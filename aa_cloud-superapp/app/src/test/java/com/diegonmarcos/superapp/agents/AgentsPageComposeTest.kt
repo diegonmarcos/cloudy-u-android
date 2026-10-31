@@ -1,9 +1,6 @@
 package com.diegonmarcos.superapp.agents
 
 import android.app.Application
-import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
 import com.diegonmarcos.superapp.launcher.Sections
 import com.diegonmarcos.superapp.ui.KitPageHarness
 import org.json.JSONObject
@@ -16,13 +13,11 @@ import org.robolectric.annotation.Config
 import java.io.File
 
 /**
- * Configs ▸ Fleet ▸ Agents.
+ * The fleet agent registry, drawn by Configs ▸ Observability ▸ X-Ray (AGENTS group) since the Agents page was removed.
  *
  *   G1 the baked registry is data/fleet-agents.json, every agent present
- *   G2 Configs: Agents is in the Observability group, after Peer Control and before About, over two tabs
- *   G3 SuperApp agents shows only this app's rows; Fleet agents shows every app's
- *   G4 a tap opens the details with the Open action
- *   G5 empty and error states
+ *   G2 no agents page is declared; page:config/agents and its two old tabs resolve to X-Ray
+ *   G3 the SuperApp scope lists only this app's rows; the Fleet scope lists every app's
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
@@ -44,48 +39,22 @@ class AgentsPageComposeTest : KitPageHarness() {
     }
 
     @Test
-    fun `G2 Agents sits in Fleet before About and owns two tabs`() {
+    fun `G2 the Agents page is folded into X-Ray and its old ids land there`() {
         val section = Sections.byId("config")!!
-        val ids = section.pages.map { it.id }
-        assertTrue(ids.indexOf("kde") < ids.indexOf("agents"))
-        assertTrue(ids.indexOf("agents") < ids.indexOf("about"))
-        val agents = section.allPages.first { it.id == "agents" }
-        assertEquals("Observability", agents.group)   // #1221: Observability reads Agents | Diagnostics Logcat About
-        assertEquals(listOf("agents-superapp", "agents-fleet"), Sections.tabPagesOf("config", agents).map { it.id })
+        val ids = section.allPages.map { it.id }
+        for (old in listOf("agents", "agents-superapp", "agents-fleet")) {
+            assertTrue("$old is still declared", old !in ids)
+            assertEquals("config" to "xray", Sections.canonicalPage("config", old))
+        }
+        assertEquals("Observability", section.allPages.first { it.id == "xray" }.group)
     }
 
     @Test
-    fun `G3 each tab shows its own scope`() {
+    fun `G3 each scope lists its own rows`() {
         val all = FleetAgents.all()
-        val mine = FleetAgents.forScope(all, AgentsFragment.SCOPE_SUPERAPP)
+        val mine = FleetAgents.forScope(all, FleetAgents.SCOPE_SUPERAPP)
         assertTrue(mine.isNotEmpty() && mine.all { it.isSelf })
-        assertEquals(all.size, FleetAgents.forScope(all, AgentsFragment.SCOPE_FLEET).size)
-
-        show(AgentsFragment.newInstance(AgentsFragment.SCOPE_SUPERAPP))
-        compose.onNodeWithTag("agents:list").assertExists()
-        compose.onNodeWithText(mine.first().name).assertExists()
-    }
-
-    @Test
-    fun `G4 a tap shows the details and the Open action`() {
-        val f = show(AgentsFragment.newInstance(AgentsFragment.SCOPE_FLEET))
-        val first = FleetAgents.all().first()
-        compose.onNodeWithText(first.name).performClick()
-        compose.waitForIdle()
-        compose.onNodeWithTag("agent:details:${first.id}").assertExists()
-        compose.onNodeWithTag("agent:open:${first.id}").assertExists()
-        assertTrue(f.ui is AgentsFragment.Ui.Loaded)
-    }
-
-    @Test
-    fun `G5 empty and error states`() {
-        val empty = AgentsFragment.newInstance(AgentsFragment.SCOPE_FLEET).apply { source = { emptyList() } }
-        show(empty)
-        compose.onNodeWithTag("agents:empty").assertExists()
-
-        compose.runOnUiThread { empty.source = { error("bad registry") }; empty.load() }
-        compose.waitForIdle()
-        compose.onNodeWithTag("agents:error").assertExists()
+        assertEquals(all.size, FleetAgents.forScope(all, FleetAgents.SCOPE_FLEET).size)
     }
 
     @Test

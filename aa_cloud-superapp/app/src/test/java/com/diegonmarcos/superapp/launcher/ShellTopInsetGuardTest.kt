@@ -64,7 +64,7 @@ class ShellTopInsetGuardTest(private val key: String) : KitPageHarness() {
         const val GAP_TOL_DP = 1
         const val TABS_ALL = "tabs-all"
         /** The pages the shell must render here; every other page is rendered when it can be and recorded when it cannot. */
-        val MUST = setOf("configs", "configs-search", "config/adb-shell", "config/about", "config/perms", TABS_ALL)
+        val MUST = setOf("configs", "configs-search", "config/adb-shell", "config/xray", "config/app-about", "config/perms", TABS_ALL)
 
         val OUT = File(System.getProperty("user.dir"), "build/configs-screens").apply { mkdirs() }
 

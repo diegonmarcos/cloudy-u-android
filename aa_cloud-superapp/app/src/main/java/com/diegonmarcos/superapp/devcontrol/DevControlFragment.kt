@@ -1,5 +1,8 @@
 package com.diegonmarcos.superapp.devcontrol
 
+import com.diegonmarcos.superapp.agents.AgentStatusReader
+import com.diegonmarcos.superapp.agents.FleetAgents
+import com.diegonmarcos.superapp.configs.Diagnostics
 import com.diegonmarcos.superapp.devtools.DevControlPrefs
 import com.diegonmarcos.superapp.system.Trace
 import com.diegonmarcos.superapp.system.ScreenLocker
@@ -69,7 +72,11 @@ class DevControlFragment : KitComposeFragment() {
 
     /** What the page head wrote to the copy buffer (the title); every block owns its own buffer, assembled in DECLARED order
      *  by [copyAll] because bodies finish in whatever order the user reaches them. */
-    private val infoBuf = StringBuilder("# About Cloud SuperApp\n")
+    /** The page title (build.json label) and the macro groups it draws: all of them (X-Ray) or [ABOUT_MACROS] (About). */
+    private val pageTitle: String get() = arguments?.getString(ARG_TITLE) ?: "X-Ray"
+    private val onlyMacros: Set<String>? get() = arguments?.getStringArrayList(ARG_MACROS)?.toSet()
+
+    private val infoBuf by lazy { StringBuilder("# $pageTitle · Cloud SuperApp\n") }
 
     private fun ctxAny(): Context = requireContext()
 
@@ -82,7 +89,7 @@ class DevControlFragment : KitComposeFragment() {
     override fun Content() {
         val ctx = requireContext()
         val scope = rememberCoroutineScope()
-        val page = remember { AboutPage(attached = { isAdded && view != null }).also { declare(it) } }
+        val page = remember { AboutPage(attached = { isAdded && view != null }, only = onlyMacros).also { declare(it) } }
         val blocks = remember(page) { page.withBackLinks() }
         val list = rememberLazyListState()
         val actions = remember {
@@ -115,7 +122,7 @@ class DevControlFragment : KitComposeFragment() {
 
         CompositionLocalProvider(LocalAboutActions provides actions) {
             LazyColumn(Modifier.fillMaxSize().testTag(AboutTags.LIST), state = list, contentPadding = PaddingValues(16.dp)) {
-                item(key = "title") { AboutTitle("About Cloud SuperApp") }
+                item(key = "title") { AboutTitle("$pageTitle · Cloud SuperApp") }
                 item(key = "index") { AboutIndex(page.macros, ::goMacro) }
                 itemsIndexed(blocks, key = { i, b -> blockKey(i, b) }) { _, block ->
                     when (block) {
@@ -1341,6 +1348,29 @@ class DevControlFragment : KitComposeFragment() {
             else web.recent.forEachIndexed { index, entry -> row((index + 1).toString(), entry) }
         }
 
+        // ══ DIAGNOSTICS macro section — folded in from the removed Configs ▸ Observability ▸ Diagnostics page: the device's
+        //    own numbers (gesture-nav mode and insets, edge service + strip rects + last touch events, measured Configs
+        //    tiles). The same Diagnostics.collect/text the debug API's diagnostics/get serves.
+        macro("🩺  DIAGNOSTICS")
+
+        infoSection("Gestures, edge strips & tiles") {
+            Diagnostics.text(Diagnostics.collect(ctx)).lines().filter { it.isNotBlank() }.forEach { small(it) }
+            button("Refresh", gray = true) { reload() }
+        }
+
+        // ══ AGENTS macro section — folded in from the removed Configs ▸ Observability ▸ Agents page: every agent the
+        //    fleet declares (data/fleet-agents.json, baked) with its live status, read only through local channels.
+        macro("🤖  AGENTS")
+
+        for ((head, scope) in listOf("SuperApp agents" to FleetAgents.SCOPE_SUPERAPP, "Fleet agents" to FleetAgents.SCOPE_FLEET)) {
+            asyncSection(head, timeoutMs = 10_000,
+                probe = { FleetAgents.forScope(FleetAgents.all(), scope).map { it to AgentStatusReader.read(appCtx, it) } },
+            ) { agents ->
+                if (agents.isEmpty()) row("—", "no agent declared")
+                agents.forEach { (a, live) -> row(a.name, "${live.word} · ${a.app} · ${a.kind}") }
+            }
+        }
+
         // The Copy All button closes the last group; "Go Back Up to Index" links are derived (AboutPage.withBackLinks).
         copyAllButton()
     }
@@ -1723,7 +1753,15 @@ class DevControlFragment : KitComposeFragment() {
     }.getOrDefault(-1L to -1L)
 
     companion object {
-        fun newInstance() = DevControlFragment()
+        private const val ARG_TITLE = "title"
+        private const val ARG_MACROS = "macros"
+
+        /** The macro groups Configs ▸ About draws: this app's identity and where the build came from. */
+        val ABOUT_MACROS = arrayListOf("APP & BUILD", "REPO & RELEASES")
+
+        fun newInstance(title: String = "X-Ray", macros: ArrayList<String>? = null) = DevControlFragment().apply {
+            arguments = android.os.Bundle().apply { putString(ARG_TITLE, title); macros?.let { putStringArrayList(ARG_MACROS, it) } }
+        }
 
         /** The page's own two heading rows (title, Index) before the first block. */
         private const val HEAD_ITEMS = 2

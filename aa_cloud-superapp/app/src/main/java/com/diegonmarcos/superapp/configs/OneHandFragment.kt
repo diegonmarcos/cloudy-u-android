@@ -410,7 +410,7 @@ class OneHandFragment : KitComposeFragment() {
         }
         caption(
             "Each press rebuilds the strips at once. Switch 'Show strip outline' on below to see them as red bars while you tune; " +
-            "Configs > Observability > Diagnostics lists where they really are and what the last touches did.")
+            "Configs > Observability > X-Ray (Diagnostics) lists where they really are and what the last touches did.")
 
         subhead("Troubleshooting")
         var debug by remember { mutableStateOf(OneHandPrefs.debugVisible(ctx)) }

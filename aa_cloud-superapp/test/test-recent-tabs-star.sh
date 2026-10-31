@@ -200,7 +200,7 @@ print(' '.join(p['id'] for p in c['pages']
 # LAST tiled entry, and no `home` page creeps back into the list.
 if case " $ORDER " in *" home "*) true ;; *) false ;; esac; then
   bad "a Configs page named home is declared again — #580 deleted it; its tabs live in Launcher"
-elif [ "${TILED##* }" = "about" ]; then
+elif [ "${TILED##* }" = "app-about" ]; then  # About is app-about since the X-Ray regroup (about aliases X-Ray)
   ok "no Home page in ui.sections[config].pages, and About is its last tiled entry"
 else
   bad "About is not the last tiled Configs entry — tiled tail is: $(echo "$TILED" | tr ' ' '\n' | tail -4 | tr '\n' ' ')"

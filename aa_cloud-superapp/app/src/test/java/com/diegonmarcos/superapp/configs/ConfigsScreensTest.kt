@@ -50,10 +50,10 @@ class ConfigsScreensTest(private val screen: String, private val fontScale: Floa
         /** Screens that are read-only by design (no control to measure). Empty unless proven by a render. */
         // The four tab STRIPS: under Robolectric the strip's pane (a FragmentContainerView inside an AndroidView pager)
         // stays empty, so only its tab pills are measured here. Every tab they hold is rendered and guarded as its own
-        // screen above (presets, panels, panels-ui, panels-tools, agents-*, apps-mesh-members, ipc, identity).
+        // screen above (presets, panels, panels-ui, panels-tools, apps-mesh-members, ipc, identity).
         // Battery: read-only stats that load from the system battery service, which Robolectric never answers
         // ("Reading the battery..." is all it draws), so it has no control to measure here.
-        val NO_CONTROLS = setOf("controls", "panels", "agents", "battery")
+        val NO_CONTROLS = setOf("controls", "panels", "battery")
         /** An icon's plate (Control's round badge): at most the icon + 8dp ("white box too big"). */
         const val ICON_DP = 22f
         const val MAX_ICON_BOX_DP = ICON_DP + 8f
@@ -62,8 +62,8 @@ class ConfigsScreensTest(private val screen: String, private val fontScale: Floa
         /** The Configs grid and every page/tab under build.json::ui.sections[config] that opens IN this app. */
         val SCREENS = listOf(
             "grid", "perms", "controls", "presets", "panels", "panels-ui", "panels-tools", "onehand",
-            "firewall", "dns", "adb-shell", "kde", "agents", "agents-superapp", "agents-fleet",
-            "diagnostics", "logcat", "about", "battery", "profile", "store-cloud", "store-phone",
+            "firewall", "dns", "adb-shell", "kde",
+            "xray", "logcat", "app-about", "battery", "profile", "store-cloud", "store-phone",
         )
 
         @JvmStatic

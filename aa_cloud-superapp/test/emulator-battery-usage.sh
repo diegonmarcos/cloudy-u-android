@@ -153,6 +153,32 @@ for i in 1 2 3 4 5 6; do cap "battery-stats-$i"; frames="$frames $OUT/battery-st
 has_all $frames "Now" "Since last charge|Since plugged in" "History" "Capacity" "Temperature & voltage" "Discharge cycles" "Charge sessions" "Top apps since charge" "Privileged channel" \
   || { echo "::error::the Battery stats page is missing a section"; fail=1; }
 
+# Configs ▸ Observability (X-Ray | LogCat | Permissions | About): the row and each page, plus the old ids landing on X-Ray.
+# A separate capture (xray-*.png + .xml); the battery checks above are not touched by it.
+xray_capture() {
+  local t xy
+  open_page "section:config"; cap xray-configs-grid
+  xy=$(centre "Observability"); [ -n "$xy" ] && { adb shell input tap $xy; sleep 2; }
+  find_text "X-Ray" >/dev/null || echo "::warning::the Observability row (X-Ray) is not on screen"
+  cap xray-observability-row
+  has_all "$OUT/xray-configs-grid.xml" "$OUT/xray-observability-row.xml" "X-Ray" "LogCat" "Permissions" "About" \
+    || { echo "::error::the Observability row does not read X-Ray | LogCat | Permissions | About"; fail=1; }
+  open_page "page:config/xray"; cap xray-page
+  grep -q "X-Ray · Cloud SuperApp" "$OUT/xray-page.xml" || { echo "::error::page:config/xray is not the X-Ray page"; fail=1; }
+  for t in DIAGNOSTICS AGENTS; do
+    if tap_text "$t"; then cap "xray-page-$(echo $t | tr A-Z a-z)"; else echo "::warning::X-Ray index has no $t card"; fi
+  done
+  open_page "page:config/app-about"; cap xray-about-page
+  grep -q "About · Cloud SuperApp" "$OUT/xray-about-page.xml" || { echo "::error::page:config/app-about is not the About page"; fail=1; }
+  grep -q "DEVICE" "$OUT/xray-about-page.xml" && { echo "::error::About draws X-Ray's DEVICE group"; fail=1; }
+  open_page "page:config/perms"; cap xray-permissions-page
+  for t in about diagnostics agents; do
+    open_page "page:config/$t"; cap "xray-redirect-$t"
+    grep -q "X-Ray · Cloud SuperApp" "$OUT/xray-redirect-$t.xml" || { echo "::error::page:config/$t does not land on X-Ray"; fail=1; }
+  done
+}
+xray_capture
+
 adb shell dumpsys battery reset
 adb shell settings delete global cloud_nav_ui_mode || true
 exit $fail

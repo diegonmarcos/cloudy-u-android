@@ -1,19 +1,16 @@
 #!/usr/bin/env bash
-# Tester: Configs ▸ Fleet ▸ Agents — every agent the fleet runs, in one page with two tabs.
+# Tester: the fleet agent registry, drawn by Configs ▸ Observability ▸ X-Ray (AGENTS group) since the Agents page was removed.
 #
-#   A1 Configs reads Setup, Fleet, Observability; Fleet = Bluetooth · C3 Fleet Control · Peer Control; Agents (Observability) comes
-#      before About in the grid (Observability = Diagnostics, Logcat, About)
-#   A2 Agents is a page over exactly two tabs, SuperApp agents then Fleet agents, both hidden
-#      pages of their own (reached through the strip), and the nav rule holds (2..8 tabs)
-#   A3 both tabs route to AgentsFragment with their own scope; the page is drawn by PageTabs
-#      (the strip branch of SectionPages) and the fragment is libs:ui-kit's (KitComposeFragment)
+#   A1 Configs reads Setup, Fleet, Observability (the order of build.json groups); Fleet = Bluetooth · C3 Fleet Control · Peer Control;
+#      no agents page or tab is declared and the Observability row is exactly what its group declares
+#   A2 page:config/agents, /agents-superapp and /agents-fleet are page_aliases of xray, and each is retired to xray
+#   A3 X-Ray draws the registry: DevControlFragment declares the AGENTS macro over FleetAgents + AgentStatusReader
 #   A4 the old deep links still land: page:config/c3 and page:config/kde are the same ids
 #   A5 the registry is baked: FLEET_AGENTS_B64 from data/fleet-agents.json, and that file is
 #      what the generator gives today (1_cicd/src/scripts/cloud-android-fleet-agents.py check)
 #   A6 every agent declared in a build.json is in the baked file, and this app's own rows are
 #      exactly its build.json fleet_agents
 #   A7 live status is local only: no HTTP client in the agents package
-#   A8 the page's three non-list states are drawn: loading, empty, error
 #
 # Static (no device, no build).
 set -u
@@ -27,7 +24,7 @@ check() { if [ "$1" = "OK" ]; then ok "$2"; else bad "$2 — $1"; fi; }
 BJ="$APP/build.json"
 KT="$APP/app/src/main/java/com/diegonmarcos/superapp"
 PAGES="$KT/launcher/SectionPages.kt"
-FRAG="$KT/agents/AgentsFragment.kt"
+FRAG="$KT/devcontrol/DevControlFragment.kt"
 READER="$KT/agents/AgentStatusReader.kt"
 MODEL="$KT/agents/FleetAgents.kt"
 DATA="$APP/data/fleet-agents.json"
@@ -36,57 +33,48 @@ for f in "$BJ" "$PAGES" "$FRAG" "$READER" "$MODEL" "$DATA" "$GEN" "$APP/app/buil
   [ -f "$f" ] || { echo "  ABORT: no such file: $f — a check over nothing passes"; exit 2; }
 done
 
-echo "== A1: Setup, Fleet, Observability; Agents before About =="
+echo "== A1: Setup, Fleet, Observability; no Agents page =="
 check "$(python3 - "$BJ" <<'PY'
 import json, sys
-pages = next(s for s in json.load(open(sys.argv[1]))['ui']['sections'] if s['id'] == 'config')['pages']
+sec = next(s for s in json.load(open(sys.argv[1]))['ui']['sections'] if s['id'] == 'config')
+pages = sec['pages']; by = {p['id']: p for p in pages}
 vis = [p for p in pages if not p.get('hidden') and not p.get('is_action')]
 groups = []
 for p in vis:
     g = p.get('group', '')
     if not groups or groups[-1] != g: groups.append(g)
 probs = []
-if groups != ['Setup', 'Fleet', 'Observability']: probs.append('groups = %r' % groups)
+declared = [g['label'] for g in sec['groups']]
+if groups != declared: probs.append('grid groups %r != declared groups %r' % (groups, declared))
 apps = [p['label'] for p in vis if p.get('group') == 'Fleet']
-if apps != ['Bluetooth', 'C3 Fleet Control', 'Peer Control']: probs.append('Fleet = %r' % apps)  # #1221: Agents moved to Observability
-ids = [p['id'] for p in vis]
-if 'agents' not in ids or 'about' not in ids or ids.index('agents') > ids.index('about'):
-    probs.append('Agents is not before About: %r' % ids)
-obs = [p['label'] for p in vis if p.get('group') == 'Observability']
-if obs != ['Agents', 'Diagnostics', 'Logcat', 'About']: probs.append('Observability = %r' % obs)
+if apps != ['Bluetooth', 'C3 Fleet Control', 'Peer Control']: probs.append('Fleet = %r' % apps)
+for gone in ('agents', 'agents-superapp', 'agents-fleet'):
+    if gone in by: probs.append('%s is still declared' % gone)
+obs = next(g for g in sec['groups'] if g['label'] == 'Observability')
+row = [i for i in obs['pages'] if i in by and not by[i].get('hidden')]
+grid = [p['id'] for p in vis if p.get('group') == 'Observability']
+if row != grid: probs.append('Observability row %r != grid %r' % (row, grid))
 print('; '.join(probs) or 'OK')
 PY
-)" "Configs = Setup, Fleet[Bluetooth, C3 Fleet Control, Peer Control], Observability[Agents, Diagnostics, Logcat, About]; Agents before About"
+)" "Configs groups are build.json's groups; Fleet = Bluetooth, C3 Fleet Control, Peer Control; no agents page; Observability row = its group"
 
-echo "== A2: Agents is a strip over SuperApp agents | Fleet agents =="
+echo "== A2: the old Agents ids land on X-Ray =="
 check "$(python3 - "$BJ" <<'PY'
 import json, sys
-pages = next(s for s in json.load(open(sys.argv[1]))['ui']['sections'] if s['id'] == 'config')['pages']
-by = {p['id']: p for p in pages}
-a = by.get('agents')
-if not a: print('no agents page'); sys.exit()
+sec = next(s for s in json.load(open(sys.argv[1]))['ui']['sections'] if s['id'] == 'config')
 probs = []
-if a.get('tabs') != ['agents-superapp', 'agents-fleet']: probs.append('tabs = %r' % a.get('tabs'))
-if not 2 <= len(a.get('tabs', [])) <= 8: probs.append('tab count outside 2..8')
-for t, label in (('agents-superapp', 'SuperApp agents'), ('agents-fleet', 'Fleet agents')):
-    p = by.get(t)
-    if not p: probs.append('no %s page' % t); continue
-    if p.get('label') != label: probs.append('%s label %r' % (t, p.get('label')))
-    if not p.get('hidden'): probs.append('%s is a tile of its own (should be hidden: reached through the strip)' % t)
-if a.get('action'): probs.append('agents carries an action %r' % a['action'])
+for old in ('agents', 'agents-superapp', 'agents-fleet'):
+    if sec.get('page_aliases', {}).get(old) != 'xray': probs.append('page_aliases[%s] = %r' % (old, sec.get('page_aliases', {}).get(old)))
+    if sec.get('retired_pages', {}).get(old) != ['xray']: probs.append('retired_pages[%s] = %r' % (old, sec.get('retired_pages', {}).get(old)))
 print('; '.join(probs) or 'OK')
 PY
-)" "agents.tabs = [agents-superapp, agents-fleet], labelled SuperApp agents / Fleet agents, both hidden"
+)" "page:config/agents, /agents-superapp, /agents-fleet alias and retire to xray"
 
-echo "== A3: the routes, the strip and the kit =="
-grep -qF 'tabs.isNotEmpty() -> SectionTabsFragment.forPage(sectionId, pageId)' "$PAGES" \
-  && ok "a page with tabs is drawn by the PageTabs strip (SectionTabsFragment)" || bad "the strip branch is gone"
-grep -qE 'pageId == "agents-superapp" *->' "$PAGES" && grep -qF 'AgentsFragment.SCOPE_SUPERAPP' "$PAGES" \
-  && ok "config/agents-superapp -> AgentsFragment(SCOPE_SUPERAPP)" || bad "agents-superapp has no route"
-grep -qE 'pageId == "agents-fleet" *->' "$PAGES" && grep -qF 'AgentsFragment.SCOPE_FLEET' "$PAGES" \
-  && ok "config/agents-fleet -> AgentsFragment(SCOPE_FLEET)" || bad "agents-fleet has no route"
-grep -qF 'class AgentsFragment : KitComposeFragment()' "$FRAG" \
-  && ok "AgentsFragment is a libs:ui-kit KitComposeFragment" || bad "AgentsFragment is not a kit page"
+echo "== A3: X-Ray draws the registry =="
+grep -qF 'macro("🤖  AGENTS")' "$FRAG" && grep -qF 'FleetAgents.forScope(FleetAgents.all(), scope)' "$FRAG" \
+  && grep -qF 'AgentStatusReader.read(appCtx, it)' "$FRAG" \
+  && ok "DevControlFragment (X-Ray) declares AGENTS over FleetAgents + AgentStatusReader" || bad "X-Ray does not draw the agent registry"
+grep -qE 'pageId == "agents' "$PAGES" && bad "SectionPages still routes an agents page" || ok "no agents route is left in SectionPages"
 
 echo "== A4: old deep links still land =="
 check "$(python3 - "$BJ" <<'PY'
@@ -139,11 +127,6 @@ else ok "no HTTP client in the agents package — WorkManager, services, Package
 grep -qF 'com.diegonmarcos.clouddrive.permission.READ_AGENT_RESULTS' "$APP/app/src/main/AndroidManifest.xml" \
   && ok "the manifest asks for Cloud Drive's agent-results permission (its provider's guard)" \
   || bad "no uses-permission for Cloud Drive's READ_AGENT_RESULTS — the Screenshot agent's state would answer SecurityException"
-
-echo "== A8: loading, empty and error are drawn =="
-for t in 'agents:loading' 'agents:empty' 'agents:error'; do
-  grep -qF "\"$t\"" "$FRAG" && ok "$t is drawn" || bad "$t is not drawn"
-done
 
 echo
 echo "== RESULT: $PASS passed, $FAIL failed =="

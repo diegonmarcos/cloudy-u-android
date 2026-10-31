@@ -18,6 +18,10 @@ object FleetAgents {
     /** The declaring app's name for this app: its rows are the SuperApp agents tab. */
     const val SELF_APP = "cloud-superapp"
 
+    /** The two scopes Configs ▸ Observability ▸ X-Ray lists under its AGENTS group. */
+    const val SCOPE_SUPERAPP = "superapp"
+    const val SCOPE_FLEET = "fleet"
+
     /** Where an agent's live status is read from (`status` of a row). */
     data class StatusSource(
         val source: String,
@@ -90,5 +94,5 @@ object FleetAgents {
 
     /** The rows a tab shows: this app's own, or the whole fleet's. */
     fun forScope(all: List<Agent>, scope: String): List<Agent> =
-        if (scope == AgentsFragment.SCOPE_SUPERAPP) all.filter { it.isSelf } else all
+        if (scope == SCOPE_SUPERAPP) all.filter { it.isSelf } else all
 }

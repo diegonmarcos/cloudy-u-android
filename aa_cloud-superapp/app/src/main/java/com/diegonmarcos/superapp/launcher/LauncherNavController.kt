@@ -216,6 +216,9 @@ class LauncherNavController(private val host: NavHost) {
         section.tabs && section.pages.count { it.action.isBlank() } >= 2
 
     fun openSectionPage(sectionId: String, pageId: String, args: Bundle? = null) {
+        // An old page id (build.json page_aliases, e.g. config/about -> config/xray) reopens as its current page, whoever
+        // asked: a page: tile already resolved it, App-Tabs history and launcher shortcuts arrive here directly.
+        Sections.canonicalPage(sectionId, pageId).let { (s, p) -> if (s != sectionId || p != pageId) { openSectionPage(s, p, args); return } }
         // #894 Cloud Store installed: a Store page opens Cloud Store itself (placeholder only if it will not start).
         if (com.diegonmarcos.superapp.apps.CloudStoreHandoff.intercept(host.navContext(), sectionId, pageId)) return
         // A page MERGED INTO another page's tab strip keeps its own id as a

@@ -57,7 +57,7 @@ internal const val TILE_ICON_MAX_DP = 32f
 
 /**
  * What the tiles REALLY measured on this device (px from layout, divided by the density they were laid out at), kept for
- * Configs ▸ Observability ▸ Diagnostics and its remote read. Written from the composition, read from anywhere.
+ * Configs ▸ Observability ▸ X-Ray (its DIAGNOSTICS group) and its remote read. Written from the composition, read from anywhere.
  */
 object TileMetrics {
     data class Sample(val id: String, val tileWDp: Float, val tileHDp: Float, val iconWDp: Float, val iconHDp: Float,

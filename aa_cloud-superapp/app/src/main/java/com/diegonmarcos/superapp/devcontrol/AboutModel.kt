@@ -117,7 +117,7 @@ internal sealed interface AboutBlock {
 }
 
 /** Collects the page's blocks as the fragment declares them. */
-internal class AboutPage(private val attached: () -> Boolean) {
+internal class AboutPage(private val attached: () -> Boolean, private val only: Set<String>? = null) {
     val blocks = mutableListOf<AboutBlock>()
     val sections: List<AboutSection> get() = blocks.filterIsInstance<AboutBlock.Section>().map { it.section }
     val macros: List<AboutBlock.Macro> get() = blocks.filterIsInstance<AboutBlock.Macro>()
@@ -129,10 +129,12 @@ internal class AboutPage(private val attached: () -> Boolean) {
         val label = text.dropWhile { !it.isLetter() }.trim()
         val glyph = text.takeWhile { !it.isLetter() }.trim()
         currentMacro = label
-        blocks += AboutBlock.Macro(label, glyph)
+        if (only == null || label in only) blocks += AboutBlock.Macro(label, glyph)
     }
 
+    /** A section under a macro group this page does not draw ([only], Configs ▸ About) is not registered at all. */
     fun infoSection(head: String, body: AboutItems.() -> Unit) {
+        if (only != null && currentMacro !in only) return
         blocks += AboutBlock.Section(AboutSection(currentMacro, head, body))
     }
 

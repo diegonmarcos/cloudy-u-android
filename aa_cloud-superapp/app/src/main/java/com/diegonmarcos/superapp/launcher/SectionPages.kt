@@ -91,12 +91,6 @@ object SectionPages {
         sectionId == "config" && pageId == "panels-ui" -> LauncherConfigFragment.newInstance(LauncherConfigFragment.SCOPE_UI)
         sectionId == "config" && pageId == "panels-tools" -> LauncherConfigFragment.newInstance(LauncherConfigFragment.SCOPE_TOOLS)
         sectionId == "config" && pageId == "kde"            -> com.diegonmarcos.superapp.kdeconnect.KdeConnectFragment.newInstance()
-        // Configs ▸ Fleet ▸ Agents: the `agents` page declares `tabs`, so the strip branch at the top
-        // answered it; these are its two tabs, one fragment over the consolidated agent registry.
-        sectionId == "config" && pageId == "agents-superapp" ->
-            com.diegonmarcos.superapp.agents.AgentsFragment.newInstance(com.diegonmarcos.superapp.agents.AgentsFragment.SCOPE_SUPERAPP)
-        sectionId == "config" && pageId == "agents-fleet"    ->
-            com.diegonmarcos.superapp.agents.AgentsFragment.newInstance(com.diegonmarcos.superapp.agents.AgentsFragment.SCOPE_FLEET)
         // Configs ▸ Fleet ▸ Bluetooth (#1221): the `bluetooth` page declares `tabs`, so the strip branch at the top answered it;
         // these are its five tabs, one fragment over libs:bluetooth's page and the one shared stack.
         sectionId == "config" && pageId == "bluetooth-find" -> com.diegonmarcos.superapp.configs.BluetoothFragment.newInstance(com.diegonmarcos.superapp.bluetooth.BtTab.Find)
@@ -122,8 +116,6 @@ object SectionPages {
         // Apps Mesh / IPC / Identity are Cloud Store > Access now (one tile, Configs > Network > Apps Access, action open_apps_access).
         // Configs > Network > ADB Shell: the privileged channel's full control (lib AdbShellPage).
         sectionId == "config" && pageId == "adb-shell"      -> com.diegonmarcos.superapp.configs.AdbShellFragment.newInstance()
-        // Configs ▸ Observability ▸ Diagnostics: the device's own numbers (edge strips + events, gesture insets, measured tiles).
-        sectionId == "config" && pageId == "diagnostics"    -> com.diegonmarcos.superapp.configs.DiagnosticsFragment.newInstance()
         // Configs ▸ Observability ▸ Logcat: the live logcat viewer, its own tab before About (it no longer lives inside About).
         sectionId == "config" && pageId == "logcat"         -> com.diegonmarcos.superapp.devcontrol.LogcatFragment.newInstance()
         sectionId == "config" && pageId == "wg"             -> WireGuardFragment.newInstance()
@@ -152,8 +144,12 @@ object SectionPages {
         // About's Battery section, the home-screen battery popup and the Battery badge).
         sectionId == "config" && pageId == "battery"        ->
             com.diegonmarcos.superapp.batterystats.BatteryStatsFragment.newInstance()
-        sectionId == "config" && pageId == "about" ->
-            com.diegonmarcos.superapp.devcontrol.DevControlFragment.newInstance()
+        // Configs ▸ Observability ▸ X-Ray (every macro group, Diagnostics and Agents folded in) and ▸ About (the same
+        // fragment, only its App & Build and Repo & Releases groups). Old ids about/diagnostics/agents are page_aliases.
+        sectionId == "config" && pageId == "xray" ->
+            com.diegonmarcos.superapp.devcontrol.DevControlFragment.newInstance(label)
+        sectionId == "config" && pageId == "app-about" ->
+            com.diegonmarcos.superapp.devcontrol.DevControlFragment.newInstance(label, com.diegonmarcos.superapp.devcontrol.DevControlFragment.ABOUT_MACROS)
         // "browser" section is dead — tile target extapp:cloud-browser bypasses openSectionPage.
         sectionId == "apptabs"                              ->
             com.diegonmarcos.superapp.apptabs.AppTabsFragment.newInstance()

@@ -69,6 +69,9 @@ check "$(python3 - "$BJ" <<'PY'
 import json, sys
 pages = next(s for s in json.load(open(sys.argv[1]))['ui']['sections']
              if s['id'] == 'config')['pages']
+sec = next(s for s in json.load(open(sys.argv[1]))['ui']['sections'] if s['id'] == 'config')
+by = {p['id']: p for p in pages}
+obs = next(g for g in sec['groups'] if g['id'] == 'observability')
 def members(g, s=''):
     return [p['label'] for p in pages
             if not p.get('hidden') and not p.get('is_action')
@@ -77,15 +80,16 @@ want = {
     ('Setup', 'Launcher'):             ['Quick Actions', 'One-Hand', 'Notify'],  # Controls = tabs Presets | Panels (UI | Tools)
     ('Fleet', ''):                     ['Bluetooth', 'C3 Fleet Control', 'Peer Control'],  # #1221 Bluetooth first; Agents moved to Observability
     ('Setup', 'Connect'):          ['Account'],
-    ('Setup', 'Apps'):             ['Store', 'Permissions'],
+    ('Setup', 'Apps'):             ['Store'],  # Permissions moved to Observability
     ('Setup', 'Network'):              ['Firewall', 'DNS', 'Webserver', 'Cloud Mesh', 'Apps Access', 'ADB Shell', 'WiFi'],  # #1263 WiFi right after ADB Shell; IPC is a tab of Apps Mesh, not a tile
-    ('Observability', ''):          ['Agents', 'Diagnostics', 'Logcat', 'About'],
+    # Observability is read from the registry: the labels of build.json groups[observability], visible pages, in order.
+    ('Observability', ''):          [by[i]['label'] for i in obs['pages'] if i in by and not by[i].get('hidden')],
 }
 problems = ['%s%s = %r' % (g, ' ▸ ' + s if s else '', members(g, s))
             for (g, s), exp in want.items() if members(g, s) != exp]
 print('; '.join(problems) or 'OK')
 PY
-)" "Setup ▸ Connect = Account; Setup ▸ Launcher = Controls/One-Hand/Notify; Fleet = Bluetooth/C3 Fleet Control/Peer Control; Observability = Agents/Diagnostics/Logcat/About; Setup ▸ Apps = Store/Permissions; Network = Firewall/DNS/Webserver/Cloud Mesh/Apps Mesh/ADB Shell (#733, #740; IPC and Identity are Apps Mesh tabs); Observability = Diagnostics/Logcat/About (Logcat: its own tab immediately before About, no longer inside it; Diagnostics: the device's own numbers, remotely readable)"
+)" "Setup ▸ Connect = Account; Setup ▸ Launcher = Controls/One-Hand/Notify; Fleet = Bluetooth/C3 Fleet Control/Peer Control; Observability = its declared group (X-Ray/LogCat/Permissions/About); Setup ▸ Apps = Store; Network = Firewall/DNS/Webserver/Cloud Mesh/Apps Mesh/ADB Shell (#733, #740; IPC and Identity are Apps Mesh tabs); About is the last page"
 
 echo "== T3: Store is the former Constellation, and Cloud Constellation is INSIDE it =="
 # #563 renamed the Constellation page Store; the word survives as the label of
@@ -172,9 +176,9 @@ w = {p[k] for p in pages for k in ('group', 'subgroup') if p.get(k)}
 w |= {p['label'] for p in pages if not p.get('hidden') and not p.get('is_action')}
 print(len(w))
 ")
-[ "$WORDS" = 27 ] \
-  && ok "T4 derived 27 words from the declaration (Setup, Apps, Launcher, Network, Fleet, Observability + 21 page labels (#1263: WiFi added; #1221: Bluetooth added, C3 became C3 Fleet Control), Diagnostics and Logcat the last two: the Agents regroup added Agents and dropped the | separator; #ipc added IPC; IPC became an Apps Mesh tab and left the labels)" \
-  || bad "T4 derived $WORDS words, expected 27 — it is checking a different set than it claims"
+[ "$WORDS" = 26 ] \
+  && ok "T4 derived 26 words from the declaration (X-Ray regroup: About became X-Ray, a new About, Agents and Diagnostics folded into X-Ray, Logcat relabelled LogCat; Setup, Apps, Launcher, Network, Fleet, Observability + 21 page labels (#1263: WiFi added; #1221: Bluetooth added, C3 became C3 Fleet Control), Diagnostics and Logcat the last two: the Agents regroup added Agents and dropped the | separator; #ipc added IPC; IPC became an Apps Mesh tab and left the labels)" \
+  || bad "T4 derived $WORDS words, expected 26 — it is checking a different set than it claims"
 
 # The ONE heading Kotlin may still name is the fallback for a section that
 # declares none, which is every section but this one. Pinned so it stays the only
@@ -227,9 +231,9 @@ import json
 print(len(next(s for s in json.load(open('$BJ'))['ui']['sections']
                if s['id'] == 'config')['pages']))
 ")
-[ "$COUNT" = 44 ] \
-  && ok "44 config pages declared — the set T5 walks is the whole set (#1263: plus wifi and its five hidden tabs; #1221: plus bluetooth and its five hidden tabs; #1264: plus its Analyze and Locate tabs; #649: 22 minus launcher; #723: minus ai and its 5 tabs; #733: plus apps-mesh; #740: plus dns; plus firewall; plus the hidden About ▸ Battery; Agents regroup: minus the Network separator, plus agents and its two tabs; #ipc: plus ipc; Controls merge: plus panels, panels-ui and panels-tools; Apps Mesh strip: plus apps-mesh-members and identity)" \
-  || bad "$COUNT config pages, expected 44 — a page was added or DELETED, and T5 cannot report a page that is gone"
+[ "$COUNT" = 41 ] \
+  && ok "41 config pages declared — the set T5 walks is the whole set (X-Ray regroup: minus about, diagnostics, agents and its two tabs, plus xray and app-about; #1263: plus wifi and its five hidden tabs; #1221: plus bluetooth and its five hidden tabs; #1264: plus its Analyze and Locate tabs; #649: 22 minus launcher; #723: minus ai and its 5 tabs; #733: plus apps-mesh; #740: plus dns; plus firewall; plus the hidden About ▸ Battery; Agents regroup: minus the Network separator, plus agents and its two tabs; #ipc: plus ipc; Controls merge: plus panels, panels-ui and panels-tools; Apps Mesh strip: plus apps-mesh-members and identity)" \
+  || bad "$COUNT config pages, expected 41 — a page was added or DELETED, and T5 cannot report a page that is gone"
 
 echo "== T6: ACTIONS IS UNTOUCHED =="
 # The owner said to keep it as it is. Three things make that true: the same three
@@ -320,6 +324,7 @@ BEFORE = {'bluetooth-analyze', 'bluetooth-locate', 'presets', 'controls', 'oneha
           'wifi', 'wifi-scan', 'wifi-channels', 'wifi-link', 'wifi-tools', 'wifi-log',  # #1263 added on purpose: Configs ▸ Setup ▸ Network ▸ WiFi and its five hidden tabs
           'agents', 'agents-superapp', 'agents-fleet',  # added on purpose: Configs ▸ Fleet ▸ Agents and its two tabs
           'diagnostics',  # added on purpose: Configs ▸ Observability ▸ Diagnostics (device numbers + remote read)
+          'xray', 'app-about',  # added on purpose: Configs ▸ Observability ▸ X-Ray (the former About) and the new About
           'logcat',     # added on purpose: Configs ▸ Observability ▸ Logcat, moved out of About into its own tab before it
           'battery'}    # added on purpose: Configs ▸ About ▸ Battery, the battery SoT's stats page (hidden, page:config/battery)
 sec     = next(s for s in json.load(open(sys.argv[1]))['ui']['sections']
@@ -413,11 +418,11 @@ for g, s, label, icon in tiles:
     out.append('%s[%s]' % (label, icon))
 want = ['H:SETUP',
         'S:CONNECT',      'Account[ic_person]',
-        'S:APPS',         'Store[ic_storefront]', 'Permissions[ic_key]',
+        'S:APPS',         'Store[ic_storefront]',
         'S:LAUNCHER',     'Quick Actions[ic_home]', 'One-Hand[ic_onehand]', 'Notify[ic_rss]',
         'S:NETWORK',          'Firewall[ic_lock]', 'DNS[ic_world]', 'Webserver[ic_web]', 'Cloud Mesh[ic_wg]', 'Apps Access[ic_apps]', 'ADB Shell[ic_terminal]', 'WiFi[ic_wifi]',
         'H:FLEET',        'Bluetooth[ic_bluetooth]', 'C3 Fleet Control[ic_p_watchdog]', 'Peer Control[ic_hub]',
-        'H:OBSERVABILITY', 'Agents[ic_robot]', 'Diagnostics[ic_monitor_heart]', 'Logcat[ic_subject]', 'About[ic_info]',
+        'H:OBSERVABILITY', 'X-Ray[ic_monitor_heart]', 'LogCat[ic_subject]', 'Permissions[ic_key]', 'About[ic_info]',
         'H:ACTIONS',
         'Update All[ic_system_update]', 'KDE Connect[ic_devices]', 'Animations[ic_animation]']
 if out == want: print('OK')
@@ -426,7 +431,7 @@ else:
     print('rendered != spec: ' + ' | '.join(l for l in difflib.unified_diff(want, out, lineterm='', n=0)
                                            if l[:1] in '+-' and l[:3] not in ('+++', '---')))
 PY
-)" "grid = SETUP ▸ CONNECT[Account] ▸ APPS[Store,Permissions] ▸ LAUNCHER[Quick Actions,One-Hand,Notify] ▸ NETWORK[Firewall,DNS,Webserver,Cloud Mesh,Apps Access,ADB Shell,WiFi] FLEET[Bluetooth,C3 Fleet Control,Peer Control] OBSERVABILITY[Agents,Diagnostics,Logcat,About] ACTIONS[Update All,KDE Connect,Animations]"
+)" "grid = SETUP ▸ CONNECT[Account] ▸ APPS[Store] ▸ LAUNCHER[Quick Actions,One-Hand,Notify] ▸ NETWORK[Firewall,DNS,Webserver,Cloud Mesh,Apps Access,ADB Shell,WiFi] FLEET[Bluetooth,C3 Fleet Control,Peer Control] OBSERVABILITY[X-Ray,LogCat,Permissions,About] ACTIONS[Update All,KDE Connect,Animations]"
 
 echo "== T12: THE AI PAGE IS GONE, not hidden — no route, target or tile names it (#723) =="
 # Deleting a declaration and leaving its door behind is the dead-tile failure:
@@ -475,9 +480,11 @@ check "$(python3 - "$BJ" <<'PY'
 import json, sys
 ids = [p['id'] for p in next(s for s in json.load(open(sys.argv[1]))['ui']['sections']
                              if s['id'] == 'config')['pages'] if p.get('group') == 'Observability']
-print('OK' if ids == ['agents', 'diagnostics', 'logcat', 'about'] else 'Observability order = %r' % (ids,))
+sec = next(s for s in json.load(open(sys.argv[1]))['ui']['sections'] if s['id'] == 'config')
+grp = [i for i in next(g for g in sec['groups'] if g['id'] == 'observability')['pages'] if i in ids]
+print('OK' if ids == grp and ids[-1] == 'app-about' and ids.index('logcat') < ids.index('app-about') else 'Observability order = %r, group = %r' % (ids, grp))
 PY
-)" "Observability = agents, diagnostics, logcat, about — Logcat sits immediately before About (#1221: Agents moved in from Fleet)"
+)" "Observability = build.json groups[observability] in order; Logcat before About, About last"
 grep -qE 'sectionId == "config" && pageId == "logcat" +-> .*LogcatFragment' "$PAGES" \
   && ok "SectionPages routes config/logcat to LogcatFragment" \
   || bad "config/logcat does not resolve to LogcatFragment — the Logcat tab opens a placeholder"

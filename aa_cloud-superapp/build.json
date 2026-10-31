@@ -3230,7 +3230,7 @@
                 "id": "configs-about",
                 "label": "About",
                 "icon": "ic_settings",
-                "target": "page:config/about"
+                "target": "page:config/app-about"
               }
             ]
           }
@@ -4819,16 +4819,18 @@
         "module": null,
         "_doc_grid_columns": "Icons per row of the Configs page grid: a fixed 8, declared here, NOT the Cloud/Phone stepper (GridColumns.cloud). 8 is GridColumns.MAX; at 360 dp a cell is 45 dp, the icon is 27 dp (cell minus 18 dp of margin, padding and the inline separator) and labels autosize 9 sp and end-ellipsize. A `separator` page takes no cell: it is a wrap_content character between tiles, as in Data Apps.",
         "grid_columns": 8,
-        "_doc_nav_mode": "#1221 horizontal_two_rows: the second row of Configs is one row per declared group, each [group label] | [that group's page icons]. Fleet reads Bluetooth | C3 Fleet Control (| Peer Control); Observability reads Agents | Diagnostics Logcat About; Setup keeps the rest. Every page of the section is in exactly one group (the nav-shape guard, N10), the hidden tab pages with their parent. The groups only REFERENCE pages: the Configs grid headings still come from each page's group / subgroup.",
+        "_doc_nav_mode": "#1221 horizontal_two_rows: the second row of Configs is one row per declared group, each [group label] | [that group's page icons]. Fleet reads Bluetooth | C3 Fleet Control (| Peer Control); Observability reads X-Ray | LogCat Permissions About (About last; Agents and Diagnostics folded into X-Ray, Permissions moved in from Setup ▸ Apps); Setup keeps the rest. Every page of the section is in exactly one group (the nav-shape guard, N10), the hidden tab pages with their parent. The groups only REFERENCE pages: the Configs grid headings still come from each page's group / subgroup.",
         "nav_mode": "horizontal_two_rows",
         "groups": [
-          {"id": "setup", "label": "Setup", "icon": "ic_settings", "pages": ["profile", "store", "perms", "controls", "onehand", "notify", "firewall", "dns", "webserver", "wg", "apps-access", "adb-shell", "wifi", "wifi-scan", "wifi-channels", "wifi-link", "wifi-tools", "wifi-log", "presets", "panels", "panels-ui", "panels-tools", "store-cloud", "store-phone", "update", "kde_connect", "animations"]},
+          {"id": "setup", "label": "Setup", "icon": "ic_settings", "pages": ["profile", "store", "controls", "onehand", "notify", "firewall", "dns", "webserver", "wg", "apps-access", "adb-shell", "wifi", "wifi-scan", "wifi-channels", "wifi-link", "wifi-tools", "wifi-log", "presets", "panels", "panels-ui", "panels-tools", "store-cloud", "store-phone", "update", "kde_connect", "animations"]},
           {"id": "fleet", "label": "Fleet", "icon": "ic_hub", "pages": ["bluetooth", "c3", "kde", "bluetooth-find", "bluetooth-analyze", "bluetooth-locate", "bluetooth-connect", "bluetooth-interact", "bluetooth-debug", "bluetooth-dev"]},
-          {"id": "observability", "label": "Observability", "icon": "ic_monitor_heart", "pages": ["agents", "diagnostics", "logcat", "about", "battery", "agents-superapp", "agents-fleet"]}
+          {"id": "observability", "label": "Observability", "icon": "ic_monitor_heart", "pages": ["xray", "logcat", "perms", "app-about", "battery"]}
         ],
         "_doc_pages_order": "Order here is the single source of truth \u2014 it drives the Configs page-grid, its SECTION and SUBSECTION headings, and (via home_groups tiles_from_section: 'config') the Home Apps Configs row. TWO LEVELS, DECLARED PER PAGE (#649): `group` is the section heading a tile sits under and `subgroup` is the heading below it, both rendered verbatim by TileGridFragment \u2014 the words \"Launcher\", \"Setup\", \"Apps\", \"Network\" and \"Observability\" appear in no Kotlin file, which is the same contract `label` already keeps for a page name. There is deliberately no parallel group map: a run of consecutive pages carrying the same group/subgroup IS the group, so moving an entry in this array moves it on the screen and a group with no pages left simply stops being drawn. A page that declares no group falls under the default Pages heading, which is every other section in this file. #649 replaced the old flat shape (Account/WireGuard/KDE/AI/Permissions \u2014 Launcher \u2014 Store/About, held together by `row_break`): Launcher stopped being a page wearing four tabs and became the TITLE over its four subpages as direct tiles, and the rest became Setup \u25b8 Apps + Setup \u25b8 Observability. `row_break: true` still starts a fresh grid row at a tile without printing a heading; no page in this section needs it any more, because every row break here is now a group boundary. ACTIONS ARE UNCHANGED: the trailing `is_action` entries are the same three, rendered under the same Actions heading from the same flag, and they carry no group \u2014 the grid appends them last whatever their position in this array. #723 (#878 relabelled: group Watchdog is now Setup, subgroups Setup/Mesh are Apps/Network): OWNER REGROUP (Agents): the order is Launcher, Apps, Setup. Apps is a group with no subgroup and holds C3 · Peer Control · Agents (C3 and Peer Control moved out of Setup ▸ Network with their ids unchanged, so page:config/c3 and page:config/kde are the same links; the Network separator went with them, see removed_pages). Before that regroup, the Setup group had THREE sub-sections in this order — Apps (Account · Permissions · Store), Network (WireGuard · Peer Control) and Observability (About) — and the AI page is gone (see removed_pages). #REORG 2026-10: Configs is exactly THREE sections, in this order: Setup (subgroups Apps = Account/Permissions/Store, Launcher = Presets/Controls/One-Hand/Notify, Network), Fleet (the former Apps group: C3 · Peer Control · Agents) and Observability (About). No ids changed, so every page:config/<id> link is intact. #733: Network is Cloud Mesh (the wg page, relabelled) · Peer Control · Apps Mesh (the Store's mesh page, reached from here too).",
         "_doc_retired_pages": "#697. A config page id that no longer exists, mapped to the pages its content lives on now. The page set is guarded: test-configs-two-sections.sh T9 holds the ids as they stood before #649 regrouped this section and fails if any of them is missing from `pages` without being named here, or if a page named here is still declared, or if one of its successors is not. So a page cannot be dropped by a regroup — removing one is a declared act with a declared destination. `launcher` is the only entry: #649 dissolved the page that wore four tabs and made those four tabs direct pages under the Launcher heading. Read by the tester only; the app routes by `pages` and never needs to know what was retired.",
-        "retired_pages": { "launcher": ["controls", "onehand", "notify"] },
+        "retired_pages": { "launcher": ["controls", "onehand", "notify"], "about": ["xray", "app-about"], "diagnostics": ["xray"], "agents": ["xray"], "agents-superapp": ["xray"], "agents-fleet": ["xray"] },
+        "_doc_page_aliases": "Old config page ids still spoken by links (launcher shortcuts, App-Tabs history, other apps, the debug API open op): Sections.canonicalPage resolves each to the page that holds its content now. About became X-Ray (a new About is app-about); Diagnostics and Agents were folded into X-Ray.",
+        "page_aliases": {"about": "xray", "diagnostics": "xray", "agents": "xray", "agents-superapp": "xray", "agents-fleet": "xray"},
         "_doc_removed_pages": "#723. A config page id that was DELETED rather than moved, with the reason. Distinct from retired_pages on purpose: a retired page names the visible pages its content lives on now, and these have none in Configs — the owner removed the AI page outright because AI tokens are managed in Account (the vault cockpit AI card applies them), so the five-tab AI strip and every tab under it went with it, and the Account card's link to the page was removed rather than left pointing at nothing. Guarded by test-configs-two-sections.sh T9 (the id may not be declared, must have existed, must carry a reason) and T12 (no route, page: target or Kotlin branch may still name it). Read by the tester only.",
         "removed_pages": { "apps-mesh": "Apps Mesh is Cloud Store > Access now; one Apps Access tile opens it", "ipc": "tab of Apps Mesh, now Cloud Store > Access > IPC", "apps-mesh-members": "tab of Apps Mesh, now Cloud Store > Access > Apps Mesh", "identity": "tab of Apps Mesh, now Cloud Store > Access > Identity", "ai": "AI page deleted; AI tokens are managed in Account", "websearch": "tab of the deleted AI page (an unbuilt agent placeholder)", "localsearch": "tab of the deleted AI page (an unbuilt agent placeholder)", "textenhance": "tab of the deleted AI page; each app keeps its own Text Enhance editor", "library": "tab of the deleted AI page (an unbuilt agent placeholder)", "tokens": "tab of the deleted AI page; AI tokens are managed in Account", "network-sep-1": "the Setup ▸ Network separator divided C3 and Peer Control from the network engines; both moved to the Configs ▸ Fleet group (then named Apps), so it had nothing left to divide" },
         "pages": [
@@ -4851,13 +4853,6 @@
             "icon": "ic_storefront",
             "action": "extapp:cloud-store",
           "_doc_865": "#865 the Store is its own app (ac_cloud-store, com.diegonmarcos.cloudstore). This entry opens it: its action extapp:cloud-store is the tile's target. Not is_action, so the tile keeps its place under Setup ▸ Apps instead of moving to the Actions row, and when it is not installed ui.external_apps[id=cloud-store].install_apk_url is offered. The two tab pages below stay, hidden, for page: links (the update notification, Update All); CloudStoreHandoff shows Open Cloud Store on them once the app is installed.",
-            "group": "Setup",
-            "subgroup": "Apps"
-          },
-          {
-            "id": "perms",
-            "label": "Permissions",
-            "icon": "ic_key",
             "group": "Setup",
             "subgroup": "Apps"
           },
@@ -4973,29 +4968,29 @@
             "group": "Fleet"
           },
           {
-            "_doc": "Configs ▸ Observability ▸ Agents: every agent the fleet runs, in one place. Status first (a dot and a word per row), the details on tap, and a tap on Open goes to the agent's own page in its app (extapp:<app>#page:..., or a page: of this app). Two tabs: SuperApp agents (the workers, services and engines this app runs, declared in this file's fleet_agents) and Fleet agents (every app's fleet_agents, consolidated by 1_cicd/src/scripts/cloud-android-fleet-agents.py into data/fleet-agents.json, baked as BuildConfig.FLEET_AGENTS_B64). Live status is read only through local, existing channels (this app's own WorkManager and services, PackageManager, and a fleet app's own read-only provider); an agent with none says 'not exposed' instead of guessing. No HTTP between apps.",
-            "id": "agents",
-            "label": "Agents",
-            "icon": "ic_robot",
-            "tabs": ["agents-superapp", "agents-fleet"],
-            "group": "Observability"
-          },
-          {
-            "_doc": "Configs ▸ Observability ▸ Diagnostics: build SHA, device/Android/One UI, density/fontScale/dp, gesture-nav mode and insets, overlay permission, edge service + attached strip rects + last 20 touch events, measured Configs tile/icon dp. DiagnosticsFragment draws it; the same JSON is served read-only at /api/diagnostics/get (+ screenshot, open, inject) on the fleet debug API.",
-            "id": "diagnostics",
-            "label": "Diagnostics",
+            "_doc": "Configs ▸ Observability ▸ X-Ray: the full diagnosis of the phone and the mesh, formerly the About page (DevControlFragment, every macro group: App & Build, Repo & Releases, Device, Security, Resources with Battery, Network, API, Mesh, Dev Tools, Webserver). It also carries what the removed Diagnostics page drew (the DIAGNOSTICS macro: Diagnostics.text, gesture insets, edge strips, touch events, measured tiles; diagnostics/get on the debug API is unchanged) and the removed Agents page's live status (the AGENTS macro over FleetAgents + AgentStatusReader). Old links page:config/about, /diagnostics, /agents, /agents-superapp, /agents-fleet land here (page_aliases).",
+            "id": "xray",
+            "label": "X-Ray",
             "icon": "ic_monitor_heart",
             "group": "Observability"
           },
           {
             "_doc": "Configs ▸ Observability ▸ Logcat: the live logcat viewer (scope This App | All Apps | one app, All | Errors, Refresh / Copy / Export / Post). It used to be the LOGCAT macro group at the bottom of About; it is its own tab now, placed immediately before About, and About no longer carries it.",
             "id": "logcat",
-            "label": "Logcat",
+            "label": "LogCat",
             "icon": "ic_subject",
             "group": "Observability"
           },
           {
-            "id": "about",
+            "_doc": "Configs ▸ Observability ▸ Permissions: every grant the app holds or lacks (PermissionsFragment). Moved out of Setup ▸ Apps into Observability, id unchanged, so page:config/perms is the same link.",
+            "id": "perms",
+            "label": "Permissions",
+            "icon": "ic_key",
+            "group": "Observability"
+          },
+          {
+            "_doc": "Configs ▸ Observability ▸ About, the LAST page: what this app is and where this build came from. The SAME DevControlFragment as X-Ray, restricted to its APP & BUILD and REPO & RELEASES macro groups (DevControlFragment.ABOUT_MACROS), so nothing is drawn twice in code. The id is app-about because `about` is the old X-Ray id and redirects there (page_aliases).",
+            "id": "app-about",
             "label": "About",
             "icon": "ic_info",
             "group": "Observability"
@@ -5034,20 +5029,6 @@
             "id": "battery",
             "label": "Battery",
             "icon": "ic_settings",
-            "hidden": true
-          },
-          {
-            "_doc": "Agents tab 1: the agents Cloud SuperApp itself runs (fleet_agents rows whose app is cloud-superapp). hidden = reached through the Agents strip, not as its own Configs tile.",
-            "id": "agents-superapp",
-            "label": "SuperApp agents",
-            "icon": "ic_robot",
-            "hidden": true
-          },
-          {
-            "_doc": "Agents tab 2: every agent declared across the fleet (data/fleet-agents.json). hidden = reached through the Agents strip, not as its own Configs tile.",
-            "id": "agents-fleet",
-            "label": "Fleet agents",
-            "icon": "ic_robot",
             "hidden": true
           },
           {

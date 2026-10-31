@@ -33,7 +33,7 @@ import java.util.concurrent.TimeUnit
 
 /**
  * Configs ▸ Observability ▸ Diagnostics: ONE read of what this phone really does, as JSON. The page draws it
- * ([DiagnosticsFragment]) and the fleet debug API serves the same object ([register]: `diagnostics/get`, `/screenshot`,
+ * (Configs ▸ Observability ▸ X-Ray, its DIAGNOSTICS group) and the fleet debug API serves the same object ([register]: `diagnostics/get`, `/screenshot`,
  * `/open`, `/inject`), so the owner never has to screenshot anything for an agent to see the device.
  */
 object Diagnostics {
@@ -176,13 +176,13 @@ object Diagnostics {
         AppDebugServer.route("diagnostics", listOf(
             AppDebugServer.Op("get", "", "build SHA, device/Android/One UI, density/fontScale/dp, gesture insets, overlay permission, edge service + strips + last 20 touch events, measured Configs tile/icon dp"),
             AppDebugServer.Op("screenshot", "w=pixels (default 540)", "PNG (base64 in JSON) of the current SuperApp activity window, PixelCopy of its own window"),
-            AppDebugServer.Op("open", "page=<section>/<page> (default config/diagnostics)", "open a SuperApp page in the foreground activity"),
+            AppDebugServer.Op("open", "page=<section>/<page> (default config/xray)", "open a SuperApp page in the foreground activity"),
             AppDebugServer.Op("inject", "edge=left|right&hold_ms=&push_dp=", "own-window test gesture on the edge strip (runs the real touch handler; see edge.events)"),
         )) { op, q ->
             when (op) {
                 "", "get" -> collect(app).toString()
                 "screenshot" -> screenshot((q["w"]?.toIntOrNull() ?: 540).coerceIn(120, 1080)).toString()
-                "open" -> open(q["page"].orEmpty().ifBlank { "config/diagnostics" }).toString()
+                "open" -> open(q["page"].orEmpty().ifBlank { "config/xray" }).toString()
                 "inject" -> inject(app, q).toString()
                 else -> null
             }

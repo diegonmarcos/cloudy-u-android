@@ -20,6 +20,8 @@ import org.robolectric.annotation.Config
  *   D2 a block loads when it scrolls into view and not before (the viewport is the trigger)
  *   D3 an Index card jumps to its group and the group's blocks load
  *   D4 the page ends with the Copy All button
+ *   D5 X-Ray carries the folded Diagnostics and Agents groups
+ *   D6 About is the same page over App & Build and Repo & Releases only
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
@@ -54,5 +56,20 @@ class AboutComposeTest : KitPageHarness() {
     fun `D4 the page ends with Copy All and the way back up`() {
         show(DevControlFragment.newInstance())
         compose.onNodeWithTag(AboutTags.LIST).performScrollToNode(hasTestTag(AboutTags.button("Copy All Infos")))
+    }
+
+    @Test
+    fun `D5 X-Ray carries the folded Diagnostics and Agents groups`() {
+        show(DevControlFragment.newInstance())
+        compose.onNodeWithTag("index:DIAGNOSTICS").assertExists()
+        compose.onNodeWithTag("index:AGENTS").assertExists()
+    }
+
+    @Test
+    fun `D6 About is the same page over App & Build and Repo & Releases only`() {
+        show(DevControlFragment.newInstance("About", DevControlFragment.ABOUT_MACROS))
+        compose.onNodeWithTag("index:APP & BUILD").assertExists()
+        compose.onNodeWithTag("index:REPO & RELEASES").assertExists()
+        compose.onAllNodesWithTag("index:DEVICE").assertCountEquals(0)
     }
 }

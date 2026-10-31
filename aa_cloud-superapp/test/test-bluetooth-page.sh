@@ -3,7 +3,7 @@
 # app/src/test/.../bluetooth/BluetoothLibTest.kt.
 #
 #   B1 the page is declared: Fleet group, five hidden tabs Find | Connect | Interact | Debug | Dev, every tab routed to BluetoothFragment
-#   B2 Configs declares horizontal_two_rows with the Fleet row (Bluetooth, C3 Fleet Control) and the Observability row (Agents,
+#   B2 Configs declares horizontal_two_rows with the Fleet row (Bluetooth, C3 Fleet Control) and the Observability row (X-Ray, LogCat, Permissions, About; was Agents,
 #      Diagnostics, Logcat, About), every page of the section in exactly one group
 #   B3 the page is the lib's: BluetoothFragment is a KitComposeFragment (its scrolling reaches the shell) over BluetoothHub; the five
 #      tabs and the ATT console, hex write, notify stream and permission rows exist in the lib's Compose page
@@ -63,7 +63,8 @@ if sec.get('nav_mode') != 'horizontal_two_rows': probs.append('nav_mode = %r' % 
 groups = {g['id']: g for g in sec.get('groups', [])}
 vis = lambda ids: [i for i in ids if not next(p for p in sec['pages'] if p['id'] == i).get('hidden')]
 if vis(groups['fleet']['pages'])[:2] != ['bluetooth', 'c3']: probs.append('fleet row = %r' % vis(groups['fleet']['pages']))
-if vis(groups['observability']['pages']) != ['agents', 'diagnostics', 'logcat', 'about']: probs.append('observability row = %r' % vis(groups['observability']['pages']))
+grid_obs = [p['id'] for p in sec['pages'] if p.get('group') == 'Observability' and not p.get('hidden')]
+if vis(groups['observability']['pages']) != grid_obs: probs.append('observability row = %r, grid = %r' % (vis(groups['observability']['pages']), grid_obs))
 label = {p['id']: p['label'] for p in sec['pages']}
 if label['c3'] != 'C3 Fleet Control': probs.append('c3 label = %r' % label['c3'])
 flat = [p['id'] for p in sec['pages']]
@@ -73,7 +74,7 @@ for g in sec['groups']:
     if not g.get('icon') or not g.get('label'): probs.append('group %s lacks an icon or label' % g['id'])
 print('; '.join(probs) or 'OK')
 PY
-)" "horizontal_two_rows: Fleet = Bluetooth | C3 Fleet Control, Observability = Agents | Diagnostics Logcat About; every page in one group"
+)" "horizontal_two_rows: Fleet = Bluetooth | C3 Fleet Control, Observability = its grid order (X-Ray | LogCat Permissions About); every page in one group"
 
 echo "== B3: the page is the lib's, scroll wired =="
 grep -q 'class BluetoothFragment : KitComposeFragment()' "$KT/configs/BluetoothFragment.kt" && ! grep -q 'override val reportsScroll.*false' "$KT/configs/BluetoothFragment.kt" \
