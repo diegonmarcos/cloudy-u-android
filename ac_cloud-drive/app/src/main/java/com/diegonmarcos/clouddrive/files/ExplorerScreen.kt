@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -40,18 +41,31 @@ fun ExplorerScreen(
     local: @Composable () -> Unit,
     cloud: @Composable () -> Unit,
     modifier: Modifier = Modifier,
+    openDrive: (String) -> Unit = {},
 ) {
-    val pages = Declarations.navPages(Declarations.SECTION_EXPLORER)
+    // #1376 every attached drive is a tab of its own after the declared ones, named by its volume: it appears on
+    // attach and goes on detach (the media broadcasts bump StorageVolumes.tick), and it is the Local file manager
+    // opened on the drive's root.
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    val usbTick by com.diegonmarcos.clouddrive.usb.StorageVolumes.tick.collectAsState()
+    val drives = androidx.compose.runtime.remember(usbTick) { com.diegonmarcos.clouddrive.usb.StorageVolumes.drives(ctx) }
+    val pages = Declarations.navPages(Declarations.SECTION_EXPLORER) + drives.map { d ->
+        com.diegonmarcos.superapp.bottomnav.NavPage(DRIVE_TAB + d.path, d.label, if (d.kind == com.diegonmarcos.clouddrive.usb.UsbVolumeModel.Kind.USB) "usb" else "sd_card")
+    }
     var current by rememberSaveable { mutableStateOf(pages.firstOrNull()?.id ?: "") }
     LaunchedEffect(page) {
         if (page != null && pages.any { it.id == page }) current = page
         if (page != null) onPageConsumed()
     }
+    // A drive tab whose drive left falls back to the first declared page.
+    LaunchedEffect(pages.size) { if (pages.none { it.id == current }) current = pages.firstOrNull()?.id ?: "" }
+    val drivePath = current.takeIf { it.startsWith(DRIVE_TAB) }?.removePrefix(DRIVE_TAB)
+    LaunchedEffect(drivePath) { drivePath?.let(openDrive) }
     Column(modifier.fillMaxSize().testTag(DriveTags.EXPLORER)) {
         NavBarTopSecondRow(pages = pages, selectedId = current, onSelect = { current = it.id }, modifier = Modifier.fillMaxWidth().padding(horizontal = DriveMetrics.gap).testTag(DriveTags.EXPLORER_STRIP), underTopChrome = false)
         // The strip already cleared the status bar; the page's own top island must not clear it twice.
         Box(Modifier.weight(1f).consumeWindowInsets(topIslandInsets()).testTag(DriveTags.explorerPage(current))) {
-            when (current) {
+            if (drivePath != null) local() else when (current) {
                 "local" -> local()
                 "cloud" -> cloud()
                 else -> EmptyState(IconCatalog.vectorOrDefault(Declarations.iconDefault), stringResource(R.string.chrome_unknown_tab), "")
@@ -59,3 +73,6 @@ fun ExplorerScreen(
         }
     }
 }
+
+/** #1376 the id prefix of a drive tab; the rest is the drive's root path. */
+private const val DRIVE_TAB = "drive:"

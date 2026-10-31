@@ -24,4 +24,14 @@
     <string name="usb_raw_card_hint">Open it directly over USB (FAT32 drives).</string>
     <string name="usb_open">Open</string>
     <string name="usb_eject_settings">Eject in Settings</string>
+    <!-- #1376 Git page storage selector -->
+    <string name="git_storage_store">Cloud-Store (Termux)</string>
+    <string name="git_storage_emulated">Emulated</string>
+    <string name="git_storage_external">External Drive</string>
+    <string name="git_storage_no_drive">No drive attached</string>
+    <string name="git_storage_no_drive_hint">Plug in a USB-C drive to see the repositories in its git folder.</string>
+    <string name="git_storage_no_folder">No git folder</string>
+    <string name="git_storage_no_folder_hint">%1$s has no folder named git (any case).</string>
+    <string name="git_storage_empty">No repositories in this git folder</string>
+    <string name="git_storage_sync">Sync</string>
 </resources>

@@ -267,7 +267,7 @@ class MainActivity : ComponentActivity(), DriveActions {
         } else if (startupState is StartupState.Ready || degraded) {
             DriveShell(select = jumpTab, onSelected = { jumpTab = null }) { tabId, _ ->
                 when (tabId) {
-                    "explorer" -> ExplorerScreen(jumpPage, onPageConsumed = { jumpPage = null }, local = { FilesScreen(files, this, hasAccess) }, cloud = { VolumesScreen(rclone, prefs, this, openPath) })
+                    "explorer" -> ExplorerScreen(jumpPage, onPageConsumed = { jumpPage = null }, local = { FilesScreen(files, this, hasAccess) }, cloud = { VolumesScreen(rclone, prefs, this, openPath) }, openDrive = { filesController?.reveal(it) })
                     "manage" -> ManageScreen(this, prefs, onShowInExplorer = openPath, page = jumpPage, onPageConsumed = { jumpPage = null })
                     "agents" -> AgentsScreen()
                     "ai" -> AiScreen()

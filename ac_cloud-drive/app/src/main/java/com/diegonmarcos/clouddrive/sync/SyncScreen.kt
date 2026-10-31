@@ -79,10 +79,17 @@ fun GitPageScreen(
     val nextRun = rememberGitNextRun()
     fun say(msg: String) { scope.launch { snackbar.showSnackbar(msg) } }
 
+    // #1376 the storage selector (the strip the Explorer draws its tabs with): Cloud-Store keeps the page as it was;
+    // Emulated / External list the repositories in that root's git folder (GitStoragePage.kt).
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    var storage by remember { mutableStateOf(gitStorageSelected(ctx)) }
+    val pagesStorage = gitStoragePages()
     Column(modifier.fillMaxSize()) {
         // #1356 no title row: the Git page opens on its sub-page strip (ui.sections[git].title_row = false);
         // the terminal shortcut it carried is the Termux tile of Home ▸ Apps (data/drive-apps.json).
         // #868 the strip is libs:bottomnav's PageTabs over ui.sections[git].pages.
+        NavBarTopSecondRow(pages = pagesStorage, selectedId = storage.id, onSelect = { storage = GitStorage.Kind.of(it.id); gitStorageSelect(ctx, storage) }, modifier = Modifier.padding(horizontal = DriveMetrics.gap).testTag("git_storage_strip"), underTopChrome = false)
+        if (storage != GitStorage.Kind.STORE) { GitStorageRepos(storage, git, Modifier.weight(1f)); SnackbarHost(snackbar); return@Column }
         NavBarTopSecondRow(pages = pages, selectedId = current, onSelect = { current = it.id }, modifier = Modifier.padding(horizontal = DriveMetrics.gap).testTag(DriveTags.SYNC_STRIP), underTopChrome = false)
         AnimatedContent(targetState = current, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "git_page", modifier = Modifier.weight(1f)) { id ->
             when (id) {
