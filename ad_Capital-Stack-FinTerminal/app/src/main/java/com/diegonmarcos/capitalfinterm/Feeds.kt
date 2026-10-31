@@ -62,6 +62,7 @@ object Feeds {
             "polymarket_events" -> polymarket(body, o.spec.optInt("last", 12))
             "frankfurter_rates" -> frankfurter(body)
             "coinbase_exchange" -> coinbase(body, o.each)
+            "cftc_cot" -> cot(body, o.each)
             "cboe_quotes" -> cboe(body, o.each, o.spec.optInt("last", 252))
             "sec_submissions" -> sec(body, o)
             "sec_concept" -> secConcept(body, o.spec.optDouble("scale", 1.0), o.spec.optInt("last", 6))
@@ -233,6 +234,18 @@ object Feeds {
         val o = JSONObject(t)
         val last = Catalog.str(o, "last").toDoubleOrNull() ?: return Got()
         return Got(points = listOf(Pt(each, each, 0.0, last, Catalog.str(o, "open").toDoubleOrNull(), "24h")))
+    }
+
+    /** CFTC Commitments of Traders (legacy futures, Socrata): newest first; net non-commercial = long - short, this week and the one before. */
+    fun cot(body: String, each: String): Got {
+        val a = JSONArray(body)
+        fun net(i: Int): Double? = a.optJSONObject(i)?.let { o ->
+            val l = Catalog.str(o, "noncomm_positions_long_all").toDoubleOrNull(); val s = Catalog.str(o, "noncomm_positions_short_all").toDoubleOrNull()
+            if (l == null || s == null) null else l - s
+        }
+        val now = net(0) ?: return Got()
+        val o = a.getJSONObject(0)
+        return Got(points = listOf(Pt(each, Catalog.str(o, "contract_market_name").ifEmpty { each }, 0.0, now, net(1), Catalog.str(o, "report_date_as_yyyy_mm_dd").take(10))))
     }
 
     /** Cboe delayed quotes: a quote ({data:{current_price, prev_day_close, last_trade_time}}) or a daily history ({data:[{date, open, high, low, close}]}). */

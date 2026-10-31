@@ -239,4 +239,14 @@ class FeedsTest {
         assertEquals(listOf(102.0, 103.0, 104.0, 105.0, 106.0, 107.0, 108.0), p.hist)
         assertTrue(Feeds.parse("coinbase_exchange", body, opt()).points.isEmpty())
     }
+
+    @Test fun cftcCotIsNetNonCommercialThisWeekAndLast() {
+        val body = """[{"contract_market_name":"GOLD","report_date_as_yyyy_mm_dd":"2026-10-27T00:00:00.000","noncomm_positions_long_all":"300000","noncomm_positions_short_all":"113549"},
+            {"contract_market_name":"GOLD","report_date_as_yyyy_mm_dd":"2026-10-20T00:00:00.000","noncomm_positions_long_all":"290000","noncomm_positions_short_all":"90135"}]"""
+        val p = Feeds.parse("cftc_cot", body, opt(each = "088691")).points.single()
+        assertEquals("GOLD", p.label)
+        assertEquals(186451.0, p.value, 0.0)
+        assertEquals(199865.0, p.prev!!, 0.0)
+        assertEquals("2026-10-27", p.date)
+    }
 }

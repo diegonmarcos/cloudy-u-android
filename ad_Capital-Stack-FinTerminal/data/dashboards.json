@@ -4139,6 +4139,56 @@
           "placeholder": {
             "reason": "needs a key or a connector"
           }
+        },
+        {
+          "id": "cot",
+          "title": "CFTC positioning: net non-commercial futures (contracts, weekly)",
+          "source": "cftc",
+          "view": "quotes",
+          "derive": "points",
+          "fetch": {
+            "provider": "cftc_cot",
+            "path": "/resource/6dca-aqww.json?cftc_contract_market_code={each}",
+            "params": {
+              "$order": "report_date_as_yyyy_mm_dd DESC",
+              "$limit": "2"
+            },
+            "each": [
+              "13874A",
+              "043602",
+              "088691",
+              "067651",
+              "099741",
+              "097741",
+              "133741",
+              "085692"
+            ],
+            "labels": {
+              "13874A": "E-mini S&P 500",
+              "043602": "UST 10Y note",
+              "088691": "Gold",
+              "067651": "WTI crude",
+              "099741": "Euro FX",
+              "097741": "Japanese yen",
+              "133741": "Bitcoin (CME)",
+              "085692": "Copper"
+            },
+            "primary": {
+              "source": "cloud_fincept",
+              "api": "/v1/quotes",
+              "params": {
+                "symbols": "cot:13874A,cot:043602,cot:088691,cot:067651,cot:099741,cot:097741,cot:133741,cot:085692"
+              },
+              "parse": "finterm_v1"
+            }
+          },
+          "columns": [
+            "Market",
+            "Net",
+            "Chg",
+            "Chg %",
+            "Report"
+          ]
         }
       ]
     },

@@ -984,6 +984,36 @@
       }
     },
     {
+      "id": "cftc",
+      "name": "CFTC Commitments of Traders (public reporting)",
+      "category": "FI-Macro",
+      "coverage": "Weekly futures positioning by trader class (legacy report): non-commercial (speculative) long and short per market, every Tuesday, published Friday",
+      "endpoint": "https://publicreporting.cftc.gov",
+      "docs": "https://publicreporting.cftc.gov/stories/s/r4w3-av2u",
+      "auth": {
+        "type": "none",
+        "note": "Public Socrata API, no key."
+      },
+      "connector": "cftc_cot",
+      "feeds": [
+        {
+          "tab": "ex",
+          "entries": [
+            "Commodities"
+          ]
+        }
+      ],
+      "priority": 10,
+      "cors": true,
+      "licence": "US government work, public domain",
+      "schedule": {
+        "ttl_s": 21600
+      },
+      "rate_limit": {
+        "per_min": 60
+      }
+    },
+    {
       "id": "cboe",
       "name": "Cboe delayed quotes",
       "category": "Equity-Exchange",

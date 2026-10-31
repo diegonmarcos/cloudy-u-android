@@ -23,7 +23,7 @@ data class Article(val title: String, val url: String, val domain: String, val s
 /** The parsers of the live providers' answers. Each answers an empty list for anything it does not recognise. */
 object Providers {
     /** The connectors Kotlin implements: data/sources.json `connector` names one of these or is empty. From nyfed_rates on they are parsed by Feeds.kt into the normalised model. */
-    val CONNECTORS: Set<String> = setOf("fred_series", "dbnomics_series", "imf_datamapper", "worldbank_indicator", "gdelt_artlist", "fincept_topic", "nyfed_rates", "treasury_xml", "sdmx_json", "jsonstat", "bls_series", "ics_calendar", "ff_calendar", "declared_events", "polymarket_events", "frankfurter_rates", "coinbase_exchange", "cboe_quotes", "sec_submissions", "sec_concept", "nasdaq_earnings", "finterm_v1")
+    val CONNECTORS: Set<String> = setOf("fred_series", "dbnomics_series", "imf_datamapper", "worldbank_indicator", "gdelt_artlist", "fincept_topic", "nyfed_rates", "treasury_xml", "sdmx_json", "jsonstat", "bls_series", "ics_calendar", "ff_calendar", "declared_events", "polymarket_events", "frankfurter_rates", "coinbase_exchange", "cftc_cot", "cboe_quotes", "sec_submissions", "sec_concept", "nasdaq_earnings", "finterm_v1")
 
     /** DBnomics `series/<provider>/<dataset>` answer: series.docs[] of series_code, series_name, period[], value[]. */
     fun dbnomics(json: String): List<SeriesData> {
