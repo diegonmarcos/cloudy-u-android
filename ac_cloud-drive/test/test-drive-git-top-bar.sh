@@ -168,7 +168,9 @@ g = next(x for x in bj["ui"]["sections"] if x["id"] == "git")
 if g.get("title_row") is False:
     body = git[git.index("Column(modifier.fillMaxSize()) {", git.index("fun GitPageScreen(")):]
     first = [l.strip() for l in body.splitlines()[1:] if l.strip() and not l.strip().startswith("//")][0]
-    if not first.startswith("NavBarTopSecondRow("): bad.append("the Git page reserves height above its strip: " + first[:80])
+    lines = [l.strip() for l in body.splitlines()[1:] if l.strip() and not l.strip().startswith("//")]
+    # the strip is the first child, or the first item of the top row that also holds the storage pill (#1376)
+    if not (first.startswith("NavBarTopSecondRow(") or (first.startswith("Row(") and lines[1].startswith("NavBarTopSecondRow("))): bad.append("the Git page reserves height above its strip: " + first[:80])
 print("\n".join(bad)); sys.exit(1 if bad else 0)
 PY
 }
@@ -179,7 +181,7 @@ t5 "$tmp/src5" "$SYNC/SyncScreen.kt" >/dev/null 2>&1 && fail "T5 passed a strip 
 mkdir -p "$tmp/src6/home"; sed 's#^\(\s*\)// \#1356 no title row.*#\1ToolbarIsland(title = "Home")#' "$SRC/home/HomeScreen.kt" > "$tmp/src6/home/HomeScreen.kt"
 grep -q 'ToolbarIsland(title = "Home")' "$tmp/src6/home/HomeScreen.kt" || fail "T5 mutation anchor gone in HomeScreen"
 t5 "$tmp/src6" "$SYNC/SyncScreen.kt" >/dev/null 2>&1 && fail "T5 passed a title row back on Home (vacuous)" || pass "a title row back on Home → T5 RED"
-sed 's/^\(        \)NavBarTopSecondRow(pages = pages/\1Spacer(Modifier.height(DriveMetrics.islandHeight))\n\1NavBarTopSecondRow(pages = pages/' "$SYNC/SyncScreen.kt" > "$tmp/S5.kt"
+sed 's/^\( *\)NavBarTopSecondRow(pages = pages/\1Spacer(Modifier.height(DriveMetrics.islandHeight))\n\1NavBarTopSecondRow(pages = pages/' "$SYNC/SyncScreen.kt" > "$tmp/S5.kt"
 t5 "$SRC" "$tmp/S5.kt" >/dev/null 2>&1 && fail "T5 passed a Spacer above the Git strip (vacuous)" || pass "a Spacer above the Git strip → T5 RED"
 
 # T6 #1356 a simple Git page: (a) the refresh is a thin top bar, never a disc over the controls; (b) Status and Name are pinned,
@@ -226,5 +228,24 @@ out=$(t7 "$SYNC/GitTopBar.kt" "$SYNC/RepoTableUi.kt" "$SYNC/SyncScreen.kt" "$SRC
 sed 's/, compact = true)/)/' "$SYNC/SyncScreen.kt" > "$tmp/S7.kt"; t7 "$SYNC/GitTopBar.kt" "$SYNC/RepoTableUi.kt" "$tmp/S7.kt" "$SRC/ui/Chrome.kt" "$NAV" >/dev/null 2>&1 && fail "T7 passed the tall strip (vacuous)" || pass "the tall Me | Cloud strip → T7 RED"
 sed 's/scrollFadeEnd(rail.canScrollForward)\.//' "$SYNC/GitTopBar.kt" > "$tmp/B7.kt"; t7 "$tmp/B7.kt" "$SYNC/RepoTableUi.kt" "$SYNC/SyncScreen.kt" "$SRC/ui/Chrome.kt" "$NAV" >/dev/null 2>&1 && fail "T7 passed an unfaded chip row (vacuous)" || pass "chips cut at the edge with no fade → T7 RED"
 if [ -f "$NAV" ]; then sed 's/val entryStyle = remember(entry.label/val entryStyle = if (!plan.fitted) cellLabelStyle else remember(entry.label/' "$NAV" > "$tmp/N7.kt"; t7 "$SYNC/GitTopBar.kt" "$SYNC/RepoTableUi.kt" "$SYNC/SyncScreen.kt" "$SRC/ui/Chrome.kt" "$tmp/N7.kt" >/dev/null 2>&1 && fail "T7 passed full-size labels that never shrink (vacuous)" || pass "nav labels shrink only in a fitted bar → T7 RED"; fi
+
+# T8 #1356/#1376 ONE Git page on every storage: the selector only switches the root. Emulated / External run GitReposScreen on
+#    that root's git folder (storageRepos); there is no second card list; the selector is a compact pill in the strip's row.
+t8() { python3 - "$1" "$2" <<'PY'
+import sys
+screen, sp = (open(p).read() for p in sys.argv[1:3]); bad = []
+body = screen[screen.index("fun GitPageScreen("):]; body = body[:body.index("\n}\n")]
+if "storageRepos = storageRepos" not in body or body.count("GitReposScreen(") < 2: bad.append("Emulated / External do not run the Git page")
+if "GitStorageRepos(" in body or "fun GitStorageRepos(" in sp or "DriveCard(" in sp: bad.append("a second card-list UI is back")
+if "GitStorageMenu(" not in body or "fun GitStorageMenu(" not in sp or "Modifier.height(DriveMetrics.chipHeight)" not in sp: bad.append("the selector is not a compact pill")
+if "GitStorageEmpty(" not in body or "git_storage_no_drive" not in sp or "git_storage_no_folder" not in sp: bad.append("the empty states are gone")
+print("\\n".join(bad)); sys.exit(1 if bad else 0)
+PY
+}
+echo "== T8 one Git page on every storage =="
+SP="$SYNC/GitStoragePage.kt"
+out=$(t8 "$SYNC/SyncScreen.kt" "$SP") && pass "the selector switches the root; the same page runs on Emulated and External; no card list; compact pill" || fail "T8: $out"
+sed 's/storageRepos = storageRepos/storageRepos = null/g' "$SYNC/SyncScreen.kt" > "$tmp/S8.kt"; t8 "$tmp/S8.kt" "$SP" >/dev/null 2>&1 && fail "T8 passed a page that ignores the storage (vacuous)" || pass "the page ignores the selected root → T8 RED"
+{ cat "$SP"; printf '\nfun GitStorageRepos() { DriveCard() }\n'; } > "$tmp/P8.kt"; t8 "$SYNC/SyncScreen.kt" "$tmp/P8.kt" >/dev/null 2>&1 && fail "T8 passed a second card list (vacuous)" || pass "a second card-list UI → T8 RED"
 
 [ "$FAILURES" -eq 0 ] && { echo "test-drive-git-top-bar: all green"; exit 0; } || { echo "test-drive-git-top-bar: $FAILURES failure(s)"; exit 1; }

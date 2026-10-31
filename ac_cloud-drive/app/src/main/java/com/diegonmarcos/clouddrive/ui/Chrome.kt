@@ -204,6 +204,7 @@ object DriveTags {
     const val SYNC_GIT_DETAIL_SHEET = "sync_git_detail_sheet"
     const val SYNC_GIT_REFRESH_BAR = "sync_git_refresh_bar"
     const val SYNC_GIT_ADVANCED = "sync_git_advanced"
+    const val SYNC_GIT_STORAGE = "sync_git_storage"
     const val SYNC_GIT_ACTIVITY_BUTTON = "sync_git_activity_button"
     const val SYNC_GIT_ACTIVITY_WINDOW = "sync_git_activity_window"
     const val SYNC_GIT_UNPUSHED = "sync_git_unpushed"

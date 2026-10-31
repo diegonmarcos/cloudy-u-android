@@ -61,6 +61,20 @@ tap '^Advanced$' || fail "no Advanced item in More: $(texts)"; sleep 2
 shot 00b-advanced
 dump >/dev/null; has 'Local repos parentless' || fail "Advanced does not show the parentless panel: $(texts)"
 adb shell input keyevent 4; sleep 2
+# ONE Git page on every storage (#1376): the pill switches the root; Emulated runs the same page on /sdcard/git, External shows its empty state
+adb shell "mkdir -p /sdcard/git/emulated-fixture/.git && echo 'ref: refs/heads/main' > /sdcard/git/emulated-fixture/.git/HEAD" || true
+tap '^Cloud-Store \(Termux\)$' || fail "no storage pill: $(texts)"; sleep 1
+tap '^Emulated$' || fail "no Emulated in the storage menu"; sleep 4
+shot 00c-storage-emulated
+dump >/dev/null; has 'emulated-fixture' || fail "Emulated does not run the Git page on /sdcard/git: $(texts)"
+has 'Check' || fail "Emulated lost the Git page's top nav: $(texts)"
+tap '^Emulated$' || fail "no storage pill on Emulated"; sleep 1
+tap '^External Drive$' || fail "no External Drive in the storage menu"; sleep 3
+shot 00d-storage-external
+dump >/dev/null; has 'No drive attached' || fail "External Drive with no drive shows no empty state: $(texts)"
+tap '^External Drive$' || fail "no storage pill on External"; sleep 1
+tap '^Cloud-Store \(Termux\)$' || fail "no Cloud-Store in the storage menu"; sleep 3
+shot 00e-storage-store
 tap "^$NAME\$" || fail "no $NAME row: $(texts)"
 sleep 2; shot 01-sheet-open
 sheet_open || fail "tapping $NAME opened no options sheet: $(texts)"

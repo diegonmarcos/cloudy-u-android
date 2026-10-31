@@ -24,6 +24,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -79,23 +80,29 @@ fun GitPageScreen(
     val nextRun = rememberGitNextRun()
     fun say(msg: String) { scope.launch { snackbar.showSnackbar(msg) } }
 
-    // #1376 the storage selector (the strip the Explorer draws its tabs with): Cloud-Store keeps the page as it was;
-    // Emulated / External list the repositories in that root's git folder (GitStoragePage.kt).
+    // #1356/#1376 ONE Git page on every storage: the selector only switches the root. Cloud-Store runs on the store's registry;
+    // Emulated / External run the same page on the repositories in that root's git / GIT / Git folder (GitStorage).
     val ctx = androidx.compose.ui.platform.LocalContext.current
     var storage by remember { mutableStateOf(gitStorageSelected(ctx)) }
-    val pagesStorage = gitStoragePages()
+    val storageView = if (storage == GitStorage.Kind.STORE) null else rememberGitStorageView(storage)
+    val storageRepos = (storageView as? GitStorage.View.Repos)?.managed()
     Column(modifier.fillMaxSize()) {
         // #1356 no title row: the Git page opens on its sub-page strip (ui.sections[git].title_row = false);
-        // the terminal shortcut it carried is the Termux tile of Home ▸ Apps (data/drive-apps.json).
-        // #868 the strip is libs:bottomnav's PageTabs over ui.sections[git].pages.
-        NavBarTopSecondRow(pages = pagesStorage, selectedId = storage.id, onSelect = { storage = GitStorage.Kind.of(it.id); gitStorageSelect(ctx, storage) }, modifier = Modifier.padding(horizontal = DriveMetrics.gap).testTag("git_storage_strip"), underTopChrome = false)
-        if (storage != GitStorage.Kind.STORE) { GitStorageRepos(storage, git, Modifier.weight(1f)); SnackbarHost(snackbar); return@Column }
-        NavBarTopSecondRow(pages = pages, selectedId = current, onSelect = { current = it.id }, modifier = Modifier.padding(horizontal = DriveMetrics.gap).testTag(DriveTags.SYNC_STRIP), underTopChrome = false, compact = true)
-        AnimatedContent(targetState = current, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "git_page", modifier = Modifier.weight(1f)) { id ->
-            when (id) {
-                "me" -> GitReposScreen(git, actions, nextRun, view = GitView.ME, prefs = prefs)
-                "cloud" -> GitReposScreen(git, actions, nextRun, view = GitView.CLOUD, prefs = prefs)
-                else -> EmptyState(IconCatalog.vectorOrDefault(Declarations.iconDefault), stringResource(R.string.chrome_unknown_tab), "")
+        // the terminal shortcut it carried is the Termux tile of Home > Apps (data/drive-apps.json).
+        // #868 the strip is libs:bottomnav's PageTabs over ui.sections[git].pages; the storage selector is a compact pill beside it.
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            NavBarTopSecondRow(pages = pages, selectedId = current, onSelect = { current = it.id }, modifier = Modifier.weight(1f).padding(horizontal = DriveMetrics.gap).testTag(DriveTags.SYNC_STRIP), underTopChrome = false, compact = true)
+            GitStorageMenu(storage, { k -> storage = k; gitStorageSelect(ctx, k) }, Modifier.padding(end = DriveMetrics.sectionInset))
+        }
+        when {
+            storage != GitStorage.Kind.STORE && storageView == null -> Box(Modifier.weight(1f))
+            storageView != null && storageRepos.isNullOrEmpty() -> GitStorageEmpty(storage, storageView, Modifier.weight(1f))
+            else -> AnimatedContent(targetState = current, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "git_page", modifier = Modifier.weight(1f)) { id ->
+                when (id) {
+                    "me" -> GitReposScreen(git, actions, nextRun, view = GitView.ME, prefs = prefs, storageRepos = storageRepos, storageKey = if (storageRepos == null) "" else "/" + storage.id)
+                    "cloud" -> GitReposScreen(git, actions, nextRun, view = GitView.CLOUD, prefs = prefs, storageRepos = storageRepos, storageKey = if (storageRepos == null) "" else "/" + storage.id)
+                    else -> EmptyState(IconCatalog.vectorOrDefault(Declarations.iconDefault), stringResource(R.string.chrome_unknown_tab), "")
+                }
             }
         }
         SnackbarHost(snackbar)

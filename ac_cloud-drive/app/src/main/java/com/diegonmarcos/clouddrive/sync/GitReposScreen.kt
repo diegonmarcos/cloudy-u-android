@@ -158,7 +158,9 @@ private data class CloudPublic(val loading: Boolean = false, val loaded: Boolean
 
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextRunMinutes: Long?, modifier: Modifier = Modifier, view: GitView = GitView.ME, prefs: DrivePrefs? = null, part: GitPart = GitPart.TABLE) {
+fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextRunMinutes: Long?, modifier: Modifier = Modifier, view: GitView = GitView.ME, prefs: DrivePrefs? = null, part: GitPart = GitPart.TABLE,
+    /** #1356/#1376 the repositories of another storage's git folder (Emulated, External): the SAME page runs on them; null = the store's registry. */
+    storageRepos: List<ManagedRepo>? = null, storageKey: String = "") {
     val setup = view == GitView.ME && part == GitPart.SETUP
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -185,7 +187,10 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
     // #1149 Me: the declared hosts beyond GitHub and Cloud git (token sign-in, their own listings).
     val hostsState = remember { GitHostsState(ctx.applicationContext, scope) }
     LaunchedEffect(view) { if (view == GitView.ME) hostsState.restore() }
-    val repos by coordinator.repos.collectAsState()
+    val registryRepos by coordinator.repos.collectAsState()
+    // #1376 one page on every storage: the selected root's repositories stand in for the store's registry.
+    val repos = storageRepos ?: registryRepos
+    LaunchedEffect(storageRepos) { storageRepos?.let { coordinator.checkRepos(it, full = false) } }
     val glances by coordinator.glances.collectAsState()
     val running by coordinator.running.collectAsState()
     val events by coordinator.events.collectAsState()
@@ -206,7 +211,7 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
     val filterSel by coordinator.filterSelection.collectAsState()
     // #1356 the page's state outlives the page: read back from the activity-scoped store, written on every change below.
     val memoryStore = LocalGitPageMemory.current
-    val memoryKey = GitPageMemoryStore.keyOf(view, part)
+    val memoryKey = GitPageMemoryStore.keyOf(view, part) + storageKey
     val memory = remember(memoryKey) { memoryStore.get(memoryKey) }
     val lastCommits by coordinator.lastCommits.collectAsState()
     // #1254 the declared depth command in flight or last finished; #1255 the unlisted git folders.
@@ -844,8 +849,8 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
     fun runTopItem(item: Declarations.GitTopItemDecl) {
         expanded = ""
         when (item.kind) {
-            "check_light" -> coordinator.lightCheckAll()
-            "check_full" -> coordinator.fullCheckAll()
+            "check_light" -> if (storageRepos != null) coordinator.checkRepos(storageRepos, full = false) else coordinator.lightCheckAll()
+            "check_full" -> if (storageRepos != null) coordinator.checkRepos(storageRepos, full = true) else coordinator.fullCheckAll()
             "check_remote" -> coordinator.refreshRemoteStats(refreshTargets(), login.token)
             "check_sizes" -> coordinator.refreshSizes(force = true)
             "scan_inventory" -> coordinator.scanUnlisted()

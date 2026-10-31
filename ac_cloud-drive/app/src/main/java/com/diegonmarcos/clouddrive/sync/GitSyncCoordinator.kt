@@ -342,6 +342,11 @@ class GitSyncCoordinator(private val ctx: Context, private val scope: CoroutineS
     val fullProgress = MutableStateFlow<FullProgress?>(null)
 
     /** "Light check all": refs only, forced, one worker; this is also what runs on open. */
+    /** #1356 the Check of a page on another storage (#1376): the same status reads, over that root's repositories. */
+    fun checkRepos(list: List<ManagedRepo>, full: Boolean) {
+        statusReader.request(list.map { GitStatusReader.Target(statusKey(it), File(it.path)) }, force = true, level = if (full) GitStatusReader.Level.FULL else GitStatusReader.Level.LIGHT)
+    }
+
     fun lightCheckAll() { scope.launch { val list = loadRegistry(); statusReader.request(list.map { GitStatusReader.Target(statusKey(it), File(it.path)) }, force = true, level = GitStatusReader.Level.LIGHT) }; scanUnlisted(); refreshLastCommits() }
 
     /** "Full check all": MANUAL only. Adds the dirty / worktree scan, one repository at a time with the per-repo timeout; the size guard marks huge / LFS repositories LARGE (each is confirmed individually in its status window). Progress is published; [cancelStatusReads] stops it. */

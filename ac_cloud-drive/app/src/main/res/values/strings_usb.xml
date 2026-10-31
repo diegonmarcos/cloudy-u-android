@@ -33,5 +33,4 @@
     <string name="git_storage_no_folder">No git folder</string>
     <string name="git_storage_no_folder_hint">%1$s has no folder named git (any case).</string>
     <string name="git_storage_empty">No repositories in this git folder</string>
-    <string name="git_storage_sync">Sync</string>
 </resources>
