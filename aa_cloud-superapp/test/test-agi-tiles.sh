@@ -98,9 +98,9 @@ check(bj["ui"].get("retired_tile_ids", {}).get("cloud/ai-tlg-claude") == "cloud/
       "ui.retired_tile_ids maps the old id cloud/ai-tlg-claude to cloud/ai-chat")
 check('"cloud/ai-tlg-claude" to "cloud/ai-chat"' in read(os.path.join(app, "app/src/main/java/com/diegonmarcos/superapp/launcher/Sections.kt")),
       "Sections.kt follows the same old -> new tile id")
-inbox = list(groups(bj["ui"]["sections"], "Inboxes"))
+inbox = list(groups(bj["ui"]["sections"], "Communication"))
 check(inbox and not any(t.get("id") in ("ai-tlg-claude", "ai-chat") for t in inbox[0]["tiles"]),
-      "the AI tile is no longer in Inboxes")
+      "the AI tile is no longer in Communication (was Inboxes)")
 
 print("== T2: each launching tile resolves to its app's OWN package ==")
 def first_candidate(target):
