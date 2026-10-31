@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.BasicTextField
@@ -27,10 +28,21 @@ class ShotActivity : ComponentActivity() {
             var text by remember { mutableStateOf("") }
             val focus = remember { FocusRequester() }
             val keyboard = LocalSoftwareKeyboardController.current
-            LaunchedEffect(Unit) { focus.requestFocus(); keyboard?.show() }
+            val platformField = intent.getBooleanExtra("edittext", false)
+            LaunchedEffect(Unit) { if (!platformField) { focus.requestFocus(); keyboard?.show() } }
             Column(Modifier.padding(start = 16.dp, top = 32.dp, end = 16.dp, bottom = 16.dp)) {
                 BasicText("Cloud Keyboard", style = androidx.compose.ui.text.TextStyle(fontSize = 18.sp))
-                BasicTextField(text, { text = it }, Modifier.focusRequester(focus))
+                // --ez edittext true: a platform EditText, which draws the SuggestionSpan underline Grammar Check's
+                // Highlight mode sets (a Compose text field keeps plain text only). The highlight-popup shots use it.
+                if (platformField) {
+                    androidx.compose.ui.viewinterop.AndroidView({ c ->
+                        android.widget.EditText(c).apply {
+                            textSize = 20f
+                            requestFocus()
+                            post { c.getSystemService(android.view.inputmethod.InputMethodManager::class.java)?.showSoftInput(this, 0) }
+                        }
+                    }, Modifier.fillMaxWidth())
+                } else BasicTextField(text, { text = it }, Modifier.focusRequester(focus))
             }
         }
     }

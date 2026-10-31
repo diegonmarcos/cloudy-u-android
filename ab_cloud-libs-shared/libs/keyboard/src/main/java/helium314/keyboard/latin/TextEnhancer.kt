@@ -206,7 +206,7 @@ object TextEnhancer {
     @JvmStatic
     fun enhance(context: Context, connection: RichInputConnection) {
         adviseNext = true   // #883: the ENHANCE key (not Grammar's explicit style) may be advised on which style to use
-        run(context, connection, AiRouter.enhanceStyle(context))
+        run(context, connection, AiRouter.enhanceStyle(context), AiTaskRouting.route(context, AiTask.ENHANCE))
     }
 
     @Volatile private var adviseNext = false
@@ -223,7 +223,10 @@ object TextEnhancer {
      * and carries the one reason it is allowed to have.
      */
     @JvmStatic
-    fun run(context: Context, connection: RichInputConnection, style: AiRouter.Style) {
+    @JvmOverloads
+    fun run(context: Context, connection: RichInputConnection, style: AiRouter.Style,
+            // Configs ▸ AI Routing: the task's own model when one is picked there (AiTaskRouting.route).
+            route: AiRouter.Route = AiRouter.route(context)) {
         val advise = adviseNext
         adviseNext = false
         val scope = scope(context)
@@ -247,13 +250,13 @@ object TextEnhancer {
         val id = seq.incrementAndGet()
         Log.i(TAG, "run $id: scope=$scope, selection=${target.fromSelection}, " +
                 "range=${target.start}..${target.end}, chars=${target.text.length}, style=${style.id}")
-        toast(context, context.getString(R.string.enhance_in_progress, AiRouter.provider(context).label))
+        toast(context, context.getString(R.string.enhance_in_progress, route.provider.label))
 
         executor.execute {
             val improved = try {
                 // #883 Jev may pick the style when the owner never did (advise only on the ENHANCE key); no opinion = `style`
                 val used = if (advise) KeyboardJev.base(context, target.text)?.let { AiRouter.enhanceStyle(context, it) } ?: style else style
-                rewrite(context, used, target.text)
+                rewrite(context, used, target.text, route = route)
             } catch (e: AiRouter.NoTokenException) {
                 return@execute ended(context, "run $id", "no API key for ${e.provider.id}",
                     R.string.ai_no_token, e.provider.label)
@@ -263,7 +266,7 @@ object TextEnhancer {
                 // one — this is the only failure here that is worth simply trying again.
                 Log.w(TAG, "run $id: no answer from the provider", e)
                 return@execute ended(context, "run $id", "network failure ${e.javaClass.simpleName}",
-                    R.string.enhance_offline, AiRouter.provider(context).label)
+                    R.string.enhance_offline, route.provider.label)
             } catch (e: Exception) {
                 Log.e(TAG, "run $id failed", e)
                 return@execute ended(context, "run $id", "provider refused or replied unreadably",
@@ -275,7 +278,7 @@ object TextEnhancer {
             // fix. Sharing a sentence made a provider fault read as a compliment.
             if (improved.isEmpty())
                 return@execute ended(context, "run $id", "reply was empty",
-                    R.string.enhance_empty_reply, AiRouter.provider(context).label)
+                    R.string.enhance_empty_reply, route.provider.label)
             if (improved == target.text)
                 return@execute ended(context, "run $id", "reply is identical to the source", R.string.enhance_unchanged)
 

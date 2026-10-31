@@ -597,6 +597,8 @@ public class LatinIME extends InputMethodService implements
 
         // the CI screenshot job's hands: only in a debuggable build, only for the adb shell (android.permission.DUMP)
         mDebugReceiver = helium314.keyboard.latin.debug.KeyboardDebugReceiver.registerIfDebuggable(this);
+        // Configs ▸ Translation ▸ Routing: ML libs vs OpenRouter, around the client the app registered.
+        RoutedTranslateEngineClient.install(this);
 
         StatsUtils.onCreate(mSettings.getCurrent(), mRichImm);
     }
@@ -1135,6 +1137,8 @@ public class LatinIME extends InputMethodService implements
 
     private void onStartInputInternal(final EditorInfo editorInfo, final boolean restarting) {
         super.onStartInput(editorInfo, restarting);
+        // Grammar Check ▸ Highlight: marks and ignores belong to one field; a new field starts clean.
+        if (!restarting) { GrammarPopup.dismiss(); GrammarHighlights.session.newSession(); }
 
         final RichInputMethodSubtype subtypeForApp = editorInfo == null
             ? null :
@@ -1341,6 +1345,7 @@ public class LatinIME extends InputMethodService implements
 
     void onFinishInputViewInternal(final boolean finishingInput) {
         super.onFinishInputView(finishingInput);
+        GrammarPopup.dismiss();
         mImeAutofill.onFinishInputView(mSuggestionStripView);
         Log.i(TAG, "onFinishInputView");
         cleanupInternalStateForFinishInput();
@@ -1388,6 +1393,9 @@ public class LatinIME extends InputMethodService implements
         if (isTranslateBarActive() && composingSpanEnd < 0) {
             mTranslateBar.onHostOutputDropped();
         }
+
+        // Grammar Check ▸ Highlight: a tap on a highlighted word puts the cursor in it; open its popup.
+        GrammarPopup.onSelectionChanged(this, newSelStart, newSelEnd);
 
         // This call happens whether our view is displayed or not, but if it's not then we should
         // not attempt recorrection. This is true even with a hardware keyboard connected: if the

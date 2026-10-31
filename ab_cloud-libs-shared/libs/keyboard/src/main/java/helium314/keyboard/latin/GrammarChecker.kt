@@ -49,8 +49,11 @@ object GrammarChecker {
         val prefs = context.prefs()
         // New pref takes precedence.
         if (prefs.contains(Settings.PREF_GRAMMAR_MODE)) {
-            return prefs.getString(Settings.PREF_GRAMMAR_MODE, Defaults.PREF_GRAMMAR_MODE)
+            val stored = prefs.getString(Settings.PREF_GRAMMAR_MODE, Defaults.PREF_GRAMMAR_MODE)
                 ?: Defaults.PREF_GRAMMAR_MODE
+            // Grammar Check ▸ Routing (ML libs vs OpenRouter), once the user has set it, decides AI or not.
+            if (!prefs.contains(AiTaskRouting.key(AiTask.GRAMMAR))) return stored
+            return AiTaskRouting.grammarEngine(stored, AiTaskRouting.resolution(context, AiTask.GRAMMAR).active)
         }
         // Back-compat: derive from old boolean.
         return if (prefs.getBoolean(Settings.PREF_GRAMMAR_CHECK_ENABLED, Defaults.PREF_GRAMMAR_CHECK_ENABLED)) "local" else "off"
@@ -177,7 +180,8 @@ object GrammarChecker {
      *
      * Must NOT be called on the IME main thread.
      */
-    private fun callRemote(context: Context, text: String, language: String, highlightOnly: Boolean = false): CharSequence? {
+    private fun callRemote(context: Context, text: String, language: String, highlightOnly: Boolean = false,
+                           marks: MutableList<GrammarIssue>? = null): CharSequence? {
         return try {
             val prefs = context.prefs()
             val urlStr = prefs.getString(Settings.PREF_GRAMMAR_REMOTE_URL, Defaults.PREF_GRAMMAR_REMOTE_URL)
@@ -210,6 +214,12 @@ object GrammarChecker {
             val sb = SpannableStringBuilder(text)
             for (m in found) {
                 val end = m.offset + m.length
+                if (highlightOnly) {
+                    // Highlight: a text/fix pair the user ignored this session is not marked again.
+                    val original = text.substring(m.offset, end)
+                    if (GrammarHighlights.session.isIgnored(original, m.replacements[0])) continue
+                    marks?.add(GrammarIssue(m.offset, end, original, m.replacements[0]))
+                }
                 if (m.replacements.size == 1 && !highlightOnly) {
                     sb.replace(m.offset, end, m.replacements[0])
                 } else {
@@ -298,7 +308,7 @@ object GrammarChecker {
             "remote" -> checkWholeFieldRemote(context, connection, highlightOnly = !grammarMode.autoCorrects)
             // "ai": the AI Model Routing provider with the grammar-only prompt — same
             // in-place replace + revert span as Text Enhancements, no LanguageTool.
-            "ai" -> TextEnhancer.run(context, connection, AiRouter.styleById("grammar"))
+            "ai" -> TextEnhancer.run(context, connection, AiRouter.styleById("grammar"), AiTaskRouting.route(context, AiTask.GRAMMAR))
             else -> checkWholeFieldLocal(context, connection)
         }
     }
@@ -328,9 +338,13 @@ object GrammarChecker {
         val language = ltLanguage(context) // read on the IME thread, before hopping
 
         // Capture connection reference for the background thread callback.
+        val base = connection.expectedSelectionStart - rawBefore.length // field offset of full[0]
         remoteExecutor.execute {
-            val fixedFull: CharSequence = callRemote(context, full, language, highlightOnly) ?: (if (highlightOnly) full else applyLocalRules(context, full))
+            val marks = mutableListOf<GrammarIssue>()
+            val fixedFull: CharSequence = callRemote(context, full, language, highlightOnly, marks) ?: (if (highlightOnly) full else applyLocalRules(context, full))
             val cut = rawBefore.length.coerceAtMost(fixedFull.length)
+            if (highlightOnly && base >= 0)
+                GrammarHighlights.session.record(marks.filter { it.end <= cut }.map { it.copy(start = it.start + base, end = it.end + base) })
             val fixedBefore = fixedFull.subSequence(0, cut)
             // ponytail: matches that land after the cursor are dropped (text after the
             // cursor is left untouched); make it a full-field replace if that ever matters.
@@ -352,8 +366,13 @@ object GrammarChecker {
     private fun replace(context: Context, connection: RichInputConnection, before: String, start: Int, end: Int, replacement: String, tail: String, highlightOnly: Boolean = false) {
         val original = before.substring(start, end)
         if (original == replacement) return
+        // Highlight: a pair ignored this session stays unmarked; otherwise remember where the mark lands.
+        if (highlightOnly && GrammarHighlights.session.isIgnored(original, replacement)) return
+        val fieldStart = connection.expectedSelectionStart - before.length
         connection.deleteTextBeforeCursor(before.length - start)
-        if (highlightOnly) { // #1077 Highlight: same text back, the word marked with the fix as its suggestion
+        if (highlightOnly) {
+            if (fieldStart >= 0)
+                GrammarHighlights.session.record(listOf(GrammarIssue(fieldStart + start, fieldStart + end, original, replacement))) // #1077 Highlight: same text back, the word marked with the fix as its suggestion
             val marked = SpannableString(original + tail)
             marked.setSpan(
                 SuggestionSpan(context, null, if (replacement.isEmpty()) emptyArray() else arrayOf(replacement),

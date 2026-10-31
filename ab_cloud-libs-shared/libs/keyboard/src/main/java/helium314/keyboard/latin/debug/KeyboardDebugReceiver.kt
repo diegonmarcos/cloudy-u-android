@@ -7,12 +7,20 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.ApplicationInfo
 import android.util.Log
+import android.view.inputmethod.ExtractedTextRequest
 import androidx.core.content.ContextCompat
 import com.diegonmarcos.superapp.autofill.AutocompleteContract
 import helium314.keyboard.keyboard.KeyboardSwitcher
 import helium314.keyboard.keyboard.emoji.EmojiSearchUi
 import helium314.keyboard.keyboard.internal.keyboard_parser.floris.KeyCode
+import helium314.keyboard.latin.AiEngine
+import helium314.keyboard.latin.AiTask
+import helium314.keyboard.latin.AiTaskModels
+import helium314.keyboard.latin.AiTaskRouting
+import helium314.keyboard.latin.GrammarHighlights
+import helium314.keyboard.latin.GrammarPopup
 import helium314.keyboard.latin.LatinIME
+import helium314.keyboard.latin.asStore
 import helium314.keyboard.latin.autocomplete.AutocompletePage
 import helium314.keyboard.latin.autocomplete.AutocompleteStore
 import helium314.keyboard.latin.common.Constants
@@ -32,6 +40,10 @@ import helium314.keyboard.latin.utils.prefs
  *   page <id>     show an Autocomplete page (ids, addresses, urls, secrets)
  *   seed <json>   replace the Autocomplete store with the rows of <json> (made-up rows only)
  *   geometry      log where the toolbar strip is on the screen
+ *   grammar <id>  set the Grammar Check mode (auto_correct | highlight | off)
+ *   select <n|end> move the cursor (a tap into a highlighted word opens its popup)
+ *   popup <replace|ignore> press the highlight popup action
+ *   marks         log the highlight marks, the ignores, the popup and the field text
  *   state         log the panel, the grammar mode, the Autocomplete page and the emoji search box height
  */
 class KeyboardDebugReceiver(private val ime: LatinIME) : BroadcastReceiver() {
@@ -71,9 +83,42 @@ class KeyboardDebugReceiver(private val ime: LatinIME) : BroadcastReceiver() {
                     "rows=${ac.rowCount} emojiBarActive=${ime.isEmojiSearchBarActive} emojiBarHeightPx=${ime.emojiSearchBarHeightPx} " +
                     "density=${ime.resources.displayMetrics.density}"
             }
+            // Grammar Check ▸ Highlight popup (CI screenshots): set the mode, move the cursor, press the popup's actions.
+            "grammar" -> { GrammarMode.write(ime.prefs(), GrammarMode.fromId(arg) ?: return "unknown mode"); "ok" }
+            "select" -> {
+                val ic = ime.currentInputConnection ?: return "no connection"
+                val at = if (arg == "end") fieldText().length else arg.toInt()
+                ic.setSelection(at, at); "ok $at"
+            }
+            "popup" -> when (arg) {
+                "replace" -> "replace=${GrammarPopup.replace(ime)}"
+                "ignore" -> "ignore=${GrammarPopup.ignore(ime)}"
+                else -> "unknown action"
+            }
+            // Configs ▸ AI Routing (CI screenshots): "aimodel translate=google/gemini-2.5-flash", "airoute grammar=openrouter".
+            "aimodel" -> {
+                val (t, id) = arg.split("=", limit = 2)
+                AiTaskModels.set(ime.prefs().asStore(), AiTask.entries.first { it.id == t }, id); "ok"
+            }
+            "airoute" -> {
+                val (t, e) = arg.split("=", limit = 2)
+                val task = AiTask.entries.first { it.id == t }
+                AiTaskRouting.choose(ime.prefs().asStore(), task, AiEngine.fromId(e) ?: return "unknown engine")
+                val r = AiTaskRouting.resolution(ime, task)
+                "chosen=${r.chosen.id} active=${r.active?.id ?: "none"} fallback=${r.fallback?.id ?: "none"} reason=${r.reason}"
+            }
+            "marks" -> {
+                val s = GrammarHighlights.session
+                "marks=${s.all.size} ignored=${s.ignoredCount} popup=${GrammarPopup.isShowing} " +
+                    "shown=${GrammarPopup.shownIssue?.let { "${it.original}->${it.suggestion}@${it.start}" } ?: "-"} " +
+                    "at=${s.all.joinToString(",") { "${it.start}..${it.end}" }} field=[${fieldText()}]"
+            }
             else -> "unknown command"
         }
     }
+
+    private fun fieldText(): String =
+        ime.currentInputConnection?.getExtractedText(ExtractedTextRequest(), 0)?.text?.toString().orEmpty()
 
     private fun code(name: String): Int = when (name) {
         "ALPHA" -> KeyCode.ALPHA

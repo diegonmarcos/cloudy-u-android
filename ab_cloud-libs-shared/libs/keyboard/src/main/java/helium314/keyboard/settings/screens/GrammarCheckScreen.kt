@@ -34,6 +34,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import helium314.keyboard.latin.AiTask
+import helium314.keyboard.latin.AiTaskRouting
 import helium314.keyboard.latin.R
 import helium314.keyboard.latin.settings.Defaults
 import helium314.keyboard.latin.settings.Settings
@@ -63,6 +65,10 @@ fun createGrammarSettings(context: Context): List<Setting> = listOf(
             context.getString(R.string.grammar_check_mode_off) to GrammarMode.OFF.id,
         )
         ListPreference(setting, items, GrammarMode.read(LocalContext.current.prefs()).id)
+    },
+    // Explicit routing: ML libs (on-device rules) vs OpenRouter (Grammar Only model from AI Routing).
+    Setting(context, AiTaskRouting.key(AiTask.GRAMMAR), R.string.ai_routing_grammar_title, R.string.ai_routing_grammar_summary) {
+        AiRoutingSwitch(it, AiTask.GRAMMAR)
     },
     Setting(
         context,
@@ -138,6 +144,7 @@ fun GrammarCheckScreen(onClickBack: () -> Unit) {
     val autoCorrect = GrammarMode.read(prefs).autoCorrects
     val items = listOf(
         Settings.PREF_GRAMMAR_CHECK_MODE,
+        AiTaskRouting.key(AiTask.GRAMMAR),
         // the Auto Correction settings that used to live in Text correction: they only act in Auto Correct mode
         if (autoCorrect) Settings.PREF_MORE_AUTO_CORRECTION else null,
         if (autoCorrect) Settings.PREF_AUTOCORRECT_SHORTCUTS else null,

@@ -1511,4 +1511,51 @@ New dictionary:
     <string name="gesture_data_swipe_o_scope">Tool for visualizing gesture data: &lt;a href=%s&gt;Swipe-O-Scope&lt;/a&gt;</string>
 
     <!-- new strings should go above the section for gesture data gathering -->
+    <!-- Configs ▸ AI Routing: OpenRouter model list, per-task model tables, routing switches, highlight popup -->
+    <string name="ai_catalog_title">OpenRouter models</string>
+    <string name="ai_catalog_summary">The full model list from openrouter.ai (no key needed). Search and filter it; the three tables below use it.</string>
+    <string name="ai_catalog_refresh">Refresh</string>
+    <string name="ai_catalog_refreshing">Refreshing…</string>
+    <string name="ai_catalog_updated">Updated %1$s · %2$d models</string>
+    <string name="ai_catalog_never">Never refreshed</string>
+    <string name="ai_catalog_offline">Offline: openrouter.ai could not be reached. The tables keep the last list fetched.</string>
+    <string name="ai_catalog_failed">Refresh failed (%1$s). The tables keep the last list fetched.</string>
+    <string name="ai_catalog_search">Search models, providers, ids</string>
+    <string name="ai_catalog_free_only">Free models only</string>
+    <string name="ai_task_translate_title">Translation Only</string>
+    <string name="ai_task_translate_summary">The model the translate bar uses when Translation is routed to OpenRouter.</string>
+    <string name="ai_task_grammar_title">Grammar Only</string>
+    <string name="ai_task_grammar_summary">The model Grammar Check uses when it is routed to OpenRouter.</string>
+    <string name="ai_task_enhance_title">Text Enhancement</string>
+    <string name="ai_task_enhance_summary">Translation, grammar and enhancement in one rewrite: the ENHANCE key and the Enhance bar.</string>
+    <string name="ai_task_in_use">In use: %1$s</string>
+    <string name="ai_task_default_note">(the AI Model Routing default; tap a row to pick one)</string>
+    <string name="ai_task_col_model">Model · provider · context</string>
+    <string name="ai_task_col_price">USD per 1M in / out</string>
+    <string name="ai_task_empty_refresh">No model list yet: tap Refresh above.</string>
+    <string name="ai_task_empty_filter">No model matches the search or the filter.</string>
+    <string name="ai_task_free">free</string>
+    <string name="ai_engine_ml">ML libs (on-device)</string>
+    <string name="ai_engine_openrouter">OpenRouter</string>
+    <string name="ai_engine_openrouter_model">OpenRouter (%1$s)</string>
+    <string name="ai_engine_none">nothing</string>
+    <string name="ai_routing_active">Active engine: %1$s</string>
+    <string name="ai_routing_fallback">When offline or unavailable, falls back to: %1$s</string>
+    <string name="ai_routing_open_tables">Choose the OpenRouter model in AI Routing ›</string>
+    <string name="ai_reason_chosen">as chosen</string>
+    <string name="ai_reason_offline">offline, fallback in use</string>
+    <string name="ai_reason_no_key">no OpenRouter key, fallback in use</string>
+    <string name="ai_reason_ml_unavailable">on-device engine not available, fallback in use</string>
+    <string name="ai_reason_nothing">no engine can run now</string>
+    <string name="ai_routing_translate_title">Translation routing</string>
+    <string name="ai_routing_translate_summary">ML libs runs ML Kit on the phone; OpenRouter sends the text to the Translation Only model.</string>
+    <string name="ai_routing_grammar_title">Grammar routing</string>
+    <string name="ai_routing_grammar_summary">ML libs runs the checks on the phone; OpenRouter sends the text to the Grammar Only model.</string>
+    <string name="ai_enhance_model_title">Model in use</string>
+    <string name="ai_enhance_model_picked">Picked in AI Routing ▸ Text Enhancement.</string>
+    <string name="ai_enhance_model_default">The AI Model Routing default: no Text Enhancement model is picked yet.</string>
+    <string name="grammar_popup_suggestion">“%1$s” → “%2$s”</string>
+    <string name="grammar_popup_remove">Remove “%1$s”</string>
+    <string name="grammar_popup_replace">Replace</string>
+    <string name="grammar_popup_ignore">Ignore</string>
 </resources>

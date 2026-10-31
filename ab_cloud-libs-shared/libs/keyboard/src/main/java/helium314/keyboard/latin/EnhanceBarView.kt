@@ -432,12 +432,13 @@ class EnhanceBarView(context: Context) : KitImeComposeView(context), ImeTextBox 
         applyWhenReady = thenApply
         val id = seq.incrementAndGet()
         val style = AiRouter.enhanceStyle(context)
-        val providerLabel = AiRouter.provider(context).label
+        val route = AiTaskRouting.route(context, AiTask.ENHANCE) // Configs ▸ AI Routing ▸ Text Enhancement model
+        val providerLabel = route.provider.label
         showStatus(context.getString(R.string.enhance_in_progress, providerLabel))
         io.execute {
             val result = runCatching {
                 // progress by name: rewrite() takes route after it, so a trailing lambda binds to route.
-                TextEnhancer.rewrite(context, style, t.text, progress = { done, total ->
+                TextEnhancer.rewrite(context, style, t.text, route = route, progress = { done, total ->
                     if (total > 1) ui.post {
                         if (id == seq.get()) showStatus(context.getString(R.string.enhance_in_progress_part, providerLabel, done + 1, total))
                     }

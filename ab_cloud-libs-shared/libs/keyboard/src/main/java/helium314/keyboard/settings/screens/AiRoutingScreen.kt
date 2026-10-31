@@ -29,6 +29,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import helium314.keyboard.latin.AiRouter
+import helium314.keyboard.latin.AiTask
 import helium314.keyboard.latin.R
 import helium314.keyboard.latin.settings.Settings
 import helium314.keyboard.latin.utils.Log
@@ -97,7 +98,19 @@ fun createAiRoutingSettings(context: Context): List<Setting> = listOf(
             AiPricingTable(setting, p)
         }
     ) else emptyList()
-}
+} + listOf(
+    // The whole OpenRouter model list (Refresh, updated stamp, search, free filter) and one table per task.
+    Setting(context, AiRoutingRows.CATALOG, R.string.ai_catalog_title, R.string.ai_catalog_summary) { AiCatalogRow(it) },
+    Setting(context, AiRoutingRows.table(AiTask.TRANSLATE), R.string.ai_task_translate_title, R.string.ai_task_translate_summary) {
+        AiTaskTable(it, AiTask.TRANSLATE)
+    },
+    Setting(context, AiRoutingRows.table(AiTask.GRAMMAR), R.string.ai_task_grammar_title, R.string.ai_task_grammar_summary) {
+        AiTaskTable(it, AiTask.GRAMMAR)
+    },
+    Setting(context, AiRoutingRows.table(AiTask.ENHANCE), R.string.ai_task_enhance_title, R.string.ai_task_enhance_summary) {
+        AiTaskTable(it, AiTask.ENHANCE)
+    },
+)
 
 /**
  * The registry and [AiRouter.refreshPricing] both hold prices in UNITED STATES DOLLARS PER MILLION
@@ -254,8 +267,13 @@ fun AiRoutingScreen(onClickBack: () -> Unit) {
     val p = AiRouter.provider(ctx)
     val items = listOf(
         Settings.PREF_AI_PROVIDER,
-        Settings.PREF_AI_PREAMBLE,
         Settings.PREF_AI_TOKEN_PREFIX + p.id,
+        // Per-task OpenRouter models: the list, then Translation Only, Grammar Only, Text Enhancement.
+        AiRoutingRows.CATALOG,
+        AiRoutingRows.table(AiTask.TRANSLATE),
+        AiRoutingRows.table(AiTask.GRAMMAR),
+        AiRoutingRows.table(AiTask.ENHANCE),
+        Settings.PREF_AI_PREAMBLE,
         Settings.PREF_AI_MODEL_PREFIX + p.id,
     ) + if (p.hasPricing()) listOf(Settings.PREF_AI_PRICING_PREFIX + p.id) else emptyList()
     SearchSettingsScreen(

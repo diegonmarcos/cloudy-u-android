@@ -17,6 +17,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.diegonmarcos.superapp.translate.TranslateEngines
 import com.diegonmarcos.superapp.translate.TranslatePrefs
+import helium314.keyboard.latin.AiTask
+import helium314.keyboard.latin.AiTaskRouting
+import helium314.keyboard.latin.RoutedTranslateEngineClient
 import helium314.keyboard.latin.R
 import helium314.keyboard.latin.utils.Theme
 import helium314.keyboard.latin.utils.previewDark
@@ -37,6 +40,10 @@ import helium314.keyboard.settings.preferences.SwitchPreference
 private fun langName(code: String) = "${java.util.Locale(code).displayLanguage} ($code)"
 
 fun createTranslateSettings(context: Context): List<Setting> = listOf(
+    // Explicit routing: ML libs (ML Kit on the phone) vs OpenRouter (Translation Only model from AI Routing).
+    Setting(context, AiTaskRouting.key(AiTask.TRANSLATE), R.string.ai_routing_translate_title, R.string.ai_routing_translate_summary) {
+        AiRoutingSwitch(it, AiTask.TRANSLATE)
+    },
     Setting(context, TranslatePrefs.KEY_DEFAULT_TARGET, R.string.translate_default_target_title) { setting ->
         val langs = TranslateEngines.client?.supportedLanguages().orEmpty()
             .ifEmpty { TranslatePrefs.FALLBACK_LANGS }
@@ -63,6 +70,7 @@ fun createTranslateSettings(context: Context): List<Setting> = listOf(
 @Composable
 fun TranslationInfoScreen(onClickBack: () -> Unit) {
     val keys = listOf(
+        AiTaskRouting.key(AiTask.TRANSLATE),
         TranslatePrefs.KEY_DEFAULT_TARGET,
         TranslatePrefs.KEY_AUTO_DETECT,
         TranslatePrefs.KEY_APPLY_MODE,
@@ -80,7 +88,8 @@ fun TranslationInfoScreen(onClickBack: () -> Unit) {
             PreferenceCategory(stringResource(R.string.translate_category_behavior))
             keys.forEach { SettingsActivity.settingsContainer[it]?.Preference() }
 
-            val client = TranslateEngines.client
+            // The on-device engine under the routing wrapper (RoutedTranslateEngineClient).
+            val client = RoutedTranslateEngineClient.onDevice()
             val liveLangs = client?.supportedLanguages().orEmpty()
             PreferenceCategory("Engine")
             Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {

@@ -57,6 +57,8 @@ import kotlinx.coroutines.withContext
 // menu here comes from build.json::keyboard_ai (AiRouter.styles/tones/lengths/languages).
 
 fun createTextEnhanceSettings(context: Context): List<Setting> = listOf(
+    // Read-only: the model the rewrite uses, as picked in AI Routing ▸ Text Enhancement, with a link there.
+    Setting(context, AiRoutingRows.ENHANCE_MODEL, R.string.ai_enhance_model_title) { AiEnhanceModelRow(it) },
     Setting(context, Settings.PREF_ENHANCE_SCOPE, R.string.enhance_scope_title, R.string.enhance_scope_summary) { setting ->
         val items = listOf(
             context.getString(R.string.enhance_scope_auto) to "auto",
@@ -193,6 +195,7 @@ private fun EnhanceTestBox(setting: Setting) {
 @Composable
 fun TextEnhanceScreen(onClickBack: () -> Unit) {
     val items = listOf(
+        AiRoutingRows.ENHANCE_MODEL,
         Settings.PREF_ENHANCE_SCOPE,
         Settings.PREF_ENHANCE_AUTO_PASTE,
         Settings.PREF_ENHANCE_STYLE,

@@ -13,6 +13,12 @@
 #   12 emoji-search-open   after a tap on the search field: the letter pad is back, the results box is above it
 #   13 emoji-search-heart  the same, typed "heart"
 #   14..15 configs-*       Configs, with the Android keyboard settings entry
+#   16 ai-routing-refreshed  Configs ▸ AI Routing after the OpenRouter model list refreshed (updated stamp)
+#   17..19 ai-table-*      the Translation Only, Grammar Only and Text Enhancement model tables
+#   20 translation-routing the Translation routing switch (ML libs vs OpenRouter, active engine, fallback)
+#   21 grammar-routing     the Grammar Check routing switch
+#   22 enhance-model       Text Enhancement: the model in use, read-only, with the link to AI Routing
+#   23..25 highlight-*     Grammar Check Highlight: the popup on a tapped mark, after Ignore, and a re-check after it
 #
 # Made-up rows only. Nothing here is a credential.
 set -uo pipefail
@@ -29,6 +35,8 @@ last() { adb logcat -d -s KbdShot:I | grep -- "$1 ->" | tail -1; }
 state() { kb state; last state; }
 
 adb logcat -c
+# The fleet UI-mode override must not leak into these shots.
+adb shell settings delete global cloud_nav_ui_mode >/dev/null 2>&1
 adb install -r -g "$APK" >/dev/null && ok "installed" || { bad "install"; exit 1; }
 # The app restarts itself when ACTION_BOOT_COMPLETED reaches it (SystemBroadcastReceiver: "Killing my process"), and on a slow
 # emulator that broadcast is still being delivered when the script starts: it killed the first run's screen. Let the boot
@@ -110,6 +118,48 @@ adb shell am start -n "$PKG/helium314.keyboard.settings.SettingsActivity" >/dev/
 shot 14-configs-top
 adb shell input swipe 540 1800 540 600 400; sleep 1
 shot 15-configs-scrolled
+
+# ── Configs ▸ AI Routing: refresh, the three task tables, the routing switches ─
+# Made-up choices, real catalog ids: one model per task, so each table shows a selected (pinned, filled) row.
+adb shell am start -n "$PKG/.ShotActivity" >/dev/null; sleep 4
+kb aimodel translate=google/gemini-2.5-flash; kb aimodel grammar=openai/gpt-4o-mini; kb aimodel enhance=anthropic/claude-sonnet-4.5
+kb airoute translate=ml; last airoute
+kb airoute grammar=openrouter; last airoute
+openat() { adb shell am start -S -n "$PKG/helium314.keyboard.settings.SettingsActivity" --es open_at "$1" >/dev/null; sleep "${2:-4}"; }
+openat ai_routing 4
+for _ in $(seq 1 30); do adb logcat -d -s AiCatalog:I AiCatalog:W | grep -qE "refreshed|offline|failed" && break; sleep 1; done
+R="$(adb logcat -d -s AiCatalog:I AiCatalog:W | grep -E "refreshed|offline|failed" | tail -1)"; echo "$R"
+grep -q "refreshed [1-9][0-9]* models" <<<"$R" && ok "AI Routing refreshed the OpenRouter model list" || bad "the model list did not refresh: $R"
+sleep 2
+shot 16-ai-routing-refreshed
+adb shell input swipe 540 1700 540 900 500; sleep 2; shot 17-ai-table-translate
+adb shell input swipe 540 1700 540 900 500; sleep 2; shot 18-ai-table-grammar
+adb shell input swipe 540 1700 540 900 500; sleep 2; shot 19-ai-table-enhance
+openat translation 4; shot 20-translation-routing
+openat grammar_check 4; shot 21-grammar-routing
+openat text_enhance 4; shot 22-enhance-model
+
+# ── Grammar Check Highlight: tap a mark → popup; Ignore → the mark goes and does not come back ─
+adb shell am force-stop "$PKG" >/dev/null 2>&1; sleep 2
+adb shell am start -n "$PKG/.ShotActivity" --ez edittext true >/dev/null
+for _ in $(seq 1 25); do shown && break; sleep 1; done; sleep 4
+kb grammar highlight
+kb text "hello i "; sleep 2
+kb marks; M="$(last marks)"; echo "$M"
+grep -q "marks=1 " <<<"$M" && ok "Highlight marked the lowercase i" || bad "no highlight mark: $M"
+kb select 6; sleep 2
+kb marks; M="$(last marks)"; echo "$M"
+grep -q "popup=true" <<<"$M" && ok "a tap into the mark opened the popup in the keyboard window" || bad "the popup did not open: $M"
+shot 23-highlight-popup
+kb popup ignore; last popup
+kb marks; M="$(last marks)"; echo "$M"
+grep -q "marks=0 ignored=1 popup=false" <<<"$M" && ok "Ignore removed the mark and remembered it" || bad "Ignore: $M"
+grep -q "field=\[[Hh]ello i \]" <<<"$M" && ok "Ignore left the text as it was" || bad "Ignore changed the text: $M"
+shot 24-highlight-after-ignore
+kb select end; kb text "ok i "; sleep 2   # "i i" would be a repeated word, a different (real) mark
+kb marks; M="$(last marks)"; echo "$M"
+grep -q "marks=0 ignored=1" <<<"$M" && ok "re-check: the ignored i is not marked again" || bad "the ignored mark came back: $M"
+shot 25-highlight-recheck
 
 if adb logcat -d | grep -q "FATAL EXCEPTION.*"; then bad "a crash is in the log"; adb logcat -d | grep -A12 "FATAL EXCEPTION" | head -40; else ok "no crash in the log"; fi
 adb logcat -d > "$OUT/logcat.txt" 2>/dev/null

@@ -247,6 +247,7 @@ object SettingsDestination {
         "text_enhance" to TextEnhance,
         "text_resume" to TextResume,
         "translation" to Translation,
+        "grammar_check" to GrammarCheck,
     )
 
     /** The route [name] asks for, or null when it is not one another app may reach. */
