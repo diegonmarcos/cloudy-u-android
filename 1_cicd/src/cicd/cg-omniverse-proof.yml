@@ -3,8 +3,10 @@ name: "Proof → CG-Omniverse (filter mutants + emulator screens)"
 # Two proofs the Ship run cannot give, on demand:
 #   mutants  every rule of the Store's filter logic (Store.kt) is held by a JVM test: each job plants ONE mutant and passes only
 #            when the suite goes RED (a mutant that stays green fails the run). A baseline job requires the real tree GREEN.
-#   screens  installs the x86_64 APK of a Ship run (or the rolling release) on an emulator and walks Avatar (default, personalised),
-#            Store (all selected, filtered) and Galaxy (a world loaded, the list), uploading the screenshots as `cg-omniverse-screens`.
+#   screens  installs the x86_64 APK of a Ship run (or the rolling release) on an emulator and walks Store (all selected, filtered)
+#            and Galaxy (A Way to Go's offline card, a live world, the list), each opened DIRECTLY by the launch extras
+#            (`am start -e section store` / `-e world <id>`, Launch.kt) so they never depend on the Avatar page; Avatar (default,
+#            personalised) is walked last. Screenshots upload as `cg-omniverse-screens`.
 
 on:
   workflow_dispatch:
@@ -153,12 +155,18 @@ jobs:
                   t = re.search(r' text="([^"]*)"', n); d = re.search(r' content-desc="([^"]*)"', n)
                   b = re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', n)
                   if b: yield (t.group(1) if t else ""), (d.group(1) if d else ""), tuple(map(int, b.groups()))
+          LAST = []
+          def launch(*extras, wait=8):
+              # a cold start straight into a page or world (Launch.kt reads the extras); remembered for a relaunch
+              LAST[:] = list(extras)
+              sh("shell", "am", "start", "-S", "-W", "-n", pkg + "/.MainActivity", *extras); time.sleep(wait)
           def front():
               # the emulator's memory pressure can kill the app (run 41201038236: GMS and the app died together); relaunch it
+              # where the walk was, never via the launcher (that would open the default page)
               top = sh("shell", "dumpsys", "activity", "activities").stdout
               if not any(pkg in l for l in top.splitlines() if "ResumedActivity" in l):
                   print("::warning::the app was not in front; relaunching")
-                  sh("shell", "monkey", "-p", pkg, "-c", "android.intent.category.LAUNCHER", "1"); time.sleep(15)
+                  launch(*LAST, wait=15)
           def tap(label, nth=0, scroll=0):
               front()
               for attempt in range(scroll + 1):
@@ -170,21 +178,22 @@ jobs:
           def shot(name, wait=0):
               time.sleep(wait)
               if not name.startswith(("06", "07", "08")): front()
-              with open("%s/%s.png" % (OUT, name), "wb") as f: f.write(subprocess.run(["adb", "exec-out", "screencap", "-p"], capture_output=True, timeout=60).stdout)
+              try:
+                  png = subprocess.run(["adb", "exec-out", "screencap", "-p"], capture_output=True, timeout=60).stdout
+              except subprocess.TimeoutExpired:
+                  print("::warning::screencap of %s timed out" % name); return
+              with open("%s/%s.png" % (OUT, name), "wb") as f: f.write(png)
               print("shot", name)
-          sh("shell", "monkey", "-p", pkg, "-c", "android.intent.category.LAUNCHER", "1")
-          shot("01-avatar-default", 20)
-          sh("shell", "input", "swipe", "700", "900", "350", "900", "600"); shot("02-avatar-rotated", 3)
-          tap("Hair"); tap("Bun"); tap("Outfit"); tap("Hoodie"); tap("Accessory"); tap("VR visor"); tap("Pose"); tap("Wave")
-          shot("03-avatar-personalised", 4)
-          tap("Store"); shot("04-store-all", 3)
+          launch("-e", "section", "store"); shot("04-store-all", 2)
           tap("All", 0); tap("Games"); tap("Flat Screen"); shot("05-store-filtered", 2)
-          tap("Open in Galaxy"); shot("06-galaxy-world-a-way-to-go", 25)
-          tap("Close"); time.sleep(2)
-          tap("WebGL Fluid Simulation", scroll=6); shot("07-galaxy-world-fluid", 20)
+          # A Way to Go times out: the load watchdog (Offline.LOAD_TIMEOUT_MS, 15 s) shows the offline card well inside 25 s
+          launch("-e", "world", "a-way-to-go", wait=0); shot("06-galaxy-world-a-way-to-go", 25)
+          launch("-e", "world", "webgl-fluid-simulation", wait=0); shot("07-galaxy-world-fluid", 20)
           sh("shell", "input", "swipe", "300", "1200", "800", "900", "300"); shot("08-galaxy-world-fluid-touched", 2)
-          tap("Close"); shot("09-galaxy-list", 3)
-          tap("Avatar"); shot("10-avatar-persisted", 15)
+          launch("-e", "section", "galaxy"); shot("09-galaxy-list", 2)
+          # Avatar last (#1373 owns it): a slow or hung Avatar page cannot cost the Store and Galaxy shots
+          launch("-e", "section", "avatar", wait=0); shot("01-avatar-default", 20)
+          sh("shell", "input", "swipe", "700", "900", "350", "900", "600"); shot("02-avatar-rotated", 3)
           PY
           cat > walk.sh <<'EOF'
           #!/bin/bash
