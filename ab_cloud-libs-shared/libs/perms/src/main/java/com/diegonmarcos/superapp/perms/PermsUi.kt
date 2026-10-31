@@ -260,6 +260,7 @@ private fun HealthBlock(health: List<PermItem>, onAction: (PermItem) -> Unit, p:
 private fun PermRowView(it: PermItem, onAction: (PermItem) -> Unit, p: PermsPalette, iconOf: (String) -> ImageVector?) {
     val ctx = LocalContext.current
     val chip = PermsView.chip(it.state)
+    val stateChip: @Composable (Modifier) -> Unit = { m -> ChipView(chip, p, m.testTag(PermsTags.state(it.id))) }
     Row(
         Modifier.fillMaxWidth().heightIn(min = PermsType.rowMin).padding(horizontal = PermsType.inset, vertical = PermsType.pad)
             .testTag(PermsTags.row(it.id)),
@@ -276,10 +277,10 @@ private fun PermRowView(it: PermItem, onAction: (PermItem) -> Unit, p: PermsPale
             if (line.isNotBlank()) Text(line, color = p.dim, fontSize = PermsType.caption, maxLines = 1, overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.padding(top = 2.dp))
             // dense: the chip sits under the title only when the row also carries its Grant / Open button
-            if (showsAction(it)) ChipView(chip, p, Modifier.padding(top = PermsType.gap).testTag(PermsTags.state(it.id)))
+            if (showsAction(it)) stateChip(Modifier.padding(top = PermsType.gap))
         }
         val a = it.action
-        if (!showsAction(it)) ChipView(chip, p, Modifier.testTag(PermsTags.state(it.id)))
+        if (!showsAction(it)) stateChip(Modifier)
         else if (a != null) FilledTonalButton(
             onClick = { onAction(it) },
             colors = ButtonDefaults.filledTonalButtonColors(containerColor = p.tile, contentColor = p.accent),
