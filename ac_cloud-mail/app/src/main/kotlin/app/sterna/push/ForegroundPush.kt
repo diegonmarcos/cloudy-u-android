@@ -26,7 +26,8 @@ import java.io.Closeable
  */
 object ForegroundPush {
     private const val TAG = "ForegroundPush"
-    internal const val RECONNECT_DELAY_MS = 5_000L
+    @Volatile private var failures = 0
+    @Volatile private var openedAt = 0L
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var handle: Closeable? = null
@@ -68,16 +69,21 @@ object ForegroundPush {
             val h = container.mailRepository.openAccountPush(
                 credentials,
                 onChanged = { if (foreground) scope.launch { onChanged(app, credentials) } },
-                onClosed = { if (foreground) scheduleReconnect(app) },
+                onClosed = {
+                    failures = ReconnectBackoff.next(failures, android.os.SystemClock.elapsedRealtime() - openedAt)
+                    if (foreground) scheduleReconnect(app)
+                },
             )
             synchronized(this) {
                 if (!foreground) { runCatching { h.close() }; return }
                 handle = h
                 heldFor = id
+                openedAt = android.os.SystemClock.elapsedRealtime()
             }
             Log.i(TAG, "foreground event source held for account $id")
         }.onFailure {
             Log.w(TAG, "foreground event source failed for account $id", it)
+            failures = ReconnectBackoff.next(failures, null)
             scheduleReconnect(app)
         }
     }
@@ -85,7 +91,7 @@ object ForegroundPush {
     private fun scheduleReconnect(app: Context) {
         synchronized(this) { handle = null; heldFor = null }
         job = scope.launch {
-            delay(RECONNECT_DELAY_MS)
+            delay(ReconnectBackoff.delayMs(failures))
             if (foreground) arm(app)
         }
     }

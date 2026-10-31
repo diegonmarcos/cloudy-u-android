@@ -79,9 +79,14 @@ class PushService : Service() {
         return START_STICKY
     }
 
+    /** Consecutive failed or short-lived connections per login, and when the open one opened ([ReconnectBackoff]). */
+    private val failures = java.util.concurrent.ConcurrentHashMap<String, Int>()
+    private val openedAt = java.util.concurrent.ConcurrentHashMap<String, Long>()
+
     private suspend fun reconnectAll(gen: Int, userInitiated: Boolean) {
         connections.values.forEach { runCatching { it.close() } }
         connections.clear()
+        failures.clear()
         carriedBy.clear()
         val store = application.container.accountStore
         val up = application.container.unifiedPushManager
@@ -142,6 +147,8 @@ class PushService : Service() {
                     // Drop the dead connection now, not at the delayed retry: a retired socket that
                     // leaves its entry behind keeps isConnected answering true with nothing to
                     retractOwnConnection(connections, loginId, mine.get())
+                    val lived = openedAt.remove(loginId)?.let { android.os.SystemClock.elapsedRealtime() - it }
+                    failures[loginId] = ReconnectBackoff.next(failures[loginId] ?: 0, lived)
                     // Deliberately silent when the generation is retired: this fires on every arm,
                     // so a line would print once per healthy arm while saying nothing about the race.
                     if (gen == generation) {
@@ -154,6 +161,7 @@ class PushService : Service() {
             // for tens of seconds, and checking BEFORE the write only narrows the defect (#130).
             mine.set(handle)
             connections[loginId] = handle
+            openedAt[loginId] = android.os.SystemClock.elapsedRealtime()
             val after = generation
             if (gen != after) {
                 retractOwnConnection(connections, loginId, handle)
@@ -162,13 +170,14 @@ class PushService : Service() {
             }
         }.onFailure {
             Log.e(TAG, "Push watch failed for login $loginId", it)
+            failures[loginId] = ReconnectBackoff.next(failures[loginId] ?: 0, null)
             scheduleReconnect(loginId, group, gen)
         }
     }
 
     private fun scheduleReconnect(loginId: String, group: List<AccountCredentials>, gen: Int) {
         scope.launch {
-            delay(RECONNECT_DELAY_MS)
+            delay(ReconnectBackoff.delayMs(failures[loginId] ?: 0))
             // Read once, same reason as the arm guard above.
             val current = generation
             if (gen == current) {
@@ -210,7 +219,6 @@ class PushService : Service() {
 
     companion object {
         private const val TAG = "PushService"
-        private const val RECONNECT_DELAY_MS = 5_000L
         private const val EXTRA_USER_INITIATED = "userInitiated"
 
         /** Whether the service object exists. Says nothing about whether any connection is open,
