@@ -57,6 +57,13 @@ class OpenRouterCatalogTest {
         assertEquals("acme/noprice", np.name)              // blank name falls back to the id
     }
 
+    @Test fun freeSuffixAloneMakesAModelFree() {
+        // no pricing published: only the ":free" id suffix says it is free
+        val ms = OpenRouterCatalog.parse("""{"data":[{"id":"acme/model:free","name":"Acme: Model"},{"id":"acme/model","name":"Acme: Model"}]}""")
+        assertTrue(ms[0].free)
+        assertFalse(ms[1].free)
+    }
+
     @Test fun cacheRoundTripKeepsEveryField() {
         val c = Catalog(1_700_000_000_000L, OpenRouterCatalog.parse(body))
         assertEquals(c, OpenRouterCatalog.decode(OpenRouterCatalog.encode(c)))
