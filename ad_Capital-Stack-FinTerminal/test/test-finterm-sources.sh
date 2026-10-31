@@ -164,7 +164,7 @@ man = read(os.path.join(app, "app/src/main/AndroidManifest.xml"))
 if "android.permission.INTERNET" not in man or "networkSecurityConfig" not in man: bad.append("S6 the manifest lacks INTERNET or the network security config for the mesh")
 # S7 model panels (Feeds.kt): sources declare cors / schedule / rate_limit; panels route container first, then key-free fallbacks that feed the entry
 LEGACY = {"fred_series", "dbnomics_series", "imf_datamapper", "worldbank_indicator", "gdelt_artlist", "fincept_topic"}
-VIEWS_OF = {"points": {"quotes", "curve", "bars", "table"}, "events": {"calendar"}, "candles": {"candles"}, "kv": {"kv"}, "filings": {"news", "table"}, "performance": {"table"}, "portfolio_performance": {"table"}, "yields_matrix": {"table"}}
+VIEWS_OF = {"points": {"quotes", "curve", "bars", "table"}, "events": {"calendar"}, "candles": {"candles"}, "kv": {"kv"}, "filings": {"news", "table"}, "performance": {"table"}, "portfolio_performance": {"table"}, "yields_matrix": {"table"}, "em_usd": {"table"}}
 SLOTS = {"each", "each_csv", "today", "from", "yyyymm", "prev_yyyymm", "cik"}
 feeds_kt = ktf("Feeds.kt")
 for s in S:

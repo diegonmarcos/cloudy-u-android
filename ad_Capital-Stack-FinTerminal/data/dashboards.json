@@ -657,6 +657,31 @@
           "mode": "forward",
           "segment_label": "Forward",
           "segment_of": "spot"
+        },
+        {
+          "id": "em_usd",
+          "title": "EM government bonds in USD (local 10Y, unhedged total return, annualised)",
+          "source": "cloud_fincept",
+          "view": "table",
+          "derive": "em_usd",
+          "fetch": {
+            "provider": "fincept_topic",
+            "primary": {
+              "source": "cloud_fincept",
+              "api": "/v1/bonds/em-usd",
+              "parse": "finterm_v1"
+            }
+          },
+          "columns": [
+            "Country",
+            "Ccy",
+            "Yield",
+            "1Y",
+            "10Y",
+            "25Y"
+          ],
+          "unit": "%",
+          "segment_label": "EM USD"
         }
       ]
     },

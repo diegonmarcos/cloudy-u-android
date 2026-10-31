@@ -225,6 +225,17 @@ class TablesTest {
         assertTrue(http.asked.first() == "http://mesh-base/v1/curves/matrix")
     }
 
+    @Test fun emUsdBondsAreOneRowPerCountryWithTheReasonForEachEmptyCell() {
+        val body = """{"method":"local 10Y total return in USD","rows":[{"country":"BR","currency":"BRL","tenor":"10Y","yield_last":{"month":"2026-09","value":13.1},"usd_return_annualised":{"1y":0.0812,"10y":0.031,"25y":null},"null_reason":null},{"country":"SA","currency":null,"tenor":"10Y","yield_last":null,"usd_return_annualised":{"1y":null,"10y":null,"25y":null},"null_reason":"no free 10-year government yield series for this country"}]}"""
+        val http = Fake { u -> if (u == "http://mesh-base/v1/bonds/em-usd") body else null }
+        val data = load("yields_matrix", "em_usd", http)
+        assertEquals(listOf("Country", "Ccy", "Yield", "1Y", "10Y", "25Y"), data.columns)
+        assertEquals(listOf("BR", "BRL", "13.10", "+8.12%", "+3.10%", FinFormat.DASH), data.rows[0])
+        assertTrue(data.rows[1].drop(1).all { it == FinFormat.DASH })
+        assertTrue(data.note, data.note.contains("BR (history shorter than 25Y)") && data.note.contains("SA (no free 10-year"))
+        assertEquals("2026-09", data.asOf)
+    }
+
     @Test fun theDeclaredMatrixIsTheOwnersCountryList() {
         val f = Dashboards.byId(dashboards, "yields_matrix")!!.panels.first { it.id == "spot" }.fetch!!
         val g = f.getJSONObject("groups")

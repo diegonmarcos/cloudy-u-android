@@ -19,7 +19,8 @@ object Tables {
     const val PERFORMANCE = "performance"
     const val PORTFOLIO = "portfolio_performance"
     const val MATRIX = "yields_matrix"
-    val DERIVES: Set<String> = setOf(PERFORMANCE, PORTFOLIO, MATRIX)
+    const val EM_USD = "em_usd"
+    val DERIVES: Set<String> = setOf(PERFORMANCE, PORTFOLIO, MATRIX, EM_USD)
 
     /** Extra (non-return) columns a performance table may declare after the return columns. */
     const val COL_VOL = "Vol 1Y"
@@ -43,7 +44,44 @@ object Tables {
         }
         MATRIX -> matrixOne(f, http, c)?.let { m -> matrix(panel, f, m.got, m) }
             ?: matrix(panel, f, some(strings(f.optJSONArray("each")).associateWith { gather(it, source, f, http, today, c) }))
+        EM_USD -> emUsd(panel, f, http, c)
         else -> throw IOException("unknown derive ${panel.derive}")
+    }
+
+    // ------------------------------------------------------------------ EM government bonds in USD
+
+    /** fetch.primary.api (/v1/bonds/em-usd) through the mesh, one call; the mesh off or no answer is an error state. */
+    fun emUsd(panel: Panel, f: JSONObject, http: Http, c: ModelCtx): PanelData {
+        val api = c.api ?: throw IOException("mesh off: the EM USD bond table is served by the FinTerm container only")
+        val path = Catalog.str(f.optJSONObject("primary") ?: JSONObject(), "api")
+        return emUsdTable(panel, http.get(api.base.trimEnd('/') + path), api.source.name)
+    }
+
+    /**
+     * {method, rows:[{country, currency, yield_last:{month, value}, usd_return_annualised:{"1y","10y","25y"} (fractions), null_reason}]} as
+     * Country | Ccy | Yield | 1Y | 10Y | 25Y (the return columns are the panel's after the third); an empty cell's reason goes to the note.
+     */
+    fun emUsdTable(panel: Panel, body: String, by: String): PanelData {
+        val o = JSONObject(body)
+        val a = o.optJSONArray("rows") ?: JSONArray()
+        val hs = panel.columns.drop(3)
+        val why = ArrayList<String>()
+        var asOf = ""
+        val rows = (0 until a.length()).mapNotNull { a.optJSONObject(it) }.map { r ->
+            val cc = Catalog.str(r, "country")
+            val y = r.optJSONObject("yield_last")
+            val ret = r.optJSONObject("usd_return_annualised") ?: JSONObject()
+            y?.let { m -> Catalog.str(m, "month").let { if (it > asOf) asOf = it } }
+            val cells = hs.map { h -> ret.opt(h.lowercase()).let { v -> if (v is Number && v.toDouble().isFinite()) String.format(Locale.US, "%+.2f%%", v.toDouble() * 100) else FinFormat.DASH } }
+            val nr = Catalog.str(r, "null_reason")
+            if (nr.isNotEmpty()) why += "$cc ($nr)"
+            else if (cells.any { it == FinFormat.DASH }) why += "$cc (history shorter than ${hs.filterIndexed { i, _ -> cells[i] == FinFormat.DASH }.joinToString("/")})"
+            listOf(cc, Catalog.str(r, "currency").ifEmpty { FinFormat.DASH },
+                y?.optDouble("value")?.takeIf { it.isFinite() }?.let { String.format(Locale.US, "%.2f", it) } ?: FinFormat.DASH) + cells
+        }
+        if (rows.isEmpty()) throw IOException("${by}: no EM bond row")
+        val note = listOfNotNull(Catalog.str(o, "method").ifEmpty { null }, if (why.isEmpty()) null else "— " + why.joinToString(", ")).joinToString(" ")
+        return PanelData(panel.columns, rows, emptyList(), emptyList(), asOf, note, servedBy = by)
     }
 
     // ------------------------------------------------------------------ fetch
