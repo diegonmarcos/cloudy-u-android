@@ -190,7 +190,12 @@ jobs:
               print("::warning::no '%s' on screen" % label); return False
           def shot(name, wait=0):
               time.sleep(wait)
-              with open("%s/%s.png" % (OUT, name), "wb") as f: f.write(subprocess.run(["adb", "exec-out", "screencap", "-p"], capture_output=True, timeout=60).stdout)
+              png = b""
+              for _ in range(3):  # screencap can come back empty on a busy emulator: retry rather than keep a 0-byte shot
+                  png = subprocess.run(["adb", "exec-out", "screencap", "-p"], capture_output=True, timeout=60).stdout
+                  if len(png) > 1000: break
+                  time.sleep(3)
+              with open("%s/%s.png" % (OUT, name), "wb") as f: f.write(png)
               print("shot", name)
           sh("shell", "monkey", "-p", pkg, "-c", "android.intent.category.LAUNCHER", "1")
           time.sleep(10)
@@ -243,6 +248,7 @@ jobs:
           a=$(anr); if [ -n "$a" ]; then echo "::error::an ANR during the walk: $a"; echo "--- ANR during walk"; echo "$a" >> screens/launch.txt; rc=4; fi
           adb shell dumpsys package "$PKG" | grep -E "versionName|codePath" > screens/package.txt || true
           adb shell ls -l /sdcard/Download/CG-Omniverse >> screens/package.txt 2>&1 || true
+          adb pull /sdcard/Download/CG-Omniverse/avatar.png screens/exported-avatar.png >/dev/null 2>&1 || true  # what WebGL drew
           ls -la app.apk >> screens/package.txt
           exit $rc
           EOF
