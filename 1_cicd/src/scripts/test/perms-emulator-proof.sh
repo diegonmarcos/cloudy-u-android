@@ -24,7 +24,7 @@ dump1() { # one fresh uiautomator dump to $1 (the old /sdcard/ui.xml is removed 
 shot() { # screenshot of the top, then the dump of every screenful (rows below the fold count too)
   adb exec-out screencap -p > "$OUT/$1.png"
   dump1 "$OUT/$1.xml"
-  local i; for i in 1 2 3; do
+  local i; for i in 1 2 3 4 5 6; do   # Me's page holds 11 rows: three screenfuls did not reach the last
     adb shell input swipe 160 560 160 160 300 >/dev/null 2>&1; sleep 1
     dump1 "$OUT/$1.more.xml"; cat "$OUT/$1.more.xml" >> "$OUT/$1.xml"
   done; rm -f "$OUT/$1.more.xml"; }
