@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Emulator proof of Resources › Battery use per app (BatteryCycles) and of the Shizuku-free battery measurement.
+# Emulator proof of Resources › Battery use per app (BatteryCycles), the Shizuku-free battery measurement, and (#1380)
+# the Cloud ▸ Apps groups (cloud-apps.png).
 #   bash aa_cloud-superapp/test/emulator-battery-usage.sh <superapp.apk> <out dir>
 # Installs the APK, clears the nav-mode override (global cloud_nav_ui_mode), drives one charge cycle with
 # `dumpsys battery` (plugged at 90 % -> unplug -> 62 % -> plug in -> unplug), so PowerStateReceiver snapshots
@@ -85,6 +86,33 @@ if tap_text "Battery Usage Details" "Battery & Usage"; then
 else
   echo "::warning::About › Battery Usage Details not reached"; shot about-missing
 fi
+
+# #1380 Cloud ▸ Apps: Communication carries Contacts; Data Apps reads Drive | Notes Tasks | Gallery Media News | Office.
+open_page "page:cloud/apps"
+adb shell screencap -p /sdcard/s.png; adb pull /sdcard/s.png "$OUT/cloud-apps.png" >/dev/null; dump; cp "$OUT/ui.xml" "$OUT/cloud-apps.xml"
+adb shell input swipe 540 1500 540 900 400; sleep 1.5
+adb shell screencap -p /sdcard/s.png; adb pull /sdcard/s.png "$OUT/cloud-apps-scrolled.png" >/dev/null; dump; cp "$OUT/ui.xml" "$OUT/cloud-apps-scrolled.xml"
+python3 - "$OUT/cloud-apps.xml" "$OUT/cloud-apps-scrolled.xml" <<'PY' || fail=1
+import re, sys
+seq = []
+for p in sys.argv[1:]:
+    for t in re.findall(r' text="([^"]+)"', open(p, encoding="utf-8", errors="ignore").read()):
+        if not seq or seq[-1] != t: seq.append(t)
+def after(head, want, stop):
+    if head not in seq: return None
+    i = seq.index(head) + 1
+    got = []
+    while i < len(seq) and seq[i] != stop:
+        if seq[i] in want and seq[i] not in got: got.append(seq[i])
+        i += 1
+    return got
+com = after("Communication", {"Mail", "Chat", "Messenger", "Dialer", "C3-Bot", "Contacts"}, "Tools Primary")
+data = after("Data Apps", {"Drive", "Notes", "Tasks", "Gallery", "Media", "News", "Office"}, "Me")
+print("Communication:", com); print("Data Apps:", data)
+ok = com is not None and "Contacts" in com and data == ["Drive", "Notes", "Tasks", "Gallery", "Media", "News", "Office"]
+if not ok: print("::error::Cloud > Apps groups are not as declared (#1380)")
+sys.exit(0 if ok else 1)
+PY
 
 adb shell dumpsys battery reset
 adb shell settings delete global cloud_nav_ui_mode || true
