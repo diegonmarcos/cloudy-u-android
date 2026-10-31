@@ -126,7 +126,324 @@
       "app": "ac_cloud-calc",
       "ship": "ship-cloud-calc.yml",
       "artifact": "Cloud-Calc-",
-      "asset": "Cloud-Calc"
+      "asset": "Cloud-Calc",
+      "_doc_scenes": "#1377 Calc > Tools review: the Time & Date, Fin and Sound sub-sections, opened by the clock_mode extra and the form chips (calc_form_<id>), Clean nav (scene_setup clears the global cloud_nav_ui_mode), dark and light.",
+      "scene_themes": [
+        "dark",
+        "light"
+      ],
+      "scene_boot_s": 8,
+      "scene_setup": [
+        [
+          "shell",
+          "settings delete global cloud_nav_ui_mode"
+        ]
+      ],
+      "scenes": [
+        {
+          "name": "tools-time-world",
+          "steps": [
+            [
+              "shell",
+              "am start -n {pkg}/.MainActivity --es clock_mode datetime"
+            ],
+            [
+              "wait",
+              3
+            ],
+            [
+              "tap",
+              "calc_form_world"
+            ],
+            [
+              "wait",
+              2
+            ]
+          ]
+        },
+        {
+          "name": "tools-time-date",
+          "steps": [
+            [
+              "shell",
+              "am start -n {pkg}/.MainActivity --es clock_mode datetime"
+            ],
+            [
+              "wait",
+              3
+            ],
+            [
+              "tap",
+              "calc_form_today"
+            ],
+            [
+              "wait",
+              2
+            ]
+          ]
+        },
+        {
+          "name": "tools-time-calendars",
+          "steps": [
+            [
+              "shell",
+              "am start -n {pkg}/.MainActivity --es clock_mode datetime"
+            ],
+            [
+              "wait",
+              3
+            ],
+            [
+              "tap",
+              "calc_form_calendars"
+            ],
+            [
+              "wait",
+              2
+            ]
+          ]
+        },
+        {
+          "name": "tools-time-calendars-more",
+          "steps": [
+            [
+              "shell",
+              "am start -n {pkg}/.MainActivity --es clock_mode datetime"
+            ],
+            [
+              "wait",
+              3
+            ],
+            [
+              "tap",
+              "calc_form_calendars"
+            ],
+            [
+              "wait",
+              2
+            ],
+            [
+              "shell",
+              "input swipe 540 1700 540 500 400"
+            ],
+            [
+              "wait",
+              1
+            ],
+            [
+              "shell",
+              "input swipe 540 1700 540 500 400"
+            ],
+            [
+              "wait",
+              1
+            ]
+          ]
+        },
+        {
+          "name": "tools-time-calendars-end",
+          "steps": [
+            [
+              "shell",
+              "am start -n {pkg}/.MainActivity --es clock_mode datetime"
+            ],
+            [
+              "wait",
+              3
+            ],
+            [
+              "tap",
+              "calc_form_calendars"
+            ],
+            [
+              "wait",
+              2
+            ],
+            [
+              "shell",
+              "input swipe 540 1700 540 500 400"
+            ],
+            [
+              "wait",
+              1
+            ],
+            [
+              "shell",
+              "input swipe 540 1700 540 500 400"
+            ],
+            [
+              "wait",
+              1
+            ],
+            [
+              "shell",
+              "input swipe 540 1700 540 500 400"
+            ],
+            [
+              "wait",
+              1
+            ],
+            [
+              "shell",
+              "input swipe 540 1700 540 500 400"
+            ],
+            [
+              "wait",
+              1
+            ],
+            [
+              "shell",
+              "input swipe 540 1700 540 500 400"
+            ],
+            [
+              "wait",
+              1
+            ]
+          ]
+        },
+        {
+          "name": "tools-fin-loan",
+          "steps": [
+            [
+              "shell",
+              "am start -n {pkg}/.MainActivity --es clock_mode finance"
+            ],
+            [
+              "wait",
+              3
+            ],
+            [
+              "tap",
+              "calc_form_loan"
+            ],
+            [
+              "wait",
+              2
+            ]
+          ]
+        },
+        {
+          "name": "tools-fin-loan-schedule",
+          "steps": [
+            [
+              "shell",
+              "am start -n {pkg}/.MainActivity --es clock_mode finance"
+            ],
+            [
+              "wait",
+              3
+            ],
+            [
+              "tap",
+              "calc_form_loan"
+            ],
+            [
+              "wait",
+              2
+            ],
+            [
+              "shell",
+              "input swipe 540 1700 540 500 400"
+            ],
+            [
+              "wait",
+              1
+            ],
+            [
+              "shell",
+              "input swipe 540 1700 540 500 400"
+            ],
+            [
+              "wait",
+              1
+            ]
+          ]
+        },
+        {
+          "name": "tools-fin-npv",
+          "steps": [
+            [
+              "shell",
+              "am start -n {pkg}/.MainActivity --es clock_mode finance"
+            ],
+            [
+              "wait",
+              3
+            ],
+            [
+              "tap",
+              "calc_form_npv"
+            ],
+            [
+              "wait",
+              2
+            ]
+          ]
+        },
+        {
+          "name": "tools-sound-fft",
+          "steps": [
+            [
+              "shell",
+              "am start -n {pkg}/.MainActivity --es clock_mode acoustics"
+            ],
+            [
+              "wait",
+              3
+            ],
+            [
+              "tap",
+              "calc_form_fft"
+            ],
+            [
+              "wait",
+              2
+            ]
+          ]
+        },
+        {
+          "name": "tools-sound-note",
+          "steps": [
+            [
+              "shell",
+              "am start -n {pkg}/.MainActivity --es clock_mode acoustics"
+            ],
+            [
+              "wait",
+              3
+            ],
+            [
+              "tap",
+              "calc_form_note"
+            ],
+            [
+              "wait",
+              2
+            ]
+          ]
+        },
+        {
+          "name": "tools-sound-bpm",
+          "steps": [
+            [
+              "shell",
+              "am start -n {pkg}/.MainActivity --es clock_mode acoustics"
+            ],
+            [
+              "wait",
+              3
+            ],
+            [
+              "tap",
+              "calc_form_bpm"
+            ],
+            [
+              "wait",
+              2
+            ]
+          ]
+        }
+      ]
     },
     {
       "app": "ac_cloud-gallery",
