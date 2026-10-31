@@ -127,23 +127,33 @@ adb shell am start -n "$PKG/.ShotActivity" >/dev/null; sleep 4
 kb aimodel translate=google/gemini-2.5-flash; kb aimodel grammar=openai/gpt-4o-mini; kb aimodel enhance=anthropic/claude-sonnet-4.5
 kb airoute translate=ml; last airoute
 kb airoute grammar=openrouter; last airoute
-openat() { adb shell am start -S -n "$PKG/helium314.keyboard.settings.SettingsActivity" --es open_at "$1" >/dev/null; sleep "${2:-4}"; }
+# No force-stop (-S): killing the package drops Cloud Keyboard as the input method. A clear-task start re-creates the
+# activity, so the open_at extra is read again; an empty name opens Configs' own list.
+CLEAR=0x10008000
+openat() {
+    if [ -n "$1" ]; then adb shell am start -f $CLEAR -n "$PKG/helium314.keyboard.settings.SettingsActivity" --es open_at "$1" >/dev/null
+    else adb shell am start -f $CLEAR -n "$PKG/helium314.keyboard.settings.SettingsActivity" >/dev/null; fi
+    sleep "${2:-4}"
+}
+read -r SW SH < <(adb shell wm size | sed -n 's/.*: *\([0-9]*\)x\([0-9]*\).*/\1 \2/p' | tail -1)
+SW=${SW:-1080}; SH=${SH:-1920}
+up() { adb shell input swipe $((SW / 2)) $((SH * 85 / 100)) $((SW / 2)) $((SH * 30 / 100)) 500; sleep 2; }
 openat ai_routing 4
 for _ in $(seq 1 30); do adb logcat -d -s AiCatalog:I AiCatalog:W | grep -qE "refreshed|offline|failed" && break; sleep 1; done
 R="$(adb logcat -d -s AiCatalog:I AiCatalog:W | grep -E "refreshed|offline|failed" | tail -1)"; echo "$R"
 grep -q "refreshed [1-9][0-9]* models" <<<"$R" && ok "AI Routing refreshed the OpenRouter model list" || bad "the model list did not refresh: $R"
 sleep 2
 shot 16-ai-routing-refreshed
-adb shell input swipe 540 1700 540 900 500; sleep 2; shot 17-ai-table-translate
-adb shell input swipe 540 1700 540 900 500; sleep 2; shot 18-ai-table-grammar
-adb shell input swipe 540 1700 540 900 500; sleep 2; shot 19-ai-table-enhance
+up; shot 17-ai-table-translate
+up; shot 18-ai-table-grammar
+up; shot 19-ai-table-enhance
 openat translation 4; shot 20-translation-routing
 openat grammar_check 4; shot 21-grammar-routing
 openat text_enhance 4; shot 22-enhance-model
 
 # ── Grammar Check Highlight: tap a mark → popup; Ignore → the mark goes and does not come back ─
-adb shell am force-stop "$PKG" >/dev/null 2>&1; sleep 2
-adb shell am start -n "$PKG/.ShotActivity" --ez edittext true >/dev/null
+adb shell ime set "$IME" >/dev/null 2>&1
+adb shell am start -f $CLEAR -n "$PKG/.ShotActivity" --ez edittext true >/dev/null
 for _ in $(seq 1 25); do shown && break; sleep 1; done; sleep 4
 kb grammar highlight
 kb text "hello i "; sleep 2
