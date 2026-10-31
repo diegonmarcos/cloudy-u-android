@@ -218,8 +218,8 @@
       },
       {
         "file": "ab_cloud-libs-shared/libs/ui-nav-bars/src/main/kotlin/com/diegonmarcos/superapp/fleetconfigs/FleetReleases.kt",
-        "needle": "releases/download/${u.tag}/$asset.source",
-        "why": "Check for updates reads the Cloud Store release"
+        "needle": "BuiltFrom.fetchReleaseCommit(\"https://github.com/${u.repo}/releases/download/${u.tag}/$asset\")",
+        "why": "Check for updates reads the Cloud Store release (its .source sidecar, through the one reader BuiltFrom.fetchReleaseCommit)"
       },
       {
         "file": "ab_cloud-libs-shared/libs/ui-nav-bars/src/main/kotlin/com/diegonmarcos/superapp/fleetconfigs/FleetAboutPage.kt",
