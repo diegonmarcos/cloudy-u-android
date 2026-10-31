@@ -43,7 +43,6 @@ fun MainSettingsScreen(
     onClickEmoji: () -> Unit, // SuperApp addition
     onClickVoiceTranscript: () -> Unit, // SuperApp addition
     onClickTextEnhance: () -> Unit, // SuperApp addition — Text Enhancements
-    onClickDraftAnswer: () -> Unit = {}, // #1384 Draft Answer
     onClickAiRouting: () -> Unit, // SuperApp addition — AI Model Routing
     onClickUpdate: () -> Unit, // #776 Config ▸ Update
     onClickPreferences: () -> Unit,
@@ -56,6 +55,7 @@ fun MainSettingsScreen(
     onClickLayouts: () -> Unit,
     onClickDictionaries: () -> Unit,
     onClickBack: () -> Unit,
+    onClickDraftAnswer: () -> Unit = {}, // #1384 Draft Answer (last: positional callers stay valid)
 ) {
     SearchSettingsScreen(
         onClickBack = onClickBack,
