@@ -1,3 +1,4 @@
+import './url';
 import './array';
 import './set';
 import './dispose';

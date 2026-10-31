@@ -42,6 +42,8 @@
     "clean_drawer_rows_with_actions": ["page_dropdown", "actions", "app_actions", "sub_page_dropdown"],
     "drawer_rows": ["page_dropdown", "actions", "sub_page_dropdown", "app_actions"],
     "actions_places": ["strip", "drawer"],
+    "_doc_bottom_kinds": "#1369 nav_ui.bottom: what the bottom nav holds in Clean mode, the sections (default) or Obsidian mobile's history bar (Back, Forward, New, Tabs, Menu; libs:bottomnav NavBottomKind / HistoryBarItem).",
+    "bottom_kinds": ["sections", "history"],
     "_doc_actions": "#1369 an app may declare build.json::ui.nav_ui.actions = \"drawer\": its launch pages (pages with a non-blank action, every section) leave the strips (NavUiDecl.stripPages) and become the Clean drawer's app_actions row, after the AI/Profile/Settings icons (clean_drawer_rows_with_actions). Default \"strip\" keeps every other app unchanged.",
     "clean_drawer_actions": [
       "ai",

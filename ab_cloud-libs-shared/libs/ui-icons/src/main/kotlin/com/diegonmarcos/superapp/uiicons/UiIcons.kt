@@ -162,6 +162,11 @@ public object UiIcons {
         "schedule" to Icons.Outlined.Schedule,
         "bolt" to Icons.Outlined.Bolt,
         "tab" to Icons.Outlined.Tab,
+        // #1369 Obsidian mobile's history bar (libs:bottomnav HistoryBarItem): Back, Forward, New, Menu.
+        "chevron_left" to Icons.Outlined.ChevronLeft,
+        "chevron_right" to Icons.Outlined.ChevronRight,
+        "add_circle" to Icons.Outlined.AddCircleOutline,
+        "menu" to Icons.Outlined.Menu,
         "mail" to Icons.Outlined.Mail,
         "search" to Icons.Outlined.Search,
         "share" to Icons.Outlined.Share,

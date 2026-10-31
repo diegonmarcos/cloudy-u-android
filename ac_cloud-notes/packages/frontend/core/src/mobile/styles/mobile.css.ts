@@ -30,6 +30,29 @@ globalStyle('body:has(cloud-notes-keyboard-toolbar[data-keyboard-visible])', {
 globalStyle('body:has(cloud-notes-keyboard-toolbar[data-panel-open])', {
   paddingBottom: `calc(${globalVars.appKeyboardStaticHeight} + 46px)`,
 });
+// #1369 the editor toolbar above the keyboard wears Obsidian mobile's toolbar (the blocksuite widget is reused, not forked):
+// --background-secondary, a hairline top border and no shadow, muted 20px Lucide-weight icons, the accent on press.
+// The height stays 46px (the body padding above counts on it).
+globalStyle('cloud-notes-keyboard-toolbar .keyboard-toolbar', {
+  backgroundColor: 'var(--background-secondary)',
+  borderTop: '1px solid var(--background-modifier-border)',
+  boxShadow: 'none',
+  gap: '4px',
+});
+globalStyle('cloud-notes-keyboard-toolbar .keyboard-toolbar icon-button', {
+  color: 'var(--text-muted)',
+  borderRadius: 'var(--radius-s)',
+});
+globalStyle('cloud-notes-keyboard-toolbar .keyboard-toolbar icon-button:active', {
+  color: 'var(--interactive-accent)',
+});
+globalStyle('cloud-notes-keyboard-toolbar .keyboard-toolbar icon-button svg', {
+  width: '20px',
+  height: '20px',
+});
+globalStyle('cloud-notes-keyboard-toolbar .keyboard-toolbar .divider', {
+  borderColor: 'var(--background-modifier-border)',
+});
 globalStyle('body:has(>#app-tabs) edgeless-toolbar-widget', {
   bottom: globalVars.appTabSafeArea,
 });

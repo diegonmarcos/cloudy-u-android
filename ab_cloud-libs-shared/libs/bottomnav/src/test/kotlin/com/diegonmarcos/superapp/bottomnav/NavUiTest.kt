@@ -103,6 +103,24 @@ class NavUiTest {
         assertNull(appActionTarget("broken"))
     }
 
+    // ── #1369 Obsidian mobile's history bar (nav_ui.bottom = "history") ──
+
+    @Test fun `nav_ui bottom history is parsed, kept over the user's choice, and drawn only in Clean`() {
+        val parsed = NavUiDecl.parse("""{"mode": "clean", "bottom": "history"}""")
+        assertEquals(NavBottomKind.History, parsed.bottom)
+        assertTrue(parsed.historyBar)
+        assertEquals(NavBottomKind.Sections, NavUiDecl.parse("""{"mode": "clean"}""").bottom)
+        assertFalse(NavUiDecl.parse("""{"mode": "clean"}""").historyBar)
+        assertTrue(resolveNavUi(parsed, MemoryNavUiStore(NavUiMode.Clean, true)).historyBar)
+        assertFalse("Classic keeps the sections", resolveNavUi(parsed, MemoryNavUiStore(NavUiMode.Classic, true)).historyBar)
+    }
+
+    @Test fun `the history bar holds Back, Forward, New, Tabs and Menu in Obsidian's order`() {
+        assertEquals(listOf("Back", "Forward", "New", "Tabs", "Menu"), HistoryBarItem.entries.map { it.label })
+        assertEquals(HistoryBarItem.Tabs, HistoryBarItem.of("history_tabs"))
+        assertNull(HistoryBarItem.of("home"))
+    }
+
     // ── the first row is transparent in every mode ──
 
     @Test fun `the first row has no fill in any mode`() {

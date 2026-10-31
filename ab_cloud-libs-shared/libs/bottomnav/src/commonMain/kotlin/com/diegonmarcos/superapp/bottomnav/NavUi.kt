@@ -59,6 +59,34 @@ public enum class NavActionsPlace(public val declared: String) {
     }
 }
 
+/**
+ * What the bottom nav holds in Clean mode (`nav_ui.bottom`, #1369): the app's bottom sections (the default), or Obsidian mobile's
+ * HISTORY bar, a fixed set of [HistoryBarItem]s (Back, Forward, New, Tabs, Menu) drawn by the SAME NavBarBottom. Classic always
+ * shows the sections. An app opts in by declaring it; the bar's look, sizes and scroll-hide stay the lib's.
+ */
+public enum class NavBottomKind(public val declared: String) {
+    Sections("sections"),
+    History("history");
+
+    public companion object {
+        public fun of(text: String?): NavBottomKind? =
+            if (text.isNullOrBlank()) Sections else entries.firstOrNull { it.declared == text.trim() }
+    }
+}
+
+/** The items of the [NavBottomKind.History] bar, in Obsidian mobile's order; [id] is the item's test tag suffix, [icon] a ui-icons name. */
+public enum class HistoryBarItem(public val id: String, public val label: String, public val icon: String) {
+    Back("history_back", "Back", "chevron_left"),
+    Forward("history_forward", "Forward", "chevron_right"),
+    New("history_new", "New", "add_circle"),
+    Tabs("history_tabs", "Tabs", "tabs"),
+    Menu("history_menu", "Menu", "menu");
+
+    public companion object {
+        public fun of(id: String): HistoryBarItem? = entries.firstOrNull { it.id == id }
+    }
+}
+
 /** The icons of the drawer's [DrawerRow.Actions] row. */
 public enum class NavQuickAction(public val declared: String) {
     Ai("ai"),
@@ -72,8 +100,13 @@ public data class NavUiSettings(
     val scrollHide: Boolean = true,
     /** `nav_ui.actions`: the launch pages move from the bottom nav's strips to the drawer's [DrawerRow.AppActions] row. */
     val actions: NavActionsPlace = NavActionsPlace.Strip,
+    /** `nav_ui.bottom`: the bottom nav holds the sections, or (Clean only) the history bar ([NavBottomKind.History]). */
+    val bottom: NavBottomKind = NavBottomKind.Sections,
 ) {
     public val actionsInDrawer: Boolean get() = actions == NavActionsPlace.Drawer
+
+    /** The history bar replaces the sections on the bottom nav: declared [NavBottomKind.History] AND in Clean mode. */
+    public val historyBar: Boolean get() = bottom == NavBottomKind.History && mode == NavUiMode.Clean
 
     /** How the chrome reacts to a scroll: hide every bar (sticky), or stay put. */
     public fun scrollPolicy(): ChromeScrollPolicy = if (scrollHide) ChromeScrollPolicy.Hide else ChromeScrollPolicy.Pinned
@@ -147,6 +180,7 @@ public object NavUiDecl {
             mode = NavUiMode.of(o["mode"] as? String) ?: DEFAULT.mode,
             scrollHide = (o["scroll_hide"] as? Boolean) ?: DEFAULT.scrollHide,
             actions = NavActionsPlace.of(o["actions"] as? String) ?: DEFAULT.actions,
+            bottom = NavBottomKind.of(o["bottom"] as? String) ?: DEFAULT.bottom,
         )
     }.getOrDefault(DEFAULT)
 
@@ -183,7 +217,7 @@ public class MemoryNavUiStore(mode: NavUiMode? = null, scrollHide: Boolean? = nu
 
 /** The settings in force: the user's choice in [store], else the app's declared [default]. */
 public fun resolveNavUi(default: NavUiSettings, store: NavUiStore?): NavUiSettings =
-    NavUiSettings(store?.mode() ?: default.mode, store?.scrollHide() ?: default.scrollHide, default.actions)
+    NavUiSettings(store?.mode() ?: default.mode, store?.scrollHide() ?: default.scrollHide, default.actions, default.bottom)
 
 /** The app's declared default ([NavUiDecl.fromBuildConfig]); an app that declares none wears [NavUiDecl.DEFAULT]. */
 public val LocalNavUiDefault = staticCompositionLocalOf { NavUiDecl.DEFAULT }

@@ -8,6 +8,8 @@
 #   S  theme switch   light and dark blocks both exist; the web half's resolved theme reaches the native shell, which picks
 #                     Obsidian light or dark (no fixed dark)
 #   V  vault          the vault stylesheet has no literal colour (all Obsidian variables); narrow screens keep the ribbon in the drawer
+#   W H K G           URL.canParse polyfilled first (WebView 113); Clean's declared history bar; the Obsidian keyboard toolbar;
+#                     the vault scene grants all-files access by uid
 set -uo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 REPO="$(cd "$ROOT/.." && pwd)"
@@ -34,6 +36,10 @@ F = {
     'vstyle': (ROOT, 'packages/frontend/core/src/mobile/vault/style.ts'),
     'vshell': (ROOT, 'packages/frontend/core/src/mobile/vault/VaultShell.tsx'),
     'icons': (ROOT, 'packages/frontend/core/src/mobile/vault/icons.tsx'),
+    'polyfill': (ROOT, 'packages/frontend/core/src/bootstrap/polyfill/browser.ts'),
+    'urlpoly': (ROOT, 'packages/frontend/core/src/bootstrap/polyfill/url.ts'),
+    'mcss': (ROOT, 'packages/frontend/core/src/mobile/styles/mobile.css.ts'),
+    'walk': (REPO, '1_cicd/src/data/nav-walk-apps.json'),
 }
 path = lambda k: os.path.join(*F[k])
 
@@ -169,6 +175,30 @@ def chk_V_ribbon_in_drawer(p):
 def chk_V_lucide(p):
     return 'strokeWidth={1.75}' in open(p['icons']).read()
 
+# ── #1369 follow-up: old WebViews, the history bar, the keyboard toolbar, the vault scene ──
+read = lambda f, k: open(f[k], encoding='utf-8').read()
+
+def chk_W_canparse(f):
+    first = [l for l in read(f, 'polyfill').splitlines() if l.strip()][0]
+    u = read(f, 'urlpoly')
+    return first == "import './url';" and "typeof U.canParse !== 'function'" in u and "'canParse'" in u and "'parse'" in u
+
+def chk_H_history_bar(f):
+    nav, shell = read(f, 'navui'), read(f, 'shell')
+    order = re.findall(r'^\s+(\w+)\("history_\w+"', nav, re.M)
+    return ('"bottom": "history"' in read(f, 'build') and order == ['Back', 'Forward', 'New', 'Tabs', 'Menu']
+            and 'bottom == NavBottomKind.History && mode == NavUiMode.Clean' in nav
+            and 'entries = if (history) historyEntries else sectionEntries' in shell and 'HistoryBarItem.Menu -> topBar.openDrawer()' in shell)
+
+def chk_K_keyboard_toolbar(f):
+    c = read(f, 'mcss')
+    return ("globalStyle('cloud-notes-keyboard-toolbar .keyboard-toolbar', {\n  backgroundColor: 'var(--background-secondary)'" in c
+            and "boxShadow: 'none'" in c)
+
+def chk_G_vault_scene(f):
+    w = read(f, 'walk')
+    return 'appops set --uid {pkg} MANAGE_EXTERNAL_STORAGE allow' in w and '"name": "editor-toolbar"' in w
+
 CHECKS = [
     ('T1 generated sheet and tokens equal data/obsidian-theme.json', chk_T_data_matches_generated,
      [('data', '"accent": "#8a5cf5"', '"accent": "#8a5cf6"')]),
@@ -197,6 +227,14 @@ CHECKS = [
     ('V1 the vault stylesheet has no literal colour', chk_V_no_literal_colour, [('vstyle', 'var(--background-primary)', '#1f2023')]),
     ('V2 narrow screens keep the ribbon in the drawer', chk_V_ribbon_in_drawer, [('vshell', '{!narrow && <nav className="cnv-ribbon"', '{<nav className="cnv-ribbon"')]),
     ('V3 Lucide stroke', chk_V_lucide, [('icons', 'strokeWidth={1.75}', 'strokeWidth={1.8}')]),
+    ('W1 URL.canParse is polyfilled first for WebViews before Chrome 120', chk_W_canparse,
+     [('polyfill', "import './url';\n", ''), ('urlpoly', "typeof U.canParse !== 'function'", 'false')]),
+    ('H1 Clean wears the declared history bar (Back, Forward, New, Tabs, Menu)', chk_H_history_bar,
+     [('build', '"bottom": "history"', '"bottom": "sections"'), ('navui', 'Forward("history_forward"', 'Fwd("history_forward"'),
+      ('shell', 'entries = if (history) historyEntries else sectionEntries', 'entries = sectionEntries')]),
+    ('K1 the keyboard toolbar wears Obsidian\'s toolbar', chk_K_keyboard_toolbar, [('mcss', "boxShadow: 'none'", "boxShadow: '0 -4px 10px #0001'")]),
+    ('G1 the vault scene grants all-files access by uid', chk_G_vault_scene,
+     [('walk', 'appops set --uid {pkg}', 'appops set {pkg}')]),
 ]
 
 real = {k: path(k) for k in F}

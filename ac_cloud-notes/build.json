@@ -96,8 +96,8 @@
       "search"
     ],
     "default_section": "home",
-    "_doc_nav_ui": "#1369 actions = drawer: the launch pages (Pages > New page, Canvas > New board) leave the bottom nav and its strips and are the left drawer's Actions row (DrawerRow.AppActions), as Obsidian mobile keeps its ribbon actions in a menu. The nav mode Cloud Notes starts in: CLEAN (a transparent first row with only the hamburger, no second row, a compact icons-only bottom nav; the left drawer holds the page dropdown, the AI / Profile / Settings icons and the child-page dropdown). Declared once here, baked as UI_NAV_UI_B64, read by NavUiDecl.fromBuildConfig; the user can switch to Classic in Configs > UI (the choice is persisted per app). scroll_hide: a downward scroll hides every bar until an upward one.",
-    "nav_ui": {"mode": "clean", "scroll_hide": true, "actions": "drawer"},
+    "_doc_nav_ui": "#1369 bottom = history: in Clean mode the shared bottom nav holds Obsidian mobile's history bar (Back, Forward, New, Tabs, Menu; libs:bottomnav NavBottomKind.History), Classic keeps the sections. #1369 actions = drawer: the launch pages (Pages > New page, Canvas > New board) leave the bottom nav and its strips and are the left drawer's Actions row (DrawerRow.AppActions), as Obsidian mobile keeps its ribbon actions in a menu. The nav mode Cloud Notes starts in: CLEAN (a transparent first row with only the hamburger, no second row, a compact icons-only bottom nav; the left drawer holds the page dropdown, the AI / Profile / Settings icons and the child-page dropdown). Declared once here, baked as UI_NAV_UI_B64, read by NavUiDecl.fromBuildConfig; the user can switch to Classic in Configs > UI (the choice is persisted per app). scroll_hide: a downward scroll hides every bar until an upward one.",
+    "nav_ui": {"mode": "clean", "scroll_hide": true, "actions": "drawer", "bottom": "history"},
     "configs_ui": ["nav_ui"],
     "sections": [
       {

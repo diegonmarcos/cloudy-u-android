@@ -30,6 +30,9 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.viewinterop.AndroidView
 import com.diegonmarcos.superapp.ai.AiFleetChatPanel
 import com.diegonmarcos.superapp.bottomnav.ChromeWebScroll
+import com.diegonmarcos.superapp.bottomnav.HistoryBarItem
+import com.diegonmarcos.superapp.bottomnav.currentNavUi
+import com.diegonmarcos.superapp.bottomnav.rememberAppTopBarController
 import com.diegonmarcos.superapp.bottomnav.LocalNavChromeCollapse
 import com.diegonmarcos.superapp.bottomnav.LocalNavUiDefault
 import com.diegonmarcos.superapp.bottomnav.NavUiDecl
@@ -101,7 +104,10 @@ internal class NotesShell(
     fun Content(container: ViewGroup, web: WebView) {
         val dark = darkState ?: isSystemInDarkTheme()
         val section = nav.decl.section(nav.sectionId)
-        val entries = nav.decl.bottomSections().map { navEntry(it.id, it.label, it.icon) }
+        val sectionEntries = nav.decl.bottomSections().map { navEntry(it.id, it.label, it.icon) }
+        // #1369 build.json::ui.nav_ui.bottom = "history": in Clean mode the SAME bottom nav holds Obsidian mobile's history bar.
+        val historyEntries = HistoryBarItem.entries.map { navEntry(it.id, it.label, it.icon) }
+        val topBar = rememberAppTopBarController()
         // The nav mode Cloud Notes starts in is build.json::ui.nav_ui (CLEAN); the user's own choice in Configs > UI wins.
         CompositionLocalProvider(LocalNavUiDefault provides NavUiDecl.fromBuildConfig(BuildConfig.UI_NAV_UI_B64)) {
         CloudNotesTheme(if (dark) ThemeMode.Dark else ThemeMode.Light) {
@@ -117,12 +123,23 @@ internal class NotesShell(
                 configsUi = false, // Configs opens Configs > UI itself (ConfigsUi below)
                 modifier = Modifier.fillMaxSize().statusBarsPadding(),
                 dark = dark,
+                controller = topBar,
             ) {
                 TopBarDrawer { close -> Drawer(close) }
+                val history = currentNavUi().historyBar
                 NavBarBottomHost(
-                    entries = entries,
-                    selectedId = nav.sectionId,
-                    onSelect = { e -> nav.open(e.id) },
+                    entries = if (history) historyEntries else sectionEntries,
+                    selectedId = if (history) null else nav.sectionId,
+                    onSelect = { e ->
+                        when (HistoryBarItem.of(e.id).takeIf { history }) {
+                            HistoryBarItem.Back -> if (web.canGoBack()) web.goBack()
+                            HistoryBarItem.Forward -> if (web.canGoForward()) web.goForward()
+                            HistoryBarItem.New -> nav.openPage("pages", "new")
+                            HistoryBarItem.Tabs -> nav.open("pages")
+                            HistoryBarItem.Menu -> topBar.openDrawer()
+                            null -> nav.open(e.id)
+                        }
+                    },
                     dark = dark,
                 ) {
                     Column(Modifier.fillMaxSize()) {

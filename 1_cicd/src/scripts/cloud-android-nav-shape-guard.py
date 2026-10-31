@@ -638,9 +638,10 @@ def check_nav_ui(root, apps, uis, exempt, spec, bad):
         bad.append(f"N13 {nu['kotlin']} is gone — the nav UI declaration (modes, drawer rows, scroll policy) lives there")
     else:
         # DrawerRow: every row the Clean drawer can draw (drawer_rows; older declarations list only clean_drawer_rows).
-        # NavActionsPlace: where an app's launch pages live (actions_places, #1369).
+        # NavActionsPlace: where an app's launch pages live (actions_places, #1369); NavBottomKind: what Clean's bottom nav holds (bottom_kinds, #1369).
         for enum, key in (("NavUiMode", "modes"), ("DrawerRow", "drawer_rows" if "drawer_rows" in nu else "clean_drawer_rows"),
-                          ("NavQuickAction", "clean_drawer_actions"), ("NavActionsPlace", "actions_places")):
+                          ("NavQuickAction", "clean_drawer_actions"), ("NavActionsPlace", "actions_places"),
+                          ("NavBottomKind", "bottom_kinds")):
             if key not in nu:
                 continue
             if kotlin_strings(kt, enum) != nu.get(key):
@@ -689,6 +690,8 @@ def check_nav_ui(root, apps, uis, exempt, spec, bad):
         if decl is not None and (not isinstance(decl, dict) or mode not in nu["modes"] or not isinstance(decl.get("scroll_hide", True), bool)):
             bad.append(f"N13 {app}: ui.nav_ui must be an object with mode one of {nu['modes']} and a boolean scroll_hide")
             continue
+        if decl and "bottom_kinds" in nu and decl.get("bottom", "sections") not in nu["bottom_kinds"]:
+            bad.append(f"N13 {app}: ui.nav_ui.bottom is {decl.get('bottom')!r}, not one of {nu['bottom_kinds']}")
         if mode != defaults.get(app, "classic"):
             bad.append(f"N13 {app}: ui.nav_ui.mode is {mode!r} but {DATA}::nav_ui.app_defaults says {defaults.get(app, 'classic')!r} — a default is declared in both places")
         code = "\n".join(app_code(root, app).values())
