@@ -4,6 +4,7 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import com.diegonmarcos.superapp.core.DataSyncBudget
 import android.content.pm.ServiceInfo
 import android.net.Uri
 import android.os.Build
@@ -44,7 +45,14 @@ class VaultOperationWorker @AssistedInject constructor(
     private val repository: MediaRepository,
 ) : CoroutineWorker(appContext, params) {
 
-    override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
+    /** #fgs-timeout budget token of this run's dataSync hold (core DataSyncBudget; 0 = not held). */
+    private var fgsToken = 0L
+
+    // #fgs-timeout the hold is closed on every exit, whatever the path.
+    override suspend fun doWork(): Result = try { work() }
+        finally { DataSyncBudget.end(applicationContext, fgsToken); fgsToken = 0L }
+
+    private suspend fun work(): Result = withContext(Dispatchers.IO) {
         val op = inputData.getString(KEY_OPERATION) ?: return@withContext Result.failure()
         val mediaJson = inputData.getString(KEY_MEDIA_URIS) ?: return@withContext Result.failure()
         val inputUris = Json.decodeFromString<List<String>>(mediaJson).map { it.toUri() }
@@ -74,7 +82,11 @@ class VaultOperationWorker @AssistedInject constructor(
         }
 
         // Set initial foreground notification
-        setForeground(createForegroundInfo(progress = 0f, operation = op))
+        // #fgs-timeout a user-started vault operation: hold dataSync only within the app's budget.
+        if (DataSyncBudget.mayHold(applicationContext, userInitiated = true)) {
+            setForeground(createForegroundInfo(progress = 0f, operation = op))
+            fgsToken = DataSyncBudget.begin(applicationContext)
+        }
 
         val processed = mutableListOf<Uri>()
         val result = when (op) {
@@ -151,7 +163,7 @@ class VaultOperationWorker @AssistedInject constructor(
         val pctInt = pct.toInt()
         throttler.emit(pctInt) {
             setProgress(workDataOf(KEY_PROGRESS to it))
-            setForeground(createForegroundInfo(pct, operation))
+            if (fgsToken != 0L) setForeground(createForegroundInfo(pct, operation))
         }
     }
 

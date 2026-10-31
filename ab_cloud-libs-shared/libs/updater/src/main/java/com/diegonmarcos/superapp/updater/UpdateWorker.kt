@@ -6,6 +6,7 @@ import com.diegonmarcos.superapp.updater.install.ShellInstall
 import com.diegonmarcos.superapp.updater.install.UpdateInstaller
 import com.diegonmarcos.superapp.updater.source.UpdateChecker
 import android.content.Context
+import com.diegonmarcos.superapp.core.DataSyncBudget
 import com.diegonmarcos.superapp.core.StoreNotifyGate
 import android.util.Log
 import androidx.work.CoroutineWorker
@@ -33,7 +34,15 @@ class UpdateWorker(
 
     override suspend fun getForegroundInfo(): ForegroundInfo = BatchForeground.foregroundInfo(applicationContext)
 
-    override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
+    /** #fgs-timeout budget token of this run's dataSync hold (0 = none). */
+    private var fgsToken = 0L
+
+    // #fgs-timeout a stop (Android 15's dataSync timeout, which WorkManager >= 2.10 turns into one,
+    // a lost constraint, a cancel) reaches the blocking downloads at once; the hold is closed on every exit.
+    override suspend fun doWork(): Result = try { stopCooperatively { work() } }
+        finally { DataSyncBudget.end(applicationContext, fgsToken); fgsToken = 0L }
+
+    private suspend fun work(): Result = withContext(Dispatchers.IO) {
         // #894 The SuperApp does no self-update and posts no update notification: a job still
         // persisted from an older build (WorkManager keeps periodic work across app updates), or
         // a manual check from anywhere, ends here. Cloud Store updates the SuperApp.
@@ -141,7 +150,9 @@ class UpdateWorker(
                 applicationContext.applicationInfo.loadLabel(applicationContext.packageManager).toString(),
                 UpdateProgress.STAGE_DOWNLOADING))
             // #903 download + install under a dataSync foreground job (refused = carry on).
-            if (BatchForeground.allowed(applicationContext)) runCatching { setForeground(BatchForeground.foregroundInfo(applicationContext)) }
+            // #fgs-timeout only when a human asked (force): the periodic pass is plain background work.
+            if (BatchForeground.allowed(applicationContext))
+                fgsToken = holdDataSync(userInitiated = force) { BatchForeground.foregroundInfo(it) }
             val apk = UpdateChecker(applicationContext).download(available) {
                 isStopped || UpdateProgress.cancelRequested
             }

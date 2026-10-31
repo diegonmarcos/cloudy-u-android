@@ -57,5 +57,5 @@ dependencies {
 
     implementation 'androidx.core:core-ktx:1.13.1'
     implementation 'androidx.fragment:fragment-ktx:1.8.5'   // EnergyUsageDialog / BatteryEstimatePopup
-    implementation 'androidx.work:work-runtime-ktx:2.9.1'   // BatterySessionWorker
+    implementation 'androidx.work:work-runtime-ktx:2.12.0'   // BatterySessionWorker
 }

@@ -169,7 +169,7 @@ dependencies {
     implementation project(':libs:shizuku-adb-debug-tools')
     implementation 'androidx.core:core-ktx:1.13.1'
     implementation 'androidx.fragment:fragment-ktx:1.8.5'
-    implementation 'androidx.work:work-runtime-ktx:2.9.1'
+    implementation 'androidx.work:work-runtime-ktx:2.12.0'
     // #866 the Store's own fleet-token entry (FleetBearer.Own), encrypted like libs:ops DaguPrefs.
     implementation 'androidx.security:security-crypto:1.1.0-alpha06'
     // The theme attributes the fleet's View hosts resolve (and the APK detail sheet's ModalBottomSheet window).

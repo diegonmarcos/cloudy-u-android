@@ -13,6 +13,7 @@ import android.net.ConnectivityManager
 import android.os.BatteryManager
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import com.diegonmarcos.superapp.core.DataSyncBudget
 import com.diegonmarcos.superapp.core.FleetAlerts
 import androidx.hilt.work.HiltWorker
 import androidx.work.BackoffPolicy
@@ -81,7 +82,14 @@ class CloudUploadWorker @AssistedInject constructor(
         val remoteId: String
     )
 
-    override suspend fun doWork(): Result {
+    /** #fgs-timeout budget token of this run's dataSync hold (core DataSyncBudget; 0 = not held). */
+    private var fgsToken = 0L
+
+    // #fgs-timeout the hold is closed on every exit, whatever the path.
+    override suspend fun doWork(): Result = try { work() }
+        finally { DataSyncBudget.end(applicationContext, fgsToken); fgsToken = 0L }
+
+    private suspend fun work(): Result {
         printDebug("CloudUploadWorker: Starting upload check...")
         try {
             // Manual ("Upload now" / "Start backup") runs are user-initiated and must work even
@@ -235,8 +243,16 @@ class CloudUploadWorker @AssistedInject constructor(
                 KEY_CURRENT_FILE to ""
             ))
 
-            if (showTotalProgress && totalItems > 0) {
-                runCatching { setForeground(progressForegroundInfo(0, totalItems, null, showDetailProgress)) }
+            // #fgs-timeout the PERIODIC backup (every 30 min) held a dataSync foreground service on
+            // every run and spent Android 15's 6 h/24 h cap in the background. Only a manual backup
+            // may hold it, within the app's budget; the periodic one is plain background work with its
+            // network constraint, stops on isStopped below and retries the rest on its next run.
+            if (showTotalProgress && totalItems > 0 &&
+                DataSyncBudget.mayHold(applicationContext, userInitiated = inputData.getBoolean(KEY_MANUAL, false))) {
+                runCatching {
+                    setForeground(progressForegroundInfo(0, totalItems, null, showDetailProgress))
+                    fgsToken = DataSyncBudget.begin(applicationContext)
+                }
             }
 
             for (task in tasks) {
@@ -252,7 +268,7 @@ class CloudUploadWorker @AssistedInject constructor(
                     KEY_FAILED_FILES to failedFiles.takeLast(MAX_TRACKED_FILES).toTypedArray()
                 ))
 
-                if (showTotalProgress) {
+                if (fgsToken != 0L) { // only a run that holds the service re-posts it (a call would promote it)
                     runCatching {
                         setForeground(
                             progressForegroundInfo(

@@ -1,0 +1,37 @@
+name: "fgs timeout guard — no worker or service runs as a dataSync foreground service without timeout handling"
+
+# WHY (#fgs-timeout). Android 15+ caps dataSync foreground services at 6 h per 24 h; at the cap the system calls
+# onTimeout and an app whose service is still running seconds later crashes
+# (ForegroundServiceDidNotStopInTimeException, Cloud Store via WorkManager's SystemForegroundService). This guard
+# fails when a work-runtime pin drops below 2.10 (no onTimeout handling), when a worker enters a foreground without
+# core DataSyncBudget, when a periodic worker holds it as user-initiated, or when a dataSync Service lacks
+# onTimeout(startId, fgsType).
+#
+# Its own workflow and every push: the commit it has to catch can touch any app's worker, service or Gradle file.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# ── MANAGED-GUARD-CONCURRENCY: injected by cloud-android-guard-triggers.py ──
+concurrency:
+  group: fgs-timeout-guard-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+# ── end MANAGED-GUARD-CONCURRENCY ──
+
+jobs:
+  fgs-timeout:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: The guard still fails on each way a dataSync foreground can miss its timeout
+        run: bash 1_cicd/src/scripts/test/fgs-timeout-guard.test.sh
+
+      - name: No worker or service in the fleet runs as a dataSync foreground without timeout handling
+        run: python3 1_cicd/src/scripts/cloud-android-fgs-timeout-guard.py .

@@ -9,6 +9,7 @@ import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
+import com.diegonmarcos.superapp.core.DataSyncBudget
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -33,7 +34,15 @@ class ApkInstallWorker(
 
     override suspend fun getForegroundInfo(): ForegroundInfo = BatchForeground.foregroundInfo(applicationContext)
 
-    override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
+    /** #fgs-timeout budget token of this run's dataSync hold (0 = none). */
+    private var fgsToken = 0L
+
+    // #fgs-timeout a stop (Android 15's dataSync timeout, which WorkManager >= 2.10 turns into one,
+    // a lost constraint, a cancel) reaches the blocking downloads at once; the hold is closed on every exit.
+    override suspend fun doWork(): Result = try { stopCooperatively { work() } }
+        finally { DataSyncBudget.end(applicationContext, fgsToken); fgsToken = 0L }
+
+    private suspend fun work(): Result = withContext(Dispatchers.IO) {
         val url   = inputData.getString(KEY_URL)
         val pkg   = inputData.getString(KEY_PKG)
         val label = inputData.getString(KEY_LABEL) ?: pkg ?: "app"
@@ -46,7 +55,9 @@ class ApkInstallWorker(
             UpdateProgress.beginJob(UpdateProgress.Job(pkg, pkg, label, UpdateProgress.STAGE_DOWNLOADING))
             UpdateProgress.update(UpdateProgress.State.Downloading(0, 0, -1))
             // #903 download + install under a dataSync foreground job (refused = carry on).
-            if (BatchForeground.allowed(applicationContext)) runCatching { setForeground(BatchForeground.foregroundInfo(applicationContext)) }
+            // #fgs-timeout a companion install is always a tap: user-initiated, still within the budget.
+            if (BatchForeground.allowed(applicationContext))
+                fgsToken = holdDataSync(userInitiated = true) { BatchForeground.foregroundInfo(it) }
             var declared = 0L
             // The private copy of this loop is gone. It was the only one of the
             // three that chased redirects by hand and the only one that could

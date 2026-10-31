@@ -1133,7 +1133,7 @@ dependencies {
     // yet; the cancel-by-tag calls are no-ops on a fresh install but
     // present so libs:updater / future producers can land their own
     // jobs under the same tag set without touching the orchestrator.
-    implementation 'androidx.work:work-runtime-ktx:2.9.1'
+    implementation 'androidx.work:work-runtime-ktx:2.12.0'
 
     // libs:browser MOVED to ac_cloud-browser (constellation APK).
     // launchUri http/https now fires ACTION_VIEW → com.diegonmarcos.cloudbrowser.

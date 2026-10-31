@@ -13,7 +13,10 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.diegonmarcos.superapp.core.FleetAlerts
+import com.diegonmarcos.superapp.core.DataSyncBudget
 import com.diegonmarcos.superapp.core.StoreNotifyGate
+import com.diegonmarcos.superapp.updater.holdDataSync
+import com.diegonmarcos.superapp.updater.stopCooperatively
 import androidx.work.ForegroundInfo
 import com.diegonmarcos.superapp.updater.Advisory
 import com.diegonmarcos.superapp.updater.BatchForeground
@@ -40,7 +43,15 @@ class ConstellationWorker(appCtx: Context, params: WorkerParameters) :
 
     override suspend fun getForegroundInfo(): ForegroundInfo = BatchForeground.foregroundInfo(applicationContext)
 
-    override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
+    /** #fgs-timeout budget token of this run's dataSync hold (0 = none). */
+    private var fgsToken = 0L
+
+    // #fgs-timeout a stop (Android 15's dataSync timeout, which WorkManager >= 2.10 turns into one,
+    // a lost constraint, a cancel) reaches the blocking downloads at once; the hold is closed on every exit.
+    override suspend fun doWork(): Result = try { stopCooperatively { work() } }
+        finally { DataSyncBudget.end(applicationContext, fgsToken); fgsToken = 0L }
+
+    private suspend fun work(): Result = withContext(Dispatchers.IO) {
         // #894 Store work and Store notifications are Cloud Store's. A pass still persisted in
         // WorkManager from an older SuperApp (periodic work outlives the update that retired it)
         // ends here, before it can reach a progress notification or an alert.
@@ -72,10 +83,15 @@ class ConstellationWorker(appCtx: Context, params: WorkerParameters) :
         // #804 the pass below IS the persisted auto chain (Fleet.autoChain);
         // attach is idempotent and makes that true in any process WorkManager wakes.
         StoreAuto.attach(applicationContext) { c, t -> kick(c, t) }
+        val trigger = inputData.getString(KEY_TRIGGER) ?: StoreAuto.TRIGGER_PERIODIC
         // #903 the pass downloads and installs: run it as a dataSync foreground job
         // so the OS (and Samsung's freezer) do not kill it; refused = carry on as before.
-        runCatching { setForeground(BatchForeground.foregroundInfo(applicationContext)) }
-        val trigger = inputData.getString(KEY_TRIGGER) ?: StoreAuto.TRIGGER_PERIODIC
+        // #fgs-timeout ONLY when the user is in the Store (refresh / local API). The periodic,
+        // app-start and Wi-Fi passes held it on every run and spent Android 15's 6 h/24 h dataSync
+        // cap in the background, then crashed (ForegroundServiceDidNotStopInTimeException). They are
+        // plain background work now: the chain is persisted and a stopped pass resumes on the next.
+        val userInitiated = trigger == StoreAuto.TRIGGER_STORE_REFRESH || trigger == StoreAuto.TRIGGER_API
+        fgsToken = holdDataSync(userInitiated = userInitiated) { BatchForeground.foregroundInfo(it) }
         // The metered decision the UNMETERED constraint used to make, made here
         // instead (same place UpdateWorker makes it). Deliberately a different
         // question: WorkManager's constraint asks the system default network,

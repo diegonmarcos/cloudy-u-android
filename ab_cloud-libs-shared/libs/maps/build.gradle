@@ -130,7 +130,7 @@ dependencies {
     // cadence) that re-spawns LocationTrackerService when Samsung's
     // aggressive "Put apps to sleep" or memory-pressure killer takes
     // the foreground service down even with Battery Optimization off.
-    implementation 'androidx.work:work-runtime-ktx:2.9.1'
+    implementation 'androidx.work:work-runtime-ktx:2.12.0'
     // MapLibre Native Android SDK — OSS map renderer using OSM tiles +
     // vector styles. Same family as `maplibre-gl` (JS) that
     // front/c-Suite/mymaps-navigation uses for visual consistency.

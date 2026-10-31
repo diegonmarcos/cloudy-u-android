@@ -739,7 +739,7 @@ dependencies {
     implementation 'me.jahnen.libaums:core:0.10.0'
     // #575 the scheduled git sync (GitSyncWorker) — the same WorkManager libs:updater
     // already schedules its own periodic check with, same version.
-    implementation 'androidx.work:work-runtime-ktx:2.9.1'
+    implementation 'androidx.work:work-runtime-ktx:2.12.0'
     implementation 'androidx.core:core-ktx:1.15.0'
     // Every activity, the PDF reader included, is a ComponentActivity with Compose chrome now; appcompat
     // and material stay only because Theme.CloudDrive's parent (Theme.Material3.Dark.NoActionBar, the

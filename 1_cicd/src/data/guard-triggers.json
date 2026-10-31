@@ -32,7 +32,8 @@
     "upstream-name-guard.yml": "#1091: the commit it must catch can add the upstream project's name to any file of any app, lib or document; the check is one git grep",
     "commit-msg-guard.yml": "#670: checks commit messages, which every push carries whatever paths it touches",
     "publish-module-guard.yml": "scans every workflow, template and script in 1_cicd/src for hand-rolled ghcr/release pushes; the offending line can be anywhere",
-    "shrink-keep-guard.yml": "scans every gradle script, every Kotlin/Java source and every res/raw keep file of every app and lib for by-name resource lookups in resource-shrinking modules; a filter would be a second list of every tree"
+    "shrink-keep-guard.yml": "scans every gradle script, every Kotlin/Java source and every res/raw keep file of every app and lib for by-name resource lookups in resource-shrinking modules; a filter would be a second list of every tree",
+    "fgs-timeout-guard.yml": "#fgs-timeout scans every app's and lib's workers, services and Gradle/catalog pins: any app's commit can add a dataSync foreground without timeout handling"
   },
   "filtered": {
     "analytics-retry-guard.yml": {

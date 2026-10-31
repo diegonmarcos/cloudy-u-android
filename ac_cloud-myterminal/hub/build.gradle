@@ -262,7 +262,7 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     // In-app updater (com.diegonmarcos.ide.update): WorkManager periodic check +
     // CoroutineWorker. GhcrClient uses built-in org.json (no extra dep).
-    implementation 'androidx.work:work-runtime-ktx:2.9.1'
+    implementation 'androidx.work:work-runtime-ktx:2.12.0'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
     // Terminal SSH backend: JSch fork with modern crypto (ECDSA, Ed25519, ChaCha20).
     // Package name stays com.jcraft.jsch — drop-in replacement.

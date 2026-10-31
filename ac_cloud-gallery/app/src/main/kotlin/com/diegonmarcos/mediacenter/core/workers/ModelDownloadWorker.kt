@@ -8,6 +8,7 @@ package com.diegonmarcos.mediacenter.core.workers
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import com.diegonmarcos.superapp.core.DataSyncBudget
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.StatFs
@@ -48,7 +49,14 @@ class ModelDownloadWorker @AssistedInject constructor(
     @Assisted workerParams: WorkerParameters
 ) : CoroutineWorker(appContext, workerParams) {
 
-    override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
+    /** #fgs-timeout budget token of this run's dataSync hold (core DataSyncBudget; 0 = not held). */
+    private var fgsToken = 0L
+
+    // #fgs-timeout the hold is closed on every exit, whatever the path.
+    override suspend fun doWork(): Result = try { work() }
+        finally { DataSyncBudget.end(applicationContext, fgsToken); fgsToken = 0L }
+
+    private suspend fun work(): Result = withContext(Dispatchers.IO) {
         // Which feature's models this worker instance is responsible for.
         val group = inputData.getString(KEY_GROUP)
             ?.let { runCatching { ModelGroup.valueOf(it) }.getOrNull() }
@@ -59,7 +67,11 @@ class ModelDownloadWorker @AssistedInject constructor(
 
             // Create notification channel and show foreground notification
             createNotificationChannel()
-            setForeground(createForegroundInfo(0))
+            // #fgs-timeout a user-started download: hold dataSync only within the app's budget.
+            if (DataSyncBudget.mayHold(applicationContext, userInitiated = true)) {
+                setForeground(createForegroundInfo(0))
+                fgsToken = DataSyncBudget.begin(applicationContext)
+            }
 
             // Check available storage
             val statFs = StatFs(appContext.filesDir.path)
@@ -237,7 +249,7 @@ class ModelDownloadWorker @AssistedInject constructor(
                                     KEY_PROGRESS to overallProgress,
                                     KEY_STATUS to "Downloading $fileName... ${(fileProgress * 100).toInt()}%"
                                 ))
-                                try {
+                                if (fgsToken != 0L) try {
                                     setForegroundAsync(createForegroundInfo(overallProgress.toInt()))
                                 } catch (_: Exception) { }
                             }

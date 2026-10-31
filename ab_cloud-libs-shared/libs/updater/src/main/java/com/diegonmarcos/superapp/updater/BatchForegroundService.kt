@@ -14,6 +14,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import androidx.work.ForegroundInfo
+import com.diegonmarcos.superapp.core.DataSyncBudget
 import com.diegonmarcos.superapp.core.SilentChannels
 import com.diegonmarcos.superapp.core.StoreNotifyGate
 import java.util.concurrent.atomic.AtomicInteger
@@ -37,7 +38,9 @@ import java.util.concurrent.atomic.AtomicInteger
  * `StoreStages.progress()?.text`, exactly what `/api/store/progress` returns —
  * and is re-posted on progress no more than once a second ([THROTTLE_MS]).
  * [foregroundInfo] is the same notification for the CoroutineWorkers that
- * download or install, so an expedited/long pass is not killed either.
+ * download or install — entered only for user-initiated runs within the
+ * app's dataSync budget (core DataSyncBudget, [holdDataSync]); unattended
+ * passes run as plain background work. The service handles onTimeout.
  *
  * Starting a foreground service from the background is refused on 12+
  * (ForegroundServiceStartNotAllowedException): that refusal is caught, the
@@ -87,6 +90,13 @@ object BatchForeground {
         if (held.incrementAndGet() != 1) return
         val app = ctx.applicationContext
         appCtx = app
+        // #fgs-timeout: the batch goes on either way; past the app's dataSync budget it goes on
+        // WITHOUT the service, rather than run into Android 15's 6 h cap and its crash.
+        if (!DataSyncBudget.mayHold(app, userInitiated = true)) {
+            Log.i(TAG, "dataSync budget spent (${DataSyncBudget.usedMs(app) / 60_000} min / 24 h): no foreground service")
+            UpdateProgress.addObserver(observer)
+            return
+        }
         lastAt = 0L
         UpdateProgress.addObserver(observer)
         runCatching { ContextCompat.startForegroundService(app, Intent(app, BatchForegroundService::class.java)) }
@@ -152,6 +162,7 @@ class BatchForegroundService : Service() {
             ServiceCompat.startForeground(this, BatchForeground.ID, BatchForeground.notification(this),
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC else 0)
             BatchForeground.foreground = true
+            if (budgetToken == 0L) budgetToken = DataSyncBudget.begin(this)
         }.onFailure {
             Log.w("BatchForeground", "startForeground refused: ${it.message}")
             stopSelf(); return START_NOT_STICKY
@@ -161,7 +172,23 @@ class BatchForegroundService : Service() {
         return START_NOT_STICKY
     }
 
+    /** Budget token of this service's hold ([DataSyncBudget.begin]); 0 = none open. */
+    private var budgetToken = 0L
+
+    /**
+     * #fgs-timeout Android 15+: the dataSync time limit ran out. Stop NOW: a foreground service still
+     * running a few seconds after this call crashes the app (ForegroundServiceDidNotStopInTimeException).
+     * The batch carries on as background work; the chain is persisted and resumes on its next trigger.
+     */
+    override fun onTimeout(startId: Int, fgsType: Int) {
+        Log.w("BatchForeground", "dataSync time limit reached (type $fgsType): stopping the foreground service")
+        BatchForeground.foreground = false
+        ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
+        stopSelf()
+    }
+
     override fun onDestroy() {
+        DataSyncBudget.end(this, budgetToken); budgetToken = 0L
         BatchForeground.foreground = false
         ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
         super.onDestroy()

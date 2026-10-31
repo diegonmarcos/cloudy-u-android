@@ -322,7 +322,7 @@ dependencies {
     implementation 'androidx.compose.foundation:foundation'
     implementation 'androidx.compose.material3:material3'
     // Tracking engine: periodic WorkManager job (no foreground service) + Health Connect steps.
-    implementation 'androidx.work:work-runtime-ktx:2.9.1'
+    implementation 'androidx.work:work-runtime-ktx:2.12.0'
     // #1145 wake sources: Activity Recognition transitions + geofencing (optional at run time: no Play Services = tick fallback)
     implementation 'com.google.android.gms:play-services-location:21.3.0'
     implementation 'androidx.health.connect:connect-client:1.1.0-alpha10'

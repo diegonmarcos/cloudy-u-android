@@ -1,0 +1,6 @@
+{
+  "_doc": "#fgs-timeout exemptions for cloud-android-fgs-timeout-guard.py. Each key is a repo-relative source file that enters a foreground from a worker without core DataSyncBudget, with the reason. A key whose file no longer has such a call is stale and turns the guard red.",
+  "exempt_workers": {
+    "ac_cloud-chat/libraries/@mattermost/rnshare/android/src/main/java/com/mattermost/rnshare/ShareWorker.kt": "Upstream Mattermost React Native share module (no libs:core link). One-shot, user-started share upload, never periodic; its module pins work-runtime 2.10.0, whose SystemForegroundService stops the work on onTimeout."
+  }
+}

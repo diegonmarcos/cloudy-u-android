@@ -29,8 +29,10 @@
 #       /api/store/progress returns), the host's icon and launch target, and
 #       progress re-posts are throttled to >= 1 s
 #   F5  the CoroutineWorkers that download or install (ConstellationWorker,
-#       UpdateWorker, ApkInstallWorker) declare getForegroundInfo() and call
-#       setForeground(BatchForeground.foregroundInfo(...)) with type dataSync
+#       UpdateWorker, ApkInstallWorker) declare getForegroundInfo() and enter
+#       BatchForeground.foregroundInfo(...) (type dataSync) through holdDataSync,
+#       i.e. only for user-initiated runs within core DataSyncBudget (#fgs-timeout:
+#       Android 15's 6 h/24 h dataSync cap); the service handles onTimeout
 #   F6  the fleet-alerts guard classifies the service's re-post as `progress`
 set -u
 APP="$(cd "$(dirname "$0")/.." && pwd)"
@@ -148,12 +150,15 @@ grep -q 'const val THROTTLE_MS = 1_000L' "$SVC" && grep -q 'now - lastAt >= THRO
 echo "== F5: the workers that download or install declare foreground info =="
 for w in "$CW" "$UW" "$AIW"; do
   grep -q 'override suspend fun getForegroundInfo(): ForegroundInfo = BatchForeground.foregroundInfo(applicationContext)' "$w" \
-    && grep -q 'runCatching { setForeground(BatchForeground.foregroundInfo(applicationContext)) }' "$w" \
-    && ok "$(basename "$w"): getForegroundInfo() + setForeground(BatchForeground.foregroundInfo)" \
+    && grep -q 'fgsToken = holdDataSync(userInitiated = .*) { BatchForeground.foregroundInfo(it) }' "$w" \
+    && grep -q 'DataSyncBudget.end(applicationContext, fgsToken)' "$w" \
+    && ok "$(basename "$w"): getForegroundInfo() + budgeted holdDataSync(BatchForeground.foregroundInfo)" \
     || bad "$(basename "$w"): no foreground info"
 done
 grep -q 'ForegroundInfo(ID, notification(ctx), ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)' "$SVC" \
   && ok "the workers' ForegroundInfo is type dataSync" || bad "the workers' ForegroundInfo has no dataSync type"
+grep -q 'override fun onTimeout(startId: Int, fgsType: Int)' "$SVC" \
+  && ok "BatchForegroundService stops itself on the dataSync timeout" || bad "BatchForegroundService has no onTimeout"
 
 echo "== F6: the fleet-alerts guard knows the re-post is progress, not an alert =="
 python3 - "$POLICY" <<'EOF' && ok "fleet-alerts-guard.json lists BatchForegroundService.kt as kind=progress" || bad "BatchForegroundService.kt is not classified in fleet-alerts-guard.json"

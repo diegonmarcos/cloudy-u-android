@@ -216,7 +216,7 @@ dependencies {
     implementation(libs.eventbus)
     implementation(libs.libphonenumber)
     implementation(libs.geocoder)
-    implementation("androidx.work:work-runtime-ktx:2.9.1")
+    implementation("androidx.work:work-runtime-ktx:2.12.0")
     testImplementation("junit:junit:4.13.2")
     // Compose UI tests of the SMS screens run on the JVM under Robolectric (same stack as libs:bottomnav's tests).
     testImplementation("org.robolectric:robolectric:4.16.1")
