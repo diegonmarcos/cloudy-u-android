@@ -73,10 +73,13 @@ object ToolTags {
     fun fftSource(id: String) = "tools_fft_$id"
 }
 
-/** The Fin forms' currency: the user's last pick, else the locale's; the list is the device's ISO 4217 table (offline). */
+/**
+ * The Fin forms' currency: the user's last pick, else the locale's; the list is the device's ISO 4217 table (offline).
+ * Kept in the app's declared `cloud_calc` store (fleet-config.json), under its own key.
+ */
 object ToolPrefs {
-    private const val FILE = "calc_tools"
-    private const val CURRENCY = "currency"
+    private const val FILE = "cloud_calc"
+    private const val CURRENCY = "tools_currency"
     fun currency(ctx: Context): String = ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE).getString(CURRENCY, null)
         ?: runCatching { java.util.Currency.getInstance(Locale.getDefault()).currencyCode }.getOrDefault("EUR")
     fun setCurrency(ctx: Context, code: String) = ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE).edit().putString(CURRENCY, code).apply()
