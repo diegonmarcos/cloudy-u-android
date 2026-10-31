@@ -1,0 +1,78 @@
+# SuperApp Resources › Battery use per app (per charge cycle / per month) and the Shizuku-free battery measurement, on a
+# real emulator: aa_cloud-superapp/test/emulator-battery-usage.sh drives one charge cycle with `dumpsys battery`, then
+# photographs Resources (Cycle, Month) and About › Battery Usage Details, and fails when the cycle is missing or any of
+# those screens says "Shizuku". Evidence: the `battery-usage-evidence` artifact (PNG + uiautomator XML). Manual only.
+name: "Test -> SuperApp battery usage (emulator)"
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: "Ship cloud-superapp run id whose x86_64 APK artifact to test (empty = the newest successful Ship run)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  battery-usage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Fetch the SuperApp APK
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ inputs.run_id }}
+        run: |
+          set -eu
+          [ -n "$RUN_ID" ] || RUN_ID=$(gh run list -R "$REPO" -w ship-cloud-superapp.yml --status success -L 1 --json databaseId --jq '.[0].databaseId')
+          echo "Ship run: $RUN_ID"
+          name=$(gh api "repos/$REPO/actions/runs/$RUN_ID/artifacts" --paginate --jq '.artifacts[] | select(.name|startswith("Cloud-SuperApp-x86_64-")) | .name' | head -1)
+          [ -n "$name" ] || { echo "::error::run $RUN_ID has no Cloud-SuperApp-x86_64 artifact"; exit 1; }
+          gh run download "$RUN_ID" -R "$REPO" -n "$name" -D apk/dl
+          find apk/dl -name '*.apk' | head -1 | xargs -I{} cp {} apk/superapp.apk
+          ls -l apk
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
+
+      - name: Boot emulator + battery usage (attempt 1)
+        id: try1
+        continue-on-error: true
+        timeout-minutes: 16
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash aa_cloud-superapp/test/emulator-battery-usage.sh apk/superapp.apk out
+
+      - name: Boot emulator + battery usage (attempt 2)
+        if: steps.try1.outcome != 'success'
+        timeout-minutes: 16
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash aa_cloud-superapp/test/emulator-battery-usage.sh apk/superapp.apk out
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: battery-usage-evidence
+          path: out/
+          if-no-files-found: warn
