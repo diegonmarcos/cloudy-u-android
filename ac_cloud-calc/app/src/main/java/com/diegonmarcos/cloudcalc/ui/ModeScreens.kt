@@ -473,17 +473,24 @@ private fun holidayBook(ctx: android.content.Context, mode: Declarations.Mode): 
     return runCatching { WorkingDays.parse(ctx.assets.open(path).bufferedReader().use { it.readText() }) }.getOrElse { WorkingDays.Book(emptyList()) }
 }
 
-// ── form: Date & Time, Finance, Acoustics ───────────────────────────────────────────────────
+// ── form: Tools ▸ Time & Date, Fin, Sound ───────────────────────────────────────────────────
 
 @Composable
 private fun FormMode(mode: Declarations.Mode) {
     if (mode.forms.isEmpty()) return
     var formId by rememberSaveable(mode.id) { mutableStateOf(mode.forms.first().id) }
     val form = mode.forms.firstOrNull { it.id == formId } ?: mode.forms.first()
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(CalcMetrics.gutter)) {
+    val chips: @Composable () -> Unit = {
         LazyRow(horizontalArrangement = Arrangement.spacedBy(CalcMetrics.gap)) {
-            items(mode.forms, key = { it.id }) { f -> FilterChip(selected = f.id == form.id, onClick = { formId = f.id }, label = { Text(f.label) }) }
+            items(mode.forms, key = { it.id }) { f -> FilterChip(selected = f.id == form.id, onClick = { formId = f.id }, label = { Text(f.label) }, modifier = Modifier.testTag(CalcTags.form(f.id))) }
         }
+    }
+    // #1377 a form with a view is a screen of its own (it scrolls itself): the chip row stays on top.
+    if (form.view.isNotEmpty()) Column(Modifier.fillMaxSize()) {
+        Box(Modifier.padding(start = CalcMetrics.gutter, end = CalcMetrics.gutter, top = CalcMetrics.gutter)) { chips() }
+        androidx.compose.runtime.key(form.id) { ToolView(mode, form.view) }
+    } else Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(CalcMetrics.gutter)) {
+        chips()
         androidx.compose.runtime.key(form.id) { FormBody(mode, form) }
     }
 }
@@ -500,7 +507,13 @@ private fun FormBody(mode: Declarations.Mode, form: Declarations.Form) {
     }
     val values = remember(form.id) {
         mutableStateMapOf<String, String>().apply {
-            form.fields.forEach { put(it.id, if (it.default.isEmpty() && it.defaultFrom == "locale_country") book.forCountry(java.util.Locale.getDefault().country) else it.default) }
+            form.fields.forEach {
+                put(it.id, when {
+                    it.optionsFrom == DateForms.CURRENCIES -> ToolPrefs.currency(ctx)
+                    it.default.isEmpty() && it.defaultFrom == "locale_country" -> book.forCountry(java.util.Locale.getDefault().country)
+                    else -> it.default
+                })
+            }
         }
     }
     var outputs by remember(form.id) { mutableStateOf(listOf<Pair<String, Logic.Result>>()) }
@@ -510,7 +523,7 @@ private fun FormBody(mode: Declarations.Mode, form: Declarations.Form) {
         if (form.outputs.any { it.calc.isEmpty() }) delay(DEBOUNCE_MS)
         outputs = form.outputs.map { o ->
             DateForms.label(o, snapshot, form.bind) to
-                if (o.calc.isNotEmpty()) DateForms.result(book, o, form.bind, snapshot)
+                if (o.calc.isNotEmpty()) DateForms.toolResult(o, form, snapshot) ?: DateForms.result(book, o, form.bind, snapshot)
                 else Logic.result(io { api.eval(Logic.fill(o.expr, snapshot), mode.options) })
         }
     }
@@ -530,8 +543,9 @@ private fun FormBody(mode: Declarations.Mode, form: Declarations.Form) {
             }
             "toggle" -> ToggleField(f.label, values[f.id] == "true", DateTags.toggle(f.id)) { values[f.id] = it.toString() }
             "choice" -> ChoiceField(
-                f.label, if (f.optionsFrom == "holiday_regions") regionOptions else f.options, values[f.id].orEmpty(), DateTags.choice(f.id),
-            ) { values[f.id] = it }
+                f.label, when (f.optionsFrom) { "holiday_regions" -> regionOptions; DateForms.CURRENCIES -> ToolPrefs.currencies; else -> f.options },
+                values[f.id].orEmpty(), DateTags.choice(f.id),
+            ) { values[f.id] = it; if (f.optionsFrom == DateForms.CURRENCIES) ToolPrefs.setCurrency(ctx, it) }
             else -> OutlinedTextField(
                 value = values[f.id].orEmpty(),
                 onValueChange = { values[f.id] = it },
@@ -542,7 +556,11 @@ private fun FormBody(mode: Declarations.Mode, form: Declarations.Form) {
         }
     }
     outputs.forEach { (label, r) ->
-        Row(
+        // #1377 a multi-line result (a loan's schedule) is a block under its label.
+        if (r.ok && '\n' in r.text) Column(Modifier.fillMaxWidth().padding(vertical = CalcMetrics.gap)) {
+            Text(label, style = MaterialTheme.typography.bodyLarge)
+            Text(r.text, style = MaterialTheme.typography.bodySmall, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, modifier = Modifier.testTag(CalcTags.RESULT))
+        } else Row(
             Modifier.fillMaxWidth().clickable {
                 if (r.ok) state.remember(Logic.Entry(mode.id, label, r.text), historyMax())
             }.padding(vertical = CalcMetrics.gap),

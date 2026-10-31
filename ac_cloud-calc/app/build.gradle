@@ -261,6 +261,7 @@ dependencies {
     implementation project(':libs:wifi')
     // The Sound tools' maths (#772): plain JVM, mutation-tested on its own (sound/build.gradle).
     implementation project(':sound')
+    implementation project(':tools')   // #1377 the Tools maths: calendars, date facts, finance, sound calculators
     // #772 the Decisions client (Http, Decision) the Jev and Sound screens hold; shared with the image engine.
     implementation project(':libs:decisions')
     // #772 the Camera tools: their maths (plain JVM, PIT), the image engine's contract (Identify,

@@ -192,6 +192,8 @@ object CalcTags {
     const val HISTORY_CLEAR = "calc_history_clear"
     fun tab(id: String) = "calc_tab_$id"
     fun mode(id: String) = "calc_mode_$id"
+    /** #1377 a form chip of a form mode (Tools ▸ Time & Date ▸ Calendars …). */
+    fun form(id: String) = "calc_form_$id"
     fun key(label: String) = "calc_key_$label"
 
     // #770 the Jev section and the follow-up question box.

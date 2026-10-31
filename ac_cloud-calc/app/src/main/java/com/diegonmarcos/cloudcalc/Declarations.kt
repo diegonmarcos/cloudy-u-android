@@ -45,7 +45,8 @@ object Declarations {
         val label: String, val expr: String,
         val calc: String = "", val metric: String = "", val labelOn: String = "", val labelOff: String = "",
     )
-    data class Form(val id: String, val label: String, val fields: List<Field>, val outputs: List<Output>, val bind: Map<String, String> = emptyMap())
+    /** #1377 a form with a [view] draws that screen (ui/ToolScreens.kt) instead of its fields and outputs. */
+    data class Form(val id: String, val label: String, val fields: List<Field>, val outputs: List<Output>, val bind: Map<String, String> = emptyMap(), val view: String = "")
 
     /** One chip of a choice row: picking it sets eval option [key] to [value]. */
     data class Choice(val label: String, val key: String, val value: Int)
@@ -157,6 +158,7 @@ object Declarations {
                         Output(it.getString("label"), it.optString("expr"), it.optString("calc"), it.optString("metric"), it.optString("label_on"), it.optString("label_off"))
                     },
                     (f.optJSONObject("bind") ?: JSONObject()).let { b -> b.keys().asSequence().associateWith { k -> b.getString(k) } },
+                    f.optString("view"),
                 )
             },
             categories = (m.optJSONArray("categories") ?: JSONArray()).strings(),

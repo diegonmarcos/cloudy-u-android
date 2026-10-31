@@ -178,7 +178,9 @@ fun WorldClockMode(mode: Declarations.Mode) {
                         -1 -> stringResource(R.string.clock_yesterday) + ", "
                         else -> ""
                     }
-                    Text(shift + ClockLogic.offsetText(z, here, now), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    // #1377 the city's UTC offset and whether it is day or night there.
+                    val sky = if (ClockLogic.isDay(z, now)) "☀ day" else "☾ night"
+                    Text(shift + ClockLogic.offsetText(z, here, now) + "  ·  " + ClockLogic.utcText(z, now) + "  ·  " + sky, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Text(HHMM.format(Instant.ofEpochMilli(now).atZone(z)), style = MaterialTheme.typography.headlineMedium)
                 TextButton(onClick = { if (i > 0) ClockEngine.setZones(ctx, zones.toMutableList().apply { add(i - 1, removeAt(i)) }) }, enabled = i > 0) { Text("↑") }

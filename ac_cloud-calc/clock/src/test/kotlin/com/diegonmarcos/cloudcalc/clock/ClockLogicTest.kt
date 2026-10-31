@@ -392,6 +392,17 @@ class ClockLogicTest {
         assertEquals("+3:30 h", ClockLogic.offsetText(ZoneId.of("Asia/Kolkata"), madrid, friNoon))
         assertEquals("−0:30 h", ClockLogic.offsetText(ZoneId.of("UTC"), ZoneId.of("+00:30"), friNoon))
         assertEquals("Same time", ClockLogic.offsetText(madrid, ZoneId.of("Europe/Paris"), friNoon))
+        assertEquals("UTC+9", ClockLogic.utcText(tokyo, friNoon))
+        assertEquals("UTC−4", ClockLogic.utcText(ny, friNoon)) // EDT in October
+        assertEquals("UTC+5:30", ClockLogic.utcText(ZoneId.of("Asia/Kolkata"), friNoon))
+        assertEquals("UTC−2:30", ClockLogic.utcText(ZoneId.of("America/St_Johns"), friNoon)) // NDT
+        assertEquals("UTC", ClockLogic.utcText(utc, friNoon))
+        assertEquals(true, ClockLogic.isDay(madrid, friNoon))
+        assertEquals(false, ClockLogic.isDay(tokyo, friNoon)) // 19:00 in Tokyo
+        assertEquals(true, ClockLogic.isDay(madrid, at(madrid, 2026, 10, 2, 6, 0)))
+        assertEquals(false, ClockLogic.isDay(madrid, at(madrid, 2026, 10, 2, 5, 59)))
+        assertEquals(true, ClockLogic.isDay(madrid, at(madrid, 2026, 10, 2, 17, 59)))
+        assertEquals(false, ClockLogic.isDay(madrid, at(madrid, 2026, 10, 2, 18, 0)))
         // 23:00 in Madrid is already tomorrow in Tokyo and still today in New York.
         val late = at(madrid, 2026, 10, 2, 23, 0)
         assertEquals(1, ClockLogic.dayShift(tokyo, madrid, late))

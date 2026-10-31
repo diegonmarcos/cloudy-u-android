@@ -264,6 +264,18 @@ object ClockLogic {
         return sign + (if (m == 0) "$h" else "%d:%02d".format(h, m)) + " h"
     }
 
+    /** #1377 [zone]'s offset from UTC at [now]: "UTC", "UTC+9", "UTC−3", "UTC+5:30". */
+    fun utcText(zone: ZoneId, now: Long): String {
+        val s = zone.rules.getOffset(Instant.ofEpochMilli(now)).totalSeconds
+        if (s == 0) return "UTC"
+        val h = abs(s) / 3600
+        val m = (abs(s) % 3600) / 60
+        return "UTC" + (if (s > 0) "+" else "−") + (if (m == 0) "$h" else "%d:%02d".format(h, m))
+    }
+
+    /** #1377 day (06:00 to 17:59 local) or night in [zone] at [now]: a clock-face rule, the city's coordinates are not known. */
+    fun isDay(zone: ZoneId, now: Long): Boolean = Instant.ofEpochMilli(now).atZone(zone).hour in 6..17
+
     /** Whether [zone]'s date at [now] is the day before (−1), the same (0) or the day after (+1) [here]'s. */
     fun dayShift(zone: ZoneId, here: ZoneId, now: Long): Int {
         val i = Instant.ofEpochMilli(now)

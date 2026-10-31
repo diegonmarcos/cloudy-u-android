@@ -116,6 +116,7 @@
         "clock",
         "jev",
         "sound",
+        "tools",
         "libs:text-tools",
         "libs:decisions",
         "measure",
@@ -139,6 +140,10 @@
     },
     "jev": {
       "_doc": "#770 the Jev section's logic as a plain-JVM Kotlin module (jev/): the build.json::jev declaration's parser and validator, the Decisions API call (the app's ONLY network code: HttpURLConnection over Android's resolver, so the fleet DNS menu applies), the router (one choice question over the declared tools + none, thresholds, candidates, the offline fallback), reading numbers and durations out of a request, the per-field slot questions, follow-up questions about a result, and the live decision-model catalogue. No Android in it: its suite drives a real local HTTP server as the mock Decisions API, and PIT mutation-tests it on every `gradle test` (jev/build.gradle).",
+      "type": "library"
+    },
+    "tools": {
+      "_doc": "#1377 the Calc ▸ Tools maths as a plain-JVM Kotlin module (tools/): every calendar of Time & Date ▸ Calendars (Julian, Hebrew, Islamic, Persian, Saka, Coptic, Ethiopian, Mayan, Aztec, 13-Moon, International Fixed, French Republican, Discordian, ...), the Date facts, the Fin formulas (loan schedule, FV, PV, NPV, IRR, savings goal, CAGR, inflation) and the Sound calculators (note, dB, SPL, BPM, wavelength, file size; it uses :sound's Notes and Air). No Android in it, so PIT mutation-tests it on every `gradle test` (tools/build.gradle). The screens are app/.../ui/ToolScreens.kt and the Tools forms of build.json.",
       "type": "library"
     },
     "sound": {
@@ -3662,9 +3667,9 @@
       },
       {
         "id": "datetime",
-        "label": "Date & Time",
+        "label": "Time & Date",
         "icon": "event",
-        "short": "Date",
+        "short": "Time & Date",
         "tab": "tools",
         "kind": "form",
         "options": {
@@ -3672,9 +3677,68 @@
         },
         "spec": {
           "_doc": "#1329 working days: the holidays are declared RULES per region (data/assets/datetime/holidays.json, offline, no library), the weekend a field's options; a field type date renders a tappable calendar (a range when it names range_end), toggle a switch, choice a menu.",
-          "holidays": "datetime/holidays.json"
+          "holidays": "datetime/holidays.json",
+          "_doc_tools": "#1377 Tools ▸ Time & Date: a form with `view` draws a screen of its own (world_clock = the Clock's World clock page, calendars = one date in every calendar of tools/Calendars.kt); an output with a `calc` the :tools module knows (ToolCalcs.CALCS) is counted there, the rest of the calcs are DateForms'."
         },
         "forms": [
+          {
+            "id": "world",
+            "label": "World Clock",
+            "view": "world_clock",
+            "fields": [],
+            "outputs": []
+          },
+          {
+            "id": "today",
+            "label": "Date",
+            "fields": [
+              {
+                "id": "date",
+                "label": "Date (blank = today)",
+                "default": "",
+                "type": "date"
+              }
+            ],
+            "outputs": [
+              {
+                "label": "Date",
+                "calc": "date",
+                "metric": "full"
+              },
+              {
+                "label": "Day of year",
+                "calc": "date",
+                "metric": "doy"
+              },
+              {
+                "label": "ISO week",
+                "calc": "date",
+                "metric": "week"
+              },
+              {
+                "label": "Quarter",
+                "calc": "date",
+                "metric": "quarter"
+              },
+              {
+                "label": "Days left in the year",
+                "calc": "date",
+                "metric": "left"
+              },
+              {
+                "label": "Leap year",
+                "calc": "date",
+                "metric": "leap"
+              }
+            ]
+          },
+          {
+            "id": "calendars",
+            "label": "Calendars",
+            "view": "calendars",
+            "fields": [],
+            "outputs": []
+          },
           {
             "id": "between",
             "label": "Days between",
@@ -3887,7 +3951,7 @@
       },
       {
         "id": "finance",
-        "label": "Finance",
+        "label": "Fin",
         "icon": "payments",
         "short": "Fin",
         "tab": "tools",
@@ -3896,6 +3960,305 @@
           "approx": 2
         },
         "forms": [
+          {
+            "id": "loan",
+            "label": "Loan / mortgage",
+            "fields": [
+              {
+                "id": "principal",
+                "label": "Principal",
+                "default": "200000"
+              },
+              {
+                "id": "rate",
+                "label": "Annual rate %",
+                "default": "5"
+              },
+              {
+                "id": "years",
+                "label": "Years",
+                "default": "30"
+              },
+              {
+                "id": "currency",
+                "label": "Currency",
+                "default": "",
+                "type": "choice",
+                "options_from": "currencies",
+                "default_from": "locale_currency"
+              }
+            ],
+            "outputs": [
+              {
+                "label": "Monthly payment",
+                "calc": "loan",
+                "metric": "payment"
+              },
+              {
+                "label": "Total interest",
+                "calc": "loan",
+                "metric": "interest"
+              },
+              {
+                "label": "Total paid",
+                "calc": "loan",
+                "metric": "total"
+              },
+              {
+                "label": "Schedule by year",
+                "calc": "loan",
+                "metric": "schedule"
+              }
+            ]
+          },
+          {
+            "id": "interest",
+            "label": "Compound / FV",
+            "fields": [
+              {
+                "id": "p",
+                "label": "Principal",
+                "default": "1000"
+              },
+              {
+                "id": "r",
+                "label": "Annual rate %",
+                "default": "5"
+              },
+              {
+                "id": "y",
+                "label": "Years",
+                "default": "10"
+              },
+              {
+                "id": "n",
+                "label": "Compounds per year",
+                "default": "1"
+              },
+              {
+                "id": "deposit",
+                "label": "Deposit per compounding period",
+                "default": "0"
+              },
+              {
+                "id": "currency",
+                "label": "Currency",
+                "default": "",
+                "type": "choice",
+                "options_from": "currencies",
+                "default_from": "locale_currency"
+              }
+            ],
+            "outputs": [
+              {
+                "label": "Future value",
+                "calc": "compound",
+                "metric": "fv"
+              },
+              {
+                "label": "Interest earned",
+                "calc": "compound",
+                "metric": "interest"
+              }
+            ]
+          },
+          {
+            "id": "pv",
+            "label": "Present value",
+            "fields": [
+              {
+                "id": "fv",
+                "label": "Future amount",
+                "default": "10000"
+              },
+              {
+                "id": "rate",
+                "label": "Annual discount rate %",
+                "default": "5"
+              },
+              {
+                "id": "years",
+                "label": "Years",
+                "default": "10"
+              },
+              {
+                "id": "currency",
+                "label": "Currency",
+                "default": "",
+                "type": "choice",
+                "options_from": "currencies",
+                "default_from": "locale_currency"
+              }
+            ],
+            "outputs": [
+              {
+                "label": "Present value",
+                "calc": "pv",
+                "metric": "pv"
+              }
+            ]
+          },
+          {
+            "id": "npv",
+            "label": "NPV / IRR",
+            "fields": [
+              {
+                "id": "rate",
+                "label": "Discount rate % per period",
+                "default": "8"
+              },
+              {
+                "id": "flows",
+                "label": "Cash flows from t=0 (; or space)",
+                "default": "-1000; 300; 400; 500"
+              },
+              {
+                "id": "currency",
+                "label": "Currency",
+                "default": "",
+                "type": "choice",
+                "options_from": "currencies",
+                "default_from": "locale_currency"
+              }
+            ],
+            "outputs": [
+              {
+                "label": "Net present value",
+                "calc": "npv",
+                "metric": "npv"
+              },
+              {
+                "label": "Internal rate of return",
+                "calc": "npv",
+                "metric": "irr"
+              }
+            ]
+          },
+          {
+            "id": "savings",
+            "label": "Savings goal",
+            "fields": [
+              {
+                "id": "goal",
+                "label": "Goal",
+                "default": "10000"
+              },
+              {
+                "id": "current",
+                "label": "Saved now",
+                "default": "0"
+              },
+              {
+                "id": "rate",
+                "label": "Annual rate %",
+                "default": "3"
+              },
+              {
+                "id": "years",
+                "label": "Years",
+                "default": "5"
+              },
+              {
+                "id": "currency",
+                "label": "Currency",
+                "default": "",
+                "type": "choice",
+                "options_from": "currencies",
+                "default_from": "locale_currency"
+              }
+            ],
+            "outputs": [
+              {
+                "label": "Monthly deposit",
+                "calc": "savings",
+                "metric": "monthly"
+              },
+              {
+                "label": "Total deposited",
+                "calc": "savings",
+                "metric": "deposited"
+              },
+              {
+                "label": "Interest earned",
+                "calc": "savings",
+                "metric": "interest"
+              }
+            ]
+          },
+          {
+            "id": "cagr",
+            "label": "CAGR",
+            "fields": [
+              {
+                "id": "start",
+                "label": "Start value",
+                "default": "1000"
+              },
+              {
+                "id": "end",
+                "label": "End value",
+                "default": "2000"
+              },
+              {
+                "id": "years",
+                "label": "Years",
+                "default": "5"
+              }
+            ],
+            "outputs": [
+              {
+                "label": "CAGR",
+                "calc": "cagr",
+                "metric": "rate"
+              },
+              {
+                "label": "Growth multiple",
+                "calc": "cagr",
+                "metric": "multiple"
+              }
+            ]
+          },
+          {
+            "id": "inflation",
+            "label": "Inflation",
+            "fields": [
+              {
+                "id": "amount",
+                "label": "Amount today",
+                "default": "100"
+              },
+              {
+                "id": "rate",
+                "label": "Inflation % a year",
+                "default": "3"
+              },
+              {
+                "id": "years",
+                "label": "Years",
+                "default": "10"
+              },
+              {
+                "id": "currency",
+                "label": "Currency",
+                "default": "",
+                "type": "choice",
+                "options_from": "currencies",
+                "default_from": "locale_currency"
+              }
+            ],
+            "outputs": [
+              {
+                "label": "Same goods then cost",
+                "calc": "inflation",
+                "metric": "future"
+              },
+              {
+                "label": "Worth then in today's money",
+                "calc": "inflation",
+                "metric": "real"
+              }
+            ]
+          },
           {
             "id": "discount",
             "label": "Discount",
@@ -3956,79 +4319,15 @@
                 "expr": "({bill}) * (1 + ({tip})%) / ({people})"
               }
             ]
-          },
-          {
-            "id": "loan",
-            "label": "Loan",
-            "fields": [
-              {
-                "id": "principal",
-                "label": "Principal",
-                "default": "200000"
-              },
-              {
-                "id": "rate",
-                "label": "Annual rate %",
-                "default": "5"
-              },
-              {
-                "id": "years",
-                "label": "Years",
-                "default": "30"
-              }
-            ],
-            "outputs": [
-              {
-                "label": "Monthly payment",
-                "expr": "-pmt(({rate})% / 12, ({years}) * 12, {principal})"
-              },
-              {
-                "label": "Total paid",
-                "expr": "-pmt(({rate})% / 12, ({years}) * 12, {principal}) * ({years}) * 12"
-              }
-            ]
-          },
-          {
-            "id": "interest",
-            "label": "Compound interest",
-            "fields": [
-              {
-                "id": "p",
-                "label": "Principal",
-                "default": "1000"
-              },
-              {
-                "id": "r",
-                "label": "Annual rate %",
-                "default": "5"
-              },
-              {
-                "id": "y",
-                "label": "Years",
-                "default": "10"
-              },
-              {
-                "id": "n",
-                "label": "Compounds per year",
-                "default": "1"
-              }
-            ],
-            "outputs": [
-              {
-                "label": "Future value",
-                "expr": "({p}) * (1 + ({r})% / ({n}))^(({n}) * ({y}))"
-              },
-              {
-                "label": "Interest earned",
-                "expr": "({p}) * (1 + ({r})% / ({n}))^(({n}) * ({y})) - ({p})"
-              }
-            ]
           }
-        ]
+        ],
+        "spec": {
+          "_doc": "#1377 Tools ▸ Fin: discount and tip are engine expressions; the rest are counted by tools/Finance.kt through ToolCalcs. A choice field with options_from `currencies` is the device's ISO 4217 list, defaults to the locale's currency and remembers the user's pick across forms; money outputs print in it."
+        }
       },
       {
         "id": "acoustics",
-        "label": "Acoustics",
+        "label": "Sound",
         "icon": "graphic_eq",
         "short": "Sound",
         "tab": "tools",
@@ -4038,8 +4337,83 @@
         },
         "forms": [
           {
+            "id": "fft",
+            "label": "FFT",
+            "view": "fft",
+            "fields": [],
+            "outputs": []
+          },
+          {
+            "id": "tone",
+            "label": "Tone generator",
+            "view": "tone",
+            "fields": [],
+            "outputs": []
+          },
+          {
+            "id": "note",
+            "label": "Freq → note",
+            "fields": [
+              {
+                "id": "f",
+                "label": "Frequency (Hz)",
+                "default": "440"
+              },
+              {
+                "id": "a4",
+                "label": "A4 tuning (Hz)",
+                "default": "440"
+              }
+            ],
+            "outputs": [
+              {
+                "label": "Note and cents",
+                "calc": "note",
+                "metric": "note"
+              },
+              {
+                "label": "MIDI note",
+                "calc": "note",
+                "metric": "midi"
+              },
+              {
+                "label": "Nearest note",
+                "calc": "note",
+                "metric": "nearest"
+              }
+            ]
+          },
+          {
+            "id": "freq",
+            "label": "Note → freq",
+            "fields": [
+              {
+                "id": "note",
+                "label": "Note (A4, C#5, Bb3)",
+                "default": "A4"
+              },
+              {
+                "id": "cents",
+                "label": "Cents",
+                "default": "0"
+              },
+              {
+                "id": "a4",
+                "label": "A4 tuning (Hz)",
+                "default": "440"
+              }
+            ],
+            "outputs": [
+              {
+                "label": "Frequency",
+                "calc": "freq",
+                "metric": "hz"
+              }
+            ]
+          },
+          {
             "id": "dbsum",
-            "label": "Add two levels (dB)",
+            "label": "dB add / subtract",
             "fields": [
               {
                 "id": "l1",
@@ -4054,51 +4428,190 @@
             ],
             "outputs": [
               {
-                "label": "Combined dB",
-                "expr": "10 * log10(10^(({l1}) / 10) + 10^(({l2}) / 10))"
+                "label": "L1 + L2",
+                "calc": "db",
+                "metric": "sum"
+              },
+              {
+                "label": "L1 − L2 (remove L2 from a total L1)",
+                "calc": "db",
+                "metric": "diff"
               }
             ]
           },
           {
-            "id": "sound",
-            "label": "Speed of sound in air",
+            "id": "spl",
+            "label": "SPL",
             "fields": [
               {
-                "id": "t",
-                "label": "Temperature °C",
-                "default": "20"
+                "id": "pa",
+                "label": "Sound pressure (Pa)",
+                "default": "1"
+              },
+              {
+                "id": "level",
+                "label": "Level (dB SPL)",
+                "default": "94"
               }
             ],
             "outputs": [
               {
-                "label": "Speed",
-                "expr": "331.3 * sqrt(1 + ({t}) / 273.15) m/s"
+                "label": "Level of the pressure",
+                "calc": "spl",
+                "metric": "spl"
+              },
+              {
+                "label": "Pressure of the level",
+                "calc": "spl",
+                "metric": "pa"
+              }
+            ]
+          },
+          {
+            "id": "bpm",
+            "label": "BPM ⇄ delay",
+            "fields": [
+              {
+                "id": "bpm",
+                "label": "Tempo (BPM)",
+                "default": "120"
+              },
+              {
+                "id": "ms",
+                "label": "Delay (ms)",
+                "default": "500"
+              }
+            ],
+            "outputs": [
+              {
+                "label": "1/4 note",
+                "calc": "bpm",
+                "metric": "quarter"
+              },
+              {
+                "label": "1/8 note",
+                "calc": "bpm",
+                "metric": "eighth"
+              },
+              {
+                "label": "1/8 dotted",
+                "calc": "bpm",
+                "metric": "dotted"
+              },
+              {
+                "label": "1/8 triplet",
+                "calc": "bpm",
+                "metric": "triplet"
+              },
+              {
+                "label": "1/16 note",
+                "calc": "bpm",
+                "metric": "sixteenth"
+              },
+              {
+                "label": "1/2 note",
+                "calc": "bpm",
+                "metric": "half"
+              },
+              {
+                "label": "Whole note",
+                "calc": "bpm",
+                "metric": "whole"
+              },
+              {
+                "label": "Beat rate",
+                "calc": "bpm",
+                "metric": "hz"
+              },
+              {
+                "label": "Tempo of the delay",
+                "calc": "bpm",
+                "metric": "from_ms"
               }
             ]
           },
           {
             "id": "wave",
-            "label": "Wavelength",
+            "label": "Wavelength ⇄ frequency",
             "fields": [
               {
                 "id": "f",
-                "label": "Frequency Hz",
+                "label": "Frequency (Hz)",
                 "default": "440"
               },
               {
-                "id": "c",
-                "label": "Speed m/s",
-                "default": "343"
+                "id": "lambda",
+                "label": "Wavelength (m)",
+                "default": "1"
+              },
+              {
+                "id": "t",
+                "label": "Air temperature (°C)",
+                "default": "20"
               }
             ],
             "outputs": [
               {
-                "label": "Wavelength",
-                "expr": "(({c}) m/s) / (({f}) Hz) to m"
+                "label": "Speed of sound",
+                "calc": "wave",
+                "metric": "speed"
+              },
+              {
+                "label": "Wavelength of the frequency",
+                "calc": "wave",
+                "metric": "wavelength"
               },
               {
                 "label": "Period",
                 "expr": "1 / (({f}) Hz) to ms"
+              },
+              {
+                "label": "Frequency of the wavelength",
+                "calc": "wave",
+                "metric": "frequency"
+              }
+            ]
+          },
+          {
+            "id": "filesize",
+            "label": "File size",
+            "fields": [
+              {
+                "id": "rate",
+                "label": "Sample rate (Hz)",
+                "default": "44100"
+              },
+              {
+                "id": "bits",
+                "label": "Bit depth",
+                "default": "16"
+              },
+              {
+                "id": "channels",
+                "label": "Channels",
+                "default": "2"
+              },
+              {
+                "id": "seconds",
+                "label": "Duration (s)",
+                "default": "60"
+              }
+            ],
+            "outputs": [
+              {
+                "label": "File size",
+                "calc": "filesize",
+                "metric": "size"
+              },
+              {
+                "label": "Bit rate",
+                "calc": "filesize",
+                "metric": "bitrate"
+              },
+              {
+                "label": "Per minute",
+                "calc": "filesize",
+                "metric": "minute"
               }
             ]
           },
@@ -4149,8 +4662,28 @@
                 "expr": "({l}) - 20 * log10(({d2}) / ({d1}))"
               }
             ]
+          },
+          {
+            "id": "sound",
+            "label": "Speed of sound in air",
+            "fields": [
+              {
+                "id": "t",
+                "label": "Temperature °C",
+                "default": "20"
+              }
+            ],
+            "outputs": [
+              {
+                "label": "Speed",
+                "expr": "331.3 * sqrt(1 + ({t}) / 273.15) m/s"
+              }
+            ]
           }
-        ]
+        ],
+        "spec": {
+          "_doc": "#1377 Tools ▸ Sound: fft (live microphone spectrum through MicGate, or a synthetic signal) and tone (the Measure ▸ Sound generator) are views; note, freq, dB, SPL, BPM, wave and filesize outputs are counted by tools/ToolCalcs.kt; ratio, distance and sound stay engine expressions."
+        }
       },
       {
         "id": "meter",

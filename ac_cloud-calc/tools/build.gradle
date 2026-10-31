@@ -1,0 +1,43 @@
+// :tools — the Calc ▸ Tools maths (#1377) as a plain-JVM module: calendar systems, date facts and
+// finance (loan schedule, FV, PV, NPV, IRR, savings goal, CAGR, inflation). No Android here (the
+// Chinese date is read by the app from android.icu and handed in), so PIT mutates it on every
+// `gradle test`, as :clock and :sound.
+plugins {
+    id 'org.jetbrains.kotlin.jvm'
+    id 'info.solidsoft.pitest'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
+dependencies {
+    // Notes (frequency to note) and Air (speed of sound) are :sound's.
+    implementation project(':sound')
+    testImplementation 'junit:junit:4.13.2'
+}
+
+// MUTATION TESTING. PIT plants mutants (flipped comparisons, removed calls, swapped returns) in
+// every tools class and runs the tools suites against each; a mutant the suite does not
+// kill is a rule nothing checks. Below mutationThreshold the build fails. Kotlin's generated
+// data-class members are excluded: equality is the language's, not ours.
+pitest {
+    pitestVersion = '1.22.1'
+    targetClasses = ['com.diegonmarcos.cloudcalc.tools.*']
+    excludedMethods = ['equals', 'hashCode', 'toString', 'copy', 'copy$default', 'component*']
+    avoidCallsTo = ['kotlin.jvm.internal']
+    threads = 2
+    outputFormats = ['XML', 'HTML']
+    timestampedReports = false
+    mutationThreshold = 75
+}
+
+// `gradle test` is what CI runs (build.json::tests.unit.task): the mutation run rides on it.
+tasks.named('test') { finalizedBy 'pitest' }

@@ -1,6 +1,7 @@
 package com.diegonmarcos.cloudcalc.decide
 
 import android.content.Context
+import com.diegonmarcos.cloudcalc.DateForms
 import com.diegonmarcos.cloudcalc.Declarations
 import com.diegonmarcos.cloudcalc.Logic
 import com.diegonmarcos.cloudcalc.clock.ClockEngine
@@ -78,9 +79,10 @@ object JevFlow {
             val form = mode?.forms?.firstOrNull { it.id == plan.form }
             if (mode == null || form == null) Run(plan.mode, plan.form, emptyList(), "no form ${plan.form} in mode ${plan.mode}", plan.slots)
             else {
-                // #1329 an output the app counts (calc, no expr) is the form screen's; Ask shows the engine's.
-                val lines = form.outputs.filter { it.expr.isNotEmpty() }.map { o ->
-                    val r = Logic.result(api.eval(Logic.fill(o.expr, plan.values), mode.options))
+                // #1329 a date-range calc (holidays) is the form screen's; #1377 the :tools calcs and the engine's are answered here.
+                val lines = form.outputs.mapNotNull { o ->
+                    val r = if (o.expr.isNotEmpty()) Logic.result(api.eval(Logic.fill(o.expr, plan.values), mode.options))
+                    else DateForms.toolResult(o, form, plan.values) ?: return@mapNotNull null
                     o.label to (if (r.ok) r.text else "— " + r.error.ifBlank { r.messages.joinToString() })
                 }
                 val calc = form.label + ": " + form.fields.joinToString(", ") { f -> f.label + " " + plan.values[f.id].orEmpty() }

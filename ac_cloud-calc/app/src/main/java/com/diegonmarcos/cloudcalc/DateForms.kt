@@ -1,5 +1,6 @@
 package com.diegonmarcos.cloudcalc
 
+import com.diegonmarcos.cloudcalc.tools.ToolCalcs
 import java.time.format.TextStyle
 import java.util.Locale
 
@@ -34,6 +35,22 @@ object DateForms {
             else -> bad("calc " + o.calc)
         }
     }
+
+    /**
+     * #1377 an output the :tools module counts (ToolCalcs.CALCS): null for any other calc. A field is read by its role in the
+     * form's bind, else by its own id; money prints in the form's currency field (options_from `currencies`), if it has one.
+     */
+    fun toolResult(o: Declarations.Output, form: Declarations.Form, values: Map<String, String>, today: java.time.LocalDate = java.time.LocalDate.now()): Logic.Result? {
+        val currency = form.fields.firstOrNull { it.optionsFrom == CURRENCIES }?.let { values[it.id] }.orEmpty()
+        return try {
+            ToolCalcs.eval(o.calc, o.metric, { role -> values[form.bind[role] ?: role].orEmpty() }, currency, today)?.let { ok(it) }
+        } catch (e: IllegalArgumentException) {
+            bad(e.message.orEmpty())
+        }
+    }
+
+    /** A choice field's options_from that lists the device's ISO 4217 currencies. */
+    const val CURRENCIES = "currencies"
 
     private fun ok(text: String) = Logic.Result(true, text, emptyList(), "")
     private fun bad(why: String) = Logic.Result(false, "", emptyList(), "Not a valid value - $why")
