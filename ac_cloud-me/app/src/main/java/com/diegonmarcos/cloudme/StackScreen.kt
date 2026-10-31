@@ -16,13 +16,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.setValue
@@ -79,8 +80,10 @@ import org.json.JSONObject
  */
 @Composable
 fun StackScreen(stack: JSONArray, modifier: Modifier = Modifier) {
+    // #1367 keyed to the page's stack: a page switch opens the new page at its top, not at the old page's offset.
+    val scroll = remember(stack) { ScrollState(0) }
     Column(
-        modifier.fillMaxSize().verticalScroll(rememberScrollState())
+        modifier.fillMaxSize().verticalScroll(scroll)
             .padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 28.dp),
     ) {
         var any = false
