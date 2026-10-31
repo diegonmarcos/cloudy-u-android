@@ -192,10 +192,10 @@ object FinStore {
 }
 
 /** A quotes panel's rows ([label, last, chg, chg %, date]) as instruments. */
-fun quotesOf(d: PanelData, betterWhen: String? = null): List<FinQuote> = d.rows.map { r ->
+fun quotesOf(d: PanelData, betterWhen: String? = null): List<FinQuote> = d.rows.mapIndexed { i, r ->
     val label = r.getOrElse(0) { "" }
     FinQuote(symbol = label, last = r.getOrElse(1) { "" }, chg = r.getOrElse(2) { "" }, pct = r.getOrElse(3) { "" }, date = r.getOrElse(4) { "" },
-        lowerBetter = betterWhen != null && FinFormat.lowerBetter(betterWhen, label))
+        lowerBetter = betterWhen != null && FinFormat.lowerBetter(betterWhen, label), history = d.spark.getOrElse(i) { emptyList() })
 }
 
 /** A calendar panel's rows ([time, country, event, importance, values...]) as events. */

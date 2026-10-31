@@ -228,4 +228,15 @@ class FeedsTest {
         for (c in listOf("nyfed_rates", "treasury_xml", "sdmx_json", "jsonstat", "bls_series", "ff_calendar", "frankfurter_rates", "coinbase_exchange", "cboe_quotes", "finterm_v1", "nope"))
             assertTrue(c, Feeds.parse(c, "<html>rate limited</html>", opt()).isEmpty)
     }
+
+    @Test fun coinbaseDailyCandlesPerItemAreAQuoteRowWithASevenDaySparkline() {
+        // newest first, as Coinbase sends: [time, low, high, open, close, volume]
+        val body = (8 downTo 0).joinToString(",", "[", "]") { d -> val t = java.time.LocalDate.of(2026, 10, 20 + d).atStartOfDay(java.time.ZoneOffset.UTC).toEpochSecond(); "[$t,${99 + d},${101 + d},${100 + d},${100 + d},1]" }
+        val p = Feeds.parse("coinbase_exchange", body, opt(each = "BTC-USD")).points.single()
+        assertEquals(108.0, p.value, 0.0)
+        assertEquals(107.0, p.prev!!, 0.0)
+        assertEquals("2026-10-28", p.date)
+        assertEquals(listOf(102.0, 103.0, 104.0, 105.0, 106.0, 107.0, 108.0), p.hist)
+        assertTrue(Feeds.parse("coinbase_exchange", body, opt()).points.isEmpty())
+    }
 }

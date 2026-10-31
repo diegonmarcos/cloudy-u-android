@@ -12,7 +12,8 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 /** One value of a series, a quote or a curve tenor: [key] is what the source calls it, [x] its place on a curve, [prev] the value before. */
-data class Pt(val key: String, val label: String, val x: Double, val value: Double, val prev: Double?, val date: String)
+/** [hist]: recent values, oldest first, for a row sparkline (empty: none). */
+data class Pt(val key: String, val label: String, val x: Double, val value: Double, val prev: Double?, val date: String, val hist: List<Double> = emptyList())
 
 /**
  * One calendar event (economic release, earnings report, central bank decision). [ts] is UTC: "YYYY-MM-DDTHH:MMZ", or "YYYY-MM-DD" for an
@@ -224,7 +225,10 @@ object Feeds {
                 val day = Instant.ofEpochSecond(c.getLong(0)).atZone(ZoneOffset.UTC).toLocalDate().toString()
                 Bar(day, c.getDouble(3), c.getDouble(2), c.getDouble(1), c.getDouble(4))
             }.sortedBy { it.date }
-            return Got(bars = bars)
+            // per item (a quotes row): the last daily close, the one before, and the last 7 closes as the row's sparkline (spec 9 crypto top-20)
+            if (each.isEmpty() || bars.isEmpty()) return Got(bars = bars)
+            val n = bars.size
+            return Got(bars = bars, points = listOf(Pt(each, each, 0.0, bars[n - 1].c, if (n > 1) bars[n - 2].c else null, bars[n - 1].date, bars.takeLast(7).map { it.c })))
         }
         val o = JSONObject(t)
         val last = Catalog.str(o, "last").toDoubleOrNull() ?: return Got()

@@ -25,6 +25,8 @@ data class PanelData(
     val alerts: List<String> = emptyList(),
     /** Per row, the full name the one-line name cell shortens (shown in the row's detail view); empty when the cell is the whole name. */
     val details: List<String> = emptyList(),
+    /** Per row, recent values (oldest first) for a sparkline; empty when the source gives no history. */
+    val spark: List<List<Double>> = emptyList(),
 )
 
 /** What a model panel (Feeds.kt) needs besides its own source: the catalog (fallback routes), its dashboard, the container route, the user's lists and now (UTC). */
@@ -225,7 +227,8 @@ object Engine {
         }
         val alerts = if (panel.raw.optString("alerts") == "price") Alerts.priceHits(c.user.alerts, pts) else emptyList()
         val cols = if (noChange) panel.columns.filterNot { it.startsWith("Chg") } else panel.columns
-        return PanelData(cols, rows, emptyList(), chart, pts.maxOfOrNull { it.date }.orEmpty(), "", alerts = alerts)
+        val spark = if (pts.any { it.hist.size > 1 }) pts.map { it.hist } else emptyList()
+        return PanelData(cols, rows, emptyList(), chart, pts.maxOfOrNull { it.date }.orEmpty(), "", alerts = alerts, spark = spark)
     }
 
     /** Events in the declared window (days_back before today to days_ahead after), at or above importance_min, once each, in time order. */

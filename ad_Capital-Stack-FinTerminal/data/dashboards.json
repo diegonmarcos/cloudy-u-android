@@ -3712,6 +3712,79 @@
           "tape": true
         },
         {
+          "id": "top20",
+          "title": "Crypto top 20 on Coinbase (USD, daily close, 7-day sparkline)",
+          "source": "coinbase",
+          "view": "quotes",
+          "derive": "points",
+          "fetch": {
+            "provider": "coinbase_exchange",
+            "path": "/products/{each}/candles",
+            "params": {
+              "granularity": "86400"
+            },
+            "each": [
+              "BTC-USD",
+              "ETH-USD",
+              "XRP-USD",
+              "SOL-USD",
+              "DOGE-USD",
+              "ADA-USD",
+              "LINK-USD",
+              "AVAX-USD",
+              "XLM-USD",
+              "LTC-USD",
+              "DOT-USD",
+              "BCH-USD",
+              "SHIB-USD",
+              "UNI-USD",
+              "HBAR-USD",
+              "SUI-USD",
+              "AAVE-USD",
+              "NEAR-USD",
+              "ICP-USD",
+              "ETC-USD"
+            ],
+            "labels": {
+              "BTC-USD": "Bitcoin",
+              "ETH-USD": "Ether",
+              "XRP-USD": "XRP",
+              "SOL-USD": "Solana",
+              "DOGE-USD": "Dogecoin",
+              "ADA-USD": "Cardano",
+              "LINK-USD": "Chainlink",
+              "AVAX-USD": "Avalanche",
+              "XLM-USD": "Stellar",
+              "LTC-USD": "Litecoin",
+              "DOT-USD": "Polkadot",
+              "BCH-USD": "Bitcoin Cash",
+              "SHIB-USD": "Shiba Inu",
+              "UNI-USD": "Uniswap",
+              "HBAR-USD": "Hedera",
+              "SUI-USD": "Sui",
+              "AAVE-USD": "Aave",
+              "NEAR-USD": "NEAR",
+              "ICP-USD": "Internet Computer",
+              "ETC-USD": "Ethereum Classic"
+            },
+            "primary": {
+              "source": "cloud_fincept",
+              "api": "/v1/quotes",
+              "params": {
+                "symbols": "BTC-USD,ETH-USD,XRP-USD,SOL-USD,DOGE-USD,ADA-USD,LINK-USD,AVAX-USD,XLM-USD,LTC-USD,DOT-USD,BCH-USD,SHIB-USD,UNI-USD,HBAR-USD,SUI-USD,AAVE-USD,NEAR-USD,ICP-USD,ETC-USD"
+              },
+              "parse": "finterm_v1"
+            }
+          },
+          "columns": [
+            "Name",
+            "Last",
+            "Chg",
+            "Chg %",
+            "As of"
+          ]
+        },
+        {
           "id": "btc",
           "title": "Bitcoin, daily (300 days)",
           "source": "coinbase",
