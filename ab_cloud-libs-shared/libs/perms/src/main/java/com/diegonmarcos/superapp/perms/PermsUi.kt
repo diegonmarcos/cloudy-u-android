@@ -1,5 +1,6 @@
 package com.diegonmarcos.superapp.perms
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
@@ -277,10 +278,11 @@ private fun PermRowView(it: PermItem, onAction: (PermItem) -> Unit, p: PermsPale
                 modifier = Modifier.size(PermsType.icon))
         }
         Column(Modifier.weight(1f).padding(start = PermsType.inset, end = PermsType.pad).semantics(mergeDescendants = true) {}) {
+            // a row with a button is narrow: its title and reason wrap to two lines rather than lose the name
             Text(it.title, color = p.ink, fontSize = PermsType.title, fontWeight = if (it.highlight) FontWeight.SemiBold else FontWeight.Medium,
-                maxLines = 1, overflow = TextOverflow.Ellipsis)
+                maxLines = 2, overflow = TextOverflow.Ellipsis)
             val line = PermsView.reasonLine(it)
-            if (line.isNotBlank()) Text(line, color = p.dim, fontSize = PermsType.caption, maxLines = 1, overflow = TextOverflow.Ellipsis,
+            if (line.isNotBlank()) Text(line, color = p.dim, fontSize = PermsType.caption, maxLines = if (showsAction(it)) 2 else 1, overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.padding(top = 2.dp))
             // dense: the chip sits under the title only when the row also carries its Grant / Open button
             if (showsAction(it)) stateChip(Modifier.padding(top = PermsType.gap))
@@ -290,6 +292,7 @@ private fun PermRowView(it: PermItem, onAction: (PermItem) -> Unit, p: PermsPale
         else if (a != null) FilledTonalButton(
             onClick = { onAction(it) },
             colors = ButtonDefaults.filledTonalButtonColors(containerColor = p.tile, contentColor = p.accent),
+            contentPadding = PaddingValues(horizontal = PermsType.inset, vertical = PermsType.pad),
             modifier = Modifier.heightIn(min = 48.dp).semantics { contentDescription = "${a.word} ${it.title}" }.testTag(PermsTags.grant(it.id)),
         ) { Text(a.word, fontSize = PermsType.body, fontWeight = FontWeight.SemiBold) }
     }
