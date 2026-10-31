@@ -101,7 +101,7 @@ else:
     bad(f"fixture unusable: hosts={pkgs} rootfs={rootfs}")
 
 # ── L1 which hosts reach Fleet.autoPass from UpdateWorker ────────────────────
-dowork = body(W, "override suspend fun doWork") or ""
+dowork = body(W, "private suspend fun work(") or ""  # #fgs-timeout doWork wraps work() (cooperative stop + budget)
 upf = body(W, "private fun updateFleet") or ""
 gates = []
 m = re.search(r"if \(!StoreNotifyGate\.mayPost\(applicationContext\)\)", dowork)
@@ -182,7 +182,7 @@ if ".setSilent(true)" in n and ".setOnlyAlertOnce(true)" in n and not re.search(
     ok("L3 the progress line is silent and alerts once")
 else:
     bad("L3 the progress line can make a sound or alert again")
-if "if (BatchForeground.allowed(applicationContext)) runCatching { setForeground(" in W:
+if "if (BatchForeground.allowed(applicationContext))\n                fgsToken = holdDataSync(" in W:
     ok("L3 the worker's foreground line is gated like every Store notification")
 else:
     bad("L3 the worker draws a foreground line without the Store gate")

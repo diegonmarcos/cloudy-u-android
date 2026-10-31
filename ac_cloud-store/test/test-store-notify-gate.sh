@@ -93,7 +93,7 @@ ok("if (!allowed(ctx)) throw" in body(bf, "fun foregroundInfo(", 300), "no foreg
 ok("if (!BatchForeground.allowed(this))" in body(bf, "override fun onStartCommand", 200), "the service itself stops at once in the SuperApp", "BatchForegroundService starts in the SuperApp")
 for f in ("UpdateWorker.kt", "ApkInstallWorker.kt"):
     t = rd(UPD + f)
-    ok("if (BatchForeground.allowed(applicationContext)) runCatching { setForeground(" in t, f + " goes foreground only where allowed", f + " calls setForeground without the gate")
+    ok("if (BatchForeground.allowed(applicationContext))\n                fgsToken = holdDataSync(" in t, f + " goes foreground only where allowed", f + " calls setForeground without the gate")
 ok("StoreNotifyGate.mayPost(applicationContext)" in body(rd(UPD + "UpdateWorker.kt"), "override suspend fun doWork", 900),
    "a persisted UpdateWorker ends at once in the SuperApp", "UpdateWorker.doWork does not stand down in the SuperApp")
 ok("StoreNotifyGate.mayPost(applicationContext)" in body(rd(APS + "ConstellationWorker.kt"), "override suspend fun doWork", 900),
@@ -189,7 +189,7 @@ mutate "foreground service held from the SuperApp" $U/BatchForegroundService.kt 
 mutate "foregroundInfo builds one for the SuperApp" $U/BatchForegroundService.kt 'if (!allowed(ctx)) throw IllegalStateException("Store notifications are Cloud Store'"'"'s; this package posts none")
         else if' 'if' || M=$((M+1))
 mutate "the service starts in the SuperApp" $U/BatchForegroundService.kt 'if (!BatchForeground.allowed(this)) { stopSelf(); return START_NOT_STICKY }' '' || M=$((M+1))
-mutate "UpdateWorker foreground without the gate" $U/UpdateWorker.kt 'if (BatchForeground.allowed(applicationContext)) runCatching' 'runCatching' || M=$((M+1))
+mutate "UpdateWorker foreground without the gate" $U/UpdateWorker.kt 'if (BatchForeground.allowed(applicationContext))' 'if (true)' || M=$((M+1))
 mutate "UpdateWorker runs in the SuperApp" $U/UpdateWorker.kt 'if (!StoreNotifyGate.mayPost(applicationContext)) {' 'if (false) {' || M=$((M+1))
 mutate "ConstellationWorker runs in the SuperApp" $P/ConstellationWorker.kt 'if (!StoreNotifyGate.mayPost(applicationContext)) {' 'if (false) {' || M=$((M+1))
 mutate "ConstellationWorker.start schedules in the SuperApp" $P/ConstellationWorker.kt 'if (!StoreNotifyGate.mayPost(context)) { cancelAll(context); return }' '' || M=$((M+1))
