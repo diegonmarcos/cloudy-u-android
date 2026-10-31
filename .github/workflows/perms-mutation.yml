@@ -62,15 +62,18 @@ jobs:
           jq '.tests.unit.task = ":libs:perms:testDebugUnitTest"' "$WORK_DIR/build.json" > /tmp/b.json && mv /tmp/b.json "$WORK_DIR/build.json"
           V=ab_cloud-libs-shared/libs/perms/src/main/java/com/diegonmarcos/superapp/perms/PermsView.kt
           suite() { sh 1_cicd/dist/scripts/cloud-android-test-engine.sh unit "$WORK_DIR" > /tmp/suite.log 2>&1; }
-          sub() { python3 -c 'import sys; p, a, b = sys.argv[1:]; s = open(p).read(); assert a in s, "anchor missing: " + a; open(p, "w").write(s.replace(a, b, 1))' "$V" "$1" "$2"; }
+          U=ab_cloud-libs-shared/libs/perms/src/main/java/com/diegonmarcos/superapp/perms/PermsUi.kt
+          # a mutant line is name@anchor@replacement[@ui]; the file is PermsView.kt, or PermsUi.kt when the 4th field is ui
+          sub() { python3 -c 'import sys; p, a, b = sys.argv[1:]; s = open(p).read(); assert a in s, "anchor missing: " + a; open(p, "w").write(s.replace(a, b, 1))' "$3" "$1" "$2"; }
           suite || { tail -60 /tmp/suite.log; echo "::error::the real tree is RED"; exit 1; }
           echo "real tree: GREEN"
           stayed=0
-          while IFS='@' read -r name a b; do
+          while IFS='@' read -r name a b f; do
             [ -z "$name" ] && continue
             [ "$ONLY" != "all" ] && [ "$ONLY" != "$name" ] && continue
-            git checkout -- "$V"
-            sub "$a" "$b" || { echo "::error::$name: mutation anchor missing"; stayed=$((stayed + 1)); continue; }
+            git checkout -- "$V" "$U"
+            F="$V"; [ "${f:-}" = ui ] && F="$U"
+            sub "$a" "$b" "$F" || { echo "::error::$name: mutation anchor missing"; stayed=$((stayed + 1)); continue; }
             if suite; then echo "::error::mutant stayed GREEN: $name"; stayed=$((stayed + 1)); else echo "RED (caught): $name"; fi
           done <<'MUTANTS'
           chip-denied@PermState.PERMANENTLY_DENIED -> PermChip.DENIED@PermState.PERMANENTLY_DENIED -> PermChip.MISSING
@@ -86,8 +89,10 @@ jobs:
           highlight-first@sortedBy { if (it.highlight) 0 else 1 }@sortedBy { if (it.highlight) 1 else 0 }
           sheet-health-once@rows + health.first { it.missing }.copy(@rows + health.filter { it.missing } + health.first { it.missing }.copy(
           walk-unknown@(it.missing || (it.kind == PermItemKind.HELPER && it.state == PermState.UNKNOWN))@(it.missing || it.state == PermState.UNKNOWN)
+          gate-when-granted@fun gateShows(items: List<PermItem>): Boolean = missing(items).isNotEmpty()@fun gateShows(items: List<PermItem>): Boolean = items.isNotEmpty()
+          gate-insets@Column(Modifier.padding(bars).fillMaxSize()@Column(Modifier.fillMaxSize()@ui
           walk-order@return todo.filter { it.action == PermAction.GRANT } +@return todo.filter { it.action == PermAction.GRANT && it.kind == PermItemKind.HELPER } +
           MUTANTS
-          git checkout -- "$V"
+          git checkout -- "$V" "$U"
           [ "$stayed" -eq 0 ] || { echo "::error::$stayed mutant(s) stayed green"; exit 1; }
           echo "every mutant RED"

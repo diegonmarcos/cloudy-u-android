@@ -4,7 +4,7 @@
         <!-- #1274 the Permissions page every app that embeds libs:perms hosts, merged in by the manifest merger.
              Android permissions belong to one package, so an app's banner must open ITS OWN page (a deep link to
              SuperApp would grant SuperApp, not this app). SuperApp hosts its fuller page through PermsHost instead.
-             #1372 translucent: first run draws a bottom sheet over the app; the full page paints its own surface. -->
+             #1372 translucent: no window colour flashes before Compose; the gate and the page paint their own full-height surface. -->
         <activity
             android:name=".PermsActivity"
             android:exported="false"

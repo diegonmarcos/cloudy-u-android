@@ -1,5 +1,11 @@
 package com.diegonmarcos.superapp.perms
 
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.Scaffold
 import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -359,41 +365,41 @@ fun PermsPromptAbove(prompt: @Composable () -> Unit, modifier: Modifier = Modifi
 }
 
 /**
- * The first-run sheet's body: what is missing, in plain words, with Grant all and Later. Drawn inside PermsActivity's
- * bottom sheet; never a chain of system dialogs without this context first.
+ * #1372 THE first-run gate: a full-height themed page (never a panel on a bare window). The Scaffold clears the status and
+ * navigation bars, so the title never sits under the clock; the page lists only what is MISSING, in the Configs > Perms row
+ * style (icon, reason, state chip, the row's own Grant / Open), with Grant all as the primary action and Later beside it.
+ * The host shows it only while [PermsView.gateShows] holds.
  */
 @Composable
-internal fun FirstRunSheetBody(appName: String, items: List<PermItem>, onGrantAll: () -> Unit, onLater: () -> Unit, style: PermsStyle = PermsStyle()) {
+internal fun FirstRunGate(
+    appName: String, items: List<PermItem>, onAction: (PermItem) -> Unit, onGrantAll: () -> Unit, onLater: () -> Unit,
+    style: PermsStyle = PermsStyle(),
+) {
     val p = style.resolve()
-    val ctx = LocalContext.current
     val missing = PermsView.missing(items)
-    Column(Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, bottom = 24.dp).testTag(PermsTags.SHEET), verticalArrangement = Arrangement.spacedBy(PermsType.pad)) {
-        Text("Before you start", color = p.ink, fontSize = 22.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.semantics { heading() }.testTag(PermsTags.TITLE))
-        Text("$appName needs ${if (missing.size == 1) "one permission" else "${missing.size} permissions"} to work fully. You can change them any time in Configs, Perms.",
-            color = p.dim, fontSize = PermsType.body)
-        Spacer(Modifier.height(PermsType.gap))
-        for (it in missing.take(SHEET_ROWS)) Row(Modifier.fillMaxWidth().heightIn(min = 48.dp).semantics(mergeDescendants = true) {}.testTag(PermsTags.row(it.id)),
-            verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(36.dp).clip(RoundedCornerShape(10.dp)).background(p.tile), contentAlignment = Alignment.Center) {
-                Icon(PermIcons.vector(ctx, it.icon.ifBlank { "security" }), contentDescription = null, tint = p.accent, modifier = Modifier.size(20.dp))
+    Scaffold(
+        Modifier.fillMaxSize().testTag(PermsTags.SHEET),
+        bottomBar = {
+            BottomAppBar {
+                Row(Modifier.fillMaxWidth().padding(horizontal = PermsType.inset), horizontalArrangement = Arrangement.spacedBy(PermsType.pad),
+                    verticalAlignment = Alignment.CenterVertically) {
+                    OutlinedButton(onClick = onLater, modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag(PermsTags.LATER)) {
+                        Text("Later", color = p.accent, fontSize = PermsType.title)
+                    }
+                    Button(onClick = onGrantAll, colors = ButtonDefaults.buttonColors(containerColor = p.accent, contentColor = p.onAccent),
+                        modifier = Modifier.weight(2f).heightIn(min = 48.dp).testTag(PermsTags.GRANT_ALL)) {
+                        Text("Grant all", fontSize = PermsType.title, fontWeight = FontWeight.SemiBold)
+                    }
+                }
             }
-            Column(Modifier.weight(1f).padding(start = PermsType.inset - PermsType.gap)) {
-                Text(it.title, color = p.ink, fontSize = PermsType.body, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(PermsView.reasonLine(it), color = p.dim, fontSize = PermsType.label, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            }
-        }
-        if (missing.size > SHEET_ROWS) Text("and ${missing.size - SHEET_ROWS} more", color = p.dim, fontSize = PermsType.caption,
-            modifier = Modifier.padding(start = 48.dp))
-        Row(Modifier.fillMaxWidth().padding(top = PermsType.pad), horizontalArrangement = Arrangement.spacedBy(PermsType.pad), verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = onLater, modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag(PermsTags.LATER)) {
-                Text("Later", color = p.accent, fontSize = PermsType.title)
-            }
-            Button(onClick = onGrantAll, colors = ButtonDefaults.buttonColors(containerColor = p.accent, contentColor = p.onAccent),
-                modifier = Modifier.weight(2f).heightIn(min = 48.dp).testTag(PermsTags.GRANT_ALL)) {
-                Text("Grant all", fontSize = PermsType.title, fontWeight = FontWeight.SemiBold)
-            }
+        },
+    ) { bars ->
+        Column(Modifier.padding(bars).fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = PermsType.inset, vertical = PermsType.pad)) {
+            Text("Before you start", color = p.ink, fontSize = 22.sp, fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.padding(top = PermsType.pad).semantics { heading() }.testTag(PermsTags.TITLE))
+            Text("$appName needs ${if (missing.size == 1) "one permission" else "${missing.size} permissions"} to work fully. You can change them any time in Configs, Perms.",
+                color = p.dim, fontSize = PermsType.body, modifier = Modifier.padding(top = PermsType.gap, bottom = PermsType.inset))
+            PermsList(missing, onAction, onGrantAll = null, style = style)
         }
     }
 }
-
-private const val SHEET_ROWS = 6

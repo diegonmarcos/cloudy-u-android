@@ -16,6 +16,16 @@ class PermsViewTest {
     private fun hp(id: String, s: PermState) = PermItem(id, id, "", "", PermItemKind.HELPER, s, action = if (s != PermState.GRANTED) PermAction.OPEN else null)
     private fun inst(id: String) = PermItem(id, id, "", "check", PermItemKind.INSTALL, PermState.GRANTED)
 
+    // ── the first-run gate ──
+
+    @Test fun `the gate does not exist when everything is granted`() {
+        val granted = listOf(rt("n", PermState.GRANTED), sp("i", PermState.GRANTED), inst("x"), hc("h", PermState.GRANTED))
+        assertFalse(PermsView.gateShows(granted))
+        assertFalse(PermsView.gateShows(emptyList()))
+        assertTrue(PermsView.gateShows(granted + rt("c", PermState.DENIED)))
+        assertTrue(PermsView.gateShows(granted + sp("s", PermState.PERMANENTLY_DENIED)))
+    }
+
     // ── state chips ──
 
     @Test fun `each state has its chip and tone`() {

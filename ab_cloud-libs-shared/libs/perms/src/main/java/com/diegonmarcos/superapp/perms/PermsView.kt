@@ -123,7 +123,10 @@ object PermsView {
 
     fun typesToggle(n: Int, open: Boolean): String = if (open) "Hide $n types" else "Show $n types"
 
-    /** What the first-run sheet lists: every used missing row, Health Connect as one line. */
+    /** #1372 the first-run gate exists only while something it lists is missing: everything granted = no gate at all. */
+    fun gateShows(items: List<PermItem>): Boolean = missing(items).isNotEmpty()
+
+    /** What the first-run gate lists: every used missing row, Health Connect as one line. */
     fun missing(items: List<PermItem>): List<PermItem> {
         val rows = items.filter { it.used && it.missing && it.kind != PermItemKind.HEALTH && it.kind != PermItemKind.INSTALL }
         val health = items.filter { it.kind == PermItemKind.HEALTH }

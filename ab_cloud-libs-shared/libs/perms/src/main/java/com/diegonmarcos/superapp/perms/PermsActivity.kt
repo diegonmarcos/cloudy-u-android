@@ -13,14 +13,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -41,8 +38,8 @@ import androidx.compose.ui.unit.sp
  * place in that app that asks: opened by [PermsLink.open] it lists the requesting feature's entries first and highlighted,
  * then every other applicable entry this app declares. Runtime entries go through the system dialog, the rest through
  * [PermsSettings.open] (the exact settings page). Re-read on every resume, so a grant made in Settings shows on return.
- * #1372 first run ([FIRST_RUN]) is a bottom sheet over the app (the window is translucent): what is missing in plain
- * words, Grant all and Later; it closes by itself once nothing is missing.
+ * #1372 first run ([FIRST_RUN]) is a full-height gate page (FirstRunGate): only what is missing, in the Perms row style,
+ * Grant all and Later; it never opens when nothing is missing and closes by itself once nothing is.
  */
 class PermsActivity : ComponentActivity() {
     private var tick by mutableIntStateOf(0)
@@ -54,9 +51,11 @@ class PermsActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val feature = intent.getStringExtra(EXTRA_FEATURE).orEmpty()
         val ids = intent.getStringArrayExtra(EXTRA_IDS)?.toSet().orEmpty()
+        // #1372 the gate never opens on a phone where nothing is missing (it would only say so)
+        if (feature == FIRST_RUN && AppPerms.missingOwn(this).isEmpty() && AppPerms.missingHelpers(this).isEmpty()) { finish(); return }
         setContent {
             MaterialTheme(colorScheme = if (isSystemInDarkTheme()) darkColorScheme() else lightColorScheme()) {
-                if (feature == FIRST_RUN) Sheet(ids, tick) else Page(feature, ids, tick)
+                if (feature == FIRST_RUN) Gate(ids, tick) else Page(feature, ids, tick)
             }
         }
     }
@@ -78,17 +77,14 @@ class PermsActivity : ComponentActivity() {
         }
     }
 
-    @OptIn(ExperimentalMaterial3Api::class)
+    /** #1372 first run: the full-height gate while something is missing; it closes itself the moment nothing is. */
     @Composable
-    private fun Sheet(ids: Set<String>, tick: Int) {
-        val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    private fun Gate(ids: Set<String>, tick: Int) {
         val perms = rememberAppPerms(tick, ids)
-        val name = remember { applicationInfo.loadLabel(packageManager).toString() }
-        // nothing left to ask (granted from the sheet, or in Settings meanwhile): the sheet has done its job
-        LaunchedEffect(perms.missing) { if (perms.missing == 0) finish() }
-        ModalBottomSheet(onDismissRequest = { finish() }, sheetState = state, containerColor = MaterialTheme.colorScheme.surface) {
-            FirstRunSheetBody(name, perms.items, onGrantAll = perms.grantAll, onLater = { finish() })
-        }
+        val name = remember { PermsView.appName(applicationInfo.loadLabel(packageManager).toString()) }
+        val shows = PermsView.gateShows(perms.items)
+        LaunchedEffect(shows) { if (!shows) finish() }
+        if (shows) FirstRunGate(name, perms.items, perms.act, perms.grantAll, onLater = { finish() })
     }
 
     private fun request(entries: List<PermEntry>) {
