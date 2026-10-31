@@ -137,6 +137,7 @@ fun getCodeForToolbarKey(key: ToolbarKey) = Settings.getInstance().getCustomTool
     GRAMMAR -> KeyCode.GRAMMAR_MODE // #1077: Grammar mode, tap cycles Highlight / Auto Correct / Off
     AUTOCOMPLETE -> KeyCode.AUTOCOMPLETE // #1077
     ENHANCE -> KeyCode.ENHANCE_BAR // SuperApp addition — Text Enhancements: tap opens the bar
+    ANSWER -> KeyCode.ANSWER_BAR // #1384 Draft Answer: tap opens the Enhance panel in reply mode
     LANGUAGE_SWITCH -> KeyCode.LANGUAGE_SWITCH // cloud-keyboard: same code the globe key emits → InputLogic → LatinIME.switchToNextSubtype
     VAULT -> KeyCode.VAULT // cloud-keyboard: launches Cloud Vault
     ANDROID_SETTINGS -> KeyCode.ANDROID_IME_SETTINGS // #1103: the system's input-method settings
@@ -177,7 +178,8 @@ enum class ToolbarKey {
     ENHANCE,   // SuperApp addition — Text Enhancements: rewrite selection/field via AI Model Routing
     LANGUAGE_SWITCH, // cloud-keyboard: toolbar twin of the globe key (tap = next subtype/IME per "Language switch key behavior", long-press = picker). In the default first row.
     VAULT, // cloud-keyboard: opens Cloud Vault.
-    ANDROID_SETTINGS // #1103: shortcut to Android's keyboard (input method) settings; sits right before VAULT in the default row
+    ANDROID_SETTINGS, // #1103: shortcut to Android's keyboard (input method) settings; sits right before VAULT in the default row
+    ANSWER // #1384: Draft Answer, a reply to the newest clipboard item, drafted by the Text Enhancement model
 }
 
 /**
@@ -206,8 +208,9 @@ val defaultToolbarPref by lazy {
     val default = listOf(
         // #1103 page one: Autocomplete and Translate swapped, Clipboard and Numpad swapped; Android keyboard settings
         // and Cloud Vault follow "Switch language" (settings first, Vault right after it).
-        FULL_LEFT, GRAMMAR, TRANSLATE, ENHANCE, AUTOCOMPLETE, CLIPBOARD, NUMPAD, EMOJI, VOICE, LANGUAGE_SWITCH,
-        ANDROID_SETTINGS, VAULT,
+        // #1384: Draft Answer takes Emoji's place on page one; Emoji opens page two right after Vault.
+        FULL_LEFT, GRAMMAR, TRANSLATE, ENHANCE, AUTOCOMPLETE, CLIPBOARD, NUMPAD, ANSWER, VOICE, LANGUAGE_SWITCH,
+        ANDROID_SETTINGS, VAULT, EMOJI,
         FULL_RIGHT, SELECT_ALL, WORD_RIGHT, WORD_LEFT, REDO, UNDO, SELECT_WORD, COPY, PASTE, CUT, PAGE_START,
     )
     val others = entries.filterNot { it in default || it == CLOSE_HISTORY }
@@ -238,7 +241,7 @@ val defaultClipboardToolbarPref by lazy {
  * the stored value does not know yet, so without this a reordered default would be visible to
  * fresh installs only — the exact trap that made earlier default changes look like no-ops.
  */
-const val TOOLBAR_LAYOUT_REVISION = 4 // 3: #1077 Grammar mode + Autocomplete replace Grammar + Auto Correction; 4: #1103 reorder + Android settings key
+const val TOOLBAR_LAYOUT_REVISION = 5 // 5: #1384 Draft Answer on page one, Emoji to page two; 3: #1077 Grammar mode + Autocomplete replace Grammar + Auto Correction; 4: #1103 reorder + Android settings key
 
 /**
  * Adopt the current default first and second rows, once per [TOOLBAR_LAYOUT_REVISION]. This

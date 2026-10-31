@@ -241,6 +241,13 @@ public final class Settings implements SharedPreferences.OnSharedPreferenceChang
     public static final String PREF_SUMMARY_PROMPT = "summary_prompt";  // settings-registry key only; shows the composed prompt, stores nothing
     public static final String PREF_SUMMARY_TEST = "summary_test";      // settings-registry key only; the try-it box stores nothing
     public static final String PREF_ENHANCE_PROMPT = "enhance_prompt";  // settings-registry key only; shows the composed prompt, stores nothing
+    // Draft Answer (the Enhance panel's reply mode, ANSWER toolbar key); model = Text Enhancement's
+    public static final String PREF_ANSWER_TONE = "answer_tone";          // tone id from keyboard_ai.tones
+    public static final String PREF_ANSWER_LENGTH = "answer_length";      // length id from keyboard_ai.lengths
+    public static final String PREF_ANSWER_LANGUAGE = "answer_language";  // language id from keyboard_ai.languages
+    public static final String PREF_ANSWER_TOOLBAR_KEY = "answer_toolbar_key"; // settings-registry key only; state lives in PREF_TOOLBAR_KEYS
+    public static final String PREF_ANSWER_PROMPT = "answer_prompt";      // settings-registry key only; shows the composed prompt
+    public static final String PREF_ANSWER_MODEL = "answer_model_in_use"; // settings-registry key only; read-only model line
     public static final String PREF_AI_PREAMBLE = "ai_preamble";        // settings-registry key only; shows the shared preambles, stores nothing
 
     public static final String PREF_VERSION_CODE = "version_code";

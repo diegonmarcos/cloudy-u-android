@@ -1,6 +1,7 @@
 # Cloud Keyboard AI Routing mutation proof: the OpenRouter model list (parse, cache with timestamp, offline keeps the
 # cache, search and free filter), the per-task model choice, the ML libs vs OpenRouter routing rule with its fallback,
-# and Grammar Check's Highlight Ignore are pinned by the JVM tests in libs:keyboard helium314.keyboard.latin.ai.
+# Grammar Check's Highlight Ignore, and Draft Answer (clipboard default and override, the model it shares with Text
+# Enhancement, the reply prompt) are pinned by the JVM tests in libs:keyboard helium314.keyboard.latin.ai.
 # This job runs those tests once on the real tree (GREEN expected), then once per planted mutant (RED expected, one
 # break each). It fails if the real tree is red or any mutant stays green. Manual only.
 name: keyboard-ai-mutation
@@ -60,9 +61,9 @@ jobs:
         run: |
           set -u
           L=ab_cloud-libs-shared/libs/keyboard/src/main/java/helium314/keyboard/latin
-          C=$L/OpenRouterCatalog.kt; R=$L/AiTaskRouting.kt; H=$L/GrammarHighlights.kt
+          C=$L/OpenRouterCatalog.kt; R=$L/AiTaskRouting.kt; H=$L/GrammarHighlights.kt; D=$L/DraftAnswer.kt
           suite() { gradle --no-daemon -p "$WORK_DIR" :libs:keyboard:testDebugUnitTest --tests 'helium314.keyboard.latin.ai.*' > /tmp/suite.log 2>&1; }
-          # a mutant line is name@anchor@replacement@file, file = C (catalog) | R (routing) | H (highlights)
+          # a mutant line is name@anchor@replacement@file, file = C (catalog) | R (routing) | H (highlights) | D (draft answer)
           sub() { python3 -c 'import sys; p, a, b = sys.argv[1:]; s = open(p).read(); assert a in s, "anchor missing: " + a; open(p, "w").write(s.replace(a, b, 1))' "$3" "$1" "$2"; }
           suite || { tail -80 /tmp/suite.log; echo "::error::the real tree is RED"; exit 1; }
           grep -c 'testcase' "$WORK_DIR"/../ab_cloud-libs-shared/libs/keyboard/build/test-results/testDebugUnitTest/TEST-helium314.keyboard.latin.ai.*.xml 2>/dev/null || true
@@ -71,8 +72,8 @@ jobs:
           while IFS='@' read -r name a b f; do
             [ -z "$name" ] && continue
             [ "$ONLY" != "all" ] && [ "$ONLY" != "$name" ] && continue
-            git checkout -- "$C" "$R" "$H"
-            case "$f" in C) F="$C" ;; R) F="$R" ;; *) F="$H" ;; esac
+            git checkout -- "$C" "$R" "$H" "$D"
+            case "$f" in C) F="$C" ;; R) F="$R" ;; D) F="$D" ;; *) F="$H" ;; esac
             sub "$a" "$b" "$F" || { echo "::error::$name: mutation anchor missing"; stayed=$((stayed + 1)); continue; }
             if suite; then echo "::error::mutant stayed GREEN: $name"; stayed=$((stayed + 1)); else echo "RED (caught): $name"; fi
           done <<'MUTANTS'
@@ -96,7 +97,16 @@ jobs:
           replace-shift@if (o.start >= issue.end) issues[i]@if (false) issues[i]@H
           tap-edge@cursor >= it.start && cursor <= it.end@cursor > it.start && cursor < it.end@H
           session-clears-ignores@issues.clear(); ignored.clear()@issues.clear()@H
+          clip-newest@.maxByOrNull { it.timeStamp }@.minByOrNull { it.timeStamp }@D
+          clip-skip-blank@clips.filter { !it.text.isNullOrBlank() }.maxByOrNull@clips.maxByOrNull@D
+          picker-newest-first@.sortedByDescending { it.timeStamp }@.sortedBy { it.timeStamp }@D
+          override-wins@val text: String get() = override ?: fallback@val text: String get() = fallback@D
+          reopen-drops-override@fun reset(clips: List<DraftAnswer.Clip>) { override = null;@fun reset(clips: List<DraftAnswer.Clip>) {@D
+          shared-model@val MODEL_TASK = AiTask.ENHANCE@val MODEL_TASK = AiTask.GRAMMAR@D
+          reply-task-line@const val TASK_LINE = "Draft a reply to this message."@const val TASK_LINE = "Rewrite this message."@D
+          prompt-keeps-extras@DEFAULT_PREAMBLE }, TASK_LINE, extras)@DEFAULT_PREAMBLE }, TASK_LINE, emptyList())@D
+          prompt-default-preamble@preamble.ifBlank { DEFAULT_PREAMBLE }@preamble@D
           MUTANTS
-          git checkout -- "$C" "$R" "$H"
+          git checkout -- "$C" "$R" "$H" "$D"
           [ "$stayed" -eq 0 ] || { echo "::error::$stayed mutant(s) stayed green"; exit 1; }
           echo "every mutant RED"

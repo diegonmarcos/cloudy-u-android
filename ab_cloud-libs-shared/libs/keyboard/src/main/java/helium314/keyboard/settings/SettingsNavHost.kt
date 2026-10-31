@@ -35,6 +35,7 @@ import helium314.keyboard.settings.screens.AutocompleteScreen
 import helium314.keyboard.settings.screens.UpdateScreen
 import helium314.keyboard.settings.screens.GrammarCheckScreen
 import helium314.keyboard.settings.screens.TextEnhanceScreen
+import helium314.keyboard.settings.screens.DraftAnswerScreen
 import helium314.keyboard.settings.screens.TextResumeScreen
 import helium314.keyboard.settings.screens.TextCorrectionScreen
 import helium314.keyboard.settings.screens.ToolbarScreen
@@ -86,6 +87,7 @@ fun SettingsNavHost(
                 onClickEmoji = { navController.navigate(SettingsDestination.Emoji) },
                 onClickVoiceTranscript = { navController.navigate(SettingsDestination.VoiceTranscript) },
                 onClickTextEnhance = { navController.navigate(SettingsDestination.TextEnhance) }, // SuperApp addition
+                onClickDraftAnswer = { navController.navigate(SettingsDestination.DraftAnswer) }, // #1384
                 onClickAiRouting = { navController.navigate(SettingsDestination.AiRouting) }, // SuperApp addition
                 onClickUpdate = { navController.navigate(SettingsDestination.Update) }, // #776
                 onClickPreferences = { navController.navigate(SettingsDestination.Preferences) },
@@ -129,6 +131,9 @@ fun SettingsNavHost(
         }
         composable(SettingsDestination.TextEnhance) { // SuperApp addition
             TextEnhanceScreen(onClickBack = ::goBack)
+        }
+        composable(SettingsDestination.DraftAnswer) { // #1384
+            DraftAnswerScreen(onClickBack = ::goBack)
         }
         composable(SettingsDestination.AiRouting) { // SuperApp addition
             AiRoutingScreen(onClickBack = ::goBack)
@@ -204,6 +209,7 @@ object SettingsDestination {
     const val Emoji = "emoji_info" // SuperApp addition
     const val VoiceTranscript = "voice_transcript_info" // SuperApp addition
     const val TextEnhance = "text_enhance" // SuperApp addition
+    const val DraftAnswer = "draft_answer" // #1384
     // "Resume" is the owner's name for SUMMARISE, not a CV and not resuming anything.
     const val TextResume = "text_resume" // SuperApp addition
     const val AiRouting = "ai_routing" // SuperApp addition
@@ -248,6 +254,7 @@ object SettingsDestination {
         "text_resume" to TextResume,
         "translation" to Translation,
         "grammar_check" to GrammarCheck,
+        "draft_answer" to DraftAnswer,
     )
 
     /** The route [name] asks for, or null when it is not one another app may reach. */

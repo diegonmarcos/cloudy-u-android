@@ -224,9 +224,8 @@ object TextEnhancer {
      */
     @JvmStatic
     @JvmOverloads
-    fun run(context: Context, connection: RichInputConnection, style: AiRouter.Style,
-            // Configs ▸ AI Routing: the task's own model when one is picked there (AiTaskRouting.route).
-            route: AiRouter.Route = AiRouter.route(context)) {
+    // route: Configs ▸ AI Routing, the task's own model when one is picked there (AiTaskRouting.route).
+    fun run(context: Context, connection: RichInputConnection, style: AiRouter.Style, route: AiRouter.Route = AiRouter.route(context)) {
         val advise = adviseNext
         adviseNext = false
         val scope = scope(context)

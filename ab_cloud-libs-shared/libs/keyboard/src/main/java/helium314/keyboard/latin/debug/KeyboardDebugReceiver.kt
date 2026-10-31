@@ -107,6 +107,15 @@ class KeyboardDebugReceiver(private val ime: LatinIME) : BroadcastReceiver() {
                 val r = AiTaskRouting.resolution(ime, task)
                 "chosen=${r.chosen.id} active=${r.active?.id ?: "none"} fallback=${r.fallback?.id ?: "none"} reason=${r.reason}"
             }
+            // Draft Answer (CI screenshots): put a made-up message on the clipboard, open the source picker, read the panel.
+            // "answer-draft" shows a made-up reply in the draft box: CI holds no AI key, so the real Generate cannot run there.
+            "clip" -> {
+                val cm = ime.getSystemService(android.content.ClipboardManager::class.java)
+                cm.setPrimaryClip(android.content.ClipData.newPlainText("ci", arg)); "ok"
+            }
+            "answer-pick" -> { ime.enhanceBar?.showSourcePicker() ?: return "no panel"; "ok" }
+            "answer-draft" -> { ime.enhanceBar?.showAnswer(arg) ?: return "no panel"; "ok" }
+            "answer" -> ime.enhanceBar?.debugState() ?: "no panel"
             "marks" -> {
                 val s = GrammarHighlights.session
                 "marks=${s.all.size} ignored=${s.ignoredCount} popup=${GrammarPopup.isShowing} " +
@@ -125,6 +134,7 @@ class KeyboardDebugReceiver(private val ime: LatinIME) : BroadcastReceiver() {
         "EMOJI" -> KeyCode.EMOJI
         "EMOJI_SEARCH" -> KeyCode.EMOJI_SEARCH
         "AUTOCOMPLETE" -> KeyCode.AUTOCOMPLETE
+        "ANSWER_BAR" -> KeyCode.ANSWER_BAR
         "GRAMMAR_MODE" -> KeyCode.GRAMMAR_MODE
         "CLIPBOARD" -> KeyCode.CLIPBOARD
         "NUMPAD" -> KeyCode.NUMPAD

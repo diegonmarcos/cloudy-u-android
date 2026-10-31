@@ -22,8 +22,18 @@ class ToolbarOrderTest {
     }
 
     @Test fun clipboardAndNumpadSwappedPlaces() {
-        // before #1103: ... NUMPAD, CLIPBOARD, EMOJI
-        assertEquals(listOf("CLIPBOARD", "NUMPAD", "EMOJI"), row.subList(5, 8))
+        // before #1103: ... NUMPAD, CLIPBOARD, EMOJI; #1384: Draft Answer took Emoji's place
+        assertEquals(listOf("CLIPBOARD", "NUMPAD", "ANSWER"), row.subList(5, 8))
+    }
+
+    @Test fun draftAnswerTakesEmojisPlaceAndEmojiOpensPageTwoAfterVault() {
+        // #1384: page one is the first 11 keys (11 / 11 / 2 at the shipped width)
+        assertTrue("ANSWER" in row.take(11))
+        assertFalse("EMOJI" in row.take(11))
+        assertEquals(listOf("VAULT", "EMOJI"), row.subList(11, 13))
+        assertEquals(1, row.count { it == "ANSWER" })
+        val source = java.io.File("src/main/java/helium314/keyboard/latin/utils/ToolbarUtils.kt").readText()
+        assertTrue(source.contains("ANSWER -> KeyCode.ANSWER_BAR"))
     }
 
     @Test fun vaultFollowsSwitchLanguageAndAndroidSettingsComesRightBeforeVault() {
@@ -34,8 +44,8 @@ class ToolbarOrderTest {
     }
 
     @Test fun theWholeFirstRowIsExactlyThis() {
-        assertEquals(listOf("FULL_LEFT", "GRAMMAR", "TRANSLATE", "ENHANCE", "AUTOCOMPLETE", "CLIPBOARD", "NUMPAD", "EMOJI", "VOICE",
-            "LANGUAGE_SWITCH", "ANDROID_SETTINGS", "VAULT", "FULL_RIGHT", "SELECT_ALL", "WORD_RIGHT", "WORD_LEFT", "REDO", "UNDO",
+        assertEquals(listOf("FULL_LEFT", "GRAMMAR", "TRANSLATE", "ENHANCE", "AUTOCOMPLETE", "CLIPBOARD", "NUMPAD", "ANSWER", "VOICE",
+            "LANGUAGE_SWITCH", "ANDROID_SETTINGS", "VAULT", "EMOJI", "FULL_RIGHT", "SELECT_ALL", "WORD_RIGHT", "WORD_LEFT", "REDO", "UNDO",
             "SELECT_WORD", "COPY", "PASTE", "CUT", "PAGE_START"), row)
     }
 
@@ -53,15 +63,15 @@ class ToolbarOrderTest {
     }
 
     @Test fun theLayoutRevisionIsBumpedSoPhonesWithTheOldOrderMoveOnce() {
-        assertEquals(4, TOOLBAR_LAYOUT_REVISION)
-        val old = FakePrefs(mapOf(Settings.PREF_TOOLBAR_LAYOUT_REVISION to 3, Settings.PREF_TOOLBAR_KEYS to "FULL_LEFT,GRAMMAR,AUTOCOMPLETE"))
+        assertEquals(5, TOOLBAR_LAYOUT_REVISION) // 5: #1384 Draft Answer on page one, Emoji to page two
+        val old = FakePrefs(mapOf(Settings.PREF_TOOLBAR_LAYOUT_REVISION to 4, Settings.PREF_TOOLBAR_KEYS to "FULL_LEFT,GRAMMAR,AUTOCOMPLETE"))
         assertTrue(toolbarLayoutRevisionPending(old))
         adoptToolbarLayoutRevision(old)
         assertEquals(defaultToolbarPref, old.getString(Settings.PREF_TOOLBAR_KEYS, null))
-        assertEquals(4, old.getInt(Settings.PREF_TOOLBAR_LAYOUT_REVISION, 0))
+        assertEquals(5, old.getInt(Settings.PREF_TOOLBAR_LAYOUT_REVISION, 0))
         assertFalse(toolbarLayoutRevisionPending(old))
-        // a phone already on revision 4 keeps what it has (the user may have re-arranged it since)
-        val mine = FakePrefs(mapOf(Settings.PREF_TOOLBAR_LAYOUT_REVISION to 4, Settings.PREF_TOOLBAR_KEYS to "COPY,true"))
+        // a phone already on revision 5 keeps what it has (the user may have re-arranged it since)
+        val mine = FakePrefs(mapOf(Settings.PREF_TOOLBAR_LAYOUT_REVISION to 5, Settings.PREF_TOOLBAR_KEYS to "COPY,true"))
         adoptToolbarLayoutRevision(mine)
         assertEquals("COPY,true", mine.getString(Settings.PREF_TOOLBAR_KEYS, null))
     }

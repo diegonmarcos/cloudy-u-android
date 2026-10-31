@@ -43,6 +43,7 @@ fun MainSettingsScreen(
     onClickEmoji: () -> Unit, // SuperApp addition
     onClickVoiceTranscript: () -> Unit, // SuperApp addition
     onClickTextEnhance: () -> Unit, // SuperApp addition — Text Enhancements
+    onClickDraftAnswer: () -> Unit = {}, // #1384 Draft Answer
     onClickAiRouting: () -> Unit, // SuperApp addition — AI Model Routing
     onClickUpdate: () -> Unit, // #776 Config ▸ Update
     onClickPreferences: () -> Unit,
@@ -98,6 +99,11 @@ fun MainSettingsScreen(
                             name = stringResource(R.string.settings_screen_enhance),
                             onClick = onClickTextEnhance,
                             icon = R.drawable.ic_toolbar_enhance
+                        ) { NextScreenIcon() }
+                        ConfigsEntry.DRAFT_ANSWER -> Preference(
+                            name = stringResource(R.string.settings_screen_answer),
+                            onClick = onClickDraftAnswer,
+                            icon = R.drawable.ic_toolbar_answer
                         ) { NextScreenIcon() }
                         ConfigsEntry.GRAMMAR_CHECK -> Preference(
                             name = stringResource(R.string.settings_screen_grammar),

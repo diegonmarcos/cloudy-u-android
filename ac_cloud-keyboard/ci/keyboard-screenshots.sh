@@ -6,7 +6,7 @@
 #   usage: keyboard-screenshots.sh <Cloud-Keyboard.apk> <out-dir>
 #
 #   00-start               the test screen, keyboard up
-#   01..03 toolbar-page-N  the first row, page by page (the 23 keys: 11 / 11 / 1)
+#   01..03 toolbar-page-N  the first row, page by page (the 24 keys: 11 / 11 / 2; Draft Answer on page 1, Emoji on page 2)
 #   04..06 grammar-*       the Grammar mode icon after each tap: Highlight, Off, Auto Correct again
 #   07..10 autocomplete-*  the Autocomplete panel: IDs, Addresses, URLs, Secrets (masked)
 #   11 emoji-panel         the emoji page with its search field
@@ -19,6 +19,8 @@
 #   21 grammar-routing     the Grammar Check routing switch
 #   22 enhance-model       Text Enhancement: the model in use, read-only, with the link to AI Routing
 #   23..25 highlight-*     Grammar Check Highlight: the popup on a tapped mark, after Ignore, and a re-check after it
+#   26..28 answer-*        Draft Answer: the panel on the newest clipboard item, the clipboard source picker, a draft
+#   29..30 configs-answer  Configs with Draft Answer after Text Enhancement, and the Draft Answer page
 #
 # Made-up rows only. Nothing here is a credential.
 set -uo pipefail
@@ -160,6 +162,28 @@ kb select end; kb text "ok i "; sleep 2   # "i i" would be a repeated word, a di
 kb marks; M="$(last marks)"; echo "$M"
 grep -q "marks=0 ignored=1" <<<"$M" && ok "re-check: the ignored i is not marked again" || bad "the ignored mark came back: $M"
 shot 25-highlight-recheck
+
+# ── Draft Answer: the Enhance panel in reply mode, input = the newest clipboard item ─
+# Made-up messages. CI holds no AI key, so the draft in shot 28 is put in the draft box by the debug receiver
+# (answer-draft); the real Generate is the same box filled by AiRouter.complete on the Text Enhancement model.
+kb clip "Can you send me the quarterly report by tomorrow?"; sleep 1
+kb clip "Hi! Are you free for lunch on Friday at 1pm? Ana"; sleep 1
+kb code ANSWER_BAR; sleep 2
+kb answer; A="$(last answer)"; echo "$A"
+grep -q "answer=true input=\[Hi! Are you free for lunch on Friday at 1pm? Ana\] custom=false" <<<"$A" \
+  && ok "Draft Answer opened on the newest clipboard item" || bad "Draft Answer input: $A"
+shot 26-answer-panel-clipboard
+kb answer-pick; sleep 1
+kb answer; A="$(last answer)"; echo "$A"
+grep -q "picker=[1-9]" <<<"$A" && ok "the clipboard source picker lists the history" || bad "source picker: $A"
+shot 27-answer-source-picker
+kb answer-draft "Hi Ana, Friday at 1pm works for me. See you then!"; sleep 1
+kb answer; A="$(last answer)"; echo "$A"
+grep -q "draft=\[Hi Ana, Friday at 1pm works for me. See you then!\]" <<<"$A" && ok "the draft is in the panel" || bad "draft: $A"
+shot 28-answer-draft
+kb code ANSWER_BAR
+openat "" 4; shot 29-configs-answer-entry
+openat draft_answer 4; shot 30-configs-draft-answer
 
 if adb logcat -d | grep -q "FATAL EXCEPTION.*"; then bad "a crash is in the log"; adb logcat -d | grep -A12 "FATAL EXCEPTION" | head -40; else ok "no crash in the log"; fi
 adb logcat -d > "$OUT/logcat.txt" 2>/dev/null

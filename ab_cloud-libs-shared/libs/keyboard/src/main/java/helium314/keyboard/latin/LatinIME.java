@@ -979,23 +979,49 @@ public class LatinIME extends InputMethodService implements
      * the app's field until the user asks for it. Long-pressing that key keeps the
      * old one-shot "rewrite in place" behaviour.
      */
-    public void toggleEnhanceBar() {
+    public void toggleEnhanceBar() { toggleEnhancePanel(false); }
+
+    /** #1384 Draft Answer: the same panel in reply mode; its input is the newest clipboard item. */
+    public void toggleAnswerBar() { toggleEnhancePanel(true); }
+
+    /** The Enhance panel, for the debug receiver (CI screenshots). Null until it was first opened. */
+    @Nullable public EnhanceBarView getEnhanceBar() { return mEnhanceBar; }
+
+    /** Clipboard items for Draft Answer: the keyboard's clipboard history, plus the system clip as the oldest fallback. */
+    private java.util.List<DraftAnswer.Clip> answerClips() {
+        final java.util.ArrayList<DraftAnswer.Clip> clips = new java.util.ArrayList<>();
+        for (int i = 0; i < mClipboardHistoryManager.getHistorySize(); i++) {
+            final ClipboardHistoryEntry e = mClipboardHistoryManager.getHistoryEntry(i);
+            if (e != null) clips.add(new DraftAnswer.Clip(e.getTimeStamp(), e.getText()));
+        }
+        try {
+            final android.content.ClipboardManager cm = (android.content.ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+            final android.content.ClipData clip = cm == null ? null : cm.getPrimaryClip();
+            if (clip != null && clip.getItemCount() > 0)
+                clips.add(new DraftAnswer.Clip(0L, String.valueOf(clip.getItemAt(0).coerceToText(this))));
+        } catch (RuntimeException ignored) { /* a clip the keyboard may not read */ }
+        return clips;
+    }
+
+    private void toggleEnhancePanel(final boolean answer) {
         if (mInputView == null) return;
         final View strip = mInputView.findViewById(R.id.strip_container);
         if (strip == null || !(strip.getParent() instanceof android.widget.LinearLayout)) return;
         final android.widget.LinearLayout frame = (android.widget.LinearLayout) strip.getParent();
-        final boolean opening = !isPanelUp(mEnhanceBar);
+        // Tapping the OTHER mode's key while the panel is up switches mode rather than closing it.
+        final boolean opening = !isPanelUp(mEnhanceBar) || mEnhanceBar.isAnswerMode() != answer;
         if (opening) { hideTranslateBar(); hideVoiceBar(); hideEmojiSearchBar(); }
         if (mEnhanceBar == null) {
             mEnhanceBar = new EnhanceBarView(this);
             mEnhanceBar.bind(this::getRichInputConnection, this::hideEnhanceBar);
+            mEnhanceBar.setClipSource(this::answerClips);
         }
         hostPanel(mEnhanceBar, frame);
         if (!opening) {
             hideEnhanceBar();
         } else {
             mEnhanceBar.setVisibility(View.VISIBLE);
-            mEnhanceBar.onShown();
+            mEnhanceBar.onShown(answer);
         }
     }
 
@@ -1782,9 +1808,9 @@ public class LatinIME extends InputMethodService implements
         // to the app field as output). Functional keys (toggle bar, settings,
         // language switch…) fall through so the keyboard stays usable.
         final com.diegonmarcos.superapp.translate.ImeTextBox box = activeTextBox();
-        // The ENHANCE_BAR key must always fall through, or the bar it opened could
+        // The ENHANCE_BAR / ANSWER_BAR keys must always fall through, or the bar it opened could
         // never be closed from the keyboard again.
-        if (box != null && KeyCode.ENHANCE_BAR != event.getKeyCode()) {
+        if (box != null && KeyCode.ENHANCE_BAR != event.getKeyCode() && KeyCode.ANSWER_BAR != event.getKeyCode()) {
             if (KeyCode.DELETE == event.getKeyCode()) { box.backspace(); return; }
             final int cp = event.getCodePoint();
             if (cp > 0) { box.appendCodePoint(cp); return; }

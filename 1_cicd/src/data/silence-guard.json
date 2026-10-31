@@ -9,7 +9,7 @@
     {
       "label": "Enhance key",
       "source": "ab_cloud-libs-shared/libs/keyboard/src/main/java/helium314/keyboard/latin/TextEnhancer.kt",
-      "entry": "fun run(context: Context, connection: RichInputConnection, style: AiRouter.Style)",
+      "entry": "fun run(context: Context, connection: RichInputConnection, style: AiRouter.Style, route: AiRouter.Route = AiRouter.route(context))",
       "reporters": ["ended("],
       "quiet": {
         "reporter": "endedQuietly(",

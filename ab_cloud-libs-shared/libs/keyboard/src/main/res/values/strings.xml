@@ -1558,4 +1558,26 @@ New dictionary:
     <string name="grammar_popup_remove">Remove “%1$s”</string>
     <string name="grammar_popup_replace">Replace</string>
     <string name="grammar_popup_ignore">Ignore</string>
+    <!-- #1384 Draft Answer: the Enhance panel in reply mode -->
+    <string name="answer" tools:keep="@string/answer">Draft answer</string>
+    <string name="settings_screen_answer">Draft Answer</string>
+    <string name="answer_model_summary">Draft Answer uses the Text Enhancement model, picked in AI Routing.</string>
+    <string name="answer_toolbar_title">Show in toolbar</string>
+    <string name="answer_toolbar_summary">The Draft Answer key on the first toolbar page</string>
+    <string name="answer_tone_summary">The tone of the drafted reply</string>
+    <string name="answer_length_summary">How long the drafted reply is</string>
+    <string name="answer_language_summary">The language of the drafted reply (keep = the message language)</string>
+    <string name="answer_prompt_summary">What the panel sends: draft a reply to this message, with the menus above</string>
+    <string name="answer_bar_title">Draft answer</string>
+    <string name="answer_bar_pick">Clipboard ▾</string>
+    <string name="answer_bar_edit">Edit</string>
+    <string name="answer_bar_insert">Insert</string>
+    <string name="answer_bar_regenerate">Regenerate</string>
+    <string name="answer_bar_input_clipboard">Message: newest clipboard item</string>
+    <string name="answer_bar_input_custom">Message: your choice</string>
+    <string name="answer_bar_input_hint">The message to answer: copy it, pick a clipboard item, paste or type it</string>
+    <string name="answer_bar_no_input">No message to answer: copy one, or pick, paste or type it</string>
+    <string name="answer_in_progress">Drafting a reply with %1$s…</string>
+    <string name="answer_bar_done">Draft ready: Insert, Regenerate or Copy</string>
+    <string name="answer_bar_inserted">Inserted at the cursor</string>
 </resources>

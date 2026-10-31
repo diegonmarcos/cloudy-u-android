@@ -357,10 +357,23 @@ object AiRouter {
     }
 
     /** One system prompt out of the shared preamble, the style, and whatever [extra] lines were pinned. */
-    private fun compose(style: Style, extra: List<String>): Style {
-        val lines = (listOf(rewritePreamble, style.prompt) + extra).filter { it.isNotBlank() }
-        return Style(style.id, style.label, lines.joinToString(" "))
-    }
+    private fun compose(style: Style, extra: List<String>): Style =
+        Style(style.id, style.label, AiPrompt.join(rewritePreamble, style.prompt, extra))
+
+    /** build.json::keyboard_ai.answer_preamble, else [DraftAnswer.DEFAULT_PREAMBLE]. */
+    val answerPreamble: String get() = registry.optString("answer_preamble", DraftAnswer.DEFAULT_PREAMBLE)
+
+    /**
+     * What the Draft Answer panel sends: the answer preamble and "draft a reply to this message" in place of
+     * the rewrite preamble and style, then the SAME tone / length / language lines Text Enhancement uses,
+     * read from Draft Answer's own three preferences.
+     */
+    fun answerStyle(context: Context): Style = Style("answer", "Draft answer", DraftAnswer.systemPrompt(answerPreamble,
+        listOfNotNull(
+            pick(context, tones, Settings.PREF_ANSWER_TONE, defaultTone),
+            pick(context, lengths, Settings.PREF_ANSWER_LENGTH, defaultLength),
+            pick(context, languages, Settings.PREF_ANSWER_LANGUAGE, defaultLanguage),
+        )))
 
     /**
      * What the ENHANCE toolbar key actually sends: the chosen [style] prompt, then the tone, the
