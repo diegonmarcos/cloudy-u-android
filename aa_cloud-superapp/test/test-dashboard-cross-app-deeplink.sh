@@ -266,13 +266,15 @@ for gone in ("myprojects", "myfin"):
 PY
 
 echo "== T6 (#1092): Cloud ▸ Apps row order, Vault and Account in Tools Primary =="
-python3 - "$BJ" <<'PY' && ok "rows Inboxes, Tools Primary, Data Apps, Me, AGI, Lnktree, Configs; Vault in Tools Primary; Account closes Me, after a '|' (#1362); Account kept in Configs" || bad "Cloud ▸ Apps row order or the Vault/Account placement drifted"
+python3 - "$BJ" "$APP/data/constellation-fleet.json" <<'PY' && ok "rows follow the derived registry (constellation-fleet.json app_categories); Vault in Tools Primary; Account closes Me, after a '|' (#1362); Account kept in Configs" || bad "Cloud ▸ Apps row order or the Vault/Account placement drifted"
 import json, sys
 d = json.load(open(sys.argv[1]))
 cloud = next(s for s in d["ui"]["sections"] if s["id"] == "cloud")
 titles = [g["title"] for g in cloud["tile_groups"]]
-want = ["Inboxes", "Tools Primary", "Data Apps", "Me", "AGI", "Lnktree", "Configs"]
-assert titles == want, (titles, "!=", want)
+# The expected order is the derived registry (data/app-categories.py via regen.sh writes one
+# app_categories entry per tile group, same title, same order, then "Other"), not a literal list here.
+want = [c["label"] for c in json.load(open(sys.argv[2]))["app_categories"] if c["id"] != "other"]
+assert titles == want, (titles, "!=", want, "regen: data/regen.sh --constellation-only")
 g = {x["title"]: [t.get("label") for t in x["tiles"]] for x in cloud["tile_groups"]}
 assert g["Me"] == ["Me", "|", "Me-Health", "Experiences", "RoadMap", "|", "Me-Duties", "Me-Buro", "Me-LLC", "|", "Account"], g["Me"]
 assert g["Tools Primary"][-2:] == ["Wallet", "Vault"] and "Account" not in g["Tools Primary"], g["Tools Primary"]  # #1155 order (Light left for Cloud Calc > Toolkit); Account moved to Me (last since #1362)
