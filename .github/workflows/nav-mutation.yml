@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       name:
-        description: 'gesture-latch | gesture-new | dropdown-cap | dropdown-ink | top-underlay'
+        description: 'gesture-latch | gesture-new | dropdown-cap | dropdown-ink | top-underlay | prefs-eager'
         required: true
 permissions:
   contents: read
@@ -31,6 +31,8 @@ jobs:
             # libs:ui-nav-bars is not in Cloud Store's build, so this one runs Cloud Calc's unit suite (every module).
             top-underlay)  sed -i 's/^public fun topChromeUnderlay(dark: Boolean): Color = ThemeBackground.colors(dark).island$/public fun topChromeUnderlay(dark: Boolean): Color = Color(0xFFFEF7FF)/' ab_cloud-libs-shared/libs/ui-nav-bars/src/main/kotlin/com/diegonmarcos/superapp/navbartop1/NavBarTopFirstRow.kt
                            echo "WORK_DIR=ac_cloud-calc" >> "$GITHUB_ENV" ;;
+            # NavUiPrefs reads its SharedPreferences in the constructor again (on the main thread): NavUiPrefsOffMainTest must go red
+            prefs-eager)   sed -i 's/private val prefs by lazy { app.getSharedPreferences(NAME, Context.MODE_PRIVATE) }/private val prefs = app.getSharedPreferences(NAME, Context.MODE_PRIVATE)/' ab_cloud-libs-shared/libs/bottomnav/src/main/kotlin/com/diegonmarcos/superapp/bottomnav/NavUiPrefs.kt ;;
             *) echo "unknown mutation"; exit 2 ;;
           esac
           git diff --stat

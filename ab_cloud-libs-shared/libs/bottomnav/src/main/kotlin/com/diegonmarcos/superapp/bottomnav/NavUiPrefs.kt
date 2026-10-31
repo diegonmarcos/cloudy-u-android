@@ -16,20 +16,37 @@ import androidx.compose.ui.platform.LocalContext
  * SharedPreferences. It is declared in the fleet manifest (libs:fleetconfig-model, class config), so it migrates to a new phone and
  * rides the app's backup with the rest of the settings. Reads are Compose state, so a change redraws the chrome at once.
  */
-public class NavUiPrefs private constructor(context: Context) : NavUiStore {
-    private val prefs = context.applicationContext.getSharedPreferences(NAME, Context.MODE_PRIVATE)
-    private var chosenMode: NavUiMode? by mutableStateOf(NavUiMode.entries.firstOrNull { it.declared == prefs.getString(KEY_MODE, null) })
-    private var chosenScrollHide: Boolean? by mutableStateOf(if (prefs.contains(KEY_SCROLL_HIDE)) prefs.getBoolean(KEY_SCROLL_HIDE, true) else null)
+public class NavUiPrefs internal constructor(context: Context) : NavUiStore {
+    private val app = context.applicationContext
+    // The SharedPreferences file and the global pin are read OFF the main thread (StrictMode caught a 1.4-2.9 s disk read here at
+    // CG-Omniverse launch): the chrome draws the app's declared default for that moment, then redraws with the stored choice.
+    private val prefs by lazy { app.getSharedPreferences(NAME, Context.MODE_PRIVATE) }
+    private var chosenMode: NavUiMode? by mutableStateOf(null)
+    private var chosenScrollHide: Boolean? by mutableStateOf(null)
+    @Volatile private var touched = false
 
     // The runtime nav walk (cloud-android-nav-walk.py) drives the pages through the Classic title dropdown: it pins the mode with the global
     // setting `cloud_nav_ui_mode` (only adb or the system can write it). Unset on a phone: the user's choice stands.
-    private val pinned: NavUiMode? = runCatching {
-        Settings.Global.getString(context.applicationContext.contentResolver, GLOBAL_PIN)?.let { v -> NavUiMode.entries.firstOrNull { it.declared == v } }
-    }.getOrNull()
+    private var pinned: NavUiMode? by mutableStateOf(null)
+
+    init {
+        Thread({
+            val p = prefs
+            pinned = runCatching {
+                Settings.Global.getString(app.contentResolver, GLOBAL_PIN)?.let { v -> NavUiMode.entries.firstOrNull { it.declared == v } }
+            }.getOrNull()
+            // a choice the user made meanwhile wins over the stored one
+            if (!touched) {
+                chosenMode = NavUiMode.entries.firstOrNull { it.declared == p.getString(KEY_MODE, null) }
+                chosenScrollHide = if (p.contains(KEY_SCROLL_HIDE)) p.getBoolean(KEY_SCROLL_HIDE, true) else null
+            }
+        }, "nav-ui-prefs").apply { isDaemon = true }.start()
+    }
 
     override fun mode(): NavUiMode? = pinned ?: chosenMode
 
     override fun setMode(mode: NavUiMode?) {
+        touched = true
         chosenMode = mode
         prefs.edit().apply { if (mode == null) remove(KEY_MODE) else putString(KEY_MODE, mode.declared) }.apply()
     }
@@ -37,6 +54,7 @@ public class NavUiPrefs private constructor(context: Context) : NavUiStore {
     override fun scrollHide(): Boolean? = chosenScrollHide
 
     override fun setScrollHide(on: Boolean?) {
+        touched = true
         chosenScrollHide = on
         prefs.edit().apply { if (on == null) remove(KEY_SCROLL_HIDE) else putBoolean(KEY_SCROLL_HIDE, on) }.apply()
     }
