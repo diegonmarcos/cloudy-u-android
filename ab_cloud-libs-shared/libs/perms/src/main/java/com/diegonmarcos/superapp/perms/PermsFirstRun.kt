@@ -15,7 +15,8 @@ import android.provider.Settings
  * top, and are recorded as asked. A grant added in a later version is therefore asked once on the first launch after the
  * update. [ASK_STORE_VERSION] versions the asked-state: raising it forgets every recorded ask once, so every app asks
  * all its missing grants again on its next launch. Off when the app asks itself (perms.first_run "own:..."), under
- * instrumentation or a test harness, and when `settings put global cloud_perms_first_run 0` (emulator walks).
+ * instrumentation or a test harness unless `settings put global cloud_perms_first_run 2` (the perms emulator proof), and
+ * when `settings put global cloud_perms_first_run 0` (emulator walks).
  */
 object PermsFirstRun {
     /** 2 = #1352: every app does a fresh ask of all its permissions on the first launch after this update. */
@@ -52,8 +53,12 @@ object PermsFirstRun {
 
     fun fromLauncher(i: Intent?): Boolean = i != null && i.action == Intent.ACTION_MAIN && i.hasCategory(Intent.CATEGORY_LAUNCHER)
 
-    private fun suppressed(ctx: Context): Boolean =
+    /** `cloud_perms_first_run`: 0 = never ask (emulator walks), 2 = ask even under a test harness or monkey (the perms
+     *  emulator proof, whose AVD reports ro.test_harness=1 and ro.monkey=1), anything else = the default below. */
+    private fun global(ctx: Context): Int = runCatching { Settings.Global.getInt(ctx.contentResolver, GLOBAL_OFF, 1) }.getOrDefault(1)
+
+    private fun suppressed(ctx: Context): Boolean = global(ctx) != 2 && (
         ActivityManager.isRunningInTestHarness() || ActivityManager.isUserAMonkey() ||
-            runCatching { Settings.Global.getInt(ctx.contentResolver, GLOBAL_OFF, 1) == 0 }.getOrDefault(false) ||
-            runCatching { Class.forName("androidx.test.platform.app.InstrumentationRegistry"); true }.getOrDefault(false)
+            global(ctx) == 0 ||
+            runCatching { Class.forName("androidx.test.platform.app.InstrumentationRegistry"); true }.getOrDefault(false))
 }

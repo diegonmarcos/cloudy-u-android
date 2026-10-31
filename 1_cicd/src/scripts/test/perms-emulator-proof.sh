@@ -47,7 +47,7 @@ perms_page() { # pkg tag
   sleep 5; shot "$2"
 }
 adb root >/dev/null 2>&1; sleep 3; adb wait-for-device
-adb shell settings put global cloud_perms_first_run 1
+adb shell settings put global cloud_perms_first_run 2   # ask even though the AVD is a test harness (PermsFirstRun.global)
 say "device: ro.test_harness=$(adb shell getprop ro.test_harness | tr -d '\r') monkey=$(adb shell getprop ro.monkey | tr -d '\r')"
 
 # key | label of the entry granted and revoked | grant cmd | revoke cmd | texts the page must show
