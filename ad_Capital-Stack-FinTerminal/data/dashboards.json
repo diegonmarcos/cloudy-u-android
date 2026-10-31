@@ -3930,6 +3930,7 @@
           "title": "Next policy decisions",
           "source": "central_banks",
           "view": "calendar",
+          "next_tiles": true,
           "derive": "events",
           "fetch": {
             "provider": "declared_events",

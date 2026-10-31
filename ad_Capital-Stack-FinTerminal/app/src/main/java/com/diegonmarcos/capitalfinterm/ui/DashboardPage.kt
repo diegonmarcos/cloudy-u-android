@@ -569,6 +569,14 @@ private fun PanelBody(
                     val today = LocalDate.now(ZoneOffset.UTC)
                     val evs = eventsOf(data, panel.title).filter { FinLogic.inCalWindow(it.ts, chip, today) }
                     Column {
+                        if (panel.raw.optBoolean("next_tiles")) {
+                            val next = FinLogic.nextDecisions(eventsOf(data, panel.title).map { it.ts to it.country }, today)
+                            val tiles = next.map { n -> @Composable { m: Modifier ->
+                                val q = FinQuote(n.country, last = FinLogic.dayHeader(n.date.toString()), chg = "", pct = "", date = if (n.days == 0L) "today" else "in ${n.days} d")
+                                FinKpiTile(q, q.symbol, "", stale, m)
+                            } }
+                            if (tiles.isNotEmpty()) Box(Modifier.padding(horizontal = FinDim.cardPad, vertical = 4.dp)) { FinKpiGrid(tiles, perRow) }
+                        }
                         Row(Modifier.padding(horizontal = FinDim.cardPad, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             FinLogic.CAL_CHIPS.forEachIndexed { i, l -> FinChip(l, i == chip, Modifier.height(24.dp)) { chip = i } }
                         }

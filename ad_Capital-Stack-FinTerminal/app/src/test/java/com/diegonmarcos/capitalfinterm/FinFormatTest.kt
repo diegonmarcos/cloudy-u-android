@@ -102,4 +102,12 @@ class FinFormatTest {
         assertEquals(Dir.UP, FinFormat.tone(Dir.UP, false))
         assertEquals(Dir.FLAT, FinFormat.tone(Dir.FLAT, true))
     }
+
+    @Test fun nextDecisionTilesTakeTheFirstUpcomingDecisionPerCountry() {
+        val today = java.time.LocalDate.parse("2026-10-31")
+        val ev = listOf("2026-10-29T18:00Z" to "US", "2026-12-09T19:00Z" to "US", "2027-01-27T19:00Z" to "US", "2026-11-05T12:00Z" to "GB", "2026-10-31T11:00Z" to "JP", "bad" to "EU")
+        val n = FinLogic.nextDecisions(ev, today)
+        assertEquals(listOf("JP", "GB", "US"), n.map { it.country })
+        assertEquals(listOf(0L, 5L, 39L), n.map { it.days })
+    }
 }

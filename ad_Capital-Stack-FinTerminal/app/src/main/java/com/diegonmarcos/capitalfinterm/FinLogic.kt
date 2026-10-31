@@ -153,6 +153,18 @@ object FinLogic {
     }
 
     /** Day header of a calendar group: `Thu 05 Nov`. */
+    /** Central-bank next-decision tiles (#1370): the first decision on or after today per country, in calendar order, with days to go. */
+    data class NextDecision(val country: String, val date: LocalDate, val days: Long)
+    fun nextDecisions(events: List<Pair<String, String>>, today: LocalDate): List<NextDecision> {
+        val seen = LinkedHashMap<String, NextDecision>()
+        for ((ts, cc) in events) {
+            val d = runCatching { LocalDate.parse(ts.take(10)) }.getOrNull() ?: continue
+            if (d.isBefore(today) || cc.isBlank() || cc in seen) continue
+            seen[cc] = NextDecision(cc, d, java.time.temporal.ChronoUnit.DAYS.between(today, d))
+        }
+        return seen.values.sortedBy { it.date }
+    }
+
     /** Calendar window chips (#1370): All, Today, This week (Monday to Sunday of today, UTC dates). */
     val CAL_CHIPS = listOf("All", "Today", "This week")
     fun inCalWindow(ts: String, chip: Int, today: LocalDate): Boolean {
