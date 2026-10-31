@@ -1,0 +1,80 @@
+# Store status-area mutation runs: each matrix leg applies ONE deliberate break to StoreTally's aggregation (installed vs
+# declared, cached vs to-download split, sizes) and runs Cloud Store's JVM suite, which holds StoreTallyTest. Every leg
+# must go RED; a green leg means the suite is blind to that break. Manual only.
+name: store-tally-mutation
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+env:
+  WORK_DIR: ac_cloud-store
+jobs:
+  mutate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        name: [installed-count, declared-release, cached-split, update-total, cached-newer]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply mutation ${{ matrix.name }}
+        env:
+          M: ${{ matrix.name }}
+        run: |
+          python3 - <<'PY'
+          import os
+          p = "ab_cloud-libs-shared/libs/appstore/src/main/java/com/diegonmarcos/superapp/appstore/StoreTally.kt"
+          m = {
+              "installed-count": ("{ installed++; if (i.installedBytes > 0)", "{ if (i.installedBytes > 0)"),
+              "declared-release": ("val decl = if (i.releaseBytes >= 0) i.releaseBytes else", "val decl = if (false) i.releaseBytes else"),
+              "cached-split": ("if (i.cachedBytes >= 0) { cached++", "if (false) { cached++"),
+              "update-total": ("updates, cachedBytes + todoBytes,", "updates, todoBytes,"),
+              "cached-newer": ("code > installedCode) bytes else -1", "code >= installedCode) bytes else -1"),
+          }[os.environ["M"]]
+          s = open(p).read()
+          assert m[0] in s, "mutation target missing"
+          open(p, "w").write(s.replace(m[0], m[1], 1))
+          PY
+          git diff --stat
+          test -n "$(git diff --name-only)" || { echo "mutation target missing"; exit 3; }
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: "platforms;android-36 platforms;android-35 platforms;android-26 build-tools;35.0.0 build-tools;34.0.0 platform-tools"
+      - name: Set up Gradle 8.10.2 (cached)
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: "8.10.2"
+      # ── MANAGED-GRADLE-CACHE-HYGIENE: injected by cloud-android-gradle-cache-hygiene.py ──
+      # Edit 1_cicd/src/actions/gradle-cache-hygiene, never this block.
+      - name: Gradle cache hygiene (retry failed resolution, never cache a failed lookup)
+        uses: ./.github/actions/gradle-cache-hygiene
+      # ── end MANAGED-GRADLE-CACHE-HYGIENE ──
+      - name: Checkout vault (shared Android signing key, read by app/build.gradle at configuration)
+        uses: actions/checkout@v4
+        with:
+          repository: diegonmarcos/cloud-me-pvt-vault
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
+          path: .vault
+      - name: Install jq
+        run: sudo apt-get update -y && sudo apt-get install -y jq
+      - name: Install ORAS + sops (pinned)
+        uses: ./.github/actions/install-pinned-tools
+        with:
+          tools: oras sops
+      - name: JVM unit tests (RED expected)
+        env:
+          BYPASS_NIX: "1"
+          VAULT_DIR: ${{ github.workspace }}/.vault
+          SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
+        run: sh 1_cicd/dist/scripts/cloud-android-test-engine.sh unit "$WORK_DIR"
+      # the evidence: which StoreTally test caught it
+      - name: Failed tests
+        if: always()
+        run: grep -rl "<failure" --include="TEST-*.xml" ac_cloud-store/app/build 2>/dev/null | xargs -r grep -h -o 'testcase name="[^"]*"' | head -40 || true

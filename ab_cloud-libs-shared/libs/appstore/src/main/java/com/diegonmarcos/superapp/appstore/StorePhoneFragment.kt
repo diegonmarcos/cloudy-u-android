@@ -229,6 +229,10 @@ class StorePhoneFragment : KitComposeFragment() {
         StoreBar.Bar(StoreBar.Verbs(
             checkAll = { checkAll() }, installAll = { installAll() }, updateAll = { updateAll() }), resume = resume)
         progress.Panel()
+        // The status area: declared rows vs installed and the updates' cached / to-download split, from
+        // the rows and checks this page already holds. Re-read on every progress event.
+        val tallyRows = rows; val tallyStates = states.toMap()
+        StoreTally.Area(listOf(progress.tick, tallyRows, tallyStates, resume), { c -> tallyItems(c, tallyRows, tallyStates) })
         // The page's file verbs: the SAME shared action buttons, laid out by StoreRow.Actions as every row's are.
         // Installed owns Export and the APK cache (what is on this phone); Declared owns Import (a list to install).
         StoreRow.Actions(buildList {
@@ -652,6 +656,21 @@ class StorePhoneFragment : KitComposeFragment() {
             AppRow(pkg, label, shelves[pkg], fa, ext, installed, actions)
         }.sortedWith(SHELF_ORDER)
         return Loaded(list, resolver, states, cached)
+    }
+
+    /** The declared rows as [StoreTally] items: PackageManager APK bytes, the checks' verdicts, the APK cache.
+     *  Local reads only; called off the main thread. */
+    private fun tallyItems(c: Context, list: List<AppRow>, st: Map<String, SourceResolver.Check>): List<StoreTally.Item> {
+        val cache = StoreTally.cache(c)
+        return list.map { r ->
+            val update = st[r.pkg] is SourceResolver.Check.UpdateAvailable
+            StoreTally.Item(
+                installed = r.installed,
+                installedBytes = if (r.installed) StoreTally.apkBytes(c, r.pkg) else -1L,
+                update = update,
+                cachedBytes = if (update) StoreTally.cachedUpdate(cache, r.pkg, StoreTally.installedCode(c, r.pkg)) else -1L,
+            )
+        }
     }
 
     /** Sizes for every installed row, measured off the main thread (cached; see [StoreSizeProbe]), then repainted. */

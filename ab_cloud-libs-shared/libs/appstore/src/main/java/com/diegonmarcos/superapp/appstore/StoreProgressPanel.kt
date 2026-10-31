@@ -15,6 +15,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -63,6 +64,11 @@ class StoreProgressPanel(
     var ui by mutableStateOf<Ui?>(null)
         private set
 
+    /** Bumped on every progress or job-board event: the page's [StoreTally] area re-reads on it, so a
+     *  download landing in the cache shows there live. */
+    var tick by mutableIntStateOf(0)
+        private set
+
     /** #894 the one writer of the bar's state: monotonic per item (see [ProgressBarModel]). */
     private val model = ProgressBarModel()
     private val main = Handler(Looper.getMainLooper())
@@ -71,10 +77,10 @@ class StoreProgressPanel(
         val p = StoreStages.progress(state)
         // While keyed jobs run, the bar speaks from THEIR board, not from the one process-wide state
         // whichever job wrote last.
-        main.post { ui = if (StoreJobs.board.overall().active > 0) board() else single(state, p) }
+        main.post { ui = if (StoreJobs.board.overall().active > 0) board() else single(state, p); tick++ }
     }
     private val boardObserver: () -> Unit = {
-        main.post { ui = if (StoreJobs.board.overall().active > 0) board() else single(UpdateProgress.state, StoreStages.progress()) }
+        main.post { ui = if (StoreJobs.board.overall().active > 0) board() else single(UpdateProgress.state, StoreStages.progress()); tick++ }
     }
 
     /** Listen from now on; [detach] stops. Idempotent: re-attaching never stacks observers. */

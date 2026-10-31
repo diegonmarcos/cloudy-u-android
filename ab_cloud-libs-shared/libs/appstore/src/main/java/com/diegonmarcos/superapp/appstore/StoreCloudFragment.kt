@@ -441,6 +441,10 @@ class StoreCloudFragment : KitComposeFragment() {
         // Sits under the buttons that start the work and above the summary line that describes the
         // result: what the fleet is doing RIGHT NOW.
         progress.Panel()
+        // The status area: declared vs installed and the updates' cached / to-download split, for the
+        // whole fleet registry, from the checks already made. Re-read on every progress event.
+        val snap = states.toMap()
+        StoreTally.Area(listOf(progress.tick, snap, resume), { c -> tallyItems(c, snap) })
         if (list.isEmpty()) { StoreCaption("Nothing here yet."); return }
         // The Libs tab has two sections: the installable engines (this list, with
         // who binds each) and, below it, the libs that only compile in (info rows).
@@ -487,6 +491,29 @@ class StoreCloudFragment : KitComposeFragment() {
             if (here != null && here != heading) StoreHeading(here, cUpd)
             heading = here
             FleetRow(ctx, app)
+        }
+    }
+
+    /** The fleet registry as [StoreTally] items: PackageManager for installed, the checks' release sizes,
+     *  the APK cache for what is already downloaded. Local reads only; called off the main thread. */
+    private fun tallyItems(c: Context, snap: Map<String, Fleet.State>): List<StoreTally.Item> {
+        val cache = StoreTally.cache(c)
+        return fleet.map { app ->
+            val id = Fleet.installedId(c, app)
+            val pkg = id ?: app.pkg
+            val s = snap[app.id]
+            val release = when (s) {
+                is Fleet.State.UpdateAvailable, is Fleet.State.Missing -> s.bytes.takeIf { it > 0 } ?: -1L
+                else -> -1L
+            }
+            val update = s is Fleet.State.UpdateAvailable
+            StoreTally.Item(
+                installed = id != null,
+                installedBytes = if (id != null) StoreTally.apkBytes(c, id) else -1L,
+                releaseBytes = release,
+                update = update,
+                cachedBytes = if (update) StoreTally.cachedUpdate(cache, pkg, id?.let { StoreTally.installedCode(c, it) }) else -1L,
+            )
         }
     }
 
