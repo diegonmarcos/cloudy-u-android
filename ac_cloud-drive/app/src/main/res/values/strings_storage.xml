@@ -111,10 +111,6 @@
     <string name="configs_section_device">Device</string>
     <!-- #1333 the Perms section of General: the entries themselves (label, why, intents) are build.json::ui.general.perms -->
     <string name="configs_section_perms">Perms</string>
-    <string name="perms_status_na">Not applicable</string>
-    <string name="perms_status_info">Info</string>
-    <string name="perms_btn_grant">Grant</string>
-    <string name="perms_btn_settings">Open settings</string>
     <string name="configs_manage_data">Data scan</string>
     <string name="configs_manage_data_body">Manage > Data ranks everything in shared storage that is not an app.</string>
     <string name="configs_manage_folders">Include folders in Data</string>
