@@ -71,11 +71,13 @@ class EngineTest {
         val fred = Catalog.byId(sources, "fred")!!
         val d = Engine.load(panel("forward_rates", "fwd"), fred, Fake(::fredAnswer), today)
         val curve = yields.map { (k, v) -> (if (k.endsWith("MO")) k.removePrefix("DGS").removeSuffix("MO").toDouble() / 12 else k.removePrefix("DGS").toDouble()) to v }.sortedBy { it.first }
-        val expect = Forward.rate(curve, 5.0, 5.0)
-        val row = d.rows.first { it[0] == "5Y x 5Y" }
-        assertEquals(String.format(java.util.Locale.ROOT, "%.2f", expect), row[1])
+        // spec 9 table (table_start 1): per tenor the spot, the 1y-forward over the same tenor and the difference in bp
+        val spot5 = curve.first { it.first == 5.0 }.second
+        val fwd5 = Forward.rate(curve, 1.0, 5.0)
+        val row = d.rows.first { it[0] == "5Y" }
+        assertEquals(listOf("5Y", String.format(java.util.Locale.ROOT, "%.2f", spot5), String.format(java.util.Locale.ROOT, "%.2f", fwd5), FinFormat.signed((fwd5 - spot5) * 100, 0)), row)
+        assertEquals(curve.size, d.rows.size)
         assertEquals(30, d.chart.size)
-        assertEquals("0Y x 1Y", d.rows.first()[0])
     }
 
     @Test fun fxCrossMatrixIsConsistentWithTheSpotRates() {
