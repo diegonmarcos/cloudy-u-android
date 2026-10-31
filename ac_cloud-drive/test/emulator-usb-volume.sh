@@ -65,7 +65,10 @@ for i in 1 2 3; do tap '^Explorer$' && break; sleep 2; done || fail "no Explorer
 sleep 2; tap '^Local$' || true; sleep 3
 shot 01-explorer
 tap '^Go to$' || fail "no Go to (Places) action: $(texts)"
-sleep 3; shot 02-places
+sleep 3
+# the drive sits below the declared places: scroll the sheet until its size line is on screen
+for i in 1 2 3 4 5 6; do dump >/dev/null; has 'free of' && break; adb shell input swipe 160 560 160 300 300; sleep 1; done
+shot 02-places
 has 'free of' || fail "no removable place with a size line in Places: $(texts)"
 tap 'free of' || fail "the volume place is not tappable"
 sleep 3; shot 03-volume-listing
