@@ -203,6 +203,7 @@ jobs:
               if not find("Loading avatar..."): break
               time.sleep(3)
           shot("01-avatar-default-animations", 6)
+          open("%s/01-hierarchy.xml" % OUT, "w").write(dump())  # where the WebView sits on screen (bounds)
           tap("Walk"); shot("02-animations-walk", 4)
           tap("Outfit"); tap("Navy"); shot("03-outfit-colour-navy", 4)
           tap("Export"); shot("04-export-menu", 1)

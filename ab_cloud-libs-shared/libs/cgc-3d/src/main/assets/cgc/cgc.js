@@ -308,11 +308,12 @@ export async function boot(config) {
   const el = document.getElementById('cgc') || document.body;
   const v = createViewer(el, config || {});
   window.cgc = v;
-  emit('ready', {});
+  const sz = () => { const c = v.three.renderer.domElement; return { css: [el.clientWidth, el.clientHeight], canvas: [c.width, c.height], dpr: window.devicePixelRatio }; };
+  emit('ready', sz());
   if (config && config.model && config.model.url) {
     // the empty stage is presented first; the GLB is decoded and uploaded after that frame, never inside the page's first one
     await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-    try { await v.load(config.model.url, config.model.kind); } catch (e) { emit('error', { where: 'load', message: String(e && e.message || e) }); }
+    try { await v.load(config.model.url, config.model.kind); emit('size', sz()); } catch (e) { emit('error', { where: 'load', message: String(e && e.message || e) }); }
   }
   return v;
 }
