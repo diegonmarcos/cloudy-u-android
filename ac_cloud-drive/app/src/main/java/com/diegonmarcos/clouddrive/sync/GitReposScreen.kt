@@ -78,6 +78,7 @@ import com.diegonmarcos.clouddrive.StoreSeedWorker
 import com.diegonmarcos.clouddrive.ui.CapsuleBadge
 import com.diegonmarcos.clouddrive.ui.DriveCard
 import com.diegonmarcos.clouddrive.ui.DriveMetrics
+import com.diegonmarcos.clouddrive.ui.scrollFadeEnd
 import com.diegonmarcos.clouddrive.ui.DriveTags
 import com.diegonmarcos.clouddrive.ui.EmptyState
 import com.diegonmarcos.clouddrive.ui.Hairline
@@ -1430,7 +1431,7 @@ private fun GitRepoRow(
                 }
             }
         }
-        Row(Modifier.weight(1f).horizontalScroll(scroll).padding(end = DriveMetrics.sectionInset, top = DriveMetrics.gap, bottom = DriveMetrics.gap), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.weight(1f).scrollFadeEnd(scroll.canScrollForward).horizontalScroll(scroll).padding(end = DriveMetrics.sectionInset, top = DriveMetrics.gap, bottom = DriveMetrics.gap), verticalAlignment = Alignment.CenterVertically) {
             RepoCells(cells)
             Box(Modifier.width(DriveMetrics.tableName), contentAlignment = Alignment.CenterEnd) {
                 when {

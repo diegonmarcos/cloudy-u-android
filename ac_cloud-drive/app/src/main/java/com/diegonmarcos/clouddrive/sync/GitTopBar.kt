@@ -50,6 +50,7 @@ import com.diegonmarcos.clouddrive.Declarations
 import com.diegonmarcos.clouddrive.DrivePrefs
 import com.diegonmarcos.clouddrive.sync.jobs.GitJobs
 import com.diegonmarcos.clouddrive.ui.DriveMetrics
+import com.diegonmarcos.clouddrive.ui.scrollFadeEnd
 import com.diegonmarcos.clouddrive.ui.DriveTags
 import com.diegonmarcos.clouddrive.ui.IconCatalog
 import com.diegonmarcos.clouddrive.ui.IslandAction
@@ -212,10 +213,12 @@ internal object GitSearchMetrics {
 internal fun QuickFilterRail(filters: List<Declarations.GitFilterDecl>, selection: Map<String, String>, counts: (Declarations.GitFilterDecl) -> Map<String, Int>, onPick: (Declarations.GitFilterDecl, String) -> Unit) {
     val quick = filters.flatMap { f -> f.options.filter { it.quick }.map { f to it } }
     if (quick.isEmpty()) return
-    LazyRow(Modifier.fillMaxWidth().testTag(DriveTags.SYNC_GIT_QUICK_FILTERS), contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = DriveMetrics.sectionInset), horizontalArrangement = Arrangement.spacedBy(DriveMetrics.gapWide)) {
+    val rail = androidx.compose.foundation.lazy.rememberLazyListState()
+    // #1356 one sideways-scrolling row of compact chips; the end edge fades while more chips lie past it.
+    LazyRow(Modifier.fillMaxWidth().scrollFadeEnd(rail.canScrollForward).testTag(DriveTags.SYNC_GIT_QUICK_FILTERS), state = rail, contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = DriveMetrics.sectionInset), horizontalArrangement = Arrangement.spacedBy(DriveMetrics.gapWide)) {
         items(quick, key = { it.first.id + ":" + it.second.id }) { (f, o) ->
             val n = counts(f)[o.id] ?: 0
-            FilterChip(selected = RepoFilters.selected(f, selection) == o.id, onClick = { onPick(f, o.id) }, label = { Text("${o.label} ($n)") })
+            FilterChip(selected = RepoFilters.selected(f, selection) == o.id, onClick = { onPick(f, o.id) }, label = { Text("${o.label} ($n)", style = MaterialTheme.typography.labelSmall, maxLines = 1) }, modifier = Modifier.height(DriveMetrics.chipHeight))
         }
     }
 }

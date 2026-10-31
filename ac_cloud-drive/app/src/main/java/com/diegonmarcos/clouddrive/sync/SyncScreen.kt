@@ -90,7 +90,7 @@ fun GitPageScreen(
         // #868 the strip is libs:bottomnav's PageTabs over ui.sections[git].pages.
         NavBarTopSecondRow(pages = pagesStorage, selectedId = storage.id, onSelect = { storage = GitStorage.Kind.of(it.id); gitStorageSelect(ctx, storage) }, modifier = Modifier.padding(horizontal = DriveMetrics.gap).testTag("git_storage_strip"), underTopChrome = false)
         if (storage != GitStorage.Kind.STORE) { GitStorageRepos(storage, git, Modifier.weight(1f)); SnackbarHost(snackbar); return@Column }
-        NavBarTopSecondRow(pages = pages, selectedId = current, onSelect = { current = it.id }, modifier = Modifier.padding(horizontal = DriveMetrics.gap).testTag(DriveTags.SYNC_STRIP), underTopChrome = false)
+        NavBarTopSecondRow(pages = pages, selectedId = current, onSelect = { current = it.id }, modifier = Modifier.padding(horizontal = DriveMetrics.gap).testTag(DriveTags.SYNC_STRIP), underTopChrome = false, compact = true)
         AnimatedContent(targetState = current, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "git_page", modifier = Modifier.weight(1f)) { id ->
             when (id) {
                 "me" -> GitReposScreen(git, actions, nextRun, view = GitView.ME, prefs = prefs)

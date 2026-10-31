@@ -260,9 +260,12 @@ private fun IslandContent(
         // outer letters shaved by the pill clip), and a label too long for that width shrinks, alone,
         // toward bottom_nav_fit_label_min_text_size before it ellipsizes. Never hidden: the selected
         // item always keeps its label.
-        val labelInset = if (plan.fitted) tokens.fitLabelInset else 0.dp
+        val labelInset = tokens.fitLabelInset
         val measurer = rememberTextMeasurer()
-        val labelRoom = with(density) { (plan.cell - labelInset * 2).toPx() }
+        // #1356 the room a label may use, clear of the capsule's round ends, in EVERY plan: a full-size bar of 7 items
+        // ('Explorer', 'Mounts' at 12sp) had its outer letters shaved by the pill clip. A label that fits draws the
+        // tokens unchanged (pixel parity); only one that does not shrinks toward fitLabelMinTextSize, then ellipsizes.
+        val labelRoom = with(density) { (plan.cell - tokens.fitLabelInset * 2).toPx() }
         Row(
             Modifier
                 .then(if (plan.fitted) Modifier.width(plan.islandWidth) else Modifier.fillMaxWidth(widthFraction))
@@ -320,7 +323,7 @@ private fun IslandContent(
                             .size(cellIcon)
                             .testTag(iconTag(entry.id)),
                     )
-                    val entryStyle = if (!plan.fitted) cellLabelStyle else remember(entry.label, cellLabelStyle, labelRoom, density) {
+                    val entryStyle = remember(entry.label, cellLabelStyle, labelRoom, density) {
                         labelStyleToFit(cellLabelStyle, tokens.fitLabelMinTextSize) { style ->
                             measurer.measure(entry.label, style, maxLines = 1, softWrap = false).size.width <= labelRoom
                         }
@@ -349,7 +352,7 @@ private fun IslandContent(
                                 .graphicsLayer { alpha = labelShown }
                                 .padding(top = cellGap)
                                 .fillMaxWidth()
-                                .then(if (plan.fitted) Modifier.padding(horizontal = labelInset) else Modifier)
+                                .padding(horizontal = labelInset)
                                 .testTag(labelTag(entry.id)),
                             color = ink,
                             style = entryStyle,

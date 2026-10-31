@@ -188,8 +188,8 @@ t6() { python3 - "$BJ" "$1" "$2" "$3" <<'PY'
 import json, sys
 bj = json.load(open(sys.argv[1])); frame, page, ui = (open(p).read() for p in sys.argv[2:5]); bad = []
 if "indicator = {" not in frame or "LinearProgressIndicator(" not in frame or "SYNC_GIT_REFRESH_BAR" not in frame: bad.append("(a) the refresh is not a top bar")
-if "RepoTable.COLUMNS.filter { it in RepoTable.PINNED }" not in ui or "Modifier.weight(1f).horizontalScroll(scroll)" not in ui: bad.append("(b) the header does not pin Status and Name")
-if "Row(Modifier.weight(1f).horizontalScroll(scroll).padding(end = DriveMetrics.sectionInset" not in page: bad.append("(b) the rows do not pin Status and Name")
+if "RepoTable.COLUMNS.filter { it in RepoTable.PINNED }" not in ui or "Modifier.weight(1f).scrollFadeEnd(scroll.canScrollForward).horizontalScroll(scroll)" not in ui: bad.append("(b) the header does not pin Status and Name")
+if "Row(Modifier.weight(1f).scrollFadeEnd(scroll.canScrollForward).horizontalScroll(scroll).padding(end = DriveMetrics.sectionInset" not in page: bad.append("(b) the rows do not pin Status and Name")
 if 'item(key = "parentless")' in page or 'item(key = "unlisted")' in page: bad.append("(c) parentless / unlisted are still in the main list")
 more = next(g for g in bj["ui"]["sync"]["git"]["top_bar"]["groups"] if g["id"] == "more")
 if not any(i["kind"] == "open_advanced" for i in more["items"]): bad.append("(c) More has no Advanced item")
@@ -203,5 +203,28 @@ out=$(t6 "$FR" "$PAGE" "$UI") && pass "refresh is a top bar; Status and Name pin
 sed 's/indicator = {/indicatorX = {/' "$FR" > "$tmp/F6.kt"; t6 "$tmp/F6.kt" "$PAGE" "$UI" >/dev/null 2>&1 && fail "T6 passed the default spinner (vacuous)" || pass "the default spinner back → T6 RED"
 sed 's/RepoTable.COLUMNS.filter { it in RepoTable.PINNED }/RepoTable.COLUMNS/' "$UI" > "$tmp/U6.kt"; t6 "$FR" "$PAGE" "$tmp/U6.kt" >/dev/null 2>&1 && fail "T6 passed an unpinned header (vacuous)" || pass "an unpinned header → T6 RED"
 sed 's|// #1356 the parentless and unlisted folder panels live in More > Advanced (a simple default view).|item(key = "parentless") { }|' "$PAGE" > "$tmp/P6.kt"; t6 "$FR" "$tmp/P6.kt" "$UI" >/dev/null 2>&1 && fail "T6 passed parentless back in the list (vacuous)" || pass "parentless back in the main list → T6 RED"
+
+# T7 #1356 a clean Git screen: quick filters are ONE sideways row of compact chips whose end edge fades while more lie past it;
+#    the table's fact columns fade at the end edge too; Me | Cloud is the compact strip; the shared bottom nav shrinks a label
+#    that does not fit its cell in EVERY plan (7 items at full size shaved 'Explorer' / 'Mounts').
+NAV="$ROOT/ab_cloud-libs-shared/libs/bottomnav/src/commonMain/kotlin/com/diegonmarcos/superapp/bottomnav/BottomNavBar.kt"
+t7() { python3 - "$1" "$2" "$3" "$4" "$5" <<'PY'
+import os, sys
+bar, ui, screen, chrome, nav = sys.argv[1:6]; rd = lambda p: open(p).read() if os.path.exists(p) else ""
+bar, ui, screen, chrome, navs = rd(bar), rd(ui), rd(screen), rd(chrome), rd(nav); bad = []
+rail = bar[bar.index("fun QuickFilterRail("):][:1500]
+if "LazyRow(" not in rail or "scrollFadeEnd(rail.canScrollForward)" not in rail or "Modifier.height(DriveMetrics.chipHeight)" not in rail or "labelSmall" not in rail: bad.append("the quick filters are not one faded row of compact chips")
+if "fun Modifier.scrollFadeEnd(" not in chrome or "BlendMode.DstIn" not in chrome: bad.append("no shared end-edge fade")
+if "scrollFadeEnd(scroll.canScrollForward)" not in ui: bad.append("the table header's fact columns do not fade at the edge")
+if "underTopChrome = false, compact = true)" not in screen: bad.append("Me | Cloud is not the compact strip")
+if navs and ("val entryStyle = remember(entry.label" not in navs or "(plan.cell - tokens.fitLabelInset * 2)" not in navs): bad.append("the bottom nav does not shrink a label that does not fit in every plan")
+print("\n".join(bad)); sys.exit(1 if bad else 0)
+PY
+}
+echo "== T7 a clean Git screen: compact chips, faded edges, compact Me | Cloud, nav labels fit =="
+out=$(t7 "$SYNC/GitTopBar.kt" "$SYNC/RepoTableUi.kt" "$SYNC/SyncScreen.kt" "$SRC/ui/Chrome.kt" "$NAV") && pass "compact faded chip row, faded fact columns, compact Me | Cloud, nav labels shrink to fit" || fail "T7: $out"
+sed 's/, compact = true)/)/' "$SYNC/SyncScreen.kt" > "$tmp/S7.kt"; t7 "$SYNC/GitTopBar.kt" "$SYNC/RepoTableUi.kt" "$tmp/S7.kt" "$SRC/ui/Chrome.kt" "$NAV" >/dev/null 2>&1 && fail "T7 passed the tall strip (vacuous)" || pass "the tall Me | Cloud strip → T7 RED"
+sed 's/scrollFadeEnd(rail.canScrollForward)\.//' "$SYNC/GitTopBar.kt" > "$tmp/B7.kt"; t7 "$tmp/B7.kt" "$SYNC/RepoTableUi.kt" "$SYNC/SyncScreen.kt" "$SRC/ui/Chrome.kt" "$NAV" >/dev/null 2>&1 && fail "T7 passed an unfaded chip row (vacuous)" || pass "chips cut at the edge with no fade → T7 RED"
+if [ -f "$NAV" ]; then sed 's/val entryStyle = remember(entry.label/val entryStyle = if (!plan.fitted) cellLabelStyle else remember(entry.label/' "$NAV" > "$tmp/N7.kt"; t7 "$SYNC/GitTopBar.kt" "$SYNC/RepoTableUi.kt" "$SYNC/SyncScreen.kt" "$SRC/ui/Chrome.kt" "$tmp/N7.kt" >/dev/null 2>&1 && fail "T7 passed full-size labels that never shrink (vacuous)" || pass "nav labels shrink only in a fitted bar → T7 RED"; fi
 
 [ "$FAILURES" -eq 0 ] && { echo "test-drive-git-top-bar: all green"; exit 0; } || { echo "test-drive-git-top-bar: $FAILURES failure(s)"; exit 1; }

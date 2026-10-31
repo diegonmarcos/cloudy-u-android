@@ -30,6 +30,7 @@ import com.diegonmarcos.clouddrive.Declarations
 import com.diegonmarcos.clouddrive.DrivePrefs
 import com.diegonmarcos.clouddrive.R
 import com.diegonmarcos.clouddrive.ui.DriveMetrics
+import com.diegonmarcos.clouddrive.ui.scrollFadeEnd
 import com.diegonmarcos.clouddrive.ui.DriveTags
 import com.diegonmarcos.clouddrive.ui.IconCatalog
 import com.diegonmarcos.clouddrive.ui.Pill
@@ -75,7 +76,7 @@ internal fun RepoTableHeader(column: RepoColumn, ascending: Boolean, scroll: Scr
         Row(Modifier.padding(start = DriveMetrics.sectionInset), verticalAlignment = Alignment.CenterVertically) {
             RepoTable.COLUMNS.filter { it in RepoTable.PINNED }.forEach { label(it) }
         }
-        Row(Modifier.weight(1f).horizontalScroll(scroll).padding(end = DriveMetrics.sectionInset), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.weight(1f).scrollFadeEnd(scroll.canScrollForward).horizontalScroll(scroll).padding(end = DriveMetrics.sectionInset), verticalAlignment = Alignment.CenterVertically) {
             RepoTable.COLUMNS.filter { it !in RepoTable.PINNED }.forEach { label(it) }
             // the rows' trailing disclosure cell: the last fact column scrolls fully into view
             Spacer(Modifier.width(DriveMetrics.tableName))

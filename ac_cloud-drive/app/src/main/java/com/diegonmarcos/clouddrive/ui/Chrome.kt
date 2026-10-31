@@ -31,6 +31,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -98,6 +100,10 @@ object DriveMetrics {
     /** Manage ▸ Apps table: the app column and every numeric column, so the table scrolls sideways at phone width. */
     val tableName = 160.dp
     val tableCell = 76.dp
+    /** #1356 the fade at the end edge of a sideways-scrolling row (table facts, quick filter chips). */
+    val fadeEdge = 32.dp
+    /** #1356 a compact chip (the quick filter rail). */
+    val chipHeight = 28.dp
     val textScale = 0.85f
     /** The two glyph sizes drawn as TEXT (the Apps tile emoji and its status dot) — declared here for the same reason. */
     val tileGlyphText = 20.sp
@@ -517,3 +523,19 @@ fun LoadingState(modifier: Modifier = Modifier) {
 fun Hairline(modifier: Modifier = Modifier) {
     Box(modifier.fillMaxWidth().height(DriveMetrics.hairline).background(MaterialTheme.colorScheme.outline))
 }
+
+/**
+ * #1356 a sideways-scrolling row says it scrolls: while more content lies past its end edge, the last [DriveMetrics.fadeEdge]
+ * fade out (a column or chip at the edge reads as "behind the fade", never as cut off).
+ */
+fun Modifier.scrollFadeEnd(show: Boolean): Modifier = if (!show) this else this
+    .graphicsLayer { compositingStrategy = androidx.compose.ui.graphics.CompositingStrategy.Offscreen }
+    .drawWithContent {
+        drawContent()
+        val w = DriveMetrics.fadeEdge.toPx().coerceAtMost(size.width)
+        drawRect(
+            androidx.compose.ui.graphics.Brush.horizontalGradient(listOf(androidx.compose.ui.graphics.Color.Black, androidx.compose.ui.graphics.Color.Transparent), startX = size.width - w, endX = size.width),
+            topLeft = androidx.compose.ui.geometry.Offset(size.width - w, 0f), size = androidx.compose.ui.geometry.Size(w, size.height),
+            blendMode = androidx.compose.ui.graphics.BlendMode.DstIn,
+        )
+    }

@@ -54,6 +54,13 @@ launch
 # 1. the sheet
 open_git || fail "no Git page: $(texts)"
 shot 00-git
+# More > Advanced: the parentless and unlisted panels live in a sheet, not in the default list (#1356)
+dump >/dev/null; has 'Local repos parentless' && fail "the parentless panel is still in the default list"
+tap '^More$' || fail "no More menu"; sleep 1
+tap '^Advanced$' || fail "no Advanced item in More: $(texts)"; sleep 2
+shot 00b-advanced
+dump >/dev/null; has 'Local repos parentless' || fail "Advanced does not show the parentless panel: $(texts)"
+adb shell input keyevent 4; sleep 2
 tap "^$NAME\$" || fail "no $NAME row: $(texts)"
 sleep 2; shot 01-sheet-open
 sheet_open || fail "tapping $NAME opened no options sheet: $(texts)"
