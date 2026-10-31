@@ -5,8 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Avatar</title>
 <style>
-  html, body, #cgc { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #121212; }
-  canvas { display: block; touch-action: none; }
+  html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #121212; }
+  /* #1373: pinned to the viewport, not a percentage of its parents: in the app's WebView those resolved to 0 px, so the
+     stage (overflow hidden) clipped the canvas away and only the PNG export showed the avatar (proof: css [393,0]). */
+  #cgc { position: fixed; inset: 0; overflow: hidden; background: #121212; }
+  canvas { display: block; touch-action: none; width: 100%; height: 100%; }
 </style>
 <!-- The Avatar editor's scene: libs:cgc-3d (assets/cgc, merged from the library) over three.js. three.js and OrbitControls are
      Cloud Nav's copies (ac_cloud-nav/app/src/main/assets/space, merged in by app/build.gradle). The scene config is
