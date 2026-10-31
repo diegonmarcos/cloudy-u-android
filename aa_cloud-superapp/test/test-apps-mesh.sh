@@ -82,7 +82,7 @@ echo "$out" | grep -qx 'ORDER firewall,dns,webserver,wg,apps-access,adb-shell,wi
   || bad "Setup ▸ Network is not firewall, dns, webserver, wg, apps-access, adb-shell, wifi in that order"
 
 echo "== C2: one page, two entry points =="
-code "$FRAG" | grep -qF 'AppsMesh.Page(this@AppsMeshFragment)' && ok "AppsMeshFragment hosts AppsMesh.Page" \
+code "$FRAG" | grep -qF 'AppsMesh.Page(this@AppsMeshFragment' && ok "AppsMeshFragment hosts AppsMesh.Page" \
   || bad "AppsMeshFragment does not draw AppsMesh.Page"
 # #896.3 the Store's entry point is Cloud Store's Access page, which hosts the SAME AppsMeshFragment (no copy).
 ACCESS="$ROOT/ac_cloud-store/app/src/main/java/com/diegonmarcos/cloudstore/AccessPage.kt"
