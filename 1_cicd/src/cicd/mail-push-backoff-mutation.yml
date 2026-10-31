@@ -1,0 +1,89 @@
+# #1381 Cloud Mail push reconnect backoff mutation proof: the push loops (PushService, ForegroundPush) retried every
+# 5 s for ever, each PushService attempt running a full baseline sync, and Cloud Mail topped the phone's battery table.
+# ReconnectBackoff (5 s doubling to a 5-min cap, reset only by a connection that held a minute) is pinned by
+# ReconnectBackoffTest. This job runs that suite once on the real tree (GREEN expected), then once per planted mutant
+# (RED expected, one break each). It fails if the real tree is red or any mutant stays green. Manual only.
+name: mail-push-backoff-mutation
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: "all | one of the mutant names below"
+        required: false
+        default: "all"
+permissions:
+  contents: read
+env:
+  WORK_DIR: ac_cloud-mail
+jobs:
+  mutate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: "platforms;android-36 platforms;android-35 platforms;android-26 build-tools;35.0.0 build-tools;34.0.0 platform-tools"
+      - name: Set up Gradle 8.10.2 (cached)
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: "8.10.2"
+      # ── MANAGED-GRADLE-CACHE-HYGIENE: injected by cloud-android-gradle-cache-hygiene.py ──
+      # Edit 1_cicd/src/actions/gradle-cache-hygiene, never this block.
+      - name: Gradle cache hygiene (retry failed resolution, never cache a failed lookup)
+        uses: ./.github/actions/gradle-cache-hygiene
+      # ── end MANAGED-GRADLE-CACHE-HYGIENE ──
+      - name: Checkout vault (shared Android signing key, read by app/build.gradle at configuration)
+        uses: actions/checkout@v4
+        with:
+          repository: diegonmarcos/cloud-me-pvt-vault
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
+          path: .vault
+      - name: Install jq
+        run: sudo apt-get update -y && sudo apt-get install -y jq
+      - name: Install ORAS + sops (pinned)
+        uses: ./.github/actions/install-pinned-tools
+        with:
+          tools: oras sops
+      - name: Real tree GREEN, every mutant RED
+        env:
+          BYPASS_NIX: "1"
+          VAULT_DIR: ${{ github.workspace }}/.vault
+          SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
+          ONLY: ${{ inputs.name }}
+        run: |
+          set -u
+          V=ac_cloud-mail/app/src/main/kotlin/app/sterna/push/ReconnectBackoff.kt
+          # Only the suite under proof runs (this checkout only): an unrelated test must not decide whether a mutant is caught.
+          find ac_cloud-mail/app/src/test -name '*.kt' ! -name 'ReconnectBackoffTest.kt' -delete
+          suite() { sh 1_cicd/dist/scripts/cloud-android-test-engine.sh unit "$WORK_DIR" > /tmp/suite.log 2>&1; }
+          sub() { python3 -c 'import sys; p, a, b = sys.argv[1:]; s = open(p).read(); assert a in s, "anchor missing: " + a; open(p, "w").write(s.replace(a, b, 1))' "$V" "$1" "$2"; }
+          suite || { tail -80 /tmp/suite.log; echo "::error::the real tree is RED"; exit 1; }
+          grep -q "ReconnectBackoffTest" -r ac_cloud-mail/app/build/test-results 2>/dev/null || { echo "::error::ReconnectBackoffTest did not run"; exit 1; }
+          echo "real tree: GREEN"
+          stayed=0
+          while IFS='@' read -r name a b; do
+            [ -z "$name" ] && continue
+            [ "$ONLY" != "all" ] && [ "$ONLY" != "$name" ] && continue
+            git checkout -- "$V"
+            sub "$a" "$b" || { echo "::error::$name: mutation anchor missing"; stayed=$((stayed + 1)); continue; }
+            if suite; then echo "::error::mutant stayed GREEN: $name"; stayed=$((stayed + 1)); else echo "RED (caught): $name"; fi
+          done <<'MUTANTS'
+          no-backoff@if (failures <= 0) BASE_MS else (BASE_MS shl failures.coerceAtMost(MAX_SHIFT)).coerceAtMost(MAX_MS)@BASE_MS
+          no-cap@(BASE_MS shl failures.coerceAtMost(MAX_SHIFT)).coerceAtMost(MAX_MS)@(BASE_MS shl failures.coerceAtMost(MAX_SHIFT))
+          cap-10-min@MAX_MS = 5 * 60_000L@MAX_MS = 10 * 60_000L
+          first-failure-no-wait@BASE_MS shl failures.coerceAtMost@BASE_MS shl (failures - 1).coerceAtMost
+          flap-resets@openedForMs != null && openedForMs >= STABLE_MS@openedForMs != null
+          stable-strict@openedForMs >= STABLE_MS@openedForMs > STABLE_MS
+          never-reset@) 0 else failures + 1@) failures else failures + 1
+          stable-10-min@STABLE_MS = 60_000L@STABLE_MS = 600_000L
+          MUTANTS
+          git checkout -- "$V"
+          [ "$stayed" -eq 0 ] || { echo "::error::$stayed mutant(s) stayed green"; exit 1; }
+          echo "every mutant RED"
