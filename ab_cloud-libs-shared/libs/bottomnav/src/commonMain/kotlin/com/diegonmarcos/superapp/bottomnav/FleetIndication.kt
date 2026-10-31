@@ -7,6 +7,7 @@ import androidx.compose.foundation.interaction.InteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.ContentDrawScope
 import androidx.compose.ui.node.DelegatableNode
 import androidx.compose.ui.node.DrawModifierNode
@@ -56,4 +57,40 @@ internal object FleetIndication : IndicationNodeFactory {
 
     internal const val PRESSED = 0.3f
     internal const val HOVERED = 0.1f
+}
+
+/** #1356 [FleetIndication]'s overlay drawn in the bottom-nav pill shape: the bar paints its pill instead of clipping the cell
+ *  (a clipped near-round cell shaved its label), so the press / hover overlay keeps the pill's outline itself. */
+internal object FleetPillIndication : IndicationNodeFactory {
+    override fun create(interactionSource: InteractionSource): DelegatableNode = Instance(interactionSource)
+    override fun hashCode(): Int = -2
+    override fun equals(other: Any?): Boolean = other === this
+
+    private class Instance(private val source: InteractionSource) : Modifier.Node(), DrawModifierNode {
+        private var pressed = false
+        private var hovered = false
+        private var focused = false
+
+        override fun onAttach() {
+            coroutineScope.launch {
+                source.interactions.collect { interaction ->
+                    when (interaction) {
+                        is androidx.compose.foundation.interaction.PressInteraction.Press -> pressed = true
+                        is androidx.compose.foundation.interaction.PressInteraction.Release, is androidx.compose.foundation.interaction.PressInteraction.Cancel -> pressed = false
+                        is androidx.compose.foundation.interaction.HoverInteraction.Enter -> hovered = true
+                        is androidx.compose.foundation.interaction.HoverInteraction.Exit -> hovered = false
+                        is androidx.compose.foundation.interaction.FocusInteraction.Focus -> focused = true
+                        is androidx.compose.foundation.interaction.FocusInteraction.Unfocus -> focused = false
+                    }
+                    invalidateDraw()
+                }
+            }
+        }
+
+        override fun ContentDrawScope.draw() {
+            drawContent()
+            val alpha = if (pressed) FleetIndication.PRESSED else if (hovered || focused) FleetIndication.HOVERED else return
+            drawOutline(bottomNavPillShape.createOutline(size, layoutDirection, this), Color.Black.copy(alpha = alpha))
+        }
+    }
 }

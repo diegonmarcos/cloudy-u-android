@@ -50,6 +50,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -270,8 +271,9 @@ private fun IslandContent(
             Modifier
                 .then(if (plan.fitted) Modifier.width(plan.islandWidth) else Modifier.fillMaxWidth(widthFraction))
                 .testTag(TAG_ISLAND)
-                .clip(bottomNavPillShape)
-                .background(tokens.islandFill)
+                // #1356 the island is PAINTED in the pill shape, not clipped to it: the first and last labels ('Explorer',
+                // 'Mounts', 'Experiences') sit where the oval's ends curve in, and a clip shaved their outer letters.
+                .background(tokens.islandFill, bottomNavPillShape)
                 .padding(horizontal = plan.endInset)
                 // TalkBack: a tab list of N, so an item reads "Mail, selected, Tab, 2 of 5".
                 .selectableGroup()
@@ -288,8 +290,9 @@ private fun IslandContent(
                         .weight(1f)
                         .padding(vertical = pillInset)
                         .testTag(itemTag(entry.id))
-                        .clip(bottomNavPillShape)
-                        .background(if (selected) tokens.pillFill else Color.Transparent)
+                        // #1356 the pill is PAINTED (background, ring, press overlay in the pill shape), not a clip of the
+                        // whole cell: a near-round cell clipped its label's outer letters ('Explorer', 'Mounts', 'Experiences').
+                        .background(if (selected) tokens.pillFill else Color.Transparent, bottomNavPillShape)
                         // Keyboard / D-pad / switch focus is drawn as a ring in the item's ink. Touch
                         // never focuses an item, so a tapped island has no ring and its pixels are
                         // exactly what they were.
@@ -298,7 +301,7 @@ private fun IslandContent(
                         .selectable(
                             selected = selected,
                             interactionSource = source,
-                            indication = FleetIndication,
+                            indication = FleetPillIndication,
                             role = Role.Tab,
                             onClick = {
                                 // SuperApp's section-change haptic rhythm, on a tap that moves the pill.
@@ -343,6 +346,8 @@ private fun IslandContent(
                         Text(
                             entry.label,
                             modifier = Modifier
+                                // the collapse animation shortens the label's slot: the text is clipped to that slot only
+                                .clipToBounds()
                                 .layout { measurable, constraints ->
                                     val placeable = measurable.measure(constraints)
                                     layout(placeable.width, (placeable.height * labelShown).roundToInt()) {

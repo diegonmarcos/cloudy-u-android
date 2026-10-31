@@ -220,6 +220,7 @@ if "fun Modifier.scrollFadeEnd(" not in chrome or "BlendMode.DstIn" not in chrom
 if "scrollFadeEnd(scroll.canScrollForward)" not in ui: bad.append("the table header's fact columns do not fade at the edge")
 if "underTopChrome = false, compact = true)" not in screen: bad.append("Me | Cloud is not the compact strip")
 if navs and ("val entryStyle = remember(entry.label" not in navs or "(plan.cell - tokens.fitLabelInset * 2)" not in navs): bad.append("the bottom nav does not shrink a label that does not fit in every plan")
+if navs and (".background(tokens.islandFill, bottomNavPillShape)" not in navs or "indication = FleetPillIndication" not in navs or ".clip(bottomNavPillShape)" in navs): bad.append("the bottom nav clips its island / cells to the oval (the end labels are shaved)")
 print("\n".join(bad)); sys.exit(1 if bad else 0)
 PY
 }
@@ -227,6 +228,7 @@ echo "== T7 a clean Git screen: compact chips, faded edges, compact Me | Cloud, 
 out=$(t7 "$SYNC/GitTopBar.kt" "$SYNC/RepoTableUi.kt" "$SYNC/SyncScreen.kt" "$SRC/ui/Chrome.kt" "$NAV") && pass "compact faded chip row, faded fact columns, compact Me | Cloud, nav labels shrink to fit" || fail "T7: $out"
 sed 's/, compact = true)/)/' "$SYNC/SyncScreen.kt" > "$tmp/S7.kt"; t7 "$SYNC/GitTopBar.kt" "$SYNC/RepoTableUi.kt" "$tmp/S7.kt" "$SRC/ui/Chrome.kt" "$NAV" >/dev/null 2>&1 && fail "T7 passed the tall strip (vacuous)" || pass "the tall Me | Cloud strip → T7 RED"
 sed 's/scrollFadeEnd(rail.canScrollForward)\.//' "$SYNC/GitTopBar.kt" > "$tmp/B7.kt"; t7 "$tmp/B7.kt" "$SYNC/RepoTableUi.kt" "$SYNC/SyncScreen.kt" "$SRC/ui/Chrome.kt" "$NAV" >/dev/null 2>&1 && fail "T7 passed an unfaded chip row (vacuous)" || pass "chips cut at the edge with no fade → T7 RED"
+if [ -f "$NAV" ]; then sed 's/\.background(tokens.islandFill, bottomNavPillShape)/.clip(bottomNavPillShape).background(tokens.islandFill)/' "$NAV" > "$tmp/N7b.kt"; t7 "$SYNC/GitTopBar.kt" "$SYNC/RepoTableUi.kt" "$SYNC/SyncScreen.kt" "$SRC/ui/Chrome.kt" "$tmp/N7b.kt" >/dev/null 2>&1 && fail "T7 passed an island clipped to the oval (vacuous)" || pass "the island clipped to the oval again → T7 RED"; fi
 if [ -f "$NAV" ]; then sed 's/val entryStyle = remember(entry.label/val entryStyle = if (!plan.fitted) cellLabelStyle else remember(entry.label/' "$NAV" > "$tmp/N7.kt"; t7 "$SYNC/GitTopBar.kt" "$SYNC/RepoTableUi.kt" "$SYNC/SyncScreen.kt" "$SRC/ui/Chrome.kt" "$tmp/N7.kt" >/dev/null 2>&1 && fail "T7 passed full-size labels that never shrink (vacuous)" || pass "nav labels shrink only in a fitted bar → T7 RED"; fi
 
 # T8 #1356/#1376 ONE Git page on every storage: the selector only switches the root. Emulated / External run GitReposScreen on

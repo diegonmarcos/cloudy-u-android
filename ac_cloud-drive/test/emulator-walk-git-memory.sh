@@ -28,6 +28,11 @@ texts() { grep -oE 'text="[^"]+"' "$OUT/ui.xml" | sed 's/text="//;s/"$//' | sort
 launch() { timeout 120 adb shell am start -W -n "$act" >/dev/null; sleep 6; for i in 1 2 3; do tap '^Continue with local files$' && break; sleep 2; done || true; sleep 2; }
 # the Git page: its bottom-nav section, else Sync then its Git sub-page
 open_git() { tap '^Git$' || { tap '^Sync$' && sleep 2 && tap '^Git$'; } || return 1; sleep 3; }
+# the app can be replaced under the flow (its own update check installs a newer build): bring it back on Git before a step
+front() { adb shell dumpsys activity activities 2>/dev/null | grep -E "mResumedActivity|topResumedActivity" | grep -q "$PKG"; }
+ensure_git() { front && return 0; echo "note: the app left the foreground (replaced or closed); relaunching on Git"; launch; open_git; }
+# step <name> <command...>: run once; if it fails, bring the app back on Git and run it once more
+step() { local n=$1; shift; "$@" && return 0; ensure_git; "$@" || fail "$n: $(texts)"; }
 sheet_open() { dump >/dev/null; has Folder && has "$NAME"; }
 
 # ── the fixture: one real cloned repository in the registry (emulator-git-status.sh's) ──
@@ -56,24 +61,19 @@ open_git || fail "no Git page: $(texts)"
 shot 00-git
 # More > Advanced: the parentless and unlisted panels live in a sheet, not in the default list (#1356)
 dump >/dev/null; has 'Local repos parentless' && fail "the parentless panel is still in the default list"
-tap '^More$' || fail "no More menu"; sleep 1
-tap '^Advanced$' || fail "no Advanced item in More: $(texts)"; sleep 2
+advanced() { ensure_git; tap '^More$' && sleep 1 && tap '^Advanced$' && sleep 2 && dump >/dev/null && has 'Local repos parentless'; }
+step "Advanced does not show the parentless panel" advanced
 shot 00b-advanced
-dump >/dev/null; has 'Local repos parentless' || fail "Advanced does not show the parentless panel: $(texts)"
 adb shell input keyevent 4; sleep 2
 # ONE Git page on every storage (#1376): the pill switches the root; Emulated runs the same page on /sdcard/git, External shows its empty state
 adb shell "mkdir -p /sdcard/git/emulated-fixture/.git && echo 'ref: refs/heads/main' > /sdcard/git/emulated-fixture/.git/HEAD" || true
-tap '^Cloud-Store \(Termux\)$' || fail "no storage pill: $(texts)"; sleep 1
-tap '^Emulated$' || fail "no Emulated in the storage menu"; sleep 4
+pick() { ensure_git; tap "$1" && sleep 1 && tap "$2" && sleep 4 && dump >/dev/null && has "$3"; }
+step "Emulated does not run the Git page on /sdcard/git" pick '^Cloud-Store \(Termux\)$' '^Emulated$' 'emulated-fixture'
 shot 00c-storage-emulated
-dump >/dev/null; has 'emulated-fixture' || fail "Emulated does not run the Git page on /sdcard/git: $(texts)"
 has 'Check' || fail "Emulated lost the Git page's top nav: $(texts)"
-tap '^Emulated$' || fail "no storage pill on Emulated"; sleep 1
-tap '^External Drive$' || fail "no External Drive in the storage menu"; sleep 3
+step "External Drive with no drive shows no empty state" pick '^Emulated$' '^External Drive$' 'No drive attached'
 shot 00d-storage-external
-dump >/dev/null; has 'No drive attached' || fail "External Drive with no drive shows no empty state: $(texts)"
-tap '^External Drive$' || fail "no storage pill on External"; sleep 1
-tap '^Cloud-Store \(Termux\)$' || fail "no Cloud-Store in the storage menu"; sleep 3
+step "Cloud-Store does not come back" pick '^External Drive$' '^Cloud-Store \(Termux\)$' "$NAME"
 shot 00e-storage-store
 tap "^$NAME\$" || fail "no $NAME row: $(texts)"
 sleep 2; shot 01-sheet-open
