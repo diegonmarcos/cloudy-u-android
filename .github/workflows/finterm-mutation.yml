@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       name:
-        description: 'ff-utc | ff-importance | merge | container-first | event-window | watchlist | alert-side | ics-dst | sdmx-key | jsonstat-stride | cache-ttl | fin-sort | fin-cell-dash | fin-engine-dash | fin-nav-back | fin-default | fin-keyrows-last | fin-afp | fin-spread | tbl-rebalance | tbl-weights | tbl-symbol-map | tbl-forward | tbl-coverage | tbl-shortname | fin-layout | feeds-curve'
+        description: 'ff-utc | ff-importance | merge | container-first | event-window | watchlist | alert-side | ics-dst | sdmx-key | jsonstat-stride | cache-ttl | fin-sort | fin-cell-dash | fin-engine-dash | fin-nav-back | fin-default | fin-keyrows-last | fin-afp | fin-spread | tbl-rebalance | tbl-weights | tbl-symbol-map | tbl-forward | tbl-coverage | tbl-shortname | fin-layout | feeds-curve | fin-mesh-off'
         required: true
 permissions:
   contents: read
@@ -36,6 +36,7 @@ jobs:
             cache-ttl)       sed -i 's/private fun ttl(url: String): Long = maxOf(ttlMs, ttlFor(url) ?: 0L)/private fun ttl(url: String): Long = ttlMs/' $K/Http.kt ;;
             # UI spec mutants (FinTerm UI overhaul): each breaks one rule a JVM test pins.
             fin-sort)        sed -i 's/return (if (step % 3 == 1) first else first.reversed()) + absent/return first + absent/' $K/FinLogic.kt ;;
+            fin-mesh-off)    sed -i 's/e.message.orEmpty().startsWith(MESH_OFF) -> MESH_OFF/false -> MESH_OFF/' $K/FinFormat.kt ;;
             fin-cell-dash)   sed -i 's/fun cell(s: String?): String = if (missing(s)) FinFormat.DASH else s!!.trim()/fun cell(s: String?): String = s.orEmpty().trim()/' $K/FinLogic.kt ;;
             fin-engine-dash) sed -i 's/if (bp) FinFormat.DASH else pctText(p)/if (bp) "-" else pctText(p)/' $K/Engine.kt ;;
             fin-nav-back)    sed -i 's/if (top.startsWith("quote:")) return stack.dropLast(1)/if (top.startsWith("quote:")) return initial(defaultDashboard)/' $K/FinNavStack.kt ;;
