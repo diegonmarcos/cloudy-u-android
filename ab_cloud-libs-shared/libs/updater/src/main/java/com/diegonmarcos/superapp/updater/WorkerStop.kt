@@ -30,6 +30,7 @@ suspend fun <T> CoroutineWorker.stopCooperatively(body: suspend CoroutineScope.(
  */
 suspend fun CoroutineWorker.holdDataSync(userInitiated: Boolean, info: (Context) -> ForegroundInfo): Long {
     val ctx = applicationContext
-    if (!DataSyncBudget.mayHold(ctx, userInitiated)) return 0L
+    // The Store gate first: only a Store-posting package may draw this notification (#894).
+    if (!BatchForeground.allowed(ctx) || !DataSyncBudget.mayHold(ctx, userInitiated)) return 0L
     return runCatching { setForeground(info(ctx)); DataSyncBudget.begin(ctx) }.getOrDefault(0L)
 }
