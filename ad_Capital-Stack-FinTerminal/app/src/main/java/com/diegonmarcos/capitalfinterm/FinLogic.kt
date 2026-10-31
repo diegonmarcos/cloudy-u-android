@@ -153,6 +153,16 @@ object FinLogic {
     }
 
     /** Day header of a calendar group: `Thu 05 Nov`. */
+    /** Calendar window chips (#1370): All, Today, This week (Monday to Sunday of today, UTC dates). */
+    val CAL_CHIPS = listOf("All", "Today", "This week")
+    fun inCalWindow(ts: String, chip: Int, today: LocalDate): Boolean {
+        if (chip == 0) return true
+        val d = runCatching { LocalDate.parse(ts.take(10)) }.getOrNull() ?: return false
+        if (chip == 1) return d == today
+        val monday = today.minusDays((today.dayOfWeek.value - 1).toLong())
+        return !d.isBefore(monday) && !d.isAfter(monday.plusDays(6))
+    }
+
     fun dayHeader(isoDate: String): String = runCatching {
         val d = LocalDate.parse(isoDate.take(10))
         d.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.US) + " " + String.format(Locale.US, "%02d", d.dayOfMonth) + " " +

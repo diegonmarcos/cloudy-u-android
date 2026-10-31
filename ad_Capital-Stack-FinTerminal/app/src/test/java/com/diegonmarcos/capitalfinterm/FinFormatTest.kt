@@ -79,4 +79,15 @@ class FinFormatTest {
         assertEquals("FRED + Cloud-Fincept", FinFormat.shortSource("FRED (St. Louis Fed) + Cloud-Fincept / fin_api (private mesh)"))
         assertEquals("Eurostat", FinFormat.shortSource("Eurostat"))
     }
+
+    @Test fun calendarChipsKeepAllTodayOrThisMondayToSundayWeek() {
+        val today = java.time.LocalDate.parse("2026-10-29") // a Thursday
+        assertTrue(FinLogic.inCalWindow("2026-12-01 08:30", 0, today))
+        assertTrue(FinLogic.inCalWindow("2026-10-29 14:00", 1, today))
+        assertFalse(FinLogic.inCalWindow("2026-10-30 14:00", 1, today))
+        assertTrue(FinLogic.inCalWindow("2026-10-26", 2, today))
+        assertTrue(FinLogic.inCalWindow("2026-11-01 23:00", 2, today))
+        assertFalse(FinLogic.inCalWindow("2026-10-25 23:00", 2, today))
+        assertFalse(FinLogic.inCalWindow("2026-11-02 00:00", 2, today))
+    }
 }

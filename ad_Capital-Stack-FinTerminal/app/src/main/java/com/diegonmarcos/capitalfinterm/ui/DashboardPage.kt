@@ -563,9 +563,16 @@ private fun PanelBody(
                     qs.forEachIndexed { i, q -> FinMonitorRow(q, stale, width, divider = i < qs.size - 1) { nav.openQuote(q.symbol) } }
                 }
                 "calendar" -> {
-                    val evs = eventsOf(data, panel.title)
-                    if (evs.isEmpty()) Box(Modifier.padding(horizontal = FinDim.cardPad)) { FinEmptyBody(data.note.ifBlank { "No event in this window" }) }
-                    else FinEventList(evs, panel.raw.optInt("limit", Int.MAX_VALUE))
+                    var chip by rememberSaveable(panel.id) { mutableStateOf(0) }
+                    val today = LocalDate.now(ZoneOffset.UTC)
+                    val evs = eventsOf(data, panel.title).filter { FinLogic.inCalWindow(it.ts, chip, today) }
+                    Column {
+                        Row(Modifier.padding(horizontal = FinDim.cardPad, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            FinLogic.CAL_CHIPS.forEachIndexed { i, l -> FinChip(l, i == chip, Modifier.height(24.dp)) { chip = i } }
+                        }
+                        if (evs.isEmpty()) Box(Modifier.padding(horizontal = FinDim.cardPad)) { FinEmptyBody(data.note.ifBlank { "No event in this window" }) }
+                        else FinEventList(evs, panel.raw.optInt("limit", Int.MAX_VALUE))
+                    }
                 }
                 else -> when (panel.view) {
                     Dashboards.VIEW_BARS, Dashboards.VIEW_ALLOC -> FinBars(data.chart.ifEmpty {
