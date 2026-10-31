@@ -1,7 +1,7 @@
 # Battery per-cycle / per-month tracker mutation proof: the charge-cycle boundaries, the reset-aware batterystats diff,
 # the monthly aggregation (libs:battery BatteryCycles) and the `dumpsys battery` plug parse (BatteryPrivileged) are
 # pinned by BatteryCyclesTest and BatteryPrivilegedTest; the home battery popup and the Battery stats page sections by
-# BatteryTruthTest, (aa_cloud-superapp/app/src/test/.../batterystats). This job runs
+# BatteryTruthTest; the row names (BatteryLabels) by BatteryLabelsTest and the 7-day sum by BatteryCyclesTest (aa_cloud-superapp/app/src/test/.../batterystats). This job runs
 # those two suites once on the real tree (GREEN expected), then once per planted mutant (RED expected, one break each).
 # It fails if the real tree is red or any mutant stays green. Manual only.
 name: battery-cycles-mutation
@@ -67,6 +67,7 @@ jobs:
           C=$D/BatteryCycles.kt
           P=$D/BatteryPrivileged.kt
           W=$D/BatteryRows.kt
+          L=$D/BatteryLabels.kt
           U=$D/BatteryEstimatePopup.kt
           S=aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/batterystats/BatteryStatsFragment.kt
           # Only the battery suites run (the package under proof): an unrelated test must not decide whether a mutant is caught.
@@ -79,8 +80,8 @@ jobs:
           while IFS='@' read -r name f a b; do
             [ -z "$name" ] && continue
             [ "$ONLY" != "all" ] && [ "$ONLY" != "$name" ] && continue
-            case "$f" in P) V=$P;; W) V=$W;; U) V=$U;; S) V=$S;; *) V=$C;; esac
-            git checkout -- "$C" "$P" "$W" "$U" "$S"
+            case "$f" in L) V=$L;; P) V=$P;; W) V=$W;; U) V=$U;; S) V=$S;; *) V=$C;; esac
+            git checkout -- "$C" "$P" "$W" "$U" "$S" "$L"
             sub "$V" "$a" "$b" || { echo "::error::$name: mutation anchor missing"; stayed=$((stayed + 1)); continue; }
             if suite; then echo "::error::mutant stayed GREEN: $name"; stayed=$((stayed + 1)); else echo "RED (caught): $name"; fi
           done <<'MUTANTS'
@@ -105,7 +106,14 @@ jobs:
           stats-drops-history@S@Header("History")@Header("Level")
           stats-drops-capacity@S@Section(BatteryRows.capacity(r, design, f?.fullMah, f?.cycles))@BatteryRows.capacity(r, design, f?.fullMah, f?.cycles)
           stats-drops-top-apps@S@Header("Top apps since charge")@Header("Apps")
+          root-unlabelled@L@id == 0 -> "Android system (root, uid 0)"@id == -1 -> "Android system (root, uid 0)"
+          shell-unlabelled@L@id == SHELL_UID ->@id == -2 ->
+          per-user-ignored@L@val id = uid % 100_000@val id = uid
+          package-dropped@L@"$name · $pkg$more"@"$name$more"
+          shared-uid-hidden@L@if (packages.size > 1) " (+${packages.size - 1})" else ""@""
+          package-wins-over-role@L@system(uid)?.let { return it }@if (packages.isEmpty()) system(uid)?.let { return it }
+          week-window-exclusive@C@cycles.filter { it.startTs >= from }@cycles.filter { it.startTs > from }
           MUTANTS
-          git checkout -- "$C" "$P" "$W" "$U" "$S"
+          git checkout -- "$C" "$P" "$W" "$U" "$S" "$L"
           [ "$stayed" -eq 0 ] || { echo "::error::$stayed mutant(s) stayed green"; exit 1; }
           echo "every mutant RED"

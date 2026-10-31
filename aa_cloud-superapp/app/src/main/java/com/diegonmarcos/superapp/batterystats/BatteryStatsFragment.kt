@@ -31,7 +31,9 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.diegonmarcos.superapp.battery.BatteryCycles
 import com.diegonmarcos.superapp.battery.BatteryHistory
+import com.diegonmarcos.superapp.battery.BatteryLabels
 import com.diegonmarcos.superapp.battery.BatteryPrivileged
 import com.diegonmarcos.superapp.battery.BatteryReport
 import com.diegonmarcos.superapp.battery.BatteryRepository
@@ -70,7 +72,10 @@ class BatteryStatsFragment : KitComposeFragment() {
 
     override fun palette() = LauncherPalette.kit(requireContext())
 
-    private class Privileged(val facts: BatteryPrivileged.Facts?, val channel: String?, val apps: List<Pair<String, Double>>)
+    /** One per-app table row: name (label · package, or the system role), mAh, share, active / background time. */
+    private class AppUse(val name: String, val mAh: Double, val share: Double, val activeMs: Long?, val backgroundMs: Long?)
+
+    private class Privileged(val facts: BatteryPrivileged.Facts?, val channel: String?, val apps: List<AppUse>, val week: List<AppUse>)
 
     @Composable
     override fun Content() {
@@ -144,20 +149,43 @@ class BatteryStatsFragment : KitComposeFragment() {
                 pv == null -> Line("asking the privileged channel…")
                 pv.channel == null -> Line("${BatteryRows.DASH} (needs the privileged shell channel: Configs › Network › ADB Shell)")
                 pv.apps.isEmpty() -> Line("${BatteryRows.DASH} (no per-app block from ${pv.channel})")
-                else -> pv.apps.forEach { (label, mah) -> Kv(label, String.format(Locale.US, "%.1f mAh", mah)) }
+                else -> AppTable(pv.apps)
             }
-            Kv("Privileged channel", pv?.channel ?: BatteryRows.DASH)
+            Kv("Privileged channel", pv?.channel?.let { "$it · Cloud SuperApp's own shell (uid ${BatteryLabels.SHELL_UID})" } ?: BatteryRows.DASH)
+
             Divider()
-            Line("Estimates (est) are projections, not measurements. Rates are signed: + into the battery, − out. " +
-                "History: battery_sot.db, sampled on battery events, screen on/off and a 15-min tick (no wakelock).")
+            Header("Most energy used · last 7 days")
+            when {
+                pv == null -> Line("reading the recorded cycles…")
+                pv.week.isEmpty() -> Line("${BatteryRows.DASH} no per-app reading recorded in the last 7 days yet")
+                else -> AppTable(pv.week)
+            }
+            Divider()
+            InfoLine("Estimates (est) are projections, not measurements. Rates are signed: + into the battery, − out. " +
+                "History: battery_sot.db, sampled on battery events, screen on/off and a 15-min tick (no wakelock). " +
+                "Active = foreground time, Background = foreground-service time (Usage Access).")
         }
     }
 
     private fun readPrivileged(ctx: Context): Privileged {
-        val channel = BatteryRepository.privilegedChannel(ctx) ?: return Privileged(null, null, emptyList())
+        val now = System.currentTimeMillis()
+        val cycles = BatteryRepository.cycles(ctx)
+        val weekFrom = now - WEEK_MS
+        // "Since charge" starts where the open cycle started (the last unplug or full charge); a day without one.
+        val sinceFrom = cycles.firstOrNull { it.endTs == null }?.startTs ?: (now - DAY_MS)
+        fun rows(apps: Map<Int, Double>, from: Long): List<AppUse> {
+            val times = BatteryRepository.usageTimes(ctx, from, now)
+            return BatteryCycles.shares(apps).take(MAX_APPS).map { s ->
+                val (pkg, name) = BatteryRepository.appLabel(ctx, s.uid)
+                val t = times[pkg]
+                AppUse(name, s.mAh, s.share, t?.first, t?.second)
+            }
+        }
+        val week = rows(BatteryCycles.sumSince(cycles, weekFrom), weekFrom)
+        val channel = BatteryRepository.privilegedChannel(ctx) ?: return Privileged(null, null, emptyList(), week)
         val facts = runCatching { BatteryRepository.privileged(ctx) }.getOrNull()
-        val apps = facts?.apps.orEmpty().take(MAX_APPS).map { a -> BatteryRepository.appLabel(ctx, a.uid).second to a.mAh }
-        return Privileged(facts, channel, apps)
+        val apps = rows(facts?.apps.orEmpty().associate { it.uid to it.mAh }, sinceFrom)
+        return Privileged(facts, channel, apps, week)
     }
 
     // ── the page's dense parts ───────────────────────────────────────────
@@ -204,9 +232,8 @@ class BatteryStatsFragment : KitComposeFragment() {
     }
 
     @Composable
-    private fun Table(head: List<String>, rows: List<List<String>>) {
+    private fun Table(head: List<String>, rows: List<List<String>>, weights: List<Float> = listOf(0.22f, 0.16f, 0.14f, 0.34f, 0.14f)) {
         val p = LocalKitPalette.current
-        val weights = listOf(0.22f, 0.16f, 0.14f, 0.34f, 0.14f)
         @Composable fun cells(c: List<String>, bold: Boolean) = Row(Modifier.fillMaxWidth().padding(vertical = 1.dp)) {
             c.forEachIndexed { i, t ->
                 Text(t, color = if (bold) p.textSecondary else p.textPrimary, fontSize = 10.sp, fontFamily = FontFamily.Monospace,
@@ -217,6 +244,29 @@ class BatteryStatsFragment : KitComposeFragment() {
         if (rows.isEmpty()) { Line("${BatteryRows.DASH} none recorded yet"); return }
         cells(head, true)
         for (r in rows) cells(r, false)
+    }
+
+    /** Per-app table: the full name wraps (never cut), then mAh, share, active and background time. */
+    @Composable
+    private fun AppTable(apps: List<AppUse>) {
+        Table(listOf("App", "mAh", "%", "Active", "Bg"), apps.map { a ->
+            listOf(a.name, String.format(Locale.US, "%.1f", a.mAh), "${Math.round(a.share * 100)}%",
+                a.activeMs?.let(::fmtDur) ?: BatteryRows.DASH, a.backgroundMs?.let(::fmtDur) ?: BatteryRows.DASH)
+        }, weights = listOf(0.46f, 0.14f, 0.1f, 0.15f, 0.15f))
+    }
+
+    /** One compact line behind an ⓘ; a tap shows the whole text. */
+    @Composable
+    private fun InfoLine(t: String) {
+        var open by remember { mutableStateOf(false) }
+        Text("ⓘ  $t", color = LocalKitPalette.current.textSecondary, fontSize = 10.sp, fontFamily = FontFamily.Monospace,
+            maxLines = if (open) Int.MAX_VALUE else 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+            modifier = Modifier.fillMaxWidth().clickable { open = !open }.padding(vertical = 2.dp).testTag("battery-info"))
+    }
+
+    private fun fmtDur(ms: Long): String {
+        val m = ms / 60_000L
+        return if (m >= 60) "${m / 60}h ${m % 60}m" else "${m}m"
     }
 
     /** The level over the window: a line, with the on-power spans shaded. */

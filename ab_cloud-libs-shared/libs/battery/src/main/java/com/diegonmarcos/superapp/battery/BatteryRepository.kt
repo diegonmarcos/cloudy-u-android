@@ -219,11 +219,26 @@ object BatteryRepository {
     /** "Channel name" when the privileged shell is up, else null. */
     fun privilegedChannel(ctx: Context): String? = channel(ctx)?.name()
 
-    /** (package, label) of a uid; "uid N" when no package owns it. */
+    /** (package, row name) of a uid: [BatteryLabels.display] over what PackageManager knows ("uid:N" when nothing owns it). */
     fun appLabel(ctx: Context, uid: Int): Pair<String, String> {
         val pm = ctx.packageManager
-        val pkg = runCatching { pm.getPackagesForUid(uid)?.firstOrNull() }.getOrNull() ?: return "uid:$uid" to "uid $uid"
-        return pkg to runCatching { pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString() }.getOrDefault(pkg)
+        val pkgs = runCatching { pm.getPackagesForUid(uid)?.toList() }.getOrNull().orEmpty()
+        val label = pkgs.firstOrNull()?.let { runCatching { pm.getApplicationLabel(pm.getApplicationInfo(it, 0)).toString() }.getOrNull() }
+        return (pkgs.firstOrNull() ?: "uid:$uid") to BatteryLabels.display(uid, label, pkgs)
+    }
+
+    /**
+     * Per package over [from]..[to]: (active, background) ms from UsageStatsManager — time in the foreground, and time
+     * with a foreground service running (API 29+; 0 before). Empty without Usage Access (the tables then print "—").
+     */
+    fun usageTimes(ctx: Context, from: Long, to: Long = System.currentTimeMillis()): Map<String, Pair<Long, Long>> {
+        if (!EnergyWatchdog.hasUsageAccess(ctx)) return emptyMap()
+        val usm = ctx.getSystemService(Context.USAGE_STATS_SERVICE) as? android.app.usage.UsageStatsManager ?: return emptyMap()
+        return runCatching {
+            usm.queryAndAggregateUsageStats(from, to).mapValues { (_, u) ->
+                u.totalTimeInForeground to (if (Build.VERSION.SDK_INT >= 29) u.totalTimeForegroundServiceUsed else 0L)
+            }
+        }.getOrDefault(emptyMap())
     }
 
     // ── charge cycles (BatteryCycles) ────────────────────────────────────

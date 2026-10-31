@@ -111,6 +111,16 @@ class BatteryCyclesTest {
         assertEquals("a cycle that gained charge used none", 0, BatteryCycles.Cycle(0, 1, 40, 60, emptyMap()).usedPct)
     }
 
+    @Test fun `the 7-day table sums the cycles that started in the window, the open one included`() {
+        val cycles = listOf(
+            BatteryCycles.Cycle(1_000, null, 90, 80, mapOf(1 to 2.0)),
+            BatteryCycles.Cycle(500, 900, 100, 50, mapOf(1 to 3.0, 2 to 4.0)),
+            BatteryCycles.Cycle(100, 400, 100, 10, mapOf(2 to 50.0)),
+        )
+        assertEquals(mapOf(1 to 5.0, 2 to 4.0), BatteryCycles.sumSince(cycles, 500))
+        assertEquals(emptyMap<Int, Double>(), BatteryCycles.sumSince(cycles, 2_000))
+    }
+
     @Test fun `shares are heaviest first and add up to one`() {
         val s = BatteryCycles.shares(mapOf(1 to 1.0, 2 to 3.0))
         assertEquals(listOf(2, 1), s.map { it.uid })

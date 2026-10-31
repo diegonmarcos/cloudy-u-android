@@ -91,6 +91,10 @@ object BatteryCycles {
             Month(k, l.size, l.sumOf { it.usedPct }, l.fold(emptyMap()) { acc, c -> add(acc, c.apps) })
         }.sortedByDescending { it.key }
 
+    /** Per-app mAh summed over the cycles that started at or after [from] (the open one included): the 7-day table. */
+    fun sumSince(cycles: List<Cycle>, from: Long): Map<Int, Double> =
+        cycles.filter { it.startTs >= from }.fold(emptyMap()) { acc, c -> add(acc, c.apps) }
+
     /** One table row: a uid, its mAh and its share of the period (0..1). Heaviest first. */
     data class Share(val uid: Int, val mAh: Double, val share: Double)
 
