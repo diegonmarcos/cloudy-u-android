@@ -63,6 +63,16 @@ if find_text "Battery use per app" "Battery" >/dev/null; then
   shot resources-battery-cycle
   dump; grep -q "90% → 62% · −28%" "$OUT/ui.xml" || { echo "::error::the unplug-to-plug-in cycle (90% → 62%) is not listed"; fail=1; }
   if tap_text "Month"; then shot resources-battery-month; else echo "::error::no Month segment"; fail=1; fi
+  # Not paired -> the row opens the ADB Shell page (the one place that pairs). That page is the channel's own and may
+  # name Shizuku as a ladder option, so it is checked for the pairing controls instead of the no-Shizuku rule.
+  if tap_text "Per-app mAh needs the ADB channel"; then
+    sleep 3; adb shell screencap -p /sdcard/s.png; adb pull /sdcard/s.png "$OUT/resources-battery-pair-opens-adb-shell.png" >/dev/null
+    dump; cp "$OUT/ui.xml" "$OUT/resources-battery-pair-opens-adb-shell.xml"
+    grep -qi "wireless debugging" "$OUT/ui.xml" || { echo "::error::the Not paired row did not open the ADB Shell page"; fail=1; }
+    adb shell input keyevent KEYCODE_BACK; sleep 2
+  else
+    echo "::error::no 'Not paired' row"; fail=1
+  fi
 else
   echo "::error::Resources has no 'Battery use per app' block"; shot resources-missing; fail=1
 fi
