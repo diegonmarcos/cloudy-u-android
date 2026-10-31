@@ -48,6 +48,7 @@ perms_page() { # pkg tag
 }
 adb root >/dev/null 2>&1; sleep 3; adb wait-for-device
 adb shell settings put global cloud_perms_first_run 1
+say "device: ro.test_harness=$(adb shell getprop ro.test_harness | tr -d '\r') monkey=$(adb shell getprop ro.monkey | tr -d '\r')"
 
 # key | label of the entry granted and revoked | grant cmd | revoke cmd | texts the page must show
 # fd 3: every adb shell below reads stdin and would swallow the rest of the table (only the first app ever ran)
@@ -62,11 +63,13 @@ while IFS='|' read -r -u 3 key entry grant revoke texts; do
   adb shell input keyevent KEYCODE_HOME >/dev/null 2>&1
   # 1 first run from the launcher
   act="$(adb shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.LAUNCHER "$pkg" | tail -1 | tr -d '\r')"
+  adb logcat -c >/dev/null 2>&1
   adb shell am start -W -a android.intent.action.MAIN -c android.intent.category.LAUNCHER -n "$act" >/dev/null 2>&1
   sleep 8
   # the app's own start screen comes first where it has one (Gallery's onboarding, Drive's storage gate); step past it
   for t in "Get Started" "Continue with local files"; do tap_text "$t" && sleep 5; done
   shot "$key-1-first-run"
+  adb logcat -d 2>/dev/null | grep -E "START u0|Displayed|AndroidRuntime|$pkg" | tail -60 > "$OUT/$key-1-logcat.txt"
   if [ "$key" = finterm ]; then check "$key first run: nothing missing, no prompt" "$key-1-first-run" ""
   elif [ "$key" = me ]; then check "$key first run: the app's own start-up ask (first_run own:MePerms.kt)" "$key-1-first-run" ""
   else check "$key first run opens the Perms page on what is missing" "$key-1-first-run" "Before you start" "Grant all"; fi
