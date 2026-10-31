@@ -167,6 +167,26 @@ class BatteryTruthTest {
         assertTrue(card.text, card.text.contains(BatteryRows.rate(r.ratePctH, r.rateW)))
     }
 
+    /**
+     * The home-screen battery tap (status strip, `opens: battery_popup`) and the page behind its "Battery stats ›" keep
+     * every section they have: a new battery feature is added beside them, never in their place.
+     */
+    @Test fun `the home battery popup and the stats page keep every section`() {
+        val root = generateSequence(File("").absoluteFile) { it.parentFile }.first { File(it, "ab_cloud-libs-shared").isDirectory }
+        val lib = File(root, "ab_cloud-libs-shared/libs/battery/src/main/java/com/diegonmarcos/superapp/battery")
+        fun code(f: File) = f.readText().lines().filterNot { it.trim().startsWith("*") || it.trim().startsWith("//") }.joinToString("\n")
+        val rows = code(File(lib, "BatteryRows.kt"))
+        assertTrue("the popup is Now + Since last charge", rows.contains("fun popup(r: BatteryReport): List<Section> = listOf(now(r), since(r))"))
+        val popup = code(File(lib, "BatteryEstimatePopup.kt"))
+        for (part in listOf("BatteryRows.popup(report)", "\"Battery stats ›\"", "Text(sec.title", "for (row in sec.rows)"))
+            assertTrue("the home battery popup lost $part", popup.contains(part))
+        val page = code(File(root, "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/batterystats/BatteryStatsFragment.kt"))
+        for (part in listOf("Section(BatteryRows.now(r))", "Section(BatteryRows.since(r))", "Header(\"History\")", "LevelGraph(",
+            "Section(BatteryRows.capacity(", "Section(BatteryRows.spreads(", "Header(\"Discharge cycles", "Header(\"Charge sessions",
+            "Header(\"Top apps since charge\")", "Kv(\"Privileged channel\""))
+            assertTrue("the Battery stats page lost $part", page.contains(part))
+    }
+
     @Test fun `the old duplicate battery paths are gone`() {
         val root = generateSequence(File("").absoluteFile) { it.parentFile }.first { File(it, "ab_cloud-libs-shared").isDirectory }
         val app = File(root, "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp")

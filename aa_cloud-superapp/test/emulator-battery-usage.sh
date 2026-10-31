@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Emulator proof of Resources › Battery use per app (BatteryCycles), the Shizuku-free battery measurement, and (#1380)
-# the Cloud ▸ Apps groups (cloud-apps.png).
+# the Cloud ▸ Apps groups (cloud-apps.png), and the home battery popup + Battery stats page sections (home-battery-popup.png,
+# battery-stats-N.png).
 #   bash aa_cloud-superapp/test/emulator-battery-usage.sh <superapp.apk> <out dir>
 # Installs the APK, clears the nav-mode override (global cloud_nav_ui_mode), drives one charge cycle with
 # `dumpsys battery` (plugged at 90 % -> unplug -> 62 % -> plug in -> unplug), so PowerStateReceiver snapshots
@@ -113,6 +114,44 @@ ok = com is not None and "Contacts" in com and data == ["Drive", "Notes", "Tasks
 if not ok: print("::error::Cloud > Apps groups are not as declared (#1380)")
 sys.exit(0 if ok else 1)
 PY
+
+# The home-screen battery tap (status strip, opens: battery_popup) and its "Battery stats ›" page: every section is on
+# screen (BatteryTruthTest pins them in source). The texts of every frame are kept, so a section below the fold counts.
+cap() { adb shell screencap -p /sdcard/s.png; adb pull /sdcard/s.png "$OUT/$1.png" >/dev/null; dump; cp "$OUT/ui.xml" "$OUT/$1.xml"; }
+has_all() { python3 - "$@" <<'PY'
+import re, sys
+files, want = [a for a in sys.argv[1:] if a.endswith(".xml")], [a for a in sys.argv[1:] if not a.endswith(".xml")]
+text = "\n".join(t for f in files for t in re.findall(r' text="([^"]+)"', open(f, encoding="utf-8", errors="ignore").read()))
+miss = [w for w in want if not any(alt in text for alt in w.split("|"))]
+print("present:", [w for w in want if w not in miss], "missing:", miss)
+sys.exit(1 if miss else 0)
+PY
+}
+adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null; sleep 8; dump
+xy=$(python3 - "$OUT/ui.xml" <<'PY'
+import re, sys
+best = None
+for n in re.findall(r'<node [^>]*>', open(sys.argv[1], encoding="utf-8", errors="ignore").read()):
+    b = re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', n)
+    if not b or 'clickable="true"' not in n: continue
+    x1, y1, x2, y2 = map(int, b.groups())
+    if y2 <= 260 and x2 - x1 < 200 and (best is None or x2 > best[2]): best = (x1, y1, x2, y2)
+if best: print((best[0] + best[2]) // 2, (best[1] + best[3]) // 2)
+PY
+)
+if [ -n "$xy" ]; then
+  adb shell input tap $xy; sleep 2.5; cap home-battery-popup
+  has_all "$OUT/home-battery-popup.xml" "Battery stats ›" "Now" "Since last charge|Since plugged in" || { echo "::error::the home battery popup is missing a section"; fail=1; }
+  grep -q "Battery state unavailable" "$OUT/home-battery-popup.xml" && { echo "::error::the home battery popup says Battery state unavailable"; fail=1; }
+  adb shell input keyevent KEYCODE_BACK; sleep 1
+else
+  echo "::error::no battery icon found on the home status strip"; cap home-no-battery-icon; fail=1
+fi
+open_page "page:config/battery"
+frames=""
+for i in 1 2 3 4 5 6; do cap "battery-stats-$i"; frames="$frames $OUT/battery-stats-$i.xml"; adb shell input swipe 540 1700 540 700 400; sleep 1.2; done
+has_all $frames "Now" "Since last charge|Since plugged in" "History" "Capacity" "Temperature & voltage" "Discharge cycles" "Charge sessions" "Top apps since charge" "Privileged channel" \
+  || { echo "::error::the Battery stats page is missing a section"; fail=1; }
 
 adb shell dumpsys battery reset
 adb shell settings delete global cloud_nav_ui_mode || true
