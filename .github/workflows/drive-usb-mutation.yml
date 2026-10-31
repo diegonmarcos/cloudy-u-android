@@ -60,6 +60,9 @@ jobs:
           set -u
           jq '.tests.unit.task = ":app:testDebugUnitTest"' "$WORK_DIR/build.json" > /tmp/b.json && mv /tmp/b.json "$WORK_DIR/build.json"
           V=ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive/usb/UsbVolumeModel.kt
+          # Only the suite under proof runs (this checkout only): an unrelated test that needs a runner tool (fish) or
+          # another ticket's fixture must not decide whether these mutants are caught.
+          find ac_cloud-drive/app/src/test -name '*.kt' ! -path '*/usb/*' -delete
           suite() { sh 1_cicd/dist/scripts/cloud-android-test-engine.sh unit "$WORK_DIR" > /tmp/suite.log 2>&1; }
           sub() { python3 -c 'import sys; p, a, b = sys.argv[1:]; s = open(p).read(); assert a in s, "anchor missing: " + a; open(p, "w").write(s.replace(a, b, 1))' "$V" "$1" "$2"; }
           suite || { tail -80 /tmp/suite.log; echo "::error::the real tree is RED"; exit 1; }
