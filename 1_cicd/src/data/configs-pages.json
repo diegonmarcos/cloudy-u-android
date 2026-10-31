@@ -100,6 +100,7 @@
     "storage_read": "Open files from shared storage.",
     "storage_write": "Save files to shared storage.",
     "all_files": "Manage every file on shared storage (a file manager, a terminal, backups).",
+    "usb_host": "Open USB-C drives plugged into the phone (USB mass storage), when Android asks per drive.",
     "install_unknown": "Install fleet updates and companion APKs.",
     "usage_access": "See which apps run and how much they are used.",
     "battery_opt": "Keep background work alive under battery optimisation.",
