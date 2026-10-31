@@ -15,7 +15,7 @@ import org.junit.Test
  */
 class UsbVolumeModelTest {
 
-    private val phone = Volume("primary", "Internal shared storage", "/storage/emulated/0", "mounted", removable = false, primary = true, 128_000_000_000, 40_000_000_000)
+    private val phone = Volume("primary", "Internal shared storage", "/storage/internal", "mounted", removable = false, primary = true, 128_000_000_000, 40_000_000_000)
     private val usb = Volume("1A2B-3C4D", "SanDisk USB drive", "/storage/1A2B-3C4D", "mounted", removable = true, primary = false, 32_000_000_000, 12_300_000_000)
     private val sd = Volume("AAAA-BBBB", "SD card", "/storage/AAAA-BBBB", "mounted", removable = true, primary = false, 64_000_000_000, 1_000_000_000)
 
