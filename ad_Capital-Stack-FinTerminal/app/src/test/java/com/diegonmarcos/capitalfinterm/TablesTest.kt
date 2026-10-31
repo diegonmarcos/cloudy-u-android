@@ -255,4 +255,15 @@ class TablesTest {
         assertEquals("/v1/curves/{each}", f.getJSONObject("primary").getString("api"))
         assertEquals("30Y", Tables.tenors(f).last().label)
     }
+
+    @Test fun worldBondsSpreadsAreThe10yOverThe2yTheBundAndTheUstInBp() {
+        val m = PanelData(listOf("Country", "Cov", "2Y", "10Y"), listOf(
+            listOf("United States", "52%", "4.56", "4.94"), listOf("Germany", "9%", "2.10", "2.60"), listOf("Italy", "4%", "—", "3.75")), emptyList(), emptyList(), "2026-10-30", "")
+        val f = org.json.JSONObject("""{"labels":{"US":"United States","DE":"Germany","IT":"Italy"}}""")
+        val d = Tables.spreads(m, f)
+        assertEquals(Tables.SPREAD_COLS, d.columns)
+        assertEquals(listOf("United States", "4.56", "4.94", "+38", "+234", "0"), d.rows[0])
+        assertEquals(listOf("Germany", "2.10", "2.60", "+50", "0", "-234"), d.rows[1])
+        assertEquals(listOf("Italy", "—", "3.75", "—", "+115", "-119"), d.rows[2])
+    }
 }

@@ -164,7 +164,7 @@ man = read(os.path.join(app, "app/src/main/AndroidManifest.xml"))
 if "android.permission.INTERNET" not in man or "networkSecurityConfig" not in man: bad.append("S6 the manifest lacks INTERNET or the network security config for the mesh")
 # S7 model panels (Feeds.kt): sources declare cors / schedule / rate_limit; panels route container first, then key-free fallbacks that feed the entry
 LEGACY = {"fred_series", "dbnomics_series", "imf_datamapper", "worldbank_indicator", "gdelt_artlist", "fincept_topic"}
-VIEWS_OF = {"points": {"quotes", "curve", "bars", "table"}, "events": {"calendar"}, "candles": {"candles"}, "kv": {"kv"}, "filings": {"news", "table"}, "performance": {"table"}, "portfolio_performance": {"table"}, "yields_matrix": {"table"}, "em_usd": {"table"}}
+VIEWS_OF = {"points": {"quotes", "curve", "bars", "table"}, "events": {"calendar"}, "candles": {"candles"}, "kv": {"kv"}, "filings": {"news", "table"}, "performance": {"table"}, "portfolio_performance": {"table"}, "yields_matrix": {"table"}, "em_usd": {"table"}, "world_bonds": {"table"}}
 SLOTS = {"each", "each_csv", "today", "from", "yyyymm", "prev_yyyymm", "cik"}
 feeds_kt = ktf("Feeds.kt")
 for s in S:
@@ -226,7 +226,7 @@ for d in dash["dashboards"]:
                 legs = [l[0] for l in (d.get("model_portfolio") or {}).get("legs", [])]
                 for l in legs:
                     if not (f.get("proxies") or {}).get(l): bad.append("S9 panel %s leg %s has no proxy" % (where, l))
-        if p.get("derive") == "yields_matrix":
+        if p.get("derive") in ("yields_matrix", "world_bonds"):
             ten = [t[0] for t in f.get("tenors", [])]
             # Country, Cov (the GDP coverage of each average, #1374), then the tenors
             if p.get("columns", [])[1:2] != ["Cov"]: bad.append("S9 panel %s has no Cov column after Country" % where)

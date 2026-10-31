@@ -994,6 +994,217 @@
       "tab": "fi",
       "panels": [
         {
+          "id": "merged",
+          "title": "World government bonds: 2Y, 10Y and spreads (bp) vs the 2Y, Bund and UST",
+          "source": "treasury_xml",
+          "view": "table",
+          "derive": "world_bonds",
+          "fetch": {
+            "provider": "treasury_xml",
+            "path": "/xml",
+            "params": {
+              "data": "daily_treasury_yield_curve",
+              "field_tdr_date_value_month": "{yyyymm}"
+            },
+            "symbol_map": {
+              "US": "US"
+            },
+            "fallbacks": [
+              {
+                "source": "treasury_xml",
+                "provider": "treasury_xml",
+                "path": "/xml",
+                "params": {
+                  "data": "daily_treasury_yield_curve",
+                  "field_tdr_date_value_month": "{prev_yyyymm}"
+                },
+                "symbol_map": {
+                  "US": "US"
+                }
+              }
+            ],
+            "each": [
+              "US",
+              "DE",
+              "FR",
+              "IT",
+              "ES",
+              "GB",
+              "JP",
+              "CA",
+              "AU",
+              "CH",
+              "NL",
+              "SE",
+              "CN",
+              "IN",
+              "BR",
+              "RU",
+              "MX",
+              "TR",
+              "ID",
+              "SA",
+              "PL",
+              "AR"
+            ],
+            "labels": {
+              "US": "United States",
+              "DE": "Germany",
+              "FR": "France",
+              "IT": "Italy",
+              "ES": "Spain",
+              "GB": "United Kingdom",
+              "JP": "Japan",
+              "CA": "Canada",
+              "AU": "Australia",
+              "CH": "Switzerland",
+              "NL": "Netherlands",
+              "SE": "Sweden",
+              "CN": "China",
+              "IN": "India",
+              "BR": "Brazil",
+              "RU": "Russia",
+              "MX": "Mexico",
+              "TR": "Turkey",
+              "ID": "Indonesia",
+              "SA": "Saudi Arabia",
+              "PL": "Poland",
+              "AR": "Argentina"
+            },
+            "groups": {
+              "DM": [
+                "US",
+                "DE",
+                "FR",
+                "IT",
+                "ES",
+                "GB",
+                "JP",
+                "CA",
+                "AU",
+                "CH",
+                "NL",
+                "SE"
+              ],
+              "EM": [
+                "CN",
+                "IN",
+                "BR",
+                "RU",
+                "MX",
+                "TR",
+                "ID",
+                "SA",
+                "PL",
+                "AR"
+              ]
+            },
+            "gdp_usd_bn": {
+              "US": 30507,
+              "DE": 4744,
+              "FR": 3211,
+              "IT": 2422,
+              "ES": 1799,
+              "GB": 3839,
+              "JP": 4186,
+              "CA": 2225,
+              "AU": 1771,
+              "CH": 947,
+              "NL": 1273,
+              "SE": 610,
+              "CN": 19232,
+              "IN": 4187,
+              "BR": 2126,
+              "RU": 2076,
+              "MX": 1863,
+              "TR": 1437,
+              "ID": 1430,
+              "SA": 1084,
+              "PL": 980,
+              "AR": 684
+            },
+            "gdp_source": "IMF WEO April 2025, nominal GDP USD bn",
+            "tenors": [
+              [
+                "3M",
+                0.25
+              ],
+              [
+                "6M",
+                0.5
+              ],
+              [
+                "1Y",
+                1
+              ],
+              [
+                "2Y",
+                2
+              ],
+              [
+                "3Y",
+                3
+              ],
+              [
+                "5Y",
+                5
+              ],
+              [
+                "7Y",
+                7
+              ],
+              [
+                "10Y",
+                10
+              ],
+              [
+                "20Y",
+                20
+              ],
+              [
+                "30Y",
+                30
+              ]
+            ],
+            "years": {
+              "BC_1MONTH": 0.083333,
+              "BC_3MONTH": 0.25,
+              "BC_6MONTH": 0.5,
+              "BC_1YEAR": 1,
+              "BC_2YEAR": 2,
+              "BC_3YEAR": 3,
+              "BC_5YEAR": 5,
+              "BC_7YEAR": 7,
+              "BC_10YEAR": 10,
+              "BC_20YEAR": 20,
+              "BC_30YEAR": 30
+            },
+            "forward_start_years": 1,
+            "min_coverage_gdp": 0.6,
+            "primary": {
+              "source": "cloud_fincept",
+              "api": "/v1/curves/{each}",
+              "matrix_api": "/v1/curves/matrix",
+              "parse": "finterm_v1"
+            }
+          },
+          "columns": [
+            "Country",
+            "Cov",
+            "3M",
+            "6M",
+            "1Y",
+            "2Y",
+            "3Y",
+            "5Y",
+            "7Y",
+            "10Y",
+            "20Y",
+            "30Y"
+          ],
+          "unit": "%"
+        },
+        {
           "id": "yields",
           "title": "Long-term government bond yields (OECD, monthly)",
           "source": "dbnomics",

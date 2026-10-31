@@ -20,7 +20,8 @@ object Tables {
     const val PORTFOLIO = "portfolio_performance"
     const val MATRIX = "yields_matrix"
     const val EM_USD = "em_usd"
-    val DERIVES: Set<String> = setOf(PERFORMANCE, PORTFOLIO, MATRIX, EM_USD)
+    const val WORLD_BONDS = "world_bonds"
+    val DERIVES: Set<String> = setOf(PERFORMANCE, PORTFOLIO, MATRIX, EM_USD, WORLD_BONDS)
 
     /** Extra (non-return) columns a performance table may declare after the return columns. */
     const val COL_VOL = "Vol 1Y"
@@ -45,7 +46,27 @@ object Tables {
         MATRIX -> matrixOne(f, http, c)?.let { m -> matrix(panel, f, m.got, m) }
             ?: matrix(panel, f, some(strings(f.optJSONArray("each")).associateWith { gather(it, source, f, http, today, c) }))
         EM_USD -> emUsd(panel, f, http, c)
+        WORLD_BONDS -> spreads(load(panel.copy(derive = MATRIX), source, f, http, today, c), f)
         else -> throw IOException("unknown derive ${panel.derive}")
+    }
+
+    // ------------------------------------------------------------------ World Bonds merged table (#1370, spec 9 spreads)
+
+    val SPREAD_COLS = listOf("Country", "2Y", "10Y", "2s10s bp", "vs Bund bp", "vs UST bp")
+
+    /** The yields matrix reshaped: 2Y, 10Y, and the 10Y spread over the 2Y, Germany's 10Y (Bund) and the US 10Y (UST), in bp. */
+    fun spreads(m: PanelData, f: JSONObject): PanelData {
+        val labels = f.optJSONObject("labels") ?: JSONObject()
+        val i2 = m.columns.indexOf("2Y")
+        val i10 = m.columns.indexOf("10Y")
+        fun cell(r: List<String>, i: Int) = if (i < 0) FinFormat.DASH else r.getOrElse(i) { FinFormat.DASH }
+        fun num(r: List<String>?, i: Int) = r?.let { FinFormat.parseNum(cell(it, i).takeIf { c -> c != FinFormat.DASH }) }
+        fun row(cc: String) = m.rows.firstOrNull { it.firstOrNull() == Catalog.str(labels, cc).ifEmpty { cc } }
+        val bund = num(row("DE"), i10)
+        val ust = num(row("US"), i10)
+        fun bp(a: Double?, b: Double?) = if (a == null || b == null) FinFormat.DASH else FinFormat.signed((a - b) * 100, 0)
+        val rows = m.rows.map { r -> val y10 = num(r, i10); listOf(r.firstOrNull().orEmpty(), cell(r, i2), cell(r, i10), bp(y10, num(r, i2)), bp(y10, bund), bp(y10, ust)) }
+        return m.copy(columns = SPREAD_COLS, rows = rows, note = (m.note + " Spreads in bp: the 10Y minus the 2Y, minus Germany's 10Y (Bund), minus the US 10Y (UST).").trim())
     }
 
     // ------------------------------------------------------------------ EM government bonds in USD
