@@ -72,7 +72,8 @@ sheet_open || fail "back on Git, $NAME's sheet is not open: $(texts)"
 adb shell input keyevent KEYCODE_HOME; sleep 2
 adb shell am kill "$PKG"; sleep 2
 adb shell pidof "$PKG" >/dev/null && echo "note: am kill left the process alive"
-timeout 120 adb shell am start -W -n "$act" >/dev/null; sleep 6
+# the relaunch passes the startup gate the same way the first launch did (no terminal on the emulator)
+launch
 shot 04-after-process-death
 if ! sheet_open; then
     echo "note: the relaunch did not land on Git; opening it"
