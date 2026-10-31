@@ -36,10 +36,10 @@ import java.io.File
 
 /** #1376 the selected storage, persisted per app. */
 fun gitStorageSelected(ctx: Context): GitStorage.Kind =
-    GitStorage.Kind.of(ctx.getSharedPreferences(GitStorage.PREFS, Context.MODE_PRIVATE).getString(GitStorage.KEY, null))
+    GitStorage.Kind.of(ctx.getSharedPreferences("git_storage", Context.MODE_PRIVATE).getString(GitStorage.KEY, null))
 
 fun gitStorageSelect(ctx: Context, k: GitStorage.Kind) {
-    ctx.getSharedPreferences(GitStorage.PREFS, Context.MODE_PRIVATE).edit().putString(GitStorage.KEY, k.id).apply()
+    ctx.getSharedPreferences("git_storage", Context.MODE_PRIVATE).edit().putString(GitStorage.KEY, k.id).apply()
 }
 
 /** The root a non-store storage is searched from: shared storage, or the attached drive (USB first). */

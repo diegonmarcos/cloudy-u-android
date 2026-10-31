@@ -422,6 +422,14 @@
         "lib-battery"
       ]
     },
+    "git_storage": {
+      "kind": "prefs",
+      "class": "config",
+      "doc": "Cloud Drive Git page: which storage the one Git page runs on (Cloud-Store, Emulated or External Drive); a viewing preference the owner keeps on a new phone.",
+      "used_by": [
+        "ac_cloud-drive"
+      ]
+    },
     "cloud-drive-pdf-reader": {
       "kind": "prefs",
       "class": "config",
