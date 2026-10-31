@@ -234,6 +234,7 @@ jobs:
             echo "--- main-thread StrictMode violations"; adb logcat -d -s StrictMode:D | grep -c "policy violation" || true
             adb logcat -d -s StrictMode:D | grep -E "policy violation|at com\.diegonmarcos" | head -40
             echo "--- frames"; adb shell dumpsys gfxinfo "$PKG" | grep -E "Total frames|Janky|50th|90th|99th" || true
+            echo "--- scene events (CgcHost)"; adb logcat -d -s CgcHost:I | tail -20
           } >> screens/launch.txt
           adb exec-out screencap -p > screens/00-cold-launch.png || true
           if [ -n "$a" ]; then echo "::error::CG-Omniverse is not responding after a cold launch"; cat screens/launch.txt; exit 3; fi

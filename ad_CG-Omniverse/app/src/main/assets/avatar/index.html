@@ -16,7 +16,13 @@
 </head>
 <body>
 <div id="cgc"></div>
-<script>window.cgcBoot = (json) => { window.cgcPending = json; };</script>
+<script>
+  window.cgcBoot = (json) => { window.cgcPending = json; };
+  // a script error or a failed promise reaches the app's log (CgcHost) instead of leaving an empty stage unexplained
+  const report = (m) => { try { window.CgcHost && window.CgcHost.event(JSON.stringify({ type: 'error', where: 'page', message: String(m).slice(0, 300) })); } catch (e) {} };
+  window.addEventListener('error', (e) => report(e.message + ' @' + (e.filename || '').split('/').pop() + ':' + e.lineno));
+  window.addEventListener('unhandledrejection', (e) => report(e.reason && (e.reason.stack || e.reason.message) || e.reason));
+</script>
 <script type="module">
   import { boot } from '../cgc/cgc.js';
   let booted = false;

@@ -159,6 +159,7 @@ private class CgcBridge(private val ctx: Context, private val onEvent: (JSONObje
     private var name = ""
 
     @JavascriptInterface fun event(json: String) {
+        android.util.Log.i("CgcHost", json.take(400)) // scene events only (ready, loaded, quality, error): no user data
         val o = runCatching { JSONObject(json) }.getOrNull() ?: return
         main.post { onEvent(o) }
     }
