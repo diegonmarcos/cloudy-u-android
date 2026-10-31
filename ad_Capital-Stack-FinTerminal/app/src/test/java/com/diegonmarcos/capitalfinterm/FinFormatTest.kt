@@ -72,4 +72,11 @@ class FinFormatTest {
         assertFalse(text.contains("US Treasury"))
         assertEquals("US Treasury did not answer (no answer)", FinFormat.failureText("US Treasury", "no answer"))
     }
+
+    @Test fun footerSourceNamesDropTheirParentheticalAndSlashDetail() {
+        assertEquals("Cloud-Fincept", FinFormat.shortSource("Cloud-Fincept / fin_api (private mesh)"))
+        assertEquals("US Treasury par yield curve", FinFormat.shortSource("US Treasury par yield curve (XML)"))
+        assertEquals("FRED + Cloud-Fincept", FinFormat.shortSource("FRED (St. Louis Fed) + Cloud-Fincept / fin_api (private mesh)"))
+        assertEquals("Eurostat", FinFormat.shortSource("Eurostat"))
+    }
 }

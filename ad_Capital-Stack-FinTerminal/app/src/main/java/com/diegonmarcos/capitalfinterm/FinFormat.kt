@@ -91,4 +91,6 @@ object FinFormat {
     /** The error body: a container-only panel off the mesh names the mesh, never its declared public source. */
     fun failureText(source: String, reason: String): String =
         if (reason == MESH_OFF) "Mesh off: served by the FinTerm container on the private mesh only" else "$source did not answer ($reason)"
+    /** A footer source name (#1370 shorter footers): the declared name without its parenthetical or " / " detail; each " + " part alike. */
+    fun shortSource(name: String): String = name.split(" + ").joinToString(" + ") { n -> n.substringBefore(" (").substringBefore(" / ").trim().ifEmpty { n.trim() } }
 }

@@ -136,11 +136,11 @@ fun FinFooter(panelId: String, fresh: Fresh, fetchedAt: String, asOf: String, so
         if (asOf.isNotBlank() && !asOf.startsWith(today)) Text("  ·  as of ${asOf.take(10)}", color = p.text3, style = FinType.caption, maxLines = 1)
         if (source.isNotBlank()) {
             Text("  ·  ", color = p.text3, style = FinType.caption)
-            Text(source, color = p.accent, style = FinType.caption, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+            Text(FinFormat.shortSource(source), color = p.accent, style = FinType.caption, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
             Icon(Icons.AutoMirrored.Outlined.OpenInNew, null, Modifier.padding(start = 2.dp).size(10.dp), tint = p.accent)
         }
         Spacer(Modifier.weight(1f))
-        if (servedBy.isNotBlank()) Text("via $servedBy", color = p.text3, style = FinType.caption, maxLines = 1, overflow = TextOverflow.Ellipsis,
+        if (servedBy.isNotBlank()) Text("via ${FinFormat.shortSource(servedBy)}", color = p.text3, style = FinType.caption, maxLines = 1, overflow = TextOverflow.Ellipsis,
             modifier = Modifier.padding(start = 8.dp).width(120.dp), textAlign = TextAlign.End)
     }
 }
