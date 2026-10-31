@@ -13,9 +13,9 @@
 {"id":"os","label":"OS","members":["lib-rootfs-nixdroid","lib-rootfs-termux","ae-tool_termux-boot"]}
 ],
 "app_categories":[
-{"id":"inboxes","label":"Inboxes","members":["mail","chat","matrix","dialer","news"]},
+{"id":"communication","label":"Communication","members":["mail","chat","matrix","dialer","contacts"]},
 {"id":"tools-primary","label":"Tools Primary","members":["browser","nav","camera","calc","keyboard","writer","wallet","vault"]},
-{"id":"data-apps","label":"Data Apps","members":["drive","tasks","contacts","notes","office","gallery","media-center"]},
+{"id":"data-apps","label":"Data Apps","members":["drive","notes","tasks","gallery","media-center","news","office"]},
 {"id":"me","label":"Me","members":["me","account"]},
 {"id":"agi","label":"AGI","members":["superintel","search","code","kg-store","tools-small-llms","myterminal","nix-on-droid"]},
 {"id":"lnktree","label":"Lnktree","members":["aa_cloud-superapp","cg-omniverse","capital-stack-finterminal","hardtech-cad","hardtech-sim2real"]},

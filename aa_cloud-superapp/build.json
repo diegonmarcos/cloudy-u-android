@@ -2774,7 +2774,7 @@
         ],
         "tile_groups": [
           {
-            "title": "Inboxes",
+            "title": "Communication",
             "tiles": [
               {
                 "id": "mail",
@@ -2810,10 +2810,11 @@
                 "target": "intent://resolve?domain=Cloud_bot_C3_Infra_bot#Intent;scheme=tg;package=org.telegram.messenger;S.browser_fallback_url=https%3A%2F%2Ft.me%2FCloud_bot_C3_Infra_bot;end"
               },
               {
-                "id": "news",
-                "label": "News",
-                "icon": "ic_rss",
-                "target": "extapp:cloud-news"
+                "_doc": "Opens the standalone Cloud-Contacts app (ac_cloud-contacts, com.diegonmarcos.cloudcontacts, native multi-channel people hub) via extapp:cloud-contacts — installed → launches; absent → install via Configs ▸ Constellation. Replaces the old Google Contacts launcher.",
+                "id": "contacts",
+                "label": "Contacts",
+                "icon": "ic_p_sol_personal",
+                "target": "extapp:cloud-contacts"
               }
             ]
           },
@@ -2895,20 +2896,6 @@
                 "separator": true
               },
               {
-                "_doc": "Cloud Tasks (ac_cloud-tasks, com.diegonmarcos.cloudagenda): tasks first, with the calendar, events and invites one tab away. Captioned by function, Tasks, since cloud-calendar became cloud-agenda (#315) and then cloud-tasks. The tile id stays `calendar` because the Home tile rows address tiles by id.",
-                "id": "calendar",
-                "label": "Tasks",
-                "icon": "ic_calendar",
-                "target": "extapp:cloud-tasks"
-              },
-              {
-                "_doc": "Opens the standalone Cloud-Contacts app (ac_cloud-contacts, com.diegonmarcos.cloudcontacts, native multi-channel people hub) via extapp:cloud-contacts — installed → launches; absent → install via Configs ▸ Constellation. Replaces the old Google Contacts launcher.",
-                "id": "contacts",
-                "label": "Contacts",
-                "icon": "ic_p_sol_personal",
-                "target": "extapp:cloud-contacts"
-              },
-              {
                 "_doc": "Cloud Notes (ac_cloud-notes, com.diegonmarcos.cloudnotes) — our own signed build of Cloud Notes, a local-first notes/whiteboard app. Formerly a Markor build in this same directory; #495 flipped the Cloud Notes build (vendored alongside it by #469 under com.diegonmarcos.cloud-notes) onto this identity and deleted the Markor tree. #522 put the DIRECTORY and the NAME back: the product is cloud-notes, Cloud Notes is only the upstream it is built from. Replaces the `obsidian://open` deep link this tile used to carry, back when it was added. Two things were wrong with that target and only one of them was about branding: it is a bare scheme URI, so ShellActivity.launchUri turns it into a plain ACTION_VIEW and it raises ActivityNotFoundException on any phone without Obsidian installed — the exact hazard test-drive-page-sections.sh T9 exists to contain, and a tile that fails AFTER the tap. `extapp:cloud-notes` resolves through ui.external_apps instead: installed → launches, absent → offers the install from the Constellation store. Obsidian itself is NOT removed from the phone or from this file — md.obsidian keeps its ui.phone_folders keyword and its place in the favourites picker (a favourite is what you can pick, not what you get), so nothing dangles.",
                 "id": "notes",
                 "label": "Notes",
@@ -2916,11 +2903,17 @@
                 "target": "extapp:cloud-notes"
               },
               {
-                "_doc": "#380. This tile is the Data Apps entry for the application whose IDENTITY is cloud-office (ac_cloud-office, com.diegonmarcos.cloudoffice) and its label is \"Office\" — a caption for the tap target, not a name for the app. It printed the identity string \"cloud-office\" until #380; identity now lives only in `target`/ui.external_apps[cloud-office].id and the app's own build.json::name, and nothing about the package, the Cloud-Office.apk asset or the folder changed with this label. THE PREVIOUS _doc HERE WAS WRONG TWICE AND IS CORRECTED RATHER THAN KEPT. It said \"this tile label and ui.external_apps[cloud-office].label are the two names the fleet owns\": ui.external_apps carries NO label key on any of its 23 entries, and test-app-names-pattern.sh T3 forbids one outright (\"ui.external_apps shows the id and restates no name\") — so that sentence pointed a future editor at a second copy that does not exist and would have reddened the guard the moment they created it. It also said the rebrand waits on build.json::build.host \"and it is null\"; ac_cloud-office/build.json::build.host is ubuntu-latest and the source build has published Cloud-Office.apk. Android's own home screen is a SEPARATE surface from this tile and takes its label from the APK manifest, via --with-app-name = that app's build.json::name, which test-app-name-reaches-the-user.sh pins to the cloud-<x> pattern — deliberately NOT to this caption.",
-                "id": "sheets",
-                "label": "Office",
-                "icon": "ic_sheets",
-                "target": "extapp:cloud-office"
+                "_doc": "Cloud Tasks (ac_cloud-tasks, com.diegonmarcos.cloudagenda): tasks first, with the calendar, events and invites one tab away. Captioned by function, Tasks, since cloud-calendar became cloud-agenda (#315) and then cloud-tasks. The tile id stays `calendar` because the Home tile rows address tiles by id.",
+                "id": "calendar",
+                "label": "Tasks",
+                "icon": "ic_calendar",
+                "target": "extapp:cloud-tasks"
+              },
+              {
+                "_doc": "Divides Notes and Tasks from the media pair, in the owner's order: Drive | Notes Tasks | Gallery Media News | Office. Same separator declaration as data-apps-sep-1.",
+                "id": "data-apps-sep-2",
+                "label": "|",
+                "separator": true
               },
               {
                 "_doc": "Gallery — the Data Apps tile for cloud-gallery (ac_cloud-gallery, applicationId com.diegonmarcos.mediacenter), our Google-Photos/Samsung-Gallery replacement (local gallery + PhotoPrism cloud library + backup). Registered in ui.external_apps[cloud-gallery]; this tile is what makes it VISIBLE in the launcher — an external_apps entry alone only makes an app installable/openable BY ID and shows nothing. The app was called cloud-media-center until 2026-10 and this tile's id was mediacenter; both were renamed to gallery so that the name cloud-media-center could go to the new Tauri media app (ac_cloud-media-center, com.diegonmarcos.cloudmediacenter). The applicationId did NOT change, because the app is installed on phones and a new package id would be a different app to Android. The former sibling 'photos' tile (app://com.google.android.apps.photos) was removed 2026-08-30 — Gallery is the sole photo entry point.",
@@ -2935,6 +2928,25 @@
                 "label": "Media",
                 "icon": "ic_music",
                 "target": "extapp:cloud-media-center"
+              },
+              {
+                "id": "news",
+                "label": "News",
+                "icon": "ic_rss",
+                "target": "extapp:cloud-news"
+              },
+              {
+                "_doc": "Divides the media group from Office, in the owner's order: Drive | Notes Tasks | Gallery Media News | Office. Same separator declaration as data-apps-sep-1.",
+                "id": "data-apps-sep-3",
+                "label": "|",
+                "separator": true
+              },
+              {
+                "_doc": "#380. This tile is the Data Apps entry for the application whose IDENTITY is cloud-office (ac_cloud-office, com.diegonmarcos.cloudoffice) and its label is \"Office\" — a caption for the tap target, not a name for the app. It printed the identity string \"cloud-office\" until #380; identity now lives only in `target`/ui.external_apps[cloud-office].id and the app's own build.json::name, and nothing about the package, the Cloud-Office.apk asset or the folder changed with this label. THE PREVIOUS _doc HERE WAS WRONG TWICE AND IS CORRECTED RATHER THAN KEPT. It said \"this tile label and ui.external_apps[cloud-office].label are the two names the fleet owns\": ui.external_apps carries NO label key on any of its 23 entries, and test-app-names-pattern.sh T3 forbids one outright (\"ui.external_apps shows the id and restates no name\") — so that sentence pointed a future editor at a second copy that does not exist and would have reddened the guard the moment they created it. It also said the rebrand waits on build.json::build.host \"and it is null\"; ac_cloud-office/build.json::build.host is ubuntu-latest and the source build has published Cloud-Office.apk. Android's own home screen is a SEPARATE surface from this tile and takes its label from the APK manifest, via --with-app-name = that app's build.json::name, which test-app-name-reaches-the-user.sh pins to the cloud-<x> pattern — deliberately NOT to this caption.",
+                "id": "sheets",
+                "label": "Office",
+                "icon": "ic_sheets",
+                "target": "extapp:cloud-office"
               }
             ]
           },
