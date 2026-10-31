@@ -79,9 +79,9 @@ internal class PermsPalette(
 
 internal object PermsType {
     val headline = 18.sp; val title = 16.sp; val body = 14.sp; val caption = 13.sp; val label = 12.sp
-    val gap = 4.dp; val pad = 8.dp; val inset = 16.dp; val tile = 40.dp; val icon = 22.dp; val corner = 16.dp; val rowMin = 72.dp
+    val gap = 4.dp; val pad = 8.dp; val inset = 16.dp; val tile = 36.dp; val icon = 20.dp; val corner = 16.dp; val rowMin = 56.dp
     /** Divider start: past the icon tile, so rows read as one list. */
-    val dividerStart = 72.dp
+    val dividerStart = 68.dp
 }
 
 @Composable
@@ -199,7 +199,7 @@ private fun SummaryCard(empty: Boolean, prog: PermsView.Progress, onGrantAll: ((
 private fun GroupBlock(g: PermsView.Group, all: List<PermItem>, onAction: (PermItem) -> Unit, p: PermsPalette, iconOf: (String) -> ImageVector?) {
     var open by rememberSaveable(g.title) { mutableStateOf(!g.collapsed) }
     val ctx = LocalContext.current
-    val head = Modifier.fillMaxWidth().padding(top = PermsType.inset + PermsType.pad, bottom = PermsType.gap).heightIn(min = 48.dp)
+    val head = Modifier.fillMaxWidth().padding(top = PermsType.pad, bottom = 0.dp).heightIn(min = 40.dp)
         .testTag(PermsTags.group(g.title)).then(if (g.title == PermsView.HELPERS) Modifier.testTag(PermsTags.HELPERS) else Modifier)
     Row(
         if (g.collapsed) head.clickable(onClickLabel = if (open) "Collapse" else "Expand", role = Role.Button) { open = !open }
@@ -261,7 +261,7 @@ private fun PermRowView(it: PermItem, onAction: (PermItem) -> Unit, p: PermsPale
     val ctx = LocalContext.current
     val chip = PermsView.chip(it.state)
     Row(
-        Modifier.fillMaxWidth().heightIn(min = PermsType.rowMin).padding(horizontal = PermsType.inset, vertical = PermsType.inset - PermsType.gap)
+        Modifier.fillMaxWidth().heightIn(min = PermsType.rowMin).padding(horizontal = PermsType.inset, vertical = PermsType.pad)
             .testTag(PermsTags.row(it.id)),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -275,16 +275,20 @@ private fun PermRowView(it: PermItem, onAction: (PermItem) -> Unit, p: PermsPale
             val line = PermsView.reasonLine(it)
             if (line.isNotBlank()) Text(line, color = p.dim, fontSize = PermsType.caption, maxLines = 1, overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.padding(top = 2.dp))
-            ChipView(chip, p, Modifier.padding(top = PermsType.pad - 2.dp).testTag(PermsTags.state(it.id)))
+            // dense: the chip sits under the title only when the row also carries its Grant / Open button
+            if (showsAction(it)) ChipView(chip, p, Modifier.padding(top = PermsType.gap).testTag(PermsTags.state(it.id)))
         }
         val a = it.action
-        if (a != null && (it.missing || it.state == PermState.UNKNOWN)) FilledTonalButton(
+        if (!showsAction(it)) ChipView(chip, p, Modifier.testTag(PermsTags.state(it.id)))
+        else if (a != null) FilledTonalButton(
             onClick = { onAction(it) },
             colors = ButtonDefaults.filledTonalButtonColors(containerColor = p.tile, contentColor = p.accent),
             modifier = Modifier.heightIn(min = 48.dp).semantics { contentDescription = "${a.word} ${it.title}" }.testTag(PermsTags.grant(it.id)),
         ) { Text(a.word, fontSize = PermsType.body, fontWeight = FontWeight.SemiBold) }
     }
 }
+
+private fun showsAction(it: PermItem) = it.action != null && (it.missing || it.state == PermState.UNKNOWN)
 
 @Composable
 internal fun ChipView(chip: PermChip, p: PermsPalette, modifier: Modifier = Modifier) = Pill(chip.word, p.tone(chip.tone), modifier)
