@@ -205,7 +205,7 @@ export const VaultShell = ({ api, decl }: { api: VaultApi; decl: VaultDecl }) =>
           {leftOpen && sidebar('left', decl.layout.left_panes, leftPane, setLeftPane, leftBody)}
           <div className="cnv-main">
             <div className="cnv-tabbar" role="tablist" data-testid="tabbar">
-              <button type="button" className="cnv-btn" title="Toggle left sidebar" onClick={() => setLeftOpen(v => !v)}><Icon name="panelLeft" /></button>
+              <button type="button" className="cnv-btn" title="Toggle left sidebar" aria-label="Toggle left sidebar" onClick={() => setLeftOpen(v => !v)}><Icon name="panelLeft" /></button>
               {api.tabs.map(t => (
                 <span key={t.path} style={{ display: 'inline-flex', alignItems: 'center' }}>
                   <button type="button" role="tab" className="cnv-tab" aria-selected={special === null && t.path === api.active} onClick={() => { setSpecial(null); api.setActive(t.path); }}>
@@ -219,7 +219,7 @@ export const VaultShell = ({ api, decl }: { api: VaultApi; decl: VaultDecl }) =>
               {tab && handler && handler.views.length > 1 && special === null && (
                 <button type="button" className="cnv-btn" onClick={toggleMode} title="Toggle edit and preview" data-testid="mode-toggle">{VIEW_LABEL[tab.view] ?? tab.view}</button>
               )}
-              <button type="button" className="cnv-btn" title="Toggle right sidebar" onClick={() => setRightOpen(v => !v)}><Icon name="panelRight" /></button>
+              <button type="button" className="cnv-btn" title="Toggle right sidebar" aria-label="Toggle right sidebar" onClick={() => setRightOpen(v => !v)}><Icon name="panelRight" /></button>
             </div>
             {content()}
           </div>

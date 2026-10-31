@@ -1,5 +1,7 @@
 package app.cloudnotes.pro
 
+import androidx.compose.ui.graphics.toArgb
+import app.cloudnotes.pro.theme.ObsidianTokens
 import com.diegonmarcos.cloudlib.web.CloudWeb
 import com.diegonmarcos.cloudlib.web.WebProfile
 import android.content.ComponentCallbacks2
@@ -34,7 +36,6 @@ import com.getcapacitor.WebViewListener
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.view.updateMargins
-import androidx.core.content.ContextCompat
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 
@@ -117,9 +118,9 @@ class MainActivity : BridgeActivity(), CloudNotesThemePlugin.Callback {
             }
             customSize = dp2px(52)
             setImageResource(R.drawable.ic_open_file)
-            backgroundTintList = android.content.res.ColorStateList.valueOf(
-                ContextCompat.getColor(context, R.color.cloud_notes_primary)
-            )
+            // #1369 Obsidian's --interactive-accent (generated ObsidianTokens), the same in light and dark
+            backgroundTintList = android.content.res.ColorStateList.valueOf(ObsidianTokens.Light.interactiveAccent.toArgb())
+            imageTintList = android.content.res.ColorStateList.valueOf(ObsidianTokens.Light.textOnAccent.toArgb())
             setOnClickListener {
                 bridge.webView.post {
                     bridge.webView.evaluateJavascript(

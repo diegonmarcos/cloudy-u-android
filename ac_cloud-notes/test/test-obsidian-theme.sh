@@ -113,6 +113,10 @@ def chk_T_native_tokens(p):
     return ('val backgroundPrimary = Color(0xFF1C1C1C)' in kt and 'val backgroundPrimary = Color(0xFFFFFFFF)' in kt
             and kt.count('val interactiveAccent = Color(0xFF8A5CF5)') == 2 and 'backgroundPrimary = ObsidianTokens.Dark.backgroundPrimary' in kt)
 
+def chk_T_fab_accent(p):
+    a = open(p['activity']).read()
+    return 'ObsidianTokens.Light.interactiveAccent.toArgb()' in a and 'R.color.cloud_notes_primary' not in a
+
 def chk_T_old_palette_gone(p):
     return 'object CloudNotesColorTokens' not in open(p['colors']).read()
 
@@ -175,6 +179,8 @@ CHECKS = [
       ('css', '--cloud-notes-v2-button-primary: var(--interactive-accent);', '--cloud-notes-v2-button-primary: #1e96eb;')]),
     ('T4 the Obsidian sheet loads after AFFiNE\'s', chk_T_sheet_loaded_last, [('index', "import './obsidian.gen.css';\n", '')]),
     ('T5 native tokens carry Obsidian colours', chk_T_native_tokens, [('kt', 'val interactiveAccent = Color(0xFF8A5CF5)', 'val interactiveAccent = Color(0xFF1E96FC)')]),
+    ('T7 the native create button wears the Obsidian accent', chk_T_fab_accent,
+     [('activity', 'ObsidianTokens.Light.interactiveAccent.toArgb()', 'ContextCompat.getColor(context, R.color.cloud_notes_primary)')]),
     ('T6 the old native palette is removed', chk_T_old_palette_gone, [('colors', 'val LocalCloudNotesColors', 'object CloudNotesColorTokens {}\nval LocalCloudNotesColors')]),
     ('A1 Cloud Notes declares its actions in the drawer', chk_A_declared, [('build', '"actions": "drawer"', '"actions": "strip"')]),
     ('A2 the bottom nav holds sections, no action', chk_A_bottom_has_no_action, [('build', '"bottom_nav": [', '"bottom_nav": ["new", ')]),
