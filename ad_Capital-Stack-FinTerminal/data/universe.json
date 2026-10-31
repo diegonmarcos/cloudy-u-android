@@ -520,6 +520,22 @@
     "method": "Reserve Bank of Australia F2 government bond yields (interpolated)"
    },
    {
+    "id": "rba_au_zc",
+    "source": "rba",
+    "format": "csv_wide",
+    "path": "/statistics/tables/csv/f17-yields.csv",
+    "params": {},
+    "header": "Series ID",
+    "date_fmt": "%d-%b-%Y",
+    "map": {
+     "FZCY25D": "curve:AU:3M",
+     "FZCY50D": "curve:AU:6M",
+     "FZCY100D": "curve:AU:1Y",
+     "FZCY700D": "curve:AU:7Y"
+    },
+    "method": "Reserve Bank of Australia F17 zero-coupon government yield curve (the tenors F2 lacks; F1.1 Treasury Notes ended 2011)"
+   },
+   {
     "id": "snb_ch",
     "source": "snb",
     "format": "csv_long",
@@ -570,6 +586,18 @@
      "SEGVB10YC": "curve:SE:10Y"
     },
     "method": "Sveriges Riksbank Swedish government bond benchmark yields (daily)"
+   },
+   {
+    "id": "riksbank_5y",
+    "source": "riksbank",
+    "format": "riksbank",
+    "path": "/swea/v1/Observations/Latest/ByGroup/99",
+    "params": {},
+    "map": {
+     "FRGVB5Y": "curve:FR:5Y",
+     "NLGVB5Y": "curve:NL:5Y"
+    },
+    "method": "Sveriges Riksbank international 5-year government bond benchmarks (daily; the FR and NL 5Y the ECB does not publish)"
    },
    {
     "id": "oecd_10y",
