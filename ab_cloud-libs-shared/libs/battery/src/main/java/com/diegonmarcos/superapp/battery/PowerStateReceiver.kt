@@ -9,7 +9,8 @@ import android.content.Intent
  * or unplugged, whether or not the SuperApp is running: it records one battery
  * SoT sample ([BatteryRepository.record]), so the plug/unplug boundary in the
  * history — where a discharge cycle ends and a charge session begins, and what
- * "since last charge" counts from — is the real moment, not the next tick.
+ * "since last charge" counts from — is the real moment, not the next tick. It is also the
+ * charge-cycle boundary: one [BatteryRepository.snapshotCycle] closes or opens the per-app cycle.
  *
  * ACTION_POWER_CONNECTED / ACTION_POWER_DISCONNECTED are exempt from the
  * Android 8+ implicit-broadcast manifest restriction, so they arrive with the
@@ -24,7 +25,11 @@ class PowerStateReceiver : BroadcastReceiver() {
                 val pending = goAsync()
                 val app = ctx.applicationContext
                 Thread {
-                    try { runCatching { BatteryRepository.record(app) } } finally { pending.finish() }
+                    try {
+                        runCatching { BatteryRepository.record(app) }
+                        // A charge-cycle boundary: snapshot per-app batterystats at the real moment.
+                        runCatching { BatteryRepository.snapshotCycle(app, intent.action == Intent.ACTION_POWER_CONNECTED) }
+                    } finally { pending.finish() }
                 }.start()
             }
         }

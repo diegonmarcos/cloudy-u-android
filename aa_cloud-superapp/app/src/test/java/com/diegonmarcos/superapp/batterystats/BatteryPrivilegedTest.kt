@@ -12,6 +12,12 @@ class BatteryPrivilegedTest {
         charge_full=4321000
         charge_full_design=4500000
         cycle_count=318
+        Current Battery Service state:
+          AC powered: false
+          USB powered: true
+          Wireless powered: false
+          status: 2
+          level: 64
         --batterystats--
           Estimated power use (mAh):
             Capacity: 4500, Computed drain: 1200, actual drain: 1100-1300
@@ -28,6 +34,17 @@ class BatteryPrivilegedTest {
         assertEquals(4500, f.designMah)
         assertEquals(318, f.cycles)
         assertEquals(4500, f.statsCapacityMah)
+    }
+
+    @Test fun `dumpsys battery gives level, status and plug`() {
+        val f = BatteryPrivileged.parse(out)!!
+        assertEquals(64, f.levelPct)
+        assertEquals(2, f.status)
+        assertEquals(true, f.plugged)
+        val off = BatteryPrivileged.parse("level: 30\n  AC powered: false\n  USB powered: false\n--batterystats--\n")!!
+        assertEquals(false, off.plugged)
+        assertEquals(30, off.levelPct)
+        assertNull(BatteryPrivileged.parse("cycle_count=1\n--batterystats--\n")!!.plugged)
     }
 
     @Test fun `per-app power is per uid, summed, heaviest first`() {

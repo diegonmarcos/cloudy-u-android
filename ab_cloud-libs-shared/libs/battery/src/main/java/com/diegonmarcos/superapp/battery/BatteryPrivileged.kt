@@ -2,9 +2,9 @@ package com.diegonmarcos.superapp.battery
 
 /**
  * What only the fleet's privileged shell channel can read, for the battery
- * stats page: the gauge's full / design capacity and cycle count from sysfs
- * (SELinux keeps an app out), and the per-app power since charge from
- * `dumpsys batterystats` (BatteryStatsManager is system-only). One shell
+ * stats page and the per-cycle tracker: the gauge's full / design capacity and cycle count from sysfs
+ * (SELinux keeps an app out), level / status / plug from `dumpsys battery`, and the per-app power since
+ * charge from `dumpsys batterystats --charged` (BatteryStatsManager is system-only). One shell
  * round trip, [COMMAND]; [parse] is pure. Without the channel every field
  * stays null and the page prints "—".
  */
@@ -12,10 +12,10 @@ object BatteryPrivileged {
 
     private const val SPLIT = "--batterystats--"
 
-    /** sysfs first (key=value lines), then the power-use block of batterystats. */
+    /** sysfs first (key=value lines), `dumpsys battery` ("key: value"), then the power-use block of batterystats. */
     const val COMMAND =
         "P=/sys/class/power_supply/battery; for f in charge_full charge_full_design cycle_count; do " +
-            "echo \"\$f=\$(cat \$P/\$f 2>/dev/null)\"; done; echo $SPLIT; " +
+            "echo \"\$f=\$(cat \$P/\$f 2>/dev/null)\"; done; dumpsys battery 2>/dev/null; echo $SPLIT; " +
             "dumpsys batterystats --charged 2>/dev/null | sed -n '/Estimated power use/,\$p' | head -200"
 
     data class App(val uid: Int, val mAh: Double)
@@ -24,6 +24,10 @@ object BatteryPrivileged {
         val fullMah: Int? = null,
         val designMah: Int? = null,
         val cycles: Int? = null,
+        /** `dumpsys battery`: level 0..100, BatteryManager status code, any of AC/USB/Wireless powered. */
+        val levelPct: Int? = null,
+        val status: Int? = null,
+        val plugged: Boolean? = null,
         /** batterystats' own "Capacity:" (the design capacity the framework uses). */
         val statsCapacityMah: Int? = null,
         /** Heaviest first; empty when the dump had no per-uid block. */
@@ -31,6 +35,9 @@ object BatteryPrivileged {
     )
 
     private val UID = Regex("""^\s*uid\s+(u(\d+)a(\d+)|\d+):\s*([\d.]+)""", RegexOption.IGNORE_CASE)
+    private val LEVEL = Regex("""(?m)^\s*level:\s*(\d+)""")
+    private val STATUS = Regex("""(?m)^\s*status:\s*(\d+)""")
+    private val POWERED = Regex("""(?m)^\s*(AC|USB|Wireless|Dock) powered:\s*(true|false)""")
     private val CAPACITY = Regex("""Capacity:\s*(\d+)""")
 
     fun parse(out: String?): Facts? {
@@ -52,6 +59,9 @@ object BatteryPrivileged {
         return Facts(
             fullMah = mah(kv["charge_full"]), designMah = mah(kv["charge_full_design"]),
             cycles = kv["cycle_count"]?.toIntOrNull()?.takeIf { it >= 0 },
+            levelPct = LEVEL.find(sys)?.groupValues?.get(1)?.toIntOrNull()?.takeIf { it in 0..100 },
+            status = STATUS.find(sys)?.groupValues?.get(1)?.toIntOrNull(),
+            plugged = POWERED.findAll(sys).toList().takeIf { it.isNotEmpty() }?.any { it.groupValues[2] == "true" },
             statsCapacityMah = CAPACITY.find(stats)?.groupValues?.get(1)?.toIntOrNull()?.takeIf { it in 300..30_000 },
             apps = apps,
         )

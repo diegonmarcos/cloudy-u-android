@@ -6,10 +6,10 @@
 // Tiered energy model:
 //   - Tier-1 (no root): BatteryManager / sysfs correlation — SysfsProc,
 //     BatterySessionStats, BatteryCapacity, PowerFlow, EnergyWatchdog.
-//   - Tier-2 (privileged): ShizukuEnergy reads `dumpsys batterystats`
-//     through the Shizuku user-service (IUserService / ShizukuUserService)
-//     that now lives in libs:shizuku-adb-debug-tools — hence the lib→lib
-//     dependency below (NOT lib→app).
+//   - Tier-2 (privileged): BatteryPrivileged reads `dumpsys battery` and
+//     `dumpsys batterystats` through the app's own privileged adb channel
+//     (ShellChannels in libs:shizuku-adb-debug-tools, never the Shizuku
+//     rung) — hence the lib→lib dependency below (NOT lib→app).
 //
 // UI dialogs (EnergyUsageDialog, BatteryEstimatePopup) live here too,
 // mirroring how libs:firewall keeps FirewallDialog in-lib.
@@ -48,8 +48,7 @@ dependencies {
     implementation 'androidx.compose.material3:material3'
     implementation project(':libs:core')
     api project(':libs:ui-kit')   // CloudKitTheme
-    // Tier-2 privileged read: ShizukuEnergy binds IUserService /
-    // ShizukuUserService, both consolidated into this lib.
+    // Tier-2 privileged read: ShellChannels (embedded adb / our app_process server) + AdbShellLink.
     implementation project(':libs:shizuku-adb-debug-tools')
     // BatterySessionWorker's 15-min tick also folds the current month into
     // the permanent data-usage ledger, so the monthly history survives
@@ -59,7 +58,4 @@ dependencies {
     implementation 'androidx.core:core-ktx:1.13.1'
     implementation 'androidx.fragment:fragment-ktx:1.8.5'   // EnergyUsageDialog / BatteryEstimatePopup
     implementation 'androidx.work:work-runtime-ktx:2.9.1'   // BatterySessionWorker
-    // rikka shizuku is implementation-scoped (non-transitive) in the
-    // shizuku lib, so declare it directly for ShizukuEnergy.
-    implementation 'dev.rikka.shizuku:api:13.1.5'
 }

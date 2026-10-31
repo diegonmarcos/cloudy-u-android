@@ -22,7 +22,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -44,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
 import androidx.fragment.app.DialogFragment
+import com.diegonmarcos.superapp.adbdebug.AdbShellLink
 import com.diegonmarcos.superapp.uikit.CloudKitTheme
 import com.diegonmarcos.superapp.uikit.KitPalette
 import com.diegonmarcos.superapp.uikit.LocalKitPalette
@@ -57,8 +57,8 @@ import com.diegonmarcos.superapp.uikit.LocalKitPalette
  *      Tier-1 watchdog ([EnergyWatchdog.attribution]).
  *   3. "By foreground app" — per-app average draw + energy share while
  *      that app was foreground (correlation, the no-privilege proxy for
- *      AccuBattery's per-app list; the Shizuku tier upgrades this to
- *      exact mAh).
+ *      AccuBattery's per-app list; the privileged adb channel upgrades this
+ *      to exact mAh from dumpsys batterystats).
  *   4. "Inside Cloud SuperApp" — our own subsystem ledger
  *      ([EnergyLedger]) so we can see + fix what WE cost.
  *
@@ -83,11 +83,11 @@ class EnergyUsageDialog : DialogFragment() {
     private var snapVersion by mutableIntStateOf(0)
     private var capturing by mutableStateOf(false)
 
-    /** The Shizuku per-app load, started by its button. */
+    /** The exact per-app load through the privileged adb channel, started by its button. */
     private sealed interface Exact {
         data object Idle : Exact
         data object Running : Exact
-        data class Done(val rows: List<ShizukuEnergy.AppEnergy>?) : Exact
+        data class Done(val rows: List<BatteryPrivileged.App>?) : Exact
     }
     private var exact by mutableStateOf<Exact>(Exact.Idle)
 
@@ -230,7 +230,7 @@ class EnergyUsageDialog : DialogFragment() {
             }
 
             // 3) By app — AccuBattery-style estimate (foreground time × avg
-            //    screen-on discharge mA). No Shizuku / privilege; just Usage
+            //    screen-on discharge mA). No privilege; just Usage
             //    Access. Same method AccuBattery uses for its per-app list.
             Card("By app  ·  estimate (foreground × draw)") {
                 if (!EnergyWatchdog.hasUsageAccess(ctx)) {
@@ -248,38 +248,29 @@ class EnergyUsageDialog : DialogFragment() {
                 }
             }
 
-            // 3b) Exact per-app mAh via Shizuku (ground truth, if available)
-            Card("Per-app exact  ·  Shizuku") {
-                Small(ShizukuEnergy.status())
-                when {
-                    !ShizukuEnergy.isAvailable() ->
-                        Small("Start Shizuku to unlock exact per-app mAh from dumpsys batterystats.")
-                    !ShizukuEnergy.isGranted() ->
-                        Pill("Grant Shizuku") { ShizukuEnergy.requestPermission() }
-                    else -> {
-                        // dumpsys batterystats can take seconds — run it OFF the
-                        // main thread on tap, then show rows. (Auto-running
-                        // it on every page open would risk an ANR + is wasteful.)
-                        LaunchedEffect(Unit) { ShizukuEnergy.bind(ctx) }
-                        Pill("Load per-app (dumpsys)") {
-                            exact = Exact.Running
-                            Thread {
-                                val rows = runCatching { ShizukuEnergy.exact(ctx) }.getOrNull()
-                                exact = Exact.Done(rows)
-                            }.start()
-                        }
-                        when (val x = exact) {
-                            Exact.Idle -> {}
-                            Exact.Running -> Small("Running dumpsys batterystats…")
-                            is Exact.Done -> when {
-                                x.rows == null ->
-                                    Small("Service not bound yet — tap again in a moment.")
-                                x.rows.isEmpty() ->
-                                    Small("No per-uid power section yet (needs discharge since last full charge).")
-                                else -> x.rows.take(15).forEach { e ->
-                                    AppRow(e.pkg, e.label, "%.1f mAh".format(e.mAh))
-                                }
-                            }
+            // 3b) Exact per-app mAh: dumpsys batterystats through the app's own privileged adb channel.
+            Card("Per-app exact  ·  ADB channel") {
+                val channel = remember(rev) { BatteryRepository.privilegedChannel(ctx) }
+                if (channel == null) {
+                    Small("Pair the ADB channel to read exact per-app mAh from dumpsys batterystats.")
+                    Pill("Pair ADB ›") { val host = requireActivity(); dismiss(); AdbShellLink.open(host) }
+                    return@Card
+                }
+                Small("Channel: $channel")
+                // dumpsys batterystats can take seconds: run it OFF the main thread on tap.
+                Pill("Load per-app (dumpsys)") {
+                    exact = Exact.Running
+                    Thread { exact = Exact.Done(runCatching { BatteryRepository.privileged(ctx)?.apps }.getOrNull()) }.start()
+                }
+                when (val x = exact) {
+                    Exact.Idle -> {}
+                    Exact.Running -> Small("Running dumpsys batterystats…")
+                    is Exact.Done -> when {
+                        x.rows == null -> Small("The channel did not answer — tap again in a moment.")
+                        x.rows.isEmpty() -> Small("No per-uid power section yet (needs discharge since last full charge).")
+                        else -> x.rows.take(15).forEach { a ->
+                            val (pkg, label) = BatteryRepository.appLabel(ctx, a.uid)
+                            AppRow(pkg, label, "%.1f mAh".format(a.mAh))
                         }
                     }
                 }

@@ -8,7 +8,9 @@ import android.database.sqlite.SQLiteOpenHelper
 import android.os.BatteryManager
 import android.os.Build
 import android.os.PowerManager
+import com.diegonmarcos.superapp.adbdebug.ShellChannel
 import com.diegonmarcos.superapp.adbdebug.ShellChannels
+import com.diegonmarcos.superapp.adbdebug.ShizukuShellChannel
 
 /**
  * The battery SoT's Android half: it READS the battery ([probe]), RECORDS the
@@ -200,15 +202,64 @@ object BatteryRepository {
     fun samples(ctx: Context, fromTs: Long = 0L): List<BatterySample> =
         synchronized(lock) { load(ctx).filter { it.ts >= fromTs } }
 
-    /** The privileged facts (sysfs capacity/cycles, per-app power) — blocking, call off the main thread. */
+    /**
+     * The app's own privileged shell: the embedded adb channel (paired on Configs › Network › ADB Shell) or our
+     * app_process server, never the third-party Shizuku rung of the ladder. Null = not paired; the surfaces then
+     * open the ADB Shell page (AdbShellLink.open), the one place that pairs.
+     */
+    private fun channel(ctx: Context): ShellChannel? =
+        runCatching { ShellChannels.active(ctx.applicationContext) }.getOrNull()?.takeUnless { it === ShizukuShellChannel }
+
+    /** The privileged facts (sysfs capacity/cycles, dumpsys battery, per-app power) — blocking, call off the main thread. */
     fun privileged(ctx: Context): BatteryPrivileged.Facts? {
-        val ch = runCatching { ShellChannels.active(ctx.applicationContext) }.getOrNull() ?: return null
+        val ch = channel(ctx) ?: return null
         return BatteryPrivileged.parse(runCatching { ch.exec(ctx.applicationContext, BatteryPrivileged.COMMAND) }.getOrNull())
     }
 
-    /** "Channel name" when a privileged shell is up, else null. */
-    fun privilegedChannel(ctx: Context): String? =
-        runCatching { ShellChannels.active(ctx.applicationContext)?.name() }.getOrNull()
+    /** "Channel name" when the privileged shell is up, else null. */
+    fun privilegedChannel(ctx: Context): String? = channel(ctx)?.name()
+
+    /** (package, label) of a uid; "uid N" when no package owns it. */
+    fun appLabel(ctx: Context, uid: Int): Pair<String, String> {
+        val pm = ctx.packageManager
+        val pkg = runCatching { pm.getPackagesForUid(uid)?.firstOrNull() }.getOrNull() ?: return "uid:$uid" to "uid $uid"
+        return pkg to runCatching { pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString() }.getOrDefault(pkg)
+    }
+
+    // ── charge cycles (BatteryCycles) ────────────────────────────────────
+
+    /**
+     * One cycle snapshot: level / plug / per-uid mAh through the privileged channel (level and plug fall back
+     * to the sticky broadcast when it is down), folded into the open cycle; a closed cycle is stored. Called by
+     * PowerStateReceiver at every plug edge (its action is [pluggedHint]) and by BatterySessionWorker's 15-min
+     * tick. Blocking.
+     */
+    fun snapshotCycle(ctx: Context, pluggedHint: Boolean? = null, now: Long = System.currentTimeMillis()) {
+        val f = privileged(ctx)
+        val r = if (f?.levelPct == null) probe(ctx, now = now) else null
+        val level = f?.levelPct ?: r?.levelPct?.takeIf { it >= 0 } ?: return
+        val plugged = pluggedHint ?: f?.plugged ?: ((r?.plugged ?: 0) != 0)
+        val snap = BatteryCycles.Snap(now, level, plugged, f?.apps?.associate { it.uid to it.mAh })
+        synchronized(lock) {
+            val d = db(ctx)
+            val state = BatteryCycles.State(d.openCycle(), d.meta(K_CYCLE_LAST)?.let(::decodeSnap))
+            val (next, closed) = BatteryCycles.step(state, snap)
+            closed?.let { d.putCycle(it) }
+            next.open?.let { d.putCycle(it) }
+            next.last?.let { d.putMeta(K_CYCLE_LAST, encodeSnap(it)) }
+            d.pruneCycles(now - CYCLE_RETENTION_MS)
+        }
+    }
+
+    /** Every recorded cycle, newest first (the open one included). */
+    fun cycles(ctx: Context): List<BatteryCycles.Cycle> = synchronized(lock) { runCatching { db(ctx).cycles() }.getOrDefault(emptyList()) }
+
+    private fun encodeSnap(s: BatteryCycles.Snap) = "${s.ts}|${s.levelPct}|${if (s.plugged) 1 else 0}|${BatteryCycles.encode(s.apps) ?: "-"}"
+    private fun decodeSnap(v: String): BatteryCycles.Snap? {
+        val f = v.split('|'); if (f.size != 4) return null
+        return BatteryCycles.Snap(f[0].toLongOrNull() ?: return null, f[1].toIntOrNull() ?: return null, f[2] == "1",
+            if (f[3] == "-") null else BatteryCycles.decode(f[3]))
+    }
 
     // ── storage ──────────────────────────────────────────────────────────
 
@@ -231,14 +282,20 @@ object BatteryRepository {
     private const val K_SCALE = "current_scale"
     private const val K_CUMULATIVE = "cumulative_charged_uah"
     private const val K_PEAK = "peak_full_uah"
+    private const val K_CYCLE_LAST = "cycle_last_snap"
+    /** Cycles are kept 13 months, so the month view always holds a full year. */
+    private const val CYCLE_RETENTION_MS = 400L * 24 * 3_600_000L
+    private const val CYCLE_TABLE = "CREATE TABLE IF NOT EXISTS cycle (start_ts INTEGER PRIMARY KEY, end_ts INTEGER, " +
+        "start_pct INTEGER, end_pct INTEGER, apps TEXT)"
 
-    private class Db(ctx: Context) : SQLiteOpenHelper(ctx, NAME, null, 2) {
+    private class Db(ctx: Context) : SQLiteOpenHelper(ctx, NAME, null, 3) {
         private val app = ctx
 
         override fun onCreate(db: SQLiteDatabase) {
             db.execSQL("CREATE TABLE sample (ts INTEGER PRIMARY KEY, level INTEGER, status INTEGER, plugged INTEGER, " +
                 "ma INTEGER, mv INTEGER, temp_dc INTEGER, counter INTEGER, screen INTEGER)")
             db.execSQL("CREATE TABLE meta (k TEXT PRIMARY KEY, v TEXT)")
+            db.execSQL(CYCLE_TABLE)
             runCatching { LegacyImport.sessions(app) { s -> write(db, s) } }
             runCatching { LegacyImport.counters(app) { k, v -> putMeta(db, k, v) } }
         }
@@ -246,9 +303,10 @@ object BatteryRepository {
         /** v1 → v2: the counted-cycle counters moved into the SoT; the samples are kept. */
         override fun onUpgrade(db: SQLiteDatabase, old: Int, new: Int) {
             if (old < 2) runCatching { LegacyImport.counters(app) { k, v -> putMeta(db, k, v) } }
+            if (old < 3) db.execSQL(CYCLE_TABLE)
         }
 
-        fun wipe() { writableDatabase.execSQL("DELETE FROM sample"); writableDatabase.execSQL("DELETE FROM meta") }
+        fun wipe() { for (t in listOf("sample", "meta", "cycle")) writableDatabase.execSQL("DELETE FROM $t") }
 
         private fun putMeta(db: SQLiteDatabase, k: String, v: String) =
             db.execSQL("INSERT OR REPLACE INTO meta VALUES (?, ?)", arrayOf<Any?>(k, v))
@@ -282,6 +340,24 @@ object BatteryRepository {
 
         fun putMeta(k: String, v: String) =
             writableDatabase.execSQL("INSERT OR REPLACE INTO meta VALUES (?, ?)", arrayOf<Any?>(k, v))
+
+        fun putCycle(c: BatteryCycles.Cycle) = writableDatabase.execSQL("INSERT OR REPLACE INTO cycle VALUES (?,?,?,?,?)",
+            arrayOf<Any?>(c.startTs, c.endTs, c.startPct, c.endPct, BatteryCycles.encode(c.apps)))
+
+        fun pruneCycles(before: Long) = writableDatabase.execSQL("DELETE FROM cycle WHERE start_ts < ?", arrayOf<Any?>(before))
+
+        fun openCycle(): BatteryCycles.Cycle? = query("WHERE end_ts IS NULL ORDER BY start_ts DESC LIMIT 1").firstOrNull()
+
+        fun cycles(): List<BatteryCycles.Cycle> = query("ORDER BY start_ts DESC")
+
+        private fun query(tail: String): List<BatteryCycles.Cycle> {
+            val out = ArrayList<BatteryCycles.Cycle>()
+            readableDatabase.rawQuery("SELECT start_ts, end_ts, start_pct, end_pct, apps FROM cycle $tail", null).use { c ->
+                while (c.moveToNext()) out += BatteryCycles.Cycle(c.getLong(0), if (c.isNull(1)) null else c.getLong(1),
+                    c.getInt(2), c.getInt(3), BatteryCycles.decode(c.getString(4)).orEmpty())
+            }
+            return out
+        }
 
         companion object { const val NAME = "battery_sot.db" }
     }

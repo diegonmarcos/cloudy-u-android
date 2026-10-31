@@ -28,7 +28,7 @@ import android.os.Process
  *     foundation for a PRECISE save-energy mode that disables only
  *     what actually dominates, not a blanket list.
  *
- * Shizuku (Tier 2, separate module) layers ground-truth per-app mAh
+ * The privileged adb channel (Tier 2, BatteryPrivileged) layers ground-truth per-app mAh
  * on top by running `dumpsys batterystats` as shell uid; this Tier 1
  * model works with zero privilege and calibrates against it.
  */
@@ -270,7 +270,7 @@ object EnergyWatchdog {
 
     /**
      * AccuBattery-style per-app energy ESTIMATE — no privilege, no
-     * Shizuku. Exactly how AccuBattery builds its list:
+     * privileged channel. Exactly how AccuBattery builds its list:
      *   per-app mAh ≈ app foreground-time × avg screen-on discharge mA
      *
      * Foreground time per app comes from [UsageStatsManager] over the

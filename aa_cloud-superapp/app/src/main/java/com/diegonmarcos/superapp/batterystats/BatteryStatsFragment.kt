@@ -156,13 +156,7 @@ class BatteryStatsFragment : KitComposeFragment() {
     private fun readPrivileged(ctx: Context): Privileged {
         val channel = BatteryRepository.privilegedChannel(ctx) ?: return Privileged(null, null, emptyList())
         val facts = runCatching { BatteryRepository.privileged(ctx) }.getOrNull()
-        val pm = ctx.packageManager
-        val apps = facts?.apps.orEmpty().take(MAX_APPS).map { a ->
-            val pkg = runCatching { pm.getPackagesForUid(a.uid)?.firstOrNull() }.getOrNull()
-            val label = pkg?.let { runCatching { pm.getApplicationLabel(pm.getApplicationInfo(it, 0)).toString() }.getOrDefault(it) }
-                ?: "uid ${a.uid}"
-            label to a.mAh
-        }
+        val apps = facts?.apps.orEmpty().take(MAX_APPS).map { a -> BatteryRepository.appLabel(ctx, a.uid).second to a.mAh }
         return Privileged(facts, channel, apps)
     }
 

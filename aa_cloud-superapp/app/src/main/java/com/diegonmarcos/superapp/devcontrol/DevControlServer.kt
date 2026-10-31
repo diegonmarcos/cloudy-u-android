@@ -15,7 +15,6 @@ import com.diegonmarcos.superapp.apps.PhoneSmartFolders
 import com.diegonmarcos.superapp.apps.PhoneFolders
 import com.diegonmarcos.superapp.apps.PhoneAppClassifier
 import com.diegonmarcos.superapp.battery.SysfsProc
-import com.diegonmarcos.superapp.battery.ShizukuEnergy
 import com.diegonmarcos.superapp.battery.PowerStateReceiver
 import com.diegonmarcos.superapp.battery.EnergyWatchdog
 import com.diegonmarcos.superapp.battery.EnergyLedger
@@ -373,7 +372,7 @@ object DevControlServer {
                 "energy/self" -> { reply(writer, "200 OK", energySelfJson(), "application/json") }
                 "energy/attribution" -> { reply(writer, "200 OK", energyAttributionJson(ctx), "application/json") }
                 "energy/samples" -> { reply(writer, "200 OK", energySamplesJson(ctx), "application/json") }
-                "energy/shizuku" -> { reply(writer, "200 OK", energyShizukuJson(ctx), "application/json") }
+                "energy/exact" -> { reply(writer, "200 OK", energyExactJson(ctx), "application/json") }
                 "energy/reset" -> {
                     com.diegonmarcos.superapp.battery.EnergyLedger.reset()
                     runCatching { com.diegonmarcos.superapp.battery.EnergyStore(ctx).clear() }
@@ -566,7 +565,7 @@ object DevControlServer {
             Spec("energy/attribution",  "GET",  true,  "Device-level Tier-1 watchdog attribution over stored samples: idle baseline mA, marginal mA per state (screen-on / audio / weak-cellular / high-cpu / bright-screen), per-foreground-app avg draw + energy proxy, and our own self cpu/net cost over the window.", ""),
             Spec("energy/samples",      "GET",  true,  "Raw recent energy-watchdog samples (last 200): per-sample whole-device draw_ma + state vector (screen, brightness, foreground pkg, cpu load, signal, wifi, audio).", ""),
             Spec("energy/reset",        "GET",  true,  "Clear the intra-app ledger + the watchdog sample store to start a fresh measurement window.", ""),
-            Spec("energy/shizuku",      "GET",  true,  "EXACT per-app mAh via Shizuku (Tier 2) — runs `dumpsys batterystats --charged` in shell context (uid 2000) through the bound ShizukuUserService and parses the per-uid 'Estimated power use (mAh)' section. Returns available/granted/status + the per-app list, or apps=null while binding / when Shizuku isn't running. Ground truth the Tier-1 correlation calibrates against.", ""),
+            Spec("energy/exact",        "GET",  true,  "EXACT per-app mAh (Tier 2): `dumpsys batterystats --charged` in shell context (uid 2000) through the app's own privileged adb channel (embedded adb / app_process server, never Shizuku), per uid. channel=null when it is not paired (pair on Configs > Network > ADB Shell).", ""),
             Spec("fleet/apps",          "GET",  true,  "#ipc THE MESH GATEWAY: this server is the phone's one fleet door. Lists every fleet app installed behind it (id, pkg, label, IPC door). Each app's own routes are /app/<id|pkg>/api/<op> on this port (GET, or POST with a body), forwarded to that app over the fleet IPC layer (signature-guarded, waking it); its /app/<pkg>/api/docs is its catalog. Bearer token on every gateway route.", ""),
             Spec("adb/status",          "GET",  true,  "libs:shizuku-adb-debug-tools shell-channel ladder: per-channel ready/status for 'embedded-adb' (PRIMARY — our on-device adb client paired to localhost Wireless Debugging, the self-contained 'we ARE Shizuku' path), 'local-server' (our app_process server), and 'shizuku' (fallback); which is active, whether DUMP is held, and the data-driven bundle ids.", ""),
             Spec("adb/pair",            "GET",  true,  "Embedded adb client, the Shizuku way: starts AdbPairingService, which discovers the pairing port over mDNS (_adb-tls-pairing._tcp — never typed), posts the 'Enter pairing code' notification, pairs in a foreground service, then discovers _adb-tls-connect._tcp, connects and starts the privileged plane. code= optional (6 digits from 'Pair device with pairing code'); omitted, type it into the notification.", "code=<6digits>"),
@@ -632,25 +631,23 @@ object DevControlServer {
         return sb.toString()
     }
 
-    /** Shizuku exact per-app mAh from dumpsys batterystats (Tier 2). */
-    private fun energyShizukuJson(ctx: Context): String {
-        val se = com.diegonmarcos.superapp.battery.ShizukuEnergy
+    /** Exact per-app mAh from dumpsys batterystats through the privileged adb channel (Tier 2). */
+    private fun energyExactJson(ctx: Context): String {
+        val repo = com.diegonmarcos.superapp.battery.BatteryRepository
+        val channel = repo.privilegedChannel(ctx)
         val sb = StringBuilder("{")
-        sb.append(""""available":""").append(se.isAvailable()).append(',')
-        sb.append(""""granted":""").append(se.isGranted()).append(',')
-        sb.append(""""status":"""").append(jsonEscape(se.status())).append('"').append(',')
-        val exact = runCatching { se.exact(ctx) }.getOrNull()
+        sb.append(""""channel":""").append(channel?.let { "\"" + jsonEscape(it) + "\"" } ?: "null").append(',')
+        val apps = if (channel == null) null else runCatching { repo.privileged(ctx)?.apps }.getOrNull()
         sb.append(""""apps":""")
-        if (exact == null) sb.append("null")
-        else {
+        if (apps == null) sb.append("null") else {
             sb.append('[')
-            var first = true
-            for (a in exact) {
-                if (!first) sb.append(','); first = false
-                sb.append("""{"pkg":"""").append(jsonEscape(a.pkg)).append('"').append(',')
-                sb.append(""""label":"""").append(jsonEscape(a.label)).append('"').append(',')
+            apps.forEachIndexed { i, a ->
+                if (i > 0) sb.append(',')
+                val (pkg, label) = repo.appLabel(ctx, a.uid)
+                sb.append("""{"pkg":"""").append(jsonEscape(pkg)).append('"').append(',')
+                sb.append(""""label":"""").append(jsonEscape(label)).append('"').append(',')
                 sb.append(""""uid":""").append(a.uid).append(',')
-                sb.append(""""mah":""").append("%.2f".format(a.mAh)).append('}')
+                sb.append(""""mah":""").append("%.2f".format(java.util.Locale.US, a.mAh)).append('}')
             }
             sb.append(']')
         }

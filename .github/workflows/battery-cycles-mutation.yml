@@ -1,0 +1,99 @@
+# Battery per-cycle / per-month tracker mutation proof: the charge-cycle boundaries, the reset-aware batterystats diff,
+# the monthly aggregation (libs:battery BatteryCycles) and the `dumpsys battery` plug parse (BatteryPrivileged) are
+# pinned by BatteryCyclesTest and BatteryPrivilegedTest (aa_cloud-superapp/app/src/test/.../batterystats). This job runs
+# those two suites once on the real tree (GREEN expected), then once per planted mutant (RED expected, one break each).
+# It fails if the real tree is red or any mutant stays green. Manual only.
+name: battery-cycles-mutation
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: "all | one of the mutant names below"
+        required: false
+        default: "all"
+permissions:
+  contents: read
+jobs:
+  mutate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: "platforms;android-36 platforms;android-35 platforms;android-34 platforms;android-26 build-tools;36.0.0 build-tools;35.0.0 build-tools;34.0.0 platform-tools cmake;3.22.1 ndk;28.0.13004108 ndk;26.1.10909125"
+      - name: Set up Gradle 8.14 (cached)
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: "8.14"
+      - name: Gradle cache hygiene (retry failed resolution, never cache a failed lookup)
+        uses: ./.github/actions/gradle-cache-hygiene
+      - name: Cache firestack Go modules + checksum-db tiles
+        uses: actions/cache@v4
+        with:
+          path: ab_cloud-libs-shared/.cache/gomodcache
+          key: firestack-gomodcache-${{ runner.os }}-${{ hashFiles('ab_cloud-libs-shared/libs/firewall/firestack/go.sum') }}
+          restore-keys: firestack-gomodcache-${{ runner.os }}-
+      - name: Checkout vault (shared Android signing key, read by app/build.gradle at configuration)
+        uses: actions/checkout@v4
+        with:
+          repository: diegonmarcos/cloud-me-pvt-vault
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
+          path: .vault
+      - name: Install sops (pinned)
+        uses: ./.github/actions/install-pinned-tools
+        with:
+          tools: sops
+      - name: Real tree GREEN, every mutant RED
+        env:
+          BYPASS_NIX: "1"
+          VAULT_DIR: ${{ github.workspace }}/.vault
+          SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ONLY: ${{ inputs.name }}
+        run: |
+          set -u
+          D=ab_cloud-libs-shared/libs/battery/src/main/java/com/diegonmarcos/superapp/battery
+          C=$D/BatteryCycles.kt
+          P=$D/BatteryPrivileged.kt
+          # Only the battery suites run (the package under proof): an unrelated test must not decide whether a mutant is caught.
+          suite() { ( cd aa_cloud-superapp && UNIT_TEST_FILTER="com.diegonmarcos.superapp.batterystats.*" bash ./build.sh test ) > /tmp/suite.log 2>&1; }
+          sub() { python3 -c 'import sys; p, a, b = sys.argv[1:]; s = open(p).read(); assert a in s, "anchor missing: " + a; open(p, "w").write(s.replace(a, b, 1))' "$1" "$2" "$3"; }
+          suite || { tail -80 /tmp/suite.log; echo "::error::the real tree is RED"; exit 1; }
+          grep -q "BatteryCyclesTest" -r aa_cloud-superapp/app/build/test-results 2>/dev/null || { echo "::error::BatteryCyclesTest did not run"; exit 1; }
+          echo "real tree: GREEN"
+          stayed=0
+          while IFS='@' read -r name f a b; do
+            [ -z "$name" ] && continue
+            [ "$ONLY" != "all" ] && [ "$ONLY" != "$name" ] && continue
+            V=$C; [ "$f" = P ] && V=$P
+            git checkout -- "$C" "$P"
+            sub "$V" "$a" "$b" || { echo "::error::$name: mutation anchor missing"; stayed=$((stayed + 1)); continue; }
+            if suite; then echo "::error::mutant stayed GREEN: $name"; stayed=$((stayed + 1)); else echo "RED (caught): $name"; fi
+          done <<'MUTANTS'
+          close-while-charging@C@open && now.plugged && prev?.plugged == false@open && now.plugged
+          no-full-charge-start@C@!now.plugged || now.levelPct >= FULL_PCT@!now.plugged
+          full-threshold@C@now.levelPct >= FULL_PCT) -> Edge.OPEN@now.levelPct >= FULL_PCT - 1) -> Edge.OPEN
+          no-reset@C@val reset = prev.any { (uid, v) -> (cur[uid] ?: 0.0) + EPS < v }@val reset = false
+          reset-diffs-anyway@C@if (reset) v else v - (prev[uid] ?: 0.0)@v - (prev[uid] ?: 0.0)
+          drop-baseline@C@now.apps ?: prev?.apps@now.apps
+          charge-span-counted@C@Cycle(now.ts, null, now.levelPct, now.levelPct, emptyMap())@Cycle(now.ts, null, now.levelPct, now.levelPct, delta(prev?.apps, now.apps))
+          close-no-end@C@acc!!.copy(endTs = now.ts)@acc!!
+          end-pct-stale@C@it.copy(endPct = now.levelPct, apps@it.copy(apps
+          month-by-end@C@monthKey(it.startTs, zone)@monthKey(it.endTs ?: it.startTs, zone)
+          month-oldest-first@C@.sortedByDescending { it.key }@.sortedBy { it.key }
+          month-pct-max@C@l.sumOf { it.usedPct }@l.maxOf { it.usedPct }
+          used-negative@C@(startPct - endPct).coerceAtLeast(0)@(startPct - endPct)
+          shares-lightest-first@C@.sortedByDescending { it.mAh }@.sortedBy { it.mAh }
+          month-zero-based@C@c.get(Calendar.MONTH) + 1@c.get(Calendar.MONTH)
+          plug-all-sources@P@?.any { it.groupValues[2] == "true" }@?.all { it.groupValues[2] == "true" }
+          MUTANTS
+          git checkout -- "$C" "$P"
+          [ "$stayed" -eq 0 ] || { echo "::error::$stayed mutant(s) stayed green"; exit 1; }
+          echo "every mutant RED"

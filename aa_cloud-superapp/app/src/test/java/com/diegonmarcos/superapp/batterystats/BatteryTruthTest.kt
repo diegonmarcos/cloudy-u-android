@@ -190,6 +190,12 @@ class BatteryTruthTest {
         assertTrue(popup.contains("BatteryRepository.report(") && popup.contains("BatteryRows.popup("))
         for (gone in listOf("BatterySessionStats", "PowerFlow", "BatteryCapacity"))
             assertFalse("the popup still reads $gone", popup.contains(gone))
+        assertFalse("battery measurement no longer asks for Shizuku", File(lib, "ShizukuEnergy.kt").exists())
+        for (f in lib.listFiles().orEmpty().filter { it.extension == "kt" })
+            assertFalse("${f.name} prompts for Shizuku", Regex("""\bShizuku(Energy|UserService|\.)""").containsMatchIn(code(f)))
+        assertTrue("the battery reads skip the Shizuku rung",
+            code(File(lib, "BatteryRepository.kt")).contains("takeUnless { it === ShizukuShellChannel }"))
+        assertTrue("unpaired opens the ADB Shell page", code(File(lib, "EnergyUsageDialog.kt")).contains("AdbShellLink.open("))
         val page = code(File(app, "batterystats/BatteryStatsFragment.kt"))
         assertTrue(page.contains("BatteryRepository.report(") && page.contains("BatteryRows.now(") && page.contains("BatteryRows.since("))
     }

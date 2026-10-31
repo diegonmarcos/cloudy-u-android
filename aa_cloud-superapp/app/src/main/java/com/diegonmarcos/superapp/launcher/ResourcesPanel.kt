@@ -36,6 +36,7 @@ internal fun ResourcesBody(resource: String) {
     Column(Modifier.fillMaxWidth().testTag(ResourcesTags.section(resource))) {
         if (rows.isEmpty()) AggCaption("Reading…")
         for (r in rows) KitListRow(r.label, secondary = r.value, tag = ResourcesTags.row(resource, r.label))
+        if (resource == "battery") BatteryUsageBody()
     }
 }
 

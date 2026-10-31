@@ -27,6 +27,9 @@ class BatterySessionWorker(
         EnergyLedger.wake("bg.battery_worker")
         // The battery SoT's low-frequency tick: one history sample even when nothing else runs.
         runCatching { BatteryRepository.record(applicationContext) }
+        // The per-app charge-cycle tracker: one batterystats snapshot per tick keeps the open cycle's diff
+        // current across batterystats' full-charge reset and reboots (BatteryCycles).
+        runCatching { BatteryRepository.snapshotCycle(applicationContext) }
         // Piggyback the energy watchdog on the same 15-min wakeup — one
         // coarse background sample per tick (cheap; the screen-on
         // foreground sampler adds the fine resolution).
