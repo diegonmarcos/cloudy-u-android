@@ -61,4 +61,15 @@ class FinFormatTest {
         assertTrue(FinFormat.isStale(0, 61_000, "coinbase"))
         assertFalse(FinFormat.isStale(0, 61_000, "fred"))
     }
+
+    @Test fun aContainerOnlyPanelOffTheMeshSaysMeshOffNotItsPublicSource() {
+        val off = FinFormat.failureReason(java.io.IOException("mesh off: the EM USD bond table is served by the FinTerm container only"))
+        assertEquals("mesh off", off)
+        assertEquals("no answer", FinFormat.failureReason(java.io.IOException("HTTP 500")))
+        assertEquals("timeout", FinFormat.failureReason(java.net.SocketTimeoutException("t")))
+        val text = FinFormat.failureText("US Treasury", off)
+        assertTrue(text.startsWith("Mesh off"))
+        assertFalse(text.contains("US Treasury"))
+        assertEquals("US Treasury did not answer (no answer)", FinFormat.failureText("US Treasury", "no answer"))
+    }
 }

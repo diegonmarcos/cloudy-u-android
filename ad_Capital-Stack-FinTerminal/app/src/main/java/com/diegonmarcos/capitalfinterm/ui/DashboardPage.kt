@@ -341,7 +341,7 @@ private suspend fun loadPanel(dash: Dashboard, panel: Panel, all: List<Source>, 
     val prev = FinStore.entries[key]
     FinStore.entries[key] = got.fold(
         { FinStore.Entry(it, System.currentTimeMillis(), 0, "", source.id) },
-        { e -> FinStore.Entry(prev?.data, prev?.fetchedAt ?: 0L, (prev?.failures ?: 0) + 1, if (e is java.net.SocketTimeoutException) "timeout" else "no answer", source.id) },
+        { e -> FinStore.Entry(prev?.data, prev?.fetchedAt ?: 0L, (prev?.failures ?: 0) + 1, FinFormat.failureReason(e), source.id) },
     )
     return got.isSuccess
 }
@@ -515,7 +515,7 @@ private fun PanelBody(
         header(hover, ranges, range) { r -> range = r; FinPrefs.setRange(ctx, prefKey, r) }
         when (state) {
             FinState.Loading -> FinChartSkeleton(h)
-            is FinState.Failed -> FinErrorBody("${state.source} did not answer (${state.reason})", h, onRetry)
+            is FinState.Failed -> FinErrorBody(FinFormat.failureText(state.source, state.reason), h, onRetry)
             is FinState.Empty -> Box(Modifier.fillMaxWidth().height(h), contentAlignment = Alignment.Center) { FinEmptyBody(state.reason) }
             is FinState.Ok -> {
                 val visible = if (ranges.isEmpty()) state.data.chart else FinLogic.range(state.data.chart, if (range in ranges) range else ranges.last())
@@ -537,7 +537,7 @@ private fun PanelBody(
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) { repeat(4) { FinSkeleton(null, 20.dp) } }
             } else FinTableSkeleton()
         }
-        is FinState.Failed -> FinErrorBody("${state.source} did not answer (${state.reason})", if (display == "kpi") FinDim.kpi * 2 else 120.dp, onRetry)
+        is FinState.Failed -> FinErrorBody(FinFormat.failureText(state.source, state.reason), if (display == "kpi") FinDim.kpi * 2 else 120.dp, onRetry)
         is FinState.Empty -> Box(Modifier.padding(horizontal = if (display == "rows" || display == "calendar") FinDim.cardPad else 0.dp)) { FinEmptyBody(state.reason) }
         is FinState.Ok -> {
             val data = state.data

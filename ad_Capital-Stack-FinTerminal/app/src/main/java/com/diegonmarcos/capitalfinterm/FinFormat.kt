@@ -80,4 +80,15 @@ object FinFormat {
     }
 
     fun isStale(fetchedAt: Long, now: Long, sourceId: String): Boolean = now - fetchedAt > policy(sourceId).staleMs
+
+    const val MESH_OFF = "mesh off"
+    /** Why a load failed, for the error body: a timeout, the mesh being off (a container-only panel), else no answer. */
+    fun failureReason(e: Throwable): String = when {
+        e is java.net.SocketTimeoutException -> "timeout"
+        e.message.orEmpty().startsWith(MESH_OFF) -> MESH_OFF
+        else -> "no answer"
+    }
+    /** The error body: a container-only panel off the mesh names the mesh, never its declared public source. */
+    fun failureText(source: String, reason: String): String =
+        if (reason == MESH_OFF) "Mesh off: served by the FinTerm container on the private mesh only" else "$source did not answer ($reason)"
 }
