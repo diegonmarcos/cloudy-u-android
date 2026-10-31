@@ -263,7 +263,7 @@ export function createViewer(container, cfgIn = {}) {
     return buf.byteLength;
   }
 
-  // #1373 at most cfg.fps frames a second (30 by default) and none while the page is hidden: the scene animates at 30 just as
+  // #1373 at most cfg.fps frames a second (30 by default): the scene animates at 30 just as
   // well, and the other half of the GPU stays with the app's own UI.
   let frameMs = 1000 / (cfg.fps || 30);
   let lastDraw = 0;
@@ -283,7 +283,9 @@ export function createViewer(container, cfgIn = {}) {
   } catch (e) { /* no renderer string: the frame timer decides */ }
   function tick() {
     const now = performance.now();
-    if (document.hidden || now - lastDraw < frameMs - 2) return;
+    // no document.hidden test: an Android WebView can report its page hidden while it is on screen, and the loop then
+    // never drew (only the PNG export did); Chromium already stops requestAnimationFrame for a page that is really hidden
+    if (now - lastDraw < frameMs - 2) return;
     lastDraw = now;
     const dt = Math.min((now - last) / 1000, 0.1); last = now;
     state.mixer && state.mixer.update(dt);
@@ -308,7 +310,7 @@ export async function boot(config) {
   const el = document.getElementById('cgc') || document.body;
   const v = createViewer(el, config || {});
   window.cgc = v;
-  const sz = () => { const c = v.three.renderer.domElement; return { css: [el.clientWidth, el.clientHeight], canvas: [c.width, c.height], dpr: window.devicePixelRatio }; };
+  const sz = () => { const c = v.three.renderer.domElement; return { css: [el.clientWidth, el.clientHeight], canvas: [c.width, c.height], dpr: window.devicePixelRatio, hidden: document.hidden, visibility: document.visibilityState }; };
   emit('ready', sz());
   if (config && config.model && config.model.url) {
     // the empty stage is presented first; the GLB is decoded and uploaded after that frame, never inside the page's first one
