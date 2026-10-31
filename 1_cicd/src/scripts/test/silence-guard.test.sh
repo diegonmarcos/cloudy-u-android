@@ -120,7 +120,7 @@ elif kind == "reuse_message":
     # Two exits collapsed onto one sentence: the owner can no longer tell an
     # empty reply from a reply that changed nothing.
     assert "R.string.enhance_empty_reply" in text
-    text = text.replace("R.string.enhance_empty_reply, AiRouter.provider(context).label",
+    text = text.replace("R.string.enhance_empty_reply, route.provider.label",
                         "R.string.enhance_unchanged", 1)
 
 elif kind == "new_quiet_reason":
@@ -132,15 +132,15 @@ elif kind == "new_quiet_reason":
 elif kind == "drop_format_argument":
     # The message still formats %1$s; the call no longer passes it. getString
     # throws at exactly the moment the owner needed to be told something.
-    old = "R.string.enhance_offline, AiRouter.provider(context).label"
+    old = "R.string.enhance_offline, route.provider.label"
     assert old in text
     text = text.replace(old, "R.string.enhance_offline", 1)
 
 elif kind == "rename_entry":
     # The guard's search window run past the code it means to check. It must
     # say so rather than reporting a clean sweep of nothing.
-    text = text.replace("fun run(context: Context, connection: RichInputConnection, style: AiRouter.Style)",
-                        "fun start(context: Context, connection: RichInputConnection, style: AiRouter.Style)")
+    text = text.replace("fun run(context: Context, connection: RichInputConnection, style: AiRouter.Style, route: AiRouter.Route = AiRouter.route(context))",
+                        "fun start(context: Context, connection: RichInputConnection, style: AiRouter.Style, route: AiRouter.Route = AiRouter.route(context))")
 
 elif kind == "comment_out_attribution":
     # An exit whose only attribution is a comment mentioning the helper.
