@@ -13,6 +13,7 @@ import android.os.Environment
 import android.os.PowerManager
 import android.provider.Settings
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -111,6 +112,8 @@ public object FleetConfigsTags {
     public const val GENERAL: String = "fleetcfg_general"
     public const val ABOUT: String = "fleetcfg_about"
     public const val BACK: String = "fleetcfg_back"
+    /** The page title: a tap on General's title scrolls back up to the anchor grid. */
+    public const val TITLE: String = "fleetcfg_title"
     public const val ANCHORS: String = "fleetcfg_anchors"
     public const val OPEN_STORE: String = "fleetcfg_open_store"
     public const val OPEN_SUPERAPP: String = "fleetcfg_open_superapp"
@@ -149,6 +152,8 @@ public fun FleetConfigsScreen(
 ) {
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
         val c = ThemeBackground.colors(dark)
+        val generalScroll = rememberScrollState()
+        val titleScope = rememberCoroutineScope()
         Column(
             Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(c.top, c.bottom)))
                 .semantics { testTagsAsResourceId = true }.testTag(FleetConfigsTags.page(page))
@@ -161,12 +166,15 @@ public fun FleetConfigsScreen(
                     contentAlignment = Alignment.Center,
                 ) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, tint = c.ink) }
                 Text(
-                    fleetConfigsEntryLabel(page), Modifier.padding(start = 4.dp).semantics { heading() },
+                    fleetConfigsEntryLabel(page),
+                    Modifier.padding(start = 4.dp).clip(RoundedCornerShape(8.dp))
+                        .clickable(enabled = page == FleetConfigsPage.General) { titleScope.launch { generalScroll.scrollTo(0) } }
+                        .semantics { heading() }.testTag(FleetConfigsTags.TITLE),
                     color = c.ink, fontSize = 18.sp, fontWeight = FontWeight.SemiBold,
                 )
             }
             when (page) {
-                FleetConfigsPage.General -> FleetGeneralPage(decl, dark, c, onAppConfigs = { onDismiss(); onAppConfigs() })
+                FleetConfigsPage.General -> FleetGeneralPage(decl, dark, c, onAppConfigs = { onDismiss(); onAppConfigs() }, scroll = generalScroll)
                 FleetConfigsPage.About -> FleetAboutPage(decl, c)
             }
         }
@@ -181,8 +189,10 @@ public fun FleetConfigsScreen(
  * always through libs:perms (the one place that builds a settings intent).
  */
 @Composable
-public fun FleetGeneralPage(decl: FleetConfigsDecl, dark: Boolean, c: ThemeColors, onAppConfigs: () -> Unit) {
-    val scroll = rememberScrollState()
+public fun FleetGeneralPage(
+    decl: FleetConfigsDecl, dark: Boolean, c: ThemeColors, onAppConfigs: () -> Unit,
+    scroll: ScrollState = rememberScrollState(),
+) {
     val scope = rememberCoroutineScope()
     val tops = remember { mutableStateMapOf<String, Int>() }
     // The system screens these sections open change state outside the app: re-read it while the page is up (cheap getters only).
@@ -193,7 +203,9 @@ public fun FleetGeneralPage(decl: FleetConfigsDecl, dark: Boolean, c: ThemeColor
         Modifier.fillMaxWidth().verticalScroll(scroll).padding(horizontal = 12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        AnchorGrid(sections, c) { id -> scope.launch { scroll.animateScrollTo(tops[id] ?: 0) } }
+        // #1352 a jump, not an animation: the live sections (Perms re-reads every 1.5 s) relayout mid-animation and
+        // stopped it half way (Calc's Update/Battery/Storage anchors never reached their section on the emulator).
+        AnchorGrid(sections, c) { id -> scope.launch { scroll.scrollTo(tops[id] ?: 0) } }
         sections.forEach { s ->
             SectionCard(s.label, sectionIcon(s.id), c, Modifier.testTag(FleetConfigsTags.section(s.id)).onGloballyPositioned { tops[s.id] = it.positionInParent().y.toInt() }) {
                 if (s.note.isNotBlank()) Body(s.note, c)

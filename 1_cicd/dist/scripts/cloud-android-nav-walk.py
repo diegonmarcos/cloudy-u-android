@@ -910,7 +910,13 @@ class Walk:
                         if missing:
                             fails.append("C3 General has no anchor for %s" % ", ".join(missing))
                         for i in sids:
-                            # the v2 grid sits at the top of the one General page: scroll back up to it before each tap
+                            # the v2 grid sits at the top of the one General page: back up to it before each tap. A tap on the
+                            # title jumps there; swiping over the sections could land on a live control (the UI section's nav
+                            # toggles) and close Configs. Swipes are the fallback for a build without the title jump.
+                            t = find(dump() or [], "fleetcfg_title")
+                            if t is not None:
+                                tap(t)
+                                settle(0.6)
                             a = None
                             for _ in range(6):
                                 a = find(dump() or [], FC_ANCHOR + i)
