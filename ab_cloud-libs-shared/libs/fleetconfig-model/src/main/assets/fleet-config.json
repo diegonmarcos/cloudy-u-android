@@ -1811,6 +1811,14 @@
         "lib-core"
       ]
     },
+    "fleet_datasync_budget": {
+      "kind": "prefs",
+      "class": "device",
+      "doc": "#1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves.",
+      "used_by": [
+        "lib-core"
+      ]
+    },
     "store_sources": {
       "kind": "prefs",
       "class": "config",
