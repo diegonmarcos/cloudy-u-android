@@ -281,4 +281,29 @@ class TablesTest {
         assertEquals(listOf("Germany", "2.10", "2.60", "+50", "0", "-234"), d.rows[1])
         assertEquals(listOf("Italy", "—", "3.75", "—", "+115", "-119"), d.rows[2])
     }
+
+    // ------------------------------------------------------------------ FX vs PPP (#1374)
+
+    @Test fun pppIsCarriedByRelativeInflationAndTheYearAgoWindowIsRealAdjusted() {
+        assertEquals(3.4 * 1.10 / 1.05, FxPpp.pppToday(3.4, 100.0, 110.0, 200.0, 210.0), 1e-12)
+        assertEquals(7.0 * 1.04 / 1.02, FxPpp.realAdjust(7.0, 100.0, 104.0, 100.0, 102.0), 1e-12)
+        assertEquals(-50.0, FxPpp.pct(3.4, 6.8), 1e-12)
+        val fx = listOf("2025-10-01" to 7.0, "2025-10-30" to 7.2, "2026-10-01" to 6.9, "2026-10-30" to 7.1)
+        assertEquals(7.0, FxPpp.windowAvg(fx, d("2026-10-30"), 30)!!, 1e-12)
+        val y = { v: List<Pair<Int, Double>> -> v.map { it.first.toString() to it.second } }
+        // PPP base 2023 carried to 2025: CN prices +3%, US +5%
+        val r = FxPpp.row(org.json.JSONObject("""{"cc":"CN","ccy":"CNY","label":"Chinese yuan","group":"em"}"""), fx, y(listOf(2023 to 3.5)),
+            y(listOf(2023 to 100.0, 2024 to 101.0, 2025 to 103.0)), y(listOf(2023 to 140.0, 2024 to 143.0, 2025 to 147.0)), 30)
+        val ppp = FxPpp.pppToday(3.5, 100.0, 103.0, 140.0, 147.0)
+        assertEquals(ppp, r.getDouble("ppp"), 1e-12)
+        assertEquals(FxPpp.pct(ppp, 7.1), r.getDouble("over_under_pct"), 1e-12)
+        val ago = FxPpp.realAdjust(7.1, 101.0, 103.0, 143.0, 147.0)
+        assertEquals(ago, r.getDouble("avg_window_year_ago_real"), 1e-12)
+        assertEquals(FxPpp.pct(ago, 7.0), r.getDouble("real_change_pct"), 1e-12)
+        val sa = FxPpp.row(org.json.JSONObject("""{"cc":"SA","ccy":"SAR","no_fx":"pegged, no ECB rate"}"""), emptyList(), emptyList(), emptyList(), emptyList(), 30)
+        assertEquals("pegged, no ECB rate", sa.getJSONObject("null_reason").getString("spot"))
+        val t = Tables.fxPppTable(Dashboards.byId(dashboards, "fx")!!.panels.first { it.id == "ppp" }, org.json.JSONArray().put(r).put(sa), "test")
+        assertEquals(listOf("CNY", "7.1000", Engine.num(ppp, 4), FinFormat.signed(FxPpp.pct(ppp, 7.1), 1)), t.rows[0].take(4))
+        assertTrue(t.note.contains("SAR spot: pegged, no ECB rate"))
+    }
 }

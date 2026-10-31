@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       name:
-        description: 'ff-utc | ff-importance | merge | container-first | event-window | watchlist | alert-side | ics-dst | sdmx-key | jsonstat-stride | cache-ttl | fin-sort | fin-cell-dash | fin-engine-dash | fin-nav-back | fin-default | fin-keyrows-last | fin-afp | fin-spread | tbl-rebalance | tbl-weights | tbl-symbol-map | tbl-forward | tbl-coverage | tbl-shortname | fin-layout | feeds-curve | fin-mesh-off | fin-short-source | fin-cal-week | fin-better-when | fin-next-decision | tbl-spreads | fwd-table | tbl-risk | feeds-spark | feeds-cot'
+        description: 'ff-utc | ff-importance | merge | container-first | event-window | watchlist | alert-side | ics-dst | sdmx-key | jsonstat-stride | cache-ttl | fin-sort | fin-cell-dash | fin-engine-dash | fin-nav-back | fin-default | fin-keyrows-last | fin-afp | fin-spread | tbl-rebalance | tbl-weights | tbl-symbol-map | tbl-forward | tbl-coverage | tbl-shortname | fin-layout | feeds-curve | fin-mesh-off | fin-short-source | fin-cal-week | fin-better-when | fin-next-decision | tbl-spreads | fwd-table | tbl-risk | feeds-spark | feeds-cot | fin-heat-col | ppp-extrapolate | ppp-real-adjust'
         required: true
 permissions:
   contents: read
@@ -43,6 +43,9 @@ jobs:
             fin-better-when) sed -i 's|fun tone(d: Dir, lowerBetter: Boolean): Dir = if (!lowerBetter) d else|fun tone(d: Dir, lowerBetter: Boolean): Dir = if (true) d else|' $K/FinFormat.kt ;;
             fin-cal-week)    sed -i 's|val monday = today.minusDays((today.dayOfWeek.value - 1).toLong())|val monday = today|' $K/FinLogic.kt ;;
             fin-short-source) sed -i 's|n.substringBefore(" (").substringBefore(" / ").trim()|n.trim()|' $K/FinFormat.kt ;;
+            ppp-extrapolate) sed -i 's|ppp0 \* (home1 / home0) / (us1 / us0)|ppp0 * (home1 / home0)|' $K/FxPpp.kt ;;
+            ppp-real-adjust) sed -i 's|rate \* (home1 / home0) / (us1 / us0)|rate|' $K/FxPpp.kt ;;
+            fin-heat-col)    sed -i 's/enum class Col { TEXT, NUM, CHG, PCT, DATE, LINK, HEAT }/enum class Col { TEXT, NUM, CHG, PCT, DATE, LINK }/' $K/FinLogic.kt ;;
             feeds-cot)       sed -i 's/if (l == null || s == null) null else l - s/if (l == null || s == null) null else l/' $K/Feeds.kt ;;
             feeds-spark)     sed -i 's/bars.takeLast(7).map { it.c }/bars.take(7).map { it.c }/' $K/Feeds.kt ;;
             fin-mesh-off)    sed -i 's/e.message.orEmpty().startsWith(MESH_OFF) -> MESH_OFF/false -> MESH_OFF/' $K/FinFormat.kt ;;

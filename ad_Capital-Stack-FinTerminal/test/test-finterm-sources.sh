@@ -164,7 +164,7 @@ man = read(os.path.join(app, "app/src/main/AndroidManifest.xml"))
 if "android.permission.INTERNET" not in man or "networkSecurityConfig" not in man: bad.append("S6 the manifest lacks INTERNET or the network security config for the mesh")
 # S7 model panels (Feeds.kt): sources declare cors / schedule / rate_limit; panels route container first, then key-free fallbacks that feed the entry
 LEGACY = {"fred_series", "dbnomics_series", "imf_datamapper", "worldbank_indicator", "gdelt_artlist", "fincept_topic"}
-VIEWS_OF = {"points": {"quotes", "curve", "bars", "table"}, "events": {"calendar"}, "candles": {"candles"}, "kv": {"kv"}, "filings": {"news", "table"}, "performance": {"table"}, "portfolio_performance": {"table"}, "yields_matrix": {"table"}, "em_usd": {"table"}, "world_bonds": {"table"}, "risk_compare": {"table"}}
+VIEWS_OF = {"points": {"quotes", "curve", "bars", "table"}, "events": {"calendar"}, "candles": {"candles"}, "kv": {"kv"}, "filings": {"news", "table"}, "performance": {"table"}, "portfolio_performance": {"table"}, "yields_matrix": {"table"}, "em_usd": {"table"}, "world_bonds": {"table"}, "risk_compare": {"table"}, "fx_ppp": {"table"}}
 SLOTS = {"each", "each_csv", "today", "from", "yyyymm", "prev_yyyymm", "cik"}
 feeds_kt = ktf("Feeds.kt")
 for s in S:
@@ -226,6 +226,11 @@ for d in dash["dashboards"]:
                 legs = [l[0] for l in (d.get("model_portfolio") or {}).get("legs", [])]
                 for l in legs:
                     if not (f.get("proxies") or {}).get(l): bad.append("S9 panel %s leg %s has no proxy" % (where, l))
+        if p.get("derive") == "fx_ppp":
+            # the panel's rows are universe.json fx_ppp.rows (the container's /v1/fx/ppp rows), one declaration in two places kept equal
+            uv = json.load(open(os.path.join(app, "data/universe.json"))).get("fx_ppp") or {}
+            if f.get("rows") != uv.get("rows"): bad.append("S9 panel %s rows differ from universe.json fx_ppp.rows" % where)
+            if f.get("window_days") != uv.get("window_days"): bad.append("S9 panel %s window_days differs from universe.json fx_ppp" % where)
         if p.get("derive") in ("yields_matrix", "world_bonds"):
             ten = [t[0] for t in f.get("tenors", [])]
             # Country, Cov (the GDP coverage of each average, #1374), then the tenors
@@ -321,6 +326,7 @@ mutant "a matrix tenor without a column"   "$JE;d=L('data/dashboards.json');[p['
 mutant "the matrix loses its Cov column"   "$JE;d=L('data/dashboards.json');[p['columns'].remove('Cov') for x in d['dashboards'] if x['id']=='yields_matrix' for p in x['panels'] if p['id']=='fwd'];D('data/dashboards.json',d)" "S9 panel yields_matrix/fwd has no Cov column"
 mutant "the matrix averages without a coverage minimum" "$JE;d=L('data/dashboards.json');[p['fetch'].pop('min_coverage_gdp') for x in d['dashboards'] if x['id']=='yields_matrix' for p in x['panels'] if p['id']=='spot'];D('data/dashboards.json',d)" "S9 panel yields_matrix/spot declares no min_coverage_gdp"
 mutant "a matrix country without GDP"      "$JE;d=L('data/dashboards.json');[p['fetch']['gdp_usd_bn'].pop('BR') for x in d['dashboards'] if x['id']=='yields_matrix' for p in x['panels'] if p['id']=='spot'];D('data/dashboards.json',d)" "S9 panel yields_matrix/spot country BR has no GDP"
+mutant "the FX vs PPP rows drift"         "$JE;d=L('data/dashboards.json');[p['fetch']['rows'].pop() for x in d['dashboards'] if x['id']=='fx' for p in x['panels'] if p['id']=='ppp'];D('data/dashboards.json',d)" "S9 panel fx/ppp rows differ"
 mutant "per-item path with no items"       "$JE;d=L('data/dashboards.json');[p['fetch'].pop('each') for x in d['dashboards'] if x['id']=='crypto' for p in x['panels'] if p['id']=='spot'];D('data/dashboards.json',d)" "S7 panel crypto/spot asks per"
 mutant "a provider that is not the source's" "$JE;d=L('data/dashboards.json');[p['fetch'].__setitem__('provider','jsonstat') for x in d['dashboards'] if x['id']=='macro' for p in x['panels'] if p['id']=='us'];D('data/dashboards.json',d)" "S7 panel macro/us provider jsonstat"
 mutant "a decision time drifts from its zone" "$JE;d=L('data/central-banks.json');d['banks'][0]['events'][-1]['ts']='2027-12-08T18:00Z';D('data/central-banks.json',d)" "S8 bank fed 2027-12-08 ts"

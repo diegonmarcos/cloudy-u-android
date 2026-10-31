@@ -22,7 +22,8 @@ object Tables {
     const val EM_USD = "em_usd"
     const val WORLD_BONDS = "world_bonds"
     const val RISK = "risk_compare"
-    val DERIVES: Set<String> = setOf(PERFORMANCE, PORTFOLIO, MATRIX, EM_USD, WORLD_BONDS, RISK)
+    const val FX_PPP = "fx_ppp"
+    val DERIVES: Set<String> = setOf(PERFORMANCE, PORTFOLIO, MATRIX, EM_USD, WORLD_BONDS, RISK, FX_PPP)
 
     /** Extra (non-return) columns a performance table may declare after the return columns. */
     const val COL_VOL = "Vol 1Y"
@@ -54,8 +55,63 @@ object Tables {
                 Catalog.str(proxies, name).let { sym -> if (sym.isEmpty()) ItemGot(Got(), "", "no proxy declared") else gather(sym, source, f, http, today, c) }
             }))
         }
+        FX_PPP -> fxPpp(panel, f, http, today, c)
         WORLD_BONDS -> spreads(load(panel.copy(derive = MATRIX), source, f, http, today, c), f)
         else -> throw IOException("unknown derive ${panel.derive}")
+    }
+
+    // ------------------------------------------------------------------ FX vs PPP (#1374)
+
+    /** fetch.primary.api (/v1/fx/ppp) on the mesh; else the direct sources: ECB reference rates (fetch.fx_source) and World Bank PPP / CPI (fetch.wb). */
+    fun fxPpp(panel: Panel, f: JSONObject, http: Http, today: LocalDate, c: ModelCtx): PanelData {
+        val api = c.api
+        if (api != null) {
+            runCatching { JSONObject(http.get(api.base.trimEnd('/') + Catalog.str(f.optJSONObject("primary") ?: JSONObject(), "api"))).getJSONArray("rows") }
+                .getOrNull()?.takeIf { it.length() > 0 }?.let { return fxPppTable(panel, it, api.source.name) }
+        }
+        val rows = f.getJSONArray("rows").let { a -> (0 until a.length()).map { a.getJSONObject(it) } }
+        val win = f.optLong("window_days", 30)
+        val fxSrc = Catalog.byId(c.sources, Catalog.str(f, "fx_source")) ?: throw IOException("no FX source declared")
+        val wb = f.getJSONObject("wb")
+        val wbSrc = Catalog.byId(c.sources, Catalog.str(wb, "source")) ?: throw IOException("no World Bank source declared")
+        val ccys = rows.filter { it.optString("no_fx").isEmpty() }.map { it.optString("ccy") } // a currency the ECB does not quote is not asked
+        val fx = HashMap<String, MutableList<Pair<String, Double>>>()
+        val body = JSONObject(http.get(Requests.url(fxSrc.endpoint, "/v1/${today.minusDays(400)}..$today", listOf("base" to "USD", "symbols" to ccys.joinToString(",")))))
+        val rates = body.optJSONObject("rates") ?: JSONObject()
+        rates.keys().asSequence().sorted().forEach { d -> val m = rates.getJSONObject(d); m.keys().forEach { k -> fx.getOrPut(k) { ArrayList() } += d to m.getDouble(k) } }
+        fun wbSeries(code: String): Map<String, List<Pair<String, Double>>> {
+            val cc = (rows.map { it.optString("cc") } + "US").joinToString(";")
+            val a = JSONArray(http.get(Requests.url(wbSrc.endpoint, "/country/$cc/indicator/$code", listOf("format" to "json", "per_page" to "2000", "date" to "2015:${today.year}"))))
+            val out = HashMap<String, MutableList<Pair<String, Double>>>()
+            val list = a.optJSONArray(1) ?: JSONArray()
+            for (i in 0 until list.length()) {
+                val o = list.getJSONObject(i)
+                if (o.isNull("value")) continue
+                out.getOrPut(o.getJSONObject("country").getString("id")) { ArrayList() } += o.getString("date") to o.getDouble("value")
+            }
+            return out.mapValues { (_, v) -> v.sortedBy { it.first } }
+        }
+        val ind = wb.getJSONObject("indicators")
+        val ppp = wbSeries(ind.getString("ppp"))
+        val cpi = wbSeries(ind.getString("cpi"))
+        val usCpi = cpi["US"].orEmpty()
+        val out = JSONArray()
+        rows.forEach { r -> out.put(FxPpp.row(r, fx[r.optString("ccy")].orEmpty(), ppp[r.optString("cc")].orEmpty(), cpi[r.optString("cc")].orEmpty(), usCpi, win)) }
+        return fxPppTable(panel, out, listOf(fxSrc.name, wbSrc.name).joinToString(" + "))
+    }
+
+    /** The /v1/fx/ppp rows as the table: Currency | Spot | PPP | Over/under % | 30d avg | 30d 1y ago (real) | Real YoY %; each empty cell's reason in the note. */
+    fun fxPppTable(panel: Panel, rows: JSONArray, by: String): PanelData {
+        fun d(o: JSONObject, k: String, digits: Int) = if (o.isNull(k) || !o.has(k)) FinFormat.DASH else Engine.num(o.getDouble(k), digits)
+        fun p(o: JSONObject, k: String) = if (o.isNull(k) || !o.has(k)) FinFormat.DASH else FinFormat.signed(o.getDouble(k), 1)
+        val list = (0 until rows.length()).map { rows.getJSONObject(it) }
+        fun dg(o: JSONObject) = if (!o.isNull("spot") && o.has("spot") && o.getDouble("spot") >= 100) 1 else 4
+        val table = list.map { o -> listOf(o.optString("currency"), d(o, "spot", dg(o)), d(o, "ppp", dg(o)), p(o, "over_under_pct"), d(o, "avg_window", dg(o)), d(o, "avg_window_year_ago_real", dg(o)), p(o, "real_change_pct")) }
+        val why = list.flatMap { o -> val w = o.optJSONObject("null_reason") ?: JSONObject(); w.keys().asSequence().map { k -> "${o.optString("currency")} $k: ${w.getString(k)}" }.toList() }
+        val note = ("Local currency per USD. Over/under % = PPP / spot - 1 (negative: undervalued); real YoY % = the year-ago window in today's prices / today's window - 1 (positive: gained in real terms)." +
+            (if (why.isEmpty()) "" else " — " + why.joinToString(" · "))).trim()
+        return PanelData(panel.columns, table, emptyList(), emptyList(), list.mapNotNull { o -> o.optString("spot_date").takeIf { it.isNotEmpty() && it != "null" } }.maxOrNull().orEmpty(), note,
+            servedBy = by, details = list.map { it.optString("label") })
     }
 
     // ------------------------------------------------------------------ 60/40 vs 100/0 risk comparison (spec 9)

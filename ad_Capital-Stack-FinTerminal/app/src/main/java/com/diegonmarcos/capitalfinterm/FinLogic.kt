@@ -15,7 +15,8 @@ import kotlin.math.pow
  */
 object FinLogic {
     /** Column types of a table (spec 2.3): declared per panel (`col_types`), else read from the header and the cells. */
-    enum class Col { TEXT, NUM, CHG, PCT, DATE, LINK }
+    /** HEAT (declared only, col_types "heat"): a number whose cell is tinted by its size against the column's largest (World Bonds heatmap, #1370). */
+    enum class Col { TEXT, NUM, CHG, PCT, DATE, LINK, HEAT }
 
     fun missing(s: String?): Boolean = s == null || s.isBlank() || s == "-" || s == FinFormat.DASH || s == "n/a"
 

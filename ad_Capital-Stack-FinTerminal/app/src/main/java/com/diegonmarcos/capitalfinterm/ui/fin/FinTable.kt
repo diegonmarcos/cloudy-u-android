@@ -32,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -63,6 +64,8 @@ fun FinTable(
 ) {
     val p = LocalFinPalette.current
     val types = remember(columns, rows, declared) { FinLogic.colTypes(declared, columns, rows) }
+    // a HEAT column's scale: its largest absolute value (FinLogic.heat clamps value / scale to -1..1)
+    val heatMax = remember(rows, types) { types.indices.map { i -> if (types[i] != Col.HEAT) 0.0 else rows.mapNotNull { FinFormat.parseNum(it.getOrNull(i))?.let { v -> kotlin.math.abs(v) } }.maxOrNull() ?: 0.0 } }
     val n = types.size
     if (n == 0) return
     var sortCol by rememberSaveable(panelId) { mutableIntStateOf(-1) }
@@ -110,6 +113,14 @@ fun FinTable(
             t == Col.TEXT || t == Col.LINK -> Text(FinLogic.cell(raw), mod, color = if (FinLogic.missing(raw)) p.text3 else p.text,
                 style = FinType.body.copy(fontSize = 12.sp), maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
             t == Col.DATE -> Text(FinLogic.cell(raw), mod, color = p.text2, style = FinType.caption, textAlign = TextAlign.End, maxLines = 1)
+            t == Col.HEAT -> {
+                val s = FinLogic.cell(raw)
+                val h = FinLogic.heat(FinFormat.parseNum(s), heatMax[i])
+                val fill = lerp(p.surfaceRaised, if (h > 0) p.down else p.up, FinLogic.HEAT_MAX_BLEND * kotlin.math.abs(h))
+                Box(mod.background(fill)) {
+                    Text(s, Modifier.fillMaxWidth(), color = if (FinLogic.missing(raw)) p.text3 else p.text, style = FinType.num, textAlign = TextAlign.End, maxLines = 1, softWrap = false)
+                }
+            }
             t == Col.CHG || t == Col.PCT -> {
                 val s = FinLogic.change(raw)
                 Box(mod.finFlash(s, FinFormat.dirOf(s))) { FinChange(s, Modifier.fillMaxWidth()) }

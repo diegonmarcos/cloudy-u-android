@@ -960,7 +960,7 @@
       "panels": [
         {
           "id": "merged",
-          "title": "World government bonds: 2Y, 10Y and spreads (bp) vs the 2Y, Bund and UST",
+          "title": "World government bonds: 2Y, 10Y and spreads (bp) vs the 2Y, Bund and UST, heatmap",
           "source": "treasury_xml",
           "view": "table",
           "derive": "world_bonds",
@@ -1167,7 +1167,15 @@
             "20Y",
             "30Y"
           ],
-          "unit": "%"
+          "unit": "%",
+          "col_types": [
+            "text",
+            "num",
+            "num",
+            "heat",
+            "heat",
+            "heat"
+          ]
         },
         {
           "id": "yields",
@@ -2017,6 +2025,170 @@
           "placeholder": {
             "reason": "needs a key or a connector"
           }
+        },
+        {
+          "id": "ppp",
+          "title": "FX vs PPP: major DM and EM currencies against USD (spot, PPP, real change)",
+          "source": "frankfurter",
+          "view": "table",
+          "derive": "fx_ppp",
+          "fetch": {
+            "provider": "frankfurter_rates",
+            "path": "/v1/latest",
+            "fx_source": "frankfurter",
+            "window_days": 30,
+            "wb": {
+              "source": "worldbank",
+              "indicators": {
+                "ppp": "PA.NUS.PPP",
+                "cpi": "FP.CPI.TOTL"
+              }
+            },
+            "rows": [
+              {
+                "cc": "DE",
+                "ccy": "EUR",
+                "label": "Euro (PPP and CPI of Germany)",
+                "group": "dm"
+              },
+              {
+                "cc": "JP",
+                "ccy": "JPY",
+                "label": "Japanese yen",
+                "group": "dm"
+              },
+              {
+                "cc": "GB",
+                "ccy": "GBP",
+                "label": "Pound sterling",
+                "group": "dm"
+              },
+              {
+                "cc": "CH",
+                "ccy": "CHF",
+                "label": "Swiss franc",
+                "group": "dm"
+              },
+              {
+                "cc": "CA",
+                "ccy": "CAD",
+                "label": "Canadian dollar",
+                "group": "dm"
+              },
+              {
+                "cc": "AU",
+                "ccy": "AUD",
+                "label": "Australian dollar",
+                "group": "dm"
+              },
+              {
+                "cc": "NZ",
+                "ccy": "NZD",
+                "label": "New Zealand dollar",
+                "group": "dm"
+              },
+              {
+                "cc": "SE",
+                "ccy": "SEK",
+                "label": "Swedish krona",
+                "group": "dm"
+              },
+              {
+                "cc": "NO",
+                "ccy": "NOK",
+                "label": "Norwegian krone",
+                "group": "dm"
+              },
+              {
+                "cc": "CN",
+                "ccy": "CNY",
+                "label": "Chinese yuan",
+                "group": "em"
+              },
+              {
+                "cc": "IN",
+                "ccy": "INR",
+                "label": "Indian rupee",
+                "group": "em"
+              },
+              {
+                "cc": "BR",
+                "ccy": "BRL",
+                "label": "Brazilian real",
+                "group": "em"
+              },
+              {
+                "cc": "MX",
+                "ccy": "MXN",
+                "label": "Mexican peso",
+                "group": "em"
+              },
+              {
+                "cc": "KR",
+                "ccy": "KRW",
+                "label": "Korean won",
+                "group": "em"
+              },
+              {
+                "cc": "ID",
+                "ccy": "IDR",
+                "label": "Indonesian rupiah",
+                "group": "em"
+              },
+              {
+                "cc": "TR",
+                "ccy": "TRY",
+                "label": "Turkish lira",
+                "group": "em"
+              },
+              {
+                "cc": "ZA",
+                "ccy": "ZAR",
+                "label": "South African rand",
+                "group": "em"
+              },
+              {
+                "cc": "RU",
+                "ccy": "RUB",
+                "label": "Russian rouble",
+                "group": "em",
+                "no_fx": "the ECB stopped the rouble reference rate in March 2022; no other free official daily USD rate"
+              },
+              {
+                "cc": "PL",
+                "ccy": "PLN",
+                "label": "Polish zloty",
+                "group": "em"
+              },
+              {
+                "cc": "TH",
+                "ccy": "THB",
+                "label": "Thai baht",
+                "group": "em"
+              },
+              {
+                "cc": "SA",
+                "ccy": "SAR",
+                "label": "Saudi riyal",
+                "group": "em",
+                "no_fx": "the ECB publishes no riyal reference rate (the riyal is pegged at 3.75 per USD); no free official daily series"
+              }
+            ],
+            "primary": {
+              "source": "cloud_fincept",
+              "api": "/v1/fx/ppp",
+              "parse": "finterm_v1"
+            }
+          },
+          "columns": [
+            "Currency",
+            "Spot",
+            "PPP",
+            "Over/under %",
+            "30d avg",
+            "30d 1y ago real",
+            "Real YoY %"
+          ]
         }
       ],
       "default": true

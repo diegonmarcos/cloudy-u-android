@@ -110,4 +110,11 @@ class FinFormatTest {
         assertEquals(listOf("JP", "GB", "US"), n.map { it.country })
         assertEquals(listOf(0L, 5L, 39L), n.map { it.days })
     }
+
+    @Test fun aDeclaredHeatColumnIsTintedAgainstItsLargestValue() {
+        val t = FinLogic.colTypes(listOf("text", "num", "heat"), listOf("Country", "10Y", "vs Bund bp"), listOf(listOf("Italy", "3.75", "+115"), listOf("Germany", "2.60", "0")))
+        assertEquals(FinLogic.Col.HEAT, t[2])
+        assertEquals(1f, FinLogic.heat(115.0, 115.0), 0f)
+        assertEquals(-0.5f, FinLogic.heat(-57.5, 115.0), 1e-6f)
+    }
 }
