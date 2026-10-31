@@ -49,8 +49,8 @@ fun FinMonitorRow(q: FinQuote, stale: Boolean, width: Dp, tall: Boolean = false,
             val a = if (stale) 0.7f else 1f
             Text(FinLogic.cell(q.last), Modifier.width(FinDim.lastCol).alpha(a), color = if (FinLogic.missing(q.last)) p.text3 else p.text,
                 style = FinType.numStrong, textAlign = TextAlign.End, maxLines = 1)
-            if (!narrow) FinChange(FinLogic.change(q.chg), Modifier.width(FinDim.numCol).alpha(a))
-            FinChange(if (FinLogic.missing(q.pct)) FinLogic.cell(q.pct) else FinLogic.change(q.pct) + "%", Modifier.width(FinDim.numCol).alpha(a))
+            if (!narrow) FinChange(FinLogic.change(q.chg), Modifier.width(FinDim.numCol).alpha(a), lowerBetter = q.lowerBetter)
+            FinChange(if (FinLogic.missing(q.pct)) FinLogic.cell(q.pct) else FinLogic.change(q.pct) + "%", Modifier.width(FinDim.numCol).alpha(a), lowerBetter = q.lowerBetter)
         }
         if (divider) Box(Modifier.padding(start = hPad).fillMaxWidth().height(1.dp).background(p.hairline))
     }

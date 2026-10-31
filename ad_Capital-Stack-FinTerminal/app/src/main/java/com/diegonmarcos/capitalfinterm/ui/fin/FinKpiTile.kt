@@ -34,6 +34,7 @@ data class FinQuote(
     val pct: String,
     val date: String,
     val history: List<Double> = emptyList(),
+    val lowerBetter: Boolean = false,
 ) {
     /** The direction of the move: the percent when given, else the absolute change. */
     val dir: FinFormat.Dir get() = if (!FinLogic.missing(pct)) FinFormat.dirOf(pct) else FinFormat.dirOf(chg)
@@ -69,7 +70,7 @@ fun FinKpiTile(q: FinQuote?, label: String, unit: String, stale: Boolean, modifi
             Text(FinLogic.cell(q.last), Modifier.weight(1f).alpha(if (stale) 0.7f else 1f), color = ink, style = FinType.kpi, maxLines = 1)
             val change = if (unit == "bp" && !FinLogic.missing(q.chg)) FinLogic.change(q.chg) + " bp"
                 else if (!FinLogic.missing(q.pct)) FinLogic.change(q.pct) + "%" else if (!FinLogic.missing(q.chg)) FinLogic.change(q.chg) else ""
-            if (change.isNotEmpty()) FinChange(change, Modifier.padding(bottom = 2.dp))
+            if (change.isNotEmpty()) FinChange(change, Modifier.padding(bottom = 2.dp), lowerBetter = q.lowerBetter)
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
             if (stale) { FinDot(p.amber); Spacer(Modifier.width(4.dp)) }

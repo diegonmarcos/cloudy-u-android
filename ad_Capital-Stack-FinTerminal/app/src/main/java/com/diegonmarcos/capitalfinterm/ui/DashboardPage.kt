@@ -192,8 +192,10 @@ object FinStore {
 }
 
 /** A quotes panel's rows ([label, last, chg, chg %, date]) as instruments. */
-fun quotesOf(d: PanelData): List<FinQuote> = d.rows.map { r ->
-    FinQuote(symbol = r.getOrElse(0) { "" }, last = r.getOrElse(1) { "" }, chg = r.getOrElse(2) { "" }, pct = r.getOrElse(3) { "" }, date = r.getOrElse(4) { "" })
+fun quotesOf(d: PanelData, betterWhen: String? = null): List<FinQuote> = d.rows.map { r ->
+    val label = r.getOrElse(0) { "" }
+    FinQuote(symbol = label, last = r.getOrElse(1) { "" }, chg = r.getOrElse(2) { "" }, pct = r.getOrElse(3) { "" }, date = r.getOrElse(4) { "" },
+        lowerBetter = betterWhen != null && FinFormat.lowerBetter(betterWhen, label))
 }
 
 /** A calendar panel's rows ([time, country, event, importance, values...]) as events. */
@@ -545,7 +547,7 @@ private fun PanelBody(
                 "watch" -> WatchBody(data, user, stale, width, nav, onUser, onRemoved)
                 "kpi" -> {
                     val unit = panel.raw.optString("change_unit")
-                    val qs = quotesOf(data)
+                    val qs = quotesOf(data, panel.raw.optString("better_when"))
                     val tiles = ArrayList<@Composable (Modifier) -> Unit>()
                     qs.forEach { q -> tiles.add { m -> FinKpiTile(q, q.symbol, unit, stale, m) { nav.openQuote(q.symbol) } } }
                     val sp = panel.raw.optJSONObject("spread")
@@ -559,7 +561,7 @@ private fun PanelBody(
                 }
                 "heat" -> FinHeatGrid(quotesOf(data), width, panel.raw.optDouble("heat_scale", 3.0), stale) { q -> nav.openQuote(q.symbol) }
                 "rows" -> Column {
-                    val qs = quotesOf(data)
+                    val qs = quotesOf(data, panel.raw.optString("better_when"))
                     qs.forEachIndexed { i, q -> FinMonitorRow(q, stale, width, divider = i < qs.size - 1) { nav.openQuote(q.symbol) } }
                 }
                 "calendar" -> {

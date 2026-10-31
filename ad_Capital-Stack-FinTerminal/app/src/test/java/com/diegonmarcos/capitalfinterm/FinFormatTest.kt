@@ -90,4 +90,16 @@ class FinFormatTest {
         assertFalse(FinLogic.inCalWindow("2026-10-25 23:00", 2, today))
         assertFalse(FinLogic.inCalWindow("2026-11-02 00:00", 2, today))
     }
+
+    @Test fun creditAndMacroMovesAreColouredByWhatIsBetter() {
+        assertTrue(FinFormat.lowerBetter("", "US Unemployment rate"))
+        assertTrue(FinFormat.lowerBetter("", "ICE BofA US HY OAS"))
+        assertFalse(FinFormat.lowerBetter("", "S&P 500"))
+        assertTrue(FinFormat.lowerBetter("lower", "S&P 500"))
+        assertFalse(FinFormat.lowerBetter("higher", "CPI YoY"))
+        assertEquals(Dir.DOWN, FinFormat.tone(Dir.UP, true))
+        assertEquals(Dir.UP, FinFormat.tone(Dir.DOWN, true))
+        assertEquals(Dir.UP, FinFormat.tone(Dir.UP, false))
+        assertEquals(Dir.FLAT, FinFormat.tone(Dir.FLAT, true))
+    }
 }

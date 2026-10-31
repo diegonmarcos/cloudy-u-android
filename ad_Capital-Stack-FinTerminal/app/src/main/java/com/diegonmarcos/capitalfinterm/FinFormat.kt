@@ -93,4 +93,13 @@ object FinFormat {
         if (reason == MESH_OFF) "Mesh off: served by the FinTerm container on the private mesh only" else "$source did not answer ($reason)"
     /** A footer source name (#1370 shorter footers): the declared name without its parenthetical or " / " detail; each " + " part alike. */
     fun shortSource(name: String): String = name.split(" + ").joinToString(" + ") { n -> n.substringBefore(" (").substringBefore(" / ").trim().ifEmpty { n.trim() } }
+    /** Credit/Macro colouring (#1370): the panel's declared better_when wins; else lower is better for the calendar's
+     *  inflation/unemployment words and for credit OAS. */
+    fun lowerBetter(betterWhen: String, label: String): Boolean = when (betterWhen) {
+        "lower" -> true
+        "higher" -> false
+        else -> !betterHigher(label) || Regex("""\boas\b""", RegexOption.IGNORE_CASE).containsMatchIn(label)
+    }
+    /** The colour direction of a move: flipped when lower is better (a rise in unemployment is red); the sign still shows the move. */
+    fun tone(d: Dir, lowerBetter: Boolean): Dir = if (!lowerBetter) d else when (d) { Dir.UP -> Dir.DOWN; Dir.DOWN -> Dir.UP; Dir.FLAT -> Dir.FLAT }
 }

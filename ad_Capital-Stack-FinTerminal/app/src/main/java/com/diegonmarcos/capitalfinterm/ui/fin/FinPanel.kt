@@ -267,7 +267,7 @@ fun FinSparkline(values: List<Double>, modifier: Modifier = Modifier) {
 
 /** A signed change in mono with its direction colour (the sign carries direction for colour-blind users). */
 @Composable
-fun FinChange(text: String, modifier: Modifier = Modifier, style: androidx.compose.ui.text.TextStyle = FinType.num, align: TextAlign = TextAlign.End) {
+fun FinChange(text: String, modifier: Modifier = Modifier, style: androidx.compose.ui.text.TextStyle = FinType.num, align: TextAlign = TextAlign.End, lowerBetter: Boolean = false) {
     val p = LocalFinPalette.current
-    Text(text, modifier, color = if (text == FinFormat.DASH) p.text3 else p.dir(FinFormat.dirOf(text)), style = style, textAlign = align, maxLines = 1)
+    Text(text, modifier, color = if (text == FinFormat.DASH) p.text3 else p.dir(FinFormat.tone(FinFormat.dirOf(text), lowerBetter)), style = style, textAlign = align, maxLines = 1)
 }
