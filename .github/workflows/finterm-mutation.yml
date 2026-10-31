@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       name:
-        description: 'ff-utc | ff-importance | merge | container-first | event-window | watchlist | alert-side | ics-dst | sdmx-key | jsonstat-stride | cache-ttl | fin-sort | fin-cell-dash | fin-engine-dash | fin-nav-back | fin-default | fin-keyrows-last | fin-afp | fin-spread | tbl-rebalance | tbl-weights | tbl-symbol-map | tbl-forward | tbl-coverage | tbl-shortname | fin-layout | feeds-curve | fin-mesh-off | fin-short-source | fin-cal-week | fin-better-when | fin-next-decision | tbl-spreads'
+        description: 'ff-utc | ff-importance | merge | container-first | event-window | watchlist | alert-side | ics-dst | sdmx-key | jsonstat-stride | cache-ttl | fin-sort | fin-cell-dash | fin-engine-dash | fin-nav-back | fin-default | fin-keyrows-last | fin-afp | fin-spread | tbl-rebalance | tbl-weights | tbl-symbol-map | tbl-forward | tbl-coverage | tbl-shortname | fin-layout | feeds-curve | fin-mesh-off | fin-short-source | fin-cal-week | fin-better-when | fin-next-decision | tbl-spreads | fwd-table'
         required: true
 permissions:
   contents: read
@@ -36,6 +36,7 @@ jobs:
             cache-ttl)       sed -i 's/private fun ttl(url: String): Long = maxOf(ttlMs, ttlFor(url) ?: 0L)/private fun ttl(url: String): Long = ttlMs/' $K/Http.kt ;;
             # UI spec mutants (FinTerm UI overhaul): each breaks one rule a JVM test pins.
             fin-sort)        sed -i 's/return (if (step % 3 == 1) first else first.reversed()) + absent/return first + absent/' $K/FinLogic.kt ;;
+            fwd-table)       sed -i 's/curve.map { (t, y) -> Triple(t, y, rate(curve, start, t)) }/curve.map { (t, y) -> Triple(t, y, rate(curve, 0.0, t)) }/' $K/Forward.kt ;;
             tbl-spreads)     sed -i 's/val bund = num(row("DE"), i10)/val bund = num(row("US"), i10)/' $K/Tables.kt ;;
             fin-next-decision) sed -i 's/if (d.isBefore(today) || cc.isBlank() || cc in seen) continue/if (cc.isBlank() || cc in seen) continue/' $K/FinLogic.kt ;;
             fin-better-when) sed -i 's|fun tone(d: Dir, lowerBetter: Boolean): Dir = if (!lowerBetter) d else|fun tone(d: Dir, lowerBetter: Boolean): Dir = if (true) d else|' $K/FinFormat.kt ;;

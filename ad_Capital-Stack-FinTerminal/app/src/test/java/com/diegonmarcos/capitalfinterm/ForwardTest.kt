@@ -42,4 +42,11 @@ class ForwardTest {
         assertEquals(30, c.size)
         assertEquals(2.0, c.first().second, 1e-9)
     }
+
+    @Test fun theSpec9TableIsTenorSpotAndTheForwardOverTheSameTenor() {
+        val t = Forward.table(listOf(1.0 to 2.0, 2.0 to 3.0), 1.0)
+        assertEquals(listOf(1.0, 2.0), t.map { it.first })
+        assertEquals(listOf(2.0, 3.0), t.map { it.second })
+        assertEquals(4.0098, t[0].third, 1e-3) // 1y forward 1y out: above the 2.0 spot by about 201 bp
+    }
 }

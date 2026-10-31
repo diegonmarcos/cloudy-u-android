@@ -345,11 +345,14 @@ object Engine {
     private fun forwardGrid(panel: Panel, f: JSONObject, series: List<FredSeries>, asOf: String, note: String): PanelData {
         val fw = f.getJSONObject("forward")
         val curve = series.map { it.spec.optDouble("years") to it.last.value }.sortedBy { it.first }
-        val grid = fw.getJSONArray("grid")
-        val rows = (0 until grid.length()).map { grid.getJSONArray(it) }.map { g ->
-            val s = g.getDouble(0)
-            val l = g.getDouble(1)
-            listOf("${years(s)}Y x ${years(l)}Y", num(Forward.rate(curve, s, l), 2))
+        // Spec 9: TENOR | SPOT | FWD | DIFF (bp) when the panel declares table_start; else the declared [start, length] grid.
+        val rows = if (fw.has("table_start")) Forward.table(curve, fw.getDouble("table_start")).map { (t, y, r) ->
+            listOf("${years(t)}Y", num(y, 2), num(r, 2), if (r.isFinite()) FinFormat.signed((r - y) * 100, 0) else FinFormat.DASH)
+        } else {
+            val grid = fw.getJSONArray("grid")
+            (0 until grid.length()).map { grid.getJSONArray(it) }.map { g ->
+                listOf("${years(g.getDouble(0))}Y x ${years(g.getDouble(1))}Y", num(Forward.rate(curve, g.getDouble(0), g.getDouble(1)), 2))
+            }
         }
         val pts = Forward.curve(curve, fw.optDouble("curve_length", 1.0), fw.optInt("curve_max_start", 29))
             .map { ChartPoint("${years(it.first)}Y", it.first, it.second) }

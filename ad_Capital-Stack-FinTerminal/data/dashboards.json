@@ -840,45 +840,8 @@
               }
             ],
             "forward": {
-              "_doc": "Par yields are treated as annually compounded spot rates, linearly interpolated between the maturities and flat before the first; f(s,l) = ((1+y(s+l))^(s+l) / (1+y(s))^s)^(1/l) - 1. grid: [start, length] in years for the table; curve_length is the length of the 1-forward curve drawn from start 0 to curve_max_start.",
-              "grid": [
-                [
-                  0,
-                  1
-                ],
-                [
-                  1,
-                  1
-                ],
-                [
-                  2,
-                  1
-                ],
-                [
-                  5,
-                  1
-                ],
-                [
-                  1,
-                  2
-                ],
-                [
-                  2,
-                  3
-                ],
-                [
-                  5,
-                  5
-                ],
-                [
-                  10,
-                  10
-                ],
-                [
-                  10,
-                  20
-                ]
-              ],
+              "_doc": "Par yields are treated as annually compounded spot rates, linearly interpolated between the maturities and flat before the first; f(s,l) = ((1+y(s+l))^(s+l) / (1+y(s))^s)^(1/l) - 1. table_start: the table is TENOR | SPOT | FWD | DIFF, the forward starting in table_start years over each tenor against the spot (bp) (a panel may instead declare grid: [start, length] pairs); curve_length is the length of the 1-forward curve drawn from start 0 to curve_max_start.",
+              "table_start": 1,
               "curve_length": 1,
               "curve_max_start": 29
             },
@@ -892,8 +855,10 @@
           },
           "unit": "%",
           "columns": [
-            "Forward (start x length)",
-            "Rate %"
+            "Tenor",
+            "Spot %",
+            "1Y fwd %",
+            "Diff bp"
           ]
         }
       ]

@@ -28,6 +28,10 @@ object Forward {
         return (Math.pow(grownEnd / grownStart, 1.0 / length) - 1.0) * 100.0
     }
 
+    /** Spec 9 forward table: per curve tenor, (tenor, spot, the forward starting in [start] years over the same tenor). */
+    fun table(curve: List<Pair<Double, Double>>, start: Double): List<Triple<Double, Double, Double>> =
+        curve.map { (t, y) -> Triple(t, y, rate(curve, start, t)) }
+
     /** The [length]-year forward rate at each whole start year 0..[maxStart], as (start, rate percent). */
     fun curve(curve: List<Pair<Double, Double>>, length: Double, maxStart: Int): List<Pair<Double, Double>> =
         (0..maxStart).map { it.toDouble() to rate(curve, it.toDouble(), length) }.filter { it.second.isFinite() }
