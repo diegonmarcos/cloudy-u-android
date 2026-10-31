@@ -21,7 +21,8 @@ object Tables {
     const val MATRIX = "yields_matrix"
     const val EM_USD = "em_usd"
     const val WORLD_BONDS = "world_bonds"
-    val DERIVES: Set<String> = setOf(PERFORMANCE, PORTFOLIO, MATRIX, EM_USD, WORLD_BONDS)
+    const val RISK = "risk_compare"
+    val DERIVES: Set<String> = setOf(PERFORMANCE, PORTFOLIO, MATRIX, EM_USD, WORLD_BONDS, RISK)
 
     /** Extra (non-return) columns a performance table may declare after the return columns. */
     const val COL_VOL = "Vol 1Y"
@@ -46,8 +47,31 @@ object Tables {
         MATRIX -> matrixOne(f, http, c)?.let { m -> matrix(panel, f, m.got, m) }
             ?: matrix(panel, f, some(strings(f.optJSONArray("each")).associateWith { gather(it, source, f, http, today, c) }))
         EM_USD -> emUsd(panel, f, http, c)
+        RISK -> {
+            val proxies = f.optJSONObject("proxies") ?: JSONObject()
+            val sets = legSets(f)
+            riskCompare(panel, f, sets, some(sets.flatten().map { it.first }.distinct().associateWith { name ->
+                Catalog.str(proxies, name).let { sym -> if (sym.isEmpty()) ItemGot(Got(), "", "no proxy declared") else gather(sym, source, f, http, today, c) }
+            }))
+        }
         WORLD_BONDS -> spreads(load(panel.copy(derive = MATRIX), source, f, http, today, c), f)
         else -> throw IOException("unknown derive ${panel.derive}")
+    }
+
+    // ------------------------------------------------------------------ 60/40 vs 100/0 risk comparison (spec 9)
+
+    /** fetch.compare: [[[leg, weight %], ...], ...], one leg set per compared portfolio. */
+    fun legSets(f: JSONObject): List<List<Pair<String, Int>>> {
+        val a = f.optJSONArray("compare") ?: return emptyList()
+        return (0 until a.length()).map { i -> a.getJSONArray(i).let { s -> (0 until s.length()).map { s.getJSONArray(it).let { l -> l.getString(0) to l.getInt(1) } } } }
+    }
+
+    /** Each compared portfolio's headline row (the [portfolio] line: return columns, Vol 1Y, MaxDD 1Y), on the same proxies and dates. */
+    fun riskCompare(panel: Panel, f: JSONObject, sets: List<List<Pair<String, Int>>>, got: Map<String, ItemGot>): PanelData {
+        val parts = sets.map { portfolio(panel, f, it, got) }
+        return PanelData(panel.columns, parts.map { it.rows.first() }, emptyList(), emptyList(), parts.firstOrNull()?.asOf.orEmpty(),
+            ("Same ETF proxies, each daily rebalanced; risk = Vol 1Y and MaxDD 1Y. " + parts.firstOrNull()?.note.orEmpty().substringAfter(" — ", "")).trim(),
+            servedBy = parts.firstOrNull()?.servedBy.orEmpty(), details = parts.map { it.details.firstOrNull().orEmpty() })
     }
 
     // ------------------------------------------------------------------ World Bonds merged table (#1370, spec 9 spreads)

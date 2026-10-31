@@ -2287,6 +2287,68 @@
             "MaxDD 1Y"
           ],
           "unit": "%"
+        },
+        {
+          "id": "risk",
+          "title": "Risk: 60/40 vs 100/0 equity/bonds (same ETF proxies, daily rebalanced)",
+          "source": "cboe",
+          "view": "table",
+          "derive": "risk_compare",
+          "fetch": {
+            "provider": "cboe_quotes",
+            "path": "/charts/historical/{each}.json",
+            "last": 100000,
+            "proxies": {
+              "Bonds": "AGG",
+              "Equity": "ACWI"
+            },
+            "each": [
+              "AGG",
+              "ACWI"
+            ],
+            "primary": {
+              "source": "cloud_fincept",
+              "api": "/v1/history",
+              "params": {
+                "symbol": "{each}",
+                "interval": "1d",
+                "range": "max"
+              },
+              "parse": "finterm_v1"
+            },
+            "compare": [
+              [
+                [
+                  "Bonds",
+                  40
+                ],
+                [
+                  "Equity",
+                  60
+                ]
+              ],
+              [
+                [
+                  "Bonds",
+                  0
+                ],
+                [
+                  "Equity",
+                  100
+                ]
+              ]
+            ]
+          },
+          "columns": [
+            "Name",
+            "Last",
+            "1Y",
+            "3Y",
+            "10Y",
+            "Vol 1Y",
+            "MaxDD 1Y"
+          ],
+          "unit": "%"
         }
       ]
     },
@@ -3011,6 +3073,7 @@
         {
           "id": "oas",
           "title": "ICE BofA option-adjusted spreads",
+          "better_when": "lower",
           "source": "fred",
           "view": "bars",
           "derive": "level_change",
@@ -3049,6 +3112,61 @@
           "chart_value": "level",
           "unit": "%",
           "change_unit": "bp"
+        },
+        {
+          "id": "oas_rating",
+          "title": "ICE BofA US corporate OAS by rating (AAA to CCC)",
+          "source": "fred",
+          "view": "bars",
+          "derive": "level_change",
+          "fetch": {
+            "provider": "fred_series",
+            "lookback_days": 21,
+            "series": [
+              {
+                "id": "BAMLC0A1CAAA",
+                "label": "AAA"
+              },
+              {
+                "id": "BAMLC0A2CAA",
+                "label": "AA"
+              },
+              {
+                "id": "BAMLC0A3CA",
+                "label": "A"
+              },
+              {
+                "id": "BAMLC0A4CBBB",
+                "label": "BBB"
+              },
+              {
+                "id": "BAMLH0A1HYBB",
+                "label": "BB"
+              },
+              {
+                "id": "BAMLH0A2HYB",
+                "label": "B"
+              },
+              {
+                "id": "BAMLH0A3HYC",
+                "label": "CCC and below"
+              }
+            ],
+            "primary": {
+              "source": "cloud_fincept",
+              "topic": "econ:fred:{id}"
+            }
+          },
+          "columns": [
+            "Rating",
+            "OAS %",
+            "1d bp",
+            "Date"
+          ],
+          "chart_value": "level",
+          "unit": "%",
+          "change_unit": "bp",
+          "better_when": "lower"
         },
         {
           "id": "yields",

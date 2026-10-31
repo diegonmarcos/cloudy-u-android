@@ -121,6 +121,21 @@ class TablesTest {
         assertEquals(listOf("Name", "Last") + Performance.COLUMNS + listOf(Tables.COL_VOL, Tables.COL_MDD), data.columns)
     }
 
+    @Test fun riskComparisonStacksEachPortfolioHeadlineOnTheSameProxies() {
+        val http = Fake { u ->
+            when {
+                u.contains("symbol=AGG") -> v1Bars("2026-10-29" to 100.0, "2026-10-30" to 101.0)
+                u.contains("symbol=ACWI") -> v1Bars("2026-10-29" to 100.0, "2026-10-30" to 110.0)
+                else -> null
+            }
+        }
+        val data = load("mp_40_60", "risk", http)
+        assertEquals(listOf("Portfolio 40/60", "Portfolio 0/100"), data.rows.map { it[0] })
+        assertEquals(Engine.sig(100.0 * (0.4 * 1.01 + 0.6 * 1.10)), data.rows[0][1])
+        assertEquals(Engine.sig(110.0), data.rows[1][1])
+        assertEquals(listOf("Name", "Last", "1Y", "3Y", "10Y", Tables.COL_VOL, Tables.COL_MDD), data.columns)
+    }
+
     // ------------------------------------------------------------------ yields matrix
 
     @Test fun averagesAreGdpWeightedOverTheCountriesWithAValue() {
