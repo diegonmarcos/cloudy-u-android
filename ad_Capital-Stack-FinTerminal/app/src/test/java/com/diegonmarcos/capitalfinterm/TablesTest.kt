@@ -190,6 +190,41 @@ class TablesTest {
         assertEquals(0.0, Tables.coverage(listOf(0.0 to 1.0)), 0.0)
     }
 
+    @Test fun oneMatrixCallFillsEveryCountryAndSaysWhyEachCellIsEmpty() {
+        val row = { cc: String, g: String, gdp: Double, cells: String -> """{"country":"$cc","group":"$g","gdp_usd":$gdp,"tenors":[$cells]}""" }
+        val v = { t: String, x: Double -> """{"tenor":"$t","value":$x,"date":"2026-10-30","source":"s","method":"m"}""" }
+        val n = { t: String, why: String -> """{"tenor":"$t","value":null,"date":null,"source":null,"method":"$why"}""" }
+        val body = """{"asof":"2026-10-30","fill":{"cells":40,"filled":5,"rate":0.125},"rows":[""" + listOf(
+            row("US", "dm", 30.0e12, listOf(v("3M", 4.0), v("10Y", 5.0)).joinToString(",")),
+            row("DE", "dm", 5.0e12, listOf(n("3M", "no free source declared for this cell"), v("10Y", 3.4)).joinToString(",")),
+            row("FR", "dm", 3.4e12, listOf(n("3M", "no free source declared for this cell"), v("10Y", 4.44)).joinToString(",")),
+            row("CN", "em", 19.5e12, listOf(n("3M", "no free source declared for this cell"), v("10Y", 1.75)).joinToString(",")),
+            row("EA", "reference", 0.0, v("10Y", 3.3)),
+        ).joinToString(",") + "]}"
+        val http = Fake { u -> if (u == "http://mesh-base/v1/curves/matrix") body else null }
+        val data = load("yields_matrix", "spot", http)
+        assertEquals(listOf("http://mesh-base/v1/curves/matrix"), http.asked)
+        assertEquals("3.40", data.rows.first { it[0] == "Germany" }[9])
+        assertEquals("4.44", data.rows.first { it[0] == "France" }[9])
+        assertEquals("1.75", data.rows.first { it[0] == "China" }[9])
+        assertEquals(FinFormat.DASH, data.rows.first { it[0] == "Germany" }[2])
+        assertTrue(data.note, data.note.contains("13% of cells filled"))
+        assertTrue(data.note, data.note.contains("no free source declared for this cell: DE 3M, FR 3M, CN 3M"))
+        // the GDP weights are the container's (USD bn): US 30000 + DE 5000 + FR 3400 of DM
+        val dm10 = (30000 * 5.0 + 5000 * 3.4 + 3400 * 4.44) / (30000 + 5000 + 3400.0)
+        assertTrue(data.rows[1].toString(), data.rows[1][9] == FinFormat.DASH || data.rows[1][9] == String.format(java.util.Locale.US, "%.2f", dm10))
+        // no row of the reference group, every declared country still a row
+        assertEquals(25, data.rows.size)
+    }
+
+    @Test fun aMatrixCallWithoutRowsFallsBackToOneCallPerCountry() {
+        assertNull(Tables.parseOne("""{"rows":[]}""", listOf("US"), "x"))
+        val http = Fake { u -> if (u == "http://mesh-base/v1/curves/US") """{"curve":{"tenors":[{"tenor":"3M","value":4.1}]}}""" else null }
+        val data = load("yields_matrix", "spot", http)
+        assertEquals("4.10", data.rows.first { it[0] == "United States" }[2])
+        assertTrue(http.asked.first() == "http://mesh-base/v1/curves/matrix")
+    }
+
     @Test fun theDeclaredMatrixIsTheOwnersCountryList() {
         val f = Dashboards.byId(dashboards, "yields_matrix")!!.panels.first { it.id == "spot" }.fetch!!
         val g = f.getJSONObject("groups")

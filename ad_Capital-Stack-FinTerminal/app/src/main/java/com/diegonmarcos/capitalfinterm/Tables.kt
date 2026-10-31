@@ -41,7 +41,8 @@ object Tables {
             val legs = c.dash?.legs.orEmpty()
             portfolio(panel, f, legs, some(legs.associate { (name, _) -> name to Catalog.str(proxies, name).let { sym -> if (sym.isEmpty()) ItemGot(Got(), "", "no proxy declared") else gather(sym, source, f, http, today, c) } }))
         }
-        MATRIX -> matrix(panel, f, some(strings(f.optJSONArray("each")).associateWith { gather(it, source, f, http, today, c) }))
+        MATRIX -> matrixOne(f, http, c)?.let { m -> matrix(panel, f, m.got, m) }
+            ?: matrix(panel, f, some(strings(f.optJSONArray("each")).associateWith { gather(it, source, f, http, today, c) }))
         else -> throw IOException("unknown derive ${panel.derive}")
     }
 
@@ -256,12 +257,71 @@ object Tables {
 
     fun pct0(x: Double): String = String.format(Locale.US, "%.0f%%", x * 100.0)
 
-    fun matrix(panel: Panel, f: JSONObject, got: Map<String, ItemGot>): PanelData {
+    /**
+     * The container's one-call matrix (fetch.primary.matrix_api, /v1/curves/matrix): {asof, fill:{cells, filled, rate}, rows:[{country, group,
+     * gdp_usd, gdp_weight, tenors:[{tenor, value|null, date, source, method}]}]}. [why] holds each empty cell's `method` (country -> tenor -> reason).
+     */
+    data class One(val got: Map<String, ItemGot>, val gdp: Map<String, Double>, val why: Map<String, Map<String, String>>, val fill: Double?, val by: String)
+
+    /** Parse a /v1/curves/matrix body for the declared [each] countries; null when it carries no row of them. */
+    fun parseOne(body: String, each: List<String>, by: String): One? {
+        val o = JSONObject(body)
+        val rows = o.optJSONArray("rows") ?: return null
+        val got = LinkedHashMap<String, ItemGot>()
+        val gdp = HashMap<String, Double>()
+        val why = HashMap<String, Map<String, String>>()
+        for (i in 0 until rows.length()) {
+            val r = rows.optJSONObject(i) ?: continue
+            val cc = Catalog.str(r, "country")
+            if (cc !in each) continue
+            r.optDouble("gdp_usd").takeIf { it.isFinite() && it > 0 }?.let { gdp[cc] = it / 1e9 }
+            val ts = r.optJSONArray("tenors") ?: JSONArray()
+            val pts = ArrayList<Pt>()
+            val miss = LinkedHashMap<String, String>()
+            for (j in 0 until ts.length()) {
+                val t = ts.optJSONObject(j) ?: continue
+                val k = Catalog.str(t, "tenor")
+                val y = Feeds.tenorYears(k) ?: continue
+                val v = t.opt("value")
+                if (v is Number && v.toDouble().isFinite()) pts += Pt(k, k, y, v.toDouble(), null, Catalog.str(t, "date"))
+                else miss[k] = Catalog.str(t, "method").ifEmpty { "no value" }
+            }
+            got[cc] = if (pts.isEmpty()) ItemGot(Got(), "", miss.values.distinct().joinToString("; ").ifEmpty { "no curve" }) else ItemGot(Got(points = pts), by, "")
+            why[cc] = miss
+        }
+        if (got.isEmpty() || got.values.all { it.got.isEmpty }) return null
+        val missing = each.filter { it !in got }
+        missing.forEach { got[it] = ItemGot(Got(), "", "not in /v1/curves/matrix") }
+        val ordered = LinkedHashMap<String, ItemGot>().apply { each.forEach { put(it, got.getValue(it)) } }
+        val fill = o.optJSONObject("fill")?.optDouble("rate")?.takeIf { it.isFinite() }
+        return One(ordered, gdp, why, fill, by)
+    }
+
+    /** One GET of fetch.primary.matrix_api through the mesh; null (the per-country path runs) when undeclared, mesh off, or no usable answer. */
+    fun matrixOne(f: JSONObject, http: Http, c: ModelCtx): One? {
+        val p = f.optJSONObject("primary") ?: return null
+        val path = Catalog.str(p, "matrix_api").ifEmpty { return null }
+        val api = c.api ?: return null
+        return try {
+            parseOne(http.get(api.base.trimEnd('/') + path), strings(f.optJSONArray("each")), api.source.name)
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    /** The empty cells' reasons, grouped: "no free source declared for this cell: FR 3M/6M, IT 3M" (tenors in declared order). */
+    fun reasons(why: Map<String, Map<String, String>>, ts: List<String>): List<String> {
+        val by = LinkedHashMap<String, LinkedHashMap<String, MutableList<String>>>()
+        for ((cc, m) in why) for (t in ts) m[t]?.let { r -> by.getOrPut(r) { LinkedHashMap() }.getOrPut(cc) { ArrayList() } += t }
+        return by.map { (r, ccs) -> "$r: " + ccs.entries.joinToString(", ") { (cc, t) -> "$cc ${t.joinToString("/")}" } }
+    }
+
+    fun matrix(panel: Panel, f: JSONObject, got: Map<String, ItemGot>, one: One? = null): PanelData {
         val forward = panel.raw.optString("mode") == "forward"
         val start = f.optDouble("forward_start_years", 1.0)
         val ts = tenors(f)
         val labels = f.optJSONObject("labels") ?: JSONObject()
-        val gdp = f.optJSONObject("gdp_usd_bn") ?: JSONObject()
+        val gdp = JSONObject((f.optJSONObject("gdp_usd_bn") ?: JSONObject()).toString()).also { g -> one?.gdp?.forEach { (k, v) -> g.put(k, v) } }
         val groups = f.optJSONObject("groups") ?: JSONObject()
         val curves = got.mapValues { curve(f, it.value.got) }
         val cells = curves.mapValues { (_, cv) -> ts.map { cell(cv, it.years, forward, start) } }
@@ -283,16 +343,18 @@ object Tables {
         val rows = avgs.map { (l, m) -> fmtRow(l, pct0(cov(m)), avg(m)) } +
             got.keys.map { fmtRow(Catalog.str(labels, it).ifEmpty { it }, if (worldGdp > 0) pct0(gdp.optDouble(it, 0.0) / worldGdp) else FinFormat.DASH, cells[it]!!) }
         val noCurve = got.filter { curves[it.key].isNullOrEmpty() }.map { "${it.key} (${it.value.why})" }
-        val gaps = curves.filter { it.value.isNotEmpty() }.mapNotNull { (k, _) ->
+        val gaps = if (one != null && !forward) emptyList() else curves.filter { it.value.isNotEmpty() }.mapNotNull { (k, _) ->
             val miss = ts.filterIndexed { i, _ -> cells[k]!![i] == null }.map { it.label }
             if (miss.isEmpty()) null else "$k ${miss.joinToString("/")}"
         }
         val note = listOfNotNull(
             if (forward) "${fmtYears(start)}-forward curve from each spot curve (Forward.rate)." else null,
+            if (one?.fill != null) "One call /v1/curves/matrix: ${pct0(one.fill)} of cells filled; GDP from the container (World Bank, USD)." else null,
             "Averages GDP-weighted (IMF, USD), shown only when the countries with a value hold ${pct0(min)} of the group's GDP; Cov = that share (country rows: share of World GDP).",
             if (thin.isEmpty()) null else "— insufficient coverage: " + thin.joinToString(", ") + " < ${pct0(min)}.",
             if (noCurve.isEmpty()) null else "— no curve: " + noCurve.joinToString(", "),
             if (gaps.isEmpty()) null else "— no point at tenor: " + gaps.joinToString(", "),
+            if (one == null || forward) null else reasons(one.why.filterKeys { k -> curves[k].orEmpty().isNotEmpty() }, ts.map { it.label }).joinToString(" ") { "— $it." },
         ).joinToString(" ")
         val asOf = got.values.flatMap { it.got.points }.maxOfOrNull { it.date }.orEmpty()
         return PanelData(panel.columns, rows, emptyList(), emptyList(), asOf, note,

@@ -423,6 +423,7 @@
             "primary": {
               "source": "cloud_fincept",
               "api": "/v1/curves/{each}",
+              "matrix_api": "/v1/curves/matrix",
               "parse": "finterm_v1"
             }
           },
@@ -634,6 +635,7 @@
             "primary": {
               "source": "cloud_fincept",
               "api": "/v1/curves/{each}",
+              "matrix_api": "/v1/curves/matrix",
               "parse": "finterm_v1"
             }
           },
