@@ -91,6 +91,13 @@
    "auth": "none",
    "per_min": 10,
    "licence": "SNB, attribution"
+  },
+  "riksbank": {
+   "name": "Sveriges Riksbank SWEA API",
+   "endpoint": "https://api.riksbank.se",
+   "auth": "none",
+   "per_min": 5,
+   "licence": "Riksbank, CC BY 4.0"
   }
  },
  "history": {
@@ -539,17 +546,42 @@
     "method": "Swiss National Bank spot interest rates on Confederation bonds (monthly)"
    },
    {
+    "id": "riksbank_se_bills",
+    "source": "riksbank",
+    "format": "riksbank",
+    "path": "/swea/v1/Observations/Latest/ByGroup/6",
+    "params": {},
+    "map": {
+     "SETB3MBENCH": "curve:SE:3M",
+     "SETB6MBENCH": "curve:SE:6M"
+    },
+    "method": "Sveriges Riksbank Swedish Treasury bill benchmark yields (daily)"
+   },
+   {
+    "id": "riksbank_se_bonds",
+    "source": "riksbank",
+    "format": "riksbank",
+    "path": "/swea/v1/Observations/Latest/ByGroup/7",
+    "params": {},
+    "map": {
+     "SEGVB2YC": "curve:SE:2Y",
+     "SEGVB5YC": "curve:SE:5Y",
+     "SEGVB7YC": "curve:SE:7Y",
+     "SEGVB10YC": "curve:SE:10Y"
+    },
+    "method": "Sveriges Riksbank Swedish government bond benchmark yields (daily)"
+   },
+   {
     "id": "oecd_10y",
     "source": "dbnomics",
     "format": "dbnomics",
     "path": "/series",
     "params": {
-     "series_ids": "OECD/DSD_KEI@DF_KEI/SWE.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/CHN.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/IND.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/BRA.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/RUS.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/KOR.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/MEX.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/IDN.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/TUR.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/SAU.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/POL.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/THA.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/ZAF.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/ARG.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/ARE.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/MYS.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/PHL.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/EGY.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/COL.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/CHL.M.IRLT.PA._Z._Z._Z",
+     "series_ids": "OECD/DSD_KEI@DF_KEI/CHN.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/IND.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/BRA.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/RUS.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/KOR.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/MEX.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/IDN.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/TUR.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/SAU.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/POL.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/THA.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/ZAF.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/ARG.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/ARE.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/MYS.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/PHL.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/EGY.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/COL.M.IRLT.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/CHL.M.IRLT.PA._Z._Z._Z",
      "observations": "1",
      "limit": "100"
     },
     "map": {
-     "SWE.M.IRLT.PA._Z._Z._Z": "curve:SE:10Y",
      "CHN.M.IRLT.PA._Z._Z._Z": "curve:CN:10Y",
      "IND.M.IRLT.PA._Z._Z._Z": "curve:IN:10Y",
      "BRA.M.IRLT.PA._Z._Z._Z": "curve:BR:10Y",

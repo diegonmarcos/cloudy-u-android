@@ -307,7 +307,7 @@ object Tables {
         val rows = o.optJSONArray("rows") ?: return null
         val got = LinkedHashMap<String, ItemGot>()
         val gdp = HashMap<String, Double>()
-        val why = HashMap<String, Map<String, String>>()
+        val why = LinkedHashMap<String, Map<String, String>>()
         for (i in 0 until rows.length()) {
             val r = rows.optJSONObject(i) ?: continue
             val cc = Catalog.str(r, "country")
