@@ -125,7 +125,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 31,
+      "unit_test_sources": 34,
       "workflow": "ship-cloud-calc.yml"
     },
     "ac_cloud-camera": {
