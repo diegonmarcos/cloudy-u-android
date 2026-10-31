@@ -661,11 +661,11 @@
         {
           "id": "em_usd",
           "title": "EM government bonds in USD (local 10Y, unhedged total return, annualised)",
-          "source": "cloud_fincept",
+          "source": "treasury_xml",
           "view": "table",
           "derive": "em_usd",
           "fetch": {
-            "provider": "fincept_topic",
+            "provider": "treasury_xml",
             "primary": {
               "source": "cloud_fincept",
               "api": "/v1/bonds/em-usd",

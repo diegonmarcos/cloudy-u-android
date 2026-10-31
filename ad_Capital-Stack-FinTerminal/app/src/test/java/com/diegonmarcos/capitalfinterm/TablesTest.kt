@@ -236,6 +236,15 @@ class TablesTest {
         assertEquals("2026-09", data.asOf)
     }
 
+    @Test fun theEmUsdPanelIsRoutedToTheContainerAndSaysMeshOffWithoutIt() {
+        val dash = Dashboards.byId(dashboards, "yields_matrix")!!
+        val panel = dash.panels.first { it.id == "em_usd" }
+        val fin = sources.first { it.primary }
+        assertTrue(Priority.api(panel, dash, sources, mapOf(fin.fleetEndpoint to "http://m"), { true }) != null)
+        val e = try { load("yields_matrix", "em_usd", Fake { null }, api = null); null } catch (x: IOException) { x }
+        assertTrue(e?.message.orEmpty(), e?.message.orEmpty().contains("mesh off"))
+    }
+
     @Test fun theDeclaredMatrixIsTheOwnersCountryList() {
         val f = Dashboards.byId(dashboards, "yields_matrix")!!.panels.first { it.id == "spot" }.fetch!!
         val g = f.getJSONObject("groups")
