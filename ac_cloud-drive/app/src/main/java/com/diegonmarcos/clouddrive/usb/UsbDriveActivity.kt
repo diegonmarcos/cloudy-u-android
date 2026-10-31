@@ -33,7 +33,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import com.diegonmarcos.clouddrive.ui.DriveMetrics
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.diegonmarcos.clouddrive.MainActivity
@@ -170,7 +170,7 @@ class UsbDriveActivity : ComponentActivity() {
         val u = ui
         BackHandler(enabled = u is Ui.Browsing && u.path != "/") { (u as? Ui.Browsing)?.let { browse(UsbVolumeModel.rawParent(it.path)) } }
         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-            Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(Modifier.fillMaxSize().padding(DriveMetrics.gutter), verticalArrangement = Arrangement.spacedBy(DriveMetrics.gapWide)) {
                 Text(drive?.label ?: getString(R.string.usb_open_drive), style = MaterialTheme.typography.titleLarge)
                 drive?.sizeHint?.takeIf { it.isNotEmpty() }?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
                 when (u) {
@@ -212,7 +212,7 @@ class UsbDriveActivity : ComponentActivity() {
         LazyColumn(Modifier.fillMaxSize()) {
             items(b.entries, key = { it.path }) { e ->
                 Row(
-                    Modifier.fillMaxWidth().clickable(enabled = e.isDir) { browse(e.path) }.padding(vertical = 8.dp),
+                    Modifier.fillMaxWidth().clickable(enabled = e.isDir) { browse(e.path) }.padding(vertical = DriveMetrics.gapWide),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Column(Modifier.weight(1f)) {
