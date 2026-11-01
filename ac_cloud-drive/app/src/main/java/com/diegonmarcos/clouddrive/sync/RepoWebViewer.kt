@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
@@ -67,7 +68,7 @@ fun RepoWebViewer(url: String, onClose: () -> Unit) {
     var menu by remember { mutableStateOf(false) }
     Dialog(onDismissRequest = onClose, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
         BackHandler(onBack = onClose)
-        Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface).testTag(DriveTags.SYNC_GIT_STORAGE + "_web")) {
+        Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface).systemBarsPadding().testTag(DriveTags.SYNC_GIT_STORAGE + "_web")) {
             Row(Modifier.fillMaxWidth().padding(horizontal = DriveMetrics.gap), verticalAlignment = Alignment.CenterVertically) {
                 com.diegonmarcos.clouddrive.ui.IslandAction(Icons.Filled.Close, stringResource(R.string.repo_status_window_close)) { onClose() }
                 Text(title, Modifier.weight(1f), style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)

@@ -123,7 +123,7 @@ fun GitCloneTargetRow(targets: List<GitStorage.Target>, picked: GitStorage.Targe
         Text(stringResource(R.string.git_clone_into), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         androidx.compose.foundation.layout.Spacer(Modifier.size(DriveMetrics.gap))
         Box {
-            FilterChip(selected = true, onClick = { open = true }, label = { Text(picked?.label.orEmpty(), style = MaterialTheme.typography.labelSmall, maxLines = 1) }, modifier = Modifier.height(DriveMetrics.chipHeight))
+            FilterChip(selected = true, onClick = { open = true }, label = { Text(picked?.label.orEmpty() + " ▾", style = MaterialTheme.typography.labelSmall, maxLines = 1) }, modifier = Modifier.height(DriveMetrics.chipHeight))
             DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
                 targets.forEachIndexed { n, t ->
                     DropdownMenuItem(
