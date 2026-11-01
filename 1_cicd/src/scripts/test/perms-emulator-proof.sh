@@ -7,8 +7,9 @@
 #   3 grant one entry from a shell -> the row reads Granted on resume
 #   4 revoke it -> the row's chip reads Missing again, with its Grant / Open button (the in-place prompt)
 #   5 #1372 the same page in dark mode (the Perms UI is drawn for both)
-#   1b #1372 some missing: the entry granted, a relaunch shows the gate again without that row
-#   6 #1372 all granted: reinstalled with every runtime grant (-g), the gate never appears (runtime-only apps)
+#   1b #1372 some missing: a fresh install with the entry granted before its first launch; the gate lists the rest, not it
+#      (the ask is once per entry, PermAskLog, so a relaunch after step 1 rightly shows nothing)
+#   6 #1372 all granted: reinstalled with every runtime grant (-g) and the special accesses, the gate never appears
 # Each step: a screenshot and a uiautomator dump in OUT, and a verdict line in OUT/verdicts.txt.
 # Usage: perms-emulator-proof.sh APK_DIR OUT   (APK_DIR/<key>.apk, keys below)
 set -u
@@ -82,13 +83,6 @@ while IFS='|' read -r -u 3 key entry grant revoke texts; do
   if [ "$key" = finterm ]; then check "$key first run: nothing missing, no prompt" "$key-1-first-run" ""
   elif [ "$key" = me ]; then check "$key first run: the app's own start-up ask (first_run own:MePerms.kt)" "$key-1-first-run" ""
   else check "$key first run opens the Perms page on what is missing" "$key-1-first-run" "Before you start" "Grant all"; fi
-  # 1b some missing: grant the table's entry, relaunch; the gate is back without that row
-  if [ -n "$entry" ] && [ "$key" != me ]; then
-    adb shell am force-stop "$pkg"; eval "${grant//\{pkg\}/$pkg}" >/dev/null 2>&1
-    launch "$pkg"; shot "$key-1b-some-missing"
-    absent "$key some missing: the gate no longer lists $entry" "$key-1b-some-missing" "text=\"$entry\""
-    eval "${revoke//\{pkg\}/$pkg}" >/dev/null 2>&1
-  fi
   # 2 the page with live states
   perms_page "$pkg" "$key-2-page"
   IFS=';' read -r -a want <<< "$texts"
@@ -108,9 +102,18 @@ while IFS='|' read -r -u 3 key entry grant revoke texts; do
   check "$key Perms page in dark mode" "$key-5-dark" "${want[@]}"
   adb shell cmd uimode night no >/dev/null 2>&1; sleep 1
   adb shell pm uninstall "$pkg" >/dev/null 2>&1
-  # 6 all granted: every grant of a runtime-only app given at install, so the gate never draws
+  # 1b some missing: a fresh install, the table's entry granted before the first launch
+  if [ -n "$entry" ] && [ "$key" != me ]; then
+    adb install -r "$apk" >/dev/null 2>&1; eval "${grant//\{pkg\}/$pkg}" >/dev/null 2>&1
+    adb shell input keyevent KEYCODE_HOME >/dev/null 2>&1; launch "$pkg"; shot "$key-1b-some-missing"
+    check "$key some missing: the gate lists what is still missing" "$key-1b-some-missing" "Before you start" "Grant all"
+    absent "$key some missing: the gate does not list the granted $entry" "$key-1b-some-missing" "text=\"$entry\""
+    adb shell pm uninstall "$pkg" >/dev/null 2>&1
+  fi
+  # 6 all granted: every runtime grant at install (-g) plus the special accesses, so the gate never draws
   case "$key" in calc|browser)
     adb install -r -g "$apk" >/dev/null 2>&1; adb shell input keyevent KEYCODE_HOME >/dev/null 2>&1
+    for op in REQUEST_INSTALL_PACKAGES MANAGE_EXTERNAL_STORAGE SYSTEM_ALERT_WINDOW; do adb shell appops set "$pkg" "$op" allow >/dev/null 2>&1; done
     launch "$pkg"; shot "$key-6-all-granted"
     absent "$key all granted: no first-run gate" "$key-6-all-granted" "Before you start"
     adb shell pm uninstall "$pkg" >/dev/null 2>&1;;
