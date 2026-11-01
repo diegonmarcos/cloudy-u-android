@@ -122,7 +122,7 @@ class BrowserSitePermsUiTest {
     }
 
     @Test
-    fun `tapping a state on the Perms page stores it, Sites Permissions lists the overrides`() {
+    fun `tapping a state on the Perms page stores it, an unsupported one shows its reason`() {
         val set = mutableListOf<Pair<String, String>>()
         compose.setContent { CloudKitTheme(palette) {
             BrowserPermsScreen("Perms", "example.org", cfg.sitePerms, stateOf = { it.default }, defaultOf = { it.default }, hasOwn = { false },
@@ -133,6 +133,10 @@ class BrowserSitePermsUiTest {
         assertEquals(listOf("camera" to "allow"), set)
         assertTrue("an unsupported perm shows its reason", has("browser:perm:nfc:unsupported"))
         assertTrue("and offers no state", !has("browser:perm:nfc:allow"))
+    }
+
+    @Test
+    fun `Sites Permissions lists the sites with overrides, each with Edit and Reset`() {
         compose.setContent { CloudKitTheme(palette) {
             BrowserPermsScreen("Sites Permissions", null, cfg.sitePerms, stateOf = { it.default }, defaultOf = { it.default }, hasOwn = { false },
                 onSet = { _, _ -> }, onReset = {}, onClose = {}, sites = listOf(PermSite("example.org", "camera allow")))
