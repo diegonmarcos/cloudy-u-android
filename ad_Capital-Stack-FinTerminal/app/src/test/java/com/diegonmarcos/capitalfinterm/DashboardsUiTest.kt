@@ -11,9 +11,11 @@ class DashboardsUiTest {
     private fun d(id: String) = Dashboards.byId(dashboards, id)!!
 
     @Test fun eachTabOpensOnItsDeclaredDefault() {
-        assertEquals("market_monitor", Dashboards.defaultOf(dashboards, listOf("yield_curves", "market_monitor")))
+        assertEquals("fx", Dashboards.defaultOf(dashboards, listOf("crypto", "fx")))
         assertEquals("yield_curves", Dashboards.defaultOf(dashboards, listOf("yield_curves", "forward_rates")))
-        for ((tab, id) in mapOf("fi" to "market_monitor", "eq" to "world_equity_indices", "ex" to "fx", "nw" to "economic_calendar", "pm" to "portfolio_risk")) {
+        // #1399 FI opens on its Homepage: no FI dashboard is declared default
+        assertTrue(dashboards.none { it.tab == "fi" && it.isDefault })
+        for ((tab, id) in mapOf("eq" to "world_equity_indices", "ex" to "fx", "nw" to "economic_calendar", "pm" to "portfolio_risk")) {
             assertEquals(tab, listOf(id), dashboards.filter { it.tab == tab && it.isDefault }.map { it.id })
         }
     }
@@ -37,14 +39,9 @@ class DashboardsUiTest {
         assertEquals(listOf("a", "b"), Dashboards.segments(d, d.panels[1]).map { it.id })
     }
 
-    @Test fun marketMonitorLeadsWithTheTreasuryTilesAndTheDerivedSpread() {
-        val mm = d("market_monitor")
-        assertEquals(listOf("ust", "funding", "fx", "crypto", "next"), mm.panels.map { it.id })
-        val ust = mm.panels.first()
-        assertEquals("kpi", ust.raw.getString("display"))
-        assertEquals("2s10s", ust.raw.getJSONObject("spread").getString("label"))
-        assertTrue(mm.search)
-        assertEquals(listOf("fx", "crypto"), mm.panels.filter { it.raw.optBoolean("tape") }.map { it.id })
+    @Test fun theMarketMonitorEventsPanelMovedToMacro() {
+        assertEquals(null, Dashboards.byId(dashboards, "market_monitor"))
+        assertEquals("next", d("macro").panels.first().id)
     }
 
     @Test fun fixedIncomeHoldsNoEquityPanel() {

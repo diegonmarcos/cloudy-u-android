@@ -63,7 +63,8 @@ if (!buildJson.ui?.bottom_nav || !buildJson.ui?.sections)
 // per `dashboard` entry (id = the dashboard id, label = the entry title), so the dashboards are never typed twice.
 def uiSectionsGen = buildJson.ui.sections.collect { s ->
     def dash = ((buildJson.ui.stacks ?: [:])[s.id] ?: []).findAll { it.kind == 'dashboard' && it.dashboard }
-    dash ? (s + [pages: dash.collect { [id: it.dashboard, label: it.title, icon: ''] }]) : s
+    // #1399 a section that declares its pages (Home first, then one per entry, with icons) keeps them: test/test-finterm-nav.sh holds them to ui.stacks.
+    s.pages ? s : (dash ? (s + [pages: dash.collect { [id: it.dashboard, label: it.title, icon: ''] }]) : s)
 }
 def uiSectionsB64    = b64(uiSectionsGen)
 // The nav UI mode this app starts in (Classic / Clean) and its scroll-hide default: ui.nav_ui (libs:bottomnav NavUiDecl), base64 of its JSON.
@@ -113,6 +114,8 @@ uiStacks.each { sectionId, entries ->
     }
 }
 def uiStacksB64  = b64(uiStacks)
+// #1399 ui.redirects: removed dashboards whose deep links open a section's Homepage instead.
+def uiRedirectsB64 = b64(buildJson.ui.redirects ?: [])
 def uiTargetsB64 = b64([sites: targetSites, registry_sites: targetRegistry, repo_base: (appUrls.repo_base ?: '')])
 
 android {
@@ -145,6 +148,7 @@ android {
         buildConfigField "String", "UI_BOTTOM_NAV",      "\"${uiBottomNav}\""
         buildConfigField "String", "UI_DEFAULT_SECTION", "\"${uiDefaultSection}\""
         buildConfigField "String", "UI_STACKS_B64",      "\"${uiStacksB64}\""
+        buildConfigField "String", "UI_REDIRECTS_B64",   "\"${uiRedirectsB64}\""
         buildConfigField "String", "UI_TARGETS_B64",     "\"${uiTargetsB64}\""
         buildConfigField "String", "FLEET_MESH_B64",     "\"${fleetMeshB64}\""
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'

@@ -59,7 +59,7 @@ EXPECT = {
     "name": "capital-stack-finterminal", "display": "Capital-Stack-FinTerminal", "pkg": "com.diegonmarcos.capitalfinterm",
     "nav": [("fi", "FI"), ("eq", "EQ"), ("ex", "EX"), ("nw", "NW"), ("pm", "PM"), ("my-pm", "MY-PM")],
     "pages": {
-      "fi": [("dashboard", "Market Monitor"), ("dashboard", "Yield Curves"), ("dashboard", "Yields Matrix"), ("dashboard", "Bonds Market"), ("dashboard", "Forward Rates"), ("dashboard", "World Interest Rate Probabilities"), ("dashboard", "World Bonds"), ("dashboard", "Credit"), ("dashboard", "Macro")],
+      "fi": [("dashboard", "Yield Curves"), ("dashboard", "Yields Matrix"), ("dashboard", "Bonds Market"), ("dashboard", "Forward Rates"), ("dashboard", "World Interest Rate Probabilities"), ("dashboard", "World Bonds"), ("dashboard", "Credit"), ("dashboard", "Macro")],
       "eq": [("dashboard", "World Equity Indices"), ("dashboard", "DM Equity (US)"), ("dashboard", "EM Equity"), ("dashboard", "Quotes & Charts"), ("dashboard", "Fundamentals"), ("dashboard", "Earnings Calendar"), ("dashboard", "Watchlist & Alerts")],
       "ex": [("dashboard", "FX"), ("dashboard", "Onshore USD Rates"), ("dashboard", "Crypto"), ("dashboard", "Commodities")],
       "nw": [("dashboard", "Economic Calendar"), ("dashboard", "News"), ("dashboard", "Central Bank Calendar")],

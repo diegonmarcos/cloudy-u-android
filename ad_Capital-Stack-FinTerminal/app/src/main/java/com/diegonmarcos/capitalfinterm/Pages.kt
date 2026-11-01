@@ -20,7 +20,12 @@ data class Entry(
     val note: String,
     /** The id of the dashboard (data/dashboards.json) a `dashboard` entry opens. */
     val dashboard: String,
+    /** #1399 the sub-page id of a non-dashboard entry (`page`, e.g. MY-PM's holdings); a dashboard's page id is its slug. */
+    val page: String = "",
 )
+
+/** #1399 one card of a section's Homepage: the sub-page it opens, its declared label, icon and one-line description. */
+data class HomeCard(val pageId: String, val title: String, val subtitle: String, val icon: String, val entry: Entry)
 
 object Pages {
     /** The kinds the renderer draws; test-lnktree-app.sh holds them against the kinds build.json declares. */
@@ -46,6 +51,7 @@ object Pages {
                 planned = o.optBoolean("planned", false),
                 note = o.optString("note"),
                 dashboard = o.optString("dashboard"),
+                page = o.optString("page"),
             )
         }
     }
@@ -63,6 +69,38 @@ object Pages {
             val base = t.optString("repo_base")
             if (base.isBlank()) return null
             return base + e.repo + (if (e.path.isNotEmpty()) "/tree/main/" + e.path else "")
+        }
+        return null
+    }
+
+    /** #1399 every terminal section's first sub-page: the section's Homepage (the grid of its other sub-pages). */
+    const val PAGE_HOME = "home"
+
+    /** The web slug of a dashboard id (scripts/gen-finterm.mjs slugOf): the dashboard's sub-page id. */
+    fun slugOf(id: String): String = id.lowercase().replace('_', '-')
+
+    /** The sub-page [e] is: its declared `page`, else its dashboard's slug; "" = not a sub-page (a section title, About, Sources). */
+    fun pageIdOf(e: Entry): String = e.page.ifEmpty { if (e.kind == KIND_DASHBOARD && e.dashboard.isNotEmpty()) slugOf(e.dashboard) else "" }
+
+    /**
+     * The Homepage of a section: one card per declared sub-page after Home (ui.sections[].pages, in order), with the sub-page's
+     * label and icon and its stack entry's one-line description. A declared page with no entry is left out (the guard rejects it).
+     */
+    fun homeCards(pages: List<Triple<String, String, String>>, entries: List<Entry>): List<HomeCard> =
+        pages.filter { it.first != PAGE_HOME }.mapNotNull { (id, label, icon) ->
+            val e = entries.firstOrNull { pageIdOf(it) == id } ?: return@mapNotNull null
+            HomeCard(id, label.ifEmpty { e.title }, e.subtitle, icon, e)
+        }
+
+    /** The entry a sub-page id opens, or null (Home, or an unknown id). */
+    fun entryOf(entries: List<Entry>, pageId: String): Entry? = entries.firstOrNull { pageIdOf(it) == pageId }
+
+    /** #1399 ui.redirects: a removed dashboard id -> (tab, sub-page) its deep links open now; null = not redirected. */
+    fun redirect(redirects: String, dashboard: String): Pair<String, String>? {
+        val arr = runCatching { org.json.JSONArray(redirects) }.getOrNull() ?: return null
+        for (i in 0 until arr.length()) {
+            val o = arr.optJSONObject(i) ?: continue
+            if (o.optString("from") == dashboard) return o.optString("tab") to o.optString("to", PAGE_HOME)
         }
         return null
     }

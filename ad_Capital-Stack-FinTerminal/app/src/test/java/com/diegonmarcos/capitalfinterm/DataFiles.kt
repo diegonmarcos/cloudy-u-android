@@ -10,4 +10,5 @@ object DataFiles {
     val dashboardsJson: String get() = find("../data/dashboards.json", "data/dashboards.json").readText()
     val controlJson: String get() = find("../data/control.json", "data/control.json").readText()
     val buildJson: String get() = find("../build.json", "build.json").readText()
+    val engineFixtureJson: String get() = find("src/test/resources/engine-fixture.json", "app/src/test/resources/engine-fixture.json").readText()
 }

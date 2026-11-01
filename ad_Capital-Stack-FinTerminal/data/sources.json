@@ -573,12 +573,6 @@
       "connector": "nyfed_rates",
       "feeds": [
         {
-          "tab": "fi",
-          "entries": [
-            "Market Monitor"
-          ]
-        },
-        {
           "tab": "ex",
           "entries": [
             "Onshore USD Rates"
@@ -611,7 +605,6 @@
         {
           "tab": "fi",
           "entries": [
-            "Market Monitor",
             "Yield Curves",
             "Yields Matrix",
             "World Bonds"
@@ -806,7 +799,7 @@
         {
           "tab": "fi",
           "entries": [
-            "Market Monitor"
+            "Macro"
           ]
         },
         {
@@ -849,7 +842,7 @@
         {
           "tab": "fi",
           "entries": [
-            "Market Monitor"
+            "Macro"
           ]
         },
         {
@@ -924,12 +917,6 @@
       "connector": "frankfurter_rates",
       "feeds": [
         {
-          "tab": "fi",
-          "entries": [
-            "Market Monitor"
-          ]
-        },
-        {
           "tab": "ex",
           "entries": [
             "FX"
@@ -959,12 +946,6 @@
       },
       "connector": "coinbase_exchange",
       "feeds": [
-        {
-          "tab": "fi",
-          "entries": [
-            "Market Monitor"
-          ]
-        },
         {
           "tab": "ex",
           "entries": [
@@ -1029,7 +1010,6 @@
         {
           "tab": "fi",
           "entries": [
-            "Market Monitor",
             "Bonds Market"
           ]
         },

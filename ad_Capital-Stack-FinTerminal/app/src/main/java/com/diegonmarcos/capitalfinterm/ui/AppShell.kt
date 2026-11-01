@@ -9,6 +9,7 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
@@ -29,7 +30,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import com.diegonmarcos.capitalfinterm.AssetData
 import com.diegonmarcos.capitalfinterm.BuildConfig
-import com.diegonmarcos.capitalfinterm.Dashboards
 import com.diegonmarcos.capitalfinterm.Decl
 import com.diegonmarcos.capitalfinterm.FinNavStack
 import com.diegonmarcos.capitalfinterm.FinSearchIndex
@@ -45,6 +45,7 @@ import com.diegonmarcos.superapp.bottomnav.rememberAccountLauncher
 import com.diegonmarcos.superapp.navbarbottom.NavBarBottomHost
 import com.diegonmarcos.superapp.navbartop1.NavBarTopFirstRowScaffold
 import com.diegonmarcos.superapp.navbartop1.titleHierarchy
+import com.diegonmarcos.superapp.navbartop2.NavBarTopSecondRows
 import com.diegonmarcos.superapp.themebg.themeBackground
 
 /** The test tags the shell is driven by. */
@@ -79,8 +80,8 @@ fun AppShell(startDashboard: String? = null) {
     var section by rememberSaveable { mutableStateOf(homeSection) }
     var stacks by rememberSaveable { mutableStateOf(mapOf<String, List<String>>()) }
     var searching by rememberSaveable { mutableStateOf(false) }
-    fun defaultDash(sec: String): String? = Dashboards.defaultOf(dashboards, Pages.entries(Decl.stacks, sec).filter { it.kind == Pages.KIND_DASHBOARD }.map { it.dashboard })
-    fun stackOf(sec: String): List<String> = stacks[sec] ?: FinNavStack.initial(defaultDash(sec))
+    // #1399 every section opens on its Homepage (the stack's `list`); the one-row nav lists Home and every sub-page.
+    fun stackOf(sec: String): List<String> = stacks[sec] ?: FinNavStack.initial()
     fun setStack(sec: String, s: List<String>) { stacks = stacks + (sec to s) }
     val stack = stackOf(section)
     val top = stack.last()
@@ -97,9 +98,26 @@ fun AppShell(startDashboard: String? = null) {
             override fun search() { searching = true }
         }
     }
-    LaunchedEffect(startDashboard) { if (startDashboard != null && dashboards.any { it.id == startDashboard }) finNav.openDashboard(startDashboard) }
-    // Back (UI spec 4.4): search -> quote pops -> a non-default dashboard -> the tab's default -> the home tab -> exit.
-    val back = FinNavStack.back(stack, defaultDash(section), section == homeSection)
+    /** A sub-page of the one-row nav (or a Homepage card): Home, a dashboard (by its slug) or a non-dashboard page. */
+    fun openPage(sec: String, id: String) {
+        val e = Pages.entryOf(Pages.entries(Decl.stacks, sec), id)
+        setStack(sec, when {
+            id == Pages.PAGE_HOME || e == null -> FinNavStack.LIST_ONLY
+            e.kind == Pages.KIND_DASHBOARD -> FinNavStack.open(stackOf(sec), e.dashboard)
+            else -> FinNavStack.openPage(id)
+        })
+    }
+    LaunchedEffect(startDashboard) {
+        if (startDashboard == null) return@LaunchedEffect
+        // #1399 a removed dashboard's deep link (ui.redirects, e.g. FI Market Monitor) opens its section's Homepage.
+        val moved = Pages.redirect(Decl.redirects, startDashboard)
+        if (moved != null && nav.section(moved.first) != null) { section = moved.first; openPage(moved.first, moved.second) }
+        else if (dashboards.any { it.id == startDashboard }) finNav.openDashboard(startDashboard)
+        // a section id (`--es dashboard fi`) opens that section on its Homepage (the CI emulator nav walk)
+        else if (nav.section(startDashboard) != null) { section = startDashboard; setStack(startDashboard, FinNavStack.LIST_ONLY) }
+    }
+    // Back (UI spec 4.4): search -> quote pops -> a sub-page -> the section's Homepage -> the home tab -> exit.
+    val back = FinNavStack.back(stack, section == homeSection)
     BackHandler(enabled = back != null) {
         when (val b = back) {
             null -> Unit
@@ -114,12 +132,12 @@ fun AppShell(startDashboard: String? = null) {
         Box(Modifier.fillMaxSize().then(canvas).windowInsetsPadding(WindowInsets.statusBars.union(WindowInsets.displayCutout))) {
             NavBarTopFirstRowScaffold(
                 title = sec?.label ?: stringResource(R.string.app_name),
-                hierarchy = sec?.let { titleHierarchy(it, FinNavStack.dashboardOf(stack)) }.orEmpty(),
+                hierarchy = sec?.let { titleHierarchy(it, FinNavStack.selectedPage(stack)) }.orEmpty(),
                 onNavigate = { e ->
                     if (e.depth == 0) {
                         // The breadcrumb's tab word: the tab's dashboard list (UI spec 3); another tab: switch to it.
                         if (e.sectionId == section) setStack(section, FinNavStack.LIST_ONLY) else section = e.sectionId
-                    } else finNav.openDashboard(e.id)
+                    } else { section = e.sectionId; openPage(e.sectionId, e.id) }
                 },
                 onAccount = rememberAccountLauncher(),
                 onConfigs = { section = Decl.SECTION_CONFIG },
@@ -134,6 +152,9 @@ fun AppShell(startDashboard: String? = null) {
                     modifier = Modifier.testTag(Tags.SHELL),
                 ) {
                     val still = LocalReduceMotion.current
+                    Column(Modifier.fillMaxSize()) {
+                    // #1399 the fleet nav lib's one-row mode: ONE horizontally scrollable row of the section's sub-pages, Home first.
+                    if (sec != null && sec.pages.isNotEmpty()) NavBarTopSecondRows(sec, FinNavStack.selectedPage(stack), onSelect = { openPage(section, it.id) }, underTopChrome = false)
                     AnimatedContent(
                         targetState = section to top,
                         transitionSpec = {
@@ -142,8 +163,11 @@ fun AppShell(startDashboard: String? = null) {
                             else slideInHorizontally(androidx.compose.animation.core.tween(200)) { it } togetherWith fadeOut(androidx.compose.animation.core.tween(200))
                         },
                         label = "screen",
+                        modifier = Modifier.weight(1f),
                     ) { (s, _) ->
-                        SectionPage(s, stackOf(s), finNav, onSelectList = { id -> setStack(s, FinNavStack.open(stackOf(s), id)) }, onOpenConfig = { section = Decl.SECTION_CONFIG })
+                        SectionPage(s, stackOf(s), finNav, onSelectList = { id -> setStack(s, FinNavStack.open(stackOf(s), id)) }, onOpenConfig = { section = Decl.SECTION_CONFIG },
+                            onOpenPage = { id -> openPage(s, id) })
+                    }
                     }
                 }
             }

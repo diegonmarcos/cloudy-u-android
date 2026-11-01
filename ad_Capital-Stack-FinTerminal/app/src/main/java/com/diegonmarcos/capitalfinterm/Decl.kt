@@ -16,6 +16,11 @@ object Decl {
 
     val stacks: String by lazy { decode(BuildConfig.UI_STACKS_B64) }
     val targets: String by lazy { decode(BuildConfig.UI_TARGETS_B64) }
+    /** #1399 ui.redirects: removed dashboards and the (tab, sub-page) their deep links open. */
+    val redirects: String by lazy { decode(BuildConfig.UI_REDIRECTS_B64) }
+
+    /** #1399 the declared sub-pages of [sectionId] (ui.sections[].pages: Home first) as (id, label, icon). */
+    fun pages(sectionId: String): List<Triple<String, String, String>> = nav.section(sectionId)?.pages.orEmpty().map { Triple(it.id, it.label, it.icon) }
 
     /** The private mesh's base addresses (fleet endpoint id to address), baked by app/build.gradle from the fleet declaration: nothing is typed here. */
     val fleetMesh: Map<String, String> by lazy { Mesh.parse(decode(BuildConfig.FLEET_MESH_B64)) }

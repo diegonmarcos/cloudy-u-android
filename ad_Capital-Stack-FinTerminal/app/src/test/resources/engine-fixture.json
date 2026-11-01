@@ -1,0 +1,178 @@
+{
+  "_doc": "#1399 TEST FIXTURE: the four engine-test panels of the removed FI Market Monitor (UST par quotes, NY Fed funding, ECB FX, Coinbase crypto), kept so ModelEngineTest still covers first-route-wins, per-item requests, column dropping and the container fallback. Not shipped.",
+  "dashboards": [
+    {
+      "id": "engine_fixture",
+      "entry": "Engine fixture",
+      "tab": "fi",
+      "panels": [
+        {
+          "id": "ust",
+          "title": "US Treasuries (par, official)",
+          "source": "treasury_xml",
+          "view": "quotes",
+          "derive": "points",
+          "fetch": {
+            "provider": "treasury_xml",
+            "path": "/xml",
+            "params": {
+              "data": "daily_treasury_yield_curve",
+              "field_tdr_date_value_month": "{yyyymm}"
+            },
+            "fallbacks": [
+              {
+                "source": "treasury_xml",
+                "provider": "treasury_xml",
+                "path": "/xml",
+                "params": {
+                  "data": "daily_treasury_yield_curve",
+                  "field_tdr_date_value_month": "{prev_yyyymm}"
+                }
+              }
+            ],
+            "labels": {
+              "BC_2YEAR": "UST 2Y",
+              "BC_10YEAR": "UST 10Y",
+              "BC_30YEAR": "UST 30Y"
+            },
+            "primary": {
+              "source": "cloud_fincept",
+              "api": "/v1/curves/ust_par",
+              "parse": "finterm_v1"
+            }
+          },
+          "columns": [
+            "Name",
+            "Last",
+            "Chg",
+            "Chg %",
+            "As of"
+          ],
+          "unit": "%",
+          "change_unit": "bp",
+          "display": "kpi",
+          "spread": {
+            "label": "2s10s",
+            "of": [
+              "UST 10Y",
+              "UST 2Y"
+            ]
+          }
+        },
+        {
+          "id": "funding",
+          "title": "USD funding (NY Fed)",
+          "source": "nyfed",
+          "view": "quotes",
+          "derive": "points",
+          "fetch": {
+            "provider": "nyfed_rates",
+            "path": "/api/rates/all/latest.json",
+            "labels": {
+              "SOFR": "SOFR",
+              "EFFR": "EFFR",
+              "SOFRAI_30D": "SOFR 30D"
+            },
+            "primary": {
+              "source": "cloud_fincept",
+              "api": "/v1/series",
+              "params": {
+                "ids": "nyfed:SOFR,nyfed:EFFR,nyfed:SOFRAI_30D"
+              },
+              "parse": "finterm_v1"
+            }
+          },
+          "columns": [
+            "Name",
+            "Last",
+            "Chg",
+            "Chg %",
+            "As of"
+          ],
+          "unit": "%",
+          "change_unit": "bp",
+          "display": "rows"
+        },
+        {
+          "id": "fx",
+          "title": "FX (ECB reference, per USD)",
+          "source": "frankfurter",
+          "view": "quotes",
+          "derive": "points",
+          "fetch": {
+            "provider": "frankfurter_rates",
+            "path": "/v1/{from}..",
+            "params": {
+              "base": "USD",
+              "symbols": "EUR,GBP,JPY,CHF,CNY"
+            },
+            "lookback_days": 30,
+            "labels": {
+              "EUR": "EUR per USD",
+              "GBP": "GBP per USD",
+              "JPY": "JPY per USD",
+              "CHF": "CHF per USD",
+              "CNY": "CNY per USD"
+            },
+            "primary": {
+              "source": "cloud_fincept",
+              "api": "/v1/fx/spot",
+              "params": {
+                "base": "USD",
+                "symbols": "EUR,GBP,JPY,CHF,CNY"
+              },
+              "parse": "finterm_v1"
+            }
+          },
+          "columns": [
+            "Name",
+            "Last",
+            "Chg",
+            "Chg %",
+            "As of"
+          ],
+          "display": "heat",
+          "heat_scale": 1.0,
+          "tape": true
+        },
+        {
+          "id": "crypto",
+          "title": "Crypto (24h)",
+          "source": "coinbase",
+          "view": "quotes",
+          "derive": "points",
+          "fetch": {
+            "provider": "coinbase_exchange",
+            "path": "/products/{each}/stats",
+            "each": [
+              "BTC-USD",
+              "ETH-USD",
+              "SOL-USD"
+            ],
+            "labels": {
+              "BTC-USD": "Bitcoin",
+              "ETH-USD": "Ether",
+              "SOL-USD": "Solana"
+            },
+            "primary": {
+              "source": "cloud_fincept",
+              "api": "/v1/quotes",
+              "params": {
+                "symbols": "BTC-USD,ETH-USD,SOL-USD"
+              },
+              "parse": "finterm_v1"
+            }
+          },
+          "columns": [
+            "Name",
+            "Last",
+            "Chg",
+            "Chg %",
+            "As of"
+          ],
+          "tape": true
+        }
+      ]
+    }
+  ]
+}

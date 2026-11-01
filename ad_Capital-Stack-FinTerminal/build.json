@@ -190,44 +190,95 @@
       "my-pm"
     ],
     "default_section": "fi",
-    "nav_ui": {"mode": "clean", "scroll_hide": true},
+    "nav_ui": {"mode": "classic", "scroll_hide": true},
     "configs_ui": ["nav_ui"],
+    "redirects": [{"from": "market_monitor", "tab": "fi", "to": "home", "note": "#1399 FI Market Monitor removed: its deep links open the FI Homepage"}],
     "sections": [
       {
         "id": "fi",
         "label": "FI",
         "icon": "account_balance",
-        "pages": []
+        "nav_mode": "horizontal_one_row",
+        "pages": [
+          {"id": "home", "label": "Home", "icon": "home"},
+          {"id": "yield-curves", "label": "Yield Curves", "icon": "timeline"},
+          {"id": "yields-matrix", "label": "Yields Matrix", "icon": "table_chart"},
+          {"id": "bonds-market", "label": "Bonds Market", "icon": "bar_chart"},
+          {"id": "forward-rates", "label": "Forward Rates", "icon": "insights"},
+          {"id": "rate-probabilities", "label": "World Interest Rate Probabilities", "icon": "speed"},
+          {"id": "world-bonds", "label": "World Bonds", "icon": "public"},
+          {"id": "credit", "label": "Credit", "icon": "assessment"},
+          {"id": "macro", "label": "Macro", "icon": "language"}
+        ]
       },
       {
         "id": "eq",
         "label": "EQ",
         "icon": "trending_up",
-        "pages": []
+        "nav_mode": "horizontal_one_row",
+        "pages": [
+          {"id": "home", "label": "Home", "icon": "home"},
+          {"id": "world-equity-indices", "label": "World Equity Indices", "icon": "public"},
+          {"id": "eq-dm-us", "label": "DM Equity (US)", "icon": "trending_up"},
+          {"id": "eq-em", "label": "EM Equity", "icon": "explore"},
+          {"id": "equity-quote", "label": "Quotes & Charts", "icon": "chart"},
+          {"id": "equity-fundamentals", "label": "Fundamentals", "icon": "description"},
+          {"id": "earnings-calendar", "label": "Earnings Calendar", "icon": "calendar_month"},
+          {"id": "watchlist", "label": "Watchlist & Alerts", "icon": "bookmark"}
+        ]
       },
       {
         "id": "ex",
         "label": "EX",
         "icon": "payments",
-        "pages": []
+        "nav_mode": "horizontal_one_row",
+        "pages": [
+          {"id": "home", "label": "Home", "icon": "home"},
+          {"id": "fx", "label": "FX", "icon": "swap_horiz"},
+          {"id": "onshore-usd-rates", "label": "Onshore USD Rates", "icon": "account_balance"},
+          {"id": "crypto", "label": "Crypto", "icon": "token"},
+          {"id": "commodities", "label": "Commodities", "icon": "inventory_2"}
+        ]
       },
       {
         "id": "nw",
         "label": "NW",
         "icon": "rss_feed",
-        "pages": []
+        "nav_mode": "horizontal_one_row",
+        "pages": [
+          {"id": "home", "label": "Home", "icon": "home"},
+          {"id": "economic-calendar", "label": "Economic Calendar", "icon": "event"},
+          {"id": "news", "label": "News", "icon": "rss_feed"},
+          {"id": "central-bank-calendar", "label": "Central Bank Calendar", "icon": "account_balance"}
+        ]
       },
       {
         "id": "pm",
         "label": "PM",
         "icon": "pie_chart",
-        "pages": []
+        "nav_mode": "horizontal_one_row",
+        "pages": [
+          {"id": "home", "label": "Home", "icon": "home"},
+          {"id": "portfolio-risk", "label": "Portfolio & Risk Analytics", "icon": "insights"},
+          {"id": "mp-40-60", "label": "40/60", "icon": "pie_chart", "separator_before": true},
+          {"id": "mp-70-30", "label": "70/30", "icon": "pie_chart"},
+          {"id": "mp-60-40", "label": "60/40", "icon": "pie_chart"},
+          {"id": "mp-30-70", "label": "30/70", "icon": "pie_chart"},
+          {"id": "mp-70-30-dm-em", "label": "70/30 DM/EM", "icon": "pie_chart", "separator_before": true},
+          {"id": "mp-60-40-dm-em", "label": "60/40 DM/EM", "icon": "pie_chart"},
+          {"id": "mp-40-60-dm-em", "label": "40/60 DM/EM", "icon": "pie_chart"},
+          {"id": "mp-30-70-dm-em", "label": "30/70 DM/EM", "icon": "pie_chart"}
+        ]
       },
       {
         "id": "my-pm",
         "label": "MY-PM",
         "icon": "wallet",
-        "pages": []
+        "nav_mode": "horizontal_one_row",
+        "pages": [
+          {"id": "home", "label": "Home", "icon": "home"},
+          {"id": "holdings", "label": "Personal portfolio", "icon": "wallet"}
+        ]
       },
       {
         "id": "about",
@@ -244,12 +295,6 @@
     ],
     "stacks": {
       "fi": [
-        {
-          "kind": "dashboard",
-          "title": "Market Monitor",
-          "subtitle": "Cross-asset tiles (rates, funding, indices, FX, crypto) and the next 48 hours of high-importance events",
-          "dashboard": "market_monitor"
-        },
         {
           "kind": "dashboard",
           "title": "Yield Curves",
@@ -455,7 +500,7 @@
       ],
       "my-pm": [
         {
-          "kind": "holdings",
+          "kind": "holdings", "page": "holdings",
           "title": "Personal portfolio",
           "subtitle": "Your holdings: ticker, quantity, cost, kept on this phone"
         }

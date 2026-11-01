@@ -19,6 +19,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Switch
@@ -44,6 +46,8 @@ import com.diegonmarcos.capitalfinterm.Decl
 import com.diegonmarcos.capitalfinterm.Entry
 import com.diegonmarcos.capitalfinterm.FinNavStack
 import com.diegonmarcos.capitalfinterm.Pages
+import com.diegonmarcos.capitalfinterm.HomeCard
+import com.diegonmarcos.superapp.navbartop2.SecondRowIcons
 import com.diegonmarcos.capitalfinterm.R
 import com.diegonmarcos.capitalfinterm.ui.fin.FinDim
 import com.diegonmarcos.capitalfinterm.ui.fin.FinType
@@ -62,8 +66,11 @@ import com.diegonmarcos.superapp.uikit.LocalKitPalette
  * the right. Nothing here is typed text: the words are build.json's.
  */
 @Composable
-fun SectionPage(sectionId: String, stack: List<String>, nav: FinNav, onSelectList: (String) -> Unit, onOpenConfig: () -> Unit) {
+fun SectionPage(sectionId: String, stack: List<String>, nav: FinNav, onSelectList: (String) -> Unit, onOpenConfig: () -> Unit, onOpenPage: (String) -> Unit = {}) {
     val entries = remember(sectionId) { Pages.entries(Decl.stacks, sectionId) }
+    // #1399 a section that declares its sub-pages opens on its Homepage: every sub-page as a card (icon, name, one line).
+    val cards = remember(sectionId) { Pages.homeCards(Decl.pages(sectionId), entries) }
+    val page = FinNavStack.pageOf(stack)?.let { Pages.entryOf(entries, it) }
     val top = stack.lastOrNull() ?: FinNavStack.LIST
     val hasDash = entries.any { it.kind == Pages.KIND_DASHBOARD }
     val p = LocalFinPalette.current
@@ -80,6 +87,8 @@ fun SectionPage(sectionId: String, stack: List<String>, nav: FinNav, onSelectLis
                     when {
                         sym != null -> QuotePage(sym, nav)
                         selected != null -> DashboardPage(selected, nav)
+                        page != null -> EntryPage(page)
+                        cards.isNotEmpty() -> HomeGrid(sectionId, cards, nav, onOpenPage)
                         else -> Box(Modifier.fillMaxSize().background(p.canvas))
                     }
                 }
@@ -89,6 +98,8 @@ fun SectionPage(sectionId: String, stack: List<String>, nav: FinNav, onSelectLis
             when {
                 sym != null -> QuotePage(sym, nav)
                 top.startsWith("dash:") -> DashboardPage(top.removePrefix("dash:"), nav)
+                page != null -> EntryPage(page)
+                cards.isNotEmpty() -> HomeGrid(sectionId, cards, nav, onOpenPage)
                 else -> TabList(sectionId, entries, compact = false, selected = null, nav = nav, onOpen = onSelectList, onOpenConfig = onOpenConfig)
             }
         }
@@ -134,6 +145,58 @@ private fun TabList(sectionId: String, entries: List<Entry>, compact: Boolean, s
                 }
             }
         }
+    }
+}
+
+/** #1399 a non-dashboard sub-page (MY-PM's holdings): its declared panel, alone. */
+@Composable
+private fun EntryPage(e: Entry) {
+    Box(Modifier.fillMaxSize().padding(horizontal = FinDim.screenPad, vertical = FinDim.gap)) {
+        when (e.kind) {
+            Pages.KIND_HOLDINGS -> HoldingsPanel()
+            else -> Text(e.title, color = LocalFinPalette.current.text, style = FinType.title)
+        }
+    }
+}
+
+/** #1399 the section's Homepage: a 2-column grid of cards, one per sub-page (icon, name, one-line description); a tap opens it. */
+@Composable
+private fun HomeGrid(sectionId: String, cards: List<HomeCard>, nav: FinNav, onOpen: (String) -> Unit) {
+    LazyColumn(
+        Modifier.fillMaxSize().testTag(HOME_GRID + sectionId),
+        contentPadding = PaddingValues(start = FinDim.screenPad, end = FinDim.screenPad, top = FinDim.gap, bottom = FinDim.bottomInset),
+        verticalArrangement = Arrangement.spacedBy(FinDim.gap),
+    ) {
+        if (cards.any { it.entry.kind == Pages.KIND_DASHBOARD }) item(key = "search") { FinSearchField(onClick = { nav.search() }) }
+        cards.chunked(2).forEachIndexed { i, pair ->
+            item(key = "h:$i") {
+                Row(horizontalArrangement = Arrangement.spacedBy(FinDim.gap)) {
+                    pair.forEach { c -> HomeCardTile(c, Modifier.weight(1f)) { onOpen(c.pageId) } }
+                    if (pair.size == 1) Spacer(Modifier.weight(1f))
+                }
+            }
+        }
+    }
+}
+
+/** The test tag prefix of a Homepage grid (+ section id) and of one card (+ sub-page id). */
+const val HOME_GRID = "home_grid:"
+const val HOME_CARD = "home_card:"
+
+@Composable
+private fun HomeCardTile(c: HomeCard, modifier: Modifier, onOpen: () -> Unit) {
+    val p = LocalFinPalette.current
+    Column(
+        modifier.height(112.dp).clip(RoundedCornerShape(FinDim.cardRadius)).background(p.surface).border(1.dp, p.hairline, RoundedCornerShape(FinDim.cardRadius))
+            .clickable(onClick = onOpen).padding(12.dp).testTag(HOME_CARD + c.pageId),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(SecondRowIcons.vector(c.icon), contentDescription = null, tint = p.accent, modifier = Modifier.size(20.dp))
+            Spacer(Modifier.width(8.dp))
+            Text(c.title, Modifier.weight(1f), color = p.text, style = FinType.title, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        }
+        Text(c.subtitle, color = p.text2, style = FinType.caption, maxLines = 2, overflow = TextOverflow.Ellipsis)
     }
 }
 

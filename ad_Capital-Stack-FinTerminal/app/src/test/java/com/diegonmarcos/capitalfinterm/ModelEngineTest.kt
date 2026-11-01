@@ -12,7 +12,8 @@ import java.time.LocalDate
 /** The model panels end to end on the real declarations and a fake network: the container first, then the panel's own source, then the fallbacks. */
 class ModelEngineTest {
     private val sources = Catalog.parse(DataFiles.sourcesJson)
-    private val dashboards = Dashboards.parse(DataFiles.dashboardsJson)
+    // #1399 + the removed Market Monitor's engine panels as a test fixture (src/test/resources/engine-fixture.json)
+    private val dashboards = Dashboards.parse(DataFiles.dashboardsJson) + Dashboards.parse(DataFiles.engineFixtureJson)
     private val today = LocalDate.of(2026, 10, 30)
     private val cloud = sources.first { it.primary }
     private val api = ApiRoute(cloud, "http://mesh-base")
@@ -70,13 +71,13 @@ class ModelEngineTest {
 
     @Test fun theImportanceFilterAndWindowAreTheDeclaredOnes() {
         val http = Fake { u -> if (u.endsWith("/ff_calendar_thisweek.json")) ff else if (u.startsWith("asset:")) cb else null }
-        val d = load("market_monitor", "next", http)
+        val d = load("macro", "next", http)
         // next 48 hours, importance 3 only: the EUR flash (31 Oct); NFP (6 Nov) and the Fed (5 Nov) are beyond, the AUD print is Low
         assertEquals(listOf("CPI Flash Estimate y/y"), d.rows.map { it[2] })
     }
 
     @Test fun anEmptyWindowSaysSoInsteadOfFailing() {
-        val d = load("market_monitor", "next", Fake { u -> if (u.endsWith("/ff_calendar_thisweek.json")) "[]" else null })
+        val d = load("macro", "next", Fake { u -> if (u.endsWith("/ff_calendar_thisweek.json")) "[]" else null })
         assertTrue(d.rows.isEmpty())
         assertEquals("No event in this window.", d.note)
     }
@@ -85,14 +86,14 @@ class ModelEngineTest {
         val xml = "<m:properties><d:NEW_DATE m:type=\"Edm.DateTime\">2026-10-29T00:00:00</d:NEW_DATE><d:BC_1MONTH m:type=\"Edm.Double\">4.0</d:BC_1MONTH><d:BC_2YEAR m:type=\"Edm.Double\">3.50</d:BC_2YEAR><d:BC_10YEAR m:type=\"Edm.Double\">4.10</d:BC_10YEAR><d:BC_30YEAR m:type=\"Edm.Double\">4.70</d:BC_30YEAR></m:properties>" +
             "<m:properties><d:NEW_DATE m:type=\"Edm.DateTime\">2026-10-30T00:00:00</d:NEW_DATE><d:BC_1MONTH m:type=\"Edm.Double\">4.0</d:BC_1MONTH><d:BC_2YEAR m:type=\"Edm.Double\">3.52</d:BC_2YEAR><d:BC_10YEAR m:type=\"Edm.Double\">4.15</d:BC_10YEAR><d:BC_30YEAR m:type=\"Edm.Double\">4.71</d:BC_30YEAR></m:properties>"
         val http = Fake { u -> if (u.contains("field_tdr_date_value_month=202610")) xml else null }
-        val d = load("market_monitor", "ust", http)
+        val d = load("engine_fixture", "ust", http)
         assertEquals(1, http.asked.size)
         assertEquals("", d.servedBy)
         assertEquals(listOf("UST 2Y", "UST 10Y", "UST 30Y"), d.rows.map { it[0] })
         assertEquals(listOf("UST 2Y", "3.52", "+2.0", FinFormat.DASH, "2026-10-30"), d.rows[0])
         // the month just started: this month's file is empty, the declared fallback (last month) serves it and is named
         val early = Fake { u -> if (u.contains("field_tdr_date_value_month=202609")) xml else if (u.contains("202610")) "<feed/>" else null }
-        val e = load("market_monitor", "ust", early)
+        val e = load("engine_fixture", "ust", early)
         assertEquals(2, early.asked.size)
         assertEquals("", e.servedBy)
         assertEquals(3, e.rows.size)
@@ -115,7 +116,7 @@ class ModelEngineTest {
                 else -> null
             }
         }
-        val d = load("market_monitor", "crypto", http)
+        val d = load("engine_fixture", "crypto", http)
         assertEquals(3, http.asked.size)
         assertEquals(listOf("Bitcoin", "Ether"), d.rows.map { it[0] })
         assertEquals(listOf("Bitcoin", "110.00", "+10.00", "+10.00", "24h"), d.rows[0])
@@ -124,7 +125,7 @@ class ModelEngineTest {
 
     @Test fun everyItemFailingIsAnError() {
         try {
-            load("market_monitor", "crypto", Fake { null })
+            load("engine_fixture", "crypto", Fake { null })
             fail("expected no data")
         } catch (e: IOException) {
             assertEquals("no data", e.message)
@@ -151,7 +152,7 @@ class ModelEngineTest {
         val eq = load("world_equity_indices", "cboe", cboe)
         assertEquals(listOf("DJX (Dow/100)", "517.70", "-5.73", "-1.09", "2026-10-30 16:47"), eq.rows.single())
         val nyfed = Fake { u -> if (u.contains("/api/rates/all/latest.json")) """{"refRates":[{"effectiveDate":"2026-10-30","type":"SOFR","percentRate":3.94}]}""" else null }
-        val f = load("market_monitor", "funding", nyfed)
+        val f = load("engine_fixture", "funding", nyfed)
         assertEquals(listOf("Name", "Last", "As of"), f.columns)
         assertEquals(3, f.rows.single().size)
     }
@@ -173,7 +174,7 @@ class ModelEngineTest {
     }
 
     @Test fun theApiRouteNeedsTheV1PathTheMeshAndAnAnswer() {
-        val d = dash("market_monitor")
+        val d = dash("engine_fixture")
         val p = d.panels.first { it.id == "fx" }
         val mesh = mapOf(cloud.fleetEndpoint to "http://mesh-base")
         assertEquals("http://mesh-base", Priority.api(p, d, sources, mesh) { true }!!.base)
@@ -204,7 +205,7 @@ class ModelEngineTest {
 
     @Test fun aFailingContainerFallsBackToThePublicSource() {
         val http = Fake { u -> if (u.startsWith("https://api.frankfurter.dev")) """{"base":"USD","rates":{"2026-10-29":{"EUR":0.89},"2026-10-30":{"EUR":0.90}}}""" else null }
-        val d = load("market_monitor", "fx", http, api)
+        val d = load("engine_fixture", "fx", http, api)
         assertTrue(http.asked[0].startsWith("http://mesh-base/v1/fx/spot"))
         assertTrue(http.asked[1].contains("/v1/2026-09-30.."))
         assertEquals("", d.servedBy)
