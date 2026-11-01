@@ -1585,6 +1585,10 @@ private fun GitRepoOpsBox(
     repoint: (File, File) -> String = { _, _ -> "" },
 ) {
     val ctx = LocalContext.current
+    // #1395 Open repo on web: the embedded browser (CloudWeb BROWSER), not an external app
+    var webUrl by remember { mutableStateOf<String?>(null) }
+    fun openWeb(u: String) { webUrl = u }
+    webUrl?.let { u -> RepoWebViewer(u) { webUrl = null } }
     val off = colorResource(R.color.status_light_off)
     var panel by remember(repo.id) { mutableStateOf(initialPanel) }
     LaunchedEffect(repo.id, panel) { onPanel(panel) }
@@ -1631,7 +1635,7 @@ private fun GitRepoOpsBox(
             "force_push" -> confirm = op.id
             "force_pull" -> confirm = op.id
             "metadata" -> panel = if (panel == op.id) "" else op.id
-            "web" -> actions.openUrl(page.webUrl(repoName))
+            "web" -> openWeb(page.webUrl(repoName))
             "stats" -> panel = if (panel == op.id) "" else op.id
             "history" -> panel = if (panel == op.id) "" else op.id
             "remote" -> panel = if (panel == op.id) "" else op.id
@@ -1808,7 +1812,7 @@ private fun GitRepoOpsBox(
                 if (feed == null) Text(stringResource(R.string.sync_glance_reading), style = MaterialTheme.typography.bodySmall)
                 else if (feed.isEmpty()) Text(stringResource(R.string.repo_prs_none), style = MaterialTheme.typography.bodySmall)
                 else feed.forEach { MetaLine(it) }
-                PillRow { Pill(stringResource(R.string.repo_prs_open_web), { actions.openUrl(page.webUrl(repoName) + "/pulls") }) }
+                PillRow { Pill(stringResource(R.string.repo_prs_open_web), { openWeb(page.webUrl(repoName) + "/pulls") }) }
             }
             "size" -> Column(Modifier.padding(top = DriveMetrics.gapWide)) {
                 if (d == null || d.loading) Text(stringResource(R.string.sync_glance_reading), style = MaterialTheme.typography.bodySmall)
@@ -1951,6 +1955,10 @@ private fun GitRepoNotClonedBox(
     onClose: () -> Unit,
 ) {
     val ctx = LocalContext.current
+    // #1395 Open repo on web: the embedded browser (CloudWeb BROWSER), not an external app
+    var webUrl by remember { mutableStateOf<String?>(null) }
+    fun openWeb(u: String) { webUrl = u }
+    webUrl?.let { u -> RepoWebViewer(u) { webUrl = null } }
     var prs by remember(repoName) { mutableStateOf<List<String>?>(null) }
     var runs by remember(repoName) { mutableStateOf<List<String>?>(null) }
     var panel by remember(repoName) { mutableStateOf("") }
@@ -1962,7 +1970,7 @@ private fun GitRepoNotClonedBox(
     }
     DriveCard(repoName, light = StatusLight.State.UNKNOWN, tag = DriveTags.SYNC_GIT_NOT_CLONED_PANEL) {
         PillRow {
-            Pill(stringResource(R.string.repo_act_open_web), { actions.openUrl(page.webUrl(repoName)) })
+            Pill(stringResource(R.string.repo_act_open_web), { openWeb(page.webUrl(repoName)) })
             Pill(stringResource(R.string.sync_clone_into_store), onClone, filled = true, enabled = !cloning)
             Pill(stringResource(R.string.repo_act_copy_url), {
                 (ctx.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager)?.setPrimaryClip(ClipData.newPlainText(repoName, url))
@@ -1973,7 +1981,7 @@ private fun GitRepoNotClonedBox(
             active = { it == panel },
             onAction = { id ->
                 when (id) {
-                    "web" -> actions.openUrl(page.webUrl(repoName))
+                    "web" -> openWeb(page.webUrl(repoName))
                     RepoActions.PRS, RepoActions.RUNS -> panel = if (panel == id) "" else id
                     RepoActions.CLONE_FULL -> coordinator.setCloneDepth(0)
                     RepoActions.CLONE_DEPTH1 -> coordinator.setCloneDepth(1)

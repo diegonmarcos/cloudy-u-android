@@ -10,6 +10,7 @@
 #      lists the drive; a small repository is cloned onto the drive's GIT folder from the Cloud page; then the drive's
 #      repositories are listed, checked (More > Light check / Check) and synced (Sync > No Winner), the result in Logs.
 #   5. Explorer: the drive is a tab of its own.
+#   (2b, #1395) Goto > Web opens the embedded browser (CloudWeb BROWSER); its menu is shot open; Back closes it.
 # Every step leaves a screenshot in <outdir>/shots. Usage: emulator-walk-git-sync-storage.sh <drive.apk> <outdir>
 set -u
 APK=${1:?drive apk}; OUT=${2:-out}
@@ -101,7 +102,15 @@ PY
 tap '^Force pull$' || fail "no Force pull"; sleep 2
 shot 21-dangerous-confirm
 dump >/dev/null; has 'Force pull' && grep -qiE 'text="(Cancel|Close)"' "$OUT/ui.xml" || fail "Force pull ran without asking: $(texts)"
+back
+# 2b. #1395 Goto > Web opens the repository page in the embedded browser; its top-right menu; Back closes it
+for i in 1 2 3; do tap '^Web$' && break; adb shell input swipe 500 600 500 1500 300; sleep 1; done || fail "no Web action in the sheet: $(texts)"
+sleep 6; tap '^More$' || fail "the web viewer has no menu: $(texts)"; sleep 2
+shot 22-web-viewer-menu
+need 'Open in another browser' 'Open in Chrome' 'Copy link' 'Share' 'Reload' || fail "the web viewer menu: $(texts)"
 back; back
+dump >/dev/null; has 'Open in Chrome' && fail "Back did not close the web viewer"
+back
 
 # 3. the selector in the top menu
 pick 'Emulated' || fail "no storage selector in the top menu: $(texts)"

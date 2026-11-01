@@ -18,6 +18,7 @@
     {"app": "Cloud Mail", "usage": "signature preview", "profile": "UNTRUSTED_HTML", "file": "ac_cloud-mail/app/src/main/kotlin/app/sterna/ui/settings/SignatureWebPreview.kt"},
     {"app": "Cloud Mail", "usage": "Authelia sign-in", "profile": "APP_PAGE", "file": "ac_cloud-mail/app/src/main/kotlin/app/sterna/ui/settings/AccountAuthSection.kt"},
     {"app": "Cloud Mail", "usage": "link mini browser", "profile": "BROWSER", "file": "ac_cloud-mail/app/src/main/kotlin/app/sterna/ui/browser/MiniBrowserActivity.kt"},
+    {"app": "Cloud Drive", "usage": "Git repository web page (#1395)", "profile": "BROWSER", "file": "ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive/sync/RepoWebViewer.kt"},
     {"app": "libs:mail (SuperApp, Account)", "usage": "Authelia sign-in", "profile": "APP_PAGE", "file": "ab_cloud-libs-shared/libs/mail/src/main/java/com/diegonmarcos/superapp/mail/MailAuthUi.kt"},
     {"app": "libs:auth (SuperApp, Account, Drive)", "usage": "provider sign-in portal", "profile": "APP_PAGE", "file": "ab_cloud-libs-shared/libs/auth/src/main/java/com/diegonmarcos/cloudlib/auth/SignInUi.kt"},
     {"app": "Cloud SuperApp", "usage": "Lnktree and web pages", "profile": "APP_PAGE", "file": "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/launcher/WebPageFragment.kt"},
