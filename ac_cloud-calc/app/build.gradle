@@ -39,7 +39,12 @@ def buildTimestamp = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss 'UTC'")
 def logSinkUrl    = (buildJson.diagnostics?.log_sink_url    ?: '')
 def logSinkStream = (buildJson.diagnostics?.log_sink_stream ?: 'cloud-calc')
 
-def b64 = { obj -> groovy.json.JsonOutput.toJson(obj).bytes.encodeBase64().toString() }
+// #1409 `_doc*` keys are comments for people, never read at runtime: dropped before baking, so ui.modes stays under
+// javac's 65535-byte string constant limit ("constant string too long").
+def undoc
+undoc = { o -> o instanceof Map ? o.findAll { k, v -> !k.toString().startsWith('_doc') }.collectEntries { k, v -> [k, undoc(v)] } :
+               o instanceof List ? o.collect { undoc(it) } : o }
+def b64 = { obj -> groovy.json.JsonOutput.toJson(undoc(obj)).bytes.encodeBase64().toString() }
 
 // ── the declarations, baked ────────────────────────────────────────────────
 // #868 ui.bottom_nav + ui.sections (+ their `pages`) + ui.default_section are THE navigation
