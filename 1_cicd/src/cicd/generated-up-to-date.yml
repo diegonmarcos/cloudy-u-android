@@ -65,6 +65,10 @@ jobs:
       - name: Every setup-gradle step carries gradle cache hygiene
         run: python3 1_cicd/src/scripts/cloud-android-gradle-cache-hygiene.py check .
 
+      # Every APK upload in a ship workflow is preceded by the 16 KB page-size guard.
+      - name: Every ship APK upload carries the 16 KB page-size guard
+        run: python3 1_cicd/src/scripts/cloud-android-page-size-inject.py check .
+
       - name: Regenerate everything from source
         env:
           CLAUDE_SOT_DIR: /nonexistent/claude-source-of-truth

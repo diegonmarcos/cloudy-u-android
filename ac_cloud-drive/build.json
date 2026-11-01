@@ -1591,7 +1591,7 @@
     "usb_class": 8,
     "uses_feature": {"name": "android.hardware.usb.host", "required": false},
     "media_actions": ["android.intent.action.MEDIA_MOUNTED", "android.intent.action.MEDIA_EJECT", "android.intent.action.MEDIA_UNMOUNTED", "android.intent.action.MEDIA_REMOVED", "android.intent.action.MEDIA_BAD_REMOVAL"],
-    "raw_library": {"coordinate": "me.jahnen.libaums:core:0.10.0", "licence": "Apache-2.0", "file_systems": ["FAT32"], "url": "https://github.com/magnusja/libaums"},
+    "raw_library": {"coordinate": "me.jahnen.libaums:core:0.10.0", "licence": "Apache-2.0", "file_systems": ["FAT32"], "url": "https://github.com/magnusja/libaums", "_doc_native_excludes": "16 KB page size: core 0.10.0 (the latest release) ships libusb-lib.so and liberrno-lib.so linked with 4 KB LOAD segments, which made a 16 KB phone flag the app. They are dropped from the APK (app/build.gradle packaging.jniLibs.excludes) and usb/JavaUsbCommunication.kt replaces their two uses (clear-halt ioctl, errno) with plain UsbDeviceConnection control requests. Guarded by test/test-drive-usb-drives.sh U8 and the ship page-size guard.", "native_excludes": ["**/libusb-lib.so", "**/liberrno-lib.so"]},
     "permission": "usb_host",
     "copy_dir": "Download/Cloud Drive USB"
   },

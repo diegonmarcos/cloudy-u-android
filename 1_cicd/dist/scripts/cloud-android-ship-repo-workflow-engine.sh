@@ -713,6 +713,15 @@ for b in bad:
 sys.exit(1 if bad else 0)
 PYGUARD
 
+# ── 16 KB page-size guard ──────────────────────────────────────────
+# Before every ship workflow's APK upload: the built APK's arm64-v8a/x86_64
+# native libs must be 16 KB LOAD-aligned and stored at 16 KB zip offsets
+# (cloud-android-page-size-guard.py, policy 1_cicd/src/data/page-size-guard.json),
+# preceded by the guard's mutation test. The phone found cloud-drive's 4 KB
+# libaums libs before CI did. generated-up-to-date runs the `check` mode.
+log_step "inject the 16 KB page-size guard"
+PYTHONDONTWRITEBYTECODE=1 python3 "$CICD_SRC/scripts/cloud-android-page-size-inject.py" inject "$CLOUD_ANDROID_ROOT" || exit 1
+
 # ── gradle cache hygiene ──────────────────────────────────────────
 # After every setup-gradle step: a gradle shim that retries a failed dependency
 # resolution once with --refresh-dependencies and, if it fails again, deletes the

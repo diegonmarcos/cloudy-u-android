@@ -91,7 +91,7 @@ class RawUsbDrive private constructor(private val device: UsbMassStorageDevice, 
 
     companion object {
         /** The libaums view of [device]; empty when it is not mass storage. */
-        fun massStorage(ctx: Context, device: UsbDevice): List<UsbMassStorageDevice> = runCatching { device.getMassStorageDevices(ctx) }.getOrDefault(emptyList())
+        fun massStorage(ctx: Context, device: UsbDevice): List<UsbMassStorageDevice> = runCatching { JavaUsbCommunication.install(); device.getMassStorageDevices(ctx) }.getOrDefault(emptyList())
 
         /** Opens [device] (USB permission must already be granted: PermsUsb.request). Blocking: call off the main thread. */
         fun open(ctx: Context, device: UsbDevice): Opened {

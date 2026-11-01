@@ -66,7 +66,16 @@ for dp, _, fs in os.walk(os.path.join(APP, "java")):
     for fn in fs:
         if fn.endswith(".kt"):
             need(not re.search(r"\.requestPermission\(\s*\w*[dD]evice", open(os.path.join(dp, fn)).read()), "U7 %s asks the USB permission itself (use PermsUsb.request)" % fn)
-print("  PASS  U1-U7")
+bj = json.load(open(os.path.join(D, "build.json")))
+ex = set(bj["usb_drives"]["raw_library"].get("native_excludes", []))
+need({"**/libusb-lib.so", "**/liberrno-lib.so"} <= ex, "U8 build.json drops libaums' 4 KB JNI libs (native_excludes)")
+g = open(os.path.join(D, "app/build.gradle")).read()
+need("raw_library?.native_excludes" in g and "useLegacyPackaging = false" in g, "U8 app/build.gradle applies native_excludes and keeps libs stored")
+u = os.path.join(APP, "java/com/diegonmarcos/clouddrive/usb")
+need("JavaUsbCommunication.install()" in open(os.path.join(u, "RawUsbDrive.kt")).read(), "U8 RawUsbDrive installs the JNI-free transport before libaums opens a device")
+jc = open(os.path.join(u, "JavaUsbCommunication.kt")).read()
+need("UnderlyingUsbCommunication.OTHER" in jc and "throw PipeException()" in jc and "REQ_CLEAR_FEATURE" in jc, "U8 JavaUsbCommunication: OTHER mode, stall -> PipeException, CLEAR_FEATURE halt")
+print("  PASS  U1-U8")
 PY
 )
 fails=0
@@ -103,6 +112,11 @@ needs|ac_cloud-drive/build.json|"usb_host",|
 asset|ac_cloud-drive/app/src/main/assets/app-perms.json|"usb_host",|
 libaums|ac_cloud-drive/app/build.gradle|'me.jahnen.libaums:core:|'me.jahnen.libaumsX:core:
 inventory|licenses/inventory.json|"maven:me.jahnen.libaums:core": {|"maven:me.jahnen.libaums:coreX": {
+jni-usb|ac_cloud-drive/build.json|"**/libusb-lib.so", |
+jni-errno|ac_cloud-drive/build.json|, "**/liberrno-lib.so"|
+legacy|ac_cloud-drive/app/build.gradle|useLegacyPackaging = false|useLegacyPackaging = true
+install|ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive/usb/RawUsbDrive.kt|JavaUsbCommunication.install(); |
+stall|ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive/usb/JavaUsbCommunication.kt|throw PipeException()|throw IOException("stall")
 own-request|ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive/usb/UsbDriveActivity.kt|PermsUsb.request(this@UsbDriveActivity, device)|getSystemService(UsbManager::class.java).requestPermission(device, null); PermsUsb.request(this@UsbDriveActivity, device)
 MUTANTS
 rm -rf "$T"

@@ -377,6 +377,19 @@ jobs:
         if: failure() && steps.gate.outputs.skip != 'true'
         run: sh 1_cicd/dist/scripts/cloud-android-annotate-build-failure.sh "$RUNNER_TEMP/gradle-build.log" "build [superapp]"
 
+      # ── MANAGED-PAGE-SIZE-GUARD: injected by cloud-android-page-size-inject.py ──
+      # 16 KB page size (Android 15+): every lib/{arm64-v8a,x86_64}/*.so in the APK about
+      # to be uploaded must have LOAD segments aligned >= 16 KB and sit stored at a 16 KB
+      # zip offset (zipalign -c -P 16). Policy and per-app exemptions:
+      # 1_cicd/src/data/page-size-guard.json. The mutation test runs first.
+      # Edit 1_cicd/src/scripts/cloud-android-page-size-inject.py, never this block.
+      - name: "16 KB page size: native libs LOAD-aligned, stored, zipaligned"
+        if: steps.gate.outputs.skip != 'true'
+        run: |
+          bash 1_cicd/src/scripts/test/page-size-guard.test.sh
+          python3 1_cicd/dist/scripts/cloud-android-page-size-guard.py "aa_cloud-superapp" ${{ env.WORK_DIR }}/dist/*.apk
+      # ── end MANAGED-PAGE-SIZE-GUARD ──
+
       - name: Upload APK as workflow artifact
         if: steps.gate.outputs.skip != 'true'
         uses: actions/upload-artifact@v4

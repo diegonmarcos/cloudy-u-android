@@ -1,0 +1,71 @@
+{
+  "_doc": "16 KB page-size policy for every built APK (cloud-android-page-size-guard.py, run by the MANAGED-PAGE-SIZE-GUARD step that cloud-android-ship-repo-workflow-engine.sh injects into each ship-*.yml right before its APK upload, after the guard's own mutation test). Every lib/<abi>/*.so of the ABIs below must have PT_LOAD p_align >= min_align, and be STORED at a min_align-aligned zip offset (zipalign -c -P 16 -v 4) unless its app is listed under legacy_packaging. Added after the phone flagged cloud-drive (libaums' libusb-lib.so / liberrno-lib.so, 4 KB LOAD segments). Keys are the ship's WORK_DIR.",
+  "min_align": 16384,
+  "abis": [
+    "arm64-v8a",
+    "x86_64"
+  ],
+  "_doc_legacy_packaging": "Apps that extract their native libraries ON PURPOSE (useLegacyPackaging=true, so the manifest gets extractNativeLibs=true), with the reason. Only the zip half is skipped for them; their ELF alignment is still enforced.",
+  "legacy_packaging": {
+    "ac_cloud-termux": "execs its tools (libtermux*.so) out of nativeLibraryDir, which must exist on disk (app/build.gradle packagingOptions)",
+    "ac_cloud-nix-on-droid": "same exec-from-nativeLibraryDir model as cloud-termux (app/build.gradle packagingOptions)",
+    "ab_cloud-libs-shared/lib-apks": "the exec flavors (rclone, unison, gh) set useLegacyPackaging in androidComponents so the engine binaries are on disk to exec",
+    "ac_cloud-c3-webserver": "Tauri gen/android sets useLegacyPackaging to keep the APK at its compressed size",
+    "ac_cloud-media-center": "Tauri gen/android sets useLegacyPackaging to keep the APK at its compressed size",
+    "ac_cloud-code": "the Cordova hook hooks/post-process.js enableLegacyJni() writes useLegacyPackaging = true"
+  },
+  "_doc_exempt_libs": "Per WORK_DIR, per APK entry: a library measured 4 KB-aligned on 2026-11-01 (the fleet's 'latest' release, scanned entry by entry) that this change does not rebuild, with the reason. Each one is a follow-up, not a permanent pass; a NEW 4 KB library anywhere still fails. Empty is the goal.",
+  "exempt_libs": {
+    "ac_cloud-chat": {
+      "lib/arm64-v8a/libanimation-decoder-gif.so": "prebuilt Expo / React Native module AARs linked with 4 KB pages; needs Expo SDK >= 52 builds. 1.1.Product-Backlog task 0172rQF2sCRHaeMtr1E7pzQ8 (16 KB follow-up)",
+      "lib/x86_64/libanimation-decoder-gif.so": "prebuilt Expo / React Native module AARs linked with 4 KB pages; needs Expo SDK >= 52 builds. 1.1.Product-Backlog task 0172rQF2sCRHaeMtr1E7pzQ8 (16 KB follow-up)",
+      "lib/arm64-v8a/libavif_android.so": "prebuilt Expo / React Native module AARs linked with 4 KB pages; needs Expo SDK >= 52 builds. 1.1.Product-Backlog task 0172rQF2sCRHaeMtr1E7pzQ8 (16 KB follow-up)",
+      "lib/x86_64/libavif_android.so": "prebuilt Expo / React Native module AARs linked with 4 KB pages; needs Expo SDK >= 52 builds. 1.1.Product-Backlog task 0172rQF2sCRHaeMtr1E7pzQ8 (16 KB follow-up)",
+      "lib/arm64-v8a/libexpo-modules-core.so": "prebuilt Expo / React Native module AARs linked with 4 KB pages; needs Expo SDK >= 52 builds. 1.1.Product-Backlog task 0172rQF2sCRHaeMtr1E7pzQ8 (16 KB follow-up)",
+      "lib/x86_64/libexpo-modules-core.so": "prebuilt Expo / React Native module AARs linked with 4 KB pages; needs Expo SDK >= 52 builds. 1.1.Product-Backlog task 0172rQF2sCRHaeMtr1E7pzQ8 (16 KB follow-up)"
+    },
+    "ac_cloud-gallery": {
+      "lib/arm64-v8a/libopenjpeg.so": "prebuilt openjpeg in the Fossify Gallery dependency, 4 KB-linked. 1.1.Product-Backlog task 0172rQF2sCRHaeMtr1E7pzQ8 (16 KB follow-up)",
+      "lib/x86_64/libopenjpeg.so": "prebuilt openjpeg in the Fossify Gallery dependency, 4 KB-linked. 1.1.Product-Backlog task 0172rQF2sCRHaeMtr1E7pzQ8 (16 KB follow-up)"
+    },
+    "ab_cloud-libs-shared/keyboard-engines": {
+      "lib/arm64-v8a/libvosk.so": "prebuilt vosk-android and JNA AARs, 4 KB-linked; needs 16 KB-aligned upstream releases. 1.1.Product-Backlog task 0172rQF2sCRHaeMtr1E7pzQ8 (16 KB follow-up)",
+      "lib/x86_64/libvosk.so": "prebuilt vosk-android and JNA AARs, 4 KB-linked; needs 16 KB-aligned upstream releases. 1.1.Product-Backlog task 0172rQF2sCRHaeMtr1E7pzQ8 (16 KB follow-up)",
+      "lib/arm64-v8a/libjnidispatch.so": "prebuilt vosk-android and JNA AARs, 4 KB-linked; needs 16 KB-aligned upstream releases. 1.1.Product-Backlog task 0172rQF2sCRHaeMtr1E7pzQ8 (16 KB follow-up)",
+      "lib/x86_64/libjnidispatch.so": "prebuilt vosk-android and JNA AARs, 4 KB-linked; needs 16 KB-aligned upstream releases. 1.1.Product-Backlog task 0172rQF2sCRHaeMtr1E7pzQ8 (16 KB follow-up)"
+    },
+    "ab_cloud-libs-shared/lib-apks": {
+      "lib/arm64-v8a/libwg-go.so": "Go/OCaml engine binaries: the x86_64 builds and wg-go are linked without -Wl,-z,max-page-size=16384 (arm64 ones already are). 1.1.Product-Backlog task 0172rQF2sCRHaeMtr1E7pzQ8 (16 KB follow-up)",
+      "lib/x86_64/libwg-go.so": "Go/OCaml engine binaries: the x86_64 builds and wg-go are linked without -Wl,-z,max-page-size=16384 (arm64 ones already are). 1.1.Product-Backlog task 0172rQF2sCRHaeMtr1E7pzQ8 (16 KB follow-up)",
+      "lib/x86_64/libgh.so": "Go/OCaml engine binaries: the x86_64 builds and wg-go are linked without -Wl,-z,max-page-size=16384 (arm64 ones already are). 1.1.Product-Backlog task 0172rQF2sCRHaeMtr1E7pzQ8 (16 KB follow-up)",
+      "lib/x86_64/librclone.so": "Go/OCaml engine binaries: the x86_64 builds and wg-go are linked without -Wl,-z,max-page-size=16384 (arm64 ones already are). 1.1.Product-Backlog task 0172rQF2sCRHaeMtr1E7pzQ8 (16 KB follow-up)",
+      "lib/x86_64/libunison.so": "Go/OCaml engine binaries: the x86_64 builds and wg-go are linked without -Wl,-z,max-page-size=16384 (arm64 ones already are). 1.1.Product-Backlog task 0172rQF2sCRHaeMtr1E7pzQ8 (16 KB follow-up)"
+    },
+    "ac_cloud-c3-webserver": {
+      "lib/arm64-v8a/libcloud_c3_webserver_lib.so": "Rust/Tauri cdylib built without -C link-arg=-Wl,-z,max-page-size=16384. 1.1.Product-Backlog task 0172rQF2sCRHaeMtr1E7pzQ8 (16 KB follow-up)",
+      "lib/x86_64/libcloud_c3_webserver_lib.so": "Rust/Tauri cdylib built without -C link-arg=-Wl,-z,max-page-size=16384. 1.1.Product-Backlog task 0172rQF2sCRHaeMtr1E7pzQ8 (16 KB follow-up)"
+    },
+    "ac_cloud-media-center": {
+      "lib/arm64-v8a/libcloud_media_center_lib.so": "Rust/Tauri cdylib built without -C link-arg=-Wl,-z,max-page-size=16384. 1.1.Product-Backlog task 0172rQF2sCRHaeMtr1E7pzQ8 (16 KB follow-up)",
+      "lib/x86_64/libcloud_media_center_lib.so": "Rust/Tauri cdylib built without -C link-arg=-Wl,-z,max-page-size=16384. 1.1.Product-Backlog task 0172rQF2sCRHaeMtr1E7pzQ8 (16 KB follow-up)"
+    },
+    "ac_cloud-notes": {
+      "lib/arm64-v8a/libcloud_notes_mobile_native.so": "Rust mobile-native lib built without -Wl,-z,max-page-size=16384. 1.1.Product-Backlog task 0172rQF2sCRHaeMtr1E7pzQ8 (16 KB follow-up)",
+      "lib/x86_64/libcloud_notes_mobile_native.so": "Rust mobile-native lib built without -Wl,-z,max-page-size=16384. 1.1.Product-Backlog task 0172rQF2sCRHaeMtr1E7pzQ8 (16 KB follow-up)"
+    },
+    "ac_cloud-nix-on-droid": {
+      "lib/arm64-v8a/liblocal-socket.so": "Termux JNI helpers built with the 4 KB default. 1.1.Product-Backlog task 0172rQF2sCRHaeMtr1E7pzQ8 (16 KB follow-up)",
+      "lib/x86_64/liblocal-socket.so": "Termux JNI helpers built with the 4 KB default. 1.1.Product-Backlog task 0172rQF2sCRHaeMtr1E7pzQ8 (16 KB follow-up)",
+      "lib/arm64-v8a/libtermux.so": "Termux JNI helpers built with the 4 KB default. 1.1.Product-Backlog task 0172rQF2sCRHaeMtr1E7pzQ8 (16 KB follow-up)",
+      "lib/x86_64/libtermux.so": "Termux JNI helpers built with the 4 KB default. 1.1.Product-Backlog task 0172rQF2sCRHaeMtr1E7pzQ8 (16 KB follow-up)"
+    },
+    "ac_cloud-termux": {
+      "lib/arm64-v8a/libtermux.so": "Termux JNI/bootstrap and the x86_64 watchdog binaries built with the 4 KB default. 1.1.Product-Backlog task 0172rQF2sCRHaeMtr1E7pzQ8 (16 KB follow-up)",
+      "lib/x86_64/libtermux.so": "Termux JNI/bootstrap and the x86_64 watchdog binaries built with the 4 KB default. 1.1.Product-Backlog task 0172rQF2sCRHaeMtr1E7pzQ8 (16 KB follow-up)",
+      "lib/arm64-v8a/libtermux-bootstrap.so": "Termux JNI/bootstrap and the x86_64 watchdog binaries built with the 4 KB default. 1.1.Product-Backlog task 0172rQF2sCRHaeMtr1E7pzQ8 (16 KB follow-up)",
+      "lib/x86_64/libtermux-bootstrap.so": "Termux JNI/bootstrap and the x86_64 watchdog binaries built with the 4 KB default. 1.1.Product-Backlog task 0172rQF2sCRHaeMtr1E7pzQ8 (16 KB follow-up)",
+      "lib/x86_64/libmywatchdog.so": "Termux JNI/bootstrap and the x86_64 watchdog binaries built with the 4 KB default. 1.1.Product-Backlog task 0172rQF2sCRHaeMtr1E7pzQ8 (16 KB follow-up)",
+      "lib/x86_64/libmywatchdogtui.so": "Termux JNI/bootstrap and the x86_64 watchdog binaries built with the 4 KB default. 1.1.Product-Backlog task 0172rQF2sCRHaeMtr1E7pzQ8 (16 KB follow-up)"
+    }
+  }
+}
