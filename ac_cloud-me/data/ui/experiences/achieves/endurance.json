@@ -1,10 +1,12 @@
 [
   {
     "kind": "ledger",
+    "view": "done_plan",
     "store": "experiences_user",
     "currency": "",
     "reports": [],
     "title": "🌐 Travel & Adventure",
+    "icon": "🧗",
     "ledgers": [
       {
         "collection": "endurance_done",
@@ -47,6 +49,11 @@
           {
             "id": "note",
             "label": "Note",
+            "type": "text"
+          },
+          {
+            "id": "link",
+            "label": "Link / evidence",
             "type": "text"
           }
         ],
@@ -134,8 +141,17 @@
             "required": true
           },
           {
+            "id": "status",
+            "label": "Status",
+            "type": "choice",
+            "options": [
+              "Planned",
+              "In progress"
+            ]
+          },
+          {
             "id": "date",
-            "label": "Date",
+            "label": "Target date",
             "type": "date"
           },
           {
@@ -146,6 +162,11 @@
           {
             "id": "note",
             "label": "Note",
+            "type": "text"
+          },
+          {
+            "id": "link",
+            "label": "Link / evidence",
             "type": "text"
           }
         ],

@@ -1,10 +1,12 @@
 [
   {
     "kind": "ledger",
+    "view": "done_plan",
     "store": "experiences_user",
     "currency": "",
     "reports": [],
     "title": "💼 Work",
+    "icon": "💼",
     "ledgers": [
       {
         "collection": "work_done",
@@ -38,73 +40,91 @@
             "id": "note",
             "label": "Note",
             "type": "text"
+          },
+          {
+            "id": "link",
+            "label": "Link / evidence",
+            "type": "text"
           }
         ],
         "builtin": [
           {
             "title": "Product Engineer Manager · LEAF.Y · Self-employed",
             "category": "🚀 Own venture",
-            "note": "Nov 2025 - Present · Berlin, Germany"
+            "note": "Nov 2025 - Present · Berlin, Germany",
+            "date": "2025-11-01"
           },
           {
             "title": "Capital Markets Advisor · Nexus Ventures & Solutions · Full-time",
             "category": "🚀 Own venture",
-            "note": "Dec 2021 - Present · Remote"
+            "note": "Dec 2021 - Present · Remote",
+            "date": "2021-12-01"
           },
           {
             "title": "Real Estate Private Equity – Front Office – Sr/Partner · RCap Asset · Full-time",
             "category": "💼 Employment",
-            "note": "Jan 2020 - Dec 2020 · São Paulo, Brazil"
+            "note": "Jan 2020 - Dec 2020 · São Paulo, Brazil",
+            "date": "2020-12-01"
           },
           {
             "title": "Asset Management - Front Office – Sr/Partner · Hectare Capital · Full-time",
             "category": "💼 Employment",
-            "note": "Jun 2018 - Jan 2020 · São Paulo, Brazil"
+            "note": "Jun 2018 - Jan 2020 · São Paulo, Brazil",
+            "date": "2020-01-01"
           },
           {
             "title": "Wealth Management - Front Office – Pl/Sr · RTSC Wealth Management and Advisory · Full-time",
             "category": "💼 Employment",
-            "note": "Dec 2015 - Jun 2018 · São Paulo, Brazil"
+            "note": "Dec 2015 - Jun 2018 · São Paulo, Brazil",
+            "date": "2018-06-01"
           },
           {
             "title": "Corporate Venture Capital - Front Office – Pl/Partner · RTSC Holding",
             "category": "💼 Employment",
-            "note": "Dec 2015 - May 2018 · São Paulo, Brazil"
+            "note": "Dec 2015 - May 2018 · São Paulo, Brazil",
+            "date": "2018-05-01"
           },
           {
             "title": "NGO Social and Real Estate Impact - Financial and Engineering - Sr · TECHO · Full-time",
             "category": "💼 Employment",
-            "note": "May 2014 - May 2016 · São Paulo, Brazil"
+            "note": "May 2014 - May 2016 · São Paulo, Brazil",
+            "date": "2016-05-01"
           },
           {
             "title": "Venture Capital – Front Office - Jr · KPTL · Full-time",
             "category": "💼 Employment",
-            "note": "Dec 2013 - May 2015 · São Paulo, Brazil"
+            "note": "Dec 2013 - May 2015 · São Paulo, Brazil",
+            "date": "2015-05-01"
           },
           {
             "title": "Real Estate Corporate - Investors Relations - Jr · Tecnisa · Full-time",
             "category": "💼 Employment",
-            "note": "May 2012 - Feb 2013 · São Paulo, Brazil"
+            "note": "May 2012 - Feb 2013 · São Paulo, Brazil",
+            "date": "2013-02-01"
           },
           {
             "title": "Real Estate Corporate - Bussines Development - Jr · Tecnisa · Full-time",
             "category": "💼 Employment",
-            "note": "Jan 2011 - May 2012 · São Paulo, Brazil"
+            "note": "Jan 2011 - May 2012 · São Paulo, Brazil",
+            "date": "2012-05-01"
           },
           {
             "title": "RE Development Premium Business - Intern · Tecnisa · Full-time",
             "category": "💼 Employment",
-            "note": "Aug 2010 - Jan 2011 · São Paulo, Brazil"
+            "note": "Aug 2010 - Jan 2011 · São Paulo, Brazil",
+            "date": "2011-01-01"
           },
           {
             "title": "Building on Site - Intern · Plano&Plano · Part-time",
             "category": "💼 Employment",
-            "note": "Jan 2009 - Jul 2010 · São Paulo, Brazil"
+            "note": "Jan 2009 - Jul 2010 · São Paulo, Brazil",
+            "date": "2010-07-01"
           },
           {
             "title": "Second Lieutenant · Estado Maior do Exército · Full-time",
             "category": "💼 Employment",
-            "note": "Jan 2006 - Dec 2007 · São Paulo, Brazil"
+            "note": "Jan 2006 - Dec 2007 · São Paulo, Brazil",
+            "date": "2007-12-01"
           }
         ],
         "move_to": "work_todo",
@@ -113,7 +133,7 @@
       {
         "collection": "work_todo",
         "title": "🎯 To do",
-        "empty": "Nothing planned yet. Add a career goal.",
+        "empty": "Nothing planned yet. Add a career goal with its target date.",
         "fields": [
           {
             "id": "title",
@@ -134,13 +154,27 @@
             "required": true
           },
           {
+            "id": "status",
+            "label": "Status",
+            "type": "choice",
+            "options": [
+              "Planned",
+              "In progress"
+            ]
+          },
+          {
             "id": "date",
-            "label": "Date",
+            "label": "Target date",
             "type": "date"
           },
           {
             "id": "note",
             "label": "Note",
+            "type": "text"
+          },
+          {
+            "id": "link",
+            "label": "Link / evidence",
             "type": "text"
           }
         ],

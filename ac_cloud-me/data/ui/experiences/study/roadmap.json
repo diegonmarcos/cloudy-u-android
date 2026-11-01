@@ -1,5 +1,188 @@
 [
   {
+    "kind": "ledger",
+    "view": "done_plan",
+    "store": "experiences_user",
+    "currency": "",
+    "reports": [],
+    "title": "🎓 Study",
+    "icon": "🎓",
+    "ledgers": [
+      {
+        "collection": "study_done",
+        "title": "✅ Done",
+        "empty": "Nothing done recorded yet.",
+        "fields": [
+          {
+            "id": "title",
+            "label": "Item",
+            "type": "text",
+            "required": true
+          },
+          {
+            "id": "category",
+            "label": "Kind",
+            "type": "choice",
+            "options": [
+              "🎓 Degree",
+              "📚 Course",
+              "📜 Certification",
+              "🗣️ Language"
+            ],
+            "required": true
+          },
+          {
+            "id": "date",
+            "label": "Date",
+            "type": "date"
+          },
+          {
+            "id": "note",
+            "label": "Note",
+            "type": "text"
+          },
+          {
+            "id": "link",
+            "label": "Link / evidence",
+            "type": "text"
+          }
+        ],
+        "builtin": [
+          {
+            "title": "Product Management Accelerated Program (On-line)",
+            "category": "📚 Course",
+            "note": "Stanford University · Nov 2023 - Dec 2023",
+            "date": "2023-12-01"
+          },
+          {
+            "title": "Specialization in Investment Banking, Private Equity and Asset Management (CFP CAIA CFA CGA prep)",
+            "category": "📜 Certification",
+            "note": "ANBIMA Certificação e Educação · Dec 2020 - Dec 2021",
+            "date": "2021-12-01"
+          },
+          {
+            "title": "Silicon Valley | Bay Area Workshop & Las Vegas Conference",
+            "category": "📚 Course",
+            "note": "StartSe · Dec 2015 - Dec 2015",
+            "date": "2015-12-01"
+          },
+          {
+            "title": "B.Sc. & BE (Bachelor of Engineering), Civil Structural Engineering",
+            "category": "🎓 Degree",
+            "note": "Universidade Presbiteriana Mackenzie · Jan 2008 - Dec 2015",
+            "date": "2015-12-01"
+          },
+          {
+            "title": "Second Lieutenant",
+            "category": "📜 Certification",
+            "note": "CPOR/RJ · Jan 2006 - Dec 2007",
+            "date": "2007-12-01"
+          },
+          {
+            "title": "Secondary School Diploma",
+            "category": "🎓 Degree",
+            "note": "Colégio Bandeirantes · Jan 2002 - Dec 2005",
+            "date": "2005-12-01"
+          },
+          {
+            "title": "Primary School Diploma",
+            "category": "🎓 Degree",
+            "note": "Escola Pacaembu · Jan 1989 - Dec 2001",
+            "date": "2001-12-01"
+          },
+          {
+            "title": "English",
+            "category": "🗣️ Language",
+            "note": "Full professional proficiency"
+          },
+          {
+            "title": "Spanish",
+            "category": "🗣️ Language",
+            "note": "Professional working proficiency"
+          },
+          {
+            "title": "Portuguese",
+            "category": "🗣️ Language",
+            "note": "Native or bilingual proficiency"
+          },
+          {
+            "title": "German",
+            "category": "🗣️ Language",
+            "note": "Elementary proficiency"
+          },
+          {
+            "title": "Gallego",
+            "category": "🗣️ Language",
+            "note": "Limited working proficiency"
+          }
+        ],
+        "move_to": "study_todo",
+        "move_label": "Mark undone"
+      },
+      {
+        "collection": "study_todo",
+        "title": "🎯 To do",
+        "empty": "Nothing planned yet. Add a course or a certification with its target date.",
+        "fields": [
+          {
+            "id": "title",
+            "label": "Item",
+            "type": "text",
+            "required": true
+          },
+          {
+            "id": "category",
+            "label": "Kind",
+            "type": "choice",
+            "options": [
+              "🎓 Degree",
+              "📚 Course",
+              "📜 Certification",
+              "🗣️ Language"
+            ],
+            "required": true
+          },
+          {
+            "id": "status",
+            "label": "Status",
+            "type": "choice",
+            "options": [
+              "Planned",
+              "In progress"
+            ]
+          },
+          {
+            "id": "date",
+            "label": "Target date",
+            "type": "date"
+          },
+          {
+            "id": "note",
+            "label": "Note",
+            "type": "text"
+          },
+          {
+            "id": "link",
+            "label": "Link / evidence",
+            "type": "text"
+          }
+        ],
+        "builtin": [
+          {
+            "title": "Course for Software Engineering C/C++",
+            "category": "📚 Course",
+            "note": "42 Berlin · Jun 2024 - Jul 2027",
+            "date": "2027-07-01",
+            "status": "In progress"
+          }
+        ],
+        "move_to": "study_done",
+        "move_label": "Mark done",
+        "move_stamp": "date"
+      }
+    ]
+  },
+  {
     "kind": "note",
     "title": "Roadmap",
     "body": "Derived from the LinkedIn profile: what is under way now, and the courses that run on. Refresh the profile bundle and run data/regen-study.py to move it."

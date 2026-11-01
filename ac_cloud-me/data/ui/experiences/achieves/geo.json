@@ -1,10 +1,12 @@
 [
   {
     "kind": "ledger",
+    "view": "done_plan",
     "store": "experiences_user",
     "currency": "",
     "reports": [],
     "title": "🌍 Places",
+    "icon": "🌍",
     "ledgers": [
       {
         "collection": "geo_done",
@@ -51,6 +53,11 @@
           {
             "id": "note",
             "label": "Note",
+            "type": "text"
+          },
+          {
+            "id": "link",
+            "label": "Link / evidence",
             "type": "text"
           }
         ],
@@ -146,8 +153,17 @@
             "required": true
           },
           {
+            "id": "status",
+            "label": "Status",
+            "type": "choice",
+            "options": [
+              "Planned",
+              "In progress"
+            ]
+          },
+          {
             "id": "date",
-            "label": "First visit",
+            "label": "Target date",
             "type": "date"
           },
           {
@@ -158,6 +174,11 @@
           {
             "id": "note",
             "label": "Note",
+            "type": "text"
+          },
+          {
+            "id": "link",
+            "label": "Link / evidence",
             "type": "text"
           }
         ],
@@ -177,7 +198,8 @@
         "countries": 43,
         "continents": 5
       }
-    }
+    },
+    "group": "continent"
   },
   {
     "kind": "section_title",

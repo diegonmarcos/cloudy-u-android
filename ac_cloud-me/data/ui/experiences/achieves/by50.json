@@ -1,10 +1,12 @@
 [
   {
     "kind": "ledger",
+    "view": "done_plan",
     "store": "experiences_user",
     "currency": "",
     "reports": [],
     "title": "🍁 (By 50) Legacy goals",
+    "icon": "🍁",
     "ledgers": [
       {
         "collection": "by50_done",
@@ -40,6 +42,11 @@
             "id": "note",
             "label": "Note",
             "type": "text"
+          },
+          {
+            "id": "link",
+            "label": "Link / evidence",
+            "type": "text"
           }
         ],
         "move_to": "by50_todo",
@@ -71,13 +78,27 @@
             "required": true
           },
           {
+            "id": "status",
+            "label": "Status",
+            "type": "choice",
+            "options": [
+              "Planned",
+              "In progress"
+            ]
+          },
+          {
             "id": "date",
-            "label": "Date",
+            "label": "Target date",
             "type": "date"
           },
           {
             "id": "note",
             "label": "Note",
+            "type": "text"
+          },
+          {
+            "id": "link",
+            "label": "Link / evidence",
             "type": "text"
           }
         ],
@@ -85,6 +106,16 @@
         "move_label": "Mark done",
         "move_stamp": "date"
       }
-    ]
+    ],
+    "milestones": {
+      "born": 1988,
+      "ages": [
+        30,
+        40,
+        50
+      ],
+      "current": 50,
+      "note": "Ages are counted from 1988 (the CV states 38 in 2026). A dated item counts for the first age not yet reached in its year; an undated one counts for the tab it is filed under."
+    }
   }
 ]

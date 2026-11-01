@@ -22,16 +22,18 @@ class LedgerScrollGuardTest {
     private fun src(n: String) = File(main, n).readText()
 
     @Test fun `the ledger block nests no vertical scroller`() {
-        assertEquals(emptyList<String>(), listOf("LedgerScreen.kt").filter { Regex("""verticalScroll\(|LazyColumn|LazyVerticalGrid|VerticalPager""").containsMatchIn(src(it)) })
+        assertEquals(emptyList<String>(), listOf("LedgerScreen.kt", "ExperiencesBlock.kt").filter { Regex("""verticalScroll\(|LazyColumn|LazyVerticalGrid|VerticalPager""").containsMatchIn(src(it)) })
     }
 
     @Test fun `the stack renderer is the one vertical scroller and hosts the ledger kind`() {
         assertEquals(1, Regex("""verticalScroll\(""").findAll(src("StackScreen.kt")).count())
         assertTrue("StackScreen does not host the ledger kind", "\"ledger\" -> LedgerBlock(o)" in src("StackScreen.kt"))
+        assertTrue("LedgerBlock does not hand the done_plan view to ExperiencesBlock",
+            "if (o.optString(\"view\") == \"done_plan\") { ExperiencesBlock(o); return }" in src("LedgerScreen.kt"))
     }
 
     @Test fun `the model, the reports and the store are free of UI code`() {
-        for (f in listOf("LedgerModel.kt", "LedgerReports.kt", "LegacyRoutes.kt")) assertTrue("$f imports UI", !Regex("""import (androidx\.compose|android\.(view|widget))""").containsMatchIn(src(f)))
+        for (f in listOf("LedgerModel.kt", "LedgerReports.kt", "LegacyRoutes.kt", "ExperiencesModel.kt")) assertTrue("$f imports UI", !Regex("""import (androidx\.compose|android\.(view|widget))""").containsMatchIn(src(f)))
     }
 
     @Test fun `no sample or mock rows are baked into the ledger code`() {

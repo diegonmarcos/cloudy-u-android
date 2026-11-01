@@ -59,6 +59,41 @@ def edu_card(e, body=False):
     return card
 
 
+MONTHS = {m: i + 1 for i, m in enumerate(["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"])}
+
+
+def month_date(part):
+    """'Dec 2023' -> '2023-12-01' (the profile dates to the month; the first of it sorts and validates). None when absent."""
+    m = re.search(r"([A-Z][a-z]{2}) (\d{4})", part or "")
+    return f"{m.group(2)}-{MONTHS[m.group(1)]:02d}-01" if m and m.group(1) in MONTHS else None
+
+
+# Experiences' Done | Planned view (ExperiencesBlock): the planned side carries a status and a target date, both
+# sides an optional link or evidence. The same shape on every Experiences tab.
+STATUS = {"id": "status", "label": "Status", "type": "choice", "options": ["Planned", "In progress"]}
+LINK = {"id": "link", "label": "Link / evidence", "type": "text"}
+
+
+def done_plan(fields_done, fields_plan_extra=None):
+    """(done fields, planned fields): planned inserts the status before the date and calls the date its target."""
+    plan = []
+    for f in fields_done:
+        if f["id"] == "date":
+            plan.append(STATUS)
+            plan.append({**f, "label": "Target date"})
+        else:
+            plan.append(f)
+    return fields_done + [LINK], plan + [LINK]
+
+
+def study_kind(degree):
+    if re.search(r"B\.Sc|Bachelor|Diploma", degree):
+        return "🎓 Degree"
+    if re.search(r"Specializ|Lieutenant|Certif", degree):
+        return "📜 Certification"
+    return "📚 Course"
+
+
 def build(d):
     p = d["profile"]
     cv = [
@@ -76,7 +111,33 @@ def build(d):
     ]
     now = [e for e in d["experience"] if present(e["dates"])]
     nxt = [e for e in d["education"] if (end_year(e["dates"]) or 0) >= REF_YEAR]
+    # Experiences > Study: Done | Planned over experiences_user (study_done / study_todo). Done is seeded read-only
+    # with every finished course and the languages; Planned with every course still running (in progress).
+    s_cats = ["🎓 Degree", "📚 Course", "📜 Certification", "🗣️ Language"]
+    s_done, s_plan = done_plan([{"id": "title", "label": "Item", "type": "text", "required": True},
+                                {"id": "category", "label": "Kind", "type": "choice", "options": s_cats, "required": True},
+                                {"id": "date", "label": "Date", "type": "date"},
+                                {"id": "note", "label": "Note", "type": "text"}])
+
+    def edu_rec(e, status=None):
+        start, _, end = e["dates"].partition(" - ")
+        r = {"title": e["degree"], "category": study_kind(e["degree"]), "note": f'{e["school"]} · {e["dates"]}'}
+        if month_date(end or start):
+            r["date"] = month_date(end or start)
+        if status:
+            r["status"] = status
+        return r
+    study_done = [edu_rec(e) for e in d["education"] if e not in nxt] + \
+        [{"title": l["name"], "category": s_cats[3], "note": l["proficiency"]} for l in d["languages"]]
+    study = {"kind": "ledger", "view": "done_plan", "store": "experiences_user", "currency": "", "reports": [],
+             "title": "🎓 Study", "icon": "🎓", "ledgers": [
+                 {"collection": "study_done", "title": "✅ Done", "empty": "Nothing done recorded yet.", "fields": s_done,
+                  "builtin": study_done, "move_to": "study_todo", "move_label": "Mark undone"},
+                 {"collection": "study_todo", "title": "🎯 To do", "empty": "Nothing planned yet. Add a course or a certification with its target date.",
+                  "fields": s_plan, "builtin": [edu_rec(e, "In progress") for e in nxt],
+                  "move_to": "study_done", "move_label": "Mark done", "move_stamp": "date"}]}
     roadmap = [
+        study,
         {"kind": "note", "title": "Roadmap",
          "body": "Derived from the LinkedIn profile: what is under way now, and the courses that run on. "
                  "Refresh the profile bundle and run data/regen-study.py to move it."},
@@ -124,16 +185,21 @@ def build(d):
     # Done is seeded with the profile's roles, newest first, as read-only rows. "Career and Finance" goals stay in
     # Personal Growth; this page is the work record itself.
     cats = ["💼 Employment", "🚀 Own venture", "🏆 Milestone", "🎯 Career goal"]
-    fields = [{"id": "title", "label": "Item", "type": "text", "required": True},
-              {"id": "category", "label": "Category", "type": "choice", "options": cats, "required": True},
-              {"id": "date", "label": "Date", "type": "date"},
-              {"id": "note", "label": "Note", "type": "text"}]
+    w_done, w_plan = done_plan([{"id": "title", "label": "Item", "type": "text", "required": True},
+                                {"id": "category", "label": "Category", "type": "choice", "options": cats, "required": True},
+                                {"id": "date", "label": "Date", "type": "date"},
+                                {"id": "note", "label": "Note", "type": "text"}])
+    def role_date(dates):
+        # Sorted by when the role ended; a running role by when it started.
+        start, _, end = dates.split(" · ")[0].partition(" - ")
+        return month_date(end) or month_date(start)
     roles = [{"title": f'{e["title"]} · {e["company"]}', "category": cats[1] if e in own else cats[0],
-              "note": e["dates"].split(" · ")[0] + (f' · {e["location"]}' if e.get("location", "").strip() else "")} for e in jobs]
-    work_page = [{"kind": "ledger", "store": "experiences_user", "currency": "", "reports": [], "title": "💼 Work", "ledgers": [
-        {"collection": "work_done", "title": "✅ Done", "empty": "Nothing done recorded yet.", "fields": fields,
+              "note": e["dates"].split(" · ")[0] + (f' · {e["location"]}' if e.get("location", "").strip() else ""),
+              **({"date": role_date(e["dates"])} if role_date(e["dates"]) else {})} for e in jobs]
+    work_page = [{"kind": "ledger", "view": "done_plan", "store": "experiences_user", "currency": "", "reports": [], "title": "💼 Work", "icon": "💼", "ledgers": [
+        {"collection": "work_done", "title": "✅ Done", "empty": "Nothing done recorded yet.", "fields": w_done,
          "builtin": roles, "move_to": "work_todo", "move_label": "Mark undone"},
-        {"collection": "work_todo", "title": "🎯 To do", "empty": "Nothing planned yet. Add a career goal.", "fields": fields,
+        {"collection": "work_todo", "title": "🎯 To do", "empty": "Nothing planned yet. Add a career goal with its target date.", "fields": w_plan,
          "move_to": "work_done", "move_label": "Mark done", "move_stamp": "date"}]}]
     return {"experiences/work.json": work_page, "experiences/study/cv.json": cv, "experiences/study/roadmap.json": roadmap, "llc/employed.json": work, "llc/side-hustles.json": endeavours}
 

@@ -60,6 +60,8 @@ object LedgerTags {
  */
 @Composable
 fun LedgerBlock(o: JSONObject) {
+    // Experiences: the same ledger drawn as Done | Planned (ExperiencesBlock); Buro, LLC and Inventory keep this view.
+    if (o.optString("view") == "done_plan") { ExperiencesBlock(o); return }
     val ctx = LocalContext.current
     val store = o.getString("store")
     val currency = o.optString("currency", "EUR")
@@ -190,7 +192,7 @@ private fun RecLines(def: LedgerDef, r: Rec, currency: String) {
 }
 
 @Composable
-private fun AddForm(def: LedgerDef, initial: Rec, onCancel: () -> Unit, onSave: (Rec) -> Unit) {
+internal fun AddForm(def: LedgerDef, initial: Rec, onCancel: () -> Unit, onSave: (Rec) -> Unit) {
     var values by remember(def.collection, initial) { mutableStateOf<Rec>(initial) }
     var errors by remember(def.collection) { mutableStateOf<Map<String, String>>(emptyMap()) }
     for (f in def.fields) {
