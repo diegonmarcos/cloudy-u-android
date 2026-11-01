@@ -59,10 +59,8 @@ if (buildJson.ui.sections.any { !(it.pages instanceof List) || it.pages.isEmpty(
 def uiSectionsB64    = b64(buildJson.ui.sections)
 def uiBottomNav      = buildJson.ui.bottom_nav.join(',')
 def uiDefaultSection = (buildJson.ui.default_section ?: buildJson.ui.bottom_nav[0]).toString()
-// #1406 the modes' _doc* notes are for readers of build.json, not the app: dropped so the constant stays under javac's 64 KB.
-def stripDocs
-stripDocs = { o -> o instanceof Map ? o.findAll { k, v -> !k.toString().startsWith('_doc') }.collectEntries { k, v -> [k, stripDocs(v)] } : (o instanceof List ? o.collect { stripDocs(it) } : o) }
-def uiModesB64       = b64(stripDocs(buildJson.ui.modes))
+// #1406 each mode's own top-level _doc* notes (nested JSON such as options/clock/spec is kept verbatim) are for readers of build.json, not the app: dropped so the constant stays under javac's 64 KB.
+def uiModesB64       = b64(buildJson.ui.modes.collect { m -> m.findAll { k, v -> !k.toString().startsWith('_doc') } })
 def debugGroup    = (buildJson.ui.debug_api?.group ?: 'calc').toString()
 def clockGroup    = (buildJson.ui.debug_api?.clock_group ?: '').toString()
 if (!clockGroup) throw new GradleException("build.json::ui.debug_api.clock_group missing — /api/clock/* would register under no name")
