@@ -751,7 +751,9 @@
               2
             ]
           ]
-        }
+        },
+        {"name": "tools-fin-npv", "steps": [["shell", "am start -n {pkg}/.MainActivity --es clock_mode finance"], ["wait", 3], ["shell", "input swipe 1000 634 80 634 500"], ["wait", 1], ["tap", "calc_form_npv"], ["wait", 2]]},
+        {"name": "tools-sound-bpm", "steps": [["shell", "am start -n {pkg}/.MainActivity --es clock_mode acoustics"], ["wait", 3], ["shell", "input swipe 1000 634 80 634 500"], ["wait", 1], ["tap", "calc_form_bpm"], ["wait", 2]]}
       ]
     },
     {
