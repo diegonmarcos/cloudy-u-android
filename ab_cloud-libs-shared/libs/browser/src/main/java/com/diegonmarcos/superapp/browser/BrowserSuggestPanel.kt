@@ -161,3 +161,29 @@ fun BrowserOpenScreen(
         SuggestRows(rows, onPick, Modifier.weight(1f).fillMaxWidth())
     }
 }
+
+/**
+ * #1410 the Search page's first box: the browser's own address/search box. As you type, [onQuery]
+ * refreshes [state] with the address bar's sections (history + bookmarks, same ranking) and the
+ * dropdown is the address bar's own [SuggestRows]. Enter searches or opens; a row opens that row.
+ */
+@Composable
+fun BrowserSearchBox(
+    hint: String,
+    state: SuggestState,
+    onQuery: (String) -> Unit,
+    onSubmit: (String) -> Unit,
+    onPick: (BrowserSuggest.Suggestion) -> Unit,
+) {
+    val p = LocalKitPalette.current
+    var text by remember { mutableStateOf("") }
+    val rows = remember(state.sections, state.engineLabel) { SuggestRow.build(state.sections, state.engineLabel) }
+    Column(Modifier.fillMaxWidth().background(p.surface).testTag("browser:searchbox")) {
+        OutlinedTextField(text, { text = it; state.visible = it.isNotBlank(); onQuery(it) },
+            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp).testTag("browser:searchbox:field"),
+            singleLine = true, placeholder = { Text(hint) },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Go),
+            keyboardActions = KeyboardActions(onGo = { onSubmit(text) }))
+        if (state.showing) SuggestRows(rows, onPick, Modifier.fillMaxWidth().heightIn(max = 360.dp).testTag("browser:searchbox:suggest"))
+    }
+}

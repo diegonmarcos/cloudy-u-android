@@ -1213,11 +1213,18 @@ class BrowserHostFragment : Fragment() {
 
     /** Item 5's view of the on-device history, with Clear. */
     private fun showHistory() {
-        val visits = history.all()
+        val all = history.all()
         overlay { close ->
+            var q by remember { mutableStateOf("") }
+            val visits = remember(q) { BrowserListFilter.visits(q, all) }
+            Column(Modifier.fillMaxSize()) {
+            SearchFilterField(q) { q = it }
+            Box(Modifier.weight(1f).fillMaxWidth()) {
             BrowserListScreen("History", visits.map { ListRow(it.url, it.title.ifBlank { it.url }, it.url) },
                 empty = "No history yet.", onOpen = { close(); navigateTo(it.id) }, onRemove = null,
                 headerAction = "Clear" to { history.clear(); close(); showHistory() }, onClose = close)
+            }
+            }
         }
     }
 
@@ -1659,7 +1666,20 @@ class BrowserHostFragment : Fragment() {
     /** #823 Cloud Search's Search page over the browser: its engine boxes and AI chat; a result opens as a tab. */
     private fun showSearchPage() {
         val page = BrowserSearchPageHost.page ?: return toast("The Search page is not available in this app")
-        overlay { close -> page({ url -> close(); openEntryUrl(url) }, close) }
+        val st = SuggestState().also { it.engineLabel = engine().label }
+        overlay { close ->
+            Column(Modifier.fillMaxSize()) {
+                // #1410 the first box is the browser's address/search box with the address bar's dropdown.
+                BrowserSearchBox(
+                    hint = "Search ${engine().label}, or type a URL",
+                    state = st,
+                    onQuery = { q -> refreshSuggestions(st, q, false) },
+                    onSubmit = { q -> if (q.isNotBlank()) { close(); openEntry(q) } },
+                    onPick = { sug -> close(); openEntry(sug.url) },
+                )
+                Box(Modifier.weight(1f).fillMaxWidth()) { page({ url -> close(); openEntryUrl(url) }, close) }
+            }
+        }
     }
 
     /** #802 I8 one query, one of cloud-search's engines (the Search add-on): its results open as a new tab. */
@@ -1884,6 +1904,16 @@ class BrowserHostFragment : Fragment() {
         Box(place) { e.content(close) }
     }
 
+    /** #1410 the Tabs/History search bar's text. */
+    private var gridQuery by androidx.compose.runtime.mutableStateOf("")
+
+    /** #1410 the search bar on top of the Tabs and History pages: filters by title and URL as you type. */
+    @Composable
+    private fun SearchFilterField(value: String, onChange: (String) -> Unit) {
+        OutlinedTextField(value, onChange, singleLine = true, placeholder = { Text("Search tabs and history") },
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 2.dp).testTag("browser:filter"))
+    }
+
     @Composable
     private fun GridScreen() {
         val version = gridVersion
@@ -1895,7 +1925,9 @@ class BrowserHostFragment : Fragment() {
                 Text(PrivateProfile.NOTICE, fontSize = 12.sp, color = Color.White.copy(alpha = 0.8f),
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp))
             }
-            val tabs = remember(version, filter) { BrowserTabsBar.filter(prefs.all(), filter) }
+            SearchFilterField(gridQuery) { gridQuery = it }
+            val q = gridQuery
+            val tabs = remember(version, filter, q) { BrowserListFilter.tabs(q, BrowserTabsBar.filter(prefs.all(), filter)) }
             if (tabs.isEmpty()) {
                 Text(if (incog) "No incognito tabs. Tap New Incognito to open one." else "No tabs yet. Tap New Tab to open a URL or search.",
                     color = Color.White.copy(alpha = 0.7f), modifier = Modifier.padding(20.dp))
