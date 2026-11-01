@@ -43,11 +43,13 @@ class PowerStateReceiver : BroadcastReceiver() {
             Intent.ACTION_POWER_CONNECTED, Intent.ACTION_POWER_DISCONNECTED -> {
                 val pending = goAsync()
                 val app = ctx.applicationContext
+                // The level at the edge itself, before any slow work (the sticky intent is a cheap read).
+                val at = runCatching { BatteryRepository.probe(app) }.getOrNull()
                 Thread {
                     try {
+                        // A charge-cycle boundary first, at the real moment; then the history sample.
+                        runCatching { BatteryRepository.snapshotCycle(app, intent.action == Intent.ACTION_POWER_CONNECTED, at = at) }
                         runCatching { BatteryRepository.record(app) }
-                        // A charge-cycle boundary: snapshot per-app batterystats at the real moment.
-                        runCatching { BatteryRepository.snapshotCycle(app, intent.action == Intent.ACTION_POWER_CONNECTED) }
                     } finally { pending.finish() }
                 }.start()
             }

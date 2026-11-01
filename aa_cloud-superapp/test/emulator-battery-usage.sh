@@ -24,6 +24,8 @@ adb install -r -g "$APK" || { echo "::error::install failed"; exit 2; }
 # shot of run 41298521502, so it gets no overlay grant; the SuperApp is the home app and system error dialogs stay hidden.
 adb shell appops set "$PKG" SYSTEM_ALERT_WINDOW deny || true
 adb shell cmd package set-home-activity "$PKG/.HomeActivity" || true
+# The home status strip (and its battery) draws only while the SuperApp HOLDS the launcher role (41306928951 had none).
+adb shell cmd role add-role-holder android.app.role.HOME "$PKG" 0 || true
 adb shell pm disable-user --user 0 com.google.android.apps.nexuslauncher >/dev/null 2>&1 || true
 adb shell settings put global hide_error_dialogs 1 || true
 adb shell settings delete global cloud_nav_ui_mode || true

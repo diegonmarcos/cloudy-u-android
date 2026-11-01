@@ -249,10 +249,12 @@ object BatteryRepository {
      * PowerStateReceiver at every plug edge (its action is [pluggedHint]) and by BatterySessionWorker's 15-min
      * tick. Blocking.
      */
-    fun snapshotCycle(ctx: Context, pluggedHint: Boolean? = null, now: Long = System.currentTimeMillis()) {
+    fun snapshotCycle(ctx: Context, pluggedHint: Boolean? = null, now: Long = System.currentTimeMillis(), at: BatteryReading? = null) {
+        // The level is the edge's own ([at], read when the broadcast arrived), not whatever it is once the privileged
+        // shell has answered: an unpaired channel takes seconds to fail, and the emulator's 90% unplug was booked at 62%.
+        val r = at ?: probe(ctx, now = now)
         val f = privileged(ctx)
-        val r = if (f?.levelPct == null) probe(ctx, now = now) else null
-        val level = f?.levelPct ?: r?.levelPct?.takeIf { it >= 0 } ?: return
+        val level = r?.levelPct?.takeIf { it >= 0 } ?: f?.levelPct ?: return
         val plugged = pluggedHint ?: f?.plugged ?: ((r?.plugged ?: 0) != 0)
         val snap = BatteryCycles.Snap(now, level, plugged, f?.apps?.associate { it.uid to it.mAh })
         synchronized(lock) {
