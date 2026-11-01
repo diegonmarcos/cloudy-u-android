@@ -85,11 +85,11 @@
     },
     "ac_cloud-browser": {
       "first_test": "COVERED NOW: app/src/test/BrowserFeaturesTest.kt asserts the behaviour of the seven tab features against the SHIPPED build.json::ui.browser - the four first-run tabs arrive pinned and in order, a second launch re-seeds nothing, a pinned tab REFUSES to close, a drag stamps an order that outlives recency, and a non-URL entry resolves to Qwant. test/test-browser-config-boundary.sh holds the #209 line: the shared libs:browser carries none of his URLs and its own default pins nothing, so no other consumer can inherit them. test/test-browser-features-wired.sh proves each feature is reachable from the UI rather than merely modelled. NOT COVERED: nothing instruments the WebView itself. No test loads a page, so a URL that 404s, a viewport that renders blank, or a drag that never fires on real hardware would all still ship green - those need the androidTest source set and a device, and this app has neither.",
-      "shell_testers": 36,
+      "shell_testers": 37,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 52,
+      "unit_test_sources": 53,
       "workflow": "ship-cloud-browser.yml"
     },
     "ac_cloud-browser/web": {
