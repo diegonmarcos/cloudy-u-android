@@ -91,10 +91,13 @@ has "$ROOTV" || has "$UUID" || fail "the drive tab did not open $ROOTV: $(texts)
 # 2c. #1376 Git: the storage selector, a repo found in each storage's git folder
 for i in 1 2 3; do tap '^Git$' && break; sleep 2; done || fail "no Git tab"
 sleep 3; shot 07a-git-store
-for c in 'Cloud-Store (Termux)' 'Emulated' 'External Drive'; do has "$c" || fail "Git storage chip '$c' missing: $(texts)"; done
+# #1356 the selector is one pill in the Git top menu: a tap lists the three storages
+SEL='^(Cloud-Store \(Termux\)|Emulated|External Drive)$'
+tap "$SEL" || fail "no storage selector in the Git top menu: $(texts)"; sleep 1; dump >/dev/null
+for c in 'Cloud-Store (Termux)' 'Emulated' 'External Drive'; do has "$c" || fail "Git storage choice '$c' missing: $(texts)"; done
 tap '^Emulated$'; sleep 3; shot 07b-git-emulated
 has 'emu-demo' || fail "Emulated did not list the repo in /sdcard/Git: $(texts)"
-tap '^External Drive$'; sleep 3; shot 07c-git-external
+tap "$SEL" && sleep 1 && tap '^External Drive$'; sleep 3; shot 07c-git-external
 has 'usb-demo' || fail "External Drive did not list the repo in $ROOTV/GIT: $(texts)"
 
 # 3. the attach hand-off opens Explorer straight on the drive
