@@ -25,7 +25,10 @@ class GitTopBarStateTest {
     @Test fun `the bar is declared with groups, known kinds, the audit verbs and depth actions that exist`() {
         assertEquals(listOf("check", "sync", "clone", "logs", "more"), bar.groups.map { it.id })
         // #1356 Check | Sync | Clone | Logs are one-item buttons; More holds the rest.
-        assertEquals(listOf("check_full", "sync_all", "clone_missing", "logs"), bar.groups.take(4).map { it.items.single().id })
+        assertEquals(listOf("check_full", "clone_missing", "logs"), listOf(0, 2, 3).map { bar.groups[it].items.single().id })
+        // #1356 Sync is a dropdown: Sync All then Manual Sync
+        assertEquals(listOf("Sync All", "Sync All", "Sync All", "Manual Sync", "Manual Sync", "Manual Sync", "Manual Sync"), bar.groups[1].items.map { it.section })
+        assertEquals(listOf("sync_remote_wins", "sync_local_wins", "sync_no_winner", "stash", "pull_rebase", "stash_pop", ""), bar.groups[1].items.map { it.op })
         assertEquals(listOf("repos", "app"), bar.logs.tabs.map { it.first })
         val items = bar.groups.flatMap { it.items }
         assertTrue(items.isNotEmpty() && items.all { it.kind in Declarations.TOP_KINDS })
