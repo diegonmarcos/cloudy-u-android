@@ -112,6 +112,8 @@ fun AppPermsSection(
     modifier: Modifier = Modifier,
     /** #1403 the host's adb channel for the adb actions (null: those are off, Copy Adb Grants still works). */
     adb: PermsAdb? = null,
+    /** false: the filter chips and actions row only (a dense host page draws its own rows). */
+    list: Boolean = true,
 ) {
     val s = rememberAppPerms(tick, highlight, extra, onExtra)
     val ctx = LocalContext.current
@@ -123,7 +125,7 @@ fun AppPermsSection(
         PermsToolbar(s.items, states, kinds, { states = it }, { kinds = it }, s.grantRuntime, s.grantAll, adb,
             onAdb = { mode -> adb?.let { a -> result = "Granting over adb…"; scope.launch { result = PermsComponents.grant(ctx, s.items, mode, a) } } },
             onCopy = { result = PermsComponents.copy(ctx, s.items) }, result = result)
-        PermsList(PermsActions.filter(s.items, states, kinds), s.act, s.grantAll.takeIf { s.missing > 0 }, Modifier, style)
+        if (list) PermsList(PermsActions.filter(s.items, states, kinds), s.act, s.grantAll.takeIf { s.missing > 0 }, Modifier, style)
     }
 }
 

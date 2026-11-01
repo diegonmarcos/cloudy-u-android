@@ -206,7 +206,7 @@ class PermissionsFragment : KitComposeFragment() {
         val pagesMissing = pages.count { it.granted == false }
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(start = 10.dp, top = 8.dp, end = 10.dp, bottom = 16.dp)) {
         // #1403 the libs:perms section with its filter chips and actions row; adb = this page's shell plane
-        com.diegonmarcos.superapp.perms.AppPermsSection(tick = epoch, adb = remember { permsAdb() })
+        com.diegonmarcos.superapp.perms.AppPermsSection(tick = epoch, adb = remember { permsAdb() }, list = false)
         CatalogueHead()
         Small("${perms.size - runtimeMissing.size + priv.size - privMissing.size} granted here · " +
             "${runtimeMissing.size + privMissing.size} missing here · $pagesMissing need a system page")

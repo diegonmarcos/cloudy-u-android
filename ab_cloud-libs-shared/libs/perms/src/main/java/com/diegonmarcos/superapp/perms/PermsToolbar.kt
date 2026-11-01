@@ -7,6 +7,9 @@ import android.content.pm.PackageManager
 import android.provider.Settings
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -74,7 +77,9 @@ internal fun PermsToolbar(
 
 @Composable
 private fun Action(id: String, label: String, enabled: Boolean, onClick: () -> Unit) {
-    FilledTonalButton(onClick = onClick, enabled = enabled, modifier = Modifier.testTag(PermsToolbarTags.action(id))) {
+    // 30 dp: the dense Configs pages hold buttons to 32 dp (ConfigsScreensTest)
+    FilledTonalButton(onClick = onClick, enabled = enabled, contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
+        modifier = Modifier.height(30.dp).testTag(PermsToolbarTags.action(id))) {
         Text(label, fontSize = PermsType.label)
     }
 }
