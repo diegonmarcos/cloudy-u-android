@@ -486,6 +486,12 @@
       ],
       "scene_themes": [
         "dark"
+      ],
+      "scene_setup": [
+        [
+          "shell",
+          "settings delete global cloud_nav_ui_mode"
+        ]
       ]
     },
     {
