@@ -11,7 +11,12 @@ WIFI="$ROOT/ab_cloud-libs-shared/libs/wifi/src/main/java/com/diegonmarcos/supera
 fail=0; ok() { echo "  ok  $1"; }; bad() { echo "  FAIL $1"; fail=1; }
 python3 - "$APP/build.json" <<'PY' || fail=1
 import json, sys
-d = json.load(open(sys.argv[1])); bad = []
+bad = []
+def nodup(pairs):
+    ks = [k for k, _ in pairs]
+    bad.extend("P0 duplicate key %r (org.json rejects it)" % k for k in sorted(set(ks)) if ks.count(k) > 1)
+    return dict(pairs)
+d = json.load(open(sys.argv[1]), object_pairs_hook=nodup)
 cfg = [m for m in d["ui"]["modes"] if m.get("tab") == "configs"]
 want = [("configs_general", "General", "fleet_general"), ("configs_permissions", "Permissions", "fleet_perms"), ("configs_about", "About", "fleet_about")]
 if [(m["id"], m["label"], m["kind"]) for m in cfg[:3]] != want: bad.append("P1 configs tab does not start with General | Permissions | About")
