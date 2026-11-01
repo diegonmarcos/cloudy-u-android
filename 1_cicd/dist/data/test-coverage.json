@@ -265,11 +265,11 @@
     },
     "ac_cloud-me": {
       "first_test": "HAD one tester that no workflow ever called. Now executed, plus a second: the release contract (release.variants[].gh_asset / gh_release.asset_name / phone_install.asset_name / artifact.debug) must name ONE file, or the ship publishes an asset the phone never downloads and every run stays green.",
-      "shell_testers": 12,
+      "shell_testers": 13,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 27,
+      "unit_test_sources": 28,
       "workflow": "ship-cloud-me.yml"
     },
     "ac_cloud-me/web": {
