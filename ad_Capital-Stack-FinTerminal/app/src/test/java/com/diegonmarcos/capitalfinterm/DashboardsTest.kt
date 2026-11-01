@@ -26,7 +26,7 @@ class DashboardsTest {
                 assertEquals(tab, d.tab)
             }
         }
-        assertEquals(32, count)
+        assertEquals(31, count) // #1399 FI Market Monitor removed
         assertEquals(count, dashboards.size)
     }
 
