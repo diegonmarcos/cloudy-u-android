@@ -338,7 +338,9 @@ private fun Pane(
     val pane = ui.pane(id)
     val loc = pane.location
     val listing = listings[loc.key]
-    val rows: List<TreeRow> = remember(pane, listings) {
+    // The live filter is a key: rows are built through controller.visible(), which reads it, and without the key the inline
+    // search recomposed onto the cached, unfiltered rows (the emulator walk typed a query and the listing did not change).
+    val rows: List<TreeRow> = remember(pane, listings, controller.liveFilter) {
         if (pane.viewMode == ViewMode.LIST) (listing?.let { controller.visible(pane, it) } ?: emptyList()).map { TreeRow(it, 0) }
         else treeRows(loc, pane, listings, controller)
     }

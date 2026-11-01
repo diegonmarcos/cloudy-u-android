@@ -53,6 +53,7 @@ s2() {
   grep -qF 'DriveTags.FILES_SEARCH_CLOSE' <<<"$bar" || { echo "    no close x"; bad=1; }
   grep -qF 'decl.scopes.forEach' <<<"$bar" || { echo "    the chips are not the declared scopes"; bad=1; }
   grep -qE 'fun SearchPanel\(' "$1" && { echo "    the old search page survives"; bad=1; }
+  grep -qF 'remember(pane, listings, controller.liveFilter)' "$1" || { echo "    the pane rows are not rebuilt when the live filter changes"; bad=1; }
   grep -qF 'searching -> closeSearch()' "$1" || { echo "    back does not collapse the bar"; bad=1; }
   local close; close=$(grep -F 'fun closeSearch()' "$1")
   [ -n "$close" ] || { echo "    no closeSearch"; bad=1; }
@@ -84,7 +85,7 @@ s4() {
 echo "── S1 declaration ──"
 s1 "$BJ" && pass "four scopes declared in order, default folders_here, 40dp, bounded" || fail "ui.files.search is not the declared shape"
 echo "── S2 screen ──"
-s2 "$SCREEN" && pass "declared default chip, GitSearchField bar, x and back collapse in place" || fail "the inline bar is not wired as declared"
+s2 "$SCREEN" && pass "declared default chip, GitSearchField bar, rows follow the live filter, x and back collapse in place" || fail "the inline bar is not wired as declared"
 echo "── S3 recursive walk ──"
 s3 "$CTRL" "$XS" && pass "cancel-first, debounced, Dispatchers.IO, streamed, bounded" || fail "the recursive walk is not safe"
 echo "── S4 scope filtering ──"
@@ -104,6 +105,7 @@ PY
 mut "folders_root lists files" s1 "$tmp/b2.json"
 sed 's/searchDecl.initialScope?.id ?: ""/"folders_here"/g' "$SCREEN" > "$tmp/s1.kt"; mut "hardcoded default chip" s2 "$tmp/s1.kt"
 sed 's/GitSearchField(query, onQuery, decl.placeholder/OutlinedTextField(query, onQuery, decl.placeholder/' "$SCREEN" > "$tmp/s2.kt"; mut "bar is an OutlinedTextField" s2 "$tmp/s2.kt"
+sed 's/remember(pane, listings, controller.liveFilter)/remember(pane, listings)/' "$SCREEN" > "$tmp/s4.kt"; mut "rows cached past the live filter" s2 "$tmp/s4.kt"
 sed 's/fun closeSearch() { searching = false;/fun closeSearch() { controller.back(ui.active); searching = false;/' "$SCREEN" > "$tmp/s3.kt"; mut "collapse navigates" s2 "$tmp/s3.kt"
 sed 's/scope.launch(Dispatchers.IO)/scope.launch(Dispatchers.Main)/' "$CTRL" > "$tmp/c1.kt"; mut "walk on Main" s3 "$tmp/c1.kt" "$XS"
 sed 's/if (++found >= bounds.results)/if (false)/' "$XS" > "$tmp/x1.kt"; mut "no result ceiling" s3 "$CTRL" "$tmp/x1.kt"
