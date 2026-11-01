@@ -8528,7 +8528,6 @@
         "_doc": "cloud-c3 (#648/#663) \u2014 the C3 surface is now its own APK, and Cloud \u25b8 Apps \u25b8 Configs opens it with extapp:cloud-c3 rather than page:c3/topology. Sections.externalApp() reads ONLY this array, so with no entry here that tile snacks 'Unknown app: cloud-c3' AFTER the tap instead of offering the APK \u2014 the same reason ac_c3-watchtower above has one. NO `label`: the id IS the application's one name (#351) and a caption beside a fleet package is the second copy #224 reverted; the launcher derives the displayed name by dropping the family prefix. install_apk_url mirrors ac_cloud-c3/build.json::release.gh_release.asset_name (Cloud-C3.apk, the arm64 rolling-latest asset, published and verified 2026-09-30). THE IN-APP C3 SECTION IS STILL HERE ON PURPOSE: its five live feeds, NTFY centre and three container dashboards are not ported into the new APK yet, whose Topology and Observ tabs still render a stated not-built placeholder \u2014 deleting the section before the port would replace a working ops surface with two empty screens. It is reached by ui.sections[cloud].pages[c3], tiles_labs and the one-hand node, so nothing here is orphaned.",
         "id": "cloud-c3",
         "folder": "sys_dev",
-        "site": "Cloud Portal",
         "hub_package": "com.diegonmarcos.cloudc3",
         "install_package": "com.diegonmarcos.cloudc3",
         "install_apk_url": "https://github.com/diegonmarcos/cloudy-u-android/releases/download/latest/Cloud-C3.apk",
