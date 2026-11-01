@@ -12,6 +12,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -21,6 +23,7 @@ import helium314.keyboard.latin.utils.JniUtils
 import helium314.keyboard.latin.utils.KeyboardUpdate
 import helium314.keyboard.latin.utils.SubtypeLocaleUtils.displayName
 import helium314.keyboard.latin.utils.SubtypeSettings
+import helium314.keyboard.latin.utils.prefs
 import helium314.keyboard.latin.utils.NextScreenIcon
 import helium314.keyboard.settings.ConfigsEntry
 import helium314.keyboard.settings.SearchSettingsScreen
@@ -123,6 +126,22 @@ fun MainSettingsScreen(
                             onClick = onClickAiRouting,
                             icon = R.drawable.ic_settings_advanced
                         ) { NextScreenIcon() }
+                        // #1413 Dev Keyboard: corner swipes + corner labels of the "unexpected" layout, ON by default
+                        ConfigsEntry.DEV_KEYBOARD -> {
+                            val ctx = androidx.compose.ui.platform.LocalContext.current
+                            var on by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(helium314.keyboard.keyboard.CornerSwipe.enabled) }
+                            Preference(
+                                name = stringResource(R.string.dev_keyboard),
+                                description = stringResource(R.string.dev_keyboard_summary),
+                                onClick = {
+                                    on = !on
+                                    ctx.prefs().edit().putBoolean(helium314.keyboard.keyboard.CornerSwipe.PREF, on).apply()
+                                    helium314.keyboard.keyboard.CornerSwipe.enabled = on
+                                    helium314.keyboard.keyboard.KeyboardSwitcher.getInstance().setThemeNeedsReload()
+                                },
+                                icon = R.drawable.ic_settings_appearance
+                            ) { androidx.compose.material3.Switch(checked = on, onCheckedChange = null) }
+                        }
                         // #1103: shortcut to Android's own keyboard (input method) settings, same intent as the toolbar key
                         ConfigsEntry.ANDROID_SETTINGS -> {
                             val ctx = androidx.compose.ui.platform.LocalContext.current

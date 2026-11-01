@@ -60,6 +60,7 @@ Limits of the inventory, stated so it is not read as more than it is:
 | `ac_cloud-myterminal` | own (hub) + upstream licence for `forks/` | `forks/files`, `forks/utils`: Amaze, GPL-3.0 patches; `forks/editor`: Acode, MIT |
 | `ab_cloud-libs-shared` | own, with the exceptions below | shared libraries |
 | ↳ `libs/keyboard` | GPL-3.0-only | HeliBoard-derived (README) |
+| ↳ `libs/keyboard` Unexpected layout + corner swipes (#1413) | GPL-3.0-only | `assets/layouts/main/unexpected.json`, `keyboard/CornerSwipe.kt`: original work *in the style of* Unexpected Keyboard (Julow/Unexpected-Keyboard, GPL-3.0-only); no code or assets copied. Compatible either way: the keyboard tree is GPL-3.0-only |
 | ↳ `libs/gitsync` | GPL-3.0 | GitSync vendored (`LICENSE.md`, `VENDORED.md`); fonts: Atkinson Hyperlegible OFL-1.1, Roboto Mono Apache-2.0 |
 | ↳ `libs/firewall/firestack` | MPL-2.0 | celzero/firestack (`LICENSE`) |
 | ↳ `libs/net`, `libs/net-wg` | Apache-2.0 | wireguard-android `tunnel/` |

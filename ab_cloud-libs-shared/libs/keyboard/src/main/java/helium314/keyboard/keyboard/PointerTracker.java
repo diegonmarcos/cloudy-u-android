@@ -141,6 +141,7 @@ public final class PointerTracker implements PointerTrackerQueue.Element,
     private int mLastX;
     private int mLastY;
     private int mStartX;
+    private Key mCornerSwipeKey; // #1413 key a Dev Keyboard corner swipe started on, else null
     private int mStartY;
     private long mStartTime;
     private boolean mInHorizontalSwipe = false;
@@ -700,6 +701,7 @@ public final class PointerTracker implements PointerTrackerQueue.Element,
     }
 
     private void onDownEventInternal(final int x, final int y, final long eventTime) {
+        mCornerSwipeKey = null;
         Key key = onDownKey(x, y, eventTime);
         // Key selection by dragging finger is allowed when 1) key selection by dragging finger is
         // enabled by configuration, 2) this pointer starts dragging from modifier key, or 3) this
@@ -733,6 +735,8 @@ public final class PointerTracker implements PointerTrackerQueue.Element,
             mStartX = x;
             mStartY = y;
             mStartTime = SystemClock.elapsedRealtime();
+            mCornerSwipeKey = (CornerSwipe.isActive(mKeyboard) && key.getLabel() != null
+                    && CornerSwipe.INSTANCE.getCorners().containsKey(key.getLabel().toLowerCase(Locale.ROOT))) ? key : null;
         }
     }
 
@@ -983,6 +987,13 @@ public final class PointerTracker implements PointerTrackerQueue.Element,
 
     private void onMoveEventInternal(final int x, final int y, final long eventTime) {
         final Key oldKey = mCurrentKey;
+        // #1413 Dev Keyboard: a move that starts on a corner-swipe key stays on that key (no sliding, no gesture trail);
+        // the corner is resolved on up. Holding still opens the popup keys, which list the same corners.
+        if (mCornerSwipeKey != null) {
+            mLastX = x;
+            mLastY = y;
+            return;
+        }
 
         // todo (later): move key swipe stuff to KeyboardActionListener (and finally extend it)
         if (mKeySwipeAllowed) {
@@ -1116,7 +1127,19 @@ public final class PointerTracker implements PointerTrackerQueue.Element,
         }
 
         if (mIsTrackingForActionDisabled) {
+            mCornerSwipeKey = null;
             return;
+        }
+        final Key cornerKey = mCornerSwipeKey;
+        mCornerSwipeKey = null;
+        if (cornerKey != null) {
+            final Integer cornerCode = CornerSwipe.codeFor(cornerKey.getLabel(), x - mStartX, y - mStartY,
+                    cornerKey.getWidth() * 0.5f);
+            if (cornerCode != null) {
+                sListener.onCodeInput(cornerCode, Constants.NOT_A_COORDINATE, Constants.NOT_A_COORDINATE, false);
+                callListenerOnRelease(cornerKey, cornerKey.getCode(), false);
+                return;
+            }
         }
         if (currentKey != null && currentKey.isRepeatable()
                 && (currentKey.getCode() == currentRepeatingKeyCode) && !isInDraggingFinger) {

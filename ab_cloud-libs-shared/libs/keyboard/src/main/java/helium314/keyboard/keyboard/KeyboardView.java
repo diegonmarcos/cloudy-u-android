@@ -171,6 +171,7 @@ public class KeyboardView extends View {
      * @param keyboard the keyboard to display in this view
      */
     public void setKeyboard(@NonNull final Keyboard keyboard) {
+        CornerSwipe.refresh(getContext()); // #1413 Dev Keyboard toggle
         if (keyboard instanceof MoreSuggestions) {
             mColors.setBackground(this, ColorType.MORE_SUGGESTIONS_BACKGROUND);
         } else if (keyboard instanceof PopupKeysKeyboard) {
@@ -458,9 +459,29 @@ public class KeyboardView extends View {
             paint.setTextScaleX(1.0f);
         }
 
+        // #1413 Dev Keyboard: four small corner labels (NW, NE, SW, SE) instead of the single hint label.
+        final java.util.List<String> corners = CornerSwipe.isActive(keyboard) && key.getLabel() != null
+                ? CornerSwipe.INSTANCE.getCorners().get(key.getLabel().toLowerCase(java.util.Locale.ROOT)) : null;
+        if (corners != null) {
+            paint.setTextSize(key.selectHintTextSize(params) * mFontSizeMultiplier);
+            paint.setColor(params.mHintLabelColor);
+            paint.setTextAlign(Align.CENTER);
+            final float padX = keyWidth * 0.18f;
+            final float topY = keyHeight * 0.30f;
+            final float bottomY = keyHeight * 0.90f;
+            for (int i = 0; i < 4; i++) {
+                final String c = corners.get(i);
+                if (c.isEmpty()) continue;
+                final String text = CornerSwipe.labelOf(c);
+                final float x = (i % 2 == 0) ? padX : keyWidth - padX;
+                final float y = (i < 2) ? topY : bottomY;
+                canvas.drawText(text, 0, text.length(), x, y, paint);
+            }
+        }
+
         // Draw hint label.
-        String hintLabel = key.getHintLabel();
-        Drawable hintIcon = (keyboard == null || !mShowsHints || hintLabel != null) ? null
+        String hintLabel = corners != null ? null : key.getHintLabel();
+        Drawable hintIcon = (keyboard == null || !mShowsHints || hintLabel != null || corners != null) ? null
                         : key.getHintIcon(keyboard.mIconsSet, params.mAnimAlpha);
         if (hintLabel != null && mShowsHints) {
             paint.setTextSize(key.selectHintTextSize(params) * mFontSizeMultiplier); // maybe take sqrt to not have such extreme changes?

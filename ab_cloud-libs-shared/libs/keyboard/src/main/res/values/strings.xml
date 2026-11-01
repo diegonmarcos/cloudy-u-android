@@ -1580,4 +1580,7 @@ New dictionary:
     <string name="answer_in_progress">Drafting a reply with %1$s…</string>
     <string name="answer_bar_done">Draft ready: Insert, Regenerate or Copy</string>
     <string name="answer_bar_inserted">Inserted at the cursor</string>
+    <!-- #1413 Configs toggle -->
+    <string name="dev_keyboard">Dev Keyboard</string>
+    <string name="dev_keyboard_summary">Swipe-corner keys (Esc, Tab, Ctrl, Alt, arrows, symbols) on the Unexpected layout</string>
 </resources>

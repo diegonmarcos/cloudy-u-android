@@ -39,6 +39,7 @@
         <item>workman</item>
         <item>bepo</item>
         <item>pcqwerty</item>
+        <item>unexpected</item>
     </string-array>
     <!-- Predefined keyboard layout display names -->
     <string-array name="predefined_layout_display_names">
@@ -53,6 +54,7 @@
         <item>Workman</item>
         <item>Bépo</item>
         <item>PC</item>
+        <item>Unexpected (corner swipes)</item>
     </string-array>
 
     <!-- Description for Bulgarian (BDS) subtype. -->
