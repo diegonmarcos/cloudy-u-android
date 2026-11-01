@@ -136,6 +136,15 @@
         "lib-account"
       ]
     },
+    "cloud_dialer_sim_manual": {
+      "kind": "encrypted",
+      "class": "secret",
+      "doc": "#1411 Cloud Dialer Configs > SIM manual fields per SIM (provider, plan, price, allowance, renewal, number, PIN, PUK, APN notes, support) in EncryptedSharedPreferences via libs:crash SafeEncryptedPrefs.",
+      "helper": "ac_cloud-dialer/app/src/main/kotlin/org/fossify/phone/sim/SimManualStore.kt",
+      "used_by": [
+        "ac_cloud-dialer"
+      ]
+    },
     "acode_auth_secure": {
       "kind": "encrypted",
       "class": "secret",
