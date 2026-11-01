@@ -23,7 +23,14 @@ class DeclarationsTest {
         ui.getString("default_section"),
     )
     private val tabs = Declarations.tabsIn(nav)
-    private val modes = Declarations.parseModes(ui.getJSONArray("modes").toString())
+    private val modes = Declarations.parseModes(undoc(ui.getJSONArray("modes")).toString())
+
+    /** #1409 app/build.gradle drops `_doc*` keys before baking; the on-disk declaration is compared the same way. */
+    private fun undoc(o: Any?): Any? = when (o) {
+        is JSONObject -> JSONObject().also { r -> o.keys().forEach { k -> if (!k.startsWith("_doc")) r.put(k, undoc(o.get(k))) } }
+        is org.json.JSONArray -> org.json.JSONArray().also { r -> (0 until o.length()).forEach { r.put(undoc(o.get(it))) } }
+        else -> o
+    }
 
     @Test fun `the declaration parses and matches what gradle baked`() {
         assertEquals(tabs, Declarations.tabs)
@@ -48,7 +55,7 @@ class DeclarationsTest {
         val configs = Declarations.configsTab
         assertEquals("configs", configs?.id)
         assertTrue("Configs is not on the bar", Declarations.sections.none { it.id == configs?.section })
-        assertEquals(listOf("jev_token", "jev_routing", "jev_models", "jev_test", "image_route"), Declarations.modesOf("configs").map { it.id })
+        assertEquals(listOf("configs_general", "configs_permissions", "configs_about", "jev_token", "jev_routing", "jev_models", "jev_test", "image_route"), Declarations.modesOf("configs").map { it.id })
     }
 
     @Test fun `the jev block parses, validates, and is what gradle baked`() {
