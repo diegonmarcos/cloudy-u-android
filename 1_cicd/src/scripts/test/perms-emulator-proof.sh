@@ -7,6 +7,8 @@
 #   3 grant one entry from a shell -> the row reads Granted on resume
 #   4 revoke it -> the row's chip reads Missing again, with its Grant / Open button (the in-place prompt)
 #   5 #1372 the same page in dark mode (the Perms UI is drawn for both)
+#   1b #1372 some missing: the entry granted, a relaunch shows the gate again without that row
+#   6 #1372 all granted: reinstalled with every runtime grant (-g), the gate never appears (runtime-only apps)
 # Each step: a screenshot and a uiautomator dump in OUT, and a verdict line in OUT/verdicts.txt.
 # Usage: perms-emulator-proof.sh APK_DIR OUT   (APK_DIR/<key>.apk, keys below)
 set -u
@@ -35,6 +37,15 @@ tap_text() { # tap the centre of the first node whose text is $1, from a fresh d
   set -- $(echo "$b" | tr '[],' '   ')
   adb shell input tap $(( ($1+$3)/2 )) $(( ($2+$4)/2 )) >/dev/null 2>&1; }
 has() { grep -q -- "$2" "$OUT/$1.xml" 2>/dev/null; }
+launch() { # pkg: a launcher start, as a user would
+  local act; act="$(adb shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.LAUNCHER "$1" | tail -1 | tr -d '\r')"
+  adb shell am start -W -a android.intent.action.MAIN -c android.intent.category.LAUNCHER -n "$act" >/dev/null 2>&1; sleep 8; }
+absent() { # name file text...: none of the texts is on screen
+  local name="$1" f="$2"; shift 2
+  local hit=""
+  for t in "$@"; do has "$f" "$t" && hit="$hit [$t]"; done
+  if [ -z "$hit" ]; then say "PASS $name"; else say "FAIL $name: still shows$hit (see $f.png)"; fails=$((fails+1)); fi
+}
 check() { # name file text...
   local name="$1" f="$2"; shift 2
   local miss=""
@@ -62,10 +73,8 @@ while IFS='|' read -r -u 3 key entry grant revoke texts; do
   # a clean screen: the previous app is uninstalled after its run, so no dialog of its own (an unknown-sources ask) covers this one
   adb shell input keyevent KEYCODE_HOME >/dev/null 2>&1
   # 1 first run from the launcher
-  act="$(adb shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.LAUNCHER "$pkg" | tail -1 | tr -d '\r')"
   adb logcat -c >/dev/null 2>&1
-  adb shell am start -W -a android.intent.action.MAIN -c android.intent.category.LAUNCHER -n "$act" >/dev/null 2>&1
-  sleep 8
+  launch "$pkg"
   # the app's own start screen comes first where it has one (Gallery's onboarding, Drive's storage gate); step past it
   for t in "Get Started" "Continue with local files"; do tap_text "$t" && sleep 5; done
   shot "$key-1-first-run"
@@ -73,6 +82,13 @@ while IFS='|' read -r -u 3 key entry grant revoke texts; do
   if [ "$key" = finterm ]; then check "$key first run: nothing missing, no prompt" "$key-1-first-run" ""
   elif [ "$key" = me ]; then check "$key first run: the app's own start-up ask (first_run own:MePerms.kt)" "$key-1-first-run" ""
   else check "$key first run opens the Perms page on what is missing" "$key-1-first-run" "Before you start" "Grant all"; fi
+  # 1b some missing: grant the table's entry, relaunch; the gate is back without that row
+  if [ -n "$entry" ] && [ "$key" != me ]; then
+    adb shell am force-stop "$pkg"; eval "${grant//\{pkg\}/$pkg}" >/dev/null 2>&1
+    launch "$pkg"; shot "$key-1b-some-missing"
+    absent "$key some missing: the gate no longer lists $entry" "$key-1b-some-missing" "text=\"$entry\""
+    eval "${revoke//\{pkg\}/$pkg}" >/dev/null 2>&1
+  fi
   # 2 the page with live states
   perms_page "$pkg" "$key-2-page"
   IFS=';' read -r -a want <<< "$texts"
@@ -92,6 +108,13 @@ while IFS='|' read -r -u 3 key entry grant revoke texts; do
   check "$key Perms page in dark mode" "$key-5-dark" "${want[@]}"
   adb shell cmd uimode night no >/dev/null 2>&1; sleep 1
   adb shell pm uninstall "$pkg" >/dev/null 2>&1
+  # 6 all granted: every grant of a runtime-only app given at install, so the gate never draws
+  case "$key" in calc|browser)
+    adb install -r -g "$apk" >/dev/null 2>&1; adb shell input keyevent KEYCODE_HOME >/dev/null 2>&1
+    launch "$pkg"; shot "$key-6-all-granted"
+    absent "$key all granted: no first-run gate" "$key-6-all-granted" "Before you start"
+    adb shell pm uninstall "$pkg" >/dev/null 2>&1;;
+  esac
 done 3<<'TABLE'
 drive|All files access|adb shell appops set {pkg} MANAGE_EXTERNAL_STORAGE allow|adb shell appops set {pkg} MANAGE_EXTERNAL_STORAGE default|All files access;HELPER APPS;Cloud Terminal Termux;Grant all
 me|Notifications|adb shell pm grant {pkg} android.permission.POST_NOTIFICATIONS|adb shell pm revoke {pkg} android.permission.POST_NOTIFICATIONS|Notifications;Health Connect;Grant all
