@@ -70,7 +70,7 @@ bj = json.load(open(os.path.join(D, "build.json")))
 ex = set(bj["usb_drives"]["raw_library"].get("native_excludes", []))
 need({"**/libusb-lib.so", "**/liberrno-lib.so"} <= ex, "U8 build.json drops libaums' 4 KB JNI libs (native_excludes)")
 g = open(os.path.join(D, "app/build.gradle")).read()
-need("raw_library?.native_excludes" in g and "useLegacyPackaging = false" in g, "U8 app/build.gradle applies native_excludes and keeps libs stored")
+need("raw_library?.native_excludes" in g, "U8 app/build.gradle applies native_excludes")
 u = os.path.join(APP, "java/com/diegonmarcos/clouddrive/usb")
 need("JavaUsbCommunication.install()" in open(os.path.join(u, "RawUsbDrive.kt")).read(), "U8 RawUsbDrive installs the JNI-free transport before libaums opens a device")
 jc = open(os.path.join(u, "JavaUsbCommunication.kt")).read()
@@ -114,7 +114,7 @@ libaums|ac_cloud-drive/app/build.gradle|'me.jahnen.libaums:core:|'me.jahnen.liba
 inventory|licenses/inventory.json|"maven:me.jahnen.libaums:core": {|"maven:me.jahnen.libaums:coreX": {
 jni-usb|ac_cloud-drive/build.json|"**/libusb-lib.so", |
 jni-errno|ac_cloud-drive/build.json|, "**/liberrno-lib.so"|
-legacy|ac_cloud-drive/app/build.gradle|useLegacyPackaging = false|useLegacyPackaging = true
+excludes|ac_cloud-drive/app/build.gradle|raw_library?.native_excludes|raw_library?.other
 install|ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive/usb/RawUsbDrive.kt|JavaUsbCommunication.install(); |
 stall|ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive/usb/JavaUsbCommunication.kt|throw PipeException()|throw IOException("stall")
 own-request|ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive/usb/UsbDriveActivity.kt|PermsUsb.request(this@UsbDriveActivity, device)|getSystemService(UsbManager::class.java).requestPermission(device, null); PermsUsb.request(this@UsbDriveActivity, device)

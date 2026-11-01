@@ -657,10 +657,9 @@ android {
             // libraries' jars (JGit, jsch, …) collide on their notice files.
             excludes += (buildJson.android?.packaging_excludes ?: []) as List
         }
-        // 16 KB page size: native libs stay stored and page-aligned in the APK (no extraction), and libaums' two
+        // 16 KB page size: libs stay stored (AGP default; test-drive-rclone-engine forbids legacy packaging) and libaums' two
         // 4 KB-linked JNI helpers are dropped (build.json::usb_drives.raw_library.native_excludes; JavaUsbCommunication).
         jniLibs {
-            useLegacyPackaging = false
             excludes += (buildJson.usb_drives?.raw_library?.native_excludes ?: []) as List
         }
         // #871 move 10: no rclone jniLibs. The static rclone binary left with libs:rclone-engine
