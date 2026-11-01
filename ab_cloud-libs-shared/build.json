@@ -3139,7 +3139,7 @@
         "catalog_url": "https://openrouter.ai/api/v1/models",
         "needs_token": true,
         "default_model": "google/gemini-2.5-flash",
-        "pricing_as_of": "2026-10-31",
+        "pricing_as_of": "2026-11-01",
         "models": [
           {
             "id": "meta-llama/llama-3.1-8b-instruct",
@@ -3231,7 +3231,7 @@
             "name": "GLM 5.2",
             "open": true,
             "quant": ["fp4", "fp8", "nvfp4"],
-            "trained_for": ["academia", "finance", "legal", "programming", "roleplay", "technology"],
+            "trained_for": ["academia", "legal", "programming", "roleplay", "technology"],
             "prompt": 0.006, "completion": 6.8,
             "note": "Ranked in ten categories including translation; the formal-register GLM."
           },
@@ -3241,7 +3241,7 @@
             "open": true,
             "quant": ["fp4", "fp8", "nvfp4"],
             "trained_for": ["academia", "finance", "health", "legal", "marketing", "marketing/seo", "programming", "roleplay", "science", "technology", "translation", "trivia"],
-            "prompt": 0.0163, "completion": 0.1479,
+            "prompt": 0.0285, "completion": 0.0923,
             "note": "Ranked in all twelve categories; the cheapest all-rounder after DeepSeek."
           },
           {
