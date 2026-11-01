@@ -243,6 +243,8 @@ dependencies {
     // The shared bars (#1154, #1157): first row, second row, bottom nav, page gradient; icons from the catalog (#1160).
     implementation project(':libs:ui-nav-bars')
     implementation project(':libs:theme-background')
+    // #1406 Configs ▸ Permissions (AppPermsSection) and MainActivity as the PermsHost.
+    implementation project(':libs:perms')
     implementation project(':libs:ui-icons')
     // The Clock section's rules (#768): plain JVM, mutation-tested on its own (clock/build.gradle).
     implementation project(':clock')

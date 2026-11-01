@@ -113,6 +113,7 @@
         "libs:ui-icons",
         "libs:ui-nav-bars",
         "libs:theme-background",
+        "libs:perms",
         "clock",
         "jev",
         "sound",
@@ -5059,6 +5060,30 @@
         "kind": "jev"
       },
       {
+        "id": "configs_general",
+        "label": "General",
+        "icon": "settings",
+        "tab": "configs",
+        "kind": "fleet_general",
+        "_doc": "#1406 Configs > General: the shared Configs v2 General page (libs:ui-nav-bars FleetGeneralPage) from configs_pages.general."
+      },
+      {
+        "id": "configs_permissions",
+        "label": "Permissions",
+        "icon": "security",
+        "tab": "configs",
+        "kind": "fleet_perms",
+        "_doc": "#1406 Configs > Permissions: libs:perms AppPermsSection over perms.needs, highlighting what a feature asked for (MainActivity is the PermsHost, so every Open Permissions lands here)."
+      },
+      {
+        "id": "configs_about",
+        "label": "About",
+        "icon": "info",
+        "tab": "configs",
+        "kind": "fleet_about",
+        "_doc": "#1406 Configs > About: the shared Configs v2 About page (libs:ui-nav-bars FleetAboutPage) from configs_pages.about."
+      },
+      {
         "id": "jev_token",
         "label": "Token",
         "tab": "configs",
@@ -5401,6 +5426,60 @@
           "why": "Installs and updates this app."
         }
       ]
+    },
+    "about": {
+      "tagline": "An all-in-one calculator, converter and measuring kit",
+      "description": "Cloud Calc is the fleet's calculator. Every number is computed by the libqalculate engine in Cloud-Lib-Calc, which the app binds and never compiles. Calculator holds Standard, Scientific, Programmer, CAS and Physics modes, unit, currency and data conversion, graphs, date, finance and acoustics tools and a history. Measure turns the phone's sound, camera, sensors and radios (Wi-Fi, Bluetooth, NFC) into instruments, and Clock holds world clocks, alarms, timers and a stopwatch. Jev routes a plain-language request to the right tool.",
+      "features": [
+        "Standard, Scientific, Programmer, CAS and Physics calculators over libqalculate",
+        "Units, currency and network/data conversion",
+        "Graphs of y = f(x)",
+        "Sound meter, oscilloscope, tuner and generator",
+        "Camera measure, level, colour and text-to-numbers",
+        "Wi-Fi scan, channels, link and tools",
+        "World clock, alarms, timers and stopwatch",
+        "Jev: ask in plain language, the right tool computes"
+      ],
+      "screens": [
+        {
+          "name": "Calculator",
+          "what": "Calc, Convert, Graph, Tools and History."
+        },
+        {
+          "name": "Measure",
+          "what": "Sound, Camera, Sensors, radios and Clock."
+        },
+        {
+          "name": "Jev",
+          "what": "Ask in plain language."
+        },
+        {
+          "name": "Configs",
+          "what": "General, Permissions, About and the app's own settings."
+        }
+      ],
+      "guide": [
+        "Type an expression in Calculator and read the result live.",
+        "Open Measure and grant the permission a tool asks for with Grant.",
+        "Open Configs > Permissions to see and grant every permission at once."
+      ],
+      "privacy": "No ads and no trackers. Calculations run on the phone. The network is used only for the currency-rate download you ask for and, when you use Jev or an OpenRouter image route, for those requests. A crash report stays on the phone and goes only to the phone's own C3 WebServer.",
+      "backends": [],
+      "related": [
+        {
+          "app": "ac_cloud-store",
+          "why": "Installs and updates this app."
+        },
+        {
+          "app": "ac_cloud-c3-webserver",
+          "why": "Receives this app's crash reports on the phone."
+        }
+      ],
+      "perms_why": {
+        "fine_location": "Wi-Fi scanning (Measure > WiFi): Android returns nearby access points only with precise location (ACCESS_FINE_LOCATION).",
+        "coarse_location": "Requested together with precise location for Wi-Fi and Bluetooth scans.",
+        "nearby_wifi": "Wi-Fi scanning on Android 13+ (API 33, NEARBY_WIFI_DEVICES, never used for location)."
+      }
     }
   },
   "perms": {

@@ -1,0 +1,25 @@
+package com.diegonmarcos.superapp.perms
+
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
+
+/**
+ * #1406 an inline Grant for a feature card (Calc ▸ Measure ▸ WiFi): asks the system dialog for the runtime grants of
+ * [entries] (catalogue rows, already filtered to this SDK and to what is missing by [PermsNeeds.missing]) through the one
+ * place that asks, recording the ask like the Perms page does. Special-access rows have no dialog: they open their page.
+ */
+@Composable
+fun rememberPermsAsk(onResult: () -> Unit = {}): (List<PermEntry>) -> Unit {
+    val ctx = LocalContext.current
+    val ask = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { onResult() }
+    return { entries ->
+        val perms = entries.map { it.permission }.filter { it.startsWith("android.permission.") }.distinct()
+        if (perms.isNotEmpty()) {
+            PermAskLog.markAsked(ctx, perms)
+            PermAskLog.markAskedIds(ctx, entries.map { it.id })
+            ask.launch(perms.toTypedArray())
+        } else entries.firstOrNull()?.let { PermsSettings.open(ctx, it) }
+    }
+}

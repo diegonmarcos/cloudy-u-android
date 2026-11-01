@@ -4,6 +4,7 @@
     <string name="wifi_perm_title">Permisos necesarios</string>
     <string name="wifi_perm_body">El escaneo Wi-Fi necesita estos permisos. La página de Permisos los concede.</string>
     <string name="wifi_open_perms">Abrir Permisos</string>
+    <string name="wifi_grant">Conceder</string>
     <string name="wifi_location_off_title">La ubicación está desactivada</string>
     <string name="wifi_location_off_body">Android no devuelve resultados de escaneo con la ubicación desactivada.</string>
     <string name="wifi_open_settings">Abrir ajustes</string>

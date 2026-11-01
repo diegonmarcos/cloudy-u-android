@@ -36,6 +36,8 @@ import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.QuestionAnswer
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.ShowChart
 import androidx.compose.material.icons.filled.SwapHoriz
@@ -61,6 +63,8 @@ object IconCatalog {
         "camera" -> Icons.Filled.PhotoCamera
         "ask" -> Icons.Filled.QuestionAnswer
         "settings" -> Icons.Filled.Settings
+        "security" -> Icons.Filled.Security
+        "info" -> Icons.Filled.Info
         "science" -> Icons.Filled.Science
         "memory" -> Icons.Filled.Memory
         "functions" -> Icons.Filled.Functions

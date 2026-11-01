@@ -8,6 +8,7 @@ import android.net.Uri
 import android.provider.Settings
 import com.diegonmarcos.superapp.perms.PermsLink
 import com.diegonmarcos.superapp.perms.PermsNeeds
+import com.diegonmarcos.superapp.perms.rememberPermsAsk
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -204,8 +205,13 @@ internal fun WifiGate(c: WifiController, s: WifiState) {
                 WTitle(t(R.string.wifi_perm_title), "key")
                 WMuted(t(R.string.wifi_perm_body))
                 WMuted(if (need.isNotEmpty()) PermsNeeds.labels(need) else WifiPermissions.describe(s.missing), mono = true)
-                WButton(t(R.string.wifi_open_perms), primary = true, tag = "open-perms") {
-                    PermsLink.open(ctx, "Wi-Fi", need.map { it.id }.ifEmpty { listOf("fine_location", "coarse_location", "nearby_wifi") })
+                // #1406 Grant asks right here through libs:perms; Open Permissions goes to the host's Permissions page.
+                val ask = rememberPermsAsk { c.refreshEnv() }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (need.isNotEmpty()) WButton(t(R.string.wifi_grant), primary = true, tag = "grant-perms") { ask(need) }
+                    WButton(t(R.string.wifi_open_perms), primary = need.isEmpty(), tag = "open-perms") {
+                        PermsLink.open(ctx, "Wi-Fi", need.map { it.id }.ifEmpty { listOf("fine_location", "coarse_location", "nearby_wifi") })
+                    }
                 }
             }
         }

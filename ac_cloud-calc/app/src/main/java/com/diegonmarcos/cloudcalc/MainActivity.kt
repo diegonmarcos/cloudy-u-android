@@ -6,14 +6,16 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import com.diegonmarcos.superapp.bottomnav.FleetChrome
+import com.diegonmarcos.superapp.perms.PermsHost
 import com.diegonmarcos.cloudcalc.clock.ClockEngine
 import com.diegonmarcos.cloudcalc.engine.CalcClient
 import com.diegonmarcos.cloudcalc.ui.CalcShell
 import com.diegonmarcos.cloudcalc.ui.CalcState
 import com.diegonmarcos.cloudcalc.ui.CalcTheme
+import com.diegonmarcos.cloudcalc.ui.CONFIGS_PERMISSIONS_MODE
 
 /** The one Activity: edge-to-edge through the lib's FleetChrome, the island clears its own inset (the cloud-c3 shape). */
-class MainActivity : ComponentActivity() {
+class MainActivity : ComponentActivity(), PermsHost {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         FleetChrome.apply(this)
@@ -32,6 +34,14 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         state.show(intent.getStringExtra(ClockEngine.EXTRA_MODE))
+    }
+
+    /** #1406 every "Open Permissions" (PermsLink) lands on Configs ▸ Permissions, which reads the pending request. */
+    override fun openPermsPage(): Boolean {
+        if (!::state.isInitialized) return false
+        state.openConfigs()
+        state.show(CONFIGS_PERMISSIONS_MODE)
+        return true
     }
 
     companion object {

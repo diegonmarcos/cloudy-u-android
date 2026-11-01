@@ -4,6 +4,7 @@
     <string name="wifi_perm_title">Permissions needed</string>
     <string name="wifi_perm_body">Wi-Fi scanning needs these permissions. The Permissions page grants them.</string>
     <string name="wifi_open_perms">Open Permissions</string>
+    <string name="wifi_grant">Grant</string>
     <string name="wifi_location_off_title">Location services are off</string>
     <string name="wifi_location_off_body">Android returns no scan results while location is off.</string>
     <string name="wifi_open_settings">Open settings</string>
