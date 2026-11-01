@@ -25,6 +25,9 @@ for m in re.finditer(r"<node [^>]*>",x):
 else: sys.exit(1)' "$1"; }
 tap() { where "$1" | { read -r px py && adb shell input tap "$px" "$py"; }; }
 has() { grep -q "text=\"$1\"" "$OUT/ui.xml"; }
+# An unfiltered listing is alphabetical and the fixture sorts low: scroll down until $1 shows, then back to the top.
+seek() { local i hit=1; for i in 1 2 3 4 5 6 7 8; do dump >/dev/null; has "$1" && { hit=0; break; }; adb shell input swipe 160 520 160 220 300; sleep 1; done
+  for i in 1 2 3 4 5 6 7 8; do adb shell input swipe 160 220 160 520 200; done; sleep 1; dump >/dev/null; return $hit; }
 texts() { grep -oE 'text="[^"]+"' "$OUT/ui.xml" | sed 's/text="//;s/"$//' | sort -u | tr '\n' ';'; }
 
 adb install -r -g "$APK" || fail "install failed"
@@ -55,13 +58,13 @@ ROOTDIR=/storage/emulated/0
 adb shell "mkdir -p '$HERE/XsTrip/xstrip-deep' '$ROOTDIR/Music/xstrip-songs' && echo x > '$HERE/xstrip.txt' && echo x > '$HERE/XsTrip/xstrip-notes.txt' && echo x > '$ROOTDIR/Music/xstrip.mp3'" || fail "fixture write failed"
 tap '^More$' && sleep 1 && tap '^Retry$'; sleep 3
 shot 01-listing
-has XsTrip || fail "the fixture folder is not in the listing of $HERE: $(texts)"
+seek XsTrip || fail "the fixture folder is not in the listing of $HERE: $(texts)"
 
 # 1. expand: chips show, the listing stays, no page replaces it
 tap '^Search$' || fail "no search icon"
 sleep 2; shot 02-expanded
 for c in 'Only Folders Here' 'Only Folders Root' 'All From Here' 'All From Root'; do has "$c" || fail "chip '$c' missing: $(texts)"; done
-has XsTrip || fail "the listing vanished when the bar expanded"
+seek XsTrip || fail "the listing vanished when the bar expanded"
 
 # 2. type: default scope = folders here, filtered live
 FIELD=$(dump | python3 -I -c '
@@ -92,8 +95,8 @@ has xstrip.mp3 || fail "All From Root missed the file elsewhere under the root: 
 # 4. back collapses in place
 adb shell input keyevent 4; sleep 2; shot 07-collapsed
 has 'Only Folders Here' && fail "back did not collapse the bar"
-has XsTrip || fail "after collapsing the explorer is not on the same folder: $(texts)"
-has xstrip.txt || fail "after collapsing the listing is still filtered"
+seek XsTrip || fail "after collapsing the explorer is not on the same folder: $(texts)"
+seek xstrip.txt || fail "after collapsing the listing is still filtered"
 
 adb logcat -d -v threadtime > "$OUT/logcat.txt"
 grep -A5 "FATAL EXCEPTION" "$OUT/logcat.txt" | grep -q "$PKG" && fail "Drive crashed"
