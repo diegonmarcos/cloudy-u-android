@@ -148,11 +148,9 @@ def vaultSection = { s ->
     (vaultRowsDecl.rows ?: []).each { d ->
         def r = rows.find { it.id == d.id }
         if (r == null) throw new GradleException("ui.vault_rows row '${d.id}' is not in data/repos/${vaultRowsDecl.asset} — run ./data/regen-vault-rows.py")
-        def ids = []
-        if (d.lead) {
-            if (!pages.any { it.id == d.lead }) throw new GradleException("ui.vault_rows row '${d.id}' leads with '${d.lead}', which ui.sections[${s.id}] does not declare")
-            ids << d.lead
-        }
+        // A declared group of the same id holds the existing pages that lead this row (Due leads Backlogs, Tree leads RoadMaps).
+        def ids = new ArrayList((s.groups ?: []).find { it.id == d.id }?.pages ?: [])
+        ids.each { lead -> if (!pages.any { it.id == lead }) throw new GradleException("ui.sections[${s.id}].groups[${d.id}] names '${lead}', which is not a page") }
         r.chips.eachWithIndex { c, i ->
             def p = [id: c.page, label: c.label, icon: d.chip_icon ?: 'ic_p_folder']
             if (i == 0 && !ids.isEmpty()) p.separator_before = true
