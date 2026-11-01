@@ -136,7 +136,7 @@ class PermsViewTest {
 
     @Test fun `a catalogue row keeps its label, plain reason and icon, and its button is the dialog while it can be shown`() {
         val i = PermsView.item(entry(PermKind.RUNTIME), PermStatus(PermState.DENIED, "r"), highlight = true)
-        assertEquals(PermItem("e", "Label", "Because.", "camera", PermItemKind.RUNTIME, PermState.DENIED, "r", PermAction.GRANT, highlight = true), i)
+        assertEquals(PermItem("e", "Label", "Because.", "camera", PermItemKind.RUNTIME, PermState.DENIED, "r", PermAction.GRANT, highlight = true, permKind = PermKind.RUNTIME), i)
         assertEquals(PermAction.OPEN, PermsView.action(entry(PermKind.RUNTIME), PermStatus(PermState.PERMANENTLY_DENIED)))
         assertEquals(PermAction.OPEN, PermsView.action(entry(PermKind.RUNTIME, auto = false), PermStatus(PermState.DENIED)))
         assertEquals(PermAction.OPEN, PermsView.action(entry(PermKind.SPECIAL), PermStatus(PermState.DENIED)))
