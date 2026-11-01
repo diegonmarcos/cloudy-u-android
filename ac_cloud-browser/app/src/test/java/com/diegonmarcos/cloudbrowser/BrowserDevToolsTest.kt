@@ -21,20 +21,20 @@ class BrowserDevToolsTest {
     private val cfg = BrowserConfig.parse(JSONObject(File("../build.json").readText()).getJSONObject("ui").getJSONObject("browser").toString())
     private val facts = mapOf("page" to true, "can_go_back" to true, "can_go_forward" to true, "text_tools" to true)
 
-    @Test fun `icon row one is back forward refresh favourite download, row two translate view hard light`() {
-        val rows = cfg.menu.iconRows(facts).map { r -> r.map { it.item.id } }
-        assertEquals(listOf(
-            listOf("back", "forward", "reload", "bookmark", "download_page"),
-            listOf("translate", "desktop", "hard_refresh", "light_refresh")), rows)
+    @Test fun `#1401 no icon rows - the former icon actions are Page Actions and Page Tools rows`() {
+        assertTrue(cfg.menu.iconRows(facts).isEmpty())
+        val sec = { id: String -> cfg.menu.item(id)!!.section }
+        listOf("back", "forward", "reload", "bookmark", "download_page", "desktop", "hard_refresh", "light_refresh").forEach { assertEquals(it, "page_actions", sec(it)) }
+        assertEquals("addons", sec("translate"))
     }
 
-    @Test fun `dev tools is its own section holding view source and the debugger rows, after the page sections`() {
+    @Test fun `dev tools is the last section holding the debugger rows and the JS toggle, view source is a Page Tool`() {
         val ids = cfg.menu.sections.map { it.id }
-        assertEquals("Dev Tools", cfg.menu.sections.first { it.id == "devtools" }.label)
-        assertTrue(ids.indexOf("devtools") > ids.indexOf("page"))
+        assertEquals("DevTools", cfg.menu.sections.first { it.id == "devtools" }.label)
+        assertEquals("devtools", ids.last())
         val dev = cfg.menu.listSections(facts).first { it.first.id == "devtools" }.second.map { it.item.id }
-        assertEquals(listOf("view_source", "dev_console", "dev_network", "dev_elements", "dev_storage", "dev_remote_debug"), dev)
-        assertTrue("view source left the Page section", cfg.menu.listSections(facts).first { it.first.id == "page" }.second.none { it.item.id == "view_source" })
+        assertEquals(listOf("dev_console", "dev_network", "dev_elements", "dev_storage", "dev_remote_debug", "shield_js"), dev)
+        assertEquals("addons", cfg.menu.item("view_source")!!.section)
         assertTrue("no debugger row is reachable over the loopback API", dev.none { cfg.menu.item(it)!!.api })
         assertTrue("icon sections are not list sections", cfg.menu.listSections(facts).none { it.first.id.startsWith("icons") })
     }

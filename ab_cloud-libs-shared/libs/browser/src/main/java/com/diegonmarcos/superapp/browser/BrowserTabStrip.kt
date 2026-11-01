@@ -25,6 +25,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.diegonmarcos.superapp.uikit.LocalKitPalette
 import java.io.File
@@ -58,10 +60,13 @@ fun BrowserTabStrip(
     groupColor: Int,
     onSelect: (BrowserTab) -> Unit,
     onNew: () -> Unit,
+    /** #1401 Browsing Tools: the icon at the far right of the tab row, after the tabs (null = none). */
+    onTools: (() -> Unit)? = null,
 ) {
     val p = LocalKitPalette.current
+    Row(Modifier.fillMaxWidth().height(36.dp).background(p.surface), verticalAlignment = Alignment.CenterVertically) {
     Row(
-        Modifier.fillMaxWidth().height(36.dp).background(p.surface).horizontalScroll(rememberScrollState())
+        Modifier.weight(1f).horizontalScroll(rememberScrollState())
             .padding(horizontal = 8.dp).testTag("browser:strip"),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -92,4 +97,24 @@ fun BrowserTabStrip(
             contentAlignment = Alignment.Center,
         ) { Text("+", color = p.textPrimary, style = MaterialTheme.typography.titleMedium) }
     }
+    if (onTools != null) BrowserTabRowToolsIcon(onTools)
+    }
 }
+
+/**
+ * #1401 the Browsing Tools icon of the tab row (far right, after the tabs). It replaced the page-level ⋮: the app bar's
+ * ⋮ opens the app's Configs, like every fleet app. Drawn alone at the row's end when the tab strip is switched off.
+ */
+@Composable
+fun BrowserTabRowToolsIcon(onTap: () -> Unit) {
+    val p = LocalKitPalette.current
+    Box(
+        Modifier.padding(horizontal = 6.dp).size(32.dp).clip(RoundedCornerShape(8.dp))
+            .clickable(onClickLabel = "Browsing Tools", onClick = onTap)
+            .semantics { contentDescription = "Browsing Tools" }.testTag(TAB_ROW_TOOLS_TAG),
+        contentAlignment = Alignment.Center,
+    ) { Text("🛠", color = p.textPrimary, style = MaterialTheme.typography.titleMedium) }
+}
+
+/** #1401 the test tag of the tab row's Browsing Tools icon (UI tests and the emulator walk find it by this). */
+const val TAB_ROW_TOOLS_TAG = "browser:tabrow:tools"

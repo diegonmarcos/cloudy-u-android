@@ -18,6 +18,14 @@ data class BrowserSitePerm(
     val android: List<String> = emptyList(),
     /** What WebView asks with: PermissionRequest resources, or "geolocation" for the location prompt. */
     val webkit: List<String> = emptyList(),
+    /** #1401 one of the most-used permissions: listed first. */
+    val top: Boolean = false,
+    /** #1401 can Android WebView enforce it (false = declared, shown as not supported in WebView). */
+    val webview: Boolean = true,
+    /** #1401 why it is not supported in WebView (empty when [webview]). */
+    val why: String = "",
+    /** #1401 the WebView hook that enforces it (empty when not [webview]). */
+    val enforcedBy: String = "",
 )
 
 /**
@@ -41,8 +49,27 @@ object BrowserSitePolicy {
         return parts.indices.map { parts.drop(it).joinToString(".") }
     }
 
+    /** #1401 the host under which the user's global default of a permission is stored (Configs > Sites Permissions). */
+    const val ANY_HOST = "*"
+
+    /** The site's rule (most specific host first), else the user's global default, else the declared [default]. */
     fun resolve(rules: Map<String, String>, host: String, perm: String, default: String): String =
-        suffixes(host).firstNotNullOfOrNull { rules[key(it, perm)] } ?: default
+        suffixes(host).firstNotNullOfOrNull { rules[key(it, perm)] } ?: rules[key(ANY_HOST, perm)] ?: default
+
+    /** #1401 the global default: the user's `*` rule, else the declared one. */
+    fun defaultOf(rules: Map<String, String>, perm: BrowserSitePerm): String = rules[key(ANY_HOST, perm.id)] ?: perm.default
+
+    /** #1401 the Perms list order: the most-used first, then all the rest, each in declared order. */
+    fun ordered(perms: List<BrowserSitePerm>): List<BrowserSitePerm> = perms.filter { it.top } + perms.filterNot { it.top }
+
+    /** #1401 the WebView settings a state turns into (pure, so the mapping is JVM-tested). */
+    fun autoplayNeedsGesture(state: String) = state != ALLOW
+    /** WebSettings.MIXED_CONTENT_ALWAYS_ALLOW = 0, NEVER_ALLOW = 1, COMPATIBILITY_MODE = 2. */
+    fun mixedContentMode(state: String) = when (state) { ALLOW -> 0; DENY -> 1; else -> 2 }
+    /** A window.open / target=_blank: allow opens it, block refuses it, ask opens it only on a user gesture. */
+    fun popupAllowed(state: String, userGesture: Boolean) = when (state) { ALLOW -> true; DENY -> false; else -> userGesture }
+    /** Storage, third-party cookies, fullscreen: on unless blocked (ask has no WebView prompt, so it behaves as allow). */
+    fun onUnlessBlocked(state: String) = state != DENY
 
     /** History, previews and suggestions never see a private tab. */
     fun shouldRecord(tab: BrowserTab?): Boolean = tab?.isPrivate != true
@@ -59,6 +86,7 @@ object BrowserSitePolicy {
     /** Hosts that hold at least one rule, with their rules: the Sites page of Configs. */
     fun hostsWithRules(rules: Map<String, String>): Map<String, Map<String, String>> =
         rules.entries.mapNotNull { (k, v) -> k.substringBefore('|', "").takeIf { it.isNotEmpty() }?.let { h -> Triple(h, k.substringAfter('|'), v) } }
+            .filter { it.first != ANY_HOST }
             .groupBy({ it.first }, { it.second to it.third }).mapValues { it.value.toMap() }.toSortedMap()
 
     fun parsePerms(arr: org.json.JSONArray?): List<BrowserSitePerm> =
@@ -66,7 +94,8 @@ object BrowserSitePolicy {
             val o = arr.optJSONObject(i) ?: return@mapNotNull null
             fun list(k: String) = o.optJSONArray(k)?.let { a -> (0 until a.length()).map { a.optString(it) } }.orEmpty()
             BrowserSitePerm(o.optString("id"), o.optString("label", o.optString("id")), o.optString("default", ASK),
-                list("android"), list("webkit"))
+                list("android"), list("webkit"), top = o.optBoolean("top", false), webview = o.optBoolean("webview", true),
+                why = o.optString("why"), enforcedBy = o.optString("enforced_by"))
         }.filter { it.id.isNotEmpty() }
 }
 
@@ -77,6 +106,18 @@ class BrowserSitePermissions(context: Context) {
     fun rules(): Map<String, String> = sp.all.mapNotNull { (k, v) -> (v as? String)?.let { k to it } }.toMap()
 
     fun resolve(host: String, perm: BrowserSitePerm) = BrowserSitePolicy.resolve(rules(), host, perm.id, perm.default)
+
+    /** #1401 the global default of [perm] (the user's, else the declared one). */
+    fun defaultOf(perm: BrowserSitePerm) = BrowserSitePolicy.defaultOf(rules(), perm)
+
+    /** #1401 set the global default of [perm] for every site with no rule of its own. */
+    fun setDefault(perm: String, value: String): String? = set(BrowserSitePolicy.ANY_HOST, perm, value)
+
+    /** #1401 does [host] hold a rule of its own for [perm]? */
+    fun hasOwn(host: String, perm: String) = rules().containsKey(BrowserSitePolicy.key(host, perm))
+
+    /** #1401 drop [host]'s own rule for [perm]: it follows the global default again. */
+    fun reset(host: String, perm: String) { sp.edit().remove(BrowserSitePolicy.key(host, perm)).apply() }
 
     /** #900 this site's text zoom in percent, or null. */
     fun zoom(host: String): Int? = BrowserSitePolicy.zoomOf(rules(), host)

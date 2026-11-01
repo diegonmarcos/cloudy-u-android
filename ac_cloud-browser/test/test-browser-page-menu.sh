@@ -42,7 +42,7 @@ def check(root, ok):
     menu = b["menu"]
     items = {i["id"]: i for i in menu["items"]}
     secs = [s["id"] for s in menu["sections"]]
-    ok(secs == ["icons", "icons2", "page", "site", "addons", "devtools"], "P1 the dropdown's sections are two icon rows, page, site, addons, Dev Tools", str(secs))
+    ok(secs == ["page_actions", "addons", "site", "site_perms", "devtools"], "P1 Browsing Tools' sections are Page Actions, Page Tools, Site Data, Site Perms, DevTools", str(secs))
     for g in GLOBAL:
         ok(g not in items, "P1 `%s` is not a dropdown row" % g)
     ok(all("settings_section" not in i for i in items.values()), "P1 no dropdown row sits inside a settings topic")
@@ -81,9 +81,9 @@ def check(root, ok):
 BJ = "ac_cloud-browser/build.json"
 FRAG = LIB + "/BrowserHostFragment.kt"
 main("page menu is page-only", check, [
-    ("a global row comes back in the dropdown", BJ, '"id": "find",\n            "section": "page"', '"id": "history",\n            "section": "page"', "`history` is not a dropdown row"),
-    ("a settings section comes back", BJ, '"label": "Page tools"', '"label": "Page tools"},\n        {"id": "settings", "label": "Settings"', "sections are two icon rows"),
-    ("a page row leaves the dropdown", BJ, '"id": "view_source",\n            "section": "devtools"', '"id": "view_source_gone",\n            "section": "devtools"', "`view_source` is in the dropdown"),
+    ("a global row comes back in the dropdown", BJ, '"id": "find",\n            "section": "page_actions"', '"id": "history",\n            "section": "page_actions"', "`history` is not a dropdown row"),
+    ("a settings section comes back", BJ, '"id": "addons",\n            "label": "Page Tools"\n          },', '"id": "addons",\n            "label": "Page Tools"\n          },\n          {"id": "settings", "label": "Settings"},', "sections are Page Actions"),
+    ("a page row leaves the dropdown", BJ, '"id": "view_source",\n            "section": "addons"', '"id": "view_source_gone",\n            "section": "addons"', "`view_source` is in the dropdown"),
     ("a global row loses its Configs page", BJ, '"id": "clear_data",\n            "label": "Clear browsing data…",\n            "page": "privacy"', '"id": "clear_data",\n            "label": "Clear browsing data…",\n            "page": "nowhere"', "Configs row `clear_data`"),
     ("trackers stop being blocked", FRAG, "override fun shouldInterceptRequest", "override fun shouldInterceptRequestGone", "Block trackers is wired"),
     ("zoom stops being per site", FRAG, "sitePerms.setZoom(host, v.toInt())", "browserSettings.set(\"text_zoom\", v)", "Zoom is stored per site"),

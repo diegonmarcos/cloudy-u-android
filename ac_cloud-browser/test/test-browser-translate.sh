@@ -78,7 +78,7 @@ def check(root, ok):
     ok(mi.get("translate", {}).get("kind") == "toggle" and mi["translate"].get("checked") == "translated", "R4 the menu row is a toggle with a state")
     ok('"translated" to translator.active' in frag, "R4 the fact is the translator's state")
     # R5
-    ok("summarize_topics" in mi and mi["summarize_topics"]["section"] == "page", "R5 Summarise by topics is in the page menu")
+    ok("summarize_topics" in mi and mi["summarize_topics"]["section"] == "addons", "R5 Summarise by topics is a Page Tool (#1401)")
     ok('"summarize_topics" -> { wv ?: return needPage(); showTopics(wv)' in frag, "R5 and wired")
     ok("port.summariseWith(PageTopics.llmInput(page, cap)" in frag, "R5 OpenRouter summarises through the binder")
     ok("if (engine != PageTranslate.OPENROUTER)" in frag and "PageTopics.ON_DEVICE_NOTE" in frag, "R5 on-device ML shows the honest note instead")

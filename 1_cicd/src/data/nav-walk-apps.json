@@ -48,7 +48,266 @@
       "ship": "ship-cloud-browser.yml",
       "artifact": "Cloud-Browser-",
       "asset": "Cloud-Browser",
-      "start_page": "mhtml"
+      "start_page": "mhtml",
+      "scenes": [
+        {
+          "name": "tabrow-tools-icon",
+          "steps": [
+            [
+              "view"
+            ],
+            [
+              "wait",
+              5
+            ]
+          ]
+        },
+        {
+          "name": "configs-from-topbar-menu",
+          "steps": [
+            [
+              "view"
+            ],
+            [
+              "wait",
+              5
+            ],
+            [
+              "tap",
+              "topbar_configs"
+            ],
+            [
+              "wait",
+              2
+            ]
+          ]
+        },
+        {
+          "name": "browsing-tools-sheet",
+          "steps": [
+            [
+              "view"
+            ],
+            [
+              "wait",
+              5
+            ],
+            [
+              "tap",
+              "Browsing Tools"
+            ],
+            [
+              "wait",
+              2
+            ]
+          ]
+        },
+        {
+          "name": "browsing-tools-sheet-scrolled",
+          "steps": [
+            [
+              "view"
+            ],
+            [
+              "wait",
+              5
+            ],
+            [
+              "tap",
+              "Browsing Tools"
+            ],
+            [
+              "wait",
+              2
+            ],
+            [
+              "swipe",
+              2
+            ]
+          ]
+        },
+        {
+          "name": "browsing-tools-sheet-end",
+          "steps": [
+            [
+              "view"
+            ],
+            [
+              "wait",
+              5
+            ],
+            [
+              "tap",
+              "Browsing Tools"
+            ],
+            [
+              "wait",
+              2
+            ],
+            [
+              "swipe",
+              5
+            ]
+          ]
+        },
+        {
+          "name": "perms-top",
+          "steps": [
+            [
+              "view"
+            ],
+            [
+              "wait",
+              5
+            ],
+            [
+              "tap",
+              "Browsing Tools"
+            ],
+            [
+              "wait",
+              2
+            ],
+            [
+              "tap",
+              "Perms"
+            ],
+            [
+              "wait",
+              2
+            ]
+          ]
+        },
+        {
+          "name": "perms-scrolled",
+          "steps": [
+            [
+              "view"
+            ],
+            [
+              "wait",
+              5
+            ],
+            [
+              "tap",
+              "Browsing Tools"
+            ],
+            [
+              "wait",
+              2
+            ],
+            [
+              "tap",
+              "Perms"
+            ],
+            [
+              "wait",
+              2
+            ],
+            [
+              "swipe",
+              3
+            ]
+          ]
+        },
+        {
+          "name": "perms-end",
+          "steps": [
+            [
+              "view"
+            ],
+            [
+              "wait",
+              5
+            ],
+            [
+              "tap",
+              "Browsing Tools"
+            ],
+            [
+              "wait",
+              2
+            ],
+            [
+              "tap",
+              "Perms"
+            ],
+            [
+              "wait",
+              2
+            ],
+            [
+              "swipe",
+              10
+            ]
+          ]
+        },
+        {
+          "name": "sites-permissions",
+          "steps": [
+            [
+              "tap",
+              "bottomnav_item_configs"
+            ],
+            [
+              "wait",
+              2
+            ],
+            [
+              "tap",
+              "Site settings"
+            ],
+            [
+              "wait",
+              2
+            ],
+            [
+              "tap",
+              "Sites Permissions…"
+            ],
+            [
+              "wait",
+              2
+            ]
+          ]
+        },
+        {
+          "name": "sites-permissions-scrolled",
+          "steps": [
+            [
+              "tap",
+              "bottomnav_item_configs"
+            ],
+            [
+              "wait",
+              2
+            ],
+            [
+              "tap",
+              "Site settings"
+            ],
+            [
+              "wait",
+              2
+            ],
+            [
+              "tap",
+              "Sites Permissions…"
+            ],
+            [
+              "wait",
+              2
+            ],
+            [
+              "swipe",
+              12
+            ]
+          ]
+        }
+      ],
+      "scene_themes": [
+        "dark"
+      ]
     },
     {
       "app": "ac_cloud-contacts",

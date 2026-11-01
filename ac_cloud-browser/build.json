@@ -663,32 +663,28 @@
       },
       "_doc_reader_css": "#802 the stylesheet reader mode renders the extracted article with (assets/browser/reader.js does the extraction).",
       "reader_css": "body{max-width:42em;margin:auto;padding:1em;font:18px/1.6 Georgia,serif;background:#111;color:#eee}img,video{max-width:100%;height:auto}a{color:#a78bfa}pre{white-space:pre-wrap}",
-      "_doc_menu": "#802/#900 THE PAGE DROPDOWN (top-right of the browser view), declared. It holds ONLY what acts on the current page or domain: the icon row (back, forward, reload, bookmark, save), Page (find, share, copy URL, open in another app, desktop site, zoom for this site, translate, summarise, reader, view source, print, home screen, save offline, autofill this page), This site (permissions, trackers, JavaScript, images, cookies, site data, this site's autocomplete entries) and Page tools (the enabled add-ons' page rows). Everything global (settings, history, clear browsing data, tabs, add-on management, default browser, vault) lives in Configs: ui.browser.configs.rows and the settings' `section` (= the Configs page). test-browser-page-menu.sh holds that no global row comes back. libs:browser BrowserMenu parses it; the Compose sheet draws `sections` in order (section `icons` is the top icon row); every item's `action` id is one branch of BrowserHostFragment.runAction (test-browser-menu-wired.sh holds that). requires = page facts that must all be true; requires_why says why a row is disabled. checked = the fact a toggle shows. api: true = /api/browser/menu/act may run it (non-destructive page actions only).",
+      "_doc_menu": "#802/#900/#1401 BROWSING TOOLS, declared: the sheet opened by the icon at the far right of the tab row (the app bar's ⋮ opens Configs). It holds ONLY what acts on the current page or domain, in five titled sections in this order: Page Actions (navigation, reload/refresh, bookmark, find, share, copy URL, open in another app, desktop site, home screen, print, download/save offline, autofill), Page Tools (reader, translate, zoom, summarise, view source; add-on page rows join here), Site Data (cookies and storage of this site, clear, autocomplete, trackers, images), Site Perms (one row, Perms: every permission a site can request), DevTools (console, network, elements, storage, remote debugging, JavaScript for this site). Global things live on the Configs pages.",
       "menu": {
         "sections": [
           {
-            "id": "icons",
-            "label": ""
-          },
-          {
-            "id": "icons2",
-            "label": ""
-          },
-          {
-            "id": "page",
-            "label": "Page"
-          },
-          {
-            "id": "site",
-            "label": "This site"
+            "id": "page_actions",
+            "label": "Page Actions"
           },
           {
             "id": "addons",
-            "label": "Page tools"
+            "label": "Page Tools"
+          },
+          {
+            "id": "site",
+            "label": "Site Data"
+          },
+          {
+            "id": "site_perms",
+            "label": "Site Perms"
           },
           {
             "id": "devtools",
-            "label": "Dev Tools"
+            "label": "DevTools"
           }
         ],
         "requires_why": {
@@ -702,8 +698,8 @@
         "items": [
           {
             "id": "back",
-            "section": "icons",
-            "label": "←",
+            "section": "page_actions",
+            "label": "Back",
             "requires": [
               "page",
               "can_go_back"
@@ -712,8 +708,8 @@
           },
           {
             "id": "forward",
-            "section": "icons",
-            "label": "→",
+            "section": "page_actions",
+            "label": "Forward",
             "requires": [
               "page",
               "can_go_forward"
@@ -722,57 +718,17 @@
           },
           {
             "id": "reload",
-            "section": "icons",
-            "label": "↻",
+            "section": "page_actions",
+            "label": "Reload",
             "requires": [
               "page"
             ],
-            "api": true
-          },
-          {
-            "id": "bookmark",
-            "section": "icons",
-            "label": "☆",
-            "kind": "toggle",
-            "checked": "bookmarked",
-            "requires": [
-              "page"
-            ]
-          },
-          {
-            "id": "download_page",
-            "section": "icons",
-            "label": "⤓",
-            "requires": [
-              "page"
-            ]
-          },
-          {
-            "id": "translate",
-            "section": "icons2",
-            "label": "文A",
-            "caption": "Translate",
-            "requires": [
-              "page",
-              "text_tools"
-            ],
-            "kind": "toggle",
-            "checked": "translated"
-          },
-          {
-            "id": "desktop",
-            "section": "icons2",
-            "label": "🖥",
-            "caption": "Desktop",
-            "kind": "toggle",
-            "checked": "desktop_mode",
             "api": true
           },
           {
             "id": "hard_refresh",
-            "section": "icons2",
-            "label": "⟲",
-            "caption": "Hard refresh",
+            "section": "page_actions",
+            "label": "Hard refresh (cache, cookies, storage)",
             "requires": [
               "page"
             ],
@@ -780,17 +736,26 @@
           },
           {
             "id": "light_refresh",
-            "section": "icons2",
-            "label": "⟳",
-            "caption": "Light refresh",
+            "section": "page_actions",
+            "label": "Light refresh (cache)",
             "requires": [
               "page"
             ],
             "_doc": "#1141 clears the HTTP cache and this site's Service Workers, keeps cookies and storage, reloads past the cache."
           },
           {
+            "id": "bookmark",
+            "section": "page_actions",
+            "label": "Bookmark this page",
+            "kind": "toggle",
+            "checked": "bookmarked",
+            "requires": [
+              "page"
+            ]
+          },
+          {
             "id": "find",
-            "section": "page",
+            "section": "page_actions",
             "label": "Find in page",
             "requires": [
               "page"
@@ -799,7 +764,7 @@
           },
           {
             "id": "share",
-            "section": "page",
+            "section": "page_actions",
             "label": "Share…",
             "requires": [
               "page"
@@ -807,7 +772,7 @@
           },
           {
             "id": "copy_url",
-            "section": "page",
+            "section": "page_actions",
             "label": "Copy URL",
             "requires": [
               "page"
@@ -815,32 +780,72 @@
           },
           {
             "id": "open_external",
-            "section": "page",
+            "section": "page_actions",
             "label": "Open in another app…",
             "requires": [
               "page"
             ]
           },
           {
-            "id": "zoom",
-            "section": "page",
-            "label": "Zoom (this site)…",
-            "requires": [
-              "page"
-            ],
+            "id": "desktop",
+            "section": "page_actions",
+            "label": "Desktop site",
+            "kind": "toggle",
+            "checked": "desktop_mode",
             "api": true
           },
           {
-            "id": "summarize_topics",
-            "section": "page",
-            "label": "Summarise page by topics",
+            "id": "add_to_home",
+            "section": "page_actions",
+            "label": "Add to home screen",
             "requires": [
               "page"
             ]
           },
           {
+            "id": "print",
+            "section": "page_actions",
+            "label": "Print / Save as PDF",
+            "requires": [
+              "page"
+            ]
+          },
+          {
+            "id": "download_page",
+            "section": "page_actions",
+            "label": "Download this page",
+            "requires": [
+              "page"
+            ]
+          },
+          {
+            "id": "save_page",
+            "section": "page_actions",
+            "label": "Save this page offline",
+            "requires": [
+              "page"
+            ]
+          },
+          {
+            "id": "save_site",
+            "section": "page_actions",
+            "label": "Save this site offline",
+            "requires": [
+              "page"
+            ]
+          },
+          {
+            "id": "fill_profile",
+            "section": "page_actions",
+            "label": "Autofill this page…",
+            "requires": [
+              "page",
+              "profile_present"
+            ]
+          },
+          {
             "id": "reader",
-            "section": "page",
+            "section": "addons",
             "label": "Reader mode",
             "kind": "toggle",
             "checked": "reader_on",
@@ -850,50 +855,62 @@
             "api": true
           },
           {
-            "id": "print",
-            "section": "page",
-            "label": "Print / Save as PDF",
-            "requires": [
-              "page"
-            ]
-          },
-          {
-            "id": "add_to_home",
-            "section": "page",
-            "label": "Add to home screen",
-            "requires": [
-              "page"
-            ]
-          },
-          {
-            "id": "save_page",
-            "section": "page",
-            "label": "Save this page offline",
-            "requires": [
-              "page"
-            ]
-          },
-          {
-            "id": "save_site",
-            "section": "page",
-            "label": "Save this site offline",
-            "requires": [
-              "page"
-            ]
-          },
-          {
-            "id": "fill_profile",
-            "section": "page",
-            "label": "Autofill this page…",
+            "id": "translate",
+            "section": "addons",
+            "label": "Translate page",
             "requires": [
               "page",
-              "profile_present"
+              "text_tools"
+            ],
+            "kind": "toggle",
+            "checked": "translated"
+          },
+          {
+            "id": "zoom",
+            "section": "addons",
+            "label": "Zoom (this site)…",
+            "requires": [
+              "page"
+            ],
+            "api": true
+          },
+          {
+            "id": "summarize_topics",
+            "section": "addons",
+            "label": "Summarise page by topics",
+            "requires": [
+              "page"
             ]
           },
           {
-            "id": "site_settings",
+            "id": "view_source",
+            "section": "addons",
+            "label": "View source",
+            "requires": [
+              "page"
+            ]
+          },
+          {
+            "id": "clear_site_data",
             "section": "site",
-            "label": "Permissions: camera, microphone, location…",
+            "label": "Site data: cookies & storage…",
+            "requires": [
+              "page"
+            ],
+            "_doc": "This site's cookies and its storage (local/session storage, IndexedDB, service workers, cache storage), each its own box. Never autofill data: that is Configs > Autocomplete. a0_docs/eng-specs/autofill-3-tier.md 3.1."
+          },
+          {
+            "id": "clear_site_cookies",
+            "section": "site",
+            "label": "Clear cookies for this site",
+            "requires": [
+              "page"
+            ]
+          },
+          {
+            "id": "site_autocomplete",
+            "section": "site",
+            "label": "Autocomplete for this site…",
             "requires": [
               "page"
             ]
@@ -909,16 +926,6 @@
             ]
           },
           {
-            "id": "shield_js",
-            "section": "site",
-            "label": "Block JavaScript here",
-            "kind": "toggle",
-            "checked": "shield_js",
-            "requires": [
-              "page"
-            ]
-          },
-          {
             "id": "shield_images",
             "section": "site",
             "label": "Block images here",
@@ -929,34 +936,9 @@
             ]
           },
           {
-            "id": "clear_site_cookies",
-            "section": "site",
-            "label": "Clear cookies for this site",
-            "requires": [
-              "page"
-            ]
-          },
-          {
-            "id": "clear_site_data",
-            "section": "site",
-            "label": "Site data: cookies & storage…",
-            "requires": [
-              "page"
-            ],
-            "_doc": "This site's cookies and its storage (local/session storage, IndexedDB, service workers, cache storage), each its own box. Never autofill data: that is Configs > Autocomplete. a0_docs/eng-specs/autofill-3-tier.md 3.1."
-          },
-          {
-            "id": "site_autocomplete",
-            "section": "site",
-            "label": "Autocomplete for this site…",
-            "requires": [
-              "page"
-            ]
-          },
-          {
-            "id": "view_source",
-            "section": "devtools",
-            "label": "View source",
+            "id": "site_settings",
+            "section": "site_perms",
+            "label": "Perms",
             "requires": [
               "page"
             ]
@@ -999,6 +981,16 @@
             "label": "Remote debugging (chrome://inspect)",
             "kind": "toggle",
             "checked": "remote_debug"
+          },
+          {
+            "id": "shield_js",
+            "section": "devtools",
+            "label": "Block JavaScript here",
+            "kind": "toggle",
+            "checked": "shield_js",
+            "requires": [
+              "page"
+            ]
           }
         ]
       },
@@ -1060,6 +1052,11 @@
             "page": "site"
           },
           {
+            "id": "site_perms_manage",
+            "label": "Sites Permissions…",
+            "page": "site"
+          },
+          {
             "id": "profile",
             "label": "Import a profile (CSV, Firefox, Bitwarden)…",
             "page": "autocomplete"
@@ -1096,7 +1093,7 @@
           }
         ]
       },
-      "_doc_site_permissions": "#802 the per-site permissions Site settings offers and WebView requests are checked against: default = the answer for a host with no rule (allow|deny|ask); android = runtime permissions the APP must hold too (declared in AndroidManifest.xml; test-browser-privacy-wired.sh holds that); webkit = what WebView asks with (PermissionRequest resources, or geolocation). javascript/images are the shields.",
+      "_doc_site_permissions": "#802/#1401 EVERY permission a site can request, one per-site state (ask/allow/deny) each, plus a global default (stored as host `*`). The most-used come first (`top`), then all the rest. `webview: true` rows are enforced (`enforced_by` names the WebView hook); `webview: false` rows are declared but not supported in WebView, `why` says so on the Perms page.",
       "site_permissions": [
         {
           "id": "geolocation",
@@ -1108,7 +1105,10 @@
           ],
           "webkit": [
             "geolocation"
-          ]
+          ],
+          "top": true,
+          "webview": true,
+          "enforced_by": "WebChromeClient.onGeolocationPermissionsShowPrompt"
         },
         {
           "id": "camera",
@@ -1119,7 +1119,10 @@
           ],
           "webkit": [
             "android.webkit.resource.VIDEO_CAPTURE"
-          ]
+          ],
+          "top": true,
+          "webview": true,
+          "enforced_by": "WebChromeClient.onPermissionRequest (VIDEO_CAPTURE)"
         },
         {
           "id": "microphone",
@@ -1130,22 +1133,270 @@
           ],
           "webkit": [
             "android.webkit.resource.AUDIO_CAPTURE"
-          ]
+          ],
+          "top": true,
+          "webview": true,
+          "enforced_by": "WebChromeClient.onPermissionRequest (AUDIO_CAPTURE)"
+        },
+        {
+          "id": "notifications",
+          "label": "Notifications",
+          "default": "ask",
+          "top": true,
+          "webview": false,
+          "why": "not supported in WebView: Android WebView has no Notification API, so a page can never ask for it."
+        },
+        {
+          "id": "popups",
+          "label": "Pop-ups and redirects",
+          "default": "allow",
+          "top": true,
+          "webview": true,
+          "enforced_by": "WebChromeClient.onCreateWindow (ask = only on a user gesture)"
+        },
+        {
+          "id": "clipboard",
+          "label": "Clipboard read/write",
+          "default": "ask",
+          "top": true,
+          "webview": false,
+          "why": "not supported in WebView: WebView gives the app no permission hook for the async Clipboard API; it decides on its own."
+        },
+        {
+          "id": "autoplay",
+          "label": "Autoplay (sound)",
+          "default": "deny",
+          "top": true,
+          "webview": true,
+          "enforced_by": "WebSettings.mediaPlaybackRequiresUserGesture (ask = needs a tap, like block)"
         },
         {
           "id": "javascript",
           "label": "JavaScript",
-          "default": "allow"
+          "default": "allow",
+          "top": true,
+          "webview": true,
+          "enforced_by": "WebSettings.javaScriptEnabled"
         },
         {
-          "id": "images",
-          "label": "Images",
-          "default": "allow"
+          "id": "third_party_cookies",
+          "label": "Cookies / third-party cookies",
+          "default": "allow",
+          "top": true,
+          "webview": true,
+          "enforced_by": "CookieManager.setAcceptThirdPartyCookies (global default: Configs > Privacy)"
+        },
+        {
+          "id": "downloads",
+          "label": "Downloads / automatic downloads",
+          "default": "allow",
+          "top": true,
+          "webview": true,
+          "enforced_by": "WebView DownloadListener (ask = a prompt per download)"
+        },
+        {
+          "id": "site_storage",
+          "label": "Storage / persistent storage",
+          "default": "allow",
+          "top": true,
+          "webview": true,
+          "enforced_by": "WebSettings.domStorageEnabled + databaseEnabled"
+        },
+        {
+          "id": "protected_media",
+          "label": "Protected media (DRM)",
+          "default": "ask",
+          "webkit": [
+            "android.webkit.resource.PROTECTED_MEDIA_ID"
+          ],
+          "top": true,
+          "webview": true,
+          "enforced_by": "WebChromeClient.onPermissionRequest (PROTECTED_MEDIA_ID)"
+        },
+        {
+          "id": "sensors",
+          "label": "Motion & orientation sensors",
+          "default": "allow",
+          "webview": false,
+          "why": "not supported in WebView: WebView delivers devicemotion/deviceorientation with no permission hook."
+        },
+        {
+          "id": "midi",
+          "label": "MIDI / MIDI SysEx",
+          "default": "ask",
+          "webkit": [
+            "android.webkit.resource.MIDI_SYSEX"
+          ],
+          "webview": true,
+          "enforced_by": "WebChromeClient.onPermissionRequest (MIDI_SYSEX; plain MIDI is not gated by WebView)"
+        },
+        {
+          "id": "bluetooth",
+          "label": "Bluetooth",
+          "default": "ask",
+          "webview": false,
+          "why": "not supported in WebView: WebView has no Web Bluetooth; the browser's own shim asks with its chooser on every use."
+        },
+        {
+          "id": "usb",
+          "label": "USB",
+          "default": "ask",
+          "webview": false,
+          "why": "not supported in WebView: WebView has no WebUSB; the browser's own hardware shim asks with its chooser on every use."
+        },
+        {
+          "id": "serial",
+          "label": "Serial",
+          "default": "ask",
+          "webview": false,
+          "why": "not supported in WebView: WebView has no Web Serial; the browser's own hardware shim asks with its chooser on every use."
+        },
+        {
+          "id": "hid",
+          "label": "HID",
+          "default": "ask",
+          "webview": false,
+          "why": "not supported in WebView: WebView has no WebHID; the browser's own hardware shim asks with its chooser on every use."
+        },
+        {
+          "id": "nfc",
+          "label": "NFC",
+          "default": "ask",
+          "webview": false,
+          "why": "not supported in WebView: WebView has no Web NFC."
+        },
+        {
+          "id": "background_sync",
+          "label": "Background sync",
+          "default": "allow",
+          "webview": false,
+          "why": "not supported in WebView: WebView does not implement Background Sync."
+        },
+        {
+          "id": "idle_detection",
+          "label": "Idle detection",
+          "default": "ask",
+          "webview": false,
+          "why": "not supported in WebView: WebView does not implement the Idle Detection API."
+        },
+        {
+          "id": "wake_lock",
+          "label": "Screen wake lock",
+          "default": "allow",
+          "webview": false,
+          "why": "not supported in WebView: WebView gives the app no permission hook for the Screen Wake Lock API."
+        },
+        {
+          "id": "window_management",
+          "label": "Window management",
+          "default": "ask",
+          "webview": false,
+          "why": "not supported in WebView: WebView has one window per view; the Window Management API is absent."
+        },
+        {
+          "id": "local_fonts",
+          "label": "Local fonts",
+          "default": "ask",
+          "webview": false,
+          "why": "not supported in WebView: WebView does not implement the Local Font Access API."
+        },
+        {
+          "id": "file_system",
+          "label": "File system access",
+          "default": "ask",
+          "webview": false,
+          "why": "not supported in WebView: WebView has no File System Access API; a file input always opens the system picker."
+        },
+        {
+          "id": "payment_handler",
+          "label": "Payment handler",
+          "default": "ask",
+          "webview": false,
+          "why": "not supported in WebView: WebView does not implement Payment Handler."
+        },
+        {
+          "id": "vr_ar",
+          "label": "Device use (VR/AR)",
+          "default": "ask",
+          "webview": false,
+          "why": "not supported in WebView: WebView does not implement WebXR."
+        },
+        {
+          "id": "display_capture",
+          "label": "Display capture (screen share)",
+          "default": "ask",
+          "webview": false,
+          "why": "not supported in WebView: WebView does not implement getDisplayMedia."
+        },
+        {
+          "id": "fullscreen",
+          "label": "Fullscreen",
+          "default": "allow",
+          "webview": true,
+          "enforced_by": "WebChromeClient.onShowCustomView (block = the page stays inline)"
+        },
+        {
+          "id": "pip",
+          "label": "Picture-in-picture",
+          "default": "allow",
+          "webview": false,
+          "why": "not supported in WebView: WebView does not implement the Picture-in-Picture API."
         },
         {
           "id": "trackers",
           "label": "Trackers (deny = blocked)",
-          "default": "deny"
+          "default": "deny",
+          "webview": true,
+          "enforced_by": "WebViewClient.shouldInterceptRequest + tracker_hosts"
+        },
+        {
+          "id": "ads",
+          "label": "Ads",
+          "default": "allow",
+          "webview": false,
+          "why": "not supported in WebView: WebView has no ad filter; Trackers blocks the declared tracker hosts."
+        },
+        {
+          "id": "intrusive_ads",
+          "label": "Intrusive ads",
+          "default": "allow",
+          "webview": false,
+          "why": "not supported in WebView: WebView has no Better Ads filter."
+        },
+        {
+          "id": "sound",
+          "label": "Sound",
+          "default": "allow",
+          "webview": false,
+          "why": "not supported in WebView: WebView has no per-page mute."
+        },
+        {
+          "id": "images",
+          "label": "Images",
+          "default": "allow",
+          "webview": true,
+          "enforced_by": "WebSettings.loadsImagesAutomatically"
+        },
+        {
+          "id": "insecure_content",
+          "label": "Insecure content",
+          "default": "deny",
+          "webview": true,
+          "enforced_by": "WebSettings.mixedContentMode (allow = always, ask = compatibility, block = never)"
+        },
+        {
+          "id": "federated_identity",
+          "label": "Federated identity / third-party sign-in",
+          "default": "ask",
+          "webview": false,
+          "why": "not supported in WebView: WebView does not implement FedCM; sign-in pop-ups follow Pop-ups and redirects."
+        },
+        {
+          "id": "storage_access",
+          "label": "Storage access",
+          "default": "ask",
+          "webview": false,
+          "why": "not supported in WebView: WebView does not implement the Storage Access API."
         }
       ],
       "_doc_tab_thumbnails": "Tab-switcher snapshots, declared once. scale = capture size relative to the WebView (0.25 = a quarter of each side, RGB_565). memory_kb = memory LRU bound; disk_kb = disk cache bound under cacheDir/tabs (oldest file evicted first); quality = lossy WebP quality of the disk copy. incognito: 'skip' = a private tab is never captured; 'memory' = captured, kept in the memory LRU only, never written to disk. Captured when a page finishes loading, when a tab is left, and when the switcher opens; deleted when the tab closes. Read by libs:browser TabThumbConfig.",

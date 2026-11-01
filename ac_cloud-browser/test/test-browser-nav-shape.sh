@@ -50,7 +50,7 @@ CFG = json.loads(r'''{
    "onWebScroll",
    "onScrollDelta",
    "openAddress()",
-   "openMenu()",
+   "onConfigs = { openSection(\"configs\") }",
    "NavDecl.fromBuildConfig",
    "islandEntries()",
    "openSearch()",

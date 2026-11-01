@@ -75,7 +75,7 @@ main("menu wiring", check, [
     ("a UA literal in Kotlin", FRAG, "private fun closeOverlays() {", 'private val ua = "Mozilla/5.0 (X11)"\n    private fun closeOverlays() {', "user-agent"),
     ("menu/act stops gating api:false rows", API, "!item.api ->", "false ->", "refuses a row"),
     ("a required fact is never produced", FRAG, '"can_go_forward" to', '"cannot_go_forward" to', "`can_go_forward`"),
-    ("a row in an undeclared section", BJ, '"id": "site_settings",\n            "section": "site"', '"id": "site_settings",\n            "section": "nowhere"', "declared section"),
+    ("a row in an undeclared section", BJ, '"id": "site_settings",\n            "section": "site_perms"', '"id": "site_settings",\n            "section": "nowhere"', "declared section"),
     ("a Configs row loses its branch", FRAG, '"sites_manage" ->', '"sites_manage_gone" ->', "`sites_manage` has its branch"),
 ])
 PYEOF

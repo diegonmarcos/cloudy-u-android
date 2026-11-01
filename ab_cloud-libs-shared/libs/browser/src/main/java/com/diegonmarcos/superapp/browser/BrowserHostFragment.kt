@@ -23,6 +23,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.ColumnScope
@@ -1069,15 +1070,23 @@ class BrowserHostFragment : Fragment() {
             setOnLongClickListener { v -> onPageLongPress(v as WebView) }
             setDownloadListener { dlUrl, ua, disposition, mime, _ ->
                 // A .torrent (by name or application/x-bittorrent) becomes a torrent; anything else downloads.
-                if (!downloadTorrent(dlUrl, ua, disposition, mime)) {
-                    val d = download(dlUrl, ua, disposition, mime)
-                    toast("Downloading ${d.file}")
+                // #1401 Downloads, per site: block refuses, ask prompts once per site.
+                val dlPerm = config.sitePerms.firstOrNull { it.id == "downloads" }
+                val start = {
+                    if (!downloadTorrent(dlUrl, ua, disposition, mime)) {
+                        val d = download(dlUrl, ua, disposition, mime)
+                        toast("Downloading ${d.file}")
+                    }
                 }
+                if (dlPerm == null) start()
+                else decide(BrowserSitePolicy.hostOf(webView?.url ?: dlUrl), listOf(dlPerm)) { ok -> if (ok) start() else toast("Download blocked for this site") }
             }
             webChromeClient = object : CloudChromeClient(activity) {
                 /** #893 window.open / target=_blank: a child window the opener can post back to (sign-in popups). */
                 override fun onCreateWindow(view: WebView?, isDialog: Boolean, isUserGesture: Boolean, resultMsg: android.os.Message?): Boolean {
                     val transport = resultMsg?.obj as? WebView.WebViewTransport ?: return false
+                    // #1401 Pop-ups and redirects, per site.
+                    if (!BrowserSitePolicy.popupAllowed(permState(BrowserSitePolicy.hostOf(view?.url), "popups"), isUserGesture)) { toast("Pop-up blocked"); return false }
                     return openPopup(transport, resultMsg)
                 }
 
@@ -1100,7 +1109,13 @@ class BrowserHostFragment : Fragment() {
                     saveFavicon(tabKey, view?.url, icon)
                 }
 
-                /** #802 camera / microphone: the site's rule, else ask; never silently granted. */
+                /** #1401 Fullscreen, per site: block keeps the video inline. */
+                override fun onShowCustomView(view: android.view.View?, callback: WebChromeClient.CustomViewCallback?) {
+                    if (!BrowserSitePolicy.onUnlessBlocked(permState(BrowserSitePolicy.hostOf(webView?.url), "fullscreen"))) { callback?.onCustomViewHidden(); return }
+                    super.onShowCustomView(view, callback)
+                }
+
+                /** #802/#1401 camera, microphone, protected media, MIDI SysEx: the site's rule, else ask; never silently granted. */
                 override fun onPermissionRequest(request: android.webkit.PermissionRequest) {
                     val host = request.origin?.host.orEmpty().lowercase()
                     val wanted = request.resources.filter { r -> config.sitePerms.any { r in it.webkit } }
@@ -1400,6 +1415,7 @@ class BrowserHostFragment : Fragment() {
         cookiesOf(wv).setAcceptThirdPartyCookies(wv, browserSettings.bool("block_third_party_cookies") != true)
         applyViewMode(wv)
         applyShields(wv, url)
+        applySitePerms(wv, url)
         // #887 file access only for a page of an offline copy (targetSdk 30+ has it off by default).
         // An .mhtml archive opened from outside (or copied to the cache from a content:// uri) is read the same way.
         // #802 JS: the user's setting, then this site's shield (a `deny` rule turns it off here).
@@ -1413,6 +1429,19 @@ class BrowserHostFragment : Fragment() {
         val host = BrowserSitePolicy.hostOf(url)
         if (host.isEmpty()) return
         if (shieldDenied(host, "images")) wv.settings.loadsImagesAutomatically = false
+    }
+
+    /** #1401 the per-site permissions WebSettings and the cookie manager enforce: autoplay, storage, insecure content, 3rd-party cookies. */
+    private fun applySitePerms(wv: WebView, url: String?) {
+        val host = BrowserSitePolicy.hostOf(url)
+        if (host.isEmpty()) return
+        val s = wv.settings
+        s.mediaPlaybackRequiresUserGesture = BrowserSitePolicy.autoplayNeedsGesture(permState(host, "autoplay"))
+        val store = BrowserSitePolicy.onUnlessBlocked(permState(host, "site_storage"))
+        s.domStorageEnabled = store
+        @Suppress("DEPRECATION") run { s.databaseEnabled = store }
+        s.mixedContentMode = BrowserSitePolicy.mixedContentMode(permState(host, "insecure_content"))
+        cookiesOf(wv).setAcceptThirdPartyCookies(wv, BrowserSitePolicy.onUnlessBlocked(permState(host, "third_party_cookies")))
     }
 
     /** #900 are trackers blocked on [host]? Its rule, else the global setting's default. Safe off the main thread. */
@@ -1460,17 +1489,42 @@ class BrowserHostFragment : Fragment() {
         if (need.isEmpty()) done(true) else { done(false); permsNeeded(need) }
     }
 
+    /** #1401 a permission's state on [host]: its rule, else the global default (trackers / 3rd-party cookies: the Configs switch moves it). */
+    private fun permState(host: String, id: String): String {
+        val perm = config.sitePerms.firstOrNull { it.id == id } ?: return BrowserSitePolicy.ASK
+        return when (id) {
+            "trackers" -> if (trackersBlocked(host)) BrowserSitePolicy.DENY else BrowserSitePolicy.ALLOW
+            "third_party_cookies" -> BrowserSitePolicy.resolve(sitePerms.rules(), host, id,
+                if (browserSettings.bool("block_third_party_cookies") == true) BrowserSitePolicy.DENY else perm.default)
+            else -> sitePerms.resolve(host, perm)
+        }
+    }
+
+    /** #1401 Browsing Tools > Site Perms > Perms: every permission a site can request, this site's state, the global default. */
     private fun showSiteSettings(host: String) {
-        val cat = BrowserSettingsCatalogue(config.sitePerms.map {
-            BrowserSetting(it.id, "enum", it.default, BrowserSitePolicy.VALUES, label = it.label, section = host)
-        })
         overlay { close ->
-            BrowserSettingsScreen(cat, value = { k ->
-                // #900 trackers: the global setting moves the default of a host with no rule.
-                if (k == "trackers") (if (trackersBlocked(host)) BrowserSitePolicy.DENY else BrowserSitePolicy.ALLOW)
-                else config.sitePerms.first { it.id == k }.let { sitePerms.resolve(host, it) } },
-                onSet = { k, v -> sitePerms.set(host, k, v.toString()); webView?.let { applySettings(it) } },
-                extra = emptyList(), onExtra = {}, onClose = { close(); webView?.reload() })
+            BrowserPermsScreen("Perms", host, config.sitePerms,
+                stateOf = { permState(host, it.id) }, defaultOf = { sitePerms.defaultOf(it) }, hasOwn = { sitePerms.hasOwn(host, it.id) },
+                onSet = { perm, v -> sitePerms.set(host, perm.id, v); webView?.let { applySettings(it) } },
+                onReset = { perm -> sitePerms.reset(host, perm.id); webView?.let { applySettings(it) } },
+                onClose = { close(); webView?.reload() })
+        }
+    }
+
+    /** #1401 Configs > Site settings > Sites Permissions: one default per permission for every site, then the sites with overrides. */
+    private fun showSitePermsDefaults() {
+        overlay { close ->
+            val sites = BrowserSitePolicy.hostsWithRules(sitePerms.rules()).map { (h, r) ->
+                PermSite(h, r.entries.sortedBy { it.key }.joinToString(", ") { "${it.key} ${it.value}" })
+            }
+            BrowserPermsScreen("Sites Permissions", null, config.sitePerms,
+                stateOf = { sitePerms.defaultOf(it) }, defaultOf = { sitePerms.defaultOf(it) }, hasOwn = { false },
+                onSet = { perm, v -> sitePerms.setDefault(perm.id, v); webView?.let { applySettings(it) } },
+                onReset = {},
+                onClose = close,
+                sites = sites,
+                onEditSite = { h -> showSiteSettings(h) },
+                onResetSite = { h -> sitePerms.forget(h); close(); showSitePermsDefaults() })
         }
     }
 
@@ -1915,7 +1969,6 @@ class BrowserHostFragment : Fragment() {
                     modifier = Modifier.weight(1f).padding(horizontal = 8.dp).testTag("browser:address")
                         .clickable { suggestState.visible = false; addressOpen = true },
                 )
-                BarButton("⋮") { showMenuSheet() }
             }
 
             // #886 the strip of tab icons for this tab's group, under the bar; on by default.
@@ -1923,8 +1976,9 @@ class BrowserHostFragment : Fragment() {
                 val m = strip.value
                 BrowserTabStrip(m.tabs, m.activeKey, m.group, m.color,
                     onSelect = { t -> if (t.key != currentTab()?.key) { prefs.setActiveId(t.key); showDetail(prefs.byId(t.key) ?: t) } },
-                    onNew = { promptForUrl(private_ = currentTab()?.isPrivate == true, joinTabKey = currentTab()?.key) })
-            }
+                    onNew = { promptForUrl(private_ = currentTab()?.isPrivate == true, joinTabKey = currentTab()?.key) },
+                    onTools = { showMenuSheet() })
+            } else Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) { BrowserTabRowToolsIcon { showMenuSheet() } }
 
             // The page area: the WebView, and over it the suggestions panel, which is a CHILD of this frame
             // (so it sits under the bar and ends at the frame's bottom: above the keyboard, never over it).
@@ -2394,6 +2448,7 @@ class BrowserHostFragment : Fragment() {
                 showSiteAutocomplete(host); done(ok().put("host", host))
             }
             "sites_manage" -> { showSites(); done(ok()) }
+            "site_perms_manage" -> { showSitePermsDefaults(); done(ok()) }
             "translate" -> { wv ?: return needPage(); done(toggleTranslate()) }
             "summarize_topics" -> { wv ?: return needPage(); showTopics(wv); done(ok().put("started", true)) }
             "save_page" -> { wv ?: return needPage(); startSave(wv, false, done) }

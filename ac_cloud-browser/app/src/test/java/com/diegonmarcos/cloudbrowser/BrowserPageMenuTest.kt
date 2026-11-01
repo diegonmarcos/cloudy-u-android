@@ -31,7 +31,7 @@ class BrowserPageMenuTest {
     fun `the dropdown has no global row and no settings section`() {
         val ids = cfg.menu.items.map { it.id }.toSet()
         assertEquals("global rows in the dropdown: ${ids intersect global}", emptySet<String>(), ids intersect global)
-        assertEquals(listOf("icons", "icons2", "page", "site", "addons", "devtools"), cfg.menu.sections.map { it.id })
+        assertEquals(listOf("page_actions", "addons", "site", "site_perms", "devtools"), cfg.menu.sections.map { it.id })
         assertTrue("no row lives in a settings section", cfg.menu.items.none { it.section == "settings" || it.settingsSection != null })
     }
 

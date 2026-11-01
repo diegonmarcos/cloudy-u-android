@@ -58,7 +58,7 @@ class BrowserPageDropdownUiTest {
     private fun show(facts: Map<String, Boolean>) {
         val iconRows = cfg.menu.iconRows(facts).map { r -> r.map { it.sheet() } }
         val sections = cfg.menu.listSections(facts).map { (s, rows) -> s.label to rows.map { it.sheet() } }
-        compose.setContent { CloudKitTheme(palette) { BrowserSheet(iconRows.first(), sections, onPick = { picked += it }, onDismiss = {}, moreIcons = iconRows.drop(1)) } }
+        compose.setContent { CloudKitTheme(palette) { BrowserSheet(iconRows.firstOrNull().orEmpty(), sections, onPick = { picked += it }, onDismiss = {}, moreIcons = iconRows.drop(1)) } }
         compose.waitForIdle()
     }
 
@@ -85,10 +85,10 @@ class BrowserPageDropdownUiTest {
     }
 
     @Test
-    fun `the sections read icons, Page, This site and Page tools`() {
+    fun `the sections read Page Actions, Page Tools, Site Data, Site Perms, DevTools`() {
         show(pageFacts)
         // a section title is drawn as text; the rows under it carry the tags
-        listOf("Page", "This site").forEach { title ->
+        listOf("Page Actions", "Page Tools", "Site Data", "Site Perms", "DevTools").forEach { title ->
             assertTrue("section $title is drawn", compose.onAllNodesWithTagOrText(title))
         }
     }

@@ -1091,6 +1091,17 @@ class Walk:
             shell(str(arg).replace("{pkg}", self.pkg)); return True
         if kind == "key":
             shell("input keyevent %s" % arg); settle(1.0); return True
+        if kind == "view":  # #1401 open the deterministic local test page (start_page) in the app, as a VIEW intent
+            uri = self.start_page()
+            if not uri:
+                return False
+            act = shell("cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.LAUNCHER %s" % self.pkg).strip().splitlines()
+            shell("am start -W -n %s -a android.intent.action.VIEW -d %s -t multipart/related" % (act[-1].strip() if act else self.pkg, uri), timeout=120)
+            settle(3); return True
+        if kind == "swipe":  # #1401 scroll the content up by about half a screen, [arg] times
+            for _ in range(int(arg or 1)):
+                swipe(self.w // 2, int(self.h * 0.75), int(self.h * 0.3)); settle(0.8)
+            return True
         if kind == "edge":  # a swipe in from the left or right edge (Obsidian's drawers)
             y = self.h // 2
             x0, x1 = (5, int(self.w * 0.7)) if arg == "left" else (self.w - 5, int(self.w * 0.3))
