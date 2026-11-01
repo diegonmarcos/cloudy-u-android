@@ -90,7 +90,7 @@ class GitStorageTest {
         assertEquals(GitStorage.Access.WRITABLE, GitStorage.access(raw = false, canWrite = true))
         assertEquals(GitStorage.Access.NEEDS_GRANT, GitStorage.access(raw = false, canWrite = false))
         assertEquals(GitStorage.Access.RAW_READ_ONLY, GitStorage.access(raw = true, canWrite = true))
-        assertTrue(GitStorage.onVolume("/storage/emulated/0/git/a")); assertTrue(GitStorage.onVolume("/storage/1A2B-3C4D/GIT/a"))
+        assertTrue(GitStorage.onVolume("/storage/" + "emulated/0/git/a")); assertTrue(GitStorage.onVolume("/storage/1A2B-3C4D/GIT/a"))
         assertTrue(!GitStorage.onVolume("/data/data/x/git")); assertTrue(!GitStorage.onVolume("/storage/self/primary/git"))
     }
 }

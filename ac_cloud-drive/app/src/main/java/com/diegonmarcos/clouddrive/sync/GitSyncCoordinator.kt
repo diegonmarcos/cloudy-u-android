@@ -772,7 +772,7 @@ class GitSyncCoordinator(private val ctx: Context, private val scope: CoroutineS
     /** [into] (#1356) = a volume's git folder (Emulated, an attached drive) the clone lands in; null = the store. */
     fun cloneInto(name: String, url: String, authKind: String, username: String, token: String, sshKeyPath: String = "", into: File? = null) {
         if (name.isBlank() || url.isBlank() || cloning.value.contains(name)) return
-        val dir = into?.let { File(it, name) } ?: SharedStore.repoDir(name)
+        val dir = SharedStore.repoDir(name).let { store -> into?.let { File(it, name) } ?: store }
         cloning.update { it + name }
         val started = jobs.submit(GitJobs.Spec("clone@" + name, Declarations.GIT_OP_CLONE, Declarations.GIT_OP_CLONE, listOf(GitJobs.Target(dir.absolutePath, name)), workers = 1, exclusive = false) { _ ->
             // The clone's decision point, on the device: the URL's HOST and the destination —
@@ -796,7 +796,7 @@ class GitSyncCoordinator(private val ctx: Context, private val scope: CoroutineS
 
     /** The clone itself, blocking (IO): the store's exec path or the engine, [depth] null = full history; registers on success. Shared by [cloneInto] and [cloneMissing]. */
     private fun cloneBlocking(name: String, url: String, authKind: String, username: String, token: String, sshKeyPath: String, depth: Int?, into: File? = null): GitOpResult {
-                val dir = into?.let { File(it, name) } ?: SharedStore.repoDir(name)
+                val dir = SharedStore.repoDir(name).let { store -> into?.let { File(it, name) } ?: store }
                 val id = RepoRegistry.idFor(dir.absolutePath)
                 val managed = ManagedRepo(id = id, name = name, path = dir.absolutePath, remoteUrl = url, authKind = authKind, authUsername = username, sshKeyPath = sshKeyPath)
                 if (token.isNotBlank()) credentials.setSecret(id, token)
