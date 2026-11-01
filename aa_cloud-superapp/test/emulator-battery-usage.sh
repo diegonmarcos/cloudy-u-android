@@ -29,7 +29,12 @@ adb shell settings put global hide_error_dialogs 1 || true
 adb shell settings delete global cloud_nav_ui_mode || true
 adb shell settings put global adb_wifi_enabled 0 || true
 
-dump() { adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb shell cat /sdcard/ui.xml > "$OUT/ui.xml" 2>/dev/null; }
+# Swipes in fractions of the real screen: the CI AVD is 320x640, and 1080-px coordinates never scrolled (run 41299866795).
+read -r SW SH < <(adb shell wm size | grep -oE '[0-9]+x[0-9]+' | tail -1 | tr x ' ')
+scroll() { adb shell input swipe $((SW / 2)) $((SH * $1 / 100)) $((SW / 2)) $((SH * $2 / 100)) 400; }
+# A fresh dump every time (the old file removed first), so a failed dump cannot pass a stale screen.
+dump() { local i; for i in 1 2 3; do adb shell rm -f /sdcard/ui.xml >/dev/null 2>&1; adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1
+  adb shell cat /sdcard/ui.xml > "$OUT/ui.xml" 2>/dev/null; grep -q '<node' "$OUT/ui.xml" && return 0; sleep 2; done; }
 # Centre of the first node whose text or content-desc equals $1 (empty when absent).
 centre() { python3 - "$OUT/ui.xml" "$1" <<'PY'
 import re, sys
@@ -49,7 +54,7 @@ find_text() {
   for i in $(seq 1 14); do
     dump; xy=$(centre "$want"); [ -n "$xy" ] && { echo "$xy"; return 0; }
     if [ -n "$opener" ]; then xy=$(centre "$opener"); [ -n "$xy" ] && { adb shell input tap $xy; sleep 2; opener=""; continue; }; fi
-    adb shell input swipe 540 1700 540 900 400; sleep 1.2
+    scroll 78 40; sleep 1.2
   done
   return 1
 }
@@ -72,7 +77,7 @@ adb shell dumpsys battery set level 66; sleep 2
 open_page "page:boards/resources"
 shot resources-top
 if find_text "Battery use per app" "Battery" >/dev/null; then
-  adb shell input swipe 540 1500 540 1100 400; sleep 1.5
+  scroll 70 50; sleep 1.5
   shot resources-battery-cycle
   dump; grep -q "90% → 62% · −28%" "$OUT/ui.xml" || { echo "::error::the unplug-to-plug-in cycle (90% → 62%) is not listed"; fail=1; }
   if tap_text "Month"; then shot resources-battery-month; else echo "::error::no Month segment"; fail=1; fi
@@ -102,7 +107,7 @@ fi
 # #1380 Cloud ▸ Apps: Communication carries Contacts; Data Apps reads Drive | Notes Tasks | Gallery Media News | Office.
 open_page "page:cloud/apps"
 adb shell screencap -p /sdcard/s.png; adb pull /sdcard/s.png "$OUT/cloud-apps.png" >/dev/null; dump; cp "$OUT/ui.xml" "$OUT/cloud-apps.xml"
-adb shell input swipe 540 1500 540 900 400; sleep 1.5
+scroll 70 40; sleep 1.5
 adb shell screencap -p /sdcard/s.png; adb pull /sdcard/s.png "$OUT/cloud-apps-scrolled.png" >/dev/null; dump; cp "$OUT/ui.xml" "$OUT/cloud-apps-scrolled.xml"
 python3 - "$OUT/cloud-apps.xml" "$OUT/cloud-apps-scrolled.xml" <<'PY' || fail=1
 import re, sys
@@ -139,17 +144,8 @@ sys.exit(1 if miss else 0)
 PY
 }
 wake; adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null; sleep 8; dump
-xy=$(python3 - "$OUT/ui.xml" <<'PY'
-import re, sys
-best = None
-for n in re.findall(r'<node [^>]*>', open(sys.argv[1], encoding="utf-8", errors="ignore").read()):
-    b = re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', n)
-    if not b or 'clickable="true"' not in n: continue
-    x1, y1, x2, y2 = map(int, b.groups())
-    if y2 <= 260 and x2 - x1 < 200 and (best is None or x2 > best[2]): best = (x1, y1, x2, y2)
-if best: print((best[0] + best[2]) // 2, (best[1] + best[3]) // 2)
-PY
-)
+# The strip's battery (BatteryIconView) carries the label "Battery status"; geometry picked the toolbar's buttons (41299866795).
+xy=$(centre "Battery status")
 if [ -n "$xy" ]; then
   adb shell input tap $xy; sleep 2.5; cap home-battery-popup
   has_all "$OUT/home-battery-popup.xml" "Battery stats ›" "Now" "Since last charge|Since plugged in" || { echo "::error::the home battery popup is missing a section"; fail=1; }
@@ -160,7 +156,7 @@ else
 fi
 open_page "page:config/battery"
 frames=""
-for i in 1 2 3 4 5 6; do cap "battery-stats-$i"; frames="$frames $OUT/battery-stats-$i.xml"; adb shell input swipe 540 1700 540 700 400; sleep 1.2; done
+for i in 1 2 3 4 5 6; do cap "battery-stats-$i"; frames="$frames $OUT/battery-stats-$i.xml"; scroll 80 30; sleep 1.2; done
 has_all $frames "Now" "Since last charge|Since plugged in" "History" "Capacity" "Temperature & voltage" "Discharge cycles" "Charge sessions" "Top apps since charge" "Privileged channel" \
   || { echo "::error::the Battery stats page is missing a section"; fail=1; }
 

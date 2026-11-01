@@ -820,6 +820,8 @@ private fun StripElementView(el: StatusElement, model: StatusStripModel, ctx: Co
                     BatteryIconView(c).apply {
                         // Tap -> the "Estimated battery last" popup + session metrics, one glance from the strip.
                         isClickable = true
+                        // An icon-only button needs a label: TalkBack reads it, and the emulator driver taps it by it.
+                        contentDescription = "Battery status"
                         setOnClickListener {
                             if (el.opens == "battery_popup") BatteryEstimatePopup.show(c, this) { com.diegonmarcos.superapp.batterystats.BatteryStatsPage.open(c) }
                         }
