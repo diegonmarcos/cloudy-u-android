@@ -59,12 +59,10 @@ launch
 # 1. the sheet
 open_git || fail "no Git page: $(texts)"
 shot 00-git
-# More > Advanced: the parentless and unlisted panels live in a sheet, not in the default list (#1356)
-dump >/dev/null; has 'Local repos parentless' && fail "the parentless panel is still in the default list"
-advanced() { ensure_git; tap '^More$' && sleep 1 && tap '^Advanced$' && sleep 2 && dump >/dev/null && has 'Local repos parentless'; }
-step "Advanced does not show the parentless panel" advanced
+# #1392 the parentless and unlisted panels sit below the table; More > Advanced scrolls to them
+advanced() { ensure_git; tap '^More$' && sleep 1 && tap '^Advanced$' && sleep 3 && dump >/dev/null && has 'Local repos parentless'; }
+step "the parentless panel is not below the table" advanced
 shot 00b-advanced
-adb shell input keyevent 4; sleep 2
 # ONE Git page on every storage (#1376): the pill switches the root; Emulated runs the same page on /sdcard/git, External shows its empty state
 adb shell "mkdir -p /sdcard/git/emulated-fixture/.git && echo 'ref: refs/heads/main' > /sdcard/git/emulated-fixture/.git/HEAD" || true
 pick() { ensure_git; tap "$1" && sleep 1 && tap "$2" && sleep 4 && dump >/dev/null && has "$3"; }

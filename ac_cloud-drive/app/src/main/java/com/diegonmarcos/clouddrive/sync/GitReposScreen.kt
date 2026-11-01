@@ -889,7 +889,7 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
             "toggle_filter" -> page.filters.firstOrNull { it.id == item.filter }?.let { f -> coordinator.setFilter(f.id, RepoFilters.toggle(f, filterSel, item.option)) }
             "legend" -> showLegend = true
             // #1356 More > Advanced: the parentless and unlisted folder panels, out of the default view.
-            "open_advanced" -> showAdvanced = true
+            "open_advanced" -> scope.launch { listState.layoutInfo.totalItemsCount.let { n -> if (n > 0) listState.animateScrollToItem((n - 3).coerceAtLeast(0)) } }
             // #1356 Sync ▸ Manual Sync ▸ Conflicts All: the solver over every repository with conflicts.
             "open_conflicts" -> showConflicts = true
         }
@@ -1111,7 +1111,9 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
                     }
                     // #1149 ONE TABLE for every listing above: the sticky header, the bulk bar, the rows.
                     if (!setup) tableBlock()
-                    // #1356 the parentless and unlisted folder panels live in More > Advanced (a simple default view).
+                    // #1392 the parentless and unlisted folder panels are back in the main view, below the table (More > Advanced only scrolls here).
+                    if (!setup && prefs != null) item(key = "parentless") { ParentlessPanel(prefs, coordinator, glances, lastCommits, depthRun, onOpenReport = { showDepthReport = true }) { coordinator.refresh(force = true) } }
+                    if (!setup) item(key = "unlisted") { UnlistedPanel(page.unlisted.label, unlistedFolders, glances, lastCommits, depthRun, coordinator, onOpenReport = { showDepthReport = true }) }
                     // #1315 THE ONE INVENTORY's other sections: duplicate clones, bare mirrors, leftover folders (drawn only when they have rows).
                     if (!setup) item(key = "inventory") { InventorySections(inventoryState, page.inventory, glances, lastCommits, depthRun, coordinator, onOpenReport = { showDepthReport = true }) }
                 }
@@ -1166,16 +1168,6 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
     if (showDepthReport) depthRun?.let { r -> DepthReportWindow(r, onCancel = { coordinator.cancelDepthRun() }, onClose = { showDepthReport = false }) }
     topConfirm?.let { item -> GitTopConfirm(item, page.topBar, scopeTargets.size, onConfirm = { runTopItem(item); topConfirm = null }, onDismiss = { topConfirm = null }, cancelLabel = stringResource(R.string.chrome_cancel)) }
     if (showFilters) GitFilterSheet(page.topBar, page.filters, filterSel, ::countsOf, onPick = { f, o -> coordinator.setFilter(f.id, RepoFilters.toggle(f, filterSel, o)) }, onClear = { coordinator.clearFilters(); query = "" }, onDismiss = { showFilters = false })
-    // #1356 MORE > ADVANCED: the local repos parentless and the unlisted git folders, in one sheet over the page.
-    if (showAdvanced) ModalBottomSheet(onDismissRequest = { showAdvanced = false }, modifier = Modifier.testTag(DriveTags.SYNC_GIT_ADVANCED)) {
-        Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(bottom = DriveMetrics.padWide)) {
-            page.topBar.groups.flatMap { it.items }.firstOrNull { it.kind == "open_advanced" }?.let { adv ->
-                Text(adv.label, Modifier.padding(horizontal = DriveMetrics.sectionInset, vertical = DriveMetrics.gap), style = MaterialTheme.typography.titleMedium)
-            }
-            if (prefs != null) ParentlessPanel(prefs, coordinator, glances, lastCommits, depthRun, onOpenReport = { showDepthReport = true }) { coordinator.refresh(force = true) }
-            UnlistedPanel(page.unlisted.label, unlistedFolders, glances, lastCommits, depthRun, coordinator, onOpenReport = { showDepthReport = true })
-        }
-    }
     createFolder?.let { f ->
         AlertDialog(
             onDismissRequest = { createFolder = null },
