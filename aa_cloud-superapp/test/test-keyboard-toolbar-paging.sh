@@ -84,14 +84,14 @@ for k, st in zip(keys, starts): pages.setdefault(st // 1188, []).append(k)
 counts = [len(pages[p]) for p in sorted(pages)]
 assert per == 11 and counts == [11, 11, 2], f'pages hold {counts}, the design is 11 / 11 / 2'
 assert pages[0][-1] == 'ANDROID_SETTINGS' and pages[1][0] == 'VAULT', f'page 1 ends {pages[0][-1]}, page 2 opens {pages[1][0]}'
-assert 'ANSWER' in pages[0] and 'EMOJI' not in pages[0] and pages[1][1] == 'EMOJI', f'#1384: Draft Answer belongs on page 1 and Emoji opens page 2 after Vault, got {pages[0]} / {pages[1][:2]}'
+assert 'ANSWER' in pages[0] and 'EMOJI' not in pages[0] and keys[-2:] == ['CUT', 'EMOJI'], f'#1384: Draft Answer belongs on page 1; Emoji is the last key, after Cut, got {pages[0]} / {keys[-2:]}'
 print(f'{key_dp}dp keys, {per}/page, split {counts}')
 EOF
 then ok "T3 the page arithmetic gives 11 / 11 / 2 and holds at every scale"; else bad "T3 page arithmetic"; fi
 
 # ── T4 Vault's place in the row ──────────────────────────────────────────────
 has "$TU" 'toolbarKeysOnOwnPage: Set<ToolbarKey> = emptySet()' "T4 no key is forced onto its own page"
-has "$TU" 'LANGUAGE_SWITCH, ANDROID_SETTINGS, VAULT,\|^        ANDROID_SETTINGS, VAULT, EMOJI,$' "T4 Android keyboard settings, then Vault (then Emoji, #1384), follow Switch language"
+has "$TU" '^        ANDROID_SETTINGS, VAULT,$' "T4 Android keyboard settings, then Vault, follow Switch language"
 
 echo
 echo "== $PASS ok, $FAIL failed =="

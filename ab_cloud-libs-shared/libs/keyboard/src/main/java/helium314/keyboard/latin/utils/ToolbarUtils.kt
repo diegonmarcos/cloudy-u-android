@@ -208,10 +208,10 @@ val defaultToolbarPref by lazy {
     val default = listOf(
         // #1103 page one: Autocomplete and Translate swapped, Clipboard and Numpad swapped; Android keyboard settings
         // and Cloud Vault follow "Switch language" (settings first, Vault right after it).
-        // #1384: Draft Answer takes Emoji's place on page one; Emoji opens page two right after Vault.
+        // #1384: Draft Answer takes Emoji's place on page one. Owner 2026-11-01: Emoji is the last key, right after Cut.
         FULL_LEFT, GRAMMAR, TRANSLATE, ENHANCE, AUTOCOMPLETE, CLIPBOARD, NUMPAD, ANSWER, VOICE, LANGUAGE_SWITCH,
-        ANDROID_SETTINGS, VAULT, EMOJI,
-        FULL_RIGHT, SELECT_ALL, WORD_RIGHT, WORD_LEFT, REDO, UNDO, SELECT_WORD, COPY, PASTE, CUT, PAGE_START,
+        ANDROID_SETTINGS, VAULT,
+        FULL_RIGHT, SELECT_ALL, WORD_RIGHT, WORD_LEFT, REDO, UNDO, SELECT_WORD, COPY, PASTE, PAGE_START, CUT, EMOJI,
     )
     val others = entries.filterNot { it in default || it == CLOSE_HISTORY }
     default.joinToString(Separators.ENTRY) { it.name + Separators.KV + true } + Separators.ENTRY +
@@ -241,7 +241,7 @@ val defaultClipboardToolbarPref by lazy {
  * the stored value does not know yet, so without this a reordered default would be visible to
  * fresh installs only — the exact trap that made earlier default changes look like no-ops.
  */
-const val TOOLBAR_LAYOUT_REVISION = 5 // 5: #1384 Draft Answer on page one, Emoji to page two; 3: #1077 Grammar mode + Autocomplete replace Grammar + Auto Correction; 4: #1103 reorder + Android settings key
+const val TOOLBAR_LAYOUT_REVISION = 6 // 6: Emoji last, after Cut; 5: #1384 Draft Answer on page one, Emoji to page two; 3: #1077 Grammar mode + Autocomplete replace Grammar + Auto Correction; 4: #1103 reorder + Android settings key
 
 /**
  * Adopt the current default first and second rows, once per [TOOLBAR_LAYOUT_REVISION]. This
