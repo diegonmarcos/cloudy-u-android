@@ -93,6 +93,7 @@ fun ModeScreen(mode: Declarations.Mode) {
             "catalog" -> CatalogMode(mode)
             "converter" -> ConverterMode(mode)
             "data_converter" -> DataConverterMode(mode)
+            "base_converter" -> BaseConverterMode(mode)
             "nutrition" -> NutritionMode(mode)
             "form" -> FormMode(mode)
             "plot" -> PlotMode(mode)

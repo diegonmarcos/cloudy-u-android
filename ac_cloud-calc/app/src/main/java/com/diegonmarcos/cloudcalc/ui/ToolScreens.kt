@@ -60,6 +60,7 @@ fun ToolView(mode: Declarations.Mode, view: String) {
     when (view) {
         "world_clock" -> WorldClockMode(mode)
         "calendars" -> CalendarsView()
+        "cycles" -> CyclesView()
         "fft" -> FftView()
         "tone" -> SoundGeneratorMode(mode)
         else -> Text("no view $view", Modifier.padding(CalcMetrics.gutter))

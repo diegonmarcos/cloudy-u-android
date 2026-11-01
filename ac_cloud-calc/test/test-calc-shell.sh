@@ -396,7 +396,7 @@ shell = code(os.path.join(src, "ui", "CalcShell.kt"))
 drawer = code(os.path.join(src, "ui", "CalcDrawer.kt"))
 if "top_bar" in bj["ui"]:
     bad.append("C15 build.json::ui.top_bar is back: the first row is the shared NavBarTopFirstRow, which has no declaration of its own")
-for need in ("NavBarTopFirstRowScaffold(", "NavBarBottomHost(", "NavBarTopSecondRow(", "titleHierarchy(", "themeBackground(",
+for need in ("NavBarTopFirstRowScaffold(", "NavBarBottomHost(", "NavBarTopSecondRows(", "titleHierarchy(", "themeBackground(",
              "onAccount = rememberAccountLauncher()", "onConfigs = { state.openConfigs() }", "onAi = { state.showSection(Declarations.AI_SECTION) }",
              "TopBarDrawer { close -> CalcDrawer(close) }"):
     if need not in shell:

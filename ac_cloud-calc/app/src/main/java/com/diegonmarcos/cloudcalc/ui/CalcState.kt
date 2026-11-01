@@ -14,7 +14,11 @@ import com.diegonmarcos.cloudcalc.engine.CalcApi
 
 /** What every tab shares: the selected tab and mode per tab, the history, and a pending insert. */
 class CalcState(private val prefs: SharedPreferences?, private val now: () -> Long = System::currentTimeMillis) {
-    var tab by mutableStateOf(Declarations.defaultTab.takeIf { d -> Declarations.tabs.any { it.id == d } } ?: Declarations.tabs.first().id)
+    private var shown by mutableStateOf(Declarations.defaultTab.takeIf { d -> Declarations.tabs.any { it.id == d } } ?: Declarations.tabs.first().id)
+    /** The shown page; an old page id (#1409 Tools) lands on the page that replaced it. */
+    var tab: String
+        get() = shown
+        set(v) { shown = Declarations.resolve(v) }
     val modeByTab = mutableStateMapOf<String, String>()
     /** #770 the tab last shown in each section, so switching sections comes back to it. */
     val tabBySection = mutableStateMapOf<String, String>()

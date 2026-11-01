@@ -31,7 +31,7 @@ class LatexTest {
 
     @Test fun `the tab order is Calc, LaTeX, Convert and the page holds Library, Edit, then Graph`() {
         val pages = Declarations.tabsOf("calculator").map { it.id }
-        assertEquals(listOf("calc", "latex", "convert", "graph", "tools", "history"), pages)
+        assertEquals(listOf("calc", "latex", "convert", "history", "datetime", "sound", "finance", "graph"), pages)
         assertEquals(listOf("latex_library", "latex_editor", "latex_graph"), Declarations.modesOf("latex").map { it.id })
         assertEquals(listOf("latex_library", "latex_editor", "latex_graph"), Declarations.modesOf("latex").map { it.kind })
         assertEquals(listOf("Library", "Edit", "Graph"), Declarations.modesOf("latex").map { it.short })

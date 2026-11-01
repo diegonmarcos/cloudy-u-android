@@ -42,7 +42,7 @@ import com.diegonmarcos.cloudcalc.engine.CalcApi
 import com.diegonmarcos.superapp.navbarbottom.NavBarBottomHost
 import com.diegonmarcos.superapp.navbartop1.NavBarTopFirstRowScaffold
 import com.diegonmarcos.superapp.navbartop1.titleHierarchy
-import com.diegonmarcos.superapp.navbartop2.NavBarTopSecondRow
+import com.diegonmarcos.superapp.navbartop2.NavBarTopSecondRows
 import com.diegonmarcos.superapp.themebg.themeBackground
 import com.diegonmarcos.superapp.bottomnav.TopBarDrawer
 import com.diegonmarcos.superapp.bottomnav.islandEntries
@@ -102,10 +102,11 @@ fun CalcShell(api: CalcApi, state: CalcState) {
  */
 @Composable
 private fun TopRow(state: CalcState) {
-    val pages = Declarations.nav.section(state.section)?.pages.orEmpty()
-    if (pages.size > 1) {
-        NavBarTopSecondRow(
-            pages = pages,
+    val sec = Declarations.nav.section(state.section) ?: return
+    // #1409 a section declaring nav_mode horizontal_two_rows (Calc: Decimals | Others) draws one labelled row per group.
+    if (sec.pages.size > 1) {
+        NavBarTopSecondRows(
+            section = sec,
             selectedId = state.tab,
             onSelect = { state.tab = it.id },
             modifier = Modifier.fillMaxWidth().testTag(CalcTags.PAGES),

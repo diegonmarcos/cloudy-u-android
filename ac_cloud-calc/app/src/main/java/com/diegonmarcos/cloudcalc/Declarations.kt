@@ -113,6 +113,16 @@ object Declarations {
     /** Where the app opens: the default section's first page. */
     val defaultTab: String get() = nav.default()?.pages?.firstOrNull()?.id ?: tabs.first().id
 
+    /** #1409 an old page id (ui.sections[].pages[].redirect_from, e.g. the retired Tools) -> the page that replaced it. */
+    val redirects: Map<String, String> by lazy { redirectsIn(decode(BuildConfig.UI_SECTIONS_B64)) }
+    /** [tab], or the page that replaced it. */
+    fun resolve(tab: String): String = redirects[tab] ?: tab
+    fun redirectsIn(sections: String): Map<String, String> = JSONArray(sections).objects().flatMap { s ->
+        (s.optJSONArray("pages") ?: JSONArray()).objects().flatMap { p ->
+            (p.optJSONArray("redirect_from") ?: JSONArray()).let { a -> (0 until a.length()).map { a.getString(it) to p.getString("id") } }
+        }
+    }.toMap()
+
     fun modesOf(tab: String): List<Mode> = modes.filter { it.tab == tab }
     fun tabsOf(section: String): List<Tab> = tabs.filter { it.section == section }
     fun sectionOf(tab: String): String = tabs.firstOrNull { it.id == tab }?.section ?: sections.first().id
