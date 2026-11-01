@@ -418,7 +418,7 @@ class PushWatchTest {
         assertEquals(
             listOf(
                 "scope.launch {",
-                "delay(RECONNECT_DELAY_MS)",
+                "delay(ReconnectBackoff.delayMs(failures[loginId] ?: 0))",
                 "val current = generation",
                 "if (gen == current) {",
                 "Log.i(TAG, \"Reconnecting push for login \$loginId\")",
@@ -595,6 +595,7 @@ class PushWatchTest {
             listOf(
                 "mine.set(handle)",
                 "connections[loginId] = handle",
+                "openedAt[loginId] = android.os.SystemClock.elapsedRealtime()",
                 "val after = generation",
                 "if (gen != after) {",
                 "retractOwnConnection(connections, loginId, handle)",
@@ -602,7 +603,7 @@ class PushWatchTest {
                 "Log.w(TAG, PushController.retiredHandleDroppedLine(loginId, gen, after))",
                 "}",
             ),
-            watch.dropWhile { it != "mine.set(handle)" }.take(8),
+            watch.dropWhile { it != "mine.set(handle)" }.take(9),
         )
     }
 
@@ -627,12 +628,14 @@ class PushWatchTest {
             listOf(
                 "onClosed = {",
                 "retractOwnConnection(connections, loginId, mine.get())",
+                "val lived = openedAt.remove(loginId)?.let { android.os.SystemClock.elapsedRealtime() - it }",
+                "failures[loginId] = ReconnectBackoff.next(failures[loginId] ?: 0, lived)",
                 "if (gen == generation) {",
                 "scheduleReconnect(loginId, group, gen)",
                 "}",
                 "},",
             ),
-            watch.dropWhile { it != "onClosed = {" }.take(6),
+            watch.dropWhile { it != "onClosed = {" }.take(8),
         )
     }
 
