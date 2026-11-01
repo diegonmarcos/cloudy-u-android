@@ -1,10 +1,12 @@
 package com.diegonmarcos.cgomniverse
 
+import android.content.Intent
 import android.os.Bundle
 import android.os.StrictMode
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.runtime.mutableStateOf
 import com.diegonmarcos.cgomniverse.ui.AppShell
 import com.diegonmarcos.cgomniverse.ui.AppTheme
 import com.diegonmarcos.superapp.bottomnav.FleetChrome
@@ -21,8 +23,22 @@ class MainActivity : ComponentActivity() {
         FleetChrome.apply(this)
         // the start page and world, read once from the launching intent (Launch); state restores take over after that
         val section = intent?.getStringExtra(Launch.EXTRA_SECTION)
-        val world = intent?.getStringExtra(Launch.EXTRA_WORLD)
-        setContent { AppTheme { AppShell(startSection = section, startWorld = world) } }
+        val world = worldOf(intent)
+        setContent { AppTheme { AppShell(startSection = section, startWorld = world, incoming = incoming.value, onIncoming = { incoming.value = null }) } }
+    }
+
+    /** singleTask: a world extra or deep link sent while the app runs arrives here and opens (or focuses) its Galaxy tab. */
+    private val incoming = mutableStateOf<String?>(null)
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        worldOf(intent)?.let { incoming.value = it }
+    }
+
+    private fun worldOf(i: Intent?): String? {
+        val link = i?.data
+        return i?.getStringExtra(Launch.EXTRA_WORLD) ?: Launch.worldFromLink(link?.scheme, link?.host, link?.path)
     }
 
     private companion object { const val STRICT_TAG = "CgcStrict" }

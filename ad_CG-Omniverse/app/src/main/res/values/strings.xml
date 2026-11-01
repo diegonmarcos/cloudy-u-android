@@ -21,11 +21,10 @@
     <string name="open_wayback">Wayback</string>
     <string name="open_galaxy">Open in Galaxy</string>
     <string name="open_browser">Browser</string>
-    <string name="galaxy_loaded">Loaded world</string>
-    <string name="galaxy_none">No world loaded yet. Pick one below, or open one from the Store.</string>
-    <string name="galaxy_enter">Enter</string>
-    <string name="galaxy_worlds">Worlds (%1$d)</string>
-    <string name="world_close">Close</string>
+    <string name="galaxy_none">No world open. Tap + to pick one from the Store.</string>
+
+    <string name="galaxy_add">Open a world from the Store</string>
+    <string name="galaxy_tab_close">Close %1$s</string>
     <string name="world_fallback_title">This world could not load here</string>
     <string name="world_fallback_body">%1$s did not open inside the app. It may need features the in-app view lacks; it opens fully in the browser.</string>
     <string name="open_in_browser">Open in browser</string>

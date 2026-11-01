@@ -96,11 +96,21 @@ class StoreTest {
     @Test fun theGeneratedCatalogueParsesWhole() {
         val f = listOf(File("../data/store.json"), File("data/store.json")).first { it.exists() }
         val worlds = Store.parse(f.readText())
-        assertEquals(30, worlds.size)
+        assertEquals(31, worlds.size)
         assertEquals(worlds.size, Store.filter(worlds, Store.allSelected()).size)
         assertEquals(5, worlds.count { it.vr })
         assertEquals(worlds.map { it.id }.toSet().size, worlds.size)
         assertTrue(worlds.all { it.url.startsWith("http") && it.name.isNotEmpty() && it.description.isNotEmpty() })
         assertTrue(Store.parse("not json").isEmpty())
+    }
+
+    @Test fun floor796IsInTheCatalogue() {
+        val f = listOf(File("../data/store.json"), File("data/store.json")).first { it.exists() }
+        val w = Store.parse(f.readText()).single { it.id == "floor796" }
+        assertEquals("floor796", w.name)
+        assertEquals("https://floor796.com", w.url)
+        assertEquals(setOf(Store.WEBSITES), Store.tags(w, FilterGroup.TYPE))
+        assertEquals(setOf(Store.D2), Store.tags(w, FilterGroup.DIMENSION))
+        assertEquals(setOf(Store.FLAT), Store.tags(w, FilterGroup.DEVICE))
     }
 }

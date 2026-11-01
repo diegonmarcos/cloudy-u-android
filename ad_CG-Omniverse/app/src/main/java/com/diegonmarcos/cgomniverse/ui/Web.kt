@@ -17,4 +17,8 @@ object Web {
     private fun prefs(ctx: Context) = ctx.getSharedPreferences("worlds", Context.MODE_PRIVATE)
     fun desktop(ctx: Context, worldId: String): Boolean = prefs(ctx).getBoolean("desktop.$worldId", false)
     fun setDesktop(ctx: Context, worldId: String, on: Boolean) = prefs(ctx).edit().putBoolean("desktop.$worldId", on).apply()
+
+    /** Galaxy's open tabs and the selected one ([com.diegonmarcos.cgomniverse.Tabs.encode]); null until the first save. */
+    fun tabs(ctx: Context): String? = prefs(ctx).getString("galaxy.tabs", null)
+    fun setTabs(ctx: Context, encoded: String) = prefs(ctx).edit().putString("galaxy.tabs", encoded).apply()
 }

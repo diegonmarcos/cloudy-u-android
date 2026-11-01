@@ -32,3 +32,4 @@
 | [Gucci Vault](https://vault.gucci.com/) | Others | 3D | Three.js | WebGL, React, GSAP | No | An immersive, experimental WebGL brand world acting as a digital concept store. |
 | [Jam3 - FWA 100](https://thefwa.com/cases/jam3-fwa-100) | Others | 3D | Three.js | WebGL, GLSL, Canvas API | No | A pure experimental WebGL celebration featuring particle explosions and drawing interactions. |
 | [Inside The Head](https://thefwa.com/cases/inside-the-head) | Others | 3D | Three.js | WebGL, Web Audio, GLSL | No | A weird, highly experimental, and wildly creative digital art piece exploring human thoughts. |
+| [floor796](https://floor796.com) | Website | 2D | Custom Canvas Engine | Canvas API, JavaScript, HTML5 | No | A huge hand-drawn animated sci-fi scene of life on the 796th floor of a space station, explored by panning and zooming. |

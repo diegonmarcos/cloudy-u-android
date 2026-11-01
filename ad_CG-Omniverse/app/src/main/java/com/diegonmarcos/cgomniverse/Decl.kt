@@ -23,6 +23,8 @@ object Decl {
     const val SECTION_ABOUT = "about"
     /** Where "Open in Galaxy" lands. */
     const val SECTION_GALAXY = "galaxy"
+    /** Where Galaxy's "+" lands: the Store is the world picker. */
+    const val SECTION_STORE = "store"
 
     private fun decode(b64: String): String = String(Base64.decode(b64, Base64.NO_WRAP), Charsets.UTF_8)
 }

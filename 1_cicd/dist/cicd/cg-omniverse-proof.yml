@@ -36,7 +36,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        mutant: [baseline, type-map, dim-mixed, vr-yes-flat, vr-no-glass, chip-any, group-all, toggle-one, all-clears, is-all, default-all]
+        mutant: [baseline, type-map, dim-mixed, vr-yes-flat, vr-no-glass, chip-any, group-all, toggle-one, all-clears, is-all, default-all, tabs-default, tabs-open-focus, tabs-open-select, tabs-close-neighbour, tabs-close-keep, tabs-persist-selected, tabs-persist-all, catalogue-floor796]
     steps:
       - uses: actions/checkout@v4
       - name: Plant the mutant
@@ -46,6 +46,8 @@ jobs:
           python3 - <<'PY'
           import os, sys
           p = "ad_CG-Omniverse/app/src/main/java/com/diegonmarcos/cgomniverse/Store.kt"
+          T = "ad_CG-Omniverse/app/src/main/java/com/diegonmarcos/cgomniverse/Tabs.kt"
+          C = "ad_CG-Omniverse/data/store.json"
           M = {
             "baseline":    None,
             "type-map":    ('"Others" -> setOf(OTHERS)', '"Others" -> setOf(WEBSITES)'),
@@ -58,8 +60,19 @@ jobs:
             "all-clears":  ('if (isAll(sel, group)) emptySet() else', 'if (false) emptySet() else'),
             "is-all":      ('sel[group].orEmpty().containsAll(group.chips)', 'sel[group].orEmpty().isNotEmpty()'),
             "default-all": ('associateWith { it.chips.toSet() }', 'associateWith { setOf(it.chips.first()) }'),
+            # #1400 Galaxy tabs (Tabs.kt, TabsTest) and the floor796 catalogue entry (store.json, StoreTest)
+            "tabs-default":          ('DEFAULT_URL = "https://floor796.com"', 'DEFAULT_URL = "https://lusion.co"', T),
+            "tabs-open-focus":       ('if (id in s.open) s.copy(selected = id) else', 'if (false) s.copy(selected = id) else', T),
+            "tabs-open-select":      ('State(s.open + id, id)', 'State(s.open + id, s.selected)', T),
+            "tabs-close-neighbour":  ('rest.getOrNull(i) ?: rest.lastOrNull()', 'rest.firstOrNull()', T),
+            "tabs-close-keep":       ('if (s.selected != id) s.selected else', 'if (false) s.selected else', T),
+            "tabs-persist-selected": ('sel.takeIf { it in open } ?: open.firstOrNull()', 'open.firstOrNull()', T),
+            "tabs-persist-all":      ('s.open.joinToString(",")', 's.open.take(1).joinToString(",")', T),
+            "catalogue-floor796":    ('"id": "floor796"', '"id": "floor-796"', C),
           }[os.environ["M"]]
           if M is None: sys.exit(0)
+          if len(M) == 3: p = M[2]
+          with open("expect.txt", "w") as f: f.write({T: "TabsTest", C: "StoreTest"}.get(p, "StoreTest"))
           s = open(p).read()
           if s.count(M[0]) != 1: sys.exit("mutation target not found exactly once: %r" % M[0])
           open(p, "w").write(s.replace(M[0], M[1]))
@@ -103,13 +116,14 @@ jobs:
           sh 1_cicd/dist/scripts/cloud-android-test-engine.sh unit "$WORK_DIR" > unit.log 2>&1
           rc=$?
           tail -60 unit.log
-          grep -E "StoreTest > .* FAILED|tests completed" unit.log || true
+          grep -E "(StoreTest|TabsTest) > .* FAILED|tests completed" unit.log || true
           if [ "$M" = baseline ]; then
             [ $rc -eq 0 ] || { echo "::error::the real tree is RED"; exit 1; }
             echo "baseline GREEN"
           else
             [ $rc -ne 0 ] || { echo "::error::mutant $M stayed GREEN: no test holds this rule"; exit 1; }
-            grep -q "StoreTest" unit.log || { echo "::error::mutant $M is red but not from StoreTest"; exit 1; }
+            E=$(cat expect.txt 2>/dev/null || echo StoreTest)
+            grep -qE "$E > .* FAILED" unit.log || { echo "::error::mutant $M is red but not from $E"; exit 1; }
             echo "mutant $M is RED (killed)"
           fi
 
@@ -187,10 +201,18 @@ jobs:
           launch("-e", "section", "store"); shot("04-store-all", 2)
           tap("All", 0); tap("Games"); tap("Flat Screen"); shot("05-store-filtered", 2)
           # A Way to Go times out: the load watchdog (Offline.LOAD_TIMEOUT_MS, 15 s) shows the offline card well inside 25 s
+          def seek(label, swipes=45):
+              for _ in range(swipes):
+                  if any(label in (t, d) for t, d, b in nodes(dump())): return True
+                  sh("shell", "input", "swipe", "540", "1700", "540", "1000", "300"); time.sleep(0.8)
+              print("::warning::'%s' never came on screen" % label); return False
+          # #1400 Galaxy tabs: the fresh install opens one tab, floor796; a Store world adds a second tab
+          launch("-e", "section", "galaxy", wait=0); shot("09-galaxy-tab-floor796", 25)
+          launch("-e", "world", "lusion-v3", wait=0); shot("10-galaxy-two-tabs", 20)
+          launch("-e", "section", "store"); seek("floor796"); shot("11-store-floor796", 1)
           launch("-e", "world", "a-way-to-go", wait=0); shot("06-galaxy-world-a-way-to-go", 25)
           launch("-e", "world", "webgl-fluid-simulation", wait=0); shot("07-galaxy-world-fluid", 20)
           sh("shell", "input", "swipe", "300", "1200", "800", "900", "300"); shot("08-galaxy-world-fluid-touched", 2)
-          launch("-e", "section", "galaxy"); shot("09-galaxy-list", 2)
           # Avatar last (#1373 owns it): a slow or hung Avatar page cannot cost the Store and Galaxy shots
           launch("-e", "section", "avatar", wait=0); shot("01-avatar-default", 20)
           sh("shell", "input", "swipe", "700", "900", "350", "900", "600"); shot("02-avatar-rotated", 3)

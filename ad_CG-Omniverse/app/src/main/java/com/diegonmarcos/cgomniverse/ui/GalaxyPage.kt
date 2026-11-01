@@ -15,22 +15,23 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.DesktopWindows
 import androidx.compose.material.icons.filled.OpenInBrowser
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.ViewInAr
 import androidx.compose.material3.Icon
@@ -61,6 +62,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.diegonmarcos.cgomniverse.Decl
 import com.diegonmarcos.cgomniverse.Offline
 import com.diegonmarcos.cgomniverse.R
+import com.diegonmarcos.cgomniverse.Tabs
 import com.diegonmarcos.cgomniverse.World
 import com.diegonmarcos.cloudlib.web.CloudChromeClient
 import com.diegonmarcos.cloudlib.web.CloudWeb
@@ -73,75 +75,67 @@ import com.diegonmarcos.superapp.uikit.KitOutlinedButton
 import com.diegonmarcos.superapp.uikit.LocalKitPalette
 import kotlinx.coroutines.delay
 
-/** Galaxy: the world loaded now (enter it again, or open it in the browser) and every selectable world of the Store's data. */
+/**
+ * Galaxy: a browser-style world viewer. The tab strip holds the worlds open now ([Tabs]; a close button per tab, "+" opens the
+ * Store to pick one); the selected tab fills the rest of the page ([WorldView]). With no tab open it says how to open one.
+ */
 @Composable
-fun GalaxyPage(loaded: World?, onEnter: (World) -> Unit) {
-    val ctx = LocalContext.current
+fun GalaxyPage(tabs: Tabs.State, onSelect: (String) -> Unit, onClose: (String) -> Unit, onAdd: () -> Unit) {
     val p = LocalKitPalette.current
-    LazyColumn(
-        Modifier.fillMaxSize().testTag(Tags.GALAXY),
-        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        item(key = "loaded") {
-            KitCard(Modifier.testTag(Tags.GALAXY_LOADED)) {
-                Text(stringResource(R.string.galaxy_loaded), style = MaterialTheme.typography.labelMedium, color = p.accent)
-                if (loaded == null) {
-                    Text(stringResource(R.string.galaxy_none), style = MaterialTheme.typography.bodyMedium, color = p.textSecondary,
-                        modifier = Modifier.padding(top = 4.dp))
-                } else {
-                    Text(loaded.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold, color = p.textPrimary,
-                        modifier = Modifier.padding(top = 2.dp, bottom = 6.dp))
-                    WorldBadges(loaded)
-                    Row(Modifier.padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        KitButton(onClick = { onEnter(loaded) }, modifier = Modifier.testTag(Tags.GALAXY_ENTER)) {
-                            Icon(Icons.Filled.PlayArrow, null); Spacer(Modifier.width(6.dp)); Text(stringResource(R.string.galaxy_enter))
-                        }
-                        KitOutlinedButton(onClick = { Web.openInBrowser(ctx, loaded.url) }) {
-                            Icon(Icons.Filled.OpenInBrowser, null); Spacer(Modifier.width(6.dp)); Text(stringResource(R.string.open_browser))
-                        }
+    val open = tabs.open.mapNotNull { id -> Decl.worlds.firstOrNull { it.id == id } }
+    Column(Modifier.fillMaxSize().testTag(Tags.GALAXY)) {
+        Row(
+            Modifier.fillMaxWidth().background(p.surface).horizontalScroll(rememberScrollState()).padding(horizontal = 4.dp)
+                .testTag(Tags.GALAXY_TABS),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            open.forEach { w ->
+                val sel = w.id == tabs.selected
+                Row(
+                    Modifier.padding(horizontal = 2.dp, vertical = 4.dp).clip(RoundedCornerShape(10.dp))
+                        .background(if (sel) p.surfaceSelected else p.surface)
+                        .then(if (sel) Modifier.border(1.dp, p.accent, RoundedCornerShape(10.dp)) else Modifier)
+                        .clickable { onSelect(w.id) }.padding(start = 12.dp).testTag(Tags.galaxyTab(w.id)),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(w.name, style = MaterialTheme.typography.labelLarge, fontWeight = if (sel) FontWeight.SemiBold else FontWeight.Normal,
+                        color = if (sel) p.textPrimary else p.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.widthIn(max = 140.dp))
+                    IconButton(onClick = { onClose(w.id) }, modifier = Modifier.size(36.dp).testTag(Tags.galaxyTabClose(w.id))) {
+                        Icon(Icons.Filled.Close, stringResource(R.string.galaxy_tab_close, w.name), tint = p.textSecondary, modifier = Modifier.size(16.dp))
                     }
                 }
             }
-        }
-        item(key = "title") {
-            Text(stringResource(R.string.galaxy_worlds, Decl.worlds.size), style = MaterialTheme.typography.labelMedium, color = p.textSecondary,
-                modifier = Modifier.padding(top = 6.dp, start = 4.dp))
-        }
-        items(Decl.worlds, key = { it.id }) { w ->
-            val current = w.id == loaded?.id
-            Row(
-                Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(if (current) p.surfaceSelected else p.surface)
-                    .then(if (current) Modifier.border(1.dp, p.accent, RoundedCornerShape(12.dp)) else Modifier)
-                    .clickable { onEnter(w) }.padding(horizontal = 14.dp, vertical = 12.dp).testTag(Tags.galaxyWorld(w.id)),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(Modifier.weight(1f)) {
-                    Text(w.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = p.textPrimary,
-                        maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(w.framework, style = MaterialTheme.typography.labelSmall, color = p.textSecondary, maxLines = 1,
-                        overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 2.dp, bottom = 6.dp))
-                    WorldBadges(w)
-                }
-                Icon(Icons.Filled.PlayArrow, null, tint = if (current) p.accent else p.textSecondary)
+            IconButton(onClick = onAdd, modifier = Modifier.testTag(Tags.GALAXY_ADD)) {
+                Icon(Icons.Filled.Add, stringResource(R.string.galaxy_add), tint = p.accent)
             }
+        }
+        val cur = open.firstOrNull { it.id == tabs.selected }
+        if (cur == null) {
+            Box(Modifier.weight(1f).fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
+                Text(stringResource(R.string.galaxy_none), style = MaterialTheme.typography.bodyMedium, color = p.textSecondary,
+                    modifier = Modifier.testTag(Tags.GALAXY_EMPTY))
+            }
+        } else {
+            WorldView(cur, Modifier.weight(1f).fillMaxWidth())
         }
     }
 }
 
 /**
- * One world, full screen: a WebView with WebGL on and hardware acceleration, a bar with close, reload and open-in-browser, and
+ * One world, filling its tab: a WebView with WebGL on and hardware acceleration, a bar with desktop mode, reload and open-in-browser, and
  * for a VR entry the WebXR state this WebView reports (Android's WebView has no immersive WebXR today, so a VR world offers the
- * browser for it). Back walks the page's history, then closes. A main-frame error (an unreachable host, a blocked scheme) or a
+ * browser for it). Back walks the page's history (and is the app's again once there is none). A main-frame error (an unreachable host, a blocked scheme) or a
  * crashed renderer replaces the page with a fallback card: Open in browser, or Reload. A world that is offline ([Offline]: no page
  * within the load watchdog, the host never answering, or HTTP 404/410) gets the offline card instead: Open in browser, its Wayback
  * Machine copy, or Reload.
  */
 @Composable
-fun WorldView(w: World, onClose: () -> Unit) {
+fun WorldView(w: World, modifier: Modifier = Modifier) {
     val ctx = LocalContext.current
     val p = LocalKitPalette.current
     var web by remember { mutableStateOf<WebView?>(null) }
+    var canBack by remember(w.id) { mutableStateOf(false) }
     var progress by remember(w.id) { mutableIntStateOf(0) }
     var error by remember(w.id) { mutableStateOf<String?>(null) }
     var xr by remember(w.id) { mutableStateOf<Boolean?>(null) }
@@ -162,12 +156,11 @@ fun WorldView(w: World, onClose: () -> Unit) {
     LaunchedEffect(Unit) { GpuProbe.probe(ctx) { caps = it } }
     val crashed = stringResource(R.string.world_crashed)
 
-    BackHandler { val v = web; if (v != null && v.canGoBack()) v.goBack() else onClose() }
+    BackHandler(enabled = canBack) { web?.goBack() }
 
-    Column(Modifier.fillMaxSize().background(Color.Black).testTag(Tags.WORLD)) {
+    Column(modifier.background(Color.Black).testTag(Tags.WORLD)) {
         Row(Modifier.fillMaxWidth().background(p.surface).padding(horizontal = 4.dp, vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onClose, modifier = Modifier.testTag(Tags.WORLD_CLOSE)) { Icon(Icons.Filled.Close, stringResource(R.string.world_close), tint = p.textPrimary) }
-            Column(Modifier.weight(1f)) {
+            Column(Modifier.weight(1f).padding(start = 10.dp)) {
                 Text(w.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = p.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(Uri.parse(w.url).host.orEmpty(), style = MaterialTheme.typography.labelSmall, color = p.textSecondary, maxLines = 1)
             }
@@ -218,6 +211,7 @@ fun WorldView(w: World, onClose: () -> Unit) {
                                 Web.openInBrowser(c, request.url.toString()); return true
                             }
                             override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) { error = null }
+                            override fun doUpdateVisitedHistory(view: WebView, url: String?, isReload: Boolean) { canBack = view.canGoBack() }
                             override fun onPageFinished(view: WebView, url: String) {
                                 if (error == null && !offline) finished = true
                                 if (w.vr) view.evaluateJavascript("(function(){return !!(navigator.xr&&navigator.xr.isSessionSupported)})()") { xr = it == "true" }
