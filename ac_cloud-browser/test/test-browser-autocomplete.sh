@@ -93,13 +93,16 @@ def check(root, ok):
     keys = {s["key"]: s for s in bj["ui"]["browser"]["settings"]}
     for k, sec_, cls in (("site_memory", "autocomplete", "config"), ("offer_save_profile_data", "autocomplete", "config"), ("offer_save_password", "passwords", "config"),
                          ("secrets_require_unlock", "passwords", "device"), ("offer_save_card", "payment", "config"), ("autofill_use_vault", "sync", "config")):
-        ok(k in keys and keys[k]["section"] == sec_ and keys[k]["class"] == cls and keys[k]["type"] == "bool", "A6 setting `%s` is declared on Configs > %s" % (k, sec_))
+        ok(k in keys and keys[k]["section"] == "autocomplete" and keys[k].get("group") == sec_ and keys[k]["class"] == cls and keys[k]["type"] == "bool", "A6 setting `%s` is declared on Configs > Autocomplete > %s" % (k, sec_))
         ok('"%s"' % k in ac or '"%s"' % k in frag, "A6 setting `%s` is read" % k)
     ok(keys.get("autofill_use_vault", {}).get("default") is False and keys.get("secrets_require_unlock", {}).get("default") is True, "A6 Cloud Vault is opt-in and the unlock is on by default")
     # A7
     nat = bj["ui"]["browser"]["configs"]["native"]
     ok(nat.get("autocomplete") == ["profiles", "sites", "passwords", "cards", "vault"], "A7 Configs > Autocomplete has the sub-sections profiles, sites, passwords, cards, vault")
-    ok(nat.get("passwords") == ["passwords"] and nat.get("payment") == ["cards"] and nat.get("sync") == ["vault"], "A7 Passwords, Payment and Sync & Vault draw the same blocks")
+    # #1402 Passwords, Payment and Sync & Vault are groups of Autocomplete (whose blocks they used to repeat); their old anchors redirect there
+    cfg_ = bj["ui"]["browser"]["configs"]
+    ok([g["id"] for g in cfg_.get("groups", {}).get("autocomplete", [])] == ["autocomplete", "passwords", "payment", "sync"]
+       and all(cfg_.get("redirects", {}).get(o) == "autocomplete" for o in ("passwords", "payment", "sync")), "A7 Passwords, Payment and Sync & Vault are groups of Autocomplete")
     ok('"site_autocomplete" ->' in frag and "AcSitePage(" in frag and "AcSiteMemory.originKey(host)" in frag, "A7 the page dropdown opens this site's remembered values")
     ok("fillLogin(f, l); thenVault(cur.id)" in ac and "fillCard(f, c); thenVault(cur.id)" in ac, "A7 a local fill then Cloud Vault overwrites it (local fills first, then Cloud Vault overwrites)")
     ok(os.path.exists(os.path.join(root, "ac_cloud-browser/docs/autocomplete.md")), "A7 docs/autocomplete.md states the model, the flows and the vault contract")
