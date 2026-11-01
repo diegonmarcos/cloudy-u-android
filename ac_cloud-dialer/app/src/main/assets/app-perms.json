@@ -8,7 +8,9 @@
     "phone_state",
     "sms_read",
     "overlay",
-    "install_unknown"
+    "install_unknown",
+    "phone_numbers",
+    "usage_access"
   ],
   "first_run": "libs:perms",
   "helpers": []

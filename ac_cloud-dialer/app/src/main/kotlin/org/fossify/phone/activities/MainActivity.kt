@@ -1,5 +1,8 @@
 package org.fossify.phone.activities
 
+import com.diegonmarcos.superapp.fleetconfigs.FleetConfigsEntries
+import org.fossify.phone.sim.SimConfigsActivity
+import android.view.Menu
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
@@ -266,8 +269,19 @@ class MainActivity : SimpleActivity() {
                 getCurrentFragment()?.onSearchQueryChanged(text)
             }
 
+            // #1411 Configs on the fleet pattern: General | About (libs:ui-nav-bars, Perms inside General) + SIM | Status.
+            FleetConfigsEntries.addTo(requireToolbar().menu)
+            if (requireToolbar().menu.findItem(ID_CONFIGS_SIM) == null) {
+                requireToolbar().menu.add(Menu.NONE, ID_CONFIGS_SIM, Menu.NONE, "Configs ▸ SIM")
+                requireToolbar().menu.add(Menu.NONE, ID_CONFIGS_STATUS, Menu.NONE, "Configs ▸ Status")
+                requireToolbar().menu.add(Menu.NONE, ID_CONFIGS_USAGE, Menu.NONE, "Configs ▸ Usage")
+            }
             requireToolbar().setOnMenuItemClickListener { menuItem ->
+                if (FleetConfigsEntries.handle(this@MainActivity, menuItem)) return@setOnMenuItemClickListener true
                 when (menuItem.itemId) {
+                    ID_CONFIGS_SIM -> startActivity(SimConfigsActivity.intent(this@MainActivity, SimConfigsActivity.PAGE_SIM))
+                    ID_CONFIGS_STATUS -> startActivity(SimConfigsActivity.intent(this@MainActivity, SimConfigsActivity.PAGE_STATUS))
+                    ID_CONFIGS_USAGE -> startActivity(SimConfigsActivity.intent(this@MainActivity, SimConfigsActivity.PAGE_USAGE))
                     R.id.clear_call_history -> clearCallHistory()
                     R.id.create_new_contact -> launchCreateNewContactIntent()
                     R.id.sort -> showSortingDialog(showCustomSorting = getCurrentFragment() is FavoritesFragment)
@@ -631,3 +645,8 @@ class MainActivity : SimpleActivity() {
         getRecentsFragment()?.refreshItems()
     }
 }
+
+
+private const val ID_CONFIGS_SIM = 0x0F1C0101
+private const val ID_CONFIGS_STATUS = 0x0F1C0102
+private const val ID_CONFIGS_USAGE = 0x0F1C0103

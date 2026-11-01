@@ -240,10 +240,15 @@
         {
           "id": "app",
           "label": "App",
-          "note": "This app's own settings."
+          "note": "This app's own settings, SIM and Status."
         }
       ]
     },
+    "app_pages": [
+      {"id": "sim", "label": "SIM", "activity": "org.fossify.phone.sim.SimConfigsActivity", "page": "sim", "what": "One card per SIM slot (physical or eSIM): carrier, MCC/MNC, country, number, masked ICCID / subscription id / EID (tap to reveal), roaming, data/voice/SMS defaults, network type, signal, plus manual provider, plan, price, allowance, renewal, number, PIN/PUK (encrypted, masked), APN notes and support contact."},
+      {"id": "status", "label": "Status", "activity": "org.fossify.phone.sim.SimConfigsActivity", "page": "status", "what": "Live per-SIM status refreshed every 3 s: service, operator, RAT, signal (dBm/RSRP/RSRQ/SINR), cell id, data state, IPv4/IPv6/DNS, roaming, SMS, call state, VoLTE/VoWiFi where exposed, mobile data this month."},
+      {"id": "usage", "label": "Usage", "activity": "org.fossify.phone.sim.SimConfigsActivity", "page": "usage", "what": "Usage tracker per SIM: calls (count and minutes, in and out), SMS sent and received, mobile data; today, this cycle (from the plan's renewal date) and month by month; against the plan allowance where entered. Sources: CallLog, the SMS provider (sub_id), NetworkStatsManager."}
+    ],
     "about": {
       "tagline": "Calls, contacts and SMS in one app",
       "description": "Cloud Dialer is the phone's dialer and messages app: a dial pad and call log, contacts and favourites, and SMS conversations, able to act as the default phone app. It is a signed fork of an open-source dialer, updated by the fleet and reporting crashes only to the phone itself. It exists so the most basic phone function runs on audited source without ads or trackers.",
@@ -310,7 +315,9 @@
       "phone_state",
       "sms_read",
       "overlay",
-      "install_unknown"
+      "install_unknown",
+      "phone_numbers",
+      "usage_access"
     ],
     "helpers": [],
     "first_run": "libs:perms"
