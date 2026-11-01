@@ -33,6 +33,10 @@ data class PermItem(
     val action: PermAction? = null,
     val used: Boolean = true,
     val highlight: Boolean = false,
+    /** #1403 what the adb actions need: the manifest permission, the app-op it reads, the catalogue kind. */
+    val permission: String = "",
+    val appop: String = "",
+    val permKind: PermKind? = null,
 ) {
     val missing: Boolean get() = state == PermState.DENIED || state == PermState.PERMANENTLY_DENIED
 }
@@ -145,6 +149,7 @@ object PermsView {
         id = e.id, title = e.label, reason = e.why, icon = e.icon,
         kind = if (e.kind == PermKind.RUNTIME) PermItemKind.RUNTIME else PermItemKind.SPECIAL,
         state = s.state, detail = s.reason, action = action(e, s), highlight = highlight,
+        permission = e.permission, appop = e.appop, permKind = e.kind,
     )
 
     fun action(e: PermEntry, s: PermStatus): PermAction? = when {
@@ -171,6 +176,7 @@ object PermsView {
         id = "${h.pkg}:${e.id}", title = "$name: ${e.label}", reason = h.why.ifBlank { e.why }, icon = e.icon.ifBlank { "apps" },
         kind = PermItemKind.HELPER, state = s.state, detail = s.reason,
         action = if (s.missing || s.state == PermState.UNKNOWN) PermAction.OPEN else null, highlight = highlight,
+        permission = e.permission, appop = e.appop, permKind = e.kind,
     )
 
     /** The order Grant all walks: one dialog for every runtime row, then each page, helpers last. */

@@ -1,5 +1,8 @@
 package com.diegonmarcos.superapp.perms
 
+import androidx.compose.foundation.layout.Column
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
@@ -30,6 +33,8 @@ class AppPermsState internal constructor(
     val items: List<PermItem>,
     val act: (PermItem) -> Unit,
     val grantAll: () -> Unit,
+    /** #1403 Grant all of the actions row: one system dialog for every missing runtime row. */
+    val grantRuntime: () -> Unit = {},
 ) {
     val missing: Int get() = PermsView.walk(items).size
 }
@@ -88,7 +93,8 @@ fun rememberAppPerms(
     }
     // advance when the user comes back from the dialog or page (the host activity resumes), never on a refresh tick
     LaunchedEffect(resumes) { if (walking && !step()) walking = false }
-    return AppPermsState(items, ::actOn) { walked = emptySet(); walking = step() }
+    val runtime = { request(PermsView.walk(items).filter { it.action == PermAction.GRANT && it.id !in extraIds }.map { it.id }) }
+    return AppPermsState(items, ::actOn, { walked = emptySet(); walking = step() }, runtime)
 }
 
 /**
@@ -104,9 +110,21 @@ fun AppPermsSection(
     extra: List<PermItem> = emptyList(),
     onExtra: (PermItem) -> Unit = {},
     modifier: Modifier = Modifier,
+    /** #1403 the host's adb channel for the adb actions (null: those are off, Copy Adb Grants still works). */
+    adb: PermsAdb? = null,
 ) {
     val s = rememberAppPerms(tick, highlight, extra, onExtra)
-    PermsList(s.items, s.act, s.grantAll.takeIf { s.missing > 0 }, modifier, style)
+    val ctx = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var states by remember { mutableStateOf(emptySet<StateFilter>()) }
+    var kinds by remember { mutableStateOf(emptySet<KindFilter>()) }
+    var result by remember { mutableStateOf<String?>(null) }
+    Column(modifier) {
+        PermsToolbar(s.items, states, kinds, { states = it }, { kinds = it }, s.grantRuntime, s.grantAll, adb,
+            onAdb = { mode -> adb?.let { a -> result = "Granting over adb…"; scope.launch { result = PermsComponents.grant(ctx, s.items, mode, a) } } },
+            onCopy = { result = PermsComponents.copy(ctx, s.items) }, result = result)
+        PermsList(PermsActions.filter(s.items, states, kinds), s.act, s.grantAll.takeIf { s.missing > 0 }, Modifier, style)
+    }
 }
 
 /** The helper's launcher label when it is installed, else its canonical name in words. */

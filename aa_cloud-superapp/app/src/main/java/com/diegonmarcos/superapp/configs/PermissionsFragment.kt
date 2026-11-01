@@ -205,6 +205,8 @@ class PermissionsFragment : KitComposeFragment() {
         val pages = remember { buildPageItems(ctxAny()) }
         val pagesMissing = pages.count { it.granted == false }
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(start = 10.dp, top = 8.dp, end = 10.dp, bottom = 16.dp)) {
+        // #1403 the libs:perms section with its filter chips and actions row; adb = this page's shell plane
+        com.diegonmarcos.superapp.perms.AppPermsSection(tick = epoch, adb = remember { permsAdb() })
         CatalogueHead()
         Small("${perms.size - runtimeMissing.size + priv.size - privMissing.size} granted here · " +
             "${runtimeMissing.size + privMissing.size} missing here · $pagesMissing need a system page")
@@ -603,6 +605,15 @@ class PermissionsFragment : KitComposeFragment() {
         Toast.makeText(ctxAny(), "grant ${t.pkg.substringAfterLast('.')} ${t.perm.substringAfterLast('.')}: " +
             (out?.trim()?.take(60) ?: "no output"), Toast.LENGTH_SHORT).show()
     }
+
+    /** #1403 the adb channel the Perms actions row grants through, and the one place that pairs (ADB Shell). */
+    private fun permsAdb() = com.diegonmarcos.superapp.perms.PermsAdb(
+        channel = object : com.diegonmarcos.superapp.perms.PermsGrant.GrantChannel {
+            override fun up() = shellPlane() != null
+            override fun exec(command: String): String? = shellPlane()?.exec(ctxAny(), command)
+        },
+        connect = { com.diegonmarcos.superapp.adbdebug.AdbShellLink.open(ctxAny()) },
+    )
 
     /** The one channel-availability check for this screen; null = no shell. */
     private fun shellPlane(): ShellChannel? =
