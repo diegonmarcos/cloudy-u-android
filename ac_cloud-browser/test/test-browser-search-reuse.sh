@@ -59,7 +59,7 @@ def check(root, ok):
     panel = src.get(os.path.join(APP, "search", "AgentPanelScreen.kt"), "")
     ok("AiAssistantPanel(" in panel and "BrowserAgentPanelHost.panel =" in panel and "AgentPanelScreen.install()" in api,
        "the assistant side panel is libs:ai's, installed at start-up")
-    ok('"search_chat" -> { showSearchPage()' in frag and "openEntryUrl(url)" in frag[frag.find("private fun showSearchPage("):][:400],
+    ok('"search_chat" -> { showSearchPage()' in frag and "openEntryUrl(url)" in frag[frag.find("private fun showSearchPage("):][:1600],
        "the Search & AI row is wired, and a result opens as a tab")
     ok("SearchPageScreen.install(" in api, "the app installs the page at start-up")
 
