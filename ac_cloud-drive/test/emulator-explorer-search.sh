@@ -45,13 +45,16 @@ for i in 1 2 3; do
 done
 dump | grep -q "package=\"$PKG\"" || fail "Drive never came to the front"
 # Drive back in front before each step (its single-task launch resumes the same screen); the step is named when it left.
+# Past the storage gate (no Termux on a bare emulator) to Explorer > Local; run again after a resume, which shows the gate again.
+to_explorer() {
+  for i in 1 2 3; do tap '^Continue with local files$' && break; sleep 2; done || true
+  sleep 2
+  for i in 1 2 3; do tap '^Explorer$' && break; sleep 2; done || fail "no Explorer tab: $(texts)"
+  sleep 2; tap '^Local$' || true; sleep 3; }
 front() { dump | grep -q "package=\"$PKG\"" && return 0; echo "Drive left the screen before: $1; resuming"
-  adb shell am start -n "$act" >/dev/null 2>&1; sleep 4; dump | grep -q "package=\"$PKG\"" || fail "Drive left the screen before $1"; }
-for i in 1 2 3; do tap '^Continue with local files$' && break; sleep 2; done || true
-sleep 2
-front "the Explorer tab"
-for i in 1 2 3; do tap '^Explorer$' && break; sleep 2; done || fail "no Explorer tab"
-sleep 2; tap '^Local$' || true; sleep 3
+  adb shell am start -n "$act" >/dev/null 2>&1; sleep 5; dump | grep -q "package=\"$PKG\"" || fail "Drive left the screen before $1"
+  to_explorer; dump | grep -q "package=\"$PKG\"" || fail "Drive left the screen again before $1"; }
+to_explorer
 
 # A bare emulator has no Termux, so the first pane (cloud-shared-store) cannot open; the shared-storage pane
 # (emulated › 0) is folded under it: open that one, it holds the fixture (run 41295555027).
