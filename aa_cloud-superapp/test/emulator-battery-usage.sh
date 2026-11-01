@@ -13,7 +13,12 @@ APK=$1; OUT=$2; PKG=com.diegonmarcos.superapp
 mkdir -p "$OUT"
 fail=0
 adb wait-for-device
-adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard || true
+# The screen must stay on and unlocked: a lock screen hid every page in run 41237928817.
+wake() { adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard >/dev/null 2>&1 || true; }
+adb shell svc power stayon true || true
+adb shell settings put system screen_off_timeout 2147483647 || true
+adb shell locksettings set-disabled true >/dev/null 2>&1 || true
+wake
 adb install -r -g "$APK" || { echo "::error::install failed"; exit 2; }
 adb shell settings delete global cloud_nav_ui_mode || true
 adb shell settings put global adb_wifi_enabled 0 || true
@@ -45,11 +50,11 @@ find_text() {
 tap_text() { local xy; xy=$(find_text "$@") || return 1; adb shell input tap $xy; sleep 2; }
 shot() { adb shell screencap -p /sdcard/s.png; adb pull /sdcard/s.png "$OUT/$1.png" >/dev/null; dump; cp "$OUT/ui.xml" "$OUT/$1.xml"
   if grep -qi shizuku "$OUT/$1.xml"; then echo "::error::$1 shows Shizuku"; fail=1; else echo "$1: no Shizuku text"; fi; }
-open_page() { adb shell am start -n "$PKG/.MainActivity" --es shortcut_action "$1" >/dev/null; sleep 7; }
+open_page() { wake; adb shell am start -n "$PKG/.MainActivity" --es shortcut_action "$1" >/dev/null; sleep 7; }
 
 # A launch first: a package that never ran is stopped and its manifest receivers get nothing.
 adb shell dumpsys battery set level 90; adb shell dumpsys battery set ac 1
-adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null; sleep 10
+wake; adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null; sleep 10
 # One cycle: unplug at 90 %, drain to 62 %, plug in (closes it); unplug again (opens the current one).
 adb shell dumpsys battery unplug; sleep 6
 adb shell dumpsys battery set level 62; sleep 3
@@ -127,7 +132,7 @@ print("present:", [w for w in want if w not in miss], "missing:", miss)
 sys.exit(1 if miss else 0)
 PY
 }
-adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null; sleep 8; dump
+wake; adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null; sleep 8; dump
 xy=$(python3 - "$OUT/ui.xml" <<'PY'
 import re, sys
 best = None
