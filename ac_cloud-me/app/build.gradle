@@ -129,7 +129,52 @@ labelAreaPages = { pages -> pages.collect { p ->
     if (p.pages) q.pages = labelAreaPages(p.pages)
     q
 } }
-def uiSectionsB64 = b64((buildJson.ui.sections ?: []).collect { s -> new LinkedHashMap(s) + [pages: labelAreaPages(s.pages ?: [])] })
+// #1398 Tasks rows (Inboxes | Backlogs | RoadMaps | Library | Projects): build.json::ui.vault_rows names the section, the
+// rows and the Projects source; the chips come from data/repos/vault-rows.json (data/regen-vault-rows.py, derived from the
+// notes vault's folder numbers), so a new vault folder is a regen, never an edit here. Each chip is a page whose file is
+// generated below (a vault_folder fragment); the Projects row IS the declared group of another section (Lnktree > Proj):
+// its page entries and page files are taken from that section at build time, nothing is listed twice.
+def vaultRowsDecl  = buildJson.ui.vault_rows ?: [:]
+def vaultPagesDir  = layout.buildDirectory.dir('generated/vault-pages').get().asFile
+def vaultSection = { s ->
+    if (!vaultRowsDecl || s.id != vaultRowsDecl.section) return s
+    def rows   = new groovy.json.JsonSlurper().parse(file("../data/repos/${vaultRowsDecl.asset}")).rows
+    def pages  = new ArrayList(s.pages ?: [])
+    def groups = []
+    def emit = { pid, Object content ->
+        def f = new File(vaultPagesDir, "${s.id}/${pid}.json"); f.parentFile.mkdirs()
+        if (content instanceof File) f.bytes = content.bytes else f.text = groovy.json.JsonOutput.toJson(content)
+    }
+    (vaultRowsDecl.rows ?: []).each { d ->
+        def r = rows.find { it.id == d.id }
+        if (r == null) throw new GradleException("ui.vault_rows row '${d.id}' is not in data/repos/${vaultRowsDecl.asset} — run ./data/regen-vault-rows.py")
+        def ids = []
+        if (d.lead) {
+            if (!pages.any { it.id == d.lead }) throw new GradleException("ui.vault_rows row '${d.id}' leads with '${d.lead}', which ui.sections[${s.id}] does not declare")
+            ids << d.lead
+        }
+        r.chips.eachWithIndex { c, i ->
+            def p = [id: c.page, label: c.label, icon: d.chip_icon ?: 'ic_p_folder']
+            if (i == 0 && !ids.isEmpty()) p.separator_before = true
+            pages << p; ids << c.page
+            emit(c.page, [[kind: 'fragment', id: 'vault_folder', asset: vaultRowsDecl.asset, path: c.path]])
+        }
+        groups << [id: d.id, label: d.label, icon: d.icon ?: '', pages: ids]
+    }
+    def pj = vaultRowsDecl.projects
+    if (pj) {
+        def src = (buildJson.ui.sections ?: []).find { it.id == pj.section }
+        def g = src?.groups?.find { it.id == pj.group }
+        if (g == null) throw new GradleException("ui.vault_rows.projects names ${pj.section}/${pj.group}, which is not a declared group")
+        g.pages.each { pid ->
+            pages << new LinkedHashMap(src.pages.find { it.id == pid })
+            emit(pid, file("../data/ui/${pj.section}/${pid}.json"))
+        }
+        groups << [id: pj.id, label: pj.label, icon: pj.icon ?: g.icon, pages: new ArrayList(g.pages)]
+    }
+    new LinkedHashMap(s) + [pages: pages, groups: groups]
+}
+def uiSectionsB64 = b64((buildJson.ui.sections ?: []).collect { s0 -> def s = vaultSection(s0); new LinkedHashMap(s) + [pages: labelAreaPages(s.pages ?: [])] })
 def fleetRepoApps = new groovy.json.JsonSlurper().parse(new File(rootDir, '../aa_cloud-superapp/data/constellation-fleet.json')).apps
     .findAll { it.repo_url && it.package }.collect { [url: it.repo_url.toString(), package: it.package.toString()] }
 def uiRepoTreeB64 = b64(repoTreeDecl + [fleet_apps: fleetRepoApps])
@@ -238,6 +283,8 @@ android {
             assets.srcDirs += file('../data/profiles')
             // #1298 libs:repos' registry outline (byte-equal copy, guarded), read by Lnktree > Proj: repos.outline.json at the asset root.
             assets.srcDirs += file('../data/repos')
+            // #1398 the Tasks row pages generated from ui.vault_rows (tasks/<page>.json), see vaultSection above.
+            assets.srcDirs += vaultPagesDir
         }
     }
 

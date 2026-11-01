@@ -155,6 +155,8 @@ private fun PageContent(section: Section, page: Page, modifier: Modifier) {
             "repo_tree" -> RepoTreeScreen(single.optString("area"), modifier)
             // #1350 RoadMap > Folders: the notes vault's folder tree (data/repos/roadmap-tree.json).
             "folder_tree" -> FolderTreeScreen(single.optString("asset"), modifier)
+            // #1398 Tasks > Inboxes | Backlogs | RoadMaps | Library > <chip>: one vault folder's notes (data/repos/vault-rows.json).
+            "vault_folder" -> VaultFolderScreen(single.optString("asset"), single.optString("path"), modifier)
             else -> StackScreen(stack, modifier)
         }
     } else {
