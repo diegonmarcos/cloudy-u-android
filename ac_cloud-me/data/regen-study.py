@@ -130,7 +130,7 @@ def build(d):
     study_done = [edu_rec(e) for e in d["education"] if e not in nxt] + \
         [{"title": l["name"], "category": s_cats[3], "note": l["proficiency"]} for l in d["languages"]]
     study = {"kind": "ledger", "view": "done_plan", "store": "experiences_user", "currency": "", "reports": [],
-             "title": "🎓 Study", "icon": "🎓", "ledgers": [
+             "title": "🎓 Study", "emoji": "🎓", "ledgers": [
                  {"collection": "study_done", "title": "✅ Done", "empty": "Nothing done recorded yet.", "fields": s_done,
                   "builtin": study_done, "move_to": "study_todo", "move_label": "Mark undone"},
                  {"collection": "study_todo", "title": "🎯 To do", "empty": "Nothing planned yet. Add a course or a certification with its target date.",
@@ -196,7 +196,7 @@ def build(d):
     roles = [{"title": f'{e["title"]} · {e["company"]}', "category": cats[1] if e in own else cats[0],
               "note": e["dates"].split(" · ")[0] + (f' · {e["location"]}' if e.get("location", "").strip() else ""),
               **({"date": role_date(e["dates"])} if role_date(e["dates"]) else {})} for e in jobs]
-    work_page = [{"kind": "ledger", "view": "done_plan", "store": "experiences_user", "currency": "", "reports": [], "title": "💼 Work", "icon": "💼", "ledgers": [
+    work_page = [{"kind": "ledger", "view": "done_plan", "store": "experiences_user", "currency": "", "reports": [], "title": "💼 Work", "emoji": "💼", "ledgers": [
         {"collection": "work_done", "title": "✅ Done", "empty": "Nothing done recorded yet.", "fields": w_done,
          "builtin": roles, "move_to": "work_todo", "move_label": "Mark undone"},
         {"collection": "work_todo", "title": "🎯 To do", "empty": "Nothing planned yet. Add a career goal with its target date.", "fields": w_plan,

@@ -6,7 +6,7 @@
     "currency": "",
     "reports": [],
     "title": "🌍 Places",
-    "icon": "🌍",
+    "emoji": "🌍",
     "ledgers": [
       {
         "collection": "geo_done",

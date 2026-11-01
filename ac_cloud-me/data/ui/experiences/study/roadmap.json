@@ -6,7 +6,7 @@
     "currency": "",
     "reports": [],
     "title": "🎓 Study",
-    "icon": "🎓",
+    "emoji": "🎓",
     "ledgers": [
       {
         "collection": "study_done",

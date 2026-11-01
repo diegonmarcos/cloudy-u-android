@@ -6,7 +6,7 @@
     "currency": "",
     "reports": [],
     "title": "💼 Work",
-    "icon": "💼",
+    "emoji": "💼",
     "ledgers": [
       {
         "collection": "work_done",

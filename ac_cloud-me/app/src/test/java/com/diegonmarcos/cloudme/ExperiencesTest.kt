@@ -35,7 +35,7 @@ class ExperiencesTest {
             val b = block(p)
             assertEquals(p, "done_plan", b.getString("view"))
             assertEquals(p, LedgerStore.EXP, b.getString("store"))
-            assertTrue("$p icon", b.optString("icon").isNotBlank())
+            assertTrue("$p emoji", b.optString("emoji").isNotBlank())
             val d = defs(p)
             val done = ExperiencesModel.doneDef(d)!!; val plan = ExperiencesModel.planDef(d)!!
             assertEquals(p, plan.collection, done.moveTo); assertEquals(p, done.collection, plan.moveTo)

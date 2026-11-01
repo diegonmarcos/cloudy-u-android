@@ -84,7 +84,7 @@ fun ExperiencesBlock(o: JSONObject) {
     val p = LocalKitPalette.current
     val store = o.getString("store")
     val group = o.optString("group", "category")
-    val fallbackIcon = o.optString("icon", "⭐")
+    val fallbackIcon = o.optString("emoji", "⭐")
     val defs = remember(o) { (o.optJSONArray("ledgers") ?: JSONArray()).let { a -> (0 until a.length()).map { LedgerDef.parse(a.getJSONObject(it)) } } }
     val doneDef = remember(defs) { ExperiencesModel.doneDef(defs) }
     val planDef = remember(defs) { ExperiencesModel.planDef(defs) }
