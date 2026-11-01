@@ -64,8 +64,8 @@ fun GitStorageMenu(selected: GitStorage.Kind, onSelect: (GitStorage.Kind) -> Uni
     Box(modifier.testTag(DriveTags.SYNC_GIT_STORAGE)) {
         FilterChip(
             selected = true, onClick = { open = true },
-            label = { Text(label(selected), style = MaterialTheme.typography.labelSmall, maxLines = 1) },
-            leadingIcon = { Icon(IconCatalog.vectorOrDefault(icon(selected)), contentDescription = null, modifier = Modifier.size(DriveMetrics.icon)) },
+            // #1356 icon only in the top menu (Check | Sync | Clone | Logs | More stay in view); the name is its description and the menu's rows
+            label = { Icon(IconCatalog.vectorOrDefault(icon(selected)), contentDescription = label(selected), modifier = Modifier.size(DriveMetrics.icon)) },
             modifier = Modifier.height(DriveMetrics.chipHeight),
         )
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {

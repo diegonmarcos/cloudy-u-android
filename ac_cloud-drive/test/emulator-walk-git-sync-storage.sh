@@ -110,7 +110,7 @@ shot 22-web-viewer-menu
 need 'Open in another browser' 'Open in Chrome' 'Copy link' 'Share' 'Reload' || fail "the web viewer menu: $(texts)"
 back; back
 dump >/dev/null; has 'Open in Chrome' && fail "Back did not close the web viewer"
-back
+for i in 1 2 3; do dump >/dev/null; has 'Goto' || break; back; done
 
 # 3. the selector in the top menu
 pick 'Emulated' || fail "no storage selector in the top menu: $(texts)"
