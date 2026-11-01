@@ -147,8 +147,7 @@
     ],
     "app_defaults": {
       "_doc": "Apps whose declared default mode is not classic (build.json::ui.nav_ui.mode must equal it).",
-      "ac_cloud-notes": "clean",
-      "ad_Capital-Stack-FinTerminal": "clean"
+      "ac_cloud-notes": "clean"
     },
     "pending": {
       "_doc": "Held apps that do not expose Configs > UI yet, each with the reason; the entry is deleted when the app does (a stale entry fails).",

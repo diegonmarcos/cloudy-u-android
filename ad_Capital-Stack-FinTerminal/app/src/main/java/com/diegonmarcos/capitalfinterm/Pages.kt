@@ -73,8 +73,13 @@ object Pages {
         return null
     }
 
-    /** #1399 every terminal section's first sub-page: the section's Homepage (the grid of its other sub-pages). */
+    /** #1399 the target word of ui.redirects for a section's Homepage. */
     const val PAGE_HOME = "home"
+
+    /** #1399 every terminal section's first sub-page, the section's Homepage (page ids are unique per app: `<section>-home`). */
+    fun homeId(sectionId: String): String = "$sectionId-home"
+
+    fun isHome(sectionId: String, pageId: String): Boolean = pageId == PAGE_HOME || pageId == homeId(sectionId)
 
     /** The web slug of a dashboard id (scripts/gen-finterm.mjs slugOf): the dashboard's sub-page id. */
     fun slugOf(id: String): String = id.lowercase().replace('_', '-')
@@ -87,7 +92,7 @@ object Pages {
      * label and icon and its stack entry's one-line description. A declared page with no entry is left out (the guard rejects it).
      */
     fun homeCards(pages: List<Triple<String, String, String>>, entries: List<Entry>): List<HomeCard> =
-        pages.filter { it.first != PAGE_HOME }.mapNotNull { (id, label, icon) ->
+        pages.drop(1).filter { !it.first.endsWith("-home") }.mapNotNull { (id, label, icon) ->
             val e = entries.firstOrNull { pageIdOf(it) == id } ?: return@mapNotNull null
             HomeCard(id, label.ifEmpty { e.title }, e.subtitle, icon, e)
         }

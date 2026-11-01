@@ -27,8 +27,8 @@ object FinNavStack {
 
     fun pageOf(stack: List<String>): String? = stack.lastOrNull { it.startsWith("page:") }?.removePrefix("page:")
 
-    /** The sub-page the one-row nav highlights: Home on the Homepage, else the shown dashboard's slug or page id. */
-    fun selectedPage(stack: List<String>): String = pageOf(stack) ?: dashboardOf(stack)?.let { Pages.slugOf(it) } ?: Pages.PAGE_HOME
+    /** The sub-page the one-row nav highlights: the section's Home on the Homepage, else the shown dashboard's slug or page id. */
+    fun selectedPage(stack: List<String>, sectionId: String): String = pageOf(stack) ?: dashboardOf(stack)?.let { Pages.slugOf(it) } ?: Pages.homeId(sectionId)
 
     fun symbolOf(screen: String?): String? = screen?.takeIf { it.startsWith("quote:") }?.removePrefix("quote:")
 

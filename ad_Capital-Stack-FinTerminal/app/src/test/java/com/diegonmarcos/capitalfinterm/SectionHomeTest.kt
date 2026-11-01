@@ -22,8 +22,13 @@ class SectionHomeTest {
     }
 
     @Test fun everySectionOpensOnItsHomepage() {
-        for (s in bottom) assertEquals(s, Pages.PAGE_HOME, pages(s).first().first)
-        assertEquals(Pages.PAGE_HOME, FinNavStack.selectedPage(FinNavStack.initial()))
+        for (s in bottom) {
+            assertEquals(s, Pages.homeId(s), pages(s).first().first)
+            assertEquals(s, Pages.homeId(s), FinNavStack.selectedPage(FinNavStack.initial(), s))
+        }
+        // page ids are unique in the app (nav-shape N12)
+        val ids = bottom.flatMap { s -> pages(s).map { it.first } }
+        assertEquals(ids.size, ids.toSet().size)
     }
 
     @Test fun theHomepageListsEverySubPageWithIconNameAndDescription() {

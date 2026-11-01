@@ -8,12 +8,12 @@ import org.junit.Test
 class FinNavStackTest {
     @Test fun aTabOpensOnItsHomepage() {
         assertEquals(listOf("list"), FinNavStack.initial())
-        assertEquals(Pages.PAGE_HOME, FinNavStack.selectedPage(FinNavStack.initial()))
+        assertEquals("fi-home", FinNavStack.selectedPage(FinNavStack.initial(), "fi"))
     }
 
     @Test fun theSelectedSubPageIsTheShownOne() {
-        assertEquals("yield-curves", FinNavStack.selectedPage(FinNavStack.open(FinNavStack.initial(), "yield_curves")))
-        assertEquals("holdings", FinNavStack.selectedPage(FinNavStack.openPage("holdings")))
+        assertEquals("yield-curves", FinNavStack.selectedPage(FinNavStack.open(FinNavStack.initial(), "yield_curves"), "fi"))
+        assertEquals("holdings", FinNavStack.selectedPage(FinNavStack.openPage("holdings"), "my-pm"))
     }
 
     @Test fun backUnwindsInTheDeclaredOrder() {

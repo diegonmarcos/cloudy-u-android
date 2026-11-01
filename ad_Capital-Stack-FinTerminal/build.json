@@ -200,7 +200,7 @@
         "icon": "account_balance",
         "nav_mode": "horizontal_one_row",
         "pages": [
-          {"id": "home", "label": "Home", "icon": "home"},
+          {"id": "fi-home", "label": "Home", "icon": "home"},
           {"id": "yield-curves", "label": "Yield Curves", "icon": "timeline"},
           {"id": "yields-matrix", "label": "Yields Matrix", "icon": "table_chart"},
           {"id": "bonds-market", "label": "Bonds Market", "icon": "bar_chart"},
@@ -217,7 +217,7 @@
         "icon": "trending_up",
         "nav_mode": "horizontal_one_row",
         "pages": [
-          {"id": "home", "label": "Home", "icon": "home"},
+          {"id": "eq-home", "label": "Home", "icon": "home"},
           {"id": "world-equity-indices", "label": "World Equity Indices", "icon": "public"},
           {"id": "eq-dm-us", "label": "DM Equity (US)", "icon": "trending_up"},
           {"id": "eq-em", "label": "EM Equity", "icon": "explore"},
@@ -233,7 +233,7 @@
         "icon": "payments",
         "nav_mode": "horizontal_one_row",
         "pages": [
-          {"id": "home", "label": "Home", "icon": "home"},
+          {"id": "ex-home", "label": "Home", "icon": "home"},
           {"id": "fx", "label": "FX", "icon": "swap_horiz"},
           {"id": "onshore-usd-rates", "label": "Onshore USD Rates", "icon": "account_balance"},
           {"id": "crypto", "label": "Crypto", "icon": "token"},
@@ -246,7 +246,7 @@
         "icon": "rss_feed",
         "nav_mode": "horizontal_one_row",
         "pages": [
-          {"id": "home", "label": "Home", "icon": "home"},
+          {"id": "nw-home", "label": "Home", "icon": "home"},
           {"id": "economic-calendar", "label": "Economic Calendar", "icon": "event"},
           {"id": "news", "label": "News", "icon": "rss_feed"},
           {"id": "central-bank-calendar", "label": "Central Bank Calendar", "icon": "account_balance"}
@@ -258,7 +258,7 @@
         "icon": "pie_chart",
         "nav_mode": "horizontal_one_row",
         "pages": [
-          {"id": "home", "label": "Home", "icon": "home"},
+          {"id": "pm-home", "label": "Home", "icon": "home"},
           {"id": "portfolio-risk", "label": "Portfolio & Risk Analytics", "icon": "insights"},
           {"id": "mp-40-60", "label": "40/60", "icon": "pie_chart", "separator_before": true},
           {"id": "mp-70-30", "label": "70/30", "icon": "pie_chart"},
@@ -276,7 +276,7 @@
         "icon": "wallet",
         "nav_mode": "horizontal_one_row",
         "pages": [
-          {"id": "home", "label": "Home", "icon": "home"},
+          {"id": "my-pm-home", "label": "Home", "icon": "home"},
           {"id": "holdings", "label": "Personal portfolio", "icon": "wallet"}
         ]
       },

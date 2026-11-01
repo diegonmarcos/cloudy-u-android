@@ -102,7 +102,7 @@ fun AppShell(startDashboard: String? = null) {
     fun openPage(sec: String, id: String) {
         val e = Pages.entryOf(Pages.entries(Decl.stacks, sec), id)
         setStack(sec, when {
-            id == Pages.PAGE_HOME || e == null -> FinNavStack.LIST_ONLY
+            Pages.isHome(sec, id) || e == null -> FinNavStack.LIST_ONLY
             e.kind == Pages.KIND_DASHBOARD -> FinNavStack.open(stackOf(sec), e.dashboard)
             else -> FinNavStack.openPage(id)
         })
@@ -132,7 +132,7 @@ fun AppShell(startDashboard: String? = null) {
         Box(Modifier.fillMaxSize().then(canvas).windowInsetsPadding(WindowInsets.statusBars.union(WindowInsets.displayCutout))) {
             NavBarTopFirstRowScaffold(
                 title = sec?.label ?: stringResource(R.string.app_name),
-                hierarchy = sec?.let { titleHierarchy(it, FinNavStack.selectedPage(stack)) }.orEmpty(),
+                hierarchy = sec?.let { titleHierarchy(it, FinNavStack.selectedPage(stack, section)) }.orEmpty(),
                 onNavigate = { e ->
                     if (e.depth == 0) {
                         // The breadcrumb's tab word: the tab's dashboard list (UI spec 3); another tab: switch to it.
@@ -154,7 +154,7 @@ fun AppShell(startDashboard: String? = null) {
                     val still = LocalReduceMotion.current
                     Column(Modifier.fillMaxSize()) {
                     // #1399 the fleet nav lib's one-row mode: ONE horizontally scrollable row of the section's sub-pages, Home first.
-                    if (sec != null && sec.pages.isNotEmpty()) NavBarTopSecondRows(sec, FinNavStack.selectedPage(stack), onSelect = { openPage(section, it.id) }, underTopChrome = false)
+                    if (sec != null && sec.pages.isNotEmpty()) NavBarTopSecondRows(sec, FinNavStack.selectedPage(stack, section), onSelect = { openPage(section, it.id) }, underTopChrome = false)
                     AnimatedContent(
                         targetState = section to top,
                         transitionSpec = {

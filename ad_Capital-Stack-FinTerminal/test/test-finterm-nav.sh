@@ -39,7 +39,7 @@ for sid in ui["bottom_nav"]:
 # N2
 for sid in ui["bottom_nav"]:
     p = secs[sid].get("pages") or [{}]
-    if (p[0].get("id"), p[0].get("label"), p[0].get("icon")) != ("home", "Home", "home"): bad.append("N2 section %s does not open on Home: first page %s" % (sid, p[0]))
+    if (p[0].get("id"), p[0].get("label"), p[0].get("icon")) != (sid + "-home", "Home", "home"): bad.append("N2 section %s does not open on Home: first page %s" % (sid, p[0]))
 if not re.search(r"fun initial\(\): List<String> = LIST_ONLY", stack): bad.append("N2 FinNavStack.initial() does not open the Homepage")
 if "NavBarTopSecondRows(" not in shell: bad.append("N2 AppShell does not draw the one-row sub-page nav")
 # N3
