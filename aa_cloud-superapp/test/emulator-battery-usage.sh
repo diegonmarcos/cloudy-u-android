@@ -109,10 +109,14 @@ open_page "page:cloud/apps"
 adb shell screencap -p /sdcard/s.png; adb pull /sdcard/s.png "$OUT/cloud-apps.png" >/dev/null; dump; cp "$OUT/ui.xml" "$OUT/cloud-apps.xml"
 scroll 70 40; sleep 1.5
 adb shell screencap -p /sdcard/s.png; adb pull /sdcard/s.png "$OUT/cloud-apps-scrolled.png" >/dev/null; dump; cp "$OUT/ui.xml" "$OUT/cloud-apps-scrolled.xml"
-python3 - "$OUT/cloud-apps.xml" "$OUT/cloud-apps-scrolled.xml" <<'PY' || fail=1
+# Each row is one horizontal strip of six tiles: Office, the seventh Data App, is reached by swiping that row left.
+open_page "page:cloud/apps"; dump; xy=$(centre "Gallery")
+if [ -n "$xy" ]; then set -- $xy; adb shell input swipe $((SW * 9 / 10)) "$2" $((SW / 10)) "$2" 400; sleep 1.5; fi
+adb shell screencap -p /sdcard/s.png; adb pull /sdcard/s.png "$OUT/cloud-apps-data-right.png" >/dev/null; dump; cp "$OUT/ui.xml" "$OUT/cloud-apps-data-right.xml"
+python3 - "$OUT/cloud-apps.xml" "$OUT/cloud-apps-scrolled.xml" "$OUT/cloud-apps-data-right.xml" <<'PY' || fail=1
 import re, sys
 seq = []
-for p in sys.argv[1:]:
+for p in sys.argv[1:3]:
     for t in re.findall(r' text="([^"]+)"', open(p, encoding="utf-8", errors="ignore").read()):
         if not seq or seq[-1] != t: seq.append(t)
 def after(head, want, stop):
@@ -126,7 +130,10 @@ def after(head, want, stop):
 com = after("Communication", {"Mail", "Chat", "Messenger", "Dialer", "C3-Bot", "Contacts"}, "Tools Primary")
 data = after("Data Apps", {"Drive", "Notes", "Tasks", "Gallery", "Media", "News", "Office"}, "Me")
 print("Communication:", com); print("Data Apps:", data)
-ok = com is not None and "Contacts" in com and data == ["Drive", "Notes", "Tasks", "Gallery", "Media", "News", "Office"]
+right = re.findall(r' text="([^"]+)"', open(sys.argv[3], encoding="utf-8", errors="ignore").read())
+office = "News" in right and "Office" in right[right.index("News"):]
+print("Data Apps swiped:", [t for t in right if t in {"Gallery", "Media", "News", "Office"}])
+ok = com is not None and "Contacts" in com and data is not None and data[:6] == ["Drive", "Notes", "Tasks", "Gallery", "Media", "News"] and office
 if not ok: print("::error::Cloud > Apps groups are not as declared (#1380)")
 sys.exit(0 if ok else 1)
 PY
