@@ -256,6 +256,8 @@ class App : Application(), WorkManagerConfiguration.Provider {
         // killed and no battery surface is open (BatteryRepository.record).
         // Idempotent — the KEEP policy makes re-scheduling a no-op.
         runCatching { BatterySessionWorker.schedule(this) }
+        // The plug edges (charge-cycle boundaries, #1381): Android 8+ does not deliver them to the manifest entry.
+        runCatching { PowerStateReceiver.register(this) }
         // Constellation AppStore — periodic fleet check across every
         // constellation APK (Configs → Constellation). Notifies when siblings
         // have GHCR updates; install stays user-initiated. Idempotent (KEEP).

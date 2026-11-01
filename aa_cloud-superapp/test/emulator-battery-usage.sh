@@ -144,14 +144,18 @@ cap() { adb shell screencap -p /sdcard/s.png; adb pull /sdcard/s.png "$OUT/$1.pn
 has_all() { python3 - "$@" <<'PY'
 import re, sys
 files, want = [a for a in sys.argv[1:] if a.endswith(".xml")], [a for a in sys.argv[1:] if not a.endswith(".xml")]
-text = "\n".join(t for f in files for t in re.findall(r' text="([^"]+)"', open(f, encoding="utf-8", errors="ignore").read()))
+# the dump is XML: "Temperature & voltage" is stored as &amp; (run 41302878487)
+import html
+text = "\n".join(html.unescape(t) for f in files for t in re.findall(r' text="([^"]+)"', open(f, encoding="utf-8", errors="ignore").read()))
 miss = [w for w in want if not any(alt in text for alt in w.split("|"))]
 print("present:", [w for w in want if w not in miss], "missing:", miss)
 sys.exit(1 if miss else 0)
 PY
 }
 wake; adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null; sleep 8; dump
-# The strip's battery (BatteryIconView) carries the label "Battery status"; geometry picked the toolbar's buttons (41299866795).
+# The relaunch resumes the last page (Cloud > Apps in 41302878487): the bottom bar's Home first, then the strip's battery
+# (BatteryIconView, labelled "Battery status"; geometry picked the toolbar's buttons in 41299866795).
+xy=$(centre "Home"); [ -n "$xy" ] && { adb shell input tap $xy; sleep 3; dump; }
 xy=$(centre "Battery status")
 if [ -n "$xy" ]; then
   adb shell input tap $xy; sleep 2.5; cap home-battery-popup
