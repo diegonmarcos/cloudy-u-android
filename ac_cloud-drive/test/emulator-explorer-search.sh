@@ -74,7 +74,7 @@ has AXsTrip || fail "the fixture folder is not in the listing of $HERE: $(texts)
 tap '^Search$' || fail "no search icon"
 sleep 2; shot 02-expanded
 for c in 'Only Folders Here' 'Only Folders Root' 'All From Here' 'All From Root'; do reveal "$c" || fail "chip '$c' missing: $(texts)"; done
-has AXsTrip || fail "the listing vanished when the bar expanded"
+has Alarms || fail "the listing vanished when the bar expanded: $(texts)"   # its first row; the bar pushes AXsTrip below the fold
 
 # 2. type: default scope = folders here, filtered live
 FIELD=$(dump | python3 -I -c '
