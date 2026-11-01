@@ -156,7 +156,7 @@ for k, st in zip(keys, starts):
 counts = [len(pages[p]) for p in sorted(pages)]
 assert per == 11 and counts == [11, 11, 2], f'pages hold {counts} at {per} per page, the design is 11 / 11 / 2'
 assert pages[0][-1] == 'ANDROID_SETTINGS' and pages[1][0] == 'VAULT', 'page 1 must end with Android keyboard settings and page 2 open with Vault'
-assert 'ANSWER' in pages[0] and 'EMOJI' not in pages[0] and pages[1][1] == 'EMOJI', f'#1384: Draft Answer belongs on page 1 and Emoji opens page 2 after Vault, got {pages[0]} / {pages[1][:2]}'
+assert 'ANSWER' in pages[0] and 'EMOJI' not in pages[0] and keys[-2:] == ['CUT', 'EMOJI'], f'#1384: Draft Answer on page 1; #1389: Emoji is the last key, after Cut, got {pages[0]} / {keys[-2:]}'
 print(f'    {key_dp}dp keys, {len(keys)} in the default row, scales 0.85-1.3 checked, 1.0 splits {counts}')
 PYEOF
 then
