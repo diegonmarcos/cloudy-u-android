@@ -13,7 +13,9 @@ PKG=com.diegonmarcos.clouddrive
 mkdir -p "$OUT/shots"
 fail() { echo "::error title=Drive Explorer search::$*"; adb exec-out screencap -p > "$OUT/shots/fail.png" 2>/dev/null; adb logcat -d -v threadtime > "$OUT/logcat.txt" 2>/dev/null; exit 1; }
 shot() { adb exec-out screencap -p > "$OUT/shots/$1.png"; dump > "$OUT/ui-$1.xml"; }
-dump() { adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb exec-out cat /sdcard/ui.xml > "$OUT/ui.xml" 2>/dev/null; cat "$OUT/ui.xml"; }
+# A fresh dump every time: the old file is removed first, so a failed dump cannot pass a stale screen (as in perms-emulator-proof).
+dump() { local i; for i in 1 2 3; do adb shell rm -f /sdcard/ui.xml >/dev/null 2>&1; adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1
+  adb exec-out cat /sdcard/ui.xml > "$OUT/ui.xml" 2>/dev/null; grep -q '<node' "$OUT/ui.xml" && break; sleep 2; done; cat "$OUT/ui.xml"; }
 # centre of the first node whose text or content-desc matches the regex ($1)
 where() { dump | python3 -I -c '
 import re,sys
@@ -38,8 +40,12 @@ for i in 1 2 3; do
   echo "Drive is not in front after launch $i; relaunching"
 done
 dump | grep -q "package=\"$PKG\"" || fail "Drive never came to the front"
+# Drive back in front before each step (its single-task launch resumes the same screen); the step is named when it left.
+front() { dump | grep -q "package=\"$PKG\"" && return 0; echo "Drive left the screen before: $1; resuming"
+  adb shell am start -n "$act" >/dev/null 2>&1; sleep 4; dump | grep -q "package=\"$PKG\"" || fail "Drive left the screen before $1"; }
 for i in 1 2 3; do tap '^Continue with local files$' && break; sleep 2; done || true
 sleep 2
+front "the Explorer tab"
 for i in 1 2 3; do tap '^Explorer$' && break; sleep 2; done || fail "no Explorer tab"
 sleep 2; tap '^Local$' || true; sleep 3
 
@@ -49,11 +55,13 @@ HERE=$(grep -oE 'text="/storage/[^"]*"' "$OUT/ui.xml" | head -1 | sed 's/text="/
 [ -n "$HERE" ] || HERE=/storage/emulated/0
 # A bare emulator has no Termux, so the first pane (cloud-shared-store) cannot open; the shared-storage pane
 # (emulated › 0) is folded under it: open that one, the fixture goes there (run 41295555027).
+front "the pane check"
 if grep -q 'text="cannot open' "$OUT/ui.xml"; then tap '^emulated › 0$' || fail "no shared-storage pane: $(texts)"; sleep 3; HERE=/storage/emulated/0; fi
 echo "explorer opened on: $HERE"
 ROOTDIR=/storage/emulated/0
 adb shell "mkdir -p '$HERE/AXsTrip/xstrip-deep' '$ROOTDIR/Music/xstrip-songs' && echo x > '$HERE/xstrip.txt' && echo x > '$HERE/AXsTrip/xstrip-notes.txt' && echo x > '$ROOTDIR/Music/xstrip.mp3'" || fail "fixture write failed"
 tap '^More$' && sleep 1 && tap '^Retry$'; sleep 3
+front "the first listing"
 shot 01-listing
 has AXsTrip || fail "the fixture folder is not in the listing of $HERE: $(texts)"
 
