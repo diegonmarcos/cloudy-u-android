@@ -130,6 +130,7 @@ fun ModeScreen(mode: Declarations.Mode) {
             "light" -> LightMode(mode)
             "bluetooth" -> BluetoothMode(mode)
             "nfc" -> NfcMode(mode)
+            "lfrfid" -> LfRfidMode(mode)
             "wifi" -> WifiMode(mode)
             "recorder" -> RecorderMode(mode)
             "tracker_link" -> TrackerLinkMode(mode)

@@ -7,6 +7,7 @@ import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.BluetoothSearching
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Nfc
+import androidx.compose.material.icons.filled.Usb
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material.icons.filled.DirectionsWalk
 import androidx.compose.material.icons.filled.Explore
@@ -89,6 +90,7 @@ object IconCatalog {
         "bluetooth" -> Icons.Filled.Bluetooth
         "bluetooth_searching" -> Icons.Filled.BluetoothSearching
         "nfc" -> Icons.Filled.Nfc
+        "usb" -> Icons.Filled.Usb
         "wifi" -> Icons.Filled.Wifi
         "edit" -> Icons.Filled.Edit
         "restaurant" -> Icons.Filled.Restaurant

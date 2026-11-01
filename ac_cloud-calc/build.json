@@ -2258,6 +2258,11 @@
             "id": "nfc",
             "label": "NFC",
             "icon": "nfc"
+          },
+          {
+            "id": "lfrfid",
+            "label": "LF-RFID-Tags",
+            "icon": "usb"
           }
         ]
       },
@@ -4936,6 +4941,39 @@
           "tab": "status"
         },
         "_doc": "#1264 libs:nfc's NfcPanel tab status: NFC on / off with the system settings link (apps cannot switch NFC), reader mode, card emulation support, MIFARE Classic support (needs an NXP NFC chip)."
+      },
+      {
+        "id": "lfrfid_read",
+        "label": "Read",
+        "icon": "usb",
+        "tab": "lfrfid",
+        "kind": "lfrfid",
+        "spec": {
+          "tab": "read"
+        },
+        "_doc": "#1407 125/134 kHz tags through a USB-OTG reader (Proxmark3, Flipper Zero, RDM6300 / EM4100 serial): reader status and Connect, then the tag type, ID and decoded fields (EM4100, HID H10301, FDX-B, T5577 blocks)."
+      },
+      {
+        "id": "lfrfid_edit",
+        "label": "Editor",
+        "icon": "edit",
+        "tab": "lfrfid",
+        "kind": "lfrfid",
+        "spec": {
+          "tab": "edit"
+        },
+        "_doc": "#1407 T5577 block editor, clone to T5577 and Flipper write / emulate, each behind a confirm step."
+      },
+      {
+        "id": "lfrfid_library",
+        "label": "Library",
+        "icon": "history",
+        "tab": "lfrfid",
+        "kind": "lfrfid",
+        "spec": {
+          "tab": "library"
+        },
+        "_doc": "#1407 Saved LF tags, exported and imported as JSON or CSV."
       },
       {
         "id": "world",

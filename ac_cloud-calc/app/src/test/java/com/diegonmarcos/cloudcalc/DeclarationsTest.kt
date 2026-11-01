@@ -128,7 +128,7 @@ class DeclarationsTest {
     }
 
     @Test fun `Clock moved from Measure to Toolkit and the new pages' modes carry what their renderers read`() {
-        assertEquals(listOf("sensors", "phone", "camera", "wifi", "bluetooth", "nfc"), Declarations.tabsOf("measure").map { it.id })
+        assertEquals(listOf("sensors", "phone", "camera", "wifi", "bluetooth", "nfc", "lfrfid"), Declarations.tabsOf("measure").map { it.id })
         assertEquals(listOf("light", "recorder", "tracker", "clock"), Declarations.tabsOf("toolkit").map { it.id })
         assertEquals(listOf("ai", "ask"), Declarations.tabsOf("ai").map { it.id })
         assertEquals("the clock modes did not move or duplicate", listOf("world", "alarms", "timers", "stopwatch", "interval", "bedtime"), Declarations.modesOf("clock").map { it.id })
