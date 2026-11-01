@@ -30,7 +30,14 @@ texts() { grep -oE 'text="[^"]+"' "$OUT/ui.xml" | sed 's/text="//;s/"$//' | sort
 adb install -r -g "$APK" || fail "install failed"
 adb shell appops set "$PKG" MANAGE_EXTERNAL_STORAGE allow || true
 act=$(adb shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.LAUNCHER "$PKG" | tr -d '\r' | tail -1)
-timeout 120 adb shell am start -W -n "$act" >/dev/null; sleep 8
+# Drive must be in front before any tap: runs 41296027953 dumped the home screen after a launch that never came up.
+for i in 1 2 3; do
+  adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard >/dev/null 2>&1 || true
+  timeout 120 adb shell am start -W -n "$act" >/dev/null; sleep 8
+  dump | grep -q "package=\"$PKG\"" && break
+  echo "Drive is not in front after launch $i; relaunching"
+done
+dump | grep -q "package=\"$PKG\"" || fail "Drive never came to the front"
 for i in 1 2 3; do tap '^Continue with local files$' && break; sleep 2; done || true
 sleep 2
 for i in 1 2 3; do tap '^Explorer$' && break; sleep 2; done || fail "no Explorer tab"
