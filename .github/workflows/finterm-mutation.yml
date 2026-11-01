@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       name:
-        description: 'ff-utc | ff-importance | merge | container-first | event-window | watchlist | alert-side | ics-dst | sdmx-key | jsonstat-stride | cache-ttl | fin-sort | fin-cell-dash | fin-engine-dash | fin-nav-back | fin-default | fin-keyrows-last | fin-afp | fin-spread | tbl-rebalance | tbl-weights | tbl-symbol-map | tbl-forward | tbl-coverage | tbl-shortname | fin-layout | feeds-curve | fin-mesh-off | fin-short-source | fin-cal-week | fin-better-when | fin-next-decision | tbl-spreads | fwd-table | tbl-risk | feeds-spark | feeds-cot | fin-heat-col | ppp-extrapolate | ppp-real-adjust | fxm-rppp | fxm-dxy | fxm-diff | fxm-bigmac'
+        description: 'ff-utc | ff-importance | merge | container-first | event-window | watchlist | alert-side | ics-dst | sdmx-key | jsonstat-stride | cache-ttl | fin-sort | fin-cell-dash | fin-engine-dash | fin-nav-back | fin-default | fin-keyrows-last | fin-afp | fin-spread | tbl-rebalance | tbl-weights | tbl-symbol-map | tbl-forward | tbl-coverage | tbl-shortname | fin-layout | feeds-curve | fin-mesh-off | fin-short-source | fin-cal-week | fin-better-when | fin-next-decision | tbl-spreads | fwd-table | tbl-risk | feeds-spark | feeds-cot | fin-heat-col | ppp-extrapolate | ppp-real-adjust | fxm-rppp | fxm-dxy | fxm-diff | fxm-bigmac | g20-ma | g20-ann | g20-net | g20-real'
         required: true
 permissions:
   contents: read
@@ -49,6 +49,10 @@ jobs:
             fxm-dxy)         sed -i 's|acc \* Math.pow(x, w)|acc * Math.pow(x, -w)|' $K/FxMatrix.kt ;;
             fxm-diff)        sed -i 's|(today / x - 1.0) \* 100.0|(x / today - 1.0) * 100.0|' $K/FxMatrix.kt ;;
             fxm-bigmac)      sed -i 's|retail = local / us.second|retail = local|' $K/FxMatrix.kt ;;
+            g20-ma)          sed -i 's|return d.sum() / d.size to "daily"|return d.sum() / (d.size + 1) to "daily"|' $K/G20Bonds.kt ;;
+            g20-ann)         sed -i 's|Math.pow(today / past, 1.0 / years)|Math.pow(today / past, 1.0)|' $K/G20Bonds.kt ;;
+            g20-net)         sed -i 's|= y - fx$|= y + fx|' $K/G20Bonds.kt ;;
+            g20-real)        sed -i 's|= net - cpi$|= net|' $K/G20Bonds.kt ;;
             fin-heat-col)    sed -i 's/enum class Col { TEXT, NUM, CHG, PCT, DATE, LINK, HEAT }/enum class Col { TEXT, NUM, CHG, PCT, DATE, LINK }/' $K/FinLogic.kt ;;
             feeds-cot)       sed -i 's/if (l == null || s == null) null else l - s/if (l == null || s == null) null else l/' $K/Feeds.kt ;;
             feeds-spark)     sed -i 's/bars.takeLast(7).map { it.c }/bars.take(7).map { it.c }/' $K/Feeds.kt ;;

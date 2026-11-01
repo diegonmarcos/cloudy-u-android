@@ -5,7 +5,7 @@
 set -u
 APK="$1"; OUT="$2"; mkdir -p "$OUT"
 PKG=com.diegonmarcos.capitalfinterm
-DASHES="${FT_DASHES:-fx yields_matrix bonds_market eq_dm_us eq_em world_equity_indices commodities mp_60_40 mp_70_30_DM_EM market_monitor}"
+DASHES="${FT_DASHES:-world_bonds fx yields_matrix bonds_market eq_dm_us eq_em world_equity_indices commodities mp_60_40 mp_70_30_DM_EM market_monitor}"
 adb install -r -g "$APK" || exit 1
 adb shell settings delete global cloud_nav_ui_mode || true
 echo "cloud_nav_ui_mode=$(adb shell settings get global cloud_nav_ui_mode)" | tee "$OUT/nav-mode.txt"

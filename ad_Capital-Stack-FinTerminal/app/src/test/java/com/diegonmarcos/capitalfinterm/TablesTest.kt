@@ -352,4 +352,38 @@ class TablesTest {
         assertEquals(FinFormat.signed((7.2 / retail - 1) * 100, 1), t.rows[0][10])
         assertTrue(t.note.contains("RUB today: no rate"))
     }
+
+    // ------------------------------------------------------------------ G20 Sovereign 10Y Bonds (#1397): the same fixture as g20bonds.rs and g20bonds.test.ts
+
+    @Test fun g20BondsMovingAverageFxAnnualisationNetAndReal() {
+        val j = { s: String -> org.json.JSONObject(s) }
+        val end = LocalDate.parse("2026-10-30")
+        val y = listOf("2023-09" to 3.5, "2023-11" to 9.9, "2025-10" to 3.9, "2026-09" to 4.1, "2026-10-10" to 4.0, "2026-10-20" to 4.2, "2026-10-30" to 4.4)
+        val fx = listOf("2023-10-31" to 4.0, "2025-10-30" to 5.0, "2026-10-30" to 6.0)
+        val cpi = G20Bonds.cpiYoY(listOf("2025-09-01" to 100.0, "2026-09-01" to 103.0))!!
+        assertEquals(3.0, cpi.first, 1e-12); assertEquals("2026-09", cpi.second)
+        val d0 = G20Bonds.ma(y, end, 30, 3)!!; assertEquals(4.2, d0.first, 1e-12); assertEquals("daily", d0.second)
+        assertEquals(4.1 to "monthly 2026-09", G20Bonds.ma(y, end, 30, 4))
+        assertEquals(3.5 to "monthly 2023-09", G20Bonds.ma(y, end.minusDays(1095), 30, 3))
+        assertEquals(null, G20Bonds.ma(y, LocalDate.parse("2020-01-01"), 30, 3))
+        assertEquals(20.0, G20Bonds.dep(6.0, 5.0, 1), 1e-12)
+        assertEquals((Math.cbrt(1.5) - 1) * 100, G20Bonds.dep(6.0, 4.0, 3), 1e-12)
+        val r = G20Bonds.row(j("""{"cc":"XX","ccy":"XXX","flag":"F","name":"Testland","bench":"TB"}"""), y, fx, cpi, end, 30, 3)
+        val f3 = (Math.cbrt(1.5) - 1) * 100
+        assertEquals(4.2, r.getDouble("y0"), 1e-12); assertEquals(3.9, r.getDouble("y1"), 1e-12); assertEquals(3.5, r.getDouble("y3"), 1e-12)
+        assertEquals(20.0, r.getDouble("fx1"), 1e-12); assertEquals(f3, r.getDouble("fx3"), 1e-12)
+        assertEquals(4.2 - 20.0, r.getDouble("net1"), 1e-12); assertEquals(4.2 - f3, r.getDouble("net3"), 1e-12)
+        assertEquals(4.2 - 20.0 - 3.0, r.getDouble("real1"), 1e-12); assertEquals(4.2 - f3 - 3.0, r.getDouble("real3"), 1e-12)
+        assertEquals("monthly 2025-10", r.getJSONObject("basis").getString("y1"))
+        assertEquals(0, r.getJSONObject("null_reason").length())
+        val us = G20Bonds.row(j("""{"cc":"US","ccy":"USD"}"""), y, emptyList(), cpi, end, 30, 3)
+        assertEquals(0.0, us.getDouble("fx3"), 0.0); assertEquals(4.2 - 3.0, us.getDouble("real1"), 1e-12)
+        val ru = G20Bonds.row(j("""{"cc":"RU","ccy":"RUB","no_fx":"no rate"}"""), emptyList(), emptyList(), null, end, 30, 3)
+        val w = ru.getJSONObject("null_reason")
+        assertEquals("no rate", w.getString("fx1")); assertTrue(w.getString("y0").startsWith("no 10Y yield")); assertTrue(w.has("cpi") && w.has("real3") && ru.isNull("net1"))
+        val t = Tables.g20Table(Dashboards.byId(dashboards, "world_bonds")!!.panels.first { it.id == "g20_real" }, org.json.JSONObject(), org.json.JSONArray().put(r).put(ru), "test", emptyList())
+        assertEquals(listOf("F Testland", "TB", FinFormat.signed(4.2 - 23.0, 2), "4.20"), t.rows[0].take(4))
+        assertEquals(t.rows[0][2], t.rows[0][11])
+        assertTrue(t.note.contains("RU fx1: no rate") && t.note.contains("XX y1: monthly 2025-10"))
+    }
 }

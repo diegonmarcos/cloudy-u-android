@@ -24,7 +24,8 @@ object Tables {
     const val RISK = "risk_compare"
     const val FX_PPP = "fx_ppp"
     const val FX_MATRIX = "fx_matrix"
-    val DERIVES: Set<String> = setOf(PERFORMANCE, PORTFOLIO, MATRIX, EM_USD, WORLD_BONDS, RISK, FX_PPP, FX_MATRIX)
+    const val G20_BONDS = "g20_bonds"
+    val DERIVES: Set<String> = setOf(PERFORMANCE, PORTFOLIO, MATRIX, EM_USD, WORLD_BONDS, RISK, FX_PPP, FX_MATRIX, G20_BONDS)
 
     /** Extra (non-return) columns a performance table may declare after the return columns. */
     const val COL_VOL = "Vol 1Y"
@@ -58,6 +59,7 @@ object Tables {
         }
         FX_PPP -> fxPpp(panel, f, http, today, c)
         FX_MATRIX -> fxMatrix(panel, f, http, today, c)
+        G20_BONDS -> g20Bonds(panel, f, http, today, c)
         WORLD_BONDS -> spreads(load(panel.copy(derive = MATRIX), source, f, http, today, c), f)
         else -> throw IOException("unknown derive ${panel.derive}")
     }
@@ -207,6 +209,92 @@ object Tables {
             (if (why.isEmpty()) "" else " — " + why.joinToString(" · "))
         return PanelData(panel.columns, table, emptyList(), emptyList(), list.mapNotNull { o -> o.optString("today_date").takeIf { it.isNotEmpty() && it != "null" } }.maxOrNull().orEmpty(), note,
             servedBy = by, details = list.map { it.optString("label") })
+    }
+
+    // ------------------------------------------------------------------ G20 Sovereign 10Y Bonds (#1397)
+
+    /** fetch.primary.api (/v1/bonds/g20-real) on the mesh; else direct: OECD 10Y monthly (DBnomics), FRED DGS10 and CPIAUCSL, ECB rates and the
+     *  Bank of Russia (rows with fx=cbr); each source that fails leaves its cells empty with the reason. */
+    fun g20Bonds(panel: Panel, f: JSONObject, http: Http, today: LocalDate, c: ModelCtx): PanelData {
+        val api = c.api
+        if (api != null) {
+            runCatching { JSONObject(http.get(api.base.trimEnd('/') + Catalog.str(f.optJSONObject("primary") ?: JSONObject(), "api"))).getJSONArray("rows") }
+                .getOrNull()?.takeIf { it.length() > 0 }?.let { return g20Table(panel, f, it, api.source.name, emptyList()) }
+        }
+        val rows = objs(f.optJSONArray("rows"))
+        val win = f.optLong("window_days", 30)
+        val minDaily = f.optInt("min_daily", 10)
+        val back = 365L * 3 + win + 75
+        val from = today.minusDays(back)
+        val fails = ArrayList<String>()
+        val used = ArrayList<String>()
+        fun src(k: String) = Catalog.byId(c.sources, Catalog.str(f, k))
+        val y = HashMap<String, MutableList<Pair<String, Double>>>()
+        src("oecd_source")?.let { s ->
+            val o = f.optJSONObject("oecd") ?: JSONObject()
+            runCatching {
+                val ids = rows.joinToString(",") { Catalog.str(o, "prefix") + it.optString("a3") + Catalog.str(o, "suffix") }
+                val byA3 = rows.associate { it.optString("a3") to it.optString("cc") }
+                for (sd in Providers.dbnomics(http.get(Requests.url(s.endpoint, Catalog.str(o, "path"), listOf("series_ids" to ids, "observations" to "1", "limit" to "100"))))) {
+                    val cc = byA3[sd.code.substringBefore('.')] ?: continue
+                    sd.periods.zip(sd.values).forEach { (p, v) -> if (v != null && p.length == 7) y.getOrPut(cc) { ArrayList() } += p to v }
+                }
+                used += s.name
+            }.onFailure { fails += "${s.name}: ${it.message}" }
+        }
+        var cpi: Pair<Double, String>? = null
+        src("fred_source")?.let { s ->
+            val fr = f.optJSONObject("fred") ?: JSONObject()
+            runCatching {
+                val id = Catalog.str(fr, "yield")
+                FredCsv.parse(http.get(Requests.fred(s.endpoint, id, today, back.toInt())))[id].orEmpty().forEach { y.getOrPut("US") { ArrayList() } += it.date to it.value }
+                val ci = Catalog.str(fr, "cpi")
+                cpi = G20Bonds.cpiYoY(FredCsv.parse(http.get(Requests.fred(s.endpoint, ci, today, 500)))[ci].orEmpty().map { it.date to it.value })
+                used += s.name
+            }.onFailure { fails += "${s.name}: ${it.message}" }
+        }
+        val fx = HashMap<String, List<Pair<String, Double>>>()
+        src("fx_source")?.let { s ->
+            runCatching {
+                val ccys = rows.filter { it.optString("fx").isEmpty() && it.optString("ccy") != "USD" }.joinToString(",") { it.optString("ccy") }
+                val rates = JSONObject(http.get(Requests.url(s.endpoint, "/v1/$from..$today", listOf("base" to "USD", "symbols" to ccys)))).optJSONObject("rates") ?: JSONObject()
+                val m = HashMap<String, MutableList<Pair<String, Double>>>()
+                rates.keys().asSequence().sorted().forEach { d -> val o = rates.getJSONObject(d); o.keys().forEach { k -> m.getOrPut(k) { ArrayList() } += d to o.getDouble(k) } }
+                fx.putAll(m); used += s.name
+            }.onFailure { fails += "${s.name}: ${it.message}" }
+        }
+        src("rub_source")?.let { s ->
+            val rub = f.optJSONObject("rub") ?: JSONObject()
+            runCatching {
+                val x = FxMatrix.cbr(http.get(Requests.url(s.endpoint, Catalog.str(rub, "path"), listOf("date_req1" to from.format(FxMatrix.DMY), "date_req2" to today.format(FxMatrix.DMY), "VAL_NM_RQ" to Catalog.str(rub, "code")))))
+                rows.filter { it.optString("fx") == "cbr" }.forEach { fx[it.optString("ccy")] = x }
+                if (x.isNotEmpty()) used += s.name
+            }.onFailure { fails += "${s.name}: ${it.message}" }
+        }
+        if (y.isEmpty()) throw IOException(fails.firstOrNull() ?: "no 10Y yield answered")
+        val out = JSONArray()
+        rows.forEach { r -> out.put(G20Bonds.row(r, y[r.optString("cc")].orEmpty().sortedBy { it.first }, fx[r.optString("ccy")].orEmpty(), cpi, today, win, minDaily)) }
+        return g20Table(panel, f, out, used.joinToString(" + "), fails)
+    }
+
+    /** Country | Benchmark | 1Y real (lead) | 10Y MA30 today, -1y, -3y | FX 1Y, 3Y ann. | net 1Y, 3Y | US CPI | real 1Y, 3Y; footer, bases and reasons in the note. */
+    fun g20Table(panel: Panel, f: JSONObject, rows: JSONArray, by: String, fails: List<String>): PanelData {
+        val list = (0 until rows.length()).map { rows.getJSONObject(it) }
+        fun v(o: JSONObject, k: String) = if (!o.has(k) || o.isNull(k)) null else o.getDouble(k)
+        fun n(o: JSONObject, k: String) = v(o, k)?.let { String.format(java.util.Locale.US, "%.2f", it) } ?: FinFormat.DASH
+        fun s(o: JSONObject, k: String) = v(o, k)?.let { FinFormat.signed(it, 2) } ?: FinFormat.DASH
+        val table = list.map { o ->
+            listOf("${o.optString("flag")} ${o.optString("name")}".trim(), o.optString("bench"), s(o, "real1"), n(o, "y0"), n(o, "y1"), n(o, "y3"),
+                s(o, "fx1"), s(o, "fx3"), s(o, "net1"), s(o, "net3"), n(o, "cpi"), s(o, "real1"), s(o, "real3"))
+        }
+        val bases = list.flatMap { o -> val b = o.optJSONObject("basis") ?: JSONObject(); b.keys().asSequence().map { k -> "${o.optString("cc")} $k: ${b.getString(k)}" }.toList() }
+        val why = list.flatMap { o -> val w = o.optJSONObject("null_reason") ?: JSONObject(); w.keys().asSequence().map { k -> "${o.optString("cc")} $k: ${w.getString(k)}" }.toList() } +
+            fails.map { "source failed: $it" }
+        val note = listOf(Catalog.str(f, "footer"), Catalog.str(f, "method")).filter { it.isNotEmpty() }.joinToString(" ") +
+            (if (bases.isEmpty()) "" else " Monthly basis: " + bases.joinToString(" · ") + ".") +
+            (if (why.isEmpty()) "" else " — " + why.joinToString(" · "))
+        return PanelData(panel.columns, table, emptyList(), emptyList(), list.mapNotNull { it.optString("as_of").takeIf { d -> d.isNotEmpty() } }.maxOrNull().orEmpty(), note,
+            servedBy = by, details = list.map { "${it.optString("name")} ${it.optString("bench")}" })
     }
 
     // ------------------------------------------------------------------ 60/40 vs 100/0 risk comparison (spec 9)
