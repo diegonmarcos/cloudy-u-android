@@ -12,6 +12,7 @@
 | [Orano](https://thefwa.com/cases/orano) | Website | 3D | Three.js | WebGL, GSAP, HTML5 | No | A beautiful, seamless 3D scrolling journey explaining nuclear materials. |
 | [Active Theory v5](https://activetheory.net/) | Website | 3D | Hydra (Custom) | WebGL, GLSL, WebSockets | No | The benchmark-setting portfolio site for one of the world's best digital production agencies. |
 | [The Cool Club x FWA](https://thefwa.com/cases/the-cool-club-x-fwa) | Website | 3D | Three.js | WebGL, Vue.js, GSAP | No | A highly stylized, fun 3D card-collecting web experience celebrating the FWA itself. |
+| [floor796](https://floor796.com) | Website | 2D | Custom Canvas Engine | Canvas API, JavaScript, HTML5 | No | A huge hand-drawn animated sci-fi scene of life on the 796th floor of a space station, explored by panning and zooming. |
 | [Food for Fish](https://foodforfish.org/) | Game | 3D | Custom WebGPU Engine | WebGPU, WGSL, Vanilla JS | No | An incredibly charming, meticulously coded personal WebGL game project that won FOTY 2024. |
 | [Paper Planes](https://paperplanes.world/) | Game | 3D | Three.js | WebGL, WebSockets, Node.js | No | A famous mobile-to-web gamified experience where users throw digital planes onto a shared screen. |
 | [Star Atlas](https://staratlas.com/) | Game | 3D | React / Three.js | WebGL, React, Solana | No | A breathtaking interactive web hub for the next-gen gaming metaverse with incredible 3D assets. |
@@ -32,4 +33,3 @@
 | [Gucci Vault](https://vault.gucci.com/) | Others | 3D | Three.js | WebGL, React, GSAP | No | An immersive, experimental WebGL brand world acting as a digital concept store. |
 | [Jam3 - FWA 100](https://thefwa.com/cases/jam3-fwa-100) | Others | 3D | Three.js | WebGL, GLSL, Canvas API | No | A pure experimental WebGL celebration featuring particle explosions and drawing interactions. |
 | [Inside The Head](https://thefwa.com/cases/inside-the-head) | Others | 3D | Three.js | WebGL, Web Audio, GLSL | No | A weird, highly experimental, and wildly creative digital art piece exploring human thoughts. |
-| [floor796](https://floor796.com) | Website | 2D | Custom Canvas Engine | Canvas API, JavaScript, HTML5 | No | A huge hand-drawn animated sci-fi scene of life on the 796th floor of a space station, explored by panning and zooming. |

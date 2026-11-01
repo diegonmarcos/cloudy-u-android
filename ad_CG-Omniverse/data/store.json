@@ -183,6 +183,24 @@
       "wayback": "https://web.archive.org/web/2020/https://thefwa.com/cases/the-cool-club-x-fwa"
     },
     {
+      "id": "floor796",
+      "name": "floor796",
+      "url": "https://floor796.com",
+      "type": "Website",
+      "dimension": "2D",
+      "framework": "Custom Canvas Engine",
+      "stack": [
+        "Canvas API",
+        "JavaScript",
+        "HTML5"
+      ],
+      "vr": false,
+      "description": "A huge hand-drawn animated sci-fi scene of life on the 796th floor of a space station, explored by panning and zooming.",
+      "status": "unverified",
+      "checked": "",
+      "wayback": "https://web.archive.org/web/2020/https://floor796.com"
+    },
+    {
       "id": "food-for-fish",
       "name": "Food for Fish",
       "url": "https://foodforfish.org/",
@@ -538,24 +556,6 @@
       "status": "online",
       "checked": "2026-10-31",
       "wayback": "https://web.archive.org/web/2020/https://thefwa.com/cases/inside-the-head"
-    },
-    {
-      "id": "floor796",
-      "name": "floor796",
-      "url": "https://floor796.com",
-      "type": "Website",
-      "dimension": "2D",
-      "framework": "Custom Canvas Engine",
-      "stack": [
-        "Canvas API",
-        "JavaScript",
-        "HTML5"
-      ],
-      "vr": false,
-      "description": "A huge hand-drawn animated sci-fi scene of life on the 796th floor of a space station, explored by panning and zooming.",
-      "status": "unverified",
-      "checked": "",
-      "wayback": "https://web.archive.org/web/2020/https://floor796.com"
     }
   ]
 }
