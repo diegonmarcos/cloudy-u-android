@@ -98,6 +98,20 @@
    "auth": "none",
    "per_min": 5,
    "licence": "Riksbank, CC BY 4.0"
+  },
+  "cbr": {
+   "name": "Bank of Russia official exchange rates (XML_dynamic)",
+   "endpoint": "https://www.cbr.ru",
+   "auth": "none",
+   "per_min": 10,
+   "licence": "Bank of Russia, attribution"
+  },
+  "economist_bigmac": {
+   "name": "The Economist Big Mac index data (GitHub, MIT)",
+   "endpoint": "https://raw.githubusercontent.com",
+   "auth": "none",
+   "per_min": 5,
+   "licence": "The Economist big-mac-data, MIT"
   }
  },
  "history": {
@@ -895,6 +909,176 @@
     "label": "Saudi riyal",
     "group": "em",
     "no_fx": "the ECB publishes no riyal reference rate (the riyal is pegged at 3.75 per USD); no free official daily series"
+   }
+  ]
+ },
+ "fx_matrix": {
+  "_doc": "G20 FX & PPP Matrix (#1396, /v1/fx/ppp-matrix; supersedes the FX vs PPP note of #1374). Rates are local currency per USD (LCU/USD). today = the latest daily rate (ECB reference rates via em_bonds.fx; the rouble from the Bank of Russia, feeds.rub); ma_Ny = the window_days calendar-day average ending N*365 days before today's date, adjusted by RPPP S_hist*(1+pi_dom)/(1+pi_US) with pi the cumulative World Bank CPI (FP.CPI.TOTL) growth over the N years ending at the latest year both sides publish; macro_ppp = the World Bank PPP conversion factor (PA.NUS.PPP) carried to that CPI year by relative inflation (the fx_ppp maths); retail_ppp = The Economist Big Mac implied rate (local price / US price) of the latest survey; diff_x = today / x - 1 (%). DXY = constant * prod(LCU/USD ^ weight) over the ICE legs (the same as 50.14348112 * EURUSD^-0.576 * USDJPY^0.136 * GBPUSD^-0.119 * USDCAD^0.091 * USDSEK^0.042 * USDCHF^0.036), computed per column from the legs' values. The euro uses Germany's CPI and PPP (the World Bank publishes no euro-area PPP), the Big Mac euro-area price.",
+  "route": "/v1/fx/ppp-matrix",
+  "window_days": 30,
+  "lags_years": [
+   1,
+   3
+  ],
+  "method": "ECB reference rates (Frankfurter) and Bank of Russia (RUB), daily; World Bank PA.NUS.PPP and FP.CPI.TOTL, annual; The Economist Big Mac index (MIT); DXY from the ICE weights.",
+  "reading": "Positive: today needs more local currency per USD than the benchmark (USD premium, local currency undervalued against it). Negative: fewer (USD discount, local currency strong).",
+  "dxy": {
+   "label": "DXY (USD index, ICE weights)",
+   "constant": 50.14348112,
+   "legs": [
+    {
+     "ccy": "EUR",
+     "cc": "DE",
+     "a3": "EUZ",
+     "weight": 0.576
+    },
+    {
+     "ccy": "JPY",
+     "cc": "JP",
+     "a3": "JPN",
+     "weight": 0.136
+    },
+    {
+     "ccy": "GBP",
+     "cc": "GB",
+     "a3": "GBR",
+     "weight": 0.119
+    },
+    {
+     "ccy": "CAD",
+     "cc": "CA",
+     "a3": "CAN",
+     "weight": 0.091
+    },
+    {
+     "ccy": "SEK",
+     "cc": "SE",
+     "a3": "SWE",
+     "weight": 0.042
+    },
+    {
+     "ccy": "CHF",
+     "cc": "CH",
+     "a3": "CHE",
+     "weight": 0.036
+    }
+   ]
+  },
+  "rows": [
+   {
+    "ccy": "EUR",
+    "cc": "DE",
+    "a3": "EUZ",
+    "seg": "DM",
+    "label": "Euro (CPI and PPP of Germany)",
+    "market_quote": true
+   },
+   {
+    "ccy": "JPY",
+    "cc": "JP",
+    "a3": "JPN",
+    "seg": "DM",
+    "label": "Japanese yen"
+   },
+   {
+    "ccy": "GBP",
+    "cc": "GB",
+    "a3": "GBR",
+    "seg": "DM",
+    "label": "Pound sterling",
+    "market_quote": true
+   },
+   {
+    "ccy": "CAD",
+    "cc": "CA",
+    "a3": "CAN",
+    "seg": "DM",
+    "label": "Canadian dollar"
+   },
+   {
+    "ccy": "AUD",
+    "cc": "AU",
+    "a3": "AUS",
+    "seg": "DM",
+    "label": "Australian dollar",
+    "market_quote": true
+   },
+   {
+    "ccy": "KRW",
+    "cc": "KR",
+    "a3": "KOR",
+    "seg": "DM",
+    "label": "Korean won"
+   },
+   {
+    "ccy": "CNY",
+    "cc": "CN",
+    "a3": "CHN",
+    "seg": "BRICS",
+    "label": "Chinese yuan"
+   },
+   {
+    "ccy": "INR",
+    "cc": "IN",
+    "a3": "IND",
+    "seg": "BRICS",
+    "label": "Indian rupee"
+   },
+   {
+    "ccy": "BRL",
+    "cc": "BR",
+    "a3": "BRA",
+    "seg": "BRICS",
+    "label": "Brazilian real"
+   },
+   {
+    "ccy": "RUB",
+    "cc": "RU",
+    "a3": "RUS",
+    "seg": "BRICS",
+    "label": "Russian rouble",
+    "fx": "cbr"
+   },
+   {
+    "ccy": "ZAR",
+    "cc": "ZA",
+    "a3": "ZAF",
+    "seg": "BRICS",
+    "label": "South African rand"
+   },
+   {
+    "ccy": "IDR",
+    "cc": "ID",
+    "a3": "IDN",
+    "seg": "EM",
+    "label": "Indonesian rupiah"
+   }
+  ],
+  "bigmac": {
+   "us": "USA"
+  },
+  "feeds": [
+   {
+    "id": "bigmac",
+    "source": "economist_bigmac",
+    "path": "/TheEconomist/big-mac-data/master/output-data/big-mac-full-index.csv",
+    "params": {},
+    "format": "bigmac_csv",
+    "every_s": 604800
+   },
+   {
+    "id": "rub",
+    "source": "cbr",
+    "path": "/scripts/XML_dynamic.asp",
+    "params": {
+     "date_req1": "{from_dmy}",
+     "date_req2": "{to_dmy}",
+     "VAL_NM_RQ": "R01235"
+    },
+    "format": "cbr_xml",
+    "series": "fx:USDRUB",
+    "first": "2015-01-01",
+    "every_s": 86400
    }
   ]
  }

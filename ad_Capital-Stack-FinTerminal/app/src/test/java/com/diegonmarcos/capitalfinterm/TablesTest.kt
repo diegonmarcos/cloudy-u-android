@@ -306,4 +306,50 @@ class TablesTest {
         assertEquals(listOf("CNY", "7.1000", Engine.num(ppp, 4), FinFormat.signed(FxPpp.pct(ppp, 7.1), 1)), t.rows[0].take(4))
         assertTrue(t.note.contains("SAR spot: pegged, no ECB rate"))
     }
+
+    // ------------------------------------------------------------------ G20 FX & PPP Matrix (#1396): the same fixture as fxmatrix.rs and fxmatrix.test.ts
+
+    @Test fun fxMatrixRealMovingAveragesPppBigMacDiffsAndDxy() {
+        val j = { s: String -> org.json.JSONObject(s) }
+        assertEquals(7.0 * 1.10 / 1.05, FxMatrix.rppp(7.0, 100.0, 110.0, 200.0, 210.0), 1e-12)
+        assertEquals(50.14348112, FxMatrix.dxy(50.14348112, listOf(0.576 to 1.0, 0.424 to 1.0)), 1e-12)
+        assertEquals(50.14348112 * Math.pow(0.9, 0.6) * Math.pow(150.0, 0.4), FxMatrix.dxy(50.14348112, listOf(0.6 to 0.9, 0.4 to 150.0)), 1e-9)
+        assertEquals(20.0, FxMatrix.diff(7.2, 6.0), 1e-12)
+        val fx = listOf("2023-10-15" to 6.0, "2025-10-20" to 7.0, "2026-10-30" to 7.2)
+        val y = { v: List<Pair<Int, Double>> -> v.map { it.first.toString() to it.second } }
+        val cpi = y(listOf(2022 to 100.0, 2024 to 106.0, 2025 to 110.0)); val us = y(listOf(2022 to 200.0, 2024 to 210.0, 2025 to 214.0))
+        val bm = listOf("2026-01-01" to 25.0, "2026-07-01" to 26.5); val bmUs = listOf("2026-07-01" to 6.22)
+        val r = FxMatrix.row(j("""{"ccy":"CNY","cc":"CN","a3":"CHN","seg":"BRICS","label":"Chinese yuan"}"""), fx, y(listOf(2024 to 3.5)), cpi, us, bm, bmUs, 30, listOf(1, 3))
+        val ma1 = 7.0 * (110.0 / 106.0) / (214.0 / 210.0); val ma3 = 6.0 * (110.0 / 100.0) / (214.0 / 200.0)
+        val macro = 3.5 * (110.0 / 106.0) / (214.0 / 210.0); val retail = 26.5 / 6.22
+        assertEquals(7.2, r.getDouble("today"), 1e-12)
+        assertEquals(ma1, r.getDouble("ma_1y"), 1e-12)
+        assertEquals(ma3, r.getDouble("ma_3y"), 1e-12)
+        assertEquals(macro, r.getDouble("macro_ppp"), 1e-12)
+        assertEquals(retail, r.getDouble("retail_ppp"), 1e-12)
+        assertEquals((7.2 / ma1 - 1) * 100, r.getDouble("diff_ma_1y"), 1e-9)
+        assertEquals((7.2 / ma3 - 1) * 100, r.getDouble("diff_ma_3y"), 1e-9)
+        assertEquals((7.2 / macro - 1) * 100, r.getDouble("diff_macro_ppp"), 1e-9)
+        assertEquals((7.2 / retail - 1) * 100, r.getDouble("diff_retail_ppp"), 1e-9)
+        assertEquals(0, r.getJSONObject("null_reason").length())
+        // a currency whose Big Mac series stopped, with no rate: every empty cell says why
+        val ru = FxMatrix.row(j("""{"ccy":"RUB","cc":"RU","a3":"RUS","no_fx":"no rate"}"""), emptyList(), emptyList(), emptyList(), emptyList(), listOf("2022-01-01" to 135.0), bmUs, 30, listOf(1, 3))
+        val w = ru.getJSONObject("null_reason")
+        assertEquals("no rate", w.getString("today"))
+        assertTrue(w.getString("retail_ppp").contains("last 2022-01-01"))
+        assertTrue(w.has("macro_ppp") && ru.isNull("diff_retail_ppp"))
+        // the market quote is 1 / today
+        assertEquals(1 / 7.2, FxMatrix.row(j("""{"ccy":"EUR","market_quote":true}"""), fx, emptyList(), cpi, us, bm, bmUs, 30, listOf(1)).getDouble("market_quote"), 1e-12)
+        val eur = j("""{"ccy":"EUR","today":0.9,"ma_1y":0.95,"null_reason":{}}"""); val jpy = j("""{"ccy":"JPY","today":150.0,"null_reason":{"ma_1y":"short"}}""")
+        val d = FxMatrix.dxyRow(j("""{"constant":50.14348112,"legs":[{"ccy":"EUR","weight":0.6},{"ccy":"JPY","weight":0.4}]}"""), mapOf("EUR" to eur, "JPY" to jpy), listOf(1))
+        assertEquals(50.14348112 * Math.pow(0.9, 0.6) * Math.pow(150.0, 0.4), d.getDouble("today"), 1e-9)
+        assertEquals("needs the JPY leg (short)", d.getJSONObject("null_reason").getString("ma_1y"))
+        assertEquals(2, FxMatrix.bigMac("date,iso_a3,currency_code,name,local_price\n2026-07-01,KOR,KRW,\"Korea, South\",5700\n2026-07-01,USA,USD,United States,6.22\n").size)
+        assertEquals(listOf("2026-10-28" to 80.5307), FxMatrix.cbr("""<ValCurs><Record Date="28.10.2026" Id="R01235"><Nominal>1</Nominal><Value>80,5307</Value></Record></ValCurs>"""))
+        val t = Tables.fxMatrixTable(Dashboards.byId(dashboards, "fx")!!.panels.first { it.id == "ppp_matrix" }, org.json.JSONObject(),
+            org.json.JSONArray().put(r).put(ru), "test", emptyList())
+        assertEquals(listOf("CNY", "BRICS", "7.2000"), t.rows[0].take(3))
+        assertEquals(FinFormat.signed((7.2 / retail - 1) * 100, 1), t.rows[0][10])
+        assertTrue(t.note.contains("RUB today: no rate"))
+    }
 }

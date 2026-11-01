@@ -23,7 +23,8 @@ object Tables {
     const val WORLD_BONDS = "world_bonds"
     const val RISK = "risk_compare"
     const val FX_PPP = "fx_ppp"
-    val DERIVES: Set<String> = setOf(PERFORMANCE, PORTFOLIO, MATRIX, EM_USD, WORLD_BONDS, RISK, FX_PPP)
+    const val FX_MATRIX = "fx_matrix"
+    val DERIVES: Set<String> = setOf(PERFORMANCE, PORTFOLIO, MATRIX, EM_USD, WORLD_BONDS, RISK, FX_PPP, FX_MATRIX)
 
     /** Extra (non-return) columns a performance table may declare after the return columns. */
     const val COL_VOL = "Vol 1Y"
@@ -56,6 +57,7 @@ object Tables {
             }))
         }
         FX_PPP -> fxPpp(panel, f, http, today, c)
+        FX_MATRIX -> fxMatrix(panel, f, http, today, c)
         WORLD_BONDS -> spreads(load(panel.copy(derive = MATRIX), source, f, http, today, c), f)
         else -> throw IOException("unknown derive ${panel.derive}")
     }
@@ -111,6 +113,99 @@ object Tables {
         val note = ("Local currency per USD. Over/under % = PPP / spot - 1 (negative: undervalued); real YoY % = the year-ago window in today's prices / today's window - 1 (positive: gained in real terms)." +
             (if (why.isEmpty()) "" else " — " + why.joinToString(" · "))).trim()
         return PanelData(panel.columns, table, emptyList(), emptyList(), list.mapNotNull { o -> o.optString("spot_date").takeIf { it.isNotEmpty() && it != "null" } }.maxOrNull().orEmpty(), note,
+            servedBy = by, details = list.map { it.optString("label") })
+    }
+
+    // ------------------------------------------------------------------ G20 FX & PPP Matrix (#1396)
+
+    private fun objs(a: JSONArray?) = if (a == null) emptyList() else (0 until a.length()).map { a.getJSONObject(it) }
+    private fun lagsOf(f: JSONObject) = f.optJSONArray("lags_years")?.let { a -> (0 until a.length()).map { a.getInt(it) } } ?: listOf(1, 3)
+
+    /** fetch.primary.api (/v1/fx/ppp-matrix) on the mesh; else direct: ECB rates (fx_source), the Bank of Russia (rub_source, rows with fx=cbr),
+     *  World Bank PPP / CPI (wb) and The Economist Big Mac data (bigmac_source); each source that fails leaves its cells empty with the reason. */
+    fun fxMatrix(panel: Panel, f: JSONObject, http: Http, today: LocalDate, c: ModelCtx): PanelData {
+        val api = c.api
+        val lags = lagsOf(f)
+        if (api != null) {
+            runCatching { JSONObject(http.get(api.base.trimEnd('/') + Catalog.str(f.optJSONObject("primary") ?: JSONObject(), "api"))).getJSONArray("rows") }
+                .getOrNull()?.takeIf { it.length() > 0 }?.let { return fxMatrixTable(panel, f, it, api.source.name, emptyList()) }
+        }
+        val rows = objs(f.optJSONArray("rows"))
+        val dxy = f.optJSONObject("dxy") ?: JSONObject()
+        val legs = objs(dxy.optJSONArray("legs"))
+        val all = (rows + legs.filter { l -> rows.none { it.optString("ccy") == l.optString("ccy") } })
+        val win = f.optLong("window_days", 30)
+        val from = today.minusDays(365L * (lags.maxOrNull() ?: 3) + win + 15)
+        val fails = ArrayList<String>()
+        val used = ArrayList<String>()
+        fun src(k: String) = Catalog.byId(c.sources, Catalog.str(f, k))
+        val fx = HashMap<String, List<Pair<String, Double>>>()
+        src("fx_source")?.let { s ->
+            runCatching {
+                val ccys = all.filter { it.optString("fx").isEmpty() }.joinToString(",") { it.optString("ccy") }
+                val rates = JSONObject(http.get(Requests.url(s.endpoint, "/v1/$from..$today", listOf("base" to "USD", "symbols" to ccys)))).optJSONObject("rates") ?: JSONObject()
+                val m = HashMap<String, MutableList<Pair<String, Double>>>()
+                rates.keys().asSequence().sorted().forEach { d -> val o = rates.getJSONObject(d); o.keys().forEach { k -> m.getOrPut(k) { ArrayList() } += d to o.getDouble(k) } }
+                fx.putAll(m); used += s.name
+            }.onFailure { fails += "${s.name}: ${it.message}" }
+        }
+        src("rub_source")?.let { s ->
+            val rub = f.optJSONObject("rub") ?: JSONObject()
+            runCatching {
+                val x = FxMatrix.cbr(http.get(Requests.url(s.endpoint, Catalog.str(rub, "path"), listOf("date_req1" to from.format(FxMatrix.DMY), "date_req2" to today.format(FxMatrix.DMY), "VAL_NM_RQ" to Catalog.str(rub, "code")))))
+                all.filter { it.optString("fx") == "cbr" }.forEach { fx[it.optString("ccy")] = x }
+                if (x.isNotEmpty()) used += s.name
+            }.onFailure { fails += "${s.name}: ${it.message}" }
+        }
+        val wb = f.optJSONObject("wb") ?: JSONObject()
+        fun wbSeries(code: String): Map<String, List<Pair<String, Double>>> {
+            val s = Catalog.byId(c.sources, Catalog.str(wb, "source")) ?: return emptyMap()
+            return runCatching {
+                val cc = (all.map { it.optString("cc") } + "US").distinct().joinToString(";")
+                val list = JSONArray(http.get(Requests.url(s.endpoint, "/country/$cc/indicator/$code", listOf("format" to "json", "per_page" to "2000", "date" to "2015:${today.year}")))).optJSONArray(1) ?: JSONArray()
+                val out = HashMap<String, MutableList<Pair<String, Double>>>()
+                for (i in 0 until list.length()) { val o = list.getJSONObject(i); if (!o.isNull("value")) out.getOrPut(o.getJSONObject("country").getString("id")) { ArrayList() } += o.getString("date") to o.getDouble("value") }
+                if (s.name !in used) used += s.name
+                out.mapValues { (_, v) -> v.sortedBy { it.first } }
+            }.getOrElse { fails += "${s.name}: ${it.message}"; emptyMap() }
+        }
+        val ind = wb.optJSONObject("indicators") ?: JSONObject()
+        val ppp = wbSeries(ind.optString("ppp"))
+        val cpi = wbSeries(ind.optString("cpi"))
+        var bm: Map<String, List<Pair<String, Double>>> = emptyMap()
+        src("bigmac_source")?.let { s ->
+            runCatching { bm = FxMatrix.bigMac(http.get(Requests.url(s.endpoint, Catalog.str(f.optJSONObject("bigmac") ?: JSONObject(), "path"), emptyList()))); used += s.name }
+                .onFailure { fails += "${s.name}: ${it.message}" }
+        }
+        val usA3 = Catalog.str(f.optJSONObject("bigmac") ?: JSONObject(), "us").ifEmpty { "USA" }
+        val by = all.associate { r ->
+            val cc = r.optString("cc")
+            r.optString("ccy") to FxMatrix.row(r, fx[r.optString("ccy")].orEmpty(), ppp[cc].orEmpty(), cpi[cc].orEmpty(), cpi["US"].orEmpty(), bm[r.optString("a3")].orEmpty(), bm[usA3].orEmpty(), win, lags)
+        }
+        if (by.values.all { it.isNull("today") }) throw IOException(fails.firstOrNull() ?: "no FX rate answered")
+        val out = JSONArray().put(FxMatrix.dxyRow(dxy, by, lags))
+        rows.forEach { out.put(by[it.optString("ccy")]) }
+        return fxMatrixTable(panel, f, out, used.joinToString(" + "), fails)
+    }
+
+    /** Currency | Seg. | Today (market quote) | 30MA -1y adj | 30MA -3y adj | Macro PPP | Retail PPP | four diffs (%, signed: coloured); reasons in the note. */
+    fun fxMatrixTable(panel: Panel, f: JSONObject, rows: JSONArray, by: String, fails: List<String>): PanelData {
+        val lags = lagsOf(f)
+        val list = (0 until rows.length()).map { rows.getJSONObject(it) }
+        fun dg(o: JSONObject) = when { o.optString("ccy") == "DXY" -> 2; !o.isNull("today") && o.has("today") && o.getDouble("today") >= 100 -> 1; else -> 4 }
+        fun d(o: JSONObject, k: String) = if (!o.has(k) || o.isNull(k)) FinFormat.DASH else Engine.num(o.getDouble(k), dg(o))
+        fun p(o: JSONObject, k: String) = if (!o.has(k) || o.isNull(k)) FinFormat.DASH else FinFormat.signed(o.getDouble(k), 1)
+        val ks = FxMatrix.keys(lags)
+        val table = list.map { o ->
+            val t = d(o, "today") + if (o.has("market_quote") && !o.isNull("market_quote")) " (${Engine.num(o.getDouble("market_quote"), 4)})" else ""
+            listOf(o.optString("ccy"), o.optString("seg"), t) + ks.map { d(o, it) } + ks.map { p(o, "diff_$it") }
+        }
+        val why = list.flatMap { o -> val w = o.optJSONObject("null_reason") ?: JSONObject(); w.keys().asSequence().map { k -> "${o.optString("ccy")} $k: ${w.getString(k)}" }.toList() } +
+            fails.map { "source failed: $it" }
+        val note = listOf(Catalog.str(f, "reading"), "Brackets: the market quote (USD per unit).", Catalog.str(f, "method"),
+            "30MA adj = the 30-day average N years ago x (1 + pi_dom) / (1 + pi_US), pi the cumulative CPI change over the window (RPPP).").filter { it.isNotEmpty() }.joinToString(" ") +
+            (if (why.isEmpty()) "" else " — " + why.joinToString(" · "))
+        return PanelData(panel.columns, table, emptyList(), emptyList(), list.mapNotNull { o -> o.optString("today_date").takeIf { it.isNotEmpty() && it != "null" } }.maxOrNull().orEmpty(), note,
             servedBy = by, details = list.map { it.optString("label") })
     }
 

@@ -1223,6 +1223,64 @@
       ],
       "priority": 20,
       "cors": true
+    },
+    {
+      "id": "cbr",
+      "name": "Bank of Russia official exchange rates",
+      "category": "FI-Macro",
+      "coverage": "Official daily rouble rates against foreign currencies (XML), with history",
+      "endpoint": "https://www.cbr.ru",
+      "docs": "https://www.cbr.ru/development/SXML/",
+      "auth": {
+        "type": "none",
+        "note": "Public XML service, no key; sends no CORS header (the APK reads it, the web through the container)."
+      },
+      "feeds": [
+        {
+          "tab": "ex",
+          "entries": [
+            "FX"
+          ]
+        }
+      ],
+      "priority": 10,
+      "cors": false,
+      "licence": "Bank of Russia, attribution",
+      "schedule": {
+        "ttl_s": 3600
+      },
+      "rate_limit": {
+        "per_min": 10
+      }
+    },
+    {
+      "id": "economist_bigmac",
+      "name": "The Economist Big Mac index",
+      "category": "FI-Macro",
+      "coverage": "Big Mac prices and implied exchange rates since 2000, twice a year (The Economist's GitHub data, MIT)",
+      "endpoint": "https://raw.githubusercontent.com",
+      "docs": "https://github.com/TheEconomist/big-mac-data",
+      "auth": {
+        "type": "none",
+        "note": "Public GitHub data, no key."
+      },
+      "feeds": [
+        {
+          "tab": "ex",
+          "entries": [
+            "FX"
+          ]
+        }
+      ],
+      "priority": 10,
+      "cors": true,
+      "licence": "The Economist big-mac-data, MIT",
+      "schedule": {
+        "ttl_s": 86400
+      },
+      "rate_limit": {
+        "per_min": 5
+      }
     }
   ],
   "_doc_priority": "Cloud-Fincept (0) first when the phone reaches the mesh; the key-free public sources (10) next; the keyed ones (20) last. A panel falls back series by series: a topic the container has not published (404) is read from the public source.",

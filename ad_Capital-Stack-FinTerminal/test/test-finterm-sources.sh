@@ -231,6 +231,13 @@ for d in dash["dashboards"]:
             uv = json.load(open(os.path.join(app, "data/universe.json"))).get("fx_ppp") or {}
             if f.get("rows") != uv.get("rows"): bad.append("S9 panel %s rows differ from universe.json fx_ppp.rows" % where)
             if f.get("window_days") != uv.get("window_days"): bad.append("S9 panel %s window_days differs from universe.json fx_ppp" % where)
+        if p.get("derive") == "fx_matrix":
+            # the G20 FX & PPP Matrix (#1396): rows, DXY legs, window and lags are universe.json fx_matrix (the container's /v1/fx/ppp-matrix), kept equal
+            um = json.load(open(os.path.join(app, "data/universe.json"))).get("fx_matrix") or {}
+            for k in ("rows", "dxy", "window_days", "lags_years"):
+                if f.get(k) != um.get(k): bad.append("S9 panel %s %s differs from universe.json fx_matrix" % (where, k))
+            if abs(sum(l["weight"] for l in (um.get("dxy") or {}).get("legs", [])) - 1.0) > 1e-9: bad.append("S9 fx_matrix DXY weights do not sum to 1")
+            if (f.get("primary") or {}).get("api") != um.get("route"): bad.append("S9 panel %s primary api is not universe.json fx_matrix.route" % where)
         if p.get("derive") in ("yields_matrix", "world_bonds"):
             ten = [t[0] for t in f.get("tenors", [])]
             # Country, Cov (the GDP coverage of each average, #1374), then the tenors
@@ -327,6 +334,8 @@ mutant "the matrix loses its Cov column"   "$JE;d=L('data/dashboards.json');[p['
 mutant "the matrix averages without a coverage minimum" "$JE;d=L('data/dashboards.json');[p['fetch'].pop('min_coverage_gdp') for x in d['dashboards'] if x['id']=='yields_matrix' for p in x['panels'] if p['id']=='spot'];D('data/dashboards.json',d)" "S9 panel yields_matrix/spot declares no min_coverage_gdp"
 mutant "a matrix country without GDP"      "$JE;d=L('data/dashboards.json');[p['fetch']['gdp_usd_bn'].pop('BR') for x in d['dashboards'] if x['id']=='yields_matrix' for p in x['panels'] if p['id']=='spot'];D('data/dashboards.json',d)" "S9 panel yields_matrix/spot country BR has no GDP"
 mutant "the FX vs PPP rows drift"         "$JE;d=L('data/dashboards.json');[p['fetch']['rows'].pop() for x in d['dashboards'] if x['id']=='fx' for p in x['panels'] if p['id']=='ppp'];D('data/dashboards.json',d)" "S9 panel fx/ppp rows differ"
+mutant "the FX matrix DXY weights drift"  "$JE;d=L('data/dashboards.json');[p['fetch']['dxy']['legs'][0].update(weight=0.5) for x in d['dashboards'] if x['id']=='fx' for p in x['panels'] if p['id']=='ppp_matrix'];D('data/dashboards.json',d)" "S9 panel fx/ppp_matrix dxy differs"
+mutant "the ICE weights stop summing to 1"  "$JE;d=L('data/universe.json');d['fx_matrix']['dxy']['legs'][0]['weight']=0.5;D('data/universe.json',d)" "S9 fx_matrix DXY weights do not sum to 1"
 mutant "per-item path with no items"       "$JE;d=L('data/dashboards.json');[p['fetch'].pop('each') for x in d['dashboards'] if x['id']=='crypto' for p in x['panels'] if p['id']=='spot'];D('data/dashboards.json',d)" "S7 panel crypto/spot asks per"
 mutant "a provider that is not the source's" "$JE;d=L('data/dashboards.json');[p['fetch'].__setitem__('provider','jsonstat') for x in d['dashboards'] if x['id']=='macro' for p in x['panels'] if p['id']=='us'];D('data/dashboards.json',d)" "S7 panel macro/us provider jsonstat"
 mutant "a decision time drifts from its zone" "$JE;d=L('data/central-banks.json');d['banks'][0]['events'][-1]['ts']='2027-12-08T18:00Z';D('data/central-banks.json',d)" "S8 bank fed 2027-12-08 ts"

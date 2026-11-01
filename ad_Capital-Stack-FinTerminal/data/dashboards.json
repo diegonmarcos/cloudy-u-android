@@ -1824,6 +1824,192 @@
       "tab": "ex",
       "panels": [
         {
+          "id": "ppp_matrix",
+          "title": "G20 FX & PPP Matrix: today vs real 30MA (-1y, -3y), macro PPP and Big Mac PPP (LCU/USD)",
+          "source": "frankfurter",
+          "view": "table",
+          "derive": "fx_matrix",
+          "fetch": {
+            "provider": "frankfurter_rates",
+            "path": "/v1/latest",
+            "fx_source": "frankfurter",
+            "rub_source": "cbr",
+            "bigmac_source": "economist_bigmac",
+            "window_days": 30,
+            "lags_years": [
+              1,
+              3
+            ],
+            "wb": {
+              "source": "worldbank",
+              "indicators": {
+                "ppp": "PA.NUS.PPP",
+                "cpi": "FP.CPI.TOTL"
+              }
+            },
+            "bigmac": {
+              "path": "/TheEconomist/big-mac-data/master/output-data/big-mac-full-index.csv",
+              "us": "USA"
+            },
+            "rub": {
+              "path": "/scripts/XML_dynamic.asp",
+              "code": "R01235"
+            },
+            "dxy": {
+              "label": "DXY (USD index, ICE weights)",
+              "constant": 50.14348112,
+              "legs": [
+                {
+                  "ccy": "EUR",
+                  "cc": "DE",
+                  "a3": "EUZ",
+                  "weight": 0.576
+                },
+                {
+                  "ccy": "JPY",
+                  "cc": "JP",
+                  "a3": "JPN",
+                  "weight": 0.136
+                },
+                {
+                  "ccy": "GBP",
+                  "cc": "GB",
+                  "a3": "GBR",
+                  "weight": 0.119
+                },
+                {
+                  "ccy": "CAD",
+                  "cc": "CA",
+                  "a3": "CAN",
+                  "weight": 0.091
+                },
+                {
+                  "ccy": "SEK",
+                  "cc": "SE",
+                  "a3": "SWE",
+                  "weight": 0.042
+                },
+                {
+                  "ccy": "CHF",
+                  "cc": "CH",
+                  "a3": "CHE",
+                  "weight": 0.036
+                }
+              ]
+            },
+            "rows": [
+              {
+                "ccy": "EUR",
+                "cc": "DE",
+                "a3": "EUZ",
+                "seg": "DM",
+                "label": "Euro (CPI and PPP of Germany)",
+                "market_quote": true
+              },
+              {
+                "ccy": "JPY",
+                "cc": "JP",
+                "a3": "JPN",
+                "seg": "DM",
+                "label": "Japanese yen"
+              },
+              {
+                "ccy": "GBP",
+                "cc": "GB",
+                "a3": "GBR",
+                "seg": "DM",
+                "label": "Pound sterling",
+                "market_quote": true
+              },
+              {
+                "ccy": "CAD",
+                "cc": "CA",
+                "a3": "CAN",
+                "seg": "DM",
+                "label": "Canadian dollar"
+              },
+              {
+                "ccy": "AUD",
+                "cc": "AU",
+                "a3": "AUS",
+                "seg": "DM",
+                "label": "Australian dollar",
+                "market_quote": true
+              },
+              {
+                "ccy": "KRW",
+                "cc": "KR",
+                "a3": "KOR",
+                "seg": "DM",
+                "label": "Korean won"
+              },
+              {
+                "ccy": "CNY",
+                "cc": "CN",
+                "a3": "CHN",
+                "seg": "BRICS",
+                "label": "Chinese yuan"
+              },
+              {
+                "ccy": "INR",
+                "cc": "IN",
+                "a3": "IND",
+                "seg": "BRICS",
+                "label": "Indian rupee"
+              },
+              {
+                "ccy": "BRL",
+                "cc": "BR",
+                "a3": "BRA",
+                "seg": "BRICS",
+                "label": "Brazilian real"
+              },
+              {
+                "ccy": "RUB",
+                "cc": "RU",
+                "a3": "RUS",
+                "seg": "BRICS",
+                "label": "Russian rouble",
+                "fx": "cbr"
+              },
+              {
+                "ccy": "ZAR",
+                "cc": "ZA",
+                "a3": "ZAF",
+                "seg": "BRICS",
+                "label": "South African rand"
+              },
+              {
+                "ccy": "IDR",
+                "cc": "ID",
+                "a3": "IDN",
+                "seg": "EM",
+                "label": "Indonesian rupiah"
+              }
+            ],
+            "reading": "Positive: today needs more local currency per USD than the benchmark (USD premium, local currency undervalued against it). Negative: fewer (USD discount, local currency strong).",
+            "method": "ECB reference rates (Frankfurter) and Bank of Russia (RUB), daily; World Bank PA.NUS.PPP and FP.CPI.TOTL, annual; The Economist Big Mac index (MIT); DXY from the ICE weights.",
+            "primary": {
+              "source": "cloud_fincept",
+              "api": "/v1/fx/ppp-matrix",
+              "parse": "finterm_v1"
+            }
+          },
+          "columns": [
+            "Currency",
+            "Seg.",
+            "Today",
+            "30MA -1y adj",
+            "30MA -3y adj",
+            "Macro PPP",
+            "Retail PPP",
+            "diff 30MA-1y %",
+            "diff 30MA-3y %",
+            "diff Macro %",
+            "diff Retail %"
+          ]
+        },
+        {
           "id": "ecb",
           "title": "ECB reference rates (per USD, Frankfurter)",
           "source": "frankfurter",
