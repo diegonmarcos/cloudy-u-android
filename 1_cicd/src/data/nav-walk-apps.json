@@ -412,6 +412,10 @@
               3
             ],
             [
+              "shell",
+              "input swipe 1000 634 80 634 500"
+            ],
+            [
               "tap",
               "calc_form_npv"
             ],
@@ -473,6 +477,10 @@
             [
               "wait",
               3
+            ],
+            [
+              "shell",
+              "input swipe 1000 634 80 634 500"
             ],
             [
               "tap",

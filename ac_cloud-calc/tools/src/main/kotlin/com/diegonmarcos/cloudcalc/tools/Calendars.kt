@@ -350,7 +350,7 @@ object Calendars {
             "Civil calendar since 1582: 365 days, leap every 4 years except centuries not divisible by 400.")
         val j = julian(d)
         add("julian", "Julian", "${j.day} ${java.time.Month.of(j.month).getDisplayName(TextStyle.FULL, Locale.ENGLISH)} ${j.year}",
-            "Julius Caesar's 46 BC calendar, a leap year every 4 years; ${jdn(d) - julianToJdn(d.year.toLong(), d.monthValue, d.dayOfMonth)} days behind the Gregorian now; Orthodox church dates.")
+            "Julius Caesar's 46 BC calendar, a leap year every 4 years; ${julianToJdn(d.year.toLong(), d.monthValue, d.dayOfMonth) - jdn(d)} days behind the Gregorian now; Orthodox church dates.")
         add("iso", "ISO week", "%d-W%02d-%d".format(d.get(IsoFields.WEEK_BASED_YEAR), d.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR), d.dayOfWeek.value),
             "ISO 8601: weeks start Monday; week 1 holds the year's first Thursday.")
         val h = hebrew(d)
