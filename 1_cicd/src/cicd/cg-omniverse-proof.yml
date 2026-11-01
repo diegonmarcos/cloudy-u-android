@@ -61,7 +61,7 @@ jobs:
             "is-all":      ('sel[group].orEmpty().containsAll(group.chips)', 'sel[group].orEmpty().isNotEmpty()'),
             "default-all": ('associateWith { it.chips.toSet() }', 'associateWith { setOf(it.chips.first()) }'),
             # #1400 Galaxy tabs (Tabs.kt, TabsTest) and the floor796 catalogue entry (store.json, StoreTest)
-            "tabs-default":          ('DEFAULT_URL = "https://floor796.com"', 'DEFAULT_URL = "https://lusion.co"', T),
+            "tabs-default":          ('DEFAULT_WORLD = "floor796"', 'DEFAULT_WORLD = "lusion-v3"', T),
             "tabs-open-focus":       ('if (id in s.open) s.copy(selected = id) else', 'if (false) s.copy(selected = id) else', T),
             "tabs-open-select":      ('State(s.open + id, id)', 'State(s.open + id, s.selected)', T),
             "tabs-close-neighbour":  ('rest.getOrNull(i) ?: rest.lastOrNull()', 'rest.firstOrNull()', T),
