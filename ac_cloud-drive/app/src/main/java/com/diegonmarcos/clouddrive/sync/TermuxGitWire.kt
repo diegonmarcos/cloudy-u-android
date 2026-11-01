@@ -46,6 +46,14 @@ object TermuxGitWire {
     private fun hdr(dir: String, args: String) =
         "if [ -n \"\$H\" ]; then git -C ${q(dir)} -c http.extraHeader=\"\$H\" $args; else git -C ${q(dir)} $args; fi"
     private fun gAuthed(dir: String, args: String) = "H=\"\$(cat)\"; " + hdr(dir, args)
+    /**
+     * #1392 a clone whose branch tracks nothing ("upstream (no upstream)") gets origin/<branch> as its upstream when that ref exists;
+     * run after a clone and before every pull, force pull and merge, so '@{u}' resolves. Never fails the script.
+     */
+    fun track(dir: String, remote: String = "origin"): String =
+        "{ " + g(dir, "rev-parse --abbrev-ref --symbolic-full-name '@{u}'") + " >/dev/null 2>&1 || { B=\"\$(" + g(dir, "symbolic-ref --short -q HEAD") + ")\"; " +
+            "[ -n \"\$B\" ] && " + g(dir, "rev-parse -q --verify \"refs/remotes/${remote}/\$B\"") + " >/dev/null 2>&1 && " +
+            g(dir, "config \"branch.\$B.remote\" ${q(remote)}") + " && " + g(dir, "config \"branch.\$B.merge\" \"refs/heads/\$B\"") + "; }; } || true"
     private fun paths(a: JSONObject): List<String>? {
         val arr = a.optJSONArray("paths") ?: return emptyList()
         val l = (0 until arr.length()).map { arr.getString(it) }
@@ -74,11 +82,11 @@ object TermuxGitWire {
             "push" -> ok(gAuthed(dir, "push ${q(remote)}"), true, header)
             "force_push" -> ok(gAuthed(dir, "push --force ${q(remote)}"), true, header)
             "fetch" -> ok(gAuthed(dir, "fetch ${q(remote)}"), true, header)
-            "pull" -> ok(gAuthed(dir, "pull ${if (a.optBoolean("rebase", true)) "--rebase" else "--no-rebase"} ${q(remote)}"), true, header)
-            "force_pull" -> ok(gAuthed(dir, "fetch ${q(remote)}") + "; " + g(dir, "reset --hard '@{u}'"), true, header)
+            "pull" -> ok(gAuthed(dir, "fetch ${q(remote)}") + "; " + track(dir, remote) + "; " + hdr(dir, "pull ${if (a.optBoolean("rebase", true)) "--rebase" else "--no-rebase"} ${q(remote)}"), true, header)
+            "force_pull" -> ok(gAuthed(dir, "fetch ${q(remote)}") + "; " + track(dir, remote) + "; " + g(dir, "reset --hard '@{u}'"), true, header)
             // #1138 compound sync verbs and the local-only history trim.
             "force_push_lease" -> ok(gAuthed(dir, "push --force-with-lease ${q(remote)}"), true, header)
-            "merge_upstream" -> ok(gAuthed(dir, "fetch ${q(remote)}") + "; if " +
+            "merge_upstream" -> ok(gAuthed(dir, "fetch ${q(remote)}") + "; " + track(dir, remote) + "; if " +
                 g(dir, "-c user.name=${q(a.optString("name"))} -c user.email=${q(a.optString("email"))} merge --no-edit '@{u}'") + "; then :; else rc=\$?; " +
                 "if [ -f \"\$(git -C ${q(dir)} rev-parse --absolute-git-dir)/MERGE_HEAD\" ]; then " + g(dir, "merge --abort") +
                 "; echo 'merge conflict: merge aborted, nothing changed' >&2; exit 3; fi; exit \$rc; fi", true, header)
@@ -128,7 +136,7 @@ object TermuxGitWire {
             "clone" -> {
                 val depth = a.optInt("depth", 0).let { if (it > 0) "--depth $it " else "" }
                 ok("mkdir -p \"\$(dirname ${q(dir)})\"; H=\"\$(cat)\"; if [ -n \"\$H\" ]; then git -c http.extraHeader=\"\$H\" clone $depth${q(a.optString("url"))} ${q(dir)}; " +
-                    "else git clone $depth${q(a.optString("url"))} ${q(dir)}; fi", true, header)
+                    "else git clone $depth${q(a.optString("url"))} ${q(dir)}; fi; " + track(dir), true, header)
             }
             else -> null to "git verb '$verb' has no implementation in cld.termux"
         }

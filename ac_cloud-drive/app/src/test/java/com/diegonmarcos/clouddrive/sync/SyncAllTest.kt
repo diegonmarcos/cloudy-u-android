@@ -41,4 +41,15 @@ class SyncAllTest {
         for (id in RepoActions.DANGEROUS) assertEquals(id, RepoActions.Route.CONFIRM, RepoActions.route(id))
         assertEquals(listOf("force_pull", "force_push"), RepoActions.DANGEROUS)
     }
+
+    @Test fun `#1392 every pull-type verb and the clone repair a missing upstream, and a job never needs nohup`() {
+        for (verb in listOf("pull", "force_pull", "merge_upstream", "clone")) {
+            val plan = TermuxGitWire.plan(verb, "/x/r", org.json.JSONObject().put("url", "https://example.invalid/r.git"), null).first!!
+            assertTrue(verb, plan.script.contains("branch.\$B.merge") && plan.script.contains("@{u}"))
+        }
+        val fp = TermuxGitWire.plan("force_pull", "/x/r", org.json.JSONObject(), null).first!!.script
+        assertTrue("the upstream is repaired BEFORE reset --hard @{u}", fp.indexOf("branch.\$B.merge") < fp.indexOf("reset --hard"))
+        assertFalse("nohup is not on every cld.termux PATH (exit 127)", com.diegonmarcos.cloudlib.sharedstore.StoreExec.jobStart("true", "/d", "1").contains("nohup"))
+    }
 }
+

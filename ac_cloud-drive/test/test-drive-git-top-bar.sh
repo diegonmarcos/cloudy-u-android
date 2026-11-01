@@ -263,4 +263,24 @@ out=$(t8 "$SYNC/SyncScreen.kt" "$SP") && pass "the selector switches the root; t
 sed 's/storageRepos = storageRepos/storageRepos = null/g' "$SYNC/SyncScreen.kt" > "$tmp/S8.kt"; t8 "$tmp/S8.kt" "$SP" >/dev/null 2>&1 && fail "T8 passed a page that ignores the storage (vacuous)" || pass "the page ignores the selected root → T8 RED"
 { cat "$SP"; printf '\nfun GitStorageRepos() { DriveCard() }\n'; } > "$tmp/P8.kt"; t8 "$SYNC/SyncScreen.kt" "$tmp/P8.kt" >/dev/null 2>&1 && fail "T8 passed a second card list (vacuous)" || pass "a second card-list UI → T8 RED"
 
+# T9 #1392 no duplicate LazyColumn key in the Git page and its sheets (the phone crashed on "Key repo-... was already used"):
+#    every keyed items(...) over repositories or log lines de-duplicates its list on the key (distinctBy) first.
+t9() { python3 - "$@" <<'PY'
+import re, sys
+bad = []
+for f in sys.argv[1:]:
+    src = open(f).read()
+    for m in re.finditer(r"items\(([^\n]*?), key = \{", src):
+        arg = m.group(1)
+        if "distinctBy" not in arg and "sortedEntries" not in arg and "quick" != arg.strip() and not arg.strip().startswith("declared."):
+            bad.append("%s: items(%s, key = ...) without distinctBy" % (f.split("/")[-1], arg[:60]))
+print("\n".join(bad)); sys.exit(1 if bad else 0)
+PY
+}
+echo "== T9 no duplicate LazyColumn keys in the Git sheets =="
+G9="$SYNC/GitDepthUi.kt $SYNC/ActivityLog.kt"
+out=$(t9 $G9) && pass "every keyed list in the Git sheets is de-duplicated on its key" || fail "T9: $out"
+sed 's/repos.distinctBy { it.id }.sortedBy/repos.sortedBy/' "$SYNC/GitDepthUi.kt" > "$tmp/D9.kt"; t9 "$tmp/D9.kt" >/dev/null 2>&1 && fail "T9 passed a duplicate-key list (vacuous)" || pass "the Logs repo list without distinctBy → T9 RED"
+grep -q 'val named = .*distinctBy { it.id }' "$PAGE" || grep -q '.distinctBy { it.key }' "$PAGE" && pass "the main table de-duplicates its rows on the key" || fail "T9: the main table rows are not distinct by key"
+
 [ "$FAILURES" -eq 0 ] && { echo "test-drive-git-top-bar: all green"; exit 0; } || { echo "test-drive-git-top-bar: $FAILURES failure(s)"; exit 1; }

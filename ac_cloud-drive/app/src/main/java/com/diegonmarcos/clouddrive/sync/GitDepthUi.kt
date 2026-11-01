@@ -119,7 +119,7 @@ private fun RepoLogsList(decl: Declarations.GitLogsDecl, coordinator: GitSyncCoo
     val ci = remember { mutableStateMapOf<String, List<String>>() }
     if (repos.isEmpty()) { Text(decl.label("no_repos"), style = MaterialTheme.typography.bodySmall); return }
     LazyColumn(Modifier.fillMaxSize().testTag(DriveTags.SYNC_GIT_ACTIVITY_WINDOW + "_repos"), verticalArrangement = Arrangement.spacedBy(DriveMetrics.gap)) {
-        items(repos.sortedBy { it.name.lowercase() }, key = { it.id }) { repo ->
+        items(repos.distinctBy { it.id }.sortedBy { it.name.lowercase() }, key = { it.id }) { repo ->
             val expanded = open == repo.id
             Column(Modifier.fillMaxWidth().clickable {
                 open = if (expanded) "" else repo.id

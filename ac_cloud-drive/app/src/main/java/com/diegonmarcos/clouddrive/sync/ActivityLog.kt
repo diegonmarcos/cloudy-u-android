@@ -122,7 +122,7 @@ internal fun ActivityLogsView(events: List<SyncEvent>, fmt: DateFormat) {
     OutlinedTextField(query, { query = it }, Modifier.fillMaxWidth(), singleLine = true, label = { Text(stringResource(R.string.activity_filter_query)) })
     if (shown.isEmpty()) Text(stringResource(R.string.sync_history_empty), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     LazyColumn(Modifier.fillMaxWidth()) {
-        items(shown, key = { "${it.epochSeconds}-${it.repoId}-${it.summary.hashCode()}-${it.details.hashCode()}" }) { e ->
+        items(shown.distinctBy { "${it.epochSeconds}-${it.repoId}-${it.summary.hashCode()}-${it.details.hashCode()}" }, key = { "${it.epochSeconds}-${it.repoId}-${it.summary.hashCode()}-${it.details.hashCode()}" }) { e ->
             var open by remember { mutableStateOf(false) }
             Column(Modifier.fillMaxWidth().combinedClickable(onClick = { open = !open }, onLongClick = { copy(ActivityLog.entryText(e, time)) }).padding(vertical = DriveMetrics.gap)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {

@@ -59,7 +59,8 @@ launch; adb shell am force-stop "$PKG"
 DIR=/data/data/$PKG/files
 adb exec-in "run-as $PKG sh -c 'mkdir -p files/fixtures files/git-sync && tar -xf - -C files/fixtures'" < "$OUT/fixture.tar" || fail "fixture copy failed"
 adb shell "run-as $PKG sh -c 'cat > files/git-sync/repos.json'" <<JSON
-[{"id":"fixture-1","name":"$NAME","path":"$DIR/fixtures/$NAME","remoteUrl":"https://example.invalid/diegonmarcos/$NAME.git"}]
+[{"id":"fixture-1","name":"$NAME","path":"$DIR/fixtures/$NAME","remoteUrl":"https://example.invalid/diegonmarcos/$NAME.git"},
+ {"id":"fixture-1","name":"$NAME","path":"$DIR/fixtures/$NAME","remoteUrl":"https://example.invalid/diegonmarcos/$NAME.git"}]
 JSON
 adb shell "run-as $PKG sh -c 'rm -f shared_prefs/git_storage.xml'" >/dev/null 2>&1 || true
 launch
@@ -80,7 +81,14 @@ shot 12-no-winner-confirm
 need 'Targets: 1 repositories in scope' || note "No Winner confirm text: $(texts)"
 back
 
-# 2. the repo sheet: Manual Sync and Dangerous, one row each
+# 1b. #1392 the registry holds the same clone twice (one id, two records, as on the phone): Logs > Repos must not crash
+tap '^Logs$' || fail "no Logs: $(texts)"; sleep 3
+tap '^Repos$' >/dev/null 2>&1; sleep 3
+shot 13-logs-repos-duplicate-id
+adb shell pidof "$PKG" >/dev/null || fail "Logs > Repos crashed on a duplicate registry id"
+grep -q 'was already used' <(adb logcat -d 2>/dev/null) && fail "duplicate LazyColumn key in Logs > Repos"
+back
+
 tap "^$NAME\$" || fail "no $NAME row: $(texts)"; sleep 2
 for i in 1 2 3 4; do need 'Stash' 'Stash Pop' 'Conflict Solver' 'Force pull' && break; swipe_up; done
 shot 20-sheet-manual-dangerous
