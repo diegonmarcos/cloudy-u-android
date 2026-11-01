@@ -184,11 +184,11 @@
     },
     "ac_cloud-dialer": {
       "first_test": "5 JVM unit test classes have never executed. Declare tests.unit.task.",
-      "shell_testers": 4,
+      "shell_testers": 5,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 11,
+      "unit_test_sources": 12,
       "workflow": "ship-cloud-dialer.yml"
     },
     "ac_cloud-dialer/web": {
