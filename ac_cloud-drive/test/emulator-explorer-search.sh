@@ -25,9 +25,9 @@ for m in re.finditer(r"<node [^>]*>",x):
 else: sys.exit(1)' "$1"; }
 tap() { where "$1" | { read -r px py && adb shell input tap "$px" "$py"; }; }
 has() { grep -q "text=\"$1\"" "$OUT/ui.xml"; }
-# An unfiltered listing is alphabetical and the fixture sorts low: scroll down until $1 shows, then back to the top.
-seek() { local i hit=1; for i in 1 2 3 4 5 6 7 8; do dump >/dev/null; has "$1" && { hit=0; break; }; adb shell input swipe 160 520 160 220 300; sleep 1; done
-  for i in 1 2 3 4 5 6 7 8; do adb shell input swipe 160 220 160 520 200; done; sleep 1; dump >/dev/null; return $hit; }
+# An unfiltered listing is alphabetical and the fixture sorts low: scroll the list up (finger moving up through the
+# middle of the screen only; a downward drag can pull the notification shade, run 41297849136) until $1 shows.
+seek() { local i; for i in 1 2 3 4 5 6 7 8; do dump >/dev/null; has "$1" && return 0; adb shell input swipe 160 420 160 260 300; sleep 1; done; return 1; }
 texts() { grep -oE 'text="[^"]+"' "$OUT/ui.xml" | sed 's/text="//;s/"$//' | sort -u | tr '\n' ';'; }
 
 adb install -r -g "$APK" || fail "install failed"
