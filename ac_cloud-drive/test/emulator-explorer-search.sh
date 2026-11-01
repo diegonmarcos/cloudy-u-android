@@ -31,6 +31,10 @@ texts() { grep -oE 'text="[^"]+"' "$OUT/ui.xml" | sed 's/text="//;s/"$//' | sort
 
 adb install -r -g "$APK" || fail "install failed"
 adb shell appops set "$PKG" MANAGE_EXTERNAL_STORAGE allow || true
+# The fixture is written before Drive starts, so its first listing already holds it: on a bare emulator (no Termux) the
+# explorer always ends on shared storage, and a Retry to refresh re-runs Drive's storage gate (run 41300081083).
+HERE=/storage/emulated/0; ROOTDIR=/storage/emulated/0
+adb shell "mkdir -p '$HERE/AXsTrip/xstrip-deep' '$ROOTDIR/Music/xstrip-songs' && echo x > '$HERE/xstrip.txt' && echo x > '$HERE/AXsTrip/xstrip-notes.txt' && echo x > '$ROOTDIR/Music/xstrip.mp3'" || fail "fixture write failed"
 act=$(adb shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.LAUNCHER "$PKG" | tr -d '\r' | tail -1)
 # Drive must be in front before any tap: runs 41296027953 dumped the home screen after a launch that never came up.
 for i in 1 2 3; do
@@ -49,18 +53,11 @@ front "the Explorer tab"
 for i in 1 2 3; do tap '^Explorer$' && break; sleep 2; done || fail "no Explorer tab"
 sleep 2; tap '^Local$' || true; sleep 3
 
-# The folder the explorer opened on is the toolbar's subtitle; the fixture goes there, and a second one elsewhere under the root.
-dump >/dev/null
-HERE=$(grep -oE 'text="/storage/[^"]*"' "$OUT/ui.xml" | head -1 | sed 's/text="//;s/"$//')
-[ -n "$HERE" ] || HERE=/storage/emulated/0
 # A bare emulator has no Termux, so the first pane (cloud-shared-store) cannot open; the shared-storage pane
-# (emulated › 0) is folded under it: open that one, the fixture goes there (run 41295555027).
+# (emulated › 0) is folded under it: open that one, it holds the fixture (run 41295555027).
 front "the pane check"
-if grep -q 'text="cannot open' "$OUT/ui.xml"; then tap '^emulated › 0$' || fail "no shared-storage pane: $(texts)"; sleep 3; HERE=/storage/emulated/0; fi
+if grep -q 'text="cannot open' "$OUT/ui.xml"; then tap '^emulated › 0$' || fail "no shared-storage pane: $(texts)"; sleep 3; fi
 echo "explorer opened on: $HERE"
-ROOTDIR=/storage/emulated/0
-adb shell "mkdir -p '$HERE/AXsTrip/xstrip-deep' '$ROOTDIR/Music/xstrip-songs' && echo x > '$HERE/xstrip.txt' && echo x > '$HERE/AXsTrip/xstrip-notes.txt' && echo x > '$ROOTDIR/Music/xstrip.mp3'" || fail "fixture write failed"
-tap '^More$' && sleep 1 && tap '^Retry$'; sleep 3
 front "the first listing"
 shot 01-listing
 has AXsTrip || fail "the fixture folder is not in the listing of $HERE: $(texts)"
