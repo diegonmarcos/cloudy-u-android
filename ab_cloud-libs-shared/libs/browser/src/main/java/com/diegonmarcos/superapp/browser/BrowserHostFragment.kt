@@ -40,6 +40,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.verticalScroll
+import com.diegonmarcos.superapp.uikit.KitSettingsRow
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
@@ -191,6 +194,8 @@ class BrowserHostFragment : Fragment() {
     fun openSettings() = showSettings()
     /** #900 a top tab of the Configs section was picked: that page replaces the one showing. */
     fun openConfigsPage(pageId: String) = showSettings(pageId)
+    /** #1402 the page an id opens now (a former page id, an old anchor, redirects to the page that holds its content). */
+    fun configsPageFor(pageId: String): String = config.configs.pageFor(pageId) ?: pageId
     /** #900 the ids of the Configs pages in tab order (the host shell checks its tabs against them). */
     val configsPageIds: List<String> get() = config.configs.pages.map { it.first }
     fun dismissOverlays() = closeOverlays()
@@ -2086,7 +2091,8 @@ class BrowserHostFragment : Fragment() {
      */
     private fun showSettings(pageId: String? = null) {
         val pages = config.configs
-        val page = pageId?.takeIf { id -> pages.pages.any { it.first == id } } ?: pages.first()
+        // #1402 a former page id (an old anchor) opens the page that holds its content now
+        val page = pages.pageFor(pageId) ?: pages.first()
         configsEntry?.let { overlays.remove(it) }
         if (page == null) {
             configsEntry = overlay { close ->
@@ -2105,6 +2111,7 @@ class BrowserHostFragment : Fragment() {
                 rows = pages.resolve(page, allFacts(), config.menu.whys),
                 onRow = { id -> close(); runAction(id) },
                 native = { ConfigsNative(pages.nativeFor(page)) },
+                groups = pages.groupsFor(page),
             )
         }
     }
@@ -2124,7 +2131,68 @@ class BrowserHostFragment : Fragment() {
         (if (ids.size > 1) listOfNotNull(sub) else ids).forEach { id ->
             when (id) {
                 "about" -> BrowserAboutBlock(aboutLines())
+                "site_list" -> SiteListBlock()
+                "perms_defaults" -> PermsDefaultsBlock()
                 else -> AcBlock(id)
+            }
+        }
+    }
+
+    /** #1402 Configs > Permissions: one default per permission for every site, then the sites with overrides (the Perms component, inline). */
+    @Composable
+    private fun ColumnScope.PermsDefaultsBlock() {
+        val tick = remember { mutableIntStateOf(0) }
+        val sites = tick.intValue.let { BrowserSitePolicy.hostsWithRules(sitePerms.rules()) }.map { (h, r) ->
+            PermSite(h, r.entries.sortedBy { it.key }.joinToString(", ") { "${it.key} ${it.value}" })
+        }
+        BrowserPermsList(null, config.sitePerms,
+            stateOf = { sitePerms.defaultOf(it) }, defaultOf = { sitePerms.defaultOf(it) }, hasOwn = { false },
+            onSet = { perm, v -> sitePerms.setDefault(perm.id, v); webView?.let { applySettings(it) } },
+            onReset = {}, sites = sites,
+            onEditSite = { h -> showSiteSettings(h) },
+            onResetSite = { h -> sitePerms.forget(h); tick.intValue++ })
+    }
+
+    /** #1402 Configs > Sites: the sites this browser keeps something for (rules, zoom, the open page); a tap manages one. */
+    @Composable
+    private fun SiteListBlock() {
+        val p = LocalKitPalette.current
+        val tick = remember { mutableIntStateOf(0) }
+        val here = BrowserSitePolicy.hostOf(webView?.url)
+        val hosts = tick.intValue.let { (listOf(here) + BrowserSitePolicy.hostsWithRules(sitePerms.rules()).keys).filter { it.isNotEmpty() }.distinct() }
+        if (hosts.isEmpty()) Text("No site yet: open a page, or give a site a permission of its own.", color = p.textSecondary, modifier = Modifier.padding(8.dp))
+        hosts.forEach { h ->
+            KitSettingsRow(h, if (h == here) "the open page · Data, Perms, more" else "Data, Perms, more",
+                Modifier.testTag("browser:sites:$h"), onClick = { showSite(h) })
+        }
+    }
+
+    /** #1402 one site: its Data (cookies, storage, clear), its Perms and its other per-site settings (zoom, autocomplete memory). */
+    private fun showSite(host: String) {
+        val url = "https://$host/"
+        overlay { close ->
+            val p = LocalKitPalette.current
+            val tick = remember { mutableIntStateOf(0) }
+            Column(Modifier.fillMaxSize().background(p.surface).verticalScroll(rememberScrollState()).padding(16.dp).testTag("browser:site:$host")) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    androidx.compose.material3.TextButton(close) { Text("← Back") }
+                    Text(host, color = p.textPrimary, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+                }
+                Text("Data", color = p.textSecondary, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 10.dp).testTag("browser:site:data"))
+                KitSettingsRow("Clear cookies of this site", "", Modifier.testTag("browser:site:clear_cookies"), onClick = {
+                    BrowserStorage.clearSiteCookies(url) { n -> toast("Cleared $n cookie(s) of $host") }
+                })
+                KitSettingsRow("Cookies & storage: clear…", "", Modifier.testTag("browser:site:clear_data"), onClick = {
+                    overlay { c2 -> BrowserClearSiteScreen(host, onClear = { boxes -> c2(); BrowserStorage.clearSiteData(url, boxes) { toast("Cleared ${boxes.size} kind(s) of data of $host") } }, onClose = c2) }
+                })
+                Text("Perms", color = p.textSecondary, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 10.dp).testTag("browser:site:perms"))
+                KitSettingsRow("Perms", "every permission this site can request", Modifier.testTag("browser:site:perms_open"), onClick = { showSiteSettings(host) })
+                Text("More", color = p.textSecondary, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 10.dp).testTag("browser:site:more"))
+                val zoom = tick.intValue.let { sitePerms.zoom(host) }
+                KitSettingsRow("Zoom", zoom?.let { "$it% (tap to reset)" } ?: "follows the global text size", Modifier.testTag("browser:site:zoom"),
+                    onClick = if (zoom != null) ({ sitePerms.setZoom(host, null); tick.intValue++ }) else null)
+                KitSettingsRow("Autocomplete for this site…", "", Modifier.testTag("browser:site:autocomplete"), onClick = { showSiteAutocomplete(host) })
+                KitSettingsRow("Reset every setting of this site", "", Modifier.testTag("browser:site:forget"), onClick = { sitePerms.forget(host); tick.intValue++; toast("$host follows the defaults again") })
             }
         }
     }

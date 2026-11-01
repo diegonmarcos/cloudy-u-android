@@ -19,6 +19,8 @@ data class BrowserSetting(
     val doc: String = "",
     /** #886 how each enum value reads on the Configs page (value → words); missing = the value, prettified. */
     val valueLabels: Map<String, String> = emptyMap(),
+    /** #1402 the titled group of its Configs page the setting sits in (empty = the page's own, ungrouped). */
+    val group: String = "",
 )
 
 /**
@@ -117,7 +119,7 @@ class BrowserSettingsCatalogue(val settings: List<BrowserSetting>) {
                     key = key, type = type, default = default, values = values,
                     min = if (o.has("min")) o.optInt("min") else null,
                     max = if (o.has("max")) o.optInt("max") else null,
-                    label = o.optString("label", key), section = o.optString("section", "general"),
+                    label = o.optString("label", key), section = o.optString("section", "general"), group = o.optString("group"),
                     cls = o.optString("class", "config"), doc = o.optString("doc"),
                     valueLabels = if (fromEngines) engineLabels else o.optJSONObject("value_labels").let { m ->
                         if (m == null) emptyMap() else m.keys().asSequence().associateWith { k -> m.optString(k) }

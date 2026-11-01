@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -218,8 +219,17 @@ class MainActivity : AppCompatActivity() {
                     val tabs = remember { decl.section("configs")?.pages.orEmpty() }
                     NavBarTopSecondRow(tabs, configsPage, onSelect = { pg -> openConfigsPage(pg.id) }, dark = true, underTopChrome = false)
                 }
-                KitFragmentHost(R.id.fragment_container, Modifier.weight(1f).fillMaxWidth()) {
-                    BrowserHostFragment.newInstance(pendingOpenUrl, BuildConfig.UI_BROWSER_CONFIG_B64)
+                Box(Modifier.weight(1f).fillMaxWidth()) {
+                    KitFragmentHost(R.id.fragment_container, Modifier.fillMaxSize()) {
+                        BrowserHostFragment.newInstance(pendingOpenUrl, BuildConfig.UI_BROWSER_CONFIG_B64)
+                    }
+                    // #1402 Configs > About is the fleet's About page (libs:ui-nav-bars), over the host's page.
+                    if (selectedId == "configs" && configsPage == "about") {
+                        val c = com.diegonmarcos.superapp.themebg.ThemeBackground.colors(true)
+                        Box(Modifier.fillMaxSize().background(c.top).testTag("browser:configs:page:about")) {
+                            com.diegonmarcos.superapp.fleetconfigs.FleetAboutPage(com.diegonmarcos.superapp.fleetconfigs.FleetConfigs.current, c)
+                        }
+                    }
                 }
             }
         }
@@ -262,7 +272,7 @@ class MainActivity : AppCompatActivity() {
     /** A Configs top tab was picked: the host swaps the page under it. */
     private fun openConfigsPage(id: String) {
         val host = supportFragmentManager.findFragmentById(R.id.fragment_container) as? BrowserHostFragment ?: return
-        configsPage = id
+        configsPage = host.configsPageFor(id)   // #1402 old anchors land on their new page
         host.openConfigsPage(id)
     }
 

@@ -26,7 +26,7 @@ def check(root, ok):
     vocab = re.findall(r'"([a-z_]+)" to "', reg[reg.find("val PERMISSIONS"):reg.find("val EMPTY")])
     ok(len(vocab) >= 5, "the permission vocabulary is declared in BrowserAddons")
     ok(any(s["id"] == "addons" for s in b["menu"]["sections"]), "the menu declares the Add-ons section")
-    ok(any(i["id"] == "addons_manage" and i["page"] == "advanced" for i in b["configs"]["rows"]), "Manage add-ons is a row of Configs > Advanced")
+    ok(any(i["id"] == "addons_manage" and i["page"] == "general" and i.get("group") == "advanced" for i in b["configs"]["rows"]), "Manage add-ons is a row of Configs > General > Advanced")
     ids = [a["id"] for a in b.get("addons", [])]
     ok(len(ids) == len(set(ids)) and ids, "add-on ids are declared and unique")
     for a in b.get("addons", []):

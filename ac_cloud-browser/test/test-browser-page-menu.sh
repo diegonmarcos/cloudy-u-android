@@ -25,8 +25,7 @@ GLOBAL = ["settings", "profile", "offline_manage", "storage_manage", "default_br
 PAGEWISE = ["reload", "find", "share", "copy_url", "open_external", "desktop", "zoom", "site_settings", "clear_site_cookies",
             "clear_site_data", "site_autocomplete", "translate", "reader", "bookmark", "save_page", "download_page", "shield_trackers",
             "view_source", "print", "add_to_home", "summarize_topics", "fill_profile"]
-PAGES = ["general", "search", "privacy", "site", "autocomplete", "passwords", "payment", "downloads",
-         "appearance", "tabs", "sync", "advanced", "about"]
+PAGES = ["sites", "permissions", "autocomplete", "general", "about"]   # #1402
 # the settings that existed before #900: none may be dropped
 BEFORE = ["search_engine_id", "homepage", "restore_tabs_on_start", "desktop_mode", "text_zoom", "javascript", "load_images",
           "block_third_party_cookies", "download_dir", "private_by_default", "autofill_enabled", "profile_fill", "offer_save_address",
@@ -67,9 +66,8 @@ def check(root, ok):
         ok(r["page"] in PAGES, "P3 Configs row `%s` is on a declared page" % r["id"], r["page"])
     ok([s for s in bj["ui"]["bottom_nav"]] == ["favourites", "tabs", "browser", "search", "configs"], "P4 the island is Fav | Tabs | Browser | Search | Configs")
     nav = [s for s in bj["ui"]["sections"] if s["id"] == "configs"][0]
-    ok([p["id"] for p in nav["pages"]] == PAGES, "P4 the Configs tabs are the 13 categories, in order")
-    ok([p["label"] for p in nav["pages"]] == ["General", "Search", "Privacy & Security", "Site settings", "Autocomplete", "Passwords", "Payment",
-        "Downloads", "Appearance", "Tabs", "Sync & Vault", "Advanced", "About"], "P4 with the owner's names")
+    ok([p["id"] for p in nav["pages"]] == PAGES, "P4 the Configs tabs are Sites, Permissions, Autocomplete, General, About, in order")
+    ok([p["label"] for p in nav["pages"]] == ["Sites", "Permissions", "Autocomplete", "General", "About"], "P4 with the owner's names")
     act = src.get(APP + "/MainActivity.kt", "")
     ok("NavBarTopSecondRow(" in act and 'decl.section("configs")' in act, "P4 the shell draws them with NavBarTopSecondRow from the declaration")
     keys = {s["key"]: s for s in b["settings"]}
@@ -84,7 +82,7 @@ main("page menu is page-only", check, [
     ("a global row comes back in the dropdown", BJ, '"id": "find",\n            "section": "page_actions"', '"id": "history",\n            "section": "page_actions"', "`history` is not a dropdown row"),
     ("a settings section comes back", BJ, '"id": "addons",\n            "label": "Page Tools"\n          },', '"id": "addons",\n            "label": "Page Tools"\n          },\n          {"id": "settings", "label": "Settings"},', "sections are Page Actions"),
     ("a page row leaves the dropdown", BJ, '"id": "view_source",\n            "section": "addons"', '"id": "view_source_gone",\n            "section": "addons"', "`view_source` is in the dropdown"),
-    ("a global row loses its Configs page", BJ, '"id": "clear_data",\n            "label": "Clear browsing data…",\n            "page": "privacy"', '"id": "clear_data",\n            "label": "Clear browsing data…",\n            "page": "nowhere"', "Configs row `clear_data`"),
+    ("a global row loses its Configs page", BJ, '"id": "clear_data",\n            "label": "Clear browsing data…",\n            "page": "general"', '"id": "clear_data",\n            "label": "Clear browsing data…",\n            "page": "nowhere"', "Configs row `clear_data`"),
     ("trackers stop being blocked", FRAG, "override fun shouldInterceptRequest", "override fun shouldInterceptRequestGone", "Block trackers is wired"),
     ("zoom stops being per site", FRAG, "sitePerms.setZoom(host, v.toInt())", "browserSettings.set(\"text_zoom\", v)", "Zoom is stored per site"),
     ("a setting is dropped", BJ, '"key": "tab_strip"', '"key": "tab_strip_gone"', "`tab_strip` is still declared"),

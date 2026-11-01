@@ -15,8 +15,8 @@ class BrowserConfigsLayoutTest {
     private val root = JSONObject(File("../build.json").readText())
     private val cfg = BrowserConfig.parse(root.getJSONObject("ui").getJSONObject("browser").toString())
 
-    private val pageIds = listOf("general", "search", "privacy", "site", "autocomplete", "passwords", "payment", "downloads",
-        "appearance", "tabs", "sync", "advanced", "about")
+    // #1402 Sites, Permissions, Autocomplete, General, About (About is the fleet page the shell draws)
+    private val pageIds = listOf("sites", "permissions", "autocomplete", "general", "about")
 
     @Test
     fun `every setting sits on a declared Configs page and every page holds something`() {
@@ -24,7 +24,7 @@ class BrowserConfigsLayoutTest {
         assertEquals(pageIds, ids)
         val used = cfg.settings.settings.map { it.section }.toSet()
         assertTrue("undeclared pages: ${used - ids.toSet()}", ids.containsAll(used))
-        for (id in ids) assertTrue("page $id is empty",
+        for (id in ids.filter { it != "about" }) assertTrue("page $id is empty",
             cfg.settings.settings.any { it.section == id } || cfg.configs.rowsFor(id).isNotEmpty() || cfg.configs.nativeFor(id).isNotEmpty())
     }
 
@@ -34,8 +34,7 @@ class BrowserConfigsLayoutTest {
         val configs = (0 until secs.length()).map { secs.getJSONObject(it) }.first { it.getString("id") == "configs" }
         val tabs = configs.getJSONArray("pages").let { a -> (0 until a.length()).map { a.getJSONObject(it).getString("id") } }
         assertEquals(cfg.settingsSections.map { it.first }, tabs)
-        assertEquals(listOf("General", "Search", "Privacy & Security", "Site settings", "Autocomplete", "Passwords", "Payment",
-            "Downloads", "Appearance", "Tabs", "Sync & Vault", "Advanced", "About"), cfg.settingsSections.map { it.second })
+        assertEquals(listOf("Sites", "Permissions", "Autocomplete", "General", "About"), cfg.settingsSections.map { it.second })
     }
 
     @Test
@@ -49,13 +48,32 @@ class BrowserConfigsLayoutTest {
 
     @Test
     fun `a row on no declared page is dropped, and add-on global rows join their page`() {
-        assertTrue(cfg.configs.rowsFor("search").map { it.id }.containsAll(listOf("search_with", "search_chat")))
-        assertTrue(cfg.configs.rowsFor("sync").map { it.id }.containsAll(listOf("vault_open", "vault_set_service")))
-        assertEquals(listOf("addon:search"), cfg.configs.rowsFor("search").first { it.id == "search_with" }.requires)
+        assertTrue(cfg.configs.rowsFor("general").filter { it.group == "search" }.map { it.id }.containsAll(listOf("search_with", "search_chat")))
+        assertTrue(cfg.configs.rowsFor("autocomplete").filter { it.group == "sync" }.map { it.id }.containsAll(listOf("vault_open", "vault_set_service")))
+        assertEquals(listOf("addon:search"), cfg.configs.rowsFor("general").first { it.id == "search_with" }.requires)
         val none = com.diegonmarcos.superapp.browser.BrowserConfigPages.parse(
             JSONObject("""{"rows":[{"id":"x","label":"X","page":"ghost"},{"id":"y","label":"Y","page":"p"}]}"""),
             listOf("p" to "P"), com.diegonmarcos.superapp.browser.BrowserAddons.EMPTY)
         assertEquals(listOf("y"), none.rows.map { it.id })
+    }
+
+    @Test
+    fun `#1402 every former page id redirects to the page that holds its content, and every setting keeps its group`() {
+        val old = listOf("general", "search", "privacy", "site", "autocomplete", "passwords", "payment", "downloads", "appearance", "tabs", "sync", "advanced", "about")
+        val want = mapOf("search" to "general", "privacy" to "general", "site" to "sites", "passwords" to "autocomplete", "payment" to "autocomplete",
+            "downloads" to "general", "appearance" to "general", "tabs" to "general", "sync" to "autocomplete", "advanced" to "general")
+        old.forEach { assertEquals(it, want[it] ?: it, cfg.configs.pageFor(it)) }
+        assertEquals(null, cfg.configs.pageFor("nowhere"))
+        assertEquals(listOf("general", "search", "privacy", "site", "downloads", "appearance", "tabs", "advanced"), cfg.configs.groupsFor("general").map { it.id })
+        assertEquals(listOf("autocomplete", "passwords", "payment", "sync"), cfg.configs.groupsFor("autocomplete").map { it.id })
+        cfg.settings.settings.forEach { s ->
+            val groups = cfg.configs.groupsFor(s.section).map { it.id }
+            assertTrue("${s.key} sits in a group of ${s.section}", groups.isEmpty() || s.group in groups)
+        }
+        assertEquals(listOf("site_list"), cfg.configs.nativeFor("sites"))
+        assertEquals(listOf("perms_defaults"), cfg.configs.nativeFor("permissions"))
+        assertEquals("sites", cfg.configs.rows.first { it.id == "sites_manage" }.page)
+        assertEquals("permissions", cfg.configs.rows.first { it.id == "site_perms_manage" }.page)
     }
 
     @Test

@@ -243,19 +243,26 @@
           ]
         },
         {
-          "name": "sites-permissions",
+          "name": "configs-site-page",
           "steps": [
+            [
+              "view"
+            ],
+            [
+              "wait",
+              5
+            ],
             [
               "tap",
               "bottomnav_item_configs"
             ],
             [
               "wait",
-              2
+              3
             ],
             [
               "tap",
-              "Site settings"
+              "Sites"
             ],
             [
               "wait",
@@ -263,7 +270,7 @@
             ],
             [
               "tap",
-              "Sites Permissions…"
+              "navwalk.invalid"
             ],
             [
               "wait",
@@ -272,7 +279,7 @@
           ]
         },
         {
-          "name": "sites-permissions-scrolled",
+          "name": "configs-sites",
           "steps": [
             [
               "tap",
@@ -280,27 +287,199 @@
             ],
             [
               "wait",
-              2
+              3
             ],
             [
               "tap",
-              "Site settings"
+              "Sites"
             ],
             [
               "wait",
-              2
+              3
+            ]
+          ]
+        },
+        {
+          "name": "configs-permissions",
+          "steps": [
+            [
+              "tap",
+              "bottomnav_item_configs"
+            ],
+            [
+              "wait",
+              3
             ],
             [
               "tap",
-              "Sites Permissions…"
+              "Permissions"
             ],
             [
               "wait",
-              2
+              3
+            ]
+          ]
+        },
+        {
+          "name": "configs-permissions-scrolled",
+          "steps": [
+            [
+              "tap",
+              "bottomnav_item_configs"
+            ],
+            [
+              "wait",
+              3
+            ],
+            [
+              "tap",
+              "Permissions"
+            ],
+            [
+              "wait",
+              3
             ],
             [
               "swipe",
-              12
+              6
+            ]
+          ]
+        },
+        {
+          "name": "configs-permissions-overrides",
+          "steps": [
+            [
+              "tap",
+              "bottomnav_item_configs"
+            ],
+            [
+              "wait",
+              3
+            ],
+            [
+              "tap",
+              "Permissions"
+            ],
+            [
+              "wait",
+              3
+            ],
+            [
+              "swipe",
+              40
+            ]
+          ]
+        },
+        {
+          "name": "configs-autocomplete",
+          "steps": [
+            [
+              "tap",
+              "bottomnav_item_configs"
+            ],
+            [
+              "wait",
+              3
+            ],
+            [
+              "tap",
+              "Autocomplete"
+            ],
+            [
+              "wait",
+              3
+            ]
+          ]
+        },
+        {
+          "name": "configs-general",
+          "steps": [
+            [
+              "tap",
+              "bottomnav_item_configs"
+            ],
+            [
+              "wait",
+              3
+            ],
+            [
+              "tap",
+              "General"
+            ],
+            [
+              "wait",
+              3
+            ]
+          ]
+        },
+        {
+          "name": "configs-general-scrolled",
+          "steps": [
+            [
+              "tap",
+              "bottomnav_item_configs"
+            ],
+            [
+              "wait",
+              3
+            ],
+            [
+              "tap",
+              "General"
+            ],
+            [
+              "wait",
+              3
+            ],
+            [
+              "swipe",
+              6
+            ]
+          ]
+        },
+        {
+          "name": "configs-general-end",
+          "steps": [
+            [
+              "tap",
+              "bottomnav_item_configs"
+            ],
+            [
+              "wait",
+              3
+            ],
+            [
+              "tap",
+              "General"
+            ],
+            [
+              "wait",
+              3
+            ],
+            [
+              "swipe",
+              40
+            ]
+          ]
+        },
+        {
+          "name": "configs-about",
+          "steps": [
+            [
+              "tap",
+              "bottomnav_item_configs"
+            ],
+            [
+              "wait",
+              3
+            ],
+            [
+              "tap",
+              "About"
+            ],
+            [
+              "wait",
+              3
             ]
           ]
         }

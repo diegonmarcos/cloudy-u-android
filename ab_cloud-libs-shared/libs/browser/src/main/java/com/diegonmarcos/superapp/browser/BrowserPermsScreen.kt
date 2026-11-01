@@ -5,6 +5,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -54,8 +55,6 @@ fun BrowserPermsScreen(
     onResetSite: (String) -> Unit = {},
 ) {
     val p = LocalKitPalette.current
-    val tick = remember { mutableIntStateOf(0) }
-    val ordered = BrowserSitePolicy.ordered(perms)
     Column(
         Modifier.fillMaxSize().background(p.surface).verticalScroll(rememberScrollState()).padding(16.dp)
             .testTag(if (host == null) "browser:perms:defaults" else "browser:perms:site"),
@@ -67,6 +66,31 @@ fun BrowserPermsScreen(
                 Text(host ?: "Default for every site", color = p.textSecondary, style = MaterialTheme.typography.bodySmall)
             }
         }
+        BrowserPermsList(host, perms, stateOf, defaultOf, hasOwn, onSet, onReset, sites, onEditSite, onResetSite)
+    }
+}
+
+/**
+ * #1402 the Perms list itself, no header and no scroll of its own: the Perms page and Configs > Permissions (inline, inside the
+ * page's own scroll) both draw it.
+ */
+@Composable
+fun ColumnScope.BrowserPermsList(
+    host: String?,
+    perms: List<BrowserSitePerm>,
+    stateOf: (BrowserSitePerm) -> String,
+    defaultOf: (BrowserSitePerm) -> String,
+    hasOwn: (BrowserSitePerm) -> Boolean,
+    onSet: (BrowserSitePerm, String) -> Unit,
+    onReset: (BrowserSitePerm) -> Unit,
+    sites: List<PermSite> = emptyList(),
+    onEditSite: (String) -> Unit = {},
+    onResetSite: (String) -> Unit = {},
+) {
+    val p = LocalKitPalette.current
+    val tick = remember { mutableIntStateOf(0) }
+    val ordered = BrowserSitePolicy.ordered(perms)
+    run {
         tick.intValue.let { _ ->
             var top: Boolean? = null
             ordered.forEach { perm ->

@@ -89,7 +89,7 @@ class BrowserAddons(val all: List<BrowserAddon>) {
                 // #900 a global entry belongs to a Configs page; only a page entry joins the page dropdown.
                 val configRows = entries.filter { it.optString("scope") == "global" }.map { m ->
                     val req = m.optJSONArray("requires")?.let { r -> (0 until r.length()).map { r.optString(it) } }.orEmpty()
-                    BrowserConfigRow(m.optString("id"), m.optString("label", m.optString("id")), m.optString("page"), listOf("addon:$id") + req)
+                    BrowserConfigRow(m.optString("id"), m.optString("label", m.optString("id")), m.optString("page"), listOf("addon:$id") + req, m.optString("group"))
                 }
                 val menu = entries.filter { it.optString("scope") != "global" }.let { a ->
                     a.map { m ->

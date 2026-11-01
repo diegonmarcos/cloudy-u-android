@@ -51,24 +51,40 @@ fun BrowserConfigsPageScreen(
     rows: List<SheetRow>,
     onRow: (String) -> Unit,
     native: @Composable ColumnScope.() -> Unit = {},
+    /** #1402 the page's titled groups: each draws its settings, then its rows, under its title (SheetRow.caption = the row's group). */
+    groups: List<BrowserConfigGroup> = emptyList(),
 ) {
     val p = LocalKitPalette.current
     var tick by remember { mutableStateOf(0) }
+    val mine = catalogue.settings.filter { it.section == pageId }
+    val known = groups.map { it.id }.toSet()
+    @Composable
+    fun block(settings: List<BrowserSetting>, rs: List<SheetRow>) {
+        settings.forEach { s ->
+            val v = tick.let { value(s.key) }   // reading tick re-reads the store after a write
+            BrowserSettingRow(s, v) { x -> onSet(s.key, x); tick += 1 }
+        }
+        if (rs.isNotEmpty()) {
+            HorizontalDivider(color = p.hairline, modifier = Modifier.padding(top = 6.dp))
+            rs.forEach { r ->
+                KitSettingsRow(r.label, if (r.enabled) "" else r.why.orEmpty(), Modifier.testTag("browser:menu:${r.id}"),
+                    onClick = if (r.enabled) ({ onRow(r.id) }) else null)
+            }
+        }
+    }
     Column(
         Modifier.fillMaxSize().background(p.surface).verticalScroll(rememberScrollState())
             .padding(horizontal = 12.dp, vertical = 8.dp).testTag("browser:configs:page:$pageId"),
     ) {
         KitSectionHeader(title, "", Modifier.testTag("browser:configs:title:$pageId"))
-        catalogue.settings.filter { it.section == pageId }.forEach { s ->
-            val v = tick.let { value(s.key) }   // reading tick re-reads the store after a write
-            BrowserSettingRow(s, v) { x -> onSet(s.key, x); tick += 1 }
-        }
-        if (rows.isNotEmpty()) {
-            HorizontalDivider(color = p.hairline, modifier = Modifier.padding(top = 6.dp))
-            rows.forEach { r ->
-                KitSettingsRow(r.label, if (r.enabled) "" else r.why.orEmpty(), Modifier.testTag("browser:menu:${r.id}"),
-                    onClick = if (r.enabled) ({ onRow(r.id) }) else null)
-            }
+        // ungrouped first (a setting or row naming no declared group), then each group under its title
+        block(mine.filter { it.group !in known }, rows.filter { (it.caption ?: "") !in known })
+        groups.forEach { g ->
+            val gs = mine.filter { it.group == g.id }
+            val gr = rows.filter { it.caption == g.id }
+            if (gs.isEmpty() && gr.isEmpty()) return@forEach
+            KitSectionHeader(g.label, "", Modifier.padding(top = 10.dp).testTag("browser:configs:group:${g.id}"))
+            block(gs, gr)
         }
         native()
     }

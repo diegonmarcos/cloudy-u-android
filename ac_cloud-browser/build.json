@@ -206,9 +206,10 @@
           "type": "enum",
           "values_from": "search_engines",
           "label": "Search engine",
-          "section": "search",
+          "section": "general",
           "class": "config",
-          "doc": "Where a typed query that is not a URL goes."
+          "doc": "Where a typed query that is not a URL goes.",
+          "group": "search"
         },
         {
           "key": "homepage",
@@ -217,25 +218,28 @@
           "label": "Homepage",
           "section": "general",
           "class": "config",
-          "doc": "What an empty New tab opens. Empty = nothing (the dialog just closes)."
+          "doc": "What an empty New tab opens. Empty = nothing (the dialog just closes).",
+          "group": "general"
         },
         {
           "key": "restore_tabs_on_start",
           "type": "bool",
           "default": false,
           "label": "Reopen last tab on launch",
-          "section": "tabs",
+          "section": "general",
           "class": "config",
-          "doc": "Launch into the last active tab instead of the tab grid."
+          "doc": "Launch into the last active tab instead of the tab grid.",
+          "group": "tabs"
         },
         {
           "key": "desktop_mode",
           "type": "bool",
           "default": false,
           "label": "Desktop site",
-          "section": "appearance",
+          "section": "general",
           "class": "config",
-          "doc": "Desktop user agent + wide viewport for every page."
+          "doc": "Desktop user agent + wide viewport for every page.",
+          "group": "appearance"
         },
         {
           "key": "text_zoom",
@@ -244,54 +248,60 @@
           "min": 50,
           "max": 200,
           "label": "Text size (%)",
-          "section": "appearance",
+          "section": "general",
           "class": "config",
-          "doc": "WebSettings.textZoom, in percent."
+          "doc": "WebSettings.textZoom, in percent.",
+          "group": "appearance"
         },
         {
           "key": "javascript",
           "type": "bool",
           "default": true,
           "label": "JavaScript",
-          "section": "site",
+          "section": "general",
           "class": "config",
-          "doc": "Run page scripts. Off breaks most sites; per-site shields come later."
+          "doc": "Run page scripts. Off breaks most sites; per-site shields come later.",
+          "group": "site"
         },
         {
           "key": "load_images",
           "type": "bool",
           "default": true,
           "label": "Load images",
-          "section": "site",
+          "section": "general",
           "class": "config",
-          "doc": "Off saves data on metered networks."
+          "doc": "Off saves data on metered networks.",
+          "group": "site"
         },
         {
           "key": "block_third_party_cookies",
           "type": "bool",
           "default": false,
           "label": "Block third-party cookies",
-          "section": "privacy",
+          "section": "general",
           "class": "config",
-          "doc": "CookieManager.setAcceptThirdPartyCookies(false) on every page."
+          "doc": "CookieManager.setAcceptThirdPartyCookies(false) on every page.",
+          "group": "privacy"
         },
         {
           "key": "download_dir",
           "type": "string",
           "default": "",
           "label": "Download folder",
-          "section": "downloads",
+          "section": "general",
           "class": "device",
-          "doc": "Sub-folder of the phone's Downloads that downloads land in. Empty = Downloads itself. Device-class: a path on this phone."
+          "doc": "Sub-folder of the phone's Downloads that downloads land in. Empty = Downloads itself. Device-class: a path on this phone.",
+          "group": "downloads"
         },
         {
           "key": "private_by_default",
           "type": "bool",
           "default": false,
           "label": "New tabs are private",
-          "section": "privacy",
+          "section": "general",
           "class": "config",
-          "doc": "A new tab opens private: no history, no preview, no HTTP cache. Cookies are shared with normal tabs (Android WebView keeps them per process)."
+          "doc": "A new tab opens private: no history, no preview, no HTTP cache. Cookies are shared with normal tabs (Android WebView keeps them per process).",
+          "group": "privacy"
         },
         {
           "key": "autofill_enabled",
@@ -300,7 +310,8 @@
           "label": "Autofill",
           "section": "autocomplete",
           "class": "config",
-          "doc": "Pages expose their fields to Android's Autofill Framework (Cloud Vault fills logins and cards there), and Fill from profile is offered."
+          "doc": "Pages expose their fields to Android's Autofill Framework (Cloud Vault fills logins and cards there), and Fill from profile is offered.",
+          "group": "autocomplete"
         },
         {
           "key": "profile_fill",
@@ -309,7 +320,8 @@
           "label": "Fill contact & address forms",
           "section": "autocomplete",
           "class": "config",
-          "doc": "Tier 2 DOM autofill (a0_docs/eng-specs/autofill-3-tier.md): focusing a name, email, phone or address field offers a chip that fills the form from your Cloud Account profiles. Never passwords, codes or cards (Cloud Vault fills those), never a login form's email. Private tabs show a chip that names no profile and fill only on an explicit pick."
+          "doc": "Tier 2 DOM autofill (a0_docs/eng-specs/autofill-3-tier.md): focusing a name, email, phone or address field offers a chip that fills the form from your Cloud Account profiles. Never passwords, codes or cards (Cloud Vault fills those), never a login form's email. Private tabs show a chip that names no profile and fill only on an explicit pick.",
+          "group": "autocomplete"
         },
         {
           "key": "offer_save_address",
@@ -318,7 +330,8 @@
           "label": "Offer to save new addresses",
           "section": "autocomplete",
           "class": "config",
-          "doc": "After you submit an address form with an address Cloud Account does not have yet, ask whether to save it there. Nothing is saved without your tap, and never from a private tab."
+          "doc": "After you submit an address form with an address Cloud Account does not have yet, ask whether to save it there. Nothing is saved without your tap, and never from a private tab.",
+          "group": "autocomplete"
         },
         {
           "key": "summarize_route",
@@ -331,34 +344,38 @@
           "label": "Summarize with",
           "section": "general",
           "class": "config",
-          "doc": "#823 Where Summarize the page runs: model = the fleet's AI model (needs the network and the fleet Account's OpenRouter token; falls back on device when it cannot answer); on_device = on the phone, offline (ML Kit's summarizer where the phone has it, else the page's key sentences)."
+          "doc": "#823 Where Summarize the page runs: model = the fleet's AI model (needs the network and the fleet Account's OpenRouter token; falls back on device when it cannot answer); on_device = on the phone, offline (ML Kit's summarizer where the phone has it, else the page's key sentences).",
+          "group": "general"
         },
         {
           "key": "addons_enabled",
           "type": "set",
           "values_from": "addons",
           "label": "Enabled add-ons",
-          "section": "advanced",
+          "section": "general",
           "class": "config",
-          "doc": "The add-ons that are on (Settings ▸ Add-ons). Default: each add-on's default_enabled."
+          "doc": "The add-ons that are on (Settings ▸ Add-ons). Default: each add-on's default_enabled.",
+          "group": "advanced"
         },
         {
           "key": "search_suggestions",
           "type": "bool",
           "default": true,
           "label": "Search suggestions",
-          "section": "search",
+          "section": "general",
           "class": "config",
-          "doc": "While you type in the address bar, ask the default search engine for query suggestions (what you type is sent to it). Off = only the search row and your own history."
+          "doc": "While you type in the address bar, ask the default search engine for query suggestions (what you type is sent to it). Off = only the search row and your own history.",
+          "group": "search"
         },
         {
           "key": "tab_strip",
           "type": "bool",
           "default": true,
           "label": "Tab strip",
-          "section": "tabs",
+          "section": "general",
           "class": "config",
-          "doc": "A row of small tab icons under the address bar: the tabs of the current group, and a + that opens a new tab in the same group."
+          "doc": "A row of small tab icons under the address bar: the tabs of the current group, and a + that opens a new tab in the same group.",
+          "group": "tabs"
         },
         {
           "key": "translate_engine",
@@ -375,7 +392,8 @@
             "on_device": "On-device ML",
             "openrouter": "OpenRouter (LLM)"
           },
-          "doc": "Which engine Translate page uses, in place on the page. On-device ML = the fleet's translation library in Cloud Writer / Cloud Keyboard (offline, private). OpenRouter = the model chosen in that app's AI routing (needs the network; the key stays in that app). Summarise by topics needs OpenRouter."
+          "doc": "Which engine Translate page uses, in place on the page. On-device ML = the fleet's translation library in Cloud Writer / Cloud Keyboard (offline, private). OpenRouter = the model chosen in that app's AI routing (needs the network; the key stays in that app). Summarise by topics needs OpenRouter.",
+          "group": "general"
         },
         {
           "key": "translate_target",
@@ -412,7 +430,8 @@
             "ja": "Japanese",
             "zh": "Chinese"
           },
-          "doc": "The language Translate page and Summarise by topics write in."
+          "doc": "The language Translate page and Summarise by topics write in.",
+          "group": "general"
         },
         {
           "key": "offline_depth",
@@ -421,9 +440,10 @@
           "min": 0,
           "max": 3,
           "label": "Offline site depth",
-          "section": "downloads",
+          "section": "general",
           "class": "config",
-          "doc": "Save site offline follows same-site links this many levels from the page you are on (0 = only that page)."
+          "doc": "Save site offline follows same-site links this many levels from the page you are on (0 = only that page).",
+          "group": "downloads"
         },
         {
           "key": "offline_max_pages",
@@ -432,9 +452,10 @@
           "min": 1,
           "max": 200,
           "label": "Offline site: max pages",
-          "section": "downloads",
+          "section": "general",
           "class": "config",
-          "doc": "Save site offline stops after this many pages."
+          "doc": "Save site offline stops after this many pages.",
+          "group": "downloads"
         },
         {
           "key": "offline_max_mb",
@@ -443,9 +464,10 @@
           "min": 5,
           "max": 500,
           "label": "Offline site: max size (MB)",
-          "section": "downloads",
+          "section": "general",
           "class": "config",
-          "doc": "Save site offline stops when the copy reaches this size."
+          "doc": "Save site offline stops when the copy reaches this size.",
+          "group": "downloads"
         },
         {
           "key": "dl_parallel",
@@ -454,27 +476,30 @@
           "min": 1,
           "max": 8,
           "label": "Downloads at a time",
-          "section": "downloads",
+          "section": "general",
           "class": "config",
-          "doc": "How many downloads (and torrents) transfer at once; the rest wait in the queue."
+          "doc": "How many downloads (and torrents) transfer at once; the rest wait in the queue.",
+          "group": "downloads"
         },
         {
           "key": "dl_wifi_only",
           "type": "bool",
           "default": false,
           "label": "Download on Wi-Fi only",
-          "section": "downloads",
+          "section": "general",
           "class": "config",
-          "doc": "Downloads wait (and resume by themselves) until the phone is on Wi-Fi or Ethernet."
+          "doc": "Downloads wait (and resume by themselves) until the phone is on Wi-Fi or Ethernet.",
+          "group": "downloads"
         },
         {
           "key": "dl_allow_metered",
           "type": "bool",
           "default": true,
           "label": "Download on metered networks",
-          "section": "downloads",
+          "section": "general",
           "class": "config",
-          "doc": "Off = downloads wait for an unmetered network (no mobile data, no metered hotspot)."
+          "doc": "Off = downloads wait for an unmetered network (no mobile data, no metered hotspot).",
+          "group": "downloads"
         },
         {
           "key": "dl_speed_limit_kbps",
@@ -483,9 +508,10 @@
           "min": 0,
           "max": 1000000,
           "label": "Download speed limit (KB/s)",
-          "section": "downloads",
+          "section": "general",
           "class": "config",
-          "doc": "Shared by every HTTP download; torrents get the same cap for their downloads. 0 = no limit."
+          "doc": "Shared by every HTTP download; torrents get the same cap for their downloads. 0 = no limit.",
+          "group": "downloads"
         },
         {
           "key": "dl_segments",
@@ -494,27 +520,30 @@
           "min": 1,
           "max": 8,
           "label": "Connections per large file",
-          "section": "downloads",
+          "section": "general",
           "class": "config",
-          "doc": "A large file on a server that accepts byte ranges downloads over this many connections at once; 1 = always one connection."
+          "doc": "A large file on a server that accepts byte ranges downloads over this many connections at once; 1 = always one connection.",
+          "group": "downloads"
         },
         {
           "key": "dl_shared_store",
           "type": "bool",
           "default": false,
           "label": "Save to cloud-shared-store",
-          "section": "downloads",
+          "section": "general",
           "class": "config",
-          "doc": "When cloud-shared-store is installed, finished downloads go there instead of the phone's Download folder. Without it, this does nothing."
+          "doc": "When cloud-shared-store is installed, finished downloads go there instead of the phone's Download folder. Without it, this does nothing.",
+          "group": "downloads"
         },
         {
           "key": "torrent_seed",
           "type": "bool",
           "default": false,
           "label": "Seed torrents after downloading",
-          "section": "downloads",
+          "section": "general",
           "class": "config",
-          "doc": "A finished torrent keeps uploading to other peers until a limit below is reached (or you turn seeding off on its row); its files are published to Download/ when seeding stops."
+          "doc": "A finished torrent keeps uploading to other peers until a limit below is reached (or you turn seeding off on its row); its files are published to Download/ when seeding stops.",
+          "group": "downloads"
         },
         {
           "key": "torrent_seed_ratio",
@@ -523,9 +552,10 @@
           "min": 0,
           "max": 1000,
           "label": "Seed until ratio (%)",
-          "section": "downloads",
+          "section": "general",
           "class": "config",
-          "doc": "Stop seeding once this share of the torrent's size has been uploaded (100 = 1.0); 0 = no ratio limit."
+          "doc": "Stop seeding once this share of the torrent's size has been uploaded (100 = 1.0); 0 = no ratio limit.",
+          "group": "downloads"
         },
         {
           "key": "torrent_seed_minutes",
@@ -534,9 +564,10 @@
           "min": 0,
           "max": 10080,
           "label": "Seed for at most (minutes)",
-          "section": "downloads",
+          "section": "general",
           "class": "config",
-          "doc": "Stop seeding after this long; 0 = no time limit."
+          "doc": "Stop seeding after this long; 0 = no time limit.",
+          "group": "downloads"
         },
         {
           "key": "torrent_upload_kbps",
@@ -545,18 +576,20 @@
           "min": 0,
           "max": 1000000,
           "label": "Torrent upload limit (KB/s)",
-          "section": "downloads",
+          "section": "general",
           "class": "config",
-          "doc": "Upload speed cap for every torrent together; 0 = no limit. Downloads use the download speed limit above."
+          "doc": "Upload speed cap for every torrent together; 0 = no limit. Downloads use the download speed limit above.",
+          "group": "downloads"
         },
         {
           "key": "block_trackers",
           "type": "bool",
           "default": true,
           "label": "Block trackers",
-          "section": "privacy",
+          "section": "general",
           "class": "config",
-          "doc": "Subresource requests to the declared tracker hosts are answered empty on every site. A site can allow them (page menu > This site > Block trackers here)."
+          "doc": "Subresource requests to the declared tracker hosts are answered empty on every site. A site can allow them (page menu > This site > Block trackers here).",
+          "group": "privacy"
         },
         {
           "key": "site_memory",
@@ -565,7 +598,8 @@
           "label": "Remember values typed on a site",
           "section": "autocomplete",
           "class": "config",
-          "doc": "After you submit a form, offer to remember a value you typed that is not generic personal data (a customer number, a member ID) for that site and form only. Never from a private tab, never a password, card, code or search box."
+          "doc": "After you submit a form, offer to remember a value you typed that is not generic personal data (a customer number, a member ID) for that site and form only. Never from a private tab, never a password, card, code or search box.",
+          "group": "autocomplete"
         },
         {
           "key": "offer_save_profile_data",
@@ -574,43 +608,48 @@
           "label": "Offer to add new details to a profile",
           "section": "autocomplete",
           "class": "config",
-          "doc": "After you submit a form with a name, address, phone, email, birth date or document that none of your profiles holds, ask which profile to add it to. Nothing is saved without your tap, and never from a private tab."
+          "doc": "After you submit a form with a name, address, phone, email, birth date or document that none of your profiles holds, ask which profile to add it to. Nothing is saved without your tap, and never from a private tab.",
+          "group": "autocomplete"
         },
         {
           "key": "offer_save_password",
           "type": "bool",
           "default": true,
           "label": "Offer to save passwords",
-          "section": "passwords",
+          "section": "autocomplete",
           "class": "config",
-          "doc": "After a sign-in or sign-up form is submitted with a new or changed password, ask whether to save it on this phone (encrypted)."
+          "doc": "After a sign-in or sign-up form is submitted with a new or changed password, ask whether to save it on this phone (encrypted).",
+          "group": "passwords"
         },
         {
           "key": "secrets_require_unlock",
           "type": "bool",
           "default": true,
           "label": "Ask for fingerprint or screen lock",
-          "section": "passwords",
+          "section": "autocomplete",
           "class": "device",
-          "doc": "Before a saved password or card is revealed or filled, ask for the fingerprint, face or screen lock. Off means anyone holding the unlocked phone can fill them."
+          "doc": "Before a saved password or card is revealed or filled, ask for the fingerprint, face or screen lock. Off means anyone holding the unlocked phone can fill them.",
+          "group": "passwords"
         },
         {
           "key": "offer_save_card",
           "type": "bool",
           "default": true,
           "label": "Offer to save cards",
-          "section": "payment",
+          "section": "autocomplete",
           "class": "config",
-          "doc": "After a checkout form with a card is submitted, ask whether to save the card on this phone (encrypted)."
+          "doc": "After a checkout form with a card is submitted, ask whether to save the card on this phone (encrypted).",
+          "group": "payment"
         },
         {
           "key": "autofill_use_vault",
           "type": "bool",
           "default": false,
           "label": "Use Cloud Vault for passwords & cards",
-          "section": "sync",
+          "section": "autocomplete",
           "class": "config",
-          "doc": "The browser fills from its own store first, then asks Cloud Vault (through Android's autofill); what Cloud Vault fills wins over the local copy, and a new password or card is also handed to Cloud Vault's save. Off = local only. Cloud Vault not installed or locked = local only, with the reason shown."
+          "doc": "The browser fills from its own store first, then asks Cloud Vault (through Android's autofill); what Cloud Vault fills wins over the local copy, and a new password or card is also handed to Cloud Vault's save. Off = local only. Cloud Vault not installed or locked = local only, with the reason shown.",
+          "group": "sync"
         }
       ],
       "_doc_favourites": "#893 THE FAVOURITES SEED (Fav = the bookmarks, one store). Not typed here: app/build.gradle EXPANDS `sources` at build time into `items` (title, url, group) from the fleet's own declaration, aa_cloud-superapp/data/services_public.json (every public edge endpoint) and services_private.json (the mesh-internal HTTP endpoints, shown and opened as declared, they answer on the mesh), and bakes the result inside UI_BROWSER_CONFIG_B64, so a seed change rebuilds only Cloud Browser. BrowserBookmarks.applySeed adds each entry ONCE (first run, and any entry a later `version` brings), never overwrites an edit and never re-adds what the user deleted. No credentials: only the url as declared. VERSION 2 adds the \"GitHub Pages\" group from data/github_pages.json, DERIVED by tools/gen-github-pages.py from the front project's published list (every site diegonmarcos.github.io serves, one row per project); existing users get those links through the same once-per-entry merge, so their edits and deletions stand. Regenerate with `python3 ac_cloud-browser/tools/gen-github-pages.py --probe`; test/test-browser-github-pages.sh holds the file (parses, no duplicates, https on the Pages host).",
@@ -997,6 +1036,12 @@
       "_doc_configs": "#900 CONFIGS, declared. Each Configs page (ui.sections[configs].pages = the top tabs = settings_sections) draws the settings whose `section` is that page, then its `rows` (global actions that used to sit in the page menu; same runAction branches), then its `native` blocks (the Autocomplete, Passwords, Cards, Vault and About sections libs:browser draws itself). An add-on menu entry with scope:global and page:<id> joins that page's rows. The page dropdown holds none of these (test-browser-page-menu.sh).",
       "configs": {
         "native": {
+          "sites": [
+            "site_list"
+          ],
+          "permissions": [
+            "perms_defaults"
+          ],
           "autocomplete": [
             "profiles",
             "sites",
@@ -1004,16 +1049,7 @@
             "cards",
             "vault"
           ],
-          "passwords": [
-            "passwords"
-          ],
-          "payment": [
-            "cards"
-          ],
-          "sync": [
-            "vault"
-          ],
-          "about": [
+          "general": [
             "about"
           ]
         },
@@ -1021,7 +1057,8 @@
           {
             "id": "bookmarks",
             "label": "Bookmarks",
-            "page": "general"
+            "page": "general",
+            "group": "general"
           },
           {
             "id": "default_browser",
@@ -1029,69 +1066,146 @@
             "page": "general",
             "requires": [
               "can_be_default"
-            ]
+            ],
+            "group": "general"
           },
           {
             "id": "history",
             "label": "History",
-            "page": "privacy"
+            "page": "general",
+            "group": "privacy"
           },
           {
             "id": "clear_data",
             "label": "Clear browsing data…",
-            "page": "privacy"
+            "page": "general",
+            "group": "privacy"
           },
           {
             "id": "storage_manage",
             "label": "Storage & cookies…",
-            "page": "privacy"
+            "page": "general",
+            "group": "privacy"
           },
           {
             "id": "sites_manage",
             "label": "Sites with custom settings…",
-            "page": "site"
+            "page": "sites"
           },
           {
             "id": "site_perms_manage",
             "label": "Sites Permissions…",
-            "page": "site"
+            "page": "permissions"
           },
           {
             "id": "profile",
             "label": "Import a profile (CSV, Firefox, Bitwarden)…",
-            "page": "autocomplete"
+            "page": "autocomplete",
+            "group": "autocomplete"
           },
           {
             "id": "downloads",
             "label": "Downloads",
-            "page": "downloads"
+            "page": "general",
+            "group": "downloads"
           },
           {
             "id": "offline_manage",
             "label": "Offline copies…",
-            "page": "downloads"
+            "page": "general",
+            "group": "downloads"
           },
           {
             "id": "new_tab",
             "label": "New tab",
-            "page": "tabs"
+            "page": "general",
+            "group": "tabs"
           },
           {
             "id": "new_private_tab",
             "label": "New private tab",
-            "page": "tabs"
+            "page": "general",
+            "group": "tabs"
           },
           {
             "id": "tab_groups",
             "label": "Tab groups…",
-            "page": "tabs"
+            "page": "general",
+            "group": "tabs"
           },
           {
             "id": "addons_manage",
             "label": "Manage add-ons…",
-            "page": "advanced"
+            "page": "general",
+            "group": "advanced"
           }
-        ]
+        ],
+        "groups": {
+          "general": [
+            {
+              "id": "general",
+              "label": "General"
+            },
+            {
+              "id": "search",
+              "label": "Search"
+            },
+            {
+              "id": "privacy",
+              "label": "Privacy & Security"
+            },
+            {
+              "id": "site",
+              "label": "Site defaults"
+            },
+            {
+              "id": "downloads",
+              "label": "Downloads"
+            },
+            {
+              "id": "appearance",
+              "label": "Appearance"
+            },
+            {
+              "id": "tabs",
+              "label": "Tabs"
+            },
+            {
+              "id": "advanced",
+              "label": "Advanced"
+            }
+          ],
+          "autocomplete": [
+            {
+              "id": "autocomplete",
+              "label": "Autocomplete"
+            },
+            {
+              "id": "passwords",
+              "label": "Passwords"
+            },
+            {
+              "id": "payment",
+              "label": "Payment"
+            },
+            {
+              "id": "sync",
+              "label": "Sync & Vault"
+            }
+          ]
+        },
+        "redirects": {
+          "search": "general",
+          "privacy": "general",
+          "site": "sites",
+          "downloads": "general",
+          "appearance": "general",
+          "tabs": "general",
+          "advanced": "general",
+          "passwords": "autocomplete",
+          "payment": "autocomplete",
+          "sync": "autocomplete"
+        }
       },
       "_doc_site_permissions": "#802/#1401 EVERY permission a site can request, one per-site state (ask/allow/deny) each, plus a global default (stored as host `*`). The most-used come first (`top`), then all the rest. `webview: true` rows are enforced (`enforced_by` names the WebView hook); `webview: false` rows are declared but not supported in WebView, `why` says so on the Perms page.",
       "site_permissions": [
@@ -1528,13 +1642,15 @@
               "id": "search_with",
               "label": "Search with…",
               "scope": "global",
-              "page": "search"
+              "page": "general",
+              "group": "search"
             },
             {
               "id": "search_chat",
               "label": "Search & AI",
               "scope": "global",
-              "page": "search"
+              "page": "general",
+              "group": "search"
             }
           ]
         },
@@ -1761,13 +1877,15 @@
               "id": "vault_open",
               "label": "Open Cloud Vault",
               "scope": "global",
-              "page": "sync"
+              "page": "autocomplete",
+              "group": "sync"
             },
             {
               "id": "vault_set_service",
               "label": "Use Cloud Vault for autofill…",
               "scope": "global",
-              "page": "sync"
+              "page": "autocomplete",
+              "group": "sync"
             }
           ]
         }
@@ -1775,52 +1893,20 @@
       "_doc_settings_sections": "#886/#900 Configs is organised BY PAGE: each setting's `section` is one of these ids = one of the top tabs of the Configs section (ui.sections[configs].pages, same ids, same order: test-browser-page-menu.sh holds that). A page with nothing in it is still a tab (its rows or native blocks fill it).",
       "settings_sections": [
         {
-          "id": "general",
-          "label": "General"
+          "id": "sites",
+          "label": "Sites"
         },
         {
-          "id": "search",
-          "label": "Search"
-        },
-        {
-          "id": "privacy",
-          "label": "Privacy & Security"
-        },
-        {
-          "id": "site",
-          "label": "Site settings"
+          "id": "permissions",
+          "label": "Permissions"
         },
         {
           "id": "autocomplete",
           "label": "Autocomplete"
         },
         {
-          "id": "passwords",
-          "label": "Passwords"
-        },
-        {
-          "id": "payment",
-          "label": "Payment"
-        },
-        {
-          "id": "downloads",
-          "label": "Downloads"
-        },
-        {
-          "id": "appearance",
-          "label": "Appearance"
-        },
-        {
-          "id": "tabs",
-          "label": "Tabs"
-        },
-        {
-          "id": "sync",
-          "label": "Sync & Vault"
-        },
-        {
-          "id": "advanced",
-          "label": "Advanced"
+          "id": "general",
+          "label": "General"
         },
         {
           "id": "about",
@@ -1867,24 +1953,14 @@
         "icon": "configs",
         "pages": [
           {
-            "id": "general",
-            "label": "General",
-            "icon": "settings"
-          },
-          {
-            "id": "search",
-            "label": "Search",
-            "icon": "search"
-          },
-          {
-            "id": "privacy",
-            "label": "Privacy & Security",
-            "icon": "security"
-          },
-          {
-            "id": "site",
-            "label": "Site settings",
+            "id": "sites",
+            "label": "Sites",
             "icon": "public"
+          },
+          {
+            "id": "permissions",
+            "label": "Permissions",
+            "icon": "security"
           },
           {
             "id": "autocomplete",
@@ -1892,39 +1968,9 @@
             "icon": "edit_note"
           },
           {
-            "id": "passwords",
-            "label": "Passwords",
-            "icon": "key"
-          },
-          {
-            "id": "payment",
-            "label": "Payment",
-            "icon": "payments"
-          },
-          {
-            "id": "downloads",
-            "label": "Downloads",
-            "icon": "download"
-          },
-          {
-            "id": "appearance",
-            "label": "Appearance",
-            "icon": "palette"
-          },
-          {
-            "id": "tabs",
-            "label": "Tabs",
-            "icon": "tab"
-          },
-          {
-            "id": "sync",
-            "label": "Sync & Vault",
-            "icon": "sync"
-          },
-          {
-            "id": "advanced",
-            "label": "Advanced",
-            "icon": "build"
+            "id": "general",
+            "label": "General",
+            "icon": "settings"
           },
           {
             "id": "about",

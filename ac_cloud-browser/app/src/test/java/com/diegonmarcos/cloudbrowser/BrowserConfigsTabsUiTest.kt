@@ -67,7 +67,7 @@ class BrowserConfigsTabsUiTest {
     private val cfg = BrowserConfig.parse(ui.getJSONObject("browser").toString())
     private val decl = NavDecl.parse(ui.getJSONArray("sections"), (0 until ui.getJSONArray("bottom_nav").length()).joinToString(",") { ui.getJSONArray("bottom_nav").getString(it) }, ui.getString("default_section"))
     private val palette = KitPalette.fromArgb(0xFF1A0033.toInt(), 0xFF2D0A55.toInt(), 0xFFFFFFFF.toInt(), 0x99FFFFFF.toInt(), 0xFF7C3AED.toInt(), 0x33FFFFFF, 0xFF000000.toInt())
-    private val order = listOf("general", "search", "privacy", "site", "autocomplete", "passwords", "payment", "downloads", "appearance", "tabs", "sync", "advanced", "about")
+    private val order = listOf("sites", "permissions", "autocomplete", "general", "about")   // #1402
 
     private var selected by mutableStateOf<String?>(null)
     private val taps = mutableListOf<String>()
@@ -83,8 +83,7 @@ class BrowserConfigsTabsUiTest {
     fun `the Configs section declares the categories as its tabs, in the owner's order`() {
         val pages = decl.section("configs")!!.pages
         assertEquals(order, pages.map { it.id })
-        assertEquals(listOf("General", "Search", "Privacy & Security", "Site settings", "Autocomplete", "Passwords", "Payment", "Downloads",
-            "Appearance", "Tabs", "Sync & Vault", "Advanced", "About"), pages.map { it.label })
+        assertEquals(listOf("Sites", "Permissions", "Autocomplete", "General", "About"), pages.map { it.label })
         assertTrue("the declaration is valid", decl.problems().isEmpty())
     }
 
@@ -119,7 +118,8 @@ class BrowserConfigsTabsUiTest {
             composed = true
             compose.setContent { CloudKitTheme(palette) {
                 BrowserConfigsPageScreen(page, cfg.configs.title(page), cfg.settings, value = { if (bare) null else cfg.settings[it]?.default }, onSet = { _, _ -> },
-                    rows = if (bare) emptyList() else cfg.configs.resolve(page, emptyMap(), cfg.menu.whys), onRow = {})
+                    rows = if (bare) emptyList() else cfg.configs.resolve(page, emptyMap(), cfg.menu.whys), onRow = {},
+                    groups = cfg.configs.groupsFor(page))
             } }
         }
         compose.waitForIdle()
@@ -131,8 +131,10 @@ class BrowserConfigsTabsUiTest {
     fun `a page draws its own settings and rows and nobody else's`() {
         showPage("general")
         assertTrue(on("browser:setting:homepage")); assertTrue(on("browser:setting:translate_engine")); assertTrue(on("browser:menu:bookmarks"))
-        assertTrue("no Appearance setting on General", !on("browser:setting:text_zoom"))
-        assertTrue("no Privacy row on General", !on("browser:menu:clear_data"))
+        // #1402 General holds every other setting, grouped: Appearance and Privacy are sections of it
+        assertTrue(on("browser:setting:text_zoom")); assertTrue(on("browser:menu:clear_data"))
+        assertTrue(on("browser:configs:group:appearance")); assertTrue(on("browser:configs:group:privacy"))
+        assertTrue("no Autocomplete setting on General", !on("browser:setting:autofill_enabled"))
     }
 
     @Test
@@ -147,11 +149,12 @@ class BrowserConfigsTabsUiTest {
     }
 
     @Test
-    fun `privacy holds its rows, and the vault tab holds the add-on's global rows`() {
-        showPage("privacy")
+    fun `General's privacy group holds its rows, and Autocomplete's vault group holds the add-on's global rows`() {
+        showPage("general")
         assertTrue(on("browser:menu:clear_data")); assertTrue(on("browser:menu:history")); assertTrue(on("browser:menu:storage_manage"))
         assertTrue(on("browser:setting:block_trackers"))
-        showPage("sync")
+        showPage("autocomplete")
+        assertTrue(on("browser:configs:group:sync"))
         assertTrue(on("browser:menu:vault_open")); assertTrue(on("browser:setting:autofill_use_vault"))
     }
 }
