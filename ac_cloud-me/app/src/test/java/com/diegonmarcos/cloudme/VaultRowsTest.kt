@@ -6,12 +6,18 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
+import android.app.Application
 
 /**
  * #1398 Tasks rows, checked on what the build actually baked (BuildConfig.UI_SECTIONS_B64) and on the shipped
  * vault-rows.json: Inboxes | Backlogs | RoadMaps | Library | Projects, each vault chip a page, and Projects being the
  * very pages (ids, labels, order) of Lnktree's Proj row.
  */
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34], application = Application::class)
 class VaultRowsTest {
     private val baked = JSONArray(String(java.util.Base64.getMimeDecoder().decode(BuildConfig.UI_SECTIONS_B64)))
         .let { a -> (0 until a.length()).map { a.getJSONObject(it) }.associateBy { it.getString("id") } }
