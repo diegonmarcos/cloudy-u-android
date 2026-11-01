@@ -61,17 +61,19 @@ class RepoMenuTest {
         assertTrue(ids("clone").containsAll(listOf("clone_full", "clone_depth1") + page.depthActions(Declarations.DEPTH_SCOPE_REPO).map { it.id }))
         assertTrue(ids("sync").containsAll(listOf("sync_no_winner", "sync_remote_wins", "sync_local_wins")))
         assertEquals("unpushed", ids("workflow").first())
-        assertTrue(ids("workflow").containsAll(listOf("list_dirty", "list_conflicts", "solve_conflicts")))
+        assertTrue(ids("workflow").containsAll(listOf("list_dirty", "list_conflicts", "fetch", "pull", "commit", "push", "stats")))
         assertEquals(listOf("clean_1", "clean_5", "clean_10"), ids("repo_clean"))
         assertTrue(ids("others").containsAll(page.folderActions.map { it.id }))
     }
 
-    @Test fun `Manual Sync is one step per line and its Dangerous subgroup is marked and equals the destructive ops`() {
+    @Test fun `Manual Sync is the four actions on one row and its Dangerous row is marked and equals the destructive ops`() {
         val m = menu.group("manual_sync")!!
-        assertTrue(m.lines)
-        assertEquals(listOf("fetch", "pull", "commit", "push"), m.items.map { it.id }.filter { it != "stats" })
+        assertTrue(m.row); assertFalse(m.lines)
+        assertEquals(listOf(RepoActions.STASH, RepoActions.PULL_REBASE, RepoActions.STASH_POP, RepoActions.SOLVE_CONFLICTS), m.items.map { it.id })
+        assertTrue(m.items.all { it.icon.isNotBlank() })
         val danger = m.subgroups.single()
-        assertTrue(danger.danger); assertTrue(danger.lines)
+        assertTrue(danger.danger); assertTrue(danger.row)
+        for (id in danger.items.map { it.id }) assertEquals(RepoActions.Route.CONFIRM, RepoActions.route(id))
         assertEquals(page.ops.filter { it.destructive }.map { it.id }.sorted(), danger.items.map { it.id }.sorted())
         assertEquals(RepoActions.DANGEROUS.sorted(), danger.items.map { it.id }.sorted())
     }

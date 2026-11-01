@@ -95,6 +95,8 @@ internal fun GitTopBar(
     prefs: DrivePrefs?,
     enabledReason: (Declarations.GitTopItemDecl) -> String?,
     onItem: (Declarations.GitTopItemDecl) -> Unit,
+    /** #1356 the storage selector (Cloud-Store | Emulated | External Drive), in the top menu before Settings. */
+    storage: @Composable () -> Unit = {},
 ) {
     var sheet by remember { mutableStateOf(false) }
     Row(Modifier.fillMaxWidth().padding(horizontal = DriveMetrics.sectionInset, vertical = DriveMetrics.gap).testTag(DriveTags.SYNC_GIT_TOP_BAR), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(DriveMetrics.gapWide)) {
@@ -108,7 +110,12 @@ internal fun GitTopBar(
             Box {
                 Pill(g.label, { if (single != null && enabledReason(single) == null) onItem(single) else open = true }, modifier = Modifier.testTag(DriveTags.SYNC_GIT_TOP_GROUP + "_" + g.id))
                 DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-                    g.items.forEach { item ->
+                    g.items.forEachIndexed { n, item ->
+                        // #1356 a declared section (Sync All, Manual Sync) opens with its title when it changes.
+                        if (item.section.isNotBlank() && item.section != g.items.getOrNull(n - 1)?.section) Text(
+                            item.section, Modifier.padding(horizontal = DriveMetrics.padWide, vertical = DriveMetrics.gap).testTag(DriveTags.SYNC_GIT_TOP_ITEM + "_section_" + n),
+                            style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary,
+                        )
                         val why = enabledReason(item)
                         DropdownMenuItem(
                             text = {
@@ -128,6 +135,7 @@ internal fun GitTopBar(
         }
         }
         Spacer(Modifier.width(DriveMetrics.gap))
+        storage()
         if (prefs != null) Row(Modifier.testTag(DriveTags.SYNC_AUTO_SETTINGS)) { IslandAction(Icons.Filled.Settings, decl.label("settings")) { sheet = true } }
     }
     if (sheet && prefs != null) AutoSettingsSheet(AutoChecks.Page.GIT, prefs) { sheet = false }

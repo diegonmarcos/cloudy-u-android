@@ -769,16 +769,17 @@ class GitSyncCoordinator(private val ctx: Context, private val scope: CoroutineS
      * [token] is the sign-in's access token for an https clone (blank for a public one) and
      * is handed to the engine and to the credential store, never written here.
      */
-    fun cloneInto(name: String, url: String, authKind: String, username: String, token: String, sshKeyPath: String = "") {
+    /** [into] (#1356) = a volume's git folder (Emulated, an attached drive) the clone lands in; null = the store. */
+    fun cloneInto(name: String, url: String, authKind: String, username: String, token: String, sshKeyPath: String = "", into: File? = null) {
         if (name.isBlank() || url.isBlank() || cloning.value.contains(name)) return
-        val dir = SharedStore.repoDir(name)
+        val dir = into?.let { File(it, name) } ?: SharedStore.repoDir(name)
         cloning.update { it + name }
         val started = jobs.submit(GitJobs.Spec("clone@" + name, Declarations.GIT_OP_CLONE, Declarations.GIT_OP_CLONE, listOf(GitJobs.Target(dir.absolutePath, name)), workers = 1, exclusive = false) { _ ->
             // The clone's decision point, on the device: the URL's HOST and the destination —
             // never the full URL (a listing URL could carry a credential in its userinfo) and
             // never the token, which travels only through GitCredentialStore.
             DriveDebugLog.i(ctx, TAG, "clone start: host=${hostOf(url)} dest=${dir.name} auth=$authKind")
-            val result = try { withContext(Dispatchers.IO) { cloneBlocking(name, url, authKind, username, token, sshKeyPath, cloneDepth.value.takeIf { it > 0 }) } } finally { cloning.update { it - name } }
+            val result = try { withContext(Dispatchers.IO) { cloneBlocking(name, url, authKind, username, token, sshKeyPath, cloneDepth.value.takeIf { it > 0 }, into) } } finally { cloning.update { it - name } }
             val now = System.currentTimeMillis() / 1000
             withContext(Dispatchers.IO) {
                 history.append(SyncEvent(now, RepoRegistry.idFor(dir.absolutePath), name, SyncHistory.TRIGGER_MANUAL, result.ok, "clone: ${result.summary}", result.details))
@@ -794,14 +795,14 @@ class GitSyncCoordinator(private val ctx: Context, private val scope: CoroutineS
 
 
     /** The clone itself, blocking (IO): the store's exec path or the engine, [depth] null = full history; registers on success. Shared by [cloneInto] and [cloneMissing]. */
-    private fun cloneBlocking(name: String, url: String, authKind: String, username: String, token: String, sshKeyPath: String, depth: Int?): GitOpResult {
-                val dir = SharedStore.repoDir(name)
+    private fun cloneBlocking(name: String, url: String, authKind: String, username: String, token: String, sshKeyPath: String, depth: Int?, into: File? = null): GitOpResult {
+                val dir = into?.let { File(it, name) } ?: SharedStore.repoDir(name)
                 val id = RepoRegistry.idFor(dir.absolutePath)
                 val managed = ManagedRepo(id = id, name = name, path = dir.absolutePath, remoteUrl = url, authKind = authKind, authUsername = username, sshKeyPath = sshKeyPath)
                 if (token.isNotBlank()) credentials.setSecret(id, token)
                 return runCatching {
                     // cloud-shared-store: not in cld.termux's uid -> clone inside it (CLOUD_EXEC).
-                    if (StoreGit.useExec(ctx)) {
+                    if (into == null && StoreGit.useExec(ctx)) {
                         if (StoreGit.isRepository(ctx, dir)) GitOpResult(true, "already cloned")
                         else StoreGit.clone(ctx, url, dir, token, depth = depth).also { if (!it.ok) error(it.summary + " " + it.details) }
                     }
@@ -815,7 +816,8 @@ class GitSyncCoordinator(private val ctx: Context, private val scope: CoroutineS
                     // fall-through to another host: this is the only URL attempted.
                     GitOpResult(false, if (authKind == AUTH_SESSION) FleetGit.explainCloneFailure(why) else why)
                 }
-                    .also { if (it.ok) registry.upsert(managed) }
+                    // A volume's clones are found by its git folder (GitStorage.repos), not registered in the store.
+                    .also { if (it.ok && into == null) registry.upsert(managed) }
     }
 
     // ── #1254 the declared depth commands: Clone all (depth 1) and Keep depth 1, bulk and per repository ──

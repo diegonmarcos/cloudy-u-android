@@ -74,10 +74,10 @@ class TermuxGitTransport(private val ctx: Context) : GitTransport {
     }
 
     companion object {
-        /** Route every GitEngine for a directory in the store through cld.termux; idempotent. */
+        /** Route every GitEngine for a directory in the store, or (#1356) on a mounted storage volume's git folder, through cld.termux; idempotent. */
         fun install(ctx: Context) {
             val app = ctx.applicationContext
-            GitTransports.router = { c, dir -> StoreRoute.of(c).let { r -> if (r.inStore(dir.absolutePath) && r.viaTermux) TermuxGitTransport(c.applicationContext) else null } }
+            GitTransports.router = { c, dir -> StoreRoute.of(c).let { r -> if ((r.inStore(dir.absolutePath) || GitStorage.onVolume(dir.absolutePath)) && r.viaTermux) TermuxGitTransport(c.applicationContext) else null } }
             GitEngine.repositoryProbe = { dir ->
                 if (!StoreRoute.of(app).inStore(dir.absolutePath) || Looper.myLooper() == Looper.getMainLooper()) null else StoreGit.isRepository(app, dir)
             }

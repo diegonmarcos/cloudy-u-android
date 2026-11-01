@@ -160,7 +160,11 @@ private data class CloudPublic(val loading: Boolean = false, val loaded: Boolean
 @Composable
 fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextRunMinutes: Long?, modifier: Modifier = Modifier, view: GitView = GitView.ME, prefs: DrivePrefs? = null, part: GitPart = GitPart.TABLE,
     /** #1356/#1376 the repositories of another storage's git folder (Emulated, External): the SAME page runs on them; null = the store's registry. */
-    storageRepos: List<ManagedRepo>? = null, storageKey: String = "") {
+    storageRepos: List<ManagedRepo>? = null, storageKey: String = "",
+    /** #1356 the storage selector drawn in the top menu, the clone target picker's choices and the selected storage. */
+    storageMenu: @Composable () -> Unit = {}, cloneTargets: List<GitStorage.Target> = emptyList(), selectedStorage: GitStorage.Kind = GitStorage.Kind.STORE,
+    /** #1356 the selected volume's git folder changed (created, or a clone landed): re-read it. */
+    onStorageChanged: () -> Unit = {}) {
     val setup = view == GitView.ME && part == GitPart.SETUP
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -343,6 +347,21 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
     // clone attempt: a handoff that reported nothing is the silent no-op this feature exists
     // to make impossible.
     var handoff by remember { mutableStateOf("") }
+    // #1356 THE CLONE TARGET: Cloud-Store, Emulated or an attached drive (default: the selected storage). A volume target clones
+    // into its git folder through the same engine call (cloneInto(into = ...)); no drive, a raw drive and a missing folder say so.
+    var cloneTarget by remember(selectedStorage, cloneTargets) { mutableStateOf(cloneTargets.takeIf { it.isNotEmpty() }?.let { GitStorage.defaultTarget(it, selectedStorage) }) }
+    var folderTick by remember { mutableStateOf(0) }
+    val cloneAt: GitStorage.CloneAt? = remember(cloneTarget, folderTick) { cloneTarget?.takeIf { it.kind != GitStorage.Kind.STORE }?.let { GitStorage.cloneAt(it, "_") } }
+    val cloneFolder: File? = (cloneAt as? GitStorage.CloneAt.Ready)?.dir?.parentFile
+    var createFolder by remember { mutableStateOf<File?>(null) }
+    var showConflicts by remember { mutableStateOf(false) }
+    /** True (and says why, or offers to create the git folder) when the picked volume cannot take a clone now. */
+    fun cloneBlocked(): Boolean = when (val at = cloneAt) {
+        null, is GitStorage.CloneAt.Ready -> false
+        GitStorage.CloneAt.NoDrive -> { handoff = ctx.getString(R.string.git_storage_no_drive); true }
+        GitStorage.CloneAt.RawReadOnly -> { handoff = ctx.getString(R.string.git_storage_raw_read_only); true }
+        is GitStorage.CloneAt.NeedsFolder -> { createFolder = at.proposed; true }
+    }
     val askRunCommand = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
         // #639: state the fact, do not narrate a route through Settings.
         handoff = ctx.getString(if (ok) R.string.git_terminal_granted else R.string.git_terminal_refused)
@@ -394,7 +413,8 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
      * truth; a LISTED item with a blank URL never reaches here (the row says so instead).
      */
     fun clone(name: String, listedUrl: String = "", listedSshUrl: String = "") {
-        if (page.terminal != null) {
+        if (cloneBlocked()) return
+        if (page.terminal != null && cloneFolder == null) {
             // #1138 clone settings: the persisted SSH | Web OAuth choice picks the URL, the depth rides the argv.
             cloneViaTerminal(name, if (cloneSsh) listedSshUrl.ifBlank { page.cloneUrl(name, Declarations.REMOTE_SSH) } else listedUrl.ifBlank { page.cloneUrl(name, Declarations.REMOTE_HTTPS) })
             return
@@ -413,6 +433,7 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
             username = login.identity,
             token = if (ssh) "" else login.token,
             sshKeyPath = if (ssh) login.sshKeyPath else "",
+            into = cloneFolder,
         )
     }
 
@@ -427,6 +448,7 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
      * is loud and names its next step; nothing falls through to another host.
      */
     fun cloneViaFleet(rungId: String, gh: GitHubRepos.Repo) {
+        if (cloneBlocked()) return
         if (!FleetSession.present) {
             handoff = ctx.getString(R.string.git_fleet_clone_no_session)
             return
@@ -442,6 +464,7 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
             authKind = GitSyncCoordinator.AUTH_SESSION,
             username = "",
             token = "",
+            into = cloneFolder,
         )
     }
 
@@ -691,6 +714,7 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
      * from gh's git-credential helper straight into the engine's credential store; nothing shows it.
      */
     fun cloneViaGh(repo: GitHubRepos.Repo) {
+        if (cloneBlocked()) return
         if (repo.cloneUrl.isBlank()) { handoff = ctx.getString(R.string.git_clone_url_missing, repo.name); return }
         scope.launch {
             val cred = withContext(Dispatchers.IO) { if (ghHost.isBlank()) null else ghEngine.credential(ghHost) }
@@ -702,6 +726,7 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
                 authKind = GitSyncCoordinator.AUTH_HTTPS,
                 username = cred.username,
                 token = cred.secret,
+                into = cloneFolder,
             )
         }
     }
@@ -809,7 +834,7 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
                                 val token = withContext(Dispatchers.IO) { hostsState.tokenOf(host.id) }
                                 if (hr.cloneUrl.isBlank()) handoff = ctx.getString(R.string.git_clone_url_missing, hr.name)
                                 else if (token.isBlank()) handoff = ctx.getString(R.string.git_host_no_token, host.label)
-                                else coordinator.cloneInto(name = hr.name, url = hr.cloneUrl, authKind = GitSyncCoordinator.AUTH_HTTPS, username = GitHosts.cloneUser(host, hs.user), token = token)
+                                else if (!cloneBlocked()) coordinator.cloneInto(name = hr.name, url = hr.cloneUrl, authKind = GitSyncCoordinator.AUTH_HTTPS, username = GitHosts.cloneUser(host, hs.user), token = token, into = cloneFolder)
                             }
                         },
                         "",
@@ -865,7 +890,19 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
             "legend" -> showLegend = true
             // #1356 More > Advanced: the parentless and unlisted folder panels, out of the default view.
             "open_advanced" -> showAdvanced = true
+            // #1356 Sync ▸ Manual Sync ▸ Conflicts All: the solver over every repository with conflicts.
+            "open_conflicts" -> showConflicts = true
         }
+    }
+    // #1356 No Winner (and Pull (Rebase), Stash Pop) STOP at conflicts: when such a job ends with any, the solver opens.
+    var solverSeen by remember { mutableStateOf(jobsState.filter { it.finished }.map { it.id }.toSet()) }
+    LaunchedEffect(jobsState) {
+        val ended = jobsState.filter { it.finished && it.id !in solverSeen }
+        if (ended.isEmpty()) return@LaunchedEffect
+        solverSeen = solverSeen + ended.map { it.id }
+        if (ended.any { j -> SyncAll.opensSolver(j.kind, j.failed.values.map { it to "" }) }) showConflicts = true
+        // a clone onto a volume landed in its git folder: the page re-reads that folder
+        if (cloneFolder != null && ended.any { it.kind == Declarations.GIT_OP_CLONE }) onStorageChanged()
     }
     fun onTopItem(item: Declarations.GitTopItemDecl) { if ((item.confirm || item.danger) && item.kind != "depth") topConfirm = item else runTopItem(item) }
 
@@ -876,11 +913,12 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
         // #1315 ONE STICKY BLOCK: the declared toolbar, the job line, the search + Filters, the quick-filter rail, the summary and the column header.
         stickyHeader(key = "table-top") {
             Column(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface)) {
-                GitTopBar(page.topBar, prefs, enabledReason = { item -> GitTopBarState.reason(item, writingJob, scopeTargets.size, page.topBar::label) }, onItem = ::onTopItem)
+                GitTopBar(page.topBar, prefs, enabledReason = { item -> GitTopBarState.reason(item, writingJob, scopeTargets.size, page.topBar::label) }, onItem = ::onTopItem, storage = storageMenu)
                 GitJobLine(jobLine, page.topBar::label, onCancel = { jobLine?.let { coordinator.jobs.cancel(it.id) } }, onDismiss = { jobLine?.let { coordinator.jobs.dismiss(it.id) } },
                     onOpen = { if (depthRun != null) showDepthReport = true else { logsTab = "app"; showActivity = true } })
                 fullProgress?.let { p -> Text(stringResource(R.string.repo_full_progress, p.done, p.total), Modifier.fillMaxWidth().padding(horizontal = DriveMetrics.sectionInset).testTag(DriveTags.SYNC_GIT_FULL_PROGRESS), style = MaterialTheme.typography.labelSmall) }
                 GitSearchRow(page.topBar, query, { query = it }, RepoFilters.active(page.filters, filterSel), onFilters = { showFilters = true }, onClear = { coordinator.clearFilters(); query = "" })
+                if (cloneTargets.isNotEmpty()) GitCloneTargetRow(cloneTargets, cloneTarget) { t -> cloneTarget = t; folderTick++; if (t.kind != GitStorage.Kind.STORE) cloneBlocked() }
                 QuickFilterRail(page.filters, filterSel, ::countsOf) { f, o -> coordinator.setFilter(f.id, RepoFilters.toggle(f, filterSel, o)) }
                 Text(summaryLine, Modifier.fillMaxWidth().padding(horizontal = DriveMetrics.sectionInset, vertical = DriveMetrics.gap).testTag(DriveTags.SYNC_GIT_SUMMARY), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 // #642 what the last clone handoff did, right under the bar that can trigger it: no press of Clone is silent.
@@ -1138,6 +1176,24 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
             UnlistedPanel(page.unlisted.label, unlistedFolders, glances, lastCommits, depthRun, coordinator, onOpenReport = { showDepthReport = true })
         }
     }
+    createFolder?.let { f ->
+        AlertDialog(
+            onDismissRequest = { createFolder = null },
+            title = { Text(stringResource(R.string.git_storage_create_title)) },
+            text = { Text(stringResource(R.string.git_storage_create_body, f.absolutePath)) },
+            confirmButton = { TextButton(onClick = {
+                val made = runCatching { f.mkdirs() || f.isDirectory }.getOrDefault(false)
+                handoff = if (made) ctx.getString(R.string.git_storage_created, f.absolutePath) else ctx.getString(R.string.git_storage_create_failed, f.absolutePath)
+                createFolder = null; folderTick++; onStorageChanged()
+            }, modifier = Modifier.testTag(DriveTags.SYNC_GIT_STORAGE + "_create")) { Text(stringResource(R.string.git_storage_create)) } },
+            dismissButton = { TextButton(onClick = { createFolder = null }) { Text(stringResource(R.string.repo_status_window_close)) } },
+        )
+    }
+    if (showConflicts) GitConflictsDialog(
+        repos.mapNotNull { r -> GitSyncCoordinator.glanceFor(r, glances)?.conflicts?.takeIf { it > 0 }?.let { r to it } },
+        onOpen = { r -> showConflicts = false; actions.openEngine(EngineActivity.ENGINE_GIT, r.path) },
+        onDismiss = { showConflicts = false },
+    )
     if (showLegend) GitLegendDialog(page.topBar, page.status.icons, { showLegend = false }, stringResource(R.string.repo_status_window_close))
     depthConfirm?.let { a ->
         AlertDialog(
@@ -1436,7 +1492,7 @@ private fun GitRepoRow(
                 }
             }
         }
-        Row(Modifier.weight(1f).scrollFadeEnd(scroll.canScrollForward).horizontalScroll(scroll).padding(end = DriveMetrics.sectionInset, top = DriveMetrics.gap, bottom = DriveMetrics.gap), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.weight(1f).padding(end = DriveMetrics.pad).scrollFadeEnd(scroll.canScrollForward).horizontalScroll(scroll).padding(end = DriveMetrics.sectionInset, top = DriveMetrics.gap, bottom = DriveMetrics.gap), verticalAlignment = Alignment.CenterVertically) {
             RepoCells(cells)
             Box(Modifier.width(DriveMetrics.tableName), contentAlignment = Alignment.CenterEnd) {
                 when {
@@ -1589,7 +1645,8 @@ private fun GitRepoOpsBox(
     fun act(id: String) {
         if (RepoActions.route(id) == RepoActions.Route.CONFIRM) { confirm = id; return }
         when (id) {
-            RepoActions.SYNC_NO_WINNER, RepoActions.SYNC_REMOTE_WINS, RepoActions.SYNC_LOCAL_WINS -> coordinator.runCompound(repo, id)
+            RepoActions.SYNC_NO_WINNER, RepoActions.SYNC_REMOTE_WINS, RepoActions.SYNC_LOCAL_WINS,
+            RepoActions.STASH, RepoActions.PULL_REBASE, RepoActions.STASH_POP -> coordinator.runCompound(repo, id)
             // #1289 Goto > Folder: the clone's folder in Drive Files (Explorer ▸ Local).
             RepoActions.OPEN_FOLDER -> actions.openInFiles(repo.path)
             RepoActions.CHECKOUT_MAIN -> coordinator.checkoutMain(repo)

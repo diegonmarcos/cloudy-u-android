@@ -41,7 +41,7 @@ for k in known:
 depth_ids = {a["id"] for a in g["depth_actions"] if a["scope"] == "all"}
 for i in items:
     if i["kind"] == "depth" and i.get("action") not in depth_ids: print("    depth item names no scope-all depth action:", i["id"]); bad = 1
-    if i["kind"] == "compound" and i.get("op") not in ("sync_no_winner", "sync_remote_wins", "sync_local_wins", "stash_push"): print("    compound item names no compound id:", i["id"]); bad = 1
+    if i["kind"] == "compound" and i.get("op") not in ("sync_no_winner", "sync_remote_wins", "sync_local_wins", "stash_push", "stash", "pull_rebase", "stash_pop"): print("    compound item names no compound id:", i["id"]); bad = 1
     if i.get("danger") and not i.get("confirm"): print("    danger without confirm:", i["id"]); bad = 1
 sys.exit(bad)
 PY
@@ -122,9 +122,16 @@ g = json.load(open(sys.argv[1]))["ui"]["sync"]["git"]; bar = open(sys.argv[2]).r
 groups = g["top_bar"]["groups"]; bad = []
 if [x["id"] for x in groups] != ["check", "sync", "clone", "logs", "more"]: bad.append("groups are %s" % [x["id"] for x in groups])
 else:
-    want = [("check_full", "check_full"), ("sync_all", "compound"), ("clone_missing", "depth"), ("logs", "open_logs")]
-    got = [(x["items"][0]["id"], x["items"][0]["kind"]) if len(x["items"]) == 1 else None for x in groups[:4]]
-    if got != want: bad.append("the four buttons are %s, want %s" % (got, want))
+    want = [("check_full", "check_full"), ("clone_missing", "depth"), ("logs", "open_logs")]
+    got = [(x["items"][0]["id"], x["items"][0]["kind"]) if len(x["items"]) == 1 else None for x in (groups[0], groups[2], groups[3])]
+    if got != want: bad.append("the three buttons are %s, want %s" % (got, want))
+    # #1356 Sync is a dropdown: Sync All (Server Wins | Local Wins | No Winner) then Manual Sync (Stash All, Pull (Rebase), Stash Pop All, Conflicts All)
+    sy = [(i["section"], i["kind"], i.get("op", "")) for i in groups[1]["items"]]
+    want_sync = [("Sync All", "compound", "sync_remote_wins"), ("Sync All", "compound", "sync_local_wins"), ("Sync All", "compound", "sync_no_winner"),
+                 ("Manual Sync", "compound", "stash"), ("Manual Sync", "compound", "pull_rebase"), ("Manual Sync", "compound", "stash_pop"), ("Manual Sync", "open_conflicts", "")]
+    if sy != want_sync: bad.append("the Sync dropdown is %s" % sy)
+    if [i["label"] for i in groups[1]["items"]] != ["Server Wins", "Local Wins", "No Winner", "Stash All", "Pull (Rebase)", "Stash Pop All", "Conflicts All"]: bad.append("the Sync dropdown labels")
+    if "item.section != g.items.getOrNull(n - 1)?.section" not in bar: bad.append("the dropdown draws no section titles")
     more = [i["id"] for i in groups[4]["items"]]
     lost = [k for k in keep if k not in more]
     if lost: bad.append("More lost %s" % lost)
@@ -139,6 +146,10 @@ echo "== T4 Check | Sync | Clone | Logs | More ..... Settings =="
 out=$(t4 "$BJ" "$SYNC/GitTopBar.kt" "$SYNC/GitDepthUi.kt") && pass "the top nav is the five declared groups, More keeps every other action, Logs = Repos | App" || fail "T4: $out"
 python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); g=d["ui"]["sync"]["git"]["top_bar"]["groups"]; g[4]["items"]=[i for i in g[4]["items"] if i["id"]!="legend"]; json.dump(d,open(sys.argv[2],"w"))' "$BJ" "$tmp/bj4.json"
 t4 "$tmp/bj4.json" "$SYNC/GitTopBar.kt" "$SYNC/GitDepthUi.kt" >/dev/null 2>&1 && fail "T4 passed a More that lost an action (vacuous)" || pass "an action dropped from More → T4 RED"
+python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); g=d["ui"]["sync"]["git"]["top_bar"]["groups"]; g[1]["items"][2]["op"]="sync_remote_wins"; json.dump(d,open(sys.argv[2],"w"))' "$BJ" "$tmp/bj4b.json"
+t4 "$tmp/bj4b.json" "$SYNC/GitTopBar.kt" "$SYNC/GitDepthUi.kt" >/dev/null 2>&1 && fail "T4 passed No Winner on the remote-wins strategy (vacuous)" || pass "No Winner mapped to remote wins → T4 RED"
+python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); g=d["ui"]["sync"]["git"]["top_bar"]["groups"]; [i.pop("section") for i in g[1]["items"][3:]]; json.dump(d,open(sys.argv[2],"w"))' "$BJ" "$tmp/bj4c.json"
+t4 "$tmp/bj4c.json" "$SYNC/GitTopBar.kt" "$SYNC/GitDepthUi.kt" >/dev/null 2>&1 && fail "T4 passed a dropdown with no Manual Sync section (vacuous)" || pass "Manual Sync section dropped → T4 RED"
 
 # T5 #1356 no reserved height: with ui.top_bar declared (the shell's first row clears the status bar) every section strip is
 #    drawn with underTopChrome = false (no second status-bar band above Local/Cloud, Me/Cloud); title_row false -> the
@@ -190,8 +201,8 @@ t6() { python3 - "$BJ" "$1" "$2" "$3" <<'PY'
 import json, sys
 bj = json.load(open(sys.argv[1])); frame, page, ui = (open(p).read() for p in sys.argv[2:5]); bad = []
 if "indicator = {" not in frame or "LinearProgressIndicator(" not in frame or "SYNC_GIT_REFRESH_BAR" not in frame: bad.append("(a) the refresh is not a top bar")
-if "RepoTable.COLUMNS.filter { it in RepoTable.PINNED }" not in ui or "Modifier.weight(1f).scrollFadeEnd(scroll.canScrollForward).horizontalScroll(scroll)" not in ui: bad.append("(b) the header does not pin Status and Name")
-if "Row(Modifier.weight(1f).scrollFadeEnd(scroll.canScrollForward).horizontalScroll(scroll).padding(end = DriveMetrics.sectionInset" not in page: bad.append("(b) the rows do not pin Status and Name")
+if "RepoTable.COLUMNS.filter { it in RepoTable.PINNED }" not in ui or "Modifier.weight(1f).padding(end = DriveMetrics.pad).scrollFadeEnd(scroll.canScrollForward).horizontalScroll(scroll)" not in ui: bad.append("(b) the header does not pin Status and Name")
+if "Row(Modifier.weight(1f).padding(end = DriveMetrics.pad).scrollFadeEnd(scroll.canScrollForward).horizontalScroll(scroll).padding(end = DriveMetrics.sectionInset" not in page: bad.append("(b) the rows do not pin Status and Name")
 if 'item(key = "parentless")' in page or 'item(key = "unlisted")' in page: bad.append("(c) parentless / unlisted are still in the main list")
 more = next(g for g in bj["ui"]["sync"]["git"]["top_bar"]["groups"] if g["id"] == "more")
 if not any(i["kind"] == "open_advanced" for i in more["items"]): bad.append("(c) More has no Advanced item")
@@ -245,7 +256,7 @@ print("\\n".join(bad)); sys.exit(1 if bad else 0)
 PY
 }
 echo "== T8 one Git page on every storage =="
-SP="$SYNC/GitStoragePage.kt"
+SP="$SYNC/GitStorageUi.kt"
 out=$(t8 "$SYNC/SyncScreen.kt" "$SP") && pass "the selector switches the root; the same page runs on Emulated and External; no card list; compact pill" || fail "T8: $out"
 sed 's/storageRepos = storageRepos/storageRepos = null/g' "$SYNC/SyncScreen.kt" > "$tmp/S8.kt"; t8 "$tmp/S8.kt" "$SP" >/dev/null 2>&1 && fail "T8 passed a page that ignores the storage (vacuous)" || pass "the page ignores the selected root → T8 RED"
 { cat "$SP"; printf '\nfun GitStorageRepos() { DriveCard() }\n'; } > "$tmp/P8.kt"; t8 "$SYNC/SyncScreen.kt" "$tmp/P8.kt" >/dev/null 2>&1 && fail "T8 passed a second card list (vacuous)" || pass "a second card-list UI → T8 RED"

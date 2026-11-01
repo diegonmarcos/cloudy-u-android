@@ -1,5 +1,9 @@
 package com.diegonmarcos.clouddrive.sync
 
+import androidx.compose.material3.Icon
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -76,7 +80,7 @@ internal fun RepoTableHeader(column: RepoColumn, ascending: Boolean, scroll: Scr
         Row(Modifier.padding(start = DriveMetrics.sectionInset), verticalAlignment = Alignment.CenterVertically) {
             RepoTable.COLUMNS.filter { it in RepoTable.PINNED }.forEach { label(it) }
         }
-        Row(Modifier.weight(1f).scrollFadeEnd(scroll.canScrollForward).horizontalScroll(scroll).padding(end = DriveMetrics.sectionInset), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.weight(1f).padding(end = DriveMetrics.pad).scrollFadeEnd(scroll.canScrollForward).horizontalScroll(scroll).padding(end = DriveMetrics.sectionInset), verticalAlignment = Alignment.CenterVertically) {
             RepoTable.COLUMNS.filter { it !in RepoTable.PINNED }.forEach { label(it) }
             // the rows' trailing disclosure cell: the last fact column scrolls fully into view
             Spacer(Modifier.width(DriveMetrics.tableName))
@@ -220,7 +224,28 @@ private fun MenuItems(
             modifier = Modifier.testTag(DriveTags.SYNC_GIT_MENU_ITEM + "_" + item.id),
         )
     }
-    if (g.lines) Column(verticalArrangement = Arrangement.spacedBy(DriveMetrics.gap)) { g.items.forEach { chip(it) } }
+    // #1356 layout "row": the items are icon actions on ONE horizontal row (Manual Sync, Dangerous); danger keeps the red and,
+    // through RepoActions.route, its confirmation.
+    if (g.row) androidx.compose.foundation.layout.Row(
+        Modifier.fillMaxWidth().horizontalScroll(androidx.compose.foundation.rememberScrollState()).testTag(DriveTags.SYNC_GIT_MENU_GROUP + "_row_" + g.id),
+        horizontalArrangement = Arrangement.spacedBy(DriveMetrics.gapWide),
+    ) {
+        g.items.forEach { item ->
+            val op = page.op(item.id)
+            val on = (!busy || groupId in RepoActions.ALWAYS_ON_GROUPS) && !(op != null && blocked(op)) && !unavailable(item.id)
+            val ink = when { !on -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f); danger -> MaterialTheme.colorScheme.error; active(item.id) -> MaterialTheme.colorScheme.primary; else -> MaterialTheme.colorScheme.onSurface }
+            Column(
+                Modifier.widthIn(min = DriveMetrics.rowHeight).clip(androidx.compose.foundation.shape.RoundedCornerShape(DriveMetrics.pad))
+                    .clickable(enabled = on) { onAction(item.id) }.padding(horizontal = DriveMetrics.gap, vertical = DriveMetrics.tight)
+                    .testTag(DriveTags.SYNC_GIT_MENU_ITEM + "_" + item.id),
+                horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+            ) {
+                Icon(IconCatalog.vectorOrDefault(item.icon.ifBlank { op?.icon.orEmpty() }), contentDescription = null, tint = ink, modifier = Modifier.size(DriveMetrics.icon))
+                Text(item.labelFor(lang).ifBlank { actionLabel(item.id, op) }, style = MaterialTheme.typography.labelSmall, color = ink, maxLines = 1)
+            }
+        }
+    }
+    else if (g.lines) Column(verticalArrangement = Arrangement.spacedBy(DriveMetrics.gap)) { g.items.forEach { chip(it) } }
     else FlowRow(horizontalArrangement = Arrangement.spacedBy(DriveMetrics.gapWide), verticalArrangement = Arrangement.spacedBy(DriveMetrics.gapWide)) { g.items.forEach { chip(it) } }
 }
 

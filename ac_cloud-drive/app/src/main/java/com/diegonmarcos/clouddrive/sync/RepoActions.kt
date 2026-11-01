@@ -19,6 +19,10 @@ object RepoActions {
     const val PRS = "prs"
     const val UNPUSHED = "unpushed"
     const val STASH_PUSH = "stash_push"
+    /** #1356 Manual Sync: stash the working tree, pull with rebase, pop the newest stash. */
+    const val STASH = "stash"
+    const val PULL_REBASE = "pull_rebase"
+    const val STASH_POP = "stash_pop"
     const val RUNS = "runs"
     const val CLEAN_1 = "clean_1"
     const val CLEAN_5 = "clean_5"
@@ -54,7 +58,7 @@ object RepoActions {
     val PAGE_IDS: Set<String> = setOf(
         SYNC_NO_WINNER, SYNC_REMOTE_WINS, SYNC_LOCAL_WINS, META_BRANCH, META_SYNC, OPEN_FOLDER, CHECKOUT_MAIN, BRANCHES, PRS, UNPUSHED,
         RUNS, CLEAN_1, CLEAN_5, CLEAN_10, SYNC_NOW, SETTINGS, CLONE_FULL, CLONE_DEPTH1, CLONE_SSH, CLONE_OAUTH,
-        LIST_DIRTY, LIST_CONFLICTS, SOLVE_CONFLICTS, AUTOSYNC_TOGGLE, AUTOSYNC_EVERY,
+        LIST_DIRTY, LIST_CONFLICTS, SOLVE_CONFLICTS, AUTOSYNC_TOGGLE, AUTOSYNC_EVERY, STASH, PULL_REBASE, STASH_POP,
     )
 
     val DANGEROUS: List<String> = listOf("force_pull", "force_push")
@@ -69,7 +73,7 @@ object RepoActions {
     fun route(id: String): Route = if (id in DANGEROUS || id in REPO_CLEAN) Route.CONFIRM else Route.RUN
 
     /** The compound sync verbs and the history trim run through [GitSyncCoordinator.runCompound]. */
-    fun isCompound(id: String): Boolean = id == STASH_PUSH || id == SYNC_NO_WINNER || id == SYNC_REMOTE_WINS || id == SYNC_LOCAL_WINS || cleanDepth(id) > 0
+    fun isCompound(id: String): Boolean = id == STASH_PUSH || id == STASH || id == PULL_REBASE || id == STASH_POP || id == SYNC_NO_WINNER || id == SYNC_REMOTE_WINS || id == SYNC_LOCAL_WINS || cleanDepth(id) > 0
 
 
     /**
@@ -79,4 +83,29 @@ object RepoActions {
      */
     val NO_CLONE_NEEDED: Set<String> = setOf("web", PRS, RUNS, CLONE_FULL, CLONE_DEPTH1, CLONE_OAUTH, CLONE_SSH)
     fun needsClone(id: String): Boolean = id !in NO_CLONE_NEEDED
+}
+
+/**
+ * #1356 THE SYNC DROPDOWN of the Git top bar: Sync All (Server Wins | Local Wins | No Winner) and Manual Sync (Stash All,
+ * Pull (Rebase), Stash Pop All, Conflicts All). Every verb is a compound id run by [GitSyncCoordinator.runCompoundAll] over
+ * the listed clones (one job, a result per repository in Logs); pure, so SyncAllTest pins the mapping.
+ */
+object SyncAll {
+    enum class Mode(val op: String) {
+        SERVER_WINS(RepoActions.SYNC_REMOTE_WINS), LOCAL_WINS(RepoActions.SYNC_LOCAL_WINS), NO_WINNER(RepoActions.SYNC_NO_WINNER),
+        STASH(RepoActions.STASH), PULL_REBASE(RepoActions.PULL_REBASE), STASH_POP(RepoActions.STASH_POP),
+    }
+
+    /** The engine strategy a declared op runs, or null when it is not one of the dropdown's verbs. */
+    fun modeOf(op: String): Mode? = Mode.values().firstOrNull { it.op == op }
+
+    /** A result line that reports a conflict (the engine's merge, rebase or pop stopped on one). */
+    fun isConflict(summary: String, details: String = ""): Boolean = Regex("(?i)conflict").containsMatchIn(summary + "\n" + details)
+
+    /**
+     * No Winner STOPS at conflicts: it never resolves one itself, so when its job reports any, the page opens the conflict
+     * solver. Server Wins and Local Wins pick a side and never open it; Pull (Rebase) and Stash Pop open it too, they stop the same way.
+     */
+    fun opensSolver(op: String, results: List<Pair<String, String>>): Boolean =
+        (op == RepoActions.SYNC_NO_WINNER || op == RepoActions.PULL_REBASE || op == RepoActions.STASH_POP) && results.any { (s, d) -> isConflict(s, d) }
 }

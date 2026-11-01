@@ -18,6 +18,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -84,23 +85,34 @@ fun GitPageScreen(
     // Emulated / External run the same page on the repositories in that root's git / GIT / Git folder (GitStorage).
     val ctx = androidx.compose.ui.platform.LocalContext.current
     var storage by remember { mutableStateOf(gitStorageSelected(ctx)) }
-    val storageView = if (storage == GitStorage.Kind.STORE) null else rememberGitStorageView(storage)
+    var storageRefresh by remember { mutableStateOf(0) }
+    val storageView = if (storage == GitStorage.Kind.STORE) null else rememberGitStorageView(storage, storageRefresh)
     val storageRepos = (storageView as? GitStorage.View.Repos)?.managed()
+    val usbTick by com.diegonmarcos.clouddrive.usb.StorageVolumes.tick.collectAsState()
+    val cloneTargets = remember(usbTick, storageRefresh) { gitCloneTargets(ctx) }
+    val access = remember(storage, usbTick, storageRefresh) { gitStorageAccess(ctx, storage) }
+    // #1356 the selector lives in the Git page's top menu (GitTopBar's storage slot); the empty states draw it above themselves.
+    val storageMenu: @Composable () -> Unit = { GitStorageMenu(storage, { k -> storage = k; gitStorageSelect(ctx, k) }) }
     Column(modifier.fillMaxSize()) {
         // #1356 no title row: the Git page opens on its sub-page strip (ui.sections[git].title_row = false);
         // the terminal shortcut it carried is the Termux tile of Home > Apps (data/drive-apps.json).
-        // #868 the strip is libs:bottomnav's PageTabs over ui.sections[git].pages; the storage selector is a compact pill beside it.
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            NavBarTopSecondRow(pages = pages, selectedId = current, onSelect = { current = it.id }, modifier = Modifier.weight(1f).padding(horizontal = DriveMetrics.gap).testTag(DriveTags.SYNC_STRIP), underTopChrome = false, compact = true)
-            GitStorageMenu(storage, { k -> storage = k; gitStorageSelect(ctx, k) }, Modifier.padding(end = DriveMetrics.sectionInset))
-        }
+        // #868 the strip is libs:bottomnav's PageTabs over ui.sections[git].pages.
+        NavBarTopSecondRow(pages = pages, selectedId = current, onSelect = { current = it.id }, modifier = Modifier.padding(horizontal = DriveMetrics.gap).testTag(DriveTags.SYNC_STRIP), underTopChrome = false, compact = true)
+        // #1356 a mounted volume git cannot write yet: all-files access is missing, so ask this volume's SAF grant.
+        if (access == GitStorage.Access.NEEDS_GRANT) GitStorageGrantBanner(storage)
         when {
             storage != GitStorage.Kind.STORE && storageView == null -> Box(Modifier.weight(1f))
-            storageView != null && storageRepos.isNullOrEmpty() -> GitStorageEmpty(storage, storageView, Modifier.weight(1f))
+            storageView != null && storageRepos.isNullOrEmpty() -> Column(Modifier.weight(1f)) {
+                Row(Modifier.fillMaxWidth().padding(horizontal = DriveMetrics.sectionInset), horizontalArrangement = Arrangement.End) { storageMenu() }
+                GitStorageEmpty(storage, storageView, Modifier.weight(1f)) { storageRefresh++ }
+            }
             else -> AnimatedContent(targetState = current, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "git_page", modifier = Modifier.weight(1f)) { id ->
+                val key = if (storageRepos == null) "" else "/" + storage.id
                 when (id) {
-                    "me" -> GitReposScreen(git, actions, nextRun, view = GitView.ME, prefs = prefs, storageRepos = storageRepos, storageKey = if (storageRepos == null) "" else "/" + storage.id)
-                    "cloud" -> GitReposScreen(git, actions, nextRun, view = GitView.CLOUD, prefs = prefs, storageRepos = storageRepos, storageKey = if (storageRepos == null) "" else "/" + storage.id)
+                    "me" -> GitReposScreen(git, actions, nextRun, view = GitView.ME, prefs = prefs, storageRepos = storageRepos, storageKey = key,
+                        storageMenu = storageMenu, cloneTargets = cloneTargets, selectedStorage = storage, onStorageChanged = { storageRefresh++ })
+                    "cloud" -> GitReposScreen(git, actions, nextRun, view = GitView.CLOUD, prefs = prefs, storageRepos = storageRepos, storageKey = key,
+                        storageMenu = storageMenu, cloneTargets = cloneTargets, selectedStorage = storage, onStorageChanged = { storageRefresh++ })
                     else -> EmptyState(IconCatalog.vectorOrDefault(Declarations.iconDefault), stringResource(R.string.chrome_unknown_tab), "")
                 }
             }

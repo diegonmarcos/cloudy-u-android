@@ -37,8 +37,12 @@ if not auth or any(i in depth or "depth" in i or "bare" in i for i in auth): pri
 ms = by.get("manual_sync", {})
 subs = ms.get("subgroups", [])
 dest = sorted(o["id"] for o in g.get("ops", []) if o.get("destructive"))
-if ms.get("layout") != "lines" or len(subs) != 1 or not subs[0].get("danger") or sorted(ids(subs[0])) != dest: print("    Manual Sync / Dangerous subgroup"); bad = 1
-for w in ("list_dirty", "list_conflicts", "solve_conflicts"):
+if ms.get("layout") != "row" or len(subs) != 1 or not subs[0].get("danger") or sorted(ids(subs[0])) != dest: print("    Manual Sync / Dangerous subgroup"); bad = 1
+# #1356 Manual Sync: the Sync dropdown's four actions, icons on ONE row; Dangerous also one row, red, confirmed (RepoActions.route)
+if [i["id"] for i in ms.get("items", [])] != ["stash", "pull_rebase", "stash_pop", "solve_conflicts"]: print("    Manual Sync is not Stash, Pull (Rebase), Stash Pop, Conflict Solver"); bad = 1
+if subs and subs[0].get("layout") != "row": print("    Dangerous is not one row"); bad = 1
+if any(not i.get("icon") for i in ms.get("items", []) + (subs[0].get("items", []) if subs else [])): print("    a row action has no icon"); bad = 1
+for w in ("list_dirty", "list_conflicts"):
     if w not in ids(by.get("workflow", {})): print("    workflow lacks", w); bad = 1
 if ids(by.get("workflow", {}))[:1] != ["unpushed"]: print("    Commits Unpushed is not Workflow's first item"); bad = 1
 a = m.get("autosync", {})
@@ -68,6 +72,8 @@ mut "g={x['id']:x for x in m['groups']}; g['goto']['items'].pop(0)"; g1 "$TMP/b.
 mut "m['groups'].reverse()"; g1 "$TMP/b.json" >/dev/null && fail "G1 passed a reordered menu (vacuous)" || pass "reordered → G1 RED"
 mut "m['autosync']['default_minutes']=5"; g1 "$TMP/b.json" >/dev/null && fail "G1 passed a 5-minute default (vacuous)" || pass "autosync default 5 → G1 RED"
 mut "g={x['id']:x for x in m['groups']}; g['manual_sync']['subgroups'][0]['danger']=False"; g1 "$TMP/b.json" >/dev/null && fail "G1 passed an unmarked Dangerous (vacuous)" || pass "unmarked Dangerous → G1 RED"
+mut "g={x['id']:x for x in m['groups']}; g['manual_sync']['layout']='lines'"; g1 "$TMP/b.json" >/dev/null && fail "G1 passed Manual Sync one per line (vacuous)" || pass "Manual Sync back to one item per line → G1 RED"
+mut "g={x['id']:x for x in m['groups']}; g['manual_sync']['subgroups'][0]['layout']='lines'"; g1 "$TMP/b.json" >/dev/null && fail "G1 passed Dangerous one per line (vacuous)" || pass "Dangerous back to one per line → G1 RED"
 sed 's/page.repoMenu.groups.forEach/RepoActions.GROUPS.forEach/' "$SRC/sync/RepoTableUi.kt" > "$TMP/u.kt"; g2 "$TMP/u.kt" "$SRC/sync/RepoActions.kt" "$SRC/GitSyncWorker.kt" >/dev/null && fail "G2 passed a hard-coded menu (vacuous)" || pass "hard-coded groups → G2 RED"
 g1 "$BJ" >/dev/null && pass "unmutated tree is still green" || fail "the unmutated tree is red"
 

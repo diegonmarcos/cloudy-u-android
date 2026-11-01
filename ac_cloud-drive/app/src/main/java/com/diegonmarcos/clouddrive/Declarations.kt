@@ -118,6 +118,8 @@ object Declarations {
         val id: String, val kind: String, val label: String, val hint: String = "", val icon: String = "", val op: String = "", val action: String = "",
         val force: Boolean = false, val scope: String = "filtered", val confirm: Boolean = false, val danger: Boolean = false, val exclusive: Boolean = true,
         val filter: String = "", val option: String = "",
+        /** #1356 the dropdown section the item is listed under ("Sync All", "Manual Sync"); blank = none. */
+        val section: String = "",
     )
     data class GitTopGroupDecl(val id: String, val label: String, val icon: String, val items: List<GitTopItemDecl>)
     /** #1356 the Logs page (ui.sync.git.logs): its title, its tabs in order (repos | app) and its labels. */
@@ -152,13 +154,15 @@ object Declarations {
      * (Wi-Fi only), the same constraint git_sync and the seed declare.
      */
     /** #1289 one item of the per-repository menu (ui.sync.git.repo_menu): the id the page dispatches on, its label and translations. */
-    data class GitMenuItemDecl(val id: String, val label: String, val i18n: Map<String, String> = emptyMap()) {
+    data class GitMenuItemDecl(val id: String, val label: String, val i18n: Map<String, String> = emptyMap(), val icon: String = "") {
         fun labelFor(lang: String): String = i18n[lang]?.takeIf { it.isNotBlank() } ?: label
     }
     /** #1289 one group (or subgroup) of the per-repository menu; [lines] = one item per line, [danger] = drawn red and every item asks first. */
     data class GitMenuGroupDecl(
         val id: String, val label: String, val i18n: Map<String, String> = emptyMap(), val lines: Boolean = false,
         val danger: Boolean = false, val items: List<GitMenuItemDecl> = emptyList(), val subgroups: List<GitMenuGroupDecl> = emptyList(),
+        /** #1356 layout "row": the items are icon actions on ONE horizontal row. */
+        val row: Boolean = false,
     ) {
         fun labelFor(lang: String): String = i18n[lang]?.takeIf { it.isNotBlank() } ?: label
         /** Every item id of this group and its subgroups, in render order. */
@@ -684,7 +688,7 @@ object Declarations {
                         GitTopGroupDecl(gid, g.str("label"), g.str("icon"), objects(g["items"]).mapNotNull { i ->
                             val iid = i.str("id"); val kind = i.str("kind")
                             if (iid.isBlank() || kind !in TOP_KINDS) null else GitTopItemDecl(iid, kind, i.str("label", iid), i.str("hint"), i.str("icon"), i.str("op"), i.str("action"),
-                                i.bool("force"), i.str("scope", "filtered"), i.bool("confirm"), i.bool("danger"), i.bool("exclusive", true), i.str("filter"), i.str("option"))
+                                i.bool("force"), i.str("scope", "filtered"), i.bool("confirm"), i.bool("danger"), i.bool("exclusive", true), i.str("filter"), i.str("option"), i.str("section"))
                         })
                     },
                     t.bool("search", true), t.str("search_placeholder"), t.strings("counters"),
@@ -731,8 +735,9 @@ object Declarations {
             val id = g.str("id"); if (id.isBlank()) return null
             return GitMenuGroupDecl(
                 id, g.str("label", id), i18n(g), g.str("layout") == "lines", g.bool("danger"),
-                objects(g["items"]).mapNotNull { x -> x.str("id").takeIf { it.isNotBlank() }?.let { GitMenuItemDecl(it, x.str("label", it), i18n(x)) } },
+                objects(g["items"]).mapNotNull { x -> x.str("id").takeIf { it.isNotBlank() }?.let { GitMenuItemDecl(it, x.str("label", it), i18n(x), x.str("icon")) } },
                 objects(g["subgroups"]).mapNotNull { group(it) },
+                g.str("layout") == "row",
             )
         }
         val a = o["autosync"] as? JsonObject ?: JsonObject(emptyMap())
@@ -944,7 +949,7 @@ object Declarations {
     /** #1288 the runner's scope of a folder command (never declared in depth_actions). */
     const val DEPTH_SCOPE_FOLDER = "folder"
     /** #1315 the top bar's item kinds (ui.sync.git.top_bar.groups[].items[].kind), dispatched by GitReposScreen; test-drive-git-top-bar.sh diffs both ways. */
-    val TOP_KINDS = setOf("check_light", "check_full", "check_remote", "check_sizes", "scan_inventory", "cancel_checks", "op", "compound", "pull", "depth", "open_logs", "open_report", "toggle_filter", "legend", "open_advanced")
+    val TOP_KINDS = setOf("check_light", "check_full", "check_remote", "check_sizes", "scan_inventory", "cancel_checks", "op", "compound", "pull", "depth", "open_logs", "open_report", "toggle_filter", "legend", "open_advanced", "open_conflicts")
     const val REMOTE_READONLY = "readonly"
 
     /** #608 the Git page's two sections and the personal section's two groups, by id. */

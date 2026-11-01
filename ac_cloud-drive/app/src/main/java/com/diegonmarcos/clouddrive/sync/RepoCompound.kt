@@ -22,6 +22,7 @@ import org.json.JSONObject
  *  - sync-no-winner  : fetch + merge of the upstream; a conflict aborts the merge and reports, nothing changes.
  *  - sync-remote-wins: local changes (untracked included) are stashed first, then reset to the remote.
  *  - sync-local-wins : stage + commit, fetch (so the lease is current), then push --force-with-lease.
+ *  - stash / pull_rebase / stash_pop: #1356 Manual Sync (stash push -u, pull --rebase, stash pop).
  *  - clean(depth)    : LOCAL ONLY: fetch --depth N, reflog expire, gc. The remote is never written.
  */
 internal object RepoCompound {
@@ -88,6 +89,20 @@ internal object RepoCompound {
                 }
                 val pushed = GitEngine(ctx, dir).use { it.push(auth = auth) }
                 GitOpResult(pushed.ok, "stash-push: " + (if (dirty) "local changes stashed, " else "") + pushed.summary, pushed.details)
+            }
+            // #1356 Manual Sync: the three verbs the Sync dropdown and the repo sheet run; a conflict is reported, never resolved here.
+            id == RepoActions.STASH -> {
+                val dirty = GitEngine(ctx, dir).use { it.status().files.isNotEmpty() }
+                if (!dirty) GitOpResult(true, "stash: nothing to stash")
+                else raw(ctx, dir, "stash", who.put("message", "cloud-drive: stash all"), auth).let { GitOpResult(it.ok, "stash: " + if (it.ok) "local changes stashed" else "refused", it.details.ifBlank { it.summary }) }
+            }
+            id == RepoActions.PULL_REBASE -> {
+                val r = GitEngine(ctx, dir).use { it.pull(rebase = true, auth = auth) }
+                GitOpResult(r.ok, "pull (rebase): " + r.summary, r.details)
+            }
+            id == RepoActions.STASH_POP -> {
+                val r = raw(ctx, dir, "stash_pop", who, auth)
+                GitOpResult(r.ok, "stash pop: " + if (r.ok) "applied" else r.summary, r.details.ifBlank { r.summary })
             }
             RepoActions.cleanDepth(id) > 0 -> {
                 val depth = RepoActions.cleanDepth(id)

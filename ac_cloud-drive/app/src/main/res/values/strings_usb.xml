@@ -33,4 +33,18 @@
     <string name="git_storage_no_folder">No git folder</string>
     <string name="git_storage_no_folder_hint">%1$s has no folder named git (any case).</string>
     <string name="git_storage_empty">No repositories in this git folder</string>
+    <string name="git_storage_raw_read_only">This USB drive is not mounted by Android (opened raw): git cannot read or write it. Use a drive Android mounts.</string>
+    <string name="git_storage_raw_hint">Explorer can still copy files to and from it.</string>
+    <string name="git_storage_needs_grant">Git cannot write on this drive yet</string>
+    <string name="git_storage_needs_grant_hint">Allow all-files access, or grant this drive to Cloud Drive.</string>
+    <string name="git_storage_grant">Grant drive access</string>
+    <string name="git_storage_create_title">Create the git folder?</string>
+    <string name="git_storage_create_body">%1$s does not exist. Create it so clones can land there?</string>
+    <string name="git_storage_create">Create</string>
+    <string name="git_storage_created">Created %1$s</string>
+    <string name="git_storage_create_failed">Could not create %1$s (no write access)</string>
+    <string name="git_clone_into">Clone into</string>
+    <string name="git_conflicts_title">Repositories with conflicts</string>
+    <string name="git_conflicts_none">No repository has conflicts.</string>
+    <string name="git_conflicts_count">%1$d conflicted file(s)</string>
 </resources>
