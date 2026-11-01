@@ -54,6 +54,7 @@ object Tags {
     const val TICKER = "holdings_ticker"
     const val QUANTITY = "holdings_quantity"
     const val COST = "holdings_cost"
+    const val ADD_SHEET = "holdings_add_sheet"
     const val CONTROL = "container_control"
     const val MESH_ONLY = "container_mesh_only"
     fun action(id: String): String = "container_action:$id"
