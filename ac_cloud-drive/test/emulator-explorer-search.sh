@@ -40,6 +40,9 @@ sleep 2; tap '^Local$' || true; sleep 3
 dump >/dev/null
 HERE=$(grep -oE 'text="/storage/[^"]*"' "$OUT/ui.xml" | head -1 | sed 's/text="//;s/"$//')
 [ -n "$HERE" ] || HERE=/storage/emulated/0
+# A bare emulator has no Termux, so the first pane (cloud-shared-store) cannot open; the shared-storage pane
+# (emulated › 0) is folded under it: open that one, the fixture goes there (run 41295555027).
+if grep -q 'text="cannot open' "$OUT/ui.xml"; then tap '^emulated › 0$' || fail "no shared-storage pane: $(texts)"; sleep 3; HERE=/storage/emulated/0; fi
 echo "explorer opened on: $HERE"
 ROOTDIR=/storage/emulated/0
 adb shell "mkdir -p '$HERE/XsTrip/xstrip-deep' '$ROOTDIR/Music/xstrip-songs' && echo x > '$HERE/xstrip.txt' && echo x > '$HERE/XsTrip/xstrip-notes.txt' && echo x > '$ROOTDIR/Music/xstrip.mp3'" || fail "fixture write failed"
