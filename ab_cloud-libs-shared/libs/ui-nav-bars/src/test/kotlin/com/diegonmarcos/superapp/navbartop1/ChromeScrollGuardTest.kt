@@ -49,7 +49,9 @@ class ChromeScrollGuardTest {
     @Test fun `no app and not the row itself brings the hamburger back`() {
         val menu = Regex("""TopFirstRowTags\.MENU|\.openDrawer\(\)""")
         for (app in apps) {
-            val hits = sources(app).filter { menu.containsMatchIn(it.readText()) }.map { it.name }
+            // The history bar's Menu item (Clean mode, the bottom row) opens the drawer on purpose (#1369); that wiring
+            // line is the one exemption, any other drawer opener or MENU tag still counts.
+            val hits = sources(app).filter { f -> f.readLines().any { menu.containsMatchIn(it) && "HistoryBarItem.Menu ->" !in it } }.map { it.name }
             assertEquals("$app draws or wires a hamburger (the first row has none; drawer content goes through TopBarDrawer into the title dropdown)", emptyList<String>(), hits)
         }
         var dir: File? = File("").absoluteFile
