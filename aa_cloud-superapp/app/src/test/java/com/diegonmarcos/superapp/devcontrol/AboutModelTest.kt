@@ -56,7 +56,7 @@ class AboutModelTest {
 
     @Test
     fun `A3 back links close every macro group`() {
-        val page = AboutPage { true }
+        val page = AboutPage(attached = { true })
         page.macro("📱  APP & BUILD"); page.infoSection("A") {}
         page.macro("☁  REPO & RELEASES"); page.infoSection("B") {}
         page.macro("🖥️  DEVICE"); page.copyAllButton()
@@ -74,7 +74,7 @@ class AboutModelTest {
 
     @Test
     fun `A4 the buffer is the heading then the rows`() {
-        val page = AboutPage { true }
+        val page = AboutPage(attached = { true })
         page.macro("X"); page.infoSection("Heading") { row("Name", "Value"); small("note") }
         val s = page.sections.single()
         s.load(scope)
