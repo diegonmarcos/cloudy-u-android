@@ -20,6 +20,12 @@ adb shell settings put system screen_off_timeout 2147483647 || true
 adb shell locksettings set-disabled true >/dev/null 2>&1 || true
 wake
 adb install -r -g "$APK" || { echo "::error::install failed"; exit 2; }
+# Same setup as screenshot-baseline.yml: the SuperApp's own idle Screensaver (an overlay with an Unlock button) covered every
+# shot of run 41298521502, so it gets no overlay grant; the SuperApp is the home app and system error dialogs stay hidden.
+adb shell appops set "$PKG" SYSTEM_ALERT_WINDOW deny || true
+adb shell cmd package set-home-activity "$PKG/.HomeActivity" || true
+adb shell pm disable-user --user 0 com.google.android.apps.nexuslauncher >/dev/null 2>&1 || true
+adb shell settings put global hide_error_dialogs 1 || true
 adb shell settings delete global cloud_nav_ui_mode || true
 adb shell settings put global adb_wifi_enabled 0 || true
 
