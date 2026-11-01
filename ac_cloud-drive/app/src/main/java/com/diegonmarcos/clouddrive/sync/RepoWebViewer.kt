@@ -19,8 +19,6 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -71,10 +69,10 @@ fun RepoWebViewer(url: String, onClose: () -> Unit) {
         BackHandler(onBack = onClose)
         Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface).testTag(DriveTags.SYNC_GIT_STORAGE + "_web")) {
             Row(Modifier.fillMaxWidth().padding(horizontal = DriveMetrics.gap), verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onClose) { Icon(Icons.Filled.Close, stringResource(R.string.repo_status_window_close)) }
+                com.diegonmarcos.clouddrive.ui.IslandAction(Icons.Filled.Close, stringResource(R.string.repo_status_window_close)) { onClose() }
                 Text(title, Modifier.weight(1f), style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Box {
-                    IconButton(onClick = { menu = true }, modifier = Modifier.testTag(DriveTags.SYNC_GIT_STORAGE + "_web_menu")) { Icon(Icons.Filled.MoreVert, stringResource(R.string.repo_web_menu)) }
+                    Box(Modifier.testTag(DriveTags.SYNC_GIT_STORAGE + "_web_menu")) { com.diegonmarcos.clouddrive.ui.IslandAction(Icons.Filled.MoreVert, stringResource(R.string.repo_web_menu)) { menu = true } }
                     DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
                         val current = web?.url ?: url
                         RepoWebMenu.ORDER.forEach { item ->
