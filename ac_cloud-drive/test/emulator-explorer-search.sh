@@ -27,6 +27,11 @@ for m in re.finditer(r"<node [^>]*>",x):
 else: sys.exit(1)' "$1"; }
 tap() { where "$1" | { read -r px py && adb shell input tap "$px" "$py"; }; }
 has() { grep -q "text=\"$1\"" "$OUT/ui.xml"; }
+# A chip past the right edge of the chip row (four chips do not fit 320 px): swipe that row left, or right, until it shows.
+reveal() { local xy d; dump >/dev/null; has "$1" && return 0
+  for d in left right; do xy=$(where '^(Only Folders Here|Only Folders Root|All From Here|All From Root)$') || return 1; set -- "$1" $xy
+    if [ $d = left ]; then adb shell input swipe 280 "$3" 40 "$3" 300; else adb shell input swipe 40 "$3" 280 "$3" 300; fi
+    sleep 1; dump >/dev/null; has "$1" && return 0; done; return 1; }
 texts() { grep -oE 'text="[^"]+"' "$OUT/ui.xml" | sed 's/text="//;s/"$//' | sort -u | tr '\n' ';'; }
 
 adb install -r -g "$APK" || fail "install failed"
@@ -68,7 +73,7 @@ has AXsTrip || fail "the fixture folder is not in the listing of $HERE: $(texts)
 # 1. expand: chips show, the listing stays, no page replaces it
 tap '^Search$' || fail "no search icon"
 sleep 2; shot 02-expanded
-for c in 'Only Folders Here' 'Only Folders Root' 'All From Here' 'All From Root'; do has "$c" || fail "chip '$c' missing: $(texts)"; done
+for c in 'Only Folders Here' 'Only Folders Root' 'All From Here' 'All From Root'; do reveal "$c" || fail "chip '$c' missing: $(texts)"; done
 has AXsTrip || fail "the listing vanished when the bar expanded"
 
 # 2. type: default scope = folders here, filtered live
@@ -89,12 +94,12 @@ has xstrip.txt && fail "Only Folders Here lists a file"
 has xstrip-songs && fail "Only Folders Here reached outside this folder"
 
 # 3. the recursive scopes
-tap '^All From Here$' || fail "no All From Here chip"; sleep 5; shot 04-all-here
+reveal 'All From Here'; tap '^All From Here$' || fail "no All From Here chip"; sleep 5; shot 04-all-here
 has xstrip-notes.txt || fail "All From Here missed a file below this folder: $(texts)"
-tap '^Only Folders Root$' || fail "no Only Folders Root chip"; sleep 6; shot 05-folders-root
+reveal 'Only Folders Root'; tap '^Only Folders Root$' || fail "no Only Folders Root chip"; sleep 6; shot 05-folders-root
 has xstrip-songs || fail "Only Folders Root missed the folder elsewhere under the root: $(texts)"
 has xstrip.mp3 && fail "Only Folders Root lists a file"
-tap '^All From Root$' || fail "no All From Root chip"; sleep 6; shot 06-all-root
+reveal 'All From Root'; tap '^All From Root$' || fail "no All From Root chip"; sleep 6; shot 06-all-root
 has xstrip.mp3 || fail "All From Root missed the file elsewhere under the root: $(texts)"
 
 # 4. back collapses in place
