@@ -44,7 +44,7 @@ check() { # $1 = app dir; prints FAIL lines, returns the number of failures
   [ "$(jq -c '[.ui.bottom_nav[] as $b | .ui.sections[] | select(.id == $b) | .label]' "$d/build.json" 2>/dev/null)" = '["Contacts","Keypad","Home","Calls","SMS","SIMs"]' ] \
     || bad "B2 bottom nav labels are not Contacts|Keypad|Home|Calls|SMS|SIMs"
   grep -q 'setOf(KEYPAD, SIMS)' "$K/nav/DialerNav.kt" || bad "B3 Keypad / SIMs are filtered out of the island (DialerNav.NON_PAGER)"
-  grep -q 'DialerNav.KEYPAD -> { launchDialpad()' "$MA" || bad "B4 Keypad does not open the dialpad"
+  grep -q 'KeypadPage(c, onCall' "$MA" && grep -q 'DialerNav.KEYPAD, DialerNav.SIMS -> { selectedSection.value = sectionId' "$MA" || bad "B4 Keypad is not the in-shell keypad page"
   # R
   local libs lib dir co ga grp bridge
   libs="$(grep -oE 'project\("(:libs:[^"]+)"\)\.projectDir = file\("[^"]+"\)' "$d/settings.gradle.kts" | sed -E 's/.*file\("([^"]+)"\)/\1/')"
@@ -105,7 +105,7 @@ mutant "bottom nav order" "jq '.ui.bottom_nav = [\"home\",\"contacts\",\"keypad\
 mutant "SIMs off the island" "jq '.ui.bottom_nav -= [\"sims\"]' build.json > b && mv b build.json" B1
 mutant "Calls relabelled" "jq '(.ui.sections[] | select(.id == \"recents\") | .label) = \"Recents\"' build.json > b && mv b build.json" B2
 mutant "Keypad filtered out" "sed -i 's|setOf(KEYPAD, SIMS)|setOf(SIMS)|' $K/nav/DialerNav.kt" B3
-mutant "Keypad opens nothing" "sed -i 's|DialerNav.KEYPAD -> { launchDialpad()|DialerNav.KEYPAD -> { Unit|' $K/activities/MainActivity.kt" B4
+mutant "Keypad opens nothing" "sed -i 's|KeypadPage(c, onCall|Unit(c, onCall|' $K/activities/MainActivity.kt" B4
 mutant "security-crypto not linked (the sha-61326f78 crash)" "sed -i '/androidx-security-crypto\|securityCrypto/d' gradle/libs.versions.toml; sed -i '/libs.androidx.security.crypto/d' app/build.gradle.kts" R1
 mutant "security-crypto linked by hand, off the catalog" "sed -i 's|implementation(libs.androidx.security.crypto)|implementation(\"androidx.security:security-crypto:1.1.0\")|' app/build.gradle.kts" R2
 mutant "keep rule dropped" "sed -i '/keep class androidx.security.crypto/d' app/proguard-rules.pro" R3

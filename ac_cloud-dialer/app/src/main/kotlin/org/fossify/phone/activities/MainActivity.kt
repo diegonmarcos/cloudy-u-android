@@ -60,6 +60,7 @@ import org.fossify.phone.dialogs.ChangeSortingDialog
 import org.fossify.phone.dialogs.FilterContactSourcesDialog
 import org.fossify.phone.extensions.clearMissedCalls
 import org.fossify.phone.extensions.config
+import org.fossify.phone.extensions.startCallWithProviderChooser
 import org.fossify.phone.extensions.handleFullScreenNotificationsPermission
 import org.fossify.phone.extensions.launchCreateNewContactIntent
 import org.fossify.phone.fragments.ContactsFragment
@@ -229,7 +230,7 @@ class MainActivity : SimpleActivity() {
         return if (binding.mainMenu.isSearchOpen) {
             binding.mainMenu.closeSearch()
             true
-        } else if (selectedSection.value == DialerNav.SIMS) {
+        } else if (selectedSection.value in DialerNav.NON_PAGER) {
             // #1415 back from the SIMs tab returns to the pager's page.
             selectedSection.value = visibleTabs().getOrNull(binding.viewPager.currentItem)?.sectionId.orEmpty()
             true
@@ -472,10 +473,12 @@ class MainActivity : SimpleActivity() {
                     modifier = Modifier.fillMaxSize(),
                 )
                 // #1415 the SIMs tab: drawn over the pager (which stays composed), each SIM's info and its usage.
-                if (sectionId == DialerNav.SIMS) {
+                // #1415 Keypad likewise: an in-shell keypad (the bars stay); a call goes through the provider chooser.
+                if (sectionId in DialerNav.NON_PAGER) {
                     val c = com.diegonmarcos.superapp.themebg.ThemeBackground.colors(dark)
                     Box(Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(c.top, c.bottom)))) {
-                        SimsOverviewPage(c)
+                        if (sectionId == DialerNav.SIMS) SimsOverviewPage(c)
+                        else org.fossify.phone.nav.KeypadPage(c, onCall = { n -> startCallWithProviderChooser(n, n) }, onFullDialpad = { n -> launchDialpad(n) })
                     }
                 }
                 }
@@ -491,10 +494,9 @@ class MainActivity : SimpleActivity() {
     /** A tap on the bottom nav: show that section's page. */
     private fun selectSection(sectionId: String) {
         when (sectionId) {
-            DialerNav.KEYPAD -> { launchDialpad(); return }
-            DialerNav.SIMS -> { selectedSection.value = DialerNav.SIMS; return }
+            DialerNav.KEYPAD, DialerNav.SIMS -> { selectedSection.value = sectionId; return }
         }
-        if (selectedSection.value == DialerNav.SIMS) {
+        if (selectedSection.value in DialerNav.NON_PAGER) {
             selectedSection.value = sectionId
         }
         val index = visibleTabs().indexOfFirst { it.sectionId == sectionId }
@@ -542,8 +544,9 @@ class MainActivity : SimpleActivity() {
         }
     }
 
-    private fun launchDialpad() {
+    private fun launchDialpad(number: String = "") {
         Intent(applicationContext, DialpadActivity::class.java).apply {
+            if (number.isNotEmpty()) { action = Intent.ACTION_DIAL; data = android.net.Uri.fromParts("tel", number, null) }
             startActivity(this)
         }
     }
