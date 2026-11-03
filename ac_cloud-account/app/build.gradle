@@ -274,6 +274,7 @@ dependencies {
     testImplementation 'org.robolectric:robolectric:4.16.1'
     testImplementation platform('androidx.compose:compose-bom:2025.11.01')
     testImplementation 'androidx.compose.ui:ui-test-junit4'
+    debugImplementation 'androidx.compose.ui:ui-test-manifest'   // createComposeRule's ComponentActivity (PersonalC3Test under Robolectric)
     androidTestImplementation 'androidx.test:runner:1.6.1'
     androidTestImplementation 'androidx.test.ext:junit:1.2.1'
 }
