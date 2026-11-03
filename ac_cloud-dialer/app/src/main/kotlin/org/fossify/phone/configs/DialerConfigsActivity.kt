@@ -53,6 +53,7 @@ import androidx.compose.ui.unit.sp
 import com.diegonmarcos.superapp.bottomnav.NavPage
 import com.diegonmarcos.superapp.fleetconfigs.FleetAboutPage
 import com.diegonmarcos.superapp.fleetconfigs.FleetConfigs
+import com.diegonmarcos.superapp.fleetconfigs.FleetConfigsTags
 import com.diegonmarcos.superapp.fleetconfigs.FleetGeneralPage
 import com.diegonmarcos.superapp.navbartop2.NavBarTopSecondRow
 import com.diegonmarcos.superapp.perms.AppPermsSection
@@ -133,7 +134,9 @@ private fun DialerConfigsScreen(dark: Boolean, start: String?, onBack: () -> Uni
             pages = pages, selectedId = selected, onSelect = { selected = it.id }, dark = dark,
             underTopChrome = false, compact = false, hidden = false,
         )
-        Box(Modifier.fillMaxSize()) {
+        // The shared page tags (fleetcfg_general / fleetcfg_about) on those two tabs: the runtime nav walk checks them there.
+        val pageTag = when (selected) { "general" -> FleetConfigsTags.GENERAL; "about" -> FleetConfigsTags.ABOUT; else -> "dialer_cfg_$selected" }
+        Box(Modifier.fillMaxSize().testTag(pageTag)) {
             when (selected) {
                 "general" -> FleetGeneralPage(FleetConfigs.current, dark, c, onAppConfigs = onAppSettings)
                 "perms" -> PermsPage(c)

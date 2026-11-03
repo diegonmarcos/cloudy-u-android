@@ -425,13 +425,22 @@ public fun NavBarTopFirstRowScaffold(
     leaf: String? = null,
     /** Kept for source compatibility: the nav UI card is now a section of Configs > General, which every app gets. */
     @Suppress("UNUSED_PARAMETER") configsUi: Boolean = true,
+    /**
+     * #1415 non-null: the app has ONE Configs of its own whose tabs include General and About (Cloud Dialer's
+     * DialerConfigsActivity); the dropdown's and the Clean drawer's Configs ▸ General / About open that page of it instead of
+     * the scaffold's own dialog, so the app never shows a second, parallel Configs.
+     */
+    onConfigsPage: ((FleetConfigsPage) -> Unit)? = null,
     content: @Composable () -> Unit,
 ) {
     // Configs > General and Configs > About (libs:ui-nav-bars fleetconfigs): the same two pages in every app, from build.json::configs_pages.
     var configsPage by remember { mutableStateOf<FleetConfigsPage?>(null) }
     configsPage?.let { p -> FleetConfigsScreen(p, dark, onDismiss = { configsPage = null }, onAppConfigs = onConfigs) }
-    val openGeneral: () -> Unit = { configsPage = FleetConfigsPage.General }
-    val openAbout: () -> Unit = { configsPage = FleetConfigsPage.About }
+    fun openConfigsPage(p: FleetConfigsPage) {
+        if (onConfigsPage != null) onConfigsPage(p) else configsPage = p
+    }
+    val openGeneral: () -> Unit = { openConfigsPage(FleetConfigsPage.General) }
+    val openAbout: () -> Unit = { openConfigsPage(FleetConfigsPage.About) }
     // Classic or Clean (NavUiMode): the user's choice in this app's Configs > UI over the app's declared default; every bar below reads the same.
     val ui = currentNavUi()
     val plan = NavUiDecl.plan(ui.mode)

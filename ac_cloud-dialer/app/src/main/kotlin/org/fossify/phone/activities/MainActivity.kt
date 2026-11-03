@@ -438,7 +438,9 @@ class MainActivity : SimpleActivity() {
             hierarchy = shown.map { HierarchyEntry(it.id, it.label, 0, it.id, selected = it.id == sectionId) },
             onNavigate = { e -> selectSection(e.sectionId) },
             onAccount = rememberAccountLauncher(),
-            onConfigs = { startActivity(DialerConfigsActivity.intent(this@MainActivity)) },
+            onConfigs = { openConfigs() },
+            // #1415 the dropdown's Configs ▸ General / About open the same one Configs, on that tab (no scaffold dialog).
+            onConfigsPage = { p -> openConfigs(p.id) },
             onAi = rememberSuperAppAiLauncher(),
             modifier = Modifier.fillMaxSize().statusBarsPadding(),
             dark = dark,
@@ -479,6 +481,11 @@ class MainActivity : SimpleActivity() {
                 }
             }
         }
+    }
+
+    /** #1415 THE one way into Configs (DialerConfigsActivity), optionally on one of its top-nav tabs. */
+    private fun openConfigs(page: String? = null) {
+        startActivity(DialerConfigsActivity.intent(this, page))
     }
 
     /** A tap on the bottom nav: show that section's page. */

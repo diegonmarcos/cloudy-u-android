@@ -18,7 +18,8 @@ check() { # $1 = app dir; prints FAIL lines, returns the number of failures
   bad() { echo "FAIL $1"; n=$((n + 1)); }
   # C
   [ "$(grep -rho 'DialerConfigsActivity\.intent(' "$K" | wc -l)" = 1 ] || bad "C1 DialerConfigsActivity.intent( must be called exactly once"
-  grep -q 'onConfigs = { startActivity(DialerConfigsActivity.intent(' "$MA" || bad "C2 the top bar's onConfigs does not open DialerConfigsActivity"
+  grep -q 'startActivity(DialerConfigsActivity.intent(this, page))' "$MA" && grep -q 'onConfigs = { openConfigs() }' "$MA" \
+    && grep -q 'onConfigsPage = { p -> openConfigs(p.id) }' "$MA" || bad "C2 the top bar's Configs (and the dropdown's General / About) do not open the one DialerConfigsActivity"
   grep -rqE 'FleetConfigs(Entries|Menu|Buttons|Activity)\b|menu\.add\(.*Configs' "$K" && bad "C3 a second Configs entry (FleetConfigs* helper or a Configs menu item)"
   grep -qE 'showAsAction="(never|ifRoom|collapseActionView)' "$d/app/src/main/res/menu/menu.xml" && bad "C4 menu.xml has an item that can fall into the ⋮ overflow"
   grep -q 'overflowIcon = null' "$MA" || bad "C5 the search bar's ⋮ overflow icon is not removed"
@@ -83,7 +84,8 @@ mutant() { # $1 name, $2 shell mutation run inside the copy, $3 expected FAIL id
 K=app/src/main/kotlin/org/fossify/phone
 mutant "a second entry: Configs menu item back" "sed -i 's|requireToolbar().overflowIcon = null|requireToolbar().menu.add(\"Configs ▸ SIM\"); requireToolbar().overflowIcon = null|' $K/activities/MainActivity.kt" C3
 mutant "FleetConfigsEntries.addTo back" "sed -i 's|requireToolbar().overflowIcon = null|FleetConfigsEntries.addTo(requireToolbar().menu)|' $K/activities/MainActivity.kt" C3
-mutant "top bar Configs opens the old settings" "sed -i 's|onConfigs = { startActivity(DialerConfigsActivity.intent(this@MainActivity)) }|onConfigs = { }|' $K/activities/MainActivity.kt" C2
+mutant "top bar Configs opens the old settings" "sed -i 's|onConfigs = { openConfigs() }|onConfigs = { }|' $K/activities/MainActivity.kt" C2
+mutant "dropdown General/About back on the scaffold's parallel dialog" "sed -i '/onConfigsPage = { p -> openConfigs(p.id) },/d' $K/activities/MainActivity.kt" C2
 mutant "a second launcher of Configs" "printf 'fun x(c: android.content.Context) = DialerConfigsActivity.intent(c)\n' >> $K/sim/SimPages.kt" C1
 mutant "Settings back in the ⋮ overflow" "sed -i '0,/app:showAsAction=\"always\"/s//app:showAsAction=\"never\"/' app/src/main/res/menu/menu.xml" C4
 mutant "overflow icon kept" "sed -i 's|requireToolbar().overflowIcon = null||' $K/activities/MainActivity.kt" C5

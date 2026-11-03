@@ -510,7 +510,11 @@
       "app": "ac_cloud-dialer",
       "ship": "ship-cloud-dialer.yml",
       "artifact": "cloud-comms-dialer-",
-      "asset": "cloud-comms-dialer"
+      "asset": "cloud-comms-dialer",
+      "_doc_scenes": "#1415 the owner reviews the one Configs (top bar), each top-nav tab, Status (scrolled, back), the bottom nav, SIMs and Keypad by these shots, with the global cloud_nav_ui_mode cleared (scene_setup deletes it, so the app's own default mode applies).",
+      "scene_themes": ["dark"],
+      "scene_setup": [["shell", "settings delete global cloud_nav_ui_mode"]],
+      "scenes": [{"name": "bottom-nav", "steps": [["wait", 3]]}, {"name": "configs-general", "steps": [["tap", "topbar_configs"], ["wait", 3]]}, {"name": "configs-perms", "steps": [["tap", "topbar_configs"], ["wait", 3], ["tap", "Perms"], ["wait", 3]]}, {"name": "configs-sim", "steps": [["tap", "topbar_configs"], ["wait", 3], ["tap", "SIM"], ["wait", 3]]}, {"name": "configs-status", "steps": [["tap", "topbar_configs"], ["wait", 3], ["tap", "Status"], ["wait", 3]]}, {"name": "configs-status-scrolled", "steps": [["tap", "topbar_configs"], ["wait", 3], ["tap", "Status"], ["wait", 3], ["swipe", 3]]}, {"name": "configs-status-back", "steps": [["tap", "topbar_configs"], ["wait", 3], ["tap", "Status"], ["wait", 3], ["tap", "dialer_configs_back"], ["wait", 2]]}, {"name": "configs-usage", "steps": [["tap", "topbar_configs"], ["wait", 3], ["tap", "Usage"], ["wait", 3]]}, {"name": "configs-about", "steps": [["tap", "topbar_configs"], ["wait", 3], ["tap", "About"], ["wait", 3]]}, {"name": "search-bar-no-overflow", "steps": [["tap", "Contacts"], ["wait", 3]]}, {"name": "sims-tab", "steps": [["tap", "SIMs"], ["wait", 4]]}, {"name": "keypad-tab", "steps": [["tap", "Keypad"], ["wait", 3]]}]
     },
     {
       "app": "ac_cloud-notes",
