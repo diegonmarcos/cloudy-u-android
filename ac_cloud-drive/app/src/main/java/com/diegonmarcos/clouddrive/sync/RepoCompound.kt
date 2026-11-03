@@ -104,6 +104,8 @@ internal object RepoCompound {
                 val r = raw(ctx, dir, "stash_pop", who, auth)
                 GitOpResult(r.ok, "stash pop: " + if (r.ok) "applied" else r.summary, r.details.ifBlank { r.summary })
             }
+            // #1419 Auto Commit: stage all, commit with the generated message; never pushes.
+            id == RepoActions.AUTO_COMMIT -> AutoCommitDrive.run(ctx, dir, name, email)
             RepoActions.cleanDepth(id) > 0 -> {
                 val depth = RepoActions.cleanDepth(id)
                 val r = raw(ctx, dir, "shrink", JSONObject().put("depth", depth), auth)

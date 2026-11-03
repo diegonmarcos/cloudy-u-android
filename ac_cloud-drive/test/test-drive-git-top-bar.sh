@@ -41,7 +41,7 @@ for k in known:
 depth_ids = {a["id"] for a in g["depth_actions"] if a["scope"] == "all"}
 for i in items:
     if i["kind"] == "depth" and i.get("action") not in depth_ids: print("    depth item names no scope-all depth action:", i["id"]); bad = 1
-    if i["kind"] == "compound" and i.get("op") not in ("sync_no_winner", "sync_remote_wins", "sync_local_wins", "stash_push", "stash", "pull_rebase", "stash_pop"): print("    compound item names no compound id:", i["id"]); bad = 1
+    if i["kind"] == "compound" and i.get("op") not in ("sync_no_winner", "sync_remote_wins", "sync_local_wins", "stash_push", "stash", "pull_rebase", "stash_pop", "auto_commit"): print("    compound item names no compound id:", i["id"]); bad = 1
     if i.get("danger") and not i.get("confirm"): print("    danger without confirm:", i["id"]); bad = 1
 sys.exit(bad)
 PY
@@ -128,9 +128,9 @@ else:
     # #1356 Sync is a dropdown: Sync All (Server Wins | Local Wins | No Winner) then Manual Sync (Stash All, Pull (Rebase), Stash Pop All, Conflicts All)
     sy = [(i["section"], i["kind"], i.get("op", "")) for i in groups[1]["items"]]
     want_sync = [("Sync All", "compound", "sync_remote_wins"), ("Sync All", "compound", "sync_local_wins"), ("Sync All", "compound", "sync_no_winner"),
-                 ("Manual Sync", "compound", "stash"), ("Manual Sync", "compound", "pull_rebase"), ("Manual Sync", "compound", "stash_pop"), ("Manual Sync", "open_conflicts", "")]
+                 ("Manual Sync", "compound", "stash"), ("Manual Sync", "compound", "pull_rebase"), ("Manual Sync", "compound", "stash_pop"), ("Manual Sync", "compound", "auto_commit"), ("Manual Sync", "open_conflicts", "")]
     if sy != want_sync: bad.append("the Sync dropdown is %s" % sy)
-    if [i["label"] for i in groups[1]["items"]] != ["Server Wins", "Local Wins", "No Winner", "Stash All", "Pull (Rebase)", "Stash Pop All", "Conflicts All"]: bad.append("the Sync dropdown labels")
+    if [i["label"] for i in groups[1]["items"]] != ["Server Wins", "Local Wins", "No Winner", "Stash All", "Pull (Rebase)", "Stash Pop All", "Auto Commit All", "Conflicts All"]: bad.append("the Sync dropdown labels")
     if "item.section != g.items.getOrNull(n - 1)?.section" not in bar: bad.append("the dropdown draws no section titles")
     more = [i["id"] for i in groups[4]["items"]]
     lost = [k for k in keep if k not in more]

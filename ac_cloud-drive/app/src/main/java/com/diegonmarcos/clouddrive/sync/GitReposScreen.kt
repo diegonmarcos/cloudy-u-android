@@ -881,7 +881,10 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
             "scan_inventory" -> coordinator.scanUnlisted()
             "cancel_checks" -> coordinator.cancelStatusReads()
             "op" -> if (item.op == GitSyncCoordinator.OP_FETCH) coordinator.fetchAll(scopeTargets)
-            "compound" -> coordinator.runCompoundAll(item.op, scopeTargets)
+            // #1419 Auto Commit All: only the dirty clones (a clone the full check read as clean is left out).
+            "compound" -> coordinator.runCompoundAll(item.op, if (item.op == RepoActions.AUTO_COMMIT) AutoCommit.targets(scopeTargets) { r ->
+                GitSyncCoordinator.glanceFor(r, glances)?.takeIf { it.read && it.level == "full" && !it.large }?.let { it.changed + it.conflicts }
+            } else scopeTargets)
             "pull" -> coordinator.pullAll(force = item.force, only = scopeTargets.map { it.id }.toSet())
             "depth" -> page.depthAction(item.action)?.let { a -> if (a.confirm) depthConfirm = a else runDepthAll(a) }
             "open_logs" -> { logsTab = page.topBar.logs.tabs.firstOrNull()?.first.orEmpty(); showActivity = true }
@@ -1001,6 +1004,8 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
                 Pill(stringResource(R.string.sync_add_repo), { actions.openEngine(EngineActivity.ENGINE_GIT, root) }, filled = true)
             }
         }
+        // #1419 Configs ▸ Git ▸ Auto Commit: the rule, a sample, the message writer.
+        if (setup) item(key = "auto_commit") { AutoCommitSection() }
         // #850 THE PAGE'S PULL ACTIONS: force pull every clone (asks first — it is the
         // declared destructive verb), and the persisted Auto pull on open (Wi-Fi only).
         if (setup) item {
@@ -1642,7 +1647,7 @@ private fun GitRepoOpsBox(
         if (RepoActions.route(id) == RepoActions.Route.CONFIRM) { confirm = id; return }
         when (id) {
             RepoActions.SYNC_NO_WINNER, RepoActions.SYNC_REMOTE_WINS, RepoActions.SYNC_LOCAL_WINS,
-            RepoActions.STASH, RepoActions.PULL_REBASE, RepoActions.STASH_POP -> coordinator.runCompound(repo, id)
+            RepoActions.STASH, RepoActions.PULL_REBASE, RepoActions.STASH_POP, RepoActions.AUTO_COMMIT -> coordinator.runCompound(repo, id)
             // #1289 Goto > Folder: the clone's folder in Drive Files (Explorer ▸ Local).
             RepoActions.OPEN_FOLDER -> actions.openInFiles(repo.path)
             RepoActions.CHECKOUT_MAIN -> coordinator.checkoutMain(repo)

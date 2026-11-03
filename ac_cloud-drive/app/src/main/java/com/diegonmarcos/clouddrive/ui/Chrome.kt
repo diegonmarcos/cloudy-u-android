@@ -217,6 +217,7 @@ object DriveTags {
     /** #642 the one line that reports what the cloud-terminal git handoff resolved to. */
     const val SYNC_GIT_HANDOFF = "sync_git_handoff"
     const val SYNC_GIT_PULL_ALL = "sync_git_pull_all"
+    const val SYNC_GIT_AUTO_COMMIT = "sync_git_auto_commit"
     const val SYNC_GIT_AUTO_PULL = "sync_git_auto_pull"
     /** #683 the first-run seed's last verdict — shown only when the store is NOT cleanly complete. */
     const val SYNC_GIT_SEED = "sync_git_seed"

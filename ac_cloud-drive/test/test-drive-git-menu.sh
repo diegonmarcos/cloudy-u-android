@@ -39,7 +39,7 @@ subs = ms.get("subgroups", [])
 dest = sorted(o["id"] for o in g.get("ops", []) if o.get("destructive"))
 if ms.get("layout") != "row" or len(subs) != 1 or not subs[0].get("danger") or sorted(ids(subs[0])) != dest: print("    Manual Sync / Dangerous subgroup"); bad = 1
 # #1356 Manual Sync: the Sync dropdown's four actions, icons on ONE row; Dangerous also one row, red, confirmed (RepoActions.route)
-if [i["id"] for i in ms.get("items", [])] != ["stash", "pull_rebase", "stash_pop", "solve_conflicts"]: print("    Manual Sync is not Stash, Pull (Rebase), Stash Pop, Conflict Solver"); bad = 1
+if [i["id"] for i in ms.get("items", [])] != ["stash", "pull_rebase", "stash_pop", "auto_commit", "solve_conflicts"]: print("    Manual Sync is not Stash, Pull (Rebase), Stash Pop, Auto Commit, Conflict Solver"); bad = 1
 if subs and subs[0].get("layout") != "row": print("    Dangerous is not one row"); bad = 1
 if any(not i.get("icon") for i in ms.get("items", []) + (subs[0].get("items", []) if subs else [])): print("    a row action has no icon"); bad = 1
 for w in ("list_dirty", "list_conflicts"):

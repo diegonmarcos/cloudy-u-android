@@ -69,7 +69,7 @@ class RepoMenuTest {
     @Test fun `Manual Sync is the four actions on one row and its Dangerous row is marked and equals the destructive ops`() {
         val m = menu.group("manual_sync")!!
         assertTrue(m.row); assertFalse(m.lines)
-        assertEquals(listOf(RepoActions.STASH, RepoActions.PULL_REBASE, RepoActions.STASH_POP, RepoActions.SOLVE_CONFLICTS), m.items.map { it.id })
+        assertEquals(listOf(RepoActions.STASH, RepoActions.PULL_REBASE, RepoActions.STASH_POP, RepoActions.AUTO_COMMIT, RepoActions.SOLVE_CONFLICTS), m.items.map { it.id })
         assertTrue(m.items.all { it.icon.isNotBlank() })
         val danger = m.subgroups.single()
         assertTrue(danger.danger); assertTrue(danger.row)

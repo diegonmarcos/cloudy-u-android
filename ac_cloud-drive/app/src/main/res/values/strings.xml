@@ -282,6 +282,12 @@
     <string name="git_cloning">cloning…</string>
     <string name="git_force_pull_all">Force pull all</string>
     <string name="git_pull_all">Pull all</string>
+    <string name="git_auto_commit_title">Auto Commit</string>
+    <string name="git_auto_commit_rule">Stages every dirty file and commits it. Subject: files, +/− lines, size and folder count. Body: each folder (full path, files, +/− lines, size), then each file as path (+a −d) up to 4 KB, then …and N more. Never pushes.</string>
+    <string name="git_auto_commit_sample">Sample message</string>
+    <string name="git_auto_commit_writer">Message writer</string>
+    <string name="git_auto_commit_model">Model</string>
+    <string name="git_auto_commit_model_hint">Sent: the diff stat and the diff cut to 8000 characters, through the fleet AI gateway. On error or offline the rule writes the message.</string>
     <string name="git_confirm_force_pull_all">Force pull overwrites the LOCAL clone of each of the %1$d repositories with its remote branch. Local commits and uncommitted edits are lost.</string>
     <string name="git_auto_pull_on_open">Auto pull on open</string>
     <string name="git_auto_pull_wifi_only">Auto pull runs on Wi-Fi only.</string>
