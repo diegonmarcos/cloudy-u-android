@@ -8,6 +8,8 @@ set -u
 APK="$1"; OUT="$2"
 PKG=com.diegonmarcos.cloudaccount
 mkdir -p "$OUT"
+# adb reads stdin: inside the `while read` loop below it would swallow the page list, so it never gets one.
+adb() { command adb "$@" </dev/null; }
 fail=0
 bad() { echo "FAIL  $*"; fail=1; }
 
@@ -52,10 +54,12 @@ tap_text() {  # tap the centre of the first node whose text is $1
   set -- $b; adb shell input tap $(( ($1 + $3) / 2 )) $(( ($2 + $4) / 2 )); sleep 1
 }
 if tap_text "Add"; then
+  # Fields in order Label, Holder, Number: TAB moves focus, so no tap can land on the wrong field.
   tap_text "Label" && adb shell input text "Test"
-  tap_text "Number" && adb shell input text "4000000000000002"
+  adb shell input keyevent 61; adb shell input keyevent 61; sleep 1
+  adb shell input text "4000000000000002"
   adb shell input keyevent 111; sleep 1
-  tap_text "Save" || bad "cards: no Save"
+  for _ in 1 2 3; do tap_text "Save" && break; adb shell input swipe 500 1500 500 600 300; sleep 1; done || bad "cards: no Save"
   shot personal-cards-added 3
   has personal-cards-added "0002" || bad "cards: the masked last four are not shown"
   has personal-cards-added "4000000000000002" && bad "cards: the full number is on screen"
