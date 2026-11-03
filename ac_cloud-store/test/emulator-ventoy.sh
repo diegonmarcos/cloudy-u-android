@@ -49,6 +49,9 @@ done
 [ -n "$UUID" ] && [ "$UUID" != "null" ] || fail "the virtual volume never mounted"
 ROOTV=/storage/$UUID
 echo "virtual drive: $ROOTV"
+# vold's virtual disk is an SD-card-class volume: Android refuses a tree on its ROOT ("Can't use this folder"), so the
+# app also accepts its top-level ISO folder (a real USB-C drive grants the root). The folder is made here.
+adb shell "mkdir -p '$ROOTV/ISO'" || echo "note: the shell could not create $ROOTV/ISO"
 
 # A small test image, picked from Downloads (Install a local image): bytes we know, so the copy is checked by hash.
 python3 -I -c 'import sys; open(sys.argv[1],"wb").write(b"VENTOY-1405-TEST-IMAGE\n"*4096)' "$OUT/ventoy-test.iso"
@@ -77,6 +80,10 @@ has '/storage/emulated' && fail "the phone's own storage is offered as a target"
 # ── grant exactly that drive (the system's own per-volume dialog) ──────────────────────────────────────────────────
 tap '^Grant access$' || fail "no Grant access on the selected drive: $(texts)"; sleep 4
 shot 03a-grant-dialog
+dump >/dev/null
+if has "Can.t use this folder"; then
+  tap '^ISO$' || fail "the root is refused and there is no ISO folder in the picker: $(texts)"; sleep 3; shot 03b-grant-iso-folder
+fi
 for i in 1 2 3 4; do tap '^(USE THIS FOLDER|Use this folder)$' && break; sleep 2; done || fail "no 'Use this folder' in the system picker: $(texts)"
 sleep 2; tap '^(ALLOW|Allow)$' || true; sleep 4
 shot 03-drive-granted

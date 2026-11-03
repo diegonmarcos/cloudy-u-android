@@ -145,7 +145,9 @@ class VentoyDriveTest {
         assertTrue(VentoyTarget.isDriveTree(VentoyTarget.EXTERNAL_AUTHORITY, "1A2B-3C4D:"))
         assertFalse(VentoyTarget.isDriveTree(VentoyTarget.EXTERNAL_AUTHORITY, "primary:"))
         assertFalse(VentoyTarget.isDriveTree(VentoyTarget.EXTERNAL_AUTHORITY, "home:"))
-        assertFalse(VentoyTarget.isDriveTree(VentoyTarget.EXTERNAL_AUTHORITY, "1A2B-3C4D:ISO"))
+        assertTrue(VentoyTarget.isDriveTree(VentoyTarget.EXTERNAL_AUTHORITY, "1A2B-3C4D:ISO"))
+        assertFalse(VentoyTarget.isDriveTree(VentoyTarget.EXTERNAL_AUTHORITY, "1A2B-3C4D:Music"))
+        assertFalse(VentoyTarget.isDriveTree(VentoyTarget.EXTERNAL_AUTHORITY, "primary:ISO"))
         assertFalse(VentoyTarget.isDriveTree("com.android.providers.downloads.documents", "1A2B-3C4D:"))
     }
 

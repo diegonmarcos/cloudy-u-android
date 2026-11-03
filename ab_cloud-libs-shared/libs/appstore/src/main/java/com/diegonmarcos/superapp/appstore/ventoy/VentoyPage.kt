@@ -110,6 +110,7 @@ class VentoyPage(private val host: Fragment) {
 
     private fun requestGrant(ctx: Context, path: String) {
         selected = path
+        message = "Pick the drive itself; if Android says \"Can't use this folder\" (SD cards), open its ISO folder and use that."
         val i = StorageVolumes.grantIntent(ctx, path) ?: run { message = "This Android version cannot grant one drive; open it in Cloud Drive."; return }
         runCatching { grant.launch(i) }.onFailure { message = "No system picker for drive access: ${it.message}" }
     }
@@ -204,6 +205,7 @@ class VentoyPage(private val host: Fragment) {
                         if (!sel) Btn("Use this drive", onClick = { open(ctx, v.path!!) })
                         if (sel && drive == null) Btn("Grant access", onClick = { requestGrant(ctx, v.path!!) })
                     }
+                    if (sel && (drive as? SafDriveFs)?.isoOnly == true) Caption("Granted: the drive's ISO folder. Images install there; persistence needs the whole drive (Android refuses the root of an SD card).")
                     if (sel && drive != null) Caption(if (ventoy) "Ventoy drive detected · ${onDrive.size} image(s) on it" else "Not a Ventoy drive yet: images can be copied, but the drive will not boot them until Ventoy is installed.")
                 }
             }

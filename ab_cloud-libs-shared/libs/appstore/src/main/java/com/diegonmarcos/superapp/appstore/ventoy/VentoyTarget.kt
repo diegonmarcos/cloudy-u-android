@@ -40,14 +40,16 @@ object VentoyTarget {
 
     /**
      * A SAF tree on the external-storage provider names its volume before the colon: "primary:..." is the phone's own
-     * storage, "1A2B-3C4D:" a removable volume. Only the root of a removable volume is accepted.
+     * storage, "1A2B-3C4D:" a removable volume. Accepted: the root of a removable volume, or its top-level ISO folder
+     * (Android refuses a tree on the ROOT of an SD-card-class volume; images still go to /ISO, persistence needs the root).
      */
+    const val ISO_FOLDER = "ISO"
     const val EXTERNAL_AUTHORITY = "com.android.externalstorage.documents"
 
     fun isDriveTree(authority: String?, treeDocId: String?): Boolean {
         if (authority != EXTERNAL_AUTHORITY || treeDocId.isNullOrBlank()) return false
         val volume = treeDocId.substringBefore(':', "")
         if (volume.isEmpty() || volume.equals("primary", ignoreCase = true) || volume.equals("home", ignoreCase = true)) return false
-        return treeDocId.substringAfter(':', "x").isEmpty()
+        return treeDocId.substringAfter(':', "x").let { it.isEmpty() || it == ISO_FOLDER }
     }
 }

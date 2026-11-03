@@ -111,7 +111,7 @@ jobs:
           target-internal-path@VentoyTarget.kt@isInternalPath(p) -> Verdict.Refused@false -> Verdict.Refused
           target-read-only@VentoyTarget.kt@v.state == UsbVolumeModel.STATE_MOUNTED_READ_ONLY -> @false -> 
           tree-primary@VentoyTarget.kt@volume.equals("primary", ignoreCase = true) || @
-          tree-subfolder@VentoyTarget.kt@return treeDocId.substringAfter(':', "x").isEmpty()@return true
+          tree-subfolder@VentoyTarget.kt@it.isEmpty() || it == ISO_FOLDER@true
           ext2-free-count@Ext2Image.kt@.putShort(free[g].toShort())@.putShort((free[g] + 1).toShort())
           ext2-no-label@Ext2Image.kt@            b.put(name)\n@
           MUTANTS

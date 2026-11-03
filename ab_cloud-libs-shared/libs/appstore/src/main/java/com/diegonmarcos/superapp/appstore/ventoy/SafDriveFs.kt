@@ -20,7 +20,16 @@ class SafDriveFs(private val cr: ContentResolver, private val tree: Uri) : Drive
 
     private val rootId: String = DocumentsContract.getTreeDocumentId(tree)
 
-    private fun segments(path: String) = path.split('/').filter { it.isNotEmpty() }
+    /** True when the grant is the drive's /ISO folder, not its root: only /ISO is reachable (no ventoy.json, no persistence). */
+    val isoOnly: Boolean = rootId.substringAfter(':') == VentoyTarget.ISO_FOLDER
+
+    private fun segments(path: String): List<String> {
+        val s = path.split('/').filter { it.isNotEmpty() }
+        if (!isoOnly) return s
+        if (s.isEmpty()) return s
+        if (s.first() != VentoyTarget.ISO_FOLDER) throw SecurityException("only the drive's ISO folder was granted: $path needs the drive root")
+        return s.drop(1)
+    }
 
     private fun child(parentId: String, name: String): Pair<String, Boolean>? {
         val uri = DocumentsContract.buildChildDocumentsUriUsingTree(tree, parentId)
@@ -38,9 +47,10 @@ class SafDriveFs(private val cr: ContentResolver, private val tree: Uri) : Drive
 
     private fun doc(id: String) = DocumentsContract.buildDocumentUriUsingTree(tree, id)
 
-    override fun exists(path: String) = resolve(path) != null
+    override fun exists(path: String) = runCatching { resolve(path) != null }.getOrDefault(false)
 
     override fun list(dir: String): List<String> {
+        if (isoOnly && dir.trim('/').isEmpty()) return listOf(VentoyTarget.ISO_FOLDER + "/")
         val (id, isDir) = resolve(dir) ?: return emptyList()
         if (!isDir) return emptyList()
         val out = ArrayList<String>()
@@ -74,7 +84,7 @@ class SafDriveFs(private val cr: ContentResolver, private val tree: Uri) : Drive
     }
 
     override fun readText(path: String): String? {
-        val (id, isDir) = resolve(path) ?: return null
+        val (id, isDir) = runCatching { resolve(path) }.getOrNull() ?: return null
         if (isDir) return null
         return cr.openInputStream(doc(id))?.use { it.readBytes().toString(Charsets.UTF_8) }
     }
