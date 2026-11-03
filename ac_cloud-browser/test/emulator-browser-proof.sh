@@ -98,7 +98,14 @@ grep -q "$BPKG" "$OUT/oauth-return.txt" && ok "O1 back returns to Cloud Browser"
 # F1
 adb shell am start -W -n "$BPKG/.MainActivity" >/dev/null 2>&1 || adb shell monkey -p "$BPKG" 1 >/dev/null 2>&1
 sleep 6
-tap '^Fav$' || bad "F1 no Fav item in the island"
+# open Favourites and wait until its title is on screen (a first launch can show Tabs for a while); re-tap Fav each round
+onfav=0
+for _ in $(seq 1 10); do
+  tap '^Fav$' || true
+  dump _fav; grep -q 'text="Favourites"' "$OUT/_fav.xml" && { onfav=1; break; }
+  sleep 3
+done
+[ "$onfav" = 1 ] || bad "F1 Favourites never came on screen"
 tap 'Grid$' || true
 shot fav-all
 # the chip row scrolls: swipe it left once (inside the real screen width) and read both dumps
