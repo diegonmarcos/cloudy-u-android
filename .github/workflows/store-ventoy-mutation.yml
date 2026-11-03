@@ -112,7 +112,7 @@ jobs:
           target-read-only@VentoyTarget.kt@v.state == UsbVolumeModel.STATE_MOUNTED_READ_ONLY -> @false -> 
           tree-primary@VentoyTarget.kt@volume.equals("primary", ignoreCase = true) || @
           tree-subfolder@VentoyTarget.kt@return treeDocId.substringAfter(':', "x").isEmpty()@return true
-          ext2-free-count@Ext2Image.kt@.putInt(free.sum())@.putInt(free.sum() + 1)
+          ext2-free-count@Ext2Image.kt@.putShort(free[g].toShort())@.putShort((free[g] + 1).toShort())
           ext2-no-label@Ext2Image.kt@            b.put(name)\n@
           MUTANTS
           git checkout -- "$D"
