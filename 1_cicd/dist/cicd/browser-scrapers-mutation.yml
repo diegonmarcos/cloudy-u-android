@@ -1,0 +1,116 @@
+# Cloud Browser Scrapers mutation proof (#1427 #1428 #1429): the WebView cache parse, the per-site grouping and the three
+# sorts (libs:scraper SiteFiles), the viewer routing and highlighter (Viewer), the YouTube request rules (YtTool) and the
+# scrappers-api client (ScraperApi) are pinned by ScraperSiteFilesTest, ScraperViewerRouteTest and ScraperYouTubeToolTest
+# (ac_cloud-browser/app/src/test). This job runs those suites once on the real tree (GREEN expected), then once per planted
+# mutant (RED expected, one break each). It fails if the real tree is red or any mutant stays green. Manual only.
+name: browser-scrapers-mutation
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: "all | one of the mutant names below"
+        required: false
+        default: "all"
+permissions:
+  contents: read
+jobs:
+  mutate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: "platforms;android-36 platforms;android-35 platforms;android-34 platforms;android-26 build-tools;36.0.0 build-tools;35.0.0 build-tools;34.0.0 platform-tools cmake;3.22.1 ndk;28.0.13004108 ndk;26.1.10909125"
+      - name: Set up Gradle 8.14 (cached)
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: "8.14"
+      # ── MANAGED-GRADLE-CACHE-HYGIENE: injected by cloud-android-gradle-cache-hygiene.py ──
+      # Edit 1_cicd/src/actions/gradle-cache-hygiene, never this block.
+      - name: Gradle cache hygiene (retry failed resolution, never cache a failed lookup)
+        uses: ./.github/actions/gradle-cache-hygiene
+      # ── end MANAGED-GRADLE-CACHE-HYGIENE ──
+      - name: Checkout vault (shared Android signing key, read by app/build.gradle at configuration)
+        uses: actions/checkout@v4
+        with:
+          repository: diegonmarcos/cloud-me-pvt-vault
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
+          path: .vault
+      - name: Install sops (pinned)
+        uses: ./.github/actions/install-pinned-tools
+        with:
+          tools: sops
+      - name: Real tree GREEN, every mutant RED
+        env:
+          BYPASS_NIX: "1"
+          VAULT_DIR: ${{ github.workspace }}/.vault
+          SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ONLY: ${{ inputs.name }}
+        run: |
+          set -u
+          D=ab_cloud-libs-shared/libs/scraper/src/main/java/com/diegonmarcos/superapp/scraper
+          S=$D/SiteFiles.kt
+          V=$D/Viewer.kt
+          Y=$D/YtTool.kt
+          A=$D/ScraperApi.kt
+          # Only the Scraper suites run (the package under proof): an unrelated test must not decide whether a mutant is caught.
+          suite() { ( cd ac_cloud-browser && UNIT_TEST_FILTER="com.diegonmarcos.cloudbrowser.Scraper*" bash ./build.sh test ) > /tmp/suite.log 2>&1; }
+          sub() { python3 -c 'import sys; p, a, b = sys.argv[1:]; s = open(p).read(); assert s.count(a) == 1, "anchor missing or not unique: " + a; open(p, "w").write(s.replace(a, b, 1))' "$1" "$2" "$3"; }
+          suite || { tail -80 /tmp/suite.log; echo "::error::the real tree is RED"; exit 1; }
+          for t in ScraperSiteFilesTest ScraperViewerRouteTest ScraperYouTubeToolTest; do
+            grep -q "$t" -r ac_cloud-browser/app/build/test-results 2>/dev/null || { echo "::error::$t did not run"; exit 1; }
+          done
+          echo "real tree: GREEN"
+          stayed=0
+          while IFS='@' read -r name f a b; do
+            [ -z "$name" ] && continue
+            [ "$ONLY" != "all" ] && [ "$ONLY" != "$name" ] && continue
+            case "$f" in V) X=$V;; Y) X=$Y;; A) X=$A;; *) X=$S;; esac
+            git checkout -- "$S" "$V" "$Y" "$A"
+            sub "$X" "$a" "$b" || { echo "::error::$name: mutation anchor missing"; stayed=$((stayed + 1)); continue; }
+            if suite; then echo "::error::mutant stayed GREEN: $name"; stayed=$((stayed + 1)); else echo "RED (caught): $name"; fi
+          done <<'MUTANTS'
+          cache-no-magic@S@if (bb.getLong(0) != INITIAL_MAGIC) return null@
+          cache-first-magic-ends-body@S@bb.getInt(i + 16) == i - start@true
+          cache-key-first-part@S@key.trim().substringAfterLast(' ')@key.trim().substringBefore(' ')
+          host-keeps-www@S@h.lowercase().removePrefix("www.")@h.lowercase()
+          visit-oldest@S@ts > (lastVisit[h] ?: Long.MIN_VALUE)@ts < (lastVisit[h] ?: Long.MAX_VALUE)
+          updated-oldest@S@fs.maxOf { it.modified }@fs.minOf { it.modified }
+          sort-visit-oldest-first@S@compareByDescending<SiteGroup> { it.lastVisit }@compareBy<SiteGroup> { it.lastVisit }
+          sort-updated-oldest-first@S@compareByDescending<SiteGroup> { it.lastUpdated }@compareBy<SiteGroup> { it.lastUpdated }
+          files-oldest-first@S@compareByDescending<SiteFile> { it.modified }@compareBy<SiteFile> { it.modified }
+          name-case-sensitive@S@SiteSort.NAME -> fs.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.name })@SiteSort.NAME -> fs.sortedBy { it.name }
+          download-missing-kept@S@= exists(path) ?: return@= exists(path) ?: (0L to 0L) ?: return
+          saved-wrong-dir@S@File(File(root, id), f).path@File(root, f).path
+          route-ext-code-dropped@V@ext in CODE -> return Route(Viewer.CODE, CODE.getValue(ext))@ext == "\u0000" -> return Route(Viewer.NONE)
+          svg-as-image@V@m.startsWith("image/svg") -> Route(Viewer.WEB)@m.startsWith("image/svg+none") -> Route(Viewer.WEB)
+          json-suffix-ignored@V@ || m.endsWith("+json")@
+          video-as-audio@V@ext in VIDEO -> return Route(Viewer.VIDEO)@ext in VIDEO -> return Route(Viewer.AUDIO)
+          keyword-prefix@V@|of|in)\b"""@|of|in)"""
+          json-every-string-a-key@V@"(?=\s*:)"""@""""
+          css-selector-as-key@V@(?=\s*:[^{}]*[;}])@(?=\s*:)
+          yt-any-host@Y@if (host !in HOSTS) return null@
+          yt-id-any-length@Y@[A-Za-z0-9_-]{11}$@[A-Za-z0-9_-]+$
+          yt-canonical-short@Y@"https://www.youtube.com/watch?v=$id"@"https://youtu.be/$id"
+          yt-audio-as-video@Y@YtAs.AUDIO -> { o.put("mode", "audio")@YtAs.AUDIO -> { o.put("mode", "video")
+          yt-no-server-extract@Y@if (serverExtract) o.put("mode", "audio_extract")@if (false) o.put("mode", "audio_extract")
+          yt-extract-full-video@Y@else { o.put("mode", "video"); o.put("quality", EXTRACT_SOURCE_QUALITY) }@else { o.put("mode", "video") }
+          yt-ladder-unchecked@Y@if (r.quality != null && r.quality !in q)@if (false)
+          yt-extract-not-on-device@Y@fun extractsOnDevice(r: YtRequest) = r.saveAs == YtAs.AUDIO_FROM_VIDEO@fun extractsOnDevice(r: YtRequest) = false
+          api-no-bearer@A@?.let { c.setRequestProperty("Authorization", "Bearer $it") }@?.let { }
+          api-wrong-path@A@post("/download/youtube", body)@post("/youtube", body)
+          api-detail-lost@A@throw ScraperApiException(code, detailOf(err) ?: "HTTP $code")@throw ScraperApiException(code, "HTTP $code")
+          api-no-fallthrough@A@last = e; continue@throw e
+          api-path-traversal@A@substringAfterLast('/').substringAfterLast('\\')@this
+          MUTANTS
+          git checkout -- "$S" "$V" "$Y" "$A"
+          [ "$stayed" -eq 0 ] || { echo "::error::$stayed mutant(s) stayed green"; exit 1; }
+          echo "every mutant RED"
