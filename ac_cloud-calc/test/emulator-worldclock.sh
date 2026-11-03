@@ -34,7 +34,7 @@ dump | grep -q "package=\"$PKG\"" || fail "Calc never came to the front"
 shot 00-start
 # Calc > Others row > Time & Date > World Clock (#1409 two-row nav); a Clock tab, where one is declared, also leads there.
 tap '^Calc$' || true; sleep 3
-if tap '^Time & Date$'; then sleep 3; tap '^World [Cc]lock$' || fail "no World Clock in Time & Date: $(texts)"
+if tap '^Time (&|&amp;) Date$'; then sleep 3; tap '^World [Cc]lock$' || fail "no World Clock in Time & Date: $(texts)"
 else tap '^Clock$' && sleep 3 && { tap '^World clock$' || true; } || fail "no Time & Date page nor Clock tab: $(texts)"; fi
 sleep 3
 box '^World map$' >/dev/null || fail "no world map: $(texts)"
