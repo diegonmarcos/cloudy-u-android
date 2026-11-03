@@ -129,5 +129,30 @@ tap '^GH Pages$' && shot fav-gh
 tap '^▾ ' && shot fav-collapsed
 grep -q 'text="▸ ' "$OUT/fav-collapsed.xml" && ok "F1 a group collapsed by its header" || bad "F1 no collapsed group after a header tap"
 tap '^GH Pages$'; [ -n "$CY" ] && { adb shell input swipe "$SX1" "$CY" "$SX0" "$CY" 400; sleep 2; }; tap '^Tools$' && shot fav-tools
+# H1 (#1410) Tabs: the search bar filters open tabs and history as you type; Search opens on the browser's
+# history + bookmarks dropdown (github.com was visited above, so "git" has matches)
+tap_edit() {
+  dump _edit
+  local xy; xy=$(python3 - "$OUT/_edit.xml" <<'PY'
+import re, sys, xml.etree.ElementTree as ET
+try: root = ET.parse(sys.argv[1]).getroot()
+except Exception: sys.exit(0)
+for n in root.iter("node"):
+    if n.get("class", "").endswith("EditText"):
+        a, b, c, d = map(int, re.findall(r"\d+", n.get("bounds", "[0,0][0,0]")))
+        print((a + c) // 2, (b + d) // 2); break
+PY
+)
+  [ -n "$xy" ] && { adb shell input tap $xy; sleep 2; return 0; }
+  return 1
+}
+tap '^Tabs$' || true; sleep 2; shot tabs-search
+grep -qi 'Search tabs' "$OUT/tabs-search.xml" && ok "H1 the Tabs page has its search bar" || bad "H1 no search bar on Tabs (tabs-search.png)"
+tap_edit && { adb shell input text git; sleep 3; shot tabs-filtered; }
+grep -qi 'github' "$OUT/tabs-filtered.xml" && ok "H1 typing filters to the matching tabs / history" || bad "H1 'git' shows no github match (tabs-filtered.png)"
+adb shell input keyevent KEYCODE_BACK; sleep 1
+tap '^Search$' || true; sleep 3
+tap_edit && { adb shell input text git; sleep 3; shot search-history; }
+grep -qi 'github' "$OUT/search-history.xml" && ok "H1 Search opens the history dropdown" || bad "H1 Search shows no history match for 'git' (search-history.png)"
 [ "$fails" -eq 0 ] || { echo "$fails check(s) failed"; exit 1; }
 echo "all browser proof checks passed"
