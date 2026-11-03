@@ -278,6 +278,27 @@
       }
     ]
   },
+  "tabs": {
+    "_doc": "#1439 THE order of every app's Configs: its tabs on the top nav start General | Perms | About (ids `first`), then the app's own pages. An app with no Configs tabs of its own gets them from the shared Configs screen of libs:ui-nav-bars (FleetConfigsScreen draws FleetConfigsTabs over the FleetConfigsPage entries, in that order), so it conforms while it reaches that screen (not in `pending` above). An app that declares Configs tabs of its own (build.json::configs_pages.top_nav, ui.modes entries with tab `configs` where kind fleet_<id> is the shared page <id>, or the pages of ui.sections[id=configs]) must start them with `first`. Read by 1_cicd/src/scripts/cloud-android-configs-tabs-guard.py (workflow configs-tabs-guard.yml), mutation-tested by 1_cicd/src/scripts/test/configs-tabs-guard.test.sh.",
+    "first": ["general", "perms", "about"],
+    "lib": {
+      "file": "ab_cloud-libs-shared/libs/ui-nav-bars/src/main/kotlin/com/diegonmarcos/superapp/fleetconfigs/FleetConfigsPages.kt",
+      "enum": "public enum class FleetConfigsPage(",
+      "screen_needle": "FleetConfigsTabs(shown, dark)",
+      "tabs_needle": "pages = FleetConfigsPage.entries.map"
+    },
+    "pending": {
+      "_doc": "Apps whose Configs does not start General | Perms | About yet, each with its reason. Delete an entry in the commit that fixes the app (the guard fails a stale one).",
+      "ac_cloud-account": "Configs is the profile's Android | Desktop | C3 inventory, being rebuilt as the shared account UI (#1438/#1439); its settings tabs must be split out first.",
+      "ac_cloud-browser": "Configs is the browser's own Sites | Permissions | Autocomplete | General | About tabs; reorder and swap in the shared pages.",
+      "ac_cloud-c3": "Configs is one About tab of its own; needs the shared General and Perms pages before it.",
+      "ac_cloud-drive": "Configs opens on its own General then Git, FSync, Mounts, Webserver; needs Perms and About after General.",
+      "ac_cloud-nav": "Configs is Tracker | APIs | Update | Cache | Layers | About; needs the shared General and Perms first.",
+      "ac_cloud-news": "Configs is one page of its own; needs the shared General | Perms | About tabs before it.",
+      "ac_cloud-chat": "React Native host that does not reach the shared Configs screen yet (configs_pages.pending).",
+      "ac_cloud-office": "Collabora patch series that does not reach the shared Configs screen yet (configs_pages.pending)."
+    }
+  },
   "exempt": {
     "aa_cloud-superapp": "The fleet's launcher hub keeps its own special Configs (owner rule): its Configs is the fleet console, not one app's settings."
   },

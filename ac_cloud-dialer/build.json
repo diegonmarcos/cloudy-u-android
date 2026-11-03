@@ -270,14 +270,14 @@
         }
       ]
     },
-    "_doc_top_nav": "#1415 THE Configs of Cloud Dialer, one entry (the top bar's Configs icon) and its pages as tabs of the top nav bar, in this order. Baked by app/build.gradle.kts as BuildConfig.CONFIGS_TOP_NAV, drawn by org.fossify.phone.configs.DialerConfigsActivity (libs:ui-nav-bars NavBarTopSecondRow). test/test-dialer-configs-nav.sh holds it.",
+    "_doc_top_nav": "#1415 THE Configs of Cloud Dialer, one entry (the top bar's Configs icon) and its pages as tabs of the top nav bar, in this order (#1439 fleet pattern: General | Perms | About first). Baked by app/build.gradle.kts as BuildConfig.CONFIGS_TOP_NAV, drawn by org.fossify.phone.configs.DialerConfigsActivity (libs:ui-nav-bars NavBarTopSecondRow). test/test-dialer-configs-nav.sh holds it.",
     "top_nav": [
       {"id": "general", "label": "General", "icon": "settings"},
       {"id": "perms", "label": "Perms", "icon": "security"},
+      {"id": "about", "label": "About", "icon": "info"},
       {"id": "sim", "label": "SIM", "icon": "sim_card"},
       {"id": "status", "label": "Status", "icon": "insights"},
-      {"id": "usage", "label": "Usage", "icon": "bar_chart"},
-      {"id": "about", "label": "About", "icon": "info"}
+      {"id": "usage", "label": "Usage", "icon": "bar_chart"}
     ],
     "app_pages": [
       {"id": "sim", "label": "SIM", "activity": "org.fossify.phone.configs.DialerConfigsActivity", "page": "sim", "what": "One card per SIM slot (physical or eSIM): carrier, MCC/MNC, country, number, masked ICCID / subscription id / EID (tap to reveal), roaming, data/voice/SMS defaults, network type, signal, plus manual provider, plan, price, allowance, renewal, number, PIN/PUK (encrypted, masked), APN notes and support contact."},

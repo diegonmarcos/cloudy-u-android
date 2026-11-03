@@ -25,10 +25,10 @@ check() { # $1 = app dir; prints FAIL lines, returns the number of failures
   grep -q 'overflowIcon = null' "$MA" || bad "C5 the search bar's ⋮ overflow icon is not removed"
   { [ -e "$K/sim/SimConfigsActivity.kt" ] || grep -q 'SimConfigsActivity' "$d/app/src/main/AndroidManifest.xml"; } && bad "C6 the parallel SimConfigsActivity is back"
   # P
-  [ "$(jq -c '[.configs_pages.top_nav[].id]' "$d/build.json" 2>/dev/null)" = '["general","perms","sim","status","usage","about"]' ] \
-    || bad "P1 configs_pages.top_nav is not general|perms|sim|status|usage|about"
-  [ "$(jq -c '[.configs_pages.top_nav[].label]' "$d/build.json" 2>/dev/null)" = '["General","Perms","SIM","Status","Usage","About"]' ] \
-    || bad "P2 configs_pages.top_nav labels are not General|Perms|SIM|Status|Usage|About"
+  [ "$(jq -c '[.configs_pages.top_nav[].id]' "$d/build.json" 2>/dev/null)" = '["general","perms","about","sim","status","usage"]' ] \
+    || bad "P1 configs_pages.top_nav is not general|perms|about|sim|status|usage"
+  [ "$(jq -c '[.configs_pages.top_nav[].label]' "$d/build.json" 2>/dev/null)" = '["General","Perms","About","SIM","Status","Usage"]' ] \
+    || bad "P2 configs_pages.top_nav labels are not General|Perms|About|SIM|Status|Usage"
   grep -q '\["top_nav"\]' "$d/app/build.gradle.kts" && grep -q '"CONFIGS_TOP_NAV"' "$d/app/build.gradle.kts" || bad "P3 top_nav is not baked as BuildConfig.CONFIGS_TOP_NAV"
   grep -q 'parse(BuildConfig.CONFIGS_TOP_NAV)' "$CA" && grep -q 'NavBarTopSecondRow(' "$CA" || bad "P4 Configs does not draw top_nav in the top nav bar"
   for id in general perms sim status usage about; do grep -q "\"$id\" -> " "$CA" || bad "P5 Configs draws no page for tab $id"; done

@@ -1,0 +1,39 @@
+name: "Configs tabs guard — every app's Configs starts General | Perms | About on the top nav"
+
+# WHY THIS EXISTS (#1439).
+# Configs grew a different shape per app: one page in one app, About last in the next, a private Perms list in a
+# third. The fleet pattern is one order everywhere: General | Perms | About first (the shared Configs v2 pages of
+# libs:ui-nav-bars), then the app's own pages. The rule is 1_cicd/src/data/configs-pages.json::tabs; the apps that
+# do not conform yet are listed there with a reason, and the guard fails any other app that breaks the order.
+
+on:
+  push:
+    # ── MANAGED-GUARD-TRIGGERS: injected by cloud-android-guard-triggers.py from 1_cicd/src/data/guard-triggers.json ──
+    paths:
+      - "1_cicd/src/cicd/configs-tabs-guard.yml"
+      - "1_cicd/src/data/configs-pages.json"
+      - "1_cicd/src/scripts/cloud-android-configs-tabs-guard.py"
+      - "1_cicd/src/scripts/test/configs-tabs-guard.test.sh"
+      - "a[acd]_*/build.json"
+      - "ab_cloud-libs-shared/libs/ui-nav-bars/src/main/kotlin/com/diegonmarcos/superapp/fleetconfigs/FleetConfigsPages.kt"
+    # ── end MANAGED-GUARD-TRIGGERS ──
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: configs-tabs-guard-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  configs-tabs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Every app's Configs starts General | Perms | About
+        run: python3 1_cicd/src/scripts/cloud-android-configs-tabs-guard.py
+      - name: The configs-tabs guard still fails on each way an app can break the order
+        run: bash 1_cicd/src/scripts/test/configs-tabs-guard.test.sh

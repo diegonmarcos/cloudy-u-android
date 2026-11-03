@@ -130,6 +130,16 @@
         "ac_cloud-code/src/cloud/**"
       ]
     },
+    "configs-tabs-guard.yml": {
+      "_doc": "#1439 every app's Configs starts General | Perms | About: the rule (configs-pages.json::tabs), the guard and its mutation test, every app's build.json (its own Configs tabs) and the shared Configs screen of libs:ui-nav-bars.",
+      "paths": [
+        "1_cicd/src/data/configs-pages.json",
+        "1_cicd/src/scripts/cloud-android-configs-tabs-guard.py",
+        "1_cicd/src/scripts/test/configs-tabs-guard.test.sh",
+        "a[acd]_*/build.json",
+        "ab_cloud-libs-shared/libs/ui-nav-bars/src/main/kotlin/com/diegonmarcos/superapp/fleetconfigs/FleetConfigsPages.kt"
+      ]
+    },
     "phone-apps-page-guard.yml": {
       "_doc": "The SuperApp's Apps page sources phone-apps-page-guard.json names.",
       "paths": [

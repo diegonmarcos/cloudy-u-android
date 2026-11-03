@@ -39,6 +39,8 @@ object LegacyRoutes {
         // #1367 RoadMap and Duties are the two subpages of Tasks; every page of either retired section lands on its subpage.
         "roadmap" to "tasks/roadmaps",
         "duties" to "tasks/backlogs",
+        // #1439 Configs was one page; it is now General | Perms | About | Navigation | Apps.
+        "configs/configs" to "configs/general",
     )
 
     /** The new (section, page) for an old one; the arguments come back unchanged when nothing moved. */

@@ -65,7 +65,7 @@ ga = k.split("fun grantAll(", 1)[1].split("\n    fun ", 1)[0]
 if "RowKind.SPECIAL && it.missing" not in ga or "healthStep(rows)" not in ga: bad("P6 Grant all skips special or Health Connect rows")
 m = open(src + "/MainActivity.kt").read()
 if "MePermPlan.startup(" not in m or "MePermPlan.grantAll(" not in m or "MePerms.noteSpecialOpened" not in m: bad("P6 MainActivity does not run the start-up walk / Grant all")
-c = json.load(open(app + "/data/ui/configs/configs.json"))
+c = json.load(open(app + "/data/ui/configs/perms.json"))
 if not any(x.get("kind") == "permissions" for x in c): bad("P6 Configs has no Perms card")
 icons = set(re.findall(r'^\s*"([a-z0-9_]+)" to ', open(root + "/ab_cloud-libs-shared/libs/ui-icons/src/main/kotlin/com/diegonmarcos/superapp/uiicons/UiIcons.kt").read(), re.M))
 for e in p["entries"] + p["install"] + [dict(p["health"], id="health")]:
@@ -92,7 +92,7 @@ print("\n".join(out)); sys.exit(1 if out else 0)
 PY
 echo "[ac_cloud-me] Configs > Perms declaration"
 r="$(python3 "$CHECK" "$ROOT" 2>&1)" && ok "declaration, manifest, Health Connect set and start-up rule agree" || bad "$r"
-FILES="ac_cloud-me/build.json ac_cloud-me/app/src/main/AndroidManifest.xml ac_cloud-me/app/build.gradle ac_cloud-me/data/ui/configs/configs.json ac_cloud-me/app/src/main/java/com/diegonmarcos/cloudme/MePerms.kt ac_cloud-me/app/src/main/java/com/diegonmarcos/cloudme/MainActivity.kt ab_cloud-libs-shared/libs/perms/src/main/assets/perms-catalogue.json ab_cloud-libs-shared/libs/health/src/main/AndroidManifest.xml ab_cloud-libs-shared/libs/ui-icons/src/main/kotlin/com/diegonmarcos/superapp/uiicons/UiIcons.kt ab_cloud-libs-shared/libs/perms/src/main/java/com/diegonmarcos/superapp/perms/PermsUi.kt ab_cloud-libs-shared/libs/perms/src/main/java/com/diegonmarcos/superapp/perms/PermsView.kt"
+FILES="ac_cloud-me/build.json ac_cloud-me/app/src/main/AndroidManifest.xml ac_cloud-me/app/build.gradle ac_cloud-me/data/ui/configs/perms.json ac_cloud-me/app/src/main/java/com/diegonmarcos/cloudme/MePerms.kt ac_cloud-me/app/src/main/java/com/diegonmarcos/cloudme/MainActivity.kt ab_cloud-libs-shared/libs/perms/src/main/assets/perms-catalogue.json ab_cloud-libs-shared/libs/health/src/main/AndroidManifest.xml ab_cloud-libs-shared/libs/ui-icons/src/main/kotlin/com/diegonmarcos/superapp/uiicons/UiIcons.kt ab_cloud-libs-shared/libs/perms/src/main/java/com/diegonmarcos/superapp/perms/PermsUi.kt ab_cloud-libs-shared/libs/perms/src/main/java/com/diegonmarcos/superapp/perms/PermsView.kt"
 plant() { # <name> <python acting on T>
   rm -rf "$S/t"; for f in $FILES; do mkdir -p "$S/t/$(dirname "$f")"; cp "$ROOT/$f" "$S/t/$f"; done
   python3 - "$S/t" <<PY
@@ -118,7 +118,7 @@ plant "a row loses its icon"                       'sub(A + "/build.json", "{\"i
 plant "a row names an icon the fleet does not have" 'sub(A + "/build.json", "\"icon\": \"bolt\", \"why\": \"Keeps", "\"icon\": \"battery_x\", \"why\": \"Keeps")'
 plant "a reason runs over one line"                'sub(A + "/build.json", "\"why\": \"Heart rate from a connected wearable.\"", "\"why\": \"Heart rate from a connected wearable, read through the sensors API while the app is open.\"")'
 plant "nothing is flagged unused"                  'import re; s = open(A + "/build.json").read(); open(A + "/build.json", "w").write(s.replace(", \"used\": false", ""))'
-plant "Configs shows a raw build.json id"          'sub(A + "/data/ui/configs/configs.json", "What Cloud Me can access", "build.json::ui.permissions: what Cloud Me can access")'
+plant "Configs shows a raw build.json id"          'sub(A + "/data/ui/configs/perms.json", "What Cloud Me can access", "build.json::ui.permissions: what Cloud Me can access")'
 plant "unused rows are not collapsed"              'sub(L + "/PermsView.kt", "items.filter { !it.used }, collapsed = true)", "items.filter { !it.used })")'
 plant "the banner loses its dismiss"               'sub(L + "/PermsUi.kt", "testTag(PermsTags.DISMISS)", "testTag(\"x\")")'
 plant "the state chip is dropped"                  'sub(L + "/PermsUi.kt", "ChipView(chip, p", "Pill(chip.word, p.dim")'

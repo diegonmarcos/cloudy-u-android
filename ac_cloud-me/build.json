@@ -1063,17 +1063,17 @@
         ]
       },
       {
-        "_doc": "Configs \u2014 reached from the gear at the top right rather than the drawer, because it is the one destination you want from wherever you are. ONE page, no tab strip: a settings screen is a list you scroll, which is how every other app in the constellation lays its Configs out. Permissions first, then About with the version, the commit and the self-update control, then the way out to the rest of the constellation.",
+        "_doc": "Configs, reached from the gear at the top right. #1439 the fleet pattern: its tabs on the top nav start General | Perms | About (the shared Configs v2 pages: libs:ui-nav-bars FleetGeneralPage, the libs:perms list, FleetAboutPage; rule 1_cicd/src/data/configs-pages.json::tabs, guard cloud-android-configs-tabs-guard.py), then Cloud Me's own pages: Navigation (the nav mode of every section) and Apps (the way out to the rest of the constellation).",
         "id": "configs",
         "label": "Configs",
         "icon": "ic_nav_configs",
         "toolbar": true,
         "pages": [
-          {
-            "id": "configs",
-            "label": "Configs",
-            "icon": "ic_nav_configs"
-          }
+          {"id": "general", "label": "General", "icon": "settings"},
+          {"id": "perms", "label": "Perms", "icon": "security"},
+          {"id": "about", "label": "About", "icon": "info"},
+          {"id": "nav", "label": "Navigation", "icon": "navigation"},
+          {"id": "apps", "label": "Apps", "icon": "apps"}
         ]
       }
     ],

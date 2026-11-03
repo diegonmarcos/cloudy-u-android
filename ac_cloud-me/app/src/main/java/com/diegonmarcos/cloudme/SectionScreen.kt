@@ -157,6 +157,21 @@ private fun PageContent(section: Section, page: Page, modifier: Modifier) {
             "folder_tree" -> FolderTreeScreen(single.optString("asset"), modifier)
             // #1398 Tasks > Inboxes | Backlogs | RoadMaps | Library > <chip>: one vault folder's notes (data/repos/vault-rows.json).
             "vault_folder" -> VaultFolderScreen(single.optString("asset"), single.optString("path"), modifier)
+            // #1439 Configs > General | About: the shared Configs v2 pages of libs:ui-nav-bars, from build.json::configs_pages.
+            "fleet_general" -> Box(modifier) {
+                val target = LocalMeTarget.current
+                com.diegonmarcos.superapp.fleetconfigs.FleetGeneralPage(
+                    com.diegonmarcos.superapp.fleetconfigs.FleetConfigs.current, dark = true,
+                    c = com.diegonmarcos.superapp.themebg.ThemeBackground.colors(true),
+                    onAppConfigs = { target("page:configs/nav") },
+                )
+            }
+            "fleet_about" -> Box(modifier) {
+                com.diegonmarcos.superapp.fleetconfigs.FleetAboutPage(
+                    com.diegonmarcos.superapp.fleetconfigs.FleetConfigs.current,
+                    com.diegonmarcos.superapp.themebg.ThemeBackground.colors(true),
+                )
+            }
             else -> StackScreen(stack, modifier)
         }
     } else {

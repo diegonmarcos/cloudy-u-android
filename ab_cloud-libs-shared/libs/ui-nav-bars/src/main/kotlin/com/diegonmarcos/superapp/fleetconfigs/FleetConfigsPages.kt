@@ -101,16 +101,23 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 
-/** The two shared Configs pages. */
-public enum class FleetConfigsPage(public val id: String, public val label: String) {
-    General("general", "General"),
-    About("about", "About"),
+/**
+ * The shared Configs pages, in the order of their tabs on the top nav (#1439: every app's Configs starts General | Perms | About;
+ * rule configs-pages.json::tabs, guard cloud-android-configs-tabs-guard.py).
+ */
+public enum class FleetConfigsPage(public val id: String, public val label: String, public val icon: String) {
+    General("general", "General", "settings"),
+    Perms("perms", "Perms", "security"),
+    About("about", "About", "info"),
 }
 
 /** Test tags (also UiAutomator resource ids: the runtime nav walk opens and photographs both pages by them). */
 public object FleetConfigsTags {
     public const val GENERAL: String = "fleetcfg_general"
     public const val ABOUT: String = "fleetcfg_about"
+    public const val PERMS: String = "fleetcfg_perms"
+    /** The General | Perms | About strip on the top nav of the Configs screen. */
+    public const val TABS: String = "fleetcfg_tabs"
     public const val BACK: String = "fleetcfg_back"
     /** The page title: a tap on General's title scrolls back up to the anchor grid. */
     public const val TITLE: String = "fleetcfg_title"
@@ -121,7 +128,7 @@ public object FleetConfigsTags {
     public fun anchor(id: String): String = "fleetcfg_anchor_$id"
     public fun section(id: String): String = "fleetcfg_section_$id"
     public fun about(field: String): String = "fleetcfg_about_$field"
-    public fun page(p: FleetConfigsPage): String = if (p == FleetConfigsPage.General) GENERAL else ABOUT
+    public fun page(p: FleetConfigsPage): String = when (p) { FleetConfigsPage.General -> GENERAL; FleetConfigsPage.Perms -> PERMS; FleetConfigsPage.About -> ABOUT }
 }
 
 /** The label of the first row's and the Clean drawer's entry for [p]. */
@@ -153,10 +160,12 @@ public fun FleetConfigsScreen(
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
         val c = ThemeBackground.colors(dark)
         val generalScroll = rememberScrollState()
+        // #1439 the three shared pages are tabs of the top nav (General | Perms | About); [page] is the one opened first.
+        var shown by remember(page) { mutableStateOf(page) }
         val titleScope = rememberCoroutineScope()
         Column(
             Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(c.top, c.bottom)))
-                .semantics { testTagsAsResourceId = true }.testTag(FleetConfigsTags.page(page))
+                .semantics { testTagsAsResourceId = true }.testTag(FleetConfigsTags.page(shown))
                 .statusBarsPadding().navigationBarsPadding(),
         ) {
             Row(Modifier.fillMaxWidth().height(52.dp).padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -166,15 +175,17 @@ public fun FleetConfigsScreen(
                     contentAlignment = Alignment.Center,
                 ) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, tint = c.ink) }
                 Text(
-                    fleetConfigsEntryLabel(page),
+                    fleetConfigsEntryLabel(shown),
                     Modifier.padding(start = 4.dp).clip(RoundedCornerShape(8.dp))
-                        .clickable(enabled = page == FleetConfigsPage.General) { titleScope.launch { generalScroll.scrollTo(0) } }
+                        .clickable(enabled = shown == FleetConfigsPage.General) { titleScope.launch { generalScroll.scrollTo(0) } }
                         .semantics { heading() }.testTag(FleetConfigsTags.TITLE),
                     color = c.ink, fontSize = 18.sp, fontWeight = FontWeight.SemiBold,
                 )
             }
-            when (page) {
+            FleetConfigsTabs(shown, dark) { shown = it }
+            when (shown) {
                 FleetConfigsPage.General -> FleetGeneralPage(decl, dark, c, onAppConfigs = { onDismiss(); onAppConfigs() }, scroll = generalScroll)
+                FleetConfigsPage.Perms -> FleetPermsPage(c)
                 FleetConfigsPage.About -> FleetAboutPage(decl, c)
             }
         }
@@ -259,6 +270,27 @@ private fun AnchorGrid(sections: List<GeneralSection>, c: ThemeColors, onAnchor:
 }
 
 private const val COLUMNS = 4
+
+/** #1439 General | Perms | About on the top nav: the shared strip (libs:ui-nav-bars NavBarTopSecondRow), first on every app's Configs. */
+@Composable
+public fun FleetConfigsTabs(selected: FleetConfigsPage, dark: Boolean, onSelect: (FleetConfigsPage) -> Unit) {
+    com.diegonmarcos.superapp.navbartop2.NavBarTopSecondRow(
+        pages = FleetConfigsPage.entries.map { com.diegonmarcos.superapp.bottomnav.NavPage(it.id, it.label, it.icon) },
+        selectedId = selected.id,
+        onSelect = { p -> FleetConfigsPage.entries.firstOrNull { it.id == p.id }?.let(onSelect) },
+        modifier = Modifier.testTag(FleetConfigsTags.TABS),
+        dark = dark,
+        underTopChrome = false,
+    )
+}
+
+/** #1439 Configs > Perms as its own page: the same libs:perms AppPermsSection as General's Perms anchor, live, scrollable. */
+@Composable
+public fun FleetPermsPage(c: ThemeColors) {
+    var tick by remember { mutableIntStateOf(0) }
+    LaunchedEffect(Unit) { while (true) { delay(1500); tick++ } }
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 12.dp)) { PermsSection(c, tick) }
+}
 
 // ── sections of General ─────────────────────────────────────────────────────────────────────────────────────────
 

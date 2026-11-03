@@ -543,7 +543,7 @@ mutant no-drawer "a drag handler is back in the shell" "echo 'val d = detectHori
 mutant no-drawer "Profile page gains a swipe handler" "echo '<script>document.addEventListener(\"touchstart\",function(){})</script>' >> data/web/mysocials/linkedin.html"
 mutant account "Account tab loses its launch action" "python3 -c \"import json;d=json.load(open('build.json'));[p.pop('action',None) for s in d['ui']['sections'] if s['id']=='buro' for p in s['pages']];json.dump(d,open('build.json','w'))\""
 mutant account "Account renamed back to Vault" "sed -i 's/\"label\": \"Account\"/\"label\": \"Vault\"/' build.json"
-mutant no-wallet "Wallet link comes back" "sed -i 's#extapp:cloud-account#extapp:cloud-wallet#' data/ui/configs/configs.json"
+mutant no-wallet "Wallet link comes back" "sed -i 's#extapp:cloud-account#extapp:cloud-wallet#' data/ui/configs/apps.json"
 mutant no-wallet "Wallet section comes back" "python3 -c \"import json;d=json.load(open('build.json'));d['ui']['sections'].append({'id':'wallet','label':'Wallet','pages':[]});json.dump(d,open('build.json','w'))\""
 mutant pages "a Health page is dropped" "python3 -c \"import json;d=json.load(open('build.json'));[s['pages'].pop(3) for s in d['ui']['sections'] if s['id']=='health'];json.dump(d,open('build.json','w'))\""
 
