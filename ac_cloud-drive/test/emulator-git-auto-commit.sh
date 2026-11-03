@@ -31,6 +31,8 @@ back() { adb shell input keyevent 4; sleep 2; }
 swipe_up() { local s; s=$(adb shell wm size | grep -oE '[0-9]+x[0-9]+' | tail -1); local w=${s%x*} h=${s#*x}; adb shell input swipe $((w/2)) $((h*3/4)) $((w/2)) $((h/3)) 400; sleep 1; }
 launch() { timeout 120 adb shell am start -W -n "$act" >/dev/null; sleep 6; for i in 1 2 3; do tap '^Continue with local files$' && break; sleep 2; done || true; sleep 2; }
 open_git() { tap '^Git$' || { tap '^Sync$' && sleep 2 && tap '^Git$'; } || return 1; sleep 3; }
+# Drive in front: whatever took focus is noted, then Drive is brought back (singleTask, its state kept)
+front() { local f; f=$(adb shell dumpsys window | tr -d '\r' | grep -m1 mCurrentFocus); case "$f" in *"$PKG"*) return 0;; esac; note "focus was: $f"; adb shell am start -n "$act" >/dev/null; sleep 3; }
 need() { dump >/dev/null; for t in "$@"; do has "$t" || return 1; done; }
 
 adb shell settings delete global cloud_nav_ui_mode >/dev/null 2>&1 || true
@@ -64,21 +66,21 @@ open_git || fail "no Git page: $(texts)"
 shot 00-git
 
 # 1. the Sync menu: Manual Sync ▸ Auto Commit All
-tap '^Sync$' || fail "no Sync in the top menu: $(texts)"; sleep 2
+front; tap '^Sync$' || fail "no Sync in the top menu: $(texts)"; sleep 2
 shot 10-sync-menu-auto-commit-all
 need 'Manual Sync' 'Auto Commit All' || fail "the Sync menu has no Auto Commit All: $(texts)"
 back
 
 # 2. the sheet: Manual Sync ▸ Auto Commit, tapped
-tap "^$NAME\$" || fail "no $NAME row: $(texts)"; sleep 2
-for i in 1 2 3 4; do need 'Auto Commit' && break; swipe_up; done
+front; tap "^$NAME\$" || fail "no $NAME row: $(texts)"; sleep 2
+for i in 1 2 3 4; do front; need 'Auto Commit' && break; swipe_up; done
 shot 20-sheet-auto-commit
 need 'Manual Sync' 'Auto Commit' 'Stash' || fail "the sheet's Manual Sync has no Auto Commit: $(texts)"
-tap '^Auto Commit$' || fail "Auto Commit not tappable"
+front; tap '^Auto Commit$' || fail "Auto Commit not tappable"
 for i in $(seq 1 20); do sleep 2; dump >/dev/null; grep -qi 'auto commit: [0-9a-f]\{5,\}' "$OUT/ui.xml" && break; done
 shot 21-sheet-auto-commit-result
 for i in 1 2 3; do dump >/dev/null; has 'Goto' || break; back; done
-tap '^Logs$' && sleep 3 && { tap '^App$' >/dev/null 2>&1; sleep 3; }
+front; tap '^Logs$' && sleep 3 && { tap '^App$' >/dev/null 2>&1; sleep 3; }
 shot 30-logs-auto-commit
 grep -qi 'auto commit' "$OUT/ui.xml" || note "Logs shows no auto commit line: $(texts)"
 back
@@ -96,12 +98,12 @@ grep -qx 'a.txt (+1 −0)' "$OUT/commit-message.txt" || fail "no file line for a
 [ -z "$(git -C "$A" status --porcelain)" ] || fail "the tree is still dirty after Auto Commit"
 
 # 3. Configs ▸ Git ▸ Auto Commit
-tap '^Configs$' || fail "no Configs in the top bar: $(texts)"; sleep 3
+front; tap '^Configs$' || fail "no Configs in the top bar: $(texts)"; sleep 3
 for i in 1 2 3; do tap '^Git$' && break; sleep 2; done; sleep 3
 for i in 1 2 3 4 5 6; do need 'Message writer' && break; swipe_up; done
 shot 40-configs-git-auto-commit
 need 'Auto Commit' 'Sample message' 'Message writer' 'Rule (default)' 'OpenRouter model' || fail "Configs ▸ Git has no Auto Commit section: $(texts)"
-tap '^OpenRouter model$' || fail "no OpenRouter model chip"; sleep 4
+front; tap '^OpenRouter model$' || fail "no OpenRouter model chip"; sleep 4
 for i in 1 2; do need 'Message writer' && break; swipe_up; done
 shot 41-configs-git-auto-commit-model
 dump >/dev/null; grep -q 'text="Model: ' "$OUT/ui.xml" || fail "no model picker: $(texts)"
