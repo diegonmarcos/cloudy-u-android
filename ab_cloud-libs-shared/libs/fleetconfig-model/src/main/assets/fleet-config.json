@@ -4023,6 +4023,7 @@
         "lib-decisions-link",
         "lib-devtools",
         "lib-fleetconfig-model",
+        "lib-ml-ocr",
         "lib-perms",
         "lib-text-tools",
         "lib-theme-background",
