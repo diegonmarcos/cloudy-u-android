@@ -64,11 +64,13 @@ jobs:
           S=$H/HealthSources.kt
           B=ac_cloud-me/build.json
           R=ac_cloud-me/app/build/test-results
-          suite() { rm -rf "$R"; sh 1_cicd/dist/scripts/cloud-android-test-engine.sh unit ac_cloud-me > /tmp/suite.log 2>&1; }
+          # The whole Cloud Me suite runs (the engine takes no filter) and may be red for an UNRELATED test; only HealthChartsTest's own XML decides.
+          suite() { rm -rf "$R"; sh 1_cicd/dist/scripts/cloud-android-test-engine.sh unit ac_cloud-me > /tmp/suite.log 2>&1 || true; }
           caught() { grep -l "<failure" "$R"/*/TEST-com.diegonmarcos.cloudme.health.HealthChartsTest.xml >/dev/null 2>&1; }
           sub() { python3 -c 'import sys; p, a, b = sys.argv[1:]; s = open(p).read(); assert a in s, "anchor missing: " + a; open(p, "w").write(s.replace(a, b, 1))' "$1" "$2" "$3"; }
-          suite || { tail -80 /tmp/suite.log; echo "::error::the real tree is RED"; exit 1; }
-          ls "$R"/*/TEST-com.diegonmarcos.cloudme.health.HealthChartsTest.xml >/dev/null 2>&1 || { echo "::error::HealthChartsTest did not run"; exit 1; }
+          suite
+          ls "$R"/*/TEST-com.diegonmarcos.cloudme.health.HealthChartsTest.xml >/dev/null 2>&1 || { tail -80 /tmp/suite.log; echo "::error::HealthChartsTest did not run (the build failed)"; exit 1; }
+          caught && { tail -80 /tmp/suite.log; echo "::error::the real tree is RED: HealthChartsTest fails"; exit 1; }
           echo "real tree: GREEN"
           stayed=0
           while IFS='@' read -r name f a b; do
@@ -79,7 +81,7 @@ jobs:
             if [ "$f" = J ]; then python3 -c "$b" || { echo "::error::$name: mutation script failed"; stayed=$((stayed + 1)); continue; }
             else sub "$V" "$a" "$b" || { echo "::error::$name: mutation anchor missing"; stayed=$((stayed + 1)); continue; }; fi
             git diff --quiet -- "$A" "$T" "$S" "$B" && { echo "::error::$name: the mutation changed nothing"; stayed=$((stayed + 1)); continue; }
-            suite || true
+            suite
             if caught; then echo "RED (caught by HealthChartsTest): $name"
             else echo "::error::mutant stayed GREEN: $name"; stayed=$((stayed + 1)); fi
           done <<'MUTANTS'
