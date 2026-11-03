@@ -447,6 +447,26 @@ printf '%s' "$BARBODY" | command grep -qF 'if (line.isEmpty()) continue' \
   && ok "a line with no tabs still draws no strip at all" \
   || bad "an empty tab line would draw a strip (or its divider)"
 
+
+echo "== T11: #1441 the Machine-learning libs table is on Lite-ML only, the shared libs table on Libs only =="
+# Declared beside the group (build.json::constellation.groups[].build_time_libs), carried into the
+# fleet by regen.sh, read by the page; exactly one group per table, so no page draws a duplicate.
+for pair in "shared:libs" "ml:libs-l-ml"; do
+  kind="${pair%%:*}"; want="${pair#*:}"
+  got="$(jq -r --arg k "$kind" '[.groups[] | select(.build_time_libs == $k) | .id] | join(",")' "$FLEET")"
+  [ "$got" = "$want" ] \
+    && ok "build-time $kind libs table is declared on $want alone" \
+    || bad "build-time $kind libs table is on [$got], want [$want] (rerun data/regen.sh after build.json)"
+done
+jq -e '[.constellation.groups[] | .build_time_libs // empty] == ["shared","ml"]' "$BUILD" >/dev/null \
+  && ok "build.json declares the two tables, in page order" \
+  || bad "build.json::constellation.groups does not declare build_time_libs shared (Libs) and ml (Lite-ML)"
+command grep -qF 'group.optString("build_time_libs")' "$PAGE" \
+  && command grep -qF 'if (buildTimeLibs.isNotEmpty()) BuildTimeLibs(buildTimeLibs == "ml")' "$PAGE" \
+  && ! command grep -qF 'if (hasLibSections) BuildTimeLibs(' "$PAGE" \
+  && ok "the page draws each lib table where the tab declares it, not on the Libs tab by default" \
+  || bad "the page no longer reads build_time_libs off the tab (the ML table would be back on Libs)"
+
 echo
-echo "== RESULT(#405 groups+ml-naming, #642 lib tables, #660/#671 tab lines): $PASS passed, $FAIL failed =="
+echo "== RESULT(#405 groups+ml-naming, #642 lib tables, #660/#671 tab lines, #1441 ML libs on Lite-ML): $PASS passed, $FAIL failed =="
 [ "$FAIL" -eq 0 ]

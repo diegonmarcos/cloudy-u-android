@@ -86,11 +86,13 @@
         "id": "libs",
         "label": "Libs",
         "default_for_kind": "lib",
+        "build_time_libs": "shared",
         "blurb": "One APK per library module, installable and inspectable on its own. Most are also compiled into the apps that use them. Two are not: net-wg (WireGuard), an out-of-process engine its app needs installed, and the two rootfs libraries — the ~400 MB root filesystems the terminals enter (#628). Those two are large, and they are ordinary: the store installs and updates them exactly like every other row here, and the terminal that needs one reads it out of the installed APK instead of downloading a runtime of its own."
       },
       {
         "id": "libs-l-ml",
         "label": "Lite-ML",
+        "build_time_libs": "ml",
         "blurb": "Lite-ML: mobile and desktop CPU models, roughly 5MB-50MB. Real modules install like any lib and are engines the keyboard needs installed. Reference rows have nothing to install; Update all never fetches them."
       },
       {

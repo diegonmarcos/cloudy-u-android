@@ -570,8 +570,11 @@ regen_constellation() {
         # members is the same group stamp read from the tab side, so the page
         # builds its tabs without reading any entry field Fleet.parse owns.
         [ (.constellation.groups // [])[] | .id as $id
-            | { id, label: (.label // .id), blurb: (.blurb // ""),
-                members: [ ($apps[], $catalogue[]) | select(.group == $id) | .id ] } ] as $groups
+            # build_time_libs ("shared" | "ml") names the page that draws that build-time lib
+            # table (#1441); only where declared, so the other groups stay byte-identical.
+            | { id, label: (.label // .id), blurb: (.blurb // "") }
+              + (if .build_time_libs then { build_time_libs } else {} end)
+              + { members: [ ($apps[], $catalogue[]) | select(.group == $id) | .id ] } ] as $groups
         | "{\"version\":1,",
           "\"groups\":[", ($groups | map(tojson) | join(",\n")), "],",
           "\"lib_categories\":[", ($libcats | map(tojson) | join(",\n")), "],",

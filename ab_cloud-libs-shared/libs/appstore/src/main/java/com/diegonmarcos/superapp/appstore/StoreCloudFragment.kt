@@ -74,7 +74,10 @@ class StoreCloudFragment : KitComposeFragment() {
     private val fleet by lazy { Fleet.parse(BuildConfig.CONSTELLATION_FLEET_B64) }
 
     /** One tab: a group the fleet data declares, and every row drawn in it. */
-    private class Tab(val id: String, val label: String, val blurb: String, val rows: List<Fleet.App>)
+    // buildTimeLibs: the build-time lib table this tab draws, "shared" or "ml" (#1441), declared
+    // beside the group in build.json::constellation.groups; "" draws none.
+    private class Tab(val id: String, val label: String, val blurb: String, val rows: List<Fleet.App>,
+                      val buildTimeLibs: String = "")
 
     // The same baked JSON Fleet.parse reads, for the three things that are this
     // page's business and not the updater's: the declared groups, the members
@@ -197,7 +200,8 @@ class StoreCloudFragment : KitComposeFragment() {
                 rows.sortedWith(compareBy(
                     { applicationOf(it.id) ?: shelfOf(it)?.order ?: UNSHELVED },
                     { appRank[it.id] ?: 0 },
-                    { it.label.lowercase() })))
+                    { it.label.lowercase() })),
+                group.optString("build_time_libs"))
         }.filter { it.rows.isNotEmpty() }
     }
 
@@ -357,7 +361,7 @@ class StoreCloudFragment : KitComposeFragment() {
             TabBar()
             // Each blurb is data beside its group, so the caption naming the out-of-process engines moves
             // with the engines. (#896.3: Apps Mesh left this page for Access, so every tab is a group.)
-            if (shown != null) FleetPage(ctx, shown.rows, shown.blurb, shown.id == libConsumers.optString("group"))
+            if (shown != null) FleetPage(ctx, shown.rows, shown.blurb, shown.id == libConsumers.optString("group"), shown.buildTimeLibs)
         }
 
         details.lastOrNull()?.let { (app, state) ->
@@ -427,7 +431,7 @@ class StoreCloudFragment : KitComposeFragment() {
     }
 
     @Composable
-    private fun FleetPage(ctx: Context, list: List<Fleet.App>, blurb: String, hasLibSections: Boolean) {
+    private fun FleetPage(ctx: Context, list: List<Fleet.App>, blurb: String, hasLibSections: Boolean, buildTimeLibs: String) {
         StoreCaption(blurb)
         // The Store's one top bar (#565), shared with Phone Apps through [StoreBar]; only the three batch
         // verbs are this page's. Update all is `fleet`, which Fleet.parse built from `apps` alone:
@@ -458,7 +462,7 @@ class StoreCloudFragment : KitComposeFragment() {
         StoreRow.Filters(listOf("All", "⬆ Updates", "◯ Missing", "✓ Installed"), filter, { i -> if (filter != i) filter = i },
             tags = FILTER_TAGS)
         FleetList(ctx, list, hasLibSections)
-        if (hasLibSections) BuildTimeLibs()
+        if (buildTimeLibs.isNotEmpty()) BuildTimeLibs(buildTimeLibs == "ml")
     }
 
     /** True when [app] belongs in the current filter. An app whose state has not
@@ -789,21 +793,18 @@ class StoreCloudFragment : KitComposeFragment() {
     private fun runtimeCallers(id: String): List<String>? =
         appNames(libConsumers.optJSONObject("runtime")?.optJSONArray(id)).takeIf { it.isNotEmpty() }
 
-    /** Section 2 of the Libs tab: every shared lib that is not an engine. Not installable,
-     *  so an info row each: name, what it is, the apps that compile it in. */
+    /** Section 2 of the Libs tab: every shared lib that is not an engine, and the same table for the
+     *  ML libs on the Lite-ML tab (#1441: one table per page, never both). Not installable, so an info
+     *  row each: name, what it is, the apps that compile it in. [ml] picks the generator's `ml` flag. */
     @Composable
-    private fun BuildTimeLibs() {
+    private fun BuildTimeLibs(ml: Boolean) {
         val libs = libConsumers.optJSONArray("build_time") ?: return
-        SectionHeading("Build-time shared libs — compiled in, nothing to install")
-        StoreCaption("${libs.length()} libs. Each is compiled into the apps listed, so it ships inside their APKs.")
-        // Don't mix ML libs with the others: the generator flags each lib (`ml`, the ml- id rule)
-        // and the two kinds are drawn as separate runs under their own headers.
-        val all = (0 until libs.length()).map { libs.getJSONObject(it) }
-        for ((title, group) in listOf("Shared libs" to all.filter { !it.optBoolean("ml") },
-                                      "Machine-learning libs" to all.filter { it.optBoolean("ml") })) {
-            if (group.isEmpty()) continue
-            GroupHeader("lib_group_$title", title, group.size) { for (lib in group) LibCard(lib) }
-        }
+        val group = (0 until libs.length()).map { libs.getJSONObject(it) }.filter { it.optBoolean("ml") == ml }
+        if (group.isEmpty()) return
+        val title = if (ml) "Machine-learning libs" else "Shared libs"
+        SectionHeading("Build-time ${if (ml) "ML" else "shared"} libs — compiled in, nothing to install")
+        StoreCaption("${group.size} libs. Each is compiled into the apps listed, so it ships inside their APKs.")
+        GroupHeader("lib_group_$title", title, group.size) { for (lib in group) LibCard(lib) }
     }
 
     @Composable
