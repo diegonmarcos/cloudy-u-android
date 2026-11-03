@@ -123,8 +123,8 @@ class MeTabsTest {
     }
 
     @Test
-    fun `Lnktree and Configs are the sections the top bar's icons open`() {
-        assertEquals(listOf("Lnktree", "Configs"), Sections.settings().map { it.label })
+    fun `Profile and Configs are the sections the top bar's icons open`() {
+        assertEquals(listOf("Profile", "Configs"), Sections.settings().map { it.label })  // #1439 the avatar opens the shared profile page
         assertTrue("the declared top bar has the hamburger and the inline actions", MeTopBar.decl.drawer && MeTopBar.decl.inlineActions)
     }
 

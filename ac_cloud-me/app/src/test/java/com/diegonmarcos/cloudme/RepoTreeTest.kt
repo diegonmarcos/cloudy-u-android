@@ -171,12 +171,14 @@ class RepoTreeTest {
         assertTrue(walked.containsAll(config.areas.map { it.first }))
     }
 
-    @Test fun `Lnktree is the default page, no Profile page label remains and the old route still opens it`() {
+    @Test fun `Lnktree is the default page, Profile is only the avatar page and the old route still opens Lnktree`() {
         assertEquals("lnktree", ui.getString("default_section"))
         assertEquals("Lnktree", lnktree.getString("label"))
         fun labels(o: JSONObject): List<String> = listOf(o.optString("label")) + o.optJSONArray("pages").objects().flatMap(::labels)
-        val all = ui.getJSONArray("sections").objects().flatMap(::labels)
-        assertFalse("no section or page is labelled Profile/Profiles: $all", all.any { it == "Profile" || it == "Profiles" })
+        // #1439 the one Profile is the avatar's section (libs:account-ui); no Lnktree page is labelled Profile/Profiles again.
+        val all = ui.getJSONArray("sections").objects().filter { it.getString("id") != "profile" }.flatMap(::labels)
+        assertFalse("no other section or page is labelled Profile/Profiles: $all", all.any { it == "Profile" || it == "Profiles" })
+        assertEquals("profile", ui.getJSONArray("settings").getString(0))
         assertEquals("lnktree" to "leafy", LegacyRoutes.resolve("me", "leafy"))
         assertEquals("lnktree" to null, LegacyRoutes.resolve("me", null))
         assertEquals("tasks" to "backlogs", LegacyRoutes.resolve("me", "tasks"))
