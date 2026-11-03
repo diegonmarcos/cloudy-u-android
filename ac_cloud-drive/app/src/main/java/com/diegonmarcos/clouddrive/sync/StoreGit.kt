@@ -27,7 +27,18 @@ object StoreGit {
 
     /** #1358 a failed script's summary carries the REAL reason (git's fatal / error line, or "git printed nothing"), not the exit code alone. */
     private fun failed(what: String, r: com.diegonmarcos.cloudlib.sharedstore.StoreExec.Result): String =
-        BulkDepth.withTail("$what failed (exit ${r.exit})", r.out + "\n" + r.err)
+        BulkDepth.withTail("$what failed (exit ${r.exit})${hint(r.out + "\n" + r.err)}", r.out + "\n" + r.err)
+
+    /** #1436 what to do, in the Logs line itself, for the failures cld.termux's two logins can produce. */
+    internal fun hint(text: String): String = when {
+        "cloud-rootfs:" in text && ("no unpacked rootfs" in text || "rootfs.sha256 is missing" in text) ->
+            " -- cld.termux's rootfs is being repaired automatically (re-extracted from cloud-lib-rootfs-termux); retry in a few minutes, or open cld.termux once. If it repeats, reinstall cloud-lib-rootfs-termux from the Store"
+        "git: inaccessible or not found" in text || "git: not found" in text || "git is still missing" in text ->
+            " -- git is missing in cld.termux: open cld.termux and run 'pkg install git', or let it repair its rootfs (open the app once)"
+        "cannot create directory '/root'" in text ->
+            " -- an old Cloud Drive ran a rootfs path in plain Termux: update Cloud Drive and cld.termux from the Store"
+        else -> ""
+    }
 
     /** `git <args>` with the token (if any) as an http.extraHeader, read from stdin. */
     internal fun authed(args: String): String =

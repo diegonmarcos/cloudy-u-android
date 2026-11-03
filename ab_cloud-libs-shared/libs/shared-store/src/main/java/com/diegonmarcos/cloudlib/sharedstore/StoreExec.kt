@@ -74,14 +74,31 @@ class StoreExec(private val ctx: Context) {
          * (nothing any shell interprets): `exec /bin/sh -c "$(echo B64 | base64 -d)"` reads alike in fish, bash, zsh, sh.
          */
         fun guestWrap(script: String, termuxShell: String = "\$HOME/.termux/shell"): String =
-            "exec /system/bin/sh \"$termuxShell\" -c " + q(loginLine(script))
+            "if [ -e \"$termuxShell\" ]; then exec /system/bin/sh \"$termuxShell\" -c " + q(loginLine(script)) +
+                "; else exec /system/bin/sh -c " + q(loginLine(script)) + "; fi"
 
-        fun loginLine(script: String): String =
-            "exec /bin/sh -c \"\$(echo " + java.util.Base64.getEncoder().encodeToString(script.toByteArray(Charsets.UTF_8)) + " | base64 -d)\""
+        /**
+         * #1436 the script runs behind [ENV_PRELUDE] (resources/cloud-exec-env.sh): HOME, PATH, the shell and git resolve in
+         * BOTH logins enter.sh can give -- the proot rootfs (HOME=/root, Debian git) and its plain-Termux fallback (HOME =
+         * the Termux home, guest /root/ paths rewritten to it, git from Termux, `pkg install -y git` when missing). Before,
+         * the fallback ran the guest script as-is: "mkdir: cannot create directory '/root'" and "git: not found" (exit 127).
+         */
+        fun loginLine(script: String): String {
+            val b64 = java.util.Base64.getEncoder()
+            val inner = b64.encodeToString(script.toByteArray(Charsets.UTF_8))
+            val outer = b64.encodeToString(("CLOUD_EXEC_SCRIPT_B64=$inner\n" + ENV_PRELUDE).toByteArray(Charsets.UTF_8))
+            return "exec /bin/sh -c \"\$(echo $outer | base64 -d)\""
+        }
+
+        /** The one copy of the prelude, a java resource of this lib (also read by ac_cloud-termux/test/test-git-exec-modes.sh). */
+        val ENV_PRELUDE: String by lazy {
+            (StoreExec::class.java.classLoader ?: ClassLoader.getSystemClassLoader()).getResourceAsStream("cloud-exec-env.sh")
+                ?.use { it.readBytes().toString(Charsets.UTF_8) } ?: error("shared-store carries no cloud-exec-env.sh resource")
+        }
 
         /** #1392 no `nohup`: it is not on cld.termux's PATH on every phone (exit 127, "force_pull failed"); the subshell ignores HUP itself.
          * #1358 a [job]'s detached start, run on the HOST: a session's proot is --kill-on-exit, so a job backgrounded inside it died when the call returned (no .rc, polled to the deadline); its own session ([loginLine]) lives until the script ends. Stdin to <dir>/<id>.in (read BEFORE the braces: a trailing & would background the whole && list, stdin /dev/null), output to .log, exit code to .rc. */
         fun jobStart(script: String, dir: String, id: String, termuxShell: String = "\$HOME/.termux/shell"): String = "mkdir -p $dir && chmod 700 $dir && cat > $dir/$id.in && " +
-            "{ ( trap '' HUP; /system/bin/sh \"$termuxShell\" -c ${q(loginLine(script))} < $dir/$id.in > $dir/$id.log 2>&1; echo \$? > $dir/$id.rc; rm -f $dir/$id.in ) >/dev/null 2>&1 & }"
+            "{ ( trap '' HUP; if [ -e \"$termuxShell\" ]; then /system/bin/sh \"$termuxShell\" -c ${q(loginLine(script))}; else /system/bin/sh -c ${q(loginLine(script))}; fi < $dir/$id.in > $dir/$id.log 2>&1; echo \$? > $dir/$id.rc; rm -f $dir/$id.in ) >/dev/null 2>&1 & }"
     }
 }

@@ -109,6 +109,9 @@ public class CloudExecService extends Service {
             return out;
         }
 
+        // #1436 a rootfs that is not delivered is re-staged from the lib in the background, with no user involved.
+        try { CloudRootfs.repairInBackground(context); } catch (Throwable ignored) { }
+
         String cwd = (workdir == null || workdir.isEmpty())
             ? TermuxConstants.TERMUX_HOME_DIR_PATH : workdir;
 

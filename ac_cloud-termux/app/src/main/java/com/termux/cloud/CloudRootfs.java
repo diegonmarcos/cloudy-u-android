@@ -112,10 +112,50 @@ public final class CloudRootfs {
             File staged = new File(stageDir(), DIGEST);
             if (!staged.isFile()) return false;
             String want = field(libManifest(context), "sha256");
-            return want.equals(read(new FileInputStream(staged)));
+            return want.equals(read(new FileInputStream(staged))) && isDelivered(want);
         } catch (Exception e) {
             return false;
         }
+    }
+
+    /**
+     * #1436 the digest file alone is not a staged rootfs. enter.sh deletes rootfs.tar.zst once it has unpacked it, so a
+     * tree whose stamp then went stale or missing (an unpack killed mid-way, a wiped rootfs/) left rootfs.sha256 naming
+     * the lib's digest with NOTHING to enter: isStaged() said yes, stage() returned early on every start, and every
+     * login fell back to plain Termux ("rootfs.tar.zst is missing and no unpacked rootfs matches"). Delivered = the
+     * tarball enter.sh would unpack is here, or the unpacked tree carries {@code want}. Two stats, UI-thread cheap.
+     */
+    static boolean isDelivered(String want) {
+        if (new File(stageDir(), TARBALL).isFile()) return true;
+        try {
+            return want.equals(read(new FileInputStream(new File(stageDir(), "rootfs/.cloud-rootfs.sha256"))));
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
+    private static final java.util.concurrent.atomic.AtomicBoolean REPAIRING = new java.util.concurrent.atomic.AtomicBoolean();
+
+    /**
+     * #1436 the automatic repair, no user involved: CloudExecService calls this before every command another app runs
+     * here (Cloud Drive's git jobs never open this app's activity, the only other place {@link #stage} ran). When the
+     * rootfs is not delivered it is re-extracted from the installed cloud-lib-rootfs-termux on a background thread
+     * (single flight); the command itself runs at once, in plain Termux if need be, which the jobs handle
+     * (cloud-exec-env.sh). The next login unpacks the re-staged tarball.
+     */
+    public static void repairInBackground(Context context) {
+        if (isStaged(context) || !REPAIRING.compareAndSet(false, true)) return;
+        final Context app = context.getApplicationContext() != null ? context.getApplicationContext() : context;
+        new Thread(() -> {
+            try {
+                Logger.logInfo(LOG_TAG, "The rootfs is not delivered: re-extracting it from cloud-lib-rootfs-termux");
+                stage(app);
+            } catch (Throwable t) {
+                Logger.logError(LOG_TAG, "Rootfs repair failed: " + t);
+            } finally {
+                REPAIRING.set(false);
+            }
+        }, "cloud-rootfs-repair").start();
     }
 
     /**
