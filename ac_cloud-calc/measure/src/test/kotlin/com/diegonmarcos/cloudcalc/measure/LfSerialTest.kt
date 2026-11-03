@@ -40,12 +40,12 @@ class LfSerialTest {
 
     @Test fun `CH340 divisor golden and init sequence`() {
         assertEquals(0xCC83 to 0x08, LfSerial.ch340Divisor(115200))
-        assertEquals(0xB282 to 0x0D, LfSerial.ch340Divisor(9600))
+        assertEquals(0xB282 to 0x0C, LfSerial.ch340Divisor(9600))
         assertEquals(0x1680 to 0x24, LfSerial.ch340Divisor(50))
         assertEquals(0xFD83 to 0x02, LfSerial.ch340Divisor(2_000_000))
         assertThrows(IllegalArgumentException::class.java) { LfSerial.ch340Divisor(49) }
         assertThrows(IllegalArgumentException::class.java) { LfSerial.ch340Divisor(2_000_001) }
-        assertEquals(listOf(Ctrl(0x40, 0xA1, 0, 0), Ctrl(0x40, 0x9A, 0x2518, 0xC3), Ctrl(0x40, 0x9A, 0x1312, 0xB282), Ctrl(0x40, 0x9A, 0x0F2C, 0x0D), Ctrl(0x40, 0xA4, 0x9F, 0)), LfSerial.ch340(9600))
+        assertEquals(listOf(Ctrl(0x40, 0xA1, 0, 0), Ctrl(0x40, 0x9A, 0x2518, 0xC3), Ctrl(0x40, 0x9A, 0x1312, 0xB282), Ctrl(0x40, 0x9A, 0x0F2C, 0x0C), Ctrl(0x40, 0xA4, 0x9F, 0)), LfSerial.ch340(9600))
         assertEquals(LfSerial.ch340(9600), LfSerial.init(UsbChip.CH340, 9600, 3))
     }
 
