@@ -1,6 +1,8 @@
 #!/bin/bash
 # Emulator walk (#1423): Calc > Time & Date > World Clock. Shots: the world map with the declared cities pinned, the map after a
 # tap on Paris (Paris added to the list, pinned), the same tap again (removed), and the city list searched for "par".
+# Also (#1409, #1406): shots of the two nav rows, Date Converter, Calendars, the base converter and Configs General |
+# Permissions | About.
 # Usage: emulator-worldclock.sh <calc.apk> <outdir>
 set -u
 APK=${1:?calc apk}; OUT=${2:-out}
@@ -59,5 +61,16 @@ adb shell input text par; sleep 2
 adb shell dumpsys input_method | grep -q 'mInputShown=true' && { adb shell input keyevent 4; sleep 1; }
 shot 05-city-list-par
 grep -q 'Paris' "$OUT/ui.xml" || fail "searching par does not find Paris: $(texts)"
+# #1409 / #1406 proof shots (same walk): the two nav rows, Date Converter, Calendars, the base converter, Configs pages.
+adb shell input keyevent 4; sleep 1; adb shell input keyevent 4; sleep 2
+for i in 1 2 3; do swipe 40 88; done; sleep 1
+tap '^Date Converter$' && { sleep 3; shot 06-date-converter; } || fail "no Date Converter tab: $(texts)"
+tap '^Calendars$' || { box '^Date Converter$' >/dev/null && { read -r a b c d < <(box '^Date Converter$'); W=$(adb shell wm size | tr -d '\r' | tail -1 | sed 's/.*: //; s/x.*//'); adb shell input swipe $((W * 9 / 10)) $(( (b + d) / 2 )) $((W / 10)) $(( (b + d) / 2 )) 400; sleep 1; tap '^Calendars$'; }; } || fail "no Calendars tab: $(texts)"
+sleep 3; shot 07-calendars
+tap '^Convert$' || fail "no Convert in the Decimals row: $(texts)"
+sleep 3; shot 08-convert-bases
+tap '^Configs$' || fail "no Configs: $(texts)"
+sleep 3; shot 09-configs
+for pg in General Permissions About; do tap "^$pg\$" || fail "no Configs > $pg: $(texts)"; sleep 2; shot "10-configs-$(echo $pg | tr A-Z a-z)"; done
 adb logcat -d -v threadtime > "$OUT/logcat.txt" 2>/dev/null
 echo "World clock walk: map, pins, tap add/remove and city search all shown"
