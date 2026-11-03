@@ -40,7 +40,8 @@ has tab-translator "Engine" || bad "tab-translator: no engine picker"
 
 # Configs with its OCR section (scroll to it).
 start_section settings; shot configs-top
-for _ in 1 2 3 4 5 6; do adb shell input swipe 500 1600 500 500 300; sleep 1; done
+WH=$(adb shell wm size | tr -d "\r" | grep -oE "[0-9]+x[0-9]+" | tail -1); W=${WH%x*}; H=${WH#*x}
+for _ in 1 2 3 4 5 6 7 8 9 10; do adb shell input swipe $((W/2)) $((H*3/4)) $((W/2)) $((H/4)) 300; sleep 1; has_now=$(adb exec-out uiautomator dump /dev/tty 2>/dev/null | grep -c "OCR engine"); [ "$has_now" -gt 0 ] && break; done
 shot configs-ocr 2
 has configs-ocr "OCR engine" || bad "configs: no OCR engine row"
 
@@ -55,7 +56,7 @@ adb shell am start -W -a android.intent.action.SEND -t image/png \
 shot ocr-result 15
 has ocr-result "Meeting moved" || has ocr-result "Friday" || bad "OCR text did not reach the Enhancer input box"
 # WYSIWYG mode: the same box, with the formatting strip, after the OCR text landed.
-adb shell input swipe 500 1200 500 900 300; shot wysiwyg-mode 2
+shot wysiwyg-mode 1
 
 adb logcat -d -t 2000 > "$OUT/logcat.txt" 2>/dev/null || true
 grep -E "FATAL EXCEPTION" -A15 "$OUT/logcat.txt" | head -60 > "$OUT/crash.txt" || true
