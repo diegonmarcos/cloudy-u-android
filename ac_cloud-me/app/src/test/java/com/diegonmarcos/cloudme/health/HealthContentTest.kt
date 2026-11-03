@@ -43,7 +43,9 @@ class HealthContentTest {
         assertEquals("horizontal_two_rows", s.getString("nav_mode"))
         val flat = s.getJSONArray("pages").let { a -> (0 until a.length()).map { a.getJSONObject(it).getString("id") } }
         val groups = groupPages()
-        assertEquals(listOf("plan", "trackers"), groups.keys.toList())
+        // #1390: Health opens on Tracked, so the Trackers row is the first row and Tracked the first flat page.
+        assertEquals(listOf("trackers", "plan"), groups.keys.toList())
+        assertEquals("tracked", flat.first())
         assertEquals(listOf("bio", "circadian", "biomarkers", "timeline", "objectives", "matrix", "culinary", "clash", "thermal", "hemo", "shop", "dossier", "workout"), groups.getValue("plan").drop(1))
         // The Workout Plan is a plan (a programme to follow), not a tracker: it sits on the Plan line.
         assertEquals("workout", groups.getValue("plan").last())
