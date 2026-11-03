@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""#1422 Derive ac_cloud-browser/data/favourites_catalog.json: the Favourites filters and every seeded link.
+"""#1422 Derive ac_cloud-browser/app/src/main/assets/favourites_catalog.json: the Favourites filters and every seeded link.
 
 Nothing is typed here. build.json::ui.browser.favourites.filters names the chips (label + `from`, in order); each `from`
 reads one declaration:
@@ -16,7 +16,8 @@ reads one declaration:
                    Store's Phone > Apps taxonomy); sub-folder = each folder of those sections (ui.phone_folders), links =
                    the site of every app the folder declares (pkg:<id> -> the package's reverse-domain host)
 
-Rows are {name, url, group} with group "<filter label>/<sub-folder>"; app/build.gradle bakes them as the Fav seed.
+Rows are {name, url, group} with group "<filter label>/<sub-folder>"; the file ships as an app asset that libs:browser
+reads beside the baked seed (FavSeed.withCatalog).
 
   gen-favourites-catalog.py           regenerate
   gen-favourites-catalog.py --check   write nothing; exit 1 when the committed file differs (test-browser-favourites-catalog.sh)
@@ -26,7 +27,7 @@ import json, os, re, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 APP = os.path.normpath(os.path.join(HERE, ".."))
 ROOT = os.path.normpath(os.path.join(APP, ".."))
-OUT = os.path.join(APP, "data", "favourites_catalog.json")
+OUT = os.path.join(APP, "app", "src", "main", "assets", "favourites_catalog.json")
 WEBSERVER = "ac_cloud-c3-webserver"
 
 

@@ -288,7 +288,7 @@ class BrowserHostFragment : Fragment() {
         sitePerms = BrowserSitePermissions(ctx)
         config = BrowserConfig.parseBase64(arguments?.getString(ARG_CONFIG_B64))
         browserSettings = BrowserSettings(ctx, config.settings)
-        bookmarks.applySeed(config.favourites)   // #893 Fav ships with the app's declared links, once per entry
+        bookmarks.applySeed(favSeed)   // #893 Fav ships with the app's declared links, once per entry
 
         // FIRST RUN ONLY, and only with what the app configured. A library
         // default of zero tabs means an app that supplies nothing gets
@@ -1248,7 +1248,7 @@ class BrowserHostFragment : Fragment() {
                 onDelete = { bookmarks.remove(it.url); rev++ },
                 onEdit = { b, title, folder -> bookmarks.edit(b.url, title, folder); rev++ },
                 // #1422 the declared chips; Webserver opens the cloud-webserver app's Pages (its `open` link)
-                filters = config.favourites.filters,
+                filters = favSeed.filters,
                 collapsed = rev.let { bookmarks.collapsed() },
                 onToggleGroup = { bookmarks.toggleCollapsed(it); rev++ },
                 onOpenUrl = { close(); navigateTo(it) })
@@ -2690,6 +2690,12 @@ class BrowserHostFragment : Fragment() {
                 },
             )
         }
+    }
+
+    /** #1422 the declared seed plus the derived catalog asset (absent in an app that ships none). */
+    private val favSeed: FavSeed by lazy {
+        val cat = runCatching { requireContext().assets.open(FavSeed.CATALOG_ASSET).bufferedReader().use { org.json.JSONObject(it.readText()) } }.getOrNull()
+        config.favourites.withCatalog(cat)
     }
 
     /** #1420 set while a Google OAuth flow runs in the Custom Tab; onResume reloads the tab. */

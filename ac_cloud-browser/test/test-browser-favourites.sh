@@ -43,13 +43,13 @@ def check(root, ok):
     ok("fun setViewMode(v: String) { sp.edit().putString(VIEW" in bm and "fun viewMode(" in bm and "BrowserFavourites.normView(" in bm, "F3 the view choice persists")
     ok("bookmarks.setViewMode(view)" in frag and "bookmarks.viewMode()" in frag, "F3 the screen reads and writes it")
     ok("fun merge(" in fav and "if (it.url in seen) continue" in fav, "F4 the seed is applied once per entry")
-    ok("bookmarks.applySeed(config.favourites)" in frag and "fun applySeed(" in bm, "F4 the seed is applied at start")
+    ok("bookmarks.applySeed(favSeed)" in frag and "fun applySeed(" in bm, "F4 the seed is applied at start")
     ok("favourites = FavSeed.parse(" in cfg, "F4 the config parses the baked seed")
     fd = ui["browser"].get("favourites", {})
-    ok(fd.get("catalog") == "data/favourites_catalog.json" and {"services_public", "services_private", "github_pages"} <= {x.get("from") for x in fd.get("filters", [])}, "F4 the seed comes from the fleet's service data (and the derived GitHub Pages list)")
+    ok(fd.get("catalog") == "app/src/main/assets/favourites_catalog.json" and {"services_public", "services_private", "github_pages"} <= {x.get("from") for x in fd.get("filters", [])}, "F4 the seed comes from the fleet's service data (and the derived GitHub Pages list)")
     ok(not any("password" in json.dumps(fd).lower() for _ in [0]), "F4 no credentials in the seed")
     g = open(os.path.join(root, "ac_cloud-browser/app/build.gradle"), encoding="utf-8").read()
-    ok("favDecl.items = favItems.unique" in g and "favDecl.remove('sources')" in g and "favDecl.filters = cat.filters" in g, "F4 gradle expands the sources into items")
+    ok("favDecl.items = favItems.unique" in g and "favDecl.remove('sources')" in g and "favDecl.remove('catalog')" in g, "F4 gradle expands the sources into items")
     ok('" ← Tabs "' not in frag and "text = \" ← Tabs" not in frag, "F5 the top-left Tabs button is gone")
 
 FRAG = LIB + "/BrowserHostFragment.kt"
@@ -63,7 +63,7 @@ main("favourites", check, [
     ("the view is not persisted", LIB + "/BrowserBookmarks.kt", "fun setViewMode(v: String) { sp.edit()", "fun setViewMode(v: String) { sp.edit().clear()", "persists"),
     ("the screen forgets the choice", FRAG, "bookmarks.setViewMode(view)", "Unit", "reads and writes"),
     ("the seed re-adds every launch", LIB + "/BrowserFavourites.kt", "if (it.url in seen) continue", "", "once per entry"),
-    ("the seed is not applied", FRAG, "bookmarks.applySeed(config.favourites)", "Unit", "applied at start"),
+    ("the seed is not applied", FRAG, "bookmarks.applySeed(favSeed)", "Unit", "applied at start"),
     ("the seed is typed in, not derived", "ac_cloud-browser/build.json", '"from": "services_private"', '"from": "typed"', "fleet's service data"),
     ("gradle stops expanding", "ac_cloud-browser/app/build.gradle", "favDecl.items = favItems.unique", "favDecl.itemz = favItems.unique", "expands the sources"),
     ("the Tabs button returns", FRAG, "        // Address bar: a plain field.", "        bar.addView(TextView(ctx).apply { text = \" ← Tabs \" })\n        // Address bar: a plain field.", "top-left Tabs button"),

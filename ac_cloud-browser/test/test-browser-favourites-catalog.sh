@@ -4,7 +4,7 @@
 # ║ that collapse                                                    ║
 # ╚══════════════════════════════════════════════════════════════════╝
 #
-#   C1 data/favourites_catalog.json is exactly what tools/gen-favourites-catalog.py derives (never hand-edited, never stale)
+#   C1 app/src/main/assets/favourites_catalog.json is exactly what tools/gen-favourites-catalog.py derives (never hand-edited, never stale)
 #   C2 the filters map to the registries: the chips are build.json's filters in order; GH Pages = data/github_pages.json
 #      by repo; Cloudy Public / Private = the SuperApp services files under the SuperApp Cloud dashboard categories;
 #      Services / Tools = the SuperApp phone_sections / phone_folders taxonomy (Store > Phone > Apps); Webserver opens
@@ -76,7 +76,7 @@ def check(root, ok):
     ok("if (folder in collapsed) collapsed - folder else collapsed + folder" in fav_kt and "if (c) emptyList() else items" in fav_kt, "C3 a collapsed group draws no tile")
     ok(".clickable { onToggleGroup(g.folder) }" in sheets and "onToggleGroup = { bookmarks.toggleCollapsed(it); rev++ }" in frag
        and "putStringSet(COLLAPSED, BrowserFavourites.toggle(collapsed(), folder))" in bm, "C3 a header tap toggles the group, persisted")
-    ok("filters = config.favourites.filters" in frag and 'testTag("browser:fav:chip:${f.id}")' in sheets and "if (o != null) onOpenUrl(o)" in sheets,
+    ok("filters = favSeed.filters" in frag and "config.favourites.withCatalog(cat)" in frag and "assets.open(FavSeed.CATALOG_ASSET)" in frag and 'testTag("browser:fav:chip:${f.id}")' in sheets and "if (o != null) onOpenUrl(o)" in sheets,
        "C3 the chips are drawn from the baked filters")
     screen = sheets[sheets.find("fun BrowserFavScreen("):]
     screen = screen[:screen.find("\n}\n")]
@@ -88,7 +88,7 @@ FAV = LIB + "/BrowserFavourites.kt"; SH = LIB + "/BrowserSheets.kt"; FRAG = LIB 
 GEN = "ac_cloud-browser/tools/gen-favourites-catalog.py"
 main("favourites catalog", check, [
     ("a registry changes, the catalog stays", "aa_cloud-superapp/data/services_public.json", '"name": "languagetool"', '"name": "languagetool-renamed"', "C1"),
-    ("the catalog is hand-edited", "ac_cloud-browser/data/favourites_catalog.json", '"group": "GH Pages/', '"group": "GH Pages/x', "C1"),
+    ("the catalog is hand-edited", "ac_cloud-browser/app/src/main/assets/favourites_catalog.json", '"group": "GH Pages/', '"group": "GH Pages/x', "C1"),
     ("a chip is dropped", "ac_cloud-browser/build.json", '{ "id": "webserver", "label": "Webserver", "from": "webserver_pages" },\n', "", "C2 the chips are"),
     ("Services reads every section", GEN, 'if s["title"].startswith(section)]', ']', "C2 Services"),
     ("GH Pages loses its repos", GEN, 'repo = p.get("repo") or ', 'repo = ', "C2 GH Pages"),
@@ -99,7 +99,8 @@ main("favourites catalog", check, [
     ("a collapsed group still draws", FAV, "if (c) emptyList() else items", "items", "C3 a collapsed group"),
     ("the toggle never opens", FAV, "if (folder in collapsed) collapsed - folder else collapsed + folder", "collapsed + folder", "C3 a collapsed group"),
     ("the header is not tappable", SH, ".clickable { onToggleGroup(g.folder) }", "", "C3 a header tap"),
-    ("the chips are not baked", FRAG, "filters = config.favourites.filters", "filters = emptyList()", "C3 the chips"),
+    ("the chips are not baked", FRAG, "filters = favSeed.filters", "filters = emptyList()", "C3 the chips"),
+    ("the catalog asset is never read", FRAG, "config.favourites.withCatalog(cat)", "config.favourites", "C3 the chips"),
     ("the back button returns", SH, 'Text("Favourites", color = p.textPrimary', 'TextButton({}) { Text("← Back") }\n            Text("Favourites", color = p.textPrimary', "C3 no back"),
 ])
 PYEOF

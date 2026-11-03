@@ -90,13 +90,11 @@ if (favDecl != null) {
             favItems << [title: (r.name ?: raw).toString(), url: url, group: src.group.toString()]
         }
     }
-    // #1422 the derived catalog (tools/gen-favourites-catalog.py): every item already carries '<filter>/<sub-folder>',
-    // and its filters (the chips, the Webserver chip's `open` link) are baked beside the items
+    // #1422 the derived catalog (tools/gen-favourites-catalog.py) ships as the asset it is committed as, NOT in
+    // BuildConfig (a few hundred links would pass javac's 65535-byte constant limit); libs:browser reads it at start
     if (favDecl.catalog) {
-        def cat = new groovy.json.JsonSlurper().parse(new File(file('../build.json').parentFile, favDecl.catalog.toString()).canonicalFile)
-        if (!cat.filters || !cat.items) throw new GradleException("ui.browser.favourites.catalog ${favDecl.catalog} has no filters or items: run tools/gen-favourites-catalog.py")
-        cat.items.each { favItems << [title: it.name.toString(), url: it.url.toString(), group: it.group.toString()] }
-        favDecl.filters = cat.filters
+        def catFile = new File(file('../build.json').parentFile, favDecl.catalog.toString()).canonicalFile
+        if (!catFile.exists()) throw new GradleException("ui.browser.favourites.catalog ${favDecl.catalog} is missing: run tools/gen-favourites-catalog.py")
         favDecl.remove('catalog')
     }
     (favDecl.extra ?: []).each { favItems << [title: it.title, url: it.url, group: it.group] }

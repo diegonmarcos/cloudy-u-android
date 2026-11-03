@@ -16,8 +16,19 @@ data class FavSeed(
     /** #1422 folders an earlier seed used: a bookmark still in one moves to the group the seed now gives it. */
     val legacyGroups: Set<String> = emptySet(),
 ) {
+    /**
+     * #1422 this seed plus the derived catalog (the app asset favourites_catalog.json: too big for BuildConfig, so it
+     * ships as a file): its items join the declared ones, its filters are the chips.
+     */
+    fun withCatalog(o: JSONObject?): FavSeed {
+        val c = parse(o)
+        return copy(items = (items + c.items).distinctBy { it.url }, filters = c.filters.ifEmpty { filters })
+    }
+
     companion object {
         val EMPTY = FavSeed(0, emptyList())
+        /** #1422 the derived catalog's asset name (ac_cloud-browser/app/src/main/assets). */
+        const val CATALOG_ASSET = "favourites_catalog.json"
 
         fun parse(o: JSONObject?): FavSeed {
             o ?: return EMPTY
@@ -25,7 +36,7 @@ data class FavSeed(
             val items = (0 until arr.length()).mapNotNull { i ->
                 val e = arr.optJSONObject(i) ?: return@mapNotNull null
                 val url = e.optString("url").trim()
-                if (url.isEmpty()) null else FavSeedItem(e.optString("title", url).ifBlank { url }, url, e.optString("group"))
+                if (url.isEmpty()) null else FavSeedItem(e.optString("title", e.optString("name", url)).ifBlank { url }, url, e.optString("group"))
             }.distinctBy { it.url }
             val fa = o.optJSONArray("filters")
             val filters = (0 until (fa?.length() ?: 0)).mapNotNull { i ->
