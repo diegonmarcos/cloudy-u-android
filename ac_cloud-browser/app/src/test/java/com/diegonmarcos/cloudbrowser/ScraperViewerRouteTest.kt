@@ -46,7 +46,7 @@ class ScraperViewerRouteTest {
         assertEquals(Route(Viewer.CODE, "js"), r("bundle", "text/javascript; charset=utf-8"))
         assertEquals(Route(Viewer.CODE, "css"), r("style", "text/css"))
         assertEquals(Route(Viewer.CODE, "txt"), r("plain", "text/plain"))
-        assertEquals(Viewer.WEB, r("index", "text/html"))
+        assertEquals(Viewer.WEB, r("index", "text/html").viewer)
         assertEquals(Viewer.NONE, r("blob", "application/octet-stream").viewer)
         assertEquals(Viewer.NONE, r("blob").viewer)
     }
