@@ -84,6 +84,18 @@ internal class PermsPalette(
     fun tone(t: PermChip.Tone): Color = when (t) { PermChip.Tone.OK -> ok; PermChip.Tone.WARN -> warn; PermChip.Tone.BAD -> bad; PermChip.Tone.IDLE -> dim }
 }
 
+/** #1403 dense host pages (SuperApp Configs, held to 32 dp buttons and 44 dp rows by ConfigsScreensTest). */
+val LocalPermsDense = androidx.compose.runtime.staticCompositionLocalOf { false }
+
+/** The list's tap targets: [normal] on an app's own page, the dense size inside a dense host. */
+internal object PermsDense {
+    @Composable fun row() = if (LocalPermsDense.current) 44.dp else PermsType.rowMin
+    @Composable fun tap() = if (LocalPermsDense.current) 44.dp else 48.dp
+    @Composable fun tile() = if (LocalPermsDense.current) 28.dp else PermsType.tile
+    /** A button: 30 dp tall in a dense host (Material's 40 dp floor lifted by an exact height), else at least 48 dp. */
+    @Composable fun button(m: Modifier): Modifier = if (LocalPermsDense.current) m.height(30.dp) else m.heightIn(min = 48.dp)
+}
+
 internal object PermsType {
     val headline = 18.sp; val title = 16.sp; val body = 14.sp; val caption = 13.sp; val label = 12.sp
     val gap = 4.dp; val pad = 8.dp; val inset = 16.dp; val tile = 36.dp; val icon = 20.dp; val corner = 16.dp; val rowMin = 56.dp
@@ -196,7 +208,8 @@ private fun SummaryCard(empty: Boolean, prog: PermsView.Progress, onGrantAll: ((
             else if (onGrantAll != null) Button(
                 onClick = onGrantAll,
                 colors = ButtonDefaults.buttonColors(containerColor = p.accent, contentColor = p.onAccent),
-                modifier = Modifier.fillMaxWidth().padding(top = PermsType.inset).heightIn(min = 48.dp).testTag(PermsTags.GRANT_ALL),
+                contentPadding = if (LocalPermsDense.current) PaddingValues(horizontal = PermsType.inset, vertical = 0.dp) else ButtonDefaults.ContentPadding,
+                modifier = PermsDense.button(Modifier.fillMaxWidth().padding(top = PermsType.inset)).testTag(PermsTags.GRANT_ALL),
             ) { Text("Grant all", fontSize = PermsType.title, fontWeight = FontWeight.SemiBold) }
         }
     }
@@ -242,7 +255,7 @@ private fun HealthBlock(health: List<PermItem>, onAction: (PermItem) -> Unit, p:
     HorizontalDivider(color = p.hairline, thickness = 1.dp, modifier = Modifier.padding(start = PermsType.dividerStart))
     val ctx = LocalContext.current
     Row(
-        Modifier.fillMaxWidth().heightIn(min = 48.dp).clickable(onClickLabel = if (open) "Hide data types" else "Show data types", role = Role.Button) { open = !open }
+        Modifier.fillMaxWidth().heightIn(min = PermsDense.tap()).clickable(onClickLabel = if (open) "Hide data types" else "Show data types", role = Role.Button) { open = !open }
             .padding(start = PermsType.dividerStart, end = PermsType.inset).testTag(PermsTags.HEALTH_EXPAND),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -269,11 +282,11 @@ private fun PermRowView(it: PermItem, onAction: (PermItem) -> Unit, p: PermsPale
     val chip = PermsView.chip(it.state)
     val stateChip: @Composable (Modifier) -> Unit = { m -> ChipView(chip, p, m.testTag(PermsTags.state(it.id))) }
     Row(
-        Modifier.fillMaxWidth().heightIn(min = PermsType.rowMin).padding(horizontal = PermsType.inset, vertical = PermsType.pad)
+        Modifier.fillMaxWidth().heightIn(min = PermsDense.row()).padding(horizontal = PermsType.inset, vertical = if (LocalPermsDense.current) PermsType.gap else PermsType.pad)
             .testTag(PermsTags.row(it.id)),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(Modifier.size(PermsType.tile).clip(RoundedCornerShape(12.dp)).background(p.tile), contentAlignment = Alignment.Center) {
+        Box(Modifier.size(PermsDense.tile()).clip(RoundedCornerShape(12.dp)).background(p.tile), contentAlignment = Alignment.Center) {
             Icon(iconOf(it.icon) ?: PermIcons.vector(ctx, it.icon.ifBlank { "security" }), contentDescription = null, tint = p.accent,
                 modifier = Modifier.size(PermsType.icon))
         }
@@ -292,8 +305,8 @@ private fun PermRowView(it: PermItem, onAction: (PermItem) -> Unit, p: PermsPale
         else if (a != null) FilledTonalButton(
             onClick = { onAction(it) },
             colors = ButtonDefaults.filledTonalButtonColors(containerColor = p.tile, contentColor = p.accent),
-            contentPadding = PaddingValues(horizontal = PermsType.inset, vertical = PermsType.pad),
-            modifier = Modifier.heightIn(min = 48.dp).semantics { contentDescription = "${a.word} ${it.title}" }.testTag(PermsTags.grant(it.id)),
+            contentPadding = PaddingValues(horizontal = PermsType.inset, vertical = if (LocalPermsDense.current) 0.dp else PermsType.pad),
+            modifier = PermsDense.button(Modifier).semantics { contentDescription = "${a.word} ${it.title}" }.testTag(PermsTags.grant(it.id)),
         ) { Text(a.word, fontSize = PermsType.body, fontWeight = FontWeight.SemiBold) }
     }
 }

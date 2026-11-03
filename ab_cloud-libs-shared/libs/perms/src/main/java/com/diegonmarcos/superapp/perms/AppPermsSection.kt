@@ -112,8 +112,8 @@ fun AppPermsSection(
     modifier: Modifier = Modifier,
     /** #1403 the host's adb channel for the adb actions (null: those are off, Copy Adb Grants still works). */
     adb: PermsAdb? = null,
-    /** false: the filter chips and actions row only (a dense host page draws its own rows). */
-    list: Boolean = true,
+    /** #1403 a dense host page (SuperApp Configs): the toolbar and the list in their dense sizes. */
+    dense: Boolean = false,
 ) {
     val s = rememberAppPerms(tick, highlight, extra, onExtra)
     val ctx = LocalContext.current
@@ -121,12 +121,12 @@ fun AppPermsSection(
     var states by remember { mutableStateOf(emptySet<StateFilter>()) }
     var kinds by remember { mutableStateOf(emptySet<KindFilter>()) }
     var result by remember { mutableStateOf<String?>(null) }
-    Column(modifier) {
+    androidx.compose.runtime.CompositionLocalProvider(LocalPermsDense provides dense) { Column(modifier) {
         PermsToolbar(s.items, states, kinds, { states = it }, { kinds = it }, s.grantRuntime, s.grantAll, adb,
             onAdb = { mode -> adb?.let { a -> result = "Granting over adb…"; scope.launch { result = PermsComponents.grant(ctx, s.items, mode, a) } } },
             onCopy = { result = PermsComponents.copy(ctx, s.items) }, result = result)
-        if (list) PermsList(PermsActions.filter(s.items, states, kinds), s.act, s.grantAll.takeIf { s.missing > 0 }, Modifier, style)
-    }
+        PermsList(PermsActions.filter(s.items, states, kinds), s.act, s.grantAll.takeIf { s.missing > 0 }, Modifier, style)
+    } }
 }
 
 /** The helper's launcher label when it is installed, else its canonical name in words. */
