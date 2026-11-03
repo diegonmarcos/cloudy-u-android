@@ -8,7 +8,7 @@
 #   S3 a tapped css/js/json/html file opens in the in-app viewer                                       -> 3-file-open.png
 #   S4 Scrap Tools shows the YouTube Download row with the rights notice, As and Download to choices    -> 4-youtube-tool.png
 set -u
-APK="$1"; OUT="$2"; URL="${3:-https://linktree.diegonmarcos.com/}"; mkdir -p "$OUT"
+APK="$1"; OUT="$2"; URL="${3:-https://diegonmarcos.github.io/linktree_icon-view}"; mkdir -p "$OUT"
 BPKG=com.diegonmarcos.cloudbrowser
 HOST=$(echo "$URL" | sed -E 's#^[a-z]+://##; s#/.*##; s#^www\.##')
 fails=0
@@ -47,7 +47,14 @@ PY
 
 # Fill the WebView cache with a real site (html, css, js, json, images).
 timeout 120 adb shell am start -W -a android.intent.action.VIEW -d "$URL" -p "$BPKG" >/dev/null || bad "S0 the emulator did not take the start command"
+sleep 20
+# A first run opens on the tab switcher, not the page: open the tab that holds the URL (a pinned tab), then wait for it.
+dump 0-tabs
+if grep -q 'Normal Tabs' "$OUT/0-tabs.xml"; then
+  tap 0-tabs "^${URL%/}/?\$" >/dev/null || tap 0-tabs "$HOST" >/dev/null || echo "NOTE  no tab for $URL on the switcher"
+fi
 sleep 40
+adb exec-out screencap -p > "$OUT/0-page.png" 2>/dev/null || true
 dump 0-page
 if tap 0-page '^Scrapers$' >/dev/null; then ok "S1 the island has Scrapers"; else bad "S1 no Scrapers item on the island"; fi
 grep -q 'text="Configs"' "$OUT/0-page.xml" && ! grep -q 'text="Scrapers"' "$OUT/0-page.xml" && bad "S1 the island still shows Configs"
