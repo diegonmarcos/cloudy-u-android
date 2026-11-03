@@ -10,6 +10,7 @@
     ],
     "_doc_exclude": "Modules that must NOT ship as a standalone APK, each with the reason. An exclusion is a claim about install-time behaviour, so it belongs in data next to the scan rule rather than as a silent skip in gradle.",
     "exclude": {
+      "usb-drive": "#1375/#1405 USB-C drives (StorageVolumes, UsbVolumeModel, RawUsbDrive over libaums) compiled into Cloud Drive and the Store's Ventoy tab; no component, nothing to install or bind.",
       "web-core": "#1371 The fleet's one embedded web view factory (CloudWeb.create/configure, declared profiles), compiled into every app that shows web content; no component, nothing to install or bind.",
       "cgc-3d": "#1373 The CG apps' 3D viewer/editor: assets (cgc.js, three.js loaders, three-vrm) and pure Kotlin (declaration, scene ops, AvatarEngine, OpenRouter connector) compiled into CG-Omniverse; no component, nothing to install or bind.",
       "sysdns": "#741 The fleet's one bridge to Android's resolver for code that cannot use it directly (ResolverProxy for the gh, rclone and gix binaries; SystemDnsBridge for terminal shells). A plain library: no component, nothing to install, nothing an app binds. It is compiled into Cloud-Lib-Gh/-Rclone/-Gix here (settings.gradle includes it for them) and into cloud-drive, and the terminal forks compile its bridge source by reference.",
@@ -96,6 +97,7 @@
     },
     "_doc_static_libs": "Section 2 of the Store Libs tab: one short description per shared lib that is NOT an engine (not installable). Which apps compile each lib in is never typed: 1_cicd/src/scripts/cloud-android-lib-consumers.py derives it from every app's build.json and regen.sh bakes it into constellation-fleet.json::lib_consumers. This map only says what the lib is; the lib-consumers guard fails when a non-engine lib has no entry here or an entry names a lib that is gone.",
     "static_libs": {
+      "usb-drive": "USB-C drives: removable volumes and their size, the per-drive SAF grant, and raw USB mass storage through libaums (#1375, shared with the Store's Ventoy tab #1405).",
       "web-core": "The fleet's one embedded web view: GPU-first WebView built by CloudWeb.create/configure with a declared profile per use (#1371).",
       "cgc-3d": "The CG apps' 3D model viewer and editor: GLB/VRM/FBX in a WebView (three.js, three-vrm), clips, blendshapes, colour swaps, show/hide, GLB/PNG export, the avatar editor's declaration and its OpenRouter connector.",
       "account": "The Account page: profile, sign-in lines, fleet cockpit, business card and QR gallery, plus the vault/git/SSH plumbing.",

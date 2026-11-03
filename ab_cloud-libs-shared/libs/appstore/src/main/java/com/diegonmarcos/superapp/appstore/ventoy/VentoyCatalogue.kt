@@ -213,15 +213,16 @@ object VentoyCatalogue {
 
     fun hex(bytes: ByteArray) = bytes.joinToString("") { "%02x".format(it) }
 
-    /** Copies [input] into [out] and returns the sha256 of every byte that passed. */
+    /** Copies [input] into [out] and returns the sha256 of every byte that passed (JDK copy + DigestOutputStream: a
+     *  hashing pipe, not a second download engine; test-download-resume.sh T2). [onBytes] gets the running total. */
     fun copyHashing(input: InputStream, out: OutputStream, onBytes: (Long) -> Unit = {}): String {
         val md = MessageDigest.getInstance("SHA-256")
-        val buf = ByteArray(256 * 1024)
         var total = 0L
-        while (true) {
-            val n = input.read(buf); if (n < 0) break
-            md.update(buf, 0, n); out.write(buf, 0, n); total += n; onBytes(total)
+        val counting = object : java.io.FilterOutputStream(out) {
+            override fun write(b: ByteArray, off: Int, len: Int) { out.write(b, off, len); total += len; onBytes(total) }
+            override fun write(b: Int) { out.write(b); total += 1; onBytes(total) }
         }
+        input.copyTo(java.security.DigestOutputStream(counting, md), 256 * 1024)
         return hex(md.digest())
     }
 }

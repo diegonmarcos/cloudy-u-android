@@ -97,7 +97,7 @@ object Ext2Image {
             b.position(start + rec)
         }
 
-        val zero = ByteArray(64 * 1024)
+        val zero = ByteArray(1 shl 16)
         fun zeros(n: Long) { var left = n; while (left > 0) { val k = minOf(left, zero.size.toLong()).toInt(); out.write(zero, 0, k); left -= k } }
 
         for (g in 0 until l.groups) {

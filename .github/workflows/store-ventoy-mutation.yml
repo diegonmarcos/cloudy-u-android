@@ -92,7 +92,7 @@ jobs:
           github-no-sums@VentoyCatalogue.kt@val sha = sumsText?.let { t -> sumsLines(t).firstOrNull { it.second == a.name }?.first } ?: a.digest ?: return null@val sha = a.digest ?: return null
           sha-case@VentoyCatalogue.kt@actual!!.equals(expected, ignoreCase = true)@actual == expected
           sha-blank@VentoyCatalogue.kt@isSha256(actual) && isSha256(expected) && actual!!@actual!!
-          hash-skips@VentoyCatalogue.kt@md.update(buf, 0, n); @
+          hash-skips@VentoyCatalogue.kt@input.copyTo(java.security.DigestOutputStream(counting, md), 256 * 1024)@input.copyTo(counting, 256 * 1024)
           json-duplicates@VentoyJson.kt@?.takeIf { it.optString("image") != image }?.let(out::put)@?.let(out::put)
           json-drops-plugins@VentoyJson.kt@        val root = parse(existing)\n        val out = JSONArray()@        val root = JSONObject()\n        val out = JSONArray()
           json-overwrites-broken@VentoyJson.kt@.getOrElse { throw IllegalArgumentException("ventoy.json is not valid JSON; left untouched") }@.getOrElse { JSONObject() }
