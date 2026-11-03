@@ -51,7 +51,8 @@ jobs:
           SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
         run: |
           set -u
-          gradle -p "$WORK_DIR" :libs:git-core:test --no-daemon --continue || true
+          jq '.tests.unit.task = ":libs:git-core:test"' "$WORK_DIR/build.json" > /tmp/b.json && mv /tmp/b.json "$WORK_DIR/build.json"
+          sh 1_cicd/dist/scripts/cloud-android-test-engine.sh unit "$WORK_DIR" > /tmp/suite.log 2>&1 || tail -40 /tmp/suite.log
           X=ab_cloud-libs-shared/libs/git-core/build/reports/pitest/mutations.xml
           [ -f "$X" ] || { echo "::error::no PIT report"; exit 1; }
           python3 - "$X" <<'PY'
