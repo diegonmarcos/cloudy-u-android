@@ -50,7 +50,7 @@ data class GpuCaps(
     }
 
     /**
-     * Why WebGPU is missing, in words a UI can show under [summary]; null when a core adapter exists (#1416).
+     * Why WebGPU is missing, in words a UI can show under [summary]; null when a core adapter exists (#1418).
      * "API without adapter" means Chromium's GPU blocklist refused the device's Vulkan driver: on Android, Chromium
      * enables WebGPU only for allowlisted GPUs (ARM, Qualcomm, Intel on Android 12+, Imagination on 16+; Samsung
      * Xclipse is not yet listed), and Chrome on the same phone reads the same list. No app setting overrides it.
