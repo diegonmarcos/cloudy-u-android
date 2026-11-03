@@ -109,12 +109,35 @@ class OpsFragment : PagedFragment() {
     }
 }
 
-/** CONFIGS — this app's own settings. About is real because everything it shows is baked. */
+/**
+ * CONFIGS — #1443 starts General | Perms | About (the fleet's shared pages of libs:ui-nav-bars), then this app's own settings.
+ * Its own build-info card is [AboutFragment], real because everything it shows is baked.
+ */
 class ConfigsFragment : PagedFragment() {
     override fun pages(): List<NavPage> = Declarations.configsPages
     override fun pageFragment(pageId: String): Fragment? = when (pageId) {
-        "about" -> AboutFragment()
+        "general" -> FleetConfigsPageFragment.newInstance(pageId)
+        "perms" -> FleetConfigsPageFragment.newInstance(pageId)
+        "about" -> FleetConfigsPageFragment.newInstance(pageId)
+        "build" -> AboutFragment()
         else -> null
+    }
+}
+
+/** #1443 One of the fleet's shared Configs pages (General, Perms, About) as a tab page; the pages are libs:ui-nav-bars', drawn once for the fleet. */
+class FleetConfigsPageFragment : KitComposeFragment() {
+    override fun palette(): KitPalette = c3KitPalette(requireContext())
+
+    @Composable
+    override fun Content() {
+        com.diegonmarcos.superapp.fleetconfigs.FleetConfigsPageBody(arguments?.getString(ARG_PAGE).orEmpty(), onAppConfigs = { (parentFragment as? PagedFragment)?.openPage("build") })
+    }
+
+    companion object {
+        private const val ARG_PAGE = "page"
+        fun newInstance(pageId: String) = FleetConfigsPageFragment().apply {
+            arguments = Bundle().apply { putString(ARG_PAGE, pageId) }
+        }
     }
 }
 

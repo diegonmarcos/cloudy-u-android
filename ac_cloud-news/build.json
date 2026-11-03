@@ -264,11 +264,15 @@
         "id": "configs",
         "label": "Configs",
         "icon": "settings",
+        "_doc": "#1443 Configs starts General | Perms | About (the fleet's shared pages of libs:ui-nav-bars, drawn by MainActivity over the page), then News, the page's own Configs tab.",
         "pages": [
+          {"id": "general", "label": "General", "icon": "settings"},
+          {"id": "perms", "label": "Perms", "icon": "security"},
+          {"id": "about", "label": "About", "icon": "info"},
           {
-            "id": "configs",
-            "label": "Configs",
-            "icon": "settings"
+            "id": "news",
+            "label": "News",
+            "icon": "rss_feed"
           }
         ]
       }

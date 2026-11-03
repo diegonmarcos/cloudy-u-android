@@ -671,6 +671,9 @@
         "icon": "configs",
         "background": "dark",
         "pages": [
+          {"id": "general", "label": "General", "icon": "settings", "_doc": "#1443 the fleet Configs tabs: General | Perms | About (the shared pages of libs:ui-nav-bars, FleetConfigsPageBody), then this app's own pages."},
+          {"id": "perms", "label": "Perms", "icon": "security"},
+          {"id": "about", "label": "About", "icon": "info"},
           {
             "_doc": "PUBLIC, no secret value on any page of this section (a guard test enforces it). #1438: three entries. Cloud Apps = the fleet manifest baked into libs:appstore (updater Fleet.parse) with what is installed here; Phone Apps = every launchable app the manifest does not name; Runbook = the privileged channel (ChannelModeBar, the one Cloud Store's ADB Shell page draws, over the ShellChannels ladder incl. the SuperApp bridge), the declared adb-shell switches (configs_sources.runbook_toggles) and the setup steps (libs:account RunbookPage).",
             "id": "android",

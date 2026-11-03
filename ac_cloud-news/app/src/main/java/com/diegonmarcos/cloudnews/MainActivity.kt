@@ -12,7 +12,10 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -24,7 +27,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import com.diegonmarcos.superapp.fleetconfigs.FleetConfigsPageBody
+import com.diegonmarcos.superapp.fleetconfigs.isFleetConfigsPage
+import com.diegonmarcos.superapp.navbartop2.NavBarTopSecondRow
+import com.diegonmarcos.superapp.themebg.ThemeBackground
 import com.diegonmarcos.superapp.bottomnav.FleetChrome
 import com.diegonmarcos.superapp.bottomnav.NavDecl
 import com.diegonmarcos.superapp.bottomnav.TopBarDrawer
@@ -83,6 +91,7 @@ class MainActivity : AppCompatActivity() {
     @Composable
     private fun NewsShell() {
         var section by remember { mutableStateOf(NAV.default()?.id ?: "feed") }
+        var configsPage by remember { mutableStateOf("general") }
         val go: (String) -> Unit = { id ->
             section = id
             webView.evaluateJavascript("switchTab('$id')", null)
@@ -111,7 +120,24 @@ class MainActivity : AppCompatActivity() {
                 selectedId = section,
                 onSelect = { go(it.id) },
             ) {
-                ChromeWebView(webView)
+                // #1443 Configs starts General | Perms | About (the fleet's shared pages, libs:ui-nav-bars) over the page, then News: the page's own Configs tab.
+                val configsOpen = section == "configs"
+                Column(Modifier.fillMaxSize()) {
+                    if (configsOpen) {
+                        NavBarTopSecondRow(
+                            pages = current?.pages.orEmpty(), selectedId = configsPage,
+                            onSelect = { configsPage = it.id }, dark = true, underTopChrome = false,
+                        )
+                    }
+                    Box(Modifier.weight(1f).fillMaxWidth()) {
+                        ChromeWebView(webView)
+                        if (configsOpen && isFleetConfigsPage(configsPage)) {
+                            Box(Modifier.fillMaxSize().background(ThemeBackground.colors(true).top).testTag("news:configs:page:$configsPage")) {
+                                FleetConfigsPageBody(configsPage, onAppConfigs = { configsPage = "news" })
+                            }
+                        }
+                    }
+                }
             }
         }
     }

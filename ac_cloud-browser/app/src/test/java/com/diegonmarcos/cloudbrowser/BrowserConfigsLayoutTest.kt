@@ -15,8 +15,8 @@ class BrowserConfigsLayoutTest {
     private val root = JSONObject(File("../build.json").readText())
     private val cfg = BrowserConfig.parse(root.getJSONObject("ui").getJSONObject("browser").toString())
 
-    // #1402 Sites, Permissions, Autocomplete, General, About (About is the fleet page the shell draws)
-    private val pageIds = listOf("sites", "permissions", "autocomplete", "general", "about")
+    // #1402/#1443 Sites, Permissions, Autocomplete, Browser (the browser's own General); General | Perms | About come first on the top nav and are the fleet pages the shell draws
+    private val pageIds = listOf("sites", "permissions", "autocomplete", "browsing")
 
     @Test
     fun `every setting sits on a declared Configs page and every page holds something`() {
@@ -33,8 +33,8 @@ class BrowserConfigsLayoutTest {
         val secs = root.getJSONObject("ui").getJSONArray("sections")
         val configs = (0 until secs.length()).map { secs.getJSONObject(it) }.first { it.getString("id") == "configs" }
         val tabs = configs.getJSONArray("pages").let { a -> (0 until a.length()).map { a.getJSONObject(it).getString("id") } }
-        assertEquals(cfg.settingsSections.map { it.first }, tabs)
-        assertEquals(listOf("Sites", "Permissions", "Autocomplete", "General", "About"), cfg.settingsSections.map { it.second })
+        assertEquals(listOf("general", "perms", "about") + cfg.settingsSections.map { it.first }, tabs)
+        assertEquals(listOf("Sites", "Permissions", "Autocomplete", "Browser"), cfg.settingsSections.map { it.second })
     }
 
     @Test
@@ -48,9 +48,9 @@ class BrowserConfigsLayoutTest {
 
     @Test
     fun `a row on no declared page is dropped, and add-on global rows join their page`() {
-        assertTrue(cfg.configs.rowsFor("general").filter { it.group == "search" }.map { it.id }.containsAll(listOf("search_with", "search_chat")))
+        assertTrue(cfg.configs.rowsFor("browsing").filter { it.group == "search" }.map { it.id }.containsAll(listOf("search_with", "search_chat")))
         assertTrue(cfg.configs.rowsFor("autocomplete").filter { it.group == "sync" }.map { it.id }.containsAll(listOf("vault_open", "vault_set_service")))
-        assertEquals(listOf("addon:search"), cfg.configs.rowsFor("general").first { it.id == "search_with" }.requires)
+        assertEquals(listOf("addon:search"), cfg.configs.rowsFor("browsing").first { it.id == "search_with" }.requires)
         val none = com.diegonmarcos.superapp.browser.BrowserConfigPages.parse(
             JSONObject("""{"rows":[{"id":"x","label":"X","page":"ghost"},{"id":"y","label":"Y","page":"p"}]}"""),
             listOf("p" to "P"), com.diegonmarcos.superapp.browser.BrowserAddons.EMPTY)
@@ -59,12 +59,12 @@ class BrowserConfigsLayoutTest {
 
     @Test
     fun `#1402 every former page id redirects to the page that holds its content, and every setting keeps its group`() {
-        val old = listOf("general", "search", "privacy", "site", "autocomplete", "passwords", "payment", "downloads", "appearance", "tabs", "sync", "advanced", "about")
-        val want = mapOf("search" to "general", "privacy" to "general", "site" to "sites", "passwords" to "autocomplete", "payment" to "autocomplete",
-            "downloads" to "general", "appearance" to "general", "tabs" to "general", "sync" to "autocomplete", "advanced" to "general")
+        val old = listOf("general", "search", "privacy", "site", "autocomplete", "passwords", "payment", "downloads", "appearance", "tabs", "sync", "advanced")
+        val want = mapOf("general" to "browsing", "search" to "browsing", "privacy" to "browsing", "site" to "sites", "passwords" to "autocomplete", "payment" to "autocomplete",
+            "downloads" to "browsing", "appearance" to "browsing", "tabs" to "browsing", "sync" to "autocomplete", "advanced" to "browsing")
         old.forEach { assertEquals(it, want[it] ?: it, cfg.configs.pageFor(it)) }
         assertEquals(null, cfg.configs.pageFor("nowhere"))
-        assertEquals(listOf("general", "search", "privacy", "site", "downloads", "appearance", "tabs", "advanced"), cfg.configs.groupsFor("general").map { it.id })
+        assertEquals(listOf("general", "search", "privacy", "site", "downloads", "appearance", "tabs", "advanced"), cfg.configs.groupsFor("browsing").map { it.id })
         assertEquals(listOf("autocomplete", "passwords", "payment", "sync"), cfg.configs.groupsFor("autocomplete").map { it.id })
         cfg.settings.settings.forEach { s ->
             val groups = cfg.configs.groupsFor(s.section).map { it.id }
@@ -79,10 +79,10 @@ class BrowserConfigsLayoutTest {
     @Test
     fun `a Configs row needing a fact the page cannot give is disabled and says why`() {
         val facts = emptyMap<String, Boolean>()
-        val r = cfg.configs.resolve("general", facts, cfg.menu.whys).first { it.id == "default_browser" }
+        val r = cfg.configs.resolve("browsing", facts, cfg.menu.whys).first { it.id == "default_browser" }
         assertFalse(r.enabled)
         assertEquals("already the default browser, or Android offers no browser role", r.why)
-        assertTrue(cfg.configs.resolve("general", facts, cfg.menu.whys).first { it.id == "bookmarks" }.enabled)
+        assertTrue(cfg.configs.resolve("browsing", facts, cfg.menu.whys).first { it.id == "bookmarks" }.enabled)
     }
 
     @Test
@@ -91,7 +91,7 @@ class BrowserConfigsLayoutTest {
         assertEquals("enum", s.type)
         assertEquals(listOf("on_device", "openrouter"), s.values)
         assertEquals("on_device", s.default)
-        assertEquals("general", s.section)
+        assertEquals("browsing", s.section)
         assertEquals("OpenRouter (LLM)", s.valueLabels["openrouter"])
         assertEquals("device", cfg.settings["translate_target"]!!.default)
     }

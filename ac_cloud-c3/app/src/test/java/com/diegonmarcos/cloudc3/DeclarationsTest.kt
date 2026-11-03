@@ -131,7 +131,7 @@ class DeclarationsTest {
             listOf("providers", "machines", "serverless", "node_python", "storage", "desktop", "mobile", "gadgets", "domains", "domains_public"), pageIds("infra"))
         assertEquals("Public and Private URLs merged into Table; Agents moved in from Ops (2026-10-25)", listOf("topology", "table", "agents"), pageIds("containers"))
         assertEquals(listOf("observability", "health", "dagu", "mesh"), pageIds("observ"))
-        assertEquals(listOf("about"), pageIds("configs"))
+        assertEquals("#1443 Configs starts General | Perms | About, then the app's own Build card", listOf("general", "perms", "about", "build"), pageIds("configs"))
     }
 
     @Test

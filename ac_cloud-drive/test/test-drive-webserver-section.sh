@@ -75,7 +75,7 @@ ui = json.load(open(sys.argv[1]))["ui"]
 cfg = next(s for s in ui["sections"] if s["id"] == "configs")["pages"]
 ids = [p["id"] for p in cfg]
 bad = 0
-if ids != ["general", "git", "fsync", "mounts", "webserver"]:
+if ids != ["general", "perms", "about", "drive", "git", "fsync", "mounts", "webserver"]:
     print("    Configs pages are %s, not general/git/fsync/mounts/webserver (#1216)" % ids); bad = 1
 if '"webserver" -> WebserverPage(' not in open(sys.argv[2], encoding="utf-8").read():
     print("    ConfigsScreen does not dispatch webserver to WebserverPage"); bad = 1

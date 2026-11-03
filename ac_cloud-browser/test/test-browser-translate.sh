@@ -46,7 +46,7 @@ def check(root, ok):
     st = {s["key"]: s for s in b["settings"]}
     # R1
     e = st.get("translate_engine", {})
-    ok(e.get("type") == "enum" and e.get("values") == ["on_device", "openrouter"] and e.get("section") == "general", "R1 translate_engine is an enum of the two engines, on the General page")
+    ok(e.get("type") == "enum" and e.get("values") == ["on_device", "openrouter"] and e.get("section") == "browsing", "R1 translate_engine is an enum of the two engines, on the Browser page")
     ok("translate_target" in st and st["translate_target"]["default"] == "device", "R1 the target language is a setting, defaulting to the phone's")
     ok('browserSettings.string("translate_engine")' in frag and "PageTranslate.backend(engine, textToolsPort())" in frag, "R1 the host builds the backend from the setting")
     # R2

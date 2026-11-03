@@ -12,6 +12,9 @@ DECLARATION  1_cicd/src/data/configs-pages.json::tabs (the required first ids, t
       configs_pages.pending)
   T3  an app breaking T1/T2 is named in tabs.pending with a reason; a pending entry for a conforming app is stale;
       every entry names a real app
+  T4  (#1443) a declared tab is a drawn tab: an app with Configs tabs of its own hands General | Perms | About to the shared
+      pages (a `tabs.draw` needle in its non-test sources), so the order cannot be declared in build.json yet drawn by nothing
+  T5  every a[acd]_* directory is checked: one without a build.json is named in tabs.no_build_json with a reason
 
 USAGE  cloud-android-configs-tabs-guard.py [ROOT]      EXIT 0 ok · 1 at least one violation
 """
@@ -39,6 +42,20 @@ def own_tabs(d):
         if isinstance(s, dict) and s.get("id") == "configs":
             out.append(("ui.sections[configs].pages", [p.get("id") if isinstance(p, dict) else p for p in s.get("pages") or []]))
     return out
+
+
+def app_sources(root, app):
+    """The app's non-test Kotlin / Java sources, as text."""
+    out = []
+    for dp, dn, fn in os.walk(os.path.join(root, app)):
+        dn[:] = [d for d in dn if d not in ("test", "androidTest", "build", "node_modules")]
+        for f in fn:
+            if f.endswith((".kt", ".java")):
+                try:
+                    out.append(open(os.path.join(dp, f), encoding="utf-8", errors="replace").read())
+                except OSError:
+                    pass
+    return "\n".join(out)
 
 
 def main(argv):
@@ -95,6 +112,22 @@ def main(argv):
                 bad.append("T1 %s: Configs does not start %s: %s" % (app, " | ".join(first), "; ".join(why)))
         elif app in pending:
             bad.append("T3 %s: conforms now; delete its entry in configs-pages.json::tabs.pending" % app)
+    # T4 the tabs are drawn: an app with Configs tabs of its own reaches the shared pages from its sources
+    needles = rule.get("draw", [])
+    for app, d in apps.items():
+        if app in exempt or not own_tabs(d):
+            continue
+        if needles and not any(n in app_sources(root, app) for n in needles):
+            bad.append("T4 %s: declares Configs tabs but no source draws the shared pages (%s)" % (app, " | ".join(needles)))
+    # T5 no app directory escapes the guard
+    skipped = {k: v for k, v in rule.get("no_build_json", {}).items() if not k.startswith("_")}
+    for dpath in sorted(glob.glob(os.path.join(root, "a[acd]_*/"))):
+        app = os.path.basename(os.path.normpath(dpath))
+        if app not in apps and app not in skipped and app not in exempt and not glob.glob(os.path.join(dpath, "build.json")):
+            bad.append("T5 %s: an app directory with no build.json is not checked; name it in tabs.no_build_json with a reason" % app)
+    for app, reason in skipped.items():
+        if len(reason) < MIN_REASON:
+            bad.append("T5 tabs.no_build_json %s: the reason is shorter than %d chars" % (app, MIN_REASON))
     for app, reason in pending.items():
         if app not in apps:
             bad.append("T3 tabs.pending names no app: " + app)

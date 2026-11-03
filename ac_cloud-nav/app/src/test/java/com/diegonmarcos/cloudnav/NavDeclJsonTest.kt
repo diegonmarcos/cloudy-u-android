@@ -35,7 +35,7 @@ class NavDeclJsonTest {
     @Test fun `sub-page sets`() {
         assertEquals(listOf("trips", "maps"), pages("explored"))
         assertEquals(listOf("timeline", "steps", "sleep"), pages("tracker"))
-        assertEquals(listOf("tracker", "apis", "update", "cache", "layers", "about"), pages("configs"))
+        assertEquals(listOf("general", "perms", "about", "tracker", "apis", "update", "cache", "layers", "device"), pages("configs"))
         assertEquals(listOf("Trips", "Maps"), (0 until 2).map { section("explored")!!.getJSONArray("pages").getJSONObject(it).getString("label") })
     }
 

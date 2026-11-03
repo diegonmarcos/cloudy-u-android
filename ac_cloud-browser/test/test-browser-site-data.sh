@@ -39,11 +39,11 @@ def check(root, ok):
         ok(i in mi and mi[i]["section"] == sec and "page" in mi[i].get("requires", []), "D1 `%s` is a page-menu row (per-site)" % i)
         ok('"%s" ->' % i in frag, "D1 `%s` has its runAction branch" % i)
     crow = {r["id"]: r for r in b["configs"]["rows"]}
-    for i, pg in (("offline_manage", "general"), ("storage_manage", "general")):   # #1402 General groups downloads and privacy
+    for i, pg in (("offline_manage", "browsing"), ("storage_manage", "browsing")):   # #1402 General groups downloads and privacy
         ok(i in crow and crow[i].get("page") == pg and i not in mi, "D1 `%s` is a row of Configs > %s, not of the page menu" % (i, pg))
         ok('"%s" ->' % i in frag, "D1 `%s` has its runAction branch" % i)
     for k in ("offline_depth", "offline_max_pages", "offline_max_mb"):
-        ok(k in st and st[k]["section"] == "general" and st[k].get("group") == "downloads" and st[k]["type"] == "int", "D2 limit `%s` is a Downloads setting" % k)
+        ok(k in st and st[k]["section"] == "browsing" and st[k].get("group") == "downloads" and st[k]["type"] == "int", "D2 limit `%s` is a Downloads setting" % k)
     # D2
     ok('CrawlLimits.of(browserSettings.int("offline_depth"), browserSettings.int("offline_max_pages"), browserSettings.int("offline_max_mb"))' in frag, "D2 a site save reads its limits from the settings")
     ok("SiteScope.sameOrigin(startUrl, finalUrl)" in off, "D2 a redirect off the site is not saved")

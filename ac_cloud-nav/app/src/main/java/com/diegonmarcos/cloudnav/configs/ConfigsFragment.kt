@@ -25,7 +25,7 @@ import com.diegonmarcos.superapp.uikit.KitComposeFragment
 import com.diegonmarcos.superapp.uikit.KitPalette
 
 /**
- * Configs tab. Six sub-pages on a NavBarTopSecondRowView strip (#868: build.json ui.sections[configs].pages):
+ * Configs tab. #1443 General | Perms | About (the fleet's shared pages) come first, then six own sub-pages on a NavBarTopSecondRowView strip (#868: build.json ui.sections[configs].pages):
  *   • Tracker — the tracking engine ([TrackerEngineFragment]); its "Foreground tracker, calibration and
  *               export" button opens libs:maps' tracker controls ([MapsConfigFragment] section=tracker).
  *   • APIs    — Search / Reverse-geocoder / POI provider pickers + API keys
@@ -33,7 +33,7 @@ import com.diegonmarcos.superapp.uikit.KitPalette
  *   • Update  — the in-app GHCR self-updater ([UpdateConfigFragment]).
  *   • Cache   — real per-mechanism cache size + clear ([CacheConfigFragment]).
  *   • Layers  — per-layer visual settings, e.g. Terrain exaggeration ([LayersConfigFragment]).
- *   • About   — the device/app/permissions/battery/memory/network page ([DevControlFragment]).
+ *   • Device  — the device/app/permissions/battery/memory/network page ([DevControlFragment]).
  *
  * Compose (the strip is NavBarTopSecondRowView through AndroidView; the pages are child fragments). A settings
  * page, not a search surface — no search bar.
@@ -74,10 +74,29 @@ class ConfigsFragment : KitComposeFragment() {
         "update" -> UpdateConfigFragment()
         "cache" -> CacheConfigFragment()
         "layers" -> LayersConfigFragment()
+        // #1443 General | Perms | About are the fleet's shared pages (libs:ui-nav-bars), first on the strip.
+        "general", "perms", "about" -> FleetConfigsPageFragment.newInstance(id)
         else -> DevControlFragment()
     }
 
     private companion object {
         const val PAGE_TRACKER = "tracker"
+    }
+}
+
+/** #1443 One of the fleet's shared Configs pages (General, Perms, About) as a Configs sub-page; the pages are libs:ui-nav-bars', drawn once for the fleet. */
+class FleetConfigsPageFragment : KitComposeFragment() {
+    override fun palette(): KitPalette = TrackerInk.palette()
+
+    @Composable
+    override fun Content() {
+        com.diegonmarcos.superapp.fleetconfigs.FleetConfigsPageBody(arguments?.getString(ARG_PAGE).orEmpty())
+    }
+
+    companion object {
+        private const val ARG_PAGE = "page"
+        fun newInstance(pageId: String) = FleetConfigsPageFragment().apply {
+            arguments = Bundle().apply { putString(ARG_PAGE, pageId) }
+        }
     }
 }

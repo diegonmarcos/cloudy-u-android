@@ -121,7 +121,7 @@ class DriveScreenshotTest {
         assertTrue("Configs (three dots) is the top-right control: $button in $bar", button.right > bar.right - 12 * density && button.top >= bar.top)
         assertTrue("the strip sits under the bar: $strip vs $bar", strip.top >= bar.bottom)
         val order = Declarations.configs.pages.map { it.id }
-        assertEquals(listOf("general", "git", "fsync", "mounts", "webserver"), order)
+        assertEquals(listOf("general", "perms", "about", "drive", "git", "fsync", "mounts", "webserver"), order)
         // The strip is a View-hosted pager, so its tab labels are not always in the Compose tree: when they are all
         // there, they must read left to right in the declared order (the declaration itself is asserted above).
         val lefts = Declarations.configs.pages.mapNotNull { p ->

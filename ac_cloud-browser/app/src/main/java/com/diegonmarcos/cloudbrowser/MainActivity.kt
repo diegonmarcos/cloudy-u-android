@@ -234,11 +234,11 @@ class MainActivity : AppCompatActivity() {
                     KitFragmentHost(R.id.fragment_container, Modifier.fillMaxSize()) {
                         BrowserHostFragment.newInstance(pendingOpenUrl, BuildConfig.UI_BROWSER_CONFIG_B64)
                     }
-                    // #1402 Configs > About is the fleet's About page (libs:ui-nav-bars), over the host's page.
-                    if (selectedId == "configs" && configsPage == "about") {
+                    // #1402/#1443 Configs > General | Perms | About are the fleet's pages (libs:ui-nav-bars FleetConfigsPageBody), over the host's page.
+                    if (selectedId == "configs" && com.diegonmarcos.superapp.fleetconfigs.isFleetConfigsPage(configsPage)) {
                         val c = com.diegonmarcos.superapp.themebg.ThemeBackground.colors(true)
-                        Box(Modifier.fillMaxSize().background(c.top).testTag("browser:configs:page:about")) {
-                            com.diegonmarcos.superapp.fleetconfigs.FleetAboutPage(com.diegonmarcos.superapp.fleetconfigs.FleetConfigs.current, c)
+                        Box(Modifier.fillMaxSize().background(c.top).testTag("browser:configs:page:$configsPage")) {
+                            com.diegonmarcos.superapp.fleetconfigs.FleetConfigsPageBody(configsPage.orEmpty(), onAppConfigs = { openConfigsPage("sites") })
                         }
                     }
                     // #1426 the Scrapers section over the host's page (libs:scraper); Back returns to the page.
@@ -289,6 +289,8 @@ class MainActivity : AppCompatActivity() {
 
     /** A Configs top tab was picked: the host swaps the page under it. */
     private fun openConfigsPage(id: String) {
+        // #1443 the shared General | Perms | About pages are drawn by the shell over the host's page; the host keeps its own.
+        if (com.diegonmarcos.superapp.fleetconfigs.isFleetConfigsPage(id)) { configsPage = id; return }
         val host = supportFragmentManager.findFragmentById(R.id.fragment_container) as? BrowserHostFragment ?: return
         configsPage = host.configsPageFor(id)   // #1402 old anchors land on their new page
         host.openConfigsPage(id)

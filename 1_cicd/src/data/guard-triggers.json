@@ -131,12 +131,14 @@
       ]
     },
     "configs-tabs-guard.yml": {
-      "_doc": "#1439 every app's Configs starts General | Perms | About: the rule (configs-pages.json::tabs), the guard and its mutation test, every app's build.json (its own Configs tabs) and the shared Configs screen of libs:ui-nav-bars.",
+      "_doc": "#1439 every app's Configs starts General | Perms | About: the rule (configs-pages.json::tabs), the guard and its mutation test, every app's build.json (its own Configs tabs) and sources (T4: the tabs are drawn) and the shared Configs screen of libs:ui-nav-bars.",
       "paths": [
         "1_cicd/src/data/configs-pages.json",
         "1_cicd/src/scripts/cloud-android-configs-tabs-guard.py",
         "1_cicd/src/scripts/test/configs-tabs-guard.test.sh",
         "a[acd]_*/build.json",
+        "a[acd]_*/**/*.kt",
+        "a[acd]_*/**/*.java",
         "ab_cloud-libs-shared/libs/ui-nav-bars/src/main/kotlin/com/diegonmarcos/superapp/fleetconfigs/FleetConfigsPages.kt"
       ]
     },

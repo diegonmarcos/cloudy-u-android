@@ -5,39 +5,39 @@ catalogue, never this file. test-browser-settings-catalogue.sh fails when it is 
 
 | key | type | default | allowed | section | class | what it does |
 |---|---|---|---|---|---|---|
-| `search_engine_id` | enum | duckduckgo | qwant, duckduckgo, google | general | config | Where a typed query that is not a URL goes. |
-| `homepage` | string | "" |  | general | config | What an empty New tab opens. Empty = nothing (the dialog just closes). |
-| `restore_tabs_on_start` | bool | false |  | general | config | Launch into the last active tab instead of the tab grid. |
-| `desktop_mode` | bool | false |  | general | config | Desktop user agent + wide viewport for every page. |
-| `text_zoom` | int | 100 | 50..200 | general | config | WebSettings.textZoom, in percent. |
-| `javascript` | bool | true |  | general | config | Run page scripts. Off breaks most sites; per-site shields come later. |
-| `load_images` | bool | true |  | general | config | Off saves data on metered networks. |
-| `block_third_party_cookies` | bool | false |  | general | config | CookieManager.setAcceptThirdPartyCookies(false) on every page. |
-| `download_dir` | string | "" |  | general | device | Sub-folder of the phone's Downloads that downloads land in. Empty = Downloads itself. Device-class: a path on this phone. |
-| `private_by_default` | bool | false |  | general | config | A new tab opens private: no history, no preview, no HTTP cache. Cookies are shared with normal tabs (Android WebView keeps them per process). |
+| `search_engine_id` | enum | duckduckgo | qwant, duckduckgo, google | browsing | config | Where a typed query that is not a URL goes. |
+| `homepage` | string | "" |  | browsing | config | What an empty New tab opens. Empty = nothing (the dialog just closes). |
+| `restore_tabs_on_start` | bool | false |  | browsing | config | Launch into the last active tab instead of the tab grid. |
+| `desktop_mode` | bool | false |  | browsing | config | Desktop user agent + wide viewport for every page. |
+| `text_zoom` | int | 100 | 50..200 | browsing | config | WebSettings.textZoom, in percent. |
+| `javascript` | bool | true |  | browsing | config | Run page scripts. Off breaks most sites; per-site shields come later. |
+| `load_images` | bool | true |  | browsing | config | Off saves data on metered networks. |
+| `block_third_party_cookies` | bool | false |  | browsing | config | CookieManager.setAcceptThirdPartyCookies(false) on every page. |
+| `download_dir` | string | "" |  | browsing | device | Sub-folder of the phone's Downloads that downloads land in. Empty = Downloads itself. Device-class: a path on this phone. |
+| `private_by_default` | bool | false |  | browsing | config | A new tab opens private: no history, no preview, no HTTP cache. Cookies are shared with normal tabs (Android WebView keeps them per process). |
 | `autofill_enabled` | bool | true |  | autocomplete | config | Pages expose their fields to Android's Autofill Framework (Cloud Vault fills logins and cards there), and Fill from profile is offered. |
 | `profile_fill` | bool | true |  | autocomplete | config | Tier 2 DOM autofill (a0_docs/eng-specs/autofill-3-tier.md): focusing a name, email, phone or address field offers a chip that fills the form from your Cloud Account profiles. Never passwords, codes or cards (Cloud Vault fills those), never a login form's email. Private tabs show a chip that names no profile and fill only on an explicit pick. |
 | `offer_save_address` | bool | true |  | autocomplete | config | After you submit an address form with an address Cloud Account does not have yet, ask whether to save it there. Nothing is saved without your tap, and never from a private tab. |
-| `summarize_route` | enum | "model" | model, on_device | general | config | #823 Where Summarize the page runs: model = the fleet's AI model (needs the network and the fleet Account's OpenRouter token; falls back on device when it cannot answer); on_device = on the phone, offline (ML Kit's summarizer where the phone has it, else the page's key sentences). |
-| `addons_enabled` | set | scraper, search, ai, vault | scraper, search, ai, vault | general | config | The add-ons that are on (Settings ▸ Add-ons). Default: each add-on's default_enabled. |
-| `search_suggestions` | bool | true |  | general | config | While you type in the address bar, ask the default search engine for query suggestions (what you type is sent to it). Off = only the search row and your own history. |
-| `tab_strip` | bool | true |  | general | config | A row of small tab icons under the address bar: the tabs of the current group, and a + that opens a new tab in the same group. |
-| `translate_engine` | enum | "on_device" | on_device, openrouter | general | config | Which engine Translate page uses, in place on the page. On-device ML = the fleet's translation library in Cloud Writer / Cloud Keyboard (offline, private). OpenRouter = the model chosen in that app's AI routing (needs the network; the key stays in that app). Summarise by topics needs OpenRouter. |
-| `translate_target` | enum | "device" | device, en, es, pt, fr, de, it, nl, pl, ru, ja, zh | general | config | The language Translate page and Summarise by topics write in. |
-| `offline_depth` | int | 1 | 0..3 | general | config | Save site offline follows same-site links this many levels from the page you are on (0 = only that page). |
-| `offline_max_pages` | int | 25 | 1..200 | general | config | Save site offline stops after this many pages. |
-| `offline_max_mb` | int | 50 | 5..500 | general | config | Save site offline stops when the copy reaches this size. |
-| `dl_parallel` | int | 3 | 1..8 | general | config | How many downloads (and torrents) transfer at once; the rest wait in the queue. |
-| `dl_wifi_only` | bool | false |  | general | config | Downloads wait (and resume by themselves) until the phone is on Wi-Fi or Ethernet. |
-| `dl_allow_metered` | bool | true |  | general | config | Off = downloads wait for an unmetered network (no mobile data, no metered hotspot). |
-| `dl_speed_limit_kbps` | int | 0 | 0..1000000 | general | config | Shared by every HTTP download; torrents get the same cap for their downloads. 0 = no limit. |
-| `dl_segments` | int | 4 | 1..8 | general | config | A large file on a server that accepts byte ranges downloads over this many connections at once; 1 = always one connection. |
-| `dl_shared_store` | bool | false |  | general | config | When cloud-shared-store is installed, finished downloads go there instead of the phone's Download folder. Without it, this does nothing. |
-| `torrent_seed` | bool | false |  | general | config | A finished torrent keeps uploading to other peers until a limit below is reached (or you turn seeding off on its row); its files are published to Download/ when seeding stops. |
-| `torrent_seed_ratio` | int | 100 | 0..1000 | general | config | Stop seeding once this share of the torrent's size has been uploaded (100 = 1.0); 0 = no ratio limit. |
-| `torrent_seed_minutes` | int | 60 | 0..10080 | general | config | Stop seeding after this long; 0 = no time limit. |
-| `torrent_upload_kbps` | int | 0 | 0..1000000 | general | config | Upload speed cap for every torrent together; 0 = no limit. Downloads use the download speed limit above. |
-| `block_trackers` | bool | true |  | general | config | Subresource requests to the declared tracker hosts are answered empty on every site. A site can allow them (page menu > This site > Block trackers here). |
+| `summarize_route` | enum | "model" | model, on_device | browsing | config | #823 Where Summarize the page runs: model = the fleet's AI model (needs the network and the fleet Account's OpenRouter token; falls back on device when it cannot answer); on_device = on the phone, offline (ML Kit's summarizer where the phone has it, else the page's key sentences). |
+| `addons_enabled` | set | scraper, search, ai, vault | scraper, search, ai, vault | browsing | config | The add-ons that are on (Settings ▸ Add-ons). Default: each add-on's default_enabled. |
+| `search_suggestions` | bool | true |  | browsing | config | While you type in the address bar, ask the default search engine for query suggestions (what you type is sent to it). Off = only the search row and your own history. |
+| `tab_strip` | bool | true |  | browsing | config | A row of small tab icons under the address bar: the tabs of the current group, and a + that opens a new tab in the same group. |
+| `translate_engine` | enum | "on_device" | on_device, openrouter | browsing | config | Which engine Translate page uses, in place on the page. On-device ML = the fleet's translation library in Cloud Writer / Cloud Keyboard (offline, private). OpenRouter = the model chosen in that app's AI routing (needs the network; the key stays in that app). Summarise by topics needs OpenRouter. |
+| `translate_target` | enum | "device" | device, en, es, pt, fr, de, it, nl, pl, ru, ja, zh | browsing | config | The language Translate page and Summarise by topics write in. |
+| `offline_depth` | int | 1 | 0..3 | browsing | config | Save site offline follows same-site links this many levels from the page you are on (0 = only that page). |
+| `offline_max_pages` | int | 25 | 1..200 | browsing | config | Save site offline stops after this many pages. |
+| `offline_max_mb` | int | 50 | 5..500 | browsing | config | Save site offline stops when the copy reaches this size. |
+| `dl_parallel` | int | 3 | 1..8 | browsing | config | How many downloads (and torrents) transfer at once; the rest wait in the queue. |
+| `dl_wifi_only` | bool | false |  | browsing | config | Downloads wait (and resume by themselves) until the phone is on Wi-Fi or Ethernet. |
+| `dl_allow_metered` | bool | true |  | browsing | config | Off = downloads wait for an unmetered network (no mobile data, no metered hotspot). |
+| `dl_speed_limit_kbps` | int | 0 | 0..1000000 | browsing | config | Shared by every HTTP download; torrents get the same cap for their downloads. 0 = no limit. |
+| `dl_segments` | int | 4 | 1..8 | browsing | config | A large file on a server that accepts byte ranges downloads over this many connections at once; 1 = always one connection. |
+| `dl_shared_store` | bool | false |  | browsing | config | When cloud-shared-store is installed, finished downloads go there instead of the phone's Download folder. Without it, this does nothing. |
+| `torrent_seed` | bool | false |  | browsing | config | A finished torrent keeps uploading to other peers until a limit below is reached (or you turn seeding off on its row); its files are published to Download/ when seeding stops. |
+| `torrent_seed_ratio` | int | 100 | 0..1000 | browsing | config | Stop seeding once this share of the torrent's size has been uploaded (100 = 1.0); 0 = no ratio limit. |
+| `torrent_seed_minutes` | int | 60 | 0..10080 | browsing | config | Stop seeding after this long; 0 = no time limit. |
+| `torrent_upload_kbps` | int | 0 | 0..1000000 | browsing | config | Upload speed cap for every torrent together; 0 = no limit. Downloads use the download speed limit above. |
+| `block_trackers` | bool | true |  | browsing | config | Subresource requests to the declared tracker hosts are answered empty on every site. A site can allow them (page menu > This site > Block trackers here). |
 | `site_memory` | bool | true |  | autocomplete | config | After you submit a form, offer to remember a value you typed that is not generic personal data (a customer number, a member ID) for that site and form only. Never from a private tab, never a password, card, code or search box. |
 | `offer_save_profile_data` | bool | true |  | autocomplete | config | After you submit a form with a name, address, phone, email, birth date or document that none of your profiles holds, ask which profile to add it to. Nothing is saved without your tap, and never from a private tab. |
 | `offer_save_password` | bool | true |  | autocomplete | config | After a sign-in or sign-up form is submitted with a new or changed password, ask whether to save it on this phone (encrypted). |

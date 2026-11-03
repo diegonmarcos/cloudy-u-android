@@ -67,7 +67,7 @@ class BrowserConfigsTabsUiTest {
     private val cfg = BrowserConfig.parse(ui.getJSONObject("browser").toString())
     private val decl = NavDecl.parse(ui.getJSONArray("sections"), (0 until ui.getJSONArray("bottom_nav").length()).joinToString(",") { ui.getJSONArray("bottom_nav").getString(it) }, ui.getString("default_section"))
     private val palette = KitPalette.fromArgb(0xFF1A0033.toInt(), 0xFF2D0A55.toInt(), 0xFFFFFFFF.toInt(), 0x99FFFFFF.toInt(), 0xFF7C3AED.toInt(), 0x33FFFFFF, 0xFF000000.toInt())
-    private val order = listOf("sites", "permissions", "autocomplete", "general", "about")   // #1402
+    private val order = listOf("sites", "permissions", "autocomplete", "browsing")   // #1402/#1443 (General | Perms | About are the fleet pages the shell draws)
 
     private var selected by mutableStateOf<String?>(null)
     private val taps = mutableListOf<String>()
@@ -107,7 +107,7 @@ class BrowserConfigsTabsUiTest {
         compose.onNodeWithTag(PageTabsTags.tab("autocomplete"), useUnmergedTree = true).assertIsSelected()
     }
 
-    private var page by mutableStateOf("general")
+    private var page by mutableStateOf("browsing")
     private var composed = false
     private var bare = false
 
@@ -129,7 +129,7 @@ class BrowserConfigsTabsUiTest {
 
     @Test
     fun `a page draws its own settings and rows and nobody else's`() {
-        showPage("general")
+        showPage("browsing")
         assertTrue(on("browser:setting:homepage")); assertTrue(on("browser:setting:translate_engine")); assertTrue(on("browser:menu:bookmarks"))
         // #1402 General holds every other setting, grouped: Appearance and Privacy are sections of it
         assertTrue(on("browser:setting:text_zoom")); assertTrue(on("browser:menu:clear_data"))
@@ -150,7 +150,7 @@ class BrowserConfigsTabsUiTest {
 
     @Test
     fun `General's privacy group holds its rows, and Autocomplete's vault group holds the add-on's global rows`() {
-        showPage("general")
+        showPage("browsing")
         assertTrue(on("browser:menu:clear_data")); assertTrue(on("browser:menu:history")); assertTrue(on("browser:menu:storage_manage"))
         assertTrue(on("browser:setting:block_trackers"))
         showPage("autocomplete")

@@ -203,6 +203,11 @@ class MainActivity : AppCompatActivity() {
     private fun Page(section: String, page: String, go: (String, String) -> Unit) {
         val ctx = LocalContext.current
         val model = remember { AccountModel.get(ctx) }
+        // #1443 Configs starts General | Perms | About (the shared pages of libs:ui-nav-bars), then libs:account-ui's own pages.
+        if (section == "configs" && com.diegonmarcos.superapp.fleetconfigs.isFleetConfigsPage(page)) {
+            com.diegonmarcos.superapp.fleetconfigs.FleetConfigsPageBody(page, onAppConfigs = { go("configs", "cloud-apps") })
+            return
+        }
         when (section) {
             // #1439 Personal Info and Configs are libs:account-ui's (AccountUiPage), shared with Cloud Me's profile page.
             // PUBLIC Configs: no page there may show a secret value (test-account-configs-public.sh reads the lib's router).

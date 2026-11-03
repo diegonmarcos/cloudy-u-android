@@ -21,7 +21,7 @@ out="$(cd "$ROOT" && python3 "$GUARD" .)"; rc=$?
 if [ "$rc" -eq 0 ]; then ok "the real tree passes ($(tail -1 <<<"$out"))"; else fail "the real tree is red"; printf '%s\n' "$out"; fi
 
 mkdir -p "$BASE"
-( cd "$ROOT" && for f in a[acd]_*/build.json "$DATA" "$LIB"; do mkdir -p "$BASE/$(dirname "$f")"; cp "$f" "$BASE/$f"; done )
+( cd "$ROOT" && for f in a[acd]_*/build.json "$DATA" "$LIB" $(grep -rlE 'FleetConfigsPageBody\(|FleetGeneralPage\(|FleetConfigsScreen\(' --include=*.kt --include=*.java a[acd]_* 2>/dev/null | grep -vE '/(test|androidTest)/'); do mkdir -p "$BASE/$(dirname "$f")"; cp "$f" "$BASE/$f"; done )
 python3 "$GUARD" "$BASE" >/dev/null || fail "the fixture is red before any mutation"
 
 # mutant NAME RULE PYTHON — PYTHON edits the fixture (cwd = fixture) and must change a file; the guard must go red naming RULE.
@@ -62,13 +62,24 @@ mutant "the shared screen drops its tab strip" T0 "
 p = '$LIB'; s = open(p).read(); n = 'FleetConfigsTabs(shown, dark)'
 assert n in s; open(p, 'w').write(s.replace(n, 'Unit // tabs gone'))"
 mutant "a pending app is forgiven without an entry" T1 "$J
-d = load('$DATA'); del d['tabs']['pending']['ac_cloud-browser']; save('$DATA', d)"
+d = load('$DATA'); del d['tabs']['pending']['ac_cloud-office']; save('$DATA', d)"
 mutant "a conforming app stays pending (stale)" T3 "$J
 d = load('$DATA'); d['tabs']['pending']['ac_cloud-me'] = 'x' * 40; save('$DATA', d)"
 mutant "pending names no app" T3 "$J
 d = load('$DATA'); d['tabs']['pending']['ac_cloud-nope'] = 'x' * 40; save('$DATA', d)"
 mutant "pending reason too short" T3 "$J
-d = load('$DATA'); d['tabs']['pending']['ac_cloud-drive'] = 'later'; save('$DATA', d)"
+d = load('$DATA'); d['tabs']['pending']['ac_cloud-office'] = 'later'; save('$DATA', d)"
+mutant "Cloud Browser declares the tabs but stops drawing the shared pages" T4 "
+p = 'ac_cloud-browser/app/src/main/java/com/diegonmarcos/cloudbrowser/MainActivity.kt'; s = open(p).read()
+assert 'FleetConfigsPageBody(' in s; open(p, 'w').write(s.replace('FleetConfigsPageBody(', 'SomethingElse('))"
+mutant "Cloud Drive Configs opens on its own page" T1 "$J
+d = load('ac_cloud-drive/build.json'); s = [x for x in d['ui']['sections'] if x['id'] == 'configs'][0]
+s['pages'].insert(0, s['pages'].pop(3)); save('ac_cloud-drive/build.json', d)"
+mutant "Cloud News falls back to one Configs page" T1 "$J
+d = load('ac_cloud-news/build.json'); s = [x for x in d['ui']['sections'] if x['id'] == 'configs'][0]
+s['pages'] = s['pages'][3:]; save('ac_cloud-news/build.json', d)"
+mutant "an app folder without a build.json escapes" T5 "
+import os; os.makedirs('ac_cloud-ghost'); open('ac_cloud-ghost/readme.md', 'w').write('x')"
 mutant "an app that no longer reaches the shared screen" T1 "$J
 d = load('$DATA'); d['pending']['ac_cloud-tasks'] = 'x' * 40; save('$DATA', d)"
 

@@ -223,12 +223,15 @@
         "id": "configs",
         "label": "Configs", "title_row": false,
         "icon": "settings",
-        "_doc": "#1216 the strip inside the Configs island, ONE declaration: General (sections Explorer, Manage, Agents, then removable storage and About: the former Others page is folded in), Git (the sign-in auths), Fsync (the servers, APIs and SFTP hosts the folder sync rules use, read from ui.sync.config_fsync and data/drive-connections.json), Mounts (rclone setup, one line per provider of ui.sync.mounts.providers, Others last) and Webserver (opens cloud-c3-webserver). The Backups page is gone.",
+        "_doc": "#1443 the strip starts with the fleet's General | Perms | About (the shared pages of libs:ui-nav-bars, FleetConfigsPageBody), then Drive. #1216 the strip inside the Configs island, ONE declaration: Drive (was General; sections Explorer, Manage, Agents, then removable storage and About: the former Others page is folded in), Git (the sign-in auths), Fsync (the servers, APIs and SFTP hosts the folder sync rules use, read from ui.sync.config_fsync and data/drive-connections.json), Mounts (rclone setup, one line per provider of ui.sync.mounts.providers, Others last) and Webserver (opens cloud-c3-webserver). The Backups page is gone.",
         "pages": [
+          {"id": "general", "label": "General", "icon": "settings"},
+          {"id": "perms", "label": "Perms", "icon": "lock"},
+          {"id": "about", "label": "About", "icon": "info"},
           {
-            "id": "general",
-            "label": "General",
-            "icon": "settings"
+            "id": "drive",
+            "label": "Drive",
+            "icon": "folder"
           },
           {
             "id": "git",

@@ -14,6 +14,8 @@ on:
       - "1_cicd/src/data/configs-pages.json"
       - "1_cicd/src/scripts/cloud-android-configs-tabs-guard.py"
       - "1_cicd/src/scripts/test/configs-tabs-guard.test.sh"
+      - "a[acd]_*/**/*.java"
+      - "a[acd]_*/**/*.kt"
       - "a[acd]_*/build.json"
       - "ab_cloud-libs-shared/libs/ui-nav-bars/src/main/kotlin/com/diegonmarcos/superapp/fleetconfigs/FleetConfigsPages.kt"
     # ── end MANAGED-GUARD-TRIGGERS ──

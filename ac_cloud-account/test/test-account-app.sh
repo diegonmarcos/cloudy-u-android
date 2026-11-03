@@ -134,7 +134,7 @@ import json, sys
 ui = json.load(open(sys.argv[1], encoding='utf-8')).get('ui') or {}
 # a0_docs/eng-specs/cloud-account-ia.md: a page's own `pages` is a second strip (Autofill, Phone, Setup)
 want = {'personal': ['ids', 'cards', 'others', 'autocomplete'],
-        'configs': ['android', 'desktop', 'c3'],
+        'configs': ['general', 'perms', 'about', 'android', 'desktop', 'c3'],
         'data': ['secrets', 'backups', 'devices'],
         'connect': ['status', 'auth', 'fleetsetup'],
         'activity': ['activity']}

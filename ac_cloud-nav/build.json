@@ -213,7 +213,11 @@
         "id": "configs",
         "label": "Configs",
         "icon": "configs",
+        "_doc": "#1443 Configs starts General | Perms | About (the fleet's shared pages of libs:ui-nav-bars, FleetConfigsPageFragment), then Cloud Nav's own pages; Device is the device/app/battery/memory/network page that was About.",
         "pages": [
+          {"id": "general", "label": "General", "icon": "settings"},
+          {"id": "perms", "label": "Perms", "icon": "security"},
+          {"id": "about", "label": "About", "icon": "info"},
           {
             "id": "tracker",
             "label": "Tracker",
@@ -240,9 +244,9 @@
             "icon": "layers"
           },
           {
-            "id": "about",
-            "label": "About",
-            "icon": "info"
+            "id": "device",
+            "label": "Device",
+            "icon": "smartphone"
           }
         ]
       }

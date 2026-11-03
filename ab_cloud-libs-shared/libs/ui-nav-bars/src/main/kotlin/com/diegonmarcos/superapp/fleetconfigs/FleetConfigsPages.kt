@@ -284,6 +284,25 @@ public fun FleetConfigsTabs(selected: FleetConfigsPage, dark: Boolean, onSelect:
     )
 }
 
+/**
+ * #1443 The three shared pages inside an app's OWN Configs screen (the app's Configs strip starts General | Perms | About, then its own
+ * pages): true when [id] is one of them. A host maps its page id with this and draws [FleetConfigsPageBody] for it.
+ */
+public fun isFleetConfigsPage(id: String?): Boolean = FleetConfigsPage.entries.any { it.id == id }
+
+/** #1443 The body of the shared page [id] (General, Perms or About) for an app's own Configs strip; [onAppConfigs] opens the app's own pages. */
+@Composable
+public fun FleetConfigsPageBody(id: String, dark: Boolean = true, onAppConfigs: () -> Unit = {}, modifier: Modifier = Modifier) {
+    val c = ThemeBackground.colors(dark)
+    Box(modifier.fillMaxSize().semantics { testTagsAsResourceId = true }.testTag(FleetConfigsTags.page(FleetConfigsPage.entries.firstOrNull { it.id == id } ?: FleetConfigsPage.General))) {
+        when (id) {
+            FleetConfigsPage.Perms.id -> FleetPermsPage(c)
+            FleetConfigsPage.About.id -> FleetAboutPage(FleetConfigs.current, c)
+            else -> FleetGeneralPage(FleetConfigs.current, dark, c, onAppConfigs = onAppConfigs)
+        }
+    }
+}
+
 /** #1439 Configs > Perms as its own page: the same libs:perms AppPermsSection as General's Perms anchor, live, scrollable. */
 @Composable
 public fun FleetPermsPage(c: ThemeColors) {

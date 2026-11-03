@@ -39,6 +39,7 @@ import com.diegonmarcos.clouddrive.ui.DriveTags
 import com.diegonmarcos.clouddrive.ui.EmptyState
 import com.diegonmarcos.clouddrive.ui.IconCatalog
 import com.diegonmarcos.clouddrive.ui.Pill
+import com.diegonmarcos.superapp.fleetconfigs.FleetConfigsPageBody
 
 /**
  * #1216 CONFIGS: ONE island whose strip is build.json ui.sections[configs].pages: General (sections Explorer, Manage, Agents, then
@@ -79,7 +80,11 @@ fun ConfigsScreen(
         NavBarTopSecondRow(pages = Declarations.navPages("configs"), selectedId = current, onSelect = { current = it.id }, modifier = Modifier.padding(horizontal = DriveMetrics.gap).testTag(DriveTags.CONFIGS_STRIP), underTopChrome = false)
         AnimatedContent(targetState = current, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "configs_page", modifier = Modifier.weight(1f)) { id ->
             when (id) {
-                "general" -> GeneralPage(prefs, actions, hasAccess, rcloneVersion)
+                // #1443 General | Perms | About are the fleet's shared pages (libs:ui-nav-bars); Drive is this app's own former General.
+                "general" -> FleetConfigsPageBody(id, onAppConfigs = { current = "drive" })
+                "perms" -> FleetConfigsPageBody(id)
+                "about" -> FleetConfigsPageBody(id)
+                "drive" -> GeneralPage(prefs, actions, hasAccess, rcloneVersion)
                 "webserver" -> WebserverPage(actions)
                 "fsync" -> ConfigsFsyncPage(storage, actions)
                 "mounts" -> ConfigsMountsPage(storage, rclone, prefs)
