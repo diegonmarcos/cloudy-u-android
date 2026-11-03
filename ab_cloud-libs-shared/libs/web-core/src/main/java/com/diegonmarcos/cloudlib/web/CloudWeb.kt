@@ -27,7 +27,7 @@ import java.util.WeakHashMap
  * the whole page per frame; a host may still latch a device onto software after [configure] (Mail's crash guard).
  * WebGL2 and WebGPU have no WebSettings switch: they are on whenever the installed System WebView and GPU allow,
  * which [GpuProbe] measures at runtime. androidx.webkit has no WebGPU feature or setting either (checked against
- * WebViewFeature, #1418); the gate is Chromium's per-GPU allowlist, see [GpuCaps.reason]. The engine is
+ * WebViewFeature, #1430); the gate is Chromium's per-GPU allowlist, see [GpuCaps.reason]. The engine is
  * [WebEngine.resolve]d per profile (GeckoView is declared, not linked).
  */
 object CloudWeb {
@@ -62,7 +62,7 @@ object CloudWeb {
     fun <T : WebView> configure(wv: T, profile: WebProfile, desktop: Boolean = false): T {
         profiles[wv] = profile
         wv.setLayerType(View.LAYER_TYPE_NONE, null)
-        // debugging only (#1418): a debuggable build of a GPU world or the Browser opens chrome://inspect, and the
+        // debugging only (#1430): a debuggable build of a GPU world or the Browser opens chrome://inspect, and the
         // WebView DevTools app's flags (enable-unsafe-webgpu, Vulkan) reach it; a release build never does
         if ((profile == WebProfile.WEB_WORLD || profile == WebProfile.BROWSER) &&
             wv.context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0

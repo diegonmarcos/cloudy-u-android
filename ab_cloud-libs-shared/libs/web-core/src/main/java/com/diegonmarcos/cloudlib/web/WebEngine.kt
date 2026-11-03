@@ -1,7 +1,7 @@
 package com.diegonmarcos.cloudlib.web
 
 /**
- * The engine behind an embedded web view (#1418, #1371). SYSTEM_WEBVIEW is the only engine linked today.
+ * The engine behind an embedded web view (#1430, #1371). SYSTEM_WEBVIEW is the only engine linked today.
  *
  * GECKO is declared, not linked: GeckoView (org.mozilla.geckoview, MPL-2.0, roughly 50-80 MB per ABI from Mozilla's
  * maven) gets WebGPU only through the `dom.webgpu.enabled` pref, which Firefox for Android still ships off (behind a
