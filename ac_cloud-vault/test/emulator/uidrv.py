@@ -28,8 +28,20 @@ def center(n):
 def hit(n, rx):
     return re.search(rx, n.get("text", "") + "\n" + n.get("content-desc", ""), re.I) is not None
 
+PROMPT_RX = r"Make Cloud Vault your passkeys & autofill provider"
+
 def find(rx):
-    for n in nodes():
+    ns = nodes()
+    # #1412: the launch-time provider prompt covers the app on an emulator that cannot select
+    # Cloud Vault as provider; dismiss it ("Not now") unless the caller is looking for it.
+    if not re.search(rx, PROMPT_RX, re.I) and any(hit(n, PROMPT_RX) for n in ns):
+        later = next((n for n in ns if hit(n, r"^Not now$")), None)
+        if later is not None:
+            x, y = center(later)
+            adb("shell", "input", "tap", str(x), str(y))
+            time.sleep(1)
+            ns = nodes()
+    for n in ns:
         if hit(n, rx) and n.get("bounds") != "[0,0][0,0]":
             return n
 
