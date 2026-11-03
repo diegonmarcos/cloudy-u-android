@@ -227,7 +227,7 @@ object WriterRoutes {
         private set
 
     /**
-     * Reads the text in [bitmap] on the engine set in Configs: ML on-device (libs:ml-ocr's ML Kit),
+     * Reads the text in [bitmap] on the engine set in Configs: ML on-device (libs:ml-l-image-ocr's ML Kit),
      * or an OpenRouter vision model with the fleet Account's token, falling back to ML with the
      * reason (core Ocr.run = Routing.run). Blocking: call from a worker.
      */

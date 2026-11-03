@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- libs:ml-ocr (#1418): no components, no permissions. The camera is the consuming app's
+<!-- libs:ml-l-image-ocr (#1418): no components, no permissions. The camera is the consuming app's
      (ActivityResultContracts.TakePicture into its own FileProvider); this lib only reads pixels. -->
 <manifest />

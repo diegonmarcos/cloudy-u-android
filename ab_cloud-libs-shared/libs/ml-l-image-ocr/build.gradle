@@ -1,4 +1,4 @@
-// libs:ml-ocr (#1418) — the fleet's OCR: ML Kit Text Recognition ON-DEVICE (the bundled Latin model
+// libs:ml-l-image-ocr (#1418) — the fleet's OCR: ML Kit Text Recognition ON-DEVICE (the bundled Latin model
 // plus the bundled Chinese, Devanagari, Japanese and Korean models, so no download and no network)
 // and the OpenRouter vision transport as the alternative. Shared BY REFERENCE (build.json::modules
 // `dir`), first linked by Cloud Writer. Which engine runs, and the fallback from OpenRouter to ML,

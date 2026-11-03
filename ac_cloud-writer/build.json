@@ -40,7 +40,7 @@
         "libs:ui-icons",
         "libs:ui-nav-bars",
         "libs:theme-background",
-        "libs:ml-ocr"
+        "libs:ml-l-image-ocr"
       ]
     },
     "core": {
@@ -112,10 +112,10 @@
       "_doc": "#1164 shared navigation and theme design, shared BY REFERENCE.",
       "dir": "../ab_cloud-libs-shared/libs/theme-background"
     },
-    "libs:ml-ocr": {
+    "libs:ml-l-image-ocr": {
       "type": "library",
       "_doc": "#1418 OCR, shared BY REFERENCE: ML Kit Text Recognition on-device (Latin plus the bundled Chinese, Devanagari, Japanese and Korean recognisers) and the OpenRouter vision transport. The ML vs OpenRouter choice and its fallback are core's Ocr.run (Routing.run), PIT-gated.",
-      "dir": "../ab_cloud-libs-shared/libs/ml-ocr"
+      "dir": "../ab_cloud-libs-shared/libs/ml-l-image-ocr"
     }
   },
   "ui": {

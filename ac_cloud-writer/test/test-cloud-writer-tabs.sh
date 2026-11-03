@@ -10,7 +10,7 @@
 #      and every tab run goes through WriterToolRunner (runner.run / runner.draft), the shared ITextTools path.
 #   T3 every tab has an input box (WriterBox(..., input = true)) and an output box (input = false);
 #      an input box offers Load file, Load image, Take picture and Export; OCR lands through core Ocr.intoBox.
-#   T4 OCR routing is core Ocr.run over Routing.run, ML (libs:ml-ocr MlKitOcr) and OpenRouter (VisionOcr),
+#   T4 OCR routing is core Ocr.run over Routing.run, ML (libs:ml-l-image-ocr MlKitOcr) and OpenRouter (VisionOcr),
 #      and Configs carries the OCR section (engine + model).
 #   T5 the edit modes: EditMode.DEFAULT is WYSIWYG, the box offers both, and the rich editor is linked and inventoried.
 #   T6 export offers md, txt and html.
@@ -79,14 +79,14 @@ def checks(f):
     need("T3 a loaded file is converted by core Import", "Import.toHtml(kind, it)" in box)
     routes = f[J + "WriterRoutes.kt"]
     need("T4 OCR routes through core Ocr.run", "Ocr.run(" in routes)
-    need("T4 the ML engine is libs:ml-ocr's MlKitOcr", "MlKitOcr.read(bitmap)" in routes)
-    need("T4 the OpenRouter engine is libs:ml-ocr's VisionOcr", "VisionOcr {" in routes and "OpenRouter.visionBody(" in routes)
+    need("T4 the ML engine is libs:ml-l-image-ocr's MlKitOcr", "MlKitOcr.read(bitmap)" in routes)
+    need("T4 the OpenRouter engine is libs:ml-l-image-ocr's VisionOcr", "VisionOcr {" in routes and "OpenRouter.visionBody(" in routes)
     need("T4 Ocr.run is Routing.run", re.search(r"fun run\(engine: OcrEngine[^=]*=\s*Routing\.run\(route\(engine\)", f[C + "Boxes.kt"]) is not None)
     need("T4 OCR engine defaults to ML", 'val DEFAULT = ML' in f[C + "Boxes.kt"])
     need("T4 Configs has the OCR section", "OcrSection()" in main and "WriterRoutes.setOcrEngine(" in main and "WriterRoutes.setOcrModel(" in main)
-    need("T4 build.json declares libs:ml-ocr and the app depends on it",
-         "libs:ml-ocr" in json.loads(f["build.json"]).get("modules", {}) and "libs:ml-ocr" in json.loads(f["build.json"])["modules"]["app"]["depends_on"])
-    need("T4 app compiles :libs:ml-ocr", "project(':libs:ml-ocr')" in f["app/build.gradle"])
+    need("T4 build.json declares libs:ml-l-image-ocr and the app depends on it",
+         "libs:ml-l-image-ocr" in json.loads(f["build.json"]).get("modules", {}) and "libs:ml-l-image-ocr" in json.loads(f["build.json"])["modules"]["app"]["depends_on"])
+    need("T4 app compiles :libs:ml-l-image-ocr", "project(':libs:ml-l-image-ocr')" in f["app/build.gradle"])
     ht = f[C + "HtmlText.kt"]
     need("T5 EditMode.DEFAULT is WYSIWYG", "val DEFAULT = WYSIWYG" in ht)
     need("T5 the box starts in EditMode.DEFAULT", "class BoxState(initial: EditMode = EditMode.DEFAULT)" in box)
