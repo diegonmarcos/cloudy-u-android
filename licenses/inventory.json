@@ -65,7 +65,8 @@
   },
   "vendored": {
    "LicenseRef-NoLicenseGranted": 2,
-   "MIT": 2
+   "MIT": 2,
+   "LicenseRef-PublicDomain AND CC-BY-4.0": 1
   }
  },
  "upstream_modules": {
@@ -16235,6 +16236,14 @@
     "ac_cloud-calc/data/assets/latex/katex/LICENSE"
    ],
    "licence": "MIT",
+   "licence_source": "licenses/curated.json"
+  },
+  "vendored:ac_cloud-calc/data/assets/worldmap": {
+   "kind": "vendored",
+   "declared_in": [
+    "ac_cloud-calc/data/assets/worldmap/LICENSE"
+   ],
+   "licence": "LicenseRef-PublicDomain AND CC-BY-4.0",
    "licence_source": "licenses/curated.json"
   },
   "vendored:ac_cloud-search": {

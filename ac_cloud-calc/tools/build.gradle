@@ -21,6 +21,9 @@ kotlin {
 dependencies {
     // Notes (frequency to note) and Air (speed of sound) are :sound's.
     implementation project(':sound')
+    // #1423 Android's own org.json at runtime (the World Clock catalogue); the real library for the JVM suite and PIT.
+    compileOnly 'org.json:json:20240303'
+    testImplementation 'org.json:json:20240303'
     testImplementation 'junit:junit:4.13.2'
 }
 

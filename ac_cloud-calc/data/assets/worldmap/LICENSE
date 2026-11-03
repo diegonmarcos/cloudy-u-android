@@ -1,0 +1,15 @@
+Cloud Calc World Clock data (#1423)
+
+land.json - Natural Earth 1:110m physical land (ne_110m_land), https://www.naturalearthdata.com,
+via https://github.com/nvkelso/natural-earth-vector. Natural Earth is in the PUBLIC DOMAIN:
+"All versions of Natural Earth raster + vector map data found on this website are in the public
+domain. You may use the maps in any manner, including modifying the content and design,
+electronic dissemination, and offset printing." (naturalearthdata.com/about/terms-of-use)
+Converted to flat outer-ring arrays rounded to 0.1 degree by ac_cloud-calc/data/gen/worldclock.py.
+
+cities.json - city names, coordinates, country codes and time zones from GeoNames
+(https://www.geonames.org, cities500.txt and countryInfo.txt), licensed under the Creative
+Commons Attribution 4.0 International licence (CC BY 4.0,
+https://creativecommons.org/licenses/by/4.0/). Selected (capitals and the most populous cities
+of the big countries) and reformatted by ac_cloud-calc/data/gen/worldclock.py; the zones list is
+the IANA time zone database (public domain).

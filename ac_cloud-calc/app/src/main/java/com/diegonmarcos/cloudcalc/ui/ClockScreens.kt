@@ -66,6 +66,7 @@ import com.diegonmarcos.cloudcalc.clock.ClockEngine
 import com.diegonmarcos.cloudcalc.clock.ClockLogic
 import com.diegonmarcos.cloudcalc.clock.ClockNotifications
 import com.diegonmarcos.cloudcalc.clock.TimerState
+import com.diegonmarcos.cloudcalc.tools.WorldClockData
 import kotlinx.coroutines.delay
 import java.time.DayOfWeek
 import java.time.Instant
@@ -166,6 +167,9 @@ fun WorldClockMode(mode: Declarations.Mode) {
             Text(HHMMSS.format(t), style = MaterialTheme.typography.displayMedium, fontFamily = FontFamily.Monospace)
             Text(DAY.format(t) + "  ·  " + here.id, color = MaterialTheme.colorScheme.onSurfaceVariant)
             HorizontalDivider(Modifier.padding(vertical = CalcMetrics.gap))
+            // #1423 the world map: zone bands, the terminator, a pin per city; a tap adds or removes the nearest city.
+            WorldMap(zones, now, onToggle = { z -> ClockEngine.setZones(ctx, if (z in zones) zones - z else zones + z) })
+            HorizontalDivider(Modifier.padding(vertical = CalcMetrics.gap))
         }
         items(zones, key = { it }) { id ->
             val z = runCatching { ZoneId.of(id) }.getOrNull() ?: return@items
@@ -198,10 +202,14 @@ fun WorldClockMode(mode: Declarations.Mode) {
 
 @Composable
 private fun ZonePicker(onDismiss: () -> Unit, onPick: (String) -> Unit) {
+    val ctx = LocalContext.current
     var query by remember { mutableStateOf("") }
-    // The device's own tzdata: offline, and as current as the phone's last system update.
-    val all = remember { ZoneId.getAvailableZoneIds().filter { '/' in it && !it.startsWith("Etc/") && !it.startsWith("SystemV/") }.sorted() }
-    val shown = remember(query) { all.filter { query.isBlank() || ClockLogic.city(it).contains(query, true) || it.contains(query, true) }.take(200) }
+    // #1423 the declared catalogue (data/assets/worldmap/cities.json): every capital, the big countries' major cities and
+    // every IANA zone; a zone the device's tzdata does not know is not offered.
+    val cat = remember { WorldAssets.catalogue(ctx) }
+    val known = remember { ZoneId.getAvailableZoneIds() }
+    val cities = remember(query) { WorldClockData.search(cat, query).filter { it.zone in known }.take(200) }
+    val zones = remember(query) { WorldClockData.searchZones(cat, query).filter { it in known }.take(200) }
     AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = {},
@@ -210,8 +218,15 @@ private fun ZonePicker(onDismiss: () -> Unit, onPick: (String) -> Unit) {
         text = {
             Column {
                 OutlinedTextField(query, { query = it }, Modifier.fillMaxWidth(), singleLine = true, placeholder = { Text(stringResource(R.string.clock_search_city)) })
-                LazyColumn(Modifier.height(CalcMetrics.plotHeight)) {
-                    items(shown, key = { it }) { id ->
+                LazyColumn(Modifier.height(CalcMetrics.plotHeight).testTag(CITY_LIST_TAG)) {
+                    items(cities, key = { "c:" + it.country + it.name }) { c ->
+                        Column(Modifier.fillMaxWidth().clickable { onPick(c.zone) }.padding(vertical = CalcMetrics.small)) {
+                            Text((if (c.capital) "★ " else "") + c.name + "  ·  " + (cat.countries[c.country] ?: c.country))
+                            Text(c.zone, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                    item { HorizontalDivider(Modifier.padding(vertical = CalcMetrics.small)) }
+                    items(zones, key = { "z:$it" }) { id ->
                         Text(ClockLogic.city(id) + "  ·  " + id, Modifier.fillMaxWidth().clickable { onPick(id) }.padding(vertical = CalcMetrics.gap))
                     }
                 }
@@ -219,6 +234,8 @@ private fun ZonePicker(onDismiss: () -> Unit, onPick: (String) -> Unit) {
         },
     )
 }
+
+const val CITY_LIST_TAG = "clock_city_list"
 
 // ── alarms ──────────────────────────────────────────────────────────────────────────────────
 
