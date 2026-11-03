@@ -7,6 +7,7 @@ object AssetData {
     const val SOURCES = "sources.json"
     const val DASHBOARDS = "dashboards.json"
     const val CONTROL = "control.json"
+    const val UNIVERSE = "universe.json"
 
     @Volatile private var sourcesJson: String? = null
     @Volatile private var sourcesList: List<Source>? = null

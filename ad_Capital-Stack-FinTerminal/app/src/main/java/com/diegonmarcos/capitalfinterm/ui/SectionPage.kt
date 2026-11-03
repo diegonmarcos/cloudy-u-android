@@ -283,6 +283,7 @@ private fun AboutPanel() {
     KitCard {
         KitSectionHeader(stringResource(R.string.app_name), stringResource(R.string.about_body, BuildConfig.VERSION_NAME, BuildConfig.GIT_SHORT_SHA))
     }
+    DataSourcesPanel()
 }
 
 internal fun openUrl(ctx: Context, url: String) {

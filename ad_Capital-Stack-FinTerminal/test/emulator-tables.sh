@@ -13,6 +13,15 @@ adb shell settings delete global cloud_nav_ui_mode || true
 echo "cloud_nav_ui_mode=$(adb shell settings get global cloud_nav_ui_mode)" | tee "$OUT/nav-mode.txt"
 read -r W H < <(adb shell wm size | awk -F'[ x]' '/Physical/{print $3, $4}')
 W=${W:-1080}; H=${H:-2400}
+# #1416 About > Data sources (the hidden about section, opened by its id), shot and scrolled through its five source cards
+adb shell am start -S -W -n "$PKG/.MainActivity" --es dashboard about >/dev/null
+sleep 12
+for i in 1 2 3; do
+  adb exec-out screencap -p > "$OUT/apk-about-data-sources-$i.png"
+  adb shell input swipe $((W / 2)) $((H * 4 / 5)) $((W / 2)) $((H / 4)) 500
+  sleep 2
+done
+adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1 && adb pull /sdcard/ui.xml "$OUT/ui-about.xml" >/dev/null 2>&1 || true
 for s in $HOMES market_monitor; do
   adb shell am start -S -W -n "$PKG/.MainActivity" --es dashboard "$s" >/dev/null
   sleep 15

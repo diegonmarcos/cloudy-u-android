@@ -4,6 +4,10 @@
     <string name="entry_open">Open</string>
     <string name="entry_planned">Planned</string>
     <string name="about_body">A Lnktree app of the Cloud constellation. Its pages are declared in build.json and drawn by declared kinds; a dashboard entry opens its panels: live where the source needs no key, a dashed layout where it does. Version %1$s, build %2$s.</string>
+    <string name="data_sources_title">About ▸ Data sources</string>
+    <string name="data_sources_licence">Licence / terms: %1$s</string>
+    <string name="data_sources_rate">Rate limit: %1$s · %2$s</string>
+    <string name="data_sources_status">Status: %1$s</string>
     <string name="sources_title">Config ▸ Sources</string>
     <string name="sources_sub">Every data source behind the dashboards, modelled on FinceptTerminal: free public feeds plus your own API keys. A key is kept encrypted on this phone, shown nowhere, never logged.</string>
     <string name="sources_all">all entries</string>

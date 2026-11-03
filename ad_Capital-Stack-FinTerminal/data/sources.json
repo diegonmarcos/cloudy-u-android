@@ -1118,6 +1118,79 @@
       }
     },
     {
+      "id": "openfigi",
+      "name": "OpenFIGI",
+      "category": "Equity-Exchange",
+      "coverage": "FIGI identifier mapping and metadata for bonds and equities (free tier, no key)",
+      "endpoint": "https://api.openfigi.com",
+      "docs": "https://www.openfigi.com/api",
+      "auth": {
+        "type": "none",
+        "note": "Free tier without a key: 25 requests a minute, 10 identifiers a request."
+      },
+      "connector": null,
+      "feeds": [
+        {
+          "tab": "eq",
+          "entries": [
+            "Fundamentals"
+          ]
+        }
+      ],
+      "priority": 10,
+      "licence": "FIGI open data; OpenFIGI terms of use"
+    },
+    {
+      "id": "fmp",
+      "name": "Financial Modeling Prep",
+      "category": "Equity-Exchange",
+      "coverage": "Standardised fundamentals and ratios for US equities",
+      "endpoint": "https://financialmodelingprep.com",
+      "docs": "https://site.financialmodelingprep.com/developer/docs",
+      "auth": {
+        "type": "free_key",
+        "key_in": {
+          "header": "apikey"
+        },
+        "signup": "https://site.financialmodelingprep.com/developer/docs",
+        "note": "A free key (250 requests a day). The container reads it from the fleet secret store; on this phone it stays encrypted here."
+      },
+      "connector": null,
+      "feeds": [
+        {
+          "tab": "eq",
+          "entries": [
+            "Fundamentals"
+          ]
+        }
+      ],
+      "priority": 20,
+      "licence": "FMP terms of service (free tier, personal use)"
+    },
+    {
+      "id": "yahoo",
+      "name": "Yahoo Finance chart (flagged)",
+      "category": "Equity-Exchange",
+      "coverage": "EOD prices, splits and dividends: the last fallback after Cboe, FRED and Coinbase, off by default",
+      "endpoint": "https://query1.finance.yahoo.com",
+      "docs": "https://legal.yahoo.com/us/en/yahoo/terms/otos/index.html",
+      "auth": {
+        "type": "none",
+        "note": "No official API; Yahoo's terms restrict automated use, so it is behind a feature flag (off)."
+      },
+      "connector": null,
+      "feeds": [
+        {
+          "tab": "eq",
+          "entries": [
+            "Quotes & Charts"
+          ]
+        }
+      ],
+      "priority": 10,
+      "licence": "Yahoo terms of service (ToS risk)"
+    },
+    {
       "id": "nasdaq_calendar",
       "name": "Nasdaq earnings calendar",
       "category": "Equity-Exchange",

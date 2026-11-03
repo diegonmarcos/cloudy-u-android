@@ -62,6 +62,7 @@ object Tags {
     fun entry(title: String): String = "entry:$title"
     fun panel(id: String): String = "panel:$id"
     fun source(id: String): String = "source:$id"
+    fun dataSource(id: String): String = "data_source:$id"
     fun key(id: String): String = "key:$id"
 }
 

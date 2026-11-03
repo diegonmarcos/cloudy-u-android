@@ -14,6 +14,10 @@ interface Http {
     /** A bodiless POST (the container actions); the answer's text. */
     @Throws(IOException::class)
     fun post(url: String): String
+
+    /** #1416 a request with its own headers (a declared User-Agent, a key header) and an optional JSON body (POST when present). */
+    @Throws(IOException::class)
+    fun send(url: String, headers: Map<String, String>, body: String?): String = if (body == null) get(url) else throw IOException("no body support")
 }
 
 /**
@@ -31,7 +35,9 @@ class UrlHttp(
 
     override fun post(url: String): String = call("POST", url)
 
-    private fun call(method: String, url: String): String {
+    override fun send(url: String, headers: Map<String, String>, body: String?): String = call(if (body == null) "GET" else "POST", url, headers, body)
+
+    private fun call(method: String, url: String, headers: Map<String, String> = emptyMap(), body: String? = null): String {
         val u = URL(url)
         val plain = u.protocol == "http" && u.host in cleartextHosts
         if (u.protocol != "https" && !plain) throw IOException("https only")
@@ -41,12 +47,13 @@ class UrlHttp(
             c.readTimeout = readMs
             c.requestMethod = method
             c.instanceFollowRedirects = false
-            if (method == "POST") {
-                c.doOutput = true
-                c.outputStream.use { it.write(ByteArray(0)) }
-            }
             c.setRequestProperty("User-Agent", AGENT)
             c.setRequestProperty("Accept", "application/json, text/csv, application/xml, */*")
+            headers.forEach { (k, v) -> c.setRequestProperty(k, v) }
+            if (method == "POST") {
+                c.doOutput = true
+                c.outputStream.use { it.write((body ?: "").toByteArray(Charsets.UTF_8)) }
+            }
             val code = c.responseCode
             if (code !in 200..299) throw IOException("HTTP $code")
             c.inputStream.use { input ->
