@@ -155,21 +155,35 @@ class InfraScreensComposeTest {
     }
 
     @Test
-    fun `electronics - every declared device shows model, os, wireguard address and role, and an empty kind says none`() {
-        show(InfraSections.ELECTRONICS)
-        slice.devices.forEach { d ->
-            val r = row(InfraSections.ELECTRONICS, d.id)
-            r.assertTextContains(d.model)
-            r.assertTextContains("OS: ${d.os ?: "not declared"}")
-            r.assertTextContains("wg0 ${d.wgIp ?: "-"}", substring = true)
-            r.assertTextContains("Role: ${d.role ?: "not declared"}")
-        }
-        FleetModel.DEVICE_KINDS.forEach { (kind, label) ->
-            compose.onNodeWithTag(InfraTags.head(InfraSections.ELECTRONICS, kind)).assertTextContains(label)
-            if (slice.devices.none { it.kind == kind }) {
-                row(InfraSections.ELECTRONICS, "none-$kind").assertTextContains("None declared")
+    fun `personal - every declared device is on its Desktop, Mobile or Gadgets page with model, os, wireguard address and role`() {
+        var current by mutableStateOf(InfraSections.DESKTOP)
+        compose.setContent { CloudKitTheme(palette) { InfraSectionScreen(current, slice, FleetLiveState(), today) } }
+        listOf(InfraSections.DESKTOP, InfraSections.MOBILE, InfraSections.GADGETS).forEach { page ->
+            compose.runOnIdle { current = page }
+            val kinds = FleetModel.personalKinds(page, slice)
+            slice.devices.filter { it.kind in kinds }.forEach { d ->
+                val r = row(page, d.id)
+                r.assertTextContains(d.model)
+                r.assertTextContains("OS: ${d.os ?: "not declared"}")
+                r.assertTextContains("wg0 ${d.wgIp ?: "-"}", substring = true)
+                r.assertTextContains("Role: ${d.role ?: "not declared"}")
+            }
+            kinds.forEach { kind ->
+                compose.onNodeWithTag(InfraTags.head(page, kind)).assertTextContains(FleetModel.kindLabel(kind))
+                if (slice.devices.none { it.kind == kind }) row(page, "none-$kind").assertTextContains("None declared")
             }
         }
+    }
+
+    @Test
+    fun `node-python and public domains read the declaration and say none when it is empty`() {
+        var current by mutableStateOf(InfraSections.NODE_PYTHON)
+        compose.setContent { CloudKitTheme(palette) { InfraSectionScreen(current, slice, FleetLiveState(), today) } }
+        if (slice.hosting.isEmpty()) row(InfraSections.NODE_PYTHON, "none").assertTextContains("None declared")
+        slice.hosting.forEach { row(InfraSections.NODE_PYTHON, it.id).assertTextContains(it.label) }
+        compose.runOnIdle { current = InfraSections.DOMAINS_PUBLIC }
+        if (slice.publicDomains.isEmpty()) row(InfraSections.DOMAINS_PUBLIC, "none").assertTextContains("None declared")
+        slice.publicDomains.forEach { row(InfraSections.DOMAINS_PUBLIC, it.name).assertTextContains(it.name) }
     }
 
     @Test

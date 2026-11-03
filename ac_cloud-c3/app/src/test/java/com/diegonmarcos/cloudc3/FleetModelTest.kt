@@ -32,6 +32,14 @@ class FleetModelTest {
     }
 
     @Test
+    fun `every declared device lands on exactly one Personal page`() {
+        val pages = listOf("desktop", "mobile", "gadgets")
+        slice.devices.forEach { d ->
+            assertEquals("device ${d.id} (${d.kind})", 1, pages.count { d.kind in FleetModel.personalKinds(it, slice) })
+        }
+    }
+
+    @Test
     fun `the references inside the declaration resolve`() {
         slice.vms.forEach { assertNotNull("vm ${it.id} names provider ${it.provider}", slice.provider(it.provider)) }
         slice.providers.forEach { p -> p.vms.forEach { id -> assertTrue("provider ${p.id} lists vm $id", slice.vms.any { it.id == id }) } }

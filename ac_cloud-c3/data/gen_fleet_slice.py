@@ -157,6 +157,7 @@ def build(cons, zone, assets, users, gcloud=None):
         "_meta": {"generated_by": "data/gen_fleet_slice.py", "sources": PATHS,
                   "note": "READ from the fleet declarations; never edit - run the generator. No key, token or instance id is carried."},
         "providers": with_self_hosted(providers, out_vms), "vms": out_vms, "serverless": serverless(gcloud or {}),
+        "hosting": assets.get("hosting") or [], "public_domains": assets.get("public_domains") or [],
         "storage": {"buckets": buckets, "backends": assets["storage_backends"]},
         "electronics": electronics, "domains": domains,
     }

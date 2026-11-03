@@ -13,7 +13,10 @@ import androidx.compose.ui.Modifier
 import androidx.fragment.app.Fragment
 import com.diegonmarcos.cloudc3.R
 import com.diegonmarcos.superapp.bottomnav.NavPage
+import com.diegonmarcos.superapp.bottomnav.NavSection
+import com.diegonmarcos.superapp.bottomnav.SecondRowMode
 import com.diegonmarcos.superapp.navbartop2.NavBarTopSecondRow
+import com.diegonmarcos.superapp.navbartop2.NavBarTopSecondRows
 import com.diegonmarcos.superapp.uikit.KitComposeFragment
 import com.diegonmarcos.superapp.uikit.KitPalette
 
@@ -41,6 +44,9 @@ abstract class PagedFragment : KitComposeFragment() {
 
     /** The real fragment for a declared page id. Null means the declaration is a lie. */
     abstract fun pageFragment(pageId: String): Fragment?
+
+    /** The tab's declared section, when it declares page groups (`nav_mode: horizontal_two_rows` + `groups`, #1437). */
+    open fun section(): NavSection? = null
 
     private var selected by mutableStateOf<String?>(null)
 
@@ -71,7 +77,16 @@ abstract class PagedFragment : KitComposeFragment() {
             // A single declared page needs no strip: the tab IS that page, and a one-item
             // picker is chrome that cannot be used. #868 the strip is libs:bottomnav's; the
             // section sits under the shell's own inset padding, so the strip adds none.
-            if (declared.size > 1) {
+            val grouped = remember { section()?.takeIf { it.rows == SecondRowMode.ManyRows && it.groups.isNotEmpty() } }
+            if (grouped != null) {
+                // One row per declared group (Bare | Personal | Domains), drawn by libs:ui-nav-bars, never a fork.
+                NavBarTopSecondRows(
+                    section = grouped,
+                    selectedId = selected,
+                    onSelect = { selected = it.id },
+                    underTopChrome = false,
+                )
+            } else if (declared.size > 1) {
                 NavBarTopSecondRow(
                     pages = declared,
                     selectedId = selected,

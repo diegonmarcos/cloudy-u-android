@@ -35,10 +35,14 @@ object InfraSections {
     const val PROVIDERS = "providers"
     const val MACHINES = "machines"
     const val SERVERLESS = "serverless"
+    const val NODE_PYTHON = "node_python"
     const val STORAGE = "storage"
-    const val ELECTRONICS = "electronics"
+    const val DESKTOP = "desktop"
+    const val MOBILE = "mobile"
+    const val GADGETS = "gadgets"
     const val DOMAINS = "domains"
-    val ALL = listOf(PROVIDERS, MACHINES, SERVERLESS, STORAGE, ELECTRONICS, DOMAINS)
+    const val DOMAINS_PUBLIC = "domains_public"
+    val ALL = listOf(PROVIDERS, MACHINES, SERVERLESS, NODE_PYTHON, STORAGE, DESKTOP, MOBILE, GADGETS, DOMAINS, DOMAINS_PUBLIC)
 }
 
 /** Test tags of the Infra pages, for the declaration-to-screen suite. */
@@ -57,7 +61,11 @@ fun InfraSectionScreen(section: String, slice: FleetModel.Slice, live: FleetLive
         InfraSections.MACHINES -> MachinesScreen(slice)
         InfraSections.SERVERLESS -> ServerlessScreen(slice)
         InfraSections.STORAGE -> StorageScreen(slice, live)
-        InfraSections.ELECTRONICS -> ElectronicsScreen(slice)
+        InfraSections.NODE_PYTHON -> NodePythonScreen(slice)
+        InfraSections.DESKTOP -> DevicesScreen(InfraSections.DESKTOP, slice)
+        InfraSections.MOBILE -> DevicesScreen(InfraSections.MOBILE, slice)
+        InfraSections.GADGETS -> DevicesScreen(InfraSections.GADGETS, slice)
+        InfraSections.DOMAINS_PUBLIC -> PublicDomainsScreen(slice)
         InfraSections.DOMAINS -> DomainsScreen(slice, live, today)
         else -> Text("Unknown Infra page: $section", color = LocalKitPalette.current.bad)
     }
@@ -143,22 +151,53 @@ fun StorageScreen(slice: FleetModel.Slice, live: FleetLiveState) {
     }
 }
 
-// ── Electronics ─────────────────────────────────────────────────────────────
+// ── Containers-Node-Python: static / Node / Python hosting (Firebase Hosting, GitHub Pages) ──
 
 @Composable
-fun ElectronicsScreen(slice: FleetModel.Slice) {
-    Page(InfraSections.ELECTRONICS, "${slice.devices.size} devices") {
-        val known = FleetModel.DEVICE_KINDS.map { it.first }
-        val kinds = FleetModel.DEVICE_KINDS.map { it.first } + slice.devices.map { it.kind }.distinct().filter { it !in known }
+fun NodePythonScreen(slice: FleetModel.Slice) {
+    Page(InfraSections.NODE_PYTHON, "${slice.hosting.size} hosting providers") {
+        if (slice.hosting.isEmpty()) {
+            DenseRow(InfraTags.row(InfraSections.NODE_PYTHON, "none"), "None declared", "", listOf("No hosting provider is declared in fleet-assets.json hosting[]"))
+        }
+        slice.hosting.forEach { h ->
+            DenseRow(
+                InfraTags.row(InfraSections.NODE_PYTHON, h.id), h.label, h.plan ?: "plan not declared",
+                listOfNotNull(h.role?.let { "Use: $it" }, h.state?.let { "State: $it" }, h.sites.takeIf { it.isNotEmpty() }?.let { "Sites: ${it.joinToString(", ")}" }),
+                links = h.links,
+            )
+        }
+    }
+}
+
+// ── Domains ▸ Public: mailbox domains the owner uses ──────────────────────────
+
+@Composable
+fun PublicDomainsScreen(slice: FleetModel.Slice) {
+    Page(InfraSections.DOMAINS_PUBLIC, "${slice.publicDomains.size} public domains") {
+        if (slice.publicDomains.isEmpty()) {
+            DenseRow(InfraTags.row(InfraSections.DOMAINS_PUBLIC, "none"), "None declared", "", listOf("No public domain is declared in fleet-assets.json public_domains[]"))
+        }
+        slice.publicDomains.forEach { d ->
+            DenseRow(InfraTags.row(InfraSections.DOMAINS_PUBLIC, d.name), d.name, d.provider.orEmpty(), listOfNotNull(d.role))
+        }
+    }
+}
+
+// ── Personal: Desktop | Mobile | Gadgets (one device list, split by kind) ────
+
+@Composable
+fun DevicesScreen(section: String, slice: FleetModel.Slice) {
+    val kinds = FleetModel.personalKinds(section, slice)
+    Page(section, "${slice.devices.count { it.kind in kinds }} devices") {
         kinds.forEach { kind ->
-            GroupHeader(InfraTags.head(InfraSections.ELECTRONICS, kind), FleetModel.kindLabel(kind))
+            GroupHeader(InfraTags.head(section, kind), FleetModel.kindLabel(kind))
             val ofKind = slice.devices.filter { it.kind == kind }
             if (ofKind.isEmpty()) {
-                DenseRow(InfraTags.row(InfraSections.ELECTRONICS, "none-$kind"), "None declared", "", listOf("No ${FleetModel.kindLabel(kind).lowercase()} is declared in the fleet"))
+                DenseRow(InfraTags.row(section, "none-$kind"), "None declared", "", listOf("No ${FleetModel.kindLabel(kind).lowercase()} is declared in the fleet"))
             }
             ofKind.forEach { d ->
                 DenseRow(
-                    InfraTags.row(InfraSections.ELECTRONICS, d.id), d.model, FleetModel.kindLabel(d.kind),
+                    InfraTags.row(section, d.id), d.model, FleetModel.kindLabel(d.kind),
                     listOf(
                         "OS: ${d.os ?: "not declared"}",
                         "WireGuard: wg0 ${d.wgIp ?: "-"} | wg-public ${d.wgPublicIp ?: "-"}",

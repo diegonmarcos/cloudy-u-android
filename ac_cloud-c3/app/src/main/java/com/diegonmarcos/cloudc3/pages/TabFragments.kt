@@ -34,19 +34,24 @@ import com.diegonmarcos.superapp.uikit.LocalKitPalette
  */
 
 /**
- * INFRA - the fleet's hardware and accounts, six dense top tabs (owner request, 2026-10-20; Serverless Cont #1431): Providers, VMs, Serverless Cont, Storage,
+ * INFRA - the fleet's hardware and accounts in three declared rows (#1437): Bare = Providers, VMs, Containers-as-Service, Containers-Node-Python, Storage; Personal = Desktop, Mobile, Gadgets; Domains = Private, Public (was:
  * Electronics, Domains. Each page is [InfraSectionFragment] over data/fleet_slice.json (derived from the fleet's own
  * declarations, never typed here), refreshed live from c3-infra-api where it can say more. Containers - the DBs, APIs
  * and MCPs among them - are NOT on this section: they live in Containers (Topology and Table).
  */
 class InfraFragment : PagedFragment() {
     override fun pages(): List<NavPage> = Declarations.infraPages
+    override fun section() = Declarations.nav.section("infra")
     override fun pageFragment(pageId: String): Fragment? = when (pageId) {
         "providers" -> InfraSectionFragment.newInstance(InfraSections.PROVIDERS)
         "machines" -> InfraSectionFragment.newInstance(InfraSections.MACHINES)
         "serverless" -> InfraSectionFragment.newInstance(InfraSections.SERVERLESS)
         "storage" -> InfraSectionFragment.newInstance(InfraSections.STORAGE)
-        "electronics" -> InfraSectionFragment.newInstance(InfraSections.ELECTRONICS)
+        "node_python" -> InfraSectionFragment.newInstance(InfraSections.NODE_PYTHON)
+        "desktop" -> InfraSectionFragment.newInstance(InfraSections.DESKTOP)
+        "mobile" -> InfraSectionFragment.newInstance(InfraSections.MOBILE)
+        "gadgets" -> InfraSectionFragment.newInstance(InfraSections.GADGETS)
+        "domains_public" -> InfraSectionFragment.newInstance(InfraSections.DOMAINS_PUBLIC)
         "domains" -> InfraSectionFragment.newInstance(InfraSections.DOMAINS)
         else -> null
     }

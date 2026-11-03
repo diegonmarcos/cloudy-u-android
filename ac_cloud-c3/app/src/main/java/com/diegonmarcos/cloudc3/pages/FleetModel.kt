@@ -69,9 +69,16 @@ object FleetModel {
         val blockers: List<String>,
     )
 
+    /** A hosting provider of Containers-Node-Python (fleet-assets.json hosting[]): Firebase Hosting, GitHub Pages. */
+    data class Hosting(val id: String, val label: String, val plan: String?, val role: String?, val state: String?, val sites: List<String>, val links: List<Link>)
+
+    /** A public mailbox domain the owner uses (fleet-assets.json public_domains[]). */
+    data class PublicDomain(val name: String, val provider: String?, val role: String?)
+
     data class Slice(
         val providers: List<Provider>, val vms: List<Vm>, val buckets: List<Bucket>, val backends: List<Backend>,
         val devices: List<Device>, val domains: List<Domain>, val serverless: List<CloudRun> = emptyList(),
+        val hosting: List<Hosting> = emptyList(), val publicDomains: List<PublicDomain> = emptyList(),
     ) {
         fun provider(id: String): Provider? = providers.firstOrNull { it.id == id }
         fun vmsOf(providerId: String): List<Vm> = vms.filter { it.provider == providerId }
@@ -124,6 +131,11 @@ object FleetModel {
                     blockers = o.strs("blockers"),
                 )
             },
+            hosting = root.objs("hosting").map { o ->
+                Hosting(o.str("id").orEmpty(), o.str("label").orEmpty(), o.str("plan"), o.str("role"), o.str("state"), o.strs("sites"),
+                    o.objs("links").map { Link(it.str("label").orEmpty(), it.str("url").orEmpty()) })
+            },
+            publicDomains = root.objs("public_domains").map { o -> PublicDomain(o.str("name").orEmpty(), o.str("provider"), o.str("role")) },
             domains = root.objs("domains").map { o ->
                 Domain(
                     name = o.str("name").orEmpty(), registrar = o.str("registrar").orEmpty(), admin = o.str("admin").orEmpty(),
@@ -205,6 +217,18 @@ object FleetModel {
     val DEVICE_KINDS: List<Pair<String, String>> = listOf(
         "notebook" to "PC", "phone" to "Phone", "tablet" to "Tablet", "smartwatch" to "Smartwatch",
     )
+
+    /** The device kinds of each Personal page; Gadgets also takes every kind no other page names. */
+    val PERSONAL_KINDS: Map<String, List<String>> = mapOf(
+        "desktop" to listOf("notebook", "desktop"), "mobile" to listOf("phone", "tablet"), "gadgets" to listOf("smartwatch"),
+    )
+
+    fun personalKinds(page: String, s: Slice): List<String> {
+        val own = PERSONAL_KINDS[page].orEmpty()
+        if (page != "gadgets") return own
+        val named = PERSONAL_KINDS.values.flatten().toSet()
+        return own + s.devices.map { it.kind }.distinct().filter { it !in named }
+    }
 
     fun kindLabel(kind: String): String =
         DEVICE_KINDS.firstOrNull { it.first == kind }?.second ?: kind.replaceFirstChar { it.uppercaseChar() }

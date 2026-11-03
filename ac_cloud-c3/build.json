@@ -214,7 +214,41 @@
         "id": "infra",
         "label": "Infra",
         "icon": "ic_p_sol_cloud",
-        "_doc": "The fleet's hardware and accounts (owner request, 2026-10-20): six dense top tabs, each a page of data/fleet_slice.json - the slice data/gen_fleet_slice.py DERIVES from the fleet's own declarations in cloud-infra (VMs, IPs, buckets, devices, zone records) plus the one new input 1_cloud-configs/src/inputs/fleet-assets.json. Nothing fleet-shaped is typed in this file or in Kotlin (test-c3-infra.sh T3). Containers - the DBs, APIs and MCPs among them - are NOT here: they live in Containers (Topology and Table). There is no API tab: every API and MCP is a container, so nothing non-container was left for it to hold.",
+        "_doc": "The fleet's hardware and accounts (owner request, 2026-10-20): three declared rows (#1437: Bare | Personal | Domains), each page a page of data/fleet_slice.json - the slice data/gen_fleet_slice.py DERIVES from the fleet's own declarations in cloud-infra (VMs, IPs, buckets, devices, zone records) plus the one new input 1_cloud-configs/src/inputs/fleet-assets.json. Nothing fleet-shaped is typed in this file or in Kotlin (test-c3-infra.sh T3). Containers - the DBs, APIs and MCPs among them - are NOT here: they live in Containers (Topology and Table). There is no API tab: every API and MCP is a container, so nothing non-container was left for it to hold.",
+        "nav_mode": "horizontal_two_rows",
+        "groups": [
+          {
+            "id": "bare",
+            "label": "Bare",
+            "icon": "ic_p_sol_cloud",
+            "pages": [
+              "providers",
+              "machines",
+              "serverless",
+              "node_python",
+              "storage"
+            ]
+          },
+          {
+            "id": "personal",
+            "label": "Personal",
+            "icon": "ic_wg",
+            "pages": [
+              "desktop",
+              "mobile",
+              "gadgets"
+            ]
+          },
+          {
+            "id": "domains_row",
+            "label": "Domains",
+            "icon": "ic_link_tile",
+            "pages": [
+              "domains",
+              "domains_public"
+            ]
+          }
+        ],
         "pages": [
           {
             "id": "providers",
@@ -230,9 +264,15 @@
           },
           {
             "id": "serverless",
-            "label": "Serverless Cont",
+            "label": "Containers-as-Service",
             "icon": "ic_p_c3_vms",
             "_doc": "InfraSectionFragment (#1431): each GCP Cloud Run service of the registry cloudy-t-infra c_vps/vps_gcloud/src/terraform.json cloud_run_services - state (live / declared, moving from a VM), region, vCPU, memory, instances, port, image, persistence, route and blockers. Read through data/gen_fleet_slice.py; nothing typed here."
+          },
+          {
+            "id": "node_python",
+            "label": "Containers-Node-Python",
+            "icon": "ic_p_c3_vms",
+            "_doc": "InfraSectionFragment (#1437): static / Node / Python hosting providers (Firebase Hosting, GitHub Pages), READ from fleet-assets.json hosting[] - provider, plan, role, sites. None is typed here."
           },
           {
             "id": "storage",
@@ -241,16 +281,34 @@
             "_doc": "InfraSectionFragment: storage HARDWARE and backends only - S3 buckets, Google Drive, each VM's disk (declared size, live usage from /health/tier3/{vm}) and the devices' storage. No DB container (test-c3-infra.sh T2)."
           },
           {
-            "id": "electronics",
-            "label": "Electronics",
+            "id": "desktop",
+            "label": "Desktop",
             "icon": "ic_wg",
-            "_doc": "InfraSectionFragment: PC, phones, tablets, smartwatch - model, OS, WireGuard IP, role. Mesh peers are read from superapp-users.json, so a device is never restated."
+            "_doc": "InfraSectionFragment (Personal row, #1437): the declared PCs (device kinds notebook, desktop) - model, OS, WireGuard IP, role."
+          },
+          {
+            "id": "mobile",
+            "label": "Mobile",
+            "icon": "ic_wg",
+            "_doc": "InfraSectionFragment (Personal row, #1437): the declared phones and tablets - model, OS, WireGuard IP, role."
+          },
+          {
+            "id": "gadgets",
+            "label": "Gadgets",
+            "icon": "ic_wg",
+            "_doc": "InfraSectionFragment (Personal row, #1437): every other declared device (smartwatch and any new kind)."
           },
           {
             "id": "domains",
-            "label": "Domains",
+            "label": "Private",
             "icon": "ic_link_tile",
-            "_doc": "InfraSectionFragment: diegonmarcos.com registration (Cloudflare registrar and admin, renewal, expiry) and its DNS: web, MX, SPF, DKIM, DMARC, MTA-STS, TLS-RPT, CAA/SRV, plus the live zone view from /cloud-data/cloudflare-dns."
+            "_doc": "InfraSectionFragment (Domains row, #1437): the domains the owner bought - diegonmarcos.com registration (Cloudflare registrar and admin, renewal, expiry) and its DNS: web, MX, SPF, DKIM, DMARC, MTA-STS, TLS-RPT, CAA/SRV, plus the live zone view from /cloud-data/cloudflare-dns."
+          },
+          {
+            "id": "domains_public",
+            "label": "Public",
+            "icon": "ic_link_tile",
+            "_doc": "InfraSectionFragment (Domains row, #1437): the public mailbox domains the owner uses (for example gmail, proton), READ from fleet-assets.json public_domains[]."
           }
         ]
       },
