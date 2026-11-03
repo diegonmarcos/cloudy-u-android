@@ -1,0 +1,73 @@
+# #1408 libs:git-core PIT report: runs :libs:git-core:test + pitest from Cloud Drive's Gradle graph and prints every
+# SURVIVED / NO_COVERAGE mutant (class, method, line, mutator) to the log, and uploads the HTML/XML report.
+# The same gate (80) runs in Ship -> Cloud Drive; this job only makes the survivors visible. Manual only.
+name: git-core-pit
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+env:
+  WORK_DIR: ac_cloud-drive
+jobs:
+  mutate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: "platforms;android-36 platforms;android-35 platforms;android-26 build-tools;35.0.0 build-tools;34.0.0 platform-tools"
+      - name: Set up Gradle 8.10.2 (cached)
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: "8.10.2"
+      # ── MANAGED-GRADLE-CACHE-HYGIENE: injected by cloud-android-gradle-cache-hygiene.py ──
+      # Edit 1_cicd/src/actions/gradle-cache-hygiene, never this block.
+      - name: Gradle cache hygiene (retry failed resolution, never cache a failed lookup)
+        uses: ./.github/actions/gradle-cache-hygiene
+      # ── end MANAGED-GRADLE-CACHE-HYGIENE ──
+      - name: Checkout vault (shared Android signing key, read by app/build.gradle at configuration)
+        uses: actions/checkout@v4
+        with:
+          repository: diegonmarcos/cloud-me-pvt-vault
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
+          path: .vault
+      - name: Install jq
+        run: sudo apt-get update -y && sudo apt-get install -y jq
+      - name: Install ORAS + sops (pinned)
+        uses: ./.github/actions/install-pinned-tools
+        with:
+          tools: oras sops
+      - name: git-core tests + PIT
+        env:
+          BYPASS_NIX: "1"
+          VAULT_DIR: ${{ github.workspace }}/.vault
+          SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
+        run: |
+          set -u
+          gradle -p "$WORK_DIR" :libs:git-core:test --no-daemon --continue || true
+          X=ab_cloud-libs-shared/libs/git-core/build/reports/pitest/mutations.xml
+          [ -f "$X" ] || { echo "::error::no PIT report"; exit 1; }
+          python3 - "$X" <<'PY'
+          import sys, xml.etree.ElementTree as ET
+          r = ET.parse(sys.argv[1]).getroot(); bad = 0; n = 0
+          for m in r:
+              n += 1
+              if m.get("status") in ("SURVIVED", "NO_COVERAGE"):
+                  bad += 1
+                  print(m.get("status"), m.findtext("mutatedClass"), m.findtext("mutatedMethod"), m.findtext("lineNumber"), m.findtext("mutator").split(".")[-1], "|", m.findtext("description"))
+          print(f"{n} mutants, {bad} survived or uncovered, score {100 * (n - bad) // max(n, 1)}")
+          PY
+      - name: Upload the PIT report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: git-core-pit
+          path: ab_cloud-libs-shared/libs/git-core/build/reports/pitest/
+          if-no-files-found: warn

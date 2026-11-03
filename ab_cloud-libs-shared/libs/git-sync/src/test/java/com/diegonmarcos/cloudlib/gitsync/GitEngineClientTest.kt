@@ -63,8 +63,8 @@ class GitEngineClientTest {
             when (req.getString("verb")) {
                 "status" -> ok(GitWire.json.encodeToString(GitStatusSnapshot.serializer(), GitStatusSnapshot(null, null, 0, 0, emptyList(), "SAFE")))
                 "commit" -> ok(GitWire.json.encodeToString(GitCommitInfo.serializer(), GitCommitInfo("a".repeat(40), "s", "s", "n", "e", 1, emptyList())))
-                "push", "fetch", "pull", "force_push", "force_pull", "sync" -> ok(GitWire.json.encodeToString(GitOpResult.serializer(), GitOpResult(true, "ok")))
-                "branches" -> ok("[]"); "log" -> ok("[]"); "remotes" -> ok("[]")
+                "push", "fetch", "pull", "force_push", "force_pull", "sync", "stash_push", "stash_pop", "set_upstream" -> ok(GitWire.json.encodeToString(GitOpResult.serializer(), GitOpResult(true, "ok")))
+                "branches" -> ok("[]"); "log" -> ok("[]"); "remotes" -> ok("[]"); "stash_list" -> ok("[]")
                 else -> ok()
             }
         }
@@ -73,6 +73,7 @@ class GitEngineClientTest {
         e.commit("m", "n", "e"); e.push(); e.fetch(); e.pull(); e.forcePush(); e.forcePull(); e.sync("m", "n", "e")
         e.branches(); e.log(); e.diff(); e.commitDiff("abc"); e.remotes(); e.addRemote("o", "u"); e.removeRemote("o"); e.setRemoteUrl("o", "u")
         e.resolve("a", ConflictSide.THEIRS); e.markResolved("a"); e.abortMerge()
+        e.stashPush("m"); e.stashPop(); e.stashList(); e.setUpstream(); e.upstream()
         GitEngine.init(f, work); GitEngine.clone(f, "https://x/y.git", work, depth = 1)
         val unknown = seen.filter { it !in GitWire.VERBS }
         assertTrue("verbs the engine does not run: $unknown", unknown.isEmpty())
