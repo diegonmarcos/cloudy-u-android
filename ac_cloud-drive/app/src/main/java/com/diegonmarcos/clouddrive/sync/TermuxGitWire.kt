@@ -22,7 +22,7 @@ object TermuxGitWire {
     data class Plan(val script: String, val stdin: String = "", val network: Boolean = false)
 
     /** Verbs that answer a GitOpResult. #1138 adds the compound ones the engine APK has no verb for (RepoCompound sends them). */
-    val OPS = setOf("push", "force_push", "fetch", "pull", "force_pull", "sync", "force_push_lease", "merge_upstream", "stash", "stash_pop", "shrink", "checkout_main", "keep_depth", "rebase_continue")
+    val OPS = setOf("push", "force_push", "fetch", "pull", "force_pull", "sync", "force_push_lease", "merge_upstream", "stash", "stash_pop", "shrink", "checkout_main", "keep_depth", "rebase_continue", "stash_push", "set_upstream")
 
     private const val FS = "%x1f"
     private const val RS = "%x1e"
@@ -131,6 +131,14 @@ object TermuxGitWire {
                 ok(g(dir, "checkout $side -- ${q(p)}") + "; " + g(dir, "add -- ${q(p)}"))
             } ?: (null to "unsafe path")
             "mark_resolved" -> a.optString("path").takeIf(::safe)?.let { ok(g(dir, "add -- ${q(it)}")) } ?: (null to "unsafe path")
+            // #1408 the in-process verbs, answered the same way when a directory is routed through cld.termux.
+            "stash_push" -> ok(g(dir, "-c user.name=t -c user.email=t@t stash push" + (if (a.optBoolean("untracked", true)) " -u" else "") +
+                (a.optString("message").takeIf { it.isNotBlank() }?.let { " -m ${q(it)}" } ?: "")))
+            "stash_list" -> ok(g(dir, "stash list --format=%s"))
+            "set_upstream" -> if (!Regex("[A-Za-z0-9._-]+").matches(remote)) null to "bad remote name" else
+                ok("B=\"\$(" + g(dir, "symbolic-ref --short HEAD") + ")\"; T=${a.optString("branch").takeIf { Regex("[A-Za-z0-9._/-]+").matches(it) }?.let { q(it) } ?: "\"\$B\""}; " +
+                    g(dir, "config branch.\"\$B\".remote ${q(remote)}") + "; " + g(dir, "config branch.\"\$B\".merge \"refs/heads/\$T\""))
+            "upstream" -> ok(g(dir, "rev-parse --abbrev-ref --symbolic-full-name '@{u}'") + " 2>/dev/null || true")
             "abort_merge" -> ok(g(dir, "merge --abort") + " 2>/dev/null || " + g(dir, "reset --hard"))
             "init" -> ok("mkdir -p ${q(dir)}; git init -q ${q(dir)}")
             "clone" -> {

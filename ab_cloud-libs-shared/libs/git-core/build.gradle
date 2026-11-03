@@ -48,7 +48,10 @@ pitest {
     // The ssh/session transport callbacks need a live ssh or http server; they are proven on the emulator flow.
     excludedMethods = ['equals', 'hashCode', 'toString', 'copy', 'copy$default', 'component*',
                        'sshCallback', 'sessionCallback', 'withAuth', 'ownerOnly']
-    avoidCallsTo = ['kotlin.jvm.internal']
+    // The jsch session factory only runs against a live ssh server (proven on the emulator flow, not in a JVM suite).
+    excludedClasses = ['com.diegonmarcos.cloudlib.gitcore.JGitEngine$Companion$sshCallback$factory$1']
+    // Closing a resource is not observable from a test (kotlin.io.use / AutoCloseable.use).
+    avoidCallsTo = ['kotlin.jvm.internal', 'kotlin.jdk7.AutoCloseableKt', 'kotlin.io.CloseableKt']
     threads = 2
     outputFormats = ['XML', 'HTML']
     timestampedReports = false

@@ -14,6 +14,7 @@ import com.diegonmarcos.cloudlib.gitsync.GitTransports
 import com.diegonmarcos.cloudlib.gitsync.GitWire
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.builtins.serializer
 import org.json.JSONObject
 import java.io.File
 import java.io.IOException
@@ -69,6 +70,8 @@ class TermuxGitTransport(private val ctx: Context) : GitTransport {
             "branches" -> enc(ListSerializer(GitBranchInfo.serializer()), TermuxGitWire.parseBranches(r.out))
             "remotes" -> enc(ListSerializer(GitRemoteInfo.serializer()), TermuxGitWire.parseRemotes(r.out))
             "diff", "commit_diff" -> r.out
+            "stash_list" -> enc(ListSerializer(String.serializer()), r.out.lines().filter { it.isNotBlank() })
+            "upstream" -> r.out.trim()
             else -> ""
         })
     }
