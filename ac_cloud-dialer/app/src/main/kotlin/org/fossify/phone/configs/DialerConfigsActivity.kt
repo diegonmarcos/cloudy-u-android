@@ -60,6 +60,7 @@ import com.diegonmarcos.superapp.perms.AppPermsSection
 import com.diegonmarcos.superapp.perms.PermsStyle
 import com.diegonmarcos.superapp.themebg.ThemeBackground
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.fossify.phone.BuildConfig
 import org.fossify.phone.activities.SettingsActivity
 import org.fossify.phone.sim.SimCardsPage
@@ -112,6 +113,8 @@ object DialerConfigsPages {
 private fun DialerConfigsScreen(dark: Boolean, start: String?, onBack: () -> Unit, onAppSettings: () -> Unit) {
     val c = ThemeBackground.colors(dark)
     val pages = DialerConfigsPages.pages
+    val generalScroll = rememberScrollState()
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
     var selected by rememberSaveable { mutableStateOf(pages.firstOrNull { it.id == start }?.id ?: pages.first().id) }
     Column(
         Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(c.top, c.bottom)))
@@ -126,7 +129,9 @@ private fun DialerConfigsScreen(dark: Boolean, start: String?, onBack: () -> Uni
             ) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, tint = c.ink) }
             Text(
                 "Configs ▸ " + (pages.firstOrNull { it.id == selected }?.label ?: ""),
-                Modifier.padding(start = 4.dp).semantics { heading() },
+                // As the shared screen: a tap on General's title scrolls back up to the anchor grid (the walk relies on it).
+                Modifier.padding(start = 4.dp).clickable(enabled = selected == "general") { scope.launch { generalScroll.scrollTo(0) } }
+                    .semantics { heading() }.testTag(FleetConfigsTags.TITLE),
                 color = c.ink, fontSize = 18.sp, fontWeight = FontWeight.SemiBold,
             )
         }
@@ -138,7 +143,7 @@ private fun DialerConfigsScreen(dark: Boolean, start: String?, onBack: () -> Uni
         val pageTag = when (selected) { "general" -> FleetConfigsTags.GENERAL; "about" -> FleetConfigsTags.ABOUT; else -> "dialer_cfg_$selected" }
         Box(Modifier.fillMaxSize().testTag(pageTag)) {
             when (selected) {
-                "general" -> FleetGeneralPage(FleetConfigs.current, dark, c, onAppConfigs = onAppSettings)
+                "general" -> FleetGeneralPage(FleetConfigs.current, dark, c, onAppConfigs = onAppSettings, scroll = generalScroll)
                 "perms" -> PermsPage(c)
                 "sim" -> SimCardsPage(c)
                 "status" -> SimStatusPage(c)
