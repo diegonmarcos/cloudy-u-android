@@ -1,0 +1,94 @@
+# #1438 Cloud Account on an emulator: a screenshot of each Personal Info and Configs page (IDs, Pay Cards, Others >
+# Entries / Me, Autocomplete, Android > Cloud Apps / Phone Apps / Runbook, Desktop, C3 > Infra / Containers), opened
+# through the OPEN intent's section / page extras. Runs the APK a Ship Cloud Account run built (x86_64 artifact), else
+# the latest release asset. Evidence is uploaded as account-pages-evidence.
+name: "Test -> Cloud Account pages (emulator)"
+
+on:
+  workflow_dispatch:
+    inputs:
+      account_run_id:
+        description: "Ship Cloud Account run id whose x86_64 APK artifact to test (empty = release asset)"
+        required: false
+        default: ""
+      release_tag:
+        description: "Release to download from when the run id is empty"
+        required: false
+        default: "latest"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  pages:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: ac_cloud-account/test
+
+      - name: Fetch the Cloud Account APK
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          W_RUN: ${{ inputs.account_run_id }}
+          TAG: ${{ inputs.release_tag }}
+        run: |
+          set -eu
+          mkdir -p apk
+          if [ -n "$W_RUN" ]; then
+            gh api "repos/$REPO/actions/runs/$W_RUN/artifacts" --paginate --jq '.artifacts[] | select(.name|startswith("Cloud-Account-")) | .name' |
+            while read -r name; do gh run download "$W_RUN" -R "$REPO" -n "$name" -D "apk/$name"; done
+          else
+            gh release download "${TAG:-latest}" -R "$REPO" -p 'Cloud-Account*.apk' -D apk
+          fi
+          pick=""
+          for want in x86_64 universal ''; do
+            pick=$(find apk -name '*.apk' | sort | grep -i -- "$want" | head -1 || true)
+            [ -n "$pick" ] && break
+          done
+          [ -n "$pick" ] || { echo "::error::no Cloud Account APK"; exit 1; }
+          cp "$pick" account.apk
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Boot emulator + walk the pages (attempt 1)
+        id: try1
+        continue-on-error: true
+        timeout-minutes: 15
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash ac_cloud-account/test/emulator-account-pages.sh account.apk out
+
+      - name: Boot emulator + walk the pages (attempt 2)
+        if: steps.try1.outcome != 'success'
+        timeout-minutes: 15
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash ac_cloud-account/test/emulator-account-pages.sh account.apk out
+
+      - name: Upload evidence (screenshots, ui dumps, logcat)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: account-pages-evidence
+          path: out/
+          if-no-files-found: warn
