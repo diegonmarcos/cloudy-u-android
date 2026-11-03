@@ -3024,8 +3024,7 @@
                 "separator": true
               },
               {
-                "_doc": "Cloud Account, moved from Tools Primary into the Me row; it closes the row, after Me-LLC and a '|' rule (#1362). Same page as the Configs ▸ Account tile (id configs-account), which stays: the duplicate is intentional. Own id because tile ids are unique. Pinned by test-me-account-tile.sh.",
-                "_doc": "#1440 Profile: Cloud Me's profile page (the top-right avatar there; libs:account-ui's Personal Info + Configs, the same page as Cloud Account's). The id stays tools-account: it is the tile's identity, pinned by the cross-app deep-link tester.",
+                "_doc": "#1440 Profile: Cloud Me's profile page (the top-right avatar there; libs:account-ui's Personal Info + Configs, the same page as Cloud Account's). The id stays tools-account: it is the tile's identity, pinned by the cross-app deep-link tester. Earlier: Cloud Account, moved from Tools Primary into the Me row; it closes the row, after Me-LLC and a '|' rule (#1362). Same page as the Configs ▸ Account tile (id configs-account), which stays: the duplicate is intentional. Own id because tile ids are unique. Pinned by test-me-account-tile.sh.",
                 "id": "tools-account",
                 "label": "Profile",
                 "icon": "ic_p_accounts",
