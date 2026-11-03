@@ -1,0 +1,76 @@
+name: "Test -> Configs General | Perms | About tabs (emulator)"
+
+# #1443: screenshots of each app's Configs screen (the strip must start General | Perms | About), taken from the APK a
+# Ship run built. 1_cicd/src/scripts/emulator-configs-tabs.sh does the walk. Dispatch only.
+
+on:
+  workflow_dispatch:
+    inputs:
+      runs:
+        description: 'JSON {"account": RUN, "browser": RUN, "c3": RUN, "drive": RUN, "nav": RUN, "news": RUN}: the Ship run id of each app'
+        required: true
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  tabs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { app: account, art: Cloud-Account, pkg: com.diegonmarcos.cloudaccount }
+          - { app: browser, art: Cloud-Browser, pkg: com.diegonmarcos.cloudbrowser }
+          - { app: c3, art: Cloud-C3, pkg: com.diegonmarcos.cloudc3 }
+          - { app: drive, art: Cloud-Drive, pkg: com.diegonmarcos.clouddrive }
+          - { app: nav, art: Cloud-Nav, pkg: com.diegonmarcos.cloudnav }
+          - { app: news, art: Cloud-News, pkg: com.diegonmarcos.cloudnews }
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: 1_cicd/src/scripts
+
+      - name: Fetch the APK
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          RUN: ${{ fromJSON(inputs.runs)[matrix.app] }}
+          ART: ${{ matrix.art }}
+        run: |
+          set -eu
+          mkdir -p dl
+          gh api "repos/$REPO/actions/runs/$RUN/artifacts" --paginate --jq ".artifacts[] | select(.name|startswith(\"$ART-x86_64\")) | .name" |
+          while read -r name; do gh run download "$RUN" -R "$REPO" -n "$name" -D "dl/$name"; done
+          pick=$(find dl -name '*.apk' | sort | head -1)
+          [ -n "$pick" ] || { echo "::error::no $ART x86_64 APK in run $RUN"; exit 1; }
+          cp "$pick" app.apk
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Boot emulator + walk Configs
+        timeout-minutes: 25
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash 1_cicd/src/scripts/emulator-configs-tabs.sh app.apk ${{ matrix.pkg }} ${{ matrix.app }} out
+
+      - name: Upload evidence (screenshots, ui dumps, logcat)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: configs-tabs-evidence-${{ matrix.app }}
+          path: out/
+          if-no-files-found: warn
