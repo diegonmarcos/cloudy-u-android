@@ -29,7 +29,7 @@ fallback() {  # $* = why
     # #1436 repair is automatic: CloudRootfs.isStaged() counts only a DELIVERED rootfs (tarball here or a tree stamped
     # with the digest), so the app's next start, or the next command another app runs here (CloudExecService), re-extracts
     # it from cloud-lib-rootfs-termux. CLOUD_ROOTFS_MODE tells cloud-exec-env.sh (Drive's git jobs) it runs in plain Termux.
-    echo "cloud-rootfs: repairing automatically: cld.termux re-extracts the rootfs from the installed cloud-lib-rootfs-termux (no network) on its next start or the next Cloud Drive job; meanwhile jobs run in plain Termux (git via 'pkg install git'). If this repeats, reinstall cloud-lib-rootfs-termux from the Store." >&2
+    echo "cloud-rootfs: repair: automatic, this app re-extracts the rootfs from the installed cloud-lib-rootfs-termux (no network) on its next start or the next Cloud Drive job; meanwhile jobs run in plain Termux. If this repeats, reinstall cloud-lib-rootfs-termux from the Store." >&2
     export CLOUD_ROOTFS_MODE=plain CLOUD_ROOTFS_HERE="$HERE"
     export PATH="${PATH:-}:/system/bin:/system/xbin"
     sh_bin="${CLOUD_ROOTFS_FALLBACK:-bash}"
