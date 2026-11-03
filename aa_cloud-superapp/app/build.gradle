@@ -1213,3 +1213,6 @@ dependencies {
 tasks.matching { it.name == 'compileDebugAndroidTestKotlin' }.configureEach {
     exclude '**/ExternalAppsTest.kt', '**/FloatingNavConfigTest.kt', '**/HomeAppsFoldersTest.kt', '**/KdeConfigsPageTest.kt'
 }
+
+// #1405 libs:usb-drive (via libs:appstore): drop libaums' 4 KB JNI helpers from the APK (16 KB page size).
+apply from: "${rootDir}/../ab_cloud-libs-shared/libs/usb-drive/packaging.gradle"

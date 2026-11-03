@@ -282,3 +282,6 @@ dependencies {
 // unit-test step does not reach its suite on its own: run it first, so a regression in the order of tries, the cache or
 // the bearer rule turns THIS app's CI red as well.
 tasks.matching { it.name == 'testDebugUnitTest' }.configureEach { dependsOn ':libs:fleet-endpoints:test' }
+
+// #1405 libs:usb-drive (via libs:appstore): drop libaums' 4 KB JNI helpers from the APK (16 KB page size).
+apply from: "${rootDir}/../ab_cloud-libs-shared/libs/usb-drive/packaging.gradle"

@@ -1,0 +1,11 @@
+// libs:usb-drive packaging, applied by every APPLICATION that links the lib (a library's own packaging block does not
+// reach the APK): libaums 0.10.0 ships libusb-lib.so and liberrno-lib.so linked with 4 KB LOAD segments, which a
+// 16 KB page-size phone flags. They are never loaded: JavaUsbCommunication replaces both uses (#1375). Cloud Drive
+// states the same pair in build.json::usb_drives.raw_library.native_excludes.
+android {
+    packaging {
+        jniLibs {
+            excludes += ['**/libusb-lib.so', '**/liberrno-lib.so']
+        }
+    }
+}

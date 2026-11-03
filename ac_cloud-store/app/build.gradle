@@ -271,3 +271,6 @@ dependencies {
     androidTestImplementation 'androidx.test:runner:1.6.1'
     androidTestImplementation 'androidx.test.ext:junit:1.2.1'
 }
+
+// #1405 libs:usb-drive (via libs:appstore): drop libaums' 4 KB JNI helpers from the APK (16 KB page size).
+apply from: "${rootDir}/../ab_cloud-libs-shared/libs/usb-drive/packaging.gradle"
