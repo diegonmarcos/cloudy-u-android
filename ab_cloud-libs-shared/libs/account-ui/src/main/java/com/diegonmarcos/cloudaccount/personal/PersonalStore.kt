@@ -84,7 +84,7 @@ class PersonalRepo(private val prefs: SharedPreferences) {
 object PersonalStore {
     const val FILE = "personal_info_secure"
 
-    @Volatile internal var testPrefs: ((Context) -> SharedPreferences)? = null
+    @Volatile @androidx.annotation.VisibleForTesting var testPrefs: ((Context) -> SharedPreferences)? = null
 
     fun encrypted(ctx: Context): SharedPreferences {
         val key = MasterKey.Builder(ctx).setKeyScheme(MasterKey.KeyScheme.AES256_GCM).build()
