@@ -11,7 +11,7 @@ PKG=com.diegonmarcos.cloudstore
 mkdir -p "$OUT/shots"
 dump() { adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb exec-out cat /sdcard/ui.xml > "$OUT/ui.xml" 2>/dev/null; cat "$OUT/ui.xml"; }
 fail() { echo "::error title=Store Ventoy::$*"; adb exec-out screencap -p > "$OUT/shots/fail.png" 2>/dev/null; dump > "$OUT/ui-fail.xml"; adb logcat -d -v threadtime > "$OUT/logcat.txt" 2>/dev/null; exit 1; }
-shot() { adb exec-out screencap -p > "$OUT/shots/$1.png"; dump > "$OUT/ui-$1.xml"; }
+shot() { [ "${1#03a}" = "$1" ] && calm; adb exec-out screencap -p > "$OUT/shots/$1.png"; dump > "$OUT/ui-$1.xml"; }
 where() { dump | python3 -I -c '
 import re,sys
 x=sys.stdin.read(); pat=re.compile(sys.argv[1],re.I)
@@ -20,11 +20,14 @@ for m in re.finditer(r"<node [^>]*>",x):
     if b and ((t and pat.search(t.group(1))) or (d and pat.search(d.group(1)))):
         a=list(map(int,b.groups())); print((a[0]+a[2])//2,(a[1]+a[3])//2); break
 else: sys.exit(1)' "$1"; }
-tap() { where "$1" | { read -r px py && adb shell input tap "$px" "$py"; }; }
+tap() { calm; where "$1" | { read -r px py && adb shell input tap "$px" "$py"; }; }
 has() { grep -q "$1" "$OUT/ui.xml"; }
 texts() { grep -oE 'text="[^"]+"' "$OUT/ui.xml" | sed 's/text="//;s/"$//' | sort -u | tr '\n' ';'; }
+# The Store's wireless-debug probe makes the system ask "Allow wireless debugging on this network?" on an emulator:
+# not part of this proof, so it is cancelled wherever it appears.
+calm() { for k in 1 2 3; do dump >/dev/null; grep -q 'Allow wireless debugging' "$OUT/ui.xml" || return 0; where '^Cancel$' | { read -r px py && adb shell input tap "$px" "$py"; }; sleep 2; done; }
 # Scroll until [pattern] is on screen (max [n] swipes).
-seek() { for i in $(seq 1 "${2:-25}"); do dump >/dev/null; grep -qE "$1" "$OUT/ui.xml" && return 0; adb shell input swipe 540 1700 540 700 400; sleep 1; done; return 1; }
+seek() { for i in $(seq 1 "${2:-25}"); do calm; grep -qE "$1" "$OUT/ui.xml" && return 0; adb shell input swipe 540 1700 540 700 400; sleep 1; done; return 1; }
 # Bring the node matching [pattern] near the top so the shot shows what follows it.
 top() { where "$1" | { read -r px py && [ "$py" -gt 500 ] && adb shell input swipe 540 "$py" 540 420 600; }; sleep 1; }
 
@@ -51,7 +54,7 @@ adb shell content call --uri content://media --method scan_volume --arg external
 
 adb install -r -g "$APK" || fail "install failed"
 timeout 120 adb shell am start -W -n "$PKG/.MainActivity" --es tab cloud >/dev/null; sleep 10
-for i in 1 2 3; do dump >/dev/null; has 'text="Ventoy"' && break; tap '^Cloud$' || true; sleep 3; done
+for i in 1 2 3 4; do calm; has 'text="Ventoy"' && break; tap '^Cloud$' || true; sleep 3; done
 shot 01-cloud-tabs
 has 'text="Tiny-ML"' || fail "no Tiny-ML tab on the Cloud page: $(texts)"
 python3 -I -c '
