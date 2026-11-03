@@ -199,7 +199,7 @@
         "catalog_url": "https://openrouter.ai/api/v1/models",
         "needs_token": true,
         "default_model": "z-ai/glm-5.3-flash",
-        "pricing_as_of": "2026-11-02",
+        "pricing_as_of": "2026-11-03",
         "models": [
           {
             "id": "meta-llama/llama-3.1-8b-instruct",
@@ -239,13 +239,13 @@
               "fp8"
             ],
             "trained_for": [
+              "academia",
               "marketing",
               "roleplay",
-              "translation",
-              "trivia"
+              "translation"
             ],
-            "prompt": 0.085,
-            "completion": 0.254,
+            "prompt": 0.086,
+            "completion": 0.257,
             "note": "Sparse 26B (4B active): translation, academia and legal at a small-model price."
           },
           {
@@ -254,8 +254,7 @@
             "open": true,
             "params_b": 27,
             "quant": [
-              "fp8",
-              "bf16"
+              "fp8"
             ],
             "trained_for": ["marketing/seo"],
             "prompt": 0.08,
@@ -287,12 +286,11 @@
             "open": true,
             "params_b": 70,
             "quant": [
-              "fp8",
-              "bf16",
-              "fp16"
+              "fp16",
+              "fp8"
             ],
-            "prompt": 0.1,
-            "completion": 0.32,
+            "prompt": 0.2,
+            "completion": 0.52,
             "note": "70B open weights, no category ranking — a general fallback, not a specialist."
           },
           {
@@ -346,8 +344,8 @@
               "translation",
               "trivia"
             ],
-            "prompt": 0.119,
-            "completion": 0.238,
+            "prompt": 0.059,
+            "completion": 0.3,
             "note": "Ranked in all twelve categories at the second-lowest price here."
           },
           {
@@ -392,8 +390,8 @@
               "translation",
               "trivia"
             ],
-            "prompt": 0.0285,
-            "completion": 0.0923,
+            "prompt": 0.0313,
+            "completion": 0.0846,
             "note": "The provider default: ranked in all twelve categories, and the cheapest all-rounder after DeepSeek."
           },
           {
