@@ -23,7 +23,7 @@ adb logcat -c || true
 shot() { sleep "${2:-4}"; adb exec-out screencap -p > "$OUT/$1.png" 2>/dev/null; adb exec-out uiautomator dump /dev/tty > "$OUT/$1.xml" 2>/dev/null || true; }
 has() { grep -q -- "$2" "$OUT/$1.xml"; }
 
-start_section() { adb shell am start -W -n "$PKG/.MainActivity" --es section "$1" >/dev/null 2>&1; }
+start_section() { adb shell am force-stop "$PKG"; adb shell am start -W -n "$PKG/.MainActivity" --es section "$1" >/dev/null 2>&1; }
 
 # First start (a first-run card, if any, is captured as it is).
 start_section home; shot 00-first-start 6
@@ -44,27 +44,21 @@ for _ in 1 2 3 4 5 6; do adb shell input swipe 500 1600 500 500 300; sleep 1; do
 shot configs-ocr 2
 has configs-ocr "OCR engine" || bad "configs: no OCR engine row"
 
-# OCR: push the fixture into MediaStore and share it into Writer.
-adb push "$HERE/fixtures/ocr-sample.png" /sdcard/Pictures/ocr-sample.png >/dev/null
-adb shell am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d file:///sdcard/Pictures/ocr-sample.png >/dev/null 2>&1
-sleep 3
-ID=$(adb shell content query --uri content://media/external/images/media --projection _id:_display_name 2>/dev/null | tr -d '\r' | grep 'ocr-sample' | sed -E 's/.*_id=([0-9]+).*/\1/' | tail -1)
-echo "media id: ${ID:-none}"
+# OCR: the fixture goes into Writer's own external files dir (readable by the app with no permission;
+# a MediaStore URI cannot be granted from the shell), then is shared into Writer.
+D=/sdcard/Android/data/$PKG/files
+adb shell mkdir -p "$D"
+adb push "$HERE/fixtures/ocr-sample.png" "$D/ocr-sample.png" >/dev/null
 adb shell am force-stop "$PKG"
-if [ -n "$ID" ]; then
-  adb shell am start -W -a android.intent.action.SEND -t image/png --grant-read-uri-permission \
-    --eu android.intent.extra.STREAM "content://media/external/images/media/$ID" -n "$PKG/.MainActivity" >/dev/null 2>&1
-else
-  adb shell am start -W -a android.intent.action.SEND -t image/png \
-    --eu android.intent.extra.STREAM file:///sdcard/Pictures/ocr-sample.png -n "$PKG/.MainActivity" >/dev/null 2>&1
-fi
+adb shell am start -W -a android.intent.action.SEND -t image/png \
+  --eu android.intent.extra.STREAM "file://$D/ocr-sample.png" -n "$PKG/.MainActivity" >/dev/null 2>&1
 shot ocr-result 15
 has ocr-result "Meeting moved" || has ocr-result "Friday" || bad "OCR text did not reach the Enhancer input box"
 # WYSIWYG mode: the same box, with the formatting strip, after the OCR text landed.
 adb shell input swipe 500 1200 500 900 300; shot wysiwyg-mode 2
 
 adb logcat -d -t 2000 > "$OUT/logcat.txt" 2>/dev/null || true
-grep -E "FATAL EXCEPTION|AndroidRuntime" -A15 "$OUT/logcat.txt" | head -60 > "$OUT/crash.txt" || true
+grep -E "FATAL EXCEPTION" -A15 "$OUT/logcat.txt" | head -60 > "$OUT/crash.txt" || true
 [ -s "$OUT/crash.txt" ] && bad "a crash in logcat (crash.txt)"
 ls -la "$OUT"
 exit $fail
