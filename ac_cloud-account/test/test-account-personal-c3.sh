@@ -126,7 +126,7 @@ mutate "ServiceDecl carries values" "$CD" '    val volumes: List<String>,
 )' '    val volumes: List<String>,
     val values: List<String> = emptyList(),
 )' || M=1
-mutate "Containers draws the raw compose" "$CP" 'containerLines(s)).joinToString' 's.envNames.joinToString() + s.fields).joinToString' || M=1
+mutate "Containers draws the raw compose" "$CP" 'listOf("▸ ${s.name}") + containerLines(s) })' 'listOf("▸ ${s.name}") + s.envNames.map { it + s.fields } })' || M=1
 # card masking
 mutate "mask shows the whole number" "$PS" 'digits.takeLast(4)' 'digits' || M=1
 mutate "display ignores the mask" "$PS" 'revealed || field !in kind.masked -> value' 'true -> value' || M=1

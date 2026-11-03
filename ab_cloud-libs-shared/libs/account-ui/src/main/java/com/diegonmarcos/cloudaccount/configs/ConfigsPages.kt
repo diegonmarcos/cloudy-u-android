@@ -299,13 +299,16 @@ fun InfraPage(load: suspend () -> List<InfraRow>? = { withContext(Dispatchers.IO
         else if (rows == null) item { KitStatusBanner("Could not read cloudy-t-infra", KitState.BAD, tag = "configs:infra:bad") }
         items(rows.orEmpty(), key = { it.dir }) { r ->
             val tf = r.tf
-            KitListRow(r.name, secondary = listOfNotNull(
+            Column {
+            KitListRow(r.name, secondary = r.dir, pill = r.category to KitState.IDLE, tag = ConfigsTags.infra(r.dir))
+            for (line in listOfNotNull(
                 r.description.takeIf { it.isNotBlank() },
                 tf?.providers?.takeIf { it.isNotEmpty() }?.let { "providers: " + it.joinToString(", ") },
                 tf?.resources?.takeIf { it.isNotEmpty() }?.let { "resources (${it.size}): " + it.take(8).joinToString(", ") + if (it.size > 8) ", …" else "" },
                 tf?.variables?.takeIf { it.isNotEmpty() }?.let { "variables: " + it.joinToString(", ") },
-                r.dir,
-            ).joinToString("\n"), pill = r.category to KitState.IDLE, tag = ConfigsTags.infra(r.dir))
+            ))
+                Text(line, Modifier.padding(start = 12.dp), style = androidx.compose.material3.MaterialTheme.typography.bodySmall)
+            }
         }
     }
 }
@@ -330,9 +333,13 @@ fun ContainersPage(load: suspend () -> List<ContainerRow>? = { withContext(Dispa
         if (!done) item { KitStatusBanner("Reading cloudy-u-containers…", KitState.BUSY, tag = "configs:containers:busy") }
         else if (rows == null) item { KitStatusBanner("Could not read cloudy-u-containers", KitState.BAD, tag = "configs:containers:bad") }
         items(rows.orEmpty(), key = { it.dir }) { r ->
-            KitListRow(r.dir, secondary = r.services.joinToString("\n") { s -> (listOf("▸ ${s.name}") + containerLines(s)).joinToString("\n") }
-                .ifBlank { "no compose declared" },
+            // The details are their own lines: a KitListRow secondary is cut after two lines and would hide the names.
+            Column {
+            KitListRow(r.dir, secondary = if (r.services.isEmpty()) "no compose declared" else "",
                 pill = "${r.services.sumOf { it.secretNames.size + it.envNames.size }} names" to KitState.IDLE, tag = ConfigsTags.container(r.dir))
+            for (line in r.services.flatMap { s -> listOf("▸ ${s.name}") + containerLines(s) })
+                Text(line, Modifier.padding(start = 12.dp), style = androidx.compose.material3.MaterialTheme.typography.bodySmall)
+            }
         }
     }
 }

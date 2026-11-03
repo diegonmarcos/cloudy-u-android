@@ -93,7 +93,7 @@ mutate "Settings mounted in Configs" "$MA" '"infra" -> InfraPage()' '"infra" -> 
                 "settings" -> AccountSettingsPage("")' || M=1
 mutate "a secrets page declared under Configs" "$A/build.json" '"id": "containers",' '"id": "providers",' || M=1
 mutate "Containers reads the vault" "$SP" 'ConfigsLoad.containers(ConfigsSources.baked)' 'AccountVault(ctx).connections()' || M=1
-mutate "a container row draws the raw compose" "$SP" 'containerLines(s)).joinToString' 's.envNames.map { it + "=" + s.fields }).joinToString' || M=1
+mutate "a container row draws the raw compose" "$SP" 'listOf("▸ ${s.name}") + containerLines(s) })' 'listOf("▸ ${s.name}") + s.envNames.map { it + "=" + s.fields } })' || M=1
 mutate "containerLines drops the secret names" "$SP" '    s.secretNames.takeIf' '    s.image.takeIf' || M=1
 mutate "PublicConfig stops filtering keys" "$SK" 'if (isSecretKey(k)) return@mapNotNull null' '' || M=1
 mutate "PublicConfig stops filtering values" "$SK" 'if (s.isEmpty() || looksSecret(s)) null else k to s' 'if (s.isEmpty()) null else k to s' || M=1
