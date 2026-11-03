@@ -16,16 +16,20 @@ tap_text() {
   set -- $b; adb shell input tap $(( ($1+$3)/2 )) $(( ($2+$4)/2 ))
 }
 shoot() { adb exec-out screencap -p > "$OUT/$1.png"; }
+# the Store asks for wireless debugging at first run: a system dialog over the tabs; refuse it
+for i in 1 2 3; do tap_text Cancel && sleep 2 || break; done
+read -r W H < <(adb shell wm size | tr -d '\r' | grep -oE '[0-9]+x[0-9]+' | tail -1 | tr x ' ')
+X=$((W/2)); Y1=$((H*4/5)); Y2=$((H/4))
 shoot start
 rc=0
 for tab in Libs Lite-ML; do
   if tap_text "$tab"; then
     sleep 4; shoot "$tab-top"
-    for i in 1 2 3 4 5 6 7 8; do adb shell input swipe 540 1800 540 400 250; sleep 0.6; done
+    for i in 1 2 3 4 5 6 7 8; do adb shell input swipe $X $Y1 $X $Y2 250; sleep 0.6; done
     sleep 2; shoot "$tab-end"
     adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb pull /sdcard/ui.xml "$OUT/$tab-end.xml" >/dev/null 2>&1
     grep -oE 'text="[^"]*libs[^"]*"' "$OUT/$tab-end.xml" | sed "s/^/$tab: /"
-    adb shell input swipe 540 400 540 1800 100; for i in 1 2 3 4 5 6 7 8; do adb shell input swipe 540 400 540 1800 100; done
+    for i in 1 2 3 4 5 6 7 8 9; do adb shell input swipe $X $Y2 $X $Y1 100; done
   else
     echo "::error::no $tab tab on screen"; rc=1
   fi
