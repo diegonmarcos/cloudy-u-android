@@ -62,6 +62,7 @@ on:
       - "ab_cloud-libs-shared/libs/ui-kit/**"
       - "ab_cloud-libs-shared/libs/ui-nav-bars/**"
       - "ab_cloud-libs-shared/libs/updater/**"
+      - "ab_cloud-libs-shared/libs/usb-drive/**"
       - "ac_cloud-store/**"
       - "!ac_cloud-store/web/**"
 permissions:
