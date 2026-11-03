@@ -64,17 +64,26 @@ for URL in https://httpbin.org/user-agent https://web.whatsapp.com/ https://gith
   echo "$URL errors=$errs" >> "$OUT/sites.txt"
   ok "J1 $URL loaded (console errors: $errs, site-$i.png)"
 done
-if grep -q '; wv)' "$OUT/site-1.xml" && ! grep -q 'Chrome/124.0.0.0 Mobile Safari/537.36 CloudSuperApp' "$OUT/site-1.xml"; then
-  ok "J1 the page saw WebView's own agent (not the pinned Chrome/124 one)"
-else bad "J1 the agent the page saw is not WebView's own (site-1.xml)"; fi
+# the agent the page sees, from WebView DevTools (debuggable builds only; the page's own text is not in the ui dump)
+open_url https://httpbin.org/user-agent; sleep 10
+PID=$(adb shell pidof "$BPKG" | tr -d '\r' | awk '{print $1}')
+adb forward tcp:9223 "localabstract:webview_devtools_remote_$PID" >/dev/null 2>&1 || true
+curl -fsS --max-time 10 http://127.0.0.1:9223/json/version > "$OUT/ua.json" 2>/dev/null || true
+curl -fsS --max-time 10 http://127.0.0.1:9223/json/list > "$OUT/pages.json" 2>/dev/null || true
+UA=$(python3 -c "import json,sys;print(json.load(open(sys.argv[1])).get('User-Agent',''))" "$OUT/ua.json" 2>/dev/null)
+echo "$UA" > "$OUT/ua.txt"
+if [ -z "$UA" ]; then echo "NOTE  J1 DevTools did not answer (release build?): ua.json"
+elif echo "$UA" | grep -q 'CloudSuperApp/1.0'; then bad "J1 the pinned Chrome/124 agent is still sent: $UA"
+else ok "J1 the page sees WebView's own agent: $UA"; fi
 if grep -qiE "update (google )?chrome|browser.*(not supported|unsupported)" "$OUT/site-2.xml"; then bad "J1 WhatsApp Web refuses the browser (site-2.png)"
 else ok "J1 WhatsApp Web does not refuse the browser"; fi
 
 # J2
 adb shell cmd uimode night yes >/dev/null 2>&1 || true
-open_url https://example.com/; sleep 15; shot dark-example
+# info.cern.ch declares no color-scheme: in night mode it must stay light (example.com declares `light dark`)
+open_url http://info.cern.ch/hypertext/WWW/TheProject.html; sleep 15; shot dark-cern
 adb shell cmd uimode night no >/dev/null 2>&1 || true
-ok "J2 example.com under night mode: dark-example.png"
+ok "J2 a light-only page under night mode: dark-cern.png"
 
 # O1
 adb shell pm list packages 2>/dev/null | grep -E "chrome|firefox|browser" > "$OUT/browsers.txt" || true
@@ -92,12 +101,21 @@ sleep 6
 tap '^Fav$' || bad "F1 no Fav item in the island"
 tap 'Grid$' || true
 shot fav-all
+# the chip row scrolls: swipe it left once and read both dumps
+CY=$(python3 - "$OUT/fav-all.xml" <<'PY'
+import re, sys
+s = open(sys.argv[1]).read(); m = re.search(r'text="GH Pages"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', s)
+print((int(m.group(2)) + int(m.group(4))) // 2 if m else "")
+PY
+)
+[ -n "$CY" ] && { adb shell input swipe 900 "$CY" 100 "$CY" 400; sleep 2; shot fav-chips-scrolled; }
 for c in "GH Pages" "Cloudy Public" "Cloudy Private" "Webserver" "Services" "Tools"; do
-  grep -q "text=\"$c\"" "$OUT/fav-all.xml" || bad "F1 chip $c is missing"
+  cat "$OUT/fav-all.xml" "$OUT/fav-chips-scrolled.xml" 2>/dev/null | grep -q "text=\"$c\"" || bad "F1 chip $c is missing"
 done
+[ -n "$CY" ] && { adb shell input swipe 100 "$CY" 900 "$CY" 400; sleep 2; }
 tap '^GH Pages$' && shot fav-gh
 tap '^▾ ' && shot fav-collapsed
 grep -q 'text="▸ ' "$OUT/fav-collapsed.xml" && ok "F1 a group collapsed by its header" || bad "F1 no collapsed group after a header tap"
-tap '^GH Pages$'; tap '^Tools$' && shot fav-tools
+tap '^GH Pages$'; [ -n "$CY" ] && { adb shell input swipe 900 "$CY" 100 "$CY" 400; sleep 2; }; tap '^Tools$' && shot fav-tools
 [ "$fails" -eq 0 ] || { echo "$fails check(s) failed"; exit 1; }
 echo "all browser proof checks passed"
