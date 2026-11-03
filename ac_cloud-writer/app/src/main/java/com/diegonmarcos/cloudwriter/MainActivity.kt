@@ -92,6 +92,7 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Button
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -126,6 +127,7 @@ import com.diegonmarcos.cloudwriter.core.DocStore
 import com.diegonmarcos.cloudwriter.core.Edit
 import com.diegonmarcos.cloudwriter.core.Markdown
 import com.diegonmarcos.cloudwriter.core.Route
+import com.diegonmarcos.cloudwriter.core.OcrEngine
 import com.diegonmarcos.cloudwriter.ui.BlockGap
 import com.diegonmarcos.cloudwriter.ui.ChoiceRow
 import com.diegonmarcos.cloudwriter.ui.CloudWriterTheme
@@ -181,7 +183,21 @@ import java.util.concurrent.Executors
  */
 class MainActivity : AppCompatActivity() {
 
-    private enum class Screen { DOCS, EDITOR, CONFIGS, TOOLS }
+    private enum class Screen { DOCS, EDITOR, CONFIGS, TOOLS, ENHANCER, DRAFTER, TRANSLATOR, GRAMMAR }
+
+    // #1418 the four tool tabs' boxes, kept across tab switches (WYSIWYG by default).
+    private val enhIn = BoxState()
+    private val enhOut = BoxState()
+    private val draftIn = BoxState()
+    private val draftOut = BoxState()
+    private val trIn = BoxState()
+    private val trOut = BoxState()
+    private val grIn = BoxState()
+    private val grOut = BoxState()
+    /** The last thing a tool tab said: a run's outcome, a load, an OCR read, an export. */
+    private val tabNote: MutableState<String?> = mutableStateOf(null)
+    private val tabBusy: MutableState<Boolean> = mutableStateOf(false)
+    private val ocrGeneration: MutableState<Int> = mutableStateOf(0)
 
     /** A tool's answer waiting for the owner: the text and the range of the document it replaces. */
     private class ToolResult(val tool: WriterTool, val text: String, val note: String, val from: Int, val to: Int)
@@ -308,7 +324,7 @@ class MainActivity : AppCompatActivity() {
                 reloadDocs()
             }
             Screen.CONFIGS -> screen.value = if (configsReturn.value == Screen.EDITOR && docId.value != null) Screen.EDITOR else Screen.DOCS
-            Screen.TOOLS -> screen.value = Screen.DOCS
+            Screen.TOOLS, Screen.ENHANCER, Screen.DRAFTER, Screen.TRANSLATOR, Screen.GRAMMAR -> screen.value = Screen.DOCS
             Screen.DOCS -> finish()
         }
     }
@@ -319,6 +335,10 @@ class MainActivity : AppCompatActivity() {
             WriterNav.DOCUMENTS -> screen.value = Screen.DOCS
             WriterNav.WRITER -> lastDocId?.takeIf { store.read(it) != null }?.let { open(it) } ?: newDoc()
             WriterNav.TOOLS -> screen.value = Screen.TOOLS
+            WriterNav.ENHANCER -> screen.value = Screen.ENHANCER
+            WriterNav.DRAFTER -> screen.value = Screen.DRAFTER
+            WriterNav.TRANSLATOR -> screen.value = Screen.TRANSLATOR
+            WriterNav.GRAMMAR -> screen.value = Screen.GRAMMAR
             WriterNav.SETTINGS -> openConfigs()
         }
     }
@@ -393,6 +413,10 @@ class MainActivity : AppCompatActivity() {
             Screen.EDITOR -> WriterNav.WRITER
             Screen.TOOLS -> WriterNav.TOOLS
             Screen.CONFIGS -> WriterNav.SETTINGS
+            Screen.ENHANCER -> WriterNav.ENHANCER
+            Screen.DRAFTER -> WriterNav.DRAFTER
+            Screen.TRANSLATOR -> WriterNav.TRANSLATOR
+            Screen.GRAMMAR -> WriterNav.GRAMMAR
         }
         val section = WriterNav.decl.section(sectionId)
         val title = when (current) {
@@ -400,6 +424,7 @@ class MainActivity : AppCompatActivity() {
             Screen.EDITOR -> Markdown.title(field.value.text).ifBlank { stringResource(R.string.doc_untitled) }
             Screen.TOOLS -> stringResource(R.string.nav_tools)
             Screen.CONFIGS -> stringResource(R.string.configs_title)
+            Screen.ENHANCER, Screen.DRAFTER, Screen.TRANSLATOR, Screen.GRAMMAR -> sectionLabel(sectionId, section?.label.orEmpty())
         }
         val entries = WriterNav.decl.bottomSections().map { s ->
             navEntry(s.id, sectionLabel(s.id, s.label), s.icon)
@@ -415,7 +440,8 @@ class MainActivity : AppCompatActivity() {
             dark = dark,
         ) {
             TopBarDrawer { close ->
-                WriterNav.decl.bottomSections().forEach { s ->
+                // #1418 every declared section, so Writer, Tools and Settings (off the bar) stay one tap away.
+                WriterNav.decl.sections.forEach { s ->
                     Text(
                         sectionLabel(s.id, s.label),
                         Modifier.fillMaxWidth().clickable { goSection(s.id); close() }.padding(horizontal = 20.dp, vertical = 14.dp),
@@ -435,6 +461,10 @@ class MainActivity : AppCompatActivity() {
                     Screen.TOOLS -> ToolsScreen()
                     Screen.CONFIGS -> ConfigsScreen()
                     Screen.EDITOR -> EditorScreen()
+                    Screen.ENHANCER -> EnhancerScreen()
+                    Screen.DRAFTER -> DrafterScreen()
+                    Screen.TRANSLATOR -> TranslatorScreen()
+                    Screen.GRAMMAR -> GrammarScreen()
                 }
             }
         }
@@ -442,10 +472,14 @@ class MainActivity : AppCompatActivity() {
 
     /** The localized label of a declared section; the declared English one for an id with no string. */
     private fun sectionLabel(id: String, declared: String): String = when (id) {
-        WriterNav.DOCUMENTS -> getString(R.string.nav_documents)
+        WriterNav.DOCUMENTS -> getString(R.string.nav_home)
         WriterNav.WRITER -> getString(R.string.nav_writer)
         WriterNav.TOOLS -> getString(R.string.nav_tools)
         WriterNav.SETTINGS -> getString(R.string.nav_settings)
+        WriterNav.ENHANCER -> getString(R.string.nav_enhancer)
+        WriterNav.DRAFTER -> getString(R.string.nav_drafter)
+        WriterNav.TRANSLATOR -> getString(R.string.nav_translator)
+        WriterNav.GRAMMAR -> getString(R.string.nav_grammar)
         else -> declared
     }
 
@@ -972,6 +1006,130 @@ class MainActivity : AppCompatActivity() {
         return getString(R.string.listen_route_line, routeName(s.requested), last) + fell + " · " + getString(R.string.listen_segments, s.segments)
     }
 
+    // ── #1418 the four tool tabs ─────────────────────────────────────────
+    //
+    // Each is an input box, the tools, a run button and an output box. Every run goes through
+    // WriterToolRunner, i.e. the keyboard's engines, AI routing, models and prompts over the shared
+    // ITextTools binder (libs:text-tools) — the same path as the editor's tools, no second copy.
+
+    @Composable
+    private fun ToolTab(
+        input: BoxState,
+        inputLabel: String,
+        output: BoxState,
+        outputLabel: String,
+        runLabel: String,
+        onRun: () -> Unit,
+        tools: @Composable () -> Unit,
+    ) {
+        val io = rememberBoxIo(this, worker) { tabNote.value = it }
+        Column(
+            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = PageGutter),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            WriterBox(inputLabel, input, io, input = true)
+            tools()
+            Button(onClick = onRun, enabled = !tabBusy.value, modifier = Modifier.fillMaxWidth()) {
+                Text(if (tabBusy.value) stringResource(R.string.run_running) else runLabel)
+            }
+            if (tabBusy.value) LinearProgressIndicator(Modifier.fillMaxWidth())
+            tabNote.value?.let { NoteText(it) }
+            WriterBox(outputLabel, output, io, input = false)
+            Spacer(Modifier.height(BlockGap))
+        }
+    }
+
+    /** One run's outcome into the output box, or its reason into the note. */
+    private fun landIn(output: BoxState): (WriterOutcome) -> Unit = { o ->
+        tabBusy.value = false
+        val a = o.answer
+        if (o.text != null) {
+            output.setText(o.text)
+            tabNote.value = if (a != null && a.fellBack) getString(R.string.translator_fell_back, a.fallbackReason.orEmpty()) else null
+        } else tabNote.value = o.error
+    }
+
+    private fun runTab(tool: WriterTool, input: BoxState, output: BoxState) {
+        tabBusy.value = true
+        runner.run(tool, input.text(), landIn(output))
+    }
+
+    @Composable
+    private fun EnhancerScreen() = ToolTab(
+        enhIn, stringResource(R.string.box_input), enhOut, stringResource(R.string.box_output),
+        stringResource(R.string.run_enhance), { runTab(WriterTool.ENHANCE, enhIn, enhOut) },
+    ) { OptionsSection() }
+
+    @Composable
+    private fun DrafterScreen() = ToolTab(
+        draftIn, stringResource(R.string.box_incoming), draftOut, stringResource(R.string.box_answer),
+        stringResource(R.string.run_draft), { tabBusy.value = true; runner.draft(draftIn.text(), landIn(draftOut)) },
+    ) { OptionsSection() }
+
+    @Composable
+    private fun TranslatorScreen() = ToolTab(
+        trIn, stringResource(R.string.box_input), trOut, stringResource(R.string.box_output),
+        stringResource(R.string.run_translate), { runTab(WriterTool.TRANSLATE, trIn, trOut) },
+    ) {
+        Column(Modifier.fillMaxWidth()) {
+            // The Translation route (Configs > Routes): ML = the keyboard's on-device ML Kit engine
+            // through libs:translate; OpenRouter = a catalogue model, falling back to ML (core Routing.run).
+            ChoiceRow(
+                stringResource(R.string.translator_engine),
+                null,
+                listOf(getString(R.string.translator_engine_ml) to Route.ML.id, getString(R.string.translator_engine_openrouter) to Route.MODEL.id),
+                WriterRoutes.route(this@MainActivity, WriterRoutes.Function.TRANSLATION).id,
+                WriterRoutes.defaultRoute(WriterRoutes.Function.TRANSLATION).id,
+            ) { WriterRoutes.setRoute(this@MainActivity, WriterRoutes.Function.TRANSLATION, Route.of(it, Route.ML)) }
+            ChoiceRow(
+                stringResource(R.string.translator_language),
+                null,
+                WriterRegistry.languages.map { it.label to it.id },
+                WriterPrefs.enhanceLanguageId(this@MainActivity),
+                WriterRegistry.defaultLanguage,
+            ) { WriterPrefs.put(this@MainActivity, WriterPrefs.KEY_ENHANCE_LANGUAGE, it) }
+        }
+    }
+
+    @Composable
+    private fun GrammarScreen() = ToolTab(
+        grIn, stringResource(R.string.box_input), grOut, stringResource(R.string.box_output),
+        stringResource(R.string.run_grammar), { runTab(WriterTool.GRAMMAR, grIn, grOut) },
+    ) { }
+
+    /** #1418 Configs > OCR: the engine (ML on-device by default, or OpenRouter) and the vision model. */
+    @Composable
+    private fun OcrSection() {
+        ocrGeneration.value
+        Column(Modifier.fillMaxWidth()) {
+            SectionHeader(stringResource(R.string.ocr_title))
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+                    NoteText(stringResource(R.string.ocr_summary))
+                    ChoiceRow(
+                        stringResource(R.string.ocr_engine),
+                        null,
+                        listOf(getString(R.string.ocr_engine_ml) to OcrEngine.ML.id, getString(R.string.ocr_engine_openrouter) to OcrEngine.OPENROUTER.id),
+                        WriterRoutes.ocrEngine(this@MainActivity).id,
+                        OcrEngine.DEFAULT.id,
+                    ) { WriterRoutes.setOcrEngine(this@MainActivity, OcrEngine.of(it)); ocrGeneration.value++ }
+                    val current = WriterRoutes.ocrModel(this@MainActivity)
+                    val models = WriterRoutes.visionModels(this@MainActivity).map { it.name to it.id }
+                    ChoiceRow(
+                        stringResource(R.string.ocr_model),
+                        if (models.isEmpty()) stringResource(R.string.ocr_models_none) else null,
+                        (if (models.any { it.second == current }) models else listOf(current to current) + models),
+                        current,
+                        WriterRoutes.defaultOcrModel(),
+                    ) { WriterRoutes.setOcrModel(this@MainActivity, it); ocrGeneration.value++ }
+                    TextButton(onClick = {
+                        worker.execute { WriterRoutes.fetchCatalogue(this@MainActivity); main.post { ocrGeneration.value++ } }
+                    }) { Text(stringResource(R.string.ocr_model_refresh)) }
+                }
+            }
+        }
+    }
+
     // ── configs ──────────────────────────────────────────────────────────
 
     @OptIn(ExperimentalMaterial3Api::class)
@@ -994,6 +1152,7 @@ class MainActivity : AppCompatActivity() {
                 WriterTheme.SYSTEM,
             ) { WriterTheme.set(this@MainActivity, it) }
             ModelSection()
+            OcrSection()
             NoteText(stringResource(R.string.token_note))
             Spacer(Modifier.height(BlockGap))
         }

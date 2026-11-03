@@ -1,5 +1,6 @@
 package com.diegonmarcos.cloudwriter
 
+import com.diegonmarcos.cloudwriter.core.WriterTabs
 import com.diegonmarcos.superapp.bottomnav.NavDecl
 
 /**
@@ -15,7 +16,12 @@ object WriterNav {
     }
 
     /** The section ids build.json declares; a `when` over them is how MainActivity opens one. */
-    const val DOCUMENTS = "documents"
+    /** #1418 Home (the document list) is the bar's middle item and where the app opens. */
+    const val DOCUMENTS = WriterTabs.HOME
+    const val ENHANCER = WriterTabs.ENHANCER
+    const val DRAFTER = WriterTabs.DRAFTER
+    const val TRANSLATOR = WriterTabs.TRANSLATOR
+    const val GRAMMAR = WriterTabs.GRAMMAR
     const val WRITER = "writer"
     const val TOOLS = "tools"
     const val SETTINGS = "settings"

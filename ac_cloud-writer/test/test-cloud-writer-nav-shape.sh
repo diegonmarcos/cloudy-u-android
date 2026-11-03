@@ -4,8 +4,8 @@
 # ╚══════════════════════════════════════════════════════════════════╝
 #
 # What this certifies, statically (the nav is data, the bar and the strips are libs:bottomnav's):
-#   S1 build.json::ui is ONE declaration: bottom_nav = documents|writer|tools|settings, default_section
-#      documents, and the Tools section carries the five tool pages (enhance|translation|grammar|
+#   S1 build.json::ui is ONE declaration: bottom_nav = enhancer|drafter|home|translator|grammar (#1418),
+#      default_section home, and the Tools section carries the five tool pages (enhance|translation|grammar|
 #      ai_routing|routes) that the Tools screen draws as a second-row strip.
 #   S2 the app compiles libs:bottomnav and bakes UI_BOTTOM_NAV + UI_SECTIONS_B64 + UI_DEFAULT_SECTION.
 #   S3 MainActivity's ONE shell (#1164) is the shared first row (NavBarTopFirstRowScaffold, Profile ->
@@ -25,12 +25,13 @@ import json, os, re, sys
 APP = os.environ["APP_DIR"]
 CFG = json.loads(r'''{
  "bottom": [
-  "documents",
-  "writer",
-  "tools",
-  "settings"
+  "enhancer",
+  "drafter",
+  "home",
+  "translator",
+  "grammar"
  ],
- "default": "documents",
+ "default": "home",
  "pages": {
   "tools": [
    "enhance",

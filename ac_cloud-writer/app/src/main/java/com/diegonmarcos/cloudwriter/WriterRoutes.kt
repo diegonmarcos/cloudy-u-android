@@ -13,6 +13,12 @@ import com.diegonmarcos.cloudwriter.core.Outcome
 import com.diegonmarcos.cloudwriter.core.Route
 import com.diegonmarcos.cloudwriter.core.Routing
 import com.diegonmarcos.cloudwriter.core.Wav
+import com.diegonmarcos.cloudwriter.core.Ocr
+import com.diegonmarcos.cloudwriter.core.OcrEngine
+import com.diegonmarcos.superapp.mlocr.MlKitOcr
+import com.diegonmarcos.superapp.mlocr.OcrImage
+import com.diegonmarcos.superapp.mlocr.VisionOcr
+import android.graphics.Bitmap
 import com.diegonmarcos.superapp.decisions.UrlHttp
 import com.diegonmarcos.superapp.texttools.TextToolsClient
 import org.json.JSONObject
@@ -198,6 +204,62 @@ object WriterRoutes {
      * heard over the same stretch of audio — Listen streams every frame to Vosk as well, so the
      * fallback costs no second pass and the live partial text exists on both routes.
      */
+    // ── #1418 OCR (Load image / Take picture in every input box) ─────────────────────────────
+
+    const val KEY_OCR_ENGINE = "ocr_engine"
+    const val KEY_OCR_MODEL = "ocr_model"
+
+    private val ocrBlock: JSONObject get() = config.optJSONObject("ocr") ?: JSONObject()
+
+    fun ocrEngine(context: Context): OcrEngine =
+        OcrEngine.of(WriterPrefs.prefs(context).getString(KEY_OCR_ENGINE, null) ?: ocrBlock.optString("default_engine", OcrEngine.DEFAULT.id))
+
+    fun setOcrEngine(context: Context, engine: OcrEngine) = WriterPrefs.put(context, KEY_OCR_ENGINE, engine.id)
+
+    fun defaultOcrModel(): String = ocrBlock.optString("default_model")
+
+    fun ocrModel(context: Context): String =
+        WriterPrefs.prefs(context).getString(KEY_OCR_MODEL, null)?.takeIf { it.isNotBlank() } ?: defaultOcrModel()
+
+    fun setOcrModel(context: Context, id: String) = WriterPrefs.put(context, KEY_OCR_MODEL, id)
+
+    @Volatile var lastOcr: Answer? = null
+        private set
+
+    /**
+     * Reads the text in [bitmap] on the engine set in Configs: ML on-device (libs:ml-ocr's ML Kit),
+     * or an OpenRouter vision model with the fleet Account's token, falling back to ML with the
+     * reason (core Ocr.run = Routing.run). Blocking: call from a worker.
+     */
+    fun ocr(context: Context, bitmap: Bitmap): Answer {
+        val engine = ocrEngine(context)
+        val modelId = ocrModel(context)
+        var token: String? = null
+        val blocker = if (engine == OcrEngine.OPENROUTER) {
+            val online = online(context)
+            if (online) token = accountToken(context)
+            Routing.modelBlocker(online, token != null, modelId)
+        } else null
+        val vision = VisionOcr { model, prompt, jpeg ->
+            val o = OpenRouter.call(UrlHttp, openRouter, token, OpenRouter.visionBody(model, prompt, jpeg, "image/jpeg", openRouter.maxTokens))
+            if (o.ok) Result.success(o.text!!) else Result.failure(IllegalStateException(o.error ?: Routing.EMPTY))
+        }
+        val answer = Ocr.run(
+            engine,
+            blocker,
+            openRouter = {
+                vision.read(OcrImage.jpeg(bitmap), modelId, Ocr.PROMPT)
+                    .fold({ Outcome.ok(it) }, { Outcome.failed(it.message ?: Routing.EMPTY) })
+            },
+            ml = { MlKitOcr.read(bitmap).let { r -> r.text?.let { Outcome.ok(it) } ?: Outcome.failed(r.error ?: Routing.EMPTY) } },
+        )
+        lastOcr = answer
+        return answer
+    }
+
+    /** The cached catalogue's vision models (image in, text out), cheapest first. */
+    fun visionModels(context: Context): List<CatalogueModel> = OpenRouter.visionModels(cachedCatalogue(context))
+
     fun transcribe(context: Context, pcm: ByteArray, blockerAtStart: String?, onDevice: () -> Outcome): Answer {
         val requested = route(context, Function.SPEECH)
         val modelId = model(context, Function.SPEECH)

@@ -215,6 +215,9 @@ object WriterRegistry {
      */
     val rewritePreamble: String get() = registry.optString("rewrite_preamble")
 
+    /** #1418 Drafter: turns an incoming message into a suggested reply (the keyboard's Draft Answer, #1384). */
+    val draftPreamble: String get() = registry.optString("draft_preamble")
+
     /** Prepended to every summary prompt, and deliberately NOT [rewritePreamble]. */
     val summaryPreamble: String get() = registry.optString("summary_preamble")
 
@@ -271,6 +274,14 @@ object WriterRegistry {
      *
      * Null when [grammarStyle] is null, so the caller has something to refuse on.
      */
+    /**
+     * #1418 the system prompt the Drafter sends: [draftPreamble], then the SAME tone, length and
+     * output language rows as Enhance, so the Drafter's tools config is the Enhancer's.
+     */
+    fun draftPrompt(toneId: String?, lengthId: String?, languageId: String?): String =
+        listOf(draftPreamble, tone(toneId).prompt, length(lengthId).prompt, language(languageId).prompt)
+            .filter { it.isNotBlank() }.joinToString(" ")
+
     fun grammarPrompt(): String? {
         val grammar = grammarStyle ?: return null
         return listOf(rewritePreamble, grammar.prompt).filter { it.isNotBlank() }.joinToString(" ")

@@ -298,6 +298,10 @@ object WriterPrefs {
         enhanceLanguageId(context),
     )
 
+    /** #1418 the Drafter's prompt over the Enhancer's tone, length and language rows. */
+    fun draftPrompt(context: Context): String =
+        WriterRegistry.draftPrompt(enhanceToneId(context), enhanceLengthId(context), enhanceLanguageId(context))
+
     fun summaryPrompt(context: Context): String =
         WriterRegistry.summaryPrompt(summaryStyleId(context))
 

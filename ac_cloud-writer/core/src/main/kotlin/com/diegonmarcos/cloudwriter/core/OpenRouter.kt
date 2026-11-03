@@ -25,6 +25,8 @@ data class CatalogueModel(
     val textIn: Boolean,
     val textOut: Boolean,
     val promptUsdPerMillion: Double?,
+    /** #1418 accepts an image (OCR over OpenRouter needs a vision model). */
+    val imageIn: Boolean = false,
 )
 
 object OpenRouter {
@@ -87,7 +89,7 @@ object OpenRouter {
             val outs = strings(arch?.optJSONArray("output_modalities"))
             val price = m.optJSONObject("pricing")?.optString("prompt")?.toDoubleOrNull()
             if (price != null && price < 0) return@mapNotNull null
-            CatalogueModel(id, m.optString("name").ifEmpty { id }, "audio" in ins, "text" in ins, "text" in outs, price?.let { it * 1_000_000 })
+            CatalogueModel(id, m.optString("name").ifEmpty { id }, "audio" in ins, "text" in ins, "text" in outs, price?.let { it * 1_000_000 }, "image" in ins)
         }
     }
 
@@ -96,6 +98,21 @@ object OpenRouter {
         all.filter { it.audioIn && it.textOut }.sortedWith(byPrice)
 
     /** Text-in, text-out models — what translation can use. Cheapest first. */
+    /** #1418 the models OCR can run on: an image in, text out, cheapest first. */
+    fun visionModels(all: List<CatalogueModel>): List<CatalogueModel> =
+        all.filter { it.imageIn && it.textOut }.sortedWith(byPrice)
+
+    /** #1418 one image and an instruction, as OpenRouter's vision chat expects (a data: URL). */
+    fun visionBody(model: String, prompt: String, image: ByteArray, mime: String, maxTokens: Int): JSONObject = JSONObject()
+        .put("model", model)
+        .put("max_tokens", maxTokens)
+        .put("messages", JSONArray().put(JSONObject()
+            .put("role", "user")
+            .put("content", JSONArray()
+                .put(JSONObject().put("type", "text").put("text", prompt))
+                .put(JSONObject().put("type", "image_url").put("image_url", JSONObject()
+                    .put("url", "data:" + mime + ";base64," + Base64.getEncoder().encodeToString(image)))))))
+
     fun textModels(all: List<CatalogueModel>): List<CatalogueModel> =
         all.filter { it.textIn && it.textOut }.sortedWith(byPrice)
 

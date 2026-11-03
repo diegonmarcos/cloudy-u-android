@@ -142,6 +142,18 @@
             android:exported="false"
             android:foregroundServiceType="microphone" />
 
+        <!-- #1418 Take picture: the camera app writes the photo into this app's cache through this
+             provider (ActivityResultContracts.TakePicture), so no CAMERA permission is needed. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.ocr"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/ocr_paths" />
+        </provider>
+
         <!-- #800 Registers /api/writer/* on the fleet debug server. Not exported, not a real provider. -->
         <provider
             android:name="com.diegonmarcos.cloudwriter.WriterDebugApiProvider"

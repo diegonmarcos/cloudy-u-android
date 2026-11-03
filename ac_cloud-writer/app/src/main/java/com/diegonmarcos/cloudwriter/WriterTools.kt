@@ -229,6 +229,29 @@ class WriterToolRunner(context: Context) {
     }
 
     /**
+     * #1418 the Drafter: the incoming message in, a suggested reply out, on the Enhance provider
+     * and model (the same ITextTools.enhanceWith path as Enhance, so no second engine and no fork).
+     */
+    fun draft(text: String, onDone: (WriterOutcome) -> Unit) {
+        if (busy != null) {
+            onDone(WriterOutcome(WriterTool.ENHANCE, null, app.getString(R.string.run_busy)))
+            return
+        }
+        if (text.isBlank()) {
+            onDone(WriterOutcome(WriterTool.ENHANCE, null, app.getString(R.string.run_nothing_to_send)))
+            return
+        }
+        busy = WriterTool.ENHANCE
+        worker.execute {
+            WriterPrefs.seedFromServingApp(app, client)
+            val provider = WriterPrefs.providerId(app)
+            val result = client.enhanceWith(text, WriterPrefs.draftPrompt(app), provider, WriterPrefs.modelFor(app, WriterTool.ENHANCE, provider))
+            busy = null
+            main.post { onDone(WriterOutcome(WriterTool.ENHANCE, result.text, result.error)) }
+        }
+    }
+
+    /**
      * THE ROUTING DECISION, AND THE ONLY ONE IN THIS APPLICATION.
      *
      * Every call carries THIS APPLICATION'S settings — its composed prompt, its provider, and the

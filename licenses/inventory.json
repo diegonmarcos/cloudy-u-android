@@ -21,10 +21,10 @@
    "PolyForm-Noncommercial-1.0.0": 3
   },
   "maven": {
-   "Apache-2.0": 237,
+   "Apache-2.0": 238,
    "NOASSERTION": 38,
    "MIT": 25,
-   "LicenseRef-Google-MLKit-Terms": 7,
+   "LicenseRef-Google-MLKit-Terms": 11,
    "BSD-3-Clause": 4,
    "EPL-2.0": 4,
    "GNU Affero General Public License (AGPL) version 3.0 AND Element Commercial License": 3,
@@ -6364,7 +6364,56 @@
    "kind": "maven",
    "declared_in": [
     "ab_cloud-libs-shared/libs/ml-l-image-mlkit/build.gradle",
+    "ab_cloud-libs-shared/libs/ml-ocr/build.gradle",
     "ac_cloud-vault/gradle/libs.versions.toml"
+   ],
+   "version": "16.0.1",
+   "scope": "shipped",
+   "licence": "LicenseRef-Google-MLKit-Terms",
+   "licence_source": "curated.maven_group_licences[com.google.mlkit]",
+   "note": "proprietary binary SDK under the ML Kit Terms of Service - not GPL-compatible if linked into a GPL app",
+   "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
+  },
+  "maven:com.google.mlkit:text-recognition-chinese": {
+   "kind": "maven",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/ml-ocr/build.gradle"
+   ],
+   "version": "16.0.1",
+   "scope": "shipped",
+   "licence": "LicenseRef-Google-MLKit-Terms",
+   "licence_source": "curated.maven_group_licences[com.google.mlkit]",
+   "note": "proprietary binary SDK under the ML Kit Terms of Service - not GPL-compatible if linked into a GPL app",
+   "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
+  },
+  "maven:com.google.mlkit:text-recognition-devanagari": {
+   "kind": "maven",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/ml-ocr/build.gradle"
+   ],
+   "version": "16.0.1",
+   "scope": "shipped",
+   "licence": "LicenseRef-Google-MLKit-Terms",
+   "licence_source": "curated.maven_group_licences[com.google.mlkit]",
+   "note": "proprietary binary SDK under the ML Kit Terms of Service - not GPL-compatible if linked into a GPL app",
+   "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
+  },
+  "maven:com.google.mlkit:text-recognition-japanese": {
+   "kind": "maven",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/ml-ocr/build.gradle"
+   ],
+   "version": "16.0.1",
+   "scope": "shipped",
+   "licence": "LicenseRef-Google-MLKit-Terms",
+   "licence_source": "curated.maven_group_licences[com.google.mlkit]",
+   "note": "proprietary binary SDK under the ML Kit Terms of Service - not GPL-compatible if linked into a GPL app",
+   "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
+  },
+  "maven:com.google.mlkit:text-recognition-korean": {
+   "kind": "maven",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/ml-ocr/build.gradle"
    ],
    "version": "16.0.1",
    "scope": "shipped",
@@ -6560,6 +6609,18 @@
    "licence_source": "POM 1.27.0",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "gallery"
+  },
+  "maven:com.mohamedrejeb.richeditor:richeditor-compose": {
+   "kind": "maven",
+   "declared_in": [
+    "ac_cloud-writer/app/build.gradle"
+   ],
+   "version": "1.0.0-rc13",
+   "scope": "shipped",
+   "licence": "Apache-2.0",
+   "licence_source": "pom <licenses>: The Apache Software License, Version 2.0 (github.com/MohamedRejeb/compose-rich-editor)",
+   "note": "#1418 the WYSIWYG box of Cloud Writer (Compose rich-text editor with HTML/Markdown in and out)",
+   "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   },
   "maven:com.pinterest.ktlint:ktlint-cli": {
    "kind": "maven",

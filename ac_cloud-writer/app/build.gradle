@@ -144,6 +144,10 @@ dependencies {
     // ab_cloud-libs-shared (build.json::modules."libs:text-tools".dir), so this
     // app links the same copy cloud-mail and cloud-keyboard link.
     implementation project(':libs:text-tools')
+    implementation project(':libs:ml-ocr')           // #1418 OCR: ML Kit on-device + the OpenRouter vision transport
+    // #1418 the WYSIWYG box: compose-rich-editor (Apache-2.0, MohamedRejeb), a small Compose rich-text
+    // editor whose state reads and writes HTML. Listed in licenses/inventory.json.
+    implementation 'com.mohamedrejeb.richeditor:richeditor-compose:1.0.0-rc13'
     implementation project(':libs:decisions-link')   // #882 writer_route: asks the decisions engine, holds no key
     // #743 fleet mesh membership: core defines + requests CONSTELLATION_DATA and
     // carries libs:devtools (fleet provider, MESH_MEMBER receiver and query).
