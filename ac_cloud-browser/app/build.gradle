@@ -144,6 +144,12 @@ stripDocs = { o ->
         : (o instanceof List ? o.collect { stripDocs(it) } : o)
 }
 def uiBrowserConfigB64 = b64(stripDocs(buildJson.ui.browser ?: [:]))
+// A Java string constant holds at most 65535 bytes: ui.browser's base64 is past 61 KB. A long value is baked as
+// String.join over chunks (not a compile-time constant, so no single literal crosses the limit); readers are unchanged.
+def bcString = { String v ->
+    if (v.length() <= 60000) return "\"${v}\""
+    "String.join(\"\", " + v.toList().collate(30000).collect { "\"${it.join()}\"" }.join(", ") + ")"
+}
 // #868 the nav declaration: ui.bottom_nav (the island), ui.sections (what each item opens), ui.default_section.
 def uiBottomNav      = (buildJson.ui.bottom_nav ?: []).join(',')
 def uiSectionsB64    = b64(buildJson.ui.sections ?: [])
@@ -280,7 +286,7 @@ android {
         buildConfigField "String", "LOG_SINK_STREAM", "\"${logSinkStream}\""
         buildConfigField "String", "UI_PERMISSIONS_RUNTIME_B64", "\"${uiPermissionsRuntimeB64}\""
         buildConfigField "String", "UI_PERMISSIONS_ROLES_B64",   "\"${uiPermissionsRolesB64}\""
-        buildConfigField "String", "UI_BROWSER_CONFIG_B64",      "\"${uiBrowserConfigB64}\""
+        buildConfigField "String", "UI_BROWSER_CONFIG_B64",      bcString(uiBrowserConfigB64)
         buildConfigField "String", "UI_BOTTOM_NAV",              "\"${uiBottomNav}\""
         buildConfigField "String", "UI_SECTIONS_B64",            "\"${uiSectionsB64}\""
         buildConfigField "String", "UI_DEFAULT_SECTION",         "\"${uiDefaultSection}\""
