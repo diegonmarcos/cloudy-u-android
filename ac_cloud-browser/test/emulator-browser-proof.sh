@@ -81,7 +81,7 @@ else ok "J1 WhatsApp Web does not refuse the browser"; fi
 # J2
 adb shell cmd uimode night yes >/dev/null 2>&1 || true
 # info.cern.ch declares no color-scheme: in night mode it must stay light (example.com declares `light dark`)
-open_url http://info.cern.ch/hypertext/WWW/TheProject.html; sleep 15; shot dark-cern
+open_url https://info.cern.ch/hypertext/WWW/TheProject.html; sleep 15; shot dark-cern
 adb shell cmd uimode night no >/dev/null 2>&1 || true
 ok "J2 a light-only page under night mode: dark-cern.png"
 
@@ -101,21 +101,22 @@ sleep 6
 tap '^Fav$' || bad "F1 no Fav item in the island"
 tap 'Grid$' || true
 shot fav-all
-# the chip row scrolls: swipe it left once and read both dumps
+# the chip row scrolls: swipe it left once (inside the real screen width) and read both dumps
+SW=$(adb shell wm size | tr -d "\r" | grep -oE "[0-9]+x[0-9]+" | tail -1 | cut -dx -f1); SW=${SW:-320}; SX1=$((SW * 9 / 10)); SX0=$((SW / 10))
 CY=$(python3 - "$OUT/fav-all.xml" <<'PY'
 import re, sys
 s = open(sys.argv[1]).read(); m = re.search(r'text="GH Pages"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', s)
 print((int(m.group(2)) + int(m.group(4))) // 2 if m else "")
 PY
 )
-[ -n "$CY" ] && { adb shell input swipe 900 "$CY" 100 "$CY" 400; sleep 2; shot fav-chips-scrolled; }
+[ -n "$CY" ] && { adb shell input swipe "$SX1" "$CY" "$SX0" "$CY" 400; sleep 2; shot fav-chips-scrolled; }
 for c in "GH Pages" "Cloudy Public" "Cloudy Private" "Webserver" "Services" "Tools"; do
   cat "$OUT/fav-all.xml" "$OUT/fav-chips-scrolled.xml" 2>/dev/null | grep -q "text=\"$c\"" || bad "F1 chip $c is missing"
 done
-[ -n "$CY" ] && { adb shell input swipe 100 "$CY" 900 "$CY" 400; sleep 2; }
+[ -n "$CY" ] && { adb shell input swipe "$SX0" "$CY" "$SX1" "$CY" 400; sleep 2; }
 tap '^GH Pages$' && shot fav-gh
 tap '^▾ ' && shot fav-collapsed
 grep -q 'text="▸ ' "$OUT/fav-collapsed.xml" && ok "F1 a group collapsed by its header" || bad "F1 no collapsed group after a header tap"
-tap '^GH Pages$'; [ -n "$CY" ] && { adb shell input swipe 900 "$CY" 100 "$CY" 400; sleep 2; }; tap '^Tools$' && shot fav-tools
+tap '^GH Pages$'; [ -n "$CY" ] && { adb shell input swipe "$SX1" "$CY" "$SX0" "$CY" 400; sleep 2; }; tap '^Tools$' && shot fav-tools
 [ "$fails" -eq 0 ] || { echo "$fails check(s) failed"; exit 1; }
 echo "all browser proof checks passed"
