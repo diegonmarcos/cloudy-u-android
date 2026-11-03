@@ -1,0 +1,1822 @@
+{
+  "_generated": "DO NOT EDIT: tools/gen-favourites-catalog.py derives this file from the registries (#1422)",
+  "filters": [
+    {
+      "id": "gh_pages",
+      "label": "GH Pages"
+    },
+    {
+      "id": "cloudy_public",
+      "label": "Cloudy Public"
+    },
+    {
+      "id": "cloudy_private",
+      "label": "Cloudy Private"
+    },
+    {
+      "id": "webserver",
+      "label": "Webserver",
+      "open": "http://emulated.app/__app__/tab/pages"
+    },
+    {
+      "id": "services",
+      "label": "Services"
+    },
+    {
+      "id": "tools",
+      "label": "Tools"
+    }
+  ],
+  "items": [
+    {
+      "name": "LMMS",
+      "url": "https://diegonmarcos.github.io/Music_DAW_LLMS/",
+      "group": "GH Pages/a-Lfy_CG-Zirkus"
+    },
+    {
+      "name": "Mixxx",
+      "url": "https://diegonmarcos.github.io/Music_DJ-Mixer_Mixxx/",
+      "group": "GH Pages/a-Lfy_CG-Zirkus"
+    },
+    {
+      "name": "Leafy",
+      "url": "https://diegonmarcos.github.io/leafy/",
+      "group": "GH Pages/a_Companies"
+    },
+    {
+      "name": "Nexus",
+      "url": "https://diegonmarcos.github.io/nexus/",
+      "group": "GH Pages/a_Companies"
+    },
+    {
+      "name": "SlabTwin 3D Warehouse",
+      "url": "https://diegonmarcos.github.io/Warehouse/",
+      "group": "GH Pages/a_Companies"
+    },
+    {
+      "name": "Stark",
+      "url": "https://diegonmarcos.github.io/stark/",
+      "group": "GH Pages/a_Companies"
+    },
+    {
+      "name": "Cloud",
+      "url": "https://diegonmarcos.github.io/cloud/",
+      "group": "GH Pages/a_Portals"
+    },
+    {
+      "name": "Cloud Web",
+      "url": "https://diegonmarcos.github.io/cloud-web/",
+      "group": "GH Pages/a_Portals"
+    },
+    {
+      "name": "FinTerminal",
+      "url": "https://diegonmarcos.github.io/fin-terminal/",
+      "group": "GH Pages/b-Nxs_Blmmbrg"
+    },
+    {
+      "name": "GDELTNews",
+      "url": "https://diegonmarcos.github.io/news/",
+      "group": "GH Pages/b-Nxs_Blmmbrg"
+    },
+    {
+      "name": "MarketWatch",
+      "url": "https://diegonmarcos.github.io/market_watch/",
+      "group": "GH Pages/b-Nxs_Blmmbrg"
+    },
+    {
+      "name": "CentralBank",
+      "url": "https://diegonmarcos.github.io/central_bank/",
+      "group": "GH Pages/b-Nxs_PA"
+    },
+    {
+      "name": "My Financials",
+      "url": "https://diegonmarcos.github.io/my-fin/",
+      "group": "GH Pages/b_MyData"
+    },
+    {
+      "name": "MyHealth",
+      "url": "https://diegonmarcos.github.io/myhealth/",
+      "group": "GH Pages/b_MyData"
+    },
+    {
+      "name": "MyHealth Tracker",
+      "url": "https://diegonmarcos.github.io/myhealth-tracker/",
+      "group": "GH Pages/b_MyData"
+    },
+    {
+      "name": "myID",
+      "url": "https://diegonmarcos.github.io/myid/",
+      "group": "GH Pages/b_MyData"
+    },
+    {
+      "name": "MyMaps MyTrips",
+      "url": "https://diegonmarcos.github.io/mymaps-mytrips/",
+      "group": "GH Pages/b_MyData"
+    },
+    {
+      "name": "MyPhotos",
+      "url": "https://diegonmarcos.github.io/myphotos/",
+      "group": "GH Pages/b_MyData"
+    },
+    {
+      "name": "MyTrackers",
+      "url": "https://diegonmarcos.github.io/myTrackers/",
+      "group": "GH Pages/b_MyData"
+    },
+    {
+      "name": "CV PDF",
+      "url": "https://diegonmarcos.github.io/cv_pdf/",
+      "group": "GH Pages/b_Profiles"
+    },
+    {
+      "name": "CV Web",
+      "url": "https://diegonmarcos.github.io/cv_web/",
+      "group": "GH Pages/b_Profiles"
+    },
+    {
+      "name": "Landpage",
+      "url": "https://diegonmarcos.github.io/landpage/",
+      "group": "GH Pages/b_Profiles"
+    },
+    {
+      "name": "MyProfile",
+      "url": "https://diegonmarcos.github.io/myprofile/",
+      "group": "GH Pages/b_Profiles"
+    },
+    {
+      "name": "mySocials",
+      "url": "https://diegonmarcos.github.io/mySocials/",
+      "group": "GH Pages/b_Profiles"
+    },
+    {
+      "name": "Galaxy",
+      "url": "https://diegonmarcos.github.io/galaxy/",
+      "group": "GH Pages/b_Projects"
+    },
+    {
+      "name": "Sailyng",
+      "url": "https://diegonmarcos.github.io/sailytics/",
+      "group": "GH Pages/c-Stk_DsX"
+    },
+    {
+      "name": "Carto",
+      "url": "https://diegonmarcos.github.io/carto/",
+      "group": "GH Pages/c_Circus"
+    },
+    {
+      "name": "Games",
+      "url": "https://diegonmarcos.github.io/games/",
+      "group": "GH Pages/c_Circus"
+    },
+    {
+      "name": "myAstro",
+      "url": "https://diegonmarcos.github.io/myAstro/",
+      "group": "GH Pages/c_Circus"
+    },
+    {
+      "name": "Others",
+      "url": "https://diegonmarcos.github.io/others/",
+      "group": "GH Pages/c_Circus"
+    },
+    {
+      "name": "JSON Vision",
+      "url": "https://diegonmarcos.github.io/json-vision/",
+      "group": "GH Pages/c_Suite"
+    },
+    {
+      "name": "Movies",
+      "url": "https://diegonmarcos.github.io/movies/",
+      "group": "GH Pages/c_Suite"
+    },
+    {
+      "name": "Music",
+      "url": "https://diegonmarcos.github.io/music/",
+      "group": "GH Pages/c_Suite"
+    },
+    {
+      "name": "MyFeed",
+      "url": "https://diegonmarcos.github.io/myfeed/",
+      "group": "GH Pages/c_Suite"
+    },
+    {
+      "name": "MyHealth FeedYourself",
+      "url": "https://diegonmarcos.github.io/myhealth-feedyourself/",
+      "group": "GH Pages/c_Suite"
+    },
+    {
+      "name": "MyMail",
+      "url": "https://diegonmarcos.github.io/mymail/",
+      "group": "GH Pages/c_Suite"
+    },
+    {
+      "name": "MyMaps",
+      "url": "https://diegonmarcos.github.io/mymaps/",
+      "group": "GH Pages/c_Suite"
+    },
+    {
+      "name": "MyMaps Maps",
+      "url": "https://diegonmarcos.github.io/mymaps-maps/",
+      "group": "GH Pages/c_Suite"
+    },
+    {
+      "name": "MyMaps Navigation",
+      "url": "https://diegonmarcos.github.io/mymaps-navigation/",
+      "group": "GH Pages/c_Suite"
+    },
+    {
+      "name": "Suite",
+      "url": "https://diegonmarcos.github.io/suite/",
+      "group": "GH Pages/c_Suite"
+    },
+    {
+      "name": "tldraw",
+      "url": "https://diegonmarcos.github.io/tldraw/",
+      "group": "GH Pages/c_Suite"
+    },
+    {
+      "name": "Cloud Mobile",
+      "url": "https://diegonmarcos.github.io/cloud-mobile/",
+      "group": "GH Pages/cloud-mobile"
+    },
+    {
+      "name": "Diego Marcos",
+      "url": "https://diegonmarcos.github.io/",
+      "group": "GH Pages/diegonmarcos.github.io"
+    },
+    {
+      "name": "Linktree",
+      "url": "https://diegonmarcos.github.io/linktree/",
+      "group": "GH Pages/Lnktree"
+    },
+    {
+      "name": "Linktree Icon View",
+      "url": "https://diegonmarcos.github.io/linktree_icon-view/",
+      "group": "GH Pages/Lnktree"
+    },
+    {
+      "name": "Linktree Mindmap",
+      "url": "https://diegonmarcos.github.io/linktree_mindmap/",
+      "group": "GH Pages/Lnktree"
+    },
+    {
+      "name": "Linktree Pixel World",
+      "url": "https://diegonmarcos.github.io/linktree_pixel-world/",
+      "group": "GH Pages/Lnktree"
+    },
+    {
+      "name": "c3-infra-api",
+      "url": "https://api.diegonmarcos.com/c3-infra-api",
+      "group": "Cloudy Public/APIs & MCPs"
+    },
+    {
+      "name": "c3-public-api",
+      "url": "https://api.diegonmarcos.com/pub",
+      "group": "Cloudy Public/APIs & MCPs"
+    },
+    {
+      "name": "c3-services-api",
+      "url": "https://api.diegonmarcos.com/c3-services-api",
+      "group": "Cloudy Public/APIs & MCPs"
+    },
+    {
+      "name": "cloud-infra-mcp",
+      "url": "https://mcp.diegonmarcos.com/c3-infra-mcp",
+      "group": "Cloudy Public/APIs & MCPs"
+    },
+    {
+      "name": "cloud-mail-mcp",
+      "url": "https://mcp.diegonmarcos.com/mail-mcp",
+      "group": "Cloudy Public/APIs & MCPs"
+    },
+    {
+      "name": "cloud-mattermost-mcp",
+      "url": "https://mcp.diegonmarcos.com/mattermost-mcp",
+      "group": "Cloudy Public/APIs & MCPs"
+    },
+    {
+      "name": "cloud-services-mcp",
+      "url": "https://mcp.diegonmarcos.com/c3-services-mcp",
+      "group": "Cloudy Public/APIs & MCPs"
+    },
+    {
+      "name": "google-personal-mcp",
+      "url": "https://mcp.diegonmarcos.com/g-personal",
+      "group": "Cloudy Public/APIs & MCPs"
+    },
+    {
+      "name": "google-workspace-mcp",
+      "url": "https://mcp.diegonmarcos.com/g-workspace",
+      "group": "Cloudy Public/APIs & MCPs"
+    },
+    {
+      "name": "http-to-smtp-proxy-api",
+      "url": "https://api.diegonmarcos.com/http-to-smtp-proxy-api",
+      "group": "Cloudy Public/APIs & MCPs"
+    },
+    {
+      "name": "continuwuity",
+      "url": "https://matrix.diegonmarcos.com",
+      "group": "Cloudy Public/Communications"
+    },
+    {
+      "name": "matrix-element",
+      "url": "https://messenger.diegonmarcos.com",
+      "group": "Cloudy Public/Communications"
+    },
+    {
+      "name": "mattermost",
+      "url": "https://chat.diegonmarcos.com",
+      "group": "Cloudy Public/Communications"
+    },
+    {
+      "name": "stalwart",
+      "url": "https://jmap.diegonmarcos.com",
+      "group": "Cloudy Public/Communications"
+    },
+    {
+      "name": "gitea",
+      "url": "https://git.diegonmarcos.com",
+      "group": "Cloudy Public/Data"
+    },
+    {
+      "name": "photoprism_app",
+      "url": "https://photos.diegonmarcos.com",
+      "group": "Cloudy Public/Media"
+    },
+    {
+      "name": "cloud-spec",
+      "url": "https://cloud.diegonmarcos.com/spec",
+      "group": "Cloudy Public/Observability"
+    },
+    {
+      "name": "dagu",
+      "url": "https://workflows.diegonmarcos.com",
+      "group": "Cloudy Public/Observability"
+    },
+    {
+      "name": "dbgate",
+      "url": "https://db.diegonmarcos.com",
+      "group": "Cloudy Public/Observability"
+    },
+    {
+      "name": "matomo-hybrid",
+      "url": "https://analytics.diegonmarcos.com/matomo",
+      "group": "Cloudy Public/Observability"
+    },
+    {
+      "name": "ntfy",
+      "url": "https://rss.diegonmarcos.com",
+      "group": "Cloudy Public/Observability"
+    },
+    {
+      "name": "openobserve",
+      "url": "https://analytics.diegonmarcos.com/openobserve",
+      "group": "Cloudy Public/Observability"
+    },
+    {
+      "name": "umami",
+      "url": "https://analytics.diegonmarcos.com",
+      "group": "Cloudy Public/Observability"
+    },
+    {
+      "name": "capital-stack-finterminal-api",
+      "url": "https://api.diegonmarcos.com/capital-stack-finterminal-api",
+      "group": "Cloudy Public/Other"
+    },
+    {
+      "name": "cloud-cgc-pub-mcp",
+      "url": "https://mcp.diegonmarcos.com/cloud-cgc-pub-mcp",
+      "group": "Cloudy Public/Other"
+    },
+    {
+      "name": "cloud-cgc-pvt-mcp",
+      "url": "https://mcp.diegonmarcos.com/cloud-cgc-pvt-mcp",
+      "group": "Cloudy Public/Other"
+    },
+    {
+      "name": "cloud-drive-mcp",
+      "url": "https://mcp.diegonmarcos.com/cloud-drive-mcp",
+      "group": "Cloudy Public/Other"
+    },
+    {
+      "name": "cloud-notes-sync",
+      "url": "https://notes-sync.diegonmarcos.com",
+      "group": "Cloudy Public/Other"
+    },
+    {
+      "name": "cloud-notes-web",
+      "url": "https://notes.diegonmarcos.com",
+      "group": "Cloudy Public/Other"
+    },
+    {
+      "name": "cloud-superapp-mcp",
+      "url": "https://mcp.diegonmarcos.com/cloud-superapp-mcp",
+      "group": "Cloudy Public/Other"
+    },
+    {
+      "name": "crowdsec",
+      "url": "https://crowdsec.diegonmarcos.com",
+      "group": "Cloudy Public/Other"
+    },
+    {
+      "name": "git-proxy-api",
+      "url": "https://api.diegonmarcos.com/git",
+      "group": "Cloudy Public/Other"
+    },
+    {
+      "name": "languagetool",
+      "url": "https://languagetool.diegonmarcos.com",
+      "group": "Cloudy Public/Other"
+    },
+    {
+      "name": "playlist-syncer",
+      "url": "https://playlist.diegonmarcos.com",
+      "group": "Cloudy Public/Other"
+    },
+    {
+      "name": "scrappers-api",
+      "url": "https://api.diegonmarcos.com",
+      "group": "Cloudy Public/Other"
+    },
+    {
+      "name": "send_app",
+      "url": "https://send.diegonmarcos.com",
+      "group": "Cloudy Public/Other"
+    },
+    {
+      "name": "calendar-radicale",
+      "url": "https://cal.diegonmarcos.com",
+      "group": "Cloudy Public/Productivity"
+    },
+    {
+      "name": "code-server",
+      "url": "https://ide.diegonmarcos.com",
+      "group": "Cloudy Public/Productivity"
+    },
+    {
+      "name": "contacts-radicale",
+      "url": "https://contacts.diegonmarcos.com",
+      "group": "Cloudy Public/Productivity"
+    },
+    {
+      "name": "etherpad_app",
+      "url": "https://app.diegonmarcos.com/etherpad",
+      "group": "Cloudy Public/Productivity"
+    },
+    {
+      "name": "filebrowser_app",
+      "url": "https://app.diegonmarcos.com/filebrowser",
+      "group": "Cloudy Public/Productivity"
+    },
+    {
+      "name": "grist_app",
+      "url": "https://sheets.diegonmarcos.com",
+      "group": "Cloudy Public/Productivity"
+    },
+    {
+      "name": "hedgedoc_app",
+      "url": "https://app.diegonmarcos.com/hedgedoc",
+      "group": "Cloudy Public/Productivity"
+    },
+    {
+      "name": "authelia",
+      "url": "https://auth.diegonmarcos.com",
+      "group": "Cloudy Public/Security"
+    },
+    {
+      "name": "vaultwarden",
+      "url": "https://vault.diegonmarcos.com",
+      "group": "Cloudy Public/Vault"
+    },
+    {
+      "name": "mautrix-whatsapp",
+      "url": "http://matrix-mautrix-whatsapp.mesh.diegonmarcos.com:29318",
+      "group": "Cloudy Private/Communications"
+    },
+    {
+      "name": "borg-server",
+      "url": "http://borg-server:2224",
+      "group": "Cloudy Private/Data"
+    },
+    {
+      "name": "bup-server",
+      "url": "http://bup-server:2223",
+      "group": "Cloudy Private/Data"
+    },
+    {
+      "name": "wireguard-mesh",
+      "url": "http://wireguard-mesh:8084",
+      "group": "Cloudy Private/Network"
+    },
+    {
+      "name": "wireguard-mesh-ws-tunnel",
+      "url": "http://wireguard-mesh-ws-tunnel:8080",
+      "group": "Cloudy Private/Network"
+    },
+    {
+      "name": "news-gdelt",
+      "url": "http://news-gdelt:3019",
+      "group": "Cloudy Private/News"
+    },
+    {
+      "name": "rss-gateway",
+      "url": "http://rss-gateway:8091",
+      "group": "Cloudy Private/Observability"
+    },
+    {
+      "name": "auth-broker-cloudflare",
+      "url": "http://auth-broker-cloudflare:4182",
+      "group": "Cloudy Private/Other"
+    },
+    {
+      "name": "auth-broker-email",
+      "url": "http://auth-broker-email:4183",
+      "group": "Cloudy Private/Other"
+    },
+    {
+      "name": "auth-broker-github",
+      "url": "http://auth-broker-github:4181",
+      "group": "Cloudy Private/Other"
+    },
+    {
+      "name": "auth-broker-google",
+      "url": "http://auth-broker-google:4180",
+      "group": "Cloudy Private/Other"
+    },
+    {
+      "name": "caddy-public",
+      "url": "http://caddy-public.mesh.diegonmarcos.com:443",
+      "group": "Cloudy Private/Other"
+    },
+    {
+      "name": "capital-stack-finterminal-web",
+      "url": "http://capital-stack-finterminal-web.mesh.diegonmarcos.com:8341",
+      "group": "Cloudy Private/Other"
+    },
+    {
+      "name": "cloud-agi-claude",
+      "url": "http://my-ai-claude-api.mesh.diegonmarcos.com:3117",
+      "group": "Cloudy Private/Other"
+    },
+    {
+      "name": "cloud-agi-goose",
+      "url": "http://my-ai-api.mesh.diegonmarcos.com:3217",
+      "group": "Cloudy Private/Other"
+    },
+    {
+      "name": "cloud-agi-hermes",
+      "url": "http://hermes-agent.mesh.diegonmarcos.com:8642",
+      "group": "Cloudy Private/Other"
+    },
+    {
+      "name": "cloud-agi-openclaw",
+      "url": "http://openclaw.mesh.diegonmarcos.com:18789",
+      "group": "Cloudy Private/Other"
+    },
+    {
+      "name": "cloud-me-api",
+      "url": "http://cloud-me-api.mesh.diegonmarcos.com:8124",
+      "group": "Cloudy Private/Other"
+    },
+    {
+      "name": "cloud-vault-mcp",
+      "url": "http://vault-mcp.mesh.diegonmarcos.com:3111",
+      "group": "Cloudy Private/Other"
+    },
+    {
+      "name": "cloud-webmail",
+      "url": "http://webmail.mesh.diegonmarcos.com:3000",
+      "group": "Cloudy Private/Other"
+    },
+    {
+      "name": "embeddings-api",
+      "url": "http://embeddings-api.mesh.diegonmarcos.com:7997",
+      "group": "Cloudy Private/Other"
+    },
+    {
+      "name": "jev-sidecar",
+      "url": "http://jev-sidecar.mesh.diegonmarcos.com:3110",
+      "group": "Cloudy Private/Other"
+    },
+    {
+      "name": "kg-store",
+      "url": "http://kg-store:8001",
+      "group": "Cloudy Private/Other"
+    },
+    {
+      "name": "kg-store-pub",
+      "url": "http://kg-store-pub:8002",
+      "group": "Cloudy Private/Other"
+    },
+    {
+      "name": "mcp-oauth",
+      "url": "http://mcp-oauth.mesh.diegonmarcos.com:4183",
+      "group": "Cloudy Private/Other"
+    },
+    {
+      "name": "session-memory",
+      "url": "http://session-memory.mesh.diegonmarcos.com:3108",
+      "group": "Cloudy Private/Other"
+    },
+    {
+      "name": "tokens-api",
+      "url": "http://tokens-api.mesh.diegonmarcos.com:4184",
+      "group": "Cloudy Private/Other"
+    },
+    {
+      "name": "revealmd_app",
+      "url": "http://revealmd.mesh.diegonmarcos.com:3014",
+      "group": "Cloudy Private/Productivity"
+    },
+    {
+      "name": "caddy",
+      "url": "http://caddy.mesh.diegonmarcos.com:443",
+      "group": "Cloudy Private/Security"
+    },
+    {
+      "name": "introspect-proxy",
+      "url": "http://introspect-proxy.mesh.diegonmarcos.com:4182",
+      "group": "Cloudy Private/Security"
+    },
+    {
+      "name": "codekarussell.com",
+      "url": "https://codekarussell.com/",
+      "group": "Services/Events"
+    },
+    {
+      "name": "dice.fm",
+      "url": "https://dice.fm/",
+      "group": "Services/Events"
+    },
+    {
+      "name": "linearshift.com",
+      "url": "https://linearshift.com/",
+      "group": "Services/Events"
+    },
+    {
+      "name": "residentadvisor.net",
+      "url": "https://residentadvisor.net/",
+      "group": "Services/Events"
+    },
+    {
+      "name": "aeat.es",
+      "url": "https://aeat.es/",
+      "group": "Services/Gov & ID"
+    },
+    {
+      "name": "atm.cat",
+      "url": "https://atm.cat/",
+      "group": "Services/Gov & ID"
+    },
+    {
+      "name": "com.br",
+      "url": "https://com.br/",
+      "group": "Services/Gov & ID"
+    },
+    {
+      "name": "correos.es",
+      "url": "https://correos.es/",
+      "group": "Services/Gov & ID"
+    },
+    {
+      "name": "deutschepost.de",
+      "url": "https://deutschepost.de/",
+      "group": "Services/Gov & ID"
+    },
+    {
+      "name": "dgt.com",
+      "url": "https://dgt.com/",
+      "group": "Services/Gov & ID"
+    },
+    {
+      "name": "fnmtrcm.es",
+      "url": "https://fnmtrcm.es/",
+      "group": "Services/Gov & ID"
+    },
+    {
+      "name": "gob.es",
+      "url": "https://gob.es/",
+      "group": "Services/Gov & ID"
+    },
+    {
+      "name": "gov.br",
+      "url": "https://gov.br/",
+      "group": "Services/Gov & ID"
+    },
+    {
+      "name": "governikus.com",
+      "url": "https://governikus.com/",
+      "group": "Services/Gov & ID"
+    },
+    {
+      "name": "jool.nl",
+      "url": "https://jool.nl/",
+      "group": "Services/Gov & ID"
+    },
+    {
+      "name": "medantapatient.com",
+      "url": "https://medantapatient.com/",
+      "group": "Services/Health"
+    },
+    {
+      "name": "urbansportsclub.com",
+      "url": "https://urbansportsclub.com/",
+      "group": "Services/Health"
+    },
+    {
+      "name": "is24.de",
+      "url": "https://is24.de/",
+      "group": "Services/Home & Housing"
+    },
+    {
+      "name": "nebenan.de",
+      "url": "https://nebenan.de/",
+      "group": "Services/Home & Housing"
+    },
+    {
+      "name": "sensorberg.com",
+      "url": "https://sensorberg.com/",
+      "group": "Services/Home & Housing"
+    },
+    {
+      "name": "wggesucht.com",
+      "url": "https://wggesucht.com/",
+      "group": "Services/Home & Housing"
+    },
+    {
+      "name": "linkedin.com",
+      "url": "https://linkedin.com/",
+      "group": "Services/Jobs"
+    },
+    {
+      "name": "otta.com",
+      "url": "https://otta.com/",
+      "group": "Services/Jobs"
+    },
+    {
+      "name": "android.taxi",
+      "url": "https://android.taxi/",
+      "group": "Services/Mobility"
+    },
+    {
+      "name": "app.ride",
+      "url": "https://app.ride/",
+      "group": "Services/Mobility"
+    },
+    {
+      "name": "comuto.com",
+      "url": "https://comuto.com/",
+      "group": "Services/Mobility"
+    },
+    {
+      "name": "donkeyrepublic.com",
+      "url": "https://donkeyrepublic.com/",
+      "group": "Services/Mobility"
+    },
+    {
+      "name": "eos.de",
+      "url": "https://eos.de/",
+      "group": "Services/Mobility"
+    },
+    {
+      "name": "geomobile.com",
+      "url": "https://geomobile.com/",
+      "group": "Services/Mobility"
+    },
+    {
+      "name": "hafas.de",
+      "url": "https://hafas.de/",
+      "group": "Services/Mobility"
+    },
+    {
+      "name": "mtakso.ee",
+      "url": "https://mtakso.ee/",
+      "group": "Services/Mobility"
+    },
+    {
+      "name": "ridedott.com",
+      "url": "https://ridedott.com/",
+      "group": "Services/Mobility"
+    },
+    {
+      "name": "ruter.no",
+      "url": "https://ruter.no/",
+      "group": "Services/Mobility"
+    },
+    {
+      "name": "trafi.com",
+      "url": "https://trafi.com/",
+      "group": "Services/Mobility"
+    },
+    {
+      "name": "ubercab.com",
+      "url": "https://ubercab.com/",
+      "group": "Services/Mobility"
+    },
+    {
+      "name": "bancosantander.es",
+      "url": "https://bancosantander.es/",
+      "group": "Services/Money"
+    },
+    {
+      "name": "binance.com",
+      "url": "https://binance.com/",
+      "group": "Services/Money"
+    },
+    {
+      "name": "bitpanda.com",
+      "url": "https://bitpanda.com/",
+      "group": "Services/Money"
+    },
+    {
+      "name": "btg.com",
+      "url": "https://btg.com/",
+      "group": "Services/Money"
+    },
+    {
+      "name": "fusionmedia.com",
+      "url": "https://fusionmedia.com/",
+      "group": "Services/Money"
+    },
+    {
+      "name": "google.com",
+      "url": "https://google.com/",
+      "group": "Services/Money"
+    },
+    {
+      "name": "paypal.com",
+      "url": "https://paypal.com/",
+      "group": "Services/Money"
+    },
+    {
+      "name": "revolut.com",
+      "url": "https://revolut.com/",
+      "group": "Services/Money"
+    },
+    {
+      "name": "transferwise.com",
+      "url": "https://transferwise.com/",
+      "group": "Services/Money"
+    },
+    {
+      "name": "xe.com",
+      "url": "https://xe.com/",
+      "group": "Services/Money"
+    },
+    {
+      "name": "amazon.com",
+      "url": "https://amazon.com/",
+      "group": "Services/Shopping"
+    },
+    {
+      "name": "app.com",
+      "url": "https://app.com/",
+      "group": "Services/Shopping"
+    },
+    {
+      "name": "backmarket.com",
+      "url": "https://backmarket.com/",
+      "group": "Services/Shopping"
+    },
+    {
+      "name": "ebay.com",
+      "url": "https://ebay.com/",
+      "group": "Services/Shopping"
+    },
+    {
+      "name": "wallapop.com",
+      "url": "https://wallapop.com/",
+      "group": "Services/Shopping"
+    },
+    {
+      "name": "web.vivino",
+      "url": "https://web.vivino/",
+      "group": "Services/Shopping"
+    },
+    {
+      "name": "affinityclick.com",
+      "url": "https://affinityclick.com/",
+      "group": "Services/Telecom"
+    },
+    {
+      "name": "congstar.de",
+      "url": "https://congstar.de/",
+      "group": "Services/Telecom"
+    },
+    {
+      "name": "esim.com",
+      "url": "https://esim.com/",
+      "group": "Services/Telecom"
+    },
+    {
+      "name": "esim.net",
+      "url": "https://esim.net/",
+      "group": "Services/Telecom"
+    },
+    {
+      "name": "mobillium.com",
+      "url": "https://mobillium.com/",
+      "group": "Services/Telecom"
+    },
+    {
+      "name": "saily.com",
+      "url": "https://saily.com/",
+      "group": "Services/Telecom"
+    },
+    {
+      "name": "spanishcoders.com",
+      "url": "https://spanishcoders.com/",
+      "group": "Services/Telecom"
+    },
+    {
+      "name": "airbnb.com",
+      "url": "https://airbnb.com/",
+      "group": "Services/Travel"
+    },
+    {
+      "name": "alohacamp.com",
+      "url": "https://alohacamp.com/",
+      "group": "Services/Travel"
+    },
+    {
+      "name": "booking.com",
+      "url": "https://booking.com/",
+      "group": "Services/Travel"
+    },
+    {
+      "name": "campy.app",
+      "url": "https://campy.app/",
+      "group": "Services/Travel"
+    },
+    {
+      "name": "flixbus.de",
+      "url": "https://flixbus.de/",
+      "group": "Services/Travel"
+    },
+    {
+      "name": "getbybus.com",
+      "url": "https://getbybus.com/",
+      "group": "Services/Travel"
+    },
+    {
+      "name": "goeuro.com",
+      "url": "https://goeuro.com/",
+      "group": "Services/Travel"
+    },
+    {
+      "name": "goki.travel",
+      "url": "https://goki.travel/",
+      "group": "Services/Travel"
+    },
+    {
+      "name": "greifmatthias.be",
+      "url": "https://greifmatthias.be/",
+      "group": "Services/Travel"
+    },
+    {
+      "name": "hostel_hop_inc.com",
+      "url": "https://hostel_hop_inc.com/",
+      "group": "Services/Travel"
+    },
+    {
+      "name": "hostelworld.com",
+      "url": "https://hostelworld.com/",
+      "group": "Services/Travel"
+    },
+    {
+      "name": "infobus.eu",
+      "url": "https://infobus.eu/",
+      "group": "Services/Travel"
+    },
+    {
+      "name": "kautra.com",
+      "url": "https://kautra.com/",
+      "group": "Services/Travel"
+    },
+    {
+      "name": "mo2o.com",
+      "url": "https://mo2o.com/",
+      "group": "Services/Travel"
+    },
+    {
+      "name": "nomadmania.com",
+      "url": "https://nomadmania.com/",
+      "group": "Services/Travel"
+    },
+    {
+      "name": "rome2rio.com",
+      "url": "https://rome2rio.com/",
+      "group": "Services/Travel"
+    },
+    {
+      "name": "ryanair.com",
+      "url": "https://ryanair.com/",
+      "group": "Services/Travel"
+    },
+    {
+      "name": "shelter.dk",
+      "url": "https://shelter.dk/",
+      "group": "Services/Travel"
+    },
+    {
+      "name": "skiplagged.com",
+      "url": "https://skiplagged.com/",
+      "group": "Services/Travel"
+    },
+    {
+      "name": "skyscanner.net",
+      "url": "https://skyscanner.net/",
+      "group": "Services/Travel"
+    },
+    {
+      "name": "thetrainline.com",
+      "url": "https://thetrainline.com/",
+      "group": "Services/Travel"
+    },
+    {
+      "name": "tramb.fr",
+      "url": "https://tramb.fr/",
+      "group": "Services/Travel"
+    },
+    {
+      "name": "wizzair.com",
+      "url": "https://wizzair.com/",
+      "group": "Services/Travel"
+    },
+    {
+      "name": "workaway.com",
+      "url": "https://workaway.com/",
+      "group": "Services/Travel"
+    },
+    {
+      "name": "anthropic.com",
+      "url": "https://anthropic.com/",
+      "group": "Tools/AI"
+    },
+    {
+      "name": "chatboxapp.xyz",
+      "url": "https://chatboxapp.xyz/",
+      "group": "Tools/AI"
+    },
+    {
+      "name": "chromium.org",
+      "url": "https://chromium.org/",
+      "group": "Tools/AI"
+    },
+    {
+      "name": "deepseek.com",
+      "url": "https://deepseek.com/",
+      "group": "Tools/AI"
+    },
+    {
+      "name": "facebook.com",
+      "url": "https://facebook.com/",
+      "group": "Tools/AI"
+    },
+    {
+      "name": "microsoft.com",
+      "url": "https://microsoft.com/",
+      "group": "Tools/AI"
+    },
+    {
+      "name": "perplexity.ai",
+      "url": "https://perplexity.ai/",
+      "group": "Tools/AI"
+    },
+    {
+      "name": "samsung.com",
+      "url": "https://samsung.com/",
+      "group": "Tools/AI"
+    },
+    {
+      "name": "synthesia.com",
+      "url": "https://synthesia.com/",
+      "group": "Tools/AI"
+    },
+    {
+      "name": "x.ai",
+      "url": "https://x.ai/",
+      "group": "Tools/AI"
+    },
+    {
+      "name": "clockify.me",
+      "url": "https://clockify.me/",
+      "group": "Tools/Calendar & Tasks"
+    },
+    {
+      "name": "gianlu.com",
+      "url": "https://gianlu.com/",
+      "group": "Tools/Calendar & Tasks"
+    },
+    {
+      "name": "mangotechnologies.co",
+      "url": "https://mangotechnologies.co/",
+      "group": "Tools/Calendar & Tasks"
+    },
+    {
+      "name": "scheduleplanner.todolist",
+      "url": "https://scheduleplanner.todolist/",
+      "group": "Tools/Calendar & Tasks"
+    },
+    {
+      "name": "toggl.com",
+      "url": "https://toggl.com/",
+      "group": "Tools/Calendar & Tasks"
+    },
+    {
+      "name": "trello.com",
+      "url": "https://trello.com/",
+      "group": "Tools/Calendar & Tasks"
+    },
+    {
+      "name": "beeper.com",
+      "url": "https://beeper.com/",
+      "group": "Tools/Chat"
+    },
+    {
+      "name": "garmin.com",
+      "url": "https://garmin.com/",
+      "group": "Tools/Chat"
+    },
+    {
+      "name": "heckel.io",
+      "url": "https://heckel.io/",
+      "group": "Tools/Chat"
+    },
+    {
+      "name": "mattermost.com",
+      "url": "https://mattermost.com/",
+      "group": "Tools/Chat"
+    },
+    {
+      "name": "rocket.chat",
+      "url": "https://rocket.chat/",
+      "group": "Tools/Chat"
+    },
+    {
+      "name": "slack.com",
+      "url": "https://slack.com/",
+      "group": "Tools/Chat"
+    },
+    {
+      "name": "telegram.org",
+      "url": "https://telegram.org/",
+      "group": "Tools/Chat"
+    },
+    {
+      "name": "trianguloy.com",
+      "url": "https://trianguloy.com/",
+      "group": "Tools/Chat"
+    },
+    {
+      "name": "vector.im",
+      "url": "https://vector.im/",
+      "group": "Tools/Chat"
+    },
+    {
+      "name": "viber.com",
+      "url": "https://viber.com/",
+      "group": "Tools/Chat"
+    },
+    {
+      "name": "whatsapp.com",
+      "url": "https://whatsapp.com/",
+      "group": "Tools/Chat"
+    },
+    {
+      "name": "arlosoft.com",
+      "url": "https://arlosoft.com/",
+      "group": "Tools/Dev"
+    },
+    {
+      "name": "diegonmarcos.com",
+      "url": "https://diegonmarcos.com/",
+      "group": "Tools/Dev"
+    },
+    {
+      "name": "lbe.com",
+      "url": "https://lbe.com/",
+      "group": "Tools/Dev"
+    },
+    {
+      "name": "shizuku.moe",
+      "url": "https://shizuku.moe/",
+      "group": "Tools/Dev"
+    },
+    {
+      "name": "truedevelopersstudio.com",
+      "url": "https://truedevelopersstudio.com/",
+      "group": "Tools/Dev"
+    },
+    {
+      "name": "biplobsd.me",
+      "url": "https://biplobsd.me/",
+      "group": "Tools/Diagnostics"
+    },
+    {
+      "name": "digibites.com",
+      "url": "https://digibites.com/",
+      "group": "Tools/Diagnostics"
+    },
+    {
+      "name": "frequencygenerator.com",
+      "url": "https://frequencygenerator.com/",
+      "group": "Tools/Diagnostics"
+    },
+    {
+      "name": "insideinc.com",
+      "url": "https://insideinc.com/",
+      "group": "Tools/Diagnostics"
+    },
+    {
+      "name": "intoorbit.org",
+      "url": "https://intoorbit.org/",
+      "group": "Tools/Diagnostics"
+    },
+    {
+      "name": "japp.io",
+      "url": "https://japp.io/",
+      "group": "Tools/Diagnostics"
+    },
+    {
+      "name": "jmaciak.com",
+      "url": "https://jmaciak.com/",
+      "group": "Tools/Diagnostics"
+    },
+    {
+      "name": "luxdelux.com",
+      "url": "https://luxdelux.com/",
+      "group": "Tools/Diagnostics"
+    },
+    {
+      "name": "noise.com",
+      "url": "https://noise.com/",
+      "group": "Tools/Diagnostics"
+    },
+    {
+      "name": "skypaw.com",
+      "url": "https://skypaw.com/",
+      "group": "Tools/Diagnostics"
+    },
+    {
+      "name": "adeeteya.com",
+      "url": "https://adeeteya.com/",
+      "group": "Tools/Docs & Notes"
+    },
+    {
+      "name": "journable.com",
+      "url": "https://journable.com/",
+      "group": "Tools/Docs & Notes"
+    },
+    {
+      "name": "obsidian.md",
+      "url": "https://obsidian.md/",
+      "group": "Tools/Docs & Notes"
+    },
+    {
+      "name": "rhmsoft.com",
+      "url": "https://rhmsoft.com/",
+      "group": "Tools/Docs & Notes"
+    },
+    {
+      "name": "sblo.jp",
+      "url": "https://sblo.jp/",
+      "group": "Tools/Docs & Notes"
+    },
+    {
+      "name": "epicgames.com",
+      "url": "https://epicgames.com/",
+      "group": "Tools/Games"
+    },
+    {
+      "name": "faudroids.org",
+      "url": "https://faudroids.org/",
+      "group": "Tools/Games"
+    },
+    {
+      "name": "playdead.com",
+      "url": "https://playdead.com/",
+      "group": "Tools/Games"
+    },
+    {
+      "name": "werewolfapps.com",
+      "url": "https://werewolfapps.com/",
+      "group": "Tools/Games"
+    },
+    {
+      "name": "gingersoftware.com",
+      "url": "https://gingersoftware.com/",
+      "group": "Tools/Keyboards"
+    },
+    {
+      "name": "grammarly.com",
+      "url": "https://grammarly.com/",
+      "group": "Tools/Keyboards"
+    },
+    {
+      "name": "icoaching.ch",
+      "url": "https://icoaching.ch/",
+      "group": "Tools/Keyboards"
+    },
+    {
+      "name": "digionline.de",
+      "url": "https://digionline.de/",
+      "group": "Tools/Learning"
+    },
+    {
+      "name": "duocards.com",
+      "url": "https://duocards.com/",
+      "group": "Tools/Learning"
+    },
+    {
+      "name": "eup.mobi",
+      "url": "https://eup.mobi/",
+      "group": "Tools/Learning"
+    },
+    {
+      "name": "fluentflix.com",
+      "url": "https://fluentflix.com/",
+      "group": "Tools/Learning"
+    },
+    {
+      "name": "flutterflow.com",
+      "url": "https://flutterflow.com/",
+      "group": "Tools/Learning"
+    },
+    {
+      "name": "hueber.com",
+      "url": "https://hueber.com/",
+      "group": "Tools/Learning"
+    },
+    {
+      "name": "lubosmikusiak.com",
+      "url": "https://lubosmikusiak.com/",
+      "group": "Tools/Learning"
+    },
+    {
+      "name": "memrise.com",
+      "url": "https://memrise.com/",
+      "group": "Tools/Learning"
+    },
+    {
+      "name": "nn.air",
+      "url": "https://nn.air/",
+      "group": "Tools/Learning"
+    },
+    {
+      "name": "rype.com",
+      "url": "https://rype.com/",
+      "group": "Tools/Learning"
+    },
+    {
+      "name": "simonandschuster.com",
+      "url": "https://simonandschuster.com/",
+      "group": "Tools/Learning"
+    },
+    {
+      "name": "softissimo.com",
+      "url": "https://softissimo.com/",
+      "group": "Tools/Learning"
+    },
+    {
+      "name": "ted.com",
+      "url": "https://ted.com/",
+      "group": "Tools/Learning"
+    },
+    {
+      "name": "clean.email",
+      "url": "https://clean.email/",
+      "group": "Tools/Mail"
+    },
+    {
+      "name": "faircode.eu",
+      "url": "https://faircode.eu/",
+      "group": "Tools/Mail"
+    },
+    {
+      "name": "fsck.com",
+      "url": "https://fsck.com/",
+      "group": "Tools/Mail"
+    },
+    {
+      "name": "ltt.rs",
+      "url": "https://ltt.rs/",
+      "group": "Tools/Mail"
+    },
+    {
+      "name": "mailtemi.com",
+      "url": "https://mailtemi.com/",
+      "group": "Tools/Mail"
+    },
+    {
+      "name": "protonmail.ch",
+      "url": "https://protonmail.ch/",
+      "group": "Tools/Mail"
+    },
+    {
+      "name": "sterna.app",
+      "url": "https://sterna.app/",
+      "group": "Tools/Mail"
+    },
+    {
+      "name": "ackee.cz",
+      "url": "https://ackee.cz/",
+      "group": "Tools/Maps & Weather"
+    },
+    {
+      "name": "mapswithme.com",
+      "url": "https://mapswithme.com/",
+      "group": "Tools/Maps & Weather"
+    },
+    {
+      "name": "tiempo.aplicacion",
+      "url": "https://tiempo.aplicacion/",
+      "group": "Tools/Maps & Weather"
+    },
+    {
+      "name": "alanwatts.ott",
+      "url": "https://alanwatts.ott/",
+      "group": "Tools/Music & Audio"
+    },
+    {
+      "name": "aspiro.com",
+      "url": "https://aspiro.com/",
+      "group": "Tools/Music & Audio"
+    },
+    {
+      "name": "deutschlandfunk.de",
+      "url": "https://deutschlandfunk.de/",
+      "group": "Tools/Music & Audio"
+    },
+    {
+      "name": "earthflare.com",
+      "url": "https://earthflare.com/",
+      "group": "Tools/Music & Audio"
+    },
+    {
+      "name": "shazam.com",
+      "url": "https://shazam.com/",
+      "group": "Tools/Music & Audio"
+    },
+    {
+      "name": "spotify.com",
+      "url": "https://spotify.com/",
+      "group": "Tools/Music & Audio"
+    },
+    {
+      "name": "ultimateguitar.com",
+      "url": "https://ultimateguitar.com/",
+      "group": "Tools/Music & Audio"
+    },
+    {
+      "name": "zuggabecka.at",
+      "url": "https://zuggabecka.at/",
+      "group": "Tools/Music & Audio"
+    },
+    {
+      "name": "devolutions.com",
+      "url": "https://devolutions.com/",
+      "group": "Tools/Network"
+    },
+    {
+      "name": "ghisler.com",
+      "url": "https://ghisler.com/",
+      "group": "Tools/Network"
+    },
+    {
+      "name": "kde.org",
+      "url": "https://kde.org/",
+      "group": "Tools/Network"
+    },
+    {
+      "name": "mobidia.com",
+      "url": "https://mobidia.com/",
+      "group": "Tools/Network"
+    },
+    {
+      "name": "phlox.com",
+      "url": "https://phlox.com/",
+      "group": "Tools/Network"
+    },
+    {
+      "name": "techet.net",
+      "url": "https://techet.net/",
+      "group": "Tools/Network"
+    },
+    {
+      "name": "ubnt.com",
+      "url": "https://ubnt.com/",
+      "group": "Tools/Network"
+    },
+    {
+      "name": "checkitt.com",
+      "url": "https://checkitt.com/",
+      "group": "Tools/News & Reading"
+    },
+    {
+      "name": "devhd.com",
+      "url": "https://devhd.com/",
+      "group": "Tools/News & Reading"
+    },
+    {
+      "name": "flyersoft.com",
+      "url": "https://flyersoft.com/",
+      "group": "Tools/News & Reading"
+    },
+    {
+      "name": "rama.com",
+      "url": "https://rama.com/",
+      "group": "Tools/News & Reading"
+    },
+    {
+      "name": "substack.com",
+      "url": "https://substack.com/",
+      "group": "Tools/News & Reading"
+    },
+    {
+      "name": "fatsecret.com",
+      "url": "https://fatsecret.com/",
+      "group": "Tools/Nutrition"
+    },
+    {
+      "name": "alltrails.com",
+      "url": "https://alltrails.com/",
+      "group": "Tools/Outdoor & Sport"
+    },
+    {
+      "name": "downdogapp.com",
+      "url": "https://downdogapp.com/",
+      "group": "Tools/Outdoor & Sport"
+    },
+    {
+      "name": "komoot.de",
+      "url": "https://komoot.de/",
+      "group": "Tools/Outdoor & Sport"
+    },
+    {
+      "name": "outdooractive.com",
+      "url": "https://outdooractive.com/",
+      "group": "Tools/Outdoor & Sport"
+    },
+    {
+      "name": "strava.com",
+      "url": "https://strava.com/",
+      "group": "Tools/Outdoor & Sport"
+    },
+    {
+      "name": "urbandroid.com",
+      "url": "https://urbandroid.com/",
+      "group": "Tools/Outdoor & Sport"
+    },
+    {
+      "name": "wikiloc.com",
+      "url": "https://wikiloc.com/",
+      "group": "Tools/Outdoor & Sport"
+    },
+    {
+      "name": "fossify.org",
+      "url": "https://fossify.org/",
+      "group": "Tools/Phone & Contacts"
+    },
+    {
+      "name": "azure.com",
+      "url": "https://azure.com/",
+      "group": "Tools/Security"
+    },
+    {
+      "name": "beemdevelopment.com",
+      "url": "https://beemdevelopment.com/",
+      "group": "Tools/Security"
+    },
+    {
+      "name": "opera.com",
+      "url": "https://opera.com/",
+      "group": "Tools/Security"
+    },
+    {
+      "name": "protonvpn.ch",
+      "url": "https://protonvpn.ch/",
+      "group": "Tools/Security"
+    },
+    {
+      "name": "wireguard.com",
+      "url": "https://wireguard.com/",
+      "group": "Tools/Security"
+    },
+    {
+      "name": "x8bit.com",
+      "url": "https://x8bit.com/",
+      "group": "Tools/Security"
+    },
+    {
+      "name": "android.com",
+      "url": "https://android.com/",
+      "group": "Tools/Settings"
+    },
+    {
+      "name": "binarysmith.com",
+      "url": "https://binarysmith.com/",
+      "group": "Tools/Settings"
+    },
+    {
+      "name": "hanks.pub",
+      "url": "https://hanks.pub/",
+      "group": "Tools/Settings"
+    },
+    {
+      "name": "mi.com",
+      "url": "https://mi.com/",
+      "group": "Tools/Settings"
+    },
+    {
+      "name": "rsupport.com",
+      "url": "https://rsupport.com/",
+      "group": "Tools/Settings"
+    },
+    {
+      "name": "sec.com",
+      "url": "https://sec.com/",
+      "group": "Tools/Settings"
+    },
+    {
+      "name": "teslacoilsw.com",
+      "url": "https://teslacoilsw.com/",
+      "group": "Tools/Settings"
+    },
+    {
+      "name": "badoo.com",
+      "url": "https://badoo.com/",
+      "group": "Tools/Social"
+    },
+    {
+      "name": "bereal.com",
+      "url": "https://bereal.com/",
+      "group": "Tools/Social"
+    },
+    {
+      "name": "bumble.com",
+      "url": "https://bumble.com/",
+      "group": "Tools/Social"
+    },
+    {
+      "name": "instagram.com",
+      "url": "https://instagram.com/",
+      "group": "Tools/Social"
+    },
+    {
+      "name": "pinterest.com",
+      "url": "https://pinterest.com/",
+      "group": "Tools/Social"
+    },
+    {
+      "name": "tinder.com",
+      "url": "https://tinder.com/",
+      "group": "Tools/Social"
+    },
+    {
+      "name": "alphainventor.com",
+      "url": "https://alphainventor.com/",
+      "group": "Tools/Storage"
+    },
+    {
+      "name": "amaze.com",
+      "url": "https://amaze.com/",
+      "group": "Tools/Storage"
+    },
+    {
+      "name": "ghostsq.com",
+      "url": "https://ghostsq.com/",
+      "group": "Tools/Storage"
+    },
+    {
+      "name": "github.com",
+      "url": "https://github.com/",
+      "group": "Tools/Storage"
+    },
+    {
+      "name": "lonelycatgames.com",
+      "url": "https://lonelycatgames.com/",
+      "group": "Tools/Storage"
+    },
+    {
+      "name": "mobimax.pl",
+      "url": "https://mobimax.pl/",
+      "group": "Tools/Storage"
+    },
+    {
+      "name": "mobisystems.com",
+      "url": "https://mobisystems.com/",
+      "group": "Tools/Storage"
+    },
+    {
+      "name": "musicvideo.com",
+      "url": "https://musicvideo.com/",
+      "group": "Tools/Storage"
+    },
+    {
+      "name": "proton.me",
+      "url": "https://proton.me/",
+      "group": "Tools/Storage"
+    },
+    {
+      "name": "rarlab.com",
+      "url": "https://rarlab.com/",
+      "group": "Tools/Storage"
+    },
+    {
+      "name": "smlnskgmail.com",
+      "url": "https://smlnskgmail.com/",
+      "group": "Tools/Storage"
+    },
+    {
+      "name": "solidexplorer2.pl",
+      "url": "https://solidexplorer2.pl/",
+      "group": "Tools/Storage"
+    },
+    {
+      "name": "tacit.dk",
+      "url": "https://tacit.dk/",
+      "group": "Tools/Storage"
+    },
+    {
+      "name": "viscouspot.com",
+      "url": "https://viscouspot.com/",
+      "group": "Tools/Storage"
+    },
+    {
+      "name": "zhanghai.me",
+      "url": "https://zhanghai.me/",
+      "group": "Tools/Storage"
+    },
+    {
+      "name": "fdroid.org",
+      "url": "https://fdroid.org/",
+      "group": "Tools/Stores"
+    },
+    {
+      "name": "uptodown.com",
+      "url": "https://uptodown.com/",
+      "group": "Tools/Stores"
+    },
+    {
+      "name": "foxdebug.com",
+      "url": "https://foxdebug.com/",
+      "group": "Tools/Terminals"
+    },
+    {
+      "name": "termux.cld",
+      "url": "https://termux.cld/",
+      "group": "Tools/Terminals"
+    },
+    {
+      "name": "termux.com",
+      "url": "https://termux.com/",
+      "group": "Tools/Terminals"
+    },
+    {
+      "name": "adobe.com",
+      "url": "https://adobe.com/",
+      "group": "Tools/Utilities"
+    },
+    {
+      "name": "diotek.com",
+      "url": "https://diotek.com/",
+      "group": "Tools/Utilities"
+    },
+    {
+      "name": "persapps.com",
+      "url": "https://persapps.com/",
+      "group": "Tools/Utilities"
+    },
+    {
+      "name": "arte.tv",
+      "url": "https://arte.tv/",
+      "group": "Tools/Video"
+    },
+    {
+      "name": "netflix.com",
+      "url": "https://netflix.com/",
+      "group": "Tools/Video"
+    },
+    {
+      "name": "wbd.com",
+      "url": "https://wbd.com/",
+      "group": "Tools/Video"
+    },
+    {
+      "name": "brave.com",
+      "url": "https://brave.com/",
+      "group": "Tools/Web"
+    },
+    {
+      "name": "duckduckgo.com",
+      "url": "https://duckduckgo.com/",
+      "group": "Tools/Web"
+    },
+    {
+      "name": "raindrop.io",
+      "url": "https://raindrop.io/",
+      "group": "Tools/Web"
+    }
+  ]
+}

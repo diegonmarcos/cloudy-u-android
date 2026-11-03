@@ -142,7 +142,8 @@ data class ViewModePlan(val userAgent: String, val wideViewPort: Boolean, val ov
             "m.setAttribute('content','width=1280');})()"
 
         fun of(desktop: Boolean, desktopUa: String?, mobileUa: String?, current: String): ViewModePlan {
-            val ua = BrowserNavPolicy.cleanUserAgent((if (desktop) desktopUa else mobileUa) ?: current)
+            // #1420 never disguised: WebView's own agent unless the app declares one (Google OAuth goes to a Custom Tab)
+            val ua = (if (desktop) desktopUa else mobileUa) ?: current
             // Mobile honours the page's own <meta name=viewport> (#893); desktop starts zoomed out on a wide layout.
             return ViewModePlan(ua, wideViewPort = true, overview = true, initialScale = if (desktop) 1 else 0,
                 viewportJs = if (desktop) DESKTOP_VIEWPORT_JS else null)

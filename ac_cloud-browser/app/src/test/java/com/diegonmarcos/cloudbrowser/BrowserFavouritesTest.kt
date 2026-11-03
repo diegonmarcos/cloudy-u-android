@@ -165,4 +165,51 @@ class BrowserFavouritesTest {
         assertEquals(listOf("Notes"), BrowserFavourites.suggest(fav, "leaf", 5, skip = setOf("https://diegonmarcos.github.io/leafy/")).map { it.title })
         assertTrue(BrowserFavourites.suggest(fav, "  ", 5).isEmpty())
     }
+
+    // ── #1422 filters, 8 columns, collapsible groups ──
+
+    private fun bm(url: String, folder: String) = BrowserBookmark(url, url, folder, 1L)
+
+    @Test
+    fun `the grid has eight columns`() {
+        assertEquals(8, BrowserFavourites.GRID_COLUMNS)
+        val rows = BrowserFavourites.gridRows((1..17).toList())
+        assertEquals(listOf(8, 8, 1), rows.map { it.size })
+    }
+
+    @Test
+    fun `a collapsed group keeps its header and draws no item`() {
+        val secs = BrowserFavourites.sections(listOf(bm("a", "GH Pages/Lnktree"), bm("b", "GH Pages/Lnktree"), bm("c", "Tools/Web")))
+        val gs = BrowserFavourites.groups(secs, setOf("GH Pages/Lnktree"))
+        val gh = gs.first { it.folder == "GH Pages/Lnktree" }
+        assertTrue(gh.collapsed); assertEquals(2, gh.count); assertTrue(gh.items.isEmpty())
+        assertEquals(1, gs.first { it.folder == "Tools/Web" }.items.size)
+        val c = BrowserFavourites.toggle(emptySet(), "Tools/Web")
+        assertEquals(setOf("Tools/Web"), c)
+        assertEquals(emptySet<String>(), BrowserFavourites.toggle(c, "Tools/Web"))
+    }
+
+    @Test
+    fun `a chip shows only its folders and headers show the sub-folder`() {
+        val secs = BrowserFavourites.sections(listOf(bm("a", "GH Pages/Lnktree"), bm("c", "Tools/Web"), bm("d", "")))
+        assertEquals(listOf("GH Pages/Lnktree"), BrowserFavourites.byFilter(secs, "GH Pages").map { it.first })
+        assertEquals(3, BrowserFavourites.byFilter(secs, null).size)
+        assertEquals("Lnktree", BrowserFavourites.subOf("GH Pages/Lnktree"))
+        assertEquals("GH Pages", BrowserFavourites.filterOf("GH Pages/Lnktree"))
+    }
+
+    @Test
+    fun `legacy seed folders move once, the filters and legacy groups parse, a user's folder stays`() {
+        val o = JSONObject("""{"version":3,"legacy_groups":["Public"],"items":[{"title":"G","url":"https://g","group":"Cloudy Public/Data"}],
+            "filters":[{"id":"gh_pages","label":"GH Pages"},{"id":"webserver","label":"Webserver","open":"http://emulated.app/__app__/tab/pages"}]}""")
+        val s = FavSeed.parse(o)
+        assertEquals(listOf("GH Pages", "Webserver"), s.filters.map { it.label })
+        assertEquals("http://emulated.app/__app__/tab/pages", s.filters[1].open)
+        assertEquals(null, s.filters[0].open)
+        assertEquals(setOf("Public"), s.legacyGroups)
+        val (moved, _) = BrowserFavourites.merge(listOf(bm("https://g", "Public")), s, setOf("https://g"), 2L)
+        assertEquals("Cloudy Public/Data", moved.single().folder)
+        val (kept, _) = BrowserFavourites.merge(listOf(bm("https://g", "Mine")), s, setOf("https://g"), 2L)
+        assertEquals("Mine", kept.single().folder)
+    }
 }

@@ -327,6 +327,8 @@ class BrowserHostFragment : Fragment() {
         BrowserBus.listener = { change -> if (isAdded) onBusChange(change) }
         BrowserBus.page = pageHost
         syncDownloadPolicy()
+        // #1420 back from a Google sign-in in the Custom Tab: the tab reloads so the site sees the new session
+        if (oauthHandedOff) { oauthHandedOff = false; webView?.reload() }
         // The download notification's tap opens the Downloads page.
         activity?.intent?.takeIf { it.getBooleanExtra(com.diegonmarcos.superapp.browser.download.DlService.EXTRA_OPEN_DOWNLOADS, false) }?.let {
             it.removeExtra(com.diegonmarcos.superapp.browser.download.DlService.EXTRA_OPEN_DOWNLOADS)
@@ -1021,9 +1023,10 @@ class BrowserHostFragment : Fragment() {
                     if (com.diegonmarcos.superapp.browser.download.DlMagnet.isMagnet(target) && addMagnet(target)) return true
                     // The app's private names (build.json ui.browser.private_names) go through its own loopback DNS, never the system's.
                     if (request.isForMainFrame && config.privateNames.matches(target)) { view?.loadResolved(target); return true }
-                    // #893 web pages (accounts.google.com included) load as they are; an app link (intent:, market:)
-                    // never leaves the browser: its fallback url loads, else nothing happens.
+                    // #893 web pages load as they are; an app link (intent:, market:) never leaves the browser: its
+                    // fallback url loads, else nothing happens. #1420 Google OAuth goes to a Custom Tab.
                     when (val d = BrowserNavPolicy.decide(target)) {
+                        is BrowserNavPolicy.Decision.CustomTab -> { handOffToCustomTab(d.url); return true }
                         is BrowserNavPolicy.Decision.Redirect -> { view?.loadUrl(d.url); return true }
                         BrowserNavPolicy.Decision.Block -> return true
                         BrowserNavPolicy.Decision.Load -> Unit
@@ -1160,7 +1163,11 @@ class BrowserHostFragment : Fragment() {
         val dialog = android.app.Dialog(ctx, android.R.style.Theme_Black_NoTitleBar)
         child.webViewClient = object : CloudWebClient(WebProfile.BROWSER) {
             override fun shouldOverrideUrlLoading(view: WebView?, request: android.webkit.WebResourceRequest?): Boolean =
-                BrowserNavPolicy.decide(request?.url?.toString()) != BrowserNavPolicy.Decision.Load
+                when (val d = BrowserNavPolicy.decide(request?.url?.toString())) {
+                    is BrowserNavPolicy.Decision.CustomTab -> { handOffToCustomTab(d.url); dialog.dismiss(); true }
+                    BrowserNavPolicy.Decision.Load -> false
+                    else -> true
+                }
         }
         child.webChromeClient = object : CloudChromeClient(activity) {
             override fun onCloseWindow(window: WebView?) { dialog.dismiss() }
@@ -1240,7 +1247,11 @@ class BrowserHostFragment : Fragment() {
                 onOpen = { close(); navigateTo(it.url) },
                 onDelete = { bookmarks.remove(it.url); rev++ },
                 onEdit = { b, title, folder -> bookmarks.edit(b.url, title, folder); rev++ },
-                onClose = close)
+                // #1422 the declared chips; Webserver opens the cloud-webserver app's Pages (its `open` link)
+                filters = config.favourites.filters,
+                collapsed = rev.let { bookmarks.collapsed() },
+                onToggleGroup = { bookmarks.toggleCollapsed(it); rev++ },
+                onOpenUrl = { close(); navigateTo(it) })
         }
     }
 
@@ -1839,8 +1850,10 @@ class BrowserHostFragment : Fragment() {
 
     private fun applyViewMode(wv: WebView) {
         val s = wv.settings
-        // #893 never `; wv)` / `Version/x.x` in the UA: Google refuses sign-in to that (disallowed_useragent). ViewModePlan holds the values.
-        val plan = ViewModePlan.of(desktopMode, config.userAgents["desktop"], config.userAgents["mobile"], s.userAgentString)
+        // #1421 never disguised: mobile = WebView's own default agent (not the current one, which is the desktop agent
+        // right after a switch back); Google OAuth goes to a Custom Tab instead (#1420). ViewModePlan holds the values.
+        val plan = ViewModePlan.of(desktopMode, config.userAgents["desktop"], config.userAgents["mobile"],
+            runCatching { android.webkit.WebSettings.getDefaultUserAgent(wv.context) }.getOrNull() ?: s.userAgentString)
         CloudWeb.userAgent(wv, plan.userAgent)
         s.useWideViewPort = plan.wideViewPort
         s.loadWithOverviewMode = plan.overview
@@ -2677,6 +2690,19 @@ class BrowserHostFragment : Fragment() {
                 },
             )
         }
+    }
+
+    /** #1420 set while a Google OAuth flow runs in the Custom Tab; onResume reloads the tab. */
+    private var oauthHandedOff = false
+
+    /** #1420 Google OAuth never runs in the WebView (Google's embedded-webview policy): a Custom Tab takes it. */
+    private fun handOffToCustomTab(url: String) {
+        // no other browser: an intent without a package would come back to this app and the WebView again
+        val pkg = browserPackage() ?: run { toast("Google sign-in needs a browser app (Chrome, Firefox, ...)"); return }
+        val launch = PasskeySupport.secureBrowserLaunch(url, pkg) ?: return
+        oauthHandedOff = true
+        runCatching { startActivity(PasskeySupport.secureBrowserIntent(launch)) }
+            .onFailure { oauthHandedOff = false; toast("No browser found for Google sign-in") }
     }
 
     /** The system browser that is not us. */

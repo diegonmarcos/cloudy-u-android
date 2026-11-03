@@ -83,6 +83,10 @@ class BrowserBookmarks(context: Context) {
     fun viewMode(): String = BrowserFavourites.normView(sp.getString(VIEW, null))
     fun setViewMode(v: String) { sp.edit().putString(VIEW, BrowserFavourites.normView(v)).apply() }
 
+    /** #1422 the collapsed Favourites groups (folder names), persisted. */
+    fun collapsed(): Set<String> = sp.getStringSet(COLLAPSED, emptySet()).orEmpty().toSet()
+    fun toggleCollapsed(folder: String) { sp.edit().putStringSet(COLLAPSED, BrowserFavourites.toggle(collapsed(), folder)).apply() }
+
     /** #893 long-press ▸ edit / move: the title and folder of the bookmark at [url]. */
     fun edit(url: String, title: String, folder: String) {
         val cur = all().firstOrNull { it.url == url } ?: return
@@ -94,6 +98,6 @@ class BrowserBookmarks(context: Context) {
     }
 
     private companion object {
-        const val KEY = "bookmarks_json"; const val SEEN = "seed_seen"; const val SEED_VERSION = "seed_version"; const val VIEW = "view"
+        const val KEY = "bookmarks_json"; const val SEEN = "seed_seen"; const val SEED_VERSION = "seed_version"; const val VIEW = "view"; const val COLLAPSED = "collapsed_groups"
     }
 }

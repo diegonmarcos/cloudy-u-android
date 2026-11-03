@@ -14,12 +14,12 @@ import org.junit.Test
  * #893 Google sign-in stuck in Cloud Browser, as behaviour. Root causes pinned here:
  *  - ERR_CACHE_MISS on accounts.google.com/gsi/transform: a POST result was committed as the tab's url and
  *    saved in its WebView state, then replayed from the cache on the next rebuild;
- *  - a WebView user agent carries `; wv)` / `Version/x.x`, which Google refuses (disallowed_useragent);
- *  - app links (intent:) must not leave the browser, accounts.google.com must load untouched.
+ *  - #1420 Google refuses OAuth in any embedded WebView: accounts.google.com goes to a Custom Tab and the
+ *    WebView's agent is never disguised;
+ *  - app links (intent:) must not leave the browser.
  */
 class BrowserSignInTest {
 
-    private val wvUa = "Mozilla/5.0 (Linux; Android 14; Pixel 8 Build/UD1A; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/124.0.0.0 Mobile Safari/537.36"
 
     @Test
     fun `a POST result page is never committed as a tab's url`() {
@@ -43,21 +43,22 @@ class BrowserSignInTest {
     }
 
     @Test
-    fun `the user agent loses the wv token and the Version marker, nothing else`() {
-        assertTrue(BrowserNavPolicy.hasWebViewToken(wvUa))
-        val clean = BrowserNavPolicy.cleanUserAgent(wvUa)
-        assertFalse(clean, BrowserNavPolicy.hasWebViewToken(clean))
-        assertFalse(clean.contains("; wv)"))
-        assertFalse(clean.contains("Version/"))
-        assertTrue(clean.contains("Chrome/124.0.0.0") && clean.contains("Android 14"))
-        val configured = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36"
-        assertEquals(configured, BrowserNavPolicy.cleanUserAgent(configured))
+    fun `Google OAuth hosts go to a Custom Tab, everything else does not`() {
+        assertTrue(BrowserNavPolicy.isGoogleOAuth("https://accounts.google.com/o/oauth2/v2/auth?client_id=1"))
+        assertTrue(BrowserNavPolicy.isGoogleOAuth("https://accounts.google.com/v3/signin/identifier"))
+        assertTrue(BrowserNavPolicy.isGoogleOAuth("https://ACCOUNTS.google.com/ServiceLogin"))
+        assertFalse(BrowserNavPolicy.isGoogleOAuth("http://accounts.google.com/o/oauth2/auth"))
+        assertFalse(BrowserNavPolicy.isGoogleOAuth("https://accounts.google.com.evil.example/o/oauth2/auth"))
+        assertFalse(BrowserNavPolicy.isGoogleOAuth("https://www.google.com/search?q=accounts.google.com"))
+        assertFalse(BrowserNavPolicy.isGoogleOAuth("https://github.com/login/oauth/authorize"))
+        val u = "https://accounts.google.com/o/oauth2/auth?client_id=1"
+        assertEquals(Decision.CustomTab(u), BrowserNavPolicy.decide(u))
     }
 
     @Test
-    fun `web pages load, accounts google included, and app links never leave the browser`() {
-        assertSame(Decision.Load, BrowserNavPolicy.decide("https://accounts.google.com/o/oauth2/auth?client_id=1"))
-        assertSame(Decision.Load, BrowserNavPolicy.decide("https://accounts.google.com/gsi/transform"))
+    fun `web pages load, Google OAuth goes out, and app links never leave the browser`() {
+        assertEquals(Decision.CustomTab("https://accounts.google.com/gsi/transform"), BrowserNavPolicy.decide("https://accounts.google.com/gsi/transform"))
+        assertSame(Decision.Load, BrowserNavPolicy.decide("https://example.com/login"))
         assertSame(Decision.Load, BrowserNavPolicy.decide("http://localhost:8000"))
         assertSame(Decision.Block, BrowserNavPolicy.decide("market://details?id=com.google.android.gms"))
         assertSame(Decision.Block, BrowserNavPolicy.decide("intent://scan/#Intent;scheme=zxing;package=com.x;end"))

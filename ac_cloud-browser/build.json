@@ -653,41 +653,29 @@
         }
       ],
       "_doc_favourites": "#893 THE FAVOURITES SEED (Fav = the bookmarks, one store). Not typed here: app/build.gradle EXPANDS `sources` at build time into `items` (title, url, group) from the fleet's own declaration, aa_cloud-superapp/data/services_public.json (every public edge endpoint) and services_private.json (the mesh-internal HTTP endpoints, shown and opened as declared, they answer on the mesh), and bakes the result inside UI_BROWSER_CONFIG_B64, so a seed change rebuilds only Cloud Browser. BrowserBookmarks.applySeed adds each entry ONCE (first run, and any entry a later `version` brings), never overwrites an edit and never re-adds what the user deleted. No credentials: only the url as declared. VERSION 2 adds the \"GitHub Pages\" group from data/github_pages.json, DERIVED by tools/gen-github-pages.py from the front project's published list (every site diegonmarcos.github.io serves, one row per project); existing users get those links through the same once-per-entry merge, so their edits and deletions stand. Regenerate with `python3 ac_cloud-browser/tools/gen-github-pages.py --probe`; test/test-browser-github-pages.sh holds the file (parses, no duplicates, https on the Pages host).",
+      "_doc_favourites_v3": "#1422 VERSION 3: the seed is ONE derived file, data/favourites_catalog.json (`catalog`), written by tools/gen-favourites-catalog.py from the registries (`filters[].from`: GitHub Pages list, SuperApp services_public / services_private filed under the SuperApp Cloud dashboard categories, the cloud-webserver serving endpoint, the SuperApp phone_sections / phone_folders taxonomy the Store's Phone > Apps reads). Each filter is a chip under the Favourites title; an item's group is '<chip label>/<sub-folder>'. A `legacy_groups` bookmark the seed also carries moves to its new group once. test/test-browser-favourites-catalog.sh fails when the committed file is stale.",
       "favourites": {
-        "version": 2,
-        "sources": [
-          {
-            "group": "Public",
-            "file": "../aa_cloud-superapp/data/services_public.json",
-            "url_field": "public_url",
-            "scheme": "https"
-          },
-          {
-            "group": "Private (mesh)",
-            "file": "../aa_cloud-superapp/data/services_private.json",
-            "url_field": "private_dns",
-            "scheme": "http",
-            "protocols": ["http", "https"],
-            "require_port": true
-          },
-          {
-            "group": "GitHub Pages",
-            "file": "data/github_pages.json",
-            "url_field": "url",
-            "scheme": "https"
-          }
+        "version": 3,
+        "catalog": "data/favourites_catalog.json",
+        "legacy_groups": ["Public", "Private (mesh)", "GitHub Pages"],
+        "filters": [
+          { "id": "gh_pages", "label": "GH Pages", "from": "github_pages" },
+          { "id": "cloudy_public", "label": "Cloudy Public", "from": "services_public" },
+          { "id": "cloudy_private", "label": "Cloudy Private", "from": "services_private" },
+          { "id": "webserver", "label": "Webserver", "from": "webserver_pages" },
+          { "id": "services", "label": "Services", "from": "phone_section", "section": "Services" },
+          { "id": "tools", "label": "Tools", "from": "phone_section", "section": "Tools" }
         ],
         "extra": [
           {
             "title": "Linktree",
             "url": "https://linktree.diegonmarcos.com",
-            "group": "Public"
+            "group": "Cloudy Public/Web"
           }
         ]
       },
-      "_doc_user_agents": "#802 the user-agent strings desktop_mode switches between, declared here rather than in libs:browser (they used to be literals in BrowserHostFragment).",
+      "_doc_user_agents": "#802 the user-agent strings desktop_mode switches between, declared here rather than in libs:browser (they used to be literals in BrowserHostFragment). #1421 NO `mobile` agent: the pinned 'Pixel 8 / Chrome 124' string disagreed with the real WebView's version and with its own Sec-CH-UA client hints, so UA-sniffing scripts served the wrong bundle (or none) and bot checks challenged; mobile mode uses WebView's own default agent (WebSettings.getDefaultUserAgent). Desktop mode is the user's explicit request for a desktop page.",
       "user_agents": {
-        "mobile": "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36 CloudSuperApp/1.0",
         "desktop": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 CloudSuperApp/1.0"
       },
       "_doc_palette": "#802 the seven KitPalette roles the Compose surfaces (menu sheet, settings, find bar, panels) paint with; the browser's purple-on-black chrome.",

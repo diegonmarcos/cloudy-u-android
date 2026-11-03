@@ -13,7 +13,7 @@ the owner's other public repos (2026-10) found no other Pages site, so this one 
   gen-github-pages.py --check            write nothing; exit 1 when the committed file differs (without --probe: when it
                                          holds a site the topology no longer has, or out of order)
 
-The output rows are {name, url}; app/build.gradle expands them into the Fav seed under the group
+The output rows are {name, url, repo}; app/build.gradle expands them into the Fav seed under the group
 "GitHub Pages" (build.json::ui.browser.favourites.sources). The guard test-browser-github-pages.sh holds
 the file to: parses, no duplicates, https on the Pages host.
 """
@@ -27,14 +27,16 @@ OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data", "gi
 def derive(topology):
     """front-topology.json -> [{name, url}], the root site first, then the projects in topology order.
     Raises ValueError on a project with no deploy_name or a duplicate URL/name: a list with either is not published."""
-    rows = [{"name": "Diego Marcos", "url": HOST + "/"}]
+    # #1422 `repo`: the front project's source folder (topology `category`), the Fav sub-folder of GH Pages
+    rows = [{"name": "Diego Marcos", "url": HOST + "/", "repo": HOST.split("://")[1]}]
     for p in topology.get("projects", []):
         if not p.get("has_dist"):
             continue   # nothing is published for it
         dn = str(p.get("deploy_name") or "").strip().strip("/")
         if not dn:
             raise ValueError("project without deploy_name: %r" % p.get("slug"))
-        rows.append({"name": str(p.get("name") or dn).strip(), "url": "%s/%s/" % (HOST, dn)})
+        rows.append({"name": str(p.get("name") or dn).strip(), "url": "%s/%s/" % (HOST, dn),
+                     "repo": str(p.get("category") or dn).strip()})
     for key in ("url", "name"):
         seen = set()
         for r in rows:

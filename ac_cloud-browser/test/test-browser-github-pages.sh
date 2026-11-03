@@ -36,7 +36,7 @@ def check(root, ok):
     ok(parses, "G1 data/github_pages.json parses")
     ok(isinstance(rows, list) and len(rows) >= 10, "G1 it is a list of sites", "found %s" % (len(rows) if isinstance(rows, list) else type(rows)))
     rows = rows if isinstance(rows, list) else []
-    ok(all(isinstance(r, dict) and set(r) == {"name", "url"} and all(isinstance(v, str) and v.strip() for v in r.values()) for r in rows), "G1 every row is {name,url}, both non-blank")
+    ok(all(isinstance(r, dict) and {"name", "url"} <= set(r) <= {"name", "url", "repo"} and all(isinstance(v, str) and v.strip() for v in r.values()) for r in rows), "G1 every row is {name,url}, both non-blank")
     urls = [r.get("url", "") for r in rows if isinstance(r, dict)]
     names = [r.get("name", "") for r in rows if isinstance(r, dict)]
     ok(all(u.startswith(HOST) and u.endswith("/") for u in urls), "G1 every url is https on the Pages host, with its trailing slash")
@@ -65,8 +65,10 @@ def check(root, ok):
     ok("front-topology.json" in open(os.path.join(root, "ac_cloud-browser/tools/gen-github-pages.py"), encoding="utf-8").read(), "G2 the source is the front project's list")
 
     fav = build_json(root)["ui"]["browser"]["favourites"]
-    src = [s for s in fav.get("sources", []) if s.get("group") == "GitHub Pages"]
-    ok(len(src) == 1 and src[0].get("file") == "data/github_pages.json" and src[0].get("url_field") == "url" and src[0].get("scheme") == "https",
+    # #1422 the Pages file reaches the seed through the derived catalog (tools/gen-favourites-catalog.py)
+    src = [s for s in fav.get("filters", []) if s.get("from") == "github_pages"]
+    catgen = open(os.path.join(root, "ac_cloud-browser/tools/gen-favourites-catalog.py"), encoding="utf-8").read()
+    ok(len(src) == 1 and 'read("ac_cloud-browser/data/github_pages.json")' in catgen,
        "G3 favourites.sources carries the GitHub Pages file")
     ok(fav.get("version", 0) >= 2, "G3 the seed version moved, so version-1 users receive the new entries")
     ok(not any("github.io" in e.get("url", "") for e in fav.get("extra", [])), "G3 no Pages link is typed into `extra`")
@@ -77,7 +79,7 @@ def check(root, ok):
     ok("favourites = bookmarks.all()" in frag, "G4 the address bar searches the bookmarks")
     ok('Title("Favorites")' in panel and panel.find('Title("History")') < panel.find('Title("Favorites")'), "G4 Favorites is the third section")
     ok("BrowserFavourites.suggest(" in sug, "G4 the ranking lives in BrowserFavourites")
-    ok("BrowserFavourites.filter(sections, q)" in sheets and 'testTag("browser:fav:search")' in sheets, "G4 the Fav page filters live")
+    ok("BrowserFavourites.filter(BrowserFavourites.byFilter(sections, chip), q)" in sheets and 'testTag("browser:fav:search")' in sheets, "G4 the Fav page filters live")
 
 main("github pages fav", check, [
     ("the file stops parsing", "ac_cloud-browser/data/github_pages.json", "[\n  {", "[\n  {,", "parses"),
@@ -87,11 +89,11 @@ main("github pages fav", check, [
     ("a site loses its trailing slash", "ac_cloud-browser/data/github_pages.json", '"url": "https://diegonmarcos.github.io/leafy/"', '"url": "https://diegonmarcos.github.io/leafy"', "trailing slash"),
     ("the generator accepts duplicates", "ac_cloud-browser/tools/gen-github-pages.py", "raise ValueError(\"duplicate %s: %s\"", "print(\"duplicate %s: %s\"", "refuses a duplicate"),
     ("the generator lists unbuilt projects", "ac_cloud-browser/tools/gen-github-pages.py", "if not p.get(\"has_dist\"):", "if False:", "unbuilt skipped"),
-    ("the source is not wired", "ac_cloud-browser/build.json", '"file": "data/github_pages.json"', '"file": "data/other.json"', "carries the GitHub Pages file"),
-    ("the seed version stays at 1", "ac_cloud-browser/build.json", '"version": 2,\n        "sources"', '"version": 1,\n        "sources"', "seed version moved"),
+    ("the source is not wired", "ac_cloud-browser/build.json", '"from": "github_pages"', '"from": "other"', "carries the GitHub Pages file"),
+    ("the seed version stays at 1", "ac_cloud-browser/build.json", '"version": 3,\n        "catalog"', '"version": 1,\n        "catalog"', "seed version moved"),
     ("a link is typed into extra", "ac_cloud-browser/build.json", '"title": "Linktree",\n            "url": "https://linktree.diegonmarcos.com",', '"title": "Leafy",\n            "url": "https://diegonmarcos.github.io/leafy/",', "typed into"),
     ("the bookmarks leave the address bar", LIB + "/BrowserHostFragment.kt", "favourites = bookmarks.all()", "favourites = emptyList()", "searches the bookmarks"),
     ("Favorites moves before History", LIB + "/BrowserSuggestPanel.kt", 'if (sections.favourites.isNotEmpty()) { add(Title("Favorites"))', 'if (sections.favourites.isNotEmpty()) { add(Title("History"))', "third section"),
-    ("the Fav page stops filtering", LIB + "/BrowserSheets.kt", "BrowserFavourites.filter(sections, q)", "sections", "filters live"),
+    ("the Fav page stops filtering", LIB + "/BrowserSheets.kt", "BrowserFavourites.filter(BrowserFavourites.byFilter(sections, chip), q)", "BrowserFavourites.byFilter(sections, chip)", "filters live"),
 ])
 PYEOF

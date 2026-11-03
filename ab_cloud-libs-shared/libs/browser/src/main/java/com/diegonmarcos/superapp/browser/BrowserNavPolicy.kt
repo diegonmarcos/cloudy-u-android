@@ -10,8 +10,12 @@ package com.diegonmarcos.superapp.browser
  *    for the grid, pause/stop, a tab switch) restored or re-loaded it, which asks the cache for a POST
  *    response that was never cached. [isFormPostResult] pages are never committed, never saved and never
  *    restored; the tab falls back to the last page that can be loaded again.
- *  - the user agent: without a configured one WebView sends `; wv)` and `Version/x.x`, which Google answers
- *    with disallowed_useragent. [cleanUserAgent] strips both.
+ *  - #1420 Google refuses OAuth in ANY embedded WebView (disallowed_useragent, "This browser or app may not be
+ *    secure"). Stripping `; wv` (the old cleanUserAgent, #893) did not fix it: the WebView still sends the
+ *    X-Requested-With: <package> header and has no FedCM / Credential Manager, and Google's embedded-webview
+ *    policy forbids disguising the agent anyway. So the user agent is left as WebView sends it and every
+ *    accounts.google.com navigation is handed to a Custom Tab ([isGoogleOAuth], [Decision.CustomTab]); the tab
+ *    reloads when the user comes back.
  *  - popups: accounts.google.com / OAuth open a child window and post back through window.opener, which
  *    needs setSupportMultipleWindows + onCreateWindow; links the page hands to another app (intent:,
  *    market:) must not leave the browser ([decide]).
@@ -32,9 +36,13 @@ object BrowserNavPolicy {
         return false
     }
 
-    /** The user agent Google accepts: WebView's own minus the `; wv` token and the `Version/x.x` marker. */
-    fun cleanUserAgent(ua: String): String =
-        ua.replace(Regex(";\\s*wv\\b"), "").replace(Regex("\\s*Version/\\d+(\\.\\d+)*"), "").replace(Regex("\\s{2,}"), " ").trim()
+    /** #1420 a Google sign-in / OAuth page: these never load in the WebView, they go to a Custom Tab. */
+    fun isGoogleOAuth(url: String?): Boolean {
+        val u = url?.trim()?.lowercase().orEmpty()
+        if (!u.startsWith("https://")) return false
+        val oauthHost = u.substringAfter("://").substringBefore('/').substringBefore('?').substringBefore('#').substringBefore(':')
+        return oauthHost == "accounts.google.com" || oauthHost.endsWith(".accounts.google.com")
+    }
 
     fun hasWebViewToken(ua: String): Boolean = Regex(";\\s*wv\\b").containsMatchIn(ua) || Regex("Version/\\d").containsMatchIn(ua)
 
@@ -45,12 +53,15 @@ object BrowserNavPolicy {
         data class Redirect(val url: String) : Decision()
         /** Swallow it: the page asked for another app or the Store; the browser stays where it is. */
         object Block : Decision()
+        /** #1420 hand [url] to a Custom Tab (Google OAuth): never rendered in the embedded WebView. */
+        data class CustomTab(val url: String) : Decision()
     }
 
-    /** What shouldOverrideUrlLoading does with [url]: web pages load (accounts.google.com included), app links never leave. */
+    /** What shouldOverrideUrlLoading does with [url]: web pages load, Google OAuth goes to a Custom Tab, app links never leave. */
     fun decide(url: String?): Decision {
         val u = url?.trim().orEmpty()
         val low = u.lowercase()
+        if (isGoogleOAuth(u)) return Decision.CustomTab(u)
         if (low.startsWith("http://") || low.startsWith("https://") || low.startsWith("about:") ||
             low.startsWith("file:") || low.startsWith("data:") || low.startsWith("blob:") || low.startsWith("javascript:")) return Decision.Load
         if (low.startsWith("intent:")) {

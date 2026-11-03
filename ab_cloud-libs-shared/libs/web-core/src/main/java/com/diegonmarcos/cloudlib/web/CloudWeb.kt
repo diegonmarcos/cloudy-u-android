@@ -95,6 +95,13 @@ object CloudWeb {
         // flipping a tab does not cost its GPU context.
         optional { wv.settings.offscreenPreRaster = profile != WebProfile.UNTRUSTED_HTML }
         optional { wv.settings.safeBrowsingEnabled = true }
+        // #1421 pages render as their authors wrote them: never algorithmically darkened (a dark app theme otherwise
+        // recolours light-only pages, which reads as "the site's JS/CSS renders strangely"); a page's own
+        // prefers-color-scheme dark styles still apply
+        if (profile == WebProfile.BROWSER) optional {
+            if (androidx.webkit.WebViewFeature.isFeatureSupported(androidx.webkit.WebViewFeature.ALGORITHMIC_DARKENING))
+                androidx.webkit.WebSettingsCompat.setAlgorithmicDarkeningAllowed(wv.settings, false)
+        }
         optional { wv.setRendererPriorityPolicy(WebView.RENDERER_PRIORITY_IMPORTANT, profile != WebProfile.WEB_WORLD) }
         optional { CookieManager.getInstance().setAcceptThirdPartyCookies(wv, profile.thirdPartyCookies) }
         if (profile == WebProfile.WEB_WORLD) {

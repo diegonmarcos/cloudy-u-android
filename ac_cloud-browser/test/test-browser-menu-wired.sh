@@ -53,8 +53,8 @@ def check(root, ok):
     ok("PopupMenu" not in allsrc, "no PopupMenu is left (the menus are the Compose sheet)")
     ok("Mozilla/5.0" not in allsrc, "no user-agent string is a Kotlin literal")
     ua = build_json(root)["ui"]["browser"].get("user_agents", {})
-    ok(ua.get("mobile", "").startswith("Mozilla/5.0") and ua.get("desktop", "").startswith("Mozilla/5.0"),
-       "both user agents are declared in build.json")
+    ok("mobile" not in ua and ua.get("desktop", "").startswith("Mozilla/5.0"),
+       "both user agents are declared in build.json (#1421 mobile = WebView's own, never pinned)")
     ok('config.userAgents["desktop"]' in frag and 'config.userAgents["mobile"]' in frag, "desktop mode reads the declared agents")
     ok("!item.api ->" in api, "menu/act refuses a row not declared api:true")
     for op in ("menu", "menu/act", "page/find", "page/text", "page/reader"):

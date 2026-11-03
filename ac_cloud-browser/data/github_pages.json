@@ -1,35 +1,43 @@
 [
   {
     "name": "Diego Marcos",
-    "url": "https://diegonmarcos.github.io/"
+    "url": "https://diegonmarcos.github.io/",
+    "repo": "diegonmarcos.github.io"
   },
   {
     "name": "Leafy",
-    "url": "https://diegonmarcos.github.io/leafy/"
+    "url": "https://diegonmarcos.github.io/leafy/",
+    "repo": "a_Companies"
   },
   {
     "name": "Nexus",
-    "url": "https://diegonmarcos.github.io/nexus/"
+    "url": "https://diegonmarcos.github.io/nexus/",
+    "repo": "a_Companies"
   },
   {
     "name": "Stark",
-    "url": "https://diegonmarcos.github.io/stark/"
+    "url": "https://diegonmarcos.github.io/stark/",
+    "repo": "a_Companies"
   },
   {
     "name": "CV PDF",
-    "url": "https://diegonmarcos.github.io/cv_pdf/"
+    "url": "https://diegonmarcos.github.io/cv_pdf/",
+    "repo": "b_Profiles"
   },
   {
     "name": "CV Web",
-    "url": "https://diegonmarcos.github.io/cv_web/"
+    "url": "https://diegonmarcos.github.io/cv_web/",
+    "repo": "b_Profiles"
   },
   {
     "name": "Landpage",
-    "url": "https://diegonmarcos.github.io/landpage/"
+    "url": "https://diegonmarcos.github.io/landpage/",
+    "repo": "b_Profiles"
   },
   {
     "name": "Cloud",
-    "url": "https://diegonmarcos.github.io/cloud/"
+    "url": "https://diegonmarcos.github.io/cloud/",
+    "repo": "a_Portals"
   },
   {
     "name": "Cloud Mobile",
@@ -37,154 +45,192 @@
   },
   {
     "name": "Cloud Web",
-    "url": "https://diegonmarcos.github.io/cloud-web/"
+    "url": "https://diegonmarcos.github.io/cloud-web/",
+    "repo": "a_Portals"
   },
   {
     "name": "Linktree",
-    "url": "https://diegonmarcos.github.io/linktree/"
+    "url": "https://diegonmarcos.github.io/linktree/",
+    "repo": "Lnktree"
   },
   {
     "name": "Linktree Icon View",
-    "url": "https://diegonmarcos.github.io/linktree_icon-view/"
+    "url": "https://diegonmarcos.github.io/linktree_icon-view/",
+    "repo": "Lnktree"
   },
   {
     "name": "Linktree Mindmap",
-    "url": "https://diegonmarcos.github.io/linktree_mindmap/"
+    "url": "https://diegonmarcos.github.io/linktree_mindmap/",
+    "repo": "Lnktree"
   },
   {
     "name": "Linktree Pixel World",
-    "url": "https://diegonmarcos.github.io/linktree_pixel-world/"
+    "url": "https://diegonmarcos.github.io/linktree_pixel-world/",
+    "repo": "Lnktree"
   },
   {
     "name": "SlabTwin 3D Warehouse",
-    "url": "https://diegonmarcos.github.io/Warehouse/"
+    "url": "https://diegonmarcos.github.io/Warehouse/",
+    "repo": "a_Companies"
   },
   {
     "name": "myAstro",
-    "url": "https://diegonmarcos.github.io/myAstro/"
+    "url": "https://diegonmarcos.github.io/myAstro/",
+    "repo": "c_Circus"
   },
   {
     "name": "MyFeed",
-    "url": "https://diegonmarcos.github.io/myfeed/"
+    "url": "https://diegonmarcos.github.io/myfeed/",
+    "repo": "c_Suite"
   },
   {
     "name": "mySocials",
-    "url": "https://diegonmarcos.github.io/mySocials/"
+    "url": "https://diegonmarcos.github.io/mySocials/",
+    "repo": "b_Profiles"
   },
   {
     "name": "My Financials",
-    "url": "https://diegonmarcos.github.io/my-fin/"
+    "url": "https://diegonmarcos.github.io/my-fin/",
+    "repo": "b_MyData"
   },
   {
     "name": "MyTrackers",
-    "url": "https://diegonmarcos.github.io/myTrackers/"
+    "url": "https://diegonmarcos.github.io/myTrackers/",
+    "repo": "b_MyData"
   },
   {
     "name": "MyHealth",
-    "url": "https://diegonmarcos.github.io/myhealth/"
+    "url": "https://diegonmarcos.github.io/myhealth/",
+    "repo": "b_MyData"
   },
   {
     "name": "MyHealth Tracker",
-    "url": "https://diegonmarcos.github.io/myhealth-tracker/"
+    "url": "https://diegonmarcos.github.io/myhealth-tracker/",
+    "repo": "b_MyData"
   },
   {
     "name": "myID",
-    "url": "https://diegonmarcos.github.io/myid/"
+    "url": "https://diegonmarcos.github.io/myid/",
+    "repo": "b_MyData"
   },
   {
     "name": "MyMaps MyTrips",
-    "url": "https://diegonmarcos.github.io/mymaps-mytrips/"
+    "url": "https://diegonmarcos.github.io/mymaps-mytrips/",
+    "repo": "b_MyData"
   },
   {
     "name": "MyPhotos",
-    "url": "https://diegonmarcos.github.io/myphotos/"
+    "url": "https://diegonmarcos.github.io/myphotos/",
+    "repo": "b_MyData"
   },
   {
     "name": "MyProfile",
-    "url": "https://diegonmarcos.github.io/myprofile/"
+    "url": "https://diegonmarcos.github.io/myprofile/",
+    "repo": "b_Profiles"
   },
   {
     "name": "Galaxy",
-    "url": "https://diegonmarcos.github.io/galaxy/"
+    "url": "https://diegonmarcos.github.io/galaxy/",
+    "repo": "b_Projects"
   },
   {
     "name": "Carto",
-    "url": "https://diegonmarcos.github.io/carto/"
+    "url": "https://diegonmarcos.github.io/carto/",
+    "repo": "c_Circus"
   },
   {
     "name": "Games",
-    "url": "https://diegonmarcos.github.io/games/"
+    "url": "https://diegonmarcos.github.io/games/",
+    "repo": "c_Circus"
   },
   {
     "name": "Movies",
-    "url": "https://diegonmarcos.github.io/movies/"
+    "url": "https://diegonmarcos.github.io/movies/",
+    "repo": "c_Suite"
   },
   {
     "name": "Music",
-    "url": "https://diegonmarcos.github.io/music/"
+    "url": "https://diegonmarcos.github.io/music/",
+    "repo": "c_Suite"
   },
   {
     "name": "LMMS",
-    "url": "https://diegonmarcos.github.io/Music_DAW_LLMS/"
+    "url": "https://diegonmarcos.github.io/Music_DAW_LLMS/",
+    "repo": "a-Lfy_CG-Zirkus"
   },
   {
     "name": "Mixxx",
-    "url": "https://diegonmarcos.github.io/Music_DJ-Mixer_Mixxx/"
+    "url": "https://diegonmarcos.github.io/Music_DJ-Mixer_Mixxx/",
+    "repo": "a-Lfy_CG-Zirkus"
   },
   {
     "name": "CentralBank",
-    "url": "https://diegonmarcos.github.io/central_bank/"
+    "url": "https://diegonmarcos.github.io/central_bank/",
+    "repo": "b-Nxs_PA"
   },
   {
     "name": "FinTerminal",
-    "url": "https://diegonmarcos.github.io/fin-terminal/"
+    "url": "https://diegonmarcos.github.io/fin-terminal/",
+    "repo": "b-Nxs_Blmmbrg"
   },
   {
     "name": "MarketWatch",
-    "url": "https://diegonmarcos.github.io/market_watch/"
+    "url": "https://diegonmarcos.github.io/market_watch/",
+    "repo": "b-Nxs_Blmmbrg"
   },
   {
     "name": "GDELTNews",
-    "url": "https://diegonmarcos.github.io/news/"
+    "url": "https://diegonmarcos.github.io/news/",
+    "repo": "b-Nxs_Blmmbrg"
   },
   {
     "name": "Sailyng",
-    "url": "https://diegonmarcos.github.io/sailytics/"
+    "url": "https://diegonmarcos.github.io/sailytics/",
+    "repo": "c-Stk_DsX"
   },
   {
     "name": "JSON Vision",
-    "url": "https://diegonmarcos.github.io/json-vision/"
+    "url": "https://diegonmarcos.github.io/json-vision/",
+    "repo": "c_Suite"
   },
   {
     "name": "MyHealth FeedYourself",
-    "url": "https://diegonmarcos.github.io/myhealth-feedyourself/"
+    "url": "https://diegonmarcos.github.io/myhealth-feedyourself/",
+    "repo": "c_Suite"
   },
   {
     "name": "MyMail",
-    "url": "https://diegonmarcos.github.io/mymail/"
+    "url": "https://diegonmarcos.github.io/mymail/",
+    "repo": "c_Suite"
   },
   {
     "name": "MyMaps",
-    "url": "https://diegonmarcos.github.io/mymaps/"
+    "url": "https://diegonmarcos.github.io/mymaps/",
+    "repo": "c_Suite"
   },
   {
     "name": "MyMaps Maps",
-    "url": "https://diegonmarcos.github.io/mymaps-maps/"
+    "url": "https://diegonmarcos.github.io/mymaps-maps/",
+    "repo": "c_Suite"
   },
   {
     "name": "MyMaps Navigation",
-    "url": "https://diegonmarcos.github.io/mymaps-navigation/"
+    "url": "https://diegonmarcos.github.io/mymaps-navigation/",
+    "repo": "c_Suite"
   },
   {
     "name": "Suite",
-    "url": "https://diegonmarcos.github.io/suite/"
+    "url": "https://diegonmarcos.github.io/suite/",
+    "repo": "c_Suite"
   },
   {
     "name": "tldraw",
-    "url": "https://diegonmarcos.github.io/tldraw/"
+    "url": "https://diegonmarcos.github.io/tldraw/",
+    "repo": "c_Suite"
   },
   {
     "name": "Others",
-    "url": "https://diegonmarcos.github.io/others/"
+    "url": "https://diegonmarcos.github.io/others/",
+    "repo": "c_Circus"
   }
 ]

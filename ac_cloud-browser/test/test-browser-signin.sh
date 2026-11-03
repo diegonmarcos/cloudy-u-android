@@ -7,8 +7,8 @@
 #   S1 ERR_CACHE_MISS on accounts.google.com/gsi/transform: a POST result was committed as the tab's url and
 #      saved in its WebView state, then replayed from the cache. The store refuses it (shouldCommit) and a
 #      restored state whose current page is one is refused (BrowserWebState.restore) -> the tab loads its url.
-#   S2 the user agent is WebView's own (`; wv)`, `Version/x.x`) whenever the app does not configure one:
-#      both modes pass through BrowserNavPolicy.cleanUserAgent.
+#   S2 #1420 the user agent is never disguised (no `; wv` stripping); Google OAuth goes to a Custom Tab
+#      instead (test-browser-oauth-customtab.sh).
 #   S3 third-party cookies default ON (WebView's own default is off) and are off only when the user blocks them.
 #   S4 child windows: setSupportMultipleWindows + javaScriptCanOpenWindowsAutomatically + onCreateWindow with a
 #      WebViewTransport and onCloseWindow; the popup gets the same UA / cookie rules.
@@ -33,8 +33,8 @@ def check(root, ok):
     ok('path.startsWith("/gsi/")' in pol and 'host == "accounts.google.com"' in pol, "S1 the policy knows Google's gsi endpoints")
     ok("if (!BrowserNavPolicy.isFormPostResult(it.url)) it.reload()" in frag, "S1 a settings change does not reload a POST result")
     dev = src.get(LIB + "/BrowserDevTools.kt", "")
-    ok('ViewModePlan.of(desktopMode, config.userAgents["desktop"], config.userAgents["mobile"]' in frag and "BrowserNavPolicy.cleanUserAgent((if (desktop) desktopUa else mobileUa) ?: current)" in dev, "S2 both the mobile and the desktop user agent are cleaned")
-    ok('ua.replace(Regex(";\\\\s*wv\\\\b")' in pol and 'Version/' in pol, "S2 the policy strips the wv token and the Version marker")
+    ok('ViewModePlan.of(desktopMode, config.userAgents["desktop"], config.userAgents["mobile"]' in frag and "val ua = (if (desktop) desktopUa else mobileUa) ?: current" in dev, "S2 both modes use the declared agent as it is")
+    ok("cleanUserAgent" not in dev and "fun cleanUserAgent" not in pol, "S2 the agent is never disguised")
     ok('setAcceptThirdPartyCookies(wv, browserSettings.bool("block_third_party_cookies") != true)' in frag, "S3 third-party cookies are on unless blocked")
     ok("cookiesOf(this).setAcceptCookie(true)" in frag, "S3 cookies are accepted")
     cw = open(os.path.join(root, "ab_cloud-libs-shared/libs/web-core/src/main/java/com/diegonmarcos/cloudlib/web/CloudWeb.kt")).read()
@@ -51,8 +51,7 @@ main("sign-in", check, [
     ("a POST result is committed again", LIB + "/BrowserTabStore.kt", "if (BrowserNavPolicy.isFormPostResult(u)) return false", "", "refuses a POST result"),
     ("a POST state is restored again", LIB + "/BrowserWebState.kt", "!BrowserNavPolicy.isFormPostResult(list.currentItem?.url)", "true", "refused"),
     ("gsi leaves the policy", LIB + "/BrowserNavPolicy.kt", 'path.startsWith("/gsi/")', 'path.startsWith("/gsx/")', "gsi endpoints"),
-    ("the mobile agent is left raw", LIB + "/BrowserDevTools.kt", "BrowserNavPolicy.cleanUserAgent((if (desktop) desktopUa else mobileUa) ?: current)", "((if (desktop) desktopUa else mobileUa) ?: current)", "cleaned"),
-    ("the wv token stays", LIB + "/BrowserNavPolicy.kt", 'ua.replace(Regex(";\\\\s*wv\\\\b")', 'ua.replace(Regex(";\\\\s*wvx\\\\b")', "strips the wv token"),
+    ("the agent is disguised again", LIB + "/BrowserDevTools.kt", "val ua = (if (desktop) desktopUa else mobileUa) ?: current", "val ua = BrowserNavPolicy.cleanUserAgent((if (desktop) desktopUa else mobileUa) ?: current)", "never disguised"),
     ("third-party cookies go off again", FRAG, '!= true)\n        applyViewMode', '== true)\n        applyViewMode', "third-party cookies are on"),
     ("child windows are off", "ab_cloud-libs-shared/libs/web-core/src/main/java/com/diegonmarcos/cloudlib/web/CloudWeb.kt", "setSupportMultipleWindows(profile == WebProfile.BROWSER)", "setSupportMultipleWindows(false)", "child windows"),
     ("onCreateWindow is gone", FRAG, "override fun onCreateWindow(view: WebView?, isDialog: Boolean, isUserGesture: Boolean, resultMsg: android.os.Message?): Boolean {\n                    val transport", "override fun onCreateWindowX(view: WebView?, isDialog: Boolean, isUserGesture: Boolean, resultMsg: android.os.Message?): Boolean {\n                    val transport", "onCreateWindow hands"),

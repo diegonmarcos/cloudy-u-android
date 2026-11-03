@@ -90,6 +90,15 @@ if (favDecl != null) {
             favItems << [title: (r.name ?: raw).toString(), url: url, group: src.group.toString()]
         }
     }
+    // #1422 the derived catalog (tools/gen-favourites-catalog.py): every item already carries '<filter>/<sub-folder>',
+    // and its filters (the chips, the Webserver chip's `open` link) are baked beside the items
+    if (favDecl.catalog) {
+        def cat = new groovy.json.JsonSlurper().parse(new File(file('../build.json').parentFile, favDecl.catalog.toString()).canonicalFile)
+        if (!cat.filters || !cat.items) throw new GradleException("ui.browser.favourites.catalog ${favDecl.catalog} has no filters or items: run tools/gen-favourites-catalog.py")
+        cat.items.each { favItems << [title: it.name.toString(), url: it.url.toString(), group: it.group.toString()] }
+        favDecl.filters = cat.filters
+        favDecl.remove('catalog')
+    }
     (favDecl.extra ?: []).each { favItems << [title: it.title, url: it.url, group: it.group] }
     favDecl.items = favItems.unique { it.url }
     favDecl.remove('sources'); favDecl.remove('extra')

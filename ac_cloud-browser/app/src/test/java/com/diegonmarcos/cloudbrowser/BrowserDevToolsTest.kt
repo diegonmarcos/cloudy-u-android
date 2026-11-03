@@ -54,7 +54,7 @@ class BrowserDevToolsTest {
         val desk = ViewModePlan.of(true, d, m, "cur")
         val mob = ViewModePlan.of(false, d, m, "cur")
         assertEquals(d, desk.userAgent)
-        assertFalse("never the WebView token", mob.userAgent.contains("wv") || mob.userAgent.contains("Version/"))
+        assertEquals("#1420 never disguised: the declared agent as it is", m, mob.userAgent)
         assertTrue(desk.wideViewPort && desk.overview && mob.wideViewPort && mob.overview)
         assertEquals(1, desk.initialScale); assertEquals(0, mob.initialScale)
         assertEquals(ViewModePlan.DESKTOP_VIEWPORT_JS, desk.viewportJs)

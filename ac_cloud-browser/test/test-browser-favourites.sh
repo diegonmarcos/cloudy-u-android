@@ -37,7 +37,7 @@ def check(root, ok):
     ok("fun openFavourites() = showBookmarks()" in frag, "F2 Fav opens the bookmarks")
     ok('"bookmarks" -> { showBookmarks()' in frag and "bookmarks.add(url, wv.title" in frag, "F2 the menu's bookmark toggle and list share the one store")
     ok("BrowserFavScreen(" in frag and "fun BrowserFavScreen(" in sheets, "F2 the Favourites screen is drawn")
-    ok("VIEW_GRID" in sheets and "FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp))" in sheets and "BrowserFavourites.letter(" in sheets, "F2 grid view of tiles (favicon or first letter)")
+    ok("VIEW_GRID" in sheets and "BrowserFavourites.gridRows(g.items).forEach { row ->" in sheets and "BrowserFavourites.letter(" in sheets, "F2 grid view of tiles (favicon or first letter)")
     ok(sheets.count("onLongPress = { acting") >= 2 and "onEdit" in sheets and "onDelete" in sheets and "Folder" in sheets, "F2 long-press edits, moves and deletes")
     ok("onTap = { onOpen(b) }" in sheets, "F2 a tap opens the favourite")
     ok("fun setViewMode(v: String) { sp.edit().putString(VIEW" in bm and "fun viewMode(" in bm and "BrowserFavourites.normView(" in bm, "F3 the view choice persists")
@@ -46,10 +46,10 @@ def check(root, ok):
     ok("bookmarks.applySeed(config.favourites)" in frag and "fun applySeed(" in bm, "F4 the seed is applied at start")
     ok("favourites = FavSeed.parse(" in cfg, "F4 the config parses the baked seed")
     fd = ui["browser"].get("favourites", {})
-    ok(all(s["file"].startswith("../aa_cloud-superapp/data/") or s["file"] == "data/github_pages.json" for s in fd.get("sources", [])) and sum(s["file"].startswith("../aa_cloud-superapp/data/") for s in fd.get("sources", [])) >= 2, "F4 the seed comes from the fleet's service data (and the derived GitHub Pages list)")
+    ok(fd.get("catalog") == "data/favourites_catalog.json" and {"services_public", "services_private", "github_pages"} <= {x.get("from") for x in fd.get("filters", [])}, "F4 the seed comes from the fleet's service data (and the derived GitHub Pages list)")
     ok(not any("password" in json.dumps(fd).lower() for _ in [0]), "F4 no credentials in the seed")
     g = open(os.path.join(root, "ac_cloud-browser/app/build.gradle"), encoding="utf-8").read()
-    ok("favDecl.items = favItems.unique" in g and "favDecl.remove('sources')" in g, "F4 gradle expands the sources into items")
+    ok("favDecl.items = favItems.unique" in g and "favDecl.remove('sources')" in g and "favDecl.filters = cat.filters" in g, "F4 gradle expands the sources into items")
     ok('" ← Tabs "' not in frag and "text = \" ← Tabs" not in frag, "F5 the top-left Tabs button is gone")
 
 FRAG = LIB + "/BrowserHostFragment.kt"
@@ -58,13 +58,13 @@ main("favourites", check, [
     ("the island order changes", "ac_cloud-browser/build.json", '"bottom_nav": [\n      "favourites",\n      "tabs",\n      "browser",', '"bottom_nav": [\n      "favourites",\n      "browser",\n      "tabs",', "F1 the island is"),
     ("Fav stops routing", APP + "/MainActivity.kt", '"favourites" -> host.openFavourites()', '"favourites" -> Unit', "routes Fav"),
     ("Fav opens something else", FRAG, "fun openFavourites() = showBookmarks()", "fun openFavourites() = showHistory()", "opens the bookmarks"),
-    ("the grid view goes", LIB + "/BrowserSheets.kt", "FlowRow(Modifier.fillMaxWidth(), horizontalArrangement", "Row(Modifier.fillMaxWidth(), horizontalArrangement", "grid view"),
-    ("long-press goes", LIB + "/BrowserSheets.kt", "onLongPress = { acting = b; title = b.title; folder = b.folder }) }\n                            .testTag(\"browser:fav:tile\")", "onLongPress = { }) }\n                            .testTag(\"browser:fav:tile\")", "long-press"),
+    ("the grid view goes", LIB + "/BrowserSheets.kt", "BrowserFavourites.gridRows(g.items).forEach { row ->", "listOf(g.items).forEach { row ->", "grid view"),
+    ("long-press goes", LIB + "/BrowserSheets.kt", "onLongPress = { acting = b; title = b.title; folder = b.folder }) }\n                                .testTag(\"browser:fav:tile\")", "onLongPress = { }) }\n                                .testTag(\"browser:fav:tile\")", "long-press"),
     ("the view is not persisted", LIB + "/BrowserBookmarks.kt", "fun setViewMode(v: String) { sp.edit()", "fun setViewMode(v: String) { sp.edit().clear()", "persists"),
     ("the screen forgets the choice", FRAG, "bookmarks.setViewMode(view)", "Unit", "reads and writes"),
     ("the seed re-adds every launch", LIB + "/BrowserFavourites.kt", "if (it.url in seen) continue", "", "once per entry"),
     ("the seed is not applied", FRAG, "bookmarks.applySeed(config.favourites)", "Unit", "applied at start"),
-    ("the seed is typed in, not derived", "ac_cloud-browser/build.json", '"file": "../aa_cloud-superapp/data/services_private.json"', '"file": "../ac_cloud-browser/typed.json"', "fleet's service data"),
+    ("the seed is typed in, not derived", "ac_cloud-browser/build.json", '"from": "services_private"', '"from": "typed"', "fleet's service data"),
     ("gradle stops expanding", "ac_cloud-browser/app/build.gradle", "favDecl.items = favItems.unique", "favDecl.itemz = favItems.unique", "expands the sources"),
     ("the Tabs button returns", FRAG, "        // Address bar: a plain field.", "        bar.addView(TextView(ctx).apply { text = \" ← Tabs \" })\n        // Address bar: a plain field.", "top-left Tabs button"),
 ])
