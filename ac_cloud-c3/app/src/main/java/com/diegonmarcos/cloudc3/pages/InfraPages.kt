@@ -34,10 +34,11 @@ import java.time.LocalDate
 object InfraSections {
     const val PROVIDERS = "providers"
     const val MACHINES = "machines"
+    const val SERVERLESS = "serverless"
     const val STORAGE = "storage"
     const val ELECTRONICS = "electronics"
     const val DOMAINS = "domains"
-    val ALL = listOf(PROVIDERS, MACHINES, STORAGE, ELECTRONICS, DOMAINS)
+    val ALL = listOf(PROVIDERS, MACHINES, SERVERLESS, STORAGE, ELECTRONICS, DOMAINS)
 }
 
 /** Test tags of the Infra pages, for the declaration-to-screen suite. */
@@ -54,6 +55,7 @@ fun InfraSectionScreen(section: String, slice: FleetModel.Slice, live: FleetLive
     when (section) {
         InfraSections.PROVIDERS -> ProvidersScreen(slice, live)
         InfraSections.MACHINES -> MachinesScreen(slice)
+        InfraSections.SERVERLESS -> ServerlessScreen(slice)
         InfraSections.STORAGE -> StorageScreen(slice, live)
         InfraSections.ELECTRONICS -> ElectronicsScreen(slice)
         InfraSections.DOMAINS -> DomainsScreen(slice, live, today)
@@ -92,6 +94,27 @@ fun MachinesScreen(slice: FleetModel.Slice) {
                 InfraTags.row(InfraSections.MACHINES, v.id), "${v.alias.ifBlank { v.id }} (${v.id})",
                 slice.provider(v.provider)?.label ?: v.provider,
                 listOf(FleetModel.vmSpec(v), FleetModel.vmNet(v), v.desc.orEmpty()),
+            )
+        }
+    }
+}
+
+// ── Serverless Cont: GCP Cloud Run services, read from the registry ─────────
+
+@Composable
+fun ServerlessScreen(slice: FleetModel.Slice) {
+    Page(InfraSections.SERVERLESS, "${slice.serverless.size} Cloud Run services - ${slice.serverless.count { it.state?.startsWith("live") == true }} live") {
+        if (slice.serverless.isEmpty()) {
+            DenseRow(InfraTags.row(InfraSections.SERVERLESS, "none"), "None declared", "", listOf("No Cloud Run service is declared in the fleet"))
+        }
+        slice.serverless.forEach { s ->
+            DenseRow(
+                InfraTags.row(InfraSections.SERVERLESS, s.name), "${s.label.ifBlank { s.name }} (${s.name})",
+                FleetModel.runState(s),
+                listOfNotNull(
+                    FleetModel.runSpec(s), s.image?.let { "Image: $it" }, s.persistence?.let { "Persistence: $it" },
+                    s.route?.let { "Route: $it" }, s.source?.let { "Source: $it" },
+                ) + s.blockers.map { "Blocker: $it" },
             )
         }
     }

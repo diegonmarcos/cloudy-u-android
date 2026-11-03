@@ -5,7 +5,8 @@
    "consolidated": "1_cloud-configs/dist/_cloud-data-consolidated.json",
    "zone": "c_vps/ba-clo_cloudflare/src/terraform.json",
    "assets": "1_cloud-configs/src/inputs/fleet-assets.json",
-   "users": "1_cloud-configs/src/inputs/superapp-users.json"
+   "users": "1_cloud-configs/src/inputs/superapp-users.json",
+   "gcloud": "c_vps/vps_gcloud/src/terraform.json"
   },
   "note": "READ from the fleet declarations; never edit - run the generator. No key, token or instance id is carried."
  },
@@ -293,6 +294,102 @@
    "desc": "Vast.ai On-Demand - RTX A4000 (16GB VRAM) - Ollama LLM fallback"
   }
  ],
+ "serverless": [
+  {
+   "name": "agy",
+   "label": "Antigravity (agy)",
+   "provider": "gcloud",
+   "region": "us-central1",
+   "state": "live-unmanaged",
+   "managed": false,
+   "image": "us-central1-docker.pkg.dev/diegonmarcos-infra-prod/antigravity-repo/agy:latest",
+   "port": 8080,
+   "cpu": "2",
+   "memory": "2Gi",
+   "min_instances": 1,
+   "max_instances": 1,
+   "from_host": null,
+   "source": "cloudy-u-containers/user-ai_antigravity",
+   "persistence": "GCS volume (gcsfuse) on /persist: dotfiles, agy/claude state, workspace, git clones",
+   "volumes": [
+    "/persist"
+   ],
+   "route": "Cloud Run URL (run.app)",
+   "blockers": []
+  },
+  {
+   "name": "capital-stack-finterminal-api",
+   "label": "FinTerminal API",
+   "provider": "gcloud",
+   "region": "us-central1",
+   "state": "declared",
+   "managed": false,
+   "image": "us-central1-docker.pkg.dev/diegonmarcos-infra-prod/ghcr/diegonmarcos/capital-stack-finterminal-api-cloudrun:latest",
+   "port": 8340,
+   "cpu": "1",
+   "memory": "512Mi",
+   "min_instances": 0,
+   "max_instances": 1,
+   "from_host": "oci-apps",
+   "source": "cloudy-u-containers/user-fin_capital-stack-finterminal-api",
+   "persistence": "SQLite on a GCS volume with max_instances 1 (single writer). Cloud SQL is the later option if write contention or gcsfuse locking bites.",
+   "volumes": [
+    "/data"
+   ],
+   "route": "api.diegonmarcos.com/capital-stack-finterminal-api",
+   "blockers": [
+    "the VM image is arm64-only (docker.arch arm64); the amd64 -cloudrun image builds in cloud-run-images.yml and must be pushed (approved dispatch) before the first apply",
+    "edge to Cloud Run auth: Caddy must mint a Google ID token (service account) or the app must enforce its bearer; invoker stays IAM-only until then",
+    "data copy of the finterm_data volume from oci-apps to the bucket at cutover"
+   ]
+  },
+  {
+   "name": "capital-stack-finterminal-web",
+   "label": "FinTerminal Web",
+   "provider": "gcloud",
+   "region": "us-central1",
+   "state": "declared",
+   "managed": false,
+   "image": "us-central1-docker.pkg.dev/diegonmarcos-infra-prod/ghcr/diegonmarcos/capital-stack-finterminal-web-cloudrun:latest",
+   "port": 80,
+   "cpu": "1",
+   "memory": "256Mi",
+   "min_instances": 0,
+   "max_instances": 2,
+   "from_host": "oci-apps",
+   "source": "cloudy-u-containers/user-fin_capital-stack-finterminal-web",
+   "persistence": "none (static nginx)",
+   "volumes": [],
+   "route": "same edge host as /capital-stack-finterminal-api",
+   "blockers": [
+    "same edge-to-Cloud-Run identity-token step as capital-stack-finterminal-api"
+   ]
+  },
+  {
+   "name": "scrappers-api",
+   "label": "Scrappers API",
+   "provider": "gcloud",
+   "region": "us-central1",
+   "state": "declared",
+   "managed": false,
+   "image": "us-central1-docker.pkg.dev/diegonmarcos-infra-prod/ghcr/diegonmarcos/scrappers-api-cloudrun:latest",
+   "port": 3020,
+   "cpu": "1",
+   "memory": "512Mi",
+   "min_instances": 0,
+   "max_instances": 1,
+   "from_host": "oci-apps",
+   "source": "cloudy-u-containers/user-data_scrappers-api",
+   "persistence": "none",
+   "volumes": [],
+   "route": "api.diegonmarcos.com/scrappers",
+   "blockers": [
+    "env_file: true - its keys must be listed as Secret Manager names in secret_env before the first apply",
+    "image is a native_build image-wrapper (python:3.13-slim) with no Dockerfile in src; an amd64 build entry is needed in cloud-run-images.yml",
+    "overlaps #1429 (scraper API on Cloud Run): that ticket reuses this entry rather than adding a second one"
+   ]
+  }
+ ],
  "storage": {
   "buckets": [
    {
@@ -456,6 +553,26 @@
     },
     {
      "group": "Web",
+     "name": "c3-pub.diegonmarcos.com",
+     "type": "A",
+     "content": "129.151.228.66",
+     "ttl": 1,
+     "proxied": true,
+     "priority": null,
+     "comment": "Routing tier pub (#1104): the ONLY Cloudflare-proxied (orange) name. Unauthenticated explicit allowlist, served by the hub site c3-pub; geo-fence at the Cloudflare edge."
+    },
+    {
+     "group": "Web",
+     "name": "c3-pub.diegonmarcos.com",
+     "type": "AAAA",
+     "content": "2603:c026:c104:8f00:0:c704:63b:6eee",
+     "ttl": 1,
+     "proxied": true,
+     "priority": null,
+     "comment": "Routing tier pub (#1104): the ONLY Cloudflare-proxied (orange) name. Unauthenticated explicit allowlist, served by the hub site c3-pub; geo-fence at the Cloudflare edge."
+    },
+    {
+     "group": "Web",
      "name": "api.diegonmarcos.com",
      "type": "A",
      "content": "129.151.228.66",
@@ -535,6 +652,16 @@
      "comment": "AWS SES custom MAIL FROM - bounce handling"
     },
     {
+     "group": "Other",
+     "name": "mesh.diegonmarcos.com",
+     "type": "TXT",
+     "content": "private-namespace: served only by fleet DNS (Hickory), nothing here (#1123)",
+     "ttl": 300,
+     "proxied": null,
+     "priority": null,
+     "comment": "#1123 mesh namespace is fleet-DNS only: blocks the * wildcard under mesh."
+    },
+    {
      "group": "SPF",
      "name": "diegonmarcos.com",
      "type": "TXT",
@@ -542,7 +669,7 @@
      "ttl": 300,
      "proxied": null,
      "priority": null,
-     "comment": "SPF: Stalwart VM IP + CF Email Routing + Google Workspace + AWS SES + OCI relay — hardfail"
+     "comment": "ip4 = oci-mail VM (Stalwart/Maddy) + CF routing + Google + SES + OCI relay; 4 lookups; -all"
     },
     {
      "group": "DMARC",

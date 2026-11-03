@@ -128,7 +128,7 @@ class DeclarationsTest {
         // WG mesh arrived with them. The SuperApp's sample-stub page ids stay undeclared,
         // which is what keeps "no placeholder in a shipped tab" assertable.
         assertEquals("Infra = Providers | VMs | Storage | Electronics | Domains (2026-10-20); no Stack, Dbs or API page",
-            listOf("providers", "machines", "storage", "electronics", "domains"), pageIds("infra"))
+            listOf("providers", "machines", "serverless", "storage", "electronics", "domains"), pageIds("infra"))
         assertEquals("Public and Private URLs merged into Table; Agents moved in from Ops (2026-10-25)", listOf("topology", "table", "agents"), pageIds("containers"))
         assertEquals(listOf("observability", "health", "dagu", "mesh"), pageIds("observ"))
         assertEquals(listOf("about"), pageIds("configs"))

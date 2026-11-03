@@ -96,6 +96,17 @@ class InfraScreensComposeTest {
     }
 
     @Test
+    fun `serverless cont - every declared Cloud Run service is a row with its state, spec and image`() {
+        assertTrue("the registry declares Cloud Run services", slice.serverless.isNotEmpty())
+        show(InfraSections.SERVERLESS)
+        slice.serverless.forEach { s ->
+            row(InfraSections.SERVERLESS, s.name).assertTextContains(FleetModel.runState(s), substring = true)
+            row(InfraSections.SERVERLESS, s.name).assertTextContains(FleetModel.runSpec(s), substring = true)
+            s.image?.let { row(InfraSections.SERVERLESS, s.name).assertTextContains(it, substring = true) }
+        }
+    }
+
+    @Test
     fun `vms - every declared vm is a row with provider, region, size and all three addresses`() {
         show(InfraSections.MACHINES)
         slice.vms.forEach { v ->

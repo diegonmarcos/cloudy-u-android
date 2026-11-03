@@ -175,7 +175,7 @@ if "fleet_slice.json" not in gradle: bad.append("app/build.gradle does not read 
 if "BuildConfig.FLEET_SLICE_B64" not in open(rel + "/Declarations.kt", encoding="utf-8").read(): bad.append("Declarations.fleet does not decode BuildConfig.FLEET_SLICE_B64")
 sl = json.load(open(app + "/data/fleet_slice.json", encoding="utf-8"))
 if sl.get("_meta", {}).get("generated_by") != "data/gen_fleet_slice.py": bad.append("fleet_slice.json does not name its generator")
-for k in ("providers", "vms", "electronics", "domains"):
+for k in ("providers", "vms", "serverless", "electronics", "domains"):
     if not sl.get(k): bad.append("fleet_slice.%s is empty" % k)
 if not sl["storage"]["buckets"]: bad.append("fleet_slice.storage.buckets is empty")
 d = (sl["domains"] or [{}])[0]
@@ -188,7 +188,8 @@ for g in ("MX", "SPF", "DKIM", "DMARC", "MTA-STS", "TLS-RPT"):
     if g not in groups: bad.append("the domain declares no %s record" % g)
 gen = open(app + "/data/gen_fleet_slice.py", encoding="utf-8").read()
 for must in ("1_cloud-configs/dist/_cloud-data-consolidated.json", "c_vps/ba-clo_cloudflare/src/terraform.json",
-             "1_cloud-configs/src/inputs/fleet-assets.json", "1_cloud-configs/src/inputs/superapp-users.json"):
+             "1_cloud-configs/src/inputs/fleet-assets.json", "1_cloud-configs/src/inputs/superapp-users.json",
+             "c_vps/vps_gcloud/src/terraform.json"):
     if must not in gen: bad.append("the generator does not name its source %s" % must)
 if re.search(r"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b", re.sub(r'""".*?"""', "", gen, flags=re.S)):
     bad.append("the generator spells an IPv4 address: it must READ every address")

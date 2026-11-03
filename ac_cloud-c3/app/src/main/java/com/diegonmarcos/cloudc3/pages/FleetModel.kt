@@ -10,7 +10,7 @@ import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.intOrNull
 
 /**
- * The Infra section's data, as plain models: Providers, VMs, Storage, Electronics, Domains.
+ * The Infra section's data, as plain models: Providers, VMs, Serverless Cont (Cloud Run), Storage, Electronics, Domains.
  *
  * THE ONE SOURCE. [parse] reads data/fleet_slice.json, which data/gen_fleet_slice.py derives from the fleet's own
  * declarations in cloud-infra (VMs, regions, IPs and WireGuard IPs from config.json, buckets from the consolidated
@@ -61,9 +61,17 @@ object FleetModel {
         val records: List<DnsRecord>, val mtaStsMode: String?, val mtaStsMaxAge: Int?,
     )
 
+    /** One serverless container (GCP Cloud Run) of the registry cloudy-t-infra c_vps/vps_gcloud/src/terraform.json. */
+    data class CloudRun(
+        val name: String, val label: String, val region: String?, val state: String?, val managed: Boolean,
+        val image: String?, val port: Int?, val cpu: String?, val memory: String?, val minInstances: Int?, val maxInstances: Int?,
+        val fromHost: String?, val source: String?, val persistence: String?, val volumes: List<String>, val route: String?,
+        val blockers: List<String>,
+    )
+
     data class Slice(
         val providers: List<Provider>, val vms: List<Vm>, val buckets: List<Bucket>, val backends: List<Backend>,
-        val devices: List<Device>, val domains: List<Domain>,
+        val devices: List<Device>, val domains: List<Domain>, val serverless: List<CloudRun> = emptyList(),
     ) {
         fun provider(id: String): Provider? = providers.firstOrNull { it.id == id }
         fun vmsOf(providerId: String): List<Vm> = vms.filter { it.provider == providerId }
@@ -104,6 +112,16 @@ object FleetModel {
                 Device(
                     id = o.str("id").orEmpty(), model = o.str("model").orEmpty(), kind = o.str("kind").orEmpty(),
                     os = o.str("os"), role = o.str("role"), wgIp = o.str("wg_ip"), wgPublicIp = o.str("wg_public_ip"),
+                )
+            },
+            serverless = root.objs("serverless").map { o ->
+                CloudRun(
+                    name = o.str("name").orEmpty(), label = o.str("label").orEmpty(), region = o.str("region"),
+                    state = o.str("state"), managed = o.bool("managed") ?: false, image = o.str("image"), port = o.int("port"),
+                    cpu = o.str("cpu"), memory = o.str("memory"), minInstances = o.int("min_instances"),
+                    maxInstances = o.int("max_instances"), fromHost = o.str("from_host"), source = o.str("source"),
+                    persistence = o.str("persistence"), volumes = o.strs("volumes"), route = o.str("route"),
+                    blockers = o.strs("blockers"),
                 )
             },
             domains = root.objs("domains").map { o ->
@@ -165,6 +183,20 @@ object FleetModel {
         v.region, v.size ?: v.gpu, v.cpu?.let { "$it vCPU" }, v.ramGb?.let { "$it GB RAM" },
         v.diskGb?.takeIf { it > 0 }?.let { "$it GB disk" }, v.arch,
     ).joinToString(" | ")
+
+    /** "region | N vCPU | memory | min-max instances | port N" for a Cloud Run row (a missing part is skipped). */
+    fun runSpec(s: CloudRun): String = listOfNotNull(
+        s.region, s.cpu?.let { "$it vCPU" }, s.memory, s.maxInstances?.let { "${s.minInstances ?: 0}-$it instances" },
+        s.port?.let { "port $it" },
+    ).joinToString(" | ")
+
+    /** "live (not yet Terraform-managed)" / "declared, moving from <vm>" / "live (Terraform)": where the service is in its lifecycle. */
+    fun runState(s: CloudRun): String = when (s.state) {
+        "live-unmanaged" -> "live (not yet Terraform-managed)"
+        "live-managed" -> "live (Terraform)"
+        "declared" -> "declared" + (s.fromHost?.let { ", moving from $it" }.orEmpty())
+        else -> s.state ?: "state not declared"
+    }
 
     fun vmNet(v: Vm): String =
         "public ${v.publicIp ?: "-"} | wg0 ${v.wgIp ?: "-"}${v.wgRole?.let { " ($it)" }.orEmpty()} | wg-public ${v.wgPublicIp ?: "-"}"

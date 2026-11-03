@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
-"""Derive data/fleet_slice.json (the Infra section's Providers / VMs / Storage / Electronics / Domains pages)
+"""Derive data/fleet_slice.json (the Infra section's Providers / VMs / Serverless Cont / Storage / Electronics / Domains pages)
 from the fleet's own declarations. NOTHING here is typed: every VM, IP, bucket, peer and DNS record is READ.
 
-  python3 data/gen_fleet_slice.py [--consolidated F] [--zone F] [--assets F] [--users F]   (default: cloud-infra main, raw)
+  python3 data/gen_fleet_slice.py [--consolidated F] [--zone F] [--assets F] [--users F] [--gcloud F]   (default: cloud-infra main, raw)
 
 Sources, all in cloud-infra:
   consolidated  1_cloud-configs/dist/_cloud-data-consolidated.json  vms, vpss, storage, owner, native.wireguard(+public),
                                                                     services.caddy mta_sts  (VMs, regions, IPs, WG IPs, buckets)
   zone          c_vps/ba-clo_cloudflare/src/terraform.json          the zone's DNS records (A/CNAME/TXT/DKIM/SRV/CAA/SES)
   users         1_cloud-configs/src/inputs/superapp-users.json      users.*.peers: the devices that are mesh peers
+  gcloud        c_vps/vps_gcloud/src/terraform.json                 cloud_run_services: the GCP Cloud Run fleet registry
   assets        1_cloud-configs/src/inputs/fleet-assets.json        the ONE file for what the others lack: provider links and
                                                                     cost source, peer OS and role, non-peer electronics,
                                                                     storage backends, the domain registration
@@ -24,6 +25,7 @@ PATHS = {
     "zone": "c_vps/ba-clo_cloudflare/src/terraform.json",
     "assets": "1_cloud-configs/src/inputs/fleet-assets.json",
     "users": "1_cloud-configs/src/inputs/superapp-users.json",
+    "gcloud": "c_vps/vps_gcloud/src/terraform.json",
 }
 
 
@@ -47,7 +49,23 @@ def with_self_hosted(providers, vms):
     return providers + [dict(SELF_HOSTED, vms=[v["id"] for v in vms if v.get("wg_ip")])]
 
 
-def build(cons, zone, assets, users):
+def serverless(gcloud):
+    """The Serverless Cont page: every Cloud Run service of the registry, as declared (no secret: names of secrets only
+    are in the registry and none is carried here)."""
+    out = []
+    for s in gcloud.get("cloud_run_services") or []:
+        out.append({"name": s["name"], "label": s.get("label") or s["name"], "provider": "gcloud", "region": s.get("region"),
+                    "state": s.get("state"), "managed": bool(s.get("managed")), "image": s.get("image"), "port": s.get("port"),
+                    "cpu": s.get("cpu"), "memory": s.get("memory"), "min_instances": s.get("min_instances", 0),
+                    "max_instances": s.get("max_instances"), "from_host": s.get("from_host"),
+                    "source": "%s/%s" % (s["source"]["repo"], s["source"]["path"]) if s.get("source") else None,
+                    "persistence": s.get("persistence"), "volumes": [v["mount_path"] for v in s.get("volumes") or []],
+                    "route": (s.get("route") or {}).get("edge_path") or (s.get("route") or {}).get("public_url"),
+                    "blockers": s.get("blockers") or []})
+    return out
+
+
+def build(cons, zone, assets, users, gcloud=None):
     vms, vpss = cons["vms"], cons["vpss"]
     provider_of_vpss = {p["vpss"]: p["id"] for p in assets["providers"] if p.get("vpss")}
     vpss_of_vm = {inst: key for key, v in vpss.items() for inst in v.get("instances") or []}
@@ -138,7 +156,7 @@ def build(cons, zone, assets, users):
     return {
         "_meta": {"generated_by": "data/gen_fleet_slice.py", "sources": PATHS,
                   "note": "READ from the fleet declarations; never edit - run the generator. No key, token or instance id is carried."},
-        "providers": with_self_hosted(providers, out_vms), "vms": out_vms,
+        "providers": with_self_hosted(providers, out_vms), "vms": out_vms, "serverless": serverless(gcloud or {}),
         "storage": {"buckets": buckets, "backends": assets["storage_backends"]},
         "electronics": electronics, "domains": domains,
     }
@@ -188,12 +206,12 @@ def main():
     for k in PATHS:
         ap.add_argument("--" + k)
     a = ap.parse_args()
-    out = build(load(a.consolidated, "consolidated"), load(a.zone, "zone"), load(a.assets, "assets"), load(a.users, "users"))
+    out = build(load(a.consolidated, "consolidated"), load(a.zone, "zone"), load(a.assets, "assets"), load(a.users, "users"), load(a.gcloud, "gcloud"))
     with open(os.path.join(HERE, "fleet_slice.json"), "w", encoding="utf-8") as f:
         json.dump(out, f, indent=1, ensure_ascii=False)
         f.write("\n")
-    print("wrote fleet_slice.json: %d providers, %d vms, %d buckets, %d electronics, %d dns records" % (
-        len(out["providers"]), len(out["vms"]), len(out["storage"]["buckets"]), len(out["electronics"]),
+    print("wrote fleet_slice.json: %d providers, %d vms, %d serverless, %d buckets, %d electronics, %d dns records" % (
+        len(out["providers"]), len(out["vms"]), len(out["serverless"]), len(out["storage"]["buckets"]), len(out["electronics"]),
         sum(len(d["records"]) for d in out["domains"])))
 
 

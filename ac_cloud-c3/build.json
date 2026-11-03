@@ -214,7 +214,7 @@
         "id": "infra",
         "label": "Infra",
         "icon": "ic_p_sol_cloud",
-        "_doc": "The fleet's hardware and accounts (owner request, 2026-10-20): five dense top tabs, each a page of data/fleet_slice.json - the slice data/gen_fleet_slice.py DERIVES from the fleet's own declarations in cloud-infra (VMs, IPs, buckets, devices, zone records) plus the one new input 1_cloud-configs/src/inputs/fleet-assets.json. Nothing fleet-shaped is typed in this file or in Kotlin (test-c3-infra.sh T3). Containers - the DBs, APIs and MCPs among them - are NOT here: they live in Containers (Topology and Table). There is no API tab: every API and MCP is a container, so nothing non-container was left for it to hold.",
+        "_doc": "The fleet's hardware and accounts (owner request, 2026-10-20): six dense top tabs, each a page of data/fleet_slice.json - the slice data/gen_fleet_slice.py DERIVES from the fleet's own declarations in cloud-infra (VMs, IPs, buckets, devices, zone records) plus the one new input 1_cloud-configs/src/inputs/fleet-assets.json. Nothing fleet-shaped is typed in this file or in Kotlin (test-c3-infra.sh T3). Containers - the DBs, APIs and MCPs among them - are NOT here: they live in Containers (Topology and Table). There is no API tab: every API and MCP is a container, so nothing non-container was left for it to hold.",
         "pages": [
           {
             "id": "providers",
@@ -227,6 +227,12 @@
             "label": "VMs",
             "icon": "ic_p_c3_vms",
             "_doc": "InfraSectionFragment: each VM with provider, region, size, public IP, wg0 and wg-public IP. The id is not `vms`: that is a SuperApp sample-stub page id test-c3-full-copy.sh keeps undeclared."
+          },
+          {
+            "id": "serverless",
+            "label": "Serverless Cont",
+            "icon": "ic_p_c3_vms",
+            "_doc": "InfraSectionFragment (#1431): each GCP Cloud Run service of the registry cloudy-t-infra c_vps/vps_gcloud/src/terraform.json cloud_run_services - state (live / declared, moving from a VM), region, vCPU, memory, instances, port, image, persistence, route and blockers. Read through data/gen_fleet_slice.py; nothing typed here."
           },
           {
             "id": "storage",
