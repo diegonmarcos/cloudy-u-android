@@ -17,6 +17,9 @@ object Decl {
     val stacks: String by lazy { decode(BuildConfig.UI_STACKS_B64) }
     val targets: String by lazy { decode(BuildConfig.UI_TARGETS_B64) }
 
+    /** #1404 ui.libraries: the MCAD model-library pages (libs:cad-core CadLibraries parses it). */
+    val libraries: String by lazy { decode(BuildConfig.UI_LIBRARIES_B64) }
+
     /** The one section Kotlin dispatches on: the gear on the first row opens it (declared in ui.sections, not on the bottom bar). */
     const val SECTION_ABOUT = "about"
 

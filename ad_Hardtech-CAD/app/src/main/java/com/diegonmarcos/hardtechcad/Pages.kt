@@ -18,6 +18,8 @@ data class Entry(
     val path: String,
     val planned: Boolean,
     val note: String,
+    /** #1404 a `library` entry: the id of ui.libraries it opens. */
+    val library: String = "",
 )
 
 object Pages {
@@ -26,6 +28,8 @@ object Pages {
     const val KIND_SECTION_TITLE = "section_title"
     const val KIND_HOLDINGS = "holdings"
     const val KIND_ABOUT = "about"
+    /** #1404 a model-library sub-page (ui.libraries[library]). */
+    const val KIND_LIBRARY = "library"
 
     /** The entries declared for [sectionId] in the stacks JSON (empty when the section declares none). */
     fun entries(stacks: String, sectionId: String): List<Entry> {
@@ -41,6 +45,7 @@ object Pages {
                 path = o.optString("path"),
                 planned = o.optBoolean("planned", false),
                 note = o.optString("note"),
+                library = o.optString("library"),
             )
         }
     }

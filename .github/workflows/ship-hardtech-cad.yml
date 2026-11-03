@@ -43,8 +43,18 @@ on:
       # app compiles is watched above: any change in it ships every consumer.
       # fleet-refresh.yml (schedule only) ships the app for a moved cross-app dir.
       #   input: "1_cicd/src/cicd/ship-hardtech-cad.yml"
+      #   input: "ac_cloud-nav/app/src/main/assets/space/OrbitControls.js"
+      #   input: "ac_cloud-nav/app/src/main/assets/space/three.core.min.js"
+      #   input: "ac_cloud-nav/app/src/main/assets/space/three.module.min.js"
       # ── end MANAGED-PATHS-HEADER ──
       - "ab_cloud-libs-shared/libs/bottomnav/**"
+      - "ab_cloud-libs-shared/libs/cad-3dm/**"
+      - "ab_cloud-libs-shared/libs/cad-brep/**"
+      - "ab_cloud-libs-shared/libs/cad-core/**"
+      - "ab_cloud-libs-shared/libs/cad-dxf/**"
+      - "ab_cloud-libs-shared/libs/cad-ifc/**"
+      - "ab_cloud-libs-shared/libs/cad-mesh/**"
+      - "ab_cloud-libs-shared/libs/cgc-3d/**"
       - "ab_cloud-libs-shared/libs/core/**"
       - "ab_cloud-libs-shared/libs/crash/**"
       - "ab_cloud-libs-shared/libs/devtools/**"
@@ -54,6 +64,7 @@ on:
       - "ab_cloud-libs-shared/libs/ui-icons/**"
       - "ab_cloud-libs-shared/libs/ui-kit/**"
       - "ab_cloud-libs-shared/libs/ui-nav-bars/**"
+      - "ab_cloud-libs-shared/libs/web-core/**"
       - "ad_Hardtech-CAD/**"
 permissions:
   contents: write

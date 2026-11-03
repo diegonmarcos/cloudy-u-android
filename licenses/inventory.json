@@ -65,8 +65,10 @@
   },
   "vendored": {
    "LicenseRef-NoLicenseGranted": 2,
-   "MIT": 2,
-   "LicenseRef-PublicDomain AND CC-BY-4.0": 1
+   "MIT": 5,
+   "LicenseRef-PublicDomain AND CC-BY-4.0": 1,
+   "LGPL-2.1-only": 1,
+   "MPL-2.0": 1
   }
  },
  "upstream_modules": {
@@ -7551,6 +7553,7 @@
   "maven:junit:junit": {
    "kind": "maven",
    "declared_in": [
+    "ab_cloud-libs-shared/libs/cad-core/build.gradle",
     "ab_cloud-libs-shared/libs/cgc-3d/build.gradle",
     "ac_cloud-gallery/gradle/libs.versions.toml",
     "ac_cloud-mail/gradle/libs.versions.toml",
@@ -8074,6 +8077,7 @@
     "ab_cloud-libs-shared/libs/ai/build.gradle",
     "ab_cloud-libs-shared/libs/analytics-sink/build.gradle",
     "ab_cloud-libs-shared/libs/bluetooth/build.gradle",
+    "ab_cloud-libs-shared/libs/cad-core/build.gradle",
     "ab_cloud-libs-shared/libs/calc/build.gradle",
     "ab_cloud-libs-shared/libs/cgc-3d/build.gradle",
     "ab_cloud-libs-shared/libs/contacts/build.gradle",
@@ -16274,6 +16278,46 @@
    "licence_source": "registry.npmjs.org latest (4.6.7)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "notes"
+  },
+  "vendored:ab_cloud-libs-shared/libs/cad-3dm/src/main/assets/cad/3dm/vendor": {
+   "kind": "vendored",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/cad-3dm/src/main/assets/cad/3dm/vendor/LICENSE"
+   ],
+   "licence": "MIT",
+   "licence_source": "licenses/curated.json"
+  },
+  "vendored:ab_cloud-libs-shared/libs/cad-brep/src/main/assets/cad/brep/vendor": {
+   "kind": "vendored",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/cad-brep/src/main/assets/cad/brep/vendor/license.occt-import-js.txt"
+   ],
+   "licence": "LGPL-2.1-only",
+   "licence_source": "licenses/curated.json"
+  },
+  "vendored:ab_cloud-libs-shared/libs/cad-dxf/src/main/assets/cad/dxf/vendor": {
+   "kind": "vendored",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/cad-dxf/src/main/assets/cad/dxf/vendor/LICENSE"
+   ],
+   "licence": "MIT",
+   "licence_source": "licenses/curated.json"
+  },
+  "vendored:ab_cloud-libs-shared/libs/cad-ifc/src/main/assets/cad/ifc/vendor": {
+   "kind": "vendored",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/cad-ifc/src/main/assets/cad/ifc/vendor/LICENSE.md"
+   ],
+   "licence": "MPL-2.0",
+   "licence_source": "licenses/curated.json"
+  },
+  "vendored:ab_cloud-libs-shared/libs/cad-mesh/src/main/assets/cad/mesh/vendor": {
+   "kind": "vendored",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/cad-mesh/src/main/assets/cad/mesh/vendor/LICENSE"
+   ],
+   "licence": "MIT",
+   "licence_source": "licenses/curated.json"
   },
   "vendored:ab_cloud-libs-shared/libs/cgc-3d/src/main/assets/cgc/vendor": {
    "kind": "vendored",

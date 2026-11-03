@@ -116,7 +116,15 @@
         "libs:ui-icons",
         "libs:ui-nav-bars",
         "libs:theme-background",
-        "libs:ui-kit"
+        "libs:ui-kit",
+        "libs:web-core",
+        "libs:cgc-3d",
+        "libs:cad-core",
+        "libs:cad-mesh",
+        "libs:cad-brep",
+        "libs:cad-dxf",
+        "libs:cad-3dm",
+        "libs:cad-ifc"
       ]
     },
     "libs:core": {
@@ -153,7 +161,11 @@
       "type": "library",
       "_doc": "#1154 shared navigation and theme design, shared BY REFERENCE."
     },
-    "libs:perms": {"dir": "../ab_cloud-libs-shared/libs/perms", "type": "library", "_doc": "#1360 the permission contract (libs:perms): Configs > General > Perms (AppPermsSection, linked by libs:ui-nav-bars), first run (PermsFirstRun), PermsGate, and the state provider helper apps are read through."},
+    "libs:perms": {
+      "dir": "../ab_cloud-libs-shared/libs/perms",
+      "type": "library",
+      "_doc": "#1360 the permission contract (libs:perms): Configs > General > Perms (AppPermsSection, linked by libs:ui-nav-bars), first run (PermsFirstRun), PermsGate, and the state provider helper apps are read through."
+    },
     "libs:theme-background": {
       "dir": "../ab_cloud-libs-shared/libs/theme-background",
       "type": "library",
@@ -163,6 +175,46 @@
       "_doc": "2026-10-16 owner decision: all apps are Compose. The fleet's Compose kit (CloudKitTheme, KitPalette, KitCard, KitSettingsRow, KitButton), shared BY REFERENCE.",
       "dir": "../ab_cloud-libs-shared/libs/ui-kit",
       "type": "library"
+    },
+    "libs:web-core": {
+      "dir": "../ab_cloud-libs-shared/libs/web-core",
+      "type": "library",
+      "_doc": "#1371 THE embedded web view (CloudWeb, WebProfile, render-process recovery); #1404 the MCAD model viewer draws in it."
+    },
+    "libs:cgc-3d": {
+      "dir": "../ab_cloud-libs-shared/libs/cgc-3d",
+      "type": "library",
+      "_doc": "#1404 reused, not copied: libs:cad-mesh imports its vendored three.js GLTFLoader and FBXLoader (assets/cgc/vendor)."
+    },
+    "libs:cad-core": {
+      "dir": "../ab_cloud-libs-shared/libs/cad-core",
+      "type": "library",
+      "_doc": "#1404 the MCAD model library core: models.json manifest, format -> viewer lib routing with store-only reasons, library declarations and default model, sha256-verified cache, and the three.js viewer page (assets/cad)."
+    },
+    "libs:cad-mesh": {
+      "dir": "../ab_cloud-libs-shared/libs/cad-mesh",
+      "type": "library",
+      "_doc": "#1404 viewer lib for glTF/GLB, OBJ and FBX (three.js loaders)."
+    },
+    "libs:cad-brep": {
+      "dir": "../ab_cloud-libs-shared/libs/cad-brep",
+      "type": "library",
+      "_doc": "#1404 viewer lib for STEP/IGES (occt-import-js, LGPL-2.1, WASM)."
+    },
+    "libs:cad-dxf": {
+      "dir": "../ab_cloud-libs-shared/libs/cad-dxf",
+      "type": "library",
+      "_doc": "#1404 viewer lib for DXF (dxf-parser, MIT)."
+    },
+    "libs:cad-3dm": {
+      "dir": "../ab_cloud-libs-shared/libs/cad-3dm",
+      "type": "library",
+      "_doc": "#1404 viewer lib for Rhino 3DM (rhino3dm.js, MIT, WASM)."
+    },
+    "libs:cad-ifc": {
+      "dir": "../ab_cloud-libs-shared/libs/cad-ifc",
+      "type": "library",
+      "_doc": "#1404 viewer lib for IFC (web-ifc, MPL-2.0, WASM)."
     }
   },
   "tests": {
@@ -174,7 +226,7 @@
       ]
     },
     "unit": {
-      "_doc": "This app's JVM suite in app/src/test: Pages (the entries of a declared stack and where each leads) and Holdings (the local list).",
+      "_doc": "This app's JVM suite in app/src/test: Pages (the entries of a declared stack and where each leads) and Holdings (the local list). #1404 also libs:cad-core's CadCoreTest (manifest parse, format routing, store-only reasons, default model per page).",
       "task": ":app:testDebugUnitTest",
       "enabled": true
     }
@@ -187,7 +239,9 @@
       "solidworks"
     ],
     "default_section": "mcad",
-    "configs_ui": ["nav_ui"],
+    "configs_ui": [
+      "nav_ui"
+    ],
     "sections": [
       {
         "id": "mcad",
@@ -221,6 +275,22 @@
           "subtitle": "Mechanical CAD: FreeCAD and AutoCAD agents (MCP)",
           "repo": "HardTech-Stack-CAD-Simulators",
           "path": "Structural-Designer/OpenCAD"
+        },
+        {
+          "kind": "section_title",
+          "title": "Model libraries"
+        },
+        {
+          "kind": "library",
+          "library": "boats",
+          "title": "Boats",
+          "subtitle": "Marine Engineering & Naval Architecture: STEP, IGES, 3DM, X_T, DXF"
+        },
+        {
+          "kind": "library",
+          "library": "architecture",
+          "title": "Architecture",
+          "subtitle": "Buildings, BIM & ArchViz: IFC, RVT, SKP, DWG/DXF, FBX/OBJ, glTF/GLB"
         }
       ],
       "bim": [
@@ -244,18 +314,140 @@
           "kind": "about"
         }
       ]
+    },
+    "_doc_libraries": "#1404 ui.libraries[<id>] is the page a `library` entry opens: its formats (ext list, label, one-line purpose), the Core Difference values (geometry, need, standards) shown side by side for every library, and the model opened by default (an id of models.json). ui.model_repo names the public LFS repo the manifest and models are fetched from, under aa_cloud-superapp ui.app_urls.repo_base (resolved at build time, no address typed).",
+    "model_repo": "hardtech-db-models",
+    "libraries": {
+      "boats": {
+        "title": "Boats",
+        "subtitle": "Marine Engineering & Naval Architecture",
+        "default_model": "one-lilo",
+        "formats": [
+          {
+            "ext": [
+              "stp",
+              "step"
+            ],
+            "label": "STEP (.stp / .step)",
+            "purpose": "Solid hulls, assemblies and hardware: the neutral solid exchange."
+          },
+          {
+            "ext": [
+              "igs",
+              "iges"
+            ],
+            "label": "IGES (.igs)",
+            "purpose": "Lines plans, waterline splines and lofted hull surfaces."
+          },
+          {
+            "ext": [
+              "3dm"
+            ],
+            "label": "Rhino (.3dm)",
+            "purpose": "Freeform hull and deck surfacing."
+          },
+          {
+            "ext": [
+              "x_t"
+            ],
+            "label": "Parasolid (.x_t)",
+            "purpose": "Solid-modeler exchange for CNC and plate cutting."
+          },
+          {
+            "ext": [
+              "dxf"
+            ],
+            "label": "DXF (.dxf)",
+            "purpose": "2D sections, station offsets and nesting sheets."
+          }
+        ],
+        "core": {
+          "geometry": "Precise B-rep solids and NURBS surfaces (fair hulls)",
+          "need": "Engineering and manufacturing (CNC, plate cutting)",
+          "standards": "STEP / IGES"
+        }
+      },
+      "architecture": {
+        "title": "Architecture",
+        "subtitle": "Buildings, BIM & ArchViz",
+        "default_model": "campidoglio",
+        "formats": [
+          {
+            "ext": [
+              "ifc"
+            ],
+            "label": "IFC (.ifc)",
+            "purpose": "BIM: building elements with their data, open standard."
+          },
+          {
+            "ext": [
+              "rvt"
+            ],
+            "label": "Revit (.rvt)",
+            "purpose": "Native Autodesk BIM projects."
+          },
+          {
+            "ext": [
+              "skp"
+            ],
+            "label": "SketchUp (.skp)",
+            "purpose": "Conceptual massing and design models."
+          },
+          {
+            "ext": [
+              "dwg",
+              "dxf"
+            ],
+            "label": "DWG / DXF",
+            "purpose": "Plans, elevations and sections."
+          },
+          {
+            "ext": [
+              "fbx",
+              "obj"
+            ],
+            "label": "FBX / OBJ",
+            "purpose": "Rendering meshes with UVs and materials."
+          },
+          {
+            "ext": [
+              "gltf",
+              "glb"
+            ],
+            "label": "glTF / GLB",
+            "purpose": "Web real-time walkthroughs."
+          }
+        ],
+        "core": {
+          "geometry": "BIM objects with data, and polygon meshes for visuals",
+          "need": "Building information, coordination and rendering",
+          "standards": "IFC / FBX / DWG"
+        }
+      }
     }
   },
   "configs_pages": {
     "_doc": "Configs > General and Configs > About (libs:ui-nav-bars fleetconfigs, rule 1_cicd/src/data/configs-pages.json, #1352 v2). general.sections: the anchors of the one General page, in order (perms, battery, storage, notifications, ui, language are required; app opens this app's own Configs; update is added after perms by default). about: the hand-written part of the extensive About: tagline, description, features, screens, guide, privacy, backends (ids of ac_cloud-account/build.json::fleet_endpoints, resolved to mesh URLs at build time), related fleet apps, credits for a fork. Permissions, data stores, crash/analytics libs, name, icon, version, build sha and date, repo, licence, origin, crash sink, debug API and changelog are derived, never typed here.",
     "general": {
       "sections": [
-        {"id": "perms"},
-        {"id": "battery"},
-        {"id": "storage"},
-        {"id": "notifications"},
-        {"id": "ui"},
-        {"id": "language"},
+        {
+          "id": "perms"
+        },
+        {
+          "id": "battery"
+        },
+        {
+          "id": "storage"
+        },
+        {
+          "id": "notifications"
+        },
+        {
+          "id": "ui"
+        },
+        {
+          "id": "language"
+        },
         {
           "id": "app",
           "label": "App",

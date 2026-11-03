@@ -473,6 +473,31 @@
    "licence": "MIT",
    "kind": "vendored-package",
    "what": "KaTeX 0.19.1 (Khan Academy and contributors), the TeX math renderer of Cloud Calc's LaTeX page: katex.min.js, auto-render.min.js and a trimmed katex.min.css, bundled offline in the APK assets (build.json::latex.renderer); see its LICENSE and ac_cloud-calc/NOTICE.md (#1329)"
+  },
+  "ab_cloud-libs-shared/libs/cad-mesh/src/main/assets/cad/mesh/vendor": {
+   "licence": "MIT",
+   "kind": "vendored-package",
+   "what": "three.js r185 OBJLoader (examples/jsm/loaders), the OBJ reader of libs:cad-mesh, Hardtech-CAD's MCAD viewer (#1404); see its LICENSE."
+  },
+  "ab_cloud-libs-shared/libs/cad-brep/src/main/assets/cad/brep/vendor": {
+   "licence": "LGPL-2.1-only",
+   "kind": "vendored-package",
+   "what": "occt-import-js 0.0.23 (Viktor Kovacs) with Open CASCADE Technology compiled to WASM (LGPL-2.1 with the OCCT exception), the STEP/IGES reader of libs:cad-brep (#1404). Shipped unmodified as separate files (occt-import-js.js, occt-import-js.wasm), loaded at run time, so it can be replaced; see license.occt-import-js.txt and license.occt.txt."
+  },
+  "ab_cloud-libs-shared/libs/cad-dxf/src/main/assets/cad/dxf/vendor": {
+   "licence": "MIT",
+   "kind": "vendored-package",
+   "what": "dxf-parser 1.1.2 (gdsestimating), the DXF reader of libs:cad-dxf (#1404); see its LICENSE."
+  },
+  "ab_cloud-libs-shared/libs/cad-3dm/src/main/assets/cad/3dm/vendor": {
+   "licence": "MIT",
+   "kind": "vendored-package",
+   "what": "rhino3dm.js 8.35.0 (Robert McNeel & Associates), the Rhino 3DM reader of libs:cad-3dm (#1404), JS module + WASM; see its LICENSE."
+  },
+  "ab_cloud-libs-shared/libs/cad-ifc/src/main/assets/cad/ifc/vendor": {
+   "licence": "MPL-2.0",
+   "kind": "vendored-package",
+   "what": "web-ifc 0.0.78 (ThatOpen Company), the IFC reader of libs:cad-ifc (#1404), IIFE build + WASM, unmodified; files stay MPL-2.0, see LICENSE.md."
   }
  },
  "assets": {

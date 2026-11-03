@@ -15,4 +15,19 @@
     <string name="holdings_empty">No holdings yet. Add one above.</string>
     <string name="holdings_line">%1$s units at %2$s</string>
     <string name="holdings_total">Cost basis: %1$s (in the currency you entered)</string>
+    <!-- #1404 MCAD model libraries -->
+    <string name="lib_back">‹ Back to MCAD</string>
+    <string name="lib_core_title">Core difference</string>
+    <string name="lib_formats_title">Formats</string>
+    <string name="lib_aspect">Aspect</string>
+    <string name="lib_core_geometry">Geometry type</string>
+    <string name="lib_core_need">Primary need</string>
+    <string name="lib_core_standards">Universal standards</string>
+    <string name="lib_models_none">No model in the library yet.</string>
+    <string name="lib_viewer">Viewer: libs:cad-%1$s</string>
+    <string name="lib_manifest_failed">The model library could not be read (offline and nothing cached yet).</string>
+    <string name="viewer_fetching">Fetching %1$s…</string>
+    <string name="viewer_failed">Could not show this model: %1$s</string>
+    <string name="viewer_derived">Shown from its derived %1$s view; the original %2$s stays the source.</string>
+    <string name="viewer_model">%1$s · %2$s · %3$s</string>
 </resources>

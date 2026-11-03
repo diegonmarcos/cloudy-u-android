@@ -32,7 +32,6 @@
       "keyboard": "Already ships as its own APK (Cloud-Keyboard.apk, ac_cloud-keyboard). A second package carrying the same LatinIME service would register a duplicate input method, and its clipboard/gesture ContentProvider authorities come from string resources that both packages would claim - INSTALL_FAILED_CONFLICTING_PROVIDER.",
       "autofill": "The non-secret autofill SOT contract (a0_docs/eng-specs/autofill-3-tier.md): compiled in via project(':libs:autofill') by Cloud Account (which serves the provider), Cloud Browser and Cloud Keyboard. No component of its own to install -- ships no lib APK.",
       "shared-store": "cloud-shared-store static lib: compiled in via project(':libs:shared-store'), the store-access contract (ICloudExec client + path rules); not a runtime engine -- ships no lib APK.",
-      "shared-store": "cloud-shared-store static lib: compiled in via project(':libs:shared-store'), the store-access contract (ICloudExec client + path rules); not a runtime engine -- ships no lib APK.",
       "account": "#870 static lib: compiled in via project(':libs:x'), not a runtime engine (no ENGINE service CONTRACT in its manifests) -- ships no lib APK.",
       "ai": "#870 static lib: compiled in via project(':libs:x'), not a runtime engine (no ENGINE service CONTRACT in its manifests) -- ships no lib APK.",
       "analytics": "#870 static lib: compiled in via project(':libs:x'), not a runtime engine (no ENGINE service CONTRACT in its manifests) -- ships no lib APK.",
@@ -87,7 +86,13 @@
       "voice": "#870 static lib: compiled in via project(':libs:x'), not a runtime engine (no ENGINE service CONTRACT in its manifests) -- ships no lib APK.",
       "wallet": "#870 static lib: compiled in via project(':libs:x'), not a runtime engine (no ENGINE service CONTRACT in its manifests) -- ships no lib APK.",
       "watchdog": "#870 static lib: compiled in via project(':libs:x'), not a runtime engine (no ENGINE service CONTRACT in its manifests) -- ships no lib APK.",
-      "webserver": "#870 static lib: compiled in via project(':libs:x'), not a runtime engine (no ENGINE service CONTRACT in its manifests) -- ships no lib APK."
+      "webserver": "#870 static lib: compiled in via project(':libs:x'), not a runtime engine (no ENGINE service CONTRACT in its manifests) -- ships no lib APK.",
+      "cad-core": "#1404 Hardtech-CAD's MCAD model-library core (manifest, format routing, cache, three.js viewer page): pure Kotlin + assets compiled in; no component, nothing to install or bind.",
+      "cad-mesh": "#1404 Hardtech-CAD's glTF/GLB, OBJ, FBX viewer lib: assets only, compiled in; nothing to install.",
+      "cad-brep": "#1404 Hardtech-CAD's STEP/IGES viewer lib (occt-import-js WASM): assets only, compiled in; nothing to install.",
+      "cad-dxf": "#1404 Hardtech-CAD's DXF viewer lib (dxf-parser): assets only, compiled in; nothing to install.",
+      "cad-3dm": "#1404 Hardtech-CAD's Rhino 3DM viewer lib (rhino3dm WASM): assets only, compiled in; nothing to install.",
+      "cad-ifc": "#1404 Hardtech-CAD's IFC viewer lib (web-ifc WASM): assets only, compiled in; nothing to install."
     },
     "_doc_static_libs": "Section 2 of the Store Libs tab: one short description per shared lib that is NOT an engine (not installable). Which apps compile each lib in is never typed: 1_cicd/src/scripts/cloud-android-lib-consumers.py derives it from every app's build.json and regen.sh bakes it into constellation-fleet.json::lib_consumers. This map only says what the lib is; the lib-consumers guard fails when a non-engine lib has no entry here or an entry names a lib that is gone.",
     "static_libs": {
@@ -167,7 +172,13 @@
       "voice": "Voice-input module: VoiceBarView, AudioRecord capture and the voice engine interface.",
       "wallet": "Wallet surface: cards, tickets, calendar and the mail connector.",
       "watchdog": "The ssh bridge Cloud C3's watchdog uses, shared by reference.",
-      "webserver": "The HTTP serving engine, free of every other fleet dependency."
+      "webserver": "The HTTP serving engine, free of every other fleet dependency.",
+      "cad-core": "The CAD model library core: models.json manifest, format to viewer-lib routing with store-only reasons, sha256-verified model cache and the three.js viewer page.",
+      "cad-mesh": "CAD viewer lib for glTF/GLB, OBJ and FBX (three.js loaders).",
+      "cad-brep": "CAD viewer lib for STEP and IGES (occt-import-js, Open CASCADE in WASM).",
+      "cad-dxf": "CAD viewer lib for DXF drawings (dxf-parser).",
+      "cad-3dm": "CAD viewer lib for Rhino 3DM (rhino3dm.js, WASM).",
+      "cad-ifc": "CAD viewer lib for IFC BIM models (web-ifc, WASM)."
     },
     "_doc_exec_native": "#705 Modules whose APK must let Android EXTRACT its native libraries at install. AGP keeps every .so stored uncompressed inside the APK and extracts nothing (measured on the published Cloud-Lib-*.apk, 2026-10-01: libgh.so, libgix.so and librclone.so are all stored), which is right for a library loaded with System.loadLibrary and fatal for a BINARY an engine execs: nativeLibraryDir is the one place an app may exec from on API 29+, and with nothing extracted it is empty, so the engine answers 'gh is not installed' from inside the very APK that carries gh. Listed per module, with the reason, because extraction costs every OTHER lib APK install-time disk for nothing; app/build.gradle applies it to exactly these flavors through the variant API (the same packaging.jniLibs.useLegacyPackaging switch cloud-drive sets for its own jniLibs), and a name here that is not a shipped module fails the build. A module whose service execs its own binary and is missing here is refused by test/test-engine-services.sh.",
     "exec_native": {
@@ -179,11 +190,53 @@
     "asset_prefix": "Cloud-Lib-",
     "_doc_categories": "#642 THE ONE DECLARATION of the Libs tab's tables, in render order. An APP is filed by the launcher's central classification (the section+folder its All Apps grid uses), which is why Cloud ▸ Apps has always drawn headed tables. A LIB has no launcher entry, so that classifier returns nothing for it and all 46 rows fell into one unnamed run - the flat list. This supplies the SAME (heading, order) pair from data instead, so StoreCloudFragment groups libs through the mechanism it already had rather than a second one. Members are FLEET ids (lib-<module>, plus the rows regen.sh adds from elsewhere: keyboard-engines, the two rootfs libraries, ae-tool_termux-boot) - the same shape as constellation.groups.members, so the two lists read alike. Ordering is this array's order; within a table it stays A-Z (#334). FIRE RULE #6 still holds: a new module under ../libs still ships an APK and still appears with no edit here - it lands under 'Other' until someone files it. What regen.sh REFUSES is a member id that is not a lib row, because that is a category quietly pointing at a renamed or deleted module. ML libs are not here: ml-{t|l}-{domain}-{name} already names its own tab (#405). #667 FIXED TWO NAMES AND THE REASONING IS THE POINT, because both were about to be tidied back. (1) There was one 'Shell & Input' bucket holding two unrelated kinds. bottomnav/launcher-apptabs/launcher-onehand/launcher-zoomies DRAW - they are Views and Fragments (BottomNavIslandView, AppTabsFragment, ArcMenu, CircularMenu, PetStrengthView), so they are 'ui'. text-tools/translate/voice/keyboard-engines COMPUTE - engines, engine clients and model management (TranslateEngines, Translator, VoiceEngines, VoiceModelManager) - so they are 'language'. Precisely: translate and voice DO each ship one thin bar the keyboard hosts (TranslateBarView, VoiceBarView); that makes them language engines carrying a host-embedded bar, NOT launcher chrome, which is why they moved. (2) 'Runtimes' was wrong twice over. The rootfs libs are complete userlands (~400MB, see the Libs group blurb) that the terminals proot INTO - an OS image, not a language runtime - and the word collides with its own real meaning, because a runtime like nodejs_22 is a thing that lives INSIDE the rootfs and cannot leave it (#664). So the label is OS. ae-tool_termux-boot stays with them because it is the hook that brings that userland up. Do not rename 'os' back to 'runtime'.",
     "categories": [
-      { "id": "platform", "label": "Platform & Core", "members": ["lib-fleetconfig", "lib-analytics-sink", "lib-ops-engine", "lib-decisions-engine", "lib-net-wg"] },
-      { "id": "data", "label": "Data & Code", "members": ["lib-calc", "lib-gh", "lib-rclone-engine", "lib-git-sync-engine", "lib-mounts-engine"] },
-      { "id": "content", "label": "Comms & Content", "members": ["lib-cal", "lib-news", "lib-feed"] },
-      { "id": "language", "label": "Text & Voice", "members": ["keyboard-engines"] },
-      { "id": "os", "label": "OS", "members": ["lib-rootfs-nixdroid", "lib-rootfs-termux", "ae-tool_termux-boot"] }
+      {
+        "id": "platform",
+        "label": "Platform & Core",
+        "members": [
+          "lib-fleetconfig",
+          "lib-analytics-sink",
+          "lib-ops-engine",
+          "lib-decisions-engine",
+          "lib-net-wg"
+        ]
+      },
+      {
+        "id": "data",
+        "label": "Data & Code",
+        "members": [
+          "lib-calc",
+          "lib-gh",
+          "lib-rclone-engine",
+          "lib-git-sync-engine",
+          "lib-mounts-engine"
+        ]
+      },
+      {
+        "id": "content",
+        "label": "Comms & Content",
+        "members": [
+          "lib-cal",
+          "lib-news",
+          "lib-feed"
+        ]
+      },
+      {
+        "id": "language",
+        "label": "Text & Voice",
+        "members": [
+          "keyboard-engines"
+        ]
+      },
+      {
+        "id": "os",
+        "label": "OS",
+        "members": [
+          "lib-rootfs-nixdroid",
+          "lib-rootfs-termux",
+          "ae-tool_termux-boot"
+        ]
+      }
     ]
   },
   "android": {
@@ -199,7 +252,9 @@
     "target_sdk": 35,
     "_doc_packaging_excludes": "Duplicate files that must not reach the APK. This repo packages 29 unrelated dependency sets through ONE wrapper module, so license/notice collisions are the normal case rather than an exception: libs:wallet pulls com.sun.mail:android-mail AND android-activation, which both carry META-INF/NOTICE.md, and mergeWalletDebugJavaResource failed the WHOLE build - one flavor taking all 29 APKs down with it. ac_cloud-wallet has carried the same block for its own APK all along. Data, not gradle, so the next collision is a one-line edit here. Never add *.kotlin_module: dropping those breaks Kotlin reflection at runtime, silently. META-INF/versions/*/OSGI-INF/MANIFEST.MF (a glob, every multi-release level): the mwiede jsch fork ships an OSGi manifest under versions/9 AND versions/15, and so do jspecify (9) and bouncycastle via sshj (15) — measured on runs 36068993994 and 36074399160, 2026-09-24. One level at a time was a chase.",
     "_doc_no_compress": "#798 asset extensions every APK keeps STORED: ML Kit's LocalModel memory-maps a bundled .tflite (the image engine's full-label classifier, data/models.json), which a compressed asset cannot be. Applied by app/build.gradle's androidResources.noCompress for every flavor; only the ML engines carry such files.",
-    "no_compress": ["tflite"],
+    "no_compress": [
+      "tflite"
+    ],
     "packaging_excludes": [
       "META-INF/NOTICE",
       "META-INF/NOTICE.txt",
@@ -225,7 +280,10 @@
     "_doc": "#705 Read by 1_cicd/dist/scripts/cloud-android-test-engine.sh, which ship-cloud-libs.yml runs before it builds. These testers are the ENGINE side of the app/engine split: once an app binds an engine instead of compiling it, the app's own ship no longer watches the engine's directory, so the only pipeline that runs when an engine changes is this one, and the engine's side of the contract is checked HERE or nowhere.",
     "shell": {
       "dir": "test",
-      "requires": ["python3", "grep"]
+      "requires": [
+        "python3",
+        "grep"
+      ]
     },
     "unit": {
       "_doc": "The engines' JVM suites, run through build.sh test (build.entry below) after the workflow has set up the JDK, the SDK and Gradle. #871 :libs:mounts-engine:testDebugUnitTest runs the mounts engine's JSON surface against a real WebDAV server on loopback (open, list, download, upload, rename, delete), the handle protocol, chunking, the ssh scratch files and the refusals (MountCallsTest), and the protocol clients' pure halves. #871 :libs:git-sync-engine:testDebugUnitTest runs the git sync engine's verbs on real repositories (JGitEngineTest) and its JSON surface, ssh scratch files and chunking (GitCallsTest). #871 :libs:rclone-engine:testDebugUnitTest runs the rclone engine against a fake binary: the argument policy, the caller-owned rclone.conf, the job poll protocol, the chunked listing, the cancel and the two refusals. #881 :libs:decisions-core:test runs the decisions engine's policy, redaction, spend ledger, cache, breaker, consent and orchestration suites and PIT-gates them at 80; :libs:decisions-engine:testDebugUnitTest pins the service's wire, its caller identity and its file stores; :libs:decisions-link:testDebugUnitTest pins the client's parse and that no credential is in the wire. #871 :libs:ops-engine:testDebugUnitTest pins the ops engine's parse of both Dagu payload shapes and its https-and-own-host-only refusal. #871 :libs:analytics-sink:testDebugUnitTest pins the sink engine's Umami and Matomo wire formats byte for byte and its https-and-own-hosts-only refusal. :libs:gh's GhLoginTest runs the gh engine's real sign-in job against a fake gh that prints the one-time code and then blocks, and fails unless the code reaches the job while gh is still waiting; it also runs libs:sysdns's ResolverProxy, the loopback tunnel gh needs to resolve names inside an app. #741 :libs:sysdns's own SysDnsTest runs the terminals' DNS bridge against a fake resolver (the client's id comes back, a failed lookup is a SERVFAIL glibc accepts, an oversized UDP answer is truncated there and whole over TCP) and the proxy in the any-host mode rclone and gix use. The phone once showed a DNS failure for a sign-in that never reached GitHub, and no shell tester can execute either property. #798 :libs:ml-l-sound-yamnet's ClassifierTest replays the real YAMNet's scores for a golden clip through the engine's whole pipeline and reads the label list out of the real, sha-verified model file; :libs:ml-l-image-mlkit's DetectorTest does the same for the classifier object detection names boxes with; :libs:sound-tags runs PIT (gate 80). Cloud Mesh fallbacks: :libs:net-wg's MeshRelayTest runs the engine's TCP/443 relay (MeshRelay, WsTunnel) against a local server speaking the fleet wstunnel v11 wire: the upgrade at /<prefix>/events with the UDP ticket, a wrong key answered 400 and named, a server ping answered, datagrams of every frame-length class round-tripping, unmasked frames (the fleet server does not unmask). One task per engine that has a suite, space-separated.",

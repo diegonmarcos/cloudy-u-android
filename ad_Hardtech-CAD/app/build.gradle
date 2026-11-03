@@ -89,6 +89,12 @@ uiStacks.each { sectionId, entries ->
     }
 }
 def uiStacksB64  = b64(uiStacks)
+// #1404 ui.libraries (the MCAD model-library pages) and the models repo they read, resolved under ui.app_urls.repo_base:
+// GitHub's /raw/main/ serves models.json and redirects each LFS file to its media host.
+if (!buildJson.ui?.model_repo || !appUrls.repo_base)
+    throw new GradleException("build.json::ui.model_repo and aa_cloud-superapp ui.app_urls.repo_base are required (#1404)")
+def uiLibrariesB64 = b64(buildJson.ui.libraries ?: [:])
+def modelsBase     = "${appUrls.repo_base}${buildJson.ui.model_repo}/raw/main/".toString()
 def uiTargetsB64 = b64([sites: targetSites, registry_sites: targetRegistry, repo_base: (appUrls.repo_base ?: '')])
 
 android {
@@ -121,6 +127,8 @@ android {
         buildConfigField "String", "UI_DEFAULT_SECTION", "\"${uiDefaultSection}\""
         buildConfigField "String", "UI_STACKS_B64",      "\"${uiStacksB64}\""
         buildConfigField "String", "UI_TARGETS_B64",     "\"${uiTargetsB64}\""
+        buildConfigField "String", "UI_LIBRARIES_B64",   "\"${uiLibrariesB64}\""
+        buildConfigField "String", "MODELS_BASE",        "\"${modelsBase}\""
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
 
@@ -157,6 +165,12 @@ android {
         }
     }
 
+    // #1404 libs:cad-core's JVM suite (manifest parse, format routing, store-only reasons, default model) runs in THIS app's unit
+    // task, mutation-proven by .github/workflows/hardtech-cad-mcad-proof.yml.
+    sourceSets {
+        test { java.srcDirs += ['../../ab_cloud-libs-shared/libs/cad-core/src/test/kotlin'] }
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
@@ -164,7 +178,41 @@ android {
     kotlinOptions { jvmTarget = '17' }
 }
 
+// #1404 the MCAD viewer's three.js and OrbitControls are Cloud Nav's copies, shared BY REFERENCE (as CG-Omniverse does): copied
+// into a generated assets/space/, the path libs:cad-core's viewer.html imports.
+abstract class CopyThreeAssets extends DefaultTask {
+    @InputDirectory abstract DirectoryProperty getSource()
+    @OutputDirectory abstract DirectoryProperty getOutputDir()
+    @TaskAction void copy() {
+        def out = new File(outputDir.get().asFile, 'space')
+        out.mkdirs()
+        ['three.module.min.js', 'three.core.min.js', 'OrbitControls.js'].each { n ->
+            def from = new File(source.get().asFile, n)
+            if (!from.isFile()) throw new GradleException("three.js asset ${from} is missing (ac_cloud-nav/app/src/main/assets/space)")
+            java.nio.file.Files.copy(from.toPath(), new File(out, n).toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+        }
+    }
+}
+def copyThree = tasks.register('copyThreeAssets', CopyThreeAssets) {
+    source.set(file('../../ac_cloud-nav/app/src/main/assets/space'))
+}
+androidComponents {
+    onVariants(selector().all()) { variant ->
+        variant.sources.assets?.addGeneratedSourceDirectory(copyThree, { it.outputDir })
+    }
+}
+
 dependencies {
+    // #1404 the MCAD model libraries: the fleet's web view, the CAD core (manifest, routing, cache, viewer page) and one viewer
+    // lib per format family; libs:cgc-3d for the three.js glTF/FBX loaders libs:cad-mesh reuses.
+    implementation project(':libs:web-core')
+    implementation project(':libs:cgc-3d')
+    implementation project(':libs:cad-core')
+    implementation project(':libs:cad-mesh')
+    implementation project(':libs:cad-brep')
+    implementation project(':libs:cad-dxf')
+    implementation project(':libs:cad-3dm')
+    implementation project(':libs:cad-ifc')
     implementation project(':libs:core')
     // The fleet's navigation: NavDecl and the top-bar scaffold's drawer (libs:bottomnav), the first row with
     // Profile at the top right, the second row with icons, the bottom nav, the page gradient (#1154).

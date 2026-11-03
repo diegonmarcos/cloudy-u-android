@@ -78,7 +78,7 @@ EXPECT = {
   "ad_Hardtech-CAD": {
     "name": "hardtech-cad", "display": "Hardtech-CAD", "pkg": "com.diegonmarcos.hardtechcad",
     "nav": [("mcad", "MCAD"), ("bim", "BIM"), ("solidworks", "SolidWorks")],
-    "pages": {"mcad": [("entry", "MCAD")], "bim": [("entry", "BIM")], "solidworks": [("entry", "SolidWorks")]},
+    "pages": {"mcad": [("entry", "MCAD"), ("section_title", "Model libraries"), ("library", "Boats"), ("library", "Architecture")], "bim": [("entry", "BIM")], "solidworks": [("entry", "SolidWorks")]},
     "sources": {"MCAD": ("repo", "HardTech-Stack-CAD-Simulators"), "BIM": ("repo", "HardTech-Stack-CAD-Simulators")},
     "planned": ["SolidWorks"],
   },

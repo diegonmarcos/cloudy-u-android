@@ -11,7 +11,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
@@ -34,6 +38,8 @@ import com.diegonmarcos.superapp.uikit.LocalKitPalette
 fun SectionPage(sectionId: String) {
     val ctx = LocalContext.current
     val entries = remember(sectionId) { Pages.entries(Decl.stacks, sectionId) }
+    var openLibrary by rememberSaveable(sectionId) { mutableStateOf<String?>(null) }
+    openLibrary?.let { id -> LibraryPage(id) { openLibrary = null }; return }
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 12.dp, vertical = 8.dp).testTag(Tags.PAGE),
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -43,6 +49,7 @@ fun SectionPage(sectionId: String) {
                 Pages.KIND_SECTION_TITLE -> GroupTitle(e.title)
                 Pages.KIND_HOLDINGS -> HoldingsPanel()
                 Pages.KIND_ABOUT -> AboutPanel()
+                Pages.KIND_LIBRARY -> LibraryRow(e) { openLibrary = e.library }
                 else -> EntryRow(e, Pages.resolve(e, Decl.targets)) { url -> openUrl(ctx, url) }
             }
         }
@@ -68,6 +75,19 @@ private fun EntryRow(e: Entry, url: String?, onOpen: (String) -> Unit) {
                 trailing = { Text(stringResource(R.string.entry_open), color = LocalKitPalette.current.accent) },
             )
         }
+    }
+}
+
+/** #1404 a `library` entry: opens its model-library sub-page. */
+@Composable
+private fun LibraryRow(e: Entry, onOpen: () -> Unit) {
+    KitCard(Modifier.testTag(Tags.entry(e.title))) {
+        KitSettingsRow(
+            title = e.title,
+            subtitle = e.subtitle,
+            onClick = onOpen,
+            trailing = { Text(stringResource(R.string.entry_open), color = LocalKitPalette.current.accent) },
+        )
     }
 }
 

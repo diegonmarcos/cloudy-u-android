@@ -1,0 +1,243 @@
+name: "Proof → Hardtech-CAD MCAD libraries (libs:cad-core mutants + emulator screens)"
+
+# Two proofs the Ship run cannot give, on demand (#1404):
+#   mutants  every rule of libs:cad-core (models.json parse, format -> viewer lib routing, store-only reasons, the default model per
+#            library page, the per-format model filter) is held by CadCoreTest: each job plants ONE mutant in the lib and passes
+#            only when Hardtech-CAD's unit task (which compiles the lib's src/test) goes RED from CadCoreTest. A baseline job
+#            requires the real tree GREEN. No network.
+#   screens  installs the x86_64 APK of a Ship run on an emulator, opens MCAD > Boats (default model: the One Lilo yacht, fetched
+#            from hardtech-db-models and drawn by libs:cad-mesh from its derived GLB view) and MCAD > Architecture (default model:
+#            the Campidoglio SketchUp file, store-only with its reason), and uploads the shots as `hardtech-cad-mcad-screens`.
+
+on:
+  workflow_dispatch:
+    inputs:
+      ship_run_id:
+        description: "Ship → Hardtech-CAD run whose x86_64 APK to walk (empty = the rolling release)"
+        required: false
+        default: ""
+      only:
+        description: "mutants | screens | both"
+        required: false
+        default: "both"
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  WORK_DIR: ad_Hardtech-CAD
+
+jobs:
+  mutants:
+    if: ${{ inputs.only != 'screens' }}
+    name: "Mutant ${{ matrix.mutant }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        mutant: [baseline, parse-sha, parse-id, parse-format, parse-size, parse-view, route-alias, route-brep, route-ifc, route-case, store-reason, store-viewer, plan-no-view, plan-conversion, default-first, default-library, filter-format, core-rows]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Plant the mutant
+        env:
+          M: ${{ matrix.mutant }}
+        run: |
+          python3 - <<'PY'
+          import os, sys
+          base = "ab_cloud-libs-shared/libs/cad-core/src/main/java/com/diegonmarcos/superapp/cad/"
+          M = {
+            "baseline":        None,
+            "parse-sha":       ('ModelManifest.kt', '|| !SHA.matches(sha)) return@mapNotNull null', ') return@mapNotNull null'),
+            "parse-id":        ('ModelManifest.kt', 'if (id.isBlank() || path.isBlank()', 'if (path.isBlank()'),
+            "parse-format":    ('ModelManifest.kt', 'CadFormats.normalize(format), path', 'format, path'),
+            "parse-size":      ('ModelManifest.kt', 'o.optLong("size"), sha, v', '0L, sha, v'),
+            "parse-view":      ('ModelManifest.kt', 'if (j.optString("path").isBlank() || !SHA.matches(vs)) null', 'if (true) null'),
+            "route-alias":     ('CadFormats.kt', '"stp" to "step"', '"stp" to "stp"'),
+            "route-brep":      ('CadFormats.kt', '"step" to LIB_BREP', '"step" to LIB_MESH'),
+            "route-ifc":       ('CadFormats.kt', '"ifc" to LIB_IFC,', '"ifc" to LIB_DXF,'),
+            "route-case":      ('CadFormats.kt', 'ext.trim().lowercase()', 'ext.trim()'),
+            "store-reason":    ('CadFormats.kt', 'Route.StoreOnly(STORE_ONLY[f] ?: UNKNOWN_REASON)', 'Route.StoreOnly(UNKNOWN_REASON)'),
+            "store-viewer":    ('CadFormats.kt', '"3dm" to LIB_3DM,', '"3dm" to LIB_3DM, "skp" to LIB_MESH,'),
+            "plan-no-view":    ('CadFormats.kt', 'm.view?.let { v ->', 'm.view?.takeIf { false }?.let { v ->'),
+            "plan-conversion": ('CadFormats.kt', 'if (m.conversion.isBlank()) r.reason else r.reason + " " + m.conversion', 'r.reason'),
+            "default-first":   ('CadLibrary.kt', 'models.firstOrNull { it.id == lib.defaultModel && it.library == lib.id }', 'models.firstOrNull { it.library == lib.id }'),
+            "default-library": ('CadLibrary.kt', 'models.firstOrNull { it.id == lib.defaultModel && it.library == lib.id }', 'models.firstOrNull { it.id == lib.defaultModel }'),
+            "filter-format":   ('CadLibrary.kt', 'it.library == lib.id && it.format in f.formats', 'it.library == lib.id'),
+            "core-rows":       ('CadLibrary.kt', 'listOf("geometry", "need", "standards")', 'listOf("geometry", "standards", "need")'),
+          }[os.environ["M"]]
+          if M is None: sys.exit(0)
+          p = base + M[0]
+          s = open(p).read()
+          if s.count(M[1]) != 1: sys.exit("mutation target not found exactly once: %r" % M[1])
+          open(p, "w").write(s.replace(M[1], M[2]))
+          PY
+          git diff --stat
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: "platforms;android-36 platforms;android-35 platforms;android-26 build-tools;35.0.0 build-tools;34.0.0 platform-tools"
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: "8.10.2"
+      # ── MANAGED-GRADLE-CACHE-HYGIENE: injected by cloud-android-gradle-cache-hygiene.py ──
+      # Edit 1_cicd/src/actions/gradle-cache-hygiene, never this block.
+      - name: Gradle cache hygiene (retry failed resolution, never cache a failed lookup)
+        uses: ./.github/actions/gradle-cache-hygiene
+      # ── end MANAGED-GRADLE-CACHE-HYGIENE ──
+      - name: Checkout vault (shared signing key, read by app/build.gradle at configuration)
+        uses: actions/checkout@v4
+        with:
+          repository: diegonmarcos/cloud-me-pvt-vault
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
+          path: .vault
+      - name: Install jq
+        run: sudo apt-get update -y && sudo apt-get install -y jq
+      - name: Install ORAS + sops (pinned)
+        uses: ./.github/actions/install-pinned-tools
+        with:
+          tools: oras sops
+      - name: JVM suite (baseline GREEN, every mutant RED)
+        env:
+          BYPASS_NIX: "1"
+          VAULT_DIR: ${{ github.workspace }}/.vault
+          SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
+          M: ${{ matrix.mutant }}
+        run: |
+          set +e
+          sh 1_cicd/dist/scripts/cloud-android-test-engine.sh unit "$WORK_DIR" > unit.log 2>&1
+          rc=$?
+          tail -60 unit.log
+          grep -E "CadCoreTest > .* FAILED|tests completed" unit.log || true
+          if [ "$M" = baseline ]; then
+            [ $rc -eq 0 ] || { echo "::error::the real tree is RED"; exit 1; }
+            echo "baseline GREEN"
+          else
+            [ $rc -ne 0 ] || { echo "::error::mutant $M stayed GREEN: no test holds this rule"; exit 1; }
+            grep -qE "CadCoreTest" unit.log || { echo "::error::mutant $M is red but not from CadCoreTest"; exit 1; }
+            echo "mutant $M is RED (killed)"
+          fi
+
+  screens:
+    if: ${{ inputs.only != 'mutants' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Get the x86_64 APK
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN: ${{ inputs.ship_run_id }}
+        run: |
+          set -eu
+          mkdir -p apk
+          if [ -n "$RUN" ]; then gh run download "$RUN" -R "$GITHUB_REPOSITORY" -p 'Hardtech-CAD-x86_64-*' -D apk
+          else gh release download latest -R "$GITHUB_REPOSITORY" -p 'Hardtech-CAD-x86_64.apk' -D apk; fi
+          pick=$(find apk -name '*.apk' | head -1); [ -n "$pick" ] || { echo "::error::no APK"; exit 1; }
+          cp "$pick" app.apk; ls -la app.apk
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Write the walk
+        run: |
+          cat > walk.py <<'PY'
+          import re, subprocess, sys, time
+          OUT = "screens"
+          pkg = sys.argv[1]
+          def sh(*a): return subprocess.run(["adb", *a], capture_output=True, text=True, timeout=90)
+          def dump():
+              for _ in range(6):
+                  sh("shell", "uiautomator", "dump", "/sdcard/u.xml")
+                  x = sh("shell", "cat", "/sdcard/u.xml").stdout
+                  if "<hierarchy" in x: return x
+                  time.sleep(2)
+              return ""
+          def texts(x): return re.findall(r' text="([^"]*)"', x)
+          def find(label):
+              out = []
+              for m in re.finditer(r'<node [^>]*>', dump()):
+                  n = m.group(0); t = re.search(r' text="([^"]*)"', n); b = re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', n)
+                  if t and b and t.group(1) == label: out.append(tuple(map(int, b.groups())))
+              return out
+          def tap(label):
+              hits = find(label)
+              if hits:
+                  x1, y1, x2, y2 = hits[0]; sh("shell", "input", "tap", str((x1 + x2) // 2), str((y1 + y2) // 2)); time.sleep(3); return True
+              print("::warning::no '%s' on screen" % label); return False
+          def shot(name, wait=0):
+              time.sleep(wait)
+              png = b""
+              for _ in range(3):
+                  png = subprocess.run(["adb", "exec-out", "screencap", "-p"], capture_output=True, timeout=60).stdout
+                  if len(png) > 1000: break
+                  time.sleep(3)
+              open("%s/%s.png" % (OUT, name), "wb").write(png); print("shot", name)
+          def settle(limit=240):
+              # the viewer's overlay reads "Fetching ..." until the model is cached; the page's own status line is drawn by WebGL
+              t0 = time.time()
+              while time.time() - t0 < limit:
+                  x = dump(); ts = texts(x)
+                  if not any(t.startswith("Fetching") for t in ts): return ts
+                  time.sleep(5)
+              print("::warning::still fetching after %ss" % limit); return texts(dump())
+          sh("shell", "monkey", "-p", pkg, "-c", "android.intent.category.LAUNCHER", "1"); time.sleep(12)
+          shot("01-mcad-with-libraries")
+          tap("Boats"); shot("02-boats-fetching", 2)
+          ts = settle(); time.sleep(25)  # cached, then the GLB view is parsed and drawn
+          shot("03-boats-default-model")
+          open("%s/03-texts.txt" % OUT, "w").write("\n".join(ts))
+          sh("shell", "input", "swipe", "540", "1900", "540", "700", "600"); shot("04-boats-core-and-formats", 2)
+          sh("shell", "input", "swipe", "540", "1900", "540", "500", "600"); shot("05-boats-formats", 2)
+          sh("shell", "input", "keyevent", "KEYCODE_BACK"); time.sleep(3)
+          if not find("Architecture"):
+              sh("shell", "monkey", "-p", pkg, "-c", "android.intent.category.LAUNCHER", "1"); time.sleep(8)
+              for _ in range(4):
+                  if find("Architecture"): break
+                  sh("shell", "input", "swipe", "540", "500", "540", "1800", "400"); time.sleep(2)
+          tap("Architecture"); time.sleep(15)
+          shot("06-architecture-default-model")
+          open("%s/06-texts.txt" % OUT, "w").write("\n".join(texts(dump())))
+          sh("shell", "input", "swipe", "540", "1900", "540", "700", "600"); shot("07-architecture-core-and-formats", 2)
+          sh("shell", "input", "swipe", "540", "1900", "540", "500", "600"); shot("08-architecture-formats", 2)
+          PY
+          cat > walk.sh <<'EOF'
+          #!/bin/bash
+          set -u
+          mkdir -p screens
+          adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard || true
+          adb install -r -g app.apk || exit 2
+          PKG=com.diegonmarcos.hardtechcad
+          adb logcat -v threadtime "*:W" chromium:I > screens/logcat.txt 2>&1 &
+          python3 walk.py "$PKG"; rc=$?
+          adb logcat -d -s chromium:I | grep -iE "console|error|cad" | tail -80 > screens/console.txt || true
+          adb shell ls -l /data/data/$PKG/cache/cad-models >> screens/package.txt 2>&1 || true
+          adb shell dumpsys package "$PKG" | grep -E "versionName" >> screens/package.txt || true
+          exit $rc
+          EOF
+          chmod +x walk.sh
+      - name: Boot emulator + walk
+        timeout-minutes: 35
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_5
+          ram-size: 4096M
+          cores: 4
+          emulator-options: -no-window -gpu swangle_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: ./walk.sh
+      - name: Upload the screens
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hardtech-cad-mcad-screens
+          path: screens
+          retention-days: 30
