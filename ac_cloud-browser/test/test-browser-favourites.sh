@@ -29,7 +29,7 @@ def check(root, ok):
     cfg = src.get(LIB + "/BrowserConfig.kt", "")
     main_ = src.get(APP + "/MainActivity.kt", "")
     bj = build_json(root); ui = bj["ui"]
-    ok(ui.get("bottom_nav") == ["favourites", "tabs", "browser", "search", "configs"], "F1 the island is Fav, Tabs, Browser, Search, Configs")
+    ok(ui.get("bottom_nav") == ["favourites", "tabs", "browser", "search", "scrapers"], "F1 the island is Fav, Tabs, Browser, Search, Scrapers")
     ids = [s["id"] for s in ui.get("sections", [])]
     ok(all(b in ids for b in ui.get("bottom_nav", [])), "F1 every island item is a section")
     ok('"favourites" -> host.openFavourites()' in main_, "F1 MainActivity routes Fav to the host")

@@ -29,6 +29,8 @@
     "nfc": { "class": "gui", "why": "#1264 the NFC tag analyzer shared by reference: the NfcPanel page (Scan, Write, History, Status) Cloud Calc renders in Measure > NFC, over one reader-mode controller and the NDEF parser." },
     "wifi": { "class": "gui", "why": "#1263 the Wi-Fi analyzer shared by reference: the five-tab WiFi page (Scan, Channels, Link, Tools, Log) the SuperApp renders in Configs > Setup > Network and Cloud Calc embeds, over one scan / link / tools controller." },
     "browser":                 { "class": "gui",      "why": "cloud-browser's feature module (activity + web views)." },
+    "scraper":                 { "class": "gui",      "why": "#1426 Cloud Browser's Scrapers section in Compose: Site Files (cache, downloads, saved pages per site, in-app viewer) and Scrap Tools (YouTube Download via the scrappers-api container)." },
+    "media-convert-audio":     { "class": "logic",    "why": "#1428 one converter: the audio track of a video remuxed on the phone (MediaExtractor/MediaMuxer, no FFmpeg). Compiled into Cloud Browser through libs:scraper (backlog 27 -> 28); a candidate engine once a second app converts media." },
     "cal":                     { "class": "engine",   "why": "Cloud-Lib-Cal; cloud-me binds it (IDataBackend)." },
     "calc":                    { "class": "engine",   "why": "#767 Cloud-Lib-Calc: libqalculate as a pinned libqalc.so behind CalcBackendService; cloud-calc binds it." },
     "chat":                    { "class": "gui",      "why": "SuperApp chat screens." },

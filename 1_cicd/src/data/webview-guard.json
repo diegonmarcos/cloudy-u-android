@@ -24,6 +24,7 @@
     {"app": "Cloud SuperApp", "usage": "Lnktree and web pages", "profile": "APP_PAGE", "file": "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/launcher/WebPageFragment.kt"},
     {"app": "Cloud Browser (libs:browser)", "usage": "tabs, popups, scrape", "profile": "BROWSER", "file": "ab_cloud-libs-shared/libs/browser/src/main/java/com/diegonmarcos/superapp/browser/BrowserHostFragment.kt"},
     {"app": "Cloud Browser (libs:browser)", "usage": "offline site crawl", "profile": "BROWSER", "file": "ab_cloud-libs-shared/libs/browser/src/main/java/com/diegonmarcos/superapp/browser/OfflineSites.kt"},
+    {"app": "Cloud Browser (libs:scraper)", "usage": "Site Files viewer: a cached page or saved archive (JS off, file access for the local file)", "profile": "BROWSER", "file": "ab_cloud-libs-shared/libs/scraper/src/main/java/com/diegonmarcos/superapp/scraper/FileViewer.kt"},
     {"app": "Cloud Browser", "usage": "auth mission sign-in", "profile": "APP_PAGE", "file": "ac_cloud-browser/app/src/main/java/com/diegonmarcos/cloudbrowser/AuthMissionActivity.kt"},
     {"app": "CG-Omniverse", "usage": "Avatar three.js scene", "profile": "WEB_WORLD", "file": "ad_CG-Omniverse/app/src/main/java/com/diegonmarcos/cgomniverse/ui/AvatarPage.kt"},
     {"app": "CG-Omniverse", "usage": "Galaxy worlds", "profile": "WEB_WORLD", "file": "ad_CG-Omniverse/app/src/main/java/com/diegonmarcos/cgomniverse/ui/GalaxyPage.kt"},

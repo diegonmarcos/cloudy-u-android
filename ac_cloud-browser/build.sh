@@ -262,8 +262,9 @@ step_test() {
   _resolve_signing
   local task; task="$(_release_var '.tests.unit.task')"
   [ -n "$task" ] || task="test"
-  log "Test: gradle $task"
-  in_nix gradle "$task"
+  log "Test: gradle $task${UNIT_TEST_FILTER:+ --tests $UNIT_TEST_FILTER}"
+  # UNIT_TEST_FILTER (optional): one test class pattern, so a mutation job runs only the suite under proof.
+  if [ -n "${UNIT_TEST_FILTER:-}" ]; then in_nix gradle "$task" --tests "$UNIT_TEST_FILTER"; else in_nix gradle "$task"; fi
 }
 step_instrument() { log "Test: instrumented (needs device)"; _resolve_signing; in_nix gradle connectedAndroidTest; }
 step_lint()       { log "Lint"; _resolve_signing; in_nix gradle lint; }

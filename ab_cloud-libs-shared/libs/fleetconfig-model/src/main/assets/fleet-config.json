@@ -314,7 +314,8 @@
       "class": "device",
       "doc": "#802 index of the downloads the browser started (DownloadManager ids and file names on THIS phone); the files themselves stay in Downloads.",
       "used_by": [
-        "lib-browser"
+        "lib-browser",
+        "lib-scraper"
       ]
     },
     "browser_history": {
@@ -322,7 +323,8 @@
       "class": "content",
       "doc": "Browsing history entries the user accumulated.",
       "used_by": [
-        "lib-browser"
+        "lib-browser",
+        "lib-scraper"
       ]
     },
     "browser_settings": {

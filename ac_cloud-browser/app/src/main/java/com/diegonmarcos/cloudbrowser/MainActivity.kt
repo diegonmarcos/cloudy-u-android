@@ -91,6 +91,8 @@ class MainActivity : AppCompatActivity() {
     private var selectedId by mutableStateOf<String?>(null)
     /** #900 the Configs top tab showing (a ui.sections[configs].pages id), while Configs is the island's item. */
     private var configsPage by mutableStateOf<String?>(null)
+    /** #1426 the Scrapers top tab showing (a ui.sections[scrapers].pages id: Site Files, Scrap Tools), libs:scraper draws it. */
+    private var scrapersPage by mutableStateOf<String?>(null)
     /** #1164 the live host fragment (Compose state: the first row reads its address). */
     private var hostFragment by mutableStateOf<BrowserHostFragment?>(null)
     /** #1164 the shared chrome's scroll-collapse; the WebView's scroll listener feeds it. */
@@ -168,7 +170,7 @@ class MainActivity : AppCompatActivity() {
 
     /**
      * The island: ui.bottom_nav through [NavDecl], the icon of a section its libs:ui-icons catalog glyph. A tap on Search / Configs asks the live host to draw that page over itself; a tap
-     * on Browser closes whatever is open. The island's look is the lib's.
+     * on Browser closes whatever is open. Scrapers (#1426, in Configs' old place: the row's ⋮ opens Configs) is libs:scraper's page. The island's look is the lib's.
      */
     @androidx.compose.runtime.Composable
     private fun Island() {
@@ -194,8 +196,12 @@ class MainActivity : AppCompatActivity() {
         val title = if (onPage) host?.addressDisplay.orEmpty().ifEmpty { section?.label.orEmpty() } else section?.label.orEmpty()
         NavBarTopFirstRowScaffold(
             title = title,
-            hierarchy = if (selectedId == "configs") section?.let { titleHierarchy(it, configsPage) }.orEmpty() else emptyList(),
-            onNavigate = { e -> if (e.depth == 0) openSection(e.sectionId) else openConfigsPage(e.id) },
+            hierarchy = when (selectedId) {
+                "configs" -> section?.let { titleHierarchy(it, configsPage) }.orEmpty()
+                "scrapers" -> section?.let { titleHierarchy(it, scrapersPage) }.orEmpty()
+                else -> emptyList()
+            },
+            onNavigate = { e -> if (e.depth == 0) openSection(e.sectionId) else if (selectedId == "scrapers") scrapersPage = e.id else openConfigsPage(e.id) },
             onAccount = rememberAccountLauncher(),
             // #1401 the app bar's ⋮ opens the app's Configs, like every fleet app; Browsing Tools is the tab row's icon.
             onConfigs = { openSection("configs") },
@@ -219,6 +225,11 @@ class MainActivity : AppCompatActivity() {
                     val tabs = remember { decl.section("configs")?.pages.orEmpty() }
                     NavBarTopSecondRow(tabs, configsPage, onSelect = { pg -> openConfigsPage(pg.id) }, dark = true, underTopChrome = false)
                 }
+                // #1426 Scrapers: Site Files | Scrap Tools as top tabs, the pages are libs:scraper's.
+                if (selectedId == "scrapers") {
+                    val tabs = remember { decl.section("scrapers")?.pages.orEmpty() }
+                    NavBarTopSecondRow(tabs, scrapersPage, onSelect = { pg -> scrapersPage = pg.id }, dark = true, underTopChrome = false)
+                }
                 Box(Modifier.weight(1f).fillMaxWidth()) {
                     KitFragmentHost(R.id.fragment_container, Modifier.fillMaxSize()) {
                         BrowserHostFragment.newInstance(pendingOpenUrl, BuildConfig.UI_BROWSER_CONFIG_B64)
@@ -229,6 +240,11 @@ class MainActivity : AppCompatActivity() {
                         Box(Modifier.fillMaxSize().background(c.top).testTag("browser:configs:page:about")) {
                             com.diegonmarcos.superapp.fleetconfigs.FleetAboutPage(com.diegonmarcos.superapp.fleetconfigs.FleetConfigs.current, c)
                         }
+                    }
+                    // #1426 the Scrapers section over the host's page (libs:scraper); Back returns to the page.
+                    if (selectedId == "scrapers") {
+                        androidx.activity.compose.BackHandler { openSection("browser") }
+                        com.diegonmarcos.superapp.scraper.ScrapersPage(scrapersPage, com.diegonmarcos.superapp.themebg.ThemeBackground.colors(true))
                     }
                 }
             }
@@ -264,6 +280,8 @@ class MainActivity : AppCompatActivity() {
                 configsPage = decl.section("configs")?.pages?.firstOrNull()?.id
                 host.openSettings()
             }
+            // #1426 Scrapers is drawn by the shell (libs:scraper), not by the host: nothing of the host stays open.
+            "scrapers" -> scrapersPage = scrapersPage ?: decl.section("scrapers")?.pages?.firstOrNull()?.id
         }
         // closeOverlays reset the pill to Browser; an overlay that opened puts it on its own item.
         selectedId = id

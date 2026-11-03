@@ -65,7 +65,8 @@
         "libs:bottomnav",
         "libs:ui-icons",
         "libs:ui-nav-bars",
-        "libs:theme-background"
+        "libs:theme-background",
+        "libs:scraper"
       ]
     },
     "libs:core": {
@@ -92,6 +93,16 @@
       "type": "library",
       "_doc_dir": "Shared BY REFERENCE from aa_cloud-superapp/libs/ - settings.gradle points projectDir here instead of at a local copy. browser was three byte-identical trees (superapp, browser, vault); nothing kept them in step, so a WebView fix had to be pasted three times or it silently reached one app.",
       "dir": "../ab_cloud-libs-shared/libs/browser"
+    },
+    "libs:scraper": {
+      "type": "library",
+      "_doc": "#1426 the Scrapers section (Site Files, Scrap Tools): reads the browser's stores as files, calls the scrappers-api container for heavy work. Separate from libs:browser.",
+      "dir": "../ab_cloud-libs-shared/libs/scraper"
+    },
+    "libs:media-convert-audio": {
+      "type": "library",
+      "_doc": "#1428 libs:scraper `implementation`s this converter (audio track remux, MediaExtractor/MediaMuxer); listed so settings.gradle resolves the path and the ship workflow's path triggers see it.",
+      "dir": "../ab_cloud-libs-shared/libs/media-convert-audio"
     },
     "libs:autofill": {
       "type": "library",
@@ -1902,13 +1913,13 @@
         }
       ]
     },
-    "_doc_nav": "#868 THE nav declaration (libs:bottomnav NavDecl): ui.bottom_nav is the island, ui.sections[] what each item opens, ui.default_section where the app opens. browser = BrowserHostFragment's page (its address bar, tab strip and overlays are the lib's own UI, so the section has no pages), tabs = the tab switcher (BrowserHostFragment.openTabs: the grid, where a tab dropped on another makes a group; #886 moved it from a button into the island), favourites = the bookmarks as a list or icon grid over it (BrowserHostFragment.openFavourites, #893; island order Fav, Tabs, Browser, Search, Configs), search = the Search add-on's page over it (BrowserHostFragment.showSearchPage), configs = the browser settings over it (showSettings), one top tab (PageTabs, scrolling sideways) per Configs page: ui.sections[configs].pages = settings_sections (#900). MainActivity feeds the island from NavDecl and follows the host's overlays so the pill goes back to Browser when one closes.",
+    "_doc_nav": "#868 THE nav declaration (libs:bottomnav NavDecl): ui.bottom_nav is the island, ui.sections[] what each item opens, ui.default_section where the app opens. browser = BrowserHostFragment's page (its address bar, tab strip and overlays are the lib's own UI, so the section has no pages), tabs = the tab switcher (BrowserHostFragment.openTabs: the grid, where a tab dropped on another makes a group; #886 moved it from a button into the island), favourites = the bookmarks as a list or icon grid over it (BrowserHostFragment.openFavourites, #893; island order Fav, Tabs, Browser, Search, Scrapers; #1426 Scrapers took Configs' island place and Configs stays a section the first row's ⋮ opens), search = the Search add-on's page over it (BrowserHostFragment.showSearchPage), configs = the browser settings over it (showSettings), one top tab (PageTabs, scrolling sideways) per Configs page: ui.sections[configs].pages = settings_sections (#900). scrapers = libs:scraper's Site Files and Scrap Tools pages, drawn by MainActivity over the host (top tabs = ui.sections[scrapers].pages). MainActivity feeds the island from NavDecl and follows the host's overlays so the pill goes back to Browser when one closes.",
     "bottom_nav": [
       "favourites",
       "tabs",
       "browser",
       "search",
-      "configs"
+      "scrapers"
     ],
     "sections": [
       {
@@ -1934,6 +1945,23 @@
         "label": "Search",
         "icon": "search",
         "pages": []
+      },
+      {
+        "id": "scrapers",
+        "label": "Scrapers",
+        "icon": "download",
+        "pages": [
+          {
+            "id": "site_files",
+            "label": "Site Files",
+            "icon": "folder_open"
+          },
+          {
+            "id": "scrap_tools",
+            "label": "Scrap Tools",
+            "icon": "build"
+          }
+        ]
       },
       {
         "id": "configs",
@@ -2174,8 +2202,12 @@
           "what": "Search engines and suggestions."
         },
         {
+          "name": "Scrapers",
+          "what": "Site Files (every file a site left: cache, downloads, saved pages) and Scrap Tools (YouTube Download)."
+        },
+        {
           "name": "Configs",
-          "what": "Site settings, privacy, downloads and appearance."
+          "what": "Site settings, privacy, downloads and appearance (the top bar's ⋮)."
         }
       ],
       "guide": [
