@@ -72,7 +72,7 @@ object ExperiencesModel {
     }
 
     /** Done on one side, planned and in progress on the other. */
-    fun split(items: List<ExpItem>): Pair<List<ExpItem>, List<ExpItem>> = items.partition { it.status != ExpStatus.PLANNED }
+    fun split(items: List<ExpItem>): Pair<List<ExpItem>, List<ExpItem>> = items.partition { it.status == ExpStatus.DONE }
 
     /** Done: newest first. Planned: in progress first, then the nearest target. Undated items go last, by title. */
     fun sorted(items: List<ExpItem>): List<ExpItem> =
@@ -97,7 +97,7 @@ object ExperiencesModel {
 
     /** Per category: done vs planned (in progress counts as planned), the biggest first. */
     fun counts(items: List<ExpItem>): List<CatCount> =
-        items.groupBy { it.category }.map { (c, l) -> CatCount(c, l.count { it.status == ExpStatus.DONE }, l.count { it.status == ExpStatus.PLANNED }) }
+        items.groupBy { it.category }.map { (c, l) -> CatCount(c, l.count { it.status == ExpStatus.DONE }, l.count { it.status != ExpStatus.DONE }) }
             .sortedWith(compareByDescending<CatCount> { it.total }.thenBy { it.category })
 
     /** The done share of everything, 0..1; nothing at all is 0. */
@@ -110,7 +110,7 @@ object ExperiencesModel {
     fun markDone(data: LedgerData, plan: String, done: String, id: String, today: String): LedgerData {
         val rec = data.rows(plan).firstOrNull { it["id"] == id } ?: return data
         val target = rec["date"].orEmpty()
-        val moved = rec - "id" - STATUS + ("date" to (rec["date"]?.takeIf { it.isNotBlank() } ?: today)) + (if (target.isNotBlank() && target != today) mapOf(TARGET to target) else emptyMap())
+        val moved = rec - "id" - STATUS + ("date" to today) + (if (target.isNotBlank() && target != today) mapOf(TARGET to target) else emptyMap())
         return data.removed(plan, id).added(done, moved)
     }
 
@@ -138,7 +138,7 @@ object ExperiencesModel {
     fun bucket(year: Int?, own: Int, born: Int, ages: List<Int>): Int {
         if (year == null) return own
         val sortedAges = ages.sorted()
-        return sortedAges.firstOrNull { year <= born + it } ?: sortedAges.last()
+        return sortedAges.firstOrNull { year < born + it } ?: sortedAges.last()
     }
 
     /** The By 30 / 40 / 50 timeline over the collections `by<age>_done` / `by<age>_todo` of the whole store. */
