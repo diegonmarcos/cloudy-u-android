@@ -25,7 +25,11 @@ has() { grep -q "$1" "$OUT/ui.xml"; }
 texts() { grep -oE 'text="[^"]+"' "$OUT/ui.xml" | sed 's/text="//;s/"$//' | sort -u | tr '\n' ';'; }
 # The Store's wireless-debug probe makes the system ask "Allow wireless debugging on this network?" on an emulator:
 # not part of this proof, so it is cancelled wherever it appears.
-calm() { for k in 1 2 3; do dump >/dev/null; grep -q 'Allow wireless debugging' "$OUT/ui.xml" || return 0; where '^Cancel$' | { read -r px py && adb shell input tap "$px" "$py"; }; sleep 2; done; }
+# The Store's own first-run question (keep update checks running?) is answered "Not now" for the same reason.
+calm() { for k in 1 2 3 4; do dump >/dev/null
+  if grep -q 'Allow wireless debugging' "$OUT/ui.xml"; then where '^Cancel$' | { read -r px py && adb shell input tap "$px" "$py"; }
+  elif grep -q 'text="Not now"' "$OUT/ui.xml"; then where '^Not now$' | { read -r px py && adb shell input tap "$px" "$py"; }
+  else return 0; fi; sleep 2; done; }
 # Scroll until [pattern] is on screen (max [n] swipes).
 seek() { for i in $(seq 1 "${2:-25}"); do calm; grep -qE "$1" "$OUT/ui.xml" && return 0; adb shell input swipe 540 1700 540 700 400; sleep 1; done; return 1; }
 # Bring the node matching [pattern] near the top so the shot shows what follows it.
