@@ -1,0 +1,117 @@
+# #1407 Cloud Calc Measure > LF-RFID-Tags mutation proof: the EM4100 / HID H10301 / FDX-B / T5577 decoders, the Proxmark3 /
+# Flipper command builders, the library CSV, and the CDC / CP210x / CH340 init transfers and BLE chunking (:measure LfRfid.kt,
+# LfSerial.kt) are pinned by LfRfidTest and LfSerialTest. The real tree runs GREEN once, then each planted mutant must turn it RED.
+# Manual only.
+name: calc-lfrfid-mutation
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: "all | one of the mutant names below"
+        required: false
+        default: "all"
+permissions:
+  contents: read
+env:
+  WORK_DIR: ac_cloud-calc
+jobs:
+  mutate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: "platforms;android-36 platforms;android-35 platforms;android-26 build-tools;35.0.0 build-tools;34.0.0 platform-tools"
+      - name: Set up Gradle 8.10.2 (cached)
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: "8.10.2"
+      # ── MANAGED-GRADLE-CACHE-HYGIENE: injected by cloud-android-gradle-cache-hygiene.py ──
+      # Edit 1_cicd/src/actions/gradle-cache-hygiene, never this block.
+      - name: Gradle cache hygiene (retry failed resolution, never cache a failed lookup)
+        uses: ./.github/actions/gradle-cache-hygiene
+      # ── end MANAGED-GRADLE-CACHE-HYGIENE ──
+      - name: Checkout vault (shared Android signing key, read by app/build.gradle at configuration)
+        uses: actions/checkout@v4
+        with:
+          repository: diegonmarcos/cloud-me-pvt-vault
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
+          path: .vault
+      - name: Install jq
+        run: sudo apt-get update -y && sudo apt-get install -y jq
+      - name: Install ORAS + sops (pinned)
+        uses: ./.github/actions/install-pinned-tools
+        with:
+          tools: oras sops
+      - name: Real tree GREEN, every mutant RED
+        env:
+          BYPASS_NIX: "1"
+          VAULT_DIR: ${{ github.workspace }}/.vault
+          SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
+          ONLY: ${{ inputs.name }}
+        run: |
+          set -u
+          jq '.tests.unit.task = ":measure:test"' "$WORK_DIR/build.json" > /tmp/b.json && mv /tmp/b.json "$WORK_DIR/build.json"
+          D=ac_cloud-calc/measure/src/main/kotlin/com/diegonmarcos/cloudcalc/measure
+          # Only the suites under proof run: another ticket's measure test must not decide whether these mutants are caught.
+          find ac_cloud-calc/measure/src/test -name '*.kt' ! -name 'LfRfidTest.kt' ! -name 'LfSerialTest.kt' -delete
+          suite() { sh 1_cicd/dist/scripts/cloud-android-test-engine.sh unit "$WORK_DIR" > /tmp/suite.log 2>&1; }
+          sub() { python3 -c 'import sys; p, a, b = sys.argv[1:]; s = open(p).read(); assert a in s, "anchor missing: " + a; open(p, "w").write(s.replace(a, b, 1))' "$1" "$2" "$3"; }
+          suite || { tail -80 /tmp/suite.log; echo "::error::the real tree is RED"; exit 1; }
+          grep -rq "LfSerialTest" ac_cloud-calc/measure/build/test-results 2>/dev/null || { echo "::error::LfSerialTest did not run"; exit 1; }
+          echo "real tree: GREEN"
+          stayed=0
+          while IFS='@' read -r f name a b; do
+            [ -z "$name" ] && continue
+            [ "$ONLY" != "all" ] && [ "$ONLY" != "$name" ] && continue
+            case "$f" in R) V=$D/LfRfid.kt ;; *) V=$D/LfSerial.kt ;; esac
+            git checkout -- "$D"
+            sub "$V" "$a" "$b" || { echo "::error::$name: mutation anchor missing"; stayed=$((stayed + 1)); continue; }
+            if suite; then echo "::error::mutant stayed GREEN: $name"; stayed=$((stayed + 1)); else echo "RED (caught): $name"; fi
+          done <<'MUTANTS'
+          R@em-header@if (!b.startsWith("111111111") || b[63] != '0') return null@if (b[63] != '0') return null
+          R@em-row-parity@if ((Integer.bitCount(nib) and 1) != row[4] - '0') return null@
+          R@em-col-parity@if (b.substring(59, 63).toInt(2) != cols) return null@
+          R@em-encode-parity@+ (Integer.bitCount(nib) and 1)@+ 0
+          R@rdm-xor@x = x xor txt.substring(2 * i, 2 * i + 2).toInt(16)@x = txt.substring(2 * i, 2 * i + 2).toInt(16)
+          R@rdm-etx@ || s[13] != 0x03.toByte()@
+          R@hid-even@val ep = Integer.bitCount(data shr 12) and 1@val ep = 0
+          R@hid-odd@val op = (Integer.bitCount(data and 0xFFF) + 1) and 1@val op = Integer.bitCount(data and 0xFFF) and 1
+          R@hid-fc-range@fc in 0..255@fc in 0..256
+          R@fdx-country-shift@(country.toLong() shl 38)@(country.toLong() shl 37)
+          R@fdx-national-mask@code and 0x3FFFFFFFFFL@code and 0xFFFFFFFFFL
+          R@t55-rate@RATES[bits(v, 11, 3)]@RATES[bits(v, 12, 3)]
+          R@t55-modulation@MODS[bits(v, 15, 5)] ?:@MODS[bits(v, 14, 5)] ?:
+          R@t55-maxblock@bits(v, 24, 3), bits(v, 27, 1)@bits(v, 25, 3), bits(v, 27, 1)
+          R@t55-password@bits(v, 27, 1) == 1@bits(v, 28, 1) == 1
+          R@dump-first-wins@if (i in 0..7 && i !in out)@if (i in 0..7)
+          R@dump-page0@if (i in 0..7 &&@if (i in 0..8 &&
+          R@em-clone-config@listOf("00148040", "%08X"@listOf("00148041", "%08X"
+          R@t55-write-block@require(block in 0..7)@require(block in 0..8)
+          R@t55-write-pwd@" -p ${hex(it, 8, "password")}"@" -p $it"
+          R@flipper-hid-cn@"rfid write H10301 %02X%04X"@"rfid write H10301 %02X%03X"
+          R@csv-quote@.replace("\"", "\"\"")@
+          S@cdc-dtr-rts@Ctrl(0x21, 0x22, 0x03, iface)@Ctrl(0x21, 0x22, 0x01, iface)
+          S@cdc-8-bits@listOf<Byte>(0, 0, 8)@listOf<Byte>(0, 0, 7)
+          S@cp210x-baud@le32(baud)),@le32(9600)),
+          S@cp210x-8n1@0x0800@0x0700
+          S@ch340-prescale@factor = factor shr 3@factor = factor shr 2
+          S@ch340-bit7@or divisor or 0x80@or divisor
+          S@ch340-handshake@(0x20 or 0x40).inv()@(0x20).inv()
+          S@ch340-lcr@0x00C3@0x00C2
+          S@chip-ch341@0x1A86, 0x4348 ->@0x1A86 ->
+          S@pm3-name-case@contains("PM3", false)@contains("PM3", true)
+          S@em-baud@if (r == LfReader.EM_SERIAL) 9600 else 115200@115200
+          S@ble-mtu@(mtu - 3)@(mtu - 2)
+          S@ble-min-chunk@.coerceAtLeast(1)@
+          MUTANTS
+          git checkout -- "$D"
+          [ "$stayed" -eq 0 ] || { echo "::error::$stayed mutant(s) stayed green"; exit 1; }
+          echo "every mutant RED"

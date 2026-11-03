@@ -8,6 +8,7 @@
     "bt_scan",
     "bt_connect",
     "camera",
+    "usb_host",
     "microphone",
     "activity_recognition",
     "body_sensors",

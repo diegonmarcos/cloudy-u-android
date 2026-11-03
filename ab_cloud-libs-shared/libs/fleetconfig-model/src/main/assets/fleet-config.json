@@ -508,6 +508,14 @@
         "ac_cloud-calc"
       ]
     },
+    "cloud_calc_lfrfid": {
+      "kind": "prefs",
+      "class": "content",
+      "doc": "#1407 Measure > LF-RFID-Tags saved tags library ('tags' key, LfLibrary JSON); user data, small and local, moved by its JSON / CSV export.",
+      "used_by": [
+        "ac_cloud-calc"
+      ]
+    },
     "cloud_calc_jev": {
       "kind": "prefs",
       "class": "config",

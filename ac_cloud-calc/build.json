@@ -2246,7 +2246,7 @@
           {
             "id": "lfrfid",
             "label": "LF-RFID-Tags",
-            "icon": "usb"
+            "icon": "nfc"
           }
         ]
       },
@@ -4946,7 +4946,7 @@
       {
         "id": "lfrfid_read",
         "label": "Read",
-        "icon": "usb",
+        "icon": "nfc",
         "tab": "lfrfid",
         "kind": "lfrfid",
         "spec": {
@@ -5482,6 +5482,7 @@
       "bt_scan",
       "bt_connect",
       "camera",
+      "usb_host",
       "microphone",
       "activity_recognition",
       "body_sensors",
