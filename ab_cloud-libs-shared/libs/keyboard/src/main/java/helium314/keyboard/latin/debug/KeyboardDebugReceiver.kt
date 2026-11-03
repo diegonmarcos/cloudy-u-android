@@ -85,7 +85,9 @@ class KeyboardDebugReceiver(private val ime: LatinIME) : BroadcastReceiver() {
             }
             // Grammar Check ▸ Highlight popup (CI screenshots): set the mode, move the cursor, press the popup's actions.
             // The Grammar ENGINE ("off" | "local" | "remote" | "ai"); unset it reads as off, so Highlight would mark nothing.
-            "grammar-engine" -> { ime.prefs().edit().putString(helium314.keyboard.latin.settings.Settings.PREF_GRAMMAR_MODE, arg).apply(); "ok" }
+            "grammar-engine" -> { ime.prefs().edit().putString(helium314.keyboard.latin.settings.Settings.PREF_GRAMMAR_MODE, arg)
+                // "Capitalise I" is off by default (#1077); the Highlight shots mark a lowercase i, so it is switched on here.
+                .putBoolean(helium314.keyboard.latin.settings.Settings.PREF_GRAMMAR_FIX_CAPITALIZE_I, true).apply(); "ok" }
             "grammar" -> { GrammarMode.write(ime.prefs(), GrammarMode.fromId(arg) ?: return "unknown mode"); "ok" }
             "select" -> {
                 val ic = ime.currentInputConnection ?: return "no connection"
