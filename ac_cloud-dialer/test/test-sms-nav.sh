@@ -68,7 +68,14 @@ def check(root):
     if re.search(r"TabLayout|BottomNavigationView|NavigationBarView", layout):
         bad.append("activity_main.xml draws a nav widget of its own")
     tabs = read(root, K + "helpers/Constants.kt")
+    # #1415 Keypad and SIMs are island items that are not pager pages (DialerNav.NON_PAGER).
+    nav = read(root, K + "nav/DialerNav.kt")
+    m = re.search(r"NON_PAGER[^=]*=\s*setOf\(([^)]*)\)", nav)
+    consts = dict(re.findall(r'const val (\w+) = "([^"]+)"', nav))
+    non_pager = {consts.get(x.strip(), x.strip()) for x in m.group(1).split(",")} if m else set()
     for sid in bar:
+        if sid in non_pager:
+            continue
         if 'sectionId = "%s"' % sid not in tabs:
             bad.append("no DialerTab (pager page) for section %r" % sid)
     if "R.layout.fragment_sms" not in tabs:

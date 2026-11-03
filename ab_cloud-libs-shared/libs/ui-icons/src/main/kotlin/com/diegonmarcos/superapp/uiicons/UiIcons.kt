@@ -188,6 +188,9 @@ public object UiIcons {
         "bookmark" to Icons.Outlined.Bookmark,
         "star" to Icons.Outlined.Star,
         "sms" to Icons.Outlined.Sms,
+        // #1415 Cloud Dialer bottom nav: Keypad and SIMs.
+        "dialpad" to Icons.Outlined.Dialpad,
+        "sim_card" to Icons.Outlined.SimCard,
         // Drawable-style names the Me, C3 and Drive declarations already use (enforced by those apps' own tests), as Material glyphs.
         "ic_p_health_body" to Icons.Outlined.AccessibilityNew,
         "ic_p_health_vitals" to Icons.Outlined.MonitorHeart,

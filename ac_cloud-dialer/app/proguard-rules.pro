@@ -37,3 +37,11 @@
     boolean checkAppSideloading(android.app.Activity) return false;
     boolean isAppSideloaded(android.app.Activity) return false;
 }
+
+# #1415 security-crypto (EncryptedSharedPreferences / MasterKey via libs:crash SafeEncryptedPrefs): sha-61326f78 crashed
+# with NoClassDefFoundError MasterKey$Builder. The library is linked in app/build.gradle.kts; keep it whole, since it is
+# reached through libs:crash and Tink's key managers are looked up reflectively. Tink's compile-time annotations are absent.
+-keep class androidx.security.crypto.** { *; }
+-keep class com.google.crypto.tink.** { *; }
+-dontwarn com.google.errorprone.annotations.**
+-dontwarn javax.annotation.**

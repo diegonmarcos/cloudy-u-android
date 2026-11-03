@@ -88,4 +88,11 @@ object SimUsage {
         SimRow("SMS sent", t.smsOut.toString()),
         SimRow("Mobile data", againstAllowance(t.dataBytes, allowance)),
     )
+
+    /** #1415 the Usage table: one line per period (today, this cycle, month by month). */
+    val TABLE_HEADER: List<String> = listOf("Period", "Calls", "Min", "SMS", "Data")
+
+    fun table(rows: List<Pair<UsagePeriod, UsageTotals>>): List<List<String>> = rows.map { (p, t) ->
+        listOf(p.label, "${t.callsIn + t.callsOut}", "${t.minutesIn + t.minutesOut}", "${t.smsIn + t.smsOut}", StatusFormat.bytes(t.dataBytes))
+    }
 }

@@ -89,4 +89,11 @@ object StatusFormat {
         SimRow("VoWiFi", yn(s.vowifi)),
         SimRow("Data this month", bytes(s.monthBytes)),
     )
+
+    /** #1415 the Status summary table: one line per SIM. */
+    val TABLE_HEADER: List<String> = listOf("SIM", "Service", "RAT", "Signal")
+
+    fun table(list: List<SimStatus>): List<List<String>> = list.map { s ->
+        listOf("SIM ${s.slot + 1}", service(s.serviceState), s.rat ?: "-", dbm(s.dbm))
+    }
 }

@@ -14,7 +14,12 @@ object DialerNav {
         NavDecl.fromBuildConfig(BuildConfig.UI_SECTIONS_B64, BuildConfig.UI_BOTTOM_NAV, BuildConfig.UI_DEFAULT_SECTION)
     }
 
-    /** The bottom nav's sections, in declared order, limited to the sections whose page is on screen. */
+    /** #1415 Keypad (opens the dialpad) and SIMs (the per-SIM info + usage page) are not pager pages: always shown. */
+    const val KEYPAD = "keypad"
+    const val SIMS = "sims"
+    val NON_PAGER: Set<String> = setOf(KEYPAD, SIMS)
+
+    /** The bottom nav's sections, in declared order, limited to the sections whose page is on screen (plus [NON_PAGER]). */
     fun shown(visibleSections: Collection<String>): List<NavSection> =
-        decl.bottomSections().filter { it.id in visibleSections }
+        decl.bottomSections().filter { it.id in visibleSections || it.id in NON_PAGER }
 }

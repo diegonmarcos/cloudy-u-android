@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# #1411 Configs: General | Perms | About (fleet pattern) + SIM, Status, Usage declared and wired; secrets only encrypted.
+# #1411/#1415 Configs: General | Perms | About (fleet pattern) + SIM, Status, Usage declared and wired; secrets only encrypted.
 set -u
 cd "$(dirname "$0")/.."
 fail=0; ok() { echo "ok   $1"; }; bad() { echo "FAIL $1"; fail=1; }
@@ -12,9 +12,12 @@ done
 for x in phone_state phone_numbers sms_read usage_access; do
   jq -e --arg x "$x" '.perms.needs | index($x)' build.json >/dev/null && ok "perm $x via libs:perms" || bad "perm $x"
 done
-grep -q 'FleetConfigsEntries.addTo(' app/src/main/kotlin/org/fossify/phone/activities/MainActivity.kt && ok "General/About wired" || bad "FleetConfigsEntries not wired"
-grep -q 'PAGE_USAGE' app/src/main/kotlin/org/fossify/phone/activities/MainActivity.kt && ok "SIM/Status/Usage wired" || bad "menu"
-grep -q '\.sim\.SimConfigsActivity' app/src/main/AndroidManifest.xml && ok "activity in manifest" || bad "manifest"
+# #1415 SIM / Status / Usage are tabs of the one Configs (DialerConfigsActivity); test-dialer-configs-nav.sh holds the entry and the tabs.
+C=app/src/main/kotlin/org/fossify/phone/configs/DialerConfigsActivity.kt
+for f in SimCardsPage SimStatusPage SimUsagePage FleetGeneralPage FleetAboutPage AppPermsSection; do
+  grep -q "$f(" $C && ok "Configs draws $f" || bad "Configs lacks $f"
+done
+grep -q '\.configs\.DialerConfigsActivity' app/src/main/AndroidManifest.xml && ok "activity in manifest" || bad "manifest"
 grep -q 'SafeEncryptedPrefs.prefs' $S/SimManualStore.kt && ok "manual SIM data encrypted" || bad "not encrypted"
 if grep -rnE 'getSharedPreferences|PreferenceManager|EncryptedSharedPreferences\.create' $S; then bad "plain prefs in sim/"; else ok "no plain prefs in sim/"; fi
 if grep -rnE 'Log\.[dviwe]\(|println\(' $S; then bad "logging in sim/ (never log PIN/PUK)"; else ok "no logging in sim/"; fi

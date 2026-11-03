@@ -94,9 +94,9 @@
         </activity>
 
         <activity
-            android:name=".sim.SimConfigsActivity"
+            android:name=".configs.DialerConfigsActivity"
             android:exported="false"
-            android:label="SIM"
+            android:label="Configs"
             android:parentActivityName=".activities.MainActivity" />
 
         <activity

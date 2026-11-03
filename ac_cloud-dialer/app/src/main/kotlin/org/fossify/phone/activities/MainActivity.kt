@@ -1,8 +1,7 @@
 package org.fossify.phone.activities
 
-import com.diegonmarcos.superapp.fleetconfigs.FleetConfigsEntries
-import org.fossify.phone.sim.SimConfigsActivity
-import android.view.Menu
+import org.fossify.phone.configs.DialerConfigsActivity
+import org.fossify.phone.sim.SimsOverviewPage
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
@@ -24,6 +23,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -228,6 +229,10 @@ class MainActivity : SimpleActivity() {
         return if (binding.mainMenu.isSearchOpen) {
             binding.mainMenu.closeSearch()
             true
+        } else if (selectedSection.value == DialerNav.SIMS) {
+            // #1415 back from the SIMs tab returns to the pager's page.
+            selectedSection.value = visibleTabs().getOrNull(binding.viewPager.currentItem)?.sectionId.orEmpty()
+            true
         } else {
             false
         }
@@ -269,27 +274,17 @@ class MainActivity : SimpleActivity() {
                 getCurrentFragment()?.onSearchQueryChanged(text)
             }
 
-            // #1411 Configs on the fleet pattern: General | About (libs:ui-nav-bars, Perms inside General) + SIM | Status.
-            FleetConfigsEntries.addTo(requireToolbar().menu)
-            if (requireToolbar().menu.findItem(ID_CONFIGS_SIM) == null) {
-                requireToolbar().menu.add(Menu.NONE, ID_CONFIGS_SIM, Menu.NONE, "Configs ▸ SIM")
-                requireToolbar().menu.add(Menu.NONE, ID_CONFIGS_STATUS, Menu.NONE, "Configs ▸ Status")
-                requireToolbar().menu.add(Menu.NONE, ID_CONFIGS_USAGE, Menu.NONE, "Configs ▸ Usage")
-            }
+            // #1415 ONE Configs: the top bar's Configs icon (DialerConfigsActivity). The search bar carries no overflow
+            // (no ⋮): every item of R.menu.menu is an icon action, Settings / About live in Configs.
+            requireToolbar().overflowIcon = null
             requireToolbar().setOnMenuItemClickListener { menuItem ->
-                if (FleetConfigsEntries.handle(this@MainActivity, menuItem)) return@setOnMenuItemClickListener true
                 when (menuItem.itemId) {
-                    ID_CONFIGS_SIM -> startActivity(SimConfigsActivity.intent(this@MainActivity, SimConfigsActivity.PAGE_SIM))
-                    ID_CONFIGS_STATUS -> startActivity(SimConfigsActivity.intent(this@MainActivity, SimConfigsActivity.PAGE_STATUS))
-                    ID_CONFIGS_USAGE -> startActivity(SimConfigsActivity.intent(this@MainActivity, SimConfigsActivity.PAGE_USAGE))
                     R.id.clear_call_history -> clearCallHistory()
                     R.id.create_new_contact -> launchCreateNewContactIntent()
                     R.id.sort -> showSortingDialog(showCustomSorting = getCurrentFragment() is FavoritesFragment)
                     R.id.filter -> showFilterDialog()
-                    R.id.settings -> launchSettings()
                     R.id.change_view_type -> changeViewType()
                     R.id.column_count -> changeColumnCount()
-                    R.id.about -> launchAbout()
                     else -> return@setOnMenuItemClickListener false
                 }
                 return@setOnMenuItemClickListener true
@@ -443,7 +438,7 @@ class MainActivity : SimpleActivity() {
             hierarchy = shown.map { HierarchyEntry(it.id, it.label, 0, it.id, selected = it.id == sectionId) },
             onNavigate = { e -> selectSection(e.sectionId) },
             onAccount = rememberAccountLauncher(),
-            onConfigs = { launchSettings() },
+            onConfigs = { startActivity(DialerConfigsActivity.intent(this@MainActivity)) },
             onAi = rememberSuperAppAiLauncher(),
             modifier = Modifier.fillMaxSize().statusBarsPadding(),
             dark = dark,
@@ -464,6 +459,7 @@ class MainActivity : SimpleActivity() {
             ) {
                 val collapse = LocalNavChromeCollapse.current
                 SideEffect { collapseTarget = collapse }
+                Box(Modifier.fillMaxSize()) {
                 AndroidView(
                     factory = {
                         // The shell's chrome owns the window insets (status bar above, nav bar below), so the Fossify pages get none.
@@ -473,12 +469,27 @@ class MainActivity : SimpleActivity() {
                     },
                     modifier = Modifier.fillMaxSize(),
                 )
+                // #1415 the SIMs tab: drawn over the pager (which stays composed), each SIM's info and its usage.
+                if (sectionId == DialerNav.SIMS) {
+                    val c = com.diegonmarcos.superapp.themebg.ThemeBackground.colors(dark)
+                    Box(Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(c.top, c.bottom)))) {
+                        SimsOverviewPage(c)
+                    }
+                }
+                }
             }
         }
     }
 
     /** A tap on the bottom nav: show that section's page. */
     private fun selectSection(sectionId: String) {
+        when (sectionId) {
+            DialerNav.KEYPAD -> { launchDialpad(); return }
+            DialerNav.SIMS -> { selectedSection.value = DialerNav.SIMS; return }
+        }
+        if (selectedSection.value == DialerNav.SIMS) {
+            selectedSection.value = sectionId
+        }
         val index = visibleTabs().indexOfFirst { it.sectionId == sectionId }
         if (index >= 0) {
             binding.viewPager.currentItem = index
@@ -574,15 +585,6 @@ class MainActivity : SimpleActivity() {
         .indexOfFirst { it.visibilityMask == config.defaultTab }
         .coerceAtLeast(HOME_TAB_INDEX)
 
-    private fun launchSettings() {
-        hideKeyboard()
-        startActivity(Intent(applicationContext, SettingsActivity::class.java))
-    }
-
-    private fun launchAbout() {
-        startActivity(Intent(applicationContext, AboutActivity::class.java))
-    }
-
     private fun showSortingDialog(showCustomSorting: Boolean) {
         ChangeSortingDialog(this, showCustomSorting) {
             getFavoritesFragment()?.refreshItems {
@@ -647,6 +649,3 @@ class MainActivity : SimpleActivity() {
 }
 
 
-private const val ID_CONFIGS_SIM = 0x0F1C0101
-private const val ID_CONFIGS_STATUS = 0x0F1C0102
-private const val ID_CONFIGS_USAGE = 0x0F1C0103

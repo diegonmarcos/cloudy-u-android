@@ -29,6 +29,8 @@ fun hasSigningVars(): Boolean {
 // UI_SECTIONS_B64 / UI_BOTTOM_NAV / UI_DEFAULT_SECTION and decoded once by DialerNav; no section id is
 // spelled in Kotlin. nav-shape-guard (N1-N9) holds this app to it.
 val dialerUi = (groovy.json.JsonSlurper().parse(rootProject.file("build.json")) as Map<*, *>)["ui"] as Map<*, *>
+val dialerConfigsTopNav = (((groovy.json.JsonSlurper().parse(rootProject.file("build.json")) as Map<*, *>)["configs_pages"] as Map<*, *>)["top_nav"] as List<*>)
+    .joinToString(",") { p -> (p as Map<*, *>).let { "${it["id"]}:${it["label"]}:${it["icon"]}" } }
 fun base64Json(value: Any?): String =
     Base64.getEncoder().encodeToString(groovy.json.JsonOutput.toJson(value).toByteArray())
 
@@ -74,6 +76,8 @@ android {
         buildConfigField("String", "UI_SECTIONS_B64", "\"${base64Json(dialerUi["sections"])}\"")
         buildConfigField("String", "UI_BOTTOM_NAV", "\"${(dialerUi["bottom_nav"] as List<*>).joinToString(",")}\"")
         buildConfigField("String", "UI_DEFAULT_SECTION", "\"${dialerUi["default_section"]}\"")
+        // #1415 build.json::configs_pages.top_nav: the tabs of the one Configs (DialerConfigsActivity), "id:Label:icon,...".
+        buildConfigField("String", "CONFIGS_TOP_NAV", "\"${dialerConfigsTopNav}\"")
         buildConfigField("boolean", "AUTO_UPDATE_ENABLED", "${project.findProperty("AUTO_UPDATE_ENABLED") ?: "false"}")
         buildConfigField("boolean", "AU_REQUIRE_UNMETERED", "${project.findProperty("AU_REQUIRE_UNMETERED") ?: "true"}")
         buildConfigField("boolean", "AU_REQUIRE_CHARGING", "${project.findProperty("AU_REQUIRE_CHARGING") ?: "false"}")
@@ -216,6 +220,11 @@ dependencies {
     implementation(libs.eventbus)
     implementation(libs.libphonenumber)
     implementation(libs.geocoder)
+    // #1415 libs:crash's SafeEncryptedPrefs (SIM manual fields, PIN/PUK) is compiled against security-crypto
+    // compileOnly: the app links it or MasterKey\$Builder is missing at runtime (NoClassDefFoundError, sha-61326f78).
+    // test/test-runtime-only-deps.sh fails the ship when a lib's compileOnly dependency the app reaches is not linked.
+    implementation(libs.androidx.security.crypto)
+    implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.work:work-runtime-ktx:2.12.0")
     testImplementation("junit:junit:4.13.2")
     // Compose UI tests of the SMS screens run on the JVM under Robolectric (same stack as libs:bottomnav's tests).

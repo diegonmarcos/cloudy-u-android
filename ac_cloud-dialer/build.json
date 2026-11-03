@@ -155,12 +155,14 @@
   },
   "ui": {
     "_doc": "#868 THE navigation declaration (libs:bottomnav's NavDecl): ui.bottom_nav is the island's section ids in display order, ui.sections[] each carry the one page they show. Home, Contacts, Favorites and Calls are the upstream pager pages; Settings > Manage shown tabs still hides the three optional ones. SMS is the default-SMS-app screen. app/build.gradle.kts bakes this as UI_SECTIONS_B64 / UI_BOTTOM_NAV / UI_DEFAULT_SECTION.",
+    "_doc_bottom_nav": "#1415 the island, in this order: Contacts | Keypad | Home | Calls | SMS | SIMs. keypad opens the dialpad, sims is the per-SIM info + usage page (org.fossify.phone.sim.SimsOverviewPage); neither is a pager page (DialerNav.NON_PAGER). Favorites stays a pager page, off the island. test/test-dialer-configs-nav.sh holds the order.",
     "bottom_nav": [
-      "home",
       "contacts",
-      "favorites",
+      "keypad",
+      "home",
       "recents",
-      "sms"
+      "sms",
+      "sims"
     ],
     "default_section": "home",
     "configs_ui": ["nav_ui"],
@@ -224,6 +226,30 @@
             "icon": "sms"
           }
         ]
+      },
+      {
+        "id": "keypad",
+        "label": "Keypad",
+        "icon": "dialpad",
+        "pages": [
+          {
+            "id": "keypad",
+            "label": "Keypad",
+            "icon": "dialpad"
+          }
+        ]
+      },
+      {
+        "id": "sims",
+        "label": "SIMs",
+        "icon": "sim_card",
+        "pages": [
+          {
+            "id": "sims",
+            "label": "SIMs",
+            "icon": "sim_card"
+          }
+        ]
       }
     ]
   },
@@ -240,14 +266,23 @@
         {
           "id": "app",
           "label": "App",
-          "note": "This app's own settings, SIM and Status."
+          "note": "This app's own settings (the Fossify settings screen)."
         }
       ]
     },
+    "_doc_top_nav": "#1415 THE Configs of Cloud Dialer, one entry (the top bar's Configs icon) and its pages as tabs of the top nav bar, in this order. Baked by app/build.gradle.kts as BuildConfig.CONFIGS_TOP_NAV, drawn by org.fossify.phone.configs.DialerConfigsActivity (libs:ui-nav-bars NavBarTopSecondRow). test/test-dialer-configs-nav.sh holds it.",
+    "top_nav": [
+      {"id": "general", "label": "General", "icon": "settings"},
+      {"id": "perms", "label": "Perms", "icon": "security"},
+      {"id": "sim", "label": "SIM", "icon": "sim_card"},
+      {"id": "status", "label": "Status", "icon": "insights"},
+      {"id": "usage", "label": "Usage", "icon": "bar_chart"},
+      {"id": "about", "label": "About", "icon": "info"}
+    ],
     "app_pages": [
-      {"id": "sim", "label": "SIM", "activity": "org.fossify.phone.sim.SimConfigsActivity", "page": "sim", "what": "One card per SIM slot (physical or eSIM): carrier, MCC/MNC, country, number, masked ICCID / subscription id / EID (tap to reveal), roaming, data/voice/SMS defaults, network type, signal, plus manual provider, plan, price, allowance, renewal, number, PIN/PUK (encrypted, masked), APN notes and support contact."},
-      {"id": "status", "label": "Status", "activity": "org.fossify.phone.sim.SimConfigsActivity", "page": "status", "what": "Live per-SIM status refreshed every 3 s: service, operator, RAT, signal (dBm/RSRP/RSRQ/SINR), cell id, data state, IPv4/IPv6/DNS, roaming, SMS, call state, VoLTE/VoWiFi where exposed, mobile data this month."},
-      {"id": "usage", "label": "Usage", "activity": "org.fossify.phone.sim.SimConfigsActivity", "page": "usage", "what": "Usage tracker per SIM: calls (count and minutes, in and out), SMS sent and received, mobile data; today, this cycle (from the plan's renewal date) and month by month; against the plan allowance where entered. Sources: CallLog, the SMS provider (sub_id), NetworkStatsManager."}
+      {"id": "sim", "label": "SIM", "activity": "org.fossify.phone.configs.DialerConfigsActivity", "page": "sim", "what": "One card per SIM slot (physical or eSIM): carrier, MCC/MNC, country, number, masked ICCID / subscription id / EID (tap to reveal), roaming, data/voice/SMS defaults, network type, signal, plus manual provider, plan, price, allowance, renewal, number, PIN/PUK (encrypted, masked), APN notes and support contact."},
+      {"id": "status", "label": "Status", "activity": "org.fossify.phone.configs.DialerConfigsActivity", "page": "status", "what": "Live per-SIM status refreshed every 3 s: service, operator, RAT, signal (dBm/RSRP/RSRQ/SINR), cell id, data state, IPv4/IPv6/DNS, roaming, SMS, call state, VoLTE/VoWiFi where exposed, mobile data this month."},
+      {"id": "usage", "label": "Usage", "activity": "org.fossify.phone.configs.DialerConfigsActivity", "page": "usage", "what": "Usage tracker per SIM: calls (count and minutes, in and out), SMS sent and received, mobile data; today, this cycle (from the plan's renewal date) and month by month; against the plan allowance where entered. Sources: CallLog, the SMS provider (sub_id), NetworkStatsManager."}
     ],
     "about": {
       "tagline": "Calls, contacts and SMS in one app",
