@@ -24,8 +24,11 @@ texts() { grep -oE '(text|content-desc)="[^"]+"' "$OUT/ui.xml" | sed 's/^[a-z-]*
 tapmap() { box '^World map$' | { read -r a b c d && python3 -I -c 'import sys;a,b,c,d,lon,lat=map(float,sys.argv[1:]);print(int(a+(lon+180)/360*(c-a)),int(b+(90-lat)/180*(d-b)))' $a $b $c $d "$1" "$2"; } | { read -r x y && adb shell input tap $x $y; }; }
 
 # whether a city row is in the list: an added zone is appended below the fold, so scroll down, look, scroll back
-listed() { local hit=1 i; for i in 1 2 3; do dump >/dev/null; grep -q "text=\"$1\"" "$OUT/ui.xml" && { hit=0; break; }; adb shell input swipe 160 560 160 300 300; sleep 1; done
-  for i in 1 2 3; do adb shell input swipe 160 300 160 600 300; done; sleep 1; return $hit; }
+# (swipes in screen fractions: the shots are scaled, the device is not 320 px wide)
+swipe() { local W H; read -r W H < <(adb shell wm size | tr -d '\r' | tail -1 | sed 's/.*: //; s/x/ /')
+  adb shell input swipe $((W / 2)) $((H * $1 / 100)) $((W / 2)) $((H * $2 / 100)) 400; }
+listed() { local hit=1 i; for i in 1 2 3 4; do dump >/dev/null; grep -q "text=\"$1\"" "$OUT/ui.xml" && { hit=0; break; }; swipe 84 40; sleep 1; done
+  for i in 1 2 3 4; do swipe 40 88; done; sleep 1; return $hit; }
 
 adb install -r -g "$APK" || fail "install failed"
 act=$(adb shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.LAUNCHER "$PKG" | tr -d '\r' | tail -1)
