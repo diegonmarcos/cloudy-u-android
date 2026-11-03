@@ -62,7 +62,7 @@ adb shell dumpsys input_method | grep -q 'mInputShown=true' && { adb shell input
 shot 05-city-list-par
 grep -q 'Paris' "$OUT/ui.xml" || fail "searching par does not find Paris: $(texts)"
 # #1409 / #1406 proof shots (same walk): the two nav rows, Date Converter, Calendars, the base converter, Configs pages.
-adb shell input keyevent 4; sleep 1; adb shell input keyevent 4; sleep 2
+dump >/dev/null; grep -q "Add city" "$OUT/ui.xml" && grep -q "Cancel" "$OUT/ui.xml" && { adb shell input keyevent 4; sleep 2; }
 for i in 1 2 3; do swipe 40 88; done; sleep 1
 tap '^Date Converter$' && { sleep 3; shot 06-date-converter; } || fail "no Date Converter tab: $(texts)"
 tap '^Calendars$' || { box '^Date Converter$' >/dev/null && { read -r a b c d < <(box '^Date Converter$'); W=$(adb shell wm size | tr -d '\r' | tail -1 | sed 's/.*: //; s/x.*//'); adb shell input swipe $((W * 9 / 10)) $(( (b + d) / 2 )) $((W / 10)) $(( (b + d) / 2 )) 400; sleep 1; tap '^Calendars$'; }; } || fail "no Calendars tab: $(texts)"
