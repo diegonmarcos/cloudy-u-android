@@ -139,8 +139,8 @@ read -r SW SH < <(adb shell wm size | sed -n 's/.*: *\([0-9]*\)x\([0-9]*\).*/\1 
 SW=${SW:-1080}; SH=${SH:-1920}
 up() { adb shell input swipe $((SW / 2)) $((SH * 85 / 100)) $((SW / 2)) $((SH * 30 / 100)) 500; sleep 2; }
 openat ai_routing 4
-for _ in $(seq 1 30); do adb logcat -d -s AiCatalog:I AiCatalog:W | grep -qE "refreshed|offline|failed" && break; sleep 1; done
-R="$(adb logcat -d -s AiCatalog:I AiCatalog:W | grep -E "refreshed|offline|failed" | tail -1)"; echo "$R"
+for _ in $(seq 1 40); do adb logcat -d | grep -E "AiCatalog.*(refreshed|offline|failed)" | grep -q . && break; sleep 1; done
+R="$(adb logcat -d | grep -E "AiCatalog.*(refreshed|offline|failed)" | tail -1)"; echo "$R"
 grep -q "refreshed [1-9][0-9]* models" <<<"$R" && ok "AI Routing refreshed the OpenRouter model list" || bad "the model list did not refresh: $R"
 sleep 2
 shot 16-ai-routing-refreshed
@@ -153,8 +153,16 @@ openat text_enhance 4; shot 22-enhance-model
 
 # ── Grammar Check Highlight: tap a mark → popup; Ignore → the mark goes and does not come back ─
 adb shell ime set "$IME" >/dev/null 2>&1
-adb shell am start -f $CLEAR -n "$PKG/.ShotActivity" --ez edittext true >/dev/null
-for _ in $(seq 1 25); do shown && break; sleep 1; done; sleep 4
+# A field tap raises the keyboard; the activity alone does not once a Settings page was in front.
+fieldkb() {   # $1 = extra args for am start
+    adb shell am start -f $CLEAR -n "$PKG/.ShotActivity" $1 >/dev/null; sleep 3
+    for _ in 1 2 3 4; do
+        shown && break
+        adb shell input tap $((SW / 2)) $((SH * 118 / 640)); sleep 3
+    done
+    shown && ok "the keyboard is up for $2" || bad "the keyboard is not up for $2"
+}
+fieldkb "--ez edittext true" "Highlight"
 kb grammar highlight
 kb text "hello i "; sleep 2
 kb marks; M="$(last marks)"; echo "$M"
@@ -176,6 +184,7 @@ shot 25-highlight-recheck
 # ── Draft Answer: the Enhance panel in reply mode, input = the newest clipboard item ─
 # Made-up messages. CI holds no AI key, so the draft in shot 28 is put in the draft box by the debug receiver
 # (answer-draft); the real Generate is the same box filled by AiRouter.complete on the Text Enhancement model.
+fieldkb "" "Draft Answer"
 kb clip "Can you send me the quarterly report by tomorrow?"; sleep 1
 kb clip "Hi! Are you free for lunch on Friday at 1pm? Ana"; sleep 1
 kb code ANSWER_BAR; sleep 2
