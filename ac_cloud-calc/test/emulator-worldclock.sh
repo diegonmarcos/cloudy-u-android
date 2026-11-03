@@ -1,5 +1,5 @@
 #!/bin/bash
-# Emulator walk (#1423): Calc > Clock > World clock. Shots: the world map with the declared cities pinned, the map after a
+# Emulator walk (#1423): Calc > Time & Date > World Clock. Shots: the world map with the declared cities pinned, the map after a
 # tap on Paris (Paris added to the list, pinned), the same tap again (removed), and the city list searched for "par".
 # Usage: emulator-worldclock.sh <calc.apk> <outdir>
 set -u
@@ -32,9 +32,11 @@ for i in 1 2 3; do
 done
 dump | grep -q "package=\"$PKG\"" || fail "Calc never came to the front"
 shot 00-start
-# Clock is a tab of the Measure section; the World clock is its first mode.
-tap '^Clock$' || { tap '^Measure$' && sleep 3 && tap '^Clock$'; } || fail "no Clock tab: $(texts)"
-sleep 3; tap '^World clock$' || true; sleep 3
+# Calc > Others row > Time & Date > World Clock (#1409 two-row nav); a Clock tab, where one is declared, also leads there.
+tap '^Calc$' || true; sleep 3
+if tap '^Time & Date$'; then sleep 3; tap '^World [Cc]lock$' || fail "no World Clock in Time & Date: $(texts)"
+else tap '^Clock$' && sleep 3 && { tap '^World clock$' || true; } || fail "no Time & Date page nor Clock tab: $(texts)"; fi
+sleep 3
 box '^World map$' >/dev/null || fail "no world map: $(texts)"
 shot 01-map-pins
 dump >/dev/null; grep -q 'text="Paris"' "$OUT/ui.xml" && fail "Paris already listed before the tap"
