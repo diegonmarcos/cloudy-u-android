@@ -20,6 +20,10 @@ on:
         description: "mutants | screens | both"
         required: false
         default: "both"
+      gpu:
+        description: "emulator -gpu mode for the screens walk (swangle_indirect | swiftshader_indirect | guest)"
+        required: false
+        default: "swangle_indirect"
 
 permissions:
   contents: read
@@ -231,7 +235,7 @@ jobs:
           profile: pixel_5
           ram-size: 4096M
           cores: 4
-          emulator-options: -no-window -gpu swangle_indirect -no-snapshot -noaudio -no-boot-anim
+          emulator-options: -no-window -gpu ${{ inputs.gpu || 'swangle_indirect' }} -no-snapshot -noaudio -no-boot-anim
           disable-animations: true
           script: ./walk.sh
       - name: Upload the screens
