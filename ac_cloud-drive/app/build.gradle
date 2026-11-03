@@ -712,6 +712,7 @@ dependencies {
     // #813 the Disk Management engine (Home ▸ Apps ▸ Disk Management, /api/disk/*); pinned to
     // this app's own grants, so it is compiled in (1_cicd/src/data/lib-classes.json).
     implementation project(':libs:disk')
+    implementation project(':libs:usb-drive')   // #1375/#1405 USB-C drives (StorageVolumes, UsbVolumeModel): the Git volume selector and Files
     // Manage ▸ Apps: running state + PSS of other apps through the fleet's privileged shell channel.
     implementation project(':libs:shizuku-adb-debug-tools')
     // The AI tab: the fleet's AI chat over the fleet agent gateway (no token on the phone). It brings libs:model-catalogue along.
