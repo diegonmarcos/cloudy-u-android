@@ -23,6 +23,7 @@ set -u
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 A="ac_cloud-account"
 K="$A/app/src/main/java/com/diegonmarcos/cloudaccount"
+LK="ab_cloud-libs-shared/libs/account-ui/src/main/java/com/diegonmarcos/cloudaccount"   # #1439 RevealGate / LocalDeviceAuth live in libs:account-ui
 
 check() {
 python3 - "$1" "$A" "$K" <<'PY'
@@ -77,7 +78,7 @@ ok(pg.count("gate.reveal(") >= 3, "reveal and copy go through RevealGate", "a re
 ok(not re.search(r"Text\(\s*HubAndroid\.value", pg) and not re.search(r"SecretClipboard\.copy\(ctx,\s*HubAndroid", pg),
    "no page draws or copies a value without the gate", "a value is drawn or copied without the gate")
 ok("SecretClipboard.copy(ctx, it)" in pg, "copy goes through SecretClipboard (auto-clear)", "copy bypasses SecretClipboard")
-rv = code(rd(f"{K}/hub/Reveal.kt"))
+rv = code(rd("ab_cloud-libs-shared/libs/account-ui/src/main/java/com/diegonmarcos/cloudaccount/hub/Reveal.kt"))
 # EVERY authenticate block (reveal and revealOnIo) must open with the refusal before anything is read
 gated = [re.match(r"\s*\{ ok ->\s*if \(!ok\) \{ denied\(\); return@authenticate \}", b) is not None for b in rv.split("auth.authenticate(reason)")[1:]]
 ok(len(gated) >= 2 and all(gated) and rv.index("if (!ok)") < rv.index("val v = read()"),
@@ -122,7 +123,7 @@ check "$ROOT"; REAL=$?
 
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 mutate() {  # mutate <label> <file> <old> <new>
-  rm -rf "$TMP/r"; mkdir -p "$TMP/r/$A"; cp -r "$ROOT/$A/build.json" "$ROOT/$A/app" "$TMP/r/$A/" 2>/dev/null
+  rm -rf "$TMP/r"; mkdir -p "$TMP/r/$A"; cp -r "$ROOT/$A/build.json" "$ROOT/$A/app" "$TMP/r/$A/" 2>/dev/null; mkdir -p "$TMP/r/ab_cloud-libs-shared/libs"; cp -r "$ROOT/ab_cloud-libs-shared/libs/account-ui" "$TMP/r/ab_cloud-libs-shared/libs/"
   rm -rf "$TMP/r/$A/app/build"
   python3 - "$TMP/r/$2" "$3" "$4" <<'PY' || { echo "  MUTATION NOT APPLIED: $1"; return 1; }
 import sys
@@ -140,8 +141,8 @@ mutate "Setup island back" "$A/build.json" '"bottom_nav": [
       "personal",' || M=1
 mutate "an old page loses its place" "$K/hub/HubNav.kt" '("setup" to "perms") to ("connect" to "perms"),' '' || M=1
 mutate "go() skips the resolver" "$K/MainActivity.kt" 'HubNav.resolve(s, p)' 'Pair(s, p)' || M=1
-mutate "gate reads before auth" "$K/hub/Reveal.kt" 'if (!ok) { denied(); return@authenticate }' 'read(); if (!ok) { denied(); return@authenticate }' || M=1
-mutate "no lock still reveals" "$K/hub/Reveal.kt" '!km.isDeviceSecure) { finish(false)' 'false) { finish(false)' || M=1
+mutate "gate reads before auth" "$LK/hub/Reveal.kt" 'if (!ok) { denied(); return@authenticate }' 'read(); if (!ok) { denied(); return@authenticate }' || M=1
+mutate "no lock still reveals" "$LK/hub/Reveal.kt" '!km.isDeviceSecure) { finish(false)' 'false) { finish(false)' || M=1
 mutate "copy without the gate" "$K/hub/HubPages.kt" 'SecretClipboard.copy(ctx, it)' 'SecretClipboard.copy(ctx, HubAndroid.value(ctx, e.path).orEmpty())' || M=1
 mutate "a hub file logs" "$K/hub/TokenImport.kt" 'val t = text.trim()' 'val t = text.trim(); android.util.Log.d("x", t)' || M=1
 mutate "Setup all dropped from Connections" "$K/hub/HubPages.kt" '        SetupAllCard { tick++ }' '' || M=1

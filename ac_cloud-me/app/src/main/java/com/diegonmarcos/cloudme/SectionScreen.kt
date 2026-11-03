@@ -166,6 +166,8 @@ private fun PageContent(section: Section, page: Page, modifier: Modifier) {
                     onAppConfigs = { target("page:configs/nav") },
                 )
             }
+            // #1439 Profile (the top-right avatar): Cloud Account's Personal Info + Configs, from libs:account-ui.
+            "account_profile" -> com.diegonmarcos.superapp.accountui.AccountProfileScreen(modifier)
             "fleet_about" -> Box(modifier) {
                 com.diegonmarcos.superapp.fleetconfigs.FleetAboutPage(
                     com.diegonmarcos.superapp.fleetconfigs.FleetConfigs.current,

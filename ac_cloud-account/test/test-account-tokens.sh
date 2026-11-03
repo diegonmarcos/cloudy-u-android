@@ -13,7 +13,8 @@ set -u
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 A="ac_cloud-account"
 H="$A/app/src/main/java/com/diegonmarcos/cloudaccount"
-FILES="$A/build.json $H/MainActivity.kt $H/hub/TokensPage.kt $H/hub/TokensClient.kt $H/hub/Reveal.kt $A/app/src/main/res/xml/network_security_config.xml"
+LK="ab_cloud-libs-shared/libs/account-ui/src/main/java/com/diegonmarcos/cloudaccount"   # #1439 RevealGate / LocalDeviceAuth live in libs:account-ui
+FILES="$A/build.json $H/MainActivity.kt $H/hub/TokensPage.kt $H/hub/TokensClient.kt $LK/hub/Reveal.kt $A/app/src/main/res/xml/network_security_config.xml"
 
 check() {
 python3 - "$1" "$A" "$H" <<'PY'
@@ -40,7 +41,7 @@ main = code(rd(f"{H}/MainActivity.kt"))
 data_branch = main.split('"data" -> when (page) {')[1].split('"connect" ->')[0] if '"data" -> when (page) {' in main else ""
 ok('"tokens" -> TokensPage()' in data_branch, "MainActivity mounts TokensPage in the data branch", "TokensPage is not mounted in the data branch")
 
-page = code(rd(f"{H}/hub/TokensPage.kt")); client = code(rd(f"{H}/hub/TokensClient.kt")); reveal = code(rd(f"{H}/hub/Reveal.kt"))
+page = code(rd(f"{H}/hub/TokensPage.kt")); client = code(rd(f"{H}/hub/TokensClient.kt")); reveal = code(rd("ab_cloud-libs-shared/libs/account-ui/src/main/java/com/diegonmarcos/cloudaccount/hub/Reveal.kt"))
 # every call that returns a value sits in a `read = { ... }` lambda handed to revealOnIo
 calls = [m.start() for m in re.finditer(r"client\.(reveal|generate)\(", page)]
 def inside_read(pos):
@@ -84,7 +85,7 @@ M=0
 mutate "Tokens page unmounted" "$H/MainActivity.kt" '"tokens" -> TokensPage()' '"tokens" -> AccountPlaceholderPage(section, page, "x")' || M=1
 mutate "a reveal outside the auth gate" "$H/hub/TokensPage.kt" 'read = { (client.reveal(t.id) as? TokensResult.Ok)?.value },
                 show = { shown[t.id] = it' 'read = { null }, show = { shown[t.id] = (client.reveal(t.id) as? TokensResult.Ok)?.value ?: ""; ""; it' || M=1
-mutate "revealOnIo reads before auth" "$H/hub/Reveal.kt" 'auth.authenticate(reason) { ok ->
+mutate "revealOnIo reads before auth" "$LK/hub/Reveal.kt" 'auth.authenticate(reason) { ok ->
             if (!ok) { denied(); return@authenticate }
             scope.launch {' 'val early = read()
         auth.authenticate(reason) { ok ->

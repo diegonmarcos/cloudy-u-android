@@ -74,7 +74,8 @@ ok(not any(x in ap for x in (".intent", "startActivity", "storePage", "play.goog
 ok("versionName" not in ap and "settings" not in ap, "apps rows are names and classes only", "apps page prints a value")
 ok("handToStore()" in ap and "DeviceVault(ctx).backup(" in ap, "apps page: Install missing via Store + Capture", "apps page lost an action")
 ma = rd("ac_cloud-account/app/src/main/java/com/diegonmarcos/cloudaccount/MainActivity.kt")
-ok('"runbook" -> RunbookTogglesPage(go)' in ma and 'RunbookPage(go)' in rd("ac_cloud-account/app/src/main/java/com/diegonmarcos/cloudaccount/configs/ConfigsPages.kt") and '"push" -> FleetSetupPage(model)' in ma, "Setup mounts runbook / apps / configs", "Setup does not mount runbook/apps/configs")
+# #1439 the Configs router and pages are libs:account-ui's; Cloud Account's host hands the Runbook setup to RunbookPage.
+ok('"runbook" -> RunbookTogglesPage(go)' in rd("ab_cloud-libs-shared/libs/account-ui/src/main/java/com/diegonmarcos/superapp/accountui/AccountUi.kt") and 'AccountUiHost.current.RunbookSetup(go)' in rd("ab_cloud-libs-shared/libs/account-ui/src/main/java/com/diegonmarcos/cloudaccount/configs/ConfigsPages.kt") and '= RunbookPage(go)' in rd("ac_cloud-account/app/src/main/java/com/diegonmarcos/cloudaccount/AccountUiHostImpl.kt") and '"push" -> FleetSetupPage(model)' in ma, "Setup mounts runbook / apps / configs", "Setup does not mount runbook/apps/configs")
 ok('q["step"].isNullOrBlank() -> r.runAll(' in api and 'Op("apps"' in api and '"apps" -> SetupRunbook(ctx).appsPlan()' in api, "debug API: run=1 = Run all, apps op", "debug API lacks Run all or apps")
 
 # spec 4.6 step 3: a foreground service holds the process up (channel + debug server are process state)
@@ -148,7 +149,9 @@ ab_cloud-libs-shared/libs/account/src/main/java/com/diegonmarcos/superapp/profil
 ab_cloud-libs-shared/libs/account/src/main/java/com/diegonmarcos/superapp/profile/AppsPage.kt
 ab_cloud-libs-shared/libs/account/src/main/java/com/diegonmarcos/superapp/profile/AccountPages.kt
 ac_cloud-account/app/src/main/java/com/diegonmarcos/cloudaccount/MainActivity.kt
-ac_cloud-account/app/src/main/java/com/diegonmarcos/cloudaccount/configs/ConfigsPages.kt
+ab_cloud-libs-shared/libs/account-ui/src/main/java/com/diegonmarcos/cloudaccount/configs/ConfigsPages.kt
+ab_cloud-libs-shared/libs/account-ui/src/main/java/com/diegonmarcos/superapp/accountui/AccountUi.kt
+ac_cloud-account/app/src/main/java/com/diegonmarcos/cloudaccount/AccountUiHostImpl.kt
 ac_cloud-store/app/src/main/AndroidManifest.xml
 ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/src/main/java/com/diegonmarcos/superapp/adbdebug/HostShellService.kt
 ab_cloud-libs-shared/libs/devtools/src/main/java/com/diegonmarcos/superapp/devtools/AppDebugServer.kt
@@ -192,8 +195,8 @@ mutate "a value printed in an apps row" $P/AppsPage.kt 'pl.installed.map { it.pk
 mutate "a Play page offered" $P/AppsPage.kt '(pl.store.map { it.entry } + pl.manual)' '(pl.store.also { ctx.startActivity(it.first().intent) }.map { it.entry } + pl.manual)' || M=$((M+1))
 mutate "no source declared dropped" $P/AppsPage.kt '"no source declared: add it to the source map"' '"open in Play"' || M=$((M+1))
 mutate "perms step not wired to PermsPlan" $P/SetupRunbook.kt 'PermsPlan.apply(ctx, plan, ch)' 'PermsPlan.Outcome(emptyList())' || M=$((M+1))
-mutate "runbook page unmounted" $K/MainActivity.kt '"runbook" -> RunbookTogglesPage(go)' '"runbook" -> AccountPlaceholderPage(section, page, "x")' || M=$((M+1))
-mutate "setup steps dropped from the Runbook" $K/configs/ConfigsPages.kt 'if (tab == "setup") RunbookPage(go) else' 'if (tab == "setup") Unit else' || M=$((M+1))
+mutate "runbook page unmounted" ab_cloud-libs-shared/libs/account-ui/src/main/java/com/diegonmarcos/superapp/accountui/AccountUi.kt '"runbook" -> RunbookTogglesPage(go)' '"runbook" -> AccountPlaceholderPage(section, page, "x")' || M=$((M+1))
+mutate "setup steps dropped from the Runbook" ab_cloud-libs-shared/libs/account-ui/src/main/java/com/diegonmarcos/cloudaccount/configs/ConfigsPages.kt 'if (tab == "setup") AccountUiHost.current.RunbookSetup(go) else' 'if (tab == "setup") Unit else' || M=$((M+1))
 mutate "debug run=1 without step is not Run all" $P/AccountDebugApi.kt 'q["step"].isNullOrBlank() -> r.runAll(' 'false -> r.runAll(' || M=$((M+1))
 
 S=ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/src/main/java/com/diegonmarcos/superapp/adbdebug

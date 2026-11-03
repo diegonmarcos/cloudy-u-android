@@ -1,0 +1,70 @@
+// libs:account-ui (#1439) — the profile pages Cloud Account and Cloud Me share: Personal Info (IDs | Pay Cards | Others |
+// Autocomplete) and Configs (Android: Cloud Apps / Phone Apps / Runbook | Desktop | C3: Infra / Containers).
+// The structure and the Configs sources are declared ONCE in account-ui.json (this directory), baked below into
+// BuildConfig.ACCOUNT_UI_B64 and CONFIGS_SOURCES_B64. What only a host can do comes through AccountUiHost.
+
+plugins {
+    id 'com.android.library'
+    id 'org.jetbrains.kotlin.plugin.compose'
+}
+if (project.extensions.findByName('kotlin') == null) {
+    apply plugin: 'org.jetbrains.kotlin.android'
+}
+
+def stripDocs
+stripDocs = { o ->
+    if (o instanceof Map) return o.findAll { k, v -> !k.toString().startsWith('_') }.collectEntries { k, v -> [k, stripDocs(v)] }
+    if (o instanceof List) return o.collect { stripDocs(it) }
+    return o
+}
+def decl = new groovy.json.JsonSlurper().parse(file("${projectDir}/account-ui.json"))
+def b64 = { o -> groovy.json.JsonOutput.toJson(stripDocs(o)).getBytes('UTF-8').encodeBase64().toString() }
+if (!(decl.sections instanceof List) || decl.sections.collect { it.id } != ['personal', 'configs'])
+    throw new GradleException("libs:account-ui: account-ui.json::sections must be [personal, configs] (#1439)")
+
+android {
+    namespace 'com.diegonmarcos.superapp.accountui'
+    compileSdk 36
+
+    defaultConfig {
+        minSdk 26
+        buildConfigField "String", "ACCOUNT_UI_B64", "\"${b64([sections: decl.sections])}\""
+        buildConfigField "String", "CONFIGS_SOURCES_B64", "\"${b64(decl.configs_sources ?: [:])}\""
+    }
+
+    buildFeatures {
+        compose = true
+        buildConfig = true
+    }
+
+    testOptions { unitTests.returnDefaultValues = true }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
+dependencies {
+    api project(':libs:ui-kit')
+    api project(':libs:autofill')
+    implementation project(':libs:updater')          // the fleet manifest (CONSTELLATION_FLEET_B64) for Cloud Apps / Phone Apps
+    implementation project(':libs:bottomnav')        // NavPage
+    implementation project(':libs:ui-nav-bars')      // NavBarTopSecondRow: the strips of the profile screen
+    implementation 'androidx.core:core-ktx:1.13.1'
+    implementation 'androidx.security:security-crypto:1.1.0'   // Personal Info: EncryptedSharedPreferences only
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
+    implementation platform('androidx.compose:compose-bom:2025.11.01')
+    implementation 'androidx.compose.ui:ui'
+    implementation 'androidx.compose.foundation:foundation'
+    implementation 'androidx.compose.material3:material3'
+    implementation 'androidx.compose.material:material-icons-extended'
+    implementation 'androidx.activity:activity-compose:1.9.3'
+    testImplementation 'junit:junit:4.13.2'
+}

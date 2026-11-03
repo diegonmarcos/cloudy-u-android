@@ -16,9 +16,11 @@ set -u
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 A="ac_cloud-account"
 K="$A/app/src/main/java/com/diegonmarcos/cloudaccount"
-MA="$K/MainActivity.kt"; PS="$K/personal/PersonalStore.kt"; PP="$K/personal/PersonalPages.kt"
-CD="$K/configs/C3Decl.kt"; CP="$K/configs/ConfigsPages.kt"
-FILES="$A/build.json $MA $PS $PP $CD $CP"
+# #1439 the pages and the router are libs:account-ui's (shared with Cloud Me); account-ui.json declares the structure once.
+LK="ab_cloud-libs-shared/libs/account-ui/src/main/java/com/diegonmarcos/cloudaccount"; UJ="ab_cloud-libs-shared/libs/account-ui/account-ui.json"
+MA="ab_cloud-libs-shared/libs/account-ui/src/main/java/com/diegonmarcos/superapp/accountui/AccountUi.kt"; PS="$LK/personal/PersonalStore.kt"; PP="$LK/personal/PersonalPages.kt"
+CD="$LK/configs/C3Decl.kt"; CP="$LK/configs/ConfigsPages.kt"
+FILES="$A/build.json $MA $PS $PP $CD $CP $UJ"
 
 check() {
 python3 - "$1" "$A" "$MA" "$PS" "$PP" "$CD" "$CP" <<'PY'
@@ -48,10 +50,14 @@ ok(sub("configs", "desktop") == [], "Desktop is one page (the tree)", "Desktop g
 ok(sub("configs", "c3") == ["infra", "containers"], "C3 = Infra, Containers", f"C3 is {sub('configs', 'c3')}")
 ma = code(rd(MA))
 want = {'"ids" -> PersonalEntriesPage(PersonalKind.IDS)', '"cards" -> PersonalEntriesPage(PersonalKind.CARDS)', '"entries" -> PersonalEntriesPage(PersonalKind.OTHERS)',
-        '"me" -> AccountProfilePage(go)', '"phone-apps" -> PhoneAppsPage()', '"runbook" -> RunbookTogglesPage(go)', '"desktop" -> DesktopTreePage()',
+        '"me" -> AccountUiHost.current.MePage(go)', '"phone-apps" -> PhoneAppsPage()', '"runbook" -> RunbookTogglesPage(go)', '"desktop" -> DesktopTreePage()',
         '"infra" -> InfraPage()', '"containers" -> ContainersPage()', 'else -> CloudAppsPage()'}
 miss = [w for w in want if w not in ma]
-ok(not miss, "MainActivity mounts every new leaf", f"MainActivity does not mount {miss}")
+ok(not miss, "the shared router mounts every new leaf", f"the shared router does not mount {miss}")
+def shape(ps): return [(p["id"], p["label"], p.get("icon"), shape(p.get("pages") or [])) for p in ps]
+uj = {x["id"]: x for x in json.loads(rd("ab_cloud-libs-shared/libs/account-ui/account-ui.json"))["sections"]}
+ok(all(k in uj and (sec[k]["label"], shape(sec[k]["pages"])) == (uj[k]["label"], shape(uj[k]["pages"])) for k in ("personal", "configs")),
+   "Cloud Account's Personal Info and Configs match libs:account-ui's account-ui.json page for page", "Cloud Account's sections drifted from account-ui.json")
 
 # 2. secret values never rendered
 cd = code(rd(CD)); cp = code(rd(CP))
@@ -107,6 +113,7 @@ PY
 }
 M=0
 # nav
+mutate "the shared structure drifts from Cloud Account" "$UJ" '"label": "Pay Cards"' '"label": "Cards"' || M=1
 mutate "Pay Cards leaves Personal Info" "$A/build.json" '"id": "cards",' '"id": "wallet",' || M=1
 mutate "Runbook leaves Android" "$A/build.json" '"id": "runbook",
                 "label": "Runbook",' '"id": "push",

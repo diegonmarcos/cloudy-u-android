@@ -290,9 +290,11 @@ WG_PROFILES="app/src/main/java/com/diegonmarcos/superapp/network/WireGuardProfil
 # The id -> page map is the ONLY page knowledge in Kotlin; every LABEL is the declaration's
 # (ac_cloud-account/build.json::ui.sections, read through NavDecl).
 has "$ACCT_MAIN" 'NavDecl.fromBuildConfig(' "the island and the strips are built from the declaration"
-for page in '"signin" -> AccountConnectPage()' '"working" -> ProfilesWorkingPage()' '"diff" -> ProfilesDiffPage(model)' '"files" -> ProfilesDevicesPage()' '"apps" -> AppsPage()' 'else -> AccountProfilePage(go)'; do
+for page in '"signin" -> AccountConnectPage()' '"working" -> ProfilesWorkingPage()' '"diff" -> ProfilesDiffPage(model)' '"files" -> ProfilesDevicesPage()' '"apps" -> AppProfilesPage()'; do
     has "$ACCT_MAIN" "$page" "the page is mounted: $page"
 done
+# #1438/#1439 Personal Info > Others > Me is libs:account-ui's router; Cloud Account's host hands it to AccountProfilePage.
+has "../ac_cloud-account/app/src/main/java/com/diegonmarcos/cloudaccount/AccountUiHostImpl.kt" "= AccountProfilePage(go)" "the page is mounted: Others > Me -> AccountProfilePage(go)"
 # No page label is a Kotlin literal, and none of the tabs the strip lost comes back.
 for gone in 'Tab("Setup"' 'Tab("Infos"' 'Tab("Connect"' 'Tab("Profiles"' 'Tab("Runtime"' 'Tab("Drift"' 'Tab("Vault"' 'Tab("Repos"' 'Tab("Store"' 'Tab("WireGuard"' 'Tab(getString(R.string.vault_tab_imported)'; do
     hasnt_acct "$gone" "no tab label literal $gone"

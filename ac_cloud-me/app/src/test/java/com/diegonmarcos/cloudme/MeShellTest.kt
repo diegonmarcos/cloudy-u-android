@@ -110,7 +110,7 @@ class MeShellTest {
         compose.onNodeWithTag(TopBarTags.CONFIGS).performClick()
         compose.waitForIdle()
         assertEquals(listOf(MeTopBar.AI_TARGET), targets)
-        assertEquals(listOf("lnktree", "configs"), opened)
+        assertEquals(listOf("profile", "configs"), opened)
     }
 
     @Test

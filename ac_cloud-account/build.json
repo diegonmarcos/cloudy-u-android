@@ -52,7 +52,8 @@
         "libs:ui-nav-bars",
         "libs:theme-background",
         "libs:shizuku-adb-debug-tools",
-        "libs:autofill"
+        "libs:autofill",
+        "libs:account-ui"
       ]
     },
     "libs:core": {
@@ -187,6 +188,11 @@
     "libs:autofill": {
       "_doc": "The non-secret autofill SOT contract (authority, permissions, columns, typed rows). Cloud Account SERVES it (AutofillSotProvider); cloud-browser and cloud-keyboard read it.",
       "dir": "../ab_cloud-libs-shared/libs/autofill",
+      "type": "library"
+    },
+    "libs:account-ui": {
+      "_doc": "#1439 Personal Info + Configs profile pages shared by Cloud Account and Cloud Me (structure and sources in its account-ui.json), shared BY REFERENCE.",
+      "dir": "../ab_cloud-libs-shared/libs/account-ui",
       "type": "library"
     }
   },
@@ -1021,25 +1027,6 @@
         }
       }
     }
-  },
-  "configs_sources": {
-    "_doc": "#1438 Where Configs > Desktop and C3 read from, at run time, never copied into the app: the owner's working repos on GitHub (trees API for the listing, raw files for a public repo, the contents API with the gh engine's token for a private one). Baked as BuildConfig.CONFIGS_SOURCES_B64, read by configs/RepoSource.kt and configs/ConfigsPages.kt. runbook_toggles: the adb-shell switches of Configs > Android > Runbook, each an on / off command and a check whose trimmed output equals on_when while it is on, run through the ShellChannels ladder (embedded adb, local server, Shizuku, the SuperApp bridge).",
-    "owner": "diegonmarcos",
-    "exclude": ["z_archive", "z_backup", "archive"],
-    "desktop": [
-      {"label": "Nix OS and Home Manager flakes", "repo": "cloud-me-pvt-configs", "ref": "main", "root": "Linux-Desktop", "match": "(\\.nix|\\.tf|flake\\.lock)$", "private": true},
-      {"label": "OS Terraform", "repo": "cloudy-u-desktop", "ref": "main", "root": "a_OS-TERRAFORM_______________________________", "match": ".*"},
-      {"label": "OS Home Manager", "repo": "cloudy-u-desktop", "ref": "main", "root": "b_OS-HOME-MANAGER_______________________________", "match": ".*"}
-    ],
-    "infra": {"repo": "cloudy-t-infra", "ref": "main", "roots": ["c_vps", "b_infra"], "decl": "build.json", "tf": ["src/main.tf", "main.tf"]},
-    "containers": {"repo": "cloudy-u-containers", "ref": "main", "compose": ["dist/docker-compose.yml", "dist/compose/docker-compose.yml"], "exclude": ["z_archive", "_shared"]},
-    "runbook_toggles": [
-      {"id": "animations-off", "label": "Animations off", "on": "settings put global window_animation_scale 0; settings put global transition_animation_scale 0; settings put global animator_duration_scale 0", "off": "settings put global window_animation_scale 1; settings put global transition_animation_scale 1; settings put global animator_duration_scale 1", "check": "settings get global animator_duration_scale", "on_when": "0"},
-      {"id": "stay-awake", "label": "Stay awake while charging", "on": "settings put global stay_on_while_plugged_in 7", "off": "settings put global stay_on_while_plugged_in 0", "check": "settings get global stay_on_while_plugged_in", "on_when": "7"},
-      {"id": "show-touches", "label": "Show touches", "on": "settings put system show_touches 1", "off": "settings put system show_touches 0", "check": "settings get system show_touches", "on_when": "1"},
-      {"id": "adb-wifi", "label": "Wireless debugging on", "on": "settings put global adb_wifi_enabled 1", "off": "settings put global adb_wifi_enabled 0", "check": "settings get global adb_wifi_enabled", "on_when": "1"},
-      {"id": "adb-verify-off", "label": "No Play Protect scan of adb installs", "on": "settings put global verifier_verify_adb_installs 0", "off": "settings put global verifier_verify_adb_installs 1", "check": "settings get global verifier_verify_adb_installs", "on_when": "0"}
-    ]
   },
   "configs_pages": {
     "_doc": "Configs > General and Configs > About (libs:ui-nav-bars fleetconfigs, rule 1_cicd/src/data/configs-pages.json, #1352 v2). general.sections: the anchors of the one General page, in order (perms, battery, storage, notifications, ui, language are required; app opens this app's own Configs; update is added after perms by default). about: the hand-written part of the extensive About: tagline, description, features, screens, guide, privacy, backends (ids of ac_cloud-account/build.json::fleet_endpoints, resolved to mesh URLs at build time), related fleet apps, credits for a fork. Permissions, data stores, crash/analytics libs, name, icon, version, build sha and date, repo, licence, origin, crash sink, debug API and changelog are derived, never typed here.",

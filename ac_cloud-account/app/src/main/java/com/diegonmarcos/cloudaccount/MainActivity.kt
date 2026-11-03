@@ -25,17 +25,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import com.diegonmarcos.cloudaccount.autofill.AutofillProfilesPage
-import com.diegonmarcos.cloudaccount.autofill.AutofillRulesPage
-import com.diegonmarcos.cloudaccount.autofill.AutofillSnippetsPage
-import com.diegonmarcos.cloudaccount.configs.CloudAppsPage
-import com.diegonmarcos.cloudaccount.configs.ContainersPage
-import com.diegonmarcos.cloudaccount.configs.DesktopTreePage
-import com.diegonmarcos.cloudaccount.configs.InfraPage
-import com.diegonmarcos.cloudaccount.configs.PhoneAppsPage
-import com.diegonmarcos.cloudaccount.configs.RunbookTogglesPage
-import com.diegonmarcos.cloudaccount.personal.PersonalEntriesPage
-import com.diegonmarcos.cloudaccount.personal.PersonalKind
+import com.diegonmarcos.superapp.accountui.AccountUiHost
+import com.diegonmarcos.superapp.accountui.AccountUiPage
 import com.diegonmarcos.cloudaccount.hub.AppProfilesPage
 import com.diegonmarcos.cloudaccount.hub.ConnectionsPage
 import com.diegonmarcos.cloudaccount.hub.HubNav
@@ -64,7 +55,6 @@ import com.diegonmarcos.superapp.profile.AccountHost
 import com.diegonmarcos.superapp.profile.AccountModel
 import com.diegonmarcos.superapp.profile.AccountPermsPage
 import com.diegonmarcos.superapp.profile.AccountPlaceholderPage
-import com.diegonmarcos.superapp.profile.AccountProfilePage
 import com.diegonmarcos.superapp.profile.AccountSettingsPage
 import com.diegonmarcos.superapp.profile.ActivityPage
 import com.diegonmarcos.superapp.profile.BackupsPage
@@ -120,6 +110,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        AccountUiHost.current = AccountUiHostImpl   // #1439 libs:account-ui's host hooks
         FleetChrome.apply(this)
         requested.value = deepLink(intent)
         setContent {
@@ -213,28 +204,10 @@ class MainActivity : AppCompatActivity() {
         val ctx = LocalContext.current
         val model = remember { AccountModel.get(ctx) }
         when (section) {
-            "personal" -> when (page) {
-                // #1438 IDs, Pay Cards, Others > Entries: EncryptedSharedPreferences only, masked until device auth.
-                "ids" -> PersonalEntriesPage(PersonalKind.IDS)
-                "cards" -> PersonalEntriesPage(PersonalKind.CARDS)
-                "entries" -> PersonalEntriesPage(PersonalKind.OTHERS)
-                // Autocomplete: the non-secret autofill Source of Truth (a0_docs/eng-specs/autofill-3-tier.md).
-                "personal" -> AutofillProfilesPage()
-                "sites" -> AutofillRulesPage()
-                "snippets" -> AutofillSnippetsPage()
-                "me" -> AccountProfilePage(go)
-                else -> PersonalEntriesPage(PersonalKind.IDS)
-            }
-            // PUBLIC: no page here may show a secret value (test-account-configs-public.sh lists the only composables allowed).
-            "configs" -> when (page) {
-                // #1438 Android (Cloud Apps, Phone Apps, Runbook), Desktop, C3 (Infra, Containers): read from the source repos at run time.
-                "phone-apps" -> PhoneAppsPage()
-                "runbook" -> RunbookTogglesPage(go)
-                "desktop" -> DesktopTreePage()
-                "infra" -> InfraPage()
-                "containers" -> ContainersPage()
-                else -> CloudAppsPage()
-            }
+            // #1439 Personal Info and Configs are libs:account-ui's (AccountUiPage), shared with Cloud Me's profile page.
+            // PUBLIC Configs: no page there may show a secret value (test-account-configs-public.sh reads the lib's router).
+            "personal" -> AccountUiPage(section, page, go)
+            "configs" -> AccountUiPage(section, page, go)
             // PRIVATE: secrets stay masked until reveal behind device auth.
             "data" -> when (page) {
                 "keys" -> SecretsTab(openVault = { AccountHost.route(this, "extapp:cloud-vault") })

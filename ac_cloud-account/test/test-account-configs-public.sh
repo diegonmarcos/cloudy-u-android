@@ -13,8 +13,9 @@
 set -u
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 A="ac_cloud-account"
-MA="$A/app/src/main/java/com/diegonmarcos/cloudaccount/MainActivity.kt"
-SP="$A/app/src/main/java/com/diegonmarcos/cloudaccount/configs/ConfigsPages.kt"
+# #1439 the Personal Info / Configs router is libs:account-ui's AccountUiPage (Cloud Account's MainActivity hands both sections to it).
+MA="ab_cloud-libs-shared/libs/account-ui/src/main/java/com/diegonmarcos/superapp/accountui/AccountUi.kt"
+SP="ab_cloud-libs-shared/libs/account-ui/src/main/java/com/diegonmarcos/cloudaccount/configs/ConfigsPages.kt"
 SK="ab_cloud-libs-shared/libs/account/src/main/java/com/diegonmarcos/superapp/profile/SectionKit.kt"
 
 check() {
@@ -42,7 +43,11 @@ have = set(leaves(cfg["pages"]))
 ok(have == allowed, "Configs declares exactly the allowed pages", f"Configs leaves are {sorted(have)}, allowed {sorted(allowed)}")
 
 ma = code(rd(MA))
-block = ma[ma.index('"configs" -> when (page) {'):ma.index('"data" -> when (page) {')]
+host = code(rd(A + "/app/src/main/java/com/diegonmarcos/cloudaccount/MainActivity.kt"))
+hb = re.search(r'^\s*"configs" -> (.*)$', host, re.M)
+ok(hb is not None and hb.group(1).strip() == "AccountUiPage(section, page, go)", "MainActivity hands Configs to libs:account-ui's router only",
+   f"MainActivity's configs branch mounts {hb.group(1).strip() if hb else 'nothing'}")
+block = ma[ma.index('AccountUi.CONFIGS -> when (page) {'):ma.index('object AccountUiTags')]
 calls = set(re.findall(r"\b([A-Z]\w*)\(", block))
 okcalls = {"CloudAppsPage", "PhoneAppsPage", "RunbookTogglesPage", "DesktopTreePage", "InfraPage", "ContainersPage"}
 ok(calls <= okcalls, "the configs branch mounts only allowed composables", f"the configs branch mounts {sorted(calls - okcalls)}")
@@ -70,7 +75,7 @@ check "$ROOT"; REAL=$?
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 mutate() {  # mutate <label> <file> <old> <new>
   rm -rf "$TMP/r"; mkdir -p "$TMP/r/$A"; cp "$ROOT/$A/build.json" "$TMP/r/$A/"
-  for f in "$MA" "$SP" "$SK"; do mkdir -p "$TMP/r/$(dirname "$f")"; cp "$ROOT/$f" "$TMP/r/$f"; done
+  for f in "$MA" "$SP" "$SK" "$A/app/src/main/java/com/diegonmarcos/cloudaccount/MainActivity.kt"; do mkdir -p "$TMP/r/$(dirname "$f")"; cp "$ROOT/$f" "$TMP/r/$f"; done
   python3 - "$TMP/r/$2" "$3" "$4" <<'PY' || { echo "  MUTATION NOT APPLIED: $1"; return 1; }
 import sys
 p, o, n = sys.argv[1:4]; s = open(p, encoding="utf-8").read()
@@ -81,6 +86,7 @@ PY
   echo "  mutation caught: $1"
 }
 M=0
+mutate "Cloud Account mounts a secret page in its own Configs branch" "$A/app/src/main/java/com/diegonmarcos/cloudaccount/MainActivity.kt" '"configs" -> AccountUiPage(section, page, go)' '"configs" -> SecretsTab(openVault = {})' || M=1
 mutate "the secret list mounted in Configs" "$MA" '"desktop" -> DesktopTreePage()' '"desktop" -> DesktopTreePage()
                 "keys" -> SecretsTab(openVault = {})' || M=1
 mutate "Settings mounted in Configs" "$MA" '"infra" -> InfraPage()' '"infra" -> InfraPage()

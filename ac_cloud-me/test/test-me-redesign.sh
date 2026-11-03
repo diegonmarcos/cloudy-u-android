@@ -90,8 +90,8 @@ for s in secs.values():
 
 # ---- N3 top bar: the fleet's AppTopBar, inline actions; ui.settings names the sections Profile and Configs open
 st = ui.get("settings")
-if st != ["lnktree", "configs"] or [secs[i]["label"] for i in (st or []) if i in secs] != ["Lnktree", "Configs"]:
-    bad("settings", f"ui.settings is {st}; wanted the sections Lnktree and Configs, in that order")
+if st != ["profile", "configs"] or [secs[i]["label"] for i in (st or []) if i in secs] != ["Profile", "Configs"]:
+    bad("settings", f"ui.settings is {st}; wanted the sections Profile (#1439, libs:account-ui) and Configs, in that order")
 for p in kt(MAIN):
     if re.search(r"\bDropdownMenu\b|Icons\.Filled\.Settings|Icons\.[A-Za-z.]*\.Menu\b", code(p)):
         bad("settings", f"{os.path.relpath(p, app)} draws a Settings dropdown or its own hamburger")

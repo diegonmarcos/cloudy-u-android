@@ -1,0 +1,212 @@
+{
+  "_doc": "#1439 libs:account-ui: THE profile structure Cloud Account and Cloud Me share, and where its Configs pages read from. `sections` is Personal Info (IDs | Pay Cards | Others | Autocomplete) and Configs (Android: Cloud Apps / Phone Apps / Runbook | Desktop | C3: Infra / Containers); Cloud Account's build.json::ui.sections personal and configs must match it page for page (ac_cloud-account/test/test-account-personal-c3.sh), Cloud Me draws it behind the top-right profile button (AccountProfileScreen). `configs_sources` moved here from Cloud Account's build.json (#1438). Baked by this lib's build.gradle into BuildConfig.ACCOUNT_UI_B64 and CONFIGS_SOURCES_B64; `_doc*` keys are not baked.",
+  "sections": [
+    {
+      "id": "personal",
+      "label": "Personal Info",
+      "icon": "personal",
+      "pages": [
+        {
+          "id": "ids",
+          "label": "IDs",
+          "icon": "badge"
+        },
+        {
+          "id": "cards",
+          "label": "Pay Cards",
+          "icon": "payments"
+        },
+        {
+          "id": "others",
+          "label": "Others",
+          "icon": "edit_note",
+          "pages": [
+            {
+              "id": "entries",
+              "label": "Entries",
+              "icon": "folder"
+            },
+            {
+              "id": "me",
+              "label": "Me",
+              "icon": "account_circle"
+            }
+          ]
+        },
+        {
+          "id": "autocomplete",
+          "label": "Autocomplete",
+          "icon": "auto_fix_high",
+          "pages": [
+            {
+              "id": "personal",
+              "label": "Personal",
+              "icon": "person"
+            },
+            {
+              "id": "sites",
+              "label": "Sites",
+              "icon": "language"
+            },
+            {
+              "id": "snippets",
+              "label": "Snippets",
+              "icon": "content_paste"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "configs",
+      "label": "Configs",
+      "icon": "configs",
+      "pages": [
+        {
+          "id": "android",
+          "label": "Android",
+          "icon": "android",
+          "pages": [
+            {
+              "id": "cloud-apps",
+              "label": "Cloud Apps",
+              "icon": "apps"
+            },
+            {
+              "id": "phone-apps",
+              "label": "Phone Apps",
+              "icon": "smartphone"
+            },
+            {
+              "id": "runbook",
+              "label": "Runbook",
+              "icon": "menu_book"
+            }
+          ]
+        },
+        {
+          "id": "desktop",
+          "label": "Desktop",
+          "icon": "desktop_windows"
+        },
+        {
+          "id": "c3",
+          "label": "C3",
+          "icon": "cloud",
+          "pages": [
+            {
+              "id": "infra",
+              "label": "Infra",
+              "icon": "dns"
+            },
+            {
+              "id": "containers",
+              "label": "Containers",
+              "icon": "inventory_2"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "configs_sources": {
+    "_doc": "#1438 Where Configs > Desktop and C3 read from, at run time, never copied into the app: the owner's working repos on GitHub (trees API for the listing, raw files for a public repo, the contents API with the gh engine's token for a private one). Baked as BuildConfig.CONFIGS_SOURCES_B64, read by configs/RepoSource.kt and configs/ConfigsPages.kt. runbook_toggles: the adb-shell switches of Configs > Android > Runbook, each an on / off command and a check whose trimmed output equals on_when while it is on, run through the ShellChannels ladder (embedded adb, local server, Shizuku, the SuperApp bridge).",
+    "owner": "diegonmarcos",
+    "exclude": [
+      "z_archive",
+      "z_backup",
+      "archive"
+    ],
+    "desktop": [
+      {
+        "label": "Nix OS and Home Manager flakes",
+        "repo": "cloud-me-pvt-configs",
+        "ref": "main",
+        "root": "Linux-Desktop",
+        "match": "(\\.nix|\\.tf|flake\\.lock)$",
+        "private": true
+      },
+      {
+        "label": "OS Terraform",
+        "repo": "cloudy-u-desktop",
+        "ref": "main",
+        "root": "a_OS-TERRAFORM_______________________________",
+        "match": ".*"
+      },
+      {
+        "label": "OS Home Manager",
+        "repo": "cloudy-u-desktop",
+        "ref": "main",
+        "root": "b_OS-HOME-MANAGER_______________________________",
+        "match": ".*"
+      }
+    ],
+    "infra": {
+      "repo": "cloudy-t-infra",
+      "ref": "main",
+      "roots": [
+        "c_vps",
+        "b_infra"
+      ],
+      "decl": "build.json",
+      "tf": [
+        "src/main.tf",
+        "main.tf"
+      ]
+    },
+    "containers": {
+      "repo": "cloudy-u-containers",
+      "ref": "main",
+      "compose": [
+        "dist/docker-compose.yml",
+        "dist/compose/docker-compose.yml"
+      ],
+      "exclude": [
+        "z_archive",
+        "_shared"
+      ]
+    },
+    "runbook_toggles": [
+      {
+        "id": "animations-off",
+        "label": "Animations off",
+        "on": "settings put global window_animation_scale 0; settings put global transition_animation_scale 0; settings put global animator_duration_scale 0",
+        "off": "settings put global window_animation_scale 1; settings put global transition_animation_scale 1; settings put global animator_duration_scale 1",
+        "check": "settings get global animator_duration_scale",
+        "on_when": "0"
+      },
+      {
+        "id": "stay-awake",
+        "label": "Stay awake while charging",
+        "on": "settings put global stay_on_while_plugged_in 7",
+        "off": "settings put global stay_on_while_plugged_in 0",
+        "check": "settings get global stay_on_while_plugged_in",
+        "on_when": "7"
+      },
+      {
+        "id": "show-touches",
+        "label": "Show touches",
+        "on": "settings put system show_touches 1",
+        "off": "settings put system show_touches 0",
+        "check": "settings get system show_touches",
+        "on_when": "1"
+      },
+      {
+        "id": "adb-wifi",
+        "label": "Wireless debugging on",
+        "on": "settings put global adb_wifi_enabled 1",
+        "off": "settings put global adb_wifi_enabled 0",
+        "check": "settings get global adb_wifi_enabled",
+        "on_when": "1"
+      },
+      {
+        "id": "adb-verify-off",
+        "label": "No Play Protect scan of adb installs",
+        "on": "settings put global verifier_verify_adb_installs 0",
+        "off": "settings put global verifier_verify_adb_installs 1",
+        "check": "settings get global verifier_verify_adb_installs",
+        "on_when": "0"
+      }
+    ]
+  }
+}

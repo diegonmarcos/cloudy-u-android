@@ -52,8 +52,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-/** The device auth every reveal and copy goes through. The default refuses: no host, no reveal. */
-val LocalDeviceAuth = staticCompositionLocalOf<DeviceAuth> { DeviceAuth { _, done -> done(false) } }
+// LocalDeviceAuth lives with RevealGate in libs:account-ui (hub/Reveal.kt, #1439).
 
 /** Reads a picked file's text; MainActivity's document picker. */
 typealias PickText = ((String) -> Unit) -> Unit

@@ -61,7 +61,9 @@
         "libs:ui-icons",
         "libs:ui-nav-bars",
         "libs:theme-background",
-        "libs:ui-kit"
+        "libs:ui-kit",
+        "libs:autofill",
+        "libs:account-ui"
       ]
     },
     "libs:core": {
@@ -131,6 +133,16 @@
       "type": "library",
       "_doc": "2026-10-16 owner decision: all apps must be Compose. Shared BY REFERENCE: the fleet's Compose kit (CloudKitTheme + KitPalette) libs:fin's dashboard paints with.",
       "dir": "../ab_cloud-libs-shared/libs/ui-kit"
+    },
+    "libs:autofill": {
+      "_doc": "#1439 the non-secret autofill SOT contract, needed by libs:account-ui's Autocomplete pages.",
+      "dir": "../ab_cloud-libs-shared/libs/autofill",
+      "type": "library"
+    },
+    "libs:account-ui": {
+      "_doc": "#1439 Personal Info + Configs profile pages shared by Cloud Account and Cloud Me (structure and sources in its account-ui.json), shared BY REFERENCE.",
+      "dir": "../ab_cloud-libs-shared/libs/account-ui",
+      "type": "library"
     }
   },
   "engines": {
@@ -1063,6 +1075,16 @@
         ]
       },
       {
+        "_doc": "#1439 Profile, reached from the round avatar at the top right: the same page as Cloud Account's Personal Info and Configs (Personal Info: IDs | Pay Cards | Others | Autocomplete; Configs: Android (Cloud Apps / Phone Apps / Runbook) | Desktop | C3 (Infra / Containers)), drawn over libs:account-ui (AccountProfileScreen), whose account-ui.json declares the structure once for both apps.",
+        "id": "profile",
+        "label": "Profile",
+        "icon": "account_circle",
+        "toolbar": true,
+        "pages": [
+          {"id": "profile", "label": "Profile", "icon": "account_circle"}
+        ]
+      },
+      {
         "_doc": "Configs, reached from the gear at the top right. #1439 the fleet pattern: its tabs on the top nav start General | Perms | About (the shared Configs v2 pages: libs:ui-nav-bars FleetGeneralPage, the libs:perms list, FleetAboutPage; rule 1_cicd/src/data/configs-pages.json::tabs, guard cloud-android-configs-tabs-guard.py), then Cloud Me's own pages: Navigation (the nav mode of every section) and Apps (the way out to the rest of the constellation).",
         "id": "configs",
         "label": "Configs",
@@ -1120,7 +1142,7 @@
       }
     },
     "settings": [
-      "lnktree",
+      "profile",
       "configs"
     ]
   },

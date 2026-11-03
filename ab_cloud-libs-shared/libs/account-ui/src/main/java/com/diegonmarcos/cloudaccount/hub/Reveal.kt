@@ -15,6 +15,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.compose.runtime.staticCompositionLocalOf
 
 /** Asks the owner to prove it is them (biometric or the screen lock). [done] is called exactly once. */
 fun interface DeviceAuth {
@@ -115,3 +116,6 @@ object SecretClipboard {
         if (!cleared) cm.setPrimaryClip(ClipData.newPlainText("", ""))
     }
 }
+
+/** The device auth every reveal and copy goes through. The default refuses: no host, no reveal. */
+val LocalDeviceAuth = staticCompositionLocalOf<DeviceAuth> { DeviceAuth { _, done -> done(false) } }

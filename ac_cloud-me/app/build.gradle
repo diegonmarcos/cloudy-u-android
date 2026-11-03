@@ -336,6 +336,7 @@ dependencies {
     // libs:cal is NOT linked: Agenda binds Cloud-Lib-Cal.apk (CalEngineClient, build.json::engines.cal).
     implementation project(':libs:bottomnav') // #531 the fleet's one bottom nav (Compose island)
     implementation project(':libs:ui-nav-bars')
+    implementation project(':libs:account-ui')   // #1439 the profile page (Personal Info + Configs), shared with Cloud Account
     implementation project(':libs:theme-background')
 
     // Photo grid on Profile > Personal. Same version libs:media already pins.

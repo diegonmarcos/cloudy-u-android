@@ -31,12 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
-import com.diegonmarcos.superapp.adbdebug.ChannelModeBar
-import com.diegonmarcos.superapp.adbdebug.ShellChannels
-import com.diegonmarcos.superapp.appstore.AppInventory
-import com.diegonmarcos.superapp.profile.AccountModel
-import com.diegonmarcos.superapp.profile.GhEngine
-import com.diegonmarcos.superapp.profile.RunbookPage
+import com.diegonmarcos.superapp.accountui.AccountUiHost
 import com.diegonmarcos.superapp.uikit.GroupTitle
 import com.diegonmarcos.superapp.uikit.KitAction
 import com.diegonmarcos.superapp.uikit.KitActionBar
@@ -80,21 +75,26 @@ class ContainerRow(val dir: String, val services: List<ServiceDecl>)
 object ConfigsLoad {
     private fun version(ctx: Context, pkg: String): String? = runCatching { ctx.packageManager.getPackageInfo(pkg, 0).versionName ?: "" }.getOrNull()
 
-    /** The fleet manifest (libs:appstore's baked CONSTELLATION_FLEET_B64), each with its installed version or null. */
+    private fun fleet(): List<Fleet.App> = Fleet.parse(com.diegonmarcos.superapp.updater.BuildConfig.CONSTELLATION_FLEET_B64)
+
+    /** The fleet manifest (libs:updater's baked CONSTELLATION_FLEET_B64), each with its installed version or null. */
     fun cloudApps(ctx: Context): List<AppRow> =
-        Fleet.parse(com.diegonmarcos.superapp.appstore.BuildConfig.CONSTELLATION_FLEET_B64)
+        fleet()
             .sortedBy { it.label.lowercase() }
             .map { a -> AppRow(a.pkg, a.label, version(ctx, a.pkg) ?: a.altId?.let { version(ctx, it) }, a.kind) }
 
     /** Every launchable app the fleet manifest does not name. */
     fun phoneApps(ctx: Context): List<AppRow> {
-        val fleet = AppInventory.fleetPackages()
-        return AppInventory.launchable(ctx).filterKeys { it !in fleet && it != ctx.packageName }
+        val fleet = fleet().flatMap { listOfNotNull(it.pkg, it.altId) }.toSet()
+        val pm = ctx.packageManager
+        val launchable = pm.queryIntentActivities(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER), 0)
+            .associate { it.activityInfo.packageName to it.loadLabel(pm).toString() }
+        return launchable.filterKeys { it !in fleet && it != ctx.packageName }
             .map { (pkg, label) -> AppRow(pkg, label, version(ctx, pkg), "") }.sortedBy { it.label.lowercase() }
     }
 
     /** The gh engine's GitHub token, for a private repo only; null when none is held. */
-    fun ghToken(ctx: Context): String? = AccountModel.ghHost()?.let { h -> runCatching { GhEngine(ctx).token(h) }.getOrNull() }
+    fun ghToken(ctx: Context): String? = runCatching { AccountUiHost.current.ghToken(ctx) }.getOrNull()
 
     fun desktop(src: ConfigsSources, token: () -> String?): List<DesktopTree> = src.desktop.map { d ->
         val repo = d.optString("repo"); val root = d.optString("root")
@@ -141,10 +141,10 @@ object ConfigsLoad {
 
     /** One adb-shell switch's state: its check's trimmed output equals on_when. Null = no channel answered. */
     fun toggleState(ctx: Context, t: ConfigsSources.Toggle): Boolean? =
-        ShellChannels.active(ctx)?.exec(ctx, t.check)?.trim()?.let { it == t.onWhen }
+        AccountUiHost.current.shell(ctx, t.check)?.trim()?.let { it == t.onWhen }
 
     fun setToggle(ctx: Context, t: ConfigsSources.Toggle, on: Boolean): Boolean =
-        ShellChannels.active(ctx)?.exec(ctx, if (on) t.on else t.off) != null
+        AccountUiHost.current.shell(ctx, if (on) t.on else t.off) != null
 }
 
 // ── pages ────────────────────────────────────────────────────────────
@@ -215,7 +215,7 @@ fun RunbookTogglesPage(
     Column(Modifier.fillMaxSize().testTag(ConfigsTags.RUNBOOK)) {
         KitSegmented(listOf("switches" to "Switches", "setup" to "Setup steps"), tab, { tab = it },
             Modifier.padding(horizontal = 16.dp, vertical = 8.dp), tag = "configs:runbook:tab")
-        if (tab == "setup") RunbookPage(go) else RunbookSwitches(toggles, state, set)
+        if (tab == "setup") AccountUiHost.current.RunbookSetup(go) else RunbookSwitches(toggles, state, set)
     }
 }
 
@@ -234,7 +234,7 @@ private fun androidx.compose.foundation.layout.ColumnScope.RunbookSwitches(
         LaunchedEffect(tick) { for (t in toggles) states[t.id] = runCatching { state(ctx, t) }.getOrNull() }
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             GroupTitle("Privileged channel")
-            ChannelModeBar { tick++ }
+            AccountUiHost.current.ChannelBar { tick++ }
             GroupTitle("adb-shell switches")
             if (states.isNotEmpty() && states.values.all { it == null })
                 KitStatusBanner("No shell channel answered: pair one above (or open the SuperApp)", KitState.WARN, tag = "configs:runbook:nochannel")

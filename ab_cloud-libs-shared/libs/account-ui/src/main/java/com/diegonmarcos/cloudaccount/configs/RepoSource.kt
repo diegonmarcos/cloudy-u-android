@@ -1,7 +1,7 @@
 package com.diegonmarcos.cloudaccount.configs
 
 import android.util.Base64
-import com.diegonmarcos.cloudaccount.BuildConfig
+import com.diegonmarcos.superapp.accountui.BuildConfig
 import org.json.JSONArray
 import org.json.JSONObject
 import java.net.HttpURLConnection
@@ -9,7 +9,7 @@ import java.net.URL
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * #1438 build.json::configs_sources as baked into BuildConfig.CONFIGS_SOURCES_B64: which repos Configs > Desktop,
+ * #1438 libs:account-ui account-ui.json::configs_sources (#1439, was Cloud Account build.json) as baked into the lib's BuildConfig.CONFIGS_SOURCES_B64: which repos Configs > Desktop,
  * C3 > Infra and C3 > Containers read, and the Runbook's adb-shell switches. Pure data; [parse] takes the JSON so a
  * test can hand in its own.
  */
