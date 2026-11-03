@@ -33,6 +33,10 @@ top()  { adb shell dumpsys activity activities 2>/dev/null | grep -m1 -E "topRes
 # tap the first node whose text or content-desc matches the regex $1 in the current screen
 tap() {
   dump _tap
+  # the app's own updater can raise the system "install unknown apps" dialog over the page: cancel it, close the shade
+  if grep -q "install unknown apps" "$OUT/_tap.xml"; then
+    adb shell input keyevent KEYCODE_BACK; adb shell cmd statusbar collapse >/dev/null 2>&1 || true; sleep 2; dump _tap
+  fi
   local xy; xy=$(python3 - "$OUT/_tap.xml" "$1" <<'PY'
 import re, sys, xml.etree.ElementTree as ET
 try: root = ET.parse(sys.argv[1]).getroot()
