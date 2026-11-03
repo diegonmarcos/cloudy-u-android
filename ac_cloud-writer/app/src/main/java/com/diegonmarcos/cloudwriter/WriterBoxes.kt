@@ -128,21 +128,7 @@ fun rememberBoxIo(context: Context, worker: Executor, note: (String) -> Unit): B
 
     fun ocr(uri: Uri) {
         val box = target ?: return
-        note(context.getString(R.string.ocr_running))
-        worker.execute {
-            val bmp = OcrImage.load(context, uri)
-            val a: Answer = if (bmp == null) Answer(null, null, Route.ML, null, context.getString(R.string.ocr_no_image))
-            else WriterRoutes.ocr(context, bmp)
-            main.post {
-                if (a.ok) {
-                    box.setHtml(Ocr.intoBox(box.html(), a.text.orEmpty()))
-                    note(
-                        if (a.fellBack) context.getString(R.string.ocr_fell_back, a.fallbackReason.orEmpty())
-                        else context.getString(R.string.ocr_done, a.text.orEmpty().length, a.route?.id.orEmpty()),
-                    )
-                } else note(context.getString(R.string.ocr_failed, a.error.orEmpty()))
-            }
-        }
+        ocrInto(context, worker, box, uri, note)
     }
 
     val openFile = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -191,6 +177,30 @@ fun rememberBoxIo(context: Context, worker: Executor, note: (String) -> Unit): B
             note(context.getString(R.string.box_copied))
         },
     )
+}
+
+/**
+ * Reads the text in the image at [uri] on the Configs engine (WriterRoutes.ocr) and appends it to
+ * [box] (core Ocr.intoBox), saying which engine answered, why it fell back, or why it failed.
+ * Used by Load image, Take picture and an image shared into Writer.
+ */
+fun ocrInto(context: Context, worker: Executor, box: BoxState, uri: Uri, note: (String) -> Unit) {
+    val main = Handler(Looper.getMainLooper())
+    note(context.getString(R.string.ocr_running))
+    worker.execute {
+        val bmp = OcrImage.load(context, uri)
+        val a: Answer = if (bmp == null) Answer(null, null, Route.ML, null, context.getString(R.string.ocr_no_image))
+        else WriterRoutes.ocr(context, bmp)
+        main.post {
+            if (a.ok) {
+                box.setHtml(Ocr.intoBox(box.html(), a.text.orEmpty()))
+                note(
+                    if (a.fellBack) context.getString(R.string.ocr_fell_back, a.fallbackReason.orEmpty())
+                    else context.getString(R.string.ocr_done, a.text.orEmpty().length, a.route?.id.orEmpty()),
+                )
+            } else note(context.getString(R.string.ocr_failed, a.error.orEmpty()))
+        }
+    }
 }
 
 private fun displayName(context: Context, uri: Uri): String =

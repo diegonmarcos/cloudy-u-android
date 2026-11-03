@@ -290,6 +290,14 @@ class MainActivity : AppCompatActivity() {
      */
     private fun adoptSharedText(from: Intent?) {
         if (from == null) return
+        // #1418 an image shared in: OCR it into the Enhancer's input box (the Configs engine).
+        if (from.action == Intent.ACTION_SEND && from.type?.startsWith("image/") == true) {
+            @Suppress("DEPRECATION")
+            val uri = from.getParcelableExtra<android.net.Uri>(Intent.EXTRA_STREAM) ?: return
+            screen.value = Screen.ENHANCER
+            ocrInto(this, worker, enhIn, uri) { tabNote.value = it }
+            return
+        }
         val shared = when (from.action) {
             Intent.ACTION_SEND -> from.getStringExtra(Intent.EXTRA_TEXT)
             Intent.ACTION_PROCESS_TEXT -> from.getCharSequenceExtra(Intent.EXTRA_PROCESS_TEXT)?.toString()

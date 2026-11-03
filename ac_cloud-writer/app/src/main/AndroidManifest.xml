@@ -75,13 +75,19 @@
             <!-- Share a text into Cloud Writer from any app. The four tools are
                  useful on text that is already somewhere else, and without this
                  the only way in is to retype or paste by hand. SEND/text-plain
-                 only: this app has nothing to do with a file or an image, and
-                 claiming a type it cannot open would put a dead entry in every
-                 share sheet on the phone. -->
+                 here; images have their own filter below (#1418 OCR). -->
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="text/plain" />
+            </intent-filter>
+
+            <!-- #1418 Share an image into Cloud Writer: its text is read (OCR, the engine set in
+                 Configs > OCR) into the Enhancer's input box. -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/*" />
             </intent-filter>
 
             <!-- PROCESS_TEXT: the "Cloud Writer" entry in the text-selection
