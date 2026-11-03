@@ -26,7 +26,7 @@ class SectionsTest {
     // ── Configs holds no secret (the guard) ──────────────────────────────
 
     @Test fun configsSectionIsExactlyTheAllowedPages() {
-        val allowed = setOf("runbook", "apps", "push", "perms", "adb-shell", "desktop", "c3")
+        val allowed = setOf("cloud-apps", "phone-apps", "runbook", "desktop", "infra", "containers")
         val configs = MainActivity.NAV.section("configs")!!
         assertEquals(allowed, configs.allPages().filter { it.pages.isEmpty() }.map { it.id }.toSet())
         // the pages that hold or show secrets live in Data and Connect, never in Configs

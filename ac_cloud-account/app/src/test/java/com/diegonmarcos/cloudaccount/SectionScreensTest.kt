@@ -22,6 +22,24 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.test.core.app.ApplicationProvider
 import com.diegonmarcos.cloudaccount.autofill.AutofillProfilesPage
+import com.diegonmarcos.cloudaccount.configs.AppRow
+import com.diegonmarcos.cloudaccount.configs.CloudAppsPage
+import com.diegonmarcos.cloudaccount.configs.ComposeDecl
+import com.diegonmarcos.cloudaccount.configs.ConfigsSources
+import com.diegonmarcos.cloudaccount.configs.ContainerRow
+import com.diegonmarcos.cloudaccount.configs.ContainersPage
+import com.diegonmarcos.cloudaccount.configs.DesktopTree
+import com.diegonmarcos.cloudaccount.configs.DesktopTreePage
+import com.diegonmarcos.cloudaccount.configs.InfraPage
+import com.diegonmarcos.cloudaccount.configs.InfraRow
+import com.diegonmarcos.cloudaccount.configs.PhoneAppsPage
+import com.diegonmarcos.cloudaccount.configs.RunbookTogglesPage
+import com.diegonmarcos.cloudaccount.configs.TfDecl
+import com.diegonmarcos.cloudaccount.configs.TreeNode
+import com.diegonmarcos.cloudaccount.personal.PersonalEntriesPage
+import com.diegonmarcos.cloudaccount.personal.PersonalEntry
+import com.diegonmarcos.cloudaccount.personal.PersonalKind
+import com.diegonmarcos.cloudaccount.personal.PersonalRepo
 import com.diegonmarcos.cloudaccount.hub.AppProfilesPage
 import com.diegonmarcos.cloudaccount.hub.ConnectionsPage
 import com.diegonmarcos.cloudaccount.hub.DriveSetupPage
@@ -40,13 +58,9 @@ import com.diegonmarcos.superapp.profile.AccountStore
 import com.diegonmarcos.superapp.profile.ActivityFeed
 import com.diegonmarcos.superapp.profile.ActivityPage
 import com.diegonmarcos.superapp.profile.BackupsPage
-import com.diegonmarcos.superapp.profile.C3ConfigsPage
-import com.diegonmarcos.superapp.profile.DesktopConfigsPage
 import com.diegonmarcos.superapp.profile.DevicesMeshPage
 import com.diegonmarcos.superapp.profile.EndpointCheck
 import com.diegonmarcos.superapp.profile.FleetEndpointsPage
-import com.diegonmarcos.superapp.profile.RunbookPage
-import com.diegonmarcos.superapp.profile.WalletPage
 import com.diegonmarcos.superapp.settings.ConfigsPrefs
 import com.diegonmarcos.superapp.uikit.CloudKitTheme
 import org.json.JSONObject
@@ -121,13 +135,18 @@ class SectionScreensTest(private val section: String, private val page: String) 
 
     @Composable private fun PageFor(go: (String, String) -> Unit) {
         when ("$section/$page") {
+            "personal/ids" -> PersonalEntriesPage(PersonalKind.IDS) { personalRepo(it) }
+            "personal/cards" -> PersonalEntriesPage(PersonalKind.CARDS) { personalRepo(it) }
+            "personal/entries" -> PersonalEntriesPage(PersonalKind.OTHERS) { personalRepo(it) }
             "personal/me" -> AccountProfilePage(go)
-            "personal/wallet" -> WalletPage()
             "personal/personal" -> AutofillProfilesPage()
-            "configs/runbook" -> RunbookPage(go)
-            "configs/perms" -> AccountPermsPage(go)
-            "configs/desktop" -> DesktopConfigsPage()
-            "configs/c3" -> C3ConfigsPage()
+            "configs/cloud-apps" -> CloudAppsPage { FIX_CLOUD }
+            "configs/phone-apps" -> PhoneAppsPage { FIX_PHONE }
+            "configs/runbook" -> RunbookTogglesPage(go, FIX_TOGGLES.toggles, state = { _, t -> t.id != "show-touches" }, set = { _, _, _ -> true })
+            "configs/desktop" -> DesktopTreePage { FIX_DESKTOP }
+            "configs/infra" -> InfraPage { FIX_INFRA }
+            "configs/containers" -> ContainersPage { FIX_CONTAINERS }
+            "connect/perms" -> AccountPermsPage(go)
             "data/providers" -> SecretsProvidersPage(go)
             "data/tokens" -> TokensPage()
             "data/databases" -> BackupsPage()
@@ -140,6 +159,17 @@ class SectionScreensTest(private val section: String, private val page: String) 
             "activity/activity" -> ActivityPage()
             else -> error("no page for $section/$page")
         }
+    }
+
+    /** Personal pages over a plain test store (Robolectric has no keystore); every value is an obvious fake. */
+    private fun personalRepo(ctx: Context): PersonalRepo {
+        val r = PersonalRepo(ctx.getSharedPreferences("screens_personal", Context.MODE_PRIVATE))
+        if (r.list(PersonalKind.CARDS).isEmpty()) {
+            r.put(PersonalKind.CARDS, PersonalEntry("c1", "Everyday card", mapOf("holder" to "TEST HOLDER", "number" to "4000 0000 0000 0002", "expiry" to "12/30", "brand" to "visa")))
+            r.put(PersonalKind.IDS, PersonalEntry("i1", "Passport", mapOf("type" to "passport", "number" to "X0000000", "country" to "ES", "expiry" to "2031-01-01")))
+            r.put(PersonalKind.OTHERS, PersonalEntry("o1", "Library card", mapOf("value" to "LIB-0000")))
+        }
+        return r
     }
 
     @Composable private fun Chrome() {
@@ -199,14 +229,34 @@ class SectionScreensTest(private val section: String, private val page: String) 
     companion object {
         private val OUT = File("build/section-screens")
 
+        // #1438 fixtures for the repo-backed pages (the shape the real loaders return; no network in a unit test).
+        private val FIX_CLOUD = listOf(AppRow("com.diegonmarcos.cloudstore", "Cloud Store", "1.4.0", "app"),
+            AppRow("com.diegonmarcos.cloudmail", "Cloud Mail", null, "app"), AppRow("com.diegonmarcos.superapp", "SuperApp", "2.0.1", "app"))
+        private val FIX_PHONE = listOf(AppRow("org.mozilla.firefox", "Firefox", "131.0", ""), AppRow("com.whatsapp", "WhatsApp", "2.24", ""))
+        private val FIX_TOGGLES = ConfigsSources.parse("""{"runbook_toggles": [
+            {"id": "animations-off", "label": "Animations off", "on": "x", "off": "y", "check": "z", "on_when": "0"},
+            {"id": "stay-awake", "label": "Stay awake while charging", "on": "x", "off": "y", "check": "z", "on_when": "7"},
+            {"id": "show-touches", "label": "Show touches", "on": "x", "off": "y", "check": "z", "on_when": "1"}]}""")
+        private val FIX_DESKTOP = listOf(DesktopTree("Nix OS and Home Manager flakes", "cloud-me-pvt-configs",
+            TreeNode.of(listOf("Linux-Desktop/a1-diego-user/nix-hm-flakes/ba_flakes_desktop/src/flake.nix",
+                "Linux-Desktop/a1-diego-user/nix-hm-flakes/ba_flakes_desktop/src/home-manager/home.nix",
+                "Linux-Desktop/_shared/nix-os-flakes/bb_flakes_termux/src/flake.nix"), "Linux-Desktop", Regex("\\.nix$"), emptyList()), "3 file(s)"),
+            DesktopTree("OS Terraform", "cloudy-u-desktop", TreeNode.of(listOf("a_OS/a.md"), "a_OS", Regex(".*"), emptyList()), "1 file(s)"))
+        private val FIX_INFRA = listOf(InfraRow("c_vps/vps_oci", "oci", "Terraform: Oracle Cloud VMs", "vps",
+            TfDecl.parse("provider \"oci\" {}\nresource \"oci_core_instance\" \"apps\" {}\nvariable \"region\" {}")))
+        private val FIX_CONTAINERS = listOf(ContainerRow("bc-obs_alerts-api", ComposeDecl.parse(
+            "services:\n  alerts-api:\n    image: ghcr.io/x/alerts-api:latest\n    environment:\n      - DB_PATH=/data/alerts.db\n      - NTFY_TOKEN=fake-value-0000\n    volumes:\n      - alerts-data:/data\n")))
+
         /** The pages #1081 added: they must render. */
-        private val MUST = setOf("personal/wallet", "configs/desktop", "configs/c3", "data/databases", "data/mesh", "activity/activity", "connect/endpoints", "connect/services", "connect/drive")
+        private val MUST = setOf("personal/ids", "personal/cards", "personal/entries", "configs/cloud-apps", "configs/phone-apps",
+            "configs/runbook", "configs/desktop", "configs/infra", "configs/containers", "data/databases", "data/mesh", "activity/activity", "connect/endpoints", "connect/services", "connect/drive")
 
         @JvmStatic
         @ParameterizedRobolectricTestRunner.Parameters(name = "{0}/{1}")
         fun pages(): List<Array<Any>> = listOf(
-            "personal/me", "personal/wallet", "personal/personal",
-            "configs/runbook", "configs/perms", "configs/desktop", "configs/c3",
+            "personal/ids", "personal/cards", "personal/entries", "personal/me", "personal/personal",
+            "configs/cloud-apps", "configs/phone-apps", "configs/runbook", "configs/desktop", "configs/infra", "configs/containers",
+            "connect/perms",
             "data/providers", "data/tokens", "data/databases", "data/mesh",
             "connect/connections", "connect/apps", "connect/endpoints", "connect/services", "connect/drive",
             "activity/activity",

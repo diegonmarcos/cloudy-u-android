@@ -193,7 +193,8 @@
   "shizuku_client": {
     "_doc": "Cloud Account's OWN privileged shell channel (account redesign, spec section 2.4: Account is the first app on an empty phone, so it pairs first and then installs Cloud Store through pm install). Declared as Cloud Store's: the embedded wireless-adb client leads, the stock Shizuku app is the one fallback provider. SuperApp's bridge is not listed: Account must work before SuperApp exists. Read by libs/shizuku-adb-debug-tools/build.gradle (BuildConfig.SHIZUKU_CLIENT_B64).",
     "providers": [
-      "moe.shizuku.privileged.api"
+      "moe.shizuku.privileged.api",
+      "com.diegonmarcos.superapp"
     ]
   },
   "privileged_channel": {
@@ -599,16 +600,34 @@
         "background": "dark",
         "pages": [
           {
-            "_doc": "The person and this phone (libs:account AccountProfilePage): picture, name, device card, the four profile tiles, Backup / Restore / Migrate, About. Was Home > Account.",
-            "id": "me",
-            "label": "Me",
-            "icon": "account_circle"
+            "_doc": "#1438 Identity documents (passport, national id, driving licence...): type, number, country, expiry. Stored ONLY in EncryptedSharedPreferences (personal/PersonalStore.kt); the number is masked until device auth (RevealGate); nothing of it is logged.",
+            "id": "ids",
+            "label": "IDs",
+            "icon": "badge"
           },
           {
-            "_doc": "Payment and identity: new in #1081. Nothing is stored here; the page opens Cloud Wallet (cards, passes) and Cloud Vault (ID documents).",
-            "id": "wallet",
-            "label": "Wallet",
-            "icon": "account_balance_wallet"
+            "_doc": "#1438 Payment cards: holder, number, expiry, brand. EncryptedSharedPreferences only; the number shows as its last four digits behind a mask and is revealed only after biometric / screen-lock auth (RevealGate), re-masked when the page is left. Never logged.",
+            "id": "cards",
+            "label": "Pay Cards",
+            "icon": "payments"
+          },
+          {
+            "_doc": "#1438 Everything else personal: labelled free entries (EncryptedSharedPreferences, masked until auth) and Me, the person and this phone (libs:account AccountProfilePage: picture, name, device card, profile tiles, Backup / Restore / Migrate).",
+            "id": "others",
+            "label": "Others",
+            "icon": "edit_note",
+            "pages": [
+              {
+                "id": "entries",
+                "label": "Entries",
+                "icon": "folder"
+              },
+              {
+                "id": "me",
+                "label": "Me",
+                "icon": "account_circle"
+              }
+            ]
           },
           {
             "_doc": "The non-secret autofill Source of Truth (a0_docs/eng-specs/autofill-3-tier.md), served by AutofillSotProvider behind AUTOFILL_PROFILE_READ/WRITE. Was Profiles > Autofill; ID documents are not here: Cloud Vault.",
@@ -645,52 +664,51 @@
         "background": "dark",
         "pages": [
           {
-            "_doc": "PUBLIC, no secret value on any page of this section (a guard test enforces it). Make this phone match the loaded profile (was the Setup strip) plus the privileged channel.",
+            "_doc": "PUBLIC, no secret value on any page of this section (a guard test enforces it). #1438: three entries. Cloud Apps = the fleet manifest baked into libs:appstore (updater Fleet.parse) with what is installed here; Phone Apps = every launchable app the manifest does not name; Runbook = the privileged channel (ChannelModeBar, the one Cloud Store's ADB Shell page draws, over the ShellChannels ladder incl. the SuperApp bridge), the declared adb-shell switches (configs_sources.runbook_toggles) and the setup steps (libs:account RunbookPage).",
             "id": "android",
             "label": "Android",
             "icon": "android",
             "pages": [
               {
-                "id": "runbook",
-                "label": "Runbook",
-                "icon": "menu_book"
-              },
-              {
-                "_doc": "The fleet app inventory: install what is missing through Cloud Store, capture what is here (libs:account AppsPage).",
-                "id": "apps",
-                "label": "Install",
+                "id": "cloud-apps",
+                "label": "Cloud Apps",
                 "icon": "apps"
               },
               {
-                "_doc": "Fleet push: the settings the profile pushes to each app, counts and names only (libs:account FleetSetupTab). Was Configs > Setup > Push (id `configs`).",
-                "id": "push",
-                "label": "Push",
-                "icon": "notifications"
+                "id": "phone-apps",
+                "label": "Phone Apps",
+                "icon": "smartphone"
               },
               {
-                "id": "perms",
-                "label": "Perms",
-                "icon": "admin_panel_settings"
-              },
-              {
-                "_doc": "THE page for the privileged channel (libs:shizuku-adb-debug-tools AdbShellPage), the same one the SuperApp and Cloud Store draw.",
-                "id": "adb-shell",
-                "label": "ADB Shell",
-                "icon": "terminal"
+                "id": "runbook",
+                "label": "Runbook",
+                "icon": "menu_book"
               }
             ]
           },
           {
-            "_doc": "New in #1081: the declared desktop-class devices, OS and Home Manager, public fields only (libs:account PublicConfig).",
+            "_doc": "#1438 A tree of the owner's OS Terraforms and Nix flakes (OS and Home Manager), read at run time from the repos configs_sources.desktop names (GitHub trees API; a private repo with the gh engine's token). Nothing of them is copied into the app.",
             "id": "desktop",
             "label": "Desktop",
             "icon": "desktop_windows"
           },
           {
-            "_doc": "New in #1081: the declared containers, public fields only, and the way to Cloud C3.",
+            "_doc": "#1438 C3, read-only, read at run time: Infra = cloudy-t-infra declarations (build.json and the providers / resources of the Terraform, never a variable value); Containers = the private data each cloudy-u-containers container gets: env and secret NAMES, env files, volumes and mounts. A value never reaches the screen: C3Decl drops it at parse time.",
             "id": "c3",
             "label": "C3",
-            "icon": "cloud"
+            "icon": "cloud",
+            "pages": [
+              {
+                "id": "infra",
+                "label": "Infra",
+                "icon": "dns"
+              },
+              {
+                "id": "containers",
+                "label": "Containers",
+                "icon": "inventory_2"
+              }
+            ]
           }
         ]
       },
@@ -864,6 +882,24 @@
                 "id": "drive",
                 "label": "Drive",
                 "icon": "folder"
+              },
+              {
+                "_doc": "#1438 moved from Configs > Android: fleet push, the settings the profile pushes to each app, counts and names only (libs:account FleetSetupTab).",
+                "id": "push",
+                "label": "Push",
+                "icon": "notifications"
+              },
+              {
+                "_doc": "#1438 moved from Configs > Android: runtime and constellation permissions (libs:account AccountPermsPage).",
+                "id": "perms",
+                "label": "Perms",
+                "icon": "admin_panel_settings"
+              },
+              {
+                "_doc": "#1438 moved from Configs > Android: THE page for the privileged channel (libs:shizuku-adb-debug-tools AdbShellPage), the one the SuperApp and Cloud Store draw.",
+                "id": "adb-shell",
+                "label": "ADB Shell",
+                "icon": "terminal"
               }
             ]
           }
@@ -985,6 +1021,25 @@
         }
       }
     }
+  },
+  "configs_sources": {
+    "_doc": "#1438 Where Configs > Desktop and C3 read from, at run time, never copied into the app: the owner's working repos on GitHub (trees API for the listing, raw files for a public repo, the contents API with the gh engine's token for a private one). Baked as BuildConfig.CONFIGS_SOURCES_B64, read by configs/RepoSource.kt and configs/ConfigsPages.kt. runbook_toggles: the adb-shell switches of Configs > Android > Runbook, each an on / off command and a check whose trimmed output equals on_when while it is on, run through the ShellChannels ladder (embedded adb, local server, Shizuku, the SuperApp bridge).",
+    "owner": "diegonmarcos",
+    "exclude": ["z_archive", "z_backup", "archive"],
+    "desktop": [
+      {"label": "Nix OS and Home Manager flakes", "repo": "cloud-me-pvt-configs", "ref": "main", "root": "Linux-Desktop", "match": "(\\.nix|\\.tf|flake\\.lock)$", "private": true},
+      {"label": "OS Terraform", "repo": "cloudy-u-desktop", "ref": "main", "root": "a_OS-TERRAFORM_______________________________", "match": ".*"},
+      {"label": "OS Home Manager", "repo": "cloudy-u-desktop", "ref": "main", "root": "b_OS-HOME-MANAGER_______________________________", "match": ".*"}
+    ],
+    "infra": {"repo": "cloudy-t-infra", "ref": "main", "roots": ["c_vps", "b_infra"], "decl": "build.json", "tf": ["src/main.tf", "main.tf"]},
+    "containers": {"repo": "cloudy-u-containers", "ref": "main", "compose": ["dist/docker-compose.yml", "dist/compose/docker-compose.yml"], "exclude": ["z_archive", "_shared"]},
+    "runbook_toggles": [
+      {"id": "animations-off", "label": "Animations off", "on": "settings put global window_animation_scale 0; settings put global transition_animation_scale 0; settings put global animator_duration_scale 0", "off": "settings put global window_animation_scale 1; settings put global transition_animation_scale 1; settings put global animator_duration_scale 1", "check": "settings get global animator_duration_scale", "on_when": "0"},
+      {"id": "stay-awake", "label": "Stay awake while charging", "on": "settings put global stay_on_while_plugged_in 7", "off": "settings put global stay_on_while_plugged_in 0", "check": "settings get global stay_on_while_plugged_in", "on_when": "7"},
+      {"id": "show-touches", "label": "Show touches", "on": "settings put system show_touches 1", "off": "settings put system show_touches 0", "check": "settings get system show_touches", "on_when": "1"},
+      {"id": "adb-wifi", "label": "Wireless debugging on", "on": "settings put global adb_wifi_enabled 1", "off": "settings put global adb_wifi_enabled 0", "check": "settings get global adb_wifi_enabled", "on_when": "1"},
+      {"id": "adb-verify-off", "label": "No Play Protect scan of adb installs", "on": "settings put global verifier_verify_adb_installs 0", "off": "settings put global verifier_verify_adb_installs 1", "check": "settings get global verifier_verify_adb_installs", "on_when": "0"}
+    ]
   },
   "configs_pages": {
     "_doc": "Configs > General and Configs > About (libs:ui-nav-bars fleetconfigs, rule 1_cicd/src/data/configs-pages.json, #1352 v2). general.sections: the anchors of the one General page, in order (perms, battery, storage, notifications, ui, language are required; app opens this app's own Configs; update is added after perms by default). about: the hand-written part of the extensive About: tagline, description, features, screens, guide, privacy, backends (ids of ac_cloud-account/build.json::fleet_endpoints, resolved to mesh URLs at build time), related fleet apps, credits for a fork. Permissions, data stores, crash/analytics libs, name, icon, version, build sha and date, repo, licence, origin, crash sink, debug API and changelog are derived, never typed here.",

@@ -1,7 +1,7 @@
 package com.diegonmarcos.cloudaccount.hub
 
 /**
- * The five sections (build.json::ui, #1081): Personal Info (Me, Wallet, Autocomplete), Configs (Android, Desktop, C3;
+ * The five sections (build.json::ui, #1081, #1438): Personal Info (IDs, Pay Cards, Others, Autocomplete), Configs (Android, Desktop, C3;
  * public, no secrets), Data (Secrets, Backups, Devices; private), Connect (Status, Authentication providers) and
  * Activity. One place per thing. A page inside a strip ("sites" under "autocomplete") is addressed by its own id;
  * NavSection.page resolves it at any depth.
@@ -28,10 +28,10 @@ object HubNav {
         ("account" to "import") to ("data" to "import"),
         ("setup" to "") to ("configs" to "runbook"),
         ("setup" to "runbook") to ("configs" to "runbook"),
-        ("setup" to "apps") to ("configs" to "apps"),
-        ("setup" to "configs") to ("configs" to "push"),
-        ("setup" to "perms") to ("configs" to "perms"),
-        ("setup" to "adb-shell") to ("configs" to "adb-shell"),
+        ("setup" to "apps") to ("configs" to "cloud-apps"),
+        ("setup" to "configs") to ("connect" to "push"),
+        ("setup" to "perms") to ("connect" to "perms"),
+        ("setup" to "adb-shell") to ("connect" to "adb-shell"),
         ("settings" to "") to ("connect" to "settings"),
         // Profiles, Secrets (four islands of 2026-10-13/14)
         ("profiles" to "") to ("connect" to "apps"),
@@ -62,10 +62,14 @@ object HubNav {
         ("configs" to "settings") to ("connect" to "settings"),
         ("configs" to "setup") to ("configs" to "runbook"),
         ("configs" to "runbook") to ("configs" to "runbook"),
-        ("configs" to "apps") to ("configs" to "apps"),
-        ("configs" to "configs") to ("configs" to "push"),
-        ("configs" to "perms") to ("configs" to "perms"),
-        ("configs" to "adb-shell") to ("configs" to "adb-shell"),
+        ("configs" to "apps") to ("configs" to "cloud-apps"),
+        ("configs" to "configs") to ("connect" to "push"),
+        ("configs" to "perms") to ("connect" to "perms"),
+        ("configs" to "adb-shell") to ("connect" to "adb-shell"),
+        // #1438 Configs > Android is Cloud Apps / Phone Apps / Runbook; Push, Perms and ADB Shell moved to Connect > Setup;
+        // Personal Info > Wallet became Pay Cards.
+        ("configs" to "push") to ("connect" to "push"),
+        ("personal" to "wallet") to ("personal" to "cards"),
     )
 
     /**

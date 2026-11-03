@@ -133,14 +133,14 @@ PY
 import json, sys
 ui = json.load(open(sys.argv[1], encoding='utf-8')).get('ui') or {}
 # a0_docs/eng-specs/cloud-account-ia.md: a page's own `pages` is a second strip (Autofill, Phone, Setup)
-want = {'personal': ['me', 'wallet', 'autocomplete'],
+want = {'personal': ['ids', 'cards', 'others', 'autocomplete'],
         'configs': ['android', 'desktop', 'c3'],
         'data': ['secrets', 'backups', 'devices'],
         'connect': ['status', 'auth', 'fleetsetup'],
         'activity': ['activity']}
-strips = {'autocomplete': ['personal', 'sites', 'snippets'], 'android': ['runbook', 'apps', 'push', 'perms', 'adb-shell'],
+strips = {'others': ['entries', 'me'], 'autocomplete': ['personal', 'sites', 'snippets'], 'android': ['cloud-apps', 'phone-apps', 'runbook'], 'c3': ['infra', 'containers'],
           'secrets': ['providers', 'keys', 'tokens', 'grants', 'import'], 'backups': ['databases', 'bundle'],
-          'devices': ['mesh', 'files', 'working', 'diff'], 'status': ['connections', 'apps', 'endpoints'], 'auth': ['hub', 'signin', 'settings'], 'fleetsetup': ['services', 'drive']}
+          'devices': ['mesh', 'files', 'working', 'diff'], 'status': ['connections', 'apps', 'endpoints'], 'auth': ['hub', 'signin', 'settings'], 'fleetsetup': ['services', 'drive', 'push', 'perms', 'adb-shell']}
 got = {s.get('id'): [p.get('id') for p in s.get('pages') or []] for s in ui.get('sections') or []}
 gotstrips = {p.get('id'): [q.get('id') for q in p.get('pages')] for s in ui.get('sections') or [] for p in s.get('pages') or [] if p.get('pages')}
 ok = (ui.get('bottom_nav') == ['personal', 'configs', 'data', 'connect', 'activity'] and got == want and gotstrips == strips and ui.get('default_section') == 'personal'

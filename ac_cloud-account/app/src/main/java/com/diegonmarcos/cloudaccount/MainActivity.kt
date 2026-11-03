@@ -28,6 +28,14 @@ import androidx.compose.ui.platform.LocalContext
 import com.diegonmarcos.cloudaccount.autofill.AutofillProfilesPage
 import com.diegonmarcos.cloudaccount.autofill.AutofillRulesPage
 import com.diegonmarcos.cloudaccount.autofill.AutofillSnippetsPage
+import com.diegonmarcos.cloudaccount.configs.CloudAppsPage
+import com.diegonmarcos.cloudaccount.configs.ContainersPage
+import com.diegonmarcos.cloudaccount.configs.DesktopTreePage
+import com.diegonmarcos.cloudaccount.configs.InfraPage
+import com.diegonmarcos.cloudaccount.configs.PhoneAppsPage
+import com.diegonmarcos.cloudaccount.configs.RunbookTogglesPage
+import com.diegonmarcos.cloudaccount.personal.PersonalEntriesPage
+import com.diegonmarcos.cloudaccount.personal.PersonalKind
 import com.diegonmarcos.cloudaccount.hub.AppProfilesPage
 import com.diegonmarcos.cloudaccount.hub.ConnectionsPage
 import com.diegonmarcos.cloudaccount.hub.HubNav
@@ -60,12 +68,7 @@ import com.diegonmarcos.superapp.profile.AccountProfilePage
 import com.diegonmarcos.superapp.profile.AccountSettingsPage
 import com.diegonmarcos.superapp.profile.ActivityPage
 import com.diegonmarcos.superapp.profile.BackupsPage
-import com.diegonmarcos.superapp.profile.C3ConfigsPage
-import com.diegonmarcos.superapp.profile.DesktopConfigsPage
 import com.diegonmarcos.superapp.profile.DevicesMeshPage
-import com.diegonmarcos.superapp.profile.WalletPage
-import com.diegonmarcos.superapp.profile.AppsPage
-import com.diegonmarcos.superapp.profile.RunbookPage
 import com.diegonmarcos.superapp.profile.ConnectionsTab
 import com.diegonmarcos.superapp.profile.FleetSetupTab
 import com.diegonmarcos.superapp.profile.ProfilesDevicesPage
@@ -77,7 +80,8 @@ import com.diegonmarcos.superapp.uikit.CloudKitTheme
 import com.diegonmarcos.superapp.updater.Updater
 
 /**
- * Cloud Account: the five sections of build.json::ui.bottom_nav (Personal Info, Configs, Data, Connect, Activity), drawn
+ * Cloud Account: the five sections of build.json::ui.bottom_nav (Personal Info, Configs, Data, Connect, Activity; #1438
+ * Personal Info = IDs, Pay Cards, Others, Autocomplete; Configs = Android, Desktop, C3), drawn
  * by libs:ui-nav-bars (bar) and libs:ui-nav-bars (strips) from the baked NavDecl. A section's pages are its top strip; a page with pages
  * of its own (Autocomplete, Android, Secrets, Backups, Devices, Status, Authentication providers) gets a second strip
  * under it, so every leaf is at most two taps from the island. Every leaf (section, page) is mapped to ONE composable
@@ -210,22 +214,26 @@ class MainActivity : AppCompatActivity() {
         val model = remember { AccountModel.get(ctx) }
         when (section) {
             "personal" -> when (page) {
-                "wallet" -> WalletPage()
+                // #1438 IDs, Pay Cards, Others > Entries: EncryptedSharedPreferences only, masked until device auth.
+                "ids" -> PersonalEntriesPage(PersonalKind.IDS)
+                "cards" -> PersonalEntriesPage(PersonalKind.CARDS)
+                "entries" -> PersonalEntriesPage(PersonalKind.OTHERS)
                 // Autocomplete: the non-secret autofill Source of Truth (a0_docs/eng-specs/autofill-3-tier.md).
                 "personal" -> AutofillProfilesPage()
                 "sites" -> AutofillRulesPage()
                 "snippets" -> AutofillSnippetsPage()
-                else -> AccountProfilePage(go)
+                "me" -> AccountProfilePage(go)
+                else -> PersonalEntriesPage(PersonalKind.IDS)
             }
             // PUBLIC: no page here may show a secret value (test-account-configs-public.sh lists the only composables allowed).
             "configs" -> when (page) {
-                "apps" -> AppsPage()
-                "push" -> FleetSetupPage(model)
-                "perms" -> AccountPermsPage(go)
-                "adb-shell" -> Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) { com.diegonmarcos.superapp.adbdebug.AdbShellPage() }
-                "desktop" -> DesktopConfigsPage()
-                "c3" -> C3ConfigsPage()
-                else -> RunbookPage(go)
+                // #1438 Android (Cloud Apps, Phone Apps, Runbook), Desktop, C3 (Infra, Containers): read from the source repos at run time.
+                "phone-apps" -> PhoneAppsPage()
+                "runbook" -> RunbookTogglesPage(go)
+                "desktop" -> DesktopTreePage()
+                "infra" -> InfraPage()
+                "containers" -> ContainersPage()
+                else -> CloudAppsPage()
             }
             // PRIVATE: secrets stay masked until reveal behind device auth.
             "data" -> when (page) {
@@ -250,6 +258,10 @@ class MainActivity : AppCompatActivity() {
                 "endpoints" -> FleetEndpointsPage()
                 // Setup: every fleet connection setting (services, Drive / Git / mounts); secrets only in the keystore-backed vault.
                 "services" -> FleetServicesSetupPage()
+                // #1438 moved here from Configs > Android.
+                "push" -> FleetSetupPage(model)
+                "perms" -> AccountPermsPage(go)
+                "adb-shell" -> Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) { com.diegonmarcos.superapp.adbdebug.AdbShellPage() }
                 "drive" -> DriveSetupPage()
                 "hub" -> AuthProvidersPage()
                 "signin" -> AccountConnectPage()

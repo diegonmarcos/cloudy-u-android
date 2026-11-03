@@ -104,10 +104,11 @@ class HubTest {
             assertTrue("$from -> $to: a container, not a leaf", page!!.pages.isEmpty())
         }
         // the links libs:account pages send with the old ids
-        assertEquals("configs" to "adb-shell", HubNav.resolve("setup", "adb-shell"))
+        assertEquals("connect" to "adb-shell", HubNav.resolve("setup", "adb-shell"))
         assertEquals("connect" to "signin", HubNav.resolve("account", "connect"))
-        assertEquals("configs" to "perms", HubNav.resolve("setup", "perms"))
-        assertEquals("configs" to "apps", HubNav.resolve("setup", "apps"))
+        assertEquals("connect" to "perms", HubNav.resolve("setup", "perms"))
+        assertEquals("configs" to "cloud-apps", HubNav.resolve("setup", "apps"))
+        assertEquals("personal" to "cards", HubNav.resolve("personal", "wallet"))
         assertEquals("data" to "working", HubNav.resolve("profiles", "working"))
         assertEquals("connect" to "settings", HubNav.resolve("settings", ""))
         // the 2026-10-13 ids: Home's one page became four, Bundle got its own id
@@ -131,7 +132,12 @@ class HubTest {
         assertEquals(listOf("secrets", "providers"), path("data", "providers"))
         assertEquals(listOf("backups", "bundle"), path("data", "bundle"))
         assertEquals(listOf("android", "runbook"), path("configs", "runbook"))
-        assertEquals(listOf("android", "adb-shell"), path("configs", "adb-shell"))
+        assertEquals(listOf("android", "cloud-apps"), path("configs", "cloud-apps"))
+        assertEquals(listOf("android", "phone-apps"), path("configs", "phone-apps"))
+        assertEquals(listOf("c3", "infra"), path("configs", "infra"))
+        assertEquals(listOf("c3", "containers"), path("configs", "containers"))
+        assertEquals(listOf("others", "me"), path("personal", "me"))
+        assertEquals(listOf("fleetsetup", "adb-shell"), path("connect", "adb-shell"))
         assertEquals(listOf("status", "apps"), path("connect", "apps"))
         assertEquals(listOf("auth", "signin"), path("connect", "signin"))
         assertEquals(listOf("auth", "hub"), path("connect", "hub"))
@@ -142,15 +148,18 @@ class HubTest {
         assertEquals(listOf("desktop"), path("configs", "desktop"))
         // the owner's tabs, exactly and in order
         fun tabs(section: String) = nav.section(section)!!.pages.map { it.id }
-        assertEquals(listOf("me", "wallet", "autocomplete"), tabs("personal"))
+        assertEquals(listOf("ids", "cards", "others", "autocomplete"), tabs("personal"))
         assertEquals(listOf("android", "desktop", "c3"), tabs("configs"))
         assertEquals(listOf("secrets", "backups", "devices"), tabs("data"))
         assertEquals(listOf("status", "auth", "fleetsetup"), tabs("connect"))
         assertEquals(listOf("activity"), tabs("activity"))
         // a container opens on its first leaf; a section opens on its first page's leaf
         assertEquals("personal", nav.section("personal")!!.page("autocomplete")!!.leaf().id)
-        assertEquals("runbook", nav.section("configs")!!.page(null)!!.leaf().id)
-        assertEquals("me", nav.section("personal")!!.page(null)!!.leaf().id)
+        assertEquals(listOf("cloud-apps", "phone-apps", "runbook"), nav.section("configs")!!.page("android")!!.pages.map { it.id })
+        assertEquals(listOf("infra", "containers"), nav.section("configs")!!.page("c3")!!.pages.map { it.id })
+        assertEquals(listOf("entries", "me"), nav.section("personal")!!.page("others")!!.pages.map { it.id })
+        assertEquals("cloud-apps", nav.section("configs")!!.page(null)!!.leaf().id)
+        assertEquals("ids", nav.section("personal")!!.page(null)!!.leaf().id)
         assertEquals("providers", nav.section("data")!!.page(null)!!.leaf().id)
         // one place per thing: no leaf id repeats inside a section
         for (s in nav.sections) {
@@ -168,7 +177,7 @@ class HubTest {
         }
         assertNull("no extras = the default", MainActivity.deepLink(i(null, null)))
         assertNull(MainActivity.deepLink(null))
-        assertEquals("configs" to "adb-shell", MainActivity.deepLink(i("setup", "adb-shell")))
+        assertEquals("connect" to "adb-shell", MainActivity.deepLink(i("setup", "adb-shell")))
         assertEquals("data" to "bundle", MainActivity.deepLink(i("secrets", "connections")))
         assertEquals("personal" to "me", MainActivity.deepLink(i("home", "")))
         assertEquals("personal" to "snippets", MainActivity.deepLink(i("account", "snippets")))

@@ -59,6 +59,7 @@ def uiPermissionsRolesB64   = b64(buildJson.ui?.permissions?.roles   ?: [])
 // #868 the nav declaration: ui.bottom_nav (the island), ui.sections (what each item opens), ui.default_section.
 def uiBottomNav       = (buildJson.ui?.bottom_nav ?: []).join(',')
 def uiSectionsB64     = b64(buildJson.ui?.sections ?: [])
+def configsSourcesB64 = b64(buildJson.configs_sources ?: [:])   // #1438 Configs > Desktop / C3 / Runbook sources
 def uiDefaultSection  = (buildJson.ui?.default_section ?: '').toString()
 def profileDefault   = buildJson.ui?.profile_default ?: [:]
 def profileName      = (profileDefault.name      ?: '').toString()
@@ -169,6 +170,7 @@ android {
         buildConfigField "String", "UI_PERMISSIONS_ROLES_B64",   "\"${uiPermissionsRolesB64}\""
         buildConfigField "String", "UI_BOTTOM_NAV",        "\"${uiBottomNav}\""
         buildConfigField "String", "UI_SECTIONS_B64",      "\"${uiSectionsB64}\""
+        buildConfigField "String", "CONFIGS_SOURCES_B64",  "\"${configsSourcesB64}\""
         buildConfigField "String", "UI_DEFAULT_SECTION",   "\"${uiDefaultSection}\""
         buildConfigField "String", "UI_PROFILE_NAME",      "\"${profileName}\""
         buildConfigField "String", "UI_PROFILE_EMAIL",     "\"${profileEmail}\""
@@ -265,6 +267,7 @@ dependencies {
     implementation 'androidx.compose.foundation:foundation'
     implementation 'androidx.compose.material3:material3'
     implementation 'androidx.compose.material:material-icons-extended'
+    implementation 'androidx.security:security-crypto:1.1.0'   // #1438 Personal Info: EncryptedSharedPreferences only
 
     testImplementation project(':libs:auth')   // #1093 AuthHttpRoutingTest drives libs:auth's seam directly
     testImplementation 'junit:junit:4.13.2'
@@ -272,7 +275,6 @@ dependencies {
     testImplementation 'org.robolectric:robolectric:4.16.1'
     testImplementation platform('androidx.compose:compose-bom:2025.11.01')
     testImplementation 'androidx.compose.ui:ui-test-junit4'
-    testImplementation 'androidx.security:security-crypto:1.1.0'
     androidTestImplementation 'androidx.test:runner:1.6.1'
     androidTestImplementation 'androidx.test.ext:junit:1.2.1'
 }

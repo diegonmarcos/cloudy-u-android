@@ -62,8 +62,8 @@ dead = [f"{a}/{b}->{c}/{d}" for (a, b), (c, d) in legacy.items() if c not in pag
 ok(not dead, "every LEGACY target is a declared leaf page", f"LEGACY points at undeclared or container pages {dead}")
 ok(nav.index("LEGACY[section to page.orEmpty()]") < nav.index("if (section in ORDER)"), "resolve() translates a renamed page before passing a current section through", "a renamed page inside a current section passes through untranslated")
 strips = {s["id"]: [p["id"] for p in s["pages"] if p.get("pages")] for s in ui["sections"]}
-ok(strips == {"personal": ["autocomplete"], "configs": ["android"], "data": ["secrets", "backups", "devices"], "connect": ["status", "auth", "fleetsetup"], "activity": []},
-   "the second strips are Personal > Autocomplete, Configs > Android, Data > Secrets / Backups / Devices, Connect > Status / Authentication providers / Setup", f"second strips are {strips}")
+ok(strips == {"personal": ["others", "autocomplete"], "configs": ["android", "c3"], "data": ["secrets", "backups", "devices"], "connect": ["status", "auth", "fleetsetup"], "activity": []},
+   "the second strips are Personal > Others / Autocomplete, Configs > Android / C3, Data > Secrets / Backups / Devices, Connect > Status / Authentication providers / Setup", f"second strips are {strips}")
 ok(all(s.get("background") in ("dark", "light", "theme") for s in ui["sections"]), "every section declares its strip background", "a section leaves its background undeclared")
 ma = code(rd(f"{K}/MainActivity.kt"))
 ok("HubNav.resolve(s, p)" in ma, "MainActivity's go() resolves old ids", "go() does not go through HubNav.resolve")
@@ -138,7 +138,7 @@ mutate "Setup island back" "$A/build.json" '"bottom_nav": [
       "personal",' '"bottom_nav": [
       "setup",
       "personal",' || M=1
-mutate "an old page loses its place" "$K/hub/HubNav.kt" '("setup" to "perms") to ("configs" to "perms"),' '' || M=1
+mutate "an old page loses its place" "$K/hub/HubNav.kt" '("setup" to "perms") to ("connect" to "perms"),' '' || M=1
 mutate "go() skips the resolver" "$K/MainActivity.kt" 'HubNav.resolve(s, p)' 'Pair(s, p)' || M=1
 mutate "gate reads before auth" "$K/hub/Reveal.kt" 'if (!ok) { denied(); return@authenticate }' 'read(); if (!ok) { denied(); return@authenticate }' || M=1
 mutate "no lock still reveals" "$K/hub/Reveal.kt" '!km.isDeviceSecure) { finish(false)' 'false) { finish(false)' || M=1
