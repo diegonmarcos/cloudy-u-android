@@ -59,7 +59,7 @@ jobs:
         run: |
           set -u
           jq '.tests.unit.task = ":app:testDebugUnitTest"' "$WORK_DIR/build.json" > /tmp/b.json && mv /tmp/b.json "$WORK_DIR/build.json"
-          V=ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive/usb/UsbVolumeModel.kt
+          V=ab_cloud-libs-shared/libs/usb-drive/src/main/java/com/diegonmarcos/superapp/usbdrive/UsbVolumeModel.kt
           # Only the suite under proof runs (this checkout only): an unrelated test that needs a runner tool (fish) or
           # another ticket's fixture must not decide whether these mutants are caught.
           find ac_cloud-drive/app/src/test -name '*.kt' ! -path '*/usb/*' -delete

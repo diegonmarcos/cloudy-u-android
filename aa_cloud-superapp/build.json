@@ -346,6 +346,7 @@
       ],
       "comment": "In-app auto-updater. Periodic WorkManager check against ghcr.io via OCI HTTP API (same flow build.sh phone-install uses). If remote sha256 differs from current PackageInfo's, installs it. Fleet.commit prefers the shell channel (uid 2000 holds INSTALL_PACKAGES → `pm install` with NO confirm dialog and no Play Protect scan prompt), falling back to PackageInstaller (which prompts) when no channel is live. All knobs in release.auto_update — no hardcoded URLs."
     },
+    "libs:usb-drive": {"dir": "../ab_cloud-libs-shared/libs/usb-drive", "type": "library", "depends_on": [], "comment": "#1375/#1405 USB-C drives (StorageVolumes, UsbVolumeModel, RawUsbDrive, libaums), shared with Cloud Drive by reference; libs:appstore's Ventoy tab reads drives through it."},
     "libs:appstore": {
       "dir": "../ab_cloud-libs-shared/libs/appstore",
       "_doc": "The Store (#563; formerly the Constellation store): fleet list, install/update actions, background pass. Split from the app so store, launcher and updater are separable - libs:updater is the engine, this is the storefront. UI, so it cannot go out-of-process like libs:net; the win is the boundary."

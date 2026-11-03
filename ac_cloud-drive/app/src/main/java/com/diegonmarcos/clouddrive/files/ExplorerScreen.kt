@@ -47,10 +47,10 @@ fun ExplorerScreen(
     // attach and goes on detach (the media broadcasts bump StorageVolumes.tick), and it is the Local file manager
     // opened on the drive's root.
     val ctx = androidx.compose.ui.platform.LocalContext.current
-    val usbTick by com.diegonmarcos.clouddrive.usb.StorageVolumes.tick.collectAsState()
-    val drives = androidx.compose.runtime.remember(usbTick) { com.diegonmarcos.clouddrive.usb.StorageVolumes.drives(ctx) }
+    val usbTick by com.diegonmarcos.superapp.usbdrive.StorageVolumes.tick.collectAsState()
+    val drives = androidx.compose.runtime.remember(usbTick) { com.diegonmarcos.superapp.usbdrive.StorageVolumes.drives(ctx) }
     val pages = Declarations.navPages(Declarations.SECTION_EXPLORER) + drives.map { d ->
-        com.diegonmarcos.superapp.bottomnav.NavPage(DRIVE_TAB + d.path, d.label, if (d.kind == com.diegonmarcos.clouddrive.usb.UsbVolumeModel.Kind.USB) "usb" else "sd_card")
+        com.diegonmarcos.superapp.bottomnav.NavPage(DRIVE_TAB + d.path, d.label, if (d.kind == com.diegonmarcos.superapp.usbdrive.UsbVolumeModel.Kind.USB) "usb" else "sd_card")
     }
     var current by rememberSaveable { mutableStateOf(pages.firstOrNull()?.id ?: "") }
     LaunchedEffect(page) {

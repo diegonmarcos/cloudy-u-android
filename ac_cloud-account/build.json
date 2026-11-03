@@ -79,11 +79,13 @@
         "libs:shizuku-adb-debug-tools"
       ]
     },
+    "libs:usb-drive": {"dir": "../ab_cloud-libs-shared/libs/usb-drive", "type": "library", "depends_on": [], "comment": "#1375/#1405 USB-C drives (StorageVolumes, UsbVolumeModel, RawUsbDrive, libaums), shared with Cloud Drive by reference; libs:appstore's Ventoy tab reads drives through it."},
     "libs:appstore": {
       "dir": "../ab_cloud-libs-shared/libs/appstore",
       "type": "library",
       "depends_on": [
         "libs:core",
+        "libs:usb-drive",
         "libs:updater",
         "libs:shizuku-adb-debug-tools",
         "libs:ui-kit",

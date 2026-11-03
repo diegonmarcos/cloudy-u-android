@@ -88,7 +88,7 @@ fun GitPageScreen(
     var storageRefresh by remember { mutableStateOf(0) }
     val storageView = if (storage == GitStorage.Kind.STORE) null else rememberGitStorageView(storage, storageRefresh)
     val storageRepos = (storageView as? GitStorage.View.Repos)?.managed()
-    val usbTick by com.diegonmarcos.clouddrive.usb.StorageVolumes.tick.collectAsState()
+    val usbTick by com.diegonmarcos.superapp.usbdrive.StorageVolumes.tick.collectAsState()
     val cloneTargets = remember(usbTick, storageRefresh) { gitCloneTargets(ctx) }
     val access = remember(storage, usbTick, storageRefresh) { gitStorageAccess(ctx, storage) }
     // #1356 the selector lives in the Git page's top menu (GitTopBar's storage slot); the empty states draw it above themselves.

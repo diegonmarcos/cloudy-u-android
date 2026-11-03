@@ -681,7 +681,7 @@ private fun PlacesSheet(d: FilesDialog.Places, ui: FilesUiState, controller: Fil
     val hasAccess = remember { Places.hasAllFilesAccess(ctx) }
     val declared = remember { Places.declared(ctx) }
     // #1375 a drive mounting or leaving (UsbVolumeReceiver) re-reads the places.
-    val usbTick by com.diegonmarcos.clouddrive.usb.StorageVolumes.tick.collectAsState()
+    val usbTick by com.diegonmarcos.superapp.usbdrive.StorageVolumes.tick.collectAsState()
     val discovered = remember(prefs, hasAccess, usbTick) { Places.discovered(ctx, prefs, hasAccess) }
     val bookmarks = remember(prefs) { Places.bookmarks(prefs) }
     fun go(place: Places.Place) {

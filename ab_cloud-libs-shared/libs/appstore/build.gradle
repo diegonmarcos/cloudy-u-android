@@ -101,6 +101,10 @@ def taxonomyFile = [
 ].find { it.exists() && new groovy.json.JsonSlurper().parse(it).ui?.phone_folders }
 if (taxonomyFile == null) throw new GradleException("libs:appstore: no build.json with ui.phone_folders under ${rootDir} or aa_cloud-superapp — refusing to bake an empty taxonomy")
 def taxonomyUi = new groovy.json.JsonSlurper().parse(taxonomyFile).ui
+// #1405 the Ventoy tab: declared by the CONSUMING app's build.json `ventoy` block (Cloud Store declares it after
+// Tiny-ML); a host that declares none bakes an empty group and draws no Ventoy tab.
+def ventoyDeclFile = file("${rootDir}/build.json")
+def ventoyDecl = ventoyDeclFile.exists() ? new groovy.json.JsonSlurper().parse(ventoyDeclFile).ventoy : null
 def taxB64 = { obj -> groovy.json.JsonOutput.toJson(obj ?: []).bytes.encodeBase64().toString() }
 // bakeB64(): the ONE chunked bake (#654), owned by :libs:updater, which this module depends on.
 apply from: '../updater/bake-b64.gradle'
@@ -125,6 +129,8 @@ android {
         buildConfigField "String", "UI_PHONE_FOLDERS_B64",  bakeB64(taxB64(taxonomyUi.phone_folders))
         buildConfigField "String", "UI_PHONE_SECTIONS_B64", bakeB64(taxB64(taxonomyUi.phone_sections))
         buildConfigField "String", "UI_EXTERNAL_APPS_B64",  bakeB64(taxB64(taxonomyUi.external_apps))
+        buildConfigField "String", "VENTOY_AFTER_GROUP", "\"${ventoyDecl?.after_group ?: ''}\""
+        buildConfigField "String", "VENTOY_LABEL", "\"${ventoyDecl?.label ?: 'Ventoy'}\""
     }
 
     buildFeatures {
@@ -140,6 +146,9 @@ android {
             assets.srcDir "${projectDir}/../gplayapi/profiles"
         }
     }
+
+    // #1405 VentoyCatalogueTest & co. are plain JVM (org.json comes from testImplementation below).
+    testOptions { unitTests.returnDefaultValues = true }
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
@@ -175,4 +184,8 @@ dependencies {
     implementation 'androidx.security:security-crypto:1.1.0-alpha06'
     // The theme attributes the fleet's View hosts resolve (and the APK detail sheet's ModalBottomSheet window).
     implementation 'com.google.android.material:material:1.12.0'
+    // #1405 USB-C drives for the Ventoy tab: the same StorageVolumes/UsbVolumeModel Cloud Drive's Explorer reads.
+    implementation project(':libs:usb-drive')
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.json:json:20231013'
 }

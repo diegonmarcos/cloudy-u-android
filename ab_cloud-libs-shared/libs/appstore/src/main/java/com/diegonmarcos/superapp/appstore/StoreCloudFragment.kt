@@ -218,6 +218,12 @@ class StoreCloudFragment : KitComposeFragment() {
     private val checking = mutableStateMapOf<String, Boolean>()
     private val expanded = mutableStateMapOf<String, Boolean>()
     private var tab by mutableIntStateOf(0)
+    /** #1405 the Ventoy tab is open (it is drawn by [ventoy], not a group's rows). */
+    private var ventoyOpen by mutableStateOf(false)
+    private val ventoy = com.diegonmarcos.superapp.appstore.ventoy.VentoyPage(this)
+    /** The Ventoy tab's place on the strip: right after the declared group, or -1 when this host declares none. */
+    private val ventoyBar: Int get() = BuildConfig.VENTOY_AFTER_GROUP.takeIf { it.isNotEmpty() }
+        ?.let { g -> tabs.indexOfFirst { it.id == g }.let { if (it < 0) -1 else it + 1 } } ?: -1
     private var filter by mutableIntStateOf(0)
     /** Bumped when the page comes back to the front: the bar re-reads the device. */
     private var resume by mutableIntStateOf(0)
@@ -361,7 +367,8 @@ class StoreCloudFragment : KitComposeFragment() {
             TabBar()
             // Each blurb is data beside its group, so the caption naming the out-of-process engines moves
             // with the engines. (#896.3: Apps Mesh left this page for Access, so every tab is a group.)
-            if (shown != null) FleetPage(ctx, shown.rows, shown.blurb, shown.id == libConsumers.optString("group"), shown.buildTimeLibs)
+            if (ventoyOpen && ventoyBar >= 0) ventoy.Content(ctx)
+            else if (shown != null) FleetPage(ctx, shown.rows, shown.blurb, shown.id == libConsumers.optString("group"), shown.buildTimeLibs)
         }
 
         details.lastOrNull()?.let { (app, state) ->
@@ -416,8 +423,17 @@ class StoreCloudFragment : KitComposeFragment() {
     @Composable
     private fun TabBar() {
         val groupTab = rememberStoreControls().groupTab
-        StoreTabs.Bar(listOf(tabs.map { StoreControls.Control(it.label, "", groupTab) }), tab) { index ->
-            if (tab != index) { tab = index; filter = 0 }
+        // #1405 the Ventoy tab is not a fleet group: the store's build.json `ventoy.after_group` places it (right after
+        // Tiny-ML); a host whose build.json declares none (SuperApp's embedded Store) has no such tab.
+        val labels = tabs.map { StoreControls.Control(it.label, "", groupTab) }.toMutableList()
+        val vb = ventoyBar
+        if (vb >= 0) labels.add(vb, StoreControls.Control(BuildConfig.VENTOY_LABEL, "", groupTab))
+        val selectedBar = if (ventoyOpen && vb >= 0) vb else tab + (if (vb in 0..tab) 1 else 0)
+        StoreTabs.Bar(listOf(labels), selectedBar) { index ->
+            if (index == vb) { ventoyOpen = true; return@Bar }
+            ventoyOpen = false
+            val t = index - (if (vb in 0 until index) 1 else 0)
+            if (tab != t) { tab = t; filter = 0 }
         }
     }
 
@@ -426,6 +442,7 @@ class StoreCloudFragment : KitComposeFragment() {
     private fun openDetail(app: Fleet.App) {
         val target = tabs.indexOfFirst { t -> t.rows.any { it.id == app.id } }
         if (target < 0) return
+        ventoyOpen = false
         tab = target; filter = 0; expanded[app.id] = true
         scrollTarget = app.id
     }

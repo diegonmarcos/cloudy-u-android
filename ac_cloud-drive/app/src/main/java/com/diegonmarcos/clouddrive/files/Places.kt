@@ -70,10 +70,10 @@ object Places {
         }
         // #1375 the drives Android mounted (USB-C over OTG, SD cards), from StorageManager: their own label and size,
         // USB first. The /storage scan stays as the fallback for a vendor whose StorageManager reports nothing.
-        val drives = com.diegonmarcos.clouddrive.usb.StorageVolumes.drives(ctx)
+        val drives = com.diegonmarcos.superapp.usbdrive.StorageVolumes.drives(ctx)
         if (hasAllFiles) {
             drives.forEach { d ->
-                out += Place(d.id, d.label, if (d.kind == com.diegonmarcos.clouddrive.usb.UsbVolumeModel.Kind.USB) "usb" else "sd_card", Kind.PATH, Location.Local(d.path), hint = d.sizeHint)
+                out += Place(d.id, d.label, if (d.kind == com.diegonmarcos.superapp.usbdrive.UsbVolumeModel.Kind.USB) "usb" else "sd_card", Kind.PATH, Location.Local(d.path), hint = d.sizeHint)
             }
             File("/storage").listFiles()?.filter { it.isDirectory && it.name != "emulated" && it.name != "self" && drives.none { d -> d.path == it.absolutePath } }?.forEach { volume ->
                 out += Place("vol-" + volume.absolutePath, volumeLabel(ctx, volume), if (volume.name.lowercase() == "usb") "usb" else "sd_card", Kind.PATH, Location.Local(volume.absolutePath))

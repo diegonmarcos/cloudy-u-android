@@ -12,8 +12,8 @@ import androidx.compose.ui.res.stringResource
 import com.diegonmarcos.clouddrive.R
 import com.diegonmarcos.clouddrive.ui.EmptyState
 import com.diegonmarcos.clouddrive.ui.IconCatalog
-import com.diegonmarcos.clouddrive.usb.StorageVolumes
-import com.diegonmarcos.clouddrive.usb.UsbVolumeModel
+import com.diegonmarcos.superapp.usbdrive.StorageVolumes
+import com.diegonmarcos.superapp.usbdrive.UsbVolumeModel
 import com.diegonmarcos.cloudlib.gitsync.ManagedRepo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

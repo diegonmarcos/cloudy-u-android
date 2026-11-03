@@ -1,5 +1,7 @@
 package com.diegonmarcos.clouddrive.usb
 
+import com.diegonmarcos.superapp.usbdrive.UsbVolumeModel
+import com.diegonmarcos.superapp.usbdrive.StorageVolumes
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent

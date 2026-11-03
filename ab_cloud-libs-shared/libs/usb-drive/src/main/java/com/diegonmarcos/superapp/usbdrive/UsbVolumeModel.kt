@@ -1,4 +1,4 @@
-package com.diegonmarcos.clouddrive.usb
+package com.diegonmarcos.superapp.usbdrive
 
 /**
  * #1375 USB-C drives, the PURE part: no Android, no IO, so the JVM suite (UsbVolumeModelTest) proves every

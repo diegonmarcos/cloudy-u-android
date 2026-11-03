@@ -313,8 +313,8 @@ class MainActivity : ComponentActivity(), DriveActions {
 
     override fun requestTreeGrant() {
         // #1375 a plugged-in drive without all-files access: the system's grant for exactly that volume, else the picker.
-        val drive = com.diegonmarcos.clouddrive.usb.StorageVolumes.drives(this).firstOrNull()
-        val perVolume = drive?.let { com.diegonmarcos.clouddrive.usb.StorageVolumes.grantIntent(this, it.path) }
+        val drive = com.diegonmarcos.superapp.usbdrive.StorageVolumes.drives(this).firstOrNull()
+        val perVolume = drive?.let { com.diegonmarcos.superapp.usbdrive.StorageVolumes.grantIntent(this, it.path) }
         if (perVolume != null && runCatching { volumeTreeLauncher.launch(perVolume) }.isSuccess) return
         runCatching { openTreeLauncher.launch(null) }
     }

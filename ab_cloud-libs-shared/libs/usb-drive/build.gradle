@@ -1,0 +1,33 @@
+// libs:usb-drive (#1375, shared by #1405): USB-C drives. StorageManager volumes flattened to plain values
+// (StorageVolumes, UsbVolumeModel), the per-volume SAF grant, and libaums raw USB mass-storage access
+// (RawUsbDrive over JavaUsbCommunication, no 4 KB JNI). Cloud Drive's Explorer and Cloud Store's Ventoy tab
+// both read drives through this one lib, so it is never copied.
+plugins {
+    id 'com.android.library'
+}
+if (project.extensions.findByName('kotlin') == null) {
+    apply plugin: 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.diegonmarcos.superapp.usbdrive'
+    compileSdk 36
+    defaultConfig { minSdk 26 }
+    testOptions { unitTests.returnDefaultValues = true }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
+dependencies {
+    // libaums (Apache-2.0): SCSI over USB bulk, FAT32. `api`: a consumer holds RawUsbDrive.fs (libaums types).
+    api 'me.jahnen.libaums:core:0.10.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
+}

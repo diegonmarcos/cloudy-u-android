@@ -1,0 +1,120 @@
+# #1405 Cloud Store Ventoy tab mutation proof: the catalogue parse and feed resolvers, the checksum rule, the ventoy.json
+# persistence entry, install/remove on a fake volume, the destructive-confirm gate, "internal storage is never a target"
+# and the ext2 persistence image (e2fsck) are pinned by libs:appstore's VentoyCatalogueTest, VentoyDriveTest and
+# Ext2ImageTest. This job runs that suite once on the real tree (GREEN expected), then once per planted mutant (RED
+# expected, one break each). It fails if the real tree is red or any mutant stays green.
+name: store-ventoy-mutation
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: "all | one of the mutant names below"
+        required: false
+        default: "all"
+  push:
+    branches: [main]
+    paths:
+      - "ab_cloud-libs-shared/libs/appstore/src/main/java/com/diegonmarcos/superapp/appstore/ventoy/**"
+      - "ab_cloud-libs-shared/libs/appstore/src/test/java/com/diegonmarcos/superapp/appstore/ventoy/**"
+      - ".github/workflows/store-ventoy-mutation.yml"
+permissions:
+  contents: read
+env:
+  WORK_DIR: ac_cloud-store
+jobs:
+  mutate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: "platforms;android-36 platforms;android-35 platforms;android-26 build-tools;35.0.0 build-tools;34.0.0 platform-tools"
+      - name: Set up Gradle 8.10.2 (cached)
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: "8.10.2"
+      # ── MANAGED-GRADLE-CACHE-HYGIENE: injected by cloud-android-gradle-cache-hygiene.py ──
+      # Edit 1_cicd/src/actions/gradle-cache-hygiene, never this block.
+      - name: Gradle cache hygiene (retry failed resolution, never cache a failed lookup)
+        uses: ./.github/actions/gradle-cache-hygiene
+      # ── end MANAGED-GRADLE-CACHE-HYGIENE ──
+      - name: Checkout vault (shared Android signing key, read by app/build.gradle at configuration)
+        uses: actions/checkout@v4
+        with:
+          repository: diegonmarcos/cloud-me-pvt-vault
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
+          path: .vault
+      - name: Install jq + e2fsprogs
+        run: sudo apt-get update -y && sudo apt-get install -y jq e2fsprogs
+      - name: Install ORAS + sops (pinned)
+        uses: ./.github/actions/install-pinned-tools
+        with:
+          tools: oras sops
+      - name: Real tree GREEN, every mutant RED
+        env:
+          BYPASS_NIX: "1"
+          VAULT_DIR: ${{ github.workspace }}/.vault
+          SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
+          ONLY: ${{ inputs.name || 'all' }}
+        run: |
+          set -u
+          jq '.tests.unit.task = ":libs:appstore:testDebugUnitTest"' "$WORK_DIR/build.json" > /tmp/b.json && mv /tmp/b.json "$WORK_DIR/build.json"
+          D=ab_cloud-libs-shared/libs/appstore/src/main/java/com/diegonmarcos/superapp/appstore/ventoy
+          suite() { sh 1_cicd/dist/scripts/cloud-android-test-engine.sh unit "$WORK_DIR" > /tmp/suite.log 2>&1; }
+          sub() { python3 -c 'import sys; p, a, b = sys.argv[1:]; a, b = a.replace(chr(92) + "n", chr(10)), b.replace(chr(92) + "n", chr(10)); s = open(p).read(); assert a in s, "anchor missing: " + a; open(p, "w").write(s.replace(a, b, 1))' "$D/$1" "$2" "$3"; }
+          suite || { tail -120 /tmp/suite.log; echo "::error::the real tree is RED"; exit 1; }
+          R=ab_cloud-libs-shared/libs/appstore/build/test-results
+          for t in VentoyCatalogueTest VentoyDriveTest Ext2ImageTest; do grep -rq "$t" "$R" 2>/dev/null || { echo "::error::$t did not run"; exit 1; }; done
+          grep -rq '<skipped' "$R" && { echo "::error::a Ventoy test was skipped (e2fsck missing?)"; exit 1; }
+          echo "real tree: GREEN"
+          stayed=0
+          while IFS='@' read -r name file a b; do
+            [ -z "$name" ] && continue
+            [ "$ONLY" != "all" ] && [ "$ONLY" != "$name" ] && continue
+            git checkout -- "$D"
+            sub "$file" "$a" "$b" || { echo "::error::$name: mutation anchor missing"; stayed=$((stayed + 1)); continue; }
+            if suite; then echo "::error::mutant stayed GREEN: $name"; stayed=$((stayed + 1)); else echo "RED (caught): $name"; fi
+          done <<'MUTANTS'
+          oldest@VentoyCatalogue.kt@.maxWithOrNull { a, b -> compareVersions(a.third, b.third) }@.minWithOrNull { a, b -> compareVersions(a.third, b.third) }
+          version-text@VentoyCatalogue.kt@val c = if (p.length != q.length) p.length.compareTo(q.length) else p.compareTo(q)@val c = p.compareTo(q)
+          no-bsd@VentoyCatalogue.kt@Regex("^SHA256 \\((.+)\\) = ([0-9a-fA-F]{64})$")@Regex("^NEVER$")
+          http-ok@VentoyCatalogue.kt@u.startsWith("https://") && u.length@u.startsWith("http") && u.length
+          mobile-installable@VentoyCatalogue.kt@if (table == "android-mobile") require(@if (false) require(
+          json-no-select@VentoyCatalogue.kt@.filter { o -> src.select.all { (k, v) -> o.optString(k) == v } }@.filter { true }
+          json-betas@VentoyCatalogue.kt@.filter { o -> vRe == null || vRe.matches(o.optString(f("version"))) }@.filter { true }
+          github-no-sums@VentoyCatalogue.kt@val sha = sumsText?.let { t -> sumsLines(t).firstOrNull { it.second == a.name }?.first } ?: a.digest ?: return null@val sha = a.digest ?: return null
+          sha-case@VentoyCatalogue.kt@actual!!.equals(expected, ignoreCase = true)@actual == expected
+          sha-blank@VentoyCatalogue.kt@isSha256(actual) && isSha256(expected) && actual!!@actual!!
+          hash-skips@VentoyCatalogue.kt@md.update(buf, 0, n); @
+          json-duplicates@VentoyJson.kt@?.takeIf { it.optString("image") != image }?.let(out::put)@?.let(out::put)
+          json-drops-plugins@VentoyJson.kt@        val root = parse(existing)\n        val out = JSONArray()@        val root = JSONObject()\n        val out = JSONArray()
+          json-overwrites-broken@VentoyJson.kt@.getOrElse { throw IllegalArgumentException("ventoy.json is not valid JSON; left untouched") }@.getOrElse { JSONObject() }
+          json-dotdot@VentoyJson.kt@p.split('/').none { it == ".." || it == "." }@true
+          no-verify@VentoyDrive.kt@if (expectedSha != null && !VentoyCatalogue.matches(sha, expectedSha)) {@if (false) {
+          part-kept@VentoyDrive.kt@fs.delete(part); throw ChecksumMismatch@throw ChecksumMismatch
+          no-rename@VentoyDrive.kt@fs.rename(part, path.substringAfterLast('/'))@Unit
+          no-entry@VentoyDrive.kt@val next = VentoyJson.withPersistence(cur, iso, backend)@val next = cur ?: "{}"
+          remove-keeps-dat@VentoyDrive.kt@        backends.forEach { fs.delete(it) }\n@
+          remove-anywhere@VentoyDrive.kt@require(iso.startsWith("$ISO_DIR/") || iso.lastIndexOf('/') == 0)@require(true)
+          gate-any-text@VentoyGate.kt@typed != phrase(d) -> null@typed.isBlank() -> null
+          gate-unshown@VentoyGate.kt@shown != prompt(d) -> null@false -> null
+          gate-internal@VentoyGate.kt@VentoyTarget.check(d.volume) != VentoyTarget.Verdict.Ok -> null@false -> null
+          gate-open-ctor@VentoyGate.kt@class Armed private constructor@class Armed constructor
+          target-primary@VentoyTarget.kt@v.primary -> Verdict.Refused@false -> Verdict.Refused
+          target-internal-path@VentoyTarget.kt@isInternalPath(p) -> Verdict.Refused@false -> Verdict.Refused
+          target-read-only@VentoyTarget.kt@v.state == UsbVolumeModel.STATE_MOUNTED_READ_ONLY -> @false -> 
+          tree-primary@VentoyTarget.kt@volume.equals("primary", ignoreCase = true) || @
+          tree-subfolder@VentoyTarget.kt@return treeDocId.substringAfter(':', "x").isEmpty()@return true
+          ext2-free-count@Ext2Image.kt@.putInt(free.sum())@.putInt(free.sum() + 1)
+          ext2-no-label@Ext2Image.kt@            b.put(name)\n@
+          MUTANTS
+          git checkout -- "$D"
+          [ "$stayed" -eq 0 ] || { echo "::error::$stayed mutant(s) stayed green"; exit 1; }
+          echo "every mutant RED"

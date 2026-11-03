@@ -1,8 +1,9 @@
 package com.diegonmarcos.clouddrive.usb
 
-import com.diegonmarcos.clouddrive.usb.UsbVolumeModel.DriveState
-import com.diegonmarcos.clouddrive.usb.UsbVolumeModel.Kind
-import com.diegonmarcos.clouddrive.usb.UsbVolumeModel.Volume
+import com.diegonmarcos.superapp.usbdrive.UsbVolumeModel
+import com.diegonmarcos.superapp.usbdrive.UsbVolumeModel.DriveState
+import com.diegonmarcos.superapp.usbdrive.UsbVolumeModel.Kind
+import com.diegonmarcos.superapp.usbdrive.UsbVolumeModel.Volume
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull

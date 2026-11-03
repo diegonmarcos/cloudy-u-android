@@ -1,0 +1,325 @@
+{
+ "_doc": "#1405 Cloud Store > Cloud > Ventoy: the catalogue. Every row names its OFFICIAL page (link) and, where an official feed publishes a checksum, the source the app resolves version, URL, size and sha256 from (sums | json | github). A link-only row has no Install. Placement (after_group) is the store's build.json `ventoy` block; test-store-ventoy.sh holds the two equal.",
+ "after_group": "libs-t-ml",
+ "label": "Ventoy",
+ "ventoy": {
+  "link": "https://www.ventoy.net/",
+  "licence": "GPL-3.0-or-later",
+  "source": {
+   "type": "github",
+   "feed": "ventoy/Ventoy",
+   "asset": "ventoy-[\\d.]+-linux\\.tar\\.gz",
+   "sums_asset": "sha256\\.txt"
+  },
+  "installer_assets": [
+   "ventoy-[\\d.]+-linux\\.tar\\.gz",
+   "ventoy-[\\d.]+-windows\\.zip"
+  ]
+ },
+ "tables": [
+  {
+   "id": "linux",
+   "label": "Linux distros",
+   "blurb": "Live ISOs Ventoy boots. Version, size and sha256 come from each project's official feed.",
+   "rows": [
+    {
+     "id": "ubuntu",
+     "name": "Ubuntu Desktop LTS",
+     "link": "https://ubuntu.com/download/desktop",
+     "note": "Live session, persistence label casper-rw.",
+     "source": {
+      "type": "sums",
+      "feed": "https://releases.ubuntu.com/24.04/SHA256SUMS",
+      "file": "ubuntu-(24\\.04(?:\\.\\d+)?)-desktop-amd64\\.iso",
+      "base": "https://releases.ubuntu.com/24.04/"
+     }
+    },
+    {
+     "id": "fedora",
+     "name": "Fedora Workstation",
+     "link": "https://fedoraproject.org/workstation/download",
+     "note": "Release feed fedoraproject.org/releases.json (betas skipped).",
+     "source": {
+      "type": "json",
+      "feed": "https://fedoraproject.org/releases.json",
+      "select": {
+       "arch": "x86_64",
+       "variant": "Workstation",
+       "subvariant": "Workstation"
+      },
+      "version_re": "^\\d+$",
+      "fields": {
+       "url": "link"
+      }
+     }
+    },
+    {
+     "id": "debian",
+     "name": "Debian Live (GNOME)",
+     "link": "https://www.debian.org/CD/live/",
+     "note": "Persistence label persistence, with persistence.conf.",
+     "persistence_label": "persistence",
+     "persistence_conf": true,
+     "source": {
+      "type": "sums",
+      "feed": "https://cdimage.debian.org/debian-cd/current-live/amd64/iso-hybrid/SHA256SUMS",
+      "file": "debian-live-([\\d.]+)-amd64-gnome\\.iso",
+      "base": "https://cdimage.debian.org/debian-cd/current-live/amd64/iso-hybrid/"
+     }
+    },
+    {
+     "id": "arch",
+     "name": "Arch Linux",
+     "link": "https://archlinux.org/download/",
+     "note": "Persistence label vtoycow.",
+     "persistence_label": "vtoycow",
+     "source": {
+      "type": "sums",
+      "feed": "https://geo.mirror.pkgbuild.com/iso/latest/sha256sums.txt",
+      "file": "archlinux-(\\d{4}\\.\\d{2}\\.\\d{2})-x86_64\\.iso",
+      "base": "https://geo.mirror.pkgbuild.com/iso/latest/"
+     }
+    },
+    {
+     "id": "mint",
+     "name": "Linux Mint Cinnamon",
+     "link": "https://linuxmint.com/download.php",
+     "note": "Newest release under pub.linuxmint.io/stable; persistence label casper-rw.",
+     "source": {
+      "type": "sums",
+      "feed": "https://pub.linuxmint.io/stable/{dir}/sha256sum.txt",
+      "file": "linuxmint-([\\d.]+)-cinnamon-64bit\\.iso",
+      "base": "https://pub.linuxmint.io/stable/{dir}/",
+      "index": "https://pub.linuxmint.io/stable/"
+     }
+    },
+    {
+     "id": "opensuse",
+     "name": "openSUSE Tumbleweed",
+     "link": "https://get.opensuse.org/tumbleweed/",
+     "note": "Rolling snapshot; the Current alias is checked against its own .sha256.",
+     "source": {
+      "type": "sums",
+      "feed": "https://download.opensuse.org/tumbleweed/iso/openSUSE-Tumbleweed-DVD-x86_64-Current.iso.sha256",
+      "file": "openSUSE-Tumbleweed-DVD-x86_64-Snapshot(\\d+)-Media\\.iso",
+      "base": "https://download.opensuse.org/tumbleweed/iso/"
+     }
+    },
+    {
+     "id": "nixos",
+     "name": "NixOS (graphical)",
+     "link": "https://nixos.org/download/",
+     "note": "Channel nixos-26.05; the latest alias is checked against its .sha256.",
+     "source": {
+      "type": "sums",
+      "feed": "https://channels.nixos.org/nixos-26.05/latest-nixos-graphical-x86_64-linux.iso.sha256",
+      "file": "nixos-graphical-([\\w.]+)-x86_64-linux\\.iso",
+      "download": "https://channels.nixos.org/nixos-26.05/latest-nixos-graphical-x86_64-linux.iso"
+     }
+    },
+    {
+     "id": "popos",
+     "name": "Pop!_OS",
+     "link": "https://system76.com/pop/download/",
+     "note": "Build feed api.pop-os.org (Intel/AMD image).",
+     "source": {
+      "type": "json",
+      "feed": "https://api.pop-os.org/builds/24.04/intel?arch=amd64",
+      "fields": {
+       "sha256": "sha_sum"
+      }
+     }
+    },
+    {
+     "id": "kali",
+     "name": "Kali Linux Live",
+     "link": "https://www.kali.org/get-kali/#kali-live",
+     "note": "Persistence label persistence, with persistence.conf.",
+     "persistence_label": "persistence",
+     "persistence_conf": true,
+     "source": {
+      "type": "sums",
+      "feed": "https://cdimage.kali.org/current/SHA256SUMS",
+      "file": "kali-linux-([\\d.]+)-live-amd64\\.iso",
+      "base": "https://cdimage.kali.org/current/"
+     }
+    },
+    {
+     "id": "tails",
+     "name": "Tails",
+     "link": "https://tails.net/install/",
+     "note": "Tails keeps its own Persistent Storage; Ventoy persistence does not apply.",
+     "source": {
+      "type": "json",
+      "feed": "https://tails.net/install/v2/Tails/amd64/stable/latest.json",
+      "path": "installations/0/installation-paths",
+      "select": {
+       "type": "iso"
+      },
+      "item": "target-files/0",
+      "version_from_url": "tails-amd64-([\\d.~a-z]+)/"
+     }
+    }
+   ]
+  },
+  {
+   "id": "android-desktop",
+   "label": "Android Desktop",
+   "blurb": "Android for PCs. None publishes a machine-readable feed: download from the official page, then Install a local image.",
+   "rows": [
+    {
+     "id": "blissos",
+     "name": "Bliss OS",
+     "link": "https://blissos.org/",
+     "note": "Builds and their sha256 are on blissos.org / SourceForge; no machine-readable feed. Download it, then Install a local image.",
+     "source": {
+      "type": "link"
+     }
+    },
+    {
+     "id": "primeos",
+     "name": "PrimeOS",
+     "link": "https://www.primeos.in/",
+     "note": "No machine-readable release feed; link only.",
+     "source": {
+      "type": "link"
+     }
+    },
+    {
+     "id": "fydeos",
+     "name": "FydeOS",
+     "link": "https://fydeos.io/download/",
+     "note": "Per-device images on fydeos.io; link only.",
+     "source": {
+      "type": "link"
+     }
+    },
+    {
+     "id": "android-x86",
+     "name": "Android-x86",
+     "link": "https://www.android-x86.org/download.html",
+     "note": "Last release 9.0-r2; checksums are in its release note. Link only.",
+     "source": {
+      "type": "link"
+     }
+    },
+    {
+     "id": "lineage-x86",
+     "name": "LineageOS x86",
+     "link": "https://wiki.lineageos.org/devices/",
+     "note": "LineageOS publishes no official x86 PC ISO; community builds are not listed here.",
+     "source": {
+      "type": "link"
+     }
+    }
+   ]
+  },
+  {
+   "id": "android-mobile",
+   "label": "Android Mobile",
+   "blurb": "Phone builds are device images: flash, not Ventoy.",
+   "rows": [
+    {
+     "id": "lineageos",
+     "name": "LineageOS",
+     "link": "https://download.lineageos.org/",
+     "note": "Device image: flash, not Ventoy.",
+     "kind": "device",
+     "source": {
+      "type": "link"
+     }
+    },
+    {
+     "id": "grapheneos",
+     "name": "GrapheneOS",
+     "link": "https://grapheneos.org/install/",
+     "note": "Pixel factory image via the web installer: flash, not Ventoy.",
+     "kind": "device",
+     "source": {
+      "type": "link"
+     }
+    },
+    {
+     "id": "eos",
+     "name": "/e/OS",
+     "link": "https://doc.e.foundation/devices",
+     "note": "Device image: flash, not Ventoy.",
+     "kind": "device",
+     "source": {
+      "type": "link"
+     }
+    },
+    {
+     "id": "calyxos",
+     "name": "CalyxOS",
+     "link": "https://calyxos.org/install/",
+     "note": "Device image: flash, not Ventoy.",
+     "kind": "device",
+     "source": {
+      "type": "link"
+     }
+    }
+   ]
+  },
+  {
+   "id": "customised",
+   "label": "Customised ISOs",
+   "blurb": "Tools that build your own image. Install the result with Install a local image.",
+   "rows": [
+    {
+     "id": "cubic",
+     "name": "Cubic (Ubuntu remaster)",
+     "kind": "tool",
+     "link": "https://github.com/PJ-Singh-001/Cubic",
+     "note": "Customise an Ubuntu ISO on a PC, then Install a local image.",
+     "source": {
+      "type": "link"
+     }
+    },
+    {
+     "id": "packer",
+     "name": "HashiCorp Packer",
+     "kind": "tool",
+     "link": "https://developer.hashicorp.com/packer/docs",
+     "note": "Packer-built images; copy the ISO/IMG output with Install a local image.",
+     "source": {
+      "type": "link"
+     }
+    },
+    {
+     "id": "nixos-custom",
+     "name": "NixOS custom ISO",
+     "kind": "tool",
+     "link": "https://nixos.org/manual/nixos/stable/#sec-building-image",
+     "note": "nix build of your own configuration's isoImage; then Install a local image.",
+     "source": {
+      "type": "link"
+     }
+    },
+    {
+     "id": "cloud-init",
+     "name": "Cloud-init NoCloud seed",
+     "kind": "tool",
+     "link": "https://cloudinit.readthedocs.io/en/latest/reference/datasources/nocloud.html",
+     "note": "A cidata seed ISO (user-data + meta-data) is attached next to a cloud image, not booted by Ventoy; build it with cloud-localds, link only.",
+     "source": {
+      "type": "link"
+     }
+    },
+    {
+     "id": "talos",
+     "name": "Talos Linux (metal ISO)",
+     "kind": "iso",
+     "link": "https://factory.talos.dev/",
+     "note": "The default schematic's metal ISO from the Talos release; custom schematics are built on factory.talos.dev.",
+     "source": {
+      "type": "github",
+      "feed": "siderolabs/talos",
+      "asset": "metal-amd64\\.iso",
+      "sums_asset": "sha256sum\\.txt"
+     }
+    }
+   ]
+  }
+ ]
+}

@@ -95,11 +95,13 @@
       "dir": "../ab_cloud-libs-shared/libs/ui-kit",
       "type": "library"
     },
+    "libs:usb-drive": {"dir": "../ab_cloud-libs-shared/libs/usb-drive", "type": "library", "depends_on": [], "comment": "#1375/#1405 USB-C drives (StorageVolumes, UsbVolumeModel, RawUsbDrive, libaums), shared with Cloud Drive by reference; libs:appstore's Ventoy tab reads drives through it."},
     "libs:appstore": {
       "dir": "../ab_cloud-libs-shared/libs/appstore",
       "type": "library",
       "depends_on": [
         "libs:core",
+        "libs:usb-drive",
         "libs:updater",
         "libs:shizuku-adb-debug-tools",
         "libs:ui-kit",
@@ -313,6 +315,12 @@
     "_doc": "Cloud Store has no DNS page of its own: a failed Store row offers SuperApp's (page id dns, declared in aa_cloud-superapp/build.json). `package` is the app launched, `shortcut_action` the extra its launcher reads (ShellActivity.handleShortcutIntent). Baked into BuildConfig.DNS_HANDOFF_ACTION; kept here so the page id is not a literal this app's nav declaration would have to own.",
     "package": "com.diegonmarcos.superapp",
     "shortcut_action": "page:config/dns"
+  },
+  "ventoy": {
+    "_doc": "#1405 Cloud > Ventoy: a tab of its own right after the Tiny-ML group (after_group), baked into libs:appstore's BuildConfig (VENTOY_AFTER_GROUP, VENTOY_LABEL) from THIS file, so SuperApp's embedded Store (no such block) has no Ventoy tab. Drives come from libs:usb-drive (the #1375 code Cloud Drive reads); the catalogue is libs:appstore assets/appstore-ventoy.json (four tables, official feeds, sha256 on every download). Raw Ventoy install (erase + partition) is NOT implemented: it needs an exFAT format Android cannot do from an app; the tab offers Copy installer + Ventoy2Disk on a PC, behind VentoyGate for when it is. Guards: test/test-store-ventoy.sh, VentoyCatalogueTest/VentoyDriveTest/Ext2ImageTest (+ store-ventoy-mutation.yml), test-store-ventoy-emulator.yml (vold virtual disk).",
+    "after_group": "libs-t-ml",
+    "label": "Ventoy",
+    "catalogue": "appstore-ventoy.json"
   },
   "ui": {
     "_doc": "#868 THE nav declaration (libs:bottomnav NavDecl): ui.bottom_nav is the island, ui.sections[] what each item opens, ui.default_section where the app opens. The island reads exactly Cloud, Phone, Search, Feed, Access and the app opens on Cloud (default_section; a deep link or a restored back-stack still opens where it points). Settings is not an island item: it is the top bar's round Settings button (Account | Configs). #896/#896.3 child pages: Phone = Installed | Declared (Search is its own island item, hosted by the same libs:appstore StorePhoneFragment on its search page), Feed = Commits | CI-CD (ids = appstore-feeds.json feed ids), Access = Apps Mesh | IPC | Identity | Android Perms | Cloud Perms (#ipc: IPC is the fleet's IPC Mesh, libs:appstore IpcMeshPage, the same page SuperApp > Configs > Network > IPC draws; Identity is libs:appstore FleetIdentityPage, the same page SuperApp > Configs > Apps Mesh > Identity draws: each fleet app's Linux uid, its sharedUserId group from data/fleet-identity.json, the live uid and signer, and any mismatch). MainActivity draws them with PageTabs and StorePages tells the pages below which is open; a host with no strip (SuperApp's embedded Store) gets Phone's drawn by the fragment. Cloud keeps its data-driven group tabs (one per constellation group, so not declared here) and nothing else: Apps Mesh and Perms moved to Access, Commits and CI-CD to Feed.",

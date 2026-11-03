@@ -1,4 +1,4 @@
-package com.diegonmarcos.clouddrive.usb
+package com.diegonmarcos.superapp.usbdrive
 
 import android.content.Context
 import android.hardware.usb.UsbDevice
