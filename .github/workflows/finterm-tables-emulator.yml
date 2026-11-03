@@ -8,6 +8,14 @@ on:
       ship_run_id:
         description: "Ship -> Capital-Stack-FinTerminal run id whose x86_64 APK artifact to shoot"
         required: true
+      dashes:
+        description: "Optional: space-separated dashboard ids to shoot (default: the script's list)"
+        required: false
+        default: ""
+      wait_s:
+        description: "Optional: seconds to wait for each dashboard to settle (default 30)"
+        required: false
+        default: "30"
 
 permissions:
   contents: read
@@ -51,7 +59,7 @@ jobs:
           profile: pixel_6
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           disable-animations: true
-          script: bash ad_Capital-Stack-FinTerminal/test/emulator-tables.sh finterm.apk out
+          script: FT_DASHES='${{ inputs.dashes }}' FT_WAIT='${{ inputs.wait_s }}' bash ad_Capital-Stack-FinTerminal/test/emulator-tables.sh finterm.apk out
 
       - name: Upload screenshots
         if: always()

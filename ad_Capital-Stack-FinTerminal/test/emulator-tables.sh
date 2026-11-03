@@ -38,7 +38,7 @@ for s in $HOMES market_monitor; do
 done
 for d in $DASHES; do
   adb shell am start -S -W -n "$PKG/.MainActivity" --es dashboard "$d" >/dev/null
-  sleep 30
+  sleep "${FT_WAIT:-30}"
   adb exec-out screencap -p > "$OUT/apk-$d-1.png"
   # sideways: the table's later columns (a swipe right-to-left across the first table), then back
   adb shell input swipe $((W * 9 / 10)) $((H / 2)) $((W / 10)) $((H / 2)) 600
