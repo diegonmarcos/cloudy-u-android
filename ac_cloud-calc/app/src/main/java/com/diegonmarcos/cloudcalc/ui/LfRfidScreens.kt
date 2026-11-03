@@ -212,7 +212,7 @@ private fun LfEditor() {
     blocks.forEachIndexed { i, b ->
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             OutlinedTextField(b, { blocks[i] = it.uppercase().take(8) }, Modifier.weight(1f), label = { Text("Block $i") }, singleLine = true)
-            TextButton(onClick = { ask("Write block $i") { listOf(LfCommands.t55xxWrite(i, blocks[i], pwd.ifEmpty { null })) } }, enabled = r == LfReader.PROXMARK3) { Text("Write") }
+            TextButton(onClick = { ask("Write block $i", build = { listOf(LfCommands.t55xxWrite(i, blocks[i], pwd.ifEmpty { null })) }) }, enabled = r == LfReader.PROXMARK3) { Text("Write") }
         }
     }
     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -222,8 +222,8 @@ private fun LfEditor() {
     LfLink.lastTag?.takeIf { it.type != LfType.T5577 }?.let { t ->
         Text("Last read: ${t.type.label} ${t.id}", fontSize = 13.sp)
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            if (r != null && r.canWrite) Button(onClick = { ask("Clone ${t.type.label} ${t.id} to a T5577") { listOf(LfCommands.clone(r, t)) } }) { Text("Clone") }
-            if (r == LfReader.FLIPPER) OutlinedButton(onClick = { ask("Emulate ${t.id}") { listOf(LfCommands.emulate(t)) } }) { Text("Emulate") }
+            if (r != null && r.canWrite) Button(onClick = { ask("Clone ${t.type.label} ${t.id} to a T5577", build = { listOf(LfCommands.clone(r, t)) }) }) { Text("Clone") }
+            if (r == LfReader.FLIPPER) OutlinedButton(onClick = { ask("Emulate ${t.id}", build = { listOf(LfCommands.emulate(t)) }) }) { Text("Emulate") }
         }
     }
     if (error.isNotEmpty()) Text(error, color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
