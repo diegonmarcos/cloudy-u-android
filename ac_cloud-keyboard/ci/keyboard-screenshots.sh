@@ -165,6 +165,7 @@ fieldkb() {   # $1 = extra args for am start
 fieldkb "--ez edittext true" "Highlight"
 # The emoji search bar from the emoji section would swallow the typing; opening the Enhance panel hides it, a second tap closes the panel.
 kb code ANSWER_BAR; sleep 1; kb code ANSWER_BAR; sleep 1
+kb grammar-engine local
 kb grammar highlight
 kb text "hello i "; sleep 2
 kb marks; M="$(last marks)"; echo "$M"

@@ -84,6 +84,8 @@ class KeyboardDebugReceiver(private val ime: LatinIME) : BroadcastReceiver() {
                     "density=${ime.resources.displayMetrics.density}"
             }
             // Grammar Check ▸ Highlight popup (CI screenshots): set the mode, move the cursor, press the popup's actions.
+            // The Grammar ENGINE ("off" | "local" | "remote" | "ai"); unset it reads as off, so Highlight would mark nothing.
+            "grammar-engine" -> { ime.prefs().edit().putString(helium314.keyboard.latin.settings.Settings.PREF_GRAMMAR_MODE, arg).apply(); "ok" }
             "grammar" -> { GrammarMode.write(ime.prefs(), GrammarMode.fromId(arg) ?: return "unknown mode"); "ok" }
             "select" -> {
                 val ic = ime.currentInputConnection ?: return "no connection"
