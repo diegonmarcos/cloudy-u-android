@@ -17,7 +17,12 @@ tap_text() {
 }
 shoot() { adb exec-out screencap -p > "$OUT/$1.png"; }
 # the Store asks for wireless debugging at first run: a system dialog over the tabs; refuse it
-for i in 1 2 3; do tap_text Cancel && sleep 2 || break; done
+# (an ANR prompt can stack on it while the first fleet pass runs: Wait, then Cancel; BACK when the dump fails)
+for i in 1 2 3 4 5 6; do
+  if tap_text Wait || tap_text Cancel; then sleep 3
+  elif ! grep -q 'text="Lite-ML"' "$OUT/ui.xml" 2>/dev/null; then adb shell input keyevent KEYCODE_BACK; sleep 3
+  else break; fi
+done
 read -r W H < <(adb shell wm size | tr -d '\r' | grep -oE '[0-9]+x[0-9]+' | tail -1 | tr x ' ')
 X=$((W/2)); Y1=$((H*4/5)); Y2=$((H/4))
 shoot start
