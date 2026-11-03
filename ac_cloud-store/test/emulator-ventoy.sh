@@ -54,7 +54,9 @@ adb shell content call --uri content://media --method scan_volume --arg external
 
 adb install -r -g "$APK" || fail "install failed"
 timeout 120 adb shell am start -W -n "$PKG/.MainActivity" --es tab cloud >/dev/null; sleep 10
-for i in 1 2 3 4; do calm; has 'text="Ventoy"' && break; tap '^Cloud$' || true; sleep 3; done
+# First run may open system pages (battery optimisation, permission grants) over the Store: back out to it.
+front() { for k in 1 2 3 4 5 6; do adb shell dumpsys window | tr -d '\r' | grep -E 'mCurrentFocus|mFocusedApp' | grep -q "$PKG" && return 0; adb shell input keyevent 4; sleep 2; done; timeout 60 adb shell am start -W -n "$PKG/.MainActivity" --es tab cloud >/dev/null; sleep 5; }
+for i in 1 2 3 4; do front; calm; has 'text="Ventoy"' && break; tap '^Cloud$' || true; sleep 3; done
 shot 01-cloud-tabs
 has 'text="Tiny-ML"' || fail "no Tiny-ML tab on the Cloud page: $(texts)"
 python3 -I -c '
