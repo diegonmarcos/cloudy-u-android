@@ -51,7 +51,8 @@ tapmap 2.35 48.85; sleep 3; shot 02-map-paris-added
 listed Paris || fail "a tap on Paris did not add it: $(texts)"
 tapmap 2.35 48.85; sleep 3; shot 03-map-paris-removed
 listed Paris && fail "a second tap on Paris did not remove it"
-tap '^Add city$' || { adb shell input swipe 500 1500 500 300 300; sleep 1; tap '^Add city$'; } || fail "no Add city button: $(texts)"
+addcity() { local i; for i in 1 2 3 4 5; do tap '^Add city$' && return 0; swipe 84 30; sleep 1; done; return 1; }
+addcity || fail "no Add city button: $(texts)"
 sleep 2; shot 04-city-list
 grep -q 'Washington' "$OUT/ui.xml" || grep -q '★' "$OUT/ui.xml" || fail "the city list shows no capital: $(texts)"
 adb shell input text par; sleep 2
