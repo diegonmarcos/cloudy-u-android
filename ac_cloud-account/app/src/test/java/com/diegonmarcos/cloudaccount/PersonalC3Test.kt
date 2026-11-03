@@ -3,7 +3,7 @@ package com.diegonmarcos.cloudaccount
 import android.app.Application
 import android.content.Context
 import androidx.compose.ui.test.assertCountEquals
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -45,7 +45,20 @@ import java.io.File
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
 class PersonalC3Test {
-    @get:Rule val compose = createComposeRule()
+    private val compose = createAndroidComposeRule<androidx.activity.ComponentActivity>()
+
+    // Robolectric resolves the host activity only once it is registered (as SectionScreensTest does).
+    @get:Rule
+    val rules: org.junit.rules.RuleChain = org.junit.rules.RuleChain.outerRule(org.junit.rules.TestRule { base, _ ->
+        object : org.junit.runners.model.Statement() {
+            override fun evaluate() {
+                val app = org.robolectric.RuntimeEnvironment.getApplication()
+                org.robolectric.Shadows.shadowOf(app.packageManager)
+                    .addActivityIfNotPresent(android.content.ComponentName(app, androidx.activity.ComponentActivity::class.java))
+                base.evaluate()
+            }
+        }
+    }).around(compose)
     private val ctx: Context get() = ApplicationProvider.getApplicationContext()
     private fun fakeSecret() = "s3" + "cr" + "et-" + "v".repeat(12)
     private fun fakeCard() = "4000" + " 0000 " + "0000 " + "0002"

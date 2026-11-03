@@ -102,7 +102,7 @@ class FleetEndpointsDeclTest {
 
     @Test fun theSetupPagesAreInTheNavigationAndRenderFromTheDeclarationNotAHandTypedList() {
         val setup = MainActivity.NAV.section("connect")!!.page("fleetsetup")!!
-        assertEquals(listOf("services", "drive"), setup.pages.map { it.id })
+        assertEquals(listOf("services", "drive", "push", "perms", "adb-shell"), setup.pages.map { it.id })  // #1438 Push / Perms / ADB Shell moved here
         val src = File("src/main/java/com/diegonmarcos/cloudaccount/hub/FleetSetupPages.kt").readText()
         assertFalse("Setup names no host: every URL comes from the declaration", Regex("https?://|diegonmarcos\\.com|\\.mesh\\.").containsMatchIn(src))
         assertTrue(src.contains("FleetEndpointsRuntime.services()"))
