@@ -20,6 +20,8 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import com.diegonmarcos.cloudcalc.tools.WorldClockData as W
 
 /** #1423 the World Clock's declared data, read once from the APK assets (data/assets: worldmap/cities.json, worldmap/land.json). */
@@ -48,7 +50,7 @@ fun WorldMap(zones: List<String>, now: Long, onToggle: (String) -> Unit, modifie
     val pin = cs.primary; val text = cs.onSurface
     val pins = remember(zones) { zones.mapNotNull { W.pinFor(cat, it) } }
     Canvas(
-        modifier.fillMaxWidth().aspectRatio(2f).testTag(WORLD_MAP_TAG).pointerInput(zones) {
+        modifier.fillMaxWidth().aspectRatio(2f).testTag(WORLD_MAP_TAG).semantics { contentDescription = "World map" }.pointerInput(zones) {
             detectTapGestures { o ->
                 val w = size.width.toDouble(); val h = size.height.toDouble()
                 W.nearest(cat, W.lat(o.y.toDouble(), h), W.lon(o.x.toDouble(), w), 6.0)?.let { onToggle(it.zone) }

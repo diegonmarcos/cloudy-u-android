@@ -1,0 +1,94 @@
+# ╔═══════════════════════════════════════════════════════════════════════╗
+# ║ Test -> Calc World clock (emulator) (#1423)                  ║
+# ║ Script: ac_cloud-calc/test/emulator-worldclock.sh; shots in the      ║
+# ║ `worldclock-evidence` artifact (map + pins, tap add/remove, cities). ║
+# ╚═══════════════════════════════════════════════════════════════════════╝
+name: "Test -> Calc World clock (emulator)"
+
+on:
+  workflow_dispatch:
+    inputs:
+      calc_run_id:
+        description: "Ship Cloud Calc run id whose APK artifact to test (empty = release asset)"
+        required: false
+        default: ""
+      release_tag:
+        description: "Release to download from when the run id is empty"
+        required: false
+        default: "latest"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  worldclock:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Fetch the Cloud Calc APK
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          B_RUN: ${{ inputs.calc_run_id }}
+          TAG: ${{ inputs.release_tag }}
+        run: |
+          set -eu
+          mkdir -p apk
+          if [ -n "$B_RUN" ]; then
+            gh api "repos/$REPO/actions/runs/$B_RUN/artifacts" --paginate --jq '.artifacts[] | select(.name|startswith("Cloud-Calc-")) | .name' |
+            while read -r name; do gh run download "$B_RUN" -R "$REPO" -n "$name" -D "apk/$name"; done
+          else
+            gh release download "${TAG:-latest}" -R "$REPO" -p Cloud-Calc.apk -D apk
+          fi
+          pick=""
+          for want in x86_64 universal arm64 ''; do
+            pick=$(find apk -name '*.apk' | sort | grep -i -- "$want" | head -1 || true)
+            [ -n "$pick" ] && break
+          done
+          [ -n "$pick" ] || { echo "::error::no Cloud Calc APK"; exit 1; }
+          cp "$pick" calc.apk
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Boot emulator + walk the World clock (attempt 1)
+        id: try1
+        continue-on-error: true
+        timeout-minutes: 12
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash ac_cloud-calc/test/emulator-worldclock.sh calc.apk out
+
+      # The runner sometimes hands over an emulator adb reports offline; a second boot is the remedy, not a weaker test.
+      - name: Boot emulator + walk the World clock (attempt 2)
+        if: steps.try1.outcome != 'success'
+        timeout-minutes: 12
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash ac_cloud-calc/test/emulator-worldclock.sh calc.apk out
+
+      - name: Upload evidence (screenshot, ui dump, console, logcat)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: worldclock-evidence
+          path: out/
+          if-no-files-found: warn
