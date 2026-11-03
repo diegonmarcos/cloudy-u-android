@@ -14,7 +14,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -208,4 +210,48 @@ fun CloudVaultProviderStatusRow(modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(4.dp))
         ProviderChecklistRows(items)
     }
+}
+
+/**
+ * #1412 launch check: on every launcher start, if Cloud Vault is not the active Credential
+ * Manager (passkeys & passwords) provider or the selected Autofill service, a dialog offers a
+ * direct link to the Android screen that fixes the first red row (the credential provider
+ * settings, or ACTION_REQUEST_SET_AUTOFILL_SERVICE). Rows re-check on resume, so the dialog
+ * closes by itself once the user comes back with the vault selected. "Not now" hides it until
+ * the next launch. Nothing is written from here.
+ */
+@Composable
+fun CloudVaultProviderLaunchPrompt() {
+    val ctx = LocalContext.current
+    val items = rememberProviderChecklist()
+    var dismissed by rememberSaveable { mutableStateOf(false) }
+    val next = ProviderChecklist.nextAction(items)
+    if (dismissed || ProviderChecklist.isComplete(items) || next == ProviderChecklist.Action.NONE) {
+        return
+    }
+    AlertDialog(
+        onDismissRequest = { dismissed = true },
+        title = { Text(text = "Make Cloud Vault your passkeys & autofill provider") },
+        text = {
+            Column {
+                Text(
+                    text = "Cloud Vault is not the phone's preferred service, so passkeys and " +
+                        "passwords go elsewhere. In Settings > Passwords, passkeys and " +
+                        "autofill, set Preferred service = Cloud Vault.",
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                ProviderChecklistRows(items)
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { openFor(ctx, next) },
+                modifier = Modifier.testTag("CloudVaultProviderLaunchPromptOpenSettings"),
+            ) { Text(text = "Open settings") }
+        },
+        dismissButton = {
+            TextButton(onClick = { dismissed = true }) { Text(text = "Not now") }
+        },
+        modifier = Modifier.testTag("CloudVaultProviderLaunchPrompt"),
+    )
 }

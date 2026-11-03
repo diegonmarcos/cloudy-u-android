@@ -43,6 +43,7 @@ import com.x8bit.bitwarden.ui.platform.feature.debugmenu.navigateToDebugMenuScre
 import com.x8bit.bitwarden.ui.platform.feature.overlaynav.OverlayNavRoute
 import com.x8bit.bitwarden.ui.platform.feature.overlaynav.overlayNavDestination
 import com.x8bit.bitwarden.ui.platform.feature.settings.appearance.model.AppLanguage
+import com.x8bit.bitwarden.ui.platform.feature.settings.autofill.CloudVaultProviderLaunchPrompt
 import com.x8bit.bitwarden.ui.platform.model.AuthTabLaunchers
 import com.x8bit.bitwarden.ui.platform.util.appLanguage
 import dagger.hilt.android.AndroidEntryPoint
@@ -124,6 +125,7 @@ class MainActivity : AppCompatActivity() {
         setupEdgeToEdge(appThemeFlow = mainViewModel.stateFlow.map { it.theme })
         // The fleet's window chrome, over the app's own bar-icon theming (which it leaves alone).
         FleetChrome.apply(this)
+        val isLauncherLaunch = intent?.action == Intent.ACTION_MAIN
         setContent {
             val navController = rememberBitwardenNavController(name = "MainActivity")
             SetupEventsEffect(navController = navController)
@@ -136,6 +138,10 @@ class MainActivity : AppCompatActivity() {
                 sendAction = mainViewModel::trySendAction,
                 onSplashScreenRemoved = { shouldShowSplashScreen = false },
             )
+            // #1412: every launcher start checks the vault is the active provider.
+            if (isLauncherLaunch) {
+                CloudVaultProviderLaunchPrompt()
+            }
         }
     }
 
