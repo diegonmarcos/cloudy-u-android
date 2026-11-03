@@ -99,6 +99,6 @@ class StoreExec(private val ctx: Context) {
         /** #1392 no `nohup`: it is not on cld.termux's PATH on every phone (exit 127, "force_pull failed"); the subshell ignores HUP itself.
          * #1358 a [job]'s detached start, run on the HOST: a session's proot is --kill-on-exit, so a job backgrounded inside it died when the call returned (no .rc, polled to the deadline); its own session ([loginLine]) lives until the script ends. Stdin to <dir>/<id>.in (read BEFORE the braces: a trailing & would background the whole && list, stdin /dev/null), output to .log, exit code to .rc. */
         fun jobStart(script: String, dir: String, id: String, termuxShell: String = "\$HOME/.termux/shell"): String = "mkdir -p $dir && chmod 700 $dir && cat > $dir/$id.in && " +
-            "{ ( trap '' HUP; if [ -e \"$termuxShell\" ]; then /system/bin/sh \"$termuxShell\" -c ${q(loginLine(script))}; else /system/bin/sh -c ${q(loginLine(script))}; fi < $dir/$id.in > $dir/$id.log 2>&1; echo \$? > $dir/$id.rc; rm -f $dir/$id.in ) >/dev/null 2>&1 & }"
+            "{ ( trap '' HUP; CLOUD_EXEC_JOB=1; export CLOUD_EXEC_JOB; if [ -e \"$termuxShell\" ]; then /system/bin/sh \"$termuxShell\" -c ${q(loginLine(script))}; else /system/bin/sh -c ${q(loginLine(script))}; fi < $dir/$id.in > $dir/$id.log 2>&1; echo \$? > $dir/$id.rc; rm -f $dir/$id.in ) >/dev/null 2>&1 & }"
     }
 }

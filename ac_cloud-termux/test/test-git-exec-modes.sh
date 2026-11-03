@@ -87,6 +87,12 @@ check_prelude() {  # $1 = prelude; prints one line per broken rule
     # G4 a script with no git in it never triggers an install
     px="$(mkprefix 0 1)"; run "$pre" 'echo plain' HOME="$px/home" PREFIX="$px/usr" PATH="$TOOLS" >/dev/null
     [ ! -f "$px/pkg.log" ] || echo "G4 a script without git still ran pkg install"
+    # G5 still no git (pkg cannot serve cld.termux): a detached job waits for the repair, then re-enters the rootfs
+    px="$(mkprefix 0 0)"; here="$px/usr/var/lib/cloud-rootfs"; mkdir -p "$here" "$px/rootfs-bin"
+    ln -s "$REALGIT" "$px/rootfs-bin/git"; : > "$here/rootfs.tar.zst"
+    printf '#!/bin/sh\n# fake enter.sh: proot entered, the rootfs git on PATH\nunset CLOUD_ROOTFS_MODE; PATH="%s:%s"; export PATH\nexec sh "$@"\n' "$px/rootfs-bin" "$TOOLS" > "$here/enter.sh"
+    out="$(run "$pre" 'echo via=$(command -v git)' HOME="$px/home" PREFIX="$px/usr" PATH="$TOOLS" CLOUD_ROOTFS_MODE=plain CLOUD_ROOTFS_HERE="$here" CLOUD_EXEC_JOB=1 CLOUD_EXEC_REPAIR_WAIT=5)"
+    echo "$out" | grep -qx "via=$px/rootfs-bin/git" || echo "G5 a job with no git does not re-enter the repaired rootfs: $out"
     # P proot (HOME=/root, no PREFIX): nothing rewritten, git is the rootfs's
     out="$(run "$pre" "echo '/root/x'" HOME=/root PATH="$(dirname "$REALGIT"):$TOOLS")"
     [ "$out" = /root/x ] || echo "P1 proot mode rewrote a guest path: $out"
@@ -125,6 +131,10 @@ if not f or "export CLOUD_ROOTFS_MODE=plain" not in f.group(1):
 if f and "repair: rm -f" in f.group(1):
     bad.append("A2 enter.sh still asks the user to rm files to repair")
 # A3 StoreExec runs every script behind the prelude, with or without ~/.termux/shell
+if "CLOUD_EXEC_JOB=1; export CLOUD_EXEC_JOB" not in kt:
+    bad.append("A3 StoreExec.jobStart does not mark a detached job (it could not wait for the repair)")
+if f and 'CLOUD_ROOTFS_HERE="$HERE"' not in f.group(1):
+    bad.append("A2 enter.sh's fallback does not tell the jobs where the rootfs is staged")
 if "ENV_PRELUDE" not in kt or 'getResourceAsStream("cloud-exec-env.sh")' not in kt or "CLOUD_EXEC_SCRIPT_B64=$inner" not in kt:
     bad.append("A3 StoreExec.loginLine does not run the script behind cloud-exec-env.sh")
 if kt.count('else exec /system/bin/sh -c ') < 1 or kt.count('else /system/bin/sh -c ') < 1:
@@ -155,6 +165,7 @@ mut_prelude G1 's#PATH="${PREFIX:+$PREFIX/bin:}${PATH:-}#PATH="${PATH:-}:${PREFI
 mut_prelude G2 's#DEBIAN_FRONTEND=noninteractive pkg install -y git#true#'
 mut_prelude G3 's#Fix: open cld.termux and run .pkg install git.#see the log#'
 mut_prelude G4 's#\*git\*) cloud_needs_git=1#*) cloud_needs_git=1#'
+mut_prelude G5 's#\[ "${CLOUD_EXEC_JOB:-}" = 1 \]#[ "${CLOUD_EXEC_JOB:-}" = never ]#'
 mut_prelude P1 's#if \[ "${CLOUD_ROOTFS_MODE:-}" = plain \]#if true#'
 
 mut_static() {  # $1 = id, $2 = file var name, $3 = sed expression
@@ -168,7 +179,7 @@ mut_static S1 GRADLE 's#def digest = sha256Hex(tarball)#def digest = new File(cl
 mut_static S2 ENTER 's#STAMP="$ROOTFS/.cloud-rootfs.sha256"#STAMP="$ROOTFS/.stamp"#'
 mut_static S3 CR 's#want.equals(read(new FileInputStream(staged))) \&\& isDelivered(want)#want.equals(read(new FileInputStream(staged)))#'
 mut_static A1 CES 's#CloudRootfs.repairInBackground(context);##'
-mut_static A2 ENTER 's#    export CLOUD_ROOTFS_MODE=plain##'
+mut_static A2 ENTER 's#    export CLOUD_ROOTFS_MODE=plain CLOUD_ROOTFS_HERE="$HERE"##'
 mut_static A3 EXEC_KT 's#("CLOUD_EXEC_SCRIPT_B64=$inner\\n" + ENV_PRELUDE)#script#'
 
 [ "$FAIL" = 0 ] && echo "PASS test-git-exec-modes" || { echo "FAIL test-git-exec-modes"; exit 1; }

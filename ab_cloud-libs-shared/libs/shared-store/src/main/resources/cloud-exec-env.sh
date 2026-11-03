@@ -23,7 +23,8 @@ else
     CLOUD_EXEC_MODE=proot
 fi
 
-cloud_script="$(printf '%s' "${CLOUD_EXEC_SCRIPT_B64:-}" | base64 -d)"
+cloud_b64="${CLOUD_EXEC_SCRIPT_B64:-}"
+cloud_script="$(printf '%s' "$cloud_b64" | base64 -d)"
 unset CLOUD_EXEC_SCRIPT_B64
 case "$cloud_script" in *git*) cloud_needs_git=1 ;; *) cloud_needs_git="" ;; esac
 
@@ -42,6 +43,28 @@ if [ "$CLOUD_EXEC_MODE" = plain ]; then
         echo "cloud-exec: the cld.termux rootfs is not active (plain Termux) and git is not installed; installing it: pkg install -y git" >&2
         if command -v pkg >/dev/null 2>&1; then
             DEBIAN_FRONTEND=noninteractive pkg install -y git </dev/null >&2 2>&1 || true
+        fi
+        # The git the lib bundles: a detached job (CLOUD_EXEC_JOB=1, StoreExec.jobStart) waits for cld.termux's automatic
+        # repair (CloudRootfs.repairInBackground re-stages rootfs.tar.zst from cloud-lib-rootfs-termux), then re-enters
+        # through enter.sh, which unpacks it and runs the job in proot with the rootfs's own git. Once only (REENTERED).
+        cloud_here="${CLOUD_ROOTFS_HERE:-}"
+        if ! command -v git >/dev/null 2>&1 && [ "${CLOUD_EXEC_JOB:-}" = 1 ] && [ -z "${CLOUD_EXEC_REENTERED:-}" ] \
+            && [ -n "$cloud_here" ] && [ -f "$cloud_here/enter.sh" ]; then
+            echo "cloud-exec: waiting for cld.termux to re-extract its rootfs from cloud-lib-rootfs-termux (up to ${CLOUD_EXEC_REPAIR_WAIT:-900}s)" >&2
+            cloud_waited=0
+            while [ ! -f "$cloud_here/rootfs.tar.zst" ] && [ "$cloud_waited" -lt "${CLOUD_EXEC_REPAIR_WAIT:-900}" ]; do
+                sleep 5; cloud_waited=$((cloud_waited + 5))
+            done
+            if [ -f "$cloud_here/rootfs.tar.zst" ]; then
+                echo "cloud-exec: rootfs re-staged after ${cloud_waited}s; re-entering it (enter.sh unpacks it, then the job runs with the rootfs's git)" >&2
+                cloud_guard="if [ \"\${CLOUD_ROOTFS_MODE:-}\" = plain ]; then echo 'cloud-exec: the rootfs repair did not take (enter.sh fell back again). Fix: open cld.termux once; if it repeats, reinstall cloud-lib-rootfs-termux from the Store.' >&2; exit 127; fi
+"
+                cloud_inner="$(printf '%s%s' "$cloud_guard" "$cloud_script" | base64 | tr -d '\n')"
+                CLOUD_EXEC_REENTERED=1; export CLOUD_EXEC_REENTERED
+                unset CLOUD_ROOTFS_MODE
+                cloud_sys_sh=/system/bin/sh; [ -x "$cloud_sys_sh" ] || cloud_sys_sh=/bin/sh
+                exec "$cloud_sys_sh" "$cloud_here/enter.sh" -c "exec /bin/sh -c \"\$(echo $cloud_inner | base64 -d)\""
+            fi
         fi
         if ! command -v git >/dev/null 2>&1; then
             echo "cloud-exec: git is still missing in plain Termux. Fix: open cld.termux and run 'pkg install git' (needs network), or open cld.termux once so it repairs its rootfs from cloud-lib-rootfs-termux (reinstall that lib from the Store if this repeats)." >&2
