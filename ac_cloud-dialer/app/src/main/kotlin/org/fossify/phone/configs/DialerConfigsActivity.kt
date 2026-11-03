@@ -97,7 +97,7 @@ class DialerConfigsActivity : ComponentActivity() {
 
 /** build.json::configs_pages.top_nav, as baked: "id:Label:icon,...". */
 object DialerConfigsPages {
-    val ORDER: List<String> = listOf("general", "perms", "sim", "status", "usage", "about")
+    val ORDER: List<String> = listOf("general", "perms", "about", "sim", "status", "usage")
 
     fun parse(baked: String): List<NavPage> = baked.split(',').mapNotNull { e ->
         val p = e.split(':')
