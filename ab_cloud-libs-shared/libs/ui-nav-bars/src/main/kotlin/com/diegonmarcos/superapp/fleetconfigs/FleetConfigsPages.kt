@@ -291,6 +291,7 @@ public fun FleetConfigsTabs(selected: FleetConfigsPage, dark: Boolean, onSelect:
 public fun isFleetConfigsPage(id: String?): Boolean = FleetConfigsPage.entries.any { it.id == id }
 
 /** #1443 The body of the shared page [id] (General, Perms or About) for an app's own Configs strip; [onAppConfigs] opens the app's own pages. */
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 public fun FleetConfigsPageBody(id: String, dark: Boolean = true, onAppConfigs: () -> Unit = {}, modifier: Modifier = Modifier) {
     val c = ThemeBackground.colors(dark)
