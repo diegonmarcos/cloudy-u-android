@@ -307,7 +307,6 @@ object StoreBar {
 
     private const val CHANNEL_RECHECK_MS = 15_000L
     private const val RED_FILL = 0xFFC53030.toInt()
-    }
 
     private fun openPlayProtect(ctx: Context) {
         val pm = ctx.packageManager
