@@ -11,8 +11,8 @@
 #       The Compose strip takes one gap PER KEY from ToolbarPaging.gaps and nothing shared.
 #   T2  exactly one place computes the page-start gap of a toolbar key, and it is that alignment.
 #   T3  the geometry: page = as many whole keys as the viewport shows, and with the shipped
-#       key width on a 411dp portrait screen that is eleven, splitting the 23 default keys
-#       11 / 11 / 2. Fails if the key width or the default row grows past the design.
+#       key width on a 411dp portrait screen that is eleven, splitting the 25 default keys
+#       11 / 11 / 3. Fails if the key width or the default row grows past the design.
 #   T4  #1103: Android keyboard settings sits right before Cloud Vault, Vault right after Switch language,
 #       and no key is forced onto a page of its own any more.
 set -uo pipefail
@@ -82,12 +82,12 @@ per, starts, widths = layout(1188, key_dp * 3, 1.0)
 pages = {}
 for k, st in zip(keys, starts): pages.setdefault(st // 1188, []).append(k)
 counts = [len(pages[p]) for p in sorted(pages)]
-assert per == 11 and counts == [11, 11, 2], f'pages hold {counts}, the design is 11 / 11 / 2'
+assert per == 11 and counts == [11, 11, 3], f'pages hold {counts}, the design is 11 / 11 / 3'
 assert pages[0][-1] == 'ANDROID_SETTINGS' and pages[1][0] == 'VAULT', f'page 1 ends {pages[0][-1]}, page 2 opens {pages[1][0]}'
-assert 'ANSWER' in pages[0] and 'EMOJI' not in pages[0] and keys[-2:] == ['CUT', 'EMOJI'], f'#1384: Draft Answer belongs on page 1; Emoji is the last key, after Cut, got {pages[0]} / {keys[-2:]}'
+assert 'ANSWER' in pages[0] and 'EMOJI' not in pages[0] and keys[-2:] == ['EMOJI', 'DEV_KEYBOARD'], f'#1384: Draft Answer belongs on page 1; Emoji then Dev Keyboard (#1413) are the last two keys, got {pages[0]} / {keys[-2:]}'
 print(f'{key_dp}dp keys, {per}/page, split {counts}')
 EOF
-then ok "T3 the page arithmetic gives 11 / 11 / 2 and holds at every scale"; else bad "T3 page arithmetic"; fi
+then ok "T3 the page arithmetic gives 11 / 11 / 3 and holds at every scale"; else bad "T3 page arithmetic"; fi
 
 # ── T4 Vault's place in the row ──────────────────────────────────────────────
 has "$TU" 'toolbarKeysOnOwnPage: Set<ToolbarKey> = emptySet()' "T4 no key is forced onto its own page"

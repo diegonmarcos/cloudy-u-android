@@ -783,6 +783,10 @@ public final class InputLogic {
                 // #1384: TAP → Draft Answer, the Enhance panel drafting a reply to the newest clipboard item.
                 mLatinIME.toggleAnswerBar();
                 break;
+            case KeyCode.DEV_KEYBOARD:
+                // #1413: TAP -> Dev Keyboard on/off (corner swipes + corner labels).
+                helium314.keyboard.keyboard.CornerSwipe.toggle(mLatinIME);
+                break;
             case KeyCode.VAULT:
                 // cloud-keyboard: TAP → hand over to Cloud Vault. Nothing to do to the field.
                 mLatinIME.launchCloudVault();

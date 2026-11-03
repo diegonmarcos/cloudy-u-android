@@ -27,10 +27,10 @@ class ToolbarOrderTest {
     }
 
     @Test fun draftAnswerTakesEmojisPlaceAndEmojiOpensPageTwoAfterVault() {
-        // #1384: page one is the first 11 keys (11 / 11 / 2 at the shipped width)
+        // #1384: page one is the first 11 keys (11 / 11 / 3 at the shipped width)
         assertTrue("ANSWER" in row.take(11))
         assertFalse("EMOJI" in row.take(11))
-        assertEquals(listOf("CUT", "EMOJI"), row.takeLast(2)) // Emoji is the last key, right after Cut
+        assertEquals(listOf("EMOJI", "DEV_KEYBOARD"), row.takeLast(2)) // #1413: Dev Keyboard is the last key, right after Emoji
         assertEquals(1, row.count { it == "ANSWER" })
         val source = java.io.File("src/main/java/helium314/keyboard/latin/utils/ToolbarUtils.kt").readText()
         assertTrue(source.contains("ANSWER -> KeyCode.ANSWER_BAR"))
@@ -46,7 +46,7 @@ class ToolbarOrderTest {
     @Test fun theWholeFirstRowIsExactlyThis() {
         assertEquals(listOf("FULL_LEFT", "GRAMMAR", "TRANSLATE", "ENHANCE", "AUTOCOMPLETE", "CLIPBOARD", "NUMPAD", "ANSWER", "VOICE",
             "LANGUAGE_SWITCH", "ANDROID_SETTINGS", "VAULT", "FULL_RIGHT", "SELECT_ALL", "WORD_RIGHT", "WORD_LEFT", "REDO", "UNDO",
-            "SELECT_WORD", "COPY", "PASTE", "PAGE_START", "CUT", "EMOJI"), row)
+            "SELECT_WORD", "COPY", "PASTE", "PAGE_START", "CUT", "EMOJI", "DEV_KEYBOARD"), row)
     }
 
     @Test fun noKeyIsForcedOntoAPageOfItsOwnAnyMore() {
@@ -63,15 +63,15 @@ class ToolbarOrderTest {
     }
 
     @Test fun theLayoutRevisionIsBumpedSoPhonesWithTheOldOrderMoveOnce() {
-        assertEquals(6, TOOLBAR_LAYOUT_REVISION) // 6: Emoji last, after Cut
-        val old = FakePrefs(mapOf(Settings.PREF_TOOLBAR_LAYOUT_REVISION to 5, Settings.PREF_TOOLBAR_KEYS to "FULL_LEFT,GRAMMAR,AUTOCOMPLETE"))
+        assertEquals(7, TOOLBAR_LAYOUT_REVISION) // 7: #1413 Dev Keyboard last, after Emoji
+        val old = FakePrefs(mapOf(Settings.PREF_TOOLBAR_LAYOUT_REVISION to 6, Settings.PREF_TOOLBAR_KEYS to "FULL_LEFT,GRAMMAR,AUTOCOMPLETE"))
         assertTrue(toolbarLayoutRevisionPending(old))
         adoptToolbarLayoutRevision(old)
         assertEquals(defaultToolbarPref, old.getString(Settings.PREF_TOOLBAR_KEYS, null))
-        assertEquals(6, old.getInt(Settings.PREF_TOOLBAR_LAYOUT_REVISION, 0))
+        assertEquals(7, old.getInt(Settings.PREF_TOOLBAR_LAYOUT_REVISION, 0))
         assertFalse(toolbarLayoutRevisionPending(old))
         // a phone already on revision 5 keeps what it has (the user may have re-arranged it since)
-        val mine = FakePrefs(mapOf(Settings.PREF_TOOLBAR_LAYOUT_REVISION to 6, Settings.PREF_TOOLBAR_KEYS to "COPY,true"))
+        val mine = FakePrefs(mapOf(Settings.PREF_TOOLBAR_LAYOUT_REVISION to 7, Settings.PREF_TOOLBAR_KEYS to "COPY,true"))
         adoptToolbarLayoutRevision(mine)
         assertEquals("COPY,true", mine.getString(Settings.PREF_TOOLBAR_KEYS, null))
     }

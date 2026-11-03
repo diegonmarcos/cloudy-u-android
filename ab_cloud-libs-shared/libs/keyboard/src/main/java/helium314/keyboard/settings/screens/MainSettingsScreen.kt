@@ -126,7 +126,7 @@ fun MainSettingsScreen(
                             onClick = onClickAiRouting,
                             icon = R.drawable.ic_settings_advanced
                         ) { NextScreenIcon() }
-                        // #1413 Dev Keyboard: corner swipes + corner labels of the "unexpected" layout, ON by default
+                        // #1413 Dev Keyboard: corner swipes + corner labels of the "unexpected" layout, OFF by default
                         ConfigsEntry.DEV_KEYBOARD -> {
                             val ctx = androidx.compose.ui.platform.LocalContext.current
                             var on by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(helium314.keyboard.keyboard.CornerSwipe.enabled) }

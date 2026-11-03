@@ -163,6 +163,7 @@ class KeyboardIconsSet private constructor() {
                     ToolbarKey.VAULT -> R.drawable.ic_toolbar_vault // cloud-keyboard: opens Cloud Vault
                     ToolbarKey.AUTOCOMPLETE -> R.drawable.ic_toolbar_autocomplete // #1077
                     ToolbarKey.ANDROID_SETTINGS -> R.drawable.ic_toolbar_android_settings // #1103
+                    ToolbarKey.DEV_KEYBOARD -> R.drawable.ic_toolbar_dev_keyboard // #1413
                 })
             }
         } }
@@ -233,6 +234,7 @@ class KeyboardIconsSet private constructor() {
                     ToolbarKey.VAULT -> R.drawable.ic_toolbar_vault // cloud-keyboard: opens Cloud Vault
                     ToolbarKey.AUTOCOMPLETE -> R.drawable.ic_toolbar_autocomplete // #1077
                     ToolbarKey.ANDROID_SETTINGS -> R.drawable.ic_toolbar_android_settings // #1103
+                    ToolbarKey.DEV_KEYBOARD -> R.drawable.ic_toolbar_dev_keyboard // #1413
                 })
             }
         } }
@@ -303,6 +305,7 @@ class KeyboardIconsSet private constructor() {
                     ToolbarKey.VAULT -> R.drawable.ic_toolbar_vault // cloud-keyboard: opens Cloud Vault
                     ToolbarKey.AUTOCOMPLETE -> R.drawable.ic_toolbar_autocomplete // #1077
                     ToolbarKey.ANDROID_SETTINGS -> R.drawable.ic_toolbar_android_settings // #1103
+                    ToolbarKey.DEV_KEYBOARD -> R.drawable.ic_toolbar_dev_keyboard // #1413
                 })
             }
         } }

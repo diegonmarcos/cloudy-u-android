@@ -154,13 +154,13 @@ pages = {}
 for k, st in zip(keys, starts):
     pages.setdefault(st // 1188, []).append(k)
 counts = [len(pages[p]) for p in sorted(pages)]
-assert per == 11 and counts == [11, 11, 2], f'pages hold {counts} at {per} per page, the design is 11 / 11 / 2'
+assert per == 11 and counts == [11, 11, 3], f'pages hold {counts} at {per} per page, the design is 11 / 11 / 3'
 assert pages[0][-1] == 'ANDROID_SETTINGS' and pages[1][0] == 'VAULT', 'page 1 must end with Android keyboard settings and page 2 open with Vault'
-assert 'ANSWER' in pages[0] and 'EMOJI' not in pages[0] and keys[-2:] == ['CUT', 'EMOJI'], f'#1384: Draft Answer on page 1; #1389: Emoji is the last key, after Cut, got {pages[0]} / {keys[-2:]}'
+assert 'ANSWER' in pages[0] and 'EMOJI' not in pages[0] and keys[-2:] == ['EMOJI', 'DEV_KEYBOARD'], f'#1384: Draft Answer on page 1; #1389: Emoji then Dev Keyboard (#1413) are the last two keys, got {pages[0]} / {keys[-2:]}'
 print(f'    {key_dp}dp keys, {len(keys)} in the default row, scales 0.85-1.3 checked, 1.0 splits {counts}')
 PYEOF
 then
-    pass "A3 the page geometry holds at scales 0.85 / 1.0 / 1.15 / 1.3 and splits 11 / 11 / 2"
+    pass "A3 the page geometry holds at scales 0.85 / 1.0 / 1.15 / 1.3 and splits 11 / 11 / 3"
 else
     fail "A3 the page geometry no longer matches the design"
 fi

@@ -16,13 +16,21 @@ import kotlin.math.hypot
  */
 object CornerSwipe {
     const val LAYOUT = "unexpected"
-    /** Configs ▸ Dev Keyboard (#1413): corner swipes and corner labels on/off, ON by default. */
+    /** Configs ▸ Dev Keyboard (#1413): corner swipes and corner labels on/off, OFF by default; the DEV_KEYBOARD toolbar key flips it. */
     const val PREF = "pref_dev_keyboard"
-    const val DEFAULT = true
+    const val DEFAULT = false
     @JvmField var enabled = DEFAULT
 
     @JvmStatic
     fun refresh(context: Context) { enabled = context.prefs().getBoolean(PREF, DEFAULT) }
+
+    /** #1413: the DEV_KEYBOARD toolbar key: flip the pref and redraw the keyboard. */
+    @JvmStatic
+    fun toggle(context: Context) {
+        enabled = !enabled
+        context.prefs().edit().putBoolean(PREF, enabled).apply()
+        KeyboardSwitcher.getInstance().setThemeNeedsReload()
+    }
 
     /** corner swipes apply on the alphabet keyboard of the "unexpected" layout while Dev Keyboard is on */
     @JvmStatic

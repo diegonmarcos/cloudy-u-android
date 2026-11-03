@@ -98,7 +98,7 @@ class ToolbarPagingTest {
         assertEquals(11, layout.perPage) // 1188 / 108
         val perPage = sortedMapOf<Int, MutableList<ToolbarKey>>()
         keys.forEachIndexed { i, key -> perPage.getOrPut(layout.keyStart[i] / layout.page) { mutableListOf() }.add(key) }
-        assertEquals(listOf(11, 11, 2), perPage.values.map { it.size }) // #1384: 24 keys (Draft Answer); #1103: 11 / 11 / 1
+        assertEquals(listOf(11, 11, 3), perPage.values.map { it.size }) // #1413: 25 keys (Dev Keyboard); #1384: 24 keys (Draft Answer); #1103: 11 / 11 / 1
         assertEquals(ToolbarKey.ANDROID_SETTINGS, perPage.values.first().last())
         assertEquals(ToolbarKey.VAULT, perPage.values.drop(1).first().first())
         // #1384: Draft Answer on page one where Emoji was; Emoji on page two, right after Vault

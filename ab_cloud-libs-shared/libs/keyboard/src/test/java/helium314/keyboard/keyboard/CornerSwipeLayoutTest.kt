@@ -11,6 +11,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import java.io.File
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -61,8 +62,8 @@ class CornerSwipeLayoutTest {
         assertNull(CornerSwipe.codeFor("u", 5, -5, d))     // too short -> plain tap
     }
 
-    @Test fun devKeyboardToggleIsInConfigsAndOnByDefault() {
-        assertTrue(CornerSwipe.DEFAULT)
+    @Test fun devKeyboardToggleIsInConfigsAndOffByDefault() {
+        assertFalse(CornerSwipe.DEFAULT)
         assertTrue(ConfigsEntry.DEV_KEYBOARD in ConfigsEntry.entries)
     }
 }
