@@ -19,6 +19,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
@@ -48,21 +49,25 @@ private fun nowMinutes() = LocalTime.now().let { it.hour * 60 + it.minute }
 private fun String.dec(): Double? = toDoubleOrNull()
 private fun dstr(v: Double?): String = v?.let { HealthFormulas.num(it) }.orEmpty()
 
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 fun HomePage(e: HealthEnv) {
     val h = e.content.home
     HTitle(h.title, h.subtitle)
+    SectionLabel("Trackers")
+    TwoColumns(listOf("tracked" to "steps", "activities" to "active", "hr" to "heart", "sleep" to "sleep", "bodycomp" to "weight", "workout" to "calories")) { (page, color), mod ->
+        HCard(mod.testTag("me:health:home:tracker:$page"), onClick = { e.go(page) }) { MetricHead(MetricColor.of(color), e.pageLabel(page)) }
+    }
+    SectionLabel("Plan")
     h.clusters.forEachIndexed { i, cl ->
-        HCard {
+        HCard(Modifier.testTag("me:health:home:cluster:$i")) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(UiIcons.vector(cl.icon), null, tint = accent())
-                Text("${i + 1}. ${cl.label}", color = ink(), fontSize = 16.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 10.dp))
+                Text(cl.label, color = ink(), fontSize = 16.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 10.dp).weight(1f))
+                Text("${cl.pages.size} pages", color = dim(), fontSize = 12.sp)
             }
-            cl.pages.forEach { p ->
-                Text(
-                    e.pageLabel(p), color = ink(), fontSize = 14.sp,
-                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp).clickable { e.go(p) }.padding(vertical = 8.dp),
-                )
+            androidx.compose.foundation.layout.FlowRow(Modifier.fillMaxWidth().padding(top = 4.dp)) {
+                cl.pages.forEach { p -> Pill(e.pageLabel(p)) { e.go(p) } }
             }
         }
     }

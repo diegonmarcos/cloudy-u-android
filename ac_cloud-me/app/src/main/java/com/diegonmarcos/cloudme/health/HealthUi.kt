@@ -56,9 +56,9 @@ internal val Bad = Color(0xFFF43F5E)
 
 @Composable
 internal fun HCard(modifier: Modifier = Modifier, onClick: (() -> Unit)? = null, content: @Composable () -> Unit) {
-    val shape = RoundedCornerShape(14.dp)
+    val shape = RoundedCornerShape(18.dp)
     Column(
-        modifier.fillMaxWidth().padding(top = 10.dp).clip(shape).background(colorResource(R.color.me_surface))
+        modifier.fillMaxWidth().padding(top = 12.dp).clip(shape).background(colorResource(R.color.me_surface))
             .border(1.dp, colorResource(R.color.me_outline), shape)
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
             .padding(14.dp),
@@ -66,7 +66,7 @@ internal fun HCard(modifier: Modifier = Modifier, onClick: (() -> Unit)? = null,
 }
 
 @Composable internal fun HTitle(text: String, sub: String = "") {
-    Text(text, color = ink(), fontSize = 20.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 4.dp))
+    Text(text, color = ink(), fontSize = 24.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 4.dp))
     if (sub.isNotBlank()) Text(sub, color = dim(), fontSize = 13.sp, modifier = Modifier.padding(top = 3.dp))
 }
 
@@ -143,50 +143,6 @@ internal fun Slide(value: Float, range: ClosedFloatingPointRange<Float>, steps: 
     )
 }
 
-/** A line chart on a Canvas: [series] of (x, y) points, optional vertical markers (x, label colour). No data, no chart: callers show their own empty state. */
-data class ChartSeries(val points: List<Pair<Double, Double>>, val color: Color)
-
-@Composable
-internal fun LineChart(series: List<ChartSeries>, markers: List<Double> = emptyList(), height: Int = 160, yMin: Double? = null, yMax: Double? = null) {
-    val grid = colorResource(R.color.me_outline)
-    val mark = Warn
-    val all = series.flatMap { it.points }
-    if (all.isEmpty()) return
-    val x0 = all.minOf { it.first }; val x1 = all.maxOf { it.first }
-    val lo = yMin ?: all.minOf { it.second }; val hi = (yMax ?: all.maxOf { it.second }).let { if (it <= lo) lo + 1 else it }
-    Canvas(Modifier.fillMaxWidth().height(height.dp).padding(top = 8.dp)) {
-        val w = size.width; val h = size.height
-        fun px(x: Double) = if (x1 == x0) w / 2 else ((x - x0) / (x1 - x0) * w).toFloat()
-        fun py(y: Double) = (h - ((y - lo) / (hi - lo) * h)).toFloat()
-        for (i in 0..3) drawLine(grid, Offset(0f, h * i / 3f), Offset(w, h * i / 3f), 1f)
-        markers.filter { it in x0..x1 }.forEach { drawLine(mark, Offset(px(it), 0f), Offset(px(it), h), 2f) }
-        series.forEach { s ->
-            val pts = s.points.sortedBy { it.first }
-            if (pts.size == 1) drawCircle(s.color, 5f, Offset(px(pts[0].first), py(pts[0].second)))
-            else {
-                val p = Path()
-                pts.forEachIndexed { i, (x, y) -> if (i == 0) p.moveTo(px(x), py(y)) else p.lineTo(px(x), py(y)) }
-                drawPath(p, s.color, style = Stroke(width = 4f, cap = StrokeCap.Round))
-                pts.forEach { (x, y) -> drawCircle(s.color, 4f, Offset(px(x), py(y))) }
-            }
-        }
-    }
-}
-
-/** Bars (one per entry) on a Canvas. */
-@Composable
-internal fun BarChart(values: List<Double>, color: Color, height: Int = 120) {
-    if (values.isEmpty()) return
-    val max = values.max().let { if (it <= 0) 1.0 else it }
-    Canvas(Modifier.fillMaxWidth().height(height.dp).padding(top = 8.dp)) {
-        val slot = size.width / values.size
-        values.forEachIndexed { i, v ->
-            val bh = (v / max * size.height).toFloat()
-            drawRect(color, Offset(i * slot + slot * 0.15f, size.height - bh), androidx.compose.ui.geometry.Size(slot * 0.7f, bh))
-        }
-    }
-}
-
 /**
  * A tracker section fed by Health Connect: says honestly when Health Connect is missing, when permission is not granted
  * (with the grant button) and when it is loading; [content] only ever sees real data.
@@ -206,4 +162,31 @@ internal fun <T> HcPanel(needed: Set<String>, load: suspend (HealthConnectClient
         }
         is HcState.Ready -> content(s.data)
     }
+}
+
+/**
+ * A tracker page's data: Health Connect's when it holds any; otherwise [mock] (HealthMock, badged "mock data") with a banner on top
+ * and the [sources] card at the bottom saying why (Health Connect missing, permission not granted, or nothing written yet) and how to
+ * connect each source. [content] gets the data and whether it is mock. [key] re-reads (a range change).
+ */
+@Composable
+internal fun <T> HealthData(
+    needed: Set<String>, sources: List<HealthSources.Source>, key: Any?, load: suspend (HealthConnectClient) -> T,
+    empty: (T) -> Boolean, mock: () -> T, content: @Composable (T, Boolean) -> Unit,
+) {
+    val ctx = LocalContext.current
+    var tick by remember { mutableIntStateOf(0) }
+    val state by produceState<HcState<T>>(HcState.Loading, tick, key) { value = HealthHc.guarded(ctx, needed, load) }
+    val launcher = rememberLauncherForActivityResult(HealthConnectGateway.requestPermissionsContract()) { tick++ }
+    val s = state
+    if (s is HcState.Loading) { HText("Reading Health Connect..."); return }
+    if (s is HcState.Ready && !empty(s.data)) { content(s.data, false); SourceCard(sources, null, null); return }
+    val why = when (s) {
+        is HcState.Unavailable -> s.why
+        is HcState.NeedPermission -> "Cloud Me is not allowed to read this from Health Connect yet."
+        else -> "Health Connect holds no data for this yet."
+    }
+    MockBanner(why)
+    content(remember(key) { mock() }, true)
+    SourceCard(sources, why, (s as? HcState.NeedPermission)?.let { p -> { launcher.launch(p.missing) } })
 }

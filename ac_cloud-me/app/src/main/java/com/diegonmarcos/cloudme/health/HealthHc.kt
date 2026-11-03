@@ -5,6 +5,7 @@ import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.BodyFatRecord
 import androidx.health.connect.client.records.ExerciseSessionRecord
+import androidx.health.connect.client.records.HeartRateRecord
 import androidx.health.connect.client.records.HeartRateVariabilityRmssdRecord
 import androidx.health.connect.client.records.HeightRecord
 import androidx.health.connect.client.records.Record
@@ -75,6 +76,7 @@ object HealthHc {
     val HEART = setOf(perm(RestingHeartRateRecord::class), perm(HeartRateVariabilityRmssdRecord::class))
     val SLEEP = setOf(perm(SleepSessionRecord::class))
     val ACTIVITY = setOf(perm(StepsRecord::class), perm(ExerciseSessionRecord::class))
+    val HEART_ZONES = HEART + perm(HeartRateRecord::class)
 
     /** Runs [read] once Health Connect is usable and every permission in [needed] is granted; otherwise says exactly what is missing. */
     suspend fun <T> guarded(ctx: Context, needed: Set<String>, read: suspend (HealthConnectClient) -> T): HcState<T> {
@@ -104,6 +106,10 @@ object HealthHc {
 
     suspend fun hrv(c: HealthConnectClient, days: Long): List<Reading> =
         records(c, HeartRateVariabilityRmssdRecord::class, days).map { Reading(it.time, it.heartRateVariabilityMillis) }.sortedBy { it.at }
+
+    /** Every heart-rate sample of the last [days] days, in bpm (the zones card). */
+    suspend fun heartSamples(c: HealthConnectClient, days: Long): List<Double> =
+        records(c, HeartRateRecord::class, days).flatMap { r -> r.samples.map { it.beatsPerMinute.toDouble() } }
 
     suspend fun steps(c: HealthConnectClient, days: Long): List<Reading> =
         records(c, StepsRecord::class, days).map { Reading(it.startTime, it.count.toDouble()) }

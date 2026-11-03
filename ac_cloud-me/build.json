@@ -285,7 +285,7 @@
     "configs_ui": ["nav_ui"],
     "sections": [
       {
-        "_doc": "Health \u2014 a bar section of its own (it was a shortcut into Projects > Health). Two page groups (Plan: index, 12 plan pages and the workout plan; Trackers: Tracked, the Google Fit / Samsung Health style today dashboard over Health Connect, and 4 more) on the many_rows nav mode, the groups referencing the flat pages list by id. Every page is drawn by the app's own Compose HealthPage from data/health/*.json (the declared plan, formulas and workout) and the user's entries (SharedPreferences health_user, a declared fleet-config store); the trackers read Health Connect live and say so when it is empty. The metric taxonomy stays here because libs:health's build.gradle looks it up by SECTION ID (`ui.sections[id=health].metrics`).",
+        "_doc": "Health \u2014 a bar section of its own (it was a shortcut into Projects > Health). Two page groups (Plan: index, 12 plan pages and the workout plan; Trackers: Tracked, the Google Fit / Samsung Health style today dashboard over Health Connect, and 4 more) on the many_rows nav mode, the groups referencing the flat pages list by id. Health opens on Tracked (#1390): Tracked is the first flat page (where NavSection.page(null) lands) and Trackers is the first row; every tracker page draws its charts from the one shared set, HealthCharts.kt. Every page is drawn by the app's own Compose HealthPage from data/health/*.json (the declared plan, formulas and workout) and the user's entries (SharedPreferences health_user, a declared fleet-config store); the trackers read Health Connect live and say so when it is empty. The metric taxonomy stays here because libs:health's build.gradle looks it up by SECTION ID (`ui.sections[id=health].metrics`).",
         "_doc_metrics": "Data-driven metric taxonomy \u2014 read by SummaryPage / TimelinePage / ConfigsPage to render the per-metric tiles + drill-downs. Each metric maps to one-or-more Health Connect record types via `records` (matched at runtime by class simple-name) + the perm subset via `perm_keys`. Add a metric = one entry here + tile icon. Removing a metric here removes it from all 3 top-level pages.",
         "id": "health",
         "nav_mode": "horizontal_two_rows",
@@ -417,6 +417,31 @@
         ],
         "pages": [
           {
+            "id": "tracked",
+            "label": "Tracked",
+            "icon": "monitor_heart"
+          },
+          {
+            "id": "activities",
+            "label": "Activities",
+            "icon": "ic_p_health_activity"
+          },
+          {
+            "id": "bodycomp",
+            "label": "Body comp",
+            "icon": "ic_p_health_body"
+          },
+          {
+            "id": "hr",
+            "label": "HR & HRV",
+            "icon": "ic_p_health_vitals"
+          },
+          {
+            "id": "sleep",
+            "label": "Sleep",
+            "icon": "ic_p_health_sleep"
+          },
+          {
             "id": "home",
             "label": "Index",
             "icon": "home"
@@ -485,34 +510,21 @@
             "id": "workout",
             "label": "Workout plan",
             "icon": "ic_gym"
-          },
-          {
-            "id": "tracked",
-            "label": "Tracked",
-            "icon": "monitor_heart"
-          },
-          {
-            "id": "activities",
-            "label": "Activities",
-            "icon": "ic_p_health_activity"
-          },
-          {
-            "id": "bodycomp",
-            "label": "Body comp",
-            "icon": "ic_p_health_body"
-          },
-          {
-            "id": "hr",
-            "label": "HR & HRV",
-            "icon": "ic_p_health_vitals"
-          },
-          {
-            "id": "sleep",
-            "label": "Sleep",
-            "icon": "ic_p_health_sleep"
           }
         ],
         "groups": [
+          {
+            "id": "trackers",
+            "label": "Trackers",
+            "icon": "monitor_heart",
+            "pages": [
+              "tracked",
+              "activities",
+              "bodycomp",
+              "hr",
+              "sleep"
+            ]
+          },
           {
             "id": "plan",
             "label": "Plan",
@@ -532,18 +544,6 @@
               "shop",
               "dossier",
               "workout"
-            ]
-          },
-          {
-            "id": "trackers",
-            "label": "Trackers",
-            "icon": "monitor_heart",
-            "pages": [
-              "tracked",
-              "activities",
-              "bodycomp",
-              "hr",
-              "sleep"
             ]
           }
         ]

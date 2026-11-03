@@ -38,8 +38,12 @@ data class TrackedMetric(
     val entryLabel: String, val entryUnit: String, val entryMinutes: Long,
 )
 
-/** The chart ranges of a card's detail: Day is hourly, Week and Month are daily. */
-enum class TrackedRange(val label: String, val days: Int) { DAY("Day", 1), WEEK("Week", 7), MONTH("Month", 30) }
+/**
+ * The chart ranges of a detail (the D / W / M / Y toggle): Day is 24 hourly buckets, Week 7 and Month 30 daily buckets, Year 12
+ * monthly buckets. A Year bucket of a sum metric holds the month's MEAN DAILY value (the month total over the days it covers), so the
+ * daily goal line means the same thing on every range.
+ */
+enum class TrackedRange(val label: String, val short: String, val days: Int) { DAY("Day", "D", 1), WEEK("Week", "W", 7), MONTH("Month", "M", 30), YEAR("Year", "Y", 365) }
 
 /** One bucket of a chart: its start (an hour, or a day at midnight), its label and its value (null = no data). */
 data class Bucket(val start: LocalDateTime, val label: String, val value: Double?)
@@ -67,12 +71,31 @@ object Tracked {
     fun format(m: TrackedMetric, v: Double?): String = if (v == null) "--" else "%.${m.decimals}f".format(java.util.Locale.US, v)
 
     /** Every slot of [range] ending at [today], in order, filled from [values] (keyed by slot start); a missing slot is null. */
-    fun grid(range: TrackedRange, today: LocalDate, values: Map<LocalDateTime, Double>): List<Bucket> =
-        if (range == TrackedRange.DAY) (0 until 24).map { h ->
-            val t = today.atTime(h, 0); Bucket(t, "%02d".format(h), values[t])
-        } else (range.days - 1 downTo 0).map { back ->
-            val d = today.minusDays(back.toLong()).atStartOfDay(); Bucket(d, "${d.dayOfMonth}", values[d])
+    fun grid(range: TrackedRange, today: LocalDate, values: Map<LocalDateTime, Double>): List<Bucket> = when (range) {
+        TrackedRange.DAY -> (0 until 24).map { h -> val t = today.atTime(h, 0); Bucket(t, "%02d".format(h), values[t]) }
+        TrackedRange.YEAR -> (11 downTo 0).map { back ->
+            val m = today.withDayOfMonth(1).minusMonths(back.toLong()).atStartOfDay()
+            Bucket(m, m.month.getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.US), values[m])
         }
+        else -> (range.days - 1 downTo 0).map { back ->
+            val d = today.minusDays(back.toLong()).atStartOfDay()
+            Bucket(d, if (range == TrackedRange.WEEK) d.dayOfWeek.getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.US) else "${d.dayOfMonth}", values[d])
+        }
+    }
+
+    /** The slot a moment falls in: its hour (Day), its day (Week, Month) or its month (Year). */
+    fun slot(range: TrackedRange, t: LocalDateTime): LocalDateTime = when (range) {
+        TrackedRange.DAY -> t.withMinute(0).withSecond(0).withNano(0)
+        TrackedRange.YEAR -> t.toLocalDate().withDayOfMonth(1).atStartOfDay()
+        else -> t.toLocalDate().atStartOfDay()
+    }
+
+    /** Days a Year bucket covers: the whole month, or up to [today] for the current month. Every other slot covers itself (1). */
+    fun daysCovered(range: TrackedRange, start: LocalDateTime, today: LocalDate): Int = when {
+        range != TrackedRange.YEAR -> 1
+        start.toLocalDate().withDayOfMonth(1) == today.withDayOfMonth(1) -> today.dayOfMonth
+        else -> start.toLocalDate().lengthOfMonth()
+    }
 
     /** Total (sum metrics) or mean (avg metrics) over the buckets that hold data; null when none does. */
     fun summary(m: TrackedMetric, buckets: List<Bucket>): Double? {
@@ -146,18 +169,26 @@ object TrackedHc {
         else -> value(id, c.aggregate(AggregateRequest(setOf(metric(id)), TimeRangeFilter.between(LocalDate.now(zone).atStartOfDay(zone).toInstant(), now))))
     }
 
-    /** The chart's slots: hourly buckets of today, or daily buckets of the last 7 / 30 days, de-duplicated across apps by Health Connect. */
-    suspend fun series(c: HealthConnectClient, id: String, range: TrackedRange, zone: ZoneId): List<Bucket> {
+    /** The chart's slots: hourly buckets of today, daily buckets of the last 7 / 30 days, or monthly buckets of the last 12 months, de-duplicated across apps by Health Connect. */
+    suspend fun series(c: HealthConnectClient, id: String, range: TrackedRange, zone: ZoneId, avg: Boolean = id == "heart" || id == "weight"): List<Bucket> {
         val today = LocalDate.now(zone)
         val values = HashMap<LocalDateTime, Double>()
-        if (range == TrackedRange.DAY) {
-            val from = today.atStartOfDay(zone).toInstant()
-            c.aggregateGroupByDuration(AggregateGroupByDurationRequest(setOf(metric(id)), TimeRangeFilter.between(from, from.plus(Duration.ofDays(1))), Duration.ofHours(1)))
-                .forEach { g -> value(id, g.result)?.let { values[LocalDateTime.ofInstant(g.startTime, zone)] = it } }
-        } else {
-            val from = today.minusDays(range.days - 1L).atStartOfDay()
-            c.aggregateGroupByPeriod(AggregateGroupByPeriodRequest(setOf(metric(id)), TimeRangeFilter.between(from, today.plusDays(1).atStartOfDay()), Period.ofDays(1)))
-                .forEach { g -> value(id, g.result)?.let { values[g.startTime] = it } }
+        when (range) {
+            TrackedRange.DAY -> {
+                val from = today.atStartOfDay(zone).toInstant()
+                c.aggregateGroupByDuration(AggregateGroupByDurationRequest(setOf(metric(id)), TimeRangeFilter.between(from, from.plus(Duration.ofDays(1))), Duration.ofHours(1)))
+                    .forEach { g -> value(id, g.result)?.let { values[LocalDateTime.ofInstant(g.startTime, zone)] = it } }
+            }
+            TrackedRange.YEAR -> {
+                val from = today.withDayOfMonth(1).minusMonths(11).atStartOfDay()
+                c.aggregateGroupByPeriod(AggregateGroupByPeriodRequest(setOf(metric(id)), TimeRangeFilter.between(from, today.plusDays(1).atStartOfDay()), Period.ofMonths(1)))
+                    .forEach { g -> value(id, g.result)?.let { v -> values[g.startTime] = if (avg) v else v / Tracked.daysCovered(range, g.startTime, today) } }
+            }
+            else -> {
+                val from = today.minusDays(range.days - 1L).atStartOfDay()
+                c.aggregateGroupByPeriod(AggregateGroupByPeriodRequest(setOf(metric(id)), TimeRangeFilter.between(from, today.plusDays(1).atStartOfDay()), Period.ofDays(1)))
+                    .forEach { g -> value(id, g.result)?.let { values[g.startTime] = it } }
+            }
         }
         return Tracked.grid(range, today, values)
     }

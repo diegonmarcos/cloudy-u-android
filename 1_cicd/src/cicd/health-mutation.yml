@@ -1,0 +1,104 @@
+# Cloud Me Health redesign mutation proof (#1390): Health opens on Tracked (build.json), the D / W / M / Y bucketing, the
+# min / avg / max strip, the heart-rate zones (HealthAgg, Tracked.slot / daysCovered) and the source mapping (HealthSources)
+# are pinned by HealthChartsTest (ac_cloud-me/app/src/test/.../health). This job runs Cloud Me's JVM suite once on the real
+# tree (GREEN expected), then once per planted mutant: a mutant is caught only when HealthChartsTest ITSELF fails (its
+# JUnit XML holds a <failure>), so an unrelated red test cannot pass for a catch. It fails if the real tree is red or any
+# mutant stays green. Manual only.
+name: health-mutation
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: "all | one of the mutant names below"
+        required: false
+        default: "all"
+permissions:
+  contents: read
+jobs:
+  mutate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: "platforms;android-36 platforms;android-35 platforms;android-26 build-tools;35.0.0 build-tools;34.0.0 platform-tools"
+      - name: Set up Gradle 8.10.2 (cached)
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: "8.10.2"
+      # ── MANAGED-GRADLE-CACHE-HYGIENE: injected by cloud-android-gradle-cache-hygiene.py ──
+      # Edit 1_cicd/src/actions/gradle-cache-hygiene, never this block.
+      - name: Gradle cache hygiene (retry failed resolution, never cache a failed lookup)
+        uses: ./.github/actions/gradle-cache-hygiene
+      # ── end MANAGED-GRADLE-CACHE-HYGIENE ──
+      - name: Checkout vault (shared Android signing key, read by app/build.gradle at configuration)
+        uses: actions/checkout@v4
+        with:
+          repository: diegonmarcos/cloud-me-pvt-vault
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
+          path: .vault
+      - name: Install jq
+        run: sudo apt-get update -y && sudo apt-get install -y jq
+      - name: Install ORAS + sops (pinned)
+        uses: ./.github/actions/install-pinned-tools
+        with:
+          tools: oras sops
+      - name: Real tree GREEN, every mutant RED
+        env:
+          BYPASS_NIX: "1"
+          VAULT_DIR: ${{ github.workspace }}/.vault
+          SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
+          ONLY: ${{ inputs.name }}
+        run: |
+          set -u
+          H=ac_cloud-me/app/src/main/java/com/diegonmarcos/cloudme/health
+          A=$H/HealthAgg.kt
+          T=$H/TrackedHc.kt
+          S=$H/HealthSources.kt
+          B=ac_cloud-me/build.json
+          R=ac_cloud-me/app/build/test-results
+          suite() { rm -rf "$R"; sh 1_cicd/dist/scripts/cloud-android-test-engine.sh unit ac_cloud-me > /tmp/suite.log 2>&1; }
+          caught() { grep -l "<failure" "$R"/*/TEST-com.diegonmarcos.cloudme.health.HealthChartsTest.xml >/dev/null 2>&1; }
+          sub() { python3 -c 'import sys; p, a, b = sys.argv[1:]; s = open(p).read(); assert a in s, "anchor missing: " + a; open(p, "w").write(s.replace(a, b, 1))' "$1" "$2" "$3"; }
+          suite || { tail -80 /tmp/suite.log; echo "::error::the real tree is RED"; exit 1; }
+          ls "$R"/*/TEST-com.diegonmarcos.cloudme.health.HealthChartsTest.xml >/dev/null 2>&1 || { echo "::error::HealthChartsTest did not run"; exit 1; }
+          echo "real tree: GREEN"
+          stayed=0
+          while IFS='@' read -r name f a b; do
+            [ -z "$name" ] && continue
+            [ "$ONLY" != "all" ] && [ "$ONLY" != "$name" ] && continue
+            case "$f" in T) V=$T;; S) V=$S;; B) V=$B;; *) V=$A;; esac
+            git checkout -- "$A" "$T" "$S" "$B"
+            if [ "$f" = J ]; then python3 -c "$b" || { echo "::error::$name: mutation script failed"; stayed=$((stayed + 1)); continue; }
+            else sub "$V" "$a" "$b" || { echo "::error::$name: mutation anchor missing"; stayed=$((stayed + 1)); continue; }; fi
+            git diff --quiet -- "$A" "$T" "$S" "$B" && { echo "::error::$name: the mutation changed nothing"; stayed=$((stayed + 1)); continue; }
+            suite || true
+            if caught; then echo "RED (caught by HealthChartsTest): $name"
+            else echo "::error::mutant stayed GREEN: $name"; stayed=$((stayed + 1)); fi
+          done <<'MUTANTS'
+          default-page-index@J@-@import json; p = "ac_cloud-me/build.json"; d = json.load(open(p)); x = [s for s in d["ui"]["sections"] if s["id"] == "health"][0]; x["pages"].append(x["pages"].pop(0)); json.dump(d, open(p, "w"), indent=2, ensure_ascii=False)
+          day-slot-is-day@T@TrackedRange.DAY -> t.withMinute(0).withSecond(0).withNano(0)@TrackedRange.DAY -> t.toLocalDate().atStartOfDay()
+          year-slot-is-day@T@TrackedRange.YEAR -> t.toLocalDate().withDayOfMonth(1).atStartOfDay()@TrackedRange.YEAR -> t.toLocalDate().atStartOfDay()
+          year-total-not-daily@T@else -> start.toLocalDate().lengthOfMonth()@else -> 1
+          year-current-month-full@T@start.toLocalDate().withDayOfMonth(1) == today.withDayOfMonth(1) -> today.dayOfMonth@start.toLocalDate().withDayOfMonth(1) == today.withDayOfMonth(1) -> today.lengthOfMonth()
+          week-label-day-number@T@if (range == TrackedRange.WEEK) d.dayOfWeek.getDisplayName@if (false) d.dayOfWeek.getDisplayName
+          avg-metric-sums@A@if (avg) v.average() else@if (false) v.average() else
+          stats-avg-is-sum@A@Stats(v.min(), v.average(), v.max(), v.size)@Stats(v.min(), v.sum(), v.max(), v.size)
+          stats-null-counts-zero@A@val v = buckets.mapNotNull { it.value }@val v = buckets.map { it.value ?: 0.0 }
+          headline-day-average@A@if (range == TrackedRange.DAY) Tracked.summary(m, buckets) else@if (false) Tracked.summary(m, buckets) else
+          zones-shifted@A@out[((pct - 0.5) / 0.1).toInt().coerceIn(0, 4)]++@out[((pct - 0.4) / 0.1).toInt().coerceIn(0, 4)]++
+          zones-count-rest@A@if (pct < 0.5) continue@if (pct < 0.0) continue
+          source-heart-wrong-record@S@Source("heart", "Heart rate", "HeartRateRecord"@Source("heart", "Heart rate", "RestingHeartRateRecord"
+          source-steps-missing@S@Source("steps", "Steps",@Source("stepz", "Steps",
+          source-page-drops-bodyfat@S@"bodycomp" -> listOf("weight", "bodyfat")@"bodycomp" -> listOf("weight")
+          MUTANTS
+          git checkout -- "$A" "$T" "$S" "$B"
+          [ "$stayed" -eq 0 ] || { echo "::error::$stayed mutant(s) stayed green"; exit 1; }
+          echo "every mutant RED"
