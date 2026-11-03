@@ -55,6 +55,7 @@ dependencies {
     api project(':libs:ui-kit')
     api project(':libs:autofill')
     implementation project(':libs:updater')          // the fleet manifest (CONSTELLATION_FLEET_B64) for Cloud Apps / Phone Apps
+    implementation project(':libs:perms')            // App info: libs:perms owns settings intents
     implementation project(':libs:bottomnav')        // NavPage
     implementation project(':libs:ui-nav-bars')      // NavBarTopSecondRow: the strips of the profile screen
     implementation 'androidx.core:core-ktx:1.13.1'

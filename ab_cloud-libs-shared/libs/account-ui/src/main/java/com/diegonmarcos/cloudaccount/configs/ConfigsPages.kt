@@ -175,7 +175,8 @@ private fun AppsList(tag: String, title: String, rows: List<AppRow>?, done: Bool
 }
 
 private fun appDetails(ctx: Context, pkg: String) = runCatching {
-    ctx.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$pkg")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    // #1440 libs:perms owns every settings intent (PermsOnePlaceTest)
+    com.diegonmarcos.superapp.perms.PermsPages.openAppInfo(ctx, pkg)
 }
 
 /** Configs > Android > Cloud Apps: the fleet manifest, installed or not. A row opens the app (or Cloud Store to get it). */
