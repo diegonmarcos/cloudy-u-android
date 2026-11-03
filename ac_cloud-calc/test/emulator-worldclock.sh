@@ -23,6 +23,10 @@ texts() { grep -oE '(text|content-desc)="[^"]+"' "$OUT/ui.xml" | sed 's/^[a-z-]*
 # tap the map at a longitude/latitude (equirectangular, as WorldClockData.x/y)
 tapmap() { box '^World map$' | { read -r a b c d && python3 -I -c 'import sys;a,b,c,d,lon,lat=map(float,sys.argv[1:]);print(int(a+(lon+180)/360*(c-a)),int(b+(90-lat)/180*(d-b)))' $a $b $c $d "$1" "$2"; } | { read -r x y && adb shell input tap $x $y; }; }
 
+# whether a city row is in the list: an added zone is appended below the fold, so scroll down, look, scroll back
+listed() { local hit=1 i; for i in 1 2 3; do dump >/dev/null; grep -q "text=\"$1\"" "$OUT/ui.xml" && { hit=0; break; }; adb shell input swipe 160 560 160 300 300; sleep 1; done
+  for i in 1 2 3; do adb shell input swipe 160 300 160 600 300; done; sleep 1; return $hit; }
+
 adb install -r -g "$APK" || fail "install failed"
 act=$(adb shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.LAUNCHER "$PKG" | tr -d '\r' | tail -1)
 for i in 1 2 3; do
@@ -39,11 +43,11 @@ else tap '^Clock$' && sleep 3 && { tap '^World clock$' || true; } || fail "no Ti
 sleep 3
 box '^World map$' >/dev/null || fail "no world map: $(texts)"
 shot 01-map-pins
-dump >/dev/null; grep -q 'text="Paris"' "$OUT/ui.xml" && fail "Paris already listed before the tap"
+listed Paris && fail "Paris already listed before the tap"
 tapmap 2.35 48.85; sleep 3; shot 02-map-paris-added
-grep -q 'text="Paris"' "$OUT/ui.xml" || fail "a tap on Paris did not add it: $(texts)"
+listed Paris || fail "a tap on Paris did not add it: $(texts)"
 tapmap 2.35 48.85; sleep 3; shot 03-map-paris-removed
-grep -q 'text="Paris"' "$OUT/ui.xml" && fail "a second tap on Paris did not remove it"
+listed Paris && fail "a second tap on Paris did not remove it"
 tap '^Add city$' || { adb shell input swipe 500 1500 500 300 300; sleep 1; tap '^Add city$'; } || fail "no Add city button: $(texts)"
 sleep 2; shot 04-city-list
 grep -q 'Washington' "$OUT/ui.xml" || grep -q '★' "$OUT/ui.xml" || fail "the city list shows no capital: $(texts)"
