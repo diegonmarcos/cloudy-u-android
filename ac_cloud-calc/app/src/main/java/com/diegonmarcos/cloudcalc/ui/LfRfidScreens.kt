@@ -2,13 +2,7 @@ package com.diegonmarcos.cloudcalc.ui
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
-import android.bluetooth.BluetoothGatt
-import android.bluetooth.BluetoothGattCallback
-import android.bluetooth.BluetoothGattCharacteristic
-import android.bluetooth.BluetoothGattDescriptor
 import android.bluetooth.BluetoothManager
-import android.bluetooth.BluetoothProfile
-import android.bluetooth.BluetoothSocket
 import android.content.Context
 import android.content.Intent
 import android.hardware.usb.UsbConstants
@@ -55,6 +49,8 @@ import com.diegonmarcos.cloudcalc.measure.UsbChip
 import com.diegonmarcos.cloudcalc.measure.LfTag
 import com.diegonmarcos.cloudcalc.measure.LfType
 import com.diegonmarcos.cloudcalc.measure.Em4100
+import com.diegonmarcos.superapp.bluetooth.BtSerial
+import com.diegonmarcos.superapp.bluetooth.BtSerialLink
 import com.diegonmarcos.superapp.perms.PermsNeeds
 import com.diegonmarcos.superapp.perms.PermsUsb
 import com.diegonmarcos.superapp.perms.rememberPermsAsk
@@ -79,51 +75,7 @@ internal class UsbTransport(private val c: UsbDeviceConnection, private val out:
     override fun close() { open = false; c.close() }
 }
 
-@SuppressLint("MissingPermission")
-internal class SppTransport(private val s: BluetoothSocket) : LfTransport {
-    init {
-        Thread {
-            val b = ByteArray(512)
-            runCatching { while (true) { val n = s.inputStream.read(b); if (n < 0) break; if (n > 0) LfLink.onBytes(b.copyOf(n)) } }
-            LfLink.status = "Bluetooth link closed"
-        }.apply { isDaemon = true; start() }
-    }
-    override fun write(b: ByteArray) { Thread { runCatching { s.outputStream.write(b); s.outputStream.flush() } }.start() }
-    override fun close() { runCatching { s.close() } }
-}
-
-@SuppressLint("MissingPermission")
-internal class BleTransport(ctx: Context, d: BluetoothDevice, private val onReady: (Boolean) -> Unit) : LfTransport {
-    private var rx: BluetoothGattCharacteristic? = null
-    private var mtu = 23
-    private val queue = java.util.ArrayDeque<ByteArray>()
-    private var busy = false
-    private val gatt: BluetoothGatt = d.connectGatt(ctx, false, object : BluetoothGattCallback() {
-        override fun onConnectionStateChange(g: BluetoothGatt, status: Int, state: Int) {
-            if (state == BluetoothProfile.STATE_CONNECTED) g.requestMtu(247) else if (state == BluetoothProfile.STATE_DISCONNECTED) LfLink.status = "Bluetooth link closed"
-        }
-        override fun onMtuChanged(g: BluetoothGatt, m: Int, status: Int) { mtu = m; g.discoverServices() }
-        override fun onServicesDiscovered(g: BluetoothGatt, status: Int) {
-            val svc = g.getService(LfSerial.NUS_SERVICE) ?: run { onReady(false); return }
-            rx = svc.getCharacteristic(LfSerial.NUS_RX)
-            val tx = svc.getCharacteristic(LfSerial.NUS_TX)
-            g.setCharacteristicNotification(tx, true)
-            tx.getDescriptor(LfSerial.CCCD)?.let { it.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE; @Suppress("DEPRECATION") g.writeDescriptor(it) }
-            onReady(rx != null)
-        }
-        @Deprecated("API < 33 path")
-        override fun onCharacteristicChanged(g: BluetoothGatt, ch: BluetoothGattCharacteristic) { ch.value?.let { LfLink.onBytes(it) } }
-        override fun onCharacteristicWrite(g: BluetoothGatt, ch: BluetoothGattCharacteristic, status: Int) { synchronized(queue) { busy = false }; pump() }
-    })
-    private fun pump() {
-        val next = synchronized(queue) { if (busy) null else queue.pollFirst()?.also { busy = true } } ?: return
-        val c = rx ?: return
-        c.value = next; c.writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
-        @Suppress("DEPRECATION") if (!gatt.writeCharacteristic(c)) synchronized(queue) { busy = false }
-    }
-    override fun write(b: ByteArray) { synchronized(queue) { LfSerial.chunks(b, mtu).forEach { queue.addLast(it) } }; pump() }
-    override fun close() { runCatching { gatt.disconnect(); gatt.close() } }
-}
+private fun BtSerialLink.asTransport() = object : LfTransport { override fun write(b: ByteArray) = this@asTransport.write(b); override fun close() = this@asTransport.close() }
 
 /** A reader the tab can connect to: a USB device or a paired Bluetooth device. */
 data class LfEndpoint(val label: String, val reader: LfReader, val usb: UsbDevice? = null, val bt: BluetoothDevice? = null)
@@ -189,15 +141,15 @@ object LfLink {
     @SuppressLint("MissingPermission")
     private fun openBt(ctx: Context, e: LfEndpoint) {
         val d = e.bt!!
+        val closed = { status = "Bluetooth link closed" }
         if (d.type == BluetoothDevice.DEVICE_TYPE_LE) {
-            var t: BleTransport? = null
-            t = BleTransport(ctx, d) { ok -> if (ok) attach(e, t!!) else { t?.close(); status = "${e.label}: no BLE UART (Nordic UART) service" } }
+            BtSerial.openBleUart(ctx, d, LfSerial.NUS_SERVICE, LfSerial.NUS_RX, LfSerial.NUS_TX, LfSerial.CCCD, LfSerial::chunks, ::onBytes, closed) { l ->
+                if (l != null) attach(e, l.asTransport()) else status = "${e.label}: no BLE UART (Nordic UART) service"
+            }
             return
         }
-        runCatching {
-            val s = d.createRfcommSocketToServiceRecord(LfSerial.SPP)
-            s.connect(); attach(e, SppTransport(s))
-        }.onFailure { status = "${e.label}: Bluetooth serial failed (${it.message})" }
+        runCatching { attach(e, BtSerial.openSpp(d, LfSerial.SPP, ::onBytes, closed).asTransport()) }
+            .onFailure { status = "${e.label}: Bluetooth serial failed (${it.message})" }
     }
 
     private fun attach(e: LfEndpoint, t: LfTransport) { link = t; connected = e; reader = e.reader; status = "${e.label} connected" }
