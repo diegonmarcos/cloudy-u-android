@@ -201,8 +201,8 @@ class VentoyPage(private val host: Fragment) {
                     Text((if (sel) "● " else "○ ") + UsbVolumeModel.labelOf(v), color = WHITE, fontWeight = FontWeight.Bold, fontSize = 15.sp)
                     Caption(listOfNotNull(v.path, UsbVolumeModel.sizeHint(v.totalBytes, v.freeBytes).ifEmpty { null }).joinToString(" · "))
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        if (!sel) Btn("Use this drive") { open(ctx, v.path!!) }
-                        if (sel && drive == null) Btn("Grant access") { requestGrant(ctx, v.path!!) }
+                        if (!sel) Btn("Use this drive", onClick = { open(ctx, v.path!!) })
+                        if (sel && drive == null) Btn("Grant access", onClick = { requestGrant(ctx, v.path!!) })
                     }
                     if (sel && drive != null) Caption(if (ventoy) "Ventoy drive detected · ${onDrive.size} image(s) on it" else "Not a Ventoy drive yet: images can be copied, but the drive will not boot them until Ventoy is installed.")
                 }
@@ -211,22 +211,22 @@ class VentoyPage(private val host: Fragment) {
             Card(false) {
                 Caption(VentoyRawInstall.WHY)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Btn("Copy installer", enabled = drive != null && !busy.containsKey("installer")) { copyInstaller() }
-                    Btn("Erase & install Ventoy", enabled = VentoyRawInstall.AVAILABLE && drive != null) {
+                    Btn("Copy installer", enabled = drive != null && !busy.containsKey("installer"), onClick = { copyInstaller() })
+                    Btn("Erase & install Ventoy", enabled = VentoyRawInstall.AVAILABLE && drive != null, onClick = {
                         vols.firstOrNull { it.path == selected }?.let { gateFor = VentoyGate.Drive(UsbVolumeModel.labelOf(it), it.totalBytes, it) }
-                    }
+                    })
                 }
                 busy["installer"]?.let { Caption(it) }
                 Caption(INSTRUCTIONS + if (installerVersion.isNotEmpty()) "\nRelease: $installerVersion" else "")
             }
             if (message.isNotEmpty()) Text(message, color = AMBER, fontSize = 13.sp, modifier = Modifier.padding(vertical = 6.dp).testTag("ventoy-message"))
-            Btn("Install a local image", enabled = drive != null && !busy.containsKey("local")) { pickLocal.launch(arrayOf("*/*")) }
+            Btn("Install a local image", enabled = drive != null && !busy.containsKey("local"), onClick = { pickLocal.launch(arrayOf("*/*")) })
             busy["local"]?.let { Caption(it) }
             val catalogueNames = cat?.rows?.mapNotNull { resolved[it.id]?.fileName }.orEmpty().toSet()
             val others = onDrive.filter { it.substringAfterLast('/') !in catalogueNames }
             if (others.isNotEmpty()) {
                 Heading("On the drive")
-                others.forEach { p -> Card(false) { Text(p, color = WHITE, fontFamily = FontFamily.Monospace, fontSize = 13.sp); Btn("Remove", enabled = !busy.containsKey(p)) { remove(p) } } }
+                others.forEach { p -> Card(false) { Text(p, color = WHITE, fontFamily = FontFamily.Monospace, fontSize = 13.sp); Btn("Remove", enabled = !busy.containsKey(p), onClick = { remove(p) }) } }
             }
             if (cat == null) { Caption("The catalogue did not load."); return@Column }
             LaunchedEffect(Unit) { resolveAll(cat) }
@@ -274,15 +274,15 @@ class VentoyPage(private val host: Fragment) {
                 if (row.installable) {
                     val mode = modes[row.id] ?: VentoyDrive.Mode.ISO_ONLY
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        VentoyDrive.Mode.values().forEach { m -> Chip(m.label, m == mode) { modes[row.id] = m } }
+                        VentoyDrive.Mode.values().forEach { m -> Chip(m.label, m == mode, onClick = { modes[row.id] = m }) }
                     }
                     if (mode == VentoyDrive.Mode.LIVE_PERSISTENT) FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        listOf(1, 2, 4, 8, 16).forEach { gb -> Chip("$gb GB", (persistGb[row.id] ?: 4) == gb) { persistGb[row.id] = gb } }
+                        listOf(1, 2, 4, 8, 16).forEach { gb -> Chip("$gb GB", (persistGb[row.id] ?: 4) == gb, onClick = { persistGb[row.id] = gb }) }
                     }
                     if (mode != VentoyDrive.Mode.ISO_ONLY) Caption(mode.note + if (mode == VentoyDrive.Mode.LIVE_PERSISTENT) " Label ${row.persistenceLabel}." else "")
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Btn("Install", enabled = drive != null && !busy.containsKey(row.id)) { install(row) }
-                        if (path != null) Btn("Remove", enabled = !busy.containsKey(path)) { remove(path) }
+                        Btn("Install", enabled = drive != null && !busy.containsKey(row.id), onClick = { install(row) })
+                        if (path != null) Btn("Remove", enabled = !busy.containsKey(path), onClick = { remove(path) })
                     }
                     busy[row.id]?.let { Caption(it) }
                 }
