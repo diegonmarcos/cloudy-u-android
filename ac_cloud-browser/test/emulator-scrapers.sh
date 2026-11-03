@@ -24,7 +24,14 @@ adb logcat -c || true
 adb install -r -g "$APK" >/dev/null || { bad "install of Cloud Browser failed"; exit 2; }
 adb shell settings put global window_animation_scale 0 || true
 
-dump() { adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb shell cat /sdcard/ui.xml 2>/dev/null > "$OUT/$1.xml"; }
+raw_dump() { adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb shell cat /sdcard/ui.xml 2>/dev/null > "$OUT/$1.xml"; }
+# The self-updater may draw its overlay over everything (a newer APK on the release than the one under test): close it.
+dump() {
+  raw_dump "$1"
+  if grep -q 'text="Update failed"\|text="Update available"' "$OUT/$1.xml"; then
+    tap "$1" '^(OK|Later|Not now)$' >/dev/null && echo "NOTE  closed the updater overlay" && sleep 2; raw_dump "$1"
+  fi
+}
 shot() { adb exec-out screencap -p > "$OUT/$1.png" 2>/dev/null || true; dump "$1"; }
 # tap the first node whose text or content-desc matches the regex $2 in dump $1; prints the matched text
 tap() {
