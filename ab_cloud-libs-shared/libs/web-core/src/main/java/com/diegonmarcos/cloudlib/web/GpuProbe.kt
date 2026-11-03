@@ -112,7 +112,8 @@ object GpuProbe {
                 if (finished) return
                 finished = true
                 last = caps
-                android.util.Log.i(
+                // WARN so CI emulator logcat (*:W) keeps the one line per process
+                android.util.Log.w(
                     "GpuProbe",
                     "${caps.engine}: ${caps.summary()} · renderer=${caps.renderer} · adapter=${caps.adapterInfo} · " +
                         "reason=${caps.reason()}",
