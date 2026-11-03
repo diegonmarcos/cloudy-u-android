@@ -70,6 +70,11 @@ on:
         description: "JSON list of emulator API levels"
         required: false
         default: "[34, 36]"
+      offline:
+        description: "Turn Wi-Fi and mobile data off before launching (an app that self-updates after launch, like Cloud Store, replaces itself within 45 s on a networked emulator and the probe reads that as a gone process)"
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -151,10 +156,11 @@ jobs:
         env:
           PKG: ${{ steps.apk.outputs.pkg }}
           APP: ${{ inputs.app }}
+          OFFLINE: ${{ inputs.offline && '1' || '0' }}
         run: |
           cat > launch.sh <<EOF
           #!/bin/bash
-          PKG='$PKG'; APP='$APP'
+          PKG='$PKG'; APP='$APP'; OFFLINE='$OFFLINE'
           EOF
           cat >> launch.sh <<'EOF'
           # Install, launch the launcher activity, watch 45 s, fail on any crash of $PKG.
@@ -162,6 +168,7 @@ jobs:
           mkdir -p out
           adb logcat -c || true
           adb install -r -g app-under-test.apk || { echo "::error::adb install failed"; exit 2; }
+          if [ "$OFFLINE" = 1 ]; then adb shell svc wifi disable; adb shell svc data disable; echo "network off for the launch"; fi
           act=$(adb shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.LAUNCHER "$PKG" | tr -d '\r' | tail -1)
           case "$act" in */*) ;; *) echo "::error::$PKG has no launcher activity ($act)"; exit 2;; esac
           echo "launching $act"
