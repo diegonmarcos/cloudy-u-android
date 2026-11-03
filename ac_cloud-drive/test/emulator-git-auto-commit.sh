@@ -32,7 +32,7 @@ swipe_up() { local s; s=$(adb shell wm size | grep -oE '[0-9]+x[0-9]+' | tail -1
 launch() { timeout 120 adb shell am start -W -n "$act" >/dev/null; sleep 6; for i in 1 2 3; do tap '^Continue with local files$' && break; sleep 2; done || true; sleep 2; }
 open_git() { tap '^Git$' || { tap '^Sync$' && sleep 2 && tap '^Git$'; } || return 1; sleep 3; }
 # Drive in front: whatever took focus is noted, then Drive is brought back (singleTask, its state kept)
-front() { local f; f=$(adb shell dumpsys window | tr -d '\r' | grep -m1 mCurrentFocus); case "$f" in *"$PKG"*) return 0;; esac; note "focus was: $f"; adb shell am start -n "$act" >/dev/null; sleep 3; }
+front() { local f; f=$(adb shell dumpsys window | tr -d '\r' | grep -m1 mCurrentFocus); case "$f" in *"$PKG"*) return 0;; esac; note "focus was: $f"; adb shell am start -n "$act" >/dev/null; sleep 4; tap '^Continue with local files$' && sleep 3; true; }
 need() { dump >/dev/null; for t in "$@"; do has "$t" || return 1; done; }
 
 adb shell settings delete global cloud_nav_ui_mode >/dev/null 2>&1 || true
@@ -62,6 +62,7 @@ adb shell "run-as $PKG sh -c 'cat > files/git-sync/repos.json'" <<JSON
 JSON
 adb shell "run-as $PKG sh -c 'rm -f shared_prefs/git_storage.xml'" >/dev/null 2>&1 || true
 launch
+front; dump >/dev/null; has 'Sync All' && back
 open_git || fail "no Git page: $(texts)"
 shot 00-git
 
