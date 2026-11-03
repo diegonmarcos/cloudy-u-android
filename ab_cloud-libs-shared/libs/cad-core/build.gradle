@@ -1,0 +1,56 @@
+// libs:cad-core (#1404): the CAD model library core of Hardtech-CAD, open source only. Pure Kotlin:
+//   ModelManifest  models.json of the public LFS repo hardtech-db-models (name, format, source, licence, size, sha256, view)
+//   CadFormats     format -> viewer lib (cad-mesh, cad-brep, cad-dxf, cad-3dm, cad-ifc), or store-only with its reason
+//   CadLibrary     a library page's declaration (formats, Core Difference values, default model)
+//   ModelCache     download once, sha256-verified, reused offline
+// and assets/cad/viewer.html + viewer.js (the three.js stage that imports assets/cad/<lib>/loader.js). three.js itself is
+// Cloud Nav's copy (the consumer copies assets/space in). Compile-in only (lib-apks exclude). TESTED through the consumer:
+// Hardtech-CAD's unit task runs src/test here, mutation-proven by .github/workflows/hardtech-cad-mcad-proof.yml.
+plugins {
+    id 'com.android.library'
+}
+if (project.extensions.findByName('kotlin') == null) {
+    apply plugin: 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.diegonmarcos.superapp.cad'
+    compileSdk 36
+
+    defaultConfig {
+        minSdk 26
+    }
+
+    sourceSets {
+        main { java.srcDirs += ['src/main/java'] }
+        test { java.srcDirs += ['src/test/kotlin'] }
+    }
+
+    testOptions {
+        unitTests {
+            all {
+                testLogging {
+                    events 'failed', 'standardOut'
+                    exceptionFormat 'full'
+                }
+            }
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
+dependencies {
+    // Android's own org.json at runtime; the real library for the JVM suite.
+    testImplementation 'org.json:json:20240303'
+    testImplementation 'junit:junit:4.13.2'
+}

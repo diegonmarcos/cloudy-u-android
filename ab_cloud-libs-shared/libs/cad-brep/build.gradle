@@ -1,0 +1,20 @@
+// libs:cad-brep (#1404): Hardtech-CAD's viewer lib for STEP/IGES through occt-import-js 0.0.23 (LGPL-2.1, Open CASCADE in WASM), loaded unmodified as separate files.
+// Assets only: assets/cad/brep/loader.js (imported by libs:cad-core's viewer.js) and vendor/ with the upstream licence beside it.
+// Compile-in only (lib-apks exclude), no code.
+plugins {
+    id 'com.android.library'
+}
+
+android {
+    namespace 'com.diegonmarcos.superapp.cad.brep'
+    compileSdk 36
+
+    defaultConfig {
+        minSdk 26
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}

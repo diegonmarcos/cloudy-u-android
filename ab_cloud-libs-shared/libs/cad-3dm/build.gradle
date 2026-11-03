@@ -1,0 +1,20 @@
+// libs:cad-3dm (#1404): Hardtech-CAD's viewer lib for Rhino 3DM through rhino3dm.js 8.35.0 (MIT, WASM).
+// Assets only: assets/cad/3dm/loader.js (imported by libs:cad-core's viewer.js) and vendor/ with the upstream licence beside it.
+// Compile-in only (lib-apks exclude), no code.
+plugins {
+    id 'com.android.library'
+}
+
+android {
+    namespace 'com.diegonmarcos.superapp.cad.rhino'
+    compileSdk 36
+
+    defaultConfig {
+        minSdk 26
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}

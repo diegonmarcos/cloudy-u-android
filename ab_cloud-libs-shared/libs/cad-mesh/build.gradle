@@ -1,0 +1,20 @@
+// libs:cad-mesh (#1404): Hardtech-CAD's viewer lib for glTF/GLB, OBJ and FBX through three.js loaders (GLTFLoader and FBXLoader reused from libs:cgc-3d, OBJLoader r185 vendored here, MIT).
+// Assets only: assets/cad/mesh/loader.js (imported by libs:cad-core's viewer.js) and vendor/ with the upstream licence beside it.
+// Compile-in only (lib-apks exclude), no code.
+plugins {
+    id 'com.android.library'
+}
+
+android {
+    namespace 'com.diegonmarcos.superapp.cad.mesh'
+    compileSdk 36
+
+    defaultConfig {
+        minSdk 26
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
