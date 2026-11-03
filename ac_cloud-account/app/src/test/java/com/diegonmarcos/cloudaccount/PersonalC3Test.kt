@@ -63,6 +63,11 @@ class PersonalC3Test {
     private fun fakeSecret() = "s3" + "cr" + "et-" + "v".repeat(12)
     private fun fakeCard() = "4000" + " 0000 " + "0000 " + "0002"
 
+    /** ui-kit composables need CloudKitTheme (as in the app and SectionScreensTest). */
+    @androidx.compose.runtime.Composable
+    private fun themed(content: @androidx.compose.runtime.Composable () -> Unit) =
+        com.diegonmarcos.superapp.uikit.CloudKitTheme(com.diegonmarcos.superapp.profile.AccountHost.palette(compose.activity)) { content() }
+
     @After fun reset() { PersonalStore.testPrefs = null }
 
     // ── nav structure ────────────────────────────────────────────────
@@ -127,7 +132,7 @@ class PersonalC3Test {
 
     @Test fun containersPageNeverDrawsAValue() {
         val v = fakeSecret()
-        compose.setContent { ContainersPage { listOf(ContainerRow("svc", ComposeDecl.parse(hostileCompose(v)))) } }
+        compose.setContent { themed { ContainersPage { listOf(ContainerRow("svc", ComposeDecl.parse(hostileCompose(v)))) } } }
         compose.waitForIdle()
         compose.onAllNodesWithText(v, substring = true, useUnmergedTree = true).assertCountEquals(0)
         compose.onAllNodesWithText("DB_PASSWORD", substring = true, useUnmergedTree = true).fetchSemanticsNodes().let { assertTrue(it.isNotEmpty()) }
@@ -175,11 +180,11 @@ class PersonalC3Test {
     }
 
     private fun cardsPage(repo: PersonalRepo, allow: Boolean) {
-        compose.setContent {
+        compose.setContent { themed {
             CompositionLocalProvider(LocalDeviceAuth provides DeviceAuth { _, done -> done(allow) }) {
                 PersonalEntriesPage(PersonalKind.CARDS) { repo }
             }
-        }
+        } }
         compose.waitForIdle()
     }
 
