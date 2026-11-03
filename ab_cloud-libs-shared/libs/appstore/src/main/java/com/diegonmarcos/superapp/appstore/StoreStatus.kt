@@ -5,6 +5,7 @@ import com.diegonmarcos.superapp.adbdebug.AdbScope
 import com.diegonmarcos.superapp.adbdebug.ChannelMode
 import com.diegonmarcos.superapp.adbdebug.ChannelModePrefs
 import com.diegonmarcos.superapp.adbdebug.ControlStatus
+import com.diegonmarcos.superapp.adbdebug.WirelessDebugging
 import com.diegonmarcos.superapp.adbdebug.ShizukuStatus
 import com.diegonmarcos.superapp.adbdebug.EmbeddedAdbChannel
 import com.diegonmarcos.superapp.adbdebug.PackageVerifier
@@ -32,6 +33,8 @@ internal object StoreStatus {
             override fun paired() = EmbeddedAdbChannel.everPaired(app)
             override fun id(): Pair<String, String?>? =
                 ShellChannels.active(app)?.let { it.name() to it.exec(app, "id") }
+            override fun adbEcho() = EmbeddedAdbChannel.probe(app)
+            override fun wirelessDebugOn(): Boolean? = WirelessDebugging.isOn(app)
             override fun shizukuState() =
                 if (ChannelModePrefs.current(app) == ChannelMode.SHIZUKU) ShizukuStatus.current(app) else null
         })
@@ -61,7 +64,7 @@ internal object StoreStatus {
             try {
                 val ch = probe(app).get(force = true)
                 if (ControlStatus.playProtect(PackageVerifier.reading(app)) == ControlStatus.Tri.UNKNOWN &&
-                    ch.state == ControlStatus.Channel.UP) {
+                    ch.shellUsable) {
                     ShellChannels.active(app)?.let {
                         ppViaShell = ControlStatus.playProtect(PackageVerifier.readingViaShell(app, it))
                     }

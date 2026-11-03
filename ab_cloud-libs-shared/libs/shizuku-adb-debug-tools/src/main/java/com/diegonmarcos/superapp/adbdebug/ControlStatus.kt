@@ -34,8 +34,37 @@ object ControlStatus {
 
     enum class Channel { UP, DOWN, NOT_PAIRED }
 
-    /** [via] = the channel that answered (UP only). */
-    data class ChannelStatus(val state: Channel, val via: String? = null, val shizuku: ShizukuState? = null)
+    /** [via] = the channel that ran `id` as the shell (it may answer while the adb link is DOWN: the
+     *  local server outlives Wireless debugging). [reason] = one line saying why it is not UP. */
+    data class ChannelStatus(val state: Channel, val via: String? = null, val shizuku: ShizukuState? = null,
+                             val reason: String? = null) {
+        /** Some channel still executes as the shell (gates shell work, never the colour). */
+        val shellUsable: Boolean get() = state == Channel.UP || via != null
+    }
+
+    /**
+     * #1442 The Wireless Dbg state from LIVE facts only. [echoOk] = a `echo` round trip over the paired
+     * adb connection came back within the timeout - the only thing that makes it UP (green). A stored
+     * "connected" flag, a cached state or the local server being alive never does. Paired but silent is
+     * DOWN (amber) with the reason; never paired is NOT_PAIRED (red).
+     */
+    fun linkStatus(paired: Boolean, echoOk: Boolean, shellVia: String?, wirelessDebugOn: Boolean?): ChannelStatus = when {
+        echoOk -> ChannelStatus(Channel.UP, shellVia ?: ChannelSelector.EMBEDDED)
+        paired -> ChannelStatus(Channel.DOWN, shellVia, reason =
+            (if (wirelessDebugOn == false) "Wireless debugging is off" else "paired, adb not answering (port changed?)") +
+                (shellVia?.let { "; $it still runs commands" } ?: ""))
+        else -> ChannelStatus(Channel.NOT_PAIRED, shellVia, reason = "not paired")
+    }
+
+    /** The chip's one line: green says the route, the others say why and what a tap does. */
+    fun label(s: ChannelStatus, wirelessDebugOn: Boolean): String = when (s.state) {
+        Channel.UP -> ChannelSelector.label(s.via, down = false)
+        else -> "Wireless Dbg: ${s.reason ?: "down"} - " + when (channelAction(s, wirelessDebugOn)) {
+            Action.PAIR -> "Pair"
+            Action.OPEN_SETTINGS -> "Open settings"
+            else -> "Reconnect"
+        }
+    }
 
     enum class Action { OPEN_SETTINGS, RECONNECT, PAIR, OPEN_SHIZUKU, REQUEST_SHIZUKU }
 
@@ -63,6 +92,10 @@ object ControlStatus {
         fun id(): Pair<String, String?>?
         /** Shizuku mode only: where the external app stands (null in every other mode). */
         fun shizukuState(): ShizukuState? = null
+        /** A real `echo` round trip over the paired adb connection (bounded). Not proven = false. Blocking. */
+        fun adbEcho(): Boolean = false
+        /** The Wireless debugging switch (null = unreadable). */
+        fun wirelessDebugOn(): Boolean? = null
     }
 
     /**
@@ -96,17 +129,24 @@ object ControlStatus {
             return s
         }
 
-        private fun probeNow(): ChannelStatus {
-            val f = pool.submit(Callable { backend.id() })
-            val got = try { f.get(timeoutMs, TimeUnit.MILLISECONDS) }
+        private fun <T> timed(block: () -> T): T? {
+            val f = pool.submit(Callable { block() })
+            return try { f.get(timeoutMs, TimeUnit.MILLISECONDS) }
                 catch (_: TimeoutException) { f.cancel(true); null }
                 catch (_: Exception) { null }
-            if (got != null && isShellUid(got.second)) return ChannelStatus(Channel.UP, got.first, if (got.first == ChannelSelector.SHIZUKU) ShizukuState.UP else null)
+        }
+
+        private fun probeNow(): ChannelStatus {
+            val got = timed { backend.id() }
+            val shellVia = got?.takeIf { isShellUid(it.second) }?.first
             val sz = runCatching { backend.shizukuState() }.getOrNull()
             // Shizuku mode: its own four-way state; "up" that did not answer is not up.
-            if (sz != null) return ChannelStatus(Channel.DOWN, null, if (sz == ShizukuState.UP) ShizukuState.NOT_RUNNING else sz)
+            if (sz != null) return if (shellVia != null) ChannelStatus(Channel.UP, shellVia, ShizukuState.UP)
+                else ChannelStatus(Channel.DOWN, null, if (sz == ShizukuState.UP) ShizukuState.NOT_RUNNING else sz)
+            val echo = timed { backend.adbEcho() } == true
             val paired = runCatching { backend.paired() }.getOrDefault(false)
-            return ChannelStatus(if (paired) Channel.DOWN else Channel.NOT_PAIRED)
+            val wd = runCatching { backend.wirelessDebugOn() }.getOrNull()
+            return linkStatus(paired, echo, if (echo) (shellVia ?: ChannelSelector.EMBEDDED) else shellVia, wd)
         }
     }
 }

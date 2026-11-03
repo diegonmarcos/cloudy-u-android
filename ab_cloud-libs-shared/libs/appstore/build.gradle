@@ -154,6 +154,7 @@ dependencies {
     implementation 'androidx.compose.foundation:foundation'
     implementation 'androidx.compose.material3:material3'
     implementation project(':libs:core')
+    implementation 'androidx.lifecycle:lifecycle-runtime-compose:2.8.7'   // #1442 StoreBar re-probes the adb link on resume
     api project(':libs:perms')   // #1274 PermsGrant (fleet grant rules) + PermsLink: permissions live in libs:perms
     implementation project(':libs:decisions-link')   // #882 phone_folder, store_shelf: ask the decisions engine, hold no key
     // The fleet's shared Compose kit: Store ▸ Phone ▸ Search draws its search field, state pills,

@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.sp
 import com.diegonmarcos.superapp.adbdebug.AdbShellLink
 import com.diegonmarcos.superapp.adbdebug.ChannelSelector
 import com.diegonmarcos.superapp.adbdebug.ControlStatus
+import com.diegonmarcos.superapp.adbdebug.WirelessDebugging
 import com.diegonmarcos.superapp.adbdebug.PackageVerifier
 import com.diegonmarcos.superapp.updater.AutoUpdatePrefs
 import kotlin.concurrent.thread
@@ -285,16 +286,27 @@ object StoreBar {
         LaunchedEffect(tick) {
             if (!StoreStatus.fresh(ctx)) StoreStatus.refresh(ctx) { MAIN.post { tick++; onChange() } }
         }
-        val chLabel = ch?.shizuku?.let { ChannelSelector.shizukuLabel(it) } ?: when (ch?.state) {
-            null -> ctx.getString(R.string.store_bar_channel_checking)
-            ControlStatus.Channel.UP -> ChannelSelector.label(ch?.via, down = false)
-            ControlStatus.Channel.DOWN -> ChannelSelector.label(null, down = true)
-            ControlStatus.Channel.NOT_PAIRED -> ChannelSelector.label(null, down = false)
+        // #1442 Re-verify the live link on resume and every CHANNEL_RECHECK_MS while shown.
+        val owner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+        androidx.compose.runtime.DisposableEffect(owner) {
+            val obs = androidx.lifecycle.LifecycleEventObserver { _, e ->
+                if (e == androidx.lifecycle.Lifecycle.Event.ON_RESUME) { StoreStatus.invalidate(); tick++ } }
+            owner.lifecycle.addObserver(obs)
+            onDispose { owner.lifecycle.removeObserver(obs) }
         }
+        LaunchedEffect(Unit) { while (true) { kotlinx.coroutines.delay(CHANNEL_RECHECK_MS); StoreStatus.invalidate(); tick++ } }
+        val wdOn = remember(tick) { WirelessDebugging.isOn(ctx) }
+        val chLabel = ch?.shizuku?.let { ChannelSelector.shizukuLabel(it) }
+            ?: ch?.let { ControlStatus.label(it, wdOn) } ?: ctx.getString(R.string.store_bar_channel_checking)
         Button(chLabel,
-            when (ch?.state) { ControlStatus.Channel.UP -> Ink.GREEN_FILL; ControlStatus.Channel.DOWN -> 0xFFC05621.toInt()
-                else -> Ink.GREY_FILL },
-            { AdbShellLink.open(ctx) }, modifier, itemTag(Item.WIRELESS_DEBUG))
+            when (ch?.state) { ControlStatus.Channel.UP -> Ink.GREEN_FILL; ControlStatus.Channel.DOWN -> AMBER
+                ControlStatus.Channel.NOT_PAIRED -> RED_FILL; null -> Ink.GREY_FILL },
+            { AdbShellLink.open(ctx, ch?.takeIf { it.state != ControlStatus.Channel.UP && it.shizuku == null }
+                ?.let { ControlStatus.channelAction(it, wdOn) }) }, modifier, itemTag(Item.WIRELESS_DEBUG))
+    }
+
+    private const val CHANNEL_RECHECK_MS = 15_000L
+    private const val RED_FILL = 0xFFC53030.toInt()
     }
 
     private fun openPlayProtect(ctx: Context) {

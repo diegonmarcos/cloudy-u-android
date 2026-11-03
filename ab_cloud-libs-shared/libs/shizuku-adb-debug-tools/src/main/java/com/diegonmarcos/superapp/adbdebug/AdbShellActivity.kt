@@ -33,6 +33,18 @@ interface AdbShellHost {
  * [AdbShellActivity].
  */
 object AdbShellLink {
+    /** #1442 A chip's tap: [ControlStatus.Action.OPEN_SETTINGS] lands on the Wireless debugging switch
+     *  (falls back to the page); every other action (pair, reconnect, status) is the page. */
+    fun open(ctx: Context, action: ControlStatus.Action?) {
+        if (action == ControlStatus.Action.OPEN_SETTINGS) {
+            val i = Intent(android.provider.Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS)
+                .putExtra(":settings:fragment_args_key", "toggle_adb_wireless")
+            if (ctx !is android.app.Activity) i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            if (runCatching { ctx.startActivity(i) }.isSuccess) return
+        }
+        open(ctx)
+    }
+
     fun open(ctx: Context) {
         var c: Context? = ctx
         while (c is android.content.ContextWrapper) {

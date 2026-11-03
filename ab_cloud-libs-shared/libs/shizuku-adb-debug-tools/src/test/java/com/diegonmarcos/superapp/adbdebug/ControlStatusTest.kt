@@ -29,15 +29,18 @@ class ControlStatusTest {
         assertEquals(-1, ControlStatus.parseSetting(" -1 "))
     }
 
-    private class Fake(var paired: Boolean, var answer: () -> Pair<String, String?>?) : ControlStatus.Backend {
+    private class Fake(var paired: Boolean, var echo: Boolean = false, var wd: Boolean? = null,
+                       var answer: () -> Pair<String, String?>?) : ControlStatus.Backend {
         var calls = 0
         override fun paired() = paired
         override fun id(): Pair<String, String?>? { calls++; return answer() }
+        override fun adbEcho() = echo
+        override fun wirelessDebugOn() = wd
     }
     private val shell = "uid=2000(shell) gid=2000(shell) groups=2000(shell)"
 
     @Test fun channelUp() {
-        val p = ControlStatus.Probe(Fake(true) { "embedded-adb" to shell })
+        val p = ControlStatus.Probe(Fake(true, echo = true) { "embedded-adb" to shell })
         assertEquals(ChannelStatus(Channel.UP, "embedded-adb"), p.get())
     }
 
@@ -78,5 +81,47 @@ class ControlStatusTest {
         assertEquals(Action.RECONNECT, ControlStatus.channelAction(ChannelStatus(Channel.DOWN), true))
         assertEquals(Action.OPEN_SETTINGS, ControlStatus.channelAction(ChannelStatus(Channel.DOWN), false))
         assertEquals(Action.PAIR, ControlStatus.channelAction(ChannelStatus(Channel.NOT_PAIRED), true))
+    }
+
+    // #1442 The bug: the local server still answered `id` as the shell, so the chip read
+    // "Wireless Dbg: up (local-server)" in green with the adb link dead. A stale flag is not a link.
+    @Test fun staleLocalServerIsNotGreen() {
+        val s = ControlStatus.Probe(Fake(true, echo = false, wd = true) { "local-server" to shell }).get()
+        assertEquals(Channel.DOWN, s.state)
+        assertEquals("local-server", s.via)
+        assertTrue(s.shellUsable)
+        assertTrue(s.reason!!.contains("not answering"))
+    }
+
+    @Test fun onlyTheEchoRoundTripIsGreen() {
+        for (paired in listOf(true, false)) for (via in listOf(null, "local-server", "embedded-adb"))
+            for (wd in listOf(true, false, null)) {
+                assertEquals(Channel.UP, ControlStatus.linkStatus(paired, true, via, wd).state)
+                assertTrue(ControlStatus.linkStatus(paired, false, via, wd).state != Channel.UP)
+            }
+    }
+
+    @Test fun stateMappingAndReasons() {
+        val off = ControlStatus.linkStatus(true, false, null, false)
+        assertEquals(ChannelStatus(Channel.DOWN, null, reason = "Wireless debugging is off"), off)
+        assertEquals("Wireless Dbg: Wireless debugging is off - Open settings", ControlStatus.label(off, false))
+        val moved = ControlStatus.linkStatus(true, false, null, true)
+        assertEquals(Channel.DOWN, moved.state)
+        assertEquals("Wireless Dbg: paired, adb not answering (port changed?) - Reconnect", ControlStatus.label(moved, true))
+        val none = ControlStatus.linkStatus(false, false, null, true)
+        assertEquals(Channel.NOT_PAIRED, none.state)
+        assertEquals("Wireless Dbg: not paired - Pair", ControlStatus.label(none, true))
+        assertEquals("Wireless Dbg: up (embedded-adb)", ControlStatus.label(ControlStatus.linkStatus(true, true, null, true), true))
+    }
+
+    @Test fun hungEchoIsNotGreen() {
+        class Hang : ControlStatus.Backend {
+            override fun paired() = true
+            override fun id() = "local-server" to "uid=2000(shell)"
+            override fun adbEcho(): Boolean { Thread.sleep(5_000); return true }
+        }
+        val t0 = System.nanoTime()
+        assertEquals(Channel.DOWN, ControlStatus.Probe(Hang(), timeoutMs = 150).get().state)
+        assertTrue((System.nanoTime() - t0) / 1_000_000 < 2_000)
     }
 }

@@ -15,7 +15,7 @@ object PermsGrantDevice {
     private const val TAG = "PermsGrant"
 
     /** The channel's last measured state (the W Debugging button's own probe). */
-    fun channelUp(ctx: Context): Boolean = StoreStatus.channel(ctx)?.state == ControlStatus.Channel.UP
+    fun channelUp(ctx: Context): Boolean = StoreStatus.channel(ctx)?.shellUsable == true
 
     /** Runs commands through the channel the owner's CURRENT mode selects ([ShellChannels.active]). */
     fun channel(ctx: Context): PermsGrant.GrantChannel {
