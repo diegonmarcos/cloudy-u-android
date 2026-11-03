@@ -4,11 +4,10 @@
 #   2. the fixture's sheet: Manual Sync has Auto Commit; a tap commits; Logs shows the result; the fixture pulled back
 #      to the host has a new HEAD whose message is the rule's (subject "auto: N files (+a −d, size) in F folders").
 #   3. Configs ▸ Git: the Auto Commit section (rule, sample, Rule | OpenRouter model, the picker).
-# The clone lives on shared storage: git runs in the git-sync engine APK (a separate app), which reads it with all-files access.
-# Every step leaves a screenshot in <outdir>/shots. Usage: emulator-git-auto-commit.sh <drive.apk> <engine.apk> <outdir>
+# The clone lives on shared storage: git runs in-process in Cloud Drive (#1408 libs:git-core), with Drive's own all-files access.
+# Every step leaves a screenshot in <outdir>/shots. Usage: emulator-git-auto-commit.sh <drive.apk> <outdir>
 set -u
-APK=${1:?drive apk}; ENGINE_APK=${2:?engine apk}; OUT=${3:-out}
-ENG=com.diegonmarcos.cloudlib.gitsyncengine
+APK=${1:?drive apk}; OUT=${2:-out}
 PKG=com.diegonmarcos.clouddrive
 NAME=cloudy-fixture
 mkdir -p "$OUT/shots"
@@ -48,10 +47,8 @@ BASE=$(git -C "$FIX" rev-parse HEAD)
 tar -C "$WORK" -cf "$OUT/fixture.tar" "$NAME"
 
 adb uninstall "$PKG" >/dev/null 2>&1 || true
-adb install -r -g "$ENGINE_APK" || fail "engine install failed"
 adb install -r -g "$APK" || fail "install failed"
 adb shell appops set "$PKG" MANAGE_EXTERNAL_STORAGE allow || true
-adb shell appops set "$ENG" MANAGE_EXTERNAL_STORAGE allow || true
 act=$(adb shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.LAUNCHER "$PKG" | tr -d '\r' | tail -1)
 launch; adb shell am force-stop "$PKG"
 DIR=/sdcard/Download

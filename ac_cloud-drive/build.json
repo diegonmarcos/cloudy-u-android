@@ -377,33 +377,6 @@
           ]
         },
         {
-          "id": "engine_all_files",
-          "label": "All files access for the git sync engine",
-          "why": "Git on repositories in shared storage (the vaults) runs in the git sync engine app, a separate uid: it needs its OWN All files access, Cloud Drive's grant does not cover it. Repositories in the store run in cld.termux and do not need it. The engine reports its grant itself.",
-          "permissions": [
-            "android.permission.MANAGE_EXTERNAL_STORAGE"
-          ],
-          "min_sdk": 30,
-          "requires_package": "{gitEnginePackage}",
-          "check": "engine_all_files",
-          "grant": "settings",
-          "intents": [
-            {
-              "action": "android.settings.MANAGE_APP_ALL_FILES_ACCESS_PERMISSION",
-              "package_uri": true,
-              "target": "{gitEnginePackage}"
-            },
-            {
-              "action": "android.settings.MANAGE_ALL_FILES_ACCESS_PERMISSION"
-            },
-            {
-              "action": "android.settings.APPLICATION_DETAILS_SETTINGS",
-              "package_uri": true,
-              "target": "{gitEnginePackage}"
-            }
-          ]
-        },
-        {
           "id": "termux_run_command",
           "label": "Run commands in cld.termux",
           "why": "Git sync store route: git runs inside the terminal app through its RunCommandService when the shared uid is not in effect (Sync > Git).",
@@ -1275,6 +1248,11 @@
       "type": "library"
     },
     "_doc_engines": "#567 THE FOUR ENGINE LIBRARIES. The owner's vision for this application: the main APK is CHROME, and every tooling is a full engine in its OWN library — libs:file-editor (the full text editor), libs:git-sync (the native git manager that finishes the #437/#448 GitSync story: status, stage/unstage, commit, push/pull, branch list, log, diff, remotes, conflicts — GitSync's UX, over JGit), libs:rclone (remotes config + declared/ad-hoc sync jobs with progress + remote browsing, over a sha256-pinned static rclone binary) and libs:mounts (ftp/sftp/ssh/webdav connections with browse-through). Each lives on the shared shelf and is shared BY REFERENCE like every other module here, so lib-apks also ships each one as cloud-lib-{name}. THE MODULE BOUNDARY IS LAW: a library imports nothing from any application (test/test-drive-engine-modules.sh fails on the first lib -> app import). Compose only (#565): each exports ONE @Composable screen that this app's EngineActivity hosts (push 5). Landed as independently green pushes — (1) skeletons + declarations, (2) git-sync, (3) file-editor, (4) rclone + mounts, (5) drive wiring — so a module on main is never half-wired: until its engine push lands, a skeleton renders its own title and nothing else, and the app does not route to it.",
+    "libs:git-core": {
+      "_doc_dir": "#1408 THE in-process git engine: JGit (clone, fetch, pull --rebase, stash, push, conflicts, upstream) on any storage root, typed errors, the models and the JSON verb surface. Plain JVM, PIT-gated at 80. Not linked by the app directly: libs:git-sync compiles it with `api`, so settings.gradle must include it. Replaces the retired Cloud-Lib-Git-Sync-Engine.apk.",
+      "dir": "../ab_cloud-libs-shared/libs/git-core",
+      "type": "library"
+    },
     "libs:git-sync": {
       "_doc_dir": "Engine library #567 push 2: the native git manager. Lives on the shelf beside the vendored Flutter GitSync tree (libs/gitsync, GPL-3.0) whose UI could not be embedded; this module is the Kotlin/Compose realisation of that UX over JGit.",
       "engine": true,

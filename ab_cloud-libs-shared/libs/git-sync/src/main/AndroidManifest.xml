@@ -1,12 +1,3 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Binding the git sync engine needs the constellation's signature permission. Declared HERE so a
-         consumer's merged manifest carries it whether or not it gets it from libs:core. -->
-    <uses-permission android:name="com.diegonmarcos.cloud.permission.CONSTELLATION_DATA" />
-
-    <!-- Merges into every consumer: on Android 11+ an unqueried package reads exactly like
-         "not installed" (engine-apk-split F2). Resolved from the fleet manifest by build.gradle. -->
-    <queries>
-        <package android:name="${gitsyncEnginePackage}" />
-    </queries>
-</manifest>
+<!-- #1408 git runs in the host's own process (libs:git-core): no engine package to query or bind. -->
+<manifest />

@@ -62,7 +62,7 @@ COORD_KT="$SRC/sync/GitSyncCoordinator.kt"
 GIT_MOD="$(python3 -c 'import json,os,sys; b=json.load(open(sys.argv[1])); print(os.path.normpath(os.path.join(sys.argv[2], b["modules"]["libs:git-sync"]["dir"])))' "$BUILD_JSON" "$APP")"
 RCLONE_MOD="$(python3 -c 'import json,os,sys; b=json.load(open(sys.argv[1])); print(os.path.normpath(os.path.join(sys.argv[2], b["modules"]["libs:rclone"]["dir"])))' "$BUILD_JSON" "$APP")"
 GIT_SCREEN="$GIT_MOD/src/main/java/com/diegonmarcos/cloudlib/gitsync/GitSyncScreen.kt"
-GIT_MODELS="$GIT_MOD/src/main/java/com/diegonmarcos/cloudlib/gitsync/GitModels.kt"
+GIT_MODELS="$GIT_MOD/../git-core/src/main/java/com/diegonmarcos/cloudlib/gitsync/GitModels.kt"
 RCLONE_CONFIG="$RCLONE_MOD/src/main/java/com/diegonmarcos/cloudlib/rclone/RcloneConfig.kt"
 RCLONE_TEST="$RCLONE_MOD/src/test/java/com/diegonmarcos/cloudlib/rclone/RcloneEngineTest.kt"
 

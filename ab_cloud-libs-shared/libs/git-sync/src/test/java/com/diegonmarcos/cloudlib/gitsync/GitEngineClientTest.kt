@@ -18,7 +18,7 @@ import java.util.concurrent.CopyOnWriteArrayList
  * (the verb, the repository, the args, the credentials as text), what it does with the answers (the
  * models decoded, a long result reassembled from chunks, a known_hosts the engine extended written back,
  * a refusal raised with its sentence) and what it does with no engine at all. The engine's own half is
- * libs:git-sync-engine's GitCallsTest and JGitEngineTest.
+ * libs:git-core's GitCallsTest and JGitEngineTest.
  */
 class GitEngineClientTest {
     private lateinit var dir: File

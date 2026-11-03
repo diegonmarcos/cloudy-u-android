@@ -5,20 +5,20 @@ import java.io.File
 
 /**
  * The Android side of [GitEngine]'s construction (#871 move 11): the engine is found through a Context
- * ([GitLink] binds Cloud-Lib-Git-Sync-Engine.apk), and [GitEngine] itself stays free of android.* so the
+ * (#1408 in-process: [InProcessGitTransport] runs libs:git-core in the host), and [GitEngine] itself stays free of android.* so the
  * JVM suite runs it against a fake transport. These keep every call site reading as it always did, with
  * the Context as the new first argument.
  */
 /**
- * Where a repository's git calls go. The default is the engine APK ([GitLink]); the host app may route a
+ * Where a repository's git calls go. The default is the in-process engine ([InProcessGitTransport], #1408); the host app may route a
  * directory elsewhere (Cloud Drive sends repos in the shared store, which lives in cld.termux's private home
  * and which the engine's uid cannot open, through cld.termux). One seam for every screen and worker.
  */
 object GitTransports {
-    /** Null = use the engine APK for this directory. */
+    /** Null = use the in-process engine for this directory. */
     @Volatile var router: ((Context, File) -> GitTransport?)? = null
 
-    fun forDir(context: Context, dir: File): GitTransport = router?.invoke(context, dir) ?: GitLink(context)
+    fun forDir(context: Context, dir: File): GitTransport = router?.invoke(context, dir) ?: InProcessGitTransport.get(context)
 }
 
 fun GitEngine(context: Context, workTree: File): GitEngine = GitEngine(GitTransports.forDir(context, workTree), workTree)

@@ -56,7 +56,7 @@ for verb in $VERBS; do
     if grep -qE "\.$verb\(" "$SCREEN"; then pass "screen reaches .$verb("; else fail "screen never calls .$verb( — a verb no button reaches"; fi
 done
 
-if grep -qE "\.conflicts\b" "$SCREEN" && grep -qE "val conflicts: List<GitFileStatus>" "$MOD/src/main/java/com/diegonmarcos/cloudlib/gitsync/GitModels.kt"; then
+if grep -qE "\.conflicts\b" "$SCREEN" && grep -qE "val conflicts: List<GitFileStatus>" "$MOD/../git-core/src/main/java/com/diegonmarcos/cloudlib/gitsync/GitModels.kt"; then
     pass "the screen renders the snapshot's conflict list"
 else
     fail "the conflict surface is not rendered: GitSyncScreen.kt must read the snapshot's .conflicts"
@@ -85,7 +85,7 @@ for verb in $VERBS; do
     if grep -qE "\.$verb\(" "$TEST"; then pass "test exercises .$verb("; else fail "no test calls .$verb("; fi
 done
 echo "── G6 the app compiles no JGit ──"
-if grep -qE "org\.eclipse\.jgit|com\.jcraft" "$GRADLE"; then fail "libs:git-sync still depends on JGit/jsch — the engine APK carries them"; else pass "libs:git-sync carries no JGit and no jsch"; fi
+if grep -qE "org\.eclipse\.jgit|com\.jcraft" "$GRADLE"; then fail "libs:git-sync names JGit/jsch itself — libs:git-core carries them (api)"; else pass "libs:git-sync carries no JGit and no jsch"; fi
 if grep -rqE "org\.eclipse\.jgit|com\.jcraft" "$MOD/src/main"; then fail "libs:git-sync's source imports JGit/jsch"; else pass "no JGit import in libs:git-sync"; fi
 
 echo

@@ -61,6 +61,7 @@ on:
       - "ab_cloud-libs-shared/libs/disk/**"
       - "ab_cloud-libs-shared/libs/file-editor/**"
       - "ab_cloud-libs-shared/libs/fleetconfig-model/**"
+      - "ab_cloud-libs-shared/libs/git-core/**"
       - "ab_cloud-libs-shared/libs/git-sync/**"
       - "ab_cloud-libs-shared/libs/ml-l-image/**"
       - "ab_cloud-libs-shared/libs/model-catalogue/**"

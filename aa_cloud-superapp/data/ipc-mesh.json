@@ -302,6 +302,7 @@
      "keyboard",
      "keyboard-engines",
      "kg-store",
+     "lib-account-ui",
      "lib-analytics-sink",
      "lib-cal",
      "lib-calc",
@@ -309,7 +310,6 @@
      "lib-feed",
      "lib-fleetconfig",
      "lib-gh",
-     "lib-git-sync-engine",
      "lib-ml-l-image-mlkit",
      "lib-ml-l-sound-yamnet",
      "lib-mounts-engine",
@@ -319,6 +319,7 @@
      "lib-rclone-engine",
      "lib-rootfs-nixdroid",
      "lib-rootfs-termux",
+     "lib-usb-drive",
      "mail",
      "matrix",
      "me",
@@ -539,6 +540,7 @@
      "keyboard",
      "keyboard-engines",
      "kg-store",
+     "lib-account-ui",
      "lib-analytics-sink",
      "lib-cal",
      "lib-calc",
@@ -546,7 +548,6 @@
      "lib-feed",
      "lib-fleetconfig",
      "lib-gh",
-     "lib-git-sync-engine",
      "lib-ml-l-image-mlkit",
      "lib-ml-l-sound-yamnet",
      "lib-mounts-engine",
@@ -556,6 +557,7 @@
      "lib-rclone-engine",
      "lib-rootfs-nixdroid",
      "lib-rootfs-termux",
+     "lib-usb-drive",
      "mail",
      "matrix",
      "me",
@@ -668,6 +670,7 @@
      "keyboard",
      "keyboard-engines",
      "kg-store",
+     "lib-account-ui",
      "lib-analytics-sink",
      "lib-cal",
      "lib-calc",
@@ -675,7 +678,6 @@
      "lib-feed",
      "lib-fleetconfig",
      "lib-gh",
-     "lib-git-sync-engine",
      "lib-ml-l-image-mlkit",
      "lib-ml-l-sound-yamnet",
      "lib-mounts-engine",
@@ -685,6 +687,7 @@
      "lib-rclone-engine",
      "lib-rootfs-nixdroid",
      "lib-rootfs-termux",
+     "lib-usb-drive",
      "mail",
      "matrix",
      "me",
@@ -727,30 +730,6 @@
      "aa_cloud-superapp",
      "drive"
     ]
-   }
-  ],
-  "git-sync-engine": [
-   {
-    "permission": "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA",
-    "level": "signature",
-    "source": "libs:git-sync-engine/src/main/AndroidManifest.xml",
-    "component": "com.diegonmarcos.cloudlib.gitsync.engine.GitSyncEngineService",
-    "id": "service:com.diegonmarcos.cloudlib.gitsync.engine.GitSyncEngineService",
-    "kind": "service",
-    "name": "GitSyncEngineService",
-    "actions": [
-     "<pkg>.ENGINE"
-    ],
-    "aidl": [
-     {
-      "interface": "IGitSyncEngine",
-      "methods": [
-       "call",
-       "methods"
-      ]
-     }
-    ],
-    "callers": []
    }
   ],
   "keyboard": [
@@ -996,6 +975,7 @@
      "keyboard",
      "keyboard-engines",
      "kg-store",
+     "lib-account-ui",
      "lib-rootfs-nixdroid",
      "lib-rootfs-termux",
      "mail",
@@ -1060,6 +1040,7 @@
      "aa_cloud-superapp",
      "account",
      "drive",
+     "lib-account-ui",
      "lib-rootfs-nixdroid",
      "lib-rootfs-termux",
      "nix-on-droid",
@@ -1116,6 +1097,7 @@
      "callers": [
       "account",
       "drive",
+      "lib-account-ui",
       "lib-rootfs-nixdroid",
       "lib-rootfs-termux",
       "nix-on-droid",
@@ -1242,6 +1224,7 @@
       "keyboard",
       "keyboard-engines",
       "kg-store",
+      "lib-account-ui",
       "lib-analytics-sink",
       "lib-cal",
       "lib-calc",
@@ -1249,7 +1232,6 @@
       "lib-feed",
       "lib-fleetconfig",
       "lib-gh",
-      "lib-git-sync-engine",
       "lib-ml-l-image-mlkit",
       "lib-ml-l-sound-yamnet",
       "lib-mounts-engine",
@@ -1259,6 +1241,7 @@
       "lib-rclone-engine",
       "lib-rootfs-nixdroid",
       "lib-rootfs-termux",
+      "lib-usb-drive",
       "mail",
       "matrix",
       "me",
@@ -1388,7 +1371,9 @@
       "drive",
       "keyboard",
       "kg-store",
+      "lib-account-ui",
       "mail",
+      "me",
       "search",
       "store"
      ]
@@ -1404,7 +1389,9 @@
      "authority": "<pkg>.autofill",
      "callers": [
       "browser",
-      "keyboard"
+      "keyboard",
+      "lib-account-ui",
+      "me"
      ]
     },
     {
@@ -2259,6 +2246,7 @@
       "matrix://"
      ],
      "callers": [
+      "capital-stack-finterminal",
       "gallery",
       "mail",
       "notes",
@@ -2957,7 +2945,9 @@
      ],
      "uris": [],
      "callers": [
-      "account"
+      "account",
+      "lib-account-ui",
+      "me"
      ]
     },
     {
@@ -3068,7 +3058,22 @@
     "fleetconfig-model",
     "perms"
    ],
-   "endpoints": []
+   "endpoints": [
+    {
+     "permission": null,
+     "level": "none",
+     "source": "ad_CG-Omniverse/app/src/main/AndroidManifest.xml",
+     "component": ".MainActivity",
+     "id": "deep_link:.MainActivity",
+     "kind": "deep_link",
+     "name": "MainActivity",
+     "actions": [],
+     "uris": [
+      "cgomniverse://world"
+     ],
+     "callers": []
+    }
+   ]
   },
   {
    "id": "capital-stack-finterminal",
@@ -3194,6 +3199,22 @@
    ]
   },
   {
+   "id": "lib-account-ui",
+   "pkg": "com.diegonmarcos.cloudlib.accountui",
+   "label": "cloud-lib-account-ui",
+   "kind": "lib",
+   "dir": "libs:account-ui",
+   "door": true,
+   "libs": [
+    "core",
+    "devtools",
+    "fleetconfig-model",
+    "perms",
+    "shizuku-adb-debug-tools"
+   ],
+   "endpoints": []
+  },
+  {
    "id": "lib-analytics-sink",
    "pkg": "com.diegonmarcos.cloudlib.analyticssink",
    "label": "cloud-lib-analytics-sink",
@@ -3299,21 +3320,6 @@
    "endpoints": []
   },
   {
-   "id": "lib-git-sync-engine",
-   "pkg": "com.diegonmarcos.cloudlib.gitsyncengine",
-   "label": "cloud-lib-git-sync-engine",
-   "kind": "lib",
-   "dir": "libs:git-sync-engine",
-   "door": true,
-   "libs": [
-    "core",
-    "devtools",
-    "fleetconfig-model",
-    "git-sync-engine"
-   ],
-   "endpoints": []
-  },
-  {
    "id": "lib-ml-l-image-mlkit",
    "pkg": "com.diegonmarcos.cloudlib.mllimagemlkit",
    "label": "cloud-lib-ml-l-image-mlkit",
@@ -3415,6 +3421,20 @@
     "devtools",
     "fleetconfig-model",
     "rclone-engine"
+   ],
+   "endpoints": []
+  },
+  {
+   "id": "lib-usb-drive",
+   "pkg": "com.diegonmarcos.cloudlib.usbdrive",
+   "label": "cloud-lib-usb-drive",
+   "kind": "lib",
+   "dir": "libs:usb-drive",
+   "door": true,
+   "libs": [
+    "core",
+    "devtools",
+    "fleetconfig-model"
    ],
    "endpoints": []
   },

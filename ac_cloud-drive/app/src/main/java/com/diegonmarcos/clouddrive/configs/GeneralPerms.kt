@@ -1,7 +1,5 @@
 package com.diegonmarcos.clouddrive.configs
 
-import com.diegonmarcos.clouddrive.sync.EngineGrant
-import com.diegonmarcos.clouddrive.sync.rememberEngineGrant
 import android.app.AppOpsManager
 import android.content.ComponentName
 import android.content.Context
@@ -60,7 +58,7 @@ import com.diegonmarcos.superapp.perms.PermsView
  */
 object GeneralPerms {
     /** The `{name}` placeholders the declaration may use, the same ones the manifest takes from the fleet manifest. */
-    fun vars(): Map<String, String> = mapOf("terminalPackage" to StoreAccess.ownerPackage(), "authMissionPermission" to BuildConfig.AUTH_MISSION_PERMISSION, "gitEnginePackage" to EngineGrant.PACKAGE)
+    fun vars(): Map<String, String> = mapOf("terminalPackage" to StoreAccess.ownerPackage(), "authMissionPermission" to BuildConfig.AUTH_MISSION_PERMISSION)
 
     private fun names(e: GeneralDecl.PermEntry) = e.permissions.map { GeneralDecl.resolve(it, vars()) }
     private fun held(ctx: Context, p: String) = ctx.checkSelfPermission(p) == PackageManager.PERMISSION_GRANTED
@@ -72,8 +70,6 @@ object GeneralPerms {
         // All-files access is a special access from Android 11; below it the declared legacy permissions are the grant.
         "all_files" -> if (Build.VERSION.SDK_INT >= 30) Environment.isExternalStorageManager()
                        else names(e).filter { it != android.Manifest.permission.MANAGE_EXTERNAL_STORAGE }.all { held(ctx, it) }
-        // #1358 the git engine's OWN grant: only the engine can read it (EngineGrant asks its info call on IO); null until it answered.
-        "engine_all_files" -> when (EngineGrant.state.value) { EngineGrant.Grant.GRANTED -> true; EngineGrant.Grant.MISSING -> false; else -> null }
         "battery_opt" -> (ctx.getSystemService(Context.POWER_SERVICE) as PowerManager).isIgnoringBatteryOptimizations(ctx.packageName)
         "install_unknown" -> ctx.packageManager.canRequestPackageInstalls()
         "appop" -> (ctx.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager).let {
@@ -138,7 +134,6 @@ fun GeneralPerms.item(e: GeneralDecl.PermEntry, st: GeneralDecl.Status, cat: Per
     }
     val kind = when {
         e.grant == "none" -> PermItemKind.INSTALL
-        e.check == "engine_all_files" -> PermItemKind.HELPER
         e.grant == "runtime" -> PermItemKind.RUNTIME
         else -> PermItemKind.SPECIAL
     }
@@ -162,9 +157,8 @@ fun GeneralPermsSection(perms: List<GeneralDecl.PermEntry>) {
         if (!ok) pending?.let { GeneralPerms.open(ctx, it) }
         tick++
     }
-    val engineGrant = rememberEngineGrant()
     val cat = remember { Perms.catalogue(ctx) }
-    val items = remember(tick, engineGrant, perms) { perms.map { e -> GeneralPerms.item(e, GeneralPerms.status(ctx, e), cat.byId(e.id)) } }
+    val items = remember(tick, perms) { perms.map { e -> GeneralPerms.item(e, GeneralPerms.status(ctx, e), cat.byId(e.id)) } }
     fun act(i: PermItem) {
         val e = perms.firstOrNull { it.id == i.id } ?: return
         val first = GeneralPerms.vars().let { v -> e.permissions.map { GeneralDecl.resolve(it, v) }.firstOrNull { ctx.checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED } }

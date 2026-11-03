@@ -249,8 +249,8 @@ p3 "$BJ" "$PAGE" && pass "the screen dispatches exactly the declared sections an
 echo "── P4 every git verb is the engine's ──"
 p4 "$COORD" "$ENGINE" && pass "the coordinator runs each transport/commit operation through GitEngine, force verbs included" || fail "an operation does not go through the engine (or the engine lacks the force verbs)"
 # #871 move 11: the force verbs' behaviour on real repositories (JGit) is proven where JGit ships, by
-# JGitEngineTest in libs:git-sync-engine and checked by ab_cloud-libs-shared/lib-apks/test/
-# test-git-sync-engine.sh; this app's suite proves the client SENDS both force verbs.
+# JGitEngineTest in libs:git-core (PIT-gated);
+# this app's suite proves the client SENDS both force verbs.
 if grep -qE 'forcePush\(\)' "$ENGINE_TEST" && grep -qE 'forcePull\(\)' "$ENGINE_TEST" && grep -qE '"force_push", "force_pull"|"push", "fetch", "pull", "force_push", "force_pull"' "$ENGINE_TEST"; then
     pass "the client's JVM suite sends both force verbs through the wire"
 else

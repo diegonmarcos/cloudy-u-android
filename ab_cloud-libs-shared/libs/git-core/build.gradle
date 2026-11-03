@@ -1,0 +1,58 @@
+// libs:git-core — #1408 THE git engine of Cloud Drive, in-process. Plain JVM so its suite runs on real
+// repositories in a temp directory (file:// remotes) and PIT mutation-tests it.
+//   JGitEngine  every verb on one work tree: status, stage, commit, clone, fetch, pull --rebase, push,
+//               force push/pull, sync, stash push/pop/list, upstream, branches, log, diff, remotes,
+//               conflicts. Any storage root the caller's process can open (Termux home, emulated, USB).
+//   GitCalls    the JSON verb surface (GitWire) over JGitEngine, answered in the caller's own process.
+//   GitError    typed failures (GitErrorKind on the wire as "kind", GitException in Kotlin).
+// The models and the wire (package com.diegonmarcos.cloudlib.gitsync) live here too, so libs:git-sync's
+// screen and client and this engine share one definition. There is no separate engine APK any more:
+// JGit is compiled into Cloud Drive. org.json is compileOnly: Android provides it at runtime.
+plugins {
+    id 'org.jetbrains.kotlin.jvm'
+    id 'org.jetbrains.kotlin.plugin.serialization'
+    id 'info.solidsoft.pitest'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
+dependencies {
+    api 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3'
+    compileOnly 'org.json:json:20240303'
+    // JGit 7.8 (EDL/BSD), the maintained pure-Java git. Nothing native; loads on minSdk 26.
+    api 'org.eclipse.jgit:org.eclipse.jgit:7.8.0.202609011348-r'
+    // SSH over jsch: JGit's ssh.jsch with the maintained mwiede fork in place of com.jcraft:jsch 0.1.55
+    // (the fork understands StrictHostKeyChecking=accept-new, which JGitEngine.sshCallback relies on).
+    implementation('org.eclipse.jgit:org.eclipse.jgit.ssh.jsch:7.8.0.202609011348-r') {
+        exclude group: 'com.jcraft', module: 'jsch'
+    }
+    implementation 'com.github.mwiede:jsch:2.28.7'
+    implementation 'org.slf4j:slf4j-nop:2.0.16'
+
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.json:json:20240303'
+}
+
+pitest {
+    pitestVersion = '1.22.1'
+    targetClasses = ['com.diegonmarcos.cloudlib.gitcore.*']
+    // The ssh/session transport callbacks need a live ssh or http server; they are proven on the emulator flow.
+    excludedMethods = ['equals', 'hashCode', 'toString', 'copy', 'copy$default', 'component*',
+                       'sshCallback', 'sessionCallback', 'withAuth', 'ownerOnly']
+    avoidCallsTo = ['kotlin.jvm.internal']
+    threads = 2
+    outputFormats = ['XML', 'HTML']
+    timestampedReports = false
+    mutationThreshold = 80
+}
+
+tasks.named('test') { finalizedBy 'pitest' }

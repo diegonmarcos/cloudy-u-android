@@ -20,7 +20,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import com.diegonmarcos.clouddrive.R
 import com.diegonmarcos.clouddrive.ui.DriveMetrics
-import com.diegonmarcos.cloudlib.gitsync.GitLink
+import android.os.Environment
 import com.diegonmarcos.superapp.perms.PermsPromptCard
 import com.diegonmarcos.superapp.perms.PermsStyle
 import kotlinx.coroutines.Dispatchers
@@ -34,8 +34,8 @@ import org.json.JSONObject
  *
  * Two apps run git for this page. A repository inside the shared store (cld.termux's private home) runs in cld.termux
  * through CLOUD_EXEC and needs no all-files grant. A repository in SHARED STORAGE (/storage/emulated/0/..., the Obsidian
- * vaults) runs in Cloud-Lib-Git-Sync-Engine.apk ([PACKAGE]), another uid, which reads and writes shared storage only with
- * its OWN MANAGE_EXTERNAL_STORAGE app-op. Drive's grant does not cover it. Without it every verb answered "the git sync
+ * vaults) (#1408: now in-process, so [PACKAGE] is Cloud Drive itself) reads and writes shared storage only with
+ * Cloud Drive's own MANAGE_EXTERNAL_STORAGE app-op (the separate engine uid is retired). Without it every verb answered "the git sync
  * engine has no All files access", which the row classified as "the git engine did not answer".
  *
  * The engine itself is the only reliable reader of its grant (AppOps refuses another uid's op without a privileged
@@ -47,10 +47,11 @@ object EngineGrant {
     enum class Grant { UNKNOWN, NOT_INSTALLED, MISSING, GRANTED }
 
     /** The engine's package (libs:git-sync resolves it from the fleet manifest at build time). */
-    val PACKAGE: String get() = com.diegonmarcos.cloudlib.gitsync.BuildConfig.GITSYNC_ENGINE_PACKAGE
+    /** #1408 git runs in-process, so the grant git needs is Cloud Drive's own. */
+    val PACKAGE: String get() = com.diegonmarcos.clouddrive.BuildConfig.APPLICATION_ID
 
     /** The row reason when the grant is missing: RepoStatus.errorKind reads "all files access" as FILES_ACCESS. */
-    const val REASON = "the git sync engine has no All files access, so it cannot read or write shared storage"
+    const val REASON = "Cloud Drive has no All files access, so git cannot read or write shared storage"
 
     private val _state = MutableStateFlow(Grant.UNKNOWN)
     val state: StateFlow<Grant> = _state
@@ -71,12 +72,9 @@ object EngineGrant {
     fun blocks(path: String): Boolean = _state.value == Grant.MISSING && touchesSharedStorage(path)
 
     /** Blocking (binds the engine): call on IO. Updates [state] and returns it. */
-    fun probe(ctx: Context): Grant {
-        val g = if (Build.VERSION.SDK_INT < 30) Grant.GRANTED else {
-            val link = GitLink(ctx)
-            if (link.unavailable() != null) Grant.NOT_INSTALLED
-            else fromInfo(runCatching { link.session().use { it.info() } }.getOrNull())
-        }
+    fun probe(@Suppress("UNUSED_PARAMETER") ctx: Context): Grant {
+        val g = if (Build.VERSION.SDK_INT < 30) Grant.GRANTED
+                else if (Environment.isExternalStorageManager()) Grant.GRANTED else Grant.MISSING
         _state.value = g
         return g
     }

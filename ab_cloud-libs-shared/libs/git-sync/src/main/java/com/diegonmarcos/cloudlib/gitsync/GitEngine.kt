@@ -4,6 +4,9 @@ import java.io.File
 import java.io.IOException
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.builtins.serializer
+import com.diegonmarcos.cloudlib.gitcore.GitErrorKind
+import com.diegonmarcos.cloudlib.gitcore.GitException
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -11,7 +14,7 @@ import org.json.JSONObject
  * The git manager's engine, as the screens and the host see it: every verb the manager screen offers, on
  * ONE repository. Blocking — callers run it on an IO dispatcher.
  *
- * #871 move 11: THIS CLASS RUNS NO GIT. JGit lives in Cloud-Lib-Git-Sync-Engine.apk and every verb is one
+ * #1408: THIS CLASS RUNS NO GIT ITSELF. JGit lives in libs:git-core, answered in-process, and every verb is one
  * call to it over [GitTransport] (the binder in the app, a fake in the JVM suite). What the callers were
  * written against is unchanged — the same verbs, the same models, the same [GitOpResult] for a transport
  * outcome — with two differences they can see: it is built with a Context (GitEngines.kt: the Android
@@ -103,6 +106,16 @@ class GitEngine(
     /** Abort an in-progress merge: back to HEAD, worktree included. */
     fun abortMerge() { call("abort_merge") }
 
+    // #1408 stash and upstream.
+    fun stashPush(message: String = "", includeUntracked: Boolean = true): GitOpResult =
+        decode(GitOpResult.serializer(), call("stash_push", JSONObject().put("message", message).put("untracked", includeUntracked)))
+    fun stashPop(): GitOpResult = decode(GitOpResult.serializer(), call("stash_pop"))
+    fun stashList(): List<String> = decode(ListSerializer(String.serializer()), call("stash_list"))
+    fun setUpstream(remote: String = "origin", branch: String? = null): GitOpResult =
+        decode(GitOpResult.serializer(), call("set_upstream", JSONObject().put("remote", remote).apply { if (branch != null) put("branch", branch) }))
+    /** "remote/branch", or null when the current branch tracks nothing. */
+    fun upstream(): String? = call("upstream").ifEmpty { null }
+
     // ── the one call ─────────────────────────────────────────────────────
 
     private fun op(verb: String, remote: String, auth: GitAuth, extra: JSONObject = JSONObject()): GitOpResult =
@@ -116,14 +129,18 @@ class GitEngine(
     private fun call(verb: String, args: JSONObject = JSONObject(), auth: GitAuth = GitAuth.None, dir: File = workTree): String =
         transport.session().use { s ->
             val a = s.git(GitWire.request(dir, verb, args, GitWire.authToJson(auth, readText)))
-            if (!a.optBoolean("ok", false)) throw IOException(a.optString("error").ifBlank { "the git sync engine refused $verb" })
+            if (!a.optBoolean("ok", false)) {
+                val why = a.optString("error").ifBlank { "git refused $verb" }
+                val kind = GitErrorKind.of(a.optString("kind")).takeIf { it != GitErrorKind.UNKNOWN } ?: GitErrorKind.classify(why)
+                throw GitException(kind, why)
+            }
             keepKnownHosts(auth, a)
             val out = StringBuilder(a.optString("result"))
             var more = a.optBoolean("more", false)
             val id = a.optString("id")
             while (more) {
                 val c = s.chunk(JSONObject().put("id", id).put("offset", out.length))
-                if (!c.optBoolean("ok", false)) throw IOException(c.optString("error").ifBlank { "the git sync engine lost the rest of $verb" })
+                if (!c.optBoolean("ok", false)) throw IOException(c.optString("error").ifBlank { "git lost the rest of $verb" })
                 out.append(c.optString("result")); more = c.optBoolean("more", false)
             }
             out.toString()

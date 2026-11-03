@@ -47,8 +47,8 @@ PAGE="$APP/app/src/main/java/com/diegonmarcos/clouddrive/sync/GitReposScreen.kt"
 APP_GRADLE="$APP/app/build.gradle"
 SHIP_WF="$ROOT/1_cicd/src/cicd/ship-cloud-drive.yml"
 FLEET_CLIENT="$APP/app/src/main/java/com/diegonmarcos/clouddrive/sync/FleetGit.kt"
-GIT_MODELS="$SHARED/libs/git-sync/src/main/java/com/diegonmarcos/cloudlib/gitsync/GitModels.kt"
-GIT_ENGINE="$SHARED/libs/git-sync/src/main/java/com/diegonmarcos/cloudlib/gitsync/GitWire.kt"
+GIT_MODELS="$SHARED/libs/git-core/src/main/java/com/diegonmarcos/cloudlib/gitsync/GitModels.kt"
+GIT_ENGINE="$SHARED/libs/git-core/src/main/java/com/diegonmarcos/cloudlib/gitsync/GitWire.kt"
 COORD="$APP/app/src/main/java/com/diegonmarcos/clouddrive/sync/GitSyncCoordinator.kt"
 SIGNIN="$SHARED/libs/auth/src/main/java/com/diegonmarcos/cloudlib/auth/SignIn.kt"
 SIGNIN_UI="$SHARED/libs/auth/src/main/java/com/diegonmarcos/cloudlib/auth/SignInUi.kt"
@@ -726,10 +726,10 @@ PYTHON
         || { echo "    libs:git-sync has no Session auth (header + value)"; bad=1; }
     grep -qE 'override fun toString\(\): String = "Session\(header=\$header, value=<redacted>\)"' "$models" \
         || { echo "    GitAuth.Session's toString is not redacted — UI state or a log line could leak the cookie"; bad=1; }
-    # THE CLIENT SENDS IT: since #871 move 11 JGit runs in Cloud-Lib-Git-Sync-Engine.apk, and what the
+    # THE CLIENT SENDS IT: since #1408 JGit runs in-process (libs:git-core), and what the
     # engine attaches to the HTTP transport (on clone AND on the shared withAuth path every later
     # fetch/pull/push rides) is checked where it ships, in ab_cloud-libs-shared/lib-apks/test/
-    # test-git-sync-engine.sh. Here: the wire form of the session carries the DECLARED header name and
+    # libs:git-core tests. Here: the wire form of the session carries the DECLARED header name and
     # the value, and nothing else.
     grep -qE 'is GitAuth\.Session -> JSONObject\(\)\.put\("kind", KIND_SESSION\)\.put\("header", auth\.header\)\.put\("value", auth\.value\)' "$engine" \
         || { echo "    the client's wire form does not carry the session under the DECLARED header name"; bad=1; }

@@ -49,7 +49,7 @@ FSP="$SRC/sync/FsyncPage.kt"
 STC="$SRC/storage/StorageCoordinator.kt"
 WORKER="$SRC/GitSyncWorker.kt"
 GIT_MOD="$(python3 -c 'import json,os,sys; b=json.load(open(sys.argv[1])); print(os.path.normpath(os.path.join(sys.argv[2], b["modules"]["libs:git-sync"]["dir"])))' "$BJ" "$APP")"
-MODELS="$GIT_MOD/src/main/java/com/diegonmarcos/cloudlib/gitsync/GitModels.kt"
+MODELS="$GIT_MOD/../git-core/src/main/java/com/diegonmarcos/cloudlib/gitsync/GitModels.kt"
 LIB_SCREEN="$GIT_MOD/src/main/java/com/diegonmarcos/cloudlib/gitsync/GitSyncScreen.kt"
 TESTS="$APP/app/src/test/java/com/diegonmarcos/clouddrive"
 

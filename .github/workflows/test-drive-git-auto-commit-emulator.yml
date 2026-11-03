@@ -43,7 +43,6 @@ jobs:
           else
             gh release download latest -R "$REPO" -p Cloud-Drive-x86_64.apk -O apk/drive.apk
           fi
-          gh release download latest -R "$REPO" -p Cloud-Lib-Git-Sync-Engine.apk -O apk/engine.apk
           ls -l apk
 
       - name: Enable KVM
@@ -62,7 +61,7 @@ jobs:
           target: google_apis
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           disable-animations: true
-          script: bash ac_cloud-drive/test/emulator-git-auto-commit.sh apk/drive.apk apk/engine.apk out
+          script: bash ac_cloud-drive/test/emulator-git-auto-commit.sh apk/drive.apk out
 
       # The runner sometimes hands over an emulator adb reports offline; a second boot is the remedy, not a weaker test.
       - name: Boot emulator + Drive > Git (attempt 2)
@@ -75,7 +74,7 @@ jobs:
           target: google_apis
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           disable-animations: true
-          script: bash ac_cloud-drive/test/emulator-git-auto-commit.sh apk/drive.apk apk/engine.apk out
+          script: bash ac_cloud-drive/test/emulator-git-auto-commit.sh apk/drive.apk out
 
       - name: Upload evidence
         if: always()

@@ -1,12 +1,11 @@
-// libs:git-sync — the git manager's CONTRACT and its screen: the IGitSyncEngine wire, the GitEngine client
-// (a thin face over the engine, the same verbs the screens were written against), the models, the
-// repository registry, the credential store, the auth-chain walker and GitSyncScreen.
+// libs:git-sync — the git manager's client and its screen: the GitEngine client (a thin face over the
+// verbs, the same ones the screens were written against), the repository registry, the credential store,
+// the auth-chain walker and GitSyncScreen.
 //
-// #871 engine-apk-split move 11: JGIT AND THE PROCESS THAT RUNS IT ARE NOT HERE. The git verbs
-// (status, stage/unstage, commit, push/pull, branches, log, diff, remotes, conflicts, clone) run in
-// libs:git-sync-engine, shipped only as Cloud-Lib-Git-Sync-Engine.apk; this module is what Cloud Drive
-// compiles, so a JGit bump or a change to how a verb runs republishes that one APK and no app. Same
-// module name, so Drive's wiring did not change.
+// #1408 THE ENGINE IS IN-PROCESS: JGit, the verbs, the models and the wire are libs:git-core (`api` below),
+// answered in the host's own process by InProcessGitTransport. The separate engine APK
+// (Cloud-Lib-Git-Sync-Engine.apk) is retired; a host may still route a directory to another transport
+// (Cloud Drive's optional Termux backend) through GitTransports.router.
 //
 // ONE OF THE FOUR cloud-drive ENGINE LIBRARIES (#567). The owner's rule for that
 // application: the main APK is chrome, every tooling is its own library, and the
@@ -34,30 +33,10 @@ plugins {
     id 'org.jetbrains.kotlin.android'
     id 'org.jetbrains.kotlin.plugin.compose'
     // ManagedRepo and the models are @Serializable (RepoRegistry persists ManagedRepo as JSON; the models
-    // cross the binder to and from the engine); kotlinx-serialization, like libs:updater, so the JVM
+    // travel as the libs:git-core wire); kotlinx-serialization, like libs:updater, so the JVM
     // tests exercise the real (de)serialisation rather than android.jar's org.json stubs.
     id 'org.jetbrains.kotlin.plugin.serialization'
 }
-
-// #871 THE ENGINE THIS CLIENT BINDS: engine-client.json beside this file, its package from the
-// constellation fleet manifest. Anchored on this module's own (canonical) directory, the one thing
-// that does not move: consumers link this directory from their own trees and the canonical path
-// still leads back here.
-def moduleDir   = projectDir.canonicalFile
-def engineDecl  = new groovy.json.JsonSlurper().parse(new File(moduleDir, 'engine-client.json')).engines?.gitsync
-if (engineDecl == null) throw new GradleException("libs:git-sync: engine-client.json::engines.gitsync is not declared")
-def fleetFile   = new File(moduleDir, '../../../aa_cloud-superapp/data/constellation-fleet.json')
-if (!fleetFile.isFile()) throw new GradleException("libs:git-sync: the fleet manifest is not at ${fleetFile}")
-def engineFleet = new groovy.json.JsonSlurper().parse(fleetFile).apps.find { it.id == engineDecl.fleet }
-if (engineFleet == null) {
-    throw new GradleException(
-        "libs:git-sync: engine-client.json::engines.gitsync.fleet '${engineDecl.fleet}' is not in ${fleetFile} — " +
-        "every consumer would bind a package no Store row installs")
-}
-def gitsyncEnginePackage = engineFleet.package.toString()
-def gitsyncAction        = engineDecl.action.toString().replace('{package}', gitsyncEnginePackage)
-def gitsyncMinContract   = engineDecl.min_contract as int
-if (gitsyncMinContract < 1) throw new GradleException("libs:git-sync: engines.gitsync.min_contract must be >= 1")
 
 android {
     namespace 'com.diegonmarcos.cloudlib.gitsync'
@@ -65,19 +44,10 @@ android {
 
     defaultConfig {
         minSdk 26
-        // #871 the git sync engine that runs JGit (Cloud-Lib-Git-Sync-Engine.apk).
-        buildConfigField "String", "GITSYNC_ENGINE_PACKAGE",      "\"${gitsyncEnginePackage}\""
-        buildConfigField "String", "GITSYNC_ENGINE_ACTION",       "\"${gitsyncAction}\""
-        buildConfigField "int",    "GITSYNC_ENGINE_MIN_CONTRACT", "${gitsyncMinContract}"
-        // Resolved in THIS library's manifest, so every consumer's merged manifest queries the
-        // engine: on Android 11+ an unqueried package reads exactly like "not installed".
-        manifestPlaceholders = [gitsyncEnginePackage: gitsyncEnginePackage]
     }
 
     buildFeatures {
         compose = true
-        buildConfig = true
-        aidl = true
     }
 
     testOptions {
@@ -119,6 +89,8 @@ dependencies {
     implementation 'androidx.security:security-crypto:1.1.0'
     // #1106 the one safe way to open an EncryptedSharedPreferences file (never throws on a mismatched Keystore key).
     implementation project(':libs:crash')
+    // #1408 THE engine, in-process: JGit, the verbs, the models and the wire. `api` because the models are this module's API.
+    api project(':libs:git-core')
 
     testImplementation 'junit:junit:4.13.2'
     // The real org.json: android.jar's copy is a stub that throws on the JVM.

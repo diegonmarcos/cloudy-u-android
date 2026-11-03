@@ -404,11 +404,6 @@
       "expect": { "apps": 0, "libs": 1, "rootfs": 0, "ship": 1, "refresh": 0 }
     },
     {
-      "id": "#871 engine lib: libs/git-sync-engine (JGit and the git verbs, which left Cloud Drive)",
-      "files": ["ab_cloud-libs-shared/libs/git-sync-engine/src/main/java/com/diegonmarcos/cloudlib/gitsync/engine/JGitEngine.kt"],
-      "expect": { "apps": 0, "libs": 1, "rootfs": 0, "ship": 1, "refresh": 0 }
-    },
-    {
       "id": "#871 engine lib: libs/mounts-engine (the ftp / sftp / ssh / webdav clients, which left Cloud Drive)",
       "files": ["ab_cloud-libs-shared/libs/mounts-engine/src/main/java/com/diegonmarcos/cloudlib/mounts/engine/MountEngines.kt"],
       "expect": { "apps": 0, "libs": 1, "rootfs": 0, "ship": 1, "refresh": 0 }

@@ -3,8 +3,8 @@ package com.diegonmarcos.cloudlib.gitsync
 import org.json.JSONObject
 
 /**
- * How [GitEngine] reaches the git sync engine: JSON in, JSON out. The Android implementation binds
- * Cloud-Lib-Git-Sync-Engine.apk ([GitLink]); the JVM suite hands in a fake, so everything the client
+ * How [GitEngine] reaches the git sync engine: JSON in, JSON out. The default implementation runs libs:git-core
+ * in the host's own process ([InProcessGitTransport], #1408); the JVM suite hands in a fake, so everything the client
  * does with an answer (the models, a long result in chunks, a known_hosts the engine extended, a
  * refusal) is tested.
  */
