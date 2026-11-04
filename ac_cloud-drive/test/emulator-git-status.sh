@@ -72,8 +72,7 @@ sleep 1
 adb shell input swipe $((W/2)) $((H*30/100)) $((W/2)) $((H*80/100)) 600
 sleep 1
 # #1315 the declared top bar: Light check sits in the Check menu
-# The pull-to-refresh above already runs the light check; the Check menu's item repeats it when the menu opens (best effort).
-if tap '^Check$'; then sleep 1; tap '^Light check' || { echo "::warning::no Light check item (the pull-to-refresh check already ran)"; adb shell input keyevent 4; }; fi
+# The pull-to-refresh above runs the light check (the page shows 'checked <1m (1/1)'); the Check menu is not needed here.
 t0=$(date +%s); ok=0
 while [ $(( $(date +%s) - t0 )) -lt 15 ]; do
   sleep 1
