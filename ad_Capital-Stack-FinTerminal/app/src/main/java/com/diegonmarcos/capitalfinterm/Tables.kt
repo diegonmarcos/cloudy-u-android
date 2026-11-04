@@ -141,7 +141,6 @@ object Tables {
         val fails = ArrayList<String>()
         val used = ArrayList<String>()
         fun src(k: String) = Catalog.byId(c.sources, Catalog.str(f, k))
-        if (cpi == null && oecdCpi != null) { cpi = oecdCpi; fails += "FRED CPIAUCSL unavailable: US CPI from the OECD monthly index (DBnomics)" }
         val fx = HashMap<String, List<Pair<String, Double>>>()
         src("fx_source")?.let { s ->
             runCatching {
@@ -258,6 +257,7 @@ object Tables {
                 used += s.name
             }.onFailure { fails += "${s.name}: ${it.message}" }
         }
+        if (cpi == null && oecdCpi != null) { cpi = oecdCpi; fails += "FRED CPIAUCSL unavailable: US CPI from the OECD monthly index (DBnomics)" }
         val fx = HashMap<String, List<Pair<String, Double>>>()
         src("fx_source")?.let { s ->
             runCatching {
