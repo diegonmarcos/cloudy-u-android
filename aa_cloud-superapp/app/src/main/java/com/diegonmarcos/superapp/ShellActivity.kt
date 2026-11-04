@@ -1604,6 +1604,11 @@ open class ShellActivity : AppCompatActivity(),
             // UnsupportedOperationException — which would turn a missing app into
             // a crash instead of a fallback.
             val fallback = if (u.isOpaque) null else u.getQueryParameter("fallback")
+            // #1453 The SuperApp's own tile, in launcher mode: no second door. Launching MainActivity from the home screen
+            // opened Home in its own task with the system status bar; the tile means Configs, in this home screen.
+            if (pkg != null && isDefaultLauncher()) {
+                com.diegonmarcos.superapp.launcher.SelfTile.routeFor(packageName, pkg)?.let { routeTarget(it); return }
+            }
             val launch = pkg?.let { packageManager.getLaunchIntentForPackage(it) }
             if (launch != null) {
                 // #1153 NEW_TASK gives the app its own task; LAUNCH_ADJACENT puts it beside this one when the

@@ -292,7 +292,8 @@ internal fun PhoneFolderSheet(open: OpenFolder, onDismiss: () -> Unit) {
                             // launched (#156); its tap opens that lib's entry in the in-app Constellation
                             // AppStore instead (#474).
                             val comp = app.activityComponent
-                            if (comp != null) runCatching { launcherApps.startMainActivity(comp, app.user, null, null) }
+                            if (com.diegonmarcos.superapp.launcher.SelfTile.open(ctx, app.packageName)) Unit
+                            else if (comp != null) runCatching { launcherApps.startMainActivity(comp, app.user, null, null) }
                             else openStore(ctx)
                             onDismiss()
                         },

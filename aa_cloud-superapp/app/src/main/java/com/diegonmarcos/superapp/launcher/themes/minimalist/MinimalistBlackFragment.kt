@@ -135,7 +135,8 @@ class MinimalistBlackFragment : KitComposeFragment() {
                     AppRow(
                         label = label.ifBlank { component.packageName },
                         launch = {
-                            launcherApps.startMainActivity(component, user, null, null)
+                            if (!com.diegonmarcos.superapp.launcher.SelfTile.open(ctx, component.packageName))
+                                launcherApps.startMainActivity(component, user, null, null)
                         },
                     )
                 }

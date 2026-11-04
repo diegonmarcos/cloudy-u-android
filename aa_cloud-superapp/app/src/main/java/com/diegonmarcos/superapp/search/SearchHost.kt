@@ -43,6 +43,7 @@ class SearchActions(private val activity: Activity) {
         val target = hit.target
         when {
             app != null -> {
+                if (com.diegonmarcos.superapp.launcher.SelfTile.open(activity, app.component.packageName)) return
                 val launcher = activity.getSystemService(Context.LAUNCHER_APPS_SERVICE) as? LauncherApps ?: return
                 runCatching { launcher.startMainActivity(app.component, app.user, null, null) }
             }

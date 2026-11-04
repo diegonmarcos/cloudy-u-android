@@ -9,6 +9,7 @@ import com.diegonmarcos.superapp.search.SearchEntry
 import com.diegonmarcos.superapp.search.SearchFrame
 import com.diegonmarcos.superapp.search.SearchSession
 import com.diegonmarcos.superapp.launcher.Sections
+import com.diegonmarcos.superapp.launcher.SelfTile
 import com.diegonmarcos.superapp.ui.LauncherPalette
 import com.diegonmarcos.superapp.ui.snack
 import com.diegonmarcos.superapp.R
@@ -498,7 +499,7 @@ private fun AppTile(app: AppInfo) {
             .combinedClickable(
                 onClick = {
                     if (app.installed) {
-                        runCatching {
+                        if (!SelfTile.open(ctx, app.pkg)) runCatching {
                             val intent = ctx.packageManager.getLaunchIntentForPackage(app.pkg)
                             if (intent != null) ctx.startActivity(intent)
                         }
@@ -584,7 +585,7 @@ private fun SuiteFolderSheet(open: SuiteOpen, onDismiss: () -> Unit) {
                         if (app.installed) app.label else desc, app.icon, app.installed, cols, iconDp, desc, Modifier.weight(1f),
                         onClick = {
                             if (app.installed) {
-                                runCatching {
+                                if (!SelfTile.open(ctx, app.pkg)) runCatching {
                                     val intent = ctx.packageManager.getLaunchIntentForPackage(app.pkg)
                                     if (intent != null) ctx.startActivity(intent)
                                 }
