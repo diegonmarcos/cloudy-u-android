@@ -81,7 +81,7 @@ class EngineCoverageTest {
             write("n.md", "x\ny\n")
             e.diff("n.md").let { d -> assertTrue(d, d.contains("b/n.md") && d.contains("+x\n") && d.contains("+y\n")) }
             assertEquals("", e.diff("n.md", staged = true))
-            assertTrue(e.diff().contains("a.md"))
+            assertTrue(e.diff().contains("n.md"))
         }
     }
 

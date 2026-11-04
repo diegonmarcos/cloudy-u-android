@@ -355,7 +355,7 @@ private fun StorageSection(c: ThemeColors, tick: Int) {
     Text("Settings and app state are part of the phone profile Cloud Account backs up to, and restores from, the private vault repository.",
         color = c.inkDim, fontSize = 11.sp)
     if (requested(ctx).contains("android.permission.MANAGE_EXTERNAL_STORAGE") && Build.VERSION.SDK_INT >= 30) {
-        val all = remember(tick) { Environment.isExternalStorageManager() }
+        val all = remember(tick) { runCatching { Environment.isExternalStorageManager() }.getOrDefault(false) }   // a JVM screenshot host has no volume list
         StatusRow("All-files access", all, c)
         if (!all) ActionButton("Allow all-files access", c, "fleetcfg_open_allfiles") {
             com.diegonmarcos.superapp.perms.Perms.catalogue(ctx).byId("all_files")?.let { com.diegonmarcos.superapp.perms.PermsSettings.open(ctx, it) }
