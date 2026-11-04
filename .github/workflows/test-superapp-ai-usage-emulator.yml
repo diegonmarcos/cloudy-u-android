@@ -1,0 +1,96 @@
+# #1451 Cloud SuperApp Notify > AI usage on an emulator: the weekly Used / Left / Est lines drawn from a seeded API sample
+# (used 29%, 6.17 days to the reset). Runs the x86_64 APK a Ship Cloud SuperApp run built; the sample is written into the
+# badge's last-good cache (debug build, run-as), so no network or bearer is needed. Evidence: ai-usage-evidence.
+name: "Test -> SuperApp Notify AI usage (emulator)"
+
+on:
+  workflow_dispatch:
+    inputs:
+      superapp_run_id:
+        description: "Ship Cloud SuperApp run id whose x86_64 APK artifact to test"
+        required: true
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  page:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Fetch the Cloud SuperApp APK
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          W_RUN: ${{ inputs.superapp_run_id }}
+        run: |
+          set -eu
+          mkdir -p apk
+          gh api "repos/$REPO/actions/runs/$W_RUN/artifacts" --paginate --jq '.artifacts[] | select(.name|startswith("Cloud-SuperApp")) | .name' |
+          while read -r name; do gh run download "$W_RUN" -R "$REPO" -n "$name" -D "apk/$name"; done
+          pick=""
+          for want in x86_64 universal ''; do
+            pick=$(find apk -name '*.apk' | sort | grep -i -- "$want" | head -1 || true)
+            [ -n "$pick" ] && break
+          done
+          [ -n "$pick" ] || { echo "::error::no Cloud SuperApp APK"; exit 1; }
+          cp "$pick" superapp.apk
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Write the script
+        run: |
+          cat > shoot.sh <<'EOF2'
+          set -u
+          mkdir -p out
+          adb install -r -g superapp.apk || exit 2
+          aapt2=$(ls -d "$ANDROID_HOME"/build-tools/*/aapt2 | sort -V | tail -1)
+          PKG=$("$aapt2" dump packagename superapp.apk)
+          ACT=$(adb shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.LAUNCHER "$PKG" | tr -d '\r' | tail -1)
+          adb shell appops set "$PKG" SYSTEM_ALERT_WINDOW deny || true
+          adb shell cmd package set-home-activity "$PKG/.HomeActivity" || true
+          adb shell pm disable-user --user 0 com.google.android.apps.nexuslauncher >/dev/null 2>&1 || true
+          adb shell settings put global hide_error_dialogs 1 || true
+          adb shell settings put system screen_off_timeout 2147483647; adb shell svc power stayon true
+          adb shell locksettings set-disabled true || true
+          adb shell pm grant "$PKG" android.permission.POST_NOTIFICATIONS || true
+          adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard
+          # seed the badge's last-good cache: a raw GET /ai/usage reply, read just now
+          now=$(date +%s)
+          python3 - "$now" > seed.xml <<'PY'
+          import json,sys,html
+          n=int(sys.argv[1])
+          body=json.dumps({"generated_at":n,"claude":{"updated_at":n-30,"source":"statusline","host":"vm","five_hour":None,
+            "seven_day":{"used_percentage":29,"resets_at":n+int(6.17*86400),"observed_at":n-30},"rate_limited_at":None,"history":[]},
+            "openrouter":{"configured":False}})
+          print('<?xml version="1.0" encoding="utf-8" standalone="yes" ?><map><string name="last_body">%s</string><long name="last_at_ms" value="%d" /></map>'%(html.escape(body),n*1000))
+          PY
+          adb shell am force-stop "$PKG"
+          adb push seed.xml /data/local/tmp/ai_usage_badge.xml
+          adb shell "run-as $PKG sh -c 'mkdir -p shared_prefs && cp /data/local/tmp/ai_usage_badge.xml shared_prefs/ai_usage_badge.xml'" || echo "run-as failed"
+          adb shell am start -W -n "$ACT" >/dev/null; sleep 10
+          adb shell am start -n "$ACT" --es shortcut_action section:communication >/dev/null; sleep 8
+          adb exec-out screencap -p > out/notify.png
+          adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb pull /sdcard/ui.xml out/ui.xml || true
+          grep -o 'Used: [^"]*\|Left: [^"]*\|Est: [^"]*\|(1/7)[^"]*' out/ui.xml | head -10 || true
+          timeout 60 adb logcat -d > out/logcat.txt || true
+          EOF2
+          chmod +x shoot.sh
+      - name: Boot emulator and shoot
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash shoot.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ai-usage-evidence
+          path: out/
+          if-no-files-found: warn
