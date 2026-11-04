@@ -122,6 +122,8 @@ if not d or "TARBALL" not in d.group(1) or ".cloud-rootfs.sha256" not in d.group
 r = re.search(r"public static Bundle run\(.*?\{(.*?)Runtime\.getRuntime\(\)\.exec", ces, re.S)
 if not r or "CloudRootfs.repairInBackground(context)" not in r.group(1):
     bad.append("A1 CloudExecService.run does not repair the rootfs before running a command")
+if not r or "CloudDnsBridge.start(context)" not in r.group(1):
+    bad.append("A4 CloudExecService.run does not start the DNS bridge: a job after process death has no DNS in proot")
 if "REPAIRING.compareAndSet(false, true)" not in cr or "stage(app)" not in cr:
     bad.append("A1 repairInBackground is not a single-flight stage()")
 # A2 enter.sh fallback: plain mode exported, no manual rm asked of the user
@@ -179,6 +181,7 @@ mut_static S1 GRADLE 's#def digest = sha256Hex(tarball)#def digest = new File(cl
 mut_static S2 ENTER 's#STAMP="$ROOTFS/.cloud-rootfs.sha256"#STAMP="$ROOTFS/.stamp"#'
 mut_static S3 CR 's#want.equals(read(new FileInputStream(staged))) \&\& isDelivered(want)#want.equals(read(new FileInputStream(staged)))#'
 mut_static A1 CES 's#CloudRootfs.repairInBackground(context);##'
+mut_static A4 CES 's#CloudDnsBridge.start(context);##'
 mut_static A2 ENTER 's#    export CLOUD_ROOTFS_MODE=plain CLOUD_ROOTFS_HERE="$HERE"##'
 mut_static A3 EXEC_KT 's#("CLOUD_EXEC_SCRIPT_B64=$inner\\n" + ENV_PRELUDE)#script#'
 

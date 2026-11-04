@@ -111,6 +111,9 @@ public class CloudExecService extends Service {
 
         // #1436 a rootfs that is not delivered is re-staged from the lib in the background, with no user involved.
         try { CloudRootfs.repairInBackground(context); } catch (Throwable ignored) { }
+        // #1436 the rootfs resolves names through this app's DNS bridge (enter.sh -p); after a process death only the
+        // terminal service started it, so a Drive job reached git with no DNS ("Could not resolve host"). Idempotent.
+        try { CloudDnsBridge.start(context); } catch (Throwable ignored) { }
 
         String cwd = (workdir == null || workdir.isEmpty())
             ? TermuxConstants.TERMUX_HOME_DIR_PATH : workdir;
