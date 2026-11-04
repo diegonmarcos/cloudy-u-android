@@ -39,7 +39,14 @@ if [ -s "$OUT/.tap" ]; then $T adb shell input tap $(cat "$OUT/.tap"); shot me-p
 
 if [ -n "$SA_APK" ] && [ -f "$SA_APK" ]; then
     open_page "$SA" "page:cloud/apps"; sleep 10; $T adb shell input keyevent KEYCODE_BACK; sleep 2
-    open_page "$SA" "page:cloud/apps"; shot superapp-cloud-apps 10
+    # the SuperApp draws its own lock screen over the launcher: tap its Unlock, then open the page again
+    for i in 1 2; do
+        $T adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; $T adb pull /sdcard/ui.xml "$OUT/.sa.xml" >/dev/null 2>&1
+        xy=$(python3 -c "import re,sys;x=open(sys.argv[1],errors='ignore').read();m=re.search(r'text=\"Unlock\"[^>]*bounds=\"\[(\d+),(\d+)\]\[(\d+),(\d+)\]',x);print('' if not m else '%d %d'%((int(m[1])+int(m[3]))//2,(int(m[2])+int(m[4]))//2))" "$OUT/.sa.xml" 2>/dev/null)
+        [ -n "$xy" ] || break
+        $T adb shell input tap $xy; sleep 4; open_page "$SA" "page:cloud/apps"; sleep 6
+    done
+    shot superapp-cloud-apps 4
     $T adb shell input swipe 540 1700 540 900 400; shot superapp-cloud-apps-me-row 4
 fi
 $T adb logcat -d > "$OUT/logcat.txt"
