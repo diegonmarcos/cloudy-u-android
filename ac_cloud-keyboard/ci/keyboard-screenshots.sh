@@ -207,6 +207,26 @@ kb code ANSWER_BAR
 openat "" 4; shot 29-configs-answer-entry
 openat draft_answer 4; shot 30-configs-draft-answer
 
+# ── #1413 Dev Keyboard: OFF by default, the last toolbar key flips it, the Unexpected layout shows its corner labels ─
+fieldkb "" "Dev Keyboard"
+kb devkb; D="$(last devkb)"; echo "$D"
+grep -q "on=false" <<<"$D" && ok "Dev Keyboard is OFF on a fresh install" || bad "Dev Keyboard is not off by default: $D"
+kb geometry; read -r SL ST SW2 SH2 < <(sed -n 's/.*strip=\([0-9]*\),\([0-9]*\),\([0-9]*\),\([0-9]*\).*/\1 \2 \3 \4/p' <<<"$(last geometry)")
+Y=$((ST + SH2 / 4)); X1=$((SL + SW2 * 8 / 10)); X2=$((SL + SW2 * 2 / 10))
+for _ in 1 2 3 4; do adb shell input swipe "$X1" "$Y" "$X2" "$Y" 250; sleep 1; done
+shot 31-dev-keyboard-toolbar-key-off
+kb code DEV_KEYBOARD; kb devkb; D="$(last devkb)"; echo "$D"
+grep -q "on=true" <<<"$D" && ok "the Dev Keyboard toolbar key turned it on" || bad "the toolbar key did not turn it on: $D"
+shot 32-dev-keyboard-toolbar-key-on
+kb layout unexpected; sleep 3; kb devkb; D="$(last devkb)"; echo "$D"
+grep -q "layout=unexpected" <<<"$D" && ok "the Unexpected layout is the main layout" || bad "the layout did not switch: $D"
+shot 33-unexpected-layout-corner-labels
+kb code DEV_KEYBOARD; kb devkb; D="$(last devkb)"; echo "$D"
+grep -q "on=false" <<<"$D" && ok "the toolbar key turned Dev Keyboard off again" || bad "the toolbar key did not turn it off: $D"
+shot 34-unexpected-layout-dev-off
+kb code DEV_KEYBOARD
+openat "" 4; up; shot 35-configs-dev-keyboard-on
+
 if adb logcat -d | grep -q "FATAL EXCEPTION.*"; then bad "a crash is in the log"; adb logcat -d | grep -A12 "FATAL EXCEPTION" | head -40; else ok "no crash in the log"; fi
 adb logcat -d > "$OUT/logcat.txt" 2>/dev/null
 adb logcat -d -s KbdShot:I > "$OUT/kbdshot.txt" 2>/dev/null

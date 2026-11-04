@@ -44,6 +44,8 @@ import helium314.keyboard.latin.utils.prefs
  *   select <n|end> move the cursor (a tap into a highlighted word opens its popup)
  *   popup <replace|ignore> press the highlight popup action
  *   marks         log the highlight marks, the ignores, the popup and the field text
+ *   layout <name> switch to the main layout <name> (#1413: unexpected) for the current language
+ *   devkb         log whether Dev Keyboard (corner swipes) is on and the main layout in use
  *   state         log the panel, the grammar mode, the Autocomplete page and the emoji search box height
  */
 class KeyboardDebugReceiver(private val ime: LatinIME) : BroadcastReceiver() {
@@ -72,6 +74,14 @@ class KeyboardDebugReceiver(private val ime: LatinIME) : BroadcastReceiver() {
                 AutocompleteStore.open(ime).replaceAll(rows, System.currentTimeMillis())
                 "seeded ${rows.size}"
             }
+            "layout" -> {
+                val st = helium314.keyboard.latin.utils.SubtypeUtilsAdditional.createDummyAdditionalSubtype(
+                    helium314.keyboard.latin.RichInputMethodManager.getInstance().currentSubtypeLocale, arg)
+                helium314.keyboard.latin.utils.SubtypeSettings.addEnabledSubtype(ime.prefs(), st)
+                ime.switchToSubtype(st); "ok"
+            }
+            "devkb" -> "on=${helium314.keyboard.keyboard.CornerSwipe.enabled} layout=${
+                helium314.keyboard.latin.RichInputMethodManager.getInstance().currentSubtype.rawSubtype.let { helium314.keyboard.latin.utils.LayoutType.getMainLayoutFromExtraValue(it.extraValue) }}"
             "geometry" -> {
                 val strip = switcher.stripContainer
                 val at = IntArray(2).also { strip.getLocationOnScreen(it) }
@@ -142,6 +152,7 @@ class KeyboardDebugReceiver(private val ime: LatinIME) : BroadcastReceiver() {
         "GRAMMAR_MODE" -> KeyCode.GRAMMAR_MODE
         "CLIPBOARD" -> KeyCode.CLIPBOARD
         "NUMPAD" -> KeyCode.NUMPAD
+        "DEV_KEYBOARD" -> KeyCode.DEV_KEYBOARD
         else -> error("unknown key $name")
     }
 
