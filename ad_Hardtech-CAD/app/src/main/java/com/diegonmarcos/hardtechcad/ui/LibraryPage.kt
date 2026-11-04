@@ -192,6 +192,13 @@ private fun ModelViewer(m: Model, dir: File) {
         android.util.Log.i("CadHost", "cadOpen " + arg)
         kotlinx.coroutines.delay(20000)
         web?.evaluateJavascript("document.getElementById('s')&&document.getElementById('s').textContent") { android.util.Log.i("CadHost", "status=" + it) }
+        // The proof pulls this PNG (cache/cad-snapshot-<id>.png) with run-as: a WebView screenshot does not capture WebGL on an emulator.
+        web?.evaluateJavascript("window.cadSnapshot&&window.cadSnapshot()") { v ->
+            runCatching {
+                val b64 = v.orEmpty().trim('"').substringAfter("base64,", "")
+                if (b64.isNotEmpty()) File(dir.parentFile, "cad-snapshot-" + m.id + ".png").writeBytes(android.util.Base64.decode(b64, android.util.Base64.DEFAULT))
+            }
+        }
     }
     DisposableEffect(Unit) { onDispose { web?.destroy(); web = null } }
 

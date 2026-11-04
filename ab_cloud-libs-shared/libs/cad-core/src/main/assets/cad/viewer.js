@@ -28,6 +28,8 @@ function frame(obj) {
 }
 window.onerror = (m) => post({ type: 'error', message: String(m) });
 window.addEventListener('unhandledrejection', (e) => post({ type: 'error', message: String(e.reason && e.reason.message || e.reason) }));
+// What the canvas drew, as a PNG data URL (an emulator screenshot of a WebView does not capture WebGL, so the proof pulls this).
+window.cadSnapshot = () => { controls.update(); renderer.render(scene, camera); return renderer.domElement.toDataURL('image/png'); };
 window.cadOpen = async ({ lib, url, format }) => {
   status('Loading ' + format.toUpperCase() + '…');
   try {
