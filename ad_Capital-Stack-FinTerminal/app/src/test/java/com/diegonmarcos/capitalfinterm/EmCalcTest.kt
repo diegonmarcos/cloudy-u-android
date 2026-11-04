@@ -7,7 +7,7 @@ import org.junit.Test
 import java.io.IOException
 import java.time.LocalDate
 
-/** The PM EM Bonds calculator and carry trade (#1447): the maths against the owner's image, the declarations, and the panels on a fake network. */
+/** The PM EM Bonds calculator and carry trade (#1447, #1462): the maths against the owner's image, the declarations, and the panels on a fake network. */
 class EmCalcTest {
     private val sources = Catalog.parse(DataFiles.sourcesJson)
     private val dashboards = Dashboards.parse(DataFiles.dashboardsJson)
@@ -45,6 +45,13 @@ class EmCalcTest {
             listOf(1000, 1000, 1250, 1250, 1500, 1500, 1500),
         )
         assertEquals(image, g.cells.map { r -> r.map { it.toInt() } })
+        // #1462 orientation, against the image: the axes ascend (yield left to right, FX top to bottom), the centre is the middle row and column,
+        // so the most (2,000) is top right and the least (1,000) bottom left
+        assertEquals(g.yields.sorted(), g.yields); assertEquals(g.fxUsd.sorted(), g.fxUsd); assertEquals(g.fxEur.sorted(), g.fxEur)
+        assertEquals(live.yHigh, g.yields[3], 1e-12); assertEquals(live.brlUsd, g.fxUsd[3], 1e-12); assertEquals(live.brlEur, g.fxEur[3], 1e-12)
+        assertEquals(2000, g.cells[0][6].toInt()); assertEquals(1000, g.cells[6][0].toInt()); assertEquals(2000, g.cells.flatten().maxOrNull()!!.toInt()); assertEquals(1000, g.cells.flatten().minOrNull()!!.toInt())
+        for (r in 0..6) for (c in 1..6) assertTrue(g.cells[r][c] >= g.cells[r][c - 1])      // a higher yield never pays less
+        for (r in 1..6) for (c in 0..6) assertTrue(g.cells[r][c] <= g.cells[r - 1][c])      // a higher BRL level never pays more EUR
         assertEquals(listOf("4.67", "4.94", "5.21", "5.49", "5.76", "6.04", "6.31"), g.fxUsd.map { EmCalc.fx(it) })
         assertEquals(listOf("5.25", "5.56", "5.86", "6.17", "6.48", "6.79", "7.10"), g.fxEur.map { EmCalc.fx(it) })
         assertEquals(listOf("12.73%", "13.48%", "14.23%", "14.98%", "15.73%", "16.48%", "17.23%"), g.yields.map { EmCalc.pct(it) })
@@ -78,6 +85,65 @@ class EmCalcTest {
         assertEquals(listOf(0, 0, 100), Dashboards.byId(dashboards, "pm_d1_em_bonds")!!.legs.map { it.second })
     }
 
+    @Test fun theMatrixFitsOnePhoneScreenInTheDenseRamp() {
+        // 312dp is the card body of a 360dp phone: 9 columns share it, no scrolling; the numerals stay within the ramp's small mono (11) and its floor (7)
+        val w = FinLogic.matrixWidths(312f, 9)
+        assertEquals(9, w.size); assertEquals(312f, w.sum(), 0.01f)
+        val f = FinLogic.matrixFont(w[2], "1,500.00".length)
+        assertTrue(f in 7f..11f)
+        assertTrue(f * 0.6f * "1,500.00".length <= w[2] + 0.01f)
+        assertEquals(11f, FinLogic.matrixFont(100f, 8), 0f) // never larger than the ramp's small size
+        assertEquals(7f, FinLogic.matrixFont(10f, 8), 0f)
+        // 10 rows of 20dp = 200dp tall
+        assertEquals(200, (1 + 9) * 20)
+    }
+
+    @Test fun everyPmPortfolioHasARiskTierByEquityShare() {
+        val tabs = RiskTabs.parse(DataFiles.dashboardsJson)
+        assertEquals(listOf("all", "A", "B", "C", "D"), tabs.map { it.id })
+        assertEquals(listOf("All", "A Low", "B Middle", "C Risky", "D High"), tabs.map { it.label })
+        assertEquals(listOf("A Low risk", "B Middle risk", "C Risky", "D High risk"), tabs.drop(1).map { it.header })
+        val pm = dashboards.filter { it.tab == "pm" && it.id != "portfolio_risk" }
+        assertEquals(14, pm.size)
+        for (d in pm) {
+            assertTrue("${d.id} has no risk tier", d.risk in tabs.drop(1).map { it.id })
+            if (d.riskBasis.isEmpty()) assertEquals("${d.id} tier by equity share ${d.equityPct}", RiskTabs.tierOf(tabs, d.equityPct), d.risk)
+            else assertTrue("${d.id} declares why", d.riskBasis.isNotBlank())
+        }
+        // more equity = higher risk: the tier never falls as the equity share rises
+        val ordered = pm.filter { it.equityPct >= 0 && it.riskBasis.isEmpty() }.sortedBy { it.equityPct }
+        assertEquals(ordered.map { it.risk }.sorted(), ordered.map { it.risk })
+        assertEquals("A", Dashboards.byId(dashboards, "mp_70_30")!!.risk); assertEquals("B", Dashboards.byId(dashboards, "mp_60_40")!!.risk)
+        assertEquals("C", Dashboards.byId(dashboards, "mp_40_60")!!.risk); assertEquals("D", Dashboards.byId(dashboards, "mp_30_70_DM_EM")!!.risk)
+        assertEquals("D", Dashboards.byId(dashboards, "pm_d1_em_bonds")!!.risk)
+        // the stacks' section titles are the declared headers, in order, each before its tier's portfolios
+        val stack = org.json.JSONObject(DataFiles.buildJson).getJSONObject("ui").getJSONObject("stacks").getJSONArray("pm")
+        var tier = ""; val seen = ArrayList<String>()
+        for (k in 0 until stack.length()) {
+            val e = stack.getJSONObject(k)
+            if (e.getString("kind") == "section_title") { seen += e.getString("title"); tier = tabs.first { it.header == e.getString("title") }.id }
+            else if (e.getString("dashboard") != "portfolio_risk") assertEquals(e.getString("dashboard"), tier, Dashboards.byId(dashboards, e.getString("dashboard"))!!.risk)
+        }
+        assertEquals(tabs.drop(1).map { it.header }, seen)
+    }
+
+    @Test fun allShowsOneHeaderPerTierAndATierTabItsOwnCardsAlone() {
+        val tabs = RiskTabs.parse(DataFiles.dashboardsJson)
+        val cards = dashboards.filter { it.tab == "pm" }.map { it.id }
+        val riskOf = { id: String -> Dashboards.byId(dashboards, id)!!.risk }
+        val all = RiskTabs.groups(cards, { it }, riskOf, tabs, "all")
+        assertEquals(listOf("", "A Low risk", "B Middle risk", "C Risky", "D High risk"), all.map { it.first })
+        assertEquals(cards.size, all.sumOf { it.second.size })
+        assertEquals(listOf("portfolio_risk"), all[0].second)
+        val c = RiskTabs.groups(cards, { it }, riskOf, tabs, "C")
+        assertEquals(listOf(""), c.map { it.first }); assertEquals(setOf("mp_40_60", "mp_30_70", "pm_c1_risky"), c[0].second.toSet())
+        assertEquals(setOf("pm_a1_cash", "pm_a2_low", "mp_70_30"), RiskTabs.groups(cards, { it }, riskOf, tabs, "A")[0].second.toSet())
+    }
+
+    @Test fun theCalculatorPanelIsFirstOnTheD1DashboardSoItsMatrixIsOnTheFirstScreen() {
+        assertEquals("calc", Dashboards.byId(dashboards, "pm_d1_em_bonds")!!.panels.first().id)
+    }
+
     private fun fake() = Fake { u ->
         when {
             u.contains("db.nomics.world") -> """{"series":{"docs":[
@@ -96,13 +162,16 @@ class EmCalcTest {
 
     @Test fun theCalculatorPanelOnLiveFeedsDrawsTheMatrixWithItsCentreBold() {
         val d = load("pm_d1_em_bonds", "calc", fake())
-        assertEquals(listOf("BRL/USD", "BRL/EUR", "12.73%", "13.48%", "14.23%", "14.98%", "15.73%", "16.48%", "17.23%"), d.columns)
+        assertEquals(listOf("", "Gross Yield", "12.73%", "13.48%", "14.23%", "14.98%", "15.73%", "16.48%", "17.23%"), d.columns)
         assertEquals(9, d.rows.size)
         assertEquals(listOf("", "Inflation") + List(7) { "3.63%" }, d.rows[0])
+        assertEquals(listOf("USD", "EUR / (-Infl) Yield", "8.78%"), d.rows[1].take(3))
         assertEquals("10.95%", d.rows[1][5])
+        assertEquals(listOf("4.67", "5.25", "1,500.00", "1,500.00", "1,750.00", "1,750.00", "1,750.00", "2,000.00", "2,000.00"), d.rows[2])
+        assertEquals(listOf("6.31", "7.10", "1,000.00", "1,000.00", "1,250.00", "1,250.00", "1,500.00", "1,500.00", "1,500.00"), d.rows[8])
         assertEquals(listOf("5.49", "6.17", "1,250.00", "1,250.00", "1,500.00", "1,500.00", "1,500.00", "1,750.00", "1,750.00"), d.rows[5])
         assertTrue(d.heat.size == d.rows.size && d.heat[0].all { it == null } && d.heat[5][5] == 0f)
-        assertTrue((5 to 5) in d.bold && (1 to 5) in d.bold)
+        assertTrue((5 to 5) in d.bold && (1 to 5) in d.bold && (-1 to 5) in d.bold && (5 to 0) in d.bold && (5 to 1) in d.bold)
         assertTrue(d.servedBy.contains("DBnomics") && d.note.contains("rounded to 250") && d.note.contains("CPI 2026-05"))
     }
 

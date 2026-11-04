@@ -49,6 +49,18 @@ object FinLogic {
     const val CELL_PAD = 16f
 
     /**
+     * #1462 the EM Bonds matrix on one phone screen, no scrolling: the two label columns take 8 % and 13 % of [totalDp], the `cols - 2` value columns share the rest.
+     */
+    fun matrixWidths(totalDp: Float, cols: Int): List<Float> {
+        if (cols <= 2) return List(cols) { totalDp / maxOf(cols, 1) }
+        val a = totalDp * 0.08f; val b = totalDp * 0.13f
+        return listOf(a, b) + List(cols - 2) { (totalDp - a - b) / (cols - 2) }
+    }
+
+    /** The matrix numeral size in dp: the ramp's small mono size (11) shrunk until [chars] tabular characters (0.6 em each) fit [cellDp]; never below 7. */
+    fun matrixFont(cellDp: Float, chars: Int): Float = (cellDp / (chars * 0.6f)).coerceIn(7f, 11f)
+
+    /**
      * Content-sized columns (the wide-table fix): every number column is as wide as its longest cell or header (never clipped, no
      * fixed 64dp), the pinned name column fits its longest one-line name within 96dp .. 45 % of [width]. When the sum fits, the
      * spare width goes to the number columns; otherwise the number columns scroll sideways under the pinned name.

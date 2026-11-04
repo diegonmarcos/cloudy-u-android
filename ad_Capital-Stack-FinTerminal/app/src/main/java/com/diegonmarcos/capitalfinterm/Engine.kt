@@ -29,7 +29,7 @@ data class PanelData(
     val spark: List<List<Double>> = emptyList(),
     /** Per cell, a tint -1 (red) .. +1 (green) or null (none), shaped like [rows]; empty when the table has none (the EM Bonds calculator, #1447). */
     val heat: List<List<Float?>> = emptyList(),
-    /** (row, column) pairs drawn bold (the calculator's centre). */
+    /** (row, column) pairs drawn bold (the calculator's centre); row -1 is the column header. */
     val bold: List<Pair<Int, Int>> = emptyList(),
 )
 

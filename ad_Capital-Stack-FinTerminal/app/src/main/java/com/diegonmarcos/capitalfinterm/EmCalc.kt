@@ -52,20 +52,24 @@ object EmCalc {
     fun money(v: Double) = String.format(Locale.US, "%,.2f", v)
     fun fx(v: Double) = String.format(Locale.US, "%.2f", v)
 
-    /** The matrix as the table: header = BRL/USD, BRL/EUR, the gross yields; then Inflation and the real yield, then one row per FX level. */
+    /**
+     * The matrix as the owner's image: header row = Gross Yield and the yields ascending left to right (the centre in the middle column); then Inflation, then
+     * the USD level, "EUR / (-Infl) Yield" and the real yields; then one row per FX level, ascending top to bottom (BRL per USD, BRL per EUR, the cells).
+     * Higher yield (right) = more, a higher BRL level (down) = less EUR, so the green 2,000 sits top right and the red 1,000 bottom left.
+     */
     fun matrix(panel: Panel, live: Live, i: Inputs, by: String, asOf: String): PanelData {
         val g = grid(live, i)
         val h = heat(g.cells)
         val c = i.n
-        val head = listOf("BRL/USD", "BRL/EUR") + g.yields.map { pct(it) }
-        val rows = listOf(listOf("", "Inflation") + g.yields.map { pct(live.infl) }, listOf("", "EUR - infl") + g.yields.map { pct(real(it, live.infl)) }) +
+        val head = listOf("", "Gross Yield") + g.yields.map { pct(it) }
+        val rows = listOf(listOf("", "Inflation") + g.yields.map { pct(live.infl) }, listOf("USD", "EUR / (-Infl) Yield") + g.yields.map { pct(real(it, live.infl)) }) +
             g.cells.mapIndexed { r, row -> listOf(fx(g.fxUsd[r]), fx(g.fxEur[r])) + row.map { money(it) } }
         val none = List(head.size) { null as Float? }
         val note = "Monthly EUR net return on a ${money(i.navEur)} NAV after ${pct(i.cg, 0)} capital-gains tax and ${pct(i.spread, 0)} exchange spread" +
-            (if (i.round > 0) ", rounded to ${i.round.toInt()}" else "") + ". Real yield = (1 + gross) / (1 + inflation) - 1; rows move the BRL level by ${pct(i.exchStep, 1)}, columns the gross yield by ${pct(i.yieldStep)}." +
+            (if (i.round > 0) ", rounded to ${i.round.toInt()}" else "") + ". Real yield = (1 + gross) / (1 + inflation) - 1; rows (down) move the BRL level up by ${pct(i.exchStep, 1)}, columns (right) the gross yield up by ${pct(i.yieldStep)}." +
             (if (live.basis.isEmpty()) "" else " ${live.basis}.") + (if (live.fails.isEmpty()) "" else " — " + live.fails.joinToString(" · "))
         return PanelData(head, rows, emptyList(), emptyList(), asOf, note, servedBy = by,
-            heat = listOf(none, none) + h.map { r -> listOf<Float?>(null, null) + r }, bold = listOf(c + 2 to c + 2, 1 to c + 2, 0 to c + 2, c + 2 to 0, c + 2 to 1))
+            heat = listOf(none, none) + h.map { r -> listOf<Float?>(null, null) + r }, bold = listOf(-1 to c + 2, 0 to c + 2, 1 to c + 2, c + 2 to 0, c + 2 to 1, c + 2 to c + 2))
     }
 
     /** The inputs panel: NAV in usd, eur, brl; the taxes; the curves and steps. */

@@ -27,7 +27,11 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -39,6 +43,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.diegonmarcos.capitalfinterm.AssetData
+import com.diegonmarcos.capitalfinterm.RiskTabs
+import com.diegonmarcos.capitalfinterm.ui.fin.FinChip
 import com.diegonmarcos.capitalfinterm.BuildConfig
 import com.diegonmarcos.capitalfinterm.DashStatus
 import com.diegonmarcos.capitalfinterm.Dashboards
@@ -162,22 +168,43 @@ private fun EntryPage(e: Entry) {
 /** #1399 the section's Homepage: a 2-column grid of cards, one per sub-page (icon, name, one-line description); a tap opens it. */
 @Composable
 private fun HomeGrid(sectionId: String, cards: List<HomeCard>, nav: FinNav, onOpen: (String) -> Unit) {
+    // #1462 a Homepage whose cards declare a risk tier (data/dashboards.json: PM) gets the top tabs All | A | B | C | D; All draws a section header per tier.
+    val ctx = LocalContext.current
+    val dashboards = remember { AssetData.dashboards(ctx) }
+    val tabs = remember { RiskTabs.parse(AssetData.read(ctx, AssetData.DASHBOARDS)) }
+    val riskOf = { id: String -> dashboards.firstOrNull { it.id == id }?.risk.orEmpty() }
+    val tiered = tabs.isNotEmpty() && cards.any { riskOf(it.entry.dashboard).isNotEmpty() }
+    var tab by rememberSaveable(sectionId) { mutableStateOf(RiskTabs.ALL) }
+    val groups = if (tiered) RiskTabs.groups(cards, { it.entry.dashboard }, riskOf, tabs, tab) else listOf("" to cards)
     LazyColumn(
         Modifier.fillMaxSize().testTag(HOME_GRID + sectionId),
         contentPadding = PaddingValues(start = FinDim.screenPad, end = FinDim.screenPad, top = FinDim.gap, bottom = FinDim.bottomInset),
         verticalArrangement = Arrangement.spacedBy(FinDim.gap),
     ) {
         if (cards.any { it.entry.kind == Pages.KIND_DASHBOARD }) item(key = "search") { FinSearchField(onClick = { nav.search() }) }
-        cards.chunked(2).forEachIndexed { i, pair ->
-            item(key = "h:$i") {
-                Row(horizontalArrangement = Arrangement.spacedBy(FinDim.gap)) {
-                    pair.forEach { c -> HomeCardTile(c, Modifier.weight(1f)) { onOpen(c.pageId) } }
-                    if (pair.size == 1) Spacer(Modifier.weight(1f))
+        if (tiered) item(key = "risk-tabs") {
+            Row(Modifier.fillMaxWidth().testTag(RISK_TABS + sectionId), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                tabs.forEach { t -> FinChip(t.label, t.id == tab, Modifier.height(32.dp).testTag(RISK_TAB + t.id)) { tab = t.id } }
+            }
+        }
+        groups.forEachIndexed { g, (header, group) ->
+            if (header.isNotEmpty()) item(key = "rh:$g") { GroupTitle(header, Modifier.testTag(RISK_HEADER + g)) }
+            group.chunked(2).forEachIndexed { i, pair ->
+                item(key = "h:$g:$i") {
+                    Row(horizontalArrangement = Arrangement.spacedBy(FinDim.gap)) {
+                        pair.forEach { c -> HomeCardTile(c, Modifier.weight(1f)) { onOpen(c.pageId) } }
+                        if (pair.size == 1) Spacer(Modifier.weight(1f))
+                    }
                 }
             }
         }
     }
 }
+
+/** #1462 test tags of the PM risk tabs row, one tab (+ id) and a tier's section header (+ index). */
+const val RISK_TABS = "risk_tabs:"
+const val RISK_TAB = "risk_tab:"
+const val RISK_HEADER = "risk_header:"
 
 /** The test tag prefix of a Homepage grid (+ section id) and of one card (+ sub-page id). */
 const val HOME_GRID = "home_grid:"

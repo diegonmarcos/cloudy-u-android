@@ -262,15 +262,15 @@
           {"id": "portfolio-risk", "label": "Portfolio & Risk Analytics", "icon": "insights"},
           {"id": "pm-a1-cash", "label": "A1 Cash (DM - Cash)", "icon": "payments", "separator_before": true},
           {"id": "pm-a2-low", "label": "A2 Low Risk", "icon": "pie_chart"},
-          {"id": "pm-b1-mid", "label": "B1 Middle Risk", "icon": "pie_chart", "separator_before": true},
-          {"id": "pm-c1-risky", "label": "C1 Risky", "icon": "pie_chart", "separator_before": true},
+          {"id": "mp-70-30", "label": "70/30", "icon": "pie_chart"},
+          {"id": "mp-60-40", "label": "60/40", "icon": "pie_chart", "separator_before": true},
+          {"id": "pm-b1-mid", "label": "B1 Middle Risk", "icon": "pie_chart"},
+          {"id": "mp-40-60", "label": "40/60", "icon": "pie_chart", "separator_before": true},
+          {"id": "mp-30-70", "label": "30/70", "icon": "pie_chart"},
+          {"id": "pm-c1-risky", "label": "C1 Risky", "icon": "pie_chart"},
           {"id": "pm-d1-em-bonds", "label": "D1 EM Bonds", "icon": "calculate", "separator_before": true},
           {"id": "pm-d0-carry", "label": "D0 EM Carry Trade", "icon": "trending_up"},
-          {"id": "mp-40-60", "label": "40/60", "icon": "pie_chart", "separator_before": true},
-          {"id": "mp-70-30", "label": "70/30", "icon": "pie_chart"},
-          {"id": "mp-60-40", "label": "60/40", "icon": "pie_chart"},
-          {"id": "mp-30-70", "label": "30/70", "icon": "pie_chart"},
-          {"id": "mp-70-30-dm-em", "label": "70/30 DM/EM", "icon": "pie_chart", "separator_before": true},
+          {"id": "mp-70-30-dm-em", "label": "70/30 DM/EM", "icon": "pie_chart"},
           {"id": "mp-60-40-dm-em", "label": "60/40 DM/EM", "icon": "pie_chart"},
           {"id": "mp-40-60-dm-em", "label": "40/60 DM/EM", "icon": "pie_chart"},
           {"id": "mp-30-70-dm-em", "label": "30/70 DM/EM", "icon": "pie_chart"}
@@ -449,7 +449,7 @@
         },
         {
           "kind": "section_title",
-          "title": "A) Low risk"
+          "title": "A Low risk"
         },
         {
           "kind": "dashboard",
@@ -464,8 +464,20 @@
           "dashboard": "pm_a2_low"
         },
         {
+          "kind": "dashboard",
+          "title": "70/30",
+          "subtitle": "70% bonds, 30% equity",
+          "dashboard": "mp_70_30"
+        },
+        {
           "kind": "section_title",
-          "title": "B) Middle risk"
+          "title": "B Middle risk"
+        },
+        {
+          "kind": "dashboard",
+          "title": "60/40",
+          "subtitle": "60% bonds, 40% equity",
+          "dashboard": "mp_60_40"
         },
         {
           "kind": "dashboard",
@@ -475,7 +487,19 @@
         },
         {
           "kind": "section_title",
-          "title": "C) Risky"
+          "title": "C Risky"
+        },
+        {
+          "kind": "dashboard",
+          "title": "40/60",
+          "subtitle": "40% bonds, 60% equity",
+          "dashboard": "mp_40_60"
+        },
+        {
+          "kind": "dashboard",
+          "title": "30/70",
+          "subtitle": "30% bonds, 70% equity",
+          "dashboard": "mp_30_70"
         },
         {
           "kind": "dashboard",
@@ -485,7 +509,7 @@
         },
         {
           "kind": "section_title",
-          "title": "D) High risk"
+          "title": "D High risk"
         },
         {
           "kind": "dashboard",
@@ -498,38 +522,6 @@
           "title": "D0 EM Carry Trade",
           "subtitle": "EM carry trade: funding currency against the EM high-yielder, breakeven and net return",
           "dashboard": "pm_d0_carry"
-        },
-        {
-          "kind": "section_title",
-          "title": "Model portfolios: bonds / equity"
-        },
-        {
-          "kind": "dashboard",
-          "title": "40/60",
-          "subtitle": "40% bonds, 60% equity",
-          "dashboard": "mp_40_60"
-        },
-        {
-          "kind": "dashboard",
-          "title": "70/30",
-          "subtitle": "70% bonds, 30% equity",
-          "dashboard": "mp_70_30"
-        },
-        {
-          "kind": "dashboard",
-          "title": "60/40",
-          "subtitle": "60% bonds, 40% equity",
-          "dashboard": "mp_60_40"
-        },
-        {
-          "kind": "dashboard",
-          "title": "30/70",
-          "subtitle": "30% bonds, 70% equity",
-          "dashboard": "mp_30_70"
-        },
-        {
-          "kind": "section_title",
-          "title": "Model portfolios: DM / EM"
         },
         {
           "kind": "dashboard",

@@ -1,5 +1,38 @@
 {
   "_doc": "THE DASHBOARDS of Capital-Stack-FinTerminal (#1335): one per FinTerm entry (build.json::ui.stacks, kind dashboard, `dashboard` = the id here). A panel names its `source` (an id of data/sources.json whose `feeds` lists this entry) and EITHER a `fetch` (a live connector: the key-free sources) OR a `placeholder` ({reason, note}: drawn as one 48dp key row while the source needs a key / has no connector yet, 'Add your key in Config > Sources'; UI spec 2). UI declarations (UI spec 6.3): dashboard `default` (the tab opens on it) and `search` (a search field on top); panel `display` (kpi | rows | heat | watch), `tape` (its quotes feed the ticker tape), `spread` ({label, of: [a, b]}: a derived KPI tile in bp), `heat_scale`, `segment_of` / `segment_label` (drawn as a source chip of another panel's card), `refresh_s`, `col_types`, `limit`. Providers and derivations are named here and implemented in Kotlin (Providers.kt, Derive.kt); no address is typed anywhere but data/sources.json (endpoint) because a request is endpoint + path + params. Read by Dashboards.kt and by test/test-finterm-sources.sh.",
+  "pm_risk_tabs": {
+    "_doc": "PM Homepage top tabs (All | A | B | C | D). Each PM portfolio declares `risk` (A..D) and `equity_pct` (equity share, %); a tier's `equity_max` is the highest equity share it takes, so more equity = higher risk. A portfolio with no equity share declares `risk_basis` instead. In All every tier is a section with its `header`.",
+    "tabs": [
+      {
+        "id": "all",
+        "label": "All"
+      },
+      {
+        "id": "A",
+        "label": "A Low",
+        "header": "A Low risk",
+        "equity_max": 30
+      },
+      {
+        "id": "B",
+        "label": "B Middle",
+        "header": "B Middle risk",
+        "equity_max": 50
+      },
+      {
+        "id": "C",
+        "label": "C Risky",
+        "header": "C Risky",
+        "equity_max": 80
+      },
+      {
+        "id": "D",
+        "label": "D High",
+        "header": "D High risk",
+        "equity_max": 100
+      }
+    ]
+  },
   "_doc_fetch": "provider: fred_series (one request per series: id + cosd = today - lookback_days), dbnomics_series (path + params; params.dimensions is JSON-encoded), imf_datamapper (path, params; countries filters the answer), worldbank_indicator (path with {countries} joined by ';'), gdelt_artlist (path + params). derive: how the parsed data becomes rows/chart: latest_curve, forward_grid, latest_per_series, imf_latest, worldbank_latest, level_change, fx_spot, fx_cross, articles. view: curve (line chart), bars (bar chart + table), table, news, alloc (model portfolio legs). fallback (fred_series): {source} names the second-priority public source, tried series by series after the primary and the panel's own source returned nothing; a series carries its code there as `dbnomics` (\"<provider>/<dataset>/<series>\", read at endpoint + /series/<code>); a series with no code has no second source. em_calc / em_carry (#1447): the PM > D1 EM Bonds calculator (a heat-map matrix: fetch.part matrix | inputs) and D0 EM Carry Trade; fetch.inputs holds NAV (EUR), CG tax, exchange spread, FX and yield steps, centre (now | ma7), centre diff and the display rounding (0 = exact); fetch.high_a3 / fund_a3 / infl_a3 name the OECD series countries.",
   "dashboards": [
     {
@@ -2855,6 +2888,8 @@
       "id": "pm_a1_cash",
       "entry": "A1 Cash (DM - Cash)",
       "tab": "pm",
+      "risk": "A",
+      "equity_pct": 0,
       "model_portfolio": {
         "legs": [
           [
@@ -2896,6 +2931,8 @@
       "id": "pm_a2_low",
       "entry": "A2 Low Risk",
       "tab": "pm",
+      "risk": "A",
+      "equity_pct": 30,
       "model_portfolio": {
         "legs": [
           [
@@ -2929,6 +2966,8 @@
       "id": "pm_b1_mid",
       "entry": "B1 Middle Risk",
       "tab": "pm",
+      "risk": "B",
+      "equity_pct": 50,
       "model_portfolio": {
         "legs": [
           [
@@ -2962,6 +3001,8 @@
       "id": "pm_c1_risky",
       "entry": "C1 Risky",
       "tab": "pm",
+      "risk": "C",
+      "equity_pct": 80,
       "model_portfolio": {
         "legs": [
           [
@@ -2995,6 +3036,9 @@
       "id": "pm_d1_em_bonds",
       "entry": "D1 EM Bonds",
       "tab": "pm",
+      "risk": "D",
+      "equity_pct": 0,
+      "risk_basis": "declared: 100% EM bonds / EM carry trade, no equity share but the highest credit and FX risk (owner, #1447)",
       "model_portfolio": {
         "legs": [
           [
@@ -3012,12 +3056,6 @@
         ]
       },
       "panels": [
-        {
-          "id": "alloc",
-          "title": "Allocation: DM 0, EM equity 0 / bonds 100",
-          "source": "fincept_data_api",
-          "view": "alloc"
-        },
         {
           "id": "calc",
           "title": "EM Bonds CALCULATOR: return after inflation and taxes (EUR MoM)",
@@ -3057,6 +3095,12 @@
               "usd": "D.USD.EUR.SP00.A"
             }
           }
+        },
+        {
+          "id": "alloc",
+          "title": "Allocation: DM 0, EM equity 0 / bonds 100",
+          "source": "fincept_data_api",
+          "view": "alloc"
         },
         {
           "id": "inputs",
@@ -3108,6 +3152,8 @@
       "id": "pm_d0_carry",
       "entry": "D0 EM Carry Trade",
       "tab": "pm",
+      "risk": "D",
+      "risk_basis": "declared: 100% EM bonds / EM carry trade, no equity share but the highest credit and FX risk (owner, #1447)",
       "panels": [
         {
           "id": "carry",
@@ -3158,6 +3204,8 @@
       "id": "mp_40_60",
       "entry": "40/60",
       "tab": "pm",
+      "risk": "C",
+      "equity_pct": 60,
       "model_portfolio": {
         "legs": [
           [
@@ -3290,6 +3338,8 @@
       "id": "mp_70_30",
       "entry": "70/30",
       "tab": "pm",
+      "risk": "A",
+      "equity_pct": 30,
       "model_portfolio": {
         "legs": [
           [
@@ -3360,6 +3410,8 @@
       "id": "mp_60_40",
       "entry": "60/40",
       "tab": "pm",
+      "risk": "B",
+      "equity_pct": 40,
       "model_portfolio": {
         "legs": [
           [
@@ -3430,6 +3482,8 @@
       "id": "mp_30_70",
       "entry": "30/70",
       "tab": "pm",
+      "risk": "C",
+      "equity_pct": 70,
       "model_portfolio": {
         "legs": [
           [
@@ -3500,6 +3554,8 @@
       "id": "mp_70_30_DM_EM",
       "entry": "70/30 DM/EM",
       "tab": "pm",
+      "risk": "D",
+      "equity_pct": 100,
       "model_portfolio": {
         "legs": [
           [
@@ -3570,6 +3626,8 @@
       "id": "mp_60_40_DM_EM",
       "entry": "60/40 DM/EM",
       "tab": "pm",
+      "risk": "D",
+      "equity_pct": 100,
       "model_portfolio": {
         "legs": [
           [
@@ -3640,6 +3698,8 @@
       "id": "mp_40_60_DM_EM",
       "entry": "40/60 DM/EM",
       "tab": "pm",
+      "risk": "D",
+      "equity_pct": 100,
       "model_portfolio": {
         "legs": [
           [
@@ -3710,6 +3770,8 @@
       "id": "mp_30_70_DM_EM",
       "entry": "30/70 DM/EM",
       "tab": "pm",
+      "risk": "D",
+      "equity_pct": 100,
       "model_portfolio": {
         "legs": [
           [
