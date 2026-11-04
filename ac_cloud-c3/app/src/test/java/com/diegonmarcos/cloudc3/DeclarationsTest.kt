@@ -135,14 +135,14 @@ class DeclarationsTest {
     }
 
     @Test
-    fun `every declared icon name looks like a drawable name, not a vocabulary key`() {
-        // The shell is Views and resolves icons with getIdentifier, so a name must be a real
-        // resource name. "health" or "robot" (the old Compose keys) resolve to 0 and draw a
-        // blank square, which is why the shell tester also checks the file exists.
+    fun `every declared icon is a drawable name (ic_) or a libs ui-icons catalog name`() {
+        // The shell resolves an ic_ name with getIdentifier, so it must be a real resource name ("health" or "robot",
+        // the old Compose keys, resolve to 0 and draw a blank square). The shared second row (Configs General | Perms |
+        // About, #1443) draws any other name from the libs:ui-icons catalog, so it must be one the catalog holds.
         val names = nav().sections.flatMap { s -> listOf(s.icon) + s.allPages().map { it.icon } }
         assertTrue("no declared icon may be blank", names.none { it.isBlank() })
-        assertTrue("every declared icon must be a drawable name (ic_*): $names",
-            names.all { it.startsWith("ic_") })
+        assertTrue("every declared icon must be an ic_ drawable name or a catalog name: $names",
+            names.all { it.startsWith("ic_") || com.diegonmarcos.superapp.uiicons.UiIcons.has(it) })
     }
 
     @Test

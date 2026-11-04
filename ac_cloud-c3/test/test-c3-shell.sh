@@ -24,7 +24,7 @@
 #       dispatch and every branch answers a declared id.
 #   T3  the declaration is the ONLY order: no Kotlin file holds a second list of tab
 #       ids, so reordering build.json reorders the nav and nothing else.
-#   T4  every declared icon is a real DRAWABLE and every drawable is declared. The
+#   T4  every declared icon is a real DRAWABLE (ic_*) or a libs:ui-icons catalog name, and every drawable is declared. The
 #       shell resolves icons by name with getIdentifier, so a name with
 #       no file resolves to 0 and draws a blank square — silently.
 #   T5  the Ops tab (was Apps) LAUNCHES the three real sibling APKs: each package equals that
@@ -66,6 +66,7 @@ MAIN="$SRC/MainActivity.kt"
 NAVKT="$SRC/C3BottomNav.kt"
 TABS="$SRC/pages/TabFragments.kt"
 DRAWABLE="$APP/app/src/main/res/drawable"
+UIICONS="$ROOT/ab_cloud-libs-shared/libs/ui-icons/src/main/kotlin/com/diegonmarcos/superapp/uiicons/UiIcons.kt"
 MANIFEST="$APP/app/src/main/AndroidManifest.xml"
 
 FAILURES=0
@@ -169,7 +170,7 @@ PYTHON
 # (R.drawable.X, and the quoted "ic_*" names iconResFor-style lookups resolve at runtime) —
 # the carried pages resolve icons both ways, and either one missing draws a BLANK square.
 t4() {
-    python3 - "$1" "$2" "$3" <<'PYTHON'
+    python3 - "$1" "$2" "$3" "$4" <<'PYTHON'
 import json, os, re, sys
 ui = json.load(open(sys.argv[1], encoding="utf-8"))["ui"]
 declared = set()
@@ -197,9 +198,16 @@ for dirpath, _d, files_ in os.walk(sys.argv[3]):
         declared.update(re.findall(r"R\.drawable\.([a-z0-9_]+)", code))
         declared.update(re.findall(r'"(ic_[a-z0-9_]+)"', code))
 declared = {d for d in declared if d}
+# A name that is not an ic_ drawable is a libs:ui-icons catalog name (#1160/#1443): the shared second row draws it
+# from the catalog, so it needs no drawable here -- but the catalog must hold it.
+catalog = set(re.findall(r'"([a-z0-9_]+)"\s+to\s+Icons\.', open(sys.argv[4], encoding="utf-8").read()))
+catalog_names = {d for d in declared if not d.startswith("ic_")}
+declared -= catalog_names
 files = {f[:-4] for f in os.listdir(sys.argv[2]) if f.endswith(".xml")}
 launcher = {"ic_launcher_background", "ic_launcher_foreground", "ic_launcher_monochrome"}
 bad = []
+for name in sorted(catalog_names - catalog):
+    bad.append("declared icon %r is neither an ic_ drawable nor a name in the libs:ui-icons catalog — it draws blank" % name)
 for name in sorted(declared - files):
     bad.append("declared icon %r has no res/drawable/%s.xml — the shell resolves icons by "
                "name with getIdentifier, so this resolves to 0 and draws a BLANK square" % (name, name))
@@ -336,10 +344,10 @@ if "AppCompatActivity" not in mc:
 if "supportFragmentManager" not in mc:
     bad.append("MainActivity never touches supportFragmentManager — it is not a fragment host, "
                "and the pages this app exists to show ARE fragments")
-for sym in ("NavBarBottom", "BottomNavViewItem"):
+for sym in ("NavBarBottom", "islandEntries"):
     if sym not in nc:
         bad.append("C3BottomNav does not use the shared %s — libs:bottomnav's own island "
-                   "is the one every fleet shell draws, not a fork" % sym)
+                   "is the one every fleet shell draws (items from the catalog via islandEntries, #1160), not a fork" % sym)
 if re.search(r"\bbottomNavItems\b", nc) or re.search(r"\bbottomNavItems\b", mc):
     bad.append("the shell references bottomNavItems, which is cloud-MAIL's item table: this "
                "app's nav would be coupled to another shipping app's tabs")
@@ -559,7 +567,7 @@ PYTHON
 t1 "$BJ"                              && pass "T1 ui.bottom_nav is the five declared tabs, in order, Home centre" || fail "T1 the tab declaration is wrong"
 t2 "$BJ" "$MAIN"                      && pass "T2 declaration <-> shell dispatch agree BOTH ways: no orphan either side" || fail "T2 declaration and dispatch disagree"
 t3 "$BJ" "$SRC"                       && pass "T3 no parallel list of tab ids" || fail "T3 a second list of tab ids exists"
-t4 "$BJ" "$DRAWABLE" "$SRC"           && pass "T4 every declared icon is a real drawable, and every drawable is declared" || fail "T4 an icon would draw blank, or a drawable is dead"
+t4 "$BJ" "$DRAWABLE" "$SRC" "$UIICONS"         && pass "T4 every declared icon is a real drawable, and every drawable is declared" || fail "T4 an icon would draw blank, or a drawable is dead"
 t5 "$BJ" "$MANIFEST" "$ROOT"          && pass "T5 the Apps tab launches the REAL siblings + cloud-c3-webserver, each queried, none renamed" || fail "T5 an Apps tile cannot open what it names"
 t6 "$BJ" "$TABS" "$SRC"               && pass "T6 NO PLACEHOLDER: every declared page resolves to a real fragment, and no not-built body exists" || fail "T6 a shipped tab can render a placeholder"
 t7 "$MAIN" "$NAVKT" "$SRC"            && pass "T7 the shell HOSTS FRAGMENTS and reuses libs:bottomnav's island" || fail "T7 the shell is not a fragment host, or forks the nav"
@@ -602,7 +610,7 @@ A="/ac_cloud-c3"
 c_t1() { t1 "$1$A/build.json"; }
 c_t2() { t2 "$1$A/build.json" "$1$A/app/src/main/java/com/diegonmarcos/cloudc3/MainActivity.kt"; }
 c_t3() { t3 "$1$A/build.json" "$1$A/app/src/main/java/com/diegonmarcos/cloudc3"; }
-c_t4() { t4 "$1$A/build.json" "$1$A/app/src/main/res/drawable" "$1$A/app/src/main/java/com/diegonmarcos/cloudc3"; }
+c_t4() { t4 "$1$A/build.json" "$1$A/app/src/main/res/drawable" "$1$A/app/src/main/java/com/diegonmarcos/cloudc3" "$UIICONS"; }
 c_t5() { t5 "$1$A/build.json" "$1$A/app/src/main/AndroidManifest.xml" "$1"; }
 c_t6() { t6 "$1$A/build.json" "$1$A/app/src/main/java/com/diegonmarcos/cloudc3/pages/TabFragments.kt" "$1$A/app/src/main/java/com/diegonmarcos/cloudc3"; }
 c_t7() { t7 "$1$A/app/src/main/java/com/diegonmarcos/cloudc3/MainActivity.kt" "$1$A/app/src/main/java/com/diegonmarcos/cloudc3/C3BottomNav.kt" "$1$A/app/src/main/java/com/diegonmarcos/cloudc3"; }
@@ -647,6 +655,7 @@ open(p,"w").write(s)
 PY
 }
 m_bad_icon()    { jqset "$1$A/build.json" 'd["ui"]["sections"][0]["icon"]="ic_does_not_exist"'; }
+m_bad_catalog_icon() { jqset "$1$A/build.json" 'sec("configs")["pages"][1]["icon"]="not_in_the_catalog"'; }
 m_dead_drawable() { cp "$1$A/app/src/main/res/drawable/ic_home.xml" "$1$A/app/src/main/res/drawable/ic_unused_ghost.xml"; }
 m_wrong_pkg()   { jqset "$1$A/build.json" 'd["ui"]["external_apps"][0]["package"]="com.diegonmarcos.c3watchdog"'; }
 m_add_label()   { jqset "$1$A/build.json" 'd["ui"]["external_apps"][0]["label"]="Watchdog"'; }
@@ -704,7 +713,7 @@ PY
 m_hardcode_top() { python3 - "$1$A/app/src/main/java/com/diegonmarcos/cloudc3/MainActivity.kt" <<'PY'
 import sys
 p=sys.argv[1]; s=open(p).read(); b=s
-s=s.replace("Modifier.fillMaxSize().background(colorResource(R.color.c3_background))","Modifier.fillMaxSize().background(colorResource(R.color.c3_background)).padding(top = 36.dp)")
+s=s.replace("Modifier.fillMaxSize().themeBackground(dark = true)","Modifier.fillMaxSize().themeBackground(dark = true).padding(top = 36.dp)")
 assert s!=b
 open(p,"w").write(s)
 PY
@@ -738,6 +747,7 @@ mutate "a declared tab loses its dispatch branch"         c_t2 m_drop_branch
 mutate "a screen is dispatched that nothing declares"     c_t2 m_orphan_branch
 mutate "a parallel list of tab ids is added"              c_t3 m_parallel
 mutate "a tab declares an icon with no drawable"          c_t4 m_bad_icon
+mutate "a catalog icon name the catalog lacks"             c_t4 m_bad_catalog_icon
 mutate "a drawable is added that nothing declares"        c_t4 m_dead_drawable
 mutate "an Apps tile names a package no sibling has"      c_t5 m_wrong_pkg
 mutate "an Apps tile regains a display label (#224)"      c_t5 m_add_label
