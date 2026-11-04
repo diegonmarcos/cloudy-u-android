@@ -58,7 +58,7 @@ if tap_text "Add"; then
   tap_text "Label" && adb shell input text "Test"
   adb shell input keyevent 61; adb shell input keyevent 61; sleep 1
   adb shell input text "4000000000000002"
-  adb shell input keyevent 111; sleep 1
+  adb shell input keyevent 4; sleep 1   # Back with the keyboard up only closes the keyboard
   for _ in 1 2 3; do tap_text "Save" && break; adb shell input swipe 500 1500 500 600 300; sleep 1; done || bad "cards: no Save"
   shot personal-cards-added 3
   has personal-cards-added "0002" || bad "cards: the masked last four are not shown"
