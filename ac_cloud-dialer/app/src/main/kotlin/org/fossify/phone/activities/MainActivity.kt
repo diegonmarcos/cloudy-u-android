@@ -436,7 +436,10 @@ class MainActivity : SimpleActivity() {
         NavBarTopFirstRowScaffold(
             title = DialerNav.decl.section(sectionId)?.label ?: getString(R.string.app_launcher_name),
             // The title island lists the sections on screen (each a single page), so a pick shows that page.
-            hierarchy = shown.map { HierarchyEntry(it.id, it.label, 0, it.id, selected = it.id == sectionId) },
+            // #1415 the title follows the active tab: the scaffold reads the FIRST depth-0 entry as the section, so only
+            // the selected one goes here and the island's sections are its peers (the dropdown still lists them all).
+            hierarchy = shown.filter { it.id == sectionId }.map { HierarchyEntry(it.id, it.label, 0, it.id, selected = true) },
+            sections = shown,
             onNavigate = { e -> selectSection(e.sectionId) },
             onAccount = rememberAccountLauncher(),
             onConfigs = { openConfigs() },

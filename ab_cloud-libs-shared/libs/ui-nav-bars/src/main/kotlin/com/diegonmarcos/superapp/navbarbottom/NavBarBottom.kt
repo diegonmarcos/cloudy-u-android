@@ -168,8 +168,14 @@ public fun NavBarBottom(
                     val lift by animateDpAsState(if (labelled) -BottomSpec.LIFT else 0.dp, label = "navbottom_lift")
                     val show by animateFloatAsState(if (labelled) 1f else 0f, label = "navbottom_label")
                     Box(
-                        Modifier.size(cell, cellHeight).clip(CircleShape).testTag(BottomTags.item(e.id))
-                            .selectable(selected = on, role = Role.Tab, onClick = { onSelect(e) })
+                        // #1415 no clip: a CircleShape clip cut the label's ends ("Contacts" on a six-item bar). The touch
+                        // feedback keeps its circle as an unbounded ripple of the cell's radius.
+                        Modifier.size(cell, cellHeight).testTag(BottomTags.item(e.id))
+                            .selectable(
+                                selected = on, interactionSource = null,
+                                indication = androidx.compose.material3.ripple(bounded = false, radius = minOf(cell, cellHeight) / 2),
+                                role = Role.Tab, onClick = { onSelect(e) },
+                            )
                             .semantics { collectionItemInfo = CollectionItemInfo(0, 1, index, 1); if (clean) contentDescription = e.label },
                         contentAlignment = Alignment.Center,
                     ) {
