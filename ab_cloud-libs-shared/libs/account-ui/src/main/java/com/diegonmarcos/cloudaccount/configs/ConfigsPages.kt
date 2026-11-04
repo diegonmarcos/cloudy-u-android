@@ -126,17 +126,24 @@ object ConfigsLoad {
         }
     }
 
+    /**
+     * cloudy-u-containers' recursive tree is megabytes (too slow for a phone), so: its top-level directories (one small
+     * call), then each directory's declared compose path from the raw host, 8 at a time. A directory without one is skipped.
+     */
     fun containers(src: ConfigsSources): List<ContainerRow>? {
         val c = src.containers; val repo = c.optString("repo"); val ref = c.optString("ref", "main")
-        val paths = RepoSource.tree(src.owner, repo, ref)?.toSet() ?: return null
         val exclude = c.optJSONArray("exclude").strings() + src.exclude
         val compose = c.optJSONArray("compose").strings()
-        val dirs = paths.map { it.substringBefore('/') }.filter { d -> d !in exclude && !d.startsWith(".") }.distinct().sorted()
-        return dirs.mapNotNull { d ->
-            val f = compose.map { "$d/$it" }.firstOrNull { it in paths } ?: return@mapNotNull null
-            val text = RepoSource.file(src.owner, repo, ref, f) ?: return@mapNotNull ContainerRow(d, emptyList())
-            ContainerRow(d, ComposeDecl.parse(text))
-        }
+        val dirs = (RepoSource.topDirs(src.owner, repo, ref) ?: return null)
+            .filter { d -> d !in exclude && !d.startsWith(".") && !d.startsWith("_") }.sorted()
+        val pool = java.util.concurrent.Executors.newFixedThreadPool(8)
+        try {
+            return dirs.map { d ->
+                pool.submit<ContainerRow?> {
+                    compose.firstNotNullOfOrNull { RepoSource.file(src.owner, repo, ref, "$d/$it") }?.let { ContainerRow(d, ComposeDecl.parse(it)) }
+                }
+            }.mapNotNull { runCatching { it.get() }.getOrNull() }
+        } finally { pool.shutdown() }
     }
 
     /** One adb-shell switch's state: its check's trimmed output equals on_when. Null = no channel answered. */

@@ -149,7 +149,7 @@ class HubTest {
         // the owner's tabs, exactly and in order
         fun tabs(section: String) = nav.section(section)!!.pages.map { it.id }
         assertEquals(listOf("ids", "cards", "others", "autocomplete"), tabs("personal"))
-        assertEquals(listOf("android", "desktop", "c3"), tabs("configs"))
+        assertEquals(listOf("general", "perms", "about", "android", "desktop", "c3"), tabs("configs"))  // #1443 shared pages first
         assertEquals(listOf("secrets", "backups", "devices"), tabs("data"))
         assertEquals(listOf("status", "auth", "fleetsetup"), tabs("connect"))
         assertEquals(listOf("activity"), tabs("activity"))
@@ -158,7 +158,7 @@ class HubTest {
         assertEquals(listOf("cloud-apps", "phone-apps", "runbook"), nav.section("configs")!!.page("android")!!.pages.map { it.id })
         assertEquals(listOf("infra", "containers"), nav.section("configs")!!.page("c3")!!.pages.map { it.id })
         assertEquals(listOf("entries", "me"), nav.section("personal")!!.page("others")!!.pages.map { it.id })
-        assertEquals("cloud-apps", nav.section("configs")!!.page(null)!!.leaf().id)
+        assertEquals("general", nav.section("configs")!!.page(null)!!.leaf().id)  // #1443
         assertEquals("ids", nav.section("personal")!!.page(null)!!.leaf().id)
         assertEquals("providers", nav.section("data")!!.page(null)!!.leaf().id)
         // one place per thing: no leaf id repeats inside a section

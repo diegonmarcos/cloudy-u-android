@@ -65,6 +65,12 @@ object RepoSource {
             runCatching { JSONObject(body).optJSONArray("tree").objects().filter { it.optString("type") == "blob" }.map { it.optString("path") } }.getOrNull()
         }
 
+    /** The top-level directory names of [repo] at [ref] (one small, non-recursive trees call); null when unreadable. */
+    fun topDirs(owner: String, repo: String, ref: String, token: String? = null): List<String>? =
+        get("$api/repos/$owner/$repo/git/trees/$ref", token, "application/vnd.github+json")?.let { body ->
+            runCatching { JSONObject(body).optJSONArray("tree").objects().filter { it.optString("type") == "tree" }.map { it.optString("path") } }.getOrNull()
+        }
+
     fun file(owner: String, repo: String, ref: String, path: String, token: String? = null): String? =
         if (token.isNullOrBlank()) get("$raw/$owner/$repo/$ref/$path", null, "text/plain")
         else get("$api/repos/$owner/$repo/contents/$path?ref=$ref", token, "application/vnd.github.raw")

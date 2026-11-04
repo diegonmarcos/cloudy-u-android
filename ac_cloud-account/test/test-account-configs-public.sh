@@ -38,7 +38,7 @@ def leaves(pages):
         if p.get("pages"): yield from leaves(p["pages"])
         else: yield p["id"]
 cfg = next(s for s in ui["sections"] if s["id"] == "configs")
-allowed = {"cloud-apps", "phone-apps", "runbook", "desktop", "infra", "containers"}
+allowed = {"general", "perms", "about", "cloud-apps", "phone-apps", "runbook", "desktop", "infra", "containers"}  # #1443 shared fleet Configs pages (public)
 have = set(leaves(cfg["pages"]))
 ok(have == allowed, "Configs declares exactly the allowed pages", f"Configs leaves are {sorted(have)}, allowed {sorted(allowed)}")
 
