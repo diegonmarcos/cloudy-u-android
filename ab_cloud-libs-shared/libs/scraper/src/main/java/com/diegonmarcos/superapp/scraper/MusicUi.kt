@@ -49,6 +49,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.diegonmarcos.cloudlib.web.CloudWeb
+import com.diegonmarcos.cloudlib.web.CloudWebClient
 import com.diegonmarcos.cloudlib.web.WebProfile
 import com.diegonmarcos.superapp.themebg.ThemeColors
 import kotlinx.coroutines.Dispatchers
@@ -191,9 +192,9 @@ fun MusicPage(c: ThemeColors) {
     }
 
     oauth?.let { (spec, state, verifier) ->
-        val client = object : WebViewClient() {
-            override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
-                val cb = MusicOAuth.callback(request.url.toString(), spec, state) ?: return false
+        val client = object : CloudWebClient(WebProfile.BROWSER) {
+            override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+                val cb = MusicOAuth.callback(request?.url?.toString() ?: return false, spec, state) ?: return false
                 oauth = null
                 scope.launch {
                     val r = runCatching {
