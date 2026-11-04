@@ -130,6 +130,18 @@ class PersonalC3Test {
         assertFalse(all.contains("line2"))
     }
 
+    @Test fun jsonComposeKeepsNamesAndDropsEveryValue() {
+        val v = fakeSecret()
+        val s = ComposeDecl.parse("""{"services":{"vw":{"image":"x/vw:1","environment":{"ADMIN_TOKEN":"$v","DOMAIN":"$v"},
+            "secrets":["db_pw",{"source":"api_key"}],"env_file":[".env"],"volumes":["data:/data",{"type":"bind","source":"/opt/v","target":"/etc/v"}]}}}""")
+        assertEquals(listOf("vw"), s.map { it.name })
+        assertEquals(listOf("ADMIN_TOKEN", "DOMAIN"), s[0].envNames)
+        assertEquals(listOf("db_pw", "api_key"), s[0].secretNames)
+        assertEquals(listOf(".env"), s[0].envFiles)
+        assertEquals(listOf("data:/data", "/opt/v:/etc/v"), s[0].volumes)
+        assertFalse(s.flatMap { containerLines(it) }.joinToString().contains(v))
+    }
+
     @Test fun containersPageNeverDrawsAValue() {
         val v = fakeSecret()
         compose.setContent { themed { ContainersPage { listOf(ContainerRow("svc", ComposeDecl.parse(hostileCompose(v)))) } } }

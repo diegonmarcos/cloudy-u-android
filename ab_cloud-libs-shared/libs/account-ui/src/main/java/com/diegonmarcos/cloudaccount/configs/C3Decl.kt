@@ -34,7 +34,33 @@ object ComposeDecl {
     /** A volume as `source:target[:mode]`; an env interpolation in it (`${X}`) is kept as its name only. */
     private fun volume(item: String): String = unquote(item).replace(Regex("\\$\\{([A-Za-z_][A-Za-z0-9_]*)[^}]*}")) { "\${" + it.groupValues[1] + "}" }
 
+    /** Generated compose files are often JSON (valid YAML): read those with org.json, names only, like [parse]. */
+    private fun parseJson(text: String): List<ServiceDecl> {
+        val svcs = runCatching { org.json.JSONObject(text).optJSONObject("services") }.getOrNull() ?: return emptyList()
+        fun strs(v: Any?, key: String? = null): List<String> = when (v) {
+            is org.json.JSONArray -> (0 until v.length()).mapNotNull { i ->
+                when (val x = v.opt(i)) { is org.json.JSONObject -> key?.let { x.optString(it).ifEmpty { null } }; null -> null; else -> x.toString() }
+            }
+            is String -> listOf(v)
+            else -> emptyList()
+        }
+        return svcs.keys().asSequence().sorted().map { name ->
+            val o = svcs.optJSONObject(name) ?: org.json.JSONObject()
+            val env = when (val e = o.opt("environment")) {
+                is org.json.JSONObject -> e.keys().asSequence().toList()
+                is org.json.JSONArray -> strs(e).mapNotNull(::envName)
+                else -> emptyList()
+            }
+            val vols = (o.optJSONArray("volumes")?.let { a -> (0 until a.length()).map { i ->
+                when (val x = a.opt(i)) { is org.json.JSONObject -> listOfNotNull(x.optString("source").ifEmpty { null }, x.optString("target").ifEmpty { null }).joinToString(":"); else -> volume(x.toString()) }
+            } } ?: emptyList()).filter { it.isNotEmpty() }
+            ServiceDecl(name, o.optString("image").substringBefore('@'), env.filter { KEY.matches(it) }.distinct(),
+                strs(o.opt("secrets"), "source").distinct(), strs(o.opt("env_file"), "path").distinct(), vols.distinct())
+        }.toList()
+    }
+
     fun parse(text: String): List<ServiceDecl> {
+        if (text.trimStart().startsWith("{")) return parseJson(text)
         val lines = text.lines().filter { it.isNotBlank() && !it.trimStart().startsWith("#") }
         val out = mutableListOf<ServiceDecl>()
         var i = lines.indexOfFirst { indent(it) == 0 && it.trimEnd() == "services:" }
