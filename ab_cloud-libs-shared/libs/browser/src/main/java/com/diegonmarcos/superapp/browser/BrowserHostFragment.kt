@@ -289,6 +289,7 @@ class BrowserHostFragment : Fragment() {
         config = BrowserConfig.parseBase64(arguments?.getString(ARG_CONFIG_B64))
         browserSettings = BrowserSettings(ctx, config.settings)
         bookmarks.applySeed(favSeed)   // #893 Fav ships with the app's declared links, once per entry
+        FavFeed.start(ctx, favSeed, bookmarks)   // #1458 GH Pages: the hub's pages.json, cached copy now, fresh copy when it arrives
 
         // FIRST RUN ONLY, and only with what the app configured. A library
         // default of zero tabs means an app that supplies nothing gets

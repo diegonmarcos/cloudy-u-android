@@ -3,8 +3,8 @@
 
 Nothing is typed here. build.json::ui.browser.favourites.filters names the chips (label + `from`, in order); each `from`
 reads one declaration:
-  github_pages     data/github_pages.json (itself derived by gen-github-pages.py); sub-folder = its `repo`, the front
-                   project's source folder the site is built from
+  pages_hub        no links baked (#1458): the chip's `feed` (pages.json in diegonmarcos/front-html) is read at runtime by
+                   libs:browser FavFeed, with a cached fallback; the catalog carries the chip and its feed URL only
   services_public  aa_cloud-superapp/data/services_public.json (public_url); sub-folder = the category the SuperApp's
   services_private aa_cloud-superapp/data/services_private.json (private_dns, http/https + port only)   Cloud dashboard
                    (aa_cloud-superapp/data/cloud_services.json, Infra Apps + User Apps subgroups) files the container
@@ -60,15 +60,6 @@ def service_rows(rows, cats, url_field, scheme, protocols=None, require_port=Fal
     return out
 
 
-def pages_rows(pages):
-    out = []
-    for p in pages:
-        # a row from before `repo` existed: the site's own path segment names its project
-        repo = p.get("repo") or p["url"].split("://", 1)[1].rstrip("/").split("/")[-1]
-        out.append((p["name"], p["url"], repo))
-    return out
-
-
 def site_of(pkg):
     """com.ubercab -> https://ubercab.com (the reverse-domain host the package is named after)."""
     parts = [x for x in pkg.split(".") if x]
@@ -115,8 +106,9 @@ def derive(bj, read):
     for flt in fav["filters"]:
         kind, label = flt["from"], flt["label"]
         entry = {"id": flt["id"], "label": label}
-        if kind == "github_pages":
-            rows = pages_rows(read("ac_cloud-browser/data/github_pages.json"))
+        if kind == "pages_hub":
+            entry["feed"] = flt["feed"]
+            rows = []
         elif kind == "services_public":
             rows = service_rows(read("aa_cloud-superapp/data/services_public.json"), cats, "public_url", "https")
         elif kind == "services_private":

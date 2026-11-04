@@ -5,8 +5,8 @@ import org.json.JSONObject
 /** One link the app ships as a favourite; [group] becomes the bookmark's folder ("Public", "Private (mesh)"). */
 data class FavSeedItem(val title: String, val url: String, val group: String)
 
-/** #1422 one chip under the Favourites title: its [label] is the first segment of its items' folder; [open] = a link the chip opens instead of filtering. */
-data class FavFilter(val id: String, val label: String, val open: String? = null)
+/** #1422 one chip under the Favourites title: its [label] is the first segment of its items' folder; [open] = a link the chip opens instead of filtering; #1458 [feed] = a pages.json URL read at runtime (FavFeed) whose sites fill the chip. */
+data class FavFilter(val id: String, val label: String, val open: String? = null, val feed: String? = null)
 
 /** The app's declared favourites (build.json::ui.browser.favourites, expanded at build time). */
 data class FavSeed(
@@ -42,7 +42,7 @@ data class FavSeed(
             val filters = (0 until (fa?.length() ?: 0)).mapNotNull { i ->
                 val e = fa!!.optJSONObject(i) ?: return@mapNotNull null
                 val label = e.optString("label").trim()
-                if (label.isEmpty()) null else FavFilter(e.optString("id", label), label, e.optString("open").trim().ifEmpty { null })
+                if (label.isEmpty()) null else FavFilter(e.optString("id", label), label, e.optString("open").trim().ifEmpty { null }, e.optString("feed").trim().ifEmpty { null })
             }
             val lg = o.optJSONArray("legacy_groups")
             val legacy = (0 until (lg?.length() ?: 0)).map { lg!!.optString(it) }.filter { it.isNotBlank() }.toSet()

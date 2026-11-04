@@ -5,8 +5,8 @@
 # ╚══════════════════════════════════════════════════════════════════╝
 #
 #   C1 app/src/main/assets/favourites_catalog.json is exactly what tools/gen-favourites-catalog.py derives (never hand-edited, never stale)
-#   C2 the filters map to the registries: the chips are build.json's filters in order; GH Pages = data/github_pages.json
-#      by repo; Cloudy Public / Private = the SuperApp services files under the SuperApp Cloud dashboard categories;
+#   C2 the filters map to the registries: the chips are build.json's filters in order; GH Pages = the runtime hub feed (no baked rows)
+#      Cloudy Public / Private = the SuperApp services files under the SuperApp Cloud dashboard categories;
 #      Services / Tools = the SuperApp phone_sections / phone_folders taxonomy (Store > Phone > Apps); Webserver opens
 #      the cloud-webserver serving endpoint's Pages tab
 #   C3 the grid is GRID_COLUMNS = 8 weighted tiles per row; a header tap toggles the group, a collapsed group draws no
@@ -46,10 +46,9 @@ def check(root, ok):
     items = cat["items"]
     ok(all(i["group"].split("/")[0] in labels and "/" in i["group"] for i in items), "C2 every item sits in '<chip>/<sub-folder>'")
     def grp(label): return [i for i in items if i["group"].split("/")[0] == label]
-    pages = j(root, "ac_cloud-browser/data/github_pages.json")
-    ok({i["url"] for i in grp("GH Pages")} == {p["url"] for p in pages}
-       and all(i["group"] == "GH Pages/" + (p.get("repo") or "") for p in pages for i in grp("GH Pages") if i["url"] == p["url"] and p.get("repo")),
-       "C2 GH Pages = the Pages list, one sub-folder per repo")
+    gh = [f for f in cat["filters"] if f["label"] == "GH Pages"]
+    ok(len(gh) == 1 and gh[0].get("feed", "").startswith("https://raw.githubusercontent.com/diegonmarcos/front-html/") and not grp("GH Pages"),
+       "C2 GH Pages carries the hub feed URL and no baked rows")
     cs = j(root, "aa_cloud-superapp/data/cloud_services.json")
     sub = {sg["label"] for g in cs["groups"] if g["id"] in ("infra", "user") for sg in g["subgroups"]} | {"Other"}
     pub = j(root, "aa_cloud-superapp/data/services_public.json")
@@ -88,10 +87,9 @@ FAV = LIB + "/BrowserFavourites.kt"; SH = LIB + "/BrowserSheets.kt"; FRAG = LIB 
 GEN = "ac_cloud-browser/tools/gen-favourites-catalog.py"
 main("favourites catalog", check, [
     ("a registry changes, the catalog stays", "aa_cloud-superapp/data/services_public.json", '"name": "languagetool"', '"name": "languagetool-renamed"', "C1"),
-    ("the catalog is hand-edited", "ac_cloud-browser/app/src/main/assets/favourites_catalog.json", '"group": "GH Pages/', '"group": "GH Pages/x', "C1"),
+    ("the catalog is hand-edited", "ac_cloud-browser/app/src/main/assets/favourites_catalog.json", '"group": "Cloudy Public/', '"group": "Cloudy Public/x', "C1"),
     ("a chip is dropped", "ac_cloud-browser/build.json", '{ "id": "webserver", "label": "Webserver", "from": "webserver_pages" },\n', "", "C2 the chips are"),
     ("Services reads every section", GEN, 'if s["title"].startswith(section)]', ']', "C2 Services"),
-    ("GH Pages loses its repos", GEN, 'repo = p.get("repo") or ', 'repo = ', "C2 GH Pages"),
     ("Cloudy loses its categories", GEN, 'or cats.get((r.get("private_dns") or "").split(":")[0]) or "Other"', 'and "Misc" or "Misc"', "C2 Cloudy Public"),
     ("Webserver opens another tab", GEN, 'route = "/__app__/tab/pages"', 'route = "/__app__/tab/home"', "C2 Webserver"),
     ("six columns", FAV, "const val GRID_COLUMNS = 8", "const val GRID_COLUMNS = 6", "C3 eight tiles"),
