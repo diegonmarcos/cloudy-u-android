@@ -1,5 +1,7 @@
 package com.diegonmarcos.clouddrive.sync
 
+import com.diegonmarcos.cloudlib.gitui.*
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement

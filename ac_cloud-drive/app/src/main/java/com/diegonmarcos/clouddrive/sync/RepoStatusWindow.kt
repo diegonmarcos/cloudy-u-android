@@ -104,8 +104,8 @@ internal fun RepoStatusWindow(
                         stringResource(R.string.repo_meta_k_upstream) to (block.upstream ?: RepoTable.DASH),
                         stringResource(R.string.repo_meta_k_last_sync) to
                             if (repo != null && repo.lastSyncEpochSeconds > 0) fmt.format(Date(repo.lastSyncEpochSeconds * 1000)) + " · " + repo.lastSyncSummary else stringResource(R.string.sync_never),
-                        stringResource(R.string.repo_meta_k_lfs) to RepoTable.lfs(row.lfs, stringResource(R.string.repo_lfs_lfs), stringResource(R.string.repo_lfs_normal)),
-                        stringResource(R.string.repo_meta_k_visibility) to RepoTable.visibility(row.isPrivate, stringResource(R.string.repo_vis_pvt), stringResource(R.string.repo_vis_pub)),
+                        stringResource(R.string.repo_meta_k_lfs) to repoLfsWord(row.lfs),
+                        stringResource(R.string.repo_meta_k_visibility) to repoVisibilityWord(row.isPrivate),
                         stringResource(R.string.repo_meta_k_provider) to (row.provider ?: RepoTable.DASH),
                         stringResource(R.string.repo_meta_k_remote) to (repo?.remoteUrl?.takeIf { it.isNotBlank() } ?: cloneUrl).ifBlank { stringResource(R.string.git_meta_no_remote) },
                         stringResource(R.string.repo_meta_k_default_branch) to (remote?.defaultBranch ?: unknown),

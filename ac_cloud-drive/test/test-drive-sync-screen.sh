@@ -38,7 +38,7 @@ SRC="$APP/app/src/main/java/com/diegonmarcos/clouddrive"
 CARDS="$SRC/sync/GitReposScreen.kt"
 # #1138 the row is a table row now: its cells and the grouped actions live in these two files.
 TABLE_UI="$SRC/sync/RepoTableUi.kt"
-TABLE="$SRC/sync/RepoTable.kt"
+GITUI="$APP/../ab_cloud-libs-shared/libs/git-ui/src/main/java/com/diegonmarcos/cloudlib/gitui"   # #1408 the table model and cells live in libs:git-ui
 COORD="$SRC/sync/GitSyncCoordinator.kt"
 HIST="$APP/../ab_cloud-libs-shared/libs/git-repos/src/main/java/com/diegonmarcos/cloudlib/gitrepos/SyncHistory.kt"
 RC="$SRC/sync/RcloneMountsScreens.kt"
@@ -97,7 +97,7 @@ for s in sync_now sync_open sync_history sync_settings sync_last sync_never sync
     grep -qE "R\.string\.$s\b" "$CARDS" "$TABLE_UI" "$SRC/sync/GitDepthUi.kt" && pass "card prints $s" || fail "card lacks $s"
 done
 if grep -qE 'StatusLightRow|light = light' "$CARDS" && grep -qE 'tag = DriveTags\.SYNC_REPO_CARD' "$CARDS"; then pass "the card is a DriveCard with a StatusLight and its tag"; else fail "the repo card is not the shared card"; fi
-if grep -qE '"↑\$ahead ↓\$behind"' "$TABLE" "$APP/../ab_cloud-libs-shared/libs/git-ui/src/main/java/com/diegonmarcos/cloudlib/gitui/GitTable.kt" && grep -qE 'if \(glance\.repositoryState != "SAFE"\)' "$CARDS" && grep -qE 'R\.string\.git_meta_branch, glance\?\.branch' "$CARDS"; then pass "the dense row's glance (#1138 table): ↑ahead ↓behind and the dirty count in their cells, state when not SAFE; the upstream is in the Metadata panel (#608)"; else fail "the glance line is incomplete"; fi
+if grep -qE '"↑\$ahead ↓\$behind"' "$APP/../ab_cloud-libs-shared/libs/git-ui/src/main/java/com/diegonmarcos/cloudlib/gitui/GitTable.kt" && grep -qE 'if \(glance\.repositoryState != "SAFE"\)' "$CARDS" && grep -qE 'R\.string\.git_meta_branch, glance\?\.branch' "$CARDS"; then pass "the dense row's glance (#1138 table): ↑ahead ↓behind and the dirty count in their cells, state when not SAFE; the upstream is in the Metadata panel (#608)"; else fail "the glance line is incomplete"; fi
 
 echo "── G3 stepped one-tap sync ──"
 if grep -qE 'enum class Step \{ STAGING, COMMITTING, PULLING, PUSHING \}' "$COORD" && grep -qE 'e\.stageAll\(\)' "$COORD" && grep -qE 'e\.commit\(repo\.syncMessage' "$COORD" && grep -qE 'e\.pull\(rebase = repo\.pullRebase, auth = authFor\(repo\)\)' "$COORD" && grep -qE 'e\.push\(auth = authFor\(repo\)\)' "$COORD"; then pass "stage → commit → pull → push through the engine's verbs, step published"; else fail "the stepped sync is not the engine's four verbs"; fi
@@ -129,7 +129,7 @@ echo "── G7 declared, not cloned (#608: a DENSE ROW, not a card) ──"
 # #669 the declared shape is the FALLBACK for rows with no listing item; a listed row clones
 # its own listing's URL (test-drive-git-auth-chain.sh C10 owns that rule and its mutations).
 if grep -qE 'ifBlank \{ page\.cloneUrl\(name, mode\) \}' "$CARDS" && grep -qE 'Pill\(stringResource\(R\.string\.sync_clone_into_store\), onClone, modifier = Modifier\.testTag\(DriveTags\.SYNC_GIT_STATUS_CLONE\), filled = true\)' "$SRC/sync/RepoStatusWindow.kt" && ! grep -q 'sync_clone_into_store' <<<"$(sed -n '/private fun GitRepoRow(/,/private fun lightOf(/p' "$CARDS")"; then pass "Clone into store is the status window's action (#1238), not the table row's; the declared URL is composed once, as the no-listing fallback"; else fail "clone-into-store composition missing (window) or still in the row"; fi
-if grep -qE 'testTag\(DriveTags\.SYNC_GIT_ROW\)' "$CARDS" && grep -qE 'RepoTable\.visibility\(r\.isPrivate, stringResource\(R\.string\.repo_vis_pvt\)' "$TABLE_UI"; then pass "the dense row is tagged and carries the Pvt/Pub column (#1138; it was a private badge)"; else fail "declared cards incomplete"; fi
+if grep -qE 'testTag\(DriveTags\.SYNC_GIT_ROW\)' "$CARDS" && grep -qE 'RepoColumn\.VISIBILITY to repoVisibilityWord\(r\.isPrivate\)' "$GITUI/RepoTableUi.kt"; then pass "the dense row is tagged and carries the Pvt/Pub column (#1138; it was a private badge)"; else fail "declared cards incomplete"; fi
 
 # g8 <MountsPage.kt> <FsyncPage.kt> <StorageCoordinator.kt> : #1173 the Rclone, FUSE and Backup pages: tagged cards whose lights are LOOKS at the thing, run state held across tabs
 g8() {

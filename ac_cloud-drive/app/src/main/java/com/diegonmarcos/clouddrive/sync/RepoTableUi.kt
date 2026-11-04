@@ -48,49 +48,17 @@ import com.diegonmarcos.clouddrive.ui.StatusLight
 internal fun RepoTableHeader(column: RepoColumn, ascending: Boolean, scroll: ScrollState, tag: String = DriveTags.SYNC_GIT_TABLE_HEADER, onSort: (RepoColumn) -> Unit) =
     com.diegonmarcos.cloudlib.gitui.RepoTableHeader(column, ascending, scroll, RepoTable.COLUMNS.filter { it in RepoTable.PINNED }, RepoTable.COLUMNS.filter { it !in RepoTable.PINNED }, tag, onSort)
 
-/** The nine fact cells after the name, in column order (the leftmost STATUS cell is [RepoStatusCell]). */
-@Composable
-internal fun RepoCells(r: RepoTableRow) {
-    val yes = stringResource(R.string.manage_yes)
-    val no = stringResource(R.string.manage_no)
-    val texts = listOf(
-        RepoColumn.PROVIDER to (r.provider ?: RepoTable.DASH),
-        RepoColumn.VISIBILITY to RepoTable.visibility(r.isPrivate, stringResource(R.string.repo_vis_pvt), stringResource(R.string.repo_vis_pub)),
-        RepoColumn.LFS to RepoTable.lfs(r.lfs, stringResource(R.string.repo_lfs_lfs), stringResource(R.string.repo_lfs_normal)),
-        RepoColumn.SIZE_MAIN to RepoTable.size(r.sizeMainBytes),
-        RepoColumn.SIZE_TOTAL to RepoTable.size(r.sizeTotalBytes),
-        RepoColumn.SIZE_DISK to RepoTable.size(r.sizeDiskBytes),
-        RepoColumn.BRANCHES to RepoTable.count(r.branches),
-        RepoColumn.DIRTY to RepoTable.dirty(r.dirtyFiles, yes, no),
-        RepoColumn.AHEAD_BEHIND to RepoTable.aheadBehind(r.ahead, r.behind),
-        RepoColumn.LAST_COMMIT to RepoTable.age(r.lastCommitMs, System.currentTimeMillis()),
-    )
-    texts.forEach { (c, t) ->
-        Text(t, repoCellModifier(c), style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace, textAlign = TextAlign.End, maxLines = 1, overflow = TextOverflow.Ellipsis)
-    }
-}
-
-/** #1238 the leftmost cell: the status icon; a tap on it (not on the row) opens the repository's full-screen status window. */
+/** #1238 the leftmost cell: the cell is libs:git-ui's; Drive draws its LOCAL | SERVER | SYNC lights from its status model. */
 @Composable
 internal fun RepoStatusCell(icons: RepoStatus.Icons, name: String, onOpen: () -> Unit, caption: String = "") {
-    val decl = com.diegonmarcos.clouddrive.Declarations.sync.git.status.icons
-    Box(
-        repoCellModifier(RepoColumn.STATUS).heightIn(min = DriveMetrics.tap).testTag(DriveTags.SYNC_GIT_STATUS_CELL)
-            .clickable(onClickLabel = stringResource(R.string.repo_status_open), onClick = onOpen),
-        contentAlignment = Alignment.Center,
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            // LOCAL | SERVER | SYNC, each its own light with its own kind in the accessible label.
-            Row(horizontalArrangement = Arrangement.spacedBy(DriveMetrics.gap)) {
-                // "not checked yet" / "never" draw a hollow dotted circle, never the "?" of a read that does not end.
-                fun glyph(l: StatusLight.State) = if (l == StatusLight.State.UNVERIFIABLE) "\u25CC" else StatusLight.glyph(l)
-                val lo = RepoStatus.lightOf("local", icons.local, decl); val se = RepoStatus.lightOf("server", icons.server, decl); val sy = RepoStatus.lightOf("sync", icons.sync, decl)
-                StatusDot(lo, "$name local ${icons.local.name.lowercase()}", glyph = glyph(lo))
-                StatusDot(se, "$name server ${icons.server.name.lowercase()}", glyph = glyph(se))
-                StatusDot(sy, "$name sync ${icons.sync.name.lowercase()}", glyph = glyph(sy))
-            }
-            if (caption.isNotBlank()) Text(caption, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
-        }
+    val decl = Declarations.sync.git.status.icons
+    com.diegonmarcos.cloudlib.gitui.RepoStatusCell(onOpen, caption) {
+        // "not checked yet" / "never" draw a hollow dotted circle, never the "?" of a read that does not end.
+        fun glyph(l: StatusLight.State) = if (l == StatusLight.State.UNVERIFIABLE) "\u25CC" else StatusLight.glyph(l)
+        val lo = RepoStatus.lightOf("local", icons.local, decl); val se = RepoStatus.lightOf("server", icons.server, decl); val sy = RepoStatus.lightOf("sync", icons.sync, decl)
+        StatusDot(lo, "$name local ${icons.local.name.lowercase()}", glyph = glyph(lo))
+        StatusDot(se, "$name server ${icons.server.name.lowercase()}", glyph = glyph(se))
+        StatusDot(sy, "$name sync ${icons.sync.name.lowercase()}", glyph = glyph(sy))
     }
 }
 

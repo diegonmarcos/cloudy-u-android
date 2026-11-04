@@ -646,9 +646,6 @@
     <string name="repo_unpushed_none">Nothing to push: every local commit is on the remote.</string>
     <string name="repo_unpushed_line">%1$s  %2$s  %3$s</string>
     <string name="repo_unpushed_failed">The unpushed commits could not be read: %1$s</string>
-    <string name="repo_lfs_lfs">LFS</string>
-    <string name="repo_lfs_normal">Normal</string>
-    <string name="repo_status_open">Open the full status</string>
     <string name="repo_status_window_close">Close</string>
     <string name="repo_status_window_title">Repository status</string>
     <string name="repo_status_window_state">State: %1$s</string>
@@ -670,8 +667,6 @@
     <string name="repo_kind_clean">clean, in sync</string>
     <string name="repo_meta_k_lfs">LFS</string>
     <string name="repo_meta_k_provider">Provider</string>
-    <string name="repo_vis_pvt">Pvt</string>
-    <string name="repo_vis_pub">Pub</string>
     <string name="repo_act_checkout_main">Checkout Main</string>
     <string name="repo_act_branches">List Branches</string>
     <string name="repo_act_prs">PRs</string>

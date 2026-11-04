@@ -20,6 +20,7 @@ data class GitUiKit(
     val fadeEnd: Modifier.(Boolean) -> Modifier = { this },
     val tagTableHeader: String = "sync_git_table_header",
     val tagMetaTable: String = "sync_git_meta_table",
+    val tagStatusCell: String = "sync_git_status_cell",
 )
 
 val LocalGitUiKit = staticCompositionLocalOf { GitUiKit() }

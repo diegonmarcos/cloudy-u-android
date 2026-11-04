@@ -1862,7 +1862,7 @@ private fun GitRepoOpsBox(
         RepoMetaTable(listOf(
             stringResource(R.string.repo_meta_k_name) to repoName,
             stringResource(R.string.repo_meta_k_owner) to owner,
-            stringResource(R.string.repo_meta_k_visibility) to RepoTable.visibility(isPrivate, stringResource(R.string.repo_vis_pvt), stringResource(R.string.repo_vis_pub)),
+            stringResource(R.string.repo_meta_k_visibility) to repoVisibilityWord(isPrivate),
             stringResource(R.string.repo_meta_k_path) to repo.path,
             stringResource(R.string.repo_meta_k_remote) to repo.remoteUrl.ifBlank { stringResource(R.string.git_meta_no_remote) },
             stringResource(R.string.repo_meta_k_branch) to (glance?.branch ?: stringResource(R.string.sync_no_branch)),
@@ -2022,7 +2022,7 @@ private fun GitRepoNotClonedBox(
         RepoMetaTable(listOf(
             stringResource(R.string.repo_meta_k_name) to repoName,
             stringResource(R.string.repo_meta_k_owner) to owner,
-            stringResource(R.string.repo_meta_k_visibility) to RepoTable.visibility(isPrivate, stringResource(R.string.repo_vis_pvt), stringResource(R.string.repo_vis_pub)),
+            stringResource(R.string.repo_meta_k_visibility) to repoVisibilityWord(isPrivate),
             stringResource(R.string.repo_meta_k_remote) to url.ifBlank { stringResource(R.string.git_meta_no_remote) },
             stringResource(R.string.repo_meta_k_default_branch) to (remote?.defaultBranch ?: stringResource(R.string.repo_unknown)),
             stringResource(R.string.repo_meta_k_size) to (RepoTable.size(row.sizeMainBytes) + " / " + RepoTable.size(row.sizeTotalBytes)),

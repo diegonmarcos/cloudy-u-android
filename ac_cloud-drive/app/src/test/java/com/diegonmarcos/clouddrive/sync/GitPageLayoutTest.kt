@@ -125,7 +125,7 @@ class GitPageLayoutTest {
 
     @Test fun `#1195 the size column is in the table header and cells`() {
         assertTrue(tableUi.contains("RepoColumn.SIZE_DISK -> R.string.repo_col_size_disk"))
-        assertTrue(tableUi.contains("RepoColumn.SIZE_DISK to RepoTable.size(r.sizeDiskBytes)"))
+        assertTrue(tableUi.contains("RepoColumn.SIZE_DISK to GitTable.size(r.sizeDiskBytes)"))
         assertTrue(src.contains("diskSizes[File(it.path).absolutePath]?.bytes"))
     }
 
@@ -141,12 +141,12 @@ class GitPageLayoutTest {
         assertFalse("the dot is no longer inside the name cell", rowFn.contains("StatusDot("))
         assertFalse("the Not cloned string is gone", strings.contains("name=\"git_not_cloned\""))
         assertTrue(src.contains("onOpenStatus = { statusFor = e.key }"))
-        assertTrue(tableUi.contains("fun RepoStatusCell(") && tableUi.contains("DriveTags.SYNC_GIT_STATUS_CELL"))
+        assertTrue(tableUi.contains("fun RepoStatusCell(") && tableUi.contains("testTag(k.tagStatusCell)"))
     }
 
     @Test fun `#1238 the LFS column is declared, labelled, printed from the registry and never hardcoded`() {
         assertTrue(tableUi.contains("RepoColumn.LFS -> R.string.repo_col_lfs"))
-        assertTrue(tableUi.contains("RepoColumn.LFS to RepoTable.lfs(r.lfs"))
+        assertTrue(tableUi.contains("RepoColumn.LFS to repoLfsWord(r.lfs)") && tableUi.contains("GitTable.lfs(lfs, "))
         assertTrue("the row reads the registry flag", src.contains("Declarations.repoSot.lfsOf(name)"))
         val vis = tableUi.indexOf("RepoColumn.VISIBILITY to"); val lfs = tableUi.indexOf("RepoColumn.LFS to")
         assertTrue("LFS is the cell right after Pvt/Pub", vis in 0 until lfs && tableUi.substring(vis, lfs).lines().size == 2)

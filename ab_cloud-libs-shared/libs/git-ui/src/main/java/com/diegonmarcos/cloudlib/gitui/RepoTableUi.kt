@@ -4,7 +4,10 @@ import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -97,6 +100,55 @@ fun RepoMetaTable(rows: List<Pair<String, String>>) {
                     }
                 }
             }
+        }
+    }
+}
+
+/** The Pvt | Pub cell word of a repository in the device language; the dash when the visibility is not known. */
+@Composable
+fun repoVisibilityWord(isPrivate: Boolean?): String = GitTable.visibility(isPrivate, stringResource(R.string.repo_vis_pvt), stringResource(R.string.repo_vis_pub))
+
+/** The LFS | Normal cell word of a repository in the device language; the dash when the registry does not list it. */
+@Composable
+fun repoLfsWord(lfs: Boolean?): String = GitTable.lfs(lfs, stringResource(R.string.repo_lfs_lfs), stringResource(R.string.repo_lfs_normal))
+
+/** The nine fact cells after the name, in column order (the leftmost STATUS cell is [RepoStatusCell]). */
+@Composable
+fun RepoCells(r: GitTableRow<*>) {
+    val yes = stringResource(R.string.repo_dirty_yes)
+    val no = stringResource(R.string.repo_dirty_no)
+    val texts = listOf(
+        RepoColumn.PROVIDER to (r.provider ?: GitTable.DASH),
+        RepoColumn.VISIBILITY to repoVisibilityWord(r.isPrivate),
+        RepoColumn.LFS to repoLfsWord(r.lfs),
+        RepoColumn.SIZE_MAIN to GitTable.size(r.sizeMainBytes),
+        RepoColumn.SIZE_TOTAL to GitTable.size(r.sizeTotalBytes),
+        RepoColumn.SIZE_DISK to GitTable.size(r.sizeDiskBytes),
+        RepoColumn.BRANCHES to GitTable.count(r.branches),
+        RepoColumn.DIRTY to GitTable.dirty(r.dirtyFiles, yes, no),
+        RepoColumn.AHEAD_BEHIND to GitTable.aheadBehind(r.ahead, r.behind),
+        RepoColumn.LAST_COMMIT to GitTable.age(r.lastCommitMs, System.currentTimeMillis()),
+    )
+    texts.forEach { (c, t) ->
+        Text(t, repoCellModifier(c), style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace, textAlign = TextAlign.End, maxLines = 1, overflow = TextOverflow.Ellipsis)
+    }
+}
+
+/**
+ * #1238 the leftmost cell: the host's status lights ([dots], LOCAL | SERVER | SYNC) over an optional caption; a tap on it (not
+ * on the row) opens the repository's full-screen status window. The status model and its lights stay the host's.
+ */
+@Composable
+fun RepoStatusCell(onOpen: () -> Unit, caption: String = "", dots: @Composable RowScope.() -> Unit) {
+    val k = LocalGitUiKit.current
+    Box(
+        repoCellModifier(RepoColumn.STATUS).heightIn(min = k.tap).testTag(k.tagStatusCell)
+            .clickable(onClickLabel = stringResource(R.string.repo_status_open), onClick = onOpen),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Row(horizontalArrangement = Arrangement.spacedBy(k.gap), content = dots)
+            if (caption.isNotBlank()) Text(caption, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
         }
     }
 }

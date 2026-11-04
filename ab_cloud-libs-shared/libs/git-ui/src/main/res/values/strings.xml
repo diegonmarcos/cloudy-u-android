@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- #1408 libs:git-ui: the repo table's column labels and the metadata table title (moved from Cloud Drive). -->
+<!-- #1408 libs:git-ui: the repo table's column labels and the metadata table title (moved from Cloud Drive), and the table cells' words. -->
 <resources>
     <string name="repo_col_status">Status</string>
     <string name="repo_col_name">Name</string>
@@ -13,5 +13,12 @@
     <string name="repo_col_dirty">Dirty</string>
     <string name="repo_col_ab">Ahead/Behind</string>
     <string name="repo_col_last_commit">Last commit</string>
+    <string name="repo_dirty_yes">yes</string>
+    <string name="repo_dirty_no">no</string>
+    <string name="repo_vis_pvt">Pvt</string>
+    <string name="repo_vis_pub">Pub</string>
+    <string name="repo_lfs_lfs">LFS</string>
+    <string name="repo_lfs_normal">Normal</string>
+    <string name="repo_status_open">Open the full status</string>
     <string name="repo_meta_table_title">Repository metadata</string>
 </resources>
