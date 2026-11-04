@@ -102,7 +102,7 @@ for t in 'Linux distros' 'Android Desktop' 'Android Mobile' 'Customised ISOs'; d
   top "^$t\$"; sleep 4
   shot "0$n-table-$(echo "$t" | tr 'A-Z ' 'a-z-' | tr -cd 'a-z-')"; n=$((n+1))
 done
-has 'flash, not Ventoy' || { seek 'flash, not Ventoy' 10; } || fail "Android Mobile rows are not marked flash, not Ventoy"
+grep -q 'flash, not Ventoy' "$OUT/ui-06-table-android-mobile.xml" || fail "Android Mobile rows are not marked flash, not Ventoy"
 seek 'text="Ubuntu Desktop LTS"' 1 || true
 
 # ── install the test image onto the virtual drive ──────────────────────────────────────────────────────────────────
