@@ -11,7 +11,7 @@ set -u
 APK=${1:?drive apk}; OUT=${2:-out}
 PKG=com.diegonmarcos.clouddrive
 NAME=cloudy-fixture
-DIR=/sdcard/Download/fixtures
+DIR=/storage/emulated/0/Download/fixtures
 mkdir -p "$OUT/shots"
 fail() { echo "::error title=Drive Git #1408::$*"; adb exec-out screencap -p > "$OUT/shots/fail.png" 2>/dev/null; adb logcat -d -v threadtime > "$OUT/logcat.txt" 2>/dev/null; exit 1; }
 note() { echo "note: $*"; echo "$*" >> "$OUT/notes.txt"; }
@@ -34,8 +34,9 @@ launch() { timeout 120 adb shell am start -W -n "$act" >/dev/null; sleep 6; for 
 open_git() { tap '^Git$' || { tap '^Sync$' && sleep 2 && tap '^Git$'; } || return 1; sleep 3; }
 front() { local f; f=$(adb shell dumpsys window | tr -d '\r' | grep -m1 mCurrentFocus); case "$f" in *"$PKG"*) return 0;; esac; note "focus was: $f"; adb shell am start -n "$act" >/dev/null; sleep 4; tap '^Continue with local files$' && sleep 3; true; }
 need() { dump >/dev/null; for t in "$@"; do has "$t" || return 1; done; }
-pull_clone() { rm -rf "$WORK/pulled"; mkdir -p "$WORK/pulled"; adb pull "$1" "$WORK/pulled/" >/dev/null 2>&1; }
-find_clone() { adb shell "find /sdcard/Download /sdcard/git /storage/emulated/0/git -maxdepth 4 -type d -name .git 2>/dev/null" | tr -d '\r' | grep "$NAME" | head -1 | sed 's#/\.git$##'; }
+pull_clone() { rm -rf "$WORK/pulled"; mkdir -p "$WORK/pulled/$(basename "$1")"; case "$1" in /data/data/*) adb exec-out "run-as $PKG tar -C ${1#/data/data/$PKG/} -cf - ." | tar -C "$WORK/pulled/$(basename "$1")" -xf - ;; *) rm -rf "$WORK/pulled"; mkdir -p "$WORK/pulled"; adb pull "$1" "$WORK/pulled/" >/dev/null 2>&1 ;; esac; }
+dev_sh() { case "$CL" in /data/data/*) adb shell "run-as $PKG sh -c '$1'" ;; *) adb shell "$1" ;; esac; }
+find_clone() { { adb shell "find -L /storage/emulated/0 -maxdepth 5 -type d -name .git 2>/dev/null"; adb shell "run-as $PKG find files -maxdepth 6 -type d -name .git 2>/dev/null" | sed "s#^#/data/data/$PKG/#"; } | tr -d '\r' | grep "$NAME" | grep -v remote.git | head -1 | sed 's#/\.git$##'; }
 host_git() { git -c user.name=h -c user.email=h@h "$@"; }
 
 adb shell settings delete global cloud_nav_ui_mode >/dev/null 2>&1 || true
@@ -84,7 +85,7 @@ printf 'server\n' > "$WORK/other/a.txt"
 host_git -C "$WORK/other" commit -qam server
 git -C "$WORK/other" push -q origin HEAD:refs/heads/main
 adb shell rm -rf "$DIR/remote.git" && adb push "$WORK/remote.git" "$DIR/" >/dev/null || fail "remote update failed"
-adb shell "printf 'phone\n' > $CL/a.txt" || fail "could not edit the clone"
+dev_sh "printf phone > $CL/a.txt" || fail "could not edit the clone"
 front; tap "^$NAME\$" || fail "no $NAME row after clone: $(texts)"; sleep 2
 for i in 1 2 3 4; do front; need 'Sync: no winner' && break; swipe_up; done
 shot 20-sheet-sync
