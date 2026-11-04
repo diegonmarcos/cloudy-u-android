@@ -46,6 +46,7 @@ def searchConfigB64 = b64(buildJson.search)
 def agentsB64 = b64(buildJson.agents ?: [:])
 [searchConfigB64, agentsB64].each { if (it.length() > 65000) throw new GradleException("a baked declaration is ${it.length()} bytes: a Java string constant holds 65535") }
 // #868 the nav declaration: ui.bottom_nav (the island), ui.sections (what each item opens), ui.default_section.
+def samplePagesB64 = b64(buildJson.sample_pages ?: [:])
 def uiBottomNav      = (buildJson.ui?.bottom_nav ?: []).join(',')
 def uiSectionsB64    = b64(buildJson.ui?.sections ?: [])
 def uiDefaultSection = (buildJson.ui?.default_section ?: '').toString()
@@ -124,6 +125,7 @@ android {
         buildConfigField "String",  "UI_STYLE",          "\"${uiStyle}\""
         buildConfigField "String",  "SEARCH_CONFIG_B64", "\"${searchConfigB64}\""
         buildConfigField "String",  "AGENTS_B64",        "\"${agentsB64}\""
+        buildConfigField "String",  "SAMPLE_PAGES_B64",    "\"${samplePagesB64}\""
         buildConfigField "String",  "DEBUG_API_GROUP",   "\"${debugGroup}\""
         buildConfigField "boolean", "DARK_DEFAULT",      "${darkDefault}"
         buildConfigField "String",  "BROWSER_PACKAGE",   "\"${browserPackage}\""

@@ -124,7 +124,7 @@ class ResearchCgcShellTest {
     }
 
     private fun search(section: String, page: String, q: String) {
-        compose.onNodeWithTag(Tags.nav(section)).performClick()
+        compose.goTo(state, section)
         compose.onNodeWithTag(Tags.subpage(page)).performClick()
         waitFor(CgcTags.QUERY)
         compose.onNodeWithTag(CgcTags.QUERY).performTextInput(q)
@@ -133,7 +133,7 @@ class ResearchCgcShellTest {
 
     @Test fun researchShowsTheFleetNewsFromTheDeclaredServiceMeshFirst() {
         compose.setContent { SearchShell(state) }
-        compose.onNodeWithTag(Tags.nav("news")).performClick()
+        compose.goTo(state, "news")
         waitFor(ResearchTags.article(0))
         waitText(ResearchTags.STATUS, "2 headlines via mesh")
         assertEquals("http://news-gdelt.mesh.diegonmarcos.com:3019/articles?q=technology%20sourcelang%3Aenglish&limit=40", http.gets.first { "/articles" in it.first }.first)
@@ -150,7 +150,7 @@ class ResearchCgcShellTest {
     /** #1197 News > YouTube Feed: the first declared channel's Atom feed is fetched and its videos listed newest first. */
     @Test fun youTubeFeedListsTheChannelsVideosNewestFirst() {
         compose.setContent { SearchShell(state) }
-        compose.onNodeWithTag(Tags.nav("news")).performClick()
+        compose.goTo(state, "news")
         compose.onNodeWithTag(Tags.subpage("youtube")).performClick()
         waitFor(NewsTags.item(1))
         waitText(NewsTags.STATUS, "2 items")

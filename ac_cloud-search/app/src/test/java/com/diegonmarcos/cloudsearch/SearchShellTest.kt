@@ -134,11 +134,12 @@ class SearchShellTest {
 
     /** #913b a vertical through the app's own nav: the assistant is the island's Chat; every other one a pill of Searches' strip. */
     private fun openVertical(id: String) {
-        if (id == state.chatVertical) compose.onNodeWithTag(Tags.nav("chat")).performClick()
+        if (id == state.chatVertical) compose.goTo(state, "chat")
         else {
-            compose.onNodeWithTag(Tags.nav(state.sectionOf(id))).performClick()
+            compose.goTo(state, state.sectionOf(id))
             compose.waitForIdle()
-            compose.onNodeWithTag(Tags.subpage(id)).performScrollTo().performClick()
+            // a one-page section (Image, Videos) draws no second row
+            if (com.diegonmarcos.cloudsearch.ui.NAV.section(state.sectionOf(id))!!.pages.size > 1) compose.onNodeWithTag(Tags.subpage(id)).performScrollTo().performClick()
         }
         compose.waitForIdle()
     }
@@ -317,14 +318,15 @@ class SearchShellTest {
     @Test fun theSharedNavPatternRendersWithTheSearchFieldInside() {
         launch()
         assertEquals(com.diegonmarcos.superapp.bottomnav.NavStyle.Fleet, com.diegonmarcos.cloudsearch.ui.NAV.style)
-        waitFor(Tags.nav("news"))
+        waitFor(Tags.nav("scrapers"))
         compose.onNodeWithTag(com.diegonmarcos.superapp.navbartop1.TopFirstRowTags.ROW).assertExists()
         for (tag in listOf(Tags.ISLAND, Tags.PROFILE, Tags.CONFIGS)) compose.onNodeWithTag(tag).assertExists()
         compose.onNodeWithTag(com.diegonmarcos.superapp.bottomnav.TopBarTags.MENU).assertDoesNotExist()
         val ids = com.diegonmarcos.cloudsearch.ui.NAV.bottomNav
-        assertEquals(listOf("news", "research", "cgc", "chat", "media", "shopping", "brokers"), ids)
+        assertEquals(listOf("scrapers", "research", "cgc", "image", "video", "models3d"), ids)
         compose.onNodeWithTag(com.diegonmarcos.superapp.navbarbottom.BottomTags.BAR).assertExists()
         for (id in ids) compose.onNodeWithTag(Tags.nav(id)).assertExists()
+        for (id in listOf("news", "shopping", "brokers")) compose.onNodeWithTag(Tags.nav(id)).assertDoesNotExist()
         openVertical("house")
         waitFor(Tags.WEB_STRIP)
         for (v in BROKERS_PAGES) compose.onNodeWithTag(Tags.subpage(v)).assertExists()
@@ -334,15 +336,19 @@ class SearchShellTest {
     }
 
     /** #1197 the former Searches (and the old Me and LLC), each vertical once: Media, Shopping and Brokers hold them. */
-    private val MEDIA_PAGES = listOf("image", "video", "movies", "books")
+    private val MEDIA_PAGES = listOf("movies", "books")
     private val SHOPPING_PAGES = listOf("groceries", "electronics", "clothing", "things")
     private val BROKERS_PAGES = listOf("jobs", "house", "commercial", "business", "suppliers", "services")
     private val SEARCH_PAGES get() = listOf(state.chatVertical, "engines", "apps", "messages", "code")
 
-    /** The seven destinations route, and each shows its second row (News' feeds, Research's Reports/Models/Agents, CGC's two indexes, Search's pages, the verticals of Media, Shopping, Brokers). */
-    @Test fun theSevenDestinationsRouteAndKeepTheirTopTabs() {
+    /** The six tabs route, and each shows its second row; the parked sections (off the island, opened through the state) keep theirs. */
+    @Test fun theSixTabsRouteAndKeepTheirTopTabs() {
         launch()
         val tabs = mapOf(
+            "scrapers" to listOf("sitefiles", "apify", "selfhosted"),
+            "image" to emptyList(),
+            "video" to emptyList(),
+            "models3d" to emptyList(),
             "news" to listOf("news", "youtube", "gnews", "rss"),
             "research" to listOf("reports", "models", "agenthub"),
             "cgc" to listOf("cloud_semantic", "cloud_graph", "me_semantic", "me_graph"),
@@ -352,12 +358,12 @@ class SearchShellTest {
             "brokers" to BROKERS_PAGES,
         )
         for ((section, pages) in tabs) {
-            compose.onNodeWithTag(Tags.nav(section)).performClick()
+            compose.goTo(state, section)
             compose.waitForIdle()
             compose.runOnIdle { assertEquals(section, state.section) }
             for (id in pages) compose.onNodeWithTag(Tags.subpage(id)).assertExists()
         }
-        compose.onNodeWithTag(Tags.nav("brokers")).performClick()
+        compose.goTo(state, "brokers")
         compose.waitForIdle()
         waitFor(Tags.WEB_STRIP)
     }
@@ -608,24 +614,24 @@ class SearchShellTest {
     }
 
     // ── #913 the island, Agents and Reports; #1197 News, Research, CGC, Search, Media, Shopping, Brokers ──────
-    @Test fun theIslandHoldsTheSevenSectionsAndEachOpens() {
+    @Test fun theIslandHoldsTheSixTabsAndEachOpens() {
         launch()
-        assertEquals(listOf("news", "research", "cgc", "chat", "media", "shopping", "brokers"), NAV_IDS)
-        assertEquals(listOf("News", "Research", "CGC", "Search", "Media", "Shopping", "Brokers"), NAV_IDS.map { com.diegonmarcos.cloudsearch.ui.NAV.section(it)!!.label })
+        assertEquals(listOf("scrapers", "research", "cgc", "image", "video", "models3d"), NAV_IDS)
+        assertEquals(listOf("Scrappers", "Research", "CGC Search", "Image", "Videos", "3D Models"), NAV_IDS.map { com.diegonmarcos.cloudsearch.ui.NAV.section(it)!!.label })
         for (id in NAV_IDS) {
-            compose.onNodeWithTag(Tags.nav(id)).performClick()
+            compose.goTo(state, id)
             compose.waitForIdle()
             assertEquals(id, state.section)
         }
         // Brokers holds Job Placement, Real Estate and Business in one row per group; Search is the assistant.
-        compose.onNodeWithTag(Tags.nav("brokers")).performClick()
+        compose.goTo(state, "brokers")
         waitFor(Tags.WEB_STRIP)
         assertEquals(BROKERS_PAGES, NAV_PAGES("brokers"))
         for (v in BROKERS_PAGES) compose.onNodeWithTag(Tags.subpage(v)).assertExists()
         for (g in listOf("job_placement", "real_estate", "business_group")) compose.onNodeWithTag(com.diegonmarcos.superapp.navbartop2.SecondRowGroupTags.row(g)).assertExists()
         openVertical("commercial")
         compose.runOnIdle { assertEquals("commercial", state.vertical); assertEquals("brokers", state.section) }
-        compose.onNodeWithTag(Tags.nav("chat")).performClick()
+        compose.goTo(state, "chat")
         waitFor(Tags.page("assistant"))
         assertEquals(state.chatVertical, state.vertical)
     }
@@ -634,7 +640,7 @@ class SearchShellTest {
     @Test fun theEnginesPageOpensAMajorEngineWithTheTypedQuery() {
         launch()
         val cfg = Decl.config
-        compose.onNodeWithTag(Tags.nav("chat")).performClick()
+        compose.goTo(state, "chat")
         compose.onNodeWithTag(Tags.subpage("engines")).performClick()
         waitFor(com.diegonmarcos.cloudsearch.ui.EnginesTags.QUERY)
         assertTrue("the list declares the engines the owner named", listOf("google", "bing", "duckduckgo", "brave", "qwant", "kagi", "perplexity").all { id -> cfg.majorEngines.any { it.id == id } })
@@ -661,10 +667,23 @@ class SearchShellTest {
         val nav = com.diegonmarcos.cloudsearch.ui.NAV
         val ids = mutableListOf<String>()
         fun walk(pages: List<com.diegonmarcos.superapp.bottomnav.NavPage>) { pages.forEach { ids += it.id; walk(it.pages) } }
-        nav.bottomNav.forEach { walk(nav.section(it)!!.pages) }
+        nav.sections.forEach { walk(it.pages) }
         assertEquals("duplicate page ids: " + ids.groupBy { it }.filter { it.value.size > 1 }.keys, ids.size, ids.toSet().size)
         val jobs = nav.section("brokers")!!.page("jobs")!!.pages.map { it.id }
         assertEquals(listOf("jobs-listing", "jobs-analysis", "jobs-feed", "jobs-calculators"), jobs)
+    }
+
+    /** #1472 the Scrappers and 3D Models pages draw the rows build.json::sample_pages declares. */
+    @Test fun theSampleTabsDrawTheirDeclaredRows() {
+        launch()
+        for ((section, page) in listOf("scrapers" to "sitefiles", "scrapers" to "apify", "scrapers" to "selfhosted", "models3d" to "models3d")) {
+            compose.goTo(state, section)
+            compose.runOnIdle { state.samplePage[section] = page }
+            waitFor(com.diegonmarcos.cloudsearch.ui.SampleTags.page(page))
+            val rows = com.diegonmarcos.cloudsearch.ui.SamplePages.page(page)!!.rows
+            assert(rows.isNotEmpty())
+            for (i in rows.indices) compose.onNodeWithTag(com.diegonmarcos.cloudsearch.ui.SampleTags.row(i)).assertExists()
+        }
     }
 
     private fun NAV_PAGES(section: String) = com.diegonmarcos.cloudsearch.ui.NAV.section(section)!!.pages.map { it.id }
@@ -770,7 +789,7 @@ class SearchShellTest {
     @Test fun theFleetSearchesAreReachableOnChatsStrip() {
         installAgents()
         launch()
-        compose.onNodeWithTag(Tags.nav("chat")).performClick()
+        compose.goTo(state, "chat")
         waitFor(Tags.CHAT_STRIP)
         assertEquals(SEARCH_PAGES, NAV_PAGES("chat"))
         for (p in listOf("apps", "messages", "code")) {
@@ -786,7 +805,7 @@ class SearchShellTest {
     @Test fun anOutsideQueryLandsOnChatSearchFromAnyPage() {
         installAgents()
         launch()
-        compose.onNodeWithTag(Tags.nav("chat")).performClick()
+        compose.goTo(state, "chat")
         compose.onNodeWithTag(Tags.subpage("messages")).performClick()
         waitFor(Tags.page("cloud_messages"))
         openAgents()

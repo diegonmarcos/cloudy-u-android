@@ -1,7 +1,7 @@
 {
   "name": "cloud-search",
   "display_name": "Cloud Search",
-  "description": "Diego's Cloud Search (#779; renamed Cloud Research in #1162, back to Cloud Search in #1197) - one app for searching, on the shared bottom nav (#1184): News (the fleet news service, YouTube channel feeds, Google News topic feeds and the German RSS feeds), Research (Reports of what agents published, the Model catalogue and Agents: #913 draft-only Buy-Side and Sell-Side agents that read your alert mails and pages and write drafts you send yourself), CGC (Cloud CGC and Me CGC, each with Semantic and Graph RAG over the public and the private code index), Search (the AI chat over OpenRouter and the major web and AI search engines, plus the fleet's Apps, Messages and Code), Media (Image, Video, Movies, Books), Shopping (Groceries, Electronics, Clothing and Compare, the price comparison) and Brokers (Job Placement, Real Estate, Business). House and Jobs keep their Listing, Analysis, Feed and Calculators subpages. REAL DATA ONLY: every in-app listing or feed comes from a public API or feed this app is allowed to read (build.json::search.sources, search.feeds), cached on the phone so the last results stay readable offline; a portal whose terms forbid automated access is never fetched - its own search page opens in cloud-browser - and a source that cannot be used says why. The German payslip runs the BMF's own Lohnsteuer PAP 2026 (core/pap, generated into Kotlin by core/tools/pap2kt.py) with the 2026 social-insurance rules, golden-tested against the BMF's calculator. English is the base language (#299); dark is the default theme (#336).",
+  "description": "Diego's Cloud Search (#779; renamed Cloud Research in #1162, back to Cloud Search in #1197) - one app for searching, on the shared bottom nav (#1184): News (the fleet news service, YouTube channel feeds, Google News topic feeds and the German RSS feeds), Research (Reports of what agents published, the Model catalogue and Agents: #913 draft-only Buy-Side and Sell-Side agents that read your alert mails and pages and write drafts you send yourself), CGC (Cloud CGC and Me CGC, each with Semantic and Graph RAG over the public and the private code index), Search (the AI chat over OpenRouter and the major web and AI search engines, plus the fleet's Apps, Messages and Code), Media (Image, Video, Movies, Books), Shopping (Groceries, Electronics, Clothing and Compare, the price comparison) and Brokers (Job Placement, Real Estate, Business). House and Jobs keep their Listing, Analysis, Feed and Calculators subpages. #1472 the bottom bar is now Scrappers, Research, CGC Search, Image, Videos, 3D Models (Scrappers and 3D Models show sample rows declared in sample_pages); News, Shopping, Brokers and Search (AI Chat) are parked sections, off the bar. REAL DATA ONLY: every in-app listing or feed comes from a public API or feed this app is allowed to read (build.json::search.sources, search.feeds), cached on the phone so the last results stay readable offline; a portal whose terms forbid automated access is never fetched - its own search page opens in cloud-browser - and a source that cannot be used says why. The German payslip runs the BMF's own Lohnsteuer PAP 2026 (core/pap, generated into Kotlin by core/tools/pap2kt.py) with the 2026 social-insurance rules, golden-tested against the BMF's calculator. English is the base language (#299); dark is the default theme (#336).",
   "category": "android",
   "vendored_engine": null,
   "android": {
@@ -184,7 +184,7 @@
     "fleet": "browser"
   },
   "web": {
-    "_doc": "#876 Cloud Search as a Kotlin/Wasm page (web/ is its own gradle root; the shared libs' pure-Compose sources arrive through the ab_cloud-libs-shared/web composite). Rendered into 1_cicd/src/cicd/ship-cloud-search-wasm.yml by the workflow generator: `./gradlew wasmJsBrowserDistribution` in `dir`, tested by test/test-search-web.sh, `build/dist/wasmJs/productionExecutable` zipped to `artifact` and attached to the rolling release as `gh_asset`. A mocked page: the island and tab strips are ui.bottom_nav / ui.sections as the Android shell reads them, the first section shows mock data and the rest say they live in the Android app. The APK's own ship ignores this directory.",
+    "_doc": "#876 Cloud Search as a Kotlin/Wasm page (web/ is its own gradle root; the shared libs' pure-Compose sources arrive through the ab_cloud-libs-shared/web composite). Rendered into 1_cicd/src/cicd/ship-cloud-search-wasm.yml by the workflow generator: `./gradlew wasmJsBrowserDistribution` in `dir`, tested by test/test-search-web.sh, `build/dist/wasmJs/productionExecutable` zipped to `artifact` and attached to the rolling release as `gh_asset`. A mocked page: the island and tab strips are ui.bottom_nav / ui.sections as the Android shell reads them, the first section shows sample data and the rest say they live in the Android app. The APK's own ship ignores this directory.",
     "dir": "web",
     "host": "ubuntu-latest",
     "artifact": "Cloud-Search.wasm.zip",
@@ -3033,42 +3033,36 @@
     },
     "_doc_debug_api": "Routes on the fleet debug API (libs:devtools AppDebugServer), for checks with the screen locked: /api/search/verticals (every vertical, subpage, source with its kind/enabled/why), /api/search/query?v=&q=&city= (the real query through the same engine and cache the screens use: listings + per-source status), /api/search/calc?name=&<field>=... (a calculator's outputs and warnings), /api/search/analysis?v= (#797: the jobs statistics or the market series, with each source's status), /api/search/feed?v= (the Feed page's headlines and each feed's status). The ops never include `state` (update-ack-guard owns GET /api/state). #913: /api/search/agents (the agents, their last run, the budget), /api/search/runs (the run log with its audit lines), /api/search/reports and /api/search/report?id= (what agents published), /api/search/cloud?kind=apps|messages&q= (the Cloud Search section).",
     "dark_default": true,
-    "_doc_nav": "#1197 THE nav declaration (libs:bottomnav NavDecl): ui.bottom_nav is the island, exactly News, Research, CGC, Search (id chat), Media, Shopping, Brokers; ui.sections[] what each item opens; ui.default_section where the app opens. News: the fleet news service (search.research), the YouTube channel feeds (search.news_pages youtube), the Google News topic feeds (gnews) and the RSS feeds (rss). Research: Reports (what agents published), Models (the model catalogue) and Agents (Agents, Runs, Templates and Settings one strip lower). CGC: horizontal_two_rows, one row per index, Cloud CGC then Me CGC, each with Semantic and Graph RAG (search.cgc.indexes[].semantic_page / graph_page name the page ids). Search (id chat): AI Chat (the assistant vertical; where a query from outside lands), Engines (search.engines_major) and the fleet searches Apps, Messages and Code. Media, Shopping and Brokers: their pages are search.verticals (Media: image, video, movies, books; Shopping: groceries, electronics, clothing, things = Compare; Brokers: jobs, house, commercial, business, suppliers, services, in horizontal_two_rows groups Job Placement, Real Estate and Business). Every vertical sits in exactly one section; test-search-shell.sh S10 holds the declaration, search.verticals and search.subpages together.",
+    "_doc_nav": "#1472 THE nav declaration (libs:bottomnav NavDecl): ui.bottom_nav is the island, exactly Scrappers, Research, CGC Search, Image, Videos, 3D Models, in that order; ui.default_section where the app opens. ui.sections[] lists the six tabs first, then the PARKED sections (chat = AI Chat, Engines, Apps, Messages, Code, reached from the top bar's AI button and from a query handed in from outside; news; media = movies, books; shopping; brokers), which keep their declared pages and data but are not on the island. Scrappers (id scrapers: Site Files, Apify, SelfHosted) and 3D Models are SAMPLE pages: their rows are build.json::sample_pages (page id = ui page id), dense rows of title, meta and badge, replaced by real data when the scrapers and the 3D index exist. Research: Reports, Models (the model catalogue) and Agents (Agents, Runs, Templates, Settings one strip lower). CGC Search (id cgc): horizontal_two_rows, one row per index, Cloud CGC then Me CGC, each with Semantic and Graph RAG (search.cgc.indexes[].semantic_page / graph_page name the page ids). Image and Videos (ids image, video): one section each, whose page is the search vertical of the same id. Every vertical sits in exactly one section (parked ones included); test-search-shell.sh S10 holds the declaration, search.verticals and search.subpages together.",
     "bottom_nav": [
-      "news",
+      "scrapers",
       "research",
       "cgc",
-      "chat",
-      "media",
-      "shopping",
-      "brokers"
+      "image",
+      "video",
+      "models3d"
     ],
     "sections": [
       {
-        "id": "news",
-        "label": "News",
-        "icon": "rss_feed",
+        "id": "scrapers",
+        "label": "Scrappers",
+        "icon": "dns",
         "background": "theme",
         "pages": [
           {
-            "id": "news",
-            "label": "News",
-            "icon": "rss_feed"
+            "id": "sitefiles",
+            "label": "Site Files",
+            "icon": "storage"
           },
           {
-            "id": "youtube",
-            "label": "YouTube Feed",
-            "icon": "play_circle"
+            "id": "apify",
+            "label": "Apify",
+            "icon": "hub"
           },
           {
-            "id": "gnews",
-            "label": "Google News Feed",
-            "icon": "public"
-          },
-          {
-            "id": "rss",
-            "label": "RSS",
-            "icon": "feed"
+            "id": "selfhosted",
+            "label": "SelfHosted",
+            "icon": "dns"
           }
         ]
       },
@@ -3119,7 +3113,7 @@
       },
       {
         "id": "cgc",
-        "label": "CGC",
+        "label": "CGC Search",
         "icon": "code",
         "background": "theme",
         "nav_mode": "horizontal_two_rows",
@@ -3167,6 +3161,45 @@
         ]
       },
       {
+        "id": "image",
+        "label": "Image",
+        "icon": "palette",
+        "background": "theme",
+        "pages": [
+          {
+            "id": "image",
+            "label": "Image",
+            "icon": "palette"
+          }
+        ]
+      },
+      {
+        "id": "video",
+        "label": "Videos",
+        "icon": "video",
+        "background": "theme",
+        "pages": [
+          {
+            "id": "video",
+            "label": "Videos",
+            "icon": "video"
+          }
+        ]
+      },
+      {
+        "id": "models3d",
+        "label": "3D Models",
+        "icon": "inventory_2",
+        "background": "theme",
+        "pages": [
+          {
+            "id": "models3d",
+            "label": "3D Models",
+            "icon": "inventory_2"
+          }
+        ]
+      },
+      {
         "id": "chat",
         "label": "Search",
         "icon": "assistant",
@@ -3200,21 +3233,39 @@
         ]
       },
       {
+        "id": "news",
+        "label": "News",
+        "icon": "rss_feed",
+        "background": "theme",
+        "pages": [
+          {
+            "id": "news",
+            "label": "News",
+            "icon": "rss_feed"
+          },
+          {
+            "id": "youtube",
+            "label": "YouTube Feed",
+            "icon": "play_circle"
+          },
+          {
+            "id": "gnews",
+            "label": "Google News Feed",
+            "icon": "public"
+          },
+          {
+            "id": "rss",
+            "label": "RSS",
+            "icon": "feed"
+          }
+        ]
+      },
+      {
         "id": "media",
         "label": "Media",
         "icon": "video",
         "background": "theme",
         "pages": [
-          {
-            "id": "image",
-            "label": "Image",
-            "icon": "palette"
-          },
-          {
-            "id": "video",
-            "label": "Video",
-            "icon": "video"
-          },
           {
             "id": "movies",
             "label": "Movies",
@@ -3368,8 +3419,113 @@
         ]
       }
     ],
-    "default_section": "chat",
+    "default_section": "scrapers",
     "configs_ui": ["nav_ui"]
+  },
+  "sample_pages": {
+    "_doc": "#1472 sample rows of the sample pages (ui.sections pages with no search vertical): page id -> blurb and dense rows {title, meta, badge}. Sample data until the real source exists; baked as SAMPLE_PAGES_B64 and drawn by ui/SamplePages.kt.",
+    "pages": {
+      "sitefiles": {
+        "blurb": "Per-site scrape recipes kept as files.",
+        "rows": [
+          {
+            "title": "immoscout24.de listings",
+            "meta": "12 selectors, last run 2h ago",
+            "badge": "ok"
+          },
+          {
+            "title": "kleinanzeigen.de rooms",
+            "meta": "9 selectors, last run 1d ago",
+            "badge": "ok"
+          },
+          {
+            "title": "tagesschau.de headlines",
+            "meta": "5 selectors, last run 6h ago",
+            "badge": "ok"
+          },
+          {
+            "title": "stepstone.de jobs",
+            "meta": "14 selectors, robots.txt blocks",
+            "badge": "blocked"
+          }
+        ]
+      },
+      "apify": {
+        "blurb": "Apify actors the account can run.",
+        "rows": [
+          {
+            "title": "apify/web-scraper",
+            "meta": "Generic crawler, 4.9k runs",
+            "badge": "actor"
+          },
+          {
+            "title": "apify/google-search-scraper",
+            "meta": "SERP results as JSON",
+            "badge": "actor"
+          },
+          {
+            "title": "apify/website-content-crawler",
+            "meta": "Pages to clean text",
+            "badge": "actor"
+          },
+          {
+            "title": "apify/instagram-scraper",
+            "meta": "Public profiles only",
+            "badge": "paused"
+          }
+        ]
+      },
+      "selfhosted": {
+        "blurb": "Crawlers running on the fleet.",
+        "rows": [
+          {
+            "title": "scrappers-api /prices",
+            "meta": "JSON-LD offers, robots.txt gated",
+            "badge": "up"
+          },
+          {
+            "title": "cloudy-crawlee",
+            "meta": "Crawlee on the C3 VM",
+            "badge": "up"
+          },
+          {
+            "title": "playwright-pool",
+            "meta": "3 workers idle",
+            "badge": "idle"
+          }
+        ]
+      },
+      "models3d": {
+        "blurb": "Openly licensed 3D models.",
+        "rows": [
+          {
+            "title": "Low-poly tree pack",
+            "meta": "glb, 2.1 MB, CC0",
+            "badge": "glb"
+          },
+          {
+            "title": "Sci-fi crate",
+            "meta": "obj, 640 KB, CC-BY",
+            "badge": "obj"
+          },
+          {
+            "title": "Human base mesh",
+            "meta": "fbx, 5.3 MB, CC0",
+            "badge": "fbx"
+          },
+          {
+            "title": "Office chair",
+            "meta": "glb, 1.2 MB, CC-BY",
+            "badge": "glb"
+          },
+          {
+            "title": "Retro car",
+            "meta": "usdz, 8.8 MB, CC-BY-SA",
+            "badge": "usdz"
+          }
+        ]
+      }
+    }
   },
   "_doc_fleet_agents": "This app's agents, in the fleet agent registry's one shape (aa_cloud-superapp/build.json::_doc_fleet_agents). Consolidated into aa_cloud-superapp/data/fleet-agents.json by 1_cicd/src/scripts/cloud-android-fleet-agents.py and shown in Cloud SuperApp ▸ Configs ▸ Apps ▸ Agents ▸ Fleet agents.",
   "fleet_agents": [

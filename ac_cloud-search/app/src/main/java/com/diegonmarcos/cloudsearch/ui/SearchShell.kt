@@ -145,7 +145,12 @@ class SearchState(val services: Services) {
         if (verticalId == chatVertical) "chat" else verticalSections.firstOrNull { s -> NAV.section(s)?.pages?.any { it.id == verticalId } == true } ?: verticalSections.first()
 
     /** The island sections whose pages are search verticals: Media, Shopping and Brokers. */
-    val verticalSections: List<String> = NAV.bottomNav.filter { s -> s != "chat" && NAV.section(s)?.pages?.let { p -> p.isNotEmpty() && p.all { cfg.vertical(it.id) != null } } == true }
+    val verticalSections: List<String> = NAV.sections.map { it.id }.filter { s -> s != "chat" && NAV.section(s)?.pages?.let { p -> p.isNotEmpty() && p.all { cfg.vertical(it.id) != null } } == true }
+
+    /** #1472 the sections whose pages are all sample pages (build.json::sample_pages): Scrappers and 3D Models. */
+    val sampleSections: List<String> = NAV.sections.map { it.id }.filter { s -> NAV.section(s)?.pages?.let { p -> p.isNotEmpty() && p.all { SamplePages.page(it.id) != null } } == true }
+    /** The page each sample section shows. */
+    val samplePage = mutableStateMapOf<String, String>()
 
     /** The mockup's switchTopic(): a vertical opens on its first subpage, menus close. */
     fun open(id: String) {
@@ -291,6 +296,7 @@ private fun Chrome(state: SearchState, v: SearchConfig.Vertical) {
         state.section == "chat" -> state.chatPage
         state.section == "news" -> state.newsPage
         state.section == "research" -> state.researchPage
+        state.section in state.sampleSections -> state.samplePage[state.section] ?: section?.pages?.firstOrNull()?.id
         state.section == "cgc" -> state.cgcPage
         // #1199 the page ids are unique now, so the path follows the sub-page the state holds, not a strip that may be scrolled out of the list
         state.section in state.verticalSections -> if (v.subpages.size > 1) state.navId(v, state.subpageOf(v)) else state.vertical
@@ -319,6 +325,7 @@ private fun Chrome(state: SearchState, v: SearchConfig.Vertical) {
             "news" -> NewsSection(state)
             "research" -> ResearchSection(state)
             "cgc" -> CgcSection(state)
+            in state.sampleSections -> SampleSection(state, state.section)
             in state.verticalSections -> VerticalsSection(state, state.section, v)
             else -> {
                 val sub = state.subpageOf(v)
@@ -343,6 +350,7 @@ private fun navigateTo(state: SearchState, e: HierarchyEntry) {
         e.sectionId == "news" -> { state.openSection("news"); state.newsPage = e.id }
         e.sectionId == "research" -> { state.openSection("research"); state.researchPage = e.id }
         e.sectionId == "cgc" -> { state.openSection("cgc"); state.cgcPage = e.id }
+        e.sectionId in state.sampleSections -> { state.openSection(e.sectionId); state.samplePage[e.sectionId] = e.id }
         e.sectionId in state.verticalSections -> state.open(e.id)
     }
 }

@@ -94,7 +94,7 @@ class ModelCatalogueShellTest {
         compose.waitUntil(60_000) { compose.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty() }
 
     private fun openCatalogue() {
-        compose.onNodeWithTag(Tags.nav("chat")).performClick()
+        compose.goTo(state, "chat")
         waitFor(Tags.MODEL)
         compose.onNodeWithTag(Tags.MODEL).performClick()
         waitFor(AiTags.CATALOGUE_PAGE)
@@ -162,7 +162,7 @@ class ModelCatalogueShellTest {
 
     @Test fun theTaskButtonOpensTheTaskCatalogueAndATaskGreysAgentAndModel() {
         compose.setContent { SearchShell(state) }
-        compose.onNodeWithTag(Tags.nav("chat")).performClick()
+        compose.goTo(state, "chat")
         waitFor(Tags.MODEL)
         compose.waitUntil(60_000) { state.chat.tasks.isNotEmpty() }
         compose.onNodeWithTag(AiTags.ctl("task")).performClick()

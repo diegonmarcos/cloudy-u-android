@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ╔══════════════════════════════════════════════════════════════════════════╗
 # ║ #779 Cloud Search — the declaration and the code that renders it agree,   ║
-# ║ the network and the AI token each have one door, and no mock data ships   ║
+# ║ the network and the AI token each have one door, and no sample data ships   ║
 # ╚══════════════════════════════════════════════════════════════════════════╝
 #
 #   S1  core/…/tax/Lohnsteuer2026.kt is exactly what core/tools/pap2kt.py makes of the BMF's
@@ -22,7 +22,7 @@
 #       only store of the OpenRouter token.
 #   S7  /api/<group>/verticals, query, calc, analysis and feed are documented and answered under
 #       build.json::ui.debug_api.group, and no op is named `state` (GET /api/state's key).
-#   S8  no mock data ships: no placeholder image host, lorem ipsum or `mock` identifier in app or
+#   S8  no sample data ships: no placeholder image host, lorem ipsum or `mock` identifier in app or
 #       core sources, and no Kotlin colour literal (colours are res/values/colors.xml).
 #   S9  (#797) the Phosphor icon set is one list: app/tools/phosphor.json, the generated
 #       res/drawable/ph_*.xml (each carrying the generator's header) and every R.drawable.ph_* the
@@ -219,7 +219,7 @@ mock = re.compile(r"placehold\.co|picsum\.photos|lorem ipsum|\bmock\w*", re.I)
 for p in kts + cks:
     hit = mock.search(code(p))
     if hit:
-        bad.append("S8 %s carries mock data (%s) — the shipped app shows real sources only" % (os.path.basename(p), hit.group(0)))
+        bad.append("S8 %s carries sample data (%s) — the shipped app shows real sources only" % (os.path.basename(p), hit.group(0)))
     if re.search(r"Color\(0x", code(p)):
         bad.append("S8 %s names a colour literal — colours are res/values/colors.xml" % os.path.basename(p))
 
@@ -293,19 +293,32 @@ for field in ("UI_BOTTOM_NAV", "UI_SECTIONS_B64", "UI_DEFAULT_SECTION", "UI_STYL
 # News is the fleet news then the declared feed pages; CGC is Cloud CGC and Me CGC, one horizontal_two_rows group each.
 ui, vs = bj.get("ui") or {}, bj["search"]["verticals"]
 secs = {x.get("id"): x for x in ui.get("sections") or []}
-if ui.get("bottom_nav") != ["news", "research", "cgc", "chat", "media", "shopping", "brokers"]:
-    bad.append("S10 ui.bottom_nav is not news, research, cgc, chat, media, shopping, brokers")
-if [x.get("id") for x in ui.get("sections") or []] != ui.get("bottom_nav"):
-    bad.append("S10 ui.sections are not exactly the island's items, in order")
-if [secs.get(i, {}).get("label") for i in ui.get("bottom_nav") or []] != ["News", "Research", "CGC", "Search", "Media", "Shopping", "Brokers"]:
-    bad.append("S10 the island's labels are not News, Research, CGC, Search, Media, Shopping, Brokers")
+# #1472 the island is exactly the six tabs; News, Shopping, Brokers (and chat, media) stay declared as parked sections, off the island
+if ui.get("bottom_nav") != ["scrapers", "research", "cgc", "image", "video", "models3d"]:
+    bad.append("S10 ui.bottom_nav is not scrapers, research, cgc, image, video, models3d")
+if [x.get("id") for x in ui.get("sections") or []][:6] != ui.get("bottom_nav"):
+    bad.append("S10 ui.sections do not start with the island's items, in order")
+if [secs.get(i, {}).get("label") for i in ui.get("bottom_nav") or []] != ["Scrappers", "Research", "CGC Search", "Image", "Videos", "3D Models"]:
+    bad.append("S10 the island's labels are not Scrappers, Research, CGC Search, Image, Videos, 3D Models")
+if {"news", "shopping", "brokers"} & set(ui.get("bottom_nav") or []):
+    bad.append("S10 News, Shopping or Brokers is on the island")
+samples = bj.get("sample_pages", {}).get("pages") or {}
+for sid, ids in (("scrapers", ["sitefiles", "apify", "selfhosted"]), ("models3d", ["models3d"])):
+    if [q.get("id") for q in (secs.get(sid) or {}).get("pages") or []] != ids:
+        bad.append("S10 ui.sections[%s] pages are not %s" % (sid, ", ".join(ids)))
+    for i in ids:
+        rows = (samples.get(i) or {}).get("rows") or []
+        if not rows or not all(r.get("title") and r.get("meta") and r.get("badge") for r in rows):
+            bad.append("S10 build.json::sample_pages[%s] has no complete title/meta/badge rows" % i)
+if "SAMPLE_PAGES_B64" not in gradle:
+    bad.append("S10 app/build.gradle does not bake SAMPLE_PAGES_B64")
 labels = {q["id"]: q["label"] for q in bj["search"]["subpages"]}
 chat_v = [v for v in vs if any(kinds_.get(x) == "assistant" for x in v["subpages"])] if (kinds_ := {sp["id"]: sp["kind"] for sp in S["subpages"]}) else []
 rest_v = [v for v in vs if v not in chat_v]
-VSEC = ("media", "shopping", "brokers")
+VSEC = ("image", "video", "media", "shopping", "brokers")
 vert_pages = [q for sid in VSEC for q in (secs.get(sid) or {}).get("pages") or []]
 if sorted(q.get("id") for q in vert_pages) != sorted(v["id"] for v in rest_v):
-    bad.append("S10 ui.sections[media, shopping, brokers] pages are not search.verticals (less the assistant), each exactly once")
+    bad.append("S10 ui.sections[image, video, media, shopping, brokers] pages are not search.verticals (less the assistant), each exactly once")
 for sid in VSEC:
     if not (secs.get(sid) or {}).get("pages"):
         bad.append("S10 ui.sections[%s] has no vertical" % sid)
@@ -324,7 +337,7 @@ for q in vert_pages:
                 bad.append("S10 ui.sections page %s/%s label differs from search.subpages" % (q.get("id"), z.get("id")))
     elif q.get("pages"):
         bad.append("S10 ui.sections page %s declares a second strip for a vertical with one subpage" % q.get("id"))
-want_v = {"media": ["image", "video", "movies", "books"], "shopping": ["groceries", "electronics", "clothing", "things"],
+want_v = {"image": ["image"], "video": ["video"], "media": ["movies", "books"], "shopping": ["groceries", "electronics", "clothing", "things"],
           "brokers": ["jobs", "house", "commercial", "business", "suppliers", "services"]}
 for sid, ids in want_v.items():
     if [q.get("id") for q in (secs.get(sid) or {}).get("pages") or []] != ids:
@@ -350,8 +363,8 @@ if [z.get("id") for q in rpages if q.get("id") == "agenthub" for z in q.get("pag
     bad.append("S10 ui.sections[research] agenthub pages are not agents, runs, templates, settings")
 if [q.get("id") for q in (secs.get("news") or {}).get("pages") or []] != ["news"] + [n["id"] for n in S.get("news_pages") or []]:
     bad.append("S10 ui.sections[news] pages are not the fleet news then search.news_pages, in order")
-if ui.get("default_section") != ("chat" if S["default_vertical"] == (chat_v[0]["id"] if chat_v else "") else "brokers"):
-    bad.append("S10 ui.default_section does not hold search.default_vertical")
+if ui.get("default_section") != "scrapers":
+    bad.append("S10 ui.default_section is not scrapers, the first tab")
 
 # S14 (#1184, #1197) the code indexes and the news: data, declared services, honest, no host in the sources
 acct = json.load(open(os.environ["ACCT_JSON"], encoding="utf-8"))["fleet_endpoints"]["services"]
@@ -564,7 +577,7 @@ mutate fleet-kit-imported "$J/ui/SearchTheme.kt" 's.replace("import com.diegonma
 mutate own-nav-back "$J/ui/Glass.kt" 's + "\n@androidx.compose.runtime.Composable\nfun BottomNav() {}\n"' "S10 Glass.kt draws its own BottomNav/SubNav"
 mutate island-dropped "$J/ui/SearchShell.kt" 's.replace("NavBarBottomHost(\n                    entries = NAV.islandEntries", "NavRail(\n                    entries = NAV.islandEntries")' "S10 SearchShell does not draw NavBarBottomHost"
 mutate fleet-island-back "$J/ui/SearchShell.kt" 's + "\nfun again() { BottomNavIsland(entries = e, selectedId = null, onSelect = {}) }\n"' "S10 SearchShell also draws BottomNavIsland"
-mutate style-undeclared build.json 's.replace("\"default_section\": \"chat\"", "\"style\": \"search-html\",\n    \"default_section\": \"chat\"")' "S10 build.json ui.style is not fleet"
+mutate style-undeclared build.json 's.replace("\"default_section\": \"scrapers\"", "\"style\": \"search-html\",\n    \"default_section\": \"scrapers\"")' "S10 build.json ui.style is not fleet"
 mutate style-not-baked app/build.gradle 's.replace("\"UI_STYLE\"", "\"UI_STYL\"")' "S10 app/build.gradle does not bake UI_STYLE"
 mutate strip-dropped "$J/ui/VerticalPages.kt" 's.replace("NavBarTopSecondRow(\n                pages = NAV.section(state.sectionOf", "SubNav(\n                pages = NAV.section(state.sectionOf")' "S10 the vertical pages do not draw their sub-pages with NavBarTopSecondRow"
 mutate web-strip-dropped "$J/ui/SearchShell.kt" 's.replace("NavSectionLayout(\n        section = decl,\n        selectedId = state.vertical", "SubNav(\n        section = decl,\n        selectedId = state.vertical")' "S10 SearchShell does not draw Media's, Shopping's and Brokers'"
@@ -572,14 +585,15 @@ mutate chat-strip-dropped "$J/ui/SearchShell.kt" 's.replace("NavBarTopSecondRow(
 mutate cloud-page-unreachable "$J/ui/SearchShell.kt" 's.replace("else CloudPage(state, state.chatPage)", "else Unit")' "S10 SearchShell does not draw Chat's strip"
 mutate messages-unreachable "$J/ui/CloudPages.kt" 's.replace("\"messages\" -> MessagesPage(state, cloud)", "\"messagez\" -> MessagesPage(state, cloud)")' "S10 CloudPage does not open messages"
 mutate ask-lands-elsewhere "$J/ui/SearchShell.kt" 's.replace("openSection(\"chat\")\n        chatPage = chatVertical", "openSection(\"chat\")")' "S10 SearchState.ask does not open Chat on Search"
-mutate vertical-in-both build.json 's.replace("\"id\": \"books\",\n            \"label\": \"Books\",\n            \"icon\": \"menu_book\"\n          }", "\"id\": \"books\",\n            \"label\": \"Books\",\n            \"icon\": \"menu_book\"\n          },\n          {\n            \"id\": \"house\",\n            \"label\": \"House\"\n          }")' "S10 ui.sections[media, shopping, brokers] pages are not search.verticals"
-mutate chat-section-dropped build.json 's.replace("\"id\": \"chat\",\n        \"label\": \"Search\"", "\"id\": \"chats\",\n        \"label\": \"Search\"")' "S10 ui.sections are not exactly the island"
+mutate vertical-in-both build.json 's.replace("\"id\": \"books\",\n            \"label\": \"Books\",\n            \"icon\": \"menu_book\"\n          }", "\"id\": \"books\",\n            \"label\": \"Books\",\n            \"icon\": \"menu_book\"\n          },\n          {\n            \"id\": \"house\",\n            \"label\": \"House\"\n          }")' "S10 ui.sections[image, video, media, shopping, brokers] pages are not search.verticals"
+mutate chat-section-dropped build.json 's.replace("\"id\": \"chat\",\n        \"label\": \"Search\"", "\"id\": \"chats\",\n        \"label\": \"Search\"")' "S10 ui.sections[chat] does not open on the assistant vertical"
 mutate section-icon-misspelt build.json 's.replace("\"icon\": \"reports\"", "\"icon\": \"reportz\"", 1)' "S3 ui.sections research icon"
 mutate agents-page-dropped build.json 's.replace("\"id\": \"runs\",", "\"id\": \"run\",", 1)' "S10 ui.sections[research] agenthub pages are not agents, runs, templates, settings"
 mutate cloud-pages-reordered build.json 's.replace("\"id\": \"apps\",\n            \"label\": \"Apps\"", "\"id\": \"appz\",\n            \"label\": \"Apps\"")' "S10 ui.sections[chat] pages after AI Chat"
 mutate agents-debug-op-dropped "$J/debugapi/SearchDebugApi.kt" 's.replace("\"runs\" -> runs(", "\"runz\" -> runs(")' "S7 /api/<group>/runs"
 mutate nav-not-baked app/build.gradle 's.replace("\"UI_SECTIONS_B64\"", "\"UI_SECTIONS\"")' "S10 app/build.gradle does not bake UI_SECTIONS_B64"
-mutate section-reordered build.json 's.replace("\"bottom_nav\": [\n      \"news\",\n      \"research\",", "\"bottom_nav\": [\n      \"research\",\n      \"news\",")' "S10 ui.bottom_nav is not news, research, cgc, chat, media, shopping, brokers"
+mutate section-reordered build.json 's.replace("\"bottom_nav\": [\n      \"scrapers\",\n      \"research\",", "\"bottom_nav\": [\n      \"research\",\n      \"scrapers\",")' "S10 ui.bottom_nav is not scrapers, research, cgc, image, video, models3d"
+mutate news-on-island build.json 's.replace("\"bottom_nav\": [\n      \"scrapers\",", "\"bottom_nav\": [\n      \"news\",\n      \"scrapers\",")' "S10 News, Shopping or Brokers is on the island"
 mutate section-pages-drift build.json 's.replace("\"id\": \"jobs-calculators\",\n                \"label\": \"Calculators\"", "\"id\": \"jobs-calculators\",\n                \"label\": \"Calculatorz\"")' "S10 ui.sections page jobs/jobs-calculators label"
 mutate parser-missing "$C/Listing.kt" 's.replace("\"open_prices\" -> openPrices(body, source)", "")' "S4 a source uses parser open_prices"
 mutate dead-parser "$C/Listing.kt" 's.replace("\"ba\" -> ba(body, source)", "\"ba\" -> ba(body, source)\n        \"immo\" -> ba(body, source)")' "S4 Parsers.parse has parser immo"
@@ -595,8 +609,8 @@ mutate token-logged "$J/data/Account.kt" 's.replace("val r = c.revealAiKey(provi
 mutate token-stored "$J/data/Account.kt" 's.replace("val r = c.revealAiKey(provider)", "val r = c.revealAiKey(provider)\n        ctx.getSharedPreferences(\"x\", 0).edit().putString(\"t\", r.text).apply()")' "S6 data/Account.kt stores something"
 mutate debug-op-dropped "$J/debugapi/SearchDebugApi.kt" 's.replace("\"calc\" -> calc(Services.get(app), q).toString()", "")' "S7 /api/<group>/calc"
 mutate debug-op-state "$J/debugapi/SearchDebugApi.kt" 's.replace("\"verticals\" -> verticals(", "\"state\" -> verticals(")' "S7 SearchDebugApi names an op state"
-mutate mock-shipped "$J/ui/VerticalPages.kt" 's + "\nprivate val mockData = listOf(\"Modern Loft in Downtown\")\n"' "S8 VerticalPages.kt carries mock data"
-mutate placeholder-image "$C/Listing.kt" 's + "\nprivate const val IMG = \"https://placehold.co/400x200\"\n"' "S8 Listing.kt carries mock data"
+mutate mock-shipped "$J/ui/VerticalPages.kt" 's + "\nprivate val mockData = listOf(\"Modern Loft in Downtown\")\n"' "S8 VerticalPages.kt carries sample data"
+mutate placeholder-image "$C/Listing.kt" 's + "\nprivate const val IMG = \"https://placehold.co/400x200\"\n"' "S8 Listing.kt carries sample data"
 mutate colour-literal "$J/ui/SearchTheme.kt" 's + "\nprivate val x = androidx.compose.ui.graphics.Color(0xFF000000)\n"' "S8 SearchTheme.kt names a colour literal"
 
 mutate launcher-hand-edited app/src/main/res/drawable/ic_launcher_foreground.xml 's.replace("#FFFF416C", "#FFFF0000")' "S11 res/drawable/ic_launcher_foreground.xml is not what"
