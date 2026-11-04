@@ -39,7 +39,10 @@ down() { adb shell input swipe $X $YHI $X $YLO 300; }
 # Scroll until [pattern] is on screen (max [n] swipes).
 seek() { for i in $(seq 1 "${2:-25}"); do calm; grep -qE "$1" "$OUT/ui.xml" && return 0; up; sleep 1; done; return 1; }
 # Bring the node matching [pattern] near the top so the shot shows what follows it.
-top() { where "$1" | { read -r px py && [ "$py" -gt "$YTOP" ] && adb shell input swipe $X "$py" $X $YTOP 600; }; sleep 1; }
+# Never start a drag in the bottom 20% (the home gesture): scroll first, then drag the heading from inside the page.
+top() { for k in 1 2 3; do where "$1" | { read -r px py; echo "$py" > "$OUT/.py"; }; py=$(cat "$OUT/.py"); [ -z "$py" ] && return 0
+    if [ "$py" -gt $((SH*70/100)) ]; then up; sleep 1; continue; fi
+    [ "$py" -gt "$YTOP" ] && adb shell input swipe $X "$py" $X $YTOP 600; break; done; sleep 1; }
 
 # ── the drive: vold's virtual disk, a public (removable) volume ────────────────────────────────────────────────────
 adb shell sm set-virtual-disk true || fail "sm set-virtual-disk refused"
