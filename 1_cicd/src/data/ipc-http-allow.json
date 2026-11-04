@@ -56,6 +56,10 @@
     "ab_cloud-libs-shared/libs/crash/src/main/java/com/diegonmarcos/superapp/crash/CrashReports.kt": {
       "max": 1,
       "why": "#1122 the crash report's POST to the phone's OWN C3 WebServer sink (POST /__app__/api/crashes on 127.0.0.1, the port baked from ac_cloud-c3-webserver/build.json::runtime.port): a plain socket written from the crashing process, which has no time to bind a service and may be killed any moment. It is not an app-to-app call (the report is the app's own data going to the on-phone log sink, offline-safe, no DNS), and the sink also serves a page that lists every app's crashes. Declared on the server side in ac_cloud-c3-webserver (server/src/app.rs)."
+    },
+    "ab_cloud-libs-shared/libs/scraper/src/main/java/com/diegonmarcos/superapp/scraper/MusicAuth.kt": {
+      "max": 2,
+      "why": "#1460 the default music-service declaration (Spotify, Deezer): the OAuth redirect URI http://127.0.0.1:8765/callback, a loopback redirect the user registers in the provider's developer console (RFC 8252), as printed text and the redirect the sign-in browser returns to. It is the sign-in of the app's own account at a third-party service, not an app-to-app call on the phone, and no sibling app is addressed."
     }
   }
 }
