@@ -38,7 +38,7 @@ class MockTasksTest {
     @Test fun `the mindmap nests subtasks under their task under their subject`() {
         val root = MockTasks.mindmap(MockTasks.ofKind(items, "tasks"))
         assertEquals(MockTasks.ROOT_LABEL, root.label)
-        val alpha = root.children.first { it.label == "Mock Project Alpha" }
+        val alpha = root.children.first { it.label == "Cloudy" }
         assertEquals(2, alpha.children.first { it.label == "Ship the fake build" }.children.size)
     }
 
@@ -51,6 +51,34 @@ class MockTasksTest {
         assertTrue(MockTasks.on(items, today, today).any { it.id == "t2" })
         assertTrue(MockTasks.on(items, today, today.plusDays(10)).none { it.id == "t2" })
         assertNull(items.first { it.id == "t6" }.parent)
+    }
+
+    @Test fun `the dial puts a task on its subject's ring over the days it covers, clipped to the month`() {
+        val tasks = MockTasks.ofKind(items, "tasks")
+        val month = YearMonth.of(2026, 11)
+        val arcs = MockTasks.dialArcs(tasks, today, month)
+        val rings = MockTasks.rings(tasks)
+        assertTrue(arcs.all { it.ring >= 0 && it.ring < rings.size })
+        val review = arcs.first { it.task.id == "t2" }                      // Nov 2 .. Nov 5 of 30 days
+        assertEquals(1 * 360f / 30, review.startDeg, 0.01f)
+        assertEquals(4 * 360f / 30, review.sweepDeg, 0.01f)
+        assertEquals(rings.indexOf("Cloudy"), review.ring)
+        assertTrue(arcs.all { it.startDeg >= 0f && it.startDeg + it.sweepDeg <= 360.01f })
+    }
+
+    @Test fun `real tasks join the calendar dated by target to deadline, in their project`() {
+        val t = com.diegonmarcos.cloudagenda.data.Task("a", "l1", name = "Pay rent", dateTarget = "2026-11-06", dateDeadline = "2026-11-08")
+        val undated = com.diegonmarcos.cloudagenda.data.Task("b", "l1", name = "Someday")
+        val snap = com.diegonmarcos.cloudagenda.data.Snapshot(
+            projects = listOf(com.diegonmarcos.cloudagenda.data.Project("p1", "Home", 0)),
+            lists = listOf(com.diegonmarcos.cloudagenda.data.TaskList("l1", "p1", "Bills", 0)), tasks = listOf(t, undated),
+        )
+        val rows = MockTasks.fromSnapshot(snap, today)
+        assertEquals(1, rows.size)
+        assertEquals("Home", rows[0].subject)
+        assertEquals(2, rows[0].startDay)
+        assertEquals(3, rows[0].days)
+        assertTrue(MockTasks.on(rows, today, today.plusDays(4)).isNotEmpty())
     }
 
     @Test fun `a collection groups by subject in name order`() {

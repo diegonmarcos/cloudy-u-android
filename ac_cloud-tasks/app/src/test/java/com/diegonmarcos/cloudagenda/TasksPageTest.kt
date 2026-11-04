@@ -99,13 +99,39 @@ class TasksPageTest {
         compose.onNodeWithTag(TasksTags.PAGE).assertIsDisplayed()
     }
 
+    @Test fun `the calendar is the round one - the month dial and a ring per project - and a tap on a day lists its tasks`() {
+        launch(list = false)
+        compose.onNodeWithTag(MockTags.DIAL).performScrollTo().assertIsDisplayed()
+        compose.onNodeWithTag(MockTags.ring("Cloudy")).performScrollTo().assertExists()
+        val iso = java.time.LocalDate.now().toString()
+        compose.onNodeWithTag(MockTags.day(iso)).performScrollTo().performClick()
+        compose.waitForIdle()
+        compose.onNodeWithTag(MockTags.page("calendar")).assertIsDisplayed()
+    }
+
+    @Test fun `the list is grouped by due date in Store rows, one line per task with an actions menu`() {
+        val env = launch()
+        assertTrue(compose.onAllNodes(tagStartsWith("tasks_group_")).fetchSemanticsNodes().isNotEmpty())
+        val first = env.controller.snapshot.topLevel(env.controller.selectedListId).first()
+        compose.onNodeWithTag(TasksTags.actions(first.id)).assertExists()
+        compose.onNodeWithTag(TasksTags.check(first.id)).assertExists()
+    }
+
     @Test fun `each collection tab lists its mock rows in the shared card layout`() {
         launch(list = false)
-        for ((id, row) in listOf("inboxes" to "i1", "backlogs" to "b1", "library" to "l1", "projects" to "p1")) {
+        // Each tab is Cloud Me's tree (a first node of it is a folder row); Expand all opens it down to the mock items.
+        for ((id, node, item) in listOf(
+            Triple("inboxes", "Mental-Models", "Mock screenshot: sample booking"), Triple("backlogs", "Due", "Mock due item: sample renewal"),
+            Triple("library", "Research-Dossiers", "Mock reference: fake template pack"), Triple("projects", "Unix", "Mock family task: sample port"),
+        )) {
             compose.onNodeWithTag(BottomNavTags.item(id)).performClick()
             compose.waitForIdle()
             compose.onNodeWithTag(MockTags.page(id)).assertIsDisplayed()
-            compose.onNodeWithTag(MockTags.row(row)).assertExists()
+            compose.onNodeWithTag(MockTags.tree(id) + ":dir:" + node).assertExists()
+            compose.onNodeWithTag(MockTags.expand(id)).performClick()
+            compose.waitForIdle()
+            compose.onNodeWithTag(MockTags.tree(id) + ":file:" + item).assertExists()
+            compose.onNodeWithTag(MockTags.collapse(id)).performClick()
         }
     }
 

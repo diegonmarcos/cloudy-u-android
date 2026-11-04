@@ -18,6 +18,12 @@ import androidx.compose.material3.Text
  * Pure (JVM-tested through the Cloud Browser suite): no Android types.
  */
 object KitFileTree {
+    /**
+     * #1461 [Entry.type] of a placeholder entry: a folder that has nothing in it yet. It keeps the folder in the tree (a folder only exists
+     * through an entry) and draws as a dim "[Entry.name]" line, but is not counted in the folder's files, bytes or newest time.
+     */
+    const val EMPTY_TYPE = "\u0000empty"
+
     /** One file: [dirs] are the folders from the root down (dirs[0] is the root, e.g. a site), [payload] is what a tap hands back. */
     data class Entry<T>(val dirs: List<String>, val name: String, val bytes: Long, val modified: Long, val type: String, val payload: T)
 
@@ -53,7 +59,7 @@ object KitFileTree {
                 path += node
                 level = node.dirs
             }
-            for (n in path) { n.count++; n.bytes += e.bytes; if (e.modified > n.modified) n.modified = e.modified }
+            if (e.type != EMPTY_TYPE) for (n in path) { n.count++; n.bytes += e.bytes; if (e.modified > n.modified) n.modified = e.modified }
             node!!.files += e
         }
         return roots
@@ -66,7 +72,7 @@ object KitFileTree {
      * The visible rows. Roots come in [rootOrder] (roots it does not name follow, A-Z); inside a folder the sub-folders come first,
      * then the files, both A-Z or, with [newestFirst], by newest. A folder's content shows only while its key is in [open].
      */
-    fun <T> rows(entries: List<Entry<T>>, open: Set<String>, rootOrder: List<String> = emptyList(), newestFirst: Boolean = false): List<Row<T>> {
+    fun <T> rows(entries: List<Entry<T>>, open: Set<String>, rootOrder: List<String> = emptyList(), newestFirst: Boolean = false, declaredOrder: Boolean = false): List<Row<T>> {
         val roots = build(entries)
         val out = ArrayList<Row<T>>()
         val ci = String.CASE_INSENSITIVE_ORDER
@@ -74,15 +80,17 @@ object KitFileTree {
             val isOpen = n.key in open
             out += Row.Dir(n.key, depth, n.name, isOpen, n.count, n.bytes, n.modified)
             if (!isOpen) return
-            val subs = if (newestFirst) n.dirs.values.sortedWith(compareByDescending<Node<T>> { it.modified }.thenBy(ci) { it.name })
+            val subs = if (declaredOrder) n.dirs.values.toList()
+            else if (newestFirst) n.dirs.values.sortedWith(compareByDescending<Node<T>> { it.modified }.thenBy(ci) { it.name })
             else n.dirs.values.sortedWith(compareBy(ci) { it.name })
             subs.forEach { walk(it, depth + 1) }
-            val fs = if (newestFirst) n.files.sortedWith(compareByDescending<Entry<T>> { it.modified }.thenBy(ci) { it.name })
+            val fs = if (declaredOrder) n.files.toList()
+            else if (newestFirst) n.files.sortedWith(compareByDescending<Entry<T>> { it.modified }.thenBy(ci) { it.name })
             else n.files.sortedWith(compareBy(ci) { it.name })
             fs.forEach { out += Row.Leaf(n.key + "/" + it.name + "#" + it.bytes + "#" + it.modified + "#" + out.size, depth + 1, it) }
         }
         val named = rootOrder.mapNotNull { roots[it] }
-        (named + roots.values.filter { it !in named }.sortedWith(compareBy(ci) { it.name })).forEach { walk(it, 0) }
+        (named + roots.values.filter { it !in named }.let { if (declaredOrder) it else it.sortedWith(compareBy(ci) { n -> n.name }) }).forEach { walk(it, 0) }
         return out
     }
 
@@ -122,7 +130,10 @@ fun <T> LazyListScope.kitFileTree(
                 Cell("${r.files} · ${size(r.bytes)}", ink.dim, 120)
                 Cell(date(r.modified), ink.dim, 96)
             }
-            is KitFileTree.Row.Leaf -> KitStoreRowLine(Modifier.testTag("$tagPrefix:file:${r.entry.name}"), onClick = { onOpen(r.entry) }) {
+            is KitFileTree.Row.Leaf -> if (r.entry.type == KitFileTree.EMPTY_TYPE) KitStoreRowLine(Modifier.testTag("$tagPrefix:empty:${r.key}")) {
+                Spacer(Modifier.width(KitStoreRow.step(14) * r.depth + KitStoreRow.step(14)))
+                KitStoreCaption(r.entry.name, Modifier.weight(1f), ink.dim)
+            } else KitStoreRowLine(Modifier.testTag("$tagPrefix:file:${r.entry.name}"), onClick = { onOpen(r.entry) }) {
                 Spacer(Modifier.width(KitStoreRow.step(14) * r.depth + KitStoreRow.step(14)))
                 Text(r.entry.name, color = ink.ink, fontSize = KitStoreRow.body, maxLines = 1, softWrap = false,
                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, modifier = Modifier.weight(1f))

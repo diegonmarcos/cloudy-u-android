@@ -16,6 +16,7 @@ import com.diegonmarcos.cloudagenda.data.Attachment
 import com.diegonmarcos.cloudagenda.data.AttachmentKind
 import com.diegonmarcos.cloudagenda.data.MockTask
 import com.diegonmarcos.cloudagenda.data.MockTasks
+import com.diegonmarcos.cloudagenda.data.Structure
 import com.diegonmarcos.cloudagenda.data.ThemeMode
 import com.diegonmarcos.cloudagenda.data.TasksDb
 import com.diegonmarcos.cloudagenda.data.TasksPrefs
@@ -66,6 +67,7 @@ class AppEnv(private val activity: ComponentActivity, private val launchPicker: 
     override fun consumePicked() { pickedLink = null }
 
     override val mock: List<MockTask> by lazy { MockTasks.load(app) }
+    override val structure: Structure by lazy { Structure.load(app) }
 
     override val chat: AiChatState get() = TasksAi.chat(app, repo)
     override val agents: List<AiAgent> by lazy { AiAgents.load(app) }

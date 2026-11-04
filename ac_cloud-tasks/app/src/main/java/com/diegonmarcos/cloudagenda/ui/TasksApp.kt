@@ -36,6 +36,8 @@ import androidx.core.view.WindowCompat
 import com.diegonmarcos.cloudagenda.data.AgentConfig
 import com.diegonmarcos.cloudagenda.data.Attachment
 import com.diegonmarcos.cloudagenda.data.MockTask
+import com.diegonmarcos.cloudagenda.data.MockTasks
+import com.diegonmarcos.cloudagenda.data.Structure
 import com.diegonmarcos.cloudagenda.data.ThemeMode
 import com.diegonmarcos.superapp.ai.AiAgent
 import com.diegonmarcos.superapp.ai.AiChatState
@@ -70,6 +72,8 @@ interface TasksEnv {
     fun consumePicked()
     /** The mock fixture (assets/mock-tasks.json, FAKE) behind the collection pages and the Calendar, Gantt, Kanban and Mindmap views. */
     val mock: List<MockTask>
+    /** Cloud Me's own structure for the Inboxes, Backlogs, Library and Projects tabs (data/Structure.kt); the mock items hang under its nodes. */
+    val structure: Structure
     val chat: AiChatState
     val agents: List<AiAgent>
     fun loadModels(): List<AiModel>
@@ -143,16 +147,16 @@ fun TasksShell(env: TasksEnv, nav: NavDecl, themeMode: ThemeMode, onThemeMode: (
             Box(Modifier.weight(1f).fillMaxWidth()) {
                 when (section) {
                     // The collection sections list their rows in the Cloud Me Tasks layout (one page each).
-                    Ids.INBOXES -> CollectionPage(Ids.PAGE_INBOXES, env.mock, today)
-                    Ids.BACKLOGS -> CollectionPage(Ids.PAGE_BACKLOGS, env.mock, today)
-                    Ids.LIBRARY -> CollectionPage(Ids.PAGE_LIBRARY, env.mock, today)
-                    Ids.PROJECTS -> CollectionPage(Ids.PAGE_PROJECTS, env.mock, today)
+                    Ids.INBOXES -> CollectionPage(Ids.PAGE_INBOXES, env.structure, env.mock, today)
+                    Ids.BACKLOGS -> CollectionPage(Ids.PAGE_BACKLOGS, env.structure, env.mock, today)
+                    Ids.LIBRARY -> CollectionPage(Ids.PAGE_LIBRARY, env.structure, env.mock, today)
+                    Ids.PROJECTS -> CollectionPage(Ids.PAGE_PROJECTS, env.structure, env.mock, today)
                     Ids.TASKS -> {
                         if (page == Ids.PAGE_LIST) TasksScreen(env.controller, env.host, env.pickedLink, onPickedConsumed = env::consumePicked)
                         else {
                             SectionPagesDrawer(pages, page) { pageOf[section] = it.id }
                             when (page) {
-                                Ids.PAGE_CALENDAR -> CalendarView(env.mock, today)
+                                Ids.PAGE_CALENDAR -> CalendarView(env.mock + MockTasks.fromSnapshot(env.controller.snapshot, today), today)
                                 Ids.PAGE_GANTT -> GanttView(env.mock, today)
                                 Ids.PAGE_KANBAN -> KanbanView(env.mock, today)
                                 Ids.PAGE_MINDMAP -> MindmapView(env.mock)

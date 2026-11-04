@@ -5,6 +5,7 @@ import org.json.JSONObject
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
+import java.time.temporal.ChronoUnit
 
 /** The status of a mock row (the Kanban columns, in order). */
 enum class MockStatus(val id: String, val label: String) {
@@ -37,6 +38,9 @@ data class MockTask(
     fun start(today: LocalDate): LocalDate? = startDay?.let { today.plusDays(it.toLong()) }
     fun end(today: LocalDate): LocalDate? = start(today)?.plusDays((days.coerceAtLeast(1) - 1).toLong())
 }
+
+/** One arc of the round Calendar's month dial: [ring] is the subject's ring (0 = outermost), degrees run clockwise from 12 o'clock. */
+data class DialArc(val ring: Int, val task: MockTask, val startDeg: Float, val sweepDeg: Float)
 
 /** A node of the Mindmap: a label and its branches. */
 data class MindNode(val label: String, val children: List<MindNode> = emptyList())
@@ -96,4 +100,45 @@ object MockTasks {
         val roots = items.filter { it.parent == null || items.none { p -> p.id == it.parent } }
         return MindNode(ROOT_LABEL, roots.groupBy { it.subject }.toList().sortedBy { it.first }.map { (s, rows) -> MindNode(s, rows.map(::node)) })
     }
+
+    /** The real tasks of the database as dated rows, so the Calendar draws them next to the fixture: dated by target (else deadline) to deadline. */
+    fun fromSnapshot(snap: Snapshot, today: LocalDate): List<MockTask> = snap.tasks.mapNotNull { t ->
+        val start = (t.dateTarget ?: t.dateDeadline)?.let { runCatching { LocalDate.parse(it) }.getOrNull() } ?: return@mapNotNull null
+        val end = t.dateDeadline?.let { runCatching { LocalDate.parse(it) }.getOrNull() }?.takeIf { !it.isBefore(start) } ?: start
+        MockTask(
+            id = "real_" + t.id, kind = "tasks", title = t.name, subject = snap.project(snap.list(t.listId)?.projectId)?.name ?: "",
+            status = when (t.status) {
+                TaskStatus.ACTION -> MockStatus.TODO
+                TaskStatus.WAITING -> MockStatus.DOING
+                TaskStatus.HOLD -> MockStatus.BLOCKED
+                TaskStatus.COMPLETED, TaskStatus.ARCHIVED -> MockStatus.DONE
+            },
+            startDay = ChronoUnit.DAYS.between(today, start).toInt(), days = (ChronoUnit.DAYS.between(start, end) + 1).toInt(),
+            progress = 0, parent = t.parentId?.let { "real_$it" }, detail = t.details,
+        )
+    }
+
+    /** The round Calendar's rings: one per subject that has a dated row, in start order (the earliest subject takes the outermost ring). */
+    fun rings(items: List<MockTask>): List<String> =
+        items.filter { it.startDay != null }.sortedBy { it.startDay }.map { it.subject }.distinct()
+
+    /** The month dial: a task is an arc over the days of [month] it covers (clipped to the month), on its subject's ring. */
+    fun dialArcs(items: List<MockTask>, today: LocalDate, month: YearMonth): List<DialArc> {
+        val rings = rings(items)
+        val n = month.lengthOfMonth()
+        val first = month.atDay(1)
+        val last = month.atEndOfMonth()
+        return items.mapNotNull { t ->
+            val s = t.start(today) ?: return@mapNotNull null
+            val e = t.end(today) ?: return@mapNotNull null
+            val a = if (s.isBefore(first)) first else s
+            val b = if (e.isAfter(last)) last else e
+            if (a.isAfter(b)) null
+            else DialArc(rings.indexOf(t.subject), t, (a.dayOfMonth - 1) * 360f / n, (b.dayOfMonth - a.dayOfMonth + 1) * 360f / n)
+        }
+    }
+
+    /** Backlogs and Projects: the registry's projects (all of them, empty or not) with the fixture rows hanging on each, by project name. */
+    fun rowsOf(items: List<MockTask>, kind: String, node: String): List<MockTask> =
+        items.filter { it.kind == kind && it.subject == node }.sortedWith(compareBy({ it.startDay == null }, { it.startDay }, { it.title }))
 }

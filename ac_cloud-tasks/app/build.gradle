@@ -186,6 +186,16 @@ def buildAvgSecs    = buildHistorySecs.isEmpty() ? -1L : (buildHistorySecs.sum()
 def buildLastSecs   = buildHistorySecs.isEmpty() ? -1L : (buildHistorySecs[0] as long)
 def buildSampleSize = buildHistorySecs.size()
 
+// #1461 the tasks section (pages + groups) of Cloud Me's build.json, as a build.json-shaped subset (data/Structure.kt reads both).
+def cloudMeDeclDir = layout.buildDirectory.dir('generated/cloud-me-decl').get().asFile
+def cloudMeBuild = new groovy.json.JsonSlurper().parse(file('../../ac_cloud-me/build.json'))
+def cloudMeTasks = (cloudMeBuild.ui.sections ?: []).find { it.id == cloudMeBuild.ui.vault_rows.section }
+cloudMeDeclDir.mkdirs()
+new File(cloudMeDeclDir, 'cloud-me-tasks.json').text = groovy.json.JsonOutput.toJson([ui: [
+    vault_rows: [section: cloudMeBuild.ui.vault_rows.section],
+    sections: [[id: cloudMeTasks.id, groups: cloudMeTasks.groups, pages: cloudMeTasks.pages.collect { [id: it.id, label: it.label] }]],
+]])
+
 android {
     namespace 'com.diegonmarcos.cloudagenda'
     compileSdk 36
@@ -250,6 +260,16 @@ android {
     buildFeatures {
         buildConfig = true
         compose = true
+    }
+
+    // #1461 Inboxes, Backlogs, Library and Projects are NOT retyped here: they are Cloud Me's own declaration files
+    // (vault-rows.json = the notes vault's folder shape, repos.outline.json = the fleet registry, and the tasks section
+    // of ac_cloud-me/build.json baked below), shared as assets.
+    sourceSets {
+        main {
+            assets.srcDirs += file('../../ac_cloud-me/data/repos')
+            assets.srcDirs += cloudMeDeclDir
+        }
     }
 
     testOptions {

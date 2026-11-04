@@ -15,7 +15,12 @@ import androidx.compose.ui.graphics.Color
 import com.diegonmarcos.cloudagenda.data.ThemeMode
 import com.diegonmarcos.superapp.uikit.CloudKitTheme
 import com.diegonmarcos.superapp.uikit.KitDenseMaterial
+import com.diegonmarcos.superapp.uikit.KitDensity
 import com.diegonmarcos.superapp.uikit.KitPalette
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Typography
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.isSpecified
 
 /** Whether the app is drawing dark right now (the chrome reads it for the nav strips and the system-bar glyphs). */
 val LocalDarkTheme = staticCompositionLocalOf { true }
@@ -73,6 +78,22 @@ fun materialSchemeFor(p: KitPalette, dark: Boolean): ColorScheme {
 }
 
 /**
+ * #1461 the fleet's dense type ramp: every Material text role times the Store's TEXT_SCALE ([KitDensity.TEXT_SCALE], 0.78), so a Text that
+ * takes its size from MaterialTheme (dialogs, fields, the AI panel, the editor) is as small as the Store's rows. A screen's own sizes
+ * come from KitStoreRow / KitDensity, never from an sp literal (DensityGuardTest).
+ */
+fun Typography.dense(f: Float = KitDensity.TEXT_SCALE): Typography {
+    fun TextStyle.s() = if (fontSize.isSpecified) copy(fontSize = fontSize * f) else this
+    return copy(
+        displayLarge = displayLarge.s(), displayMedium = displayMedium.s(), displaySmall = displaySmall.s(),
+        headlineLarge = headlineLarge.s(), headlineMedium = headlineMedium.s(), headlineSmall = headlineSmall.s(),
+        titleLarge = titleLarge.s(), titleMedium = titleMedium.s(), titleSmall = titleSmall.s(),
+        bodyLarge = bodyLarge.s(), bodyMedium = bodyMedium.s(), bodySmall = bodySmall.s(),
+        labelLarge = labelLarge.s(), labelMedium = labelMedium.s(), labelSmall = labelSmall.s(),
+    )
+}
+
+/**
  * THE theme of the app: Settings > Appearance (Light / Dark / System) picks the palette, CloudKitTheme applies it
  * app-wide, and the Material scheme under it is derived from the same palette. [systemDark] is injectable so a test
  * can render either mode without a device setting.
@@ -83,9 +104,16 @@ fun TasksTheme(mode: ThemeMode, systemDark: Boolean = isSystemInDarkTheme(), con
     val palette = TasksPalettes.of(dark)
     CloudKitTheme(palette) {
         KitDenseMaterial(materialSchemeFor(palette, dark)) {
-            CompositionLocalProvider(LocalDarkTheme provides dark) {
-                // The kit leaves the page background transparent; the app paints it so a dark window never shows a light one.
-                Box(Modifier.fillMaxSize().background(palette.surface)) { content() }
+            MaterialTheme(colorScheme = MaterialTheme.colorScheme, typography = MaterialTheme.typography.dense()) {
+                // KitDenseMaterial set the default text style to bodySmall before this scaling: re-read it from the scaled ramp.
+                androidx.compose.runtime.CompositionLocalProvider(
+                    androidx.compose.material3.LocalTextStyle provides MaterialTheme.typography.bodySmall,
+                ) {
+                    CompositionLocalProvider(LocalDarkTheme provides dark) {
+                        // The kit leaves the page background transparent; the app paints it so a dark window never shows a light one.
+                        Box(Modifier.fillMaxSize().background(palette.surface)) { content() }
+                    }
+                }
             }
         }
     }

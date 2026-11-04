@@ -1,6 +1,22 @@
 package com.diegonmarcos.cloudagenda.ui
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import com.diegonmarcos.cloudagenda.data.DueBucket
+import com.diegonmarcos.cloudagenda.data.TaskGrouping
+import com.diegonmarcos.superapp.uikit.KitBadge
+import com.diegonmarcos.superapp.uikit.KitBadgeChip
+import com.diegonmarcos.superapp.uikit.KitDensity
+import com.diegonmarcos.superapp.uikit.KitSkeletonRows
+import com.diegonmarcos.superapp.uikit.KitState
+import com.diegonmarcos.superapp.uikit.KitStoreDot
+import com.diegonmarcos.superapp.uikit.KitStoreName
+import com.diegonmarcos.superapp.uikit.KitStoreRow
+import com.diegonmarcos.superapp.uikit.KitStoreRowLine
+import java.time.LocalDate
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -56,6 +72,9 @@ object TasksTags {
     const val LIST = "tasks_list"
     const val EMPTY = "tasks_empty"
     const val NO_MATCH = "tasks_no_match"
+    const val LOADING = "tasks_loading"
+    fun group(id: String) = "tasks_group_$id"
+    fun actions(id: String) = "tasks_actions_$id"
     const val ADD_INPUT = "add_task_input"
     const val ADD = "add_task"
     fun row(id: String) = "task_row_$id"
@@ -79,7 +98,7 @@ private val StringSetSaver = listSaver<Set<String>, String>(save = { it.toList()
  * [pickedLink] is a link a system picker returned while the editor was open; the page hands it to the editor once.
  */
 @Composable
-fun TasksScreen(controller: TasksController, host: TasksHost, pickedLink: Attachment?, onPickedConsumed: () -> Unit, modifier: Modifier = Modifier) {
+fun TasksScreen(controller: TasksController, host: TasksHost, pickedLink: Attachment?, onPickedConsumed: () -> Unit, modifier: Modifier = Modifier, today: LocalDate = remember { LocalDate.now() }) {
     val snap = controller.snapshot
     val p = LocalKitPalette.current
     var expanded by rememberSaveable(stateSaver = StringSetSaver) { mutableStateOf(emptySet<String>()) }
@@ -107,20 +126,30 @@ fun TasksScreen(controller: TasksController, host: TasksHost, pickedLink: Attach
         } else {
             val nodes = TaskFiltering.visible(snap, list.id, controller.filter)
             val crumb = (snap.project(list.projectId)?.name?.let { "$it  ›  " } ?: "") + list.name
-            Text(crumb, color = p.textSecondary, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp).testTag(TasksTags.HEADER))
-            LazyColumn(Modifier.weight(1f).fillMaxWidth().testTag(TasksTags.LIST)) {
+            Text(crumb, color = p.textSecondary, fontSize = KitStoreRow.meta, modifier = Modifier.padding(horizontal = KitStoreRow.padH, vertical = KitStoreRow.tight).testTag(TasksTags.HEADER))
+            if (!controller.loaded) KitSkeletonRows(modifier = Modifier.padding(KitDensity.small).testTag(TasksTags.LOADING))
+            else LazyColumn(Modifier.weight(1f).fillMaxWidth().testTag(TasksTags.LIST)) {
                 if (nodes.isEmpty()) {
                     item {
                         val filtered = controller.filter.active
                         Column(Modifier.fillMaxWidth().padding(24.dp).testTag(if (filtered) TasksTags.NO_MATCH else TasksTags.EMPTY), horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(if (filtered) "No task matches the filter." else "No tasks in this list yet.", color = p.textSecondary)
+                            Text(if (filtered) "No task matches the filter." else "No tasks in this list yet.", color = p.textSecondary, fontSize = KitStoreRow.body)
                             if (filtered) TextButton(onClick = { controller.updateFilter(controller.filter.clear()) }) { Text("Clear all") }
                         }
                     }
                 }
-                items(nodes, key = { it.task.id }) { node ->
-                    TaskNodeRows(node, snap, controller, onOpen = { editingId = it.id })
-                    HorizontalDivider(color = p.hairline)
+                // Grouped by due date; a group is a Store section line, then one dense line per task and subtask.
+                for ((bucket, rows) in TaskGrouping.byDue(nodes, today)) {
+                    item(key = "group_" + bucket.name) {
+                        Text(
+                            bucket.label.uppercase() + "  ·  " + rows.size, color = if (bucket == DueBucket.OVERDUE) KitStoreRow.BAD else p.textSecondary,
+                            fontSize = KitStoreRow.caption, fontWeight = FontWeight.Bold,
+                            modifier = Modifier.fillMaxWidth().padding(start = KitStoreRow.padH, top = KitStoreRow.padH, bottom = KitStoreRow.tight).testTag(TasksTags.group(bucket.name)),
+                        )
+                    }
+                    items(rows, key = { it.task.id }) { node ->
+                        TaskNodeRows(node, snap, controller, today, onOpen = { editingId = it.id })
+                    }
                 }
                 item { AddTaskRow(onAdd = { controller.addTask(list.id, it) }) }
             }
@@ -180,49 +209,71 @@ fun TasksScreen(controller: TasksController, host: TasksHost, pickedLink: Attach
 }
 
 @Composable
-private fun TaskNodeRows(node: TaskNode, snap: Snapshot, controller: TasksController, onOpen: (Task) -> Unit) {
-    TaskRow(node.task, snap, depth = 0, controller, onOpen)
-    for (s in node.subtasks) TaskRow(s, snap, depth = 1, controller, onOpen)
+private fun TaskNodeRows(node: TaskNode, snap: Snapshot, controller: TasksController, today: LocalDate, onOpen: (Task) -> Unit) {
+    TaskRow(node.task, snap, depth = 0, controller, today, onOpen)
+    for (s in node.subtasks) TaskRow(s, snap, depth = 1, controller, today, onOpen)
 }
 
-@OptIn(ExperimentalLayoutApi::class)
+private fun glyphOf(s: TaskStatus) = when (s) {
+    TaskStatus.ACTION -> "◯"
+    TaskStatus.WAITING -> "◔"
+    TaskStatus.HOLD -> "⏸"
+    TaskStatus.COMPLETED -> "✓"
+    TaskStatus.ARCHIVED -> "▫"
+}
+
+private fun inkOf(s: TaskStatus) = when (s) {
+    TaskStatus.ACTION -> KitStoreRow.MISSING
+    TaskStatus.WAITING -> KitStoreRow.UPDATE
+    TaskStatus.HOLD -> KitStoreRow.BAD
+    TaskStatus.COMPLETED -> KitStoreRow.UP
+    TaskStatus.ARCHIVED -> KitStoreRow.RULE
+}
+
+private fun stateOf(s: TaskStatus) = when (s) {
+    TaskStatus.ACTION -> KitState.IDLE
+    TaskStatus.WAITING -> KitState.WARN
+    TaskStatus.HOLD -> KitState.BAD
+    TaskStatus.COMPLETED -> KitState.OK
+    TaskStatus.ARCHIVED -> KitState.IDLE
+}
+
+/**
+ * One line in the Cloud Store's dense row (KitStoreRowLine): the status glyph (a tap completes), the name, then chips: project, due
+ * date, status. The row's actions are collapsed behind one menu; a tap on the line opens the editor.
+ */
 @Composable
-private fun TaskRow(t: Task, snap: Snapshot, depth: Int, controller: TasksController, onOpen: (Task) -> Unit) {
+private fun TaskRow(t: Task, snap: Snapshot, depth: Int, controller: TasksController, today: LocalDate, onOpen: (Task) -> Unit) {
     val p = LocalKitPalette.current
     val done = t.status == TaskStatus.COMPLETED || t.status == TaskStatus.ARCHIVED
-    Row(
-        Modifier.fillMaxWidth().clickable(role = Role.Button) { onOpen(t) }.padding(start = (12 + depth * 28).dp, end = 12.dp, top = 4.dp, bottom = 4.dp)
-            .testTag(if (depth == 0) TasksTags.row(t.id) else TasksTags.sub(t.id)),
-        verticalAlignment = Alignment.Top,
-    ) {
-        Checkbox(
-            checked = t.status == TaskStatus.COMPLETED,
-            onCheckedChange = { controller.setStatus(t.id, if (it) TaskStatus.COMPLETED else TaskStatus.ACTION) },
-            modifier = Modifier.testTag(TasksTags.check(t.id)),
+    var menu by remember { mutableStateOf(false) }
+    val due = TaskGrouping.due(t)
+    val project = snap.project(snap.list(t.listId)?.projectId)?.name
+    KitStoreRowLine(Modifier.testTag(if (depth == 0) TasksTags.row(t.id) else TasksTags.sub(t.id)), onClick = { onOpen(t) }) {
+        Spacer(Modifier.width(KitStoreRow.step(14) * depth))
+        KitStoreDot(
+            glyphOf(t.status), inkOf(t.status),
+            Modifier.testTag(TasksTags.check(t.id)).clickable(role = Role.Checkbox) { controller.setStatus(t.id, if (t.status == TaskStatus.COMPLETED) TaskStatus.ACTION else TaskStatus.COMPLETED) },
         )
-        Column(Modifier.weight(1f).padding(top = 10.dp)) {
-            Text(
-                t.name, color = if (done) p.textSecondary else p.textPrimary, style = if (depth == 0) MaterialTheme.typography.bodyLarge else MaterialTheme.typography.bodyMedium,
-                fontWeight = if (depth == 0) FontWeight.Medium else FontWeight.Normal, textDecoration = if (done) TextDecoration.LineThrough else null,
-            )
-            val meta = listOfNotNull(
-                t.status.label, t.dateTarget?.let { "target $it" }, t.dateDeadline?.let { "due $it" }, t.location.ifBlank { null },
-                t.attachments.size.takeIf { it > 0 }?.let { "$it link${if (it == 1) "" else "s"}" },
-            ).joinToString("  ·  ")
-            Text(meta, color = p.textSecondary, style = MaterialTheme.typography.bodySmall)
-            if (t.tagIds.isNotEmpty()) {
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 2.dp)) {
-                    for (id in t.tagIds) snap.tag(id)?.let { tag ->
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            ColorDot(tagColor(tag.color), size = 8)
-                            Spacer(Modifier.width(4.dp))
-                            Text(tag.name, color = p.textSecondary, style = MaterialTheme.typography.labelSmall)
-                        }
-                    }
-                }
+        KitStoreName(t.name, Modifier.weight(1f), if (done) p.textSecondary else p.textPrimary)
+        if (depth == 0 && project != null) KitBadgeChip(KitBadge(project), Modifier.widthIn(max = 72.dp).padding(start = KitStoreRow.tight))
+        if (due != null) KitBadgeChip(
+            KitBadge(due.toString().substring(5), if (!done && due.isBefore(today)) KitState.BAD else if (!done && due == today) KitState.WARN else null),
+            Modifier.padding(start = KitStoreRow.tight),
+        )
+        KitBadgeChip(KitBadge(t.status.label, stateOf(t.status)), Modifier.padding(start = KitStoreRow.tight))
+        Box {
+            Text("⋯", color = p.textSecondary, fontSize = KitStoreRow.title, modifier = Modifier.clickable(role = Role.Button) { menu = true }.padding(start = KitStoreRow.gap, end = KitStoreRow.tight).testTag(TasksTags.actions(t.id)))
+            DropdownMenu(menu, { menu = false }) {
+                DropdownMenuItem(text = { Text("Open") }, onClick = { menu = false; onOpen(t) })
+                DropdownMenuItem(text = { Text(if (t.status == TaskStatus.COMPLETED) "Reopen" else "Complete") }, onClick = {
+                    menu = false; controller.setStatus(t.id, if (t.status == TaskStatus.COMPLETED) TaskStatus.ACTION else TaskStatus.COMPLETED)
+                })
+                DropdownMenuItem(text = { Text("Archive") }, onClick = { menu = false; controller.setStatus(t.id, TaskStatus.ARCHIVED) })
             }
         }
     }
+    HorizontalDivider(color = p.hairline.copy(alpha = 0.4f))
 }
 
 @Composable
