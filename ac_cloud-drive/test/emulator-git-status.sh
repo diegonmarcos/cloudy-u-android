@@ -3,7 +3,7 @@
 # repo with an upstream ref) must show named statuses, never the "?" of a read that does not end.
 #   1. open the page: NO check runs by itself, the row says "not checked yet" (the persisted-cache contract);
 #   2. pull to refresh (= Light check all): within 15 s the three icons of the row must be terminal
-#      (local cloned, server in_sync, sync never) and "last check: ... / 1 of 1 done" must show;
+#      (local clean, server in_sync, sync never) and "last check: ... / 1 of 1 done" must show;
 #   3. none of the three icons may say "reading" or "not_checked" after that.
 # Usage: emulator-git-status.sh <drive.apk> <outdir>
 set -u
@@ -77,10 +77,10 @@ t0=$(date +%s); ok=0
 while [ $(( $(date +%s) - t0 )) -lt 15 ]; do
   sleep 1
   find_row >/dev/null || continue
-  if grep -q "$NAME local cloned" "$OUT/ui.xml" && grep -q "$NAME server in_sync" "$OUT/ui.xml"; then ok=1; break; fi
+  if grep -qE "$NAME local (cloned|clean)" "$OUT/ui.xml" && grep -q "$NAME server in_sync" "$OUT/ui.xml"; then ok=1; break; fi
 done
 cp "$OUT/ui.xml" "$OUT/ui-after.xml"; adb exec-out screencap -p > "$OUT/after.png"
-[ $ok = 1 ] || fail "after pull-to-refresh the fixture icons did not become local cloned / server in_sync within 15 s: $(grep -o "$NAME [a-z]* [a-z_]*" "$OUT/ui-after.xml" | head -3 | tr '\n' ';')"
+[ $ok = 1 ] || fail "after pull-to-refresh the fixture icons did not become local clean / server in_sync within 15 s: $(grep -o "$NAME [a-z]* [a-z_]*" "$OUT/ui-after.xml" | head -3 | tr '\n' ';')"
 grep -qE "$NAME (local|server|sync) (reading|not_checked)" "$OUT/ui-after.xml" && fail "an icon is still reading / not checked after the check"
 grep -qE "last check: .* / 1 of 1 done" "$OUT/ui-after.xml" || { dump | grep -qE "last check: .* / 1 of 1 done" || echo "::warning::progress line not on screen (scrolled away)"; }
 adb logcat -d -v threadtime > "$OUT/logcat.txt"

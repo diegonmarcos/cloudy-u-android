@@ -125,7 +125,7 @@ dump >/dev/null; has "$NAME" || fail "the $NAME row is gone after process death:
 grep -qiE 'conflict' "$OUT/ui.xml" || note "the row shows no conflict after reopen: $(texts)"
 # 4b. the full-screen status window (libs:git-ui GitStatusWindow): a tap on the row's status lights opens it
 tap "^$NAME local" || fail "no status lights on the $NAME row: $(texts)"; sleep 3
-need 'Repository status' 'Repository metadata' 'Actions' || fail "the status window is not open: $(texts)"
+need 'Repository status' 'STATUS' 'Close' || fail "the status window is not open: $(texts)"
 shot 45-status-window
 back
 pull_clone "$CL"; grep -q '^<<<<<<<' "$WORK/pulled/$(basename "$CL")/a.txt" || fail "the conflict state did not survive process death"
