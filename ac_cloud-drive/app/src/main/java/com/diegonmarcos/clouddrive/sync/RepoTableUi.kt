@@ -52,14 +52,14 @@ internal fun RepoTableHeader(column: RepoColumn, ascending: Boolean, scroll: Scr
 @Composable
 internal fun RepoStatusCell(icons: RepoStatus.Icons, name: String, onOpen: () -> Unit, caption: String = "") {
     val decl = Declarations.sync.git.status.icons
-    com.diegonmarcos.cloudlib.gitui.RepoStatusCell(onOpen, caption) {
+    com.diegonmarcos.cloudlib.gitui.RepoStatusCell(onOpen, caption, dots = {
         // "not checked yet" / "never" draw a hollow dotted circle, never the "?" of a read that does not end.
         fun glyph(l: StatusLight.State) = if (l == StatusLight.State.UNVERIFIABLE) "\u25CC" else StatusLight.glyph(l)
         val lo = RepoStatus.lightOf("local", icons.local, decl); val se = RepoStatus.lightOf("server", icons.server, decl); val sy = RepoStatus.lightOf("sync", icons.sync, decl)
         StatusDot(lo, "$name local ${icons.local.name.lowercase()}", glyph = glyph(lo))
         StatusDot(se, "$name server ${icons.server.name.lowercase()}", glyph = glyph(se))
         StatusDot(sy, "$name sync ${icons.sync.name.lowercase()}", glyph = glyph(sy))
-    }
+    })
 }
 
 /** The label of one action: a string of its own for the added ids and the renamed declared ones, else the declared label. */
