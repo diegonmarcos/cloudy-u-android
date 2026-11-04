@@ -28,6 +28,7 @@ import com.diegonmarcos.superapp.navbarbottom.NavBarBottom
 import com.diegonmarcos.superapp.navbartop1.NavBarTopFirstRow
 import com.diegonmarcos.superapp.navbartop1.titleHierarchy
 import com.diegonmarcos.superapp.navbartop2.NavBarTopSecondRow
+import com.diegonmarcos.superapp.navbartop2.NavBarTopSecondRows
 import com.diegonmarcos.superapp.themebg.ThemeBackground
 import com.diegonmarcos.superapp.themebg.themeBackground
 import com.diegonmarcos.superapp.uikit.CloudKitTheme
@@ -149,7 +150,8 @@ abstract class BaselineShots(private val device: String) {
                     hierarchy = titleHierarchy(section, pageId), onNavigate = {}, onAi = {}, onProfile = {}, onConfigs = {},
                     appName = app, sections = decl.bottomSections(),
                 )
-                if (section.pages.size > 1) NavBarTopSecondRow(section.pages, pageId, {}, Modifier.fillMaxWidth(), underTopChrome = false)
+                // the section's declared nav_mode: one row, or one row per group (horizontal_two_rows, e.g. Calc #1409), as the app draws it
+                if (section.pages.size > 1) NavBarTopSecondRows(section, pageId, {}, Modifier.fillMaxWidth(), underTopChrome = false)
                 Box(Modifier.weight(1f).fillMaxWidth())
                 NavBarBottom(decl.islandEntries(), sectionId, {}, dark = true)
             }
