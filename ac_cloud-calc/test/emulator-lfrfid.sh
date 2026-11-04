@@ -32,8 +32,8 @@ shot 00-start
 tap '^Measure$' || true; sleep 3
 # the tab is the strip's last: swipe that row (found by a visible neighbour) left until it shows; the shot is scaled, the device is not
 lftab() { local i xy W; W=$(adb shell wm size | tr -d '\r' | tail -1 | sed 's/.*: //; s/x.*//')
-  for i in 1 2 3 4 5; do tap '^LF-RFID-Tags$' && return 0; xy=$(where '^(NFC|Bluetooth|WiFi|Camera|Phone|Sensors)$') || return 1; set -- $xy
-    adb shell input swipe $((W * 9 / 10)) "$2" $((W / 10)) "$2" 400; sleep 1; done; return 1; }
+  for i in 1 2 3 4 5; do tap '^LF-RFID-Tags$' && return 0; xy=$(box '^(NFC|Bluetooth|WiFi|Camera|Phone|Sensors)$') || return 1; set -- $xy
+    adb shell input swipe $((W * 9 / 10)) $(( ($2 + $4) / 2 )) $((W / 10)) $(( ($2 + $4) / 2 )) 400; sleep 1; done; return 1; }
 lftab || fail "no LF-RFID-Tags tab: $(texts)"
 sleep 3; tap '^Read$' || true; sleep 2
 shot 01-read-no-reader
