@@ -77,7 +77,7 @@ class CalendarMathTest {
         assertEquals(listOf("Month", "Year"), modes.map { it.label })
         assertTrue(CalendarMath.parseModes("").isEmpty())
         assertEquals(listOf("a"), CalendarMath.parseModes("a:A,broken,:x,y:").map { it.id })
-        val decl = org.json.JSONObject(File("build.json").readText()).getJSONObject("ui").getJSONArray("calendar_views")
+        val decl = org.json.JSONObject(File("../build.json").readText()).getJSONObject("ui").getJSONArray("calendar_views")
         assertEquals(modes.map { it.id }, (0 until decl.length()).map { decl.getJSONObject(it).getString("id") })
     }
 }
