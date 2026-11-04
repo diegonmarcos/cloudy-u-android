@@ -83,8 +83,8 @@ interface TokenStore {
 }
 
 /** The only place tokens live on disk: SafeEncryptedPrefs (AES-256), never a plain file; an unreadable store resets to memory, not plaintext. */
-class EncryptedTokenStore(ctx: Context) : TokenStore {
-    private val sp = SafeEncryptedPrefs.prefs(ctx.applicationContext, "music_tokens")
+class EncryptedTokenStore(ctx: Context, name: String = "music_tokens") : TokenStore {
+    private val sp = SafeEncryptedPrefs.prefs(ctx.applicationContext, name)
     override fun get(key: String): String? = sp.getString(key, null)
     override fun put(key: String, value: String) { sp.edit().putString(key, value).apply() }
     override fun remove(key: String) { sp.edit().remove(key).apply() }

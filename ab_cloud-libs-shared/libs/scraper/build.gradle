@@ -1,4 +1,4 @@
-// libs:scraper — #1427/#1428 the Cloud Browser's Scrapers section (Site Files, Scrap Tools), shared by
+// libs:scraper — #1427/#1428 the Cloud Browser's Scrapers section (Site Files, Apify, SelfHosted), shared by
 // reference like every lib (build.json::modules dir). Separate from libs:browser on purpose: it reads the
 // browser's stores as files/JSON (WebView simple cache, browser_downloads, offline index, browser_history)
 // and never links the browser's code, so a tool here cannot break browsing.

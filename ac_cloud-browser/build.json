@@ -96,7 +96,7 @@
     },
     "libs:scraper": {
       "type": "library",
-      "_doc": "#1426 the Scrapers section (Site Files, Scrap Tools): reads the browser's stores as files, calls the scrappers-api container for heavy work. Separate from libs:browser.",
+      "_doc": "#1426 the Scrapers section (Site Files, Apify, SelfHosted): reads the browser's stores as files, calls the scrappers-api container for heavy work. Separate from libs:browser.",
       "dir": "../ab_cloud-libs-shared/libs/scraper"
     },
     "libs:media-convert-audio": {
@@ -1908,7 +1908,7 @@
         }
       ]
     },
-    "_doc_nav": "#868 THE nav declaration (libs:bottomnav NavDecl): ui.bottom_nav is the island, ui.sections[] what each item opens, ui.default_section where the app opens. browser = BrowserHostFragment's page (its address bar, tab strip and overlays are the lib's own UI, so the section has no pages), tabs = the tab switcher (BrowserHostFragment.openTabs: the grid, where a tab dropped on another makes a group; #886 moved it from a button into the island), favourites = the bookmarks as a list or icon grid over it (BrowserHostFragment.openFavourites, #893; island order Fav, Tabs, Browser, Search, Scrapers; #1426 Scrapers took Configs' island place and Configs stays a section the first row's ⋮ opens), search = the Search add-on's page over it (BrowserHostFragment.showSearchPage), configs = the browser settings over it (showSettings), one top tab (PageTabs, scrolling sideways) per Configs page: ui.sections[configs].pages = settings_sections (#900). scrapers = libs:scraper's Site Files and Scrap Tools pages, drawn by MainActivity over the host (top tabs = ui.sections[scrapers].pages). MainActivity feeds the island from NavDecl and follows the host's overlays so the pill goes back to Browser when one closes.",
+    "_doc_nav": "#868 THE nav declaration (libs:bottomnav NavDecl): ui.bottom_nav is the island, ui.sections[] what each item opens, ui.default_section where the app opens. browser = BrowserHostFragment's page (its address bar, tab strip and overlays are the lib's own UI, so the section has no pages), tabs = the tab switcher (BrowserHostFragment.openTabs: the grid, where a tab dropped on another makes a group; #886 moved it from a button into the island), favourites = the bookmarks as a list or icon grid over it (BrowserHostFragment.openFavourites, #893; island order Fav, Tabs, Browser, Search, Scrapers; #1426 Scrapers took Configs' island place and Configs stays a section the first row's ⋮ opens), search = the Search add-on's page over it (BrowserHostFragment.showSearchPage), configs = the browser settings over it (showSettings), one top tab (PageTabs, scrolling sideways) per Configs page: ui.sections[configs].pages = settings_sections (#900). scrapers = libs:scraper's Site Files, Apify and SelfHosted pages (#1468), drawn by MainActivity over the host (top tabs = ui.sections[scrapers].pages). MainActivity feeds the island from NavDecl and follows the host's overlays so the pill goes back to Browser when one closes.",
     "bottom_nav": [
       "favourites",
       "tabs",
@@ -1952,15 +1952,16 @@
             "icon": "folder_open"
           },
           {
-            "id": "scrap_tools",
-            "label": "Scrap Tools",
-            "icon": "build"
+            "id": "apify",
+            "label": "Apify",
+            "icon": "build",
+            "_doc": "#1468 libs:scraper ApifyPage: the declared most-used actors, a search of the public Store API (api.apify.com/v2/store), and with the user's own token (encrypted) run an actor, list runs and datasets, export items as CSV/JSON."
           },
           {
-            "id": "music",
-            "label": "Music",
+            "id": "self_hosted",
+            "label": "SelfHosted",
             "icon": "music_note",
-            "_doc": "#1459 libs:scraper MusicPage: Spotify, YouTube Music, Deezer (official APIs) and Apple Music (logged-in web player) read, match (ISRC then title+artist+length), sync with preview and dry-run, CSV/JSON export; tokens in SafeEncryptedPrefs."
+            "_doc": "#1468 libs:scraper SelfHostedPage: Music (moved here from its own tab, #1459/#1460), the YouTube tool and the fleet's scrappers-api, as sections."
           }
         ]
       },
@@ -2202,7 +2203,7 @@
         },
         {
           "name": "Scrapers",
-          "what": "Site Files (every file a site left: cache, downloads, saved pages) and Scrap Tools (YouTube Download)."
+          "what": "Site Files (every file a site left: cache, downloads, saved pages), Apify (actors, Store search, runs, datasets) and SelfHosted (Music, YouTube Download, scrappers-api)."
         },
         {
           "name": "Configs",

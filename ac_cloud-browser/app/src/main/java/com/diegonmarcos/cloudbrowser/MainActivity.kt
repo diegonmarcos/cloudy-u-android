@@ -91,7 +91,7 @@ class MainActivity : AppCompatActivity() {
     private var selectedId by mutableStateOf<String?>(null)
     /** #900 the Configs top tab showing (a ui.sections[configs].pages id), while Configs is the island's item. */
     private var configsPage by mutableStateOf<String?>(null)
-    /** #1426 the Scrapers top tab showing (a ui.sections[scrapers].pages id: Site Files, Scrap Tools), libs:scraper draws it. */
+    /** #1426 the Scrapers top tab showing (a ui.sections[scrapers].pages id: Site Files, Apify, SelfHosted), libs:scraper draws it. */
     private var scrapersPage by mutableStateOf<String?>(null)
     /** #1164 the live host fragment (Compose state: the first row reads its address). */
     private var hostFragment by mutableStateOf<BrowserHostFragment?>(null)
@@ -225,7 +225,7 @@ class MainActivity : AppCompatActivity() {
                     val tabs = remember { decl.section("configs")?.pages.orEmpty() }
                     NavBarTopSecondRow(tabs, configsPage, onSelect = { pg -> openConfigsPage(pg.id) }, dark = true, underTopChrome = false)
                 }
-                // #1426 Scrapers: Site Files | Scrap Tools as top tabs, the pages are libs:scraper's.
+                // #1426 Scrapers: Site Files | Apify | SelfHosted as top tabs, the pages are libs:scraper's.
                 if (selectedId == "scrapers") {
                     val tabs = remember { decl.section("scrapers")?.pages.orEmpty() }
                     NavBarTopSecondRow(tabs, scrapersPage, onSelect = { pg -> scrapersPage = pg.id }, dark = true, underTopChrome = false)

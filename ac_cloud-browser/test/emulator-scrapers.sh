@@ -6,7 +6,7 @@
 #   S1 the island shows Scrapers (not Configs) and a tap opens the Scrapers section on Site Files     -> 1-scrapers.png
 #   S2 the visited site is a folder in Site Files; a tap drops down its cached files                   -> 2-site-files-expanded.png
 #   S3 a tapped css/js/json/html file opens in the in-app viewer                                       -> 3-file-open.png
-#   S4 Scrap Tools shows the YouTube Download row with the rights notice, As and Download to choices    -> 4-youtube-tool.png
+#   S4 SelfHosted shows the YouTube Download row with the rights notice, As and Download to choices    -> 4-youtube-tool.png
 set -u
 APK="$1"; OUT="$2"; URL="${3:-https://diegonmarcos.github.io/linktree_icon-view}"; mkdir -p "$OUT"
 BPKG=com.diegonmarcos.cloudbrowser
@@ -67,7 +67,7 @@ dump 0-page
 if tap 0-page '^Scrapers$' >/dev/null; then ok "S1 the island has Scrapers"; else bad "S1 no Scrapers item on the island"; fi
 grep -q 'text="Configs"' "$OUT/0-page.xml" && ! grep -q 'text="Scrapers"' "$OUT/0-page.xml" && bad "S1 the island still shows Configs"
 sleep 4; shot 1-scrapers
-if grep -q 'Site Files' "$OUT/1-scrapers.xml" && grep -q 'Scrap Tools' "$OUT/1-scrapers.xml"; then ok "S1 Scrapers shows the Site Files and Scrap Tools tabs"; else bad "S1 the Site Files / Scrap Tools tabs are missing"; fi
+if grep -q 'Site Files' "$OUT/1-scrapers.xml" && grep -q 'SelfHosted' "$OUT/1-scrapers.xml"; then ok "S1 Scrapers shows the Site Files and SelfHosted tabs"; else bad "S1 the Site Files / SelfHosted tabs are missing"; fi
 
 if tap 1-scrapers "^${HOST//./\\.}\$" >/dev/null; then
   sleep 3; shot 2-site-files-expanded
@@ -83,7 +83,7 @@ else
 fi
 
 dump 4-pre
-if tap 4-pre '^Scrap Tools$' >/dev/null; then
+if tap 4-pre '^SelfHosted$' >/dev/null; then
   sleep 3; dump 4-tools
   tap 4-tools 'YouTube link' >/dev/null && adb shell input text 'https://youtu.be/dQw4w9WgXcQ' && adb shell input keyevent KEYCODE_BACK
   sleep 2; shot 4-youtube-tool
@@ -91,7 +91,7 @@ if tap 4-pre '^Scrap Tools$' >/dev/null; then
   if grep -q 'YouTube Download' "$X" && grep -q 'Only download content you have rights to' "$X" && grep -q 'Audio from video' "$X" && grep -q 'Downloads' "$X"; then
     ok "S4 YouTube Download: notice, As and Download to are on screen"
   else bad "S4 the YouTube Download row is incomplete"; fi
-else bad "S4 no Scrap Tools tab"; shot 4-youtube-tool; fi
+else bad "S4 no SelfHosted tab"; shot 4-youtube-tool; fi
 
 adb logcat -d -v threadtime > "$OUT/logcat.txt"
 grep -q "FATAL EXCEPTION" "$OUT/logcat.txt" && bad "the app crashed (logcat.txt)"

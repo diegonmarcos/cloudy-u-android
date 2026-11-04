@@ -55,11 +55,11 @@ import kotlinx.coroutines.withContext
 import java.text.DateFormat
 import java.util.Date
 
-/** The Scrapers section's top-nav pages, by id (build.json ui.sections[scrapers].pages). */
+/** The Scrapers section's top-nav pages (#1468: Site Files | Apify | SelfHosted), by id (build.json ui.sections[scrapers].pages). */
 object ScrapersPages {
     const val SITE_FILES = "site_files"
-    const val SCRAP_TOOLS = "scrap_tools"
-    const val MUSIC = "music"
+    const val APIFY = "apify"
+    const val SELF_HOSTED = "self_hosted"
 }
 
 /** #1426 the Scrapers section: [page] is a ScrapersPages id; drawn by the app over its host. */
@@ -67,8 +67,8 @@ object ScrapersPages {
 fun ScrapersPage(page: String?, c: ThemeColors, modifier: Modifier = Modifier) {
     Box(modifier.fillMaxSize().background(c.top).testTag("scrapers:page:${page ?: ScrapersPages.SITE_FILES}")) {
         when (page) {
-            ScrapersPages.SCRAP_TOOLS -> ScrapToolsPage(c)
-            ScrapersPages.MUSIC -> MusicPage(c)
+            ScrapersPages.APIFY -> ApifyPage(c)
+            ScrapersPages.SELF_HOSTED -> SelfHostedPage(c)
             else -> SiteFilesPage(c)
         }
     }
@@ -136,19 +136,10 @@ fun SiteFilesPage(c: ThemeColors) {
     }
 }
 
-/** #1428 Scrap Tools: one tool per row; the first is YouTube Download. */
+/** #1428/#1468 the YouTube tool, a SelfHosted section (the scrappers-api does the extraction). */
 @Composable
-fun ScrapToolsPage(c: ThemeColors) {
-    var openTool by remember { mutableStateOf("youtube") }
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(12.dp)) {
-        Row(Modifier.fillMaxWidth().clickable { openTool = if (openTool == "youtube") "" else "youtube" }
-            .background(c.island, RoundedCornerShape(12.dp)).padding(14.dp).testTag("scrapers:tool:youtube"),
-            verticalAlignment = Alignment.CenterVertically) {
-            Text(if (openTool == "youtube") "▾" else "▸", color = c.accent, modifier = Modifier.width(22.dp))
-            Text("YouTube Download", color = c.onIsland, fontWeight = FontWeight.SemiBold)
-        }
-        if (openTool == "youtube") YouTubeTool(c)
-    }
+fun YouTubeToolPage(c: ThemeColors) {
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(12.dp).testTag("scrapers:tool:youtube")) { YouTubeTool(c) }
 }
 
 @Composable
