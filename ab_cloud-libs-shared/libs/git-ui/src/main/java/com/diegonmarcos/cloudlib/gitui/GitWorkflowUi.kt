@@ -28,9 +28,9 @@ private fun MetaLine(text: String) {
     Text(text, style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Monospace, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
 }
 
-/** A row of the host's pills. */
+/** A row of the host's pills (internal: the sheet tail uses it too). */
 @Composable
-private fun PillLine(content: @Composable () -> Unit) {
+internal fun PillLine(content: @Composable () -> Unit) {
     val k = LocalGitUiKit.current
     Row(Modifier.fillMaxWidth().padding(top = k.pad), horizontalArrangement = Arrangement.spacedBy(k.pad), verticalAlignment = Alignment.CenterVertically) { content() }
 }

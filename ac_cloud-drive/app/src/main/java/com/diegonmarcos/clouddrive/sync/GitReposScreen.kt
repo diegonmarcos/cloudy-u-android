@@ -1821,7 +1821,7 @@ private fun GitRepoOpsBox(
                 canSolve = running == null, onSolve = { solveAsk = it },
             )
         }
-        RepoMetaTable(listOf(
+        GitSheetTail(listOf(
             stringResource(R.string.repo_meta_k_name) to repoName,
             stringResource(R.string.repo_meta_k_owner) to owner,
             stringResource(R.string.repo_meta_k_visibility) to repoVisibilityWord(isPrivate),
@@ -1835,12 +1835,8 @@ private fun GitRepoOpsBox(
             stringResource(R.string.repo_meta_k_size) to (RepoTable.size(row.sizeMainBytes) + " / " + RepoTable.size(row.sizeTotalBytes)),
             stringResource(R.string.repo_meta_k_size_disk) to RepoTable.size(row.sizeDiskBytes),
             stringResource(R.string.repo_meta_k_branches) to RepoTable.count(row.branches),
-        ))
-        PillRow { Pill(stringResource(R.string.repo_menu_close), onClose) }
-        Text(
-            if (repo.autoSync) stringResource(R.string.sync_auto, if (repo.syncIntervalMinutes > 0) repo.syncIntervalMinutes else BuildConfig.GIT_SYNC_INTERVAL_MINUTES, stringResource(if (repo.syncRequireUnmetered) R.string.sync_network_unmetered else R.string.sync_network_any)) else stringResource(R.string.sync_manual),
-            Modifier.padding(top = DriveMetrics.pad), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        ), stringResource(R.string.repo_menu_close), onClose, footer =
+            if (repo.autoSync) stringResource(R.string.sync_auto, if (repo.syncIntervalMinutes > 0) repo.syncIntervalMinutes else BuildConfig.GIT_SYNC_INTERVAL_MINUTES, stringResource(if (repo.syncRequireUnmetered) R.string.sync_network_unmetered else R.string.sync_network_any)) else stringResource(R.string.sync_manual))
     }
 
     confirm?.let { id ->
@@ -1962,7 +1958,7 @@ private fun GitRepoNotClonedBox(
                 else feed.forEach { MetaLine(it) }
             }
         }
-        RepoMetaTable(listOf(
+        GitSheetTail(listOf(
             stringResource(R.string.repo_meta_k_name) to repoName,
             stringResource(R.string.repo_meta_k_owner) to owner,
             stringResource(R.string.repo_meta_k_visibility) to repoVisibilityWord(isPrivate),
@@ -1971,8 +1967,7 @@ private fun GitRepoNotClonedBox(
             stringResource(R.string.repo_meta_k_size) to (RepoTable.size(row.sizeMainBytes) + " / " + RepoTable.size(row.sizeTotalBytes)),
             stringResource(R.string.repo_meta_k_size_disk) to RepoTable.size(row.sizeDiskBytes),
             stringResource(R.string.repo_meta_k_branches) to RepoTable.count(row.branches),
-        ))
-        PillRow { Pill(stringResource(R.string.repo_menu_close), onClose) }
+        ), stringResource(R.string.repo_menu_close), onClose)
     }
 }
 
