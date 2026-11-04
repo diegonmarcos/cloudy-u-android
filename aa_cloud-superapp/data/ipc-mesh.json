@@ -302,7 +302,6 @@
      "keyboard",
      "keyboard-engines",
      "kg-store",
-     "lib-account-ui",
      "lib-analytics-sink",
      "lib-cal",
      "lib-calc",
@@ -319,7 +318,6 @@
      "lib-rclone-engine",
      "lib-rootfs-nixdroid",
      "lib-rootfs-termux",
-     "lib-usb-drive",
      "mail",
      "matrix",
      "me",
@@ -540,7 +538,6 @@
      "keyboard",
      "keyboard-engines",
      "kg-store",
-     "lib-account-ui",
      "lib-analytics-sink",
      "lib-cal",
      "lib-calc",
@@ -557,7 +554,6 @@
      "lib-rclone-engine",
      "lib-rootfs-nixdroid",
      "lib-rootfs-termux",
-     "lib-usb-drive",
      "mail",
      "matrix",
      "me",
@@ -670,7 +666,6 @@
      "keyboard",
      "keyboard-engines",
      "kg-store",
-     "lib-account-ui",
      "lib-analytics-sink",
      "lib-cal",
      "lib-calc",
@@ -687,7 +682,6 @@
      "lib-rclone-engine",
      "lib-rootfs-nixdroid",
      "lib-rootfs-termux",
-     "lib-usb-drive",
      "mail",
      "matrix",
      "me",
@@ -975,7 +969,6 @@
      "keyboard",
      "keyboard-engines",
      "kg-store",
-     "lib-account-ui",
      "lib-rootfs-nixdroid",
      "lib-rootfs-termux",
      "mail",
@@ -1040,7 +1033,6 @@
      "aa_cloud-superapp",
      "account",
      "drive",
-     "lib-account-ui",
      "lib-rootfs-nixdroid",
      "lib-rootfs-termux",
      "nix-on-droid",
@@ -1097,7 +1089,6 @@
      "callers": [
       "account",
       "drive",
-      "lib-account-ui",
       "lib-rootfs-nixdroid",
       "lib-rootfs-termux",
       "nix-on-droid",
@@ -1224,7 +1215,6 @@
       "keyboard",
       "keyboard-engines",
       "kg-store",
-      "lib-account-ui",
       "lib-analytics-sink",
       "lib-cal",
       "lib-calc",
@@ -1241,7 +1231,6 @@
       "lib-rclone-engine",
       "lib-rootfs-nixdroid",
       "lib-rootfs-termux",
-      "lib-usb-drive",
       "mail",
       "matrix",
       "me",
@@ -1371,7 +1360,6 @@
       "drive",
       "keyboard",
       "kg-store",
-      "lib-account-ui",
       "mail",
       "me",
       "search",
@@ -1390,7 +1378,6 @@
      "callers": [
       "browser",
       "keyboard",
-      "lib-account-ui",
       "me"
      ]
     },
@@ -2946,7 +2933,6 @@
      "uris": [],
      "callers": [
       "account",
-      "lib-account-ui",
       "me"
      ]
     },
@@ -3088,7 +3074,35 @@
     "fleetconfig-model",
     "perms"
    ],
-   "endpoints": []
+   "endpoints": [
+    {
+     "permission": "android.permission.DUMP",
+     "level": "none",
+     "source": "ad_Capital-Stack-FinTerminal/app/src/main/AndroidManifest.xml",
+     "component": ".ui.SeedReceiver",
+     "id": "receiver:.ui.SeedReceiver",
+     "kind": "receiver",
+     "name": "SeedReceiver",
+     "actions": [
+      "<pkg>.SEED"
+     ],
+     "callers": []
+    },
+    {
+     "permission": null,
+     "level": "none",
+     "source": "ad_Capital-Stack-FinTerminal/app/src/main/AndroidManifest.xml",
+     "component": ".MainActivity",
+     "id": "deep_link:.MainActivity",
+     "kind": "deep_link",
+     "name": "MainActivity",
+     "actions": [],
+     "uris": [
+      "finterm://dashboard"
+     ],
+     "callers": []
+    }
+   ]
   },
   {
    "id": "hardtech-cad",
@@ -3197,22 +3211,6 @@
      ]
     }
    ]
-  },
-  {
-   "id": "lib-account-ui",
-   "pkg": "com.diegonmarcos.cloudlib.accountui",
-   "label": "cloud-lib-account-ui",
-   "kind": "lib",
-   "dir": "libs:account-ui",
-   "door": true,
-   "libs": [
-    "core",
-    "devtools",
-    "fleetconfig-model",
-    "perms",
-    "shizuku-adb-debug-tools"
-   ],
-   "endpoints": []
   },
   {
    "id": "lib-analytics-sink",
@@ -3421,20 +3419,6 @@
     "devtools",
     "fleetconfig-model",
     "rclone-engine"
-   ],
-   "endpoints": []
-  },
-  {
-   "id": "lib-usb-drive",
-   "pkg": "com.diegonmarcos.cloudlib.usbdrive",
-   "label": "cloud-lib-usb-drive",
-   "kind": "lib",
-   "dir": "libs:usb-drive",
-   "door": true,
-   "libs": [
-    "core",
-    "devtools",
-    "fleetconfig-model"
    ],
    "endpoints": []
   },
