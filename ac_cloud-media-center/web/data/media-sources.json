@@ -1,0 +1,44 @@
+{
+  "_doc": "#1469 THE declaration of Media's playlist sources, read by assets/media-sync.js (parser, runner, mappers) and by Configs (the Music / Videos / Gallery tabs, Apify | Direct subsections). One row per service: `method` is the default, `methods` what it may be switched to in Configs. direct = the service's official API with the owner's own token (Spotify Web API, YouTube Data API, Deezer public API); apify = an Apify actor named by `actor`, run through the chosen backend (Apify Cloud by default, self-hosted Cloudy Crawlee opt-in), with `input` as its run input where {ref} is the profile, playlist or board URL the owner enters. Actor ids are defaults the owner can change. Metadata only: titles, artists, ISRC, covers and links; nothing here fetches audio or video, and no DRM is touched.",
+  "version": 1,
+  "default_backend": "cloud",
+  "backends": {
+    "cloud": { "label": "Apify Cloud", "api": "https://api.apify.com/v2", "token_key": "apify.token" },
+    "crawlee": { "label": "Self-hosted Cloudy Crawlee", "api": "https://crawlee-cloud.mesh.diegonmarcos.com/v2", "token_key": "crawlee.token" }
+  },
+  "areas": [
+    { "id": "music", "tab": "music", "label": "Music", "icon": "♪" },
+    { "id": "video", "tab": "videos", "label": "Video", "icon": "▶" },
+    { "id": "images", "tab": "gallery", "label": "Images / Boards", "icon": "▦" }
+  ],
+  "sources": [
+    { "id": "spotify", "area": "music", "label": "Spotify playlists", "kind": "playlist", "method": "direct", "methods": ["direct", "apify"], "api": "spotify",
+      "token_key": "spotify.token", "token_help": "OAuth access token with playlist-read-private (Spotify Web API); kept encrypted.",
+      "actor": "apify/spotify-playlist-scraper", "ref_label": "Playlist URL (apify)", "input": { "startUrls": [{ "url": "{ref}" }] } },
+    { "id": "youtube", "area": "video", "label": "YouTube playlists", "kind": "playlist", "method": "direct", "methods": ["direct", "apify"], "api": "youtube",
+      "token_key": "youtube.token", "token_help": "OAuth access token with youtube.readonly (YouTube Data API v3); kept encrypted.",
+      "actor": "streamers/youtube-scraper", "ref_label": "Channel or playlist URL (apify)", "input": { "startUrls": [{ "url": "{ref}" }], "maxResults": 100 } },
+    { "id": "pinterest", "area": "images", "label": "Pinterest boards", "kind": "board", "method": "apify", "methods": ["apify"],
+      "actor": "epctex/pinterest-scraper", "ref_label": "Profile or board URL", "input": { "startUrls": [{ "url": "{ref}" }], "maxItems": 200 } },
+    { "id": "soundcloud", "area": "music", "label": "SoundCloud playlists", "kind": "playlist", "method": "apify", "methods": ["apify"],
+      "actor": "scrapearchitect/soundcloud-scraper", "ref_label": "Profile or playlist URL", "input": { "startUrls": [{ "url": "{ref}" }] } },
+    { "id": "deezer", "area": "music", "label": "Deezer playlists", "kind": "playlist", "method": "apify", "methods": ["direct", "apify"], "api": "deezer",
+      "token_key": "", "token_help": "Public playlists need no token; the ref is the Deezer user id. The Deezer API sends no CORS headers, so a webview may refuse it; apify is the default.",
+      "actor": "apify/deezer-scraper", "ref_label": "Deezer user id (direct) or profile URL (apify)", "input": { "startUrls": [{ "url": "{ref}" }] } },
+    { "id": "apple-music", "area": "music", "label": "Apple Music playlists", "kind": "playlist", "method": "apify", "methods": ["apify"],
+      "actor": "apify/apple-music-scraper", "ref_label": "Playlist URL", "input": { "startUrls": [{ "url": "{ref}" }] } }
+  ],
+  "app_pages": {
+    "_doc": "Static text of Configs > Perms and Configs > About (the app is a webview, so the shared native pages are summarised here; the full ones open from the fleet menu).",
+    "perms": [
+      { "name": "Internet", "why": "Sync calls the Spotify Web API, the YouTube Data API, Deezer and Apify (Cloud or your Cloudy Crawlee) with your own tokens." },
+      { "name": "Nothing else", "why": "No storage, contacts or location grant is asked; tokens stay encrypted in the app's own storage." }
+    ],
+    "about": [
+      "Cloud Media Center keeps the owner's music, video and image playlists in one library.",
+      "Sync reads metadata only (titles, artists, ISRC, covers, links). No audio or video is downloaded and no DRM is touched.",
+      "Direct sources use the official APIs with your own token; Apify sources run an actor on the backend chosen in the Apify tab (Apify Cloud by default, self-hosted Cloudy Crawlee opt-in).",
+      "Music is matched against the collection by ISRC, then by title, artist and length, as in Cloud Browser."
+    ]
+  }
+}

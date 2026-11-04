@@ -93,7 +93,7 @@ function page(rel, storage, hash) {
     fetch: (u) => { const f = path.join(web, path.dirname(rel), u); return fs.existsSync(f) ? Promise.resolve({ ok: true, json: () => Promise.resolve(JSON.parse(fs.readFileSync(f, 'utf8'))) }) : Promise.reject(new Error('404 ' + u)); },
     setTimeout, clearTimeout, console };
   win.window = win; vm.createContext(win);
-  ['sources-core.js', 'configs.js'].forEach((s) => vm.runInContext(fs.readFileSync(path.join(web, 'assets', s), 'utf8'), win, { filename: s }));
+  ['sources-core.js', 'media-sync.js', 'configs.js'].forEach((s) => vm.runInContext(fs.readFileSync(path.join(web, 'assets', s), 'utf8'), win, { filename: s }));
   win.CmcConfig.boot();
   return { win, doc, body, main: doc.querySelector('main') };
 }
@@ -130,12 +130,13 @@ function mem() { const m = {}; return { getItem: (k) => (k in m ? m[k] : null), 
   const store = mem();
   const c = page('configs/index.html', store); await tick(); await tick();
   const chipIds = c.doc.querySelectorAll('.chip').map((b) => b.getAttribute('data-chip'));
-  ok(JSON.stringify(chipIds) === '["music","videos","gallery","books","feed","movies"]', 'configs: a section per tab (' + chipIds.join(', ') + ')');
+  ok(JSON.stringify(chipIds) === '["music","videos","gallery","books","feed","movies","apify","general","perms","about"]', 'configs: a section per tab (' + chipIds.join(', ') + ')');
   for (const id of chipIds) {
     fire(c.doc.querySelector('.chip[data-chip="' + id + '"]'), 'click'); await tick();
     const fields = c.main.querySelectorAll('[data-key]');
-    ok(c.main.querySelector('.cfg[data-cfg="' + id + '"]') && fields.length >= 1, 'configs: ' + id + ' renders its settings (' + fields.length + ' fields)');
+    ok(c.main.querySelector('.cfg[data-cfg="' + id + '"]') && (fields.length >= 1 || ['apify', 'general', 'perms', 'about'].includes(id)), 'configs: ' + id + ' renders its settings (' + fields.length + ' fields)');
   }
+  fire(c.doc.querySelector('.chip[data-chip="movies"]'), 'click'); await tick();
   const secs = c.main.querySelectorAll('[data-msec]').map((s) => s.getAttribute('data-msec'));
   ok(JSON.stringify(secs) === '["sources","playback","torrent"]', 'configs/movies: Sources, Playback, Torrents');
   const need = ['tmdb_key', 'region', 'jellyfin.url', 'jellyfin.token', 'emby.url', 'emby.token', 'plex.url', 'plex.token', 'drive.url', 'buffer', 'offline',

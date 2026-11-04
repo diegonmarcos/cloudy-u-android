@@ -16,6 +16,16 @@ pinned at one commit (`build.json::data.source`).
 | `web/movies/` | `c-Circus/movies/src/data` — the site's shelves and posters | a detail sheet, then IMDb or a trailer search |
 | `web/documentaries/` | the YouTube "Docs" playlist plus every Documentary-genre title | YouTube / the detail sheet |
 
+**Library and playlist sync (#1469).** `web/library/` shows the owner's synced playlists, boards and video lists as dense rows;
+Sync now runs on demand and Configs > General sets a schedule (run when the app opens and the last sync is old enough). What is
+synced is declared in `web/data/media-sources.json`: each service has a method (`direct` = the official API with the owner's token:
+Spotify Web API, YouTube Data API, Deezer; `apify` = an actor id run through the backend chosen in Configs > Apify, Apify Cloud by
+default, self-hosted Cloudy Crawlee opt-in) and a default actor. Configs order: Music, Video, Images / Boards (each with Apify | Direct
+subsections), Books, Feed, Movies, Apify, General, Perms, About (the order is allowed for this app in
+`1_cicd/src/data/configs-pages.json::tabs.app_order`). Tokens are AES-GCM encrypted in the webview storage with a non-extractable key.
+Music is matched against the collection with a JS port of Cloud Browser's ISRC-then-fuzzy matcher (libs:scraper is Kotlin, which this
+app does not have). Metadata only, no DRM. Tester: `test/test-media-center-sync.sh`.
+
 Every link out goes through `tauri-plugin-opener` (`opener:default`, the one
 capability), so TIDAL, YouTube and Pinterest open in their own apps.
 

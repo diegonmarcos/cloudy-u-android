@@ -1,0 +1,3 @@
+[{"title":"Song A","artist":"Band","duration":200,"url":"https://soundcloud.com/a","playlist":{"title":"Set 1","url":"https://soundcloud.com/s/1"}},
+ {"title":"Song B","artistName":"Band","playlist":{"title":"Set 1","url":"https://soundcloud.com/s/1"}},
+ {"name":"Mix","url":"https://soundcloud.com/s/2","tracks":[{"title":"X","artist":"Y"},{"title":""}]}]

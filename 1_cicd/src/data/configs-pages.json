@@ -320,6 +320,22 @@
           "about"
         ],
         "reason": "The owner chose Media | Events | News | Apify | General | Perms | About for Cloud News (#1470): its own source groups first, the shared pages after."
+      },
+      "ac_cloud-media-center": {
+        "order": [
+          "music",
+          "videos",
+          "gallery",
+          "books",
+          "feed",
+          "movies",
+          "apify",
+          "general",
+          "perms",
+          "about"
+        ],
+        "reason": "The owner chose the media areas first, then Apify, then General | Perms | About for Cloud Media Center (#1469), mirroring Cloud News (#1470); its Configs is a web page.",
+        "source": "ac_cloud-media-center/web/assets/configs.js"
       }
     }
   },

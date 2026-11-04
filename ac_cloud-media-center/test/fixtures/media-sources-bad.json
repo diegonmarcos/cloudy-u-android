@@ -1,0 +1,10 @@
+{"version":1,"default_backend":"cloud","backends":{"cloud":{"label":"Apify Cloud","api":"https://api.apify.com/v2","token_key":"apify.token"}},
+ "areas":[{"id":"music","tab":"music","label":"Music"}],
+ "sources":[
+  {"id":"ok","area":"music","kind":"playlist","method":"apify","methods":["apify"],"actor":"a/b"},
+  {"id":"ok","area":"music","kind":"playlist","method":"apify","methods":["apify"],"actor":"a/b"},
+  {"id":"noactor","area":"music","kind":"playlist","method":"apify","methods":["apify"]},
+  {"id":"noarea","area":"nope","kind":"playlist","method":"apify","methods":["apify"],"actor":"a/b"},
+  {"id":"badapi","area":"music","kind":"playlist","method":"direct","methods":["direct"],"api":"napster"},
+  {"id":"badkind","area":"music","kind":"song","method":"apify","methods":["apify"],"actor":"a/b"},
+  {"id":"badmethod","area":"music","kind":"playlist","method":"direct","methods":["apify"],"actor":"a/b"}]}

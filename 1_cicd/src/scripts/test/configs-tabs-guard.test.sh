@@ -21,7 +21,7 @@ out="$(cd "$ROOT" && python3 "$GUARD" .)"; rc=$?
 if [ "$rc" -eq 0 ]; then ok "the real tree passes ($(tail -1 <<<"$out"))"; else fail "the real tree is red"; printf '%s\n' "$out"; fi
 
 mkdir -p "$BASE"
-( cd "$ROOT" && for f in a[acd]_*/build.json "$DATA" "$LIB" $(grep -rlE 'FleetConfigsPageBody\(|FleetGeneralPage\(|FleetConfigsScreen\(' --include=*.kt --include=*.java a[acd]_* 2>/dev/null | grep -vE '/(test|androidTest)/'); do mkdir -p "$BASE/$(dirname "$f")"; cp "$f" "$BASE/$f"; done )
+( cd "$ROOT" && for f in a[acd]_*/build.json "$DATA" "$LIB" ac_cloud-media-center/web/assets/configs.js $(grep -rlE 'FleetConfigsPageBody\(|FleetGeneralPage\(|FleetConfigsScreen\(' --include=*.kt --include=*.java a[acd]_* 2>/dev/null | grep -vE '/(test|androidTest)/'); do mkdir -p "$BASE/$(dirname "$f")"; cp "$f" "$BASE/$f"; done )
 python3 "$GUARD" "$BASE" >/dev/null || fail "the fixture is red before any mutation"
 
 # mutant NAME RULE PYTHON — PYTHON edits the fixture (cwd = fixture) and must change a file; the guard must go red naming RULE.
@@ -80,6 +80,16 @@ d = load('ac_cloud-news/build.json'); s = [x for x in d['ui']['sections'] if x['
 s['pages'] = s['pages'][3:]; save('ac_cloud-news/build.json', d)"
 mutant "an app folder without a build.json escapes" T5 "
 import os; os.makedirs('ac_cloud-ghost'); open('ac_cloud-ghost/readme.md', 'w').write('x')"
+mutant "Media Center draws Perms before General" T4 "
+p = 'ac_cloud-media-center/web/assets/configs.js'; s = open(p).read()
+a = \"    { id: 'general', label: 'General'\"; assert a in s
+b = \"    { id: 'perms', label: 'Perms'\"; assert b in s
+i, j = s.index(a), s.index(b); l1 = s[i:s.index('\\n', i) + 1]; l2 = s[j:s.index('\\n', j) + 1]
+open(p, 'w').write(s.replace(l1 + l2, l2 + l1))"
+mutant "Media Center build.json declares another order" T1 "$J
+d = load('ac_cloud-media-center/build.json'); t = d['configs_pages']['top_nav']; t.reverse(); save('ac_cloud-media-center/build.json', d)"
+mutant "the Media Center exception drops a shared page" T6 "$J
+d = load('$DATA'); o = d['tabs']['app_order']['ac_cloud-media-center']['order']; o.remove('perms'); save('$DATA', d)"
 mutant "an app that no longer reaches the shared screen" T1 "$J
 d = load('$DATA'); d['pending']['ac_cloud-tasks'] = 'x' * 40; save('$DATA', d)"
 

@@ -18,6 +18,8 @@
     { id: 'movies', label: 'Movies', icon: '◉' },
     { id: 'documentaries', label: 'Docs', icon: '◎' }
   ];
+  // not a data page (no web/data/<id>.json): the synced playlists of #1469, drawn by assets/media-sync.js
+  var EXTRA = [{ id: 'library', label: 'Library', icon: '☰' }];
 
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -208,7 +210,7 @@
   };
 
   function tabsHtml(current, prefix) {
-    return PAGES.map(function (p) {
+    return PAGES.concat(EXTRA).map(function (p) {
       return '<a href="' + prefix + p.id + '/index.html"' + (p.id === current ? ' aria-current="page"' : '') + '><span>' + p.icon + '</span>' + esc(p.label) + '</a>';
     }).join('');
   }

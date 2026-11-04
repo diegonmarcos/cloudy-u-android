@@ -240,6 +240,8 @@
     }
   },
   "configs_pages": {
+    "top_nav": [{"id": "music", "label": "Music"}, {"id": "videos", "label": "Video"}, {"id": "gallery", "label": "Images / Boards"}, {"id": "books", "label": "Books"}, {"id": "feed", "label": "Feed"}, {"id": "movies", "label": "Movies"}, {"id": "apify", "label": "Apify"}, {"id": "general", "label": "General"}, {"id": "perms", "label": "Perms"}, {"id": "about", "label": "About"}],
+    "_doc_top_nav": "#1469 this app's Configs is a web page (web/assets/configs.js::TABS) with the order the owner chose, allowed for this app only by 1_cicd/src/data/configs-pages.json::tabs.app_order: the media areas, then Apify, then General | Perms | About. The guard (T4) checks the page draws exactly these ids.",
     "_doc": "Configs > General and Configs > About (libs:ui-nav-bars fleetconfigs, rule 1_cicd/src/data/configs-pages.json, #1352 v2). general.sections: the anchors of the one General page, in order (perms, battery, storage, notifications, ui, language are required; app opens this app's own Configs; update is added after perms by default). about: the hand-written part of the extensive About: tagline, description, features, screens, guide, privacy, backends (ids of ac_cloud-account/build.json::fleet_endpoints, resolved to mesh URLs at build time), related fleet apps, credits for a fork. Permissions, data stores, crash/analytics libs, name, icon, version, build sha and date, repo, licence, origin, crash sink, debug API and changelog are derived, never typed here.",
     "general": {
       "sections": [

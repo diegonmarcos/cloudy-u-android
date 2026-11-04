@@ -1,0 +1,5 @@
+{"items":[
+{"track":{"id":"t1","name":"Know Your Enemy - Remastered 2011","duration_ms":220000,"external_ids":{"isrc":"US-SM1-92-00456"},"external_urls":{"spotify":"https://open.spotify.com/track/t1"},"artists":[{"name":"Rage Against The Machine"}],"album":{"name":"Rage","images":[{"url":"https://i.scdn.co/image/b"}]}}},
+{"track":{"id":"t2","name":"Still Waiting (feat. X)","duration_ms":158000,"external_ids":{},"external_urls":{"spotify":"https://open.spotify.com/track/t2"},"artists":[{"name":"Sum 41"}],"album":{"name":"Does This Look Infected?","images":[]}}},
+{"track":{"id":"loc","name":"Local file","is_local":true,"artists":[]}},
+{"track":null}]}

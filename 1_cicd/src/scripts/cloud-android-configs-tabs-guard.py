@@ -124,6 +124,16 @@ def main(argv):
     for app, d in apps.items():
         if app in exempt or not own_tabs(d):
             continue
+        src = app_order.get(app, {}).get("source")
+        if src:  # #1469 a web Configs page: it must draw exactly the declared order (no Kotlin to hold a needle)
+            try:
+                text = open(os.path.join(root, src), encoding="utf-8").read()
+                drawn = re.findall(r"^\s*\{ id: '([a-z_]+)', label:", text.split("var TABS = [", 1)[1].split("\n  ];", 1)[0], re.M)
+            except (OSError, IndexError):
+                drawn = []
+            if drawn != app_order[app]["order"]:
+                bad.append("T4 %s: %s draws %s, not the declared %s" % (app, src, "|".join(drawn) or "no tabs", "|".join(app_order[app]["order"])))
+            continue
         if needles and not any(n in app_sources(root, app) for n in needles):
             bad.append("T4 %s: declares Configs tabs but no source draws the shared pages (%s)" % (app, " | ".join(needles)))
     # T5 no app directory escapes the guard
