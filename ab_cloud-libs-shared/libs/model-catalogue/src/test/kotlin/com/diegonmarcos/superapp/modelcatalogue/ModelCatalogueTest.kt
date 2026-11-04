@@ -278,7 +278,7 @@ class ModelCatalogueTest {
         val prices = p.prices!!
         assertEquals(Price(PriceUnit.TOKENS, 0.0126, 1.28, 0.0126, 0.18), prices["deepseek/deepseek-v4-flash-0731"])
         assertEquals(Price(PriceUnit.TOKENS, 0.3, 1.0, 0.22, 1.0), prices["qwen/qwen3-coder"])
-        assertEquals("no endpoints recorded: the floor is the list price", Price(PriceUnit.TOKENS, 0.09, 0.18), prices["poolside/laguna-s-2.1"])
+        assertEquals("no endpoints recorded: the floor is the list price", Price(PriceUnit.TOKENS, 0.06, 0.25), prices["ibm-granite/granite-4.2-8b"])
         assertEquals(0.01, prices.getValue("baai/bge-m3").floorInput!!, 0.0)
         assertEquals(Price(PriceUnit.IMAGE, 0.003, 0.03, 0.003, 0.03), prices["qwen/qwen-image-3"])
         assertEquals(Price(PriceUnit.SECOND, null, 0.05), prices["alibaba/wan-3.0"])
