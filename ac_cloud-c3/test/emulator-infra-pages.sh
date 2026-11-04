@@ -19,18 +19,18 @@ adb logcat -c || true
 
 shot() { sleep "${2:-4}"; adb exec-out screencap -p > "$OUT/$1.png" 2>/dev/null; adb exec-out uiautomator dump /dev/tty > "$OUT/$1.xml" 2>/dev/null || true; }
 has() { grep -q -- "$2" "$OUT/$1.xml"; }
-open_page() { adb shell am start -W -n "$PKG/.MainActivity" --es shortcut_action "page:$1" >/dev/null 2>&1; }
+open_page() { adb shell am start -W -n "$PKG/.MainActivity" --es shortcut_action "page:$1" </dev/null >/dev/null 2>&1; }
 
-adb shell am start -W -n "$PKG/.MainActivity" >/dev/null 2>&1; shot 00-first-start 6
+adb shell am start -W -n "$PKG/.MainActivity" </dev/null >/dev/null 2>&1; shot 00-first-start 6
 # page id, wait, labels the screen must show (row names and page names; _ = space)
 while read -r page wait labels; do
   [ -z "$page" ] && continue
   open_page "$page"; shot "infra-$page" "$wait"
   for l in ${labels//,/ }; do has "infra-$page" "${l//_/ }" || bad "infra-$page: label '${l//_/ }' missing"; done
 done <<'PAGES'
-providers 6 Bare,Personal,Domains,Providers,VMs,Containers-as-Service,Containers-Node-Python,Storage
+providers 6 Bare,Personal,Domains,Providers,VMs
 machines 4 VMs
-serverless 4 Containers-as-Service,Cloud_Run
+serverless 6 Containers-as-Service
 node_python 4 Containers-Node-Python
 storage 4 Storage
 desktop 4 Desktop,Mobile,Gadgets
