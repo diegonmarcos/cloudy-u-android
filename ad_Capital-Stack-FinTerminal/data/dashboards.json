@@ -934,7 +934,16 @@
               "limit": "10"
             },
             "last": 8,
-            "match": "How many Fed rate cuts"
+            "match": "How many Fed rate cuts",
+            "primary": {
+              "source": "cloud_fincept",
+              "api": "/v1/calendar/central-banks",
+              "params": {
+                "implied": "polymarket",
+                "match": "How many Fed rate cuts"
+              },
+              "parse": "finterm_v1"
+            }
           },
           "columns": [
             "Cuts",
