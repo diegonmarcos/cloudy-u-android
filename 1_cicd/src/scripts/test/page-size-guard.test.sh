@@ -53,7 +53,7 @@ expect() {
   outp="$(python3 -I "$GUARD" "$app" "$apk" 2>&1)"; rc=$?
   [ "$rc" -ne 0 ] && rc=1
   if [ "$rc" != "$want" ]; then fail "$label (exit $rc, wanted $want)"; printf '%s\n' "$outp" | sed 's/^/         /'; return; fi
-  if [ -n "$pat" ] && ! printf '%s\n' "$outp" | grep -q -- "$pat"; then fail "$label (output lacks '$pat')"; printf '%s\n' "$outp" | sed 's/^/         /'; return; fi
+  if [ -n "$pat" ] && ! grep -q -- "$pat" <<<"$outp"; then fail "$label (output lacks '$pat')"; printf '%s\n' "$outp" | sed 's/^/         /'; return; fi
   ok "$label"
 }
 
@@ -97,7 +97,7 @@ expect 1 "MUT an exemption does not cover a NEW 4 KB lib in the same app" app/ex
 expect 1 "MUT an exemption is per app" app/drive "$T/e1.apk" "FAIL   $A/libold.so"
 
 outp="$(CI=true ANDROID_HOME="$T/nosdk" ANDROID_SDK_ROOT= PATH="/usr/bin:/bin" python3 -I "$GUARD" app/drive "$T/clean.apk" 2>&1)"
-if [ $? -ne 0 ] && printf '%s' "$outp" | grep -q "zipalign not found"; then ok "MUT on CI a missing zipalign is a failure, not a skip"
+if [ $? -ne 0 ] && grep -q "zipalign not found" <<<"$outp"; then ok "MUT on CI a missing zipalign is a failure, not a skip"
 elif command -v zipalign >/dev/null 2>&1; then ok "zipalign on PATH here: the CI-missing case cannot be staged"
 else fail "on CI a missing zipalign was not a failure"; printf '%s\n' "$outp"; fi
 
