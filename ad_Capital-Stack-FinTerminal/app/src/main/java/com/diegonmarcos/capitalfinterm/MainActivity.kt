@@ -13,7 +13,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         FleetChrome.apply(this)
         // `--es dashboard <id>` opens that dashboard (a deep link for the CI emulator walk and the launcher); unknown ids are ignored
-        val start = intent?.getStringExtra(EXTRA_DASHBOARD)
+        // `finterm://dashboard/<id>` (ACTION_VIEW) is the same deep link for other apps and the launcher
+        val start = intent?.getStringExtra(EXTRA_DASHBOARD) ?: intent?.data?.takeIf { it.scheme == "finterm" }?.lastPathSegment
         setContent { AppTheme { AppShell(startDashboard = start) } }
     }
 

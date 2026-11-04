@@ -36,6 +36,12 @@ for s in $HOMES market_monitor; do
     adb exec-out screencap -p > "$OUT/apk-home-$s-navscrolled.png"
   fi
 done
+# #1370 deep link: ACTION_VIEW finterm://dashboard/<id> opens the dashboard; predictive back is on when logcat has no "OnBackInvokedCallback is not enabled"
+adb logcat -c
+adb shell am start -S -W -a android.intent.action.VIEW -d "finterm://dashboard/${FT_DEEPLINK:-eq_dm_us}" -n "$PKG/.MainActivity" >/dev/null
+sleep 20
+adb exec-out screencap -p > "$OUT/apk-deeplink.png"
+adb logcat -d | grep -c "OnBackInvokedCallback is not enabled" > "$OUT/predictive-back-warnings.txt" || true
 for d in $DASHES; do
   adb shell am start -S -W -n "$PKG/.MainActivity" --es dashboard "$d" >/dev/null
   sleep "${FT_WAIT:-30}"

@@ -11,6 +11,7 @@
 
     <application
         android:allowBackup="false"
+        android:enableOnBackInvokedCallback="true"
         android:networkSecurityConfig="@xml/network_security_config"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
@@ -28,6 +29,12 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="finterm" android:host="dashboard" />
             </intent-filter>
         </activity>
     </application>
