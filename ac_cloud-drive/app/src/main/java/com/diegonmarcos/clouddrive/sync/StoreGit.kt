@@ -45,7 +45,7 @@ object StoreGit {
     /** `git <args>` with the token (if any) as an http.extraHeader, read from stdin. */
     internal fun authed(args: String): String =
         "T=\"\$(cat)\"; if [ -n \"\$T\" ]; then " +
-            "H=\"Authorization: Basic \$(printf 'x-access-token:%s' \"\$T\" | base64 | tr -d '\\n')\"; " +
+            "H=\"Authorization: Basic \$(printf '${com.diegonmarcos.cloudlib.gitui.GitConnectRules.USER}:%s' \"\$T\" | base64 | tr -d '\\n')\"; " +
             "git -c http.extraHeader=\"\$H\" $args; else git $args; fi"
 
     fun cloneScript(url: String, guestDir: String, depth: Int?): String =

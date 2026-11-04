@@ -34,6 +34,9 @@ object GitConnectRules {
     fun credentialId(s: GitConnectSpec) = "gitconnect:${s.owner}/${s.repo}"
     fun auth(token: String?): GitAuth = if (token.isNullOrBlank()) GitAuth.None else GitAuth.Https(USER, token)
 
+    /** A GitHub HTTPS credential for [user] (Cloud Drive presents the account's login; [USER] is the token user). */
+    fun https(user: String, token: String): GitAuth = GitAuth.Https(user, token)
+
     /** A declared path stays inside the clone: relative, no `..`, not blank. */
     fun safePath(p: String) = p.isNotBlank() && !p.startsWith("/") && p.split('/').none { it == ".." || it.isEmpty() }
 
@@ -52,6 +55,12 @@ class GitConnect(
     val spec: GitConnectSpec,
     private val hostToken: (Context) -> String? = { null },
 ) {
+    companion object {
+        /** THE clone of the fleet's apps (Cloud Drive's seed and Clone button, Configs > Repos): libs:git-sync's in-process engine. BLOCKS: call on IO. */
+        fun clone(ctx: Context, url: String, dir: File, auth: GitAuth = GitAuth.None, depth: Int = 0): GitEngine =
+            GitEngine.clone(ctx, url, dir, auth, depth)
+    }
+
     private val store by lazy { GitCredentialStore(ctx.applicationContext) }
     val dir: File = File(ctx.filesDir, "git-connect/${spec.owner}/${spec.repo}")
 
@@ -71,7 +80,7 @@ class GitConnect(
         val auth = GitConnectRules.auth(token())
         if (!isCloned()) {
             dir.parentFile?.mkdirs()
-            GitEngine.clone(ctx, GitConnectRules.url(spec), dir, auth, depth = 1)
+            clone(ctx, GitConnectRules.url(spec), dir, auth, depth = 1)
             GitConnectResult(true, "cloned ${spec.repo}")
         } else {
             val r = engine().pull(auth = auth)

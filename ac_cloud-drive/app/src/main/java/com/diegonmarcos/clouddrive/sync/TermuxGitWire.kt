@@ -36,7 +36,7 @@ object TermuxGitWire {
     /** The `Name: value` header the auth travels as (stdin, never argv), or "" for none. Ssh keys stay in cld.termux's own ~/.ssh. */
     fun authHeader(auth: JSONObject?): String = when (auth?.optString("kind")) {
         "https" -> "Authorization: Basic " + Base64.getEncoder().encodeToString(
-            ("${auth.optString("username").ifBlank { "x-access-token" }}:${auth.optString("secret")}").toByteArray())
+            ("${auth.optString("username").ifBlank { com.diegonmarcos.cloudlib.gitui.GitConnectRules.USER }}:${auth.optString("secret")}").toByteArray())
         "session" -> "${auth.optString("header")}: ${auth.optString("value")}"
         else -> ""
     }

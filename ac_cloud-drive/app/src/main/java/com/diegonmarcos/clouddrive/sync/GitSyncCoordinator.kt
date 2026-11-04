@@ -811,7 +811,7 @@ class GitSyncCoordinator(private val ctx: Context, private val scope: CoroutineS
                         else StoreGit.clone(ctx, url, dir, token, depth = depth).also { if (!it.ok) error(it.summary + " " + it.details) }
                     }
                     else if (GitEngine.isRepository(dir)) GitOpResult(true, "already cloned")
-                    else { (if (depth != null) GitEngine.clone(ctx, url, dir, auth = authFor(managed), depth = depth) else GitEngine.clone(ctx, url, dir, auth = authFor(managed))).close(); GitOpResult(true, "cloned into ${dir.name}") }
+                    else { (if (depth != null) GitConnect.clone(ctx, url, dir, auth = authFor(managed), depth = depth) else GitConnect.clone(ctx, url, dir, auth = authFor(managed))).close(); GitOpResult(true, "cloned into ${dir.name}") }
                 }.getOrElse {
                     val why = it.message ?: it.toString()
                     // #669 a fleet-session clone that fails must name its NEXT STEP —
@@ -1444,7 +1444,7 @@ class GitSyncCoordinator(private val ctx: Context, private val scope: CoroutineS
             // The declared token is the DECLARED host's: never presented to another host.
             if (!declaredHost) return own
             val token = declaredToken()
-            return if (token.isNotBlank()) com.diegonmarcos.cloudlib.gitsync.GitAuth.Https(owner, token) else own
+            return if (token.isNotBlank()) com.diegonmarcos.cloudlib.gitui.GitConnectRules.https(owner, token) else own
         }
 
         /**

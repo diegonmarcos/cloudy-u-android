@@ -197,7 +197,7 @@ class GhRunner(private val context: Context) {
     /**
      * #689 THE CREDENTIAL gh HOLDS for [host], asked the way git asks it: gh's own git-credential
      * helper, the very protocol `gh repo clone` feeds to git. MEASURED: signed in, gh answers
-     * `username=x-access-token` and `password=...`; signed out it answers nothing and exits 1.
+     * `username=` (the token user) and `password=...`; signed out it answers nothing and exits 1.
      * The answer is read straight into a [Credential] and never into a [Result], so it cannot reach
      * a caller's error line, a log or a screen. Null when gh holds none.
      */

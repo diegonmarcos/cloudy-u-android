@@ -140,11 +140,11 @@ class StoreSeedWorker(context: Context, params: WorkerParameters) : Worker(conte
                 // than attempted against a torn-down thread and logged as if they were broken.
                 isStopped -> SeedOutcome(decl.name, SeedOutcome.DEFERRED, "the worker was stopped before this repository was reached")
                 else -> {
-                    val auth = if (token.isBlank()) GitAuth.None else GitAuth.Https(decl.githubOwner, token)
+                    val auth = if (token.isBlank()) GitAuth.None else com.diegonmarcos.cloudlib.gitui.GitConnectRules.https(decl.githubOwner, token)
                     // cloud-shared-store: not in cld.termux's uid -> the clone runs inside it (CLOUD_EXEC).
                     val cloned = if (viaExec) com.diegonmarcos.clouddrive.sync.StoreGit.clone(applicationContext, url, dir, token, BuildConfig.SEED_DEPTH)
                         .let { if (it.ok) kotlin.Result.success(Unit) else kotlin.Result.failure(IllegalStateException(it.summary + " " + it.details)) }
-                    else runCatching { GitEngine.clone(applicationContext, url, dir, auth = auth, depth = BuildConfig.SEED_DEPTH).close() }
+                    else runCatching { com.diegonmarcos.cloudlib.gitui.GitConnect.clone(applicationContext, url, dir, auth = auth, depth = BuildConfig.SEED_DEPTH).close() }
                     if (cloned.isFailure) {
                         val why = cloned.exceptionOrNull()?.message ?: cloned.exceptionOrNull()?.javaClass?.simpleName ?: "clone failed"
                         // #683 STRUCTURAL, NOT TRANSIENT: the provider demanded a credential and

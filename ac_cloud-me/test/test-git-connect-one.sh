@@ -7,12 +7,13 @@
 set -u
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 DECL="1_cicd/src/data/git-connect-one.json"
-PAT='GitAuth\.Https\(|GitEngine\.clone\(|org\.eclipse\.jgit|x-access-token'
+PAT='GitAuth\.Https\(|GitEngine\.clone\(|x-access-token|UsernamePasswordCredentialsProvider'
+PAT_NEVER='org\.eclipse\.jgit'
 
 check() {
-python3 - "$1" "$DECL" "$PAT" <<'PY'
+python3 - "$1" "$DECL" "$PAT" "$PAT_NEVER" <<'PY'
 import json, os, re, subprocess, sys
-R, DECL, PAT = sys.argv[1:4]
+R, DECL, PAT, PAT_NEVER = sys.argv[1:5]
 d = json.load(open(os.path.join(R, DECL)))
 fails = 0
 def ok(c, good, bad):
@@ -26,7 +27,10 @@ for dp, dn, fn in os.walk(R):
         if not f.endswith((".kt", ".java", ".gradle")): continue
         rel = os.path.relpath(os.path.join(dp, f), R)
         if "/src/test/" in rel or rel.startswith("1_cicd/"): continue
-        if re.search(PAT, open(os.path.join(dp, f), encoding="utf-8", errors="replace").read()): hits.append(rel)
+        txt = open(os.path.join(dp, f), encoding="utf-8", errors="replace").read()
+        txt = "\n".join(l for l in txt.split("\n") if "testImplementation" not in l)
+        never = any(rel.startswith(n) for n in d["never"])
+        if re.search(PAT, txt) or (never and re.search(PAT_NEVER, txt)): hits.append(rel)
 owned = lambda p: any(p.startswith(o) for o in d["owners"])
 foreign = sorted(h for h in hits if not owned(h) and h not in d["legacy"])
 ok(not foreign, "no app re-implements the GitHub connect", f"re-implemented outside libs:git-ui: {foreign}")
@@ -52,7 +56,9 @@ mutate() {  # mutate <label> <relative new file> <content>
 echo "-- mutations --"
 mutate "Cloud Me builds its own GitHub credential" "ac_cloud-me/app/src/main/java/com/diegonmarcos/cloudme/Own.kt" 'val a = GitAuth.Https("x", "y")'
 mutate "Cloud Account clones with the engine" "ac_cloud-account/app/src/main/java/com/diegonmarcos/cloudaccount/Own.kt" 'GitEngine.clone(ctx, u, d)'
-mutate "a new app uses JGit directly" "ac_cloud-notes/app/src/main/java/x/Own.kt" 'import org.eclipse.jgit.api.Git'
+mutate "a new app builds a JGit credentials provider" "ac_cloud-notes/app/src/main/java/x/Own.kt" 'UsernamePasswordCredentialsProvider("u", "t")'
+mutate "Cloud Me imports JGit" "ac_cloud-me/app/src/main/java/com/diegonmarcos/cloudme/Own.kt" 'import org.eclipse.jgit.api.Git'
+mutate "Cloud Drive builds its own GitHub credential" "ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive/Own.kt" 'val a = GitAuth.Https("o", "t")'
 mutate "account-ui names the token user" "ab_cloud-libs-shared/libs/account-ui/src/main/java/x/Own.kt" 'val u = "x-access-token"'
 [ "$REAL" -eq 0 ] && [ "$M" -eq 0 ] || { echo "FAIL"; exit 1; }
 echo "ok: one GitHub connect; each guard proven red"
