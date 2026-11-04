@@ -1,5 +1,7 @@
 package com.diegonmarcos.clouddrive.sync
 
+import com.diegonmarcos.cloudlib.gitui.*
+
 import com.diegonmarcos.cloudlib.gitsync.ConflictSide
 import org.json.JSONObject
 import org.junit.Assert.assertEquals

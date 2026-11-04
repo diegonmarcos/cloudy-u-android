@@ -1822,42 +1822,12 @@ private fun GitRepoOpsBox(
                 else MetaLine(stringResource(R.string.git_size_line, GitRepoScan.humanBytes(d.size.bytes), d.size.files, d.size.folders, GitRepoScan.humanBytes(d.size.gitBytes)))
             }
             // #1289 Workflow: List Dirty / List Conflicts / Solve Conflicts, from the one status read.
-            in WORKFLOW_PANELS -> Column(Modifier.padding(top = DriveMetrics.gapWide).testTag(DriveTags.SYNC_GIT_WORKFLOW), verticalArrangement = Arrangement.spacedBy(DriveMetrics.gap)) {
-                val t = tree
-                if (t == null) Text(stringResource(R.string.sync_glance_reading), style = MaterialTheme.typography.bodySmall)
-                else t.fold(
-                    onFailure = { MetaLine(stringResource(R.string.sync_glance_unreadable, it.message ?: it.javaClass.simpleName)) },
-                    onSuccess = { snap ->
-                        val conflicts = RepoWorkflow.conflicts(snap)
-                        when (panel) {
-                            RepoActions.LIST_DIRTY -> RepoWorkflow.dirty(snap).let { list ->
-                                if (list.isEmpty()) Text(stringResource(R.string.repo_wf_clean), style = MaterialTheme.typography.bodySmall)
-                                else list.forEach { MetaLine(it.code + " " + it.path) }
-                            }
-                            RepoActions.LIST_CONFLICTS -> if (conflicts.isEmpty()) Text(stringResource(R.string.repo_wf_no_conflicts), style = MaterialTheme.typography.bodySmall) else conflicts.forEach { MetaLine("UU " + it) }
-                            else -> {
-                                if (conflicts.isEmpty()) Text(stringResource(R.string.repo_wf_no_conflicts), style = MaterialTheme.typography.bodySmall)
-                                conflicts.forEach { path ->
-                                    MetaLine(path)
-                                    PillRow {
-                                        Pill(stringResource(R.string.repo_wf_ours), { choices = choices + (path to RepoWorkflow.Choice.OURS) }, filled = choices[path] == RepoWorkflow.Choice.OURS)
-                                        Pill(stringResource(R.string.repo_wf_theirs), { choices = choices + (path to RepoWorkflow.Choice.THEIRS) }, filled = choices[path] == RepoWorkflow.Choice.THEIRS)
-                                        Pill(stringResource(R.string.repo_wf_editor), {
-                                            actions.openEngine(EngineActivity.ENGINE_EDITOR, File(repo.path, path).absolutePath)
-                                            choices = choices + (path to RepoWorkflow.Choice.EDITED)
-                                        }, filled = choices[path] == RepoWorkflow.Choice.EDITED)
-                                    }
-                                }
-                                val plan = RepoWorkflow.solvePlan(conflicts, choices, snap.repositoryState)
-                                if (conflicts.isNotEmpty()) PillRow {
-                                    Pill(stringResource(R.string.repo_wf_stage_continue), { solveAsk = plan }, filled = true, enabled = plan.ready && running == null)
-                                }
-                                if (plan.missing.isNotEmpty() && conflicts.isNotEmpty()) Text(stringResource(R.string.repo_wf_missing, plan.missing.size), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                        }
-                    },
-                )
-            }
+            in WORKFLOW_PANELS -> GitWorkflowPanel(
+                tree, when (panel) { RepoActions.LIST_DIRTY -> GitWorkflowMode.DIRTY; RepoActions.LIST_CONFLICTS -> GitWorkflowMode.CONFLICTS; else -> GitWorkflowMode.SOLVE },
+                choices, { path, c -> choices = choices + (path to c) },
+                onEdit = { path -> actions.openEngine(EngineActivity.ENGINE_EDITOR, File(repo.path, path).absolutePath) },
+                canSolve = running == null, onSolve = { solveAsk = it },
+            )
         }
         RepoMetaTable(listOf(
             stringResource(R.string.repo_meta_k_name) to repoName,
@@ -1905,26 +1875,7 @@ private fun GitRepoOpsBox(
             dismissButton = { TextButton(onClick = { confirm = null }) { Text(stringResource(R.string.chrome_cancel)) } },
         )
     }
-    solveAsk?.let { plan ->
-        AlertDialog(
-            onDismissRequest = { solveAsk = null },
-            title = { Text(stringResource(R.string.repo_wf_confirm_title)) },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(DriveMetrics.gap)) {
-                    plan.steps.forEach { st ->
-                        MetaLine(when (st) {
-                            is RepoWorkflow.Step.Resolve -> stringResource(if (st.side == com.diegonmarcos.cloudlib.gitsync.ConflictSide.OURS) R.string.repo_wf_step_ours else R.string.repo_wf_step_theirs, st.path)
-                            is RepoWorkflow.Step.Stage -> stringResource(R.string.repo_wf_step_stage, st.path)
-                            is RepoWorkflow.Step.Continue -> stringResource(R.string.repo_wf_step_continue, st.what.name.lowercase())
-                        })
-                    }
-                    Text(stringResource(R.string.repo_wf_never_push), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            },
-            confirmButton = { TextButton(onClick = { coordinator.solveConflicts(repo, plan); solveAsk = null; choices = emptyMap() }) { Text(stringResource(R.string.repo_wf_stage_continue)) } },
-            dismissButton = { TextButton(onClick = { solveAsk = null }) { Text(stringResource(R.string.chrome_cancel)) } },
-        )
-    }
+    solveAsk?.let { plan -> GitSolveConfirm(plan, onConfirm = { coordinator.solveConflicts(repo, plan); solveAsk = null; choices = emptyMap() }, onDismiss = { solveAsk = null }) }
     folderAsk?.let { c -> FolderConfirmDialog(c, coordinator, repoint, onDone = { folderAsk = null }) }
     depthAsk?.let { a ->
         AlertDialog(

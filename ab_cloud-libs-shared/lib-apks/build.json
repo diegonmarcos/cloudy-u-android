@@ -140,7 +140,7 @@
       "devtools": "Debug API, log pipe, fleet token and peer discovery that make an app a fleet mesh member.",
       "disk": "Disk Management engine: volumes, storage map, huge files, duplicates, per-app sizes and cache clean.",
       "disk-scan": "Plain-JVM arithmetic of disk management: tree walk, storage map, huge-file threshold, duplicate detection.",
-      "git-ui": "Git manager UI: repo table model, header, cells and metadata table, the host's look lent through LocalGitUiKit.",
+      "git-ui": "Git manager UI: repo table model, header, cells, repository menu, conflict solver and metadata table, the host's look lent through LocalGitUiKit.",
       "git-repos": "Git repo model: repo scan, sync history and schedule, Auto Commit message core, auto checks, stale-pack cleaner.",
       "git-core": "In-process git engine: JGit clone, fetch, pull --rebase, stash, push, conflicts and upstream on any storage root, with typed errors.",
       "file-editor": "Full text editor: undo/redo, find/replace, line numbers, syntax colouring, encoding and line-ending aware.",
