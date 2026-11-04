@@ -1071,7 +1071,8 @@
       "class": "device",
       "doc": "15-minute TTL cache of Gitea commit feed responses (GiteaFeed PREFS constant), pure cache.",
       "used_by": [
-        "aa_cloud-superapp"
+        "aa_cloud-superapp",
+        "ac_cloud-c3"
       ]
     },
     "health_store": {
@@ -2367,6 +2368,40 @@
       "used_by": [
         "lib-appstore"
       ]
+    },
+    "browser_fav_feed": {
+      "kind": "prefs",
+      "class": "device",
+      "doc": "Cloud Browser's Favourites feeds: the last good copy of each filter's feed (feed_<filter id>), kept so the list shows at once offline; pure cache, refetched on start.",
+      "used_by": [
+        "lib-browser"
+      ]
+    },
+    "c3_private": {
+      "kind": "encrypted",
+      "class": "secret",
+      "doc": "#1454 Cloud C3's private-data source: the GitHub token (github_token) used to read the private identities file, in EncryptedSharedPreferences via libs:crash SafeEncryptedPrefs. A credential: shown masked, migrates through the vault.",
+      "helper": "ac_cloud-c3/app/src/main/java/com/diegonmarcos/cloudc3/pages/PrivateData.kt",
+      "used_by": [
+        "ac_cloud-c3"
+      ]
+    },
+    "music_tokens": {
+      "kind": "encrypted",
+      "class": "secret",
+      "doc": "#1460 Cloud Browser Scrapers > Music: the OAuth access and refresh tokens of the music services (Spotify, YouTube Music, Deezer, Apple Music), in EncryptedSharedPreferences via libs:crash SafeEncryptedPrefs; an unreadable store resets to memory, never to plaintext. Credentials: migrate through the vault.",
+      "helper": "ab_cloud-libs-shared/libs/scraper/src/main/java/com/diegonmarcos/superapp/scraper/MusicAuth.kt",
+      "used_by": [
+        "lib-scraper"
+      ]
+    },
+    "speedmeter": {
+      "kind": "prefs",
+      "class": "device",
+      "doc": "#1446 the home strip's speedmeter: the rolling 24 h list of speed samples (key samples), pruned to 24 h. A measurement history of this phone's network, not configuration.",
+      "used_by": [
+        "aa_cloud-superapp"
+      ]
     }
   },
   "bundle": {
@@ -2617,6 +2652,10 @@
     "file@ab_cloud-libs-shared/libs/fleetconfig-model/src/main/java/com/diegonmarcos/superapp/fleetconfig/SetupStores.kt": {
       "store": "-",
       "why": "the setup contract's default handler: it opens exactly the files a describe lists, by their declared names (fleet-config.json) -- it keeps no store of its own."
+    },
+    "PREFS@ac_cloud-c3/app/src/main/java/com/diegonmarcos/cloudc3/cloud/GiteaFeed.kt": {
+      "store": "gitea_feed_cache",
+      "why": "const val PREFS = \"gitea_feed_cache\" (GiteaFeed.kt:59, the c3 copy of the Gitea feed cache)"
     }
   },
   "apps": {
@@ -2818,6 +2857,10 @@
         "lib-fleet-endpoints",
         "lib-fleet-endpoints-android",
         "lib-fleetconfig-model",
+        "lib-git-core",
+        "lib-git-repos",
+        "lib-git-sync",
+        "lib-git-ui",
         "lib-mail",
         "lib-net",
         "lib-perms",
@@ -3315,7 +3358,9 @@
         "lib-file-editor",
         "lib-fleetconfig-model",
         "lib-git-core",
+        "lib-git-repos",
         "lib-git-sync",
+        "lib-git-ui",
         "lib-ml-l-image",
         "lib-model-catalogue",
         "lib-mounts",
@@ -3326,6 +3371,7 @@
         "lib-sysdns",
         "lib-theme-background",
         "lib-ui-icons",
+        "lib-ui-kit",
         "lib-ui-nav-bars",
         "lib-updater",
         "lib-usb-drive",
@@ -3496,6 +3542,10 @@
         "lib-devtools",
         "lib-fin",
         "lib-fleetconfig-model",
+        "lib-git-core",
+        "lib-git-repos",
+        "lib-git-sync",
+        "lib-git-ui",
         "lib-health",
         "lib-perms",
         "lib-theme-background",

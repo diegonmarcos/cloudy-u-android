@@ -19,12 +19,12 @@ DataStore / Room stores and declared files it cannot move yet.
 | c3-morpheus | `com.diegonmarcos.morpheus` | 4 | 0 | 100% |
 | c3-watchdog | `com.diegonmarcos.watchdog` | 4 | 0 | 100% |
 | c3-watchtower | `com.diegonmarcos.watchtower` | 4 | 0 | 100% |
-| cloud-account | `com.diegonmarcos.cloudaccount` | 18 | 0 | 100% |
+| cloud-account | `com.diegonmarcos.cloudaccount` | 19 | 1 | 95% |
 | cloud-tasks | `com.diegonmarcos.cloudagenda` | 9 | 0 | 100% |
-| cloud-browser | `com.diegonmarcos.cloudbrowser` | 14 | 0 | 100% |
+| cloud-browser | `com.diegonmarcos.cloudbrowser` | 15 | 0 | 100% |
 | cloud-c3-webserver | `com.diegonmarcos.cloudwebserver` | 4 | 0 | 100% |
 | cloud-media-center | `com.diegonmarcos.cloudmediacenter` | 4 | 0 | 100% |
-| cloud-c3 | `com.diegonmarcos.cloudc3` | 11 | 0 | 100% |
+| cloud-c3 | `com.diegonmarcos.cloudc3` | 12 | 0 | 100% |
 | cloud-calc | `com.diegonmarcos.cloudcalc` | 16 | 0 | 100% |
 | cloud-camera | `cld.camera` | 11 | 0 | 100% |
 | cloud-chat | `com.diegonmarcos.comms.chat` | 6 | 0 | 100% |
@@ -35,7 +35,7 @@ DataStore / Room stores and declared files it cannot move yet.
 | cloud-keyboard | `com.diegonmarcos.cloudkeyboard` | 7 | 0 | 100% |
 | cloud-mail | `com.diegonmarcos.comms.mail` | 12 | 2 | 85% |
 | cloud-matrix | `com.diegonmarcos.comms.matrix` | 4 | 9 | 30% |
-| cloud-me | `com.diegonmarcos.cloudme` | 17 | 0 | 100% |
+| cloud-me | `com.diegonmarcos.cloudme` | 18 | 1 | 94% |
 | cloud-gallery | `com.diegonmarcos.mediacenter` | 7 | 1 | 87% |
 | cloud-myterminal | `com.diegonmarcos.ide` | 9 | 0 | 100% |
 | cloud-nav | `com.diegonmarcos.cloudnav` | 14 | 0 | 100% |
@@ -56,7 +56,7 @@ DataStore / Room stores and declared files it cannot move yet.
 | capital-stack-finterminal | `com.diegonmarcos.capitalfinterm` | 5 | 0 | 100% |
 | hardtech-cad | `com.diegonmarcos.hardtechcad` | 4 | 0 | 100% |
 | hardtech-sim2real | `com.diegonmarcos.hardtechsim2real` | 4 | 0 | 100% |
-| **fleet** | | **384** | **54** | **87%** |
+| **fleet** | | **388** | **56** | **87%** |
 
 ## cloud-superapp — `com.diegonmarcos.superapp`
 
@@ -130,6 +130,7 @@ Module `aa_cloud-superapp`; libs: lib-account, lib-analytics, lib-appstore, lib-
 | `recent_cloud_tiles` | prefs | device | no | Most-recently-opened cloud tile list (max 12), usage history. |
 | `safe_encrypted_prefs_reset` | prefs | device | no | #1106 which encrypted prefs files SafeEncryptedPrefs had to reset (a Keystore master key that no longer matches the file, after a shared-uid migration or a restored backup), so the app can tell the user to sign in again until they acknowledge it. Describes this phone's Keystore, never configuration. |
 | `search_scope_prefs` | prefs | config | yes | The SuperApp search's scope chips as each entry point was last left (scopes_home_star, scopes_home_sheet, scopes_cloud_apps_page: the build.json::ui.search_scopes ids that are on). Absent until the owner taps a chip there, so an entry never touched starts on its defaults. |
+| `speedmeter` | prefs | device | no | #1446 the home strip's speedmeter: the rolling 24 h list of speed samples (key samples), pruned to 24 h. A measurement history of this phone's network, not configuration. |
 | `stack_filters` | prefs | config (keys: */read_keys→device, */seen_at→device) | yes | Chosen filter option per stack page ('<page>/<filterId>'); dynamic keys '<page>/seen_at' and the reads string-set are device state (cannot be keyed statically). |
 | `status_bar_prefs` | prefs | config | yes | Home status bar overrides (#1332): a visibility switch per declared element and an order per cluster, laid over build.json::home_status_bar. |
 | `store_auto` | prefs | device | no | #804 the auto-update chain's persisted state: phase, queue, per-package result, current package, last error. Lets a chain killed mid-download or mid-install resume on THIS phone; a new phone runs its own. |
@@ -235,7 +236,7 @@ Coverage: 4 covered, 0 gaps.
 
 ## cloud-account — `com.diegonmarcos.cloudaccount`
 
-Module `ac_cloud-account`; libs: lib-account, lib-account-ui, lib-appstore, lib-auth, lib-autofill, lib-bottomnav, lib-core, lib-crash, lib-databackend, lib-decisions-link, lib-devtools, lib-fleet-endpoints, lib-fleet-endpoints-android, lib-fleetconfig-model, lib-mail, lib-net, lib-perms, lib-shared-store, lib-shizuku-adb-debug-tools, lib-text-tools, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-usb-drive, lib-web-core.
+Module `ac_cloud-account`; libs: lib-account, lib-account-ui, lib-appstore, lib-auth, lib-autofill, lib-bottomnav, lib-core, lib-crash, lib-databackend, lib-decisions-link, lib-devtools, lib-fleet-endpoints, lib-fleet-endpoints-android, lib-fleetconfig-model, lib-git-core, lib-git-repos, lib-git-sync, lib-git-ui, lib-mail, lib-net, lib-perms, lib-shared-store, lib-shizuku-adb-debug-tools, lib-text-tools, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-usb-drive, lib-web-core.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -249,6 +250,7 @@ Module `ac_cloud-account`; libs: lib-account, lib-account-ui, lib-appstore, lib-
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
+| `git-sync-credentials` | encrypted | secret | yes | Encrypted git credentials (tokens/passwords/keys). |
 | `import_configs` | encrypted | secret (keys: app_configs_json→secret, configs_json→secret, data_json→secret, grants_json→device, grants_seeded→device, mail_signatures→device) | yes | EncryptedSharedPreferences, THE Account vault's one keystore-backed file (#874): `configs_json` the Connections (the imported blob incl. auth.authelia_token and email, fleet bearer, mesh, DNS, Dagu, mail), `data_json` the identities, `app_configs_json` the Configs captured from every app; `grants_json` the per-app Secret grants (never migrates: a grant is the owner's decision on THIS phone) and `grants_seeded` its marker. Mostly credentials. `mail_signatures` is the copy of Mail's signatures the vault last held for the bundle (Mail's own store is the source of truth and travels through mail_signatures). |
 | `mail_auth_prefs` | encrypted | secret | yes | Cloud Mail's per-account gateway credentials (Authelia in front of the JMAP server): one encrypted JSON blob per account, key auth:<email>, holding the auth mode (none / bearer / authelia), the pasted bearer token and the captured authelia_session cookie. Credentials: shown masked, never logged, replayed only to the account's own domain. |
 | `mail_jmap_prefs` | encrypted | config (keys: password→secret) | yes | JMAP server and email are account links; password is a credential. |
@@ -279,7 +281,12 @@ Module `ac_cloud-account`; libs: lib-account, lib-account-ui, lib-appstore, lib-
 | `user_registry` | prefs | config (keys: applied_at→device, peer_id→device) | yes | Registry JSON, identity_email and peer_id: user identity/peer registry applied on this device. |
 | `vault_cockpit` | prefs | device | no | Only holds this phone's device_id used in the vault cockpit. |
 
-Coverage: 18 covered, 0 gaps.
+| file | class | doc |
+|---|---|---|
+| `filesDir/git-sync/repos.json` | config | Registered repos to sync |
+| `filesDir/git-sync/known_hosts` | device | Pinned git SSH host keys |
+
+Coverage: 19 covered, 1 gaps — file:filesDir/git-sync/repos.json.
 
 ## cloud-tasks — `com.diegonmarcos.cloudagenda`
 
@@ -329,6 +336,7 @@ Module `ac_cloud-browser`; libs: lib-ai, lib-analytics, lib-autofill, lib-blueto
 | `browser_autofill` | encrypted | secret | yes | #802 the browser's autofill profile: identity + addresses + card METADATA (label, holder, last4, expiry, type) — never a card number or security code. vault_profile/vault_addresses are the vault bundle's about.profile/about.addresses (cockpit derived_settings, applied by server → runtime); profile is what was imported on the phone. |
 | `browser_bookmarks` | prefs | config | yes | #802 the browser's bookmarks with their folders (bookmarks_json: url, title, folder path, ts). |
 | `browser_downloads` | prefs | device | no | #802 index of the downloads the browser started (DownloadManager ids and file names on THIS phone); the files themselves stay in Downloads. |
+| `browser_fav_feed` | prefs | device | no | Cloud Browser's Favourites feeds: the last good copy of each filter's feed (feed_<filter id>), kept so the list shows at once offline; pure cache, refetched on start. |
 | `browser_history` | prefs | content | no | Browsing history entries the user accumulated. |
 | `browser_settings` | prefs | config (keys: download_dir→device, secrets_require_unlock→device) | yes | #802 the browser's settings catalogue (ac_cloud-browser/build.json::ui.browser.settings): search engine, homepage, desktop site, text size, JavaScript, images, third-party cookies; one typed key per declared setting. Served by /api/browser/settings. |
 | `browser_site_permissions` | prefs | config | yes | #802 per-site decisions host\|permission -> allow/deny/ask (location, camera, microphone, and the javascript/images/trackers shields); a rule covers subdomains. #900 also host\|zoom -> the site's text zoom in percent. |
@@ -336,6 +344,7 @@ Module `ac_cloud-browser`; libs: lib-ai, lib-analytics, lib-autofill, lib-blueto
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
+| `music_tokens` | encrypted | secret | yes | #1460 Cloud Browser Scrapers > Music: the OAuth access and refresh tokens of the music services (Spotify, YouTube Music, Deezer, Apple Music), in EncryptedSharedPreferences via libs:crash SafeEncryptedPrefs; an unreadable store resets to memory, never to plaintext. Credentials: migrate through the vault. |
 | `nav_modes` | prefs | config | yes | #1189 the user's per-section choice of how child pages are navigated (one row, two rows, side menu; overrides the build.json declaration) and whether the side menu is expanded or the rail. Written by the shared nav bars (NavModePrefs) from each app's Configs; part of the app's settings, so it migrates and backs up with them. |
 | `nav_ui` | prefs | config | yes | The user's nav UI choice for this app (Configs > UI): the nav mode, Classic or Clean, and the scroll-hide toggle (a downward scroll hides every bar until an upward one). Written by the shared Configs card (NavUiPrefs, libs:ui-nav-bars NavUiConfigCard); part of the app's settings, so it migrates and backs up with them. The app's declared default is build.json::ui.nav_ui. |
 | `notification_store` | prefs | content | no | Stored in-app notification log (info/warn/error). |
@@ -355,7 +364,7 @@ Module `ac_cloud-browser`; libs: lib-ai, lib-analytics, lib-autofill, lib-blueto
 |---|---|---|
 | `browser_settings` | config | #802 every user setting is a key of the declared browser_settings store (libs:browser BrowserSettings over build.json::ui.browser.settings); tabs and history are the lib's own declared stores. Nothing is kept outside them. |
 
-Coverage: 14 covered, 0 gaps.
+Coverage: 15 covered, 0 gaps.
 
 ## cloud-c3-webserver — `com.diegonmarcos.cloudwebserver`
 
@@ -409,6 +418,7 @@ Module `ac_cloud-c3`; libs: lib-ai, lib-analytics, lib-bottomnav, lib-core, lib-
 |---|---|---|---|---|
 | `ai_composer` | prefs | config | yes | The shared AI chat's config bar: whether it is collapsed to its one compact chip, one boolean per app (key ai_composer_collapsed.<app>). A user layout choice, so it migrates with the app's settings. |
 | `auto_update` | prefs | config (keys: last_check_at→device, last_remote_bytes→device, last_remote_digest→device, unattended_pass→device) | yes | Auto-update toggles (enabled, require_silent/unmetered) are settings; last_check/remote digest/bytes/unattended_pass are state. |
+| `c3_private` | encrypted | secret | yes | #1454 Cloud C3's private-data source: the GitHub token (github_token) used to read the private identities file, in EncryptedSharedPreferences via libs:crash SafeEncryptedPrefs. A credential: shown masked, migrates through the vault. |
 | `c3_routes_table` | prefs | config | yes | Cloud C3 > Containers > Table: the chosen sort column and direction, the Auth Type and VM filters, the category filter and the search text, as one string under the key 'state'. |
 | `cloud_analytics` | prefs | config (keys: visitor_id→device) | yes | Analytics consent is a user choice; visitor_id is a per-install identity. |
 | `dagu_prefs` | encrypted | config (keys: bearer_token→secret) | yes | Dagu server URL and user label are account links; bearer_token is a credential. |
@@ -417,6 +427,7 @@ Module `ac_cloud-c3`; libs: lib-ai, lib-analytics, lib-bottomnav, lib-core, lib-
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
 | `gh_feed_cache` | prefs | device | no | 15-minute TTL cache of GitHub commits/workflow-run feeds. |
+| `gitea_feed_cache` | prefs | device | no | 15-minute TTL cache of Gitea commit feed responses (GiteaFeed PREFS constant), pure cache. |
 | `nav_modes` | prefs | config | yes | #1189 the user's per-section choice of how child pages are navigated (one row, two rows, side menu; overrides the build.json declaration) and whether the side menu is expanded or the rail. Written by the shared nav bars (NavModePrefs) from each app's Configs; part of the app's settings, so it migrates and backs up with them. |
 | `nav_ui` | prefs | config | yes | The user's nav UI choice for this app (Configs > UI): the nav mode, Classic or Clean, and the scroll-hide toggle (a downward scroll hides every bar until an upward one). Written by the shared Configs card (NavUiPrefs, libs:ui-nav-bars NavUiConfigCard); part of the app's settings, so it migrates and backs up with them. The app's declared default is build.json::ui.nav_ui. |
 | `notification_store` | prefs | content | no | Stored in-app notification log (info/warn/error). |
@@ -428,7 +439,7 @@ Module `ac_cloud-c3`; libs: lib-ai, lib-analytics, lib-bottomnav, lib-core, lib-
 | `updater_advisory` | prefs | device | no | Update advisory feed, snooze/shown/fail state per app. |
 | `updater_apk_cache_notes` | prefs | device | no | Notes about cached downloaded APKs. |
 
-Coverage: 11 covered, 0 gaps.
+Coverage: 12 covered, 0 gaps.
 
 ## cloud-calc — `com.diegonmarcos.cloudcalc`
 
@@ -622,7 +633,7 @@ Coverage: 9 covered, 2 gaps — call_history, file:system CallLog and BlockedNum
 
 ## cloud-drive — `com.diegonmarcos.clouddrive`
 
-Module `ac_cloud-drive`; libs: lib-ai, lib-analytics, lib-auth, lib-bottomnav, lib-core, lib-crash, lib-databackend, lib-decisions-link, lib-devtools, lib-disk, lib-disk-scan, lib-file-editor, lib-fleetconfig-model, lib-git-core, lib-git-sync, lib-ml-l-image, lib-model-catalogue, lib-mounts, lib-perms, lib-rclone, lib-shared-store, lib-shizuku-adb-debug-tools, lib-sysdns, lib-theme-background, lib-ui-icons, lib-ui-nav-bars, lib-updater, lib-usb-drive, lib-web-core.
+Module `ac_cloud-drive`; libs: lib-ai, lib-analytics, lib-auth, lib-bottomnav, lib-core, lib-crash, lib-databackend, lib-decisions-link, lib-devtools, lib-disk, lib-disk-scan, lib-file-editor, lib-fleetconfig-model, lib-git-core, lib-git-repos, lib-git-sync, lib-git-ui, lib-ml-l-image, lib-model-catalogue, lib-mounts, lib-perms, lib-rclone, lib-shared-store, lib-shizuku-adb-debug-tools, lib-sysdns, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-usb-drive, lib-web-core.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -784,7 +795,7 @@ Coverage: 4 covered, 9 gaps — datastore:elementx_featureflag, datastore:elemen
 
 ## cloud-me — `com.diegonmarcos.cloudme`
 
-Module `ac_cloud-me`; libs: lib-account-ui, lib-analytics, lib-autofill, lib-bottomnav, lib-core, lib-crash, lib-databackend, lib-decisions-link, lib-devtools, lib-fin, lib-fleetconfig-model, lib-health, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-web-core.
+Module `ac_cloud-me`; libs: lib-account-ui, lib-analytics, lib-autofill, lib-bottomnav, lib-core, lib-crash, lib-databackend, lib-decisions-link, lib-devtools, lib-fin, lib-fleetconfig-model, lib-git-core, lib-git-repos, lib-git-sync, lib-git-ui, lib-health, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-web-core.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -796,6 +807,7 @@ Module `ac_cloud-me`; libs: lib-account-ui, lib-analytics, lib-autofill, lib-bot
 | `experiences_user` | prefs | config | yes | Cloud Me > Achieves > Experiences user data, one JSON string under 'data': your own done and to-do experiences (accepted suggestions, edits, additions). Moves with the phone and the backup. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
+| `git-sync-credentials` | encrypted | secret | yes | Encrypted git credentials (tokens/passwords/keys). |
 | `health_store` | prefs | device | no | Health Connect snapshots, history and source last-seen; cache of device data. |
 | `health_user` | prefs | config | yes | #1180 Cloud Me > Health user data, one JSON string under 'data': saved body measurements, lab results, ticked plan events and shopping items, the workout log, chosen activity level, sleep target and dossier choices. Your own entries, so they move with the phone; Health Connect readings are never copied in (the trackers read them live). |
 | `inventory_user` | prefs | config | yes | #1367 Cloud Me > Inventory user data, one JSON string under 'data' (collections of typed item records per sub-page: housing, household, transport, parking, utilities, taxes, insurance, contracts, banking, subscriptions, leisure, food, care, clothing, electronics, education) plus the `_seeded` marker of the collections whose declared mock seed was already applied once. Your own entries, so they move with the phone and the backup; the summary (count, value, monthly recurring) is derived and never stored. |
@@ -818,8 +830,10 @@ Module `ac_cloud-me`; libs: lib-account-ui, lib-analytics, lib-autofill, lib-bot
 | file | class | doc |
 |---|---|---|
 | `assets/health_*.json (from ac_cloud-me/data/health)` | config | #1180 Cloud Me > Health declared content (plan, formulas, home clusters, workout programme) is baked from git into the build, so a new phone gets it by installing the same build; the user's own entries are the health_user store. |
+| `filesDir/git-sync/repos.json` | config | Registered repos to sync |
+| `filesDir/git-sync/known_hosts` | device | Pinned git SSH host keys |
 
-Coverage: 17 covered, 0 gaps.
+Coverage: 18 covered, 1 gaps — file:filesDir/git-sync/repos.json.
 
 ## cloud-gallery — `com.diegonmarcos.mediacenter`
 
