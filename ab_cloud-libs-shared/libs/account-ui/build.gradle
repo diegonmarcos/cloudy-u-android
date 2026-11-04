@@ -58,7 +58,7 @@ dependencies {
     implementation project(':libs:updater')          // the fleet manifest (CONSTELLATION_FLEET_B64) for Cloud Apps / Phone Apps
     implementation project(':libs:perms')            // App info: libs:perms owns settings intents
     implementation project(':libs:bottomnav')        // NavPage
-    implementation project(':libs:git-ui')           // #1445 GitConnectPanel: THE shared GitHub connect (also Cloud Drive's)
+    api project(':libs:git-ui')                      // #1445 GitConnectPanel: THE shared GitHub connect (also Cloud Drive's)
     implementation project(':libs:ui-nav-bars')      // NavBarTopSecondRow: the strips of the profile screen
     implementation 'androidx.core:core-ktx:1.13.1'
     implementation 'androidx.security:security-crypto:1.1.0'   // Personal Info: EncryptedSharedPreferences only

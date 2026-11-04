@@ -745,7 +745,7 @@
             "_doc": "#1445 Configs > Repos: the owner's private repo(s) of account-ui.json::configs_sources.connectors, pulled on open, committed + pushed on save through libs:git-ui GitConnect (the one GitHub connect, shared with Cloud Drive and Cloud Me).",
             "id": "repos",
             "label": "Repos",
-            "icon": "sync_alt"
+            "icon": "sync"
           }
         ]
       },
