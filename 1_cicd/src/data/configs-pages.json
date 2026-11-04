@@ -107,7 +107,8 @@
     "battery_opt": "Keep background work alive under battery optimisation.",
     "overlay": "Draw over other apps (floating windows, call screens).",
     "health_connect": "Read and write health data through Health Connect.",
-    "accessibility": "Fill passwords into other apps (autofill through accessibility)."
+    "accessibility": "Fill passwords into other apps (autofill through accessibility).",
+    "write_secure_settings": "Held through a one-time adb grant so the adb-shell channel can keep wireless debugging available; the app does not write settings itself."
   },
   "lib": {
     "decl": "ab_cloud-libs-shared/libs/ui-nav-bars/src/main/kotlin/com/diegonmarcos/superapp/fleetconfigs/FleetConfigs.kt",

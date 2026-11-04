@@ -61,6 +61,9 @@
     <!-- Manage ▸ Apps lists every installed app with its sizes. -->
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" tools:ignore="QueryAllPackagesPermission" />
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" tools:ignore="ProtectedPermissions" />
+    <!-- Held only through `pm grant` (the adb-shell lib's channel); declared so the grant can be applied. No code writes settings. -->
+    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS"
+        tools:ignore="ProtectedPermissions" />
     <queries>
         <package android:name="moe.shizuku.privileged.api" />
         <package android:name="com.diegonmarcos.superapp" />
