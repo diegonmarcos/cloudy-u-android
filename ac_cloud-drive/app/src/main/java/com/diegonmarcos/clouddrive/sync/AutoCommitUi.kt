@@ -1,5 +1,7 @@
 package com.diegonmarcos.clouddrive.sync
 
+import com.diegonmarcos.cloudlib.gitrepos.*
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box

@@ -1,5 +1,7 @@
 package com.diegonmarcos.clouddrive.sync
 
+import com.diegonmarcos.cloudlib.gitrepos.*
+
 import com.diegonmarcos.clouddrive.ui.StatusLight
 import java.io.File
 import java.nio.file.Files

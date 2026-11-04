@@ -1,5 +1,7 @@
 package com.diegonmarcos.clouddrive.sync
 
+import com.diegonmarcos.cloudlib.gitrepos.*
+
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context

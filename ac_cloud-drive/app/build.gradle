@@ -696,6 +696,7 @@ dependencies {
     // its own module on the shared shelf. Linked from push 1 so every push after it
     // compiles the engine inside THIS app's toolchain, not only inside lib-apks'.
     implementation project(':libs:git-sync')
+    implementation project(':libs:git-repos')   // #1408 the repo model (scan, history, Auto Commit core, checks)
     // cloud-shared-store: where the store is and how this app reaches it (direct / CLOUD_EXEC).
     implementation project(':libs:shared-store')
     implementation project(':libs:file-editor')

@@ -1,5 +1,7 @@
 package com.diegonmarcos.clouddrive.sync
 
+import com.diegonmarcos.cloudlib.gitrepos.*
+
 import android.content.Context
 import com.diegonmarcos.clouddrive.sync.store.StoreRoute
 import com.diegonmarcos.clouddrive.sync.store.StoreShell

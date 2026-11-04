@@ -1,5 +1,7 @@
 package com.diegonmarcos.clouddrive
 
+import com.diegonmarcos.cloudlib.gitrepos.*
+
 import android.content.Context
 import android.util.Log
 import androidx.work.Constraints

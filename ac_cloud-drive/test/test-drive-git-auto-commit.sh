@@ -64,7 +64,7 @@ echo "── A wiring ──"
 a1 "$APP/build.json" && pass "A1 declared in Manual Sync and the Sync menu" || fail "A1 declarations"
 a2 "$SYNC/GitReposScreen.kt" "$SYNC/RepoCompound.kt" "$SYNC/AutoCommitDrive.kt" && pass "A2 per-repo + all-repos dispatch" || fail "A2 dispatch"
 a3 "$SYNC/GitReposScreen.kt" "$SYNC/AutoCommitUi.kt" && pass "A3 Configs ▸ Git ▸ Auto Commit" || fail "A3 Configs section"
-a4 "$SYNC/AutoCommitDrive.kt" "$SYNC/AutoCommit.kt" && pass "A4 no key read, fleet gateway" || fail "A4 key"
+a4 "$SYNC/AutoCommitDrive.kt" "$APP/../ab_cloud-libs-shared/libs/git-repos/src/main/java/com/diegonmarcos/cloudlib/gitrepos/AutoCommit.kt" && pass "A4 no key read, fleet gateway" || fail "A4 key"
 
 echo "── M mutations ──"
 mutf() { # file, python replace (a, b), runner
@@ -77,6 +77,6 @@ mutf "$SYNC/AutoCommitDrive.kt" 'val c = e.commit(w.message, name, email)' 'val 
 mutf "$SYNC/GitReposScreen.kt" 'if (setup) item(key = "auto_commit") { AutoCommitSection() }' '' && { a3 "$TMP/m" "$SYNC/AutoCommitUi.kt" >/dev/null && fail "A3 passed without the section (vacuous)" || pass "section dropped → A3 RED"; }
 mutf "$SYNC/AutoCommitUi.kt" 'AutoCommit.message(AutoCommit.SAMPLE)' '""' && { a3 "$SYNC/GitReposScreen.kt" "$TMP/m" >/dev/null && fail "A3 passed without the sample (vacuous)" || pass "no sample → A3 RED"; }
 mutf "$SYNC/AutoCommitDrive.kt" 'fun online(' 'fun k() = TextToolsClient(x).revealAiKey("openrouter")
-    fun online(' && { a4 "$TMP/m" "$SYNC/AutoCommit.kt" >/dev/null && fail "A4 passed a key read (vacuous)" || pass "key read → A4 RED"; }
+    fun online(' && { a4 "$TMP/m" "$APP/../ab_cloud-libs-shared/libs/git-repos/src/main/java/com/diegonmarcos/cloudlib/gitrepos/AutoCommit.kt" >/dev/null && fail "A4 passed a key read (vacuous)" || pass "key read → A4 RED"; }
 
 [ "$FAILURES" -eq 0 ] && echo "test-drive-git-auto-commit: all green" || { echo "test-drive-git-auto-commit: $FAILURES failure(s)"; exit 1; }

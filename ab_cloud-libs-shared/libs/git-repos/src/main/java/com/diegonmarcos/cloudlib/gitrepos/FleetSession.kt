@@ -1,4 +1,4 @@
-package com.diegonmarcos.clouddrive.sync
+package com.diegonmarcos.cloudlib.gitrepos
 
 /**
  * #653 THE FLEET SESSION, IN MEMORY AND NOWHERE ELSE.

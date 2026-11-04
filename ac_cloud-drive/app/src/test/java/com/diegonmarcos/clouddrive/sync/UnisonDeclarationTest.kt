@@ -1,5 +1,7 @@
 package com.diegonmarcos.clouddrive.sync
 
+import com.diegonmarcos.cloudlib.gitrepos.*
+
 import com.diegonmarcos.clouddrive.UnisonSyncWorker
 import com.diegonmarcos.clouddrive.storage.UnisonPairs
 import com.diegonmarcos.cloudlib.rclone.unison.UnisonConfig

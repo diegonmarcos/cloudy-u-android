@@ -1,5 +1,7 @@
 package com.diegonmarcos.clouddrive.sync
 
+import com.diegonmarcos.cloudlib.gitrepos.*
+
 import com.diegonmarcos.clouddrive.Declarations
 import java.io.File
 import kotlinx.serialization.json.Json

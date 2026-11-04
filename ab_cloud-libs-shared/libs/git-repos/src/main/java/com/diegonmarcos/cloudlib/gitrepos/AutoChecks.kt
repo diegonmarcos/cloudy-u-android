@@ -1,4 +1,4 @@
-package com.diegonmarcos.clouddrive.sync
+package com.diegonmarcos.cloudlib.gitrepos
 
 /**
  * The auto-behaviours of the table pages (Git, Fsync, Mounts), as pure rules the JVM suite pins. EVERY flag is OFF

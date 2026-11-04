@@ -10,7 +10,7 @@ set -uo pipefail
 ROOT="${CLOUD_ANDROID_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && while [ "$PWD" != "/" ] && [ ! -e "$PWD/.git" ]; do cd ..; done; printf '%s' "$PWD")}"
 APP="$ROOT/ac_cloud-drive"; BJ="$APP/build.json"
 SRC="$APP/app/src/main/java/com/diegonmarcos/clouddrive"
-CLEAN="$SRC/sync/StalePackCleaner.kt"; COORD="$SRC/sync/GitSyncCoordinator.kt"; MAIN="$SRC/MainActivity.kt"; WORKER="$SRC/GitSyncWorker.kt"
+CLEAN="$APP/../ab_cloud-libs-shared/libs/git-repos/src/main/java/com/diegonmarcos/cloudlib/gitrepos/StalePackCleaner.kt"; COORD="$SRC/sync/GitSyncCoordinator.kt"; MAIN="$SRC/MainActivity.kt"; WORKER="$SRC/GitSyncWorker.kt"
 TESTS="$APP/app/src/test/java/com/diegonmarcos/clouddrive/sync/StalePackCleanerTest.kt"
 FAILURES=0
 pass() { echo "  PASS  $*"; }

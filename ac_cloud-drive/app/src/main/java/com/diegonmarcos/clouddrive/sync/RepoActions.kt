@@ -1,5 +1,7 @@
 package com.diegonmarcos.clouddrive.sync
 
+import com.diegonmarcos.cloudlib.gitrepos.*
+
 /**
  * #1138 THE ACTIONS of a repository's detail. A declared operation (build.json ui.sync.git.ops) keeps
  * its declared id and its dispatch; the ids added here are the compound sync verbs, the history trim,

@@ -1,5 +1,7 @@
 package com.diegonmarcos.clouddrive.debugapi
 
+import com.diegonmarcos.cloudlib.gitrepos.*
+
 import android.content.Context
 import com.diegonmarcos.clouddrive.BuildConfig
 import com.diegonmarcos.clouddrive.DriveDebugLog

@@ -1,6 +1,6 @@
-package com.diegonmarcos.clouddrive.sync
+package com.diegonmarcos.cloudlib.gitrepos
 
-import com.diegonmarcos.clouddrive.sync.AutoCommit.FileStat
+import com.diegonmarcos.cloudlib.gitrepos.AutoCommit.FileStat
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.nio.file.Files

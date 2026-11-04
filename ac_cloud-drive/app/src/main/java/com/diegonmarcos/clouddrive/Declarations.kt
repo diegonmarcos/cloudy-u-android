@@ -1,5 +1,7 @@
 package com.diegonmarcos.clouddrive
 
+import com.diegonmarcos.cloudlib.gitrepos.*
+
 import com.diegonmarcos.superapp.bottomnav.NavDecl
 import com.diegonmarcos.superapp.bottomnav.NavPage
 import com.diegonmarcos.clouddrive.sync.GitHostsDecl

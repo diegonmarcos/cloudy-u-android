@@ -1,5 +1,7 @@
 package com.diegonmarcos.clouddrive.sync
 
+import com.diegonmarcos.cloudlib.gitrepos.*
+
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.diegonmarcos.clouddrive.DrivePrefs

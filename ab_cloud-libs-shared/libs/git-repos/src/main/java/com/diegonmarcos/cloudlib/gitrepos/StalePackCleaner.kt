@@ -1,4 +1,4 @@
-package com.diegonmarcos.clouddrive.sync
+package com.diegonmarcos.cloudlib.gitrepos
 
 import java.io.File
 import java.nio.file.Files

@@ -1,0 +1,39 @@
+// libs:git-repos — #1408 Cloud Drive's git repo model, out of the app: the repo scan (GitRepoScan), the sync history and
+// schedule (SyncHistory, SyncEvent, SyncSchedule), the Auto Commit message core (AutoCommit, #1419, moved as is), the
+// background auto checks (AutoChecks), the fleet-session rule (FleetSession) and the stale-pack cleaner. Plain JVM so
+// PIT mutation-tests it. Compiled into cloud-drive; ships no APK. The engine it sits on is libs:git-core.
+plugins {
+    id 'org.jetbrains.kotlin.jvm'
+    id 'org.jetbrains.kotlin.plugin.serialization'
+    id 'info.solidsoft.pitest'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
+dependencies {
+    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3'
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.eclipse.jgit:org.eclipse.jgit:7.8.0.202609011348-r'
+}
+
+pitest {
+    pitestVersion = '1.22.1'
+    targetClasses = ['com.diegonmarcos.cloudlib.gitrepos.*']
+    excludedMethods = ['equals', 'hashCode', 'toString', 'copy', 'copy$default', 'component*']
+    avoidCallsTo = ['kotlin.jvm.internal', 'kotlin.jdk7.AutoCloseableKt', 'kotlin.io.CloseableKt']
+    threads = 2
+    outputFormats = ['XML', 'HTML']
+    timestampedReports = false
+    mutationThreshold = 80
+}
+
+tasks.named('test') { finalizedBy 'pitest' }

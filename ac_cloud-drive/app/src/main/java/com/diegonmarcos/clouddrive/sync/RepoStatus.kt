@@ -1,5 +1,7 @@
 package com.diegonmarcos.clouddrive.sync
 
+import com.diegonmarcos.cloudlib.gitrepos.*
+
 import com.diegonmarcos.clouddrive.ui.StatusLight
 import com.diegonmarcos.cloudlib.gitsync.GitCommitInfo
 
