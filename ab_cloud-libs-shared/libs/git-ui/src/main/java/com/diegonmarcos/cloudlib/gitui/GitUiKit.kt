@@ -40,7 +40,7 @@ data class GitUiKit(
     val tagMenuItem: String = "sync_git_menu_item",
     /** The host's pill button (Drive's own); the default is a plain Material button so a screen still works without a provider. */
     val pill: @Composable (GitPill) -> Unit = { p ->
-        Button(p.onClick, p.modifier, enabled = p.enabled) { p.icon?.let { Icon(it, contentDescription = null) }; Text(p.text) }
+        Button(p.onClick, p.modifier, enabled = p.enabled, content = { p.icon?.let { Icon(it, contentDescription = null) }; Text(p.text) })
     },
 )
 

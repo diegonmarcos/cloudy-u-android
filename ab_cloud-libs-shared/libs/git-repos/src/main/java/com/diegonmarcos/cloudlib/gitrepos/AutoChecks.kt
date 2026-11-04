@@ -10,7 +10,9 @@ package com.diegonmarcos.cloudlib.gitrepos
  * carries, plus one interval per page. [GIT_PULL_KEY] is the very key the older "Auto pull on open" switch wrote.
  */
 object AutoChecks {
-    enum class Page(val id: String) { GIT("git"), FSYNC("fsync"), MOUNTS("mounts") }
+    enum class Page(
+        val id: String,
+    ) { GIT("git"), FSYNC("fsync"), MOUNTS("mounts") }
 
     enum class Flag(val id: String) {
         /** Read every item's status once when the page opens. */
