@@ -1,5 +1,5 @@
 {
-  "launcher_icon": {"_doc": "The launcher icon, generated from this declaration by 1_cicd/src/scripts/cloud-android-launcher-icons.py (pattern + category colours + glyphs in 1_cicd/src/data/launcher-icons.json). Never edit the generated res files.", "glyph": "rss_feed", "category": "comms", "res": "app/src/main/res"},
+  "launcher_icon": {"_doc": "The launcher icon, generated from this declaration by 1_cicd/src/scripts/cloud-android-launcher-icons.py (pattern + category colours + glyphs in 1_cicd/src/data/launcher-icons.json). Never edit the generated res files.", "glyph": "rss_feed", "category": "data", "res": "app/src/main/res"},
   "name": "cloud-news",
   "display_name": "Cloud News",
   "description": "Diego's Cloud News — standalone Android news app. WebView UI over GDELT-backed topic feeds (economy, technology, geopolitics, climate, finance, AI, energy, health): per-topic article lists, tone/sentiment timelines, and rolling topic summaries against a self-hosted GDELT proxy. Build via Nix devShell, one APK out.",
