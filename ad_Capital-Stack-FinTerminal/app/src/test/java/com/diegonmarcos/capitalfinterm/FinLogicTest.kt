@@ -71,6 +71,15 @@ class FinLogicTest {
         assertEquals("0.00", FinLogic.change("0.00"))
     }
 
+    @Test fun pinchZoomKeepsTheLatestPointsAndClamps() {
+        val pts = (0 until 100).map { ChartPoint("2026-01-01", it.toDouble(), it.toDouble()) }
+        assertEquals(pts, FinLogic.zoomed(pts, 1f))
+        assertEquals(50, FinLogic.zoomed(pts, 2f).size)
+        assertEquals(99.0, FinLogic.zoomed(pts, 2f).last().y, 0.0)
+        assertEquals(FinLogic.ZOOM_MIN_POINTS, FinLogic.zoomed(pts, 20f).size)
+        assertEquals(pts.take(5), FinLogic.zoomed(pts.take(5), 4f))
+    }
+
     @Test fun rangesFollowTheSeriesLength() {
         val start = LocalDate.parse("2025-01-01")
         val pts = (0 until 400).map { ChartPoint(start.plusDays(it.toLong()).toString(), it.toDouble(), it.toDouble()) }

@@ -98,6 +98,15 @@ object FinLogic {
         return if (out.size >= 2) out else points.takeLast(2)
     }
 
+    const val ZOOM_MIN_POINTS = 8
+    const val ZOOM_MAX = 20f
+
+    /** The pinch-zoomed window of a series: the last size / [zoom] points (anchored on the latest), never fewer than [ZOOM_MIN_POINTS] nor more than all. */
+    fun zoomed(points: List<ChartPoint>, zoom: Float): List<ChartPoint> {
+        if (zoom <= 1f || points.size <= ZOOM_MIN_POINTS) return points
+        return points.takeLast((points.size / zoom).toInt().coerceIn(ZOOM_MIN_POINTS, points.size))
+    }
+
     private fun rangeCount(range: String): Int = when (range) { "1D" -> 2; "5D" -> 5; "1M" -> 22; "6M" -> 126; "1Y" -> 252; else -> 1260 }
 
     /** Ranges offered by a chart card: none for a curve (its x axis is tenors), else those the series is long enough for. */

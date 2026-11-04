@@ -2,6 +2,9 @@ package com.diegonmarcos.capitalfinterm.ui.fin
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.horizontalScroll
@@ -79,10 +82,13 @@ fun FinChartHeader(title: String, hover: String?, ranges: List<String>, range: S
  * tenors, evenly spaced. Long-press and drag: a crosshair snapped to the nearest point, reported through [onHover].
  */
 @Composable
-fun FinLineChart(points: List<ChartPoint>, curve: Boolean, height: Dp, panelId: String, onHover: (String?) -> Unit) {
+fun FinLineChart(allPoints: List<ChartPoint>, curve: Boolean, height: Dp, panelId: String, onHover: (String?) -> Unit) {
     val p = LocalFinPalette.current
     val measurer = rememberTextMeasurer()
     val haptic = LocalHapticFeedback.current
+    // pinch with two fingers zooms a dated series onto its latest points (FinLogic.zoomed); a double tap resets; a curve (tenors) does not zoom
+    var zoom by remember(allPoints) { mutableStateOf(1f) }
+    val points = if (curve) allPoints else FinLogic.zoomed(allPoints, zoom)
     var hoverIdx by remember(points) { mutableStateOf(-1) }
     if (points.size < 2) {
         Box(Modifier.fillMaxWidth().height(height), contentAlignment = Alignment.Center) { Text("No data for this range", color = p.text2, style = FinType.caption) }
@@ -109,7 +115,20 @@ fun FinLineChart(points: List<ChartPoint>, curve: Boolean, height: Dp, panelId: 
                     },
                 )
             }
-            .pointerInput(Unit) { detectTapGestures(onDoubleTap = { hoverIdx = -1; onHover(null) }) },
+            .pointerInput(Unit) { detectTapGestures(onDoubleTap = { hoverIdx = -1; zoom = 1f; onHover(null) }) }
+            .pointerInput(curve) {
+                if (curve) return@pointerInput
+                awaitEachGesture {
+                    awaitFirstDown(requireUnconsumed = false)
+                    do {
+                        val ev = awaitPointerEvent()
+                        if (ev.changes.size >= 2) {
+                            val z = ev.calculateZoom()
+                            if (z != 1f) { zoom = (zoom * z).coerceIn(1f, FinLogic.ZOOM_MAX); ev.changes.forEach { it.consume() } }
+                        }
+                    } while (ev.changes.any { it.pressed })
+                }
+            },
     ) {
         val right = 48.dp.toPx(); val bottom = 16.dp.toPx(); val top = 4.dp.toPx()
         val w = size.width - right; val h = size.height - bottom - top
