@@ -23,6 +23,7 @@ import com.diegonmarcos.cloudaccount.configs.ContainersPage
 import com.diegonmarcos.cloudaccount.configs.DesktopTreePage
 import com.diegonmarcos.cloudaccount.configs.InfraPage
 import com.diegonmarcos.cloudaccount.configs.PhoneAppsPage
+import com.diegonmarcos.cloudaccount.configs.RepoConnectorPage
 import com.diegonmarcos.cloudaccount.configs.RunbookTogglesPage
 import com.diegonmarcos.cloudaccount.personal.PersonalEntriesPage
 import com.diegonmarcos.cloudaccount.personal.PersonalKind
@@ -63,7 +64,7 @@ private fun HostNote(text: String) {
 }
 
 /** One node of the declared structure. */
-data class AccountUiNode(val id: String, val label: String, val icon: String, val pages: List<AccountUiNode>) {
+data class AccountUiNode(val id: String, val label: String, val icon: String, val pages: List<AccountUiNode>, val render: String = "") {
     val leaves: List<String> get() = if (pages.isEmpty()) listOf(id) else pages.flatMap { it.leaves }
     fun nav(): NavPage = NavPage(id, label, icon, pages = pages.map { it.nav() })
 }
@@ -77,10 +78,22 @@ object AccountUi {
         parse(runCatching { String(Base64.decode(BuildConfig.ACCOUNT_UI_B64, Base64.DEFAULT)) }.getOrDefault("{}"))
     }
 
+    /** #1445 the renderer a leaf [page] of [section] declares (account-ui.json `render`); "" when the declaration has none. */
+    fun renderOf(section: String, page: String): String {
+        fun find(n: AccountUiNode): AccountUiNode? = if (n.id == page && n.pages.isEmpty()) n else n.pages.firstNotNullOfOrNull(::find)
+        return sections.firstOrNull { it.id == section }?.let(::find)?.render.orEmpty()
+    }
+
+    /** #1445 the field schema of a Personal Info kind (account-ui.json `kinds`, labels and masks only), or null when the build carries none. */
+    fun kind(key: String): JSONObject? = runCatching {
+        JSONObject(String(Base64.decode(BuildConfig.ACCOUNT_UI_B64, Base64.DEFAULT))).optJSONObject("kinds")?.optJSONObject(key)
+    }.getOrNull()
+
     fun parse(json: String): List<AccountUiNode> {
         fun node(o: JSONObject): AccountUiNode = AccountUiNode(
             o.optString("id"), o.optString("label"), o.optString("icon"),
             (o.optJSONArray("pages") ?: JSONArray()).let { a -> (0 until a.length()).mapNotNull { a.optJSONObject(it)?.let(::node) } },
+            o.optString("render"),
         )
         val a = runCatching { JSONObject(json).optJSONArray("sections") }.getOrNull() ?: JSONArray()
         return (0 until a.length()).mapNotNull { a.optJSONObject(it)?.let(::node) }
@@ -90,27 +103,31 @@ object AccountUi {
 /** (section, leaf page) of the shared structure → its page. Cloud Account's MainActivity and [AccountProfileScreen] both mount it. */
 @Composable
 fun AccountUiPage(section: String, page: String, go: (String, String) -> Unit) {
+    // #1445 data driven: the renderer is what account-ui.json declares for the leaf, not a hard-coded page id.
+    val render = AccountUi.renderOf(section, page)
     when (section) {
-        AccountUi.PERSONAL -> when (page) {
+        AccountUi.PERSONAL -> when (render) {
             // #1438 IDs, Pay Cards, Others > Entries: EncryptedSharedPreferences only, masked until device auth.
-            "ids" -> PersonalEntriesPage(PersonalKind.IDS)
-            "cards" -> PersonalEntriesPage(PersonalKind.CARDS)
-            "entries" -> PersonalEntriesPage(PersonalKind.OTHERS)
+            "entries:ids" -> PersonalEntriesPage(PersonalKind.IDS)
+            "entries:cards" -> PersonalEntriesPage(PersonalKind.CARDS)
+            "entries:others" -> PersonalEntriesPage(PersonalKind.OTHERS)
             // Autocomplete: the non-secret autofill Source of Truth (a0_docs/eng-specs/autofill-3-tier.md).
-            "personal" -> AutofillProfilesPage()
-            "sites" -> AutofillRulesPage()
-            "snippets" -> AutofillSnippetsPage()
-            "me" -> AccountUiHost.current.MePage(go)
+            "autofill:profiles" -> AutofillProfilesPage()
+            "autofill:rules" -> AutofillRulesPage()
+            "autofill:snippets" -> AutofillSnippetsPage()
+            "host:me" -> AccountUiHost.current.MePage(go)
             else -> PersonalEntriesPage(PersonalKind.IDS)
         }
         // PUBLIC: no page here may show a secret value (test-account-configs-public.sh lists the only composables allowed).
-        AccountUi.CONFIGS -> when (page) {
+        AccountUi.CONFIGS -> when (render) {
             // #1438 Android (Cloud Apps, Phone Apps, Runbook), Desktop, C3 (Infra, Containers): read from the source repos at run time.
-            "phone-apps" -> PhoneAppsPage()
-            "runbook" -> RunbookTogglesPage(go)
-            "desktop" -> DesktopTreePage()
-            "infra" -> InfraPage()
-            "containers" -> ContainersPage()
+            "configs:phone-apps" -> PhoneAppsPage()
+            "configs:runbook" -> RunbookTogglesPage(go)
+            "configs:desktop" -> DesktopTreePage()
+            "configs:infra" -> InfraPage()
+            "configs:containers" -> ContainersPage()
+            // #1445 the owner's private repo, read and written with the owner's token (RepoConnector.kt).
+            "configs:repos" -> RepoConnectorPage()
             else -> CloudAppsPage()
         }
     }

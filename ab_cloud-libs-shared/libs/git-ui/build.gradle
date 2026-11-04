@@ -1,6 +1,6 @@
 // libs:git-ui — #1408 Cloud Drive's git manager UI, out of the app. The host passes its look in through
 // LocalGitUiKit (metrics, the fade modifier, test tags); strings live in this module's res. First slice: the
-// repo table's columns, its sortable header and the metadata table. Compiled into cloud-drive; ships no APK.
+// repo table's columns, its sortable header and the metadata table. Compiled into cloud-drive, Cloud Me and Cloud Account (#1445: GitConnect, the one GitHub connect + repo picker + auto-commit-and-push); ships no APK.
 plugins {
     id 'com.android.library'
     id 'org.jetbrains.kotlin.android'
@@ -32,5 +32,6 @@ dependencies {
     implementation 'androidx.compose.material3:material3'
     implementation project(':libs:git-repos')   // GitRepoScan.humanBytes for the size cells
     implementation project(':libs:git-core')    // the models the solver reads (GitStatusSnapshot, ConflictSide)
+    implementation project(':libs:git-sync')    // #1445 GitConnect: GitEngine + GitCredentialStore, the ONE GitHub connect Drive, Cloud Me and Cloud Account call
     testImplementation 'junit:junit:4.13.2'
 }

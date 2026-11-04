@@ -38,7 +38,7 @@ def leaves(pages):
         if p.get("pages"): yield from leaves(p["pages"])
         else: yield p["id"]
 cfg = next(s for s in ui["sections"] if s["id"] == "configs")
-allowed = {"general", "perms", "about", "cloud-apps", "phone-apps", "runbook", "desktop", "infra", "containers"}  # #1443 shared fleet Configs pages (public)
+allowed = {"general", "perms", "about", "cloud-apps", "phone-apps", "runbook", "desktop", "infra", "containers", "repos"}  # #1445 repos: the private-repo connector (libs:git-ui GitConnect; its own file, not ConfigsPages.kt)
 have = set(leaves(cfg["pages"]))
 ok(have == allowed, "Configs declares exactly the allowed pages", f"Configs leaves are {sorted(have)}, allowed {sorted(allowed)}")
 
@@ -47,9 +47,9 @@ host = code(rd(A + "/app/src/main/java/com/diegonmarcos/cloudaccount/MainActivit
 hb = re.search(r'^\s*"configs" -> (.*)$', host, re.M)
 ok(hb is not None and hb.group(1).strip() == "AccountUiPage(section, page, go)", "MainActivity hands Configs to libs:account-ui's router only",
    f"MainActivity's configs branch mounts {hb.group(1).strip() if hb else 'nothing'}")
-block = ma[ma.index('AccountUi.CONFIGS -> when (page) {'):ma.index('object AccountUiTags')]
+block = ma[ma.index('AccountUi.CONFIGS -> when (render) {'):ma.index('object AccountUiTags')]
 calls = set(re.findall(r"\b([A-Z]\w*)\(", block))
-okcalls = {"CloudAppsPage", "PhoneAppsPage", "RunbookTogglesPage", "DesktopTreePage", "InfraPage", "ContainersPage"}
+okcalls = {"CloudAppsPage", "PhoneAppsPage", "RunbookTogglesPage", "DesktopTreePage", "InfraPage", "ContainersPage", "RepoConnectorPage"}
 ok(calls <= okcalls, "the configs branch mounts only allowed composables", f"the configs branch mounts {sorted(calls - okcalls)}")
 bad = [w for w in ("Secret", "Reveal", "AccountVault", "Password", "Providers", "Grants", "Import", "ConnectionsTab", "SettingsPage") if w in block]
 ok(not bad, "the configs branch names no secret-bearing composable", f"the configs branch names {bad}")
@@ -87,9 +87,9 @@ PY
 }
 M=0
 mutate "Cloud Account mounts a secret page in its own Configs branch" "$A/app/src/main/java/com/diegonmarcos/cloudaccount/MainActivity.kt" '"configs" -> AccountUiPage(section, page, go)' '"configs" -> SecretsTab(openVault = {})' || M=1
-mutate "the secret list mounted in Configs" "$MA" '"desktop" -> DesktopTreePage()' '"desktop" -> DesktopTreePage()
+mutate "the secret list mounted in Configs" "$MA" '"configs:desktop" -> DesktopTreePage()' '"configs:desktop" -> DesktopTreePage()
                 "keys" -> SecretsTab(openVault = {})' || M=1
-mutate "Settings mounted in Configs" "$MA" '"infra" -> InfraPage()' '"infra" -> InfraPage()
+mutate "Settings mounted in Configs" "$MA" '"configs:infra" -> InfraPage()' '"configs:infra" -> InfraPage()
                 "settings" -> AccountSettingsPage("")' || M=1
 mutate "a secrets page declared under Configs" "$A/build.json" '"id": "containers",' '"id": "providers",' || M=1
 mutate "Containers reads the vault" "$SP" 'ConfigsLoad.containers(ConfigsSources.baked)' 'AccountVault(ctx).connections()' || M=1

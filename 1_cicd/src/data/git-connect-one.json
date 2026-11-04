@@ -1,0 +1,24 @@
+{
+  "_doc": "#1445 THE GitHub connect is ONE implementation: libs:git-ui GitConnect (libs:git-sync's GitEngine + GitCredentialStore, libs:git-repos' Auto Commit message). test-git-connect-one.sh fails when a file outside the shared git libs builds a GitHub credential (GitAuth.Https), clones with the engine (GitEngine.clone), uses JGit directly, or names the x-access-token user, unless the file is listed in `legacy` (an existing implementation not yet moved to GitConnect; the list may only shrink) . Cloud Me, Cloud Account and libs:account-ui are never allowed.",
+  "owners": [
+    "ab_cloud-libs-shared/libs/git-core/",
+    "ab_cloud-libs-shared/libs/git-sync/",
+    "ab_cloud-libs-shared/libs/git-ui/",
+    "ab_cloud-libs-shared/libs/git-repos/"
+  ],
+  "never": [
+    "ac_cloud-me/",
+    "ac_cloud-account/",
+    "ab_cloud-libs-shared/libs/account-ui/"
+  ],
+  "legacy": {
+    "ac_cloud-drive/app/build.gradle": "Cloud Drive's JGit packaging excludes, not a connect",
+    "ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive/StoreSeed.kt": "Drive's first-run seed clone; moves to GitConnect with Drive's Sync > Git page",
+    "ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive/sync/GitSyncCoordinator.kt": "Drive's scheduled sync; moves to GitConnect",
+    "ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive/sync/TermuxGitWire.kt": "Drive's optional Termux backend wire",
+    "ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive/sync/StoreGit.kt": "Drive's shared-store git; moves to GitConnect",
+    "ab_cloud-libs-shared/libs/account/build.gradle": "libs:account's SSH key vault dependency, not a GitHub connect",
+    "ab_cloud-libs-shared/libs/account/src/main/java/com/diegonmarcos/superapp/profile/GitSshVault.kt": "SSH key import into the vault, not a GitHub connect",
+    "ab_cloud-libs-shared/libs/gh/src/main/java/com/diegonmarcos/cloudlib/gh/GhRunner.kt": "the gh engine itself (the sign-in whose token GitConnect receives)"
+  }
+}

@@ -44,14 +44,14 @@ def sub(s, p): return ids(next(x for x in sec[s]["pages"] if x["id"] == p).get("
 ok(ids(sec["personal"]["pages"]) == ["ids", "cards", "others", "autocomplete"], "Personal Info = IDs, Pay Cards, Others, Autocomplete", f"Personal Info is {ids(sec['personal']['pages'])}")
 ok([p["label"] for p in sec["personal"]["pages"]] == ["IDs", "Pay Cards", "Others", "Autocomplete"], "Personal Info labels as asked", "Personal Info labels drifted")
 ok(sub("personal", "others") == ["entries", "me"], "Others = Entries, Me", f"Others is {sub('personal', 'others')}")
-ok(ids(sec["configs"]["pages"]) == ["general", "perms", "about", "android", "desktop", "c3"], "Configs = General, Perms, About (#1443), Android, Desktop, C3", f"Configs is {ids(sec['configs']['pages'])}")
+ok(ids(sec["configs"]["pages"]) == ["general", "perms", "about", "android", "desktop", "c3", "repos"], "Configs = General, Perms, About (#1443), Android, Desktop, C3, Repos (#1445)", f"Configs is {ids(sec['configs']['pages'])}")
 ok(sub("configs", "android") == ["cloud-apps", "phone-apps", "runbook"], "Android = Cloud Apps, Phone Apps, Runbook", f"Android is {sub('configs', 'android')}")
 ok(sub("configs", "desktop") == [], "Desktop is one page (the tree)", "Desktop grew sub-pages")
 ok(sub("configs", "c3") == ["infra", "containers"], "C3 = Infra, Containers", f"C3 is {sub('configs', 'c3')}")
 ma = code(rd(MA))
-want = {'"ids" -> PersonalEntriesPage(PersonalKind.IDS)', '"cards" -> PersonalEntriesPage(PersonalKind.CARDS)', '"entries" -> PersonalEntriesPage(PersonalKind.OTHERS)',
-        '"me" -> AccountUiHost.current.MePage(go)', '"phone-apps" -> PhoneAppsPage()', '"runbook" -> RunbookTogglesPage(go)', '"desktop" -> DesktopTreePage()',
-        '"infra" -> InfraPage()', '"containers" -> ContainersPage()', 'else -> CloudAppsPage()'}
+want = {'"entries:ids" -> PersonalEntriesPage(PersonalKind.IDS)', '"entries:cards" -> PersonalEntriesPage(PersonalKind.CARDS)', '"entries:others" -> PersonalEntriesPage(PersonalKind.OTHERS)',
+        '"host:me" -> AccountUiHost.current.MePage(go)', '"configs:phone-apps" -> PhoneAppsPage()', '"configs:runbook" -> RunbookTogglesPage(go)', '"configs:desktop" -> DesktopTreePage()', '"configs:repos" -> RepoConnectorPage()',
+        '"configs:infra" -> InfraPage()', '"configs:containers" -> ContainersPage()', 'else -> CloudAppsPage()'}
 miss = [w for w in want if w not in ma]
 ok(not miss, "the shared router mounts every new leaf", f"the shared router does not mount {miss}")
 def shape(ps): return [(p["id"], p["label"], p.get("icon"), shape(p.get("pages") or [])) for p in ps]
@@ -118,7 +118,7 @@ mutate "Pay Cards leaves Personal Info" "$A/build.json" '"id": "cards",' '"id": 
 mutate "Runbook leaves Android" "$A/build.json" '"id": "runbook",
                 "label": "Runbook",' '"id": "push",
                 "label": "Runbook",' || M=1
-mutate "Containers not mounted" "$MA" '"containers" -> ContainersPage()' '"containers" -> InfraPage()' || M=1
+mutate "Containers not mounted" "$MA" '"configs:containers" -> ContainersPage()' '"configs:containers" -> InfraPage()' || M=1
 # secret values
 mutate "envName keeps the value" "$CD" ".substringBefore('=').substringBefore(':')" ".substringBefore(':')" || M=1
 mutate "block-scalar lines read as names" "$CD" 'ind > itemIndent && key != "volumes"' 'false' || M=1

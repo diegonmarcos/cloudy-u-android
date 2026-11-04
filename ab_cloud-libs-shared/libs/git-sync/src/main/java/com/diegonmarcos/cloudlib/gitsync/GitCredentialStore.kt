@@ -17,6 +17,8 @@ class GitCredentialStore(context: Context) {
     private val knownHosts = File(context.filesDir, "git-sync/known_hosts")
 
     fun setSecret(repoId: String, secret: String) = prefs.edit().putString(repoId, secret).apply()
+    /** #1445 the stored secret of [repoId] (libs:git-ui GitConnect's token); never log it. */
+    fun secret(repoId: String): String? = prefs.getString(repoId, null)?.takeIf { it.isNotBlank() }
     fun clear(repoId: String) = prefs.edit().remove(repoId).apply()
     fun hasSecret(repoId: String): Boolean = prefs.contains(repoId)
 

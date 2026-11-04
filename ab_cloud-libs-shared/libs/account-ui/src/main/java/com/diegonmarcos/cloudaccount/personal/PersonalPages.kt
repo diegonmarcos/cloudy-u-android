@@ -49,12 +49,6 @@ object PersonalTags {
     const val UNAVAILABLE = "personal:unavailable"
 }
 
-private fun title(kind: PersonalKind) = when (kind) {
-    PersonalKind.IDS -> "ID documents"
-    PersonalKind.CARDS -> "Payment cards"
-    PersonalKind.OTHERS -> "Other personal entries"
-}
-
 private fun fieldLabel(f: String) = f.replaceFirstChar { it.uppercase() }
 
 /**
@@ -76,7 +70,7 @@ fun PersonalEntriesPage(kind: PersonalKind, repoOf: (Context) -> PersonalRepo? =
 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp).testTag(PersonalTags.page(kind)),
         verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        GroupTitle(title(kind))
+        GroupTitle(kind.title)
         if (repo == null) {
             KitStatusBanner("Secure storage is unavailable on this phone: nothing is stored", KitState.BAD, tag = PersonalTags.UNAVAILABLE)
         } else {
@@ -126,9 +120,9 @@ private fun AddForm(kind: PersonalKind, save: (String, Map<String, String>) -> U
     for (f in kind.fields) {
         val secret = f in kind.masked
         OutlinedTextField(values[f].orEmpty(), { values[f] = it }, Modifier.fillMaxWidth().testTag("personal:${kind.key}:field:$f"),
-            label = { Text(fieldLabel(f)) }, singleLine = f != "value",
+            label = { Text(fieldLabel(f)) }, singleLine = !kind.multiline(f),
             visualTransformation = if (secret) PasswordVisualTransformation() else VisualTransformation.None,
-            keyboardOptions = KeyboardOptions(keyboardType = if (kind == PersonalKind.CARDS && f == "number") KeyboardType.Number else KeyboardType.Text))
+            keyboardOptions = KeyboardOptions(keyboardType = if (kind.numeric(f)) KeyboardType.Number else KeyboardType.Text))
     }
     KitActionBar(listOf(KitAction("Save", PersonalTags.save(kind), label.isNotBlank()) {
         save(label.trim(), values.filterValues { it.isNotBlank() }.mapValues { it.value.trim() })

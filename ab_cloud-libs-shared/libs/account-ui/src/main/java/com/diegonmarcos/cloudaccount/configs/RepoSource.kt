@@ -19,6 +19,11 @@ class ConfigsSources(val json: JSONObject) {
     val desktop: List<JSONObject> get() = json.optJSONArray("desktop").objects()
     val infra: JSONObject get() = json.optJSONObject("infra") ?: JSONObject()
     val containers: JSONObject get() = json.optJSONObject("containers") ?: JSONObject()
+    /** #1445 the private repos Configs > Repos connects (read AND write) as libs:git-ui's GitConnect specs. */
+    val connectors: List<com.diegonmarcos.cloudlib.gitui.GitConnectSpec> get() = json.optJSONArray("connectors").objects().map {
+        com.diegonmarcos.cloudlib.gitui.GitConnectSpec(it.optString("id"), it.optString("label"), owner, it.optString("repo"),
+            it.optString("ref", "main"), it.optJSONArray("paths").strings())
+    }
     val toggles: List<Toggle> get() = json.optJSONArray("runbook_toggles").objects().map {
         Toggle(it.optString("id"), it.optString("label"), it.optString("on"), it.optString("off"), it.optString("check"), it.optString("on_when"))
     }

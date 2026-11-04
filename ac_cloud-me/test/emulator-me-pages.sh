@@ -36,6 +36,14 @@ for m in re.finditer(r'<node [^>]*text="Configs"[^>]*bounds="\[(\d+),(\d+)\]\[(\
     a, b, c, d = map(int, m.groups()); print((a + c) // 2, (b + d) // 2); break
 PY
 if [ -s "$OUT/.tap" ]; then $T adb shell input tap $(cat "$OUT/.tap"); shot me-profile-configs; else echo "no Configs tab found on the profile page"; rc=1; fi
+# #1445 Configs > Repos (the shared GitHub connect, libs:git-ui): tap its page tab, no token on a fresh emulator = read only
+python3 - "$OUT/me-profile-configs.xml" > "$OUT/.tap" <<'PY' || true
+import re, sys
+x = open(sys.argv[1], errors="ignore").read()
+for m in re.finditer(r'<node [^>]*text="Repos"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', x):
+    a, b, c, d = map(int, m.groups()); print((a + c) // 2, (b + d) // 2); break
+PY
+if [ -s "$OUT/.tap" ]; then $T adb shell input tap $(cat "$OUT/.tap"); shot me-profile-configs-repos 10; else echo "no Repos tab on the profile Configs page"; rc=1; fi
 
 # #1387/#1391 Experiences: every tab in Done and in Planned, top and one swipe down (page:experiences/<tab>)
 tap_text() {  # tap_text SUBSTRING: tap the first node whose text contains it

@@ -196,6 +196,26 @@
       "_doc": "#1439 Personal Info + Configs profile pages shared by Cloud Account and Cloud Me (structure and sources in its account-ui.json), shared BY REFERENCE.",
       "dir": "../ab_cloud-libs-shared/libs/account-ui",
       "type": "library"
+    },
+    "libs:git-ui": {
+      "_doc": "#1445 THE shared GitHub connect (GitConnect + GitConnectPanel): Drive, Cloud Me and Cloud Account call this one implementation. Compiled in through libs:account-ui's Configs > Repos page.",
+      "dir": "../ab_cloud-libs-shared/libs/git-ui",
+      "type": "library"
+    },
+    "libs:git-sync": {
+      "_doc": "#1445 GitEngine + GitCredentialStore under libs:git-ui's GitConnect.",
+      "dir": "../ab_cloud-libs-shared/libs/git-sync",
+      "type": "library"
+    },
+    "libs:git-core": {
+      "_doc": "#1445 the in-process JGit engine, `api` of libs:git-sync, so settings.gradle must include it.",
+      "dir": "../ab_cloud-libs-shared/libs/git-core",
+      "type": "library"
+    },
+    "libs:git-repos": {
+      "_doc": "#1445 the Auto Commit message core GitConnect commits with.",
+      "dir": "../ab_cloud-libs-shared/libs/git-repos",
+      "type": "library"
     }
   },
   "shizuku_client": {
@@ -720,6 +740,12 @@
                 "icon": "inventory_2"
               }
             ]
+          },
+          {
+            "_doc": "#1445 Configs > Repos: the owner's private repo(s) of account-ui.json::configs_sources.connectors, pulled on open, committed + pushed on save through libs:git-ui GitConnect (the one GitHub connect, shared with Cloud Drive and Cloud Me).",
+            "id": "repos",
+            "label": "Repos",
+            "icon": "sync_alt"
           }
         ]
       },

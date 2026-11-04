@@ -11,10 +11,19 @@ import org.json.JSONObject
  * #1438 Personal Info (IDs, Pay Cards, Others > Entries): what each kind holds. [masked] fields stay behind the mask
  * until device auth; a card's number is masked by [CardMask], every other masked field by [CardMask.hide].
  */
-enum class PersonalKind(val key: String, val fields: List<String>, val masked: Set<String>) {
+enum class PersonalKind(val key: String, private val defFields: List<String>, private val defMasked: Set<String>) {
     IDS("ids", listOf("type", "number", "country", "expiry"), setOf("number")),
     CARDS("cards", listOf("holder", "number", "expiry", "brand"), setOf("number")),
-    OTHERS("others", listOf("value"), setOf("value")),
+    OTHERS("others", listOf("value"), setOf("value"));
+
+    /** #1445 the schema is account-ui.json::kinds (Cloud Me's SoT, baked); the literals above are only the fallback of a build that carries none. */
+    private val decl: JSONObject? get() = com.diegonmarcos.superapp.accountui.AccountUi.kind(key)
+    private fun JSONArray?.names(): List<String> = if (this == null) emptyList() else (0 until length()).map { optString(it) }.filter { it.isNotEmpty() }
+    val fields: List<String> get() = decl?.optJSONArray("fields").names().ifEmpty { defFields }
+    val masked: Set<String> get() = decl?.optJSONArray("masked")?.names()?.toSet() ?: defMasked
+    val title: String get() = decl?.optString("title").orEmpty().ifBlank { key.replaceFirstChar { it.uppercase() } }
+    fun numeric(field: String): Boolean = decl?.optJSONArray("numeric").names().contains(field)
+    fun multiline(field: String): Boolean = decl?.optJSONArray("multiline").names().contains(field)
 }
 
 /** One personal entry. [toString] names the field KEYS only, so an entry that reaches a log carries no value. */

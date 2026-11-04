@@ -309,8 +309,9 @@ android {
 
     packaging {
         resources {
-            excludes += ['META-INF/NOTICE.md', 'META-INF/LICENSE.md',
-                         'META-INF/NOTICE',    'META-INF/LICENSE']
+            // #1445 + JGit (libs:git-ui GitConnect): the same list as Cloud Drive's build.json::android.packaging_excludes
+            excludes += ['META-INF/NOTICE.md', 'META-INF/LICENSE.md', 'META-INF/NOTICE', 'META-INF/LICENSE', 'META-INF/NOTICE.txt', 'META-INF/LICENSE.txt',
+                         'META-INF/DEPENDENCIES', 'META-INF/AL2.0', 'META-INF/LGPL2.1', 'META-INF/INDEX.LIST', 'META-INF/versions/*/OSGI-INF/MANIFEST.MF']
         }
     }
 

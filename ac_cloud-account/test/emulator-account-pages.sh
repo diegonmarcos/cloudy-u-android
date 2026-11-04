@@ -59,6 +59,7 @@ configs runbook 4 Switches,Setup_steps,Animations_off
 configs desktop 15 Desktop
 configs infra 20 C3,Infra,Containers
 configs containers 30 Infra,Containers
+configs repos 12 Repos,Pull
 PAGES
 
 # Pay Cards: add a fake card through the form; the list must show •••• 0002 and never the full number.
