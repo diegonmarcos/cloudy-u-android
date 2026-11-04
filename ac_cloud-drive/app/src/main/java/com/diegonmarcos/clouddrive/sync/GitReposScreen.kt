@@ -1685,12 +1685,14 @@ private fun GitRepoOpsBox(
             if (repo.lastSyncEpochSeconds > 0) stringResource(R.string.sync_last, fmt.format(Date(repo.lastSyncEpochSeconds * 1000)), repo.lastSyncSummary) else stringResource(R.string.sync_never),
             Modifier.padding(top = DriveMetrics.tight), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis,
         )
-        if (glance != null && glance.conflicts > 0) {
+        // #1408 the solver is offered as soon as a sync leaves conflicts, before a full status read counts them.
+        val conflictCount = maxOf(glance?.conflicts ?: 0, SyncNoWinner.leftConflicts(repo.lastSyncSummary))
+        if (conflictCount > 0) {
             Row(Modifier.padding(top = DriveMetrics.gap), verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Filled.Warning, contentDescription = null, tint = off, modifier = Modifier.padding(horizontal = DriveMetrics.gap))
-                Text(stringResource(R.string.sync_conflicts, glance.conflicts), color = off, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.sync_conflicts, conflictCount), color = off, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
             }
-            PillRow { Pill(stringResource(R.string.sync_resolve_conflicts, glance.conflicts), { actions.openEngine(EngineActivity.ENGINE_GIT, repo.path) }, filled = true) }
+            PillRow { Pill(stringResource(R.string.sync_resolve_conflicts, conflictCount), { actions.openEngine(EngineActivity.ENGINE_GIT, repo.path) }, filled = true) }
         }
         if (running != null) {
             LinearProgressIndicator(Modifier.fillMaxWidth().padding(vertical = DriveMetrics.gapWide))

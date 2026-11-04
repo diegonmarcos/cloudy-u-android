@@ -36,4 +36,17 @@ class SyncNoWinnerTest {
         assertTrue(SyncNoWinner.explain("", 1, 1, renamed, "z-old").endsWith("(renamed: 'z-old' is now z-archived_front-data)"))
         for (d in listOf("", "fatal: something", "error: Your local changes would be overwritten")) assertFalse(SyncNoWinner.explain(d, -1, -1, plain, "x").contains("not merged"))
     }
+
+    /** #1408 the in-process merge keeps the conflict in place: the text says so (never "nothing changed") and the sheet reads the count back. */
+    @Test fun inProcessConflictIsNamedAndCounted() {
+        val id = SyncNoWinner.Identity("x", false)
+        val why = SyncNoWinner.explain("a.txt\nb.txt\npull conflicts: 2 file(s)", 1, 1, id, "x")
+        assertEquals("conflict: 2 file(s) need you, markers kept — open the conflict solver", why)
+        assertFalse(why.contains("nothing changed"))
+        assertEquals(2, SyncNoWinner.leftConflicts("sync-no-winner: $why"))
+        assertEquals(0, SyncNoWinner.leftConflicts("sync-no-winner: fetched and merged"))
+        assertEquals(0, SyncNoWinner.leftConflicts(""))
+        // the CLI wording (Termux backend aborts the merge) keeps its own sentence
+        assertTrue(SyncNoWinner.explain("merge conflict", 1, 1, id, "x").contains("nothing changed"))
+    }
 }

@@ -31,6 +31,8 @@ object SyncNoWinner {
         val d = details.lowercase()
         val counts = if (ahead >= 0 && behind >= 0) "$ahead local, $behind remote commits" else "local and remote both have new commits"
         val why = when {
+            // #1408 the in-process merge (libs:git-core) stops WITH the conflict in place: the files carry markers, the solver resolves them.
+            IN_PROCESS_CONFLICT.containsMatchIn(d) -> "conflict: ${IN_PROCESS_CONFLICT.find(d)!!.groupValues[1]} file(s) need you, markers kept — open the conflict solver"
             "merge conflict" in d -> "conflict: $counts touch the same lines, merge aborted, nothing changed — open to resolve or pick a side"
             "unrelated histories" in d || "shallow" in d -> "diverged: $counts and the shallow clone has no common base, nothing changed — open to resolve (remote wins / local wins)"
             "would be overwritten" in d || "uncommitted" in d || "commit your changes" in d -> "local changes block the merge, nothing changed — commit or stash them first"
@@ -41,4 +43,10 @@ object SyncNoWinner {
         }
         return if (id.renamed) "$why (renamed: '$cloneName' is now ${id.current})" else why
     }
+
+    private val IN_PROCESS_CONFLICT = Regex("""pull conflicts: (\d+) file""")
+    private val LEFT = Regex("""conflict: (\d+) file\(s\) need you""")
+
+    /** #1408 the conflicts a last sync left in the tree, read from its recorded summary; 0 when it left none. */
+    fun leftConflicts(lastSummary: String): Int = LEFT.find(lastSummary)?.groupValues?.get(1)?.toIntOrNull() ?: 0
 }

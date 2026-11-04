@@ -101,7 +101,8 @@ shot 21-sync-result
 pull_clone "$CL"; P="$WORK/pulled/$(basename "$CL")"
 grep -q '^<<<<<<<' "$P/a.txt" || fail "no conflict markers in the clone's a.txt: $(cat "$P/a.txt")"
 for i in 1 2 3 4; do front; dump >/dev/null; grep -qE 'text="Resolve [0-9]+ conflict' "$OUT/ui.xml" && break; swipe_up; done
-tap '^Resolve [0-9]+ conflict' && sleep 3 || note "no Resolve N conflict(s) button: $(texts)"
+dump >/dev/null; grep -q 'nothing changed' "$OUT/ui.xml" && fail "the sheet says nothing changed after a conflict: $(texts)"
+tap '^Resolve [0-9]+ conflict' || fail "no Resolve N conflict(s) button: $(texts)"; sleep 4
 shot 30-conflict-solver
 for i in 1 2 3; do back; done
 
