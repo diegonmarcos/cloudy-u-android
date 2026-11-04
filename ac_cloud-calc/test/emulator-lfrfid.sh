@@ -46,6 +46,10 @@ grep -q '00148040' "$OUT/ui.xml" || fail "block 0 is not the EM4100 config: $(te
 tap '^Library$' || fail "no Library mode: $(texts)"
 sleep 2; shot 03-library
 grep -q 'Export JSON' "$OUT/ui.xml" || fail "the Library has no export: $(texts)"
+# the empty-library line sits under the no-reader help and the export row: scroll the pane (device pixels) until it shows
+for i in 1 2 3; do grep -q 'No saved tags yet' "$OUT/ui.xml" && break; read -r SW SH < <(adb shell wm size | tr -d '\r' | tail -1 | sed 's/.*: //; s/x/ /')
+  adb shell input swipe $((SW / 2)) $((SH * 75 / 100)) $((SW / 2)) $((SH * 35 / 100)) 400; sleep 1; dump >/dev/null; done
+shot 04-library-empty
 grep -q 'No saved tags yet' "$OUT/ui.xml" || fail "an empty library says nothing: $(texts)"
 adb logcat -d -v threadtime > "$OUT/logcat.txt" 2>/dev/null
 grep -q "FATAL EXCEPTION" "$OUT/logcat.txt" && grep -A3 "FATAL EXCEPTION" "$OUT/logcat.txt" | grep -q cloudcalc && fail "Calc crashed"
