@@ -21,6 +21,7 @@ git init -q -b main "$FIX"
   && git update-ref refs/remotes/origin/main HEAD && echo x > .git/FETCH_HEAD )
 tar -C "$(dirname "$FIX")" -cf "$OUT/fixture.tar" "$NAME"
 
+adb uninstall "$PKG" >/dev/null 2>&1 || true   # a retry starts from a clean app, as the first attempt did
 adb install -r -g "$APK" || fail "install failed"
 adb shell appops set "$PKG" MANAGE_EXTERNAL_STORAGE allow || true
 act=$(adb shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.LAUNCHER "$PKG" | tr -d '\r' | tail -1)
@@ -72,7 +73,7 @@ sleep 1
 # #1315 the declared top bar: Light check sits in the Check menu
 tap '^Check$' || fail "no Check menu button"
 sleep 1
-tap '^Light check$' || fail "no Light check item"
+tap '^Light check' || fail "no Light check item: $(grep -oE 'text="[^"]+"' "$OUT/ui.xml" | sed 's/text="//;s/"$//' | sort -u | tr '\n' ';')"
 t0=$(date +%s); ok=0
 while [ $(( $(date +%s) - t0 )) -lt 15 ]; do
   sleep 1
