@@ -28,7 +28,7 @@ import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.unit.dp
 import com.diegonmarcos.clouddrive.Declarations
-import com.diegonmarcos.clouddrive.sync.RepoColumn
+import com.diegonmarcos.cloudlib.gitui.RepoColumn
 import com.diegonmarcos.clouddrive.sync.RepoTableHeader
 import com.diegonmarcos.superapp.bottomnav.BottomNavTags
 import com.diegonmarcos.superapp.bottomnav.TopBarTags
