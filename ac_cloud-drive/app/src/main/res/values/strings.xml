@@ -637,10 +637,7 @@
     <string name="repo_unpushed_line">%1$s  %2$s  %3$s</string>
     <string name="repo_unpushed_failed">The unpushed commits could not be read: %1$s</string>
     <string name="repo_status_window_close">Close</string>
-    <string name="repo_status_window_title">Repository status</string>
     <string name="repo_status_window_state">State: %1$s</string>
-    <string name="repo_status_window_actions">Actions</string>
-    <string name="repo_status_window_cloned_note">Already cloned: the clone is managed from the repository panel.</string>
     <string name="repo_kind_not_cloned">not cloned</string>
     <string name="repo_kind_not_checked">not checked yet (pull to refresh)</string>
     <string name="repo_kind_reading">status not read yet</string>
@@ -649,7 +646,6 @@
     <string name="repo_kind_conflict">conflicts</string>
     <string name="repo_kind_dirty">uncommitted changes</string>
     <string name="repo_kind_large">large repo: working tree not scanned, tap to check</string>
-    <string name="repo_check_worktree">Check working tree</string>
     <string name="repo_kind_diverged">diverged: unpushed commits and new remote commits</string>
     <string name="repo_kind_no_upstream">no upstream branch to compare with</string>
     <string name="repo_kind_behind">behind the remote</string>
@@ -759,7 +755,6 @@
     <string name="repo_depth_done">%1$s finished: %2$d of %3$d · %4$d ok · %5$d skipped · %6$d failed</string>
     <string name="repo_depth_cancelled">%1$s cancelled: %2$d of %3$d · %4$d ok · %5$d skipped · %6$d failed</string>
     <string name="repo_depth_report">Depth report</string>
-    <string name="repo_depth_outcome">Last depth command: %1$s</string>
     <string name="repo_depth_confirm_keep">Shrinks every clean, fully pushed clone to depth %1$d in place: fetch --depth %1$d, reset to the remote default branch, reflog expire, gc. Clones with uncommitted or unpushed work are skipped and reported. The remote is never written and nothing is re-cloned.</string>
     <string name="repo_depth_confirm_keep_one">Shrinks %1$s to depth %2$d in place: fetch --depth %2$d, reset to the remote default branch, reflog expire, gc. Refused when it has uncommitted or unpushed work. The remote is never written.</string>
     <string name="repo_depth_confirm_clone">Clones every registry repository that has no clone on this device yet, depth %1$d. A repository already cloned anywhere (any folder name, any old name) is never cloned twice.</string>

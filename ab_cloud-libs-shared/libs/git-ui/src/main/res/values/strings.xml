@@ -51,5 +51,12 @@
     <string name="repo_status_level_full">Checked: full (working tree scanned), %1$s ago</string>
     <string name="repo_status_no_upstream">(no upstream)</string>
     <string name="repo_status_no_error">none</string>
+    <string name="repo_status_window_title">Repository status</string>
+    <string name="repo_status_window_actions">Actions</string>
+    <string name="repo_status_window_cloned_note">Already cloned: the clone is managed from the repository panel.</string>
+    <string name="repo_check_worktree">Check working tree</string>
+    <string name="repo_depth_outcome">Last depth command: %1$s</string>
+    <string name="git_window_close">Close</string>
+    <string name="git_window_cloning">cloning…</string>
     <string name="repo_meta_table_title">Repository metadata</string>
 </resources>

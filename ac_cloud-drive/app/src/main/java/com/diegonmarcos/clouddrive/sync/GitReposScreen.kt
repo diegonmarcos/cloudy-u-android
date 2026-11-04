@@ -1530,18 +1530,17 @@ internal fun statusErrorText(kind: RepoStatus.ErrorKind?, detail: String?): Stri
     }
 }
 
+/** #1408 the STATUS block's facts: Drive's status model (RepoStatus.Block, the error sentence, the age word) resolved for libs:git-ui's view. */
+@Composable
+internal fun statusFacts(b: RepoStatus.Block): GitStatusFacts = GitStatusFacts(
+    b.cloned, b.branch, b.upstream, b.dirty, b.modified, b.untracked, b.conflicts,
+    b.level, if (b.level != null && b.readAtMs != null) RepoStatus.ageWord(System.currentTimeMillis() - b.readAtMs) else null,
+    b.ahead, b.behind, b.unpushed, b.lastFetchMs, if (b.error == null) null else statusErrorText(b.error, b.errorDetail),
+)
+
 /** The STATUS block at the top of the open repository panel: the view is libs:git-ui's; Drive resolves its status model into the facts. */
 @Composable
-internal fun RepoStatusBlock(b: RepoStatus.Block, fmt: DateFormat) {
-    GitStatusBlockView(
-        GitStatusFacts(
-            b.cloned, b.branch, b.upstream, b.dirty, b.modified, b.untracked, b.conflicts,
-            b.level, if (b.level != null && b.readAtMs != null) RepoStatus.ageWord(System.currentTimeMillis() - b.readAtMs) else null,
-            b.ahead, b.behind, b.unpushed, b.lastFetchMs, if (b.error == null) null else statusErrorText(b.error, b.errorDetail),
-        ),
-        fmt,
-    )
-}
+internal fun RepoStatusBlock(b: RepoStatus.Block, fmt: DateFormat) = GitStatusBlockView(statusFacts(b), fmt)
 
 /**
  * THE per-repository operations box, the row's disclosure. Every DECLARED operation is a

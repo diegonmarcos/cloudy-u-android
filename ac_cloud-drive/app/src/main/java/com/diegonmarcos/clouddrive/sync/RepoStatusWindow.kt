@@ -78,60 +78,38 @@ internal fun RepoStatusWindow(
     val kind = RepoStatus.kindOf(repo != null, glance)
     val block = RepoStatus.block(repo != null, glance)
     val unknown = stringResource(R.string.repo_unknown)
-    Dialog(onDismissRequest = onClose, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
-        Surface(Modifier.fillMaxSize().testTag(DriveTags.SYNC_GIT_STATUS_WINDOW), color = MaterialTheme.colorScheme.background) {
-            Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(horizontal = DriveMetrics.sectionInset)) {
-                Row(Modifier.fillMaxWidth().padding(vertical = DriveMetrics.pad), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(DriveMetrics.pad)) {
-                    StatusDot(RepoStatus.light(kind), name)
-                    Column(Modifier.weight(1f)) {
-                        Text(stringResource(R.string.repo_status_window_title), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text(name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    }
-                    Pill(stringResource(R.string.repo_status_window_close), onClose)
-                }
-                Column(Modifier.weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(DriveMetrics.gapWide)) {
-                    Text(stringResource(R.string.repo_status_window_state, kindText(kind)), style = MaterialTheme.typography.bodyMedium)
-                    RepoThreeSections(icons, name)
-                    // Debug line: the exact path read and the reader's outcome, so a "?" can never be silent again.
-                    Text(RepoStatus.debugLine(repo?.path.orEmpty(), glance), Modifier.testTag(DriveTags.SYNC_GIT_DEBUG_LINE), style = MaterialTheme.typography.labelSmall, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    RepoStatusBlock(block, fmt)
-                    depthOutcome?.let { Text(stringResource(R.string.repo_depth_outcome, it), style = MaterialTheme.typography.bodySmall, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace) }
-                    RepoMetaTable(listOf(
-                        stringResource(R.string.repo_meta_k_name) to name,
-                        stringResource(R.string.repo_meta_k_owner) to owner,
-                        stringResource(R.string.repo_meta_k_path) to (repo?.path ?: RepoTable.DASH),
-                        stringResource(R.string.repo_meta_k_branch) to (block.branch ?: RepoTable.DASH),
-                        stringResource(R.string.repo_meta_k_upstream) to (block.upstream ?: RepoTable.DASH),
-                        stringResource(R.string.repo_meta_k_last_sync) to
-                            if (repo != null && repo.lastSyncEpochSeconds > 0) fmt.format(Date(repo.lastSyncEpochSeconds * 1000)) + " · " + repo.lastSyncSummary else stringResource(R.string.sync_never),
-                        stringResource(R.string.repo_meta_k_lfs) to repoLfsWord(row.lfs),
-                        stringResource(R.string.repo_meta_k_visibility) to repoVisibilityWord(row.isPrivate),
-                        stringResource(R.string.repo_meta_k_provider) to (row.provider ?: RepoTable.DASH),
-                        stringResource(R.string.repo_meta_k_remote) to (repo?.remoteUrl?.takeIf { it.isNotBlank() } ?: cloneUrl).ifBlank { stringResource(R.string.git_meta_no_remote) },
-                        stringResource(R.string.repo_meta_k_default_branch) to (remote?.defaultBranch ?: unknown),
-                        stringResource(R.string.repo_meta_k_size) to (RepoTable.size(row.sizeMainBytes) + " / " + RepoTable.size(row.sizeTotalBytes)),
-                        stringResource(R.string.repo_meta_k_size_disk) to RepoTable.size(row.sizeDiskBytes),
-                        stringResource(R.string.repo_meta_k_branches) to RepoTable.count(row.branches),
-                        stringResource(R.string.repo_meta_k_last_commit) to (row.lastCommitMs?.let { fmt.format(Date(it)) + " (" + RepoTable.age(it, System.currentTimeMillis()) + ")" } ?: RepoTable.DASH),
-                    ))
-                    // LAST SECTION: the actions. Clone repo lives here, not in the table row (#1238).
-                    Text(stringResource(R.string.repo_status_window_actions), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = DriveMetrics.pad))
-                    when (RepoStatus.cloneAction(repo != null, cloning)) {
-                        RepoStatus.CloneAction.CLONE -> Pill(stringResource(R.string.sync_clone_into_store), onClone, modifier = Modifier.testTag(DriveTags.SYNC_GIT_STATUS_CLONE), filled = true)
-                        RepoStatus.CloneAction.CLONING -> Text(stringResource(R.string.git_cloning), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        RepoStatus.CloneAction.NONE -> Text(stringResource(R.string.repo_status_window_cloned_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    if (kind == RepoStatus.Kind.LARGE) Pill(stringResource(R.string.repo_check_worktree), onCheckWorktree, modifier = Modifier.testTag(DriveTags.SYNC_GIT_STATUS_CHECK), filled = true)
-                    androidx.compose.foundation.layout.Spacer(Modifier.padding(bottom = DriveMetrics.listBottom))
-                }
-            }
-        }
-    }
+    // #1408 the window's layout is libs:git-ui's; Drive resolves its status model, strings and clone/check actions into it.
+    GitStatusWindow(
+        name = name, headerDot = { StatusDot(RepoStatus.light(kind), name) }, stateText = stringResource(R.string.repo_status_window_state, kindText(kind)),
+        sections = threeSections(icons, name), debugLine = RepoStatus.debugLine(repo?.path.orEmpty(), glance),
+        facts = statusFacts(block), fmt = fmt, depthOutcome = depthOutcome,
+        meta = listOf(
+            stringResource(R.string.repo_meta_k_name) to name,
+            stringResource(R.string.repo_meta_k_owner) to owner,
+            stringResource(R.string.repo_meta_k_path) to (repo?.path ?: RepoTable.DASH),
+            stringResource(R.string.repo_meta_k_branch) to (block.branch ?: RepoTable.DASH),
+            stringResource(R.string.repo_meta_k_upstream) to (block.upstream ?: RepoTable.DASH),
+            stringResource(R.string.repo_meta_k_last_sync) to
+                if (repo != null && repo.lastSyncEpochSeconds > 0) fmt.format(Date(repo.lastSyncEpochSeconds * 1000)) + " · " + repo.lastSyncSummary else stringResource(R.string.sync_never),
+            stringResource(R.string.repo_meta_k_lfs) to repoLfsWord(row.lfs),
+            stringResource(R.string.repo_meta_k_visibility) to repoVisibilityWord(row.isPrivate),
+            stringResource(R.string.repo_meta_k_provider) to (row.provider ?: RepoTable.DASH),
+            stringResource(R.string.repo_meta_k_remote) to (repo?.remoteUrl?.takeIf { it.isNotBlank() } ?: cloneUrl).ifBlank { stringResource(R.string.git_meta_no_remote) },
+            stringResource(R.string.repo_meta_k_default_branch) to (remote?.defaultBranch ?: unknown),
+            stringResource(R.string.repo_meta_k_size) to (RepoTable.size(row.sizeMainBytes) + " / " + RepoTable.size(row.sizeTotalBytes)),
+            stringResource(R.string.repo_meta_k_size_disk) to RepoTable.size(row.sizeDiskBytes),
+            stringResource(R.string.repo_meta_k_branches) to RepoTable.count(row.branches),
+            stringResource(R.string.repo_meta_k_last_commit) to (row.lastCommitMs?.let { fmt.format(Date(it)) + " (" + RepoTable.age(it, System.currentTimeMillis()) + ")" } ?: RepoTable.DASH),
+        ),
+        cloneAction = when (RepoStatus.cloneAction(repo != null, cloning)) { RepoStatus.CloneAction.CLONE -> GitCloneAction.CLONE; RepoStatus.CloneAction.CLONING -> GitCloneAction.CLONING; RepoStatus.CloneAction.NONE -> GitCloneAction.NONE },
+        cloneLabel = stringResource(R.string.sync_clone_into_store), onClone = onClone,
+        showCheckWorktree = kind == RepoStatus.Kind.LARGE, onCheckWorktree = onCheckWorktree, onClose = onClose,
+    )
 }
 
 /** The status window's three sections, matching the three row icons: LOCAL (working copy), SERVER (against the remote), SYNC (last job). */
 @Composable
-private fun RepoThreeSections(icons: RepoStatus.Icons, name: String) {
+private fun threeSections(icons: RepoStatus.Icons, name: String): List<GitStatusSection> {
     val decl = com.diegonmarcos.clouddrive.Declarations.sync.git.status.icons
     fun word(k: Enum<*>) = k.name.lowercase().replace('_', ' ')
     val now = System.currentTimeMillis()
@@ -142,19 +120,12 @@ private fun RepoThreeSections(icons: RepoStatus.Icons, name: String) {
         RepoStatus.SyncKind.OK -> stringResource(R.string.repo_sync_ok_at, RepoStatus.ageWord(now - (last?.epochSeconds ?: 0) * 1000), last?.summary.orEmpty())
         RepoStatus.SyncKind.ERROR -> stringResource(R.string.repo_sync_failed, RepoStatus.ageWord(now - (last?.epochSeconds ?: 0) * 1000), last?.summary.orEmpty())
     }
-    Column(verticalArrangement = Arrangement.spacedBy(DriveMetrics.gap)) {
-        listOf(
-            Triple(R.string.repo_section_local, RepoStatus.lightOf("local", icons.local, decl), word(icons.local)),
-            Triple(R.string.repo_section_server, RepoStatus.lightOf("server", icons.server, decl), word(icons.server)),
-            Triple(R.string.repo_section_sync, RepoStatus.lightOf("sync", icons.sync, decl), word(icons.sync) + ": " + syncDetail),
-        ).forEach { (title, light, text) ->
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(DriveMetrics.pad)) {
-                StatusDot(light, name + " " + stringResource(title))
-                Column(Modifier.weight(1f)) {
-                    Text(stringResource(title), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text(text, style = MaterialTheme.typography.bodySmall)
-                }
-            }
-        }
+    return listOf(
+        Triple(R.string.repo_section_local, RepoStatus.lightOf("local", icons.local, decl), word(icons.local)),
+        Triple(R.string.repo_section_server, RepoStatus.lightOf("server", icons.server, decl), word(icons.server)),
+        Triple(R.string.repo_section_sync, RepoStatus.lightOf("sync", icons.sync, decl), word(icons.sync) + ": " + syncDetail),
+    ).map { (title, light, text) ->
+        val t = stringResource(title)
+        GitStatusSection(t, text) { StatusDot(light, name + " " + t) }
     }
 }

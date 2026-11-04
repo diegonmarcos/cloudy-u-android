@@ -129,7 +129,10 @@ class GitPageLayoutTest {
         assertTrue(src.contains("diskSizes[File(it.path).absolutePath]?.bytes"))
     }
 
-    private val window = File(root, "app/src/main/java/com/diegonmarcos/clouddrive/sync/RepoStatusWindow.kt").readText()
+    private val driveWindow = File(root, "app/src/main/java/com/diegonmarcos/clouddrive/sync/RepoStatusWindow.kt").readText()
+    // #1408 the window's layout is libs:git-ui's; Drive's file resolves the facts into it
+    private val libWindow = File(root, "../ab_cloud-libs-shared/libs/git-ui/src/main/java/com/diegonmarcos/cloudlib/gitui/GitStatusWindowUi.kt").readText()
+    private val window = driveWindow + libWindow
     private val strings = File(root, "app/src/main/res/values/strings.xml").readText()
     private val rowFn = src.substring(src.indexOf("private fun GitRepoRow("), src.indexOf("private fun lightOf("))
 
@@ -154,12 +157,13 @@ class GitPageLayoutTest {
     }
 
     @Test fun `#1238 the status window is full screen, shows what the app knows, and holds Clone repo as its last section`() {
-        assertTrue(window.contains("usePlatformDefaultWidth = false") && window.contains("fillMaxSize()") && window.contains("DriveTags.SYNC_GIT_STATUS_WINDOW"))
-        for (needle in listOf("RepoStatusBlock(", "R.string.repo_meta_k_path", "R.string.repo_meta_k_remote", "R.string.repo_meta_k_last_sync", "R.string.repo_meta_k_lfs", "R.string.repo_meta_k_visibility", "R.string.repo_meta_k_upstream", "RepoStatus.block(")) assertTrue(needle, window.contains(needle))
-        val actions = window.indexOf("R.string.repo_status_window_actions")
-        assertTrue("Clone is after the metadata table", window.indexOf("RepoMetaTable(") in 0 until window.indexOf("R.string.sync_clone_into_store"))
-        assertTrue("Clone is in the actions section, the last one", actions in 0 until window.indexOf("R.string.sync_clone_into_store"))
-        assertTrue(window.contains("RepoStatus.cloneAction(repo != null, cloning)") && window.contains("DriveTags.SYNC_GIT_STATUS_CLONE"))
+        assertTrue(libWindow.contains("usePlatformDefaultWidth = false") && libWindow.contains("fillMaxSize()") && libWindow.contains("k.tagStatusWindow"))
+        for (needle in listOf("statusFacts(", "R.string.repo_meta_k_path", "R.string.repo_meta_k_remote", "R.string.repo_meta_k_last_sync", "R.string.repo_meta_k_lfs", "R.string.repo_meta_k_visibility", "R.string.repo_meta_k_upstream", "RepoStatus.block(")) assertTrue(needle, window.contains(needle))
+        assertTrue("the window draws the status block", libWindow.contains("GitStatusBlockView(") && driveWindow.contains("R.string.sync_clone_into_store"))
+        val actions = libWindow.indexOf("R.string.repo_status_window_actions")
+        assertTrue("Clone is after the metadata table", libWindow.indexOf("RepoMetaTable(") in 0 until libWindow.indexOf("GitCloneAction.CLONE ->"))
+        assertTrue("Clone is in the actions section, the last one", actions in 0 until libWindow.indexOf("GitCloneAction.CLONE ->"))
+        assertTrue(driveWindow.contains("RepoStatus.cloneAction(repo != null, cloning)") && libWindow.contains("k.tagStatusClone"))
         assertTrue("the screen shows the window for the tapped row and passes the row's own clone", src.contains("RepoStatusWindow(") && src.contains("onClone = e.onClone,") && src.contains("onCheckWorktree = { e.cloned?.let { coordinator.checkWorktree(it) } }, onClose = { statusFor = \"\" }"))
         assertFalse("no hardcoded dp in the window", Regex("\\d\\.dp").containsMatchIn(window))
     }
