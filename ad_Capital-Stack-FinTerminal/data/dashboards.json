@@ -1111,7 +1111,8 @@
             "oecd": {
               "path": "/series",
               "prefix": "OECD/DSD_KEI@DF_KEI/",
-              "suffix": ".M.IRLT.PA._Z._Z._Z"
+              "suffix": ".M.IRLT.PA._Z._Z._Z",
+              "cpi_suffix": ".M.CP.IX._Z._Z._Z"
             },
             "fred": {
               "yield": "DGS10",

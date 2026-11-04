@@ -141,6 +141,7 @@ object Tables {
         val fails = ArrayList<String>()
         val used = ArrayList<String>()
         fun src(k: String) = Catalog.byId(c.sources, Catalog.str(f, k))
+        if (cpi == null && oecdCpi != null) { cpi = oecdCpi; fails += "FRED CPIAUCSL unavailable: US CPI from the OECD monthly index (DBnomics)" }
         val fx = HashMap<String, List<Pair<String, Double>>>()
         src("fx_source")?.let { s ->
             runCatching {
@@ -230,12 +231,16 @@ object Tables {
         val used = ArrayList<String>()
         fun src(k: String) = Catalog.byId(c.sources, Catalog.str(f, k))
         val y = HashMap<String, MutableList<Pair<String, Double>>>()
+        var oecdCpi: Pair<Double, String>? = null
         src("oecd_source")?.let { s ->
             val o = f.optJSONObject("oecd") ?: JSONObject()
             runCatching {
-                val ids = rows.joinToString(",") { Catalog.str(o, "prefix") + it.optString("a3") + Catalog.str(o, "suffix") }
+                val cpiSfx = Catalog.str(o, "cpi_suffix")
+                val ids = (rows.map { Catalog.str(o, "prefix") + it.optString("a3") + Catalog.str(o, "suffix") } +
+                    (if (cpiSfx.isEmpty()) emptyList() else listOf(Catalog.str(o, "prefix") + "USA" + cpiSfx))).joinToString(",")
                 val byA3 = rows.associate { it.optString("a3") to it.optString("cc") }
                 for (sd in Providers.dbnomics(http.get(Requests.url(s.endpoint, Catalog.str(o, "path"), listOf("series_ids" to ids, "observations" to "1", "limit" to "100"))))) {
+                    if (cpiSfx.isNotEmpty() && sd.code.endsWith(cpiSfx)) { oecdCpi = G20Bonds.cpiYoY(sd.periods.zip(sd.values).mapNotNull { (p, v) -> v?.let { p to it } }); continue }
                     val cc = byA3[sd.code.substringBefore('.')] ?: continue
                     sd.periods.zip(sd.values).forEach { (p, v) -> if (v != null && p.length == 7) y.getOrPut(cc) { ArrayList() } += p to v }
                 }
