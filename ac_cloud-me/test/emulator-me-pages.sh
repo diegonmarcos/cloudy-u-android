@@ -51,7 +51,12 @@ if [ -n "$SA_APK" ] && [ -f "$SA_APK" ]; then
         $T adb shell input tap $xy; sleep 4; open_page "$SA" "page:cloud/apps"; sleep 6
     done
     shot superapp-cloud-apps 4
-    $T adb shell input swipe 540 1700 540 900 400; shot superapp-cloud-apps-me-row 4
+    # tap a first-run dialog's Skip, then swipe the Me row (found by its Me-Buro tile) left to its last tile, Profile
+    tapxy() { $T adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; $T adb pull /sdcard/ui.xml "$OUT/.sa.xml" >/dev/null 2>&1
+        python3 -c "import re,sys;x=open(sys.argv[1],errors='ignore').read();m=re.search(r'text=\"'+sys.argv[2]+r'\"[^>]*bounds=\"\[(\d+),(\d+)\]\[(\d+),(\d+)\]',x);print('' if not m else '%d %d'%((int(m[1])+int(m[3]))//2,(int(m[2])+int(m[4]))//2))" "$OUT/.sa.xml" "$1" 2>/dev/null; }
+    xy=$(tapxy Skip); [ -n "$xy" ] && { $T adb shell input tap $xy; sleep 2; }
+    xy=$(tapxy Me-Buro); if [ -n "$xy" ]; then y=${xy#* }; $T adb shell input swipe 1000 $y 100 $y 500; sleep 1; $T adb shell input swipe 1000 $y 100 $y 500; fi
+    shot superapp-cloud-apps-me-row 3
 fi
 $T adb logcat -d > "$OUT/logcat.txt"
 ls -la "$OUT"
