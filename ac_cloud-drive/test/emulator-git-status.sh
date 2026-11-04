@@ -49,8 +49,7 @@ timeout 120 adb shell am start -W -n "$act" >/dev/null; sleep 6
 # The emulator has no cld.termux: Drive's startup gate offers "Continue with local files" (the fixture sits in the app's own files dir).
 for i in 1 2 3; do tap '^Continue with local files$' && break; sleep 2; done || true
 sleep 3
-for i in 1 2 3; do tap '^Sync$' && break; sleep 2; done || fail "no Sync tab"
-sleep 2
+# The bottom nav carries Git directly (there is no Sync tab; the top bar's Sync is the Sync All menu, which a tap here would open over the page).
 tap '^Git$' || fail "no Git sub-page"
 sleep 4
 
