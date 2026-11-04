@@ -217,9 +217,9 @@ jobs:
           adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard || true
           adb install -r -g app.apk || exit 2
           PKG=com.diegonmarcos.hardtechcad
-          adb logcat -v threadtime "*:W" chromium:I > screens/logcat.txt 2>&1 &
+          adb logcat -v threadtime "*:W" chromium:I CadHost:I > screens/logcat.txt 2>&1 &
           python3 walk.py "$PKG"; rc=$?
-          adb logcat -d -s chromium:I | grep -iE "console|error|cad" | tail -80 > screens/console.txt || true
+          adb logcat -d -s chromium:I CadHost:I | grep -iE "console|error|cad" | tail -80 > screens/console.txt || true
           adb shell ls -l /data/data/$PKG/cache/cad-models >> screens/package.txt 2>&1 || true
           adb shell dumpsys package "$PKG" | grep -E "versionName" >> screens/package.txt || true
           exit $rc
