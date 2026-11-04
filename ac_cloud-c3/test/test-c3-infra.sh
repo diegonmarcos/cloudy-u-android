@@ -152,7 +152,7 @@ for where, t in texts.items():
 # data/ holds generated or carried files only
 generated = set(re.findall(r'os\.path\.join\(HERE, "([a-z_]+\.json)"\)', open(app + "/data/gen_infra_slice.py", encoding="utf-8").read())) | \
             set(re.findall(r'os\.path\.join\(HERE, "([a-z_]+\.json)"\)', open(app + "/data/gen_fleet_slice.py", encoding="utf-8").read()))
-carried = {"mesh.json", "services_public.json", "services_private.json", "containers_declared.json", "container_projects.json"}   # carried copies: the SuperApp's, and the configs-sync data repo's containers-declared.json; container_projects.json is c3 own declaration of the Containers project sub-pages (#1454: not a fleet fact, the container build.json carries no project field)
+carried = {"mesh.json", "services_public.json", "services_private.json", "containers_declared.json", "container_projects.json", "public_identities.json"}   # carried copies: the SuperApp's, and the configs-sync data repo's containers-declared.json; container_projects.json is c3 own declaration of the Containers project sub-pages (#1454: not a fleet fact; public_identities.json is the owner-declared public emails, guarded by test-c3-declarative D5, the container build.json carries no project field)
 generated |= {"routes.json", "declarations.json", "infra_slice.json"}                                # gen_infra_slice.py's outputs
 for f in os.listdir(app + "/data"):
     if f.endswith(".json") and f not in generated and f not in carried:
