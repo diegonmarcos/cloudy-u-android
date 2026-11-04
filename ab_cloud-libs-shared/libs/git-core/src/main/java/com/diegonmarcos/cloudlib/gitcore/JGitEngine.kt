@@ -279,6 +279,40 @@ class JGitEngine(val workTree: File) : AutoCloseable {
 
     // ── branches (read-only) ─────────────────────────────────────────────
 
+    // ── compound ops Cloud Drive's sheet runs (#1408: in-process, the same names the Termux wire answers) ──
+
+    /** Sync: no winner. Fetch, then a real merge of the upstream (no rebase, no force); conflicts stop it and are named. */
+    fun mergeUpstream(remote: String = "origin", auth: GitAuth = GitAuth.None): GitOpResult = pull(remote, rebase = false, auth = auth)
+
+    /** Sync: local wins. Force push guarded by a lease: refused when the remote moved past what was last fetched. */
+    fun forcePushLease(remote: String = "origin", auth: GitAuth = GitAuth.None): GitOpResult {
+        val branch = repo.branch ?: return GitOpResult(false, "no current branch")
+        val tracking = Constants.R_REMOTES + remote + "/" + branch
+        val cmd = git.push().setRemote(remote).setForce(true)
+            .setRefSpecs(RefSpec(Constants.R_HEADS + branch + ":" + Constants.R_HEADS + branch))
+            .withAuth(auth)
+        if (repo.findRef(tracking) != null) cmd.setRefLeaseSpecs(org.eclipse.jgit.transport.RefLeaseSpec(Constants.R_HEADS + branch, tracking))
+        val results = cmd.call()
+        val bad = results.flatMap { it.remoteUpdates }.filter { it.status != RemoteRefUpdate.Status.OK && it.status != RemoteRefUpdate.Status.UP_TO_DATE }
+        if (bad.isNotEmpty()) return GitOpResult(false, "push with lease rejected: " + bad.joinToString { "${it.remoteName} ${it.status}" })
+        return GitOpResult(true, "pushed $branch to $remote with lease")
+    }
+
+    /** The default branch: main, else master. */
+    fun checkoutMain(): GitOpResult {
+        for (b in listOf("main", "master")) {
+            if (repo.findRef(Constants.R_HEADS + b) != null) { git.checkout().setName(b).call(); return GitOpResult(true, "on $b") }
+        }
+        return GitOpResult(false, "no main or master branch")
+    }
+
+    /** Continue a rebase once every conflict is staged; nothing to continue is a plain ok. */
+    fun rebaseContinue(): GitOpResult {
+        if (!repo.repositoryState.isRebasing) return GitOpResult(true, "no rebase in progress")
+        val r = git.rebase().setOperation(org.eclipse.jgit.api.RebaseCommand.Operation.CONTINUE).call()
+        return GitOpResult(r.status.isSuccessful, "rebase " + r.status.name.lowercase().replace('_', ' '))
+    }
+
     // ── stash and upstream (#1408) ───────────────────────────────────────
 
     /** Stashes the working tree and index (untracked files too); ok with "nothing to stash" when clean. */

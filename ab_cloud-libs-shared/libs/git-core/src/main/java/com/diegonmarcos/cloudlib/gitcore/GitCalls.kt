@@ -42,7 +42,7 @@ class GitCalls(
 
     fun git(req: JSONObject): String {
         val verb = req.optString("verb")
-        if (verb !in GitWire.VERBS) return fail("git verb '$verb' is not one this engine runs (${GitWire.VERBS.joinToString(", ")})")
+        if (verb !in GitWire.VERBS && verb !in GitWire.COMPOUND) return fail("git verb '$verb' is not one this engine runs (${GitWire.VERBS.joinToString(", ")})")
         val dir = File(req.optString("dir").ifBlank { return fail("git: no dir" ) })
         if (touchesSharedStorage(dir) && !filesAccess())
             return fail("Cloud Drive has no All files access, so git cannot read or write the shared storage — Configs ▸ General ▸ Permissions ▸ All files access", GitErrorKind.STORAGE)
@@ -112,6 +112,12 @@ class GitCalls(
                 "stash_list" -> enc(ListSerializer(String.serializer()), e.stashList())
                 "set_upstream" -> enc(GitOpResult.serializer(), e.setUpstream(remote, a.optString("branch").ifEmpty { null }))
                 "upstream" -> e.upstream().orEmpty()
+                "merge_upstream" -> enc(GitOpResult.serializer(), e.mergeUpstream(remote, auth))
+                "force_push_lease" -> enc(GitOpResult.serializer(), e.forcePushLease(remote, auth))
+                "stash" -> enc(GitOpResult.serializer(), e.stashPush(a.optString("message")))
+                "checkout_main" -> enc(GitOpResult.serializer(), e.checkoutMain())
+                "rebase_continue" -> enc(GitOpResult.serializer(), e.rebaseContinue())
+                "shrink", "keep_depth" -> enc(GitOpResult.serializer(), GitOpResult(false, "$verb rewrites a clone's depth in place, which JGit cannot do: it runs where git is a binary (cld.termux)"))
                 else -> throw IllegalArgumentException("git verb '$verb' has no implementation")
             }
         }
