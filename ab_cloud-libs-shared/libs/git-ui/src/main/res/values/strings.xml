@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- #1408 libs:git-ui: the repo table's column labels and the metadata table title (moved from Cloud Drive). -->
+<resources>
+    <string name="repo_col_status">Status</string>
+    <string name="repo_col_name">Name</string>
+    <string name="repo_col_provider">Provider</string>
+    <string name="repo_col_vis">Pvt/Pub</string>
+    <string name="repo_col_lfs">LFS</string>
+    <string name="repo_col_size_main">Main (depth 1)</string>
+    <string name="repo_col_size_total">Total (history)</string>
+    <string name="repo_col_size_disk">On disk</string>
+    <string name="repo_col_branches">Branches</string>
+    <string name="repo_col_dirty">Dirty</string>
+    <string name="repo_col_ab">Ahead/Behind</string>
+    <string name="repo_col_last_commit">Last commit</string>
+    <string name="repo_meta_table_title">Repository metadata</string>
+</resources>

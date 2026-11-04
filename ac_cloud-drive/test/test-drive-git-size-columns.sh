@@ -7,7 +7,7 @@
 #   Z3 On disk is only shown for a clone (sizeDiskBytes = if (cloned) diskBytes else null).
 set -uo pipefail
 ROOT="${CLOUD_ANDROID_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && while [ "$PWD" != "/" ] && [ ! -e "$PWD/.git" ]; do cd ..; done; printf '%s' "$PWD")}"
-APP="$ROOT/ac_cloud-drive"; T="$APP/app/src/main/java/com/diegonmarcos/clouddrive/sync/RepoTable.kt"; S="$APP/app/src/main/res/values/strings.xml"
+APP="$ROOT/ac_cloud-drive"; T="$APP/app/src/main/java/com/diegonmarcos/clouddrive/sync/RepoTable.kt"; S="$APP/../ab_cloud-libs-shared/libs/git-ui/src/main/res/values/strings.xml"
 TEST="$APP/app/src/test/java/com/diegonmarcos/clouddrive/sync/RepoSizeColumnsTest.kt"
 FAILURES=0; pass() { echo "  PASS  $*"; }; fail() { echo "  FAIL  $*"; FAILURES=$((FAILURES + 1)); }
 check() { python3 - "$1" "$2" "$3" <<'PY'

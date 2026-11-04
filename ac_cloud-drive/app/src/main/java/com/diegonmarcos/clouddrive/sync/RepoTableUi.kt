@@ -1,5 +1,7 @@
 package com.diegonmarcos.clouddrive.sync
 
+import com.diegonmarcos.cloudlib.gitui.*
+
 import androidx.compose.material3.Icon
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.size
@@ -41,52 +43,10 @@ import com.diegonmarcos.clouddrive.ui.Pill
 import com.diegonmarcos.clouddrive.ui.StatusDot
 import com.diegonmarcos.clouddrive.ui.StatusLight
 
-/** #1138 the repo table's column width: the name column is wide, every other column is one table cell. */
-internal fun repoCellModifier(c: RepoColumn): Modifier =
-    Modifier.width(when (c) { RepoColumn.NAME -> DriveMetrics.tableName; RepoColumn.STATUS -> DriveMetrics.tap * 2; else -> DriveMetrics.tableCell }).padding(horizontal = DriveMetrics.gap)
-
+/** #1408 the header lives in libs:git-ui; Drive passes its column split (pinned | scrolling) from [RepoTable]. */
 @Composable
-private fun columnLabel(c: RepoColumn): String = stringResource(when (c) {
-    RepoColumn.STATUS -> R.string.repo_col_status
-    RepoColumn.NAME -> R.string.repo_col_name
-    RepoColumn.PROVIDER -> R.string.repo_col_provider
-    RepoColumn.VISIBILITY -> R.string.repo_col_vis
-    RepoColumn.LFS -> R.string.repo_col_lfs
-    RepoColumn.SIZE_MAIN -> R.string.repo_col_size_main
-    RepoColumn.SIZE_TOTAL -> R.string.repo_col_size_total
-    RepoColumn.SIZE_DISK -> R.string.repo_col_size_disk
-    RepoColumn.BRANCHES -> R.string.repo_col_branches
-    RepoColumn.DIRTY -> R.string.repo_col_dirty
-    RepoColumn.AHEAD_BEHIND -> R.string.repo_col_ab
-    RepoColumn.LAST_COMMIT -> R.string.repo_col_last_commit
-})
-
-/** The sortable header: a tap on a column sorts by it, a second tap flips the direction. Scrolls with the rows ([scroll] is shared). */
-@Composable
-internal fun RepoTableHeader(column: RepoColumn, ascending: Boolean, scroll: ScrollState, tag: String = DriveTags.SYNC_GIT_TABLE_HEADER, onSort: (RepoColumn) -> Unit) {
-    Row(
-        Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant).heightIn(min = DriveMetrics.tap).testTag(tag),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        // #1356 Status and Name are pinned (they never scroll off); the fact columns scroll sideways under the same state the rows use.
-        val label: @Composable (RepoColumn) -> Unit = { c ->
-            val arrow = if (c == column) (if (ascending) " ▲" else " ▼") else ""
-            Text(
-                columnLabel(c) + arrow, repoCellModifier(c).clickable { onSort(c) },
-                style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold,
-                textAlign = when (c) { RepoColumn.NAME -> TextAlign.Start; RepoColumn.STATUS -> TextAlign.Center; else -> TextAlign.End }, maxLines = 2, overflow = TextOverflow.Ellipsis,
-            )
-        }
-        Row(Modifier.padding(start = DriveMetrics.sectionInset), verticalAlignment = Alignment.CenterVertically) {
-            RepoTable.COLUMNS.filter { it in RepoTable.PINNED }.forEach { label(it) }
-        }
-        Row(Modifier.weight(1f).padding(end = DriveMetrics.pad).scrollFadeEnd(scroll.canScrollForward).horizontalScroll(scroll).padding(end = DriveMetrics.sectionInset), verticalAlignment = Alignment.CenterVertically) {
-            RepoTable.COLUMNS.filter { it !in RepoTable.PINNED }.forEach { label(it) }
-            // the rows' trailing disclosure cell: the last fact column scrolls fully into view
-            Spacer(Modifier.width(DriveMetrics.tableName))
-        }
-    }
-}
+internal fun RepoTableHeader(column: RepoColumn, ascending: Boolean, scroll: ScrollState, tag: String = DriveTags.SYNC_GIT_TABLE_HEADER, onSort: (RepoColumn) -> Unit) =
+    com.diegonmarcos.cloudlib.gitui.RepoTableHeader(column, ascending, scroll, RepoTable.COLUMNS.filter { it in RepoTable.PINNED }, RepoTable.COLUMNS.filter { it !in RepoTable.PINNED }, tag, onSort)
 
 /** The nine fact cells after the name, in column order (the leftmost STATUS cell is [RepoStatusCell]). */
 @Composable
@@ -247,22 +207,4 @@ private fun MenuItems(
     }
     else if (g.lines) Column(verticalArrangement = Arrangement.spacedBy(DriveMetrics.gap)) { g.items.forEach { chip(it) } }
     else FlowRow(horizontalArrangement = Arrangement.spacedBy(DriveMetrics.gapWide), verticalArrangement = Arrangement.spacedBy(DriveMetrics.gapWide)) { g.items.forEach { chip(it) } }
-}
-
-/** The repo metadata as a key | value table; the values are selectable (long-press, copy). */
-@Composable
-internal fun RepoMetaTable(rows: List<Pair<String, String>>) {
-    Column(Modifier.fillMaxWidth().padding(top = DriveMetrics.pad).testTag(DriveTags.SYNC_GIT_META_TABLE)) {
-        Text(stringResource(R.string.repo_meta_table_title), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        androidx.compose.foundation.text.selection.SelectionContainer {
-            Column {
-                rows.forEach { (k, v) ->
-                    Row(Modifier.fillMaxWidth().padding(vertical = DriveMetrics.tight)) {
-                        Text(k, Modifier.width(DriveMetrics.tableName), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
-                        Text(v, Modifier.weight(1f), style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace)
-                    }
-                }
-            }
-        }
-    }
 }

@@ -1191,6 +1191,7 @@
         "libs:shared-store",
         "libs:git-sync",
         "libs:git-repos",
+        "libs:git-ui",
         "libs:file-editor",
         "libs:rclone",
         "libs:mounts",
@@ -1252,6 +1253,11 @@
       "type": "library"
     },
     "_doc_engines": "#567 THE FOUR ENGINE LIBRARIES. The owner's vision for this application: the main APK is CHROME, and every tooling is a full engine in its OWN library — libs:file-editor (the full text editor), libs:git-sync (the native git manager that finishes the #437/#448 GitSync story: status, stage/unstage, commit, push/pull, branch list, log, diff, remotes, conflicts — GitSync's UX, over JGit), libs:rclone (remotes config + declared/ad-hoc sync jobs with progress + remote browsing, over a sha256-pinned static rclone binary) and libs:mounts (ftp/sftp/ssh/webdav connections with browse-through). Each lives on the shared shelf and is shared BY REFERENCE like every other module here, so lib-apks also ships each one as cloud-lib-{name}. THE MODULE BOUNDARY IS LAW: a library imports nothing from any application (test/test-drive-engine-modules.sh fails on the first lib -> app import). Compose only (#565): each exports ONE @Composable screen that this app's EngineActivity hosts (push 5). Landed as independently green pushes — (1) skeletons + declarations, (2) git-sync, (3) file-editor, (4) rclone + mounts, (5) drive wiring — so a module on main is never half-wired: until its engine push lands, a skeleton renders its own title and nothing else, and the app does not route to it.",
+    "libs:git-ui": {
+      "_doc_dir": "#1408 Cloud Drive's git manager UI out of the app; the host lends its look through LocalGitUiKit. First slice: the repo table's columns, sortable header and metadata table.",
+      "dir": "../ab_cloud-libs-shared/libs/git-ui",
+      "type": "library"
+    },
     "libs:git-repos": {
       "_doc_dir": "#1408 Cloud Drive's git repo model out of the app: repo scan, sync history and schedule, the Auto Commit message core, the background auto checks, the stale-pack cleaner. Plain JVM, PIT-gated at 80.",
       "dir": "../ab_cloud-libs-shared/libs/git-repos",

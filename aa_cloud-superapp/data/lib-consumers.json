@@ -59,6 +59,7 @@
 {"compiled_by":["ac_cloud-drive"],"description":"In-process git engine: JGit clone, fetch, pull --rebase, stash, push, conflicts and upstream on any storage root, with typed errors.","engines":[],"id":"git-core","ml":false},
 {"compiled_by":["ac_cloud-drive"],"description":"Git repo model: repo scan, sync history and schedule, Auto Commit message core, auto checks, stale-pack cleaner.","engines":[],"id":"git-repos","ml":false},
 {"compiled_by":["ac_cloud-drive"],"description":"Git manager: screen, repository registry, credential store and the client of the in-process engine (libs:git-core).","engines":[],"id":"git-sync","ml":false},
+{"compiled_by":["ac_cloud-drive"],"description":"Git manager UI: repo table header, metadata table, the host's look lent through LocalGitUiKit.","engines":[],"id":"git-ui","ml":false},
 {"compiled_by":[],"description":"gitoxide as a fleet library: a sha256-pinned static gix binary that clones and fetches over HTTPS.","engines":[],"id":"gix","ml":false},
 {"compiled_by":["aa_cloud-superapp","ac_cloud-me"],"description":"Health Connect dashboard surface: store, metrics and pages.","engines":[],"id":"health","ml":false,"primary":"aa_cloud-superapp"},
 {"compiled_by":["aa_cloud-superapp"],"description":"KDE Connect protocol plugins (share, SMS, telephony, SFTP, volume, virtual monitor).","engines":[],"id":"kde-connect","ml":false},

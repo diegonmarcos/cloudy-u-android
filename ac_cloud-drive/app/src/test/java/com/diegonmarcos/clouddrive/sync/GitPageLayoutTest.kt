@@ -1,5 +1,7 @@
 package com.diegonmarcos.clouddrive.sync
 
+import com.diegonmarcos.cloudlib.gitui.*
+
 import com.diegonmarcos.cloudlib.gitrepos.*
 
 import com.diegonmarcos.clouddrive.Declarations
@@ -67,7 +69,7 @@ class GitPageLayoutTest {
     private val dir = File(root, "app/src/main/java/com/diegonmarcos/clouddrive/sync")
     private val fsync = File(dir, "FsyncPage.kt").readText()
     private val mounts = File(dir, "MountsPage.kt").readText()
-    private val tableUi = File(dir, "RepoTableUi.kt").readText()
+    private val tableUi = File(dir, "RepoTableUi.kt").readText() + File(root, "../ab_cloud-libs-shared/libs/git-ui/src/main/java/com/diegonmarcos/cloudlib/gitui/RepoTableUi.kt").readText()
 
     @Test fun `#1195 the actions bar sits above the column header and the header is the sticky item right below it`() {
         val block = src.substring(src.indexOf("fun LazyListScope.tableBlock()"))

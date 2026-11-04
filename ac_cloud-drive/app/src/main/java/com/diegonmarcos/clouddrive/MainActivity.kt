@@ -1,5 +1,6 @@
 package com.diegonmarcos.clouddrive
 
+import com.diegonmarcos.clouddrive.ui.scrollFadeEnd
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -167,7 +168,7 @@ class MainActivity : ComponentActivity(), DriveActions {
             EngineActivity.declareFromBuild(this)
         }
         // #1356 the Git page's state is activity-scoped (survives a bottom-nav switch) and saved with the activity (survives process death).
-        setContent { CompositionLocalProvider(LocalGitPageMemory provides gitPage.store) { DriveTheme { Root(); DataMigration.Dialog() } } }
+        setContent { CompositionLocalProvider(LocalGitPageMemory provides gitPage.store, com.diegonmarcos.cloudlib.gitui.LocalGitUiKit provides com.diegonmarcos.cloudlib.gitui.GitUiKit(fadeEnd = { show -> scrollFadeEnd(show) })) { DriveTheme { Root(); DataMigration.Dialog() } } }
         guarded("Updater", optional = true) {
             Updater.start(this)
         }

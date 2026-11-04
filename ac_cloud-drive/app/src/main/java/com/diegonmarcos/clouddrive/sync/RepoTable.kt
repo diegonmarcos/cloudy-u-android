@@ -1,9 +1,9 @@
 package com.diegonmarcos.clouddrive.sync
 
+import com.diegonmarcos.cloudlib.gitui.*
+
 import com.diegonmarcos.cloudlib.gitrepos.*
 
-/** #1138 the Sync ▸ Git repo table's columns, in display order. #1238: STATUS is the leftmost (the status icon, its tap opens the full status window) and LFS follows Pvt/Pub. */
-enum class RepoColumn { STATUS, NAME, PROVIDER, VISIBILITY, LFS, SIZE_MAIN, SIZE_TOTAL, SIZE_DISK, BRANCHES, DIRTY, AHEAD_BEHIND, LAST_COMMIT }
 
 /**
  * One table row's facts. A fact the page could not read (not cloned, not fetched yet, no upstream) is

@@ -188,6 +188,9 @@
     "ab_cloud-libs-shared/libs/git-sync": {
       "base_language": "host"
     },
+    "ab_cloud-libs-shared/libs/git-ui": {
+      "base_language": "host"
+    },
     "ab_cloud-libs-shared/libs/file-editor": {
       "base_language": "host"
     },

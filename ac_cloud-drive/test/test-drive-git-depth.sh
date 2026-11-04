@@ -149,7 +149,7 @@ echo "── B1 bare depth 1 ──"; b1 "$SRC/sync/BareClones.kt" "$SRC/sync/St
 echo "── D4 bounded ──";    d4 "$COORD" && pass "bounded workers, cancel, cache refreshed after" || fail "depth runs unbounded"
 echo "── U1 unlisted ──";   u1 "$COORD" "$PAGE" && pass "declared roots, one reader, scanned on refresh / check-all" || fail "unlisted wiring"
 echo "── F1 filters ──";    f1 "$FILT" "$PAGE" && pass "filters declared == handled, sort and filters persisted" || fail "filters / sort"
-grep -qF 'RepoColumn.LAST_COMMIT -> R.string.repo_col_last_commit' "$SRC/sync/RepoTableUi.kt" && pass "Last commit column labelled" || fail "Last commit column"
+grep -qF 'RepoColumn.LAST_COMMIT -> R.string.repo_col_last_commit' "$APP/../ab_cloud-libs-shared/libs/git-ui/src/main/java/com/diegonmarcos/cloudlib/gitui/RepoTableUi.kt" && pass "Last commit column labelled" || fail "Last commit column"
 echo "── A1 activity ──";   a1 "$PAGE" && pass "Activity Logs renamed and moved to a top button" || fail "Activity Logs"
 echo "── N1 nav slot ──";   n1 "$HOST" && pass "the bottom-nav slot keeps the expanded height" || fail "the bar slot resizes"
 echo "── C1 cache on reopen ──"

@@ -624,8 +624,6 @@
     <string name="startup_log_empty">The log is empty.</string>
 
     <!-- #1138 Sync ▸ Git: the sortable repo table and the grouped repository actions -->
-    <string name="repo_col_name">Name</string>
-    <string name="repo_col_provider">Provider</string>
     <string name="repo_act_unpushed">Show unpushed commits</string>
     <string name="repo_status_title">STATUS</string>
     <string name="repo_status_cloned">Cloned: %1$s</string>
@@ -648,9 +646,6 @@
     <string name="repo_unpushed_none">Nothing to push: every local commit is on the remote.</string>
     <string name="repo_unpushed_line">%1$s  %2$s  %3$s</string>
     <string name="repo_unpushed_failed">The unpushed commits could not be read: %1$s</string>
-    <string name="repo_col_vis">Pvt/Pub</string>
-    <string name="repo_col_status">Status</string>
-    <string name="repo_col_lfs">LFS</string>
     <string name="repo_lfs_lfs">LFS</string>
     <string name="repo_lfs_normal">Normal</string>
     <string name="repo_status_open">Open the full status</string>
@@ -675,11 +670,6 @@
     <string name="repo_kind_clean">clean, in sync</string>
     <string name="repo_meta_k_lfs">LFS</string>
     <string name="repo_meta_k_provider">Provider</string>
-    <string name="repo_col_size_main">Main (depth 1)</string>
-    <string name="repo_col_size_total">Total (history)</string>
-    <string name="repo_col_branches">Branches</string>
-    <string name="repo_col_dirty">Dirty</string>
-    <string name="repo_col_ab">Ahead/Behind</string>
     <string name="repo_vis_pvt">Pvt</string>
     <string name="repo_vis_pub">Pub</string>
     <string name="repo_act_checkout_main">Checkout Main</string>
@@ -689,12 +679,10 @@
     <string name="repo_prs_failed">Pull requests could not be read: %1$s</string>
     <string name="repo_prs_open_web">Open PRs on the web</string>
     <string name="repo_menu_close">Close menu</string>
-    <string name="repo_meta_table_title">Repository metadata</string>
     <string name="repo_full_progress">Full check %1$d / %2$d (one repository at a time)</string>
     <string name="repo_status_dirty_light">Dirty: not checked (light check reads refs only)</string>
     <string name="repo_status_level_light">Checked: light (refs only), %1$s ago</string>
     <string name="repo_status_level_full">Checked: full (working tree scanned), %1$s ago</string>
-    <string name="repo_col_size_disk">On disk</string>
     <string name="repo_act_copy_url">Copy URL</string>
     <string name="repo_act_open_web">Open on web</string>
     <string name="repo_not_cloned_why">Not cloned: the greyed actions need the local clone. Clone it first.</string>
@@ -783,7 +771,6 @@
     <string name="git_cloud_failed">Could not list from GitHub (%1$s). Showing the declared public set.</string>
     <string name="git_cloud_count">Public repositories of %1$s starting with %2$s: %3$d</string>
     <!-- #1254 depth commands, #1255 unlisted git folders, #1256 filters and Last commit -->
-    <string name="repo_col_last_commit">Last commit</string>
     <string name="repo_meta_k_last_commit">Last commit</string>
     <string name="repo_depth_cancel">Cancel</string>
     <string name="repo_depth_progress">%1$s: %2$d of %3$d · %4$d ok · %5$d skipped · %6$d failed</string>
