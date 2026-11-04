@@ -1,0 +1,72 @@
+{
+  "_doc": "#1471 Infra > APIs: the third-party API providers the fleet uses, declared here and nowhere else (build.json declares the row and its pages, Kotlin spells none of it). A provider's `group` is one of `groups[].id`; a group's `page` is the Infra page id build.json declares for it. `secrets` holds secret NAMES only (an env var or a vault / store key), never a value: test/test-c3-declarative.sh D6 rejects any other key, a name that does not look like a name, and anything token-shaped. `used_by` names fleet apps (ids of the Android constellation) and containers (names in containers_declared.json) where the data or the registry has them.",
+  "groups": [
+    {"id": "ai", "label": "AI", "page": "api_ai"},
+    {"id": "scraper", "label": "Scraper", "page": "api_scraper"}
+  ],
+  "providers": [
+    {
+      "id": "openrouter", "label": "OpenRouter", "group": "ai", "category": "LLM gateway",
+      "links": [
+        {"label": "Console", "url": "https://openrouter.ai/settings/keys"},
+        {"label": "Docs", "url": "https://openrouter.ai/docs"}
+      ],
+      "used_by": {
+        "apps": ["cloud-account", "cloud-browser", "cloud-camera", "cloud-nav", "cloud-search", "cloud-termux", "cloud-nix-on-droid"],
+        "containers": ["cloud-agi-goose", "jev-sidecar"]
+      },
+      "auth": "API key, sent as a bearer token",
+      "secrets": [
+        {"name": "OPENROUTER_API_KEY", "kind": "env"},
+        {"name": "ai/tokens/openrouter_my_ai_api", "kind": "vault"},
+        {"name": "ai/tokens/openrouter_hermes_agent", "kind": "vault"}
+      ]
+    },
+    {
+      "id": "claude", "label": "Claude (Anthropic API)", "group": "ai", "category": "LLM provider",
+      "links": [
+        {"label": "Console", "url": "https://console.anthropic.com"},
+        {"label": "Docs", "url": "https://docs.anthropic.com"}
+      ],
+      "used_by": {
+        "apps": ["cloud-termux", "cloud-nix-on-droid"],
+        "containers": ["cloud-agi-claude"]
+      },
+      "auth": "OAuth token of the Claude subscription CLI (no metered key)",
+      "secrets": [
+        {"name": "CLAUDE_CODE_OAUTH_TOKEN", "kind": "env"},
+        {"name": "ai/tokens/claude/token", "kind": "vault"}
+      ]
+    },
+    {
+      "id": "apify", "label": "Apify", "group": "scraper", "category": "Scraping actors (cloud)",
+      "links": [
+        {"label": "Console", "url": "https://console.apify.com/account/integrations"},
+        {"label": "Docs", "url": "https://docs.apify.com/api/v2"}
+      ],
+      "used_by": {
+        "apps": ["cloud-browser", "cloud-news"],
+        "containers": []
+      },
+      "auth": "API token, sent as a bearer token",
+      "secrets": [
+        {"name": "apify.token", "kind": "store apify_tokens"}
+      ]
+    },
+    {
+      "id": "crawlee", "label": "Cloudy Crawlee", "group": "scraper", "category": "Scraping actors (self-hosted, Apify-compatible)",
+      "links": [
+        {"label": "Docs", "url": "https://crawlee.dev/docs"}
+      ],
+      "used_by": {
+        "apps": ["cloud-browser", "cloud-news"],
+        "containers": []
+      },
+      "auth": "Fleet bearer token over the WireGuard mesh",
+      "secrets": [
+        {"name": "crawlee.token", "kind": "store apify_tokens"},
+        {"name": "apify.self.bearer", "kind": "store apify_tokens"}
+      ]
+    }
+  ]
+}

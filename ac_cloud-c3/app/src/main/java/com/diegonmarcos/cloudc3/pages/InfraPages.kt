@@ -64,6 +64,7 @@ object InfraTags {
 fun InfraSectionScreen(
     section: String, slice: FleetModel.Slice, live: FleetLiveState, today: LocalDate = LocalDate.now(),
     identities: PrivateIdentitiesState = PrivateIdentitiesState(), onToken: (String) -> Unit = {},
+    apis: ApiProviders.Decl = Declarations.apiProviders,
 ) {
     when (section) {
         InfraSections.PROVIDERS -> ProvidersScreen(slice, live)
@@ -76,7 +77,32 @@ fun InfraSectionScreen(
         InfraSections.GADGETS -> DevicesScreen(InfraSections.GADGETS, slice)
         InfraSections.DOMAINS_PUBLIC -> PublicDomainsScreen(slice, identities, onToken)
         InfraSections.DOMAINS -> DomainsScreen(slice, live, today)
-        else -> Text("Unknown Infra page: $section", color = LocalKitPalette.current.bad)
+        else -> apis.groupOfPage(section)?.let { ApiProvidersScreen(section, it, apis) }
+            ?: Text("Unknown Infra page: $section", color = LocalKitPalette.current.bad)
+    }
+}
+
+// ── APIs (#1471): the third-party API providers of one declared group (data/api_providers.json); secret NAMES only ──
+
+@Composable
+fun ApiProvidersScreen(section: String, group: ApiProviders.Group, apis: ApiProviders.Decl) {
+    val rows = apis.of(group)
+    Page(section, "${rows.size} ${group.label} API providers") {
+        if (rows.isEmpty()) {
+            DenseRow(InfraTags.row(section, "none"), "None declared", "", listOf("No ${group.label} API provider is declared in the fleet"))
+        }
+        rows.forEach { p ->
+            DenseRow(
+                InfraTags.row(section, p.id), p.label, p.category,
+                listOf(
+                    "Apps: ${p.apps.joinToString(", ").ifBlank { "none declared" }}",
+                    p.containers.takeIf { it.isNotEmpty() }?.let { "Containers: ${it.joinToString(", ")}" }.orEmpty(),
+                    "Auth: ${p.auth.ifBlank { "not declared" }}",
+                    "Secret name: ${p.secrets.joinToString(", ") { s -> if (s.kind.isBlank()) s.name else "${s.name} (${s.kind})" }.ifBlank { "none" }}",
+                ),
+                links = p.links,
+            )
+        }
     }
 }
 

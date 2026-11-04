@@ -277,6 +277,12 @@ for tab, cls in (("infra", "InfraFragment"), ("containers", "ContainersFragment"
                  ("ops", "OpsFragment"), ("configs", "ConfigsFragment")):
     sec = next((s for s in (ui.get("sections") or []) if s.get("id") == tab), {})
     declared = [p["id"] for p in (sec.get("pages") or [])]
+    # #1471 the APIs row's pages are declared by the groups of data/api_providers.json and resolved by data (the fall-through arm), not by an id arm
+    if tab == "infra":
+        _ap = os.path.join(os.path.dirname(os.path.abspath(sys.argv[1])), "data", "api_providers.json")
+        _pages = {g["page"] for g in json.load(open(_ap, encoding="utf-8")).get("groups") or []} if os.path.isfile(_ap) else set()
+        if _pages and "apiProviders.groupOfPage" not in tabsrc: bad.append("InfraFragment does not resolve the pages of data/api_providers.json groups %s" % sorted(_pages))
+        declared = [d for d in declared if d not in _pages]
     # #1454 a page that declares pages of its own (Containers: project -> Topology | Table) resolves its NESTED ids through
     # leafFragment(parent, leaf) -> the view is the leaf id after "<parent>_"; the top ids need no fragment of their own.
     nested = [(p["id"], [q["id"] for q in p["pages"]]) for p in (sec.get("pages") or []) if p.get("pages")]
@@ -547,7 +553,7 @@ for _p in (secs.get("containers") or {}).get("pages") or []:
     if [q["id"] for q in _p.get("pages") or []] != [_p["id"] + "_topology", _p["id"] + "_table"]:
         bad.append("Containers project %r lost its Topology | Table switch (nested pages %s)" % (_p["id"], [q["id"] for q in _p.get("pages") or []]))
 if pids("ops") != ["service", "infrastructure", "orchestration", "network", "release", "agents"]: bad.append("Ops pages are %s, not the five topology views then Agents (Services and Tools are gone)" % pids("ops"))
-if pids("infra") != ["providers", "machines", "serverless", "node_python", "storage", "desktop", "mobile", "gadgets", "domains", "domains_public"]: bad.append("Infra pages are %s, not the three declared rows (Bare, Personal, Domains)" % pids("infra"))
+if pids("infra") != ["providers", "machines", "serverless", "node_python", "storage", "api_ai", "api_scraper", "desktop", "mobile", "gadgets", "domains", "domains_public"]: bad.append("Infra pages are %s, not the four declared rows (Bare, APIs, Personal, Domains)" % pids("infra"))
 c3 = ui["carried_c3"]
 topo, infra = c3.get("stack_topology") or [], []
 for k in ("c3_public", "c3_private"):

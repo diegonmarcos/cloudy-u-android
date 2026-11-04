@@ -34,7 +34,7 @@ import com.diegonmarcos.superapp.uikit.LocalKitPalette
  */
 
 /**
- * INFRA - the fleet's hardware and accounts in three declared rows (#1437): Bare = Providers, VMs, Containers-as-Service, Containers-Node-Python, Storage; Personal = Desktop, Mobile, Gadgets; Domains = Private, Public (was:
+ * INFRA - the fleet's hardware and accounts in four declared rows (#1437, #1471): Bare = Providers, VMs, Containers-as-Service, Containers-Node-Python, Storage; APIs = one page per group of data/api_providers.json (AI, Scraper); Personal = Desktop, Mobile, Gadgets; Domains = Private, Public (was:
  * Electronics, Domains. Each page is [InfraSectionFragment] over data/fleet_slice.json (derived from the fleet's own
  * declarations, never typed here), refreshed live from c3-infra-api where it can say more. Containers - the DBs, APIs
  * and MCPs among them - are NOT on this section: they live in Containers (Topology and Table).
@@ -53,7 +53,7 @@ class InfraFragment : PagedFragment() {
         "gadgets" -> InfraSectionFragment.newInstance(InfraSections.GADGETS)
         "domains_public" -> InfraSectionFragment.newInstance(InfraSections.DOMAINS_PUBLIC)
         "domains" -> InfraSectionFragment.newInstance(InfraSections.DOMAINS)
-        else -> null
+        else -> Declarations.apiProviders.groupOfPage(pageId)?.let { InfraSectionFragment.newInstance(pageId) }
     }
 }
 

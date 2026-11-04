@@ -117,6 +117,11 @@ object Declarations {
         com.diegonmarcos.cloudc3.pages.PrivateData.parseIdentities(decode(BuildConfig.PUBLIC_IDENTITIES_B64))
     }
 
+    /** data/api_providers.json (#1471): the third-party API providers of Infra > APIs, with secret NAMES only. */
+    val apiProviders: com.diegonmarcos.cloudc3.pages.ApiProviders.Decl by lazy {
+        com.diegonmarcos.cloudc3.pages.ApiProviders.parse(decode(BuildConfig.API_PROVIDERS_B64))
+    }
+
     /** data/container_projects.json: which project each container belongs to (Containers sub-pages). */
     val containerProjects: com.diegonmarcos.cloudc3.pages.ContainerProjects.Decl by lazy {
         com.diegonmarcos.cloudc3.pages.ContainerProjects.parse(decode(BuildConfig.CONTAINER_PROJECTS_B64), decode(BuildConfig.REPOS_DECLARED_B64))

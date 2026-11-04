@@ -45,7 +45,8 @@ b = json.load(open(app + "/build.json", encoding="utf-8"))
 ui = b["ui"]
 bad = []
 infra = next((s for s in ui["sections"] if s["id"] == "infra"), None)
-declared = [p["id"] for p in (infra or {}).get("pages") or []]
+api_pages = {g["page"] for g in json.load(open(app + "/data/api_providers.json", encoding="utf-8")).get("groups") or []}   # #1471 the APIs row's pages are declared by data/api_providers.json groups, dispatched by data
+declared = [p["id"] for p in (infra or {}).get("pages") or [] if p["id"] not in api_pages]
 pages_kt = open(rel + "/pages/InfraPages.kt", encoding="utf-8").read()
 code = re.sub(r"//[^\n]*", "", re.sub(r"/\*.*?\*/", "", pages_kt, flags=re.S))
 consts = dict(re.findall(r'const val (\w+) = "([a-z_]+)"', code[code.index("object InfraSections"):code.index("object InfraTags")]))
@@ -153,7 +154,7 @@ for where, t in texts.items():
 generated = set(re.findall(r'os\.path\.join\(HERE, "([a-z_]+\.json)"\)', open(app + "/data/gen_infra_slice.py", encoding="utf-8").read())) | \
             set(re.findall(r'os\.path\.join\(HERE, "([a-z_]+\.json)"\)', open(app + "/data/gen_fleet_slice.py", encoding="utf-8").read())) | \
             set(re.findall(r'os\.path\.join\(HERE, "([a-z_]+\.json)"\)', open(app + "/data/gen_repos_slice.py", encoding="utf-8").read()))   # repos_declared.json: derived from the fleet registry (#1454)
-carried = {"mesh.json", "services_public.json", "services_private.json", "containers_declared.json", "container_projects.json", "public_identities.json"}   # carried copies: the SuperApp's, and the configs-sync data repo's containers-declared.json; container_projects.json is c3 own declaration of the Containers project sub-pages (#1454: not a fleet fact; public_identities.json is the owner-declared public emails, guarded by test-c3-declarative D5, the container build.json carries no project field)
+carried = {"mesh.json", "services_public.json", "services_private.json", "containers_declared.json", "container_projects.json", "public_identities.json", "api_providers.json"}   # carried copies: the SuperApp's, and the configs-sync data repo's containers-declared.json; container_projects.json is c3 own declaration of the Containers project sub-pages (#1454: not a fleet fact; api_providers.json is the third-party API providers (#1471, secret names only, guarded by test-c3-declarative D6); public_identities.json is the owner-declared public emails, guarded by test-c3-declarative D5, the container build.json carries no project field)
 generated |= {"routes.json", "declarations.json", "infra_slice.json"}                                # gen_infra_slice.py's outputs
 for f in os.listdir(app + "/data"):
     if f.endswith(".json") and f not in generated and f not in carried:

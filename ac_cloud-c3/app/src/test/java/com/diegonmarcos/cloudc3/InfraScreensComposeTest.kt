@@ -254,6 +254,26 @@ class InfraScreensComposeTest {
     }
 
     @Test
+    fun `apis - every declared group page lists its providers with apps, auth, links and the secret NAME only`() {
+        val apis = Declarations.apiProviders
+        assertTrue("data/api_providers.json declares groups and providers", apis.groups.size >= 2 && apis.providers.isNotEmpty())
+        var current by mutableStateOf(apis.groups.first().page)
+        compose.setContent { CloudKitTheme(palette) { InfraSectionScreen(current, slice, FleetLiveState(), today, apis = apis) } }
+        apis.groups.forEach { g ->
+            compose.runOnIdle { current = g.page }
+            compose.onNodeWithTag(InfraTags.screen(g.page)).assertExists()
+            apis.of(g).forEach { p ->
+                val r = row(g.page, p.id)
+                r.assertTextContains(p.label)
+                r.assertTextContains("Auth: ${p.auth}", substring = true)
+                p.apps.forEach { r.assertTextContains(it, substring = true) }
+                p.secrets.forEach { r.assertTextContains(it.name, substring = true) }
+                p.links.forEach { l -> compose.onNodeWithText("${l.label}: ${l.url}").assertExists() }
+            }
+        }
+    }
+
+    @Test
     fun `every declared page id has a screen`() {
         var current by mutableStateOf(InfraSections.ALL.first())
         compose.setContent { CloudKitTheme(palette) { InfraSectionScreen(current, slice, FleetLiveState(), today) } }

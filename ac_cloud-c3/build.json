@@ -219,7 +219,7 @@
         "id": "infra",
         "label": "Infra",
         "icon": "ic_p_sol_cloud",
-        "_doc": "The fleet's hardware and accounts (owner request, 2026-10-20): three declared rows (#1437: Bare | Personal | Domains), each page a page of data/fleet_slice.json - the slice data/gen_fleet_slice.py DERIVES from the fleet's own declarations in cloud-infra (VMs, IPs, buckets, devices, zone records) plus the one new input 1_cloud-configs/src/inputs/fleet-assets.json. Nothing fleet-shaped is typed in this file or in Kotlin (test-c3-infra.sh T3). Containers - the DBs, APIs and MCPs among them - are NOT here: they live in Containers (Topology and Table). There is no API tab: every API and MCP is a container, so nothing non-container was left for it to hold.",
+        "_doc": "The fleet's hardware and accounts (owner request, 2026-10-20): four declared rows (#1437, #1471: Bare | APIs | Personal | Domains), each page a page of data/fleet_slice.json - the slice data/gen_fleet_slice.py DERIVES from the fleet's own declarations in cloud-infra (VMs, IPs, buckets, devices, zone records) plus the one new input 1_cloud-configs/src/inputs/fleet-assets.json. Nothing fleet-shaped is typed in this file or in Kotlin (test-c3-infra.sh T3). Containers - the DBs, APIs and MCPs among them - are NOT here: they live in Containers (Topology and Table). The APIs row (#1471) is NOT the fleet's own API containers (those are Containers): it lists the THIRD-PARTY API providers the fleet calls (data/api_providers.json: AI, Scraper), with secret NAMES only.",
         "nav_mode": "horizontal_two_rows",
         "groups": [
           {
@@ -232,6 +232,15 @@
               "serverless",
               "node_python",
               "storage"
+            ]
+          },
+          {
+            "id": "apis",
+            "label": "APIs",
+            "icon": "ic_robot",
+            "pages": [
+              "api_ai",
+              "api_scraper"
             ]
           },
           {
@@ -284,6 +293,18 @@
             "label": "Storage",
             "icon": "ic_p_c3_stack",
             "_doc": "InfraSectionFragment: storage HARDWARE and backends only - S3 buckets, Google Drive, each VM's disk (declared size, live usage from /health/tier3/{vm}) and the devices' storage. No DB container (test-c3-infra.sh T2)."
+          },
+          {
+            "id": "api_ai",
+            "label": "AI",
+            "icon": "ic_robot",
+            "_doc": "InfraSectionFragment (APIs row, #1471): the AI API providers (OpenRouter, Claude) of data/api_providers.json group `ai` - category, console and docs links, the apps and containers that use each, the auth method and the secret NAME only. The group declares this page id; Kotlin spells no provider."
+          },
+          {
+            "id": "api_scraper",
+            "label": "Scraper",
+            "icon": "ic_robot",
+            "_doc": "InfraSectionFragment (APIs row, #1471): the scraper API providers (Apify, and the self-hosted Cloudy Crawlee as its alternative backend, the shared Apify setting of News, Media and Browser) of data/api_providers.json group `scraper`; secret NAMES only."
           },
           {
             "id": "desktop",
