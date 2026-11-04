@@ -33,6 +33,8 @@ import com.diegonmarcos.capitalfinterm.BuildConfig
 import com.diegonmarcos.capitalfinterm.Decl
 import com.diegonmarcos.capitalfinterm.FinNavStack
 import com.diegonmarcos.capitalfinterm.FinSearchIndex
+import com.diegonmarcos.capitalfinterm.FreeStack
+import com.diegonmarcos.capitalfinterm.UrlHttp
 import com.diegonmarcos.capitalfinterm.Pages
 import com.diegonmarcos.capitalfinterm.R
 import com.diegonmarcos.capitalfinterm.ui.fin.FinSearch
@@ -183,7 +185,9 @@ fun AppShell(startDashboard: String? = null) {
         val tickersUrl = remember { AssetData.sources(ctx).firstOrNull { it.id == "sec_edgar" }?.paths?.get("tickers") }
         val remote: (suspend (String) -> List<FinSearchIndex.Item>)? = tickersUrl?.let { url ->
             { q ->
-                val list = RemoteTickers.get { Net.http.get(url) }
+                // SEC refuses a bare agent: the declared fleet contact (universe.json free_stack.contact) rides in the User-Agent
+                val contact = runCatching { FreeStack.parse(AssetData.read(ctx, AssetData.UNIVERSE)).contact }.getOrDefault("")
+                val list = RemoteTickers.get { UrlHttp(readMs = 30_000).send(url, mapOf("User-Agent" to UrlHttp.AGENT + (if (contact.isEmpty()) "" else " ($contact)")), null) }
                 FinSearchIndex.remote(list, q)
             }
         }
