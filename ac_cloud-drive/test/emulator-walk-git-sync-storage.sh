@@ -38,7 +38,7 @@ launch() { timeout 120 adb shell am start -W -n "$act" >/dev/null; sleep 6; for 
 open_git() { tap '^Git$' || { tap '^Sync$' && sleep 2 && tap '^Git$'; } || return 1; sleep 3; }
 need() { dump >/dev/null; for t in "$@"; do has "$t" || return 1; done; }
 # the selector in the top menu: its pill names the selected storage
-pick() { tap '^(Cloud-Store \(Termux\)|Emulated|External Drive)$' && sleep 1 && tap "^$1\$" && sleep 4; }
+pick() { tap '^(Cloud-Store \(Termux\)|Emulated|External Drive)( ▾)?$' && sleep 1 && tap "^$1\$" && sleep 4; }
 
 # the walk runs on the declared UI mode, not an override a previous run left on the device
 adb shell settings delete global cloud_nav_ui_mode >/dev/null 2>&1 || true

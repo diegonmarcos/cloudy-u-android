@@ -1,0 +1,85 @@
+# ╔═══════════════════════════════════════════════════════════════════════╗
+# ║ Test -> Drive Git sync + storage walk (emulator)                               ║
+# ║ Cloud Drive alone (in-process JGit, libs:git-core, no engine APK):     ║
+# ║ clone, sync, conflict, kill and reopen, the volume selector, with      ║
+# ║ host-side git checks of the clone. Shots in the evidence artifact.     ║
+# ║ Script: ac_cloud-drive/test/emulator-walk-git-sync-storage.sh.                      ║
+# ╚═══════════════════════════════════════════════════════════════════════╝
+name: "Test -> Drive Git sync + storage walk (emulator)"
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: "Ship cloud-drive run id whose x86_64 APK artifact to test (empty = the latest release asset)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  git-sync-storage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Fetch the Drive APK
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ inputs.run_id }}
+        run: |
+          set -eu
+          mkdir -p apk
+          if [ -n "$RUN_ID" ]; then
+            gh api "repos/$REPO/actions/runs/$RUN_ID/artifacts" --paginate \
+              --jq '.artifacts[] | select(.name|startswith("Cloud-Drive-x86_64-")) | .name' |
+            while read -r name; do gh run download "$RUN_ID" -R "$REPO" -n "$name" -D "apk/dl-$name"; done
+            find apk -name '*.apk' -path '*dl-*' | head -1 | xargs -I{} cp {} apk/drive.apk
+          else
+            gh release download latest -R "$REPO" -p Cloud-Drive-x86_64.apk -O apk/drive.apk
+          fi
+          ls -l apk
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
+
+      - name: Boot emulator + Drive > Git (attempt 1)
+        id: try1
+        continue-on-error: true
+        timeout-minutes: 14
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash ac_cloud-drive/test/emulator-walk-git-sync-storage.sh apk/drive.apk out
+
+      # The runner sometimes hands over an emulator adb reports offline; a second boot is the remedy, not a weaker test.
+      - name: Boot emulator + Drive > Git (attempt 2)
+        if: steps.try1.outcome != 'success'
+        timeout-minutes: 14
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash ac_cloud-drive/test/emulator-walk-git-sync-storage.sh apk/drive.apk out
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: drive-git-sync-storage-evidence
+          path: out/
+          if-no-files-found: warn
