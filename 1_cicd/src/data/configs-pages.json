@@ -93,6 +93,7 @@
     "contacts_write": "Save and edit contacts.",
     "calendar_read": "Read calendar events to show what is due.",
     "phone_state": "Know whether a call is active and read the phone's call state.",
+    "phone_numbers": "Read the phone number of each SIM.",
     "sms_read": "Read SMS conversations.",
     "media_images": "Show the photos on the phone.",
     "media_video": "Show the videos on the phone.",
