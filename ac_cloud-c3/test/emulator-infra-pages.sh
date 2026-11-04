@@ -41,7 +41,7 @@ domains_public 4 Private,Public
 PAGES
 # the declared Cloud Run services are the registry's (fleet_slice.json serverless), never typed here
 has infra-serverless "agy" || bad "infra-serverless: service agy not listed"
-has infra-serverless "scrappers-api" || bad "infra-serverless: service scrappers-api not listed"
+has infra-serverless "capital-stack-finterminal-api" || bad "infra-serverless: service capital-stack-finterminal-api not listed"
 
 adb logcat -d -t 3000 > "$OUT/logcat.txt" 2>/dev/null || true
 grep -E "FATAL EXCEPTION|AndroidRuntime" -A15 "$OUT/logcat.txt" | grep -B2 -A15 "$PKG" | head -80 > "$OUT/crash.txt" || true
