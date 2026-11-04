@@ -83,13 +83,13 @@ if run "$PY" $D "$T/rel.tar.gz" --sha256 "$SHA" >"$T/log" 2>&1 && verify $D; the
 refuse() { # name, expected words, args...
   local name=$1 words=$2; shift 2
   if out=$(run "$PY" "$@") ; then echo "  FAIL  B3 $name: accepted"; fails=$((fails+1))
-  elif echo "$out" | grep -q "$words"; then :; else echo "  FAIL  B3 $name: wrong refusal: $out"; fails=$((fails+1)); fi
+  elif grep -q "$words" <<<"$out"; then :; else echo "  FAIL  B3 $name: wrong refusal: $out"; fails=$((fails+1)); fi
 }
 refuse "wrong sha256" "sha256 mismatch" $D "$T/rel.tar.gz" --sha256 "$(printf 'b%.0s' $(seq 64))"
 refuse "tiny drive" "smaller than 256 MiB" $((100<<20)) "$T/rel.tar.gz"
 refuse "over 2 TiB" "larger than 2 TiB" $((3<<40)) "$T/rel.tar.gz"
 refuse "no boot.img" "no /boot/boot.img" $D "$T/bad.tar.gz"
-if out=$(python3 -I "$PY" --disk-bytes $D --out "$T/o2" --url http://example.com/x.tar.gz 2>&1); then echo "  FAIL  B3 http accepted"; fails=$((fails+1)); elif ! echo "$out" | grep -q "https only"; then echo "  FAIL  B3 http: $out"; fails=$((fails+1)); fi
+if out=$(python3 -I "$PY" --disk-bytes $D --out "$T/o2" --url http://example.com/x.tar.gz 2>&1); then echo "  FAIL  B3 http accepted"; fails=$((fails+1)); elif ! grep -q "https only" <<<"$out"; then echo "  FAIL  B3 http: $out"; fails=$((fails+1)); fi
 [ $fails -eq 0 ] && echo "  PASS  B3 five refusals"
 
 # Planted defects: each one must make the checks fail.
