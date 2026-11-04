@@ -1458,12 +1458,12 @@ class BrowserHostFragment : Fragment() {
     private fun applySitePerms(wv: WebView, url: String?) {
         val host = BrowserSitePolicy.hostOf(url)
         if (host.isEmpty()) return
-        val s = wv.settings
-        s.mediaPlaybackRequiresUserGesture = BrowserSitePolicy.autoplayNeedsGesture(permState(host, "autoplay"))
-        val store = BrowserSitePolicy.onUnlessBlocked(permState(host, "site_storage"))
-        s.domStorageEnabled = store
-        @Suppress("DEPRECATION") run { s.databaseEnabled = store }
-        s.mixedContentMode = BrowserSitePolicy.mixedContentMode(permState(host, "insecure_content"))
+        CloudWeb.sitePermissions(
+            wv,
+            mediaNeedsGesture = BrowserSitePolicy.autoplayNeedsGesture(permState(host, "autoplay")),
+            storage = BrowserSitePolicy.onUnlessBlocked(permState(host, "site_storage")),
+            mixedContent = BrowserSitePolicy.mixedContentMode(permState(host, "insecure_content")),
+        )
         cookiesOf(wv).setAcceptThirdPartyCookies(wv, BrowserSitePolicy.onUnlessBlocked(permState(host, "third_party_cookies")))
     }
 

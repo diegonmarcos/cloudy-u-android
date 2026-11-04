@@ -140,6 +140,20 @@ object CloudWeb {
         wv.settings.allowFileAccess = fileAccess
     }
 
+    /**
+     * The Browser's per-site permission switches (#1401) on a BROWSER view: whether media needs a tap to play, whether
+     * DOM storage / the web database are on, and how mixed content is treated ([mixedContent] is a
+     * WebSettings.MIXED_CONTENT_* value). Any other profile is left as declared.
+     */
+    fun sitePermissions(wv: WebView, mediaNeedsGesture: Boolean, storage: Boolean, mixedContent: Int) {
+        if (profiles[wv] != WebProfile.BROWSER) return
+        val s = wv.settings
+        s.mediaPlaybackRequiresUserGesture = mediaNeedsGesture
+        s.domStorageEnabled = storage
+        @Suppress("DEPRECATION") run { s.databaseEnabled = storage }
+        s.mixedContentMode = mixedContent
+    }
+
     /** Sets a specific user agent (null = the WebView's default); desktop mode is [desktopMode]. */
     fun userAgent(wv: WebView, ua: String?) {
         wv.settings.userAgentString = ua
