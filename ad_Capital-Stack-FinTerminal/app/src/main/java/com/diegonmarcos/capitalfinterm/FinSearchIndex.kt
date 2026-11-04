@@ -37,6 +37,22 @@ object FinSearchIndex {
         }
     }
 
+    /** The US-listed tickers of the SEC company_tickers.json answer ({"0":{"cik_str":..,"ticker":"AAPL","title":"Apple Inc."},..}): ticker to company name. */
+    fun parseTickers(json: String): List<Pair<String, String>> {
+        val o = runCatching { org.json.JSONObject(json) }.getOrNull() ?: return emptyList()
+        return o.keys().asSequence().mapNotNull { k -> o.optJSONObject(k)?.let { it.optString("ticker").trim() to it.optString("title").trim() } }
+            .filter { it.first.isNotEmpty() }.toList()
+    }
+
+    /** Remote symbol search (#1370): the tickers whose symbol starts with the query, then those whose company name contains it, as equity Items. */
+    fun remote(tickers: List<Pair<String, String>>, query: String, max: Int = 8): List<Item> {
+        val q = query.trim().lowercase(Locale.ROOT)
+        if (q.length < 2) return emptyList()
+        val (pre, rest) = tickers.filter { (t, n) -> t.lowercase(Locale.ROOT).startsWith(q) || n.lowercase(Locale.ROOT).contains(q) }
+            .partition { it.first.lowercase(Locale.ROOT).startsWith(q) }
+        return (pre.sortedBy { it.first.length } + rest).take(max).map { (t, n) -> Item("Equities & indices", "EQ", t, n, KIND_SYMBOL, "remote:sec") }
+    }
+
     fun search(all: List<Item>, query: String, max: Int = 30): List<Item> {
         val q = query.trim().lowercase(Locale.ROOT)
         if (q.isEmpty()) return emptyList()

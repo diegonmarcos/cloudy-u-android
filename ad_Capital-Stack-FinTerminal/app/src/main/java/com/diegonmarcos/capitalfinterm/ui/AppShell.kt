@@ -179,7 +179,15 @@ fun AppShell(startDashboard: String? = null) {
             val box = EncryptedSecretBox(ctx)
             searchCatalogue(dashboards, com.diegonmarcos.capitalfinterm.Alerts.watchlist(box.get(KEY_WATCHLIST)))
         }
-        FinSearch(catalogue, onDismiss = { searching = false }) { item ->
+        // the declared remote symbol list (sec_edgar paths.tickers, key-free), fetched once per process and searched in memory
+        val tickersUrl = remember { AssetData.sources(ctx).firstOrNull { it.id == "sec_edgar" }?.paths?.get("tickers") }
+        val remote: (suspend (String) -> List<FinSearchIndex.Item>)? = tickersUrl?.let { url ->
+            { q ->
+                val list = RemoteTickers.get { Net.http.get(url) }
+                FinSearchIndex.remote(list, q)
+            }
+        }
+        FinSearch(catalogue, onDismiss = { searching = false }, remote = remote) { item ->
             searching = false
             if (item.kind == FinSearchIndex.KIND_DASHBOARD) finNav.openDashboard(item.target) else finNav.openQuote(item.symbol)
         }

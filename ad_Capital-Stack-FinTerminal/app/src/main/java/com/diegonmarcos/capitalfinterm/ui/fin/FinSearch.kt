@@ -57,14 +57,20 @@ import com.diegonmarcos.capitalfinterm.FinSearchIndex
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FinSearch(catalogue: List<FinSearchIndex.Item>, onDismiss: () -> Unit, onPick: (FinSearchIndex.Item) -> Unit) {
+fun FinSearch(catalogue: List<FinSearchIndex.Item>, onDismiss: () -> Unit, remote: (suspend (String) -> List<FinSearchIndex.Item>)? = null, onPick: (FinSearchIndex.Item) -> Unit) {
     val p = LocalFinPalette.current
     val ctx = LocalContext.current
     var query by rememberSaveable { mutableStateOf("") }
     var recent by remember { mutableStateOf(FinPrefs.recent(ctx)) }
     val focus = remember { FocusRequester() }
     val sheet = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val results = remember(query, catalogue) { FinSearchIndex.search(catalogue, query) }
+    // remote symbol search: after a short pause the declared remote list adds its matches (the local catalogue ranks first)
+    var extra by remember { mutableStateOf(emptyList<FinSearchIndex.Item>()) }
+    LaunchedEffect(query) {
+        extra = emptyList()
+        if (remote != null && query.trim().length >= 2) { kotlinx.coroutines.delay(300); extra = runCatching { remote(query) }.getOrDefault(emptyList()) }
+    }
+    val results = remember(query, catalogue, extra) { FinSearchIndex.search(catalogue + extra, query) }
     LaunchedEffect(Unit) { runCatching { focus.requestFocus() } }
     fun pick(i: FinSearchIndex.Item) { FinPrefs.addRecent(ctx, i.symbol); onPick(i) }
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheet, containerColor = p.surface, scrimColor = androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.6f),

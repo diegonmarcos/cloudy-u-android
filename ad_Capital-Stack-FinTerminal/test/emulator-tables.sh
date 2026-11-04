@@ -72,6 +72,11 @@ if [ -n "$XY" ]; then
   MV=$(node_xy "Move down"); echo "move down xy=${MV:-none}" | tee -a "$OUT/nav-strip.txt"
   if [ -n "$MV" ]; then set -- $MV; adb shell input tap "$1" "$2"; sleep 3; adb exec-out screencap -p > "$OUT/apk-watchlist-moved.png"; fi
 fi
+# #1370 remote symbol search: EQ Homepage > the search field > type a company name, the SEC ticker list answers (TSLA is in no panel)
+adb shell am start -S -W -n "$PKG/.MainActivity" --es dashboard eq >/dev/null
+sleep 15
+SF=$(node_xy "Symbol, index, pair, country, event"); echo "search field xy=${SF:-none}" | tee -a "$OUT/nav-strip.txt"
+if [ -n "$SF" ]; then set -- $SF; adb shell input tap "$1" "$2"; sleep 3; adb shell input text tesla; sleep 12; adb exec-out screencap -p > "$OUT/apk-remote-search.png"; fi
 # #1370 add-holding sheet: MY-PM > holdings page, tap Add
 adb shell am start -S -W -n "$PKG/.MainActivity" --es dashboard my-pm >/dev/null
 sleep 15

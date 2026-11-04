@@ -1067,7 +1067,8 @@
       },
       "connector": "sec_submissions",
       "paths": {
-        "filing": "https://www.sec.gov/Archives/edgar/data/{cik}/{accession}/{document}"
+        "filing": "https://www.sec.gov/Archives/edgar/data/{cik}/{accession}/{document}",
+        "tickers": "https://www.sec.gov/files/company_tickers.json"
       },
       "feeds": [
         {
