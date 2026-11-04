@@ -328,11 +328,11 @@
     },
     "ac_cloud-news": {
       "first_test": "WebView over topic feeds: assert every topic declared in build.json has a feed URL and no two topics share an id.",
-      "shell_testers": 1,
+      "shell_testers": 2,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
-      "unit_task_declared": false,
-      "unit_test_sources": 0,
+      "unit_task_declared": true,
+      "unit_test_sources": 1,
       "workflow": "ship-cloud-news.yml"
     },
     "ac_cloud-news/web": {
