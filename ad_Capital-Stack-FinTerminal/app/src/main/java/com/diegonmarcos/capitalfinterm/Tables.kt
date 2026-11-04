@@ -257,6 +257,16 @@ object Tables {
                 used += s.name
             }.onFailure { fails += "${s.name}: ${it.message}" }
         }
+        // FRED unreachable (it times out from some networks): the daily US 10Y from the Fed H.15 mirror on DBnomics, key-free
+        val h15 = Catalog.str(f.optJSONObject("fred") ?: JSONObject(), "dbnomics_yield")
+        if (y["US"].orEmpty().none { it.first.length == 10 } && h15.isNotEmpty()) src("oecd_source")?.let { s ->
+            runCatching {
+                for (sd in Providers.dbnomics(http.get(Requests.url(s.endpoint, "/series/$h15", listOf("observations" to "1", "metadata" to "0"))))) {
+                    sd.periods.zip(sd.values).forEach { (p, v) -> if (v != null && p.length == 10 && p >= from.toString()) y.getOrPut("US") { ArrayList() } += p to v }
+                }
+                used += s.name; fails += "FRED unavailable: US 10Y from the Fed H.15 mirror on DBnomics"
+            }.onFailure { fails += "${s.name} H.15: ${it.message}" }
+        }
         if (cpi == null && oecdCpi != null) { cpi = oecdCpi; fails += "FRED CPIAUCSL unavailable: US CPI from the OECD monthly index (DBnomics)" }
         val fx = HashMap<String, List<Pair<String, Double>>>()
         src("fx_source")?.let { s ->

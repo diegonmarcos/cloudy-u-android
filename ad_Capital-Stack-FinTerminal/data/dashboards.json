@@ -1116,6 +1116,7 @@
             },
             "fred": {
               "yield": "DGS10",
+              "dbnomics_yield": "FED/H15/RIFLGFCY10_N.B",
               "cpi": "CPIAUCSL"
             },
             "rub": {
