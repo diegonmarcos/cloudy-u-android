@@ -55,7 +55,7 @@ class SimConfigsTest {
         assertEquals("1.5 GB", StatusFormat.bytes(1610612736L))
         assertEquals("-", StatusFormat.bytes(null))
         val s = SimStatus(0, "A", 0, "Op", "LTE", -95, -100, -10, Int.MAX_VALUE, "1", 2, listOf("10.0.0.2"), emptyList(),
-            listOf("1.1.1.1"), null, false, true, 0, null, null, 1024L)
+            listOf("10.0.0.1"), null, false, true, 0, null, null, 1024L)
         assertEquals("-95 dBm · RSRP -100 dBm · RSRQ -10 dB", StatusFormat.signal(s))
         assertEquals("-", StatusFormat.rows(s).first { it.label == "IPv6" }.value)
     }
