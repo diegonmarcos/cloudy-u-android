@@ -10,7 +10,7 @@
    "GPL-3.0": 3
   },
   "dir": {
-   "LicenseRef-NoLicenseGranted": 52,
+   "LicenseRef-NoLicenseGranted": 53,
    "GPL-3.0-only": 6,
    "MIT": 3,
    "Apache-2.0": 2,
@@ -3272,6 +3272,14 @@
    "licence": "LicenseRef-NoLicenseGranted",
    "licence_source": "licenses/curated.json"
   },
+  "dir:ac_cloud-shopping": {
+   "kind": "dir",
+   "declared_in": [
+    "(tree)"
+   ],
+   "licence": "LicenseRef-NoLicenseGranted",
+   "licence_source": "licenses/curated.json"
+  },
   "dir:ac_cloud-store": {
    "kind": "dir",
    "declared_in": [
@@ -3476,6 +3484,7 @@
     "ac_cloud-nix-on-droid/app/build.gradle",
     "ac_cloud-notes/packages/frontend/apps/android/App/gradle/libs.versions.toml",
     "ac_cloud-search/app/build.gradle",
+    "ac_cloud-shopping/app/build.gradle",
     "ac_cloud-store/app/build.gradle",
     "ac_cloud-superintel/app/build.gradle",
     "ac_cloud-tasks/app/build.gradle",
@@ -3854,6 +3863,7 @@
     "ac_cloud-news/app/build.gradle",
     "ac_cloud-nix-on-droid/app/build.gradle",
     "ac_cloud-search/app/build.gradle",
+    "ac_cloud-shopping/app/build.gradle",
     "ac_cloud-store/app/build.gradle",
     "ac_cloud-superintel/app/build.gradle",
     "ac_cloud-tasks/app/build.gradle",
@@ -3984,6 +3994,7 @@
     "ac_cloud-nix-on-droid/app/build.gradle",
     "ac_cloud-notes/packages/frontend/apps/android/App/gradle/libs.versions.toml",
     "ac_cloud-search/app/build.gradle",
+    "ac_cloud-shopping/app/build.gradle",
     "ac_cloud-store/app/build.gradle",
     "ac_cloud-superintel/app/build.gradle",
     "ac_cloud-tasks/app/build.gradle",
@@ -4061,6 +4072,7 @@
     "ac_cloud-mail/gradle/libs.versions.toml",
     "ac_cloud-matrix/gradle/libs.versions.toml",
     "ac_cloud-notes/packages/frontend/apps/android/App/gradle/libs.versions.toml",
+    "ac_cloud-shopping/app/build.gradle",
     "ac_cloud-store/app/build.gradle",
     "ac_cloud-superintel/app/build.gradle",
     "ac_cloud-tools-small-llms/app/build.gradle",
@@ -4168,6 +4180,7 @@
     "ac_cloud-news/app/build.gradle",
     "ac_cloud-nix-on-droid/app/build.gradle",
     "ac_cloud-search/app/build.gradle",
+    "ac_cloud-shopping/app/build.gradle",
     "ac_cloud-store/app/build.gradle",
     "ac_cloud-superintel/app/build.gradle",
     "ac_cloud-tasks/app/build.gradle",
@@ -4395,6 +4408,7 @@
     "ac_cloud-nix-on-droid/app/build.gradle",
     "ac_cloud-notes/packages/frontend/apps/android/App/gradle/libs.versions.toml",
     "ac_cloud-search/app/build.gradle",
+    "ac_cloud-shopping/app/build.gradle",
     "ac_cloud-store/app/build.gradle",
     "ac_cloud-superintel/app/build.gradle",
     "ac_cloud-tasks/app/build.gradle",
@@ -4551,6 +4565,7 @@
     "ac_cloud-news/app/build.gradle",
     "ac_cloud-notes/packages/frontend/apps/android/App/gradle/libs.versions.toml",
     "ac_cloud-search/app/build.gradle",
+    "ac_cloud-shopping/app/build.gradle",
     "ac_cloud-store/app/build.gradle",
     "ac_cloud-superintel/app/build.gradle",
     "ac_cloud-tasks/app/build.gradle",
@@ -6176,6 +6191,7 @@
     "ac_cloud-nix-on-droid/app/build.gradle",
     "ac_cloud-nix-on-droid/termux-shared/build.gradle",
     "ac_cloud-search/app/build.gradle",
+    "ac_cloud-shopping/app/build.gradle",
     "ac_cloud-store/app/build.gradle",
     "ac_cloud-superintel/app/build.gradle",
     "ac_cloud-tasks/app/build.gradle",
@@ -8102,6 +8118,7 @@
     "ac_cloud-myterminal/hub/build.gradle",
     "ac_cloud-notes/packages/frontend/apps/android/App/gradle/libs.versions.toml",
     "ac_cloud-search/app/build.gradle",
+    "ac_cloud-shopping/app/build.gradle",
     "ac_cloud-superintel/app/build.gradle",
     "ac_cloud-tasks/app/build.gradle",
     "ac_cloud-tools-small-llms/app/build.gradle",
@@ -8265,6 +8282,7 @@
     "ac_cloud-nav/app/build.gradle",
     "ac_cloud-search/app/build.gradle",
     "ac_cloud-search/core/build.gradle",
+    "ac_cloud-shopping/app/build.gradle",
     "ac_cloud-superintel/app/build.gradle",
     "ac_cloud-tasks/app/build.gradle",
     "ac_cloud-tools-small-llms/core/build.gradle",
