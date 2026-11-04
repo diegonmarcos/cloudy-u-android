@@ -33,10 +33,12 @@ PY
     $T adb shell input tap $p; return 0
 }
 
-# a system dialog over the app (Cloud Account's wireless-debugging probe): Cancel it
+# a system dialog over the app (Cloud Account's wireless-debugging probe): Cancel it; a start gate: continue
 dismiss() {
     for _ in 1 2 3; do
         dump cur
+        # Cloud Drive's start gate (no terminal installed): continue with local files
+        if grep -q 'Continue with local files' "$OUT/cur.xml"; then tap_node "$OUT/cur.xml" '^Continue with local files$'; sleep 6; continue; fi
         if grep -qiE 'wireless debugging|Allow .* on this network' "$OUT/cur.xml"; then tap_node "$OUT/cur.xml" '^cancel$|^don.t allow$' || $T adb shell input keyevent KEYCODE_BACK; sleep 2; else break; fi
     done
 }
