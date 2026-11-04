@@ -207,16 +207,17 @@ class VentoyPage(private val host: Fragment) {
             vols.forEach { v -> DriveRow(ctx, v) }
             StoreHeading("Install Ventoy", Ink.WHITE, tag = "ventoy-h-Install Ventoy")
             InstallRow(vols)
-            if (message.isNotEmpty()) StoreRow.Line(message, color = Ink.AMBER_FILL, tag = "ventoy-message")
+            // Order matters for accessibility (and the emulator test that reads the UI tree): Compose hides a node that a LATER
+            // sibling's 48dp touch target covers, so a status line never sits right above a button or the next row's head.
             StoreRow.Actions(listOf(StoreVerb("Install a local image", Ink.BLUE_FILL, if (drive != null && !busy.containsKey("local")) ({ pickLocal.launch(arrayOf("*/*")) }) else null)))
             busy["local"]?.let { StoreRow.Line(it) }
+            if (message.isNotEmpty()) StoreRow.Line(message, color = Ink.AMBER_FILL, tag = "ventoy-message")
             val catalogueNames = cat?.rows?.mapNotNull { resolved[it.id]?.fileName }.orEmpty().toSet()
             val others = onDrive.filter { it.substringAfterLast('/') !in catalogueNames }
             if (others.isNotEmpty()) {
                 StoreHeading("On the drive", Ink.WHITE, tag = "ventoy-h-On the drive")
                 others.forEach { p ->
-                    StoreRow.Item(p.substringAfterLast('/'), open = true, onToggle = {}, dot = "●", dotColor = Ink.GREEN_FILL, meta = "on drive") {
-                        StoreRow.Line(p, mono = true)
+                    StoreRow.Item(p, open = true, onToggle = {}, dot = "●", dotColor = Ink.GREEN_FILL, meta = "on drive") {
                         StoreRow.Actions(listOf(StoreVerb("Remove", Ink.GREY_FILL, if (busy.containsKey(p)) null else ({ remove(p) }))))
                     }
                 }
@@ -235,13 +236,13 @@ class VentoyPage(private val host: Fragment) {
         StoreRow.Item(UsbVolumeModel.labelOf(v), open = expanded[key] ?: sel, onToggle = { expanded[key] = !(expanded[key] ?: sel) },
             dot = if (sel) "●" else "○", dotColor = if (sel) Ink.GREEN_FILL else Ink.DIM,
             meta = UsbVolumeModel.sizeHint(v.totalBytes, v.freeBytes), tag = "ventoy-drive") {
-            StoreRow.Line(v.path.orEmpty(), mono = true)
-            if (sel && (drive as? SafDriveFs)?.isoOnly == true) StoreRow.Line("Granted: the drive's ISO folder. Images install there; persistence needs the whole drive (Android refuses the root of an SD card).")
-            if (sel && drive != null) StoreRow.Line(if (ventoy) "Ventoy drive detected · ${onDrive.size} image(s) on it" else "Not a Ventoy drive yet: images can be copied, but the drive will not boot them until Ventoy is installed.")
             StoreRow.Actions(listOfNotNull(
                 if (!sel) StoreVerb("Use this drive", Ink.BLUE_FILL, { open(ctx, v.path!!) }) else null,
                 if (sel && drive == null) StoreVerb("Grant access", Ink.BLUE_FILL, { requestGrant(ctx, v.path!!) }) else null,
             ))
+            StoreRow.Line(v.path.orEmpty(), mono = true)
+            if (sel && (drive as? SafDriveFs)?.isoOnly == true) StoreRow.Line("Granted: the drive's ISO folder. Images install there; persistence needs the whole drive (Android refuses the root of an SD card).")
+            if (sel && drive != null) StoreRow.Line(if (ventoy) "Ventoy drive detected · ${onDrive.size} image(s) on it" else "Not a Ventoy drive yet: images can be copied, but the drive will not boot them until Ventoy is installed.")
         }
     }
 
@@ -250,14 +251,14 @@ class VentoyPage(private val host: Fragment) {
         StoreRow.Item("Ventoy on this drive", open = expanded["install"] ?: false, onToggle = { expanded["install"] = !(expanded["install"] ?: false) },
             dot = if (ventoy) "●" else "○", dotColor = if (ventoy) Ink.GREEN_FILL else Ink.DIM,
             meta = busy["raw"] ?: busy["installer"] ?: if (installerVersion.isNotEmpty()) "release $installerVersion" else if (ventoy) "installed" else "not installed", tag = "ventoy-install") {
-            StoreRow.Line(VentoyRawInstall.WHY)
-            StoreRow.Line(INSTRUCTIONS)
             StoreRow.Actions(listOf(
                 StoreVerb("Copy installer", Ink.BLUE_FILL, if (drive != null && !busy.containsKey("installer")) ({ copyInstaller() }) else null),
                 StoreVerb("Erase & install Ventoy", Ink.AMBER_FILL, if (VentoyRawInstall.AVAILABLE && drive != null && !busy.containsKey("raw")) ({
                     vols.firstOrNull { it.path == selected }?.let { gateFor = VentoyGate.Drive(UsbVolumeModel.labelOf(it), it.totalBytes, it) }
                 }) else null, tag = "ventoy-erase"),
             ))
+            StoreRow.Line(VentoyRawInstall.WHY)
+            StoreRow.Line(INSTRUCTIONS)
         }
     }
 
