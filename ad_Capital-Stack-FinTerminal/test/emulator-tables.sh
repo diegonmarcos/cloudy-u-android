@@ -46,10 +46,14 @@ for d in $DASHES; do
   adb shell am start -S -W -n "$PKG/.MainActivity" --es dashboard "$d" >/dev/null
   sleep "${FT_WAIT:-30}"
   adb exec-out screencap -p > "$OUT/apk-$d-1.png"
+  adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1 && adb pull /sdcard/ui.xml "$OUT/ui-$d-first.xml" >/dev/null 2>&1 || true
   # sideways: the table's later columns (a swipe right-to-left across the first table), then back
   adb shell input swipe $((W * 9 / 10)) $((H / 2)) $((W / 10)) $((H / 2)) 600
   sleep 3
   adb exec-out screencap -p > "$OUT/apk-$d-side.png"
+  adb shell input swipe $((W * 9 / 10)) $((H * 35 / 100)) $((W / 10)) $((H * 35 / 100)) 600
+  sleep 3
+  adb exec-out screencap -p > "$OUT/apk-$d-side2.png"
   adb shell input swipe $((W / 10)) $((H / 2)) $((W * 9 / 10)) $((H / 2)) 600
   sleep 2
   for i in 2 3 4; do
