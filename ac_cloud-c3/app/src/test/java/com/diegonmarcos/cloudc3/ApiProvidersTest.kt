@@ -23,7 +23,7 @@ class ApiProvidersTest {
         assertEquals(listOf("AI", "Scraper"), decl.groups.map { it.label })
         assertTrue(decl.providers.all { p -> decl.groups.any { it.id == p.group } })
         assertEquals(setOf("OpenRouter", "Claude (Anthropic API)"), decl.of(decl.groups[0]).map { it.label }.toSet())
-        assertEquals(setOf("Apify", "Cloudy Crawlee"), decl.of(decl.groups[1]).map { it.label }.toSet())
+        assertEquals(setOf("Apify", "Cloudy Crawlee", "Cloudflare Browser Run"), decl.of(decl.groups[1]).map { it.label }.toSet())
     }
 
     @Test
