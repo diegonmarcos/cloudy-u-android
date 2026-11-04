@@ -372,6 +372,9 @@ fun AdbShellPage(modifier: Modifier = Modifier) {
                 Dim("Each app has its own key, paired-devices entry, port and process; only the pairing window is shared, so one app pairs at a time.")
             }
         }
+
+        // ── 8  keep wireless debugging on (#1467) ──────────────────────────────────────────────
+        Section("8  KEEP WIRELESS DEBUGGING ON") { KeeperSection() }
     }
 }
 
@@ -446,5 +449,45 @@ fun AdbShellChip(modifier: Modifier = Modifier) {
     Row(modifier.clickable { AdbShellLink.open(ctx) }, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         StateDot((conn?.dot() ?: Dot.UNKNOWN).color())
         Text(ChannelState.chip(facts) + "  ›", fontSize = 11.sp)
+    }
+}
+
+/** #1467 Configs > Keep wireless debugging on: status chips (permission, battery, service, Wi-Fi, last re-arm) and the audit log. */
+@Composable
+private fun KeeperSection() {
+    val ctx = LocalContext.current
+    var snap by remember { mutableStateOf<WdKeeperStatus.Snapshot?>(null) }
+    var entries by remember { mutableStateOf<List<WdAuditLog.Entry>>(emptyList()) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            withContext(Dispatchers.IO) { runCatching { WdKeeper.snapshot(ctx) to WdKeeper.audit(ctx).entries() }.getOrNull() }
+                ?.let { snap = it.first; entries = it.second }
+            delay(5_000)
+        }
+    }
+    val s = snap
+    if (s == null) { Dim("Reading...", size = 11); return }
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+        val chips = WdKeeperStatus.chips(s) { WdKeeper.ago(it) }
+        for (c in chips) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            StateDot(when (c.level) {
+                WdKeeperStatus.Level.OK -> C_OK
+                WdKeeperStatus.Level.WARN -> C_WARN
+                WdKeeperStatus.Level.BAD -> C_BAD
+                WdKeeperStatus.Level.UNKNOWN -> C_UNKNOWN
+            })
+            Text(c.label + ": " + c.value, fontSize = 11.sp)
+        }
+    }
+    if (!s.armed) Dim("Off. Turn on Keep armed (or Configs > Keep Wireless debugging on) to arm the keeper.")
+    if (s.armed && !s.batteryExempt) {
+        Dim("Android may kill this app in the background. Set its battery to Unrestricted (on Samsung also Never sleeping apps).")
+        DenseButton("Battery: allow unrestricted", onClick = { WdKeeper.promptBattery(ctx) })
+    }
+    Dim("Every change of Wireless debugging, newest first (time, on/off, Wi-Fi, cause guess, who re-armed it):")
+    if (entries.isEmpty()) Dim("Nothing recorded yet.")
+    else SelectionContainer {
+        Text(entries.takeLast(30).reversed().joinToString("\n") { stamp(it.at) + "  " + (if (it.on) "ON " else "OFF") + "  wifi " + (if (it.wifi) "yes" else "no") + "  " + it.cause + "  by " + it.by },
+            fontSize = 10.sp, fontFamily = FontFamily.Monospace)
     }
 }

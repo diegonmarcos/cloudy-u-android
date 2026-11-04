@@ -61,6 +61,7 @@ class AdbStatusProvider : ContentProvider() {
         val ctx = context ?: return Bundle()
         if (Binder.getCallingUid() != Process.myUid() &&
             ctx.checkCallingPermission(FleetConfig.PERMISSION) != PackageManager.PERMISSION_GRANTED) return Bundle()
+        if (method == WdKeeper.METHOD_CLAIM) return WdKeeper.claimBundle(ctx)   // #1467 leader election
         if (method != AdbPeers.METHOD_STATUS) return Bundle()
         return Bundle().apply {
             putString(AdbPeers.KEY_LINK, AdbPeerReader.ownLink(ctx).name)

@@ -36,6 +36,9 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <!-- #1467 Keep wireless debugging on: the keeper asks the owner (through the Permissions page, libs:perms) to leave
+         this app unrestricted, so battery management does not kill it. -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
     <application>
         <!-- The ADB Shell page (AdbShellScreen) as its own screen: opened by every status chip in every app
@@ -60,6 +63,15 @@
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="Pairs this app's embedded adb client with the phone's own Wireless debugging while the user types the pairing code into the notification" />
+        </service>
+        <!-- #1467 the keeper's foreground service while "Keep wireless debugging on" is armed. -->
+        <service
+            android:name="com.diegonmarcos.superapp.adbdebug.WdKeeperService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Keeps the app process alive while Keep wireless debugging on is armed, so it can turn Wireless debugging back on when Android switches it off (Wi-Fi change, reboot)" />
         </service>
     </application>
 

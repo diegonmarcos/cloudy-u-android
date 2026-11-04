@@ -19,7 +19,7 @@ object SilentChannels {
     const val SUFFIX = "_silent_v2"
     val SILENT_PACKAGES = setOf(StoreNotifyGate.STORE_PKG)
     /** Every id a silent app posted on before [SUFFIX]. */
-    val LEGACY_IDS = listOf("fleet_alerts", "superapp-updater", "store_batch", "adb_pairing", "host_shell_channel")
+    val LEGACY_IDS = listOf("fleet_alerts", "superapp-updater", "store_batch", "adb_pairing", "host_shell_channel", "wd_keeper_channel")
 
     fun isSilent(packageName: String): Boolean = packageName in SILENT_PACKAGES
     fun isSilent(ctx: Context): Boolean = isSilent(ctx.packageName)

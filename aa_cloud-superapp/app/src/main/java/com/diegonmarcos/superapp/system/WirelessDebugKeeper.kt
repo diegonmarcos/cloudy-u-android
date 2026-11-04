@@ -171,8 +171,12 @@ class WirelessDebugKeeper(ctx: Context, params: WorkerParameters) : Worker(ctx, 
                 wm.cancelUniqueWork(UNIQUE_NAME)
                 wm.cancelUniqueWork(TICK_NAME)
                 cancelNotice(app)
+                com.diegonmarcos.superapp.adbdebug.WdKeeper.stop(app)
                 return
             }
+            // #1467 the shared keeper (libs:shizuku-adb-debug-tools WdKeeper): foreground service, observer, Wi-Fi callback,
+            // audit log and leader election with Cloud Store, so whichever app is alive re-arms and the two never fight.
+            com.diegonmarcos.superapp.adbdebug.WdKeeper.start(app)
             wm.enqueueUniquePeriodicWork(UNIQUE_NAME, ExistingPeriodicWorkPolicy.KEEP,
                 PeriodicWorkRequestBuilder<WirelessDebugKeeper>(15, TimeUnit.MINUTES).build())
             registerCallbacks(app)

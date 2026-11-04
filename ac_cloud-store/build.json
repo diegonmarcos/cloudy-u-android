@@ -546,7 +546,8 @@
     "needs": [
       "notifications",
       "install_unknown",
-      "usage_access"
+      "usage_access",
+      "battery_opt"
     ],
     "helpers": [],
     "first_run": "libs:perms"

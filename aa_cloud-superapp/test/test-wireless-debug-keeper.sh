@@ -33,6 +33,14 @@
 #       with it, so the watchdog never fights the owner's hand.
 #   T11 the switch is declared in build.json with its shipped default.
 #   T12 doWork never returns Result.retry() — backoff on top of the period.
+#   T13 (#1467) the SHARED keeper (libs:shizuku-adb-debug-tools WdKeeper, also Cloud Store's) is started by this
+#       switch's sync() and stopped by its OFF branch.
+#   T14 WdKeeper writes only on the REARM verdict, and asks the leader election first.
+#   T15 the keeper's foreground service is declared specialUse with its justification, and in the perms catalogue.
+#   T16 the shared keeper has every trigger: setting observer, Wi-Fi callback, boot (HostShell), periodic backstop.
+#   T17 a peer app can read this app's claim (provider method), so the election has both sides.
+#   T18 audit log + chips on the ADB Shell page (both apps), and the debug API route / endpoint.
+#   T19 the battery prompt goes through PermsLink, never a settings intent of the lib's own.
 #
 # FAIL CLOSED: a missing tool or a moved file proves nothing and says so.
 
@@ -201,6 +209,83 @@ if grep -q 'Result\.retry' <<<"$DOWORK"; then
   bad "T12 doWork can return Result.retry() — backoff re-runs stack on top of the period"
 else
   ok "T12 doWork never retries"
+fi
+
+# ── #1467 the shared keeper ──────────────────────────────────────────────────────────────────────────────
+LIB="$APP/../ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/src/main"
+WD="$LIB/java/com/diegonmarcos/superapp/adbdebug"
+for f in "$WD/WdKeeper.kt" "$WD/WdKeeperCore.kt" "$WD/WdKeeperService.kt" "$WD/WdAuditLog.kt" "$WD/AdbShellPage.kt" "$WD/HostShell.kt" \
+         "$WD/AdbPeerReader.kt" "$LIB/AndroidManifest.xml" "$APP/app/src/main/java/com/diegonmarcos/superapp/devcontrol/DevControlServer.kt" \
+         "$APP/../ab_cloud-libs-shared/libs/perms/src/main/assets/perms-catalogue.json"; do
+  [ -f "$f" ] || { bad "T13 missing $f"; echo "== RESULT: $PASS passed, $FAIL failed =="; exit 1; }
+done
+WDK="$(code "$WD/WdKeeper.kt")"
+EVAL="$(body "$WD/WdKeeper.kt" 'fun evaluate(')"
+
+# T13
+if grep -q 'WdKeeper\.start(app)' <<<"$SYNC" && python3 -c '
+import sys; b=sys.argv[1]
+i=b.find("if (!Prefs.enabled(app))"); seg=b[i:b.find("return", i)] if i!=-1 else ""
+sys.exit(0 if "WdKeeper.stop(app)" in seg else 1)' "$SYNC"; then
+  ok "T13 sync() starts the shared keeper when armed and stops it when the switch is off"
+else
+  bad "T13 the shared keeper is not tied to this switch"
+fi
+
+# T14
+if python3 -c '
+import sys; b=sys.argv[1]
+d=b.find("WdKeeperCore.decide("); l=b.find("WdKeeperLeader.isLeader("); w=b.find("keepWirelessDebuggingOn(")
+r=b.find("Action.REARM")
+sys.exit(0 if -1 not in (d,l,w,r) and d<l<w and r<w else 1)' "$EVAL"; then
+  ok "T14 evaluate decides, asks the leader election, and only then writes"
+else
+  bad "T14 WdKeeper.evaluate can write without the decision or the leader election"
+fi
+
+# T15
+if grep -q 'android:name="com.diegonmarcos.superapp.adbdebug.WdKeeperService"' "$LIB/AndroidManifest.xml" \
+   && python3 -c '
+import re,sys; m=open(sys.argv[1]).read()
+i=m.find("adbdebug.WdKeeperService"); seg=m[i:m.find("</service>", i)]
+sys.exit(0 if "foregroundServiceType=\"specialUse\"" in seg and "PROPERTY_SPECIAL_USE_FGS_SUBTYPE" in seg else 1)' "$LIB/AndroidManifest.xml" \
+   && jq -e '[.foreground_services[]? | select(.id=="wireless-keeper" and .type=="specialUse" and (.why|length>20))] | length==1' \
+        "$APP/../ab_cloud-libs-shared/libs/perms/src/main/assets/perms-catalogue.json" >/dev/null; then
+  ok "T15 the foreground service is specialUse, justified in the manifest and in the perms catalogue"
+else
+  bad "T15 the keeper service is not declared specialUse with a justification in both places"
+fi
+
+# T16
+if grep -q 'registerContentObserver' <<<"$WDK" && grep -q '"adb_wifi_enabled"\|ADB_WIFI_ENABLED' <<<"$WDK" \
+   && grep -q 'registerNetworkCallback' <<<"$WDK" && grep -q 'TRANSPORT_WIFI' <<<"$WDK" \
+   && grep -q 'PeriodicWorkRequestBuilder<WdKeeperWorker>(15, TimeUnit.MINUTES)' <<<"$WDK" \
+   && grep -q 'WdKeeper\.start(context' "$WD/HostShell.kt"; then
+  ok "T16 observer, Wi-Fi callback, boot and the 15-minute backstop are all wired"
+else
+  bad "T16 a trigger of the shared keeper is missing"
+fi
+
+# T17
+if grep -q 'WdKeeper\.METHOD_CLAIM' "$WD/AdbPeerReader.kt" && grep -q 'fun claimBundle' <<<"$WDK"; then
+  ok "T17 this app answers its claim to the peer keeper"
+else
+  bad "T17 no claim provider: the leader election would see only one side"
+fi
+
+# T18
+if grep -q 'WdAuditLog\.Entry' <<<"$WDK" && grep -q 'KeeperSection()' "$WD/AdbShellPage.kt" \
+   && grep -q 'AppDebugServer\.route("keeper"' <<<"$WDK" && grep -q '"keeper/status"' "$APP/app/src/main/java/com/diegonmarcos/superapp/devcontrol/DevControlServer.kt"; then
+  ok "T18 audit log, Configs chips and the debug API (both apps) exist"
+else
+  bad "T18 the audit log, the chips or the debug API is missing"
+fi
+
+# T19
+if grep -q 'PermsLink\.open' <<<"$WDK" && ! grep -q 'REQUEST_IGNORE_BATTERY_OPTIMIZATIONS\|IGNORE_BATTERY_OPTIMIZATION_SETTINGS' <<<"$WDK"; then
+  ok "T19 the battery prompt goes through PermsLink"
+else
+  bad "T19 the lib asks for the battery exemption itself (PermsOnePlaceTest would go red)"
 fi
 
 echo "== RESULT: $PASS passed, $FAIL failed =="

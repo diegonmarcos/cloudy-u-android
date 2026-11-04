@@ -48,6 +48,7 @@ object HostShell {
         schedule(app, replace = false)
         // The channel and the debug server are process state: the foreground service holds the process up.
         HostShellService.start(app)
+        WdKeeper.start(app)   // #1467 keep wireless debugging on: observer, Wi-Fi callback, service, backstop
     }
 
     /** Re-arm the channel in the background: unique work, so a repeat call never stacks. */
@@ -123,6 +124,7 @@ open class HostShellBootReceiver : BroadcastReceiver() {
         if (intent?.action == Intent.ACTION_BOOT_COMPLETED) {
             if (ChannelAutoArm.enabled(context)) HostShell.schedule(context.applicationContext, replace = true)
             HostShellService.start(context.applicationContext)
+            WdKeeper.start(context.applicationContext)   // #1467
         }
     }
 }

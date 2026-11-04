@@ -3,7 +3,8 @@
   "needs": [
     "notifications",
     "install_unknown",
-    "usage_access"
+    "usage_access",
+    "battery_opt"
   ],
   "first_run": "libs:perms",
   "helpers": []

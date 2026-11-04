@@ -70,6 +70,8 @@ object WirelessDebugging {
             "Turning Wireless Debugging off now could leave it half-finished. " +
             "Wait for it to end, then try again.", isOn(ctx))
 
+        // #1467 an OFF from the owner's own screen is the one "owner turned it off" the keeper can detect: it is honoured.
+        if (!on) WdKeeper.noteOwnerOff(ctx)
         val want = if (on) 1 else 0
 
         // OURSELVES FIRST — same reasoning as PackageVerifier.setScanning: on a
