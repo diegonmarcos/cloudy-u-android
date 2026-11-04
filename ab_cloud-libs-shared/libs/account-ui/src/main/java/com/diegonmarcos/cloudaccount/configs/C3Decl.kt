@@ -60,7 +60,9 @@ object ComposeDecl {
     }
 
     fun parse(text: String): List<ServiceDecl> {
-        if (text.trimStart().startsWith("{")) return parseJson(text)
+        // A generated file opens with a `#` DO-NOT-EDIT header; the body after it may be JSON.
+        val body = text.lines().filterNot { it.trimStart().startsWith("#") }.joinToString("\n")
+        if (body.trimStart().startsWith("{")) return parseJson(body)
         val lines = text.lines().filter { it.isNotBlank() && !it.trimStart().startsWith("#") }
         val out = mutableListOf<ServiceDecl>()
         var i = lines.indexOfFirst { indent(it) == 0 && it.trimEnd() == "services:" }

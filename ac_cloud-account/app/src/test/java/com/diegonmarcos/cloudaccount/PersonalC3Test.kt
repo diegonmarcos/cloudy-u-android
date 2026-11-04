@@ -132,7 +132,7 @@ class PersonalC3Test {
 
     @Test fun jsonComposeKeepsNamesAndDropsEveryValue() {
         val v = fakeSecret()
-        val s = ComposeDecl.parse("""{"services":{"vw":{"image":"x/vw:1","environment":{"ADMIN_TOKEN":"$v","DOMAIN":"$v"},
+        val s = ComposeDecl.parse("# DO NOT EDIT: generated\n" + """{"services":{"vw":{"image":"x/vw:1","environment":{"ADMIN_TOKEN":"$v","DOMAIN":"$v"},
             "secrets":["db_pw",{"source":"api_key"}],"env_file":[".env"],"volumes":["data:/data",{"type":"bind","source":"/opt/v","target":"/etc/v"}]}}}""")
         assertEquals(listOf("vw"), s.map { it.name })
         assertEquals(listOf("ADMIN_TOKEN", "DOMAIN"), s[0].envNames)
