@@ -1,0 +1,65 @@
+name: "Test -> SuperApp one-hand speedmeter (emulator)"
+
+# #1446: screenshots of the one-hand home with the speedmeter in the status strip, taken from the x86_64 APK a Ship run
+# built. 1_cicd/src/scripts/emulator-speedmeter.sh does the walk. Dispatch only.
+
+on:
+  workflow_dispatch:
+    inputs:
+      run:
+        description: 'The Ship SuperApp run id whose x86_64 APK is shot'
+        required: true
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  speed:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: 1_cicd/src/scripts
+
+      - name: Fetch the APK
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          RUN: ${{ inputs.run }}
+        run: |
+          set -eu
+          mkdir -p dl
+          gh api "repos/$REPO/actions/runs/$RUN/artifacts" --paginate --jq '.artifacts[] | select(.name|startswith("Cloud-SuperApp-x86_64")) | .name' |
+          while read -r name; do gh run download "$RUN" -R "$REPO" -n "$name" -D "dl/$name"; done
+          pick=$(find dl -name '*.apk' | sort | head -1)
+          [ -n "$pick" ] || { echo "::error::no SuperApp x86_64 APK in run $RUN"; exit 1; }
+          cp "$pick" app.apk
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Boot emulator + shoot the home
+        timeout-minutes: 25
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash 1_cicd/src/scripts/emulator-speedmeter.sh app.apk out
+
+      - name: Upload evidence (screenshots, ui dumps, logcat)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: speedmeter-evidence
+          path: out/
+          if-no-files-found: warn
