@@ -44,10 +44,14 @@ dismiss() {
 }
 $T adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1
 sleep 20
-# first start can show a start-up permission walk: BACK once, then bring the app back on top
-$T adb shell input keyevent KEYCODE_BACK; sleep 2
-$T adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1; sleep 8
 dismiss
+# first start can show a start-up permission walk (a Settings page of another package): bring the app back on top
+dump cur
+if ! grep -q "package=\"$PKG\"" "$OUT/cur.xml"; then
+    $T adb shell input keyevent KEYCODE_BACK; sleep 2
+    $T adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1; sleep 10
+    dismiss
+fi
 shot start 2
 
 dump cur
