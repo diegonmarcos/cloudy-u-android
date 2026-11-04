@@ -79,7 +79,7 @@ class PersonalC3Test {
         assertEquals(listOf("ids", "cards", "others", "autocomplete"), tabs("personal"))
         assertEquals(listOf("IDs", "Pay Cards", "Others", "Autocomplete"), nav.section("personal")!!.pages.map { it.label })
         assertEquals(listOf("entries", "me"), sub("personal", "others"))
-        assertEquals(listOf("general", "perms", "about", "android", "desktop", "c3"), tabs("configs"))  // #1443 shared pages first
+        assertEquals(listOf("general", "perms", "about", "android", "desktop", "c3", "repos"), tabs("configs"))  // #1443 shared pages first, #1445 Repos
         assertEquals(listOf("cloud-apps", "phone-apps", "runbook"), sub("configs", "android"))
         assertEquals(listOf("infra", "containers"), sub("configs", "c3"))
         assertTrue(nav.section("configs")!!.page("desktop")!!.pages.isEmpty())

@@ -149,7 +149,7 @@ class HubTest {
         // the owner's tabs, exactly and in order
         fun tabs(section: String) = nav.section(section)!!.pages.map { it.id }
         assertEquals(listOf("ids", "cards", "others", "autocomplete"), tabs("personal"))
-        assertEquals(listOf("general", "perms", "about", "android", "desktop", "c3"), tabs("configs"))  // #1443 shared pages first
+        assertEquals(listOf("general", "perms", "about", "android", "desktop", "c3", "repos"), tabs("configs"))  // #1443 shared pages first, #1445 Repos
         assertEquals(listOf("secrets", "backups", "devices"), tabs("data"))
         assertEquals(listOf("status", "auth", "fleetsetup"), tabs("connect"))
         assertEquals(listOf("activity"), tabs("activity"))
