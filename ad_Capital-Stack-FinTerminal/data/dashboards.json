@@ -1666,18 +1666,18 @@
               "TSLA"
             ],
             "labels": {
-              "AAPL": "AAPL Apple",
-              "MSFT": "MSFT Microsoft",
-              "NVDA": "NVDA Nvidia",
-              "AMZN": "AMZN Amazon",
-              "GOOGL": "GOOGL Alphabet",
-              "META": "META Meta",
-              "BRK.B": "BRK.B Berkshire B",
-              "JPM": "JPM JPMorgan",
-              "XOM": "XOM Exxon",
-              "UNH": "UNH UnitedHealth",
-              "LLY": "LLY Eli Lilly",
-              "TSLA": "TSLA Tesla"
+              "AAPL": "Apple (AAPL)",
+              "MSFT": "Microsoft (MSFT)",
+              "NVDA": "Nvidia (NVDA)",
+              "AMZN": "Amazon (AMZN)",
+              "GOOGL": "Alphabet (GOOGL)",
+              "META": "Meta (META)",
+              "BRK.B": "Berkshire B (BRK.B)",
+              "JPM": "JPMorgan (JPM)",
+              "XOM": "Exxon (XOM)",
+              "UNH": "UnitedHealth (UNH)",
+              "LLY": "Eli Lilly (LLY)",
+              "TSLA": "Tesla (TSLA)"
             },
             "primary": {
               "source": "cloud_fincept",
