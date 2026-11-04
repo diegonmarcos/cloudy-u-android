@@ -9,4 +9,6 @@ plugins {
     id 'org.jetbrains.kotlin.plugin.compose'       version '2.3.20' apply false
     // #1093 libs:fleet-endpoints (the endpoint fallback shared with Cloud Mail) is plain JVM Kotlin.
     id 'org.jetbrains.kotlin.jvm'                  version '2.3.20' apply false
+    // #1445 libs:git-core / libs:git-repos (under libs:git-ui's GitConnect) are mutation-tested by PIT, like Cloud Drive's root.
+    id 'info.solidsoft.pitest'                     version '1.19.0' apply false
 }
