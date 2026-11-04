@@ -25,7 +25,7 @@
 #   D5  libs:bottomnav is declared, depended on, linked, and DriveShell draws
 #       NavBarBottomHost (libs:ui-nav-bars: the bar, its collapse and its insets) with the declared entries.
 #   D6  the WebView shell is gone: no drive.html, no tailwind.js, no FilesBridge,
-#       no Material Views widget, no WebView and no JavascriptInterface at all; no
+#       no Material Views widget, no WebView (but RepoWebViewer's CloudWeb page, #1395) and no JavascriptInterface at all; no
 #       AppCompatActivity anywhere (2026-10-15 owner decision: all apps must be Compose,
 #       so #577's pdfium reader is a ComponentActivity with Compose chrome too).
 #   D7  no colour literal and no caption literal in the chrome's Kotlin; every
@@ -204,7 +204,10 @@ if [ -z "$APPCOMPAT" ]; then pass "no AppCompatActivity anywhere: the chrome and
 if grep -qE 'class PdfReaderActivity : ComponentActivity\(\)' "$SRC/PdfReaderActivity.kt" && grep -qE 'setContent \{ DriveTheme \{ ReaderScreen\(\) \} \}' "$SRC/PdfReaderActivity.kt"; then pass "the PDF reader is a Compose host under DriveTheme"; else fail "the PDF reader is not a ComponentActivity hosting ReaderScreen under DriveTheme"; fi
 if grep -qE 'AlertDialog\.Builder|PopupMenu|\bEditText\(|\bTextView\(|\bsetContentView\(' "$SRC/PdfReaderActivity.kt"; then fail "the PDF reader builds a View widget again (its pdfium surface PdfReaderView is the one View, hosted by AndroidView)"; else pass "the PDF reader builds no View widget: dialogs, menu, fields and bars are Compose"; fi
 if grep -qE "^import com\.google\.android\.material\." -r "$SRC"; then fail "a Material Views widget in the chrome"; else pass "no Material Views widget in Kotlin (the material dependency only supplies the AppCompat-descended dark theme the reader needs)"; fi
-if grep -rqE 'android\.webkit\.WebView' "$SRC" --include='*.kt'; then fail "a WebView is back in the chrome (the PDF reader is native pdfium, #577)"; else pass "no WebView anywhere: the chrome is Compose, the PDF reader is native (#577)"; fi
+# #1395 Git > Open repo on web is the ONE embedded page, built by libs:web-core's CloudWeb (webview guard); no other file touches a WebView.
+WV="$(grep -rlE 'android\.webkit\.WebView' "$SRC" --include='*.kt' | grep -v '/sync/RepoWebViewer\.kt$' || true)"
+if [ -n "$WV" ]; then fail "a WebView is back in the chrome (the PDF reader is native pdfium, #577; the only page is RepoWebViewer): $WV"; else pass "no WebView outside RepoWebViewer: the chrome is Compose, the PDF reader is native (#577)"; fi
+if grep -qE 'CloudWeb\.create\(' "$SRC/sync/RepoWebViewer.kt" && ! grep -qE '[^.\w]WebView\(|addJavascriptInterface|@JavascriptInterface' "$SRC/sync/RepoWebViewer.kt"; then pass "RepoWebViewer builds its page with CloudWeb.create and bridges nothing into Kotlin"; else fail "RepoWebViewer builds a WebView of its own or bridges Kotlin by string name"; fi
 for gone in "$APP/app/src/main/assets/reader.html" "$APP/app/src/main/assets/vendor"; do [ -e "$gone" ] && fail "still present: ${gone#$APP/}" || pass "gone: ${gone#$APP/}"; done
 
 echo "── D7 no colour or caption literal; strings alive ──"
