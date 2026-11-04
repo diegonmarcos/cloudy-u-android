@@ -136,7 +136,6 @@ internal fun GitTopBar(
             }
         }
         }
-        Spacer(Modifier.width(DriveMetrics.gap))
         storage()
         if (prefs != null) Row(Modifier.testTag(DriveTags.SYNC_AUTO_SETTINGS)) { IslandAction(Icons.Filled.Settings, decl.label("settings")) { sheet = true } }
     }

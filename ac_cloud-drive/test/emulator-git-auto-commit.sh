@@ -51,8 +51,10 @@ adb install -r -g "$APK" || fail "install failed"
 adb shell appops set "$PKG" MANAGE_EXTERNAL_STORAGE allow || true
 act=$(adb shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.LAUNCHER "$PKG" | tr -d '\r' | tail -1)
 launch; adb shell am force-stop "$PKG"
-DIR=/sdcard/Download
-adb shell rm -rf "$DIR/fixtures" >/dev/null 2>&1; adb shell mkdir -p "$DIR/fixtures" && adb push "$FIX" "$DIR/fixtures/" >/dev/null || fail "fixture copy failed"
+# #1452 the Cloud-Store page lists the store's repositories only (a clone on shared storage belongs to Emulated): the fixture lives under the app's own files.
+DIR=/data/data/$PKG/files
+adb shell "run-as $PKG sh -c 'rm -rf files/fixtures; mkdir -p files/fixtures'" >/dev/null 2>&1
+adb push "$FIX" /data/local/tmp/ >/dev/null && adb shell "run-as $PKG sh -c 'cp -r /data/local/tmp/$NAME files/fixtures/'" && adb shell rm -rf "/data/local/tmp/$NAME" || fail "fixture copy failed"
 adb shell "run-as $PKG sh -c 'mkdir -p files/git-sync'" || fail "no files dir"
 adb shell "run-as $PKG sh -c 'cat > files/git-sync/repos.json'" <<JSON
 [{"id":"fixture-1","name":"$NAME","path":"$DIR/fixtures/$NAME","remoteUrl":"https://example.invalid/diegonmarcos/$NAME.git"}]
@@ -84,7 +86,7 @@ grep -qi 'auto commit' "$OUT/ui.xml" || note "Logs shows no auto commit line: $(
 back
 
 # the commit itself, read on the host from the pulled-back clone
-mkdir -p "$WORK/after" && adb pull "$DIR/fixtures/$NAME" "$WORK/after/" >/dev/null || fail "fixture pull failed"
+mkdir -p "$WORK/after" && adb exec-out "run-as $PKG tar -C files/fixtures -cf - $NAME" | tar -C "$WORK/after" -xf - || fail "fixture pull failed"
 A="$WORK/after/$NAME"
 git -C "$A" log -1 --format=%B > "$OUT/commit-message.txt" 2>/dev/null || fail "no git log in the pulled clone"
 cat "$OUT/commit-message.txt"

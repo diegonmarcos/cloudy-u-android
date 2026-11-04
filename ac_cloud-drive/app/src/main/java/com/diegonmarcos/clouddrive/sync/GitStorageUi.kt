@@ -18,7 +18,13 @@ import com.diegonmarcos.cloudlib.gitsync.ManagedRepo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.DropdownMenu
@@ -52,7 +58,11 @@ fun gitStorageRoot(ctx: Context, k: GitStorage.Kind): File? = when (k) {
     GitStorage.Kind.EXTERNAL -> StorageVolumes.drives(ctx).let { ds -> ds.firstOrNull { it.kind == UsbVolumeModel.Kind.USB } ?: ds.firstOrNull() }?.let { File(it.path) }
 }
 
-/** #1452 the environment selector, in the Git page's top row before Settings: Emulated | cloud-shared-store | External, one compact icon chip each, the selected one filled. */
+/**
+ * #1452 the environment selector, in the Git page's top row before Settings: Emulated | cloud-shared-store | External, ONE compact
+ * segmented control (an icon per segment, the selected one filled; the name is each segment's description). Narrow on purpose:
+ * Check | Sync | Clone | Logs | More must stay in view beside it.
+ */
 @Composable
 fun GitStorageMenu(selected: GitStorage.Kind, onSelect: (GitStorage.Kind) -> Unit, modifier: Modifier = Modifier) {
     val label: @Composable (GitStorage.Kind) -> String = { k -> stringResource(when (k) {
@@ -61,14 +71,24 @@ fun GitStorageMenu(selected: GitStorage.Kind, onSelect: (GitStorage.Kind) -> Uni
         GitStorage.Kind.EXTERNAL -> R.string.git_storage_external
     }) }
     val icon: (GitStorage.Kind) -> String = { k -> when (k) { GitStorage.Kind.STORE -> "cloud"; GitStorage.Kind.EMULATED -> "smartphone"; GitStorage.Kind.EXTERNAL -> "usb" } }
-    androidx.compose.foundation.layout.Row(modifier.testTag(DriveTags.SYNC_GIT_STORAGE), horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(DriveMetrics.gap), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+    val shape = androidx.compose.foundation.shape.RoundedCornerShape(DriveMetrics.pad)
+    androidx.compose.foundation.layout.Row(
+        modifier.testTag(DriveTags.SYNC_GIT_STORAGE).height(DriveMetrics.chipHeight).clip(shape)
+            .border(DriveMetrics.hairline, MaterialTheme.colorScheme.outlineVariant, shape),
+        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+    ) {
         listOf(GitStorage.Kind.EMULATED, GitStorage.Kind.STORE, GitStorage.Kind.EXTERNAL).forEach { k ->
-            FilterChip(
-                selected = k == selected, onClick = { onSelect(k) },
-                // #1356 icon only (Check | Sync | Clone | Logs | More stay in view); the name is its description
-                label = { Icon(IconCatalog.vectorOrDefault(icon(k)), contentDescription = label(k), modifier = Modifier.size(DriveMetrics.icon)) },
-                modifier = Modifier.height(DriveMetrics.chipHeight).testTag(DriveTags.SYNC_GIT_STORAGE + "_" + k.id),
-            )
+            val on = k == selected
+            Box(
+                Modifier.fillMaxHeight().width(DriveMetrics.icon + DriveMetrics.gapWide)
+                    .background(if (on) MaterialTheme.colorScheme.primaryContainer else androidx.compose.ui.graphics.Color.Transparent)
+                    .selectable(selected = on, onClick = { onSelect(k) }, role = androidx.compose.ui.semantics.Role.RadioButton)
+                    .testTag(DriveTags.SYNC_GIT_STORAGE + "_" + k.id),
+                contentAlignment = androidx.compose.ui.Alignment.Center,
+            ) {
+                Icon(IconCatalog.vectorOrDefault(icon(k)), contentDescription = label(k), modifier = Modifier.size(DriveMetrics.icon),
+                    tint = if (on) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant)
+            }
         }
     }
 }

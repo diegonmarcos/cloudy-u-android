@@ -37,6 +37,10 @@ pull_clone() { rm -rf "$WORK/pulled"; mkdir -p "$WORK/pulled/$(basename "$1")"; 
 dev_sh() { case "$CL" in /data/data/*) adb shell "run-as $PKG sh -c '$1'" ;; *) adb shell "$1" ;; esac; }
 find_clone() { { adb shell "find -L /storage/emulated/0 -maxdepth 5 -type d -name .git 2>/dev/null"; adb shell "run-as $PKG find files -maxdepth 6 -type d -name .git 2>/dev/null" | sed "s#^#/data/data/$PKG/#"; } | tr -d '\r' | grep "$NAME" | grep -v remote.git | head -1 | sed 's#/\.git$##'; }
 host_git() { git -c user.name=h -c user.email=h@h "$@"; }
+# #1452 the Cloud-Store page lists the store's repositories only: a clone on shared storage belongs to Emulated. The fixture clone therefore
+# lives under the app's own files (a path under no shared-storage or drive root is the store's); the remote stays on shared storage.
+CLDIR=/data/data/$PKG/files/fixtures
+put_clone() { local n; n=$(basename "$1"); adb push "$1" /data/local/tmp/ >/dev/null && adb shell "run-as $PKG sh -c 'mkdir -p files/fixtures && rm -rf files/fixtures/$n && cp -r /data/local/tmp/$n files/fixtures/'" && adb shell rm -rf "/data/local/tmp/$n"; }
 
 adb shell settings delete global cloud_nav_ui_mode >/dev/null 2>&1 || true
 adb shell pm list packages | grep -q gitsyncengine && fail "a git-sync engine APK is installed: this flow proves Drive alone"
@@ -57,7 +61,7 @@ launch; adb shell am force-stop "$PKG"
 adb shell rm -rf "$DIR" >/dev/null 2>&1; adb shell mkdir -p "$DIR" && adb push "$WORK/remote.git" "$DIR/" >/dev/null || fail "remote copy failed"
 adb shell "run-as $PKG sh -c 'mkdir -p files/git-sync'" || fail "no files dir"
 adb shell "run-as $PKG sh -c 'cat > files/git-sync/repos.json'" <<JSON
-[{"id":"fixture-1408","name":"$NAME","path":"$DIR/$NAME","remoteUrl":"file://$DIR/remote.git"}]
+[{"id":"fixture-1408","name":"$NAME","path":"$CLDIR/$NAME","remoteUrl":"file://$DIR/remote.git"}]
 JSON
 adb shell "run-as $PKG sh -c 'rm -f shared_prefs/git_storage.xml'" >/dev/null 2>&1 || true
 launch
@@ -70,8 +74,8 @@ shot 00-git
 #    is a real git clone of the fixture remote, laid on shared storage with origin = file://<remote on the phone>.
 git clone -q "$WORK/remote.git" "$WORK/$NAME"
 git -C "$WORK/$NAME" remote set-url origin "file://$DIR/remote.git"
-adb push "$WORK/$NAME" "$DIR/" >/dev/null || fail "clone copy failed"
-CL="$DIR/$NAME"
+put_clone "$WORK/$NAME" || fail "clone copy failed"
+CL="$CLDIR/$NAME"
 adb shell am force-stop "$PKG"; launch; front; dump >/dev/null; has 'Sync All' && back
 open_git || fail "no Git page: $(texts)"
 front; tap "^$NAME\$" || fail "no $NAME row: $(texts)"; sleep 4
@@ -89,7 +93,7 @@ git -C "$WORK/other" push -q origin HEAD:refs/heads/main
 adb shell rm -rf "$DIR/remote.git" && adb push "$WORK/remote.git" "$DIR/" >/dev/null || fail "remote update failed"
 # the phone side commits its own edit of the same line (a merge needs two commits to disagree; an uncommitted edit is refused)
 printf 'phone\n' > "$WORK/$NAME/a.txt"; host_git -C "$WORK/$NAME" commit -qam phone
-adb shell rm -rf "$CL" && adb push "$WORK/$NAME" "$DIR/" >/dev/null || fail "could not update the clone"
+put_clone "$WORK/$NAME" || fail "could not update the clone"
 front; tap "^$NAME\$" || fail "no $NAME row after clone: $(texts)"; sleep 2
 for i in 1 2 3 4; do front; need 'Sync: no winner' && break; swipe_up; done
 shot 20-sheet-sync
