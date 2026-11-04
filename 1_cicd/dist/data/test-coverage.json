@@ -440,7 +440,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 9,
+      "unit_test_sources": 12,
       "workflow": "ship-cloud-tasks.yml"
     },
     "ac_cloud-termux": {
