@@ -51,4 +51,13 @@ class AlertsTest {
         assertEquals(3, two.size)
         assertTrue(Alerts.eventHits(listOf(Alerts.rule("AAPL > 1")!!), ev, "2026-10-30T12:00Z").isEmpty())
     }
+
+    @Test fun watchlistMoveReordersAndClamps() {
+        val l = listOf("AAPL", "MSFT", "NVDA")
+        assertEquals(listOf("MSFT", "AAPL", "NVDA"), Alerts.move(l, "msft", -1))
+        assertEquals(listOf("AAPL", "NVDA", "MSFT"), Alerts.move(l, "MSFT", 1))
+        assertEquals(l, Alerts.move(l, "AAPL", -1))
+        assertEquals(l, Alerts.move(l, "NVDA", 1))
+        assertEquals(l, Alerts.move(l, "TSLA", 1))
+    }
 }

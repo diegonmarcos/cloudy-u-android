@@ -32,10 +32,10 @@ import androidx.compose.ui.unit.dp
 /**
  * Watchlist row (spec 2.9, tag fin:watch:<symbol>): a tall monitor row in a swipe box. Swipe to the start (left) removes it
  * (the caller shows "removed · Undo"); swipe to the end (right) opens the alert rule for the symbol. Its alert rules follow as
- * 32dp sub-rows (bell + rule); a tap on a rule removes it.
+ * 32dp sub-rows (bell + rule); a tap on a rule removes it. A long press opens the row menu (move up/down, alert, remove).
  */
 @Composable
-fun FinWatchRow(q: FinQuote, rules: List<String>, stale: Boolean, width: Dp, onOpen: () -> Unit, onRemove: () -> Unit, onAlert: () -> Unit, onRemoveRule: (String) -> Unit) {
+fun FinWatchRow(q: FinQuote, rules: List<String>, stale: Boolean, width: Dp, onOpen: () -> Unit, onRemove: () -> Unit, onAlert: () -> Unit, onRemoveRule: (String) -> Unit, onLongClick: (() -> Unit)? = null) {
     val p = LocalFinPalette.current
     val state = rememberSwipeToDismissBoxState(
         confirmValueChange = { v ->
@@ -59,7 +59,7 @@ fun FinWatchRow(q: FinQuote, rules: List<String>, stale: Boolean, width: Dp, onO
                 }
             },
         ) {
-            Box(Modifier.background(p.surface)) { FinMonitorRow(q, stale, width, tall = true, divider = rules.isEmpty(), onClick = onOpen) }
+            Box(Modifier.background(p.surface)) { FinMonitorRow(q, stale, width, tall = true, divider = rules.isEmpty(), onClick = onOpen, onLongClick = onLongClick) }
         }
         rules.forEach { r ->
             Row(Modifier.fillMaxWidth().height(32.dp).clickable { onRemoveRule(r) }.padding(start = 24.dp, end = 12.dp), verticalAlignment = Alignment.CenterVertically) {

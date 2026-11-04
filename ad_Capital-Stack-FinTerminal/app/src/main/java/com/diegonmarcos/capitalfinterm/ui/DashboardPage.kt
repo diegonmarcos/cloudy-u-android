@@ -605,6 +605,7 @@ private fun declaredTypes(panel: Panel): List<String> {
 @Composable
 private fun WatchBody(data: PanelData, user: UserLists, stale: Boolean, width: Dp, nav: FinNav, onUser: (UserLists) -> Unit, onRemoved: (String, UserLists) -> Unit) {
     var alertFor by remember { mutableStateOf<String?>(null) }
+    var menuFor by remember { mutableStateOf<String?>(null) }
     if (user.watchlist.isEmpty()) { FinWatchEmpty(onAdd = { nav.search() }); return }
     val byLabel = quotesOf(data).associateBy { it.symbol.uppercase() }
     Column {
@@ -615,13 +616,41 @@ private fun WatchBody(data: PanelData, user: UserLists, stale: Boolean, width: D
                 onOpen = { nav.openQuote(sym) },
                 onRemove = { val prev = user; onUser(user.copy(watchlist = user.watchlist - sym)); onRemoved(sym, prev) },
                 onAlert = { alertFor = sym },
+                onLongClick = { menuFor = sym },
                 onRemoveRule = { t -> onUser(user.copy(alerts = user.alerts.filterNot { it.text() == t })) })
         }
+    }
+    menuFor?.let { sym ->
+        WatchMenu(sym, onDismiss = { menuFor = null },
+            onMove = { d -> onUser(user.copy(watchlist = Alerts.move(user.watchlist, sym, d))); menuFor = null },
+            onAlert = { menuFor = null; alertFor = sym },
+            onRemove = { val prev = user; onUser(user.copy(watchlist = user.watchlist - sym)); onRemoved(sym, prev); menuFor = null })
     }
     alertFor?.let { sym ->
         AlertSheet(sym, onDismiss = { alertFor = null }) { text ->
             Alerts.rule(text)?.let { r -> onUser(user.copy(alerts = (user.alerts + r).distinct())) }
             alertFor = null
+        }
+    }
+}
+
+/** The long-press menu of a watchlist row: reorder (up, down), a new alert, remove. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun WatchMenu(symbol: String, onDismiss: () -> Unit, onMove: (Int) -> Unit, onAlert: () -> Unit, onRemove: () -> Unit) {
+    val p = LocalFinPalette.current
+    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = p.surface) {
+        Column(Modifier.fillMaxWidth().padding(16.dp).testTag("fin:watchmenu:$symbol"), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(symbol, color = p.text, style = FinType.title)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FinChip("Move up", true) { onMove(-1) }
+                FinChip("Move down", true) { onMove(1) }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FinChip("New alert", true, onClick = onAlert)
+                FinChip("Remove", true, onClick = onRemove)
+            }
+            Spacer(Modifier.height(24.dp))
         }
     }
 }

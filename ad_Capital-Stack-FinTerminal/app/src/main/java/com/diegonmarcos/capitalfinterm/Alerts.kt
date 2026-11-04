@@ -33,6 +33,14 @@ object Alerts {
 
     fun watchlistText(list: List<String>): String = list.distinct().joinToString(",")
 
+    /** The symbol moved `delta` places (-1 up, +1 down) in the watchlist, clamped to its ends; an unknown symbol leaves the list as it is. */
+    fun move(list: List<String>, symbol: String, delta: Int): List<String> {
+        val i = list.indexOfFirst { it.equals(symbol, ignoreCase = true) }
+        if (i < 0) return list
+        val j = (i + delta).coerceIn(0, list.lastIndex)
+        return list.toMutableList().also { it.add(j, it.removeAt(i)) }
+    }
+
     /** One typed rule, or null when it does not read as `SYM > n`, `SYM < n` or `events >= n` (n from 0 to 3). */
     fun rule(raw: String): AlertRule? {
         val t = raw.trim()
