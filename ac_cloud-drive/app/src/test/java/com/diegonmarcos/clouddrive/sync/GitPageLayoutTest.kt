@@ -51,7 +51,9 @@ class GitPageLayoutTest {
     @Test fun `the declared top bar comes before the rows and dispatches every declared kind`() {
         val block = src.substring(src.indexOf("fun LazyListScope.tableBlock()"))
         assertTrue(block.indexOf("GitTopBar(page.topBar") in 0 until block.indexOf("items(sortedEntries"))
-        assertTrue(block.indexOf("Text(summaryLine") in 0 until block.indexOf("items(sortedEntries"))
+        // #1452 the block is two rows (actions, filters) then the column header: no summary line, no Clone-into row
+        assertFalse(block.contains("Text(summaryLine") || block.contains("GitCloneTargetRow("))
+        assertTrue(block.indexOf("QuickFilterRail(") in block.indexOf("GitTopBar(page.topBar") until block.indexOf("RepoTableHeader(sortColumn"))
         // #1315 no Kotlin list of bulk commands: every kind of ui.sync.git.top_bar has a branch, nothing else does.
         for (k in Declarations.TOP_KINDS) assertTrue(k, src.contains("\"$k\" ->"))
         assertFalse(src.contains("RepoActions.Bulk"))
