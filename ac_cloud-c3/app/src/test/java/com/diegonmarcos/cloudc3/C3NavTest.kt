@@ -83,7 +83,7 @@ class C3NavTest {
         for (s in nav.sections) {
             assertEquals("pages of ${s.id}", s.allPages().map { it.id }, rows.filter { it.section == s.id && it.page != null }.map { it.page })
         }
-        assertTrue("Home, Table and Configs are all reachable from the drawer",
-            rows.any { it.section == "home" } && rows.any { it.page == "table" } && rows.any { it.section == "configs" })
+        assertTrue("Home, the All project's Table and Configs are all reachable from the drawer",
+            rows.any { it.section == "home" } && rows.any { it.page == "all_table" } && rows.any { it.section == "configs" })
     }
 }
