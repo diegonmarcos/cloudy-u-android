@@ -40,7 +40,7 @@ class ContainersModelTest {
         val dashNames = dash.groups.flatMap { g -> g.subgroups.flatMap { s -> s.containers.map { it.name } } }
         val tableNames = M.rows(catalog).map { it.container }
         assertEquals("both views list the same containers", dashNames.sorted(), tableNames.sorted())
-        assertEquals("the live accessor serves the same document", dashNames.sorted(), Stacks.cloudServices().groups.flatMap { g -> g.subgroups.flatMap { s -> s.containers.map { it.name } } }.sorted())
+        assertEquals("the live accessor serves the same document plus the declared repos", (dashNames + com.diegonmarcos.cloudc3.Declarations.containerProjects.repos.map { it.name }).sorted(), Stacks.cloudServices().groups.flatMap { g -> g.subgroups.flatMap { s -> s.containers.map { it.name } } }.sorted())
         // neither view may keep a second, older list
         val stacks = moduleFile("app/src/main/java/com/diegonmarcos/cloudc3/cloud/Stacks.kt").readText()
         val table = moduleFile("app/src/main/java/com/diegonmarcos/cloudc3/pages/RoutesTable.kt").readText()

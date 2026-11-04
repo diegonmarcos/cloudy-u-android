@@ -129,7 +129,7 @@ class DeclarationsTest {
         // which is what keeps "no placeholder in a shipped tab" assertable.
         assertEquals("Infra = Providers | VMs | Storage | Electronics | Domains (2026-10-20); no Stack, Dbs or API page",
             listOf("providers", "machines", "serverless", "node_python", "storage", "desktop", "mobile", "gadgets", "domains", "domains_public"), pageIds("infra"))
-        assertEquals("#1454 one page per project, in the owner's order", listOf("all", "cloudy", "cg", "capital", "hardtech", "cloud_me"), pageIds("containers"))
+        assertEquals("#1454 one page per project, in the owner's order", listOf("all", "cloudy", "cloud_me", "cg", "capital", "hardtech", "others"), pageIds("containers"))
         assertEquals("#1454 every project page keeps the Topology | Table switch",
             pageIds("containers").map { listOf("${it}_topology", "${it}_table") },
             nav().section("containers")!!.pages.map { p -> p.pages.map { it.id } })
