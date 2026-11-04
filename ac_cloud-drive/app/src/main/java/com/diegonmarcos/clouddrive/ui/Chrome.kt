@@ -440,8 +440,8 @@ fun Pill(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, icon:
             .padding(horizontal = DriveMetrics.padWide, vertical = DriveMetrics.gap),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (icon != null) { Icon(icon, contentDescription = null, tint = ink, modifier = Modifier.size(DriveMetrics.icon)); Spacer(Modifier.width(DriveMetrics.gap)) }
-        Text(text, color = ink, style = MaterialTheme.typography.labelLarge, maxLines = 1)
+        if (icon != null) { Icon(icon, contentDescription = null, tint = ink, modifier = Modifier.size(DriveMetrics.icon)); if (text.isNotEmpty()) Spacer(Modifier.width(DriveMetrics.gap)) }
+        if (text.isNotEmpty()) Text(text, color = ink, style = MaterialTheme.typography.labelLarge, maxLines = 1)
     }
 }
 

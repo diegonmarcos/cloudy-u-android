@@ -30,6 +30,7 @@ dependencies {
     implementation 'androidx.compose.ui:ui'
     implementation 'androidx.compose.foundation:foundation'
     implementation 'androidx.compose.material3:material3'
+    implementation project(':libs:ui-kit')      // #1452 KitStoreRow: the Cloud Store list row (spacing, type, glyphs, palette)
     implementation project(':libs:git-repos')   // GitRepoScan.humanBytes for the size cells
     implementation project(':libs:git-core')    // the models the solver reads (GitStatusSnapshot, ConflictSide)
     implementation project(':libs:git-sync')    // #1445 GitConnect: GitEngine + GitCredentialStore, the ONE GitHub connect Drive, Cloud Me and Cloud Account call

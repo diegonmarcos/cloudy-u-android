@@ -25,7 +25,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import com.diegonmarcos.superapp.uikit.KitStoreDot
+import com.diegonmarcos.superapp.uikit.KitStoreQuick
+import com.diegonmarcos.superapp.uikit.KitStoreRow
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
@@ -97,20 +103,27 @@ internal fun FolderRepoTable(
                 t.path to FolderTable.rowOf(t, glances[UnlistedRepos.statusKey(t.path)], t.origin.takeIf { it.isNotBlank() }?.let { RepoProvider.labelOf(it, Declarations.providers) }, lastCommits[LastCommits.keyOf(t.path)])
             }
             val words = remember(ctx) { repoMessageWords(ctx) }
+            val bareWord = stringResource(R.string.repo_kind_bare)
             RepoTable.sort(list, sort.first, sort.second) { cells.getValue(it.path) }.forEach { t ->
                 val g = glances[UnlistedRepos.statusKey(t.path)]
                 // #1452 ONE LINE PER FOLDER: the last command's outcome (it used to wrap in a report under the table) is the Status Message cell; the commands are the last cell.
-                val say = RepoMessage.ofFolder(run?.takeIf { it.kind in Declarations.FOLDER_KINDS }?.outcomeOf(t.name), g, subtitle(t), words)
-                val row = cells.getValue(t.path).copy(message = say.text, messageProblem = say.problem)
+                val outcome = run?.takeIf { it.kind in Declarations.FOLDER_KINDS }?.outcomeOf(t.name)
+                // #1452 a bare repository (the Bare section): its status is "bare", the Status Message adds what the table says about it
+                val bare = tableId == "bare"
+                val say = RepoMessage.ofFolder(outcome, g.takeUnless { bare }, (if (bare) bareWord + " · " else "") + subtitle(t), words)
+                val row = cells.getValue(t.path).copy(message = say.text, messageProblem = say.problem, status = if (bare) RepoStatus.Kind.BARE else cells.getValue(t.path).status)
                 val toggle = { open = if (open == t.path) "" else t.path }
                 RepoTableLine(scroll, Modifier.testTag(DriveTags.parentlessRow(tableId + "_" + t.name)), onClick = toggle) {
-                    RepoStatusCell(RepoStatus.icons(true, g, false, emptyList(), ""), t.name, toggle)
+                    if (bare) com.diegonmarcos.cloudlib.gitui.RepoStatusCell(toggle, "", dots = {
+                        KitStoreDot("\u25EF", KitStoreRow.MISSING, Modifier.testTag(DriveTags.STATUS_LIGHT).semantics { contentDescription = t.name + " " + bareWord })
+                    }) else RepoStatusCell(RepoStatus.icons(true, g, false, emptyList(), ""), t.name, toggle)
                     RepoNameCell(t.name)
                     RepoCells(row)
-                    Row(Modifier.widthIn(min = DriveMetrics.tableName), horizontalArrangement = Arrangement.spacedBy(DriveMetrics.gapWide, Alignment.End), verticalAlignment = Alignment.CenterVertically) {
+                    // the Store's quick verb (a small filled box) for each command
+                    Row(Modifier.widthIn(min = DriveMetrics.tap), horizontalArrangement = Arrangement.spacedBy(DriveMetrics.gap, Alignment.End), verticalAlignment = Alignment.CenterVertically) {
                         actions.filter { a -> a.kind != Declarations.FOLDER_REPOINT || FolderActions.fixedOrigin(t.origin, RegistryNames.live()) != null }.forEach { a ->
-                            Pill(a.label, { confirm = FolderConfirm(a, listOf(t)) }, enabled = !busy, danger = a.kind == Declarations.FOLDER_DELETE,
-                                modifier = Modifier.testTag(DriveTags.folderAction(a.kind, t.name)))
+                            KitStoreQuick(a.label, if (a.kind == Declarations.FOLDER_DELETE) KitStoreRow.BAD else KitStoreRow.BLUE_FILL,
+                                Modifier.alpha(if (busy) 0.4f else 1f).testTag(DriveTags.folderAction(a.kind, t.name)), onClick = if (busy) null else ({ confirm = FolderConfirm(a, listOf(t)) }))
                         }
                     }
                 }

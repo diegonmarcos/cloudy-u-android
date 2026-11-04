@@ -651,6 +651,7 @@
     <string name="repo_kind_behind">behind the remote</string>
     <string name="repo_kind_ahead">ahead of the remote</string>
     <string name="repo_kind_clean">clean, in sync</string>
+    <string name="repo_kind_bare">bare</string>
     <string name="repo_meta_k_lfs">LFS</string>
     <string name="repo_meta_k_provider">Provider</string>
     <string name="repo_act_checkout_main">Checkout Main</string>

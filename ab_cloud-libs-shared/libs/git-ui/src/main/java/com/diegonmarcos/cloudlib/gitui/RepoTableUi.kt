@@ -26,6 +26,9 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import com.diegonmarcos.superapp.uikit.KitStoreCaption
+import com.diegonmarcos.superapp.uikit.KitStoreName
+import com.diegonmarcos.superapp.uikit.KitStoreRow
 
 /** #1138 the repo table's columns, in display order. #1238: STATUS is the leftmost and LFS follows Pvt/Pub. #1452: MESSAGE (Status Message) follows the name, so the status text has a cell of its own. */
 enum class RepoColumn { STATUS, NAME, MESSAGE, PROVIDER, VISIBILITY, LFS, SIZE_MAIN, SIZE_TOTAL, SIZE_DISK, BRANCHES, DIRTY, AHEAD_BEHIND, LAST_COMMIT }
@@ -68,20 +71,20 @@ fun RepoTableHeader(
 ) {
     val k = LocalGitUiKit.current
     Row(
-        Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant).heightIn(min = k.tap).testTag(tag),
+        Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant).padding(vertical = KitStoreRow.padV).testTag(tag),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         val label: @Composable (RepoColumn) -> Unit = { c ->
             Text(
                 stringResource(columnLabelRes(c)) + sortArrow(c, column, ascending), repoCellModifier(c).clickable { onSort(c) },
-                style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.labelSmall, fontSize = KitStoreRow.caption, fontWeight = FontWeight.SemiBold,
                 textAlign = when (c) { RepoColumn.NAME, RepoColumn.MESSAGE -> TextAlign.Start; RepoColumn.STATUS -> TextAlign.Center; else -> TextAlign.End }, maxLines = 2, overflow = TextOverflow.Ellipsis,
             )
         }
-        Row(Modifier.padding(start = k.sectionInset), verticalAlignment = Alignment.CenterVertically) { pinned.forEach { label(it) } }
-        Row(Modifier.weight(1f).padding(end = k.pad).let { k.fadeEnd(it, scroll.canScrollForward) }.horizontalScroll(scroll).padding(end = k.sectionInset), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.padding(start = KitStoreRow.padH), verticalAlignment = Alignment.CenterVertically) { pinned.forEach { label(it) } }
+        Row(Modifier.weight(1f).padding(end = k.pad).let { k.fadeEnd(it, scroll.canScrollForward) }.horizontalScroll(scroll).padding(end = KitStoreRow.padH), verticalAlignment = Alignment.CenterVertically) {
             scrolling.forEach { label(it) }
-            Spacer(Modifier.width(k.tableName))
+            Spacer(Modifier.width(k.tap))
         }
     }
 }
@@ -121,12 +124,13 @@ fun repoLfsWord(lfs: Boolean?): String = GitTable.lfs(lfs, stringResource(R.stri
 @Composable
 fun RepoTableLine(scroll: ScrollState, modifier: Modifier = Modifier, onClick: (() -> Unit)? = null, content: @Composable RowScope.() -> Unit) {
     val k = LocalGitUiKit.current
+    // The Cloud Store list row's own padding (KitStoreRow: 12 x 8 Store steps at the Store's scale); no height floor: the text sets the height.
     Row(
-        modifier.fillMaxWidth().heightIn(min = k.rowHeight).let { if (onClick != null) it.clickable(onClick = onClick) else it }.padding(start = k.sectionInset),
+        modifier.fillMaxWidth().let { if (onClick != null) it.clickable(interactionSource = null, indication = null, onClick = onClick) else it }.padding(start = KitStoreRow.padH),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Row(
-            Modifier.weight(1f).padding(end = k.pad).let { k.fadeEnd(it, scroll.canScrollForward) }.horizontalScroll(scroll).padding(end = k.sectionInset, top = k.gap, bottom = k.gap),
+            Modifier.weight(1f).padding(end = k.pad).let { k.fadeEnd(it, scroll.canScrollForward) }.horizontalScroll(scroll).padding(end = KitStoreRow.padH, top = KitStoreRow.padV, bottom = KitStoreRow.padV),
             verticalAlignment = Alignment.CenterVertically, content = content,
         )
     }
@@ -136,7 +140,7 @@ fun RepoTableLine(scroll: ScrollState, modifier: Modifier = Modifier, onClick: (
 @Composable
 fun RepoNameCell(name: String, badges: @Composable RowScope.() -> Unit = {}) {
     Row(repoCellModifier(RepoColumn.NAME), verticalAlignment = Alignment.CenterVertically) {
-        Text(name, Modifier.weight(1f, fill = false), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        KitStoreName(name, Modifier.weight(1f, fill = false))
         badges()
     }
 }
@@ -144,9 +148,9 @@ fun RepoNameCell(name: String, badges: @Composable RowScope.() -> Unit = {}) {
 /** The Status Message cell: what the status icons cannot say, on one line (ellipsis; the status window has it whole); red when it is a problem. */
 @Composable
 fun RepoMessageCell(text: String, problem: Boolean = false) {
-    Text(
-        text.ifBlank { GitTable.DASH }, repoCellModifier(RepoColumn.MESSAGE), style = MaterialTheme.typography.labelSmall,
-        color = if (problem) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis,
+    KitStoreCaption(
+        text.ifBlank { GitTable.DASH }, repoCellModifier(RepoColumn.MESSAGE),
+        color = if (problem) KitStoreRow.BAD else MaterialTheme.colorScheme.onSurfaceVariant,
     )
 }
 
@@ -169,7 +173,7 @@ fun RepoCells(r: GitTableRow<*>) {
     )
     RepoMessageCell(r.message, r.messageProblem)
     texts.forEach { (c, t) ->
-        Text(t, repoCellModifier(c), style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace, textAlign = TextAlign.End, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        KitStoreCaption(t, repoCellModifier(c), mono = true, align = TextAlign.End)
     }
 }
 
@@ -181,7 +185,7 @@ fun RepoCells(r: GitTableRow<*>) {
 fun RepoStatusCell(onOpen: () -> Unit, caption: String = "", dots: @Composable RowScope.() -> Unit) {
     val k = LocalGitUiKit.current
     Box(
-        repoCellModifier(RepoColumn.STATUS).heightIn(min = k.tap).testTag(k.tagStatusCell)
+        repoCellModifier(RepoColumn.STATUS).testTag(k.tagStatusCell)
             .clickable(onClickLabel = stringResource(R.string.repo_status_open), onClick = onOpen),
         contentAlignment = Alignment.Center,
     ) {

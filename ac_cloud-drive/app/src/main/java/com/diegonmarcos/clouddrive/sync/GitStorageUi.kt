@@ -20,6 +20,8 @@ import kotlinx.coroutines.withContext
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -58,36 +60,29 @@ fun gitStorageRoot(ctx: Context, k: GitStorage.Kind): File? = when (k) {
     GitStorage.Kind.EXTERNAL -> StorageVolumes.drives(ctx).let { ds -> ds.firstOrNull { it.kind == UsbVolumeModel.Kind.USB } ?: ds.firstOrNull() }?.let { File(it.path) }
 }
 
-/**
- * #1452 the environment selector, in the Git page's top row before Settings: Emulated | cloud-shared-store | External, ONE compact
- * segmented control (an icon per segment, the selected one filled; the name is each segment's description). Narrow on purpose:
- * Check | Sync | Clone | Logs | More must stay in view beside it.
- */
+/** #1356/#1376 the selector, compact: one small pill in the Git page's top row naming the selected storage; a tap lists the three (Emulated | cloud-shared-store | External). */
 @Composable
 fun GitStorageMenu(selected: GitStorage.Kind, onSelect: (GitStorage.Kind) -> Unit, modifier: Modifier = Modifier) {
+    var open by remember { mutableStateOf(false) }
     val label: @Composable (GitStorage.Kind) -> String = { k -> stringResource(when (k) {
         GitStorage.Kind.STORE -> R.string.git_storage_store
         GitStorage.Kind.EMULATED -> R.string.git_storage_emulated
         GitStorage.Kind.EXTERNAL -> R.string.git_storage_external
     }) }
     val icon: (GitStorage.Kind) -> String = { k -> when (k) { GitStorage.Kind.STORE -> "cloud"; GitStorage.Kind.EMULATED -> "smartphone"; GitStorage.Kind.EXTERNAL -> "usb" } }
-    val shape = androidx.compose.foundation.shape.RoundedCornerShape(DriveMetrics.pad)
-    androidx.compose.foundation.layout.Row(
-        modifier.testTag(DriveTags.SYNC_GIT_STORAGE).height(DriveMetrics.chipHeight).clip(shape)
-            .border(DriveMetrics.hairline, MaterialTheme.colorScheme.outlineVariant, shape),
-        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
-    ) {
-        listOf(GitStorage.Kind.EMULATED, GitStorage.Kind.STORE, GitStorage.Kind.EXTERNAL).forEach { k ->
-            val on = k == selected
-            Box(
-                Modifier.fillMaxHeight().width(DriveMetrics.icon + DriveMetrics.gapWide)
-                    .background(if (on) MaterialTheme.colorScheme.primaryContainer else androidx.compose.ui.graphics.Color.Transparent)
-                    .selectable(selected = on, onClick = { onSelect(k) }, role = androidx.compose.ui.semantics.Role.RadioButton)
-                    .testTag(DriveTags.SYNC_GIT_STORAGE + "_" + k.id),
-                contentAlignment = androidx.compose.ui.Alignment.Center,
-            ) {
-                Icon(IconCatalog.vectorOrDefault(icon(k)), contentDescription = label(k), modifier = Modifier.size(DriveMetrics.icon),
-                    tint = if (on) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant)
+    Box(modifier.testTag(DriveTags.SYNC_GIT_STORAGE)) {
+        // #1452 the SAME pill + dropdown as every other action of the bar (Sync, Clone, More): icon only (Check | Sync | Clone | Logs | More stay in view);
+        // the selected name is its description and the menu's rows
+        val described = label(selected)
+        com.diegonmarcos.clouddrive.ui.Pill("", { open = true }, Modifier.semantics { contentDescription = described }, icon = IconCatalog.vectorOrDefault(icon(selected)))
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            // #1452 the options in the owner's order
+            listOf(GitStorage.Kind.EMULATED, GitStorage.Kind.STORE, GitStorage.Kind.EXTERNAL).forEach { k ->
+                DropdownMenuItem(
+                    text = { Text(label(k)) },
+                    leadingIcon = { Icon(IconCatalog.vectorOrDefault(icon(k)), contentDescription = null) },
+                    onClick = { open = false; onSelect(k) },
+                )
             }
         }
     }
@@ -126,31 +121,6 @@ fun gitStorageAccess(ctx: Context, kind: GitStorage.Kind): GitStorage.Access? {
     if (kind == GitStorage.Kind.STORE) return null
     val root = gitStorageRoot(ctx, kind) ?: return if (kind == GitStorage.Kind.EXTERNAL && rawUsbAttached(ctx)) GitStorage.Access.RAW_READ_ONLY else null
     return GitStorage.access(raw = false, canWrite = root.canWrite())
-}
-
-/** #1356 "Clone into ▾": the picked target (default: the selected storage); the menu lists Cloud-Store, Emulated and each drive. */
-@Composable
-fun GitCloneTargetRow(targets: List<GitStorage.Target>, picked: GitStorage.Target?, onPick: (GitStorage.Target) -> Unit, trailing: @Composable () -> Unit = {}) {
-    var open by remember { mutableStateOf(false) }
-    androidx.compose.foundation.layout.Row(Modifier.fillMaxWidth().padding(horizontal = DriveMetrics.sectionInset).testTag(DriveTags.SYNC_GIT_STORAGE + "_clone_into"), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-        Text(stringResource(R.string.git_clone_into), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        androidx.compose.foundation.layout.Spacer(Modifier.size(DriveMetrics.gap))
-        Box {
-            FilterChip(selected = true, onClick = { open = true }, label = { Text(picked?.label.orEmpty() + " ▾", style = MaterialTheme.typography.labelSmall, maxLines = 1) }, modifier = Modifier.height(DriveMetrics.chipHeight))
-            DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-                targets.forEachIndexed { n, t ->
-                    DropdownMenuItem(
-                        text = { Text(t.label) },
-                        leadingIcon = { Icon(IconCatalog.vectorOrDefault(when (t.kind) { GitStorage.Kind.STORE -> "cloud"; GitStorage.Kind.EMULATED -> "smartphone"; GitStorage.Kind.EXTERNAL -> "usb" }), contentDescription = null) },
-                        onClick = { open = false; onPick(t) },
-                        modifier = Modifier.testTag(DriveTags.SYNC_GIT_STORAGE + "_clone_into_" + n),
-                    )
-                }
-            }
-        }
-        androidx.compose.foundation.layout.Spacer(Modifier.weight(1f))
-        trailing()
-    }
 }
 
 /** #1356 the conflict solver over every repository with conflicts: one line each, a tap opens the engine's solver on it. */

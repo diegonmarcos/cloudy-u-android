@@ -943,6 +943,37 @@ class GitSyncCoordinator(private val ctx: Context, private val scope: CoroutineS
         }
     }
 
+    /**
+     * #1452 CLONE BARE ALL (no hist): for each target a bare, depth-1 clone (`--bare --depth 1`: the repository only, no working-tree
+     * files, the latest commit of each ref) through libs:git-core's JGit, at the bare path (<store git>/<bare_root>/<owner>/<repo>.git).
+     * One per repository: a target that already has a bare copy (or a working clone) is skipped, never doubled.
+     */
+    fun cloneBareNoHist(action: Declarations.GitDepthActionDecl, targets: List<CloneTarget>) {
+        val canonical: (String) -> String = { Declarations.repoSot.canonical(it) }
+        depth(action, plan = {
+            val gitRoot = SharedStore.gitRoot().absolutePath
+            targets.map { t ->
+                val dest = BareClones.path(gitRoot, Declarations.sync.git.bareRoot, t.url, t.name, canonical)
+                val held = dest?.takeIf { com.diegonmarcos.cloudlib.gitcore.JGitEngine.isBare(File(it)) }
+                DepthItem(dest.orEmpty(), t.name, held, if (dest == null) "no safe bare path for ${t.name}" else null) to t
+            }
+        }, onEnd = { withContext(Dispatchers.IO) { scanUnlisted() } }) { (item, t0) ->
+            item.refusal?.let { return@depth t0.name to Outcome.FAIL to it }
+            if (item.held != null) return@depth t0.name to Outcome.SKIP to "already a bare copy"
+            val t = if (t0.token.isBlank()) t0.copy(token = runCatching { declaredToken() }.getOrDefault("")) else t0
+            val managed = ManagedRepo(id = RepoRegistry.idFor(item.path), name = t.name, path = item.path, remoteUrl = t.url, authKind = t.authKind, authUsername = t.username)
+            if (t.token.isNotBlank()) credentials.setSecret(managed.id, t.token)
+            val r = withContext(Dispatchers.IO) {
+                runCatching {
+                    GitConnect.clone(ctx, t.url, File(item.path), auth = authFor(managed), depth = 1, bare = true).close()
+                    GitOpResult(true, "bare, depth 1: ${File(item.path).name}")
+                }.getOrElse { GitOpResult(false, it.message ?: it.toString()) }
+            }
+            withContext(Dispatchers.IO) { history.append(SyncEvent(System.currentTimeMillis() / 1000, "bare:" + t.name, t.name, SyncHistory.TRIGGER_MANUAL, r.ok, "${action.id}: ${r.summary}", r.details)) }
+            t.name to (if (r.ok) Outcome.OK else Outcome.FAIL) to (if (r.ok) r.summary else BulkDepth.withTail(r.summary, r.details))
+        }
+    }
+
     /** One depth command at a time; the run state and the job are the coordinator's, so a page close does not lose them. */
     /** One planned item of a depth / folder command: the path it locks (host form; "" = none), the name the report shows, what already holds it, or why it cannot run. */
     private data class DepthItem(val path: String, val name: String, val held: String? = null, val refusal: String? = null)
@@ -1357,7 +1388,7 @@ class GitSyncCoordinator(private val ctx: Context, private val scope: CoroutineS
         /** #1315 the last inventory pass's entries (InventoryScript.encode), re-classified at start. */
         const val KEY_INVENTORY = "git.inventory"
         /** #1315 the job kinds the depth report, the depth progress line and the status window follow (depth commands and folder commands). */
-        val DEPTH_JOB_KINDS: Array<String> = arrayOf(Declarations.DEPTH_CLONE_MISSING, Declarations.DEPTH_KEEP, Declarations.DEPTH_CLONE_BARE, Declarations.FOLDER_RENAME, Declarations.FOLDER_ARCHIVE, Declarations.FOLDER_DELETE, Declarations.FOLDER_REPOINT)
+        val DEPTH_JOB_KINDS: Array<String> = arrayOf(Declarations.DEPTH_CLONE_MISSING, Declarations.DEPTH_KEEP, Declarations.DEPTH_CLONE_BARE, Declarations.DEPTH_CLONE_BARE_NOHIST, Declarations.FOLDER_RENAME, Declarations.FOLDER_ARCHIVE, Declarations.FOLDER_DELETE, Declarations.FOLDER_REPOINT)
         const val CLEANUP_DEBRIS = "cleanup_debris"
         const val BARE_NO_TERMUX = "bare clones run git in cld.termux, which is not answering; nothing changed"
         const val KEY_LAST_COMMITS = "git.last_commits"

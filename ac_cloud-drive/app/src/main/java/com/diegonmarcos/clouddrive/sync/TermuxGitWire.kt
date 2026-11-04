@@ -142,7 +142,7 @@ object TermuxGitWire {
             "abort_merge" -> ok(g(dir, "merge --abort") + " 2>/dev/null || " + g(dir, "reset --hard"))
             "init" -> ok("mkdir -p ${q(dir)}; git init -q ${q(dir)}")
             "clone" -> {
-                val depth = a.optInt("depth", 0).let { if (it > 0) "--depth $it " else "" }
+                val depth = (if (a.optBoolean("bare", false)) "--bare " else "") + a.optInt("depth", 0).let { if (it > 0) "--depth $it " else "" }
                 ok("mkdir -p \"\$(dirname ${q(dir)})\"; H=\"\$(cat)\"; if [ -n \"\$H\" ]; then git -c http.extraHeader=\"\$H\" clone $depth${q(a.optString("url"))} ${q(dir)}; " +
                     "else git clone $depth${q(a.optString("url"))} ${q(dir)}; fi; " + track(dir), true, header)
             }

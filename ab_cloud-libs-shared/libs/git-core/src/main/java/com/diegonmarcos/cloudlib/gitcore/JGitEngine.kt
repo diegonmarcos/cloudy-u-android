@@ -489,6 +489,9 @@ class JGitEngine(val workTree: File) : AutoCloseable {
     companion object {
         fun isRepository(dir: File): Boolean = File(dir, ".git").exists()
 
+        /** #1452 a bare repository: the folder itself holds HEAD and objects (what a bare clone leaves). */
+        fun isBare(dir: File): Boolean = File(dir, "HEAD").isFile && File(dir, "objects").isDirectory && !File(dir, ".git").exists()
+
         fun init(dir: File): JGitEngine {
             Git.init().setDirectory(dir).call().close()
             return JGitEngine(dir)
@@ -499,8 +502,10 @@ class JGitEngine(val workTree: File) : AutoCloseable {
          *   #603 the host seeds its store with depth 1: a working tree is what the user wants and
          *   the full history is megabytes it never asked for. 0 keeps the complete clone.
          */
-        fun clone(url: String, dir: File, auth: GitAuth = GitAuth.None, depth: Int = 0): JGitEngine {
+        fun clone(url: String, dir: File, auth: GitAuth = GitAuth.None, depth: Int = 0, bare: Boolean = false): JGitEngine {
             val cmd = Git.cloneRepository().setURI(url).setDirectory(dir)
+            // #1452 [bare]: only the repository itself (no working tree, no .git folder: [dir] IS the git dir); with [depth] 1 it is the latest commit of each ref only.
+            if (bare) cmd.setBare(true)
             if (depth > 0) cmd.setDepth(depth)
             when (auth) {
                 is GitAuth.None -> Unit

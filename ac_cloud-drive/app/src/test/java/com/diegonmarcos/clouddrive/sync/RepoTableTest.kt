@@ -150,4 +150,18 @@ class RepoTableTest {
         assertEquals(listOf("c", "a", "b"), names(rows, RepoColumn.MESSAGE, true))
         assertEquals(listOf("a", "c", "b"), names(rows, RepoColumn.MESSAGE, false))
     }
+
+    @Test fun `#1452 a bare repository has its own bare status kind, an unverifiable light, and sorts by it`() {
+        assertEquals(com.diegonmarcos.clouddrive.ui.StatusLight.State.UNVERIFIABLE, RepoStatus.light(RepoStatus.Kind.BARE))
+        val rows = listOf(row("a").copy(status = RepoStatus.Kind.BARE), row("b").copy(status = RepoStatus.Kind.CLEAN), row("c").copy(status = RepoStatus.Kind.NOT_CLONED))
+        assertEquals(listOf("c", "b", "a"), names(rows, RepoColumn.STATUS, true))
+    }
+
+    @Test fun `#1452 Clone Bare All (no hist) is declared in the Clone dropdown, depth 1, both scopes, next to Clone Depth 1 All`() {
+        val all = com.diegonmarcos.clouddrive.Declarations.sync.git.depthActions(com.diegonmarcos.clouddrive.Declarations.DEPTH_SCOPE_ALL).filter { it.kind == com.diegonmarcos.clouddrive.Declarations.DEPTH_CLONE_BARE_NOHIST }
+        assertEquals(1, all.size); assertEquals(1, all[0].depth); assertEquals("Clone Bare All (no hist)", all[0].label)
+        assertEquals(1, com.diegonmarcos.clouddrive.Declarations.sync.git.depthActions(com.diegonmarcos.clouddrive.Declarations.DEPTH_SCOPE_REPO).count { it.kind == com.diegonmarcos.clouddrive.Declarations.DEPTH_CLONE_BARE_NOHIST })
+        val clone = com.diegonmarcos.clouddrive.Declarations.sync.git.topBar.groups.first { it.id == "clone" }.items.map { it.label }
+        assertEquals(listOf("Clone Depth 1 All", "Clone Bare All (no hist)"), clone)
+    }
 }

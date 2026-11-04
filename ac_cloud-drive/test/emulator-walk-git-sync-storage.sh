@@ -146,7 +146,7 @@ tap '^Create ' && sleep 3 && shot 41-drive-created || note "no Create offer: $(t
 adb shell "rmdir $ROOT/git 2>/dev/null; mkdir -p $ROOT/GIT" || fail "no GIT folder on the drive"
 pick 'Cloud-Store \(Termux\)'; pick 'External Drive'
 shot 42-drive-empty-git
-# Clone into: the picker lists Cloud-Store, Emulated and the drive (by its label), the drive selected
+# #1452 no Clone-into picker: a clone lands in the selected environment (the drive)
 tap '^Cloud$' >/dev/null 2>&1; sleep 4
 shot 43-cloud-page
 if tap '^External Drive$|Virtual|USB|disk' ; then :; fi
@@ -164,8 +164,8 @@ else
 fi
 for i in 1 2 3; do dump >/dev/null; grep -q 'text="Emulated"' "$OUT/ui.xml" && back; tap '^Me$' >/dev/null 2>&1; sleep 3; dump >/dev/null; grep -q 'text="Cloud Drive / Git / Me"' "$OUT/ui.xml" && break; done
 grep -q 'text="Cloud Drive / Git / Me"' "$OUT/ui.xml" || fail "the Me page did not open: $(texts)"
-for i in 1 2 3; do pick 'External Drive'; dump >/dev/null; grep -qE 'text="External Drive( ▾)?"|content-desc="External Drive"' "$OUT/ui.xml" && ! grep -q 'text="Cloud-Store (Termux) ▾"' "$OUT/ui.xml" && break; done
-grep -q 'text="Cloud-Store (Termux) ▾"' "$OUT/ui.xml" && fail "External Drive was not selected: $(texts)"
+for i in 1 2 3; do pick 'External Drive'; dump >/dev/null; grep -q 'content-desc="External Drive"' "$OUT/ui.xml" && break; done
+grep -q 'content-desc="External Drive"' "$OUT/ui.xml" || fail "External Drive was not selected: $(texts)"
 shot 45-drive-listed
 dump >/dev/null; texts > "$OUT/drive-texts.txt"
 tap '^Check$' && sleep 8 && shot 46-drive-checked || note "Check not tappable: $(texts)"

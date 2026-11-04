@@ -217,15 +217,17 @@ internal object GitSearchMetrics {
 
 /** The quick-filter rail: every option declared `quick`, with its live count; a tap selects it (or its filter's default when already on). */
 @Composable
-internal fun QuickFilterRail(filters: List<Declarations.GitFilterDecl>, selection: Map<String, String>, counts: (Declarations.GitFilterDecl) -> Map<String, Int>, onPick: (Declarations.GitFilterDecl, String) -> Unit) {
+internal fun QuickFilterRail(filters: List<Declarations.GitFilterDecl>, selection: Map<String, String>, counts: (Declarations.GitFilterDecl) -> Map<String, Int>, lead: @Composable () -> Unit = {}, onPick: (Declarations.GitFilterDecl, String) -> Unit) {
     val quick = filters.flatMap { f -> f.options.filter { it.quick }.map { f to it } }
-    if (quick.isEmpty()) return
     val rail = androidx.compose.foundation.lazy.rememberLazyListState()
-    // #1356 one sideways-scrolling row of compact chips; the end edge fades while more chips lie past it.
-    LazyRow(Modifier.fillMaxWidth().scrollFadeEnd(rail.canScrollForward).testTag(DriveTags.SYNC_GIT_QUICK_FILTERS), state = rail, contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = DriveMetrics.sectionInset), horizontalArrangement = Arrangement.spacedBy(DriveMetrics.gapWide)) {
-        items(quick, key = { it.first.id + ":" + it.second.id }) { (f, o) ->
-            val n = counts(f)[o.id] ?: 0
-            FilterChip(selected = RepoFilters.selected(f, selection) == o.id, onClick = { onPick(f, o.id) }, label = { Text("${o.label} ($n)", style = MaterialTheme.typography.labelSmall, maxLines = 1) }, modifier = Modifier.height(DriveMetrics.chipHeight))
+    // #1356 one sideways-scrolling row of compact chips; the end edge fades while more chips lie past it. #1452 the Filters button leads it.
+    Row(Modifier.fillMaxWidth().padding(start = DriveMetrics.sectionInset), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(DriveMetrics.gapWide)) {
+        lead()
+        if (quick.isNotEmpty()) LazyRow(Modifier.weight(1f).scrollFadeEnd(rail.canScrollForward).testTag(DriveTags.SYNC_GIT_QUICK_FILTERS), state = rail, contentPadding = androidx.compose.foundation.layout.PaddingValues(end = DriveMetrics.sectionInset), horizontalArrangement = Arrangement.spacedBy(DriveMetrics.gapWide)) {
+            items(quick, key = { it.first.id + ":" + it.second.id }) { (f, o) ->
+                val n = counts(f)[o.id] ?: 0
+                FilterChip(selected = RepoFilters.selected(f, selection) == o.id, onClick = { onPick(f, o.id) }, label = { Text("${o.label} ($n)", style = MaterialTheme.typography.labelSmall, maxLines = 1) }, modifier = Modifier.height(DriveMetrics.chipHeight))
+            }
         }
     }
 }

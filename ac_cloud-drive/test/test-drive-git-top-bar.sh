@@ -52,7 +52,9 @@ t2() {
   grep -q 'repo_bulk_' "$APP/app/src/main/res/values/strings.xml" && { echo "    strings.xml still carries repo_bulk_*"; bad=1; }
   grep -rqE 'fun (RepoBulkBar|DepthBar|RepoFilterRow)\(' "$SYNC" && { echo "    an old bar composable survives"; bad=1; }
   local block; block=$(sed -n '/stickyHeader(key = "table-top")/,/^        }$/p' "$1")
-  for t in 'GitTopBar(page.topBar' 'GitJobLine(' 'GitSearchRow(' 'QuickFilterRail(' 'Text(summaryLine' 'RepoTableHeader(sortColumn'; do grep -qF -- "$t" <<<"$block" || { echo "    the sticky block lacks $t"; bad=1; }; done
+  for t in 'GitTopBar(page.topBar' 'GitJobLine(' 'GitSearchRow(' 'QuickFilterRail(' 'RepoTableHeader(sortColumn'; do grep -qF -- "$t" <<<"$block" || { echo "    the sticky block lacks $t"; bad=1; }; done
+  # #1452 two rows only (actions, filters): no Clone-into row, no summary line
+  for t in 'GitCloneTargetRow(' 'Text(summaryLine'; do grep -qF -- "$t" <<<"$block" && { echo "    the sticky block still has $t"; bad=1; }; done
   grep -q 'item(key = "table-bulk")' "$1" && { echo "    a plain item still sits above the sticky block"; bad=1; }
   return $bad
 }
@@ -126,9 +128,10 @@ g = json.load(open(sys.argv[1]))["ui"]["sync"]["git"]; bar = open(sys.argv[2]).r
 groups = g["top_bar"]["groups"]; bad = []
 if [x["id"] for x in groups] != ["check", "sync", "clone", "logs", "more"]: bad.append("groups are %s" % [x["id"] for x in groups])
 else:
-    want = [("check_full", "check_full"), ("clone_missing", "depth"), ("logs", "open_logs")]
+    want = [("check_full", "check_full"), None, ("logs", "open_logs")]   # #1452 Clone is a dropdown of two (Clone Depth 1 All | Clone Bare All (no hist))
     got = [(x["items"][0]["id"], x["items"][0]["kind"]) if len(x["items"]) == 1 else None for x in (groups[0], groups[2], groups[3])]
     if got != want: bad.append("the three buttons are %s, want %s" % (got, want))
+    if [(i["id"], i["kind"], i["action"]) for i in groups[2]["items"]] != [("clone_missing", "depth", "clone_all_depth1"), ("clone_bare_nohist", "depth", "clone_all_bare_nohist")]: bad.append("the Clone dropdown is not Clone Depth 1 All, Clone Bare All (no hist)")
     # #1356 Sync is a dropdown: Sync All (Server Wins | Local Wins | No Winner) then Manual Sync (Stash All, Pull (Rebase), Stash Pop All, Conflicts All)
     sy = [(i["section"], i["kind"], i.get("op", "")) for i in groups[1]["items"]]
     want_sync = [("Sync All", "compound", "sync_remote_wins"), ("Sync All", "compound", "sync_local_wins"), ("Sync All", "compound", "sync_no_winner"),
@@ -263,7 +266,7 @@ screen, sp = (open(p).read() for p in sys.argv[1:3]); bad = []
 body = screen[screen.index("fun GitPageScreen("):]; body = body[:body.index("\n}\n")]
 if "storageRepos = storageRepos" not in body or body.count("GitReposScreen(") < 2: bad.append("Emulated / External do not run the Git page")
 if "GitStorageRepos(" in body or "fun GitStorageRepos(" in sp or "DriveCard(" in sp: bad.append("a second card-list UI is back")
-if "GitStorageMenu(" not in body or "fun GitStorageMenu(" not in sp or "Modifier.height(DriveMetrics.chipHeight)" not in sp: bad.append("the selector is not a compact pill")
+if "GitStorageMenu(" not in body or "fun GitStorageMenu(" not in sp or "com.diegonmarcos.clouddrive.ui.Pill(" not in sp: bad.append("the selector is not the bar's own pill + dropdown")
 if "GitStorageEmpty(" not in body or "git_storage_no_drive" not in sp or "git_storage_no_folder" not in sp: bad.append("the empty states are gone")
 print("\\n".join(bad)); sys.exit(1 if bad else 0)
 PY

@@ -193,8 +193,8 @@ class GitEngine(
          *   #603 the host seeds its store with depth 1: a working tree is what the user wants and
          *   the full history is megabytes it never asked for. 0 keeps the complete clone.
          */
-        fun clone(transport: GitTransport, url: String, dir: File, auth: GitAuth = GitAuth.None, depth: Int = 0): GitEngine {
-            GitEngine(transport, dir).call("clone", JSONObject().put("url", url).put("depth", depth), auth)
+        fun clone(transport: GitTransport, url: String, dir: File, auth: GitAuth = GitAuth.None, depth: Int = 0, bare: Boolean = false): GitEngine {
+            GitEngine(transport, dir).call("clone", JSONObject().put("url", url).put("depth", depth).put("bare", bare), auth)
             forgetRepository(dir)
             return GitEngine(transport, dir)
         }

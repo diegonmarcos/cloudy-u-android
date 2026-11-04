@@ -25,5 +25,5 @@ fun GitEngine(context: Context, workTree: File): GitEngine = GitEngine(GitTransp
 
 fun GitEngine.Companion.init(context: Context, dir: File): GitEngine = init(GitTransports.forDir(context, dir), dir)
 
-fun GitEngine.Companion.clone(context: Context, url: String, dir: File, auth: GitAuth = GitAuth.None, depth: Int = 0): GitEngine =
-    clone(GitTransports.forDir(context, dir), url, dir, auth, depth)
+fun GitEngine.Companion.clone(context: Context, url: String, dir: File, auth: GitAuth = GitAuth.None, depth: Int = 0, bare: Boolean = false): GitEngine =
+    clone(GitTransports.forDir(context, dir), url, dir, auth, depth, bare)

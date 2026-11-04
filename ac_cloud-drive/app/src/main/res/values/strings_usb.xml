@@ -43,7 +43,6 @@
     <string name="git_storage_create">Create</string>
     <string name="git_storage_created">Created %1$s</string>
     <string name="git_storage_create_failed">Could not create %1$s (no write access)</string>
-    <string name="git_clone_into">Clone into</string>
     <string name="git_conflicts_title">Repositories with conflicts</string>
     <string name="git_conflicts_none">No repository has conflicts.</string>
     <string name="git_conflicts_count">%1$d conflicted file(s)</string>

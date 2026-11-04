@@ -641,7 +641,7 @@ object Declarations {
                 val id = a.str("id"); val kind = a.str("kind"); val scope = a.str("scope")
                 if (id.isBlank() || kind !in DEPTH_KINDS || scope !in DEPTH_SCOPES) null
                 // #1314 a bare mirror is depth 1 by default (no working tree, the latest commit per ref); a declared 0 still means full history.
-                else GitDepthActionDecl(id, a.str("label", id), a.str("icon"), kind, scope, if (kind == DEPTH_CLONE_BARE) (a.int("depth") ?: 1).coerceIn(0, 1000) else (a.int("depth") ?: 1).coerceIn(1, 1000), (a.int("workers") ?: 1).coerceIn(1, 4), a.bool("confirm"))
+                else GitDepthActionDecl(id, a.str("label", id), a.str("icon"), kind, scope, if (kind == DEPTH_CLONE_BARE) (a.int("depth") ?: 1).coerceIn(0, 1000) else if (kind == DEPTH_CLONE_BARE_NOHIST) 1 else (a.int("depth") ?: 1).coerceIn(1, 1000), (a.int("workers") ?: 1).coerceIn(1, 4), a.bool("confirm"))
             },
             unlisted = (o["unlisted"] as? JsonObject)?.let { u ->
                 GitUnlistedDecl(u.str("label"), u.strings("roots"), (u.int("max_depth") ?: 2).coerceIn(0, 6), (u.int("max_dirs") ?: 2000).coerceIn(1, 100_000), (u.int("timeout_seconds") ?: 30).coerceIn(1, 600))
@@ -939,7 +939,10 @@ object Declarations {
     /** #1282 a bare mirror per repository under ui.sync.git.bare_root (BareClones). */
     const val DEPTH_CLONE_BARE = "clone_bare"
 
-    val DEPTH_KINDS = setOf(DEPTH_CLONE_MISSING, DEPTH_KEEP, DEPTH_CLONE_BARE)
+    /** #1452 Clone Bare All (no hist): `--bare --depth 1` through libs:git-core (JGit setBare + setDepth), under the same bare root: the repository only, no working tree. */
+    const val DEPTH_CLONE_BARE_NOHIST = "clone_bare_nohist"
+
+    val DEPTH_KINDS = setOf(DEPTH_CLONE_MISSING, DEPTH_KEEP, DEPTH_CLONE_BARE, DEPTH_CLONE_BARE_NOHIST)
     val DEPTH_SCOPES = setOf(DEPTH_SCOPE_ALL, DEPTH_SCOPE_REPO)
     /** #1288 the per-folder command kinds the Parentless / Unlisted tables dispatch on (test-drive-git-folder-actions.sh diffs both ways). */
     const val FOLDER_RENAME = "rename_to_repo"

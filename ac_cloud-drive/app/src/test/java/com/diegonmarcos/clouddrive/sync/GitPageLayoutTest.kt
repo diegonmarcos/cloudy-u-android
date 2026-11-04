@@ -154,7 +154,7 @@ class GitPageLayoutTest {
         assertTrue("the Status Message is a table column after the name", tableUi.contains("RepoMessageCell(r.message, r.messageProblem)") && tableUi.contains("RepoColumn.MESSAGE -> R.string.repo_col_message"))
         assertTrue("the note under a row went into the message", !src.contains("e.note.isNotBlank()"))
         val line = tableUi.substring(tableUi.indexOf("fun RepoTableLine("), tableUi.indexOf("fun RepoNameCell("))
-        assertTrue("the whole line scrolls on the shared state (nothing pinned)", line.contains("horizontalScroll(scroll)") && line.contains("heightIn(min = k.rowHeight)"))
+        assertTrue("the whole line scrolls on the shared state (nothing pinned), at the Cloud Store row's own padding, no height floor", line.contains("horizontalScroll(scroll)") && line.contains("top = KitStoreRow.padV, bottom = KitStoreRow.padV") && !line.contains("heightIn("))
         val folder = File(root, "app/src/main/java/com/diegonmarcos/clouddrive/sync/FolderTableUi.kt").readText()
         assertTrue("the folder tables draw the same line, the outcome in the message cell", folder.contains("RepoTableLine(scroll,") && folder.contains("RepoMessage.ofFolder(") && !folder.contains("run.lines()"))
     }

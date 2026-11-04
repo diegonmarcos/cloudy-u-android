@@ -30,6 +30,8 @@ object RepoStatus {
         ERROR(StatusLight.State.OFF), CONFLICT(StatusLight.State.OFF), DIRTY(StatusLight.State.OFF),
         DIVERGED(StatusLight.State.OFF), NO_UPSTREAM(StatusLight.State.OFF),
         BEHIND(StatusLight.State.ON), AHEAD(StatusLight.State.ON), CLEAN(StatusLight.State.ON),
+        /** #1452 a bare repository (no working tree: a Clone Bare All (no hist) copy, a mirror): nothing to be dirty or ahead of. */
+        BARE(StatusLight.State.UNVERIFIABLE),
     }
 
     /** The kind of one row: [cloned] says whether a clone is registered, [g] is the status reader's last answer for it. */

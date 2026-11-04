@@ -48,6 +48,7 @@ private fun kindText(k: RepoStatus.Kind): String = stringResource(when (k) {
     RepoStatus.Kind.BEHIND -> R.string.repo_kind_behind
     RepoStatus.Kind.AHEAD -> R.string.repo_kind_ahead
     RepoStatus.Kind.CLEAN -> R.string.repo_kind_clean
+    RepoStatus.Kind.BARE -> R.string.repo_kind_bare
 })
 
 /**

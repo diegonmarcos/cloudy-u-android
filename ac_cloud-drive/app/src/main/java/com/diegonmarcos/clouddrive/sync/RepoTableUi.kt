@@ -3,6 +3,10 @@ package com.diegonmarcos.clouddrive.sync
 import com.diegonmarcos.cloudlib.gitui.*
 
 import androidx.compose.material3.Icon
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import com.diegonmarcos.superapp.uikit.KitStoreDot
+import com.diegonmarcos.superapp.uikit.KitStoreRow
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -48,17 +52,29 @@ import com.diegonmarcos.clouddrive.ui.StatusLight
 internal fun RepoTableHeader(column: RepoColumn, ascending: Boolean, scroll: ScrollState, tag: String = DriveTags.SYNC_GIT_TABLE_HEADER, onSort: (RepoColumn) -> Unit) =
     com.diegonmarcos.cloudlib.gitui.RepoTableHeader(column, ascending, scroll, RepoTable.COLUMNS.filter { it in RepoTable.PINNED }, RepoTable.COLUMNS.filter { it !in RepoTable.PINNED }, tag, onSort)
 
-/** #1238 the leftmost cell: the cell is libs:git-ui's; Drive draws its LOCAL | SERVER | SYNC lights from its status model. */
+/**
+ * #1238 the leftmost cell: the cell is libs:git-ui's; Drive draws its LOCAL | SERVER | SYNC lights from its status model.
+ * #1452 in the Cloud Store's icon style and palette (KitStoreRow: ✓ green, ⚠ red, ◌ / · dim; the same glyph text as a Store row's state dot).
+ */
 @Composable
 internal fun RepoStatusCell(icons: RepoStatus.Icons, name: String, onOpen: () -> Unit, caption: String = "") {
     val decl = Declarations.sync.git.status.icons
+    val ctx = androidx.compose.ui.platform.LocalContext.current
     com.diegonmarcos.cloudlib.gitui.RepoStatusCell(onOpen, caption, dots = {
-        // "not checked yet" / "never" draw a hollow dotted circle, never the "?" of a read that does not end.
-        fun glyph(l: StatusLight.State) = if (l == StatusLight.State.UNVERIFIABLE) "\u25CC" else StatusLight.glyph(l)
-        val lo = RepoStatus.lightOf("local", icons.local, decl); val se = RepoStatus.lightOf("server", icons.server, decl); val sy = RepoStatus.lightOf("sync", icons.sync, decl)
-        StatusDot(lo, "$name local ${icons.local.name.lowercase()}", glyph = glyph(lo))
-        StatusDot(se, "$name server ${icons.server.name.lowercase()}", glyph = glyph(se))
-        StatusDot(sy, "$name sync ${icons.sync.name.lowercase()}", glyph = glyph(sy))
+        fun light(l: StatusLight.State, what: String, word: String) {
+            val (glyph, ink) = when (l) {
+                StatusLight.State.ON -> "\u2713" to KitStoreRow.UP
+                StatusLight.State.OFF -> "\u26A0" to KitStoreRow.BAD
+                StatusLight.State.UNVERIFIABLE -> "\u25CC" to null
+                StatusLight.State.UNKNOWN -> "\u00B7" to null
+            }
+            val description = StatusLight.description(ctx, "$name $what ${word.lowercase()}", l)
+            KitStoreDot(glyph, ink ?: androidx.compose.material3.LocalContentColor.current.copy(alpha = 0.6f),
+                Modifier.testTag(DriveTags.STATUS_LIGHT).semantics { contentDescription = description }, endPad = KitStoreRow.tight)
+        }
+        light(RepoStatus.lightOf("local", icons.local, decl), "local", icons.local.name)
+        light(RepoStatus.lightOf("server", icons.server, decl), "server", icons.server.name)
+        light(RepoStatus.lightOf("sync", icons.sync, decl), "sync", icons.sync.name)
     })
 }
 

@@ -25,6 +25,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import com.diegonmarcos.superapp.uikit.KitStoreCaption
+import com.diegonmarcos.superapp.uikit.KitStoreRow
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
@@ -797,6 +802,10 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
                     if (ssh) GitSyncCoordinator.AUTH_SSH else GitSyncCoordinator.AUTH_HTTPS, login.identity, if (ssh) "" else login.token)
             })
             Declarations.DEPTH_KEEP -> coordinator.keepDepth(a)
+            // #1452 Clone Bare All (no hist): --bare --depth 1 through libs:git-core.
+            Declarations.DEPTH_CLONE_BARE_NOHIST -> coordinator.cloneBareNoHist(a, Declarations.repoSot.repos.filter { !it.pending && !it.archived }.map { r ->
+                GitSyncCoordinator.CloneTarget(r.github, page.cloneUrl(r.github, Declarations.REMOTE_HTTPS), GitSyncCoordinator.AUTH_HTTPS, login.identity, login.token)
+            })
             // #1282 one bare mirror per registry repository (an existing mirror is updated, never doubled).
             Declarations.DEPTH_CLONE_BARE -> coordinator.cloneBare(a, Declarations.repoSot.repos.filter { !it.pending && !it.archived }.map { r ->
                 GitSyncCoordinator.CloneTarget(r.github, page.cloneUrl(r.github, Declarations.REMOTE_HTTPS), GitSyncCoordinator.AUTH_HTTPS, login.identity, login.token)
@@ -929,11 +938,8 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
                 GitJobLine(jobLine, page.topBar::label, onCancel = { jobLine?.let { coordinator.jobs.cancel(it.id) } }, onDismiss = { jobLine?.let { coordinator.jobs.dismiss(it.id) } },
                     onOpen = { if (depthRun != null) showDepthReport = true else { logsTab = "app"; showActivity = true } })
                 fullProgress?.let { p -> Text(stringResource(R.string.repo_full_progress, p.done, p.total), Modifier.fillMaxWidth().padding(horizontal = DriveMetrics.sectionInset).testTag(DriveTags.SYNC_GIT_FULL_PROGRESS), style = MaterialTheme.typography.labelSmall) }
-                // #1452 no search field: the Filters button shares the Clone-into row.
-                val filtersRow: @Composable () -> Unit = { GitSearchRow(page.topBar, query, { query = it }, RepoFilters.active(page.filters, filterSel), onFilters = { showFilters = true }, onClear = { coordinator.clearFilters(); query = "" }) }
-                if (cloneTargets.isNotEmpty()) GitCloneTargetRow(cloneTargets, cloneTarget, { t -> cloneTarget = t; folderTick++; if (t.kind != GitStorage.Kind.STORE) cloneBlocked() }, trailing = filtersRow) else Row(Modifier.fillMaxWidth().padding(horizontal = DriveMetrics.sectionInset), horizontalArrangement = Arrangement.End) { filtersRow() }
-                QuickFilterRail(page.filters, filterSel, ::countsOf) { f, o -> coordinator.setFilter(f.id, RepoFilters.toggle(f, filterSel, o)) }
-                Text(summaryLine, Modifier.fillMaxWidth().padding(horizontal = DriveMetrics.sectionInset, vertical = DriveMetrics.gap).testTag(DriveTags.SYNC_GIT_SUMMARY), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                // #1452 two rows only: the actions, then the filters (the Filters button leads the quick-filter chips).
+                QuickFilterRail(page.filters, filterSel, ::countsOf, lead = { GitSearchRow(page.topBar, query, { query = it }, RepoFilters.active(page.filters, filterSel), onFilters = { showFilters = true }, onClear = { coordinator.clearFilters(); query = "" }) }) { f, o -> coordinator.setFilter(f.id, RepoFilters.toggle(f, filterSel, o)) }
                 // #642 what the last clone handoff did, right under the bar that can trigger it: no press of Clone is silent.
                 if (handoff.isNotBlank()) Text(
                     handoff,
@@ -1202,7 +1208,7 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
         AlertDialog(
             onDismissRequest = { depthConfirm = null },
             title = { Text(a.label) },
-            text = { Text(if (a.kind == Declarations.DEPTH_CLONE_BARE) stringResource(R.string.repo_bare_confirm, Declarations.sync.git.bareRoot) else stringResource(if (a.kind == Declarations.DEPTH_KEEP) R.string.repo_depth_confirm_keep else R.string.repo_depth_confirm_clone, a.depth)) },
+            text = { Text(if (a.kind == Declarations.DEPTH_CLONE_BARE || a.kind == Declarations.DEPTH_CLONE_BARE_NOHIST) stringResource(R.string.repo_bare_confirm, Declarations.sync.git.bareRoot) else stringResource(if (a.kind == Declarations.DEPTH_KEEP) R.string.repo_depth_confirm_keep else R.string.repo_depth_confirm_clone, a.depth)) },
             confirmButton = { TextButton(onClick = { runDepthAll(a); depthConfirm = null }) { Text(a.label) } },
             dismissButton = { TextButton(onClick = { depthConfirm = null }) { Text(stringResource(R.string.chrome_cancel)) } },
         )
@@ -1471,16 +1477,11 @@ private fun GitRepoRow(
             if (copies > 1) CapsuleBadge("$copies$copiesLabel")
         }
         RepoCells(cells)
-        Box(Modifier.width(DriveMetrics.tableName), contentAlignment = Alignment.CenterEnd) {
-            when {
-                cloning -> Text(stringResource(R.string.git_cloning), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                // #1238 the Clone repo button left the row: it is the last section of the status window.
-                else -> Icon(
-                    if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
-                    contentDescription = stringResource(if (expanded) R.string.git_collapse else R.string.git_expand),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+        // The Store row's chevron (› / ⌄); #1238 the Clone repo button left the row: it is the last section of the status window.
+        Box(Modifier.widthIn(min = DriveMetrics.tap), contentAlignment = Alignment.CenterEnd) {
+            val chevron = stringResource(if (expanded) R.string.git_collapse else R.string.git_expand)
+            if (cloning) KitStoreCaption(stringResource(R.string.git_cloning), color = MaterialTheme.colorScheme.onSurfaceVariant)
+            else Text(if (expanded) "\u2304" else "\u203A", Modifier.semantics { contentDescription = chevron }, fontSize = KitStoreRow.title, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
     if (running != null) LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = DriveMetrics.sectionInset))
@@ -1646,6 +1647,7 @@ private fun GitRepoOpsBox(
                     when {
                         it.kind == Declarations.DEPTH_KEEP -> if (it.confirm) depthAsk = it else coordinator.keepDepth(it, repo)
                         it.kind == Declarations.DEPTH_CLONE_BARE -> coordinator.cloneBare(it, listOf(target))
+                        it.kind == Declarations.DEPTH_CLONE_BARE_NOHIST -> coordinator.cloneBareNoHist(it, listOf(target))
                         it.kind == Declarations.DEPTH_CLONE_MISSING -> coordinator.cloneMissing(it, listOf(target))
                     }
                     return
@@ -1918,6 +1920,7 @@ private fun GitRepoNotClonedBox(
                         when {
                             it.kind == Declarations.DEPTH_CLONE_MISSING -> coordinator.cloneMissing(it, listOf(target))
                             it.kind == Declarations.DEPTH_CLONE_BARE -> coordinator.cloneBare(it, listOf(target))
+                            it.kind == Declarations.DEPTH_CLONE_BARE_NOHIST -> coordinator.cloneBareNoHist(it, listOf(target))
                         }
                     }
                 }

@@ -16,9 +16,9 @@ import kotlin.math.roundToInt
  */
 object StoreDensity {
     /** Every dp value of the Store is multiplied by this (1.0 = the old, launcher-sized look). */
-    const val SCALE = 0.7f
+    const val SCALE = com.diegonmarcos.superapp.uikit.KitStoreRow.SCALE
     /** Every sp value of the Store is multiplied by this. */
-    const val TEXT_SCALE = 0.78f
+    const val TEXT_SCALE = com.diegonmarcos.superapp.uikit.KitStoreRow.TEXT_SCALE
 
     // Spacing steps (dp, before SCALE): the six-step set every old pad collapses into.
     const val S1 = 1

@@ -495,15 +495,9 @@ object StoreRow {
     ) {
         // The head is ONE tap target (it merges its texts into the node [headTag] names); a test reads the
         // dot / name / meta by their own tags from the UNMERGED tree.
-        Row(
-            modifier.fillMaxWidth().tagged(headTag).tap(onToggle)
-                .padding(horizontal = sdp(StoreDensity.S12), vertical = sdp(StoreDensity.S8)),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(dot, color = dotColor.ink(), fontSize = StoreDensity.T_BODY.sp,
-                modifier = Modifier.tagged(dotTag).padding(end = sdp(StoreDensity.S8)))
-            Text(label, color = Ink.WHITE.ink(), fontSize = StoreDensity.T_TITLE.sp, fontWeight = FontWeight.Bold,
-                maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f).tagged(nameTag))
+        com.diegonmarcos.superapp.uikit.KitStoreRowLine(modifier.tagged(headTag), onToggle) {
+            com.diegonmarcos.superapp.uikit.KitStoreDot(dot, dotColor.ink(), Modifier.tagged(dotTag))
+            com.diegonmarcos.superapp.uikit.KitStoreName(label, Modifier.weight(1f).tagged(nameTag), Ink.WHITE.ink())
             Text(meta, color = metaColor.ink(), fontSize = StoreDensity.T_CAPTION.sp, maxLines = 1,
                 modifier = Modifier.tagged(metaTag))
             if (quick != null) Text(quick.label, color = Ink.WHITE.ink(), fontSize = StoreDensity.T_BODY.sp,
