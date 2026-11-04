@@ -13,9 +13,9 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.Worker
 import androidx.work.WorkerParameters
-import com.diegonmarcos.clouddrive.sync.SyncEvent
-import com.diegonmarcos.clouddrive.sync.SyncHistory
-import com.diegonmarcos.clouddrive.sync.SyncSchedule
+import com.diegonmarcos.cloudlib.gitrepos.SyncEvent
+import com.diegonmarcos.cloudlib.gitrepos.SyncHistory
+import com.diegonmarcos.cloudlib.gitrepos.SyncSchedule
 import com.diegonmarcos.cloudlib.gitsync.GitCredentialStore
 import com.diegonmarcos.cloudlib.gitsync.GitEngine
 import com.diegonmarcos.cloudlib.gitsync.GitOpResult
@@ -54,8 +54,8 @@ class GitSyncWorker(context: Context, params: WorkerParameters) : Worker(context
             if (d.enabled) {
                 val git = SharedStore.gitRoot(); val bare = com.diegonmarcos.clouddrive.Declarations.sync.git.bareRoot
                 val r = if (com.diegonmarcos.clouddrive.sync.StoreGit.useExec(applicationContext)) com.diegonmarcos.clouddrive.sync.StoreGit.sweepStalePacks(applicationContext, git, bare, d.patterns, d.minAgeHours)
-                    else com.diegonmarcos.clouddrive.sync.StalePackCleaner.sweep(com.diegonmarcos.clouddrive.sync.StalePackCleaner.packDirs(git, bare), d.patterns, d.minAgeHours, System.currentTimeMillis(), false)
-                val line = r?.let { com.diegonmarcos.clouddrive.sync.StalePackCleaner.message(it) }.orEmpty()
+                    else com.diegonmarcos.cloudlib.gitrepos.StalePackCleaner.sweep(com.diegonmarcos.cloudlib.gitrepos.StalePackCleaner.packDirs(git, bare), d.patterns, d.minAgeHours, System.currentTimeMillis(), false)
+                val line = r?.let { com.diegonmarcos.cloudlib.gitrepos.StalePackCleaner.message(it) }.orEmpty()
                 if (line.isNotEmpty()) history.append(SyncEvent(now, "stale-packs", "stale packs", SyncHistory.TRIGGER_SCHEDULED, true, "stale_pack_cleanup: $line"))
             }
         }

@@ -27,7 +27,9 @@ dependencies {
 
 pitest {
     pitestVersion = '1.22.1'
-    targetClasses = ['com.diegonmarcos.cloudlib.gitrepos.*']
+    // Mutation-gated where this module's own suite is: AutoChecks, StalePackCleaner, FleetSession and GitRepoScan are
+    // exercised by Cloud Drive's app suite (Robolectric / Declarations), which PIT does not run.
+    targetClasses = ['com.diegonmarcos.cloudlib.gitrepos.SyncHistory*', 'com.diegonmarcos.cloudlib.gitrepos.SyncSchedule*', 'com.diegonmarcos.cloudlib.gitrepos.SyncEvent*', 'com.diegonmarcos.cloudlib.gitrepos.AutoCommit*']
     excludedMethods = ['equals', 'hashCode', 'toString', 'copy', 'copy$default', 'component*']
     avoidCallsTo = ['kotlin.jvm.internal', 'kotlin.jdk7.AutoCloseableKt', 'kotlin.io.CloseableKt']
     threads = 2

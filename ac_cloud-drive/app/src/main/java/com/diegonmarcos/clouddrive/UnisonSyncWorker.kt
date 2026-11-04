@@ -11,7 +11,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.Worker
 import androidx.work.WorkerParameters
-import com.diegonmarcos.clouddrive.sync.SyncSchedule
+import com.diegonmarcos.cloudlib.gitrepos.SyncSchedule
 import com.diegonmarcos.clouddrive.sync.UnisonSyncer
 import java.util.concurrent.TimeUnit
 

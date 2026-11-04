@@ -48,7 +48,7 @@ class DrivePrefs(context: Context) {
         bookmarks = (safe("") { prefs.getString(KEY_BOOKMARKS, "") } ?: "").split('\n').filter { it.isNotBlank() },
         treeGrantUri = safe(null) { grants.getString(KEY_TREE_GRANT_URI, null) },
         treeGrantName = safe(null) { grants.getString(KEY_TREE_GRANT_NAME, null) },
-        auto = safe<Map<String, Any?>>(emptyMap()) { prefs.all.filterKeys { it.startsWith("auto.") || it == com.diegonmarcos.clouddrive.sync.AutoChecks.GIT_PULL_KEY } },
+        auto = safe<Map<String, Any?>>(emptyMap()) { prefs.all.filterKeys { it.startsWith("auto.") || it == com.diegonmarcos.cloudlib.gitrepos.AutoChecks.GIT_PULL_KEY } },
     )
 
     private fun edit(block: SharedPreferences.Editor.() -> Unit) { prefs.edit().apply(block).apply(); _snapshot.value = read() }
@@ -109,12 +109,12 @@ class DrivePrefs(context: Context) {
     fun setScreenshotAgentEnabled(on: Boolean) = edit { putBoolean(KEY_AGENT_SHOTS, on) }
 
     /** #1195 one page's auto-behaviour settings (all OFF until set). */
-    fun autoChecks(page: com.diegonmarcos.clouddrive.sync.AutoChecks.Page): com.diegonmarcos.clouddrive.sync.AutoChecks.Settings =
-        com.diegonmarcos.clouddrive.sync.AutoChecks.Settings(page, _snapshot.value.auto)
-    fun setAutoCheck(page: com.diegonmarcos.clouddrive.sync.AutoChecks.Page, flag: com.diegonmarcos.clouddrive.sync.AutoChecks.Flag, on: Boolean) =
-        edit { putBoolean(com.diegonmarcos.clouddrive.sync.AutoChecks.key(page, flag), on) }
-    fun setAutoInterval(page: com.diegonmarcos.clouddrive.sync.AutoChecks.Page, minutes: Int) =
-        edit { putInt(com.diegonmarcos.clouddrive.sync.AutoChecks.intervalKey(page), minutes) }
+    fun autoChecks(page: com.diegonmarcos.cloudlib.gitrepos.AutoChecks.Page): com.diegonmarcos.cloudlib.gitrepos.AutoChecks.Settings =
+        com.diegonmarcos.cloudlib.gitrepos.AutoChecks.Settings(page, _snapshot.value.auto)
+    fun setAutoCheck(page: com.diegonmarcos.cloudlib.gitrepos.AutoChecks.Page, flag: com.diegonmarcos.cloudlib.gitrepos.AutoChecks.Flag, on: Boolean) =
+        edit { putBoolean(com.diegonmarcos.cloudlib.gitrepos.AutoChecks.key(page, flag), on) }
+    fun setAutoInterval(page: com.diegonmarcos.cloudlib.gitrepos.AutoChecks.Page, minutes: Int) =
+        edit { putInt(com.diegonmarcos.cloudlib.gitrepos.AutoChecks.intervalKey(page), minutes) }
 
     private companion object {
         const val KEY_DATA_FILTER = "manage.data.filter"

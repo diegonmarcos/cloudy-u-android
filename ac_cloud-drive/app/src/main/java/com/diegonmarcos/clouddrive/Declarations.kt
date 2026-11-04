@@ -85,7 +85,7 @@ object Declarations {
     data class GitStalePackDecl(
         val enabled: Boolean = true,
         val minAgeHours: Int = 6,
-        val patterns: List<String> = com.diegonmarcos.clouddrive.sync.StalePackCleaner.DEFAULT_PATTERNS,
+        val patterns: List<String> = com.diegonmarcos.cloudlib.gitrepos.StalePackCleaner.DEFAULT_PATTERNS,
     )
     /** #1255 the Unlisted git folders section (ui.sync.git.unlisted): root templates, walk bounds. */
     data class GitUnlistedDecl(val label: String = "", val roots: List<String> = emptyList(), val maxDepth: Int = 2, val maxDirs: Int = 2000, val timeoutSeconds: Int = 30)
@@ -670,7 +670,7 @@ object Declarations {
                 GitStalePackDecl(
                     enabled = c.bool("enabled", true),
                     minAgeHours = (c.int("min_age_hours") ?: 6).coerceIn(1, 24 * 90),
-                    patterns = c.strings("patterns").filter { com.diegonmarcos.clouddrive.sync.StalePackCleaner.safePattern(it) }.ifEmpty { com.diegonmarcos.clouddrive.sync.StalePackCleaner.DEFAULT_PATTERNS },
+                    patterns = c.strings("patterns").filter { com.diegonmarcos.cloudlib.gitrepos.StalePackCleaner.safePattern(it) }.ifEmpty { com.diegonmarcos.cloudlib.gitrepos.StalePackCleaner.DEFAULT_PATTERNS },
                 )
             } ?: GitStalePackDecl(),
             filters = objects(o["filters"]).mapNotNull { f ->

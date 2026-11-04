@@ -9,7 +9,7 @@ import com.diegonmarcos.clouddrive.GitSyncWorker
 import com.diegonmarcos.clouddrive.SharedStore
 import com.diegonmarcos.clouddrive.configs.DriveGitChain
 import com.diegonmarcos.clouddrive.sync.FleetGit
-import com.diegonmarcos.clouddrive.sync.FleetSession
+import com.diegonmarcos.cloudlib.gitrepos.FleetSession
 import com.diegonmarcos.clouddrive.sync.GitSyncCoordinator
 import com.diegonmarcos.cloudlib.gitsync.GitAuthChain
 import com.diegonmarcos.cloudlib.gitsync.RepoRegistry
