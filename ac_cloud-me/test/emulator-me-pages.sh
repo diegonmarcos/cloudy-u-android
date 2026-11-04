@@ -38,7 +38,10 @@ PY
 if [ -s "$OUT/.tap" ]; then $T adb shell input tap $(cat "$OUT/.tap"); shot me-profile-configs; else echo "no Configs tab found on the profile page"; rc=1; fi
 
 if [ -n "$SA_APK" ] && [ -f "$SA_APK" ]; then
-    open_page "$SA" "page:cloud/apps"; sleep 10; $T adb shell input keyevent KEYCODE_BACK; sleep 2
+    # the SuperApp's Screensaver is a black SYSTEM_ALERT_WINDOW overlay (floatingnav/ScreensaverService): no overlay for the shot
+    $T adb shell appops set "$SA" SYSTEM_ALERT_WINDOW deny
+    open_page "$SA" "page:cloud/apps"; sleep 10
+    $T adb shell am force-stop "$SA"; $T adb shell appops set "$SA" SYSTEM_ALERT_WINDOW deny
     # the SuperApp draws its own lock screen over the launcher: tap its Unlock, then open the page again
     for i in 1 2; do
         $T adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; $T adb pull /sdcard/ui.xml "$OUT/.sa.xml" >/dev/null 2>&1
