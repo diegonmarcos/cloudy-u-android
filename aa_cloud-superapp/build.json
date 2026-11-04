@@ -3295,6 +3295,14 @@
             "_doc": "The installed-Android-apps surface (SuitePhoneAppsFragment). Not a facet — it reads LauncherApps, not build.json tiles."
           },
           {
+            "id": "webapps",
+            "label": "WebApps",
+            "icon": "ic_world",
+            "_doc": "Phone > WebApps (#1466): the web version of the phone apps, in the same embedded pane as Cloud > WebApps (WebPageFragment / CloudWeb), at the cloud-webapps route /phone/webapps/. The apps and their URLs are data, data/phone-webapps.json (same packages as phone_app_groups; a null url = no known web version, drawn greyed and disabled); the site's phone-apps source is generated from it (cloudy-h-webapps-mob scripts/gen-phone-apps.mjs). Same ONE address declaration as Cloud > WebApps: webapps_base + webapps_path. Guarded by test-phone-webapps.sh.",
+            "webapps_base": "https://diegonmarcos.github.io/cloud-webapps",
+            "webapps_path": "phone/webapps/?embed=1"
+          },
+          {
             "id": "configs",
             "label": "Configs",
             "icon": "ic_settings",
@@ -3693,7 +3701,7 @@
           }
         ],
         "_doc_tiles_configs": "Phone ▸ Configs — the ANDROID system settings screens, as Intent-scheme URIs handed to Intent.parseUri. Data, not Kotlin: add a screen by adding a line. A device that lacks one answers 'No app handles' rather than crashing (launchUri wraps startActivity in runCatching).",
-        "_doc_pages": "Phone = this handset. Apps (everything installed) | Configs (Android's own settings)."
+        "_doc_pages": "Phone = this handset. Apps (everything installed) | WebApps (their web versions) | Configs (Android's own settings)."
       },
       {
         "id": "mail",

@@ -1,0 +1,320 @@
+{
+  "_doc": "Phone > WebApps (#1466): the web version of each phone app declared in build.json ui.sections[phone].phone_app_groups (same packages, same groups; test-phone-webapps.sh keeps them equal). `url` = the app's https web address, opened in the embedded browser (libs:web-core CloudWeb); null = no known web version, the tile is drawn GREYED and disabled. Data, not code: add a line to add an app. cloudy-h-webapps-mob generates its phone-apps/ source from this file (scripts/gen-phone-apps.mjs, drift-checked).",
+  "groups": [
+    {
+      "title": "AI",
+      "apps": [
+        {
+          "pkg": "com.anthropic.claude",
+          "label": "Claude",
+          "url": "https://claude.ai"
+        },
+        {
+          "pkg": "com.google.android.apps.bard",
+          "label": "Gemini",
+          "url": "https://gemini.google.com"
+        },
+        {
+          "pkg": "com.termux",
+          "label": "Termux",
+          "url": null
+        },
+        {
+          "pkg": "com.termux.nix",
+          "label": "Nix",
+          "url": null
+        },
+        {
+          "pkg": "com.foxdebug.acode",
+          "label": "Acode",
+          "url": null
+        },
+        {
+          "pkg": "com.rhmsoft.edit",
+          "label": "QuickEdit",
+          "url": null
+        }
+      ]
+    },
+    {
+      "title": "Inboxes",
+      "apps": [
+        {
+          "pkg": "com.google.android.gm",
+          "label": "Gmail",
+          "url": "https://mail.google.com"
+        },
+        {
+          "pkg": "com.Slack",
+          "label": "Slack",
+          "url": "https://app.slack.com"
+        },
+        {
+          "pkg": "com.whatsapp.w4b",
+          "label": "WhatsApp Business",
+          "url": "https://web.whatsapp.com"
+        },
+        {
+          "pkg": "com.linkedin.android",
+          "label": "LinkedIn",
+          "url": "https://www.linkedin.com"
+        },
+        {
+          "pkg": "com.instagram.android",
+          "label": "Instagram",
+          "url": "https://www.instagram.com"
+        },
+        {
+          "pkg": "com.google.android.apps.magazines",
+          "label": "Google News",
+          "url": "https://news.google.com"
+        },
+        {
+          "pkg": "ch.protonmail.android",
+          "label": "Proton Mail",
+          "url": "https://mail.proton.me"
+        },
+        {
+          "pkg": "app.sterna",
+          "label": "Sterna Mail",
+          "url": null
+        },
+        {
+          "pkg": "com.mattermost.rn",
+          "label": "Mattermost",
+          "url": null
+        },
+        {
+          "pkg": "com.beeper.android",
+          "label": "Beeper",
+          "url": null
+        },
+        {
+          "pkg": "org.telegram.messenger",
+          "label": "Telegram",
+          "url": "https://web.telegram.org"
+        },
+        {
+          "pkg": "com.devhd.feedly",
+          "label": "Feedly",
+          "url": "https://feedly.com"
+        }
+      ]
+    },
+    {
+      "title": "Data Apps",
+      "apps": [
+        {
+          "pkg": "com.google.android.apps.docs",
+          "label": "Google Drive",
+          "url": "https://drive.google.com"
+        },
+        {
+          "pkg": "com.google.android.calendar",
+          "label": "Google Calendar",
+          "url": "https://calendar.google.com"
+        },
+        {
+          "pkg": "com.google.android.contacts",
+          "label": "Google Contacts",
+          "url": "https://contacts.google.com"
+        },
+        {
+          "pkg": "com.microsoft.office.onenote",
+          "label": "OneNote",
+          "url": "https://www.onenote.com"
+        },
+        {
+          "pkg": "com.google.android.apps.photos",
+          "label": "Google Photos",
+          "url": "https://photos.google.com"
+        },
+        {
+          "pkg": "com.aspiro.tidal",
+          "label": "Tidal",
+          "url": "https://listen.tidal.com"
+        },
+        {
+          "pkg": "com.sec.android.app.myfiles",
+          "label": "My Files",
+          "url": null
+        },
+        {
+          "pkg": "com.lonelycatgames.Xplore",
+          "label": "X-plore",
+          "url": null
+        },
+        {
+          "pkg": "me.proton.android.drive",
+          "label": "Proton Drive",
+          "url": "https://drive.proton.me"
+        },
+        {
+          "pkg": "md.obsidian",
+          "label": "Obsidian",
+          "url": null
+        },
+        {
+          "pkg": "com.x8bit.bitwarden",
+          "label": "Bitwarden",
+          "url": "https://vault.bitwarden.com"
+        },
+        {
+          "pkg": "com.viscouspot.gitsync",
+          "label": "Git Sync",
+          "url": null
+        }
+      ]
+    },
+    {
+      "title": "Tools Primary",
+      "apps": [
+        {
+          "pkg": "com.brave.browser",
+          "label": "Brave",
+          "url": null
+        },
+        {
+          "pkg": "com.google.android.apps.maps",
+          "label": "Maps",
+          "url": "https://maps.google.com"
+        },
+        {
+          "pkg": "com.google.android.apps.walletnfcrel",
+          "label": "Google Wallet",
+          "url": "https://wallet.google.com"
+        },
+        {
+          "pkg": "com.google.android.apps.translate",
+          "label": "Translate",
+          "url": "https://translate.google.com"
+        },
+        {
+          "pkg": "com.sec.android.app.clockpackage",
+          "label": "Clock",
+          "url": null
+        },
+        {
+          "pkg": "com.sec.android.app.popupcalculator",
+          "label": "Calculator",
+          "url": null
+        },
+        {
+          "pkg": "es.gob.interior.policia.midni",
+          "label": "miDNI",
+          "url": null
+        },
+        {
+          "pkg": "com.sec.android.app.camera",
+          "label": "Camera",
+          "url": null
+        }
+      ]
+    },
+    {
+      "title": "Projects",
+      "apps": [
+        {
+          "pkg": "co.mangotechnologies.clickup",
+          "label": "ClickUp",
+          "url": "https://app.clickup.com"
+        },
+        {
+          "pkg": "com.google.android.apps.fitness",
+          "label": "Google Fit",
+          "url": null
+        },
+        {
+          "pkg": "com.fatsecret.android",
+          "label": "FatSecret",
+          "url": "https://www.fatsecret.com"
+        },
+        {
+          "pkg": "mobi.eup.easygerman",
+          "label": "Todaii German",
+          "url": null
+        },
+        {
+          "pkg": "com.nomadmania.presentation",
+          "label": "NomadMania",
+          "url": "https://nomadmania.com"
+        },
+        {
+          "pkg": "es.bancosantander.apps",
+          "label": "Santander",
+          "url": "https://www.bancosantander.es"
+        },
+        {
+          "pkg": "com.revolut.revolut",
+          "label": "Revolut",
+          "url": "https://app.revolut.com"
+        },
+        {
+          "pkg": "com.transferwise.android",
+          "label": "Wise",
+          "url": "https://wise.com"
+        },
+        {
+          "pkg": "com.paypal.android.p2pmobile",
+          "label": "PayPal",
+          "url": "https://www.paypal.com"
+        },
+        {
+          "pkg": "com.btg.pactual.banking",
+          "label": "BTG Banking",
+          "url": null
+        },
+        {
+          "pkg": "com.btg.pactual.digital.mobile",
+          "label": "BTG Pactual",
+          "url": "https://www.btgpactual.com"
+        },
+        {
+          "pkg": "com.btg.pactual.homebroker.mobile",
+          "label": "BTG Home Broker",
+          "url": null
+        },
+        {
+          "pkg": "com.binance.dev",
+          "label": "Binance",
+          "url": "https://www.binance.com"
+        },
+        {
+          "pkg": "com.bitpanda.bitpanda",
+          "label": "Bitpanda",
+          "url": "https://web.bitpanda.com"
+        },
+        {
+          "pkg": "com.fusionmedia.investing",
+          "label": "Investing.com",
+          "url": "https://www.investing.com"
+        },
+        {
+          "pkg": "com.xe.currency",
+          "label": "XE Currency",
+          "url": "https://www.xe.com"
+        }
+      ]
+    },
+    {
+      "title": "Configs",
+      "apps": [
+        {
+          "pkg": "com.android.vending",
+          "label": "Play Store",
+          "url": "https://play.google.com/store"
+        },
+        {
+          "pkg": "org.fdroid.fdroid",
+          "label": "F-Droid",
+          "url": "https://f-droid.org"
+        },
+        {
+          "pkg": "com.android.settings",
+          "label": "Settings",
+          "url": null
+        }
+      ]
+    }
+  ]
+}
