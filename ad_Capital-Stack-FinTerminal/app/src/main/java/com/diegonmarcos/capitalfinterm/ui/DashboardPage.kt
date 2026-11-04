@@ -588,7 +588,7 @@ private fun PanelBody(
                 else -> when (panel.view) {
                     Dashboards.VIEW_BARS, Dashboards.VIEW_ALLOC -> if (panel.raw.optBoolean("stacked")) {
                         // #1370 the rate path: one 100% stacked bar, a segment per outcome (e.g. the number of Fed cuts), legend below
-                        FinStackBar(data.chart.map { it.label to it.y }.filter { it.second >= 1.0 })
+                        FinStackBar(data.chart.map { it.label to it.y }.filter { it.second >= 0.3 })
                     } else FinBars(data.chart.ifEmpty {
                         data.rows.mapIndexedNotNull { i, r -> FinFormat.parseNum(r.getOrNull(1))?.let { ChartPoint(r.getOrElse(0) { "" }, i.toDouble(), it) } }
                     }, panel.unit, panel.id)
