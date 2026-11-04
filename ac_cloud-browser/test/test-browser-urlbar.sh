@@ -65,7 +65,8 @@ def check(root, ok):
     others = [p for p, t in src.items() if any(n in t for n in ("HttpURLConnection",)) and "BrowserRemoteSuggest" not in p
               and "ScrapeRemote" not in p and "search" not in p.lower() and "debugapi" not in p and "Offline" not in p and "Updater" not in p and "AuthMission" not in p
               and "agentapi/AgentFetchProvider" not in p  # #913 the fleet agent door's read-only GET, held by test-browser-agent-door.sh
-              and "/download/DlHttpEngine.kt" not in p and "/download/DlQueue.kt" not in p]  # the download manager fetches only what the user chose to download (a file, a .torrent)
+              and "/download/DlHttpEngine.kt" not in p and "/download/DlQueue.kt" not in p
+              and "/FavFeed.kt" not in p]  # #1458 one GET of the public pages.json (front-html), no user data, held by test-browser-pages-hub.sh  # the download manager fetches only what the user chose to download (a file, a .torrent)
     ok(not others, "U4 no other browser file opens a connection", str(others))
     s = [x for x in build_json(root)["ui"]["browser"]["settings"] if x["key"] == "search_suggestions"]
     ok(s and s[0]["type"] == "bool" and "sent to it" in s[0]["doc"], "U4 the setting says in words that what you type goes to the engine")
