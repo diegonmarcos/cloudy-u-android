@@ -19,6 +19,19 @@ if ! grep -q "package=\"$PKG\"" "$OUT/cur.xml"; then
     $T adb shell input keyevent KEYCODE_BACK; sleep 2
     $T adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1; sleep 12
 fi
+# the app's screensaver overlay (neon clock + a single Unlock button) can sit over the home: tap Unlock
+for _ in 1 2 3; do
+    dump cur
+    grep -q 'text="Unlock"' "$OUT/cur.xml" || break
+    b="$(python3 - "$OUT/cur.xml" <<'PY'
+import re, sys
+x = open(sys.argv[1], errors="ignore").read()
+m = re.search(r'text="Unlock"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', x)
+if m: l, t, r, d = map(int, m.groups()); print((l + r) // 2, (t + d) // 2)
+PY
+)"
+    [ -n "$b" ] && $T adb shell input tap $b; sleep 4
+done
 shot home 3
 grep -o 'content-desc="Speed test[^"]*"' "$OUT/speed-home.xml" | head -1 || true
 p="$(python3 - "$OUT/speed-home.xml" <<'PY'
