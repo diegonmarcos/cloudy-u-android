@@ -55,6 +55,16 @@ for t in work roadmap geo endurance growth community by30 by40 by50; do
     else echo "no Planned segment on experiences/$t"; rc=1; fi
 done
 
+# #1390 Health redesign, dark mode: opens on Tracked (section:health), then every redesigned page (page:health/<id>), top and scrolled
+$T adb shell cmd uimode night yes
+open_page "$ME" "section:health"; shot me-health-default 6
+for h in tracked activities bodycomp hr sleep workout home; do
+    open_page "$ME" "page:health/$h"; shot "me-health-$h" 5
+    $T adb shell input swipe $((EW/2)) $((EH*70/100)) $((EW/2)) $((EH*25/100)) 600; shot "me-health-$h-scrolled" 2
+    $T adb shell input swipe $((EW/2)) $((EH*70/100)) $((EW/2)) $((EH*25/100)) 600; shot "me-health-$h-scrolled2" 2
+done
+$T adb shell cmd uimode night no
+
 if [ -n "$SA_APK" ] && [ -f "$SA_APK" ]; then
     # the SuperApp's Screensaver is a black SYSTEM_ALERT_WINDOW overlay (floatingnav/ScreensaverService): no overlay for the shot
     $T adb shell appops set "$SA" SYSTEM_ALERT_WINDOW deny
