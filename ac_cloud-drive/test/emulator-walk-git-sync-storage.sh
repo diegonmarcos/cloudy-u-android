@@ -156,6 +156,9 @@ CLONED=$(adb shell "ls $ROOT/GIT 2>/dev/null" | tr -d '\r' | head -1)
 if [ -z "$CLONED" ]; then
   note "in-app clone onto $ROOT/GIT produced nothing; seeding the fixture repository there to show list/check/sync"
   adb push "$FIX" "$ROOT/GIT/" >/dev/null || fail "seed onto the drive failed"
+  adb shell "ls -a $ROOT/GIT/$NAME" | tr -d '\r' | grep -qx '.git' || fail "the seeded repository has no .git on the drive"
+  # a fresh process lists the drive's git folder anew (the listing is read when the page opens)
+  adb shell am force-stop "$PKG"; sleep 2; launch; open_git || fail "no Git page after relaunch: $(texts)"
 else
   echo "cloned onto the drive: $CLONED" >> "$OUT/notes.txt"
 fi
