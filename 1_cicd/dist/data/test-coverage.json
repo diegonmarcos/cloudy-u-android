@@ -331,8 +331,8 @@
       "shell_testers": 2,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
-      "unit_task_declared": true,
-      "unit_test_sources": 1,
+      "unit_task_declared": false,
+      "unit_test_sources": 0,
       "workflow": "ship-cloud-news.yml"
     },
     "ac_cloud-news/web": {
