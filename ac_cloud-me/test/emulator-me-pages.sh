@@ -54,8 +54,11 @@ if [ -n "$SA_APK" ] && [ -f "$SA_APK" ]; then
     # tap a first-run dialog's Skip, then swipe the Me row (found by its Me-Buro tile) left to its last tile, Profile
     tapxy() { $T adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; $T adb pull /sdcard/ui.xml "$OUT/.sa.xml" >/dev/null 2>&1
         python3 -c "import re,sys;x=open(sys.argv[1],errors='ignore').read();m=re.search(r'text=\"'+sys.argv[2]+r'\"[^>]*bounds=\"\[(\d+),(\d+)\]\[(\d+),(\d+)\]',x);print('' if not m else '%d %d'%((int(m[1])+int(m[3]))//2,(int(m[2])+int(m[4]))//2))" "$OUT/.sa.xml" "$1" 2>/dev/null; }
-    xy=$(tapxy Skip); [ -n "$xy" ] && { $T adb shell input tap $xy; sleep 2; }
-    xy=$(tapxy Me-Buro); if [ -n "$xy" ]; then y=${xy#* }; $T adb shell input swipe 1000 $y 100 $y 500; sleep 1; $T adb shell input swipe 1000 $y 100 $y 500; fi
+    # the SuperApp's Compose views expose no text to uiautomator: scale from the screen size. Its first-run dialogs
+    # (install source, default launcher, ...) chain; each has Skip at ~(61%, 58%). The Me row sits at ~80% height.
+    wh=$($T adb shell wm size | tr -d '\r' | sed 's/.*: //'); W=${wh%x*}; H=${wh#*x}
+    for i in 1 2 3 4 5; do $T adb shell input tap $((W*61/100)) $((H*58/100)); sleep 2; done
+    y=$((H*80/100)); $T adb shell input swipe $((W*95/100)) $y $((W*5/100)) $y 600; sleep 1; $T adb shell input swipe $((W*95/100)) $y $((W*5/100)) $y 600
     shot superapp-cloud-apps-me-row 3
 fi
 $T adb logcat -d > "$OUT/logcat.txt"
