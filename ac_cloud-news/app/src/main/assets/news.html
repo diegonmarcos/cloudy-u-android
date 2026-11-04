@@ -28,6 +28,9 @@
     })();
     </script>
     <script src="vendor/tailwind.js"></script>
+    <link rel="stylesheet" href="events-finder.css">
+    <script src="events-core.js"></script>
+    <script src="events-ui.js"></script>
     <style>
         /* =================================================================
            Theme tokens — one source of truth, switched by [data-theme] on
@@ -593,13 +596,7 @@ if (window.NewsBridge) {
 
             <!-- ============ EVENTS TAB ============ -->
             <section id="tab-events" class="tab-panel hidden">
-                <header class="panel-header">
-                    <h1 class="text-xl font-medium">Events</h1>
-                </header>
-                <div id="events-error-mount" class="px-6"></div>
-                <div class="events-progress" id="events-progress"></div>
-                <div class="px-6" id="events-stack-mount"></div>
-                <div class="px-6 panel-scroll-pad" id="events-done-mount"></div>
+                <div id="ef-root" class="panel-scroll-pad"></div>
             </section>
 
             <!-- ============ FEED TAB ============ -->
@@ -753,6 +750,12 @@ if (window.NewsBridge) {
                             </div>
                         </div>
                         <div class="mt-1" id="topics-list"></div>
+                    </div>
+
+                    <div>
+                        <span class="text-[11px] font-semibold tracking-widest uppercase" style="color:var(--text-secondary);">Events</span>
+                        <p class="text-[11.5px] mt-1 mb-3" style="color:var(--text-secondary);">Where the Events tab looks. Official APIs first (Ticketmaster, Skiddle: bring your own key, stored encrypted on this device); sites without an API are read politely through the scraper path (robots.txt checked, cached, one request per interval) and are off until you switch them on. Check each site's terms before enabling it.</p>
+                        <div id="ef-configs-mount"></div>
                     </div>
 
                     <div>
@@ -2254,7 +2257,6 @@ var State = {
     saved: { items: [] },
     savedUrls: new Set(),
     media: { channels: [], activeChannel: '', items: [], limit: 50 },
-    events: { items: [], index: 0 },
     savedEvents: { items: [], byDay: {}, viewYear: 0, viewMonth: 0, selectedKey: null }
 };
 
@@ -3788,35 +3790,12 @@ function renderMediaList() {
 }
 
 /* =====================================================================
-   Events tab — swipeable card stack. Bridge: Api.events(fromMs,toMs) ->
-   [{id,calendarId,calendarLabel,color,title,location,start,end,allDay}],
-   Api.saveEvent(json) -> {ok,saved,error} (toggle), Api.isEventSaved(id)
-   -> {saved}. Default range is "now" through three weeks out — "the next
-   few weeks" per spec. Swipe right / the Save button both funnel through
-   flyOut('save') -> decideEvent('save'); swipe left / Skip funnel through
-   flyOut('skip') -> decideEvent('skip') with no bridge write. Drag tracking
-   is a plain inline CSS transform (translateX + a slight rotate) — no
-   gesture library.
+   Events tab — the finder (city, category / When / ticketer filters, Calendar | List | Cards)
+   lives in events-core.js (logic, tested) and events-ui.js (views); its lists are
+   data/event-finder.json. Cards save through Api.saveEvent like the Saved tab expects.
    ===================================================================== */
-var EVENTS_WINDOW_DAYS = 21;
-
-function loadEventsTab() {
-    var now = Date.now();
-    loadEventsRange(now, now + EVENTS_WINDOW_DAYS * 86400000);
-}
-
-function loadEventsRange(fromMs, toMs) {
-    var errMount = document.getElementById('events-error-mount');
-    var res;
-    try { res = Api.events(fromMs, toMs); } catch (e) { errMount.innerHTML = errorBanner(e.message); return; }
-    if (res && res.error) { errMount.innerHTML = errorBanner(res.error); return; }
-    errMount.innerHTML = '';
-    State.events.items = (Array.isArray(res) ? res : []).slice().sort(function (a, b) { return (Number(a.start) || 0) - (Number(b.start) || 0); });
-    State.events.index = 0;
-    renderEventsView();
-}
-
-function currentEvent() { return State.events.items[State.events.index] || null; }
+function loadEventsTab() { EventsUI.open(); }
+function renderEventsView() { EventsUI.render(); }
 
 function fmtEventTime(e) {
     if (e.allDay) return 'All day';
@@ -3833,100 +3812,6 @@ function fmtEventTime(e) {
     return out;
 }
 
-var EVENT_ICON_CAL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5.5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3.5v4M16 3.5v4"/></svg>';
-var EVENT_ICON_PIN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0112 2.5a7 7 0 017 7C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.3"/></svg>';
-
-function eventCardHtml(e, alreadySaved) {
-    var color = /^#[0-9a-fA-F]{3,8}$/.test(e.color || '') ? e.color : '#8B9096';
-    return '<div class="event-card" id="event-active-card">' +
-        '<div class="event-card-accent" style="background:' + esc(color) + ';"></div>' +
-        '<div class="event-card-body">' +
-            '<div class="event-card-cal">' + esc(e.calendarLabel || '') + (alreadySaved ? ' · Already saved' : '') + '</div>' +
-            '<div class="event-card-title">' + esc(e.title || 'Untitled event') + '</div>' +
-            '<div class="event-card-row">' + EVENT_ICON_CAL + '<span>' + esc(fmtEventTime(e)) + '</span></div>' +
-            (e.location ? '<div class="event-card-row">' + EVENT_ICON_PIN + '<span>' + esc(e.location) + '</span></div>' : '') +
-        '</div>' +
-        '<div class="event-card-stamp save" id="event-stamp-save">Save</div>' +
-        '<div class="event-card-stamp skip" id="event-stamp-skip">Skip</div>' +
-        '<div class="event-card-actions">' +
-            '<button type="button" class="event-action-btn event-action-skip" id="event-skip-btn">Skip</button>' +
-            '<button type="button" class="event-action-btn event-action-save" id="event-save-btn">' + (alreadySaved ? 'Saved ✓' : 'Save') + '</button>' +
-        '</div>' +
-    '</div>';
-}
-
-function renderEventsView() {
-    var stackMount = document.getElementById('events-stack-mount');
-    var doneMount = document.getElementById('events-done-mount');
-    var progressEl = document.getElementById('events-progress');
-    if (!stackMount || !doneMount || !progressEl) return;
-    var total = State.events.items.length;
-    if (!total) {
-        progressEl.textContent = '';
-        stackMount.innerHTML = '';
-        doneMount.innerHTML = '<div class="events-empty-state">No upcoming events in this window.</div>';
-        return;
-    }
-    if (State.events.index >= total) {
-        progressEl.textContent = '';
-        stackMount.innerHTML = '';
-        doneMount.innerHTML = '<div class="events-done-state"><strong>All caught up</strong>You’ve gone through all ' + total + ' events in this window. Check Saved for the ones you kept.</div>';
-        return;
-    }
-    doneMount.innerHTML = '';
-    progressEl.textContent = (State.events.index + 1) + ' of ' + total;
-    var e = currentEvent();
-    var alreadySaved = false;
-    try { alreadySaved = !!(Api.isEventSaved(e.id) || {}).saved; } catch (err) { alreadySaved = false; }
-    stackMount.innerHTML = '<div class="event-stack">' + eventCardHtml(e, alreadySaved) + '</div>';
-    wireEventCard();
-}
-
-// Drag/pointer mechanics live in bindSwipeCard() (see the Feed tab section
-// above, right before Cards mode) — factored out FROM here so Feed's Cards
-// mode could reuse it instead of forking a second, near-identical
-// implementation. The pointerdown-inside-.event-action-btn guard that used
-// to live inline in this function's onDown() now lives inside
-// bindSwipeCard() itself, applied via ignoreSelector below.
-function wireEventCard() {
-    var card = document.getElementById('event-active-card');
-    if (!card) return;
-    var saveBtn = document.getElementById('event-save-btn');
-    var skipBtn = document.getElementById('event-skip-btn');
-    if (saveBtn) saveBtn.addEventListener('click', function () { flyOut('save'); });
-    if (skipBtn) skipBtn.addEventListener('click', function () { flyOut('skip'); });
-
-    bindSwipeCard(card, {
-        stampRight: document.getElementById('event-stamp-save'),
-        stampLeft: document.getElementById('event-stamp-skip'),
-        ignoreSelector: '.event-action-btn',
-        onRight: function () { flyOut('save'); },
-        onLeft: function () { flyOut('skip'); }
-    });
-}
-
-// Shared by swipe release AND the visible Skip/Save buttons — same fly-off
-// animation, same clear visual affirmation, either way (see the spec note
-// that the buttons exist so this flow is testable without a gesture).
-// flyOutCard() (see the Feed tab section above) does the actual animation
-// work now, shared with Feed's Cards mode.
-function flyOut(kind) {
-    var card = document.getElementById('event-active-card');
-    if (!card) { decideEvent(kind); return; }
-    var dir = kind === 'save' ? 1 : -1;
-    var stamp = document.getElementById(kind === 'save' ? 'event-stamp-save' : 'event-stamp-skip');
-    flyOutCard(card, dir, stamp, function () { decideEvent(kind); });
-}
-
-function decideEvent(kind) {
-    var e = currentEvent();
-    if (!e) return;
-    if (kind === 'save') {
-        try { Api.saveEvent(e); } catch (err) { /* card still advances — a save error must not get the deck stuck */ }
-    }
-    State.events.index++;
-    renderEventsView();
-}
 
 /* =====================================================================
    Saved tab
@@ -4155,6 +4040,7 @@ function initConfigsTab() {
     });
 
     loadConfigValues();
+    EventsUI.renderConfigs();
     renderImagesToggle();
     renderDemoModeConfig();
     renderRefreshStatus();
@@ -4184,7 +4070,7 @@ function switchTab(tab) {
     } else {
         if (tab === 'events') renderEventsView();
         else if (tab === 'saved') loadSavedTab();
-        else if (tab === 'configs') { renderRefreshStatus(); renderDemoModeConfig(); }
+        else if (tab === 'configs') { renderRefreshStatus(); renderDemoModeConfig(); EventsUI.renderConfigs(); }
     }
 }
 

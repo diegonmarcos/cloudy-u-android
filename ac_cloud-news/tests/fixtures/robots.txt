@@ -1,0 +1,7 @@
+# test
+User-agent: *
+Disallow: /private
+Disallow: /d/
+Allow: /d/germany--berlin/
+User-agent: badbot
+Disallow: /

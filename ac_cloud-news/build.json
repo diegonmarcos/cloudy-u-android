@@ -293,8 +293,13 @@
     "shell": {
       "dir": "test",
       "requires": [
-        "jq"
+        "jq",
+        "node"
       ]
+    },
+    "unit": {
+      "task": "test",
+      "enabled": true
     }
   },
   "configs_pages": {

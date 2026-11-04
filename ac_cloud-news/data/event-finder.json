@@ -1,0 +1,949 @@
+{
+ "_doc": "EVENT FINDER — everything the Events tab's finder needs, declared once (Configs pattern: the page and EventFetcher.kt read this, no list lives in code). Sections: ramp (the fleet type ramp, mirrors KitStoreRow SCALE/TEXT_SCALE; the page turns it into CSS variables, no font-size literal in events-finder.css), defaults (first-run prefs), categories (the filter chips + how each maps onto a ticketer's own taxonomy + keywords used to classify an event), when (the time filter), views, cities (the picker's list; lat/lng drive API queries, ra_area is Resident Advisor's area id), ticketers (ONE ROW PER SOURCE: how it is fetched, which hosts it may touch, its terms, cache and politeness limits). Adding a ticketer/category/city is an entry HERE plus a rebuild; the parser id must exist in assets/events-core.js PARSERS. Baked into BuildConfig.EVENT_FINDER_B64 by app/build.gradle, same pattern as data/events.json.",
+ "version": 1,
+ "ramp": {
+  "_doc": "The Store row's scale (libs:ui-kit KitStoreRow): spacing steps x scale, type sizes x text_scale.",
+  "scale": 0.7,
+  "text_scale": 0.78,
+  "caption": 11,
+  "meta": 12,
+  "body": 13,
+  "title": 14,
+  "steps": [4, 8, 12, 16, 24, 64, 240]
+ },
+ "defaults": {
+  "city": "berlin",
+  "category": "all",
+  "when": "week",
+  "view": "list",
+  "radius_km": 25,
+  "week_starts_on": 1,
+  "weekend": {
+   "start_day": 5,
+   "start_hour": 17,
+   "end_day": 0
+  },
+  "max_events": 400
+ },
+ "categories": [
+  {
+   "id": "all",
+   "label": "All",
+   "color": "#8B9096",
+   "keywords": [],
+   "map": {}
+  },
+  {
+   "id": "sports",
+   "label": "Sports",
+   "color": "#43A047",
+   "keywords": [
+    "football",
+    "soccer",
+    "basketball",
+    "tennis",
+    "marathon",
+    "match",
+    "hockey",
+    "baseball",
+    "rugby",
+    "fc ",
+    "vs.",
+    "grand prix",
+    "olympi"
+   ],
+   "map": {
+    "ticketmaster": "Sports",
+    "skiddle": "SPORT"
+   }
+  },
+  {
+   "id": "raves",
+   "label": "Raves",
+   "color": "#E91E63",
+   "keywords": [
+    "rave",
+    "techno",
+    "house",
+    "club night",
+    "clubnight",
+    "dj ",
+    "electronic",
+    "afterhour",
+    "after hour",
+    "warehouse",
+    "festival of electronic",
+    "trance",
+    "drum and bass",
+    "dnb"
+   ],
+   "map": {
+    "ticketmaster": "",
+    "skiddle": "CLUB"
+   }
+  },
+  {
+   "id": "art",
+   "label": "Art",
+   "color": "#AB47BC",
+   "keywords": [
+    "exhibition",
+    "gallery",
+    "museum",
+    "vernissage",
+    "art fair",
+    "installation",
+    "photography",
+    "sculpture",
+    "biennale",
+    "art "
+   ],
+   "map": {
+    "ticketmaster": "Arts & Theatre",
+    "skiddle": "ARTS"
+   }
+  },
+  {
+   "id": "music",
+   "label": "Music",
+   "color": "#1E88E5",
+   "keywords": [
+    "concert",
+    "live",
+    "tour",
+    "orchestra",
+    "symphony",
+    "jazz",
+    "band",
+    "festival",
+    "recital",
+    "singer",
+    "acoustic",
+    "gig",
+    "opera"
+   ],
+   "map": {
+    "ticketmaster": "Music",
+    "skiddle": "LIVE"
+   }
+  },
+  {
+   "id": "theatre",
+   "label": "Theatre",
+   "color": "#FB8C00",
+   "keywords": [
+    "theatre",
+    "theater",
+    "musical",
+    "ballet",
+    "comedy",
+    "stand-up",
+    "standup",
+    "cabaret",
+    "drama",
+    "play ",
+    "dance",
+    "circus"
+   ],
+   "map": {
+    "ticketmaster": "Arts & Theatre",
+    "skiddle": "THEATRE"
+   }
+  },
+  {
+   "id": "food",
+   "label": "Food",
+   "color": "#F4511E",
+   "keywords": [
+    "food",
+    "tasting",
+    "wine",
+    "beer",
+    "brunch",
+    "dinner",
+    "market",
+    "street food",
+    "cooking",
+    "culinary",
+    "whisky",
+    "coffee"
+   ],
+   "map": {
+    "ticketmaster": "",
+    "skiddle": "BARS"
+   }
+  },
+  {
+   "id": "other",
+   "label": "Other",
+   "color": "#78909C",
+   "keywords": [],
+   "map": {
+    "ticketmaster": "",
+    "skiddle": ""
+   }
+  }
+ ],
+ "when": [
+  {
+   "id": "today",
+   "label": "Today",
+   "rule": "today"
+  },
+  {
+   "id": "week",
+   "label": "This week",
+   "rule": "week"
+  },
+  {
+   "id": "weekend",
+   "label": "This weekend",
+   "rule": "weekend"
+  },
+  {
+   "id": "month",
+   "label": "This month",
+   "rule": "month"
+  },
+  {
+   "id": "custom",
+   "label": "Custom range",
+   "rule": "custom"
+  }
+ ],
+ "views": [
+  {
+   "id": "calendar",
+   "label": "Calendar"
+  },
+  {
+   "id": "list",
+   "label": "List"
+  },
+  {
+   "id": "cards",
+   "label": "Cards",
+   "hint": "Swipe right to save, left to skip"
+  }
+ ],
+ "cities": [
+  {
+   "id": "berlin",
+   "name": "Berlin",
+   "country": "DE",
+   "countryName": "Germany",
+   "lat": 52.52,
+   "lng": 13.405,
+   "ra_area": 34
+  },
+  {
+   "id": "hamburg",
+   "name": "Hamburg",
+   "country": "DE",
+   "countryName": "Germany",
+   "lat": 53.551,
+   "lng": 9.994
+  },
+  {
+   "id": "munich",
+   "name": "Munich",
+   "country": "DE",
+   "countryName": "Germany",
+   "lat": 48.137,
+   "lng": 11.575
+  },
+  {
+   "id": "cologne",
+   "name": "Cologne",
+   "country": "DE",
+   "countryName": "Germany",
+   "lat": 50.938,
+   "lng": 6.96
+  },
+  {
+   "id": "frankfurt",
+   "name": "Frankfurt",
+   "country": "DE",
+   "countryName": "Germany",
+   "lat": 50.11,
+   "lng": 8.682
+  },
+  {
+   "id": "leipzig",
+   "name": "Leipzig",
+   "country": "DE",
+   "countryName": "Germany",
+   "lat": 51.34,
+   "lng": 12.375
+  },
+  {
+   "id": "dusseldorf",
+   "name": "Dusseldorf",
+   "country": "DE",
+   "countryName": "Germany",
+   "lat": 51.228,
+   "lng": 6.774
+  },
+  {
+   "id": "stuttgart",
+   "name": "Stuttgart",
+   "country": "DE",
+   "countryName": "Germany",
+   "lat": 48.775,
+   "lng": 9.182
+  },
+  {
+   "id": "london",
+   "name": "London",
+   "country": "GB",
+   "countryName": "United Kingdom",
+   "lat": 51.507,
+   "lng": -0.128,
+   "ra_area": 13
+  },
+  {
+   "id": "manchester",
+   "name": "Manchester",
+   "country": "GB",
+   "countryName": "United Kingdom",
+   "lat": 53.481,
+   "lng": -2.243
+  },
+  {
+   "id": "glasgow",
+   "name": "Glasgow",
+   "country": "GB",
+   "countryName": "United Kingdom",
+   "lat": 55.864,
+   "lng": -4.252
+  },
+  {
+   "id": "bristol",
+   "name": "Bristol",
+   "country": "GB",
+   "countryName": "United Kingdom",
+   "lat": 51.454,
+   "lng": -2.587
+  },
+  {
+   "id": "dublin",
+   "name": "Dublin",
+   "country": "IE",
+   "countryName": "Ireland",
+   "lat": 53.35,
+   "lng": -6.26
+  },
+  {
+   "id": "paris",
+   "name": "Paris",
+   "country": "FR",
+   "countryName": "France",
+   "lat": 48.857,
+   "lng": 2.352,
+   "ra_area": 44
+  },
+  {
+   "id": "lyon",
+   "name": "Lyon",
+   "country": "FR",
+   "countryName": "France",
+   "lat": 45.764,
+   "lng": 4.836
+  },
+  {
+   "id": "marseille",
+   "name": "Marseille",
+   "country": "FR",
+   "countryName": "France",
+   "lat": 43.296,
+   "lng": 5.37
+  },
+  {
+   "id": "amsterdam",
+   "name": "Amsterdam",
+   "country": "NL",
+   "countryName": "Netherlands",
+   "lat": 52.37,
+   "lng": 4.895,
+   "ra_area": 29
+  },
+  {
+   "id": "rotterdam",
+   "name": "Rotterdam",
+   "country": "NL",
+   "countryName": "Netherlands",
+   "lat": 51.924,
+   "lng": 4.478
+  },
+  {
+   "id": "brussels",
+   "name": "Brussels",
+   "country": "BE",
+   "countryName": "Belgium",
+   "lat": 50.85,
+   "lng": 4.352
+  },
+  {
+   "id": "vienna",
+   "name": "Vienna",
+   "country": "AT",
+   "countryName": "Austria",
+   "lat": 48.208,
+   "lng": 16.373
+  },
+  {
+   "id": "zurich",
+   "name": "Zurich",
+   "country": "CH",
+   "countryName": "Switzerland",
+   "lat": 47.377,
+   "lng": 8.54
+  },
+  {
+   "id": "madrid",
+   "name": "Madrid",
+   "country": "ES",
+   "countryName": "Spain",
+   "lat": 40.417,
+   "lng": -3.704
+  },
+  {
+   "id": "barcelona",
+   "name": "Barcelona",
+   "country": "ES",
+   "countryName": "Spain",
+   "lat": 41.385,
+   "lng": 2.173
+  },
+  {
+   "id": "valencia",
+   "name": "Valencia",
+   "country": "ES",
+   "countryName": "Spain",
+   "lat": 39.47,
+   "lng": -0.376
+  },
+  {
+   "id": "lisbon",
+   "name": "Lisbon",
+   "country": "PT",
+   "countryName": "Portugal",
+   "lat": 38.722,
+   "lng": -9.139
+  },
+  {
+   "id": "porto",
+   "name": "Porto",
+   "country": "PT",
+   "countryName": "Portugal",
+   "lat": 41.158,
+   "lng": -8.629
+  },
+  {
+   "id": "rome",
+   "name": "Rome",
+   "country": "IT",
+   "countryName": "Italy",
+   "lat": 41.903,
+   "lng": 12.496
+  },
+  {
+   "id": "milan",
+   "name": "Milan",
+   "country": "IT",
+   "countryName": "Italy",
+   "lat": 45.464,
+   "lng": 9.19
+  },
+  {
+   "id": "copenhagen",
+   "name": "Copenhagen",
+   "country": "DK",
+   "countryName": "Denmark",
+   "lat": 55.676,
+   "lng": 12.568
+  },
+  {
+   "id": "stockholm",
+   "name": "Stockholm",
+   "country": "SE",
+   "countryName": "Sweden",
+   "lat": 59.33,
+   "lng": 18.069
+  },
+  {
+   "id": "oslo",
+   "name": "Oslo",
+   "country": "NO",
+   "countryName": "Norway",
+   "lat": 59.914,
+   "lng": 10.752
+  },
+  {
+   "id": "helsinki",
+   "name": "Helsinki",
+   "country": "FI",
+   "countryName": "Finland",
+   "lat": 60.17,
+   "lng": 24.938
+  },
+  {
+   "id": "warsaw",
+   "name": "Warsaw",
+   "country": "PL",
+   "countryName": "Poland",
+   "lat": 52.23,
+   "lng": 21.012
+  },
+  {
+   "id": "prague",
+   "name": "Prague",
+   "country": "CZ",
+   "countryName": "Czechia",
+   "lat": 50.075,
+   "lng": 14.438
+  },
+  {
+   "id": "budapest",
+   "name": "Budapest",
+   "country": "HU",
+   "countryName": "Hungary",
+   "lat": 47.498,
+   "lng": 19.04
+  },
+  {
+   "id": "athens",
+   "name": "Athens",
+   "country": "GR",
+   "countryName": "Greece",
+   "lat": 37.984,
+   "lng": 23.728
+  },
+  {
+   "id": "istanbul",
+   "name": "Istanbul",
+   "country": "TR",
+   "countryName": "Turkey",
+   "lat": 41.008,
+   "lng": 28.978
+  },
+  {
+   "id": "new-york",
+   "name": "New York",
+   "country": "US",
+   "countryName": "United States",
+   "lat": 40.713,
+   "lng": -74.006,
+   "ra_area": 8
+  },
+  {
+   "id": "los-angeles",
+   "name": "Los Angeles",
+   "country": "US",
+   "countryName": "United States",
+   "lat": 34.052,
+   "lng": -118.244
+  },
+  {
+   "id": "chicago",
+   "name": "Chicago",
+   "country": "US",
+   "countryName": "United States",
+   "lat": 41.878,
+   "lng": -87.63
+  },
+  {
+   "id": "san-francisco",
+   "name": "San Francisco",
+   "country": "US",
+   "countryName": "United States",
+   "lat": 37.775,
+   "lng": -122.419
+  },
+  {
+   "id": "miami",
+   "name": "Miami",
+   "country": "US",
+   "countryName": "United States",
+   "lat": 25.762,
+   "lng": -80.192
+  },
+  {
+   "id": "austin",
+   "name": "Austin",
+   "country": "US",
+   "countryName": "United States",
+   "lat": 30.267,
+   "lng": -97.743
+  },
+  {
+   "id": "toronto",
+   "name": "Toronto",
+   "country": "CA",
+   "countryName": "Canada",
+   "lat": 43.653,
+   "lng": -79.383
+  },
+  {
+   "id": "mexico-city",
+   "name": "Mexico City",
+   "country": "MX",
+   "countryName": "Mexico",
+   "lat": 19.433,
+   "lng": -99.133
+  },
+  {
+   "id": "sao-paulo",
+   "name": "Sao Paulo",
+   "country": "BR",
+   "countryName": "Brazil",
+   "lat": -23.551,
+   "lng": -46.633
+  },
+  {
+   "id": "buenos-aires",
+   "name": "Buenos Aires",
+   "country": "AR",
+   "countryName": "Argentina",
+   "lat": -34.604,
+   "lng": -58.382
+  },
+  {
+   "id": "sydney",
+   "name": "Sydney",
+   "country": "AU",
+   "countryName": "Australia",
+   "lat": -33.869,
+   "lng": 151.209
+  },
+  {
+   "id": "melbourne",
+   "name": "Melbourne",
+   "country": "AU",
+   "countryName": "Australia",
+   "lat": -37.814,
+   "lng": 144.963
+  },
+  {
+   "id": "tokyo",
+   "name": "Tokyo",
+   "country": "JP",
+   "countryName": "Japan",
+   "lat": 35.676,
+   "lng": 139.65
+  },
+  {
+   "id": "dubai",
+   "name": "Dubai",
+   "country": "AE",
+   "countryName": "United Arab Emirates",
+   "lat": 25.205,
+   "lng": 55.271
+  },
+  {
+   "id": "cape-town",
+   "name": "Cape Town",
+   "country": "ZA",
+   "countryName": "South Africa",
+   "lat": -33.925,
+   "lng": 18.424
+  }
+ ],
+ "ticketers": [
+  {
+   "id": "ticketmaster",
+   "label": "Ticketmaster",
+   "color": "#026CDF",
+   "home": "https://www.ticketmaster.com",
+   "terms_url": "https://developer.ticketmaster.com/support/terms-of-use/",
+   "coverage": [
+    "US",
+    "CA",
+    "MX",
+    "GB",
+    "IE",
+    "DE",
+    "ES",
+    "NL",
+    "AT",
+    "CH",
+    "DK",
+    "FI",
+    "NO",
+    "SE",
+    "PL",
+    "BE",
+    "FR",
+    "AU"
+   ],
+   "auth": {
+    "type": "key",
+    "label": "Consumer Key",
+    "help_url": "https://developer-acct.ticketmaster.com/user/register"
+   },
+   "enabled_default": true,
+   "cache_hours": 6,
+   "min_interval_hours": 1,
+   "fetch": {
+    "kind": "api",
+    "how": "Ticketmaster Discovery API v2 (public, free key, 5000 calls/day, 5/s)",
+    "method": "GET",
+    "url": "https://app.ticketmaster.com/discovery/v2/events.json",
+    "query": {
+     "apikey": "{key}",
+     "latlong": "{lat},{lng}",
+     "radius": "{radius_km}",
+     "unit": "km",
+     "startDateTime": "{from_iso}",
+     "endDateTime": "{to_iso}",
+     "size": "100",
+     "sort": "date,asc",
+     "classificationName": "{category_param}"
+    },
+    "hosts": [
+     "app.ticketmaster.com"
+    ],
+    "parser": "ticketmaster"
+   },
+   "note": "Official API. Needs your own key (Configs > Events)."
+  },
+  {
+   "id": "skiddle",
+   "label": "Skiddle",
+   "color": "#FF5A00",
+   "home": "https://www.skiddle.com",
+   "terms_url": "https://github.com/Skiddle/web-api/wiki",
+   "coverage": [
+    "GB"
+   ],
+   "auth": {
+    "type": "key",
+    "label": "API key",
+    "help_url": "https://www.skiddle.com/api/join.php"
+   },
+   "enabled_default": true,
+   "cache_hours": 6,
+   "min_interval_hours": 1,
+   "fetch": {
+    "kind": "api",
+    "how": "Skiddle public API v1 (free key; UK clubs, gigs, festivals)",
+    "method": "GET",
+    "url": "https://www.skiddle.com/api/v1/events/search/",
+    "query": {
+     "api_key": "{key}",
+     "latitude": "{lat}",
+     "longitude": "{lng}",
+     "radius": "{radius_mi}",
+     "minDate": "{from_date}",
+     "maxDate": "{to_date}",
+     "limit": "100",
+     "order": "date",
+     "eventcode": "{category_param}"
+    },
+    "hosts": [
+     "www.skiddle.com"
+    ],
+    "parser": "skiddle"
+   },
+   "note": "Official API, UK only. Needs your own key."
+  },
+  {
+   "id": "ra",
+   "label": "Resident Advisor",
+   "short": "RA",
+   "color": "#D81B60",
+   "home": "https://ra.co",
+   "terms_url": "https://ra.co/terms",
+   "coverage": null,
+   "needs_city_field": "ra_area",
+   "auth": {
+    "type": "none"
+   },
+   "enabled_default": false,
+   "cache_hours": 12,
+   "min_interval_hours": 6,
+   "fetch": {
+    "kind": "graphql",
+    "how": "RA's public listings GraphQL endpoint (undocumented, the one ra.co's own pages call); opt-in, polite: one query per city per 12 h",
+    "method": "POST",
+    "url": "https://ra.co/graphql",
+    "headers": {
+     "Content-Type": "application/json",
+     "Referer": "https://ra.co/events"
+    },
+    "body": {
+     "operationName": "GET_EVENT_LISTINGS",
+     "variables": {
+      "filters": {
+       "areas": {
+        "eq": "{ra_area}"
+       },
+       "listingDate": {
+        "gte": "{from_iso}",
+        "lte": "{to_iso}"
+       }
+      },
+      "pageSize": 50,
+      "page": 1
+     },
+     "query": "query GET_EVENT_LISTINGS($filters: FilterInputDtoInput, $pageSize: Int, $page: Int) { eventListings(filters: $filters, pageSize: $pageSize, page: $page, sort: {listingDate: {priority: 1, order: ASCENDING}}) { data { id listingDate event { id title date startTime endTime contentUrl flyerFront venue { name area { name } } artists { name } } } totalResults } }"
+    },
+    "hosts": [
+     "ra.co"
+    ],
+    "parser": "ra",
+    "robots": true
+   },
+   "note": "Opt-in: the endpoint is not a documented public API, so it is off until you switch it on. Only covers cities with an ra_area."
+  },
+  {
+   "id": "eventbrite",
+   "label": "Eventbrite",
+   "color": "#F05537",
+   "home": "https://www.eventbrite.com",
+   "terms_url": "https://www.eventbrite.com/help/en-us/articles/460838/eventbrite-terms-of-service/",
+   "coverage": null,
+   "auth": {
+    "type": "none"
+   },
+   "enabled_default": false,
+   "cache_hours": 12,
+   "min_interval_hours": 12,
+   "fetch": {
+    "kind": "scrape",
+    "how": "Fleet scraper path: one polite GET of the public city page, then schema.org Event JSON-LD (libs:scraper's fetch-and-extract, app-side); robots.txt checked first, honest User-Agent",
+    "method": "GET",
+    "url": "https://www.eventbrite.com/d/{country_slug}--{city_slug}/events/",
+    "headers": {
+     "Accept": "text/html",
+     "User-Agent": "CloudNews (personal, non-commercial reader; one request per page per interval; honours robots.txt)"
+    },
+    "hosts": [
+     "www.eventbrite.com"
+    ],
+    "parser": "jsonld",
+    "robots": true
+   },
+   "note": "Eventbrite retired its public event-search API, so the city browse page's schema.org JSON-LD is read instead (scraper path). Opt-in."
+  },
+  {
+   "id": "dice",
+   "label": "Dice",
+   "color": "#000000",
+   "home": "https://dice.fm",
+   "terms_url": "https://dice.fm/terms",
+   "coverage": [
+    "GB",
+    "US",
+    "DE",
+    "FR",
+    "ES",
+    "IT",
+    "NL",
+    "IE",
+    "PT"
+   ],
+   "auth": {
+    "type": "none"
+   },
+   "enabled_default": false,
+   "cache_hours": 12,
+   "min_interval_hours": 12,
+   "fetch": {
+    "kind": "scrape",
+    "how": "Fleet scraper path: one polite GET of the public city page, then schema.org Event JSON-LD (libs:scraper's fetch-and-extract, app-side); robots.txt checked first, honest User-Agent",
+    "method": "GET",
+    "url": "https://dice.fm/browse/{city_slug}",
+    "headers": {
+     "Accept": "text/html",
+     "User-Agent": "CloudNews (personal, non-commercial reader; one request per page per interval; honours robots.txt)"
+    },
+    "hosts": [
+     "dice.fm"
+    ],
+    "parser": "jsonld",
+    "robots": true
+   },
+   "note": "No public API: the city browse page's schema.org JSON-LD is read (scraper path). Opt-in."
+  },
+  {
+   "id": "eventim",
+   "label": "Eventim",
+   "color": "#0066B3",
+   "home": "https://www.eventim.com",
+   "terms_url": "https://www.eventim.de/hilfe/agb/",
+   "coverage": [
+    "DE",
+    "AT",
+    "CH",
+    "ES",
+    "NL",
+    "IT",
+    "PL"
+   ],
+   "auth": {
+    "type": "none"
+   },
+   "enabled_default": false,
+   "cache_hours": 12,
+   "min_interval_hours": 12,
+   "fetch": {
+    "kind": "scrape",
+    "how": "Fleet scraper path: one polite GET of the public city page, then schema.org Event JSON-LD (libs:scraper's fetch-and-extract, app-side); robots.txt checked first, honest User-Agent",
+    "method": "GET",
+    "url": "https://www.eventim.{tld}/city/{city_slug}/",
+    "headers": {
+     "Accept": "text/html",
+     "User-Agent": "CloudNews (personal, non-commercial reader; one request per page per interval; honours robots.txt)"
+    },
+    "hosts": [
+     "www.eventim.de",
+     "www.eventim.at",
+     "www.eventim.ch",
+     "www.eventim.es",
+     "www.eventim.nl",
+     "www.eventim.it",
+     "www.eventim.pl"
+    ],
+    "parser": "jsonld",
+    "robots": true,
+    "tld": {
+     "DE": "de",
+     "AT": "at",
+     "CH": "ch",
+     "ES": "es",
+     "NL": "nl",
+     "IT": "it",
+     "PL": "pl"
+    }
+   },
+   "note": "Partner API is contract-only, so the city page's schema.org JSON-LD is read (scraper path). Opt-in."
+  },
+  {
+   "id": "ics",
+   "label": "Public calendars",
+   "short": "ICS",
+   "color": "#00897B",
+   "home": "",
+   "terms_url": "",
+   "coverage": null,
+   "auth": {
+    "type": "none"
+   },
+   "enabled_default": true,
+   "cache_hours": 24,
+   "min_interval_hours": 1,
+   "fetch": {
+    "kind": "engine",
+    "how": "The ICS feeds of data/events.json, synced by the news engine; read through NewsBridge.events",
+    "parser": "engine"
+   },
+   "note": "Holidays, sports and local calendars; not city-specific."
+  }
+ ],
+ "fetch_policy": {
+  "_doc": "Applied by EventFetcher.kt to every ticketer request: https only, host must be in the row's fetch.hosts, key placeholders {key} resolved from the encrypted store (never returned to the page), response cached on disk for the row's cache_hours (a stale copy is served when the network fails), a row is not re-requested inside min_interval_hours, bodies capped.",
+  "max_body_bytes": 2000000,
+  "timeout_ms": 15000
+ }
+}

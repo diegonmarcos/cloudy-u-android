@@ -1,0 +1,4 @@
+{"error":0,"totalcount":2,"results":[
+{"id":"101","eventname":"Warehouse Sessions","date":"2026-11-06","startdate":"2026-11-06T22:00:00","enddate":"2026-11-07T05:00:00","EventCode":"CLUB","imageurl":"https://s/i.jpg","largeimageurl":"https://s/l.jpg","link":"https://www.skiddle.com/e/101","entryprice":"12.00","venue":{"name":"Depot","town":"Manchester"}},
+{"id":"102","eventname":"Stand-up Sunday","date":"2026-11-08","startdate":"2026-11-08","EventCode":"COMEDY","link":"https://www.skiddle.com/e/102","venue":{"name":"The Club","town":"Leeds"}}
+]}

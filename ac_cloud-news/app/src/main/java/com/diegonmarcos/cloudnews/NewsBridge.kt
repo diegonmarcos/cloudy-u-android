@@ -12,6 +12,9 @@ import org.json.JSONObject
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+import java.io.File
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 
 /**
@@ -459,6 +462,58 @@ class NewsBridge(private val ctx: Context) {
      *  epoch millis for [mediaItems]' `published` field. 0 (never
      *  throws) for a blank/unparseable seendate (an article whose date
      *  never parsed at all — see RssParser.parseDate). */
+
+    // ---- events finder (data/event-finder.json -> BuildConfig.EVENT_FINDER_B64) -------------------------
+    // The page (events-core.js / events-ui.js) builds each ticketer request from the declared row; EventFetcher is the
+    // policy (https + declared hosts only, encrypted keys, disk cache, politeness). A fetch is a job the page polls, so
+    // the JS thread never waits on the network.
+
+    private val finderJson: String by lazy { String(Base64.decode(BuildConfig.EVENT_FINDER_B64, Base64.DEFAULT), Charsets.UTF_8) }
+    private val fetcher: EventFetcher by lazy {
+        EventFetcher(JSONObject(finderJson), File(ctx.cacheDir, "events"), EncryptedKeyStore(ctx))
+    }
+    private val keys: EventKeyStore by lazy { EncryptedKeyStore(ctx) }
+    private val fetchPool = Executors.newFixedThreadPool(3)
+    private val fetchJobs = ConcurrentHashMap<String, String>()
+
+    /** The declared finder config, verbatim (categories, when, views, cities, ticketers, ramp, defaults). */
+    @JavascriptInterface
+    fun eventFinder(): String = finderJson
+
+    @JavascriptInterface
+    fun eventFetchStart(ticketerId: String, requestJson: String, force: String): String {
+        val req = try { JSONObject(requestJson) } catch (e: Exception) { return okErr(false, "bad request") }
+        val job = UUID.randomUUID().toString()
+        fetchJobs[job] = ""
+        fetchPool.execute {
+            val r = try { fetcher.fetch(ticketerId, req, force == "1") }
+            catch (e: Exception) { JSONObject().put("ok", false).put("error", e.message ?: e.javaClass.simpleName) }
+            fetchJobs[job] = r.toString()
+        }
+        return JSONObject().put("job", job).toString()
+    }
+
+    /** `{pending:true}` until the job is done, then its result once (and forgotten). */
+    @JavascriptInterface
+    fun eventFetchResult(job: String): String {
+        val r = fetchJobs[job] ?: return okErr(false, "unknown job")
+        if (r.isEmpty()) return JSONObject().put("pending", true).toString()
+        fetchJobs.remove(job)
+        return r
+    }
+
+    /** Stores (or, blank, clears) a ticketer's API key, encrypted. Only ticketers that declare a key are accepted. */
+    @JavascriptInterface
+    fun eventSetKey(ticketerId: String, value: String): String {
+        if (!fetcher.needsKey(ticketerId)) return okErr(false, "this ticketer takes no key")
+        keys.set(ticketerId, value.trim())
+        return okErr(true, "")
+    }
+
+    /** Whether a key is stored. The key itself never crosses back to the page. */
+    @JavascriptInterface
+    fun eventHasKey(ticketerId: String): String =
+        JSONObject().put("has", fetcher.needsKey(ticketerId) && !keys.get(ticketerId).isNullOrBlank()).toString()
 
     // ---- saved --------------------------------------------------------------
 

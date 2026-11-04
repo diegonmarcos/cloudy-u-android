@@ -1,0 +1,12 @@
+{"_embedded":{"events":[
+{"id":"Z1","name":"Hertha BSC vs Union Berlin","url":"https://www.ticketmaster.de/event/z1","images":[{"url":"https://img/a_4_3.jpg","ratio":"4_3","width":305},{"url":"https://img/a_16_9.jpg","ratio":"16_9","width":1024}],
+ "dates":{"start":{"localDate":"2026-11-07","localTime":"15:30:00","dateTime":"2026-11-07T14:30:00Z"}},
+ "classifications":[{"segment":{"name":"Sports"},"genre":{"name":"Soccer"}}],
+ "priceRanges":[{"min":25,"currency":"EUR"}],
+ "_embedded":{"venues":[{"name":"Olympiastadion","city":{"name":"Berlin"}}]}},
+{"id":"Z2","name":"Boiler Room Night","url":"https://www.ticketmaster.de/event/z2","images":[],
+ "dates":{"start":{"localDate":"2026-11-08","noSpecificTime":true}},
+ "classifications":[{"segment":{"name":"Music"},"genre":{"name":"Dance/Electronic"}}],
+ "_embedded":{"venues":[{"name":"Tempodrom","city":{"name":"Berlin"}}]}},
+{"id":"Z3","name":"No date","dates":{"start":{}}}
+]}}

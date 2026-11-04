@@ -1,0 +1,71 @@
+/* Events finder. Every size comes from the fleet ramp: events-ui.js turns data/event-finder.json::ramp into
+   --ef-caption/meta/body/title (the Store's type sizes x text_scale) and --ef-s<N> (the Store's spacing step N x scale),
+   the same numbers as libs:ui-kit KitStoreRow. No font-size or spacing literal belongs in this file (1px hairlines excepted;
+   tests/events-core.test.js guards it). */
+.ef-head { display: flex; align-items: center; justify-content: space-between; gap: var(--ef-s8); padding: var(--ef-s8) var(--ef-s12); }
+.ef-title-h { font-size: var(--ef-title); font-weight: 700; color: var(--text); }
+.ef-city-btn { display: inline-flex; align-items: center; gap: var(--ef-s4); font: inherit; font-size: var(--ef-body); font-weight: 600; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: var(--ef-s16); padding: var(--ef-s4) var(--ef-s12); }
+.ef-bar { display: flex; gap: var(--ef-s4); overflow-x: auto; padding: var(--ef-s4) var(--ef-s12); scrollbar-width: none; }
+.ef-bar::-webkit-scrollbar { display: none; }
+.ef-chip { flex: none; font: inherit; font-size: var(--ef-meta); color: var(--text-secondary); background: transparent; border: 1px solid var(--border); border-radius: var(--ef-s16); padding: var(--ef-s4) var(--ef-s8); white-space: nowrap; }
+.ef-chip.on { background: var(--fill); color: var(--fill-text); border-color: var(--fill); }
+.ef-chip .ef-dot { display: inline-block; width: var(--ef-s8); height: var(--ef-s8); border-radius: 50%; margin-right: var(--ef-s4); vertical-align: middle; }
+.ef-chip .ef-n { color: var(--text-muted); margin-left: var(--ef-s4); }
+.ef-chip.on .ef-n { color: inherit; opacity: .8; }
+.ef-label { flex: none; align-self: center; font-size: var(--ef-caption); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); padding-right: var(--ef-s4); }
+.ef-custom { display: flex; gap: var(--ef-s8); align-items: center; padding: var(--ef-s4) var(--ef-s12); font-size: var(--ef-meta); color: var(--text-secondary); }
+.ef-custom input { font: inherit; font-size: var(--ef-body); color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: var(--ef-s8); padding: var(--ef-s4) var(--ef-s8); min-width: 0; }
+.ef-status { padding: var(--ef-s4) var(--ef-s12); font-size: var(--ef-caption); color: var(--text-muted); display: flex; flex-wrap: wrap; gap: var(--ef-s8); align-items: center; }
+.ef-status .bad { color: var(--remove-text); }
+.ef-status button { font: inherit; font-size: var(--ef-caption); color: var(--text-secondary); background: none; border: 1px solid var(--border); border-radius: var(--ef-s8); padding: 0 var(--ef-s8); }
+.ef-seg { display: flex; margin: var(--ef-s4) var(--ef-s12); background: var(--surface); border: 1px solid var(--border); border-radius: var(--ef-s8); overflow: hidden; }
+.ef-seg button { flex: 1; font: inherit; font-size: var(--ef-body); font-weight: 600; color: var(--text-secondary); background: none; border: none; padding: var(--ef-s4) 0; }
+.ef-seg button.on { background: var(--fill); color: var(--fill-text); }
+
+/* the Store row: dense, hairline rule, thumb + two text lines + a state glyph */
+.ef-day { padding: var(--ef-s8) var(--ef-s12) var(--ef-s4); font-size: var(--ef-caption); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); }
+.ef-row { display: flex; align-items: center; gap: var(--ef-s8); padding: var(--ef-s8) var(--ef-s12); border-bottom: 1px solid var(--border); }
+.ef-thumb { flex: none; width: var(--ef-s64); height: var(--ef-s64); border-radius: var(--ef-s8); background: var(--surface-strong); object-fit: cover; display: flex; align-items: center; justify-content: center; font-size: var(--ef-title); font-weight: 700; color: #fff; overflow: hidden; }
+.ef-main { flex: 1; min-width: 0; }
+.ef-name { font-size: var(--ef-title); font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ef-meta { font-size: var(--ef-meta); color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ef-cap { font-size: var(--ef-caption); color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ef-cap b { font-weight: 700; }
+.ef-star { flex: none; font: inherit; font-size: var(--ef-title); background: none; border: none; color: var(--text-muted); padding: var(--ef-s4); }
+.ef-star.on { color: #F6AD55; }
+.ef-empty { text-align: center; padding: var(--ef-s64) var(--ef-s16); color: var(--text-secondary); font-size: var(--ef-body); line-height: 1.5; }
+.ef-month { display: flex; align-items: center; justify-content: space-between; padding: var(--ef-s4) var(--ef-s12); }
+.ef-month button { font: inherit; font-size: var(--ef-title); color: var(--text); background: none; border: none; padding: var(--ef-s4) var(--ef-s12); }
+.ef-month span { font-size: var(--ef-title); font-weight: 700; color: var(--text); }
+.ef-calwrap { padding: 0 var(--ef-s12); }
+
+/* swipe cards reuse .event-stack/.event-card/.event-card-* from news.html; this is only the image header */
+.ef-card-img { flex: none; height: var(--ef-s240); background-size: cover; background-position: center; background-color: var(--surface-strong); }
+.ef-card-src { font-size: var(--ef-caption); font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--text-secondary); }
+.ef-card-title { font-size: var(--ef-title); font-weight: 700; color: var(--text); margin-top: var(--ef-s8); line-height: 1.3; }
+.ef-card-row { margin-top: var(--ef-s8); font-size: var(--ef-body); color: var(--text-secondary); }
+.ef-hint { text-align: center; font-size: var(--ef-caption); color: var(--text-muted); margin: var(--ef-s4) 0; }
+
+/* city picker */
+.ef-overlay { position: fixed; inset: 0; z-index: 60; background: var(--bg); display: flex; flex-direction: column; }
+.ef-overlay.hidden { display: none; }
+.ef-overlay-head { display: flex; gap: var(--ef-s8); align-items: center; padding: var(--ef-s12); border-bottom: 1px solid var(--border); }
+.ef-overlay-head input { flex: 1; min-width: 0; font: inherit; font-size: var(--ef-title); color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: var(--ef-s8); padding: var(--ef-s8) var(--ef-s12); }
+.ef-overlay-head button { font: inherit; font-size: var(--ef-body); color: var(--text-secondary); background: none; border: none; }
+.ef-overlay-list { flex: 1; overflow-y: auto; }
+.ef-city-row { display: flex; align-items: baseline; justify-content: space-between; width: 100%; font: inherit; text-align: left; color: var(--text); background: none; border: none; border-bottom: 1px solid var(--border); padding: var(--ef-s8) var(--ef-s12); }
+.ef-city-row.on { background: var(--surface); }
+.ef-city-row .n { font-size: var(--ef-title); font-weight: 700; }
+.ef-city-row .c { font-size: var(--ef-meta); color: var(--text-muted); }
+
+/* Configs > Events */
+.ef-cfg-row { display: flex; flex-direction: column; gap: var(--ef-s4); padding: var(--ef-s8) 0; border-bottom: 1px solid var(--border); }
+.ef-cfg-top { display: flex; align-items: center; justify-content: space-between; gap: var(--ef-s8); }
+.ef-cfg-name { font-size: var(--ef-title); font-weight: 700; color: var(--text); }
+.ef-cfg-kind { font-size: var(--ef-caption); font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); margin-left: var(--ef-s8); }
+.ef-cfg-note { font-size: var(--ef-meta); color: var(--text-secondary); }
+.ef-cfg-key { display: flex; gap: var(--ef-s8); align-items: center; }
+.ef-cfg-key input { flex: 1; min-width: 0; font: inherit; font-size: var(--ef-body); color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: var(--ef-s8); padding: var(--ef-s4) var(--ef-s8); }
+.ef-cfg-key button { font: inherit; font-size: var(--ef-body); color: var(--fill-text); background: var(--fill); border: none; border-radius: var(--ef-s8); padding: var(--ef-s4) var(--ef-s12); }
+.ef-cfg-key button.quiet { color: var(--text-secondary); background: none; border: 1px solid var(--border); }
+.ef-cfg-ok { font-size: var(--ef-caption); color: var(--success-text); }
