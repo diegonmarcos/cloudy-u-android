@@ -104,46 +104,6 @@ object ApifyStore {
     }
 }
 
-/** #1468 where actor runs go: Apify Cloud (the default) or the fleet's Apify-compatible Cloudy Crawlee runner (opt-in). The Store search always uses the public Apify Store. */
-enum class ApifyBackend(val label: String, val api: String, val tokenKey: String) {
-    CLOUD("Apify Cloud", ApifyCatalog.API, "apify.token"),
-    CRAWLEE("Self-hosted Cloudy Crawlee", "https://crawlee-cloud.mesh.diegonmarcos.com/v2", "crawlee.token"),
-}
-
-/** #1468 the Apify tokens' only store: SafeEncryptedPrefs file apify_tokens. */
-class ApifyTokenStore(ctx: android.content.Context) : TokenStore {
-    private val sp = com.diegonmarcos.superapp.crash.SafeEncryptedPrefs.prefs(ctx.applicationContext, "apify_tokens")
-    override fun get(key: String): String? = sp.getString(key, null)
-    override fun put(key: String, value: String) { sp.edit().putString(key, value).apply() }
-    override fun remove(key: String) { sp.edit().remove(key).apply() }
-}
-
-/** #1468 the user's Apify token: only in encrypted storage (EncryptedTokenStore with its own prefs file), never plaintext. */
-class ApifyAccount(private val store: TokenStore) {
-    /** The chosen backend; Apify Cloud until the user opts in to Crawlee. */
-    var backend: ApifyBackend
-        get() = ApifyBackend.entries.firstOrNull { it.name == store.get(BACKEND) } ?: ApifyBackend.CLOUD
-        set(v) { store.put(BACKEND, v.name) }
-
-    private val key get() = backend.tokenKey
-    fun token(): String = store.get(key).orEmpty()
-    fun connected(): Boolean = token().isNotEmpty()
-
-    /** False (nothing stored) for a blank token or one with spaces inside. */
-    fun save(raw: String): Boolean {
-        val t = raw.trim()
-        if (t.length < 8 || t.any { it.isWhitespace() }) return false
-        store.put(key, t); return true
-    }
-
-    fun clear() = store.remove(key)
-
-    /** Shown in place of the token: first 4 and last 2 characters. */
-    fun masked(): String = token().let { if (it.length <= 8) "••••" else it.take(4) + "••••" + it.takeLast(2) }
-
-    companion object { const val BACKEND = "apify.backend" }
-}
-
 /** #1468 the token-authenticated Apify calls (run an actor, list runs, datasets and their items). */
 class ApifyClient(private val token: String, private val http: MusicHttp = MusicHttp(), private val api: String = ApifyCatalog.API) {
     private val auth get() = mapOf("Authorization" to "Bearer $token")

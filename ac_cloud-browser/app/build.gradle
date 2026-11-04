@@ -365,6 +365,7 @@ dependencies {
     implementation project(':libs:analytics')
     implementation project(':libs:core')
     implementation project(':libs:browser')
+    implementation project(':libs:apify')   // #1468 shared Apify backend + token store
     implementation project(':libs:scraper')   // #1426 Scrapers: Site Files, Apify, SelfHosted
     // #1222 the Bluetooth stack the Web Bluetooth polyfill drives (the app's tests run the bridge over a fake adapter).
     implementation project(':libs:bluetooth')

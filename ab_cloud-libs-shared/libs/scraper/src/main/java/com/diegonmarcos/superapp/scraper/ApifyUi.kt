@@ -29,6 +29,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import com.diegonmarcos.superapp.apify.ApifyBackendStore
+import com.diegonmarcos.superapp.apify.ApifyBackends
+import com.diegonmarcos.superapp.apify.EncryptedApifyKv
 import com.diegonmarcos.superapp.themebg.ThemeColors
 import com.diegonmarcos.superapp.uikit.KitStoreCaption
 import com.diegonmarcos.superapp.uikit.KitStoreDot
@@ -51,7 +54,7 @@ fun ApifyPage(c: ThemeColors) {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
     val http = remember { MusicHttp() }
-    val account = remember { ApifyAccount(ApifyTokenStore(ctx)) }
+    val store = remember { ApifyBackendStore(EncryptedApifyKv(ctx)) }
     var rev by remember { mutableStateOf(0) }
     var view by remember { mutableStateOf(ApifyView.ACTORS) }
     var query by remember { mutableStateOf("") }
@@ -61,6 +64,7 @@ fun ApifyPage(c: ThemeColors) {
     var sets by remember { mutableStateOf<List<ApifyDataset>>(emptyList()) }
     var open by remember { mutableStateOf<String?>(null) }
     var accountOpen by remember { mutableStateOf(false) }
+    var selfUrl by remember { mutableStateOf(store.selfUrl()) }
     var tokenText by remember { mutableStateOf("") }
     var input by remember { mutableStateOf("{}") }
     var message by remember { mutableStateOf("") }
@@ -72,14 +76,16 @@ fun ApifyPage(c: ThemeColors) {
             }
         }
     }
-    val connected = rev.let { account.connected() }
+    val backend = rev.let { store.backend() }
+    val connected = rev.let { store.hasToken() }
+    fun masked() = store.resolve()?.second.orEmpty().let { if (it.length <= 8) "••••" else it.take(4) + "••••" + it.takeLast(2) }
     val colors = OutlinedTextFieldDefaults.colors(focusedTextColor = c.ink, unfocusedTextColor = c.ink, focusedLabelColor = c.accent, unfocusedLabelColor = c.inkDim)
 
     fun guarded(what: String, block: suspend () -> Unit) = scope.launch {
         message = what
         runCatching { block() }.onSuccess { if (message == what) message = "" }.onFailure { message = "Apify: ${it.message}" }
     }
-    fun client() = ApifyClient(account.token(), http, account.backend.api)
+    fun client() = store.resolve().let { r -> ApifyClient(r?.second.orEmpty(), http, r?.first ?: ApifyBackends.CLOUD_API) }
     fun search() = guarded("Searching the Store…") {
         val p = withContext(Dispatchers.IO) { ApifyStore.parse(http.get(ApifyStore.url(query))) }
         found = p.items; total = p.total; view = ApifyView.ACTORS
@@ -117,8 +123,8 @@ fun ApifyPage(c: ThemeColors) {
         }
         item(key = "backend") {
             Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = KitStoreRow.padH), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                for (b in ApifyBackend.entries) Chip(b.label, rev.let { account.backend } == b, c, "apify:backend:${b.name}") {
-                    account.backend = b; rev++; runs = emptyList(); sets = emptyList(); open = null
+                for (b in store.decl.backends) Chip(b.label, backend.id == b.id, c, "apify:backend:${b.id}") {
+                    store.setBackend(b.id); rev++; runs = emptyList(); sets = emptyList(); open = null
                     if (view != ApifyView.ACTORS) view = ApifyView.ACTORS
                 }
             }
@@ -128,17 +134,19 @@ fun ApifyPage(c: ThemeColors) {
                 for (v in ApifyView.entries) Chip(v.label, view == v, c, "apify:view:${v.name}") {
                     pick(v)
                 }
-                Chip(if (connected) "Token ${account.masked()}" else "Add token", accountOpen, c, "apify:account") { accountOpen = !accountOpen }
+                Chip(if (connected) "Token ${masked()}" else "Add token", accountOpen, c, "apify:account") { accountOpen = !accountOpen }
             }
         }
         if (accountOpen) item(key = "account") {
             Column(Modifier.fillMaxWidth().padding(horizontal = KitStoreRow.padH).testTag("apify:token")) {
-                OutlinedTextField(tokenText, { tokenText = it }, label = { Text("${rev.let { account.backend.label }} token (stored encrypted)") }, singleLine = true, colors = colors,
+                OutlinedTextField(tokenText, { tokenText = it }, label = { Text("${backend.label} token (stored encrypted)") }, singleLine = true, colors = colors,
                     modifier = Modifier.fillMaxWidth().testTag("apify:token:field"))
+                if (backend.api == null) OutlinedTextField(selfUrl, { selfUrl = it; store.setSelfUrl(it) }, label = { Text("Runner URL (https)") }, singleLine = true, colors = colors,
+                    modifier = Modifier.fillMaxWidth().testTag("apify:token:url"))
                 Row {
-                    Button(onClick = { if (account.save(tokenText)) { tokenText = ""; rev++; accountOpen = false; message = "Token saved" } else message = "That does not look like an Apify token" },
+                    Button(onClick = { if (tokenText.trim().length >= 8 && store.setToken(backend, tokenText)) { tokenText = ""; rev++; accountOpen = false; message = "Token saved" } else message = "That does not look like an Apify token" },
                         enabled = tokenText.isNotBlank(), colors = ButtonDefaults.buttonColors(containerColor = c.accent), modifier = Modifier.testTag("apify:token:save")) { Text("Save") }
-                    if (connected) TextButton(onClick = { account.clear(); rev++; runs = emptyList(); sets = emptyList() }, modifier = Modifier.testTag("apify:token:clear")) { Text("Remove", color = c.accent) }
+                    if (connected) TextButton(onClick = { store.setToken(backend, ""); rev++; runs = emptyList(); sets = emptyList() }, modifier = Modifier.testTag("apify:token:clear")) { Text("Remove", color = c.accent) }
                 }
             }
         }

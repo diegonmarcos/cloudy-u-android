@@ -1,12 +1,12 @@
 package com.diegonmarcos.cloudbrowser
 
-import com.diegonmarcos.superapp.scraper.ApifyAccount
-import com.diegonmarcos.superapp.scraper.ApifyBackend
+import com.diegonmarcos.superapp.apify.ApifyBackendStore
+import com.diegonmarcos.superapp.apify.ApifyBackends
+import com.diegonmarcos.superapp.apify.ApifyKv
 import com.diegonmarcos.superapp.scraper.ApifyCatalog
 import com.diegonmarcos.superapp.scraper.ApifyClient
 import com.diegonmarcos.superapp.scraper.ApifyExport
 import com.diegonmarcos.superapp.scraper.ApifyStore
-import com.diegonmarcos.superapp.scraper.MemoryTokenStore
 import com.diegonmarcos.superapp.scraper.MusicHttp
 import com.diegonmarcos.superapp.scraper.ScrapersPages
 import com.diegonmarcos.superapp.scraper.SelfHostedCatalog
@@ -76,32 +76,29 @@ class ScraperApifyTest {
         assertTrue(ApifyCatalog.actors.all { it.url == "https://apify.com/${it.id}" && it.author.isNotBlank() })
     }
 
-    @Test fun `token is kept in the store, trimmed, masked, and validated`() {
-        val store = MemoryTokenStore()
-        val a = ApifyAccount(store)
-        assertFalse(a.connected())
-        assertFalse(a.save("short")); assertFalse(a.save("has space inside token"))
-        assertFalse(a.connected())
-        assertTrue(a.save("  apify_api_ABCDEFGHIJ  "))
-        assertEquals("apify_api_ABCDEFGHIJ", ApifyAccount(store).token())      // a new account over the same store sees it
-        assertEquals("apif••••IJ", a.masked())
-        assertFalse(a.masked().contains("ABCDEFG"))
-        a.clear()
-        assertFalse(a.connected()); assertEquals("", a.token())
+    private class MapKv : ApifyKv {
+        val m = mutableMapOf<String, String>()
+        override fun get(key: String) = m[key]
+        override fun set(key: String, value: String?) { if (value.isNullOrBlank()) m.remove(key) else m[key] = value.trim() }
     }
 
-    @Test fun `backend defaults to Apify Cloud, Crawlee is opt-in and keeps its own token`() {
-        val store = MemoryTokenStore()
-        val a = ApifyAccount(store)
-        assertEquals(ApifyBackend.CLOUD, a.backend)
-        assertEquals("https://api.apify.com/v2", a.backend.api)
-        assertTrue(a.save("cloud_token_123456"))
-        a.backend = ApifyBackend.CRAWLEE
-        assertEquals(ApifyBackend.CRAWLEE, ApifyAccount(store).backend)
-        assertFalse(a.connected())                       // the cloud token is not sent to the self-hosted runner
-        assertTrue(a.save("crawlee_token_123456"))
-        a.backend = ApifyBackend.CLOUD
-        assertEquals("cloud_token_123456", a.token())
+    @Test fun `token is kept in the shared store per backend, validated, and defaults to Apify Cloud`() {
+        val kv = MapKv()
+        val s = ApifyBackendStore(kv)
+        assertEquals(ApifyBackends.CLOUD, s.backend().id)                    // Apify Cloud unless the user opts in
+        assertEquals("https://api.apify.com/v2", s.resolve()?.first ?: ApifyBackends.CLOUD_API)
+        assertFalse(s.hasToken())
+        assertFalse(s.setToken(s.backend(), "has space inside"))
+        assertTrue(s.setToken(s.backend(), "  apify_api_ABCDEFGHIJ  "))
+        assertEquals("https://api.apify.com/v2" to "apify_api_ABCDEFGHIJ", ApifyBackendStore(kv).resolve())
+        s.setBackend(ApifyBackends.SELF_HOSTED)
+        assertEquals(ApifyBackends.SELF_HOSTED, ApifyBackendStore(kv).backend().id)
+        assertFalse(s.hasToken())                                            // the cloud token is not sent to the self-hosted runner
+        assertTrue(s.setToken(s.backend(), "crawlee_bearer_1234"))
+        assertEquals("https://crawlee-cloud.mesh.diegonmarcos.com/v2" to "crawlee_bearer_1234", s.resolve())
+        s.setBackend(ApifyBackends.CLOUD)
+        s.setToken(s.backend(), "")
+        assertFalse(s.hasToken())
     }
 
     @Test fun `client sends the bearer token to run an actor and lists runs and datasets`() {

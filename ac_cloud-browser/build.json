@@ -66,7 +66,8 @@
         "libs:ui-icons",
         "libs:ui-nav-bars",
         "libs:theme-background",
-        "libs:scraper"
+        "libs:scraper",
+        "libs:apify"
       ]
     },
     "libs:core": {
@@ -93,6 +94,11 @@
       "type": "library",
       "_doc_dir": "Shared BY REFERENCE from aa_cloud-superapp/libs/ - settings.gradle points projectDir here instead of at a local copy. browser was three byte-identical trees (superapp, browser, vault); nothing kept them in step, so a WebView fix had to be pasted three times or it silently reached one app.",
       "dir": "../ab_cloud-libs-shared/libs/browser"
+    },
+    "libs:apify": {
+      "_doc": "#1470/#1468 the fleet's ONE Apify backend choice and encrypted token store (Apify Cloud default | self-hosted Cloudy Crawlee), shared BY REFERENCE; the Scrapers > Apify page of libs:scraper adopts it.",
+      "dir": "../ab_cloud-libs-shared/libs/apify",
+      "type": "library"
     },
     "libs:scraper": {
       "type": "library",

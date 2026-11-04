@@ -34,6 +34,7 @@ dependencies {
     api project(':libs:ui-kit')   // #1459 KitFileTree: the shared folder-explorer tree and its Store-dense rows
     implementation project(':libs:web-core')   // #1371 the viewer's page view is CloudWeb's (profile BROWSER, local archive)
     implementation project(':libs:media-convert-audio')
+    implementation project(':libs:apify')   // #1468 the fleet's one Apify backend choice + encrypted token store
     implementation project(':libs:crash')   // #1459 SafeEncryptedPrefs: the Music tokens' only store
     implementation 'androidx.security:security-crypto:1.1.0'   // crash links it compileOnly: the app that opens an encrypted file brings it
     api platform('androidx.compose:compose-bom:2025.11.01')
