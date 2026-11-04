@@ -6,13 +6,6 @@
          SuperApp's DNS menu applies). -->
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <!-- #903 Things: the stores around the person. COARSE only (a city-block fix from the network
-         provider), requested once from the page, and never stored: it only centres the search (the
-         centre leaves the phone rounded to ~1 km). Optional: without it, the city typed in settings
-         is used. -->
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-feature android:name="android.hardware.location" android:required="false" />
-
     <queries>
         <!-- Where results open (build.json::open_with, resolved from the fleet manifest): without
              this line cloud-browser is invisible on API 30+ and every link would go elsewhere. -->

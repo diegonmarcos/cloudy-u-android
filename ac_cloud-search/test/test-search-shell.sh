@@ -15,12 +15,13 @@
 #   S4  every enabled api source names a parser Parsers.parse dispatches, every declared calculator
 #       is a Calculators.run branch, every declared series names a Series.parse branch (#797), and
 #       no dispatch has a branch nothing declares.
+
 #   S5  one network door: only core/Engine.kt (UrlHttp) opens a connection; no app or other core
 #       source names java.net, HttpURLConnection, OkHttp or a socket, and the app declares INTERNET.
 #   S6  one token door: only data/Account.kt calls revealAiKey; it and data/SearchAi.kt never log,
 #       and Account.kt writes nothing (no SharedPreferences, no file) — the fleet Account is the
 #       only store of the OpenRouter token.
-#   S7  /api/<group>/verticals, query, calc, analysis and feed are documented and answered under
+#   S7  /api/<group>/verticals, query, agents, runs, reports, report and cloud are documented and answered under
 #       build.json::ui.debug_api.group, and no op is named `state` (GET /api/state's key).
 #   S8  no sample data ships: no placeholder image host, lorem ipsum or `mock` identifier in app or
 #       core sources, and no Kotlin colour literal (colours are res/values/colors.xml).
@@ -33,18 +34,15 @@
 #       NavBarTopFirstRowScaffold (libs:ui-nav-bars, Profile on the fleet Account launcher) and the
 #       strips with NavBarTopSecondRow (libs:ui-nav-bars) from the NavDecl build.json::ui bakes, the app
 #       bakes UI_BOTTOM_NAV/UI_SECTIONS_B64/UI_DEFAULT_SECTION/UI_STYLE (style fleet: the search-html variant is gone).
-#       #1197: the island is exactly News, Research, CGC, Search (id chat), Media, Shopping, Brokers; Media's, Shopping's and
-#       Brokers' pages are search.verticals (less the assistant), each exactly once, with its subpages one strip lower (Brokers
-#       and CGC are horizontal_two_rows, every page in a group); Search is the assistant vertical (AI Chat), Engines, Apps,
-#       Messages, Code; Research is Reports, Models and Agents (with its four pages); News is the fleet news then the declared
-#       feed pages; and every section icon is a branch of the libs:ui-icons catalog.
-#   S15 (#1197) the Engines page and the News feed pages are declared real data: the major engines are https URLs with {q}, the news
-#       pages name declared rss/atom feeds, the media sources are enabled keyless https APIs that need a search term and state
-#       their terms, and the shell opens Engines and the feed pages.
-#   S14 (#1184) the code indexes and the news are DATA and honest: search.cgc.indexes are the cgc and mecgc sections, each
+#       #1472: the island is exactly Scrappers, Research, CGC Search, Image, Videos, 3D Models; Image's, Videos' and the parked Media's
+#       pages are search.verticals (less the assistant), each exactly once (CGC is horizontal_two_rows, every page in a group);
+#       the parked Search (id chat) is the assistant vertical (AI Chat), Engines, Apps, Messages, Code; Research is Reports, Models and
+#       Agents (with its four pages); and every section icon is a branch of the libs:ui-icons catalog.
+#   S15 (#1197) the Engines page is declared real data: the major engines are https URLs with {q}, the media sources are enabled keyless https APIs that need a search term and state
+#       their terms, and the shell opens Engines.
+#   S14 (#1184) the code indexes are DATA and honest: search.cgc.indexes are the cgc and mecgc sections, each
 #       with Semantic and Graph RAG pages, each naming a service ac_cloud-account's fleet_endpoints declares (the private
-#       one mesh_only, no public address, behind the Account sign-in; no repository in both indexes); search.research names
-#       a declared service; app/build.gradle bakes the endpoints; the shell dispatches Research and the code sections; both
+#       one mesh_only, no public address, behind the Account sign-in; no repository in both indexes); app/build.gradle bakes the endpoints; the shell dispatches Research and the code sections; both
 #       modes call the service's two tools; Search is a fleet-nsc.json app with its manifest pointing at the generated
 #       network security config; no fleet host is spelled in the new sources; and no new page nests a vertical scroller.
 #   S11 (#803) the app icon is the mockup's central nav icon: res/drawable/ic_launcher_foreground.xml
@@ -58,10 +56,9 @@
 #       Templates.fill and opened through SearchAi's opener = Browser.open; AiChatPage itself draws the engine boxes (Welcome, a
 #       box per engine) and the chat (Conversation + Composer); and SearchShellTest keeps the UI test
 #       that asserts both parts inside that one page.
-#   S13 (#903) Things is coarse, once, dense and honest: the manifest holds ACCESS_COARSE_LOCATION and
-#       neither the fine nor the background permission; ThingsPage asks for it once (the asked flag is
-#       set before the request, behind a check of that flag); Locator.kt stores and logs nothing; the
-#       Things pages inflate no minimum height; and the declared default radius is the owner's 20 km.
+#   S16 (#1472) News, Shopping and Brokers are removed from the app and cannot come back: no island item, section, page kind, menu entry,
+#       debug route, deep link, location permission or string of theirs; their verticals are declared only in build.json::ui.not_shown
+#       (Cloud KG Store's Web pages read the same declaration).
 #   MUT each property, broken on a copy (and the edit proven to have landed), goes red.
 #
 # Reads ac_cloud-search and, for S12, the one lib it hosts its Search page from
@@ -117,7 +114,9 @@ m = re.search(r"when \(kind\) \{(.*?)\n        \}", shell, re.S)
 dispatched = set(re.findall(r'^\s*"(\w+)" ->', m.group(1), re.M)) if m else set()
 if not dispatched:
     bad.append("S2 SearchShell has no `when (kind)` this tester can read")
-declared = {p["kind"] for p in S["subpages"]}
+# #1472 the kinds the shown verticals use: the verticals in ui.not_shown stay declared for Cloud KG Store and are drawn by no page here
+not_shown = set(((bj.get("ui") or {}).get("not_shown") or {}).get("verticals") or [])
+declared = {p["kind"] for v in S["verticals"] if v["id"] not in not_shown for p in S["subpages"] if p["id"] in v["subpages"]}
 for k in sorted(declared - dispatched):
     bad.append("S2 subpage kind %s is declared but no page draws it" % k)
 for k in sorted(dispatched - declared):
@@ -206,9 +205,12 @@ if re.search(r"SharedPreferences|getSharedPreferences|putString|writeText|FileOu
 api = code(os.path.join(src, "debugapi", "SearchDebugApi.kt"))
 if "BuildConfig.DEBUG_API_GROUP" not in api:
     bad.append("S7 SearchDebugApi does not register under build.json::ui.debug_api.group")
-for op in ("verticals", "query", "calc", "analysis", "feed", "things", "agents", "runs", "reports", "report", "cloud"):
+for op in ("verticals", "query", "agents", "runs", "reports", "report", "cloud"):
     if not re.search(r'AppDebugServer\.Op\("%s"' % op, api) or not re.search(r'"%s" ->' % op, api):
         bad.append("S7 /api/<group>/%s is not both documented and answered" % op)
+for op in ("calc", "analysis", "feed", "things"):
+    if re.search(r'AppDebugServer\.Op\("%s"' % op, api) or re.search(r'"%s" ->' % op, api):
+        bad.append("S7 /api/<group>/%s is back - the Calculators, Analysis, Feed and Things pages left with News, Shopping and Brokers (#1472)" % op)
 if re.search(r'"state"', api):
     bad.append("S7 SearchDebugApi names an op state — that key is GET /api/state's (update-ack guard)")
 if not bj.get("ui", {}).get("debug_api", {}).get("group"):
@@ -269,7 +271,7 @@ vpages = code(os.path.join(app, "app/src/main/java/com/diegonmarcos/cloudsearch/
 if not re.search(r"NavBarTopSecondRow\(\s*pages = NAV\.section\(state\.sectionOf\(v\.id\)\)\?\.page\(v\.id\)", vpages):
     bad.append("S10 the vertical pages do not draw their sub-pages with NavBarTopSecondRow from the vertical's page in the NavDecl")
 if not re.search(r"NavSectionLayout\(\s*section = decl,\s*selectedId = state\.vertical", shell) or not re.search(r"in state\.verticalSections -> VerticalsSection\(state, state\.section, v\)", shell):
-    bad.append("S10 SearchShell does not draw Media's, Shopping's and Brokers' verticals with NavSectionLayout from NAV.section(section)")
+    bad.append("S10 SearchShell does not draw Image's, Videos' and Media's verticals with NavSectionLayout from NAV.section(section)")
 # #913b Chat holds Search and the fleet searches that were the Cloud page: its strip is NavBarTopSecondRow, its pages dispatch to CloudPage.
 if not re.search(r"NavBarTopSecondRow\(\s*pages = NAV\.section\(\"chat\"\)", shell) or "else CloudPage(state, state.chatPage)" not in shell:
     bad.append("S10 SearchShell does not draw Chat's strip (Search + Apps, Messages, Code) with NavBarTopSecondRow and CloudPage")
@@ -287,21 +289,19 @@ gradle = open(os.path.join(app, "app", "build.gradle"), encoding="utf-8").read()
 for field in ("UI_BOTTOM_NAV", "UI_SECTIONS_B64", "UI_DEFAULT_SECTION", "UI_STYLE"):
     if field not in gradle:
         bad.append("S10 app/build.gradle does not bake %s" % field)
-# #1197 the declaration: seven island sections, News, Research, CGC, Search (id chat), Media, Shopping, Brokers. Every vertical but the
-# assistant is a page of exactly one of Media, Shopping, Brokers (each with its subpages one strip lower); Search is AI Chat (the assistant
-# vertical), Engines, Apps, Messages and Code; Research is Reports, Models and Agents (Agents, Runs, Templates, Settings one strip lower);
-# News is the fleet news then the declared feed pages; CGC is Cloud CGC and Me CGC, one horizontal_two_rows group each.
+# #1472 the declaration: six island tabs, Scrappers, Research, CGC Search, Image, Videos, 3D Models, then the parked Search (id chat) and
+# Media. Every vertical but the assistant is a page of exactly one of Image, Videos, Media; Search is AI Chat (the assistant vertical),
+# Engines, Apps, Messages and Code; Research is Reports, Models and Agents (Agents, Runs, Templates, Settings one strip lower); CGC is
+# Cloud CGC and Me CGC, one horizontal_two_rows group each. News, Shopping and Brokers do not exist (S16).
 ui, vs = bj.get("ui") or {}, bj["search"]["verticals"]
 secs = {x.get("id"): x for x in ui.get("sections") or []}
-# #1472 the island is exactly the six tabs; News, Shopping, Brokers (and chat, media) stay declared as parked sections, off the island
+# #1472 the island is exactly the six tabs; chat and media stay declared as parked sections, off the island
 if ui.get("bottom_nav") != ["scrapers", "research", "cgc", "image", "video", "models3d"]:
     bad.append("S10 ui.bottom_nav is not scrapers, research, cgc, image, video, models3d")
 if [x.get("id") for x in ui.get("sections") or []][:6] != ui.get("bottom_nav"):
     bad.append("S10 ui.sections do not start with the island's items, in order")
 if [secs.get(i, {}).get("label") for i in ui.get("bottom_nav") or []] != ["Scrappers", "Research", "CGC Search", "Image", "Videos", "3D Models"]:
     bad.append("S10 the island's labels are not Scrappers, Research, CGC Search, Image, Videos, 3D Models")
-if {"news", "shopping", "brokers"} & set(ui.get("bottom_nav") or []):
-    bad.append("S10 News, Shopping or Brokers is on the island")
 samples = bj.get("sample_pages", {}).get("pages") or {}
 for sid, ids in (("scrapers", ["sitefiles", "apify", "cloudflare", "selfhosted"]), ("models3d", ["models3d"])):
     if [q.get("id") for q in (secs.get(sid) or {}).get("pages") or []] != ids:
@@ -314,11 +314,11 @@ if "SAMPLE_PAGES_B64" not in gradle:
     bad.append("S10 app/build.gradle does not bake SAMPLE_PAGES_B64")
 labels = {q["id"]: q["label"] for q in bj["search"]["subpages"]}
 chat_v = [v for v in vs if any(kinds_.get(x) == "assistant" for x in v["subpages"])] if (kinds_ := {sp["id"]: sp["kind"] for sp in S["subpages"]}) else []
-rest_v = [v for v in vs if v not in chat_v]
-VSEC = ("image", "video", "media", "shopping", "brokers")
+rest_v = [v for v in vs if v not in chat_v and v["id"] not in not_shown]
+VSEC = ("image", "video", "media")
 vert_pages = [q for sid in VSEC for q in (secs.get(sid) or {}).get("pages") or []]
 if sorted(q.get("id") for q in vert_pages) != sorted(v["id"] for v in rest_v):
-    bad.append("S10 ui.sections[image, video, media, shopping, brokers] pages are not search.verticals (less the assistant), each exactly once")
+    bad.append("S10 ui.sections[image, video, media] pages are not search.verticals (less the assistant), each exactly once")
 for sid in VSEC:
     if not (secs.get(sid) or {}).get("pages"):
         bad.append("S10 ui.sections[%s] has no vertical" % sid)
@@ -327,7 +327,7 @@ for q in vert_pages:
     v = byid.get(q.get("id"))
     if v is None:
         continue
-    # a page's label is its own (Shopping's things vertical is Compare, Brokers' jobs is Jobs); a vertical with subpages says which
+    # a page's label is its own; a vertical with subpages says which
     if len(v["subpages"]) > 1:
         # #1199 a nav page id is unique in the app: "<vertical>-<subpage>" (jobs-listing), never the bare shared subpage id
         if [z.get("id") for z in q.get("pages") or []] != ["%s-%s" % (v["id"], x) for x in v["subpages"]]:
@@ -337,14 +337,12 @@ for q in vert_pages:
                 bad.append("S10 ui.sections page %s/%s label differs from search.subpages" % (q.get("id"), z.get("id")))
     elif q.get("pages"):
         bad.append("S10 ui.sections page %s declares a second strip for a vertical with one subpage" % q.get("id"))
-want_v = {"image": ["image"], "video": ["video"], "media": ["movies", "books"], "shopping": ["groceries", "electronics", "clothing", "things"],
-          "brokers": ["jobs", "house", "commercial", "business", "suppliers", "services"]}
+want_v = {"image": ["image"], "video": ["video"], "media": ["movies", "books"]}
 for sid, ids in want_v.items():
     if [q.get("id") for q in (secs.get(sid) or {}).get("pages") or []] != ids:
         bad.append("S10 ui.sections[%s] pages are not %s" % (sid, ", ".join(ids)))
-# Brokers (and CGC) are two-row sections: every page in exactly one group
-for sid, groups in (("brokers", [("job_placement", ["jobs"]), ("real_estate", ["house", "commercial"]), ("business_group", ["business", "suppliers", "services"])]),
-                    ("cgc", [("cloud_cgc", ["cloud_semantic", "cloud_graph"]), ("me_cgc", ["me_semantic", "me_graph"])])):
+# CGC is a two-row section: every page in exactly one group
+for sid, groups in (("cgc", [("cloud_cgc", ["cloud_semantic", "cloud_graph"]), ("me_cgc", ["me_semantic", "me_graph"])]),):
     sec_ = secs.get(sid) or {}
     if sec_.get("nav_mode") != "horizontal_two_rows":
         bad.append("S10 ui.sections[%s] is not horizontal_two_rows" % sid)
@@ -361,15 +359,13 @@ if [q.get("id") for q in rpages] != ["reports", "models", "agenthub"]:
     bad.append("S10 ui.sections[research] pages are not reports, models, agenthub")
 if [z.get("id") for q in rpages if q.get("id") == "agenthub" for z in q.get("pages") or []] != ["agents", "runs", "templates", "settings"]:
     bad.append("S10 ui.sections[research] agenthub pages are not agents, runs, templates, settings")
-if [q.get("id") for q in (secs.get("news") or {}).get("pages") or []] != ["news"] + [n["id"] for n in S.get("news_pages") or []]:
-    bad.append("S10 ui.sections[news] pages are not the fleet news then search.news_pages, in order")
 if ui.get("default_section") != "scrapers":
     bad.append("S10 ui.default_section is not scrapers, the first tab")
 
-# S14 (#1184, #1197) the code indexes and the news: data, declared services, honest, no host in the sources
+# S14 (#1184, #1197) the code indexes: data, declared services, honest, no host in the sources
 acct = json.load(open(os.environ["ACCT_JSON"], encoding="utf-8"))["fleet_endpoints"]["services"]
 fsvc = {x["id"]: x for x in acct}
-cg, rs = S.get("cgc") or {}, S.get("research") or {}
+cg = S.get("cgc") or {}
 ixs = cg.get("indexes") or []
 if [x.get("id") for x in ixs] != ["cgc", "mecgc"]:
     bad.append("S14 search.cgc.indexes are not the cgc and mecgc indexes")
@@ -387,12 +383,10 @@ for x in ixs:
         bad.append("S14 the private index mecgc does not wait for the Cloud Account sign-in")
 if len(ixs) == 2 and set(ixs[0].get("repos") or []) & set(ixs[1].get("repos") or []):
     bad.append("S14 a repository is in both the public and the private index")
-if (rs.get("news") or {}).get("service") not in fsvc:
-    bad.append("S14 search.research.news.service is not a fleet_endpoints service")
 if "FLEET_ENDPOINTS_B64" not in gradle:
     bad.append("S14 app/build.gradle does not bake FLEET_ENDPOINTS_B64")
-if not all(re.search(r'"%s" -> %s\(state\)' % (k, f), shell) for k, f in (("news", "NewsSection"), ("research", "ResearchSection"), ("cgc", "CgcSection"))):
-    bad.append("S14 SearchShell does not dispatch News, Research and the CGC section")
+if not all(re.search(r'"%s" -> %s\(state\)' % (k, f), shell) for k, f in (("research", "ResearchSection"), ("cgc", "CgcSection"))):
+    bad.append("S14 SearchShell does not dispatch Research and the CGC section")
 fcalls = code(os.path.join(app, "app/src/main/java/com/diegonmarcos/cloudsearch/data/FleetCalls.kt"))
 if "Cgc.SEARCH_TOOL" not in fcalls or "Cgc.GRAPH_TOOL" not in fcalls:
     bad.append("S14 FleetCalls does not call both tools (Semantic and Graph RAG)")
@@ -400,11 +394,11 @@ if "if (ix.needsAccount && token == null)" not in fcalls:
     bad.append("S14 FleetCalls does not hold the private index behind the Account sign-in")
 nsc = json.load(open(os.environ["NSC_JSON"], encoding="utf-8"))["apps"]
 mine = [a for a in nsc if a["nsc"].startswith("ac_cloud-search/")]
-if not mine or not {"news", "cgc-pub-mcp", "cgc-pvt-mcp"} <= set(mine[0]["services"]):
-    bad.append("S14 fleet-nsc.json does not list Cloud Search with news, cgc-pub-mcp and cgc-pvt-mcp")
+if not mine or not {"cgc-pub-mcp", "cgc-pvt-mcp"} == set(mine[0]["services"]):
+    bad.append("S14 fleet-nsc.json does not list Cloud Search with exactly cgc-pub-mcp and cgc-pvt-mcp")
 if "android:networkSecurityConfig=\"@xml/network_security_config\"" not in open(os.path.join(app, "app/src/main/AndroidManifest.xml"), encoding="utf-8").read():
     bad.append("S14 the manifest does not point at the generated network security config")
-for rel in ("core/Cgc.kt", "core/Endpoints.kt", "core/Research.kt", "app/data/FleetCalls.kt", "app/ui/CgcPages.kt", "app/ui/ResearchPages.kt"):
+for rel in ("core/Cgc.kt", "core/Endpoints.kt", "app/data/FleetCalls.kt", "app/ui/CgcPages.kt"):
     path = os.path.join(core, rel[5:]) if rel.startswith("core/") else os.path.join(src, rel[4:])
     t = code(path) if os.path.isfile(path) else ""
     if not t:
@@ -416,8 +410,8 @@ for rel in ("core/Cgc.kt", "core/Endpoints.kt", "core/Research.kt", "app/data/Fl
     elif rel.startswith("app/ui/") and "LazyColumn(" not in t:
         bad.append("S14 %s has no LazyColumn: the page must be the one scroller the shared collapse reads" % rel)
 
-# S15 (#1197) Search > Engines and the News feed pages are declared data the shell draws, honest and real: every major engine is an
-# https URL with {q}; every news page names declared feeds and the feed formats are the two the parser reads; the media sources are
+# S15 (#1197) Search > Engines is declared data the shell draws, honest and real: every major engine is an
+# https URL with {q}; the media sources are
 # real keyless APIs (https, a parser, a search term required) and say so in their terms; the shell opens Engines and the feed pages.
 engines_major = S.get("engines_major") or []
 if len(engines_major) < 6:
@@ -428,13 +422,6 @@ for e in engines_major:
 for must in ("google", "bing", "duckduckgo", "brave", "qwant", "kagi", "perplexity"):
     if must not in [e.get("id") for e in engines_major]:
         bad.append("S15 search.engines_major does not declare %s" % must)
-for n in S.get("news_pages") or []:
-    for f in n.get("feeds") or []:
-        if f not in S["feeds"]:
-            bad.append("S15 news page %s names feed %s, which search.feeds does not declare" % (n.get("id"), f))
-for k, f in S["feeds"].items():
-    if not k.startswith("_") and f.get("format", "rss") not in ("rss", "atom"):
-        bad.append("S15 feed %s has format %s, which is neither rss nor atom" % (k, f.get("format")))
 for v in vs:
     if v["id"] in ("image", "video", "movies", "books"):
         for sid in v["sources"]:
@@ -443,8 +430,6 @@ for v in vs:
                 bad.append("S15 media source %s is not an enabled keyless https api that needs a search term and states its terms" % sid)
 if 'state.chatPage == "engines") EnginesPage(state)' not in shell:
     bad.append("S15 SearchShell does not open the Engines page")
-if "if (page == null) NewsPage(state) else FeedPage(state, page)" not in code(os.path.join(src, "ui", "FeedPages.kt")):
-    bad.append("S15 NewsSection does not draw the fleet news and the declared feed pages")
 
 # S11
 res = os.path.join(app, "app", "src", "main", "res")
@@ -498,26 +483,45 @@ if not re.search(r"@Test fun theSearchTabIsOnePageWithTheEnginesAndTheChat\(\)",
         or 'hasAnyAncestor(hasTestTag(Tags.page("assistant")))' not in ui_test:
     bad.append("S12 SearchShellTest lost theSearchTabIsOnePageWithTheEnginesAndTheChat, the UI test of the one page")
 
-# S13
-mf = open(os.path.join(app, "app", "src", "main", "AndroidManifest.xml"), encoding="utf-8").read()
-if "android.permission.ACCESS_COARSE_LOCATION" not in mf:
-    bad.append("S13 the manifest does not declare ACCESS_COARSE_LOCATION — Things could not place the search")
-for fine in ("ACCESS_FINE_LOCATION", "ACCESS_BACKGROUND_LOCATION"):
-    if fine in mf:
-        bad.append("S13 the manifest declares %s — Things needs a coarse fix, once, in the foreground" % fine)
-things_ui = code(os.path.join(src, "ui", "ThingsPage.kt"))
-if not re.search(r"!prefs\.locationAsked[^\n]*\n\s*prefs\.locationAsked = true\n\s*ask\.launch\(Manifest\.permission\.ACCESS_COARSE_LOCATION\)", things_ui):
-    bad.append("S13 ThingsPage does not ask the location permission once (flag checked, set, then the request)")
-loc = code(os.path.join(src, "data", "Locator.kt"))
-if re.search(r"SharedPreferences|putString|putFloat|putLong|writeText|\bLog\.[a-z]\(|println\(", loc):
-    bad.append("S13 data/Locator.kt stores or logs the fix — it only centres the search")
-if "ACCESS_FINE" in loc:
-    bad.append("S13 data/Locator.kt names the fine permission")
-for p in (os.path.join(src, "ui", "ThingsPage.kt"),):
-    if re.search(r"minHeight|heightIn\(|defaultMinSize|sizeIn\(|requiredHeightIn", code(p)):
-        bad.append("S13 %s inflates a minimum height — the table is data-dense" % os.path.basename(p))
-if S["things"]["default_radius_km"] != 20:
-    bad.append("S13 build.json::search.things.default_radius_km is %s — the owner's default search area is 20 km" % S["things"]["default_radius_km"])
+# S16 (#1472) News, Shopping and Brokers are gone from this app, and cannot come back: no section, island item, page kind, menu entry,
+# debug route, deep link, location permission or string of theirs. Their verticals stay DECLARED (build.json::ui.not_shown) only
+# because Cloud KG Store's Web pages read this one declaration through the linked core; this app shows none of them.
+GONE = ("news", "shopping", "brokers")
+for sid in GONE:
+    if sid in secs or sid in (ui.get("bottom_nav") or []):
+        bad.append("S16 ui.bottom_nav or ui.sections names %s - News, Shopping and Brokers are removed" % sid)
+hidden = set((ui.get("not_shown") or {}).get("verticals") or [])
+if hidden != {"house", "jobs", "groceries", "things", "commercial", "business", "suppliers", "services", "electronics", "clothing"}:
+    bad.append("S16 ui.not_shown.verticals are not the ten News/Shopping/Brokers verticals Cloud KG Store still reads")
+placed = {q.get("id") for x in ui.get("sections") or [] for q in x.get("pages") or []}
+for v in hidden & placed:
+    bad.append("S16 vertical %s is in a ui.sections page - it is declared for Cloud KG Store only" % v)
+for v in S["verticals"]:
+    if v["id"] not in hidden and v["id"] not in placed and not any(kinds_.get(x) == "assistant" for x in v["subpages"]):
+        bad.append("S16 vertical %s is neither shown by a section nor listed in ui.not_shown" % v["id"])
+if "shownVerticals" not in shell or not re.search(r"state\.shownVerticals\.forEach \{ v ->\s*MenuItem\(v\.title, Tags\.drawer", shell):
+    bad.append("S16 the categories menu does not list shownVerticals only - a removed vertical would open from the menu")
+if not re.search(r"v !in shown", api):
+    bad.append("S16 the debug routes answer a vertical this app does not show")
+for rel in ("data/Locator.kt", "data/ThingsArea.kt", "ui/ThingsPage.kt"):
+    if os.path.exists(os.path.join(src, rel)):
+        bad.append("S16 %s is back - it served News, Shopping or Brokers alone" % rel)
+allapp = "\n".join(code(p) for p in kts)
+for sym in ("NewsSection", "NewsPage", "FeedPage", "ThingsPage", "CalculatorsPage", "AnalysisPage", "ThingsEngine", "Locator.", "ResearchConfig", "openAgent(\"", "agentLink"):
+    if sym in allapp:
+        bad.append("S16 the app code names %s - News, Shopping and Brokers are removed from it" % sym)
+if re.search(r'ACCESS_(COARSE|FINE|BACKGROUND)_LOCATION', open(os.path.join(app, "app", "src", "main", "AndroidManifest.xml"), encoding="utf-8").read()):
+    bad.append("S16 the manifest declares a location permission - only the Things comparison used it")
+if (bj.get("perms") or {}).get("needs"):
+    bad.append("S16 build.json::perms.needs is not empty - the app needs no grant since the Things comparison left")
+strings = open(os.path.join(app, "app", "src", "main", "res", "values", "strings.xml"), encoding="utf-8").read()
+if re.search(r'name="(things_|newsfeed_|research_)', strings):
+    bad.append("S16 strings.xml still carries Things, News feed or Research news strings")
+nsc_search = [a for a in json.load(open(os.environ["NSC_JSON"], encoding="utf-8"))["apps"] if a["nsc"].startswith("ac_cloud-search/")]
+if nsc_search and "news" in nsc_search[0]["services"]:
+    bad.append("S16 fleet-nsc.json still lists the news service for Cloud Search")
+if re.search(r'search\??\.(research|news)', gradle):
+    bad.append("S16 app/build.gradle still reads search.research / news")
 
 for b in bad:
     print("  FAIL  " + b)
@@ -525,9 +529,9 @@ sys.exit(1 if bad else 0)
 PY
 
 FAILURES=0
-echo "── S1-S15 against the tree ──"
+echo "── S2-S16 against the tree ──"
 UIC="$APP/../ab_cloud-libs-shared/libs/ui-icons/src/main/kotlin/com/diegonmarcos/superapp/uiicons/UiIcons.kt"
-if python3 "$CHECK" "$APP" "$LIB" "$UIC"; then echo "  PASS  S1-S15"; else FAILURES=$((FAILURES + 1)); fi
+if python3 "$CHECK" "$APP" "$LIB" "$UIC"; then echo "  PASS  S2-S16"; else FAILURES=$((FAILURES + 1)); fi
 
 # ── mutations: each must go red, for the right reason ─────────────────────────
 WORK="$(mktemp -d)"
@@ -559,14 +563,17 @@ PY
 J="$K"
 mutate pap-hand-edited "$C/tax/Lohnsteuer2026.kt" 's.replace("GFB = bd(12348)", "GFB = bd(12000)")' "S1 tax/Lohnsteuer2026.kt differs"
 mutate pap-xml-changed core/pap/Lohnsteuer2026.xml 's.replace("BigDecimal.valueOf(20350)", "BigDecimal.valueOf(20000)")' "S1 tax/Lohnsteuer2026.kt differs"
-mutate kind-without-page "$J/ui/SearchShell.kt" 's.replace("\"feed\" -> FeedPage(v)", "")' "S2 subpage kind feed is declared"
-mutate dead-page "$J/ui/SearchShell.kt" 's.replace("\"assistant\" -> AssistantPage(v)", "\"assistant\" -> AssistantPage(v)\n            \"atlas\" -> AssistantPage(v)")' "S2 SearchShell draws kind atlas"
 mutate subpage-undeclared build.json 's.replace("\"listing\",\n          \"analysis\",", "\"listing\",\n          \"analysiz\",")' "names subpage analysiz"
-mutate icon-misspelt build.json 's.replace("\"icon\": \"groceries\"", "\"icon\": \"grocerys\"")' "S3 vertical groceries icon"
-mutate engine-icon-misspelt build.json 's.replace("\"icon\": \"bird\"", "\"icon\": \"birb\"")' "S3 engine duckduckgo icon"
 mutate calc-icon-misspelt build.json 's.replace("\"icon\": \"wallet\"", "\"icon\": \"walet\"")' "S3 calculator max_rent icon"
-mutate accent-missing build.json 's.replace("\"accent\": \"engine_brave\"", "\"accent\": \"engine_bravo\"")' "S3 engine brave colour"
 mutate chart-colour-missing app/src/main/res/values/colors.xml 's.replace("<color name=\"chart_jobs\">", "<color name=\"chart_job\">")' "S3 vertical jobs colour"
+mutate series-parser-missing "$C/Market.kt" 's.replace("\"jsonstat\" -> jsonStat(body)", "")' "S4 a series uses parser jsonstat"
+mutate dead-series-parser "$C/Market.kt" 's.replace("\"sdmx_json\" -> sdmxJson(body)", "\"sdmx_json\" -> sdmxJson(body)\n        \"csv\" -> sdmxJson(body)")' "S4 Series.parse has parser csv"
+mutate calc-missing "$C/Calculators.kt" 's.replace("\"max_rent\" -> Result(", "\"max_rentx\" -> Result(")' "S4 calculator max_rent is declared"
+mutate kind-without-page "$J/ui/SearchShell.kt" 's.replace("\"listing\" -> ListingPage(v)", "")' "S2 subpage kind listing is declared"
+mutate dead-page "$J/ui/SearchShell.kt" 's.replace("\"assistant\" -> AssistantPage(v)", "\"assistant\" -> AssistantPage(v)\n            \"atlas\" -> AssistantPage(v)")' "S2 SearchShell draws kind atlas"
+mutate icon-misspelt build.json 's.replace("\"icon\": \"globe\"", "\"icon\": \"globz\"")' "S3 vertical image icon"
+mutate engine-icon-misspelt build.json 's.replace("\"icon\": \"bird\"", "\"icon\": \"birb\"")' "S3 engine duckduckgo icon"
+mutate accent-missing build.json 's.replace("\"accent\": \"engine_brave\"", "\"accent\": \"engine_bravo\"")' "S3 engine brave colour"
 mutate phosphor-unlisted app/tools/phosphor.json 's.replace("\"warning\", ", "")' "S9 res/drawable/ph_warning.xml is not in phosphor.json"
 mutate phosphor-listed-missing app/tools/phosphor.json 's.replace("\"wallet\",", "\"wallet\", \"rocket\",")' "S9 phosphor.json lists ph_rocket"
 mutate hand-drawn-icon app/src/main/res/drawable/ph_x.xml 's.replace("GENERATED by app/tools/phosphor2vd.py", "drawn by hand")' "S9 res/drawable/ph_x.xml was not written"
@@ -580,12 +587,12 @@ mutate fleet-island-back "$J/ui/SearchShell.kt" 's + "\nfun again() { BottomNavI
 mutate style-undeclared build.json 's.replace("\"default_section\": \"scrapers\"", "\"style\": \"search-html\",\n    \"default_section\": \"scrapers\"")' "S10 build.json ui.style is not fleet"
 mutate style-not-baked app/build.gradle 's.replace("\"UI_STYLE\"", "\"UI_STYL\"")' "S10 app/build.gradle does not bake UI_STYLE"
 mutate strip-dropped "$J/ui/VerticalPages.kt" 's.replace("NavBarTopSecondRow(\n                pages = NAV.section(state.sectionOf", "SubNav(\n                pages = NAV.section(state.sectionOf")' "S10 the vertical pages do not draw their sub-pages with NavBarTopSecondRow"
-mutate web-strip-dropped "$J/ui/SearchShell.kt" 's.replace("NavSectionLayout(\n        section = decl,\n        selectedId = state.vertical", "SubNav(\n        section = decl,\n        selectedId = state.vertical")' "S10 SearchShell does not draw Media's, Shopping's and Brokers'"
+mutate web-strip-dropped "$J/ui/SearchShell.kt" 's.replace("NavSectionLayout(\n        section = decl,\n        selectedId = state.vertical", "SubNav(\n        section = decl,\n        selectedId = state.vertical")' "S10 SearchShell does not draw Image's, Videos'"
 mutate chat-strip-dropped "$J/ui/SearchShell.kt" 's.replace("NavBarTopSecondRow(\n                pages = NAV.section(\"chat\")", "SubNav(\n                pages = NAV.section(\"chat\")")' "S10 SearchShell does not draw Chat's strip"
 mutate cloud-page-unreachable "$J/ui/SearchShell.kt" 's.replace("else CloudPage(state, state.chatPage)", "else Unit")' "S10 SearchShell does not draw Chat's strip"
 mutate messages-unreachable "$J/ui/CloudPages.kt" 's.replace("\"messages\" -> MessagesPage(state, cloud)", "\"messagez\" -> MessagesPage(state, cloud)")' "S10 CloudPage does not open messages"
 mutate ask-lands-elsewhere "$J/ui/SearchShell.kt" 's.replace("openSection(\"chat\")\n        chatPage = chatVertical", "openSection(\"chat\")")' "S10 SearchState.ask does not open Chat on Search"
-mutate vertical-in-both build.json 's.replace("\"id\": \"books\",\n            \"label\": \"Books\",\n            \"icon\": \"menu_book\"\n          }", "\"id\": \"books\",\n            \"label\": \"Books\",\n            \"icon\": \"menu_book\"\n          },\n          {\n            \"id\": \"house\",\n            \"label\": \"House\"\n          }")' "S10 ui.sections[image, video, media, shopping, brokers] pages are not search.verticals"
+mutate vertical-in-both build.json 's.replace("\"id\": \"books\",\n            \"label\": \"Books\",\n            \"icon\": \"menu_book\"\n          }", "\"id\": \"books\",\n            \"label\": \"Books\",\n            \"icon\": \"menu_book\"\n          },\n          {\n            \"id\": \"image\",\n            \"label\": \"Image\"\n          }")' "S10 ui.sections[image, video, media] pages are not search.verticals"
 mutate chat-section-dropped build.json 's.replace("\"id\": \"chat\",\n        \"label\": \"Search\"", "\"id\": \"chats\",\n        \"label\": \"Search\"")' "S10 ui.sections[chat] does not open on the assistant vertical"
 mutate section-icon-misspelt build.json 's.replace("\"icon\": \"reports\"", "\"icon\": \"reportz\"", 1)' "S3 ui.sections research icon"
 mutate agents-page-dropped build.json 's.replace("\"id\": \"runs\",", "\"id\": \"run\",", 1)' "S10 ui.sections[research] agenthub pages are not agents, runs, templates, settings"
@@ -593,21 +600,15 @@ mutate cloud-pages-reordered build.json 's.replace("\"id\": \"apps\",\n         
 mutate agents-debug-op-dropped "$J/debugapi/SearchDebugApi.kt" 's.replace("\"runs\" -> runs(", "\"runz\" -> runs(")' "S7 /api/<group>/runs"
 mutate nav-not-baked app/build.gradle 's.replace("\"UI_SECTIONS_B64\"", "\"UI_SECTIONS\"")' "S10 app/build.gradle does not bake UI_SECTIONS_B64"
 mutate section-reordered build.json 's.replace("\"bottom_nav\": [\n      \"scrapers\",\n      \"research\",", "\"bottom_nav\": [\n      \"research\",\n      \"scrapers\",")' "S10 ui.bottom_nav is not scrapers, research, cgc, image, video, models3d"
-mutate news-on-island build.json 's.replace("\"bottom_nav\": [\n      \"scrapers\",", "\"bottom_nav\": [\n      \"news\",\n      \"scrapers\",")' "S10 News, Shopping or Brokers is on the island"
-mutate section-pages-drift build.json 's.replace("\"id\": \"jobs-calculators\",\n                \"label\": \"Calculators\"", "\"id\": \"jobs-calculators\",\n                \"label\": \"Calculatorz\"")' "S10 ui.sections page jobs/jobs-calculators label"
-mutate parser-missing "$C/Listing.kt" 's.replace("\"open_prices\" -> openPrices(body, source)", "")' "S4 a source uses parser open_prices"
-mutate dead-parser "$C/Listing.kt" 's.replace("\"ba\" -> ba(body, source)", "\"ba\" -> ba(body, source)\n        \"immo\" -> ba(body, source)")' "S4 Parsers.parse has parser immo"
-mutate series-parser-missing "$C/Market.kt" 's.replace("\"jsonstat\" -> jsonStat(body)", "")' "S4 a series uses parser jsonstat"
-mutate dead-series-parser "$C/Market.kt" 's.replace("\"sdmx_json\" -> sdmxJson(body)", "\"sdmx_json\" -> sdmxJson(body)\n        \"csv\" -> sdmxJson(body)")' "S4 Series.parse has parser csv"
-mutate debug-feed-dropped "$J/debugapi/SearchDebugApi.kt" 's.replace("\"feed\" -> feed(Services.get(app), q).toString()", "")' "S7 /api/<group>/feed"
-mutate calc-missing "$C/Calculators.kt" 's.replace("\"max_rent\" -> Result(", "\"max_rentx\" -> Result(")' "S4 calculator max_rent is declared"
+mutate parser-missing "$C/Listing.kt" 's.replace("\"tvmaze\" -> tvmaze(body, source)", "")' "S4 a source uses parser tvmaze"
+mutate dead-parser "$C/Listing.kt" 's.replace("\"tvmaze\" -> tvmaze(body, source)", "\"tvmaze\" -> tvmaze(body, source)\n        \"immo\" -> tvmaze(body, source)")' "S4 Parsers.parse has parser immo"
 mutate app-online "$J/ui/VerticalPages.kt" 's + "\nprivate val u = java.net.URL(\"https://example.org\")\n"' "S5 VerticalPages.kt uses the network"
 mutate core-online "$C/Chat.kt" 's + "\nprivate fun leak() = java.net.Socket(\"x\", 1)\n"' "S5 Chat.kt uses the network"
 mutate no-internet app/src/main/AndroidManifest.xml 's.replace("<uses-permission android:name=\"android.permission.INTERNET\" />", "")' "S5 the manifest does not declare INTERNET"
 mutate token-second-door "$J/data/SearchAi.kt" 's + "\nprivate fun peek(c: com.diegonmarcos.superapp.texttools.TextToolsClient) = c.revealAiKey(\"openrouter\")\n"' "S6 revealAiKey must be called by data/Account.kt alone"
 mutate token-logged "$J/data/Account.kt" 's.replace("val r = c.revealAiKey(provider)", "val r = c.revealAiKey(provider)\n        android.util.Log.d(\"acct\", r.text.orEmpty())")' "S6 data/Account.kt logs"
 mutate token-stored "$J/data/Account.kt" 's.replace("val r = c.revealAiKey(provider)", "val r = c.revealAiKey(provider)\n        ctx.getSharedPreferences(\"x\", 0).edit().putString(\"t\", r.text).apply()")' "S6 data/Account.kt stores something"
-mutate debug-op-dropped "$J/debugapi/SearchDebugApi.kt" 's.replace("\"calc\" -> calc(Services.get(app), q).toString()", "")' "S7 /api/<group>/calc"
+mutate debug-op-dropped "$J/debugapi/SearchDebugApi.kt" 's.replace("\"query\" -> query(Services.get(app), q).toString()", "")' "S7 /api/<group>/query"
 mutate debug-op-state "$J/debugapi/SearchDebugApi.kt" 's.replace("\"verticals\" -> verticals(", "\"state\" -> verticals(")' "S7 SearchDebugApi names an op state"
 mutate mock-shipped "$J/ui/VerticalPages.kt" 's + "\nprivate val mockData = listOf(\"Modern Loft in Downtown\")\n"' "S8 VerticalPages.kt carries sample data"
 mutate placeholder-image "$C/Listing.kt" 's + "\nprivate const val IMG = \"https://placehold.co/400x200\"\n"' "S8 Listing.kt carries sample data"
@@ -619,7 +620,6 @@ mutate launcher-colour-moved app/src/main/res/values/colors.xml 's.replace("<col
 mutate launcher-glyph-missing app/tools/phosphor.json 's.replace("\"icon\": \"shooting-star\"", "\"icon\": \"comet\"")' "S11 phosphor2vd.py cannot make the launcher icon"
 mutate monochrome-dropped app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml 's.replace("    <monochrome android:drawable=\"@drawable/ic_launcher_monochrome\" />\n", "")' "S11 mipmap-anydpi-v26/ic_launcher_round.xml lacks monochrome"
 mutate search-split build.json 's.replace("\"subpages\": [\n          \"assistant\"\n        ]", "\"subpages\": [\n          \"assistant\",\n          \"listing\"\n        ]")' "S12 vertical search declares subpages"
-mutate assistant-twice build.json 's.replace("\"subpages\": [\n          \"listing\"\n        ],\n        \"sources\": [\n          \"open-prices\"", "\"subpages\": [\n          \"assistant\"\n        ],\n        \"sources\": [\n          \"open-prices\"")' "S12 2 verticals hold the assistant subpage"
 SP=ai/src/main/kotlin/com/diegonmarcos/superapp/ai
 mutate chat-moved-out "$SP/AiPage.kt" 's.replace("        Composer(\n            chat, theme", "        NoBar(\n            chat, theme")' "S12 AiChatPage does not draw Composer"
 mutate engines-moved-out "$SP/AiPage.kt" 's.replace("if (chat.session.messages.isEmpty() && !chat.sending) Welcome(", "if (chat.session.messages.isEmpty() && !chat.sending) Unit; if (false) Wx(")' "S12 AiChatPage does not draw Welcome"
@@ -629,21 +629,24 @@ mutate engines-not-handed "$J/ui/AssistantPages.kt" 's.replace("engines = state.
 mutate result-not-in-browser "$J/data/SearchAi.kt" 's.replace("opener = { Browser.open(s.app, it) }", "opener = { println(it) }")' "S12 SearchAi does not open"
 mutate one-page-test-dropped app/src/test/java/com/diegonmarcos/cloudsearch/SearchShellTest.kt 's.replace("fun theSearchTabIsOnePageWithTheEnginesAndTheChat()", "fun theSearchTabComposes()")' "S12 SearchShellTest lost"
 
-mutate fine-location app/src/main/AndroidManifest.xml 's.replace("ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION")' "S13 the manifest does not declare ACCESS_COARSE_LOCATION"
-mutate background-location app/src/main/AndroidManifest.xml 's.replace("<uses-feature", "<uses-permission android:name=\"android.permission.ACCESS_BACKGROUND_LOCATION\" />\n    <uses-feature")' "S13 the manifest declares ACCESS_BACKGROUND_LOCATION"
-mutate asked-every-time "$J/ui/ThingsPage.kt" 's.replace("            prefs.locationAsked = true\n            ask.launch(Manifest", "            ask.launch(Manifest")' "S13 ThingsPage does not ask the location permission once"
-mutate fix-stored "$J/data/Locator.kt" 's.replace("fun fix(ctx: Context): Fix? =", "fun leak(ctx: Context) = ctx.getSharedPreferences(\"x\", 0).edit().putString(\"fix\", \"\").apply()\n\n    fun fix(ctx: Context): Fix? =")' "S13 data/Locator.kt stores or logs the fix"
-mutate fix-logged "$J/data/Locator.kt" 's.replace("private const val WAIT_MS", "private fun dbg(f: Fix) = android.util.Log.d(\"loc\", f.toString())\n    private const val WAIT_MS")' "S13 data/Locator.kt stores or logs the fix"
-mutate height-inflated "$J/ui/ThingsPage.kt" 's.replace("private val KM_COL", "private val Tall = androidx.compose.ui.Modifier.heightIn(min = 120.dp)\nprivate val KM_COL")' "S13 ThingsPage.kt inflates a minimum height"
-mutate radius-default-moved build.json 's.replace("\"default_radius_km\": 20", "\"default_radius_km\": 25")' "S13 build.json::search.things.default_radius_km is 25"
-mutate things-without-renderer "$J/ui/SearchShell.kt" 's.replace("\"things\" -> ThingsPage(v)", "")' "S2 subpage kind things is declared"
-mutate things-debug-op-dropped "$J/debugapi/SearchDebugApi.kt" 's.replace("\"things\" -> things(Services.get(app), q).toString()", "")' "S7 /api/<group>/things"
 
+mutate calculators-page-back "$J/ui/VerticalPages.kt" 's + "\nfun CalculatorsPage() {}\n"' "S16 the app code names CalculatorsPage"
+mutate things-page-back "$J/ui/SearchShell.kt" 's + "\nfun ThingsPage() {}\n"' "S16 the app code names ThingsPage"
+mutate locator-back "$J/data/Account.kt" 's + "\nprivate val l = Locator.reader\n"' "S16 the app code names Locator."
+mutate news-section-back "$J/ui/FeedPages.kt" 's + "\n@androidx.compose.runtime.Composable\nfun NewsSection() {}\n"' "S16 the app code names NewsSection"
+mutate categories-unfiltered "$J/ui/SearchShell.kt" 's.replace("state.shownVerticals.forEach { v ->", "state.cfg.verticals.forEach { v ->")' "S16 the categories menu does not list shownVerticals only"
+mutate debug-unfiltered "$J/debugapi/SearchDebugApi.kt" 's.replace("if (v !in shown)", "if (false)")' "S16 the debug routes answer a vertical this app does not show"
+mutate hidden-vertical-placed build.json 's.replace("\"id\": \"books\",\n            \"label\": \"Books\",\n            \"icon\": \"menu_book\"\n          }", "\"id\": \"books\",\n            \"label\": \"Books\",\n            \"icon\": \"menu_book\"\n          },\n          {\n            \"id\": \"jobs\",\n            \"label\": \"Jobs\",\n            \"icon\": \"work\"\n          }")' "S16 vertical jobs is in a ui.sections page"
+mutate shopping-back build.json 's.replace("\"bottom_nav\": [\n      \"scrapers\",", "\"bottom_nav\": [\n      \"shopping\",\n      \"scrapers\",")' "S10 ui.bottom_nav is not scrapers"
+mutate location-permission-back app/src/main/AndroidManifest.xml 's.replace("<queries>", "<uses-permission android:name=\"android.permission.ACCESS_COARSE_LOCATION\" />\n    <queries>", 1)' "S16 the manifest declares a location permission"
+mutate perms-need-back build.json 's.replace("\"needs\": []", "\"needs\": [\"coarse_location\"]", 1)' "S16 build.json::perms.needs is not empty"
+mutate things-string-back app/src/main/res/values/strings.xml 's.replace("</resources>", "    <string name=\"things_blurb\">x</string>\n</resources>")' "S16 strings.xml still carries Things"
+mutate debug-things-back "$J/debugapi/SearchDebugApi.kt" 's.replace("AppDebugServer.Op(\"query\"", "AppDebugServer.Op(\"things\", \"\", \"x\"),\n                AppDebugServer.Op(\"query\"", 1)' "S7 /api/<group>/things is back"
+mutate vertical-undeclared-hidden build.json 's.replace("\"jobs\",\n        \"groceries\"", "\"groceries\"", 1)' "S16 ui.not_shown.verticals are not the ten"
 mutate cgc-service-undeclared build.json 's.replace("\"service\": \"cgc-pvt-mcp\"", "\"service\": \"cgc-ghost-mcp\"")' "S14 search.cgc index mecgc names service cgc-ghost-mcp"
 mutate private-index-opened build.json 's.replace("\"needs_account\": true", "\"needs_account\": false")' "S14 the private index mecgc does not wait"
 mutate repo-in-both-indexes build.json 's.replace("\"cloud-me-pvt-data\",\n            \"cloud-me-pvt-my-ai\"", "\"cloud-data\",\n            \"cloud-u-android\"")' "S14 a repository is in both"
-mutate news-service-ghost build.json 's.replace("\"service\": \"news\"", "\"service\": \"newz\"")' "S14 search.research.news.service is not a fleet_endpoints service"
-mutate cgc-section-undispatched "$J/ui/SearchShell.kt" 's.replace("\"cgc\" -> CgcSection(state)", "")' "S14 SearchShell does not dispatch News, Research and the CGC section"
+mutate cgc-section-undispatched "$J/ui/SearchShell.kt" 's.replace("\"cgc\" -> CgcSection(state)", "")' "S14 SearchShell does not dispatch Research and the CGC section"
 mutate graph-tool-dropped "$J/data/FleetCalls.kt" 's.replace("Cgc.GRAPH_TOOL", "\"x\"")' "S14 FleetCalls does not call both tools"
 mutate private-gate-dropped "$J/data/FleetCalls.kt" 's.replace("if (ix.needsAccount && token == null)", "if (false)")' "S14 FleetCalls does not hold the private index behind the Account sign-in"
 mutate nsc-not-wired app/src/main/AndroidManifest.xml 's.replace("android:networkSecurityConfig=\"@xml/network_security_config\"", "")' "S14 the manifest does not point at the generated network security config"
@@ -651,9 +654,7 @@ mutate host-spelled "$J/data/FleetCalls.kt" 's + "\nval h = \"http://cloud-cgc-p
 mutate nested-scroller "$J/ui/CgcPages.kt" 's + "\nval n = Modifier.verticalScroll(rememberScrollState())\n"' "S14 app/ui/CgcPages.kt nests a verticalScroll"
 mutate engines-page-dropped "$J/ui/SearchShell.kt" 's.replace("state.chatPage == \"engines\") EnginesPage(state)", "state.chatPage == \"engines\") Unit")' "S15 SearchShell does not open the Engines page"
 mutate engine-without-query build.json 's.replace("https://kagi.com/search?q={q}", "https://kagi.com/search")' "S15 major engine kagi has no https url with {q}"
-mutate news-feed-undeclared build.json 's.replace("\"gn-world\",\n          \"gn-business\"", "\"gn-worldz\",\n          \"gn-business\"")' "S15 news page gnews names feed gn-worldz"
 mutate media-source-paid build.json 's.replace("\"query_required\": true,\n        \"url\": \"https://api.openverse.org", "\"query_required\": false,\n        \"url\": \"https://api.openverse.org")' "S15 media source openverse-images"
-mutate feed-format-unknown build.json 's.replace("\"format\": \"atom\"", "\"format\": \"json\"", 1)' "has format json, which is neither rss nor atom"
 
-echo "── S1-S15 + mutations: $FAILURES failure(s) ──"
+echo "── S2-S16 + mutations: $FAILURES failure(s) ──"
 [ "$FAILURES" -eq 0 ]

@@ -52,26 +52,8 @@
     <string name="unsave">Remove from saved</string>
     <string name="saved_empty">Nothing saved yet. Tap the star on a result to keep it here.</string>
 
-    <string name="market_overview">Market Overview</string>
-    <string name="germany">Germany</string>
-    <string name="stat_remote_short">Remote share</string>
-    <string name="stat_time_to_hire">Time to Hire</string>
-    <string name="stat_open_positions">Open positions</string>
-    <string name="no_source">no source</string>
-    <string name="top_fields">Top occupational fields (Bundesagentur)</string>
-    <string name="recent_insights">Recent Insights</string>
-    <string name="insight_yearly">Median advertised pay %1$s a year (of %2$d listings that state it).</string>
-    <string name="insight_hourly">Median advertised pay %1$s an hour (of %2$d listings that state it).</string>
-    <string name="insight_remote">Remote share over %1$d Arbeitnow listings that say whether they are remote.</string>
-    <string name="analysis_sources">Computed from the live answers of the Bundesagentur für Arbeit (open positions, fields, advertised pay) and Arbeitnow (remote share). No source publishes time to hire, so it says \"no source\".</string>
-    <string name="insight_series">%1$s %2$s, %3$s (%4$s, %5$s).</string>
-    <string name="no_year_before">no value a year before</string>
-    <string name="market_sources">Official statistics, Germany-wide: no source this app may read publishes rents or prices per city.</string>
-    <string name="analysis_failed">Could not compute the analysis: no source answered.</string>
-    <string name="feed_empty">None of the %1$d latest headlines is about this topic.</string>
     <string name="share">Share</string>
     <string name="open">Open</string>
-    <string name="calc_failed">These inputs cannot be computed.</string>
 
     <string name="assistant_hello">Hi, I\'m your AI Assistant</string>
     <string name="assistant_hello_sub">Search the web below or ask me a complex question.</string>
@@ -97,35 +79,6 @@
     <string name="ask_anything">Ask anything…</string>
     <string name="send">Send</string>
 
-    <!-- #903 Things: stores near you and what each asks -->
-    <string name="things_area_title">Things area</string>
-    <string name="things_use_location">Use my location (coarse, ~1 km)</string>
-    <string name="things_loc_granted">Location allowed. It only centres the search; it is never stored.</string>
-    <string name="things_loc_denied">Location not allowed (change it in system settings). The typed city is used.</string>
-    <string name="things_loc_unasked">Asked once, when you first open Things.</string>
-    <string name="things_city_hint">City, used when location is off</string>
-    <string name="things_radius_km">Radius (km)</string>
-    <string name="things_apply">Apply</string>
-    <string name="things_area_location">Near you</string>
-    <string name="things_area_line">%1$s · %2$d km · %3$s</string>
-    <string name="things_how_location">location</string>
-    <string name="things_how_typed">typed city</string>
-    <string name="things_how_city">default city</string>
-    <string name="things_why_permission">no location permission</string>
-    <string name="things_why_nofix">no location fix</string>
-    <string name="things_why_unknown_city">city "%1$s" not found</string>
-    <string name="things_stores_line">%1$s · %2$d stores found · %3$d shown</string>
-    <string name="things_fallback_line">No store type known for "%1$s": showing general stores.</string>
-    <string name="things_col_store">Store</string>
-    <string name="things_col_km">km</string>
-    <string name="things_col_price">Price</string>
-    <string name="things_src_shelf">shelf</string>
-    <string name="things_src_online">online</string>
-    <string name="things_no_price">no price</string>
-    <string name="things_open_link">Open the store\'s page</string>
-    <string name="things_no_stores">No store of that kind found in this area. Widen the radius in settings.</string>
-    <string name="things_blurb">Shelf = a price seen at that very store (Open Prices). Online = the chain\'s own site price, not that branch\'s shelf. A store with no price says why; nothing is estimated.</string>
-    <string name="things_area_failed">Could not place the search: %1$s</string>
 
     <!-- #913 Agents, Reports, Cloud Search -->
     <string name="agents_none">The Agents tab is not declared in this build.</string>
@@ -185,7 +138,7 @@
     <string name="cloud_code_placeholder">Code to find</string>
     <string name="cloud_code_search">Search on GitHub</string>
     <string name="cloud_code_open">Open Cloud Code</string>
-    <!-- #913b Buy-Side and Sell-Side agents; Me and LLC lead to them -->
+    <!-- #913b Buy-Side and Sell-Side agents; -->
     <string name="agents_draft_only_notice">Draft only: this agent searches, compares, summarises and drafts. Sending, applying, buying or submitting is always yours: open the page in Cloud Browser and do it yourself.</string>
     <string name="agents_all">‹ All agents</string>
     <string name="agents_goal">Goal</string>
@@ -198,26 +151,14 @@
     <string name="agents_results">Results: %1$d · %2$s</string>
     <string name="agents_draft">Draft</string>
     <string name="agents_runs_of">Runs: %1$d</string>
-    <string name="vertical_agents">Agents</string>
-    <!-- #1197 the News feed pages and the Search > Engines page. -->
-    <string name="newsfeed_loading">Loading…</string>
-    <string name="newsfeed_count">%1$d items</string>
-    <string name="newsfeed_empty">The feed has no items.</string>
-    <string name="newsfeed_unavailable">Feed not reachable: %1$s</string>
-    <string name="newsfeed_stale">%1$d items from the last saved copy (the feed answered: %2$s)</string>
+    <!-- #1197 the Search > Engines page. -->
     <string name="engines_title">Search engines</string>
     <string name="engines_blurb">Opens the engine\'s own results in Cloud Browser with your query.</string>
     <string name="engines_placeholder">What to search for</string>
     <string name="engines_kind_web">Web search</string>
     <string name="engines_kind_ai">AI answers</string>
     <string name="engines_in">Search in</string>
-    <!-- #1184 Research (News), Cloud-CGC and Me-CGC. -->
-    <string name="research_none">Research is not declared in this build.</string>
-    <string name="research_loading">Loading headlines…</string>
-    <string name="research_empty">No headlines for this topic.</string>
-    <string name="research_unavailable">News service not reachable: %1$s</string>
-    <string name="research_count">%1$d headlines via %2$s</string>
-    <string name="research_note">News service answered: %1$s</string>
+    <!-- #1184 Cloud-CGC and Me-CGC. -->
     <string name="cgc_none">The code indexes are not declared in this build.</string>
     <string name="cgc_semantic_placeholder">Describe the code you are looking for</string>
     <string name="cgc_graph_placeholder">A file, module or symbol to start the graph from</string>

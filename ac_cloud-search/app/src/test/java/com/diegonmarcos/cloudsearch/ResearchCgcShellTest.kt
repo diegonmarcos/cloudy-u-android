@@ -13,8 +13,6 @@ import com.diegonmarcos.cloudsearch.core.Http
 import com.diegonmarcos.cloudsearch.data.FleetBearer
 import com.diegonmarcos.cloudsearch.data.Services
 import com.diegonmarcos.cloudsearch.ui.CgcTags
-import com.diegonmarcos.cloudsearch.ui.NewsTags
-import com.diegonmarcos.cloudsearch.ui.ResearchTags
 import com.diegonmarcos.cloudsearch.ui.SearchShell
 import com.diegonmarcos.cloudsearch.ui.SearchState
 import com.diegonmarcos.cloudsearch.ui.Tags
@@ -37,8 +35,8 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 /**
- * #1184 News (the fleet news service) and the two code indexes (#1197: Cloud CGC and Me CGC, the CGC section's two rows) through the real shell, on a fake network that answers the way the fleet's
- * news service and its cgc MCP service do (JSON-RPC over an event stream): the answers are shaped like the services', not
+ * #1184 the two code indexes (#1197: Cloud CGC and Me CGC, the CGC section's two rows) through the real shell, on a fake network that answers the way the fleet's
+ * cgc MCP service does (JSON-RPC over an event stream): the answers are shaped like the services', not
  * captured from them. The private index is asked with and without the Cloud Account sign-in, and answers as an unbuilt index does.
  */
 @RunWith(RobolectricTestRunner::class)
@@ -65,15 +63,6 @@ class ResearchCgcShellTest {
         override fun get(url: String, headers: Map<String, String>, timeoutMs: Int): Http.Response {
             synchronized(gets) { gets += url to headers }
             return when {
-                "/articles" in url -> Http.Response(200, """{"query":"q","count":2,"articles":[
-                    {"url":"https://example.org/a","title":"Chip makers expand","seendate":"20261024T101500Z","domain":"example.org"},
-                    {"url":"https://example.net/b","title":"Open model released","seendate":"20261025T081000Z","domain":"example.net"}]}""")
-                "youtube.com/feeds/videos.xml" in url -> Http.Response(200, """<?xml version="1.0" encoding="UTF-8"?>
-                    <feed xmlns:yt="http://www.youtube.com/xml/schemas/2015" xmlns:media="http://search.yahoo.com/mrss/" xmlns="http://www.w3.org/2005/Atom">
-                     <title>Channel</title>
-                     <entry><title>Newer video</title><link rel="alternate" href="https://www.youtube.com/watch?v=b"/><published>2026-10-22T10:00:00+00:00</published></entry>
-                     <entry><title>Older video</title><link rel="alternate" href="https://www.youtube.com/watch?v=a"/><published>2026-10-21T10:00:00+00:00</published></entry>
-                    </feed>""")
                 "cloud-cgc-pvt-mcp" in url && url.endsWith("/health") -> Http.Response(200, """{"status":"degraded","checks":{"octocode":{"binary":true},"kgstore":{"reachable":false}}}""")
                 else -> Http.Response(404, "")
             }
@@ -106,7 +95,6 @@ class ResearchCgcShellTest {
 
     @Before fun setUp() {
         val services = Services(RuntimeEnvironment.getApplication(), http)
-        services.prefs.locationAsked = true
         Services.install(services)
         state = SearchState(services)
         FleetBearer.reader = { "" }
@@ -129,34 +117,6 @@ class ResearchCgcShellTest {
         waitFor(CgcTags.QUERY)
         compose.onNodeWithTag(CgcTags.QUERY).performTextInput(q)
         compose.onNodeWithTag(CgcTags.SEARCH).performClick()
-    }
-
-    @Test fun researchShowsTheFleetNewsFromTheDeclaredServiceMeshFirst() {
-        compose.setContent { SearchShell(state) }
-        compose.goTo(state, "news")
-        waitFor(ResearchTags.article(0))
-        waitText(ResearchTags.STATUS, "2 headlines via mesh")
-        assertEquals("http://news-gdelt.mesh.diegonmarcos.com:3019/articles?q=technology%20sourcelang%3Aenglish&limit=40", http.gets.first { "/articles" in it.first }.first)
-        assertTrue("the mesh is not sent the bearer", http.gets.filter { "/articles" in it.first }.all { !it.second.containsKey("Authorization") })
-        compose.onNodeWithTag(ResearchTags.topic("ai")).performClick()
-        try {
-            compose.waitUntil(60_000) { synchronized(http.gets) { http.gets.any { it.first.contains("q=artificial%20intelligence%20sourcelang%3Aenglish") } } }
-        } catch (e: androidx.compose.ui.test.ComposeTimeoutException) {
-            throw AssertionError("the AI topic was never fetched: newsTopic=${state.newsTopic}, asked=${synchronized(http.gets) { http.gets.map { it.first } }}", e)
-        }
-        assertEquals("ai", state.newsTopic)
-    }
-
-    /** #1197 News > YouTube Feed: the first declared channel's Atom feed is fetched and its videos listed newest first. */
-    @Test fun youTubeFeedListsTheChannelsVideosNewestFirst() {
-        compose.setContent { SearchShell(state) }
-        compose.goTo(state, "news")
-        compose.onNodeWithTag(Tags.subpage("youtube")).performClick()
-        waitFor(NewsTags.item(1))
-        waitText(NewsTags.STATUS, "2 items")
-        assertTrue(text(NewsTags.item(0)).startsWith("Newer video"))
-        val channel = state.cfg.feeds.getValue(state.cfg.newsPage("youtube")!!.feeds.first()).url
-        assertTrue("the declared channel feed was asked: $channel", synchronized(http.gets) { http.gets.any { it.first == channel } })
     }
 
     @Test fun cloudCgcSemanticShowsRepoPathLineAndOpens() {

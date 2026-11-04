@@ -86,7 +86,6 @@ class QueryIntentTest {
 
     @Before fun offline() {
         services = Services(RuntimeEnvironment.getApplication(), OfflineHttp())
-        services.prefs.locationAsked = true
         Services.install(services)
         savedReader = Account.reader
         Account.reader = { _, _ -> Account.Token(null, "no token in this test") }

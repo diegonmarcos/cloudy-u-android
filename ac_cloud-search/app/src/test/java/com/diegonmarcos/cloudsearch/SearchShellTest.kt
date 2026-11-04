@@ -72,29 +72,15 @@ class SearchShellTest {
         }
     }).around(compose)
 
-    /** One job from the Bundesagentur, a refusal from everything else; records what was asked. */
+    /** One picture from Openverse, a refusal from everything else; records what was asked. */
     private class FakeHttp : Http {
         val asked = mutableListOf<String>()
         val headersAsked = mutableListOf<Map<String, String>>()
         override fun get(url: String, headers: Map<String, String>, timeoutMs: Int): Http.Response {
             synchronized(asked) { asked += url; headersAsked += headers }
             return when {
-                // #903 Things: two stores (one of a chain the price service reads), a geocoded city, the service's answer.
-                "overpass" in url -> Http.Response(200,
-                    """{"elements":[
-                       {"type":"node","id":1,"lat":48.14,"lon":11.58,"tags":{"name":"OBI Mitte","brand":"OBI","shop":"doityourself","addr:street":"Hauptstr.","addr:housenumber":"1"}},
-                       {"type":"node","id":2,"lat":48.15,"lon":11.59,"tags":{"name":"Kleiner Baumarkt","shop":"doityourself"}}]}""")
-                "nominatim" in url -> Http.Response(200, """[{"lat":"48.1371","lon":"11.5753","name":"München","display_name":"München, Bayern, Deutschland"}]""")
-                "prices.openfoodfacts" in url -> Http.Response(200, """{"items":[]}""")
-                "/scrappers-api/prices" in url -> Http.Response(200,
-                    """{"results":[{"adapter":"obi","label":"OBI","status":"ok","price":24.49,"currency":"EUR","title":"Bohrmaschine X","url":"https://www.obi.de/p/1","fetched_at":1790000000000}],
-                       "adapters":[{"adapter":"obi","label":"OBI","enabled":true,"brands":["obi"],"why":""}]}""")
-                "arbeitsagentur" in url -> Http.Response(200,
-                    """{"maxErgebnisse":1,"ergebnisliste":[{"referenznummer":"r-1","stellenangebotsTitel":"Kotlin Developer","firma":"ACME","arbeitszeitVollzeit":true}]}""")
-                // The Bundesbank's SDMX-JSON shape, two observations a year apart.
-                "bundesbank" in url -> Http.Response(200,
-                    """{"data":{"structure":{"dimensions":{"observation":[{"id":"TIME_PERIOD","values":[{"id":"2025-08"},{"id":"2026-08"}]}]}},
-                       "dataSets":[{"series":{"0:0":{"observations":{"0":["3.71"],"1":["4.01"]}}}}]}}""")
+                "api.openverse.org" in url -> Http.Response(200,
+                    """{"results":[{"id":"img-1","title":"Orange Cat","creator":"Ada","provider":"flickr","url":"https://example.org/cat.jpg","foreign_landing_url":"https://example.org/cat","license":"by","license_version":"2.0"}]}""")
                 else -> Http.Response(503, "")
             }
         }
@@ -111,12 +97,9 @@ class SearchShellTest {
     private lateinit var state: SearchState
     private lateinit var savedReader: (android.content.Context, String) -> Account.Token
     private val savedFleetRead = com.diegonmarcos.cloudsearch.data.FleetBearer.reader
-    private val savedLocator = com.diegonmarcos.cloudsearch.data.Locator.reader
 
     @Before fun offline() {
         services = Services(RuntimeEnvironment.getApplication(), http)
-        // Things asks the coarse-location permission once, through the system dialog: not under test here.
-        services.prefs.locationAsked = true
         Services.install(services)
         state = SearchState(services)
         savedReader = Account.reader
@@ -125,7 +108,6 @@ class SearchShellTest {
 
     @After fun online() {
         com.diegonmarcos.cloudsearch.data.FleetBearer.reader = savedFleetRead
-        com.diegonmarcos.cloudsearch.data.Locator.reader = savedLocator
         Account.reader = savedReader
         Services.install(null)
     }
@@ -155,17 +137,16 @@ class SearchShellTest {
     @Test fun everyVerticalAndSubpageIsReachableAndComposes() {
         launch()
         val cfg = Decl.config
-        for (v in cfg.verticals) {
+        for (v in com.diegonmarcos.cloudsearch.ui.appVerticals(cfg)) {
             openVertical(v.id)
             assertEquals(v.id, state.vertical)
-            // A vertical with one subpage draws no sub-nav (the mockup's Search, Groceries, Things).
-            // (Things' one subpage shares its id with Web Search's Things pill, which is always there.)
+            // A vertical with one subpage draws no sub-nav (every remaining vertical has one).
             if (v.subpages.first() !in cfg.verticals.map { it.id } + NAV_PAGES("chat"))
                 assertEquals(v.subpages.size > 1, compose.onAllNodesWithTag(Tags.subpage(state.navId(v, v.subpages.first()))).fetchSemanticsNodes().isNotEmpty())
             if (v.subpages.size > 1) compose.onNodeWithTag(Tags.subpage(state.navId(v, v.subpages.last()))).performClick()
             for (sub in v.subpages) {
                 compose.runOnIdle { state.showSubpage(v, sub) }
-                // Bounded wait, not an instant check: a heavy page (the payslip runs the whole PAP
+                // Bounded wait, not an instant check: a heavy page (a heavy page
                 // while composing) was not yet composed on one runner (run 37036021906) and was on
                 // the other (run 37403502266: arm64 timed out at 10 s while the same step passed on x86_64, with
                 // PIT running beside it). A page that never appears still fails here, after 60 s.
@@ -175,24 +156,13 @@ class SearchShellTest {
         }
     }
 
-    @Test fun jobsListingShowsWhatTheSourceReturnedAndWhyTheOthersDidNot() {
+    @Test fun imageListingShowsWhatTheSourceReturned() {
+        state.listing("image").let { it.q = "cat"; it.stale = true }
         launch()
-        openVertical("jobs")
-        waitFor(Tags.card("ba-jobsuche:r-1"))
-        compose.onNodeWithTag(Tags.card("ba-jobsuche:r-1")).assertTextContains("Kotlin Developer", substring = true)
-        waitFor(Tags.source("arbeitnow"))
-        compose.onNodeWithTag(Tags.source("arbeitnow")).assertTextContains("failed", substring = true)
-        assertTrue(synchronized(http.asked) { http.asked.any { "arbeitsagentur" in it } })
-    }
-
-    @Test fun payslipComputesOnScreen() {
-        launch()
-        openVertical("jobs")
-        compose.runOnIdle { state.showSubpage(state.v(), "calculators") }
-        waitFor(Tags.output("payslip", "net"))
-        // 5,000 € gross, class I, childless, 2.9 % extra rate: PayslipTest's hand-checked net.
-        compose.onNodeWithTag(Tags.output("payslip", "net")).assertTextContains("3,130.09", substring = true)
-        compose.onNodeWithTag(Tags.output("payslip", "company_cost")).assertTextContains("6,065.00", substring = true)
+        openVertical("image")
+        waitFor(Tags.card("openverse-images:img-1"))
+        compose.onNodeWithTag(Tags.card("openverse-images:img-1")).assertTextContains("Orange Cat", substring = true)
+        assertTrue(synchronized(http.asked) { http.asked.any { "api.openverse.org" in it && "q=cat" in it } })
     }
 
     @Test fun chatWithoutATokenSaysWhyAndSendsNothing() {
@@ -327,18 +297,16 @@ class SearchShellTest {
         compose.onNodeWithTag(com.diegonmarcos.superapp.navbarbottom.BottomTags.BAR).assertExists()
         for (id in ids) compose.onNodeWithTag(Tags.nav(id)).assertExists()
         for (id in listOf("news", "shopping", "brokers")) compose.onNodeWithTag(Tags.nav(id)).assertDoesNotExist()
-        openVertical("house")
+        openVertical("movies")
         waitFor(Tags.WEB_STRIP)
-        for (v in BROKERS_PAGES) compose.onNodeWithTag(Tags.subpage(v)).assertExists()
+        for (v in MEDIA_PAGES) compose.onNodeWithTag(Tags.subpage(v)).assertExists()
         waitFor(Tags.SEARCH_BOX)
-        compose.onNodeWithTag(Tags.SEARCH_BOX).performTextInput("Wohnung")
-        compose.onNodeWithTag(Tags.SEARCH_BOX).assertTextContains("Wohnung", substring = true)
+        compose.onNodeWithTag(Tags.SEARCH_BOX).performTextInput("Matrix")
+        compose.onNodeWithTag(Tags.SEARCH_BOX).assertTextContains("Matrix", substring = true)
     }
 
-    /** #1197 the former Searches (and the old Me and LLC), each vertical once: Media, Shopping and Brokers hold them. */
+    /** #1472 the parked Media section holds the two verticals that are not a tab of their own. */
     private val MEDIA_PAGES = listOf("movies", "books")
-    private val SHOPPING_PAGES = listOf("groceries", "electronics", "clothing", "things")
-    private val BROKERS_PAGES = listOf("jobs", "house", "commercial", "business", "suppliers", "services")
     private val SEARCH_PAGES get() = listOf(state.chatVertical, "engines", "apps", "messages", "code")
 
     /** The six tabs route, and each shows its second row; the parked sections (off the island, opened through the state) keep theirs. */
@@ -349,13 +317,10 @@ class SearchShellTest {
             "image" to emptyList(),
             "video" to emptyList(),
             "models3d" to emptyList(),
-            "news" to listOf("news", "youtube", "gnews", "rss"),
             "research" to listOf("reports", "models", "agenthub"),
             "cgc" to listOf("cloud_semantic", "cloud_graph", "me_semantic", "me_graph"),
             "chat" to SEARCH_PAGES,
             "media" to MEDIA_PAGES,
-            "shopping" to SHOPPING_PAGES,
-            "brokers" to BROKERS_PAGES,
         )
         for ((section, pages) in tabs) {
             compose.goTo(state, section)
@@ -363,9 +328,11 @@ class SearchShellTest {
             compose.runOnIdle { assertEquals(section, state.section) }
             for (id in pages) compose.onNodeWithTag(Tags.subpage(id)).assertExists()
         }
-        compose.goTo(state, "brokers")
+        compose.goTo(state, "media")
         compose.waitForIdle()
         waitFor(Tags.WEB_STRIP)
+        // #1472 News, Shopping and Brokers are not sections any more: the declaration names none of them
+        for (gone in listOf("news", "shopping", "brokers")) assertEquals(null, com.diegonmarcos.cloudsearch.ui.NAV.section(gone))
     }
 
     @Test fun themeToggleFlipsAndIsRemembered() {
@@ -381,9 +348,10 @@ class SearchShellTest {
     @Test fun theTitleDropdownOpensEveryCategoryAndSavedItems() {
         launch()
         compose.onNodeWithTag(Tags.ISLAND).performClick()
-        waitFor(Tags.drawer("jobs"))
-        compose.onNodeWithTag(Tags.drawer("jobs")).performScrollTo().performClick()
-        compose.runOnIdle { assertEquals("jobs", state.vertical); assertEquals(null, state.menu) }
+        waitFor(Tags.drawer("movies"))
+        for (gone in listOf("jobs", "house", "groceries", "things")) compose.onNodeWithTag(Tags.drawer(gone)).assertDoesNotExist()
+        compose.onNodeWithTag(Tags.drawer("movies")).performScrollTo().performClick()
+        compose.runOnIdle { assertEquals("movies", state.vertical); assertEquals(null, state.menu) }
         compose.onNodeWithTag(Tags.ISLAND).performClick()
         waitFor(Tags.drawer("saved"))
         compose.onNodeWithTag(Tags.drawer("saved")).performScrollTo().performClick()
@@ -391,32 +359,22 @@ class SearchShellTest {
         // the title path ends with the page; while a search still runs the island says Searching, so wait for the settled title
         compose.waitUntil(30_000) { compose.onAllNodesWithTag(Tags.ISLAND).fetchSemanticsNodes().any { n -> n.config.getOrNull(androidx.compose.ui.semantics.SemanticsProperties.Text)?.any { it.text.contains("Saved Items") } == true } }
         compose.onNodeWithTag(Tags.ISLAND).assertTextContains("Saved Items", substring = true)
-        openVertical("house")
-        compose.runOnIdle { assertFalse(state.saved); assertEquals("house", state.vertical) }
+        openVertical("image")
+        compose.runOnIdle { assertFalse(state.saved); assertEquals("image", state.vertical) }
     }
 
-    @Test fun extensiveFiltersApplyTheDeclaredOptions() {
+    @Test fun extensiveFiltersApplyTheChosenRange() {
         launch()
-        openVertical("jobs")
+        openVertical("image")
         waitFor(Tags.MORE_FILTERS)
         compose.onNodeWithTag(Tags.MORE_FILTERS).performClick()
         waitFor(Tags.APPLY_FILTERS)
-        compose.onNodeWithTag(Tags.option("remote")).performClick()
+        compose.onNodeWithTag(Tags.option("min")).performTextInput("5")
         compose.onNodeWithTag(Tags.APPLY_FILTERS).performClick()
         compose.runOnIdle {
-            assertEquals(setOf("remote"), state.filtersOf("jobs").chips)
+            assertEquals(5.0, state.filtersOf("image").min!!, 0.0)
             assertEquals(null, state.menu)
         }
-    }
-
-    @Test fun houseAnalysisShowsTheSeriesAndSaysWhatIsMissing() {
-        launch()
-        openVertical("house")
-        compose.runOnIdle { state.showSubpage(state.v(), "analysis") }
-        compose.waitUntil(60_000) { compose.onAllNodesWithText("4.01 %", substring = true).fetchSemanticsNodes().isNotEmpty() }
-        compose.onAllNodesWithText("+0.30 pp vs 2025-08", substring = true).fetchSemanticsNodes().let { assertTrue(it.isNotEmpty()) }
-        // Eurostat is down in this test: its two series read "no source", never a number.
-        assertEquals(2, compose.onAllNodesWithText("no source").fetchSemanticsNodes().size)
     }
 
     /**
@@ -480,140 +438,16 @@ class SearchShellTest {
 
     @Test fun debugRoutesAnswerFromTheSameEngine() {
         val v = SearchDebugApi.verticals(services)
-        assertEquals(Decl.config.verticals.size, v.getJSONArray("verticals").length())
-        val calc = SearchDebugApi.calc(services, mapOf("name" to "payslip", "gross" to "5000"))
-        assertEquals(3130.09, calc.getJSONObject("outputs").getDouble("net"), 0.001)
-        assertFalse(SearchDebugApi.calc(services, mapOf("name" to "nope")).getBoolean("ok"))
-        val q = SearchDebugApi.query(services, mapOf("v" to "jobs", "q" to "kotlin"))
+        assertEquals(com.diegonmarcos.cloudsearch.ui.appVerticals(Decl.config).size, v.getJSONArray("verticals").length())
+        assertEquals(5, v.getJSONArray("verticals").length())
+        assertFalse(SearchDebugApi.query(services, mapOf("v" to "jobs")).getBoolean("ok"))
+        val q = SearchDebugApi.query(services, mapOf("v" to "image", "q" to "cat"))
         assertTrue(q.getBoolean("ok"))
-        assertEquals("Kotlin Developer", q.getJSONArray("listings").getJSONObject(0).getString("title"))
+        assertEquals("Orange Cat", q.getJSONArray("listings").getJSONObject(0).getString("title"))
         assertFalse(SearchDebugApi.query(services, mapOf("v" to "nope")).getBoolean("ok"))
-        // #797 the Analysis and Feed pages, screen-locked: offline here, so every source says why.
-        val house = SearchDebugApi.analysis(services, mapOf("v" to "house"))
-        assertEquals("market", house.getString("kind"))
-        assertEquals(Decl.config.vertical("house")!!.series.size, house.getJSONArray("sources").length())
-        val houseSources = (0 until house.getJSONArray("sources").length()).map { house.getJSONArray("sources").getJSONObject(it) }.associateBy { it.getString("id") }
-        assertEquals("ok", houseSources.getValue("bbk-mortgage-rate").getString("state"))
-        assertEquals("error", houseSources.getValue("eurostat-house-prices").getString("state"))
-        assertEquals("jobs", SearchDebugApi.analysis(services, mapOf("v" to "jobs", "q" to "kotlin")).getString("kind"))
-        assertFalse(SearchDebugApi.analysis(services, mapOf("v" to "nope")).getBoolean("ok"))
-        val feed = SearchDebugApi.feed(services, mapOf("v" to "jobs"))
-        assertTrue(feed.getBoolean("ok"))
-        assertEquals("error", feed.getJSONArray("sources").getJSONObject(0).getString("state"))
-        assertFalse(SearchDebugApi.feed(services, mapOf("v" to "search")).getBoolean("ok"))
     }
 
-    // ── #903 Things ──────────────────────────────────────────────────────────────────────────────
-    private fun openThings(item: String) {
-        launch()
-        openVertical("things")
-        waitFor(Tags.SEARCH_BOX)
-        compose.onNodeWithTag(Tags.SEARCH_BOX).performTextInput(item)
-        compose.onNodeWithTag(Tags.SEARCH_BOX).performImeAction()
-    }
-
-    private fun waitThingsRowText(osm: String, part: String) = try {
-        compose.waitUntil(60_000) {
-            compose.onAllNodesWithTag(Tags.thingsRow(osm)).fetchSemanticsNodes().any { n ->
-                n.config.getOrNull(androidx.compose.ui.semantics.SemanticsProperties.Text)?.any { it.text.contains(part) } == true
-            }
-        }
-    } catch (e: androidx.compose.ui.test.ComposeTimeoutException) {
-        throw AssertionError("the row '$osm' never said '$part'", e)
-    }
-
-    @Test fun thingsComparesStoresWithTheirRealPriceOrWhyNone() {
-        services.prefs.useLocation = false
-        services.prefs.city = "munich" // the declared city the fake stores sit in
-        state.city = "munich"
-        com.diegonmarcos.cloudsearch.data.FleetBearer.reader = { "tok-1" }
-        openThings("Bohrmaschine")
-        // the page first lists the stores for the empty query, then the typed item's answer replaces it: wait for the answer
-        waitThingsRowText("node/1", "€24.49")
-        // the chain store carries the price its own site published, with where it comes from; the other says why not
-        compose.onNodeWithTag(Tags.thingsRow("node/1")).assertTextContains("€24.49", substring = true)
-        compose.onNodeWithTag(Tags.thingsRow("node/1")).assertTextContains("online", substring = true)
-        compose.onNodeWithTag(Tags.thingsRow("node/2")).assertTextContains("no price", substring = true)
-        compose.onNodeWithTag(Tags.thingsRow("node/2")).assertTextContains("no price source for this chain", substring = true)
-        val rows = compose.onAllNodes(hasTestTag(Tags.THINGS_TABLE)).fetchSemanticsNodes()
-        assertEquals(1, rows.size)
-        val top = { t: String -> compose.onNodeWithTag(t).fetchSemanticsNode().boundsInRoot.top }
-        assertTrue("cheapest first, the unpriced below", top(Tags.thingsRow("node/1")) < top(Tags.thingsRow("node/2")))
-        compose.onNodeWithTag(Tags.THINGS_STORES).assertTextContains("DIY and tools", substring = true)
-        // the default city and the declared 20 km radius, said on the page
-        compose.onNodeWithTag(Tags.THINGS_AREA).assertTextContains("20 km", substring = true)
-        synchronized(http.asked) {
-            val i = http.asked.indexOfFirst { "/scrappers-api/prices" in it }
-            assertTrue(http.asked[i], "q=Bohrmaschine" in http.asked[i] && "brands=kleiner%20baumarkt%2Cobi" in http.asked[i])
-            assertEquals(mapOf("Authorization" to "Bearer tok-1"), http.headersAsked[i])
-        }
-    }
-
-    @Test fun thingsWithoutTheFleetSignInShowsNoStorePriceAndSaysSo() {
-        services.prefs.useLocation = false
-        services.prefs.city = "munich"
-        state.city = "munich"
-        com.diegonmarcos.cloudsearch.data.FleetBearer.reader = { "" }
-        openThings("Bohrmaschine")
-        waitThingsRowText("node/1", "fleet sign-in")
-        compose.onNodeWithTag(Tags.thingsRow("node/1")).assertTextContains("no price", substring = true)
-        compose.onNodeWithTag(Tags.thingsRow("node/1")).assertTextContains("fleet sign-in", substring = true)
-        assertTrue(synchronized(http.asked) { http.asked.none { "/scrappers-api/prices" in it } })
-    }
-
-    @Test fun thingsCentresOnTheCoarseFixWhenAllowed() {
-        val app = RuntimeEnvironment.getApplication()
-        shadowOf(app).grantPermissions(android.Manifest.permission.ACCESS_COARSE_LOCATION)
-        com.diegonmarcos.cloudsearch.data.Locator.reader = { com.diegonmarcos.cloudsearch.data.Locator.Fix(48.1371, 11.5753) }
-        openThings("Bohrmaschine")
-        waitFor(Tags.thingsRow("node/1"))
-        compose.onNodeWithTag(Tags.THINGS_AREA).assertTextContains("Near you", substring = true)
-        // the centre leaves the phone rounded to ~1 km
-        assertTrue(synchronized(http.asked) { http.asked.any { "overpass" in it && "48.14000%2C11.58000" in it } })
-        assertTrue(synchronized(http.asked) { http.asked.none { "48.1371" in it || "11.5753" in it } })
-    }
-
-    @Test fun thingsFallsBackToTheTypedCityAndNamesWhy() {
-        services.prefs.thingsCity = "München"
-        openThings("Bohrmaschine")
-        waitFor(Tags.thingsRow("node/1"))
-        compose.onNodeWithTag(Tags.THINGS_AREA).assertTextContains("München", substring = true)
-        compose.onNodeWithTag(Tags.THINGS_AREA).assertTextContains("typed city", substring = true)
-        compose.onNodeWithTag(Tags.THINGS_AREA).assertTextContains("no location permission", substring = true)
-        assertTrue(synchronized(http.asked) { http.asked.any { "nominatim" in it && "K%C3%B6ln" !in it && "M%C3%BCnchen" in it } })
-    }
-
-    @Test fun thingsSettingsKeepTheCityAndClampTheRadius() {
-        launch()
-        compose.onNodeWithTag(Tags.CONFIGS).performClick()
-        waitFor(Tags.THINGS_CITY)
-        compose.onNodeWithTag(Tags.THINGS_CITY).performTextInput(" Köln ")
-        compose.onNodeWithTag(Tags.THINGS_RADIUS).performTextInput("500")
-        val before = state.areaRev
-        compose.onNodeWithTag(Tags.THINGS_APPLY).performClick()
-        compose.runOnIdle {
-            assertEquals("Köln", services.prefs.thingsCity)
-            assertEquals(Decl.config.things!!.maxRadiusKm, services.prefs.radiusKm)
-            assertEquals(before + 1, state.areaRev)
-        }
-        compose.onNodeWithTag(Tags.option("radius_5")).performClick()
-        compose.runOnIdle { assertEquals(5, services.prefs.radiusKm) }
-        compose.onNodeWithTag(Tags.THINGS_USE_LOCATION).performClick()
-        compose.runOnIdle { assertFalse(services.prefs.useLocation) }
-    }
-
-    @Test fun theDebugRouteAnswersTheThingsComparison() {
-        com.diegonmarcos.cloudsearch.data.FleetBearer.reader = { "tok-1" }
-        val j = SearchDebugApi.things(services, mapOf("q" to "Bohrmaschine", "lat" to "48.14", "lon" to "11.58", "radius" to "10"))
-        assertTrue(j.getBoolean("ok"))
-        assertEquals(10, j.getJSONObject("area").getInt("radius_km"))
-        assertEquals(2, j.getJSONArray("rows").length())
-        assertEquals(24.49, j.getJSONArray("rows").getJSONObject(0).getDouble("price"), 1e-9)
-        assertTrue(j.getJSONArray("rows").getJSONObject(1).isNull("price"))
-        assertTrue(SearchDebugApi.things(services, mapOf("q" to "x", "city" to "München")).getBoolean("ok"))
-    }
-
-    // ── #913 the island, Agents and Reports; #1197 News, Research, CGC, Search, Media, Shopping, Brokers ──────
+    // ── #913 the island, Agents and Reports; #1472 Scrappers, Research, CGC Search, Image, Videos, 3D Models ──────
     @Test fun theIslandHoldsTheSixTabsAndEachOpens() {
         launch()
         assertEquals(listOf("scrapers", "research", "cgc", "image", "video", "models3d"), NAV_IDS)
@@ -623,14 +457,13 @@ class SearchShellTest {
             compose.waitForIdle()
             assertEquals(id, state.section)
         }
-        // Brokers holds Job Placement, Real Estate and Business in one row per group; Search is the assistant.
-        compose.goTo(state, "brokers")
+        // Media (parked) holds Movies and Books; Search (parked) is the assistant.
+        compose.goTo(state, "media")
         waitFor(Tags.WEB_STRIP)
-        assertEquals(BROKERS_PAGES, NAV_PAGES("brokers"))
-        for (v in BROKERS_PAGES) compose.onNodeWithTag(Tags.subpage(v)).assertExists()
-        for (g in listOf("job_placement", "real_estate", "business_group")) compose.onNodeWithTag(com.diegonmarcos.superapp.navbartop2.SecondRowGroupTags.row(g)).assertExists()
-        openVertical("commercial")
-        compose.runOnIdle { assertEquals("commercial", state.vertical); assertEquals("brokers", state.section) }
+        assertEquals(MEDIA_PAGES, NAV_PAGES("media"))
+        for (v in MEDIA_PAGES) compose.onNodeWithTag(Tags.subpage(v)).assertExists()
+        openVertical("books")
+        compose.runOnIdle { assertEquals("books", state.vertical); assertEquals("media", state.section) }
         compose.goTo(state, "chat")
         waitFor(Tags.page("assistant"))
         assertEquals(state.chatVertical, state.vertical)
@@ -669,8 +502,7 @@ class SearchShellTest {
         fun walk(pages: List<com.diegonmarcos.superapp.bottomnav.NavPage>) { pages.forEach { ids += it.id; walk(it.pages) } }
         nav.sections.forEach { walk(it.pages) }
         assertEquals("duplicate page ids: " + ids.groupBy { it }.filter { it.value.size > 1 }.keys, ids.size, ids.toSet().size)
-        val jobs = nav.section("brokers")!!.page("jobs")!!.pages.map { it.id }
-        assertEquals(listOf("jobs-listing", "jobs-analysis", "jobs-feed", "jobs-calculators"), jobs)
+        for (gone in listOf("news", "shopping", "brokers")) assertEquals(null, nav.section(gone))
     }
 
     /** #1472 the Scrappers and 3D Models pages draw the rows build.json::sample_pages declares. */
@@ -851,22 +683,6 @@ class SearchShellTest {
         scrollTo(AT.screen("job_placement"), AT.source("job_placement", "linkedin"))
         click(AT.source("job_placement", "linkedin"))
         compose.runOnIdle { assertEquals(listOf("stepstone", "arbeitsagentur"), a.prefs.sources(agent).map { it.id }) }
-    }
-
-    /** #913b Brokers' and Shopping's verticals lead to their agents. */
-    @Test fun aVerticalLeadsToItsAgents() {
-        installAgents()
-        launch()
-        openVertical("house")
-        waitFor(Tags.agentLink("rs_house_rental"))
-        compose.onNodeWithTag(Tags.agentLink("rs_house_purchase")).assertExists()
-        compose.onNodeWithTag(Tags.agentLink("rs_house_rental")).performClick()
-        waitFor(AT.screen("rs_house_rental"))
-        compose.runOnIdle { assertEquals("research", state.section); assertEquals("agenthub", state.researchPage); assertEquals("rs_house_rental", state.agentOpen) }
-        openVertical("commercial")
-        compose.runOnIdle { assertEquals("brokers", state.section) }
-        waitFor(Tags.agentLink("rs_commercial_stores"))
-        compose.onNodeWithTag(Tags.agentLink("rs_commercial_buildings")).assertExists()
     }
 
     /** #913b the house agent became RS_House-Rental: what the owner saved under house_search is still theirs. */

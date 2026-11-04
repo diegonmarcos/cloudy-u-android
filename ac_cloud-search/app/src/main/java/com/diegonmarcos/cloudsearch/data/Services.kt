@@ -8,7 +8,6 @@ import com.diegonmarcos.cloudsearch.core.FleetEndpoint
 import com.diegonmarcos.cloudsearch.core.Http
 import com.diegonmarcos.cloudsearch.core.SearchConfig
 import com.diegonmarcos.cloudsearch.core.SearchEngine
-import com.diegonmarcos.cloudsearch.core.ThingsEngine
 import com.diegonmarcos.cloudsearch.core.UrlHttp
 import com.diegonmarcos.superapp.ai.AiFileSessions
 import com.diegonmarcos.superapp.ai.AiHost
@@ -24,9 +23,7 @@ class Services(ctx: Context, val http: Http) {
     val app: Context = ctx.applicationContext
     val cfg: SearchConfig = Decl.config
     val engine = SearchEngine(cfg, http, Cache(File(ctx.filesDir, "results")), System::currentTimeMillis)
-    /** #903 the Things comparison: stores, shelf prices and the fleet price service, cached under filesDir/things. */
-    val things = ThingsEngine(cfg, http, Cache(File(ctx.filesDir, "things")), System::currentTimeMillis) { FleetBearer.token(app) }
-    /** #1184 Research (news) and Cloud-CGC / Me-CGC: the fleet services behind them, addressed from the baked fleet declaration. */
+    /** #1184 Cloud-CGC / Me-CGC: the fleet services behind them, addressed from the baked fleet declaration. */
     val fleet: FleetCalls by lazy {
         FleetCalls(http, FleetEndpoint.parse(String(android.util.Base64.decode(BuildConfig.FLEET_ENDPOINTS_B64, android.util.Base64.DEFAULT), Charsets.UTF_8))) { FleetBearer.token(app) }
     }

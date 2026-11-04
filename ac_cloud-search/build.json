@@ -1,7 +1,7 @@
 {
   "name": "cloud-search",
   "display_name": "Cloud Search",
-  "description": "Diego's Cloud Search (#779; renamed Cloud Research in #1162, back to Cloud Search in #1197) - one app for searching, on the shared bottom nav (#1184): News (the fleet news service, YouTube channel feeds, Google News topic feeds and the German RSS feeds), Research (Reports of what agents published, the Model catalogue and Agents: #913 draft-only Buy-Side and Sell-Side agents that read your alert mails and pages and write drafts you send yourself), CGC (Cloud CGC and Me CGC, each with Semantic and Graph RAG over the public and the private code index), Search (the AI chat over OpenRouter and the major web and AI search engines, plus the fleet's Apps, Messages and Code), Media (Image, Video, Movies, Books), Shopping (Groceries, Electronics, Clothing and Compare, the price comparison) and Brokers (Job Placement, Real Estate, Business). House and Jobs keep their Listing, Analysis, Feed and Calculators subpages. #1472 the bottom bar is now Scrappers, Research, CGC Search, Image, Videos, 3D Models (Scrappers and 3D Models show sample rows declared in sample_pages); News, Shopping, Brokers and Search (AI Chat) are parked sections, off the bar. REAL DATA ONLY: every in-app listing or feed comes from a public API or feed this app is allowed to read (build.json::search.sources, search.feeds), cached on the phone so the last results stay readable offline; a portal whose terms forbid automated access is never fetched - its own search page opens in cloud-browser - and a source that cannot be used says why. The German payslip runs the BMF's own Lohnsteuer PAP 2026 (core/pap, generated into Kotlin by core/tools/pap2kt.py) with the 2026 social-insurance rules, golden-tested against the BMF's calculator. English is the base language (#299); dark is the default theme (#336).",
+  "description": "Diego's Cloud Search (#779; renamed Cloud Research in #1162, back to Cloud Search in #1197) - one app for searching, on the shared bottom nav: Scrappers (Site Files, Apify, Cloudflare, SelfHosted; sample rows), Research (Reports of what agents published, the Model catalogue and Agents: #913 draft-only Buy-Side and Sell-Side agents that read your alert mails and pages and write drafts you send yourself), CGC Search (Cloud CGC and Me CGC, each with Semantic and Graph RAG over the public and the private code index), Image, Videos and 3D Models (sample rows); the AI chat over OpenRouter with the major web and AI search engines, plus the fleet's Apps, Messages and Code, is reached from the top bar. News, Shopping and Brokers are gone from the app (#1472; their declaration stays for Cloud KG Store). REAL DATA ONLY: every in-app listing or feed comes from a public API or feed this app is allowed to read (build.json::search.sources, search.feeds), cached on the phone so the last results stay readable offline; a portal whose terms forbid automated access is never fetched - its own search page opens in cloud-browser - and a source that cannot be used says why. The German payslip runs the BMF's own Lohnsteuer PAP 2026 (core/pap, generated into Kotlin by core/tools/pap2kt.py) with the 2026 social-insurance rules, golden-tested against the BMF's calculator. English is the base language (#299); dark is the default theme (#336).",
   "category": "android",
   "vendored_engine": null,
   "android": {
@@ -167,7 +167,11 @@
       "type": "library",
       "_doc": "#1161 shared navigation and theme design, shared BY REFERENCE."
     },
-    "libs:perms": {"dir": "../ab_cloud-libs-shared/libs/perms", "type": "library", "_doc": "#1360 the permission contract (libs:perms): Configs > General > Perms (AppPermsSection, linked by libs:ui-nav-bars), first run (PermsFirstRun), PermsGate, and the state provider helper apps are read through."},
+    "libs:perms": {
+      "dir": "../ab_cloud-libs-shared/libs/perms",
+      "type": "library",
+      "_doc": "#1360 the permission contract (libs:perms): Configs > General > Perms (AppPermsSection, linked by libs:ui-nav-bars), first run (PermsFirstRun), PermsGate, and the state provider helper apps are read through."
+    },
     "libs:theme-background": {
       "dir": "../ab_cloud-libs-shared/libs/theme-background",
       "type": "library",
@@ -2134,7 +2138,14 @@
             "front-diegonmarcos",
             "front-data"
           ],
-          "repo_names": {"cloud-u-android": "cloudy-u-android", "cloud-u-containers": "cloudy-u-containers", "cloud-infra": "cloudy-t-infra", "cloud-infra-desktop": "cloudy-u-desktop", "front-diegonmarcos": "diegonmarcos.github.io", "front-data": "z-archived_front-data"},
+          "repo_names": {
+            "cloud-u-android": "cloudy-u-android",
+            "cloud-u-containers": "cloudy-u-containers",
+            "cloud-infra": "cloudy-t-infra",
+            "cloud-infra-desktop": "cloudy-u-desktop",
+            "front-diegonmarcos": "diegonmarcos.github.io",
+            "front-data": "z-archived_front-data"
+          },
           "needs_account": false,
           "web_url": "https://github.com/diegonmarcos/{repo}/blob/main/{path}#L{line}",
           "drive_fleet": "drive",
@@ -3031,9 +3042,9 @@
     "debug_api": {
       "group": "search"
     },
-    "_doc_debug_api": "Routes on the fleet debug API (libs:devtools AppDebugServer), for checks with the screen locked: /api/search/verticals (every vertical, subpage, source with its kind/enabled/why), /api/search/query?v=&q=&city= (the real query through the same engine and cache the screens use: listings + per-source status), /api/search/calc?name=&<field>=... (a calculator's outputs and warnings), /api/search/analysis?v= (#797: the jobs statistics or the market series, with each source's status), /api/search/feed?v= (the Feed page's headlines and each feed's status). The ops never include `state` (update-ack-guard owns GET /api/state). #913: /api/search/agents (the agents, their last run, the budget), /api/search/runs (the run log with its audit lines), /api/search/reports and /api/search/report?id= (what agents published), /api/search/cloud?kind=apps|messages&q= (the Cloud Search section).",
+    "_doc_debug_api": "Routes on the fleet debug API (libs:devtools AppDebugServer), for checks with the screen locked: /api/search/verticals (every vertical, subpage, source with its kind/enabled/why), /api/search/query?v=&q=&city= (the real query through the same engine and cache the screens use: listings + per-source status), #913: /api/search/agents (the agents, their last run, the budget), /api/search/runs (the run log with its audit lines), /api/search/reports and /api/search/report?id= (what agents published), /api/search/cloud?kind=apps|messages&q= (the Cloud Search section).",
     "dark_default": true,
-    "_doc_nav": "#1472 THE nav declaration (libs:bottomnav NavDecl): ui.bottom_nav is the island, exactly Scrappers, Research, CGC Search, Image, Videos, 3D Models, in that order; ui.default_section where the app opens. ui.sections[] lists the six tabs first, then the PARKED sections (chat = AI Chat, Engines, Apps, Messages, Code, reached from the top bar's AI button and from a query handed in from outside; news; media = movies, books; shopping; brokers), which keep their declared pages and data but are not on the island. Scrappers (id scrapers: Site Files, Apify, SelfHosted) and 3D Models are SAMPLE pages: their rows are build.json::sample_pages (page id = ui page id), dense rows of title, meta and badge, replaced by real data when the scrapers and the 3D index exist. Research: Reports, Models (the model catalogue) and Agents (Agents, Runs, Templates, Settings one strip lower). CGC Search (id cgc): horizontal_two_rows, one row per index, Cloud CGC then Me CGC, each with Semantic and Graph RAG (search.cgc.indexes[].semantic_page / graph_page name the page ids). Image and Videos (ids image, video): one section each, whose page is the search vertical of the same id. Every vertical sits in exactly one section (parked ones included); test-search-shell.sh S10 holds the declaration, search.verticals and search.subpages together.",
+    "_doc_nav": "#1472 THE nav declaration (libs:bottomnav NavDecl): ui.bottom_nav is the island, exactly Scrappers, Research, CGC Search, Image, Videos, 3D Models, in that order; ui.default_section where the app opens. ui.sections[] lists the six tabs first, then the PARKED sections (chat = AI Chat, Engines, Apps, Messages, Code, reached from the top bar's AI button and from a query handed in from outside; media = movies, books), which keep their declared pages and data but are not on the island. News, Shopping and Brokers are gone from this app (#1472: no section, page, menu, route or deep link; their verticals stay declared only for Cloud KG Store's Web pages, ui.not_shown); test-search-shell.sh S16 keeps them out. Scrappers (id scrapers: Site Files, Apify, Cloudflare, SelfHosted) and 3D Models are SAMPLE pages: their rows are build.json::sample_pages (page id = ui page id), dense rows of title, meta and badge, replaced by real data when the scrapers and the 3D index exist. Research: Reports, Models (the model catalogue) and Agents (Agents, Runs, Templates, Settings one strip lower). CGC Search (id cgc): horizontal_two_rows, one row per index, Cloud CGC then Me CGC, each with Semantic and Graph RAG (search.cgc.indexes[].semantic_page / graph_page name the page ids). Image and Videos (ids image, video): one section each, whose page is the search vertical of the same id. Every vertical not in ui.not_shown sits in exactly one section; test-search-shell.sh S10 holds the declaration, search.verticals and search.subpages together.",
     "bottom_nav": [
       "scrapers",
       "research",
@@ -3238,34 +3249,6 @@
         ]
       },
       {
-        "id": "news",
-        "label": "News",
-        "icon": "rss_feed",
-        "background": "theme",
-        "pages": [
-          {
-            "id": "news",
-            "label": "News",
-            "icon": "rss_feed"
-          },
-          {
-            "id": "youtube",
-            "label": "YouTube Feed",
-            "icon": "play_circle"
-          },
-          {
-            "id": "gnews",
-            "label": "Google News Feed",
-            "icon": "public"
-          },
-          {
-            "id": "rss",
-            "label": "RSS",
-            "icon": "feed"
-          }
-        ]
-      },
-      {
         "id": "media",
         "label": "Media",
         "icon": "video",
@@ -3282,150 +3265,27 @@
             "icon": "menu_book"
           }
         ]
-      },
-      {
-        "id": "shopping",
-        "label": "Shopping",
-        "icon": "inventory_2",
-        "background": "theme",
-        "pages": [
-          {
-            "id": "groceries",
-            "label": "Groceries",
-            "icon": "restaurant"
-          },
-          {
-            "id": "electronics",
-            "label": "Electronics",
-            "icon": "devices"
-          },
-          {
-            "id": "clothing",
-            "label": "Clothing",
-            "icon": "accessibility_new"
-          },
-          {
-            "id": "things",
-            "label": "Compare",
-            "icon": "compare_arrows"
-          }
-        ]
-      },
-      {
-        "id": "brokers",
-        "label": "Brokers",
-        "icon": "work",
-        "background": "theme",
-        "nav_mode": "horizontal_two_rows",
-        "groups": [
-          {
-            "id": "job_placement",
-            "label": "Job Placement",
-            "icon": "work",
-            "pages": [
-              "jobs"
-            ]
-          },
-          {
-            "id": "real_estate",
-            "label": "Real Estate",
-            "icon": "home",
-            "pages": [
-              "house",
-              "commercial"
-            ]
-          },
-          {
-            "id": "business_group",
-            "label": "Business",
-            "icon": "rocket_launch",
-            "pages": [
-              "business",
-              "suppliers",
-              "services"
-            ]
-          }
-        ],
-        "pages": [
-          {
-            "id": "jobs",
-            "label": "Jobs",
-            "icon": "work",
-            "pages": [
-              {
-                "id": "jobs-listing",
-                "label": "Listing",
-                "icon": "description"
-              },
-              {
-                "id": "jobs-analysis",
-                "label": "Analysis",
-                "icon": "insights"
-              },
-              {
-                "id": "jobs-feed",
-                "label": "Feed",
-                "icon": "rss_feed"
-              },
-              {
-                "id": "jobs-calculators",
-                "label": "Calculators",
-                "icon": "table_chart"
-              }
-            ]
-          },
-          {
-            "id": "house",
-            "label": "House",
-            "icon": "home",
-            "pages": [
-              {
-                "id": "house-listing",
-                "label": "Listing",
-                "icon": "description"
-              },
-              {
-                "id": "house-analysis",
-                "label": "Analysis",
-                "icon": "insights"
-              },
-              {
-                "id": "house-feed",
-                "label": "Feed",
-                "icon": "rss_feed"
-              },
-              {
-                "id": "house-calculators",
-                "label": "Calculators",
-                "icon": "table_chart"
-              }
-            ]
-          },
-          {
-            "id": "commercial",
-            "label": "Commercial",
-            "icon": "account_balance"
-          },
-          {
-            "id": "business",
-            "label": "Business",
-            "icon": "rocket_launch"
-          },
-          {
-            "id": "suppliers",
-            "label": "Suppliers",
-            "icon": "inventory_2"
-          },
-          {
-            "id": "services",
-            "label": "Services",
-            "icon": "build"
-          }
-        ]
       }
     ],
     "default_section": "scrapers",
-    "configs_ui": ["nav_ui"]
+    "configs_ui": [
+      "nav_ui"
+    ],
+    "not_shown": {
+      "_doc": "#1472 verticals this app no longer shows: search.verticals still declares them, with their sources, feeds, calculators and things data, because Cloud KG Store's Web pages (news, media, shopping, real estate, jobs, business) read this one declaration and the linked core. They are on no section, page, menu, route or deep link of Cloud Search; test-search-shell.sh S16 holds that.",
+      "verticals": [
+        "house",
+        "jobs",
+        "groceries",
+        "things",
+        "commercial",
+        "business",
+        "suppliers",
+        "services",
+        "electronics",
+        "clothing"
+      ]
+    }
   },
   "sample_pages": {
     "_doc": "#1472 sample rows of the sample pages (ui.sections pages with no search vertical): page id -> blurb and dense rows {title, meta, badge}. Sample data until the real source exists; baked as SAMPLE_PAGES_B64 and drawn by ui/SamplePages.kt.",
@@ -3576,12 +3436,24 @@
     "_doc": "Configs > General and Configs > About (libs:ui-nav-bars fleetconfigs, rule 1_cicd/src/data/configs-pages.json, #1352 v2). general.sections: the anchors of the one General page, in order (perms, battery, storage, notifications, ui, language are required; app opens this app's own Configs; update is added after perms by default). about: the hand-written part of the extensive About: tagline, description, features, screens, guide, privacy, backends (ids of ac_cloud-account/build.json::fleet_endpoints, resolved to mesh URLs at build time), related fleet apps, credits for a fork. Permissions, data stores, crash/analytics libs, name, icon, version, build sha and date, repo, licence, origin, crash sink, debug API and changelog are derived, never typed here.",
     "general": {
       "sections": [
-        {"id": "perms"},
-        {"id": "battery"},
-        {"id": "storage"},
-        {"id": "notifications"},
-        {"id": "ui"},
-        {"id": "language"},
+        {
+          "id": "perms"
+        },
+        {
+          "id": "battery"
+        },
+        {
+          "id": "storage"
+        },
+        {
+          "id": "notifications"
+        },
+        {
+          "id": "ui"
+        },
+        {
+          "id": "language"
+        },
         {
           "id": "app",
           "label": "App",
@@ -3591,42 +3463,38 @@
     },
     "about": {
       "tagline": "One app for searching everything",
-      "description": "Cloud Search is one app for searching: news (the fleet news service, YouTube channel feeds, Google News topics and RSS), research reports agents published, the owner's knowledge graph through semantic and GraphRAG search, engines, apps, messages and code, and media, shopping and brokers. It exists so a search starts in one place and fans out to the right sources.",
+      "description": "Cloud Search is one app for searching: scrapers (sample pages for now), research reports agents published, the owner's knowledge graph through semantic and GraphRAG search, images, videos, 3D models (sample pages), and the AI chat with the major web engines, apps, messages and code. It exists so a search starts in one place and fans out to the right sources.",
       "features": [
-        "News, YouTube and RSS feeds",
+        "Scrapers (sample pages)",
         "Research reports and agents",
         "CGC semantic and GraphRAG search",
-        "Engines, apps, messages and code",
-        "Media, shopping and brokers"
+        "Images and videos",
+        "3D models (sample pages)"
       ],
       "screens": [
         {
-          "name": "News",
-          "what": "News, YouTube and RSS feeds."
+          "name": "Scrappers",
+          "what": "Site Files, Apify, Cloudflare, SelfHosted (sample rows)."
         },
         {
           "name": "Research",
-          "what": "Reports and agents."
+          "what": "Reports, models and agents."
         },
         {
-          "name": "CGC",
+          "name": "CGC Search",
           "what": "Semantic and GraphRAG search."
         },
         {
-          "name": "Search",
-          "what": "Engines, apps, messages and code."
+          "name": "Image",
+          "what": "Openly licensed pictures."
         },
         {
-          "name": "Media",
-          "what": "Media search."
+          "name": "Videos",
+          "what": "Moving images from the Internet Archive."
         },
         {
-          "name": "Shopping",
-          "what": "Prices and products."
-        },
-        {
-          "name": "Brokers",
-          "what": "Brokers."
+          "name": "3D Models",
+          "what": "Openly licensed 3D models (sample rows)."
         }
       ],
       "guide": [
@@ -3636,10 +3504,6 @@
       ],
       "privacy": "No ads and no third-party trackers. A crash report is saved on the phone and sent only to the phone's own C3 WebServer over loopback; nothing leaves the device unless you share it. It talks only to the fleet services listed below, over the private mesh first.",
       "backends": [
-        {
-          "id": "news",
-          "why": "news feeds"
-        },
         {
           "id": "cgc-pub-mcp",
           "why": "public knowledge graph search"
@@ -3655,10 +3519,6 @@
           "why": "The knowledge graph."
         },
         {
-          "app": "ac_cloud-news",
-          "why": "Topic news."
-        },
-        {
           "app": "ac_cloud-account",
           "why": "Signs in to the fleet and holds the tokens and secrets this app reads."
         }
@@ -3667,9 +3527,7 @@
   },
   "perms": {
     "_doc": "#1360 every grant this app needs, by libs:perms catalogue id (needs), and the fleet apps that do work for it with the grants THEY must hold (helpers). The ONE declaration: generated into assets/app-perms.json (cloud-android-perms-guard.py --write), drawn by Configs > General > Perms (libs:perms AppPermsSection) with live state, Grant / Open and Grant all, asked at first run (first_run), and reported as 'Missing permission X - Grant' when an operation fails (PermsGate). perms-guard fails when code uses a gated API or another app's engine that is not declared here, or when the manifest and this list disagree.",
-    "needs": [
-      "coarse_location"
-    ],
+    "needs": [],
     "helpers": [],
     "first_run": "libs:perms"
   }

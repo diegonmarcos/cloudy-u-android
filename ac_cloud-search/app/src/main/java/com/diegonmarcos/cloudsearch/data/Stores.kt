@@ -30,7 +30,7 @@ class SavedStore(private val prefs: SharedPreferences) {
     private companion object { const val KEY = "saved" }
 }
 
-/** The small choices the app remembers: theme, city, last query per vertical, model, web toggle, the Things area. */
+/** The small choices the app remembers: theme, city, last query per vertical, model, web toggle. */
 class Prefs(private val prefs: SharedPreferences, private val cfg: SearchConfig) {
     var dark: Boolean
         get() = prefs.getBoolean("dark", com.diegonmarcos.cloudsearch.BuildConfig.DARK_DEFAULT)
@@ -48,21 +48,6 @@ class Prefs(private val prefs: SharedPreferences, private val cfg: SearchConfig)
     var agent: String
         get() = prefs.getString("agent", "") ?: ""
         set(v) = prefs.edit().putString("agent", v).apply()
-
-    /** #903 Things: the search radius, in km; the person's typed city (used when location is off or has no fix). */
-    var radiusKm: Int
-        get() = prefs.getInt("things_radius_km", cfg.things?.defaultRadiusKm ?: 20)
-        set(v) = prefs.edit().putInt("things_radius_km", v).apply()
-    var thingsCity: String
-        get() = prefs.getString("things_city", "") ?: ""
-        set(v) = prefs.edit().putString("things_city", v.trim()).apply()
-    var useLocation: Boolean
-        get() = prefs.getBoolean("things_use_location", true)
-        set(v) = prefs.edit().putBoolean("things_use_location", v).apply()
-    /** The location permission is asked once, ever; this remembers that it was (device state, never migrates). */
-    var locationAsked: Boolean
-        get() = prefs.getBoolean("things_location_asked", false)
-        set(v) = prefs.edit().putBoolean("things_location_asked", v).apply()
 
     fun lastQuery(vertical: String): String = prefs.getString("q:$vertical", "") ?: ""
     fun setLastQuery(vertical: String, q: String) = prefs.edit().putString("q:$vertical", q).apply()

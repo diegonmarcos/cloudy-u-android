@@ -10,7 +10,7 @@
     { "nsc": "ac_cloud-mail/app/src/main/res/xml/network_security_config.xml", "services": ["jmap"] },
     { "nsc": "ac_cloud-vault/app/src/main/res/xml/network_security_config.xml", "services": [] },
     { "nsc": "ac_cloud-news/app/src/main/res/xml/network_security_config.xml", "services": ["news", "git-proxy-api"] },
-    { "nsc": "ac_cloud-search/app/src/main/res/xml/network_security_config.xml", "services": ["news", "cgc-pub-mcp", "cgc-pvt-mcp"] },
+    { "nsc": "ac_cloud-search/app/src/main/res/xml/network_security_config.xml", "services": ["cgc-pub-mcp", "cgc-pvt-mcp"] },
     { "nsc": "ac_cloud-store/app/src/main/res/xml/network_security_config.xml", "services": ["git-proxy-api"] },
     { "nsc": "aa_cloud-superapp/app/src/main/res/xml/network_security_config.xml", "services": ["git-proxy-api"] }
   ]

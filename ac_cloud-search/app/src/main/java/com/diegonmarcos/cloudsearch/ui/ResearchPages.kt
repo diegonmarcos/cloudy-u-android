@@ -20,7 +20,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import com.diegonmarcos.cloudsearch.R
-import com.diegonmarcos.cloudsearch.core.ResearchConfig
 import com.diegonmarcos.cloudsearch.data.Browser
 import com.diegonmarcos.cloudsearch.data.FleetCalls
 import com.diegonmarcos.superapp.ai.AiModelCatalogue
@@ -32,14 +31,10 @@ import kotlinx.coroutines.withContext
 
 object ResearchTags {
     const val STRIP = "research_strip"
-    const val STATUS = "research_status"
-    fun topic(id: String) = "research_topic_$id"
-    fun article(i: Int) = "research_article_$i"
 }
 
 /**
- * #1197 Research: Reports (what agents published), Models (the model catalogue) and the Agents pages (its third page). The fleet
- * news service (build.json::search.research) is the News section's first page. The second row is libs:ui-nav-bars's; each page below it is one bounded list, so the
+ * #1197 Research: Reports (what agents published), Models (the model catalogue) and the Agents pages (its third page). The second row is libs:ui-nav-bars's; each page below it is one bounded list, so the
  * shared scroll-collapse sees a single scroller and nothing scrolls inside another scroller of the same axis.
  */
 @Composable
@@ -65,57 +60,6 @@ fun ResearchSection(state: SearchState) {
                 )
                 "agenthub" -> AgentsSection(state)
                 else -> ReportsSection(state)
-            }
-        }
-    }
-}
-
-/** The fleet news service's headlines by topic: the News section's first page. */
-@Composable
-fun NewsPage(state: SearchState) {
-    val g = LocalGlass.current
-    val ctx = LocalContext.current
-    val cfg = state.cfg.research
-    if (cfg == null) {
-        Text(stringResource(R.string.research_none), Modifier.padding(Metrics.gutter), color = g.text2)
-        return
-    }
-    val topic = cfg.topics.firstOrNull { it.id == state.newsTopic } ?: cfg.topics.first()
-    val scope = rememberCoroutineScope()
-    // A topic is fetched when it is picked (and once when the page first opens); an answer for a topic no longer picked is dropped.
-    fun load(t: ResearchConfig.Topic) {
-        state.newsTopic = t.id
-        state.newsResult = null
-        scope.launch {
-            val r = withContext(Dispatchers.IO) { state.services.fleet.news(cfg, t) }
-            if (state.newsTopic == t.id) state.newsResult = r
-        }
-    }
-    LaunchedEffect(Unit) { if (state.newsResult == null) load(topic) }
-    LazyColumn(
-        Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = Metrics.gutter, end = Metrics.gutter, top = Metrics.small, bottom = Metrics.contentBottom),
-        verticalArrangement = Arrangement.spacedBy(Metrics.small),
-    ) {
-        // The status is read INSIDE the item, from the state itself: an item that only captured it would not follow the answer.
-        item {
-            val r = state.newsResult
-            val status = when {
-                r == null -> stringResource(R.string.research_loading)
-                r.kind == FleetCalls.Kind.OK -> stringResource(R.string.research_count, r.items.size, r.via)
-                r.kind == FleetCalls.Kind.EMPTY -> stringResource(R.string.research_empty)
-                r.kind == FleetCalls.Kind.NOTE -> stringResource(R.string.research_note, r.detail)
-                else -> stringResource(R.string.research_unavailable, r.detail)
-            }
-            Column(verticalArrangement = Arrangement.spacedBy(Metrics.small)) {
-                ChipRow { cfg.topics.forEach { t -> Chip(t.label, ResearchTags.topic(t.id), selected = t.id == topic.id) { load(t) } } }
-                Text(status, Modifier.testTag(ResearchTags.STATUS), color = g.text2, style = Type.style(Type.tiny))
-            }
-        }
-        items(state.newsResult?.items.orEmpty().withIndex().toList(), key = { it.value.url }) { (i, a) ->
-            GlassCard(Modifier.testTag(ResearchTags.article(i)), onClick = { Browser.open(ctx, a.url) }) {
-                Text(a.title, color = g.text, style = Type.style(Type.body, FontWeight.SemiBold), maxLines = 3, overflow = TextOverflow.Ellipsis)
-                Text(a.domain + " · " + a.seen, color = g.text2, style = Type.style(Type.tiny), maxLines = 1)
             }
         }
     }

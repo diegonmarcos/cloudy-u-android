@@ -19,7 +19,6 @@
         <!-- BEGIN fleet-mesh-cleartext (generated from ac_cloud-account/build.json::fleet_endpoints by 1_cicd/src/scripts/cloud-android-fleet-nsc.py; do not edit) -->
         <domain includeSubdomains="false">cloud-cgc-pub-mcp.mesh.diegonmarcos.com</domain>
         <domain includeSubdomains="false">cloud-cgc-pvt-mcp.mesh.diegonmarcos.com</domain>
-        <domain includeSubdomains="false">news-gdelt.mesh.diegonmarcos.com</domain>
         <!-- END fleet-mesh-cleartext -->
     </domain-config>
 </network-security-config>

@@ -9,11 +9,10 @@ import com.diegonmarcos.cloudsearch.core.FleetEndpoint
 import com.diegonmarcos.cloudsearch.core.Http
 import com.diegonmarcos.cloudsearch.core.McpClient
 import com.diegonmarcos.cloudsearch.core.Outcome
-import com.diegonmarcos.cloudsearch.core.ResearchConfig
 import org.json.JSONObject
 
 /**
- * #1184 The calls to the fleet services Research, Cloud-CGC and Me-CGC use. Every address comes from the fleet declaration
+ * #1184 The calls to the fleet services Cloud-CGC and Me-CGC use. Every address comes from the fleet declaration
  * ([endpoints], baked from ac_cloud-account/build.json::fleet_endpoints); a route is tried in the declared policy order, and the
  * fleet bearer ([bearer], Cloud Account's, read over its IPC on use and never kept) goes to a public origin only.
  */
@@ -21,17 +20,6 @@ class FleetCalls(private val http: Http, val endpoints: Map<String, FleetEndpoin
     /** [kind] says what the page shows; [detail] is the service's or the transport's own words. */
     enum class Kind { OK, EMPTY, UNAVAILABLE, REFUSED, NOTE }
     data class Result<T>(val items: List<T> = emptyList(), val kind: Kind = Kind.OK, val detail: String = "", val via: String = "")
-
-    fun news(cfg: ResearchConfig, topic: ResearchConfig.Topic): Result<ResearchConfig.Article> {
-        val ep = endpoints[cfg.service] ?: return Result(kind = Kind.UNAVAILABLE, detail = "${cfg.service} is not in the fleet endpoints")
-        return when (val o = ep.attempt(bearer()) { r -> get(r.base + cfg.path(topic), r.headers, cfg.timeoutMs) }) {
-            is Outcome.Down -> Result(kind = Kind.UNAVAILABLE, detail = o.reasons.joinToString("; "))
-            is Outcome.Ok -> {
-                val a = runCatching { ResearchConfig.articles(o.value) }.getOrElse { return Result(kind = Kind.NOTE, detail = "unreadable answer: " + it.message, via = o.via) }
-                Result(a, if (a.isEmpty()) Kind.EMPTY else Kind.OK, via = o.via)
-            }
-        }
-    }
 
     fun semantic(cfg: CgcConfig, ix: CgcConfig.Index, repo: String, q: String): Result<CgcHit> =
         ask(cfg, ix, Cgc.SEARCH_TOOL, Cgc.semanticArgs(repo, q, cfg.threshold)) { Cgc.hits(repo, it, cfg.limit) }

@@ -78,7 +78,6 @@ class ModelCatalogueShellTest {
 
     @Before fun offline() {
         services = Services(RuntimeEnvironment.getApplication(), http)
-        services.prefs.locationAsked = true
         Services.install(services)
         state = SearchState(services)
         savedReader = Account.reader

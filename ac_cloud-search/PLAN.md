@@ -1,4 +1,4 @@
-# Cloud Search (Cloud Research #1162-#1197) — the plan per section (#797; nav since #1197: News, Research, CGC, Search, Media, Shopping, Brokers)
+# Cloud Search (Cloud Research #1162-#1197) — the plan per section (#797; nav since #1472: Scrappers, Research, CGC Search, Image, Videos, 3D Models; Search (AI Chat) and Media are parked off the bar. News, Shopping and Brokers were removed in #1472)
 
 The design is the owner's mockup (`_dispatch/assets/cloud-search-mockup.html`): a glass theme with
 light/dark tokens, a top bar (menu · dynamic island · profile menu), and the app's OWN bottom nav
@@ -23,27 +23,6 @@ Rules that hold for every section:
   any URL the site's robots.txt disallows (cloud-u-containers, #797), so it stays usable for
   sites that do permit it.
 
-## House
-
-| Part | Source | Engine |
-|---|---|---|
-| Listing | none legal — ImmoScout24, Immowelt, Kleinanzeigen Immobilien, WG-Gesucht are links (a DuckDuckGo `site:` search, because their own URLs need region ids); scrappers-api disabled | `SearchEngine.query` reports each as link/disabled |
-| Analysis | **Bundesbank** MFI rate on new housing loans (SDMX-JSON), **Eurostat** house price index `prc_hpi_q` and HICP actual rentals `prc_hicp_minr` CP041 (JSON-stat) — all Germany-wide | `SearchEngine.market` → `Market.stat`: latest value, change vs the same period a year before (pp for a rate, % for an index), chart = last 6 HPI quarters |
-| Feed | tagesschau Wirtschaft + Verbraucher RSS, filtered by declared keywords | `SearchEngine.feed` |
-| Calculators | Rent vs Buy (monthly simulation), Max rent ratio | `Calculators.run`, golden-tested |
-
-No source publishes city-level rents or prices that this app may read, so the market card says
-"Germany" and never shows a Berlin figure.
-
-## Jobs
-
-| Part | Source | Engine |
-|---|---|---|
-| Listing | **Bundesagentur für Arbeit** Jobsuche v6 (official, published client key), **Arbeitnow** (free public API); StepStone, Indeed, LinkedIn are links | `SearchEngine.query`, parsers `ba`, `arbeitnow` |
-| Analysis | BA open positions + occupational-field facet + advertised pay; Arbeitnow remote share | `Analysis.jobs` — medians with their sample size; time-to-hire has no public source and says so |
-| Feed | tagesschau Wirtschaft RSS, keyword-filtered | `SearchEngine.feed` |
-| Calculators | German payslip 2026 | the BMF's own PAP 2026, generated into `tax/Lohnsteuer2026.kt` (16 BMF golden rows to the cent) |
-
 ## Search
 
 One page, as in the mockup: four engine boxes (Google, DuckDuckGo, Brave, Qwant — each opens the
@@ -52,28 +31,6 @@ OpenRouter. Sessions are stored on the phone (`chat-sessions.json`), grouped Tod
 Days / Older. The model list is OpenRouter's live catalogue (cached `catalog_ttl_hours`), flagging
 models that search the web natively; the Web switch uses native search or the `web` plugin. The
 token is read from the fleet Account on every send; without one the chat says why and posts nothing.
-
-## Groceries
-
-**Open Prices** (prices from receipts and price tags within the city's radius; *verified* = backed by
-a proof) and **Open Food Facts** search (products, Nutri-Score), both ODbL. REWE, Lidl and Kaufland
-have no public API and forbid automated access: links.
-
-## Things
-
-One page, **Compare** (#903): the stores around the person that sell the item's kind, and what each
-asks. Nothing is estimated; a store with no price says why.
-
-| Part | Source | Engine |
-|---|---|---|
-| Area | the coarse location fix (`ACCESS_COARSE_LOCATION`, asked once, never stored; the centre leaves the phone rounded to ~1 km), else the city typed in settings (Nominatim, keyless, cached), else the selected city; radius 20 km by default, set in settings | `data/ThingsArea.kt`, `data/Locator.kt` |
-| Stores | **OpenStreetMap** `shop=*` within the radius through the Overpass API (keyless, ODbL; two public instances tried in order), the item matched to shop types by `things.categories[].words`; cached per area, category and radius for a week | `ThingsEngine.compare`, `Things.overpassQuery/parseStores` |
-| Shelf price | **Open Prices** (ODbL): a price seen at that very OSM place (receipt or price tag), per unit, dated; mostly groceries and drugstore goods, so most other items have none | `Things.parseShelf` |
-| Online price | the chain's **own site**, read server-side by the fleet scraper (`scrappers-api` `GET /prices`, robots.txt-gated, schema.org JSON-LD offers, cached 30 min) behind the fleet bearer; OBI and Euronics today, the rest listed disabled with the verified reason (`user-data_scrappers-api/src/code/prices.json`). It is the chain's online price, not the branch shelf price, and the row says "online" | `Things.parseBackend`, `Things.compare` |
-| Table | store, km, price (source and date), cheapest first, the unpriced below with the reason; a row opens the price page or the store's website | `ui/ThingsPage.kt` |
-
-No marketplace offers a public search API this app may use: Kleinanzeigen, eBay and Vinted stay links
-(open on their own search below the table) until the Account carries an eBay key.
 
 ## Screen-locked checks
 
@@ -86,7 +43,6 @@ The island is Me · LLC · Chat · Agents · Reports (`build.json::ui`), drawn i
 
 | Section | Pages (PageTabs) | What it is |
 |---|---|---|
-| Me | House · Jobs · Groceries · Things | personal search: the verticals above, each with its own subpage strip; each links its agents (House: RS_House-Rental, RS_House-Purchase; Jobs: Job-Placement; Things: Things_Housing, Things_Electronics) |
 | LLC | Commercial · Business · Suppliers · Services | commercial search, every source a site search opened in cloud-browser (no portal has an API this app may read): Commercial Real Estate (ImmoScout24, Immowelt, Kleinanzeigen Gewerbe; RS_Commercial-Stores, RS_Commercial-Buildings, Real-Estate), Buy a Business (nexxt-change, DUB), Suppliers / B2B (wer liefert was, Europages, Alibaba), Business Services (Gelbe Seiten, Malt, freelancermap; Services_General, Job-Placement) |
 | Chat | Search · Apps · Messages · Code | Search is the engine boxes + AI chat (where a query from outside lands, #937); Apps, Messages and Code are the fleet searches that were the Cloud page: Apps searches the fleet manifest and launches the app, Messages asks Cloud Mail through the read-only agent door, Code searches the owner's repositories on GitHub in Cloud Browser and opens Cloud Code |
 | Agents | Agents · Runs · Templates · Settings | draft-only agents, grouped Buy-Side › Real Estate / Things / Services, then Sell-Side |

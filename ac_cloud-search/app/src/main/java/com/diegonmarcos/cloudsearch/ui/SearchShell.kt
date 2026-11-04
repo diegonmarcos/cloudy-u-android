@@ -77,24 +77,22 @@ val NAV: NavDecl by lazy {
     NavDecl.fromBuildConfig(BuildConfig.UI_SECTIONS_B64, BuildConfig.UI_BOTTOM_NAV, BuildConfig.UI_DEFAULT_SECTION, BuildConfig.UI_STYLE)
 }
 
+/** #1472 the verticals this app shows: the assistant and every page of a section; build.json::ui.not_shown's stay declared for Cloud KG Store only. */
+fun appVerticals(cfg: SearchConfig): List<SearchConfig.Vertical> =
+    cfg.verticals.filter { v -> v.subpages.any { cfg.subpage(it)?.kind == "assistant" } || NAV.sections.any { s -> s.pages.any { it.id == v.id } } }
+
 enum class Menu { CATEGORIES, FILTERS, SESSIONS, PROFILE }
 
 /** Everything the shell remembers while it is up; the durable half lives in [Services.prefs]. */
 class SearchState(val services: Services) {
     val cfg: SearchConfig = services.cfg
-    /** The vertical whose page is the assistant (Search › AI Chat); every other vertical is a page of Media, Shopping or Brokers. */
+    /** The vertical whose page is the assistant (Search › AI Chat); every other vertical is a page of Image, Videos or Media. */
     val chatVertical: String = cfg.verticals.first { v -> v.subpages.any { cfg.subpage(it)?.kind == "assistant" } }.id
-    /** #1197 the island's selection: news, research, cgc, chat (Search), media, shopping or brokers (ui.sections). */
+    /** #1197 the island's selection: a ui.sections id (the six tabs, or the parked chat and media). */
     var section by mutableStateOf(NAV.default()?.id ?: "chat")
     var agentsPage by mutableStateOf(NAV.section("research")?.page("agenthub")?.pages?.firstOrNull()?.id ?: "agents")
     /** #1197 Research's second row (Reports, Models, Agents). */
     var researchPage by mutableStateOf(NAV.section("research")?.pages?.firstOrNull()?.id ?: "reports")
-    /** #1197 News's second row (News, YouTube Feed, Google News Feed, RSS), the fleet-news topic shown, and each feed page's chosen feed and last answer. */
-    var newsPage by mutableStateOf(NAV.section("news")?.pages?.firstOrNull()?.id ?: "news")
-    val feedPicks = mutableStateMapOf<String, String>()
-    val feedResults = mutableStateMapOf<String, com.diegonmarcos.cloudsearch.core.SearchEngine.FeedResult>()
-    var newsTopic by mutableStateOf<String?>(null)
-    var newsResult by mutableStateOf<com.diegonmarcos.cloudsearch.data.FleetCalls.Result<com.diegonmarcos.cloudsearch.core.ResearchConfig.Article>?>(null)
     /** #1197 the CGC section: one page per index and mode (Cloud CGC and Me CGC, each Semantic and Graph RAG) and what each index remembers. */
     var cgcPage by mutableStateOf(NAV.section("cgc")?.pages?.firstOrNull()?.id ?: "cloud_semantic")
     private val cgcModels = mutableMapOf<String, CgcModel>()
@@ -119,9 +117,6 @@ class SearchState(val services: Services) {
     private val subpages = mutableStateMapOf<String, String>()
     val filters = mutableStateMapOf<String, Filters>()
     val listings = mutableMapOf<String, ListingModel>()
-    private val thingsModels = mutableMapOf<String, ThingsModel>()
-    /** Bumped when the Things area (location use, typed city, radius) changes: the page asks again. */
-    var areaRev by mutableStateOf(0)
     val chat = AiChatState(services.ai)
 
     fun v(): SearchConfig.Vertical = cfg.vertical(vertical) ?: cfg.verticals.first()
@@ -132,19 +127,18 @@ class SearchState(val services: Services) {
     fun showSubpage(v: SearchConfig.Vertical, id: String) { subpages[v.id] = id.removePrefix("${v.id}-") }
     fun filtersOf(v: String): Filters = filters[v] ?: Filters()
     fun listing(v: String): ListingModel = listings.getOrPut(v) { ListingModel(services.prefs.lastQuery(v)) }
-    fun things(v: String): ThingsModel = thingsModels.getOrPut(v) { ThingsModel(services.prefs.lastQuery(v)) }
-
-    /** #903 the settings that place the Things search changed: every Things page asks again. */
-    fun areaChanged() { thingsModels.values.forEach { it.stale = true }; areaRev++ }
 
     /**
-     * The island section a vertical lives under: Search (id chat) for the assistant, else the section (Media, Shopping, Brokers) whose strip
+     * The island section a vertical lives under: Search (id chat) for the assistant, else the section (Image, Videos, Media) whose strip
      * lists it (build.json::ui.sections; test-search-shell.sh S10 holds every vertical to exactly one of them).
      */
     fun sectionOf(verticalId: String): String =
         if (verticalId == chatVertical) "chat" else verticalSections.firstOrNull { s -> NAV.section(s)?.pages?.any { it.id == verticalId } == true } ?: verticalSections.first()
 
-    /** The island sections whose pages are search verticals: Media, Shopping and Brokers. */
+    /** #1472 the verticals this app shows: the assistant and every page of a section (build.json::ui.not_shown keeps the rest for Cloud KG Store). */
+    val shownVerticals: List<SearchConfig.Vertical> = appVerticals(cfg)
+
+    /** The sections whose pages are search verticals: Image, Videos and Media. */
     val verticalSections: List<String> = NAV.sections.map { it.id }.filter { s -> s != "chat" && NAV.section(s)?.pages?.let { p -> p.isNotEmpty() && p.all { cfg.vertical(it.id) != null } } == true }
 
     /** #1472 the sections whose pages are all sample pages (build.json::sample_pages): Scrappers and 3D Models. */
@@ -159,7 +153,7 @@ class SearchState(val services: Services) {
         cfg.vertical(id)?.let { subpages[it.id] = it.subpages.first() }
     }
 
-    /** A tap on an island item (ui.bottom_nav). Media, Shopping and Brokers keep the vertical they were on; Search keeps its page. */
+    /** A tap on an island item (ui.bottom_nav). Image, Videos and Media keep the vertical they were on; Search keeps its page. */
     fun openSection(id: String) {
         saved = false; menu = null
         when (id) {
@@ -172,7 +166,7 @@ class SearchState(val services: Services) {
         }
     }
 
-    /** #913b a vertical's agent link (Brokers, Shopping): the Agents page (under Research) opens on that agent's screen. */
+    /** Opens an agent's screen: Research's Agents page (the deep link a test or a fleet "open" uses). */
     fun openAgent(id: String) {
         openSection("research"); researchPage = "agenthub"; agentsPage = NAV.section("research")?.page("agenthub")?.pages?.firstOrNull()?.id ?: "agents"; agentOpen = id
     }
@@ -194,7 +188,7 @@ class SearchState(val services: Services) {
     }
     fun toggle(m: Menu) { menu = if (menu == m) null else m }
     fun toggleDark() { dark = !dark; services.prefs.dark = dark }
-    fun pickCity(id: String) { city = id; services.prefs.city = id; listings.values.forEach { it.stale = true }; areaChanged() }
+    fun pickCity(id: String) { city = id; services.prefs.city = id; listings.values.forEach { it.stale = true } }
 }
 
 val LocalState = staticCompositionLocalOf<SearchState> { error("SearchShell provides the state") }
@@ -204,7 +198,6 @@ object Tags {
     const val SHELL = "search_shell"
     const val WEB_STRIP = "search_web_strip"
     const val CHAT_STRIP = "search_chat_strip"
-    fun agentLink(id: String) = "search_agent_link_$id"
     /** #1161 the first row is libs:ui-nav-bars's: its tags are the row's own. */
     const val ISLAND = TopFirstRowTags.ISLAND
     const val PROFILE = TopFirstRowTags.PROFILE
@@ -228,15 +221,6 @@ object Tags {
     const val MODEL = AiTags.MODEL
     const val WEB = AiTags.WEB
     const val SAVED = "search_saved"
-    const val THINGS_AREA = "search_things_area"
-    const val THINGS_SETTINGS = "search_things_settings"
-    const val THINGS_STORES = "search_things_stores"
-    const val THINGS_TABLE = "search_things_table"
-    const val THINGS_USE_LOCATION = "search_things_use_location"
-    const val THINGS_CITY = "search_things_city"
-    const val THINGS_RADIUS = "search_things_radius"
-    const val THINGS_APPLY = "search_things_apply"
-    fun thingsRow(osm: String) = "search_things_row_$osm"
     /** libs:ui-nav-bars's item tag. */
     fun nav(id: String) = BottomTags.item(id)
     /** A sub-page pill of the page-tab strip. */
@@ -294,7 +278,6 @@ private fun Chrome(state: SearchState, v: SearchConfig.Vertical) {
     }
     val pageId = when {
         state.section == "chat" -> state.chatPage
-        state.section == "news" -> state.newsPage
         state.section == "research" -> state.researchPage
         state.section in state.sampleSections -> state.samplePage[state.section] ?: section?.pages?.firstOrNull()?.id
         state.section == "cgc" -> state.cgcPage
@@ -322,7 +305,6 @@ private fun Chrome(state: SearchState, v: SearchConfig.Vertical) {
         if (state.saved) SavedPage()
         else when (state.section) {
             "chat" -> ChatSection(state, v)
-            "news" -> NewsSection(state)
             "research" -> ResearchSection(state)
             "cgc" -> CgcSection(state)
             in state.sampleSections -> SampleSection(state, state.section)
@@ -335,19 +317,18 @@ private fun Chrome(state: SearchState, v: SearchConfig.Vertical) {
     }
 }
 
-/** A pick in the title dropdown: the bottom page, or one of its pages (a vertical, a Search, News, Research or CGC page). */
+/** A pick in the title dropdown: the bottom page, or one of its pages (a vertical, a Search, Research or CGC page). */
 private fun navigateTo(state: SearchState, e: HierarchyEntry) {
     if (e.depth == 0) { state.openSection(e.sectionId); return }
     if (e.depth > 2) return
     if (e.depth == 2) {
-        // a sub-page of a vertical (Brokers' Jobs, House): open the vertical, then the sub-page its unique id names
+        // a sub-page of a vertical: open the vertical, then the sub-page its unique id names
         val v = state.cfg.verticals.firstOrNull { e.id.startsWith(it.id + "-") && e.sectionId in state.verticalSections } ?: return
         state.open(v.id); state.showSubpage(v, e.id)
         return
     }
     when {
         e.sectionId == "chat" -> { state.openSection("chat"); state.chatPage = e.id }
-        e.sectionId == "news" -> { state.openSection("news"); state.newsPage = e.id }
         e.sectionId == "research" -> { state.openSection("research"); state.researchPage = e.id }
         e.sectionId == "cgc" -> { state.openSection("cgc"); state.cgcPage = e.id }
         e.sectionId in state.sampleSections -> { state.openSection(e.sectionId); state.samplePage[e.sectionId] = e.id }
@@ -356,8 +337,7 @@ private fun navigateTo(state: SearchState, e: HierarchyEntry) {
 }
 
 /**
- * #1197 Media, Shopping and Brokers: the section's verticals (ui.sections[].pages) in the section's own second row (one strip, or
- * Brokers' one row per group) over the selected vertical's page.
+ * #1197 Image, Videos and Media: the section's verticals (ui.sections[].pages) in the section's own second row over the selected vertical's page.
  */
 @Composable
 private fun VerticalsSection(state: SearchState, section: String, v: SearchConfig.Vertical) {
@@ -410,22 +390,18 @@ private fun Page(v: SearchConfig.Vertical, kind: String) {
     Box(Modifier.fillMaxSize().testTag(Tags.page(kind))) {
         when (kind) {
             "listing" -> ListingPage(v)
-            "things" -> ThingsPage(v)
-            "analysis" -> AnalysisPage(v)
-            "feed" -> FeedPage(v)
-            "calculators" -> CalculatorsPage(v)
             "assistant" -> AssistantPage(v)
             else -> Text(stringResource(R.string.no_renderer, kind), Modifier.padding(Metrics.gutter))
         }
     }
 }
 
-/** The hamburger menu: Categories (every vertical) and Saved Items. */
+/** The hamburger menu: Categories (every shown vertical) and Saved Items. */
 @Composable
 private fun Categories(state: SearchState, close: () -> Unit) {
     val g = LocalGlass.current
     MenuTitle(stringResource(R.string.drawer_title))
-    state.cfg.verticals.forEach { v ->
+    state.shownVerticals.forEach { v ->
         MenuItem(v.title, Tags.drawer(v.id), icon = { DeclaredIcon(v.icon, Metrics.icon, g.text) }) { state.open(v.id); close() }
     }
     Hairline(Modifier.padding(vertical = Metrics.gutter))
@@ -557,10 +533,6 @@ private fun ProfileMenu(state: SearchState) {
         }
         ChipRow {
             state.cfg.cities.forEach { c -> Chip(c.label, Tags.city(c.id), selected = c.id == state.city) { state.pickCity(c.id) } }
-        }
-        if (state.cfg.things != null) {
-            Hairline(Modifier.padding(vertical = Metrics.small))
-            ThingsSettings(state)
         }
     }
 }

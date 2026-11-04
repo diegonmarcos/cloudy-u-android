@@ -83,10 +83,10 @@ def gatewayRow = (privateServices instanceof List ? privateServices : (privateSe
 if (gatewayRow?.private_dns == null) throw new GradleException("agent gateway '${agentGatewayService}' has no private_dns in ac_cloud-c3/data/services_private.json")
 def agentGatewayUrl = "${gatewayRow.protocol ?: 'http'}://${gatewayRow.private_dns}"
 def fleetAppsB64 = b64(fleetManifest.apps.findAll { it.kind == 'app' }.collect { [id: it.id, label: it.label, package: it.package] })
-// #1184 The fleet services Research and the two code indexes call (search.research.news.service, search.cgc.indexes[].service),
+// #1184 The fleet services the two code indexes call (search.cgc.indexes[].service),
 // as ac_cloud-account/build.json::fleet_endpoints declares them: mesh base, public base, policy. No host is spelled anywhere else.
 def fleetDecl = new groovy.json.JsonSlurper().parse(new File(rootDir, '../ac_cloud-account/build.json')).fleet_endpoints.services
-def fleetUsed = ([buildJson.search?.research?.news?.service] + (buildJson.search?.cgc?.indexes ?: []).collect { it.service }).findAll { it }
+def fleetUsed = (buildJson.search?.cgc?.indexes ?: []).collect { it.service }.findAll { it }
 def fleetEndpointsB64 = b64(fleetUsed.unique().collect { id ->
     def sv = fleetDecl.find { it.id == id }
     if (sv == null) throw new GradleException("build.json::search names the fleet service '${id}', which ac_cloud-account/build.json::fleet_endpoints does not declare")
