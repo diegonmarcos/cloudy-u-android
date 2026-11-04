@@ -102,6 +102,7 @@
       "web-core": "The fleet's one embedded web view: GPU-first WebView built by CloudWeb.create/configure with a declared profile per use (#1371).",
       "cgc-3d": "The CG apps' 3D model viewer and editor: GLB/VRM/FBX in a WebView (three.js, three-vrm), clips, blendshapes, colour swaps, show/hide, GLB/PNG export, the avatar editor's declaration and its OpenRouter connector.",
       "account": "The Account page: profile, sign-in lines, fleet cockpit, business card and QR gallery, plus the vault/git/SSH plumbing.",
+      "account-ui": "The profile pages Cloud Account and Cloud Me share: Personal Info (IDs, Pay Cards, Others, Autocomplete) and Configs (Android, Desktop, C3), declared once in account-ui.json (#1439).",
       "ai": "The fleet's AI chat: page, streaming, Agent and Model pickers, sessions, consent card, assistant panel, gateway and OpenRouter backends, and the shared assets/ai/ai.json contract.",
       "analytics": "Analytics client: consent flag, visitor id, bounded per-sink queue; the HTTP POST runs in the analytics-sink engine.",
       "appstore": "The Constellation store: fleet list, install/update actions and the background fleet pass.",
