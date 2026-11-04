@@ -61,7 +61,7 @@ object BadgeCardData {
         val extraLines = big.lines().map { it.trim() }.filter { it.isNotEmpty() && it != title && it != text }
             .take(maxLines(b)).map { l ->
                 val i = l.indexOf(": ")
-                if (i in 1..24) Line(l.substring(0, i), l.substring(i + 2)) else Line("", l)
+                if (i in 1..24 && l[i - 1] != ' ') Line(l.substring(0, i), l.substring(i + 2)) else Line("", l)
             }
         fun data(headline: String, sub: String, progress: Float?, lines: List<Line>) = Data(
             b, b.label, headline, sub, progress, lines, live, note, n?.`when` ?: 0L, n?.contentIntent,
@@ -96,7 +96,7 @@ object BadgeCardData {
     private const val MAX_LINES = 4
 
     /** #1151 The AI badge carries seven "label: value" rows (two Claude windows, the push age, four OpenRouter figures). */
-    private fun maxLines(b: BadgeDeclaration.Badge): Int = if (b.id == "ai_usage") 8 else MAX_LINES
+    private fun maxLines(b: BadgeDeclaration.Badge): Int = if (b.id == "ai_usage") 12 else MAX_LINES
 
     /** (level 0..1, charging) from the battery sticky intent, or null when the platform gives none. */
     private fun batteryLevel(ctx: Context): Pair<Float, Boolean>? = runCatching {

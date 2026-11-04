@@ -75,6 +75,38 @@ object AiUsageModel {
         return when { m < 60 -> "in ${m}m"; m < 1_440 -> "in ${m / 60}h ${m % 60}m"; else -> "in ${m / 1_440}d ${(m % 1_440) / 60}h" }
     }
 
+    /** One decimal with a point ("0.8"). */
+    private fun d1(v: Double): String = String.format(Locale.US, "%.1f", v)
+
+    /**
+     * #1451 The weekly burn-rate block, computed here from the raw `seven_day` sample (so the app works without any server
+     * maths): elapsed = 7d - (resets_at - now); used avg = used / elapsed; needed = left / days left; "over in" = left / rate.
+     * Four lines, the second Est line indented so the colons align:
+     *     Used: 29% (in 0.8 days) | 35%/day avg
+     *     Left: 71% (6.2 days) | 12%/day
+     *     Est: 35%/day (used avg) : over in 2.0 days
+     *          14%/day (1/7)      : over in 5.0 days
+     */
+    fun weekLines(w: Win, nowMs: Long): List<String> {
+        val left = (100.0 - w.usedPct).coerceAtLeast(0.0)
+        val daysLeft = ((w.resetsAtSec * 1000 - nowMs) / DAY_MS).coerceIn(0.0, 7.0)
+        val elapsed = 7.0 - daysLeft
+        val avg = if (elapsed > 0.01) w.usedPct / elapsed else null
+        val need = if (daysLeft > 0.01) left / daysLeft else null
+        val flat = 100.0 / 7.0
+        fun over(rate: Double?) = if (rate == null || rate <= 0.0) "-" else "over in ${d1(left / rate)} days"
+        val a = "${avg?.let { pct(it) } ?: "-"}/day (used avg)"
+        val b = "${pct(flat)}/day (1/7)".padEnd(a.length)
+        return listOf(
+            "Used: ${pct(w.usedPct)} (in ${d1(elapsed)} days) | ${avg?.let { pct(it) } ?: "-"}/day avg",
+            "Left: ${pct(left)} (${d1(daysLeft)} days) | ${need?.let { pct(it) } ?: "-"}/day",
+            "Est: $a : ${over(avg)}",
+            "     $b : ${over(flat)}",
+        )
+    }
+
+    private const val DAY_MS = 86_400_000.0
+
     private fun resets(w: Win, nowMs: Long, zone: TimeZone): String {
         val fmt = SimpleDateFormat(if (w.resetsAtSec * 1000 - nowMs > 20 * 3_600_000L) "EEE HH:mm" else "HH:mm", Locale.US).apply { timeZone = zone }
         return "resets ${fmt.format(java.util.Date(w.resetsAtSec * 1000))} (${until(w.resetsAtSec * 1000 - nowMs)})"
@@ -107,6 +139,7 @@ object AiUsageModel {
         val lines = mutableListOf<String>()
         lines += "5h session: " + (five?.let { "${pct(it.usedPct)} · ${resets(it, nowMs, zone)}" } ?: "no window")
         lines += "Week (all models): " + (seven?.let { "${pct(it.usedPct)} · ${resets(it, nowMs, zone)}" } ?: "no window")
+        if (seven != null) lines += weekLines(seven, nowMs)
         if (c != null) {
             val rl = c.rateLimitedAtSec?.takeIf { nowMs - it * 1000 < 3_600_000L }
             lines += "Claude data: " + (if (claudeStale) "STALE, " else "") + "pushed " + ago(claudeAgeMs) + (if (rl != null) " · rate limited " + ago(nowMs - rl * 1000) else "")
