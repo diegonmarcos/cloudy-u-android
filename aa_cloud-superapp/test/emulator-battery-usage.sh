@@ -211,6 +211,9 @@ perms_capture() {
   has_all "$OUT/perms-toolbar.xml" "Missing" "Denied" "Allowed" "Grant all" "Ask Missing" "Adb Connect" \
     || { echo "::error::the Permissions page has no filter chips / actions row (#1403)"; fail=1; }
   if tap_text "Missing"; then cap perms-filter-missing; else echo "::error::no Missing chip"; fail=1; fi
+  # the actions row scrolls sideways: swipe it left so the last chips (Grant All Adb, Copy Adb Grants) are on screen
+  read -r W H <<<"$(adb shell wm size | grep -o '[0-9]*x[0-9]*' | tail -1 | tr x ' ')"
+  adb shell input swipe $((W * 85 / 100)) $((H * 23 / 100)) $((W * 5 / 100)) $((H * 23 / 100)) 300; sleep 1; cap perms-actions-scrolled
   if tap_text "Copy Adb Grants"; then cap perms-copy-result
     grep -q 'adb shell ' "$OUT/perms-copy-result.xml" || { echo "::error::Copy Adb Grants shows no adb command"; fail=1; }
   else echo "::error::no Copy Adb Grants action"; fail=1; fi
