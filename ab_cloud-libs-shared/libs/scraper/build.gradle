@@ -30,6 +30,7 @@ android {
 
 dependencies {
     api project(':libs:theme-background')
+    api project(':libs:ui-kit')   // #1459 KitFileTree: the shared folder-explorer tree and its Store-dense rows
     implementation project(':libs:web-core')   // #1371 the viewer's page view is CloudWeb's (profile BROWSER, local archive)
     implementation project(':libs:media-convert-audio')
     api platform('androidx.compose:compose-bom:2025.11.01')

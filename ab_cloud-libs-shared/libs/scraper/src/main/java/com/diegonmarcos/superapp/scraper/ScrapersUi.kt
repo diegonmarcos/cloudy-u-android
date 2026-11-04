@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -47,6 +46,9 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.diegonmarcos.superapp.themebg.ThemeColors
+import com.diegonmarcos.superapp.uikit.KitFileTree
+import com.diegonmarcos.superapp.uikit.KitFileTreeInk
+import com.diegonmarcos.superapp.uikit.kitFileTree
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -90,7 +92,7 @@ private fun Chip(label: String, selected: Boolean, c: ThemeColors, tag: String, 
     )
 }
 
-/** #1427 Site Files: sites as folders (tap to drop down the files), sorted by name, last visit or last updated. */
+/** #1427/#1459 Site Files: a folder explorer (site > folders > files, size, type, modified; tap a file to open it), sorted by name, last visit or last updated. */
 @Composable
 fun SiteFilesPage(c: ThemeColors) {
     val ctx = LocalContext.current
@@ -98,7 +100,10 @@ fun SiteFilesPage(c: ThemeColors) {
     var sort by remember { mutableStateOf(SiteSort.LAST_VISIT) }
     val open = remember { mutableStateListOf<String>() }
     var viewing by remember { mutableStateOf<SiteFile?>(null) }
-    LaunchedEffect(Unit) { groups = withContext(Dispatchers.IO) { runCatching { SiteFilesSource.load(ctx) }.getOrDefault(emptyList()) } }
+    var failure by remember { mutableStateOf("") }
+    LaunchedEffect(Unit) {
+        groups = withContext(Dispatchers.IO) { runCatching { SiteFilesSource.load(ctx) }.onFailure { failure = it.message ?: it.javaClass.simpleName }.getOrDefault(emptyList()) }
+    }
     val v = viewing
     if (v != null) { FileViewer(v, c, onClose = { viewing = null }); return }
     Column(Modifier.fillMaxSize()) {
@@ -110,32 +115,19 @@ fun SiteFilesPage(c: ThemeColors) {
         val gs = groups
         when {
             gs == null -> Text("Reading the cache…", color = c.inkDim, modifier = Modifier.padding(16.dp))
-            gs.isEmpty() -> Text("No site has left files on the phone yet.", color = c.inkDim, modifier = Modifier.padding(16.dp))
-            else -> LazyColumn(Modifier.fillMaxSize().testTag("scrapers:sites")) {
-                for (g in SiteFiles.sort(gs, sort)) {
-                    val expanded = g.host in open
-                    item(key = "site:" + g.host) {
-                        Row(Modifier.fillMaxWidth().clickable { if (expanded) open.remove(g.host) else open.add(g.host) }
-                            .padding(horizontal = 16.dp, vertical = 12.dp).testTag("scrapers:site:${g.host}"),
-                            verticalAlignment = Alignment.CenterVertically) {
-                            Text(if (expanded) "▾" else "▸", color = c.accent, modifier = Modifier.width(22.dp))
-                            Column(Modifier.weight(1f)) {
-                                Text(g.host, color = c.ink, fontWeight = FontWeight.SemiBold)
-                                Text("${g.files.size} files · ${human(g.bytes)} · visited ${date(g.lastVisit)}", color = c.inkDim,
-                                    style = MaterialTheme.typography.bodySmall)
-                            }
-                        }
-                    }
-                    if (expanded) items(g.files, key = { "file:" + g.host + ":" + it.path + it.url }) { f ->
-                        Row(Modifier.fillMaxWidth().clickable { viewing = f }.padding(start = 54.dp, end = 16.dp, top = 8.dp, bottom = 8.dp)
-                            .testTag("scrapers:file:${f.name}")) {
-                            Column(Modifier.weight(1f)) {
-                                Text(f.name, color = c.ink, maxLines = 1)
-                                Text("${f.source.label} · ${human(f.bytes)} · ${date(f.modified)}", color = c.inkDim,
-                                    style = MaterialTheme.typography.bodySmall)
-                            }
-                        }
-                    }
+            gs.isEmpty() -> Text(if (failure.isBlank()) "No site has left files on the phone yet." else "Could not read the cache: $failure", color = c.inkDim, modifier = Modifier.padding(16.dp))
+            else -> {
+                val sorted = SiteFiles.sort(gs, sort)
+                val entries = remember(sorted) { SiteFiles.entries(sorted) }
+                val rows = KitFileTree.rows(entries, open.toSet(), sorted.map { it.host }, newestFirst = sort != SiteSort.NAME)
+                val ink = remember(c) { KitFileTreeInk(c.ink, c.inkDim, c.accent) }
+                Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp)) {
+                    TextButton({ open.clear(); open.addAll(KitFileTree.containers(entries)) }, modifier = Modifier.testTag("scrapers:expand")) { Text("Expand all", color = c.accent) }
+                    TextButton({ open.clear() }, modifier = Modifier.testTag("scrapers:collapse")) { Text("Collapse all", color = c.accent) }
+                }
+                LazyColumn(Modifier.fillMaxSize().testTag("scrapers:sites")) {
+                    kitFileTree(rows, ink, size = ::human, date = ::date, tagPrefix = "scrapers",
+                        onToggle = { k -> if (k in open) open.remove(k) else open.add(k) }, onOpen = { viewing = it.payload })
                 }
             }
         }

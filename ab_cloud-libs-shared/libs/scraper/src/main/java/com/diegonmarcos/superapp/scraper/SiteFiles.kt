@@ -8,7 +8,7 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 /** Where a file a site left on the phone came from. */
-enum class FileSource(val label: String) { CACHE("Cache"), DOWNLOAD("Download"), SAVED("Saved page") }
+enum class FileSource(val label: String) { CACHE("Cache"), DOWNLOAD("Download"), SAVED("Saved page"), STORAGE("Storage") }
 
 /** One file a site left on the phone. [path] is the file on disk; for a cache entry the body is a slice of it. */
 data class SiteFile(
@@ -20,6 +20,8 @@ data class SiteFile(
     val modified: Long,
     val url: String = "",
     val mime: String = "",
+    /** The folder inside the site ("css", "static/js", "WebView storage/Local Storage"), "/"-separated; "" = the site's top. */
+    val dir: String = "",
 )
 
 /** A site and its files, with the two dates the list sorts by. */
@@ -34,6 +36,25 @@ enum class SiteSort(val label: String) { NAME("Name"), LAST_VISIT("Last visit"),
  * Pure (JVM-tested): the Android side only hands in file bytes and the stores' JSON.
  */
 object SiteFiles {
+    /** The pseudo-site that holds files no site owns: the WebView's own storage and the app's overrides.css. */
+    const val APP_HOST = "App files"
+
+    /** The folders of a URL's path below its site ("css/v2" for https://a.com/css/v2/x.css), "" for a file at the top. */
+    fun dirOf(url: String): String {
+        val path = runCatching { URI(url.trim()).rawPath }.getOrNull().orEmpty()
+        return path.split('/').dropLast(1).filter { it.isNotBlank() }
+            .joinToString("/") { runCatching { java.net.URLDecoder.decode(it, "UTF-8") }.getOrDefault(it) }
+    }
+
+    /** The files of [groups] as the shared tree's entries: site, then the file's folders, then the file (downloads and saved pages get a folder of their own). */
+    fun entries(groups: List<SiteGroup>): List<com.diegonmarcos.superapp.uikit.KitFileTree.Entry<SiteFile>> = groups.flatMap { g ->
+        g.files.map { f ->
+            val sub = f.dir.ifBlank { when (f.source) { FileSource.DOWNLOAD -> "Downloads"; FileSource.SAVED -> "Saved pages"; else -> "" } }
+            com.diegonmarcos.superapp.uikit.KitFileTree.Entry(listOf(g.host) + sub.split('/').filter { it.isNotBlank() }, f.name, f.bytes, f.modified,
+                com.diegonmarcos.superapp.uikit.KitFileTree.typeOf(f.name, f.mime), f)
+        }
+    }
+
     /** The site a URL belongs to: its host, lower case, without a leading www. Blank when there is none. */
     fun hostOf(url: String): String {
         val h = runCatching { URI(url.trim()).host }.getOrNull() ?: return ""
@@ -145,15 +166,32 @@ object SimpleCache {
         val key = String(b, HEADER, keyLen, Charsets.UTF_8)
         val url = urlOfKey(key) ?: return null
         val start = HEADER + keyLen
-        var end = -1
-        var i = start
-        while (i + 20 <= b.size) {
-            if (bb.getLong(i) == FINAL_MAGIC && bb.getInt(i + 16) == i - start) { end = i; break }
-            i++
-        }
+        val end = bodyEnd(b, bb, start)
         if (end < 0) return null
         val headers = String(b, end, b.size - end, Charsets.ISO_8859_1)
         return Entry(url, start, end, header(headers, "content-type"), header(headers, "content-encoding"))
+    }
+
+    /**
+     * Where the body (stream 1) ends. The file ends with stream 0's EOF record, whose stream_size is the headers' length
+     * (the stream-1 EOF record carries no size, so it must NOT be matched on one: that matched nothing in a real cache,
+     * which left Site Files empty). So walk back from the tail: last EOF, minus the headers (and the key SHA-256 when
+     * flagged), minus the stream-1 EOF record = the body's end. Else the first EOF record after the key.
+     */
+    private fun bodyEnd(b: ByteArray, bb: ByteBuffer, start: Int): Int {
+        for (rec in intArrayOf(24, 20)) {
+            val e0 = b.size - rec
+            if (e0 < start || bb.getLong(e0) != FINAL_MAGIC) continue
+            val sha = if (bb.getInt(e0 + 8) and 2 != 0) 32 else 0
+            val h = bb.getInt(e0 + 16)
+            for (eof1 in intArrayOf(24, 20)) {
+                val end = e0 - sha - h - eof1
+                if (h >= 0 && end >= start && bb.getLong(end) == FINAL_MAGIC) return end
+            }
+        }
+        var i = start
+        while (i + 20 <= b.size) { if (bb.getLong(i) == FINAL_MAGIC) return i; i++ }
+        return -1
     }
 
     /** The URL in a cache key: the last space-separated part (keys may carry an isolation prefix). */

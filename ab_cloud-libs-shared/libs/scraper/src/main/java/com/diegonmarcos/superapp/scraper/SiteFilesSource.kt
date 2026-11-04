@@ -27,8 +27,9 @@ object SiteFilesSource {
             if (f.length() > MAX_ENTRY) continue
             val e = runCatching { SimpleCache.parse(f.readBytes()) }.getOrNull() ?: continue
             files += SiteFile(SiteFiles.hostOf(e.url), SiteFiles.nameOf(e.url), f.path, FileSource.CACHE,
-                e.bodyBytes.toLong(), f.lastModified(), e.url, e.contentType)
+                e.bodyBytes.toLong(), f.lastModified(), e.url, e.contentType, SiteFiles.dirOf(e.url))
         }
+        files += appFiles(ctx)
         val dl = ctx.getSharedPreferences("browser_downloads", Context.MODE_PRIVATE).getString("jobs_v2", null)
         files += SiteFiles.downloads(dl, stat)
         val off = File(ctx.filesDir, "offline")
@@ -36,6 +37,24 @@ object SiteFilesSource {
         files += ownDownloads(ctx, stat)
         val visits = SiteFiles.visits(ctx.getSharedPreferences("browser_history", Context.MODE_PRIVATE).getString("history_json", null))
         return SiteFiles.group(files.distinctBy { it.path + it.url }, visits)
+    }
+
+    /**
+     * What no site owns: the WebView's own storage (Local Storage, IndexedDB, cookies, service workers ... under app_webview, anything
+     * of the cache that is not an HTTP entry) and the app's overrides.css, listed as they lie on disk under [SiteFiles.APP_HOST].
+     */
+    fun appFiles(ctx: Context): List<SiteFile> {
+        val out = ArrayList<SiteFile>()
+        val roots = listOf("WebView storage" to File(ctx.dataDir, "app_webview"), "WebView cache" to File(ctx.cacheDir, "WebView"))
+        for ((label, root) in roots) for (f in root.walkTopDown().maxDepth(8).filter { it.isFile && !ENTRY.matches(it.name) }.take(5000)) {
+            val rel = f.relativeTo(root).path.replace(File.separatorChar, '/')
+            out += SiteFile(SiteFiles.APP_HOST, f.name, f.path, FileSource.STORAGE, f.length(), f.lastModified(), "", "",
+                listOf(label, rel.substringBeforeLast('/', "")).filter { it.isNotEmpty() }.joinToString("/"))
+        }
+        for (root in listOf(ctx.filesDir, ctx.dataDir)) for (f in root.walkTopDown().maxDepth(4).filter { it.isFile && it.name == "overrides.css" }) {
+            out += SiteFile(SiteFiles.APP_HOST, f.name, f.path, FileSource.STORAGE, f.length(), f.lastModified(), "", "text/css", "Overrides")
+        }
+        return out.distinctBy { it.path }
     }
 
     /** Files the Scrap Tools saved to the app's external folder count under the site they came from. */

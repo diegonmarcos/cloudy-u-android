@@ -71,7 +71,8 @@ if grep -q 'Site Files' "$OUT/1-scrapers.xml" && grep -q 'Scrap Tools' "$OUT/1-s
 
 if tap 1-scrapers "^${HOST//./\\.}\$" >/dev/null; then
   sleep 3; shot 2-site-files-expanded
-  if grep -q 'Cache ·' "$OUT/2-site-files-expanded.xml"; then ok "S2 $HOST drops down its cached files"; else bad "S2 $HOST shows no cached file after the tap"; fi
+  tap 2-site-files-expanded '^Expand all$' >/dev/null; sleep 2; shot 2-site-files-expanded   # #1459 the tree: folders below the site open too
+  if grep -qE 'text="[^"]+\.(css|js|json|html)"' "$OUT/2-site-files-expanded.xml"; then ok "S2 $HOST drops down its cached files"; else bad "S2 $HOST shows no cached file after the tap"; fi
   if F=$(tap 2-site-files-expanded '\.(css|js|json|html)$'); then
     sleep 5; shot 3-file-open
     if grep -q '‹ Back' "$OUT/3-file-open.xml"; then ok "S3 '$F' opened in the in-app viewer"; else bad "S3 '$F' did not open the viewer"; fi
