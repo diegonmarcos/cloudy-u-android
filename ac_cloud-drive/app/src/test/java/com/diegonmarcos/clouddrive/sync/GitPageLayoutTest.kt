@@ -137,7 +137,7 @@ class GitPageLayoutTest {
     private val rowFn = src.substring(src.indexOf("private fun GitRepoRow("), src.indexOf("private fun lightOf("))
 
     @Test fun `#1238 the row has the status icon cell first, no GitHub or Not Cloned text and no Clone button`() {
-        assertTrue("the status cell comes before the name column", rowFn.indexOf("RepoStatusCell(icons, name, onOpenStatus, RepoStatus.levelCaption(glance, System.currentTimeMillis()))") in 0 until rowFn.indexOf("Column(Modifier.width(DriveMetrics.tableName))"))
+        assertTrue("the status cell comes before the name column", rowFn.indexOf("RepoStatusCell(icons, name, onOpenStatus)") in 0 until rowFn.indexOf("RepoNameCell(name)"))
         assertFalse("no Not cloned text under the row", rowFn.contains("git_not_cloned"))
         assertFalse("the listing label (GitHub) is not drawn under the row", rowFn.contains("source: String") || rowFn.contains("Text(source"))
         assertFalse("the Clone button left the row", rowFn.contains("sync_clone_into_store") || rowFn.contains("onClone"))
@@ -145,6 +145,18 @@ class GitPageLayoutTest {
         assertFalse("the Not cloned string is gone", strings.contains("name=\"git_not_cloned\""))
         assertTrue(src.contains("onOpenStatus = { statusFor = e.key }"))
         assertTrue(tableUi.contains("fun RepoStatusCell(") && tableUi.contains("testTag(k.tagStatusCell)"))
+    }
+
+    @Test fun `#1452 the row is ONE line - no text under the name or under the lights, the message is a column`() {
+        assertTrue("the row is the shared one-line row", rowFn.contains("RepoTableLine(scroll, Modifier.testTag(DriveTags.SYNC_GIT_ROW)"))
+        assertFalse("no caption inside the status lights", rowFn.contains("levelCaption"))
+        assertFalse("no second line under the name", rowFn.contains("Column(") || rowFn.contains("maxLines = 2") || rowFn.contains("sync_glance_gone") || rowFn.contains("statusErrorText"))
+        assertTrue("the Status Message is a table column after the name", tableUi.contains("RepoMessageCell(r.message, r.messageProblem)") && tableUi.contains("RepoColumn.MESSAGE -> R.string.repo_col_message"))
+        assertTrue("the note under a row went into the message", !src.contains("e.note.isNotBlank()"))
+        val line = tableUi.substring(tableUi.indexOf("fun RepoTableLine("), tableUi.indexOf("fun RepoNameCell("))
+        assertTrue("the whole line scrolls on the shared state (nothing pinned)", line.contains("horizontalScroll(scroll)") && line.contains("heightIn(min = k.rowHeight)"))
+        val folder = File(root, "app/src/main/java/com/diegonmarcos/clouddrive/sync/FolderTableUi.kt").readText()
+        assertTrue("the folder tables draw the same line, the outcome in the message cell", folder.contains("RepoTableLine(scroll,") && folder.contains("RepoMessage.ofFolder(") && !folder.contains("run.lines()"))
     }
 
     @Test fun `#1238 the LFS column is declared, labelled, printed from the registry and never hardcoded`() {

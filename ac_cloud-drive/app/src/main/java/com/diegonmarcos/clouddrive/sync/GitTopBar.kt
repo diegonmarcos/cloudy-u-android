@@ -160,12 +160,10 @@ internal fun GitJobLine(job: GitJobs.State?, labels: (String) -> String, onCance
     }
 }
 
-/** The search field and the Filters button (with its active count), then Clear when anything is on. */
+/** #1452 the Filters button (with its active count), then Clear when anything is on. The page has no search field; it sits in the Clone-into row. */
 @Composable
 internal fun GitSearchRow(decl: Declarations.GitTopBarDecl, query: String, onQuery: (String) -> Unit, active: Int, onFilters: () -> Unit, onClear: () -> Unit) {
-    Row(Modifier.fillMaxWidth().padding(horizontal = DriveMetrics.sectionInset), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(DriveMetrics.gapWide)) {
-        if (decl.search) GitSearchField(query, onQuery, decl.searchPlaceholder, Modifier.weight(1f).testTag(DriveTags.SYNC_GIT_SEARCH))
-        else Spacer(Modifier.weight(1f))
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(DriveMetrics.gapWide)) {
         Pill(decl.label("filters") + (if (active > 0) " ($active)" else ""), onFilters, filled = active > 0, modifier = Modifier.testTag(DriveTags.SYNC_GIT_FILTERS_BUTTON))
         if (active > 0 || query.isNotBlank()) Pill(decl.label("clear") + " ×", onClear)
     }

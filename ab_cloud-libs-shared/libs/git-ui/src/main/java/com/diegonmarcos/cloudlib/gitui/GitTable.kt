@@ -24,14 +24,17 @@ data class GitTableRow<S : Enum<S>>(
     val status: S? = null,
     /** #1256 the last commit's time (epoch ms): the local HEAD commit when cloned, else the forge's pushed_at; null = unknown. */
     val lastCommitMs: Long? = null,
+    /** #1452 the Status Message cell: what the status icons cannot say (the clone is gone, a conflict, an error, a folder command's outcome); "" = nothing to say. */
+    val message: String = "",
+    val messageProblem: Boolean = false,
 )
 
 /** #1408 moved from Cloud Drive: the host keeps only how a row is read from its own state (RepoTable.rowOf). */
 /** #1138 the table's pure rules: ranking, sorting, how each cell prints and where its facts come from. */
 object GitTable {
     const val DASH = "—"
-    /** #1356 the columns that never scroll sideways: the status icon and the name, left of every fact column. */
-    val PINNED = setOf(RepoColumn.STATUS, RepoColumn.NAME)
+    /** #1452 no column is frozen: the name scrolls sideways with the rest (it was pinned with the status icon before). */
+    val PINNED = emptySet<RepoColumn>()
     val DEFAULT_SORT = RepoColumn.NAME
     /** #1288 THE column set and order of every repo table (the main one, Parentless, Unlisted): the one header draws exactly these. */
     val COLUMNS: List<RepoColumn> = RepoColumn.entries.toList()
@@ -43,6 +46,7 @@ object GitTable {
     private fun key(r: GitTableRow<*>, c: RepoColumn): Comparable<*>? = when (c) {
         RepoColumn.STATUS -> r.status?.ordinal
         RepoColumn.NAME -> r.name.lowercase()
+        RepoColumn.MESSAGE -> r.message.takeIf { it.isNotBlank() }?.lowercase()
         RepoColumn.PROVIDER -> r.provider?.lowercase()
         RepoColumn.VISIBILITY -> r.isPrivate?.let { if (it) 1 else 0 }
         RepoColumn.LFS -> r.lfs?.let { if (it) 1 else 0 }

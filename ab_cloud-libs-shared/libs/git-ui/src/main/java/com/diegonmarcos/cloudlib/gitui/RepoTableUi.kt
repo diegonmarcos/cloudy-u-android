@@ -27,13 +27,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 
-/** #1138 the repo table's columns, in display order. #1238: STATUS is the leftmost and LFS follows Pvt/Pub. */
-enum class RepoColumn { STATUS, NAME, PROVIDER, VISIBILITY, LFS, SIZE_MAIN, SIZE_TOTAL, SIZE_DISK, BRANCHES, DIRTY, AHEAD_BEHIND, LAST_COMMIT }
+/** #1138 the repo table's columns, in display order. #1238: STATUS is the leftmost and LFS follows Pvt/Pub. #1452: MESSAGE (Status Message) follows the name, so the status text has a cell of its own. */
+enum class RepoColumn { STATUS, NAME, MESSAGE, PROVIDER, VISIBILITY, LFS, SIZE_MAIN, SIZE_TOTAL, SIZE_DISK, BRANCHES, DIRTY, AHEAD_BEHIND, LAST_COMMIT }
 
 /** The string resource that labels [c] (a column without one is a programming error caught by RepoColumnTest). */
 fun columnLabelRes(c: RepoColumn): Int = when (c) {
     RepoColumn.STATUS -> R.string.repo_col_status
     RepoColumn.NAME -> R.string.repo_col_name
+    RepoColumn.MESSAGE -> R.string.repo_col_message
     RepoColumn.PROVIDER -> R.string.repo_col_provider
     RepoColumn.VISIBILITY -> R.string.repo_col_vis
     RepoColumn.LFS -> R.string.repo_col_lfs
@@ -49,11 +50,11 @@ fun columnLabelRes(c: RepoColumn): Int = when (c) {
 /** The header's sort arrow for [c]: none unless it is the sorted column. */
 fun sortArrow(c: RepoColumn, sorted: RepoColumn, ascending: Boolean): String = if (c != sorted) "" else if (ascending) " ▲" else " ▼"
 
-/** #1138 a column's width: the name column is wide, the status column two taps, every other column one table cell. */
+/** #1138 a column's width: the name column is wide, the message column wider, the status column two taps, every other column one table cell. */
 @Composable
 fun repoCellModifier(c: RepoColumn): Modifier {
     val k = LocalGitUiKit.current
-    return Modifier.width(when (c) { RepoColumn.NAME -> k.tableName; RepoColumn.STATUS -> k.tap * 2; else -> k.tableCell }).padding(horizontal = k.gap)
+    return Modifier.width(when (c) { RepoColumn.NAME -> k.tableName; RepoColumn.MESSAGE -> k.tableName * 1.5f; RepoColumn.STATUS -> k.tap * 2; else -> k.tableCell }).padding(horizontal = k.gap)
 }
 
 /**
@@ -74,7 +75,7 @@ fun RepoTableHeader(
             Text(
                 stringResource(columnLabelRes(c)) + sortArrow(c, column, ascending), repoCellModifier(c).clickable { onSort(c) },
                 style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold,
-                textAlign = when (c) { RepoColumn.NAME -> TextAlign.Start; RepoColumn.STATUS -> TextAlign.Center; else -> TextAlign.End }, maxLines = 2, overflow = TextOverflow.Ellipsis,
+                textAlign = when (c) { RepoColumn.NAME, RepoColumn.MESSAGE -> TextAlign.Start; RepoColumn.STATUS -> TextAlign.Center; else -> TextAlign.End }, maxLines = 2, overflow = TextOverflow.Ellipsis,
             )
         }
         Row(Modifier.padding(start = k.sectionInset), verticalAlignment = Alignment.CenterVertically) { pinned.forEach { label(it) } }
@@ -112,7 +113,44 @@ fun repoVisibilityWord(isPrivate: Boolean?): String = GitTable.visibility(isPriv
 @Composable
 fun repoLfsWord(lfs: Boolean?): String = GitTable.lfs(lfs, stringResource(R.string.repo_lfs_lfs), stringResource(R.string.repo_lfs_normal))
 
-/** The nine fact cells after the name, in column order (the leftmost STATUS cell is [RepoStatusCell]). */
+/**
+ * #1452 ONE LINE PER REPOSITORY, the Cloud Store Apps list's row: no pinned column (the whole line scrolls sideways on [scroll], the
+ * state the header shares), a hairline-high compact row, every cell on one line. Both the main table and the folder tables draw
+ * their rows through this, so the two cannot drift apart.
+ */
+@Composable
+fun RepoTableLine(scroll: ScrollState, modifier: Modifier = Modifier, onClick: (() -> Unit)? = null, content: @Composable RowScope.() -> Unit) {
+    val k = LocalGitUiKit.current
+    Row(
+        modifier.fillMaxWidth().heightIn(min = k.rowHeight).let { if (onClick != null) it.clickable(onClick = onClick) else it }.padding(start = k.sectionInset),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Row(
+            Modifier.weight(1f).padding(end = k.pad).let { k.fadeEnd(it, scroll.canScrollForward) }.horizontalScroll(scroll).padding(end = k.sectionInset, top = k.gap, bottom = k.gap),
+            verticalAlignment = Alignment.CenterVertically, content = content,
+        )
+    }
+}
+
+/** The Name cell: the repository's name on one line (ellipsis), then its badges; it scrolls with the rest. */
+@Composable
+fun RepoNameCell(name: String, badges: @Composable RowScope.() -> Unit = {}) {
+    Row(repoCellModifier(RepoColumn.NAME), verticalAlignment = Alignment.CenterVertically) {
+        Text(name, Modifier.weight(1f, fill = false), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        badges()
+    }
+}
+
+/** The Status Message cell: what the status icons cannot say, on one line (ellipsis; the status window has it whole); red when it is a problem. */
+@Composable
+fun RepoMessageCell(text: String, problem: Boolean = false) {
+    Text(
+        text.ifBlank { GitTable.DASH }, repoCellModifier(RepoColumn.MESSAGE), style = MaterialTheme.typography.labelSmall,
+        color = if (problem) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis,
+    )
+}
+
+/** The cells after the name, in column order: Status Message, then the fact cells (the leftmost STATUS cell is [RepoStatusCell], then [RepoNameCell]). */
 @Composable
 fun RepoCells(r: GitTableRow<*>) {
     val yes = stringResource(R.string.repo_dirty_yes)
@@ -129,6 +167,7 @@ fun RepoCells(r: GitTableRow<*>) {
         RepoColumn.AHEAD_BEHIND to GitTable.aheadBehind(r.ahead, r.behind),
         RepoColumn.LAST_COMMIT to GitTable.age(r.lastCommitMs, System.currentTimeMillis()),
     )
+    RepoMessageCell(r.message, r.messageProblem)
     texts.forEach { (c, t) ->
         Text(t, repoCellModifier(c), style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace, textAlign = TextAlign.End, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }

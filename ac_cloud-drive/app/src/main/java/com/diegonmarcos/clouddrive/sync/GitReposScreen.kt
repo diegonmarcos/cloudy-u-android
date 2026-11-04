@@ -151,7 +151,7 @@ enum class GitView { ME, CLOUD }
 /** Which half of Me is drawn: TABLE is the Git page (bulk bar, summary, table, Local, History); SETUP is Configs ▸ Git (everything that used to sit above the table). */
 enum class GitPart { TABLE, SETUP }
 
-/** One row of THE table, whatever listing it came from; [onClone] clones it from the leg that listed it, [note] is a line under it. */
+/** One row of THE table, whatever listing it came from; [onClone] clones it from the leg that listed it, [note] is its Status Message when it has no clone. */
 private class TableEntry(
     val key: String, val label: String, val name: String, val owner: String, val isPrivate: Boolean?, val fork: Boolean, val source: String,
     val row: RepoTableRow, val cloned: ManagedRepo?, val onClone: () -> Unit, val note: String, val cloneUrl: String = "",
@@ -197,7 +197,8 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
     LaunchedEffect(view) { if (view == GitView.ME) hostsState.restore() }
     val registryRepos by coordinator.repos.collectAsState()
     // #1376 one page on every storage: the selected root's repositories stand in for the store's registry.
-    val repos = storageRepos ?: registryRepos
+    // #1452 the store's page lists the store's repositories only: a clone registered from shared storage or a drive belongs to that environment.
+    val repos = storageRepos ?: remember(registryRepos) { val roots = coordinator.environmentRoots(); registryRepos.filter { GitStorage.inEnvironment(GitStorage.Kind.STORE, it.path, roots) } }
     LaunchedEffect(storageRepos) { storageRepos?.let { coordinator.checkRepos(it, full = false) } }
     val glances by coordinator.glances.collectAsState()
     val running by coordinator.running.collectAsState()
@@ -329,13 +330,16 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
     var topConfirm by remember { mutableStateOf<Declarations.GitTopItemDecl?>(null) }
     val jobsState by coordinator.jobs.jobs.collectAsState()
     val fmt = remember { DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT) }
+    val messageWords = remember(ctx) { repoMessageWords(ctx) }
 
     // #1138 one table row of one repository: the cached remote facts and the local glance, no network here.
     // The Provider cell comes from the clone's own remote URL, else the listing's clone URL, through the declared host map.
-    fun tableRow(name: String, owner: String, declaredPrivate: Boolean?, listedUrl: String = ""): RepoTableRow {
+    fun tableRow(name: String, owner: String, declaredPrivate: Boolean?, listedUrl: String = "", note: String = ""): RepoTableRow {
         val cloned = clonedByName[name]
         val url = cloned?.remoteUrl?.takeIf { it.isNotBlank() } ?: listedUrl
-        return RepoTable.rowOf(name, declaredPrivate, cloned != null, cloned?.let { GitSyncCoordinator.glanceFor(it, glances) }, remoteStats[RepoRemoteStats.keyOf(owner, name)], RepoProvider.labelOf(url, Declarations.providers), cloned?.let { diskSizes[File(it.path).absolutePath]?.bytes }, Declarations.repoSot.lfsOf(name), cloned?.let { lastCommits[LastCommits.keyOf(it.path)] })
+        val glance = cloned?.let { GitSyncCoordinator.glanceFor(it, glances) }
+        val say = RepoMessage.of(cloned != null, glance, note, messageWords)
+        return RepoTable.rowOf(name, declaredPrivate, cloned != null, cloned?.let { GitSyncCoordinator.glanceFor(it, glances) }, remoteStats[RepoRemoteStats.keyOf(owner, name)], RepoProvider.labelOf(url, Declarations.providers), cloned?.let { diskSizes[File(it.path).absolutePath]?.bytes }, Declarations.repoSot.lfsOf(name), cloned?.let { lastCommits[LastCommits.keyOf(it.path)] }).copy(message = say.text, messageProblem = say.problem)
     }
     // Pull-to-refresh re-reads the REST facts of every repository the table lists (GitHub-listed or declared; the fleet's own git is not GitHub).
     fun refreshTargets(): List<Pair<String, String>> {
@@ -813,8 +817,9 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
                 if (wayListing.loaded && wayListing.error.isBlank()) wayListing.repos.forEach { gh ->
                     val owner = gh.owner.ifBlank { page.owner }
                     val cloned = clonedByName[gh.name]
+                    val note = if (gh.private && cloned == null && gh.cloneUrl.isBlank() && wayListing.rungId.isBlank()) ctx.getString(R.string.git_way_private_needs_credential, gh.name) else ""
                     add(TableEntry(
-                        "own-" + way.id + "-" + gh.owner + "/" + gh.name, gh.name, gh.name, owner, gh.private, gh.fork, way.label, tableRow(gh.name, owner, gh.private, gh.cloneUrl), cloned,
+                        "own-" + way.id + "-" + gh.owner + "/" + gh.name, gh.name, gh.name, owner, gh.private, gh.fork, way.label, tableRow(gh.name, owner, gh.private, gh.cloneUrl, note), cloned,
                         {
                             // #684 the row clones from the LEG THAT LISTED IT (#669's rule, per way).
                             if (wayListing.rungId.isNotBlank()) cloneViaFleet(wayListing.rungId, gh)
@@ -822,7 +827,7 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
                             else if (gh.cloneUrl.isBlank()) handoff = ctx.getString(R.string.git_clone_url_missing, gh.name)
                             else clone(gh.name, gh.cloneUrl, gh.sshUrl)
                         },
-                        if (gh.private && cloned == null && gh.cloneUrl.isBlank() && wayListing.rungId.isBlank()) ctx.getString(R.string.git_way_private_needs_credential, gh.name) else "",
+                        note,
                         gh.cloneUrl,
                     ))
                 }
@@ -924,8 +929,9 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
                 GitJobLine(jobLine, page.topBar::label, onCancel = { jobLine?.let { coordinator.jobs.cancel(it.id) } }, onDismiss = { jobLine?.let { coordinator.jobs.dismiss(it.id) } },
                     onOpen = { if (depthRun != null) showDepthReport = true else { logsTab = "app"; showActivity = true } })
                 fullProgress?.let { p -> Text(stringResource(R.string.repo_full_progress, p.done, p.total), Modifier.fillMaxWidth().padding(horizontal = DriveMetrics.sectionInset).testTag(DriveTags.SYNC_GIT_FULL_PROGRESS), style = MaterialTheme.typography.labelSmall) }
-                GitSearchRow(page.topBar, query, { query = it }, RepoFilters.active(page.filters, filterSel), onFilters = { showFilters = true }, onClear = { coordinator.clearFilters(); query = "" })
-                if (cloneTargets.isNotEmpty()) GitCloneTargetRow(cloneTargets, cloneTarget) { t -> cloneTarget = t; folderTick++; if (t.kind != GitStorage.Kind.STORE) cloneBlocked() }
+                // #1452 no search field: the Filters button shares the Clone-into row.
+                val filtersRow: @Composable () -> Unit = { GitSearchRow(page.topBar, query, { query = it }, RepoFilters.active(page.filters, filterSel), onFilters = { showFilters = true }, onClear = { coordinator.clearFilters(); query = "" }) }
+                if (cloneTargets.isNotEmpty()) GitCloneTargetRow(cloneTargets, cloneTarget, { t -> cloneTarget = t; folderTick++; if (t.kind != GitStorage.Kind.STORE) cloneBlocked() }, trailing = filtersRow) else Row(Modifier.fillMaxWidth().padding(horizontal = DriveMetrics.sectionInset), horizontalArrangement = Arrangement.End) { filtersRow() }
                 QuickFilterRail(page.filters, filterSel, ::countsOf) { f, o -> coordinator.setFilter(f.id, RepoFilters.toggle(f, filterSel, o)) }
                 Text(summaryLine, Modifier.fillMaxWidth().padding(horizontal = DriveMetrics.sectionInset, vertical = DriveMetrics.gap).testTag(DriveTags.SYNC_GIT_SUMMARY), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 // #642 what the last clone handoff did, right under the bar that can trigger it: no press of Clone is silent.
@@ -951,10 +957,6 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
                 // A second tap on the same repo closes its menu; a tap on another repo moves it.
                 onToggle = { expanded = RepoTable.toggle(expanded, e.key) },
                 onOpenStatus = { statusFor = e.key },
-            )
-            if (e.note.isNotBlank()) Text(
-                e.note, Modifier.fillMaxWidth().padding(horizontal = DriveMetrics.sectionInset, vertical = DriveMetrics.gap),
-                style = MaterialTheme.typography.labelSmall, color = colorResource(R.color.status_light_off),
             )
             Hairline()
         }
@@ -1438,9 +1440,9 @@ private fun GitWayCard(
 }
 
 /**
- * ONE dense row. Single line where it fits: the light, the name, the private/fork badges,
- * the inline monospace glance (branch ↑ahead ↓behind clean|N changed) and either the clone
- * state or the disclosure. No card, no per-repository box — that is what expanding does.
+ * ONE dense row, ONE line (#1452): the status lights, the name with its badges, the Status Message, then one cell per column and the
+ * disclosure, all in [RepoTableLine] (the Cloud Store Apps list's row: nothing pinned, the whole line scrolls on the ONE scroll state the
+ * header shares). What used to wrap under the name or sit under the lights is the Status Message cell ([RepoMessage]).
  */
 @Composable
 private fun GitRepoRow(
@@ -1460,51 +1462,24 @@ private fun GitRepoRow(
     onToggle: () -> Unit,
     onOpenStatus: () -> Unit,
 ) {
-    // #1138 THE TABLE ROW: the light and the name, then one cell per column, then the clone / disclosure
-    // control; the whole row scrolls sideways on the ONE scroll state the header shares.
-    Row(
-        Modifier.fillMaxWidth().testTag(DriveTags.SYNC_GIT_ROW)
-            .heightIn(min = DriveMetrics.rowHeight)
-            .clickable(onClick = onToggle),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        // #1356 Status and Name are pinned; the fact columns scroll sideways under them on the ONE scroll state the header shares.
-        Row(Modifier.padding(start = DriveMetrics.sectionInset, top = DriveMetrics.gap, bottom = DriveMetrics.gap), verticalAlignment = Alignment.CenterVertically) {
-            // #1238 the leftmost column is the status icon on its own: a tap opens the full-screen status window.
-            RepoStatusCell(icons, name, onOpenStatus, RepoStatus.levelCaption(glance, System.currentTimeMillis()))
-            Column(Modifier.width(DriveMetrics.tableName)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(name, Modifier.weight(1f, fill = false), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    if (fork) CapsuleBadge(stringResource(R.string.git_fork))
-                    // #1315 ONE CLONE PER REPOSITORY: a second folder holding it is a DUPLICATE (the Duplicate clones section offers Archive / Delete on the extra copies only).
-                    if (copies > 1) CapsuleBadge("$copies$copiesLabel")
-                }
-                // What the cells cannot say: the clone folder is gone, a conflict, or an unfinished merge / rebase.
-                // #1238 no "GitHub" (the listing's label) and no "Not Cloned" text under a repo that is not cloned: the status window says it.
-                if (repo != null && glance != null && glance.gone) Text(stringResource(R.string.sync_glance_gone), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                else if (repo != null && (glance == null || !glance.read)) Text(stringResource(R.string.sync_glance_unchecked), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                else if (repo != null && glance != null && glance.error != null) Text(
-                    statusErrorText(RepoStatus.errorKind(glance.error), glance.error), style = MaterialTheme.typography.labelSmall,
-                    color = colorResource(R.color.status_light_off), maxLines = 2, overflow = TextOverflow.Ellipsis,
-                )
-                else if (repo != null && glance != null && glance.read) {
-                    if (glance.conflicts > 0) Text(stringResource(R.string.sync_conflicts, glance.conflicts), style = MaterialTheme.typography.labelSmall, color = colorResource(R.color.status_light_off))
-                    if (glance.repositoryState != "SAFE") Text(glance.repositoryState, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
+    RepoTableLine(scroll, Modifier.testTag(DriveTags.SYNC_GIT_ROW), onClick = onToggle) {
+        // #1238 the leftmost column is the status icon on its own: a tap opens the full-screen status window.
+        RepoStatusCell(icons, name, onOpenStatus)
+        RepoNameCell(name) {
+            if (fork) CapsuleBadge(stringResource(R.string.git_fork))
+            // #1315 ONE CLONE PER REPOSITORY: a second folder holding it is a DUPLICATE (the Duplicate clones section offers Archive / Delete on the extra copies only).
+            if (copies > 1) CapsuleBadge("$copies$copiesLabel")
         }
-        Row(Modifier.weight(1f).padding(end = DriveMetrics.pad).scrollFadeEnd(scroll.canScrollForward).horizontalScroll(scroll).padding(end = DriveMetrics.sectionInset, top = DriveMetrics.gap, bottom = DriveMetrics.gap), verticalAlignment = Alignment.CenterVertically) {
-            RepoCells(cells)
-            Box(Modifier.width(DriveMetrics.tableName), contentAlignment = Alignment.CenterEnd) {
-                when {
-                    cloning -> Text(stringResource(R.string.git_cloning), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    // #1238 the Clone repo button left the row: it is the last section of the status window.
-                    else -> Icon(
-                        if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
-                        contentDescription = stringResource(if (expanded) R.string.git_collapse else R.string.git_expand),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
+        RepoCells(cells)
+        Box(Modifier.width(DriveMetrics.tableName), contentAlignment = Alignment.CenterEnd) {
+            when {
+                cloning -> Text(stringResource(R.string.git_cloning), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                // #1238 the Clone repo button left the row: it is the last section of the status window.
+                else -> Icon(
+                    if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                    contentDescription = stringResource(if (expanded) R.string.git_collapse else R.string.git_expand),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
     }
@@ -1515,20 +1490,28 @@ private fun GitRepoRow(
 private fun lightOf(repo: ManagedRepo?, glance: GitSyncCoordinator.Glance?): StatusLight.State = RepoStatus.light(RepoStatus.kindOf(repo != null, glance))
 
 /** One human sentence for a probe failure (RepoStatus.errorKind picks the sentence, the raw reason rides along as detail). */
-@Composable
-internal fun statusErrorText(kind: RepoStatus.ErrorKind?, detail: String?): String {
+internal fun statusErrorString(ctx: Context, kind: RepoStatus.ErrorKind?, detail: String?): String {
     val d = detail.orEmpty()
     return when (kind) {
-        RepoStatus.ErrorKind.TIMEOUT -> stringResource(R.string.repo_err_timeout, d)
-        RepoStatus.ErrorKind.NOT_A_REPOSITORY -> stringResource(R.string.repo_err_not_repo, d)
-        RepoStatus.ErrorKind.FILES_ACCESS -> stringResource(R.string.repo_err_files_access, androidx.compose.ui.platform.LocalContext.current.let { remember(it) { EngineGrant.label(it) } }, d)
-        RepoStatus.ErrorKind.PERMISSION -> stringResource(R.string.repo_err_permission, d)
-        RepoStatus.ErrorKind.AUTH -> stringResource(R.string.repo_err_auth, d)
-        RepoStatus.ErrorKind.ENGINE -> stringResource(R.string.repo_err_engine, d)
-        RepoStatus.ErrorKind.OTHER -> stringResource(R.string.repo_err_other, d)
-        null -> stringResource(R.string.repo_status_none)
+        RepoStatus.ErrorKind.TIMEOUT -> ctx.getString(R.string.repo_err_timeout, d)
+        RepoStatus.ErrorKind.NOT_A_REPOSITORY -> ctx.getString(R.string.repo_err_not_repo, d)
+        RepoStatus.ErrorKind.FILES_ACCESS -> ctx.getString(R.string.repo_err_files_access, EngineGrant.label(ctx), d)
+        RepoStatus.ErrorKind.PERMISSION -> ctx.getString(R.string.repo_err_permission, d)
+        RepoStatus.ErrorKind.AUTH -> ctx.getString(R.string.repo_err_auth, d)
+        RepoStatus.ErrorKind.ENGINE -> ctx.getString(R.string.repo_err_engine, d)
+        RepoStatus.ErrorKind.OTHER -> ctx.getString(R.string.repo_err_other, d)
+        null -> ctx.getString(R.string.repo_status_none)
     }
 }
+
+@Composable
+internal fun statusErrorText(kind: RepoStatus.ErrorKind?, detail: String?): String = statusErrorString(androidx.compose.ui.platform.LocalContext.current, kind, detail)
+
+/** #1452 the Status Message words in the device language (the pure rules are [RepoMessage]). */
+internal fun repoMessageWords(ctx: Context) = RepoMessage.Words(
+    gone = ctx.getString(R.string.sync_glance_gone), unchecked = ctx.getString(R.string.sync_glance_unchecked),
+    conflicts = { n -> ctx.getString(R.string.sync_conflicts, n) }, error = { e -> statusErrorString(ctx, RepoStatus.errorKind(e), e) },
+)
 
 /** #1408 the STATUS block's facts: Drive's status model (RepoStatus.Block, the error sentence, the age word) resolved for libs:git-ui's view. */
 @Composable

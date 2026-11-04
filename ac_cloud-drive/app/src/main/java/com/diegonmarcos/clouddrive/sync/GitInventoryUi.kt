@@ -33,6 +33,8 @@ internal fun InventorySections(
         rows = dups.map { FolderActions.Target(it.path, it.origin, it.registryName) },
         glances = glances, lastCommits = lastCommits, run = run,
         kinds = listOf(Declarations.FOLDER_ARCHIVE, Declarations.FOLDER_DELETE),
+        // #1452 Archive all: every extra copy to the archive root, after the same confirm dialog as one row's Archive (it lists the folders).
+        bulk = listOf(Declarations.FOLDER_ARCHIVE to decl.label("archive_all")),
         coordinator = coordinator,
         subtitle = { t -> decl.label("duplicate_of") + " " + (inv.byPath(t.path)?.primaryPath?.substringAfterLast('/') ?: t.repoName) },
         onOpenReport = onOpenReport,

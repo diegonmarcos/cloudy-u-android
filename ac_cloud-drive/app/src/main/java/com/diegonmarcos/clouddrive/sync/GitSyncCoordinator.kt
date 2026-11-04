@@ -1113,7 +1113,7 @@ class GitSyncCoordinator(private val ctx: Context, private val scope: CoroutineS
                     gone.forEach { statusReader.invalidate(UnlistedRepos.statusKey(it)) }
                     val kept = UnlistedRepos.without(unlisted.value, gone)
                     unlisted.value = kept
-                    pagePrefs.edit().putString(KEY_UNLISTED, UnlistedRepos.encode(kept)).apply()
+                    pagePrefs.edit().putString(envKey(KEY_UNLISTED), UnlistedRepos.encode(kept)).apply()
                 }
             }
             scanUnlisted()
@@ -1143,18 +1143,47 @@ class GitSyncCoordinator(private val ctx: Context, private val scope: CoroutineS
 
     // ── #1255 the Unlisted git folders: declared roots, bounded walk, statuses in the ONE reader (so in StatusCache) ──
 
+    /** #1452 the environment the page lists (Cloud-Store, Emulated, External): the scan, the inventory and its cache are this one's only. */
+    @Volatile var environment: GitStorage.Kind = GitStorage.Kind.STORE
+        private set
+
+    /** #1452 where each environment starts (the store root, shared storage, every attached drive). */
+    fun environmentRoots(): GitStorage.Roots = GitStorage.Roots(
+        runCatching { SharedStore.root() }.getOrNull(),
+        runCatching { android.os.Environment.getExternalStorageDirectory() }.getOrNull(),
+        runCatching { com.diegonmarcos.superapp.usbdrive.StorageVolumes.drives(ctx).map { File(it.path) } }.getOrDefault(emptyList()),
+    )
+
+    private fun envKey(base: String, env: GitStorage.Kind = environment) = base + "." + env.id
+
+    /** #1452 the page switched environment: drop the other one's inventory and read this one's cache and folders afresh. */
+    fun setEnvironment(kind: GitStorage.Kind) {
+        if (kind == environment) return
+        environment = kind
+        inventory.value = null
+        unlisted.value = emptyList()
+        scope.launch(Dispatchers.IO) {
+            runCatching { InventoryScript.decode(pagePrefs.getString(envKey(KEY_INVENTORY, kind), null)) }.getOrDefault(emptyList()).takeIf { it.isNotEmpty() }?.let { if (environment == kind) inventory.value = classifyInventory(it, 0L, "cache") }
+            if (environment == kind) unlisted.value = UnlistedRepos.decode(pagePrefs.getString(envKey(KEY_UNLISTED, kind), null)).filter { GitStorage.inEnvironment(kind, it.path, environmentRoots()) }
+        }
+        scanUnlisted()
+    }
+
     val unlisted = MutableStateFlow<List<UnlistedRepos.Folder>>(emptyList())
-        .also { f -> scope.launch(Dispatchers.IO) { f.value = UnlistedRepos.decode(pagePrefs.getString(KEY_UNLISTED, null)) } }
+        .also { f -> scope.launch(Dispatchers.IO) { f.value = UnlistedRepos.decode(pagePrefs.getString(envKey(KEY_UNLISTED), null)).filter { GitStorage.inEnvironment(GitStorage.Kind.STORE, it.path, environmentRoots()) } } }
     val scanningUnlisted = MutableStateFlow(false)
 
     // ── #1315 THE ONE INVENTORY: one discovery pass (the store through the one shell, the rest through java.io), classified once ──
 
     /** The last inventory (persisted entries re-classified at start, replaced by every pass); null until the first pass or load. */
     val inventory = MutableStateFlow<RepoInventory.Inventory?>(null)
-        .also { f -> scope.launch(Dispatchers.IO) { runCatching { InventoryScript.decode(pagePrefs.getString(KEY_INVENTORY, null)) }.getOrDefault(emptyList()).takeIf { it.isNotEmpty() }?.let { f.value = classifyInventory(it, 0L, "cache") } } }
+        .also { f -> scope.launch(Dispatchers.IO) { runCatching { InventoryScript.decode(pagePrefs.getString(envKey(KEY_INVENTORY), null)) }.getOrDefault(emptyList()).takeIf { it.isNotEmpty() }?.let { f.value = classifyInventory(it, 0L, "cache") } } }
+
+    /** #1452 only the entries inside the environment the page lists. */
+    private fun inEnvironment(entries: List<InventoryScript.Entry>): List<InventoryScript.Entry> { val roots = environmentRoots(); val env = environment; return entries.filter { GitStorage.inEnvironment(env, it.path, roots) } }
 
     private fun classifyInventory(entries: List<InventoryScript.Entry>, now: Long, via: String, truncated: Boolean = false, malformed: Int = 0): RepoInventory.Inventory =
-        RepoInventory.classify(entries, RegistryNames.live(), Declarations.repoSot, repos.value.map { File(it.path).absolutePath }.toSet(), now, via, truncated, malformed)
+        RepoInventory.classify(inEnvironment(entries), RegistryNames.live(), Declarations.repoSot, repos.value.map { File(it.path).absolutePath }.toSet(), now, via, truncated, malformed)
 
     /** The declared roots with their placeholders expanded (host form). */
     private fun inventoryRoots(list: List<ManagedRepo>): List<File> = UnlistedRepos.expandRoots(Declarations.sync.git.unlisted.roots, mapOf(
@@ -1172,7 +1201,10 @@ class GitSyncCoordinator(private val ctx: Context, private val scope: CoroutineS
     private fun discover(list: List<ManagedRepo>): Triple<List<InventoryScript.Entry>, String, Int> {
         val d = Declarations.sync.git.unlisted
         val inv = Declarations.sync.git.inventory
-        val roots = inventoryRoots(list)
+        val env = environment
+        val envRoots = environmentRoots()
+        // #1452 ONLY this environment's roots are walked: the store's git folder, shared storage or the drive; never all of them at once.
+        val roots = GitStorage.scanRoots(env, inventoryRoots(list) + (if (env == GitStorage.Kind.EXTERNAL) envRoots.drives else emptyList()), envRoots)
         val archive = archiveDir()
         val route = shell.route
         val (storeRoots, ioRoots) = if (route.viaTermux) roots.partition { route.inStore(it.absolutePath) } else emptyList<File>() to roots
@@ -1192,7 +1224,7 @@ class GitSyncCoordinator(private val ctx: Context, private val scope: CoroutineS
             out += InventoryScript.walkIo(ioRoots, d.maxDepth, d.maxDirs, System.currentTimeMillis() + d.timeoutSeconds * 1000L, inv.debris) { f -> archive != null && FolderActions.insideArchive(f, archive) }
             via = if (via.isEmpty()) "files" else "exec+files"
         }
-        return Triple(out.distinctBy { it.path }, via, malformed)
+        return Triple(inEnvironment(out.distinctBy { it.path }), via, malformed)
     }
 
     /**
@@ -1200,7 +1232,8 @@ class GitSyncCoordinator(private val ctx: Context, private val scope: CoroutineS
      * origin; the declared credential path serves it), so the table says cloned and the scheduler syncs it. Never removes anything.
      */
     private fun autoRegister(inv: RepoInventory.Inventory, list: List<ManagedRepo>): Int {
-        if (!Declarations.sync.git.inventory.autoRegister) return 0
+        // #1452 the registry is the store's: a clone on shared storage or a drive is never registered into it.
+        if (!Declarations.sync.git.inventory.autoRegister || environment != GitStorage.Kind.STORE) return 0
         val known = list.map { File(it.path).absolutePath }.toSet()
         var n = 0
         inv.rows.filter { (it.cls == RepoInventory.RepoClass.REGISTERED || it.cls == RepoInventory.RepoClass.STALE_ORIGIN || it.cls == RepoInventory.RepoClass.MISNAMED) && it.path !in known }.forEach { row ->
@@ -1244,6 +1277,8 @@ class GitSyncCoordinator(private val ctx: Context, private val scope: CoroutineS
     fun scanUnlisted(level: GitStatusReader.Level = GitStatusReader.Level.LIGHT) {
         if (!scanningUnlisted.compareAndSet(false, true)) return
         scope.launch {
+            val env0 = environment
+            var switched = false
             try {
                 val (inv, found) = withContext(Dispatchers.IO) {
                     val list = registry.load()
@@ -1256,12 +1291,14 @@ class GitSyncCoordinator(private val ctx: Context, private val scope: CoroutineS
                         inv = RepoInventory.classify(entries, RegistryNames.live(), Declarations.repoSot, list.map { File(it.path).absolutePath }.toSet(), System.currentTimeMillis(), via, malformed = malformed)
                     }
                     if (autoRegister(inv, list) > 0) inv = RepoInventory.classify(entries, RegistryNames.live(), Declarations.repoSot, registry.load().map { File(it.path).absolutePath }.toSet(), System.currentTimeMillis(), via, malformed = malformed)
-                    pagePrefs.edit().putString(KEY_INVENTORY, InventoryScript.encode(entries)).apply()
+                    pagePrefs.edit().putString(envKey(KEY_INVENTORY, env0), InventoryScript.encode(entries)).apply()
                     val unlistedRows = inv.of(RepoInventory.RepoClass.UNLISTED).map { UnlistedRepos.Folder(it.path, it.origin) }
-                    pagePrefs.edit().putString(KEY_UNLISTED, UnlistedRepos.encode(unlistedRows)).apply()
+                    pagePrefs.edit().putString(envKey(KEY_UNLISTED, env0), UnlistedRepos.encode(unlistedRows)).apply()
                     DriveDebugLog.i(ctx, TAG, "inventory ($via): " + inv.counts.entries.joinToString(", ") { "${it.value} ${it.key.name.lowercase()}" } + if (malformed > 0) ", $malformed unreadable" else "")
                     inv to unlistedRows
                 }
+                // #1452 the page switched environment while this pass ran: its result is the other environment's, drop it and scan again.
+                if (environment != env0) { switched = true; return@launch }
                 inventory.value = inv
                 unlisted.value = found
                 loadRegistry()
@@ -1272,7 +1309,7 @@ class GitSyncCoordinator(private val ctx: Context, private val scope: CoroutineS
             } catch (e: Exception) {
                 // A failed scan must never take the app down: keep the last cached list.
                 DriveDebugLog.e(ctx, TAG, "inventory failed: ${e.message ?: e.javaClass.simpleName}")
-            } finally { scanningUnlisted.value = false }
+            } finally { scanningUnlisted.value = false; if (switched) scanUnlisted(level) }
         }
     }
 

@@ -73,6 +73,43 @@ object GitStorage {
     /** #1356 a path on a mounted shared volume (Emulated, an attached drive): its clones run on the store's transport, not a second path. */
     fun onVolume(path: String): Boolean = path.startsWith("/storage/") && !path.startsWith("/storage/self/")
 
+    /**
+     * #1452 THE ENVIRONMENT A PATH BELONGS TO. The page lists, scans and counts duplicates in ONE environment at a time; before this
+     * the inventory walked the store's git folder, the registered clones' parents AND all of shared storage in one pass and published
+     * everything to every environment (so /storage/emulated/0/GIT/... showed under Cloud-Store). A path belongs to the first of: the
+     * store root, an attached drive, shared storage (aliases /sdcard and /storage/self/primary folded in); else to none.
+     */
+    data class Roots(val store: File?, val emulated: File?, val drives: List<File> = emptyList())
+
+    /** The primary shared volume as the kernel names it (written split: no device-absolute path literal in sources, test-drive-shared-store.sh). */
+    private val SHARED = "/storage/" + "emulated/0"
+
+    private fun norm(path: String): String {
+        val p = path.trimEnd('/')
+        return listOf("/storage/self/primary", "/sdcard", "/mnt/sdcard").firstOrNull { p == it || p.startsWith("$it/") }?.let { SHARED + p.removePrefix(it) } ?: p
+    }
+
+    private fun under(path: String, root: File?): Boolean {
+        val r = root?.let { norm(it.absolutePath) } ?: return false
+        return path == r || path.startsWith("$r/")
+    }
+
+    fun kindOf(path: String, roots: Roots): Kind? {
+        val p = norm(path)
+        return when {
+            under(p, roots.store) -> Kind.STORE
+            roots.drives.any { under(p, it) } -> Kind.EXTERNAL
+            under(p, roots.emulated) -> Kind.EMULATED
+            else -> null
+        }
+    }
+
+    /** A path under no known root is the store's: the store is app-private (Termux home), its path forms vary, and it is the default environment. */
+    fun inEnvironment(kind: Kind, path: String, roots: Roots): Boolean = (kindOf(path, roots) ?: Kind.STORE) == kind
+
+    /** The scan roots that lie inside [kind]; the others are not walked at all. */
+    fun scanRoots(kind: Kind, candidates: List<File>, roots: Roots): List<File> = candidates.filter { inEnvironment(kind, it.absolutePath, roots) }
+
     const val PREFS = "git_storage"
     const val KEY = "selected"
 }

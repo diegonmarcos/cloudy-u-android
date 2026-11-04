@@ -345,7 +345,7 @@ for t in hooksSkipTheSamples workflowsAreTheYamlOnes sizeCountsTheTreeAndTheGitD
 done
 
 echo "── P8 dense, not a card per repository ──"
-if grep -qE 'private fun GitRepoRow\(' "$PAGE" && grep -qE 'testTag\(DriveTags\.SYNC_GIT_ROW\)' "$PAGE" && grep -qE '\.heightIn\(min = DriveMetrics\.rowHeight\)' "$PAGE" && grep -qE 'RepoStatusCell\(icons, name, onOpenStatus' "$PAGE" && grep -qE 'StatusDot\(lo, ' "$(dirname "$PAGE")/RepoTableUi.kt"; then pass "one compact Row per repository, with a height floor and the one-character light in its own leftmost cell (#1238)"; else fail "the repository row is not the dense row #608 asked for"; fi
+if grep -qE 'private fun GitRepoRow\(' "$PAGE" && grep -qE 'testTag\(DriveTags\.SYNC_GIT_ROW\)' "$PAGE" && grep -qE 'RepoTableLine\(scroll, Modifier\.testTag\(DriveTags\.SYNC_GIT_ROW\)' "$PAGE" && grep -qE 'heightIn\(min = k\.rowHeight\)' "$ROOT/ab_cloud-libs-shared/libs/git-ui/src/main/java/com/diegonmarcos/cloudlib/gitui/RepoTableUi.kt" && grep -qE 'RepoStatusCell\(icons, name, onOpenStatus' "$PAGE" && grep -qE 'StatusDot\(lo, ' "$(dirname "$PAGE")/RepoTableUi.kt"; then pass "one compact Row per repository, with a height floor and the one-character light in its own leftmost cell (#1238)"; else fail "the repository row is not the dense row #608 asked for"; fi
 if python3 - "$PAGE" <<'PYTHON'
 import re, sys
 src = open(sys.argv[1], encoding="utf-8").read()

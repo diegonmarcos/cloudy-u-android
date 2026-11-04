@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
@@ -25,6 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
@@ -68,6 +69,7 @@ internal fun FolderRepoTable(
     onOpenReport: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
+    val ctx = LocalContext.current
     val scroll = rememberScrollState()
     var sort by remember { mutableStateOf(RepoTable.DEFAULT_SORT to true) }
     var confirm by remember { mutableStateOf<FolderConfirm?>(null) }
@@ -94,38 +96,33 @@ internal fun FolderRepoTable(
             val cells = list.associate { t ->
                 t.path to FolderTable.rowOf(t, glances[UnlistedRepos.statusKey(t.path)], t.origin.takeIf { it.isNotBlank() }?.let { RepoProvider.labelOf(it, Declarations.providers) }, lastCommits[LastCommits.keyOf(t.path)])
             }
+            val words = remember(ctx) { repoMessageWords(ctx) }
             RepoTable.sort(list, sort.first, sort.second) { cells.getValue(it.path) }.forEach { t ->
-                val row = cells.getValue(t.path)
                 val g = glances[UnlistedRepos.statusKey(t.path)]
-                Row(Modifier.fillMaxWidth().heightIn(min = DriveMetrics.rowHeight).testTag(DriveTags.parentlessRow(tableId + "_" + t.name)), verticalAlignment = Alignment.CenterVertically) {
-                    Row(Modifier.horizontalScroll(scroll).padding(horizontal = DriveMetrics.sectionInset, vertical = DriveMetrics.gap), verticalAlignment = Alignment.CenterVertically) {
-                        RepoStatusCell(RepoStatus.icons(true, g, false, emptyList(), ""), t.name, { open = if (open == t.path) "" else t.path }, RepoStatus.levelCaption(g, System.currentTimeMillis()))
-                        Column(Modifier.width(DriveMetrics.tableName).clickable { open = if (open == t.path) "" else t.path }) {
-                            Text(t.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                            Text(subtitle(t) + "\n" + t.path, style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Monospace, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 3, overflow = TextOverflow.Ellipsis)
+                // #1452 ONE LINE PER FOLDER: the last command's outcome (it used to wrap in a report under the table) is the Status Message cell; the commands are the last cell.
+                val say = RepoMessage.ofFolder(run?.takeIf { it.kind in Declarations.FOLDER_KINDS }?.outcomeOf(t.name), g, subtitle(t), words)
+                val row = cells.getValue(t.path).copy(message = say.text, messageProblem = say.problem)
+                val toggle = { open = if (open == t.path) "" else t.path }
+                RepoTableLine(scroll, Modifier.testTag(DriveTags.parentlessRow(tableId + "_" + t.name)), onClick = toggle) {
+                    RepoStatusCell(RepoStatus.icons(true, g, false, emptyList(), ""), t.name, toggle)
+                    RepoNameCell(t.name)
+                    RepoCells(row)
+                    Row(Modifier.widthIn(min = DriveMetrics.tableName), horizontalArrangement = Arrangement.spacedBy(DriveMetrics.gapWide, Alignment.End), verticalAlignment = Alignment.CenterVertically) {
+                        actions.filter { a -> a.kind != Declarations.FOLDER_REPOINT || FolderActions.fixedOrigin(t.origin, RegistryNames.live()) != null }.forEach { a ->
+                            Pill(a.label, { confirm = FolderConfirm(a, listOf(t)) }, enabled = !busy, danger = a.kind == Declarations.FOLDER_DELETE,
+                                modifier = Modifier.testTag(DriveTags.folderAction(a.kind, t.name)))
                         }
-                        RepoCells(row)
                     }
                 }
                 if (open == t.path) Text(
                     t.path + "\n" + t.origin.ifBlank { stringResource(R.string.repo_unlisted_no_remote) }, Modifier.padding(horizontal = DriveMetrics.sectionInset),
                     style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Monospace, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                Row(Modifier.fillMaxWidth().padding(horizontal = DriveMetrics.sectionInset, vertical = DriveMetrics.tight), horizontalArrangement = Arrangement.spacedBy(DriveMetrics.gapWide, Alignment.End)) {
-                    actions.filter { a -> a.kind != Declarations.FOLDER_REPOINT || FolderActions.fixedOrigin(t.origin, RegistryNames.live()) != null }.forEach { a ->
-                        Pill(a.label, { confirm = FolderConfirm(a, listOf(t)) }, enabled = !busy, danger = a.kind == Declarations.FOLDER_DELETE,
-                            modifier = Modifier.testTag(DriveTags.folderAction(a.kind, t.name)))
-                    }
-                }
                 Hairline()
             }
         }
         // The outcome of the last folder command (the full list is the depth report; every line is in Activity Logs too).
         if (run != null && run.kind in Declarations.FOLDER_KINDS && list != null) {
-            run.lines().take(REPORT_LINES).forEach { line ->
-                Text(line, Modifier.padding(horizontal = DriveMetrics.sectionInset), style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Monospace,
-                    color = if (line.startsWith("ok ")) MaterialTheme.colorScheme.onSurfaceVariant else colorResource(R.color.status_light_off))
-            }
             Row(Modifier.fillMaxWidth().padding(horizontal = DriveMetrics.sectionInset), horizontalArrangement = Arrangement.End) { Pill(stringResource(R.string.repo_depth_report), onOpenReport) }
         }
     }
@@ -180,4 +177,3 @@ internal fun FolderConfirmDialog(c: FolderConfirm, coordinator: GitSyncCoordinat
 }
 
 private const val PREVIEW = 8
-private const val REPORT_LINES = 6

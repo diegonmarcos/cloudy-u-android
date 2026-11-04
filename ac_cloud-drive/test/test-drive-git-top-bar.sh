@@ -99,7 +99,10 @@ if "ToolbarIsland(" in body or "TerminalIslandAction(" in body: bad.append("GitP
 if h != 40: bad.append("search_height_dp is %r, want 40" % h)
 chrome = open(os.path.join(os.path.dirname(sys.argv[1]), "app/src/main/java/com/diegonmarcos/clouddrive/ui/Chrome.kt")).read()
 if "val height = DriveMetrics.rowHeight" not in bar or not re.search(r'val rowHeight = %s\.dp' % h, chrome): bad.append("GitSearchMetrics.height is not DriveMetrics.rowHeight = search_height_dp")
-if "OutlinedTextField" in bar or "GitSearchField(query" not in bar: bad.append("the Git search is not the compact GitSearchField")
+# #1452 the Git page has NO search field (owner order); GitSearchField stays as the shared compact bar (Files' search uses it)
+row = re.search(r'fun GitSearchRow\((.*?)\n}\n', bar, re.S)
+if not row or "GitSearchField(" in row.group(1) or "OutlinedTextField" in bar: bad.append("the Git page draws a search field again")
+if "fun GitSearchField(query" not in bar: bad.append("the shared compact GitSearchField is gone (Files uses it)")
 if "Icons.Filled.Search" not in bar or "Icons.Filled.Close" not in bar: bad.append("no inline magnifier or clear (x)")
 if not any(a.get("fleet") == "termux" and a.get("label") == "Termux" for a in apps): bad.append("no Termux tile (fleet termux) on Home ▸ Apps")
 print("\n".join(bad)); sys.exit(1 if bad else 0)
@@ -109,8 +112,9 @@ echo "== T3 no Git title row, compact search, Termux tile =="
 out=$(t3 "$SYNC/SyncScreen.kt" "$SYNC/GitTopBar.kt") && pass "Git page has no title row; search is 40dp compact; Termux tile on Home ▸ Apps" || fail "T3: $out"
 sed 's|NavBarTopSecondRow(pages = pages|ToolbarIsland(title = ""); NavBarTopSecondRow(pages = pages|' "$SYNC/SyncScreen.kt" > "$tmp/S.kt"
 t3 "$tmp/S.kt" "$SYNC/GitTopBar.kt" >/dev/null 2>&1 && fail "T3 passed a title row (vacuous)" || pass "a ToolbarIsland back on the Git page → T3 RED"
-sed 's|GitSearchField(query, onQuery|OutlinedTextField(query, onQuery|' "$SYNC/GitTopBar.kt" > "$tmp/B.kt"
-t3 "$SYNC/SyncScreen.kt" "$tmp/B.kt" >/dev/null 2>&1 && fail "T3 passed an outlined search (vacuous)" || pass "an OutlinedTextField search → T3 RED"
+sed 's|        Pill(decl.label("filters") + (if (active|        GitSearchField(query, onQuery, "", Modifier); Pill(decl.label("filters") + (if (active|' "$SYNC/GitTopBar.kt" > "$tmp/B.kt"
+grep -q 'GitSearchField(query, onQuery, ""' "$tmp/B.kt" || fail "T3 mutation anchor gone"
+t3 "$SYNC/SyncScreen.kt" "$tmp/B.kt" >/dev/null 2>&1 && fail "T3 passed a search field back on the Git page (vacuous)" || pass "a search field back on the Git page → T3 RED"
 
 # T4 #1356 the top nav is Check | Sync | Clone | Logs | More ..... Settings: those five groups in that order, the first four ONE
 #    item each (check_full, sync_all, clone_missing, the open_logs item) run on tap, More keeps every other action of the bar
@@ -197,15 +201,17 @@ t5 "$SRC" "$tmp/S5.kt" >/dev/null 2>&1 && fail "T5 passed a Spacer above the Git
 
 # T6 #1356 a simple Git page: (a) the refresh is a thin top bar, never a disc over the controls; (b) Status and Name are pinned,
 #    the fact columns scroll under them (header and rows alike); (c) parentless / unlisted panels are in More > Advanced, not the list.
-t6() { python3 - "$BJ" "$1" "$2" "$3" <<'PY'
+t6() { python3 - "$BJ" "$1" "$2" "$3" "${4:-$GITTABLE}" <<'PY'
 import json, sys
-bj = json.load(open(sys.argv[1])); frame, page, ui = (open(p).read() for p in sys.argv[2:5]); bad = []
+bj = json.load(open(sys.argv[1])); frame, page, ui, gtable = (open(p).read() for p in sys.argv[2:6]); bad = []
 # #1408 the header body lives in libs:git-ui; Drive passes the pinned / scrolling split and lends its fade (LocalGitUiKit)
 import os
 lib = open(os.path.join(os.path.dirname(os.path.abspath(sys.argv[1])), "../ab_cloud-libs-shared/libs/git-ui/src/main/java/com/diegonmarcos/cloudlib/gitui/RepoTableUi.kt")).read()
 if "indicator = {" not in frame or "LinearProgressIndicator(" not in frame or "SYNC_GIT_REFRESH_BAR" not in frame: bad.append("(a) the refresh is not a top bar")
 if "RepoTable.COLUMNS.filter { it in RepoTable.PINNED }" not in ui or "Modifier.weight(1f).padding(end = k.pad).let { k.fadeEnd(it, scroll.canScrollForward) }.horizontalScroll(scroll)" not in lib: bad.append("(b) the header does not pin Status and Name")
-if "Row(Modifier.weight(1f).padding(end = DriveMetrics.pad).scrollFadeEnd(scroll.canScrollForward).horizontalScroll(scroll).padding(end = DriveMetrics.sectionInset" not in page: bad.append("(b) the rows do not pin Status and Name")
+# #1452 the owner order reversed this: NOTHING is pinned, the name scrolls with the rest; the header and every row share ONE scroll state
+if "val PINNED = emptySet<RepoColumn>()" not in gtable: bad.append("(b) a column is pinned again (the name must scroll with the rest)")
+if "RepoTableLine(scroll, Modifier.testTag(DriveTags.SYNC_GIT_ROW)" not in page or "fun RepoTableLine(scroll: ScrollState" not in lib or "horizontalScroll(scroll)" not in lib.split("fun RepoTableLine(")[1].split("\n}\n")[0]: bad.append("(b) the rows do not scroll as one line on the shared scroll state")
 # #1392 the panels are back in the main view, BELOW the table; More > Advanced is only a link that scrolls there
 t, pl, ul = page.find("if (!setup) tableBlock()"), page.find('item(key = "parentless")'), page.find('item(key = "unlisted")')
 if pl < 0 or ul < 0 or not (0 <= t < pl < ul): bad.append("(c) parentless / unlisted are not below the table in the main list")
@@ -215,11 +221,12 @@ if '"open_advanced" -> scope.launch { listState' not in page or "if (showAdvance
 print("\n".join(bad)); sys.exit(1 if bad else 0)
 PY
 }
-echo "== T6 a simple Git page: top refresh bar, pinned Name, Advanced =="
-FR="$SYNC/GitPageFrame.kt"; UI="$SYNC/RepoTableUi.kt"
-out=$(t6 "$FR" "$PAGE" "$UI") && pass "refresh is a top bar; Status and Name pinned; parentless / unlisted below the table" || fail "T6: $out"
+echo "== T6 a simple Git page: top refresh bar, nothing pinned, Advanced =="
+FR="$SYNC/GitPageFrame.kt"; UI="$SYNC/RepoTableUi.kt"; GITTABLE="$ROOT/ab_cloud-libs-shared/libs/git-ui/src/main/java/com/diegonmarcos/cloudlib/gitui/GitTable.kt"
+out=$(t6 "$FR" "$PAGE" "$UI") && pass "refresh is a top bar; no column pinned (the whole row scrolls); parentless / unlisted below the table" || fail "T6: $out"
 sed 's/indicator = {/indicatorX = {/' "$FR" > "$tmp/F6.kt"; t6 "$tmp/F6.kt" "$PAGE" "$UI" >/dev/null 2>&1 && fail "T6 passed the default spinner (vacuous)" || pass "the default spinner back → T6 RED"
 sed 's/RepoTable.COLUMNS.filter { it in RepoTable.PINNED }/RepoTable.COLUMNS/' "$UI" > "$tmp/U6.kt"; t6 "$FR" "$PAGE" "$tmp/U6.kt" >/dev/null 2>&1 && fail "T6 passed an unpinned header (vacuous)" || pass "an unpinned header → T6 RED"
+sed 's/val PINNED = emptySet<RepoColumn>()/val PINNED = setOf(RepoColumn.STATUS, RepoColumn.NAME)/' "$GITTABLE" > "$tmp/G6.kt"; t6 "$FR" "$PAGE" "$UI" "$tmp/G6.kt" >/dev/null 2>&1 && fail "T6 passed a pinned name (vacuous)" || pass "the name pinned again → T6 RED"
 sed 's|item(key = "parentless")|item(key = "gone")|' "$PAGE" > "$tmp/P6.kt"; t6 "$FR" "$tmp/P6.kt" "$UI" >/dev/null 2>&1 && fail "T6 passed parentless gone from the list (vacuous)" || pass "parentless gone from the main list → T6 RED"
 
 # T7 #1356 a clean Git screen: quick filters are ONE sideways row of compact chips whose end edge fades while more lie past it;

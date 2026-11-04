@@ -3,6 +3,7 @@
 <resources>
     <string name="repo_col_status">Status</string>
     <string name="repo_col_name">Name</string>
+    <string name="repo_col_message">Status Message</string>
     <string name="repo_col_provider">Provider</string>
     <string name="repo_col_vis">Pvt/Pub</string>
     <string name="repo_col_lfs">LFS</string>

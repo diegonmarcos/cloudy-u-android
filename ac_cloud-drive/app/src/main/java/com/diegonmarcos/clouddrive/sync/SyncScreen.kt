@@ -89,6 +89,8 @@ fun GitPageScreen(
     var storage by remember { mutableStateOf(gitStorageSelected(ctx)) }
     var storageRefresh by remember { mutableStateOf(0) }
     val storageView = if (storage == GitStorage.Kind.STORE) null else rememberGitStorageView(storage, storageRefresh)
+    // #1452 the coordinator scans, caches and counts duplicates in the selected environment only.
+    LaunchedEffect(storage) { git.setEnvironment(storage) }
     val storageRepos = (storageView as? GitStorage.Listing.Repos)?.managed()
     val usbTick by com.diegonmarcos.superapp.usbdrive.StorageVolumes.tick.collectAsState()
     val cloneTargets = remember(usbTick, storageRefresh) { gitCloneTargets(ctx) }
