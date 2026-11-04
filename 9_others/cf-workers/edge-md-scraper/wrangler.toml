@@ -1,0 +1,11 @@
+name = "edge-md-scraper"
+main = "src/index.ts"
+compatibility_date = "2024-03-20"
+# Node.js compatibility required for the parsing libraries
+compatibility_flags = ["nodejs_compat"]
+
+# Browser Rendering binding: provisions headless Chromium instances on demand.
+browser = { binding = "BROWSER", type = "browser" }
+
+# Secret (NAME only, never a value here): SCRAPER_TOKEN, the bearer every request must send.
+# The owner sets it with: npx wrangler secret put SCRAPER_TOKEN

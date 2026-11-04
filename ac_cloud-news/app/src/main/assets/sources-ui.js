@@ -109,14 +109,16 @@ var SourcesUI = (function () {
         m.innerHTML = '<div class="sd-head">Run actors on</div>' +
             '<div class="seg" id="sd-backend">' + c.backends.map(function (b) { return '<button type="button" data-backend="' + esc(b.id) + '"' + (b.id === cur.id ? ' class="active"' : '') + '>' + esc(b.label) + '</button>'; }).join('') + '</div>' +
             '<div class="sd-sub" style="margin-top:var(--ef-s8)">' + (cur.cloudflare
-                ? 'Cloudflare Browser Run: a headless-browser rendering API (developers.cloudflare.com/browser-rendering). A source renders its first start URL as Markdown. Needs your account id and an API token with Browser Rendering permission; billed to your Cloudflare account.'
+                ? 'Cloudflare Browser Run: headless-browser rendering (developers.cloudflare.com/browser-rendering). A source renders its first start URL as Markdown, through your deployed edge-md-scraper Worker (Worker URL, default) or the REST API (account id plus an API token with Browser Rendering permission, billed to your Cloudflare account).'
                 : cur.selfHosted
                 ? 'The fleet\'s own Apify-compatible runner (Crawlee Cloud, reached over the mesh). Same API as Apify Cloud; nothing is billed by Apify.'
                 : 'Apify\'s cloud. Actors run on your Apify account and bill it. Paste your API token (console.apify.com, Settings, Integrations).') + '</div>' +
-            (cur.cloudflare ? '<div class="sd-head">Account id</div><div class="ef-cfg-key"><input type="text" id="sd-account" autocomplete="off" spellcheck="false" placeholder="32 hex characters" value="' + esc(c.accountId) + '"><button type="button" id="sd-account-save">Save</button></div>' : '') +
+            (cur.cloudflare ? '<div class="seg" id="sd-cfmode">' + [['worker', 'Worker URL'], ['rest', 'REST API']].map(function (m) { return '<button type="button" data-cfmode="' + m[0] + '"' + (c.cfMode === m[0] ? ' class="active"' : '') + '>' + m[1] + '</button>'; }).join('') + '</div>' : '') +
+            (cur.cloudflare && c.cfMode === 'worker' ? '<div class="sd-head">Worker URL</div><div class="ef-cfg-key"><input type="url" id="sd-worker" autocomplete="off" spellcheck="false" placeholder="https://edge-md-scraper.example.workers.dev" value="' + esc(c.workerUrl) + '"><button type="button" id="sd-worker-save">Save</button></div>' : '') +
+            (cur.cloudflare && c.cfMode === 'rest' ? '<div class="sd-head">Account id</div><div class="ef-cfg-key"><input type="text" id="sd-account" autocomplete="off" spellcheck="false" placeholder="32 hex characters" value="' + esc(c.accountId) + '"><button type="button" id="sd-account-save">Save</button></div>' : '') +
             (cur.selfHosted ? '<div class="sd-head">Base URL</div><div class="ef-cfg-key"><input type="url" id="sd-url" autocomplete="off" spellcheck="false" value="' + esc(c.selfUrl) + '"><button type="button" id="sd-url-save">Save</button></div>' : '') +
             '<div class="sd-head">' + (cur.selfHosted ? 'Fleet bearer' : 'API token') + '</div>' +
-            '<div class="ef-cfg-key"><input type="password" id="sd-token" autocomplete="off" placeholder="' + (cur.selfHosted ? 'Fleet bearer' : cur.cloudflare ? 'Cloudflare API token' : 'Apify API token') + (has ? ' (saved, encrypted)' : '') + '"><button type="button" id="sd-token-save">Save</button>' + (has ? '<button type="button" class="quiet" id="sd-token-clear">Clear</button>' : '') + '</div>' +
+            '<div class="ef-cfg-key"><input type="password" id="sd-token" autocomplete="off" placeholder="' + (cur.selfHosted ? 'Fleet bearer' : cur.cloudflare ? (c.cfMode === 'worker' ? 'Worker bearer token' : 'Cloudflare API token') : 'Apify API token') + (has ? ' (saved, encrypted)' : '') + '"><button type="button" id="sd-token-save">Save</button>' + (has ? '<button type="button" class="quiet" id="sd-token-clear">Clear</button>' : '') + '</div>' +
             '<div class="sd-sub" id="sd-msg">' + (has ? '<span class="ef-cfg-ok">Stored encrypted on this device.</span>' : 'Nothing stored for this backend: Apify sources will ask for it.') + '</div>' +
             '<div class="sd-head">Apify sources<span class="sd-count">' + apifyRows.length + '</span></div>' +
             apifyRows.map(function (s) { return '<div class="sd-row"><div class="sd-main"><div class="sd-name">' + esc(s.label) + '</div><div class="sd-sub"><span class="sd-actor">' + esc(P.actors[s.id] || s.actor) + '</span> ' + esc(s.area) + '</div></div></div>'; }).join('');
@@ -125,6 +127,9 @@ var SourcesUI = (function () {
             var b = ev.target.closest('[data-backend]');
             if (b) { bcall('apifySetBackend', [b.dataset.backend]); renderApify(mountId); return; }
             if (ev.target.id === 'sd-url-save') { var r = bcall('apifySetSelfUrl', [$('sd-url').value.trim()]); if (r && r.ok) renderApify(mountId); else say((r && r.error) || 'could not save'); return; }
+            var cm = ev.target.closest('[data-cfmode]');
+            if (cm) { bcall('apifySetCfMode', [cm.dataset.cfmode]); renderApify(mountId); return; }
+            if (ev.target.id === 'sd-worker-save') { var w = bcall('apifySetWorkerUrl', [$('sd-worker').value.trim()]); if (w && w.ok) renderApify(mountId); else say((w && w.error) || 'could not save'); return; }
             if (ev.target.id === 'sd-account-save') { var a = bcall('apifySetAccount', [$('sd-account').value.trim()]); if (a && a.ok) renderApify(mountId); else say((a && a.error) || 'could not save'); return; }
             if (ev.target.id === 'sd-token-save') { var v = $('sd-token').value.trim(); if (!v) return; var s = bcall('apifySetToken', [cur.id, v]); if (s && s.ok) renderApify(mountId); else say((s && s.error) || 'could not save'); return; }
             if (ev.target.id === 'sd-token-clear') { bcall('apifySetToken', [cur.id, '']); renderApify(mountId); }

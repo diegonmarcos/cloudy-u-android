@@ -1,0 +1,20 @@
+{
+  "name": "edge-md-scraper",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Cloudflare Worker: render a URL in Browser Rendering, strip boilerplate (Readability), return Markdown. Called by the Cloudflare Browser Run option of the scraper apps (Worker URL mode).",
+  "scripts": { "deploy": "wrangler deploy" },
+  "dependencies": {
+    "@cloudflare/puppeteer": "^0.0.14",
+    "@mozilla/readability": "^0.5.0",
+    "jsdom": "^24.0.0",
+    "turndown": "^7.1.3"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240320.0",
+    "@types/jsdom": "^21.1.6",
+    "@types/turndown": "^5.0.4",
+    "typescript": "^5.4.0",
+    "wrangler": "^3.50.0"
+  }
+}

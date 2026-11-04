@@ -103,37 +103,53 @@ class ScraperApifyTest {
         assertFalse(s.hasToken())
     }
 
-    @Test fun `Cloudflare Browser Run is the third backend, Apify stays the default, and its account id and token are kept in the store`() {
+    @Test fun `Cloudflare Browser Run is the third backend, Apify stays the default, Worker URL is the default mode and REST keeps an account id`() {
         val kv = MapKv()
         val s = ApifyBackendStore(kv)
         assertEquals(listOf("cloud", "selfhosted", "cloudflare"), s.decl.backends.map { it.id })
         assertEquals(ApifyBackends.CLOUD, s.backend().id)
         val cf = s.decl.byId(ApifyBackends.CLOUDFLARE)
-        assertTrue(cf.cloudflare)
-        assertFalse(s.decl.byId(ApifyBackends.CLOUD).cloudflare)
+        assertTrue(cf.cloudflare); assertFalse(s.decl.byId(ApifyBackends.CLOUD).cloudflare)
+        assertEquals(ApifyBackends.CF_WORKER, s.cfMode())
+        // Worker URL mode (default): an https Worker URL + the Worker bearer
+        assertFalse(s.setWorkerUrl("http://insecure.example"))
+        assertTrue(s.setToken(cf, "  wk_token_1234  "))
+        assertFalse(s.hasToken(cf))                                          // the Worker URL is missing
+        assertTrue(s.setWorkerUrl(" https://edge-md-scraper.example.workers.dev/ "))
+        assertTrue(s.hasToken(cf))
+        assertEquals("wk_token_1234", kv.get("cloudflare.worker_token"))
+        s.setBackend(ApifyBackends.CLOUDFLARE)
+        assertEquals("https://edge-md-scraper.example.workers.dev/?url=https%3A%2F%2Fa.example%2Fx%3Fq%3D1", ApifyBackends.workerUrl(s.resolve()!!.first, "https://a.example/x?q=1"))
+        assertEquals("wk_token_1234", s.resolve()!!.second)
+        assertEquals(null, ApifyBackends.workerUrl("http://x", "https://a"))
+        // REST API mode: the account id + the API token, separate keys
+        s.setCfMode(ApifyBackends.CF_REST)
         val acct = "0123456789abcdef0123456789ABCDEF"
+        assertFalse(s.hasToken(cf))
         assertFalse(s.setAccountId("not-an-id"))
-        assertTrue(s.setToken(cf, "  cf_token_1234  "))
-        assertFalse(s.hasToken(cf))                                          // the account id is missing
-        assertTrue(s.setAccountId(acct))
+        assertTrue(s.setToken(cf, "cf_token_1234")); assertTrue(s.setAccountId(acct))
         assertTrue(s.hasToken(cf))
         assertEquals("cf_token_1234", kv.get("cloudflare.api_token")); assertEquals(acct, kv.get("cloudflare.account_id"))
-        assertFalse(s.hasToken())                                            // Apify Cloud's own token is separate
-        s.setBackend(ApifyBackends.CLOUDFLARE)
         assertEquals("https://api.cloudflare.com/client/v4/accounts/$acct/browser-rendering" to "cf_token_1234", s.resolve())
         assertEquals("https://x/accounts/$acct/browser-rendering/markdown", ApifyBackends.cloudflareUrl(ApifyBackends.cloudflareBase("https://x", acct)!!))
         assertEquals(null, ApifyBackends.cloudflareBase("https://x", "zz"))
+        assertFalse(s.hasToken(s.decl.byId(ApifyBackends.CLOUD)))            // Apify Cloud's own token is separate
         val parsed = ApifyBackends.parse("""{"default_backend":"cloud","backends":[{"id":"cloud","api":"https://api.apify.com/v2"},{"id":"cloudflare","kind":"cloudflare","api":"https://api.cloudflare.com/client/v4"}]}""")
         assertTrue(parsed.byId("cloudflare").cloudflare)
     }
 
-    @Test fun `Cloudflare client posts the url with the bearer token and reads result or errors`() {
+    @Test fun `Cloudflare client reads Markdown from the Worker (default) or the REST API, bearer on both`() {
         MockWebServer().use { srv ->
+            srv.enqueue(MockResponse().setBody("---\ntitle: \"T\"\n---\n\n# Title"))
             srv.enqueue(MockResponse().setBody("""{"success":true,"result":"# Title"}"""))
             srv.enqueue(MockResponse().setBody("""{"success":true,"result":["https://a","https://b"]}"""))
-            srv.enqueue(MockResponse().setResponseCode(200).setBody("""{"success":false,"errors":[{"code":10000,"message":"Authentication error"}]}"""))
+            srv.enqueue(MockResponse().setBody("""{"success":false,"errors":[{"code":10000,"message":"Authentication error"}]}"""))
+            val w = CloudflareClient(ApifyBackends.CF_WORKER, srv.url("/").toString().replace("http://", "https://").trimEnd('/'), "wk_tok", MusicHttp(open = { java.net.URL(it.toString().replace("https://", "http://")).openConnection() as java.net.HttpURLConnection }))
+            assertTrue(w.render(CfEndpoint.MARKDOWN, "https://example.com/p?x=1").endsWith("# Title"))
+            val wr = srv.takeRequest()
+            assertEquals("/?url=https%3A%2F%2Fexample.com%2Fp%3Fx%3D1", wr.path); assertEquals("Bearer wk_tok", wr.getHeader("Authorization"))
             val base = srv.url("/client/v4/accounts/A/browser-rendering").toString().trimEnd('/')
-            val c = CloudflareClient(base, "cf_tok", MusicHttp())
+            val c = CloudflareClient(ApifyBackends.CF_REST, base, "cf_tok", MusicHttp())
             assertEquals("# Title", c.render(CfEndpoint.MARKDOWN, " https://example.com "))
             val req = srv.takeRequest()
             assertEquals("/client/v4/accounts/A/browser-rendering/markdown", req.path)

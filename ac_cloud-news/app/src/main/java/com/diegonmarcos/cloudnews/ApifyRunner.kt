@@ -42,7 +42,8 @@ class ApifyRunner(
         val input = try { JSONObject(inputJson) } catch (e: Exception) { return fail("bad input", "bad-input") }
         val (base, bearer) = store.resolve() ?: return fail("no token stored for ${store.backend().label}", "no-token")
         val cf = store.backend().cloudflare
-        val url = if (cf) ApifyBackends.cloudflareUrl(base) else ApifyBackends.runSyncUrl(base, actor)
+        val rest = store.cfMode() == ApifyBackends.CF_REST
+        val url = if (cf) (if (rest) ApifyBackends.cloudflareUrl(base) else base) else ApifyBackends.runSyncUrl(base, actor)
         if (!url.startsWith("https://")) return fail("https only", "insecure")
         val ttl = minOf(cacheHours, MAX_TTL_HOURS) * HOUR
         val file = File(cacheDir, sourceId + "-" + EventFetcher.sha1("$url $input") + ".json")
@@ -52,7 +53,7 @@ class ApifyRunner(
             if (age < ttl || (force && age < MIN_FORCE_MS)) return ok(cached, maxOf(1L, age))
         }
         return try {
-            val items = if (cf) cloudflare(url, bearer, input) else post(url, bearer, input.toString())
+            val items = if (cf) cloudflare(url, bearer, input, rest) else post(url, bearer, input.toString())
             val live = JSONObject().put("t", now()).put("items", items)
             try { file.parentFile?.mkdirs(); file.writeText(live.toString()) } catch (e: Exception) { /* a cache that cannot be written is only a miss */ }
             ok(live, 0)
@@ -64,18 +65,20 @@ class ApifyRunner(
     private fun post(url: String, bearer: String, body: String): JSONArray =
         try { JSONArray(postText(url, bearer, body)) } catch (e: org.json.JSONException) { throw IOException("the actor did not answer with a JSON list") }
 
-    private fun postText(url: String, bearer: String, body: String): String {
+    private fun postText(url: String, bearer: String, body: String?): String {
         val c = open(URL(url))
         try {
-            c.requestMethod = "POST"
+            c.requestMethod = if (body == null) "GET" else "POST"
             c.instanceFollowRedirects = false
             c.connectTimeout = 15_000
             c.readTimeout = timeoutMs
-            c.doOutput = true
             c.setRequestProperty("Authorization", "Bearer $bearer")
-            c.setRequestProperty("Content-Type", "application/json")
-            c.setRequestProperty("Accept", "application/json")
-            c.outputStream.use { it.write(body.toByteArray()) }
+            if (body != null) {
+                c.doOutput = true
+                c.setRequestProperty("Content-Type", "application/json")
+                c.setRequestProperty("Accept", "application/json")
+                c.outputStream.use { it.write(body.toByteArray()) }
+            }
             val code = c.responseCode
             if (code !in 200..299) throw IOException(if (code == 401 || code == 403) "HTTP $code: the token / bearer was refused" else "HTTP $code")
             val text = c.inputStream.use { it.readBytes() }
@@ -86,13 +89,15 @@ class ApifyRunner(
         }
     }
 
-    /** #1475 Cloudflare Browser Run renders one page: the first start URL of the input as Markdown, answered as a one-item list [{url, markdown}]. */
-    private fun cloudflare(url: String, bearer: String, input: JSONObject): JSONArray {
+    /** #1475 Cloudflare Browser Run renders one page: the first start URL of the input as Markdown (Worker URL mode, default: GET <worker>/?url=; REST API mode: POST /markdown), answered as a one-item list [{url, markdown}]. */
+    private fun cloudflare(url: String, bearer: String, input: JSONObject, rest: Boolean): JSONArray {
         val target = input.optJSONArray("startUrls")?.optJSONObject(0)?.optString("url").orEmpty().ifBlank { input.optString("url") }
         if (!target.startsWith("https://") && !target.startsWith("http://")) throw IOException("Cloudflare Browser Run needs a page URL in startUrls")
-        val answer = try { JSONObject(postText(url, bearer, JSONObject().put("url", target).toString())) } catch (e: org.json.JSONException) { throw IOException("Cloudflare did not answer with JSON") }
-        if (!answer.optBoolean("success", false)) throw IOException(answer.optJSONArray("errors")?.optJSONObject(0)?.optString("message").orEmpty().ifBlank { "Cloudflare refused the request" })
-        return JSONArray().put(JSONObject().put("url", target).put("markdown", answer.optString("result")))
+        val markdown = try {
+            if (rest) ApifyBackends.cloudflareMarkdown(ApifyBackends.CF_REST, postText(url, bearer, JSONObject().put("url", target).toString()))
+            else postText(ApifyBackends.workerUrl(url, target) ?: throw IOException("the Worker URL must be https"), bearer, null)
+        } catch (e: org.json.JSONException) { throw IOException("Cloudflare did not answer with JSON") }
+        return JSONArray().put(JSONObject().put("url", target).put("markdown", markdown))
     }
 
     private fun ok(c: JSONObject, age: Long) = JSONObject().put("ok", true).put("items", c.optJSONArray("items") ?: JSONArray()).put("age_ms", age)

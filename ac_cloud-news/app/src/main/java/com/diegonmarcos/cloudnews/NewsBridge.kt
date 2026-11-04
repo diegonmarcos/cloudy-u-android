@@ -530,14 +530,14 @@ class NewsBridge(private val ctx: Context) {
     @JavascriptInterface
     fun sourceDecl(): String = declJson
 
-    /** The backend choice for Configs > Apify: {backends:[{id,label}], backend, selfUrl, accountId, hasToken:{id:bool}}. No secret crosses. */
+    /** The backend choice for Configs > Apify: {backends:[{id,label}], backend, selfUrl, accountId, cfMode, workerUrl, hasToken:{id:bool}}. No secret crosses. */
     @JavascriptInterface
     fun apifyConfig(): String {
         val st = apifyStore
         val bs = JSONArray()
         val has = JSONObject()
         st.decl.backends.forEach { bs.put(JSONObject().put("id", it.id).put("label", it.label).put("selfHosted", it.api == null).put("cloudflare", it.cloudflare)); has.put(it.id, st.hasToken(it)) }
-        return JSONObject().put("backends", bs).put("backend", st.backend().id).put("selfUrl", st.selfUrl()).put("accountId", st.accountId().orEmpty()).put("hasToken", has).toString()
+        return JSONObject().put("backends", bs).put("backend", st.backend().id).put("selfUrl", st.selfUrl()).put("accountId", st.accountId().orEmpty()).put("cfMode", st.cfMode()).put("workerUrl", st.workerUrl().orEmpty()).put("hasToken", has).toString()
     }
 
     @JavascriptInterface
@@ -546,6 +546,14 @@ class NewsBridge(private val ctx: Context) {
     @JavascriptInterface
     fun apifySetSelfUrl(url: String): String =
         if (url.isNotBlank() && !url.trim().startsWith("https://")) okErr(false, "the base URL must start with https://") else { apifyStore.setSelfUrl(url); okErr(true, "") }
+
+    /** #1475 Cloudflare Browser Run mode: worker (default) or rest. */
+    @JavascriptInterface
+    fun apifySetCfMode(mode: String): String { apifyStore.setCfMode(mode); return okErr(true, "") }
+
+    /** #1475 Stores (blank clears) the https URL of the deployed edge-md-scraper Worker. */
+    @JavascriptInterface
+    fun apifySetWorkerUrl(url: String): String = if (apifyStore.setWorkerUrl(url)) okErr(true, "") else okErr(false, "the Worker URL must start with https://")
 
     /** #1475 Stores (blank clears) the Cloudflare account id (32 hex). */
     @JavascriptInterface

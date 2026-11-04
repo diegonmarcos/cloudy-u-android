@@ -21,7 +21,7 @@
     var ab = d.apify || {}, backends = {};
     (ab.backends || []).forEach(function (b) {
       if (!b || !b.id || !(/^https:\/\//.test(b.api || '') || /^https:\/\//.test(b.default_url || ''))) return;
-      var o = {}; Object.keys(b).forEach(function (k) { o[k] = b[k]; }); o.label = b.label || b.id; var cf = b.kind === 'cloudflare'; o.token_key = cf ? 'cloudflare.api_token' : b.api ? 'apify.token' : 'apify.self.bearer'; if (cf) o.account_key = 'cloudflare.account_id'; backends[b.id] = o;
+      var o = {}; Object.keys(b).forEach(function (k) { o[k] = b[k]; }); o.label = b.label || b.id; var cf = b.kind === 'cloudflare'; o.token_key = cf ? 'cloudflare.worker_token' : b.api ? 'apify.token' : 'apify.self.bearer'; if (cf) { o.mode = 'worker'; o.rest_token_key = 'cloudflare.api_token'; o.account_key = 'cloudflare.account_id'; } backends[b.id] = o;
     });
     if (!backends.cloud) errors.push('backends: Apify Cloud missing');
     var def = backends[ab.default_backend] ? ab.default_backend : 'cloud';
@@ -254,6 +254,15 @@
   /* deps: { fetch, secret(name) -> Promise<string>, backend: declaration entry, apifyToken: Promise<string> } */
   /* Cloudflare Browser Run: render the ref page as Markdown on Cloudflare's headless browser; the answer is one item {url, markdown} */
   function cloudflareRun(e, deps, token) {
+    if (deps.backend.mode !== 'rest') {
+      /* Worker URL mode (default): the owner's edge-md-scraper answers the Markdown itself */
+      var w = String(deps.backend.worker_url || '').trim().replace(/\/+$/, '');
+      if (!/^https:\/\//.test(w)) return Promise.reject(new Error('no Worker URL (Configs > Apify)'));
+      return deps.fetch(w + '/?url=' + encodeURIComponent(String(e.ref)), { headers: { Authorization: 'Bearer ' + token } }).then(function (res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.text();
+      }).then(function (md) { return [{ url: String(e.ref), markdown: md }]; });
+    }
     return deps.secret(deps.backend.account_key).then(function (acct) {
       if (!/^[0-9a-fA-F]{32}$/.test(String(acct || '').trim())) throw new Error('no Cloudflare account id (Configs > Apify)');
       var url = deps.backend.api + '/accounts/' + String(acct).trim() + '/browser-rendering/markdown';
@@ -349,6 +358,7 @@
   function makeDeps(decl, secrets) {
     var s = storage(), choice = s && s.getItem('cmc_apify.backend');
     var backend = Object.assign({}, backendOf(decl, choice)); backend.api = apiBase(backend, s && s.getItem('cmc_apify.self.url'));
+    if (backend.kind === 'cloudflare') { backend.mode = (s && s.getItem('cmc_cloudflare.mode')) === 'rest' ? 'rest' : 'worker'; backend.worker_url = (s && s.getItem('cmc_cloudflare.worker_url')) || ''; if (backend.mode === 'rest') backend.token_key = backend.rest_token_key; }
     return { fetch: function (u, o) { return root.fetch(u, o); }, secret: function (n) { return secrets.get(n); }, backend: backend, apifyToken: function () { return secrets.get(backend.token_key); } };
   }
   function syncNow(decl, secrets, music) {

@@ -132,13 +132,15 @@
   function renderSpecial(id, ctx) {
     var d = ctx.msrc, n = '<p class="cfg__note">';
     if (id === 'apify') {
-      var b = S.backendOf(d, ctx.backend), keys = Object.keys(d.backends);
-      return '<section class="cfg__sec" data-tsec="apify"><h3>Apify</h3>' + n + 'Actors run in Apify\'s cloud and bill your Apify account, on your self-hosted Cloudy Crawlee, or on Cloudflare Browser Run (account id plus API token). The token is kept encrypted on this phone, one per backend.</p>' +
+      var b = S.backendOf(d, ctx.backend), keys = Object.keys(d.backends), cf = b.kind === 'cloudflare', rest = cf && ctx.cfMode === 'rest', tkey = rest ? b.rest_token_key : b.token_key;
+      return '<section class="cfg__sec" data-tsec="apify"><h3>Apify</h3>' + n + 'Actors run in Apify\'s cloud and bill your Apify account, on your self-hosted Cloudy Crawlee, or on Cloudflare Browser Run (your edge-md-scraper Worker URL plus its bearer, or the REST API with an account id plus API token). The token is kept encrypted on this phone, one per backend.</p>' +
         '<label>Backend<select data-apify-backend>' + keys.map(function (k) { return '<option value="' + k + '"' + (d.backends[k] === b ? ' selected' : '') + '>' + esc(d.backends[k].label) + (k === d.default_backend ? ' (default)' : '') + '</option>'; }).join('') + '</select></label>' +
         (b.api ? '' : '<label>Runner URL (https, empty = ' + esc(b.default_url) + ')<input data-self-url value="' + esc(ctx.selfUrl || '') + '" autocomplete="off"></label>') +
-        (b.account_key ? '<label>Account id (' + (ctx.has(b.account_key) ? 'saved, encrypted' : 'not set') + ')<input type="password" data-secret="' + esc(b.account_key) + '" placeholder="32 hex characters" autocomplete="off"></label>' : '') +
-        '<label>' + esc(b.label) + (b.api ? ' API token (' : ' bearer (') + (ctx.has(b.token_key) ? 'saved, encrypted' : 'not set') + ')<input type="password" data-secret="' + esc(b.token_key) + '" placeholder="Paste to replace" autocomplete="off"></label>' +
-        '<button type="button" class="btn" data-secret-clear="' + esc(b.token_key) + '">Remove token</button><div class="cfg__umsg" role="status"></div></section>';
+        (cf ? '<label>Mode<select data-cf-mode><option value="worker"' + (rest ? '' : ' selected') + '>Worker URL (default)</option><option value="rest"' + (rest ? ' selected' : '') + '>REST API</option></select></label>' : '') +
+        (cf && !rest ? '<label>Worker URL (https, your edge-md-scraper)<input data-cf-worker value="' + esc(ctx.workerUrl || '') + '" autocomplete="off"></label>' : '') +
+        (rest ? '<label>Account id (' + (ctx.has(b.account_key) ? 'saved, encrypted' : 'not set') + ')<input type="password" data-secret="' + esc(b.account_key) + '" placeholder="32 hex characters" autocomplete="off"></label>' : '') +
+        '<label>' + esc(b.label) + (cf ? (rest ? ' API token (' : ' Worker bearer (') : b.api ? ' API token (' : ' bearer (') + (ctx.has(tkey) ? 'saved, encrypted' : 'not set') + ')<input type="password" data-secret="' + esc(tkey) + '" placeholder="Paste to replace" autocomplete="off"></label>' +
+        '<button type="button" class="btn" data-secret-clear="' + esc(tkey) + '">Remove token</button><div class="cfg__umsg" role="status"></div></section>';
     }
     if (id === 'general') {
       return '<section class="cfg__sec" data-tsec="general"><h3>Playlist sync</h3>' + n + 'Sync is on demand (Library, Sync now). A schedule also syncs when the app is opened and the last sync is older than the interval.</p>' +
@@ -198,8 +200,8 @@
   function bootConfigs(doc) {
     var main = doc.querySelector('main'), chips = doc.querySelector('.chips');
     var hash = (root.location.hash || '').slice(1), tab = tabSpec(hash) ? hash : 'music', decl = null, users = loadUsers();
-    var msrc = null, sub = 'apify', secrets = S.SecretStore(store()), BK = 'cmc_apify.backend', UK = 'cmc_apify.self.url';
-    function ctx() { return msrc && { msrc: msrc, srcCfg: S.loadSourceCfg(), has: function (n) { return secrets.has(n); }, backend: getItem(BK) || msrc.default_backend, selfUrl: getItem(UK) || '', sync: S.loadSync(), sub: sub }; }
+    var msrc = null, sub = 'apify', secrets = S.SecretStore(store()), BK = 'cmc_apify.backend', UK = 'cmc_apify.self.url', CM = 'cmc_cloudflare.mode', CW = 'cmc_cloudflare.worker_url';
+    function ctx() { return msrc && { msrc: msrc, srcCfg: S.loadSourceCfg(), has: function (n) { return secrets.has(n); }, backend: getItem(BK) || msrc.default_backend, selfUrl: getItem(UK) || '', cfMode: getItem(CM) === 'rest' ? 'rest' : 'worker', workerUrl: getItem(CW) || '', sync: S.loadSync(), sub: sub }; }
     chips.innerHTML = TABS.map(function (t) { return '<button class="chip" data-chip="' + t.id + '" aria-pressed="' + (t.id === tab) + '">' + t.icon + ' ' + esc(t.label) + '</button>'; }).join('');
     function draw() {
       main.innerHTML = renderConfigs(tab, loadTab(tab), decl, users, ctx());
@@ -219,6 +221,8 @@
       if (i.hasAttribute('data-sf')) { srcChange(i); return; }
       if (i.hasAttribute('data-sched')) { var sy = S.loadSync(); sy.schedule = i.value; S.saveSync(sy); return; }
       if (i.hasAttribute('data-self-url')) { var u = i.value.trim(); if (u && !/^https:\/\//.test(u)) { note('The runner URL must start with https://'); return; } setItem(UK, u); note('Saved.'); return; }
+      if (i.hasAttribute('data-cf-mode')) { setItem(CM, i.value); draw(); return; }
+      if (i.hasAttribute('data-cf-worker')) { var wu = i.value.trim(); if (wu && !/^https:\/\//.test(wu)) { note('The Worker URL must start with https://'); return; } setItem(CW, wu); note('Saved.'); return; }
       if (i.hasAttribute('data-apify-backend')) { setItem(BK, i.value); draw(); return; }
       if (i.hasAttribute('data-secret')) {
         var tok = S.validToken(i.value); if (!tok) { note('That does not look like a token (8+ characters, no spaces).'); return; }

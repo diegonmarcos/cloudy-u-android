@@ -78,8 +78,10 @@
         "apps": ["cloud-browser", "cloud-media-center", "cloud-news"],
         "containers": []
       },
-      "auth": "Account id plus an API token with Browser Rendering permission, sent as a bearer token",
+      "auth": "Worker URL mode (default): bearer token of the owner Worker edge-md-scraper (secret SCRAPER_TOKEN on the Worker). REST API mode: account id plus an API token with Browser Rendering permission, sent as a bearer token",
       "secrets": [
+        {"name": "cloudflare.worker_url", "kind": "store apify_tokens"},
+        {"name": "cloudflare.worker_token", "kind": "store apify_tokens"},
         {"name": "cloudflare.account_id", "kind": "store apify_tokens"},
         {"name": "cloudflare.api_token", "kind": "store apify_tokens"}
       ]

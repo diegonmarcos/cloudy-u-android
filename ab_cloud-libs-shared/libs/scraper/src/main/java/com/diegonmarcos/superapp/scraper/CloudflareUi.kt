@@ -38,18 +38,15 @@ import org.json.JSONObject
 /** #1475 the Cloudflare Browser Run endpoints offered as chips: id (the path under browser-rendering) and label. */
 enum class CfEndpoint(val path: String, val label: String) { MARKDOWN("markdown", "Markdown"), CONTENT("content", "HTML"), LINKS("links", "Links") }
 
-/** #1475 Cloudflare Browser Run (browser-rendering REST API): POST <base>/<endpoint> {"url": ...}, bearer API token, answer {success, result, errors}. */
-class CloudflareClient(private val base: String, private val token: String, private val http: MusicHttp = MusicHttp()) {
-    fun render(endpoint: CfEndpoint, url: String): String = result(http.postJson(ApifyBackends.cloudflareUrl(base, endpoint.path), JSONObject().put("url", url.trim()), mapOf("Authorization" to "Bearer $token")))
-
-    companion object {
-        /** The `result` of an answer as text (a list becomes one line per entry); an unsuccessful answer throws its first error message. */
-        fun result(body: String): String {
-            val o = JSONObject(body)
-            if (!o.optBoolean("success", false)) throw java.io.IOException(o.optJSONArray("errors")?.optJSONObject(0)?.optString("message").orEmpty().ifBlank { "Cloudflare refused the request" })
-            val r = o.opt("result")
-            return if (r is org.json.JSONArray) (0 until r.length()).joinToString("\n") { r.optString(it) } else r?.toString().orEmpty()
+/** #1475 Cloudflare Browser Run: [mode] worker = GET <worker url>/?url= (the owner's edge-md-scraper, Markdown body); rest = POST <base>/<endpoint> {"url"} (browser-rendering REST API). Bearer token either way. */
+class CloudflareClient(private val mode: String, private val base: String, private val token: String, private val http: MusicHttp = MusicHttp()) {
+    fun render(endpoint: CfEndpoint, url: String): String {
+        val auth = mapOf("Authorization" to "Bearer $token")
+        if (mode == ApifyBackends.CF_WORKER) {
+            val u = ApifyBackends.workerUrl(base, url) ?: throw java.io.IOException("The Worker URL must start with https://")
+            return ApifyBackends.cloudflareMarkdown(mode, http.get(u, auth))
         }
+        return ApifyBackends.cloudflareMarkdown(mode, http.postJson(ApifyBackends.cloudflareUrl(base, endpoint.path), JSONObject().put("url", url.trim()), auth))
     }
 }
 
@@ -61,6 +58,8 @@ fun CloudflarePage(c: ThemeColors) {
     val store = remember { ApifyBackendStore(EncryptedApifyKv(ctx)) }
     val cf = remember { store.decl.backends.first { it.cloudflare } }
     var rev by remember { mutableStateOf(0) }
+    var mode by remember { mutableStateOf(store.cfMode()) }
+    var worker by remember { mutableStateOf(store.workerUrl().orEmpty()) }
     var account by remember { mutableStateOf(store.accountId().orEmpty()) }
     var tokenText by remember { mutableStateOf("") }
     var endpoint by remember { mutableStateOf(CfEndpoint.MARKDOWN) }
@@ -74,7 +73,7 @@ fun CloudflarePage(c: ThemeColors) {
         val r = store.resolve(cf) ?: run { message = "Add the account id and the API token first"; return }
         message = "Rendering…"
         scope.launch {
-            runCatching { withContext(Dispatchers.IO) { CloudflareClient(r.first, r.second).render(endpoint, url) } }
+            runCatching { withContext(Dispatchers.IO) { CloudflareClient(mode, r.first, r.second).render(endpoint, url) } }
                 .onSuccess { output = it; message = "${it.length} characters" }.onFailure { message = "Cloudflare: ${it.message}" }
         }
     }
@@ -82,23 +81,28 @@ fun CloudflarePage(c: ThemeColors) {
         item(key = "notice") { KitStoreRowLine { KitStoreCaption(CF_NOTICE, color = c.inkDim, modifier = Modifier.testTag("cloudflare:notice")) } }
         item(key = "account") {
             Column(Modifier.fillMaxWidth().padding(horizontal = KitStoreRow.padH)) {
-                OutlinedTextField(account, { account = it }, label = { Text("Account id (32 hex)") }, singleLine = true, colors = colors, modifier = Modifier.fillMaxWidth().testTag("cloudflare:account"))
-                OutlinedTextField(tokenText, { tokenText = it }, label = { Text(if (connected) "API token (stored encrypted, set)" else "API token (stored encrypted)") }, singleLine = true, colors = colors,
+                Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
+                    for (m in CF_MODES) Chip(m.second, mode == m.first, c, "cloudflare:mode:${m.first}") { mode = m.first; store.setCfMode(m.first); rev++ }
+                }
+                if (mode == ApifyBackends.CF_WORKER) OutlinedTextField(worker, { worker = it }, label = { Text("Worker URL (https, your edge-md-scraper)") }, singleLine = true, colors = colors, modifier = Modifier.fillMaxWidth().testTag("cloudflare:worker"))
+                else OutlinedTextField(account, { account = it }, label = { Text("Account id (32 hex)") }, singleLine = true, colors = colors, modifier = Modifier.fillMaxWidth().testTag("cloudflare:account"))
+                OutlinedTextField(tokenText, { tokenText = it }, label = { Text((if (mode == ApifyBackends.CF_WORKER) "Worker bearer token" else "API token") + (if (connected) " (stored encrypted, set)" else " (stored encrypted)")) }, singleLine = true, colors = colors,
                     modifier = Modifier.fillMaxWidth().testTag("cloudflare:token"))
                 Row {
                     Button(onClick = {
-                        if (!store.setAccountId(account)) message = "That is not a Cloudflare account id"
+                        if (mode == ApifyBackends.CF_WORKER && !store.setWorkerUrl(worker)) message = "The Worker URL must start with https://"
+                        else if (mode == ApifyBackends.CF_REST && !store.setAccountId(account)) message = "That is not a Cloudflare account id"
                         else if (tokenText.isNotBlank() && !store.setToken(cf, tokenText)) message = "A token has no spaces"
                         else { tokenText = ""; rev++; message = "Saved" }
-                    }, enabled = account.isNotBlank() || tokenText.isNotBlank(), colors = ButtonDefaults.buttonColors(containerColor = c.accent), modifier = Modifier.testTag("cloudflare:save")) { Text("Save") }
-                    if (connected) TextButton(onClick = { store.setToken(cf, ""); store.setAccountId(""); account = ""; rev++ }, modifier = Modifier.testTag("cloudflare:clear")) { Text("Remove", color = c.accent) }
+                    }, enabled = (if (mode == ApifyBackends.CF_WORKER) worker else account).isNotBlank() || tokenText.isNotBlank(), colors = ButtonDefaults.buttonColors(containerColor = c.accent), modifier = Modifier.testTag("cloudflare:save")) { Text("Save") }
+                    if (connected) TextButton(onClick = { store.setToken(cf, ""); rev++ }, modifier = Modifier.testTag("cloudflare:clear")) { Text("Remove", color = c.accent) }
                     TextButton(onClick = { store.setBackend(cf.id); rev++; message = "Cloudflare Browser Run is now the scraper backend" }, enabled = connected, modifier = Modifier.testTag("cloudflare:use")) { Text("Use as backend", color = c.accent) }
                 }
             }
         }
         item(key = "render") {
             Column(Modifier.fillMaxWidth().padding(horizontal = KitStoreRow.padH)) {
-                Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
+                if (mode == ApifyBackends.CF_REST) Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
                     for (e in CfEndpoint.entries) Chip(e.label, endpoint == e, c, "cloudflare:endpoint:${e.name}") { endpoint = e }
                 }
                 OutlinedTextField(url, { url = it }, label = { Text("Page URL") }, singleLine = true, colors = colors, modifier = Modifier.fillMaxWidth().testTag("cloudflare:url"))
@@ -110,4 +114,5 @@ fun CloudflarePage(c: ThemeColors) {
     }
 }
 
-private const val CF_NOTICE = "Cloudflare Browser Run renders a page on Cloudflare's headless browser (REST API, billed to your Cloudflare account). Apify stays the default backend."
+private val CF_MODES = listOf(ApifyBackends.CF_WORKER to "Worker URL", ApifyBackends.CF_REST to "REST API")
+private const val CF_NOTICE = "Cloudflare Browser Run renders a page on Cloudflare's headless browser and answers Markdown: through your deployed edge-md-scraper Worker (default) or the REST API with an account id and token. Apify stays the default backend."
