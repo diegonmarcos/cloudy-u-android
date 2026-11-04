@@ -1,0 +1,284 @@
+{
+ "_doc": "#1470 THE source declaration of Cloud News: one row per source with its area (media|events|news), method (apify|direct), the Apify actor id for method apify, an enabled flag, an optional input template ({city_slug} {country_slug} {country} {tld} {from_date} {to_date} ... as events-core.js fill()) and `ref`, the row of the older data file (sources.json, media.json, event-finder.json) that still holds the protocol details. The fetchers read it: events-core.js runFinder routes each events ticketer through sources-decl.js route(); NewsBridge.apifyRun runs ONLY an actor declared here (or a user override of the same shape) on the chosen backend; Configs > Media | Events | News list it as Apify and Direct subsections. enabled=false hides a source and keeps it from being fetched. Actor ids are the declared defaults and can be overridden per source in Configs; confirm them in the Apify Store. Flip a source to method direct to use its legacy fetch block in event-finder.json.",
+ "version": 1,
+ "apify": {
+  "_doc": "The backend actors run on (shared store libs:apify): both speak the Apify API shape (/v2/acts/<user~name>/run-sync-get-dataset-items, bearer). Default Apify Cloud; the self-hosted Cloudy Crawlee (container crawlee-cloud in aa_cloud-superapp/data/cloud_services.json, mesh only) is opt-in with its own base URL and fleet bearer, both stored encrypted.",
+  "default_backend": "cloud",
+  "backends": [
+   {
+    "id": "cloud",
+    "label": "Apify Cloud",
+    "api": "https://api.apify.com/v2"
+   },
+   {
+    "id": "selfhosted",
+    "label": "Self-hosted Cloudy Crawlee",
+    "default_url": "https://crawlee-cloud.mesh.diegonmarcos.com"
+   }
+  ],
+  "timeout_s": 120,
+  "cache_hours": 6
+ },
+ "sources": [
+  {
+   "id": "youtube",
+   "area": "media",
+   "label": "YouTube",
+   "method": "direct",
+   "enabled": true,
+   "how": "Per-channel Atom feeds, 8 channels (data/media.json)",
+   "ref": "media.json"
+  },
+  {
+   "id": "tiktok",
+   "area": "media",
+   "label": "TikTok",
+   "method": "apify",
+   "enabled": false,
+   "how": "Videos of a profile or hashtag via an Apify actor (not wired to the Media tab yet)",
+   "actor": "clockworks/tiktok-scraper"
+  },
+  {
+   "id": "instagram",
+   "area": "media",
+   "label": "Instagram Reels",
+   "method": "apify",
+   "enabled": false,
+   "how": "Reels of a public profile via an Apify actor (not wired to the Media tab yet)",
+   "actor": "apify/instagram-scraper"
+  },
+  {
+   "id": "podcasts",
+   "area": "media",
+   "label": "Podcasts (RSS)",
+   "method": "direct",
+   "enabled": false,
+   "how": "Plain podcast RSS feeds (declared, no fetcher yet)"
+  },
+  {
+   "id": "ticketmaster",
+   "area": "events",
+   "label": "Ticketmaster",
+   "method": "apify",
+   "enabled": true,
+   "how": "Apify actor reads the public city listing",
+   "actor": "lexis-solutions/ticketmaster-scraper",
+   "input": {
+    "startUrls": [
+     {
+      "url": "https://www.ticketmaster.com/discover/concerts/{city_slug}"
+     }
+    ],
+    "maxItems": 100
+   },
+   "ref": "ticketmaster"
+  },
+  {
+   "id": "skiddle",
+   "area": "events",
+   "label": "Skiddle",
+   "method": "apify",
+   "enabled": true,
+   "how": "Apify actor reads the public listing",
+   "actor": "lexis-solutions/skiddle-scraper",
+   "input": {
+    "startUrls": [
+     {
+      "url": "https://www.skiddle.com/whats-on/{city_slug}/"
+     }
+    ],
+    "maxItems": 100
+   },
+   "ref": "skiddle"
+  },
+  {
+   "id": "ra",
+   "area": "events",
+   "label": "Resident Advisor",
+   "method": "apify",
+   "enabled": true,
+   "how": "Apify actor reads the public events of the area",
+   "actor": "mscraper/resident-advisor-scraper",
+   "input": {
+    "startUrls": [
+     {
+      "url": "https://ra.co/events/{country}/{city_slug}"
+     }
+    ],
+    "maxItems": 100
+   },
+   "ref": "ra"
+  },
+  {
+   "id": "eventbrite",
+   "area": "events",
+   "label": "Eventbrite",
+   "method": "apify",
+   "enabled": true,
+   "how": "Apify actor reads the city page",
+   "actor": "aitorsm/eventbrite",
+   "input": {
+    "startUrls": [
+     {
+      "url": "https://www.eventbrite.com/d/{country_slug}--{city_slug}/events/"
+     }
+    ],
+    "maxItems": 100
+   },
+   "ref": "eventbrite"
+  },
+  {
+   "id": "dice",
+   "area": "events",
+   "label": "Dice",
+   "method": "apify",
+   "enabled": true,
+   "how": "Apify actor reads the city page",
+   "actor": "lexis-solutions/dice-fm-scraper",
+   "input": {
+    "startUrls": [
+     {
+      "url": "https://dice.fm/browse/{city_slug}"
+     }
+    ],
+    "maxItems": 100
+   },
+   "ref": "dice"
+  },
+  {
+   "id": "eventim",
+   "area": "events",
+   "label": "Eventim",
+   "method": "apify",
+   "enabled": true,
+   "how": "Apify actor reads the city page",
+   "actor": "lexis-solutions/eventim-scraper",
+   "input": {
+    "startUrls": [
+     {
+      "url": "https://www.eventim.{tld}/city/{city_slug}/"
+     }
+    ],
+    "maxItems": 100
+   },
+   "ref": "eventim"
+  },
+  {
+   "id": "ics",
+   "area": "events",
+   "label": "Public calendars (ICS)",
+   "method": "direct",
+   "enabled": true,
+   "how": "Public ICS feeds synced on the phone (data/events.json)",
+   "ref": "ics"
+  },
+  {
+   "id": "gdelt-self",
+   "area": "news",
+   "label": "GDELT (self-hosted)",
+   "method": "direct",
+   "enabled": true,
+   "how": "Self-hosted GDELT proxy",
+   "ref": "sources.json"
+  },
+  {
+   "id": "ntfy-self",
+   "area": "news",
+   "label": "Cloud Feeds (ntfy)",
+   "method": "direct",
+   "enabled": true,
+   "how": "RSS / Atom fetched straight from the handset via the mesh gateway",
+   "ref": "sources.json"
+  },
+  {
+   "id": "google-news",
+   "area": "news",
+   "label": "Google News (search)",
+   "method": "direct",
+   "enabled": true,
+   "how": "RSS / Atom fetched straight from the handset",
+   "ref": "sources.json"
+  },
+  {
+   "id": "google-top",
+   "area": "news",
+   "label": "Google News (top stories)",
+   "method": "direct",
+   "enabled": true,
+   "how": "RSS / Atom fetched straight from the handset",
+   "ref": "sources.json"
+  },
+  {
+   "id": "bbc-world",
+   "area": "news",
+   "label": "BBC",
+   "method": "direct",
+   "enabled": true,
+   "how": "RSS / Atom fetched straight from the handset",
+   "ref": "sources.json"
+  },
+  {
+   "id": "dw-en",
+   "area": "news",
+   "label": "DW (English)",
+   "method": "direct",
+   "enabled": true,
+   "how": "RSS / Atom fetched straight from the handset",
+   "ref": "sources.json"
+  },
+  {
+   "id": "guardian-world",
+   "area": "news",
+   "label": "The Guardian",
+   "method": "direct",
+   "enabled": true,
+   "how": "RSS / Atom fetched straight from the handset",
+   "ref": "sources.json"
+  },
+  {
+   "id": "aljazeera",
+   "area": "news",
+   "label": "Al Jazeera",
+   "method": "direct",
+   "enabled": true,
+   "how": "RSS / Atom fetched straight from the handset",
+   "ref": "sources.json"
+  },
+  {
+   "id": "tagesschau",
+   "area": "news",
+   "label": "Tagesschau",
+   "method": "direct",
+   "enabled": true,
+   "how": "RSS / Atom fetched straight from the handset",
+   "ref": "sources.json"
+  },
+  {
+   "id": "spiegel",
+   "area": "news",
+   "label": "Der Spiegel",
+   "method": "direct",
+   "enabled": true,
+   "how": "RSS / Atom fetched straight from the handset",
+   "ref": "sources.json"
+  },
+  {
+   "id": "hackernews",
+   "area": "news",
+   "label": "Hacker News",
+   "method": "direct",
+   "enabled": true,
+   "how": "RSS / Atom fetched straight from the handset",
+   "ref": "sources.json"
+  },
+  {
+   "id": "x-news",
+   "area": "news",
+   "label": "X / Twitter news",
+   "method": "apify",
+   "enabled": false,
+   "how": "Posts of followed accounts via an Apify actor (declared, no fetcher yet)",
+   "actor": "apidojo/tweet-scraper"
+  }
+ ]
+}

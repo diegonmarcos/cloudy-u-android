@@ -1,5 +1,5 @@
 /* Events tab UI: city picker, category / When / ticketer filters, Calendar | List | Cards views, and the
-   Configs > Events section (per-ticketer on/off + user-entered API key). All logic is events-core.js; all lists
+   Configs > Events switches (the rows come from sources-ui.js). All logic is events-core.js; all lists
    come from data/event-finder.json via NewsBridge.eventFinder(). Uses news.html's globals: esc, Api, bindSwipeCard,
    flyOutCard, imagesEnabled, fmtEventTime, errorBanner. */
 var EventsUI = (function () {
@@ -66,6 +66,8 @@ var EventsUI = (function () {
         S.loading = true; renderStatus();
         C.runFinder(CFG, prefs, {
             now: Date.now(), hasKey: hasKey, engine: engineRows,
+            route: function (id) { return SourcesUI.route('events', id); },
+            apify: function (id, actor, input, o) { return SourcesUI.apifyRun(id, actor, input, { cache_hours: o && o.cache_hours, force: force }); },
             fetch: function (id, req) { return fetchVia(id, req, force); }
         }).then(function (res) {
             if (token !== S.token) return;
@@ -273,23 +275,10 @@ var EventsUI = (function () {
 
     /* ---- Configs > Events -------------------------------------------------------------------------------- */
     function renderConfigs() {
-        var m = $('ef-configs-mount'); if (!m || !loadCfg()) return;
-        m.innerHTML = CFG.ticketers.map(function (t) {
-            var needsKey = t.auth && t.auth.type === 'key', has = needsKey && hasKey(t.id);
-            return '<div class="ef-cfg-row" data-t="' + esc(t.id) + '"><div class="ef-cfg-top"><span><span class="ef-cfg-name">' + esc(t.label) + '</span><span class="ef-cfg-kind">' + esc(t.fetch.kind) + '</span></span>' +
-                '<label class="switch"><input type="checkbox" data-on="' + esc(t.id) + '"' + (prefs.sources[t.id] ? ' checked' : '') + '><span class="slider"></span></label></div>' +
-                '<div class="ef-cfg-note">' + esc(t.fetch.how) + '. ' + esc(t.note || '') + (t.terms_url ? ' <a href="#" data-terms="' + esc(t.terms_url) + '" style="text-decoration:underline">Terms</a>' : '') + '</div>' +
-                (needsKey ? '<div class="ef-cfg-key"><input type="password" autocomplete="off" placeholder="' + esc(t.auth.label) + (has ? ' (saved, encrypted)' : '') + '" data-key="' + esc(t.id) + '"><button type="button" data-savekey="' + esc(t.id) + '">Save</button>' +
-                    (has ? '<button type="button" class="quiet" data-clearkey="' + esc(t.id) + '">Clear</button>' : '') + '</div>' +
-                    '<div class="ef-cfg-note">' + (has ? '<span class="ef-cfg-ok">Key stored encrypted on this device.</span> ' : '') + '<a href="#" data-terms="' + esc(t.auth.help_url) + '" style="text-decoration:underline">Get a key</a></div>' : '') + '</div>';
-        }).join('');
-        m.onclick = function (ev) {
-            var a = ev.target.closest('[data-terms]'); if (a) { ev.preventDefault(); try { Api.openExternal(a.dataset.terms); } catch (e) { /* none */ } return; }
-            var s = ev.target.closest('[data-savekey]');
-            if (s) { var inp = m.querySelector('[data-key="' + s.dataset.savekey + '"]'); if (inp.value.trim()) { bcall('eventSetKey', [s.dataset.savekey, inp.value.trim()]); inp.value = ''; renderConfigs(); } return; }
-            var c = ev.target.closest('[data-clearkey]'); if (c) { bcall('eventSetKey', [c.dataset.clearkey, '']); renderConfigs(); }
-        };
-        m.onchange = function (ev) { var i = ev.target.closest('[data-on]'); if (i) { prefs.sources[i.dataset.on] = i.checked; persist(); S.loaded = false; } };
+        if (!loadCfg()) return;
+        // #1470 the per-source switches of Events are the finder prefs; the list itself (Apify | Direct) is data/source-decl.json
+        SourcesUI.hooks.events = { get: function (id) { return !!prefs.sources[id]; }, set: function (id, on) { prefs.sources[id] = on; persist(); S.loaded = false; } };
+        SourcesUI.render('events', 'ef-configs-mount');
     }
 
     /* ---- entry points ------------------------------------------------------------------------------------ */
@@ -299,5 +288,5 @@ var EventsUI = (function () {
         renderChrome();
         if (!S.loaded) load(false); else render(true);
     }
-    return { open: open, render: function () { if (CFG && $('ef-root')) { if (S.loaded) render(); else open(); } }, renderConfigs: renderConfigs };
+    return { open: open, render: function () { if (CFG && $('ef-root')) { if (S.loaded) render(); else open(); } }, renderConfigs: renderConfigs, ramp: loadCfg };
 })();

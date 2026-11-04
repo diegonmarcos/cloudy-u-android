@@ -320,7 +320,39 @@
         }).filter(function (e) { return e.start; });
     }
 
-    var PARSERS = { ticketmaster: parseTicketmaster, skiddle: parseSkiddle, ra: parseRA, jsonld: parseJsonLd, engine: parseEngine };
+    // #1470 the dataset items of any Apify actor (the actor's own field names vary): the first present of each common name wins.
+    function pick(o, names) { for (var i = 0; i < names.length; i++) { var v = o[names[i]]; if (v != null && v !== '') return v; } return ''; }
+    function nameOf(x) { x = ldFirst(x); return !x ? '' : typeof x === 'string' ? x : x.name || x.title || ''; }
+    function parseApify(items, ctx) {
+        var src = (ctx && ctx.ticketer && ctx.ticketer.id) || 'apify';
+        return (Array.isArray(items) ? items : []).map(function (e) {
+            if (!e || typeof e !== 'object') return null;
+            var title = pick(e, ['name', 'title', 'eventName', 'event_name']);
+            var raw = pick(e, ['startDate', 'start_date', 'startsAt', 'start', 'dateStart', 'date', 'dateTime', 'datetime']);
+            if (!title || !raw) return null;
+            var dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(raw);
+            var start = typeof raw === 'number' ? raw : dateOnly ? parseDateKey(raw) : Date.parse(raw);
+            if (isNaN(start)) return null;
+            var endRaw = pick(e, ['endDate', 'end_date', 'endsAt', 'end', 'dateEnd']);
+            var end = endRaw && !/^\d{4}-\d{2}-\d{2}$/.test(endRaw) ? Date.parse(endRaw) || 0 : 0;
+            var url = pick(e, ['url', 'link', 'eventUrl', 'event_url', 'ticketUrl']);
+            return { id: src + ':' + (pick(e, ['id', '@id', 'eventId']) || url || slugify(title) + '-' + start), source: src, title: String(title), start: start, end: end, allDay: dateOnly,
+                venue: nameOf(pick(e, ['venue', 'venueName', 'location', 'place'])), city: nameOf(pick(e, ['city', 'addressLocality'])),
+                image: ldImage(pick(e, ['image', 'imageUrl', 'image_url', 'thumbnail', 'flyer'])), url: String(url),
+                price: String(pick(e, ['price', 'priceRange', 'minPrice'])), categoryHint: '', genre: String(pick(e, ['category', 'genre', 'type'])) };
+        }).filter(Boolean);
+    }
+
+    // The input of an Apify actor run: the declared template with the city / range placeholders filled. null = not coverable here.
+    function apifyInput(ticketer, template, city, range, cfg, categories) {
+        if (!covers(ticketer, city)) return null;
+        var vars = requestVars(city, range, 'all', ticketer, categories, (cfg && cfg.radius_km) || 25);
+        var json = JSON.stringify(template || {});
+        if (/\{tld\}/.test(json) && !vars.tld) return null;
+        return fill(template || {}, vars);
+    }
+
+    var PARSERS = { apify: parseApify, ticketmaster: parseTicketmaster, skiddle: parseSkiddle, ra: parseRA, jsonld: parseJsonLd, engine: parseEngine };
 
     /* ---- prefs --------------------------------------------------------------------------------------------- */
     var PREFS_KEY = 'ef.prefs', SKIP_KEY = 'ef.skipped';
@@ -378,6 +410,18 @@
             function fail(state, msg) { st.state = state; st.message = msg; }
             return Promise.resolve().then(function () {
                 if (t.fetch.kind === 'engine') return done(PARSERS.engine(deps.engine(range.from, range.to)));
+                var rt = deps.route ? deps.route(t.id) : null;
+                if (rt && rt.skip) return fail('skipped', rt.skip);
+                if (rt && rt.method === 'apify') {
+                    var input = apifyInput(t, rt.input, city, range, cfg.defaults, cfg.categories);
+                    if (!input) return fail('skipped', 'not covered in ' + city.name);
+                    return deps.apify(t.id, rt.actor, input, { cache_hours: t.cache_hours }).then(function (r) {
+                        if (!r.ok) return fail(r.code === 'no-token' ? 'needs-key' : 'error', r.code === 'no-token' ? 'Add your Apify token in Configs > Apify' : (r.error || 'Apify run failed'));
+                        st.age_ms = r.age_ms || 0;
+                        if (st.age_ms > 0) st.state = 'cached';
+                        done(parseApify(r.items, { ticketer: t, city: city }));
+                    });
+                }
                 var req = buildRequest(t, city, range, 'all', cfg.defaults, cfg.categories);
                 if (req.skip) return fail('skipped', req.skip);
                 if (t.auth && t.auth.type === 'key' && !deps.hasKey(t.id)) return fail('needs-key', 'Add your ' + t.label + ' key in Configs');
@@ -408,7 +452,7 @@
         whenRange: whenRange, rangeFor: rangeFor, searchCities: searchCities, cityById: cityById, classify: classify, categoryParam: categoryParam,
         dedupe: dedupe, applyFilters: applyFilters, countByCategory: countByCategory, fill: fill, covers: covers, buildRequest: buildRequest,
         robotsAllows: robotsAllows, PARSERS: PARSERS, parseTicketmaster: parseTicketmaster, parseSkiddle: parseSkiddle, parseRA: parseRA,
-        parseJsonLd: parseJsonLd, parseEngine: parseEngine, defaultPrefs: defaultPrefs, loadPrefs: loadPrefs, savePrefs: savePrefs,
+        parseJsonLd: parseJsonLd, parseApify: parseApify, apifyInput: apifyInput, parseEngine: parseEngine, defaultPrefs: defaultPrefs, loadPrefs: loadPrefs, savePrefs: savePrefs,
         loadSkipped: loadSkipped, saveSkipped: saveSkipped, monthGrid: monthGrid, groupByDay: groupByDay, runFinder: runFinder,
         dateKey: dateKey, parseDateKey: parseDateKey, slugify: slugify, fold: fold, startOfDay: startOfDay, endOfDay: endOfDay
     };

@@ -16,7 +16,7 @@ ok()  { PASS=$((PASS + 1)); echo "PASS  $1"; }
 bad() { FAIL=$((FAIL + 1)); echo "FAIL  $1"; }
 
 for tz in Europe/Berlin America/Los_Angeles Asia/Tokyo; do
-  for t in events-core swipe eventdate; do
+  for t in events-core swipe eventdate sources-decl; do
     if out="$(cd "$APP" && TZ="$tz" node "tests/$t.test.js" 2>&1)"; then ok "$t.test.js under $tz"; else bad "$t.test.js under $tz"; echo "$out" | head -20; fi
   done
 done
@@ -32,12 +32,25 @@ done
 [ "$(jq '[.ticketers[].id] | length == (unique | length)' "$D")" = "true" ] && ok "one row per ticketer" || bad "ticketer ids repeat"
 
 H="$APP/app/src/main/assets/news.html"
-for f in events-core.js events-ui.js events-finder.css; do
+for f in sources-decl.js sources-ui.js events-core.js events-ui.js events-finder.css; do
   [ -s "$APP/app/src/main/assets/$f" ] && grep -q "$f" "$H" && ok "$f ships and news.html loads it" || bad "$f ships and news.html loads it"
 done
-for m in eventFinder eventFetchStart eventFetchResult eventSetKey eventHasKey; do
+for m in eventFinder eventFetchStart eventFetchResult eventHasKey; do
   grep -q "bcall('$m'" "$APP/app/src/main/assets/events-ui.js" && grep -q "fun $m(" "$APP/app/src/main/java/com/diegonmarcos/cloudnews/NewsBridge.kt" && ok "bridge method $m is called and implemented" || bad "bridge method $m is called and implemented"
 done
+# #1470 the declaration: baked, read through the bridge, and every Apify call goes through the declared-source runner
+for m in sourceDecl apifyConfig apifySetBackend apifySetSelfUrl apifySetToken apifyStart; do
+  grep -q "bcall('$m'\|b\.$m\|bridge()\.$m" "$APP/app/src/main/assets/sources-ui.js" && grep -q "fun $m(" "$APP/app/src/main/java/com/diegonmarcos/cloudnews/NewsBridge.kt" && ok "bridge method $m is called and implemented" || bad "bridge method $m is called and implemented"
+done
+grep -q 'SOURCE_DECL_B64' "$APP/app/build.gradle" && ok "build.gradle bakes the source declaration" || bad "build.gradle bakes the source declaration"
+S="$APP/data/source-decl.json"
+[ "$(jq -r '.apify.default_backend' "$S")" = "cloud" ] && ok "default Apify backend is Apify Cloud" || bad "default Apify backend is Apify Cloud"
+[ "$(jq -r '[.apify.backends[].id] | join(",")' "$S")" = "cloud,selfhosted" ] && ok "backends cloud, selfhosted" || bad "backends cloud, selfhosted"
+[ "$(jq '[.sources[] | select(.area == "events" and .method == "apify")] | length' "$S")" = "6" ] && ok "events ticketers are Apify-method" || bad "events ticketers are Apify-method"
+[ "$(jq -r '[.sources[] | select(.id == "youtube")][0].method' "$S")" = "direct" ] && ok "YouTube is Direct" || bad "YouTube is Direct"
+BN="$APP/build.json"
+[ "$(jq -r '[.ui.sections[] | select(.id == "configs") | .pages[].id] | join("|")' "$BN")" = "media|events|news|apify|general|perms|about" ] && ok "Configs tabs: Media|Events|News|Apify|General|Perms|About" || bad "Configs tabs order"
+[ "$(jq -r '.ui.sections[] | select(.id == "feed") | .label' "$BN")" = "News" ] && ok "bottom nav item feed is labelled News" || bad "bottom nav item feed is labelled News"
 grep -q 'EVENT_FINDER_B64' "$APP/app/build.gradle" && ok "build.gradle bakes the finder data" || bad "build.gradle bakes the finder data"
 
 echo; echo "$PASS passed, $FAIL failed"

@@ -126,6 +126,9 @@ def eventsFile = file("../data/events.json")
 def eventsJson = eventsFile.exists() ? eventsFile.text : "{}"
 def eventsB64  = eventsJson.bytes.encodeBase64().toString()
 
+def sourceDeclFile = file("../data/source-decl.json")
+def sourceDeclB64  = b64(sourceDeclFile.exists() ? new groovy.json.JsonSlurper().parse(sourceDeclFile) : [:])
+
 def eventFinderFile = file("../data/event-finder.json")
 // compact (JsonOutput), so the BuildConfig string stays far under the 64 KB constant limit
 def eventFinderB64  = b64(eventFinderFile.exists() ? new groovy.json.JsonSlurper().parse(eventFinderFile) : [:])
@@ -228,6 +231,7 @@ android {
         buildConfigField "String", "SOURCES_B64", "\"${sourcesB64}\""
         buildConfigField "String", "MEDIA_B64", "\"${mediaB64}\""
         buildConfigField "String", "EVENTS_B64", "\"${eventsB64}\""
+        buildConfigField "String", "SOURCE_DECL_B64", "\"${sourceDeclB64}\""
         buildConfigField "String", "EVENT_FINDER_B64", "\"${eventFinderB64}\""
         buildConfigField "long",   "STACK_GRADLE_CONFIG_MS",  "${System.currentTimeMillis() - gradleScriptStartMs}L"
         buildConfigField "long",   "STACK_BUILD_AVG_SECS",    "${buildAvgSecs}L"
@@ -282,6 +286,7 @@ dependencies {
     implementation project(':libs:core')
     implementation project(':libs:databackend')   // #825 DataBackendClient: this app binds an engine
     implementation project(':libs:updater')
+    implementation project(':libs:apify')   // #1470 the shared Apify backend + token store
     // #1164 the shared navigation: first row (Profile -> Cloud Account), second row, bottom nav, page background.
     implementation project(':libs:bottomnav')
     implementation project(':libs:ui-nav-bars')

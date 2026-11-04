@@ -71,7 +71,8 @@
         "libs:ui-nav-bars",
         "libs:theme-background",
         "libs:core",
-        "libs:updater"
+        "libs:updater",
+        "libs:apify"
       ]
     },
     "libs:core": {
@@ -106,6 +107,11 @@
     },
     "libs:analytics": {
       "dir": "../ab_cloud-libs-shared/libs/analytics"
+    },
+    "libs:apify": {
+      "_doc": "#1470 the fleet's ONE Apify backend choice (Apify Cloud | self-hosted Cloudy Crawlee, default Apify Cloud) and its encrypted token / bearer store, shared BY REFERENCE; Cloud Browser's libs:scraper Apify page and Media adopt it.",
+      "dir": "../ab_cloud-libs-shared/libs/apify",
+      "type": "library"
     }
   },
   "engines": {
@@ -238,12 +244,12 @@
       },
       {
         "id": "feed",
-        "label": "Feed",
+        "label": "News",
         "icon": "rss_feed",
         "pages": [
           {
             "id": "feed",
-            "label": "Feed",
+            "label": "News",
             "icon": "rss_feed"
           }
         ]
@@ -264,16 +270,15 @@
         "id": "configs",
         "label": "Configs",
         "icon": "settings",
-        "_doc": "#1443 Configs starts General | Perms | About (the fleet's shared pages of libs:ui-nav-bars, drawn by MainActivity over the page), then News, the page's own Configs tab.",
+        "_doc": "#1470 the owner's order, declared for this app only (configs-pages.json::tabs.app_order): Media | Events | News | Apify | General | Perms | About. The first four are the page's own Configs groups (switchConfigs); General, Perms and About are the fleet's shared pages of libs:ui-nav-bars, drawn by MainActivity over the page.",
         "pages": [
+          {"id": "media", "label": "Media", "icon": "play_circle"},
+          {"id": "events", "label": "Events", "icon": "event"},
+          {"id": "news", "label": "News", "icon": "rss_feed"},
+          {"id": "apify", "label": "Apify", "icon": "cloud"},
           {"id": "general", "label": "General", "icon": "settings"},
           {"id": "perms", "label": "Perms", "icon": "security"},
-          {"id": "about", "label": "About", "icon": "info"},
-          {
-            "id": "news",
-            "label": "News",
-            "icon": "rss_feed"
-          }
+          {"id": "about", "label": "About", "icon": "info"}
         ]
       }
     ]
@@ -335,7 +340,7 @@
           "what": "Events by topic."
         },
         {
-          "name": "Feed",
+          "name": "News",
           "what": "The topic feeds."
         },
         {
@@ -349,7 +354,7 @@
       ],
       "guide": [
         "Pick topics in Configs.",
-        "Read Feed; tap an article to open it.",
+        "Read News; tap an article to open it.",
         "Save an article to read it later."
       ],
       "privacy": "No ads and no third-party trackers. A crash report is saved on the phone and sent only to the phone's own C3 WebServer over loopback; nothing leaves the device unless you share it. Usage analytics are opt-in and off by default; when allowed, events go only to the owner's self-hosted Umami and Matomo. It talks only to the fleet services listed below, over the private mesh first.",

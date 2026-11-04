@@ -1,0 +1,34 @@
+// libs:apify (#1470): the fleet's ONE Apify backend choice and token store (Apify Cloud | self-hosted Cloudy Crawlee), shared BY REFERENCE
+// by every app that runs Apify actors (Cloud News today; Cloud Browser's libs:scraper Apify page and Media adopt it). Pure Kotlin plus
+// one encrypted prefs file (libs:crash SafeEncryptedPrefs); no UI.
+plugins {
+    id 'com.android.library'
+    id 'org.jetbrains.kotlin.android' apply false
+}
+if (project.extensions.findByName('kotlin') == null) {
+    apply plugin: 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.diegonmarcos.superapp.apify'
+    compileSdk 36
+    defaultConfig { minSdk 26 }
+    testOptions { unitTests.returnDefaultValues = true }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
+dependencies {
+    implementation project(':libs:crash')
+    compileOnly 'androidx.security:security-crypto:1.1.0'
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.json:json:20240303'
+}

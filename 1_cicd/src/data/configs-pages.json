@@ -282,14 +282,22 @@
   },
   "tabs": {
     "_doc": "#1443 `draw` = the needles one non-test source of an app with Configs tabs of its own must hold (the tabs are drawn, not only declared; T4); `no_build_json` = a[acd]_* folders that are no app (T5). #1439 THE order of every app's Configs: its tabs on the top nav start General | Perms | About (ids `first`), then the app's own pages. An app with no Configs tabs of its own gets them from the shared Configs screen of libs:ui-nav-bars (FleetConfigsScreen draws FleetConfigsTabs over the FleetConfigsPage entries, in that order), so it conforms while it reaches that screen (not in `pending` above). An app that declares Configs tabs of its own (build.json::configs_pages.top_nav, ui.modes entries with tab `configs` where kind fleet_<id> is the shared page <id>, or the pages of ui.sections[id=configs]) must start them with `first`. Read by 1_cicd/src/scripts/cloud-android-configs-tabs-guard.py (workflow configs-tabs-guard.yml), mutation-tested by 1_cicd/src/scripts/test/configs-tabs-guard.test.sh.",
-    "first": ["general", "perms", "about"],
+    "first": [
+      "general",
+      "perms",
+      "about"
+    ],
     "lib": {
       "file": "ab_cloud-libs-shared/libs/ui-nav-bars/src/main/kotlin/com/diegonmarcos/superapp/fleetconfigs/FleetConfigsPages.kt",
       "enum": "public enum class FleetConfigsPage(",
       "screen_needle": "FleetConfigsTabs(shown, dark)",
       "tabs_needle": "pages = FleetConfigsPage.entries.map"
     },
-    "draw": ["FleetConfigsPageBody(", "FleetGeneralPage(", "FleetConfigsScreen("],
+    "draw": [
+      "FleetConfigsPageBody(",
+      "FleetGeneralPage(",
+      "FleetConfigsScreen("
+    ],
     "no_build_json": {
       "_doc": "a[acd]_* directories that are no app (T5): each with its reason.",
       "ac_ANDROID_______________________________": "A docs marker folder holding one empty a.md, no app and no build.json."
@@ -298,6 +306,21 @@
       "_doc": "Apps whose Configs does not start General | Perms | About yet, each with its reason. Delete an entry in the commit that fixes the app (the guard fails a stale one).",
       "ac_cloud-chat": "React Native host that does not reach the shared Configs screen yet (configs_pages.pending).",
       "ac_cloud-office": "Collabora patch series that does not reach the shared Configs screen yet (configs_pages.pending)."
+    },
+    "app_order": {
+      "_doc": "#1470 apps whose OWNER chose another Configs order. Per app and explicit, never a pattern: the app's declarations must equal `order` exactly (instead of starting with `first`), every id of `first` must be in it, and `reason` (30+ chars) says why. Every other app keeps the General | Perms | About first rule.",
+      "ac_cloud-news": {
+        "order": [
+          "media",
+          "events",
+          "news",
+          "apify",
+          "general",
+          "perms",
+          "about"
+        ],
+        "reason": "The owner chose Media | Events | News | Apify | General | Perms | About for Cloud News (#1470): its own source groups first, the shared pages after."
+      }
     }
   },
   "exempt": {

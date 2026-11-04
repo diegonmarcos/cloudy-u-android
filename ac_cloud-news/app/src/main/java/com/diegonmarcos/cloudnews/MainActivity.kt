@@ -46,7 +46,7 @@ import com.diegonmarcos.superapp.updater.Updater
 
 /**
  * Cloud News: the shared nav pattern (#1164) around the news.html WebView. The first row (Profile top-right opens Cloud
- * Account), the bottom nav and the page background are the shared libs'; the sections are build.json::ui (Media, Events, Feed,
+ * Account), the bottom nav and the page background are the shared libs'; the sections are build.json::ui (Media, Events, News,
  * Saved, Configs) and a tap runs the page's own switchTab(). The page's bottom bar is hidden in the shell (news.html,
  * `native-nav`), and its scroll is wired into the one chrome collapse ([ChromeWebView]).
  */
@@ -91,10 +91,16 @@ class MainActivity : AppCompatActivity() {
     @Composable
     private fun NewsShell() {
         var section by remember { mutableStateOf(NAV.default()?.id ?: "feed") }
-        var configsPage by remember { mutableStateOf("general") }
+        var configsPage by remember { mutableStateOf("media") }
         val go: (String) -> Unit = { id ->
             section = id
             webView.evaluateJavascript("switchTab('$id')", null)
+            if (id == "configs") webView.evaluateJavascript("switchConfigs('$configsPage')", null)
+        }
+        // #1470 Configs: Media | Events | News | Apify are the page's own groups (switchConfigs), General | Perms | About the fleet's shared pages.
+        val pickConfigs: (String) -> Unit = { id ->
+            configsPage = id
+            if (!isFleetConfigsPage(id)) webView.evaluateJavascript("switchConfigs('$id')", null)
         }
         val current = NAV.section(section)
         NavBarTopFirstRowScaffold(
@@ -120,20 +126,20 @@ class MainActivity : AppCompatActivity() {
                 selectedId = section,
                 onSelect = { go(it.id) },
             ) {
-                // #1443 Configs starts General | Perms | About (the fleet's shared pages, libs:ui-nav-bars) over the page, then News: the page's own Configs tab.
+                // #1470 Configs is Media | Events | News | Apify (the page's own groups) then General | Perms | About (the fleet's shared pages, libs:ui-nav-bars, drawn over the page).
                 val configsOpen = section == "configs"
                 Column(Modifier.fillMaxSize()) {
                     if (configsOpen) {
                         NavBarTopSecondRow(
                             pages = current?.pages.orEmpty(), selectedId = configsPage,
-                            onSelect = { configsPage = it.id }, dark = true, underTopChrome = false,
+                            onSelect = { pickConfigs(it.id) }, dark = true, underTopChrome = false,
                         )
                     }
                     Box(Modifier.weight(1f).fillMaxWidth()) {
                         ChromeWebView(webView)
                         if (configsOpen && isFleetConfigsPage(configsPage)) {
                             Box(Modifier.fillMaxSize().background(ThemeBackground.colors(true).top).testTag("news:configs:page:$configsPage")) {
-                                FleetConfigsPageBody(configsPage, onAppConfigs = { configsPage = "news" })
+                                FleetConfigsPageBody(configsPage, onAppConfigs = { pickConfigs("news") })
                             }
                         }
                     }
@@ -143,7 +149,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     companion object {
-        /** build.json::ui as baked into BuildConfig: the bottom nav's items (Media, Events, Feed, Saved, Configs) and their sections. */
+        /** build.json::ui as baked into BuildConfig: the bottom nav's items (Media, Events, News, Saved, Configs) and their sections. */
         val NAV: NavDecl by lazy {
             NavDecl.fromBuildConfig(BuildConfig.UI_SECTIONS_B64, BuildConfig.UI_BOTTOM_NAV, BuildConfig.UI_DEFAULT_SECTION)
         }

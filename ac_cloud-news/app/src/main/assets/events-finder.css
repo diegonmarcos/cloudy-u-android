@@ -69,3 +69,19 @@
 .ef-cfg-key button { font: inherit; font-size: var(--ef-body); color: var(--fill-text); background: var(--fill); border: none; border-radius: var(--ef-s8); padding: var(--ef-s4) var(--ef-s12); }
 .ef-cfg-key button.quiet { color: var(--text-secondary); background: none; border: 1px solid var(--border); }
 .ef-cfg-ok { font-size: var(--ef-caption); color: var(--success-text); }
+
+/* #1470 Configs > Media | Events | News | Apify: dense Store rows on the fleet type ramp */
+.sd-head { display: flex; align-items: center; justify-content: space-between; font-size: var(--ef-caption); font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); padding: var(--ef-s12) 0 var(--ef-s4); }
+.sd-count { font-weight: 600; }
+.sd-row { display: flex; align-items: center; justify-content: space-between; gap: var(--ef-s8); padding: var(--ef-s8) 0; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.sd-row.sd-off { opacity: .55; }
+.sd-main { flex: 1; min-width: 0; }
+.sd-name { font-size: var(--ef-title); font-weight: 700; color: var(--text); }
+.sd-sub { font-size: var(--ef-meta); color: var(--text-secondary); }
+.sd-actor { font-family: monospace; font-size: var(--ef-caption); color: var(--text-muted); }
+.sd-empty { font-size: var(--ef-meta); color: var(--text-muted); padding: var(--ef-s8) 0; }
+.sd-edit { display: flex; gap: var(--ef-s8); width: 100%; }
+.sd-edit.hidden { display: none; }
+.sd-edit input { flex: 1; min-width: 0; font: inherit; font-size: var(--ef-body); color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: var(--ef-s8); padding: var(--ef-s4) var(--ef-s8); }
+.sd-edit button { font: inherit; font-size: var(--ef-body); color: var(--fill-text); background: var(--fill); border: none; border-radius: var(--ef-s8); padding: var(--ef-s4) var(--ef-s12); }
+.sd-edit button.quiet { color: var(--text-secondary); background: none; border: 1px solid var(--border); }

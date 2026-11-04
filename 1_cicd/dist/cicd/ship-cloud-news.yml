@@ -45,6 +45,7 @@ on:
       #   input: "1_cicd/src/cicd/ship-cloud-news.yml"
       # ── end MANAGED-PATHS-HEADER ──
       - "ab_cloud-libs-shared/libs/analytics/**"
+      - "ab_cloud-libs-shared/libs/apify/**"
       - "ab_cloud-libs-shared/libs/bottomnav/**"
       - "ab_cloud-libs-shared/libs/core/**"
       - "ab_cloud-libs-shared/libs/crash/**"

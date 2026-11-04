@@ -6,6 +6,9 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.util.Base64
 import android.webkit.JavascriptInterface
+import com.diegonmarcos.superapp.apify.ApifyBackendStore
+import com.diegonmarcos.superapp.apify.ApifyBackends
+import com.diegonmarcos.superapp.apify.EncryptedApifyKv
 import com.diegonmarcos.superapp.core.DataBackendClient
 import org.json.JSONArray
 import org.json.JSONObject
@@ -514,6 +517,55 @@ class NewsBridge(private val ctx: Context) {
     @JavascriptInterface
     fun eventHasKey(ticketerId: String): String =
         JSONObject().put("has", fetcher.needsKey(ticketerId) && !keys.get(ticketerId).isNullOrBlank()).toString()
+
+    // ---- #1470 source declaration + Apify backend ----------------------------
+
+    private val declJson: String by lazy { String(Base64.decode(BuildConfig.SOURCE_DECL_B64, Base64.DEFAULT), Charsets.UTF_8) }
+    private val apifyStore: ApifyBackendStore by lazy {
+        ApifyBackendStore(EncryptedApifyKv(ctx), ApifyBackends.parse(JSONObject(declJson).optJSONObject("apify")?.toString()))
+    }
+    private val apify: ApifyRunner by lazy { ApifyRunner(JSONObject(declJson), File(ctx.cacheDir, "apify"), apifyStore) }
+
+    /** data/source-decl.json, verbatim (sources-decl.js parses and routes it). */
+    @JavascriptInterface
+    fun sourceDecl(): String = declJson
+
+    /** The backend choice for Configs > Apify: {backends:[{id,label}], backend, selfUrl, hasToken:{id:bool}}. No secret crosses. */
+    @JavascriptInterface
+    fun apifyConfig(): String {
+        val st = apifyStore
+        val bs = JSONArray()
+        val has = JSONObject()
+        st.decl.backends.forEach { bs.put(JSONObject().put("id", it.id).put("label", it.label).put("selfHosted", it.api == null)); has.put(it.id, st.hasToken(it)) }
+        return JSONObject().put("backends", bs).put("backend", st.backend().id).put("selfUrl", st.selfUrl()).put("hasToken", has).toString()
+    }
+
+    @JavascriptInterface
+    fun apifySetBackend(id: String): String { apifyStore.setBackend(id); return okErr(true, "") }
+
+    @JavascriptInterface
+    fun apifySetSelfUrl(url: String): String =
+        if (url.isNotBlank() && !url.trim().startsWith("https://")) okErr(false, "the base URL must start with https://") else { apifyStore.setSelfUrl(url); okErr(true, "") }
+
+    /** Stores (blank clears) the token of Apify Cloud or the fleet bearer of the self-hosted backend, encrypted. */
+    @JavascriptInterface
+    fun apifySetToken(backendId: String, value: String): String {
+        val b = apifyStore.decl.backends.firstOrNull { it.id == backendId } ?: return okErr(false, "unknown backend")
+        return if (apifyStore.setToken(b, value)) okErr(true, "") else okErr(false, "a token has no spaces")
+    }
+
+    /** Starts a run of a declared Apify source; poll [eventFetchResult] with the returned job. */
+    @JavascriptInterface
+    fun apifyStart(sourceId: String, actor: String, inputJson: String, cacheHours: String, force: String): String {
+        val job = UUID.randomUUID().toString()
+        fetchJobs[job] = ""
+        fetchPool.execute {
+            val r = try { apify.run(sourceId, actor, inputJson, cacheHours.toDoubleOrNull() ?: 6.0, force == "1") }
+            catch (e: Exception) { JSONObject().put("ok", false).put("error", e.message ?: e.javaClass.simpleName) }
+            fetchJobs[job] = r.toString()
+        }
+        return JSONObject().put("job", job).toString()
+    }
 
     // ---- saved --------------------------------------------------------------
 

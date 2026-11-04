@@ -29,6 +29,8 @@
     </script>
     <script src="vendor/tailwind.js"></script>
     <link rel="stylesheet" href="events-finder.css">
+    <script src="sources-decl.js"></script>
+    <script src="sources-ui.js"></script>
     <script src="events-core.js"></script>
     <script src="events-ui.js"></script>
     <style>
@@ -711,6 +713,19 @@ if (window.NewsBridge) {
                 <div id="configs-error-mount" class="px-6"></div>
                 <div class="px-6 panel-scroll-pad space-y-8">
 
+                    <!-- #1470 Configs groups (Media | Events | News | Apify; General | Perms | About are the shell's shared pages): switchConfigs() shows one -->
+                    <div data-cfg-group="media" class="hidden">
+                        <p class="text-[11.5px] mb-3" style="color:var(--text-secondary);">Every media source and how it is fetched (data/source-decl.json). Apify sources run on the backend chosen in Apify; Direct sources are read straight from the handset.</p>
+                        <div id="sd-media-mount"></div>
+                    </div>
+
+                    <div data-cfg-group="apify" class="hidden">
+                        <p class="text-[11.5px] mb-3" style="color:var(--text-secondary);">Where Apify-method sources run, and the secret that pays for them. Apify Cloud is the default; the self-hosted Cloudy Crawlee is opt-in. Secrets are stored encrypted on this device and never shown again.</p>
+                        <div id="sd-apify-mount"></div>
+                    </div>
+
+                    <div data-cfg-group="news" class="space-y-8 hidden">
+
                     <div>
                         <span class="text-[11px] font-semibold tracking-widest uppercase" style="color:var(--text-secondary);">Appearance</span>
                         <p class="text-[11.5px] mt-1 mb-3" style="color:var(--text-secondary);">Dark is the default. System follows your device's light/dark setting and updates live.</p>
@@ -725,6 +740,7 @@ if (window.NewsBridge) {
                         <span class="text-[11px] font-semibold tracking-widest uppercase" style="color:var(--text-secondary);">Source</span>
                         <p class="text-[11.5px] mt-1 mb-3" style="color:var(--text-secondary);">Pick where articles come from. Only the self-hosted GDELT source provides tone/sentiment and timeline data — public RSS feeds carry headlines only.</p>
                         <div id="source-list"></div>
+                        <div id="sd-news-mount"></div>
                         <p class="privacy-note">Reading from a publisher's own feed (Google, BBC, etc.) means that publisher sees your device's IP address and the fact that you're interested in that feed — the self-hosted GDELT source does not have this effect.</p>
                     </div>
 
@@ -750,12 +766,6 @@ if (window.NewsBridge) {
                             </div>
                         </div>
                         <div class="mt-1" id="topics-list"></div>
-                    </div>
-
-                    <div>
-                        <span class="text-[11px] font-semibold tracking-widest uppercase" style="color:var(--text-secondary);">Events</span>
-                        <p class="text-[11.5px] mt-1 mb-3" style="color:var(--text-secondary);">Where the Events tab looks. Official APIs first (Ticketmaster, Skiddle: bring your own key, stored encrypted on this device); sites without an API are read politely through the scraper path (robots.txt checked, cached, one request per interval) and are off until you switch them on. Check each site's terms before enabling it.</p>
-                        <div id="ef-configs-mount"></div>
                     </div>
 
                     <div>
@@ -820,6 +830,13 @@ if (window.NewsBridge) {
                         </div>
                     </div>
 
+                    </div><!-- /news group -->
+
+                    <div data-cfg-group="events" class="hidden">
+                        <p class="text-[11.5px] mb-3" style="color:var(--text-secondary);">Where the Events tab looks (data/source-decl.json). Ticketers run as Apify actors on the backend chosen in Apify (token needed) and are off until you switch them on; the public calendars are read on the phone. Tap a source to change its actor. Check each site's terms before enabling it.</p>
+                        <div id="ef-configs-mount"></div>
+                    </div>
+
                 </div>
             </section>
 
@@ -840,7 +857,7 @@ if (window.NewsBridge) {
             </button>
             <button class="nav-item active" data-tab="feed">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M7.5 8.5h9M7.5 12h11M7.5 15.5h11"/></svg>
-                <span>Feed</span>
+                <span>News</span>
             </button>
             <button class="nav-item" data-tab="saved">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 3.5h11a1 1 0 011 1V21l-6.5-4-6.5 4V4.5a1 1 0 011-1z"/></svg>
@@ -2300,7 +2317,7 @@ function renderSourceList() {
     if (!mount) return;
     if (!State.sources.length) { mount.innerHTML = '<div class="empty-state">No sources available.</div>'; return; }
     var checkSvg = '<svg class="source-row-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5l5 5 10-10"/></svg>';
-    mount.innerHTML = State.sources.map(function (s) {
+    mount.innerHTML = State.sources.filter(function (s) { return SourcesUI.offered('news', s.id) || s.id === State.activeSourceId; }).map(function (s) {
         var active = s.id === State.activeSourceId;
         var caps = (s.capabilities || []).join(', ');
         return '<button type="button" class="source-row" data-source-id="' + esc(s.id) + '">' +
@@ -3722,7 +3739,8 @@ function loadMediaTab() {
     try { res = Api.media(); } catch (e) { errMount.innerHTML = errorBanner(e.message); return; }
     if (res && res.error) { errMount.innerHTML = errorBanner(res.error); return; }
     errMount.innerHTML = '';
-    State.media.channels = Array.isArray(res) ? res : [];
+    // #1470 YouTube is a declared Direct source: switched off in Configs > Media, the tab has no channels
+    State.media.channels = Array.isArray(res) && SourcesUI.offered('media', 'youtube') ? res : [];
     renderMediaChannelPills();
     loadMediaItems();
 }
@@ -4040,7 +4058,7 @@ function initConfigsTab() {
     });
 
     loadConfigValues();
-    EventsUI.renderConfigs();
+    switchConfigs('media');
     renderImagesToggle();
     renderDemoModeConfig();
     renderRefreshStatus();
@@ -4055,6 +4073,23 @@ var loadedTabs = {};
 // media/events/saved are lazy-loaded on first visit (same pattern the old
 // topics/trends/saved tabs used); feed and configs are eager at init below,
 // so they're intentionally absent from both branches here.
+// #1470 Configs groups: the shell's pager (Media | Events | News | Apify) shows one; General | Perms | About are native pages over this one.
+function switchConfigs(group) {
+    State.configsGroup = group;
+    document.querySelectorAll('[data-cfg-group]').forEach(function (g) { g.classList.toggle('hidden', g.dataset.cfgGroup !== group); });
+    if (group === 'media') { if (typeof EventsUI !== 'undefined') EventsUI.ramp(); SourcesUI.render('media', 'sd-media-mount'); }
+    else if (group === 'events') EventsUI.renderConfigs();
+    else if (group === 'news') { EventsUI.ramp(); SourcesUI.render('news', 'sd-news-mount'); renderRefreshStatus(); renderDemoModeConfig(); }
+    else if (group === 'apify') { EventsUI.ramp(); SourcesUI.renderApify('sd-apify-mount'); }
+    document.getElementById('app-main').scrollTop = 0;
+}
+
+// a source switch in Configs: the pickers re-read what they may offer
+function onSourcesChanged(area) {
+    if (area === 'news') { try { renderSourceList(); } catch (e) { /* not drawn yet */ } }
+    else if (area === 'media') { try { loadMediaTab(); } catch (e) { /* not drawn yet */ } }
+}
+
 function switchTab(tab) {
     State.tab = tab;
     document.querySelectorAll('.tab-panel').forEach(function (p) { p.classList.add('hidden'); });
@@ -4070,7 +4105,7 @@ function switchTab(tab) {
     } else {
         if (tab === 'events') renderEventsView();
         else if (tab === 'saved') loadSavedTab();
-        else if (tab === 'configs') { renderRefreshStatus(); renderDemoModeConfig(); EventsUI.renderConfigs(); }
+        else if (tab === 'configs') { switchConfigs(State.configsGroup || 'media'); }
     }
 }
 
