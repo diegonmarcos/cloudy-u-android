@@ -1,6 +1,7 @@
 package com.diegonmarcos.cloudbrowser
 
 import com.diegonmarcos.superapp.scraper.ApifyAccount
+import com.diegonmarcos.superapp.scraper.ApifyBackend
 import com.diegonmarcos.superapp.scraper.ApifyCatalog
 import com.diegonmarcos.superapp.scraper.ApifyClient
 import com.diegonmarcos.superapp.scraper.ApifyExport
@@ -87,6 +88,20 @@ class ScraperApifyTest {
         assertFalse(a.masked().contains("ABCDEFG"))
         a.clear()
         assertFalse(a.connected()); assertEquals("", a.token())
+    }
+
+    @Test fun `backend defaults to Apify Cloud, Crawlee is opt-in and keeps its own token`() {
+        val store = MemoryTokenStore()
+        val a = ApifyAccount(store)
+        assertEquals(ApifyBackend.CLOUD, a.backend)
+        assertEquals("https://api.apify.com/v2", a.backend.api)
+        assertTrue(a.save("cloud_token_123456"))
+        a.backend = ApifyBackend.CRAWLEE
+        assertEquals(ApifyBackend.CRAWLEE, ApifyAccount(store).backend)
+        assertFalse(a.connected())                       // the cloud token is not sent to the self-hosted runner
+        assertTrue(a.save("crawlee_token_123456"))
+        a.backend = ApifyBackend.CLOUD
+        assertEquals("cloud_token_123456", a.token())
     }
 
     @Test fun `client sends the bearer token to run an actor and lists runs and datasets`() {

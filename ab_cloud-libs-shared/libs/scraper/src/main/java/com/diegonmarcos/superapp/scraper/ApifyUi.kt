@@ -79,7 +79,7 @@ fun ApifyPage(c: ThemeColors) {
         message = what
         runCatching { block() }.onSuccess { if (message == what) message = "" }.onFailure { message = "Apify: ${it.message}" }
     }
-    fun client() = ApifyClient(account.token(), http)
+    fun client() = ApifyClient(account.token(), http, account.backend.api)
     fun search() = guarded("Searching the Store…") {
         val p = withContext(Dispatchers.IO) { ApifyStore.parse(http.get(ApifyStore.url(query))) }
         found = p.items; total = p.total; view = ApifyView.ACTORS
@@ -115,6 +115,14 @@ fun ApifyPage(c: ThemeColors) {
                 TextButton(onClick = { search() }, enabled = query.isNotBlank(), modifier = Modifier.testTag("apify:go")) { Text("Search", color = c.accent) }
             }
         }
+        item(key = "backend") {
+            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = KitStoreRow.padH), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                for (b in ApifyBackend.entries) Chip(b.label, rev.let { account.backend } == b, c, "apify:backend:${b.name}") {
+                    account.backend = b; rev++; runs = emptyList(); sets = emptyList(); open = null
+                    if (view != ApifyView.ACTORS) view = ApifyView.ACTORS
+                }
+            }
+        }
         item(key = "tabs") {
             Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = KitStoreRow.padH), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                 for (v in ApifyView.entries) Chip(v.label, view == v, c, "apify:view:${v.name}") {
@@ -125,7 +133,7 @@ fun ApifyPage(c: ThemeColors) {
         }
         if (accountOpen) item(key = "account") {
             Column(Modifier.fillMaxWidth().padding(horizontal = KitStoreRow.padH).testTag("apify:token")) {
-                OutlinedTextField(tokenText, { tokenText = it }, label = { Text("Apify API token (stored encrypted)") }, singleLine = true, colors = colors,
+                OutlinedTextField(tokenText, { tokenText = it }, label = { Text("${rev.let { account.backend.label }} token (stored encrypted)") }, singleLine = true, colors = colors,
                     modifier = Modifier.fillMaxWidth().testTag("apify:token:field"))
                 Row {
                     Button(onClick = { if (account.save(tokenText)) { tokenText = ""; rev++; accountOpen = false; message = "Token saved" } else message = "That does not look like an Apify token" },
