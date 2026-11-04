@@ -13,11 +13,13 @@ $T adb wait-for-device
 $T adb install -r -g "$ME_APK" || rc=1
 [ -n "$SA_APK" ] && [ -f "$SA_APK" ] && { $T adb install -r -g "$SA_APK" || rc=1; }
 $T adb shell settings put global window_animation_scale 0
-$T adb shell svc power stayon true; $T adb shell input keyevent KEYCODE_WAKEUP; $T adb shell wm dismiss-keyguard
+$T adb shell locksettings set-disabled true; $T adb shell settings put system screen_off_timeout 1800000
+wake() { $T adb shell svc power stayon true; $T adb shell input keyevent KEYCODE_WAKEUP; $T adb shell wm dismiss-keyguard; }
+wake
 
 launcher() { $T adb shell cmd package resolve-activity --brief -c android.intent.category.LAUNCHER "$1" | tail -1 | tr -d '\r'; }
 open_page() {  # open_page PKG TARGET
-    local comp; comp="$(launcher "$1")"
+    wake; local comp; comp="$(launcher "$1")"
     $T adb shell am start -W -n "$comp" -f 0x14000000 --es shortcut_action "$2" >/dev/null
 }
 shot() { sleep "${2:-6}"; $T adb exec-out screencap -p > "$OUT/$1.png"; $T adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; $T adb pull /sdcard/ui.xml "$OUT/$1.xml" >/dev/null 2>&1; echo "shot $1"; }
