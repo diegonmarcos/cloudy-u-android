@@ -58,10 +58,12 @@ class UpdateChecksTest {
     }
 
     @Test
-    fun `the manifest asks for no battery exemption`() {
+    fun `the manifest asks for no DEVICE_POWER, and the battery exemption only for the wireless keeper`() {
         val requested = app.packageManager.getPackageInfo(app.packageName, PackageManager.GET_PERMISSIONS)
             .requestedPermissions?.toList().orEmpty()
-        assertFalse(requested.contains("android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"))
+        // #1467 the exemption IS requested now, but only for "Keep wireless debugging on" (libs:shizuku-adb-debug-tools, through the
+        // Permissions page): the owner asked for it so battery management stops killing the keeper. The fleet check stays on WorkManager.
+        assertTrue(requested.contains("android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"))
         assertFalse(requested.contains("android.permission.DEVICE_POWER"))
     }
 
