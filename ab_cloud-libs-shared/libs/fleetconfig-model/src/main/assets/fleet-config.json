@@ -2395,6 +2395,15 @@
         "lib-scraper"
       ]
     },
+    "apify_tokens": {
+      "kind": "encrypted",
+      "class": "secret",
+      "doc": "#1468 Cloud Browser Scrapers > Apify: the user's Apify API token and the Cloudy Crawlee token (plus the chosen backend), in EncryptedSharedPreferences via libs:crash SafeEncryptedPrefs; an unreadable store resets to memory, never to plaintext. Credentials: migrate through the vault.",
+      "helper": "ab_cloud-libs-shared/libs/scraper/src/main/java/com/diegonmarcos/superapp/scraper/Apify.kt",
+      "used_by": [
+        "lib-scraper"
+      ]
+    },
     "speedmeter": {
       "kind": "prefs",
       "class": "device",

@@ -51,7 +51,7 @@ fun ApifyPage(c: ThemeColors) {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
     val http = remember { MusicHttp() }
-    val account = remember { ApifyAccount(EncryptedTokenStore(ctx, ApifyAccount.PREFS)) }
+    val account = remember { ApifyAccount(ApifyTokenStore(ctx)) }
     var rev by remember { mutableStateOf(0) }
     var view by remember { mutableStateOf(ApifyView.ACTORS) }
     var query by remember { mutableStateOf("") }
