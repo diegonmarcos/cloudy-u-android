@@ -20,6 +20,7 @@ import com.diegonmarcos.cloudc3.pages.InfraTags
 import com.diegonmarcos.superapp.uikit.CloudKitTheme
 import com.diegonmarcos.superapp.uikit.KitPalette
 import java.time.LocalDate
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -118,6 +119,15 @@ class InfraScreensComposeTest {
         compose.setContent { CloudKitTheme(palette) { InfraSectionScreen(InfraSections.DOMAINS_PUBLIC, slice, FleetLiveState(), today, identities) } }
         row(InfraSections.DOMAINS_PUBLIC, "id:someone@example.test").assertTextContains("someone@example.test", substring = true)
         compose.onNodeWithTag(InfraTags.IDENTITIES_NOTE).assertTextContains("side-loaded", substring = true)
+    }
+
+    @Test
+    fun `public domains - the three declared public addresses are listed with no private source`() {
+        compose.setContent { CloudKitTheme(palette) { InfraSectionScreen(InfraSections.DOMAINS_PUBLIC, slice, FleetLiveState(), today) } }
+        assertEquals(3, com.diegonmarcos.cloudc3.Declarations.publicIdentities.size)
+        com.diegonmarcos.cloudc3.Declarations.publicIdentities.forEach { i ->
+            row(InfraSections.DOMAINS_PUBLIC, "id:${i.address}").assertTextContains(i.address, substring = true)
+        }
     }
 
     @Test

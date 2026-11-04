@@ -183,15 +183,17 @@ fun NodePythonScreen(slice: FleetModel.Slice) {
 
 @Composable
 fun PublicDomainsScreen(slice: FleetModel.Slice, identities: PrivateIdentitiesState = PrivateIdentitiesState(), onToken: (String) -> Unit = {}) {
-    Page(InfraSections.DOMAINS_PUBLIC, "${slice.publicDomains.size} public domains - ${identities.items.size} email identities") {
+    // the declared public addresses first, then any the optional private source adds (no duplicates)
+    val all = Declarations.publicIdentities + identities.items.filter { p -> Declarations.publicIdentities.none { it.address.equals(p.address, true) } }
+    Page(InfraSections.DOMAINS_PUBLIC, "${slice.publicDomains.size} public domains - ${all.size} email identities") {
         if (slice.publicDomains.isEmpty()) {
             DenseRow(InfraTags.row(InfraSections.DOMAINS_PUBLIC, "none"), "None declared", "", listOf("No public domain is declared in the fleet"))
         }
         slice.publicDomains.forEach { d ->
             DenseRow(InfraTags.row(InfraSections.DOMAINS_PUBLIC, d.name), d.name, d.provider.orEmpty(), listOfNotNull(d.role))
         }
-        GroupHeader(InfraTags.head(InfraSections.DOMAINS_PUBLIC, "identities"), "Email identities (private)")
-        identities.items.forEach { i ->
+        GroupHeader(InfraTags.head(InfraSections.DOMAINS_PUBLIC, "identities"), "Email identities")
+        all.forEach { i ->
             DenseRow(InfraTags.row(InfraSections.DOMAINS_PUBLIC, "id:${i.address}"), i.address, i.provider, listOf(i.label))
         }
         identities.note?.let {

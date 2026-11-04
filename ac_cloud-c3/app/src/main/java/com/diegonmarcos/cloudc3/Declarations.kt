@@ -112,6 +112,11 @@ object Declarations {
         com.diegonmarcos.cloudc3.pages.PrivateData.parseSources(decode(BuildConfig.UI_PRIVATE_SOURCES_B64))
     }
 
+    /** data/public_identities.json: the owner's public email addresses, declared directly (the private source can add to them). */
+    val publicIdentities: List<com.diegonmarcos.cloudc3.pages.PrivateData.Identity> by lazy {
+        com.diegonmarcos.cloudc3.pages.PrivateData.parseIdentities(decode(BuildConfig.PUBLIC_IDENTITIES_B64))
+    }
+
     /** data/container_projects.json: which project each container belongs to (Containers sub-pages). */
     val containerProjects: com.diegonmarcos.cloudc3.pages.ContainerProjects.Decl by lazy {
         com.diegonmarcos.cloudc3.pages.ContainerProjects.parse(decode(BuildConfig.CONTAINER_PROJECTS_B64))

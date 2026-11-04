@@ -1,0 +1,8 @@
+{
+  "_note": "#1454 the owner's PUBLIC email addresses, declared directly (owner-approved as public). The ONLY file allowed to hold personal addresses: test/test-c3-declarative.sh D5 checks this exact set. The private loader (ui.private_sources) stays an optional override.",
+  "emails": [
+    { "address": "diegonmarcos@live.com",      "label": "Public", "provider": "Microsoft" },
+    { "address": "diegonmarcos1@gmail.com",    "label": "Public", "provider": "Google" },
+    { "address": "42.d13.go@gmail.com",        "label": "Public", "provider": "Google" }
+  ]
+}

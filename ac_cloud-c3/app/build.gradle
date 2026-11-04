@@ -89,6 +89,10 @@ def containersDeclaredB64Array = chunkedB64(file("../data/containers_declared.js
 def fleetSliceB64Array   = chunkedB64(file("../data/fleet_slice.json"))
 // Where the owner's PRIVATE data is read from at run time (declaration only, never content), and the container -> project mapping.
 def uiPrivateSourcesB64 = b64(buildJson.ui.private_sources ?: [:])
+// #1454 the owner's PUBLIC email addresses (data/public_identities.json), declared directly.
+def publicIdentitiesFile = file("../data/public_identities.json")
+if (!publicIdentitiesFile.exists()) throw new GradleException("missing data/public_identities.json - Domains > Public would list no email address")
+def publicIdentitiesB64 = publicIdentitiesFile.bytes.encodeBase64().toString()
 def containerProjectsFile = file("../data/container_projects.json")
 if (!containerProjectsFile.exists()) throw new GradleException("missing data/container_projects.json - the Containers project sub-pages would bake empty")
 def containerProjectsB64 = containerProjectsFile.bytes.encodeBase64().toString()
@@ -219,6 +223,7 @@ android {
         buildConfigField "String[]", "CONTAINERS_DECLARED_B64", containersDeclaredB64Array
         buildConfigField "String[]", "FLEET_SLICE_B64",   fleetSliceB64Array
         buildConfigField "String", "UI_PRIVATE_SOURCES_B64", "\"${uiPrivateSourcesB64}\""
+        buildConfigField "String", "PUBLIC_IDENTITIES_B64", "\"${publicIdentitiesB64}\""
         buildConfigField "String", "CONTAINER_PROJECTS_B64",  "\"${containerProjectsB64}\""
         buildConfigField "String", "C3_OPS_BASE_URL",       "\"${c3OpsBaseUrl}\""
         buildConfigField "String", "SERVICES_PUBLIC_B64",  "\"${servicesPublicB64}\""

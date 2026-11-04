@@ -13,7 +13,7 @@
 #   D2  the nav: every Containers project page nests exactly Topology | Table; Agents is an Ops page and not a Containers one
 #   D3  the project strip, data/container_projects.json and the Kotlin agree with no list in between (ids match, codes look like registry codes)
 #   D4  the platform rows are declared: platforms.json entries reach fleet_slice.json (container_platforms / hosting), and the Infra pages read them from the slice
-#   D5  NO PERSONAL EMAIL ADDRESS in this app's tree (build.json, data, Kotlin, tests, scripts); the private source is a declaration only
+#   D5  NO PERSONAL EMAIL ADDRESS in this app's tree (build.json, data, Kotlin, tests, scripts); the ONLY exception is data/public_identities.json, exactly the 3 owner-declared public ones
 #   M   mutation-proof: each check above is shown able to go RED on a mutated copy.
 #
 # OWN-SOURCE ONLY. python3.
@@ -135,6 +135,9 @@ d5() { python3 - "$1" <<'PY'
 import json, os, re, sys
 app = sys.argv[1]
 rx = re.compile(r"[A-Za-z0-9._%+-]+@(?:gmail|googlemail|live|hotmail|outlook|yahoo|proton|protonmail|icloud|me|msn)\.[A-Za-z.]+", re.I)
+# the ONE file allowed to hold personal addresses, and exactly this set (owner-declared public, 2026-11-04)
+ALLOWED_FILE = os.path.join("data", "public_identities.json")
+ALLOWED = {u + "@" + h for u, h in (("diegonmarcos", "live.com"), ("diegonmarcos1", "gmail.com"), ("42.d13.go", "gmail.com"))}  # split so this file holds none
 bad = []
 for dp, dn, files in os.walk(app):
     dn[:] = [d for d in dn if d not in (".git", "build", ".gradle", "node_modules")]
@@ -143,6 +146,11 @@ for dp, dn, files in os.walk(app):
         p = os.path.join(dp, f)
         try: t = open(p, encoding="utf-8").read()
         except Exception: continue
+        rel = os.path.relpath(p, app)
+        if rel == ALLOWED_FILE:
+            found = {x.group(0).lower() for x in rx.finditer(t)}
+            if found != ALLOWED: bad.append("%s must hold exactly the 3 declared public addresses" % rel)
+            continue
         for m in [x.group(0) for x in rx.finditer(t)]:
             bad.append("%s holds a personal-looking address (%s...) - the owner's identities are private data, loaded at run time" % (os.path.relpath(p, app), m[:2]))
 src = json.load(open(app + "/build.json", encoding="utf-8"))["ui"].get("private_sources", {}).get("identities") or {}
@@ -200,6 +208,8 @@ m_platform_gone(){ pyjson "$1/data/fleet_slice.json" 'd["hosting"]=d["hosting"][
 m_lists_ctrs()   { append "$1/$KT/pages/InfraPages.kt" 'val x = slice.serverless'; }
 m_email_json()   { pyjson "$1/build.json" 'd["description"]=d.get("description","")+" mail someone"+"@"+"gmail.com"'; }
 m_email_kt()     { append "$1/$KT/pages/PrivateData.kt" 'val e = "someone'"@"'live.com"'; }
+m_email_data()   { pyjson "$1/data/public_identities.json" 'd["emails"].append({"address":"extra"+"@"+"gmail.com"})'; }
+m_email_other()  { printf '{"x":"diegonmarcos%s"}\n' '@live.com' > "$1/data/zz_other.json"; }
 m_no_source()    { pyjson "$1/build.json" 'del d["ui"]["private_sources"]'; }
 
 mutate "a project label is typed into Kotlin"            d1 m_kt_project
@@ -213,6 +223,8 @@ mutate "a declared hosting platform never reaches the slice" d4 m_platform_gone
 mutate "Containers-as-Service lists containers again"    d4 m_lists_ctrs
 mutate "a personal address lands in build.json"          d5 m_email_json
 mutate "a personal address lands in Kotlin"              d5 m_email_kt
+mutate "a 4th address lands in public_identities.json"    d5 m_email_data
+mutate "an allowed address is copied into another file"   d5 m_email_other
 mutate "the private source declaration is removed"       d5 m_no_source
 
 if [ "$FAILURES" -ne 0 ] || [ "$MUT_FAIL" -ne 0 ]; then
