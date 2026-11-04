@@ -87,7 +87,9 @@ printf 'server\n' > "$WORK/other/a.txt"
 host_git -C "$WORK/other" commit -qam server
 git -C "$WORK/other" push -q origin HEAD:refs/heads/main
 adb shell rm -rf "$DIR/remote.git" && adb push "$WORK/remote.git" "$DIR/" >/dev/null || fail "remote update failed"
-dev_sh "printf phone > $CL/a.txt" || fail "could not edit the clone"
+# the phone side commits its own edit of the same line (a merge needs two commits to disagree; an uncommitted edit is refused)
+printf 'phone\n' > "$WORK/$NAME/a.txt"; host_git -C "$WORK/$NAME" commit -qam phone
+adb shell rm -rf "$CL" && adb push "$WORK/$NAME" "$DIR/" >/dev/null || fail "could not update the clone"
 front; tap "^$NAME\$" || fail "no $NAME row after clone: $(texts)"; sleep 2
 for i in 1 2 3 4; do front; need 'Sync: no winner' && break; swipe_up; done
 shot 20-sheet-sync
