@@ -119,6 +119,8 @@ if (!(uiDecl.sections instanceof List) || uiDecl.sections.isEmpty() || !(uiDecl.
 }
 def uiSectionsB64   = b64(uiDecl.sections)
 def uiBottomNav     = uiDecl.bottom_nav.join(',')
+// #1464 the Calendar's view modes (Month | Year), declared in build.json::ui.calendar_views as id:label pairs.
+def uiCalendarViews = (uiDecl.calendar_views ?: []).collect { "${it.id}:${it.label}" }.join(',')
 def uiDefaultSection = (uiDecl.default_section ?: uiDecl.bottom_nav[0]).toString()
 // The top bar declaration (libs:bottomnav TopBarDecl): ui.top_bar as base64 JSON, '' when the app declares none.
 def uiTopBarB64     = uiDecl.top_bar ? b64(uiDecl.top_bar) : ''
@@ -238,6 +240,7 @@ android {
         buildConfigField "String", "CALENDARS_B64", "\"${calendarsB64}\""
         buildConfigField "String", "UI_SECTIONS_B64",    "\"${uiSectionsB64}\""
         buildConfigField "String", "UI_BOTTOM_NAV",      "\"${uiBottomNav}\""
+        buildConfigField "String", "UI_CALENDAR_VIEWS",  "\"${uiCalendarViews}\""
         buildConfigField "String", "UI_DEFAULT_SECTION", "\"${uiDefaultSection}\""
         buildConfigField "String", "UI_TOP_BAR_B64",     "\"${uiTopBarB64}\""
         buildConfigField "String", "AI_GATEWAY_URL",     "\"${aiGatewayUrl}\""

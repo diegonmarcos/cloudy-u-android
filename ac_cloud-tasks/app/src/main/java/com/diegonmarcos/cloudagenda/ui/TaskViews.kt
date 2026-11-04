@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -18,15 +19,19 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -43,6 +48,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.diegonmarcos.cloudagenda.BuildConfig
+import com.diegonmarcos.cloudagenda.data.CalendarMath
+import com.diegonmarcos.cloudagenda.data.CalendarMode
 import com.diegonmarcos.cloudagenda.data.MindNode
 import com.diegonmarcos.cloudagenda.data.MockStatus
 import com.diegonmarcos.cloudagenda.data.MockTask
@@ -61,6 +69,7 @@ import com.diegonmarcos.superapp.uikit.KitStoreRowLine
 import com.diegonmarcos.superapp.uikit.KitTextButton
 import com.diegonmarcos.superapp.uikit.LocalKitPalette
 import com.diegonmarcos.superapp.uikit.kitFileTree
+import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
@@ -82,6 +91,20 @@ object MockTags {
     fun day(iso: String) = "mock_day_$iso"
     fun ring(subject: String) = "mock_ring_$subject"
     fun node(label: String) = "mock_node_$label"
+    fun mode(id: String) = "mock_mode_$id"
+    fun yearMonth(month: Int) = "mock_year_month_$month"
+    fun yearDay(iso: String) = "mock_year_day_$iso"
+    fun pick(month: Int) = "mock_pick_$month"
+    const val PREV_YEAR = "mock_prev_year"
+    const val NEXT_YEAR = "mock_next_year"
+    const val PREV_MONTH = "mock_prev_month"
+    const val NEXT_MONTH = "mock_next_month"
+    const val TITLE = "mock_cal_title"
+    const val PAGER = "mock_cal_pager"
+    const val YEAR = "mock_year"
+    const val PICK_PREV = "mock_pick_prev"
+    const val PICK_NEXT = "mock_pick_next"
+    const val PICK_YEAR = "mock_pick_year"
 }
 
 /** The Cloud Store's status ink, so a task reads like an app row in the Store: To do violet, Doing amber, Blocked red, Done green. */
@@ -158,24 +181,136 @@ private fun TaskLine(t: MockTask, today: LocalDate) {
 private val CellArcs = listOf(0f to 20f, 30f to 25f, 65f to 15f, 75f to 22f)
 
 /**
- * The round calendar (restored from the legacy Cloud Agenda page, assets/tasks.html): a month grid whose days carry a coloured arc
- * per subject, and the dial under it, one concentric ring per subject with every task an arc over the days it spans (the legacy
- * Today Graph's clockArcPath rings, mapped from hours of the day to days of the month because a task has dates, not times).
- * Tap a day to list its tasks. [items] is the fixture plus the real tasks (MockTasks.fromSnapshot).
+ * The Calendar page: a Month | Year toggle (the modes are build.json::ui.calendar_views), a year selector (prev / next year, a
+ * month / year picker on the title) and, in Month view, a horizontal pager (swipe left / right to change month, [CalendarMath.MIN_YEAR]
+ * to [CalendarMath.MAX_YEAR] reachable). Year view is the whole year on one screen: 12 mini months, 3 columns x 4 rows; a tap opens
+ * that month in Month view. Month pages are the round calendar restored from the legacy Cloud Agenda page (assets/tasks.html): a
+ * month grid whose days carry a coloured arc per project and the dial under it. [items] is the fixture plus the real tasks.
  */
 @Composable
 fun CalendarView(items: List<MockTask>, today: LocalDate, modifier: Modifier = Modifier) {
     val p = LocalKitPalette.current
     val tasks = MockTasks.ofKind(items, "tasks")
-    val month = YearMonth.from(today)
-    val cells = MockTasks.monthGrid(month)
     val rings = remember(tasks) { MockTasks.rings(tasks) }
-    val arcs = remember(tasks, today) { MockTasks.dialArcs(tasks, today, month) }
+    val modes = remember { CalendarMath.parseModes(BuildConfig.UI_CALENDAR_VIEWS).ifEmpty { listOf(CalendarMode(CalendarMath.MODE_MONTH, "Month"), CalendarMode(CalendarMath.MODE_YEAR, "Year")) } }
+    var mode by rememberSaveable { mutableStateOf(CalendarMath.MODE_MONTH) }
+    var year by rememberSaveable { mutableStateOf(today.year) }
+    var picker by remember { mutableStateOf(false) }
     var selected by rememberSaveable { mutableStateOf(today.toString()) }
-    val day = LocalDate.parse(selected)
-    Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = KitStoreRow.padH, vertical = KitStoreRow.padV).testTag(MockTags.page("calendar"))) {
+    val pager = rememberPagerState(CalendarMath.pageOf(YearMonth.from(today))) { CalendarMath.PAGES }
+    val scope = rememberCoroutineScope()
+    val shown = CalendarMath.monthOf(pager.currentPage)
+    val inYear = mode == CalendarMath.MODE_YEAR
+    fun go(m: YearMonth) { scope.launch { pager.animateScrollToPage(CalendarMath.pageOf(m)) } }
+    fun open(m: YearMonth) { mode = CalendarMath.MODE_MONTH; scope.launch { pager.scrollToPage(CalendarMath.pageOf(m)) } }
+    fun byYear(n: Int) { if (inYear) year = CalendarMath.shiftYear(YearMonth.of(year, 1), n).year else go(CalendarMath.shiftYear(shown, n)) }
+    Column(modifier.fillMaxSize().padding(horizontal = KitStoreRow.padH, vertical = KitStoreRow.padV).testTag(MockTags.page("calendar"))) {
         MockNotice()
-        Text(month.month.getDisplayName(TextStyle.FULL, Locale.getDefault()) + " " + month.year, color = p.textPrimary, fontSize = KitDensity.head, fontWeight = FontWeight.Bold, modifier = Modifier.padding(vertical = KitStoreRow.gap))
+        Row(Modifier.fillMaxWidth().padding(vertical = KitStoreRow.tight), horizontalArrangement = Arrangement.spacedBy(KitStoreRow.gap), verticalAlignment = Alignment.CenterVertically) {
+            for (m in modes) {
+                val on = m.id == mode
+                Text(
+                    m.label, color = if (on) p.tileInk else p.textPrimary, fontSize = KitStoreRow.body, fontWeight = FontWeight.Bold,
+                    modifier = Modifier.clip(RoundedCornerShape(KitDensity.small)).background(if (on) p.accent else p.surface)
+                        .clickable { if (m.id == CalendarMath.MODE_YEAR) year = shown.year; mode = m.id }
+                        .padding(horizontal = KitStoreRow.padH, vertical = KitStoreRow.tight).testTag(MockTags.mode(m.id)),
+                )
+            }
+        }
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            KitTextButton({ byYear(-1) }, Modifier.testTag(MockTags.PREV_YEAR)) { Text("«", color = p.accent) }
+            if (!inYear) KitTextButton({ go(CalendarMath.shiftMonth(shown, -1)) }, Modifier.testTag(MockTags.PREV_MONTH)) { Text("‹", color = p.accent) }
+            Text(
+                if (inYear) year.toString() else shown.month.getDisplayName(TextStyle.FULL, Locale.getDefault()) + " " + shown.year,
+                color = p.textPrimary, fontSize = KitDensity.head, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center,
+                modifier = Modifier.weight(1f).clickable { picker = true }.testTag(MockTags.TITLE),
+            )
+            if (!inYear) KitTextButton({ go(CalendarMath.shiftMonth(shown, 1)) }, Modifier.testTag(MockTags.NEXT_MONTH)) { Text("›", color = p.accent) }
+            KitTextButton({ byYear(1) }, Modifier.testTag(MockTags.NEXT_YEAR)) { Text("»", color = p.accent) }
+        }
+        if (inYear) {
+            YearView(year, tasks, rings, today, ::open, Modifier.weight(1f).fillMaxWidth())
+        } else {
+            HorizontalPager(pager, Modifier.weight(1f).fillMaxWidth().testTag(MockTags.PAGER)) { page ->
+                MonthPage(CalendarMath.monthOf(page), tasks, rings, today, selected) { selected = it }
+            }
+        }
+    }
+    if (picker) MonthYearPicker(if (inYear) year else shown.year, onDismiss = { picker = false }) { m -> picker = false; year = m.year; open(m) }
+}
+
+/** The month / year picker: year with prev / next, then the twelve months of that year; a pick opens that month in Month view. */
+@Composable
+private fun MonthYearPicker(startYear: Int, onDismiss: () -> Unit, onPick: (YearMonth) -> Unit) {
+    val p = LocalKitPalette.current
+    var y by remember { mutableStateOf(startYear) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = { KitTextButton(onDismiss) { Text("Close", color = p.accent) } },
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                KitTextButton({ y = CalendarMath.shiftYear(YearMonth.of(y, 1), -1).year }, Modifier.testTag(MockTags.PICK_PREV)) { Text("‹", color = p.accent) }
+                Text(y.toString(), color = p.textPrimary, fontSize = KitStoreRow.title, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, modifier = Modifier.weight(1f).testTag(MockTags.PICK_YEAR))
+                KitTextButton({ y = CalendarMath.shiftYear(YearMonth.of(y, 1), 1).year }, Modifier.testTag(MockTags.PICK_NEXT)) { Text("›", color = p.accent) }
+            }
+        },
+        text = {
+            Column {
+                for (row in CalendarMath.yearGrid(y)) Row(Modifier.fillMaxWidth()) {
+                    for (m in row) KitTextButton({ onPick(m) }, Modifier.weight(1f).testTag(MockTags.pick(m.monthValue))) {
+                        Text(m.month.getDisplayName(TextStyle.SHORT, Locale.getDefault()), color = p.textPrimary)
+                    }
+                }
+            }
+        },
+    )
+}
+
+/** The whole year on one screen, no scrolling: [CalendarMath.yearGrid] months, each a mini grid marked in the project colours. */
+@Composable
+private fun YearView(year: Int, tasks: List<MockTask>, rings: List<String>, today: LocalDate, onOpen: (YearMonth) -> Unit, modifier: Modifier = Modifier) {
+    Column(modifier.testTag(MockTags.YEAR)) {
+        for (row in CalendarMath.yearGrid(year)) Row(Modifier.weight(1f).fillMaxWidth()) {
+            for (m in row) MiniMonth(m, tasks, rings, today, Modifier.weight(1f).fillMaxHeight().padding(KitStoreRow.tight).clip(RoundedCornerShape(KitDensity.small)).clickable { onOpen(m) }.testTag(MockTags.yearMonth(m.monthValue)))
+        }
+    }
+}
+
+@Composable
+private fun MiniMonth(m: YearMonth, tasks: List<MockTask>, rings: List<String>, today: LocalDate, modifier: Modifier) {
+    val p = LocalKitPalette.current
+    val marks = remember(m, tasks, today) { CalendarMath.markers(m, tasks, today, rings, CellArcs.size) }
+    Column(modifier) {
+        Text(m.month.getDisplayName(TextStyle.SHORT, Locale.getDefault()), color = if (m == YearMonth.from(today)) p.accent else p.textPrimary, fontSize = KitStoreRow.meta, fontWeight = FontWeight.Bold)
+        for (week in CalendarMath.miniMonth(m)) Row(Modifier.weight(1f).fillMaxWidth()) {
+            for (d in week) {
+                val subjects = d?.let { marks[it] }.orEmpty()
+                Box(
+                    Modifier.weight(1f).fillMaxHeight().let { b -> if (d == null) b else b.testTag(MockTags.yearDay(d.toString())) }.drawBehind {
+                        val dia = size.minDimension
+                        val tl = Offset((size.width - dia) / 2f, (size.height - dia) / 2f)
+                        subjects.forEachIndexed { n, ring ->
+                            val (off, len) = CellArcs[n]
+                            drawArc(ringInk(ring), off / 100.5f * 360f - 90f, len / 100.5f * 360f, false, tl, Size(dia, dia), style = Stroke(1.5.dp.toPx(), cap = StrokeCap.Round))
+                        }
+                    },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    if (d != null) Text(d.dayOfMonth.toString(), color = p.textPrimary, fontSize = KitStoreRow.caption, fontWeight = if (d == today) FontWeight.Bold else FontWeight.Normal, maxLines = 1, softWrap = false)
+                }
+            }
+        }
+    }
+}
+
+/** One month of the pager: the day grid, the dial, the project rings and the selected day's tasks. */
+@Composable
+private fun MonthPage(month: YearMonth, tasks: List<MockTask>, rings: List<String>, today: LocalDate, selected: String, onSelect: (String) -> Unit) {
+    val p = LocalKitPalette.current
+    val cells = MockTasks.monthGrid(month)
+    val arcs = remember(tasks, today, month) { MockTasks.dialArcs(tasks, today, month) }
+    val day = LocalDate.parse(selected)
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         Row(Modifier.fillMaxWidth()) {
             for (d in java.time.DayOfWeek.values()) Text(d.getDisplayName(TextStyle.NARROW, Locale.getDefault()), color = p.textSecondary, fontSize = KitStoreRow.caption, modifier = Modifier.weight(1f), textAlign = TextAlign.Center)
         }
@@ -187,7 +322,7 @@ fun CalendarView(items: List<MockTask>, today: LocalDate, modifier: Modifier = M
                     Box(
                         Modifier.weight(1f).height(38.dp).let { m ->
                             if (d == null) m else m.testTag(MockTags.day(d.toString())).clip(RoundedCornerShape(KitDensity.small))
-                                .background(if (d == day) p.surfaceSelected else Color.Transparent).clickable { selected = d.toString() }
+                                .background(if (d == day) p.surfaceSelected else Color.Transparent).clickable { onSelect(d.toString()) }
                         }.drawBehind {
                             val dia = size.minDimension * 0.82f
                             val tl = Offset((size.width - dia) / 2f, (size.height - dia) / 2f)

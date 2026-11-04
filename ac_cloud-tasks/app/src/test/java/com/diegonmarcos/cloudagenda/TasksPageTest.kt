@@ -109,6 +109,33 @@ class TasksPageTest {
         compose.onNodeWithTag(MockTags.page("calendar")).assertIsDisplayed()
     }
 
+    @Test fun `the calendar toggles to a one-screen year view of 12 months and a tap opens that month`() {
+        launch(list = false)
+        compose.onNodeWithTag(MockTags.mode("year")).performClick()
+        compose.waitForIdle()
+        compose.onNodeWithTag(MockTags.YEAR).assertIsDisplayed()
+        for (m in 1..12) compose.onNodeWithTag(MockTags.yearMonth(m)).assertIsDisplayed()
+        compose.onNodeWithTag(MockTags.yearMonth(3)).performClick()
+        compose.waitForIdle()
+        compose.onNodeWithTag(MockTags.PAGER).assertIsDisplayed()
+        compose.onNodeWithTag(MockTags.day(java.time.LocalDate.now().withMonth(3).withDayOfMonth(1).toString())).assertExists()
+    }
+
+    @Test fun `the calendar pages by month and by year with the buttons`() {
+        launch(list = false)
+        val now = java.time.YearMonth.now()
+        fun title() = now.month.getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.getDefault()) + " " + now.year
+        compose.onNodeWithText(title()).assertIsDisplayed()
+        compose.onNodeWithTag(MockTags.NEXT_MONTH).performClick()
+        compose.waitForIdle()
+        val next = now.plusMonths(1)
+        compose.onNodeWithText(next.month.getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.getDefault()) + " " + next.year).assertIsDisplayed()
+        compose.onNodeWithTag(MockTags.PREV_YEAR).performClick()
+        compose.waitForIdle()
+        val back = next.minusYears(1)
+        compose.onNodeWithText(back.month.getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.getDefault()) + " " + back.year).assertIsDisplayed()
+    }
+
     @Test fun `the list is grouped by due date in Store rows, one line per task with an actions menu`() {
         val env = launch()
         assertTrue(compose.onAllNodes(tagStartsWith("tasks_group_")).fetchSemanticsNodes().isNotEmpty())

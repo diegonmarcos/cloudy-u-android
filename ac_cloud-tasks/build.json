@@ -218,6 +218,10 @@
   },
   "ui": {
     "_doc": "#868 THE navigation declaration (libs:bottomnav NavDecl): ui.bottom_nav is the island's ids, ui.sections the section each one opens, ui.default_section where the app opens. #1456 the island is Inboxes | Backlogs | Tasks | Library | Projects. The four collection sections list their items in the Cloud Me Tasks row layout from the mock fixture (assets/mock-tasks.json, FAKE data); Tasks has the sub-pages Calendar, List (the native database list with the projects drawer), Gantt, Kanban and Mindmap. Settings is NOT on the island: it opens from the top bar's Settings > Configs and follows the fleet Configs pattern, General | Perms | About (libs:ui-nav-bars fleetconfigs) first, then the app's own Appearance, Agent, Proposals (mail-agent review) and Feeds. Every section's `background` is `theme`.",
+    "calendar_views": [
+      {"id": "month", "label": "Month"},
+      {"id": "year", "label": "Year"}
+    ],
     "top_bar": {
       "_doc": "THE first row of the app (libs:bottomnav AppTopBar, declared once for the fleet): a hamburger that opens a side drawer the CURRENT page fills (the Tasks page: the projects and their lists; Calendar and Settings: their pages), the title, and two circular buttons: AI (libs:ai's chat in an anchored panel, one box for search and chat, history kept) and Settings (Account launches Cloud Account; Configs opens the Settings section: Appearance, Agent, Inbox, Feeds). No app draws its own copy of this row (cloud-android-top-bar-guard).",
       "drawer": true,
