@@ -17,6 +17,7 @@ Tier (b) accepts either credential; the split says which one the route is MEANT 
 """
 
 AUTH_MESH, AUTH_OPEN, AUTH_BEARER, AUTH_WOAUTH = "mesh", "open", "bearer", "woauth"
+MCP_HOST_LABEL = "mcp"  # every route under mcp.<domain>/* is a machine surface: edge bearer, never open (#1454)
 API_HOST_LABEL = "api"  # the fleet's API gateway host (api.<domain>/<service>); mcp.* is read from mcp.has_mcp
 
 
@@ -35,6 +36,8 @@ def auth_type(public_url, service, route_auth, wg_only, edge_auth):
     if not public_url or wg_only:
         return AUTH_MESH
     host, _ = split_url(public_url)
+    if host.split(".")[0] == MCP_HOST_LABEL:
+        return AUTH_BEARER
     if host in open_hosts(edge_auth):
         return AUTH_OPEN
     service = service or {}

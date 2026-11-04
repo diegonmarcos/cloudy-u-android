@@ -53,13 +53,13 @@ while read -r page wait labels; do
   open_page "$page"; shot "c-$page" "$wait"
   for l in ${labels//,/ }; do has "c-$page" "${l//_/ }" || bad "c-$page: label '${l//_/ }' missing"; done
 done <<'CPAGES'
-all_topology 6 All,Cloudy,CG,Capital,Hardtech,Cloud-me,Topology,Table
+all_topology 6 All,Cloudy,Cloud-me,CG,Capital,Hardtech,Others,Topology,Table
 all_table 6 Topology,Table,Container,Cloudy_/
 cloudy_topology 5 Topology,Table
 cloudy_table 5 Container
 capital_topology 5 Capital
 capital_table 5 Container
-cg_topology 5 No_container_is_declared_for_CG
+cg_topology 5 Topology,Table,MCPs,APIs,Apps,DBs,Repos
 hardtech_table 5 Topology,Table
 cloud_me_table 5 Container
 agents 5 Agents

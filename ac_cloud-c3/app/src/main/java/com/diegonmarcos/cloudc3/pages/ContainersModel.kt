@@ -27,6 +27,8 @@ object ContainersModel {
         val description: String, val image: String, val host: String, val dns: String, val port: Int?,
         val isPublic: Boolean, val protocol: String, val dbEngine: String, val legacyCategory: String, val folder: String,
         val publicUrl: String, val auth: String, val authType: String,
+        /** Extra labelled facts after the document's own (a Repos entity: project, visibility, default branch, Pages URL, GitHub URL). */
+        val extra: List<Pair<String, String>> = emptyList(),
     ) {
         /** Every field, label first: what the More view prints. A new field is added HERE and in [parse], nowhere else. */
         fun fields(): List<Pair<String, String>> = listOf(
@@ -34,7 +36,7 @@ object ContainersModel {
             "description" to description, "image" to image, "host" to host, "dns" to dns, "port" to (port?.toString() ?: ""),
             "public" to isPublic.toString(), "protocol" to protocol, "db_engine" to dbEngine, "legacy_category" to legacyCategory,
             "folder" to folder, "public_url" to publicUrl, "auth" to auth, "auth_type" to authType,
-        )
+        ) + extra
     }
 
     data class Category(val label: String, val names: List<String>)

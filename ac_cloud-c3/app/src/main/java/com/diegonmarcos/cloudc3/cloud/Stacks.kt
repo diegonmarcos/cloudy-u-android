@@ -233,16 +233,17 @@ object Stacks {
 
     /** #1148 the container dashboards: the SAME document as the Table page (ContainersSource), one card per group, one
      *  sub-table per category, in the document's order. Not cached: the live copy may replace the baked one. */
-    fun cloudServices(project: String? = null): CloudDash {
+    fun cloudServices(project: String? = null, kind: String? = null): CloudDash {
         val c = ContainersSource.current()
         val d = Declarations.containerProjects
-        return dashOf(if (d.project(project) != null) ContainerProjects.scope(d, c, project!!) else c)
+        return dashOf(ContainerProjects.scope(d, c, project?.takeIf { d.project(it) != null }, kind))
     }
 
     fun dashOf(c: ContainersModel.Catalog): CloudDash = CloudDash(c.groups.map { g ->
         CloudGroup(g.id, g.label, "", g.categories.map { cat ->
             CloudSub(cat.label, "", cat.names.mapNotNull { c.entry(it) }.map { e ->
-                CloudContainer(e.name, e.name, e.dns, e.port ?: -1, false, "")
+                CloudContainer(e.name, e.name, e.dns, e.port ?: -1, false,
+                    if (e.role == "repo") e.publicUrl.ifBlank { e.extra.firstOrNull { it.first == "github_url" }?.second.orEmpty() } else "")
             })
         }, emptyList())
     })

@@ -119,7 +119,7 @@ object Declarations {
 
     /** data/container_projects.json: which project each container belongs to (Containers sub-pages). */
     val containerProjects: com.diegonmarcos.cloudc3.pages.ContainerProjects.Decl by lazy {
-        com.diegonmarcos.cloudc3.pages.ContainerProjects.parse(decode(BuildConfig.CONTAINER_PROJECTS_B64))
+        com.diegonmarcos.cloudc3.pages.ContainerProjects.parse(decode(BuildConfig.CONTAINER_PROJECTS_B64), decode(BuildConfig.REPOS_DECLARED_B64))
     }
 
     /** Renamed section ids (old -> new) and moved page ids (old -> "section/page"). */

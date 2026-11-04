@@ -1215,8 +1215,10 @@ class C3StackFragment : KitComposeFragment() {
      *  opens [ContainerSheet] on tap. Provider groups render external consoles (no ping). */
     @Composable
     private fun CloudDashboard(index: Int, panel: Stacks.StackPanel) {
-        val dash = remember(ContainersSource.version, projectId) { Stacks.cloudServices(projectId) }
+        var kind by remember { mutableStateOf<String?>(null) }
+        val dash = remember(ContainersSource.version, projectId, kind) { Stacks.cloudServices(projectId, kind) }
         val cols = Stacks.tileColumns()
+        if (projectId != null) com.diegonmarcos.cloudc3.pages.KindBar(Declarations.containerProjects.kinds, kind, { kind = it })
         val wanted = panel.dashGroupIds.ifEmpty { dash.groups.map { it.id } }
         val groups = dash.groups.filter { it.id in wanted }
         // Only label the group inside the card when one card shows >1 group.

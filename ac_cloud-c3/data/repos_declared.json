@@ -1,0 +1,584 @@
+{
+ "_meta": {
+  "generated_by": "data/gen_repos_slice.py",
+  "source": "git-repos-master 0_registry/projects-repos.json + front-html pages.json"
+ },
+ "projects": {
+  "cloudy": {
+   "families": [
+    "Android",
+    "C3",
+    "Linux",
+    "WebApps"
+   ]
+  },
+  "cloud_me": {
+   "families": [
+    "Profiles",
+    "Shared",
+    "AI Memory",
+    "CGC",
+    "Configs",
+    "Data",
+    "Notes",
+    "Vault"
+   ]
+  },
+  "cg": {
+   "families": [
+    "Threlte",
+    "Unity",
+    "Voxel-rust",
+    "Music Production",
+    "Video Production",
+    "Game Production",
+    "Web Games"
+   ]
+  },
+  "capital": {
+   "families": [
+    "MQPM",
+    "Corporate",
+    "Terminal"
+   ]
+  },
+  "hardtech": {
+   "families": [
+    "Sailytics",
+    "CAD"
+   ]
+  },
+  "others": {
+   "families": [
+    "Back",
+    "Ops",
+    "Curriculum",
+    "ML",
+    "Cyber",
+    "Dev",
+    "Endeavours",
+    "README",
+    "Deployer"
+   ]
+  }
+ },
+ "repos": [
+  {
+   "name": "cloudy-u-android",
+   "project": "cloudy",
+   "group": "Repos",
+   "category": "Android",
+   "code": "1.1.1.1",
+   "visibility": "pub",
+   "default_branch": "",
+   "pages_url": "",
+   "github_url": "https://github.com/diegonmarcos/cloudy-u-android"
+  },
+  {
+   "name": "cloudy-t-infra",
+   "project": "cloudy",
+   "group": "Repos",
+   "category": "C3",
+   "code": "1.1.2.1",
+   "visibility": "pub",
+   "default_branch": "",
+   "pages_url": "",
+   "github_url": "https://github.com/diegonmarcos/cloudy-t-infra"
+  },
+  {
+   "name": "cloudy_db_assets-cdn",
+   "project": "cloudy",
+   "group": "Repos",
+   "category": "C3",
+   "code": "1.1.2.2.1",
+   "visibility": "pub",
+   "default_branch": "",
+   "pages_url": "",
+   "github_url": "https://github.com/diegonmarcos/cloudy_db_assets-cdn"
+  },
+  {
+   "name": "cloudy_db_infra-ops-obsv_configs-sync",
+   "project": "cloudy",
+   "group": "Repos",
+   "category": "C3",
+   "code": "1.1.2.2.2",
+   "visibility": "pub",
+   "default_branch": "",
+   "pages_url": "",
+   "github_url": "https://github.com/diegonmarcos/cloudy_db_infra-ops-obsv_configs-sync"
+  },
+  {
+   "name": "cloudy_db_LFS",
+   "project": "cloudy",
+   "group": "Repos",
+   "category": "C3",
+   "code": "1.1.2.2.3",
+   "visibility": "pvt",
+   "default_branch": "",
+   "pages_url": "",
+   "github_url": "https://github.com/diegonmarcos/cloudy_db_LFS"
+  },
+  {
+   "name": "cloudy-a-docs",
+   "project": "cloudy",
+   "group": "Repos",
+   "category": "C3",
+   "code": "1.1.2.3.1",
+   "visibility": "pvt",
+   "default_branch": "",
+   "pages_url": "",
+   "github_url": "https://github.com/diegonmarcos/cloudy-a-docs"
+  },
+  {
+   "name": "cloudy-u-containers",
+   "project": "cloudy",
+   "group": "Repos",
+   "category": "Linux",
+   "code": "1.1.3.1.1",
+   "visibility": "pub",
+   "default_branch": "",
+   "pages_url": "",
+   "github_url": "https://github.com/diegonmarcos/cloudy-u-containers"
+  },
+  {
+   "name": "cloudy-u-containers_cgc",
+   "project": "cloudy",
+   "group": "Repos",
+   "category": "Linux",
+   "code": "1.1.3.1.2",
+   "visibility": "pub",
+   "default_branch": "",
+   "pages_url": "",
+   "github_url": "https://github.com/diegonmarcos/cloudy-u-containers_cgc"
+  },
+  {
+   "name": "cloudy-u-desktop",
+   "project": "cloudy",
+   "group": "Repos",
+   "category": "Linux",
+   "code": "1.1.3.2.1",
+   "visibility": "pub",
+   "default_branch": "",
+   "pages_url": "",
+   "github_url": "https://github.com/diegonmarcos/cloudy-u-desktop"
+  },
+  {
+   "name": "cloudy-u-linux",
+   "project": "cloudy",
+   "group": "Repos",
+   "category": "Linux",
+   "code": "1.1.3.2.2",
+   "visibility": "pub",
+   "default_branch": "",
+   "pages_url": "",
+   "github_url": "https://github.com/diegonmarcos/cloudy-u-linux"
+  },
+  {
+   "name": "cloudy-h-webapps-mob",
+   "project": "cloudy",
+   "group": "Repos",
+   "category": "WebApps",
+   "code": "1.1.4.1",
+   "visibility": "pub",
+   "default_branch": "",
+   "pages_url": "",
+   "github_url": "https://github.com/diegonmarcos/cloudy-h-webapps-mob"
+  },
+  {
+   "name": "cloudy-h-webapps-desk",
+   "project": "cloudy",
+   "group": "Repos",
+   "category": "WebApps",
+   "code": "1.1.4.2",
+   "visibility": "pub",
+   "default_branch": "",
+   "pages_url": "",
+   "github_url": "https://github.com/diegonmarcos/cloudy-h-webapps-desk"
+  },
+  {
+   "name": "cloud-me-pub-profiles-_lnktree",
+   "project": "cloud_me",
+   "group": "Profiles",
+   "category": "Pub",
+   "code": "1.2.1.1.1",
+   "visibility": "pub",
+   "default_branch": "",
+   "pages_url": "",
+   "github_url": "https://github.com/diegonmarcos/cloud-me-pub-profiles-_lnktree"
+  },
+  {
+   "name": "cloud-me-pub-profiles-leaf.y",
+   "project": "cloud_me",
+   "group": "Profiles",
+   "category": "Pub",
+   "code": "1.2.1.1.2",
+   "visibility": "pub",
+   "default_branch": "",
+   "pages_url": "",
+   "github_url": "https://github.com/diegonmarcos/cloud-me-pub-profiles-leaf.y"
+  },
+  {
+   "name": "cloud-me-pub-profiles-nexus.z",
+   "project": "cloud_me",
+   "group": "Profiles",
+   "category": "Pub",
+   "code": "1.2.1.1.3",
+   "visibility": "pub",
+   "default_branch": "",
+   "pages_url": "",
+   "github_url": "https://github.com/diegonmarcos/cloud-me-pub-profiles-nexus.z"
+  },
+  {
+   "name": "cloud-me-pub-profiles-prf-prs",
+   "project": "cloud_me",
+   "group": "Profiles",
+   "category": "Pub",
+   "code": "1.2.1.1.4",
+   "visibility": "pub",
+   "default_branch": "",
+   "pages_url": "",
+   "github_url": "https://github.com/diegonmarcos/cloud-me-pub-profiles-prf-prs"
+  },
+  {
+   "name": "cloud-me-pub-profiles-stark.x",
+   "project": "cloud_me",
+   "group": "Profiles",
+   "category": "Pub",
+   "code": "1.2.1.1.5",
+   "visibility": "pub",
+   "default_branch": "",
+   "pages_url": "",
+   "github_url": "https://github.com/diegonmarcos/cloud-me-pub-profiles-stark.x"
+  },
+  {
+   "name": "cloud-me-pub-shared",
+   "project": "cloud_me",
+   "group": "Shared",
+   "category": "Pub",
+   "code": "1.2.1.2.1",
+   "visibility": "pub",
+   "default_branch": "",
+   "pages_url": "",
+   "github_url": "https://github.com/diegonmarcos/cloud-me-pub-shared"
+  },
+  {
+   "name": "cloud-me-pvt-my-ai",
+   "project": "cloud_me",
+   "group": "AI Memory",
+   "category": "Pvt",
+   "code": "1.2.2.1.1",
+   "visibility": "pvt",
+   "default_branch": "",
+   "pages_url": "",
+   "github_url": "https://github.com/diegonmarcos/cloud-me-pvt-my-ai"
+  },
+  {
+   "name": "cloud-me-pvt-cgc",
+   "project": "cloud_me",
+   "group": "CGC",
+   "category": "Pvt",
+   "code": "1.2.2.2.1",
+   "visibility": "pvt",
+   "default_branch": "",
+   "pages_url": "",
+   "github_url": "https://github.com/diegonmarcos/cloud-me-pvt-cgc"
+  },
+  {
+   "name": "cloud-me-pvt-configs",
+   "project": "cloud_me",
+   "group": "Configs",
+   "category": "Pvt",
+   "code": "1.2.2.3.1",
+   "visibility": "pvt",
+   "default_branch": "",
+   "pages_url": "",
+   "github_url": "https://github.com/diegonmarcos/cloud-me-pvt-configs"
+  },
+  {
+   "name": "cloud-me-pvt-data",
+   "project": "cloud_me",
+   "group": "Data",
+   "category": "Pvt",
+   "code": "1.2.2.4.1",
+   "visibility": "pvt",
+   "default_branch": "",
+   "pages_url": "",
+   "github_url": "https://github.com/diegonmarcos/cloud-me-pvt-data"
+  },
+  {
+   "name": "cloud-me-pvt-notes",
+   "project": "cloud_me",
+   "group": "Notes",
+   "category": "Pvt",
+   "code": "1.2.2.5.1",
+   "visibility": "pvt",
+   "default_branch": "",
+   "pages_url": "",
+   "github_url": "https://github.com/diegonmarcos/cloud-me-pvt-notes"
+  },
+  {
+   "name": "cloud-me-pvt-vault",
+   "project": "cloud_me",
+   "group": "Vault",
+   "category": "Pvt",
+   "code": "1.2.2.6.1",
+   "visibility": "pvt",
+   "default_branch": "",
+   "pages_url": "",
+   "github_url": "https://github.com/diegonmarcos/cloud-me-pvt-vault"
+  },
+  {
+   "name": "CG-galaxy",
+   "project": "cg",
+   "group": "Threlte",
+   "category": "Threlte",
+   "code": "2.1.1.1",
+   "visibility": "pub",
+   "default_branch": "",
+   "pages_url": "",
+   "github_url": "https://github.com/diegonmarcos/CG-galaxy"
+  },
+  {
+   "name": "CG-galaxy-gaia",
+   "project": "cg",
+   "group": "Threlte",
+   "category": "Threlte",
+   "code": "2.1.1.2",
+   "visibility": "pvt",
+   "default_branch": "",
+   "pages_url": "",
+   "github_url": "https://github.com/diegonmarcos/CG-galaxy-gaia"
+  },
+  {
+   "name": "CG-unity",
+   "project": "cg",
+   "group": "Unity",
+   "category": "Unity",
+   "code": "2.1.2.1",
+   "visibility": "pvt",
+   "default_branch": "",
+   "pages_url": "",
+   "github_url": "https://github.com/diegonmarcos/CG-unity"
+  },
+  {
+   "name": "CG-voxel-rust",
+   "project": "cg",
+   "group": "Voxel-rust",
+   "category": "Voxel-rust",
+   "code": "2.1.3.1",
+   "visibility": "pub",
+   "default_branch": "",
+   "pages_url": "",
+   "github_url": "https://github.com/diegonmarcos/CG-voxel-rust"
+  },
+  {
+   "name": "CG-circus",
+   "project": "cg",
+   "group": "Web Games",
+   "category": "Web Games",
+   "code": "2.2.4.1",
+   "visibility": "pub",
+   "default_branch": "",
+   "pages_url": "",
+   "github_url": "https://github.com/diegonmarcos/CG-circus"
+  },
+  {
+   "name": "Capital-Macro-Central-Bank",
+   "project": "capital",
+   "group": "MQPM",
+   "category": "MQPM",
+   "code": "3.1.1.1",
+   "visibility": "pub",
+   "default_branch": "",
+   "pages_url": "",
+   "github_url": "https://github.com/diegonmarcos/Capital-Macro-Central-Bank"
+  },
+  {
+   "name": "Capital-Micro-Asset-Management",
+   "project": "capital",
+   "group": "Corporate",
+   "category": "Corporate",
+   "code": "3.2.1.1",
+   "visibility": "pub",
+   "default_branch": "",
+   "pages_url": "",
+   "github_url": "https://github.com/diegonmarcos/Capital-Micro-Asset-Management"
+  },
+  {
+   "name": "Capital-Stack-Fin-Terminal",
+   "project": "capital",
+   "group": "Terminal",
+   "category": "Terminal",
+   "code": "3.3.1.1",
+   "visibility": "pub",
+   "default_branch": "",
+   "pages_url": "",
+   "github_url": "https://github.com/diegonmarcos/Capital-Stack-Fin-Terminal"
+  },
+  {
+   "name": "HardTech-DeepXTech",
+   "project": "hardtech",
+   "group": "Sailytics",
+   "category": "Sailytics",
+   "code": "4.2.1.1",
+   "visibility": "pub",
+   "default_branch": "",
+   "pages_url": "",
+   "github_url": "https://github.com/diegonmarcos/HardTech-DeepXTech"
+  },
+  {
+   "name": "HardTech-Stack-CAD-Simulators",
+   "project": "hardtech",
+   "group": "CAD",
+   "category": "CAD",
+   "code": "4.3.1.1",
+   "visibility": "pub",
+   "default_branch": "",
+   "pages_url": "",
+   "github_url": "https://github.com/diegonmarcos/HardTech-Stack-CAD-Simulators"
+  },
+  {
+   "name": "lecole-42_back-Algo",
+   "project": "others",
+   "group": "Back",
+   "category": "Back",
+   "code": "5.1.1.1",
+   "visibility": "pub",
+   "default_branch": "",
+   "pages_url": "",
+   "github_url": "https://github.com/diegonmarcos/lecole-42_back-Algo"
+  },
+  {
+   "name": "lecole-42_back-Graphic",
+   "project": "others",
+   "group": "Back",
+   "category": "Back",
+   "code": "5.2.1.1",
+   "visibility": "pub",
+   "default_branch": "",
+   "pages_url": "",
+   "github_url": "https://github.com/diegonmarcos/lecole-42_back-Graphic"
+  },
+  {
+   "name": "lecole-42_back-System",
+   "project": "others",
+   "group": "Back",
+   "category": "Back",
+   "code": "5.3.1.1",
+   "visibility": "pub",
+   "default_branch": "",
+   "pages_url": "",
+   "github_url": "https://github.com/diegonmarcos/lecole-42_back-System"
+  },
+  {
+   "name": "lecole-42_ops-Mylibs",
+   "project": "others",
+   "group": "Ops",
+   "category": "Ops",
+   "code": "5.4.1.1",
+   "visibility": "pub",
+   "default_branch": "",
+   "pages_url": "",
+   "github_url": "https://github.com/diegonmarcos/lecole-42_ops-Mylibs"
+  },
+  {
+   "name": "lecole-42-projects",
+   "project": "others",
+   "group": "Curriculum",
+   "category": "Curriculum",
+   "code": "5.5.1.1",
+   "visibility": "pvt",
+   "default_branch": "",
+   "pages_url": "",
+   "github_url": "https://github.com/diegonmarcos/lecole-42-projects"
+  },
+  {
+   "name": "lecole-42_ml-Agentic",
+   "project": "others",
+   "group": "ML",
+   "category": "ML",
+   "code": "5.6.1.1",
+   "visibility": "pub",
+   "default_branch": "",
+   "pages_url": "",
+   "github_url": "https://github.com/diegonmarcos/lecole-42_ml-Agentic"
+  },
+  {
+   "name": "lecole-42_ml-DataScience",
+   "project": "others",
+   "group": "ML",
+   "category": "ML",
+   "code": "5.7.1.1",
+   "visibility": "pub",
+   "default_branch": "",
+   "pages_url": "",
+   "github_url": "https://github.com/diegonmarcos/lecole-42_ml-DataScience"
+  },
+  {
+   "name": "lecole-42_ml-MachineLearning",
+   "project": "others",
+   "group": "ML",
+   "category": "ML",
+   "code": "5.8.1.1",
+   "visibility": "pub",
+   "default_branch": "",
+   "pages_url": "",
+   "github_url": "https://github.com/diegonmarcos/lecole-42_ml-MachineLearning"
+  },
+  {
+   "name": "lecole-42_cyber-Cyberwarfare",
+   "project": "others",
+   "group": "Cyber",
+   "category": "Cyber",
+   "code": "5.9.1.1",
+   "visibility": "pub",
+   "default_branch": "",
+   "pages_url": "",
+   "github_url": "https://github.com/diegonmarcos/lecole-42_cyber-Cyberwarfare"
+  },
+  {
+   "name": "lecole-42_dev",
+   "project": "others",
+   "group": "Dev",
+   "category": "Dev",
+   "code": "5.10.1.1",
+   "visibility": "pvt",
+   "default_branch": "",
+   "pages_url": "",
+   "github_url": "https://github.com/diegonmarcos/lecole-42_dev"
+  },
+  {
+   "name": "Projects-endeavours",
+   "project": "others",
+   "group": "Endeavours",
+   "category": "Endeavours",
+   "code": "6.1.1.1",
+   "visibility": "pub",
+   "default_branch": "",
+   "pages_url": "",
+   "github_url": "https://github.com/diegonmarcos/Projects-endeavours"
+  },
+  {
+   "name": "front-gh-profile-diegonmarcos",
+   "project": "others",
+   "group": "README",
+   "category": "README",
+   "code": "7.1.1.1",
+   "visibility": "pub",
+   "default_branch": "",
+   "pages_url": "",
+   "github_url": "https://github.com/diegonmarcos/front-gh-profile-diegonmarcos"
+  },
+  {
+   "name": "front-diegonmarcos",
+   "project": "others",
+   "group": "Deployer",
+   "category": "Deployer",
+   "code": "7.2.1.1",
+   "visibility": "pub",
+   "default_branch": "",
+   "pages_url": "",
+   "github_url": "https://github.com/diegonmarcos/front-diegonmarcos"
+  }
+ ]
+}

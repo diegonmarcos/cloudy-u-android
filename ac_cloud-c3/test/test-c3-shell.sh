@@ -542,7 +542,7 @@ tabs = open(sys.argv[3], encoding="utf-8").read()
 bad = []
 secs = {x["id"]: x for x in ui.get("sections") or []}
 def pids(i): return [p["id"] for p in (secs.get(i) or {}).get("pages") or []]
-if pids("containers") != ["all", "cloudy", "cg", "capital", "hardtech", "cloud_me"]: bad.append("Containers pages are %s, not the project pages [all, cloudy, cg, capital, hardtech, cloud_me]" % pids("containers"))
+if pids("containers") != ["all", "cloudy", "cloud_me", "cg", "capital", "hardtech", "others"]: bad.append("Containers pages are %s, not the project pages [all, cloudy, cloud_me, cg, capital, hardtech, others]" % pids("containers"))
 for _p in (secs.get("containers") or {}).get("pages") or []:
     if [q["id"] for q in _p.get("pages") or []] != [_p["id"] + "_topology", _p["id"] + "_table"]:
         bad.append("Containers project %r lost its Topology | Table switch (nested pages %s)" % (_p["id"], [q["id"] for q in _p.get("pages") or []]))

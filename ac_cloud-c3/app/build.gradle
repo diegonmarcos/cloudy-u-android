@@ -96,6 +96,9 @@ def publicIdentitiesB64 = publicIdentitiesFile.bytes.encodeBase64().toString()
 def containerProjectsFile = file("../data/container_projects.json")
 if (!containerProjectsFile.exists()) throw new GradleException("missing data/container_projects.json - the Containers project sub-pages would bake empty")
 def containerProjectsB64 = containerProjectsFile.bytes.encodeBase64().toString()
+def reposDeclaredFile = file("../data/repos_declared.json")
+if (!reposDeclaredFile.exists()) throw new GradleException("missing data/repos_declared.json - run data/gen_repos_slice.py; the Repos kind would bake empty")
+def reposDeclaredB64 = reposDeclaredFile.bytes.encodeBase64().toString()
 def c3OpsBaseUrl       = (buildJson.ui.c3_ops?.base_url  ?: '').toString()
 
 // #648 THE CARRIED C3 SECTION: ui.carried_c3 (not nav: ui.sections is) is the SuperApp's declaration block,
@@ -225,6 +228,7 @@ android {
         buildConfigField "String", "UI_PRIVATE_SOURCES_B64", "\"${uiPrivateSourcesB64}\""
         buildConfigField "String", "PUBLIC_IDENTITIES_B64", "\"${publicIdentitiesB64}\""
         buildConfigField "String", "CONTAINER_PROJECTS_B64",  "\"${containerProjectsB64}\""
+        buildConfigField "String", "REPOS_DECLARED_B64",      "\"${reposDeclaredB64}\""
         buildConfigField "String", "C3_OPS_BASE_URL",       "\"${c3OpsBaseUrl}\""
         buildConfigField "String", "SERVICES_PUBLIC_B64",  "\"${servicesPublicB64}\""
         buildConfigField "String", "SERVICES_PRIVATE_B64", "\"${servicesPrivateB64}\""

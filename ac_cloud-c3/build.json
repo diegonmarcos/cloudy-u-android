@@ -321,7 +321,7 @@
         "id": "containers",
         "label": "Containers",
         "icon": "ic_p_c3_stack",
-        "_doc": "Renamed from Topology (owner request, 2026-10-16). #1454: one top page per PROJECT (All | Cloudy | CG | Capital | Hardtech | Cloud-me), each with a Topology | Table switch (nested pages `<project>_topology`, `<project>_table`; ids are unique per section, the view is the id after the project). Topology = the container dashboards (C3StackFragment over ui.carried_c3.stack_topology) and Table = the sortable, filterable table (RoutesTableFragment), both scoped to the project. Which project a container belongs to is data/container_projects.json (folder / name prefixes, mapped to the registry project codes); a project id with no entry there is All. Agents moved to Ops.",
+        "_doc": "Renamed from Topology (owner request, 2026-10-16). #1454: one top page per PROJECT (All | Cloudy | Cloud-me | CG | Capital | Hardtech | Others), each with a Topology | Table switch (nested pages `<project>_topology`, `<project>_table`; ids are unique per section, the view is the id after the project). Topology = the container dashboards (C3StackFragment over ui.carried_c3.stack_topology) and Table = the sortable, filterable table (RoutesTableFragment), both scoped to the project. Which project a container belongs to is data/container_projects.json (explicit name_overrides, then folder / name prefixes; no match = Others), plus a kind chip row inside each tab (All | MCPs | APIs | Apps | DBs) and a group_remap; a project id with no entry there is All. Agents moved to Ops.",
         "pages": [
           {
             "id": "all",
@@ -339,6 +339,15 @@
             "pages": [
               {"id": "cloudy_topology", "label": "Topology", "icon": "ic_p_c3_stack"},
               {"id": "cloudy_table", "label": "Table", "icon": "ic_link_tile"}
+            ]
+          },
+          {
+            "id": "cloud_me",
+            "label": "Cloud-me",
+            "icon": "ic_p_c3_stack",
+            "pages": [
+              {"id": "cloud_me_topology", "label": "Topology", "icon": "ic_p_c3_stack"},
+              {"id": "cloud_me_table", "label": "Table", "icon": "ic_link_tile"}
             ]
           },
           {
@@ -369,12 +378,12 @@
             ]
           },
           {
-            "id": "cloud_me",
-            "label": "Cloud-me",
+            "id": "others",
+            "label": "Others",
             "icon": "ic_p_c3_stack",
             "pages": [
-              {"id": "cloud_me_topology", "label": "Topology", "icon": "ic_p_c3_stack"},
-              {"id": "cloud_me_table", "label": "Table", "icon": "ic_link_tile"}
+              {"id": "others_topology", "label": "Topology", "icon": "ic_p_c3_stack"},
+              {"id": "others_table", "label": "Table", "icon": "ic_link_tile"}
             ]
           }
         ]

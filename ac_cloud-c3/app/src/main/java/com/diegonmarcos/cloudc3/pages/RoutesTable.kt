@@ -159,6 +159,8 @@ fun RoutesTableScreen(
     store: RoutesProbeStore = remember { RoutesProbeStore() },
     /** data/declarations.json: container name -> declaration, for the More page. */
     declarations: JsonObject = JsonObject(emptyMap()),
+    /** The Containers kind chips (All | MCPs | APIs | ...); empty = no chip row. The caller filters [rows] by [kind]. */
+    kinds: List<ContainerProjects.Kind> = emptyList(), kind: String? = null, onKind: (String?) -> Unit = {},
 ) {
     var state by remember { mutableStateOf(initial) }
     fun update(s: RoutesTableModel.State) { state = s; onState(s) }
@@ -187,6 +189,7 @@ fun RoutesTableScreen(
         LazyColumn(Modifier.fillMaxSize().testTag(RoutesTags.LIST)) {
             item {
             Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp)) {
+                if (kinds.isNotEmpty()) KindBar(kinds, kind, onKind)
                 ChipRow("Light") {
                     ProbeModel.Light.entries.forEach { l ->
                         Chip(l.label, l.id in state.lights, RoutesTags.lightChip(l.id)) { update(RoutesTableModel.toggleLight(state, l.id)) }
@@ -494,6 +497,15 @@ private fun ChipRow(label: String, chips: @Composable () -> Unit) {
     }
 }
 
+/** The kind filter chips of a Containers project tab: All, then one chip per declared kind (data/container_projects.json). */
+@Composable
+fun KindBar(kinds: List<ContainerProjects.Kind>, selected: String?, onSelect: (String?) -> Unit) {
+    ChipRow("Kind") {
+        Chip("All", selected == null, "kind_all") { onSelect(null) }
+        kinds.forEach { k -> Chip(k.label, selected == k.id, "kind_${k.id}") { onSelect(k.id) } }
+    }
+}
+
 @Composable
 private fun Chip(label: String, selected: Boolean, tag: String, onClick: () -> Unit) {
     val c = MaterialTheme.colorScheme
@@ -526,8 +538,10 @@ class RoutesTableFragment : KitComposeFragment() {
         val version = ContainersSource.version
         LaunchedEffect(Unit) { ContainersSource.refresh(ApiFleetLive(ctx.applicationContext)) }
         val initial = remember { store.load() }
+        var kind by remember { mutableStateOf<String?>(null) }
         RoutesTableScreen(
-            rows = remember(version, project) { ContainerProjects.rows(Declarations.containerProjects, ContainersSource.current(), project) },
+            kinds = Declarations.containerProjects.kinds, kind = kind, onKind = { kind = it },
+            rows = remember(version, project, kind) { ContainerProjects.rows(Declarations.containerProjects, ContainersSource.current(), project, kind) },
             initial = initial,
             onState = store::save,
             prober = remember { NetProber(ctx) },

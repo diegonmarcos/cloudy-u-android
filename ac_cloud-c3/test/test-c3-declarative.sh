@@ -75,7 +75,7 @@ for p in cont:
     if got != want: bad.append("Containers page %r nests %s, not the Topology | Table switch %s" % (p["id"], got, want))
     labels = [q["label"] for q in p.get("pages") or []]
     if labels != ["Topology", "Table"]: bad.append("Containers page %r labels its switch %s" % (p["id"], labels))
-if [p["label"] for p in cont] != ["All", "Cloudy", "CG", "Capital", "Hardtech", "Cloud-me"]:
+if [p["label"] for p in cont] != ["All", "Cloudy", "Cloud-me", "CG", "Capital", "Hardtech", "Others"]:
     bad.append("the Containers strip reads %s" % [p["label"] for p in cont])
 ops = [p["id"] for p in secs["ops"]["pages"]]
 if "agents" not in ops: bad.append("Agents is not an Ops page")
@@ -98,7 +98,7 @@ bad = []
 if sorted(declared) != sorted(i for i in strip if i != "all"): bad.append("the strip %s and container_projects.json %s name different projects" % (strip, declared))
 if cp.get("default") not in declared: bad.append("the default project %r is not declared" % cp.get("default"))
 for p in cp["projects"]:
-    if not re.fullmatch(r"\d+(\.\d+)*", p.get("code", "")): bad.append("project %r has no registry code" % p["id"])
+    if p["id"] != cp.get("default") and not re.fullmatch(r"\d+(\.\d+)*", p.get("code", "")): bad.append("project %r has no registry code" % p["id"])
 for b in bad: print("    " + b)
 sys.exit(1 if bad else 0)
 PY

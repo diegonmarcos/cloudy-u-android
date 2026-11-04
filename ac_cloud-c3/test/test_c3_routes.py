@@ -28,6 +28,10 @@ class AuthType(unittest.TestCase):
     def test_path_scoped_open_does_not_open_the_host(self):
         self.assertEqual(self.t("mcp.example.com/tool", {"mcp": {"has_mcp": True}}), "bearer")
 
+    def test_mcp_host_is_bearer_even_if_listed_open_or_unknown_service(self):
+        self.assertEqual(self.t("mcp.example.com/anything"), "bearer")
+        self.assertEqual(r.auth_type("mcp.example.com/x", {}, None, False, {"public_open": [{"host": "mcp.example.com", "scope": "host"}]}), "bearer")
+
     def test_mcp_service_is_bearer(self):
         self.assertEqual(self.t("m.example.com/x", {"mcp": {"has_mcp": True}}), "bearer")
 
@@ -99,6 +103,7 @@ class ShippedSlice(unittest.TestCase):
             self.assertIn(row["auth_type"], {"mesh", "open", "bearer", "woauth"})
             if not row["public_url"]:
                 self.assertEqual(row["auth_type"], "mesh")
+        self.assertTrue(all(x["auth_type"] == "bearer" for x in rows if x["public_url"].startswith("mcp.")))
         self.assertTrue({"bearer", "woauth", "mesh"} <= {x["auth_type"] for x in rows})
 
 
