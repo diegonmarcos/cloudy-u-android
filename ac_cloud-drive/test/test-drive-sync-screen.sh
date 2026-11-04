@@ -40,7 +40,7 @@ CARDS="$SRC/sync/GitReposScreen.kt"
 TABLE_UI="$SRC/sync/RepoTableUi.kt"
 TABLE="$SRC/sync/RepoTable.kt"
 COORD="$SRC/sync/GitSyncCoordinator.kt"
-HIST="$SRC/sync/SyncHistory.kt"
+HIST="$APP/../ab_cloud-libs-shared/libs/git-repos/src/main/java/com/diegonmarcos/cloudlib/gitrepos/SyncHistory.kt"
 RC="$SRC/sync/RcloneMountsScreens.kt"
 RCC="$SRC/sync/RcloneCoordinator.kt"
 # #1173 the Mounts and Fsync pages are their own files, over StorageCoordinator's real state
@@ -62,8 +62,8 @@ done
 
 # g2 <GitReposScreen.kt> : the card prints the conflict count in the off colour and offers Resolve
 g2() {
-    grep -qE 'stringResource\(R\.string\.sync_conflicts, glance\.conflicts\), color = off' "$1" &&
-    grep -qE 'Pill\(stringResource\(R\.string\.sync_resolve_conflicts, glance\.conflicts\), \{ actions\.openEngine\(EngineActivity\.ENGINE_GIT, repo\.path\) \}, filled = true\)' "$1" &&
+    grep -qE 'stringResource\(R\.string\.sync_conflicts, conflictCount\), color = off' "$1" &&
+    grep -qE 'Pill\(stringResource\(R\.string\.sync_resolve_conflicts, conflictCount\), \{ actions\.openEngine\(EngineActivity\.ENGINE_GIT, repo\.path\) \}, filled = true\)' "$1" &&
     # #1175 the light's rule moved to RepoStatus (pure, JVM-tested): a conflict is never green.
     grep -qE 'g\.conflicts > 0 -> Kind\.CONFLICT' "$SRC/sync/RepoStatus.kt" &&
     grep -qE 'CONFLICT\(StatusLight\.State\.OFF\)' "$SRC/sync/RepoStatus.kt" &&
@@ -120,7 +120,7 @@ echo "── G6 the scheduler decides per repository ──"
 g6 "$WORKER" && pass "the worker asks SyncSchedule.isDue with the repo's own period and rule and skips the rest" || fail "the worker does not decide per repository"
 if grep -qE 'fun isDue\(' "$HIST" && grep -qE 'val period = if \(repoIntervalMinutes > 0\) repoIntervalMinutes else baseIntervalMinutes' "$HIST" && grep -qE 'if \(requireUnmetered && networkUnmetered != true\) return false' "$HIST"; then pass "SyncSchedule.isDue: own period or base; Wi-Fi rule refuses an unknown network"; else fail "SyncSchedule.isDue rules missing"; fi
 if grep -qE 'return Result\.success\(\)' "$WORKER" && grep -qE 'NET_CAPABILITY_NOT_METERED' "$WORKER"; then pass "conflicts are not retried; the network is read from the platform"; else fail "worker outcome/network rules missing"; fi
-if [ -f "$TESTS/sync/SyncHistoryTest.kt" ] && grep -qE 'class SyncScheduleTest' "$TESTS/sync/SyncHistoryTest.kt" && grep -qE 'ownPeriodOverridesTheBase' "$TESTS/sync/SyncHistoryTest.kt" && grep -qE 'capDropsTheOldest' "$TESTS/sync/SyncHistoryTest.kt"; then pass "the JVM suite proves the decision and the cap"; else fail "no JVM proof of SyncSchedule / SyncHistory"; fi
+if [ -f "$APP/../ab_cloud-libs-shared/libs/git-repos/src/test/java/com/diegonmarcos/cloudlib/gitrepos/SyncHistoryTest.kt" ] && grep -qE 'class SyncScheduleTest' "$APP/../ab_cloud-libs-shared/libs/git-repos/src/test/java/com/diegonmarcos/cloudlib/gitrepos/SyncHistoryTest.kt" && grep -qE 'ownPeriodOverridesTheBase' "$APP/../ab_cloud-libs-shared/libs/git-repos/src/test/java/com/diegonmarcos/cloudlib/gitrepos/SyncHistoryTest.kt" && grep -qE 'capDropsTheOldest' "$APP/../ab_cloud-libs-shared/libs/git-repos/src/test/java/com/diegonmarcos/cloudlib/gitrepos/SyncHistoryTest.kt"; then pass "the JVM suite proves the decision and the cap"; else fail "no JVM proof of SyncSchedule / SyncHistory"; fi
 
 echo "── G7 declared, not cloned (#608: a DENSE ROW, not a card) ──"
 # The declared public set is rendered as a compact row that offers Clone into store; the
