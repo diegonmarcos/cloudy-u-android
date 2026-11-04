@@ -303,7 +303,7 @@ if [secs.get(i, {}).get("label") for i in ui.get("bottom_nav") or []] != ["Scrap
 if {"news", "shopping", "brokers"} & set(ui.get("bottom_nav") or []):
     bad.append("S10 News, Shopping or Brokers is on the island")
 samples = bj.get("sample_pages", {}).get("pages") or {}
-for sid, ids in (("scrapers", ["sitefiles", "apify", "selfhosted"]), ("models3d", ["models3d"])):
+for sid, ids in (("scrapers", ["sitefiles", "apify", "cloudflare", "selfhosted"]), ("models3d", ["models3d"])):
     if [q.get("id") for q in (secs.get(sid) or {}).get("pages") or []] != ids:
         bad.append("S10 ui.sections[%s] pages are not %s" % (sid, ", ".join(ids)))
     for i in ids:

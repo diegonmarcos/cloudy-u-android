@@ -3060,6 +3060,11 @@
             "icon": "hub"
           },
           {
+            "id": "cloudflare",
+            "label": "Cloudflare",
+            "icon": "public"
+          },
+          {
             "id": "selfhosted",
             "label": "SelfHosted",
             "icon": "dns"
@@ -3472,6 +3477,31 @@
             "title": "apify/instagram-scraper",
             "meta": "Public profiles only",
             "badge": "paused"
+          }
+        ]
+      },
+      "cloudflare": {
+        "blurb": "Cloudflare Browser Run, the headless-browser rendering API (third scraper backend; account id and API token are entered in the scraper apps).",
+        "rows": [
+          {
+            "title": "markdown",
+            "meta": "Page to Markdown",
+            "badge": "endpoint"
+          },
+          {
+            "title": "content",
+            "meta": "Rendered HTML",
+            "badge": "endpoint"
+          },
+          {
+            "title": "links",
+            "meta": "Every link on the page",
+            "badge": "endpoint"
+          },
+          {
+            "title": "scrape",
+            "meta": "CSS selectors to JSON",
+            "badge": "endpoint"
           }
         ]
       },

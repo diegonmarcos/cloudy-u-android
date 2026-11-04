@@ -345,7 +345,7 @@ class SearchShellTest {
     @Test fun theSixTabsRouteAndKeepTheirTopTabs() {
         launch()
         val tabs = mapOf(
-            "scrapers" to listOf("sitefiles", "apify", "selfhosted"),
+            "scrapers" to listOf("sitefiles", "apify", "cloudflare", "selfhosted"),
             "image" to emptyList(),
             "video" to emptyList(),
             "models3d" to emptyList(),
@@ -676,7 +676,7 @@ class SearchShellTest {
     /** #1472 the Scrappers and 3D Models pages draw the rows build.json::sample_pages declares. */
     @Test fun theSampleTabsDrawTheirDeclaredRows() {
         launch()
-        for ((section, page) in listOf("scrapers" to "sitefiles", "scrapers" to "apify", "scrapers" to "selfhosted", "models3d" to "models3d")) {
+        for ((section, page) in listOf("scrapers" to "sitefiles", "scrapers" to "apify", "scrapers" to "cloudflare", "scrapers" to "selfhosted", "models3d" to "models3d")) {
             compose.goTo(state, section)
             compose.runOnIdle { state.samplePage[section] = page }
             waitFor(com.diegonmarcos.cloudsearch.ui.SampleTags.page(page))
