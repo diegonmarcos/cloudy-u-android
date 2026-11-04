@@ -100,6 +100,15 @@ shot 21-sync-result
 # 3. conflict: the clone holds the conflict, the solver opens
 pull_clone "$CL"; P="$WORK/pulled/$(basename "$CL")"
 grep -q '^<<<<<<<' "$P/a.txt" || fail "no conflict markers in the clone's a.txt: $(cat "$P/a.txt")"
+# 3b. the conflict solver's Workflow panel (libs:git-ui GitWorkflowPanel): Manual Sync > Conflict Solver lists the conflicted file with
+#     its per-file choices; the shot is the panel itself (the next step opens the engine's own solver screen).
+for i in 1 2 3 4; do front; dump >/dev/null; has 'Conflict Solver' && break; swipe_up; done
+tap '^Conflict Solver$' || fail "no Conflict Solver item in Manual Sync: $(texts)"; sleep 4
+for i in 1 2 3 4; do dump >/dev/null; has 'Keep ours' && break; swipe_up; done
+dump >/dev/null; has 'Keep ours' && has 'Keep theirs' && has 'Open in editor' && has 'a.txt' || fail "the Workflow panel does not list a.txt with Keep ours / Keep theirs / Open in editor: $(texts)"
+has 'Stage and continue' || fail "the Workflow panel has no Stage and continue: $(texts)"
+shot 25-workflow-solver
+sz=$(adb shell wm size | grep -oE '[0-9]+x[0-9]+' | tail -1); for i in 1 2 3 4 5 6; do adb shell input swipe $((${sz%x*}/2)) $((${sz#*x}/3)) $((${sz%x*}/2)) $((${sz#*x}*3/4)) 300; done; sleep 1   # back to the top of the sheet
 for i in 1 2 3 4; do front; dump >/dev/null; grep -qE 'text="Resolve [0-9]+ conflict' "$OUT/ui.xml" && break; swipe_up; done
 dump >/dev/null; grep -q 'nothing changed' "$OUT/ui.xml" && fail "the sheet says nothing changed after a conflict: $(texts)"
 tap '^Resolve [0-9]+ conflict' || fail "no Resolve N conflict(s) button: $(texts)"; sleep 4
