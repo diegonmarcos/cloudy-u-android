@@ -1,6 +1,9 @@
 name: "Ship → Hardtech-CAD APK (build + push to GHCR via ORAS + attach to GH Release)"
 
 on:
+  # ── MANAGED-REFRESH-TRIGGER (#836): fleet-refresh.yml dispatches this app ──
+  repository_dispatch:
+    types: [fleet-refresh-ad_Hardtech-CAD]
   workflow_dispatch:
     inputs:
       variant:

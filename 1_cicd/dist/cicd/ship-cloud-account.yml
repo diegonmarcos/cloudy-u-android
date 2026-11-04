@@ -44,6 +44,7 @@ on:
       # fleet-refresh.yml (schedule only) ships the app for a moved cross-app dir.
       #   input: "1_cicd/src/cicd/ship-cloud-account.yml"
       # ── end MANAGED-PATHS-HEADER ──
+      - "ab_cloud-libs-shared/libs/account-ui/**"
       - "ab_cloud-libs-shared/libs/account/**"
       - "ab_cloud-libs-shared/libs/appstore/**"
       - "ab_cloud-libs-shared/libs/auth/**"

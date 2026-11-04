@@ -31,7 +31,7 @@
     },
     "ab_cloud-libs-shared/lib-apks": {
       "first_test": "Assert the per-asset path sets it derives UNION to the workflow's whole trigger list \u2014 publish-gate-blast-radius.test.sh already asserts this; give it a tests block so it runs in the ship job too.",
-      "shell_testers": 9,
+      "shell_testers": 8,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
@@ -67,11 +67,11 @@
     },
     "ac_cloud-account": {
       "first_test": "#867 NEW APP (the Account page split out of cloud-superapp). Has 1 shell tester (test-account-app.sh): the Account page comes from libs:account with no copy here; one package name and one OPEN action across SuperApp, build.json, manifest and the fleet manifest; the data provider is signature-gated, exported only by this app and only reads; the one-shot copy never overwrites a store SuperApp already holds; SuperApp's Account entry opens this app (extapp:cloud-account) - planted mutations each go red. NOT COVERED: the Account tabs themselves (libs:account and cloud-superapp's account testers cover them), and the copy on a real phone (fill Account in SuperApp, install Cloud Account, confirm configs, profile and the S/R/L files arrive once).",
-      "shell_testers": 12,
+      "shell_testers": 13,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 18,
+      "unit_test_sources": 19,
       "workflow": "ship-cloud-account.yml"
     },
     "ac_cloud-account/web": {
@@ -85,11 +85,11 @@
     },
     "ac_cloud-browser": {
       "first_test": "COVERED NOW: app/src/test/BrowserFeaturesTest.kt asserts the behaviour of the seven tab features against the SHIPPED build.json::ui.browser - the four first-run tabs arrive pinned and in order, a second launch re-seeds nothing, a pinned tab REFUSES to close, a drag stamps an order that outlives recency, and a non-URL entry resolves to Qwant. test/test-browser-config-boundary.sh holds the #209 line: the shared libs:browser carries none of his URLs and its own default pins nothing, so no other consumer can inherit them. test/test-browser-features-wired.sh proves each feature is reachable from the UI rather than merely modelled. NOT COVERED: nothing instruments the WebView itself. No test loads a page, so a URL that 404s, a viewport that renders blank, or a drag that never fires on real hardware would all still ship green - those need the androidTest source set and a device, and this app has neither.",
-      "shell_testers": 37,
+      "shell_testers": 39,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 54,
+      "unit_test_sources": 57,
       "workflow": "ship-cloud-browser.yml"
     },
     "ac_cloud-browser/web": {
@@ -125,7 +125,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 38,
+      "unit_test_sources": 40,
       "workflow": "ship-cloud-calc.yml"
     },
     "ac_cloud-camera": {
@@ -206,7 +206,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 95,
+      "unit_test_sources": 96,
       "workflow": "ship-cloud-drive.yml"
     },
     "ac_cloud-drive/web": {
@@ -269,7 +269,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 28,
+      "unit_test_sources": 29,
       "workflow": "ship-cloud-me.yml"
     },
     "ac_cloud-me/web": {
@@ -409,7 +409,7 @@
     },
     "ac_cloud-store": {
       "first_test": "#865 NEW APP (the Store split out of cloud-superapp). Has 1 shell tester (test-store-app.sh): the three Store pages come from libs:appstore with no copy here; Cloud Store claims the fleet pass; libs:appstore honours AppStoreHost.runsFleetPass at all four entry points (start, kick, checkNow, doWork); SuperApp hands the pass and its three Store pages to Cloud Store exactly when it is installed; one package name and one OPEN action across hand-off, build.json, manifest and the fleet manifest - 10 planted mutations each go red. NOT COVERED: the store pages themselves (libs:appstore and cloud-superapp's 91 store testers cover them), and the hand-off on a real phone (install Cloud Store, then confirm SuperApp's Store pages show the Open button and SuperApp's fleet pass stands down).",
-      "shell_testers": 19,
+      "shell_testers": 21,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
@@ -472,7 +472,7 @@
     },
     "ac_cloud-vault": {
       "first_test": "634 JVM unit test classes have never executed. Same: declare tests.unit.task.",
-      "shell_testers": 5,
+      "shell_testers": 6,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
@@ -508,11 +508,11 @@
     },
     "ac_cloud-writer": {
       "first_test": "Has 6 shell testers, executed. Two prove the routing and the absence of a credential; two prove the four configuration pages exist AND are backed by this app's own store, which is the assertion task 209 lacked; two prove the Material 3 design system is in place and has not been undone \u2014 the toolchain restated in build.gradle still matches build.json, no screen draws outside the theme, no hardcoded hex palette or raw-pixel padding has crept back, the price table's cells are still single-line (task 214), and every home-screen card description exists in Spanish (task 221). The gap that remains is that NONE of this is a rendered screen: there is no instrumentation test and no JVM in the container that maintains this app, so a green run proves the APK compiles and the source has the right shape, never that the screen looks right. Only a device screenshot does that.",
-      "shell_testers": 11,
+      "shell_testers": 12,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 7,
+      "unit_test_sources": 8,
       "workflow": "ship-cloud-writer.yml"
     },
     "ac_cloud-writer/web": {

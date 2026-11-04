@@ -113,7 +113,7 @@ on:
       - "ab_cloud-libs-shared/libs/decisions/**"
       - "ab_cloud-libs-shared/libs/devtools/**"
       - "ab_cloud-libs-shared/libs/fleetconfig-model/**"
-      - "ab_cloud-libs-shared/libs/ml-ocr/**"
+      - "ab_cloud-libs-shared/libs/ml-l-image-ocr/**"
       - "ab_cloud-libs-shared/libs/perms/**"
       - "ab_cloud-libs-shared/libs/text-tools/**"
       - "ab_cloud-libs-shared/libs/theme-background/**"

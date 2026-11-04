@@ -1,0 +1,77 @@
+name: "Test -> Cloud Me Configs tabs + Profile page, SuperApp Me row (emulator)"
+
+# #1439/#1440: screenshots of Cloud Me's Configs (General | Perms | About | Navigation | Apps), its Profile page
+# (libs:account-ui: Personal Info and Configs) and the SuperApp's Cloud > Apps Me row (Profile tile), taken from the
+# APKs a Ship run built. ac_cloud-me/test/emulator-me-pages.sh does the walk. Dispatch only.
+
+on:
+  workflow_dispatch:
+    inputs:
+      me_run_id:
+        description: "Ship Cloud Me run id whose x86_64 APK artifact to test"
+        required: true
+      superapp_run_id:
+        description: "Ship Cloud SuperApp run id whose x86_64 APK artifact to test (empty = skip the SuperApp shot; release = the latest release asset)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  pages:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: ac_cloud-me/test
+
+      - name: Fetch the APKs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          ME_RUN: ${{ inputs.me_run_id }}
+          SA_RUN: ${{ inputs.superapp_run_id }}
+        run: |
+          set -eu
+          fetch() {  # fetch RUN PREFIX OUT
+            mkdir -p "dl/$2"
+            if [ "$1" = release ]; then gh release download latest -R "$REPO" -p "$2*.apk" -D "dl/$2"; else
+            gh api "repos/$REPO/actions/runs/$1/artifacts" --paginate --jq ".artifacts[] | select(.name|startswith(\"$2-x86_64\")) | .name" |
+            while read -r name; do gh run download "$1" -R "$REPO" -n "$name" -D "dl/$2/$name"; done
+            fi
+            pick=$(find "dl/$2" -name '*.apk' | sort | grep -i -- x86_64 | head -1); [ -n "$pick" ] || pick=$(find "dl/$2" -name '*.apk' | sort | grep -vi arm | head -1)
+            [ -n "$pick" ] || { echo "::error::no $2 x86_64 APK in run $1"; exit 1; }
+            cp "$pick" "$3"
+          }
+          fetch "$ME_RUN" Cloud-Me me.apk
+          if [ -n "$SA_RUN" ]; then fetch "$SA_RUN" Cloud-SuperApp superapp.apk; fi
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Boot emulator + walk the pages
+        timeout-minutes: 25
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash ac_cloud-me/test/emulator-me-pages.sh me.apk "$( [ -f superapp.apk ] && echo superapp.apk )" out
+
+      - name: Upload evidence (screenshots, ui dumps, logcat)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: me-pages-evidence
+          path: out/
+          if-no-files-found: warn
