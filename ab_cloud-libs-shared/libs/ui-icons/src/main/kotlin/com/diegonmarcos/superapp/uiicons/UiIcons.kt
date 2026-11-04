@@ -180,6 +180,7 @@ public object UiIcons {
         "navigation" to Icons.Outlined.Navigation,
         "place" to Icons.Outlined.Place,
         "folder_open" to Icons.Outlined.FolderOpen,
+        "music_note" to Icons.Outlined.MusicNote,
         "groups" to Icons.Outlined.Groups,
         "speed" to Icons.Outlined.Speed,
         "person_add" to Icons.Outlined.PersonAdd,

@@ -55,10 +55,11 @@ import kotlinx.coroutines.withContext
 import java.text.DateFormat
 import java.util.Date
 
-/** The Scrapers section's two top-nav pages, by id (build.json ui.sections[scrapers].pages). */
+/** The Scrapers section's top-nav pages, by id (build.json ui.sections[scrapers].pages). */
 object ScrapersPages {
     const val SITE_FILES = "site_files"
     const val SCRAP_TOOLS = "scrap_tools"
+    const val MUSIC = "music"
 }
 
 /** #1426 the Scrapers section: [page] is a ScrapersPages id; drawn by the app over its host. */
@@ -67,6 +68,7 @@ fun ScrapersPage(page: String?, c: ThemeColors, modifier: Modifier = Modifier) {
     Box(modifier.fillMaxSize().background(c.top).testTag("scrapers:page:${page ?: ScrapersPages.SITE_FILES}")) {
         when (page) {
             ScrapersPages.SCRAP_TOOLS -> ScrapToolsPage(c)
+            ScrapersPages.MUSIC -> MusicPage(c)
             else -> SiteFilesPage(c)
         }
     }
@@ -82,7 +84,7 @@ internal fun human(bytes: Long): String = when {
 private fun date(ts: Long): String = if (ts <= 0) "never" else DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(Date(ts))
 
 @Composable
-private fun Chip(label: String, selected: Boolean, c: ThemeColors, tag: String, onClick: () -> Unit) {
+internal fun Chip(label: String, selected: Boolean, c: ThemeColors, tag: String, onClick: () -> Unit) {
     FilterChip(
         selected = selected, onClick = onClick, label = { Text(label) },
         colors = FilterChipDefaults.filterChipColors(

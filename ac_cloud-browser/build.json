@@ -1955,6 +1955,12 @@
             "id": "scrap_tools",
             "label": "Scrap Tools",
             "icon": "build"
+          },
+          {
+            "id": "music",
+            "label": "Music",
+            "icon": "music_note",
+            "_doc": "#1459 libs:scraper MusicPage: Spotify, YouTube Music, Deezer (official APIs) and Apple Music (logged-in web player) read, match (ISRC then title+artist+length), sync with preview and dry-run, CSV/JSON export; tokens in SafeEncryptedPrefs."
           }
         ]
       },
