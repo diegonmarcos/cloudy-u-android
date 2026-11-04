@@ -248,6 +248,7 @@ public object UiIcons {
         "calculate" to Icons.Outlined.Calculate,
         "psychology" to Icons.Outlined.Psychology,
         "mic" to Icons.Outlined.Mic,
+        "graphic_eq" to Icons.Outlined.GraphicEq,
         "camera" to Icons.Outlined.PhotoCamera,
         "ask" to Icons.Outlined.QuestionAnswer,
         "clock" to Icons.Outlined.AccessTime,
