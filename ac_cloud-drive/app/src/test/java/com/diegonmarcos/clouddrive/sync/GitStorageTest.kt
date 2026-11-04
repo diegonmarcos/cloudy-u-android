@@ -41,11 +41,11 @@ class GitStorageTest {
     }
 
     @Test fun `views - no drive, no git folder, repos`() {
-        assertEquals(GitStorage.View.NoDrive, GitStorage.view(null))
+        assertEquals(GitStorage.Listing.NoDrive, GitStorage.view(null))
         val r = tmp.newFolder("v")
-        assertTrue(GitStorage.view(r) is GitStorage.View.NoGitFolder)
+        assertTrue(GitStorage.view(r) is GitStorage.Listing.NoGitFolder)
         repo(File(r, "git"), "a")
-        val v = GitStorage.view(r) as GitStorage.View.Repos
+        val v = GitStorage.view(r) as GitStorage.Listing.Repos
         assertEquals(listOf("a"), v.repos.map { it.name })
     }
 
@@ -81,9 +81,9 @@ class GitStorageTest {
         assertEquals(GitStorage.CloneAt.NeedsFolder(File(root, "git")), GitStorage.cloneAt(t(GitStorage.Kind.EMULATED, root), "x"))
         assertEquals(GitStorage.CloneAt.NoDrive, GitStorage.cloneAt(t(GitStorage.Kind.EXTERNAL, null), "x"))
         assertEquals(GitStorage.CloneAt.RawReadOnly, GitStorage.cloneAt(t(GitStorage.Kind.EXTERNAL, null, raw = true), "x"))
-        assertEquals(GitStorage.View.NoDrive, GitStorage.view(null))
-        assertEquals(GitStorage.View.RawOnly, GitStorage.view(null, rawAttached = true))
-        assertEquals(GitStorage.View.NoGitFolder(root.absolutePath), GitStorage.view(root))
+        assertEquals(GitStorage.Listing.NoDrive, GitStorage.view(null))
+        assertEquals(GitStorage.Listing.RawOnly, GitStorage.view(null, rawAttached = true))
+        assertEquals(GitStorage.Listing.NoGitFolder(root.absolutePath), GitStorage.view(root))
     }
 
     @Test fun `write access - mounted and writable, needs the SAF grant, raw is read-only`() {

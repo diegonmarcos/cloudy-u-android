@@ -25,18 +25,18 @@ object GitStorage {
         gitFolder?.listFiles()?.filter { it.isDirectory && File(it, ".git").exists() }?.sortedBy { it.name.lowercase() }.orEmpty()
 
     /** What the page shows for a non-store storage. */
-    sealed class View {
-        object NoDrive : View()
+    sealed class Listing {
+        object NoDrive : Listing()
         /** #1356 a USB drive is attached but Android did not mount it (opened raw through libaums): git cannot work on it. */
-        object RawOnly : View()
-        data class NoGitFolder(val root: String) : View()
-        data class Repos(val folder: String, val repos: List<File>) : View()
+        object RawOnly : Listing()
+        data class NoGitFolder(val root: String) : Listing()
+        data class Repos(val folder: String, val repos: List<File>) : Listing()
     }
 
-    fun view(root: File?, rawAttached: Boolean = false): View {
-        if (root == null) return if (rawAttached) View.RawOnly else View.NoDrive
-        val folder = gitFolder(root) ?: return View.NoGitFolder(root.absolutePath)
-        return View.Repos(folder.absolutePath, repos(folder))
+    fun view(root: File?, rawAttached: Boolean = false): Listing {
+        if (root == null) return if (rawAttached) Listing.RawOnly else Listing.NoDrive
+        val folder = gitFolder(root) ?: return Listing.NoGitFolder(root.absolutePath)
+        return Listing.Repos(folder.absolutePath, repos(folder))
     }
 
     /** #1356 one place a clone can land: Cloud-Store, Emulated, or one attached drive ([driveId] its volume id); [root] null = not attached. */

@@ -79,7 +79,7 @@ fun FileViewer(f: SiteFile, c: ThemeColors, onClose: () -> Unit) {
                 fl == null -> Text("Opening…", color = c.inkDim, modifier = Modifier.padding(16.dp))
                 else -> when (route.viewer) {
                     Viewer.CODE -> CodeView(fl, route.lang, c)
-                    Viewer.IMAGE -> ImageView(fl)
+                    Viewer.IMAGE -> ImagePane(fl)
                     Viewer.AUDIO, Viewer.VIDEO -> MediaView(fl)
                     Viewer.WEB -> AndroidView({ cx -> pageView(cx, fl) }, Modifier.fillMaxSize().testTag("scrapers:viewer:web"))
                     Viewer.NONE -> Text("No in-app viewer for this type (${f.mime.ifBlank { "unknown" }}).", color = c.inkDim, modifier = Modifier.padding(16.dp))
@@ -136,7 +136,7 @@ fun prettyJson(raw: String): String = runCatching {
 }.getOrDefault(raw)
 
 @Composable
-private fun ImageView(f: File) {
+private fun ImagePane(f: File) {
     val bmp = remember(f) {
         val o = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         BitmapFactory.decodeFile(f.path, o)

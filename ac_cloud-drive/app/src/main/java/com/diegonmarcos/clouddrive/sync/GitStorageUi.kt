@@ -82,10 +82,10 @@ fun GitStorageMenu(selected: GitStorage.Kind, onSelect: (GitStorage.Kind) -> Uni
 
 /** What a non-store storage holds: the empty states, or its repositories as page rows (id "storage:<path>"). Null while read. [refresh] re-reads it (a clone landed, the git folder was created). */
 @Composable
-fun rememberGitStorageView(kind: GitStorage.Kind, refresh: Int = 0): GitStorage.View? {
+fun rememberGitStorageView(kind: GitStorage.Kind, refresh: Int = 0): GitStorage.Listing? {
     val ctx = LocalContext.current
     val tick by StorageVolumes.tick.collectAsState()
-    val view by produceState<GitStorage.View?>(null, kind, tick, refresh) {
+    val view by produceState<GitStorage.Listing?>(null, kind, tick, refresh) {
         value = withContext(Dispatchers.IO) { GitStorage.view(gitStorageRoot(ctx, kind), rawAttached = kind == GitStorage.Kind.EXTERNAL && rawUsbAttached(ctx)) }
     }
     return view
@@ -160,16 +160,16 @@ fun GitConflictsDialog(repos: List<Pair<ManagedRepo, Int>>, onOpen: (ManagedRepo
     )
 }
 
-fun GitStorage.View.Repos.managed(): List<ManagedRepo> = repos.map { ManagedRepo(id = "storage:" + it.absolutePath, name = it.name, path = it.absolutePath) }
+fun GitStorage.Listing.Repos.managed(): List<ManagedRepo> = repos.map { ManagedRepo(id = "storage:" + it.absolutePath, name = it.name, path = it.absolutePath) }
 
 /** The empty states of a non-store storage: no drive attached, a raw drive (read-only for git), no git folder (#1356 with Create), a git folder with no repository. */
 @Composable
-fun GitStorageEmpty(kind: GitStorage.Kind, view: GitStorage.View, modifier: Modifier = Modifier, onCreated: () -> Unit = {}) {
+fun GitStorageEmpty(kind: GitStorage.Kind, view: GitStorage.Listing, modifier: Modifier = Modifier, onCreated: () -> Unit = {}) {
     val icon = IconCatalog.vectorOrDefault(if (kind == GitStorage.Kind.EXTERNAL) "usb" else "folder")
     when (view) {
-        GitStorage.View.RawOnly -> EmptyState(icon, stringResource(R.string.git_storage_raw_read_only), stringResource(R.string.git_storage_raw_hint), modifier)
-        GitStorage.View.NoDrive -> EmptyState(icon, stringResource(R.string.git_storage_no_drive), stringResource(R.string.git_storage_no_drive_hint), modifier)
-        is GitStorage.View.NoGitFolder -> androidx.compose.foundation.layout.Column(modifier, horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
+        GitStorage.Listing.RawOnly -> EmptyState(icon, stringResource(R.string.git_storage_raw_read_only), stringResource(R.string.git_storage_raw_hint), modifier)
+        GitStorage.Listing.NoDrive -> EmptyState(icon, stringResource(R.string.git_storage_no_drive), stringResource(R.string.git_storage_no_drive_hint), modifier)
+        is GitStorage.Listing.NoGitFolder -> androidx.compose.foundation.layout.Column(modifier, horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
             EmptyState(icon, stringResource(R.string.git_storage_no_folder), stringResource(R.string.git_storage_no_folder_hint, view.root), Modifier.weight(1f, fill = false))
             val folder = File(view.root, "git")
             var failed by remember { mutableStateOf(false) }
@@ -178,7 +178,7 @@ fun GitStorageEmpty(kind: GitStorage.Kind, view: GitStorage.View, modifier: Modi
             }, filled = true, modifier = Modifier.testTag(DriveTags.SYNC_GIT_STORAGE + "_create"))
             if (failed) Text(stringResource(R.string.git_storage_create_failed, folder.absolutePath), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
         }
-        is GitStorage.View.Repos -> EmptyState(icon, stringResource(R.string.git_storage_empty), view.folder, modifier)
+        is GitStorage.Listing.Repos -> EmptyState(icon, stringResource(R.string.git_storage_empty), view.folder, modifier)
     }
 }
 

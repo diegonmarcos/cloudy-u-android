@@ -1,28 +1,37 @@
 // SPDX-License-Identifier: GPL-3.0-only
 package helium314.keyboard.latin
 
-import android.graphics.drawable.GradientDrawable
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.LinearLayout
-import android.widget.PopupWindow
-import android.widget.TextView
-import androidx.compose.ui.graphics.toArgb
+import android.widget.FrameLayout
 import helium314.keyboard.keyboard.KeyboardSwitcher
 import helium314.keyboard.latin.settings.GrammarMode
 import helium314.keyboard.latin.settings.Settings
 import helium314.keyboard.latin.utils.Log
 import helium314.keyboard.latin.utils.prefs
 import helium314.keyboard.latin.utils.toKitPalette
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.diegonmarcos.superapp.uikit.KitImeComposeView
+import com.diegonmarcos.superapp.uikit.KitPalette
 
 /**
  * Grammar Check ▸ Highlight: a tap on a highlighted word in the field moves the cursor into it; the IME sees
  * that in onUpdateSelection and shows this popup with the suggestion and two actions.
  *
- * It is a [PopupWindow] anchored to the keyboard view, so it lives in the INPUT METHOD's window: an input
+ * It is a Compose view laid over the top of the keyboard's InputView, so it lives in the INPUT METHOD's window: an input
  * method has no Activity to host a dialog, and a dialog would take focus from the field being edited.
  *
  *   Replace → the suggestion is committed over the span through the InputConnection.
@@ -31,12 +40,12 @@ import helium314.keyboard.latin.utils.toKitPalette
  */
 object GrammarPopup {
     private const val TAG = "GrammarPopup"
-    private var window: PopupWindow? = null
+    private var window: View? = null
     /** The mark the popup is open for, and where the cursor was when it opened. */
     @Volatile var shownIssue: GrammarIssue? = null; private set
     private var cursorAt = 0
 
-    val isShowing: Boolean get() = window?.isShowing == true
+    val isShowing: Boolean get() = window?.isAttachedToWindow == true
 
     @JvmStatic
     fun onSelectionChanged(ime: LatinIME, selStart: Int, selEnd: Int) {
@@ -51,46 +60,25 @@ object GrammarPopup {
         val anchor: View = KeyboardSwitcher.getInstance().mainKeyboardView ?: return
         if (anchor.windowToken == null) return
         val ctx = anchor.context
-        val pal = runCatching { Settings.getValues().mColors.toKitPalette() }.getOrNull()
         val dp = { v: Int -> TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, v.toFloat(), ctx.resources.displayMetrics).toInt() }
-        val ink = pal?.textPrimary?.toArgb() ?: 0xFFFFFFFF.toInt()
-        val box = LinearLayout(ctx).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(14), dp(10), dp(14), dp(6))
-            background = GradientDrawable().apply {
-                cornerRadius = dp(12).toFloat()
-                setColor(pal?.surface?.toArgb() ?: 0xFF2B2B2B.toInt())
-                setStroke(dp(1), pal?.hairline?.toArgb() ?: 0xFF555555.toInt())
-            }
-            elevation = dp(6).toFloat()
-        }
-        box.addView(TextView(ctx).apply {
-            text = if (issue.suggestion.isEmpty()) ctx.getString(R.string.grammar_popup_remove, issue.original)
-                   else ctx.getString(R.string.grammar_popup_suggestion, issue.original, issue.suggestion)
-            setTextColor(ink); textSize = 15f
-            tag = "grammar_popup_text"
-        })
-        val row = LinearLayout(ctx).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.END }
-        val replace = Button(ctx, null, android.R.attr.borderlessButtonStyle).apply {
-            text = ctx.getString(R.string.grammar_popup_replace); setTextColor(pal?.accent?.toArgb() ?: ink)
-            setOnClickListener { replace(ime) }
-        }
-        val ignore = Button(ctx, null, android.R.attr.borderlessButtonStyle).apply {
-            text = ctx.getString(R.string.grammar_popup_ignore); setTextColor(pal?.textSecondary?.toArgb() ?: ink)
-            setOnClickListener { ignore(ime) }
-        }
-        row.addView(ignore); row.addView(replace)
-        box.addView(row)
-        val pw = PopupWindow(box, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, false).apply {
-            isOutsideTouchable = true
-            isTouchable = true
-            inputMethodMode = PopupWindow.INPUT_METHOD_NOT_NEEDED
-            setOnDismissListener { if (window === this) { window = null; shownIssue = null } }
-        }
-        val at = IntArray(2).also { anchor.getLocationInWindow(it) }
-        runCatching { pw.showAtLocation(anchor, Gravity.TOP or Gravity.CENTER_HORIZONTAL, 0, at[1] + dp(8)) }
-            .onFailure { Log.w(TAG, "popup could not be shown: ${it.message}"); return }
-        window = pw; shownIssue = issue; cursorAt = cursor
+        val box = GrammarPopupView(
+            ctx,
+            if (issue.suggestion.isEmpty()) ctx.getString(R.string.grammar_popup_remove, issue.original)
+            else ctx.getString(R.string.grammar_popup_suggestion, issue.original, issue.suggestion),
+            onIgnore = { ignore(ime) }, onReplace = { replace(ime) },
+        )
+        // The popup is a child of the IME's own InputView, over the top of the keys: Compose hosts there
+        // (KitImeComposeView), an input method has no Activity for a dialog, and a separate window would take
+        // focus from the field being edited.
+        var host: View? = anchor
+        while (host != null && host !is InputView) host = host.parent as? View
+        val frame = host as? InputView ?: return
+        val inAnchor = IntArray(2).also { anchor.getLocationInWindow(it) }
+        val inFrame = IntArray(2).also { frame.getLocationInWindow(it) }
+        val lp = FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
+            Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = inAnchor[1] - inFrame[1] + dp(8) }
+        frame.addView(box, lp)
+        window = box; shownIssue = issue; cursorAt = cursor
         Log.i(TAG, "shown for '${issue.original}' -> '${issue.suggestion}' at ${issue.start}..${issue.end}")
     }
 
@@ -98,7 +86,7 @@ object GrammarPopup {
     fun dismiss() {
         val w = window ?: return
         window = null; shownIssue = null
-        runCatching { w.dismiss() }
+        runCatching { (w.parent as? ViewGroup)?.removeView(w) }
     }
 
     /** True when the field still holds the mark's text, read around the cursor the popup opened at. */
@@ -138,5 +126,34 @@ object GrammarPopup {
         Log.i(TAG, "ignored '${issue.original}' (ignored this session: ${GrammarHighlights.session.ignoredCount})")
         dismiss()
         return true
+    }
+}
+
+/** The popup's body: the suggestion line and the two actions, in Compose on the keyboard's palette. */
+private class GrammarPopupView(
+    context: android.content.Context,
+    private val message: String,
+    private val onIgnore: () -> Unit,
+    private val onReplace: () -> Unit,
+) : KitImeComposeView(context) {
+    override fun palette(): KitPalette = Settings.getValues().mColors.toKitPalette()
+
+    @Composable
+    override fun Body() {
+        val pal = palette()
+        Surface(
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+            color = pal.surface,
+            border = BorderStroke(1.dp, pal.hairline),
+            shadowElevation = 6.dp,
+        ) {
+            Column(Modifier.padding(start = 14.dp, top = 10.dp, end = 14.dp, bottom = 6.dp)) {
+                Text(message, color = pal.textPrimary, fontSize = 15.sp)
+                Row(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.End) {
+                    TextButton(onClick = onIgnore) { Text(context.getString(R.string.grammar_popup_ignore), color = pal.textSecondary) }
+                    TextButton(onClick = onReplace) { Text(context.getString(R.string.grammar_popup_replace), color = pal.accent) }
+                }
+            }
+        }
     }
 }

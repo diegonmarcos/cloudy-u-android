@@ -87,7 +87,7 @@ fun GitPageScreen(
     var storage by remember { mutableStateOf(gitStorageSelected(ctx)) }
     var storageRefresh by remember { mutableStateOf(0) }
     val storageView = if (storage == GitStorage.Kind.STORE) null else rememberGitStorageView(storage, storageRefresh)
-    val storageRepos = (storageView as? GitStorage.View.Repos)?.managed()
+    val storageRepos = (storageView as? GitStorage.Listing.Repos)?.managed()
     val usbTick by com.diegonmarcos.superapp.usbdrive.StorageVolumes.tick.collectAsState()
     val cloneTargets = remember(usbTick, storageRefresh) { gitCloneTargets(ctx) }
     val access = remember(storage, usbTick, storageRefresh) { gitStorageAccess(ctx, storage) }

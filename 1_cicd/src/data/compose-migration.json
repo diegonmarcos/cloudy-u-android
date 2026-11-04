@@ -911,6 +911,23 @@
       "reason": "Vendored Element X (Compose); our patches are rebrand only."
     },
     {
+      "id": "ac_cloud-keyboard",
+      "scope": "in",
+      "wave": 5,
+      "ui": "compose",
+      "size": "S",
+      "notes": "The app shell around libs:keyboard (counted there). Counted over app/src/main only: the debug source set holds ShotActivity, the emulator screenshot harness, which is never shipped and needs one platform EditText (a Compose text field strips the SuggestionSpan underline that Grammar Check Highlight draws, and the highlight-popup shots photograph it).",
+      "roots": [
+        "app/src/main"
+      ],
+      "baseline": {
+        "view_screens": 0,
+        "layout_xml": 0,
+        "view_ui_files": 0,
+        "custom_views": 0
+      }
+    },
+    {
       "id": "ac_cloud-gallery",
       "scope": "out",
       "reason": "Vendored ReFra (Compose); our cloud/ additions are Compose. 4 layouts are upstream's."
