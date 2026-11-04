@@ -131,7 +131,7 @@ private fun fieldColors() = OutlinedTextFieldDefaults.colors(
 internal fun Tick(label: String, checked: Boolean, onChange: (Boolean) -> Unit) {
     Row(Modifier.fillMaxWidth().clickable { onChange(!checked) }.padding(top = 4.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
         Checkbox(checked, { onChange(it) }, colors = CheckboxDefaults.colors(checkedColor = accent(), uncheckedColor = dim(), checkmarkColor = colorResource(R.color.me_on_primary)))
-        Text(label, color = ink(), fontSize = 14.sp)
+        Text(label, color = ink(), fontSize = 14.sp, modifier = Modifier.padding(start = 8.dp))
     }
 }
 

@@ -174,7 +174,9 @@ private fun DrawScope.axisLabels(tm: TextMeasurer, labels: List<String>, slot: F
 private fun DrawScope.goalLine(tm: TextMeasurer, y: Float, label: String, color: Color) {
     drawLine(color, Offset(0f, y), Offset(size.width, y), 1.5.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 8f)))
     val t = tm.measure(label, TextStyle(color = color, fontSize = 10.sp, fontWeight = FontWeight.Bold))
-    drawText(t, topLeft = Offset(size.width - t.size.width, (y - t.size.height - 2f).coerceAtLeast(0f)))
+    val tl = Offset(size.width - t.size.width, (y - t.size.height - 2f).coerceAtLeast(0f))
+    drawRoundRect(Color.Black.copy(alpha = 0.55f), Offset(tl.x - 4f, tl.y), Size(t.size.width + 8f, t.size.height.toFloat()), CornerRadius(6f, 6f))  // legible over bars
+    drawText(t, topLeft = tl)
 }
 
 private fun DrawScope.gridLines(color: Color, plotH: Float) {

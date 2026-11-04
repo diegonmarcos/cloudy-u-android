@@ -92,7 +92,7 @@ fun TrackedPage(e: HealthEnv) {
                         Text(m.label.uppercase(), color = MetricColor.of(m.id), fontSize = 11.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 6.dp))
                         Row(verticalAlignment = Alignment.Bottom) {
                             Text(Tracked.format(m, v(m.id)), color = ink(), fontSize = 22.sp, fontWeight = FontWeight.Bold)
-                            Text(" / ${Tracked.format(m, m.goal)} ${m.unit}", color = dim(), fontSize = 12.sp, modifier = Modifier.padding(bottom = 3.dp), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(" / ${Tracked.format(m, m.goal)}${if (m.id == "steps") "" else " " + m.unit}", color = dim(), fontSize = 12.sp, modifier = Modifier.padding(bottom = 3.dp), maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
                     }
                 }
