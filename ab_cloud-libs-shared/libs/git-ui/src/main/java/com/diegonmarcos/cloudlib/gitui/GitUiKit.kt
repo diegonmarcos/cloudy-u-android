@@ -29,6 +29,7 @@ data class GitUiKit(
     val tagTableHeader: String = "sync_git_table_header",
     val tagMetaTable: String = "sync_git_meta_table",
     val tagStatusCell: String = "sync_git_status_cell",
+    val tagStatusBlock: String = "sync_git_status_block",
     val tagWorkflow: String = "sync_git_workflow",
     val tagMenuGroup: String = "sync_git_menu_group",
     val tagMenuItem: String = "sync_git_menu_item",

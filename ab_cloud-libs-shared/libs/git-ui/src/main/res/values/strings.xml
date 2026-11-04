@@ -36,5 +36,20 @@
     <string name="repo_wf_step_stage">stage as edited: %1$s</string>
     <string name="repo_wf_step_continue">continue the %1$s</string>
     <string name="repo_wf_never_push">Nothing is pushed: push stays your own tap.</string>
+    <string name="repo_status_title">STATUS</string>
+    <string name="repo_status_cloned">Cloned: %1$s</string>
+    <string name="repo_status_branch">Branch: %1$s · upstream %2$s</string>
+    <string name="repo_status_dirty">Dirty: %1$d files (%2$d modified, %3$d untracked, %4$d conflicting)</string>
+    <string name="repo_status_dirty_unknown">Dirty: unknown (status not read)</string>
+    <string name="repo_status_ab">Remote: ahead %1$s · behind %2$s</string>
+    <string name="repo_status_unpushed">Commits not pushed: %1$s</string>
+    <string name="repo_status_fetch">Last fetch: %1$s</string>
+    <string name="repo_status_never">never</string>
+    <string name="repo_status_error">Last error: %1$s</string>
+    <string name="repo_status_dirty_light">Dirty: not checked (light check reads refs only)</string>
+    <string name="repo_status_level_light">Checked: light (refs only), %1$s ago</string>
+    <string name="repo_status_level_full">Checked: full (working tree scanned), %1$s ago</string>
+    <string name="repo_status_no_upstream">(no upstream)</string>
+    <string name="repo_status_no_error">none</string>
     <string name="repo_meta_table_title">Repository metadata</string>
 </resources>

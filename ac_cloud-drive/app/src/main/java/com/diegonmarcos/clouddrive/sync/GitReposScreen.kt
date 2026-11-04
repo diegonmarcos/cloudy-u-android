@@ -1530,24 +1530,17 @@ internal fun statusErrorText(kind: RepoStatus.ErrorKind?, detail: String?): Stri
     }
 }
 
-/** The STATUS block at the top of the open repository panel: cloned, branch, dirty, ahead/behind, not pushed, last fetch, last error. */
+/** The STATUS block at the top of the open repository panel: the view is libs:git-ui's; Drive resolves its status model into the facts. */
 @Composable
 internal fun RepoStatusBlock(b: RepoStatus.Block, fmt: DateFormat) {
-    val dash = RepoTable.DASH
-    Column(Modifier.fillMaxWidth().padding(top = DriveMetrics.gapWide).testTag(DriveTags.SYNC_GIT_STATUS_BLOCK)) {
-        Text(stringResource(R.string.repo_status_title), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        MetaLine(stringResource(R.string.repo_status_cloned, stringResource(if (b.cloned) R.string.manage_yes else R.string.manage_no)))
-        MetaLine(stringResource(R.string.repo_status_branch, b.branch ?: dash, b.upstream ?: stringResource(R.string.git_meta_no_upstream)))
-        MetaLine(
-            if (b.dirty == null) stringResource(if (b.level == "light") R.string.repo_status_dirty_light else R.string.repo_status_dirty_unknown)
-            else stringResource(R.string.repo_status_dirty, b.dirty!!, b.modified ?: 0, b.untracked ?: 0, b.conflicts ?: 0),
-        )
-        if (b.level != null && b.readAtMs != null) MetaLine(stringResource(if (b.level == "light") R.string.repo_status_level_light else R.string.repo_status_level_full, RepoStatus.ageWord(System.currentTimeMillis() - b.readAtMs)))
-        MetaLine(stringResource(R.string.repo_status_ab, b.ahead?.toString() ?: dash, b.behind?.toString() ?: dash))
-        MetaLine(stringResource(R.string.repo_status_unpushed, b.unpushed?.toString() ?: dash))
-        MetaLine(stringResource(R.string.repo_status_fetch, b.lastFetchMs?.let { fmt.format(Date(it)) } ?: stringResource(R.string.repo_status_never)))
-        MetaLine(stringResource(R.string.repo_status_error, if (b.error == null) stringResource(R.string.repo_status_none) else statusErrorText(b.error, b.errorDetail)))
-    }
+    GitStatusBlockView(
+        GitStatusFacts(
+            b.cloned, b.branch, b.upstream, b.dirty, b.modified, b.untracked, b.conflicts,
+            b.level, if (b.level != null && b.readAtMs != null) RepoStatus.ageWord(System.currentTimeMillis() - b.readAtMs) else null,
+            b.ahead, b.behind, b.unpushed, b.lastFetchMs, if (b.error == null) null else statusErrorText(b.error, b.errorDetail),
+        ),
+        fmt,
+    )
 }
 
 /**

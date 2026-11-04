@@ -625,16 +625,6 @@
 
     <!-- #1138 Sync ▸ Git: the sortable repo table and the grouped repository actions -->
     <string name="repo_act_unpushed">Show unpushed commits</string>
-    <string name="repo_status_title">STATUS</string>
-    <string name="repo_status_cloned">Cloned: %1$s</string>
-    <string name="repo_status_branch">Branch: %1$s · upstream %2$s</string>
-    <string name="repo_status_dirty">Dirty: %1$d files (%2$d modified, %3$d untracked, %4$d conflicting)</string>
-    <string name="repo_status_dirty_unknown">Dirty: unknown (status not read)</string>
-    <string name="repo_status_ab">Remote: ahead %1$s · behind %2$s</string>
-    <string name="repo_status_unpushed">Commits not pushed: %1$s</string>
-    <string name="repo_status_fetch">Last fetch: %1$s</string>
-    <string name="repo_status_never">never</string>
-    <string name="repo_status_error">Last error: %1$s</string>
     <string name="repo_status_none">none</string>
     <string name="repo_err_timeout">The status check was stopped: it ran past its time limit (%1$s). A very large working tree on slow storage does this; fetch or try again.</string>
     <string name="repo_err_not_repo">The folder is no longer a git repository (%1$s).</string>
@@ -675,9 +665,6 @@
     <string name="repo_prs_open_web">Open PRs on the web</string>
     <string name="repo_menu_close">Close menu</string>
     <string name="repo_full_progress">Full check %1$d / %2$d (one repository at a time)</string>
-    <string name="repo_status_dirty_light">Dirty: not checked (light check reads refs only)</string>
-    <string name="repo_status_level_light">Checked: light (refs only), %1$s ago</string>
-    <string name="repo_status_level_full">Checked: full (working tree scanned), %1$s ago</string>
     <string name="repo_act_copy_url">Copy URL</string>
     <string name="repo_act_open_web">Open on web</string>
     <string name="repo_not_cloned_why">Not cloned: the greyed actions need the local clone. Clone it first.</string>
