@@ -75,7 +75,7 @@ jobs:
           adb shell am start -W -n "$ACT" >/dev/null; sleep 10; awake
           adb shell am start -n "$ACT" --es shortcut_action section:communication >/dev/null; awake; sleep 10; awake; sleep 3
           adb exec-out screencap -p > out/notify.png
-          for k in 1 2 3; do adb shell input swipe 540 1800 540 600 400; sleep 1; done; sleep 2
+          adb shell input swipe 540 1900 540 1000 600; sleep 3
           adb exec-out screencap -p > out/notify-scrolled.png
           adb shell uiautomator dump /sdcard/ui.xml || true; adb pull /sdcard/ui.xml out/ui.xml || true
           grep -o 'Used: [^"]*\|Left: [^"]*\|Est: [^"]*\|(1/7)[^"]*' out/ui.xml | head -10 || true
