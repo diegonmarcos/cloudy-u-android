@@ -68,7 +68,8 @@ fun ConfigsScreen(
     modifier: Modifier = Modifier,
 ) {
     val pages = Declarations.configs.pages
-    var current by rememberSaveable { mutableStateOf(pages.firstOrNull()?.id ?: "") }
+    // #1443 a requested page is the first one drawn (no frame of General first: it reads the phone's storage state)
+    var current by rememberSaveable { mutableStateOf(page?.takeIf { p -> pages.any { it.id == p } } ?: pages.firstOrNull()?.id ?: "") }
     LaunchedEffect(page) {
         if (page != null && pages.any { it.id == page }) current = page
         if (page != null) onPageConsumed()
