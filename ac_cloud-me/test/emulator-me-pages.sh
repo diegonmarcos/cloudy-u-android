@@ -37,6 +37,21 @@ for m in re.finditer(r'<node [^>]*text="Configs"[^>]*bounds="\[(\d+),(\d+)\]\[(\
 PY
 if [ -s "$OUT/.tap" ]; then $T adb shell input tap $(cat "$OUT/.tap"); shot me-profile-configs; else echo "no Configs tab found on the profile page"; rc=1; fi
 
+# #1387/#1391 Experiences: every tab in Done and in Planned, top and one swipe down (page:experiences/<tab>)
+tap_text() {  # tap_text SUBSTRING: tap the first node whose text contains it
+    $T adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; $T adb pull /sdcard/ui.xml "$OUT/.exp.xml" >/dev/null 2>&1
+    local xy; xy=$(python3 -c "import re,sys;x=open(sys.argv[1],errors='ignore').read();m=re.search(r'text=\"[^\"]*'+re.escape(sys.argv[2])+r'[^\"]*\"[^>]*bounds=\"\[(\d+),(\d+)\]\[(\d+),(\d+)\]',x);print('' if not m else '%d %d'%((int(m[1])+int(m[3]))//2,(int(m[2])+int(m[4]))//2))" "$OUT/.exp.xml" "$1" 2>/dev/null)
+    [ -n "$xy" ] && $T adb shell input tap $xy
+}
+$T adb shell settings delete global cloud_nav_ui_mode
+for t in work roadmap geo endurance growth community by30 by40 by50; do
+    open_page "$ME" "page:experiences/$t"; shot "me-exp-$t-done" 5
+    $T adb shell input swipe 540 1700 540 500 600; shot "me-exp-$t-done-scrolled" 2
+    open_page "$ME" "page:experiences/$t"; sleep 5
+    if tap_text "Planned ("; then shot "me-exp-$t-plan" 2; $T adb shell input swipe 540 1700 540 500 600; shot "me-exp-$t-plan-scrolled" 2
+    else echo "no Planned segment on experiences/$t"; rc=1; fi
+done
+
 if [ -n "$SA_APK" ] && [ -f "$SA_APK" ]; then
     # the SuperApp's Screensaver is a black SYSTEM_ALERT_WINDOW overlay (floatingnav/ScreensaverService): no overlay for the shot
     $T adb shell appops set "$SA" SYSTEM_ALERT_WINDOW deny
