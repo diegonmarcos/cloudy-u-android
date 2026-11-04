@@ -390,7 +390,88 @@
    ]
   }
  ],
- "hosting": [],
+ "container_platforms": [
+  {
+   "id": "cloud-run",
+   "label": "Google Cloud Run",
+   "provider": "Google Cloud",
+   "role": "Managed serverless containers",
+   "links": [
+    {
+     "label": "Console",
+     "url": "https://console.cloud.google.com/run"
+    }
+   ],
+   "project": "diegonmarcos-infra-prod",
+   "regions": [
+    "us-central1"
+   ],
+   "services": 4,
+   "live": 1
+  }
+ ],
+ "hosting": [
+  {
+   "id": "github-pages",
+   "label": "GitHub Pages",
+   "provider": "GitHub",
+   "plan": null,
+   "role": "Static site hosting",
+   "state": null,
+   "sites": [],
+   "links": [
+    {
+     "label": "Docs",
+     "url": "https://pages.github.com"
+    }
+   ]
+  },
+  {
+   "id": "github-actions",
+   "label": "GitHub Actions",
+   "provider": "GitHub",
+   "plan": null,
+   "role": "CI/CD runtime: workflows and x86 runners",
+   "state": null,
+   "sites": [],
+   "links": [
+    {
+     "label": "Actions",
+     "url": "https://github.com/features/actions"
+    }
+   ]
+  },
+  {
+   "id": "firebase",
+   "label": "Google Firebase",
+   "provider": "Google Cloud",
+   "plan": null,
+   "role": "App hosting and backend platform",
+   "state": null,
+   "sites": [],
+   "links": [
+    {
+     "label": "Console",
+     "url": "https://console.firebase.google.com"
+    }
+   ]
+  },
+  {
+   "id": "cloudflare-workers",
+   "label": "Cloudflare Workers",
+   "provider": "Cloudflare",
+   "plan": null,
+   "role": "Edge runtime for JavaScript workers",
+   "state": null,
+   "sites": [],
+   "links": [
+    {
+     "label": "Dashboard",
+     "url": "https://dash.cloudflare.com"
+    }
+   ]
+  }
+ ],
  "public_domains": [],
  "storage": {
   "buckets": [

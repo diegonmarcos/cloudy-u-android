@@ -69,8 +69,14 @@ object FleetModel {
         val blockers: List<String>,
     )
 
-    /** A hosting provider of Containers-Node-Python (fleet-assets.json hosting[]): Firebase Hosting, GitHub Pages. */
-    data class Hosting(val id: String, val label: String, val plan: String?, val role: String?, val state: String?, val sites: List<String>, val links: List<Link>)
+    /** A hosting / runtime platform of Containers-Node-Python (slice hosting[], from data/platforms.json and the registry): GitHub Pages, GitHub Actions, Firebase. */
+    data class Hosting(val id: String, val label: String, val plan: String?, val role: String?, val state: String?, val sites: List<String>, val links: List<Link>, val provider: String? = null)
+
+    /** A managed platform that RUNS containers (Containers-as-Service), e.g. Cloud Run; project, regions and counts are read from the registry. */
+    data class ContainerPlatform(
+        val id: String, val label: String, val provider: String?, val role: String?, val project: String?,
+        val regions: List<String>, val services: Int?, val live: Int?, val links: List<Link>,
+    )
 
     /** A public mailbox domain the owner uses (fleet-assets.json public_domains[]). */
     data class PublicDomain(val name: String, val provider: String?, val role: String?)
@@ -79,6 +85,7 @@ object FleetModel {
         val providers: List<Provider>, val vms: List<Vm>, val buckets: List<Bucket>, val backends: List<Backend>,
         val devices: List<Device>, val domains: List<Domain>, val serverless: List<CloudRun> = emptyList(),
         val hosting: List<Hosting> = emptyList(), val publicDomains: List<PublicDomain> = emptyList(),
+        val containerPlatforms: List<ContainerPlatform> = emptyList(),
     ) {
         fun provider(id: String): Provider? = providers.firstOrNull { it.id == id }
         fun vmsOf(providerId: String): List<Vm> = vms.filter { it.provider == providerId }
@@ -133,7 +140,11 @@ object FleetModel {
             },
             hosting = root.objs("hosting").map { o ->
                 Hosting(o.str("id").orEmpty(), o.str("label").orEmpty(), o.str("plan"), o.str("role"), o.str("state"), o.strs("sites"),
-                    o.objs("links").map { Link(it.str("label").orEmpty(), it.str("url").orEmpty()) })
+                    o.objs("links").map { Link(it.str("label").orEmpty(), it.str("url").orEmpty()) }, o.str("provider"))
+            },
+            containerPlatforms = root.objs("container_platforms").map { o ->
+                ContainerPlatform(o.str("id").orEmpty(), o.str("label").orEmpty(), o.str("provider"), o.str("role"), o.str("project"),
+                    o.strs("regions"), o.int("services"), o.int("live"), o.objs("links").map { Link(it.str("label").orEmpty(), it.str("url").orEmpty()) })
             },
             publicDomains = root.objs("public_domains").map { o -> PublicDomain(o.str("name").orEmpty(), o.str("provider"), o.str("role")) },
             domains = root.objs("domains").map { o ->

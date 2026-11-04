@@ -58,17 +58,20 @@ class InfraFragment : PagedFragment() {
 }
 
 /**
- * CONTAINERS (was Topology) - three top tabs (Agents joined 2026-10-25, moved from Ops). `topology` is the SuperApp's Topology page minus its address cards:
- * [C3StackFragment] over ui.carried_c3.stack_topology (the Index row and the Infra Apps / User Apps dashboards).
- * `table` is [RoutesTableFragment]: the former Public and Private URL pages merged into one sortable, filterable
- * table over data/infra_slice.json::routes.
+ * CONTAINERS (was Topology) - one top page per PROJECT (All | Cloudy | CG | ..., declared in build.json), each with a Topology | Table
+ * switch (nested pages, #1454). `topology` is the SuperApp's Topology page minus its address cards: [C3StackFragment] over
+ * ui.carried_c3.stack_topology, scoped to the project; `table` is [RoutesTableFragment]: the sortable, filterable table over the
+ * same containers. Which project a container belongs to is data/container_projects.json (ContainerProjects), never code. Agents
+ * moved to Ops (#1454).
  */
 class ContainersFragment : PagedFragment() {
     override fun pages(): List<NavPage> = Declarations.containersPages
-    override fun pageFragment(pageId: String): Fragment? = when (pageId) {
-        "topology" -> C3StackFragment.newInstance(C3StackFragment.STACK_TOPOLOGY)
-        "table" -> RoutesTableFragment()
-        "agents" -> AgentsFragment()
+    override fun pageFragment(pageId: String): Fragment? = null
+
+    /** A nested page `<project>_<view>` (build.json): the project is its parent page, the view the rest of its id. */
+    override fun leafFragment(parentId: String, leafId: String): Fragment? = when (leafId.removePrefix("${parentId}_")) {
+        "topology" -> C3StackFragment.newInstance(C3StackFragment.STACK_TOPOLOGY, parentId)
+        "table" -> RoutesTableFragment.newInstance(parentId)
         else -> null
     }
 }
@@ -92,14 +95,15 @@ class ObservFragment : PagedFragment() {
 }
 
 /**
- * OPS (was Apps) - the five topology views of the fleet (owner request, 2026-10-25), one page each over [TopologyViewFragment]:
+ * OPS (was Apps) - the five topology views, then Agents of the fleet (owner request, 2026-10-25), one page each over [TopologyViewFragment]:
  * Service (logical flow), Infrastructure (compute), Orchestration (declared vs deployed), Network and Release. Each is a tree
- * grouped by its own key with a list fallback, and a node opens the same entity in the other four. Agents moved to Containers;
+ * grouped by its own key with a list fallback, and a node opens the same entity in the other four. Agents is the sixth page (back from Containers, #1454);
  * Services and Tools are gone from here.
  */
 class OpsFragment : PagedFragment() {
     override fun pages(): List<NavPage> = Declarations.opsPages
     override fun pageFragment(pageId: String): Fragment? = when (pageId) {
+        "agents" -> AgentsFragment()
         "service" -> TopologyViewFragment.newInstance(TopologyModel.SERVICE)
         "infrastructure" -> TopologyViewFragment.newInstance(TopologyModel.INFRASTRUCTURE)
         "orchestration" -> TopologyViewFragment.newInstance(TopologyModel.ORCHESTRATION)

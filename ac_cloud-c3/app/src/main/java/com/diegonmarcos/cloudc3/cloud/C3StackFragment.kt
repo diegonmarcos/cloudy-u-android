@@ -60,6 +60,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.Image
+import com.diegonmarcos.cloudc3.Declarations
 import com.diegonmarcos.cloudc3.R
 import com.diegonmarcos.cloudc3.pages.ApiFleetLive
 import com.diegonmarcos.cloudc3.pages.ContainersSource
@@ -121,6 +122,9 @@ class C3StackFragment : KitComposeFragment() {
 
     private val stackId: String get() = arguments?.getString(ARG_STACK).orEmpty()
 
+    /** The Containers sub-page's project id (null = unscoped); an id the project declaration does not know is All. */
+    private val projectId: String? get() = arguments?.getString(ARG_PROJECT)
+
     /** In-page `anchor:` links for this stack. Generic — the registry is fed
      *  from the panels' own declarations. */
     private val anchors = StackAnchors()
@@ -178,6 +182,12 @@ class C3StackFragment : KitComposeFragment() {
             }
         }
         stackPanels = panels
+        val scoped = projectId?.let { id -> Declarations.containerProjects.project(id) }
+        if (scoped != null && Stacks.cloudServices(scoped.id).groups.all { g -> g.subgroups.all { it.containers.isEmpty() } }) {
+            Text("No container is declared for ${scoped.label}", color = p.textSecondary,
+                style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(16.dp))
+            return
+        }
         if (panels.isEmpty()) {
             Text("No panels declared for stack: $stackId", color = p.textSecondary,
                 style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(16.dp))
@@ -1205,7 +1215,7 @@ class C3StackFragment : KitComposeFragment() {
      *  opens [ContainerSheet] on tap. Provider groups render external consoles (no ping). */
     @Composable
     private fun CloudDashboard(index: Int, panel: Stacks.StackPanel) {
-        val dash = remember(ContainersSource.version) { Stacks.cloudServices() }
+        val dash = remember(ContainersSource.version, projectId) { Stacks.cloudServices(projectId) }
         val cols = Stacks.tileColumns()
         val wanted = panel.dashGroupIds.ifEmpty { dash.groups.map { it.id } }
         val groups = dash.groups.filter { it.id in wanted }
@@ -1383,6 +1393,7 @@ class C3StackFragment : KitComposeFragment() {
 
     companion object {
         private const val ARG_STACK = "stack"
+        private const val ARG_PROJECT = "project"
         const val STACK_TOPOLOGY = "stack_topology"
         const val STACK_OBSERVABILITY = "stack_observability"
 
@@ -1411,9 +1422,9 @@ class C3StackFragment : KitComposeFragment() {
          *  polled, so that is the largest set a successful poll is entitled to prune. */
         private fun ntfyNs(topic: String) = "ntfy:$topic:"
 
-        fun newInstance(stackId: String): C3StackFragment =
+        fun newInstance(stackId: String, project: String? = null): C3StackFragment =
             C3StackFragment().apply {
-                arguments = Bundle().apply { putString(ARG_STACK, stackId) }
+                arguments = Bundle().apply { putString(ARG_STACK, stackId); project?.let { putString(ARG_PROJECT, it) } }
             }
     }
 }

@@ -107,6 +107,16 @@ object Declarations {
     /** The Infra section's data: data/fleet_slice.json, derived by data/gen_fleet_slice.py from the fleet's own declarations. */
     val fleet: FleetModel.Slice by lazy { FleetModel.parse(decodeChunks(BuildConfig.FLEET_SLICE_B64)) }
 
+    /** ui.private_sources (build.json): WHERE the owner's private data lives; the content is never baked (pages/PrivateData.kt). */
+    val privateSources: Map<String, com.diegonmarcos.cloudc3.pages.PrivateData.Source> by lazy {
+        com.diegonmarcos.cloudc3.pages.PrivateData.parseSources(decode(BuildConfig.UI_PRIVATE_SOURCES_B64))
+    }
+
+    /** data/container_projects.json: which project each container belongs to (Containers sub-pages). */
+    val containerProjects: com.diegonmarcos.cloudc3.pages.ContainerProjects.Decl by lazy {
+        com.diegonmarcos.cloudc3.pages.ContainerProjects.parse(decode(BuildConfig.CONTAINER_PROJECTS_B64))
+    }
+
     /** Renamed section ids (old -> new) and moved page ids (old -> "section/page"). */
     data class Aliases(val sections: Map<String, String> = emptyMap(), val pages: Map<String, String> = emptyMap())
 

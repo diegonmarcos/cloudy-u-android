@@ -48,8 +48,8 @@ class C3NavTest {
     fun `the old ids keep working through ui_aliases`() {
         assertEquals("Topology became Containers", Target("containers"), C3Nav.resolve(nav, aliases, "topology"))
         assertEquals("Apps became Ops", Target("ops"), C3Nav.resolve(nav, aliases, "apps"))
-        assertEquals(Target("containers", "table"), C3Nav.resolve(nav, aliases, "public"))
-        assertEquals(Target("containers", "table"), C3Nav.resolve(nav, aliases, "private"))
+        assertEquals(Target("containers", "all_table"), C3Nav.resolve(nav, aliases, "public"))
+        assertEquals(Target("containers", "all_table"), C3Nav.resolve(nav, aliases, "private"))
         assertEquals("the old Stack id opens Infra's first page", Target("infra", "providers"), C3Nav.resolve(nav, aliases, "stack"))
         assertEquals("a restored old tab opens its new home", Target("ops"), C3Nav.start(nav, aliases, "apps"))
     }
@@ -58,7 +58,9 @@ class C3NavTest {
     fun `declared sections and pages resolve to themselves, unknown ids to nothing`() {
         assertEquals(Target("observ"), C3Nav.resolve(nav, aliases, "observ"))
         assertEquals(Target("observ", "health"), C3Nav.resolve(nav, aliases, "health"))
-        assertEquals(Target("containers", "table"), C3Nav.resolve(nav, aliases, "table"))
+        assertEquals("the old Table id opens the All project's Table", Target("containers", "all_table"), C3Nav.resolve(nav, aliases, "table"))
+        assertEquals(Target("containers", "cg_table"), C3Nav.resolve(nav, aliases, "cg_table"))
+        assertEquals(Target("ops", "agents"), C3Nav.resolve(nav, aliases, "agents"))
         assertNull(C3Nav.resolve(nav, aliases, "nope"))
         assertNull(C3Nav.resolve(nav, aliases, ""))
         assertNull(C3Nav.resolve(nav, aliases, null))

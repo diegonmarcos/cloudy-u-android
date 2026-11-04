@@ -197,15 +197,20 @@
         "configs"
       ]
     },
-    "_doc_aliases": "Ids that MOVED keep working: a deep link (page:c3/<id>, the launcher's shortcut_action), a saved tab or an old tester naming one is rewritten to where it lives now. `sections` maps a renamed section id to its new id (Topology became Containers, Apps became Ops); `pages` maps a moved page id to 'section/page' (the Public and Private URL pages merged into the Table page; the Stack page is Infra's). Kotlin reads this map and holds no id literal of its own.",
+    "_doc_aliases": "Ids that MOVED keep working: a deep link (page:c3/<id>, the launcher's shortcut_action), a saved tab or an old tester naming one is rewritten to where it lives now. `sections` maps a renamed section id to its new id (Topology became Containers, Apps became Ops); `pages` maps a moved page id to 'section/page' (the Public and Private URL pages merged into the Table page, which is now the All project's Table, #1454; the Stack page is Infra's). Kotlin reads this map and holds no id literal of its own.",
+    "_doc_private_sources": "#1454 WHERE the owner's PRIVATE data lives, never the content. `identities`: the owner's email identities for Infra > Domains > Public, read at run time from the owner's private repo (the store Cloud Me and Cloud Account read, #1438/#1445) with the owner's GitHub token (typed once, kept encrypted), else a side-loaded or cached copy. The file holds {\"emails\": [{\"address\", \"label\", \"provider\"}]}. Tests and emulator fixtures use fake emails only.",
+    "private_sources": {
+      "identities": {"owner": "diegonmarcos", "repo": "cloud-me-pvt-configs", "ref": "main", "path": "profile/identities.json"}
+    },
     "aliases": {
       "sections": {
         "topology": "containers",
         "apps": "ops"
       },
       "pages": {
-        "public": "containers/table",
-        "private": "containers/table",
+        "public": "containers/all_table",
+        "private": "containers/all_table",
+        "table": "containers/all_table",
         "stack": "infra/providers"
       }
     },
@@ -266,13 +271,13 @@
             "id": "serverless",
             "label": "Containers-as-Service",
             "icon": "ic_p_c3_vms",
-            "_doc": "InfraSectionFragment (#1431): each GCP Cloud Run service of the registry cloudy-t-infra c_vps/vps_gcloud/src/terraform.json cloud_run_services - state (live / declared, moving from a VM), region, vCPU, memory, instances, port, image, persistence, route and blockers. Read through data/gen_fleet_slice.py; nothing typed here."
+            "_doc": "InfraSectionFragment (#1454): the PLATFORMS that run containers, one row each - Google Cloud Run (project, region and service count read from the registry cloudy-t-infra c_vps/vps_gcloud/src/terraform.json cloud_run_services) and any other managed container platform the registry or data/platforms.json container_platforms[] declares. The containers themselves are the Containers page's. Read through data/gen_fleet_slice.py; nothing typed here."
           },
           {
             "id": "node_python",
             "label": "Containers-Node-Python",
             "icon": "ic_p_c3_vms",
-            "_doc": "InfraSectionFragment (#1437): static / Node / Python hosting providers (Firebase Hosting, GitHub Pages), READ from fleet-assets.json hosting[] - provider, plan, role, sites. None is typed here."
+            "_doc": "InfraSectionFragment (#1454): the hosting and runtime PLATFORMS (GitHub Pages, GitHub Actions, Google Firebase, Cloudflare Workers and similar), READ from data/platforms.json hosting_platforms[] and the registry's hosting[] - provider, role. None is typed in Kotlin."
           },
           {
             "id": "storage",
@@ -308,7 +313,7 @@
             "id": "domains_public",
             "label": "Public",
             "icon": "ic_link_tile",
-            "_doc": "InfraSectionFragment (Domains row, #1437): the public mailbox domains the owner uses (for example gmail, proton), READ from fleet-assets.json public_domains[]."
+            "_doc": "InfraSectionFragment (Domains row, #1437): the public mailbox domains the owner uses (for example gmail, proton), READ from fleet-assets.json public_domains[], plus (#1454) the owner's email identities, PRIVATE: loaded at run time from the owner's private repo declared in ui.private_sources.identities (never in this repo)."
           }
         ]
       },
@@ -316,25 +321,61 @@
         "id": "containers",
         "label": "Containers",
         "icon": "ic_p_c3_stack",
-        "_doc": "Renamed from Topology (owner request, 2026-10-16). Two top tabs: Topology (the container dashboards, without the address tables) and Table (the former Public and Private URL pages merged into one sortable, filterable table over data/infra_slice.json::routes).",
+        "_doc": "Renamed from Topology (owner request, 2026-10-16). #1454: one top page per PROJECT (All | Cloudy | CG | Capital | Hardtech | Cloud-me), each with a Topology | Table switch (nested pages `<project>_topology`, `<project>_table`; ids are unique per section, the view is the id after the project). Topology = the container dashboards (C3StackFragment over ui.carried_c3.stack_topology) and Table = the sortable, filterable table (RoutesTableFragment), both scoped to the project. Which project a container belongs to is data/container_projects.json (folder / name prefixes, mapped to the registry project codes); a project id with no entry there is All. Agents moved to Ops.",
         "pages": [
           {
-            "id": "topology",
-            "label": "Topology",
+            "id": "all",
+            "label": "All",
             "icon": "ic_p_c3_stack",
-            "_doc": "C3StackFragment renders ui.carried_c3.stack_topology: the Index row and the Infra Apps / User Apps dashboards. The embedded public-URL / private-URL address cards and the More row were removed; the data they showed is in the Table page."
+            "pages": [
+              {"id": "all_topology", "label": "Topology", "icon": "ic_p_c3_stack"},
+              {"id": "all_table", "label": "Table", "icon": "ic_link_tile"}
+            ]
           },
           {
-            "id": "table",
-            "label": "Table",
-            "icon": "ic_link_tile",
-            "_doc": "RoutesTableFragment: one row per container - Category, Container, Public URL, Auth Type, Private URL, VM Name, VM IP:PORT. Sort by any column (tap the header), filter by Auth Type and VM, filter state persisted. Rows are data/infra_slice.json::routes, derived by data/gen_infra_slice.py from the edge auth tiers."
+            "id": "cloudy",
+            "label": "Cloudy",
+            "icon": "ic_p_c3_stack",
+            "pages": [
+              {"id": "cloudy_topology", "label": "Topology", "icon": "ic_p_c3_stack"},
+              {"id": "cloudy_table", "label": "Table", "icon": "ic_link_tile"}
+            ]
           },
           {
-            "id": "agents",
-            "label": "Agents",
-            "icon": "ic_robot",
-            "_doc": "AgentsFragment (moved from Ops, owner request 2026-10-25): the launchable C3 siblings, now one of the Containers section's pages."
+            "id": "cg",
+            "label": "CG",
+            "icon": "ic_p_c3_stack",
+            "pages": [
+              {"id": "cg_topology", "label": "Topology", "icon": "ic_p_c3_stack"},
+              {"id": "cg_table", "label": "Table", "icon": "ic_link_tile"}
+            ]
+          },
+          {
+            "id": "capital",
+            "label": "Capital",
+            "icon": "ic_p_c3_stack",
+            "pages": [
+              {"id": "capital_topology", "label": "Topology", "icon": "ic_p_c3_stack"},
+              {"id": "capital_table", "label": "Table", "icon": "ic_link_tile"}
+            ]
+          },
+          {
+            "id": "hardtech",
+            "label": "Hardtech",
+            "icon": "ic_p_c3_stack",
+            "pages": [
+              {"id": "hardtech_topology", "label": "Topology", "icon": "ic_p_c3_stack"},
+              {"id": "hardtech_table", "label": "Table", "icon": "ic_link_tile"}
+            ]
+          },
+          {
+            "id": "cloud_me",
+            "label": "Cloud-me",
+            "icon": "ic_p_c3_stack",
+            "pages": [
+              {"id": "cloud_me_topology", "label": "Topology", "icon": "ic_p_c3_stack"},
+              {"id": "cloud_me_table", "label": "Table", "icon": "ic_link_tile"}
+            ]
           }
         ]
       },
@@ -347,7 +388,7 @@
         "id": "ops",
         "label": "Ops",
         "icon": "ic_robot",
-        "_doc": "Renamed from Apps (owner request, 2026-10-16). Since 2026-10-25 Ops is the five TOPOLOGY VIEWS of the fleet, one page each, one TopologyViewFragment over ui.topology (view | grouping key | dominant metric | incident scenario): Service (logical flow), Infrastructure (compute), Orchestration (GitOps), Network & Security and Release (CI/CD). Agents moved to Containers; Services and Tools are gone from Ops.",
+        "_doc": "Renamed from Apps (owner request, 2026-10-16). Since 2026-10-25 Ops is the five TOPOLOGY VIEWS of the fleet, one page each, one TopologyViewFragment over ui.topology (view | grouping key | dominant metric | incident scenario): Service (logical flow), Infrastructure (compute), Orchestration (GitOps), Network & Security and Release (CI/CD). Agents is the sixth page (#1454); Services and Tools are gone from Ops.",
         "pages": [
           {
             "id": "service",
@@ -373,6 +414,12 @@
             "id": "release",
             "label": "Release",
             "icon": "ic_code"
+          },
+          {
+            "id": "agents",
+            "label": "Agents",
+            "icon": "ic_robot",
+            "_doc": "AgentsFragment (#1454, back under Ops from Containers): the launchable C3 siblings. Not a topology view: ui.topology.views does not list it."
           }
         ]
       },

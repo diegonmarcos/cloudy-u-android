@@ -23,6 +23,8 @@ class FleetModelTest {
         assertEquals(raw["providers"]!!.jsonArray.size, slice.providers.size)
         assertEquals(raw["vms"]!!.jsonArray.size, slice.vms.size)
         assertEquals(raw["serverless"]!!.jsonArray.size, slice.serverless.size)
+        assertEquals(raw["container_platforms"]!!.jsonArray.size, slice.containerPlatforms.size)
+        assertEquals(raw["hosting"]!!.jsonArray.size, slice.hosting.size)
         assertEquals(raw["storage"]!!.jsonObject["buckets"]!!.jsonArray.size, slice.buckets.size)
         assertEquals(raw["storage"]!!.jsonObject["backends"]!!.jsonArray.size, slice.backends.size)
         assertEquals(raw["electronics"]!!.jsonArray.size, slice.devices.size)

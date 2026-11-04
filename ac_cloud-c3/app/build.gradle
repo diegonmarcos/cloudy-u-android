@@ -87,6 +87,11 @@ def containersDeclaredB64Array = chunkedB64(file("../data/containers_declared.js
 // data/gen_fleet_slice.py from the fleet's own declarations in cloud-infra. A missing slice would draw five empty pages
 // that look like working ones (#276), so it is asserted present. Chunked: ~19 KB now, but it grows with the fleet.
 def fleetSliceB64Array   = chunkedB64(file("../data/fleet_slice.json"))
+// Where the owner's PRIVATE data is read from at run time (declaration only, never content), and the container -> project mapping.
+def uiPrivateSourcesB64 = b64(buildJson.ui.private_sources ?: [:])
+def containerProjectsFile = file("../data/container_projects.json")
+if (!containerProjectsFile.exists()) throw new GradleException("missing data/container_projects.json - the Containers project sub-pages would bake empty")
+def containerProjectsB64 = containerProjectsFile.bytes.encodeBase64().toString()
 def c3OpsBaseUrl       = (buildJson.ui.c3_ops?.base_url  ?: '').toString()
 
 // #648 THE CARRIED C3 SECTION: ui.carried_c3 (not nav: ui.sections is) is the SuperApp's declaration block,
@@ -213,6 +218,8 @@ android {
         buildConfigField "String[]", "DECLARATIONS_B64",  declarationsB64Array
         buildConfigField "String[]", "CONTAINERS_DECLARED_B64", containersDeclaredB64Array
         buildConfigField "String[]", "FLEET_SLICE_B64",   fleetSliceB64Array
+        buildConfigField "String", "UI_PRIVATE_SOURCES_B64", "\"${uiPrivateSourcesB64}\""
+        buildConfigField "String", "CONTAINER_PROJECTS_B64",  "\"${containerProjectsB64}\""
         buildConfigField "String", "C3_OPS_BASE_URL",       "\"${c3OpsBaseUrl}\""
         buildConfigField "String", "SERVICES_PUBLIC_B64",  "\"${servicesPublicB64}\""
         buildConfigField "String", "SERVICES_PRIVATE_B64", "\"${servicesPrivateB64}\""

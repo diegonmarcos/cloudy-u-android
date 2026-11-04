@@ -3,6 +3,8 @@ package com.diegonmarcos.cloudc3.cloud
 import android.content.Context
 import android.util.Base64
 import com.diegonmarcos.cloudc3.BuildConfig
+import com.diegonmarcos.cloudc3.Declarations
+import com.diegonmarcos.cloudc3.pages.ContainerProjects
 import com.diegonmarcos.cloudc3.pages.ContainersModel
 import com.diegonmarcos.cloudc3.pages.ContainersSource
 import org.json.JSONArray
@@ -231,7 +233,11 @@ object Stacks {
 
     /** #1148 the container dashboards: the SAME document as the Table page (ContainersSource), one card per group, one
      *  sub-table per category, in the document's order. Not cached: the live copy may replace the baked one. */
-    fun cloudServices(): CloudDash = dashOf(ContainersSource.current())
+    fun cloudServices(project: String? = null): CloudDash {
+        val c = ContainersSource.current()
+        val d = Declarations.containerProjects
+        return dashOf(if (d.project(project) != null) ContainerProjects.scope(d, c, project!!) else c)
+    }
 
     fun dashOf(c: ContainersModel.Catalog): CloudDash = CloudDash(c.groups.map { g ->
         CloudGroup(g.id, g.label, "", g.categories.map { cat ->

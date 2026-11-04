@@ -1,5 +1,6 @@
 package com.diegonmarcos.cloudc3.pages
 
+import android.os.Bundle
 import android.content.ClipData
 import android.content.Intent
 import android.net.Uri
@@ -511,6 +512,9 @@ private fun Chip(label: String, selected: Boolean, tag: String, onClick: () -> U
 /** The Table page as a tab fragment: rows from the baked slice, state in SharedPreferences, a public URL opens in the browser. */
 class RoutesTableFragment : KitComposeFragment() {
 
+    /** The Containers sub-page's project (ContainerProjects); an id the declaration does not know is All. */
+    private val project: String? get() = arguments?.getString(ARG_PROJECT)?.takeIf { Declarations.containerProjects.project(it) != null }
+
     override fun palette(): KitPalette = c3KitPalette(requireContext())
 
     @Composable
@@ -523,7 +527,7 @@ class RoutesTableFragment : KitComposeFragment() {
         LaunchedEffect(Unit) { ContainersSource.refresh(ApiFleetLive(ctx.applicationContext)) }
         val initial = remember { store.load() }
         RoutesTableScreen(
-            rows = remember(version) { ContainersModel.rows(ContainersSource.current()) },
+            rows = remember(version, project) { ContainerProjects.rows(Declarations.containerProjects, ContainersSource.current(), project) },
             initial = initial,
             onState = store::save,
             prober = remember { NetProber(ctx) },
@@ -546,6 +550,13 @@ class RoutesTableFragment : KitComposeFragment() {
                 onOpenUrl = { url -> (activity as? C3HealthFragment.UrlClickListener)?.onUrlClicked(url) },
                 onDismiss = { container = null },
             )
+        }
+    }
+
+    companion object {
+        private const val ARG_PROJECT = "project"
+        fun newInstance(project: String? = null) = RoutesTableFragment().apply {
+            arguments = Bundle().apply { project?.let { putString(ARG_PROJECT, it) } }
         }
     }
 }

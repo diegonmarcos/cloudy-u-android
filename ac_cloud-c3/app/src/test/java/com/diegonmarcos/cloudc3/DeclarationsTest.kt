@@ -129,7 +129,10 @@ class DeclarationsTest {
         // which is what keeps "no placeholder in a shipped tab" assertable.
         assertEquals("Infra = Providers | VMs | Storage | Electronics | Domains (2026-10-20); no Stack, Dbs or API page",
             listOf("providers", "machines", "serverless", "node_python", "storage", "desktop", "mobile", "gadgets", "domains", "domains_public"), pageIds("infra"))
-        assertEquals("Public and Private URLs merged into Table; Agents moved in from Ops (2026-10-25)", listOf("topology", "table", "agents"), pageIds("containers"))
+        assertEquals("#1454 one page per project, in the owner's order", listOf("all", "cloudy", "cg", "capital", "hardtech", "cloud_me"), pageIds("containers"))
+        assertEquals("#1454 every project page keeps the Topology | Table switch",
+            pageIds("containers").map { listOf("${it}_topology", "${it}_table") },
+            nav().section("containers")!!.pages.map { p -> p.pages.map { it.id } })
         assertEquals(listOf("observability", "health", "dagu", "mesh"), pageIds("observ"))
         assertEquals("#1443 Configs starts General | Perms | About, then the app's own Build card", listOf("general", "perms", "about", "build"), pageIds("configs"))
     }
@@ -189,17 +192,16 @@ class DeclarationsTest {
     }
 
     @Test
-    fun `the Ops tab declares the five topology views, with Agents under Containers and no Services or Tools`() {
-        assertEquals(listOf("service", "infrastructure", "orchestration", "network", "release"), pageIds("ops"))
-        assertTrue("Agents is not on Ops any more", "agents" !in pageIds("ops"))
+    fun `the Ops tab declares the five topology views then Agents, and no Services or Tools`() {
+        assertEquals(listOf("service", "infrastructure", "orchestration", "network", "release", "agents"), pageIds("ops"))
         assertTrue("Services and Tools are gone from Ops", pageIds("ops").none { it == "services" || it == "tools" })
-        assertTrue("Agents is on Containers", "agents" in pageIds("containers"))
+        assertTrue("Agents left Containers", "agents" !in nav().section("containers")!!.allPages().map { it.id })
     }
 
     @Test
     fun `every Ops page has a declared view with its grouping, metric, question and a second-row icon from the shared catalog`() {
         val topo = com.diegonmarcos.cloudc3.pages.TopologyModel.parseDecl(ui()["topology"]!!.toString())
-        assertEquals(pageIds("ops"), topo.views.map { it.id })
+        assertEquals("every Ops page is a topology view except Agents", pageIds("ops") - "agents", topo.views.map { it.id })
         topo.views.forEach { assertTrue("${it.id} lacks grouping/metric/question/missing", it.grouping.isNotBlank() && it.metric.isNotBlank() && it.question.isNotBlank() && it.missing.isNotEmpty()) }
         assertEquals("Ship", topo.release?.workflow)
         nav().section("ops")!!.pages.forEach {

@@ -1,0 +1,43 @@
+{
+  "_doc": "c3's own declaration of WHICH platforms the Infra pages Containers-as-Service and Containers-Node-Python list (owner request 2026-11-04). data/gen_fleet_slice.py reads it and fills the numbers from the fleet registry (cloudy-t-infra terraform.json); a platform the registry itself declares in fleet-assets.json container_platforms[] / hosting[] is listed too and wins on a clashing id. Containers are NOT listed here: they belong to the Containers page. Move an entry into the registry and delete it here to make the registry the only source.",
+  "container_platforms": [
+    {
+      "id": "cloud-run",
+      "label": "Google Cloud Run",
+      "provider": "gcloud",
+      "registry": "cloud_run_services",
+      "role": "Managed serverless containers",
+      "links": [{"label": "Console", "url": "https://console.cloud.google.com/run"}]
+    }
+  ],
+  "hosting_platforms": [
+    {
+      "id": "github-pages",
+      "label": "GitHub Pages",
+      "provider": "github",
+      "role": "Static site hosting",
+      "links": [{"label": "Docs", "url": "https://pages.github.com"}]
+    },
+    {
+      "id": "github-actions",
+      "label": "GitHub Actions",
+      "provider": "github",
+      "role": "CI/CD runtime: workflows and x86 runners",
+      "links": [{"label": "Actions", "url": "https://github.com/features/actions"}]
+    },
+    {
+      "id": "firebase",
+      "label": "Google Firebase",
+      "provider": "gcloud",
+      "role": "App hosting and backend platform",
+      "links": [{"label": "Console", "url": "https://console.firebase.google.com"}]
+    },
+    {
+      "id": "cloudflare-workers",
+      "label": "Cloudflare Workers",
+      "provider": "cloudflare",
+      "role": "Edge runtime for JavaScript workers",
+      "links": [{"label": "Dashboard", "url": "https://dash.cloudflare.com"}]
+    }
+  ]
+}

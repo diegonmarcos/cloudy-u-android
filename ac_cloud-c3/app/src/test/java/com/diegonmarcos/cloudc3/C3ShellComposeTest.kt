@@ -172,8 +172,8 @@ class C3ShellComposeTest {
     fun `a tree page opens its section and page, and closes the dropdown`() {
         show()
         tap(TopBarTags.TITLE)
-        tapIn(C3Tags.drawerPage("containers", "table"))
-        assertEquals(listOf(C3Nav.Target("containers", "table")), opened)
+        tapIn(C3Tags.drawerPage("containers", "all_table"))
+        assertEquals(listOf(C3Nav.Target("containers", "all_table")), opened)
         assertFalse("the dropdown closes after a tap", exists(com.diegonmarcos.superapp.navbartop1.TopFirstRowTags.DROPDOWN))
     }
 

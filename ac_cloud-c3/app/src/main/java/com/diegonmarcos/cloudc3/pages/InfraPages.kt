@@ -15,6 +15,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,6 +32,7 @@ import com.diegonmarcos.superapp.uikit.KitDensity
 import com.diegonmarcos.superapp.uikit.KitPalette
 import com.diegonmarcos.superapp.uikit.LocalKitPalette
 import java.time.LocalDate
+import kotlinx.coroutines.launch
 
 /** The Infra section's page ids (build.json::ui.sections[infra].pages) - the screens below answer exactly these. */
 object InfraSections {
@@ -51,11 +55,16 @@ object InfraTags {
     fun row(section: String, id: String) = "infra_row_${section}_$id"
     fun head(section: String, id: String) = "infra_head_${section}_$id"
     const val LIVE_NOTE = "infra_live_note"
+    const val IDENTITIES_NOTE = "infra_identities_note"
+    const val IDENTITIES_TOKEN = "infra_identities_token"
 }
 
 /** One Infra page by its declared id, over the slice and the live state. */
 @Composable
-fun InfraSectionScreen(section: String, slice: FleetModel.Slice, live: FleetLiveState, today: LocalDate = LocalDate.now()) {
+fun InfraSectionScreen(
+    section: String, slice: FleetModel.Slice, live: FleetLiveState, today: LocalDate = LocalDate.now(),
+    identities: PrivateIdentitiesState = PrivateIdentitiesState(), onToken: (String) -> Unit = {},
+) {
     when (section) {
         InfraSections.PROVIDERS -> ProvidersScreen(slice, live)
         InfraSections.MACHINES -> MachinesScreen(slice)
@@ -65,7 +74,7 @@ fun InfraSectionScreen(section: String, slice: FleetModel.Slice, live: FleetLive
         InfraSections.DESKTOP -> DevicesScreen(InfraSections.DESKTOP, slice)
         InfraSections.MOBILE -> DevicesScreen(InfraSections.MOBILE, slice)
         InfraSections.GADGETS -> DevicesScreen(InfraSections.GADGETS, slice)
-        InfraSections.DOMAINS_PUBLIC -> PublicDomainsScreen(slice)
+        InfraSections.DOMAINS_PUBLIC -> PublicDomainsScreen(slice, identities, onToken)
         InfraSections.DOMAINS -> DomainsScreen(slice, live, today)
         else -> Text("Unknown Infra page: $section", color = LocalKitPalette.current.bad)
     }
@@ -107,22 +116,23 @@ fun MachinesScreen(slice: FleetModel.Slice) {
     }
 }
 
-// ── Serverless Cont: GCP Cloud Run services, read from the registry ─────────
+// ── Containers-as-Service: the PLATFORMS that run containers (the containers are the Containers page's) ──
 
 @Composable
 fun ServerlessScreen(slice: FleetModel.Slice) {
-    Page(InfraSections.SERVERLESS, "${slice.serverless.size} Cloud Run services - ${slice.serverless.count { it.state?.startsWith("live") == true }} live") {
-        if (slice.serverless.isEmpty()) {
-            DenseRow(InfraTags.row(InfraSections.SERVERLESS, "none"), "None declared", "", listOf("No Cloud Run service is declared in the fleet"))
+    Page(InfraSections.SERVERLESS, "${slice.containerPlatforms.size} container platforms") {
+        if (slice.containerPlatforms.isEmpty()) {
+            DenseRow(InfraTags.row(InfraSections.SERVERLESS, "none"), "None declared", "", listOf("No managed container platform is declared in the fleet"))
         }
-        slice.serverless.forEach { s ->
+        slice.containerPlatforms.forEach { p ->
             DenseRow(
-                InfraTags.row(InfraSections.SERVERLESS, s.name), "${s.label.ifBlank { s.name }} (${s.name})",
-                FleetModel.runState(s),
+                InfraTags.row(InfraSections.SERVERLESS, p.id), p.label,
+                p.services?.let { "$it services" + (p.live?.let { l -> " - $l live" } ?: "") }.orEmpty(),
                 listOfNotNull(
-                    FleetModel.runSpec(s), s.image?.let { "Image: $it" }, s.persistence?.let { "Persistence: $it" },
-                    s.route?.let { "Route: $it" }, s.source?.let { "Source: $it" },
-                ) + s.blockers.map { "Blocker: $it" },
+                    p.provider?.let { "Provider: $it" }, p.project?.let { "Project: $it" },
+                    p.regions.takeIf { it.isNotEmpty() }?.let { "Region: ${it.joinToString(", ")}" }, p.role?.let { "Use: $it" },
+                ),
+                links = p.links,
             )
         }
     }
@@ -155,31 +165,54 @@ fun StorageScreen(slice: FleetModel.Slice, live: FleetLiveState) {
 
 @Composable
 fun NodePythonScreen(slice: FleetModel.Slice) {
-    Page(InfraSections.NODE_PYTHON, "${slice.hosting.size} hosting providers") {
+    Page(InfraSections.NODE_PYTHON, "${slice.hosting.size} hosting and runtime platforms") {
         if (slice.hosting.isEmpty()) {
-            DenseRow(InfraTags.row(InfraSections.NODE_PYTHON, "none"), "None declared", "", listOf("No hosting provider is declared in fleet-assets.json hosting[]"))
+            DenseRow(InfraTags.row(InfraSections.NODE_PYTHON, "none"), "None declared", "", listOf("No hosting platform is declared in the fleet"))
         }
         slice.hosting.forEach { h ->
             DenseRow(
                 InfraTags.row(InfraSections.NODE_PYTHON, h.id), h.label, h.plan ?: "plan not declared",
-                listOfNotNull(h.role?.let { "Use: $it" }, h.state?.let { "State: $it" }, h.sites.takeIf { it.isNotEmpty() }?.let { "Sites: ${it.joinToString(", ")}" }),
+                listOfNotNull(h.provider?.let { "Provider: $it" }, h.role?.let { "Use: $it" }, h.state?.let { "State: $it" }, h.sites.takeIf { it.isNotEmpty() }?.let { "Sites: ${it.joinToString(", ")}" }),
                 links = h.links,
             )
         }
     }
 }
 
-// ── Domains ▸ Public: mailbox domains the owner uses ──────────────────────────
+// ── Domains ▸ Public: mailbox domains the owner uses, and the owner's email identities (private data, run time) ──
 
 @Composable
-fun PublicDomainsScreen(slice: FleetModel.Slice) {
-    Page(InfraSections.DOMAINS_PUBLIC, "${slice.publicDomains.size} public domains") {
+fun PublicDomainsScreen(slice: FleetModel.Slice, identities: PrivateIdentitiesState = PrivateIdentitiesState(), onToken: (String) -> Unit = {}) {
+    Page(InfraSections.DOMAINS_PUBLIC, "${slice.publicDomains.size} public domains - ${identities.items.size} email identities") {
         if (slice.publicDomains.isEmpty()) {
-            DenseRow(InfraTags.row(InfraSections.DOMAINS_PUBLIC, "none"), "None declared", "", listOf("No public domain is declared in fleet-assets.json public_domains[]"))
+            DenseRow(InfraTags.row(InfraSections.DOMAINS_PUBLIC, "none"), "None declared", "", listOf("No public domain is declared in the fleet"))
         }
         slice.publicDomains.forEach { d ->
             DenseRow(InfraTags.row(InfraSections.DOMAINS_PUBLIC, d.name), d.name, d.provider.orEmpty(), listOfNotNull(d.role))
         }
+        GroupHeader(InfraTags.head(InfraSections.DOMAINS_PUBLIC, "identities"), "Email identities (private)")
+        identities.items.forEach { i ->
+            DenseRow(InfraTags.row(InfraSections.DOMAINS_PUBLIC, "id:${i.address}"), i.address, i.provider, listOf(i.label))
+        }
+        identities.note?.let {
+            Text(it, color = LocalKitPalette.current.textSecondary, fontSize = KitDensity.caption,
+                modifier = Modifier.testTag(InfraTags.IDENTITIES_NOTE).padding(start = 4.dp, bottom = 2.dp))
+        }
+        if (identities.needsToken) TokenField(onToken)
+    }
+}
+
+/** The owner's GitHub token for the private repo: typed once, kept in the encrypted store, never drawn back. */
+@Composable
+private fun TokenField(onToken: (String) -> Unit) {
+    var typed by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf("") }
+    Row(Modifier.fillMaxWidth().padding(start = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+        androidx.compose.material3.OutlinedTextField(
+            typed, { typed = it }, Modifier.weight(1f).testTag(InfraTags.IDENTITIES_TOKEN),
+            label = { Text("GitHub token (kept encrypted)") }, singleLine = true,
+            visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+        )
+        androidx.compose.material3.TextButton({ onToken(typed); typed = "" }, enabled = typed.isNotBlank()) { Text("Connect") }
     }
 }
 
@@ -321,6 +354,10 @@ class InfraSectionFragment : KitComposeFragment() {
         val ctx = LocalContext.current
         val live = remember { FleetLiveState() }
         val slice = remember { Declarations.fleet }
+        val identities = remember { PrivateIdentitiesState() }
+        val scope = androidx.compose.runtime.rememberCoroutineScope()
+        val source = remember { Declarations.privateSources[PRIVATE_IDENTITIES] }
+        if (section == InfraSections.DOMAINS_PUBLIC) LaunchedEffect(section) { identities.refresh(ctx.applicationContext, source) }
         LaunchedEffect(section) {
             try {
                 live.refresh(slice, ApiFleetLive(ctx.applicationContext))
@@ -330,10 +367,15 @@ class InfraSectionFragment : KitComposeFragment() {
                 live.notes = live.notes + ("dns" to "${e.javaClass.simpleName}: ${e.message.orEmpty()}")
             }
         }
-        InfraSectionScreen(section, slice, live)
+        InfraSectionScreen(section, slice, live, identities = identities, onToken = { t ->
+            PrivateData.saveToken(ctx, t)
+            scope.launch { identities.refresh(ctx.applicationContext, source) }
+        })
     }
 
     companion object {
+        /** The key of the owner's email identities in build.json ui.private_sources. */
+        private const val PRIVATE_IDENTITIES = "identities"
         private const val ARG_SECTION = "infra_section"
         fun newInstance(section: String) = InfraSectionFragment().apply {
             arguments = Bundle().apply { putString(ARG_SECTION, section) }

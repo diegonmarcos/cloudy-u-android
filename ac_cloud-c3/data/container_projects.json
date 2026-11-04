@@ -1,0 +1,11 @@
+{
+  "_doc": "c3's declaration of how the Containers page groups containers by PROJECT (owner request 2026-11-04). `code` is the project's code in the fleet registry (git-repos-master 0_registry/projects-repos.json). A container belongs to the first project whose `folder_prefix` (its cloudy-u-containers folder, containers-declared.json `dir`) or `name_prefix` matches it, else to `default`. The container's own build.json carries no project field, so this file is the mapping. The page strip is declared in build.json (ui.sections[containers]); a project listed there with no match here shows an empty page, honestly.",
+  "default": "cloudy",
+  "projects": [
+    {"id": "cloudy", "label": "Cloudy", "code": "1.1", "folder_prefix": ["infra-", "bc-", "user-ai_", "user-web_"], "name_prefix": []},
+    {"id": "cg", "label": "CG", "code": "2", "folder_prefix": [], "name_prefix": []},
+    {"id": "capital", "label": "Capital", "code": "3", "folder_prefix": ["user-fin_", "user-news_", "user-data_"], "name_prefix": ["capital-"]},
+    {"id": "hardtech", "label": "Hardtech", "code": "4", "folder_prefix": [], "name_prefix": []},
+    {"id": "cloud_me", "label": "Cloud-me", "code": "1.2", "folder_prefix": ["user-vault_", "user-media_", "user-prod_", "user-comm_"], "name_prefix": []}
+  ]
+}

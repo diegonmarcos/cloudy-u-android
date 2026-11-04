@@ -271,7 +271,7 @@ class TopologyViewFragment : KitComposeFragment() {
             TopologyModel.Inputs(ContainersSource.current(), slice, TopologyModel.parseInfra(Declarations.infraSlice), state.live, decl)
         }
         TopologyScreen(
-            view, inputs, TopologyFocus.key, Declarations.opsPages.associate { it.id to it.label },
+            view, inputs, TopologyFocus.key, Declarations.opsPages.filter { p -> decl.views.any { it.id == p.id } }.associate { it.id to it.label },
             onFocus = { TopologyFocus.key = it },
             onPivot = { to, key ->
                 TopologyFocus.key = key

@@ -45,15 +45,34 @@ abstract class PagedFragment : KitComposeFragment() {
     /** The real fragment for a declared page id. Null means the declaration is a lie. */
     abstract fun pageFragment(pageId: String): Fragment?
 
+    /**
+     * The fragment for a NESTED declared page: [leafId] is a page under the top page [parentId] (build.json `pages` inside a
+     * page, drawn as a second strip). Default: the leaf resolves like any page.
+     */
+    open fun leafFragment(parentId: String, leafId: String): Fragment? = pageFragment(leafId)
+
     /** The tab's declared section, when it declares page groups (`nav_mode: horizontal_two_rows` + `groups`, #1437). */
     open fun section(): NavSection? = null
 
     private var selected by mutableStateOf<String?>(null)
 
-    /** Show a declared page of this tab (a pivot link from one page to a sibling); an id the tab does not declare is ignored. */
-    fun openPage(pageId: String) {
-        if (pages().any { it.id == pageId }) selected = pageId
+    /** The selected nested page of the selected top page (null when that page declares none). */
+    private var selectedSub by mutableStateOf<String?>(null)
+
+    /** [id] as (top page, nested page): a top page id gives its first nested page, a nested id its parent; null when undeclared. */
+    private fun locate(id: String?): Pair<String, String?>? {
+        val top = pages().firstOrNull { it.id == id } ?: pages().firstOrNull { p -> p.pages.any { it.id == id } } ?: return null
+        return top.id to (top.pages.firstOrNull { it.id == id } ?: top.pages.firstOrNull())?.id
     }
+
+    private fun select(id: String?) {
+        val at = locate(id) ?: return
+        selected = at.first
+        selectedSub = at.second
+    }
+
+    /** Show a declared page of this tab (a pivot link from one page to a sibling); an id the tab does not declare is ignored. */
+    fun openPage(pageId: String) = select(pageId)
 
     override fun palette(): KitPalette = c3KitPalette(requireContext())
 
@@ -61,16 +80,16 @@ abstract class PagedFragment : KitComposeFragment() {
         super.onCreate(savedInstanceState)
         val declared = pages()
         val restored = savedInstanceState?.getString(STATE_PAGE) ?: arguments?.getString(ARG_PAGE)
-        selected = restored?.takeIf { id -> declared.any { it.id == id } } ?: declared.firstOrNull()?.id
+        select(restored ?: declared.firstOrNull()?.id)
     }
 
     @Composable
     override fun Content() {
         val declared = remember { pages() }
         // Tell the shell which page this tab shows, so its drawer marks it (the shell does not own the strip).
-        LaunchedEffect(selected) {
+        LaunchedEffect(selected, selectedSub) {
             val tab = arguments?.getString(ARG_TAB)
-            val page = selected
+            val page = selectedSub ?: selected
             if (tab != null && page != null) (activity as? PageListener)?.onPageShown(tab, page)
         }
         Column(Modifier.fillMaxSize()) {
@@ -83,27 +102,38 @@ abstract class PagedFragment : KitComposeFragment() {
                 NavBarTopSecondRows(
                     section = grouped,
                     selectedId = selected,
-                    onSelect = { selected = it.id },
+                    onSelect = { select(it.id) },
                     underTopChrome = false,
                 )
             } else if (declared.size > 1) {
                 NavBarTopSecondRow(
                     pages = declared,
                     selectedId = selected,
-                    onSelect = { selected = it.id },
+                    onSelect = { select(it.id) },
                     underTopChrome = false,
                 )
             }
             val id = selected
+            // A page that declares pages of its own (Containers: a project, then Topology | Table) draws a second strip.
+            val subs = declared.firstOrNull { it.id == id }?.pages.orEmpty()
+            if (subs.size > 1) {
+                NavBarTopSecondRow(
+                    pages = subs,
+                    selectedId = selectedSub,
+                    onSelect = { selectedSub = it.id },
+                    underTopChrome = false,
+                )
+            }
             if (id != null) {
+                val leaf = selectedSub
                 C3FragmentHost(
                     fm = childFragmentManager,
                     containerId = R.id.page_container,
-                    key = id,
+                    key = leaf ?: id,
                     modifier = Modifier.weight(1f),
                 ) {
                     // A declared page with no fragment. Stated, not drawn blank.
-                    pageFragment(id) ?: UndeclaredPageFragment.newInstance(id)
+                    (if (leaf != null) leafFragment(id, leaf) else pageFragment(id)) ?: UndeclaredPageFragment.newInstance(leaf ?: id)
                 }
             }
         }
@@ -111,7 +141,7 @@ abstract class PagedFragment : KitComposeFragment() {
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        outState.putString(STATE_PAGE, selected)
+        outState.putString(STATE_PAGE, selectedSub ?: selected)
     }
 
     /** The host that wants to know which page a tab is showing. */

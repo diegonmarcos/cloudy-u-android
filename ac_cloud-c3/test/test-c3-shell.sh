@@ -277,8 +277,22 @@ for tab, cls in (("infra", "InfraFragment"), ("containers", "ContainersFragment"
                  ("ops", "OpsFragment"), ("configs", "ConfigsFragment")):
     sec = next((s for s in (ui.get("sections") or []) if s.get("id") == tab), {})
     declared = [p["id"] for p in (sec.get("pages") or [])]
-    m = re.search(r"class %s : PagedFragment\(\).*?when \(pageId\) \{(.*?)\n    \}" % cls,
+    # #1454 a page that declares pages of its own (Containers: project -> Topology | Table) resolves its NESTED ids through
+    # leafFragment(parent, leaf) -> the view is the leaf id after "<parent>_"; the top ids need no fragment of their own.
+    nested = [(p["id"], [q["id"] for q in p["pages"]]) for p in (sec.get("pages") or []) if p.get("pages")]
+    if nested:
+        views = sorted({lid[len(pid) + 1:] for pid, leaves in nested for lid in leaves if lid.startswith(pid + "_")})
+        if any(not lid.startswith(pid + "_") for pid, leaves in nested for lid in leaves):
+            bad.append("ui.sections[%s] nests a page whose id does not start with its parent's id + '_'" % tab)
+        mm = re.search(r"class %s : PagedFragment\(\)(?:(?!\n\}\n).)*?when \(leafId\.removePrefix\(.*?\)\) \{(.*?)\n    \}" % cls, tabsrc, re.S)
+        got = re.findall(r'^\s*"([^"]+)"\s*->', mm.group(1), re.M) if mm else []
+        if not mm or sorted(got) != views:
+            bad.append("%s resolves the nested views %s, the declaration nests %s" % (cls, got, views))
+        declared = [d for d in declared if d not in {pid for pid, _ in nested}]
+    m = re.search(r"class %s : PagedFragment\(\)(?:(?!\n\}\n).)*?when \(pageId\) \{(.*?)\n    \}" % cls,
                   tabsrc, re.S)
+    if nested and not m:
+        continue
     if not m:
         bad.append("no pageFragment when-block found for %s — nothing to diff the %s pages against"
                    % (cls, tab))
@@ -528,8 +542,11 @@ tabs = open(sys.argv[3], encoding="utf-8").read()
 bad = []
 secs = {x["id"]: x for x in ui.get("sections") or []}
 def pids(i): return [p["id"] for p in (secs.get(i) or {}).get("pages") or []]
-if pids("containers") != ["topology", "table", "agents"]: bad.append("Containers pages are %s, not [topology, table, agents]" % pids("containers"))
-if pids("ops") != ["service", "infrastructure", "orchestration", "network", "release"]: bad.append("Ops pages are %s, not the five topology views (Services and Tools are gone, Agents is under Containers)" % pids("ops"))
+if pids("containers") != ["all", "cloudy", "cg", "capital", "hardtech", "cloud_me"]: bad.append("Containers pages are %s, not the project pages [all, cloudy, cg, capital, hardtech, cloud_me]" % pids("containers"))
+for _p in (secs.get("containers") or {}).get("pages") or []:
+    if [q["id"] for q in _p.get("pages") or []] != [_p["id"] + "_topology", _p["id"] + "_table"]:
+        bad.append("Containers project %r lost its Topology | Table switch (nested pages %s)" % (_p["id"], [q["id"] for q in _p.get("pages") or []]))
+if pids("ops") != ["service", "infrastructure", "orchestration", "network", "release", "agents"]: bad.append("Ops pages are %s, not the five topology views then Agents (Services and Tools are gone)" % pids("ops"))
 if pids("infra") != ["providers", "machines", "serverless", "node_python", "storage", "desktop", "mobile", "gadgets", "domains", "domains_public"]: bad.append("Infra pages are %s, not the three declared rows (Bare, Personal, Domains)" % pids("infra"))
 c3 = ui["carried_c3"]
 topo, infra = c3.get("stack_topology") or [], []
@@ -539,7 +556,7 @@ if any(p.get("kind") == "tile_row" and p.get("title") == "More" for p in topo + 
     bad.append("the More table is back on the Topology / Infra page (owner item 10: removed)")
 if "stack_infra" in c3: bad.append("stack_infra is back: the Infra section is five fleet pages now (data/fleet_slice.json), not the Stack card")
 if any(p.get("anchor") == "stack" for p in topo): bad.append("the Stack card is back on Containers > Topology (it is gone: Infra reads the fleet declarations)")
-if '"table" -> RoutesTableFragment()' not in tabs: bad.append("ContainersFragment resolves no RoutesTableFragment for the table page")
+if '"table" -> RoutesTableFragment.newInstance(parentId)' not in tabs: bad.append("ContainersFragment resolves no RoutesTableFragment for the table page")
 _rt = open(sys.argv[3].replace("TabFragments.kt", "RoutesTable.kt"), encoding="utf-8").read()
 _rm = open(sys.argv[3].replace("TabFragments.kt", "RoutesTableModel.kt"), encoding="utf-8").read()
 if "SearchBox(" not in _rt or "fun matches(" not in _rm or "state.query" not in _rm:
@@ -736,7 +753,7 @@ m_alias_dead()   { jqset "$1$A/build.json" 'd["ui"]["aliases"]["sections"]["apps
 m_alias_gone()   { jqset "$1$A/build.json" 'del d["ui"]["aliases"]["pages"]["public"]'; }
 m_more_back()    { jqset "$1$A/build.json" 'd["ui"]["carried_c3"]["stack_topology"].append(collections.OrderedDict([("kind","tile_row"),("title","More"),("tiles",[])]))'; }
 m_addr_back()    { jqset "$1$A/build.json" 'd["ui"]["carried_c3"]["stack_topology"].append(collections.OrderedDict([("kind","c3_public"),("title","Public")]))'; }
-m_table_dropped() { jqset "$1$A/build.json" 'sec("containers")["pages"]=[p for p in sec("containers")["pages"] if p["id"]!="table"]'; }
+m_table_dropped() { jqset "$1$A/build.json" 'for p in sec("containers")["pages"]: p["pages"]=[q for q in p["pages"] if not q["id"].endswith("_table")]'; }
 m_route_field()  { jqset "$1$A/data/routes.json" 'del d[0]["vm_addr"]'; }
 m_route_authless() { jqset "$1$A/data/routes.json" 'd[0]["auth_type"]="anything"'; }
 m_decl_gone()    { jqset "$1$A/data/declarations.json" 'd.pop(next(iter(d)))'; }

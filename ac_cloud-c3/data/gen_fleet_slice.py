@@ -65,6 +65,38 @@ def serverless(gcloud):
     return out
 
 
+def platforms(assets, gcloud, declared):
+    """The PLATFORMS page rows (owner request 2026-11-04): the managed platforms that run containers (Containers-as-Service)
+    and the hosting / runtime platforms (Containers-Node-Python). A platform the registry declares itself
+    (fleet-assets.json container_platforms[] / hosting[]) wins; the rest comes from c3's own declaration file
+    data/platforms.json. A platform that names `registry: cloud_run_services` takes its project, regions and service
+    count FROM the registry (terraform.json), never from a typed number."""
+    labels = {p["id"]: p["label"] for p in assets["providers"]}
+    run = (gcloud or {}).get("cloud_run_services") or []
+
+    def merged(key):
+        seen, out = set(), []
+        for p in (assets.get(key) or []) + (declared.get(key) or []):
+            if p["id"] not in seen:
+                seen.add(p["id"])
+                out.append(p)
+        return out
+
+    containers = []
+    for p in merged("container_platforms"):
+        row = {"id": p["id"], "label": p["label"], "provider": labels.get(p.get("provider"), p.get("provider")),
+               "role": p.get("role"), "links": p.get("links") or [], "project": None, "regions": [], "services": None, "live": None}
+        if p.get("registry") == "cloud_run_services":
+            row.update(project=((gcloud or {}).get("provider") or {}).get("project_id"),
+                       regions=sorted({s["region"] for s in run if s.get("region")}), services=len(run),
+                       live=len([s for s in run if str(s.get("state") or "").startswith("live")]))
+        containers.append(row)
+    hosting = [{"id": p["id"], "label": p["label"], "provider": labels.get(p.get("provider"), p.get("provider")), "plan": p.get("plan"),
+                "role": p.get("role"), "state": p.get("state"), "sites": p.get("sites") or [], "links": p.get("links") or []}
+               for p in merged("hosting_platforms") + (assets.get("hosting") or [])]
+    return containers, hosting
+
+
 def build(cons, zone, assets, users, gcloud=None):
     vms, vpss = cons["vms"], cons["vpss"]
     provider_of_vpss = {p["vpss"]: p["id"] for p in assets["providers"] if p.get("vpss")}
@@ -153,11 +185,12 @@ def build(cons, zone, assets, users, gcloud=None):
                             records=zone_records(d["name"], zone, sts),
                             mta_sts={k: sts.get(k) for k in ("domain", "mode", "max_age", "mx")}))
 
+    plats = platforms(assets, gcloud, json.load(open(os.path.join(HERE, "platforms.json"), encoding="utf-8")))
     return {
         "_meta": {"generated_by": "data/gen_fleet_slice.py", "sources": PATHS,
                   "note": "READ from the fleet declarations; never edit - run the generator. No key, token or instance id is carried."},
         "providers": with_self_hosted(providers, out_vms), "vms": out_vms, "serverless": serverless(gcloud or {}),
-        "hosting": assets.get("hosting") or [], "public_domains": assets.get("public_domains") or [],
+        "container_platforms": plats[0], "hosting": plats[1], "public_domains": assets.get("public_domains") or [],
         "storage": {"buckets": buckets, "backends": assets["storage_backends"]},
         "electronics": electronics, "domains": domains,
     }

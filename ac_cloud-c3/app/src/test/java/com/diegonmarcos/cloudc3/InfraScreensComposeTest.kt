@@ -96,14 +96,28 @@ class InfraScreensComposeTest {
     }
 
     @Test
-    fun `serverless cont - every declared Cloud Run service is a row with its state, spec and image`() {
-        assertTrue("the registry declares Cloud Run services", slice.serverless.isNotEmpty())
+    fun `containers-as-service - every declared platform is a row with its project, region and service count, and no container is listed`() {
+        assertTrue("the registry declares a container platform", slice.containerPlatforms.isNotEmpty())
         show(InfraSections.SERVERLESS)
-        slice.serverless.forEach { s ->
-            row(InfraSections.SERVERLESS, s.name).assertTextContains(FleetModel.runState(s), substring = true)
-            row(InfraSections.SERVERLESS, s.name).assertTextContains(FleetModel.runSpec(s), substring = true)
-            s.image?.let { row(InfraSections.SERVERLESS, s.name).assertTextContains(it, substring = true) }
+        slice.containerPlatforms.forEach { p ->
+            val r = row(InfraSections.SERVERLESS, p.id)
+            r.assertTextContains(p.label, substring = true)
+            p.project?.let { r.assertTextContains("Project: $it", substring = true) }
+            p.regions.forEach { r.assertTextContains(it, substring = true) }
+            p.services?.let { r.assertTextContains("$it services", substring = true) }
         }
+        slice.serverless.forEach { s -> compose.onAllNodesWithText(s.name, substring = true).assertCountEquals(0) }
+    }
+
+    @Test
+    fun `public domains - the private email identities appear with the declared domains (fake addresses)`() {
+        val identities = com.diegonmarcos.cloudc3.pages.PrivateIdentitiesState().apply {
+            items = listOf(com.diegonmarcos.cloudc3.pages.PrivateData.Identity("someone@example.test", "Test mailbox", "example"))
+            note = "1 from the side-loaded copy"
+        }
+        compose.setContent { CloudKitTheme(palette) { InfraSectionScreen(InfraSections.DOMAINS_PUBLIC, slice, FleetLiveState(), today, identities) } }
+        row(InfraSections.DOMAINS_PUBLIC, "id:someone@example.test").assertTextContains("someone@example.test", substring = true)
+        compose.onNodeWithTag(InfraTags.IDENTITIES_NOTE).assertTextContains("side-loaded", substring = true)
     }
 
     @Test
