@@ -1,4 +1,4 @@
-{"version":1,"default_backend":"cloud","backends":{"cloud":{"label":"Apify Cloud","api":"https://api.apify.com/v2","token_key":"apify.token"}},
+{"version":1,"apify":{"default_backend":"cloud","backends":[{"id":"cloud","label":"Apify Cloud","api":"https://api.apify.com/v2"}]},
  "areas":[{"id":"music","tab":"music","label":"Music"}],
  "sources":[
   {"id":"ok","area":"music","kind":"playlist","method":"apify","methods":["apify"],"actor":"a/b"},

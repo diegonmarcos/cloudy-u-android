@@ -18,10 +18,14 @@
     try { d = typeof raw === 'string' ? JSON.parse(raw) : raw; } catch (e) { return { error: 'not JSON', sources: [], areas: [], backends: {}, errors: ['not JSON'] }; }
     if (!d || typeof d !== 'object') return { error: 'not an object', sources: [], areas: [], backends: {}, errors: ['not an object'] };
     var areas = (d.areas || []).filter(function (a) { return a && a.id && a.tab; });
-    var backends = {}; Object.keys(d.backends || {}).forEach(function (k) { var b = d.backends[k]; if (b && /^https:\/\//.test(b.api || '') && b.token_key) backends[k] = b; });
+    var ab = d.apify || {}, backends = {};
+    (ab.backends || []).forEach(function (b) {
+      if (!b || !b.id || !(/^https:\/\//.test(b.api || '') || /^https:\/\//.test(b.default_url || ''))) return;
+      var o = {}; Object.keys(b).forEach(function (k) { o[k] = b[k]; }); o.label = b.label || b.id; o.token_key = b.api ? 'apify.token' : 'apify.self.bearer'; backends[b.id] = o;
+    });
     if (!backends.cloud) errors.push('backends: Apify Cloud missing');
-    var def = backends[d.default_backend] ? d.default_backend : 'cloud';
-    if (d.default_backend && d.default_backend !== 'cloud') errors.push('default_backend must be cloud (Crawlee is opt-in)');
+    var def = backends[ab.default_backend] ? ab.default_backend : 'cloud';
+    if (ab.default_backend && ab.default_backend !== 'cloud') errors.push('default_backend must be cloud (Crawlee is opt-in)');
     var seen = {}, sources = [];
     (d.sources || []).forEach(function (s, i) {
       var w = 'sources[' + i + '] ' + (s && s.id);
@@ -55,6 +59,12 @@
   function backendOf(decl, id) { return decl.backends[id] || decl.backends[decl.default_backend] || decl.backends.cloud; }
   function validToken(t) { t = String(t || '').trim(); return t.length >= 8 && !/\s/.test(t) ? t : ''; }
   function masked(t) { return !t ? '' : t.length <= 8 ? '••••' : t.slice(0, 4) + '••••' + t.slice(-2); }
+  /* the API base ending in /v2; the self-hosted one takes the owner's URL (apify.self.url) or its declared default */
+  function apiBase(backend, selfUrl) {
+    if (backend.api) return backend.api;
+    var u = String(selfUrl && /^https:\/\//.test(selfUrl.trim()) ? selfUrl : backend.default_url || '').trim().replace(/\/+$/, '');
+    return /\/v2$/.test(u) ? u : u + '/v2';
+  }
   function actorUrl(backend, actor, path) { return backend.api + '/acts/' + String(actor).replace('/', '~') + '/' + path; }
 
   /* ── encrypted secrets ───────────────────────────────────────────────── */
@@ -325,8 +335,8 @@
   function loadSync() { var s = readJson(SYNC_KEY, {}); return { schedule: ['off', 'daily', 'weekly'].indexOf(s.schedule) >= 0 ? s.schedule : 'off', last: Number(s.last) || 0 }; }
   function saveSync(s) { writeJson(SYNC_KEY, s); }
   function makeDeps(decl, secrets) {
-    var s = storage(), choice = s && s.getItem('cmc_apify_backend');
-    var backend = backendOf(decl, choice);
+    var s = storage(), choice = s && s.getItem('cmc_apify.backend');
+    var backend = Object.assign({}, backendOf(decl, choice)); backend.api = apiBase(backend, s && s.getItem('cmc_apify.self.url'));
     return { fetch: function (u, o) { return root.fetch(u, o); }, secret: function (n) { return secrets.get(n); }, backend: backend, apifyToken: function () { return secrets.get(backend.token_key); } };
   }
   function syncNow(decl, secrets, music) {
@@ -363,7 +373,7 @@
   }
   function boot() { var doc = root.document; if (doc && doc.body.getAttribute('data-page') === 'library') bootLibrary(doc); }
 
-  var api = { parseSources: parseSources, effective: effective, runnable: runnable, backendOf: backendOf, validToken: validToken, masked: masked, actorUrl: actorUrl, SecretStore: SecretStore, Match: Match, matchPlaylist: matchPlaylist,
+  var api = { parseSources: parseSources, effective: effective, runnable: runnable, backendOf: backendOf, apiBase: apiBase, validToken: validToken, masked: masked, actorUrl: actorUrl, SecretStore: SecretStore, Match: Match, matchPlaylist: matchPlaylist,
     localTracks: localTracks, mapSpotifyPlaylists: mapSpotifyPlaylists, mapSpotifyTracks: mapSpotifyTracks, mapYouTubePlaylists: mapYouTubePlaylists, mapYouTubeItems: mapYouTubeItems, mapDeezerPlaylists: mapDeezerPlaylists,
     mapDeezerTracks: mapDeezerTracks, mapPinterest: mapPinterest, mapApifyTracks: mapApifyTracks, mapApify: mapApify, fillInput: fillInput, syncAll: syncAll, dueForSync: dueForSync, renderLibrary: renderLibrary,
     loadSourceCfg: loadSourceCfg, saveSourceCfg: saveSourceCfg, loadSync: loadSync, saveSync: saveSync, loadLibrary: loadLibrary, boot: boot, METHODS: METHODS };

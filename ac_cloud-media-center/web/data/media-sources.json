@@ -1,10 +1,13 @@
 {
-  "_doc": "#1469 THE declaration of Media's playlist sources, read by assets/media-sync.js (parser, runner, mappers) and by Configs (the Music / Videos / Gallery tabs, Apify | Direct subsections). One row per service: `method` is the default, `methods` what it may be switched to in Configs. direct = the service's official API with the owner's own token (Spotify Web API, YouTube Data API, Deezer public API); apify = an Apify actor named by `actor`, run through the chosen backend (Apify Cloud by default, self-hosted Cloudy Crawlee opt-in), with `input` as its run input where {ref} is the profile, playlist or board URL the owner enters. Actor ids are defaults the owner can change. Metadata only: titles, artists, ISRC, covers and links; nothing here fetches audio or video, and no DRM is touched.",
+  "_doc": "#1469 THE declaration of Media's playlist sources, read by assets/media-sync.js (parser, runner, mappers) and by Configs (the Music / Videos / Gallery tabs, Apify | Direct subsections). One row per service: `method` is the default, `methods` what it may be switched to in Configs. direct = the service's official API with the owner's own token (Spotify Web API, YouTube Data API, Deezer public API); apify = an Apify actor named by `actor`, run through the chosen backend (Apify Cloud by default, self-hosted Cloudy Crawlee opt-in; the `apify` block below is the shared libs/apify declaration), with `input` as its run input where {ref} is the profile, playlist or board URL the owner enters. Actor ids are defaults the owner can change. Metadata only: titles, artists, ISRC, covers and links; nothing here fetches audio or video, and no DRM is touched.",
   "version": 1,
-  "default_backend": "cloud",
-  "backends": {
-    "cloud": { "label": "Apify Cloud", "api": "https://api.apify.com/v2", "token_key": "apify.token" },
-    "crawlee": { "label": "Self-hosted Cloudy Crawlee", "api": "https://crawlee-cloud.mesh.diegonmarcos.com/v2", "token_key": "crawlee.token" }
+  "apify": {
+    "_doc": "Same shape as the shared libs/apify declaration (#1470, ApifyBackends.parse): Apify Cloud is the default, self-hosted Cloudy Crawlee is opt-in; both speak the Apify API (acts/<user~name>/run-sync-get-dataset-items, bearer). Store keys as the shared store: apify.backend, apify.token (cloud), apify.self.bearer and apify.self.url (self-hosted).",
+    "default_backend": "cloud",
+    "backends": [
+      { "id": "cloud", "label": "Apify Cloud", "api": "https://api.apify.com/v2" },
+      { "id": "selfhosted", "label": "Self-hosted Cloudy Crawlee", "default_url": "https://crawlee-cloud.mesh.diegonmarcos.com" }
+    ]
   },
   "areas": [
     { "id": "music", "tab": "music", "label": "Music", "icon": "♪" },
@@ -37,7 +40,7 @@
     "about": [
       "Cloud Media Center keeps the owner's music, video and image playlists in one library.",
       "Sync reads metadata only (titles, artists, ISRC, covers, links). No audio or video is downloaded and no DRM is touched.",
-      "Direct sources use the official APIs with your own token; Apify sources run an actor on the backend chosen in the Apify tab (Apify Cloud by default, self-hosted Cloudy Crawlee opt-in).",
+      "Direct sources use the official APIs with your own token; Apify sources run an actor on the backend chosen in the Apify tab (Apify Cloud by default, self-hosted Cloudy Crawlee opt-in; the `apify` block below is the shared libs/apify declaration).",
       "Music is matched against the collection by ISRC, then by title, artist and length, as in Cloud Browser."
     ]
   }
