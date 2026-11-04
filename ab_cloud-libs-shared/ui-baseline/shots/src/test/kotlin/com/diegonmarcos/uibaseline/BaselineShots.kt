@@ -136,7 +136,7 @@ abstract class BaselineShots(private val device: String) {
 
     @Test fun fleetCalc() = fleet("ac_cloud-calc", "Cloud Calc", "calculator", "calc")
     @Test fun fleetTasks() = fleet("ac_cloud-tasks", "Cloud Tasks", "tasks", "calendar")
-    @Test fun fleetC3() = fleet("ac_cloud-c3", "Cloud C3", "containers", "table")
+    @Test fun fleetC3() = fleet("ac_cloud-c3", "Cloud C3", "containers", "all_table")
 
     /** A fleet app's chrome as its shell draws it: NavBarTopFirstRow, NavBarTopSecondRow, the page, NavBarBottom. */
     private fun fleet(dir: String, app: String, sectionId: String, pageId: String) {
