@@ -80,6 +80,7 @@ internal fun RepoStatusWindow(
     val unknown = stringResource(R.string.repo_unknown)
     // #1408 the window's layout is libs:git-ui's; Drive resolves its status model, strings and clone/check actions into it.
     GitStatusWindow(
+        insets = Modifier.statusBarsPadding().navigationBarsPadding(),
         name = name, headerDot = { StatusDot(RepoStatus.light(kind), name) }, stateText = stringResource(R.string.repo_status_window_state, kindText(kind)),
         sections = threeSections(icons, name), debugLine = RepoStatus.debugLine(repo?.path.orEmpty(), glance),
         facts = statusFacts(block), fmt = fmt, depthOutcome = depthOutcome,

@@ -6,9 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
@@ -42,11 +40,12 @@ fun GitStatusWindow(
     name: String, headerDot: @Composable () -> Unit, stateText: String, sections: List<GitStatusSection>, debugLine: String,
     facts: GitStatusFacts, fmt: DateFormat, depthOutcome: String?, meta: List<Pair<String, String>>,
     cloneAction: GitCloneAction, cloneLabel: String, onClone: () -> Unit, showCheckWorktree: Boolean, onCheckWorktree: () -> Unit, onClose: () -> Unit,
+    insets: Modifier = Modifier,   // the host applies the system-bar insets (the shell owns the top row; shared libs never name insets)
 ) {
     val k = LocalGitUiKit.current
     Dialog(onDismissRequest = onClose, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
         Surface(Modifier.fillMaxSize().testTag(k.tagStatusWindow), color = MaterialTheme.colorScheme.background) {
-            Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(horizontal = k.sectionInset)) {
+            Column(Modifier.fillMaxSize().then(insets).padding(horizontal = k.sectionInset)) {
                 Row(Modifier.fillMaxWidth().padding(vertical = k.pad), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(k.pad)) {
                     headerDot()
                     Column(Modifier.weight(1f)) {
