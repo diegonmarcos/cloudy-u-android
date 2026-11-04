@@ -131,6 +131,22 @@ class EmCalcTest {
         assertNotEquals(m["Net EUR per month if BRL -10% in 12M"], m["Net EUR per month if BRL +10% in 12M"])
     }
 
+    @Test fun frankfurterDownFallsBackToTheEcbRatesOnDbnomics() {
+        val base = fake()
+        val http = Fake { u ->
+            when {
+                u.contains("frankfurter") -> null
+                u.contains("EXR") -> """{"series":{"docs":[
+                    {"series_code":"D.BRL.EUR.SP00.A","period":["2026-10-29","2026-10-30"],"value":[6.1,6.1728]},
+                    {"series_code":"D.USD.EUR.SP00.A","period":["2026-10-29","2026-10-30"],"value":[1.12,1.1246]}]}}"""
+                else -> base.get(u)
+            }
+        }
+        val d = load("pm_d1_em_bonds", "calc", http)
+        assertEquals("6.17", d.rows[5][1]); assertEquals("5.49", d.rows[5][0])
+        assertTrue(d.note.contains("Frankfurter unavailable") && d.servedBy == "DBnomics")
+    }
+
     @Test fun noFeedsIsAnErrorStateNamingTheReason() {
         try { load("pm_d1_em_bonds", "calc", Fake { null }); throw AssertionError("expected an error") } catch (e: IOException) { assertTrue(e.message!!.contains("no Brazil 10Y yield")) }
     }

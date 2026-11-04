@@ -146,12 +146,26 @@ object EmCalc {
                 used += s.name
             }.onFailure { fails += "${s.name}: ${it.message}" }
         }
+        // Frankfurter unreachable (a 5xx from some networks): the ECB reference rates on DBnomics, key-free (BRL and USD per EUR -> BRL and EUR per USD)
+        val e = f.optJSONObject("ecb_fx")
+        if (e != null && (fxm["BRL"].isNullOrEmpty() || fxm["EUR"].isNullOrEmpty())) src("oecd_source")?.let { s ->
+            runCatching {
+                val pre = Catalog.str(e, "prefix"); val bc = Catalog.str(e, "brl"); val uc = Catalog.str(e, "usd")
+                val by = Providers.dbnomics(http.get(Requests.url(s.endpoint, Catalog.str(e, "path"), listOf("series_ids" to "$pre$bc,$pre$uc", "observations" to "1", "metadata" to "0")))).associate { it.code to it.periods.zip(it.values) }
+                val u = by[uc].orEmpty().mapNotNull { (p, v) -> v?.let { p to it } }.toMap()
+                val from = today.minusDays(30).toString()
+                val bl = by[bc].orEmpty().mapNotNull { (p, v) -> if (v != null && p >= from && u.containsKey(p)) Triple(p, v, u.getValue(p)) else null }
+                fxm["BRL"] = bl.map { (p, b, d) -> p to b / d }.toMutableList()
+                fxm["EUR"] = bl.map { (p, _, d) -> p to 1 / d }.toMutableList()
+                used += s.name; fails += "Frankfurter unavailable: BRL and EUR from the ECB reference rates on DBnomics"
+            }.onFailure { fails += "${s.name} ECB: ${it.message}" }
+        }
         val yh = pick(y[hi].orEmpty(), i.ma, 7); val yf = pick(y[fu].orEmpty(), i.ma, 7)
         val brl = pick(fxm["BRL"].orEmpty(), i.ma, 7); val eur = pick(fxm["EUR"].orEmpty(), i.ma, 7)
         val missing = listOfNotNull(if (yh == null) "no Brazil 10Y yield" else null, if (cpi == null) "no Germany CPI a year apart" else null, if (brl == null || eur == null) "no BRL / EUR rate" else null)
         if (missing.isNotEmpty()) throw IOException((missing + fails).joinToString(" · "))
         val basis = "Yield ${yh!!.second}, CPI ${cpi!!.second}, FX ${brl!!.second}"
-        return Triple(Live(yh.first / 100, yf?.first?.div(100), cpi!!.first / 100, brl.first, brl.first / eur!!.first, basis, fails), used.joinToString(" + "), (fxm["BRL"].orEmpty().maxOfOrNull { it.first } ?: ""))
+        return Triple(Live(yh.first / 100, yf?.first?.div(100), cpi!!.first / 100, brl.first, brl.first / eur!!.first, basis, fails), used.distinct().joinToString(" + "), (fxm["BRL"].orEmpty().maxOfOrNull { it.first } ?: ""))
     }
 
     fun panel(panel: Panel, f: JSONObject, http: Http, today: LocalDate, c: ModelCtx): PanelData {
