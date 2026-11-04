@@ -98,33 +98,40 @@ class EmCalcTest {
         assertEquals(200, (1 + 9) * 20)
     }
 
-    @Test fun everyPmPortfolioHasARiskTierByEquityShare() {
+    @Test fun everyPmPortfolioHasAMarketAndATierOnTheTwoBandScale() {
         val tabs = RiskTabs.parse(DataFiles.dashboardsJson)
-        assertEquals(listOf("all", "A", "B", "C", "D"), tabs.map { it.id })
-        assertEquals(listOf("All", "A Low", "B Middle", "C Risky", "D High"), tabs.map { it.label })
-        assertEquals(listOf("A Low risk", "B Middle risk", "C Risky", "D High risk"), tabs.drop(1).map { it.header })
+        assertEquals(listOf("all", "dm_low", "dm_mid", "em_mid", "em_high"), tabs.map { it.id })
+        assertEquals(listOf("All", "DM · Low", "DM · Mid", "EM · Mid-High", "EM · High"), tabs.map { it.label })
+        assertEquals(listOf("DM · Low risk", "DM · Middle risk", "EM · Middle-High risk", "EM · High risk"), tabs.drop(1).map { it.header })
+        assertEquals(listOf("DM", "DM", "EM", "EM"), tabs.drop(1).map { it.market })
         val pm = dashboards.filter { it.tab == "pm" && it.id != "portfolio_risk" }
         assertEquals(14, pm.size)
         for (d in pm) {
+            assertTrue("${d.id} has no market", d.market == "DM" || d.market == "EM")
+            assertTrue("${d.id} has no equity share", d.equityPct in 0..100 && d.emPct in 0..100)
             assertTrue("${d.id} has no risk tier", d.risk in tabs.drop(1).map { it.id })
-            if (d.riskBasis.isEmpty()) assertEquals("${d.id} tier by equity share ${d.equityPct}", RiskTabs.tierOf(tabs, d.equityPct), d.risk)
-            else assertTrue("${d.id} declares why", d.riskBasis.isNotBlank())
+            assertEquals("${d.id} tier by market ${d.market} and equity share ${d.equityPct}", RiskTabs.tierOf(tabs, d.market, d.equityPct), d.risk)
+            assertEquals(d.id, d.market == "EM", d.emPct > 0) // a portfolio that holds any EM is in the EM band
         }
-        // more equity = higher risk: the tier never falls as the equity share rises
-        val ordered = pm.filter { it.equityPct >= 0 && it.riskBasis.isEmpty() }.sortedBy { it.equityPct }
-        assertEquals(ordered.map { it.risk }.sorted(), ordered.map { it.risk })
-        assertEquals("A", Dashboards.byId(dashboards, "mp_70_30")!!.risk); assertEquals("B", Dashboards.byId(dashboards, "mp_60_40")!!.risk)
-        assertEquals("C", Dashboards.byId(dashboards, "mp_40_60")!!.risk); assertEquals("D", Dashboards.byId(dashboards, "mp_30_70_DM_EM")!!.risk)
-        assertEquals("D", Dashboards.byId(dashboards, "pm_d1_em_bonds")!!.risk)
-        // the stacks' section titles are the declared headers, in order, each before its tier's portfolios
+        assertTrue(Dashboards.byId(dashboards, "pm_d0_carry")!!.riskBasis.isNotBlank())
+        // the ordering key: market (DM < EM), then equity share, then EM share; the pages follow it and never fall
+        val key = { d: Dashboard -> (if (d.market == "DM") 0 else 1) * 1000000 + d.equityPct * 1000 + d.emPct }
         val stack = org.json.JSONObject(DataFiles.buildJson).getJSONObject("ui").getJSONObject("stacks").getJSONArray("pm")
-        var tier = ""; val seen = ArrayList<String>()
+        var tier = ""; val seen = ArrayList<String>(); val keys = ArrayList<Int>(); val tierIdx = ArrayList<Int>()
         for (k in 0 until stack.length()) {
             val e = stack.getJSONObject(k)
             if (e.getString("kind") == "section_title") { seen += e.getString("title"); tier = tabs.first { it.header == e.getString("title") }.id }
-            else if (e.getString("dashboard") != "portfolio_risk") assertEquals(e.getString("dashboard"), tier, Dashboards.byId(dashboards, e.getString("dashboard"))!!.risk)
+            else if (e.getString("dashboard") != "portfolio_risk") {
+                val d = Dashboards.byId(dashboards, e.getString("dashboard"))!!
+                assertEquals(d.id, tier, d.risk); keys += key(d); tierIdx += tabs.indexOfFirst { it.id == d.risk }
+            }
         }
         assertEquals(tabs.drop(1).map { it.header }, seen)
+        assertEquals(keys.sorted(), keys); assertEquals(tierIdx.sorted(), tierIdx)
+        val t = { id: String -> Dashboards.byId(dashboards, id)!!.risk }
+        assertEquals(listOf("dm_low", "dm_low", "dm_mid", "dm_mid", "dm_mid"), listOf("pm_a1_cash", "mp_70_30", "mp_60_40", "mp_40_60", "mp_30_70").map(t))
+        assertEquals(listOf("em_mid", "em_mid", "em_mid", "em_high", "em_high"), listOf("pm_d1_em_bonds", "pm_b1_mid", "pm_c1_risky", "mp_30_70_DM_EM", "pm_d0_carry").map(t))
+        assertEquals("pm_d0_carry", pm.maxByOrNull { key(it) }!!.id) // the carry trade is the top
     }
 
     @Test fun allShowsOneHeaderPerTierAndATierTabItsOwnCardsAlone() {
@@ -132,12 +139,12 @@ class EmCalcTest {
         val cards = dashboards.filter { it.tab == "pm" }.map { it.id }
         val riskOf = { id: String -> Dashboards.byId(dashboards, id)!!.risk }
         val all = RiskTabs.groups(cards, { it }, riskOf, tabs, "all")
-        assertEquals(listOf("", "A Low risk", "B Middle risk", "C Risky", "D High risk"), all.map { it.first })
+        assertEquals(listOf("", "DM · Low risk", "DM · Middle risk", "EM · Middle-High risk", "EM · High risk"), all.map { it.first })
         assertEquals(cards.size, all.sumOf { it.second.size })
         assertEquals(listOf("portfolio_risk"), all[0].second)
-        val c = RiskTabs.groups(cards, { it }, riskOf, tabs, "C")
-        assertEquals(listOf(""), c.map { it.first }); assertEquals(setOf("mp_40_60", "mp_30_70", "pm_c1_risky"), c[0].second.toSet())
-        assertEquals(setOf("pm_a1_cash", "pm_a2_low", "mp_70_30"), RiskTabs.groups(cards, { it }, riskOf, tabs, "A")[0].second.toSet())
+        val c = RiskTabs.groups(cards, { it }, riskOf, tabs, "em_mid")
+        assertEquals(listOf(""), c.map { it.first }); assertEquals(setOf("pm_d1_em_bonds", "pm_b1_mid", "pm_c1_risky"), c[0].second.toSet())
+        assertEquals(setOf("pm_a1_cash", "pm_a2_low", "mp_70_30"), RiskTabs.groups(cards, { it }, riskOf, tabs, "dm_low")[0].second.toSet())
     }
 
     @Test fun theCalculatorPanelIsFirstOnTheD1DashboardSoItsMatrixIsOnTheFirstScreen() {

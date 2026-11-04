@@ -6,6 +6,8 @@ import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -183,7 +185,7 @@ private fun HomeGrid(sectionId: String, cards: List<HomeCard>, nav: FinNav, onOp
     ) {
         if (cards.any { it.entry.kind == Pages.KIND_DASHBOARD }) item(key = "search") { FinSearchField(onClick = { nav.search() }) }
         if (tiered) item(key = "risk-tabs") {
-            Row(Modifier.fillMaxWidth().testTag(RISK_TABS + sectionId), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).testTag(RISK_TABS + sectionId), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 tabs.forEach { t -> FinChip(t.label, t.id == tab, Modifier.height(32.dp).testTag(RISK_TAB + t.id)) { tab = t.id } }
             }
         }

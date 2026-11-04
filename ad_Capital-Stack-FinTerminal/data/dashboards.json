@@ -1,34 +1,38 @@
 {
   "_doc": "THE DASHBOARDS of Capital-Stack-FinTerminal (#1335): one per FinTerm entry (build.json::ui.stacks, kind dashboard, `dashboard` = the id here). A panel names its `source` (an id of data/sources.json whose `feeds` lists this entry) and EITHER a `fetch` (a live connector: the key-free sources) OR a `placeholder` ({reason, note}: drawn as one 48dp key row while the source needs a key / has no connector yet, 'Add your key in Config > Sources'; UI spec 2). UI declarations (UI spec 6.3): dashboard `default` (the tab opens on it) and `search` (a search field on top); panel `display` (kpi | rows | heat | watch), `tape` (its quotes feed the ticker tape), `spread` ({label, of: [a, b]}: a derived KPI tile in bp), `heat_scale`, `segment_of` / `segment_label` (drawn as a source chip of another panel's card), `refresh_s`, `col_types`, `limit`. Providers and derivations are named here and implemented in Kotlin (Providers.kt, Derive.kt); no address is typed anywhere but data/sources.json (endpoint) because a request is endpoint + path + params. Read by Dashboards.kt and by test/test-finterm-sources.sh.",
   "pm_risk_tabs": {
-    "_doc": "PM Homepage top tabs (All | A | B | C | D). Each PM portfolio declares `risk` (A..D) and `equity_pct` (equity share, %); a tier's `equity_max` is the highest equity share it takes, so more equity = higher risk. A portfolio with no equity share declares `risk_basis` instead. In All every tier is a section with its `header`.",
+    "_doc": "PM Homepage top tabs (All | DM Low | DM Mid | EM Mid-High | EM High) on a two-band scale (owner, #1462): Low -> Middle risk = developed markets only (100% DM), Middle -> High risk = portfolios that add emerging markets. The ordering key is first the market (DM < EM), then the equity share (fixed income -> equity), then the EM share. Each PM portfolio declares `market` (DM | EM), `equity_pct` (equity share, %), `em_pct` (EM share, %) and `risk` (a tier id); a tier takes the portfolios of its `market` whose equity share is at most its `equity_max` (first match in order). A portfolio with no legs (the carry trade) declares `risk_basis`. In All every tier is a section with its `header`.",
     "tabs": [
       {
         "id": "all",
         "label": "All"
       },
       {
-        "id": "A",
-        "label": "A Low",
-        "header": "A Low risk",
+        "id": "dm_low",
+        "label": "DM · Low",
+        "header": "DM · Low risk",
+        "market": "DM",
         "equity_max": 30
       },
       {
-        "id": "B",
-        "label": "B Middle",
-        "header": "B Middle risk",
-        "equity_max": 50
+        "id": "dm_mid",
+        "label": "DM · Mid",
+        "header": "DM · Middle risk",
+        "market": "DM",
+        "equity_max": 100
       },
       {
-        "id": "C",
-        "label": "C Risky",
-        "header": "C Risky",
+        "id": "em_mid",
+        "label": "EM · Mid-High",
+        "header": "EM · Middle-High risk",
+        "market": "EM",
         "equity_max": 80
       },
       {
-        "id": "D",
-        "label": "D High",
-        "header": "D High risk",
+        "id": "em_high",
+        "label": "EM · High",
+        "header": "EM · High risk",
+        "market": "EM",
         "equity_max": 100
       }
     ]
@@ -2888,8 +2892,10 @@
       "id": "pm_a1_cash",
       "entry": "A1 Cash (DM - Cash)",
       "tab": "pm",
-      "risk": "A",
+      "market": "DM",
       "equity_pct": 0,
+      "em_pct": 0,
+      "risk": "dm_low",
       "model_portfolio": {
         "legs": [
           [
@@ -2931,8 +2937,10 @@
       "id": "pm_a2_low",
       "entry": "A2 Low Risk",
       "tab": "pm",
-      "risk": "A",
+      "market": "DM",
       "equity_pct": 30,
+      "em_pct": 0,
+      "risk": "dm_low",
       "model_portfolio": {
         "legs": [
           [
@@ -2966,8 +2974,10 @@
       "id": "pm_b1_mid",
       "entry": "B1 Middle Risk",
       "tab": "pm",
-      "risk": "B",
+      "market": "EM",
       "equity_pct": 50,
+      "em_pct": 20,
+      "risk": "em_mid",
       "model_portfolio": {
         "legs": [
           [
@@ -3001,8 +3011,10 @@
       "id": "pm_c1_risky",
       "entry": "C1 Risky",
       "tab": "pm",
-      "risk": "C",
+      "market": "EM",
       "equity_pct": 80,
+      "em_pct": 40,
+      "risk": "em_mid",
       "model_portfolio": {
         "legs": [
           [
@@ -3036,9 +3048,10 @@
       "id": "pm_d1_em_bonds",
       "entry": "D1 EM Bonds",
       "tab": "pm",
-      "risk": "D",
+      "market": "EM",
       "equity_pct": 0,
-      "risk_basis": "declared: 100% EM bonds / EM carry trade, no equity share but the highest credit and FX risk (owner, #1447)",
+      "em_pct": 100,
+      "risk": "em_mid",
       "model_portfolio": {
         "legs": [
           [
@@ -3152,8 +3165,11 @@
       "id": "pm_d0_carry",
       "entry": "D0 EM Carry Trade",
       "tab": "pm",
-      "risk": "D",
-      "risk_basis": "declared: 100% EM bonds / EM carry trade, no equity share but the highest credit and FX risk (owner, #1447)",
+      "market": "EM",
+      "equity_pct": 100,
+      "em_pct": 100,
+      "risk": "em_high",
+      "risk_basis": "the top of the scale: the EM carry trade (EM funding-currency FX risk on top of EM bonds), no portfolio legs; equity_pct 100 places it last",
       "panels": [
         {
           "id": "carry",
@@ -3204,8 +3220,10 @@
       "id": "mp_40_60",
       "entry": "40/60",
       "tab": "pm",
-      "risk": "C",
+      "market": "DM",
       "equity_pct": 60,
+      "em_pct": 0,
+      "risk": "dm_mid",
       "model_portfolio": {
         "legs": [
           [
@@ -3338,8 +3356,10 @@
       "id": "mp_70_30",
       "entry": "70/30",
       "tab": "pm",
-      "risk": "A",
+      "market": "DM",
       "equity_pct": 30,
+      "em_pct": 0,
+      "risk": "dm_low",
       "model_portfolio": {
         "legs": [
           [
@@ -3410,8 +3430,10 @@
       "id": "mp_60_40",
       "entry": "60/40",
       "tab": "pm",
-      "risk": "B",
+      "market": "DM",
       "equity_pct": 40,
+      "em_pct": 0,
+      "risk": "dm_mid",
       "model_portfolio": {
         "legs": [
           [
@@ -3482,8 +3504,10 @@
       "id": "mp_30_70",
       "entry": "30/70",
       "tab": "pm",
-      "risk": "C",
+      "market": "DM",
       "equity_pct": 70,
+      "em_pct": 0,
+      "risk": "dm_mid",
       "model_portfolio": {
         "legs": [
           [
@@ -3554,8 +3578,10 @@
       "id": "mp_70_30_DM_EM",
       "entry": "70/30 DM/EM",
       "tab": "pm",
-      "risk": "D",
+      "market": "EM",
       "equity_pct": 100,
+      "em_pct": 30,
+      "risk": "em_high",
       "model_portfolio": {
         "legs": [
           [
@@ -3626,8 +3652,10 @@
       "id": "mp_60_40_DM_EM",
       "entry": "60/40 DM/EM",
       "tab": "pm",
-      "risk": "D",
+      "market": "EM",
       "equity_pct": 100,
+      "em_pct": 40,
+      "risk": "em_high",
       "model_portfolio": {
         "legs": [
           [
@@ -3698,8 +3726,10 @@
       "id": "mp_40_60_DM_EM",
       "entry": "40/60 DM/EM",
       "tab": "pm",
-      "risk": "D",
+      "market": "EM",
       "equity_pct": 100,
+      "em_pct": 60,
+      "risk": "em_high",
       "model_portfolio": {
         "legs": [
           [
@@ -3770,8 +3800,10 @@
       "id": "mp_30_70_DM_EM",
       "entry": "30/70 DM/EM",
       "tab": "pm",
-      "risk": "D",
+      "market": "EM",
       "equity_pct": 100,
+      "em_pct": 70,
+      "risk": "em_high",
       "model_portfolio": {
         "legs": [
           [

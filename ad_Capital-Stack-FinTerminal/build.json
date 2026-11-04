@@ -264,16 +264,16 @@
           {"id": "pm-a2-low", "label": "A2 Low Risk", "icon": "pie_chart"},
           {"id": "mp-70-30", "label": "70/30", "icon": "pie_chart"},
           {"id": "mp-60-40", "label": "60/40", "icon": "pie_chart", "separator_before": true},
-          {"id": "pm-b1-mid", "label": "B1 Middle Risk", "icon": "pie_chart"},
-          {"id": "mp-40-60", "label": "40/60", "icon": "pie_chart", "separator_before": true},
+          {"id": "mp-40-60", "label": "40/60", "icon": "pie_chart"},
           {"id": "mp-30-70", "label": "30/70", "icon": "pie_chart"},
-          {"id": "pm-c1-risky", "label": "C1 Risky", "icon": "pie_chart"},
           {"id": "pm-d1-em-bonds", "label": "D1 EM Bonds", "icon": "calculate", "separator_before": true},
-          {"id": "pm-d0-carry", "label": "D0 EM Carry Trade", "icon": "trending_up"},
-          {"id": "mp-70-30-dm-em", "label": "70/30 DM/EM", "icon": "pie_chart"},
+          {"id": "pm-b1-mid", "label": "B1 Middle Risk", "icon": "pie_chart"},
+          {"id": "pm-c1-risky", "label": "C1 Risky", "icon": "pie_chart"},
+          {"id": "mp-70-30-dm-em", "label": "70/30 DM/EM", "icon": "pie_chart", "separator_before": true},
           {"id": "mp-60-40-dm-em", "label": "60/40 DM/EM", "icon": "pie_chart"},
           {"id": "mp-40-60-dm-em", "label": "40/60 DM/EM", "icon": "pie_chart"},
-          {"id": "mp-30-70-dm-em", "label": "30/70 DM/EM", "icon": "pie_chart"}
+          {"id": "mp-30-70-dm-em", "label": "30/70 DM/EM", "icon": "pie_chart"},
+          {"id": "pm-d0-carry", "label": "D0 EM Carry Trade", "icon": "trending_up"}
         ]
       },
       {
@@ -449,7 +449,7 @@
         },
         {
           "kind": "section_title",
-          "title": "A Low risk"
+          "title": "DM · Low risk"
         },
         {
           "kind": "dashboard",
@@ -471,23 +471,13 @@
         },
         {
           "kind": "section_title",
-          "title": "B Middle risk"
+          "title": "DM · Middle risk"
         },
         {
           "kind": "dashboard",
           "title": "60/40",
           "subtitle": "60% bonds, 40% equity",
           "dashboard": "mp_60_40"
-        },
-        {
-          "kind": "dashboard",
-          "title": "B1 Middle Risk",
-          "subtitle": "Placeholder tier: DM equity 40 / bonds 40, EM equity 10 / bonds 10",
-          "dashboard": "pm_b1_mid"
-        },
-        {
-          "kind": "section_title",
-          "title": "C Risky"
         },
         {
           "kind": "dashboard",
@@ -502,14 +492,8 @@
           "dashboard": "mp_30_70"
         },
         {
-          "kind": "dashboard",
-          "title": "C1 Risky",
-          "subtitle": "Placeholder tier: DM equity 50 / bonds 10, EM equity 30 / bonds 10",
-          "dashboard": "pm_c1_risky"
-        },
-        {
           "kind": "section_title",
-          "title": "D High risk"
+          "title": "EM · Middle-High risk"
         },
         {
           "kind": "dashboard",
@@ -519,9 +503,19 @@
         },
         {
           "kind": "dashboard",
-          "title": "D0 EM Carry Trade",
-          "subtitle": "EM carry trade: funding currency against the EM high-yielder, breakeven and net return",
-          "dashboard": "pm_d0_carry"
+          "title": "B1 Middle Risk",
+          "subtitle": "Placeholder tier: DM equity 40 / bonds 40, EM equity 10 / bonds 10",
+          "dashboard": "pm_b1_mid"
+        },
+        {
+          "kind": "dashboard",
+          "title": "C1 Risky",
+          "subtitle": "Placeholder tier: DM equity 50 / bonds 10, EM equity 30 / bonds 10",
+          "dashboard": "pm_c1_risky"
+        },
+        {
+          "kind": "section_title",
+          "title": "EM · High risk"
         },
         {
           "kind": "dashboard",
@@ -546,6 +540,12 @@
           "title": "30/70 DM/EM",
           "subtitle": "30% Developed Markets, 70% Emerging Markets",
           "dashboard": "mp_30_70_DM_EM"
+        },
+        {
+          "kind": "dashboard",
+          "title": "D0 EM Carry Trade",
+          "subtitle": "EM carry trade: funding currency against the EM high-yielder, breakeven and net return",
+          "dashboard": "pm_d0_carry"
         }
       ],
       "my-pm": [

@@ -30,8 +30,8 @@ data class Dashboard(
     val isDefault: Boolean = false,
     /** A 48dp search field at the top of the dashboard (`"search": true`: Market Monitor, Quotes, Watchlist; UI spec 4.2). */
     val search: Boolean = false,
-    /** #1462 a PM portfolio's risk tier (`risk`: A..D, "" = none), its equity share in % (`equity_pct`, -1 = none) and why it is that tier when it has no equity share. */
-    val risk: String = "", val equityPct: Int = -1, val riskBasis: String = "",
+    /** #1462 a PM portfolio's risk tier (`risk`, "" = none), its market (`market`: DM | EM), equity share and EM share in % (`equity_pct`, `em_pct`, -1 = none) and why it is that tier when it has no legs. */
+    val risk: String = "", val market: String = "", val equityPct: Int = -1, val emPct: Int = -1, val riskBasis: String = "",
 )
 
 /** What a dashboard shows right now, by its panels and their sources. */
@@ -63,7 +63,7 @@ object Dashboards {
                 id = Catalog.str(d, "id"), entry = Catalog.str(d, "entry"), tab = Catalog.str(d, "tab"), legs = legs,
                 panels = if (panels == null) emptyList() else (0 until panels.length()).mapNotNull { panels.optJSONObject(it) }.map { panel(it) },
                 isDefault = d.optBoolean("default", false), search = d.optBoolean("search", false),
-                risk = d.optString("risk"), equityPct = d.optInt("equity_pct", -1), riskBasis = d.optString("risk_basis"),
+                risk = d.optString("risk"), market = d.optString("market"), equityPct = d.optInt("equity_pct", -1), emPct = d.optInt("em_pct", -1), riskBasis = d.optString("risk_basis"),
             )
         }
     }
