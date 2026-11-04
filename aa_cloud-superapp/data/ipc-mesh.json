@@ -1021,6 +1021,26 @@
   ],
   "shizuku-adb-debug-tools": [
    {
+    "id": "op:keeper/log",
+    "kind": "op",
+    "name": "keeper/log",
+    "method": "fleet.ipc.v1",
+    "permission": "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA",
+    "level": "signature",
+    "source": "libs:shizuku-adb-debug-tools/src/main/java/com/diegonmarcos/superapp/adbdebug/WdKeeper.kt",
+    "callers": []
+   },
+   {
+    "id": "op:keeper/status",
+    "kind": "op",
+    "name": "keeper/status",
+    "method": "fleet.ipc.v1",
+    "permission": "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA",
+    "level": "signature",
+    "source": "libs:shizuku-adb-debug-tools/src/main/java/com/diegonmarcos/superapp/adbdebug/WdKeeper.kt",
+    "callers": []
+   },
+   {
     "permission": "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA",
     "level": "signature",
     "source": "libs:shizuku-adb-debug-tools/src/main/AndroidManifest.xml",
