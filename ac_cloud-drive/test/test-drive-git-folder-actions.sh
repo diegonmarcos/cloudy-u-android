@@ -111,7 +111,7 @@ if not re.search(r"fun UnlistedPanel\([^{]*\{[^}]*FolderRepoTable\(", rd("GitDep
 ui = rd("RepoTableUi.kt")
 # #1356 the header iterates every column, split into the pinned (Status, Name) and the scrolling half
 hdr = ui[ui.index("fun RepoTableHeader("):]
-if not (re.search(r"RepoTable\.COLUMNS\.forEach", hdr[:2500]) or ("RepoTable.COLUMNS.filter { it in RepoTable.PINNED }.forEach" in hdr[:2500] and "RepoTable.COLUMNS.filter { it !in RepoTable.PINNED }.forEach" in hdr[:2500])): print("    the header does not iterate RepoTable.COLUMNS"); bad = 1
+if not (re.search(r"RepoTable\.COLUMNS\.forEach", hdr[:2500]) or ("RepoTable.COLUMNS.filter { it in RepoTable.PINNED }, RepoTable.COLUMNS.filter { it !in RepoTable.PINNED }" in hdr[:2500])): print("    the header does not iterate RepoTable.COLUMNS"); bad = 1
 for f in os.listdir(d):
     if f.endswith(".kt") and re.search(r"RepoColumn\.entries\.forEach", rd(f)): print("    a second header loop in", f); bad = 1
 if "val COLUMNS: List<RepoColumn> get() = RepoTable.COLUMNS" not in rd("RepoTable.kt"): print("    FolderTable.COLUMNS is not RepoTable.COLUMNS"); bad = 1
