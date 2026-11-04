@@ -42,6 +42,42 @@ adb shell am start -S -W -a android.intent.action.VIEW -d "finterm://dashboard/$
 sleep 20
 adb exec-out screencap -p > "$OUT/apk-deeplink.png"
 adb logcat -d | grep -c "OnBackInvokedCallback is not enabled" > "$OUT/predictive-back-warnings.txt" || true
+# node_xy <text> -> "x y" of the centre of the first uiautomator node whose text or content-desc equals <text> (empty when absent)
+node_xy() {
+  adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1 && adb pull /sdcard/ui.xml "$OUT/ui-last.xml" >/dev/null 2>&1 || return 0
+  python3 -I - "$OUT/ui-last.xml" "$1" <<'PY'
+import re, sys
+x = open(sys.argv[1], encoding="utf-8").read()
+for m in re.finditer(r'<node [^>]*>', x):
+    n = m.group(0)
+    t = re.search(r' text="([^"]*)"', n); c = re.search(r' content-desc="([^"]*)"', n)
+    if sys.argv[2] in ((t.group(1) if t else None), (c.group(1) if c else None)):
+        b = re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', n)
+        if b:
+            a = [int(v) for v in b.groups()]
+            print((a[0] + a[2]) // 2, (a[1] + a[3]) // 2); break
+PY
+}
+# #1370 watchlist: seed three symbols through the shell-only receiver, long-press a row (menu), move it down, shoot each step
+adb shell am broadcast -a com.diegonmarcos.capitalfinterm.SEED -n "$PKG/.ui.SeedReceiver" --es watchlist AAPL,MSFT,NVDA >/dev/null
+adb shell am start -S -W -n "$PKG/.MainActivity" --es dashboard watchlist >/dev/null
+sleep "${FT_WAIT:-30}"
+adb exec-out screencap -p > "$OUT/apk-watchlist-1.png"
+XY=$(node_xy AAPL); echo "watchlist AAPL xy=${XY:-none}" | tee -a "$OUT/nav-strip.txt"
+if [ -n "$XY" ]; then
+  set -- $XY
+  adb shell input swipe "$1" "$2" "$1" "$2" 1200
+  sleep 3
+  adb exec-out screencap -p > "$OUT/apk-watchlist-menu.png"
+  MV=$(node_xy "Move down"); echo "move down xy=${MV:-none}" | tee -a "$OUT/nav-strip.txt"
+  if [ -n "$MV" ]; then set -- $MV; adb shell input tap "$1" "$2"; sleep 3; adb exec-out screencap -p > "$OUT/apk-watchlist-moved.png"; fi
+fi
+# #1370 add-holding sheet: MY-PM > holdings page, tap Add
+adb shell am start -S -W -n "$PKG/.MainActivity" --es dashboard my-pm >/dev/null
+sleep 15
+PP=$(node_xy "Personal portfolio"); if [ -n "$PP" ]; then set -- $PP; adb shell input tap "$1" "$2"; sleep 4; fi
+AD=$(node_xy Add); echo "holdings Add xy=${AD:-none}" | tee -a "$OUT/nav-strip.txt"
+if [ -n "$AD" ]; then set -- $AD; adb shell input tap "$1" "$2"; sleep 3; adb exec-out screencap -p > "$OUT/apk-holdings-sheet.png"; fi
 for d in $DASHES; do
   adb shell am start -S -W -n "$PKG/.MainActivity" --es dashboard "$d" >/dev/null
   sleep "${FT_WAIT:-30}"
