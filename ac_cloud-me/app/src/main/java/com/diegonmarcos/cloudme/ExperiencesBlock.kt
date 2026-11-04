@@ -40,6 +40,7 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.diegonmarcos.superapp.uikit.KitButton
@@ -109,7 +110,8 @@ fun ExperiencesBlock(o: JSONObject) {
     KitCard(Modifier.testTag(ExpTags.SUMMARY)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text(o.optString("title"), color = p.textPrimary, fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
+                Text(o.optString("title"), color = p.textPrimary, fontSize = 17.sp, fontWeight = FontWeight.SemiBold,
+                    maxLines = 2, overflow = TextOverflow.Ellipsis)
                 Text("${doneItems.size} done · ${planItems.size} planned", color = p.textSecondary, fontSize = 13.sp,
                     modifier = Modifier.padding(top = 2.dp))
                 planItems.count { it.status == ExpStatus.IN_PROGRESS }.takeIf { it > 0 }?.let {

@@ -376,7 +376,7 @@ private fun MeCard(onClick: (() -> Unit)? = null, content: @Composable () -> Uni
 
 @Composable
 private fun Heading(text: String) = Text(
-    text, color = colorResource(R.color.me_text), fontSize = 17.sp, fontWeight = FontWeight.Bold,
+    unmark(text), color = colorResource(R.color.me_text), fontSize = 17.sp, fontWeight = FontWeight.Bold,
     modifier = Modifier.padding(top = 16.dp, bottom = 2.dp),
 )
 
@@ -392,10 +392,14 @@ private fun Dim(text: String) =
 private fun NoteCard(title: String, body: String) = MeCard {
     if (title.isNotBlank()) CardTitle(title)
     if (body.isNotBlank()) {
-        Text(body, color = colorResource(R.color.me_text_dim), fontSize = 13.sp, lineHeight = 19.sp,
+        Text(unmark(body), color = colorResource(R.color.me_text_dim), fontSize = 13.sp, lineHeight = 19.sp,
             modifier = Modifier.padding(top = 6.dp))
     }
 }
+
+/** Profile-derived text carries section markers on their own line ("@brief", "@projects:"): shown as a plain label ("Brief"). */
+private val MARKER = Regex("""(?m)^@(\w+):?[ \t]*$""")
+private fun unmark(text: String) = MARKER.replace(text) { it.groupValues[1].replaceFirstChar(Char::uppercase) }
 
 @Composable
 private fun KeyValueRow(label: String, value: String, modifier: Modifier = Modifier) {
