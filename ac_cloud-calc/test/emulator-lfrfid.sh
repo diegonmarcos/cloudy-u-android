@@ -30,7 +30,11 @@ done
 dump | grep -q "package=\"$PKG\"" || fail "Calc never came to the front"
 shot 00-start
 tap '^Measure$' || true; sleep 3
-tap '^LF-RFID-Tags$' || { adb shell input swipe 900 300 100 300 300; sleep 1; tap '^LF-RFID-Tags$'; } || fail "no LF-RFID-Tags tab: $(texts)"
+# the tab is the strip's last: swipe that row (found by a visible neighbour) left until it shows; the shot is scaled, the device is not
+lftab() { local i xy W; W=$(adb shell wm size | tr -d '\r' | tail -1 | sed 's/.*: //; s/x.*//')
+  for i in 1 2 3 4 5; do tap '^LF-RFID-Tags$' && return 0; xy=$(where '^(NFC|Bluetooth|WiFi|Camera|Phone|Sensors)$') || return 1; set -- $xy
+    adb shell input swipe $((W * 9 / 10)) "$2" $((W / 10)) "$2" 400; sleep 1; done; return 1; }
+lftab || fail "no LF-RFID-Tags tab: $(texts)"
 sleep 3; tap '^Read$' || true; sleep 2
 shot 01-read-no-reader
 grep -q 'No reader found' "$OUT/ui.xml" || fail "Read does not explain the hardware: $(texts)"
