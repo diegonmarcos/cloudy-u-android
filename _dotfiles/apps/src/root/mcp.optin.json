@@ -1,0 +1,103 @@
+{
+  "_warning": "GENERATED — DO NOT EDIT. Opt-in tier catalog (mcp-policy.json .tiers), same entry shape as mcp.project.json. A repo opts in by listing names in .claude/mcp-optin.json.",
+  "_schema": "mcp-servers/v1",
+  "mcpServers": {
+    "cloud-cgc-pub-mcp": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "${CLAUDE_PROJECT_DIR:-.}/.claude/mcp-connect.mjs",
+        "--mesh",
+        "https://c3-cloud-cgc-pub-mcp.app/mcp",
+        "--public",
+        "https://mcp.diegonmarcos.com/cloud-cgc-pub-mcp/mcp"
+      ]
+    },
+    "cloud-cgc-pvt-mcp": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "${CLAUDE_PROJECT_DIR:-.}/.claude/mcp-connect.mjs",
+        "--mesh",
+        "http://10.0.0.6:3107/mcp",
+        "--public",
+        "https://mcp.diegonmarcos.com/cloud-cgc-pvt-mcp/mcp"
+      ]
+    },
+    "cloud-drive-mcp": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "${CLAUDE_PROJECT_DIR:-.}/.claude/mcp-connect.mjs",
+        "--mesh",
+        "https://c3-cloud-drive-mcp.app/mcp",
+        "--public",
+        "https://mcp.diegonmarcos.com/cloud-drive-mcp/mcp"
+      ]
+    },
+    "cloud-mail-mcp": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "${CLAUDE_PROJECT_DIR:-.}/.claude/mcp-connect.mjs",
+        "--mesh",
+        "https://c3-cloud-mail-mcp.app/mcp",
+        "--public",
+        "https://mcp.diegonmarcos.com/mail-mcp/mcp"
+      ]
+    },
+    "cloud-mattermost-mcp": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "${CLAUDE_PROJECT_DIR:-.}/.claude/mcp-connect.mjs",
+        "--mesh",
+        "https://c3-cloud-mattermost-mcp.app/mcp",
+        "--public",
+        "https://mcp.diegonmarcos.com/mattermost-mcp/mcp"
+      ]
+    },
+    "cloud-services-mcp": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "${CLAUDE_PROJECT_DIR:-.}/.claude/mcp-connect.mjs",
+        "--mesh",
+        "https://c3-cloud-services-mcp.app/mcp",
+        "--public",
+        "https://mcp.diegonmarcos.com/c3-services-mcp/mcp"
+      ]
+    },
+    "cloud-vault-mcp": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "${CLAUDE_PROJECT_DIR:-.}/.claude/mcp-connect.mjs",
+        "--mesh",
+        "http://10.0.0.6:3111/mcp"
+      ]
+    },
+    "google-personal-mcp": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "${CLAUDE_PROJECT_DIR:-.}/.claude/mcp-connect.mjs",
+        "--mesh",
+        "https://c3-google-personal-mcp.app/mcp",
+        "--public",
+        "https://mcp.diegonmarcos.com/g-personal/mcp"
+      ]
+    },
+    "google-workspace-mcp": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "${CLAUDE_PROJECT_DIR:-.}/.claude/mcp-connect.mjs",
+        "--mesh",
+        "https://c3-google-workspace-mcp.app/mcp",
+        "--public",
+        "https://mcp.diegonmarcos.com/g-workspace/mcp"
+      ]
+    }
+  }
+}
