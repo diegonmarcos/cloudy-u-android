@@ -24,8 +24,11 @@ class GitTopBarStateTest {
 
     @Test fun `the bar is declared with groups, known kinds, the audit verbs and depth actions that exist`() {
         assertEquals(listOf("check", "sync", "clone", "logs", "more"), bar.groups.map { it.id })
-        // #1356 Check | Sync | Clone | Logs are one-item buttons; More holds the rest.
-        assertEquals(listOf("check_full", "clone_missing", "logs"), listOf(0, 2, 3).map { bar.groups[it].items.single().id })
+        // #1356 Logs is a one-item button; More holds the rest. #1452 Check and Clone are dropdowns like Sync.
+        assertEquals("logs", bar.groups[3].items.single().id)
+        assertEquals(listOf("check_lite", "check_full"), bar.groups[0].items.map { it.id })
+        assertEquals(listOf("check_light", "check_full"), bar.groups[0].items.map { it.kind })
+        assertEquals(listOf("clone_missing", "clone_bare_nohist"), bar.groups[2].items.map { it.id })
         // #1356 Sync is a dropdown: Sync All then Manual Sync
         assertEquals(listOf("Sync All", "Sync All", "Sync All", "Manual Sync", "Manual Sync", "Manual Sync", "Manual Sync", "Manual Sync"), bar.groups[1].items.map { it.section })
         assertEquals(listOf("sync_remote_wins", "sync_local_wins", "sync_no_winner", "stash", "pull_rebase", "stash_pop", "auto_commit", ""), bar.groups[1].items.map { it.op })

@@ -168,7 +168,7 @@ for i in 1 2 3; do pick 'External Drive'; dump >/dev/null; grep -q 'content-desc
 grep -q 'content-desc="External Drive"' "$OUT/ui.xml" || fail "External Drive was not selected: $(texts)"
 shot 45-drive-listed
 dump >/dev/null; texts > "$OUT/drive-texts.txt"
-tap '^Check$' && sleep 8 && shot 46-drive-checked || note "Check not tappable: $(texts)"
+tap '^Check$' && sleep 1 && tap '^Check full$' && sleep 8 && shot 46-drive-checked || note "Check not tappable: $(texts)"
 tap '^Sync$' && sleep 1 && tap '^No Winner$' && sleep 2 && tap '^No Winner$' && sleep 15 && shot 47-drive-synced || note "No Winner on the drive: $(texts)"
 tap '^Logs$' && sleep 3 && shot 48-drive-logs || note "no Logs: $(texts)"
 back

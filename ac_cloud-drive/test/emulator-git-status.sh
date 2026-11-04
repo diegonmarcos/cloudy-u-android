@@ -71,8 +71,8 @@ for i in $(seq 1 25); do adb shell input swipe $((W/2)) $((H*30/100)) $((W/2)) $
 sleep 1
 adb shell input swipe $((W/2)) $((H*30/100)) $((W/2)) $((H*80/100)) 600
 sleep 1
-# #1356 the top nav is Check | Sync | Clone | Logs | More: a group with one item runs it on tap, so Check is the full status check.
-tap '^Check$' || fail "no Check button"
+# #1452 Check is a dropdown (Check lite | Check full): the full status check is its second item.
+tap '^Check$' || fail "no Check button"; sleep 1; tap '^Check full$' || fail "no Check full item"
 t0=$(date +%s); ok=0
 while [ $(( $(date +%s) - t0 )) -lt 15 ]; do
   sleep 1

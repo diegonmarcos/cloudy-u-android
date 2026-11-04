@@ -128,9 +128,10 @@ g = json.load(open(sys.argv[1]))["ui"]["sync"]["git"]; bar = open(sys.argv[2]).r
 groups = g["top_bar"]["groups"]; bad = []
 if [x["id"] for x in groups] != ["check", "sync", "clone", "logs", "more"]: bad.append("groups are %s" % [x["id"] for x in groups])
 else:
-    want = [("check_full", "check_full"), None, ("logs", "open_logs")]   # #1452 Clone is a dropdown of two (Clone Depth 1 All | Clone Bare All (no hist))
+    want = [None, None, ("logs", "open_logs")]   # #1452 Clone is a dropdown of two (Clone Depth 1 All | Clone Bare All (no hist))
     got = [(x["items"][0]["id"], x["items"][0]["kind"]) if len(x["items"]) == 1 else None for x in (groups[0], groups[2], groups[3])]
     if got != want: bad.append("the three buttons are %s, want %s" % (got, want))
+    if [(i["id"], i["kind"]) for i in groups[0]["items"]] != [("check_lite", "check_light"), ("check_full", "check_full")]: bad.append("the Check dropdown is not Check lite, Check full")
     if [(i["id"], i["kind"], i["action"]) for i in groups[2]["items"]] != [("clone_missing", "depth", "clone_all_depth1"), ("clone_bare_nohist", "depth", "clone_all_bare_nohist")]: bad.append("the Clone dropdown is not Clone Depth 1 All, Clone Bare All (no hist)")
     # #1356 Sync is a dropdown: Sync All (Server Wins | Local Wins | No Winner) then Manual Sync (Stash All, Pull (Rebase), Stash Pop All, Conflicts All)
     sy = [(i["section"], i["kind"], i.get("op", "")) for i in groups[1]["items"]]
