@@ -226,6 +226,8 @@ public object UiIcons {
         "ic_p_c3_health" to Icons.Outlined.MonitorHeart,
         "ic_settings" to Icons.Outlined.Settings,
         "ic_code" to Icons.Outlined.Code,
+        "ic_perms" to Icons.Outlined.Security,
+        "ic_info" to Icons.Outlined.Info,
         "ic_rss" to Icons.Outlined.RssFeed,
         "ic_p_logs" to Icons.Outlined.Description,
         "help_outline" to Icons.Outlined.Info,
