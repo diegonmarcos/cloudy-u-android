@@ -11,9 +11,9 @@
   },
   "baseline": {
     "libs": {
-      "ui-kit": 956,
-      "bottomnav": 2016
+      "ui-kit": 1226,
+      "bottomnav": 2159
     },
-    "total": 2972
+    "total": 3385
   }
 }

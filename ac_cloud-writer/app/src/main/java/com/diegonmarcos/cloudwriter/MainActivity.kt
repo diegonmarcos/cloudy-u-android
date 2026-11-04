@@ -122,7 +122,13 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.diegonmarcos.cloudwriter.core.DocList
 import com.diegonmarcos.cloudwriter.core.DocMeta
+import com.diegonmarcos.cloudwriter.core.DocSort
+import com.diegonmarcos.cloudwriter.core.HtmlText
+import com.diegonmarcos.cloudwriter.core.Import
+import com.diegonmarcos.cloudwriter.core.ImportKind
+import com.diegonmarcos.cloudwriter.core.SaveState
 import com.diegonmarcos.cloudwriter.core.DocStore
 import com.diegonmarcos.cloudwriter.core.Edit
 import com.diegonmarcos.cloudwriter.core.Markdown
@@ -151,11 +157,29 @@ import com.diegonmarcos.superapp.navbartop1.titleHierarchy
 import com.diegonmarcos.superapp.navbartop2.NavBarTopSecondRow
 import com.diegonmarcos.superapp.bottomnav.NavPage
 import com.diegonmarcos.cloudwriter.ui.insertAtCaret
+import androidx.compose.material.icons.filled.FormatSize
+import androidx.core.content.FileProvider
+import com.diegonmarcos.superapp.fleetconfigs.FleetConfigsPageBody
+import com.diegonmarcos.superapp.mlocr.OcrImage
+import com.diegonmarcos.superapp.uikit.KitAction
+import com.diegonmarcos.superapp.uikit.KitActionBar
+import com.diegonmarcos.superapp.uikit.KitBadge
+import com.diegonmarcos.superapp.uikit.KitDensity
+import com.diegonmarcos.superapp.uikit.KitDocRow
+import com.diegonmarcos.superapp.uikit.KitEditorStatus
 import com.diegonmarcos.superapp.uikit.KitEmptyState
+import com.diegonmarcos.superapp.uikit.KitFilterChips
+import com.diegonmarcos.superapp.uikit.KitSearchBar
+import com.diegonmarcos.superapp.uikit.KitSkeletonRows
+import com.diegonmarcos.superapp.uikit.KitState
+import com.diegonmarcos.superapp.uikit.KitStatusBanner
+import com.diegonmarcos.superapp.uikit.KitToolAction
+import com.diegonmarcos.superapp.uikit.KitToolbar
 import com.diegonmarcos.superapp.uikit.KitSectionHeader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import java.io.File
 import java.util.concurrent.Executors
 
 /**
@@ -217,6 +241,16 @@ class MainActivity : AppCompatActivity() {
     private val toolsPage: MutableState<String> = mutableStateOf("")
     private val docs: MutableState<List<DocMeta>> = mutableStateOf(emptyList())
     private val query: MutableState<String> = mutableStateOf("")
+    /** #1457 false until the first list read returns: the list shows a skeleton, not the empty state. */
+    private val docsLoaded: MutableState<Boolean> = mutableStateOf(false)
+    private val docSort: MutableState<DocSort> = mutableStateOf(DocSort.RECENT)
+    /** #1457 the editor's autosave state and when it last saved. */
+    private val saveState: MutableState<SaveState> = mutableStateOf(SaveState.SAVED)
+    private val savedAt: MutableState<Long> = mutableStateOf(0L)
+    /** #1457 the last import (file, image or camera) outcome, said under the actions. */
+    private val importNote: MutableState<Pair<String, KitState>?> = mutableStateOf(null)
+    /** #1457 the selected Configs page (a ui.sections[settings].pages id). */
+    private val configsPage: MutableState<String> = mutableStateOf("general")
     private val docId: MutableState<String?> = mutableStateOf(null)
     private val field: MutableState<TextFieldValue> = mutableStateOf(TextFieldValue(""))
 
@@ -261,6 +295,9 @@ class MainActivity : AppCompatActivity() {
         val id = from?.getStringExtra(EXTRA_SECTION) ?: return
         from.removeExtra(EXTRA_SECTION)
         if (id != WriterNav.WRITER) goSection(id)
+        // #1457 a Configs page by id (general, perms, about, appearance, models, ocr), for deep links and the emulator walk.
+        from.getStringExtra(EXTRA_PAGE)?.let { if (id == WriterNav.SETTINGS) configsPage.value = it }
+        from.removeExtra(EXTRA_PAGE)
     }
 
     override fun onStart() {
@@ -366,7 +403,7 @@ class MainActivity : AppCompatActivity() {
         val q = query.value
         worker.execute {
             val list = store.search(q)
-            main.post { docs.value = list }
+            main.post { docs.value = list; docsLoaded.value = true }
         }
     }
 
@@ -439,8 +476,8 @@ class MainActivity : AppCompatActivity() {
         }
         NavBarTopFirstRowScaffold(
             title = title,
-            hierarchy = section?.let { titleHierarchy(it, if (current == Screen.TOOLS) toolsPage.value.ifBlank { null } else null) }.orEmpty(),
-            onNavigate = { e -> goSection(e.sectionId); if (e.depth > 0 && e.sectionId == WriterNav.TOOLS) toolsPage.value = e.id },
+            hierarchy = section?.let { titleHierarchy(it, if (current == Screen.TOOLS) toolsPage.value.ifBlank { null } else if (current == Screen.CONFIGS) configsPage.value else null) }.orEmpty(),
+            onNavigate = { e -> goSection(e.sectionId); if (e.depth > 0 && e.sectionId == WriterNav.TOOLS) toolsPage.value = e.id; if (e.depth > 0 && e.sectionId == WriterNav.SETTINGS) configsPage.value = e.id },
             onAccount = rememberAccountLauncher(),
             onConfigs = { if (screen.value != Screen.CONFIGS) { saveNow(); openConfigs() } },
             onAi = rememberSuperAppAiLauncher(),
@@ -491,93 +528,105 @@ class MainActivity : AppCompatActivity() {
         else -> declared
     }
 
+    /**
+     * #1457 Home: a search row, the status of the text-tool peer, the four ways to start (new, file, scan, image), a one-line
+     * summary with its sort chips, then the documents as dense rows (title, snippet, words and updated badges). A skeleton shows
+     * while the list loads and a real empty state (with the same actions above it) when there is nothing.
+     */
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     private fun DocsScreen() {
-        Box(Modifier.fillMaxSize()) {
+        val pickFile = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> uri?.let { importFile(it) } }
+        val pickImage = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> uri?.let { importImage(it) } }
+        var shot by remember { mutableStateOf<Uri?>(null) }
+        val takePhoto = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { ok -> shot?.takeIf { ok }?.let { importImage(it) } }
+        val list = DocList.sort(docs.value, docSort.value)
+        KitBridge {
             Column(
-                modifier = Modifier.fillMaxSize().padding(horizontal = PageGutter),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.fillMaxSize().padding(horizontal = KitDensity.medium),
+                verticalArrangement = Arrangement.spacedBy(KitDensity.small),
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                OutlinedTextField(
-                    value = query.value,
-                    onValueChange = { query.value = it; reloadDocs() },
-                    modifier = Modifier.weight(1f),
-                    singleLine = true,
-                    placeholder = { Text(stringResource(R.string.doc_search_hint)) },
-                    leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-                    trailingIcon = {
-                        if (query.value.isNotEmpty()) {
-                            IconButton(onClick = { query.value = ""; reloadDocs() }) {
-                                Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_clear))
-                            }
-                        }
-                    },
-                )
+                    KitSearchBar(
+                        query = query.value,
+                        onQueryChange = { query.value = it; reloadDocs() },
+                        onSubmit = { reloadDocs() },
+                        modifier = Modifier.weight(1f),
+                        placeholder = stringResource(R.string.doc_search_hint),
+                        clearLabel = stringResource(R.string.action_clear),
+                    )
                     ThemeMenu()
                 }
                 StatusCard()
-                val list = docs.value
-                if (list.isEmpty()) {
-                    val searching = query.value.isNotBlank()
-                    KitBridge {
+                KitActionBar(
+                    listOf(
+                        KitAction(stringResource(R.string.doc_new), "writer:new") { newDoc() },
+                        KitAction(stringResource(R.string.import_file), "writer:import-file") {
+                            pickFile.launch(arrayOf("text/*", "text/markdown", "text/html", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/octet-stream"))
+                        },
+                        KitAction(stringResource(R.string.import_scan), "writer:import-scan") {
+                            val dir = File(cacheDir, "ocr").apply { mkdirs() }
+                            val uri = FileProvider.getUriForFile(this@MainActivity, packageName + ".ocr", File(dir, "shot.jpg"))
+                            shot = uri
+                            takePhoto.launch(uri)
+                        },
+                        KitAction(stringResource(R.string.import_image), "writer:import-image") { pickImage.launch("image/*") },
+                    ),
+                )
+                importNote.value?.let { (line, state) -> KitStatusBanner(line, state, tag = "import") }
+                if (docsLoaded.value && list.isNotEmpty()) {
+                    KitSectionHeader(
+                        stringResource(R.string.doc_list_title),
+                        stringResource(R.string.doc_list_summary, list.size, DocList.totalWords(list)),
+                        modifier = Modifier.padding(top = KitDensity.small),
+                    )
+                    KitFilterChips(
+                        options = listOf(
+                            DocSort.RECENT.id to stringResource(R.string.sort_recent),
+                            DocSort.LONGEST.id to stringResource(R.string.sort_longest),
+                            DocSort.TITLE.id to stringResource(R.string.sort_title),
+                        ),
+                        selected = docSort.value.id,
+                        onSelect = { docSort.value = DocSort.of(it) },
+                        group = "sort",
+                    )
+                }
+                when {
+                    !docsLoaded.value -> KitSkeletonRows(5)
+                    list.isEmpty() -> {
+                        val searching = query.value.isNotBlank()
                         KitEmptyState(
                             title = stringResource(if (searching) R.string.doc_no_match_title else R.string.doc_empty_title),
                             caption = stringResource(if (searching) R.string.doc_no_match_caption else R.string.doc_empty_caption),
                         )
                     }
-                } else {
-                    LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        contentPadding = PaddingValues(bottom = 96.dp),
+                    else -> LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(KitDensity.small),
+                        contentPadding = PaddingValues(bottom = KitDensity.large),
                     ) {
                         items(list, key = { it.id }) { DocCard(it) }
                     }
                 }
             }
-            ExtendedFloatingActionButton(
-                text = { Text(stringResource(R.string.doc_new)) },
-                icon = { Icon(Icons.Filled.Add, contentDescription = null) },
-                onClick = { newDoc() },
-                modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
-            )
         }
     }
 
-    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     private fun DocCard(d: DocMeta) {
         var menu by remember { mutableStateOf(false) }
-        Card(onClick = { open(d.id) }, modifier = Modifier.fillMaxWidth()) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(start = PageGutter, top = 12.dp, bottom = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(Icons.Filled.Description, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                Spacer(Modifier.width(12.dp))
-                Column(Modifier.weight(1f)) {
-                    Text(
-                        d.title.ifBlank { stringResource(R.string.doc_untitled) },
-                        style = MaterialTheme.typography.titleMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    if (d.snippet.isNotBlank()) {
-                        Text(
-                            d.snippet,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
-                    Text(
-                        stringResource(R.string.doc_meta, DateUtils.getRelativeTimeSpanString(d.modified).toString(), d.words),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
+        val minutes = DocList.readingMinutes(d.words)
+        KitDocRow(
+            title = d.title.ifBlank { stringResource(R.string.doc_untitled) },
+            snippet = d.snippet,
+            badges = listOfNotNull(
+                KitBadge(stringResource(R.string.editor_words, d.words)),
+                KitBadge(DateUtils.getRelativeTimeSpanString(d.modified).toString()),
+                if (minutes > 0) KitBadge(stringResource(R.string.doc_badge_read, minutes)) else null,
+            ),
+            initial = DocList.initial(d.title),
+            tag = d.id,
+            onClick = { open(d.id) },
+            trailing = {
                 Box {
                     IconButton(onClick = { menu = true }) {
                         Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.doc_more))
@@ -593,6 +642,53 @@ class MainActivity : AppCompatActivity() {
                             leadingIcon = { Icon(Icons.Filled.Delete, contentDescription = null) },
                             onClick = { menu = false; confirmDelete.value = d.id },
                         )
+                    }
+                }
+            },
+        )
+    }
+
+    // ── import: a file or an image becomes a NEW document and opens ─────
+
+    private fun importFile(uri: Uri) {
+        importNote.value = getString(R.string.import_running) to KitState.BUSY
+        worker.execute {
+            val name = displayName(this, uri)
+            val kind = Import.kind(name, contentResolver.getType(uri))
+            val bytes = runCatching { contentResolver.openInputStream(uri)?.use { it.readBytes() } }.getOrNull()
+            // Markdown and plain text keep their own characters; HTML and DOCX come through the shared box importer as text.
+            val text = bytes?.let {
+                if (kind == ImportKind.MD || kind == ImportKind.TXT) it.toString(Charsets.UTF_8)
+                else Import.toHtml(kind, it)?.let { h -> HtmlText.htmlToText(h) }
+            }
+            main.post {
+                when {
+                    kind == ImportKind.UNSUPPORTED -> importNote.value = getString(R.string.box_load_unsupported, name) to KitState.BAD
+                    text == null -> importNote.value = getString(R.string.box_load_failed, name) to KitState.BAD
+                    else -> {
+                        importNote.value = getString(R.string.import_done, name) to KitState.OK
+                        open(store.create(text))
+                    }
+                }
+            }
+        }
+    }
+
+    private fun importImage(uri: Uri) {
+        importNote.value = getString(R.string.ocr_running) to KitState.BUSY
+        worker.execute {
+            val bmp = OcrImage.load(this, uri)
+            val a = bmp?.let { WriterRoutes.ocr(this, it) }
+            main.post {
+                when {
+                    a == null -> importNote.value = getString(R.string.ocr_no_image) to KitState.BAD
+                    !a.ok -> importNote.value = getString(R.string.ocr_failed, a.error.orEmpty()) to KitState.BAD
+                    else -> {
+                        importNote.value = (
+                            if (a.fellBack) getString(R.string.ocr_fell_back, a.fallbackReason.orEmpty())
+                            else getString(R.string.ocr_done, a.text.orEmpty().length, a.route?.id.orEmpty())
+                        ) to KitState.OK
+                        open(store.create(a.text.orEmpty()))
                     }
                 }
             }
@@ -641,9 +737,12 @@ class MainActivity : AppCompatActivity() {
 
         // Autosave: half a second after the last change, off the main thread.
         LaunchedEffect(id, v.text) {
+            saveState.value = SaveState.SAVING
             delay(SAVE_DELAY_MS)
             val text = v.text
-            withContext(Dispatchers.IO) { store.write(id, text) }
+            val ok = withContext(Dispatchers.IO) { runCatching { store.write(id, text) }.isSuccess }
+            saveState.value = if (ok) SaveState.SAVED else SaveState.FAILED
+            if (ok) savedAt.value = System.currentTimeMillis()
         }
 
         val exportMd = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/markdown")) { uri -> uri?.let { export(it) } }
@@ -746,12 +845,29 @@ class MainActivity : AppCompatActivity() {
                         }
                     },
                 )
-                Text(
-                    stringResource(R.string.editor_words, Markdown.words(v.text)),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = PageGutter, vertical = 4.dp),
-                )
+                KitBridge {
+                    val words = Markdown.words(v.text)
+                    val minutes = DocList.readingMinutes(words)
+                    val state = saveState.value
+                    KitEditorStatus(
+                        facts = listOfNotNull(
+                            stringResource(R.string.editor_words, words),
+                            stringResource(R.string.editor_chars, DocList.chars(v.text)),
+                            if (minutes > 0) stringResource(R.string.doc_badge_read, minutes) else null,
+                        ),
+                        saveWord = when (state) {
+                            SaveState.SAVING -> stringResource(R.string.save_saving)
+                            SaveState.FAILED -> stringResource(R.string.save_failed)
+                            SaveState.SAVED -> if (savedAt.value == 0L) stringResource(R.string.save_saved)
+                            else stringResource(R.string.save_saved_at, DateUtils.formatDateTime(this@MainActivity, savedAt.value, DateUtils.FORMAT_SHOW_TIME))
+                        },
+                        saveState = when (state) {
+                            SaveState.SAVING -> KitState.BUSY
+                            SaveState.FAILED -> KitState.BAD
+                            SaveState.SAVED -> KitState.OK
+                        },
+                    )
+                }
             }
             Column(Modifier.navigationBarsPadding().imePadding()) {
                 if (listening || listenOpen.value) ListenPanel(askMic)
@@ -770,26 +886,31 @@ class MainActivity : AppCompatActivity() {
         field.value = action(v.text, v.selection.start, v.selection.end).asValue()
     }
 
+    /** #1457 the format strip: the shared kit toolbar over a declared list of groups. */
     @Composable
     private fun FormatBar() {
-        Row(
-            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            FormatButton(Icons.Filled.Title, R.string.fmt_h1) { format { t, s, e -> Markdown.heading(t, s, e, 1) } }
-            TextButton(onClick = { format { t, s, e -> Markdown.heading(t, s, e, 2) } }) { Text(stringResource(R.string.fmt_h2)) }
-            FormatButton(Icons.Filled.FormatBold, R.string.fmt_bold) { format { t, s, e -> Markdown.wrap(t, s, e, "**") } }
-            FormatButton(Icons.Filled.FormatItalic, R.string.fmt_italic) { format { t, s, e -> Markdown.wrap(t, s, e, "*") } }
-            FormatButton(Icons.Filled.Code, R.string.fmt_code) { format { t, s, e -> Markdown.wrap(t, s, e, "`") } }
-            FormatButton(Icons.Filled.FormatListBulleted, R.string.fmt_bullets) { format { t, s, e -> Markdown.prefixLines(t, s, e, "- ") } }
-            FormatButton(Icons.Filled.FormatListNumbered, R.string.fmt_numbered) { format { t, s, e -> Markdown.prefixLines(t, s, e, "1. ") } }
-            FormatButton(Icons.Filled.FormatQuote, R.string.fmt_quote) { format { t, s, e -> Markdown.prefixLines(t, s, e, "> ") } }
+        fun act(id: String, icon: ImageVector, @StringRes label: Int, f: (String, Int, Int) -> Edit) =
+            KitToolAction(id, icon, getString(label), onClick = { format(f) })
+        KitBridge {
+            KitToolbar(
+                listOf(
+                    listOf(
+                        act("h1", Icons.Filled.Title, R.string.fmt_h1) { t, s, e -> Markdown.heading(t, s, e, 1) },
+                        act("h2", Icons.Filled.FormatSize, R.string.fmt_h2) { t, s, e -> Markdown.heading(t, s, e, 2) },
+                    ),
+                    listOf(
+                        act("bold", Icons.Filled.FormatBold, R.string.fmt_bold) { t, s, e -> Markdown.wrap(t, s, e, "**") },
+                        act("italic", Icons.Filled.FormatItalic, R.string.fmt_italic) { t, s, e -> Markdown.wrap(t, s, e, "*") },
+                        act("code", Icons.Filled.Code, R.string.fmt_code) { t, s, e -> Markdown.wrap(t, s, e, "`") },
+                    ),
+                    listOf(
+                        act("bullets", Icons.Filled.FormatListBulleted, R.string.fmt_bullets) { t, s, e -> Markdown.prefixLines(t, s, e, "- ") },
+                        act("numbered", Icons.Filled.FormatListNumbered, R.string.fmt_numbered) { t, s, e -> Markdown.prefixLines(t, s, e, "1. ") },
+                        act("quote", Icons.Filled.FormatQuote, R.string.fmt_quote) { t, s, e -> Markdown.prefixLines(t, s, e, "> ") },
+                    ),
+                ),
+            )
         }
-    }
-
-    @Composable
-    private fun FormatButton(icon: ImageVector, @StringRes label: Int, onClick: () -> Unit) {
-        IconButton(onClick = onClick) { Icon(icon, contentDescription = stringResource(label)) }
     }
 
     /**
@@ -798,25 +919,18 @@ class MainActivity : AppCompatActivity() {
      */
     @Composable
     private fun ToolBar() {
-        Row(
-            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            WriterTool.values().forEach { tool ->
-                AssistChip(
-                    onClick = { start(tool) },
-                    enabled = !busy.value,
-                    label = { Text(stringResource(tool.label)) },
-                    leadingIcon = { Icon(iconFor(tool), contentDescription = null, modifier = Modifier.size(18.dp)) },
+        KitBridge {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                KitToolbar(
+                    listOf(
+                        WriterTool.values().map { tool ->
+                            KitToolAction(tool.name, iconFor(tool), getString(tool.label), enabled = !busy.value, showLabel = true, onClick = { start(tool) })
+                        } + KitToolAction("options", Icons.Filled.Tune, getString(R.string.editor_options), showLabel = true, onClick = { optionsOpen.value = true }),
+                    ),
+                    modifier = Modifier.weight(1f),
                 )
+                if (busy.value) CircularProgressIndicator(Modifier.padding(end = KitDensity.medium).size(KitDensity.large), strokeWidth = 2.dp)
             }
-            AssistChip(
-                onClick = { optionsOpen.value = true },
-                label = { Text(stringResource(R.string.editor_options)) },
-                leadingIcon = { Icon(Icons.Filled.Tune, contentDescription = null, modifier = Modifier.size(18.dp)) },
-            )
-            if (busy.value) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
         }
     }
 
@@ -1041,7 +1155,7 @@ class MainActivity : AppCompatActivity() {
                 Text(if (tabBusy.value) stringResource(R.string.run_running) else runLabel)
             }
             if (tabBusy.value) LinearProgressIndicator(Modifier.fillMaxWidth())
-            tabNote.value?.let { NoteText(it) }
+            tabNote.value?.let { line -> KitBridge { KitStatusBanner(line, if (tabBusy.value) KitState.BUSY else KitState.IDLE, tag = "tab") } }
             WriterBox(outputLabel, output, io, input = false)
             Spacer(Modifier.height(BlockGap))
         }
@@ -1140,30 +1254,64 @@ class MainActivity : AppCompatActivity() {
 
     // ── configs ──────────────────────────────────────────────────────────
 
+    /**
+     * #1457 Configs, the fleet pattern: General | Perms | About (libs:ui-nav-bars' shared pages) first on the second row, then this
+     * app's own pages (Appearance, Models, OCR). The ids and icons are build.json::ui.sections[settings].pages; only the localized
+     * label is code.
+     */
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     private fun ConfigsScreen() {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = PageGutter),
-            verticalArrangement = Arrangement.spacedBy(BlockGap),
-        ) {
-            StatusCard()
-            KitBridge { KitSectionHeader(stringResource(R.string.theme_title), stringResource(R.string.theme_summary)) }
-            ChoiceRow(
-                stringResource(R.string.theme_title),
-                null,
-                themes(),
-                WriterTheme.current(this@MainActivity),
-                WriterTheme.SYSTEM,
-            ) { WriterTheme.set(this@MainActivity, it) }
-            ModelSection()
-            OcrSection()
-            NoteText(stringResource(R.string.token_note))
-            Spacer(Modifier.height(BlockGap))
+        val dark = WriterTheme.isDark()
+        val declared: List<NavPage> = WriterNav.decl.section(WriterNav.SETTINGS)?.pages.orEmpty().map { it.copy(label = configsLabel(it.id, it.label)) }
+        val selected = declared.firstOrNull { it.id == configsPage.value } ?: declared.firstOrNull()
+        Column(Modifier.fillMaxSize()) {
+            NavBarTopSecondRow(
+                pages = declared,
+                dark = dark,
+                selectedId = selected?.id,
+                onSelect = { configsPage.value = it.id },
+                underTopChrome = false,
+                surface = WriterNav.decl.stripSurface(WriterNav.SETTINGS, dark),
+            )
+            val id = selected?.id.orEmpty()
+            if (id == "general" || id == "perms" || id == "about") {
+                // The shared pages draw their own scroll and colours.
+                FleetConfigsPageBody(id, dark, onAppConfigs = { configsPage.value = "appearance" })
+            } else {
+                Column(
+                    modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = PageGutter),
+                    verticalArrangement = Arrangement.spacedBy(BlockGap),
+                ) {
+                    when (id) {
+                        "appearance" -> {
+                            KitBridge { KitSectionHeader(stringResource(R.string.theme_title), stringResource(R.string.theme_summary)) }
+                            ChoiceRow(
+                                stringResource(R.string.theme_title),
+                                null,
+                                themes(),
+                                WriterTheme.current(this@MainActivity),
+                                WriterTheme.SYSTEM,
+                            ) { WriterTheme.set(this@MainActivity, it) }
+                        }
+                        "models" -> { StatusCard(); ModelSection(); NoteText(stringResource(R.string.token_note)) }
+                        "ocr" -> OcrSection()
+                    }
+                    Spacer(Modifier.height(BlockGap))
+                }
+            }
         }
+    }
+
+    /** The localized label of a declared Configs page; the declared English one for an id with no string. */
+    private fun configsLabel(id: String, declared: String): String = when (id) {
+        "general" -> getString(R.string.configs_page_general)
+        "perms" -> getString(R.string.configs_page_perms)
+        "about" -> getString(R.string.configs_page_about)
+        "appearance" -> getString(R.string.theme_title)
+        "models" -> getString(R.string.configs_page_models)
+        "ocr" -> getString(R.string.ocr_title)
+        else -> declared
     }
 
     // ── dialogs ──────────────────────────────────────────────────────────
@@ -1405,43 +1553,15 @@ class MainActivity : AppCompatActivity() {
     @Composable
     private fun StatusCard() {
         val line = status.value
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-            ),
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(PageGutter),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                if (line == null) {
-                    CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
-                } else {
-                    Icon(
-                        imageVector = if (servingAppNamed.value) Icons.Filled.Cloud else Icons.Filled.CloudOff,
-                        contentDescription = null,
-                        tint = if (servingAppNamed.value) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.error
-                        },
-                        modifier = Modifier.size(20.dp),
-                    )
-                }
-                Spacer(Modifier.width(PageGutter))
-                Column(Modifier.weight(1f)) {
-                    Text(
-                        text = line ?: stringResource(R.string.status_checking),
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                    if (line != null && storeRepair.value) {
-                        TextButton(onClick = { ServingApp.openStore(this@MainActivity) }) {
-                            Text(stringResource(R.string.action_store_update))
-                        }
-                    }
-                }
-            }
+        KitBridge {
+            KitStatusBanner(
+                text = line ?: stringResource(R.string.status_checking),
+                state = if (line == null) KitState.BUSY else if (servingAppNamed.value) KitState.OK else KitState.WARN,
+                tag = "serving",
+                action = if (line != null && storeRepair.value) {
+                    KitAction(stringResource(R.string.action_store_update), "writer:store-update") { ServingApp.openStore(this@MainActivity) }
+                } else null,
+            )
         }
     }
     /** True once the probe has named a peer; drives the status card's icon and its colour. */
@@ -1581,5 +1701,6 @@ class MainActivity : AppCompatActivity() {
 
         /** The ui.sections id a tool page's bottom nav asks the main screen to open. */
         const val EXTRA_SECTION = "section"
+        const val EXTRA_PAGE = "page"
     }
 }

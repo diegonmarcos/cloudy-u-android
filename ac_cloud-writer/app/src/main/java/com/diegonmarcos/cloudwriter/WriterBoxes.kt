@@ -67,6 +67,10 @@ import com.diegonmarcos.cloudwriter.core.Export
 import com.diegonmarcos.cloudwriter.core.ExportFormat
 import com.diegonmarcos.cloudwriter.core.HtmlText
 import com.diegonmarcos.cloudwriter.core.Import
+import com.diegonmarcos.cloudwriter.core.Markdown
+import com.diegonmarcos.cloudwriter.ui.KitBridge
+import com.diegonmarcos.superapp.uikit.KitBadge
+import com.diegonmarcos.superapp.uikit.KitBadgeChip
 import com.diegonmarcos.cloudwriter.core.ImportKind
 import com.diegonmarcos.cloudwriter.core.Ocr
 import com.diegonmarcos.cloudwriter.core.Route
@@ -203,7 +207,7 @@ fun ocrInto(context: Context, worker: Executor, box: BoxState, uri: Uri, note: (
     }
 }
 
-private fun displayName(context: Context, uri: Uri): String =
+internal fun displayName(context: Context, uri: Uri): String =
     runCatching {
         context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { c ->
             if (c.moveToFirst()) c.getString(0) else null
@@ -221,6 +225,8 @@ fun WriterBox(label: String, state: BoxState, io: BoxIo, input: Boolean, modifie
         Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(label, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
+                // #1457 the box's own word count, in the kit's badge.
+                KitBridge { KitBadgeChip(KitBadge(stringResource(R.string.editor_words, Markdown.words(state.text())))) }
                 FilterChip(state.mode == EditMode.WYSIWYG, { state.switchTo(EditMode.WYSIWYG) }, { Text(stringResource(R.string.box_mode_wysiwyg)) })
                 FilterChip(state.mode == EditMode.TEXT, { state.switchTo(EditMode.TEXT) }, { Text(stringResource(R.string.box_mode_text)) })
             }

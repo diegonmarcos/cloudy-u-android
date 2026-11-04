@@ -329,4 +329,25 @@
     <string name="ocr_fell_back">OCR: OpenRouter no disponible (%1$s), leído en el dispositivo</string>
     <string name="ocr_failed">Error de OCR: %1$s</string>
     <string name="ocr_no_image">No se pudo abrir la imagen</string>
+    <!-- #1457 the redesign: list, import, save state, Configs pages -->
+    <string name="doc_list_title">Documentos</string>
+    <string name="doc_list_summary">%1$d documentos · %2$d palabras en total</string>
+    <string name="sort_recent">Recientes</string>
+    <string name="sort_longest">Más largos</string>
+    <string name="sort_title">A–Z</string>
+    <string name="doc_badge_read">%1$d min de lectura</string>
+    <string name="import_file">Importar archivo</string>
+    <string name="import_scan">Escanear</string>
+    <string name="import_image">Desde imagen</string>
+    <string name="import_running">Importando…</string>
+    <string name="import_done">%1$s importado como documento nuevo.</string>
+    <string name="editor_chars">%1$d caracteres</string>
+    <string name="save_saving">Guardando…</string>
+    <string name="save_saved">Guardado</string>
+    <string name="save_saved_at">Guardado %1$s</string>
+    <string name="save_failed">Sin guardar</string>
+    <string name="configs_page_general">General</string>
+    <string name="configs_page_perms">Permisos</string>
+    <string name="configs_page_about">Acerca de</string>
+    <string name="configs_page_models">Modelos</string>
 </resources>

@@ -201,7 +201,40 @@
         "id": "settings",
         "label": "Settings",
         "icon": "settings",
-        "pages": []
+        "background": "theme",
+        "_doc": "#1457 Configs: General | Perms | About first (the fleet pattern, libs:ui-nav-bars FleetConfigsPageBody), then Writer's own pages: Appearance (theme), Models (per-tool models and the serving peer) and OCR (engine and vision model).",
+        "pages": [
+          {
+            "id": "general",
+            "label": "General",
+            "icon": "settings"
+          },
+          {
+            "id": "perms",
+            "label": "Perms",
+            "icon": "security"
+          },
+          {
+            "id": "about",
+            "label": "About",
+            "icon": "info"
+          },
+          {
+            "id": "appearance",
+            "label": "Appearance",
+            "icon": "palette"
+          },
+          {
+            "id": "models",
+            "label": "Models",
+            "icon": "smart_toy"
+          },
+          {
+            "id": "ocr",
+            "label": "OCR",
+            "icon": "visibility"
+          }
+        ]
       }
     ],
     "default_section": "home",

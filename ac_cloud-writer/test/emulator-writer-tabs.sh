@@ -23,7 +23,7 @@ adb logcat -c || true
 shot() { sleep "${2:-4}"; adb exec-out screencap -p > "$OUT/$1.png" 2>/dev/null; adb exec-out uiautomator dump /dev/tty > "$OUT/$1.xml" 2>/dev/null || true; }
 has() { grep -q -- "$2" "$OUT/$1.xml"; }
 
-start_section() { adb shell am force-stop "$PKG"; adb shell am start -W -n "$PKG/.MainActivity" --es section "$1" >/dev/null 2>&1; }
+start_section() { adb shell am force-stop "$PKG"; adb shell am start -W -n "$PKG/.MainActivity" --es section "$1" ${2:+--es page "$2"} >/dev/null 2>&1; }
 
 # First start (a first-run card, if any, is captured as it is).
 start_section home; shot 00-first-start 6
@@ -38,11 +38,10 @@ has tab-enhancer "WYSIWYG" || bad "tab-enhancer: no WYSIWYG mode selector"
 has tab-enhancer "Load image" || bad "tab-enhancer: no Load image action"
 has tab-translator "Engine" || bad "tab-translator: no engine picker"
 
-# Configs with its OCR section (scroll to it).
-start_section settings; shot configs-top
-WH=$(adb shell wm size | tr -d "\r" | grep -oE "[0-9]+x[0-9]+" | tail -1); W=${WH%x*}; H=${WH#*x}
-for _ in 1 2 3 4 5 6 7 8 9 10; do adb shell input swipe $((W/2)) $((H*3/4)) $((W/2)) $((H/4)) 300; sleep 1; has_now=$(adb exec-out uiautomator dump /dev/tty 2>/dev/null | grep -c "OCR engine"); [ "$has_now" -gt 0 ] && break; done
-shot configs-ocr 2
+# Configs (#1457): General | Perms | About first, then Writer's own pages; one shot per page, the OCR page holds the engine row.
+for pg in general perms about appearance models; do start_section settings "$pg"; shot "configs-$pg" 3; done
+for l in General Perms About; do has configs-general "$l" || bad "configs: tab $l missing"; done
+start_section settings ocr; shot configs-ocr 3
 has configs-ocr "OCR engine" || bad "configs: no OCR engine row"
 
 # OCR: the fixture goes into Writer's own external files dir (readable by the app with no permission;
