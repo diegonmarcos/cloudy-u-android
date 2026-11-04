@@ -5,6 +5,7 @@
     "ab_cloud-libs-shared/libs/account/src/main/java/com/diegonmarcos/superapp/profile/AccountModel.kt": "EncryptedFile (the account slots), not EncryptedSharedPreferences; AccountStore already treats an unreadable slot as empty",
     "ac_cloud-gallery/app/src/main/kotlin/com/diegonmarcos/mediacenter/feature_node/data/data_source/KeychainHolder.kt": "EncryptedFile for vault media, not EncryptedSharedPreferences",
     "ac_cloud-vault/data/src/main/kotlin/com/bitwarden/data/datasource/disk/di/PreferenceModule.kt": "Bitwarden's own module graph (no libs:crash on :data); it already catches the failure and destroys and rebuilds the master key and file",
-    "ac_cloud-chat/libraries/@mattermost/secure-pdf-viewer/android/src/main/java/com/mattermost/securepdfviewer/manager/PasswordAttemptStore.kt": "a vendored React Native library with its own gradle module, outside the fleet's module graph"
+    "ac_cloud-chat/libraries/@mattermost/secure-pdf-viewer/android/src/main/java/com/mattermost/securepdfviewer/manager/PasswordAttemptStore.kt": "a vendored React Native library with its own gradle module, outside the fleet's module graph",
+    "ab_cloud-libs-shared/libs/account-ui/src/main/java/com/diegonmarcos/cloudaccount/personal/PersonalStore.kt": "Personal Info (IDs, cards): PersonalStore.repo already wraps the open in runCatching, so a Keystore mismatch cannot crash the app -- the pages say the store is locked. SafeEncryptedPrefs would instead delete the sealed file and carry on with an empty in-memory store, silently dropping the owner's documents instead of telling them."
   }
 }
