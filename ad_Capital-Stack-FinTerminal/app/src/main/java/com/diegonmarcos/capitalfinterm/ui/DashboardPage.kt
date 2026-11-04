@@ -82,6 +82,7 @@ import com.diegonmarcos.capitalfinterm.SourceKeys
 import com.diegonmarcos.capitalfinterm.UrlHttp
 import com.diegonmarcos.capitalfinterm.UserLists
 import com.diegonmarcos.capitalfinterm.ui.fin.FinBars
+import com.diegonmarcos.capitalfinterm.ui.fin.FinStackBar
 import com.diegonmarcos.capitalfinterm.ui.fin.FinCard
 import com.diegonmarcos.capitalfinterm.ui.fin.FinChartHeader
 import com.diegonmarcos.capitalfinterm.ui.fin.FinChartSkeleton
@@ -585,7 +586,10 @@ private fun PanelBody(
                     }
                 }
                 else -> when (panel.view) {
-                    Dashboards.VIEW_BARS, Dashboards.VIEW_ALLOC -> FinBars(data.chart.ifEmpty {
+                    Dashboards.VIEW_BARS, Dashboards.VIEW_ALLOC -> if (panel.raw.optBoolean("stacked")) {
+                        // #1370 the rate path: one 100% stacked bar, a segment per outcome (e.g. the number of Fed cuts), legend below
+                        FinStackBar(data.chart.map { it.label to it.y }.filter { it.second >= 1.0 })
+                    } else FinBars(data.chart.ifEmpty {
                         data.rows.mapIndexedNotNull { i, r -> FinFormat.parseNum(r.getOrNull(1))?.let { ChartPoint(r.getOrElse(0) { "" }, i.toDouble(), it) } }
                     }, panel.unit, panel.id)
                     Dashboards.VIEW_NEWS -> FinNewsList(panel.id, data.rows, data.links, panel.raw.optInt("limit", 8)) { openUrl(ctx, it) }

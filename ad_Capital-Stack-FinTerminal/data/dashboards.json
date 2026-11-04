@@ -919,6 +919,33 @@
           ]
         },
         {
+          "id": "rate_path",
+          "title": "Fed rate path: how many cuts in 2026 (Polymarket, share of probability %)",
+          "source": "polymarket",
+          "view": "bars",
+          "derive": "points",
+          "fetch": {
+            "provider": "polymarket_events",
+            "path": "/events",
+            "params": {
+              "tag_slug": "fed-rates",
+              "active": "true",
+              "closed": "false",
+              "limit": "10"
+            },
+            "last": 8,
+            "match": "How many Fed rate cuts"
+          },
+          "columns": [
+            "Cuts",
+            "Probability %",
+            "",
+            "Ends"
+          ],
+          "unit": "%",
+          "stacked": true
+        },
+        {
           "id": "implied",
           "title": "Market-implied Fed path (Polymarket, %)",
           "source": "polymarket",

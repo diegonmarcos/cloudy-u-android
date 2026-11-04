@@ -59,7 +59,7 @@ object Feeds {
             "ics_calendar" -> ics(body, o.spec.optJSONObject("importance"))
             "ff_calendar" -> ff(body)
             "declared_events" -> declared(body)
-            "polymarket_events" -> polymarket(body, o.spec.optInt("last", 12))
+            "polymarket_events" -> polymarket(body, o.spec.optInt("last", 12), Catalog.str(o.spec, "match"))
             "frankfurter_rates" -> frankfurter(body)
             "coinbase_exchange" -> coinbase(body, o.each)
             "cftc_cot" -> cot(body, o.each)
@@ -353,15 +353,16 @@ object Feeds {
     }
 
     /** Polymarket Gamma events: per open market its label (groupItemTitle, else the question) and the first outcome's price as a percent. */
-    fun polymarket(body: String, last: Int): Got {
+    fun polymarket(body: String, last: Int, match: String = ""): Got {
         val out = ArrayList<Pt>()
-        objects(JSONArray(body)).forEach { e ->
+        // `match` keeps only the events whose title contains it (one event = one distribution, e.g. the Fed cuts in 2026), labelled by the market alone
+        objects(JSONArray(body)).filter { match.isEmpty() || Catalog.str(it, "title").contains(match, ignoreCase = true) }.forEach { e ->
             objects(e.optJSONArray("markets")).forEach { m ->
                 if (m.optBoolean("closed", false)) return@forEach
                 val prices = runCatching { JSONArray(Catalog.str(m, "outcomePrices")) }.getOrNull() ?: return@forEach
                 val p = prices.optString(0).toDoubleOrNull() ?: return@forEach
                 val label = Catalog.str(m, "groupItemTitle").ifEmpty { Catalog.str(m, "question") }
-                out += Pt(Catalog.str(m, "slug").ifEmpty { label }, Catalog.str(e, "title") + ": " + label, out.size.toDouble(), p * 100.0, null, Catalog.str(e, "endDate").take(10))
+                out += Pt(Catalog.str(m, "slug").ifEmpty { label }, if (match.isEmpty()) Catalog.str(e, "title") + ": " + label else label, out.size.toDouble(), p * 100.0, null, Catalog.str(e, "endDate").take(10))
             }
         }
         return Got(points = out.take(maxOf(1, last)))

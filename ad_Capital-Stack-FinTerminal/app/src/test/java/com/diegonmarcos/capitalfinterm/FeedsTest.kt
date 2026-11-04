@@ -183,6 +183,16 @@ class FeedsTest {
         assertEquals("2027-01-01", p.date)
     }
 
+    @Test fun polymarketMatchKeepsOneEventAndLabelsByTheMarket() {
+        val body = """[{"title":"How many Fed rate cuts in 2026?","endDate":"2027-01-01T04:59:00Z","markets":[
+            {"question":"q0","groupItemTitle":"0 (0 bps)","slug":"zero","outcomePrices":"[\"0.7\", \"0.3\"]"},
+            {"question":"q1","groupItemTitle":"1 (25 bps)","slug":"one","outcomePrices":"[\"0.3\", \"0.7\"]"}]},
+            {"title":"Fed emergency rate cut before 2027?","endDate":"2027-01-01T04:59:00Z","markets":[{"question":"e","slug":"e","outcomePrices":"[\"0.02\", \"0.98\"]"}]}]"""
+        val g = Feeds.parse("polymarket_events", body, opt("""{"match":"how many fed rate cuts"}"""))
+        assertEquals(listOf("0 (0 bps)", "1 (25 bps)"), g.points.map { it.label })
+        assertEquals(listOf(70.0, 30.0), g.points.map { it.value })
+    }
+
     @Test fun secSubmissionsGiveTheProfileAndLinkedFilingsOfTheDeclaredForms() {
         val body = """{"cik":"0000320193","name":"Apple Inc.","tickers":["AAPL"],"exchanges":["Nasdaq"],"sicDescription":"Electronic Computers","fiscalYearEnd":"0926",
             "filings":{"recent":{"accessionNumber":["0001140361-26-041201","0000320193-26-000020"],"filingDate":["2026-10-29","2026-07-31"],"form":["4","10-Q"],
