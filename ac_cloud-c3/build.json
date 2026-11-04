@@ -352,7 +352,7 @@
           },
           {
             "id": "capital",
-            "label": "Capital area",
+            "label": "Capital",
             "icon": "ic_p_c3_stack",
             "pages": [
               {"id": "capital_topology", "label": "Topology", "icon": "ic_p_c3_stack"},
@@ -361,7 +361,7 @@
           },
           {
             "id": "hardtech",
-            "label": "Hardtech area",
+            "label": "Hardtech",
             "icon": "ic_p_c3_stack",
             "pages": [
               {"id": "hardtech_topology", "label": "Topology", "icon": "ic_p_c3_stack"},
@@ -370,7 +370,7 @@
           },
           {
             "id": "cloud_me",
-            "label": "My cloud",
+            "label": "Cloud-me",
             "icon": "ic_p_c3_stack",
             "pages": [
               {"id": "cloud_me_topology", "label": "Topology", "icon": "ic_p_c3_stack"},

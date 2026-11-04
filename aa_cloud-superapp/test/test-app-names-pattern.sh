@@ -147,11 +147,21 @@ def word_ends(text):
     for word in re.findall(r"[a-z0-9]+", text.lower()):
         n += len(word); ends.add(n)
     return ends
+# A project/area tab is not an application: a page whose id AND label are one project declared in the app's own
+# data/container_projects.json (the owner's tabs All | Cloudy | CG | Capital | Hardtech | Cloud-me) names a project.
+# The exemption is exact (same id, same label, same app); any other caption still has to clear the sweep.
+project_tabs = {}
+for directory in build_files:
+    cp_path = os.path.join(root, directory, "data", "container_projects.json")
+    if os.path.isfile(cp_path):
+        project_tabs[directory] = {(p["id"], p["label"]) for p in json.load(open(cp_path)).get("projects", [])}
 for directory, data in sorted(build_files.items()):
     for path, node in walk(data):
         for key in ("label", "title", "name", "--with-app-name"):
             value = node.get(key)
             if not isinstance(value, str) or PATTERN.match(value) or value in display_names:
+                continue
+            if key == "label" and (node.get("id"), value) in project_tabs.get(directory, ()):
                 continue
             flat = normalise(value)
             if len(flat) <= len("cloud") + 1:

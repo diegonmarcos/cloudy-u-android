@@ -75,7 +75,7 @@ for p in cont:
     if got != want: bad.append("Containers page %r nests %s, not the Topology | Table switch %s" % (p["id"], got, want))
     labels = [q["label"] for q in p.get("pages") or []]
     if labels != ["Topology", "Table"]: bad.append("Containers page %r labels its switch %s" % (p["id"], labels))
-if [p["label"] for p in cont] != ["All", "Cloudy", "CG", "Capital area", "Hardtech area", "My cloud"]:
+if [p["label"] for p in cont] != ["All", "Cloudy", "CG", "Capital", "Hardtech", "Cloud-me"]:
     bad.append("the Containers strip reads %s" % [p["label"] for p in cont])
 ops = [p["id"] for p in secs["ops"]["pages"]]
 if "agents" not in ops: bad.append("Agents is not an Ops page")
