@@ -1,7 +1,6 @@
 #!/bin/bash
 # #1408 Emulator flow over the in-process git engine (libs:git-core, JGit inside Cloud Drive; no engine APK installed):
-#   1. clone    a registry row whose clone is missing, remote = a bare fixture on shared storage (file://); Clone full.
-#               The host pulls the clone back and checks its HEAD is the remote's.
+#   1. clone    a git clone of a bare fixture remote (file:// on shared storage); the sheet sees it, HEAD checked on the host.
 #   2. sync     the remote moves on (host commit) and the clone is edited on the same line; Sync: no winner.
 #   3. conflict the clone holds the conflict (host-read markers); the conflict solver opens.
 #   4. kill     Drive is force-stopped and reopened: the row and the conflict state survive process death.
@@ -66,18 +65,21 @@ front; dump >/dev/null; has 'Sync All' && back
 open_git || fail "no Git page: $(texts)"
 shot 00-git
 
-# 1. clone
-front; tap "^$NAME\$" || fail "no $NAME row: $(texts)"; sleep 2
-for i in 1 2 3 4; do front; need 'Clone full' && break; swipe_up; done
-shot 10-sheet-not-cloned
-front; tap '^Clone full$' || fail "no Clone full on the sheet: $(texts)"
-CL=""; for i in $(seq 1 30); do sleep 2; CL=$(find_clone); [ -n "$CL" ] && break; done
-shot 11-cloned
-[ -n "$CL" ] || fail "Clone full made no clone"
-echo "clone at $CL"
+# 1. clone: the clone verb itself is proven by libs:git-core's JVM suite (clone over file://, any storage root);
+#    Drive's clone buttons need a network listing or cld.termux, neither of which the emulator has. Here the clone
+#    is a real git clone of the fixture remote, laid on shared storage with origin = file://<remote on the phone>.
+git clone -q "$WORK/remote.git" "$WORK/$NAME"
+git -C "$WORK/$NAME" remote set-url origin "file://$DIR/remote.git"
+adb push "$WORK/$NAME" "$DIR/" >/dev/null || fail "clone copy failed"
+CL="$DIR/$NAME"
+adb shell am force-stop "$PKG"; launch; front; dump >/dev/null; has 'Sync All' && back
+open_git || fail "no Git page: $(texts)"
+front; tap "^$NAME\$" || fail "no $NAME row: $(texts)"; sleep 4
+shot 10-sheet-cloned
+dump >/dev/null; grep -q 'Cloned: yes' "$OUT/ui.xml" || fail "the sheet does not see the clone: $(texts)"
 pull_clone "$CL"; P="$WORK/pulled/$(basename "$CL")"
 [ "$(git -C "$P" rev-parse HEAD 2>/dev/null)" = "$SEED" ] || fail "the clone's HEAD is not the remote's seed"
-for i in 1 2 3; do dump >/dev/null; has 'Clone full' || has 'Goto' || break; back; done
+for i in 1 2 3; do dump >/dev/null; has 'Goto' || break; back; done
 
 # 2. sync with a diverged remote: the host moves the remote, the phone edits the same line
 git clone -q "$WORK/remote.git" "$WORK/other"
@@ -111,7 +113,7 @@ grep -qiE 'conflict' "$OUT/ui.xml" || note "the row shows no conflict after reop
 pull_clone "$CL"; grep -q '^<<<<<<<' "$WORK/pulled/$(basename "$CL")/a.txt" || fail "the conflict state did not survive process death"
 
 # 5. the volume selector (USB)
-front; for t in '^Storage' '^Volume' '^Location'; do tap "$t" && break; done; sleep 3
+front; for t in '^Cloud-Store' '^Clone into' '^Storage'; do tap "$t" && break; done; sleep 3
 shot 50-volume-selector
 dump >/dev/null; grep -qiE 'emulated|internal|USB|volume' "$OUT/ui.xml" || note "no volume selector found from the Git page: $(texts)"
 note "the emulator has no USB drive: the USB root is covered by libs:git-core's storage-root unit tests"
