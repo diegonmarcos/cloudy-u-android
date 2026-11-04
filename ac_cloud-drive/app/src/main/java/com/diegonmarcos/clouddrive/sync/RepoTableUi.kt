@@ -61,6 +61,7 @@ internal fun RepoStatusCell(icons: RepoStatus.Icons, name: String, onOpen: () ->
     val decl = Declarations.sync.git.status.icons
     val ctx = androidx.compose.ui.platform.LocalContext.current
     com.diegonmarcos.cloudlib.gitui.RepoStatusCell(onOpen, caption, dots = {
+        @Composable
         fun light(l: StatusLight.State, what: String, word: String) {
             val (glyph, ink) = when (l) {
                 StatusLight.State.ON -> "\u2713" to KitStoreRow.UP
