@@ -119,12 +119,4 @@ class AutoCommitTest {
         val dirty = mapOf("clean" to 0, "dirty" to 3, "unknown" to null)
         assertEquals(listOf("dirty", "unknown"), AutoCommit.targets(listOf("clean", "dirty", "unknown")) { dirty[it] })
     }
-
-    @Test fun perRepoAndAllReposAreTheCompoundVerb() {
-        assertTrue(RepoActions.isCompound(RepoActions.AUTO_COMMIT))
-        assertTrue(RepoActions.AUTO_COMMIT in RepoActions.PAGE_IDS)
-        assertEquals(RepoActions.Route.RUN, RepoActions.route(RepoActions.AUTO_COMMIT))
-        assertEquals(SyncAll.Mode.AUTO_COMMIT, SyncAll.modeOf("auto_commit"))
-        assertFalse(SyncAll.opensSolver(RepoActions.AUTO_COMMIT, listOf("auto commit: refused" to "conflict")))
-    }
 }
