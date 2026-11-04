@@ -44,13 +44,14 @@ tap_text() {  # tap_text SUBSTRING: tap the first node whose text contains it
     [ -n "$xy" ] && $T adb shell input tap $xy
 }
 $T adb shell settings delete global cloud_nav_ui_mode
+ewh=$($T adb shell wm size | tr -d '\r' | sed 's/.*: //'); EW=${ewh%x*}; EH=${ewh#*x}
 for t in work roadmap geo endurance growth community by30 by40 by50; do
     open_page "$ME" "page:experiences/$t"; shot "me-exp-$t-done" 5
-    $T adb shell input swipe 540 1700 540 500 600; shot "me-exp-$t-done-scrolled" 2
+    $T adb shell input swipe $((EW/2)) $((EH*70/100)) $((EW/2)) $((EH*25/100)) 600; shot "me-exp-$t-done-scrolled" 2
     open_page "$ME" "page:experiences/$t"; sleep 5
     # the Done | Planned switch sits below the fold on Geo and the By tabs: scroll until its label is on screen
-    hit=0; for i in 1 2 3 4; do tap_text "Planned (" && { hit=1; break; }; $T adb shell input swipe 540 1500 540 900 400; sleep 1; done
-    if [ "$hit" = 1 ]; then shot "me-exp-$t-plan" 2; $T adb shell input swipe 540 1700 540 500 600; shot "me-exp-$t-plan-scrolled" 2
+    hit=0; for i in 1 2 3 4; do tap_text "Planned (" && { hit=1; break; }; $T adb shell input swipe $((EW/2)) $((EH*60/100)) $((EW/2)) $((EH*35/100)) 400; sleep 1; done
+    if [ "$hit" = 1 ]; then shot "me-exp-$t-plan" 2; $T adb shell input swipe $((EW/2)) $((EH*70/100)) $((EW/2)) $((EH*25/100)) 600; shot "me-exp-$t-plan-scrolled" 2
     else echo "no Planned segment on experiences/$t"; rc=1; fi
 done
 
