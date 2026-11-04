@@ -5,7 +5,7 @@
 set -u
 APK="$1"; OUT="$2"; mkdir -p "$OUT"
 PKG=com.diegonmarcos.capitalfinterm
-DASHES="${FT_DASHES:-world_bonds fx yields_matrix bonds_market eq_dm_us eq_em world_equity_indices commodities mp_60_40 mp_70_30_DM_EM}"
+DASHES="${FT_DASHES:-world_bonds fx yields_matrix bonds_market eq_dm_us eq_em world_equity_indices commodities mp_60_40 mp_70_30_DM_EM pm_d1_em_bonds pm_d0_carry pm_a1_cash}"
 # #1399 each section's Homepage (a section id opens it), the one-row sub-page nav scrolled sideways, and the removed Market Monitor's deep link (redirects to the FI Homepage)
 HOMES="${FT_HOMES:-fi eq ex nw pm my-pm}"
 adb install -r -g "$APK" || exit 1

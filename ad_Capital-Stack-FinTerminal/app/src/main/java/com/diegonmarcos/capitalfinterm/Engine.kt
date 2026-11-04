@@ -27,6 +27,10 @@ data class PanelData(
     val details: List<String> = emptyList(),
     /** Per row, recent values (oldest first) for a sparkline; empty when the source gives no history. */
     val spark: List<List<Double>> = emptyList(),
+    /** Per cell, a tint -1 (red) .. +1 (green) or null (none), shaped like [rows]; empty when the table has none (the EM Bonds calculator, #1447). */
+    val heat: List<List<Float?>> = emptyList(),
+    /** (row, column) pairs drawn bold (the calculator's centre). */
+    val bold: List<Pair<Int, Int>> = emptyList(),
 )
 
 /** What a model panel (Feeds.kt) needs besides its own source: the catalog (fallback routes), its dashboard, the container route, the user's lists and now (UTC). */

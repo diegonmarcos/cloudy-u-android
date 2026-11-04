@@ -34,6 +34,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -60,6 +61,9 @@ fun FinTable(
     width: Dp,
     limit: Int = 8,
     details: List<String> = emptyList(),
+    /** Per-cell tints -1 (red) .. +1 (green) shaped like [rows] and the bold (row, column) cells: the EM Bonds calculator's heat map (#1447); a heat table is not sortable. */
+    heat: List<List<Float?>> = emptyList(),
+    bold: List<Pair<Int, Int>> = emptyList(),
     onOpen: (String) -> Unit,
 ) {
     val p = LocalFinPalette.current
@@ -86,7 +90,7 @@ fun FinTable(
         val t = types[i]
         val right = t != Col.TEXT && t != Col.LINK
         Row(
-            Modifier.width(w).fillMaxHeight().clickable {
+            Modifier.width(w).fillMaxHeight().clickable(enabled = heat.isEmpty()) {
                 if (sortCol != i) { sortCol = i; sortStep = 1 } else sortStep = (sortStep + 1) % 3
             }.padding(horizontal = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -108,6 +112,13 @@ fun FinTable(
         val t = types[i]
         val link = links.getOrNull(r).orEmpty()
         val mod = Modifier.width(w).padding(horizontal = 8.dp)
+        if (heat.isNotEmpty()) {
+            val tint = heat.getOrNull(r)?.getOrNull(i)
+            val fill = if (tint == null) Color.Transparent else lerp(p.surfaceRaised, if (tint > 0) p.up else p.down, FinLogic.HEAT_MAX_BLEND * kotlin.math.abs(tint))
+            val st = if ((r to i) in bold) FinType.num.copy(fontWeight = FontWeight.Bold) else FinType.num
+            Box(mod.background(fill)) { Text(FinLogic.cell(raw), Modifier.fillMaxWidth(), color = if (FinLogic.missing(raw)) p.text3 else p.text, style = st, textAlign = TextAlign.End, maxLines = 1, softWrap = false) }
+            return
+        }
         when {
             i == 0 && link.isNotEmpty() -> Text(FinLogic.cell(raw), mod, color = p.accent, style = FinType.body.copy(fontSize = 12.sp), maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
             t == Col.TEXT || t == Col.LINK -> Text(FinLogic.cell(raw), mod, color = if (FinLogic.missing(raw)) p.text3 else p.text,

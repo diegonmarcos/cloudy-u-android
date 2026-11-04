@@ -164,6 +164,13 @@
           "entries": [
             "Central Bank Calendar"
           ]
+        },
+        {
+          "tab": "pm",
+          "entries": [
+            "D1 EM Bonds",
+            "D0 EM Carry Trade"
+          ]
         }
       ],
       "priority": 10,
@@ -920,6 +927,13 @@
           "tab": "ex",
           "entries": [
             "FX"
+          ]
+        },
+        {
+          "tab": "pm",
+          "entries": [
+            "D1 EM Bonds",
+            "D0 EM Carry Trade"
           ]
         }
       ],

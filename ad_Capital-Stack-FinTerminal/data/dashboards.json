@@ -1,6 +1,6 @@
 {
   "_doc": "THE DASHBOARDS of Capital-Stack-FinTerminal (#1335): one per FinTerm entry (build.json::ui.stacks, kind dashboard, `dashboard` = the id here). A panel names its `source` (an id of data/sources.json whose `feeds` lists this entry) and EITHER a `fetch` (a live connector: the key-free sources) OR a `placeholder` ({reason, note}: drawn as one 48dp key row while the source needs a key / has no connector yet, 'Add your key in Config > Sources'; UI spec 2). UI declarations (UI spec 6.3): dashboard `default` (the tab opens on it) and `search` (a search field on top); panel `display` (kpi | rows | heat | watch), `tape` (its quotes feed the ticker tape), `spread` ({label, of: [a, b]}: a derived KPI tile in bp), `heat_scale`, `segment_of` / `segment_label` (drawn as a source chip of another panel's card), `refresh_s`, `col_types`, `limit`. Providers and derivations are named here and implemented in Kotlin (Providers.kt, Derive.kt); no address is typed anywhere but data/sources.json (endpoint) because a request is endpoint + path + params. Read by Dashboards.kt and by test/test-finterm-sources.sh.",
-  "_doc_fetch": "provider: fred_series (one request per series: id + cosd = today - lookback_days), dbnomics_series (path + params; params.dimensions is JSON-encoded), imf_datamapper (path, params; countries filters the answer), worldbank_indicator (path with {countries} joined by ';'), gdelt_artlist (path + params). derive: how the parsed data becomes rows/chart: latest_curve, forward_grid, latest_per_series, imf_latest, worldbank_latest, level_change, fx_spot, fx_cross, articles. view: curve (line chart), bars (bar chart + table), table, news, alloc (model portfolio legs). fallback (fred_series): {source} names the second-priority public source, tried series by series after the primary and the panel's own source returned nothing; a series carries its code there as `dbnomics` (\"<provider>/<dataset>/<series>\", read at endpoint + /series/<code>); a series with no code has no second source.",
+  "_doc_fetch": "provider: fred_series (one request per series: id + cosd = today - lookback_days), dbnomics_series (path + params; params.dimensions is JSON-encoded), imf_datamapper (path, params; countries filters the answer), worldbank_indicator (path with {countries} joined by ';'), gdelt_artlist (path + params). derive: how the parsed data becomes rows/chart: latest_curve, forward_grid, latest_per_series, imf_latest, worldbank_latest, level_change, fx_spot, fx_cross, articles. view: curve (line chart), bars (bar chart + table), table, news, alloc (model portfolio legs). fallback (fred_series): {source} names the second-priority public source, tried series by series after the primary and the panel's own source returned nothing; a series carries its code there as `dbnomics` (\"<provider>/<dataset>/<series>\", read at endpoint + /series/<code>); a series with no code has no second source. em_calc / em_carry (#1447): the PM > D1 EM Bonds calculator (a heat-map matrix: fetch.part matrix | inputs) and D0 EM Carry Trade; fetch.inputs holds NAV (EUR), CG tax, exchange spread, FX and yield steps, centre (now | ma7), centre diff and the display rounding (0 = exact); fetch.high_a3 / fund_a3 / infl_a3 name the OECD series countries.",
   "dashboards": [
     {
       "id": "yield_curves",
@@ -2850,6 +2850,291 @@
         }
       ],
       "default": true
+    },
+    {
+      "id": "pm_a1_cash",
+      "entry": "A1 Cash (DM - Cash)",
+      "tab": "pm",
+      "model_portfolio": {
+        "legs": [
+          [
+            "EUR short-term sovereign bonds (DXY 57.6%)",
+            58
+          ],
+          [
+            "JPY short-term sovereign bonds (DXY 13.6%)",
+            14
+          ],
+          [
+            "GBP short-term sovereign bonds (DXY 11.9%)",
+            12
+          ],
+          [
+            "CAD short-term sovereign bonds (DXY 9.1%)",
+            9
+          ],
+          [
+            "SEK short-term sovereign bonds (DXY 4.2%)",
+            4
+          ],
+          [
+            "CHF short-term sovereign bonds (DXY 3.6%)",
+            3
+          ]
+        ]
+      },
+      "panels": [
+        {
+          "id": "alloc",
+          "title": "Allocation: short-term sovereign bonds, each currency at its USD Dollar Index weight",
+          "source": "fincept_data_api",
+          "view": "alloc"
+        }
+      ]
+    },
+    {
+      "id": "pm_a2_low",
+      "entry": "A2 Low Risk",
+      "tab": "pm",
+      "model_portfolio": {
+        "legs": [
+          [
+            "DM Equity",
+            30
+          ],
+          [
+            "DM Bonds",
+            70
+          ],
+          [
+            "EM Equity",
+            0
+          ],
+          [
+            "EM Bonds",
+            0
+          ]
+        ]
+      },
+      "panels": [
+        {
+          "id": "alloc",
+          "title": "Allocation: DM (equity 30 / bonds 70), EM (equity 0 / bonds 0)",
+          "source": "fincept_data_api",
+          "view": "alloc"
+        }
+      ]
+    },
+    {
+      "id": "pm_b1_mid",
+      "entry": "B1 Middle Risk",
+      "tab": "pm",
+      "model_portfolio": {
+        "legs": [
+          [
+            "DM Equity",
+            40
+          ],
+          [
+            "DM Bonds",
+            40
+          ],
+          [
+            "EM Equity",
+            10
+          ],
+          [
+            "EM Bonds",
+            10
+          ]
+        ]
+      },
+      "panels": [
+        {
+          "id": "alloc",
+          "title": "Allocation (placeholder tier): DM 40 / 40, EM 10 / 10",
+          "source": "fincept_data_api",
+          "view": "alloc"
+        }
+      ]
+    },
+    {
+      "id": "pm_c1_risky",
+      "entry": "C1 Risky",
+      "tab": "pm",
+      "model_portfolio": {
+        "legs": [
+          [
+            "DM Equity",
+            50
+          ],
+          [
+            "DM Bonds",
+            10
+          ],
+          [
+            "EM Equity",
+            30
+          ],
+          [
+            "EM Bonds",
+            10
+          ]
+        ]
+      },
+      "panels": [
+        {
+          "id": "alloc",
+          "title": "Allocation (placeholder tier): DM 50 / 10, EM 30 / 10",
+          "source": "fincept_data_api",
+          "view": "alloc"
+        }
+      ]
+    },
+    {
+      "id": "pm_d1_em_bonds",
+      "entry": "D1 EM Bonds",
+      "tab": "pm",
+      "model_portfolio": {
+        "legs": [
+          [
+            "DM",
+            0
+          ],
+          [
+            "EM Equity",
+            0
+          ],
+          [
+            "EM Bonds",
+            100
+          ]
+        ]
+      },
+      "panels": [
+        {
+          "id": "alloc",
+          "title": "Allocation: DM 0, EM equity 0 / bonds 100",
+          "source": "fincept_data_api",
+          "view": "alloc"
+        },
+        {
+          "id": "calc",
+          "title": "EM Bonds CALCULATOR: return after inflation and taxes (EUR MoM)",
+          "source": "dbnomics",
+          "view": "table",
+          "derive": "em_calc",
+          "fetch": {
+            "provider": "dbnomics_series",
+            "path": "/series",
+            "fx_source": "frankfurter",
+            "oecd_source": "dbnomics",
+            "oecd": {
+              "path": "/series",
+              "prefix": "OECD/DSD_KEI@DF_KEI/",
+              "suffix": ".M.IRLT.PA._Z._Z._Z",
+              "cpi_suffix": ".M.CP.IX._Z._Z._Z"
+            },
+            "high_a3": "BRA",
+            "fund_a3": "DEU",
+            "infl_a3": "DEU",
+            "part": "matrix",
+            "inputs": {
+              "nav_eur": 200000,
+              "cg": 0.17,
+              "spread": 0.02,
+              "exch_step": 0.05,
+              "yield_step": 0.0075,
+              "center": "now",
+              "center_diff": 0,
+              "round": 250,
+              "n": 3
+            }
+          }
+        },
+        {
+          "id": "inputs",
+          "title": "Calculator inputs",
+          "source": "dbnomics",
+          "view": "table",
+          "derive": "em_calc",
+          "columns": [
+            "Input",
+            "Value"
+          ],
+          "fetch": {
+            "provider": "dbnomics_series",
+            "path": "/series",
+            "fx_source": "frankfurter",
+            "oecd_source": "dbnomics",
+            "oecd": {
+              "path": "/series",
+              "prefix": "OECD/DSD_KEI@DF_KEI/",
+              "suffix": ".M.IRLT.PA._Z._Z._Z",
+              "cpi_suffix": ".M.CP.IX._Z._Z._Z"
+            },
+            "high_a3": "BRA",
+            "fund_a3": "DEU",
+            "infl_a3": "DEU",
+            "part": "inputs",
+            "inputs": {
+              "nav_eur": 200000,
+              "cg": 0.17,
+              "spread": 0.02,
+              "exch_step": 0.05,
+              "yield_step": 0.0075,
+              "center": "now",
+              "center_diff": 0,
+              "round": 250,
+              "n": 3
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "pm_d0_carry",
+      "entry": "D0 EM Carry Trade",
+      "tab": "pm",
+      "panels": [
+        {
+          "id": "carry",
+          "title": "EM Carry Trade: EUR funding against BRL",
+          "source": "dbnomics",
+          "view": "table",
+          "derive": "em_carry",
+          "columns": [
+            "Metric",
+            "Value"
+          ],
+          "fetch": {
+            "provider": "dbnomics_series",
+            "path": "/series",
+            "fx_source": "frankfurter",
+            "oecd_source": "dbnomics",
+            "oecd": {
+              "path": "/series",
+              "prefix": "OECD/DSD_KEI@DF_KEI/",
+              "suffix": ".M.IRLT.PA._Z._Z._Z",
+              "cpi_suffix": ".M.CP.IX._Z._Z._Z"
+            },
+            "high_a3": "BRA",
+            "fund_a3": "DEU",
+            "infl_a3": "DEU",
+            "inputs": {
+              "nav_eur": 200000,
+              "cg": 0.17,
+              "spread": 0.02,
+              "exch_step": 0.05,
+              "yield_step": 0.0075,
+              "center": "now",
+              "center_diff": 0,
+              "round": 250,
+              "n": 3
+            }
+          }
+        }
+      ]
     },
     {
       "id": "mp_40_60",

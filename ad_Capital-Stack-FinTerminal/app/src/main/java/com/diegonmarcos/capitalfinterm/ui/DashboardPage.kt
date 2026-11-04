@@ -593,7 +593,7 @@ private fun PanelBody(
                         data.rows.mapIndexedNotNull { i, r -> FinFormat.parseNum(r.getOrNull(1))?.let { ChartPoint(r.getOrElse(0) { "" }, i.toDouble(), it) } }
                     }, panel.unit, panel.id)
                     Dashboards.VIEW_NEWS -> FinNewsList(panel.id, data.rows, data.links, panel.raw.optInt("limit", 8)) { openUrl(ctx, it) }
-                    else -> FinTable(panel.id, data.columns, data.rows, data.links, declaredTypes(panel), width, details = data.details) { openUrl(ctx, it) }
+                    else -> FinTable(panel.id, data.columns, data.rows, data.links, declaredTypes(panel), width, limit = if (data.heat.isEmpty()) 8 else data.rows.size, details = data.details, heat = data.heat, bold = data.bold) { openUrl(ctx, it) }
                 }
             }
         }

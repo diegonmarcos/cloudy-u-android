@@ -25,7 +25,7 @@ object Tables {
     const val FX_PPP = "fx_ppp"
     const val FX_MATRIX = "fx_matrix"
     const val G20_BONDS = "g20_bonds"
-    val DERIVES: Set<String> = setOf(PERFORMANCE, PORTFOLIO, MATRIX, EM_USD, WORLD_BONDS, RISK, FX_PPP, FX_MATRIX, G20_BONDS)
+    val DERIVES: Set<String> = setOf(PERFORMANCE, PORTFOLIO, MATRIX, EM_USD, WORLD_BONDS, RISK, FX_PPP, FX_MATRIX, G20_BONDS, EmCalc.CALC, EmCalc.CARRY)
 
     /** Extra (non-return) columns a performance table may declare after the return columns. */
     const val COL_VOL = "Vol 1Y"
@@ -60,6 +60,7 @@ object Tables {
         FX_PPP -> fxPpp(panel, f, http, today, c)
         FX_MATRIX -> fxMatrix(panel, f, http, today, c)
         G20_BONDS -> g20Bonds(panel, f, http, today, c)
+        EmCalc.CALC, EmCalc.CARRY -> EmCalc.panel(panel, f, http, today, c)
         WORLD_BONDS -> spreads(load(panel.copy(derive = MATRIX), source, f, http, today, c), f)
         else -> throw IOException("unknown derive ${panel.derive}")
     }
