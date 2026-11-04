@@ -159,7 +159,10 @@ if [ -z "$CLONED" ]; then
 else
   echo "cloned onto the drive: $CLONED" >> "$OUT/notes.txt"
 fi
-tap '^Me$' >/dev/null 2>&1; pick 'Cloud-Store \(Termux\)'; pick 'External Drive'
+for i in 1 2 3; do tap '^Me$' >/dev/null 2>&1; sleep 3; dump >/dev/null; grep -q 'text="Cloud Drive / Git / Me"' "$OUT/ui.xml" && break; done
+grep -q 'text="Cloud Drive / Git / Me"' "$OUT/ui.xml" || fail "the Me page did not open: $(texts)"
+for i in 1 2 3; do pick 'External Drive'; dump >/dev/null; grep -qE 'text="External Drive( ▾)?"|content-desc="External Drive"' "$OUT/ui.xml" && ! grep -q 'text="Cloud-Store (Termux) ▾"' "$OUT/ui.xml" && break; done
+grep -q 'text="Cloud-Store (Termux) ▾"' "$OUT/ui.xml" && fail "External Drive was not selected: $(texts)"
 shot 45-drive-listed
 dump >/dev/null; texts > "$OUT/drive-texts.txt"
 tap '^Check$' && sleep 8 && shot 46-drive-checked || note "Check not tappable: $(texts)"
