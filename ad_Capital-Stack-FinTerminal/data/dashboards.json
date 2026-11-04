@@ -1640,6 +1640,69 @@
             "10Y"
           ],
           "unit": "%"
+        },
+        {
+          "id": "screener",
+          "title": "Equity screener: 12 US mega-caps ranked by performance (price return, USD; tap a column to sort)",
+          "source": "cboe",
+          "view": "table",
+          "derive": "performance",
+          "fetch": {
+            "provider": "cboe_quotes",
+            "path": "/charts/historical/{each}.json",
+            "last": 100000,
+            "each": [
+              "AAPL",
+              "MSFT",
+              "NVDA",
+              "AMZN",
+              "GOOGL",
+              "META",
+              "BRK.B",
+              "JPM",
+              "XOM",
+              "UNH",
+              "LLY",
+              "TSLA"
+            ],
+            "labels": {
+              "AAPL": "AAPL Apple",
+              "MSFT": "MSFT Microsoft",
+              "NVDA": "NVDA Nvidia",
+              "AMZN": "AMZN Amazon",
+              "GOOGL": "GOOGL Alphabet",
+              "META": "META Meta",
+              "BRK.B": "BRK.B Berkshire B",
+              "JPM": "JPM JPMorgan",
+              "XOM": "XOM Exxon",
+              "UNH": "UNH UnitedHealth",
+              "LLY": "LLY Eli Lilly",
+              "TSLA": "TSLA Tesla"
+            },
+            "primary": {
+              "source": "cloud_fincept",
+              "api": "/v1/history",
+              "params": {
+                "symbol": "{each}",
+                "interval": "1d",
+                "range": "max"
+              },
+              "parse": "finterm_v1"
+            }
+          },
+          "columns": [
+            "Name",
+            "Last",
+            "WTD",
+            "MTD",
+            "YTD",
+            "1M",
+            "3M",
+            "1Y",
+            "3Y",
+            "10Y"
+          ],
+          "unit": "%"
         }
       ]
     },
