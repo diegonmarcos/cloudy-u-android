@@ -2,7 +2,7 @@
 # ac_cloud-notes tester (#1369): Cloud Notes wears Obsidian's UI. No build, no device. Three claims, each assertion
 # proven red by its own mutation (a copy of the file under test is mutated in a temp dir; the real tree is never touched):
 #   T  token mapping  the generated sheet and native tokens equal data/obsidian-theme.json, carry Obsidian's reference values
-#                     (docs.obsidian.md CSS variables), and every AFFiNE variable the app paints with points at its Obsidian name
+#                     (docs.obsidian.md CSS variables), and every legacy variable the app paints with points at its Obsidian name
 #   A  actions        build.json declares nav_ui.actions = drawer, the lib draws the drawer's AppActions row from every launch
 #                     page and filters launch pages out of the strips; the bottom nav holds sections only
 #   S  theme switch   light and dark blocks both exist; the web half's resolved theme reaches the native shell, which picks
@@ -52,8 +52,8 @@ REF = {
              'text-faint': '#666666', 'interactive-accent': '#8a5cf5', 'background-modifier-border': '#333333', 'text-accent': '#a68af9',
              'color-red': '#fb464c', 'color-blue': '#027aff'},
 }
-# AFFiNE variables the editor, canvas and chrome paint with -> the Obsidian name they must wear.
-AFFINE = {
+# Legacy variables the editor, canvas and chrome paint with -> the Obsidian name they must wear.
+LEGACY = {
     'affine-v2-layer-background-primary': 'background-primary', 'affine-v2-layer-background-secondary': 'background-secondary',
     'affine-v2-text-primary': 'text-normal', 'affine-v2-text-secondary': 'text-muted', 'affine-v2-text-link': 'text-accent',
     'affine-v2-icon-activated': 'interactive-accent', 'affine-v2-button-primary': 'interactive-accent',
@@ -100,12 +100,12 @@ def chk_T_reference_values(p):
                 print('    %s %s = %r, Obsidian says %s' % (mode, k, resolve(None, k, mv), v)); return False
     return True
 
-def chk_T_affine_mapping(p):
+def chk_T_legacy_mapping(p):
     b = blocks(open(p['css']).read())
     for mode in ('light', 'dark'):
         mv = {**b.get('light', {}), **b.get(mode, {})}
-        for a, o in AFFINE.items():
-            for name in (a, 'cloud-notes-' + a[len('affine-'):]):  # the fork's components read the cloud-notes-* names
+        for a, o in LEGACY.items():
+            for name in (a, 'cloud-notes-' + a.split('-', 1)[1]):  # the fork's components read the cloud-notes-* names
                 if mv.get(name, '').strip() != 'var(--%s)' % o:
                     print('    %s --%s is %r, want var(--%s)' % (mode, name, mv.get(name), o)); return False
     return True
@@ -204,10 +204,10 @@ CHECKS = [
      [('data', '"accent": "#8a5cf5"', '"accent": "#8a5cf6"')]),
     ('T2 Obsidian reference values, light and dark', chk_T_reference_values,
      [('css', '--background-primary: #1c1c1c;', '--background-primary: #1e1f22;'), ('css', '--text-normal: #222222;', '--text-normal: #000000;')]),
-    ('T3 AFFiNE variables point at Obsidian names', chk_T_affine_mapping,
+    ('T3 legacy variables point at Obsidian names', chk_T_legacy_mapping,
      [('css', '--affine-v2-text-primary: var(--text-normal);', '--affine-v2-text-primary: var(--text-muted);'),
       ('css', '--cloud-notes-v2-button-primary: var(--interactive-accent);', '--cloud-notes-v2-button-primary: #1e96eb;')]),
-    ('T4 the Obsidian sheet loads after AFFiNE\'s', chk_T_sheet_loaded_last, [('index', "import './obsidian.gen.css';\n", '')]),
+    ('T4 the Obsidian sheet loads after the editor\'s', chk_T_sheet_loaded_last, [('index', "import './obsidian.gen.css';\n", '')]),
     ('T5 native tokens carry Obsidian colours', chk_T_native_tokens, [('kt', 'val interactiveAccent = Color(0xFF8A5CF5)', 'val interactiveAccent = Color(0xFF1E96FC)')]),
     ('T7 the native create button wears the Obsidian accent', chk_T_fab_accent,
      [('activity', 'ObsidianTokens.Light.interactiveAccent.toArgb()', 'ContextCompat.getColor(context, R.color.cloud_notes_primary)')]),

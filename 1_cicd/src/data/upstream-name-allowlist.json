@@ -107,7 +107,8 @@
       "id": "three-js-api",
       "category": "third-party",
       "paths": [
-        "ac_cloud-nav/app/src/main/assets/space/three.module.min.js"
+        "ac_cloud-nav/app/src/main/assets/space/three.module.min.js",
+        "ac_cloud-nav/app/src/main/assets/space/three.core.min.js"
       ],
       "patterns": [
         "determinantAffine"
@@ -153,6 +154,19 @@
         "(?i)'affine-icon'"
       ],
       "reason": "Doc icons chosen before the rename were stored with this type value; the renderer still reads it."
+    },
+    {
+      "id": "obsidian-theme-aliases",
+      "category": "persisted-format",
+      "paths": [
+        "ac_cloud-notes/data/obsidian-theme.json",
+        "ac_cloud-notes/packages/frontend/component/src/theme/obsidian.gen.css",
+        "ac_cloud-notes/test/test-obsidian-theme.sh"
+      ],
+      "patterns": [
+        "(?i)(?<![A-Za-z0-9])affine-[A-Za-z0-9-]+"
+      ],
+      "reason": "The Obsidian theme (#1369) points each variable under its old name at an Obsidian colour, beside the cloud-notes-* name the components read: documents written before the rename store colours as the old variable names (see legacy-color-aliases), so those names must keep resolving."
     },
     {
       "id": "legacy-color-aliases",

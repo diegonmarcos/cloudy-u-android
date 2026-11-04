@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """#1369 Cloud Notes theme generator: data/obsidian-theme.json -> the web sheet and the native tokens.
 
-  packages/frontend/component/src/theme/obsidian.gen.css   Obsidian's variables + every mapped AFFiNE variable, light and dark
+  packages/frontend/component/src/theme/obsidian.gen.css   Obsidian's variables + every mapped legacy variable, light and dark
   packages/frontend/apps/android/App/app/src/main/java/app/cloudnotes/pro/theme/ObsidianTokens.kt   the native colour schemes
 
 Usage: gen-obsidian-theme.py [--check] [--src <json>]. --check exits 1 when a generated file differs (test/test-obsidian-theme.sh).
@@ -63,7 +63,7 @@ def css_color(c):
 def gen_css(t):
     d = t.d
     ty = d['typography']
-    out = ['/* ' + HEADER + ' */', '/* Obsidian default theme (#1369): Obsidian names first, then every AFFiNE variable the app paints with, pointed at them. */']
+    out = ['/* ' + HEADER + ' */', '/* Obsidian default theme (#1369): Obsidian names first, then every legacy variable the app paints with, pointed at them. */']
     for mode in MODES:
         sel = ':root,\n[data-theme=light]' if mode == 'light' else '[data-theme=dark]'
         out.append(sel + ' {')
@@ -92,14 +92,14 @@ def gen_css(t):
                 out.append('  --%s-size: %sem;' % (k, ty[k]))
             for k, v in d['radius'].items():
                 out.append('  --%s: %dpx;' % (k, v))
-            for k, v in d['affine_typography'].items():
+            for k, v in d['legacy_typography'].items():
                 if not k.startswith('_'):
                     out.append('  --%s: var(--%s);' % (k, v))
-                    out.append('  --cloud-notes-%s: var(--%s);' % (k[len('affine-'):], v))
-        for k, v in d['affine'].items():
+                    out.append('  --cloud-notes-%s: var(--%s);' % (k.split('-', 1)[1], v))
+        for k, v in d['legacy_aliases'].items():
             if not k.startswith('_'):
                 out.append('  --%s: var(--%s);' % (k, v))
-                out.append('  --cloud-notes-%s: var(--%s);' % (k[len('affine-'):], v))
+                out.append('  --cloud-notes-%s: var(--%s);' % (k.split('-', 1)[1], v))
         out.append('}')
     out.append('body {\n  font-family: var(--font-interface);\n  background: var(--background-primary);\n  color: var(--text-normal);\n}')
     out.append('::selection {\n  background: var(--text-selection);\n}')

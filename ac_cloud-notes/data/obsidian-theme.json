@@ -1,5 +1,5 @@
 {
-  "_doc": "#1369 THE Cloud Notes theme: Obsidian's default theme, as data. base/accent/extended are Obsidian's documented CSS variables (docs.obsidian.md Reference > CSS variables > Foundations); semantic is the default theme's mapping (app.css 1.x) of Obsidian's names onto them; affine maps every AFFiNE variable the app paints with onto an Obsidian name, so the editor, canvas, sidebars and dialogs all wear Obsidian's colours. scripts/gen-obsidian-theme.py writes the web sheet (component/src/theme/obsidian.gen.css) and the native tokens (apps/android .../theme/ObsidianTokens.kt) from this file; test/test-obsidian-theme.sh fails on drift and proves each mapping red by mutation. A value is a hex, a ref (\"base-30\", \"accent\", \"red\") or \"<ref>@<alpha>\".",
+  "_doc": "#1369 THE Cloud Notes theme: Obsidian's default theme, as data. base/accent/extended are Obsidian's documented CSS variables (docs.obsidian.md Reference > CSS variables > Foundations); semantic is the default theme's mapping (app.css 1.x) of Obsidian's names onto them; legacy_aliases maps every variable the upstream editor paints with (its old names, which documents written before the rename still carry) onto an Obsidian name, so the editor, canvas, sidebars and dialogs all wear Obsidian's colours. scripts/gen-obsidian-theme.py writes the web sheet (component/src/theme/obsidian.gen.css) and the native tokens (apps/android .../theme/ObsidianTokens.kt) from this file; test/test-obsidian-theme.sh fails on drift and proves each mapping red by mutation. A value is a hex, a ref (\"base-30\", \"accent\", \"red\") or \"<ref>@<alpha>\".",
   "accent_hsl": [
     258,
     88,
@@ -206,8 +206,8 @@
       "dark": "accent@0.15"
     }
   },
-  "affine": {
-    "_doc": "AFFiNE variable (affine-* name) -> Obsidian semantic name. The fork's components read the same variables under the cloud-notes-* prefix (affine-* are aliases of them), so the generator writes every entry under both prefixes.",
+  "legacy_aliases": {
+    "_doc": "Old variable name -> Obsidian semantic name. The fork's components read the same variables under the cloud-notes-* prefix (the old names are aliases of them), so the generator writes every entry under both prefixes.",
     "affine-background-primary-color": "background-primary",
     "affine-background-secondary-color": "background-secondary",
     "affine-background-tertiary-color": "background-primary-alt",
@@ -302,8 +302,8 @@
     "radius-l": 12,
     "radius-xl": 16
   },
-  "affine_typography": {
-    "_doc": "AFFiNE typography variable -> Obsidian typography key.",
+  "legacy_typography": {
+    "_doc": "Old typography variable name -> Obsidian typography key.",
     "affine-font-family": "font-interface",
     "affine-font-mono-family": "font-monospace",
     "affine-font-code-family": "font-monospace"
