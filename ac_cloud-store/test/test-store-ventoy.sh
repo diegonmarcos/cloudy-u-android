@@ -68,7 +68,7 @@ need("VentoyRawInstall.WHY" in page and "VentoyRawInstall.AVAILABLE && drive != 
 py = open(os.path.join(A, "src/main/assets/ventoy-build.py")).read()
 need('"mkfs.exfat"' in py and 'startswith("https://")' in py and "/dev/" not in py.replace("never /dev/anything", ""), "V8 ventoy-build.py formats with mkfs.exfat, https only, touches no device node")
 rj = json.load(open(os.path.join(R, "ac_cloud-termux/rootfs/rootfs.json")))
-need("exfatprogs" in rj["apt_packages"] and "mkfs.exfat" in rj["binaries"] and "mkfs.exfat" in rj["smoke"], "V8 the Cloud Terminal rootfs declares exfatprogs, mkfs.exfat rostered and smoked")
+need("exfatprogs" in rj["apt_packages"] and "mkfs.exfat" in rj["binaries"], "V8 the Cloud Terminal rootfs declares exfatprogs, mkfs.exfat rostered (verify-inside runs it)")
 ri = src["VentoyRawInstall.kt"]
 need("StoreExec(ctx)" in ri and "exec.job(" in ri and "RawDiskWriter.open(" in ri and "fun install(armed: VentoyGate.Armed" in ri, "V8 VentoyRawInstall builds through StoreExec and writes with RawDiskWriter, only for an Armed token")
 need(re.search(r"VentoyGate\.arm\(d, typed, shown\)[^}]*rawInstall\(armed\)", page, re.S) is not None and len(re.findall(r"rawInstall\(", page)) == 2, "V8 the page reaches rawInstall only from the typed-confirm gate")
