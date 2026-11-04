@@ -1,6 +1,9 @@
 name: "Ship → Cloud Account APK (build + push to GHCR via ORAS + attach to GH Release)"
 
 on:
+  # ── MANAGED-REFRESH-TRIGGER (#836): fleet-refresh.yml dispatches this app ──
+  repository_dispatch:
+    types: [fleet-refresh-ac_cloud-account]
   workflow_dispatch:
     inputs:
       variant:
@@ -43,6 +46,7 @@ on:
       # app compiles is watched above: any change in it ships every consumer.
       # fleet-refresh.yml (schedule only) ships the app for a moved cross-app dir.
       #   input: "1_cicd/src/cicd/ship-cloud-account.yml"
+      #   input: "ac_cloud-me/data/profile/**"
       # ── end MANAGED-PATHS-HEADER ──
       - "ab_cloud-libs-shared/libs/account-ui/**"
       - "ab_cloud-libs-shared/libs/account/**"
@@ -77,7 +81,6 @@ on:
       - "ab_cloud-libs-shared/libs/web-core/**"
       - "ac_cloud-account/**"
       - "!ac_cloud-account/web/**"
-      - "ac_cloud-me/data/profile/**"   # #1445 the profile SoT Cloud Account mirrors
 permissions:
   contents: write
   packages: write

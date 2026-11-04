@@ -219,6 +219,7 @@ jobs:
           PKG=com.diegonmarcos.hardtechcad
           adb logcat -v threadtime "*:W" chromium:I CadHost:I > screens/logcat.txt 2>&1 &
           python3 walk.py "$PKG"; rc=$?
+          adb exec-out run-as $PKG cat cache/cad-snapshot-one-lilo.png > screens/boats-canvas-render.png || true
           adb logcat -d -s chromium:I CadHost:I | grep -iE "console|error|cad" | tail -80 > screens/console.txt || true
           adb shell ls -l /data/data/$PKG/cache/cad-models >> screens/package.txt 2>&1 || true
           adb shell dumpsys package "$PKG" | grep -E "versionName" >> screens/package.txt || true

@@ -1,3 +1,4 @@
+# ─── GENERATED: do not edit — edit 1_cicd/src/scripts/emulator-speedmeter.sh ───
 #!/usr/bin/env bash
 # emulator-speedmeter — #1446 screenshots on a booted emulator of the SuperApp's one-hand home with the speedmeter in the
 # top-left status strip: the home as it opens, then after a tap on the meter (the bounded download test).

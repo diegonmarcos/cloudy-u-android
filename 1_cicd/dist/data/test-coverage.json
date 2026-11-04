@@ -17,7 +17,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 217,
+      "unit_test_sources": 220,
       "workflow": "ship-cloud-superapp.yml"
     },
     "ab_cloud-libs-shared/keyboard-engines": {
@@ -67,11 +67,11 @@
     },
     "ac_cloud-account": {
       "first_test": "#867 NEW APP (the Account page split out of cloud-superapp). Has 1 shell tester (test-account-app.sh): the Account page comes from libs:account with no copy here; one package name and one OPEN action across SuperApp, build.json, manifest and the fleet manifest; the data provider is signature-gated, exported only by this app and only reads; the one-shot copy never overwrites a store SuperApp already holds; SuperApp's Account entry opens this app (extapp:cloud-account) - planted mutations each go red. NOT COVERED: the Account tabs themselves (libs:account and cloud-superapp's account testers cover them), and the copy on a real phone (fill Account in SuperApp, install Cloud Account, confirm configs, profile and the S/R/L files arrive once).",
-      "shell_testers": 13,
+      "shell_testers": 14,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 19,
+      "unit_test_sources": 20,
       "workflow": "ship-cloud-account.yml"
     },
     "ac_cloud-account/web": {
@@ -89,7 +89,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 57,
+      "unit_test_sources": 59,
       "workflow": "ship-cloud-browser.yml"
     },
     "ac_cloud-browser/web": {
@@ -103,11 +103,11 @@
     },
     "ac_cloud-c3": {
       "first_test": "#648 NEW APP, extracted from the SuperApp's C3 section. Its first tester is test/test-c3-shell.sh, which pins the chrome as DECLARED: build.json::ui.tabs is the ONE tab declaration and is diffed against C3Screens' dispatch in BOTH directions, so a declared tab with no screen and a screen with no declared tab are each a build failure - which is what makes 'no orphaned page' an ASSERTED property in an extraction rather than a hope. It also pins that the five tabs are Topology/Observ/Home/Apps/Configs in declared order with Home centre, that reordering the array reorders the nav and changes nothing else, that every declared icon name is in IconCatalog's vocabulary and every vocabulary entry is reachable, that the Apps tab LAUNCHES the three EXISTING sibling APKs (com.diegonmarcos.watchdog / .morpheus / .watchtower) through packages resolved against the device and declared in <queries> rather than re-implementing them as pages, that no Kotlin file holds a caption, colour, dp or sp literal, and that the four shared libs:bottomnav symbols are reused while cloud-mail's bottomNavItems table is NOT. Its second tester is test/test-c3-full-copy.sh (#648, owner-escalated full copy): the WHOLE SuperApp c3 surface is enumerated and 'lost nothing' is a TESTED property - the carried ui.sections[c3] block must hold every page id (visible, action and hidden), the five feed cards by source, the ntfy centre, the three container dashboards and both address cards; every declared panel kind and feed source must have a renderer arm in C3StackFragment; a source->dest copy manifest pins every carried artifact (Kotlin, layouts, drawables, data snapshots, the libs:ops module wiring) as present AND still carrying its content; every carried BuildConfig blob must actually be baked; and every stack tile target must resolve (anchor/extapp/page), so a dead tap is a red. STILL NOT COVERED: whether a tap actually lands in each of the three sibling APKs, and the live feeds' network behaviour - both need a device on the mesh. 2026-10-20 INFRA REWORK: the Infra section is five fleet pages (Providers, VMs, Storage, Electronics, Domains) over data/fleet_slice.json, which data/gen_fleet_slice.py derives from cloud-infra's own declarations. Its tester is test/test-c3-infra.sh (declaration == dispatch == screens; NO DB container under Infra; NO fleet fact spelled outside the slice; the slice baked and complete; the live half only through OpsClient; 13 mutations red) and its JVM suites are FleetModelTest (declaration to model, the live-answer parsers) and InfraScreensComposeTest (declaration to screen, one test per section). STILL NOT COVERED: the live reads against the real c3-infra-api (they need the Authelia bearer and the mesh).",
-      "shell_testers": 7,
+      "shell_testers": 8,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 16,
+      "unit_test_sources": 18,
       "workflow": "ship-cloud-c3.yml"
     },
     "ac_cloud-c3-webserver": {
@@ -206,7 +206,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 95,
+      "unit_test_sources": 97,
       "workflow": "ship-cloud-drive.yml"
     },
     "ac_cloud-drive/web": {
@@ -265,7 +265,7 @@
     },
     "ac_cloud-me": {
       "first_test": "HAD one tester that no workflow ever called. Now executed, plus a second: the release contract (release.variants[].gh_asset / gh_release.asset_name / phone_install.asset_name / artifact.debug) must name ONE file, or the ship publishes an asset the phone never downloads and every run stays green.",
-      "shell_testers": 13,
+      "shell_testers": 15,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
@@ -409,7 +409,7 @@
     },
     "ac_cloud-store": {
       "first_test": "#865 NEW APP (the Store split out of cloud-superapp). Has 1 shell tester (test-store-app.sh): the three Store pages come from libs:appstore with no copy here; Cloud Store claims the fleet pass; libs:appstore honours AppStoreHost.runsFleetPass at all four entry points (start, kick, checkNow, doWork); SuperApp hands the pass and its three Store pages to Cloud Store exactly when it is installed; one package name and one OPEN action across hand-off, build.json, manifest and the fleet manifest - 10 planted mutations each go red. NOT COVERED: the store pages themselves (libs:appstore and cloud-superapp's 91 store testers cover them), and the hand-off on a real phone (install Cloud Store, then confirm SuperApp's Store pages show the Open button and SuperApp's fleet pass stands down).",
-      "shell_testers": 21,
+      "shell_testers": 22,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
@@ -440,7 +440,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 8,
+      "unit_test_sources": 9,
       "workflow": "ship-cloud-tasks.yml"
     },
     "ac_cloud-termux": {
@@ -512,7 +512,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 8,
+      "unit_test_sources": 9,
       "workflow": "ship-cloud-writer.yml"
     },
     "ac_cloud-writer/web": {
@@ -539,7 +539,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 25,
+      "unit_test_sources": 26,
       "workflow": "ship-capital-stack-finterminal.yml"
     },
     "ad_Hardtech-CAD": {
