@@ -166,6 +166,7 @@ class VentoyDriveTest {
         assertNull(VentoyGate.arm(d.copy(sizeBytes = 0), "ERASE SanDisk", VentoyGate.prompt(d.copy(sizeBytes = 0))))
         // The token has no public constructor: the only door is arm().
         assertTrue(VentoyGate.Armed::class.java.declaredConstructors.filter { !it.isSynthetic }.none { java.lang.reflect.Modifier.isPublic(it.modifiers) })
-        assertFalse(VentoyRawInstall.AVAILABLE)
+        // #1444 the raw install exists now, and only this token reaches it (VentoyRawInstallTest.onlyAnArmedTokenReachesTheInstall).
+        assertTrue(VentoyRawInstall.AVAILABLE)
     }
 }

@@ -33,24 +33,3 @@ object VentoyGate {
         else -> Armed.of(d)
     }
 }
-
-/**
- * The raw Ventoy install (MBR/GPT layout, partition 1 exFAT data, partition 2 VTOYEFI, boot.img/core.img written
- * byte-exact through libaums). NOT AVAILABLE in this build, and the tab says so: Ventoy2Disk formats partition 1 as
- * exFAT with mkexfatfs, and Android has no exFAT formatter an app may call, while libaums writes FAT32 only; a layout
- * Ventoy did not write cannot be called byte-exact. The tab offers the documented fallback instead: detect an existing
- * Ventoy drive, Copy installer (the verified official release) and the Ventoy2Disk-on-a-PC steps.
- */
-object VentoyRawInstall {
-    const val AVAILABLE = false
-    const val WHY = "Installing Ventoy itself needs an exFAT format of partition 1, which Android cannot do from an app, " +
-        "so this build does not erase or partition drives. Use Copy installer, then run Ventoy2Disk on a PC."
-
-    sealed class Result {
-        data class Unsupported(val why: String) : Result()
-    }
-
-    /** The one entry point; it cannot be reached without [VentoyGate.arm]. */
-    @Suppress("UNUSED_PARAMETER")
-    fun install(armed: VentoyGate.Armed): Result = Result.Unsupported(WHY)
-}

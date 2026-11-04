@@ -126,7 +126,44 @@ GOT=$(adb shell "sha256sum '$ROOTV/ISO/ventoy-test.iso'" | tr -d '\r' | awk '{pr
 adb shell "ls -la '$ROOTV' '$ROOTV/ISO'" > "$OUT/drive-listing.txt" 2>&1
 adb shell "ls /sdcard/ISO" >/dev/null 2>&1 && fail "an ISO folder appeared on the phone's own storage"
 
+# ── #1444 the erase gate and the refusal. A vold virtual disk is not a USB device the Store can write raw, so the typed-confirm
+# gate must open, a wrong phrase must erase nothing, and the right phrase must be refused BEFORE any write, saying why; the
+# drive's files must be untouched. (The real install needs a USB mass-storage drive and cld.termux: CHECK ON THE PHONE.)
+for i in $(seq 1 60); do dump >/dev/null; has 'Ventoy on this drive' && break; down; sleep 1; done
+has 'Ventoy on this drive' || fail "no 'Ventoy on this drive' row: $(texts)"
+tap 'Ventoy on this drive'; sleep 2
+shot 09-install-row
+has 'Erase .*install Ventoy' || fail "the install row does not offer Erase & install Ventoy: $(texts)"
+has 'Cloud Terminal' || fail "the install row does not name the Cloud Terminal: $(texts)"
+tap '^Erase .*install Ventoy$' || fail "cannot tap Erase & install Ventoy"; sleep 2
+dump >/dev/null; shot 10-gate-dialog
+has 'ALL DATA WILL BE ERASED' || fail "the gate does not warn ALL DATA WILL BE ERASED: $(texts)"
+PHRASE=$(python3 -I -c '
+import html,re,sys
+x=open(sys.argv[1]).read()
+m=re.search(r"Type &quot;(ERASE [^&]*)&quot; to continue",x)
+print(html.unescape(m.group(1)) if m else "")' "$OUT/ui.xml")
+[ -n "$PHRASE" ] || fail "the gate shows no phrase to type: $(texts)"
+field() { dump >/dev/null; python3 -I -c '
+import re,sys
+x=open(sys.argv[1]).read()
+for n in re.findall(r"<node [^>]*>",x):
+    if "EditText" in n:
+        a=list(map(int,re.search(r"bounds=\"\[(\d+),(\d+)\]\[(\d+),(\d+)\]\"",n).groups())); print((a[0]+a[2])//2,(a[1]+a[3])//2); break' "$OUT/ui.xml" | { read -r px py && adb shell input tap "$px" "$py"; }; }
+field; sleep 1; adb shell input text "nope"; sleep 1
+tap '^Erase$' || fail "no Erase button in the gate"; sleep 3
+shot 11-gate-wrong-phrase
+dump >/dev/null; has 'Not confirmed: nothing was erased' || fail "a wrong phrase was not refused: $(texts)"
+for i in $(seq 1 20); do dump >/dev/null; has 'Erase .*install Ventoy' && break; up; sleep 1; done
+tap '^Erase .*install Ventoy$' || fail "cannot reopen the gate"; sleep 2
+field; sleep 1; adb shell input text "$(printf '%s' "$PHRASE" | sed 's/ /%s/g')"; sleep 1
+tap '^Erase$' || fail "no Erase button in the gate (2)"; sleep 8
+shot 12-gate-refused
+dump >/dev/null; has 'Nothing was erased: no USB mass-storage drive' || fail "the right phrase on a non-USB drive was not refused before any write: $(texts)"
+GOT=$(adb shell "sha256sum '$ROOTV/ISO/ventoy-test.iso'" | tr -d '\r' | awk '{print $1}')
+[ "$GOT" = "$SHA" ] || fail "the refused erase touched the drive: $ROOTV/ISO/ventoy-test.iso is now '$GOT'"
+
 adb logcat -d -v threadtime > "$OUT/logcat.txt"
 grep -A5 "FATAL EXCEPTION" "$OUT/logcat.txt" | grep -q "$PKG" && fail "Store crashed"
 adb shell sm set-virtual-disk false || true
-echo "Store Ventoy: tab after Tiny-ML, virtual drive picked and granted, four tables, test image installed ($SHA) on $ROOTV/ISO."
+echo "Store Ventoy: tab after Tiny-ML, virtual drive picked and granted, four tables as Apps-style rows, test image installed ($SHA) on $ROOTV/ISO, erase gate: wrong phrase refused, right phrase refused before any write on a non-USB drive."

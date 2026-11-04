@@ -22,14 +22,16 @@
     "diffutils",
     "rclone",
     "sshfs",
-    "fuse3"
+    "fuse3",
+    "exfatprogs"
   ],
-  "_doc_apt_packages": "Terminal-only additions, installed together with the shared apt_packages. git: the shared list counts it as a base-image binary of the AI containers, and debian slim does not carry it. fish: the default shell. zsh: baked and available, NOT the default (#470 follow-up). python3-venv: hermes is installed into its own virtual environment (pip_venvs below). python3: already pulled in by python3-venv, named so the roster can declare it (#737; this terminal's extra, not the shared toolset -- #665 keeps it out of the nix image). age: bookworm ships 1.1.1, the shared toolset's encryption tool. debianutils: provides `which`, which the toolset declares because the on-device checklist runs it. util-linux and diffutils: flock and cmp, which the toolset declares because linux-store (store.json::linux_tools) refuses to start without them; both are Essential in bookworm, named so the roster can declare them.",
+  "_doc_apt_packages": "Terminal-only additions, installed together with the shared apt_packages. git: the shared list counts it as a base-image binary of the AI containers, and debian slim does not carry it. fish: the default shell. zsh: baked and available, NOT the default (#470 follow-up). python3-venv: hermes is installed into its own virtual environment (pip_venvs below). python3: already pulled in by python3-venv, named so the roster can declare it (#737; this terminal's extra, not the shared toolset -- #665 keeps it out of the nix image). age: bookworm ships 1.1.1, the shared toolset's encryption tool. debianutils: provides `which`, which the toolset declares because the on-device checklist runs it. util-linux and diffutils: flock and cmp, which the toolset declares because linux-store (store.json::linux_tools) refuses to start without them; both are Essential in bookworm, named so the roster can declare them. exfatprogs (#1444): mkfs.exfat, which the Store's Ventoy tab runs here (assets/ventoy-build.py through CLOUD_EXEC) to format partition 1, because Android has no exFAT formatter an app may call.",
   "apt_provides": {
     "debianutils": ["which"],
     "util-linux": ["flock"],
     "diffutils": ["cmp"],
-    "fuse3": ["fusermount3"]
+    "fuse3": ["fusermount3"],
+    "exfatprogs": ["mkfs.exfat"]
   },
   "_doc_apt_provides": "Same meaning as the fleet tool belt's apt_provides (package -> binary names when they differ), for packages only this terminal installs. resolve.py merges both maps.",
   "tarballs": {
@@ -133,7 +135,8 @@
     "unison",
     "rclone",
     "sshfs",
-    "fusermount3"
+    "fusermount3",
+    "mkfs.exfat"
   ],
   "_doc_binaries": "This terminal's tools BEYOND ab_cloud-terminal-store/store.json::toolset (#737: fish, zsh, node, claude, gh, ... -- the set both terminals ship) and beyond the fleet tool belt's `binaries`. resolve.py merges all three into the roster install-in-rootfs.sh installs and command -v's and verify-rootfs.sh proves present, loadable (PT_INTERP inside the root) and executable under the shipped proot. A name repeated from either other list is refused.",
   "default_shell": "/usr/bin/fish",
@@ -194,6 +197,10 @@
     ],
     "ssh": [
       "ssh",
+      "-V"
+    ],
+    "mkfs.exfat": [
+      "mkfs.exfat",
       "-V"
     ]
   },

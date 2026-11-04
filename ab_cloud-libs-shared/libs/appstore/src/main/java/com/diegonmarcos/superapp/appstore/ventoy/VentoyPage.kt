@@ -8,21 +8,10 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.OpenableColumns
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -34,19 +23,20 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.fragment.app.Fragment
+import com.diegonmarcos.superapp.appstore.Ink
+import com.diegonmarcos.superapp.appstore.StoreCaption
+import com.diegonmarcos.superapp.appstore.StoreHeading
+import com.diegonmarcos.superapp.appstore.StoreQuick
+import com.diegonmarcos.superapp.appstore.StoreRow
+import com.diegonmarcos.superapp.appstore.StoreVerb
 import com.diegonmarcos.superapp.usbdrive.StorageVolumes
 import com.diegonmarcos.superapp.usbdrive.UsbVolumeModel
 import kotlin.concurrent.thread
 
 /**
- * #1405 Cloud Store > Cloud > Ventoy: pick a USB-C drive (libs:usb-drive), see whether it is a Ventoy drive, copy the
+ * #1405 Cloud Store > Cloud > Ventoy (#1444: rows are the Apps list's StoreRow; Erase & install Ventoy runs through the Cloud Terminal, see [VentoyRawInstall]): pick a USB-C drive (libs:usb-drive), see whether it is a Ventoy drive, copy the
  * verified Ventoy installer onto it, and install or remove images from the four tables (assets/appstore-ventoy.json).
  * Every write goes through [SafDriveFs] on the drive's own SAF grant and the [VentoyDrive] rules; nothing here
  * writes to the phone's own storage. Built by StoreCloudFragment, which registers the two activity results.
@@ -70,6 +60,7 @@ class VentoyPage(private val host: Fragment) {
     private val busy = mutableStateMapOf<String, String>()
     private val modes = mutableStateMapOf<String, VentoyDrive.Mode>()
     private val persistGb = mutableStateMapOf<String, Int>()
+    private val expanded = mutableStateMapOf<String, Boolean>()
 
     private val prefs by lazy { host.requireContext().getSharedPreferences("store_ventoy", Context.MODE_PRIVATE) }
 
@@ -180,8 +171,25 @@ class VentoyPage(private val host: Fragment) {
         }
     }
 
-    // ── UI ────────────────────────────────────────────────────────────────────────────────────────────────────────
-    @OptIn(ExperimentalLayoutApi::class)
+    // ── raw install (#1444) ───────────────────────────────────────────────────────────────────────────────────────
+    private fun rawInstall(armed: VentoyGate.Armed) {
+        val ctx = host.requireContext().applicationContext
+        val cat = catalogue ?: run { message = "The catalogue did not load."; return }
+        work("raw", "starting...") { say ->
+            val py = ctx.assets.open(VentoyRawInstall.ASSET).use { it.readBytes() }
+            val release = {
+                val re = cat.installerAssets.first { it.contains("linux") }
+                VentoyNet.resolve(cat.ventoy.copy(asset = re)) ?: error("the Ventoy release has no asset $re")
+            }
+            when (val r = VentoyRawInstall.install(armed, ctx, py, release) { p -> say(p) }) {
+                is VentoyRawInstall.Result.Done -> r.msg
+                is VentoyRawInstall.Result.Untouched -> "Nothing was erased: ${r.why}"
+                is VentoyRawInstall.Result.Broken -> "FAILED: ${r.why}"
+            }
+        }
+    }
+
+    // ── UI: the Apps list's rows (StoreRow), one compact row per thing, buttons in the expand ─────────────────────
     @Composable
     fun Content(ctx: Context) {
         val tick by StorageVolumes.tick.collectAsState()
@@ -193,48 +201,64 @@ class VentoyPage(private val host: Fragment) {
         }
         val cat = catalogue
         Column(Modifier.fillMaxWidth().testTag("ventoy-page")) {
-            Caption("Ventoy (GPL-3.0) boots any ISO copied onto its drive. Pick a USB-C drive, then add or remove images. Every download is checked against the publisher's sha256.")
-            Heading("Drive")
-            if (vols.isEmpty()) Caption("No USB-C drive is mounted. Plug one in (the phone's own storage is never offered).")
-            vols.forEach { v ->
-                val sel = v.path == selected
-                Card(sel) {
-                    Text((if (sel) "● " else "○ ") + UsbVolumeModel.labelOf(v), color = WHITE, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                    Caption(listOfNotNull(v.path, UsbVolumeModel.sizeHint(v.totalBytes, v.freeBytes).ifEmpty { null }).joinToString(" · "))
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        if (!sel) Btn("Use this drive", onClick = { open(ctx, v.path!!) })
-                        if (sel && drive == null) Btn("Grant access", onClick = { requestGrant(ctx, v.path!!) })
-                    }
-                    if (sel && (drive as? SafDriveFs)?.isoOnly == true) Caption("Granted: the drive's ISO folder. Images install there; persistence needs the whole drive (Android refuses the root of an SD card).")
-                    if (sel && drive != null) Caption(if (ventoy) "Ventoy drive detected · ${onDrive.size} image(s) on it" else "Not a Ventoy drive yet: images can be copied, but the drive will not boot them until Ventoy is installed.")
-                }
-            }
-            Heading("Install Ventoy")
-            Card(false) {
-                Caption(VentoyRawInstall.WHY)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Btn("Copy installer", enabled = drive != null && !busy.containsKey("installer"), onClick = { copyInstaller() })
-                    Btn("Erase & install Ventoy", enabled = VentoyRawInstall.AVAILABLE && drive != null, onClick = {
-                        vols.firstOrNull { it.path == selected }?.let { gateFor = VentoyGate.Drive(UsbVolumeModel.labelOf(it), it.totalBytes, it) }
-                    })
-                }
-                busy["installer"]?.let { Caption(it) }
-                Caption(INSTRUCTIONS + if (installerVersion.isNotEmpty()) "\nRelease: $installerVersion" else "")
-            }
-            if (message.isNotEmpty()) Text(message, color = AMBER, fontSize = 13.sp, modifier = Modifier.padding(vertical = 6.dp).testTag("ventoy-message"))
-            Btn("Install a local image", enabled = drive != null && !busy.containsKey("local"), onClick = { pickLocal.launch(arrayOf("*/*")) })
-            busy["local"]?.let { Caption(it) }
+            StoreCaption("Ventoy (GPL-3.0) boots any ISO copied onto its drive. Pick a USB-C drive, then add or remove images. Every download is checked against the publisher's sha256.")
+            StoreHeading("Drive", Ink.WHITE, tag = "ventoy-h-Drive")
+            if (vols.isEmpty()) StoreCaption("No USB-C drive is mounted. Plug one in (the phone's own storage is never offered).")
+            vols.forEach { v -> DriveRow(ctx, v) }
+            StoreHeading("Install Ventoy", Ink.WHITE, tag = "ventoy-h-Install Ventoy")
+            InstallRow(vols)
+            if (message.isNotEmpty()) StoreRow.Line(message, color = Ink.AMBER_FILL, tag = "ventoy-message")
+            StoreRow.Actions(listOf(StoreVerb("Install a local image", Ink.BLUE_FILL, if (drive != null && !busy.containsKey("local")) ({ pickLocal.launch(arrayOf("*/*")) }) else null)))
+            busy["local"]?.let { StoreRow.Line(it) }
             val catalogueNames = cat?.rows?.mapNotNull { resolved[it.id]?.fileName }.orEmpty().toSet()
             val others = onDrive.filter { it.substringAfterLast('/') !in catalogueNames }
             if (others.isNotEmpty()) {
-                Heading("On the drive")
-                others.forEach { p -> Card(false) { Text(p, color = WHITE, fontFamily = FontFamily.Monospace, fontSize = 13.sp); Btn("Remove", enabled = !busy.containsKey(p), onClick = { remove(p) }) } }
+                StoreHeading("On the drive", Ink.WHITE, tag = "ventoy-h-On the drive")
+                others.forEach { p ->
+                    StoreRow.Item(p.substringAfterLast('/'), open = true, onToggle = {}, dot = "●", dotColor = Ink.GREEN_FILL, meta = "on drive") {
+                        StoreRow.Line(p, mono = true)
+                        StoreRow.Actions(listOf(StoreVerb("Remove", Ink.GREY_FILL, if (busy.containsKey(p)) null else ({ remove(p) }))))
+                    }
+                }
             }
-            if (cat == null) { Caption("The catalogue did not load."); return@Column }
+            if (cat == null) { StoreCaption("The catalogue did not load."); return@Column }
             LaunchedEffect(Unit) { resolveAll(cat) }
             cat.tables.forEach { t -> TableView(t) }
         }
         gateFor?.let { GateDialog(it) }
+    }
+
+    @Composable
+    private fun DriveRow(ctx: Context, v: com.diegonmarcos.superapp.usbdrive.UsbVolumeModel.Volume) {
+        val sel = v.path == selected
+        val key = "drive:${v.path}"
+        StoreRow.Item(UsbVolumeModel.labelOf(v), open = expanded[key] ?: sel, onToggle = { expanded[key] = !(expanded[key] ?: sel) },
+            dot = if (sel) "●" else "○", dotColor = if (sel) Ink.GREEN_FILL else Ink.DIM,
+            meta = UsbVolumeModel.sizeHint(v.totalBytes, v.freeBytes), tag = "ventoy-drive") {
+            StoreRow.Line(v.path.orEmpty(), mono = true)
+            if (sel && (drive as? SafDriveFs)?.isoOnly == true) StoreRow.Line("Granted: the drive's ISO folder. Images install there; persistence needs the whole drive (Android refuses the root of an SD card).")
+            if (sel && drive != null) StoreRow.Line(if (ventoy) "Ventoy drive detected · ${onDrive.size} image(s) on it" else "Not a Ventoy drive yet: images can be copied, but the drive will not boot them until Ventoy is installed.")
+            StoreRow.Actions(listOfNotNull(
+                if (!sel) StoreVerb("Use this drive", Ink.BLUE_FILL, { open(ctx, v.path!!) }) else null,
+                if (sel && drive == null) StoreVerb("Grant access", Ink.BLUE_FILL, { requestGrant(ctx, v.path!!) }) else null,
+            ))
+        }
+    }
+
+    @Composable
+    private fun InstallRow(vols: List<com.diegonmarcos.superapp.usbdrive.UsbVolumeModel.Volume>) {
+        StoreRow.Item("Ventoy on this drive", open = expanded["install"] ?: false, onToggle = { expanded["install"] = !(expanded["install"] ?: false) },
+            dot = if (ventoy) "●" else "○", dotColor = if (ventoy) Ink.GREEN_FILL else Ink.DIM,
+            meta = busy["raw"] ?: busy["installer"] ?: if (installerVersion.isNotEmpty()) "release $installerVersion" else if (ventoy) "installed" else "not installed", tag = "ventoy-install") {
+            StoreRow.Line(VentoyRawInstall.WHY)
+            StoreRow.Line(INSTRUCTIONS)
+            StoreRow.Actions(listOf(
+                StoreVerb("Copy installer", Ink.BLUE_FILL, if (drive != null && !busy.containsKey("installer")) ({ copyInstaller() }) else null),
+                StoreVerb("Erase & install Ventoy", Ink.AMBER_FILL, if (VentoyRawInstall.AVAILABLE && drive != null && !busy.containsKey("raw")) ({
+                    vols.firstOrNull { it.path == selected }?.let { gateFor = VentoyGate.Drive(UsbVolumeModel.labelOf(it), it.totalBytes, it) }
+                }) else null, tag = "ventoy-erase"),
+            ))
+        }
     }
 
     private fun resolveAll(cat: VentoyCatalogue.Catalogue) {
@@ -246,47 +270,43 @@ class VentoyPage(private val host: Fragment) {
         }
     }
 
-    @OptIn(ExperimentalLayoutApi::class)
     @Composable
     private fun TableView(t: VentoyCatalogue.Table) {
-        Heading(t.label, tag = "ventoy-table-${t.id}")
-        Caption(t.blurb)
+        StoreHeading(t.label, Ink.WHITE, tag = "ventoy-table-${t.id}")
+        StoreCaption(t.blurb)
+        StoreRow.Summary("${t.rows.size} rows · ${t.rows.count { r -> resolved[r.id]?.let { x -> onDrive.any { it.substringAfterLast('/') == x.fileName } } == true }} on the drive")
         t.rows.forEach { row ->
             val r = resolved[row.id]
-            val here = r != null && onDrive.any { it.substringAfterLast('/') == r.fileName }
             val path = onDrive.firstOrNull { r != null && it.substringAfterLast('/') == r.fileName }
-            Card(here) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(row.name, color = WHITE, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                    when {
-                        row.kind == VentoyCatalogue.Kind.DEVICE -> Badge("flash, not Ventoy", RED)
-                        here -> Badge("on drive", GREEN)
-                    }
-                }
-                val facts = when {
-                    r != null -> listOf(r.version, if (r.size > 0) UsbVolumeModel.human(r.size) else "size ?", r.fileName)
-                    !row.installable -> listOf("link only")
-                    resolveErr[row.id] != null -> listOf("feed: " + resolveErr[row.id])
-                    else -> listOf("checking the official feed...")
-                }
-                Caption(facts.joinToString(" · "))
-                if (r != null) Text("sha256 ${r.sha256}", color = DIM, fontFamily = FontFamily.Monospace, fontSize = 10.sp)
-                Text(r?.url ?: row.link, color = BLUE, fontSize = 11.sp)
-                if (row.note.isNotEmpty()) Caption(row.note)
+            val here = path != null
+            val mode = modes[row.id] ?: VentoyDrive.Mode.ISO_ONLY
+            val meta = busy[row.id] ?: when {
+                row.kind == VentoyCatalogue.Kind.DEVICE -> "flash, not Ventoy"
+                r != null -> listOf(r.version, if (r.size > 0) UsbVolumeModel.human(r.size) else "size ?", if (here) "on drive" else "").filter { it.isNotEmpty() }.joinToString(" · ")
+                !row.installable -> "link only"
+                resolveErr[row.id] != null -> "feed: " + resolveErr[row.id]
+                else -> "checking..."
+            }
+            val canInstall = row.installable && drive != null && !busy.containsKey(row.id)
+            StoreRow.Item(row.name, open = expanded[row.id] ?: false, onToggle = { expanded[row.id] = !(expanded[row.id] ?: false) },
+                dot = if (here) "●" else "○", dotColor = when { row.kind == VentoyCatalogue.Kind.DEVICE -> Ink.AMBER_FILL; here -> Ink.GREEN_FILL; else -> Ink.DIM },
+                meta = meta, metaColor = if (row.kind == VentoyCatalogue.Kind.DEVICE) Ink.AMBER_FILL else Ink.DIM,
+                quick = if (canInstall && !here) StoreQuick("Install", Ink.GREEN_FILL) { install(row) } else null, tag = "ventoy-row-${row.id}") {
+                if (r != null) StoreRow.Line(r.fileName, mono = true)
+                if (r != null) StoreRow.Line("sha256 ${r.sha256}", mono = true)
+                StoreRow.Line(r?.url ?: row.link, color = Ink.BLUE_FILL)
+                if (row.note.isNotEmpty()) StoreRow.Line(row.note)
                 if (row.installable) {
-                    val mode = modes[row.id] ?: VentoyDrive.Mode.ISO_ONLY
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        VentoyDrive.Mode.values().forEach { m -> Chip(m.label, m == mode, onClick = { modes[row.id] = m }) }
+                    StoreRow.Filters(VentoyDrive.Mode.values().map { it.label }, mode.ordinal, { modes[row.id] = VentoyDrive.Mode.values()[it] })
+                    if (mode == VentoyDrive.Mode.LIVE_PERSISTENT) {
+                        val gbs = listOf(1, 2, 4, 8, 16)
+                        StoreRow.Filters(gbs.map { "$it GB" }, gbs.indexOf(persistGb[row.id] ?: 4), { persistGb[row.id] = gbs[it] })
                     }
-                    if (mode == VentoyDrive.Mode.LIVE_PERSISTENT) FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        listOf(1, 2, 4, 8, 16).forEach { gb -> Chip("$gb GB", (persistGb[row.id] ?: 4) == gb, onClick = { persistGb[row.id] = gb }) }
-                    }
-                    if (mode != VentoyDrive.Mode.ISO_ONLY) Caption(mode.note + if (mode == VentoyDrive.Mode.LIVE_PERSISTENT) " Label ${row.persistenceLabel}." else "")
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Btn("Install", enabled = drive != null && !busy.containsKey(row.id), onClick = { install(row) })
-                        if (path != null) Btn("Remove", enabled = !busy.containsKey(path), onClick = { remove(path) })
-                    }
-                    busy[row.id]?.let { Caption(it) }
+                    if (mode != VentoyDrive.Mode.ISO_ONLY) StoreRow.Line(mode.note + if (mode == VentoyDrive.Mode.LIVE_PERSISTENT) " Label ${row.persistenceLabel}." else "")
+                    StoreRow.Actions(listOfNotNull(
+                        StoreVerb("Install", Ink.GREEN_FILL, if (canInstall) ({ install(row) }) else null),
+                        path?.let { p -> StoreVerb("Remove", Ink.GREY_FILL, if (busy.containsKey(p)) null else ({ remove(p) })) },
+                    ))
                 }
             }
         }
@@ -305,23 +325,11 @@ class VentoyPage(private val host: Fragment) {
                 TextButton({
                     val armed = VentoyGate.arm(d, typed, shown)
                     gateFor = null
-                    message = if (armed == null) "Not confirmed: nothing was erased." else when (val r = VentoyRawInstall.install(armed)) { is VentoyRawInstall.Result.Unsupported -> r.why }
+                    if (armed == null) message = "Not confirmed: nothing was erased." else rawInstall(armed)
                 }) { Text("Erase") }
             },
         )
     }
-
-    // ── small parts ───────────────────────────────────────────────────────────────────────────────────────────────
-    @Composable private fun Caption(t: String) = Text(t, color = DIM, fontSize = 12.sp, modifier = Modifier.padding(vertical = 2.dp))
-    @Composable private fun Heading(t: String, tag: String = "") =
-        Text(t, color = WHITE, fontSize = 19.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 18.dp, bottom = 4.dp).testTag(tag.ifEmpty { "ventoy-h-$t" }))
-    @Composable private fun Badge(t: String, c: Color) = Text(t, color = c, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-    @Composable private fun Btn(t: String, enabled: Boolean = true, onClick: () -> Unit) = OutlinedButton(onClick, enabled = enabled) { Text(t) }
-    @Composable private fun Chip(t: String, on: Boolean, onClick: () -> Unit) =
-        FilterChip(on, onClick, label = { Text(t, fontSize = 12.sp) }, colors = FilterChipDefaults.filterChipColors(labelColor = DIM, selectedLabelColor = WHITE))
-    @Composable private fun Card(on: Boolean, body: @Composable () -> Unit) =
-        Surface(color = Color(0x22FFFFFF), shape = RoundedCornerShape(10.dp), border = if (on) BorderStroke(1.dp, GREEN) else null,
-            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) { Column(Modifier.padding(10.dp)) { body() } }
 
     companion object {
         const val ASSET = "appstore-ventoy.json"
@@ -329,7 +337,5 @@ class VentoyPage(private val host: Fragment) {
         const val INSTRUCTIONS = "On a PC: copy ventoy-installer/ off this drive, unpack the archive for your OS, run Ventoy2Disk " +
             "(Windows: Ventoy2Disk.exe; Linux: sudo sh Ventoy2Disk.sh -i /dev/sdX) and pick this drive. Ventoy2Disk erases the drive, " +
             "so copy images back afterwards. Then plug it into the phone again and install images here."
-        private val WHITE = Color(0xFFFFFFFF); private val DIM = Color(0x99FFFFFF); private val GREEN = Color(0xFF48BB78)
-        private val RED = Color(0xFFF56565); private val AMBER = Color(0xFFECC94B); private val BLUE = Color(0xFF63B3ED)
     }
 }

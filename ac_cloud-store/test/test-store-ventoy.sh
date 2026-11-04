@@ -14,6 +14,10 @@
 #      :libs:appstore:testDebugUnitTest (the Ventoy suites)
 #   V7 the raw install says what it is: VentoyRawInstall.WHY is drawn, and the erase button is enabled only by
 #      VentoyRawInstall.AVAILABLE
+#   V8 (#1444) the install runs through the Cloud Terminal: ventoy-build.py formats with mkfs.exfat over https, the
+#      terminal's rootfs declares exfatprogs/mkfs.exfat, VentoyRawInstall drives it through StoreExec and writes with
+#      RawDiskWriter, and nothing but the typed-confirm gate (VentoyGate.arm) reaches it; no other file opens a raw disk
+#   V9 (#1444) the distro list is the Apps list's rows: VentoyPage draws through StoreRow/StoreVerb/StoreQuick, no copy
 # Then every planted defect must turn it red.
 set -uo pipefail
 ROOT="${CLOUD_ANDROID_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && while [ "$PWD" != "/" ] && [ ! -e "$PWD/.git" ]; do cd ..; done; printf '%s' "$PWD")}"
@@ -60,8 +64,19 @@ mods = bj["modules"]
 need("libs:usb-drive" in mods and "libs:usb-drive" in mods["libs:appstore"].get("depends_on", []), "V6 libs:usb-drive is a Store module and libs:appstore depends on it")
 rg = open(os.path.join(R, "ac_cloud-store/build.gradle")).read()
 need("':libs:appstore:testDebugUnitTest'" in rg, "V6 storeUnitTests runs the libs:appstore suites")
-need("VentoyRawInstall.WHY" in page and "enabled = VentoyRawInstall.AVAILABLE" in page, "V7 the page states the raw-install limit and only AVAILABLE enables erase")
-print("  PASS  V1-V7")
+need("VentoyRawInstall.WHY" in page and "VentoyRawInstall.AVAILABLE && drive != null" in page, "V7 the page states the raw-install limit and only AVAILABLE enables erase")
+py = open(os.path.join(A, "src/main/assets/ventoy-build.py")).read()
+need('"mkfs.exfat"' in py and 'startswith("https://")' in py and "/dev/" not in py.replace("never /dev/anything", ""), "V8 ventoy-build.py formats with mkfs.exfat, https only, touches no device node")
+rj = json.load(open(os.path.join(R, "ac_cloud-termux/rootfs/rootfs.json")))
+need("exfatprogs" in rj["apt_packages"] and "mkfs.exfat" in rj["binaries"] and "mkfs.exfat" in rj["smoke"], "V8 the Cloud Terminal rootfs declares exfatprogs, mkfs.exfat rostered and smoked")
+ri = src["VentoyRawInstall.kt"]
+need("StoreExec(ctx)" in ri and "exec.job(" in ri and "RawDiskWriter.open(" in ri and "fun install(armed: VentoyGate.Armed" in ri, "V8 VentoyRawInstall builds through StoreExec and writes with RawDiskWriter, only for an Armed token")
+need(re.search(r"VentoyGate\.arm\(d, typed, shown\)[^}]*rawInstall\(armed\)", page, re.S) is not None and len(re.findall(r"rawInstall\(", page)) == 2, "V8 the page reaches rawInstall only from the typed-confirm gate")
+others = [n for n, t in src.items() if n != "VentoyRawInstall.kt" and "RawDiskWriter" in t]
+need(not others, "V8 no other ventoy file opens a raw disk: %s" % others)
+need("StoreRow.Item(" in page and "StoreVerb(" in page and "StoreQuick(" in page and "StoreRow.Actions(" in page, "V9 the Ventoy lists are StoreRow rows with their buttons in the expand")
+need("OutlinedButton" not in page and "FilterChip(" not in page and "Surface(" not in page, "V9 the page keeps no private card/button/chip copies")
+print("  PASS  V1-V9")
 PY
 )
 fails=0
@@ -70,6 +85,7 @@ python3 -I -c "$CHECK" "$ROOT" || fails=$((fails+1))
 T=$(mktemp -d)
 FILES="ac_cloud-store/build.json ac_cloud-store/build.gradle aa_cloud-superapp/build.json ab_cloud-libs-shared/libs/appstore/build.gradle
 ab_cloud-libs-shared/libs/appstore/src/main/assets/appstore-ventoy.json
+ab_cloud-libs-shared/libs/appstore/src/main/assets/ventoy-build.py ac_cloud-termux/rootfs/rootfs.json
 ab_cloud-libs-shared/libs/appstore/src/main/java/com/diegonmarcos/superapp/appstore/StoreCloudFragment.kt
 ab_cloud-libs-shared/libs/appstore/src/main/java/com/diegonmarcos/superapp/appstore/ventoy"
 copy() { for p in $FILES; do mkdir -p "$T/m/$(dirname "$p")"; cp -r "$ROOT/$p" "$T/m/$p"; done; }
@@ -98,7 +114,12 @@ saf-guard|$VD/SafDriveFs.kt|if (!VentoyTarget.isDriveTree(tree.authority, treeId
 page-file|$VD/VentoyPage.kt|private fun volumes(ctx: Context) =|private val f = java.io.File("/sdcard")\n    private fun volumes(ctx: Context) =
 module|ac_cloud-store/build.json|"libs:core",\n        "libs:usb-drive",|"libs:core",
 unit|ac_cloud-store/build.gradle|':libs:appstore:testDebugUnitTest'|':libs:core:testDebugUnitTest'
-erase-enabled|$VD/VentoyPage.kt|enabled = VentoyRawInstall.AVAILABLE|enabled = true
+erase-enabled|$VD/VentoyPage.kt|VentoyRawInstall.AVAILABLE && drive != null|true && drive != null
+no-exfatprogs|ac_cloud-termux/rootfs/rootfs.json|"fuse3",\n    "exfatprogs"|"fuse3"
+vfat|ab_cloud-libs-shared/libs/appstore/src/main/assets/ventoy-build.py|["mkfs.exfat", "-L"|["mkfs.vfat", "-L"
+page-copy|$VD/VentoyPage.kt|StoreQuick("Install"|Unit.also("Install"
+raw-elsewhere|$VD/VentoyPage.kt|private fun remove(path: String) {|private val w = RawDiskWriter::class\n    private fun remove(path: String) {
+no-gate|$VD/VentoyPage.kt|else rawInstall(armed)|else rawInstall(armed); rawInstall(armed)
 MUTANTS
 rm -rf "$T"
 [ "$stayed" -eq 0 ] && echo "  PASS  $proven mutant(s) proven red" || fails=$((fails+1))
