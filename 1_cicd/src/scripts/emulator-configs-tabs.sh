@@ -33,18 +33,27 @@ PY
     $T adb shell input tap $p; return 0
 }
 
+# a system dialog over the app (Cloud Account's wireless-debugging probe): Cancel it
+dismiss() {
+    for _ in 1 2 3; do
+        dump cur
+        if grep -qiE 'wireless debugging|Allow .* on this network' "$OUT/cur.xml"; then tap_node "$OUT/cur.xml" '^cancel$|^don.t allow$' || $T adb shell input keyevent KEYCODE_BACK; sleep 2; else break; fi
+    done
+}
 $T adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1
 sleep 20
 # first start can show a start-up permission walk: BACK once, then bring the app back on top
 $T adb shell input keyevent KEYCODE_BACK; sleep 2
 $T adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1; sleep 8
+dismiss
 shot start 2
 
 dump cur
 if tap_node "$OUT/cur.xml" 'configs'; then :; elif tap_node "$OUT/cur.xml" 'more options|settings'; then sleep 2; dump cur; tap_node "$OUT/cur.xml" '^configs$' || true; fi
+dismiss
 shot configs-open 6
 for tab in General Perms About; do
-    dump cur
+    dismiss
     if tap_node "$OUT/cur.xml" "^$tab\$"; then shot "tab-$tab" 5; else echo "FAIL $NAME: no $tab tab on screen"; rc=1; fi
 done
 # the strip must read General, Perms, About in that order (first x of each label on the Configs screen)
