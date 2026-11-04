@@ -247,7 +247,7 @@ private fun ItemCard(o: JSONObject) {
         // curriculum. Rendered like a note's body rather than as another dim
         // subtitle, because paragraphs need the line spacing.
         o.optString("body").takeIf { it.isNotBlank() }?.let { body ->
-            Text(body, color = colorResource(R.color.me_text_dim), fontSize = 13.sp, lineHeight = 19.sp,
+            Text(unmark(body), color = colorResource(R.color.me_text_dim), fontSize = 13.sp, lineHeight = 19.sp,
                 modifier = Modifier.padding(top = 8.dp))
         }
 
