@@ -28,12 +28,18 @@ texts() { grep -oE 'text="[^"]+"' "$OUT/ui.xml" | sed 's/text="//;s/"$//' | sort
 # The Store's own first-run question (keep update checks running?) is answered "Not now" for the same reason.
 calm() { for k in 1 2 3 4; do dump >/dev/null
   if grep -q 'Allow wireless debugging' "$OUT/ui.xml"; then where '^Cancel$' | { read -r px py && adb shell input tap "$px" "$py"; }
+  elif grep -q "allowed to install unknown apps" "$OUT/ui.xml"; then where '^Cancel$' | { read -r px py && adb shell input tap "$px" "$py"; }
   elif grep -q 'text="Not now"' "$OUT/ui.xml"; then where '^Not now$' | { read -r px py && adb shell input tap "$px" "$py"; }
   else return 0; fi; sleep 2; done; }
+# Swipes are relative to the emulator's real screen (wm size), not a fixed 1080p.
+read -r SW SH <<<"$(adb shell wm size | tr -d '\r' | grep -oE '[0-9]+x[0-9]+' | tail -1 | tr x ' ')"
+SW=${SW:-1080}; SH=${SH:-2400}; X=$((SW/2)); YLO=$((SH*78/100)); YHI=$((SH*35/100)); YTOP=$((SH*22/100))
+up() { adb shell input swipe $X $YLO $X $YHI 400; }
+down() { adb shell input swipe $X $YHI $X $YLO 300; }
 # Scroll until [pattern] is on screen (max [n] swipes).
-seek() { for i in $(seq 1 "${2:-25}"); do calm; grep -qE "$1" "$OUT/ui.xml" && return 0; adb shell input swipe 540 1700 540 700 400; sleep 1; done; return 1; }
+seek() { for i in $(seq 1 "${2:-25}"); do calm; grep -qE "$1" "$OUT/ui.xml" && return 0; up; sleep 1; done; return 1; }
 # Bring the node matching [pattern] near the top so the shot shows what follows it.
-top() { where "$1" | { read -r px py && [ "$py" -gt 500 ] && adb shell input swipe 540 "$py" 540 420 600; }; sleep 1; }
+top() { where "$1" | { read -r px py && [ "$py" -gt "$YTOP" ] && adb shell input swipe $X "$py" $X $YTOP 600; }; sleep 1; }
 
 # ── the drive: vold's virtual disk, a public (removable) volume ────────────────────────────────────────────────────
 adb shell sm set-virtual-disk true || fail "sm set-virtual-disk refused"
@@ -100,7 +106,7 @@ has 'flash, not Ventoy' || { seek 'flash, not Ventoy' 10; } || fail "Android Mob
 seek 'text="Ubuntu Desktop LTS"' 1 || true
 
 # ── install the test image onto the virtual drive ──────────────────────────────────────────────────────────────────
-for i in $(seq 1 60); do dump >/dev/null; has 'text="Install a local image"' && break; adb shell input swipe 540 700 540 1700 300; sleep 1; done
+for i in $(seq 1 60); do dump >/dev/null; has 'text="Install a local image"' && break; down; sleep 1; done
 tap '^Install a local image$' || fail "no Install a local image: $(texts)"; sleep 4
 shot 08a-picker
 if ! tap '^ventoy-test\.iso$'; then
@@ -108,7 +114,7 @@ if ! tap '^ventoy-test\.iso$'; then
   tap '^ventoy-test\.iso$' || fail "the test image is not in the picker: $(texts)"
 fi
 for i in $(seq 1 30); do dump >/dev/null; has 'ventoy-test.iso installed' && break; sleep 2; done
-for i in $(seq 1 20); do dump >/dev/null; has 'text="/ISO/ventoy-test.iso"' && break; adb shell input swipe 540 1500 540 1100 300; sleep 1; done
+for i in $(seq 1 20); do dump >/dev/null; has 'text="/ISO/ventoy-test.iso"' && break; adb shell input swipe $X $((SH*60/100)) $X $((SH*45/100)) 300; sleep 1; done
 shot 08-installed
 has 'ventoy-test.iso installed' || fail "no installed message: $(texts)"
 has "$SHA" || fail "the page does not show the image's sha256 $SHA: $(texts)"
