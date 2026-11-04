@@ -1,0 +1,400 @@
+{
+  "launcher_icon": {
+    "_doc": "The launcher icon, generated from this declaration by 1_cicd/src/scripts/cloud-android-launcher-icons.py (pattern + category colours + glyphs in 1_cicd/src/data/launcher-icons.json). Never edit the generated res files.",
+    "glyph": "shopping_cart",
+    "category": "services",
+    "res": "app/src/main/res",
+    "tile": "ic_shopping"
+  },
+  "name": "cloud-shopping",
+  "display_name": "Cloud Shopping",
+  "description": "Cloud Shopping (#1473): a deals and listings browser over mock data. Navigation is ONE collapsed left side menu (libs:ui-nav-bars vertical_side_menu: the rail on a phone, the full menu on a wide screen) in five groups, Feed (Home: the deals of every page), Things (Groceries, Electronics, Clothing), Services (Transport, Hotels), Assets (Real Estate, Business, Jobs) and Entertainment (Events); the bottom nav holds exactly one item, a search icon with no label, which searches every page. Every page has its own top filter tabs and its rows, both declared in app/src/main/assets/shop/shop.json (mock data, nothing is fetched and no shop is contacted); a row is the ui-kit KitStoreRow (the Cloud Store's dense row) in the shared type ramp. Configs are the fleet's General | Perms | About. Offline, declares no network permission of its own.",
+  "category": "android",
+  "android": {
+    "application_id": "com.diegonmarcos.cloudshopping",
+    "_doc_application_id": "The fleet name with its separator dropped, as cloudcalc / cloudsearch.",
+    "compile_sdk": 36,
+    "min_sdk": 26,
+    "target_sdk": 35,
+    "version_code": 1,
+    "version_name": "0.1.0-dev",
+    "abi_filters": [
+      "arm64-v8a"
+    ]
+  },
+  "build": {
+    "type": "gradle",
+    "entry": "build.sh"
+  },
+  "signing": {
+    "_doc": "ONE shared Cloud-constellation signing key for ALL Android apps. KEY LOCATION: Shared/Providers/D_TOOLS-DEVICES/d2-android/release.jks (OU=Cloud Constellation) + Shared/Providers/D_TOOLS-DEVICES/d2-android/signing.secrets.yaml.",
+    "vault_keystore": "Shared/Providers/D_TOOLS-DEVICES/d2-android/release.jks",
+    "vault_secrets": "Shared/Providers/D_TOOLS-DEVICES/d2-android/signing.secrets.yaml"
+  },
+  "diagnostics": {
+    "log_sink_url": "",
+    "log_sink_stream": "cloud-shopping"
+  },
+  "release": {
+    "artifact": {
+      "debug": "Cloud-Shopping.apk",
+      "release": "Cloud-Shopping-release.apk"
+    },
+    "variants": [
+      {
+        "id": "arm64",
+        "abis": [
+          "arm64-v8a"
+        ],
+        "supported_abis": [
+          "arm64-v8a",
+          "armeabi-v7a"
+        ],
+        "artifact_debug": "Cloud-Shopping.apk",
+        "gh_asset": "Cloud-Shopping.apk",
+        "ghcr_tag_suffix": "",
+        "update_tag": "latest"
+      },
+      {
+        "id": "x86_64",
+        "abis": [
+          "x86_64"
+        ],
+        "supported_abis": [
+          "x86_64",
+          "x86"
+        ],
+        "artifact_debug": "Cloud-Shopping-x86_64.apk",
+        "gh_asset": "Cloud-Shopping-x86_64.apk",
+        "ghcr_tag_suffix": "-x86_64",
+        "update_tag": "latest-x86_64"
+      }
+    ],
+    "auto_update": {
+      "enabled": false,
+      "tag": "latest",
+      "interval_hours": 6,
+      "require_unmetered_network": true,
+      "require_charging": false,
+      "install_mode": "silent",
+      "_doc_max_installs_per_pass": "Most install sessions ONE unattended background pass may open. A background pass cannot show the system install dialog (Android 10+ blocks background activity starts), so each install it starts leaves a tap-to-install notification holding a PackageInstaller session until the user answers it. Unbounded, one pass over the 40-entry fleet opens 40 and the installer hits Android's 50-session cap - 'Too many active sessions for UID'. The remainder is picked up by the next pass. User-initiated 'Update all' is NOT capped: it runs in the foreground where the dialog appears and sessions resolve at once.",
+      "max_installs_per_pass": 3,
+      "_doc_enabled": "Off because this app compiles no libs:updater: the Store updates it, as it does Cloud Calc and Cloud Search."
+    },
+    "ghcr": {
+      "enabled": true,
+      "registry": "ghcr.io",
+      "namespace": "diegonmarcos",
+      "image": "cloud-shopping",
+      "media_type": "application/vnd.android.package-archive",
+      "tags": [
+        "latest",
+        "sha-{sha}",
+        "v{version_name}"
+      ]
+    },
+    "gh_release": {
+      "enabled": true,
+      "rolling_tag": "latest",
+      "asset_name": "Cloud-Shopping.apk",
+      "draft": false,
+      "prerelease": false,
+      "generate_release_notes": false
+    },
+    "phone_install": {
+      "default_tag": "latest",
+      "target_dir": "~/storage/downloads",
+      "asset_name": "Cloud-Shopping.apk"
+    }
+  },
+  "modules": {
+    "_doc": "Single source of truth for the Gradle module graph; settings.gradle iterates it. No `logic` lib is compiled in (lib-classes L4): the Store installs and updates this app, as it does Cloud Calc.",
+    "app": {
+      "type": "application",
+      "depends_on": [
+        "libs:core",
+        "libs:bottomnav",
+        "libs:ui-icons",
+        "libs:ui-nav-bars",
+        "libs:theme-background",
+        "libs:ui-kit"
+      ]
+    },
+    "libs:core": {
+      "dir": "../ab_cloud-libs-shared/libs/core",
+      "type": "library"
+    },
+    "libs:devtools": {
+      "_doc_dir": "Not linked in app/build.gradle: libs:core pulls it in with an `api` dependency, which makes this app a fleet mesh member with the debug API.",
+      "dir": "../ab_cloud-libs-shared/libs/devtools",
+      "type": "library"
+    },
+    "libs:crash": {
+      "_doc": "#1122 libs:core `api`s this module (the default crash handler, the local crash sink and the generic crash screen); listed so settings.gradle resolves the path and the ship workflow's path triggers see it, not linked in the app's own gradle.",
+      "dir": "../ab_cloud-libs-shared/libs/crash",
+      "type": "library"
+    },
+    "libs:fleetconfig-model": {
+      "_doc": "#873 libs:core `api`s this module (the setup provider every app serves); listed so settings.gradle resolves the path.",
+      "dir": "../ab_cloud-libs-shared/libs/fleetconfig-model",
+      "type": "library"
+    },
+    "libs:bottomnav": {
+      "_doc": "#868 the fleet's NavDecl (ui.bottom_nav/ui.sections baked into BuildConfig), the top-bar scaffold's drawer and the scroll collapse, shared BY REFERENCE.",
+      "dir": "../ab_cloud-libs-shared/libs/bottomnav",
+      "type": "library"
+    },
+    "libs:ui-icons": {
+      "dir": "../ab_cloud-libs-shared/libs/ui-icons",
+      "type": "library",
+      "_doc": "#1160 the nav icon catalog (name to ImageVector, tinted or brand): every nav glyph of every app, shared BY REFERENCE; libs:bottomnav depends on it."
+    },
+    "libs:ui-nav-bars": {
+      "dir": "../ab_cloud-libs-shared/libs/ui-nav-bars",
+      "type": "library",
+      "_doc": "#1154 shared navigation and theme design, shared BY REFERENCE."
+    },
+    "libs:perms": {
+      "dir": "../ab_cloud-libs-shared/libs/perms",
+      "type": "library",
+      "_doc": "#1360 the permission contract (libs:perms): Configs > General > Perms (AppPermsSection, linked by libs:ui-nav-bars), first run (PermsFirstRun), PermsGate, and the state provider helper apps are read through."
+    },
+    "libs:theme-background": {
+      "dir": "../ab_cloud-libs-shared/libs/theme-background",
+      "type": "library",
+      "_doc": "#1154 shared navigation and theme design, shared BY REFERENCE."
+    },
+    "libs:ui-kit": {
+      "_doc": "2026-10-16 owner decision: all apps are Compose. The fleet's Compose kit (CloudKitTheme, KitPalette, KitCard, KitSettingsRow, KitButton), shared BY REFERENCE.",
+      "dir": "../ab_cloud-libs-shared/libs/ui-kit",
+      "type": "library"
+    }
+  },
+  "tests": {
+    "_doc": "Read by 1_cicd/dist/scripts/cloud-android-test-engine.sh, which the ship workflow runs before it builds.",
+    "shell": {
+      "dir": "test",
+      "requires": [
+        "python3"
+      ]
+    },
+    "unit": {
+      "_doc": "This app's JVM suite in app/src/test: the mock data against the declared pages, the filter tabs, the Feed aggregation, the search and the discount maths.",
+      "task": ":app:testDebugUnitTest",
+      "enabled": true
+    }
+  },
+  "ui": {
+    "_doc": "#868 THE nav declaration (libs:bottomnav NavDecl) of Cloud Shopping. ui.bottom_nav holds ONE section, search (a search icon, drawn WITHOUT a label: assets/shop/shop.json::chrome.bottom_labels), declared in nav-shape.json::single_bottom because N1 asks for two or more. The pages are the ONE section `shop`, default_section, drawn in vertical_side_menu mode (the collapsed rail; libs:ui-nav-bars NavSectionLayout) with the owner's five groups. Each page's filter tabs and mock rows are assets/shop/shop.json::pages[<page id>] (test-shopping-app.sh holds the ids in step both ways); the Feed page has no rows of its own: it aggregates the deals of every other page.",
+    "bottom_nav": [
+      "search"
+    ],
+    "default_section": "shop",
+    "configs_ui": [
+      "nav_ui"
+    ],
+    "sections": [
+      {
+        "id": "shop",
+        "label": "Shopping",
+        "icon": "inventory_2",
+        "nav_mode": "vertical_side_menu",
+        "pages": [
+          {
+            "id": "home",
+            "label": "Home",
+            "icon": "home"
+          },
+          {
+            "id": "groceries",
+            "label": "Groceries",
+            "icon": "restaurant"
+          },
+          {
+            "id": "electronics",
+            "label": "Electronics",
+            "icon": "devices"
+          },
+          {
+            "id": "clothing",
+            "label": "Clothing",
+            "icon": "label"
+          },
+          {
+            "id": "transport",
+            "label": "Transport",
+            "icon": "route"
+          },
+          {
+            "id": "hotels",
+            "label": "Hotels",
+            "icon": "luggage"
+          },
+          {
+            "id": "real_estate",
+            "label": "Real Estate",
+            "icon": "place"
+          },
+          {
+            "id": "business",
+            "label": "Business",
+            "icon": "payments"
+          },
+          {
+            "id": "jobs",
+            "label": "Jobs",
+            "icon": "work"
+          },
+          {
+            "id": "events",
+            "label": "Events",
+            "icon": "event"
+          }
+        ],
+        "groups": [
+          {
+            "id": "feed",
+            "label": "Feed",
+            "icon": "rss_feed",
+            "pages": [
+              "home"
+            ]
+          },
+          {
+            "id": "things",
+            "label": "Things",
+            "icon": "inventory_2",
+            "pages": [
+              "groceries",
+              "electronics",
+              "clothing"
+            ]
+          },
+          {
+            "id": "services",
+            "label": "Services",
+            "icon": "miscellaneous_services",
+            "pages": [
+              "transport",
+              "hotels"
+            ]
+          },
+          {
+            "id": "assets",
+            "label": "Assets",
+            "icon": "account_balance",
+            "pages": [
+              "real_estate",
+              "business",
+              "jobs"
+            ]
+          },
+          {
+            "id": "entertainment",
+            "label": "Entertainment",
+            "icon": "emoji_events",
+            "pages": [
+              "events"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "search",
+        "label": "Search",
+        "icon": "search",
+        "pages": []
+      }
+    ]
+  },
+  "configs_pages": {
+    "_doc": "Configs > General and Configs > About (libs:ui-nav-bars fleetconfigs, rule 1_cicd/src/data/configs-pages.json, #1352 v2). general.sections: the anchors of the one General page, in order (perms, battery, storage, notifications, ui, language are required; app opens this app's own Configs; update is added after perms by default). about: the hand-written part of the extensive About: tagline, description, features, screens, guide, privacy, backends (ids of ac_cloud-account/build.json::fleet_endpoints, resolved to mesh URLs at build time), related fleet apps, credits for a fork. Permissions, data stores, crash/analytics libs, name, icon, version, build sha and date, repo, licence, origin, crash sink, debug API and changelog are derived, never typed here.",
+    "general": {
+      "sections": [
+        {
+          "id": "perms"
+        },
+        {
+          "id": "battery"
+        },
+        {
+          "id": "storage"
+        },
+        {
+          "id": "notifications"
+        },
+        {
+          "id": "ui"
+        },
+        {
+          "id": "language"
+        }
+      ]
+    },
+    "about": {
+      "tagline": "Deals and listings, one side menu",
+      "description": "Cloud Shopping browses deals and listings in one dense list: a collapsed side menu groups the pages (Feed, Things, Services, Assets, Entertainment), each page has its own filter tabs, and a search icon on the bottom bar searches them all. Today every row is mock data bundled with the app; no shop is contacted.",
+      "features": [
+        "Feed: the deals of every page",
+        "Things: Groceries, Electronics, Clothing",
+        "Services: Transport, Hotels",
+        "Assets: Real Estate, Business, Jobs",
+        "Entertainment: Events",
+        "Search across every page"
+      ],
+      "screens": [
+        {
+          "name": "Feed",
+          "what": "Deals aggregated from all pages."
+        },
+        {
+          "name": "Things",
+          "what": "Groceries, Electronics, Clothing."
+        },
+        {
+          "name": "Services",
+          "what": "Transport, Hotels."
+        },
+        {
+          "name": "Assets",
+          "what": "Real Estate, Business, Jobs."
+        },
+        {
+          "name": "Entertainment",
+          "what": "Events."
+        },
+        {
+          "name": "Search",
+          "what": "One query over every page."
+        }
+      ],
+      "guide": [
+        "Open the side menu for a page.",
+        "Pick a filter tab at the top.",
+        "Tap the search icon to look across pages."
+      ],
+      "privacy": "No ads and no third-party trackers. A crash report is saved on the phone and sent only to the phone's own C3 WebServer over loopback; nothing leaves the device unless you share it. It calls no fleet service: its data is mock data bundled with the app.",
+      "backends": [],
+      "related": [
+        {
+          "app": "aa_cloud-superapp",
+          "why": "Opens this app from Cloud > Apps > Services."
+        },
+        {
+          "app": "ac_cloud-news",
+          "why": "The other Services tile."
+        },
+        {
+          "app": "ac_cloud-store",
+          "why": "Installs and updates this app."
+        }
+      ]
+    }
+  },
+  "perms": {
+    "_doc": "#1360 every grant this app needs, by libs:perms catalogue id (needs), and the fleet apps that do work for it with the grants THEY must hold (helpers). The ONE declaration: generated into assets/app-perms.json (cloud-android-perms-guard.py --write), drawn by Configs > General > Perms (libs:perms AppPermsSection) with live state, Grant / Open and Grant all, asked at first run (first_run), and reported as 'Missing permission X - Grant' when an operation fails (PermsGate). perms-guard fails when code uses a gated API or another app's engine that is not declared here, or when the manifest and this list disagree.",
+    "needs": [],
+    "helpers": [],
+    "first_run": "libs:perms"
+  }
+}

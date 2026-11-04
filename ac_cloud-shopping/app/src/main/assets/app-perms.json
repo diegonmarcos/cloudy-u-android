@@ -1,0 +1,6 @@
+{
+  "_doc": "GENERATED from build.json::perms by 1_cicd/src/scripts/cloud-android-perms-guard.py --write. DO NOT EDIT. Read by libs:perms (AppPerms): the Perms page rows, Grant all, first run and PermsGate.",
+  "needs": [],
+  "first_run": "libs:perms",
+  "helpers": []
+}

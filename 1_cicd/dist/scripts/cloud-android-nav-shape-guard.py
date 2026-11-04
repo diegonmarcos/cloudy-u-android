@@ -10,7 +10,7 @@ DECLARATION  1_cicd/src/data/nav-shape.json (the rules, the forbidden widgets, a
 
   N0  libs:bottomnav still ships NavDecl, PageTabs and PageTabsView
   N11 libs:ui-nav-bars is the ONE nav-bars lib (first row, second row, side menu, bottom nav); the retired per-bar libs stay gone and unnamed
-  N1  ui.bottom_nav is min_bottom..max_bottom ids (2..8; the owner lifted the old cap of 5,
+  N1  ui.bottom_nav is min_bottom..max_bottom ids (2..8, or exactly 1 for an app named in nav-shape.json::single_bottom, whose default_section may then be any section; the owner lifted the old cap of 5,
       and the island never scrolls: a crowded bar widens and scales down so every item fits,
       8 on a 360dp phone being 44dp cells), each one a ui.sections id;
       ui.default_section is one of them
@@ -309,15 +309,19 @@ def check_n1(app, ui, spec, bad):
         bar = []
     if len(bar) > spec["max_bottom"]:
         bad.append(f"N1 {app}: ui.bottom_nav has {len(bar)} ids, the island holds at most {spec['max_bottom']}")
-    if bar and len(bar) < spec["min_bottom"]:
-        bad.append(f"N1 {app}: ui.bottom_nav has {len(bar)} ids, the island needs at least {spec['min_bottom']}")
+    single = app in (spec.get("single_bottom") or {})
+    if bar and len(bar) < (1 if single else spec["min_bottom"]):
+        bad.append(f"N1 {app}: ui.bottom_nav has {len(bar)} ids, the island needs at least {1 if single else spec['min_bottom']}")
+    if single and len(bar) != 1:
+        bad.append(f"N1 {app}: declared in {DATA}::single_bottom but ui.bottom_nav has {len(bar)} ids (a single_bottom app has exactly one)")
     for b in bar:
         if b not in ids:
             bad.append(f"N1 {app}: ui.bottom_nav id {b!r} is not a ui.sections id")
     if not sections:
         bad.append(f"N1 {app}: build.json ui.sections is missing or empty")
-    if ui.get("default_section") not in bar:
-        bad.append(f"N1 {app}: ui.default_section {ui.get('default_section')!r} is not one of ui.bottom_nav")
+    # single_bottom: the one bar item is a verb (Search), the app opens on a page section that is not on the bar
+    if ui.get("default_section") not in (ids if single else bar):
+        bad.append(f"N1 {app}: ui.default_section {ui.get('default_section')!r} is not one of {'ui.sections' if single else 'ui.bottom_nav'}")
     return sections, ids
 
 

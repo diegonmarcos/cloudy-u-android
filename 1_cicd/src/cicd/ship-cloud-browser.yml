@@ -55,6 +55,7 @@ on:
       # ── end MANAGED-PATHS-HEADER ──
       - "ab_cloud-libs-shared/libs/ai/**"
       - "ab_cloud-libs-shared/libs/analytics/**"
+      - "ab_cloud-libs-shared/libs/apify/**"
       - "ab_cloud-libs-shared/libs/autofill/**"
       - "ab_cloud-libs-shared/libs/bluetooth/**"
       - "ab_cloud-libs-shared/libs/bottomnav/**"

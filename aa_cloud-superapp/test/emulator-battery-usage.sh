@@ -132,12 +132,12 @@ def after(head, want, stop):
         i += 1
     return got
 com = after("Communication", {"Mail", "Chat", "Messenger", "Dialer", "C3-Bot", "Contacts"}, "Tools Primary")
-data = after("Data Apps", {"Drive", "Notes", "Tasks", "Gallery", "Media", "News", "Office"}, "Me")
+data = after("Data Apps", {"Drive", "Notes", "Tasks", "Gallery", "Media", "Office"}, "Me")
 print("Communication:", com); print("Data Apps:", data)
 right = re.findall(r' text="([^"]+)"', open(sys.argv[3], encoding="utf-8", errors="ignore").read())
-office = "News" in right and "Office" in right[right.index("News"):]
-print("Data Apps swiped:", [t for t in right if t in {"Gallery", "Media", "News", "Office"}])
-ok = com is not None and "Contacts" in com and data is not None and data[:6] == ["Drive", "Notes", "Tasks", "Gallery", "Media", "News"] and office
+office = "Media" in right and "Office" in right[right.index("Media"):]
+print("Data Apps swiped:", [t for t in right if t in {"Gallery", "Media", "Office"}])
+ok = com is not None and "Contacts" in com and data is not None and data[:5] == ["Drive", "Notes", "Tasks", "Gallery", "Media"] and office
 if not ok: print("::error::Cloud > Apps groups are not as declared (#1380)")
 sys.exit(0 if ok else 1)
 PY

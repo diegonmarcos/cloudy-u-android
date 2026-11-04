@@ -4127,6 +4127,24 @@
       ],
       "items": []
     },
+    "shopping": {
+      "package": "com.diegonmarcos.cloudshopping",
+      "module": "ac_cloud-shopping",
+      "schema_version": 1,
+      "libs": [
+        "lib-bottomnav",
+        "lib-core",
+        "lib-crash",
+        "lib-devtools",
+        "lib-fleetconfig-model",
+        "lib-perms",
+        "lib-theme-background",
+        "lib-ui-icons",
+        "lib-ui-kit",
+        "lib-ui-nav-bars"
+      ],
+      "items": []
+    },
     "superintel": {
       "package": "com.diegonmarcos.cloudsuperintel",
       "module": "ac_cloud-superintel",

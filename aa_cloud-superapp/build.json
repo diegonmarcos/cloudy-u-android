@@ -2913,7 +2913,7 @@
                 "target": "extapp:cloud-tasks"
               },
               {
-                "_doc": "Divides Notes and Tasks from the media pair, in the owner's order: Drive | Notes Tasks | Gallery Media News | Office. Same separator declaration as data-apps-sep-1.",
+                "_doc": "Divides Notes and Tasks from the media pair, in the owner's order: Drive | Notes Tasks | Gallery Media | Office (News moved to the Services row, #1473). Same separator declaration as data-apps-sep-1.",
                 "id": "data-apps-sep-2",
                 "label": "|",
                 "separator": true
@@ -2933,13 +2933,7 @@
                 "target": "extapp:cloud-media-center"
               },
               {
-                "id": "news",
-                "label": "News",
-                "icon": "ic_rss",
-                "target": "extapp:cloud-news"
-              },
-              {
-                "_doc": "Divides the media group from Office, in the owner's order: Drive | Notes Tasks | Gallery Media News | Office. Same separator declaration as data-apps-sep-1.",
+                "_doc": "Divides the media group from Office, in the owner's order: Drive | Notes Tasks | Gallery Media | Office (News moved to the Services row, #1473). Same separator declaration as data-apps-sep-1.",
                 "id": "data-apps-sep-3",
                 "label": "|",
                 "separator": true
@@ -3030,6 +3024,24 @@
                 "icon": "ic_p_identities",
                 "target": "extapp:cloud-me#page:profile/profile",
                 "fleet_app": "me"
+              }
+            ]
+          },
+          {
+            "_doc": "#1473 Services: the row after Me and before AGI. News moved here from Data Apps; Shopping (ac_cloud-shopping, com.diegonmarcos.cloudshopping, a deals and listings browser over mock data) joined it. Both open their own app through ui.external_apps; the Shopping glyph ic_shopping is generated from ac_cloud-shopping/build.json::launcher_icon by cloud-android-launcher-icons.py (never edit the drawable). Pinned by test-agi-tiles.sh (AGI follows Services) and test-services-row.sh.",
+            "title": "Services",
+            "tiles": [
+              {
+                "id": "news",
+                "label": "News",
+                "icon": "ic_rss",
+                "target": "extapp:cloud-news"
+              },
+              {
+                "id": "shopping",
+                "label": "Shopping",
+                "icon": "ic_shopping",
+                "target": "extapp:cloud-shopping"
               }
             ]
           },
@@ -8451,6 +8463,15 @@
         "hub_package": "com.diegonmarcos.cloudagenda",
         "install_package": "com.diegonmarcos.cloudagenda",
         "install_apk_url": "https://github.com/diegonmarcos/cloudy-u-android/releases/download/latest/Cloud-Tasks.apk",
+        "forks": {}
+      },
+      {
+        "_doc": "#1473 Cloud Shopping (ac_cloud-shopping, published by ship-cloud-shopping.yml). Added for the Cloud > Apps > Services 'Shopping' tile: every extapp:<id> must resolve here (test-app-identity-resolves.sh T1). package read from ac_cloud-shopping/build.json::android.application_id and app/build.gradle::namespace, which agree. install_apk_url mirrors its arm64 release asset; x86_64 devices are resolved through the fleet assets map. folder=svc_shopping ('+Shopping') is the taxonomy half of the same record - PhoneFolders derives the pkg: keyword from it, so NO literal keyword for com.diegonmarcos.cloudshopping may be added to ui.phone_folders.",
+        "id": "cloud-shopping",
+        "folder": "svc_shopping",
+        "hub_package": "com.diegonmarcos.cloudshopping",
+        "install_package": "com.diegonmarcos.cloudshopping",
+        "install_apk_url": "https://github.com/diegonmarcos/cloudy-u-android/releases/download/latest/Cloud-Shopping.apk",
         "forks": {}
       },
       {

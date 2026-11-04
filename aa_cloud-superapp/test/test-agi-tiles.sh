@@ -69,11 +69,11 @@ check(len(agi) == 1, "exactly one AGI tile group under ui.sections (found %d)" %
 if len(agi) != 1: print("-- %d passed, %d failed" % (passed, failed)); sys.exit(1)
 tiles = agi[0]["tiles"]
 
-print("== T0: AGI sits right after the Me row ==")
+print("== T0: AGI sits right after the Services row, which sits right after Me (#1473) ==")
 cloud = [s for s in bj["ui"]["sections"] if s.get("id") == "cloud"][0]
 titles = [g.get("title") for g in cloud.get("tile_groups", [])]
-check("AGI" in titles and "Me" in titles and titles.index("AGI") == titles.index("Me") + 1,
-      "AGI is the group immediately after Me (%s)" % titles)
+check("AGI" in titles and "Services" in titles and "Me" in titles and titles.index("AGI") == titles.index("Services") + 1 and titles.index("Services") == titles.index("Me") + 1,
+      "Services is the group immediately after Me and AGI the one after Services (%s)" % titles)
 
 print("== T1: the AGI row is SI AI | Search Code | KG Store Tools | MyTerminal Terminal (#1162, #1207), '|' being the group separators ==")
 got = [t.get("label") for t in tiles]

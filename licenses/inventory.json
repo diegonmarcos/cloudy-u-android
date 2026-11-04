@@ -298,6 +298,10 @@
     "ab_cloud-libs-shared/libs/fleet-endpoints",
     "ab_cloud-libs-shared/libs/fleet-endpoints-android",
     "ab_cloud-libs-shared/libs/fleetconfig-model",
+    "ab_cloud-libs-shared/libs/git-core",
+    "ab_cloud-libs-shared/libs/git-repos",
+    "ab_cloud-libs-shared/libs/git-sync",
+    "ab_cloud-libs-shared/libs/git-ui",
     "ab_cloud-libs-shared/libs/mail",
     "ab_cloud-libs-shared/libs/net",
     "ab_cloud-libs-shared/libs/perms",
@@ -318,6 +322,7 @@
    "links_shared_modules": [
     "ab_cloud-libs-shared/libs/ai",
     "ab_cloud-libs-shared/libs/analytics",
+    "ab_cloud-libs-shared/libs/apify",
     "ab_cloud-libs-shared/libs/autofill",
     "ab_cloud-libs-shared/libs/bluetooth",
     "ab_cloud-libs-shared/libs/bottomnav",
@@ -496,7 +501,9 @@
     "ab_cloud-libs-shared/libs/file-editor",
     "ab_cloud-libs-shared/libs/fleetconfig-model",
     "ab_cloud-libs-shared/libs/git-core",
+    "ab_cloud-libs-shared/libs/git-repos",
     "ab_cloud-libs-shared/libs/git-sync",
+    "ab_cloud-libs-shared/libs/git-ui",
     "ab_cloud-libs-shared/libs/ml-l-image",
     "ab_cloud-libs-shared/libs/model-catalogue",
     "ab_cloud-libs-shared/libs/mounts",
@@ -507,6 +514,7 @@
     "ab_cloud-libs-shared/libs/sysdns",
     "ab_cloud-libs-shared/libs/theme-background",
     "ab_cloud-libs-shared/libs/ui-icons",
+    "ab_cloud-libs-shared/libs/ui-kit",
     "ab_cloud-libs-shared/libs/ui-nav-bars",
     "ab_cloud-libs-shared/libs/updater",
     "ab_cloud-libs-shared/libs/usb-drive",
@@ -598,6 +606,10 @@
     "ab_cloud-libs-shared/libs/devtools",
     "ab_cloud-libs-shared/libs/fin",
     "ab_cloud-libs-shared/libs/fleetconfig-model",
+    "ab_cloud-libs-shared/libs/git-core",
+    "ab_cloud-libs-shared/libs/git-repos",
+    "ab_cloud-libs-shared/libs/git-sync",
+    "ab_cloud-libs-shared/libs/git-ui",
     "ab_cloud-libs-shared/libs/health",
     "ab_cloud-libs-shared/libs/perms",
     "ab_cloud-libs-shared/libs/theme-background",
@@ -663,6 +675,7 @@
    "app_licence": "LicenseRef-NoLicenseGranted",
    "links_shared_modules": [
     "ab_cloud-libs-shared/libs/analytics",
+    "ab_cloud-libs-shared/libs/apify",
     "ab_cloud-libs-shared/libs/bottomnav",
     "ab_cloud-libs-shared/libs/core",
     "ab_cloud-libs-shared/libs/crash",
@@ -711,6 +724,21 @@
     "ab_cloud-libs-shared/libs/ui-icons",
     "ab_cloud-libs-shared/libs/ui-nav-bars",
     "ac_cloud-search/core"
+   ]
+  },
+  "ac_cloud-shopping": {
+   "app_licence": "LicenseRef-NoLicenseGranted",
+   "links_shared_modules": [
+    "ab_cloud-libs-shared/libs/bottomnav",
+    "ab_cloud-libs-shared/libs/core",
+    "ab_cloud-libs-shared/libs/crash",
+    "ab_cloud-libs-shared/libs/devtools",
+    "ab_cloud-libs-shared/libs/fleetconfig-model",
+    "ab_cloud-libs-shared/libs/perms",
+    "ab_cloud-libs-shared/libs/theme-background",
+    "ab_cloud-libs-shared/libs/ui-icons",
+    "ab_cloud-libs-shared/libs/ui-kit",
+    "ab_cloud-libs-shared/libs/ui-nav-bars"
    ]
   },
   "ac_cloud-store": {
@@ -854,7 +882,7 @@
     "ab_cloud-libs-shared/libs/decisions-link",
     "ab_cloud-libs-shared/libs/devtools",
     "ab_cloud-libs-shared/libs/fleetconfig-model",
-    "ab_cloud-libs-shared/libs/ml-ocr",
+    "ab_cloud-libs-shared/libs/ml-l-image-ocr",
     "ab_cloud-libs-shared/libs/perms",
     "ab_cloud-libs-shared/libs/text-tools",
     "ab_cloud-libs-shared/libs/theme-background",
@@ -3782,6 +3810,7 @@
     "ab_cloud-libs-shared/libs/fin/build.gradle",
     "ab_cloud-libs-shared/libs/firewall/build.gradle",
     "ab_cloud-libs-shared/libs/git-sync/build.gradle",
+    "ab_cloud-libs-shared/libs/git-ui/build.gradle",
     "ab_cloud-libs-shared/libs/health/build.gradle",
     "ab_cloud-libs-shared/libs/kde-connect/build.gradle",
     "ab_cloud-libs-shared/libs/launcher-apptabs/build.gradle",
@@ -3909,6 +3938,7 @@
     "ab_cloud-libs-shared/libs/fin/build.gradle",
     "ab_cloud-libs-shared/libs/firewall/build.gradle",
     "ab_cloud-libs-shared/libs/git-sync/build.gradle",
+    "ab_cloud-libs-shared/libs/git-ui/build.gradle",
     "ab_cloud-libs-shared/libs/health/build.gradle",
     "ab_cloud-libs-shared/libs/kde-connect/build.gradle",
     "ab_cloud-libs-shared/libs/keyboard/build.gradle",
@@ -4093,6 +4123,7 @@
     "ab_cloud-libs-shared/libs/fin/build.gradle",
     "ab_cloud-libs-shared/libs/firewall/build.gradle",
     "ab_cloud-libs-shared/libs/git-sync/build.gradle",
+    "ab_cloud-libs-shared/libs/git-ui/build.gradle",
     "ab_cloud-libs-shared/libs/health/build.gradle",
     "ab_cloud-libs-shared/libs/kde-connect/build.gradle",
     "ab_cloud-libs-shared/libs/launcher-apptabs/build.gradle",
@@ -4216,6 +4247,7 @@
    "kind": "maven",
    "declared_in": [
     "ab_cloud-libs-shared/ui-baseline/shots/build.gradle",
+    "ac_cloud-account/app/build.gradle",
     "ac_cloud-gallery/gradle/libs.versions.toml",
     "ac_cloud-matrix/gradle/libs.versions.toml",
     "ac_cloud-nav/app/build.gradle",
@@ -4315,6 +4347,7 @@
     "ab_cloud-libs-shared/libs/fin/build.gradle",
     "ab_cloud-libs-shared/libs/firewall/build.gradle",
     "ab_cloud-libs-shared/libs/git-sync/build.gradle",
+    "ab_cloud-libs-shared/libs/git-ui/build.gradle",
     "ab_cloud-libs-shared/libs/health/build.gradle",
     "ab_cloud-libs-shared/libs/kde-connect/build.gradle",
     "ab_cloud-libs-shared/libs/keyboard/build.gradle",
@@ -4474,7 +4507,7 @@
     "ab_cloud-libs-shared/libs/maps/build.gradle",
     "ab_cloud-libs-shared/libs/media-convert-audio/build.gradle",
     "ab_cloud-libs-shared/libs/media/build.gradle",
-    "ab_cloud-libs-shared/libs/ml-ocr/build.gradle",
+    "ab_cloud-libs-shared/libs/ml-l-image-ocr/build.gradle",
     "ab_cloud-libs-shared/libs/mounts/build.gradle",
     "ab_cloud-libs-shared/libs/net-wg/build.gradle",
     "ab_cloud-libs-shared/libs/net/build.gradle",
@@ -5169,6 +5202,7 @@
     "aa_cloud-superapp/app/build.gradle",
     "ab_cloud-libs-shared/libs/account-ui/build.gradle",
     "ab_cloud-libs-shared/libs/account/build.gradle",
+    "ab_cloud-libs-shared/libs/apify/build.gradle",
     "ab_cloud-libs-shared/libs/appstore/build.gradle",
     "ab_cloud-libs-shared/libs/browser/build.gradle",
     "ab_cloud-libs-shared/libs/chat/build.gradle",
@@ -5179,6 +5213,7 @@
     "ab_cloud-libs-shared/libs/mail/build.gradle",
     "ab_cloud-libs-shared/libs/mounts/build.gradle",
     "ab_cloud-libs-shared/libs/ops/build.gradle",
+    "ab_cloud-libs-shared/libs/scraper/build.gradle",
     "ac_cloud-account/app/build.gradle",
     "ac_cloud-calc/app/build.gradle",
     "ac_cloud-chat/libraries/@mattermost/secure-pdf-viewer/android/build.gradle",
@@ -6483,7 +6518,7 @@
    "kind": "maven",
    "declared_in": [
     "ab_cloud-libs-shared/libs/ml-l-image-mlkit/build.gradle",
-    "ab_cloud-libs-shared/libs/ml-ocr/build.gradle",
+    "ab_cloud-libs-shared/libs/ml-l-image-ocr/build.gradle",
     "ac_cloud-vault/gradle/libs.versions.toml"
    ],
    "version": "16.0.1",
@@ -6495,7 +6530,7 @@
   "maven:com.google.mlkit:text-recognition-chinese": {
    "kind": "maven",
    "declared_in": [
-    "ab_cloud-libs-shared/libs/ml-ocr/build.gradle"
+    "ab_cloud-libs-shared/libs/ml-l-image-ocr/build.gradle"
    ],
    "version": "16.0.1",
    "scope": "shipped",
@@ -6506,7 +6541,7 @@
   "maven:com.google.mlkit:text-recognition-devanagari": {
    "kind": "maven",
    "declared_in": [
-    "ab_cloud-libs-shared/libs/ml-ocr/build.gradle"
+    "ab_cloud-libs-shared/libs/ml-l-image-ocr/build.gradle"
    ],
    "version": "16.0.1",
    "scope": "shipped",
@@ -6517,7 +6552,7 @@
   "maven:com.google.mlkit:text-recognition-japanese": {
    "kind": "maven",
    "declared_in": [
-    "ab_cloud-libs-shared/libs/ml-ocr/build.gradle"
+    "ab_cloud-libs-shared/libs/ml-l-image-ocr/build.gradle"
    ],
    "version": "16.0.1",
    "scope": "shipped",
@@ -6528,7 +6563,7 @@
   "maven:com.google.mlkit:text-recognition-korean": {
    "kind": "maven",
    "declared_in": [
-    "ab_cloud-libs-shared/libs/ml-ocr/build.gradle"
+    "ab_cloud-libs-shared/libs/ml-l-image-ocr/build.gradle"
    ],
    "version": "16.0.1",
    "scope": "shipped",
@@ -7848,6 +7883,7 @@
    "declared_in": [
     "ab_cloud-libs-shared/libs/account/build.gradle",
     "ab_cloud-libs-shared/libs/git-core/build.gradle",
+    "ab_cloud-libs-shared/libs/git-repos/build.gradle",
     "ac_cloud-drive/app/build.gradle"
    ],
    "version": "6.10.1.202505221210-r",
@@ -8142,6 +8178,7 @@
    "declared_in": [
     "ab_cloud-libs-shared/libs/file-editor/build.gradle",
     "ab_cloud-libs-shared/libs/git-core/build.gradle",
+    "ab_cloud-libs-shared/libs/git-repos/build.gradle",
     "ab_cloud-libs-shared/libs/git-sync/build.gradle",
     "ab_cloud-libs-shared/libs/keyboard/build.gradle",
     "ab_cloud-libs-shared/libs/mail/build.gradle",
@@ -8183,6 +8220,7 @@
     "aa_cloud-superapp/app/build.gradle",
     "ab_cloud-libs-shared/libs/ai/build.gradle",
     "ab_cloud-libs-shared/libs/analytics-sink/build.gradle",
+    "ab_cloud-libs-shared/libs/apify/build.gradle",
     "ab_cloud-libs-shared/libs/appstore/build.gradle",
     "ab_cloud-libs-shared/libs/bluetooth/build.gradle",
     "ab_cloud-libs-shared/libs/cad-core/build.gradle",

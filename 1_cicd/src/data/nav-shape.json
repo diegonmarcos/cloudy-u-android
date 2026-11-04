@@ -160,6 +160,10 @@
   },
   "max_bottom": 8,
   "min_bottom": 2,
+  "single_bottom": {
+    "_doc": "N1 apps whose bottom nav is deliberately ONE item (min_bottom does not apply: ui.bottom_nav has exactly one id, and ui.default_section may be a section that is not on the bar). Needs the owner's explicit request, named in the reason.",
+    "ac_cloud-shopping": "Cloud Shopping (#1473): the owner asked for exactly one bottom item, a search icon with no label; every page is reached through the collapsed left side menu (section shop, vertical_side_menu), so the bar holds only the Search verb."
+  },
   "backgrounds": ["dark", "light", "theme"],
   "min_reason_chars": 30,
   "id_calls": [

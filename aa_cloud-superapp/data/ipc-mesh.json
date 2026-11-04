@@ -330,6 +330,7 @@
      "notes",
      "office",
      "search",
+     "shopping",
      "store",
      "superintel",
      "tasks",
@@ -566,6 +567,7 @@
      "notes",
      "office",
      "search",
+     "shopping",
      "store",
      "superintel",
      "tasks",
@@ -694,6 +696,7 @@
      "notes",
      "office",
      "search",
+     "shopping",
      "store",
      "superintel",
      "tasks",
@@ -982,6 +985,7 @@
      "nix-on-droid",
      "notes",
      "search",
+     "shopping",
      "store",
      "superintel",
      "tasks",
@@ -1263,6 +1267,7 @@
       "notes",
       "office",
       "search",
+      "shopping",
       "store",
       "superintel",
       "tasks",
@@ -2685,6 +2690,21 @@
      "callers": []
     }
    ]
+  },
+  {
+   "id": "shopping",
+   "pkg": "com.diegonmarcos.cloudshopping",
+   "label": "cloud-shopping",
+   "kind": "app",
+   "dir": "ac_cloud-shopping",
+   "door": true,
+   "libs": [
+    "core",
+    "devtools",
+    "fleetconfig-model",
+    "perms"
+   ],
+   "endpoints": []
   },
   {
    "id": "store",

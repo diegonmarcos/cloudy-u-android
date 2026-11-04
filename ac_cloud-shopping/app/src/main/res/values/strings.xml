@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- English is the fleet's base language (#299). app_name comes from build.json::display_name. -->
+    <string name="search_hint">Search every page</string>
+    <string name="empty">Nothing here for this filter.</string>
+    <string name="saving">-%1$d%%</string>
+</resources>

@@ -400,6 +400,12 @@
    "what": "Hardtech-Sim2Real app (SAP2000, MATLAB, Ansys pages behind Cloud > Lnktree)",
    "proposed": "PROPOSED (owner decides): PolyForm-Noncommercial-1.0.0"
   },
+  "ac_cloud-shopping": {
+   "licence": "LicenseRef-NoLicenseGranted",
+   "kind": "own",
+   "what": "Cloud Shopping app (deals and listings browser over bundled mock data)",
+   "proposed": "PROPOSED (owner decides): PolyForm-Noncommercial-1.0.0"
+  },
   "ac_cloud-superintel": {
    "licence": "LicenseRef-NoLicenseGranted",
    "kind": "own",

@@ -1,0 +1,983 @@
+{
+ "_doc": "MOCK DATA of Cloud Shopping (#1473): nothing here is fetched and no shop is contacted. chrome: bottom_labels false = the one bottom item (search) is drawn without a label; currency is the symbol-free code shown after a price. pages[<page id>] is the data of ONE page of build.json::ui.sections[shop].pages (test-shopping-app.sh holds the two in step both ways): kind `feed` aggregates the deals (items with an old_price above their price) of every other page, kind `list` shows its own items. A tab filters by any of: tag (the item carries it), group (the page's group in build.json::ui), deal (a deal only), min_discount (a deal of at least that percent); a tab with no filter shows everything. Tab icons are names of the ui-icons catalog. search.tabs are the tabs of the bottom Search page, which looks across every page.",
+ "chrome": {
+  "bottom_labels": false,
+  "currency": "EUR"
+ },
+ "search": {
+  "tabs": [
+   {
+    "id": "all",
+    "label": "All",
+    "icon": "label"
+   },
+   {
+    "id": "things",
+    "label": "Things",
+    "icon": "inventory_2",
+    "group": "things"
+   },
+   {
+    "id": "services",
+    "label": "Services",
+    "icon": "miscellaneous_services",
+    "group": "services"
+   },
+   {
+    "id": "assets",
+    "label": "Assets",
+    "icon": "account_balance",
+    "group": "assets"
+   },
+   {
+    "id": "entertainment",
+    "label": "Fun",
+    "icon": "emoji_events",
+    "group": "entertainment"
+   },
+   {
+    "id": "deals",
+    "label": "Deals",
+    "icon": "bolt",
+    "deal": true
+   }
+  ]
+ },
+ "pages": {
+  "home": {
+   "kind": "feed",
+   "tabs": [
+    {
+     "id": "all",
+     "label": "All",
+     "icon": "label"
+    },
+    {
+     "id": "top",
+     "label": "Top 30%+",
+     "icon": "trending_up",
+     "min_discount": 30
+    },
+    {
+     "id": "things",
+     "label": "Things",
+     "icon": "inventory_2",
+     "group": "things"
+    },
+    {
+     "id": "services",
+     "label": "Services",
+     "icon": "miscellaneous_services",
+     "group": "services"
+    },
+    {
+     "id": "assets",
+     "label": "Assets",
+     "icon": "account_balance",
+     "group": "assets"
+    },
+    {
+     "id": "entertainment",
+     "label": "Fun",
+     "icon": "emoji_events",
+     "group": "entertainment"
+    }
+   ],
+   "items": []
+  },
+  "groceries": {
+   "kind": "list",
+   "tabs": [
+    {
+     "id": "all",
+     "label": "All",
+     "icon": "label"
+    },
+    {
+     "id": "fresh",
+     "label": "Fresh",
+     "icon": "restaurant",
+     "tag": "fresh"
+    },
+    {
+     "id": "pantry",
+     "label": "Pantry",
+     "icon": "inventory_2",
+     "tag": "pantry"
+    },
+    {
+     "id": "drinks",
+     "label": "Drinks",
+     "icon": "star",
+     "tag": "drinks"
+    },
+    {
+     "id": "deals",
+     "label": "Deals",
+     "icon": "bolt",
+     "deal": true
+    }
+   ],
+   "items": [
+    {
+     "id": "gro-1",
+     "title": "Organic bananas",
+     "subtitle": "Biocoop, 1 kg",
+     "price": 2.49,
+     "unit": "EUR/kg",
+     "old_price": 3.2,
+     "tags": [
+      "fresh"
+     ]
+    },
+    {
+     "id": "gro-2",
+     "title": "Free-range eggs x12",
+     "subtitle": "Carrefour, size M",
+     "price": 3.1,
+     "unit": "EUR",
+     "tags": [
+      "fresh"
+     ]
+    },
+    {
+     "id": "gro-3",
+     "title": "Basmati rice 5 kg",
+     "subtitle": "Lidl, long grain",
+     "price": 7.99,
+     "unit": "EUR",
+     "old_price": 11.5,
+     "tags": [
+      "pantry"
+     ]
+    },
+    {
+     "id": "gro-4",
+     "title": "Olive oil extra virgin",
+     "subtitle": "Monoprix, 1 L",
+     "price": 8.9,
+     "unit": "EUR",
+     "old_price": 12.4,
+     "tags": [
+      "pantry"
+     ]
+    },
+    {
+     "id": "gro-5",
+     "title": "Sparkling water x6",
+     "subtitle": "Badoit, 1.25 L",
+     "price": 4.2,
+     "unit": "EUR",
+     "tags": [
+      "drinks"
+     ]
+    },
+    {
+     "id": "gro-6",
+     "title": "Cold brew coffee",
+     "subtitle": "Starbucks, 750 ml",
+     "price": 5.5,
+     "unit": "EUR",
+     "old_price": 6.9,
+     "tags": [
+      "drinks"
+     ]
+    }
+   ]
+  },
+  "electronics": {
+   "kind": "list",
+   "tabs": [
+    {
+     "id": "all",
+     "label": "All",
+     "icon": "label"
+    },
+    {
+     "id": "phones",
+     "label": "Phones",
+     "icon": "smartphone",
+     "tag": "phones"
+    },
+    {
+     "id": "audio",
+     "label": "Audio",
+     "icon": "music_note",
+     "tag": "audio"
+    },
+    {
+     "id": "home",
+     "label": "Home",
+     "icon": "home",
+     "tag": "home"
+    },
+    {
+     "id": "deals",
+     "label": "Deals",
+     "icon": "bolt",
+     "deal": true
+    }
+   ],
+   "items": [
+    {
+     "id": "ele-1",
+     "title": "Pixel 9a 128 GB",
+     "subtitle": "Google, unlocked",
+     "price": 399.0,
+     "unit": "EUR",
+     "old_price": 499.0,
+     "tags": [
+      "phones"
+     ]
+    },
+    {
+     "id": "ele-2",
+     "title": "Galaxy A56",
+     "subtitle": "Samsung, 256 GB",
+     "price": 349.0,
+     "unit": "EUR",
+     "tags": [
+      "phones"
+     ]
+    },
+    {
+     "id": "ele-3",
+     "title": "Noise-cancelling headphones",
+     "subtitle": "Sony WH-1000XM5",
+     "price": 279.0,
+     "unit": "EUR",
+     "old_price": 399.0,
+     "tags": [
+      "audio"
+     ]
+    },
+    {
+     "id": "ele-4",
+     "title": "Bluetooth speaker",
+     "subtitle": "JBL Flip 6",
+     "price": 89.9,
+     "unit": "EUR",
+     "old_price": 129.9,
+     "tags": [
+      "audio"
+     ]
+    },
+    {
+     "id": "ele-5",
+     "title": "Robot vacuum",
+     "subtitle": "Roborock Q8",
+     "price": 249.0,
+     "unit": "EUR",
+     "old_price": 349.0,
+     "tags": [
+      "home"
+     ]
+    },
+    {
+     "id": "ele-6",
+     "title": "Smart plug x4",
+     "subtitle": "TP-Link Tapo",
+     "price": 24.9,
+     "unit": "EUR",
+     "tags": [
+      "home"
+     ]
+    }
+   ]
+  },
+  "clothing": {
+   "kind": "list",
+   "tabs": [
+    {
+     "id": "all",
+     "label": "All",
+     "icon": "label"
+    },
+    {
+     "id": "women",
+     "label": "Women",
+     "icon": "account_circle",
+     "tag": "women"
+    },
+    {
+     "id": "men",
+     "label": "Men",
+     "icon": "person",
+     "tag": "men"
+    },
+    {
+     "id": "shoes",
+     "label": "Shoes",
+     "icon": "directions_walk",
+     "tag": "shoes"
+    },
+    {
+     "id": "deals",
+     "label": "Deals",
+     "icon": "bolt",
+     "deal": true
+    }
+   ],
+   "items": [
+    {
+     "id": "clo-1",
+     "title": "Wool coat",
+     "subtitle": "Zara, camel",
+     "price": 89.9,
+     "unit": "EUR",
+     "old_price": 139.0,
+     "tags": [
+      "women"
+     ]
+    },
+    {
+     "id": "clo-2",
+     "title": "Linen shirt",
+     "subtitle": "Uniqlo, white",
+     "price": 29.9,
+     "unit": "EUR",
+     "tags": [
+      "men"
+     ]
+    },
+    {
+     "id": "clo-3",
+     "title": "Slim jeans",
+     "subtitle": "Levi's 511, dark",
+     "price": 54.0,
+     "unit": "EUR",
+     "old_price": 89.0,
+     "tags": [
+      "men"
+     ]
+    },
+    {
+     "id": "clo-4",
+     "title": "Knit dress",
+     "subtitle": "Mango, green",
+     "price": 45.0,
+     "unit": "EUR",
+     "old_price": 69.99,
+     "tags": [
+      "women"
+     ]
+    },
+    {
+     "id": "clo-5",
+     "title": "Running shoes",
+     "subtitle": "Adidas Duramo",
+     "price": 49.0,
+     "unit": "EUR",
+     "old_price": 79.99,
+     "tags": [
+      "shoes"
+     ]
+    },
+    {
+     "id": "clo-6",
+     "title": "Leather boots",
+     "subtitle": "Dr. Martens 1460",
+     "price": 129.0,
+     "unit": "EUR",
+     "tags": [
+      "shoes"
+     ]
+    }
+   ]
+  },
+  "transport": {
+   "kind": "list",
+   "tabs": [
+    {
+     "id": "all",
+     "label": "All",
+     "icon": "label"
+    },
+    {
+     "id": "rail",
+     "label": "Rail",
+     "icon": "route",
+     "tag": "rail"
+    },
+    {
+     "id": "bus",
+     "label": "Bus",
+     "icon": "directions_walk",
+     "tag": "bus"
+    },
+    {
+     "id": "air",
+     "label": "Air",
+     "icon": "flight",
+     "tag": "air"
+    },
+    {
+     "id": "deals",
+     "label": "Deals",
+     "icon": "bolt",
+     "deal": true
+    }
+   ],
+   "items": [
+    {
+     "id": "tra-1",
+     "title": "Paris to Lyon",
+     "subtitle": "TGV inOui, 2h",
+     "price": 29.0,
+     "unit": "EUR",
+     "old_price": 69.0,
+     "tags": [
+      "rail"
+     ]
+    },
+    {
+     "id": "tra-2",
+     "title": "Paris to Brussels",
+     "subtitle": "Thalys, 1h20",
+     "price": 35.0,
+     "unit": "EUR",
+     "tags": [
+      "rail"
+     ]
+    },
+    {
+     "id": "tra-3",
+     "title": "Lyon to Geneva",
+     "subtitle": "FlixBus, 2h",
+     "price": 9.99,
+     "unit": "EUR",
+     "old_price": 19.99,
+     "tags": [
+      "bus"
+     ]
+    },
+    {
+     "id": "tra-4",
+     "title": "Paris to Lille",
+     "subtitle": "BlaBlaCar Bus, 1h50",
+     "price": 7.5,
+     "unit": "EUR",
+     "tags": [
+      "bus"
+     ]
+    },
+    {
+     "id": "tra-5",
+     "title": "Paris to Lisbon",
+     "subtitle": "Transavia, direct",
+     "price": 59.0,
+     "unit": "EUR",
+     "old_price": 119.0,
+     "tags": [
+      "air"
+     ]
+    },
+    {
+     "id": "tra-6",
+     "title": "Nice to Rome",
+     "subtitle": "easyJet, 1h30",
+     "price": 44.0,
+     "unit": "EUR",
+     "tags": [
+      "air"
+     ]
+    }
+   ]
+  },
+  "hotels": {
+   "kind": "list",
+   "tabs": [
+    {
+     "id": "all",
+     "label": "All",
+     "icon": "label"
+    },
+    {
+     "id": "city",
+     "label": "City",
+     "icon": "place",
+     "tag": "city"
+    },
+    {
+     "id": "beach",
+     "label": "Beach",
+     "icon": "public",
+     "tag": "beach"
+    },
+    {
+     "id": "mountain",
+     "label": "Mountain",
+     "icon": "explore",
+     "tag": "mountain"
+    },
+    {
+     "id": "deals",
+     "label": "Deals",
+     "icon": "bolt",
+     "deal": true
+    }
+   ],
+   "items": [
+    {
+     "id": "hot-1",
+     "title": "Hotel Lumiere, Paris",
+     "subtitle": "4 stars, per night",
+     "price": 139.0,
+     "unit": "EUR",
+     "old_price": 189.0,
+     "tags": [
+      "city"
+     ]
+    },
+    {
+     "id": "hot-2",
+     "title": "Ibis Centre, Lyon",
+     "subtitle": "3 stars, per night",
+     "price": 79.0,
+     "unit": "EUR",
+     "tags": [
+      "city"
+     ]
+    },
+    {
+     "id": "hot-3",
+     "title": "Villa Azur, Nice",
+     "subtitle": "Sea view, per night",
+     "price": 169.0,
+     "unit": "EUR",
+     "old_price": 229.0,
+     "tags": [
+      "beach"
+     ]
+    },
+    {
+     "id": "hot-4",
+     "title": "Casa Mar, Lisbon",
+     "subtitle": "Beachfront, per night",
+     "price": 99.0,
+     "unit": "EUR",
+     "tags": [
+      "beach"
+     ]
+    },
+    {
+     "id": "hot-5",
+     "title": "Chalet Alpin, Chamonix",
+     "subtitle": "Ski-in, per night",
+     "price": 149.0,
+     "unit": "EUR",
+     "old_price": 199.0,
+     "tags": [
+      "mountain"
+     ]
+    },
+    {
+     "id": "hot-6",
+     "title": "Refuge du Lac, Annecy",
+     "subtitle": "Lake view, per night",
+     "price": 89.0,
+     "unit": "EUR",
+     "tags": [
+      "mountain"
+     ]
+    }
+   ]
+  },
+  "real_estate": {
+   "kind": "list",
+   "tabs": [
+    {
+     "id": "all",
+     "label": "All",
+     "icon": "label"
+    },
+    {
+     "id": "rent",
+     "label": "Rent",
+     "icon": "key",
+     "tag": "rent"
+    },
+    {
+     "id": "buy",
+     "label": "Buy",
+     "icon": "payments",
+     "tag": "buy"
+    },
+    {
+     "id": "land",
+     "label": "Land",
+     "icon": "map",
+     "tag": "land"
+    },
+    {
+     "id": "deals",
+     "label": "Deals",
+     "icon": "bolt",
+     "deal": true
+    }
+   ],
+   "items": [
+    {
+     "id": "re-1",
+     "title": "Studio 24 m2, Paris 11",
+     "subtitle": "Furnished, monthly",
+     "price": 1050.0,
+     "unit": "EUR/mo",
+     "old_price": 1190.0,
+     "tags": [
+      "rent"
+     ]
+    },
+    {
+     "id": "re-2",
+     "title": "2 rooms 48 m2, Lyon 3",
+     "subtitle": "Balcony, monthly",
+     "price": 890.0,
+     "unit": "EUR/mo",
+     "tags": [
+      "rent"
+     ]
+    },
+    {
+     "id": "re-3",
+     "title": "House 110 m2, Nantes",
+     "subtitle": "Garden, 4 rooms",
+     "price": 385000.0,
+     "unit": "EUR",
+     "old_price": 410000.0,
+     "tags": [
+      "buy"
+     ]
+    },
+    {
+     "id": "re-4",
+     "title": "Flat 62 m2, Bordeaux",
+     "subtitle": "Lift, 3 rooms",
+     "price": 279000.0,
+     "unit": "EUR",
+     "tags": [
+      "buy"
+     ]
+    },
+    {
+     "id": "re-5",
+     "title": "Plot 800 m2, Annecy",
+     "subtitle": "Serviced, buildable",
+     "price": 165000.0,
+     "unit": "EUR",
+     "old_price": 185000.0,
+     "tags": [
+      "land"
+     ]
+    },
+    {
+     "id": "re-6",
+     "title": "Plot 1200 m2, Aix",
+     "subtitle": "Olive grove",
+     "price": 210000.0,
+     "unit": "EUR",
+     "tags": [
+      "land"
+     ]
+    }
+   ]
+  },
+  "business": {
+   "kind": "list",
+   "tabs": [
+    {
+     "id": "all",
+     "label": "All",
+     "icon": "label"
+    },
+    {
+     "id": "retail",
+     "label": "Retail",
+     "icon": "inventory_2",
+     "tag": "retail"
+    },
+    {
+     "id": "office",
+     "label": "Office",
+     "icon": "work",
+     "tag": "office"
+    },
+    {
+     "id": "franchise",
+     "label": "Franchise",
+     "icon": "hub",
+     "tag": "franchise"
+    },
+    {
+     "id": "deals",
+     "label": "Deals",
+     "icon": "bolt",
+     "deal": true
+    }
+   ],
+   "items": [
+    {
+     "id": "bus-1",
+     "title": "Bakery with lease",
+     "subtitle": "Lyon 6, turnover 420k",
+     "price": 95000.0,
+     "unit": "EUR",
+     "old_price": 120000.0,
+     "tags": [
+      "retail"
+     ]
+    },
+    {
+     "id": "bus-2",
+     "title": "Concept store",
+     "subtitle": "Paris 3, 60 m2",
+     "price": 58000.0,
+     "unit": "EUR",
+     "tags": [
+      "retail"
+     ]
+    },
+    {
+     "id": "bus-3",
+     "title": "Coworking floor",
+     "subtitle": "Lille, 24 desks",
+     "price": 72000.0,
+     "unit": "EUR",
+     "old_price": 90000.0,
+     "tags": [
+      "office"
+     ]
+    },
+    {
+     "id": "bus-4",
+     "title": "Accounting practice",
+     "subtitle": "Nantes, 80 clients",
+     "price": 130000.0,
+     "unit": "EUR",
+     "tags": [
+      "office"
+     ]
+    },
+    {
+     "id": "bus-5",
+     "title": "Coffee franchise",
+     "subtitle": "Entry fee, region Sud",
+     "price": 45000.0,
+     "unit": "EUR",
+     "old_price": 60000.0,
+     "tags": [
+      "franchise"
+     ]
+    },
+    {
+     "id": "bus-6",
+     "title": "Fitness franchise",
+     "subtitle": "Entry fee, region Ouest",
+     "price": 80000.0,
+     "unit": "EUR",
+     "tags": [
+      "franchise"
+     ]
+    }
+   ]
+  },
+  "jobs": {
+   "kind": "list",
+   "tabs": [
+    {
+     "id": "all",
+     "label": "All",
+     "icon": "label"
+    },
+    {
+     "id": "remote",
+     "label": "Remote",
+     "icon": "public",
+     "tag": "remote"
+    },
+    {
+     "id": "onsite",
+     "label": "On site",
+     "icon": "place",
+     "tag": "onsite"
+    },
+    {
+     "id": "parttime",
+     "label": "Part time",
+     "icon": "schedule",
+     "tag": "parttime"
+    },
+    {
+     "id": "deals",
+     "label": "Deals",
+     "icon": "bolt",
+     "deal": true
+    }
+   ],
+   "items": [
+    {
+     "id": "job-1",
+     "title": "Android developer",
+     "subtitle": "Remote, EU zones, urgent hire",
+     "price": 68000.0,
+     "unit": "EUR/yr",
+     "old_price": 72000.0,
+     "tags": [
+      "remote"
+     ]
+    },
+    {
+     "id": "job-2",
+     "title": "Data analyst",
+     "subtitle": "Remote, Paris-based team",
+     "price": 54000.0,
+     "unit": "EUR/yr",
+     "tags": [
+      "remote"
+     ]
+    },
+    {
+     "id": "job-3",
+     "title": "Site engineer",
+     "subtitle": "On site, Lyon, urgent hire",
+     "price": 58000.0,
+     "unit": "EUR/yr",
+     "old_price": 62000.0,
+     "tags": [
+      "onsite"
+     ]
+    },
+    {
+     "id": "job-4",
+     "title": "Chef de partie",
+     "subtitle": "On site, Nice",
+     "price": 32000.0,
+     "unit": "EUR/yr",
+     "tags": [
+      "onsite"
+     ]
+    },
+    {
+     "id": "job-5",
+     "title": "Tutor, maths",
+     "subtitle": "Part time, 8 h per week, urgent",
+     "price": 28.0,
+     "unit": "EUR/h",
+     "old_price": 32.0,
+     "tags": [
+      "parttime"
+     ]
+    },
+    {
+     "id": "job-6",
+     "title": "Warehouse picker",
+     "subtitle": "Part time, evenings",
+     "price": 14.5,
+     "unit": "EUR/h",
+     "tags": [
+      "parttime"
+     ]
+    }
+   ]
+  },
+  "events": {
+   "kind": "list",
+   "tabs": [
+    {
+     "id": "all",
+     "label": "All",
+     "icon": "label"
+    },
+    {
+     "id": "music",
+     "label": "Music",
+     "icon": "music_note",
+     "tag": "music"
+    },
+    {
+     "id": "sport",
+     "label": "Sport",
+     "icon": "fitness_center",
+     "tag": "sport"
+    },
+    {
+     "id": "stage",
+     "label": "Stage",
+     "icon": "groups",
+     "tag": "stage"
+    },
+    {
+     "id": "deals",
+     "label": "Deals",
+     "icon": "bolt",
+     "deal": true
+    }
+   ],
+   "items": [
+    {
+     "id": "evt-1",
+     "title": "Jazz night, Olympia",
+     "subtitle": "Fri 21:00",
+     "price": 38.0,
+     "unit": "EUR",
+     "old_price": 55.0,
+     "tags": [
+      "music"
+     ]
+    },
+    {
+     "id": "evt-2",
+     "title": "Open-air electro",
+     "subtitle": "Sat 18:00, Lyon",
+     "price": 45.0,
+     "unit": "EUR",
+     "tags": [
+      "music"
+     ]
+    },
+    {
+     "id": "evt-3",
+     "title": "Ligue 1: PSG vs OL",
+     "subtitle": "Sun 20:45",
+     "price": 62.0,
+     "unit": "EUR",
+     "old_price": 85.0,
+     "tags": [
+      "sport"
+     ]
+    },
+    {
+     "id": "evt-4",
+     "title": "City 10K run",
+     "subtitle": "Sun 09:00, Nantes",
+     "price": 19.0,
+     "unit": "EUR",
+     "tags": [
+      "sport"
+     ]
+    },
+    {
+     "id": "evt-5",
+     "title": "Hamlet, Comedie-Francaise",
+     "subtitle": "Thu 20:00",
+     "price": 32.0,
+     "unit": "EUR",
+     "old_price": 48.0,
+     "tags": [
+      "stage"
+     ]
+    },
+    {
+     "id": "evt-6",
+     "title": "Stand-up night",
+     "subtitle": "Wed 21:30, Paris",
+     "price": 22.0,
+     "unit": "EUR",
+     "tags": [
+      "stage"
+     ]
+    }
+   ]
+  }
+ }
+}

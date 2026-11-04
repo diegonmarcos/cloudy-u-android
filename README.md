@@ -977,6 +977,10 @@ cloudy-u-android/
 │   └── web/
 │       ├── gradle/
 │       └── src/
+├── ac_cloud-shopping/
+│   ├── app/
+│   │   └── src/
+│   └── test/
 ├── ac_cloud-store/
 │   ├── app/
 │   │   └── src/

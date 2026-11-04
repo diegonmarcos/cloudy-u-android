@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The fleet palette, dark by default (#336); libs:ui-kit's CloudKitTheme paints from these roles (ui/AppTheme.kt). -->
+    <color name="app_background">#FF0B1416</color>
+    <color name="app_surface">#FF12222A</color>
+    <color name="app_surface_raised">#FF1B323C</color>
+    <color name="app_text">#FFE6F4F1</color>
+    <color name="app_text_secondary">#FF9DB8B5</color>
+    <color name="app_outline">#FF2A4650</color>
+    <color name="app_accent">#FF2DD4BF</color>
+    <color name="app_on_accent">#FF042F2E</color>
+</resources>

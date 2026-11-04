@@ -21,10 +21,12 @@
     "tools":   {"label": "Tools",   "tile_group": "Tools Primary", "start": "#7C3AED", "end": "#312E81"},
     "agi":     {"label": "AGI",     "tile_group": "AGI",           "start": "#C026D3", "end": "#4A044E"},
     "configs": {"label": "Configs", "tile_group": "Configs",       "start": "#475569", "end": "#1E1B4B"},
-    "lnktree": {"label": "Lnktree", "tile_group": "Lnktree",       "start": "#0F766E", "end": "#1E1B4B"}
+    "lnktree": {"label": "Lnktree", "tile_group": "Lnktree",       "start": "#0F766E", "end": "#1E1B4B"},
+    "services": {"label": "Services", "tile_group": "Services",     "start": "#0369A1", "end": "#1E3A8A"}
   },
   "_doc_glyphs": "24dp glyph paths (Material Icons, Apache-2.0, unless noted; kg_graph is drawn for Cloud KG Store: three nodes and their edges; omniverse, finterm, cad and sim2real are drawn for the Lnktree apps: an orbit, candlesticks, a set square and rising steps). One glyph per app: the guard fails when two apps declare the same glyph or two glyphs draw the same path.",
   "glyphs": {
+    "shopping_cart": "M7,18c-1.1,0 -1.99,0.9 -1.99,2S5.9,22 7,22s2,-0.9 2,-2 -0.9,-2 -2,-2zM1,2v2h2l3.6,7.59 -1.35,2.45c-0.16,0.28 -0.25,0.61 -0.25,0.96 0,1.1 0.9,2 2,2h12v-2L7.42,15c-0.14,0 -0.25,-0.11 -0.25,-0.25l0.03,-0.12 0.9,-1.63h7.45c0.75,0 1.41,-0.41 1.75,-1.03l3.58,-6.49c0.08,-0.14 0.12,-0.31 0.12,-0.48 0,-0.55 -0.45,-1 -1,-1L5.21,4l-0.94,-2L1,2zM17,18c-1.1,0 -1.99,0.9 -1.99,2s0.89,2 1.99,2 2,-0.9 2,-2 -0.9,-2 -2,-2z",
     "apps": "M4,8h4V4H4v4zM10,20h4v-4h-4v4zM4,20h4v-4H4v4zM4,14h4v-4H4v4zM10,14h4v-4h-4v4zM16,4v4h4V4h-4zM10,8h4V4h-4v4zM16,14h4v-4h-4v4zM16,20h4v-4h-4v4z",
     "auto_awesome": "M19,9l1.25,-2.75L23,5l-2.75,-1.25L19,1l-1.25,2.75L15,5l2.75,1.25L19,9zM19,15l-1.25,2.75L15,19l2.75,1.25L19,23l1.25,-2.75L23,19l-2.75,-1.25L19,15zM11.5,9.5L9,4L6.5,9.5L1,12l5.5,2.5L9,20l2.5,-5.5L17,12L11.5,9.5z",
     "omniverse": "M12,2a10,10 0 1,1 0,20a10,10 0 1,1 0,-20zM12,4.4a7.6,7.6 0 1,0 0,15.2a7.6,7.6 0 1,0 0,-15.2zM12,9a3,3 0 1,1 0,6a3,3 0 1,1 0,-6zM18.5,4.2a1.6,1.6 0 1,1 0,3.2a1.6,1.6 0 1,1 0,-3.2z",

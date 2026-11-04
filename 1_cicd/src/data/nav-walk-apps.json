@@ -20,6 +20,12 @@
       "asset": "Cloud-Account"
     },
     {
+      "app": "ac_cloud-shopping",
+      "ship": "ship-cloud-shopping.yml",
+      "artifact": "Cloud-Shopping-",
+      "asset": "Cloud-Shopping"
+    },
+    {
       "app": "ac_cloud-superintel",
       "ship": "ship-cloud-superintel.yml",
       "artifact": "Cloud-SuperIntel-",

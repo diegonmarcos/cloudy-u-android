@@ -15,6 +15,8 @@ DECLARATION  1_cicd/src/data/configs-pages.json::tabs (the required first ids, t
       every entry names a real app
   T4  (#1443) a declared tab is a drawn tab: an app with Configs tabs of its own hands General | Perms | About to the shared
       pages (a `tabs.draw` needle in its non-test sources), so the order cannot be declared in build.json yet drawn by nothing
+  T6  (#1470) an app may keep an order its owner chose, but only by name in tabs.app_order with its exact `order` and a reason;
+      its declarations must equal that order, so the exception is per app and never loosens another app
   T5  every a[acd]_* directory is checked: one without a build.json is named in tabs.no_build_json with a reason
 
 USAGE  cloud-android-configs-tabs-guard.py [ROOT]      EXIT 0 ok · 1 at least one violation
@@ -67,6 +69,7 @@ def main(argv):
     exempt = {k for k in rule_all.get("exempt", {}) if not k.startswith("_")}
     unreached = {k for k in rule_all.get("pending", {}) if not k.startswith("_")}
     pending = {k: v for k, v in rule["pending"].items() if not k.startswith("_")}
+    app_order = {k: v for k, v in rule.get("app_order", {}).items() if not k.startswith("_")}
     bad = []
 
     # T0 the shared screen
@@ -100,8 +103,12 @@ def main(argv):
         checked += 1
         why = []
         decls = own_tabs(d)
+        want = app_order.get(app, {}).get("order")
         for where, ids in decls:
-            if ids[:len(first)] != first:
+            if want:
+                if ids != want:
+                    why.append("%s is %s, the owner's declared order is %s" % (where, "|".join(map(str, ids)) or "empty", "|".join(want)))
+            elif ids[:len(first)] != first:
                 why.append("%s starts %s" % (where, "|".join(map(str, ids[:len(first)])) or "empty"))
         if len({tuple(ids) for _, ids in decls}) > 1:
             why.append("its Configs tab declarations disagree")
@@ -118,6 +125,16 @@ def main(argv):
     for app, d in apps.items():
         if app in exempt or not own_tabs(d):
             continue
+        src = app_order.get(app, {}).get("source")
+        if src:  # #1469 a web Configs page: it must draw exactly the declared order (no Kotlin to hold a needle)
+            try:
+                text = open(os.path.join(root, src), encoding="utf-8").read()
+                drawn = re.findall(r"^\s*\{ id: '([a-z_]+)', label:", text.split("var TABS = [", 1)[1].split("\n  ];", 1)[0], re.M)
+            except (OSError, IndexError):
+                drawn = []
+            if drawn != app_order[app]["order"]:
+                bad.append("T4 %s: %s draws %s, not the declared %s" % (app, src, "|".join(drawn) or "no tabs", "|".join(app_order[app]["order"])))
+            continue
         if needles and not any(n in app_sources(root, app) for n in needles):
             bad.append("T4 %s: declares Configs tabs but no source draws the shared pages (%s)" % (app, " | ".join(needles)))
     # T5 no app directory escapes the guard
@@ -129,6 +146,15 @@ def main(argv):
     for app, reason in skipped.items():
         if len(reason) < MIN_REASON:
             bad.append("T5 tabs.no_build_json %s: the reason is shorter than %d chars" % (app, MIN_REASON))
+    for app, o in app_order.items():
+        if app not in apps:
+            bad.append("T6 tabs.app_order names no app: " + app)
+        elif not own_tabs(apps[app]):
+            bad.append("T6 tabs.app_order %s: the app declares no Configs tabs of its own" % app)
+        if not isinstance(o, dict) or not isinstance(o.get("order"), list) or not set(first) <= set(o["order"]):
+            bad.append("T6 tabs.app_order %s: `order` must be a list holding %s" % (app, "|".join(first)))
+        if not isinstance(o, dict) or len(str(o.get("reason", ""))) < MIN_REASON:
+            bad.append("T6 tabs.app_order %s: the reason is shorter than %d chars" % (app, MIN_REASON))
     for app, reason in pending.items():
         if app not in apps:
             bad.append("T3 tabs.pending names no app: " + app)
