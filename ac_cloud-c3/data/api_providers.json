@@ -67,6 +67,22 @@
         {"name": "crawlee.token", "kind": "store apify_tokens"},
         {"name": "apify.self.bearer", "kind": "store apify_tokens"}
       ]
+    },
+    {
+      "id": "cloudflare-browser-run", "label": "Cloudflare Browser Run", "group": "scraper", "category": "Headless-browser rendering (cloud, REST)",
+      "links": [
+        {"label": "Console", "url": "https://dash.cloudflare.com/profile/api-tokens"},
+        {"label": "Docs", "url": "https://developers.cloudflare.com/browser-rendering"}
+      ],
+      "used_by": {
+        "apps": ["cloud-browser", "cloud-media-center", "cloud-news"],
+        "containers": []
+      },
+      "auth": "Account id plus an API token with Browser Rendering permission, sent as a bearer token",
+      "secrets": [
+        {"name": "cloudflare.account_id", "kind": "store apify_tokens"},
+        {"name": "cloudflare.api_token", "kind": "store apify_tokens"}
+      ]
     }
   ]
 }

@@ -21,7 +21,7 @@
     var ab = d.apify || {}, backends = {};
     (ab.backends || []).forEach(function (b) {
       if (!b || !b.id || !(/^https:\/\//.test(b.api || '') || /^https:\/\//.test(b.default_url || ''))) return;
-      var o = {}; Object.keys(b).forEach(function (k) { o[k] = b[k]; }); o.label = b.label || b.id; o.token_key = b.api ? 'apify.token' : 'apify.self.bearer'; backends[b.id] = o;
+      var o = {}; Object.keys(b).forEach(function (k) { o[k] = b[k]; }); o.label = b.label || b.id; var cf = b.kind === 'cloudflare'; o.token_key = cf ? 'cloudflare.api_token' : b.api ? 'apify.token' : 'apify.self.bearer'; if (cf) o.account_key = 'cloudflare.account_id'; backends[b.id] = o;
     });
     if (!backends.cloud) errors.push('backends: Apify Cloud missing');
     var def = backends[ab.default_backend] ? ab.default_backend : 'cloud';
@@ -252,9 +252,21 @@
   }
   function fillInput(input, ref) { return JSON.parse(JSON.stringify(input || {}).replace(/\{ref\}/g, String(ref).replace(/\\/g, '\\\\').replace(/"/g, '\\"'))); }
   /* deps: { fetch, secret(name) -> Promise<string>, backend: declaration entry, apifyToken: Promise<string> } */
+  /* Cloudflare Browser Run: render the ref page as Markdown on Cloudflare's headless browser; the answer is one item {url, markdown} */
+  function cloudflareRun(e, deps, token) {
+    return deps.secret(deps.backend.account_key).then(function (acct) {
+      if (!/^[0-9a-fA-F]{32}$/.test(String(acct || '').trim())) throw new Error('no Cloudflare account id (Configs > Apify)');
+      var url = deps.backend.api + '/accounts/' + String(acct).trim() + '/browser-rendering/markdown';
+      return J(deps, url, { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }, { method: 'POST', body: JSON.stringify({ url: String(e.ref) }) });
+    }).then(function (r) {
+      if (!r || r.success !== true) throw new Error((r && r.errors && r.errors[0] && r.errors[0].message) || 'Cloudflare refused the request');
+      return [{ url: String(e.ref), markdown: r.result }];
+    });
+  }
   function runApify(e, deps) {
     return deps.apifyToken().then(function (token) {
       if (!token) throw new Error('no ' + deps.backend.label + ' token (Configs > Apify)');
+      if (deps.backend.kind === 'cloudflare') return cloudflareRun(e, deps, token);
       var url = actorUrl(deps.backend, e.actor, 'run-sync-get-dataset-items') + '?format=json&clean=true';
       return J(deps, url, { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }, { method: 'POST', body: JSON.stringify(fillInput(e.input, e.ref)) });
     }).then(function (items) { return mapApify(e, items); });

@@ -530,14 +530,14 @@ class NewsBridge(private val ctx: Context) {
     @JavascriptInterface
     fun sourceDecl(): String = declJson
 
-    /** The backend choice for Configs > Apify: {backends:[{id,label}], backend, selfUrl, hasToken:{id:bool}}. No secret crosses. */
+    /** The backend choice for Configs > Apify: {backends:[{id,label}], backend, selfUrl, accountId, hasToken:{id:bool}}. No secret crosses. */
     @JavascriptInterface
     fun apifyConfig(): String {
         val st = apifyStore
         val bs = JSONArray()
         val has = JSONObject()
-        st.decl.backends.forEach { bs.put(JSONObject().put("id", it.id).put("label", it.label).put("selfHosted", it.api == null)); has.put(it.id, st.hasToken(it)) }
-        return JSONObject().put("backends", bs).put("backend", st.backend().id).put("selfUrl", st.selfUrl()).put("hasToken", has).toString()
+        st.decl.backends.forEach { bs.put(JSONObject().put("id", it.id).put("label", it.label).put("selfHosted", it.api == null).put("cloudflare", it.cloudflare)); has.put(it.id, st.hasToken(it)) }
+        return JSONObject().put("backends", bs).put("backend", st.backend().id).put("selfUrl", st.selfUrl()).put("accountId", st.accountId().orEmpty()).put("hasToken", has).toString()
     }
 
     @JavascriptInterface
@@ -546,6 +546,10 @@ class NewsBridge(private val ctx: Context) {
     @JavascriptInterface
     fun apifySetSelfUrl(url: String): String =
         if (url.isNotBlank() && !url.trim().startsWith("https://")) okErr(false, "the base URL must start with https://") else { apifyStore.setSelfUrl(url); okErr(true, "") }
+
+    /** #1475 Stores (blank clears) the Cloudflare account id (32 hex). */
+    @JavascriptInterface
+    fun apifySetAccount(id: String): String = if (apifyStore.setAccountId(id)) okErr(true, "") else okErr(false, "a Cloudflare account id is 32 hex characters")
 
     /** Stores (blank clears) the token of Apify Cloud or the fleet bearer of the self-hosted backend, encrypted. */
     @JavascriptInterface

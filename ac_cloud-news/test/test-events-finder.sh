@@ -45,7 +45,7 @@ done
 grep -q 'SOURCE_DECL_B64' "$APP/app/build.gradle" && ok "build.gradle bakes the source declaration" || bad "build.gradle bakes the source declaration"
 S="$APP/data/source-decl.json"
 [ "$(jq -r '.apify.default_backend' "$S")" = "cloud" ] && ok "default Apify backend is Apify Cloud" || bad "default Apify backend is Apify Cloud"
-[ "$(jq -r '[.apify.backends[].id] | join(",")' "$S")" = "cloud,selfhosted" ] && ok "backends cloud, selfhosted" || bad "backends cloud, selfhosted"
+[ "$(jq -r '[.apify.backends[].id] | join(",")' "$S")" = "cloud,selfhosted,cloudflare" ] && ok "backends cloud, selfhosted, cloudflare" || bad "backends cloud, selfhosted, cloudflare"
 [ "$(jq '[.sources[] | select(.area == "events" and .method == "apify")] | length' "$S")" = "6" ] && ok "events ticketers are Apify-method" || bad "events ticketers are Apify-method"
 [ "$(jq -r '[.sources[] | select(.id == "youtube")][0].method' "$S")" = "direct" ] && ok "YouTube is Direct" || bad "YouTube is Direct"
 BN="$APP/build.json"

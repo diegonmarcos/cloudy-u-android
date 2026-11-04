@@ -55,10 +55,11 @@ import kotlinx.coroutines.withContext
 import java.text.DateFormat
 import java.util.Date
 
-/** The Scrapers section's top-nav pages (#1468: Site Files | Apify | SelfHosted), by id (build.json ui.sections[scrapers].pages). */
+/** The Scrapers section's top-nav pages (#1468: Site Files | Apify | Cloudflare | SelfHosted), by id (build.json ui.sections[scrapers].pages). */
 object ScrapersPages {
     const val SITE_FILES = "site_files"
     const val APIFY = "apify"
+    const val CLOUDFLARE = "cloudflare"
     const val SELF_HOSTED = "self_hosted"
 }
 
@@ -68,6 +69,7 @@ fun ScrapersPage(page: String?, c: ThemeColors, modifier: Modifier = Modifier) {
     Box(modifier.fillMaxSize().background(c.top).testTag("scrapers:page:${page ?: ScrapersPages.SITE_FILES}")) {
         when (page) {
             ScrapersPages.APIFY -> ApifyPage(c)
+            ScrapersPages.CLOUDFLARE -> CloudflarePage(c)
             ScrapersPages.SELF_HOSTED -> SelfHostedPage(c)
             else -> SiteFilesPage(c)
         }

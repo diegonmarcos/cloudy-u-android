@@ -25,9 +25,9 @@ t('every apify row has an actor and every ref of the events area is a real ticke
     d.sources.filter((s) => s.method === 'apify').forEach((s) => assert.ok(SD.ACTOR.test(s.actor), s.id));
     d.sources.filter((s) => s.area === 'events').forEach((s) => assert.ok(cfg.ticketers.some((x) => x.id === s.id), s.id));
 });
-t('the default backend is Apify Cloud, self-hosted is declared and opt-in', () => {
+t('the default backend is Apify Cloud, self-hosted and Cloudflare Browser Run are declared and opt-in', () => {
     assert.strictEqual(real.apify.default_backend, 'cloud');
-    assert.deepStrictEqual(real.apify.backends.map((b) => b.id), ['cloud', 'selfhosted']);
+    assert.deepStrictEqual(real.apify.backends.map((b) => b.id), ['cloud', 'selfhosted', 'cloudflare']);
     assert.ok(/^https:\/\//.test(real.apify.backends[1].default_url));
 });
 t('bad rows are errors and dropped', () => {

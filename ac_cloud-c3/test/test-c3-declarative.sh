@@ -188,7 +188,7 @@ for g in ap["groups"]:
     if g["page"] not in pages: bad.append("group %r answers page %r that build.json does not declare" % (g["id"], g["page"]))
 ids = [p["id"] for p in ap["providers"]]
 if len(set(ids)) != len(ids): bad.append("duplicate provider ids")
-if not {"openrouter", "claude", "apify", "crawlee"} <= set(ids): bad.append("OpenRouter, Claude, Apify and Cloudy Crawlee must all be declared (got %s)" % ids)
+if not {"openrouter", "claude", "apify", "crawlee", "cloudflare-browser-run"} <= set(ids): bad.append("OpenRouter, Claude, Apify, Cloudy Crawlee and Cloudflare Browser Run must all be declared (got %s)" % ids)
 KEYS = {"id", "label", "group", "category", "links", "used_by", "auth", "secrets"}
 NAME = re.compile(r"[A-Za-z][A-Za-z0-9_./-]{2,63}")
 KIND = re.compile(r"env|vault|store [a-z_]+")

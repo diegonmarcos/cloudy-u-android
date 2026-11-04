@@ -76,16 +76,18 @@ fun ApifyPage(c: ThemeColors) {
             }
         }
     }
-    val backend = rev.let { store.backend() }
-    val connected = rev.let { store.hasToken() }
-    fun masked() = store.resolve()?.second.orEmpty().let { if (it.length <= 8) "••••" else it.take(4) + "••••" + it.takeLast(2) }
+    // #1475 the Cloudflare backend has its own tab; actors only run on the Apify-shaped ones
+    val actorBackends = store.decl.backends.filter { !it.cloudflare }
+    val backend = rev.let { store.backend().takeIf { !it.cloudflare } ?: (actorBackends.firstOrNull { it.id == store.decl.default } ?: actorBackends.first()) }
+    val connected = rev.let { store.hasToken(backend) }
+    fun masked() = store.resolve(backend)?.second.orEmpty().let { if (it.length <= 8) "••••" else it.take(4) + "••••" + it.takeLast(2) }
     val colors = OutlinedTextFieldDefaults.colors(focusedTextColor = c.ink, unfocusedTextColor = c.ink, focusedLabelColor = c.accent, unfocusedLabelColor = c.inkDim)
 
     fun guarded(what: String, block: suspend () -> Unit) = scope.launch {
         message = what
         runCatching { block() }.onSuccess { if (message == what) message = "" }.onFailure { message = "Apify: ${it.message}" }
     }
-    fun client() = store.resolve().let { r -> ApifyClient(r?.second.orEmpty(), http, r?.first ?: ApifyBackends.CLOUD_API) }
+    fun client() = store.resolve(backend).let { r -> ApifyClient(r?.second.orEmpty(), http, r?.first ?: ApifyBackends.CLOUD_API) }
     fun search() = guarded("Searching the Store…") {
         val p = withContext(Dispatchers.IO) { ApifyStore.parse(http.get(ApifyStore.url(query))) }
         found = p.items; total = p.total; view = ApifyView.ACTORS
@@ -123,7 +125,7 @@ fun ApifyPage(c: ThemeColors) {
         }
         item(key = "backend") {
             Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = KitStoreRow.padH), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                for (b in store.decl.backends) Chip(b.label, backend.id == b.id, c, "apify:backend:${b.id}") {
+                for (b in actorBackends) Chip(b.label, backend.id == b.id, c, "apify:backend:${b.id}") {
                     store.setBackend(b.id); rev++; runs = emptyList(); sets = emptyList(); open = null
                     if (view != ApifyView.ACTORS) view = ApifyView.ACTORS
                 }

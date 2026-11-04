@@ -2,7 +2,7 @@
  "_doc": "#1470 THE source declaration of Cloud News: one row per source with its area (media|events|news), method (apify|direct), the Apify actor id for method apify, an enabled flag, an optional input template ({city_slug} {country_slug} {country} {tld} {from_date} {to_date} ... as events-core.js fill()) and `ref`, the row of the older data file (sources.json, media.json, event-finder.json) that still holds the protocol details. The fetchers read it: events-core.js runFinder routes each events ticketer through sources-decl.js route(); NewsBridge.apifyRun runs ONLY an actor declared here (or a user override of the same shape) on the chosen backend; Configs > Media | Events | News list it as Apify and Direct subsections. enabled=false hides a source and keeps it from being fetched. Actor ids are the declared defaults and can be overridden per source in Configs; confirm them in the Apify Store. Flip a source to method direct to use its legacy fetch block in event-finder.json.",
  "version": 1,
  "apify": {
-  "_doc": "The backend actors run on (shared store libs:apify): both speak the Apify API shape (/v2/acts/<user~name>/run-sync-get-dataset-items, bearer). Default Apify Cloud; the self-hosted Cloudy Crawlee (container crawlee-cloud in aa_cloud-superapp/data/cloud_services.json, mesh only) is opt-in with its own base URL and fleet bearer, both stored encrypted.",
+  "_doc": "The backend actors run on (shared store libs:apify): both speak the Apify API shape (/v2/acts/<user~name>/run-sync-get-dataset-items, bearer). Default Apify Cloud; the self-hosted Cloudy Crawlee (container crawlee-cloud in aa_cloud-superapp/data/cloud_services.json, mesh only) is opt-in with its own base URL and fleet bearer, both stored encrypted. #1475 Cloudflare Browser Run (kind cloudflare, headless-browser rendering REST API) is the third option: it needs an account id plus an API token (store keys cloudflare.account_id, cloudflare.api_token) and renders the first start URL of a source as Markdown instead of running an actor.",
   "default_backend": "cloud",
   "backends": [
    {
@@ -14,6 +14,12 @@
     "id": "selfhosted",
     "label": "Self-hosted Cloudy Crawlee",
     "default_url": "https://crawlee-cloud.mesh.diegonmarcos.com"
+   },
+   {
+    "id": "cloudflare",
+    "label": "Cloudflare Browser Run",
+    "kind": "cloudflare",
+    "api": "https://api.cloudflare.com/client/v4"
    }
   ],
   "timeout_s": 120,

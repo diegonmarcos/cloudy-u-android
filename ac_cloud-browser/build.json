@@ -1964,6 +1964,12 @@
             "_doc": "#1468 libs:scraper ApifyPage: the declared most-used actors, a search of the public Store API (api.apify.com/v2/store), and with the user's own token (encrypted) run an actor, list runs and datasets, export items as CSV/JSON."
           },
           {
+            "id": "cloudflare",
+            "label": "Cloudflare",
+            "icon": "public",
+            "_doc": "#1475 libs:scraper CloudflarePage: Cloudflare Browser Run (headless-browser rendering REST API) as the third scraper backend beside Apify and SelfHosted; the account id and API token are stored encrypted in the shared libs:apify store (keys cloudflare.account_id, cloudflare.api_token)."
+          },
+          {
             "id": "self_hosted",
             "label": "SelfHosted",
             "icon": "music_note",

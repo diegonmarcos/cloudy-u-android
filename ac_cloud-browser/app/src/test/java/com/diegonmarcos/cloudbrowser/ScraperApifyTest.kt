@@ -7,6 +7,8 @@ import com.diegonmarcos.superapp.scraper.ApifyCatalog
 import com.diegonmarcos.superapp.scraper.ApifyClient
 import com.diegonmarcos.superapp.scraper.ApifyExport
 import com.diegonmarcos.superapp.scraper.ApifyStore
+import com.diegonmarcos.superapp.scraper.CfEndpoint
+import com.diegonmarcos.superapp.scraper.CloudflareClient
 import com.diegonmarcos.superapp.scraper.MusicHttp
 import com.diegonmarcos.superapp.scraper.ScrapersPages
 import com.diegonmarcos.superapp.scraper.SelfHostedCatalog
@@ -101,6 +103,47 @@ class ScraperApifyTest {
         assertFalse(s.hasToken())
     }
 
+    @Test fun `Cloudflare Browser Run is the third backend, Apify stays the default, and its account id and token are kept in the store`() {
+        val kv = MapKv()
+        val s = ApifyBackendStore(kv)
+        assertEquals(listOf("cloud", "selfhosted", "cloudflare"), s.decl.backends.map { it.id })
+        assertEquals(ApifyBackends.CLOUD, s.backend().id)
+        val cf = s.decl.byId(ApifyBackends.CLOUDFLARE)
+        assertTrue(cf.cloudflare)
+        assertFalse(s.decl.byId(ApifyBackends.CLOUD).cloudflare)
+        val acct = "0123456789abcdef0123456789ABCDEF"
+        assertFalse(s.setAccountId("not-an-id"))
+        assertTrue(s.setToken(cf, "  cf_token_1234  "))
+        assertFalse(s.hasToken(cf))                                          // the account id is missing
+        assertTrue(s.setAccountId(acct))
+        assertTrue(s.hasToken(cf))
+        assertEquals("cf_token_1234", kv.get("cloudflare.api_token")); assertEquals(acct, kv.get("cloudflare.account_id"))
+        assertFalse(s.hasToken())                                            // Apify Cloud's own token is separate
+        s.setBackend(ApifyBackends.CLOUDFLARE)
+        assertEquals("https://api.cloudflare.com/client/v4/accounts/$acct/browser-rendering" to "cf_token_1234", s.resolve())
+        assertEquals("https://x/accounts/$acct/browser-rendering/markdown", ApifyBackends.cloudflareUrl(ApifyBackends.cloudflareBase("https://x", acct)!!))
+        assertEquals(null, ApifyBackends.cloudflareBase("https://x", "zz"))
+        val parsed = ApifyBackends.parse("""{"default_backend":"cloud","backends":[{"id":"cloud","api":"https://api.apify.com/v2"},{"id":"cloudflare","kind":"cloudflare","api":"https://api.cloudflare.com/client/v4"}]}""")
+        assertTrue(parsed.byId("cloudflare").cloudflare)
+    }
+
+    @Test fun `Cloudflare client posts the url with the bearer token and reads result or errors`() {
+        MockWebServer().use { srv ->
+            srv.enqueue(MockResponse().setBody("""{"success":true,"result":"# Title"}"""))
+            srv.enqueue(MockResponse().setBody("""{"success":true,"result":["https://a","https://b"]}"""))
+            srv.enqueue(MockResponse().setResponseCode(200).setBody("""{"success":false,"errors":[{"code":10000,"message":"Authentication error"}]}"""))
+            val base = srv.url("/client/v4/accounts/A/browser-rendering").toString().trimEnd('/')
+            val c = CloudflareClient(base, "cf_tok", MusicHttp())
+            assertEquals("# Title", c.render(CfEndpoint.MARKDOWN, " https://example.com "))
+            val req = srv.takeRequest()
+            assertEquals("/client/v4/accounts/A/browser-rendering/markdown", req.path)
+            assertEquals("Bearer cf_tok", req.getHeader("Authorization"))
+            assertEquals("""{"url":"https://example.com"}""", req.body.readUtf8())
+            assertEquals("https://a\nhttps://b", c.render(CfEndpoint.LINKS, "https://example.com"))
+            assertTrue(runCatching { c.render(CfEndpoint.CONTENT, "https://example.com") }.exceptionOrNull()!!.message!!.contains("Authentication error"))
+        }
+    }
+
     @Test fun `client sends the bearer token to run an actor and lists runs and datasets`() {
         MockWebServer().use { srv ->
             srv.enqueue(MockResponse().setBody("""{"data":{"id":"R1","actId":"A1","status":"READY","startedAt":"2026-11-04T10:00:00Z","defaultDatasetId":"D1"}}"""))
@@ -133,13 +176,13 @@ class ScraperApifyTest {
     }
 
     // ---- the nav move
-    @Test fun `Scrapers pages are exactly Site Files, Apify, SelfHosted and Music is a SelfHosted section`() {
+    @Test fun `Scrapers pages are exactly Site Files, Apify, Cloudflare, SelfHosted and Music is a SelfHosted section`() {
         val secs = JSONObject(File("../build.json").readText()).getJSONObject("ui").getJSONArray("sections")
         val s = (0 until secs.length()).map { secs.getJSONObject(it) }.first { it.getString("id") == "scrapers" }
         val pages = s.getJSONArray("pages").let { a -> (0 until a.length()).map { a.getJSONObject(it) } }
-        assertEquals(listOf("site_files", "apify", "self_hosted"), pages.map { it.getString("id") })
-        assertEquals(listOf("Site Files", "Apify", "SelfHosted"), pages.map { it.getString("label") })
-        assertEquals(listOf(ScrapersPages.SITE_FILES, ScrapersPages.APIFY, ScrapersPages.SELF_HOSTED), pages.map { it.getString("id") })
+        assertEquals(listOf("site_files", "apify", "cloudflare", "self_hosted"), pages.map { it.getString("id") })
+        assertEquals(listOf("Site Files", "Apify", "Cloudflare", "SelfHosted"), pages.map { it.getString("label") })
+        assertEquals(listOf(ScrapersPages.SITE_FILES, ScrapersPages.APIFY, ScrapersPages.CLOUDFLARE, ScrapersPages.SELF_HOSTED), pages.map { it.getString("id") })
         assertEquals(listOf("music", "youtube", "scrappers_api"), SelfHostedCatalog.sections.map { it.id })
         assertEquals(SelfHostedCatalog.MUSIC, SelfHostedCatalog.sections.first().id)
     }

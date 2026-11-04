@@ -133,9 +133,10 @@
     var d = ctx.msrc, n = '<p class="cfg__note">';
     if (id === 'apify') {
       var b = S.backendOf(d, ctx.backend), keys = Object.keys(d.backends);
-      return '<section class="cfg__sec" data-tsec="apify"><h3>Apify</h3>' + n + 'Actors run in Apify\'s cloud and bill your Apify account, or on your self-hosted Cloudy Crawlee. The token is kept encrypted on this phone, one per backend.</p>' +
+      return '<section class="cfg__sec" data-tsec="apify"><h3>Apify</h3>' + n + 'Actors run in Apify\'s cloud and bill your Apify account, on your self-hosted Cloudy Crawlee, or on Cloudflare Browser Run (account id plus API token). The token is kept encrypted on this phone, one per backend.</p>' +
         '<label>Backend<select data-apify-backend>' + keys.map(function (k) { return '<option value="' + k + '"' + (d.backends[k] === b ? ' selected' : '') + '>' + esc(d.backends[k].label) + (k === d.default_backend ? ' (default)' : '') + '</option>'; }).join('') + '</select></label>' +
         (b.api ? '' : '<label>Runner URL (https, empty = ' + esc(b.default_url) + ')<input data-self-url value="' + esc(ctx.selfUrl || '') + '" autocomplete="off"></label>') +
+        (b.account_key ? '<label>Account id (' + (ctx.has(b.account_key) ? 'saved, encrypted' : 'not set') + ')<input type="password" data-secret="' + esc(b.account_key) + '" placeholder="32 hex characters" autocomplete="off"></label>' : '') +
         '<label>' + esc(b.label) + (b.api ? ' API token (' : ' bearer (') + (ctx.has(b.token_key) ? 'saved, encrypted' : 'not set') + ')<input type="password" data-secret="' + esc(b.token_key) + '" placeholder="Paste to replace" autocomplete="off"></label>' +
         '<button type="button" class="btn" data-secret-clear="' + esc(b.token_key) + '">Remove token</button><div class="cfg__umsg" role="status"></div></section>';
     }
