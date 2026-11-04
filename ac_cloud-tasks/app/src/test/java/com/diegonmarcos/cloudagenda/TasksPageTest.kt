@@ -188,6 +188,7 @@ class TasksPageTest {
         val env = FakeEnv(RuntimeEnvironment.getApplication())
         env.controller.updateFilter(TaskFilter(statuses = setOf(TaskStatus.HOLD)))
         compose.setContent { TasksApp(env, Declarations.nav) }
+        compose.onNodeWithTag(PageTabsTags.tab("list")).performClick()
         compose.onNodeWithTag(TasksTags.NO_MATCH).assertIsDisplayed()
     }
 
