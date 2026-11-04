@@ -274,7 +274,7 @@
         "catalog_url": "https://openrouter.ai/api/v1/models",
         "needs_token": true,
         "default_model": "z-ai/glm-5.3-flash",
-        "pricing_as_of": "2026-11-03",
+        "pricing_as_of": "2026-11-04",
         "models": [
           {
             "id": "meta-llama/llama-3.1-8b-instruct",
@@ -319,8 +319,8 @@
               "roleplay",
               "translation"
             ],
-            "prompt": 0.086,
-            "completion": 0.257,
+            "prompt": 0.082,
+            "completion": 0.245,
             "note": "Sparse 26B (4B active): translation, academia and legal at a small-model price."
           },
           {
@@ -349,7 +349,6 @@
               "fp8"
             ],
             "trained_for": [
-              "marketing",
               "roleplay",
               "translation"
             ],
@@ -366,8 +365,8 @@
               "fp16",
               "fp8"
             ],
-            "prompt": 0.2,
-            "completion": 0.52,
+            "prompt": 0.1,
+            "completion": 0.32,
             "note": "70B open weights, no category ranking — a general fallback, not a specialist."
           },
           {
@@ -378,8 +377,8 @@
             "quant": [
               "fp8"
             ],
-            "prompt": 0.09,
-            "completion": 0.55,
+            "prompt": 0.14,
+            "completion": 0.8,
             "note": "Largest parameter count here; served only at fp8."
           },
           {
@@ -412,7 +411,6 @@
               "finance",
               "health",
               "legal",
-              "marketing",
               "marketing/seo",
               "programming",
               "roleplay",
@@ -467,8 +465,8 @@
               "translation",
               "trivia"
             ],
-            "prompt": 0.0313,
-            "completion": 0.0846,
+            "prompt": 0.0269,
+            "completion": 0.0996,
             "note": "The provider default: ranked in all twelve categories, and the cheapest all-rounder after DeepSeek."
           },
           {
@@ -503,9 +501,7 @@
           {
             "id": "google/gemini-2.5-flash",
             "name": "Gemini 2.5 Flash",
-            "trained_for": [
-              "translation"
-            ],
+            "trained_for": [],
             "prompt": 0.3,
             "completion": 2.5,
             "note": "Translation-ranked plus eight more categories, and cheap. Selectable, but no longer any tool's default — see _doc_tool_models."
