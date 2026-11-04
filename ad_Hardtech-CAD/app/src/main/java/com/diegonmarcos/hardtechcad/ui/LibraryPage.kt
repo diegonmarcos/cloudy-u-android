@@ -83,16 +83,14 @@ fun LibraryPage(id: String, onBack: () -> Unit) {
         models = ms
         if (selected == null) selected = CadLibraries.defaultModel(lib, ms)
     }
-    Column(
-        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 12.dp, vertical = 8.dp).testTag("library:$id"),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
+    Column(Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 8.dp).testTag("library:$id"), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(stringResource(R.string.lib_back), color = p.accent, fontSize = 14.sp,
             modifier = Modifier.clickable(onClick = onBack).padding(vertical = 6.dp))
         KitSectionHeader(lib.title, lib.subtitle)
+        // The viewer stays pinned above the scrolling content: a WebView inside a scrolling column did not paint on the emulator.
         selected?.let { m -> ModelViewer(m, dir) } ?: Box(Modifier.fillMaxWidth().height(300.dp).clip(RoundedCornerShape(12.dp)).background(Color(0xFF0E1116)))
         if (manifestFailed) Text(stringResource(R.string.lib_manifest_failed), color = p.bad, fontSize = 13.sp)
-
+        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         GroupTitle(stringResource(R.string.lib_core_title))
         CoreTable(libs, lib)
 
@@ -113,6 +111,7 @@ fun LibraryPage(id: String, onBack: () -> Unit) {
                         modifier = Modifier.fillMaxWidth().clickable { selected = m }.padding(vertical = 4.dp))
                 }
             }
+        }
         }
     }
 }
@@ -168,6 +167,7 @@ private fun ModelViewer(m: Model, dir: File) {
         object {
             @JavascriptInterface
             fun post(json: String) {
+                android.util.Log.i("CadHost", json)
                 val e = runCatching { JSONObject(json) }.getOrNull() ?: return
                 when (e.optString("type")) {
                     "ready" -> ready = true
@@ -189,6 +189,9 @@ private fun ModelViewer(m: Model, dir: File) {
         if (!ready) return@LaunchedEffect
         val arg = JSONObject().put("lib", show.lib).put("url", MODELS_PATH + f.name).put("format", show.format)
         web?.evaluateJavascript("window.cadOpen&&window.cadOpen($arg)", null)
+        android.util.Log.i("CadHost", "cadOpen " + arg)
+        kotlinx.coroutines.delay(20000)
+        web?.evaluateJavascript("document.getElementById('s')&&document.getElementById('s').textContent") { android.util.Log.i("CadHost", "status=" + it) }
     }
     DisposableEffect(Unit) { onDispose { web?.destroy(); web = null } }
 
