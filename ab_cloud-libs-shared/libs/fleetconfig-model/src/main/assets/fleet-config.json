@@ -82,7 +82,7 @@
       "class": "config",
       "doc": "The non-secret autofill Source of Truth Cloud Account owns (a0_docs/eng-specs/autofill-3-tier.md): profiles_json (names, emails, phones, postal addresses), rules_json (per-site form mapping rules), snippets_json (keyboard snippets), next_id. Served to Cloud Browser and Cloud Keyboard by AutofillSotProvider behind AUTOFILL_PROFILE_READ/WRITE. Never a password, code or card: there is no column for one.",
       "used_by": [
-        "ac_cloud-account"
+        "lib-account-ui"
       ],
       "keys": {
         "next_id": "device"
@@ -2340,6 +2340,33 @@
       "used_by": [
         "ad_Capital-Stack-FinTerminal"
       ]
+    },
+    "drive_auto_commit": {
+      "kind": "prefs",
+      "class": "config",
+      "doc": "#1419 Cloud Drive Git > Auto Commit: which writer composes the commit message (rule or model) and, for the model writer, the model id picked from OpenRouter's public list. Owner choices that migrate; no key is held here (decisions-use guard D5).",
+      "helper": "ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive/sync/AutoCommitDrive.kt",
+      "used_by": [
+        "ac_cloud-drive"
+      ]
+    },
+    "personal_info_secure": {
+      "kind": "encrypted",
+      "class": "secret",
+      "doc": "#1439 Cloud Account / Cloud Me > Personal Info: the owner's IDs, Pay Cards and Others entries (PersonalStore), one JSON array per kind. EncryptedSharedPreferences (key names AES256-SIV, values AES256-GCM) under an Android Keystore master key; the number fields are masked on screen. Personal documents and card numbers: they migrate through the vault, never in the clear.",
+      "helper": "ab_cloud-libs-shared/libs/account-ui/src/main/java/com/diegonmarcos/cloudaccount/personal/PersonalStore.kt",
+      "used_by": [
+        "lib-account-ui"
+      ]
+    },
+    "store_ventoy": {
+      "kind": "prefs",
+      "class": "device",
+      "doc": "#1405 Store > Ventoy: the per-path SAF tree URI the user granted for a Ventoy USB drive (key tree:<path>). Persisted URI permissions do not exist on a new phone, so it never migrates.",
+      "helper": "ab_cloud-libs-shared/libs/appstore/src/main/java/com/diegonmarcos/superapp/appstore/ventoy/VentoyPage.kt",
+      "used_by": [
+        "lib-appstore"
+      ]
     }
   },
   "bundle": {
@@ -2634,6 +2661,7 @@
         "lib-ui-icons",
         "lib-ui-kit",
         "lib-updater",
+        "lib-usb-drive",
         "lib-web-core",
         "lib-webserver",
         "lib-wifi"
@@ -2777,6 +2805,7 @@
       "schema_version": 1,
       "libs": [
         "lib-account",
+        "lib-account-ui",
         "lib-appstore",
         "lib-auth",
         "lib-autofill",
@@ -2800,6 +2829,7 @@
         "lib-ui-kit",
         "lib-ui-nav-bars",
         "lib-updater",
+        "lib-usb-drive",
         "lib-web-core"
       ],
       "items": []
@@ -3284,6 +3314,7 @@
         "lib-disk-scan",
         "lib-file-editor",
         "lib-fleetconfig-model",
+        "lib-git-core",
         "lib-git-sync",
         "lib-ml-l-image",
         "lib-model-catalogue",
@@ -3297,6 +3328,7 @@
         "lib-ui-icons",
         "lib-ui-nav-bars",
         "lib-updater",
+        "lib-usb-drive",
         "lib-web-core"
       ],
       "items": [
@@ -3453,7 +3485,9 @@
       "module": "ac_cloud-me",
       "schema_version": 1,
       "libs": [
+        "lib-account-ui",
         "lib-analytics",
+        "lib-autofill",
         "lib-bottomnav",
         "lib-core",
         "lib-crash",
@@ -3856,7 +3890,8 @@
         "lib-ui-icons",
         "lib-ui-kit",
         "lib-ui-nav-bars",
-        "lib-updater"
+        "lib-updater",
+        "lib-usb-drive"
       ],
       "items": []
     },
@@ -4215,6 +4250,13 @@
       "schema_version": 1,
       "libs": [
         "lib-bottomnav",
+        "lib-cad-3dm",
+        "lib-cad-brep",
+        "lib-cad-core",
+        "lib-cad-dxf",
+        "lib-cad-ifc",
+        "lib-cad-mesh",
+        "lib-cgc-3d",
         "lib-core",
         "lib-crash",
         "lib-devtools",
@@ -4223,7 +4265,8 @@
         "lib-theme-background",
         "lib-ui-icons",
         "lib-ui-kit",
-        "lib-ui-nav-bars"
+        "lib-ui-nav-bars",
+        "lib-web-core"
       ],
       "items": []
     },

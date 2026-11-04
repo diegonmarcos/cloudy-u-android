@@ -19,7 +19,7 @@ DataStore / Room stores and declared files it cannot move yet.
 | c3-morpheus | `com.diegonmarcos.morpheus` | 4 | 0 | 100% |
 | c3-watchdog | `com.diegonmarcos.watchdog` | 4 | 0 | 100% |
 | c3-watchtower | `com.diegonmarcos.watchtower` | 4 | 0 | 100% |
-| cloud-account | `com.diegonmarcos.cloudaccount` | 17 | 0 | 100% |
+| cloud-account | `com.diegonmarcos.cloudaccount` | 18 | 0 | 100% |
 | cloud-tasks | `com.diegonmarcos.cloudagenda` | 9 | 0 | 100% |
 | cloud-browser | `com.diegonmarcos.cloudbrowser` | 14 | 0 | 100% |
 | cloud-c3-webserver | `com.diegonmarcos.cloudwebserver` | 4 | 0 | 100% |
@@ -30,12 +30,12 @@ DataStore / Room stores and declared files it cannot move yet.
 | cloud-chat | `com.diegonmarcos.comms.chat` | 6 | 0 | 100% |
 | cloud-code | `com.diegonmarcos.code` | 11 | 5 | 68% |
 | cloud-contacts | `com.diegonmarcos.cloudcontacts` | 7 | 2 | 77% |
-| cloud-dialer | `com.diegonmarcos.comms.dialer` | 8 | 2 | 80% |
-| cloud-drive | `com.diegonmarcos.clouddrive` | 14 | 6 | 70% |
+| cloud-dialer | `com.diegonmarcos.comms.dialer` | 9 | 2 | 81% |
+| cloud-drive | `com.diegonmarcos.clouddrive` | 15 | 6 | 71% |
 | cloud-keyboard | `com.diegonmarcos.cloudkeyboard` | 7 | 0 | 100% |
 | cloud-mail | `com.diegonmarcos.comms.mail` | 12 | 2 | 85% |
 | cloud-matrix | `com.diegonmarcos.comms.matrix` | 4 | 9 | 30% |
-| cloud-me | `com.diegonmarcos.cloudme` | 15 | 0 | 100% |
+| cloud-me | `com.diegonmarcos.cloudme` | 17 | 0 | 100% |
 | cloud-gallery | `com.diegonmarcos.mediacenter` | 7 | 1 | 87% |
 | cloud-myterminal | `com.diegonmarcos.ide` | 9 | 0 | 100% |
 | cloud-nav | `com.diegonmarcos.cloudnav` | 14 | 0 | 100% |
@@ -56,11 +56,11 @@ DataStore / Room stores and declared files it cannot move yet.
 | capital-stack-finterminal | `com.diegonmarcos.capitalfinterm` | 5 | 0 | 100% |
 | hardtech-cad | `com.diegonmarcos.hardtechcad` | 4 | 0 | 100% |
 | hardtech-sim2real | `com.diegonmarcos.hardtechsim2real` | 4 | 0 | 100% |
-| **fleet** | | **379** | **54** | **87%** |
+| **fleet** | | **384** | **54** | **87%** |
 
 ## cloud-superapp — `com.diegonmarcos.superapp`
 
-Module `aa_cloud-superapp`; libs: lib-account, lib-analytics, lib-appstore, lib-auth, lib-battery, lib-bluetooth, lib-bottomnav, lib-chat, lib-core, lib-crash, lib-databackend, lib-datamanager, lib-decisions-link, lib-devtools, lib-firewall, lib-fleet-endpoints, lib-fleet-endpoints-android, lib-fleetconfig-model, lib-health, lib-kde-connect, lib-launcher-apptabs, lib-launcher-onehand, lib-launcher-zoomies, lib-light, lib-mail, lib-net, lib-ops, lib-perms, lib-search, lib-shared-store, lib-shizuku-adb-debug-tools, lib-sysdns, lib-text-tools, lib-ui-icons, lib-ui-kit, lib-updater, lib-web-core, lib-webserver, lib-wifi.
+Module `aa_cloud-superapp`; libs: lib-account, lib-analytics, lib-appstore, lib-auth, lib-battery, lib-bluetooth, lib-bottomnav, lib-chat, lib-core, lib-crash, lib-databackend, lib-datamanager, lib-decisions-link, lib-devtools, lib-firewall, lib-fleet-endpoints, lib-fleet-endpoints-android, lib-fleetconfig-model, lib-health, lib-kde-connect, lib-launcher-apptabs, lib-launcher-onehand, lib-launcher-zoomies, lib-light, lib-mail, lib-net, lib-ops, lib-perms, lib-search, lib-shared-store, lib-shizuku-adb-debug-tools, lib-sysdns, lib-text-tools, lib-ui-icons, lib-ui-kit, lib-updater, lib-usb-drive, lib-web-core, lib-webserver, lib-wifi.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -144,6 +144,7 @@ Module `aa_cloud-superapp`; libs: lib-account, lib-analytics, lib-appstore, lib-
 | `store_phone_view` | prefs | device | no | Store > Phone: how the app list is sorted (shelf, or size largest / smallest first); a view preference of this phone, not state a new phone needs. |
 | `store_play_anon` | prefs | device | no | Cloud Store's cached anonymous Google Play session from the declared dispenser (auth token, gsfId, device tokens, fetch time), reused for token_ttl_minutes. Bound to this device registration and short-lived: never migrated, a new phone asks the dispenser again. |
 | `store_sources` | prefs | config | yes | Cloud Store > Configs > Sources: the ids of the declared feeds the owner switched off (never urls; the declaration stays the only list of feeds); the owner's choice, so it moves with the phone. |
+| `store_ventoy` | prefs | device | no | #1405 Store > Ventoy: the per-path SAF tree URI the user granted for a Ventoy USB drive (key tree:<path>). Persisted URI permissions do not exist on a new phone, so it never migrates. |
 | `unpack_after_install` | prefs | device | no | #1121 What the last explicit unpack of the Termux terminal / Nix-on-Droid said after Cloud Store installed it ('unpacking', 'unpacked', the error): one sentence per package, shown on the row. Never migrates. |
 | `updater_advisory` | prefs | device | no | Update advisory feed, snooze/shown/fail state per app. |
 | `updater_apk_cache_notes` | prefs | device | no | Notes about cached downloaded APKs. |
@@ -234,7 +235,7 @@ Coverage: 4 covered, 0 gaps.
 
 ## cloud-account — `com.diegonmarcos.cloudaccount`
 
-Module `ac_cloud-account`; libs: lib-account, lib-appstore, lib-auth, lib-autofill, lib-bottomnav, lib-core, lib-crash, lib-databackend, lib-decisions-link, lib-devtools, lib-fleet-endpoints, lib-fleet-endpoints-android, lib-fleetconfig-model, lib-mail, lib-net, lib-perms, lib-shared-store, lib-shizuku-adb-debug-tools, lib-text-tools, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-web-core.
+Module `ac_cloud-account`; libs: lib-account, lib-account-ui, lib-appstore, lib-auth, lib-autofill, lib-bottomnav, lib-core, lib-crash, lib-databackend, lib-decisions-link, lib-devtools, lib-fleet-endpoints, lib-fleet-endpoints-android, lib-fleetconfig-model, lib-mail, lib-net, lib-perms, lib-shared-store, lib-shizuku-adb-debug-tools, lib-text-tools, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-usb-drive, lib-web-core.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -256,6 +257,7 @@ Module `ac_cloud-account`; libs: lib-account, lib-appstore, lib-auth, lib-autofi
 | `notification_store` | prefs | content | no | Stored in-app notification log (info/warn/error). |
 | `pass_ledger` | prefs | device | no | #894 What the running fleet pass did per package (installed, needs a tap, failed), the summary signature last shown and the last failure reported per package: pass state, never a setting. |
 | `perm_ask_tracker` | prefs | device | no | Set of permissions already asked on this install; permission-asked tracker. #1274 libs:perms PermAskLog shares it with the app's PermAskTracker (one record of what was asked). |
+| `personal_info_secure` | encrypted | secret | yes | #1439 Cloud Account / Cloud Me > Personal Info: the owner's IDs, Pay Cards and Others entries (PersonalStore), one JSON array per kind. EncryptedSharedPreferences (key names AES256-SIV, values AES256-GCM) under an Android Keystore master key; the number fields are masked on screen. Personal documents and card numbers: they migrate through the vault, never in the clear. |
 | `profile_prefs` | prefs | config (keys: banner_uri→device, install_id→device, install_secret→device, picture_uri→device, schema_version→device) | yes | Owner profile card fields (name, email, phone, birth, company, location, website, titles) plus install identity. |
 | `safe_encrypted_prefs_reset` | prefs | device | no | #1106 which encrypted prefs files SafeEncryptedPrefs had to reset (a Keystore master key that no longer matches the file, after a shared-uid migration or a restored backup), so the app can tell the user to sign in again until they acknowledge it. Describes this phone's Keystore, never configuration. |
 | `store_auto` | prefs | device | no | #804 the auto-update chain's persisted state: phase, queue, per-package result, current package, last error. Lets a chain killed mid-download or mid-install resume on THIS phone; a new phone runs its own. |
@@ -270,13 +272,14 @@ Module `ac_cloud-account`; libs: lib-account, lib-appstore, lib-auth, lib-autofi
 | `store_phone_view` | prefs | device | no | Store > Phone: how the app list is sorted (shelf, or size largest / smallest first); a view preference of this phone, not state a new phone needs. |
 | `store_play_anon` | prefs | device | no | Cloud Store's cached anonymous Google Play session from the declared dispenser (auth token, gsfId, device tokens, fetch time), reused for token_ttl_minutes. Bound to this device registration and short-lived: never migrated, a new phone asks the dispenser again. |
 | `store_sources` | prefs | config | yes | Cloud Store > Configs > Sources: the ids of the declared feeds the owner switched off (never urls; the declaration stays the only list of feeds); the owner's choice, so it moves with the phone. |
+| `store_ventoy` | prefs | device | no | #1405 Store > Ventoy: the per-path SAF tree URI the user granted for a Ventoy USB drive (key tree:<path>). Persisted URI permissions do not exist on a new phone, so it never migrates. |
 | `unpack_after_install` | prefs | device | no | #1121 What the last explicit unpack of the Termux terminal / Nix-on-Droid said after Cloud Store installed it ('unpacking', 'unpacked', the error): one sentence per package, shown on the row. Never migrates. |
 | `updater_advisory` | prefs | device | no | Update advisory feed, snooze/shown/fail state per app. |
 | `updater_apk_cache_notes` | prefs | device | no | Notes about cached downloaded APKs. |
 | `user_registry` | prefs | config (keys: applied_at→device, peer_id→device) | yes | Registry JSON, identity_email and peer_id: user identity/peer registry applied on this device. |
 | `vault_cockpit` | prefs | device | no | Only holds this phone's device_id used in the vault cockpit. |
 
-Coverage: 17 covered, 0 gaps.
+Coverage: 18 covered, 0 gaps.
 
 ## cloud-tasks — `com.diegonmarcos.cloudagenda`
 
@@ -315,7 +318,7 @@ Coverage: 9 covered, 0 gaps.
 
 ## cloud-browser — `com.diegonmarcos.cloudbrowser`
 
-Module `ac_cloud-browser`; libs: lib-ai, lib-analytics, lib-autofill, lib-bluetooth, lib-bottomnav, lib-browser, lib-core, lib-crash, lib-decisions-link, lib-devtools, lib-fleetconfig-model, lib-model-catalogue, lib-perms, lib-text-tools, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-web-core.
+Module `ac_cloud-browser`; libs: lib-ai, lib-analytics, lib-autofill, lib-bluetooth, lib-bottomnav, lib-browser, lib-core, lib-crash, lib-decisions-link, lib-devtools, lib-fleetconfig-model, lib-media-convert-audio, lib-model-catalogue, lib-perms, lib-scraper, lib-text-tools, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-web-core.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -437,6 +440,7 @@ Module `ac_cloud-calc`; libs: lib-ai, lib-bluetooth, lib-bottomnav, lib-core, li
 | `cloud_calc` | prefs | content | no | cloud-calc calculation history ('history' key, CalcState); user data, small and local. |
 | `cloud_calc_jev` | prefs | config (keys: catalog→device, catalog_at→device) | yes | Jev decision config: config_override (the edited routing declaration), model_<use> picked models; catalog and catalog_at are a cached OpenRouter model list. |
 | `cloud_calc_jev_secret` | encrypted | secret | yes | EncryptedSharedPreferences holding the manual OpenRouter token (openrouter_token). |
+| `cloud_calc_lfrfid` | prefs | content | no | #1407 Measure > LF-RFID-Tags saved tags library ('tags' key, LfLibrary JSON); user data, small and local, moved by its JSON / CSV export. |
 | `cloud_camera` | prefs | device | no | cloud-calc level calibration (zero_tilt/pitch/roll/edge) measured against this phone's sensors; not valid on another device. |
 | `cloud_clock` | prefs | config (keys: scheduled→device) | yes | Clock engine data blob (alarms, timers, world-clock zones, stopwatch) as one JSON; alarms/timers/zones are user config; 'scheduled' is device alarm-scheduling state. |
 | `cloud_image_recognition` | prefs | config | yes | Chosen image recognition route (on-device vs openrouter) and decision model. |
@@ -593,6 +597,7 @@ Module `ac_cloud-dialer`; libs: lib-analytics, lib-bottomnav, lib-core, lib-cras
 |---|---|---|---|---|
 | `call_history` | provider | config | GAP | Cloud Dialer: the system call log and blocked numbers, served by the handler the app registers. Carried in the device file so a new phone keeps its call history; restore adds the missing calls and blocked numbers (needs the default phone app role) and never deletes. |
 | `cloud_analytics` | prefs | config (keys: visitor_id→device) | yes | Analytics consent is a user choice; visitor_id is a per-install identity. |
+| `cloud_dialer_sim_manual` | encrypted | secret | yes | #1411 Cloud Dialer Configs > SIM manual fields per SIM (provider, plan, price, allowance, renewal, number, PIN, PUK, APN notes, support) in EncryptedSharedPreferences via libs:crash SafeEncryptedPrefs. |
 | `cloud_dialer_sms` | prefs | config | yes | Cloud Dialer SMS: which conversation threads the owner pinned or archived, the SIM the owner prefers, and the SIM each thread last sent on (SmsPrefs). The owner's own choices, so a new phone keeps them. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
@@ -613,11 +618,11 @@ Module `ac_cloud-dialer`; libs: lib-analytics, lib-bottomnav, lib-core, lib-cras
 | `system BlockedNumberContract provider and default-dialer role / call-screening role` | content | Blocked numbers and the default phone app role live in the system; the blocked numbers migrate through the call_history store. |
 | `assets/call_providers.json, assets/spam_patterns.json` | device | Read-only bundled assets. |
 
-Coverage: 8 covered, 2 gaps — call_history, file:system CallLog and BlockedNumberContract providers.
+Coverage: 9 covered, 2 gaps — call_history, file:system CallLog and BlockedNumberContract providers.
 
 ## cloud-drive — `com.diegonmarcos.clouddrive`
 
-Module `ac_cloud-drive`; libs: lib-ai, lib-analytics, lib-auth, lib-bottomnav, lib-core, lib-crash, lib-databackend, lib-decisions-link, lib-devtools, lib-disk, lib-disk-scan, lib-file-editor, lib-fleetconfig-model, lib-git-sync, lib-ml-l-image, lib-model-catalogue, lib-mounts, lib-perms, lib-rclone, lib-shared-store, lib-shizuku-adb-debug-tools, lib-sysdns, lib-theme-background, lib-ui-icons, lib-ui-nav-bars, lib-updater, lib-web-core.
+Module `ac_cloud-drive`; libs: lib-ai, lib-analytics, lib-auth, lib-bottomnav, lib-core, lib-crash, lib-databackend, lib-decisions-link, lib-devtools, lib-disk, lib-disk-scan, lib-file-editor, lib-fleetconfig-model, lib-git-core, lib-git-sync, lib-ml-l-image, lib-model-catalogue, lib-mounts, lib-perms, lib-rclone, lib-shared-store, lib-shizuku-adb-debug-tools, lib-sysdns, lib-theme-background, lib-ui-icons, lib-ui-nav-bars, lib-updater, lib-usb-drive, lib-web-core.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -632,6 +637,7 @@ Module `ac_cloud-drive`; libs: lib-ai, lib-analytics, lib-auth, lib-bottomnav, l
 | `cloud_analytics` | prefs | config (keys: visitor_id→device) | yes | Analytics consent is a user choice; visitor_id is a per-install identity. |
 | `cloud_image_recognition` | prefs | config | yes | Chosen image recognition route (on-device vs openrouter) and decision model. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
+| `drive_auto_commit` | prefs | config | yes | #1419 Cloud Drive Git > Auto Commit: which writer composes the commit message (rule or model) and, for the model writer, the model id picked from OpenRouter's public list. Owner choices that migrate; no key is held here (decisions-use guard D5). |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
 | `git-sync-credentials` | encrypted | secret | yes | Encrypted git credentials (tokens/passwords/keys). |
@@ -661,7 +667,7 @@ Module `ac_cloud-drive`; libs: lib-ai, lib-analytics, lib-auth, lib-bottomnav, l
 | `filesDir/rclone/rclone.conf` | secret | rclone remotes (with embedded tokens/passwords); remote definitions are the config, credentials inside are secret |
 | `filesDir/rclone/jobs.json` | config | Saved rclone sync/copy jobs |
 
-Coverage: 14 covered, 6 gaps — ai_sessions, file:filesDir/ai-sessions.json, file:filesDir/git-sync/repos.json, file:filesDir/mounts/mounts.json, file:filesDir/rclone/rclone.conf, file:filesDir/rclone/jobs.json.
+Coverage: 15 covered, 6 gaps — ai_sessions, file:filesDir/ai-sessions.json, file:filesDir/git-sync/repos.json, file:filesDir/mounts/mounts.json, file:filesDir/rclone/rclone.conf, file:filesDir/rclone/jobs.json.
 
 ## cloud-keyboard — `com.diegonmarcos.cloudkeyboard`
 
@@ -778,11 +784,12 @@ Coverage: 4 covered, 9 gaps — datastore:elementx_featureflag, datastore:elemen
 
 ## cloud-me — `com.diegonmarcos.cloudme`
 
-Module `ac_cloud-me`; libs: lib-analytics, lib-bottomnav, lib-core, lib-crash, lib-databackend, lib-decisions-link, lib-devtools, lib-fin, lib-fleetconfig-model, lib-health, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-web-core.
+Module `ac_cloud-me`; libs: lib-account-ui, lib-analytics, lib-autofill, lib-bottomnav, lib-core, lib-crash, lib-databackend, lib-decisions-link, lib-devtools, lib-fin, lib-fleetconfig-model, lib-health, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-web-core.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
 | `auto_update` | prefs | config (keys: last_check_at→device, last_remote_bytes→device, last_remote_digest→device, unattended_pass→device) | yes | Auto-update toggles (enabled, require_silent/unmetered) are settings; last_check/remote digest/bytes/unattended_pass are state. |
+| `autofill_sot` | prefs | config (keys: next_id→device) | yes | The non-secret autofill Source of Truth Cloud Account owns (a0_docs/eng-specs/autofill-3-tier.md): profiles_json (names, emails, phones, postal addresses), rules_json (per-site form mapping rules), snippets_json (keyboard snippets), next_id. Served to Cloud Browser and Cloud Keyboard by AutofillSotProvider behind AUTOFILL_PROFILE_READ/WRITE. Never a password, code or card: there is no column for one. |
 | `buro_user` | prefs | config | yes | Cloud Me > Buro user data, one JSON string under 'data' (collections of typed records): personal due-diligence items, assets, services, liabilities and taxes, budget lines, accounts and cashflow entries. Your own entries, so they move with the phone; the reports (budget vs cashflow, accounts vs cashflow) are derived from them and never stored. |
 | `cloud_analytics` | prefs | config (keys: visitor_id→device) | yes | Analytics consent is a user choice; visitor_id is a per-install identity. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
@@ -799,6 +806,7 @@ Module `ac_cloud-me`; libs: lib-analytics, lib-bottomnav, lib-core, lib-crash, l
 | `notification_store` | prefs | content | no | Stored in-app notification log (info/warn/error). |
 | `pass_ledger` | prefs | device | no | #894 What the running fleet pass did per package (installed, needs a tap, failed), the summary signature last shown and the last failure reported per package: pass state, never a setting. |
 | `perm_ask_tracker` | prefs | device | no | Set of permissions already asked on this install; permission-asked tracker. #1274 libs:perms PermAskLog shares it with the app's PermAskTracker (one record of what was asked). |
+| `personal_info_secure` | encrypted | secret | yes | #1439 Cloud Account / Cloud Me > Personal Info: the owner's IDs, Pay Cards and Others entries (PersonalStore), one JSON array per kind. EncryptedSharedPreferences (key names AES256-SIV, values AES256-GCM) under an Android Keystore master key; the number fields are masked on screen. Personal documents and card numbers: they migrate through the vault, never in the clear. |
 | `profile_dd_user` | prefs | config | yes | Cloud Me > Profile > DD (due diligence) dossier values, one JSON string under 'data' (field id to value, status, expiry), imported from the private store. Special-category data: it stays on the device and in the encrypted backup, never in a public repo; the schema (labels only) is the public asset. |
 | `profile_health_user` | prefs | config | yes | Cloud Me > Profile > Health record values, one JSON string under 'data' (field id to value, status, expiry), imported from the private store. Special-category data: it stays on the device and in the encrypted backup, never in a public repo; the schema (labels only) is the public asset. |
 | `repo_tree` | prefs | config | yes | Cloud Me > Lnktree > Proj (#1298): which nodes of the repository tree are expanded, one string set under 'expanded' (registry node codes such as 1.2 or 1.2.1). A view preference of the owner: it migrates so the tree reopens as it was left. |
@@ -811,7 +819,7 @@ Module `ac_cloud-me`; libs: lib-analytics, lib-bottomnav, lib-core, lib-crash, l
 |---|---|---|
 | `assets/health_*.json (from ac_cloud-me/data/health)` | config | #1180 Cloud Me > Health declared content (plan, formulas, home clusters, workout programme) is baked from git into the build, so a new phone gets it by installing the same build; the user's own entries are the health_user store. |
 
-Coverage: 15 covered, 0 gaps.
+Coverage: 17 covered, 0 gaps.
 
 ## cloud-gallery — `com.diegonmarcos.mediacenter`
 
@@ -1061,7 +1069,7 @@ Coverage: 6 covered, 4 gaps — search_agents_state, search_chat_sessions, file:
 
 ## cloud-store — `com.diegonmarcos.cloudstore`
 
-Module `ac_cloud-store`; libs: lib-ai, lib-appstore, lib-bottomnav, lib-core, lib-crash, lib-decisions-link, lib-devtools, lib-fleetconfig-model, lib-model-catalogue, lib-perms, lib-shared-store, lib-shizuku-adb-debug-tools, lib-sysdns, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater.
+Module `ac_cloud-store`; libs: lib-ai, lib-appstore, lib-bottomnav, lib-core, lib-crash, lib-decisions-link, lib-devtools, lib-fleetconfig-model, lib-model-catalogue, lib-perms, lib-shared-store, lib-shizuku-adb-debug-tools, lib-sysdns, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-usb-drive.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -1090,6 +1098,7 @@ Module `ac_cloud-store`; libs: lib-ai, lib-appstore, lib-bottomnav, lib-core, li
 | `store_phone_view` | prefs | device | no | Store > Phone: how the app list is sorted (shelf, or size largest / smallest first); a view preference of this phone, not state a new phone needs. |
 | `store_play_anon` | prefs | device | no | Cloud Store's cached anonymous Google Play session from the declared dispenser (auth token, gsfId, device tokens, fetch time), reused for token_ttl_minutes. Bound to this device registration and short-lived: never migrated, a new phone asks the dispenser again. |
 | `store_sources` | prefs | config | yes | Cloud Store > Configs > Sources: the ids of the declared feeds the owner switched off (never urls; the declaration stays the only list of feeds); the owner's choice, so it moves with the phone. |
+| `store_ventoy` | prefs | device | no | #1405 Store > Ventoy: the per-path SAF tree URI the user granted for a Ventoy USB drive (key tree:<path>). Persisted URI permissions do not exist on a new phone, so it never migrates. |
 | `unpack_after_install` | prefs | device | no | #1121 What the last explicit unpack of the Termux terminal / Nix-on-Droid said after Cloud Store installed it ('unpacking', 'unpacked', the error): one sentence per package, shown on the row. Never migrates. |
 | `update_checks` | prefs | device | no | #1078 Cloud Store: whether the one-time battery-optimization prompt has been shown on this phone; a prompt marker, never migrated (the new phone asks once itself). |
 | `updater_advisory` | prefs | device | no | Update advisory feed, snooze/shown/fail state per app. |
@@ -1195,7 +1204,7 @@ Coverage: 8 covered, 0 gaps.
 
 ## cloud-writer — `com.diegonmarcos.cloudwriter`
 
-Module `ac_cloud-writer`; libs: lib-bottomnav, lib-core, lib-crash, lib-decisions, lib-decisions-link, lib-devtools, lib-fleetconfig-model, lib-perms, lib-text-tools, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars.
+Module `ac_cloud-writer`; libs: lib-bottomnav, lib-core, lib-crash, lib-decisions, lib-decisions-link, lib-devtools, lib-fleetconfig-model, lib-ml-l-image-ocr, lib-perms, lib-text-tools, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -1337,7 +1346,7 @@ Coverage: 5 covered, 0 gaps.
 
 ## hardtech-cad — `com.diegonmarcos.hardtechcad`
 
-Module `ad_Hardtech-CAD`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtools, lib-fleetconfig-model, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars.
+Module `ad_Hardtech-CAD`; libs: lib-bottomnav, lib-cad-3dm, lib-cad-brep, lib-cad-core, lib-cad-dxf, lib-cad-ifc, lib-cad-mesh, lib-cgc-3d, lib-core, lib-crash, lib-devtools, lib-fleetconfig-model, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-web-core.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
