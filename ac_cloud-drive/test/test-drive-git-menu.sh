@@ -54,14 +54,17 @@ sys.exit(bad)
 PY
 }
 g2() {
-    grep -qF 'page.repoMenu.groups.forEach' "$1" || { echo "    the menu is not drawn from the declaration"; return 1; }
-    ! grep -qE 'RepoActions\.GROUPS|enum class RepoGroup' "$1" "$2" || { echo "    a hard-coded group list is back"; return 1; }
+    # #1408 Drive maps the declared groups into libs:git-ui's model ($1), the lib draws every group it is given ($4); neither holds a group list
+    grep -qF 'page.repoMenu.groups.map' "$1" || { echo "    the menu is not drawn from the declaration"; return 1; }
+    grep -qF 'groups.forEach' "$4" || { echo "    the lib does not draw the groups it is given"; return 1; }
+    ! grep -qE 'RepoActions\.GROUPS|enum class RepoGroup' "$1" "$2" "$4" || { echo "    a hard-coded group list is back"; return 1; }
     grep -qF 'AutoSyncPlan.tickMinutes(BuildConfig.GIT_SYNC_INTERVAL_MINUTES, opted)' "$3" || { echo "    the worker does not tick at the AutoSync period"; return 1; }
 }
 
 echo "── G declaration ──"
 g1 "$BJ" && pass "groups, placement, Configs-Auth, Dangerous, AutoSync 15" || fail "repo_menu declaration"
-g2 "$SRC/sync/RepoTableUi.kt" "$SRC/sync/RepoActions.kt" "$SRC/GitSyncWorker.kt" && pass "page draws the declared groups; worker ticks at AutoSync" || fail "page/worker wiring"
+MENU_LIB="$APP/../ab_cloud-libs-shared/libs/git-ui/src/main/java/com/diegonmarcos/cloudlib/gitui/GitMenuUi.kt"
+g2 "$SRC/sync/RepoTableUi.kt" "$SRC/sync/RepoActions.kt" "$SRC/GitSyncWorker.kt" "$MENU_LIB" && pass "page draws the declared groups; worker ticks at AutoSync" || fail "page/worker wiring"
 grep -q '@Test' "$APP/app/src/test/java/com/diegonmarcos/clouddrive/sync/RepoMenuTest.kt" && grep -q '@Test' "$APP/app/src/test/java/com/diegonmarcos/clouddrive/sync/RepoWorkflowTest.kt" && pass "JVM RepoMenuTest + RepoWorkflowTest present" || fail "missing JVM tests"
 
 echo "── M mutation-proof ──"
@@ -74,7 +77,8 @@ mut "m['autosync']['default_minutes']=5"; g1 "$TMP/b.json" >/dev/null && fail "G
 mut "g={x['id']:x for x in m['groups']}; g['manual_sync']['subgroups'][0]['danger']=False"; g1 "$TMP/b.json" >/dev/null && fail "G1 passed an unmarked Dangerous (vacuous)" || pass "unmarked Dangerous → G1 RED"
 mut "g={x['id']:x for x in m['groups']}; g['manual_sync']['layout']='lines'"; g1 "$TMP/b.json" >/dev/null && fail "G1 passed Manual Sync one per line (vacuous)" || pass "Manual Sync back to one item per line → G1 RED"
 mut "g={x['id']:x for x in m['groups']}; g['manual_sync']['subgroups'][0]['layout']='lines'"; g1 "$TMP/b.json" >/dev/null && fail "G1 passed Dangerous one per line (vacuous)" || pass "Dangerous back to one per line → G1 RED"
-sed 's/page.repoMenu.groups.forEach/RepoActions.GROUPS.forEach/' "$SRC/sync/RepoTableUi.kt" > "$TMP/u.kt"; g2 "$TMP/u.kt" "$SRC/sync/RepoActions.kt" "$SRC/GitSyncWorker.kt" >/dev/null && fail "G2 passed a hard-coded menu (vacuous)" || pass "hard-coded groups → G2 RED"
+sed 's/page.repoMenu.groups.map/RepoActions.GROUPS.map/' "$SRC/sync/RepoTableUi.kt" > "$TMP/u.kt"; g2 "$TMP/u.kt" "$SRC/sync/RepoActions.kt" "$SRC/GitSyncWorker.kt" "$MENU_LIB" >/dev/null && fail "G2 passed a hard-coded menu (vacuous)" || pass "hard-coded groups → G2 RED"
+sed 's/groups.forEach/RepoActions.GROUPS.forEach/' "$MENU_LIB" > "$TMP/m.kt"; g2 "$SRC/sync/RepoTableUi.kt" "$SRC/sync/RepoActions.kt" "$SRC/GitSyncWorker.kt" "$TMP/m.kt" >/dev/null && fail "G2 passed a hard-coded lib menu (vacuous)" || pass "hard-coded groups in the lib → G2 RED"
 g1 "$BJ" >/dev/null && pass "unmutated tree is still green" || fail "the unmutated tree is red"
 
 echo

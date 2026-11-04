@@ -168,7 +168,7 @@ class MainActivity : ComponentActivity(), DriveActions {
             EngineActivity.declareFromBuild(this)
         }
         // #1356 the Git page's state is activity-scoped (survives a bottom-nav switch) and saved with the activity (survives process death).
-        setContent { CompositionLocalProvider(LocalGitPageMemory provides gitPage.store, com.diegonmarcos.cloudlib.gitui.LocalGitUiKit provides com.diegonmarcos.cloudlib.gitui.GitUiKit(fadeEnd = { show -> scrollFadeEnd(show) }, tagStatusCell = com.diegonmarcos.clouddrive.ui.DriveTags.SYNC_GIT_STATUS_CELL)) { DriveTheme { Root(); DataMigration.Dialog() } } }
+        setContent { CompositionLocalProvider(LocalGitPageMemory provides gitPage.store, com.diegonmarcos.cloudlib.gitui.LocalGitUiKit provides com.diegonmarcos.cloudlib.gitui.GitUiKit(fadeEnd = { show -> scrollFadeEnd(show) }, tagStatusCell = com.diegonmarcos.clouddrive.ui.DriveTags.SYNC_GIT_STATUS_CELL, tagMenuGroup = com.diegonmarcos.clouddrive.ui.DriveTags.SYNC_GIT_MENU_GROUP, tagMenuItem = com.diegonmarcos.clouddrive.ui.DriveTags.SYNC_GIT_MENU_ITEM, pill = { p -> com.diegonmarcos.clouddrive.ui.Pill(p.text, p.onClick, p.modifier, p.icon, p.filled, p.enabled, p.danger) })) { DriveTheme { Root(); DataMigration.Dialog() } } }
         guarded("Updater", optional = true) {
             Updater.start(this)
         }

@@ -91,13 +91,11 @@ internal fun actionLabel(id: String, declared: Declarations.GitOpDecl?): String 
 }
 
 /**
- * #1289 The repository detail's menu: the DECLARED groups of ui.sync.git.repo_menu in their declared order, each a
- * title and its items (chips that wrap, or one item per line for a `lines` group); a `danger` subgroup is titled and
- * drawn red. Labels are the declared ones in the device language ([Declarations.GitMenuItemDecl.labelFor]), else
- * [actionLabel]. [active] is the chip to draw filled; [onAction] receives the item id; [slot] draws a group the page
- * renders itself (Configs-AutoSync) and returns true when it did.
+ * #1289 The repository detail's menu: the DECLARED groups of ui.sync.git.repo_menu in their declared order. #1408 the drawing is
+ * libs:git-ui's [GitMenuView]; Drive resolves the declaration into its model: labels are the declared ones in the device language
+ * ([Declarations.GitMenuItemDecl.labelFor]), else [actionLabel]; [active] is the chip to draw filled; [onAction] receives the item
+ * id; [slot] draws a group the page renders itself (Configs-AutoSync) and returns true when it did.
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun RepoActionGroupsView(
     page: Declarations.GitPageDecl,
@@ -110,69 +108,22 @@ internal fun RepoActionGroupsView(
     slot: @Composable (Declarations.GitMenuGroupDecl) -> Boolean = { false },
 ) {
     val lang = java.util.Locale.getDefault().language
-    Column(Modifier.fillMaxWidth().padding(top = DriveMetrics.pad), verticalArrangement = Arrangement.spacedBy(DriveMetrics.gapWide)) {
-        page.repoMenu.groups.forEach { g ->
-            Column(Modifier.testTag(DriveTags.SYNC_GIT_MENU_GROUP + "_" + g.id), verticalArrangement = Arrangement.spacedBy(DriveMetrics.gap)) {
-                Text(
-                    g.labelFor(lang), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold,
-                    color = if (g.danger) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                if (!slot(g)) {
-                    MenuItems(page, g, g.id, g.danger, lang, busy, blocked, active, onAction, unavailable)
-                    g.subgroups.forEach { sub ->
-                        Text(
-                            sub.labelFor(lang), Modifier.padding(top = DriveMetrics.gap),
-                            style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold,
-                            color = if (sub.danger) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        MenuItems(page, sub, g.id, sub.danger || g.danger, lang, busy, blocked, active, onAction, unavailable)
-                    }
-                }
-            }
-        }
-    }
-}
-
-/** #1289 one group's (or subgroup's) items: wrapping chips, or one per line for a `lines` group. */
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun MenuItems(
-    page: Declarations.GitPageDecl, g: Declarations.GitMenuGroupDecl, groupId: String, danger: Boolean, lang: String, busy: Boolean,
-    blocked: (Declarations.GitOpDecl) -> Boolean, active: (String) -> Boolean, onAction: (String) -> Unit, unavailable: (String) -> Boolean,
-) {
-    val chip: @Composable (Declarations.GitMenuItemDecl) -> Unit = { item ->
-        val op = page.op(item.id)
-        Pill(
-            item.labelFor(lang).ifBlank { actionLabel(item.id, op) }, { onAction(item.id) },
-            icon = op?.let { IconCatalog.vectorOrDefault(it.icon) },
-            filled = active(item.id),
-            // Settings, auth and the readers stay available while an operation runs; the verbs wait.
-            enabled = (!busy || groupId in RepoActions.ALWAYS_ON_GROUPS) && !(op != null && blocked(op)) && !unavailable(item.id),
-            danger = danger,
-            modifier = Modifier.testTag(DriveTags.SYNC_GIT_MENU_ITEM + "_" + item.id),
-        )
-    }
-    // #1356 layout "row": the items are icon actions on ONE horizontal row (Manual Sync, Dangerous); danger keeps the red and,
-    // through RepoActions.route, its confirmation.
-    if (g.row) androidx.compose.foundation.layout.Row(
-        Modifier.fillMaxWidth().horizontalScroll(androidx.compose.foundation.rememberScrollState()).testTag(DriveTags.SYNC_GIT_MENU_GROUP + "_row_" + g.id),
-        horizontalArrangement = Arrangement.spacedBy(DriveMetrics.gapWide),
-    ) {
-        g.items.forEach { item ->
+    @Composable
+    fun lib(g: Declarations.GitMenuGroupDecl): GitMenuGroup = GitMenuGroup(
+        g.id, g.labelFor(lang), g.danger, g.lines, g.row,
+        g.items.map { item ->
             val op = page.op(item.id)
-            val on = (!busy || groupId in RepoActions.ALWAYS_ON_GROUPS) && !(op != null && blocked(op)) && !unavailable(item.id)
-            val ink = when { !on -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f); danger -> MaterialTheme.colorScheme.error; active(item.id) -> MaterialTheme.colorScheme.primary; else -> MaterialTheme.colorScheme.onSurface }
-            Column(
-                Modifier.widthIn(min = DriveMetrics.rowHeight).clip(androidx.compose.foundation.shape.RoundedCornerShape(DriveMetrics.pad))
-                    .clickable(enabled = on) { onAction(item.id) }.padding(horizontal = DriveMetrics.gap, vertical = DriveMetrics.tight)
-                    .testTag(DriveTags.SYNC_GIT_MENU_ITEM + "_" + item.id),
-                horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
-            ) {
-                Icon(IconCatalog.vectorOrDefault(item.icon.ifBlank { op?.icon.orEmpty() }), contentDescription = null, tint = ink, modifier = Modifier.size(DriveMetrics.icon))
-                Text(item.labelFor(lang).ifBlank { actionLabel(item.id, op) }, style = MaterialTheme.typography.labelSmall, color = ink, maxLines = 1)
-            }
-        }
-    }
-    else if (g.lines) Column(verticalArrangement = Arrangement.spacedBy(DriveMetrics.gap)) { g.items.forEach { chip(it) } }
-    else FlowRow(horizontalArrangement = Arrangement.spacedBy(DriveMetrics.gapWide), verticalArrangement = Arrangement.spacedBy(DriveMetrics.gapWide)) { g.items.forEach { chip(it) } }
+            GitMenuItem(
+                item.id, item.labelFor(lang).ifBlank { actionLabel(item.id, op) },
+                icon = op?.let { IconCatalog.vectorOrDefault(it.icon) },
+                rowIcon = IconCatalog.vectorOrDefault(item.icon.ifBlank { op?.icon.orEmpty() }),
+                // Settings, auth and the readers stay available while an operation runs; the verbs wait (GitMenuView).
+                available = !(op != null && blocked(op)) && !unavailable(item.id),
+                active = active(item.id),
+            )
+        },
+        g.subgroups.map { lib(it) },
+    )
+    val groups = page.repoMenu.groups.map { lib(it) }
+    GitMenuView(groups, busy, RepoActions.ALWAYS_ON_GROUPS, onAction, slot = { lg -> slot(page.repoMenu.groups.first { it.id == lg.id }) })
 }
