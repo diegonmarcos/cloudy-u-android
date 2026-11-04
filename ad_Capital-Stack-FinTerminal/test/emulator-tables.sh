@@ -76,7 +76,7 @@ fi
 adb shell am start -S -W -n "$PKG/.MainActivity" --es dashboard eq >/dev/null
 sleep 15
 SF=$(node_xy "Symbol, index, pair, country, event"); echo "search field xy=${SF:-none}" | tee -a "$OUT/nav-strip.txt"
-if [ -n "$SF" ]; then set -- $SF; adb shell input tap "$1" "$2"; sleep 3; adb shell input text tesla; sleep 12; adb exec-out screencap -p > "$OUT/apk-remote-search.png"; fi
+if [ -n "$SF" ]; then set -- $SF; adb shell input tap "$1" "$2"; sleep 3; adb shell input text tesla; sleep 12; adb exec-out screencap -p > "$OUT/apk-remote-search.png"; TS=$(node_xy "Tesla, Inc."); echo "remote result xy=${TS:-none}" | tee -a "$OUT/nav-strip.txt"; fi
 # #1370 add-holding sheet: MY-PM > holdings page, tap Add
 adb shell am start -S -W -n "$PKG/.MainActivity" --es dashboard my-pm >/dev/null
 sleep 15
