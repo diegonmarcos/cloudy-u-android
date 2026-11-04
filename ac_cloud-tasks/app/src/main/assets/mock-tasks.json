@@ -1,0 +1,273 @@
+{
+ "_fake": "MOCK DATA - FAKE. Every row below is invented for layout checks; none of it is a real task, person or project. Days are offsets from today so the views always render. Read by ui/MockTasks.kt; replace with the real source when the tasks backend lands.",
+ "kinds": [
+  "inboxes",
+  "backlogs",
+  "tasks",
+  "library",
+  "projects"
+ ],
+ "statuses": [
+  "todo",
+  "doing",
+  "blocked",
+  "done"
+ ],
+ "items": [
+  {
+   "id": "t1",
+   "kind": "tasks",
+   "title": "Write the fake spec",
+   "subject": "Mock Project Alpha",
+   "status": "done",
+   "startDay": -6,
+   "days": 3,
+   "progress": 100,
+   "detail": "Mock task, not real work."
+  },
+  {
+   "id": "t2",
+   "kind": "tasks",
+   "title": "Review the fake spec",
+   "subject": "Mock Project Alpha",
+   "status": "doing",
+   "startDay": -2,
+   "days": 4,
+   "progress": 40
+  },
+  {
+   "id": "t3",
+   "kind": "tasks",
+   "title": "Ship the fake build",
+   "subject": "Mock Project Alpha",
+   "status": "todo",
+   "startDay": 3,
+   "days": 2
+  },
+  {
+   "id": "t3a",
+   "kind": "tasks",
+   "title": "Tag the fake release",
+   "subject": "Mock Project Alpha",
+   "status": "todo",
+   "startDay": 3,
+   "days": 1,
+   "parent": "t3"
+  },
+  {
+   "id": "t3b",
+   "kind": "tasks",
+   "title": "Announce the fake release",
+   "subject": "Mock Project Alpha",
+   "status": "todo",
+   "startDay": 4,
+   "days": 1,
+   "parent": "t3"
+  },
+  {
+   "id": "t4",
+   "kind": "tasks",
+   "title": "Draw the sample wireframe",
+   "subject": "Mock Project Beta",
+   "status": "doing",
+   "startDay": -1,
+   "days": 5,
+   "progress": 60,
+   "detail": "Placeholder wireframe."
+  },
+  {
+   "id": "t5",
+   "kind": "tasks",
+   "title": "Wait for the sample vendor",
+   "subject": "Mock Project Beta",
+   "status": "blocked",
+   "startDay": 1,
+   "days": 6,
+   "progress": 10,
+   "detail": "Blocked on a made-up vendor."
+  },
+  {
+   "id": "t5a",
+   "kind": "tasks",
+   "title": "Chase the sample vendor",
+   "subject": "Mock Project Beta",
+   "status": "blocked",
+   "startDay": 2,
+   "days": 1,
+   "parent": "t5"
+  },
+  {
+   "id": "t6",
+   "kind": "tasks",
+   "title": "Plan the imaginary offsite",
+   "subject": "Mock Project Gamma",
+   "status": "todo",
+   "startDay": 7,
+   "days": 3
+  },
+  {
+   "id": "t7",
+   "kind": "tasks",
+   "title": "Archive the old mock notes",
+   "subject": "Mock Project Gamma",
+   "status": "done",
+   "startDay": -9,
+   "days": 2,
+   "progress": 100
+  },
+  {
+   "id": "t8",
+   "kind": "tasks",
+   "title": "Test the dummy pipeline",
+   "subject": "Mock Project Gamma",
+   "status": "doing",
+   "startDay": 0,
+   "days": 3,
+   "progress": 30
+  },
+  {
+   "id": "t8a",
+   "kind": "tasks",
+   "title": "Fix the dummy flaky step",
+   "subject": "Mock Project Gamma",
+   "status": "doing",
+   "startDay": 1,
+   "days": 2,
+   "progress": 20,
+   "parent": "t8"
+  },
+  {
+   "id": "i1",
+   "kind": "inboxes",
+   "title": "Mock email: please confirm the sample invoice",
+   "subject": "Mock Project Alpha",
+   "status": "todo",
+   "startDay": 1,
+   "days": 1,
+   "detail": "From nobody@example.invalid"
+  },
+  {
+   "id": "i2",
+   "kind": "inboxes",
+   "title": "Mock screenshot: sample booking",
+   "subject": "Mock Project Beta",
+   "status": "todo",
+   "startDay": 2,
+   "days": 1,
+   "detail": "Proposed by the mock agent"
+  },
+  {
+   "id": "i3",
+   "kind": "inboxes",
+   "title": "Mock note: call the imaginary dentist",
+   "subject": "Mock Project Gamma",
+   "status": "todo",
+   "startDay": 0,
+   "days": 1
+  },
+  {
+   "id": "i4",
+   "kind": "inboxes",
+   "title": "Mock invite: fake planning meeting",
+   "subject": "Mock Project Alpha",
+   "status": "todo",
+   "startDay": 5,
+   "days": 1
+  },
+  {
+   "id": "b1",
+   "kind": "backlogs",
+   "title": "Someday: tidy the mock archive",
+   "subject": "Mock Project Alpha",
+   "status": "todo",
+   "startDay": 14,
+   "days": 1
+  },
+  {
+   "id": "b2",
+   "kind": "backlogs",
+   "title": "Someday: try the sample tool",
+   "subject": "Mock Project Beta",
+   "status": "todo",
+   "startDay": 21,
+   "days": 1,
+   "detail": "No date pressure."
+  },
+  {
+   "id": "b3",
+   "kind": "backlogs",
+   "title": "Idea: a fake dashboard",
+   "subject": "Mock Project Gamma",
+   "status": "todo",
+   "startDay": 30,
+   "days": 1
+  },
+  {
+   "id": "b4",
+   "kind": "backlogs",
+   "title": "Idea: a fake widget",
+   "subject": "Mock Project Gamma",
+   "status": "todo",
+   "startDay": 35,
+   "days": 1
+  },
+  {
+   "id": "l1",
+   "kind": "library",
+   "title": "Mock reference: sample style guide",
+   "subject": "Mock Project Alpha",
+   "status": "done",
+   "detail": "Reading material, fake."
+  },
+  {
+   "id": "l2",
+   "kind": "library",
+   "title": "Mock reference: example checklist",
+   "subject": "Mock Project Beta",
+   "status": "done"
+  },
+  {
+   "id": "l3",
+   "kind": "library",
+   "title": "Mock reference: dummy glossary",
+   "subject": "Mock Project Beta",
+   "status": "done"
+  },
+  {
+   "id": "l4",
+   "kind": "library",
+   "title": "Mock reference: fake template pack",
+   "subject": "Mock Project Gamma",
+   "status": "done"
+  },
+  {
+   "id": "p1",
+   "kind": "projects",
+   "title": "Mock Project Alpha: kickoff plan",
+   "subject": "Mock Project Alpha",
+   "status": "doing",
+   "startDay": -10,
+   "days": 20,
+   "progress": 45
+  },
+  {
+   "id": "p2",
+   "kind": "projects",
+   "title": "Mock Project Beta: design phase",
+   "subject": "Mock Project Beta",
+   "status": "doing",
+   "startDay": -4,
+   "days": 12,
+   "progress": 30
+  },
+  {
+   "id": "p3",
+   "kind": "projects",
+   "title": "Mock Project Gamma: research",
+   "subject": "Mock Project Gamma",
+   "status": "todo",
+   "startDay": 5,
+   "days": 25
+  }
+ ]
+}

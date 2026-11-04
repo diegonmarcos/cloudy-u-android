@@ -2,7 +2,7 @@
   "launcher_icon": {"_doc": "The launcher icon, generated from this declaration by 1_cicd/src/scripts/cloud-android-launcher-icons.py (pattern + category colours + glyphs in 1_cicd/src/data/launcher-icons.json). Never edit the generated res files.", "glyph": "check_box", "category": "data", "res": "app/src/main/res"},
   "name": "cloud-tasks",
   "display_name": "Cloud Tasks",
-  "description": "Diego's Cloud Tasks (formerly Cloud Agenda, before that Cloud Calendar) — standalone Android task, calendar and event app. The applicationId stays com.diegonmarcos.cloudagenda so installed phones update in place. Jetpack Compose chrome (CloudKitTheme light/dark/system, libs:bottomnav island + page tabs, a page-managed hamburger drawer, AI and Profile buttons in the top row, libs:ai chat with persistent history) over a local tasks database (projects > lists > tasks > subtasks, statuses, tags, links to Cloud Mail / Cloud Drive items) and a mail agent that proposes tasks for review. The Events, Calendar and Invites pages are still the legacy tasks.html WebView (public-ICS feed sync, CalDAV against a self-hosted Radicale). Build via Nix devShell, one APK out.",
+  "description": "Diego's Cloud Tasks (formerly Cloud Agenda, before that Cloud Calendar) — standalone Android task, calendar and event app. The applicationId stays com.diegonmarcos.cloudagenda so installed phones update in place. Jetpack Compose chrome (CloudKitTheme light/dark/system, libs:bottomnav island + page tabs, a page-managed hamburger drawer, AI and Profile buttons in the top row, libs:ai chat with persistent history) over a local tasks database (projects > lists > tasks > subtasks, statuses, tags, links to Cloud Mail / Cloud Drive items) and a mail agent that proposes tasks for review. The Feeds page is still the legacy tasks.html WebView (public-ICS feed sync, CalDAV against a self-hosted Radicale). Build via Nix devShell, one APK out.",
   "category": "android",
   "build": {
     "type": "gradle",
@@ -217,7 +217,7 @@
     }
   },
   "ui": {
-    "_doc": "#868 THE navigation declaration (libs:bottomnav NavDecl): ui.bottom_nav is the island's ids, ui.sections the section each one opens, ui.default_section where the app opens. Tasks is the native Compose page (hamburger drawer = projects and lists). Calendar is the legacy tasks.html WebView, one page per tab of the old shell (Events, Calendar, Invites). Settings is NOT on the island: it opens from the top bar's Settings > Configs, and its pages (Appearance, Agent, Inbox, Feeds) are the section's tab strip. Every section's `background` is `theme`: the strips follow the app's light / dark mode (Settings > Appearance), through NavDecl.stripSurface.",
+    "_doc": "#868 THE navigation declaration (libs:bottomnav NavDecl): ui.bottom_nav is the island's ids, ui.sections the section each one opens, ui.default_section where the app opens. #1456 the island is Inboxes | Backlogs | Tasks | Library | Projects. The four collection sections list their items in the Cloud Me Tasks row layout from the mock fixture (assets/mock-tasks.json, FAKE data); Tasks has the sub-pages Calendar, List (the native database list with the projects drawer), Gantt, Kanban and Mindmap. Settings is NOT on the island: it opens from the top bar's Settings > Configs and follows the fleet Configs pattern, General | Perms | About (libs:ui-nav-bars fleetconfigs) first, then the app's own Appearance, Agent, Proposals (mail-agent review) and Feeds. Every section's `background` is `theme`.",
     "top_bar": {
       "_doc": "THE first row of the app (libs:bottomnav AppTopBar, declared once for the fleet): a hamburger that opens a side drawer the CURRENT page fills (the Tasks page: the projects and their lists; Calendar and Settings: their pages), the title, and two circular buttons: AI (libs:ai's chat in an anchored panel, one box for search and chat, history kept) and Settings (Account launches Cloud Account; Configs opens the Settings section: Appearance, Agent, Inbox, Feeds). No app draws its own copy of this row (cloud-android-top-bar-guard).",
       "drawer": true,
@@ -227,13 +227,36 @@
         "configs"
       ]
     },
-    "bottom_nav": [
-      "tasks",
-      "calendar"
-    ],
+    "bottom_nav": ["inboxes", "backlogs", "tasks", "library", "projects"],
     "default_section": "tasks",
     "configs_ui": ["nav_ui"],
     "sections": [
+      {
+        "id": "inboxes",
+        "label": "Inboxes",
+        "icon": "inbox",
+        "background": "theme",
+        "pages": [
+          {
+            "id": "inboxes",
+            "label": "Inboxes",
+            "icon": "inbox"
+          }
+        ]
+      },
+      {
+        "id": "backlogs",
+        "label": "Backlogs",
+        "icon": "bookmark",
+        "background": "theme",
+        "pages": [
+          {
+            "id": "backlogs",
+            "label": "Backlogs",
+            "icon": "bookmark"
+          }
+        ]
+      },
       {
         "id": "tasks",
         "label": "Tasks",
@@ -241,32 +264,55 @@
         "background": "theme",
         "pages": [
           {
-            "id": "tasks",
-            "label": "Tasks",
-            "icon": "checklist"
-          }
-        ]
-      },
-      {
-        "id": "calendar",
-        "label": "Calendar",
-        "icon": "calendar",
-        "background": "theme",
-        "pages": [
-          {
-            "id": "events",
-            "label": "Events",
-            "icon": "event"
-          },
-          {
             "id": "calendar",
             "label": "Calendar",
             "icon": "calendar_month"
           },
           {
-            "id": "invites",
-            "label": "Invites",
-            "icon": "mark_email_unread"
+            "id": "list",
+            "label": "List",
+            "icon": "checklist"
+          },
+          {
+            "id": "gantt",
+            "label": "Gantt",
+            "icon": "timeline"
+          },
+          {
+            "id": "kanban",
+            "label": "Kanban",
+            "icon": "table_chart"
+          },
+          {
+            "id": "mindmap",
+            "label": "Mindmap",
+            "icon": "account_tree"
+          }
+        ]
+      },
+      {
+        "id": "library",
+        "label": "Library",
+        "icon": "folder_open",
+        "background": "theme",
+        "pages": [
+          {
+            "id": "library",
+            "label": "Library",
+            "icon": "folder_open"
+          }
+        ]
+      },
+      {
+        "id": "projects",
+        "label": "Projects",
+        "icon": "folder",
+        "background": "theme",
+        "pages": [
+          {
+            "id": "projects",
+            "label": "Projects",
+            "icon": "folder"
           }
         ]
       },
@@ -276,6 +322,21 @@
         "icon": "settings",
         "background": "theme",
         "pages": [
+          {
+            "id": "general",
+            "label": "General",
+            "icon": "settings"
+          },
+          {
+            "id": "perms",
+            "label": "Perms",
+            "icon": "security"
+          },
+          {
+            "id": "about",
+            "label": "About",
+            "icon": "info"
+          },
           {
             "id": "appearance",
             "label": "Appearance",
@@ -288,7 +349,7 @@
           },
           {
             "id": "inbox",
-            "label": "Inbox",
+            "label": "Proposals",
             "icon": "inbox"
           },
           {

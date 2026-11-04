@@ -13,15 +13,21 @@ class NavDeclTest {
 
     @Test fun `the declaration is valid and opens on Tasks`() {
         assertEquals(emptyList<String>(), nav.problems())
-        assertEquals(listOf("tasks", "calendar"), nav.bottomNav)
+        assertEquals(listOf("inboxes", "backlogs", "tasks", "library", "projects"), nav.bottomNav)
         assertEquals(Ids.TASKS, nav.default()?.id)
     }
 
     @Test fun `every id Kotlin dispatches on is declared and every declared section is dispatched`() {
-        assertEquals(setOf(Ids.TASKS, Ids.CALENDAR, Ids.SETTINGS), nav.sections.map { it.id }.toSet())
-        assertEquals(listOf(Ids.PAGE_EVENTS, Ids.PAGE_CALENDAR, Ids.PAGE_INVITES), nav.section(Ids.CALENDAR)!!.pages.map { it.id })
-        assertEquals(listOf(Ids.PAGE_APPEARANCE, Ids.PAGE_AGENT, Ids.PAGE_INBOX, Ids.PAGE_FEEDS), nav.section(Ids.SETTINGS)!!.pages.map { it.id })
-        assertEquals(listOf(Ids.PAGE_TASKS), nav.section(Ids.TASKS)!!.pages.map { it.id })
+        assertEquals(setOf(Ids.INBOXES, Ids.BACKLOGS, Ids.TASKS, Ids.LIBRARY, Ids.PROJECTS, Ids.SETTINGS), nav.sections.map { it.id }.toSet())
+        assertEquals(listOf(Ids.PAGE_CALENDAR, Ids.PAGE_LIST, Ids.PAGE_GANTT, Ids.PAGE_KANBAN, Ids.PAGE_MINDMAP), nav.section(Ids.TASKS)!!.pages.map { it.id })
+        assertEquals(
+            listOf(Ids.PAGE_GENERAL, Ids.PAGE_PERMS, Ids.PAGE_ABOUT, Ids.PAGE_APPEARANCE, Ids.PAGE_AGENT, Ids.PAGE_INBOX, Ids.PAGE_FEEDS),
+            nav.section(Ids.SETTINGS)!!.pages.map { it.id },
+        )
+        assertEquals(listOf(Ids.PAGE_INBOXES), nav.section(Ids.INBOXES)!!.pages.map { it.id })
+        assertEquals(listOf(Ids.PAGE_BACKLOGS), nav.section(Ids.BACKLOGS)!!.pages.map { it.id })
+        assertEquals(listOf(Ids.PAGE_LIBRARY), nav.section(Ids.LIBRARY)!!.pages.map { it.id })
+        assertEquals(listOf(Ids.PAGE_PROJECTS), nav.section(Ids.PROJECTS)!!.pages.map { it.id })
     }
 
     @Test fun `Settings is declared but not on the island`() {
@@ -30,8 +36,8 @@ class NavDeclTest {
     }
 
     @Test fun `strips follow the app's light and dark mode`() {
-        assertEquals(TabSurface.Dark, nav.stripSurface(Ids.CALENDAR, darkTheme = true))
-        assertEquals(TabSurface.Light, nav.stripSurface(Ids.CALENDAR, darkTheme = false))
+        assertEquals(TabSurface.Dark, nav.stripSurface(Ids.TASKS, darkTheme = true))
+        assertEquals(TabSurface.Light, nav.stripSurface(Ids.TASKS, darkTheme = false))
         assertEquals(TabSurface.Light, nav.stripSurface(Ids.SETTINGS, darkTheme = false, pageId = Ids.PAGE_AGENT))
     }
 }

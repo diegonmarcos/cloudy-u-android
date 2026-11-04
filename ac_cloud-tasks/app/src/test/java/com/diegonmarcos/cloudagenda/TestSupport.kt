@@ -14,6 +14,7 @@ import com.diegonmarcos.cloudagenda.agent.MailSource
 import com.diegonmarcos.cloudagenda.data.AgentConfig
 import com.diegonmarcos.cloudagenda.data.Attachment
 import com.diegonmarcos.cloudagenda.data.AttachmentKind
+import com.diegonmarcos.cloudagenda.data.MockTasks
 import com.diegonmarcos.cloudagenda.data.TasksDb
 import com.diegonmarcos.cloudagenda.data.TasksPrefs
 import com.diegonmarcos.cloudagenda.data.TasksRepository
@@ -95,6 +96,7 @@ class FakeEnv(context: Context, seed: Boolean = true) : TasksEnv {
     override var pickedLink: Attachment? by mutableStateOf(null)
     override fun consumePicked() { pickedLink = null }
 
+    override val mock = MockTasks.load(context)
     override val chat = AiChatState(FakeAiHost())
     override val agents: List<AiAgent> = listOf(AiAgent("hermes", "Hermes", "tools", "hermes"))
     override fun loadModels(): List<AiModel> = listOf(AiModel("m/one", "Model one"))

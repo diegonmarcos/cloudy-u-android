@@ -4,6 +4,7 @@ import android.app.Activity
 import androidx.activity.compose.BackHandler
 import android.content.Context
 import android.content.ContextWrapper
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -34,12 +35,15 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import com.diegonmarcos.cloudagenda.data.AgentConfig
 import com.diegonmarcos.cloudagenda.data.Attachment
+import com.diegonmarcos.cloudagenda.data.MockTask
 import com.diegonmarcos.cloudagenda.data.ThemeMode
 import com.diegonmarcos.superapp.ai.AiAgent
 import com.diegonmarcos.superapp.ai.AiChatState
 import com.diegonmarcos.superapp.ai.AiModel
 import androidx.compose.ui.res.stringResource
 import com.diegonmarcos.cloudagenda.R
+import com.diegonmarcos.superapp.fleetconfigs.FleetConfigsPageBody
+import com.diegonmarcos.superapp.themebg.ThemeBackground
 import com.diegonmarcos.superapp.navbarbottom.NavBarBottomHost
 import com.diegonmarcos.superapp.navbartop1.NavBarTopFirstRowScaffold
 import com.diegonmarcos.superapp.navbartop1.titleHierarchy
@@ -64,6 +68,8 @@ interface TasksEnv {
     /** A link a system picker returned while the editor was open; the page takes it into the draft once. */
     val pickedLink: Attachment?
     fun consumePicked()
+    /** The mock fixture (assets/mock-tasks.json, FAKE) behind the collection pages and the Calendar, Gantt, Kanban and Mindmap views. */
+    val mock: List<MockTask>
     val chat: AiChatState
     val agents: List<AiAgent>
     fun loadModels(): List<AiModel>
@@ -79,15 +85,6 @@ private val PageMapSaver = listSaver<androidx.compose.runtime.snapshots.Snapshot
     save = { m -> m.entries.flatMap { listOf(it.key, it.value) } },
     restore = { l -> mutableStateMapOf<String, String>().also { m -> l.chunked(2).forEach { m[it[0]] = it[1] } } },
 )
-
-/** The tab of the legacy tasks.html shell each declared page shows (its own tab ids: todo, events, calendar, invites, configs). */
-internal fun webTabFor(page: String): String = when (page) {
-    Ids.PAGE_EVENTS -> "events"
-    Ids.PAGE_CALENDAR -> "calendar"
-    Ids.PAGE_INVITES -> "invites"
-    Ids.PAGE_FEEDS -> "configs"
-    else -> "events"
-}
 
 private tailrec fun Context.activity(): Activity? = when (this) {
     is Activity -> this
@@ -130,6 +127,7 @@ fun TasksShell(env: TasksEnv, nav: NavDecl, themeMode: ThemeMode, onThemeMode: (
     val pages = current?.pages.orEmpty()
     val page = current?.page(pageOf[section])?.id.orEmpty()
     val onIsland = section in nav.bottomNav
+    val today = remember { java.time.LocalDate.now() }
 
     fun go(id: String) { section = id }
     BackHandler(enabled = section == Ids.SETTINGS) { go(returnTo) }
@@ -144,14 +142,26 @@ fun TasksShell(env: TasksEnv, nav: NavDecl, themeMode: ThemeMode, onThemeMode: (
             }
             Box(Modifier.weight(1f).fillMaxWidth()) {
                 when (section) {
-                    Ids.TASKS -> if (page == Ids.PAGE_TASKS) TasksScreen(env.controller, env.host, env.pickedLink, onPickedConsumed = env::consumePicked)
-                    Ids.CALENDAR -> {
-                        SectionPagesDrawer(pages, page) { pageOf[section] = it.id }
-                        LegacyWeb(tab = webTabFor(page), Modifier.fillMaxSize())
+                    // The collection sections list their rows in the Cloud Me Tasks layout (one page each).
+                    Ids.INBOXES -> CollectionPage(Ids.PAGE_INBOXES, env.mock, today)
+                    Ids.BACKLOGS -> CollectionPage(Ids.PAGE_BACKLOGS, env.mock, today)
+                    Ids.LIBRARY -> CollectionPage(Ids.PAGE_LIBRARY, env.mock, today)
+                    Ids.PROJECTS -> CollectionPage(Ids.PAGE_PROJECTS, env.mock, today)
+                    Ids.TASKS -> {
+                        if (page == Ids.PAGE_LIST) TasksScreen(env.controller, env.host, env.pickedLink, onPickedConsumed = env::consumePicked)
+                        else {
+                            SectionPagesDrawer(pages, page) { pageOf[section] = it.id }
+                            when (page) {
+                                Ids.PAGE_CALENDAR -> CalendarView(env.mock, today)
+                                Ids.PAGE_GANTT -> GanttView(env.mock, today)
+                                Ids.PAGE_KANBAN -> KanbanView(env.mock, today)
+                                Ids.PAGE_MINDMAP -> MindmapView(env.mock)
+                            }
+                        }
                     }
                     Ids.SETTINGS -> {
                         SectionPagesDrawer(pages, page) { pageOf[section] = it.id }
-                        SettingsContent(env, page, themeMode, onThemeMode)
+                        SettingsContent(env, page, themeMode, onThemeMode) { pageOf[Ids.SETTINGS] = Ids.PAGE_APPEARANCE }
                     }
                 }
             }
@@ -197,9 +207,14 @@ private fun SectionPagesDrawer(pages: List<NavPage>, selected: String, onSelect:
 }
 
 @Composable
-private fun SettingsContent(env: TasksEnv, page: String, themeMode: ThemeMode, onThemeMode: (ThemeMode) -> Unit) {
+private fun SettingsContent(env: TasksEnv, page: String, themeMode: ThemeMode, onThemeMode: (ThemeMode) -> Unit, onAppConfigs: () -> Unit) {
     val controller = env.controller
+    val dark = LocalDarkTheme.current
     when (page) {
+        // #1443 the fleet's shared Configs pages (libs:ui-nav-bars) come first: General | Perms | About.
+        Ids.PAGE_GENERAL, Ids.PAGE_PERMS, Ids.PAGE_ABOUT -> Box(Modifier.fillMaxSize().background(ThemeBackground.colors(dark).top).testTag("tasks:configs:page:" + page)) {
+            FleetConfigsPageBody(page, dark, onAppConfigs)
+        }
         Ids.PAGE_APPEARANCE -> AppearancePage(themeMode, onThemeMode)
         Ids.PAGE_AGENT -> AgentPageHost(env)
         Ids.PAGE_INBOX -> {
@@ -210,7 +225,7 @@ private fun SettingsContent(env: TasksEnv, page: String, themeMode: ThemeMode, o
                 onReject = { controller.decide(it.id, false, null) },
             )
         }
-        Ids.PAGE_FEEDS -> LegacyWeb(tab = webTabFor(Ids.PAGE_FEEDS), Modifier.fillMaxSize())
+        Ids.PAGE_FEEDS -> LegacyWeb(tab = "configs", Modifier.fillMaxSize())
     }
 }
 

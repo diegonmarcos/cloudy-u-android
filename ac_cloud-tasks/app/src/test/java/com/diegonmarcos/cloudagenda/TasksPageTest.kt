@@ -20,6 +20,7 @@ import com.diegonmarcos.superapp.bottomnav.TopBarTags
 import com.diegonmarcos.cloudagenda.ui.DrawerTags
 import com.diegonmarcos.cloudagenda.ui.EditorTags
 import com.diegonmarcos.cloudagenda.ui.FilterTags
+import com.diegonmarcos.cloudagenda.ui.MockTags
 import com.diegonmarcos.cloudagenda.ui.Declarations
 import com.diegonmarcos.cloudagenda.ui.SettingsTags
 import com.diegonmarcos.cloudagenda.ui.TagTags
@@ -52,10 +53,19 @@ class TasksPageTest {
     @get:Rule
     val rules = composeChain(compose)
 
-    private fun launch(seed: Boolean = true): FakeEnv {
+    /** [list] = open Tasks > List, the native database page (the Tasks section itself opens on Calendar, its first declared page). */
+    private fun launch(seed: Boolean = true, list: Boolean = true): FakeEnv {
         val env = FakeEnv(RuntimeEnvironment.getApplication(), seed)
         compose.setContent { TasksApp(env, Declarations.nav) }
+        if (list) { compose.onNodeWithTag(PageTabsTags.tab("list")).performClick(); compose.waitForIdle() }
         return env
+    }
+
+    private fun openSettingsPage(id: String) {
+        compose.onNodeWithTag(TopBarTags.CONFIGS).performClick()
+        compose.waitForIdle()
+        compose.onNodeWithTag(PageTabsTags.tab(id)).performClick()
+        compose.waitForIdle()
     }
 
     private fun rows() = compose.onAllNodes(tagStartsWith("task_row_"))
@@ -64,16 +74,39 @@ class TasksPageTest {
     // ── chrome and island ───────────────────────────────────────────────────────────────────────────────
 
     @Test fun `the shell draws the top row and the declared island, and opens on Tasks`() {
-        launch()
+        launch(list = false)
         compose.onNodeWithTag(TopBarTags.MENU).assertDoesNotExist()
         compose.onNodeWithTag(TopBarTags.TITLE).assertIsDisplayed()
         compose.onNodeWithTag(TopBarTags.AI).assertIsDisplayed()
         compose.onNodeWithTag(TopBarTags.ACCOUNT).assertIsDisplayed()
         compose.onNodeWithTag(TopBarTags.CONFIGS).assertIsDisplayed()
-        compose.onNodeWithTag(BottomNavTags.item("tasks")).assertIsDisplayed()
-        compose.onNodeWithTag(BottomNavTags.item("calendar")).assertIsDisplayed()
+        for (id in listOf("inboxes", "backlogs", "tasks", "library", "projects")) compose.onNodeWithTag(BottomNavTags.item(id)).assertIsDisplayed()
         compose.onNodeWithTag(BottomNavTags.item("settings")).assertDoesNotExist()
+        for (id in listOf("calendar", "list", "gantt", "kanban", "mindmap")) compose.onNodeWithTag(PageTabsTags.tab(id)).assertExists()
+        compose.onNodeWithTag(MockTags.page("calendar")).assertIsDisplayed()
+    }
+
+    @Test fun `every task view renders the mock fixture`() {
+        launch(list = false)
+        compose.onNodeWithTag(MockTags.NOTICE).assertIsDisplayed()
+        for (id in listOf("gantt", "kanban", "mindmap")) {
+            compose.onNodeWithTag(PageTabsTags.tab(id)).performClick()
+            compose.waitForIdle()
+            compose.onNodeWithTag(MockTags.page(id)).assertIsDisplayed()
+        }
+        compose.onNodeWithTag(PageTabsTags.tab("list")).performClick()
+        compose.waitForIdle()
         compose.onNodeWithTag(TasksTags.PAGE).assertIsDisplayed()
+    }
+
+    @Test fun `each collection tab lists its mock rows in the shared card layout`() {
+        launch(list = false)
+        for ((id, row) in listOf("inboxes" to "i1", "backlogs" to "b1", "library" to "l1", "projects" to "p1")) {
+            compose.onNodeWithTag(BottomNavTags.item(id)).performClick()
+            compose.waitForIdle()
+            compose.onNodeWithTag(MockTags.page(id)).assertIsDisplayed()
+            compose.onNodeWithTag(MockTags.row(row)).assertExists()
+        }
     }
 
     @Test fun `the first run shows Project Zero's first list with three tasks and their subtasks`() {
@@ -237,7 +270,11 @@ class TasksPageTest {
         launch()
         compose.onNodeWithTag(TopBarTags.CONFIGS).performClick()
         compose.waitForIdle()
-        for (id in listOf("appearance", "agent", "inbox", "feeds")) compose.onNodeWithTag(PageTabsTags.tab(id)).assertExists()
+        // The fleet Configs pattern: General | Perms | About first, then the app's own pages.
+        for (id in listOf("general", "perms", "about", "appearance", "agent", "inbox", "feeds")) compose.onNodeWithTag(PageTabsTags.tab(id)).assertExists()
+        compose.onNodeWithTag("tasks:configs:page:general").assertIsDisplayed()
+        compose.onNodeWithTag(PageTabsTags.tab("appearance")).performClick()
+        compose.waitForIdle()
         compose.onNodeWithTag(SettingsTags.APPEARANCE).assertIsDisplayed()
         compose.onNodeWithTag(BottomNavTags.item("tasks")).performClick()
         compose.waitForIdle()
@@ -246,8 +283,7 @@ class TasksPageTest {
 
     @Test fun `choosing Dark in Appearance is saved`() {
         val env = launch()
-        compose.onNodeWithTag(TopBarTags.CONFIGS).performClick()
-        compose.waitForIdle()
+        openSettingsPage("appearance")
         compose.onNodeWithTag(KitPartTags.segment(SettingsTags.THEME, "dark")).performClick()
         compose.waitForIdle()
         assertEquals(ThemeMode.DARK, env.savedMode)
@@ -258,10 +294,7 @@ class TasksPageTest {
 
     @Test fun `the Agent page saves its declaration and says no backend is deployed after a run that found none`() {
         val env = launch()
-        compose.onNodeWithTag(TopBarTags.CONFIGS).performClick()
-        compose.waitForIdle()
-        compose.onNodeWithTag(PageTabsTags.tab("agent")).performClick()
-        compose.waitForIdle()
+        openSettingsPage("agent")
         for (tag in listOf(SettingsTags.AGENT_ENABLED, KitPartTags.segment(SettingsTags.SOURCE, "cloud-mail"), SettingsTags.ACCOUNT, SettingsTags.MAILBOXES, KitPartTags.segment(SettingsTags.FREQUENCY, "360"),
             SettingsTags.MODEL, SettingsTags.TARGET, SettingsTags.extract("events"), SettingsTags.extract("bookings"),
             SettingsTags.extract("invoices"), SettingsTags.extract("deadlines"), SettingsTags.SAVE)) {
