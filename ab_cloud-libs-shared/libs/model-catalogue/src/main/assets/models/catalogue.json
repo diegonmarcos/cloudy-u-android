@@ -74,22 +74,6 @@
        }
       },
       {
-       "provider": "Poolside",
-       "id": "poolside/laguna-s-2.1",
-       "name": "Laguna S 2.1",
-       "params": "MoE 118B / 8B",
-       "params_est": false,
-       "license": "Open weights",
-       "license_est": true,
-       "snapshot": {
-        "unit": "tokens",
-        "in": 0.09,
-        "out": 0.18,
-        "floor_in": 0.09,
-        "floor_out": 0.18
-       }
-      },
-      {
        "provider": "DeepSeek",
        "id": "deepseek/deepseek-v4-flash-0731",
        "name": "DeepSeek V4 Flash 0731",
@@ -808,22 +792,6 @@
        }
       },
       {
-       "provider": "Arcee",
-       "id": "arcee-ai/trinity-large-thinking",
-       "name": "Trinity Large Thinking",
-       "params": "MoE ~400B / 13B",
-       "params_est": true,
-       "license": "Apache-2.0",
-       "license_est": true,
-       "snapshot": {
-        "unit": "tokens",
-        "in": 0.25,
-        "out": 0.8,
-        "floor_in": 0.25,
-        "floor_out": 0.8
-       }
-      },
-      {
        "provider": "OpenAI",
        "id": "openai/gpt-oss-120b",
        "name": "gpt-oss-120b",
@@ -1075,18 +1043,18 @@
       },
       {
        "provider": "IBM",
-       "id": "ibm-granite/granite-4.0-h-micro",
-       "name": "Granite 4.0 Micro",
-       "params": "Dense 3B",
+       "id": "ibm-granite/granite-4.2-8b",
+       "name": "Granite 4.2 8B",
+       "params": "Dense 8B",
        "params_est": false,
        "license": "Apache-2.0",
-       "license_est": false,
+       "license_est": true,
        "snapshot": {
         "unit": "tokens",
-        "in": 0.017,
-        "out": 0.112,
-        "floor_in": 0.017,
-        "floor_out": 0.112
+        "in": 0.06,
+        "out": 0.25,
+        "floor_in": 0.06,
+        "floor_out": 0.15
        }
       },
       {
