@@ -305,10 +305,6 @@ dependencies {
     implementation 'androidx.activity:activity-compose:1.9.3'
     implementation 'androidx.lifecycle:lifecycle-runtime-compose:2.8.7'
 
-    // The JVM suite (build.json::tests.unit): EventFetcher's policy (hosts, keys, cache). Real org.json: Android's is a stub in plain JUnit.
-    testImplementation 'junit:junit:4.13.2'
-    testImplementation 'org.json:json:20240303'
-
     androidTestImplementation 'androidx.test:runner:1.6.1'
     androidTestImplementation 'androidx.test.ext:junit:1.2.1'
 }
