@@ -17,8 +17,8 @@
 {"id":"tools-primary","label":"Tools Primary","members":["browser","nav","camera","calc","keyboard","writer","wallet","vault"]},
 {"id":"data-apps","label":"Data Apps","members":["drive","notes","tasks","gallery","media-center","office"]},
 {"id":"me","label":"Me","members":["me"]},
-{"id":"services","label":"Services","members":["news","shopping"]},
-{"id":"agi","label":"AGI","members":["superintel","search","code","kg-store","tools-small-llms","myterminal","nix-on-droid"]},
+{"id":"weby-services","label":"Weby Services","members":["search","news","shopping","kg-store"]},
+{"id":"agi","label":"AGI","members":["superintel","code","tools-small-llms","myterminal","nix-on-droid"]},
 {"id":"lnktree","label":"Lnktree","members":["aa_cloud-superapp","cg-omniverse","capital-stack-finterminal","hardtech-cad","hardtech-sim2real"]},
 {"id":"configs","label":"Configs","members":["store","c3"]},
 {"id":"other","label":"Other","members":["morpheus","watchdog","watchtower","account","c3-webserver","termux"]}

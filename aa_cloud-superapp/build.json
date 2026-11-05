@@ -3028,9 +3028,23 @@
             ]
           },
           {
-            "_doc": "#1473 Services: the row after Me and before AGI. News moved here from Data Apps; Shopping (ac_cloud-shopping, com.diegonmarcos.cloudshopping, a deals and listings browser over mock data) joined it. Both open their own app through ui.external_apps; the Shopping glyph ic_shopping is generated from ac_cloud-shopping/build.json::launcher_icon by cloud-android-launcher-icons.py (never edit the drawable). Pinned by test-agi-tiles.sh (AGI follows Services) and test-services-row.sh.",
-            "title": "Services",
+            "_doc": "#1473/#1476 Weby Services (was Services): the row after Me and before AGI. News moved here from Data Apps; Shopping (ac_cloud-shopping, com.diegonmarcos.cloudshopping, a deals and listings browser over mock data) joined it. Both open their own app through ui.external_apps; the Shopping glyph ic_shopping is generated from ac_cloud-shopping/build.json::launcher_icon by cloud-android-launcher-icons.py (never edit the drawable). Events, Mobility and Jobs are coming_soon placeholders (no app yet). Search moved in before News Shopping and KG Store after them, with a declared separator between the sub-groups (#1476). Pinned by test-agi-tiles.sh (AGI follows Services) and test-services-row.sh.",
+            "title": "Weby Services",
             "tiles": [
+              {
+                "_doc": "#1162 the caption was Research (Cloud Search renamed Cloud Research); the caption is Search again (renamed back to Cloud Search); id, package and extapp target stay search / cloud-search so installed copies update). #779 Search — hands off to the standalone Cloud Search app (ac_cloud-search, com.diegonmarcos.cloudsearch, read from ITS android.application_id and app/build.gradle namespace). #803: the owner moved SuperApp to the Configs row, so AGI now STARTS with Search: Search, AI Chat, Code, Tools, MyTerminal, Terminal (B-LLM and S-LLM removed, Tools in S-LLM's place, 2026-10-13). GroupedTilesFragment walks group.tiles in declared order with no sort, so array position is that placement, and test-agi-tiles.sh T1 pins the row. target=extapp:cloud-search → launchExternalApp opens the package if installed, else installs ui.external_apps[id=cloud-search].install_apk_url (ABI-resolved through the fleet assets map). icon ic_cloud_search is Cloud Search's own launcher foreground, byte for byte (test-agi-tiles.sh T3) — #803 the Phosphor shooting-star in the mockup's .ai-nav-icon gradient (Cloud Search's app/tools/phosphor.json::launcher generates it; Phosphor is MIT, recorded in ac_cloud-search/NOTICE.md). `tint: false` keeps that gradient: every other tile glyph is drawn white, which would flatten this one to a silhouette (test-agi-tiles.sh T6).",
+                "id": "search",
+                "label": "Search",
+                "icon": "ic_cloud_search",
+                "tint": false,
+                "target": "extapp:cloud-search"
+              },
+              {
+                "_doc": "Group divider (declared separator tile, drawn as a bare '|'): Weby Services reads Search | News Events | Shopping Mobility & Travel Jobs & Business | KG Store (owner 2026-11-05, #1476; test-services-row.sh pins it).",
+                "id": "weby-sep-1",
+                "label": "|",
+                "separator": true
+              },
               {
                 "id": "news",
                 "label": "News",
@@ -3038,10 +3052,50 @@
                 "target": "extapp:cloud-news"
               },
               {
+                "_doc": "#1476 declared placeholder (coming_soon): Events is not an app yet. Drawn gray, no target, no tap, no fleet package or ui.external_apps entry; becomes a real extapp tile when the app exists.",
+                "id": "events",
+                "label": "Events",
+                "icon": "ic_calendar",
+                "coming_soon": true
+              },
+              {
+                "_doc": "Group divider (declared separator tile, drawn as a bare '|'): Weby Services reads Search | News Events | Shopping Mobility & Travel Jobs & Business | KG Store (owner 2026-11-05, #1476; test-services-row.sh pins it).",
+                "id": "weby-sep-2",
+                "label": "|",
+                "separator": true
+              },
+              {
                 "id": "shopping",
                 "label": "Shopping",
                 "icon": "ic_shopping",
                 "target": "extapp:cloud-shopping"
+              },
+              {
+                "_doc": "#1476 declared placeholder (coming_soon): Mobility & Travel is not an app yet. Drawn gray, no target, no tap, no fleet package or ui.external_apps entry; becomes a real extapp tile when the app exists.",
+                "id": "mobility",
+                "label": "Mobility & Travel",
+                "icon": "ic_maps",
+                "coming_soon": true
+              },
+              {
+                "_doc": "#1476 declared placeholder (coming_soon): Jobs & Business is not an app yet. Drawn gray, no target, no tap, no fleet package or ui.external_apps entry; becomes a real extapp tile when the app exists.",
+                "id": "jobs",
+                "label": "Jobs & Business",
+                "icon": "ic_vcard",
+                "coming_soon": true
+              },
+              {
+                "_doc": "Group divider (declared separator tile, drawn as a bare '|'): Weby Services reads Search | News Events | Shopping Mobility & Travel Jobs & Business | KG Store (owner 2026-11-05, #1476; test-services-row.sh pins it).",
+                "id": "weby-sep-3",
+                "label": "|",
+                "separator": true
+              },
+              {
+                "_doc": "#1207 KG Store, Cloud KG Store (ac_cloud-kg-store, com.diegonmarcos.cloudkgstore): the fleet's knowledge-graph store and browser (Cloud: applications and repositories over the fleet's API, MCP and code-graph services; Phone: the installed apps index; Web: news, media, shopping, real estate, jobs, business on Cloud Search's sources). Placed right after the '| Search Code |' group, as the owner asked, so the AGI row reads SI AI | Search Code | KG Store Tools | MyTerminal Terminal. Opened through ui.external_apps[cloud-kg-store]; the glyph ic_kgs is generated from ac_cloud-kg-store/build.json::launcher_icon by cloud-android-launcher-icons.py (never edit the drawable).",
+                "id": "kg-store",
+                "label": "KG Store",
+                "icon": "ic_kgs",
+                "target": "extapp:cloud-kg-store"
               }
             ]
           },
@@ -3063,18 +3117,10 @@
                 "target": "intent://resolve?domain=Cloud_agent_claude_bot#Intent;scheme=tg;package=org.telegram.messenger;S.browser_fallback_url=https%3A%2F%2Ft.me%2FCloud_agent_claude_bot;end"
               },
               {
-                "_doc": "Group separator (#1162): a bare '|' between SI AI and Search Code, like the Data Apps and Me rows; the AGI row reads SI AI | Search Code | KG Store Tools | MyTerminal Terminal (test-agi-tiles.sh T1 pins it).",
+                "_doc": "Group divider (declared separator tile, drawn as a bare '|'): the AGI row reads SI AI | Code Tools | MyTerm Terminal (owner 2026-11-05, #1476; test-agi-tiles.sh T1 pins it).",
                 "id": "agi-sep-1",
                 "label": "|",
                 "separator": true
-              },
-              {
-                "_doc": "#1162 the caption was Research (Cloud Search renamed Cloud Research); the caption is Search again (renamed back to Cloud Search); id, package and extapp target stay search / cloud-search so installed copies update). #779 Search — hands off to the standalone Cloud Search app (ac_cloud-search, com.diegonmarcos.cloudsearch, read from ITS android.application_id and app/build.gradle namespace). #803: the owner moved SuperApp to the Configs row, so AGI now STARTS with Search: Search, AI Chat, Code, Tools, MyTerminal, Terminal (B-LLM and S-LLM removed, Tools in S-LLM's place, 2026-10-13). GroupedTilesFragment walks group.tiles in declared order with no sort, so array position is that placement, and test-agi-tiles.sh T1 pins the row. target=extapp:cloud-search → launchExternalApp opens the package if installed, else installs ui.external_apps[id=cloud-search].install_apk_url (ABI-resolved through the fleet assets map). icon ic_cloud_search is Cloud Search's own launcher foreground, byte for byte (test-agi-tiles.sh T3) — #803 the Phosphor shooting-star in the mockup's .ai-nav-icon gradient (Cloud Search's app/tools/phosphor.json::launcher generates it; Phosphor is MIT, recorded in ac_cloud-search/NOTICE.md). `tint: false` keeps that gradient: every other tile glyph is drawn white, which would flatten this one to a silhouette (test-agi-tiles.sh T6).",
-                "id": "search",
-                "label": "Search",
-                "icon": "ic_cloud_search",
-                "tint": false,
-                "target": "extapp:cloud-search"
               },
               {
                 "_doc": "#599 follow-up to #571/#562: last surviving 'IDE' identity string in this file, renamed to match cloud-code (ac_cloud-code, applicationId com.diegonmarcos.code, our Acode build) opened through ui.external_apps[cloud-code]. The APK is often not installed yet, so GroupedTilesFragment draws this tile as the #249 placeholder (ic_app_not_installed + 'Not installed') and the tap installs it from the constellation Store's own release asset. icon ic_ide is kept as the resource filename (cloud-code's launcher foreground copied verbatim from ac_cloud-code/res/android/drawable/ic_launcher_foreground.xml, the same way Writer/Camera/Drive carry theirs) — ic_code is already taken by the MyTerminal tile above, so only the id/label rebrand here, not the drawable filename.",
@@ -3084,19 +3130,6 @@
                 "target": "extapp:cloud-code"
               },
               {
-                "_doc": "Group separator (#1162): a bare '|' between SI AI and Search Code, like the Data Apps and Me rows; the AGI row reads SI AI | Search Code | KG Store Tools | MyTerminal Terminal (test-agi-tiles.sh T1 pins it).",
-                "id": "agi-sep-2",
-                "label": "|",
-                "separator": true
-              },
-              {
-                "_doc": "#1207 KG Store, Cloud KG Store (ac_cloud-kg-store, com.diegonmarcos.cloudkgstore): the fleet's knowledge-graph store and browser (Cloud: applications and repositories over the fleet's API, MCP and code-graph services; Phone: the installed apps index; Web: news, media, shopping, real estate, jobs, business on Cloud Search's sources). Placed right after the '| Search Code |' group, as the owner asked, so the AGI row reads SI AI | Search Code | KG Store Tools | MyTerminal Terminal. Opened through ui.external_apps[cloud-kg-store]; the glyph ic_kgs is generated from ac_cloud-kg-store/build.json::launcher_icon by cloud-android-launcher-icons.py (never edit the drawable).",
-                "id": "kg-store",
-                "label": "KG Store",
-                "icon": "ic_kgs",
-                "target": "extapp:cloud-kg-store"
-              },
-              {
                 "_doc": "Tools - hands off to the standalone Cloud Tools Small LLMs app (ac_cloud-tools-small-llms, com.diegonmarcos.cloudtoolssmallllms, read from ITS android.application_id and app/build.gradle namespace): an AI chat that does quick text jobs with small, cheap OpenRouter models only, a router (Jev, else a small JSON model) picking the task and its worker. It REPLACES the S-LLM folder in S-LLM's place (the owner, 2026-10-13), and the B-LLM folder (the three hosted Telegram agents) is gone from the row, so AGI reads Search, AI Chat, Code, Tools, MyTerminal, Terminal (test-agi-tiles.sh T1). target=extapp:cloud-tools-small-llms -> launchExternalApp opens the package if installed, else installs ui.external_apps[id=cloud-tools-small-llms].install_apk_url. icon ic_tools_small_llms is that app's launcher foreground, byte for byte (test-agi-tiles.sh T3); Sections.iconResFor falls back to ic_link_tile in silence when a name resolves to nothing, so the drawable's existence is pinned there too.",
                 "id": "tools-small-llms",
                 "label": "Tools",
@@ -3104,8 +3137,8 @@
                 "target": "extapp:cloud-tools-small-llms"
               },
               {
-                "_doc": "Group separator (#1162): a bare '|' between SI AI and Search Code, like the Data Apps and Me rows; the AGI row reads SI AI | Search Code | KG Store Tools | MyTerminal Terminal (test-agi-tiles.sh T1 pins it).",
-                "id": "agi-sep-3",
+                "_doc": "Group divider (declared separator tile, drawn as a bare '|'): the AGI row reads SI AI | Code Tools | MyTerm Terminal (owner 2026-11-05, #1476; test-agi-tiles.sh T1 pins it).",
+                "id": "agi-sep-2",
                 "label": "|",
                 "separator": true
               },

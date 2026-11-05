@@ -350,6 +350,9 @@ object Sections {
          *  glyph IS the mockup's gradient, and a tint flattens it to a
          *  silhouette. `"tint": false` in build.json (default true). */
         val tint: Boolean = true,
+        /** `"coming_soon": true` in build.json (#1476): a declared placeholder for an app that does not exist yet. It is drawn
+         *  gray, ignores taps and is no destination (no install, no launch). */
+        val comingSoon: Boolean = false,
         /** A drawable already resolved by the page builder (Configs' grid, whose tiles arrive with their icon); 0 = resolve [iconName]. */
         @androidx.annotation.DrawableRes val iconRes: Int = 0,
     ) {
@@ -362,7 +365,8 @@ object Sections {
          *  Recursive because a folder inside a folder is legal in the schema,
          *  not because one exists today. */
         val destinations: List<AggTile> get() =
-            if (children.isEmpty()) listOf(this)
+            if (comingSoon) emptyList()
+            else if (children.isEmpty()) listOf(this)
             else children.filterNot { it.separator }.flatMap { it.destinations }
     }
 
@@ -784,6 +788,7 @@ object Sections {
                             caption    = t.optString("caption", ""),
                             note       = t.optString("note", ""),
                             tint       = t.optBoolean("tint", true),
+                            comingSoon = t.optBoolean("coming_soon", false),
                         )
                     )
                 }

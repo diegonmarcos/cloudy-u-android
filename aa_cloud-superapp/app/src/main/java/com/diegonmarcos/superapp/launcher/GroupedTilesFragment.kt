@@ -47,6 +47,8 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
@@ -251,11 +253,12 @@ internal fun TileCell(tile: Sections.AggTile, click: (String) -> Unit, openFolde
     // launchExternalApp, which installs from the Store's asset.
     val missing = remember(tile.target) { Sections.extappMissing(ctx, tile.target) }
     val iconRes = if (missing) R.drawable.ic_app_not_installed else tile.iconRes.takeIf { it != 0 } ?: Sections.iconResFor(ctx, tile.iconName)
+    val soon = tile.comingSoon
     val hint = if (missing) stringResource(R.string.phone_app_not_installed_tile_hint, tile.label) else null
     Column(
         // Fixed-width cells so the sideways row shows ~6 tiles at a time on a typical phone width.
         Modifier.width(TILE_CELL_WIDTH)
-            .clickable {
+            .clickable(enabled = !soon) {
                 // A folder HOLDS destinations instead of being one, so it opens the popup and the entries inside
                 // dispatch. A folder opens a POPUP, which is not a tile click and reaches no dispatcher, so it buzzes
                 // for itself. A destination does not: onTileClicked IS the per-tap bookkeeping (log, haptic, drawer
@@ -264,7 +267,8 @@ internal fun TileCell(tile: Sections.AggTile, click: (String) -> Unit, openFolde
             }
             .extInstallRing(tile.target, 32.dp, iconTop = 6.dp)
             .padding(6.dp)
-            .semantics { if (hint != null) contentDescription = hint }
+            .alpha(if (soon) 0.4f else 1f)
+            .semantics { if (hint != null) contentDescription = hint; if (soon) disabled() }
             .testTag(GroupedTilesFragment.tileTag(tile.target)),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {

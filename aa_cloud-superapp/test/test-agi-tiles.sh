@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Tester (#571, #779, #803, #1162, #1207): Cloud ▸ Apps ▸ AGI is exactly SI AI | Search Code | KG Store Tools |
-# MyTerminal | Terminal, SuperApp leads Cloud > Apps > Lnktree (owner 2026-10-30, was in Configs since #803), and each launching tile
+# Tester (#571, #779, #803, #1162, #1207): Cloud ▸ Apps ▸ AGI is exactly SI AI | Code Tools | MyTerminal Terminal
+# (#1476; Search and KG Store moved to Weby Services), SuperApp leads Cloud > Apps > Lnktree (owner 2026-10-30, was in Configs since #803), and each launching tile
 # LANDS on the app it is named for. (2026-10-13: the B-LLM and S-LLM folders are gone; Tools, the
 # Cloud Tools Small LLMs app, took S-LLM's place. test-agi-llm-folders.sh, which pinned the two
 # folders, went with them; its A1, AGI right after the row before it, is T0 here; #1092: that row is now Me.)
@@ -72,23 +72,26 @@ tiles = agi[0]["tiles"]
 print("== T0: AGI sits right after the Services row, which sits right after Me (#1473) ==")
 cloud = [s for s in bj["ui"]["sections"] if s.get("id") == "cloud"][0]
 titles = [g.get("title") for g in cloud.get("tile_groups", [])]
-check("AGI" in titles and "Services" in titles and "Me" in titles and titles.index("AGI") == titles.index("Services") + 1 and titles.index("Services") == titles.index("Me") + 1,
-      "Services is the group immediately after Me and AGI the one after Services (%s)" % titles)
+check("AGI" in titles and "Weby Services" in titles and "Me" in titles and titles.index("AGI") == titles.index("Weby Services") + 1 and titles.index("Weby Services") == titles.index("Me") + 1,
+      "Weby Services is the group immediately after Me and AGI the one after it (%s)" % titles)
 
-print("== T1: the AGI row is SI AI | Search Code | KG Store Tools | MyTerminal Terminal (#1162, #1207), '|' being the group separators ==")
+print("== T1: the AGI row is SI AI | Code Tools | MyTerminal Terminal (#1162, #1207, #1476), '|' being the group separators ==")
 got = [t.get("label") for t in tiles]
-want = ["SI", "AI", "|", "Search", "Code", "|", "KG Store", "Tools", "|", "MyTerminal", "Terminal"]
+want = ["SI", "AI", "|", "Code", "Tools", "|", "MyTerminal", "Terminal"]
 check(got == want, "AGI captions are %s (want %s)" % (got, want))
 ids = [t.get("id") for t in tiles]
-check([i for i in ids if not str(i).startswith("agi-sep-")] == ["si", "ai-chat", "search", "code", "kg-store", "tools-small-llms", "drive", "ai-tmx"], "AGI tile ids are %s" % ids)
-check([t.get("label") for t in tiles if t.get("separator")] == ["|", "|", "|"] and all(t.get("label") == "|" for t in tiles if t.get("separator")),
-      "the three separators are declared separator:true tiles captioned '|' (GroupedTilesFragment draws a bare character)")
+check([i for i in ids if not str(i).startswith("agi-sep-")] == ["si", "ai-chat", "code", "tools-small-llms", "drive", "ai-tmx"], "AGI tile ids are %s" % ids)
+check([t.get("label") for t in tiles if t.get("separator")] == ["|", "|"] and all(t.get("label") == "|" for t in tiles if t.get("separator")),
+      "the two separators are declared separator:true tiles captioned '|' (GroupedTilesFragment draws a bare character)")
+check(not any(t.get("label") in ("Search", "KG Store") for t in tiles), "Search and KG Store are not in AGI (they are Weby Services)")
 check(not any(t.get("label") in ("B-LLM", "S-LLM") or t.get("id") in ("b-llm", "s-llm") for t in tiles),
       "no B-LLM or S-LLM tile is left in AGI")
 check(not any(isinstance(t.get("tiles"), list) for t in tiles), "no AGI tile is a folder")
 check((by_label := {t.get("label"): t for t in tiles}).get("Tools", {}).get("target") == "extapp:cloud-tools-small-llms",
       "the Tools tile launches extapp:cloud-tools-small-llms")
 by = {t.get("label"): t for t in tiles}
+weby = [t for g in cloud["tile_groups"] if g.get("title") == "Weby Services" for t in g["tiles"]]
+by.update({t.get("label"): t for t in weby if not t.get("separator")})  # Search and KG Store live in Weby Services since #1476
 chat = by.get("AI", {})
 check(chat.get("id") == "ai-chat" and chat.get("icon") == "ic_ai_chat"
       and chat.get("target", "").startswith("intent://resolve?domain=Cloud_agent_claude_bot#Intent;scheme=tg;"),
