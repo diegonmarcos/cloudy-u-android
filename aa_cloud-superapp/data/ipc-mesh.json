@@ -584,6 +584,17 @@
     "permission": "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA",
     "level": "signature",
     "source": "libs:devtools/src/main/AndroidManifest.xml",
+    "component": "com.diegonmarcos.superapp.logexport.LogExportProvider",
+    "id": "provider:<pkg>.logexport",
+    "kind": "provider",
+    "name": "LogExportProvider",
+    "authority": "<pkg>.logexport",
+    "callers": []
+   },
+   {
+    "permission": "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA",
+    "level": "signature",
+    "source": "libs:devtools/src/main/AndroidManifest.xml",
     "component": "com.diegonmarcos.superapp.devtools.FleetMemberReceiver",
     "id": "receiver:com.diegonmarcos.superapp.devtools.FleetMemberReceiver",
     "kind": "receiver",
@@ -726,6 +737,21 @@
     "callers": [
      "aa_cloud-superapp",
      "drive"
+    ]
+   }
+  ],
+  "headless-browser": [
+   {
+    "permission": "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA",
+    "level": "signature",
+    "source": "libs:headless-browser/src/main/AndroidManifest.xml",
+    "component": "com.diegonmarcos.superapp.headless.HeadlessProvider",
+    "id": "provider:<pkg>.headless",
+    "kind": "provider",
+    "name": "HeadlessProvider",
+    "authority": "<pkg>.headless",
+    "callers": [
+     "browser"
     ]
    }
   ],
@@ -1388,7 +1414,8 @@
       "mail",
       "me",
       "search",
-      "store"
+      "store",
+      "superintel"
      ]
     },
     {
@@ -1435,6 +1462,7 @@
     "core",
     "devtools",
     "fleetconfig-model",
+    "headless-browser",
     "perms"
    ],
    "endpoints": [
@@ -2259,6 +2287,7 @@
      ],
      "callers": [
       "capital-stack-finterminal",
+      "drive",
       "gallery",
       "mail",
       "notes",
@@ -2590,39 +2619,9 @@
      "callers": []
     },
     {
-     "id": "op:search/analysis",
-     "kind": "op",
-     "name": "search/analysis",
-     "method": "fleet.ipc.v1",
-     "permission": "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA",
-     "level": "signature",
-     "source": "ac_cloud-search/app/src/main/java/com/diegonmarcos/cloudsearch/debugapi/SearchDebugApi.kt",
-     "callers": []
-    },
-    {
-     "id": "op:search/calc",
-     "kind": "op",
-     "name": "search/calc",
-     "method": "fleet.ipc.v1",
-     "permission": "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA",
-     "level": "signature",
-     "source": "ac_cloud-search/app/src/main/java/com/diegonmarcos/cloudsearch/debugapi/SearchDebugApi.kt",
-     "callers": []
-    },
-    {
      "id": "op:search/cloud",
      "kind": "op",
      "name": "search/cloud",
-     "method": "fleet.ipc.v1",
-     "permission": "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA",
-     "level": "signature",
-     "source": "ac_cloud-search/app/src/main/java/com/diegonmarcos/cloudsearch/debugapi/SearchDebugApi.kt",
-     "callers": []
-    },
-    {
-     "id": "op:search/feed",
-     "kind": "op",
-     "name": "search/feed",
      "method": "fleet.ipc.v1",
      "permission": "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA",
      "level": "signature",
@@ -2663,16 +2662,6 @@
      "id": "op:search/runs",
      "kind": "op",
      "name": "search/runs",
-     "method": "fleet.ipc.v1",
-     "permission": "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA",
-     "level": "signature",
-     "source": "ac_cloud-search/app/src/main/java/com/diegonmarcos/cloudsearch/debugapi/SearchDebugApi.kt",
-     "callers": []
-    },
-    {
-     "id": "op:search/things",
-     "kind": "op",
-     "name": "search/things",
      "method": "fleet.ipc.v1",
      "permission": "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA",
      "level": "signature",
