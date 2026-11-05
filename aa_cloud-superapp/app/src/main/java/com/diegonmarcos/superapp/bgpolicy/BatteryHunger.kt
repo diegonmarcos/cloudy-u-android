@@ -1,7 +1,6 @@
 package com.diegonmarcos.superapp.bgpolicy
 
 import android.app.Activity
-import android.app.AlertDialog
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -49,6 +48,7 @@ fun BatteryHungerPanel(activity: Activity) {
     var apps by remember { mutableStateOf<List<HungerRow>>(emptyList()) }
     var status by remember { mutableStateOf("") }
     var busy by remember { mutableStateOf(false) }
+    val dialogs = remember { BgDialogs() }
 
     /** Run [work] on a worker thread behind the busy flag; [work] gets the engine or nothing when the shell is not there. */
     fun task(say: String, work: (BgEngine, BgConfig) -> Unit) {
@@ -56,7 +56,7 @@ fun BatteryHungerPanel(activity: Activity) {
         busy = true; status = say
         Thread({
             try {
-                val shell = BgUi.ensureShell(activity)
+                val shell = BgUi.ensureShell(activity, dialogs)
                 if (shell == null) status = "ADB shell not connected: nothing was changed."
                 else work(BgHost.engine(activity, shell), BgHost.config(activity))
             } catch (t: Throwable) { status = "Failed: ${t.message}" } finally { busy = false }
@@ -98,12 +98,7 @@ fun BatteryHungerPanel(activity: Activity) {
         status = if (sus.isEmpty()) "No drainers ranked (no per-app battery stats since the last charge)." else "${sus.size} drainers ranked since the last charge."
     }
 
-    fun confirm(title: String, msg: String, go: () -> Unit) {
-        AlertDialog.Builder(activity).setTitle(title).setMessage(msg)
-            .setPositiveButton("Do it") { _, _ -> go() }.setNegativeButton("Cancel", null).show()
-    }
-
-    fun restrictAll() = confirm("Restrict all non-essential",
+    fun restrictAll() = dialogs.askConfirm("Restrict all non-essential",
         "Every installed app that is not on the essential list (SuperApp, phone, SMS, launcher, keyboard, system UI) loses background work. Restore puts each back exactly as it was.") {
         task("restricting every non-essential app…") { e, cfg ->
             val outs = e.restrictAll(BgHost.packages(activity), cfg)
@@ -122,20 +117,19 @@ fun BatteryHungerPanel(activity: Activity) {
         val pk = r.pkgs.first()
         Thread({
             val list = BgHost.components(activity, pk)
-            activity.runOnUiThread {
-                if (list.isEmpty()) { BgUi.toast(activity, "No receivers or services found for ${r.label}."); return@runOnUiThread }
-                AlertDialog.Builder(activity).setTitle("${r.label}: receivers and services")
-                    .setItems(list.map { (if (it.second) "enabled   " else "DISABLED  ") + it.first.substringAfterLast('.') }.toTypedArray()) { _, i ->
-                        val (name, on) = list[i]
-                        task("${if (on) "disabling" else "enabling"} ${name.substringAfterLast('.')}…") { e, _ ->
-                            val o = e.component(pk, name, enable = !on)
-                            status = (if (o.ok) "Done: " else "Not done: ") + o.note
-                        }
-                    }.setNegativeButton("Close", null).show()
+            if (list.isEmpty()) { BgUi.toast(activity, "No receivers or services found for ${r.label}."); return@Thread }
+            dialogs.pick = BgDialogs.Pick("${r.label}: receivers and services",
+                list.map { (if (it.second) "enabled   " else "DISABLED  ") + it.first.substringAfterLast('.') }) { i ->
+                val (name, on) = list[i]
+                task("${if (on) "disabling" else "enabling"} ${name.substringAfterLast('.')}…") { e, _ ->
+                    val o = e.component(pk, name, enable = !on)
+                    status = (if (o.ok) "Done: " else "Not done: ") + o.note
+                }
             }
         }, "bg-components").start()
     }
 
+    BgDialogHost(dialogs)
     Column(Modifier.fillMaxWidth().testTag("battery-hunger")) {
         Spacer(Modifier.height(KitStoreRow.step(16)))
         KitSectionHeader("Battery Hunger",
