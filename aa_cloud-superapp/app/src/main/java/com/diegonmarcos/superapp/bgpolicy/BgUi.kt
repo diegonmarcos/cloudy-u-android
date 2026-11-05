@@ -12,20 +12,30 @@ import kotlinx.coroutines.runBlocking
  */
 internal object BgUi {
 
-    /** Blocking; call off the main thread. The shell, or null: the user was asked and sent to the ADB Shell page (or gave up). */
-    fun ensureShell(activity: Activity, dialogs: BgDialogs): BgShell? {
+    /** [proceed] = go on (with the [shell], or without it when the user chose to); false = nothing should run now. */
+    class Acquired(val shell: BgShell?, val proceed: Boolean)
+
+    /** Blocking; call off the main thread. Asks to arm the shell when it is down: the ADB Shell page, the wireless-debugging switch, or (when [withoutAdb]) go on without. */
+    fun acquire(activity: Activity, dialogs: BgDialogs, withoutAdb: Boolean = false): Acquired {
         val ctx = activity.applicationContext
-        BgHost.shell(ctx)?.let { return it }
+        BgHost.shell(ctx)?.let { return Acquired(it, true) }
         val r = runBlocking {
             BgGate.run(
                 ready = { BgHost.shell(ctx) != null },
                 openArmFlow = { activity.runOnUiThread { AdbShellLink.open(activity) } },
                 openWirelessDebugging = { activity.runOnUiThread { AdbShellLink.open(activity, ControlStatus.Action.OPEN_SETTINGS) } },
-                ask = { dialogs.askGate(it) },
+                ask = { dialogs.askGate(it, withoutAdb) },
             )
         }
-        return if (r == BgGate.Result.READY) BgHost.shell(ctx) else null
+        return when (r) {
+            BgGate.Result.READY -> Acquired(BgHost.shell(ctx), true)
+            BgGate.Result.WITHOUT_ADB -> Acquired(null, true)
+            else -> Acquired(null, false)
+        }
     }
+
+    /** The shell, or null when the user was asked and went to arm it (or gave up). */
+    fun ensureShell(activity: Activity, dialogs: BgDialogs): BgShell? = acquire(activity, dialogs).shell
 
     fun toast(activity: Activity, text: String) = activity.runOnUiThread { Toast.makeText(activity, text, Toast.LENGTH_LONG).show() }
 

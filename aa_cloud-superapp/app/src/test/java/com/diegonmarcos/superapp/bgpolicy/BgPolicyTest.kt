@@ -160,6 +160,7 @@ class BgPolicyTest {
         assertEquals(1, arm); assertEquals(1, wd)
         assertEquals(BgGate.Result.CANCELLED, BgGate.run({ false }, { arm++ }, { wd++ }, { BgGate.Choice.CANCEL }))
         assertEquals(1, arm); assertEquals(1, wd)
+        assertEquals(BgGate.Result.WITHOUT_ADB, BgGate.run({ false }, { arm++ }, { wd++ }, { BgGate.Choice.WITHOUT_ADB }))
         assertEquals(BgGate.Result.READY, BgGate.run({ true }, { arm++ }, { wd++ }, { error("not asked when ready") }))
     }
 

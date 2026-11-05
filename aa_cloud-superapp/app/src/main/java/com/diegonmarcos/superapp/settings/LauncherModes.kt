@@ -7,7 +7,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * Configs → Launcher → Presets ▸ Modes (#574): Power · Focus · Saving Energy.
+ * Configs → Launcher → Presets ▸ Modes (#574): Power · Focus · Saving Energy · Super Saving Battery Mode (#1506, an `engine` mode).
  *
  * A mode is a named bundle of the launcher's own switches — no palette, no
  * chrome. It owns NO engine: applying one goes through
@@ -27,6 +27,8 @@ object LauncherModes {
         val label: String,
         val subtitle: String,
         val toggles: Map<String, Boolean>,
+        /** #1506 Non-empty = the pick is handed to that engine (bgpolicy.SuperSavingRuntime.ENGINE) instead of writing [toggles]. */
+        val engine: String = "",
     )
 
     private fun declaration(): JSONArray =
@@ -41,7 +43,7 @@ object LauncherModes {
         (0 until arr.length()).map { i ->
             val o: JSONObject = arr.getJSONObject(i)
             val id = o.optString("id")
-            Mode(id, o.optString("label"), o.optString("subtitle"), toggles[id] ?: emptyMap())
+            Mode(id, o.optString("label"), o.optString("subtitle"), toggles[id] ?: emptyMap(), o.optString("engine"))
         }
     }.getOrDefault(emptyList())
 

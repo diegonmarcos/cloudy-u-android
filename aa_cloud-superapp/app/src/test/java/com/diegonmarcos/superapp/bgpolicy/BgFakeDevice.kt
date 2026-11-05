@@ -13,11 +13,45 @@ class BgFakeDevice(vararg apps: String) : BgShell {
     /** Packages whose standby bucket the "device" refuses to change. */
     val refuseBucket = HashSet<String>()
 
+    // ── the rest of the phone, for Super Saving ──
+    val settings = HashMap<String, String>()
+    var nfc: String? = "on"
+    var night = "no"
+    var wifiConnected = true
+    var btConnected = false
+    var idleForced = false
+    /** Settings keys ("ns/key") the device silently ignores a write to. */
+    val refuseSettings = HashSet<String>()
+
     override fun exec(cmd: String): String? {
         log += cmd
+        special(cmd)?.let { return it }
         val out = StringBuilder()
         for (line in cmd.split("\n")) for (stmt in line.split(";").map { it.trim() }.filter { it.isNotEmpty() }) run(stmt, out)
         return out.toString()
+    }
+
+    private fun special(c: String): String? {
+        val t = c.split(" ")
+        return when {
+            c.startsWith("settings get ") -> (settings["${t[2]}/${t[3]}"] ?: "null") + "\n"
+            c.startsWith("settings put ") -> { if ("${t[2]}/${t[3]}" !in refuseSettings) settings["${t[2]}/${t[3]}"] = t[4]; "" }
+            c.startsWith("settings delete ") -> { settings.remove("${t[2]}/${t[3]}"); "" }
+            c == "cmd uimode night" -> "Night mode: $night\n"
+            c.startsWith("cmd uimode night ") -> { night = t[3]; "" }
+            c.startsWith("dumpsys nfc") -> nfc?.let { "mState=$it\n" } ?: ""
+            c == "svc nfc disable" -> { nfc = "off"; "" }
+            c == "svc nfc enable" -> { nfc = "on"; "" }
+            c == "svc bluetooth disable" -> { settings["global/bluetooth_on"] = "0"; "" }
+            c == "svc bluetooth enable" -> { settings["global/bluetooth_on"] = "1"; "" }
+            c.startsWith("dumpsys bluetooth_manager") -> if (btConnected) "1\n" else "0\n"
+            c.startsWith("ip route get") -> if (wifiConnected) "dev wlan\n" else ""
+            c == "svc data disable" -> { settings["global/mobile_data"] = "0"; "" }
+            c == "svc data enable" -> { settings["global/mobile_data"] = "1"; "" }
+            c == BgCmd.FORCE_IDLE -> { idleForced = true; "" }
+            c == BgCmd.UNFORCE_IDLE -> { idleForced = false; "" }
+            else -> null
+        }
     }
 
     private fun run(s: String, out: StringBuilder) {

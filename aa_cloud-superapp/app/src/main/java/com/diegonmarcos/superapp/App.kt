@@ -126,6 +126,8 @@ class App : Application(), WorkManagerConfiguration.Provider {
 
         // #1506 Background policy: PACKAGE_REPLACED re-applies the chosen policy to that package once (no service, no retry).
         com.diegonmarcos.superapp.bgpolicy.BgReplacedReceiver.register(this)
+        // #1506 Super Saving: when the mode is on, the screen-off doze hook and the Off notification come back with the process.
+        com.diegonmarcos.superapp.bgpolicy.SuperSavingRuntime.onAppStart(this)
 
         // Tell libs:appstore what it cannot know: this app's entry Activity,
         // its notification icon, how this launcher routes a tap, and the

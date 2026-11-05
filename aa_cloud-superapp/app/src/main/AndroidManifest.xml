@@ -276,6 +276,10 @@
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
+        <!-- #1506 Super Saving's one-tap Off (the ongoing notification's action): restores the snapshot once. -->
+        <receiver
+            android:name=".bgpolicy.SuperSavingOffReceiver"
+            android:exported="false" />
         <receiver
             android:name=".notificationcenter.BadgeRestartReceiver"
             android:exported="true">

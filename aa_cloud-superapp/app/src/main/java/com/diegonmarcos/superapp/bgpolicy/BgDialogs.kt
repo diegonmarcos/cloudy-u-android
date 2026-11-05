@@ -30,9 +30,11 @@ internal class BgDialogs {
     var gate by mutableStateOf<Ask<BgGate.Choice>?>(null)
     var confirm by mutableStateOf<Ask<Boolean>?>(null)
     var pick by mutableStateOf<Pick?>(null)
+    var offerWithout by mutableStateOf(false)
 
     /** Suspends the calling (worker) thread's coroutine until the user answers the arm prompt. */
-    suspend fun askGate(message: String): BgGate.Choice = suspendCancellableCoroutine { c ->
+    suspend fun askGate(message: String, withoutAdb: Boolean = false): BgGate.Choice = suspendCancellableCoroutine { c ->
+        offerWithout = withoutAdb
         gate = Ask("Background policy needs ADB", message) { gate = null; if (c.isActive) c.resume(it) }
         c.invokeOnCancellation { gate = null }
     }
@@ -54,6 +56,10 @@ internal fun BgDialogHost(d: BgDialogs) {
                 Column {
                     KitStoreQuick("Wireless debugging", KitStoreRow.AMBER_FILL, Modifier.testTag("bg-gate:wireless")) { a.answer(BgGate.Choice.OPEN_WIRELESS_DEBUGGING) }
                     Spacer(Modifier.height(KitStoreRow.gap))
+                    if (d.offerWithout) {
+                        KitStoreQuick("Continue without ADB", KitStoreRow.AMBER_FILL, Modifier.testTag("bg-gate:without")) { a.answer(BgGate.Choice.WITHOUT_ADB) }
+                        Spacer(Modifier.height(KitStoreRow.gap))
+                    }
                     KitStoreQuick("Cancel", KitStoreRow.RULE, Modifier.testTag("bg-gate:cancel")) { a.answer(BgGate.Choice.CANCEL) }
                 }
             },

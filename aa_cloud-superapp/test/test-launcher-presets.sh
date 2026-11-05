@@ -72,7 +72,7 @@ import json, re, sys
 ui = json.load(open(sys.argv[1]))['ui']
 feeds = {'profile': ('launcher_profiles', ['Work', 'Personal', 'Guest']),
          'theme':   ('launcher_themes',   ['Cloud Purple', 'Cloud Minimalistic']),
-         'mode':    ('launcher_modes',    ['Power Mode', 'Focus Mode', 'Saving Energy Mode'])}
+         'mode':    ('launcher_modes',    ['Power Mode', 'Focus Mode', 'Saving Energy Mode', 'Super Saving Battery Mode'])}
 problems = []
 for g in ui['launcher_presets']['groups']:
     key, want = feeds[g['kind']]
@@ -84,7 +84,7 @@ for g in ui['launcher_presets']['groups']:
             problems.append('%s/%s: caption is an identity string' % (key, r['id']))
 print('; '.join(problems) or 'OK')
 PY
-)" "Work·Personal·Guest / Cloud Purple·Cloud Minimalistic / Power·Focus·Saving Energy Mode"
+)" "Work·Personal·Guest / Cloud Purple·Cloud Minimalistic / Power·Focus·Saving Energy·Super Saving Battery Mode"
 
 echo "== T4: a mode names only real switches it may write =="
 check "$(python3 - "$BJ" <<'PY'
@@ -93,7 +93,7 @@ ui = json.load(open(sys.argv[1]))['ui']
 toggles = {t['id']: t for t in ui['launcher_settings']['toggles']}
 problems = []
 for m in ui['launcher_modes']:
-    if not m.get('toggles'): problems.append('%s names no switch' % m['id'])
+    if not m.get('toggles') and not m.get('engine'): problems.append('%s names no switch' % m['id'])
     for k in m.get('toggles', {}):
         if k not in toggles:            problems.append('%s: unknown switch %s' % (m['id'], k))
         elif toggles[k].get('user_owned'):

@@ -63,6 +63,9 @@ class LauncherPresetsFragment : KitComposeFragment() {
 
     override fun palette() = LauncherPalette.kit(requireContext())
 
+    /** #1506 The arm prompt Super Saving raises from its worker thread. */
+    private val dialogs = com.diegonmarcos.superapp.bgpolicy.BgDialogs()
+
     override fun onCreateView(inf: LayoutInflater, c: ViewGroup?, s: Bundle?): View {
         repaintAll()
         return super.onCreateView(inf, c, s)
@@ -71,6 +74,7 @@ class LauncherPresetsFragment : KitComposeFragment() {
     @Composable
     override fun Content() {
         val view = LocalView.current
+        com.diegonmarcos.superapp.bgpolicy.BgDialogHost(dialogs)
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
             page.forEachIndexed { i, (group, tiles) ->
                 if (i > 0) Spacer(Modifier.height(24.dp))
@@ -140,6 +144,7 @@ class LauncherPresetsFragment : KitComposeFragment() {
         val ctx = requireContext()
         val selected = LauncherModePrefs(ctx).selected
         return LauncherModes.load().map { mode ->
+            if (mode.engine == com.diegonmarcos.superapp.bgpolicy.SuperSavingRuntime.ENGINE) return@map superSavingTile(mode)
             val isCurrent = mode.id == selected
             val modified = isCurrent && LauncherModes.isModified(ctx, mode)
             Tile(
@@ -159,6 +164,28 @@ class LauncherPresetsFragment : KitComposeFragment() {
                 com.diegonmarcos.superapp.appstore.ConstellationWorker.start(ctx)
                 repaintAll()
             }
+        }
+    }
+
+    /** #1506 The Super Saving tile: ● while the mode is on; a tap turns it on (snapshot, then every step) or, when on, off (restore the snapshot). */
+    private fun superSavingTile(mode: LauncherModes.Mode): Tile {
+        val ctx = requireContext().applicationContext
+        val on = com.diegonmarcos.superapp.bgpolicy.SuperSavingRuntime.active(ctx)
+        return Tile(mode.id, mode.label + if (on) "  ·  on, tap to turn off" else "", mode.subtitle, on) {
+            val act = requireActivity()
+            Thread({
+                try {
+                    val rt = com.diegonmarcos.superapp.bgpolicy.SuperSavingRuntime
+                    val text = if (rt.active(ctx)) {
+                        val sh = com.diegonmarcos.superapp.bgpolicy.BgUi.acquire(act, dialogs, withoutAdb = true)
+                        if (!sh.proceed) "Not changed: Off needs the ADB shell for the steps that used it." else "Off: " + rt.summary(rt.turnOff(ctx, sh.shell))
+                    } else {
+                        val sh = com.diegonmarcos.superapp.bgpolicy.BgUi.acquire(act, dialogs, withoutAdb = true)
+                        if (!sh.proceed) "Not turned on." else "On: " + rt.summary(rt.turnOn(ctx, sh.shell))
+                    }
+                    com.diegonmarcos.superapp.bgpolicy.BgUi.toast(act, text)
+                } finally { act.runOnUiThread { repaintAll() } }
+            }, "super-saving").start()
         }
     }
 

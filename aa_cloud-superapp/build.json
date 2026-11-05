@@ -5437,6 +5437,13 @@
           "oled_black": true,
           "analytics_batch": true
         }
+      },
+      {
+        "_doc": "#1506 Not a bundle of launcher switches: `engine` hands the pick to bgpolicy/SuperSaving, whose ordered, reversible steps are declared in app/src/main/assets/super-saving.json (background policy, battery saver, doze, radios, sync, display, fleet). It names no toggles; picking it takes a snapshot of the prior state, and picking it again (or the notification's Off) restores everything exactly. Steps that need the ADB shell are skipped with a note when it is not connected.",
+        "id": "super_saving",
+        "label": "Super Saving Battery Mode",
+        "subtitle": "The most aggressive battery mode: every non-essential app restricted, battery saver and doze forced, radios and scans off, sync off, slowest display, fleet engines stopped. One tap on Off restores everything exactly. Most steps need the ADB shell.",
+        "engine": "super_saving"
       }
     ],
     "_doc_launcher_presets": "Configs ▸ Launcher ▸ Presets — the ONE declaration of what the tab shows: which groups, in what order, under what name, and which declaration feeds each. `kind` selects the renderer (profile → ui.launcher_profiles, theme → ui.launcher_themes, mode → ui.launcher_modes); the tiles' own names and order come from those arrays, so no caption is written in Kotlin and no id is ever displayed as a caption.",
