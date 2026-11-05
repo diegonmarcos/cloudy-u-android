@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # #1517 The Store's ONE download engine (libs:appstore dl). Static, no build, no device. The behaviour is pinned by the unit tests
 # (DownloadEngineTest against a fake HTTP server, CheckGateTest, EngineGuardTest); this is the fast pre-build guard for the shape:
-#  E1 only the user's own buttons mint a UserAction (DownloadsPanel, StoreProgressPanel); no other UI file stops engine work
+#  E1 only the user's own buttons mint a UserAction (StoreActivityPanel); no other UI file stops engine work
 #  E2 the engine package is pure JVM and never reads the process-wide cancel flag
 #  E3 a tab switch asks (force = false), starts no second updates-first chain, and its check path never names the engine
 #  E4 the transfer goes through the engine (StoreStages.fetch) and its legs keep Fleet's order mesh, release, ghcr
@@ -30,9 +30,9 @@ mint = []
 for dp, _, fs in os.walk(os.path.join(R, "ab_cloud-libs-shared/libs")):
     if "/src/main/" not in dp or not any(x in dp for x in ("/appstore/", "/updater/")): continue
     for f in fs:
-        if f.endswith(".kt") and f not in ("DownloadsPanel.kt", "StoreProgressPanel.kt", "DownloadEngine.kt"):
+        if f.endswith(".kt") and f not in ("StoreActivityPanel.kt", "DownloadEngine.kt"):
             if "UserAction.tap(" in code(os.path.relpath(os.path.join(dp, f), R)): mint.append(f)
-ok(not mint, "E1 only DownloadsPanel and StoreProgressPanel mint a UserAction", "E1 these mint a UserAction: " + ", ".join(mint))
+ok(not mint, "E1 only StoreActivityPanel mints a UserAction", "E1 these mint a UserAction: " + ", ".join(mint))
 eng = code(A + "dl/DownloadEngine.kt")
 ok(re.search(r"fun pause\([^)]*by: UserAction\)", eng) and re.search(r"fun cancel\([^)]*by: UserAction\)", eng) and re.search(r"fun cancelAll\(by: UserAction\)", eng), "E1 pause, cancel and cancelAll require a UserAction", "E1 a stopping verb no longer requires a UserAction")
 

@@ -66,15 +66,6 @@ ok(sa.count("CloudStoreHandoff.ownsInstalls(applicationContext)") >= 1 and "Flee
 ok("else Updater.start(applicationContext)" in sa, "SuperApp schedules no self-update with Cloud Store present", "SuperApp still schedules its own self-update")
 pf = rd("aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/configs/PermissionsFragment.kt")
 ok("if (!com.diegonmarcos.superapp.apps.CloudStoreHandoff.ownsInstalls(ctxAny()))" in pf, "the Auto-update toggle does not restart SuperApp's own updater", "the Auto-update toggle restarts SuperApp's updater")
-# the bar is the StoreProgressPanel's (both Store tabs draw that one panel); its state is a Ui built from a model Draw
-sf = re.sub(r"/\*.*?\*/", "", rd("ab_cloud-libs-shared/libs/appstore/src/main/java/com/diegonmarcos/superapp/appstore/StoreProgressPanel.kt"), flags=re.S)
-ok(len(re.findall(r'\bd\.indeterminate\b', sf)) == 3 and len(re.findall(r'\bindeterminate\s*=', sf)) == 0, "the bar's indeterminate flag has ONE writer (the model's Draw)", "more than one place writes the bar's indeterminate flag")
-ok(len(re.findall(r'\bd\.percent\b', sf)) == 3 and len(re.findall(r'\bpercent\s*=\s', sf)) == 0, "the bar's percent has ONE writer (the model's Draw)", "more than one place writes the bar's percent")
-ok("model.step(p.appId.ifEmpty { p.pkg }" in sf and "model.step(if (o.multi)" in sf and "model.reset()" in sf and "model.complete()" in sf, "every draw goes through ProgressBarModel", "a draw bypasses ProgressBarModel")
-pm = rd("ab_cloud-libs-shared/libs/appstore/src/main/java/com/diegonmarcos/superapp/appstore/ProgressBarModel.kt")
-ok("this.percent = maxOf(this.percent," in pm, "the percent never moves backwards within an item", "ProgressBarModel's percent can move backwards")
-ok("if (percent > 0 || (bytes > 0 && percent >= 0))" in pm, "determinate starts at the first byte count", "ProgressBarModel's determinate trigger changed")
-ok("if (item.isNotEmpty() && item != this.item)" in pm, "a state naming no item does not reset the bar", "an item-less state resets the bar")
 sys.exit(fails)
 PY
 }
@@ -92,9 +83,7 @@ ab_cloud-libs-shared/libs/updater/src/broker/java/com/diegonmarcos/superapp/upda
 ab_cloud-libs-shared/libs/updater/build.gradle
 aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/apps/CloudStoreHandoff.kt
 aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/ShellActivity.kt
-aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/configs/PermissionsFragment.kt
-ab_cloud-libs-shared/libs/appstore/src/main/java/com/diegonmarcos/superapp/appstore/StoreProgressPanel.kt
-ab_cloud-libs-shared/libs/appstore/src/main/java/com/diegonmarcos/superapp/appstore/ProgressBarModel.kt"
+aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/configs/PermissionsFragment.kt"
 mutate() {  # mutate <label> <file> <old> <new>
   local label="$1" f="$2" old="$3" new="$4" d="$TMP/m"
   rm -rf "$d"; mkdir -p "$d"
@@ -131,11 +120,6 @@ mutate "SuperApp schedules its own self-update" $A/ShellActivity.kt 'else Update
 mutate "SuperApp's Update-all installs again" $A/ShellActivity.kt "// #894 Installs are Cloud Store's: this opens it (or the Install Cloud Store button).
                 routeTarget(\"page:config/store-cloud\")" "routeTarget(\"page:config/store-cloud\"); kotlin.concurrent.thread { com.diegonmarcos.superapp.updater.Fleet.installAll(applicationContext, emptyList(), com.diegonmarcos.superapp.updater.Fleet.Mode.UPDATES) }" || M=$((M+1))
 mutate "toggle restarts SuperApp's updater" $A/configs/PermissionsFragment.kt 'if (!com.diegonmarcos.superapp.apps.CloudStoreHandoff.ownsInstalls(ctxAny()))' '' || M=$((M+1))
-mutate "a second writer of the indeterminate flag" $P/StoreProgressPanel.kt 'false, d.percent, d.indeterminate, false)' 'false, d.percent, false, false)' || M=$((M+1))
-mutate "a draw bypasses the model" $P/StoreProgressPanel.kt 'val d = model.step(p.appId.ifEmpty { p.pkg }, p.bytes, p.percent, p.failed)' 'val d = ProgressBarModel.Draw(p.percent < 0, p.percent)' || M=$((M+1))
-mutate "percent can move backwards" $P/ProgressBarModel.kt 'this.percent = maxOf(this.percent, percent.coerceIn(0, 100))' 'this.percent = percent.coerceIn(0, 100)' || M=$((M+1))
-mutate "determinate before any byte" $P/ProgressBarModel.kt 'if (percent > 0 || (bytes > 0 && percent >= 0))' 'if (true)' || M=$((M+1))
-mutate "an item-less state resets the bar" $P/ProgressBarModel.kt 'if (item.isNotEmpty() && item != this.item)' 'if (item != this.item)' || M=$((M+1))
 
 echo "== RESULT: real tree $REAL failure(s), $M mutation(s) not caught =="
 [ "$REAL" -eq 0 ] && [ "$M" -eq 0 ]

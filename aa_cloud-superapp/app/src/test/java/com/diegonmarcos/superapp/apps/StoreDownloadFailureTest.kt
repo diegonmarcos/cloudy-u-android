@@ -141,8 +141,5 @@ class StoreDownloadFailureTest {
         val s = src.readText()
         assertTrue(s.contains("ui.error?.let { ErrorArea(ctx, app, it) }"))
         assertTrue(s.contains("if (stg.failedAt != null) error = StoreRowError.of(stg.text, null)"))
-        // the progress line is the one StoreProgressPanel both Store tabs draw
-        val panel = File(dir + "StoreProgressPanel.kt").takeIf { it.isFile } ?: return
-        assertTrue(panel.readText().contains("if (p.failed) StoreRowError.banner(p.app) else p.text"))
     }
 }

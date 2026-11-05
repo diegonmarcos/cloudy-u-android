@@ -9,7 +9,7 @@ import org.junit.Test
 /**
  * #1517 THE GUARD: no UI or fragment code can cancel or pause engine jobs except through an explicit user action.
  *
- *  G1 a [UserAction] is minted only by the two files that draw the user's buttons (DownloadsPanel, StoreProgressPanel)
+ *  G1 a [UserAction] is minted only by the one file that draws the user's buttons (StoreActivityPanel)
  *  G2 nothing else calls the engine's stopping verbs (cancel, pause, cancelAll, clearFinished, setPriority)
  *  G3 no lifecycle or check path (onResume, onPause, onStop, onDestroyView, DisposableEffect, LaunchedEffect, reload, checkAll) mints a
  *     UserAction or calls a stopping verb, even in the files that may
@@ -20,7 +20,7 @@ import org.junit.Test
  */
 class EngineGuardTest {
 
-    private val mayMint = setOf("DownloadsPanel.kt", "StoreProgressPanel.kt")
+    private val mayMint = setOf("StoreActivityPanel.kt")
     private val verbs = Regex("""\.(cancel|pause|cancelAll|clearFinished|setPriority)\(""")
     private val engineRef = Regex("""\b(StoreEngine|DownloadEngine|engineOrNull\(\))\b|\bengine\b""")
     private val lifecycle = listOf("onResume", "onPause", "onStop", "onDestroyView", "onDestroy", "DisposableEffect", "LaunchedEffect", "fun reload", "fun checkAll")
@@ -113,7 +113,7 @@ class EngineGuardTest {
     }
 
     @Test fun mutationALifecycleCallbackStoppingAJobIsCaughtEvenInAnAllowedFile() {
-        val bad = violations(mapOf("/x/appstore/DownloadsPanel.kt" to "fun P() { DisposableEffect(Unit) { onDispose { engine.cancel(id, UserAction.tap(\"x\")) } } }"))
+        val bad = violations(mapOf("/x/appstore/StoreActivityPanel.kt" to "fun P() { DisposableEffect(Unit) { onDispose { engine.cancel(id, UserAction.tap(\"x\")) } } }"))
         assertTrue(bad.toString(), bad.any { it.startsWith("G3") })
         val bad2 = violations(mapOf(ui to "override fun onResume() { StoreEngine.engineOrNull()?.pause(id, u) }"))
         assertTrue(bad2.toString(), bad2.any { it.startsWith("G3") })
@@ -127,7 +127,7 @@ class EngineGuardTest {
 
     @Test fun cleanSourcesPass() {
         val ok = violations(mapOf(
-            "/x/appstore/DownloadsPanel.kt" to "fun P() { Button({ e.cancel(id, UserAction.tap(\"c\")) }) ; LaunchedEffect(Unit) { engine = StoreEngine.get(app) } }",
+            "/x/appstore/StoreActivityPanel.kt" to "fun P() { Button({ e.cancel(id, UserAction.tap(\"c\")) }) ; LaunchedEffect(Unit) { engine = StoreEngine.get(app) } }",
             ui to "override fun onResume() { reload() }\n// engine.cancel( in a comment is prose\nfun other() { jobs.cancel(1) }",
             "/x/appstore/dl/DownloadEngine.kt" to "import java.io.File\nclass E",
             "/x/appstore/StoreEngine.kt" to "object StoreEngine { fun f() {} }\nobject StoreChecks { fun f() = 1 }",

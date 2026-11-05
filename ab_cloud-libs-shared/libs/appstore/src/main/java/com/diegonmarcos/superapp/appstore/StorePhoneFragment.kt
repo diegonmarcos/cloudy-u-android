@@ -227,8 +227,8 @@ class StorePhoneFragment : KitComposeFragment() {
         // that need Play. Then export / import / clear cache, and the store-source strip.
         StoreBar.Bar(StoreBar.Verbs(
             checkAll = { checkAll() }, installAll = { installAll() }, updateAll = { updateAll() }), resume = resume)
-        progress.Panel()
-        StoreDownloadsPanel()
+        // #1524 THE one Activity panel: every download and install, collapsed to one Overall line (Update all when idle).
+        StoreActivityPanel(updates = rows.count { states[it.pkg] is SourceResolver.Check.UpdateAvailable && it.direct }, onUpdateAll = { updateAll() })
         // The status area: declared rows vs installed and the updates' cached / to-download split, from
         // the rows and checks this page already holds. Re-read on every progress event.
         val tallyRows = rows; val tallyStates = states.toMap()

@@ -61,8 +61,8 @@ ST="$(strip "$SRC/StoreStages.kt")"
 SD="$(printf '%s' "$ST" | sed -n '/fun downloadAll(/,/^    }/p')"
 PANEL="$(strip "$SRC/StoreProgressPanel.kt")"
 if printf '%s' "$SD" | grep -q 'StoreJobs.board.begin(' && printf '%s' "$PANEL" | grep -q 'UpdateProgress.addObserver' \
-   && printf '%s' "$FRAG" | grep -q 'progress.Panel()'; then
-  ok "Download all drives the Store's progress row"
+   && printf '%s' "$FRAG" | grep -q 'StoreActivityPanel('; then
+  ok "Download all drives the Store's one Activity panel"
 else bad "Download all publishes no progress"; fi
 
 echo "== RESULT: $PASS passed, $FAIL failed =="

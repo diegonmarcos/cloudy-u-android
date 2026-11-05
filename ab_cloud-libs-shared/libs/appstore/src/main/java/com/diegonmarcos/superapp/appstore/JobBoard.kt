@@ -93,6 +93,9 @@ class JobBoard {
         if (!r.finished) rows[key] = r.copy(phase = Phase.DONE, waitingFor = "")
     }
 
+    /** The Activity panel's Clear: forget finished rows, never a live one. */
+    @Synchronized fun clearFinished() { rows.values.removeAll { it.finished } }
+
     /** Forget every row (a test starting from nothing running). */
     @Synchronized fun reset() = rows.clear()
 

@@ -112,7 +112,6 @@ for needle, what in (
         ("Fleet.downgradePolicy = Fleet.DowngradePolicy { app, candidateCode, installedCode ->", "#496 downgrade confirm armed while visible"),
         ("Fleet.downgradePolicy = Fleet.DowngradePolicy { _, _, _ -> false }", "#496 refuse-by-default restored on leave"),
         ("{ it.label.lowercase() }", "#334 A-Z within a run"),
-        ("Updater.cancelNow(ctx.applicationContext)", "#140 Cancel"),
         ("UpdateProgress.addObserver(progressObserver)", "#88 live progress"),
         ("StoreBar.Bar(StoreBar.Verbs(", "#565 the Cloud tab draws the shared Store bar")):
     # the progress row (Cancel, the observer) is the one StoreProgressPanel both Store tabs draw

@@ -236,8 +236,8 @@ class StoreCloudFragment : KitComposeFragment() {
     private val rowTops = HashMap<String, Float>()
     private var columnTop = 0f
 
-    /** #785 the live progress row: a tap on it opens the app's row. */
-    private val progress by lazy { StoreProgressPanel(fleet) { openDetail(it) } }
+    /** The progress watch (#1524: it only ticks the status area; the Activity panel draws every job). */
+    private val progress by lazy { StoreProgressPanel() }
 
     // amber, green, grey, red, orange, blue
     private val cUp = 0xFF48BB78.toInt(); private val cUpd = 0xFFED8936.toInt()
@@ -460,11 +460,8 @@ class StoreCloudFragment : KitComposeFragment() {
             updateAll = { updateAll(ctx, "the whole fleet", fleet) },
             downloadAll = { downloadAll(ctx, fleet) },
         ), resume = resume)
-        // Sits under the buttons that start the work and above the summary line that describes the
-        // result: what the fleet is doing RIGHT NOW.
-        progress.Panel()
-        // #1517 the engine's queue: observed here, owned by the process-wide engine.
-        StoreDownloadsPanel()
+        // #1524 THE one Activity panel: every download and install, collapsed to one Overall line (Update all when idle).
+        StoreActivityPanel(updates = states.values.count { it is Fleet.State.UpdateAvailable }, onUpdateAll = { updateAll(ctx, "the whole fleet", fleet) })
         // The status area: declared vs installed and the updates' cached / to-download split, for the
         // whole fleet registry, from the checks already made. Re-read on every progress event.
         val snap = states.toMap()
@@ -570,7 +567,7 @@ class StoreCloudFragment : KitComposeFragment() {
     /**
      * One state -> dot, collapsed meta line, quick button, full status line, error area; then the
      * #774 cache stages over it: a row with an APK in the cache, a verb running, or a stage that stopped
-     * says THAT — "cached (ready to install)", "downloading 41%", "install did not finish: cancelled" —
+     * says THAT — "cached (ready to install)", "install did not finish: cancelled" (a running verb is a glyph only, #1524) —
      * and only the verbs [StoreStages.Stage.actions] allows are live. The quick button is always the
      * NEXT stage, so one tap takes over from exactly where a stage (or the auto chain) stopped.
      */
@@ -627,7 +624,9 @@ class StoreCloudFragment : KitComposeFragment() {
         }
         if (stg != null) {
             val busy = stg.id == "downloading" || stg.id == "installing"
-            if (busy || stg.cached != null || stg.failedAt != null) {
+            // #1524 a running row shows at most a small status glyph; its progress is the Activity panel's alone.
+            if (busy) { dot = if (stg.id == "downloading") "⬇" else "⚙"; dotColor = cUpd }
+            if (!busy && (stg.cached != null || stg.failedAt != null)) {
                 val color = if (stg.failedAt != null) cErr else cUpd
                 meta = stg.text; metaColor = color
                 full = stg.text; fullColor = color
@@ -990,8 +989,7 @@ class StoreCloudFragment : KitComposeFragment() {
             // The report is per app — installed / skipped / needs download /
             // failed at <stage> — because a count of zero has meant "everything
             // is current" and "everything failed" alike before.
-            val batch = StoreStages.updateAll(ctx, targets)
-            main.post { report("Update all", batch) }
+            StoreStages.updateAll(ctx, targets)
             // The HOST update goes LAST. It still runs unconditionally, so the
             // button stays the repair tool it was built to be when the baked
             // fleet is empty — an empty fleet just makes the batch above a
@@ -1009,21 +1007,13 @@ class StoreCloudFragment : KitComposeFragment() {
      * nothing installed — pre-fetch on Wi-Fi, Update all later, offline if need
      * be. What does not fit in the REAL free storage (less the declared
      * reserve, #812) is skipped rather than evicting the rest. #812 no dialog:
-     * progress and the outcome are drawn in the bar under the buttons.
+     * progress and the outcome are drawn in the Store's one Activity panel.
      */
     private fun downloadAll(ctx: Context, targets: List<Fleet.App>) {
         thread(name = "fleet-download-all") {
-            val done = StoreStages.downloadAll(ctx, targets)
-            main.post { report("Download all", done) }
+            StoreStages.downloadAll(ctx, targets)
             checkAll(ctx)
         }
-    }
-
-    /** #812 A batch's outcome, IN the page's progress bar — never a dialog.
-     *  A failure already drawn there ([StoreStages.progress]) keeps the bar. */
-    private fun report(title: String, b: StoreStages.Batch) {
-        if (!isAdded) return
-        progress.report(title, b)
     }
 
     // "Install all" — only apps not yet on the device.
