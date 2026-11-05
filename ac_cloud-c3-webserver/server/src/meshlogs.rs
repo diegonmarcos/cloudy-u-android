@@ -375,9 +375,10 @@ mod tests {
         }
         assert_eq!(route(&m, &a, &get("/browser/status", None), Some("tok"), &stub).status, 401);
         assert_eq!(route(&m, &a, &post("/browser/command", Some("Bearer tok"), "{}"), None, &stub).status, 503, "no token known fails closed");
-        let seen = std::sync::Mutex::new(vec![]);
-        let spy = |auth: &str, method: &str, arg: &str| -> Result<(String, String), String> {
-            seen.lock().unwrap().push((auth.to_string(), method.to_string(), arg.to_string()));
+        let seen = Arc::new(std::sync::Mutex::new(vec![]));
+        let sink = seen.clone();
+        let spy = move |auth: &str, method: &str, arg: &str| -> Result<(String, String), String> {
+            sink.lock().unwrap().push((auth.to_string(), method.to_string(), arg.to_string()));
             Ok(("application/json".into(), "{\"ok\":true}".into()))
         };
         assert_eq!(route(&m, &a, &post("/browser/command", Some("Bearer tok"), "{\"cmd\":\"html\"}"), Some("tok"), &spy).status, 200);
