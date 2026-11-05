@@ -3055,7 +3055,7 @@
                 "_doc": "#1476 declared placeholder (coming_soon): Events is not an app yet. Drawn gray, no target, no tap, no fleet package or ui.external_apps entry; becomes a real extapp tile when the app exists.",
                 "id": "events",
                 "label": "Events",
-                "icon": "ic_calendar",
+                "icon": "ic_p_cal_month",
                 "coming_soon": true
               },
               {
@@ -3074,14 +3074,14 @@
                 "_doc": "#1476 declared placeholder (coming_soon): Mobility & Travel is not an app yet. Drawn gray, no target, no tap, no fleet package or ui.external_apps entry; becomes a real extapp tile when the app exists.",
                 "id": "mobility",
                 "label": "Mobility & Travel",
-                "icon": "ic_maps",
+                "icon": "ic_ctl_airplane",
                 "coming_soon": true
               },
               {
                 "_doc": "#1476 declared placeholder (coming_soon): Jobs & Business is not an app yet. Drawn gray, no target, no tap, no fleet package or ui.external_apps entry; becomes a real extapp tile when the app exists.",
                 "id": "jobs",
                 "label": "Jobs & Business",
-                "icon": "ic_vcard",
+                "icon": "ic_suite",
                 "coming_soon": true
               },
               {
@@ -3095,7 +3095,7 @@
                 "_doc": "#1476 declared placeholder (coming_soon): Money is not an app yet. Drawn gray, no target, no tap, no fleet package or ui.external_apps entry; becomes a real extapp tile when the app exists.",
                 "id": "money",
                 "label": "Money",
-                "icon": "ic_wallet",
+                "icon": "ic_storefront",
                 "coming_soon": true
               },
               {
