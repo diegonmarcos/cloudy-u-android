@@ -1314,7 +1314,7 @@ Coverage: 5 covered, 2 gaps — ai_sessions, file:filesDir/ai-sessions.json.
 
 ## cloud-tools-small-llms — `com.diegonmarcos.cloudtoolssmallllms`
 
-Module `ac_cloud-tools-small-llms`; libs: lib-ai, lib-bottomnav, lib-core, lib-crash, lib-decisions, lib-devtools, lib-fleetconfig-model, lib-model-catalogue, lib-perms, lib-text-tools, lib-theme-background, lib-ui-icons, lib-ui-nav-bars.
+Module `ac_cloud-tools-small-llms`; libs: lib-ai, lib-bottomnav, lib-core, lib-crash, lib-decisions, lib-devtools, lib-fleetconfig-model, lib-model-catalogue, lib-perms, lib-text-tools, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|

@@ -179,3 +179,6 @@ private fun Card(title: String, content: @Composable () -> Unit) {
 
 /** Small and cheap only: a worker the picker offers costs at most this many dollars per 1M tokens either way. */
 private const val CHEAP = 1.0
+
+/** A model id without its provider prefix ("openai/gpt-x" -> "gpt-x"). */
+fun short(model: String): String = model.substringAfter('/').ifBlank { model }

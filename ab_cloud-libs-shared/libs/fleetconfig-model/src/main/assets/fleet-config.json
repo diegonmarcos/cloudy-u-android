@@ -4240,6 +4240,7 @@
         "lib-text-tools",
         "lib-theme-background",
         "lib-ui-icons",
+        "lib-ui-kit",
         "lib-ui-nav-bars"
       ],
       "items": [
