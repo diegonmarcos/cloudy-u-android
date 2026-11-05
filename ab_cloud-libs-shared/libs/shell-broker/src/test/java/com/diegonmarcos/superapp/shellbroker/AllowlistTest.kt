@@ -66,6 +66,15 @@ class AllowlistTest {
         assertTrue(real.decide("some.stranger", "getprop") is Decision.Deny)
     }
 
+    @Test fun theSuperAppMayGrantWriteSecureSettingsToFleetPackagesOnly() {
+        val real = Allowlist.parse(File("src/main/assets/shell-allowlist.json").readText())
+        val su = "com.diegonmarcos.superapp"
+        val ok = real.decide(su, "pm grant com.diegonmarcos.cloudstore android.permission.WRITE_SECURE_SETTINGS")
+        assertTrue(ok is Decision.Allow)
+        assertTrue(real.decide("com.diegonmarcos.cloudstore", "pm grant com.diegonmarcos.cloudstore android.permission.WRITE_SECURE_SETTINGS") is Decision.Deny)
+        assertTrue(real.decide("com.diegonmarcos.clouddrive", "pm grant com.diegonmarcos.clouddrive android.permission.WRITE_SECURE_SETTINGS") is Decision.Deny)
+    }
+
     @Test fun aSegmentedCallerMayChainOnlyAllowedSegments() {
         assertTrue(list.decide("app.host", "cmd appops set a.b RUN_ANY allow; am set-standby-bucket a.b active") is Decision.Allow)
         assertTrue(list.decide("app.host", "cmd appops set a.b RUN_ANY allow\nam set-standby-bucket a.b active") is Decision.Allow)

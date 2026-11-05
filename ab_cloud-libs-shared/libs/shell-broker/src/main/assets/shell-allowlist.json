@@ -57,6 +57,10 @@
      "re": "^pm grant com\\.diegonmarcos\\.superapp android\\.permission\\.WRITE_SECURE_SETTINGS$"
     },
     {
+     "id": "fleetgrant-wss",
+     "re": "^pm grant com\\.diegonmarcos\\.[a-z][a-z0-9_.]* android\\.permission\\.WRITE_SECURE_SETTINGS$"
+    },
+    {
      "id": "perms-1",
      "re": "^pm (grant|revoke) [a-z][\\w.]* [\\w.]+$"
     },
