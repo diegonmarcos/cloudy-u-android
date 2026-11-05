@@ -5,7 +5,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -47,6 +49,11 @@ import com.diegonmarcos.cloudtoolssmallllms.data.AppDef
 import com.diegonmarcos.cloudtoolssmallllms.data.ModelsData
 import com.diegonmarcos.cloudtoolssmallllms.data.Step
 import com.diegonmarcos.superapp.uiicons.UiIcons
+import com.diegonmarcos.superapp.uikit.KitStoreCaption
+import com.diegonmarcos.superapp.uikit.KitStoreDot
+import com.diegonmarcos.superapp.uikit.KitStoreName
+import com.diegonmarcos.superapp.uikit.KitStoreRow
+import com.diegonmarcos.superapp.uikit.KitStoreRowLine
 
 private fun gb(v: Double): String = java.lang.String.format(java.util.Locale.US, "%.1f", v)
 
@@ -57,8 +64,22 @@ fun AppsPage(model: ToolsModel, page: String) {
     val open = data.apps.firstOrNull { it.id == model.appId }
     when {
         open != null -> { BackHandler { model.closeApp() }; AppDetail(model, data, open) }
-        page == Decl.PAGE_APPS_LIST -> AppsList(model, data)
-        else -> AppsGrid(model, data)
+        else -> Column(Modifier.fillMaxSize()) {
+            AppFilters(model, data)
+            val apps = data.appsIn(model.appFilter)
+            if (page == Decl.PAGE_APPS_LIST) AppsList(model, data, apps) else AppsGrid(model, data, apps)
+        }
+    }
+}
+
+/** The top filter All | Hybrids | Models Only | ML Only (tools-models.json::app_filters): one chip each, the open one selected. */
+@Composable
+private fun AppFilters(model: ToolsModel, data: ModelsData) {
+    Row(
+        Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = KitStoreRow.padH, vertical = KitStoreRow.tight).testTag(Tags.APP_FILTERS),
+        horizontalArrangement = Arrangement.spacedBy(ToolsMetrics.small), verticalAlignment = Alignment.CenterVertically,
+    ) {
+        data.appFilters.forEach { f -> Chip(f.label, selected = model.appFilter == f.id, tag = Tags.appFilter(f.id)) { model.appFilter = f.id } }
     }
 }
 
@@ -67,12 +88,12 @@ fun AppsPage(model: ToolsModel, page: String) {
 private fun totalsCompact(data: ModelsData, a: AppDef): String = stringResource(R.string.app_totals_compact, gb(data.appRamQ4(a)), gb(data.appDiskFp16(a)), data.appModels(a).size)
 
 @Composable
-private fun AppsGrid(model: ToolsModel, data: ModelsData) {
+private fun AppsGrid(model: ToolsModel, data: ModelsData, apps: List<AppDef>) {
     LazyVerticalGrid(
         GridCells.Adaptive(150.dp), Modifier.fillMaxSize().testTag(Tags.APPS), contentPadding = PaddingValues(ToolsMetrics.gutter),
         horizontalArrangement = Arrangement.spacedBy(ToolsMetrics.gap), verticalArrangement = Arrangement.spacedBy(ToolsMetrics.gap),
     ) {
-        items(data.apps, key = { it.id }) { a ->
+        items(apps, key = { it.id }) { a ->
             Column(
                 Modifier.fillMaxWidth().clip(RoundedCornerShape(ToolsMetrics.corner)).background(MaterialTheme.colorScheme.surface)
                     .clickable { model.appId = a.id }.padding(ToolsMetrics.gutter).testTag(Tags.app(a.id)),
@@ -92,49 +113,45 @@ private fun AppsGrid(model: ToolsModel, data: ModelsData) {
 
 /** The pipeline as "model → model → model": "|" between the alternatives of a step, an up arrow on an escalation step. */
 @Composable
-private fun PipelineRow(data: ModelsData, a: AppDef) {
-    Row(Modifier.horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(ToolsMetrics.small)) {
-        a.pipeline.forEachIndexed { i, s ->
-            if (i > 0) Text("→", style = MaterialTheme.typography.labelMedium)
-            val text = stepText(s)
-            Chip(if (s.escalation) stringResource(R.string.app_escalation_mark, text) else text)
-        }
+private fun pipelineText(a: AppDef): String {
+    val parts = ArrayList<String>()
+    for (st in a.pipeline) {
+        val t = stepText(st)
+        parts += if (st.escalation) stringResource(R.string.app_escalation_mark, t) else t
     }
+    return parts.joinToString(" → ")
 }
 
 private fun stepText(s: Step): String = if (s.models.isEmpty()) s.note.orEmpty().substringBefore(':') else s.models.joinToString(if (s.alternatives) " | " else " + ")
 
-/** Descriptive list: category headers, then per app its number, phone badge, name, pipeline and computed totals. */
+/** Dense list (ui-kit KitStoreRow, the Cloud Store's row): category headers, then per app its class glyph, name over its pipeline, and the compact totals at the end. */
 @Composable
-private fun AppsList(model: ToolsModel, data: ModelsData) {
-    LazyColumn(Modifier.fillMaxSize().testTag(Tags.APPS_LIST), contentPadding = PaddingValues(ToolsMetrics.gutter), verticalArrangement = Arrangement.spacedBy(ToolsMetrics.gap)) {
+private fun AppsList(model: ToolsModel, data: ModelsData, apps: List<AppDef>) {
+    val scheme = MaterialTheme.colorScheme
+    LazyColumn(Modifier.fillMaxSize().testTag(Tags.APPS_LIST)) {
         data.appCategories.forEach { c ->
-            val apps = data.apps.filter { it.category == c.id }
-            if (apps.isEmpty()) return@forEach
+            val inCategory = apps.filter { it.category == c.id }
+            if (inCategory.isEmpty()) return@forEach
             item(key = "cat_" + c.id) {
-                Row(Modifier.padding(top = ToolsMetrics.gap).testTag(Tags.category(c.id)), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(UiIcons.vector(c.icon), contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                Row(Modifier.padding(horizontal = KitStoreRow.padH, vertical = KitStoreRow.tight).testTag(Tags.category(c.id)), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(UiIcons.vector(c.icon), contentDescription = null, tint = scheme.primary, modifier = Modifier.size(ToolsMetrics.icon))
                     Spacer(Modifier.width(ToolsMetrics.gap))
-                    Text(c.label, style = MaterialTheme.typography.titleMedium)
+                    KitStoreCaption(c.label, color = scheme.primary)
                 }
             }
-            items(apps, key = { it.id }) { a ->
-                Column(
-                    Modifier.fillMaxWidth().clip(RoundedCornerShape(ToolsMetrics.corner)).background(MaterialTheme.colorScheme.surface)
-                        .clickable { model.appId = a.id }.padding(ToolsMetrics.gutter).testTag(Tags.appRow(a.id)),
-                    verticalArrangement = Arrangement.spacedBy(ToolsMetrics.small),
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("${data.apps.indexOf(a) + 1}.", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            items(inCategory, key = { it.id }) { a ->
+                Column(Modifier.testTag(Tags.appRow(a.id))) {
+                    KitStoreRowLine(onClick = { model.appId = a.id }) {
+                        KitStoreDot(data.classGlyph(a), scheme.primary)
+                        if (data.phoneCapable(a)) { Text(stringResource(R.string.app_phone_icon), fontSize = KitStoreRow.body); Spacer(Modifier.width(ToolsMetrics.small)) }
+                        Column(Modifier.weight(1f)) {
+                            KitStoreName(a.name, color = scheme.onSurface)
+                            KitStoreCaption(pipelineText(a), color = scheme.onSurfaceVariant)
+                        }
                         Spacer(Modifier.width(ToolsMetrics.gap))
-                        if (data.phoneCapable(a)) { Text(stringResource(R.string.app_phone_icon)); Spacer(Modifier.width(ToolsMetrics.small)) }
-                        Text(a.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                        KitStoreCaption(totalsCompact(data, a), color = scheme.onSurfaceVariant, mono = true, modifier = Modifier.testTag(Tags.APP_TOTALS))
                     }
-                    PipelineRow(data, a)
-                    Text(stringResource(R.string.app_totals, gb(data.appRamQ4(a)), gb(data.appDiskFp16(a)), data.appModels(a).size),
-                        style = MaterialTheme.typography.labelMedium, modifier = Modifier.testTag(Tags.APP_TOTALS))
-                    Text(stringResource(R.string.app_models_used, data.appModels(a).joinToString(", ") { it.model }),
-                        style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Box(Modifier.fillMaxWidth().height(ToolsMetrics.hairline).background(KitStoreRow.RULE))
                 }
             }
         }

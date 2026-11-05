@@ -8,7 +8,7 @@
   },
   "name": "cloud-tools-small-llms",
   "display_name": "Cloud Tools Small LLMs",
-  "description": "Cloud Tools Small LLMs - an AI chat that does simple, direct text jobs with small, cheap models only, calling OpenRouter directly with the user's own token. A router reads each request and names the task (Jev, TypeSafe's decision model on OpenRouter's Decisions API, while it is listed; else a small JSON chat model), and one small worker model per task answers it with a fixed prompt: translate, summarize, rewrite, fix grammar, extract, classify, reply drafts, explain simply, quick maths, JSON/CSV fix, regex/command, titles and hashtags, sentiment, keywords, Q&A on pasted text. Every answer shows its task, model and actual cost (from OpenRouter's usage, router included); Costs keeps the day and month totals. Sections: Apps (an icon grid of applications buildable from the models, each with its pipeline), Models (the owner's small, medium and retrieval model tables from app/src/main/assets/tools-models.json as a sortable table, an icon grid, descriptive cards or cards grouped by macro task), AI (the shared libs:ai chat over the fleet agent gateway, its model picker listing only the chat models, grouped by macro; every call recorded in Costs), Store and Costs. English is the base language (#299); dark is the default theme (#336).",
+  "description": "Cloud Tools Small LLMs - an AI chat that does simple, direct text jobs with small, cheap models only, calling OpenRouter directly with the user's own token. A router reads each request and names the task (Jev, TypeSafe's decision model on OpenRouter's Decisions API, while it is listed; else a small JSON chat model), and one small worker model per task answers it with a fixed prompt: translate, summarize, rewrite, fix grammar, extract, classify, reply drafts, explain simply, quick maths, JSON/CSV fix, regex/command, titles and hashtags, sentiment, keywords, Q&A on pasted text. Every answer shows its task, model and actual cost (from OpenRouter's usage, router included). Sections: Apps (an icon grid of applications buildable from the models, each with its pipeline), Models (the owner's small, medium and retrieval model tables from app/src/main/assets/tools-models.json as a sortable table, an icon grid, descriptive cards or cards grouped by macro task), AI (the shared libs:ai chat over the fleet agent gateway, its model picker listing only the chat models, grouped by macro; the call is priced per answer), Store and MLs (the Cloud Store's Lite-ML and Tiny-ML libs, derived from its fleet declaration). The bottom nav is Apps, Store, AI Models, MLs; the Apps page has a top filter All, Hybrids, Models Only, ML Only. English is the base language (#299); dark is the default theme (#336).",
   "category": "android",
   "android": {
     "application_id": "com.diegonmarcos.cloudtoolssmallllms",
@@ -121,7 +121,8 @@
         "libs:text-tools",
         "tools-core",
         "libs:ui-nav-bars",
-        "libs:theme-background"
+        "libs:theme-background",
+        "libs:ui-kit"
       ]
     },
     "tools-core": {
@@ -189,6 +190,11 @@
       "dir": "../ab_cloud-libs-shared/libs/theme-background",
       "type": "library",
       "_doc": "#1154 shared navigation and theme design, shared BY REFERENCE."
+    },
+    "libs:ui-kit": {
+      "_doc": "The fleet's Compose kit; the MLs and Apps rows are its KitStoreRow (the Cloud Store's dense row) in its type ramp, shared BY REFERENCE.",
+      "dir": "../ab_cloud-libs-shared/libs/ui-kit",
+      "type": "library"
     }
   },
   "web": {
@@ -515,16 +521,20 @@
     ]
   },
   "ui": {
-    "_doc": "#868 THE nav declaration (libs:bottomnav NavDecl): Apps, Models, AI, Store, Costs on the bottom nav; Store (the model store and runtime manager) has Installed, Loaded and All on the second row; Settings is reached from the first row's gear. Models has Small, Medium and Retrieval on the second row, each with a Table / Grid / Details / Macro view switcher, all over app/src/main/assets/tools-models.json; Apps (second row Grid | List) is what those models build: an icon grid, or a list grouped by category with each pipeline and its totals. The Profile icon at the top right of the first row opens extapp:cloud-account.",
+    "_doc": "#868 THE nav declaration (libs:bottomnav NavDecl): Apps, Store, Models (AI Models) and MLs on the bottom nav (the AI chat is the top bar's AI button; Costs is gone); Store (the model store and runtime manager) has Installed, Loaded and All on the second row; Settings is reached from the first row's gear. Models has Small, Medium and Retrieval on the second row, each with a Table / Grid / Details / Macro view switcher, all over app/src/main/assets/tools-models.json; Apps (second row Grid | List, a top filter All | Hybrids | Models Only | ML Only from tools-models.json::app_filters) is what those models build: an icon grid, or a list grouped by category with each pipeline and its totals. MLs (second row Lite MLs | Tiny MLs) lists the Cloud Store's Lite-ML and Tiny-ML libs as dense KitStoreRow rows. The Profile icon at the top right of the first row opens extapp:cloud-account.",
     "bottom_nav": [
       "apps",
-      "models",
-      "ai",
       "store",
-      "costs"
+      "models",
+      "mls"
     ],
     "default_section": "models",
     "configs_ui": ["nav_ui"],
+    "ml_pages": {
+      "_doc": "Which Cloud Store group each MLs page lists. The groups, their members and the lib names are NOT declared here: app/build.gradle copies aa_cloud-superapp/data/constellation-fleet.json (the Cloud Store's own declaration, generated by its regen.sh) into the assets as ml-fleet.json, and core MlCatalogue reads groups[id].members and the rows of apps + catalogue from it.",
+      "ml_lite": "libs-l-ml",
+      "ml_tiny": "libs-t-ml"
+    },
     "sections": [
       {
         "id": "apps",
@@ -602,10 +612,23 @@
         ]
       },
       {
-        "id": "costs",
-        "label": "Costs",
-        "icon": "costs",
-        "pages": []
+        "id": "mls",
+        "label": "MLs",
+        "icon": "hub",
+        "pages": [
+          {
+            "id": "ml_lite",
+            "label": "Lite MLs",
+            "icon": "speed",
+            "pages": []
+          },
+          {
+            "id": "ml_tiny",
+            "label": "Tiny MLs",
+            "icon": "bolt",
+            "pages": []
+          }
+        ]
       },
       {
         "id": "settings",
@@ -642,8 +665,8 @@
         "Apps grid of text tools",
         "Small, medium and retrieval models",
         "Router that picks the model per task",
-        "Costs per request",
-        "Per-request cost"
+        "Per-request cost on every answer",
+        "Lite and Tiny ML libs of the Cloud Store"
       ],
       "screens": [
         {
@@ -663,8 +686,8 @@
           "what": "More tools."
         },
         {
-          "name": "Costs",
-          "what": "Spend per request."
+          "name": "MLs",
+          "what": "Lite and Tiny ML libs, as the Cloud Store declares them."
         },
         {
           "name": "Settings",
@@ -674,7 +697,7 @@
       "guide": [
         "Set the OpenRouter token through Cloud Account.",
         "Pick a tool on Apps or just ask in AI.",
-        "Check Costs to see what each request cost."
+        "Every answer shows what the request cost."
       ],
       "privacy": "No ads and no third-party trackers. A crash report is saved on the phone and sent only to the phone's own C3 WebServer over loopback; nothing leaves the device unless you share it. It talks only to the fleet services listed below, over the private mesh first.",
       "backends": [

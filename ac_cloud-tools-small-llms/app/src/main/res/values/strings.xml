@@ -4,7 +4,7 @@
     <string name="chat_hint">Ask one of the models…</string>
     <string name="chat_send">Send</string>
     <string name="chat_empty_title">Chat with the small and medium models</string>
-    <string name="chat_empty_body">Pick a task below; the app picks the model, runs it on this phone\'s runtime when it is Loaded or on OpenRouter otherwise, and names it under each answer. Everything is recorded in Costs.</string>
+    <string name="chat_empty_body">Pick a task below; the app picks the model, runs it on this phone\'s runtime when it is Loaded or on OpenRouter otherwise, and names it under each answer.</string>
     <string name="chat_working">Working…</string>
     <string name="chat_failed">Failed: %1$s</string>
     <string name="chat_clear">Clear chat</string>
@@ -73,20 +73,8 @@
     <string name="backend_openrouter">OpenRouter</string>
     <string name="backend_local">Local</string>
     <string name="backend_load_in_store">Load a model in Store</string>
-    <string name="costs_local">Local usage (free)</string>
-    <string name="costs_local_empty">No local calls yet.</string>
-    <string name="costs_local_total">%1$d calls · ~%2$d tokens · %3$d s</string>
-    <string name="costs_local_row">~%1$d tokens · %2$d s</string>
-    <string name="costs_local_clear">Clear local usage</string>
-
-    <string name="costs_title">Costs</string>
-    <string name="costs_today">Today</string>
-    <string name="costs_month">This month</string>
-    <string name="costs_calls">%1$d calls</string>
-    <string name="costs_by_task">This month by task</string>
-    <string name="costs_history">History</string>
-    <string name="costs_empty">No paid calls yet.</string>
-    <string name="costs_clear">Clear history and totals</string>
+    <string name="mls_count">%1$d libs, as the Cloud Store declares them</string>
+    <string name="mls_dot">○</string>
 
     <string name="settings_token">OpenRouter token</string>
     <string name="settings_token_stored">Stored: %1$s</string>

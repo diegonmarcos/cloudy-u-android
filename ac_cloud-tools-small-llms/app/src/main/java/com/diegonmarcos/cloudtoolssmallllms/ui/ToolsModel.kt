@@ -5,15 +5,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.diegonmarcos.cloudtoolssmallllms.Decl
-import com.diegonmarcos.cloudtoolssmallllms.core.Ledger
 import com.diegonmarcos.cloudtoolssmallllms.core.OpenRouterChat
 import com.diegonmarcos.cloudtoolssmallllms.core.TaskRegistry
 import com.diegonmarcos.cloudtoolssmallllms.core.TokenVault
+import com.diegonmarcos.cloudtoolssmallllms.core.MlCatalogue
+import com.diegonmarcos.cloudtoolssmallllms.core.MlGroup
 import com.diegonmarcos.cloudtoolssmallllms.core.ToolsConfig
 import com.diegonmarcos.cloudtoolssmallllms.data.AccountStatus
 import com.diegonmarcos.cloudtoolssmallllms.data.Catalogue
 import com.diegonmarcos.cloudtoolssmallllms.data.AppDef
-import com.diegonmarcos.cloudtoolssmallllms.data.LocalCall
 import com.diegonmarcos.cloudtoolssmallllms.data.FleetRetrieval
 import com.diegonmarcos.cloudtoolssmallllms.data.LocalChatBackend
 import com.diegonmarcos.cloudtoolssmallllms.data.Location
@@ -28,13 +28,11 @@ import com.diegonmarcos.cloudtoolssmallllms.data.Step
 import com.diegonmarcos.cloudtoolssmallllms.data.SecretPrefs
 import com.diegonmarcos.cloudtoolssmallllms.data.Stores
 import com.diegonmarcos.cloudtoolssmallllms.BuildConfig
-import com.diegonmarcos.cloudtoolssmallllms.core.Costs
 import com.diegonmarcos.superapp.ai.AiBackend
 import com.diegonmarcos.superapp.ai.AiChatState
 import com.diegonmarcos.superapp.ai.AiConfig
 import com.diegonmarcos.superapp.ai.AiDesign
 import com.diegonmarcos.superapp.ai.AiTask
-import com.diegonmarcos.superapp.ai.AiUsageLine
 import com.diegonmarcos.superapp.ai.AiFileSessions
 import com.diegonmarcos.superapp.ai.AiGatewayBackend
 import com.diegonmarcos.superapp.ai.AiMemoryPrefs
@@ -51,7 +49,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * The app's state, held once per Activity: the chat, the model data, the ledger, the router and worker choices,
+ * The app's state, held once per Activity: the chat, the model data, the router and worker choices,
  * the token's mask, the Account's status and the catalogue's prices. Every network call runs on
  * [Dispatchers.IO] through :tools-core ([ToolsFlow], [OpenRouterChat]); this class only moves
  * their results into Compose state and the stores.
@@ -65,8 +63,6 @@ class ToolsModel(context: Context, private val scope: CoroutineScope) {
     val catalogue = Catalogue(context, UrlHttp, cfg.openRouter.timeoutMs)
 
     var section by mutableStateOf(Decl.nav.default()?.id ?: Decl.nav.bottomNav.firstOrNull().orEmpty())
-    var ledger by mutableStateOf(stores.ledger())
-        private set
     /** The open page of the section (a second-row tab); null = the section's first. */
     var page by mutableStateOf<String?>(null)
     var router by mutableStateOf(stores.router.takeIf { it in cfg.router.choices } ?: cfg.router.default)
@@ -110,6 +106,10 @@ class ToolsModel(context: Context, private val scope: CoroutineScope) {
 
     /** The model data (assets/tools-models.json): the Models and Apps sections and the AI chat's model picker. */
     val models: ModelsData = ModelsData.load(app)
+    /** The Cloud Store's Lite-ML and Tiny-ML groups, derived from its fleet declaration (assets/ml-fleet.json); one per MLs page. */
+    val mls: List<MlGroup> = MlCatalogue.parse(app.assets.open(ML_FLEET).bufferedReader().use { it.readText() }, Decl.mlPages)
+    /** The Apps page's top filter (an id of tools-models.json::app_filters); the first is All. */
+    var appFilter by mutableStateOf(models.appFilters.first().id)
 
     /** The Models view the switcher picked (kept across the Small / Medium / Retrieval pages). */
     var view by mutableStateOf(ModelsView.TABLE)
@@ -158,8 +158,6 @@ class ToolsModel(context: Context, private val scope: CoroutineScope) {
     /** The last Store action's failure, if any. */
     var storeError by mutableStateOf<String?>(null)
         private set
-    var localCalls by mutableStateOf(stores.localUsage())
-        private set
 
     /** The first ollama-kind runtime's address: where the Local chat is sent. */
     private val localUrl: String? = models.locations.firstOrNull { it.kind == "ollama" }?.let { urlOf(it) }
@@ -192,40 +190,23 @@ class ToolsModel(context: Context, private val scope: CoroutineScope) {
         }
     }
 
-    fun clearLocalUsage() {
-        stores.clearLocalUsage()
-        localCalls = emptyList()
-    }
-
     /**
      * The one backend of the chat: routes each call by [backend]. OpenRouter goes through the fleet agent gateway
-     * (the picked model out as its OpenRouter id) and is recorded in Costs in money (an estimate: tokens ~ characters / 4,
-     * priced by the shared catalogue; nothing for a model the catalogue does not price). Local goes to the Store's
-     * runtime on its OpenAI-compatible endpoint and is recorded as tokens and time, at no cost.
+     * (the picked model out as its OpenRouter id) . Local goes to the Store's
+     * runtime on its OpenAI-compatible endpoint, at no cost.
      */
     private val gateway = AiGatewayBackend(AiConfig.load(app), BuildConfig.AI_GATEWAY_URL)
     private val localChat = localUrl?.let { LocalChatBackend(AiConfig.load(app), it) }
 
-    /** One model call on [be] (local or openrouter), recorded in Costs: money for OpenRouter, tokens and time for Local. */
+    /** One model call on [be] (local or openrouter). */
     private fun call(be: String, task: String, req: AiRequest, onDelta: (String) -> Unit): AiReply {
         val row = models.row(req.model.orEmpty())
-        val chars = req.messages.sumOf { it.content.length }
         if (be == LOCAL) {
             val l = localChat ?: return AiReply(null, error = "no local runtime is declared")
-            val t0 = System.currentTimeMillis()
-            val reply = l.chat(req, onDelta)
-            val text = reply.text
-            if (row != null && text != null) recordLocal(LocalCall(t0, row.model, (chars + text.length) / 4, System.currentTimeMillis() - t0))
-            return reply
+            return l.chat(req, onDelta)
         }
         val wire = AiRequest(row?.wireId ?: req.model, req.messages, req.web, req.nativeWeb, req.agent, req.tools, req.wire, req.stream)
-        val reply = gateway.chat(wire, onDelta)
-        val text = reply.text
-        if (row != null && text != null) {
-            val price = catalogue.book.price(row.wireId)
-            if (price != null) charge(task, row.model, Costs.estimate(price, chars / 4, text.length / 4))
-        }
-        return reply
+        return gateway.chat(wire, onDelta)
     }
 
     /** Where [row] can run now under the backend preference: Local needs it Loaded, OpenRouter needs its openrouter_id. Null = nowhere. */
@@ -263,7 +244,7 @@ class ToolsModel(context: Context, private val scope: CoroutineScope) {
     /**
      * One chat turn on the user's TASK: the guard checks the question, the task's small model answers (Local when Loaded, else
      * OpenRouter; the pinned model instead when pinned), the small judge grades it and a low score asks the medium model again;
-     * the guard checks the answer and the reply names the model it came from. Costs are recorded by [call] under the task id.
+     * the guard checks the answer and the reply names the model it came from. 
      */
     private fun answerTask(req: AiRequest, onDelta: (String) -> Unit): AiReply {
         val task = models.chatTasks.firstOrNull { it.id == chatTask } ?: models.chatTasks.first()
@@ -317,7 +298,7 @@ class ToolsModel(context: Context, private val scope: CoroutineScope) {
         return if (want == LOCAL) local() ?: cloud() else cloud() ?: local()
     }
 
-    /** Runs [a] on [input]: each runnable step feeds its answer to the next, status per step, usage into Costs. */
+    /** Runs [a] on [input]: each runnable step feeds its answer to the next, status per step, usage priced per step. */
     fun runApp(a: AppDef, input: String) {
         if (appRun?.running == true || input.isBlank()) return
         var steps = a.pipeline.map { StepRun(it.macro, it.models.firstOrNull(), null, "waiting", null) }
@@ -381,10 +362,6 @@ class ToolsModel(context: Context, private val scope: CoroutineScope) {
         appRun = null
     }
 
-    private fun recordLocal(c: LocalCall) {
-        localCalls = stores.addLocalUsage(c)
-    }
-
     /**
      * The AI page's state: the open conversation, kept in a file. There is no model picker: the user picks a TASK
      * ([chatTask]) and [answerTask] picks the model; the gateway holds the fleet keys, so no token is held for it.
@@ -395,14 +372,6 @@ class ToolsModel(context: Context, private val scope: CoroutineScope) {
         direct = routedBackend,
         modelSource = { emptyList() },
         design = AiDesign.load(app),
-        // The Costs ledger is this app's real usage: money per day and per month (nothing is invented for tokens).
-        usageSource = {
-            val zone = java.time.ZoneId.systemDefault()
-            listOf(
-                AiUsageLine("Today", "$" + "%.4f".format(java.util.Locale.ROOT, ledger.day(now(), zone))),
-                AiUsageLine("This month", "$" + "%.4f".format(java.util.Locale.ROOT, ledger.month(now(), zone))),
-            )
-        },
     ))
 
     init {
@@ -419,19 +388,6 @@ class ToolsModel(context: Context, private val scope: CoroutineScope) {
         stronger = row?.tier == "medium"
         section = Decl.SECTION_AI
         page = null
-    }
-
-    private fun charge(task: String, model: String, usd: Double) {
-        if (usd <= 0.0) return
-        val l = Ledger(ledger.entries)
-        l.add(Ledger.Entry(now(), usd, task, model))
-        ledger = l
-        stores.saveLedger(l)
-    }
-
-    fun clearLedger() {
-        ledger = Ledger()
-        stores.saveLedger(ledger)
     }
 
     // ── settings ─────────────────────────────────────────────────────────────────────────────
@@ -491,9 +447,10 @@ class ToolsModel(context: Context, private val scope: CoroutineScope) {
     private fun now(): Long = System.currentTimeMillis()
 
     companion object {
-        /** The ledger's task id of a chat call. */
+        /** The task id of a chat call. */
         const val CHAT_TASK = "chat"
         const val AUTO = "auto"
+        private const val ML_FLEET = "ml-fleet.json"
         const val OPENROUTER = "openrouter"
         const val LOCAL = "local"
         const val FLEET = "fleet"

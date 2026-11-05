@@ -23,9 +23,11 @@
 #       and every app declares its own UI: a template of the declared set (all twelve used) plus params
 #       and the chat's task->model mapping (every task names declared models, a gate and a judge, escalation score)
 #   A9  the shell draws the shared bars (first row with Profile -> Cloud Account, second row, bottom nav, theme
-#       background), the bottom nav is Apps, Models, AI, Store, Costs, the AI chat is libs:ai's over the gateway
-#       with its picker fed ONLY by the chat rows of the data file, the four views and the apps page exist, and chat
-#       calls are recorded into the Costs ledger
+#       background), the bottom nav is exactly Apps, Store, Models (AI Models), MLs and there is no Costs
+#       section, page or ledger, the AI chat is libs:ai's over the gateway with its picker fed ONLY by the chat rows of
+#       the data file, the four views and the apps page exist, MLs has Lite MLs and Tiny MLs bound to the Cloud Store's
+#       groups and derived from its fleet file (not hand-copied), and the Apps page has the All | Hybrids | Models Only |
+#       ML Only filter with every app carrying exactly one class (Hybrids 12, Models Only 9, ML Only 4)
 # then plants mutations in a scratch copy and requires RED for each.
 set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -211,22 +213,27 @@ store = code(os.path.join(kt, "ui/StorePage.kt"))
 for need in ("it.install(", "it.uninstall(", "it.load(", "it.unload(", "store_fits", "store_not_installed", "store_loaded", "store_installed", "listOf(4, 8, 16)"):
     if need not in store: bad.append("A9 StorePage lacks %s" % need)
 if re.search(r"getSharedPreferences|mutableStateOf\(\s*listOf", store): bad.append("A9 StorePage keeps model state of its own: it must come from the runtimes")
-if bj["ui"]["bottom_nav"] != ["apps", "models", "ai", "store", "costs"]: bad.append("A9 bottom_nav is %r" % bj["ui"]["bottom_nav"])
+if bj["ui"]["bottom_nav"] != ["apps", "store", "models", "mls"]: bad.append("A9 bottom_nav is %r" % bj["ui"]["bottom_nav"])
+if "costs" in {s["id"] for s in bj["ui"]["sections"]}: bad.append("A9 a Costs section is still declared")
+for f in sources("app/src/main", "core/src/main"):
+    if re.search(r"CostsPage|SECTION_COSTS|Ledger\b|saveLedger", code(f)): bad.append("A9 %s still names the Costs page or its ledger" % os.path.relpath(f, app))
+if os.path.exists(os.path.join(kt, "ui/CostsPage.kt")): bad.append("A9 ui/CostsPage.kt still exists")
+if "libs:ui-kit" not in bj["modules"] or "project(':libs:ui-kit')" not in code(os.path.join(app, "app/build." + "gradle")): bad.append("A9 libs:ui-kit (KitStoreRow) is not linked")
 shell = code(os.path.join(kt, "ui/ToolsShell.kt"))
-for need in ("NavBarTopFirstRowScaffold(", "NavSectionLayout(", "NavBarBottomHost(", "themeBackground(", "rememberAccountLauncher()", "titleHierarchy(", "AiChatPage(", "AppsPage(", "ModelsPage("):
+for need in ("NavBarTopFirstRowScaffold(", "NavSectionLayout(", "NavBarBottomHost(", "themeBackground(", "rememberAccountLauncher()", "titleHierarchy(", "AiChatPage(", "AppsPage(", "ModelsPage(", "MlsPage("):
     if need not in shell: bad.append("A9 ToolsShell does not call %s" % need)
 apg = code(os.path.join(kt, "ui/AppsPage.kt"))
 for need in ("appRamQ4(", "appDiskFp16(", "appModels(", "phoneCapable(", "AppsList(", "AppsGrid(", "app_totals", "app_phone_icon", "appCategories", "s.escalation", "s.alternatives"):
     if need not in apg: bad.append("A9 AppsPage lacks %s (list view, computed totals, badges)" % need)
 for need in ("OutlinedTextField(", "model.runApp(", "stepStatus(", "app_info_show", "APP_RESULT"):
     if need not in apg: bad.append("A9 the app page lacks %s (own UI: input, run, per-step status, result, collapsible header)" % need)
-if len(re.findall(r"app_totals, gb\(data\.appRamQ4\(a\)\), gb\(data\.appDiskFp16\(a\)\)", apg)) < 2: bad.append("A9 the list and the detail do not both show the computed totals")
+if len(re.findall(r"app_totals, gb\(data\.appRamQ4\(a\)\), gb\(data\.appDiskFp16\(a\)\)", apg)) < 1 or len(re.findall(r"totalsCompact\(data, a\)", apg)) < 2: bad.append("A9 the grid, the list and the detail do not all show the computed totals")
 pages = code(os.path.join(kt, "ui/ModelsPages.kt"))
 for v in ("TABLE", "GRID", "DETAIL", "MACRO"):
     if not re.search(r"ModelsView\.%s\s*->\s*Models%s\(" % (v, v.title()), pages): bad.append("A9 the %s view is not drawn" % v)
 if "AiChatPage(" not in shell or re.search(r"\b(BasicTextField|OutlinedTextField)\b", shell): bad.append("A9 the AI page is not libs:ai's alone")
 script = code(os.path.join(app, "app/build." + "gradle"))
-for lib in ("libs:ui-nav-bars", "libs:ui-nav-bars", "libs:ui-nav-bars", "libs:theme-background", "libs:ui-icons", "libs:ai"):
+for lib in ("libs:ui-nav-bars", "libs:ui-nav-bars", "libs:ui-nav-bars", "libs:theme-background", "libs:ui-icons", "libs:ai", "libs:ui-kit"):
     if lib not in bj["modules"]: bad.append("A9 build.json modules lack %s" % lib)
     if "project(':%s')" % lib not in script: bad.append("A9 the app's build script does not link %s" % lib)
 if "AI_GATEWAY_URL" not in script or "ai-gateway.gradle" not in script: bad.append("A9 the gateway address is not baked")
@@ -253,11 +260,25 @@ if "Tags.pin(" not in code(os.path.join(kt, "ui/SettingsPage.kt")): bad.append("
 if "row?.wireId ?: req.model" not in tm: bad.append("A9 the gateway is not sent the data's openrouter_id")
 for need in ("fun runApp(", "private fun place(", "status = \"running\"", "call(placed.second", "models.stepPrompt("):
     if need not in tm: bad.append("A9 ToolsModel lacks %s (the app runner)" % need)
-for need in ("fun chooseBackend(", "OPENROUTER -> if (cloud) OPENROUTER else null", "if (loaded) LOCAL", "recordLocal(LocalCall(", "LocalChatBackend("):
+for need in ("fun chooseBackend(", "OPENROUTER -> if (cloud) OPENROUTER else null", "if (loaded) LOCAL", "LocalChatBackend("):
     if need not in tm: bad.append("A9 ToolsModel lacks %s" % need)
 if "BACKEND_LOCAL" not in shell or "BACKEND_OPENROUTER" not in shell or "header = {" not in shell: bad.append("A9 the AI page has no OpenRouter | Local toggle in its header")
-if "localCalls" not in code(os.path.join(kt, "ui/CostsPage.kt")): bad.append("A9 Costs does not show local usage")
-if "charge(task, row.model" not in tm or "stores.saveLedger(l)" not in tm: bad.append("A9 chat calls are not recorded into the Costs ledger")
+mls = code(os.path.join(kt, "ui/MlsPage.kt"))
+for need in ("KitStoreRowLine", "KitStoreName(", "KitStoreCaption(", "KitStoreDot(", "group.libs", "group.blurb"):
+    if need not in mls: bad.append("A9 MlsPage lacks %s (the Cloud Store's dense row over the derived groups)" % need)
+if re.search(r"\d\s*\.\s*sp\b", mls + apg): bad.append("A9 MlsPage / AppsPage hold an sp literal: the type ramp is KitStoreRow's")
+if "ml_pages" not in script or "aa_cloud-superapp/data/constellation-fleet.json\")" not in script or "rename { 'ml-fleet.json' }" not in script: bad.append("A9 the build does not derive the MLs data from the Cloud Store's constellation-fleet.json")
+if "MlCatalogue.parse(" not in tm: bad.append("A9 the model does not read the MLs groups through MlCatalogue")
+mlp = bj["ui"].get("ml_pages", {})
+fleet = json.loads(read(os.path.join(root, "aa_cloud-superapp/data/constellation-fleet.json")))
+fg = {g["id"]: g for g in fleet["groups"]}
+if [p["id"] for p in secs["mls"]["pages"]] != ["ml_lite", "ml_tiny"] or [p["label"] for p in secs["mls"]["pages"]] != ["Lite MLs", "Tiny MLs"]: bad.append("A9 MLs pages are not Lite MLs, Tiny MLs")
+if mlp.get("ml_lite") != "libs-l-ml" or mlp.get("ml_tiny") != "libs-t-ml" or any(g not in fg for g in (mlp.get("ml_lite"), mlp.get("ml_tiny"))): bad.append("A9 ml_pages do not name the Cloud Store's Lite-ML and Tiny-ML groups")
+fl = [f["id"] for f in md["app_filters"]]
+if fl != ["all", "hybrid", "models_only", "ml_only"] or [f["label"] for f in md["app_filters"]] != ["All", "Hybrids", "Models Only", "ML Only"]: bad.append("A9 the Apps filter is %r" % fl)
+for a in md["apps"]:
+    if a.get("class") not in fl[1:]: bad.append("A9 app %r is not classified (class %r)" % (a["id"], a.get("class")))
+if "AppFilters(model, data)" not in apg or "appsIn(" not in apg: bad.append("A9 the Apps page has no top filter")
 
 for b in bad: print("  FAIL: " + b)
 sys.exit(1 if bad else 0)
@@ -307,8 +328,6 @@ mutate "apps list page dropped" 'sub(M + "/build.json", "\"id\": \"apps_list\"",
 mutate "shell loses the apps page" 'sub(K + "/ui/ToolsShell.kt", "AppsPage(model, pageId ?: Decl.PAGE_APPS_GRID)", "Unit")'
 mutate "macro view undrawn" 'sub(K + "/ui/ModelsPages.kt", "ModelsView.MACRO -> ModelsMacro", "ModelsView.MACRO -> ModelsGrid")'
 mutate "openrouter id not sent" 'sub(K + "/ui/ToolsModel.kt", "row?.wireId ?: req.model", "req.model")'
-mutate "chat calls not recorded" 'sub(K + "/ui/ToolsModel.kt", "stores.saveLedger(l)", "")'
-mutate "local usage not recorded" 'sub(K + "/ui/ToolsModel.kt", "recordLocal(LocalCall", "Unit; (LocalCall")'
 mutate "engine loses unload" 'sub(K + "/data/ModelRuntime.kt", "    fun unload(loaded: LoadedModel): String?\n", "")'
 mutate "store keeps its own state" 'sub(K + "/ui/StorePage.kt", "val data = model.models", "val data = model.models; val own = context.getSharedPreferences(\"x\", 0)")'
 mutate "store pages reordered" 'sub(M + "/build.json", "\"id\": \"installed\"", "\"id\": \"installedz\"")'
@@ -318,7 +337,16 @@ mutate "escalation ignores the score" 'sub(K + "/ui/ToolsModel.kt", "models.judg
 mutate "reply loses its model label" 'sub(K + "/ui/ToolsModel.kt", "text + \"\\n\\n— \" + label", "text")'
 mutate "task row dropped" 'sub(K + "/ui/ToolsModel.kt", "chat.tasks = models.chatTasks", "val unused = models.chatTasks")'
 mutate "chat task names an unknown model" 'sub(M + "/app/src/main/assets/tools-models.json", "\"small\": \"ministral-3b-2512\"", "\"small\": \"ministral-9z\"")'
-mutate "bottom nav reordered" 'sub(M + "/build.json", "\"apps\",\n      \"models\",\n      \"ai\"", "\"models\",\n      \"apps\",\n      \"ai\"")'
+mutate "bottom nav reordered" 'sub(M + "/build.json", "\"apps\",\n      \"store\"", "\"store\",\n      \"apps\"")'
+mutate "Costs back on the nav" 'sub(M + "/build.json", "\"models\",\n      \"mls\"\n", "\"models\",\n      \"mls\",\n      \"costs\"\n")'
+mutate "Costs ledger back" 'sub(K + "/Decl.kt", "SECTION_MLS", "SECTION_COSTS")'
+mutate "MLs page dropped from the shell" 'sub(K + "/ui/ToolsShell.kt", "MlsPage(model.mls, pageId ?: Decl.PAGE_ML_LITE)", "Unit")'
+mutate "MLs page renamed" 'sub(M + "/build.json", "\"Tiny MLs\"", "\"Tiny\"")'
+mutate "MLs group not the Store's" 'sub(M + "/build.json", "\"libs-t-ml\"", "\"libs-x-ml\"")'
+mutate "MLs data hand-copied" 'sub(M + "/app/build.gradle", "aa_cloud-superapp/data/constellation-fleet.json\")", "ml-copy.json\")")'
+mutate "filter loses a class" 'sub(M + "/app/src/main/assets/tools-models.json", "\"label\": \"ML Only\"", "\"label\": \"ML\"")'
+mutate "an app is unclassified" 'sub(M + "/app/src/main/assets/tools-models.json", "\"class\": \"hybrid\",\n      \"ui\"", "\"class\": \"none\",\n      \"ui\"")'
+mutate "apps page loses the filter" 'sub(K + "/ui/AppsPage.kt", "AppFilters(model, data)\n", "")'
 
 echo "-- test-tools-app: $PASS passed, $FAILS failed"
 [ "$FAILS" -eq 0 ]

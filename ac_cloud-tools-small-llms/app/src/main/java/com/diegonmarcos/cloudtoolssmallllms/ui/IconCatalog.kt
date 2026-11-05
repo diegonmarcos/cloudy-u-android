@@ -10,7 +10,6 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Label
 import androidx.compose.material.icons.filled.Mood
-import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.QuestionAnswer
 import androidx.compose.material.icons.filled.Reply
 import androidx.compose.material.icons.filled.School
@@ -35,7 +34,6 @@ object IconCatalog {
     fun vector(name: String): ImageVector = when (name) {
         "chat" -> Icons.Filled.Chat
         "tasks" -> Icons.Filled.Widgets
-        "costs" -> Icons.Filled.Payments
         "settings" -> Icons.Filled.Settings
         "translate" -> Icons.Filled.Translate
         "summarize" -> Icons.Filled.ShortText

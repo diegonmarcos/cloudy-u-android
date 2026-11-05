@@ -98,7 +98,7 @@ fun ToolsShell(model: ToolsModel) {
                                 }
                             })
                             Decl.SECTION_STORE -> StorePage(model, pageId ?: Decl.PAGE_INSTALLED)
-                            Decl.SECTION_COSTS -> CostsPage(model)
+                            Decl.SECTION_MLS -> MlsPage(model.mls, pageId ?: Decl.PAGE_ML_LITE)
                             Decl.SECTION_SETTINGS -> SettingsPage(model)
                             else -> {}
                         }
@@ -157,6 +157,11 @@ object Tags {
     const val CHAT = "tools_chat"
     const val APPS = "tools_apps"
     const val APPS_LIST = "tools_apps_list"
+    const val APP_FILTERS = "tools_app_filters"
+    fun appFilter(id: String) = "tools_app_filter_$id"
+    const val MLS = "tools_mls"
+    fun mlRow(id: String) = "tools_ml_row_$id"
+    fun mlHeader(application: String) = "tools_ml_header_$application"
     const val APP_TOTALS = "tools_app_totals"
     const val APP_TEMPLATE = "tools_app_template"
     const val APP_INFO = "tools_app_info"
@@ -192,7 +197,6 @@ object Tags {
     fun chatTask(id: String) = "tools_chat_task_$id"
     const val BACKEND_OPENROUTER = "tools_backend_openrouter"
     const val BACKEND_LOCAL = "tools_backend_local"
-    const val LOCAL_USAGE = "tools_local_usage"
     fun stepBackend(i: Int) = "tools_app_step_backend_$i"
     fun location(id: String) = "tools_store_loc_$id"
     fun store(loc: String, model: String) = "tools_store_${loc}_$model"

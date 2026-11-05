@@ -1,26 +1,15 @@
 package com.diegonmarcos.cloudtoolssmallllms.data
 
 import android.content.Context
-import com.diegonmarcos.cloudtoolssmallllms.core.Ledger
-import org.json.JSONArray
 import org.json.JSONObject
-
-/** One call served by a local runtime: costs nothing, so it is kept as tokens (an estimate) and time. */
-data class LocalCall(val at: Long, val model: String, val tokens: Int, val ms: Long)
 
 /**
  * Everything this app keeps that is not a secret, in SharedPreferences [PREFS] (fleet manifest
- * store, class content / config): the cost ledger, the router choice, the per-task
+ * store, class content / config): the router choice, the per-task
  * worker overrides and the last read of Jev's availability. The token is NOT here (SecretPrefs).
  */
 class Stores(context: Context) {
     private val prefs = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-
-    fun ledger(): Ledger = Ledger.fromJson(prefs.getString(LEDGER, null))
-
-    fun saveLedger(l: Ledger) {
-        prefs.edit().putString(LEDGER, l.toJson()).apply()
-    }
 
     /** The AI chat's backend: "openrouter" (cloud, paid) or "local" (a runtime of the Store, free). */
     var backend: String
@@ -31,24 +20,6 @@ class Stores(context: Context) {
     var pinned: String
         get() = prefs.getString(PINNED, "").orEmpty()
         set(v) { prefs.edit().putString(PINNED, v).apply() }
-
-    fun localUsage(): List<LocalCall> = runCatching {
-        val a = JSONArray(prefs.getString(LOCAL_USAGE, "[]") ?: "[]")
-        List(a.length()) { i -> a.getJSONObject(i).let { LocalCall(it.getLong("at"), it.getString("model"), it.getInt("tokens"), it.getLong("ms")) } }
-    }.getOrDefault(emptyList())
-
-    /** Appends [c], keeping the newest [LOCAL_KEEP]. */
-    fun addLocalUsage(c: LocalCall): List<LocalCall> {
-        val all = (localUsage() + c).takeLast(LOCAL_KEEP)
-        val a = JSONArray()
-        all.forEach { a.put(JSONObject().put("at", it.at).put("model", it.model).put("tokens", it.tokens).put("ms", it.ms)) }
-        prefs.edit().putString(LOCAL_USAGE, a.toString()).apply()
-        return all
-    }
-
-    fun clearLocalUsage() {
-        prefs.edit().remove(LOCAL_USAGE).apply()
-    }
 
     var router: String
         get() = prefs.getString(ROUTER, "").orEmpty()
@@ -76,12 +47,9 @@ class Stores(context: Context) {
 
     companion object {
         const val PREFS = "cloud_tools_small_llms"
-        private const val LEDGER = "ledger"
         private const val ROUTER = "router"
         private const val BACKEND = "backend"
         private const val PINNED = "pinned_model"
-        private const val LOCAL_USAGE = "local_usage"
-        private const val LOCAL_KEEP = 500
         private const val WORKERS = "workers"
         private const val JEV_LISTED = "jev_listed"
         private const val JEV_PRICE = "jev_price_in"

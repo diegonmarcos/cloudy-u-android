@@ -11,9 +11,6 @@ import org.junit.Assert.fail
 import org.junit.Test
 import java.io.File
 import java.io.IOException
-import java.time.LocalDateTime
-import java.time.ZoneId
-import java.time.ZoneOffset
 
 /**
  * The app's logic against THIS build.json, the fleet's catalogue.json and RECORDED OpenRouter
@@ -238,28 +235,6 @@ class ToolsCoreTest {
         assertEquals("$0.042", Costs.usd(0.042))
         assertEquals("$1.25", Costs.usd(1.25))
         assertEquals("$2.00", Costs.usd(2.0))
-    }
-
-    @Test fun `the ledger totals the day and the month, per task, and survives storage`() {
-        val zone = ZoneId.of("Europe/Berlin")
-        fun at(d: Int, h: Int, m: Int = 10) = LocalDateTime.of(2026, m, d, h, 0).atZone(zone).toInstant().toEpochMilli()
-        val l = Ledger()
-        l.add(Ledger.Entry(at(13, 9), 0.001, "translate", "a/b"))
-        l.add(Ledger.Entry(at(13, 23), 0.002, "summarize", "a/b"))
-        l.add(Ledger.Entry(at(12, 23), 0.004, "translate", "a/b"))
-        l.add(Ledger.Entry(at(30, 12, 9), 0.5, "translate", "a/b"))
-        val now = at(13, 23)
-        assertEquals(0.003, l.day(now, zone), 1e-12)
-        assertEquals(0.007, l.month(now, zone), 1e-12)
-        assertEquals(listOf(Triple("translate", 2, 0.005), Triple("summarize", 1, 0.002)), l.byTask(now, zone).map { Triple(it.first, it.second, Math.round(it.third * 1e6) / 1e6) })
-        // In UTC the 23:00 Berlin call of the 13th is still the 13th, the one of the 12th is the 12th.
-        assertEquals(0.003, l.day(now, ZoneOffset.UTC), 1e-12)
-        val back = Ledger.fromJson(l.toJson())
-        assertEquals(l.entries, back.entries)
-        assertTrue(Ledger.fromJson(null).entries.isEmpty())
-        assertTrue(Ledger.fromJson("garbage").entries.isEmpty())
-        assertEquals(1, Ledger.fromJson("""[{"at":1,"usd":0.1,"task":"t","model":"m"},{"at":1,"usd":-1},7]""").entries.size)
-        try { l.add(Ledger.Entry(1, -0.1, "t", "m")); fail("negative cost accepted") } catch (_: IllegalArgumentException) { }
     }
 
     // ── a whole turn ─────────────────────────────────────────────────────────────────────────

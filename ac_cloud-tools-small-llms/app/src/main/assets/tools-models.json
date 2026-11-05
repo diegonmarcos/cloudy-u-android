@@ -761,6 +761,35 @@
       "chat": false
     }
   ],
+  "app_filters": [
+    {
+      "id": "all",
+      "glyph": "·",
+      "label": "All",
+      "blurb": "Every app, whatever its class."
+    },
+    {
+      "id": "hybrid",
+      "class": "hybrid",
+      "glyph": "◐",
+      "label": "Hybrids",
+      "blurb": "Runs on an ML lib, and a small model exists that does that job better."
+    },
+    {
+      "id": "models_only",
+      "class": "models_only",
+      "glyph": "●",
+      "label": "Models Only",
+      "blurb": "No ML lib can do the job, so it needs a model."
+    },
+    {
+      "id": "ml_only",
+      "class": "ml_only",
+      "glyph": "○",
+      "label": "ML Only",
+      "blurb": "Classic ML can handle the task alone."
+    }
+  ],
   "app_categories": [
     {
       "id": "search",
@@ -944,6 +973,7 @@
     {
       "id": "private_rag",
       "category": "search",
+      "class": "hybrid",
       "ui": {
         "template": "rag_search",
         "params": {
@@ -983,6 +1013,7 @@
     {
       "id": "code_qa",
       "category": "search",
+      "class": "hybrid",
       "ui": {
         "template": "rag_search",
         "params": {
@@ -1016,6 +1047,7 @@
     {
       "id": "multilingual_kb",
       "category": "search",
+      "class": "hybrid",
       "ui": {
         "template": "rag_search",
         "params": {
@@ -1051,6 +1083,7 @@
     {
       "id": "dedup",
       "category": "search",
+      "class": "ml_only",
       "ui": {
         "template": "cluster_view",
         "params": {
@@ -1072,6 +1105,7 @@
     {
       "id": "file_search",
       "category": "search",
+      "class": "ml_only",
       "ui": {
         "template": "rag_search",
         "params": {
@@ -1099,6 +1133,7 @@
     {
       "id": "receipt_json",
       "category": "documents",
+      "class": "hybrid",
       "ui": {
         "template": "doc_extract",
         "params": {
@@ -1127,6 +1162,7 @@
     {
       "id": "photo_qa",
       "category": "documents",
+      "class": "models_only",
       "ui": {
         "template": "vision_qa",
         "params": {
@@ -1150,6 +1186,7 @@
     {
       "id": "doc_understanding",
       "category": "documents",
+      "class": "hybrid",
       "ui": {
         "template": "doc_extract",
         "params": {
@@ -1178,6 +1215,7 @@
     {
       "id": "email_triage",
       "category": "communication",
+      "class": "hybrid",
       "ui": {
         "template": "triage_inbox",
         "params": {
@@ -1211,6 +1249,7 @@
     {
       "id": "meeting_notes",
       "category": "communication",
+      "class": "models_only",
       "ui": {
         "template": "summarizer",
         "params": {
@@ -1238,6 +1277,7 @@
     {
       "id": "writing",
       "category": "communication",
+      "class": "models_only",
       "ui": {
         "template": "writer",
         "params": {
@@ -1266,6 +1306,7 @@
     {
       "id": "translator",
       "category": "communication",
+      "class": "models_only",
       "ui": {
         "template": "writer",
         "params": {
@@ -1289,6 +1330,7 @@
     {
       "id": "tool_runner",
       "category": "agents",
+      "class": "models_only",
       "ui": {
         "template": "tool_runner",
         "params": {
@@ -1329,6 +1371,7 @@
     {
       "id": "spec_json",
       "category": "agents",
+      "class": "models_only",
       "ui": {
         "template": "writer",
         "params": {
@@ -1358,6 +1401,7 @@
     {
       "id": "fleet_ops",
       "category": "agents",
+      "class": "hybrid",
       "ui": {
         "template": "tool_runner",
         "params": {
@@ -1385,6 +1429,7 @@
     {
       "id": "notification_filter",
       "category": "agents",
+      "class": "ml_only",
       "ui": {
         "template": "triage_inbox",
         "params": {
@@ -1412,6 +1457,7 @@
     {
       "id": "math_tutor",
       "category": "reasoning",
+      "class": "models_only",
       "ui": {
         "template": "tutor",
         "params": {
@@ -1446,6 +1492,7 @@
     {
       "id": "code_review",
       "category": "reasoning",
+      "class": "models_only",
       "ui": {
         "template": "compare_judge",
         "params": {
@@ -1476,6 +1523,7 @@
     {
       "id": "research",
       "category": "reasoning",
+      "class": "hybrid",
       "ui": {
         "template": "rag_search",
         "params": {
@@ -1515,6 +1563,7 @@
     {
       "id": "safe_chat",
       "category": "safety",
+      "class": "hybrid",
       "ui": {
         "template": "chat_guarded",
         "params": {
@@ -1554,6 +1603,7 @@
     {
       "id": "moderation",
       "category": "safety",
+      "class": "ml_only",
       "ui": {
         "template": "triage_inbox",
         "params": {
@@ -1576,6 +1626,7 @@
     {
       "id": "eval_lab",
       "category": "safety",
+      "class": "models_only",
       "ui": {
         "template": "compare_judge",
         "params": {
@@ -1604,6 +1655,7 @@
     {
       "id": "offline",
       "category": "personal",
+      "class": "hybrid",
       "ui": {
         "template": "chat_guarded",
         "params": {
@@ -1643,6 +1695,7 @@
     {
       "id": "journal",
       "category": "personal",
+      "class": "hybrid",
       "ui": {
         "template": "cluster_view",
         "params": {
@@ -1670,6 +1723,7 @@
     {
       "id": "quick_actions",
       "category": "personal",
+      "class": "hybrid",
       "ui": {
         "template": "quick_actions",
         "params": {

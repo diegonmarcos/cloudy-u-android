@@ -56,6 +56,17 @@ def uiSectionsB64    = b64(buildJson.ui.sections)
 def uiBottomNav      = buildJson.ui.bottom_nav.join(',')
 def uiDefaultSection = (buildJson.ui.default_section ?: buildJson.ui.bottom_nav[0]).toString()
 def toolsConfigB64   = b64(buildJson.tools)
+// The MLs page: build.json::ui.ml_pages names the Cloud Store group each page lists; the groups, their members and every lib name
+// are the Cloud Store's own declaration, copied (never hand-written) into the assets as ml-fleet.json and read by core's MlCatalogue.
+if (!buildJson.ui?.ml_pages) throw new GradleException("build.json::ui.ml_pages missing - the MLs page would list nothing")
+def uiMlPagesB64 = b64(buildJson.ui.ml_pages)
+def mlFleetFile = file("${projectDir}/../../aa_cloud-superapp/data/constellation-fleet.json")
+if (!mlFleetFile.exists()) throw new GradleException("aa_cloud-superapp/data/constellation-fleet.json missing - the MLs page has no Cloud Store declaration to derive from")
+def mlAssetsDir = layout.buildDirectory.dir('generated/ml-assets').get().asFile
+def bakeMlFleet = tasks.register('bakeMlFleet', Copy) {
+    from(mlFleetFile) { rename { 'ml-fleet.json' } }
+    into(mlAssetsDir)
+}
 
 android {
     namespace 'com.diegonmarcos.cloudtoolssmallllms'
@@ -89,6 +100,7 @@ android {
         buildConfigField "String", "UI_BOTTOM_NAV",      "\"${uiBottomNav}\""
         buildConfigField "String", "UI_DEFAULT_SECTION", "\"${uiDefaultSection}\""
         buildConfigField "String", "TOOLS_CONFIG_B64",   "\"${toolsConfigB64}\""
+        buildConfigField "String", "UI_ML_PAGES_B64",    "\"${uiMlPagesB64}\""
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
 
@@ -130,6 +142,8 @@ android {
         targetCompatibility JavaVersion.VERSION_17
     }
     kotlinOptions { jvmTarget = '17' }
+
+    sourceSets.main.assets.srcDir(files(mlAssetsDir).builtBy(bakeMlFleet))
 }
 
 dependencies {
@@ -139,6 +153,8 @@ dependencies {
     // The shared bars (#1154, #1157): first row (Profile top right), second row, bottom nav, page gradient; icons from the catalog (#1160).
     implementation project(':libs:ui-nav-bars')
     implementation project(':libs:theme-background')
+    // The Cloud Store's dense row (KitStoreRow) and its type ramp: the MLs and Apps rows.
+    implementation project(':libs:ui-kit')
     implementation project(':libs:ui-icons')
     // Every decision and every number: plain JVM, mutation-tested on its own (core/build.gradle).
     implementation project(':tools-core')

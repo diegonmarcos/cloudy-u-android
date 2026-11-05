@@ -1,9 +1,6 @@
 package com.diegonmarcos.cloudtoolssmallllms.core
 
-import org.json.JSONArray
 import org.json.JSONObject
-import java.time.Instant
-import java.time.ZoneId
 
 /** A model's price in dollars per 1M tokens, as the shared catalogue publishes it. */
 data class Price(val inPerM: Double, val outPerM: Double)
@@ -56,50 +53,4 @@ object Costs {
     }
 
     private fun num(o: JSONObject, k: String): Double? = o.opt(k)?.takeIf { it is Number }?.let { (it as Number).toDouble() }
-}
-
-/** Every priced call, kept for the day and month totals. Plain data: the app stores [toJson]. */
-class Ledger(entries: List<Entry> = emptyList()) {
-    data class Entry(val at: Long, val usd: Double, val task: String, val model: String)
-
-    private val list = entries.toMutableList()
-    val entries: List<Entry> get() = list.toList()
-
-    fun add(e: Entry) {
-        require(e.usd >= 0 && !e.usd.isNaN()) { "a cost is never negative" }
-        list += e
-    }
-
-    /** The total of the calendar day [now] falls in, in [zone]. */
-    fun day(now: Long, zone: ZoneId): Double {
-        val d = Instant.ofEpochMilli(now).atZone(zone).toLocalDate()
-        return list.filter { Instant.ofEpochMilli(it.at).atZone(zone).toLocalDate() == d }.sumOf { it.usd }
-    }
-
-    /** The total of the calendar month [now] falls in, in [zone]. */
-    fun month(now: Long, zone: ZoneId): Double {
-        val m = Instant.ofEpochMilli(now).atZone(zone).toLocalDate()
-        return list.filter { Instant.ofEpochMilli(it.at).atZone(zone).toLocalDate().let { d -> d.year == m.year && d.month == m.month } }.sumOf { it.usd }
-    }
-
-    /** Per task, this month: task id -> (calls, dollars), most expensive first. */
-    fun byTask(now: Long, zone: ZoneId): List<Triple<String, Int, Double>> {
-        val m = Instant.ofEpochMilli(now).atZone(zone).toLocalDate()
-        return list.filter { Instant.ofEpochMilli(it.at).atZone(zone).toLocalDate().let { d -> d.year == m.year && d.month == m.month } }
-            .groupBy { it.task }.map { (k, v) -> Triple(k, v.size, v.sumOf { it.usd }) }.sortedByDescending { it.third }
-    }
-
-    fun toJson(): String = JSONArray(list.map { JSONObject().put("at", it.at).put("usd", it.usd).put("task", it.task).put("model", it.model) }).toString()
-
-    companion object {
-        /** A stored ledger; anything unreadable is an empty one, never a crash. */
-        fun fromJson(s: String?): Ledger {
-            val a = runCatching { JSONArray(s ?: return Ledger()) }.getOrNull() ?: return Ledger()
-            return Ledger((0 until a.length()).mapNotNull { i ->
-                val o = a.optJSONObject(i) ?: return@mapNotNull null
-                val usd = o.optDouble("usd", -1.0)
-                if (usd < 0) null else Entry(o.optLong("at"), usd, o.optString("task"), o.optString("model"))
-            })
-        }
-    }
 }

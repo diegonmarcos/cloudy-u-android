@@ -53,8 +53,11 @@ data class RetrievalService(
 /** An app category of the Apps list (Search & Knowledge, Documents & Vision, ...). */
 data class AppCategory(val id: String, val label: String, val icon: String)
 
+/** A top filter of the Apps page: [cls] is the app class it keeps (null = every app), [glyph] marks that class on a row. */
+data class AppFilter(val id: String, val label: String, val blurb: String, val cls: String?, val glyph: String)
+
 /** An application buildable from the models: [pipeline] is its ordered steps. */
-data class AppDef(val id: String, val category: String, val name: String, val icon: String, val description: String, val pipeline: List<Step>, val ui: AppUi)
+data class AppDef(val id: String, val category: String, val cls: String, val name: String, val icon: String, val description: String, val pipeline: List<Step>, val ui: AppUi)
 
 /** An app's own UI: a reusable [template] id and its params (the input hint, the input labels, the output kind). */
 data class AppUi(val template: String, val inputHint: String, val inputs: List<String>, val output: String?)
@@ -90,6 +93,7 @@ class ModelsData(json: String) {
     }
     val quantTags: Map<Int, String> = root.getJSONObject("quant_tags").let { o -> o.keys().asSequence().associate { it.toInt() to o.getString(it) } }
     val appCategories: List<AppCategory> = list(root.getJSONArray("app_categories")) { AppCategory(it.getString("id"), it.getString("label"), it.getString("icon")) }
+    val appFilters: List<AppFilter> = list(root.getJSONArray("app_filters")) { AppFilter(it.getString("id"), it.getString("label"), it.getString("blurb"), it.optString("class").ifBlank { null }, it.getString("glyph")) }
     val templates: List<UiTemplate> = list(root.getJSONArray("app_ui_templates")) { UiTemplate(it.getString("id"), it.getString("label"), it.getString("flow")) }
     val chatTasks: List<ChatTask> = list(root.getJSONArray("chat_tasks")) { ChatTask(it.getString("id"), it.getString("label"), it.getString("icon"), it.getString("macro"), it.getString("small"), it.getString("medium"), it.optString("note").ifBlank { null }) }
     val chatDefaultTask: String = root.getString("chat_default_task")
@@ -98,9 +102,15 @@ class ModelsData(json: String) {
     val judgeMinScore: Int = root.getJSONObject("chat_escalation").getInt("min_score")
     private val prompts: JSONObject = root.getJSONObject("step_prompts")
     val apps: List<AppDef> = list(root.getJSONArray("apps")) { a ->
-        AppDef(a.getString("id"), a.getString("category"), a.getString("name"), a.getString("icon"), a.getString("description"),
+        AppDef(a.getString("id"), a.getString("category"), a.getString("class"), a.getString("name"), a.getString("icon"), a.getString("description"),
             list(a.getJSONArray("pipeline")) { s -> Step(s.getString("macro"), strings(s.getJSONArray("models")), s.optString("backend").ifBlank { null }, s.optBoolean("alternatives"), s.optBoolean("escalation"), s.optString("note").ifBlank { null }) }, a.getJSONObject("ui").let { u -> val pr = u.getJSONObject("params"); AppUi(u.getString("template"), pr.optString("input_hint"), pr.optJSONArray("inputs")?.let { strings(it) } ?: emptyList(), pr.optString("output").ifBlank { null }) })
     }
+
+    /** The apps a top filter keeps: those of its class, every app for the filter that has none. */
+    fun appsIn(filter: String): List<AppDef> = appFilters.firstOrNull { it.id == filter }?.cls?.let { c -> apps.filter { it.cls == c } } ?: apps
+
+    /** The glyph that marks [a]'s class on a row. */
+    fun classGlyph(a: AppDef): String = appFilters.firstOrNull { it.cls == a.cls }?.glyph.orEmpty()
 
     /** The rows of a Models page: "small" / "medium" without retrieval models, "retrieval" = every retrieval model. */
     fun page(id: String): List<ModelRow> = if (id == "retrieval") rows.filter { it.macro == "retrieval" } else rows.filter { it.tier == id && it.macro != "retrieval" }
