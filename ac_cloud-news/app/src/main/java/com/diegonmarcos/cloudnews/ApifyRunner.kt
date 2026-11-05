@@ -42,9 +42,11 @@ class ApifyRunner(
         val input = try { JSONObject(inputJson) } catch (e: Exception) { return fail("bad input", "bad-input") }
         val (base, bearer) = store.resolve() ?: return fail("no token stored for ${store.backend().label}", "no-token")
         val cf = store.backend().cloudflare
+        val hl = store.backend().headless
         val rest = store.cfMode() == ApifyBackends.CF_REST
-        val url = if (cf) (if (rest) ApifyBackends.cloudflareUrl(base) else base) else ApifyBackends.runSyncUrl(base, actor)
-        if (!url.startsWith("https://")) return fail("https only", "insecure")
+        val url = if (cf) (if (rest) ApifyBackends.cloudflareUrl(base) else base) else if (hl) "$base/run" else ApifyBackends.runSyncUrl(base, actor)
+        // #1498 Phone Browser is the phone's own loopback listener (http, 127.0.0.1 only); every other backend is https
+        if (!url.startsWith("https://") && !(hl && url.startsWith("http://127.0.0.1:"))) return fail("https only", "insecure")
         val ttl = minOf(cacheHours, MAX_TTL_HOURS) * HOUR
         val file = File(cacheDir, sourceId + "-" + EventFetcher.sha1("$url $input") + ".json")
         val cached = try { if (file.isFile) JSONObject(file.readText()) else null } catch (e: Exception) { null }
@@ -53,7 +55,7 @@ class ApifyRunner(
             if (age < ttl || (force && age < MIN_FORCE_MS)) return ok(cached, maxOf(1L, age))
         }
         return try {
-            val items = if (cf) cloudflare(url, bearer, input, rest) else post(url, bearer, input.toString())
+            val items = if (cf) cloudflare(url, bearer, input, rest) else if (hl) headless(url, bearer, input) else post(url, bearer, input.toString())
             val live = JSONObject().put("t", now()).put("items", items)
             try { file.parentFile?.mkdirs(); file.writeText(live.toString()) } catch (e: Exception) { /* a cache that cannot be written is only a miss */ }
             ok(live, 0)
@@ -97,6 +99,14 @@ class ApifyRunner(
             if (rest) ApifyBackends.cloudflareMarkdown(ApifyBackends.CF_REST, postText(url, bearer, JSONObject().put("url", target).toString()))
             else postText(ApifyBackends.workerUrl(url, target) ?: throw IOException("the Worker URL must be https"), bearer, null)
         } catch (e: org.json.JSONException) { throw IOException("Cloudflare did not answer with JSON") }
+        return JSONArray().put(JSONObject().put("url", target).put("markdown", markdown))
+    }
+
+    /** #1498 Phone Browser / Cloudy Headless render one page (the first start URL) to Markdown through headless-api v1 `run`, answered as [{url, markdown}]. */
+    private fun headless(url: String, bearer: String, input: JSONObject): JSONArray {
+        val target = input.optJSONArray("startUrls")?.optJSONObject(0)?.optString("url").orEmpty().ifBlank { input.optString("url") }
+        if (!target.startsWith("https://") && !target.startsWith("http://")) throw IOException("the headless browser needs a page URL in startUrls")
+        val markdown = try { ApifyBackends.headlessMarkdown(postText(url, bearer, ApifyBackends.headlessRunBody(target))) } catch (e: org.json.JSONException) { throw IOException("the headless browser did not answer with JSON") }
         return JSONArray().put(JSONObject().put("url", target).put("markdown", markdown))
     }
 

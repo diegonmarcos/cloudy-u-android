@@ -65,8 +65,14 @@
         "libs:bottomnav",
         "libs:ui-icons",
         "libs:ui-nav-bars",
-        "libs:theme-background"
+        "libs:theme-background",
+        "libs:headless-browser"
       ]
+    },
+    "libs:headless-browser": {
+      "_doc": "#1498 Headless Browser for agents, This App engine: HeadlessBrowserService, off-screen WebView sessions, signature-permission provider and loopback listener, shared BY REFERENCE.",
+      "dir": "../ab_cloud-libs-shared/libs/headless-browser",
+      "type": "library"
     },
     "libs:core": {
       "_doc_dir": "Shared BY REFERENCE from aa_cloud-superapp/libs/ — settings.gradle points projectDir here instead of at a local copy. Every app used to carry its own copy-pasted tree and they drifted: 6 apps sat 228 source lines behind superapp's updater. One directory, no sync step, no drift.",
@@ -650,6 +656,95 @@
           "class": "config",
           "doc": "The browser fills from its own store first, then asks Cloud Vault (through Android's autofill); what Cloud Vault fills wins over the local copy, and a new password or card is also handed to Cloud Vault's save. Off = local only. Cloud Vault not installed or locked = local only, with the reason shown.",
           "group": "sync"
+        },
+        {
+          "key": "headless_backend",
+          "type": "enum",
+          "values": ["cloudflare-browser-run", "cloudy-browser-headless", "this-app"],
+          "default": "this-app",
+          "label": "Backend",
+          "section": "headless",
+          "class": "config",
+          "doc": "Where agent browser calls run (#1498): Cloudflare-Browser-Run (the #1474 backend and store keys), Cloudy-Browser-Headless (the container on oci-apps) or This App (off-screen WebView on this phone, the default).",
+          "group": "headless"
+        },
+        {
+          "key": "headless_cloudy_url_key",
+          "type": "string",
+          "default": "headless.cloudy.url",
+          "label": "Cloudy-Browser-Headless URL (store key name)",
+          "section": "headless",
+          "class": "config",
+          "doc": "The NAME of the encrypted-store key that holds the container URL (https, mesh path route). The value is never kept here.",
+          "group": "headless"
+        },
+        {
+          "key": "headless_cloudy_token_key",
+          "type": "string",
+          "default": "headless.cloudy.token",
+          "label": "Cloudy-Browser-Headless bearer (store key name)",
+          "section": "headless",
+          "class": "config",
+          "doc": "The NAME of the encrypted-store key that holds the container bearer token. The value is never kept here; the vault holds it by name.",
+          "group": "headless"
+        },
+        {
+          "key": "headless_max_sessions",
+          "type": "int",
+          "min": 1,
+          "max": 8,
+          "default": 3,
+          "label": "Max sessions (This App)",
+          "section": "headless",
+          "class": "config",
+          "doc": "Open sessions at once on this phone, 1 to 8. A new session over the limit is refused.",
+          "group": "headless"
+        },
+        {
+          "key": "headless_idle_stop_s",
+          "type": "int",
+          "min": 15,
+          "max": 1800,
+          "default": 120,
+          "label": "Idle stop (seconds)",
+          "section": "headless",
+          "class": "config",
+          "doc": "The service stops, and a session closes, after this long without a command (15 to 1800).",
+          "group": "headless"
+        },
+        {
+          "key": "headless_call_timeout_s",
+          "type": "int",
+          "min": 1,
+          "max": 120,
+          "default": 30,
+          "label": "Per-call timeout (seconds)",
+          "section": "headless",
+          "class": "config",
+          "doc": "A command that takes longer answers a timeout (1 to 120).",
+          "group": "headless"
+        },
+        {
+          "key": "headless_cdp",
+          "type": "bool",
+          "default": false,
+          "label": "DevTools / CDP (debug, opt-in)",
+          "section": "headless",
+          "class": "config",
+          "doc": "Lets Playwright or Puppeteer connectOverCDP to the phone engine: WebView debugging on, the DevTools socket relayed to a loopback port, bearer-gated, off by itself after the minutes below. Default off.",
+          "group": "headless"
+        },
+        {
+          "key": "headless_cdp_minutes",
+          "type": "int",
+          "min": 1,
+          "max": 60,
+          "default": 10,
+          "label": "DevTools / CDP auto-off (minutes)",
+          "section": "headless",
+          "class": "config",
+          "doc": "CDP switches itself off after this long (1 to 60).",
+          "group": "headless"
         }
       ],
       "_doc_favourites": "#893 THE FAVOURITES SEED (Fav = the bookmarks, one store). Not typed here: app/build.gradle EXPANDS `sources` at build time into `items` (title, url, group) from the fleet's own declaration, aa_cloud-superapp/data/services_public.json (every public edge endpoint) and services_private.json (the mesh-internal HTTP endpoints, shown and opened as declared, they answer on the mesh), and bakes the result inside UI_BROWSER_CONFIG_B64, so a seed change rebuilds only Cloud Browser. BrowserBookmarks.applySeed adds each entry ONCE (first run, and any entry a later `version` brings), never overwrites an edit and never re-adds what the user deleted. No credentials: only the url as declared. #1458 The \"GH Pages\" chip is NOT baked: it is read at runtime from `feed` (pages.json in the public hub repo diegonmarcos/front-html, generated there from the GitHub API), cached as the last good copy, and merged once per entry like the rest. test/test-browser-pages-hub.sh holds the wiring.",
@@ -1894,6 +1989,10 @@
         {
           "id": "browsing",
           "label": "Browser"
+        },
+        {
+          "id": "headless",
+          "label": "Headless Browser"
         }
       ]
     },
@@ -1985,6 +2084,11 @@
           {
             "id": "browsing",
             "label": "Browser",
+            "icon": "language"
+          },
+          {
+            "id": "headless",
+            "label": "Headless Browser",
             "icon": "language"
           }
         ]

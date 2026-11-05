@@ -77,8 +77,8 @@ fun ApifyPage(c: ThemeColors) {
         }
     }
     // #1475 the Cloudflare backend has its own tab; actors only run on the Apify-shaped ones
-    val actorBackends = store.decl.backends.filter { !it.cloudflare }
-    val backend = rev.let { store.backend().takeIf { !it.cloudflare } ?: (actorBackends.firstOrNull { it.id == store.decl.default } ?: actorBackends.first()) }
+    val actorBackends = store.decl.backends.filter { !it.cloudflare && !it.headless }
+    val backend = rev.let { store.backend().takeIf { !it.cloudflare && !it.headless } ?: (actorBackends.firstOrNull { it.id == store.decl.default } ?: actorBackends.first()) }
     val connected = rev.let { store.hasToken(backend) }
     fun masked() = store.resolve(backend)?.second.orEmpty().let { if (it.length <= 8) "••••" else it.take(4) + "••••" + it.takeLast(2) }
     val colors = OutlinedTextFieldDefaults.colors(focusedTextColor = c.ink, unfocusedTextColor = c.ink, focusedLabelColor = c.accent, unfocusedLabelColor = c.inkDim)

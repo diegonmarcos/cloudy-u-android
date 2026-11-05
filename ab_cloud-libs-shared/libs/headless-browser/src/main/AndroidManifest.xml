@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- #1498 "This App" headless engine. Both doors are gated on the fleet's one signature permission (declared by libs:core).
+         The service is NOT exported: it runs in this app's process and is started on demand by the provider / the loopback listener. -->
+    <application>
+        <service
+            android:name="com.diegonmarcos.superapp.headless.HeadlessBrowserService"
+            android:exported="false" />
+        <provider
+            android:name="com.diegonmarcos.superapp.headless.HeadlessProvider"
+            android:authorities="${applicationId}.headless"
+            android:exported="true"
+            android:permission="com.diegonmarcos.cloud.permission.CONSTELLATION_DATA" />
+    </application>
+</manifest>

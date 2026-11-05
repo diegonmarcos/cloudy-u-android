@@ -388,6 +388,7 @@ android {
 
 dependencies {
     implementation project(':libs:web-core')   // #1371 the fleet's one web view (CloudWeb, WebProfile)
+    implementation project(':libs:headless-browser')   // #1498 Headless Browser for agents, This App engine
     implementation project(':libs:analytics')
     implementation project(':libs:core')
     implementation project(':libs:browser')

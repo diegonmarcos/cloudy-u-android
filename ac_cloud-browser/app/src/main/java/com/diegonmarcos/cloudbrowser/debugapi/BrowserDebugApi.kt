@@ -97,6 +97,8 @@ object BrowserDebugApi {
             AgentRunner.get(app, SearchAddon.get(BuildConfig.SEARCH_CONFIG_B64), it).summarizeRoute =
                 { BrowserSettings(app, config.settings).string("summarize_route") }
         } }
+        // #1498 the Headless Browser engine reads its Configs section (headless_*) through the one BrowserSettings door, whatever process wakes it
+        com.diegonmarcos.superapp.headless.HeadlessRuntime.settingsSource = { key -> BrowserSettings(app, config.settings).value(key)?.toString() }
         // #823 the assistant's side panel (libs:ai's AiAssistantPanel) and the Search add-on's on-screen page (libs:ai's AI page).
         config.addons["ai"]?.let { runCatching { AgentPanelScreen.install() } }
         config.addons["search"]?.let { runCatching { SearchPageScreen.install(app, SearchAddon.get(BuildConfig.SEARCH_CONFIG_B64)) } }

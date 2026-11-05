@@ -20,6 +20,18 @@
     "label": "Cloudflare Browser Run",
     "kind": "cloudflare",
     "api": "https://api.cloudflare.com/client/v4"
+   },
+   {
+    "id": "phone",
+    "label": "Phone Browser",
+    "kind": "phone",
+    "api": "http://127.0.0.1:8765"
+   },
+   {
+    "id": "headless",
+    "label": "Cloudy Headless",
+    "kind": "headless",
+    "api": "https://mcp.diegonmarcos.com/cloudy-browser-headless"
    }
   ],
   "timeout_s": 120,

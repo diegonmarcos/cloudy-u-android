@@ -10,10 +10,12 @@ import json, os, shutil, sys, tempfile
 
 LIB = "ab_cloud-libs-shared/libs/browser/src/main/java/com/diegonmarcos/superapp/browser"
 APP = "ac_cloud-browser/app/src/main/java/com/diegonmarcos/cloudbrowser"
+HEADLESS = "ab_cloud-libs-shared/libs/headless-browser/src/main/java/com/diegonmarcos/superapp/headless"  # #1498 the Headless Browser section's readers
 MANIFEST = "ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json"
 # What a mutated copy needs: the app, the shared browser lib, the fleet manifest, cloud-search's declaration.
 COPY = ["ac_cloud-browser", "ab_cloud-libs-shared/libs/browser", MANIFEST,
         "ab_cloud-libs-shared/libs/ai",  # #823 the assistant panel, the consent card and the shared AI contract are libs:ai's
+        "ab_cloud-libs-shared/libs/headless-browser",  # #1498 reads the Headless Browser settings
         "ab_cloud-libs-shared/libs/crash",  # #1106 SafeEncryptedPrefs, the one safe opener the encrypted stores go through
         "ab_cloud-libs-shared/libs/autofill",  # Tier 2 DOM autofill: the Cloud Account SOT contract
         "ab_cloud-libs-shared/libs/web-core",  # #1371 the BROWSER profile (child windows, file access per site)

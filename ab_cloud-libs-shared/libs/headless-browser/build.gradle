@@ -1,0 +1,52 @@
+// libs:headless-browser (#1498): the fleet's headless browser for agents, "This App" engine. A bound/started HeadlessBrowserService runs
+// off-screen WebView sessions on a VirtualDisplay (per-agent profiles), answers the shared headless-api v1 command API (libs/headless-api/
+// headless-api.json) over a signature-permission ContentProvider and a loopback-only HTTP listener (per-session token, for Termux), and
+// stops when idle (START_NOT_STICKY, no screen-off work, KeepAlivePolicy rules of #1487). The pure rules (contract, selector, idle policy,
+// token gate, CDP policy, audit ring) are JVM-tested in src/test.
+plugins {
+    id 'com.android.library'
+}
+if (project.extensions.findByName('kotlin') == null) {
+    apply plugin: 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.diegonmarcos.superapp.headless'
+    compileSdk 36
+
+    defaultConfig {
+        minSdk 26
+    }
+
+    testOptions {
+        unitTests {
+            returnDefaultValues = true
+            all {
+                testLogging {
+                    events 'failed'
+                    exceptionFormat 'full'
+                }
+            }
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
+dependencies {
+    implementation project(':libs:crash')   // SafeEncryptedPrefs: the encrypted store the Cloudflare / Cloudy keys live in
+    implementation project(':libs:web-core')
+    implementation 'androidx.webkit:webkit:1.12.1'
+    implementation 'androidx.core:core-ktx:1.13.1'
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.json:json:20240303'
+}

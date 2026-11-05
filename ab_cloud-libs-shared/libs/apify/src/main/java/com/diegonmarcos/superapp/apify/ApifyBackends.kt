@@ -8,6 +8,8 @@ import org.json.JSONObject
 data class ApifyBackend(val id: String, val label: String, val api: String?, val defaultUrl: String?, val kind: String = if (api == null) ApifyBackends.SELF_HOSTED else ApifyBackends.CLOUD) {
     /** Cloudflare Browser Run: an account id plus an API token, and a rendering endpoint instead of an actor. */
     val cloudflare get() = kind == ApifyBackends.CLOUDFLARE
+    /** #1498 Phone Browser (Cloud-Browser's headless engine on this phone) and Cloudy Headless (the cloudy-browser-headless container): headless-api v1 `run`, bearer. */
+    val headless get() = kind == ApifyBackends.PHONE || kind == ApifyBackends.HEADLESS
 }
 
 /**
@@ -37,6 +39,12 @@ class ApifyBackends(val backends: List<ApifyBackend>, val default: String) {
         const val CF_WORKER = "worker"
         const val CF_REST = "rest"
         const val CLOUD_API = "https://api.apify.com/v2"
+        /** #1498 Phone Browser: the loopback listener of Cloud-Browser's HeadlessBrowserService (Configs > Headless Browser); the bearer is its per-run token. */
+        const val PHONE = "phone"
+        const val PHONE_URL = "http://127.0.0.1:8765"
+        /** #1498 Cloudy Headless: the cloudy-browser-headless container behind its wg-only Caddy path route; the bearer is in the vault by name. */
+        const val HEADLESS = "headless"
+        const val HEADLESS_URL = "https://mcp.diegonmarcos.com/cloudy-browser-headless"
         /** The fleet's Crawlee Cloud (aa_cloud-superapp/data/cloud_services.json container `crawlee-cloud`, reached over the mesh). */
         const val SELF_URL = "https://crawlee-cloud.mesh.diegonmarcos.com"
 
@@ -45,6 +53,8 @@ class ApifyBackends(val backends: List<ApifyBackend>, val default: String) {
                 ApifyBackend(CLOUD, "Apify Cloud", CLOUD_API, null),
                 ApifyBackend(SELF_HOSTED, "Self-hosted Cloudy Crawlee", null, SELF_URL),
                 ApifyBackend(CLOUDFLARE, "Cloudflare Browser Run", CLOUDFLARE_API, null, CLOUDFLARE),
+                ApifyBackend(PHONE, "Phone Browser", PHONE_URL, null, PHONE),
+                ApifyBackend(HEADLESS, "Cloudy Headless", HEADLESS_URL, null, HEADLESS),
             ),
             CLOUD,
         )
@@ -85,6 +95,24 @@ class ApifyBackends(val backends: List<ApifyBackend>, val default: String) {
             return if (r is org.json.JSONArray) (0 until r.length()).joinToString("\n") { r.optString(it) } else r?.toString().orEmpty()
         }
 
+        /** #1498 the headless-api v1 `run` that renders [target] to Markdown: open, wait for idle, readable, close. */
+        fun headlessRunBody(target: String): String = JSONObject().put("agent", "scraper").put("stepTimeoutMs", 30000).put("steps", org.json.JSONArray()
+            .put(JSONObject().put("cmd", "open").put("url", target.trim()))
+            .put(JSONObject().put("cmd", "wait").put("idle", true))
+            .put(JSONObject().put("cmd", "readable"))
+            .put(JSONObject().put("cmd", "close"))).toString()
+
+        /** The Markdown of a headless `run` answer; throws IOException with the engine's message when a step failed. */
+        fun headlessMarkdown(body: String): String {
+            val o = JSONObject(body)
+            val steps = o.optJSONArray("steps")
+            if (!o.optBoolean("ok", false) && steps != null) {
+                for (i in 0 until steps.length()) steps.getJSONObject(i).optJSONObject("error")?.let { throw java.io.IOException(it.optString("message", "the headless browser refused the step")) }
+            }
+            if (!o.optBoolean("ok", false)) throw java.io.IOException(o.optJSONObject("error")?.optString("message").orEmpty().ifBlank { "the headless browser refused the request" })
+            return steps?.optJSONObject(2)?.optJSONObject("result")?.optString("markdown").orEmpty()
+        }
+
         fun runSyncUrl(apiBase: String, actor: String) = "$apiBase/acts/${apiId(actor)}/run-sync-get-dataset-items?format=json&clean=1"
     }
 }
@@ -110,7 +138,7 @@ class ApifyBackendStore(private val kv: ApifyKv, val decl: ApifyBackends = Apify
     fun setBackend(id: String) = kv.set(K_BACKEND, decl.backends.firstOrNull { it.id == id }?.id)
     fun selfUrl(): String = kv.get(K_URL)?.takeIf { it.isNotBlank() } ?: decl.backends.firstOrNull { it.api == null }?.defaultUrl.orEmpty()
     fun setSelfUrl(url: String) = kv.set(K_URL, url.takeIf { it.isNotBlank() && it.trim().startsWith("https://") })
-    fun tokenKey(b: ApifyBackend) = when { b.cloudflare -> if (cfMode() == ApifyBackends.CF_REST) K_CF_TOKEN else K_CF_WORKER_TOKEN; b.api != null -> K_TOKEN; else -> K_BEARER }
+    fun tokenKey(b: ApifyBackend) = when { b.kind == ApifyBackends.PHONE -> K_PHONE_TOKEN; b.kind == ApifyBackends.HEADLESS -> K_HEADLESS_TOKEN; b.cloudflare -> if (cfMode() == ApifyBackends.CF_REST) K_CF_TOKEN else K_CF_WORKER_TOKEN; b.api != null -> K_TOKEN; else -> K_BEARER }
     /** Cloudflare Browser Run mode: the Worker URL (default) or the REST API. */
     fun cfMode(): String = if (kv.get(K_CF_MODE) == ApifyBackends.CF_REST) ApifyBackends.CF_REST else ApifyBackends.CF_WORKER
     fun setCfMode(mode: String) = kv.set(K_CF_MODE, mode.takeIf { it == ApifyBackends.CF_REST || it == ApifyBackends.CF_WORKER })
@@ -145,10 +173,12 @@ class ApifyBackendStore(private val kv: ApifyKv, val decl: ApifyBackends = Apify
     fun resolve(b: ApifyBackend = backend()): Pair<String, String>? {
         val t = kv.get(tokenKey(b)).orEmpty()
         if (t.isEmpty()) return null
+        if (b.headless) return (if (b.kind == ApifyBackends.PHONE) b.api ?: ApifyBackends.PHONE_URL else (kv.get(K_HEADLESS_URL)?.takeIf { it.trim().startsWith("https://") } ?: b.api ?: ApifyBackends.HEADLESS_URL)).trimEnd('/') to t
         if (b.cloudflare) return (if (cfMode() == ApifyBackends.CF_REST) ApifyBackends.cloudflareBase(b.api ?: ApifyBackends.CLOUDFLARE_API, accountId()) else workerUrl())?.let { it to t }
         return decl.apiBase(b, kv.get(K_URL)) to t
     }
 
     companion object { const val K_BACKEND = "apify.backend"; const val K_TOKEN = "apify.token"; const val K_URL = "apify.self.url"; const val K_BEARER = "apify.self.bearer"; const val K_CF_TOKEN = "cloudflare.api_token"; const val K_CF_ACCOUNT = "cloudflare.account_id"
-        const val K_CF_MODE = "cloudflare.mode"; const val K_CF_WORKER_URL = "cloudflare.worker_url"; const val K_CF_WORKER_TOKEN = "cloudflare.worker_token" }
+        const val K_CF_MODE = "cloudflare.mode"; const val K_CF_WORKER_URL = "cloudflare.worker_url"; const val K_CF_WORKER_TOKEN = "cloudflare.worker_token"
+        const val K_PHONE_TOKEN = "phone.browser.token"; const val K_HEADLESS_TOKEN = "headless.cloudy.token"; const val K_HEADLESS_URL = "headless.cloudy.url" }
 }

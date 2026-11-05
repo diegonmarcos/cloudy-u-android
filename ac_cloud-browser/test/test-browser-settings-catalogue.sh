@@ -16,19 +16,19 @@ cd "$(dirname "$0")"
 python3 - <<'PYEOF'
 import json, os, sys
 sys.path.insert(0, ".")
-from browser_tester import LIB, APP, MANIFEST, kotlin, build_json, render_catalogue, main
+from browser_tester import LIB, APP, HEADLESS, MANIFEST, kotlin, build_json, render_catalogue, main
 
 def check(root, ok):
     bj = build_json(root)
     cat = bj["ui"]["browser"].get("settings", [])
     ok(len(cat) > 0, "the catalogue declares settings")
-    src = kotlin(root, LIB, APP)
+    src = kotlin(root, LIB, APP, HEADLESS)
     allsrc = "\n".join(src.values())
     for s in cat:
         k = s["key"]
         # A read is the key as a string literal in code other than the catalogue parser.
         readers = [p for p, t in src.items() if '"%s"' % k in t]
-        ok(readers, "setting `%s` is read somewhere in libs:browser or the app" % k)
+        ok(readers, "setting `%s` is read somewhere in libs:browser, libs:headless-browser or the app" % k)
         ok(s.get("type") in ("bool", "int", "string", "enum", "set"), "`%s` has a known type" % k)
         ok(s.get("class") in ("config", "device"), "`%s` has a migration class" % k)
         if s.get("type") == "int":

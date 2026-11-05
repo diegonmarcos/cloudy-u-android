@@ -351,12 +351,21 @@
         "ac_cloud-browser"
       ]
     },
+    "headless_audit": {
+      "kind": "prefs",
+      "class": "content",
+      "doc": "#1498 the audit ring of the headless browser (audit_json, capped): every agent command with its agent name, command, URL and result; Domains > History shows it tagged agent.",
+      "used_by": [
+        "lib-headless-browser"
+      ]
+    },
     "browser_settings": {
       "kind": "prefs",
       "class": "config",
       "doc": "#802 the browser's settings catalogue (ac_cloud-browser/build.json::ui.browser.settings): search engine, homepage, desktop site, text size, JavaScript, images, third-party cookies; one typed key per declared setting. Served by /api/browser/settings.",
       "used_by": [
-        "lib-browser"
+        "lib-browser",
+        "lib-headless-browser"
       ],
       "keys": {
         "download_dir": "device",

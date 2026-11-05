@@ -19,7 +19,7 @@ sys.path.insert(0, ".")
 from browser_tester import LIB, APP, kotlin, build_json, main
 
 # #1402 the Configs pages, in order; every former page id redirects to the page that holds its content now
-PAGES = ["sites", "permissions", "autocomplete", "browsing"]   # #1443 the host's pages; the tabs start with the fleet's General | Perms | About
+PAGES = ["sites", "permissions", "autocomplete", "browsing", "headless"]   # #1443 the host's pages; the tabs start with the fleet's General | Perms | About
 FLEET = ["general", "perms", "about"]
 OLD = ["general", "search", "privacy", "site", "autocomplete", "passwords", "payment", "downloads",
        "appearance", "tabs", "sync", "advanced"]
@@ -80,7 +80,7 @@ main("configs layout", check, [
     ("About stops being the fleet page", APP + "/MainActivity.kt", "com.diegonmarcos.superapp.fleetconfigs.FleetConfigsPageBody(", "BrowserAboutGone(", "are the fleet pages"),
     ("groups are not drawn", SC, "groups.forEach { g ->", "emptyList<BrowserConfigGroup>().forEach { g ->", "draws its groups"),
     ("a site loses its Perms", LIB + "/BrowserHostFragment.kt", 'KitSettingsRow("Perms", "every permission this site can request", Modifier.testTag("browser:site:perms_open"), onClick = { showSiteSettings(host) })', '', "Data, Perms and other"),
-    ("the nav tabs lose a page", BJ, '"id": "browsing",\n            "label": "Browser",\n            "icon": "language"\n          }\n        ]', '"id": "browsing",\n            "label": "Browser",\n            "icon": "language"\n          }\n        , {"id": "extra", "label": "Extra"}]', "tabs are the fleet pages"),
+    ("the nav tabs lose a page", BJ, '"id": "headless",\n            "label": "Headless Browser",\n            "icon": "language"\n          }\n        ]', '"id": "headless",\n            "label": "Headless Browser",\n            "icon": "language"\n          }\n        , {"id": "extra", "label": "Extra"}]', "tabs are the fleet pages"),
     ("the page ignores its id", SC, "catalogue.settings.filter { it.section == pageId }", "catalogue.settings.filter { true }", "settings of its own id"),
     ("native blocks are not drawn", SC, "        native()\n", "", "native blocks"),
     ("enums become a list again", LIB + "/BrowserSheets.kt", "FilterChip(selected", "androidx.compose.material3.Text(selected", "chip row"),

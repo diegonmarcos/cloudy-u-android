@@ -310,7 +310,13 @@ private fun HistoryPage(d: org.json.JSONObject, t: (String) -> String) {
     val ctx = LocalContext.current
     val p = LocalKitPalette.current
     var mode by remember { mutableStateOf(d.optString("history_default", "pages")) }
-    val visits by loaded(emptyList<com.diegonmarcos.superapp.browser.BrowserVisit>(), "history") { VisitLogStore(ctx).sync() }
+    val browsed by loaded(emptyList<com.diegonmarcos.superapp.browser.BrowserVisit>(), "history") { VisitLogStore(ctx).sync() }
+    // #1498 what agents did through the headless browser, tagged "agent" (title [agent:<name>] <command>), newest first with the browsing
+    val visits = remember(browsed) {
+        (browsed + com.diegonmarcos.superapp.headless.HeadlessRuntime.audit(ctx).map {
+            com.diegonmarcos.superapp.browser.BrowserVisit(it.url.ifEmpty { "agent://headless" }, com.diegonmarcos.superapp.headless.HeadlessAudit.title(it), it.ts)
+        }).sortedByDescending { it.ts }
+    }
     val zone = remember { ZoneId.systemDefault() }
     Column(Modifier.fillMaxSize().testTag("domains:history")) {
         KitSegmented(optionsOf(d, "history_modes"), mode, { mode = it }, Modifier.padding(KitStoreRow.padH), tag = "history")
