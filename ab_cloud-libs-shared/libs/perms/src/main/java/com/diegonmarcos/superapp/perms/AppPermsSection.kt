@@ -83,7 +83,7 @@ fun rememberAppPerms(
 
     fun request(ids: List<String>) {
         // #1519 one combined request (fine + coarse location together on API 31+); a permanent denial opens its settings page
-        PermsRequest.ask(ctx, ids.mapNotNull { entries[it] }, activity) { ask.launch(it) }
+        PermsRequest.requestVia(ctx, ids.mapNotNull { entries[it] }, activity) { ask.launch(it) }
     }
     // #1513 the adb grant row: channel armed = grant now and read it back; else copy the line and open the pairing flow.
     fun adbGrant(i: PermItem) {

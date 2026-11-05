@@ -89,7 +89,7 @@ class PermsActivity : ComponentActivity() {
 
     private fun request(entries: List<PermEntry>) {
         // #1519 one combined request (fine + coarse location together on API 31+); a permanent denial opens its settings page
-        PermsRequest.ask(this, entries, this) { ask.launch(it) }
+        PermsRequest.requestVia(this, entries, this) { ask.launch(it) }
     }
 
     data class Row(val entry: PermEntry, val status: PermStatus, val wanted: Boolean)
