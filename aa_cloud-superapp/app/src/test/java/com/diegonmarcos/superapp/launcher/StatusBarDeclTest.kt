@@ -77,4 +77,15 @@ class StatusBarDeclTest {
         val refused = runCatching { StatusBarDecl.parse(json(el("wifi", "middle", 1))) }.isFailure
         assertTrue(refused)
     }
+
+    @Test
+    fun `D6 the speed meter rows are declared for the network dropdown, not drawn on the bar`() {
+        val ns = StatusBarDecl.declared.networkSpeed!!
+        assertEquals(listOf("now", "avg24"), ns.rows.map { it.first })
+        assertEquals(1000L, ns.sampleMs)
+        assertTrue(ns.perInterface)
+        val p = StatusBarDecl.parse("""{"row_height_dp":26,"elements":[],"network_speed":{"sample_ms":500,"rows":[{"id":"now","label":"N"}],"per_interface":false}}""")
+        assertEquals(NetworkSpeedDecl(500L, listOf("now" to "N"), false), p.networkSpeed)
+        assertEquals(null, StatusBarDecl.parse(json(el("wifi", "left", 1))).networkSpeed)
+    }
 }

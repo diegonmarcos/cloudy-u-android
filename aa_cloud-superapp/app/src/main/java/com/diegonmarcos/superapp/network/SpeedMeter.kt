@@ -14,62 +14,100 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 /**
- * #1446 The home strip's speedmeter: the last reading against the rolling 24 h average, in Mbps and MB/s.
+ * #1446 / #1508 The network dropdown's speedmeter: the live rate, the rolling 24 h average and the per-interface rates, down and up.
  *
- * Samples: a passive TrafficStats delta every [PASSIVE_MS] while the strip is on screen (kept only when the device really
- * moved data, so idle minutes do not drag the average to zero), and one sample per active test ([testNow]). Both are
- * stored on the device (SharedPreferences `speedmeter`), pruned to 24 h. The test is a bounded download from the fleet's
- * Caddy static host: at most [CAP_BYTES] ([CAP_METERED_BYTES] on a metered network) and [TEST_MS] in total.
+ * It samples ONLY between [start] and [stop], which the dropdown calls while it is open: a TrafficStats (and /proc/net/dev)
+ * delta every [sampleMs] (declared, build.json::home_status_bar.network_speed.sample_ms). There is no loop while the dropdown is
+ * closed (battery rules #1487/#1502). The deltas are folded into one stored sample per [FLUSH_MS] (SharedPreferences
+ * `speedmeter`, pruned to 24 h), kept only when the device really moved data; a bounded download test is [testNow].
  */
-class SpeedMeter(private val context: Context) {
+class SpeedMeter(private val context: Context, private val sampleMs: Long = 1_000L) {
     private val app = context.applicationContext
     private val main = Handler(Looper.getMainLooper())
     private val sp = app.getSharedPreferences(STORE, Context.MODE_PRIVATE)
 
-    /** The latest reading in Mbps (a test or a passive sample), null before any. */
-    var nowMbps by mutableStateOf<Double?>(null)
+    /** The latest download / upload rate in Mbps, null before the first delta. */
+    var nowDownMbps by mutableStateOf<Double?>(null)
         private set
-    /** The rolling 24 h average in Mbps, null with no sample. */
-    var avgMbps by mutableStateOf<Double?>(null)
+    var nowUpMbps by mutableStateOf<Double?>(null)
+        private set
+    /** The rolling 24 h average download / upload in Mbps, null with no sample. */
+    var avgDownMbps by mutableStateOf<Double?>(null)
+        private set
+    var avgUpMbps by mutableStateOf<Double?>(null)
+        private set
+    /** Interface name to (down, up) Mbps, from /proc/net/dev when the device lets the app read it; empty otherwise. */
+    var ifaces by mutableStateOf<List<Triple<String, Double, Double>>>(emptyList())
         private set
     var testing by mutableStateOf(false)
         private set
+    var running = false
+        private set
 
     private var lastRx = -1L
+    private var lastTx = -1L
     private var lastAt = 0L
+    private var lastIf: Map<String, Pair<Long, Long>> = emptyMap()
+    private var pendRx = 0L; private var pendTx = 0L; private var pendMs = 0L
 
     private val tick = object : Runnable {
-        override fun run() { passive(); main.postDelayed(this, PASSIVE_MS) }
+        override fun run() { sample(); if (running) main.postDelayed(this, sampleMs) }
     }
 
+    /** The dropdown opened: first sample now, then one per [sampleMs] until [stop]. */
     fun start() {
-        val s = load(); recompute(s)
-        lastRx = TrafficStats.getTotalRxBytes(); lastAt = SystemClock.elapsedRealtime()
-        main.postDelayed(tick, PASSIVE_MS)
+        if (running) return
+        running = true
+        recompute(load())
+        lastRx = TrafficStats.getTotalRxBytes(); lastTx = TrafficStats.getTotalTxBytes()
+        lastAt = SystemClock.elapsedRealtime(); lastIf = readIfaces()
+        main.postDelayed(tick, sampleMs)
     }
 
-    fun stop() { main.removeCallbacks(tick) }
+    /** The dropdown closed: no callback stays posted. */
+    fun stop() {
+        running = false
+        main.removeCallbacks(tick)
+        flush()
+    }
+
+    private fun readIfaces(): Map<String, Pair<Long, Long>> =
+        runCatching { SpeedMath.parseNetDev(java.io.File("/proc/net/dev").readText()) }.getOrDefault(emptyMap())
 
     private fun load(): List<SpeedSample> = SpeedMath.decode(sp.getString(KEY, "").orEmpty())
 
     private fun add(s: SpeedSample) {
         val all = SpeedMath.prune(load() + s, System.currentTimeMillis())
         sp.edit().putString(KEY, SpeedMath.encode(all)).apply()
-        nowMbps = s.mbps
         recompute(all)
     }
 
     private fun recompute(all: List<SpeedSample>) {
-        avgMbps = SpeedMath.average(all, System.currentTimeMillis())
-        if (nowMbps == null) nowMbps = all.lastOrNull()?.mbps
+        val t = System.currentTimeMillis()
+        avgDownMbps = SpeedMath.average(all, t); avgUpMbps = SpeedMath.averageTx(all, t)
+        if (nowDownMbps == null) nowDownMbps = all.lastOrNull()?.mbps
     }
 
-    private fun passive() {
-        val rx = TrafficStats.getTotalRxBytes(); val t = SystemClock.elapsedRealtime()
-        val d = rx - lastRx; val ms = t - lastAt
-        lastRx = rx; lastAt = t
-        if (rx == TrafficStats.UNSUPPORTED.toLong() || d < PASSIVE_MIN_BYTES || ms <= 0L) { recompute(load()); return }
-        add(SpeedSample(System.currentTimeMillis(), d, ms, active = false))
+    private fun flush() {
+        if (pendMs > 0L && pendRx + pendTx >= PASSIVE_MIN_BYTES) add(SpeedSample(System.currentTimeMillis(), pendRx, pendMs, active = false, txBytes = pendTx))
+        pendRx = 0L; pendTx = 0L; pendMs = 0L
+    }
+
+    private fun sample() {
+        val rx = TrafficStats.getTotalRxBytes(); val tx = TrafficStats.getTotalTxBytes(); val t = SystemClock.elapsedRealtime()
+        val ms = t - lastAt
+        val cur = readIfaces()
+        if (rx != TrafficStats.UNSUPPORTED.toLong() && tx != TrafficStats.UNSUPPORTED.toLong() && lastRx >= 0L && ms > 0L) {
+            val dr = (rx - lastRx).coerceAtLeast(0L); val dt = (tx - lastTx).coerceAtLeast(0L)
+            nowDownMbps = SpeedMath.mbps(dr, ms); nowUpMbps = SpeedMath.mbps(dt, ms)
+            pendRx += dr; pendTx += dt; pendMs += ms
+            ifaces = cur.mapNotNull { (n, v) ->
+                val p = lastIf[n] ?: return@mapNotNull null
+                Triple(n, SpeedMath.mbps((v.first - p.first).coerceAtLeast(0L), ms), SpeedMath.mbps((v.second - p.second).coerceAtLeast(0L), ms))
+            }
+            if (pendMs >= FLUSH_MS) flush()
+        }
+        lastRx = rx; lastTx = tx; lastAt = t; lastIf = cur
     }
 
     private fun metered(): Boolean = runCatching {
@@ -81,7 +119,7 @@ class SpeedMeter(private val context: Context) {
         cm.getNetworkCapabilities(cm.activeNetwork)?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
     }.getOrDefault(false)
 
-    /** Tap: one bounded download test off the main thread. A second tap while it runs is ignored. */
+    /** The dropdown's Test link: one bounded download test off the main thread. A second tap while it runs is ignored. */
     fun testNow() {
         if (testing || !online()) return
         testing = true
@@ -90,7 +128,7 @@ class SpeedMeter(private val context: Context) {
             val r = runCatching { download(cap) }.getOrNull()
             main.post {
                 testing = false
-                if (r != null && r.ms > 0L && r.bytes > 0L) add(SpeedSample(System.currentTimeMillis(), r.bytes, r.ms, active = true))
+                if (r != null && r.ms > 0L && r.bytes > 0L) { add(SpeedSample(System.currentTimeMillis(), r.bytes, r.ms, active = true)); nowDownMbps = SpeedMath.mbps(r.bytes, r.ms) }
             }
         }, "speedmeter-test").start()
     }
@@ -128,7 +166,8 @@ class SpeedMeter(private val context: Context) {
         const val CAP_BYTES = 1_048_576L
         const val CAP_METERED_BYTES = 262_144L
         const val TEST_MS = 8_000L
-        const val PASSIVE_MS = 60_000L
+        /** One stored sample per this much sampled time. */
+        const val FLUSH_MS = 60_000L
         const val PASSIVE_MIN_BYTES = 65_536L
     }
 }

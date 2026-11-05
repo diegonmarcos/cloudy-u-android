@@ -1,5 +1,6 @@
 package com.diegonmarcos.superapp.configs
 
+import com.diegonmarcos.superapp.system.RamPlus
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -1024,7 +1025,7 @@ class PermissionsFragment : KitComposeFragment() {
     }
 
     /** One DECLARED device-state row (#632): build.json::ui.permissions.device[]. */
-    private class DeviceSpec(val key: String, val label: String, val want: String, val remedy: String)
+    private class DeviceSpec(val key: String, val label: String, val want: String, val remedy: String, val intents: List<String> = emptyList())
 
     private fun parseDeviceItems(): List<DeviceSpec> {
         val raw = runCatching {
@@ -1036,7 +1037,8 @@ class PermissionsFragment : KitComposeFragment() {
             val o = arr.optJSONObject(i) ?: continue
             val key = o.optString("key"); val label = o.optString("label")
             if (key.isBlank() || label.isBlank()) continue
-            out.add(DeviceSpec(key, label, o.optString("want"), o.optString("remedy")))
+            out.add(DeviceSpec(key, label, o.optString("want"), o.optString("remedy"),
+                o.optJSONArray("remedy_intents")?.let { a -> (0 until a.length()).map { a.getString(it) } }.orEmpty()))
         }
         return out
     }
@@ -1062,6 +1064,14 @@ class PermissionsFragment : KitComposeFragment() {
                 else false to "◯ ON — " + st.describe() + " — " + spec.remedy
             }
         }
+        // #1508 RAM Plus: read-only, measured; the desired state is the row's declared `want` (default on).
+        "ram_plus" -> RamPlus.read(ctx).let { on ->
+            RamPlus.satisfied(on, spec.want.ifBlank { "on" }) to when (RamPlus.satisfied(on, spec.want.ifBlank { "on" })) {
+                null -> "— cannot verify on this device — check " + spec.remedy
+                true -> if (on == true) "✓ ON" else "✓ OFF"
+                else -> (if (on == true) "◯ ON" else "◯ OFF") + " — wanted ${spec.want.ifBlank { "on" }.uppercase()} — " + spec.remedy
+            }
+        }
         // A key nobody measures is not a row: saying so beats drawing it grey
         // forever, which is how an unimplemented declaration hides.
         else -> null to "— no measurement declared for \"${spec.key}\""
@@ -1082,6 +1092,13 @@ class PermissionsFragment : KitComposeFragment() {
      * button.
      */
     private fun openDeviceRemedy(ctx: Context, spec: DeviceSpec) {
+        if (spec.key == "ram_plus") {
+            // Ask: a prompt that deep-links to Device care > Memory > RAM Plus; the owner flips it, this app never does.
+            val i = RamPlus.intent(ctx, spec.intents)
+            if (runCatching { startActivity(i) }.isSuccess) Toast.makeText(ctx, spec.remedy, Toast.LENGTH_LONG).show()
+            else Toast.makeText(ctx, "Could not open RAM Plus. " + spec.remedy, Toast.LENGTH_LONG).show()
+            return
+        }
         if (spec.key != "play_protect_off") {
             Toast.makeText(ctx, "No remedy page declared for ${spec.key}", Toast.LENGTH_LONG).show()
             return

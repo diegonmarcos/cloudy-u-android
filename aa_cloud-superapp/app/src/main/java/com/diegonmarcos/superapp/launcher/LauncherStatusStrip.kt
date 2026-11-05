@@ -135,9 +135,6 @@ class StatusStripModel(private val context: Context) {
 
     private val resources = context.resources
 
-    /** #1446 The speedmeter beside the network chips: the last reading vs the rolling 24 h average. */
-    internal val speed = com.diegonmarcos.superapp.network.SpeedMeter(context)
-
     // ── Pets: data-driven from BuildConfig.STATUS_PETS_B64 (build.json::status_pets) ──
     var petsEnabled = false
         private set
@@ -403,7 +400,6 @@ class StatusStripModel(private val context: Context) {
             cr.registerContentObserver(android.provider.Settings.Global.getUriFor(ADB_WIFI), false, adbObserver)
         }
         mobileWatch.start()
-        speed.start()
         gpsWatch.start()
         refreshAdb()
         mainHandler.post(adbPeersTicker)
@@ -429,7 +425,6 @@ class StatusStripModel(private val context: Context) {
         BtLinks.onProxy = null
         runCatching { context.contentResolver.unregisterContentObserver(adbObserver) }
         mobileWatch.stop()
-        speed.stop()
         gpsWatch.stop()
         runCatching {
             (context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager)?.unregisterNetworkCallback(networkCallback)
@@ -764,12 +759,7 @@ internal fun StatusStripBody(model: StatusStripModel, ctx: Context) {
             gapPx = gapPx,
             modifier = Modifier.fillMaxWidth().padding(start = padStart, end = padEnd, top = with(density) { model.innerRowTopPadPx.toDp() },
                 bottom = with(density) { model.innerRowTopPadPx.toDp() }).testTag("strip:row"),
-            left = {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    StripCluster(layout.getValue(StatusBarDecl.LEFT), model, ctx, host)
-                    SpeedChip(model.speed)
-                }
-            },
+            left = { StripCluster(layout.getValue(StatusBarDecl.LEFT), model, ctx, host) },
             reserve = { h -> Spacer(Modifier.testTag("strip:reserve").height(with(density) { h.toDp() })) },
             // CENTRE: the clock, below the camera punch-hole / pet row.
             clock = { StripCluster(layout.getValue(StatusBarDecl.CENTRE), model, ctx, host) },
@@ -777,23 +767,6 @@ internal fun StatusStripBody(model: StatusStripModel, ctx: Context) {
         )
         // ── Bottom hairline: faint white separator. ShellActivity nudges the toolbar island 6 dp below it. ──
         Spacer(Modifier.fillMaxWidth().height(with(density) { maxOf(1, (density.density * 0.75f).toInt()).toDp() }).background(Color(0x33FFFFFF)))
-    }
-}
-
-/** #1446 The speedmeter: two 7 sp lines, the latest reading over the 24 h average, each in Mbps and MB/s; a tap runs a test. */
-@Composable
-private fun SpeedChip(speed: com.diegonmarcos.superapp.network.SpeedMeter) {
-    val tint = Color.White
-    val sh = androidx.compose.ui.text.TextStyle(shadow = Shadow(Color(0xCC000000), Offset(0f, 1f), 3f))
-    val now = if (speed.testing) "testing..." else com.diegonmarcos.superapp.network.SpeedMath.line("now", speed.nowMbps)
-    val avg = com.diegonmarcos.superapp.network.SpeedMath.line("24h", speed.avgMbps)
-    Tappable("strip:speed", onTap = { speed.testNow() }, modifier = Modifier.padding(start = 6.dp).semantics {
-        contentDescription = "Speed test. $now. $avg"
-    }) {
-        Column {
-            Text(now, color = tint, fontSize = 7.sp, fontFamily = MONO_BOLD, maxLines = 1, softWrap = false, style = sh)
-            Text(avg, color = tint.copy(alpha = 0.75f), fontSize = 7.sp, fontFamily = MONO_BOLD, maxLines = 1, softWrap = false, style = sh)
-        }
     }
 }
 

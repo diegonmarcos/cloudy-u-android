@@ -28,6 +28,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -318,8 +319,24 @@ object NetworkInfoPopup {
 
             // ── 8. Network (DNS + private IPs)
             PopTitle("Network")
+            SpeedRows(ctx)
             for (row in remember { readNetwork(ctx) }) PopValue(row)
         }
+    }
+
+    /** #1508 The speed meter's rows (declared in build.json::home_status_bar.network_speed). The meter runs only while this
+     *  is composed, i.e. while the dropdown is open: it starts here and stops when the dropdown goes. */
+    @Composable
+    private fun SpeedRows(ctx: Context) {
+        val decl = remember { com.diegonmarcos.superapp.launcher.StatusBarDecl.declared.networkSpeed } ?: return
+        val meter = remember { SpeedMeter(ctx, decl.sampleMs) }
+        DisposableEffect(meter) { meter.start(); onDispose { meter.stop() } }
+        for ((id, label) in decl.rows) when (id) {
+            "now" -> PopValue(if (meter.testing) "$label  testing..." else SpeedMath.rowLine(label, meter.nowDownMbps, meter.nowUpMbps))
+            "avg24" -> PopValue(SpeedMath.rowLine(label, meter.avgDownMbps, meter.avgUpMbps))
+        }
+        if (decl.perInterface) for ((n, d, u) in meter.ifaces) PopValue(SpeedMath.rowLine(n, d, u))
+        PopLink("Speed test \u203a") { meter.testNow() }
     }
 
     // ──────────────── Light indicators + radio toggles ────────────────

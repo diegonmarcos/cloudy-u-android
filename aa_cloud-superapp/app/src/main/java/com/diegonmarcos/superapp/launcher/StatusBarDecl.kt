@@ -28,10 +28,15 @@ data class StatusElement(
     val format: String? = null,
 )
 
+/** #1508 The speed rows of the network dropdown (build.json::home_status_bar.network_speed): `rows` are ids now | avg24. */
+data class NetworkSpeedDecl(val sampleMs: Long, val rows: List<Pair<String, String>>, val perInterface: Boolean)
+
 data class StatusBarDeclaration(
     val rowHeightDp: Int, val elements: List<StatusElement>,
     /** Read-only: the toolbar island's pills, listed for the settings section; the strip does not draw them. */
     val toolbarRow: List<StatusElement>,
+    /** The speed meter rows inside the network dropdown; null = none declared. */
+    val networkSpeed: NetworkSpeedDecl? = null,
 )
 
 object StatusBarDecl {
@@ -59,7 +64,12 @@ object StatusBarDecl {
             val e = tb.getJSONObject(i)
             StatusElement(e.getString("id"), e.getString("label"), "pill", e.getString("position"), e.getInt("order"), true, null, "")
         }
-        return StatusBarDeclaration(o.getInt("row_height_dp"), els, toolbar)
+        val ns = o.optJSONObject("network_speed")?.let { n ->
+            val r = n.getJSONArray("rows")
+            NetworkSpeedDecl(n.getLong("sample_ms"), (0 until r.length()).map { i -> r.getJSONObject(i).let { it.getString("id") to it.getString("label") } },
+                n.optBoolean("per_interface", true))
+        }
+        return StatusBarDeclaration(o.getInt("row_height_dp"), els, toolbar, ns)
     }
 
     /**

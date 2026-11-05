@@ -813,6 +813,15 @@
       {"id": "cpu", "label": "CPU load (C)", "short": "C", "kind": "metric", "position": "right", "order": 3, "visible": true, "pet": "cpu", "opens": "system_popup"},
       {"id": "battery", "label": "Battery", "short": "BAT", "kind": "battery", "position": "right", "order": 4, "visible": true, "pet": "battery", "opens": "battery_popup"}
     ],
+    "network_speed": {
+      "_doc": "#1508 The network speed meter, moved off the bar INTO the dropdown the left cluster opens (the table titled Network): `rows` are the declared rows, id now = the live down/up rate, id avg24 = the rolling 24 h average down/up, each in Mb (Mbps); `per_interface` adds one row per network interface the device lets the app read (/proc/net/dev). It samples every `sample_ms` ONLY while the dropdown is open and stops with it (no loop while closed; battery rules #1487/#1502).",
+      "sample_ms": 1000,
+      "rows": [
+        {"id": "now", "label": "Now"},
+        {"id": "avg24", "label": "24 h"}
+      ],
+      "per_interface": true
+    },
     "toolbar_row": [
       {"id": "music_pill", "label": "Music pill (now playing)", "position": "centre", "order": 1, "render": "shell", "source": "ShellActivity: the first pill of the toolbar island; its target is the package that owns the live media session, discovered at runtime"},
       {"id": "dynamic_island", "label": "Dynamic island (initials and mode)", "position": "centre", "order": 2, "render": "shell", "source": "ui.dynamic_island_action"}
@@ -1450,6 +1459,15 @@
         "want": "off",
         "remedy": "Play Store \u2192 profile \u2192 Play Protect \u2192 Settings \u2192 turn off \"Scan apps with Play Protect\"",
         "wizard": true
+      },
+      {
+        "key": "ram_plus",
+        "label": "Samsung RAM Plus (virtual memory)",
+        "want": "on",
+        "remedy": "Settings \u2192 Battery and device care \u2192 Memory \u2192 RAM Plus",
+        "remedy_intents": ["com.samsung.android.lool/com.samsung.android.sm.ui.ram.RamActivity", "com.samsung.android.lool"],
+        "wizard": true,
+        "_doc": "#1508 READ-ONLY check (Settings.Global ram_expand_size, 0 = off; SwapTotal > 0 when the key is absent) and a prompt: when the measured state is not `want` (on | off, default on) the row opens Device care > Memory > RAM Plus through remedy_intents (first that resolves), falling back to Settings. The app never changes it."
       }
     ],
     "_doc_special": "Special permissions the SuperApp itself needs and Android never shows a runtime dialog for. Rendered at the top of Configs > Permissions > OPEN A SYSTEM PAGE and asked, in this order, by the first-run step (system/FirstRunPerms.kt; Skip, and never again after 2 skips). INSTALL_UNKNOWN = PackageManager.canRequestPackageInstalls(), granted on Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES (package-scoped) - the SuperApp installs the fleet. HOME = RoleManager.isRoleHeld(ROLE_HOME) on API 29+ (resolveActivity CATEGORY_HOME below), requested with RoleManager.createRequestRoleIntent(ROLE_HOME), falling back to Settings.ACTION_HOME_SETTINGS. Both re-checked on resume. Kept in step with system/SpecialPerms.kt by SpecialPermsTest.",
@@ -3033,8 +3051,8 @@
             ]
           },
           {
-            "_doc": "#1473/#1476 Weby Services (was Services): the row after Me and before AGI. News moved here from Data Apps; Shopping (ac_cloud-shopping, com.diegonmarcos.cloudshopping, a deals and listings browser over mock data) joined it. Both open their own app through ui.external_apps; the Shopping glyph ic_shopping is generated from ac_cloud-shopping/build.json::launcher_icon by cloud-android-launcher-icons.py (never edit the drawable). Events, Mobility and Jobs are coming_soon placeholders (no app yet). Search moved in before News Shopping and KG Store after them, with a declared separator between the sub-groups (#1476). Pinned by test-agi-tiles.sh (AGI follows Services) and test-services-row.sh.",
-            "title": "Weby Services",
+            "_doc": "#1473/#1476 Weby Services & Markets (was Services): the row after Me and before AGI. News moved here from Data Apps; Shopping (ac_cloud-shopping, com.diegonmarcos.cloudshopping, a deals and listings browser over mock data) joined it. Both open their own app through ui.external_apps; the Shopping glyph ic_shopping is generated from ac_cloud-shopping/build.json::launcher_icon by cloud-android-launcher-icons.py (never edit the drawable). Events, Mobility and Jobs are coming_soon placeholders (no app yet). Search moved in before News Shopping and KG Store after them, with a declared separator between the sub-groups (#1476). Pinned by test-agi-tiles.sh (AGI follows Services) and test-services-row.sh.",
+            "title": "Weby Services & Markets",
             "tiles": [
               {
                 "_doc": "#1162 the caption was Research (Cloud Search renamed Cloud Research); the caption is Search again (renamed back to Cloud Search); id, package and extapp target stay search / cloud-search so installed copies update). #779 Search — hands off to the standalone Cloud Search app (ac_cloud-search, com.diegonmarcos.cloudsearch, read from ITS android.application_id and app/build.gradle namespace). #803: the owner moved SuperApp to the Configs row, so AGI now STARTS with Search: Search, AI Chat, Code, Tools, MyTerminal, Terminal (B-LLM and S-LLM removed, Tools in S-LLM's place, 2026-10-13). GroupedTilesFragment walks group.tiles in declared order with no sort, so array position is that placement, and test-agi-tiles.sh T1 pins the row. target=extapp:cloud-search → launchExternalApp opens the package if installed, else installs ui.external_apps[id=cloud-search].install_apk_url (ABI-resolved through the fleet assets map). icon ic_cloud_search is Cloud Search's own launcher foreground, byte for byte (test-agi-tiles.sh T3) — #803 the Phosphor shooting-star in the mockup's .ai-nav-icon gradient (Cloud Search's app/tools/phosphor.json::launcher generates it; Phosphor is MIT, recorded in ac_cloud-search/NOTICE.md). `tint: false` keeps that gradient: every other tile glyph is drawn white, which would flatten this one to a silhouette (test-agi-tiles.sh T6).",
@@ -3045,7 +3063,7 @@
                 "target": "extapp:cloud-search"
               },
               {
-                "_doc": "Group divider (declared separator tile, drawn as a bare '|'): Weby Services reads Search | News Events | Shopping Mobility & Travel Jobs & Business Real Estate Money | KG Store (owner 2026-11-05, #1476; test-services-row.sh pins it).",
+                "_doc": "Group divider (declared separator tile, drawn as a bare '|'): Weby Services & Markets reads Search | News Events | Shopping Mobility & Travel Jobs & Business Real Estate Money | KG Store (owner 2026-11-05, #1476; test-services-row.sh pins it).",
                 "id": "weby-sep-1",
                 "label": "|",
                 "separator": true
@@ -3064,7 +3082,7 @@
                 "coming_soon": true
               },
               {
-                "_doc": "Group divider (declared separator tile, drawn as a bare '|'): Weby Services reads Search | News Events | Shopping Mobility & Travel Jobs & Business Real Estate Money | KG Store (owner 2026-11-05, #1476; test-services-row.sh pins it).",
+                "_doc": "Group divider (declared separator tile, drawn as a bare '|'): Weby Services & Markets reads Search | News Events | Shopping Mobility & Travel Jobs & Business Real Estate Money | KG Store (owner 2026-11-05, #1476; test-services-row.sh pins it).",
                 "id": "weby-sep-2",
                 "label": "|",
                 "separator": true
@@ -3104,7 +3122,7 @@
                 "coming_soon": true
               },
               {
-                "_doc": "Group divider (declared separator tile, drawn as a bare '|'): Weby Services reads Search | News Events | Shopping Mobility & Travel Jobs & Business Real Estate Money | KG Store (owner 2026-11-05, #1476; test-services-row.sh pins it).",
+                "_doc": "Group divider (declared separator tile, drawn as a bare '|'): Weby Services & Markets reads Search | News Events | Shopping Mobility & Travel Jobs & Business Real Estate Money | KG Store (owner 2026-11-05, #1476; test-services-row.sh pins it).",
                 "id": "weby-sep-3",
                 "label": "|",
                 "separator": true

@@ -65,4 +65,20 @@ class SpeedMathTest {
         assertEquals("24h --", SpeedMath.line("24h", null))
         assertEquals("0.0", SpeedMath.fmt(0.0))
     }
+
+    @Test fun uploadAverageRowLineAndLegacyCodec() {
+        val now = 100 * h
+        val all = listOf(SpeedSample(now - h, 1_000_000, 1000, false, txBytes = 500_000), SpeedSample(now - 2 * h, 0, 1000, false, txBytes = 500_000))
+        assertEquals(4.0, SpeedMath.averageTx(all, now)!!, 1e-9)                    // 1 MB over 2 s = 4 Mbps
+        assertNull(SpeedMath.averageTx(emptyList(), now))
+        assertEquals("Now  \u2193 12.3Mb  \u2191 --Mb", SpeedMath.rowLine("Now", 12.34, null))
+        assertEquals(all, SpeedMath.decode(SpeedMath.encode(all)))
+        assertEquals(listOf(SpeedSample(1, 2, 3, true, 0L)), SpeedMath.decode("1,2,3,1"))   // pre-#1508 four-field line
+    }
+
+    @Test fun netDevParsesInterfacesAndSkipsLoopback() {
+        val txt = "Inter-|   Receive\n face |bytes packets errs drop fifo frame compressed multicast|bytes packets\n" +
+            "    lo: 100 1 0 0 0 0 0 0 200 1 0 0 0 0 0 0\n wlan0: 5000 10 0 0 0 0 0 0 7000 9 0 0 0 0 0 0\n"
+        assertEquals(mapOf("wlan0" to (5000L to 7000L)), SpeedMath.parseNetDev(txt))
+    }
 }
