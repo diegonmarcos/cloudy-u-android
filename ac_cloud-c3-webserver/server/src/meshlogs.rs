@@ -47,6 +47,10 @@ pub struct Mesh {
     pub suffix: String,
     pub default_method: String,
     pub methods: Vec<String>,
+    /// #1498 `/browser/*`: the headless browser API (headless-api v1) of Cloud-Browser's `<package>.headless` provider.
+    pub browser_route: String,
+    pub browser_package: String,
+    pub browser_suffix: String,
 }
 
 pub fn parse_cidr(c: &str) -> Result<(Ipv4Addr, u8), String> {
@@ -86,6 +90,9 @@ impl Mesh {
             suffix: m["ipc"]["authority_suffix"].as_str().filter(|x| !x.is_empty()).ok_or("mesh.ipc.authority_suffix missing")?.to_string(),
             default_method: m["ipc"]["default_method"].as_str().unwrap_or("export").to_string(),
             methods: strs(&m["ipc"]["methods"]),
+            browser_route: m["browser_route"].as_str().filter(|r| r.starts_with('/') && r.len() > 1).unwrap_or("/browser").trim_end_matches('/').to_string(),
+            browser_package: m["browser_package"].as_str().filter(|x| !x.is_empty()).unwrap_or("com.diegonmarcos.cloudbrowser").to_string(),
+            browser_suffix: m["browser_suffix"].as_str().filter(|x| !x.is_empty()).unwrap_or("headless").to_string(),
         };
         if !mesh.methods.contains(&mesh.default_method) {
             return Err(format!("mesh.ipc.default_method {} is not one of its methods", mesh.default_method));
@@ -145,6 +152,9 @@ pub fn route(m: &Mesh, apps: &[App], req: &Req, token: Option<&str>, src: &LogSo
         return deny;
     }
     let p = req.path.trim_end_matches('/');
+    if let Some(rest) = p.strip_prefix(m.browser_route.as_str()).filter(|r| r.is_empty() || r.starts_with('/')) {
+        return browser(m, rest.trim_start_matches('/'), req, src);
+    }
     if let Some(kind) = p.strip_prefix(m.endpoints_route.as_str()).and_then(|r| r.strip_prefix('/')) {
         return match kind {
             "public" => Resp::json(200, apis::public_page(apis::data()).to_string()),
@@ -182,6 +192,30 @@ pub fn route(m: &Mesh, apps: &[App], req: &Req, token: Option<&str>, src: &LogSo
     match src(&format!("{}.{}", app.package, m.suffix), method, &arg.join("&")) {
         Ok((_, payload)) => Resp::bytes(200, "application/json", payload.into_bytes()),
         Err(e) => Resp::json(502, format!("{{\"error\":{},\"app\":{}}}", jstr(&e), jstr(&app.id))),
+    }
+}
+
+/// #1498 `/browser/*`, after the bearer check: the same headless-api v1 as the container, served from this phone. Only the Cloud-Browser provider is
+/// ever called, only with the five declared provider methods, and the body is capped; nothing from the request names an authority or a method.
+pub fn browser(m: &Mesh, rest: &str, req: &Req, src: &LogSource) -> Resp {
+    let (method, post) = match rest {
+        "" | "status" | "sessions" => ("status", false),
+        "command" => ("command", true),
+        "run" => ("run", true),
+        "stop" => ("stop", true),
+        "cdp" => (if serde_json::from_slice::<Value>(&req.body).ok().and_then(|v| v["on"].as_bool()).unwrap_or(false) { "cdp_on" } else { "cdp_off" }, true),
+        _ => return Resp::json(404, "{\"error\":\"not found\"}".to_string()),
+    };
+    if post != (req.method == "POST") {
+        return Resp::json(405, format!("{{\"error\":{}}}", jstr(if post { "POST required" } else { "GET required" }))).with("allow", if post { "POST" } else { "GET" });
+    }
+    if req.body.len() > 1_000_000 {
+        return Resp::json(413, "{\"error\":\"body too large\"}".to_string());
+    }
+    let arg = String::from_utf8_lossy(&req.body).to_string();
+    match src(&format!("{}.{}", m.browser_package, m.browser_suffix), method, &arg) {
+        Ok((_, payload)) => Resp::bytes(200, "application/json", payload.into_bytes()),
+        Err(e) => Resp::json(502, format!("{{\"error\":{},\"app\":\"browser\"}}", jstr(&e))),
     }
 }
 
@@ -298,6 +332,48 @@ mod tests {
         assert_eq!(route(&m, &a, &get("/logs/..%2F..", Some("Bearer tok")), Some("tok"), &spy).status, 404);
         assert!(!called.load(std::sync::atomic::Ordering::SeqCst), "no provider was called for a refused request");
         assert_eq!(route(&m, &a, &get("/other", Some("Bearer tok")), Some("tok"), &spy).status, 404);
+    }
+
+    fn post(path: &str, auth: Option<&str>, body: &str) -> Req {
+        let a = auth.map(|t| format!("authorization: {}\r\n", t)).unwrap_or_default();
+        let mut r = http::parse_request(&format!("POST {} HTTP/1.1\r\nhost: 10.0.0.9\r\n{}content-length: {}\r\n\r\n", path, a, body.len())).unwrap();
+        r.body = body.as_bytes().to_vec();
+        r
+    }
+
+    #[test]
+    fn browser_routes_are_bearer_gated_and_call_only_the_browser_provider() {
+        let (m, a) = (mesh(), apps());
+        for (path, body) in [("/browser/command", "{\"cmd\":\"open\"}"), ("/browser/run", "{}"), ("/browser/stop", ""), ("/browser/cdp", "{\"on\":true}")] {
+            assert_eq!(route(&m, &a, &post(path, None, body), Some("tok"), &stub).status, 401, "{} without a bearer", path);
+            assert_eq!(route(&m, &a, &post(path, Some("Bearer wrong"), body), Some("tok"), &stub).status, 401, "{} with a wrong bearer", path);
+        }
+        assert_eq!(route(&m, &a, &get("/browser/status", None), Some("tok"), &stub).status, 401);
+        assert_eq!(route(&m, &a, &post("/browser/command", Some("Bearer tok"), "{}"), None, &stub).status, 503, "no token known fails closed");
+        let seen = std::sync::Mutex::new(vec![]);
+        let spy = |auth: &str, method: &str, arg: &str| -> Result<(String, String), String> {
+            seen.lock().unwrap().push((auth.to_string(), method.to_string(), arg.to_string()));
+            Ok(("application/json".into(), "{\"ok\":true}".into()))
+        };
+        assert_eq!(route(&m, &a, &post("/browser/command", Some("Bearer tok"), "{\"cmd\":\"html\"}"), Some("tok"), &spy).status, 200);
+        assert_eq!(route(&m, &a, &post("/browser/run", Some("Bearer tok"), "{\"steps\":[]}"), Some("tok"), &spy).status, 200);
+        assert_eq!(route(&m, &a, &get("/browser/status", Some("Bearer tok")), Some("tok"), &spy).status, 200);
+        assert_eq!(route(&m, &a, &post("/browser/cdp", Some("Bearer tok"), "{\"on\":true}"), Some("tok"), &spy).status, 200);
+        assert_eq!(route(&m, &a, &post("/browser/cdp", Some("Bearer tok"), "{\"on\":false}"), Some("tok"), &spy).status, 200);
+        let s = seen.lock().unwrap().clone();
+        assert!(s.iter().all(|x| x.0 == "com.diegonmarcos.cloudbrowser.headless"), "only the Cloud-Browser provider: {:?}", s);
+        assert_eq!(s.iter().map(|x| x.1.as_str()).collect::<Vec<_>>(), ["command", "run", "status", "cdp_on", "cdp_off"]);
+        assert_eq!(s[0].2, "{\"cmd\":\"html\"}");
+    }
+
+    #[test]
+    fn browser_wrong_verb_unknown_path_and_dead_phone() {
+        let (m, a) = (mesh(), apps());
+        assert_eq!(route(&m, &a, &get("/browser/command", Some("Bearer tok")), Some("tok"), &stub).status, 405);
+        assert_eq!(route(&m, &a, &post("/browser/status", Some("Bearer tok"), ""), Some("tok"), &stub).status, 405);
+        assert_eq!(route(&m, &a, &post("/browser/shell", Some("Bearer tok"), ""), Some("tok"), &stub).status, 404);
+        assert_eq!(route(&m, &a, &post("/browsers", Some("Bearer tok"), ""), Some("tok"), &stub).status, 404);
+        assert_eq!(route(&m, &a, &post("/browser/command", Some("Bearer tok"), "{}"), Some("tok"), &stub).status, 502, "the stub knows no headless authority");
     }
 
     #[test]

@@ -88,6 +88,10 @@
     ],
     "retry_s": 20,
     "logs_route": "/logs",
+    "browser_route": "/browser",
+    "browser_package": "com.diegonmarcos.cloudbrowser",
+    "browser_suffix": "headless",
+    "_doc_browser": "#1498 /browser/* serves the headless browser API (ab_cloud-libs-shared/libs/headless-api/headless-api.json) from this phone: POST /browser/command, POST /browser/run, GET /browser/status, POST /browser/stop, POST /browser/cdp {on}. Same listener, so mesh peers and the fleet bearer only; each call goes to Cloud-Browser's <browser_package>.<browser_suffix> provider (libs:headless-browser) and to nothing else.",
     "endpoints_route": "/endpoints",
     "token_authority_suffix": "fleet",
     "ipc": {

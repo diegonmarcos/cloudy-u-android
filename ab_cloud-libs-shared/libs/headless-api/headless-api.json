@@ -4,63 +4,298 @@
   "title": "Headless browser command API",
   "description": "One command API shared by all backends (This App WebView, cloudy-browser-headless container, Cloudflare Browser Run). Transport: POST <base>/command with a Command body, or POST <base>/run with a Run body. Auth: Authorization: Bearer <token>. Reply: {ok, session?, result?, error?}.",
   "version": 1,
-  "backends": ["cloudflare-browser-run", "cloudy-browser-headless", "this-app"],
+  "backends": [
+    "cloudflare-browser-run",
+    "cloudy-browser-headless",
+    "this-app"
+  ],
   "defaultBackend": "this-app",
-  "limits": {"defaultCallTimeoutMs": 30000, "maxCallTimeoutMs": 120000, "defaultMaxSessions": 4, "defaultIdleCloseMs": 300000},
+  "limits": {
+    "defaultCallTimeoutMs": 30000,
+    "maxCallTimeoutMs": 120000,
+    "defaultMaxSessions": 4,
+    "defaultIdleCloseMs": 300000
+  },
   "commands": {
-    "open": {"params": {"url": "string", "session": "string?", "agent": "string?", "profile": "string?"}, "result": "{session,url,title}"},
-    "close": {"params": {"session": "string"}, "result": "{closed:boolean}"},
-    "wait": {"params": {"selector": "string?", "idle": "boolean?", "ms": "integer?", "timeoutMs": "integer?"}, "oneOf": ["selector", "idle", "ms"], "result": "{waited}"},
-    "eval": {"params": {"js": "string"}, "result": "any JSON value"},
-    "click": {"params": {"selector": "string"}, "result": "{clicked:boolean}"},
-    "type": {"params": {"selector": "string", "text": "string", "clear": "boolean?"}, "result": "{typed:integer}"},
-    "scroll": {"params": {"selector": "string?", "x": "integer?", "y": "integer?"}, "result": "{x,y}"},
-    "html": {"params": {"selector": "string?"}, "result": "string"},
-    "text": {"params": {"selector": "string?"}, "result": "string"},
-    "readable": {"params": {}, "result": "{title,markdown}"},
-    "screenshot": {"params": {"fullPage": "boolean?", "selector": "string?"}, "result": "{mime:'image/png',base64}"},
-    "cookies": {"params": {"action": "get|set|clear", "cookies": "array?"}, "result": "array"},
-    "storage": {"params": {"area": "local|session", "action": "get|set|remove|clear", "key": "string?", "value": "string?"}, "result": "object"},
-    "network": {"params": {"action": "log|clear|block|unblock", "patterns": "array<string>?"}, "result": "array|{blocked:array}"}
+    "open": {
+      "params": {
+        "url": "string",
+        "session": "string?",
+        "agent": "string?",
+        "profile": "string?"
+      },
+      "result": "{session,url,title}"
+    },
+    "close": {
+      "params": {
+        "session": "string"
+      },
+      "result": "{closed:boolean}"
+    },
+    "wait": {
+      "params": {
+        "selector": "string?",
+        "idle": "boolean?",
+        "ms": "integer?",
+        "timeoutMs": "integer?"
+      },
+      "oneOf": [
+        "selector",
+        "idle",
+        "ms"
+      ],
+      "result": "{waited}"
+    },
+    "eval": {
+      "params": {
+        "js": "string"
+      },
+      "result": "any JSON value"
+    },
+    "click": {
+      "params": {
+        "selector": "string"
+      },
+      "result": "{clicked:boolean}"
+    },
+    "type": {
+      "params": {
+        "selector": "string",
+        "text": "string",
+        "clear": "boolean?"
+      },
+      "result": "{typed:integer}"
+    },
+    "scroll": {
+      "params": {
+        "selector": "string?",
+        "x": "integer?",
+        "y": "integer?"
+      },
+      "result": "{x,y}"
+    },
+    "html": {
+      "params": {
+        "selector": "string?"
+      },
+      "result": "string"
+    },
+    "text": {
+      "params": {
+        "selector": "string?"
+      },
+      "result": "string"
+    },
+    "readable": {
+      "params": {},
+      "result": "{title,markdown}"
+    },
+    "screenshot": {
+      "params": {
+        "fullPage": "boolean?",
+        "selector": "string?"
+      },
+      "result": "{mime:'image/png',base64}"
+    },
+    "cookies": {
+      "params": {
+        "action": "get|set|clear",
+        "cookies": "array?"
+      },
+      "result": "array"
+    },
+    "storage": {
+      "params": {
+        "area": "local|session",
+        "action": "get|set|remove|clear",
+        "key": "string?",
+        "value": "string?"
+      },
+      "result": "object"
+    },
+    "network": {
+      "params": {
+        "action": "log|clear|block|unblock",
+        "patterns": "array<string>?"
+      },
+      "result": "array|{blocked:array}"
+    }
   },
   "$defs": {
     "Command": {
       "type": "object",
-      "required": ["cmd"],
+      "required": [
+        "cmd"
+      ],
       "properties": {
-        "cmd": {"enum": ["open", "close", "wait", "eval", "click", "type", "scroll", "html", "text", "readable", "screenshot", "cookies", "storage", "network"]},
-        "session": {"type": "string", "pattern": "^[A-Za-z0-9_-]{1,64}$"},
-        "agent": {"type": "string", "maxLength": 64},
-        "timeoutMs": {"type": "integer", "minimum": 1, "maximum": 120000},
-        "url": {"type": "string"}, "profile": {"type": "string"},
-        "selector": {"type": "string"}, "idle": {"type": "boolean"}, "ms": {"type": "integer", "minimum": 0},
-        "js": {"type": "string"}, "text": {"type": "string"}, "clear": {"type": "boolean"},
-        "x": {"type": "integer"}, "y": {"type": "integer"}, "fullPage": {"type": "boolean"},
-        "action": {"type": "string"}, "area": {"enum": ["local", "session"]},
-        "key": {"type": "string"}, "value": {"type": "string"},
-        "cookies": {"type": "array", "items": {"type": "object"}},
-        "patterns": {"type": "array", "items": {"type": "string"}}
+        "cmd": {
+          "enum": [
+            "open",
+            "close",
+            "wait",
+            "eval",
+            "click",
+            "type",
+            "scroll",
+            "html",
+            "text",
+            "readable",
+            "screenshot",
+            "cookies",
+            "storage",
+            "network"
+          ]
+        },
+        "session": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{1,64}$"
+        },
+        "agent": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "timeoutMs": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 120000
+        },
+        "url": {
+          "type": "string"
+        },
+        "profile": {
+          "type": "string"
+        },
+        "selector": {
+          "type": "string"
+        },
+        "idle": {
+          "type": "boolean"
+        },
+        "ms": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "js": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        },
+        "clear": {
+          "type": "boolean"
+        },
+        "x": {
+          "type": "integer"
+        },
+        "y": {
+          "type": "integer"
+        },
+        "fullPage": {
+          "type": "boolean"
+        },
+        "action": {
+          "type": "string"
+        },
+        "area": {
+          "enum": [
+            "local",
+            "session"
+          ]
+        },
+        "key": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        },
+        "cookies": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "patterns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
       }
     },
     "Run": {
       "type": "object",
-      "required": ["steps"],
+      "required": [
+        "steps"
+      ],
       "properties": {
-        "session": {"type": "string"},
-        "stepTimeoutMs": {"type": "integer", "minimum": 1, "maximum": 120000},
-        "stopOnError": {"type": "boolean", "default": true},
-        "steps": {"type": "array", "minItems": 1, "maxItems": 50, "items": {"$ref": "#/$defs/Command"}}
+        "session": {
+          "type": "string"
+        },
+        "stepTimeoutMs": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 120000
+        },
+        "stopOnError": {
+          "type": "boolean",
+          "default": true
+        },
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 50,
+          "items": {
+            "$ref": "#/$defs/Command"
+          }
+        }
       }
     },
     "Reply": {
       "type": "object",
-      "required": ["ok"],
-      "properties": {"ok": {"type": "boolean"}, "session": {"type": "string"}, "result": {}, "error": {"$ref": "#/$defs/Error"}, "steps": {"type": "array", "items": {"$ref": "#/$defs/Reply"}}}
+      "required": [
+        "ok"
+      ],
+      "properties": {
+        "ok": {
+          "type": "boolean"
+        },
+        "session": {
+          "type": "string"
+        },
+        "result": {},
+        "error": {
+          "$ref": "#/$defs/Error"
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Reply"
+          }
+        }
+      }
     },
     "Error": {
       "type": "object",
-      "required": ["code", "message"],
-      "properties": {"code": {"enum": ["bad_request", "unauthorized", "not_found", "timeout", "limit", "denied", "internal"]}, "message": {"type": "string"}}
+      "required": [
+        "code",
+        "message"
+      ],
+      "properties": {
+        "code": {
+          "enum": [
+            "bad_request",
+            "unauthorized",
+            "not_found",
+            "timeout",
+            "limit",
+            "denied",
+            "internal"
+          ]
+        },
+        "message": {
+          "type": "string"
+        }
+      }
     }
   },
   "http": {
@@ -68,6 +303,11 @@
     "POST /command": "Command -> Reply",
     "POST /run": "Run -> Reply",
     "GET /sessions": "list",
-    "DELETE /sessions/{id}": "close"
+    "DELETE /sessions/{id}": "close",
+    "POST /cdp": "phone only: {on:boolean}; opt-in DevTools/CDP relay (default off, token-gated, auto-off)"
+  },
+  "mesh": {
+    "phone": "/browser/{command|run|status|stop|cdp} on Cloud-Webserver's mesh listener (bearer, mesh peers only)",
+    "container": "https://mcp.diegonmarcos.com/cloudy-browser-headless/{health|command|run|sessions} (wg-only Caddy path route, bearer)"
   }
 }
