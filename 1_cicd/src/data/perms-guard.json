@@ -219,13 +219,9 @@
       "ac_cloud-nix-on-droid/": "vendored Termux/nix-on-droid fork (termux-shared PermissionUtils); upstream code",
       "ac_cloud-notes/packages/frontend/apps/android/App/app/src/main/java/app/cloudnotes/pro/plugin/VaultPlugin.kt": "not moved into a Perms row yet (#1515)",
       "ac_cloud-notes/packages/frontend/apps/android/App/app/src/main/java/app/cloudnotes/pro/plugin/ExternalFilePlugin.kt": "not moved into a Perms row yet (#1515)",
-      "ac_cloud-store/app/src/main/java/com/diegonmarcos/cloudstore/UpdateChecks.kt": "not moved into a Perms row yet (#1515)",
-      "ac_cloud-store/app/src/main/java/com/diegonmarcos/cloudstore/MainActivity.kt": "not moved into a Perms row yet (#1515)",
-      "ac_cloud-store/app/src/main/java/com/diegonmarcos/cloudstore/UpdateChecksCard.kt": "not moved into a Perms row yet (#1515)",
-      "ac_cloud-store/app/src/main/java/com/diegonmarcos/cloudstore/AccessPage.kt": "not moved into a Perms row yet (#1515)",
       "ac_cloud-termux/": "vendored Termux fork (termux-shared PermissionUtils); upstream code, not owner-written",
       "ac_cloud-vault/": "vendored Bitwarden fork: its own permission manager asks; replaced only with the fork's own screens"
     },
-    "baseline_max": 36
+    "baseline_max": 32
   }
 }

@@ -1,5 +1,6 @@
 package com.diegonmarcos.cloudstore
 
+import com.diegonmarcos.superapp.perms.PermsPages
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -257,10 +258,7 @@ private fun AndroidPerms(ctx: Context, pkg: String) {
     }
     Text("System settings ↗", Modifier.padding(top = dpOf(StoreDensity.S4))
         .background(IDLE).clickable {
-            runCatching {
-                ctx.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", pkg, null))
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-            }.onFailure { Toast.makeText(ctx, "No settings screen", Toast.LENGTH_SHORT).show() }
+            if (!PermsPages.openAppInfo(ctx, pkg)) Toast.makeText(ctx, "No settings screen", Toast.LENGTH_SHORT).show()
         }.padding(dpOf(StoreDensity.S8), dpOf(StoreDensity.S4)),
         color = Color.White, fontWeight = FontWeight.Bold, fontSize = StoreDensity.T_META.sp)
 }

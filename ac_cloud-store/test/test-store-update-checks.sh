@@ -3,8 +3,8 @@
 # Held statically (no build, no device, no network):
 #  U1 the periodic fleet check is still scheduled at launch (App.kt -> ConstellationWorker.start); #1502 no boot/update
 #     receiver (WorkManager keeps its jobs; a job exists only with auto-update on over an unmetered network)
-#  U2 UpdateChecks asks the system: notifications through the permission dialog, install source and battery through
-#     their settings screens; and it NEVER grants or exempts: no REQUEST_IGNORE_BATTERY_OPTIMIZATIONS (manifest or code),
+#  U2 UpdateChecks asks nothing itself (#1515): notifications, install source and battery are Configs > Perms rows the
+#     card's buttons open; and it NEVER grants or exempts: no REQUEST_IGNORE_BATTERY_OPTIMIZATIONS (manifest or code),
 #     no pm grant, no secure-settings write, no shell channel in the three update-check files
 #  U3 it is reachable: Configs > Notifications draws the card, MainActivity shows the one-time battery prompt
 #  U4 the suite exists and runs through this app (UpdateChecksTest; storeUnitTests -> :app:testDebugUnitTest)
@@ -38,10 +38,10 @@ ok("ConstellationWorker.start(this)" in app, "U1 launch schedules the periodic f
 ok("android.intent.action.BOOT_COMPLETED" not in mf and "MY_PACKAGE_REPLACED" not in mf and "<receiver" not in re.sub(r"<!--.*?-->", "", mf, flags=re.S),
    "U1 #1502 no boot or package-replaced receiver in the Store manifest", "U1 #1502 the Store manifest declares a receiver that can start it at boot")
 ok("RECEIVE_BOOT_COMPLETED" not in mf, "U1 #1502 RECEIVE_BOOT_COMPLETED is not held", "U1 #1502 RECEIVE_BOOT_COMPLETED is back")
-ok("ActivityResultContracts.RequestPermission()" in card and "android.Manifest.permission.POST_NOTIFICATIONS" in card,
-   "U2 notifications are asked through the system permission dialog", "U2 notifications are not asked through RequestPermission")
-ok("Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES" in uc and "Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS" in uc,
-   "U2 install source and battery open their system settings screens", "U2 an update-check need no longer opens its system screen")
+ok("UpdateChecks.open(ctx, n)" in card and "PermsLink.open(" in uc,
+   "U2 #1515 every need's button opens its Configs > Perms row", "U2 an update-check need no longer opens its Perms row")
+ok(all(x in uc for x in ('"notifications"', '"install_unknown"', '"battery_opt"')) and not any(t in uc + card for t in ("RequestPermission", "requestPermissions(", "ACTION_MANAGE_UNKNOWN_APP_SOURCES", "ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS")),
+   "U2 #1515 the card asks nothing itself: the three needs are Perms rows (notifications, install_unknown, battery_opt)", "U2 the update-check card asks or opens a settings screen itself, or lost a Perms row id")
 bad = [t for t in ("REQUEST_IGNORE_BATTERY_OPTIMIZATIONS", "ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS", "WRITE_SECURE_SETTINGS", "pm grant",
                    "HostShell", "PermsGrant", "setDeviceOwner", "DevicePolicyManager") if t in uc + card ]
 ok(not bad, "U2 no privileged or silent self-grant in the update-check files", f"U2 privileged/silent grant found: {bad}")
@@ -83,9 +83,9 @@ M=0
 mutate "fleet check not scheduled at launch" $K/App.kt 'ConstellationWorker.start(this)' 'Unit' || M=$((M+1))
 mutate "boot receiver returns" ac_cloud-store/app/src/main/AndroidManifest.xml '<!-- #1502 no boot receiver' '<receiver android:name=".X"><intent-filter><action android:name="android.intent.action.BOOT_COMPLETED"/></intent-filter></receiver><!-- #1502 no boot receiver' || M=$((M+1))
 mutate "battery exemption requested by the app" ac_cloud-store/app/src/main/AndroidManifest.xml '<uses-permission android:name="android.permission.INTERNET" />' '<uses-permission android:name="android.permission.INTERNET" /><uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />' || M=$((M+1))
-mutate "silent self-grant added" $K/UpdateChecks.kt 'fun batteryIntent()' 'fun grantSilently(sh: HostShell) = sh.run("pm grant") ; fun batteryIntent()' || M=$((M+1))
-mutate "battery screen replaced by a direct request" $K/UpdateChecks.kt 'Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS' 'Settings.ACTION_APPLICATION_DETAILS_SETTINGS' || M=$((M+1))
-mutate "notifications not asked through the system dialog" $K/UpdateChecksCard.kt 'ActivityResultContracts.RequestPermission()' 'ActivityResultContracts.StartActivityForResult()' || M=$((M+1))
+mutate "silent self-grant added" $K/UpdateChecks.kt 'fun permsId(n: Need)' 'fun grantSilently(sh: HostShell) = sh.run("pm grant") ; fun permsId(n: Need)' || M=$((M+1))
+mutate "battery row id lost" $K/UpdateChecks.kt '"battery_opt"' '"battery_x"' || M=$((M+1))
+mutate "card asks the system dialog itself" $K/UpdateChecksCard.kt 'onClick = { UpdateChecks.open(ctx, n) }' 'onClick = { val l = ActivityResultContracts.RequestPermission() }' || M=$((M+1))
 mutate "card not drawn" $K/ConfigsPage.kt 'UpdateChecksCard()   // #1078' 'Unit' || M=$((M+1))
 mutate "prompt not shown" $K/MainActivity.kt 'BatteryPrompt()   // #1078' 'Unit' || M=$((M+1))
 mutate "prompt repeats every launch" $K/UpdateChecksCard.kt 'UpdateChecks.markBatteryPrompted(ctx); show = false

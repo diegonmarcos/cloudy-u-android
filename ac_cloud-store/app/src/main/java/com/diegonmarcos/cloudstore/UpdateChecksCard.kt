@@ -3,8 +3,6 @@ package com.diegonmarcos.cloudstore
 import android.content.Context
 import android.content.ContextWrapper
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -59,14 +57,12 @@ private fun rememberRefresh(): Int {
 fun UpdateChecksCard() {
     val ctx = LocalContext.current
     val tick = rememberRefresh()
-    var asked by remember { mutableStateOf(0) }   // the permission dialog answered: re-read
-    val askNotifications = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { asked++ }
     Column(Modifier.fillMaxWidth().testTag(UpdateChecks.TAG_CARD), verticalArrangement = Arrangement.spacedBy(StoreDensity.dpValue(StoreDensity.S4).dp)) {
         Text("Reliable update checks", fontSize = StoreDensity.T_TITLE.sp, color = MaterialTheme.colorScheme.onSurface)
-        Text("Cloud Store checks for updates in the background. Each of these is your choice, made on the system's own screen.",
+        Text("Cloud Store checks for updates in the background. Each of these is your choice, made in Configs > Perms.",
             fontSize = StoreDensity.T_CAPTION.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         UpdateChecks.Need.values().forEach { n ->
-            val ok = remember(tick, asked, n) { UpdateChecks.granted(ctx, n) }
+            val ok = remember(tick, n) { UpdateChecks.granted(ctx, n) }
             val (label, why) = when (n) {
                 UpdateChecks.Need.NOTIFICATIONS -> "Notifications" to "To tell you an update is ready or needs a tap."
                 UpdateChecks.Need.INSTALL_SOURCE -> "Install updates" to "Lets Cloud Store hand an update to the system installer."
@@ -78,17 +74,9 @@ fun UpdateChecksCard() {
                     Text(why, fontSize = StoreDensity.T_CAPTION.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 if (!ok) TextButton(
-                    onClick = {
-                        when (n) {
-                            UpdateChecks.Need.NOTIFICATIONS ->
-                                // 13+: the system prompt. Below 13 (or once refused twice) the app's notification settings.
-                                if (android.os.Build.VERSION.SDK_INT >= 33) askNotifications.launch(android.Manifest.permission.POST_NOTIFICATIONS)
-                            UpdateChecks.Need.INSTALL_SOURCE -> UpdateChecks.open(ctx, UpdateChecks.installSourceIntent(ctx))
-                            UpdateChecks.Need.BATTERY -> UpdateChecks.open(ctx, UpdateChecks.batteryIntent())
-                        }
-                    },
+                    onClick = { UpdateChecks.open(ctx, n) },   // #1515 granted in Configs > Perms
                     modifier = Modifier.testTag(UpdateChecks.action(n)),
-                ) { Text(if (n == UpdateChecks.Need.NOTIFICATIONS) "Allow" else "Open settings") }
+                ) { Text("Fix in Perms ›") }
             }
         }
     }
@@ -110,7 +98,7 @@ fun BatteryPrompt() {
         text = { Text("Android can pause Cloud Store's background update checks to save battery. You can exempt it on the system's battery screen; nothing changes unless you choose it there.") },
         confirmButton = { TextButton({
             UpdateChecks.markBatteryPrompted(ctx); show = false
-            UpdateChecks.open(ctx, UpdateChecks.batteryIntent())
+            UpdateChecks.open(ctx, UpdateChecks.Need.BATTERY)
         }) { Text("Open battery settings") } },
         dismissButton = { TextButton({ UpdateChecks.markBatteryPrompted(ctx); show = false }) { Text("Not now") } },
     )

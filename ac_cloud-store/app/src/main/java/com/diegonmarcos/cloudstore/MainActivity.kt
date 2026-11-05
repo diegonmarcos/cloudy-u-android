@@ -72,11 +72,7 @@ class MainActivity : AppCompatActivity(), AdbShellHost {
                 Surface(Modifier.fillMaxSize()) { StoreShell() }
             }
         }
-        // #894 Android 13+ ships POST_NOTIFICATIONS denied until asked. Cloud Store never asked, so its
-        // install confirmations and the pass summary were "blocked because notifications are off".
-        if (android.os.Build.VERSION.SDK_INT >= 33 &&
-            checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED)
-            requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), REQ_NOTIFICATIONS)
+        // #894 / #1515 POST_NOTIFICATIONS is asked at first run and granted in Configs > Perms (libs:perms), never from here.
         // Self-update, as every constellation app does.
         Updater.start(this)
     }
@@ -193,7 +189,6 @@ class MainActivity : AppCompatActivity(), AdbShellHost {
     companion object {
         /** Intent extra naming the tab to open: [TAB_CLOUD], [TAB_PHONE], [TAB_FEED] or [TAB_ACCESS]. */
         const val EXTRA_TAB = "tab"
-        private const val REQ_NOTIFICATIONS = 894
         const val TAB_CLOUD = "cloud"
         const val TAB_PHONE = "phone"
         const val TAB_SEARCH = "search"

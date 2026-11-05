@@ -55,7 +55,7 @@ check() {
   printf '%s' "$L" | grep -q 'if (!s.running) flush(ctx)' && ok "the summary waits for the pass to end, then follows late results" || bad "the summary is raised mid-pass"
   printf '%s' "$L" | grep -q 'dedupeKey = KEY' && ok "one summary key: each update replaces the last" || bad "the summary has no dedupe key"
   # 3. Cloud Store
-  printf '%s' "$MA" | grep -q 'requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS)' && ok "Cloud Store asks for POST_NOTIFICATIONS" || bad "Cloud Store never asks for POST_NOTIFICATIONS"
+  printf '%s' "$(strip "$S/UpdateChecks.kt")" | grep -q 'Need.NOTIFICATIONS -> "notifications"' && ! printf '%s' "$MA" | grep -q 'requestPermissions(' && ok "Cloud Store's notifications are its Configs > Perms row (#1515), not an ask of its own" || bad "Cloud Store lost its notifications Perms row, or asks for POST_NOTIFICATIONS itself"
   printf '%s' "$AP" | grep -q 'alertLink = "intent:#Intent;action=com.diegonmarcos.cloudstore.OPEN;package=com.diegonmarcos.cloudstore;S.tab=cloud;end"' && ok "the summary opens Cloud Store on the fleet tab" || bad "Cloud Store's summary does not open Cloud Store"
   return $fails
 }
@@ -89,7 +89,7 @@ mutate "host chain stops filing outcomes" ast/StoreAuto.kt 'INSTALLED -> com.die
 mutate "worker raises its own alert again" ast/ConstellationWorker.kt 'FleetAlerts.withdraw(applicationContext, KEY_INSTALLED)' 'FleetAlerts.raise(applicationContext, FleetAlerts.Alert("x"))' || M=$((M+1))
 mutate "summary raised mid-pass" upd/PassLedger.kt 'if (!s.running) flush(ctx)' 'flush(ctx)' || M=$((M+1))
 mutate "summary loses its key" upd/PassLedger.kt 'dedupeKey = KEY' 'dedupeKey = ""' || M=$((M+1))
-mutate "Cloud Store stops asking" store/MainActivity.kt 'requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS)' 'requestPermissionsx(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS)' || M=$((M+1))
+mutate "Cloud Store loses its notifications Perms row" store/UpdateChecks.kt 'Need.NOTIFICATIONS -> "notifications"' 'Need.NOTIFICATIONS -> "notificationz"' || M=$((M+1))
 mutate "summary opens SuperApp" store/App.kt 'package=com.diegonmarcos.cloudstore;S.tab=cloud' 'package=com.diegonmarcos.superapp;S.tab=cloud' || M=$((M+1))
 
 echo "== RESULT: real tree $REAL failure(s), $M mutation(s) not caught =="

@@ -50,11 +50,13 @@ class UpdateChecksTest {
     }).around(compose)
 
     @Test
-    fun `the settings intents are the system screens, not a request to exempt or grant`() {
-        assertEquals(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS, UpdateChecks.batteryIntent().action)
-        val src = UpdateChecks.installSourceIntent(app)
-        assertEquals(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, src.action)
-        assertEquals("package:" + app.packageName, src.dataString)
+    fun `every need is granted in Configs - Perms: its row, never a settings intent of the card (#1515)`() {
+        assertEquals(listOf("notifications", "install_unknown", "battery_opt"), UpdateChecks.Need.values().map { UpdateChecks.permsId(it) })
+        val src = java.io.File("src/main/java/com/diegonmarcos/cloudstore").walkTopDown().filter { it.extension == "kt" }
+            .filter { it.name == "UpdateChecks.kt" || it.name == "UpdateChecksCard.kt" || it.name == "MainActivity.kt" || it.name == "AccessPage.kt" }
+            .joinToString("\n") { it.readText() }
+        for (t in listOf("requestPermissions(", "RequestPermission", "ACTION_MANAGE_UNKNOWN_APP_SOURCES", "ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS", "ACTION_APPLICATION_DETAILS_SETTINGS"))
+            assertFalse("$t is back in the Store UI", src.contains(t))
     }
 
     @Test

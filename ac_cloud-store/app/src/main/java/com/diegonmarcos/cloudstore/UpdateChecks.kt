@@ -1,12 +1,10 @@
 package com.diegonmarcos.cloudstore
 
+import com.diegonmarcos.superapp.perms.PermsLink
 import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
-import android.provider.Settings
 
 /**
  * #1078 What keeps Cloud Store's background update checks (libs:appstore ConstellationWorker, a WorkManager periodic job
@@ -45,16 +43,15 @@ object UpdateChecks {
         Need.BATTERY -> batteryExempt(ctx)
     }
 
-    /** This app's own "Install unknown apps" screen. */
-    fun installSourceIntent(ctx: Context): Intent =
-        Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.fromParts("package", ctx.packageName, null))
+    /** #1515 the Configs > Perms row (catalogue id) that grants [n]: every grant is made there, never from this card. */
+    fun permsId(n: Need): String = when (n) {
+        Need.NOTIFICATIONS -> "notifications"
+        Need.INSTALL_SOURCE -> "install_unknown"
+        Need.BATTERY -> "battery_opt"
+    }
 
-    /** The system's battery-optimization list: the user finds Cloud Store there and chooses "Don't optimize". */
-    fun batteryIntent(): Intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
-
-    /** Opens a settings screen; false when this phone has none for it. */
-    fun open(ctx: Context, intent: Intent): Boolean =
-        runCatching { ctx.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }.isSuccess
+    /** Opens Configs > Perms on the row of [n]. */
+    fun open(ctx: Context, n: Need) = PermsLink.open(ctx, "updates", listOf(permsId(n)))
 
     /** The in-app battery prompt is asked once, and only while the app is still battery-optimized. */
     fun shouldPromptBattery(ctx: Context): Boolean =
