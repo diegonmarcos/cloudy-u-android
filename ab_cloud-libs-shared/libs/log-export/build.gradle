@@ -1,0 +1,58 @@
+// libs:log-export (#1490): the fleet's ONE IPC entry point that EXPORTS an app's own logs. Every app gets an exported,
+// signature-permission ContentProvider `<package>.logexport` (CONSTELLATION_DATA, the fleet's one membership permission)
+// answering call(meta | logs | crashes | export) with {ok, mime, payload, error}: the recent logcat of the app's own uid
+// (libs:devtools' LogPipe ring) and the crash ring (libs:crash's files/crashes), as JSON. libs:core `api`s this module, so
+// it is declared once and no app has code or manifest of its own; cloud-android-log-export-guard.py asserts that every app
+// of the fleet manifest links it. Cloud-Webserver routes these exports onto the mesh (/logs/<app>).
+// WIRING: the sources live in libs:devtools (src/main/java/com/diegonmarcos/superapp/logexport, with the provider declared in
+// devtools' manifest) because devtools already rides on core into every app and every settings file: no per-app build.json or
+// settings edit exists to forget, and a change to them moves devtools' tree sha, so the publish gate re-ships every app. This
+// module is the standalone, testable face of them (the Libs ship compiles and unit-tests it); it is never on an app's
+// classpath (two copies of the classes would clash). Tests live here, in src/test.
+
+plugins {
+    id 'com.android.library'
+}
+if (project.extensions.findByName('kotlin') == null) {
+    apply plugin: 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.diegonmarcos.superapp.logexport'
+    compileSdk 36
+
+    defaultConfig {
+        minSdk 26
+    }
+
+    testOptions {
+        unitTests {
+            returnDefaultValues = true
+            all {
+                testLogging {
+                    events 'failed'
+                    exceptionFormat 'full'
+                }
+            }
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+// The sources of libs:devtools' logexport package, compiled here on their own.
+android.sourceSets.main.java.srcDir('../devtools/src/main/java/com/diegonmarcos/superapp/logexport')
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
+dependencies {
+    implementation project(':libs:devtools')
+    testImplementation 'junit:junit:4.13.2'
+}

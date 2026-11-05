@@ -1,0 +1,36 @@
+name: "log-export guard — every fleet app exports its logs over IPC"
+
+# WHY (#1490). Cloud-Webserver serves /logs/<app> on the mesh by calling each app's `<package>.logexport` provider
+# (libs/log-export, compiled into libs:devtools, which libs:core carries into every app). This guard fails when devtools
+# stops declaring the exported, signature-permission provider, when the contract drifts from libs:crash / the fleet
+# permission, or when an app of the fleet manifest does not link it.
+#
+# Its own workflow and every push, for the reason crash-default-guard gives: the commit it must catch can touch any
+# app's manifest or build.json, so there is no path to filter on.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# ── MANAGED-GUARD-CONCURRENCY: injected by cloud-android-guard-triggers.py ──
+concurrency:
+  group: log-export-guard-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+# ── end MANAGED-GUARD-CONCURRENCY ──
+
+jobs:
+  log-export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: The guard still fails when an app loses the log export
+        run: bash 1_cicd/src/scripts/test/log-export-guard.test.sh
+
+      - name: Every fleet app exports its logs over IPC
+        run: python3 1_cicd/src/scripts/cloud-android-log-export-guard.py .

@@ -64,6 +64,15 @@
                 <action android:name="com.diegonmarcos.cloud.action.MESH_MEMBER" />
             </intent-filter>
         </receiver>
+
+        <!-- #1490 every app's log-export door (sources: libs/log-export, compiled into this module). Exported and
+             gated on the same signature permission; read-only. Cloud-Webserver calls it and serves /logs/<app> on
+             the mesh. -->
+        <provider
+            android:name="com.diegonmarcos.superapp.logexport.LogExportProvider"
+            android:authorities="${applicationId}.logexport"
+            android:exported="true"
+            android:permission="com.diegonmarcos.cloud.permission.CONSTELLATION_DATA" />
     </application>
 
 </manifest>

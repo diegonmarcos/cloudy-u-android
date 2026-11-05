@@ -11,6 +11,7 @@
     "compose-ratchet-guard.yml": "#773: counts View UI in every app and lib tree and discovers new ones; a filter would be a second list of app trees",
     "dns-resolver-guard.yml": "scans the sources of every app and lib for resolver bypasses (30k files traced)",
     "crash-default-guard.yml": "#1122: scans every app manifest and build.json for an opt-out of the default crash handler; the commit it must catch can touch any app",
+    "log-export-guard.yml": "#1490: reads the fleet manifest and every app's build.json, settings and manifests for the log-export IPC door; the commit it must catch can touch any app",
     "fleet-alerts-guard.yml": "#777: scans every app and lib tree for a direct notify(); the commit it must catch can be any source file anywhere",
     "fleet-config-guard.yml": "#783: scans every app and lib tree for a store (SharedPreferences, encrypted, DataStore, Room) the migration manifest does not declare; the commit it must catch can be any source file anywhere",
     "fleet-setup-guard.yml": "#873: reads every app's build.json and settings, the fleet-config.json declarations and the setup provider; the commit it must catch can be any app's module list or any store declaration",
