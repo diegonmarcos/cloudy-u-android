@@ -53,13 +53,18 @@ def manifest_of(app_dir, bj):
     if rel:
         return os.path.join(app_dir, rel)
     best = None
-    for m in glob.glob(os.path.join(app_dir, "**/src/main/AndroidManifest.xml"), recursive=True):
+    # sorted: glob order is filesystem-dependent, and a tie (or a library that also has an <application>) must not decide
+    # which module is the app. A module dir named "app" wins, then the shallowest, then the path.
+    def rank(m):
+        mod = os.path.relpath(m, app_dir).split(os.sep)[:-3]
+        return (0 if mod and mod[-1] == "app" else 1, m.count(os.sep), m)
+    for m in sorted(glob.glob(os.path.join(app_dir, "**/src/main/AndroidManifest.xml"), recursive=True)):
         parts = set(os.path.relpath(m, app_dir).split(os.sep))
         if parts & SKIP_DIRS:
             continue
         if "<application" not in (read(m) or ""):
             continue
-        if best is None or m.count(os.sep) < best.count(os.sep):
+        if best is None or rank(m) < rank(best):
             best = m
     return best
 
