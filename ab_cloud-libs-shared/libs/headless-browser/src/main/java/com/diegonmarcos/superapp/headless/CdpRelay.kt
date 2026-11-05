@@ -41,7 +41,7 @@ class CdpRelay(private val gate: HeadlessTokenGate, private val socketName: Stri
             dev.outputStream.write(head.toByteArray()); dev.outputStream.flush()
             val t = Thread({ pipe(dev.inputStream, cout) }, "cdp-down").apply { isDaemon = true }; t.start()
             pipe(cin, dev.outputStream)
-        } catch (_: Exception) {
+        } catch (e: Exception) {
         } finally { runCatching { dev.close() }; runCatching { c.close() } }
     }
 

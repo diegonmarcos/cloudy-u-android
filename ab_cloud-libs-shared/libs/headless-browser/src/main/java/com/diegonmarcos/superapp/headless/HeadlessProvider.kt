@@ -13,7 +13,7 @@ import org.json.JSONObject
 /**
  * #1498 the signature-permission IPC door of the headless browser (same pattern as libs:log-export's provider, #1490): exported, gated on
  * CONSTELLATION_DATA in the manifest, and [call] re-checks the caller. Methods: command | run | status | stop | loopback | cdp_on | cdp_off | store_set.
- * Cloud-Webserver calls it and serves the same API on the mesh as /browser/*. Every reply is {ok, mime, payload, error}.
+ * Cloud-Webserver calls it and serves the same API on the mesh as the mesh route /browser. Every reply is {ok, mime, payload, error}.
  */
 class HeadlessProvider : ContentProvider() {
     override fun onCreate(): Boolean = true
