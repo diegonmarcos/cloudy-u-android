@@ -1,0 +1,644 @@
+{
+  "_doc": "#1478 THE PM sub-pages' tables of Capital-Stack-FinTerminal (Vol, Commodities, Profiles), all MODEL / SAMPLE values, none live: the page names its table (build.json ui.stacks.pm entry `table`), Kotlin (PmTables.kt, ui/PmPage.kt) names no portfolio, commodity, currency, company or column. `columns` is the header row (a \\n is a header line break), `label_fracs` the width of the left aligned label columns (ui/fin FinMatrix), `note` the one-line caption under the table. Vol: a row names its portfolio dashboard (data/dashboards.json: the name shown is its `entry`, the filter tab is its `risk`, pm_risk_tabs) and carries the % of the portfolio in DM, DM Bonds, DM Equity, EM, EM Bonds, EM Equity, then Swap (No = the EM currency is unhedged; a blank cell is a dash) and Vol (expected annualised volatility, %). Commodities: each cell is the % of that commodity's allocation held through that currency (a row sums to 100), the last column its assumed annual Vol; `heat` = [first, last] columns tinted by weight. Profiles: sample companies per business-cycle profile and the cycle phases the profile tends to lead; a membership sample, not a screen result.",
+  "vol": {
+    "columns": [
+      "Portfolio",
+      "DM",
+      "DM\nBonds",
+      "DM\nEquity",
+      "EM",
+      "EM\nBonds",
+      "EM\nEquity",
+      "Swap",
+      "Vol"
+    ],
+    "label_fracs": [
+      0.36
+    ],
+    "note": "Model values, not live. Vol: expected annualised volatility in %, from assumed long-run volatility (DM bonds 5, DM equity 16, EM local bonds unhedged 11, EM equity 20) and correlations (DM equity with EM equity 0.75). Swap: Yes = FX swap hedges the EM currency; No = unhedged. Cash and carry rows: the Vol is a rough currency-move estimate (~).",
+    "tool": {
+      "label": "Portfolio & Risk Analytics",
+      "dashboard": "portfolio_risk"
+    },
+    "rows": [
+      {
+        "dashboard": "pm_a1_cash",
+        "cells": [
+          "100",
+          "100",
+          "0",
+          "0",
+          "0",
+          "0",
+          "",
+          "~4"
+        ]
+      },
+      {
+        "dashboard": "mp_70_30",
+        "cells": [
+          "100",
+          "70",
+          "30",
+          "0",
+          "0",
+          "0",
+          "",
+          "5.9"
+        ]
+      },
+      {
+        "dashboard": "mp_60_40",
+        "cells": [
+          "100",
+          "60",
+          "40",
+          "0",
+          "0",
+          "0",
+          "",
+          "7.1"
+        ]
+      },
+      {
+        "dashboard": "mp_40_60",
+        "cells": [
+          "100",
+          "40",
+          "60",
+          "0",
+          "0",
+          "0",
+          "",
+          "9.8"
+        ]
+      },
+      {
+        "dashboard": "mp_30_70",
+        "cells": [
+          "100",
+          "30",
+          "70",
+          "0",
+          "0",
+          "0",
+          "",
+          "11.3"
+        ]
+      },
+      {
+        "dashboard": "pm_b1_mid",
+        "cells": [
+          "80",
+          "40",
+          "40",
+          "20",
+          "10",
+          "10",
+          "No",
+          "9.0"
+        ]
+      },
+      {
+        "dashboard": "pm_d1_em_bonds",
+        "cells": [
+          "0",
+          "0",
+          "0",
+          "100",
+          "100",
+          "0",
+          "No",
+          "11.0"
+        ]
+      },
+      {
+        "dashboard": "pm_c1_risky",
+        "cells": [
+          "60",
+          "10",
+          "50",
+          "40",
+          "10",
+          "30",
+          "No",
+          "13.8"
+        ]
+      },
+      {
+        "dashboard": "mp_70_30_DM_EM",
+        "cells": [
+          "70",
+          "0",
+          "70",
+          "30",
+          "0",
+          "30",
+          "No",
+          "16.2"
+        ]
+      },
+      {
+        "dashboard": "mp_60_40_DM_EM",
+        "cells": [
+          "60",
+          "0",
+          "60",
+          "40",
+          "0",
+          "40",
+          "No",
+          "16.5"
+        ]
+      },
+      {
+        "dashboard": "mp_40_60_DM_EM",
+        "cells": [
+          "40",
+          "0",
+          "40",
+          "60",
+          "0",
+          "60",
+          "No",
+          "17.3"
+        ]
+      },
+      {
+        "dashboard": "mp_30_70_DM_EM",
+        "cells": [
+          "30",
+          "0",
+          "30",
+          "70",
+          "0",
+          "70",
+          "No",
+          "17.9"
+        ]
+      },
+      {
+        "dashboard": "pm_d0_carry",
+        "cells": [
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "No",
+          "~15"
+        ]
+      }
+    ]
+  },
+  "commodities": {
+    "columns": [
+      "Commodity",
+      "USD",
+      "EUR",
+      "GBP",
+      "CHF",
+      "JPY",
+      "CNY",
+      "BRL",
+      "Vol"
+    ],
+    "label_fracs": [
+      0.2
+    ],
+    "heat": [
+      1,
+      7
+    ],
+    "note": "Sample model weights, not live: % of each commodity's allocation held through each currency (a row sums to 100). Vol: assumed annual volatility in %.",
+    "rows": [
+      {
+        "name": "Gold",
+        "cells": [
+          "50",
+          "15",
+          "5",
+          "10",
+          "10",
+          "10",
+          "0",
+          "15"
+        ]
+      },
+      {
+        "name": "Silver",
+        "cells": [
+          "55",
+          "15",
+          "5",
+          "5",
+          "10",
+          "10",
+          "0",
+          "28"
+        ]
+      },
+      {
+        "name": "Platinum",
+        "cells": [
+          "40",
+          "20",
+          "5",
+          "10",
+          "15",
+          "10",
+          "0",
+          "22"
+        ]
+      },
+      {
+        "name": "Copper",
+        "cells": [
+          "30",
+          "10",
+          "5",
+          "0",
+          "10",
+          "45",
+          "0",
+          "24"
+        ]
+      },
+      {
+        "name": "Brent",
+        "cells": [
+          "60",
+          "15",
+          "10",
+          "0",
+          "5",
+          "5",
+          "5",
+          "35"
+        ]
+      },
+      {
+        "name": "WTI",
+        "cells": [
+          "85",
+          "5",
+          "5",
+          "0",
+          "0",
+          "5",
+          "0",
+          "37"
+        ]
+      },
+      {
+        "name": "Nat Gas",
+        "cells": [
+          "65",
+          "20",
+          "10",
+          "0",
+          "5",
+          "0",
+          "0",
+          "55"
+        ]
+      },
+      {
+        "name": "Wheat",
+        "cells": [
+          "40",
+          "25",
+          "5",
+          "0",
+          "0",
+          "10",
+          "20",
+          "30"
+        ]
+      },
+      {
+        "name": "Corn",
+        "cells": [
+          "45",
+          "10",
+          "0",
+          "0",
+          "5",
+          "10",
+          "30",
+          "26"
+        ]
+      },
+      {
+        "name": "Soybeans",
+        "cells": [
+          "30",
+          "10",
+          "0",
+          "0",
+          "5",
+          "25",
+          "30",
+          "20"
+        ]
+      },
+      {
+        "name": "Coffee",
+        "cells": [
+          "35",
+          "20",
+          "5",
+          "5",
+          "0",
+          "0",
+          "35",
+          "32"
+        ]
+      },
+      {
+        "name": "Sugar",
+        "cells": [
+          "30",
+          "15",
+          "5",
+          "0",
+          "5",
+          "15",
+          "30",
+          "28"
+        ]
+      }
+    ]
+  },
+  "profiles": {
+    "columns": [
+      "Ticker",
+      "Company",
+      "Sector"
+    ],
+    "label_fracs": [
+      0.16,
+      0.46
+    ],
+    "note": "Sample companies per profile, not a screen result; a profile's phases are where it tends to lead the business cycle (Early, Mid, Late, Recession).",
+    "tabs": [
+      {
+        "id": "growth",
+        "label": "Growth",
+        "leads": "Early, Mid",
+        "rows": [
+          [
+            "NVDA",
+            "Nvidia",
+            "Technology"
+          ],
+          [
+            "AMZN",
+            "Amazon",
+            "Consumer Disc."
+          ],
+          [
+            "META",
+            "Meta Platforms",
+            "Communication"
+          ],
+          [
+            "TSLA",
+            "Tesla",
+            "Consumer Disc."
+          ],
+          [
+            "NOW",
+            "ServiceNow",
+            "Technology"
+          ]
+        ]
+      },
+      {
+        "id": "value",
+        "label": "Value",
+        "leads": "Early, Late",
+        "rows": [
+          [
+            "BRK-B",
+            "Berkshire Hathaway",
+            "Financials"
+          ],
+          [
+            "JPM",
+            "JPMorgan Chase",
+            "Financials"
+          ],
+          [
+            "XOM",
+            "Exxon Mobil",
+            "Energy"
+          ],
+          [
+            "CVX",
+            "Chevron",
+            "Energy"
+          ],
+          [
+            "INTC",
+            "Intel",
+            "Technology"
+          ]
+        ]
+      },
+      {
+        "id": "quality",
+        "label": "Quality",
+        "leads": "Mid, Late",
+        "rows": [
+          [
+            "MSFT",
+            "Microsoft",
+            "Technology"
+          ],
+          [
+            "V",
+            "Visa",
+            "Financials"
+          ],
+          [
+            "COST",
+            "Costco",
+            "Consumer Staples"
+          ],
+          [
+            "ADBE",
+            "Adobe",
+            "Technology"
+          ],
+          [
+            "LIN",
+            "Linde",
+            "Materials"
+          ]
+        ]
+      },
+      {
+        "id": "cyclical",
+        "label": "Cyclical",
+        "leads": "Early, Mid",
+        "rows": [
+          [
+            "CAT",
+            "Caterpillar",
+            "Industrials"
+          ],
+          [
+            "F",
+            "Ford Motor",
+            "Consumer Disc."
+          ],
+          [
+            "DOW",
+            "Dow",
+            "Materials"
+          ],
+          [
+            "FCX",
+            "Freeport-McMoRan",
+            "Materials"
+          ],
+          [
+            "UAL",
+            "United Airlines",
+            "Industrials"
+          ]
+        ]
+      },
+      {
+        "id": "defensive",
+        "label": "Defensive",
+        "leads": "Late, Recession",
+        "rows": [
+          [
+            "PG",
+            "Procter & Gamble",
+            "Consumer Staples"
+          ],
+          [
+            "KO",
+            "Coca-Cola",
+            "Consumer Staples"
+          ],
+          [
+            "JNJ",
+            "Johnson & Johnson",
+            "Health Care"
+          ],
+          [
+            "WMT",
+            "Walmart",
+            "Consumer Staples"
+          ],
+          [
+            "DUK",
+            "Duke Energy",
+            "Utilities"
+          ]
+        ]
+      },
+      {
+        "id": "dividend",
+        "label": "Dividend",
+        "leads": "Late, Recession",
+        "rows": [
+          [
+            "VZ",
+            "Verizon",
+            "Communication"
+          ],
+          [
+            "MO",
+            "Altria",
+            "Consumer Staples"
+          ],
+          [
+            "ABBV",
+            "AbbVie",
+            "Health Care"
+          ],
+          [
+            "PEP",
+            "PepsiCo",
+            "Consumer Staples"
+          ],
+          [
+            "O",
+            "Realty Income",
+            "Real Estate"
+          ]
+        ]
+      },
+      {
+        "id": "momentum",
+        "label": "Momentum",
+        "leads": "Early, Mid",
+        "rows": [
+          [
+            "AVGO",
+            "Broadcom",
+            "Technology"
+          ],
+          [
+            "LLY",
+            "Eli Lilly",
+            "Health Care"
+          ],
+          [
+            "ANET",
+            "Arista Networks",
+            "Technology"
+          ],
+          [
+            "PLTR",
+            "Palantir",
+            "Technology"
+          ],
+          [
+            "NFLX",
+            "Netflix",
+            "Communication"
+          ]
+        ]
+      },
+      {
+        "id": "small_cap",
+        "label": "Small-cap",
+        "leads": "Early",
+        "rows": [
+          [
+            "CELH",
+            "Celsius Holdings",
+            "Consumer Staples"
+          ],
+          [
+            "DUOL",
+            "Duolingo",
+            "Technology"
+          ],
+          [
+            "ONON",
+            "On Holding",
+            "Consumer Disc."
+          ],
+          [
+            "SFM",
+            "Sprouts Farmers Market",
+            "Consumer Staples"
+          ],
+          [
+            "AIT",
+            "Applied Industrial",
+            "Industrials"
+          ]
+        ]
+      }
+    ]
+  }
+}

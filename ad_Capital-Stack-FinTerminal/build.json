@@ -192,7 +192,7 @@
     "default_section": "fi",
     "nav_ui": {"mode": "classic", "scroll_hide": true},
     "configs_ui": ["nav_ui"],
-    "redirects": [{"from": "market_monitor", "tab": "fi", "to": "home", "note": "#1399 FI Market Monitor removed: its deep links open the FI Homepage"}],
+    "redirects": [{"from": "pm_a2_low", "tab": "pm", "to": "home", "note": "#1478 A2 Low Risk dropped (identical to DM E30B70): its deep links open the PM Homepage"}, {"from": "market_monitor", "tab": "fi", "to": "home", "note": "#1399 FI Market Monitor removed: its deep links open the FI Homepage"}],
     "sections": [
       {
         "id": "fi",
@@ -259,21 +259,9 @@
         "nav_mode": "horizontal_one_row",
         "pages": [
           {"id": "pm-home", "label": "Home", "icon": "home"},
-          {"id": "portfolio-risk", "label": "Portfolio & Risk Analytics", "icon": "insights"},
-          {"id": "pm-a1-cash", "label": "A1 Cash (DM - Cash)", "icon": "payments", "separator_before": true},
-          {"id": "pm-a2-low", "label": "A2 Low Risk", "icon": "pie_chart"},
-          {"id": "mp-70-30", "label": "70/30", "icon": "pie_chart"},
-          {"id": "mp-60-40", "label": "60/40", "icon": "pie_chart", "separator_before": true},
-          {"id": "mp-40-60", "label": "40/60", "icon": "pie_chart"},
-          {"id": "mp-30-70", "label": "30/70", "icon": "pie_chart"},
-          {"id": "pm-d1-em-bonds", "label": "D1 EM Bonds", "icon": "calculate", "separator_before": true},
-          {"id": "pm-b1-mid", "label": "B1 Middle Risk", "icon": "pie_chart"},
-          {"id": "pm-c1-risky", "label": "C1 Risky", "icon": "pie_chart"},
-          {"id": "mp-70-30-dm-em", "label": "70/30 DM/EM", "icon": "pie_chart", "separator_before": true},
-          {"id": "mp-60-40-dm-em", "label": "60/40 DM/EM", "icon": "pie_chart"},
-          {"id": "mp-40-60-dm-em", "label": "40/60 DM/EM", "icon": "pie_chart"},
-          {"id": "mp-30-70-dm-em", "label": "30/70 DM/EM", "icon": "pie_chart"},
-          {"id": "pm-d0-carry", "label": "D0 EM Carry Trade", "icon": "trending_up"}
+          {"id": "pm-vol", "label": "Vol", "icon": "table_chart"},
+          {"id": "pm-commodities", "label": "Commodities", "icon": "inventory_2"},
+          {"id": "pm-profiles", "label": "Profiles", "icon": "groups"}
         ]
       },
       {
@@ -442,108 +430,101 @@
       ],
       "pm": [
         {
-          "kind": "dashboard",
+          "kind": "pm_table", "page": "pm-vol", "table": "vol",
+          "title": "Vol",
+          "subtitle": "The portfolios by risk level: allocation in DM and EM, Swap and expected annualised volatility; a row opens the portfolio"
+        },
+        {
+          "kind": "pm_table", "page": "pm-commodities", "table": "commodities",
+          "title": "Commodities",
+          "subtitle": "Commodities by the currency they are held in: sample allocation weights and volatility"
+        },
+        {
+          "kind": "pm_table", "page": "pm-profiles", "table": "profiles",
+          "title": "Profiles",
+          "subtitle": "Companies by business-cycle profile: Growth, Value, Quality, Cyclical, Defensive, Dividend, Momentum, Small-cap"
+        },
+        {
+          "kind": "dashboard", "detail": true,
           "title": "Portfolio & Risk Analytics",
           "subtitle": "Comprehensive portfolio tracking, attribution analysis, factor exposures and scenario stress testing for well-known portfolios",
           "dashboard": "portfolio_risk"
         },
         {
-          "kind": "section_title",
-          "title": "DM · Low risk"
-        },
-        {
-          "kind": "dashboard",
-          "title": "A1 Cash (DM - Cash)",
+          "kind": "dashboard", "detail": true,
+          "title": "DM Cash B100",
           "subtitle": "100% short-term sovereign bonds, each currency at its USD Dollar Index weight (the index only tracks FX; the bonds are held)",
           "dashboard": "pm_a1_cash"
         },
         {
-          "kind": "dashboard",
-          "title": "A2 Low Risk",
-          "subtitle": "DM equity 30 / bonds 70, EM equity 0 / bonds 0",
-          "dashboard": "pm_a2_low"
-        },
-        {
-          "kind": "dashboard",
-          "title": "70/30",
+          "kind": "dashboard", "detail": true,
+          "title": "DM E30B70",
           "subtitle": "70% bonds, 30% equity",
           "dashboard": "mp_70_30"
         },
         {
-          "kind": "section_title",
-          "title": "DM · Middle risk"
-        },
-        {
-          "kind": "dashboard",
-          "title": "60/40",
+          "kind": "dashboard", "detail": true,
+          "title": "DM E40B60",
           "subtitle": "60% bonds, 40% equity",
           "dashboard": "mp_60_40"
         },
         {
-          "kind": "dashboard",
-          "title": "40/60",
+          "kind": "dashboard", "detail": true,
+          "title": "DM E60B40",
           "subtitle": "40% bonds, 60% equity",
           "dashboard": "mp_40_60"
         },
         {
-          "kind": "dashboard",
-          "title": "30/70",
+          "kind": "dashboard", "detail": true,
+          "title": "DM E70B30",
           "subtitle": "30% bonds, 70% equity",
           "dashboard": "mp_30_70"
         },
         {
-          "kind": "section_title",
-          "title": "EM · Middle-High risk"
-        },
-        {
-          "kind": "dashboard",
-          "title": "D1 EM Bonds",
-          "subtitle": "DM 0, EM equity 0 / bonds 100: the EM Bonds calculator, return after inflation and taxes",
-          "dashboard": "pm_d1_em_bonds"
-        },
-        {
-          "kind": "dashboard",
-          "title": "B1 Middle Risk",
+          "kind": "dashboard", "detail": true,
+          "title": "DM E40B40 · EM E10B10",
           "subtitle": "Placeholder tier: DM equity 40 / bonds 40, EM equity 10 / bonds 10",
           "dashboard": "pm_b1_mid"
         },
         {
-          "kind": "dashboard",
-          "title": "C1 Risky",
+          "kind": "dashboard", "detail": true,
+          "title": "EM B100",
+          "subtitle": "DM 0, EM equity 0 / bonds 100: the EM Bonds calculator, return after inflation and taxes",
+          "dashboard": "pm_d1_em_bonds"
+        },
+        {
+          "kind": "dashboard", "detail": true,
+          "title": "DM E50B10 · EM E30B10",
           "subtitle": "Placeholder tier: DM equity 50 / bonds 10, EM equity 30 / bonds 10",
           "dashboard": "pm_c1_risky"
         },
         {
-          "kind": "section_title",
-          "title": "EM · High risk"
-        },
-        {
-          "kind": "dashboard",
-          "title": "70/30 DM/EM",
+          "kind": "dashboard", "detail": true,
+          "title": "DM E70 · EM E30",
           "subtitle": "70% Developed Markets, 30% Emerging Markets",
           "dashboard": "mp_70_30_DM_EM"
         },
         {
-          "kind": "dashboard",
-          "title": "60/40 DM/EM",
+          "kind": "dashboard", "detail": true,
+          "title": "DM E60 · EM E40",
           "subtitle": "60% Developed Markets, 40% Emerging Markets",
           "dashboard": "mp_60_40_DM_EM"
         },
         {
-          "kind": "dashboard",
-          "title": "40/60 DM/EM",
+          "kind": "dashboard", "detail": true,
+          "title": "DM E40 · EM E60",
           "subtitle": "40% Developed Markets, 60% Emerging Markets",
           "dashboard": "mp_40_60_DM_EM"
         },
         {
-          "kind": "dashboard",
-          "title": "30/70 DM/EM",
+          "kind": "dashboard", "detail": true,
+          "title": "DM E30 · EM E70",
           "subtitle": "30% Developed Markets, 70% Emerging Markets",
           "dashboard": "mp_30_70_DM_EM"
         },
         {
-          "kind": "dashboard",
-          "title": "D0 EM Carry Trade",
+          "kind": "dashboard", "detail": true,
+          "title": "EM Carry EUR→BRL",
           "subtitle": "EM carry trade: funding currency against the EM high-yielder, breakeven and net return",
           "dashboard": "pm_d0_carry"
         }

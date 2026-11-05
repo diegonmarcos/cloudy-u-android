@@ -46,7 +46,7 @@ if "NavBarTopSecondRows(" not in shell: bad.append("N2 AppShell does not draw th
 for sid in ui["bottom_nav"]:
     want = []
     for e in ui["stacks"].get(sid, []):
-        pid = e.get("page") or (slug(e["dashboard"]) if e.get("kind") == "dashboard" and e.get("dashboard") else "")
+        pid = e.get("page") or (slug(e["dashboard"]) if e.get("kind") == "dashboard" and e.get("dashboard") and not e.get("detail") else "")
         if pid: want.append((pid, e.get("title"), bool(e.get("subtitle")) or e.get("kind") != "dashboard"))
     got = [(p["id"], p.get("label")) for p in secs[sid].get("pages", [])[1:]]
     if got != [(a, b) for a, b, _ in want]: bad.append("N3 section %s Homepage pages %s differ from its sub-pages %s" % (sid, got, [(a, b) for a, b, _ in want]))

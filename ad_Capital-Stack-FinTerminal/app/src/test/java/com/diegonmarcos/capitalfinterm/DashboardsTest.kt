@@ -26,7 +26,7 @@ class DashboardsTest {
                 assertEquals(tab, d.tab)
             }
         }
-        assertEquals(37, count) // #1399 FI Market Monitor removed; #1447 PM A1, A2, B1, C1, D1, D0
+        assertEquals(36, count) // #1399 FI Market Monitor removed; #1447 PM A1, B1, C1, D1, D0 (#1478 A2 dropped)
         assertEquals(count, dashboards.size)
     }
 
@@ -59,7 +59,7 @@ class DashboardsTest {
 
     @Test fun modelPortfolioLegsSumToOneHundred() {
         val mp = dashboards.filter { it.legs.isNotEmpty() }
-        assertEquals(13, mp.size) // the 8 reference portfolios + #1447 A1, A2, B1, C1, D1
+        assertEquals(12, mp.size) // the 8 reference portfolios + #1447 A1, B1, C1, D1
         mp.forEach { assertEquals(it.id, 100, it.legs.sumOf { l -> l.second }) }
     }
 }

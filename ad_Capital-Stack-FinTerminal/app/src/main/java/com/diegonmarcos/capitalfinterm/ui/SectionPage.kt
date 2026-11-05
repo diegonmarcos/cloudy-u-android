@@ -6,8 +6,6 @@ import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -29,11 +27,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -45,8 +39,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.diegonmarcos.capitalfinterm.AssetData
-import com.diegonmarcos.capitalfinterm.RiskTabs
-import com.diegonmarcos.capitalfinterm.ui.fin.FinChip
 import com.diegonmarcos.capitalfinterm.BuildConfig
 import com.diegonmarcos.capitalfinterm.DashStatus
 import com.diegonmarcos.capitalfinterm.Dashboards
@@ -95,7 +87,7 @@ fun SectionPage(sectionId: String, stack: List<String>, nav: FinNav, onSelectLis
                     when {
                         sym != null -> QuotePage(sym, nav)
                         selected != null -> DashboardPage(selected, nav)
-                        page != null -> EntryPage(page)
+                        page != null -> EntryPage(page, nav)
                         cards.isNotEmpty() -> HomeGrid(sectionId, cards, nav, onOpenPage)
                         else -> Box(Modifier.fillMaxSize().background(p.canvas))
                     }
@@ -106,7 +98,7 @@ fun SectionPage(sectionId: String, stack: List<String>, nav: FinNav, onSelectLis
             when {
                 sym != null -> QuotePage(sym, nav)
                 top.startsWith("dash:") -> DashboardPage(top.removePrefix("dash:"), nav)
-                page != null -> EntryPage(page)
+                page != null -> EntryPage(page, nav)
                 cards.isNotEmpty() -> HomeGrid(sectionId, cards, nav, onOpenPage)
                 else -> TabList(sectionId, entries, compact = false, selected = null, nav = nav, onOpen = onSelectList, onOpenConfig = onOpenConfig)
             }
@@ -121,7 +113,7 @@ private fun TabList(sectionId: String, entries: List<Entry>, compact: Boolean, s
     val sources = remember { AssetData.sources(ctx) }
     val dashboards = remember { AssetData.dashboards(ctx) }
     val dashEntries = entries.filter { it.kind == Pages.KIND_DASHBOARD }
-    val others = entries.filter { it.kind != Pages.KIND_DASHBOARD }
+    val others = entries.filter { it.kind != Pages.KIND_DASHBOARD && it.kind != Pages.KIND_PM_TABLE }
     fun status(e: Entry): DashStatus? = dashboards.firstOrNull { it.id == e.dashboard }?.let { Dashboards.status(it, sources) }
     LazyColumn(
         Modifier.fillMaxSize(),
@@ -156,12 +148,13 @@ private fun TabList(sectionId: String, entries: List<Entry>, compact: Boolean, s
     }
 }
 
-/** #1399 a non-dashboard sub-page (MY-PM's holdings): its declared panel, alone. */
+/** #1399 a non-dashboard sub-page (MY-PM's holdings, #1478 the PM tables): its declared panel, alone. */
 @Composable
-private fun EntryPage(e: Entry) {
+private fun EntryPage(e: Entry, nav: FinNav) {
     Box(Modifier.fillMaxSize().padding(horizontal = FinDim.screenPad, vertical = FinDim.gap)) {
         when (e.kind) {
             Pages.KIND_HOLDINGS -> HoldingsPanel()
+            Pages.KIND_PM_TABLE -> PmPage(e.table, nav)
             else -> Text(e.title, color = LocalFinPalette.current.text, style = FinType.title)
         }
     }
@@ -170,43 +163,22 @@ private fun EntryPage(e: Entry) {
 /** #1399 the section's Homepage: a 2-column grid of cards, one per sub-page (icon, name, one-line description); a tap opens it. */
 @Composable
 private fun HomeGrid(sectionId: String, cards: List<HomeCard>, nav: FinNav, onOpen: (String) -> Unit) {
-    // #1462 a Homepage whose cards declare a risk tier (data/dashboards.json: PM) gets the top tabs All | A | B | C | D; All draws a section header per tier.
-    val ctx = LocalContext.current
-    val dashboards = remember { AssetData.dashboards(ctx) }
-    val tabs = remember { RiskTabs.parse(AssetData.read(ctx, AssetData.DASHBOARDS)) }
-    val riskOf = { id: String -> dashboards.firstOrNull { it.id == id }?.risk.orEmpty() }
-    val tiered = tabs.isNotEmpty() && cards.any { riskOf(it.entry.dashboard).isNotEmpty() }
-    var tab by rememberSaveable(sectionId) { mutableStateOf(RiskTabs.ALL) }
-    val groups = if (tiered) RiskTabs.groups(cards, { it.entry.dashboard }, riskOf, tabs, tab) else listOf("" to cards)
     LazyColumn(
         Modifier.fillMaxSize().testTag(HOME_GRID + sectionId),
         contentPadding = PaddingValues(start = FinDim.screenPad, end = FinDim.screenPad, top = FinDim.gap, bottom = FinDim.bottomInset),
         verticalArrangement = Arrangement.spacedBy(FinDim.gap),
     ) {
         if (cards.any { it.entry.kind == Pages.KIND_DASHBOARD }) item(key = "search") { FinSearchField(onClick = { nav.search() }) }
-        if (tiered) item(key = "risk-tabs") {
-            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).testTag(RISK_TABS + sectionId), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                tabs.forEach { t -> FinChip(t.label, t.id == tab, Modifier.height(32.dp).testTag(RISK_TAB + t.id)) { tab = t.id } }
-            }
-        }
-        groups.forEachIndexed { g, (header, group) ->
-            if (header.isNotEmpty()) item(key = "rh:$g") { GroupTitle(header, Modifier.testTag(RISK_HEADER + g)) }
-            group.chunked(2).forEachIndexed { i, pair ->
-                item(key = "h:$g:$i") {
-                    Row(horizontalArrangement = Arrangement.spacedBy(FinDim.gap)) {
-                        pair.forEach { c -> HomeCardTile(c, Modifier.weight(1f)) { onOpen(c.pageId) } }
-                        if (pair.size == 1) Spacer(Modifier.weight(1f))
-                    }
+        cards.chunked(2).forEachIndexed { i, pair ->
+            item(key = "h:$i") {
+                Row(horizontalArrangement = Arrangement.spacedBy(FinDim.gap)) {
+                    pair.forEach { c -> HomeCardTile(c, Modifier.weight(1f)) { onOpen(c.pageId) } }
+                    if (pair.size == 1) Spacer(Modifier.weight(1f))
                 }
             }
         }
     }
 }
-
-/** #1462 test tags of the PM risk tabs row, one tab (+ id) and a tier's section header (+ index). */
-const val RISK_TABS = "risk_tabs:"
-const val RISK_TAB = "risk_tab:"
-const val RISK_HEADER = "risk_header:"
 
 /** The test tag prefix of a Homepage grid (+ section id) and of one card (+ sub-page id). */
 const val HOME_GRID = "home_grid:"

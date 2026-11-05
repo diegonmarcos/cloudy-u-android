@@ -22,6 +22,10 @@ data class Entry(
     val dashboard: String,
     /** #1399 the sub-page id of a non-dashboard entry (`page`, e.g. MY-PM's holdings); a dashboard's page id is its slug. */
     val page: String = "",
+    /** #1478 the table (data/pm.json key) a `pm_table` entry draws. */
+    val table: String = "",
+    /** #1478 a dashboard that is a detail page (a row of the PM Vol table opens it), not a sub-page of the one-row nav. */
+    val detail: Boolean = false,
 )
 
 /** #1399 one card of a section's Homepage: the sub-page it opens, its declared label, icon and one-line description. */
@@ -35,6 +39,7 @@ object Pages {
     const val KIND_ABOUT = "about"
     const val KIND_DASHBOARD = "dashboard"
     const val KIND_SOURCES = "sources"
+    const val KIND_PM_TABLE = "pm_table"
 
     /** The entries declared for [sectionId] in the stacks JSON (empty when the section declares none). */
     fun entries(stacks: String, sectionId: String): List<Entry> {
@@ -52,6 +57,8 @@ object Pages {
                 note = o.optString("note"),
                 dashboard = o.optString("dashboard"),
                 page = o.optString("page"),
+                table = o.optString("table"),
+                detail = o.optBoolean("detail", false),
             )
         }
     }
@@ -84,8 +91,8 @@ object Pages {
     /** The web slug of a dashboard id (scripts/gen-finterm.mjs slugOf): the dashboard's sub-page id. */
     fun slugOf(id: String): String = id.lowercase().replace('_', '-')
 
-    /** The sub-page [e] is: its declared `page`, else its dashboard's slug; "" = not a sub-page (a section title, About, Sources). */
-    fun pageIdOf(e: Entry): String = e.page.ifEmpty { if (e.kind == KIND_DASHBOARD && e.dashboard.isNotEmpty()) slugOf(e.dashboard) else "" }
+    /** The sub-page [e] is: its declared `page`, else its dashboard's slug; "" = not a sub-page (a section title, About, Sources, a `detail` dashboard). */
+    fun pageIdOf(e: Entry): String = e.page.ifEmpty { if (e.kind == KIND_DASHBOARD && e.dashboard.isNotEmpty() && !e.detail) slugOf(e.dashboard) else "" }
 
     /**
      * The Homepage of a section: one card per declared sub-page after Home (ui.sections[].pages, in order), with the sub-page's

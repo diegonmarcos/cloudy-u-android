@@ -168,8 +168,8 @@
         {
           "tab": "pm",
           "entries": [
-            "D1 EM Bonds",
-            "D0 EM Carry Trade"
+            "EM B100",
+            "EM Carry EUR→BRL"
           ]
         }
       ],
@@ -932,8 +932,8 @@
         {
           "tab": "pm",
           "entries": [
-            "D1 EM Bonds",
-            "D0 EM Carry Trade"
+            "EM B100",
+            "EM Carry EUR→BRL"
           ]
         }
       ],
@@ -1046,14 +1046,14 @@
         {
           "tab": "pm",
           "entries": [
-            "40/60",
-            "70/30",
-            "60/40",
-            "30/70",
-            "70/30 DM/EM",
-            "60/40 DM/EM",
-            "40/60 DM/EM",
-            "30/70 DM/EM"
+            "DM E60B40",
+            "DM E30B70",
+            "DM E40B60",
+            "DM E70B30",
+            "DM E70 · EM E30",
+            "DM E60 · EM E40",
+            "DM E40 · EM E60",
+            "DM E30 · EM E70"
           ]
         }
       ],

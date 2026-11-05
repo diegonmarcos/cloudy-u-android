@@ -1,7 +1,7 @@
 {
   "_doc": "THE DASHBOARDS of Capital-Stack-FinTerminal (#1335): one per FinTerm entry (build.json::ui.stacks, kind dashboard, `dashboard` = the id here). A panel names its `source` (an id of data/sources.json whose `feeds` lists this entry) and EITHER a `fetch` (a live connector: the key-free sources) OR a `placeholder` ({reason, note}: drawn as one 48dp key row while the source needs a key / has no connector yet, 'Add your key in Config > Sources'; UI spec 2). UI declarations (UI spec 6.3): dashboard `default` (the tab opens on it) and `search` (a search field on top); panel `display` (kpi | rows | heat | watch), `tape` (its quotes feed the ticker tape), `spread` ({label, of: [a, b]}: a derived KPI tile in bp), `heat_scale`, `segment_of` / `segment_label` (drawn as a source chip of another panel's card), `refresh_s`, `col_types`, `limit`. Providers and derivations are named here and implemented in Kotlin (Providers.kt, Derive.kt); no address is typed anywhere but data/sources.json (endpoint) because a request is endpoint + path + params. Read by Dashboards.kt and by test/test-finterm-sources.sh.",
   "pm_risk_tabs": {
-    "_doc": "PM Homepage top tabs (All | DM Low | DM Mid | EM Mid-High | EM High) on a two-band scale (owner, #1462): Low -> Middle risk = developed markets only (100% DM), Middle -> High risk = portfolios that add emerging markets. The ordering key is first the market (DM < EM), then the equity share (fixed income -> equity), then the EM share. Each PM portfolio declares `market` (DM | EM), `equity_pct` (equity share, %), `em_pct` (EM share, %) and `risk` (a tier id); a tier takes the portfolios of its `market` whose equity share is at most its `equity_max` (first match in order). A portfolio with no legs (the carry trade) declares `risk_basis`. In All every tier is a section with its `header`.",
+    "_doc": "PM Vol filter tabs (All | DM · Low | DM · Middle | DM+EM · Middle-High | DM+EM · High) on a two-band scale (owner, #1462, #1478): the 4 risk levels; Low and Middle are developed markets only (100% DM), Middle-High and High hold DM and EM. Each PM portfolio declares `market` (DM | EM: EM = it holds any EM), `equity_pct` (equity share, %), `em_pct` (EM share, %) and `risk` (a tier id); a tier takes the portfolios of its `market` whose equity share is at most its `equity_max` (first match in order). A portfolio with no legs (the carry trade) declares `risk_basis`. The order of the rows inside a level is data/pm.json (vol rows): level 3 by Vol, B1, D1, C1.",
     "tabs": [
       {
         "id": "all",
@@ -10,28 +10,24 @@
       {
         "id": "dm_low",
         "label": "DM · Low",
-        "header": "DM · Low risk",
         "market": "DM",
         "equity_max": 30
       },
       {
         "id": "dm_mid",
-        "label": "DM · Mid",
-        "header": "DM · Middle risk",
+        "label": "DM · Middle",
         "market": "DM",
         "equity_max": 100
       },
       {
         "id": "em_mid",
-        "label": "EM · Mid-High",
-        "header": "EM · Middle-High risk",
+        "label": "DM+EM · Middle-High",
         "market": "EM",
         "equity_max": 80
       },
       {
         "id": "em_high",
-        "label": "EM · High",
-        "header": "EM · High risk",
+        "label": "DM+EM · High",
         "market": "EM",
         "equity_max": 100
       }
@@ -2890,7 +2886,7 @@
     },
     {
       "id": "pm_a1_cash",
-      "entry": "A1 Cash (DM - Cash)",
+      "entry": "DM Cash B100",
       "tab": "pm",
       "market": "DM",
       "equity_pct": 0,
@@ -2934,45 +2930,8 @@
       ]
     },
     {
-      "id": "pm_a2_low",
-      "entry": "A2 Low Risk",
-      "tab": "pm",
-      "market": "DM",
-      "equity_pct": 30,
-      "em_pct": 0,
-      "risk": "dm_low",
-      "model_portfolio": {
-        "legs": [
-          [
-            "DM Equity",
-            30
-          ],
-          [
-            "DM Bonds",
-            70
-          ],
-          [
-            "EM Equity",
-            0
-          ],
-          [
-            "EM Bonds",
-            0
-          ]
-        ]
-      },
-      "panels": [
-        {
-          "id": "alloc",
-          "title": "Allocation: DM (equity 30 / bonds 70), EM (equity 0 / bonds 0)",
-          "source": "fincept_data_api",
-          "view": "alloc"
-        }
-      ]
-    },
-    {
       "id": "pm_b1_mid",
-      "entry": "B1 Middle Risk",
+      "entry": "DM E40B40 · EM E10B10",
       "tab": "pm",
       "market": "EM",
       "equity_pct": 50,
@@ -3009,7 +2968,7 @@
     },
     {
       "id": "pm_c1_risky",
-      "entry": "C1 Risky",
+      "entry": "DM E50B10 · EM E30B10",
       "tab": "pm",
       "market": "EM",
       "equity_pct": 80,
@@ -3046,7 +3005,7 @@
     },
     {
       "id": "pm_d1_em_bonds",
-      "entry": "D1 EM Bonds",
+      "entry": "EM B100",
       "tab": "pm",
       "market": "EM",
       "equity_pct": 0,
@@ -3163,7 +3122,7 @@
     },
     {
       "id": "pm_d0_carry",
-      "entry": "D0 EM Carry Trade",
+      "entry": "EM Carry EUR→BRL",
       "tab": "pm",
       "market": "EM",
       "equity_pct": 100,
@@ -3218,7 +3177,7 @@
     },
     {
       "id": "mp_40_60",
-      "entry": "40/60",
+      "entry": "DM E60B40",
       "tab": "pm",
       "market": "DM",
       "equity_pct": 60,
@@ -3354,7 +3313,7 @@
     },
     {
       "id": "mp_70_30",
-      "entry": "70/30",
+      "entry": "DM E30B70",
       "tab": "pm",
       "market": "DM",
       "equity_pct": 30,
@@ -3428,7 +3387,7 @@
     },
     {
       "id": "mp_60_40",
-      "entry": "60/40",
+      "entry": "DM E40B60",
       "tab": "pm",
       "market": "DM",
       "equity_pct": 40,
@@ -3502,7 +3461,7 @@
     },
     {
       "id": "mp_30_70",
-      "entry": "30/70",
+      "entry": "DM E70B30",
       "tab": "pm",
       "market": "DM",
       "equity_pct": 70,
@@ -3576,7 +3535,7 @@
     },
     {
       "id": "mp_70_30_DM_EM",
-      "entry": "70/30 DM/EM",
+      "entry": "DM E70 · EM E30",
       "tab": "pm",
       "market": "EM",
       "equity_pct": 100,
@@ -3650,7 +3609,7 @@
     },
     {
       "id": "mp_60_40_DM_EM",
-      "entry": "60/40 DM/EM",
+      "entry": "DM E60 · EM E40",
       "tab": "pm",
       "market": "EM",
       "equity_pct": 100,
@@ -3724,7 +3683,7 @@
     },
     {
       "id": "mp_40_60_DM_EM",
-      "entry": "40/60 DM/EM",
+      "entry": "DM E40 · EM E60",
       "tab": "pm",
       "market": "EM",
       "equity_pct": 100,
@@ -3798,7 +3757,7 @@
     },
     {
       "id": "mp_30_70_DM_EM",
-      "entry": "30/70 DM/EM",
+      "entry": "DM E30 · EM E70",
       "tab": "pm",
       "market": "EM",
       "equity_pct": 100,

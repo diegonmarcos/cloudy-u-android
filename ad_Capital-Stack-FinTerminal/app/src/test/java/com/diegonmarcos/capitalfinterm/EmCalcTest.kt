@@ -1,6 +1,7 @@
 package com.diegonmarcos.capitalfinterm
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -71,8 +72,8 @@ class EmCalcTest {
 
     @Test fun declaredDashboardsGroupByRiskAndTheA1WeightsFollowTheDxyBasket() {
         val pm = dashboards.filter { it.tab == "pm" }.map { it.id }
-        assertTrue(pm.containsAll(listOf("pm_a1_cash", "pm_a2_low", "pm_b1_mid", "pm_c1_risky", "pm_d1_em_bonds", "pm_d0_carry")))
-        for (id in listOf("pm_a1_cash", "pm_a2_low", "pm_b1_mid", "pm_c1_risky", "pm_d1_em_bonds")) assertEquals(id, 100, Dashboards.byId(dashboards, id)!!.legs.sumOf { it.second })
+        assertTrue(pm.containsAll(listOf("pm_a1_cash", "pm_b1_mid", "pm_c1_risky", "pm_d1_em_bonds", "pm_d0_carry")))
+        for (id in listOf("pm_a1_cash", "mp_70_30", "pm_b1_mid", "pm_c1_risky", "pm_d1_em_bonds")) assertEquals(id, 100, Dashboards.byId(dashboards, id)!!.legs.sumOf { it.second })
         val dxy = org.json.JSONObject(DataFiles.universeJson).getJSONObject("fx_matrix").getJSONObject("dxy").getJSONArray("legs")
         val a1 = Dashboards.byId(dashboards, "pm_a1_cash")!!.legs
         assertEquals(dxy.length(), a1.size)
@@ -81,7 +82,7 @@ class EmCalcTest {
             assertTrue(a1[k].first.startsWith(l.getString("ccy")))
             assertEquals(l.getDouble("weight") * 100, a1[k].second.toDouble(), 1.0) // whole percents of the ICE weight
         }
-        assertEquals(listOf(30, 70, 0, 0), Dashboards.byId(dashboards, "pm_a2_low")!!.legs.map { it.second })
+        assertNull("A2 is dropped (identical to 70/30)", Dashboards.byId(dashboards, "pm_a2_low"))
         assertEquals(listOf(0, 0, 100), Dashboards.byId(dashboards, "pm_d1_em_bonds")!!.legs.map { it.second })
     }
 
@@ -101,11 +102,10 @@ class EmCalcTest {
     @Test fun everyPmPortfolioHasAMarketAndATierOnTheTwoBandScale() {
         val tabs = RiskTabs.parse(DataFiles.dashboardsJson)
         assertEquals(listOf("all", "dm_low", "dm_mid", "em_mid", "em_high"), tabs.map { it.id })
-        assertEquals(listOf("All", "DM · Low", "DM · Mid", "EM · Mid-High", "EM · High"), tabs.map { it.label })
-        assertEquals(listOf("DM · Low risk", "DM · Middle risk", "EM · Middle-High risk", "EM · High risk"), tabs.drop(1).map { it.header })
+        assertEquals(listOf("All", "DM · Low", "DM · Middle", "DM+EM · Middle-High", "DM+EM · High"), tabs.map { it.label })
         assertEquals(listOf("DM", "DM", "EM", "EM"), tabs.drop(1).map { it.market })
         val pm = dashboards.filter { it.tab == "pm" && it.id != "portfolio_risk" }
-        assertEquals(14, pm.size)
+        assertEquals(13, pm.size)
         for (d in pm) {
             assertTrue("${d.id} has no market", d.market == "DM" || d.market == "EM")
             assertTrue("${d.id} has no equity share", d.equityPct in 0..100 && d.emPct in 0..100)
@@ -114,37 +114,17 @@ class EmCalcTest {
             assertEquals(d.id, d.market == "EM", d.emPct > 0) // a portfolio that holds any EM is in the EM band
         }
         assertTrue(Dashboards.byId(dashboards, "pm_d0_carry")!!.riskBasis.isNotBlank())
-        // the ordering key: market (DM < EM), then equity share, then EM share; the pages follow it and never fall
+        // the ordering key: market (DM < EM), then equity share, then EM share: the Vol rows follow it by level (level 3 is ordered by Vol: B1, D1, C1)
         val key = { d: Dashboard -> (if (d.market == "DM") 0 else 1) * 1000000 + d.equityPct * 1000 + d.emPct }
-        val stack = org.json.JSONObject(DataFiles.buildJson).getJSONObject("ui").getJSONObject("stacks").getJSONArray("pm")
-        var tier = ""; val seen = ArrayList<String>(); val keys = ArrayList<Int>(); val tierIdx = ArrayList<Int>()
-        for (k in 0 until stack.length()) {
-            val e = stack.getJSONObject(k)
-            if (e.getString("kind") == "section_title") { seen += e.getString("title"); tier = tabs.first { it.header == e.getString("title") }.id }
-            else if (e.getString("dashboard") != "portfolio_risk") {
-                val d = Dashboards.byId(dashboards, e.getString("dashboard"))!!
-                assertEquals(d.id, tier, d.risk); keys += key(d); tierIdx += tabs.indexOfFirst { it.id == d.risk }
-            }
-        }
-        assertEquals(tabs.drop(1).map { it.header }, seen)
-        assertEquals(keys.sorted(), keys); assertEquals(tierIdx.sorted(), tierIdx)
+        val vol = PmTables.parse(DataFiles.pmJson, "vol") { id -> Dashboards.byId(dashboards, id)!!.entry }!!
+        assertEquals(pm.map { it.id }.toSet(), vol.rows.map { it.dashboard }.toSet())
+        val tierIdx = vol.rows.map { r -> tabs.indexOfFirst { it.id == Dashboards.byId(dashboards, r.dashboard)!!.risk } }
+        assertEquals(tierIdx.sorted(), tierIdx)
         val t = { id: String -> Dashboards.byId(dashboards, id)!!.risk }
         assertEquals(listOf("dm_low", "dm_low", "dm_mid", "dm_mid", "dm_mid"), listOf("pm_a1_cash", "mp_70_30", "mp_60_40", "mp_40_60", "mp_30_70").map(t))
         assertEquals(listOf("em_mid", "em_mid", "em_mid", "em_high", "em_high"), listOf("pm_d1_em_bonds", "pm_b1_mid", "pm_c1_risky", "mp_30_70_DM_EM", "pm_d0_carry").map(t))
         assertEquals("pm_d0_carry", pm.maxByOrNull { key(it) }!!.id) // the carry trade is the top
-    }
-
-    @Test fun allShowsOneHeaderPerTierAndATierTabItsOwnCardsAlone() {
-        val tabs = RiskTabs.parse(DataFiles.dashboardsJson)
-        val cards = dashboards.filter { it.tab == "pm" }.map { it.id }
-        val riskOf = { id: String -> Dashboards.byId(dashboards, id)!!.risk }
-        val all = RiskTabs.groups(cards, { it }, riskOf, tabs, "all")
-        assertEquals(listOf("", "DM · Low risk", "DM · Middle risk", "EM · Middle-High risk", "EM · High risk"), all.map { it.first })
-        assertEquals(cards.size, all.sumOf { it.second.size })
-        assertEquals(listOf("portfolio_risk"), all[0].second)
-        val c = RiskTabs.groups(cards, { it }, riskOf, tabs, "em_mid")
-        assertEquals(listOf(""), c.map { it.first }); assertEquals(setOf("pm_d1_em_bonds", "pm_b1_mid", "pm_c1_risky"), c[0].second.toSet())
-        assertEquals(setOf("pm_a1_cash", "pm_a2_low", "mp_70_30"), RiskTabs.groups(cards, { it }, riskOf, tabs, "dm_low")[0].second.toSet())
+        assertEquals("pm_d0_carry", vol.rows.last().dashboard)
     }
 
     @Test fun theCalculatorPanelIsFirstOnTheD1DashboardSoItsMatrixIsOnTheFirstScreen() {

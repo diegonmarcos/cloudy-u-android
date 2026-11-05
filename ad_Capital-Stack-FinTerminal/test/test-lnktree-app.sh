@@ -63,11 +63,10 @@ EXPECT = {
       "eq": [("dashboard", "World Equity Indices"), ("dashboard", "DM Equity (US)"), ("dashboard", "EM Equity"), ("dashboard", "Quotes & Charts"), ("dashboard", "Fundamentals"), ("dashboard", "Earnings Calendar"), ("dashboard", "Watchlist & Alerts")],
       "ex": [("dashboard", "FX"), ("dashboard", "Onshore USD Rates"), ("dashboard", "Crypto"), ("dashboard", "Commodities")],
       "nw": [("dashboard", "Economic Calendar"), ("dashboard", "News"), ("dashboard", "Central Bank Calendar")],
-      "pm": [("dashboard", "Portfolio & Risk Analytics"),
-             ("section_title", "DM · Low risk"), ("dashboard", "A1 Cash (DM - Cash)"), ("dashboard", "A2 Low Risk"), ("dashboard", "70/30"),
-             ("section_title", "DM · Middle risk"), ("dashboard", "60/40"), ("dashboard", "40/60"), ("dashboard", "30/70"),
-             ("section_title", "EM · Middle-High risk"), ("dashboard", "D1 EM Bonds"), ("dashboard", "B1 Middle Risk"), ("dashboard", "C1 Risky"),
-             ("section_title", "EM · High risk"), ("dashboard", "70/30 DM/EM"), ("dashboard", "60/40 DM/EM"), ("dashboard", "40/60 DM/EM"), ("dashboard", "30/70 DM/EM"), ("dashboard", "D0 EM Carry Trade")],
+      "pm": [("pm_table", "Vol"), ("pm_table", "Commodities"), ("pm_table", "Profiles"), ("dashboard", "Portfolio & Risk Analytics"),
+             ("dashboard", "DM Cash B100"), ("dashboard", "DM E30B70"), ("dashboard", "DM E40B60"), ("dashboard", "DM E60B40"), ("dashboard", "DM E70B30"),
+             ("dashboard", "DM E40B40 · EM E10B10"), ("dashboard", "EM B100"), ("dashboard", "DM E50B10 · EM E30B10"),
+             ("dashboard", "DM E70 · EM E30"), ("dashboard", "DM E60 · EM E40"), ("dashboard", "DM E40 · EM E60"), ("dashboard", "DM E30 · EM E70"), ("dashboard", "EM Carry EUR→BRL")],
       "my-pm": [("holdings", "Personal portfolio")],
       "config": [("sources", "Sources"), ("about", None)],
     },
@@ -218,7 +217,7 @@ declared_kinds = {e.get("kind", "entry") for lst in stacks.values() for e in lst
 named_kinds = set(re.findall(r'KIND_\w+\s*=\s*"([^"]+)"', pages_kt))
 for k in sorted(declared_kinds - named_kinds): bad.append("P6 build.json declares the kind %r that Pages.kt does not name" % k)
 for k in sorted(named_kinds - declared_kinds - {"holdings", "section_title", "entry"}): bad.append("P6 Pages.kt names the kind %r that build.json never declares" % k)
-for k, const in (("section_title", "KIND_SECTION_TITLE"), ("holdings", "KIND_HOLDINGS"), ("about", "KIND_ABOUT"), ("dashboard", "KIND_DASHBOARD"), ("sources", "KIND_SOURCES"),
+for k, const in (("section_title", "KIND_SECTION_TITLE"), ("holdings", "KIND_HOLDINGS"), ("about", "KIND_ABOUT"), ("dashboard", "KIND_DASHBOARD"), ("sources", "KIND_SOURCES"), ("pm_table", "KIND_PM_TABLE"),
                  ("avatar", "KIND_AVATAR"), ("galaxy", "KIND_GALAXY"), ("store", "KIND_STORE")):
     if k in named_kinds and const not in page_kt: bad.append("P6 SectionPage does not draw %s" % const)
 if "about" not in by_id: bad.append("P6 ui.sections declares no hidden about section")
