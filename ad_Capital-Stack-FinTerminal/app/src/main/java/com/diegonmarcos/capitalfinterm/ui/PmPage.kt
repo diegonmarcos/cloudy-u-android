@@ -51,6 +51,7 @@ fun PmPage(key: String, nav: FinNav) {
     val p = LocalFinPalette.current
     var sel by rememberSaveable(key) { mutableStateOf(RiskTabs.ALL) }
     BoxWithConstraints(Modifier.fillMaxSize().testTag(PM_PAGE + key)) {
+        val width = maxWidth
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(FinDim.gap)) {
             if (profiles != null) {
                 val (head, groups) = profiles
@@ -58,7 +59,7 @@ fun PmPage(key: String, nav: FinNav) {
                 Chips(key, groups.map { it.id to it.label }, g?.id.orEmpty()) { sel = it }
                 if (g != null) {
                     Text(g.leads, color = p.text2, style = FinType.caption)
-                    FinMatrix(key, head.columns, g.rows, emptyList(), emptyList(), maxWidth, head.labels)
+                    FinMatrix(key, head.columns, g.rows, emptyList(), emptyList(), width, head.labels)
                 }
                 Text(head.note, color = p.text3, style = FinType.caption)
             } else if (table != null) {
@@ -67,7 +68,7 @@ fun PmPage(key: String, nav: FinNav) {
                 val rows = if (withTabs) PmTables.filter(table.rows, sel, risk) else table.rows
                 if (withTabs) Chips(key, tabs.map { it.id to it.label }, sel) { sel = it }
                 FinMatrix(
-                    key, table.columns, PmTables.matrixRows(rows), PmTables.heat(rows, table.heat), emptyList(), maxWidth, table.labels,
+                    key, table.columns, PmTables.matrixRows(rows), PmTables.heat(rows, table.heat), emptyList(), width, table.labels,
                     onRow = if (withTabs) ({ i: Int -> nav.openDashboard(rows[i].dashboard) }) else null,
                 )
                 Text(table.note, color = p.text3, style = FinType.caption)
