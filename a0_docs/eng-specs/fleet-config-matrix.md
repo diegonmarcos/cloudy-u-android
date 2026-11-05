@@ -21,7 +21,7 @@ DataStore / Room stores and declared files it cannot move yet.
 | c3-watchtower | `com.diegonmarcos.watchtower` | 4 | 0 | 100% |
 | cloud-account | `com.diegonmarcos.cloudaccount` | 19 | 1 | 95% |
 | cloud-tasks | `com.diegonmarcos.cloudagenda` | 9 | 0 | 100% |
-| cloud-browser | `com.diegonmarcos.cloudbrowser` | 16 | 0 | 100% |
+| cloud-browser | `com.diegonmarcos.cloudbrowser` | 15 | 0 | 100% |
 | cloud-c3-webserver | `com.diegonmarcos.cloudwebserver` | 4 | 0 | 100% |
 | cloud-media-center | `com.diegonmarcos.cloudmediacenter` | 4 | 0 | 100% |
 | cloud-c3 | `com.diegonmarcos.cloudc3` | 12 | 0 | 100% |
@@ -57,7 +57,7 @@ DataStore / Room stores and declared files it cannot move yet.
 | capital-stack-finterminal | `com.diegonmarcos.capitalfinterm` | 5 | 0 | 100% |
 | hardtech-cad | `com.diegonmarcos.hardtechcad` | 4 | 0 | 100% |
 | hardtech-sim2real | `com.diegonmarcos.hardtechsim2real` | 4 | 0 | 100% |
-| **fleet** | | **395** | **56** | **87%** |
+| **fleet** | | **394** | **56** | **87%** |
 
 ## cloud-superapp — `com.diegonmarcos.superapp`
 
@@ -328,12 +328,11 @@ Coverage: 9 covered, 0 gaps.
 
 ## cloud-browser — `com.diegonmarcos.cloudbrowser`
 
-Module `ac_cloud-browser`; libs: lib-ai, lib-analytics, lib-apify, lib-autofill, lib-bluetooth, lib-bottomnav, lib-browser, lib-core, lib-crash, lib-decisions-link, lib-devtools, lib-fleetconfig-model, lib-media-convert-audio, lib-model-catalogue, lib-perms, lib-scraper, lib-text-tools, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-web-core.
+Module `ac_cloud-browser`; libs: lib-ai, lib-analytics, lib-autofill, lib-bluetooth, lib-bottomnav, lib-browser, lib-core, lib-crash, lib-decisions-link, lib-devtools, lib-fleetconfig-model, lib-model-catalogue, lib-perms, lib-text-tools, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-web-core.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
 | `ai_composer` | prefs | config | yes | The shared AI chat's config bar: whether it is collapsed to its one compact chip, one boolean per app (key ai_composer_collapsed.<app>). A user layout choice, so it migrates with the app's settings. |
-| `apify_tokens` | encrypted | secret | yes | #1468/#1470 libs:apify, the fleet's one Apify store (Cloud Browser Scrapers > Apify, Cloud News): the chosen backend, the Apify token, the Cloudy Crawlee URL and bearer, in EncryptedSharedPreferences via libs:crash SafeEncryptedPrefs; an unreadable store resets to memory, never to plaintext. Credentials: migrate through the vault. |
 | `auto_update` | prefs | config (keys: last_check_at→device, last_remote_bytes→device, last_remote_digest→device, unattended_pass→device) | yes | Auto-update toggles (enabled, require_silent/unmetered) are settings; last_check/remote digest/bytes/unattended_pass are state. |
 | `browser_ac_profiles` | encrypted | secret | yes | #900 Autocomplete: the personal profiles (many-valued names, addresses, phones, emails, ID documents, birth dates, organisations), the per-site memory (values typed on one site: customer number, member ID) and the never-save lists. EncryptedSharedPreferences, MasterKey AES256_GCM. Imports the old browser_autofill profile once; never deletes it. |
 | `browser_ac_secrets` | encrypted | device | no | #900 Autocomplete: saved sign-ins and cards. EncryptedSharedPreferences over which every password, card number and code is sealed again (AES-256-GCM, Android Keystore key cloud_browser_ac_v1, record-bound AAD), so it never migrates in the clear: the Keystore key does not leave the phone, and Cloud Vault is the fleet's migration path for secrets. |
@@ -344,11 +343,12 @@ Module `ac_cloud-browser`; libs: lib-ai, lib-analytics, lib-apify, lib-autofill,
 | `browser_history` | prefs | content | no | Browsing history entries the user accumulated. |
 | `browser_settings` | prefs | config (keys: download_dir→device, secrets_require_unlock→device) | yes | #802 the browser's settings catalogue (ac_cloud-browser/build.json::ui.browser.settings): search engine, homepage, desktop site, text size, JavaScript, images, third-party cookies; one typed key per declared setting. Served by /api/browser/settings. |
 | `browser_site_permissions` | prefs | config | yes | #802 per-site decisions host\|permission -> allow/deny/ask (location, camera, microphone, and the javascript/images/trackers shields); a rule covers subdomains. #900 also host\|zoom -> the site's text zoom in percent. |
+| `browser_visit_log` | prefs | content | no | #1493 Cloud Browser Domains: every page the browser's history ever showed, with its time (log_json), kept past the history's own cap; History, Visited and Perms&Actions read it. |
 | `cloud_analytics` | prefs | config (keys: visitor_id→device) | yes | Analytics consent is a user choice; visitor_id is a per-install identity. |
+| `cloudy_cache` | prefs | device | no | #1493 Cloud Browser Cloudy: the last front-html pages.json answer (pages_json), shown at once and refreshed when the network answers. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
-| `music_tokens` | encrypted | secret | yes | #1460 Cloud Browser Scrapers > Music: the OAuth access and refresh tokens of the music services (Spotify, YouTube Music, Deezer, Apple Music), in EncryptedSharedPreferences via libs:crash SafeEncryptedPrefs; an unreadable store resets to memory, never to plaintext. Credentials: migrate through the vault. |
 | `nav_modes` | prefs | config | yes | #1189 the user's per-section choice of how child pages are navigated (one row, two rows, side menu; overrides the build.json declaration) and whether the side menu is expanded or the rail. Written by the shared nav bars (NavModePrefs) from each app's Configs; part of the app's settings, so it migrates and backs up with them. |
 | `nav_ui` | prefs | config | yes | The user's nav UI choice for this app (Configs > UI): the nav mode, Classic or Clean, and the scroll-hide toggle (a downward scroll hides every bar until an upward one). Written by the shared Configs card (NavUiPrefs, libs:ui-nav-bars NavUiConfigCard); part of the app's settings, so it migrates and backs up with them. The app's declared default is build.json::ui.nav_ui. |
 | `notification_store` | prefs | content | no | Stored in-app notification log (info/warn/error). |
@@ -363,12 +363,13 @@ Module `ac_cloud-browser`; libs: lib-ai, lib-analytics, lib-apify, lib-autofill,
 | `web_nfc_grants` | prefs | device | no | #1225 Cloud Browser's Web NFC permission memory: per site origin, whether the user allowed the site to read and write NFC tags. The NFC radio belongs to this phone, so it never migrates; a private tab keeps its grant in memory only. |
 | `web_serial_grants` | prefs | device | no | #1225 Cloud Browser's Web Serial permission memory: per site origin, the USB serial ports (vendor:product key, name) the user picked in the chooser. A port is a cable on this phone, so it never migrates; a private tab keeps its grants in memory only. |
 | `web_usb_grants` | prefs | device | no | #1225 Cloud Browser's WebUSB permission memory: per site origin, the USB devices (vendor:product key, name) the user picked in the chooser. Devices are plugged into this phone, so it never migrates; a private tab keeps its grants in memory only; Android's own per-device USB permission is separate and asked again after a replug. |
+| `weby_bookmarks` | prefs | config | yes | #1493 Cloud Browser Weby: the user's bookmark folders and tiles (folders_json), seeded from the SuperApp phone-apps declaration until the first edit. |
 
 | file | class | doc |
 |---|---|---|
 | `browser_settings` | config | #802 every user setting is a key of the declared browser_settings store (libs:browser BrowserSettings over build.json::ui.browser.settings); tabs and history are the lib's own declared stores. Nothing is kept outside them. |
 
-Coverage: 16 covered, 0 gaps.
+Coverage: 15 covered, 0 gaps.
 
 ## cloud-c3-webserver — `com.diegonmarcos.cloudwebserver`
 

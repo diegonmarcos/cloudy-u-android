@@ -65,9 +65,7 @@
         "libs:bottomnav",
         "libs:ui-icons",
         "libs:ui-nav-bars",
-        "libs:theme-background",
-        "libs:scraper",
-        "libs:apify"
+        "libs:theme-background"
       ]
     },
     "libs:core": {
@@ -94,21 +92,6 @@
       "type": "library",
       "_doc_dir": "Shared BY REFERENCE from aa_cloud-superapp/libs/ - settings.gradle points projectDir here instead of at a local copy. browser was three byte-identical trees (superapp, browser, vault); nothing kept them in step, so a WebView fix had to be pasted three times or it silently reached one app.",
       "dir": "../ab_cloud-libs-shared/libs/browser"
-    },
-    "libs:apify": {
-      "_doc": "#1470/#1468 the fleet's ONE Apify backend choice and encrypted token store (Apify Cloud default | self-hosted Cloudy Crawlee), shared BY REFERENCE; the Scrapers > Apify page of libs:scraper adopts it.",
-      "dir": "../ab_cloud-libs-shared/libs/apify",
-      "type": "library"
-    },
-    "libs:scraper": {
-      "type": "library",
-      "_doc": "#1426 the Scrapers section (Site Files, Apify, SelfHosted): reads the browser's stores as files, calls the scrappers-api container for heavy work. Separate from libs:browser.",
-      "dir": "../ab_cloud-libs-shared/libs/scraper"
-    },
-    "libs:media-convert-audio": {
-      "type": "library",
-      "_doc": "#1428 libs:scraper `implementation`s this converter (audio track remux, MediaExtractor/MediaMuxer); listed so settings.gradle resolves the path and the ship workflow's path triggers see it.",
-      "dir": "../ab_cloud-libs-shared/libs/media-convert-audio"
     },
     "libs:autofill": {
       "type": "library",
@@ -1914,13 +1897,13 @@
         }
       ]
     },
-    "_doc_nav": "#868 THE nav declaration (libs:bottomnav NavDecl): ui.bottom_nav is the island, ui.sections[] what each item opens, ui.default_section where the app opens. browser = BrowserHostFragment's page (its address bar, tab strip and overlays are the lib's own UI, so the section has no pages), tabs = the tab switcher (BrowserHostFragment.openTabs: the grid, where a tab dropped on another makes a group; #886 moved it from a button into the island), favourites = the bookmarks as a list or icon grid over it (BrowserHostFragment.openFavourites, #893; island order Fav, Tabs, Browser, Search, Scrapers; #1426 Scrapers took Configs' island place and Configs stays a section the first row's ⋮ opens), search = the Search add-on's page over it (BrowserHostFragment.showSearchPage), configs = the browser settings over it (showSettings), one top tab (PageTabs, scrolling sideways) per Configs page: ui.sections[configs].pages = settings_sections (#900). scrapers = libs:scraper's Site Files, Apify and SelfHosted pages (#1468), drawn by MainActivity over the host (top tabs = ui.sections[scrapers].pages). MainActivity feeds the island from NavDecl and follows the host's overlays so the pill goes back to Browser when one closes.",
+    "_doc_nav": "#868/#1493 THE nav declaration (libs:bottomnav NavDecl): ui.bottom_nav is the island, ui.sections[] what each item opens, ui.default_section where the app opens. Island order (#1493): Weby, Cloudy, Browser, Tabs, Domains. browser = BrowserHostFragment's page (its address bar, tab strip and overlays are the lib's own UI, so the section has no pages), tabs = the tab switcher (BrowserHostFragment.openTabs, #886), weby = the bookmarks as a launcher icon grid in folders, seeded from the SuperApp phone apps, cloudy = Cloudy-Public GH-Pages | Cloudy-Private Webserver, domains = Files Cached | Perms&Actions | History | Visited; those three are drawn by MainActivity over the host from sites/ (top tabs = ui.sections[<id>].pages). favourites and search stay declared sections reached from the first row (the AI icon opens Search), no longer island items; configs = the browser settings over the host (showSettings), one top tab per Configs page: ui.sections[configs].pages = settings_sections (#900). MainActivity feeds the island from NavDecl and follows the host's overlays so the pill goes back to Browser when one closes.",
     "bottom_nav": [
-      "favourites",
-      "tabs",
+      "weby",
+      "cloudy",
       "browser",
-      "search",
-      "scrapers"
+      "tabs",
+      "domains"
     ],
     "sections": [
       {
@@ -1948,34 +1931,33 @@
         "pages": []
       },
       {
-        "id": "scrapers",
-        "label": "Scrapers",
-        "icon": "download",
+        "id": "weby",
+        "label": "Weby",
+        "icon": "apps",
+        "pages": [],
+        "_doc": "#1493 the bookmarks as a launcher icon grid in folders (sites/WebyPage.kt). Seeded from the Cloud SuperApp Phone WebApps declaration (aa_cloud-superapp/data/phone-webapps.json, #1466), read at BUILD time by app/build.gradle into SITES_DECL_B64: same groups, same order, never copied by hand."
+      },
+      {
+        "id": "cloudy",
+        "label": "Cloudy",
+        "icon": "cloud",
         "pages": [
-          {
-            "id": "site_files",
-            "label": "Site Files",
-            "icon": "folder_open"
-          },
-          {
-            "id": "apify",
-            "label": "Apify",
-            "icon": "build",
-            "_doc": "#1468 libs:scraper ApifyPage: the declared most-used actors, a search of the public Store API (api.apify.com/v2/store), and with the user's own token (encrypted) run an actor, list runs and datasets, export items as CSV/JSON."
-          },
-          {
-            "id": "cloudflare",
-            "label": "Cloudflare",
-            "icon": "public",
-            "_doc": "#1475 libs:scraper CloudflarePage: Cloudflare Browser Run (headless-browser rendering REST API) as the third scraper backend beside Apify and SelfHosted; the account id and API token are stored encrypted in the shared libs:apify store (keys cloudflare.account_id, cloudflare.api_token)."
-          },
-          {
-            "id": "self_hosted",
-            "label": "SelfHosted",
-            "icon": "music_note",
-            "_doc": "#1468 libs:scraper SelfHostedPage: Music (moved here from its own tab, #1459/#1460), the YouTube tool and the fleet's scrappers-api, as sections."
-          }
-        ]
+          {"id": "gh_pages", "label": "Cloudy-Public GH-Pages", "icon": "public"},
+          {"id": "webserver", "label": "Cloudy-Private Webserver", "icon": "dns"}
+        ],
+        "_doc": "#1493 the owner's sites: the public GitHub Pages (declared repos + front-html pages.json) and the pages the phone's Cloud-Webserver serves (ui.cloudy)."
+      },
+      {
+        "id": "domains",
+        "label": "Domains",
+        "icon": "language",
+        "pages": [
+          {"id": "files", "label": "Files Cached", "icon": "folder_open"},
+          {"id": "site_perms", "label": "Perms&Actions", "icon": "security"},
+          {"id": "history", "label": "History", "icon": "history"},
+          {"id": "visited", "label": "Visited", "icon": "public"}
+        ],
+        "_doc": "#1493 what the browser knows per site (sites/DomainsPage.kt): cached files, permissions and clear actions, history per day, visited domains. Texts and actions are ui.domains."
       },
       {
         "id": "configs",
@@ -2008,6 +1990,40 @@
         ]
       }
     ],
+    "weby": {
+      "_doc": "#1493 Weby's words. Its folders and tiles are NOT here: app/build.gradle derives them from aa_cloud-superapp (ui.sections[phone].phone_app_groups + data/phone-webapps.json); the user's edits are the weby_bookmarks prefs.",
+      "texts": {
+        "add_bookmark": "Add bookmark", "add_folder": "New folder", "add_short": "+", "remove_short": "×", "path_sep": " › ",
+        "remove_bookmark": "Remove this bookmark?", "remove_folder": "Remove this folder and everything in it?",
+        "field_title": "Title", "field_url": "Address", "field_folder": "Folder", "ok": "OK", "cancel": "Cancel", "empty": "No bookmarks."
+      }
+    },
+    "cloudy": {
+      "_doc": "#1493 Cloudy. pages_url = front-html's Pages list (the owner's GitHub Pages, public ones, refreshed over the network and kept in the cloudy_cache prefs); the declared repos' Pages (ac_cloud-c3 data/repos_declared.json) and the Cloud-Webserver's serving map, Pages sub-pages and Repos store (ac_cloud-c3-webserver/build.json) are read by app/build.gradle. webserver_base_role = the serving endpoint the Webserver's own pages are served on.",
+      "pages_url": "https://raw.githubusercontent.com/diegonmarcos/front-html/main/pages.json",
+      "webserver_base_role": "drive",
+      "timeout_ms": 1500,
+      "texts": { "gh_empty": "No public GitHub Pages found yet.", "ws_empty": "The Cloud-Webserver declares no pages.", "up": "up", "down": "down" }
+    },
+    "domains": {
+      "_doc": "#1493 Domains: the per-site actions (ids are the SiteActions plans: cookies, media, cache, storage, reset_perms), what counts as media (cached content types), the History and Visited switches and the words.",
+      "media_mime_prefixes": ["image/", "audio/", "video/"],
+      "history_default": "pages",
+      "history_modes": [ {"id": "pages", "label": "Pages"}, {"id": "domains", "label": "Domains"} ],
+      "visited_default": "last",
+      "visited_sorts": [ {"id": "name", "label": "Name"}, {"id": "last", "label": "Last visited"} ],
+      "actions": [
+        {"id": "cookies", "label": "Clear cookies", "detail": "this site"},
+        {"id": "media", "label": "Clear media", "detail": "cached images, audio, video"},
+        {"id": "cache", "label": "Clear cache", "detail": "cached files"},
+        {"id": "storage", "label": "Clear storage", "detail": "local, session, IndexedDB"},
+        {"id": "reset_perms", "label": "Reset permissions", "detail": "back to the defaults"}
+      ],
+      "texts": {
+        "actions": "Actions", "done": "done", "files_empty": "No cached files yet.", "perms_empty": "No site visited yet.",
+        "history_empty": "No history yet.", "visited_empty": "No site visited yet."
+      }
+    },
     "default_section": "browser",
     "configs_ui": ["nav_ui"],
     "profile_default": {

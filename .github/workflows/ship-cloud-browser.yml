@@ -55,7 +55,6 @@ on:
       # ── end MANAGED-PATHS-HEADER ──
       - "ab_cloud-libs-shared/libs/ai/**"
       - "ab_cloud-libs-shared/libs/analytics/**"
-      - "ab_cloud-libs-shared/libs/apify/**"
       - "ab_cloud-libs-shared/libs/autofill/**"
       - "ab_cloud-libs-shared/libs/bluetooth/**"
       - "ab_cloud-libs-shared/libs/bottomnav/**"
@@ -65,10 +64,8 @@ on:
       - "ab_cloud-libs-shared/libs/decisions-link/**"
       - "ab_cloud-libs-shared/libs/devtools/**"
       - "ab_cloud-libs-shared/libs/fleetconfig-model/**"
-      - "ab_cloud-libs-shared/libs/media-convert-audio/**"
       - "ab_cloud-libs-shared/libs/model-catalogue/**"
       - "ab_cloud-libs-shared/libs/perms/**"
-      - "ab_cloud-libs-shared/libs/scraper/**"
       - "ab_cloud-libs-shared/libs/text-tools/**"
       - "ab_cloud-libs-shared/libs/theme-background/**"
       - "ab_cloud-libs-shared/libs/ui-icons/**"

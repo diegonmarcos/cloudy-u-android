@@ -32,6 +32,11 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.commit
+import com.diegonmarcos.cloudbrowser.sites.CloudyPage
+import com.diegonmarcos.cloudbrowser.sites.DomainsPage
+import com.diegonmarcos.cloudbrowser.sites.SitesDecl
+import com.diegonmarcos.cloudbrowser.sites.VisitLogStore
+import com.diegonmarcos.cloudbrowser.sites.WebyPage
 import com.diegonmarcos.superapp.bottomnav.BottomNavCollapse
 import com.diegonmarcos.superapp.bottomnav.FleetChrome
 import com.diegonmarcos.superapp.bottomnav.NavChromeScroll
@@ -91,8 +96,10 @@ class MainActivity : AppCompatActivity() {
     private var selectedId by mutableStateOf<String?>(null)
     /** #900 the Configs top tab showing (a ui.sections[configs].pages id), while Configs is the island's item. */
     private var configsPage by mutableStateOf<String?>(null)
-    /** #1426 the Scrapers top tab showing (a ui.sections[scrapers].pages id: Site Files, Apify, SelfHosted), libs:scraper draws it. */
-    private var scrapersPage by mutableStateOf<String?>(null)
+    /** #1493 the top tab showing under Cloudy or Domains (a ui.sections[<id>].pages id); sites/SitesUi.kt draws it. */
+    private var sitesPage by mutableStateOf<String?>(null)
+    /** #1493 the declaration behind Weby, Cloudy and Domains (build.json::ui, baked with its sibling declarations). */
+    private val sites: SitesDecl by lazy { SitesDecl.parseBase64(BuildConfig.SITES_DECL_B64) }
     /** #1164 the live host fragment (Compose state: the first row reads its address). */
     private var hostFragment by mutableStateOf<BrowserHostFragment?>(null)
     /** #1164 the shared chrome's scroll-collapse; the WebView's scroll listener feeds it. */
@@ -170,7 +177,7 @@ class MainActivity : AppCompatActivity() {
 
     /**
      * The island: ui.bottom_nav through [NavDecl], the icon of a section its libs:ui-icons catalog glyph. A tap on Search / Configs asks the live host to draw that page over itself; a tap
-     * on Browser closes whatever is open. Scrapers (#1426, in Configs' old place: the row's ⋮ opens Configs) is libs:scraper's page. The island's look is the lib's.
+     * on Browser closes whatever is open. Weby, Cloudy and Domains (#1493) are sites/'s pages. The island's look is the lib's.
      */
     @androidx.compose.runtime.Composable
     private fun Island() {
@@ -198,10 +205,10 @@ class MainActivity : AppCompatActivity() {
             title = title,
             hierarchy = when (selectedId) {
                 "configs" -> section?.let { titleHierarchy(it, configsPage) }.orEmpty()
-                "scrapers" -> section?.let { titleHierarchy(it, scrapersPage) }.orEmpty()
+                "cloudy", "domains" -> section?.let { titleHierarchy(it, sitesPage) }.orEmpty()
                 else -> emptyList()
             },
-            onNavigate = { e -> if (e.depth == 0) openSection(e.sectionId) else if (selectedId == "scrapers") scrapersPage = e.id else openConfigsPage(e.id) },
+            onNavigate = { e -> if (e.depth == 0) openSection(e.sectionId) else if (selectedId == "cloudy" || selectedId == "domains") sitesPage = e.id else openConfigsPage(e.id) },
             onAccount = rememberAccountLauncher(),
             // #1401 the app bar's ⋮ opens the app's Configs, like every fleet app; Browsing Tools is the tab row's icon.
             onConfigs = { openSection("configs") },
@@ -225,10 +232,10 @@ class MainActivity : AppCompatActivity() {
                     val tabs = remember { decl.section("configs")?.pages.orEmpty() }
                     NavBarTopSecondRow(tabs, configsPage, onSelect = { pg -> openConfigsPage(pg.id) }, dark = true, underTopChrome = false)
                 }
-                // #1426 Scrapers: Site Files | Apify | SelfHosted as top tabs, the pages are libs:scraper's.
-                if (selectedId == "scrapers") {
-                    val tabs = remember { decl.section("scrapers")?.pages.orEmpty() }
-                    NavBarTopSecondRow(tabs, scrapersPage, onSelect = { pg -> scrapersPage = pg.id }, dark = true, underTopChrome = false)
+                // #1493 Cloudy and Domains: their sub-pages as top tabs (ui.sections[<id>].pages).
+                if (selectedId == "cloudy" || selectedId == "domains") {
+                    val tabs = remember(selectedId) { decl.section(selectedId.orEmpty())?.pages.orEmpty() }
+                    NavBarTopSecondRow(tabs, sitesPage, onSelect = { pg -> sitesPage = pg.id }, dark = true, underTopChrome = false)
                 }
                 Box(Modifier.weight(1f).fillMaxWidth()) {
                     KitFragmentHost(R.id.fragment_container, Modifier.fillMaxSize()) {
@@ -241,10 +248,17 @@ class MainActivity : AppCompatActivity() {
                             com.diegonmarcos.superapp.fleetconfigs.FleetConfigsPageBody(configsPage.orEmpty(), onAppConfigs = { openConfigsPage("sites") })
                         }
                     }
-                    // #1426 the Scrapers section over the host's page (libs:scraper); Back returns to the page.
-                    if (selectedId == "scrapers") {
+                    // #1493 Weby, Cloudy and Domains over the host's page (sites/SitesUi.kt); Back returns to the page.
+                    if (selectedId == "weby" || selectedId == "cloudy" || selectedId == "domains") {
                         androidx.activity.compose.BackHandler { openSection("browser") }
-                        com.diegonmarcos.superapp.scraper.ScrapersPage(scrapersPage, com.diegonmarcos.superapp.themebg.ThemeBackground.colors(true))
+                        val c = com.diegonmarcos.superapp.themebg.ThemeBackground.colors(true)
+                        Box(Modifier.fillMaxSize().background(c.top).testTag("browser:sites:${selectedId}")) {
+                            when (selectedId) {
+                                "weby" -> WebyPage(sites) { url -> openUrl(url) }
+                                "cloudy" -> CloudyPage(sitesPage, sites) { url -> openUrl(url) }
+                                else -> DomainsPage(sitesPage, sites)
+                            }
+                        }
                     }
                 }
             }
@@ -280,11 +294,19 @@ class MainActivity : AppCompatActivity() {
                 configsPage = decl.section("configs")?.pages?.firstOrNull()?.id
                 host.openSettings()
             }
-            // #1426 Scrapers is drawn by the shell (libs:scraper), not by the host: nothing of the host stays open.
-            "scrapers" -> scrapersPage = scrapersPage ?: decl.section("scrapers")?.pages?.firstOrNull()?.id
+            // #1493 Weby, Cloudy and Domains are drawn by the shell (sites/), not by the host: nothing of the host stays open.
+            "weby" -> Unit
+            "cloudy", "domains" -> sitesPage = decl.section(id)?.pages?.firstOrNull()?.id
         }
         // closeOverlays reset the pill to Browser; an overlay that opened puts it on its own item.
         selectedId = id
+    }
+
+    /** #1493 a Weby or Cloudy tile: the host opens the site in a tab and the island goes back to Browser. */
+    private fun openUrl(url: String) {
+        val host = supportFragmentManager.findFragmentById(R.id.fragment_container) as? BrowserHostFragment ?: return
+        host.openUrl(url)
+        selectedId = decl.section("browser")?.id
     }
 
     /** A Configs top tab was picked: the host swaps the page under it. */
@@ -311,6 +333,12 @@ class MainActivity : AppCompatActivity() {
                 )
             }
         }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        // #1493 the visit log keeps what the browser's capped history shows, so Domains lists every site ever visited.
+        Thread { runCatching { VisitLogStore(applicationContext).sync() } }.start()
     }
 
     override fun onDestroy() {

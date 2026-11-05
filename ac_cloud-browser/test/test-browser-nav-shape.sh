@@ -4,7 +4,7 @@
 # ╚══════════════════════════════════════════════════════════════════╝
 #
 # What this certifies, statically (the nav is data, the bar and the strips are libs:bottomnav's):
-#   S1 build.json::ui is ONE declaration: bottom_nav = favourites|tabs|browser|search|scrapers (#1426), default_section browser
+#   S1 build.json::ui is ONE declaration: bottom_nav = weby|cloudy|browser|tabs|domains (#1493), default_section browser
 #      (the web tabs, address bar and every overlay stay libs:browser's own UI: no pages; #900 Configs alone has pages, its
 #      the Configs top tabs (#1402: Sites, Permissions, Autocomplete, General, About), drawn by NavBarTopSecondRow in MainActivity: test-browser-page-menu.sh holds their ids and order).
 #   S2 the app compiles libs:bottomnav and bakes UI_BOTTOM_NAV + UI_SECTIONS_B64 + UI_DEFAULT_SECTION.
@@ -25,11 +25,20 @@ import json, os, re, sys
 APP = os.environ["APP_DIR"]
 CFG = json.loads(r'''{
  "bottom": [
-  "favourites",
-  "tabs",
+  "weby",
+  "cloudy",
   "browser",
-  "search",
-  "scrapers"
+  "tabs",
+  "domains"
+ ],
+ "pages": {
+  "cloudy": ["gh_pages", "webserver"],
+  "domains": ["files", "site_perms", "history", "visited"]
+ },
+ "gone_modules": [
+  "libs:scraper",
+  "libs:apify",
+  "libs:media-convert-audio"
  ],
  "default": "browser",
  "gradles": [
@@ -60,7 +69,12 @@ CFG = json.loads(r'''{
    "host.openBrowser()",
    "isTabsOpen",
    "onOverlaysClosed",
-   "dismissOverlays()"
+   "dismissOverlays()",
+   "WebyPage(",
+   "CloudyPage(",
+   "DomainsPage(",
+   "host.openUrl(url)",
+   "SitesDecl.parseBase64"
   ],
   "../ab_cloud-libs-shared/libs/browser/src/main/java/com/diegonmarcos/superapp/browser/BrowserHostFragment.kt": [
    "fun openSearch()",
@@ -74,9 +88,13 @@ CFG = json.loads(r'''{
    "fun openTabs()",
    "fun openFavourites()",
    "fun openBrowser()",
+   "fun openUrl(url: String)",
    "val isTabsOpen",
    "var onOverlaysClosed"
   ]
+ },
+ "mustnot": {
+  "app/src/main/java/com/diegonmarcos/cloudbrowser/MainActivity.kt": ["(?i)scraper"]
  },
  "mutate_host": "app/src/main/java/com/diegonmarcos/cloudbrowser/MainActivity.kt",
  "must_token_mutations": [
@@ -119,6 +137,18 @@ CFG = json.loads(r'''{
   [
    "app/src/main/java/com/diegonmarcos/cloudbrowser/MainActivity.kt",
    "host.openTabs()"
+  ],
+  [
+   "app/src/main/java/com/diegonmarcos/cloudbrowser/MainActivity.kt",
+   "WebyPage("
+  ],
+  [
+   "app/src/main/java/com/diegonmarcos/cloudbrowser/MainActivity.kt",
+   "DomainsPage("
+  ],
+  [
+   "app/src/main/java/com/diegonmarcos/cloudbrowser/MainActivity.kt",
+   "host.openUrl(url)"
   ]
  ]
 }''')
@@ -202,6 +232,8 @@ def checks(f):
     gradle = "\n".join(code(f[g]) for g in CFG["gradles"])
     need("N2 the app compiles project(':libs:bottomnav')", re.search(r"project\(\s*['\"]:libs:bottomnav['\"]", gradle) is not None)
     need("N2 build.json::modules declares libs:bottomnav", "libs:bottomnav" in mods)
+    for m in CFG.get("gone_modules", []):
+        need("N2 the app no longer depends on %s (#1493: the scrapers left Cloud Browser)" % m, m not in gradle and m not in mods)
     for field in ("UI_BOTTOM_NAV", "UI_SECTIONS_B64", "UI_DEFAULT_SECTION"):
         need("N4 gradle bakes %s" % field, field in gradle)
     need("N4 gradle reads ui.bottom_nav and ui.sections", "bottom_nav" in gradle and "sections" in gradle)
@@ -264,9 +296,11 @@ MUTATIONS = [
     ("bottom_nav gains an undeclared id", "build.json", edit_json(lambda ui, d: ui["bottom_nav"].append("ghost"))),
     ("default_section points outside the bar", "build.json", edit_json(lambda ui, d: ui.__setitem__("default_section", "ghost"))),
     ("bottom_nav grows past five", "build.json", edit_json(lambda ui, d: ui.__setitem__("bottom_nav", ui["bottom_nav"] + ["a", "b", "c", "d", "e", "f"]))),
-    ("a section is dropped", "build.json", edit_json(lambda ui, d: ui.__setitem__("sections", ui["sections"][1:]))),
+    ("a section is dropped", "build.json", edit_json(lambda ui, d: ui.__setitem__("sections", [x for x in ui["sections"] if x["id"] != "weby"]))),
     ("the app stops compiling libs:bottomnav", CFG["gradles"][-1], lambda t: t.replace(":libs:bottomnav", ":libs:gone")),
     ("the gradle stops baking the sections", CFG["gradles"][-1], lambda t: t.replace("UI_SECTIONS_B64", "UI_SECTIONS_X")),
+    ("the app depends on libs:scraper again", CFG["gradles"][-1], lambda t: t + "\n    implementation project(':libs:scraper')\n"),
+    ("the host names a scraper again", CFG["mutate_host"], lambda t: t + "\nval scrapersPage: String? = null\n"),
     ("the host grows a BottomNavigationView", CFG["mutate_host"], lambda t: t + "\nval nav: BottomNavigationView? = null\n"),
     ("the host grows a TabLayout", CFG["mutate_host"], lambda t: t + "\nval tabs: TabLayout? = null\n"),
     ("the host grows a Material3 NavigationBar", CFG["mutate_host"], lambda t: t + "\n@Composable fun X() { NavigationBar { } }\n"),

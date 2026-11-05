@@ -29,7 +29,7 @@ def check(root, ok):
     cfg = src.get(LIB + "/BrowserConfig.kt", "")
     main_ = src.get(APP + "/MainActivity.kt", "")
     bj = build_json(root); ui = bj["ui"]
-    ok(ui.get("bottom_nav") == ["favourites", "tabs", "browser", "search", "scrapers"], "F1 the island is Fav, Tabs, Browser, Search, Scrapers")
+    ok(ui.get("bottom_nav") == ["weby", "cloudy", "browser", "tabs", "domains"], "F1 the island is Weby, Cloudy, Browser, Tabs, Domains (#1493); Fav stays a declared section")
     ids = [s["id"] for s in ui.get("sections", [])]
     ok(all(b in ids for b in ui.get("bottom_nav", [])), "F1 every island item is a section")
     ok('"favourites" -> host.openFavourites()' in main_, "F1 MainActivity routes Fav to the host")
@@ -54,8 +54,8 @@ def check(root, ok):
 
 FRAG = LIB + "/BrowserHostFragment.kt"
 main("favourites", check, [
-    ("Fav leaves the island", "ac_cloud-browser/build.json", '"bottom_nav": [\n      "favourites",\n      "tabs",\n      "browser",', '"bottom_nav": [\n      "tabs",\n      "browser",', "F1 the island is"),
-    ("the island order changes", "ac_cloud-browser/build.json", '"bottom_nav": [\n      "favourites",\n      "tabs",\n      "browser",', '"bottom_nav": [\n      "favourites",\n      "browser",\n      "tabs",', "F1 the island is"),
+    ("Weby leaves the island", "ac_cloud-browser/build.json", '"bottom_nav": [\n      "weby",\n      "cloudy",\n      "browser",', '"bottom_nav": [\n      "cloudy",\n      "browser",', "F1 the island is"),
+    ("the island order changes", "ac_cloud-browser/build.json", '"bottom_nav": [\n      "weby",\n      "cloudy",\n      "browser",', '"bottom_nav": [\n      "weby",\n      "browser",\n      "cloudy",', "F1 the island is"),
     ("Fav stops routing", APP + "/MainActivity.kt", '"favourites" -> host.openFavourites()', '"favourites" -> Unit', "routes Fav"),
     ("Fav opens something else", FRAG, "fun openFavourites() = showBookmarks()", "fun openFavourites() = showHistory()", "opens the bookmarks"),
     ("the grid view goes", LIB + "/BrowserSheets.kt", "BrowserFavourites.gridRows(g.items).forEach { row ->", "listOf(g.items).forEach { row ->", "grid view"),

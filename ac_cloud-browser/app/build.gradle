@@ -150,6 +150,31 @@ def bcString = { String v ->
     if (v.length() <= 60000) return "\"${v}\""
     "String.join(\"\", " + v.toList().collate(30000).collect { "\"${it.join()}\"" }.join(", ") + ")"
 }
+// #1493 THE declaration behind Weby, Cloudy and Domains, baked as SITES_DECL_B64 from the declarations that already exist, never typed
+// here: Weby = the SuperApp's phone apps (ui.sections[phone].phone_app_groups: groups and their folders) joined with the web address of
+// each app (data/phone-webapps.json, #1466); Cloudy = the declared repos' Pages (ac_cloud-c3 data/repos_declared.json) and the
+// Cloud-Webserver's own serving map, Pages sub-pages and Repos store path (its build.json); Domains = ui.domains. The words of each
+// page are build.json::ui.<page>.texts.
+def superappDir  = new File(rootDir, '../aa_cloud-superapp')
+def phoneSection = new groovy.json.JsonSlurper().parse(new File(superappDir, 'build.json')).ui.sections.find { it.id == 'phone' }
+if (phoneSection == null || !phoneSection.phone_app_groups) throw new GradleException("aa_cloud-superapp/build.json ui.sections[phone].phone_app_groups is missing: Weby has nothing to derive from")
+def phoneWebapps = new groovy.json.JsonSlurper().parse(new File(superappDir, 'data/phone-webapps.json'))
+def reposDeclared = new groovy.json.JsonSlurper().parse(new File(rootDir, '../ac_cloud-c3/data/repos_declared.json'))
+def webserverBuild = new groovy.json.JsonSlurper().parse(file('../../ac_cloud-c3-webserver/build.json'))
+def sitesDecl = [
+    weby   : (buildJson.ui.weby ?: [:]) + [groups: phoneSection.phone_app_groups, webapps: phoneWebapps.groups],
+    cloudy : (buildJson.ui.cloudy ?: [:]) + [
+        gh_pages : reposDeclared.repos.findAll { it.visibility == 'pub' && it.pages_url }.collect { [name: it.name, url: it.pages_url] },
+        webserver: [
+            base_role : (buildJson.ui.cloudy?.webserver_base_role ?: '').toString(),
+            endpoints : servingDecl.endpoints.collect { [id: it.id, title: it.title, name: it.name, port: it.port, role: it.role, summary: it.summary] },
+            pages     : (webserverBuild.subpages ?: []).findAll { it.tab == 'pages' }.collect { [id: it.id, label: it.label, route: it.route, tab: it.tab] },
+            repos_store: (webserverBuild.repos?.store ?: '').toString(),
+        ],
+    ],
+    domains: buildJson.ui.domains ?: [:],
+]
+def sitesDeclB64 = b64(stripDocs(sitesDecl))
 // #868 the nav declaration: ui.bottom_nav (the island), ui.sections (what each item opens), ui.default_section.
 def uiBottomNav      = (buildJson.ui.bottom_nav ?: []).join(',')
 def uiSectionsB64    = b64(buildJson.ui.sections ?: [])
@@ -290,6 +315,7 @@ android {
         buildConfigField "String", "UI_BOTTOM_NAV",              "\"${uiBottomNav}\""
         buildConfigField "String", "UI_SECTIONS_B64",            "\"${uiSectionsB64}\""
         buildConfigField "String", "UI_DEFAULT_SECTION",         "\"${uiDefaultSection}\""
+        buildConfigField "String", "SITES_DECL_B64",             bcString(sitesDeclB64)
         buildConfigField "String", "SEARCH_CONFIG_B64",          "\"${searchConfigB64}\""
         buildConfigField "String", "AI_CONFIG_B64",              "\"${aiContractB64}\""
         buildConfigField "String", "DEBUG_API_GROUP",           "\"${debugGroup}\""
@@ -365,8 +391,6 @@ dependencies {
     implementation project(':libs:analytics')
     implementation project(':libs:core')
     implementation project(':libs:browser')
-    implementation project(':libs:apify')   // #1468 shared Apify backend + token store
-    implementation project(':libs:scraper')   // #1426 Scrapers: Site Files, Apify, SelfHosted
     // #1222 the Bluetooth stack the Web Bluetooth polyfill drives (the app's tests run the bridge over a fake adapter).
     implementation project(':libs:bluetooth')
     // Tier 2 DOM autofill: the Cloud Account SOT contract libs:browser reads (its types are in DomAutofill's API).

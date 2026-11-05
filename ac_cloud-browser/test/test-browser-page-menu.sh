@@ -7,7 +7,7 @@
 #      add-on, default-browser or vault row, no `settings` section, no settings_section on a row;
 #   P2 every row the owner listed for the page or domain is there, each with its runAction branch;
 #   P3 every global thing that left the dropdown is a Configs row (or an add-on global row) on a declared page;
-#   P4 the nav: bottom_nav is Fav | Tabs | Browser | Search | Scrapers (#1426) and Configs' tabs are, in order, the
+#   P4 the nav: bottom_nav is Weby | Cloudy | Browser | Tabs | Domains (#1493) and Configs' tabs are, in order, the
 #      13 categories, drawn by NavBarTopSecondRow in the shell (nav-shape guard N5);
 #   P5 every setting maps to exactly one Configs page (none dropped: the count is the pre-#900 count plus the new ones).
 set -eu
@@ -65,7 +65,7 @@ def check(root, ok):
         ok(g in crow or g in gl or g in ("settings", "pin_tab", "close_tab"), "P3 `%s` is reachable from a Configs page" % g)
     for r in crow.values():
         ok(r["page"] in PAGES, "P3 Configs row `%s` is on a declared page" % r["id"], r["page"])
-    ok([s for s in bj["ui"]["bottom_nav"]] == ["favourites", "tabs", "browser", "search", "scrapers"], "P4 the island is Fav | Tabs | Browser | Search | Scrapers (#1426; Configs is the ⋮)")
+    ok([s for s in bj["ui"]["bottom_nav"]] == ["weby", "cloudy", "browser", "tabs", "domains"], "P4 the island is Weby | Cloudy | Browser | Tabs | Domains (#1493; Configs is the ⋮)")
     nav = [s for s in bj["ui"]["sections"] if s["id"] == "configs"][0]
     ok([p["id"] for p in nav["pages"]] == TABS, "P4 the Configs tabs are General, Perms, About, Sites, Permissions, Autocomplete, Browser, in order")
     ok([p["label"] for p in nav["pages"]] == ["General", "Perms", "About", "Sites", "Permissions", "Autocomplete", "Browser"], "P4 with the owner's names")

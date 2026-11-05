@@ -201,6 +201,8 @@ class BrowserHostFragment : Fragment() {
     fun dismissOverlays() = closeOverlays()
     /** #893 Fav is a destination of the nav island: the saved pages (list, open, remove). */
     fun openFavourites() = showBookmarks()
+    /** #1493 the host shell opens [url] in the tab that shows it, else a new one (Weby and Cloudy tiles): every overlay closes first. */
+    fun openUrl(url: String) { closeOverlays(); openUrlInTab(url) }
 
     /** #886 Tabs is a destination of the nav island: the tab switcher, over nothing (the page is parked). */
     fun openTabs() { closeOverlays(); if (mode !is Mode.GRID) showGrid() else onOverlaysClosed?.invoke() }

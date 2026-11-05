@@ -65,7 +65,7 @@ def check(root, ok):
 FRAG = LIB + "/BrowserHostFragment.kt"
 GRID = LIB + "/BrowserTabGrid.kt"
 main("tabs and groups", check, [
-    ("Tabs leaves the island", "ac_cloud-browser/build.json", '"bottom_nav": [\n      "favourites",\n      "tabs",', '"bottom_nav": [\n      "favourites",', "T1 Tabs is a section"),
+    ("Tabs leaves the island", "ac_cloud-browser/build.json", '      "browser",\n      "tabs",\n      "domains"', '      "browser",\n      "domains"', "T1 Tabs is a section"),
     ("the Tabs button returns to the bar", LIB + "/BrowserHostFragment.kt", "        // Address bar: a plain field.", "        bar.addView(TextView(ctx).apply { text = \" ← Tabs \" })\n        // Address bar: a plain field.", "Tabs button at the top left"),
     ("the island stops opening the switcher", APP + "/MainActivity.kt", '"tabs" -> host.openTabs()', '"tabs" -> Unit', "routes the island"),
     ("the pill stays on Browser", APP + "/MainActivity.kt", 'if (f.isTabsOpen) "tabs" else "browser"', '"browser"', "shows Tabs"),

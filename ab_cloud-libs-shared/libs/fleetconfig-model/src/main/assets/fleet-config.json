@@ -327,6 +327,30 @@
         "lib-scraper"
       ]
     },
+    "weby_bookmarks": {
+      "kind": "prefs",
+      "class": "config",
+      "doc": "#1493 Cloud Browser Weby: the user's bookmark folders and tiles (folders_json), seeded from the SuperApp phone-apps declaration until the first edit.",
+      "used_by": [
+        "ac_cloud-browser"
+      ]
+    },
+    "browser_visit_log": {
+      "kind": "prefs",
+      "class": "content",
+      "doc": "#1493 Cloud Browser Domains: every page the browser's history ever showed, with its time (log_json), kept past the history's own cap; History, Visited and Perms&Actions read it.",
+      "used_by": [
+        "ac_cloud-browser"
+      ]
+    },
+    "cloudy_cache": {
+      "kind": "prefs",
+      "class": "device",
+      "doc": "#1493 Cloud Browser Cloudy: the last front-html pages.json answer (pages_json), shown at once and refreshed when the network answers.",
+      "used_by": [
+        "ac_cloud-browser"
+      ]
+    },
     "browser_settings": {
       "kind": "prefs",
       "class": "config",
@@ -2947,7 +2971,6 @@
       "libs": [
         "lib-ai",
         "lib-analytics",
-        "lib-apify",
         "lib-autofill",
         "lib-bluetooth",
         "lib-bottomnav",
@@ -2957,10 +2980,8 @@
         "lib-decisions-link",
         "lib-devtools",
         "lib-fleetconfig-model",
-        "lib-media-convert-audio",
         "lib-model-catalogue",
         "lib-perms",
-        "lib-scraper",
         "lib-text-tools",
         "lib-theme-background",
         "lib-ui-icons",
