@@ -33,6 +33,23 @@ class SelfAllowlistTest {
         ).forEach { allowed(it) }
     }
 
+    /** #1519 Grant via shell: the SuperApp grants ITSELF each runtime / adb-only permission of the Perms catalogue by an exact rule, and Location on. */
+    @Test fun theSuperAppMayGrantItselfEveryCataloguePermissionAndSwitchLocationOn() {
+        val cat = org.json.JSONObject(File("../../ab_cloud-libs-shared/libs/perms/src/main/assets/perms-catalogue.json").readText()).getJSONArray("entries")
+        val perms = (0 until cat.length()).map { cat.getJSONObject(it) }
+            .filter { it.getString("kind") in setOf("runtime", "adb_only") && it.optString("permission").startsWith("android.permission.") }
+            .map { it.getString("permission") }
+        assertTrue(perms.size > 20)
+        for (perm in perms) {
+            val d = list.decide(self, "pm grant $self $perm")
+            assertTrue("refused: $perm", d is Allowlist.Decision.Allow)
+            val id = (d as Allowlist.Decision.Allow).rule.id
+            assertTrue("$perm is not covered by an exact self-grant rule (got $id)", id == "selfgrant-wss" || id == "selfgrant-runtime")
+        }
+        allowed("cmd location set-location-enabled true")
+        assertTrue(list.decide(self, "pm grant $self android.permission.SOME_UNLISTED_PERMISSION_XYZ").let { d -> !(d is Allowlist.Decision.Allow && d.rule.id == "selfgrant-runtime") })
+    }
+
     @Test fun theSuperAppEntryStillRefusesWhatNoFeatureNeeds() {
         for (c in listOf("rm -rf /sdcard", "sh -c id", "cat /data/data/com.example/shared_prefs/x.xml", "pm uninstall com.example.app; rm -rf /x"))
             assertTrue(c, list.decide(self, c) is Allowlist.Decision.Deny)

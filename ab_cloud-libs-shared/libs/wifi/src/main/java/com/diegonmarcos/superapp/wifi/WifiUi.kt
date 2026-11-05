@@ -8,6 +8,7 @@ import android.net.Uri
 import android.provider.Settings
 import com.diegonmarcos.superapp.perms.PermsLink
 import com.diegonmarcos.superapp.perms.PermsNeeds
+import com.diegonmarcos.superapp.perms.PermsWifiScan
 import com.diegonmarcos.superapp.perms.rememberPermsAsk
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -196,21 +197,27 @@ internal fun openSettings(ctx: Context, action: String, data: Uri? = null) {
 @Composable
 internal fun WifiGate(c: WifiController, s: WifiState) {
     val ctx = LocalContext.current
+    // #1519 every blocker of a scan, named (fine location, Nearby Wi-Fi, Location services, the throttle), each fixed in Perms
+    val blocks = remember(s.missing, s.locationOn, s.throttleSetting, s.throttleRemaining) {
+        PermsWifiScan.detect(PermsWifiScan.snapshot(ctx, s.throttleSetting != false, s.throttleRemaining))
+    }
     when {
         !s.supported -> WCard { WTitle(t(R.string.wifi_unsupported), "router") }
         // #1274 the lib never asks: a compact banner deep-links to the app's Permissions page, highlighting its entries.
-        s.missing.isNotEmpty() -> {
-            val need = remember(s.missing) { PermsNeeds.missing(ctx, "wifi") }
+        s.missing.isNotEmpty() || PermsWifiScan.hard(blocks).isNotEmpty() -> {
+            val need = remember(s.missing, s.locationOn) { PermsNeeds.missing(ctx, "wifi") }
             WCard(Modifier.testTag("wifi:perms-banner")) {
                 WTitle(t(R.string.wifi_perm_title), "key")
                 WMuted(t(R.string.wifi_perm_body))
+                for (b in blocks) WMuted((if (b.hard) "✗ " else "◯ ") + b.text, Modifier.testTag("wifi:blocker:${b.entryId}"))
                 WMuted(if (need.isNotEmpty()) PermsNeeds.labels(need) else WifiPermissions.describe(s.missing), mono = true)
                 // #1406 Grant asks right here through libs:perms; Open Permissions goes to the host's Permissions page.
                 val ask = rememberPermsAsk { c.refreshEnv() }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (need.isNotEmpty()) WButton(t(R.string.wifi_grant), primary = true, tag = "grant-perms") { ask(need) }
-                    WButton(t(R.string.wifi_open_perms), primary = need.isEmpty(), tag = "open-perms") {
-                        PermsLink.open(ctx, "Wi-Fi", need.map { it.id }.ifEmpty { listOf("fine_location", "coarse_location", "nearby_wifi") })
+                    WButton(PermsWifiScan.FIX, primary = need.isEmpty(), tag = "open-perms") {
+                        PermsLink.open(ctx, "Wi-Fi", (need.map { it.id } + blocks.map { it.entryId }).distinct()
+                            .ifEmpty { listOf("fine_location", "coarse_location", "nearby_wifi", "location_services") })
                     }
                 }
             }

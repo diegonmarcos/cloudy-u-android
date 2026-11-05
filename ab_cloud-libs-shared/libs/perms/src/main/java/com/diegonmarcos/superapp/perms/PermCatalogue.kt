@@ -15,7 +15,9 @@ enum class PermKind { RUNTIME, SPECIAL, APPOPS, ADB_ONLY;
 
 /** Where a row lives on the page; the order here is the page order. */
 enum class PermSection(val title: String) {
-    RUNTIME("Runtime"), SPECIAL("Special access"), BATTERY("Battery & background"), SAMSUNG("Samsung"), ADB("ADB-only");
+    RUNTIME("Runtime"), SPECIAL("Special access"), BATTERY("Battery & background"), SAMSUNG("Samsung"), ADB("ADB-only"),
+    /** A system toggle that is not a grant of this app (Location on, the Wi-Fi scan throttle). */
+    SYSTEM("System toggles");
     companion object { fun of(s: String) = values().firstOrNull { it.name.equals(s, true) } ?: SPECIAL }
 }
 

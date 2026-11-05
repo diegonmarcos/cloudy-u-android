@@ -82,12 +82,8 @@ fun rememberAppPerms(
     val extraIds = extra.map { it.id }.toSet()
 
     fun request(ids: List<String>) {
-        val es = ids.mapNotNull { entries[it] }
-        val perms = es.map { it.permission }.filter { it.isNotEmpty() }.distinct()
-        if (perms.isEmpty()) return
-        PermAskLog.markAsked(ctx, perms)
-        PermAskLog.markAskedIds(ctx, es.map { it.id })
-        ask.launch(perms.toTypedArray())
+        // #1519 one combined request (fine + coarse location together on API 31+); a permanent denial opens its settings page
+        PermsRequest.ask(ctx, ids.mapNotNull { entries[it] }, { ask.launch(it) }, activity)
     }
     // #1513 the adb grant row: channel armed = grant now and read it back; else copy the line and open the pairing flow.
     fun adbGrant(i: PermItem) {

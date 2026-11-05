@@ -76,7 +76,8 @@ object PermsActions {
             entry == "usb_host" -> Grant.Cannot("USB access is asked per device when it is plugged in")
             entry in OPS -> sh(PermsShell.appop(target, OPS.getValue(entry)))
             entry == "battery_opt" -> sh("cmd deviceidle whitelist +$target")
-            entry == "dnd" -> sh("cmd notification allow_dnd $target")
+            entry == "location_services" -> sh("cmd location set-location-enabled true")
+            entry == "dnd" || entry == "dnd_access" -> sh("cmd notification allow_dnd $target")
             entry == "standby_active" -> sh("am set-standby-bucket $target active")
             entry == "notification_listener" -> component("notification listener service") { sh("cmd notification allow_listener $it") }
             entry == "accessibility" -> component("accessibility service") { c ->

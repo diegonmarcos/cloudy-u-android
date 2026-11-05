@@ -56,6 +56,8 @@
      "id": "selfgrant-wss",
      "re": "^pm grant com\\.diegonmarcos\\.superapp android\\.permission\\.WRITE_SECURE_SETTINGS$"
     },
+    {"id": "selfgrant-runtime", "re": "^pm grant com\\.diegonmarcos\\.superapp android\\.permission\\.(ACCESS_BACKGROUND_LOCATION|ACCESS_COARSE_LOCATION|ACCESS_FINE_LOCATION|ACTIVITY_RECOGNITION|BLUETOOTH_ADVERTISE|BLUETOOTH_CONNECT|BLUETOOTH_SCAN|BODY_SENSORS|CAMERA|DUMP|NEARBY_WIFI_DEVICES|PACKAGE_USAGE_STATS|POST_NOTIFICATIONS|READ_CALENDAR|READ_CONTACTS|READ_EXTERNAL_STORAGE|READ_LOGS|READ_MEDIA_AUDIO|READ_MEDIA_IMAGES|READ_MEDIA_VIDEO|READ_PHONE_NUMBERS|READ_PHONE_STATE|READ_SMS|RECORD_AUDIO|WRITE_CALENDAR|WRITE_CONTACTS|WRITE_EXTERNAL_STORAGE)$"},
+    {"id": "selfgrant-location", "re": "^cmd location set-location-enabled (true|false)$"},
     {
      "id": "fleetgrant-wss",
      "re": "^pm grant com\\.diegonmarcos\\.[a-z][a-z0-9_.]* android\\.permission\\.WRITE_SECURE_SETTINGS$"

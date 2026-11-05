@@ -69,7 +69,7 @@ class PermsCatalogueTest {
     }
 
     @Test fun `features declare their needs`() {
-        assertEquals(setOf("fine_location", "coarse_location", "nearby_wifi"), cat.forFeature("wifi").map { it.id }.toSet())
+        assertEquals(setOf("fine_location", "coarse_location", "nearby_wifi", "location_services", "wifi_scan_throttle"), cat.forFeature("wifi").map { it.id }.toSet())
         assertEquals(setOf("bt_scan", "bt_connect"), cat.forFeature("bluetooth").map { it.id }.toSet())
         assertEquals(setOf("fine_location"), cat.forFeature("bluetooth-legacy").map { it.id }.toSet())
         assertTrue(cat.forFeature("mounts").any { it.id == "all_files" })

@@ -80,8 +80,8 @@ class PermissionsFragment : KitComposeFragment() {
         }
 
     private val hotspotLocationLauncher =
-        registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestPermission()) { granted ->
-            if (granted) startLocalHotspot() else Toast.makeText(requireContext(),
+        registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions()) { result ->
+            if (result[android.Manifest.permission.ACCESS_FINE_LOCATION] == true) startLocalHotspot() else Toast.makeText(requireContext(),
                 "Location is required by Android to create a local WiFi hotspot", Toast.LENGTH_LONG).show()
         }
 
@@ -103,7 +103,8 @@ class PermissionsFragment : KitComposeFragment() {
     private val centerLauncher =
         registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions()) {
             centerEpoch++
-            if (autoChain) view?.post { if (isAdded) autoNext() }
+            if (walking) view?.post { if (isAdded) walkNext() }
+            else if (autoChain) view?.post { if (isAdded) autoNext() }
         }
     private var autoChain = false
 
@@ -118,11 +119,68 @@ class PermissionsFragment : KitComposeFragment() {
     }
 
     private fun askBatch(batch: List<com.diegonmarcos.superapp.perms.PermEntry>) {
-        val perms = batch.map { it.permission }.filter { it.isNotEmpty() }.distinct()
+        // #1519 one combined request: fine location always travels with coarse on API 31+, or Android ignores / downgrades it
+        val perms = com.diegonmarcos.superapp.perms.PermsRequest.expand(batch.map { it.permission }.filter { it.isNotEmpty() })
         if (perms.isEmpty()) return
         askedThisSession.addAll(perms)
         com.diegonmarcos.superapp.perms.PermAskLog.markAsked(requireContext(), perms)
-        runCatching { centerLauncher.launch(perms.toTypedArray()) }.onFailure { autoChain = false }
+        com.diegonmarcos.superapp.perms.PermAskLog.markAskedIds(requireContext(), batch.map { it.id })
+        runCatching { centerLauncher.launch(perms.toTypedArray()) }.onFailure { autoChain = false; walking = false }
+    }
+
+    /** The Grant button of a row: the combined dialog while Android still shows it, the settings page after a permanent denial. */
+    private fun grantRow(e: com.diegonmarcos.superapp.perms.PermEntry) {
+        val act = requireActivity()
+        com.diegonmarcos.superapp.perms.PermsRequest.ask(act, listOf(e), { perms ->
+            askedThisSession.addAll(perms)
+            runCatching { centerLauncher.launch(perms) }
+        }, act)
+        centerEpoch++
+    }
+
+    // ── #1519 Grant via shell (the shell broker, allowlist-checked), read back, then the page re-reads ──
+    private var shellNote by mutableStateOf<String?>(null)
+
+    private fun shellGrant(e: com.diegonmarcos.superapp.perms.PermEntry, then: () -> Unit = {}) {
+        val ctx = requireContext().applicationContext
+        val cmds = com.diegonmarcos.superapp.perms.PermsShellGrant.commands(ctx.packageName, e)
+        if (cmds == null) { shellNote = "${e.label}: no shell line can grant it"; then(); return }
+        shellNote = "${e.label}: granting by shell…"
+        Thread {
+            val vars = com.diegonmarcos.superapp.perms.Perms.vars(ctx)
+            val out = com.diegonmarcos.superapp.perms.PermsShellGrant.run(e.label, cmds, BrokerGrantChannel(ctx)) {
+                com.diegonmarcos.superapp.perms.PermStatusReader.status(ctx, e, null, vars).state == com.diegonmarcos.superapp.perms.PermState.GRANTED
+            }
+            view?.post { shellNote = out.message; centerEpoch++; then() }
+        }.start()
+    }
+
+    // ── #1519 Ask all missing: walk the missing rows, real dialog first, then shell or settings, re-checking after each step ──
+    private var walking = false
+    private var awaitingResume = false
+    private val walked = HashSet<String>()
+    private val asked = HashSet<String>()
+
+    private fun startWalk() { walked.clear(); asked.clear(); walking = true; awaitingResume = false; walkNext() }
+
+    private fun walkNext() {
+        val act = activity ?: return
+        val ctx = act.applicationContext
+        val rows = pageRows(ctx, readPermRows(act, act))
+        val shellable = { e: com.diegonmarcos.superapp.perms.PermEntry -> com.diegonmarcos.superapp.perms.PermsShellGrant.commands(ctx.packageName, e) != null }
+        val up = BrokerGrantChannel(ctx).up()
+        when (val step = com.diegonmarcos.superapp.perms.PermsPage.nextStep(rows, walked, up, shellable, asked)) {
+            null -> { walking = false; centerEpoch++; shellNote = com.diegonmarcos.superapp.perms.PermsPage.summary(rows).text }
+            is com.diegonmarcos.superapp.perms.PermsPage.Step.Dialog -> { asked += step.entries.map { it.id }; askBatch(step.entries) }
+            is com.diegonmarcos.superapp.perms.PermsPage.Step.Shell -> {
+                walked += step.row.entry.id
+                shellGrant(step.row.entry) { if (walking && isAdded) walkNext() }
+            }
+            is com.diegonmarcos.superapp.perms.PermsPage.Step.Settings -> {
+                walked += step.row.entry.id; awaitingResume = true
+                if (!com.diegonmarcos.superapp.perms.PermsSettings.open(act, step.row.entry)) { awaitingResume = false; walkNext() }
+            }
+        }
     }
 
     private fun startAuto(force: Boolean) {
@@ -157,13 +215,22 @@ class PermissionsFragment : KitComposeFragment() {
         }
         PermsCenterSection(
             rows = rows, highlight = highlight, channelName = plane?.name(), adbResults = adbResults, adbRunning = adbRunning,
+            shellNote = shellNote,
             onClearHighlight = { highlight = null },
-            onAskRuntime = { askBatch(it) },
-            onAutoAgain = { startAuto(force = true) },
+            onGrant = { grantRow(it) },
+            onShell = { shellGrant(it) },
             onRunAdb = { runAdbBlock(rows) },
             onOpenAdbShell = { com.diegonmarcos.superapp.adbdebug.AdbShellLink.open(ctxAny()) },
             ctx = act,
         )
+    }
+
+    /** The sticky top: "N of M granted, K missing" and Ask all missing. */
+    @Composable
+    private fun SummaryBar() {
+        val act = requireActivity()
+        val rows = remember(centerEpoch) { readPermRows(act, act) }
+        PermsSummaryBar(rows, act) { startWalk() }
     }
 
     /** Redraw key: bumping it re-reads every row (the old detach+attach, without tearing the fragment down). */
@@ -205,10 +272,18 @@ class PermissionsFragment : KitComposeFragment() {
         val privMissing = priv.filter { !PrivilegedGrants.isGranted(ctxAny(), it) }
         val pages = remember { buildPageItems(ctxAny()) }
         val pagesMissing = pages.count { it.granted == false }
-        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(start = 10.dp, top = 8.dp, end = 10.dp, bottom = 16.dp)) {
+        Column(Modifier.fillMaxSize()) {
+        SummaryBar()
+        Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = 10.dp, top = 8.dp, end = 10.dp, bottom = 16.dp)) {
+        CatalogueHead()
+        // #1519 the older device tools (helper apps, per-fleet grants, hotspot, recovery) fold away under the grouped list
+        var legacy by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+        PermButtonRow {
+            PermButton(if (legacy) "Hide device tools ▲" else "Device tools: helper apps, ADB, hotspot, recovery ▼", null) { legacy = !legacy }
+        }
+        if (legacy) {
         // #1403 the libs:perms section with its filter chips and actions row; adb = this page's shell plane
         com.diegonmarcos.superapp.perms.AppPermsSection(tick = epoch, adb = remember { permsAdb() }, dense = true)
-        CatalogueHead()
         Small("${perms.size - runtimeMissing.size + priv.size - privMissing.size} granted here · " +
             "${runtimeMissing.size + privMissing.size} missing here · $pagesMissing need a system page")
 
@@ -418,6 +493,8 @@ class PermissionsFragment : KitComposeFragment() {
             Toast.makeText(ctxAny(), "Copied full permission status", Toast.LENGTH_SHORT).show()
         }
         }
+        }
+        }
     }
 
     // ── Reorg helpers (state + button on ONE row; grant-here vs open-a-page) ──
@@ -454,7 +531,7 @@ class PermissionsFragment : KitComposeFragment() {
         val granted = ctx.checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) ==
             PackageManager.PERMISSION_GRANTED
         if (granted) startLocalHotspot()
-        else hotspotLocationLauncher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
+        else hotspotLocationLauncher.launch(com.diegonmarcos.superapp.perms.PermsRequest.expand(listOf(android.Manifest.permission.ACCESS_FINE_LOCATION)).toTypedArray())
     }
 
     private fun startLocalHotspot() = runCatching {
@@ -692,6 +769,7 @@ class PermissionsFragment : KitComposeFragment() {
         // moves, so this cannot start the detach/attach loop described below.
         com.diegonmarcos.superapp.perms.PermsLink.consume()?.let { highlight = it }
         centerEpoch++
+        if (walking && awaitingResume) { awaitingResume = false; view?.post { if (isAdded) walkNext() } }
     }
 
     // NO onResume->rebuildFragment: rebuildFragment() detaches+attaches this
@@ -768,8 +846,9 @@ class PermissionsFragment : KitComposeFragment() {
     }
 
     private fun requestAllPermissions(perms: Array<String>) {
-        PermAskTracker(requireContext()).markAskedAll(perms.toList())
-        allPermsLauncher.launch(perms)
+        val combined = com.diegonmarcos.superapp.perms.PermsRequest.expand(perms.toList()).toTypedArray()
+        PermAskTracker(requireContext()).markAskedAll(combined.toList())
+        allPermsLauncher.launch(combined)
     }
 
     private fun permissionState(perm: String): String {

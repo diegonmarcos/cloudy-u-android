@@ -90,14 +90,14 @@ object PermsView {
 
     /** "X of N granted" over what Grant all can act on: runtime, special and helper rows, Health Connect counted once. */
     fun progress(items: List<PermItem>): Progress {
-        // a missing row counts only when the phone can fix it (an adb-only grant has no action and is not "missing" here)
+        // #1519 truthful: every missing row counts, also one only a shell can grant (it used to drop out and read "all granted")
         val rows = items.filter { (it.kind == PermItemKind.RUNTIME || it.kind == PermItemKind.SPECIAL || it.kind == PermItemKind.HELPER) &&
-            (it.state == PermState.GRANTED || (it.missing && it.action != null)) }
+            (it.state == PermState.GRANTED || it.missing) }
         val health = items.filter { it.kind == PermItemKind.HEALTH }
         val hs = healthState(health)
         val h = when {
             hs == PermState.GRANTED -> 1 to 1
-            hs == PermState.DENIED && health.any { it.action != null } -> 0 to 1
+            hs == PermState.DENIED -> 0 to 1
             else -> 0 to 0
         }
         return Progress(rows.count { it.state == PermState.GRANTED } + h.first, rows.size + h.second)

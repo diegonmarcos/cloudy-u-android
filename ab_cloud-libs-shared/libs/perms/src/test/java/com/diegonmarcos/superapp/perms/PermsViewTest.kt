@@ -58,9 +58,9 @@ class PermsViewTest {
         assertEquals(1f, PermsView.Progress(0, 0).fraction, 0f)
     }
 
-    @Test fun `a missing row the phone cannot fix is not counted as missing`() {
+    @Test fun `a missing row the phone cannot fix still counts as missing (never a false all granted)`() {
         val adb = sp("adb", PermState.DENIED, a = null)
-        assertEquals(PermsView.Progress(1, 1), PermsView.progress(listOf(rt("A", PermState.GRANTED), adb)))
+        assertEquals(PermsView.Progress(1, 2), PermsView.progress(listOf(rt("A", PermState.GRANTED), adb)))
         assertEquals(PermsView.Progress(1, 2), PermsView.progress(listOf(rt("A", PermState.GRANTED), rt("P", PermState.PERMANENTLY_DENIED))))
     }
 

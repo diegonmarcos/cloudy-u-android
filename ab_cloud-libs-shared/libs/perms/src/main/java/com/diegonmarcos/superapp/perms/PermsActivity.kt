@@ -88,11 +88,8 @@ class PermsActivity : ComponentActivity() {
     }
 
     private fun request(entries: List<PermEntry>) {
-        val perms = entries.map { it.permission }.filter { it.isNotEmpty() }.distinct()
-        if (perms.isEmpty()) return
-        PermAskLog.markAsked(this, perms)
-        PermAskLog.markAskedIds(this, entries.map { it.id })
-        ask.launch(perms.toTypedArray())
+        // #1519 one combined request (fine + coarse location together on API 31+); a permanent denial opens its settings page
+        PermsRequest.ask(this, entries, { ask.launch(it) }, this)
     }
 
     data class Row(val entry: PermEntry, val status: PermStatus, val wanted: Boolean)

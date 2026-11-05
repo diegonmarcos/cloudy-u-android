@@ -160,6 +160,9 @@ object PermStatusReader {
                     if (b == null) PermStatus(PermState.UNKNOWN) else bool(b <= UsageStatsManager.STANDBY_BUCKET_ACTIVE, "bucket $b")
                 }
             "appop" -> appop(ctx, e.appop)
+            "location_enabled" -> bool(PermsWifiScan.locationOn(ctx), "Location is off: Android hides Wi-Fi scan results")
+            "wifi_scan_throttle" -> if (PermsWifiScan.throttleOn(ctx)) PermStatus(PermState.UNKNOWN, "4 scans per 2 minutes per app")
+                else PermStatus(PermState.GRANTED, "throttling is off (developer option)")
             "health_connect" -> Perms.declared(ctx).filter { it.startsWith("android.permission.health.") }.let { hp ->
                 val granted = hp.count { ctx.checkSelfPermission(it) == PackageManager.PERMISSION_GRANTED }
                 when {

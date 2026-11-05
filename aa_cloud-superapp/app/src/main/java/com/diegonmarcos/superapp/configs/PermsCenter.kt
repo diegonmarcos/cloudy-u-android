@@ -6,12 +6,12 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -30,7 +30,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.diegonmarcos.superapp.perms.AdbLine
 import com.diegonmarcos.superapp.perms.AdbScript
 import com.diegonmarcos.superapp.perms.PermEntry
@@ -42,6 +41,16 @@ import com.diegonmarcos.superapp.perms.PermStatusReader
 import com.diegonmarcos.superapp.perms.Perms
 import com.diegonmarcos.superapp.perms.PermsLink
 import com.diegonmarcos.superapp.perms.PermsSettings
+import com.diegonmarcos.superapp.perms.PermsPage
+import com.diegonmarcos.superapp.perms.RowAction
+import com.diegonmarcos.superapp.perms.RowChip
+import com.diegonmarcos.superapp.perms.PermsShellGrant
+import com.diegonmarcos.superapp.perms.PermsGrant
+import com.diegonmarcos.superapp.uikit.KitStoreCaption
+import com.diegonmarcos.superapp.uikit.KitStoreName
+import com.diegonmarcos.superapp.uikit.KitStoreQuick
+import com.diegonmarcos.superapp.uikit.KitStoreRow
+import com.diegonmarcos.superapp.uikit.KitStoreRowLine
 import com.diegonmarcos.superapp.uikit.LocalKitPalette
 
 /** One row's resolved state for the catalogue section (#1274). */
@@ -66,9 +75,47 @@ fun readPermRows(ctx: Context, activity: Activity?): List<PermRowState> {
 fun adbLinesFor(ctx: Context, rows: List<PermRowState>): List<AdbLine> =
     AdbScript.lines(rows.filter { it.status.state != PermState.NOT_APPLICABLE }.map { it.entry }, Perms.vars(ctx))
 
+/** #1519 the page's rows (libs:perms PermsPage): category, chip, reason, actions per catalogue entry. */
+internal fun pageRows(ctx: Context, rows: List<PermRowState>): List<PermsPage.Row> {
+    val by = rows.associateBy { it.entry.id }
+    return PermsPage.rows(rows.map { it.entry }, { by.getValue(it.id).status }, { PermsShellGrant.commands(ctx.packageName, it) != null })
+}
+
 /**
- * The catalogue-driven head of the Permissions page: progress, the "Requested by" highlight, the missing-only filter,
- * Grant all via ADB (copy / run on the connected channel with per-line results) and one section per [PermSection].
+ * #1510 / #1519 the shell broker as the page's grant channel: `up` = a privileged channel is armed; `exec` answers the
+ * command's output, an `error:` line when the broker refused it or it exited non-zero, null when nothing is armed.
+ */
+class BrokerGrantChannel(private val ctx: Context) : PermsGrant.GrantChannel {
+    override fun up() = runCatching { com.diegonmarcos.superapp.shellbroker.ShellBroker.status(ctx).armed }.getOrDefault(false)
+    override fun exec(command: String): String? =
+        when (val r = com.diegonmarcos.superapp.shellbroker.ShellBroker.exec(ctx, com.diegonmarcos.superapp.shellbroker.ShellBroker.SELF, command)) {
+            is com.diegonmarcos.superapp.shellclient.ShellResult.Ok ->
+                (r.stdout + r.stderr).trim().ifEmpty { if (r.exitCode == 0) "" else "error: exit ${r.exitCode}" }
+            is com.diegonmarcos.superapp.shellclient.ShellResult.Denied -> "error: refused by the shell broker (${r.reason})"
+            is com.diegonmarcos.superapp.shellclient.ShellResult.Failed -> "error: ${r.reason}"
+            else -> null
+        }
+}
+
+/** The sticky top of the page: "N of M granted, K missing" and Ask all missing. Never says all granted while a row is missing. */
+@Composable
+internal fun PermsSummaryBar(rows: List<PermRowState>, ctx: Context, onAskAll: () -> Unit) {
+    val p = LocalKitPalette.current
+    val s = PermsPage.summary(pageRows(ctx, rows))
+    Column(Modifier.fillMaxWidth().background(p.surface).testTag("perms:summary")) {
+        KitStoreRowLine {
+            KitStoreName(s.text, Modifier.weight(1f).testTag("perms:progress"), color = if (s.allGranted) p.ok else p.warn)
+            if (!s.allGranted) KitStoreQuick("Ask all missing", KitStoreRow.BLUE_FILL, Modifier.testTag("perms:ask-all"), onAskAll)
+        }
+        Box(Modifier.fillMaxWidth().height(KitStoreRow.tight).background(KitStoreRow.RULE)) {
+            Box(Modifier.fillMaxWidth(s.fraction).height(KitStoreRow.tight).background(p.ok))
+        }
+    }
+}
+
+/**
+ * The catalogue-driven body of the Permissions page: the "Requested by" highlight, the adb block (copy / run through the
+ * shell broker) and the rows grouped by category (PermsPage), missing first, one dense KitStoreRow each.
  */
 @Composable
 internal fun PermsCenterSection(
@@ -77,123 +124,82 @@ internal fun PermsCenterSection(
     channelName: String?,
     adbResults: List<AdbRunResult>,
     adbRunning: Boolean,
+    shellNote: String?,
     onClearHighlight: () -> Unit,
-    onAskRuntime: (List<PermEntry>) -> Unit,
-    onAutoAgain: () -> Unit,
+    onGrant: (PermEntry) -> Unit,
+    onShell: (PermEntry) -> Unit,
     onRunAdb: () -> Unit,
     onOpenAdbShell: () -> Unit,
     ctx: Context,
 ) {
     val p = LocalKitPalette.current
-    var missingOnly by rememberSaveable { mutableStateOf(highlight != null) }
-    val applicable = rows.filter { it.status.state != PermState.NOT_APPLICABLE }
-    val granted = applicable.count { it.status.state == PermState.GRANTED }
-    val total = applicable.size.coerceAtLeast(1)
-
+    val page = remember(rows) { pageRows(ctx, rows) }
     Column(Modifier.fillMaxWidth().testTag("perms:center")) {
-        Text("PERMISSIONS — $granted of ${applicable.size} granted", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = p.accent,
-            modifier = Modifier.padding(top = 4.dp).testTag("perms:progress"))
-        Box(Modifier.fillMaxWidth().height(5.dp).padding(top = 1.dp).background(Color(0xFF2A2A33))) {
-            Box(Modifier.fillMaxWidth(granted.toFloat() / total).height(5.dp).background(Color(0xFF22C55E)))
-        }
         if (highlight != null) {
             val n = rows.count { it.entry.id in highlight.ids }
-            Row(Modifier.fillMaxWidth().padding(top = 4.dp).background(p.accent.copy(alpha = 0.18f)).padding(6.dp).testTag("perms:highlight"),
-                verticalAlignment = Alignment.CenterVertically) {
-                Text("Requested by ${highlight.feature}: $n permission(s) highlighted below", fontSize = 11.sp, color = p.textPrimary, modifier = Modifier.weight(1f))
-                PermsCenterButton("Show all", tag = "perms:highlight-clear") { onClearHighlight() }
+            KitStoreRowLine(Modifier.background(p.accent.copy(alpha = 0.18f)).testTag("perms:highlight")) {
+                KitStoreCaption("Requested by ${highlight.feature}: $n highlighted", Modifier.weight(1f), color = p.textPrimary)
+                KitStoreQuick("Show all", KitStoreRow.BLUE_FILL, Modifier.testTag("perms:highlight-clear"), onClearHighlight)
             }
         }
-        val dialogable = rows.filter { it.entry.kind == PermKind.RUNTIME && it.entry.autoRequest && it.status.state == PermState.DENIED }
-        Row(Modifier.fillMaxWidth().padding(top = 4.dp)) {
-            PermsCenterButton(if (missingOnly) "✓ Missing only" else "Missing only", tag = "perms:filter-missing", fill = true) { missingOnly = !missingOnly }
-            PermsCenterButton("Ask all again (${dialogable.size})", tag = "perms:ask-all", fill = true) { onAutoAgain() }
-        }
-        // ── Grant all via ADB ──
         val lines = remember(rows) { adbLinesFor(ctx, rows) }
-        Row(Modifier.fillMaxWidth().padding(top = 3.dp)) {
-            PermsCenterButton("Copy ADB block (${lines.size})", tag = "perms:adb-copy", fill = true) {
+        KitStoreRowLine {
+            KitStoreQuick("Copy ADB block (${lines.size})", KitStoreRow.BLUE_FILL, Modifier.weight(1f).testTag("perms:adb-copy")) {
                 copy(ctx, AdbScript.block(lines, ctx.packageName))
                 Toast.makeText(ctx, "Copied ${lines.size} adb commands", Toast.LENGTH_SHORT).show()
             }
-            if (channelName != null) PermsCenterButton(if (adbRunning) "Running…" else "Run via $channelName", tag = "perms:adb-run", fill = true) { if (!adbRunning) onRunAdb() }
-            else PermsCenterButton("ADB not connected ›", tag = "perms:adb-connect", fill = true) { onOpenAdbShell() }
+            Box(Modifier.width(KitStoreRow.tight))
+            if (channelName != null) KitStoreQuick(if (adbRunning) "Running…" else "Run via $channelName", KitStoreRow.BLUE_FILL,
+                Modifier.weight(1f).testTag("perms:adb-run")) { if (!adbRunning) onRunAdb() }
+            else KitStoreQuick("ADB not connected ›", KitStoreRow.AMBER_FILL, Modifier.weight(1f).testTag("perms:adb-connect"), onOpenAdbShell)
         }
-        if (adbResults.isNotEmpty()) Column(Modifier.fillMaxWidth().padding(top = 2.dp).testTag("perms:adb-results")) {
-            Text("ADB: ${adbResults.count { it.ok }} ok · ${adbResults.count { !it.ok }} failed", fontSize = 10.5.sp, color = p.textPrimary.copy(alpha = 0.7f))
-            for (r in adbResults) Text((if (r.ok) "✓ " else "✗ ") + r.line.command.take(90) + (if (r.output.isNotBlank()) "  → ${r.output.trim().take(80)}" else ""),
-                fontSize = 9.5.sp, fontFamily = FontFamily.Monospace, color = if (r.ok) Color(0xFF22C55E) else Color(0xFFEF4444))
+        if (shellNote != null) KitStoreCaption(shellNote, Modifier.fillMaxWidth().padding(horizontal = KitStoreRow.padH).testTag("perms:shell-note"), color = p.textPrimary)
+        if (adbResults.isNotEmpty()) Column(Modifier.fillMaxWidth().padding(horizontal = KitStoreRow.padH).testTag("perms:adb-results")) {
+            KitStoreCaption("ADB: ${adbResults.count { it.ok }} ok · ${adbResults.count { !it.ok }} failed", color = p.textSecondary)
+            for (r in adbResults) KitStoreCaption((if (r.ok) "✓ " else "✗ ") + r.line.command.take(90) + (if (r.output.isNotBlank()) "  → ${r.output.trim().take(80)}" else ""),
+                mono = true, color = if (r.ok) p.ok else p.bad)
         }
-
-        for (section in PermSection.values()) {
-            val inSection = rows.filter { it.entry.section == section }
-            if (inSection.isEmpty()) continue
-            val shown = inSection.filter { r ->
-                (highlight == null || r.entry.id in highlight.ids || !missingOnly) &&
-                    (!missingOnly || r.status.missing || r.status.state == PermState.UNKNOWN)
-            }
-            val app = inSection.filter { it.status.state != PermState.NOT_APPLICABLE }
-            Text("${section.title.uppercase()} — ${app.count { it.status.state == PermState.GRANTED }}/${app.size}",
-                fontSize = 11.sp, fontWeight = FontWeight.Bold, color = p.accent,
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 1.dp).testTag("perms:section:${section.name.lowercase()}"))
-            if (shown.isEmpty()) Text("nothing missing", fontSize = 10.sp, color = p.textPrimary.copy(alpha = 0.5f))
-            for (r in shown) CatalogueRow(r, highlight?.ids?.contains(r.entry.id) == true, ctx, onAskRuntime)
+        for (g in PermsPage.groups(page)) {
+            KitStoreCaption("${g.category.title.uppercase()} · ${g.count}" + (if (g.missing > 0) " · ${g.missing} missing" else ""),
+                Modifier.fillMaxWidth().padding(horizontal = KitStoreRow.padH, vertical = KitStoreRow.gap).testTag("perms:group:${g.category.name.lowercase()}"),
+                color = p.accent)
+            for (r in g.rows) PermRowLine(r, highlight?.ids?.contains(r.entry.id) == true, ctx, onGrant, onShell)
         }
     }
 }
 
+/** One row: name and chip, the reason under them, and the actions (Grant / Settings / Shell) that apply. */
 @Composable
-private fun CatalogueRow(r: PermRowState, highlighted: Boolean, ctx: Context, onAskRuntime: (List<PermEntry>) -> Unit) {
+private fun PermRowLine(r: PermsPage.Row, highlighted: Boolean, ctx: Context, onGrant: (PermEntry) -> Unit, onShell: (PermEntry) -> Unit) {
     val p = LocalKitPalette.current
     val e = r.entry
-    val (icon, col) = when (r.status.state) {
-        PermState.GRANTED -> "✓" to Color(0xFF22C55E)
-        PermState.DENIED -> "◯" to Color(0xFFF59E0B)
-        PermState.PERMANENTLY_DENIED -> "✗" to Color(0xFFEF4444)
-        PermState.NOT_APPLICABLE -> "–" to Color(0xFF6B7280)
-        PermState.UNKNOWN -> "?" to Color(0xFF9CA3AF)
+    val tone = when (r.chip) {
+        RowChip.GRANTED -> p.ok
+        RowChip.MISSING, RowChip.NEEDS_SHELL -> p.warn
+        RowChip.DENIED_PERMANENTLY -> p.bad
+        RowChip.INFO, RowChip.NOT_APPLICABLE -> p.textSecondary
     }
-    val stateWord = when (r.status.state) {
-        PermState.GRANTED -> "granted"; PermState.DENIED -> "denied"; PermState.PERMANENTLY_DENIED -> "permanently denied"
-        PermState.NOT_APPLICABLE -> "not applicable"; PermState.UNKNOWN -> "check manually"
-    }
-    var mod = Modifier.fillMaxWidth().padding(vertical = 1.dp)
-    if (highlighted) mod = mod.border(1.dp, p.accent).background(p.accent.copy(alpha = 0.12f))
-    Column(mod.padding(horizontal = 3.dp, vertical = 2.dp).testTag("perms:row:${e.id}")) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text("$icon ${e.label}  ·  $stateWord" + (if (r.status.reason.isNotBlank()) " (${r.status.reason})" else ""),
-                fontSize = 11.5.sp, color = col, modifier = Modifier.weight(1f))
-            when {
-                r.status.state == PermState.GRANTED || r.status.state == PermState.NOT_APPLICABLE -> {}
-                e.kind == PermKind.RUNTIME && e.autoRequest && r.status.state == PermState.DENIED ->
-                    PermsCenterButton("Request", tag = "perms:request:${e.id}") { onAskRuntime(listOf(e)) }
-                e.kind == PermKind.ADB_ONLY && e.settings == null ->
-                    PermsCenterButton("Copy adb", tag = "perms:copy:${e.id}") {
-                        val l = AdbScript.lines(listOf(e), Perms.vars(ctx))
-                        copy(ctx, l.joinToString("\n") { it.forComputer() })
-                        Toast.makeText(ctx, "Copied", Toast.LENGTH_SHORT).show()
-                    }
-                else -> PermsCenterButton("Open ›", tag = "perms:open:${e.id}") {
+    KitStoreRowLine(Modifier.let { if (highlighted) it.background(p.accent.copy(alpha = 0.12f)) else it }.testTag("perms:row:${e.id}")) {
+        Column(Modifier.weight(1f)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                KitStoreName(e.label, Modifier.weight(1f, fill = false), color = p.textPrimary)
+                KitStoreCaption(r.chip.word, Modifier.padding(start = KitStoreRow.gap).background(tone.copy(alpha = 0.18f))
+                    .padding(horizontal = KitStoreRow.tight).testTag("perms:chip:${e.id}"), color = tone)
+            }
+            KitStoreCaption(r.reason, Modifier.fillMaxWidth(), color = p.textSecondary)
+        }
+        for (a in r.actions) KitStoreQuick(a.word, if (a == RowAction.SHELL) KitStoreRow.AMBER_FILL else KitStoreRow.BLUE_FILL,
+            Modifier.padding(start = KitStoreRow.tight).testTag("perms:${a.name.lowercase()}:${e.id}")) {
+            when (a) {
+                RowAction.GRANT -> onGrant(e)
+                RowAction.SHELL -> onShell(e)
+                RowAction.SETTINGS -> {
                     if (!PermsSettings.open(ctx, e)) Toast.makeText(ctx, "No settings page for ${e.label} on this device", Toast.LENGTH_LONG).show()
                     else if (e.lookFor.isNotBlank()) Toast.makeText(ctx, "Look for: ${e.lookFor}", Toast.LENGTH_LONG).show()
                 }
             }
         }
-        if (r.status.missing || r.status.state == PermState.UNKNOWN) {
-            val hint = listOf(e.lookFor.takeIf { it.isNotBlank() }?.let { "Look for: $it" }, e.instruction.takeIf { it.isNotBlank() })
-                .filterNotNull().joinToString(" · ")
-            val permanently = r.status.state == PermState.PERMANENTLY_DENIED
-            val text = if (permanently && hint.isBlank()) "Open › App info > Permissions > ${e.label} > Allow" else hint
-            if (text.isNotBlank()) Text(text, fontSize = 10.sp, color = p.textPrimary.copy(alpha = 0.65f))
-        }
     }
-}
-
-@Composable
-private fun RowScope.PermsCenterButton(label: String, tag: String, fill: Boolean = false, onClick: () -> Unit) {
-    Text(label, fontSize = 11.sp, maxLines = 2, textAlign = TextAlign.Center, color = Color.White,
-        modifier = (if (fill) Modifier.weight(1f) else Modifier).padding(horizontal = 1.5.dp).background(Color(0xFF7C3AED))
-            .clickable(onClick = onClick).padding(horizontal = 6.dp, vertical = 3.dp).testTag(tag))
 }
 
 private fun copy(ctx: Context, v: String) {

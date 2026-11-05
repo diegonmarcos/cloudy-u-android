@@ -14,12 +14,5 @@ import androidx.compose.ui.platform.LocalContext
 fun rememberPermsAsk(onResult: () -> Unit = {}): (List<PermEntry>) -> Unit {
     val ctx = LocalContext.current
     val ask = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { onResult() }
-    return { entries ->
-        val perms = entries.map { it.permission }.filter { it.startsWith("android.permission.") }.distinct()
-        if (perms.isNotEmpty()) {
-            PermAskLog.markAsked(ctx, perms)
-            PermAskLog.markAskedIds(ctx, entries.map { it.id })
-            ask.launch(perms.toTypedArray())
-        } else entries.firstOrNull()?.let { PermsSettings.open(ctx, it) }
-    }
+    return { entries -> PermsRequest.ask(ctx, entries, { ask.launch(it) }) }
 }
