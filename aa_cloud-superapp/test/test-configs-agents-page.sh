@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Tester: the fleet agent registry, drawn by Configs ▸ Observability ▸ X-Ray (AGENTS group) since the Agents page was removed.
 #
-#   A1 Configs reads Setup, Fleet, Observability (the order of build.json groups); Fleet = Bluetooth · C3 Fleet Control · Peer Control;
+#   A1 Configs reads Setup, Fleet, Observability (the order of build.json groups); Fleet = C3 | Peer Control · Bluetooth;
 #      no agents page or tab is declared and the Observability row is exactly what its group declares
 #   A2 page:config/agents, /agents-superapp and /agents-fleet are page_aliases of xray, and each is retired to xray
 #   A3 X-Ray draws the registry: DevControlFragment declares the AGENTS macro over FleetAgents + AgentStatusReader
@@ -47,7 +47,7 @@ probs = []
 declared = [g['label'] for g in sec['groups']]
 if groups != declared: probs.append('grid groups %r != declared groups %r' % (groups, declared))
 apps = [p['label'] for p in vis if p.get('group') == 'Fleet']
-if apps != ['Bluetooth', 'C3 Fleet Control', 'Peer Control']: probs.append('Fleet = %r' % apps)
+if apps != ['C3', 'Peer Control', 'Bluetooth']: probs.append('Fleet = %r' % apps)
 for gone in ('agents', 'agents-superapp', 'agents-fleet'):
     if gone in by: probs.append('%s is still declared' % gone)
 obs = next(g for g in sec['groups'] if g['label'] == 'Observability')
@@ -56,7 +56,7 @@ grid = [p['id'] for p in vis if p.get('group') == 'Observability']
 if row != grid: probs.append('Observability row %r != grid %r' % (row, grid))
 print('; '.join(probs) or 'OK')
 PY
-)" "Configs groups are build.json's groups; Fleet = Bluetooth, C3 Fleet Control, Peer Control; no agents page; Observability row = its group"
+)" "Configs groups are build.json's groups; Fleet = C3, Peer Control, Bluetooth; no agents page; Observability row = its group"
 
 echo "== A2: the old Agents ids land on X-Ray =="
 check "$(python3 - "$BJ" <<'PY'

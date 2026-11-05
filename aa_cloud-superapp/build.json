@@ -4889,11 +4889,11 @@
         "module": null,
         "_doc_grid_columns": "Icons per row of the Configs page grid: a fixed 8, declared here, NOT the Cloud/Phone stepper (GridColumns.cloud). 8 is GridColumns.MAX; at 360 dp a cell is 45 dp, the icon is 27 dp (cell minus 18 dp of margin, padding and the inline separator) and labels autosize 9 sp and end-ellipsize. A `separator` page takes no cell: it is a wrap_content character between tiles, as in Data Apps.",
         "grid_columns": 8,
-        "_doc_nav_mode": "#1221 horizontal_two_rows: the second row of Configs is one row per declared group, each [group label] | [that group's page icons]. Fleet reads Bluetooth | C3 Fleet Control (| Peer Control); Observability reads X-Ray | LogCat Permissions About (About last; Agents and Diagnostics folded into X-Ray, Permissions moved in from Setup ▸ Apps); Setup keeps the rest. Every page of the section is in exactly one group (the nav-shape guard, N10), the hidden tab pages with their parent. The groups only REFERENCE pages: the Configs grid headings still come from each page's group / subgroup.",
+        "_doc_nav_mode": "#1221 horizontal_two_rows: the second row of Configs is one row per declared group, each [group label] | [that group's page icons]. Fleet reads C3 | Peer Control, Bluetooth (the | is separator_before on Peer Control); Observability reads X-Ray | LogCat Permissions About (About last; Agents and Diagnostics folded into X-Ray, Permissions moved in from Setup ▸ Apps); Setup keeps the rest. Every page of the section is in exactly one group (the nav-shape guard, N10), the hidden tab pages with their parent. The groups only REFERENCE pages: the Configs grid headings still come from each page's group / subgroup.",
         "nav_mode": "horizontal_two_rows",
         "groups": [
           {"id": "setup", "label": "Setup", "icon": "ic_settings", "pages": ["profile", "store", "controls", "onehand", "notify", "firewall", "dns", "webserver", "wg", "apps-access", "adb-shell", "wifi", "wifi-scan", "wifi-channels", "wifi-link", "wifi-tools", "wifi-log", "presets", "panels", "panels-ui", "panels-tools", "store-cloud", "store-phone", "update", "kde_connect", "animations"]},
-          {"id": "fleet", "label": "Fleet", "icon": "ic_hub", "pages": ["bluetooth", "c3", "kde", "bluetooth-find", "bluetooth-analyze", "bluetooth-locate", "bluetooth-connect", "bluetooth-interact", "bluetooth-debug", "bluetooth-dev"]},
+          {"id": "fleet", "label": "Fleet", "icon": "ic_hub", "pages": ["c3", "kde", "bluetooth", "bluetooth-find", "bluetooth-analyze", "bluetooth-locate", "bluetooth-connect", "bluetooth-interact", "bluetooth-debug", "bluetooth-dev"]},
           {"id": "observability", "label": "Observability", "icon": "ic_monitor_heart", "pages": ["xray", "logcat", "perms", "app-about", "battery"]}
         ],
         "_doc_pages_order": "Order here is the single source of truth \u2014 it drives the Configs page-grid, its SECTION and SUBSECTION headings, and (via home_groups tiles_from_section: 'config') the Home Apps Configs row. TWO LEVELS, DECLARED PER PAGE (#649): `group` is the section heading a tile sits under and `subgroup` is the heading below it, both rendered verbatim by TileGridFragment \u2014 the words \"Launcher\", \"Setup\", \"Apps\", \"Network\" and \"Observability\" appear in no Kotlin file, which is the same contract `label` already keeps for a page name. There is deliberately no parallel group map: a run of consecutive pages carrying the same group/subgroup IS the group, so moving an entry in this array moves it on the screen and a group with no pages left simply stops being drawn. A page that declares no group falls under the default Pages heading, which is every other section in this file. #649 replaced the old flat shape (Account/WireGuard/KDE/AI/Permissions \u2014 Launcher \u2014 Store/About, held together by `row_break`): Launcher stopped being a page wearing four tabs and became the TITLE over its four subpages as direct tiles, and the rest became Setup \u25b8 Apps + Setup \u25b8 Observability. `row_break: true` still starts a fresh grid row at a tile without printing a heading; no page in this section needs it any more, because every row break here is now a group boundary. ACTIONS ARE UNCHANGED: the trailing `is_action` entries are the same three, rendered under the same Actions heading from the same flag, and they carry no group \u2014 the grid appends them last whatever their position in this array. #723 (#878 relabelled: group Watchdog is now Setup, subgroups Setup/Mesh are Apps/Network): OWNER REGROUP (Agents): the order is Launcher, Apps, Setup. Apps is a group with no subgroup and holds C3 · Peer Control · Agents (C3 and Peer Control moved out of Setup ▸ Network with their ids unchanged, so page:config/c3 and page:config/kde are the same links; the Network separator went with them, see removed_pages). Before that regroup, the Setup group had THREE sub-sections in this order — Apps (Account · Permissions · Store), Network (WireGuard · Peer Control) and Observability (About) — and the AI page is gone (see removed_pages). #REORG 2026-10: Configs is exactly THREE sections, in this order: Setup (subgroups Apps = Account/Permissions/Store, Launcher = Presets/Controls/One-Hand/Notify, Network), Fleet (the former Apps group: C3 · Peer Control · Agents) and Observability (About). No ids changed, so every page:config/<id> link is intact. #733: Network is Cloud Mesh (the wg page, relabelled) · Peer Control · Apps Mesh (the Store's mesh page, reached from here too).",
@@ -5015,18 +5015,10 @@
             "subgroup": "Network"
           },
           {
-            "_doc": "#1221 Configs ▸ Fleet ▸ Bluetooth: the phone's Bluetooth as a page over libs:bluetooth (BluetoothFragment draws BluetoothPanel). Five tabs, one shared stack so a connection survives a tab switch: Find (scan with name / service / RSSI filters, the device list, paired devices), Connect (the selected device: connect, bond, GATT discovery, MTU, RSSI), Interact (the live dashboard and the GATT tree: read, write, notify, indicate, descriptors), Debug (the ATT event log, copy and export) and Dev (raw hex write, test payloads, notify stream, permissions, adb grant commands). The known services, characteristics, decoders, filter presets and payloads are DATA (libs/bluetooth assets/bluetooth/gatt-catalog.json). hidden tabs: reached through the Bluetooth strip.",
-            "id": "bluetooth",
-            "label": "Bluetooth",
-            "icon": "ic_bluetooth",
-            "tabs": ["bluetooth-find", "bluetooth-analyze", "bluetooth-locate", "bluetooth-connect", "bluetooth-interact", "bluetooth-debug", "bluetooth-dev"],
-            "group": "Fleet"
-          },
-          {
             "_doc": "C3 — the Cloud Control Center app (ac_cloud-c3), reached from Configs ▸ Fleet (it moved there from Setup ▸ Network; the id `c3` did not change, so page:config/c3 and every existing link still land on it) like Store is from Setup ▸ Apps: action extapp:cloud-c3 opens the app or offers the install through ui.external_apps[id=cloud-c3]. Same target as the C3 tile of the Cloud ▸ Apps Configs group; no second C3.",
             "id": "c3",
-            "label": "C3 Fleet Control",
-            "icon": "ic_p_watchdog",
+            "label": "C3",
+            "icon": "ic_cloud_control",
             "action": "extapp:cloud-c3",
             "group": "Fleet"
           },
@@ -5035,6 +5027,15 @@
             "id": "kde",
             "label": "Peer Control",
             "icon": "ic_hub",
+            "separator_before": true,
+            "group": "Fleet"
+          },
+          {
+            "_doc": "#1221 Configs ▸ Fleet ▸ Bluetooth: the phone's Bluetooth as a page over libs:bluetooth (BluetoothFragment draws BluetoothPanel). Five tabs, one shared stack so a connection survives a tab switch: Find (scan with name / service / RSSI filters, the device list, paired devices), Connect (the selected device: connect, bond, GATT discovery, MTU, RSSI), Interact (the live dashboard and the GATT tree: read, write, notify, indicate, descriptors), Debug (the ATT event log, copy and export) and Dev (raw hex write, test payloads, notify stream, permissions, adb grant commands). The known services, characteristics, decoders, filter presets and payloads are DATA (libs/bluetooth assets/bluetooth/gatt-catalog.json). hidden tabs: reached through the Bluetooth strip.",
+            "id": "bluetooth",
+            "label": "Bluetooth",
+            "icon": "ic_bluetooth",
+            "tabs": ["bluetooth-find", "bluetooth-analyze", "bluetooth-locate", "bluetooth-connect", "bluetooth-interact", "bluetooth-debug", "bluetooth-dev"],
             "group": "Fleet"
           },
           {

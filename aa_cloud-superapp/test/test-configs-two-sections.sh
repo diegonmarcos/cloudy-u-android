@@ -78,7 +78,7 @@ def members(g, s=''):
             and p.get('group', '') == g and p.get('subgroup', '') == s]
 want = {
     ('Setup', 'Launcher'):             ['Quick Actions', 'One-Hand', 'Notify'],  # Controls = tabs Presets | Panels (UI | Tools)
-    ('Fleet', ''):                     ['Bluetooth', 'C3 Fleet Control', 'Peer Control'],  # #1221 Bluetooth first; Agents moved to Observability
+    ('Fleet', ''):                     ['C3', 'Peer Control', 'Bluetooth'],  # #1221 Bluetooth first; Agents moved to Observability
     ('Setup', 'Connect'):          ['Account'],
     ('Setup', 'Apps'):             ['Store'],  # Permissions moved to Observability
     ('Setup', 'Network'):              ['Firewall', 'DNS', 'Webserver', 'Cloud Mesh', 'Apps Access', 'ADB Shell', 'WiFi'],  # #1263 WiFi right after ADB Shell; IPC is a tab of Apps Mesh, not a tile
@@ -89,7 +89,7 @@ problems = ['%s%s = %r' % (g, ' ▸ ' + s if s else '', members(g, s))
             for (g, s), exp in want.items() if members(g, s) != exp]
 print('; '.join(problems) or 'OK')
 PY
-)" "Setup ▸ Connect = Account; Setup ▸ Launcher = Controls/One-Hand/Notify; Fleet = Bluetooth/C3 Fleet Control/Peer Control; Observability = its declared group (X-Ray/LogCat/Permissions/About); Setup ▸ Apps = Store; Network = Firewall/DNS/Webserver/Cloud Mesh/Apps Mesh/ADB Shell (#733, #740; IPC and Identity are Apps Mesh tabs); About is the last page"
+)" "Setup ▸ Connect = Account; Setup ▸ Launcher = Controls/One-Hand/Notify; Fleet = C3/Peer Control/Bluetooth; Observability = its declared group (X-Ray/LogCat/Permissions/About); Setup ▸ Apps = Store; Network = Firewall/DNS/Webserver/Cloud Mesh/Apps Mesh/ADB Shell (#733, #740; IPC and Identity are Apps Mesh tabs); About is the last page"
 
 echo "== T3: Store is the former Constellation, and Cloud Constellation is INSIDE it =="
 # #563 renamed the Constellation page Store; the word survives as the label of
@@ -177,7 +177,7 @@ w |= {p['label'] for p in pages if not p.get('hidden') and not p.get('is_action'
 print(len(w))
 ")
 [ "$WORDS" = 26 ] \
-  && ok "T4 derived 26 words from the declaration (X-Ray regroup: About became X-Ray, a new About, Agents and Diagnostics folded into X-Ray, Logcat relabelled LogCat; Setup, Apps, Launcher, Network, Fleet, Observability + 21 page labels (#1263: WiFi added; #1221: Bluetooth added, C3 became C3 Fleet Control), Diagnostics and Logcat the last two: the Agents regroup added Agents and dropped the | separator; #ipc added IPC; IPC became an Apps Mesh tab and left the labels)" \
+  && ok "T4 derived 26 words from the declaration (X-Ray regroup: About became X-Ray, a new About, Agents and Diagnostics folded into X-Ray, Logcat relabelled LogCat; Setup, Apps, Launcher, Network, Fleet, Observability + 21 page labels (#1263: WiFi added; #1221: Bluetooth added, C3 became C3 Fleet Control, later just C3 with ic_cloud_control), Diagnostics and Logcat the last two: the Agents regroup added Agents and dropped the | separator; #ipc added IPC; IPC became an Apps Mesh tab and left the labels)" \
   || bad "T4 derived $WORDS words, expected 26 — it is checking a different set than it claims"
 
 # The ONE heading Kotlin may still name is the fallback for a section that
@@ -421,7 +421,7 @@ want = ['H:SETUP',
         'S:APPS',         'Store[ic_storefront]',
         'S:LAUNCHER',     'Quick Actions[ic_home]', 'One-Hand[ic_onehand]', 'Notify[ic_rss]',
         'S:NETWORK',          'Firewall[ic_lock]', 'DNS[ic_world]', 'Webserver[ic_web]', 'Cloud Mesh[ic_wg]', 'Apps Access[ic_apps]', 'ADB Shell[ic_terminal]', 'WiFi[ic_wifi]',
-        'H:FLEET',        'Bluetooth[ic_bluetooth]', 'C3 Fleet Control[ic_p_watchdog]', 'Peer Control[ic_hub]',
+        'H:FLEET',        'C3[ic_cloud_control]', 'Peer Control[ic_hub]', 'Bluetooth[ic_bluetooth]',
         'H:OBSERVABILITY', 'X-Ray[ic_monitor_heart]', 'LogCat[ic_subject]', 'Permissions[ic_key]', 'About[ic_info]',
         'H:ACTIONS',
         'Update All[ic_system_update]', 'KDE Connect[ic_devices]', 'Animations[ic_animation]']
@@ -431,7 +431,7 @@ else:
     print('rendered != spec: ' + ' | '.join(l for l in difflib.unified_diff(want, out, lineterm='', n=0)
                                            if l[:1] in '+-' and l[:3] not in ('+++', '---')))
 PY
-)" "grid = SETUP ▸ CONNECT[Account] ▸ APPS[Store] ▸ LAUNCHER[Quick Actions,One-Hand,Notify] ▸ NETWORK[Firewall,DNS,Webserver,Cloud Mesh,Apps Access,ADB Shell,WiFi] FLEET[Bluetooth,C3 Fleet Control,Peer Control] OBSERVABILITY[X-Ray,LogCat,Permissions,About] ACTIONS[Update All,KDE Connect,Animations]"
+)" "grid = SETUP ▸ CONNECT[Account] ▸ APPS[Store] ▸ LAUNCHER[Quick Actions,One-Hand,Notify] ▸ NETWORK[Firewall,DNS,Webserver,Cloud Mesh,Apps Access,ADB Shell,WiFi] FLEET[C3,Peer Control,Bluetooth] OBSERVABILITY[X-Ray,LogCat,Permissions,About] ACTIONS[Update All,KDE Connect,Animations]"
 
 echo "== T12: THE AI PAGE IS GONE, not hidden — no route, target or tile names it (#723) =="
 # Deleting a declaration and leaving its door behind is the dead-tile failure:

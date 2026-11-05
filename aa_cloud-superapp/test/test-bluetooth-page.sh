@@ -3,7 +3,7 @@
 # app/src/test/.../bluetooth/BluetoothLibTest.kt.
 #
 #   B1 the page is declared: Fleet group, five hidden tabs Find | Connect | Interact | Debug | Dev, every tab routed to BluetoothFragment
-#   B2 Configs declares horizontal_two_rows with the Fleet row (Bluetooth, C3 Fleet Control) and the Observability row (X-Ray, LogCat, Permissions, About; was Agents,
+#   B2 Configs declares horizontal_two_rows with the Fleet row (C3 | Peer Control, Bluetooth) and the Observability row (X-Ray, LogCat, Permissions, About; was Agents,
 #      Diagnostics, Logcat, About), every page of the section in exactly one group
 #   B3 the page is the lib's: BluetoothFragment is a KitComposeFragment (its scrolling reaches the shell) over BluetoothHub; the five
 #      tabs and the ATT console, hex write, notify stream and permission rows exist in the lib's Compose page
@@ -62,11 +62,27 @@ probs = []
 if sec.get('nav_mode') != 'horizontal_two_rows': probs.append('nav_mode = %r' % sec.get('nav_mode'))
 groups = {g['id']: g for g in sec.get('groups', [])}
 vis = lambda ids: [i for i in ids if not next(p for p in sec['pages'] if p['id'] == i).get('hidden')]
-if vis(groups['fleet']['pages'])[:2] != ['bluetooth', 'c3']: probs.append('fleet row = %r' % vis(groups['fleet']['pages']))
+if vis(groups['fleet']['pages'])[:3] != ['c3', 'kde', 'bluetooth']: probs.append('fleet row = %r' % vis(groups['fleet']['pages']))
 grid_obs = [p['id'] for p in sec['pages'] if p.get('group') == 'Observability' and not p.get('hidden')]
 if vis(groups['observability']['pages']) != grid_obs: probs.append('observability row = %r, grid = %r' % (vis(groups['observability']['pages']), grid_obs))
 label = {p['id']: p['label'] for p in sec['pages']}
-if label['c3'] != 'C3 Fleet Control': probs.append('c3 label = %r' % label['c3'])
+if label['c3'] != 'C3': probs.append('c3 label = %r' % label['c3'])
+icon = {p['id']: p.get('icon') for p in sec['pages']}
+if icon['c3'] != 'ic_cloud_control': probs.append('c3 icon = %r' % icon['c3'])
+if icon['c3'] in [p.get('icon') for p in sec['pages'] if p['id'] != 'c3']: probs.append('c3 icon collides with another Configs page')
+cloud = next(s for s in json.load(open(sys.argv[1]))['ui']['sections'] if s['id'] == 'cloud')
+def icons(o):
+    if isinstance(o, dict):
+        for k, v in o.items():
+            if k == 'icon': yield v
+            else: yield from icons(v)
+    elif isinstance(o, list):
+        for v in o: yield from icons(v)
+if 'ic_cloud_control' in list(icons(cloud)): probs.append('c3 icon collides with a Cloud page icon')
+sep = {p['id']: p.get('separator_before') for p in sec['pages']}
+if not sep['kde']: probs.append('Peer Control lacks the sub-group divider (separator_before)')
+import os
+if not os.path.exists(os.path.join(os.path.dirname(sys.argv[1]), 'app/src/main/res/drawable/ic_cloud_control.xml')): probs.append('ic_cloud_control drawable missing')
 flat = [p['id'] for p in sec['pages']]
 seen = [i for g in sec['groups'] for i in g['pages']]
 if sorted(flat) != sorted(seen): probs.append('pages not in exactly one group: %r' % sorted(set(flat) ^ set(seen)))
@@ -74,7 +90,7 @@ for g in sec['groups']:
     if not g.get('icon') or not g.get('label'): probs.append('group %s lacks an icon or label' % g['id'])
 print('; '.join(probs) or 'OK')
 PY
-)" "horizontal_two_rows: Fleet = Bluetooth | C3 Fleet Control, Observability = its grid order (X-Ray | LogCat Permissions About); every page in one group"
+)" "horizontal_two_rows: Fleet = C3 | Peer Control Bluetooth (label C3, icon ic_cloud_control), Observability = its grid order (X-Ray | LogCat Permissions About); every page in one group"
 
 echo "== B3: the page is the lib's, scroll wired =="
 grep -q 'class BluetoothFragment : KitComposeFragment()' "$KT/configs/BluetoothFragment.kt" && ! grep -q 'override val reportsScroll.*false' "$KT/configs/BluetoothFragment.kt" \
