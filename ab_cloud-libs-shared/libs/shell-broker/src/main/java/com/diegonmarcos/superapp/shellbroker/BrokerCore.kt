@@ -19,6 +19,8 @@ interface BrokerChannel {
     fun ready(): Boolean
     /** Run `sh -c cmd` (stdin piped from [stdin] when given); null = the channel could not serve it. */
     fun run(cmd: String, stdin: File?): String?
+    /** Why no channel is ready (SuperApp-side facts: wireless debugging off, not paired, connection refused). */
+    fun whyDown(): String = "no privileged channel is armed"
 }
 
 /** #1510 Battery: the broker holds nothing while idle. Idle = no call in flight and none for [IDLE_MS] (the fleet's 30 s floor). */
@@ -68,10 +70,37 @@ class BrokerCore(
 
     fun auditEntries(): List<AuditLog.Entry> = audit.entries()
 
+    /** Called when a live check flips the verdict (the first check is not a change). */
+    @Volatile var onChange: ((com.diegonmarcos.superapp.shellclient.ShellStatus) -> Unit)? = null
+    @Volatile private var lastStatus: com.diegonmarcos.superapp.shellclient.ShellStatus? = null
+
+    /**
+     * #1521 LIVE status: a trivial command (`id -u`, must answer the shell uid 2000) through the real channel, bounded by
+     * [CHECK_TIMEOUT_MS]. Armed only when that round trip succeeds now; otherwise the real reason. Cached for [STATUS_TTL_MS]
+     * at most (the cache holds the verdict of a real check, down as well as up), never a flag and never "last known good".
+     */
     fun status(): com.diegonmarcos.superapp.shellclient.ShellStatus {
-        val ready = runCatching { channel.ready() }.getOrDefault(false)
-        return com.diegonmarcos.superapp.shellclient.ShellStatus(true, ready, if (ready) channel.name() else "none",
-            if (ready) "armed: ${channel.name()}" else "not armed: arm it in the SuperApp")
+        val now = clock()
+        lastStatus?.let { if (now - it.checkedAt in 0 until STATUS_TTL_MS) return it }
+        val prev = lastStatus
+        return live(now).also { lastStatus = it; if (prev != null && prev.armed != it.armed) runCatching { onChange?.invoke(it) } }
+    }
+
+    private fun live(now: Long): com.diegonmarcos.superapp.shellclient.ShellStatus {
+        fun down(why: String) = com.diegonmarcos.superapp.shellclient.ShellStatus(true, false, "none", "not armed: $why", now, why)
+        if (!runCatching { channel.ready() }.getOrDefault(false)) return down(runCatching { channel.whyDown() }.getOrDefault("no privileged channel is armed"))
+        val name = channel.name()
+        val pool = java.util.concurrent.Executors.newSingleThreadExecutor { r -> Thread(r, "shell-broker-check").apply { isDaemon = true } }
+        try {
+            val raw = try { pool.submit<String?> { channel.run(ShellWire.CHECK_CMD, null) }.get(CHECK_TIMEOUT_MS, TimeUnit.MILLISECONDS) }
+            catch (e: TimeoutException) { return down("timeout: no answer within ${CHECK_TIMEOUT_MS / 1000}s") }
+            catch (e: ExecutionException) { return down("connection refused (${e.cause?.javaClass?.simpleName})") }
+            if (raw == null) return down("connection refused: the channel did not answer")
+            if (raw.startsWith("ERR: ")) return down("connection refused: " + raw.removePrefix("ERR: ").trim().take(80))
+            val uid = raw.trim().lineSequence().firstOrNull { it.isNotBlank() }?.trim()
+            if (uid != ShellWire.SHELL_UID) return down("the channel answered uid ${uid ?: "none"}, not the shell uid ${ShellWire.SHELL_UID}")
+            return com.diegonmarcos.superapp.shellclient.ShellStatus(true, true, name, "armed: $name (live check ok)", now, "")
+        } finally { pool.shutdownNow() }
     }
 
     /** [caller] is the binder-resolved package, never a client-supplied string. */
@@ -167,6 +196,8 @@ class BrokerCore(
 
     companion object {
         const val DEFAULT_MAX_CONCURRENT = 3
+        const val STATUS_TTL_MS = 3_000L
+        const val CHECK_TIMEOUT_MS = 4_000L
         private const val SPOOL_STALE_MS = 60 * 60 * 1000L
         private const val MARK = "__SB_EXIT__"
         private val EXIT = Regex("""\n?$MARK(-?\d+)\s*$""")

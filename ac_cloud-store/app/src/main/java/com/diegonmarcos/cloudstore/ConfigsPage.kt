@@ -151,7 +151,7 @@ private fun AdbPage() {
     }
     Head("Shell broker")
     ShellBrokerPage.lines(status).forEach { Body(it) }
-    Button(onClick = { ShellClient.arm(ctx); tick++ }, modifier = Modifier.testTag(ShellBrokerPage.ARM_TAG), content = { Text("Arm in SuperApp") })
+    Button(onClick = { ShellClient.openArmPage(ctx); tick++ }, modifier = Modifier.testTag(ShellBrokerPage.ARM_TAG), content = { Text("Arm in SuperApp") })
     Button(onClick = { tick++ }, content = { Text("Re-check") })
     Note("Silent installs and the self-update run through the SuperApp's shell broker (the APK is streamed over its stdin door), under this app's own allowlist entry. The broker never keeps a connection open between calls.")
 }

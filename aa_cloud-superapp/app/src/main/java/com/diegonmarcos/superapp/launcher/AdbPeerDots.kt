@@ -13,39 +13,29 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import com.diegonmarcos.superapp.adbdebug.AdbPeers
-import com.diegonmarcos.superapp.adbdebug.PeerLink
-import com.diegonmarcos.superapp.adbdebug.PeerStatus
+import com.diegonmarcos.superapp.shellclient.ShellStatus
 
 /**
- * The home status strip's ADB readout: TWO dots under the "ADB" label, one per app that runs an adb channel of its own
- * (libs:shizuku-adb-debug-tools [AdbPeers.FLEET]: SuperApp first, Cloud Store second). Each dot is that app's own link:
- * green = up, amber = degraded or connecting, dim = down, not installed or not answering. The label itself still follows
- * USB / Wireless debugging; the dots are the channels the two apps hold over it.
+ * The home status strip's ADB readout: ONE dot under the "ADB" label, the central shell broker's LIVE status
+ * ([com.diegonmarcos.superapp.shellbroker.ShellBroker.status]: an `id -u` round trip through the real channel).
+ * Green only when that round trip succeeded; red when it failed; grey before the first answer. The label itself still
+ * follows USB / Wireless debugging. (Before: one dot per app, from the per-app channel design.)
  */
 internal object AdbPeerDots {
     const val UP: Int = 0xFF4ADE80.toInt()
-    const val WARN: Int = 0xFFFBBF24.toInt()
+    const val DOWN: Int = 0xFFF87171.toInt()
     const val OFF: Int = 0x55FFFFFF
 
-    fun tint(link: PeerLink): Int = when (link) {
-        PeerLink.UP -> UP
-        PeerLink.DEGRADED, PeerLink.CONNECTING -> WARN
-        PeerLink.DOWN, PeerLink.UNREACHABLE -> OFF
-    }
+    /** [armed] null = not checked yet (grey). */
+    fun tint(armed: Boolean?): Int = when (armed) { true -> UP; false -> DOWN; null -> OFF }
 
-    /** One link per app in [AdbPeers.FLEET] order; an app the reading did not name is [PeerLink.UNREACHABLE]. */
-    fun links(statuses: List<PeerStatus>): List<PeerLink> =
-        AdbPeers.FLEET.map { app -> statuses.firstOrNull { it.peer.applicationId == app.applicationId }?.link ?: PeerLink.UNREACHABLE }
+    fun tints(status: ShellStatus?): List<Int> = listOf(tint(status?.armed))
 
-    fun tints(statuses: List<PeerStatus>): List<Int> = links(statuses).map(::tint)
-
-    /** The spoken form: "SuperApp up, Cloud Store down". */
-    fun describe(statuses: List<PeerStatus>): String =
-        AdbPeers.FLEET.zip(links(statuses)).joinToString(", ") { (app, l) -> "${app.label} ${AdbPeers.title(l)}" }
+    /** The spoken form: the status line, which carries the reason and the check time. */
+    fun describe(status: ShellStatus?): String = status?.line() ?: "checking"
 }
 
-/** Two 2 dp dots, one per app, in the strip's own dot size (the same footprint class as SignalDots). */
+/** The 2 dp dot(s) in the strip's own dot size (the same footprint class as SignalDots). */
 @Composable
 internal fun PeerDots(tints: List<Int>, description: String, modifier: Modifier = Modifier) {
     Row(modifier.padding(top = 1.dp).semantics { contentDescription = "ADB: $description" }) {

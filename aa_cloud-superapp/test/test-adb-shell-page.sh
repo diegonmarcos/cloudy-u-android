@@ -3,7 +3,7 @@
 #  1. build.json: the page is declared once, in Setup > Network, RIGHT AFTER Apps Mesh, labelled "ADB Shell".
 #  2. SectionPages routes it to AdbShellFragment, which only hosts the lib's AdbShellHostedPage (the one Cloud Store hosts).
 #  3. The page lives in libs:shizuku-adb-debug-tools with its seven sections in order (status table, connect,
-#     active connection, logs, declared needs, setup, side by side), the four modes, the five connection buttons and the
+#     active connection, logs, declared needs, setup, keeper), the four modes, the five connection buttons and the
 #     log's Copy / Clear; every rule behind it is a pure, tested model.
 #  4. The SuperApp's default mode is the local server (it declares its own local_server port) and it declares
 #     what it needs the channel for.
@@ -39,7 +39,7 @@ grep -q 'AdbShellHostedPage(' "$ROOT/aa_cloud-superapp/app/src/main/java/com/die
 python3 - "$LM/AdbShellPage.kt" <<'PY' && ok "the page draws its seven sections in order" || bad "the page's sections are missing or out of order"
 import sys
 s = open(sys.argv[1], encoding='utf-8').read()
-want = ['"1  STATUS"', '"2  CONNECT"', '"3  ACTIVE CONNECTION"', '"4  LOGS"', '"5  DECLARED NEEDS"', '"6  SETUP"', '"7  SIDE BY SIDE"']
+want = ['"1  STATUS"', '"2  CONNECT"', '"3  ACTIVE CONNECTION"', '"4  LOGS"', '"5  DECLARED NEEDS"', '"6  SETUP"', '"7  KEEP WIRELESS DEBUGGING ON"']
 at = [s.find(w) for w in want]
 sys.exit(0 if all(a >= 0 for a in at) and at == sorted(at) else 1)
 PY

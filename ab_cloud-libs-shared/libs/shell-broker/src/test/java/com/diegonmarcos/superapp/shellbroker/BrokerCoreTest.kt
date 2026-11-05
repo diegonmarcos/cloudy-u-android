@@ -142,4 +142,59 @@ class BrokerCoreTest {
         assertFalse(g.mayTry(30_000 + 59_999)); assertTrue(g.mayTry(30_000 + 60_000))
         g.succeeded(); assertTrue(g.mayTry(30_001))
     }
+
+    // #1521 status is a LIVE round trip: id -u == 2000 now, never the channel's ready flag.
+    @Test fun statusIsGreenOnlyOnASuccessfulLiveRoundTrip() {
+        val ch = FakeChannel(ready = true) { "2000\n" }
+        val s = core(ch).status()
+        assertTrue(s.armed); assertEquals("fake", s.channel); assertEquals(1_000L, s.checkedAt)
+        assertEquals(listOf("id -u"), ch.ran)
+    }
+
+    @Test fun aConnectedFlagWithADeadLinkIsRed() {
+        val s = core(FakeChannel(ready = true) { null }).status()
+        assertFalse(s.armed); assertTrue(s.reason.contains("connection refused"))
+    }
+
+    @Test fun aWrongUidIsRed() {
+        val s = core(FakeChannel(ready = true) { "10123\n" }).status()
+        assertFalse(s.armed); assertTrue(s.reason.contains("10123"))
+    }
+
+    @Test fun anUnreadyChannelIsRedWithItsReasonAndNeverRunsAnything() {
+        val ch = object : BrokerChannel {
+            var ran = false
+            override fun name() = "x"; override fun ready() = false
+            override fun run(cmd: String, stdin: File?): String? { ran = true; return "2000" }
+            override fun whyDown() = "wireless debugging is off"
+        }
+        val s = core(ch).status()
+        assertFalse(s.armed); assertEquals("wireless debugging is off", s.reason); assertFalse(ch.ran)
+    }
+
+    @Test fun aHangingChannelTimesOutRed() {
+        val s = core(FakeChannel(ready = true) { Thread.sleep(6_000); "2000" }).status()
+        assertFalse(s.armed); assertTrue(s.reason.contains("timeout"))
+    }
+
+    @Test fun theVerdictIsCachedForAFewSecondsOnly() {
+        var now = 1_000L
+        val ch = FakeChannel(ready = true) { "2000" }
+        val c = core(ch, now = { now })
+        c.status(); c.status()
+        assertEquals(1, ch.ran.size)
+        now += BrokerCore.STATUS_TTL_MS
+        c.status()
+        assertEquals(2, ch.ran.size)
+    }
+
+    @Test fun aFlipOfTheVerdictCallsTheChangeCallback() {
+        var now = 1_000L; var up = true
+        val c = core(FakeChannel(ready = true) { if (up) "2000" else null }, now = { now })
+        var seen: Boolean? = null
+        c.onChange = { seen = it.armed }
+        c.status(); assertEquals(null, seen)
+        now += 10_000; up = false; c.status()
+        assertEquals(false, seen)
+    }
 }

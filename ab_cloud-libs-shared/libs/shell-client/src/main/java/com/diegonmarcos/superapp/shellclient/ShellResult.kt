@@ -19,5 +19,15 @@ sealed class ShellResult {
     fun stdoutOrNull(): String? = (this as? Ok)?.takeIf { it.success }?.stdout
 }
 
-/** [armed] = a privileged channel is ready now; [channel] its name; [detail] one human line. */
-data class ShellStatus(val brokerInstalled: Boolean, val armed: Boolean, val channel: String, val detail: String)
+/**
+ * [armed] = a privileged channel answered a live round trip (`id -u` == 2000) at [checkedAt]; never a flag, never a last-known value.
+ * [channel] its name; [detail] one human line; [reason] why it is down ("" when armed); [checkedAt] epoch ms of the check (0 = never checked).
+ */
+data class ShellStatus(val brokerInstalled: Boolean, val armed: Boolean, val channel: String, val detail: String,
+                       val checkedAt: Long = 0L, val reason: String = "") {
+    /** The one line every ADB/shell indicator shows: green only when [armed]; else the real reason; always the check time. */
+    fun line(): String {
+        val at = if (checkedAt > 0) " (checked ${java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.US).format(java.util.Date(checkedAt))})" else ""
+        return if (armed) "ADB shell: up via $channel$at" else "ADB shell: down - ${reason.ifBlank { detail }.ifBlank { "unknown" }}$at"
+    }
+}

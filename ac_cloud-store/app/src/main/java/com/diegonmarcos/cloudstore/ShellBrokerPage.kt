@@ -9,7 +9,7 @@ object ShellBrokerPage {
     fun lines(s: ShellStatus?): List<String> = when {
         s == null -> listOf("Checking the SuperApp's shell broker...")
         !s.brokerInstalled -> listOf("Broker: not installed.", "Install Cloud SuperApp: it owns the one privileged shell. Without it installs show the system prompt.")
-        s.armed -> listOf("Broker: armed (${s.channel}).", "Installs and updates carry no confirmation tap.")
-        else -> listOf("Broker: reachable, not armed.", s.detail.ifBlank { "Arm it in the SuperApp." })
+        s.armed -> listOf(s.line(), "Installs and updates carry no confirmation tap.")
+        else -> listOf(s.line(), "Open Cloud SuperApp > ADB Shell to re-arm it.")
     }
 }

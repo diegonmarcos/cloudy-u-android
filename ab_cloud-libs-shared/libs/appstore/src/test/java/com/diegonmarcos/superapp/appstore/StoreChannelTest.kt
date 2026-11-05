@@ -15,9 +15,9 @@ class StoreChannelTest {
     }
 
     @Test fun anUnarmedBrokerIsDownAndTheLabelSaysToArmIt() {
-        val s = ControlStatus.fromBroker(ShellStatus(true, false, "none", "not armed: arm it in the SuperApp"))
+        val s = ControlStatus.fromBroker(ShellStatus(true, false, "none", "", 5_000L, "timeout: no answer within 4s"))
         assertEquals(ControlStatus.Channel.DOWN, s.state); assertFalse(s.shellUsable)
-        assertTrue(ControlStatus.label(s).contains("Arm in SuperApp"))
+        assertTrue(ControlStatus.label(s).contains("Arm in SuperApp") && ControlStatus.label(s).contains("timeout") && ControlStatus.label(s).contains("checked"))
     }
 
     @Test fun noSuperAppIsNotPaired() {

@@ -195,8 +195,8 @@ class StatusStripModel(private val context: Context) {
     private var hasHotspot = false
     private var hasKde = false
     /** The adb channel of each app that has one (SuperApp, Cloud Store), as the other apps' providers last said. */
-    private var adbPeers: List<com.diegonmarcos.superapp.adbdebug.PeerStatus> = emptyList()
-    private var adbPeersPinned = false
+    private var brokerStatus: com.diegonmarcos.superapp.shellclient.ShellStatus? = null
+    private var brokerPinned = false
     private var wifiLevel = SignalLevels.NONE
     private var mobile = MobileLink.Reading(MobileLink.Kind.NO_SERVICE, MobileLink.OFF_LABEL, WgLink.TINT_OFF, 0, "", null)
     private val mobileWatch = MobileProbe.Watch(context) { signalOnly -> refreshMobile(signalOnly) }
@@ -402,7 +402,8 @@ class StatusStripModel(private val context: Context) {
         mobileWatch.start()
         gpsWatch.start()
         refreshAdb()
-        mainHandler.post(adbPeersTicker)
+        com.diegonmarcos.superapp.shellbroker.ShellBroker.onStatusChange = { st -> mainHandler.post { noteBroker(st) } }
+        refreshBroker()
         refreshWgLevel()
         runCatching {
             (context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager)
@@ -430,7 +431,7 @@ class StatusStripModel(private val context: Context) {
             (context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager)?.unregisterNetworkCallback(networkCallback)
         }
         mainHandler.removeCallbacks(metricsTicker)
-        mainHandler.removeCallbacks(adbPeersTicker)
+        com.diegonmarcos.superapp.shellbroker.ShellBroker.onStatusChange = null
         mainHandler.removeCallbacks(wgRefresh)
     }
 
@@ -473,22 +474,19 @@ class StatusStripModel(private val context: Context) {
         applyIconTints()
     }
 
-    /** Take the adb channels' readings. [pin] freezes them against the background refresh (a test's fixed reading). */
-    internal fun noteAdbPeers(list: List<com.diegonmarcos.superapp.adbdebug.PeerStatus>, pin: Boolean = false) {
-        if (pin) adbPeersPinned = true else if (adbPeersPinned) return
-        adbPeers = list
+    /** Take the broker's live reading. [pin] freezes it against refreshes (a test's fixed reading). */
+    internal fun noteBroker(st: com.diegonmarcos.superapp.shellclient.ShellStatus, pin: Boolean = false) {
+        if (pin) brokerPinned = true else if (brokerPinned) return
+        brokerStatus = st
         applyIconTints()
     }
 
-    /** Every 15 s while the strip is on screen: one blocking pass (a probe and a binder call to the other app) off the main thread. */
-    private val adbPeersTicker = object : Runnable {
-        override fun run() {
-            Thread {
-                val r = runCatching { com.diegonmarcos.superapp.adbdebug.AdbPeerReader.read(context, wake = false) }.getOrNull()   // #1502 the 15 s tick never starts Store
-                if (r != null) mainHandler.post { noteAdbPeers(r) }
-            }.start()
-            mainHandler.postDelayed(this, 15_000)
-        }
+    /** One live check (an `id -u` round trip, off the main thread) when the strip opens or the screen resumes; no timer. */
+    private fun refreshBroker() {
+        Thread {
+            val r = runCatching { com.diegonmarcos.superapp.shellbroker.ShellBroker.status(context) }.getOrNull()
+            if (r != null) mainHandler.post { noteBroker(r) }
+        }.start()
     }
 
     private fun refreshAdb() {
@@ -589,9 +587,9 @@ class StatusStripModel(private val context: Context) {
             NetworkSections.MESH to StripChip(label.getValue(NetworkSections.MESH), wgTint,
                 if (wgLink.onMesh) wgLink.level else SignalLevels.NONE),
             NetworkSections.KDE to StripChip(label.getValue(NetworkSections.KDE), if (hasKde) on else off),
-            // ADB: the label follows USB / Wireless debugging; the two dots are the SuperApp's and Cloud Store's own channels.
+            // ADB: the label follows USB / Wireless debugging; the ONE dot is the central broker's live status.
             NetworkSections.ADB to StripChip(label.getValue(NetworkSections.ADB), if (hasAdb) on else off,
-                peerDots = AdbPeerDots.tints(adbPeers), peerDescription = AdbPeerDots.describe(adbPeers)),
+                peerDots = AdbPeerDots.tints(brokerStatus), peerDescription = AdbPeerDots.describe(brokerStatus)),
             NetworkSections.DATA to StripChip(label.getValue(NetworkSections.DATA), if (hasUsbData) on else off),
             NetworkSections.HOTSPOT to StripChip(label.getValue(NetworkSections.HOTSPOT), if (hasHotspot) on else off),
             // GPS: white with location on; dots = the passive / last fix's quality (0 = none).

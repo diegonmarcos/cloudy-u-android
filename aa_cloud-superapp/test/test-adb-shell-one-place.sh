@@ -157,7 +157,7 @@ ok("PairingClaim.take(" in ps and "PairingClaim.release()" in ps and "AdbPeerRea
    "pairing claims the shared window, releases it, and is refused while the other app holds it", "AdbPairingService does not claim / release / respect the pairing window across apps")
 st = code("aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/launcher/LauncherStatusStrip.kt")
 dots = code("aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/launcher/AdbPeerDots.kt")
-ok("AdbPeerDots.tints(" in st and "PeerDots(" in st and "AdbPeers.FLEET.map" in dots, "the home status draws ADB as one dot per app (SuperApp, Cloud Store)", "the home status strip does not draw one ADB dot per app")
+ok("AdbPeerDots.tints(" in st and "PeerDots(" in st and "ShellBroker.status(" in st and "adbPeersTicker" not in st and "AdbPeers.FLEET" not in dots, "the home status draws ADB as ONE dot: the central broker's live status, no timer", "the home status strip does not draw one broker dot")
 
 # G8: ONE page, no copy
 copies = [p for p in sources if not p.startswith(LIB + "/") and re.search(r"\bfun\s+AdbShell\w*\s*\(|\bAdbShellScreen\(", code(p))]

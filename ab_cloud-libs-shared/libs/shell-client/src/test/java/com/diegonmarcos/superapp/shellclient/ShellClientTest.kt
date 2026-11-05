@@ -67,7 +67,7 @@ class ShellClientTest {
     }
 
     @Test fun statusRoundTrip() {
-        val c = client { _, _, _ -> ShellWire.encodeStatus(ShellStatus(true, true, "embedded-adb", "ready")) }
+        val c = client { _, _, _ -> ShellWire.encodeStatus(ShellStatus(true, true, "embedded-adb", "ready", 5_000L)) }
         assertTrue(c.status().armed)
         assertEquals("embedded-adb", c.status().channel)
     }
@@ -75,5 +75,31 @@ class ShellClientTest {
     @Test fun garbageIsFailed() {
         assertTrue(ShellWire.decode("not json") is ShellResult.Failed)
         assertTrue(ShellWire.decode(null) is ShellResult.Failed)
+    }
+
+    @Test fun anOldBrokerWithoutALiveCheckIsNeverGreen() {
+        val c = client { _, _, _ -> """{"brokerInstalled":true,"armed":true,"channel":"embedded-adb","detail":"armed"}""" }
+        val s = c.status()
+        assertFalse(s.armed)
+        assertTrue(s.line().startsWith("ADB shell: down"))
+    }
+
+    @Test fun downCarriesTheReasonAndTheCheckTime() {
+        val c = client { _, _, _ -> ShellWire.encodeStatus(ShellStatus(true, false, "none", "d", 1_700_000_000_000L, "wireless debugging is off")) }
+        val s = c.status()
+        assertFalse(s.armed)
+        assertEquals("wireless debugging is off", s.reason)
+        assertTrue(s.line().contains("wireless debugging is off") && s.line().contains("checked"))
+    }
+
+    @Test fun greenLineOnlyWhenArmedAndItShowsTheCheckTime() {
+        val s = ShellStatus(true, true, "embedded-adb", "", 1_700_000_000_000L)
+        assertTrue(s.line().startsWith("ADB shell: up via embedded-adb") && s.line().contains("checked"))
+    }
+
+    @Test fun brokerUnreachableIsDownWithAReason() {
+        val s = client { _, _, _ -> null }.status()
+        assertFalse(s.armed)
+        assertTrue(s.reason.contains("unreachable") && s.checkedAt > 0)
     }
 }

@@ -10,6 +10,11 @@ object ShellWire {
     const val PERMISSION = "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA"
     /** The exported SuperApp activity "Arm in SuperApp" opens (the ADB Shell page, or the Wireless debugging switch). */
     const val ACTION_ARM = "com.diegonmarcos.superapp.action.ARM_SHELL"
+    /** The declared, exported SuperApp entry of that page (explicit component, so no intent resolution can pick another app). */
+    const val ARM_ACTIVITY = "com.diegonmarcos.superapp.shellbroker.ShellArmActivity"
+    /** The live check command and the uid of a shell channel. */
+    const val CHECK_CMD = "id -u"
+    const val SHELL_UID = "2000"
 
     const val M_EXEC = "exec"
     const val M_STREAM = "stream"
@@ -63,12 +68,18 @@ object ShellWire {
     }
 
     fun encodeStatus(s: ShellStatus): String = JSONObject().put("brokerInstalled", s.brokerInstalled)
-        .put("armed", s.armed).put("channel", s.channel).put("detail", s.detail).toString()
+        .put("armed", s.armed).put("channel", s.channel).put("detail", s.detail)
+        .put("checkedAt", s.checkedAt).put("reason", s.reason).toString()
 
     fun decodeStatus(json: String?): ShellStatus {
         val o = runCatching { JSONObject(json.orEmpty()) }.getOrNull()
             ?: return ShellStatus(true, false, "none", "unreadable broker status")
-        return ShellStatus(true, o.optBoolean("armed", false), o.optString("channel", "none"), o.optString("detail"))
+        // A broker that sends no check time predates the live round trip: its "armed" is a flag, so it is never shown as up.
+        if (!o.has("checkedAt")) return ShellStatus(true, false, "none", "the SuperApp is outdated: update it for a live shell check",
+            0L, "SuperApp outdated (no live check)")
+        val armed = o.optBoolean("armed", false)
+        return ShellStatus(true, armed, o.optString("channel", "none"), o.optString("detail"), o.optLong("checkedAt", 0L),
+            o.optString("reason").takeUnless { armed }.orEmpty())
     }
 
     /** Clamp a caller's timeout into 1 s .. [MAX_TIMEOUT_MS]; every call has one. */

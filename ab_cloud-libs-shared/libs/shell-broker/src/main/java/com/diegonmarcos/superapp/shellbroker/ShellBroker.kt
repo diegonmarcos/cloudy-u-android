@@ -40,6 +40,14 @@ object ShellBroker {
         val channel = object : BrokerChannel {
             override fun name(): String = ShellChannels.active(app)?.name() ?: "none"
             override fun ready(): Boolean = ShellChannels.active(app) != null
+            override fun whyDown(): String = runCatching {
+                val f = com.diegonmarcos.superapp.adbdebug.ChannelReader.read(app)
+                when {
+                    f.wirelessDebug == false -> "wireless debugging is off"
+                    !f.adbPaired -> "channel not paired (pair it on the ADB Shell page)"
+                    else -> "connection refused: paired, but not connected"
+                }
+            }.getOrDefault("no privileged channel is armed")
             override fun run(cmd: String, stdin: File?): String? {
                 val ch = ShellChannels.active(app) ?: return null
                 return if (stdin != null) ch.execWithStdin(app, cmd, stdin) else ch.exec(app, cmd)
@@ -51,7 +59,7 @@ object ShellBroker {
             if (!ChannelAutoArm.enabled(app) || !gate.mayTry(now)) false
             else EmbeddedAdbChannel.autoArm(app).first.also { ok -> if (ok) gate.succeeded() else gate.failed(now) }
         }
-        return BrokerCore({ list }, channel, audit, tryArm = arm)
+        return BrokerCore({ list }, channel, audit, tryArm = arm).also { c -> c.onChange = { onStatusChange?.invoke(it) } }
     }
 
     /** For the SuperApp's own features and the provider: [caller] is the resolved package. Blocking. */
@@ -74,6 +82,9 @@ object ShellBroker {
     /** An unenforced legacy caller (fleet IPC `adb/exec`): audited under the caller "legacy-ipc" until it moves to the client. */
     fun recordLegacy(ctx: Context, cmd: String, ok: Boolean, ms: Long, source: String) =
         core(ctx).note("legacy-ipc", cmd, if (ok) "legacy" else "legacy-fail", if (ok) 0 else -1, ms, source)
+
+    /** The broker's change callback: called when a live check flips the verdict (up <-> down). Set by the home status strip. */
+    @Volatile var onStatusChange: ((ShellStatus) -> Unit)? = null
 
     fun status(ctx: Context): ShellStatus = core(ctx).status()
 

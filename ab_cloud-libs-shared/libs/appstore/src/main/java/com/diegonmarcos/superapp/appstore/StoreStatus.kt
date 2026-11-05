@@ -10,7 +10,7 @@ import kotlin.concurrent.thread
  * Protect read. #1512: the channel belongs to the SuperApp's broker, so there is no probe of an adb link of our own.
  */
 internal object StoreStatus {
-    private const val TTL_MS = 5_000L
+    private const val TTL_MS = 3_000L
 
     @Volatile private var cached: ControlStatus.ChannelStatus? = null
     @Volatile private var at = 0L

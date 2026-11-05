@@ -24,8 +24,7 @@ object ShellBrokerLines {
     fun of(s: ShellStatus?): List<String> = when {
         s == null -> listOf("Checking the SuperApp's shell broker...")
         !s.brokerInstalled -> listOf("Broker: not installed.", "Install Cloud SuperApp: it owns the one privileged shell.")
-        s.armed -> listOf("Broker: armed (${s.channel}).")
-        else -> listOf("Broker: reachable, not armed.", s.detail.ifBlank { "Arm it in the SuperApp." })
+        else -> listOf(s.line())
     }
 }
 
@@ -46,7 +45,7 @@ fun ShellBrokerPanel(onChange: () -> Unit = {}) {
     Column(Modifier.padding(16.dp).testTag("shell-broker-panel")) {
         ShellBrokerLines.of(status).forEach { Text(it, color = MaterialTheme.colorScheme.onSurface) }
         Row {
-            Button(onClick = { ShellClient.arm(ctx); tick++ }, content = { Text("Arm in SuperApp") })
+            Button(onClick = { ShellClient.openArmPage(ctx); tick++ }, content = { Text("Arm in SuperApp") })
             Button(onClick = { tick++ }, modifier = Modifier.padding(start = 8.dp), content = { Text("Re-check") })
         }
         Text("Installs of Cloud Store and the setup runbook's grants run through the SuperApp's shell broker, under this app's own allowlist entry.",

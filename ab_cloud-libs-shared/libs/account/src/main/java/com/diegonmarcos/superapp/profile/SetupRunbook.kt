@@ -281,7 +281,7 @@ class SetupRunbook(private val ctx: Context) {
         ShellChannels.active(ctx)?.let { return State.Already("channel ${it.name()} up") }
         // #1512 The channel belongs to the SuperApp's broker: the runbook opens its arm flow rather than carrying a pairing flow of its own,
         // and picks up once the broker answers armed.
-        com.diegonmarcos.superapp.shellclient.ShellClient.arm(ctx)
+        com.diegonmarcos.superapp.shellclient.ShellClient.openArmPage(ctx)
         return State.Running("The SuperApp's arm flow is open: switch Wireless debugging on and pair there. This step is done once the broker answers armed.")
     }
 

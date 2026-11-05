@@ -25,7 +25,7 @@ internal object StoreShell {
     fun status(ctx: Context): ShellStatus = ShellClient.status(ctx)
 
     /** The "Arm in SuperApp" step: the broker's own flow (ADB Shell page / Wireless debugging switch). */
-    fun arm(ctx: Context): Boolean = ShellClient.arm(ctx)
+    fun arm(ctx: Context): Boolean = ShellClient.openArmPage(ctx)
 
     internal fun text(r: ShellResult): String? = when (r) {
         is ShellResult.Ok -> r.stdout + r.stderr

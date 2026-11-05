@@ -33,10 +33,10 @@ fun ShellBrokerCard() {
     val s = status
     DriveCard(
         stringResource(R.string.configs_shell_title), light = StatusLight.of(s?.armed),
-        summary = s?.detail ?: stringResource(R.string.configs_shell_checking), tag = DriveTags.CONFIGS_CARD,
+        summary = s?.line() ?: stringResource(R.string.configs_shell_checking), tag = DriveTags.CONFIGS_CARD,
     ) {
         PillRow {
-            if (s?.armed != true) Pill(stringResource(R.string.configs_shell_arm), { ShellClient.arm(ctx) }, filled = true)
+            if (s?.armed != true) Pill(stringResource(R.string.configs_shell_arm), { ShellClient.openArmPage(ctx) }, filled = true)
             Pill(stringResource(R.string.configs_shell_refresh), { tick++ })
         }
     }

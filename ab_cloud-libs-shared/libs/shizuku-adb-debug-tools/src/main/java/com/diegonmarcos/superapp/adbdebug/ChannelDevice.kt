@@ -58,7 +58,8 @@ object ChannelReader {
             onWifi = onWifi(app),
             notificationsAllowed = runCatching { NotificationManagerCompat.from(app).areNotificationsEnabled() }.getOrNull(),
             adbPaired = EmbeddedAdbChannel.everPaired(app) || EmbeddedAdbChannel.isReady(app),
-            adbConnected = EmbeddedAdbChannel.isReady(app),
+            // Connected = a live `echo` round trip just now (4 s leash), never the socket flag (it stays true on a dead link).
+            adbConnected = EmbeddedAdbChannel.isReady(app) && EmbeddedAdbChannel.probe(app),
             adbEndpoint = EmbeddedAdbChannel.endpoint(app),
             serverPort = AdbShellBootstrap.port(),
             serverRunning = serverUp,

@@ -55,9 +55,10 @@ class ShellClient(private val transport: Transport) {
         return bounded(t) { transport.callStdin(cmd, extras, stdin) }
     }
 
+    /** The broker's LIVE status: it runs a round trip through the real channel on every call (a few seconds of cache at most, broker side). */
     fun status(): ShellStatus {
         val json = runCatching { transport.call(ShellWire.M_STATUS, "", emptyMap()) }.getOrNull()
-            ?: return ShellStatus(false, false, "none", "SuperApp (the shell broker) is not installed or not reachable")
+            ?: return ShellStatus(false, false, "none", "broker unreachable", System.currentTimeMillis(), "broker unreachable (the SuperApp did not answer)")
         return ShellWire.decodeStatus(json)
     }
 
@@ -113,17 +114,40 @@ class ShellClient(private val transport: Transport) {
         }
 
         fun exec(ctx: Context, cmd: String, timeoutMs: Long = ShellWire.DEFAULT_TIMEOUT_MS): ShellResult = over(ctx).exec(cmd, timeoutMs)
-        fun status(ctx: Context): ShellStatus = over(ctx).status()
+        fun status(ctx: Context): ShellStatus {
+            if (!superAppInstalled(ctx)) return ShellStatus(false, false, "none", "SuperApp missing", System.currentTimeMillis(),
+                "SuperApp is not installed")
+            return over(ctx).status()
+        }
+
+        fun superAppInstalled(ctx: Context): Boolean =
+            runCatching { ctx.packageManager.getPackageInfo(ShellWire.BROKER_PKG, 0) }.isSuccess
+
+        /** The explicit intent of "Arm in SuperApp": the SuperApp's declared, exported [ShellWire.ARM_ACTIVITY] (action kept for resolution checks). */
+        fun armIntent(): Intent = Intent(ShellWire.ACTION_ARM).setClassName(ShellWire.BROKER_PKG, ShellWire.ARM_ACTIVITY)
 
         /** #1512 The stdin door over the real provider. Blocking, off the main thread. */
         fun execStdin(ctx: Context, cmd: String, stdin: java.io.File, timeoutMs: Long = ShellWire.STDIN_DEFAULT_TIMEOUT_MS): ShellResult =
             over(ctx).execStdin(cmd, stdin, timeoutMs)
 
-        /** "Arm in SuperApp": opens the SuperApp's re-arm flow (the ADB Shell page, or the Wireless debugging switch). */
-        fun arm(ctx: Context): Boolean {
-            val i = Intent(ShellWire.ACTION_ARM).setPackage(ShellWire.BROKER_PKG)
-            if (ctx !is android.app.Activity) i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            return runCatching { ctx.startActivity(i) }.isSuccess
+        /**
+         * THE one way every app opens the SuperApp's ADB Shell page (the broker / re-arm page): an explicit intent to the declared
+         * exported entry, NEW_TASK from any context. Never silent: a missing SuperApp or a refused start is shown as a toast.
+         * Returns true when the page was started.
+         */
+        fun openArmPage(ctx: Context): Boolean {
+            if (!superAppInstalled(ctx)) { toast(ctx, "Cloud SuperApp is not installed: it owns the ADB shell. Install it from the Store."); return false }
+            val i = armIntent().addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            val r = runCatching { ctx.startActivity(i) }
+            if (r.isFailure) toast(ctx, "Could not open Cloud SuperApp > ADB Shell (${r.exceptionOrNull()?.javaClass?.simpleName}). Update the SuperApp.")
+            return r.isSuccess
+        }
+
+        @Deprecated("use openArmPage", ReplaceWith("openArmPage(ctx)"))
+        fun arm(ctx: Context): Boolean = openArmPage(ctx)
+
+        private fun toast(ctx: Context, msg: String) {
+            runCatching { android.widget.Toast.makeText(ctx.applicationContext, msg, android.widget.Toast.LENGTH_LONG).show() }
         }
     }
 }

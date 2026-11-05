@@ -294,7 +294,7 @@ object StoreBar {
         Button(chLabel,
             when (ch?.state) { ControlStatus.Channel.UP -> Ink.GREEN_FILL; ControlStatus.Channel.DOWN -> AMBER
                 ControlStatus.Channel.NOT_PAIRED -> RED_FILL; null -> Ink.GREY_FILL },
-            { if (ch?.state != ControlStatus.Channel.UP) StoreShell.arm(ctx) }, modifier, itemTag(Item.WIRELESS_DEBUG))
+            { StoreShell.arm(ctx) }, modifier, itemTag(Item.WIRELESS_DEBUG))
     }
 
     private const val CHANNEL_RECHECK_MS = 15_000L

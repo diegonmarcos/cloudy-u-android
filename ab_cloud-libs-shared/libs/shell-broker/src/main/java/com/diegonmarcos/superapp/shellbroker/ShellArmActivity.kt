@@ -11,7 +11,13 @@ import com.diegonmarcos.superapp.adbdebug.AdbShellLink
 class ShellArmActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        AdbShellLink.open(this)
+        // The SuperApp's real ADB Shell page (Configs > ADB Shell, in the frame) through the launcher's own deep-link extra; the bare
+        // lib screen only when that start is refused. (Before: always the bare lib screen, which is not the broker page.)
+        val home = android.content.Intent().setClassName(packageName, "$packageName.MainActivity")
+            .putExtra("shortcut_action", "page:config/adb-shell")
+            .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP or
+                android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        if (runCatching { startActivity(home) }.isFailure) AdbShellLink.open(this)
         finish()
     }
 }
