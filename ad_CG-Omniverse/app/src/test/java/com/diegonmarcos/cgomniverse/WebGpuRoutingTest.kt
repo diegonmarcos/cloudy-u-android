@@ -60,4 +60,11 @@ class WebGpuRoutingTest {
         assertTrue(prod.text.contains("ignores the WebView flags file"))
         assertEquals(WebGpuPlan.Status.FLAG_APPLIED_NO_ADAPTER, WebGpuPlan.diagnose(caps(true, false), true, true).status)
     }
+
+    @Test fun productionFlagsAreTheSubsetTheDevToolsUiOffers() {
+        assertTrue(WebGpuPlan.FLAGS.containsAll(WebGpuPlan.PRODUCTION_FLAGS))
+        assertEquals(listOf("--ignore-gpu-blocklist"), WebGpuPlan.PRODUCTION_FLAGS)
+        assertTrue(WebGpuPlan.providerLine("com.google.android.webview.canary", "160").contains("160"))
+        assertEquals(3, WebGpuPlan.OWNER_STEPS.size)
+    }
 }

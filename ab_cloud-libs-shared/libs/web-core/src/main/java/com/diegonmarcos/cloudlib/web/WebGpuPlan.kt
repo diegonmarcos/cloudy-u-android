@@ -24,6 +24,25 @@ object WebGpuPlan {
         "--enable-features=Vulkan,WebGPUService,CanvasOopRasterization",
     )
 
+    /**
+     * The one flag of [FLAGS] the WebView DevTools "Flags" UI offers on a NON-debuggable OS (chromium main
+     * ProductionSupportedFlagList: `ignore-gpu-blocklist`; WebGPUService is already on by default on Android and
+     * `enable-unsafe-webgpu` is in no channel's list). Whether it lifts the WebGPU adapter refusal on a given GPU is
+     * only known by re-probing; no Beta/Dev/Canary channel adds a WebGPU flag to the list.
+     */
+    val PRODUCTION_FLAGS: List<String> = listOf("--ignore-gpu-blocklist")
+
+    /** One-time owner steps for the experiment (no Chrome): the DevTools UI is part of every System WebView channel. */
+    val OWNER_STEPS: List<String> = listOf(
+        "Developer options > WebView implementation: keep the installed System WebView (Beta/Dev/Canary add no WebGPU flag).",
+        "Open WebView DevTools (adb shell am start -a com.android.webview.SHOW_DEV_UI), Flags tab, enable \"ignore-gpu-blocklist\".",
+        "Restart Cloud-Browser (force stop), open a WebGPU world, and read the status line: the adapter appears or the reason stays.",
+    )
+
+    /** The Configs status row: provider, version, and whether this build's flag list can matter (always false for WebGPU itself). */
+    fun providerLine(pkg: String?, version: String?): String =
+        "WebView provider ${pkg ?: "unknown"} ${version ?: ""}".trim() + ": the Flags UI has no WebGPU switch, only ignore-gpu-blocklist"
+
     fun fileContent(flags: List<String> = FLAGS): String = "_ " + flags.joinToString(" ")
 
     /** The shell commands the broker runs (shell uid). The content holds no quote, so single quotes carry it safely. */
