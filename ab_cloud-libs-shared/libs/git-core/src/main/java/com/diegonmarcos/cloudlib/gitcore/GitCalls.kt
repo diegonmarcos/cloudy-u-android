@@ -78,7 +78,7 @@ class GitCalls(
     private fun execute(verb: String, dir: File, a: JSONObject, auth: GitAuth): String {
         when (verb) {
             "init" -> { JGitEngine.init(dir).close(); return "" }
-            "clone" -> { JGitEngine.clone(a.getString("url"), dir, auth, a.optInt("depth", 0), a.optBoolean("bare", false)).close(); return "" }
+            "clone" -> { JGitEngine.clone(a.getString("url"), dir, auth, a.optInt("depth", 0), a.optBoolean("bare", false), a.optBoolean("single_branch", false), a.optString("branch"), a.optString("filter")).close(); return "" }
         }
         return JGitEngine(dir).use { e ->
             val remote = a.optString("remote", "origin")

@@ -57,8 +57,8 @@ class GitConnect(
 ) {
     companion object {
         /** THE clone of the fleet's apps (Cloud Drive's seed and Clone button, Configs > Repos): libs:git-sync's in-process engine. BLOCKS: call on IO. */
-        fun clone(ctx: Context, url: String, dir: File, auth: GitAuth = GitAuth.None, depth: Int = 0, bare: Boolean = false): GitEngine =
-            GitEngine.clone(ctx, url, dir, auth, depth, bare)
+        fun clone(ctx: Context, url: String, dir: File, auth: GitAuth = GitAuth.None, depth: Int = 0, bare: Boolean = false, mode: com.diegonmarcos.cloudlib.gitcore.CloneMode? = null): GitEngine =
+            GitEngine.clone(ctx, url, dir, auth, depth, bare, mode)
     }
 
     private val store by lazy { GitCredentialStore(ctx.applicationContext) }

@@ -502,19 +502,47 @@ class JGitEngine(val workTree: File) : AutoCloseable {
          *   #603 the host seeds its store with depth 1: a working tree is what the user wants and
          *   the full history is megabytes it never asked for. 0 keeps the complete clone.
          */
-        fun clone(url: String, dir: File, auth: GitAuth = GitAuth.None, depth: Int = 0, bare: Boolean = false): JGitEngine {
+        fun clone(url: String, dir: File, auth: GitAuth = GitAuth.None, depth: Int = 0, bare: Boolean = false, singleBranch: Boolean = false, branch: String = "", filter: String = ""): JGitEngine {
+            // #1491 JGit's CloneCommand has no partial-clone filter: a filter mode runs the git binary (the app's cld.termux path), never a silent full clone.
+            require(filter.isBlank()) { "a partial-clone filter ($filter) needs the git binary; JGit cannot filter" }
             val cmd = Git.cloneRepository().setURI(url).setDirectory(dir)
             // #1452 [bare]: only the repository itself (no working tree, no .git folder: [dir] IS the git dir); with [depth] 1 it is the latest commit of each ref only.
             if (bare) cmd.setBare(true)
             if (depth > 0) cmd.setDepth(depth)
+            // #1491 single branch: [branch], else the remote's default (HEAD's symref).
+            if (singleBranch) {
+                val b = branch.ifBlank { defaultBranch(url, auth) }
+                cmd.setBranch("refs/heads/$b").setBranchesToClone(listOf("refs/heads/$b")).setCloneAllBranches(false)
+            }
+            authorize(cmd, auth)
+            cmd.call().close()
+            return JGitEngine(dir)
+        }
+
+        /** #1491 the clone of one declared [mode] (JGit modes only; see [CloneMode.needsGitBinary]). */
+        fun clone(url: String, dir: File, mode: CloneMode, auth: GitAuth = GitAuth.None): JGitEngine =
+            clone(url, dir, auth, mode.depth, mode.bare, mode.singleBranch, "", mode.filter)
+
+        /** #1491 the remote's default branch: the symref HEAD points at (`ls-remote --symref`). */
+        fun defaultBranch(url: String, auth: GitAuth = GitAuth.None): String {
+            val cmd = Git.lsRemoteRepository().setRemote(url)
+            authorize(cmd, auth)
+            val refs = cmd.callAsMap()
+            val head = refs["HEAD"]
+            val target = (head as? org.eclipse.jgit.lib.SymbolicRef)?.target?.name
+            // A server that does not advertise the symref: the branch whose tip is HEAD's (main, then master, then the first).
+            val heads = refs.filterKeys { it.startsWith("refs/heads/") && head != null && refs[it]?.objectId == head.objectId }.keys.map { it.removePrefix("refs/heads/") }
+            return (target?.removePrefix("refs/heads/") ?: heads.firstOrNull { it == "main" } ?: heads.firstOrNull { it == "master" } ?: heads.firstOrNull())
+                ?.takeIf { it.isNotBlank() } ?: error("no default branch advertised by $url")
+        }
+
+        private fun authorize(cmd: org.eclipse.jgit.api.TransportCommand<*, *>, auth: GitAuth) {
             when (auth) {
                 is GitAuth.None -> Unit
                 is GitAuth.Https -> cmd.setCredentialsProvider(UsernamePasswordCredentialsProvider(auth.username, auth.secret))
                 is GitAuth.Ssh -> cmd.setTransportConfigCallback(sshCallback(auth))
                 is GitAuth.Session -> cmd.setTransportConfigCallback(sessionCallback(auth))
             }
-            cmd.call().close()
-            return JGitEngine(dir)
         }
 
         /**

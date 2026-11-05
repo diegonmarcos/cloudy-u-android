@@ -63,10 +63,10 @@ class SubPageIconGuardTest {
         for (app in apps) assertTrue("$app declares no pages", decl(app).sections.sumOf { it.allPages().size } > 0)
     }
 
-    @Test fun `Cloud Drive Mounts declares its two sub-pages and Fsync three (#1173, #1484), icons the shared catalog draws`() {
+    @Test fun `Cloud Drive Mounts declares its two sub-pages and Fsync two (#1173, #1491), icons the shared catalog draws`() {
         val d = decl("ac_cloud-drive")
-        // #1484: Fsync = Folders, Agents, Projects (Agents moved in from the bottom nav).
-        val want = mapOf("fsync" to listOf("folders", "agents", "projects"), "mounts" to listOf("rclone", "fuse"))
+        // #1491: Fsync = Folders, Agents (Projects moved out to the bottom nav, right after Explorer).
+        val want = mapOf("fsync" to listOf("folders", "agents"), "mounts" to listOf("rclone", "fuse"))
         for ((section, ids) in want) {
             val s = d.sections.firstOrNull { it.id == section } ?: throw AssertionError("ac_cloud-drive declares no $section section")
             assertEquals("$section pages", ids, s.allPages().map { it.id })
@@ -77,6 +77,11 @@ class SubPageIconGuardTest {
             }
         }
         assertEquals(listOf("Rclone", "FUSE"), d.sections.first { it.id == "mounts" }.allPages().map { it.label })
+        // #1491 Projects is a bottom-nav section of its own, right after Explorer, with no sub-pages and a catalog icon.
+        val projects = d.sections.firstOrNull { it.id == "projects" } ?: throw AssertionError("ac_cloud-drive declares no projects section")
+        assertTrue("Projects declares no sub-pages", projects.allPages().isEmpty())
+        assertTrue("projects icon '${projects.icon}' is not in libs:ui-icons", com.diegonmarcos.superapp.uiicons.UiIcons.has(projects.icon))
+        assertEquals(listOf("explorer", "projects", "editor", "home", "git", "fsync", "mounts"), d.bottomSections().map { it.id })
         assertTrue("the renamed page keeps no rsync section", d.sections.none { it.id == "rsync" })
     }
 }

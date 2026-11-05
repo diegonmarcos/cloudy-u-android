@@ -15,7 +15,8 @@ object GitRepoScan {
 
     /** The hooks that are actually installed: `.git/hooks` minus git's own `*.sample`. */
     fun hooks(repo: File): List<String> {
-        val dir = File(repo, ".git/hooks")
+        // #1491 a bare repository keeps its hooks in the folder itself (RepoDetect.gitDir), a working tree under .git
+        val dir = File(RepoDetect.detect(repo)?.gitDir ?: File(repo, ".git"), "hooks")
         if (!dir.isDirectory) return emptyList()
         return dir.listFiles().orEmpty()
             .filter { it.isFile && !it.name.endsWith(".sample") }
@@ -48,7 +49,7 @@ object GitRepoScan {
         var files = 0
         var folders = 0
         var gitBytes = 0L
-        val gitDir = File(repo, ".git").absolutePath
+        val gitDir = (RepoDetect.detect(repo)?.gitDir ?: File(repo, ".git")).absolutePath
         val stack = ArrayDeque<File>()
         stack.addLast(repo)
         while (stack.isNotEmpty()) {
