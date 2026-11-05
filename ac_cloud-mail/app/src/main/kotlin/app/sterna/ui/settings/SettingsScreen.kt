@@ -1,8 +1,9 @@
 package app.sterna.ui.settings
 
+import com.diegonmarcos.superapp.perms.rememberPermsResumes
+import com.diegonmarcos.superapp.perms.PermsLink
 import app.sterna.BuildConfig
 import app.sterna.contacts.AndroidContacts
-import android.Manifest
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -96,6 +97,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -997,9 +999,12 @@ private fun PrivacySecurityScreen(viewModel: SettingsViewModel, onBack: () -> Un
     val quotedDatesUtc by viewModel.quotedDatesUtc.collectAsStateWithLifecycle()
     val imageAllowlist by viewModel.imageAllowlist.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    val contactsPermission = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission(),
-    ) { granted -> viewModel.setContactSuggestions(granted) }
+    // #1515 READ_CONTACTS is granted in Configs > Perms (libs:perms); the outcome is read when the screen resumes.
+    var contactsAsked by rememberSaveable { mutableStateOf(false) }
+    val contactsResumes = rememberPermsResumes()
+    LaunchedEffect(contactsResumes) {
+        if (contactsAsked) { contactsAsked = false; viewModel.setContactSuggestions(AndroidContacts.hasPermission(context)) }
+    }
     DetailScaffold(title = stringResource(R.string.settings_privacy_screen_title), onBack = onBack) { padding ->
         Column(
             Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()),
@@ -1143,7 +1148,7 @@ private fun PrivacySecurityScreen(viewModel: SettingsViewModel, onBack: () -> Un
                         when {
                             !wantOn -> viewModel.setContactSuggestions(false)
                             AndroidContacts.hasPermission(context) -> viewModel.setContactSuggestions(true)
-                            else -> contactsPermission.launch(Manifest.permission.READ_CONTACTS)
+                            else -> { contactsAsked = true; PermsLink.open(context, "mail", listOf("contacts_read")) }
                         }
                     },
                 )

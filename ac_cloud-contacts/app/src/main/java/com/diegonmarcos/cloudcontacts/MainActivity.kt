@@ -49,10 +49,17 @@ class MainActivity : AppCompatActivity() {
     private lateinit var webView: WebView
     private lateinit var bridge: ContactsBridge
 
-    private val contactsPermission =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-            bridge.onPermissionResult(granted)
+    // #1515 READ_CONTACTS is granted in Configs > Perms (libs:perms), never asked from here: the page opens on the contacts_read
+    // row and the bridge hears the outcome when the user is back.
+    private var askedContacts = false
+
+    override fun onResume() {
+        super.onResume()
+        if (askedContacts) {
+            askedContacts = false
+            bridge.onPermissionResult(checkSelfPermission(Manifest.permission.READ_CONTACTS) == android.content.pm.PackageManager.PERMISSION_GRANTED)
         }
+    }
 
     private val importPicker =
         registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
@@ -70,7 +77,7 @@ class MainActivity : AppCompatActivity() {
         bridge = ContactsBridge(
             activity = this,
             webView = webView,
-            requestContactsPermission = { contactsPermission.launch(Manifest.permission.READ_CONTACTS) },
+            requestContactsPermission = { askedContacts = true; com.diegonmarcos.superapp.perms.PermsLink.open(this, "contacts", listOf("contacts_read")) },
             launchImportPicker = { importPicker.launch("*/*") },
         )
         webView.addJavascriptInterface(bridge, "Native")

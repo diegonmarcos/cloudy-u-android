@@ -145,7 +145,7 @@
   },
   "pending_page_max": 1,
   "one_place": {
-    "_doc": "#1515 P7 of 1_cicd/src/scripts/cloud-android-perms-guard.py. tokens: calls an app may make only from its Perms page. allow: path substrings of the places that may (the libs:perms lib and each app's declared Perms page). exceptions: declared in data, code that acts on OTHER apps. baseline: sites not moved into a Perms row yet (exact file, or a dir/ prefix for a vendored fork); the list only shrinks (baseline_max) and an entry that stops violating must be removed.",
+    "_doc": "#1515 P7 of 1_cicd/src/scripts/cloud-android-perms-guard.py. tokens: calls an app may make only from its Perms page. allow: path substrings of the places that may (the libs:perms lib and each app's declared Perms page). exceptions: declared in data, code that acts on OTHER apps. baseline: sites not moved into a Perms row yet (exact file, or a dir/ prefix for a vendored fork); the list only shrinks (baseline_max) and an entry that stops violating must be removed. allow also names an activity that must register the launcher its own Perms page uses (Cloud Me MainActivity hosts Configs > Perms: the Configs rows and the start-up walk go through its one launcher).",
     "tokens": [
       "requestPermissions(",
       "RequestPermission",
@@ -174,7 +174,8 @@
       "ab_cloud-libs-shared/libs/perms/",
       "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/configs/PermissionsFragment.kt",
       "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/system/PrivilegedGrants.kt",
-      "ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive/configs/GeneralPerms.kt"
+      "ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive/configs/GeneralPerms.kt",
+      "ac_cloud-me/app/src/main/java/com/diegonmarcos/cloudme/MainActivity.kt"
     ],
     "exceptions": [
       {
@@ -202,18 +203,13 @@
       "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/system/ScreenLocker.kt": "not moved into a Perms row yet (#1515)",
       "ac_cloud-camera/app/src/main/java/cld/camera/identify/IdentifyActivity.kt": "not moved into a Perms row yet (#1515)",
       "ac_cloud-camera/app/src/main/java/cld/camera/ui/activities/MainActivity.kt": "not moved into a Perms row yet (#1515)",
-      "ac_cloud-contacts/app/src/main/java/com/diegonmarcos/cloudcontacts/MainActivity.kt": "not moved into a Perms row yet (#1515)",
       "ac_cloud-dialer/": "vendored Fossify Phone fork: its own SMS and dialer screens ask",
       "ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive/sync/GitReposScreen.kt": "not moved into a Perms row yet (#1515)",
       "ac_cloud-gallery/app/src/main/kotlin/com/diegonmarcos/mediacenter/feature_node/presentation/util/ContextExt.kt": "not moved into a Perms row yet (#1515)",
       "ac_cloud-gallery/app/src/main/kotlin/com/diegonmarcos/mediacenter/feature_node/presentation/cast/components/CastPermissionsDialog.kt": "not moved into a Perms row yet (#1515)",
       "ac_cloud-gallery/app/src/main/kotlin/com/diegonmarcos/mediacenter/shell/ShellParts.kt": "not moved into a Perms row yet (#1515)",
       "ac_cloud-gallery/app/src/main/kotlin/com/diegonmarcos/mediacenter/cloud/ui/WifiSsidPermission.kt": "not moved into a Perms row yet (#1515)",
-      "ac_cloud-mail/app/src/main/kotlin/app/sterna/ui/SternaApp.kt": "not moved into a Perms row yet (#1515)",
-      "ac_cloud-mail/app/src/main/kotlin/app/sterna/ui/compose/ComposeScreen.kt": "not moved into a Perms row yet (#1515)",
-      "ac_cloud-mail/app/src/main/kotlin/app/sterna/ui/settings/SettingsScreen.kt": "not moved into a Perms row yet (#1515)",
       "ac_cloud-matrix/": "vendored Element X fork: its own presenters ask; not an owner-written screen (Perms page per #1360 pending_page class)",
-      "ac_cloud-me/app/src/main/java/com/diegonmarcos/cloudme/MainActivity.kt": "not moved into a Perms row yet (#1515)",
       "ac_cloud-myterminal/hub/src/main/java/com/diegonmarcos/ide/AboutActivity.kt": "not moved into a Perms row yet (#1515)",
       "ac_cloud-myterminal/hub/src/main/java/com/diegonmarcos/ide/TerminalWakeLock.kt": "not moved into a Perms row yet (#1515)",
       "ac_cloud-nav/app/src/main/java/com/diegonmarcos/cloudnav/tracker/StepsRepository.kt": "not moved into a Perms row yet (#1515)",
@@ -230,6 +226,6 @@
       "ac_cloud-termux/": "vendored Termux fork (termux-shared PermissionUtils); upstream code, not owner-written",
       "ac_cloud-vault/": "vendored Bitwarden fork: its own permission manager asks; replaced only with the fork's own screens"
     },
-    "baseline_max": 41
+    "baseline_max": 36
   }
 }

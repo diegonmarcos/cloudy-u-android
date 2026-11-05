@@ -1,6 +1,7 @@
 package app.sterna.ui.compose
 
-import android.Manifest
+import com.diegonmarcos.superapp.perms.rememberPermsResumes
+import com.diegonmarcos.superapp.perms.PermsLink
 import android.text.format.DateUtils
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
@@ -359,9 +360,12 @@ fun ComposeScreen(
     // --- Contacts permission priming (offered once, on first compose) ---
     val contactsPrimed by viewModel.contactsPrimed.collectAsStateWithLifecycle()
     val contactSuggestionsOn by viewModel.contactSuggestionsEnabled.collectAsStateWithLifecycle()
-    val contactsPermission = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission(),
-    ) { granted -> viewModel.setContactSuggestions(granted) }
+    // #1515 READ_CONTACTS is granted in Configs > Perms (libs:perms); the outcome is read when the screen resumes.
+    var contactsAsked by rememberSaveable { mutableStateOf(false) }
+    val contactsResumes = rememberPermsResumes()
+    LaunchedEffect(contactsResumes) {
+        if (contactsAsked) { contactsAsked = false; viewModel.setContactSuggestions(AndroidContacts.hasPermission(context)) }
+    }
     var showContactsPriming by remember { mutableStateOf(false) }
     var primingHandled by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(contactsPrimed, contactSuggestionsOn) {
@@ -411,7 +415,7 @@ fun ComposeScreen(
                         if (AndroidContacts.hasPermission(context)) {
                             viewModel.setContactSuggestions(true)
                         } else {
-                            contactsPermission.launch(Manifest.permission.READ_CONTACTS)
+                            contactsAsked = true; PermsLink.open(context, "mail", listOf("contacts_read"))
                         }
                     }) {
                         Text(stringResource(R.string.compose_contacts_priming_enable))
