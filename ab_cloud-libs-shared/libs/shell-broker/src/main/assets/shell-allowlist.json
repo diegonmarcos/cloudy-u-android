@@ -42,7 +42,7 @@
     },
     {
      "id": "bgpolicy-2",
-     "re": "^am (force-stop|kill|set-standby-bucket|set-inactive|set-idle|stop-service|broadcast)( [\\w.:/=,@+*?-]+)*$"
+     "re": "^am (force-stop|kill|get-standby-bucket|get-inactive|set-standby-bucket|set-inactive|set-idle|stop-service|broadcast)( [\\w.:/=,@+*?-]+)*$"
     },
     {
      "id": "bgpolicy-3",
@@ -300,7 +300,7 @@
     },
     {
      "id": "bgpolicy-2",
-     "re": "^am (force-stop|kill|set-standby-bucket|set-inactive|set-idle|stop-service|broadcast)( [\\w.:/=,@+*?-]+)*$"
+     "re": "^am (force-stop|kill|get-standby-bucket|get-inactive|set-standby-bucket|set-inactive|set-idle|stop-service|broadcast)( [\\w.:/=,@+*?-]+)*$"
     },
     {
      "id": "bgpolicy-3",
