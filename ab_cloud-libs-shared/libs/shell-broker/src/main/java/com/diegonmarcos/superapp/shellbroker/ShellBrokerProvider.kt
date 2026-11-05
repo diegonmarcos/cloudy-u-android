@@ -22,14 +22,28 @@ class ShellBrokerProvider : ContentProvider() {
         val uid = Binder.getCallingUid()
         if (!CallerId.permitted(ctx, uid)) return reply(ShellWire.encode(ShellResult.Denied("signature permission missing")))
         if (method == ShellWire.M_STATUS) return reply(ShellWire.encodeStatus(ShellBroker.status(ctx)))
-        if (method != ShellWire.M_EXEC && method != ShellWire.M_STREAM) return null
+        val viaJson = method == ShellWire.M_EXEC_JSON || method == ShellWire.M_STREAM_JSON
+        if (method != ShellWire.M_EXEC && method != ShellWire.M_STREAM && !viaJson) return null
         val caller = CallerId.of(ctx, uid, callingPackage) ?: return reply(ShellWire.encode(ShellResult.Denied("unknown caller")))
-        val timeout = extras?.getString(ShellWire.K_TIMEOUT)?.toLongOrNull() ?: ShellWire.DEFAULT_TIMEOUT_MS
-        val max = extras?.getString(ShellWire.K_MAX_BYTES)?.toIntOrNull() ?: ShellWire.EXEC_MAX_BYTES
-        return reply(ShellWire.encode(ShellBroker.exec(ctx, caller, arg.orEmpty(), timeout, max.coerceIn(1, ShellWire.EXEC_MAX_BYTES))))
+        var cmd = arg.orEmpty()
+        var timeout = extras?.getString(ShellWire.K_TIMEOUT)?.toLongOrNull() ?: ShellWire.DEFAULT_TIMEOUT_MS
+        var max = extras?.getString(ShellWire.K_MAX_BYTES)?.toIntOrNull()
+            ?: if (method == ShellWire.M_STREAM_JSON) ShellWire.STREAM_MAX_BYTES else ShellWire.EXEC_MAX_BYTES
+        if (viaJson) {
+            val o = runCatching { org.json.JSONObject(arg.orEmpty()) }.getOrNull()
+                ?: return reply(ShellWire.encode(ShellResult.Denied("body is not a JSON object")))
+            cmd = o.optString("cmd")
+            timeout = o.optLong("timeoutMs", timeout)
+            max = o.optInt("maxBytes", max)
+        }
+        return reply(ShellWire.encode(ShellBroker.exec(ctx, caller, cmd, timeout, max.coerceIn(1, ShellWire.EXEC_MAX_BYTES))))
     }
 
-    private fun reply(json: String) = Bundle().apply { putString(ShellWire.K_JSON, json) }
+    /** The client reads `json`; the Cloud-Webserver bridge reads `ok` / `mime` / `payload` (the same shape every fleet provider answers). */
+    private fun reply(json: String) = Bundle().apply {
+        putString(ShellWire.K_JSON, json)
+        putBoolean("ok", true); putString("mime", "application/json"); putString("payload", json)
+    }
 
     override fun query(u: Uri, p: Array<String>?, s: String?, a: Array<String>?, o: String?): Cursor? = null
     override fun getType(uri: Uri): String? = null

@@ -328,11 +328,15 @@
     },
     {
      "id": "mesh-3",
-     "re": "^screencap -p$"
+     "re": "^screencap -p /sdcard/Download/screencap-[0-9]{8}-[0-9]{6}\\.png$"
     },
     {
      "id": "mesh-4",
      "re": "^logcat( -[\\w]+)*( [\\w.:/=,@+*?-]+)*$"
+    },
+    {
+     "id": "mesh-5",
+     "re": "^cmd package (list|resolve-activity|path)( [\\w.:/=,@+*?-]+)*$"
     }
    ]
   }

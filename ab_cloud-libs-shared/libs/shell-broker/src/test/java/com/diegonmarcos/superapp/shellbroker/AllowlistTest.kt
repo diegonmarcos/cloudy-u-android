@@ -75,4 +75,15 @@ class AllowlistTest {
         assertTrue(list.decide("app.host", "dumpsys alarm | head -5; id") is Decision.Deny)
         assertTrue(list.decide("app.a", "dumpsys alarm | head -5") is Decision.Deny)   // exact is per caller
     }
+
+    @Test fun theMeshEntryCoversThePeersToolsAndNothingRaw() {
+        val real = Allowlist.parse(File("src/main/assets/shell-allowlist.json").readText())
+        val web = "com.diegonmarcos.cloudwebserver"
+        for (c in listOf("cmd package list packages -U com.x.y", "logcat -d -t 500 --uid=10234", "pm grant com.x.y android.permission.READ_LOGS",
+                         "am force-stop com.x.y", "input tap 100 200", "input keyevent KEYCODE_HOME", "getprop ro.build.id",
+                         "screencap -p /sdcard/Download/screencap-20261105-163000.png"))
+            assertTrue(c, real.decide(web, c) is Decision.Allow)
+        for (c in listOf("screencap -p /sdcard/x.png; id", "screencap -p /data/local/tmp/x.png", "logcat -d | grep x", "sh -c id", "reboot", "rm -rf /sdcard"))
+            assertTrue(c, real.decide(web, c) is Decision.Deny)
+    }
 }

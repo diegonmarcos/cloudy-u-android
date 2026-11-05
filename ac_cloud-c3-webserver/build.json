@@ -142,6 +142,10 @@
     "browser_package": "com.diegonmarcos.cloudbrowser",
     "browser_suffix": "headless",
     "_doc_browser": "#1498 /browser/* serves the headless browser API (ab_cloud-libs-shared/libs/headless-api/headless-api.json) from this phone: POST /browser/command, POST /browser/run, GET /browser/status, POST /browser/stop, POST /browser/cdp {on}. Same listener, so mesh peers and the fleet bearer only; each call goes to Cloud-Browser's <browser_package>.<browser_suffix> provider (libs:headless-browser) and to nothing else.",
+    "shell_route": "/shell",
+    "shell_package": "com.diegonmarcos.superapp",
+    "shell_suffix": "shellbroker",
+    "_doc_shell": "#1510 /shell/* is the mesh door of the SuperApp's shell broker (libs:shell-broker): GET /shell/status, POST /shell/exec and POST /shell/stream {cmd, timeoutMs}. Bearer plus mesh-only like /logs, served only while the Server switch runs the mesh listener (#1503). The broker sees this app as the caller \"mesh\" (its allowlist entry, default deny); a request never names an authority or a method. Answers: ok 200, needs_arm 409, denied 403, timeout 504, failed 502.",
     "endpoints_route": "/endpoints",
     "token_authority_suffix": "fleet",
     "ipc": {
