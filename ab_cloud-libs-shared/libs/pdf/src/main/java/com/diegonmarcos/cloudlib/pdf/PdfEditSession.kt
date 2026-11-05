@@ -7,6 +7,7 @@ import com.tom_roush.pdfbox.cos.COSName
 import com.tom_roush.pdfbox.pdmodel.PDDocument
 import com.tom_roush.pdfbox.pdmodel.PDResources
 import com.tom_roush.pdfbox.pdmodel.common.PDRectangle
+import com.tom_roush.pdfbox.pdmodel.fixup.PDDocumentFixup
 import com.tom_roush.pdfbox.pdmodel.interactive.annotation.PDAnnotation
 import com.tom_roush.pdfbox.pdmodel.interactive.annotation.PDAppearanceDictionary
 import com.tom_roush.pdfbox.pdmodel.interactive.annotation.PDAppearanceStream
@@ -96,7 +97,7 @@ class PdfEditSession private constructor(private val doc: PDDocument) : AutoClos
     // ── forms ───────────────────────────────────────────────────────────────
 
     fun formFields(): List<PdfFormField> {
-        val form = doc.documentCatalog.acroForm ?: return emptyList()
+        val form = acroForm() ?: return emptyList()
         return form.fieldTree.mapNotNull { f ->
             val type = f.fieldType ?: return@mapNotNull null
             val kind = when (type) {
@@ -114,7 +115,7 @@ class PdfEditSession private constructor(private val doc: PDDocument) : AutoClos
      * Returns the names that were set. The values are written to the field dictionary directly, so no font has to be resolved.
      */
     fun fillForm(values: Map<String, String>): List<String> {
-        val form = doc.documentCatalog.acroForm ?: return emptyList()
+        val form = acroForm() ?: return emptyList()
         val done = ArrayList<String>()
         for ((name, value) in values) {
             val field = form.getField(name) ?: continue
@@ -142,6 +143,9 @@ class PdfEditSession private constructor(private val doc: PDDocument) : AutoClos
         if (done.isNotEmpty()) form.cosObject.setBoolean(COSName.getPDFName("NeedAppearances"), false)
         return done
     }
+
+    /** The form without the catalog's default fixup, which loads the standard fonts (needs the Android resource loader). */
+    private fun acroForm() = doc.documentCatalog.getAcroForm(null as PDDocumentFixup?)
 
     // ── pages ───────────────────────────────────────────────────────────────
 

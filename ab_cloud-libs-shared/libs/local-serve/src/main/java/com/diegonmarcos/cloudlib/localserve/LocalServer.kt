@@ -52,6 +52,7 @@ class LocalServer(root: File, private val bindPort: Int = 0) : AutoCloseable {
     override fun close() {
         runCatching { socket?.close() }
         pool?.shutdownNow()
+        runCatching { pool?.awaitTermination(1, java.util.concurrent.TimeUnit.SECONDS) }
     }
 
     private fun handle(c: Socket) {

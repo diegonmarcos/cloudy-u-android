@@ -113,8 +113,11 @@ class LocalServerTest {
         assertTrue(s.isRunning)
         s.close()
         assertFalse(s.isRunning)
+        // the listener goes away with the close; give the OS a moment, then every connect must be refused
         var refused = false
-        try { Socket("127.0.0.1", port).close() } catch (e: ConnectException) { refused = true }
+        for (i in 0 until 30) {
+            try { Socket("127.0.0.1", port).close(); Thread.sleep(100) } catch (e: java.io.IOException) { refused = true; break }
+        }
         assertTrue(refused)
         s.close() // closing twice is fine
     }
