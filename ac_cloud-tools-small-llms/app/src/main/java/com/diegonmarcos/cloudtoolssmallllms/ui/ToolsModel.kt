@@ -256,7 +256,7 @@ class ToolsModel(context: Context, private val scope: CoroutineScope) {
             val score = helper(models.judgeModel, "judging", "judging", "Request:\n$question\n\nAnswer:\n${reply.text}")
                 ?.let { Regex("""\b(10|[1-9])\b""").find(it)?.value?.toInt() }
             if (score != null && score < models.judgeMinScore) {
-                val (better, betterLabel) = ask(task.medium, task.id, req) {}
+                val (better, betterLabel) = ask(task.medium, task.id, req, onDelta = {})
                 if (better.text != null) { reply = better; label = "$betterLabel · escalated (small scored $score)" }
             }
         }
