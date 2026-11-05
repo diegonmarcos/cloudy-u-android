@@ -21,12 +21,15 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
 /**
- * AGENTS ▸ SCREENSHOTS: every screenshot on the phone gets an OCR text layer (lines with boxes,
+ * AGENTS ▸ SCREENSHOT OCR: every screenshot on the phone gets an OCR text layer (lines with boxes,
  * grouped into blocks), image labels, detected objects, dominant colours, any barcode, the app it
  * was taken in and the dates / times / links / mails / phones in its text — all ON DEVICE through
  * the fleet's image engine (libs:ml-l-image → Cloud-Lib-Ml-L-Image-Mlkit.apk: ML Kit text
  * recognition, image labelling, object detection with the full-label classifier, ZXing). Nothing
  * leaves the phone: detect is on-device whatever route the user chose for photos.
+ *
+ * SIDECARS (#1507): beside every screenshot, <name>.md (OCR as Markdown with tables) and <name>.json
+ * (metadata + OCR), written by SidecarWriter through libs:ocr and skipped while their sha256 matches.
  *
  * OUTPUT: the published contract, data/agent-screenshots-contract.json (records/<id>.json,
  * index.jsonl, state.json under <shared_root>/.agents/screenshots/v1), also served by
@@ -104,7 +107,8 @@ object ScreenshotAgent {
             val have = store.ids()
             // Sources that are gone or were edited: their old records go.
             have.filter { it !in wanted.keys }.forEach { store.remove(it) }
-            val todo = wanted.filterKeys { it !in have }
+            // Screenshot OCR: a screenshot is done when its record AND its <name>.md/.json pair (matching sha256) exist.
+            val todo = wanted.filter { (id, f) -> id !in have || !SidecarWriter.isCurrent(f) }
             val before = store.state()
             _status.value = Status(running = true, todo = todo.size)
             if (todo.isEmpty()) {
@@ -116,19 +120,23 @@ object ScreenshotAgent {
                 store.writeState(before.copy(lastScanMs = System.currentTimeMillis(), total = files.size, pending = todo.size))
                 return finish(Status(todo = todo.size, message = problem))
             }
-            var done = 0; var failed = 0; var cursor = before.cursorMtimeMs
+            var done = 0; var failed = 0; var lastError: String? = null; var cursor = before.cursorMtimeMs
             for ((id, f) in todo) {
                 if (stop.get() || shouldStop()) break
                 _status.value = _status.value.copy(current = f.name, done = done, failed = failed)
-                val r = runCatching { process(ctx, engine, id, f) }.getOrElse { e -> failedRecord(id, f, e.message ?: e.toString()) }
-                store.write(r)
-                if (r.error != null) failed++
+                val kept = if (id in have) store.read(id) else null
+                val r = kept ?: runCatching { process(ctx, engine, id, f) }.getOrElse { e -> failedRecord(id, f, e.message ?: e.toString()) }.also { store.write(it) }
+                var err = r.error
+                // An OCR that failed writes no sidecar (an empty .md would read as done); it is retried on the next pass.
+                if (r.error?.contains("ocr:") != true && !r.failed) runCatching { SidecarWriter.write(ctx, f, r) }.onFailure { err = "sidecar: ${it.message ?: it}" }
+                else if (err == null) err = "no sidecar written"
+                if (err != null) { failed++; lastError = "${f.name}: $err" }
                 done++
                 cursor = maxOf(cursor, f.lastModified())
             }
             store.writeState(ScreenshotStore.State(System.currentTimeMillis(), before.processed + done, before.failed + failed, cursor, files.size, todo.size - done))
             Log.i(TAG, "pass: $done read, $failed with errors, ${todo.size - done} left")
-            return finish(Status(done = done, todo = todo.size - done, failed = failed, message = if (done < todo.size) "stopped; the next pass resumes" else null))
+            return finish(Status(done = done, todo = todo.size - done, failed = failed, message = if (done < todo.size) "stopped; the next pass resumes" else lastError))
         } finally {
             busy.set(false)
         }

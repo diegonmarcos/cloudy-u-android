@@ -76,3 +76,13 @@ screenshot is not shrunk to 1024 px before the text is read. ML Kit image labell
 (full-label classifier) and ZXing add the rest. A new screenshot is read seconds after it is taken (a
 MediaStore trigger), a periodic pass every six hours catches anything missed, and Agents ▸ Screenshots has
 Run now, Stop, Retry failed and an on/off switch.
+
+## Sidecars (Screenshot OCR, #1507)
+
+Besides the contract records, the agent writes two files beside every screenshot, same folder and base name:
+`<name>.md` (the OCR as Markdown: headings, paragraphs, lists, tables with a header row, a front-matter block with
+source, captured time, app, engine and mean confidence) and `<name>.json` (schema `cloud-drive.screenshot-ocr/1`:
+file with sha256, EXIF/XMP, MediaStore fields, device, colours, OCR blocks/lines/words with boxes and confidence,
+languages, tables with row and column, image labels, engine versions). The pair is skipped while the JSON's sha256
+matches the image and re-written when the image changes. Engine: ML Kit Text Recognition (bundled, on-device) in
+Cloud-Lib-Ml-L-Image-Mlkit; shaping in `libs:ocr`. The `.md` is written first, the `.json` last.

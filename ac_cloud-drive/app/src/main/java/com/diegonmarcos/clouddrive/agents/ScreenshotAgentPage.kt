@@ -41,26 +41,27 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import com.diegonmarcos.clouddrive.R
 import com.diegonmarcos.clouddrive.ui.CapsuleBadge
-import com.diegonmarcos.clouddrive.ui.DriveCard
 import com.diegonmarcos.clouddrive.ui.DriveMetrics
 import com.diegonmarcos.clouddrive.ui.DriveTags
 import com.diegonmarcos.clouddrive.ui.EmptyState
-import com.diegonmarcos.clouddrive.ui.ErrorState
 import com.diegonmarcos.clouddrive.ui.Hairline
 import com.diegonmarcos.clouddrive.ui.IslandAction
-import com.diegonmarcos.clouddrive.ui.Pill
-import com.diegonmarcos.clouddrive.ui.PillRow
-import com.diegonmarcos.clouddrive.ui.ProgressCard
 import com.diegonmarcos.clouddrive.ui.SectionHeader
-import com.diegonmarcos.clouddrive.ui.StatusLight
 import com.diegonmarcos.clouddrive.ui.ToolbarIsland
 import com.diegonmarcos.clouddrive.viewer.ImageViewerActivity
+import com.diegonmarcos.superapp.uikit.KitStoreCaption
+import com.diegonmarcos.superapp.uikit.KitStoreDot
+import com.diegonmarcos.superapp.uikit.KitStoreName
+import com.diegonmarcos.superapp.uikit.KitStoreQuick
+import com.diegonmarcos.superapp.uikit.KitStoreRow
+import com.diegonmarcos.superapp.uikit.KitStoreRowLine
+import androidx.compose.material3.LinearProgressIndicator
 import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /**
- * AGENTS ▸ the Screenshot agent's page: is it on, how much of the phone it has read, the pass in
+ * AGENTS ▸ the Screenshot OCR agent's page: is it on, how much of the phone it has read, the pass in
  * progress (with Stop), Run now / Retry failed / Turn on-off, where the output lives (the
  * contract), and the most recent screenshots it read with their text and labels. A row opens the
  * image viewer, whose Text layer draws the same record.
@@ -75,6 +76,7 @@ fun ScreenshotAgentPage(title: String, modifier: Modifier = Modifier) {
     val counts by produceState<Pair<Int, Int>?>(null, status.running, status.finishedAtMs, tick) { value = withContext(Dispatchers.IO) { runCatching { ScreenshotAgent.counts() }.getOrNull() } }
     val recent by produceState(emptyList<ScreenshotRecord>(), status.done, status.finishedAtMs, tick) { value = withContext(Dispatchers.IO) { runCatching { ScreenshotAgent.store().recent(RECENT) }.getOrDefault(emptyList()) } }
     val state by produceState<ScreenshotStore.State?>(null, status.finishedAtMs, tick) { value = withContext(Dispatchers.IO) { runCatching { ScreenshotAgent.store().state() }.getOrNull() } }
+    val decl = remember { runCatching { AgentsDecl.load(ctx).firstOrNull { it.id == "screenshot-ocr" } }.getOrNull() }
     val last = remember(status.finishedAtMs, tick) { ScreenshotAgentPrefs.lastRun(ctx) }
 
     Column(modifier.fillMaxSize()) {
@@ -86,42 +88,39 @@ fun ScreenshotAgentPage(title: String, modifier: Modifier = Modifier) {
         LazyColumn(Modifier.fillMaxSize()) {
             item {
                 val (total, read) = counts ?: (0 to 0)
-                DriveCard(
-                    header = stringResource(R.string.agent_shots_title),
-                    badge = if (enabled) "on" else "off",
-                    light = if (status.message != null && !status.running) StatusLight.State.OFF else if (enabled) StatusLight.State.ON else StatusLight.State.UNKNOWN,
-                    summary = if (counts == null) stringResource(R.string.agent_shots_scanning) else stringResource(R.string.agent_shots_summary, read, total, state?.failed ?: 0),
-                    tag = DriveTags.AGENT_CARD,
-                ) {
-                    Text(stringResource(if (enabled) R.string.agent_shots_on else R.string.agent_shots_off), style = MaterialTheme.typography.bodySmall)
-                    Text(stringResource(R.string.agent_shots_about), Modifier.padding(top = DriveMetrics.gap), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text(
-                        last?.let { stringResource(R.string.agent_shots_last_run, DateUtils.getRelativeTimeSpanString(it.atMs).toString(), it.done, it.failed) } ?: stringResource(R.string.agent_shots_never_run),
-                        Modifier.padding(top = DriveMetrics.gap), style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Monospace, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                val failed = state?.failed ?: 0
+                // The agent row: one dense Store row per declared agent (assets/agents.json); state, progress and the last error live in it.
+                decl?.let { agent ->
+                    AgentRow(
+                        agent = agent, enabled = enabled, running = status.running,
+                        caption = when {
+                            status.running -> stringResource(R.string.agent_shots_running, status.current.ifBlank { "…" }) + " · " + stringResource(R.string.agent_shots_progress, status.done, status.done + status.todo)
+                            counts == null -> stringResource(R.string.agent_shots_scanning)
+                            else -> stringResource(R.string.agent_shots_summary, read, total, failed)
+                        },
+                        error = status.message?.takeIf { !status.running },
+                        fraction = if (status.running && status.todo + status.done > 0) status.done.toFloat() / (status.done + status.todo) else null,
+                        canRetry = !status.running && failed > 0,
+                        onAction = { id ->
+                            when (id) {
+                                "process_all" -> if (status.running) ScreenshotAgent.requestStop() else ScreenshotAgentWorker.runNow(ctx)
+                                "retry_failed" -> ScreenshotAgentWorker.runNow(ctx, retryFailed = true)
+                                "toggle" -> { enabled = !enabled; ScreenshotAgentPrefs.setEnabled(ctx, enabled) }
+                            }
+                            tick++
+                        },
                     )
-                    Text(
-                        stringResource(R.string.agent_shots_output, ScreenshotAgent.store().root.absolutePath),
-                        Modifier.padding(top = DriveMetrics.tight), style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Monospace,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis,
-                    )
-                    PillRow {
-                        if (status.running) Pill(stringResource(R.string.agent_shots_stop), { ScreenshotAgent.requestStop() })
-                        else Pill(stringResource(R.string.agent_shots_run_now), { ScreenshotAgentWorker.runNow(ctx); tick++ }, filled = true)
-                        Pill(stringResource(R.string.agent_shots_retry_failed), { ScreenshotAgentWorker.runNow(ctx, retryFailed = true); tick++ }, enabled = !status.running && (state?.failed ?: 0) > 0)
-                        Pill(stringResource(if (enabled) R.string.agent_shots_turn_off else R.string.agent_shots_turn_on), { enabled = !enabled; ScreenshotAgentPrefs.setEnabled(ctx, enabled); tick++ })
-                    }
                 }
-            }
-            if (status.running) item {
-                ProgressCard(
-                    title = stringResource(R.string.agent_shots_running, status.current.ifBlank { "…" }),
-                    detail = stringResource(R.string.agent_shots_progress, status.done, status.done + status.todo),
-                    fraction = if (status.todo + status.done > 0) status.done.toFloat() / (status.done + status.todo) else null,
-                    onCancel = { ScreenshotAgent.requestStop() },
-                    cancelLabel = stringResource(R.string.agent_shots_stop),
+                Text(
+                    last?.let { stringResource(R.string.agent_shots_last_run, DateUtils.getRelativeTimeSpanString(it.atMs).toString(), it.done, it.failed) } ?: stringResource(R.string.agent_shots_never_run),
+                    Modifier.padding(horizontal = KitStoreRow.padH), fontSize = KitStoreRow.caption, fontFamily = FontFamily.Monospace, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    stringResource(R.string.agent_shots_output, ScreenshotAgent.sources().firstOrNull()?.absolutePath ?: "Pictures/Screenshots"),
+                    Modifier.padding(horizontal = KitStoreRow.padH), fontSize = KitStoreRow.caption, fontFamily = FontFamily.Monospace,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis,
                 )
             }
-            status.message?.takeIf { !status.running }?.let { msg -> item { ErrorState(msg, onRetry = { ScreenshotAgentWorker.runNow(ctx); tick++ }) } }
             item { SectionHeader(stringResource(R.string.agent_shots_recent), count = recent.size.takeIf { it > 0 }) }
             if (recent.isEmpty()) item {
                 EmptyState(Icons.Filled.DocumentScanner, stringResource(R.string.agent_shots_empty), stringResource(R.string.agent_shots_empty_hint))
@@ -131,6 +130,27 @@ fun ScreenshotAgentPage(title: String, modifier: Modifier = Modifier) {
                 Hairline(Modifier.padding(horizontal = DriveMetrics.gutter))
             }
         }
+    }
+}
+
+/** One declared agent as a dense Store row: dot, name, caption (counts or progress), the quick verbs, a bar while running, the last error under it. */
+@Composable
+private fun AgentRow(agent: AgentsDecl.Agent, enabled: Boolean, running: Boolean, caption: String, error: String?, fraction: Float?, canRetry: Boolean, onAction: (String) -> Unit) {
+    Column(Modifier.fillMaxWidth().testTag(DriveTags.AGENT_CARD)) {
+        KitStoreRowLine {
+            KitStoreDot(if (error != null) "\u26A0" else if (enabled) "\u2713" else "\u25EF", if (error != null) KitStoreRow.BAD else if (enabled) KitStoreRow.UP else KitStoreRow.MISSING)
+            Column(Modifier.weight(1f)) {
+                KitStoreName(agent.name)
+                KitStoreCaption(caption, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            agent.actions.forEach { a ->
+                val label = when (a.id) { "process_all" -> if (running) stringResource(R.string.agent_shots_stop) else a.label; "toggle" -> stringResource(if (enabled) R.string.agent_shots_turn_off else R.string.agent_shots_turn_on); else -> a.label }
+                if (a.id != "retry_failed" || canRetry) KitStoreQuick(label, if (a.id == "toggle") KitStoreRow.MISSING else KitStoreRow.BLUE_FILL, Modifier.padding(start = KitStoreRow.tight)) { onAction(a.id) }
+            }
+        }
+        if (running) LinearProgressIndicator(progress = { fraction ?: 0f }, modifier = Modifier.fillMaxWidth().padding(horizontal = KitStoreRow.padH))
+        error?.let { KitStoreCaption(it, Modifier.padding(horizontal = KitStoreRow.padH), color = KitStoreRow.BAD) }
+        KitStoreCaption(agent.summary, Modifier.padding(horizontal = KitStoreRow.padH, vertical = KitStoreRow.tight), color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 

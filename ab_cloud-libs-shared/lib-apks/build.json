@@ -136,6 +136,7 @@
       "ui-nav-bars": "The shared navigation chrome of every app: first row (breadcrumb title, AI, Profile, Configs), second row (one row, two rows, vertical side menu with its rail), bottom nav, and the three-state scroll machine they follow.",
       "browser": "In-app web browser: WebView host, per-tab persistence and the tab strip.",
       "ml-l-image-ocr": "Cloud Writer's on-device text recognition (OCR) of an image into editable text (#1435).",
+      "ocr": "The OCR result toolkit: lines to blocks, tables (column clustering by x-overlap, rows by y), Markdown with front matter, the sidecar JSON, file naming and the sha256 skip rule. Pure Kotlin, reads no pixels (#1507).",
       "scraper": "Cloud Browser's Scrapers section: Site Files (every file a site left, in-app viewer) and Scrap Tools (YouTube Download via scrappers-api).",
       "media-convert-audio": "Audio track of a video remuxed on the phone (MediaExtractor/MediaMuxer), used by the YouTube tool.",
       "chat": "Mattermost client: models, prefs, client and the chat pages.",

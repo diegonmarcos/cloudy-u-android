@@ -3,12 +3,11 @@ package com.diegonmarcos.clouddrive.agents
 import android.content.Context
 import android.provider.MediaStore
 import com.diegonmarcos.clouddrive.DrivePrefs
+import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
-import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
@@ -17,16 +16,18 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /**
- * The Screenshot agent's schedule. Three ways a pass starts, all one worker:
+ * Screenshot OCR's schedule (battery rules #1487/#1502: event-driven, no polling, no periodic tick).
  *
  *  - WATCH: a one-off request with a MediaStore content-URI trigger, so a new screenshot is read
  *    a few seconds after it is taken. Content triggers fire once, so every pass re-arms the watch
- *    (APPEND_OR_REPLACE: it waits for the pass that armed it, then watches again).
- *  - PERIODIC: every [PERIOD_HOURS] while the battery is not low, the safety net for a watch the
- *    platform dropped (reboot, force-stop) and for the backlog a first install starts with.
- *  - NOW: the page's Run now / Retry failed.
+ *    (APPEND_OR_REPLACE: it waits for the pass that armed it, then watches again). Zero cost idle.
+ *  - BACKFILL: ONE one-shot that waits for the charger ([Constraints.Builder.setRequiresCharging])
+ *    and reads whatever is still unread (a first install, a dropped watch). Never periodic.
+ *  - NOW: the page's Process all / Retry failed, an explicit tap.
  *
- * Off ([ScreenshotAgentPrefs.enabled] false) cancels all three; a pass already running finishes
+ * Retries: the passes return success (a missing engine or grant is shown in the agent row, not
+ * retried in a storm); the backoff floor is [BACKOFF_SECONDS] regardless, never below 30 s.
+ * Off ([ScreenshotAgentPrefs.enabled] false) cancels all of it; a pass already running finishes
  * the screenshot it is on.
  */
 class ScreenshotAgentWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
@@ -45,21 +46,23 @@ class ScreenshotAgentWorker(context: Context, params: WorkerParameters) : Corout
 
     companion object {
         const val WATCH = "cloud-drive-agent-screenshots-watch"
-        const val PERIODIC = "cloud-drive-agent-screenshots-periodic"
+        /** Retired periodic tick: kept only so an upgrade cancels the old work. */
+        private const val PERIODIC_RETIRED = "cloud-drive-agent-screenshots-periodic"
+        const val BACKFILL = "cloud-drive-agent-screenshots-backfill"
         const val NOW = "cloud-drive-agent-screenshots-now"
-        const val PERIOD_HOURS = 6L
+        const val BACKOFF_SECONDS = 30L
         private const val KEY_MANUAL = "manual"
         private const val KEY_RETRY_FAILED = "retry_failed"
 
-        /** Arm (or re-apply) the watch and the periodic pass; called on app start and when the page turns the agent on. */
+        /** Arm (or re-apply) the watch and the one charging backfill; called on app start and when the page turns the agent on. */
         fun schedule(context: Context) {
             val wm = WorkManager.getInstance(context)
             if (!ScreenshotAgentPrefs.enabled(context)) { cancel(context); return }
-            val periodic = PeriodicWorkRequestBuilder<ScreenshotAgentWorker>(PERIOD_HOURS, TimeUnit.HOURS)
-                .setConstraints(Constraints.Builder().setRequiresBatteryNotLow(true).build())
-                .build()
-            wm.enqueueUniquePeriodicWork(PERIODIC, ExistingPeriodicWorkPolicy.UPDATE, periodic)
+            wm.cancelUniqueWork(PERIODIC_RETIRED)
             watch(context, ExistingWorkPolicy.KEEP)
+            wm.enqueueUniqueWork(BACKFILL, ExistingWorkPolicy.KEEP, OneTimeWorkRequestBuilder<ScreenshotAgentWorker>()
+                .setConstraints(Constraints.Builder().setRequiresCharging(true).build())
+                .setBackoffCriteria(BackoffPolicy.LINEAR, BACKOFF_SECONDS, TimeUnit.SECONDS).build())
         }
 
         private fun watch(context: Context, policy: ExistingWorkPolicy) {
@@ -68,12 +71,12 @@ class ScreenshotAgentWorker(context: Context, params: WorkerParameters) : Corout
                 .setTriggerContentUpdateDelay(5, TimeUnit.SECONDS)
                 .setTriggerContentMaxDelay(1, TimeUnit.MINUTES)
                 .build()
-            WorkManager.getInstance(context).enqueueUniqueWork(WATCH, policy, OneTimeWorkRequestBuilder<ScreenshotAgentWorker>().setConstraints(constraints).addTag(WATCH).build())
+            WorkManager.getInstance(context).enqueueUniqueWork(WATCH, policy, OneTimeWorkRequestBuilder<ScreenshotAgentWorker>().setConstraints(constraints).setBackoffCriteria(BackoffPolicy.LINEAR, BACKOFF_SECONDS, TimeUnit.SECONDS).addTag(WATCH).build())
         }
 
         /** Run a pass now (the page's Run now; [retryFailed] reads every failed screenshot again). */
         fun runNow(context: Context, retryFailed: Boolean = false) {
-            val req = OneTimeWorkRequestBuilder<ScreenshotAgentWorker>().setInputData(workDataOf(KEY_MANUAL to true, KEY_RETRY_FAILED to retryFailed)).build()
+            val req = OneTimeWorkRequestBuilder<ScreenshotAgentWorker>().setInputData(workDataOf(KEY_MANUAL to true, KEY_RETRY_FAILED to retryFailed)).setBackoffCriteria(BackoffPolicy.LINEAR, BACKOFF_SECONDS, TimeUnit.SECONDS).build()
             WorkManager.getInstance(context).enqueueUniqueWork(NOW, ExistingWorkPolicy.KEEP, req)
         }
 
@@ -81,7 +84,7 @@ class ScreenshotAgentWorker(context: Context, params: WorkerParameters) : Corout
         fun cancel(context: Context) {
             ScreenshotAgent.requestStop()
             val wm = WorkManager.getInstance(context)
-            wm.cancelUniqueWork(WATCH); wm.cancelUniqueWork(PERIODIC); wm.cancelUniqueWork(NOW)
+            wm.cancelUniqueWork(WATCH); wm.cancelUniqueWork(BACKFILL); wm.cancelUniqueWork(PERIODIC_RETIRED); wm.cancelUniqueWork(NOW)
         }
     }
 }

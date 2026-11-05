@@ -440,25 +440,25 @@
     <string name="viewer_text_layer">Text layer</string>
     <string name="viewer_text_layer_none">The Screenshot agent has not read this image yet</string>
     <!-- Agents ▸ Screenshots (agents/): the Screenshot agent's page and the viewer's text layer. -->
-    <string name="agent_shots_title">Screenshots</string>
+    <string name="agent_shots_title">Screenshot OCR</string>
     <string name="agent_shots_summary">%1$d of %2$d read · %3$d with errors</string>
     <string name="agent_shots_scanning">Counting screenshots…</string>
     <string name="agent_shots_running">Reading %1$s</string>
     <string name="agent_shots_progress">%1$d of %2$d this pass</string>
     <string name="agent_shots_last_run">Last pass %1$s · %2$d read · %3$d with errors</string>
     <string name="agent_shots_never_run">No pass yet</string>
-    <string name="agent_shots_run_now">Run now</string>
+    <string name="agent_shots_run_now">Process all</string>
     <string name="agent_shots_stop">Stop</string>
     <string name="agent_shots_retry_failed">Retry failed</string>
     <string name="agent_shots_turn_on">Turn on</string>
     <string name="agent_shots_turn_off">Turn off</string>
     <string name="agent_shots_on">On · new screenshots are read as they are taken</string>
     <string name="agent_shots_off">Off · nothing is read in the background</string>
-    <string name="agent_shots_about">On-device OCR, image labels, objects, colours, barcodes and dates, links and phone numbers in the text. Nothing leaves the phone.</string>
-    <string name="agent_shots_output">Output: %1$s</string>
+    <string name="agent_shots_about">On-device OCR: writes name.md (Markdown with tables) and name.json (metadata and OCR) beside each screenshot. Nothing leaves the phone.</string>
+    <string name="agent_shots_output">Sidecars (.md, .json) beside the images in: %1$s</string>
     <string name="agent_shots_recent">Recent</string>
     <string name="agent_shots_empty">No screenshot read yet</string>
-    <string name="agent_shots_empty_hint">Run now reads every screenshot on the phone, newest first.</string>
+    <string name="agent_shots_empty_hint">Process all reads every screenshot on the phone, newest first.</string>
     <string name="agent_shots_no_text">No text</string>
     <!-- #642 the cloud-terminal git handoff. Every outcome has its own line: a clone that
          reported nothing is the silent no-op this feature exists to make impossible. -->

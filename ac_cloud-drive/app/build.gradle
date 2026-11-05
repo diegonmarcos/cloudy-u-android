@@ -695,6 +695,7 @@ dependencies {
     // The shared scan engine: ZXing barcode decode + ML Kit OCR for the image
     // viewer. Same module cloud-media-center compiles in (task #459/#460).
     implementation project(':libs:ml-l-image')
+    implementation project(':libs:ocr')   // #1507 table detection, Markdown and sidecar JSON for Screenshot OCR
     // The four engine libraries (#567): the main APK is chrome, each tooling is
     // its own module on the shared shelf. Linked from push 1 so every push after it
     // compiles the engine inside THIS app's toolchain, not only inside lib-apks'.

@@ -1,0 +1,17 @@
+{
+  "_doc": "THE AGENTS declaration (Fsync > Agents). One entry per on-device agent; AgentsDecl parses it and AgentsScreen draws one dense KitStoreRow per entry. `id` is the only thing the code dispatches on. Names and captions here, not in Kotlin; sizes come from the ui-kit KitStoreRow ramp.",
+  "agents": [
+    {
+      "id": "screenshot-ocr",
+      "name": "Screenshot OCR",
+      "summary": "Reads every screenshot on the phone, on-device, and writes <name>.md and <name>.json beside it.",
+      "outputs": [".md", ".json"],
+      "triggers": ["new screenshot (MediaStore)", "Process all", "charging backfill"],
+      "actions": [
+        {"id": "process_all", "label": "Process all"},
+        {"id": "retry_failed", "label": "Retry failed"},
+        {"id": "toggle", "label": "On/Off"}
+      ]
+    }
+  ]
+}

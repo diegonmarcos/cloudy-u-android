@@ -1,0 +1,28 @@
+// libs:ocr (#1507) — the fleet's OCR RESULT toolkit: image text -> blocks, tables, Markdown and the
+// sidecar JSON. Pure Kotlin geometry (no ML Kit, no Android classes besides org.json), so the whole
+// suite runs on the JVM. The READING of pixels stays where it already is: ML Kit Text Recognition
+// bundled in Cloud-Lib-Ml-L-Image-Mlkit (on-device, no network), reached through libs:ml-l-image;
+// this module only shapes what that engine returns. Shared BY REFERENCE (build.json::modules `dir`).
+plugins {
+    id 'com.android.library'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.diegonmarcos.superapp.ocr'
+    compileSdk 36
+    defaultConfig {
+        minSdk 26
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions { jvmTarget = '17' }
+}
+
+dependencies {
+    testImplementation 'junit:junit:4.13.2'
+    // The real org.json on the JVM (android.jar's copy is a stub that throws).
+    testImplementation 'org.json:json:20240303'
+}

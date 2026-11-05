@@ -212,7 +212,7 @@
         "id": "fsync",
         "label": "Fsync", "title_row": false,
         "icon": "sync",
-        "_doc": "#1491 Fsync has two sub-pages: Folders (the folder sync rules below) and Agents (the on-device agents, moved here from the bottom nav; the Screenshot agent first, OCR plus on-device ML labels, writing the contract in data/agent-screenshots-contract.json, docs/screenshot-agent-contract.md); Projects moved to the bottom nav after Explorer (#1491). #1216 the Fsync page is the folder sync rules and nothing else: Unison two-way pairs with conflict detection and keep-A / keep-B / keep-both (sync/FsyncPage.kt FolderSyncScreen over UnisonCoordinator). The former Backup sub-page (rsync mirror jobs) is gone, so the section declares no sub-pages and draws no strip. The servers, APIs and SFTP hosts the rules talk to are set up in Configs > Fsync. Everything drawn is real state: the pairs the user made and the last result of each run; the APK declares no job, rule or pair.",
+        "_doc": "#1491 Fsync has two sub-pages: Folders (the folder sync rules below) and Agents (the on-device agents, moved here from the bottom nav; the Screenshot OCR agent first, OCR plus on-device ML labels, name.md and name.json written beside each screenshot, writing the contract in data/agent-screenshots-contract.json, docs/screenshot-agent-contract.md); Projects moved to the bottom nav after Explorer (#1491). #1216 the Fsync page is the folder sync rules and nothing else: Unison two-way pairs with conflict detection and keep-A / keep-B / keep-both (sync/FsyncPage.kt FolderSyncScreen over UnisonCoordinator). The former Backup sub-page (rsync mirror jobs) is gone, so the section declares no sub-pages and draws no strip. The servers, APIs and SFTP hosts the rules talk to are set up in Configs > Fsync. Everything drawn is real state: the pairs the user made and the last result of each run; the APK declares no job, rule or pair.",
         "pages": [
           {
             "id": "folders",
@@ -1304,6 +1304,7 @@
     "libs:analytics": {
       "dir": "../ab_cloud-libs-shared/libs/analytics"
     },
+    "libs:ocr": {"dir": "../ab_cloud-libs-shared/libs/ocr", "type": "library", "depends_on": [], "comment": "#1507 the OCR result toolkit (pure Kotlin): table detection, Markdown, sidecar JSON, naming, idempotency. Reads no pixels; the engine stays libs:ml-l-image."},
     "libs:ml-l-image": {
       "_doc_dir": "THE shared scan engine (task #459/#460): ZXing barcode decode + ML Kit text-recognition + typed-payload parsing, shared BY REFERENCE the same way libs:core and libs:updater are. cloud-media-center consumes the SAME directory — one engine, two apps, no private copy to drift.",
       "dir": "../ab_cloud-libs-shared/libs/ml-l-image",
@@ -1547,7 +1548,7 @@
   },
   "_doc_fleet_agents": "This app's agents, in the fleet agent registry's one shape (aa_cloud-superapp/build.json::_doc_fleet_agents). Consolidated into aa_cloud-superapp/data/fleet-agents.json by 1_cicd/src/scripts/cloud-android-fleet-agents.py and shown in Cloud SuperApp ▸ Configs ▸ Apps ▸ Agents ▸ Fleet agents.",
   "fleet_agents": [
-    {"id": "screenshots", "name": "Screenshot agent", "kind": "on-device worker", "trigger": "new screenshots (incremental pass by ScreenshotAgentWorker)", "summary": "OCRs and labels every screenshot on the phone with on-device ML and writes the contract in data/agent-screenshots-contract.json.", "open": "page:fsync/agents", "contract": "ac_cloud-drive/data/agent-screenshots-contract.json", "status": {"source": "provider", "authority_suffix": "agents.screenshots", "path": "state", "permission": "com.diegonmarcos.clouddrive.permission.READ_AGENT_RESULTS"}}
+    {"id": "screenshots", "name": "Screenshot OCR", "kind": "on-device worker", "trigger": "new screenshots (incremental pass by ScreenshotAgentWorker)", "summary": "OCRs every screenshot on the phone with on-device ML, writes <name>.md and <name>.json beside it and the contract in data/agent-screenshots-contract.json.", "open": "page:fsync/agents", "contract": "ac_cloud-drive/data/agent-screenshots-contract.json", "status": {"source": "provider", "authority_suffix": "agents.screenshots", "path": "state", "permission": "com.diegonmarcos.clouddrive.permission.READ_AGENT_RESULTS"}}
   ],
   "configs_pages": {
     "_doc": "Configs > General and Configs > About (libs:ui-nav-bars fleetconfigs, rule 1_cicd/src/data/configs-pages.json, #1352 v2). general.sections: the anchors of the one General page, in order (perms, battery, storage, notifications, ui, language are required; app opens this app's own Configs; update is added after perms by default). about: the hand-written part of the extensive About: tagline, description, features, screens, guide, privacy, backends (ids of ac_cloud-account/build.json::fleet_endpoints, resolved to mesh URLs at build time), related fleet apps, credits for a fork. Permissions, data stores, crash/analytics libs, name, icon, version, build sha and date, repo, licence, origin, crash sink, debug API and changelog are derived, never typed here.",

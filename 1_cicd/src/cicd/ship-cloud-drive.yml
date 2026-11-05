@@ -72,6 +72,7 @@ on:
       - "ab_cloud-libs-shared/libs/ml-l-image/**"
       - "ab_cloud-libs-shared/libs/model-catalogue/**"
       - "ab_cloud-libs-shared/libs/mounts/**"
+      - "ab_cloud-libs-shared/libs/ocr/**"
       - "ab_cloud-libs-shared/libs/odf/**"
       - "ab_cloud-libs-shared/libs/pdf/**"
       - "ab_cloud-libs-shared/libs/perms/**"
