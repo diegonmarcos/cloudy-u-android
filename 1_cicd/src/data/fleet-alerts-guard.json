@@ -264,6 +264,12 @@
       "kind": "foreground_service",
       "notify_calls": 1,
       "why": "The sticky foreground service that keeps the user's mounts alive re-posts its own ongoing notification with the live mount count. The ongoing line a foreground service must hold, not an alert about the fleet."
+    },
+    {
+      "path": "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/bgpolicy/SuperSavingRuntime.kt",
+      "kind": "ongoing_controls",
+      "notify_calls": 1,
+      "why": "#1506 The one persistent indicator of Super Saving Battery Mode with its one-tap Off action: posted once when the mode is turned on and cancelled on Off, never updated. A control for the mode the user switched on, not an alert about the fleet."
     }
   ]
 }
