@@ -35,7 +35,7 @@ mf = rd("ac_cloud-account/app/src/main/AndroidManifest.xml")
 mfc = re.sub(r"<!--.*?-->", "", mf, flags=re.S)
 ok("adbdebug" not in mfc and "ShizukuProvider" not in mfc and "<service" not in mfc, "#1512 no pairing service, keep-alive service or Shizuku provider in the manifest", "#1512 the manifest declares a channel service or provider again")
 ok("<receiver" not in mfc and "RECEIVE_BOOT_COMPLETED" not in mf, "#1502 no boot receiver, no RECEIVE_BOOT_COMPLETED (Account never wakes itself)", "#1502 Account declares a boot receiver again")
-ok("android.permission.WRITE_SECURE_SETTINGS" in mf, "WRITE_SECURE_SETTINGS declared (the grant target)", "WRITE_SECURE_SETTINGS not declared")
+ok("WRITE_SECURE_SETTINGS" not in mfc, "#1515 WRITE_SECURE_SETTINGS not declared (only the SuperApp holds it; Account asks the broker)", "WRITE_SECURE_SETTINGS is declared again")
 
 app = rd("ac_cloud-account/app/src/main/java/com/diegonmarcos/cloudaccount/App.kt")
 ok("HostShell" not in re.sub(r"//[^\n]*", "", app) and "adbdebug" not in app, "#1512 App.onCreate arms no channel of its own (no HostShell)", "#1512 App.onCreate still names HostShell / adbdebug")

@@ -483,7 +483,7 @@ private fun KeeperSection() {
     val s = snap
     if (s == null) { Dim("Reading...", size = 11); return }
     FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-        val chips = WdKeeperStatus.chips(s) { WdKeeper.ago(it) }
+        val chips = WdKeeperStatus.chips(s, com.diegonmarcos.superapp.perms.Perms.appLabel(ctx, ctx.packageName) + "/" + ctx.packageName) { WdKeeper.ago(it) }
         for (c in chips) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             StateDot(when (c.level) {
                 WdKeeperStatus.Level.OK -> C_OK

@@ -489,17 +489,6 @@
           "intents": []
         },
         {
-          "id": "write_secure_settings",
-          "label": "Write secure settings",
-          "why": "Held through a one-time adb grant so the adb-shell channel can keep wireless debugging available; the app does not write settings itself.",
-          "permissions": [
-            "android.permission.WRITE_SECURE_SETTINGS"
-          ],
-          "check": "permission",
-          "grant": "none",
-          "intents": []
-        },
-        {
           "id": "fgs",
           "label": "Foreground service (specialUse)",
           "why": "The mount keeper keeps rclone and sshfs mounts alive past the UI as a foreground service of type specialUse. Info: declared in the manifest, nothing to grant.",
@@ -1654,8 +1643,7 @@
       "usb_host",
       "install_unknown",
       "usage_access",
-      "battery_opt",
-      "write_secure_settings"
+      "battery_opt"
     ],
     "helpers": [
       {

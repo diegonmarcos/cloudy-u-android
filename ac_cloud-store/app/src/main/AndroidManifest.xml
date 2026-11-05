@@ -33,8 +33,6 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <!-- Configs > Perms asks the owner to leave the Store unrestricted (battery_opt) when auto-update is on. -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
-    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS"
-        tools:ignore="ProtectedPermissions" />
 
     <!-- #1121 The cross-app start the fleet IPC grants declare: after the Store installs the Termux
          terminal or Nix-on-Droid it starts that app's UnpackService (action

@@ -67,8 +67,9 @@ object WdKeeperStatus {
         val lastRearmBy: String?,
     )
 
-    fun chips(s: Snapshot, ago: (Long) -> String): List<StatusChip> = listOf(
-        StatusChip("permission", "Permission", if (s.canWrite) "held" else "missing", if (s.canWrite) Level.OK else Level.BAD),
+    /** [holder] = "<app label>/<package>" of the app running the keeper: the chip names the exact permission and who lacks it. */
+    fun chips(s: Snapshot, holder: String = "this app", ago: (Long) -> String): List<StatusChip> = listOf(
+        StatusChip("permission", "WRITE_SECURE_SETTINGS (Write secure settings)", if (s.canWrite) "granted to $holder" else "not granted to $holder", if (s.canWrite) Level.OK else Level.BAD),
         StatusChip("battery", "Battery", if (s.batteryExempt) "unrestricted" else "optimised", if (s.batteryExempt) Level.OK else Level.WARN),
         StatusChip("service", "Service", if (s.serviceRunning) "running" else if (s.armed) "stopped" else "off",
             if (s.serviceRunning) Level.OK else if (s.armed) Level.BAD else Level.UNKNOWN),

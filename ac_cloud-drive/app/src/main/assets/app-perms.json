@@ -8,8 +8,7 @@
     "usb_host",
     "install_unknown",
     "usage_access",
-    "battery_opt",
-    "write_secure_settings"
+    "battery_opt"
   ],
   "first_run": "libs:perms",
   "helpers": [

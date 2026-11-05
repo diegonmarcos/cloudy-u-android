@@ -126,6 +126,7 @@ class WdKeeperStatusTest {
     @Test fun `a missing permission and a restricted battery show`() {
         val c = WdKeeperStatus.chips(ok.copy(canWrite = false, batteryExempt = false)) { "now" }.associateBy { it.id }
         assertEquals(WdKeeperStatus.Level.BAD, c.getValue("permission").level)
+        assertEquals("WRITE_SECURE_SETTINGS (Write secure settings): not granted to this app", c.getValue("permission").let { it.label + ": " + it.value })
         assertEquals(WdKeeperStatus.Level.WARN, c.getValue("battery").level)
     }
 

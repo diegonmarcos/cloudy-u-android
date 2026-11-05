@@ -18,8 +18,6 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Configs > Perms (battery_opt): the owner may leave Account unrestricted. -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
-    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS"
-        tools:ignore="ProtectedPermissions" />
 
     <!-- Account ▸ Import sends each ID document it finds to Cloud Vault's add-identity entry point
          (autofill/VaultIdentityHandoff.kt), which opens the vault's new-Identity screen prefilled.
