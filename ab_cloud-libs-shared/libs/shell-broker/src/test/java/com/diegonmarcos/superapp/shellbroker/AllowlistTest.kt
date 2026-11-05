@@ -58,7 +58,7 @@ class AllowlistTest {
         val self = real.decide("com.diegonmarcos.superapp", "pm grant com.diegonmarcos.superapp android.permission.WRITE_SECURE_SETTINGS")
         assertTrue(self is Decision.Allow && self.rule.id == "selfgrant-wss")
         assertTrue(real.decide("com.diegonmarcos.clouddrive", "dumpsys meminfo com.x.y") is Decision.Allow)
-        assertTrue(real.decide("com.diegonmarcos.clouddrive", "pm install -r /x.apk") is Decision.Deny)
+        assertTrue(real.decide("com.diegonmarcos.clouddrive", "pm clear com.x.y") is Decision.Deny)
         assertTrue(real.decide("com.diegonmarcos.cloudwebserver", "rm -rf /") is Decision.Deny)
         assertTrue(real.decide("com.diegonmarcos.cloudwebserver", "pm uninstall com.x.y") is Decision.Deny)
         assertTrue(real.decide("com.diegonmarcos.cloudwebserver", "appops set com.x.y RUN_IN_BACKGROUND deny") is Decision.Allow)
