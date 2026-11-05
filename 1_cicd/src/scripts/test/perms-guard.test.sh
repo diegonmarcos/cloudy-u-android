@@ -15,6 +15,8 @@ mk() {
   python3 - "$r/1_cicd/src/data/perms-guard.json" <<'PY'
 import json, sys
 p = json.load(open(sys.argv[1])); p["pending_page"] = {}; p["pending_page_max"] = 0; p["not_android"] = {}
+op = p["one_place"]; op["baseline"] = {}; op["baseline_max"] = 0; op["min_files"] = 1; op["allow"] = op["allow"] + ["a/PermsPage.kt"]
+op["exceptions"] = [{"path": "ac_cloud-a/app/src/main/java/a/bg/", "tokens": ["appops set"], "why": "acts on other apps through the shell broker"}]
 json.dump(p, open(sys.argv[1], "w"))
 PY
   cp "$REPO/ab_cloud-libs-shared/libs/perms/src/main/assets/perms-catalogue.json" "$r/ab_cloud-libs-shared/libs/perms/src/main/assets/"
@@ -80,5 +82,23 @@ r="$(mk)"; jset "$r/ac_cloud-a/build.json" 'd["ui"]={"general":{"perms":[{"permi
 r="$(mk)"; jset "$r/1_cicd/src/data/perms-guard.json" 'd["pending_page"]={"ac_cloud-a":"a fork that asks in its own screens"}; d["pending_page_max"]=1'; expect "a pending app that links libs:perms must leave the list (red)" 1 "$r"
 r="$(mk)"; jset "$r/ac_cloud-termux/build.json" 'del d["modules"]["libs:perms"]'; jset "$r/1_cicd/src/data/perms-guard.json" 'd["pending_page"]={"ac_cloud-termux":"a fork that asks in its own screens"}; d["pending_page_max"]=0'; expect "the pending list growing past its max is red" 1 "$r"
 r="$(mk)"; jset "$r/ac_cloud-termux/build.json" 'del d["modules"]["libs:perms"]'; jset "$r/1_cicd/src/data/perms-guard.json" 'd["pending_page"]={"ac_cloud-termux":"a fork that asks in its own screens"}; d["pending_page_max"]=1'; expect "a listed pending app within the max is green" 0 "$r"
+# P7 (#1515): one place asks. Each forbidden call outside the Perms page is red; the declared places are green.
+r="$(mk)"; printf 'class B { fun g(a: Activity) = a.requestPermissions(arrayOf("x"), 1) }\n' > "$r/$A/java/a/B.kt"; expect "P7 requestPermissions outside the Perms page is red" 1 "$r"
+r="$(mk)"; printf 'class B { val l = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {} }\n' > "$r/$A/java/a/B.kt"; expect "P7 an ActivityResultContracts.RequestPermission launcher outside the Perms page is red" 1 "$r"
+r="$(mk)"; printf 'class B { val i = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION) }\n' > "$r/$A/java/a/B.kt"; expect "P7 opening a special-access settings intent outside the Perms page is red" 1 "$r"
+r="$(mk)"; printf 'class B { val i = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS) }\n' > "$r/$A/java/a/B.kt"; expect "P7 opening App info outside the Perms page is red" 1 "$r"
+r="$(mk)"; printf 'class B { val c = "pm grant com.x android.permission.WRITE_SECURE_SETTINGS" }\n' > "$r/$A/java/a/B.kt"; expect "P7 a pm grant line outside the Perms page is red" 1 "$r"
+r="$(mk)"; printf 'class B { val c = "cmd appops set com.x RUN_ANY allow" }\n' > "$r/$A/java/a/B.kt"; expect "P7 an appops set line outside the Perms page is red" 1 "$r"
+r="$(mk)"; printf 'class B { // requestPermissions( and pm grant, only prose\n}\n' > "$r/$A/java/a/B.kt"; expect "P7 the calls named only in a comment are green" 0 "$r"
+r="$(mk)"; printf 'class P { fun g(a: Activity) = a.requestPermissions(arrayOf("x"), 1) }\n' > "$r/$A/java/a/PermsPage.kt"; expect "P7 the same call inside an allowed Perms page file is green" 0 "$r"
+r="$(mk)"; mkdir -p "$r/$A/java/a/bg"; printf 'class C { val c = "cmd appops set com.other RUN_ANY allow" }\n' > "$r/$A/java/a/bg/C.kt"; expect "P7 the declared bgpolicy exception (acts on other apps) is green" 0 "$r"
+r="$(mk)"; mkdir -p "$r/$A/java/a/bg"; printf 'class C { val c = "pm grant com.x android.permission.CAMERA" }\n' > "$r/$A/java/a/bg/C.kt"; expect "P7 the exception covers only its declared tokens (pm grant there is red)" 1 "$r"
+r="$(mk)"; jset "$r/1_cicd/src/data/perms-guard.json" 'd["one_place"]["exceptions"][0]["why"]="x"'; expect "P7 an exception without a why is red" 1 "$r"
+r="$(mk)"; printf 'class B { fun g(a: Activity) = a.requestPermissions(arrayOf("x"), 1) }\n' > "$r/$A/java/a/B.kt"; jset "$r/1_cicd/src/data/perms-guard.json" 'd["one_place"]["baseline"]={"ac_cloud-a/app/src/main/java/a/B.kt":"not moved into a Perms row yet"}; d["one_place"]["baseline_max"]=1'; expect "P7 a baselined site is green" 0 "$r"
+r="$(mk)"; printf 'class B { fun g(a: Activity) = a.requestPermissions(arrayOf("x"), 1) }\n' > "$r/$A/java/a/B.kt"; jset "$r/1_cicd/src/data/perms-guard.json" 'd["one_place"]["baseline"]={"ac_cloud-a/app/":"a vendored fork that asks itself"}; d["one_place"]["baseline_max"]=1'; expect "P7 a baselined directory prefix is green" 0 "$r"
+r="$(mk)"; jset "$r/1_cicd/src/data/perms-guard.json" 'd["one_place"]["baseline"]={"ac_cloud-a/app/src/main/java/a/A.kt":"not moved into a Perms row yet"}; d["one_place"]["baseline_max"]=1'; expect "P7 a baseline entry that no longer violates must be dropped (red)" 1 "$r"
+r="$(mk)"; printf 'class B { fun g(a: Activity) = a.requestPermissions(arrayOf("x"), 1) }\n' > "$r/$A/java/a/B.kt"; jset "$r/1_cicd/src/data/perms-guard.json" 'd["one_place"]["baseline"]={"ac_cloud-a/app/src/main/java/a/B.kt":"not moved into a Perms row yet"}; d["one_place"]["baseline_max"]=0'; expect "P7 the baseline growing past its max is red" 1 "$r"
+r="$(mk)"; printf 'class B { fun g(a: Activity) = a.requestPermissions(arrayOf("x"), 1) }\n' > "$r/$A/java/a/B.kt"; jset "$r/1_cicd/src/data/perms-guard.json" 'd["one_place"]["baseline"]={"ac_cloud-a/app/src/main/java/a/B.kt":"x"}; d["one_place"]["baseline_max"]=1'; expect "P7 a baseline entry without a reason is red" 1 "$r"
+r="$(mk)"; jset "$r/1_cicd/src/data/perms-guard.json" 'd["one_place"]["min_files"]=50'; expect "P7 a guard that scans nothing (lost the fleet) is red" 1 "$r"
 rm -f "${OUT:?}"
 [ "$fails" -eq 0 ] && echo "perms-guard.test: all green" || { echo "perms-guard.test: $fails FAILED"; exit 1; }

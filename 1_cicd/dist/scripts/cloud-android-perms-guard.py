@@ -19,6 +19,11 @@ Exit 1 on any finding. Rules:
                           (the asset is what the Perms page, first run and the failure prompt read); an app with its own
                           declared Perms section (ui.general.perms) lists every manifest permission there too
   P6 first run            perms.first_run is "libs:perms" (PermsFirstRun) or "own:<File.kt>" naming a file that exists
+  P7 one place (#1515)    no app code outside libs:perms and the app's declared Perms page (policy one_place.allow) calls
+                          requestPermissions / RequestPermission(s), opens a special-access or App-info settings intent, or runs
+                          `pm grant` / `appops set`. one_place.exceptions are declared in data (bgpolicy acts on OTHER apps);
+                          one_place.baseline lists the sites not moved yet (path or dir/ prefix + reason), may only shrink
+                          (baseline_max), and an entry that no longer violates must be dropped
 """
 import glob
 import json
@@ -215,6 +220,51 @@ def scan(app_dir, policy, extra_skip):
     return found
 
 
+def one_place(policy, apps):
+    """P7: {file: [tokens]} of asker code outside the allowed Perms places, as findings."""
+    op = policy.get("one_place")
+    if not op:
+        return []
+    bad = []
+    tokens, allow = op["tokens"], op["allow"]
+    exc = [(e["path"], set(e["tokens"]), e.get("why", "")) for e in op.get("exceptions", [])]
+    base = {k: v for k, v in op.get("baseline", {}).items() if not k.startswith("_")}
+    hit_base = set()
+    for e in op.get("exceptions", []):
+        if len(e.get("why", "")) < 20:
+            bad.append("policy: one_place exception %s needs a why" % e["path"])
+    seen = 0
+    for name, (app_dir, bj, man) in sorted(apps.items()):
+        for f in code_files(app_dir, []):
+            rel = os.path.relpath(f, ROOT).replace(os.sep, "/")
+            if "/src/" not in rel or any(a in rel for a in allow):
+                continue
+            seen += 1
+            text = strip(read(f) or "")
+            toks = {t for t in tokens if t in text}
+            for path, etoks, _ in exc:
+                if rel.startswith(path):
+                    toks -= etoks
+            if not toks:
+                continue
+            key = next((k for k in base if rel == k or (k.endswith("/") and rel.startswith(k))), None)
+            if key:
+                hit_base.add(key)
+                continue
+            bad.append("P7 %s asks or grants a permission outside the Perms page (%s): move it into a Perms row, or the app's Perms page is not in one_place.allow" % (rel, ", ".join(sorted(toks))))
+    if seen < op.get("min_files", 200):
+        bad.append("P7 scanned only %d files: the guard lost the fleet" % seen)
+    for k, v in base.items():
+        if not isinstance(v, str) or len(v) < 12:
+            bad.append("policy: one_place.baseline[%s] needs a reason" % k)
+        if k not in hit_base:
+            bad.append("policy: one_place.baseline[%s] no longer violates: drop it (the list only shrinks)" % k)
+    cap = op.get("baseline_max")
+    if cap is not None and len(base) > cap:
+        bad.append("policy: one_place.baseline has %d entries, more than baseline_max %d (the list may only shrink)" % (len(base), cap))
+    return bad
+
+
 def asset_body(perms):
     out = {
         "_doc": "GENERATED from build.json::perms by 1_cicd/src/scripts/cloud-android-perms-guard.py --write. DO NOT EDIT. Read by libs:perms (AppPerms): the Perms page rows, Grant all, first run and PermsGate.",
@@ -355,6 +405,7 @@ def main():
             if not m or not glob.glob(os.path.join(app_dir, "**", m.group(1)), recursive=True):
                 gap("P6 perms.first_run %r is neither libs:perms nor own:<File.kt> naming an existing file" % fr)
 
+    bad += one_place(policy, apps)
     pend = {k: v for k, v in policy.get("pending_page", {}).items() if not k.startswith("_")}
     for k, v in pend.items():
         if k not in apps:
