@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Tester: Cloud > Apps: the Weby Services row (#1473, #1476) sits right after Me and before AGI and reads Search | News Events | Shopping Mobility & Travel Jobs & Business Real Estate | KG Store (Events, Mobility & Travel, Jobs & Business, Real Estate are coming_soon placeholders; '|' = declared separator tiles), News left Data Apps, and both
+# Tester: Cloud > Apps: the Weby Services row (#1473, #1476) sits right after Me and before AGI and reads Search | News Events | Shopping Mobility & Travel Jobs & Business Real Estate Money | KG Store (Events, Mobility & Travel, Jobs & Business, Real Estate, Money are coming_soon placeholders; '|' = declared separator tiles), News left Data Apps, and both
 # tiles resolve to a fleet app (ui.external_apps) and a constellation member. Static only.
 set -u
 APP="$(cd "$(dirname "$0")/.." && pwd)"; BJ="$APP/build.json"; FLEET="$APP/data/constellation-fleet.json"; PASS=0; FAIL=0
@@ -12,10 +12,10 @@ check() {
   local W="$G | select(.title == \"Weby Services\")"
   eq "group order Me, Weby Services, AGI" "$(jq -r "[$G | .title] | join(\",\")" "$bj" | grep -o 'Me,Weby Services,AGI')" "Me,Weby Services,AGI"
   eq "no group is still titled Services" "$(jq -r "[$G | select(.title == \"Services\")] | length" "$bj")" "0"
-  eq "Weby Services row reads Search | News Events | Shopping Mobility & Travel Jobs & Business Real Estate | KG Store (exact order, dividers declared)" "$(jq -r "$W | [.tiles[] | if .separator then \"|\" else .label end] | join(\" \")" "$bj")" "Search | News Events | Shopping Mobility & Travel Jobs & Business Real Estate | KG Store"
-  eq "dividers are separator tiles at positions 1, 4 and 9" "$(jq -r "$W | [.tiles | to_entries[] | select(.value.separator == true) | .key] | join(\",\")" "$bj")" "1,4,9"
+  eq "Weby Services row reads Search | News Events | Shopping Mobility & Travel Jobs & Business Real Estate Money | KG Store (exact order, dividers declared)" "$(jq -r "$W | [.tiles[] | if .separator then \"|\" else .label end] | join(\" \")" "$bj")" "Search | News Events | Shopping Mobility & Travel Jobs & Business Real Estate Money | KG Store"
+  eq "dividers are separator tiles at positions 1, 4 and 10" "$(jq -r "$W | [.tiles | to_entries[] | select(.value.separator == true) | .key] | join(\",\")" "$bj")" "1,4,10"
   eq "the real apps open search, news, shopping, kg-store in order" "$(jq -r "$W | [.tiles[] | select((.separator | not) and (.coming_soon | not)) | .target] | join(\" \")" "$bj")" "extapp:cloud-search extapp:cloud-news extapp:cloud-shopping extapp:cloud-kg-store"
-  eq "exactly Events, Mobility & Travel, Jobs & Business, Real Estate are coming_soon placeholders" "$(jq -r "$W | [.tiles[] | select(.coming_soon == true) | .label] | join(\",\")" "$bj")" "Events,Mobility & Travel,Jobs & Business,Real Estate"
+  eq "exactly Events, Mobility & Travel, Jobs & Business, Real Estate, Money are coming_soon placeholders" "$(jq -r "$W | [.tiles[] | select(.coming_soon == true) | .label] | join(\",\")" "$bj")" "Events,Mobility & Travel,Jobs & Business,Real Estate,Money"
   eq "placeholders have no target and no icon-less entry" "$(jq -r "$W | [.tiles[] | select(.coming_soon == true) | (.target // \"\") + (.icon // \"?\" | if . == \"?\" then \"?\" else \"\" end)] | join(\"\")" "$bj")" ""
   eq "no fleet app or external app was invented for the placeholders" "$(jq -r '[.ui.external_apps[] | select(.id | test("events|mobility|jobs"))] | length' "$bj")$(jq -r '[.apps[]? | select(.id | test("^(events|mobility|jobs)$"))] | length' "$FLEET")" "00"
   eq "Search and KG Store left AGI" "$(jq -r "$G | select(.title == \"AGI\") | [.tiles[] | select(.label == \"Search\" or .label == \"KG Store\")] | length" "$bj")" "0"

@@ -3040,7 +3040,7 @@
                 "target": "extapp:cloud-search"
               },
               {
-                "_doc": "Group divider (declared separator tile, drawn as a bare '|'): Weby Services reads Search | News Events | Shopping Mobility & Travel Jobs & Business Real Estate | KG Store (owner 2026-11-05, #1476; test-services-row.sh pins it).",
+                "_doc": "Group divider (declared separator tile, drawn as a bare '|'): Weby Services reads Search | News Events | Shopping Mobility & Travel Jobs & Business Real Estate Money | KG Store (owner 2026-11-05, #1476; test-services-row.sh pins it).",
                 "id": "weby-sep-1",
                 "label": "|",
                 "separator": true
@@ -3059,7 +3059,7 @@
                 "coming_soon": true
               },
               {
-                "_doc": "Group divider (declared separator tile, drawn as a bare '|'): Weby Services reads Search | News Events | Shopping Mobility & Travel Jobs & Business Real Estate | KG Store (owner 2026-11-05, #1476; test-services-row.sh pins it).",
+                "_doc": "Group divider (declared separator tile, drawn as a bare '|'): Weby Services reads Search | News Events | Shopping Mobility & Travel Jobs & Business Real Estate Money | KG Store (owner 2026-11-05, #1476; test-services-row.sh pins it).",
                 "id": "weby-sep-2",
                 "label": "|",
                 "separator": true
@@ -3092,7 +3092,14 @@
                 "coming_soon": true
               },
               {
-                "_doc": "Group divider (declared separator tile, drawn as a bare '|'): Weby Services reads Search | News Events | Shopping Mobility & Travel Jobs & Business Real Estate | KG Store (owner 2026-11-05, #1476; test-services-row.sh pins it).",
+                "_doc": "#1476 declared placeholder (coming_soon): Money is not an app yet. Drawn gray, no target, no tap, no fleet package or ui.external_apps entry; becomes a real extapp tile when the app exists.",
+                "id": "money",
+                "label": "Money",
+                "icon": "ic_wallet",
+                "coming_soon": true
+              },
+              {
+                "_doc": "Group divider (declared separator tile, drawn as a bare '|'): Weby Services reads Search | News Events | Shopping Mobility & Travel Jobs & Business Real Estate Money | KG Store (owner 2026-11-05, #1476; test-services-row.sh pins it).",
                 "id": "weby-sep-3",
                 "label": "|",
                 "separator": true
