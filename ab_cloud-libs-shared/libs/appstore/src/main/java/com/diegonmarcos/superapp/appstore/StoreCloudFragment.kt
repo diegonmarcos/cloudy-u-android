@@ -818,7 +818,7 @@ class StoreCloudFragment : KitComposeFragment() {
         if (group.isEmpty()) return
         SectionHeading("Build-time ${if (ml) "ML" else "shared"} libs — compiled in, nothing to install")
         StoreCaption("${group.size} libs, by category. Tap a lib for the apps that compile it in.")
-        LibsTable.Page(libConsumers, ml) { key, title, count, content -> GroupHeader(key, title, count, content) }
+        LibsTable.Page(libConsumers, ml, group = { key, title, count, content -> GroupHeader(key, title, count, content) })
     }
 
     /** A section or group separator: larger than a row title, with room above and below, so the
