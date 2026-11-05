@@ -107,7 +107,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 19,
+      "unit_test_sources": 20,
       "workflow": "ship-cloud-c3.yml"
     },
     "ac_cloud-c3-webserver": {
@@ -544,11 +544,11 @@
     },
     "ad_Capital-Stack-FinTerminal": {
       "first_test": "NEW APP (#1335, Lnktree family). Has 3 shell testers: test-lnktree-app.sh (the declaration, the FI | EQ | EX | NW | PM | MY-PM tabs with a dashboard entry each, the hidden Config section, the shared bottom nav / kit / icons, no typed address, the declared kinds against the renderer, Compose only; mutations proven red), test-finterm-sources.sh (the source catalog, every FinTerm entry mapped to a declared source, Cloud-Fincept first with the public fallback, keys only through SafeEncryptedPrefs and never logged, the container control mesh-only with confirmation for Stop and Restart, no hard-coded address; 24 mutations proven red) and test-fleet-setup.sh, plus a JVM suite run by the ship workflow (57 tests: catalog parsing, the FRED CSV parser on a fixture, the forward-rate derivation, DBnomics / World Bank / IMF / GDELT parsers, the engine on a fake network, source priority and fallback, the control states and confirmation, the key store). Not tested: the Compose screens and live sources (no Robolectric or emulator suite yet).",
-      "shell_testers": 4,
+      "shell_testers": 5,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 26,
+      "unit_test_sources": 27,
       "workflow": "ship-capital-stack-finterminal.yml"
     },
     "ad_Hardtech-CAD": {
