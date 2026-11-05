@@ -375,10 +375,6 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
         GitStorage.CloneAt.RawReadOnly -> { handoff = ctx.getString(R.string.git_storage_raw_read_only); true }
         is GitStorage.CloneAt.NeedsFolder -> { createFolder = at.proposed; true }
     }
-    val askRunCommand = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
-        // #639: state the fact, do not narrate a route through Settings.
-        handoff = ctx.getString(if (ok) R.string.git_terminal_granted else R.string.git_terminal_refused)
-    }
 
     /**
      * #642 CLONE IS THE TERMINAL'S JOB. The argv goes to cloud-terminal-nix, which has a real
@@ -398,7 +394,8 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
             is TerminalGit.Outcome.NotInstalled ->
                 ctx.getString(R.string.git_terminal_absent, outcome.pkg)
             is TerminalGit.Outcome.NeedsPermission -> {
-                askRunCommand.launch(outcome.permission)
+                // #1515 the grant is made in Configs > Perms (termux_run_command row), never asked from here.
+                com.diegonmarcos.superapp.perms.PermsLink.open(ctx, "git", listOf("termux_run_command"))
                 ctx.getString(R.string.git_terminal_asking)
             }
             is TerminalGit.Outcome.NoService ->
