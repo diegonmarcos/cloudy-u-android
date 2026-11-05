@@ -58,6 +58,7 @@ import com.diegonmarcos.clouddrive.home.HomeScreen
 import com.diegonmarcos.clouddrive.sync.GitSyncCoordinator
 import com.diegonmarcos.clouddrive.sync.RcloneCoordinator
 import com.diegonmarcos.clouddrive.sync.GitPageScreen
+import com.diegonmarcos.clouddrive.sync.ProjectsPage
 import com.diegonmarcos.clouddrive.sync.MountsPageScreen
 import com.diegonmarcos.clouddrive.storage.StorageCoordinator
 import com.diegonmarcos.clouddrive.sync.FsyncPageScreen
@@ -271,6 +272,7 @@ class MainActivity : ComponentActivity(), DriveActions {
             DriveShell(select = jumpTab, onSelected = { jumpTab = null }) { tabId, _ ->
                 when (tabId) {
                     "explorer" -> ExplorerScreen(jumpPage, onPageConsumed = { jumpPage = null }, local = { FilesScreen(files, this, hasAccess) }, cloud = { VolumesScreen(rclone, prefs, this, openPath) }, openDrive = { filesController?.reveal(it) })
+                    "projects" -> ProjectsPage()
                     "editor" -> EditorScreen(this, openPath)
                     "ai" -> AiScreen()
                     "home" -> HomeScreen(git, this, onOpenFiles = { jump(Declarations.SECTION_EXPLORER, Declarations.PAGE_LOCAL) }, onOpenVolumes = { jump(Declarations.SECTION_EXPLORER, Declarations.PAGE_CLOUD) }, onOpenSync = { jumpTab = Declarations.SECTION_GIT }, onRoute = jump, onSyncAll = syncAll, manage = { ManageScreen(this, prefs, onShowInExplorer = openPath) }, page = jumpPage, onPageConsumed = { jumpPage = null })

@@ -13,7 +13,8 @@ import java.io.File
  */
 object InventoryScript {
 
-    enum class Kind { TREE, BARE, GITFILE, DEBRIS }
+    /** #1491 a bare repository is a TREE with [Entry.bare] set, not a kind of its own: one list of repo folders. */
+    enum class Kind { TREE, GITFILE, DEBRIS }
 
     /** One folder the pass found. [path] is in HOST form once parsed (the script prints guest paths; [parse] translates). */
     data class Entry(
@@ -24,8 +25,12 @@ object InventoryScript {
         val upstream: String? = null,
         val headTimeMs: Long = 0,
         val shallow: Boolean = false,
+        /** #1491 a bare repository (no working tree): an attribute of the repo, never its own list. */
+        val bare: Boolean = false,
     ) {
         val name: String get() = path.trimEnd('/').substringAfterLast('/')
+        /** The repository's own name: a bare folder `x.git` is the repository `x`. */
+        val repoName: String get() = if (bare) name.removeSuffix(".git") else name
     }
 
     /** The script's output after [parse]: the entries and how many lines could not be read. */
@@ -53,7 +58,10 @@ object InventoryScript {
             "\"\$(git -C \"\$d\" symbolic-ref -q --short HEAD 2>/dev/null)\" \"\$(git -C \"\$d\" rev-parse -q --abbrev-ref '@{u}' 2>/dev/null)\" " +
             "\"\$(git -C \"\$d\" log -1 --format=%ct 2>/dev/null)\" \"\$([ -f \"\$g/shallow\" ] && echo 1 || echo 0)\"; " +
             "else printf 'gitfile\\t%s\\n' \"\$d\"; fi;; " +
-            "*.git) if [ -f \"\$g/HEAD\" ] && [ -d \"\$g/objects\" ]; then printf 'bare\\t%s\\t%s\\n' \"\$g\" \"\$(git --git-dir=\"\$g\" config remote.origin.url 2>/dev/null)\"; fi;; " +
+            "*.git) if [ -f \"\$g/HEAD\" ] && [ -d \"\$g/objects\" ]; then " +
+            "printf 'tree\\t%s\\t%s\\t%s\\t%s\\t%s\\t%s\\t1\\n' \"\$g\" \"\$(git --git-dir=\"\$g\" config remote.origin.url 2>/dev/null)\" " +
+            "\"\$(git --git-dir=\"\$g\" symbolic-ref -q --short HEAD 2>/dev/null)\" \"\$(git --git-dir=\"\$g\" rev-parse -q --abbrev-ref '@{u}' 2>/dev/null)\" " +
+            "\"\$(git --git-dir=\"\$g\" log -1 --format=%ct 2>/dev/null)\" \"\$([ -f \"\$g/shallow\" ] && echo 1 || echo 0)\"; fi;; " +
             "*) printf 'debris\\t%s\\n' \"\$g\";; " +
             "esac; done; true"
     }
@@ -66,14 +74,13 @@ object InventoryScript {
         for (raw in out.lineSequence()) {
             if (raw.isEmpty()) continue // a whitespace-only line is a malformed record, counted below
             val f = raw.split('\t')
-            val kind = when (f[0]) { "tree" -> Kind.TREE; "bare" -> Kind.BARE; "gitfile" -> Kind.GITFILE; "debris" -> Kind.DEBRIS; else -> null }
+            val kind = when (f[0]) { "tree", "bare" -> Kind.TREE; "gitfile" -> Kind.GITFILE; "debris" -> Kind.DEBRIS; else -> null }
             val path = f.getOrNull(1)?.trim().orEmpty()
             if (kind == null || path.isBlank()) { malformed++; continue }
             val h = host(path) ?: run { outside++; null } ?: continue
             entries += when (kind) {
                 Kind.TREE -> Entry(h, kind, f.getOrNull(2).orEmpty().trim(), f.getOrNull(3)?.trim()?.ifEmpty { null }, f.getOrNull(4)?.trim()?.ifEmpty { null },
-                    (f.getOrNull(5)?.trim()?.toLongOrNull() ?: 0L) * 1000L, f.getOrNull(6)?.trim() == "1")
-                Kind.BARE -> Entry(h, kind, f.getOrNull(2).orEmpty().trim())
+                    (f.getOrNull(5)?.trim()?.toLongOrNull() ?: 0L) * 1000L, f.getOrNull(6)?.trim() == "1", f.getOrNull(7)?.trim() == "1" || f[0] == "bare")
                 else -> Entry(h, kind)
             }
         }
@@ -97,8 +104,9 @@ object InventoryScript {
             if (depth > 0) {
                 val n = d.name
                 if (debrisRx.any { it.matches(n) }) { out.putIfAbsent(d.absolutePath, Entry(d.absolutePath, Kind.DEBRIS)); continue }
-                if (n.endsWith(".git") && File(d, "HEAD").isFile && File(d, "objects").isDirectory) {
-                    out.putIfAbsent(d.absolutePath, Entry(d.absolutePath, Kind.BARE, LocalRepos.originOf(d).ifBlank { bareOrigin(d) })); continue
+                // #1491 the ONE detection (git-repos RepoDetect): a bare repo folder is a repo like a working tree, with the bare attribute.
+                if (com.diegonmarcos.cloudlib.gitrepos.RepoDetect.isBare(d)) {
+                    out.putIfAbsent(d.absolutePath, Entry(d.absolutePath, Kind.TREE, LocalRepos.originOf(d).ifBlank { bareOrigin(d) }, null, null, 0L, File(d, "shallow").isFile, bare = true)); continue
                 }
             }
             val dot = File(d, ".git")
@@ -129,11 +137,12 @@ object InventoryScript {
     private fun globRegex(glob: String): Regex = Regex(glob.map { c -> when (c) { '*' -> ".*"; '?' -> "."; else -> Regex.escape(c.toString()) } }.joinToString(""))
 
     /** The entries as one prefs string (one line each, TAB-separated) and back: the last inventory survives a restart. */
-    fun encode(l: List<Entry>): String = l.joinToString("\n") { e -> listOf(e.kind.name, e.path, e.origin, e.branch.orEmpty(), e.upstream.orEmpty(), e.headTimeMs.toString(), if (e.shallow) "1" else "0").joinToString("\t") }
+    fun encode(l: List<Entry>): String = l.joinToString("\n") { e -> listOf(e.kind.name, e.path, e.origin, e.branch.orEmpty(), e.upstream.orEmpty(), e.headTimeMs.toString(), if (e.shallow) "1" else "0", if (e.bare) "1" else "0").joinToString("\t") }
     fun decode(s: String?): List<Entry> = s.orEmpty().lineSequence().filter { it.isNotBlank() }.mapNotNull { line ->
         val f = line.split('\t')
-        val kind = runCatching { Kind.valueOf(f[0]) }.getOrNull() ?: return@mapNotNull null
+        // an older save wrote BARE as a kind of its own: it reads back as a TREE with the bare attribute
+        val kind = runCatching { Kind.valueOf(if (f[0] == "BARE") "TREE" else f[0]) }.getOrNull() ?: return@mapNotNull null
         val path = f.getOrNull(1).orEmpty(); if (path.isBlank()) return@mapNotNull null
-        Entry(path, kind, f.getOrNull(2).orEmpty(), f.getOrNull(3)?.ifEmpty { null }, f.getOrNull(4)?.ifEmpty { null }, f.getOrNull(5)?.toLongOrNull() ?: 0L, f.getOrNull(6) == "1")
+        Entry(path, kind, f.getOrNull(2).orEmpty(), f.getOrNull(3)?.ifEmpty { null }, f.getOrNull(4)?.ifEmpty { null }, f.getOrNull(5)?.toLongOrNull() ?: 0L, f.getOrNull(6) == "1", f.getOrNull(7) == "1" || f[0] == "BARE")
     }.toList()
 }

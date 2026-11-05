@@ -28,7 +28,7 @@ class GitTopBarStateTest {
         assertEquals("logs", bar.groups[3].items.single().id)
         assertEquals(listOf("check_lite", "check_full"), bar.groups[0].items.map { it.id })
         assertEquals(listOf("check_light", "check_full"), bar.groups[0].items.map { it.kind })
-        assertEquals(listOf("clone_missing", "clone_bare_nohist"), bar.groups[2].items.map { it.id })
+        assertEquals(listOf("clone_all_full", "clone_all_depth3", "clone_all_bare_main", "clone_all_bare_blobless", "clone_all_bare_treeless"), bar.groups[2].items.map { it.id })
         // #1356 Sync is a dropdown: Sync All then Manual Sync
         assertEquals(listOf("Sync All", "Sync All", "Sync All", "Manual Sync", "Manual Sync", "Manual Sync", "Manual Sync", "Manual Sync"), bar.groups[1].items.map { it.section })
         assertEquals(listOf("sync_remote_wins", "sync_local_wins", "sync_no_winner", "stash", "pull_rebase", "stash_pop", "auto_commit", ""), bar.groups[1].items.map { it.op })
@@ -56,7 +56,7 @@ class GitTopBarStateTest {
     @Test fun `a scoped verb with nothing in scope is disabled and says so`() {
         assertEquals(labels("nothing_in_scope"), GitTopBarState.reason(bar.item("fetch_all")!!, null, 0, labels))
         assertEquals(labels("nothing_in_scope"), GitTopBarState.reason(bar.item("pull_all")!!, null, 0, labels))
-        assertNull(GitTopBarState.reason(bar.item("clone_missing")!!, null, 0, labels))
+        assertNull(GitTopBarState.reason(bar.item("clone_all_full")!!, null, 0, labels))
     }
 
     @Test fun `the summary follows the declared counters in order`() {

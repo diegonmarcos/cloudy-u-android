@@ -215,8 +215,7 @@
     <string name="sync_clone_into_store">Clone into store</string>
     <string name="sync_history_section">Activity Logs</string>
     <string name="sync_history_empty">No activity yet</string>
-    <string name="repo_bare_present">bare ✓ %1$s</string>
-    <string name="repo_bare_confirm">Mirror every repository as a bare clone under %1$s (full history). Existing mirrors are updated, working clones are not touched.</string>
+    <string name="repo_clone_mode_confirm">Clones every registry repository that has no repo folder on this device yet, in the mode %1$s (%2$s). A repository already cloned anywhere (any folder name, any old name, working tree or bare) is never cloned twice.</string>
     <string name="activity_copy_all">Copy all</string>
     <string name="activity_copy_filtered">Copy filtered</string>
     <string name="activity_share">Share</string>
@@ -714,8 +713,6 @@
     <string name="repo_act_commit_history">Commit history</string>
     <string name="repo_act_runs">CI/CD runs</string>
     <string name="repo_act_clean">Keep depth %1$d</string>
-    <string name="repo_act_clone_full">Clone full</string>
-    <string name="repo_act_clone_depth1">Clone depth 1</string>
     <string name="repo_act_clone_oauth">Via Web OAuth</string>
     <string name="repo_act_clone_ssh">Via SSH</string>
     <string name="repo_confirm_clean">Deletes the LOCAL history of %1$s, keeping the last %2$d commit(s) of each branch: fetch --depth, reflog expire, gc. Only this phone changes; the remote is never rewritten.</string>
@@ -762,7 +759,6 @@
     <string name="repo_depth_report">Depth report</string>
     <string name="repo_depth_confirm_keep">Shrinks every clean, fully pushed clone to depth %1$d in place: fetch --depth %1$d, reset to the remote default branch, reflog expire, gc. Clones with uncommitted or unpushed work are skipped and reported. The remote is never written and nothing is re-cloned.</string>
     <string name="repo_depth_confirm_keep_one">Shrinks %1$s to depth %2$d in place: fetch --depth %2$d, reset to the remote default branch, reflog expire, gc. Refused when it has uncommitted or unpushed work. The remote is never written.</string>
-    <string name="repo_depth_confirm_clone">Clones every registry repository that has no clone on this device yet, depth %1$d. A repository already cloned anywhere (any folder name, any old name) is never cloned twice.</string>
     <string name="repo_unlisted_title">Unlisted git folders</string>
     <string name="repo_unlisted_none">No unlisted git folder found yet (pull to refresh or check all to scan).</string>
     <string name="repo_unlisted_no_remote">no remote</string>

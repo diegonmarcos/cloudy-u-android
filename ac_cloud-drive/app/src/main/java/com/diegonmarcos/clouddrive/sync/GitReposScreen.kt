@@ -790,26 +790,18 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
     }
 
     /**
-     * #1254 a declared bulk depth command. clone_missing: every repository of the REGISTRY list (not pending, not retired) is a
+     * #1254 a declared bulk depth command. clone_mode (#1491, one declared clone mode): every repository of the REGISTRY list (not pending, not retired) is a
      * candidate, at its declared clone URL with the page's credential; the coordinator drops each one already cloned anywhere
      * on the device. keep_depth: every registered clone.
      */
     fun runDepthAll(a: Declarations.GitDepthActionDecl) {
         when (a.kind) {
-            Declarations.DEPTH_CLONE_MISSING -> coordinator.cloneMissing(a, Declarations.repoSot.repos.filter { !it.pending && !it.archived }.map { r ->
+            Declarations.DEPTH_CLONE_MODE -> coordinator.cloneMode(a, Declarations.repoSot.repos.filter { !it.pending && !it.archived }.map { r ->
                 val ssh = cloneSsh && login.sshKeyPath.isNotBlank()
                 GitSyncCoordinator.CloneTarget(r.github, page.cloneUrl(r.github, if (ssh) Declarations.REMOTE_SSH else Declarations.REMOTE_HTTPS),
                     if (ssh) GitSyncCoordinator.AUTH_SSH else GitSyncCoordinator.AUTH_HTTPS, login.identity, if (ssh) "" else login.token)
             })
             Declarations.DEPTH_KEEP -> coordinator.keepDepth(a)
-            // #1452 Clone Bare All (no hist): --bare --depth 1 through libs:git-core.
-            Declarations.DEPTH_CLONE_BARE_NOHIST -> coordinator.cloneBareNoHist(a, Declarations.repoSot.repos.filter { !it.pending && !it.archived }.map { r ->
-                GitSyncCoordinator.CloneTarget(r.github, page.cloneUrl(r.github, Declarations.REMOTE_HTTPS), GitSyncCoordinator.AUTH_HTTPS, login.identity, login.token)
-            })
-            // #1282 one bare mirror per registry repository (an existing mirror is updated, never doubled).
-            Declarations.DEPTH_CLONE_BARE -> coordinator.cloneBare(a, Declarations.repoSot.repos.filter { !it.pending && !it.archived }.map { r ->
-                GitSyncCoordinator.CloneTarget(r.github, page.cloneUrl(r.github, Declarations.REMOTE_HTTPS), GitSyncCoordinator.AUTH_HTTPS, login.identity, login.token)
-            })
         }
     }
 
@@ -1170,7 +1162,7 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
                     coordinator = coordinator, actions = actions,
                     repoName = e.name, owner = e.owner, remote = remoteStats[RepoRemoteStats.keyOf(e.owner, e.name)],
                     initialPanel = if (panelRepo == e.cloned.id) panel else "", onPanel = { id -> panelRepo = e.cloned.id; panel = id },
-                    cloneDepth = cloneDepth, cloneSsh = cloneSsh, onSettings = { settingsFor = e.cloned.id }, onClose = { expanded = "" },
+                    cloneSsh = cloneSsh, onSettings = { settingsFor = e.cloned.id }, onClose = { expanded = "" },
                     row = e.row, isPrivate = e.isPrivate, nextRunMinutes = nextRunMinutes,
                     repoint = { from, to -> prefs?.let { p -> LocalRepoRefs.repoint(ctx.applicationContext, p, from, to).let { r -> ctx.getString(R.string.parentless_refs, r.repos, r.jobs, r.bookmarks) } }.orEmpty() },
                 )
@@ -1208,7 +1200,7 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
         AlertDialog(
             onDismissRequest = { depthConfirm = null },
             title = { Text(a.label) },
-            text = { Text(if (a.kind == Declarations.DEPTH_CLONE_BARE || a.kind == Declarations.DEPTH_CLONE_BARE_NOHIST) stringResource(R.string.repo_bare_confirm, Declarations.sync.git.bareRoot) else stringResource(if (a.kind == Declarations.DEPTH_KEEP) R.string.repo_depth_confirm_keep else R.string.repo_depth_confirm_clone, a.depth)) },
+            text = { Text(Declarations.sync.git.cloneMode(a.mode)?.let { m -> stringResource(R.string.repo_clone_mode_confirm, m.label, "git " + m.args("<url>", "<dest>", "<default>".takeIf { m.singleBranch })) } ?: stringResource(R.string.repo_depth_confirm_keep, a.depth)) },
             confirmButton = { TextButton(onClick = { runDepthAll(a); depthConfirm = null }) { Text(a.label) } },
             dismissButton = { TextButton(onClick = { depthConfirm = null }) { Text(stringResource(R.string.chrome_cancel)) } },
         )
@@ -1547,7 +1539,6 @@ private fun GitRepoOpsBox(
     repoName: String,
     owner: String,
     remote: RepoRemoteStats.Stats?,
-    cloneDepth: Int,
     cloneSsh: Boolean,
     onSettings: () -> Unit,
     onClose: () -> Unit,
@@ -1635,8 +1626,6 @@ private fun GitRepoOpsBox(
             RepoActions.SYNC_NOW -> coordinator.syncNow(repo)
             RepoActions.SETTINGS -> onSettings()
             RepoActions.META_BRANCH, RepoActions.META_SYNC, RepoActions.RUNS -> panel = if (panel == id) "" else id
-            RepoActions.CLONE_FULL -> coordinator.setCloneDepth(0)
-            RepoActions.CLONE_DEPTH1 -> coordinator.setCloneDepth(1)
             RepoActions.CLONE_OAUTH -> coordinator.setCloneViaSsh(false)
             RepoActions.CLONE_SSH -> coordinator.setCloneViaSsh(true)
             RepoActions.LIST_DIRTY, RepoActions.LIST_CONFLICTS, RepoActions.SOLVE_CONFLICTS -> { panel = if (panel == id) "" else id; choices = emptyMap() }
@@ -1646,9 +1635,7 @@ private fun GitRepoOpsBox(
                     val target = GitSyncCoordinator.CloneTarget(repo.name, repo.remoteUrl, GitSyncCoordinator.AUTH_HTTPS, "", "")
                     when {
                         it.kind == Declarations.DEPTH_KEEP -> if (it.confirm) depthAsk = it else coordinator.keepDepth(it, repo)
-                        it.kind == Declarations.DEPTH_CLONE_BARE -> coordinator.cloneBare(it, listOf(target))
-                        it.kind == Declarations.DEPTH_CLONE_BARE_NOHIST -> coordinator.cloneBareNoHist(it, listOf(target))
-                        it.kind == Declarations.DEPTH_CLONE_MISSING -> coordinator.cloneMissing(it, listOf(target))
+                        it.kind == Declarations.DEPTH_CLONE_MODE -> coordinator.cloneMode(it, listOf(target))
                     }
                     return
                 }
@@ -1694,13 +1681,12 @@ private fun GitRepoOpsBox(
                     val blocked = readOnly && (op.id == GitSyncCoordinator.OP_PUSH || op.id == GitSyncCoordinator.OP_FORCE_PUSH)
                     blocked
                 },
-                active = { id -> id == panel || (id == RepoActions.CLONE_FULL && cloneDepth == 0) || (id == RepoActions.CLONE_DEPTH1 && cloneDepth == 1) || (id == RepoActions.CLONE_OAUTH && !cloneSsh) || (id == RepoActions.CLONE_SSH && cloneSsh) },
+                active = { id -> id == panel || (id == RepoActions.CLONE_OAUTH && !cloneSsh) || (id == RepoActions.CLONE_SSH && cloneSsh) },
                 onAction = { act(it) },
                 slot = { g -> if (g.id == RepoActions.G_AUTOSYNC) { AutoSyncControls(repo, page.repoMenu.autoSync, g, nextRunMinutes, coordinator); true } else false },
             )
         }
         // #1282 the "bare present" line under the menu: a mirror under the declared bare root already holds this repository.
-        BarePresent(coordinator, repo.name, repo.remoteUrl)
         if (readOnly) Text(stringResource(R.string.git_readonly_blocked), Modifier.padding(top = DriveMetrics.gap), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         result?.let { r ->
             Text(
@@ -1910,17 +1896,13 @@ private fun GitRepoNotClonedBox(
                 when (id) {
                     "web" -> openWeb(page.webUrl(repoName))
                     RepoActions.PRS, RepoActions.RUNS -> panel = if (panel == id) "" else id
-                    RepoActions.CLONE_FULL -> coordinator.setCloneDepth(0)
-                    RepoActions.CLONE_DEPTH1 -> coordinator.setCloneDepth(1)
                     RepoActions.CLONE_OAUTH -> coordinator.setCloneViaSsh(false)
                     RepoActions.CLONE_SSH -> coordinator.setCloneViaSsh(true)
-                    // #1254 Clone (depth 1) / Clone bare from the Clone group: the same one-clone rule as the bulk command.
+                    // #1491 a declared clone mode from the Clone group: the same one-clone rule as the bulk command.
                     else -> page.depthActions(Declarations.DEPTH_SCOPE_REPO).firstOrNull { it.id == id }?.let {
                         val target = GitSyncCoordinator.CloneTarget(repoName, url, GitSyncCoordinator.AUTH_HTTPS, "", "")
                         when {
-                            it.kind == Declarations.DEPTH_CLONE_MISSING -> coordinator.cloneMissing(it, listOf(target))
-                            it.kind == Declarations.DEPTH_CLONE_BARE -> coordinator.cloneBare(it, listOf(target))
-                            it.kind == Declarations.DEPTH_CLONE_BARE_NOHIST -> coordinator.cloneBareNoHist(it, listOf(target))
+                            it.kind == Declarations.DEPTH_CLONE_MODE -> coordinator.cloneMode(it, listOf(target))
                         }
                     }
                 }
@@ -1928,7 +1910,6 @@ private fun GitRepoNotClonedBox(
             // A clone that does not exist yet can be made from here; everything else that needs it is drawn disabled.
             unavailable = { id -> page.depthActions(Declarations.DEPTH_SCOPE_REPO).firstOrNull { it.id == id }?.let { it.kind == Declarations.DEPTH_KEEP || cloning } ?: RepoActions.needsClone(id) },
         )
-        BarePresent(coordinator, repoName, url)
         Text(stringResource(R.string.repo_not_cloned_why), Modifier.padding(top = DriveMetrics.gap), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         when (panel) {
             RepoActions.PRS -> Column(Modifier.padding(top = DriveMetrics.gapWide)) {
@@ -2069,14 +2050,6 @@ private fun RepoSettingsSheet(repo: ManagedRepo, coordinator: GitSyncCoordinator
             dismissButton = { TextButton(onClick = { confirmRemove = false }) { Text(stringResource(R.string.chrome_keep)) } },
         )
     }
-}
-
-/** #1282 the "bare ✓" indicator when a mirror already holds this repository (the Clone bare chip sits in the menu's Clone group). */
-@Composable
-private fun BarePresent(coordinator: GitSyncCoordinator, name: String, url: String) {
-    val mirrors by coordinator.bareMirrors.collectAsState()
-    val at = mirrors[BulkDepth.identity(url.ifBlank { name }) { Declarations.repoSot.canonical(it) }]
-    if (at != null) Text(stringResource(R.string.repo_bare_present, at), style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Monospace, color = MaterialTheme.colorScheme.onSurfaceVariant)
 }
 
 /**

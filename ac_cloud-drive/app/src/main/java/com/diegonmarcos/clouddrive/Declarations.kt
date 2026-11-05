@@ -75,7 +75,7 @@ object Declarations {
      * every registry repo with no clone anywhere on the device) or keep_depth (shrink a clean, fully pushed clone back to
      * [depth] in place); [scope] all = the bulk bar, repo = the row's detail; [workers] bounds the concurrency.
      */
-    data class GitDepthActionDecl(val id: String, val label: String, val icon: String, val kind: String, val scope: String, val depth: Int, val workers: Int, val confirm: Boolean)
+    data class GitDepthActionDecl(val id: String, val label: String, val icon: String, val kind: String, val scope: String, val depth: Int, val workers: Int, val confirm: Boolean, /** #1491 kind clone_mode: the id of the ui.sync.git.clone_modes entry it runs. */ val mode: String = "")
     /** #1288 one DECLARED per-folder command of the Parentless / Unlisted tables (ui.sync.git.folder_actions): [kind] rename_to_repo, archive or delete_local. */
     data class GitFolderActionDecl(val id: String, val label: String, val icon: String, val kind: String, val workers: Int, val confirm: Boolean) {
         /** The same runner as the depth commands: a folder command is a depth command of scope "folder". */
@@ -237,6 +237,8 @@ object Declarations {
         val autoPull: GitAutoPullDecl = GitAutoPullDecl(),
         /** #1254 the declared depth commands (bulk and per repo). */
         val depthActions: List<GitDepthActionDecl> = emptyList(),
+        /** #1491 the declared clone modes (ui.sync.git.clone_modes), in render order: the per-repo Clone and Clone All offer exactly these. */
+        val cloneModes: List<com.diegonmarcos.cloudlib.gitcore.CloneMode> = emptyList(),
         /** #1255 the Unlisted git folders scan. */
         val unlisted: GitUnlistedDecl = GitUnlistedDecl(),
         /** #1256 the filter row. */
@@ -267,6 +269,7 @@ object Declarations {
         fun folderAction(kind: String): GitFolderActionDecl? = folderActions.firstOrNull { it.kind == kind }
         fun depthActions(scope: String): List<GitDepthActionDecl> = depthActions.filter { it.scope == scope }
         fun depthAction(id: String): GitDepthActionDecl? = depthActions.firstOrNull { it.id == id }
+        fun cloneMode(id: String): com.diegonmarcos.cloudlib.gitcore.CloneMode? = cloneModes.firstOrNull { it.id == id }
         fun op(id: String): GitOpDecl? = ops.firstOrNull { it.id == id }
         fun remoteMode(id: String): GitRemoteModeDecl? = remoteModes.firstOrNull { it.id == id }
         /** The declared HTTPS clone URL of [name] under the declared owner — the default for every clone. */
@@ -558,6 +561,8 @@ object Declarations {
     /** #1484 Manage is a sub-page of Home (ui.sections[home].pages[manage]); its own Apps / Data pages are nested under it. */
     const val PAGE_MANAGE = "manage"
     const val SECTION_EDITOR = "editor"
+    /** #1491 Projects: a bottom-nav page right after Explorer (no sub-pages). */
+    const val SECTION_PROJECTS = "projects"
     fun managePages(): List<NavPage> = navPages(SECTION_HOME).firstOrNull { it.id == PAGE_MANAGE }?.pages.orEmpty()
     const val PAGE_APPS = "apps"
     const val PAGE_DATA = "data"
@@ -640,12 +645,16 @@ object Declarations {
                 val id = p.str("id"); if (id.isBlank()) null else GitOpDecl(id, p.str("label", id), p.str("icon"), p.bool("destructive"))
             },
             historyMax = (o.int("history_max") ?: 30).coerceAtLeast(1),
+            cloneModes = objects(o["clone_modes"]).mapNotNull { m ->
+                val id = m.str("id"); if (id.isBlank()) null
+                else com.diegonmarcos.cloudlib.gitcore.CloneMode(id, m.str("label", id), (m.int("depth") ?: 0).coerceIn(0, 1000), m.bool("bare"), m.bool("single_branch"), m.str("filter"))
+            },
+            // #1491 a clone_mode action names one of clone_modes; one naming no declared mode is dropped.
             depthActions = objects(o["depth_actions"]).mapNotNull { a ->
                 val id = a.str("id"); val kind = a.str("kind"); val scope = a.str("scope")
                 if (id.isBlank() || kind !in DEPTH_KINDS || scope !in DEPTH_SCOPES) null
-                // #1314 a bare mirror is depth 1 by default (no working tree, the latest commit per ref); a declared 0 still means full history.
-                else GitDepthActionDecl(id, a.str("label", id), a.str("icon"), kind, scope, if (kind == DEPTH_CLONE_BARE) (a.int("depth") ?: 1).coerceIn(0, 1000) else if (kind == DEPTH_CLONE_BARE_NOHIST) 1 else (a.int("depth") ?: 1).coerceIn(1, 1000), (a.int("workers") ?: 1).coerceIn(1, 4), a.bool("confirm"))
-            },
+                else GitDepthActionDecl(id, a.str("label", id), a.str("icon"), kind, scope, (a.int("depth") ?: 1).coerceIn(1, 1000), (a.int("workers") ?: 1).coerceIn(1, 4), a.bool("confirm"), a.str("mode"))
+            }.filter { it.kind != DEPTH_CLONE_MODE || objects(o["clone_modes"]).any { m -> m.str("id") == it.mode } },
             unlisted = (o["unlisted"] as? JsonObject)?.let { u ->
                 GitUnlistedDecl(u.str("label"), u.strings("roots"), (u.int("max_depth") ?: 2).coerceIn(0, 6), (u.int("max_dirs") ?: 2000).coerceIn(1, 100_000), (u.int("timeout_seconds") ?: 30).coerceIn(1, 600))
             } ?: GitUnlistedDecl(),
@@ -935,17 +944,13 @@ object Declarations {
     const val REMOTE_HTTPS = "https"
     const val REMOTE_SSH = "ssh"
     /** #1254 the depth command kinds and scopes GitReposScreen dispatches on (test-drive-git-depth.sh diffs both ways). */
-    const val DEPTH_CLONE_MISSING = "clone_missing"
     const val DEPTH_KEEP = "keep_depth"
     const val DEPTH_SCOPE_ALL = "all"
     const val DEPTH_SCOPE_REPO = "repo"
-    /** #1282 a bare mirror per repository under ui.sync.git.bare_root (BareClones). */
-    const val DEPTH_CLONE_BARE = "clone_bare"
+    /** #1491 one declared clone mode (ui.sync.git.clone_modes) on one scope: Full, Full Depth 3, Bare Main Only, Bare Blobless, Bare Treeless. */
+    const val DEPTH_CLONE_MODE = "clone_mode"
 
-    /** #1452 Clone Bare All (no hist): `--bare --depth 1` through libs:git-core (JGit setBare + setDepth), under the same bare root: the repository only, no working tree. */
-    const val DEPTH_CLONE_BARE_NOHIST = "clone_bare_nohist"
-
-    val DEPTH_KINDS = setOf(DEPTH_CLONE_MISSING, DEPTH_KEEP, DEPTH_CLONE_BARE, DEPTH_CLONE_BARE_NOHIST)
+    val DEPTH_KINDS = setOf(DEPTH_CLONE_MODE, DEPTH_KEEP)
     val DEPTH_SCOPES = setOf(DEPTH_SCOPE_ALL, DEPTH_SCOPE_REPO)
     /** #1288 the per-folder command kinds the Parentless / Unlisted tables dispatch on (test-drive-git-folder-actions.sh diffs both ways). */
     const val FOLDER_RENAME = "rename_to_repo"

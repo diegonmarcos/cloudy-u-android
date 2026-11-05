@@ -33,8 +33,6 @@ object RepoActions {
     const val CLEAN_10 = "clean_10"
     const val SYNC_NOW = "sync_now"
     const val SETTINGS = "settings"
-    const val CLONE_FULL = "clone_full"
-    const val CLONE_DEPTH1 = "clone_depth1"
     const val CLONE_SSH = "clone_ssh"
     const val CLONE_OAUTH = "clone_oauth"
 
@@ -61,7 +59,7 @@ object RepoActions {
     /** The ids every action handler of the page knows besides the declared ops and depth/folder actions. */
     val PAGE_IDS: Set<String> = setOf(
         SYNC_NO_WINNER, SYNC_REMOTE_WINS, SYNC_LOCAL_WINS, META_BRANCH, META_SYNC, OPEN_FOLDER, CHECKOUT_MAIN, BRANCHES, PRS, UNPUSHED,
-        RUNS, CLEAN_1, CLEAN_5, CLEAN_10, SYNC_NOW, SETTINGS, CLONE_FULL, CLONE_DEPTH1, CLONE_SSH, CLONE_OAUTH,
+        RUNS, CLEAN_1, CLEAN_5, CLEAN_10, SYNC_NOW, SETTINGS, CLONE_SSH, CLONE_OAUTH,
         LIST_DIRTY, LIST_CONFLICTS, SOLVE_CONFLICTS, AUTOSYNC_TOGGLE, AUTOSYNC_EVERY, STASH, PULL_REBASE, STASH_POP, AUTO_COMMIT,
     )
 
@@ -85,7 +83,7 @@ object RepoActions {
      * (remote reads), and set how a clone will be made. Every other action needs the local clone and is drawn disabled
      * with the reason ([needsClone]); Clone and Copy URL are the panel's own two buttons.
      */
-    val NO_CLONE_NEEDED: Set<String> = setOf("web", PRS, RUNS, CLONE_FULL, CLONE_DEPTH1, CLONE_OAUTH, CLONE_SSH)
+    val NO_CLONE_NEEDED: Set<String> = setOf("web", PRS, RUNS, CLONE_OAUTH, CLONE_SSH)
     fun needsClone(id: String): Boolean = id !in NO_CLONE_NEEDED
 }
 

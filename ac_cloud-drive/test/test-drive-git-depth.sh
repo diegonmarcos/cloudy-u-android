@@ -4,7 +4,7 @@
 # ║ filter row + Last commit + persisted sort, Activity Logs, and the bottom ║
 # ║ nav's constant slot. Gradle proves it compiles; this proves the shape.   ║
 # ╚══════════════════════════════════════════════════════════════════════════╝
-#   D1 depth commands are DATA: ui.sync.git.depth_actions declares clone_missing, keep_depth and clone_bare (#1282) in both scopes; the page
+#   D1 depth commands are DATA: ui.sync.git.clone_modes declares the five clone modes (#1491), depth_actions offers them (kind clone_mode) and keep_depth in both scopes; the page
 #      dispatches on Declarations.DEPTH_* kinds only, and every declared kind has a handler and every handler a kind.
 #   D2 ONE CLONE PER REPOSITORY: the clone path plans through BulkDepth.planClones over every existing clone (registry,
 #      store scan, unlisted scan) with the registry canonical (renamed_from), and re-checks the destination.
@@ -23,6 +23,7 @@ APP="$ROOT/ac_cloud-drive"
 BJ="$APP/build.json"
 SRC="$APP/app/src/main/java/com/diegonmarcos/clouddrive"
 COORD="$SRC/sync/GitSyncCoordinator.kt"
+LIBS="$ROOT/ab_cloud-libs-shared/libs"
 PAGE="$SRC/sync/GitReposScreen.kt"
 WIRE="$SRC/sync/TermuxGitWire.kt"
 FILT="$SRC/sync/RepoFilters.kt"
@@ -41,13 +42,17 @@ page = open(sys.argv[2]).read()
 decl = open(sys.argv[3]).read()
 acts = g.get("depth_actions") or []
 kinds = {(a["kind"], a["scope"]) for a in acts}
-need = {(k, s) for k in ("clone_missing", "keep_depth", "clone_bare") for s in ("all", "repo")}
 bad = 0
+# #1491 the five declared clone modes, in the owner's order, with the git command each stands for; both scopes offer exactly these.
+want = [("full", 0, False, False, ""), ("depth3", 3, False, False, ""), ("bare_main", 0, True, True, ""), ("bare_blobless", 0, True, False, "blob:none"), ("bare_treeless", 0, True, False, "tree:0")]
+got = [(m["id"], m.get("depth", 0), bool(m.get("bare")), bool(m.get("single_branch")), m.get("filter", "")) for m in g.get("clone_modes") or []]
+if got != want: print("    clone_modes is %s, not the five declared modes %s" % (got, want)); bad = 1
+for s in ("all", "repo"):
+    if [a.get("mode") for a in acts if a["kind"] == "clone_mode" and a["scope"] == s] != [w[0] for w in want]: print("    depth_actions scope %s does not offer exactly the five clone modes" % s); bad = 1
+need = {("keep_depth", "all"), ("keep_depth", "repo")}
 if not need <= kinds: print("    depth_actions lacks", sorted(need - kinds)); bad = 1
-if any(a.get("depth") != 1 for a in acts if a["kind"] != "clone_bare"): print("    every declared shallow depth command is depth 1"); bad = 1
-if any(a.get("depth") != 1 for a in acts if a["kind"] == "clone_bare"): print("    clone_bare must declare depth 1 (#1314: no working tree, latest commit per ref)"); bad = 1
-doc = g.get("_doc_bare", "")
-if "full-history backup" in doc or "depth 1" not in doc: print("    _doc_bare must say bare mirrors are depth 1, not the full-history backup form"); bad = 1
+if any(a["kind"] in ("clone_missing", "clone_bare", "clone_bare_nohist") for a in acts): print("    an old clone kind is still declared (#1491 replaced them)"); bad = 1
+if any(a.get("depth") != 1 for a in acts if a["kind"] == "keep_depth"): print("    every declared keep_depth command is depth 1"); bad = 1
 # #1282 declared kinds <-> Declarations constants <-> page handlers, both ways.
 consts = dict((v, k) for k, v in re.findall(r'const val (DEPTH_[A-Z_]+) = "([a-z_]+)"', decl) if not k.startswith("DEPTH_SCOPE"))
 known = set(re.search(r"val DEPTH_KINDS = setOf\(([^)]*)\)", decl).group(1).replace(" ", "").split(","))
@@ -60,7 +65,7 @@ for k in declared:
 for c in known:
     kind = next((k for k, v in consts.items() if v == c), None)
     if kind not in declared: print("    handled kind is not declared:", c); bad = 1
-if re.search(r'"(clone_all_depth1|keep_depth1_all|clone_repo_depth1|keep_repo_depth1|clone_all_bare|clone_repo_bare)"', page): print("    a declared id is typed into the page"); bad = 1
+if re.search(r'"(clone_(all|repo)_(full|depth3|bare_main|bare_blobless|bare_treeless)|keep_depth1_all|keep_repo_depth1)"', page): print("    a declared id is typed into the page"); bad = 1
 sys.exit(bad)
 PY
 }
@@ -80,25 +85,12 @@ if re.search(r"\bclone\b|\bpush\b", b): print("    keep_depth clones or pushes")
 PY
     grep -qF 'BulkDepth.keepSkip(' "$2" || { echo "    the coordinator does not gate with keepSkip"; return 1; }
 }
-# #1314 B1: a bare mirror is depth 1 and its UPDATE keeps it so: depth fetch (not remote update), shrink of a full mirror.
-b1() { # $1 BareClones.kt  $2 StoreGit.kt  $3 coordinator
-    python3 - "$1" "$2" "$3" <<'PYB'
-import re, sys
-bare, store, coord = (open(f).read() for f in sys.argv[1:4])
-bad = 0
-m = re.search(r"fun updateArgs\(.*?\n\n", bare, re.S)
-if not m or "fetch --prune --depth $depth origin" not in m.group(0): print("    updateArgs has no `fetch --prune --depth N origin`"); bad = 1
-m = re.search(r"fun updateScript\(.*?\n    }\n", bare, re.S)
-body = m.group(0) if m else ""
-order = ["fetch --prune --depth", "reflog expire --expire=now --all", "gc --prune=now"]
-pos = [body.find(t) for t in order]
-if -1 in pos or pos != sorted(pos): print("    updateScript is not depth fetch -> reflog expire -> gc:", pos); bad = 1
-if '[ ! -f \\"\\$d/shallow\\" ]' not in body: print("    updateScript does not test the mirror's shallow file"); bad = 1
-if "bareUpdate(ctx, at, t.token, action.depth)" not in coord: print("    the coordinator does not pass the declared depth to the update"); bad = 1
-if "BareClones.updateScript(guestDir, depth" not in store: print("    StoreGit.bareUpdate does not run updateScript"); bad = 1
-if "freed" not in store: print("    the freed bytes are not reported"); bad = 1
-sys.exit(bad)
-PYB
+# #1491 C1: the clone modes run in the engine the lib has: JGit for every mode without a filter, the git binary (cld.termux) for a partial-clone filter.
+c1() { # $1 JGitEngine.kt  $2 StoreGit.kt  $3 coordinator
+    grep -qF 'require(filter.isBlank())' "$1" || { echo "    JGit does not refuse a partial-clone filter"; return 1; }
+    grep -qF 'setBranchesToClone' "$1" || { echo "    JGit has no single-branch clone"; return 1; }
+    grep -qF 'fun cloneModeScript(' "$2" && grep -qF 'ls-remote --symref' "$2" || { echo "    StoreGit has no clone-mode script with the default-branch read"; return 1; }
+    grep -qF 'mode?.needsGitBinary == true' "$3" || { echo "    the coordinator does not route a filter mode to the git binary"; return 1; }
 }
 # #1315 the bound, the cancel and the never-cancelled finaliser are the ONE executor's (sync/jobs/GitJobs); the coordinator declares the workers and re-reads after.
 d4() { for t in 'workers = action.workers' 'fun cancelDepthRun()' 'jobs.cancel(' 'refresh(force = true).join()'; do grep -qF "$t" "$1" || { echo "    coordinator lacks $t"; return 1; }; done; J="$(dirname "$1")/jobs/GitJobs.kt"; for t in 'Semaphore(spec.workers' 'withContext(NonCancellable)'; do grep -qF "$t" "$J" || { echo "    GitJobs lacks $t"; return 1; }; done; }
@@ -145,7 +137,7 @@ n1() { for t in 'heightIn(min = slot)' 'LocalNavBottomClearance provides slot' '
 echo "── D1 declared ──";   d1 "$BJ" "$PAGE" && pass "depth commands declared in both scopes, dispatched by kind" || fail "depth commands not data"
 echo "── D2 one clone ──";  d2 "$COORD" && pass "clones plan over every existing clone with renames folded in" || fail "one-clone rule missing"
 echo "── D3 in place ──";   d3 "$WIRE" "$COORD" && pass "keep_depth gates, shallow-fetches, resets, expires, gcs; never clones or pushes" || fail "keep_depth unsafe"
-echo "── B1 bare depth 1 ──"; b1 "$SRC/sync/BareClones.kt" "$SRC/sync/StoreGit.kt" "$COORD" && pass "bare mirrors depth 1: depth fetch update, full mirror shrunk, freed bytes reported" || fail "bare depth 1"
+echo "── C1 clone engines ──"; c1 "$LIBS/git-core/src/main/java/com/diegonmarcos/cloudlib/gitcore/JGitEngine.kt" "$SRC/sync/StoreGit.kt" "$COORD" && pass "JGit for the plain modes, the git binary in cld.termux for a filter" || fail "clone engines"
 echo "── D4 bounded ──";    d4 "$COORD" && pass "bounded workers, cancel, cache refreshed after" || fail "depth runs unbounded"
 echo "── U1 unlisted ──";   u1 "$COORD" "$PAGE" && pass "declared roots, one reader, scanned on refresh / check-all" || fail "unlisted wiring"
 echo "── F1 filters ──";    f1 "$FILT" "$PAGE" && pass "filters declared == handled, sort and filters persisted" || fail "filters / sort"
@@ -176,10 +168,9 @@ for t in sync/BulkDepthTest.kt sync/UnlistedReposTest.kt sync/RepoFiltersTest.kt
 echo "── M mutation-proof ──"
 TMP="$(mktemp -d)"; trap 'rm -rf "${TMP:?}"' EXIT
 sed 's/status --porcelain/status/' "$WIRE" > "$TMP/w.kt"; d3 "$TMP/w.kt" "$COORD" >/dev/null && fail "D3 passed an ungated wire (vacuous)" || pass "gate removed → D3 RED"
-sed 's/fetch --prune --depth \$depth origin/remote update --prune/' "$SRC/sync/BareClones.kt" > "$TMP/bc.kt"; b1 "$TMP/bc.kt" "$SRC/sync/StoreGit.kt" "$COORD" >/dev/null && fail "B1 passed a remote-update mirror (vacuous)" || pass "remote update instead of depth fetch → B1 RED"
-sed 's/gc --prune=now; fi; /true; fi; /' "$SRC/sync/BareClones.kt" > "$TMP/bc2.kt"; b1 "$TMP/bc2.kt" "$SRC/sync/StoreGit.kt" "$COORD" >/dev/null && fail "B1 passed a mirror that never gcs (vacuous)" || pass "no gc → B1 RED"
-python3 -c 'import json,sys; b=json.load(open(sys.argv[1])); [a.update(depth=0) for a in b["ui"]["sync"]["git"]["depth_actions"] if a["kind"]=="clone_bare"]; json.dump(b,open(sys.argv[2],"w"))' "$BJ" "$TMP/b0.json"
-BJ0="$BJ"; BJ="$TMP/b0.json"; d1 "$BJ" "$PAGE" >/dev/null && fail "D1 passed bare depth 0 (vacuous)" || pass "bare depth 0 → D1 RED"; BJ="$BJ0"
+sed 's/require(filter.isBlank())/true/' "$LIBS/git-core/src/main/java/com/diegonmarcos/cloudlib/gitcore/JGitEngine.kt" > "$TMP/je.kt"; c1 "$TMP/je.kt" "$SRC/sync/StoreGit.kt" "$COORD" >/dev/null && fail "C1 passed a JGit that clones a filter mode silently (vacuous)" || pass "JGit ignores the filter → C1 RED"
+python3 -c 'import json,sys; b=json.load(open(sys.argv[1])); b["ui"]["sync"]["git"]["clone_modes"][3]["filter"]=""; json.dump(b,open(sys.argv[2],"w"))' "$BJ" "$TMP/b0.json"
+BJ0="$BJ"; BJ="$TMP/b0.json"; d1 "$BJ" "$PAGE" >/dev/null && fail "D1 passed a Bare Blobless without its filter (vacuous)" || pass "Bare Blobless without filter → D1 RED"; BJ="$BJ0"
 sed 's/BulkDepth.planClones(/listOf(/' "$COORD" > "$TMP/c.kt"; d2 "$TMP/c.kt" >/dev/null && fail "D2 passed without the plan (vacuous)" || pass "one-clone plan removed → D2 RED"
 python3 -c 'import json,sys; b=json.load(open(sys.argv[1])); b["ui"]["sync"]["git"]["filters"].append({"id":"bogus","options":[{"id":"all"},{"id":"meaningless","label":"?"}]}); json.dump(b,open(sys.argv[2],"w"))' "$BJ" "$TMP/b.json"
 BJ0="$BJ"; BJ="$TMP/b.json"; f1 "$FILT" "$PAGE" >/dev/null && fail "F1 passed an unhandled filter (vacuous)" || pass "undeclared filter meaning → F1 RED"; BJ="$BJ0"

@@ -100,8 +100,6 @@ internal fun actionLabel(id: String, declared: Declarations.GitOpDecl?): String 
     RepoActions.CLEAN_1, RepoActions.CLEAN_5, RepoActions.CLEAN_10 -> stringResource(R.string.repo_act_clean, RepoActions.cleanDepth(id))
     RepoActions.SYNC_NOW -> stringResource(R.string.sync_now)
     RepoActions.SETTINGS -> stringResource(R.string.sync_settings)
-    RepoActions.CLONE_FULL -> stringResource(R.string.repo_act_clone_full)
-    RepoActions.CLONE_DEPTH1 -> stringResource(R.string.repo_act_clone_depth1)
     RepoActions.CLONE_OAUTH -> stringResource(R.string.repo_act_clone_oauth)
     RepoActions.CLONE_SSH -> stringResource(R.string.repo_act_clone_ssh)
     else -> declared?.label ?: id

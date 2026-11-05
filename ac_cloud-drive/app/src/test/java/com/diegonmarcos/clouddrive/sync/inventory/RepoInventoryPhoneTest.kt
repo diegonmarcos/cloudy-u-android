@@ -46,7 +46,7 @@ class RepoInventoryPhoneTest {
         Entry("$git/cloudy-a-docs.incoming", Kind.DEBRIS),
         tree("notes", ""),
         tree("someone-else", "https://github.com/other/thing.git"),
-        Entry("$git/_bare/diegonmarcos/cloudy-u-android.git", Kind.BARE, "https://github.com/diegonmarcos/cloudy-u-android.git"),
+        Entry("$git/_bare/diegonmarcos/cloudy-u-android.git", Kind.TREE, "https://github.com/diegonmarcos/cloudy-u-android.git", bare = true),
         Entry("$git/wt", Kind.GITFILE),
     )
     private val managed = setOf("$git/cloudy-u-linux", "$git/_git-repos-master", "$git/cloudy-u-android")
@@ -93,13 +93,14 @@ class RepoInventoryPhoneTest {
         assertEquals(r, inv.cloneOf("cloudy-u-android"))
     }
 
-    @Test fun `debris, unlisted, bare and a git file are what they are`() {
+    @Test fun `debris, unlisted and a git file are what they are, and a bare repo is a repo folder of the one list`() {
         assertEquals(RepoClass.DEBRIS, row("cloudy-a-docs.incoming").cls)
         assertEquals(RepoClass.UNLISTED, row("notes").cls)
         assertEquals(RepoClass.UNLISTED, row("someone-else").cls)
         assertEquals("thing", row("someone-else").identity)
         val bare = row("cloudy-u-android.git")
-        assertEquals(RepoClass.BARE, bare.cls)
+        // #1491 no bare class: the bare copy of a repository another folder holds is a DUPLICATE row of the same list, its bare state an attribute
+        assertEquals(RepoClass.DUPLICATE, bare.cls); assertTrue(bare.bare)
         assertEquals("cloudy-u-android", bare.identity)
         assertNull("a .git file is not a row of its own", inv.rows.firstOrNull { it.name == "wt" })
     }
@@ -111,7 +112,7 @@ class RepoInventoryPhoneTest {
 
     @Test fun `the main table has one row per registry repository and the counts add up`() {
         assertEquals(setOf("cloudy-u-linux", "cloudy_db_LFS", "Projects-___", "cloud-me_data-pub", "My-ai-memory", "_git-repos-master", "cloudy-u-android", "never-cloned"), inv.main.map { it.name }.toSet())
-        assertEquals(mapOf(RepoClass.STALE_ORIGIN to 4, RepoClass.MISNAMED to 1, RepoClass.REGISTERED to 2, RepoClass.DUPLICATE to 2, RepoClass.DEBRIS to 1, RepoClass.UNLISTED to 2, RepoClass.BARE to 1, RepoClass.NOT_CLONED to 1), inv.counts)
+        assertEquals(mapOf(RepoClass.STALE_ORIGIN to 4, RepoClass.MISNAMED to 1, RepoClass.REGISTERED to 2, RepoClass.DUPLICATE to 3, RepoClass.DEBRIS to 1, RepoClass.UNLISTED to 2, RepoClass.NOT_CLONED to 1), inv.counts)
     }
 
     @Test fun `without the primary being managed the folder carrying the registry name wins, else the newest`() {

@@ -157,11 +157,19 @@ class RepoTableTest {
         assertEquals(listOf("c", "b", "a"), names(rows, RepoColumn.STATUS, true))
     }
 
-    @Test fun `#1452 Clone Bare All (no hist) is declared in the Clone dropdown, depth 1, both scopes, next to Clone Depth 1 All`() {
-        val all = com.diegonmarcos.clouddrive.Declarations.sync.git.depthActions(com.diegonmarcos.clouddrive.Declarations.DEPTH_SCOPE_ALL).filter { it.kind == com.diegonmarcos.clouddrive.Declarations.DEPTH_CLONE_BARE_NOHIST }
-        assertEquals(1, all.size); assertEquals(1, all[0].depth); assertEquals("Clone Bare All (no hist)", all[0].label)
-        assertEquals(1, com.diegonmarcos.clouddrive.Declarations.sync.git.depthActions(com.diegonmarcos.clouddrive.Declarations.DEPTH_SCOPE_REPO).count { it.kind == com.diegonmarcos.clouddrive.Declarations.DEPTH_CLONE_BARE_NOHIST })
-        val clone = com.diegonmarcos.clouddrive.Declarations.sync.git.topBar.groups.first { it.id == "clone" }.items.map { it.label }
-        assertEquals(listOf("Clone Depth 1 All", "Clone Bare All (no hist)"), clone)
+    @Test fun `#1491 Clone All and the per-repo Clone offer exactly the five declared modes, in the table's order`() {
+        val git = com.diegonmarcos.clouddrive.Declarations.sync.git
+        val ids = listOf("full", "depth3", "bare_main", "bare_blobless", "bare_treeless")
+        assertEquals(listOf("Full", "Full Depth 3", "Bare Main Only", "Bare Blobless", "Bare Treeless"), git.cloneModes.map { it.label })
+        assertEquals(ids, git.cloneModes.map { it.id })
+        for (scope in listOf(com.diegonmarcos.clouddrive.Declarations.DEPTH_SCOPE_ALL, com.diegonmarcos.clouddrive.Declarations.DEPTH_SCOPE_REPO)) {
+            assertEquals(ids, git.depthActions(scope).filter { it.kind == com.diegonmarcos.clouddrive.Declarations.DEPTH_CLONE_MODE }.map { it.mode })
+        }
+        assertEquals(ids.map { "clone_all_$it" }, git.topBar.groups.first { it.id == "clone" }.items.map { it.id })
+        // the git commands of the table
+        fun cmd(id: String) = "git " + git.cloneMode(id)!!.args("U", "D", "<default>".takeIf { git.cloneMode(id)!!.singleBranch })
+        assertEquals("git clone U D", cmd("full")); assertEquals("git clone --depth 3 U D", cmd("depth3"))
+        assertEquals("git clone --bare --single-branch --branch <default> U D", cmd("bare_main"))
+        assertEquals("git clone --bare --filter=blob:none U D", cmd("bare_blobless")); assertEquals("git clone --bare --filter=tree:0 U D", cmd("bare_treeless"))
     }
 }

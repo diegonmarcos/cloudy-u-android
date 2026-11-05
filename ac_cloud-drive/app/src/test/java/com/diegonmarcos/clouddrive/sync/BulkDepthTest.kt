@@ -92,7 +92,7 @@ class BulkDepthTest {
         val one = page.depthActions(Declarations.DEPTH_SCOPE_REPO)
         assertEquals(Declarations.DEPTH_KINDS, all.map { it.kind }.toSet())
         assertEquals(Declarations.DEPTH_KINDS, one.map { it.kind }.toSet())
-        assertNotNull(page.depthAction("clone_all_depth1")); assertNotNull(page.depthAction("keep_depth1_all"))
+        assertNotNull(page.depthAction("clone_all_full")); assertNotNull(page.depthAction("keep_depth1_all"))
         assertTrue(page.depthActions.all { it.depth == 1 && it.workers in 1..4 })
         assertTrue("shrinking every clone asks first", all.first { it.kind == Declarations.DEPTH_KEEP }.confirm)
         assertTrue("no declared id collides with a RepoActions id", page.depthActions.none { a -> a.id in RepoActions.PAGE_IDS })

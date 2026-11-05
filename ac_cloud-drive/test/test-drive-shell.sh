@@ -276,8 +276,8 @@ import json, sys
 ui = json.load(open(sys.argv[1]))["ui"]
 bad = 0
 tabs = ui["bottom_nav"]
-if tabs != ["explorer", "editor", "home", "git", "fsync", "mounts"]:
-    print("    ui.bottom_nav is %s, not the owner's order explorer/editor/home/git/fsync/mounts (#1484)" % tabs); bad = 1
+if tabs != ["explorer", "projects", "editor", "home", "git", "fsync", "mounts"]:
+    print("    ui.bottom_nav is %s, not the owner's order explorer/projects/editor/home/git/fsync/mounts (#1491)" % tabs); bad = 1
 if any(s["id"] in ("manage", "agents") for s in ui["sections"]):
     print("    a `manage` or `agents` section is declared again: they are sub-pages of Home and Fsync (#1484)"); bad = 1
 if ui.get("top_bar", {}).get("drawer") is not True or ui["top_bar"].get("inline_actions") is not True:
@@ -296,7 +296,7 @@ sync_sec = next(s for s in ui["sections"] if s["id"] == "git").get("pages", [])
 sync_pages = [p["id"] for p in sync_sec]
 if sync_pages != ["me", "cloud"]:
     print("    ui.sections[git].pages is %s, not me/cloud (#1149)" % sync_pages); bad = 1
-for sid, want in (("fsync", ["folders", "agents", "projects"]), ("mounts", ["rclone", "fuse"]), ("home", ["home_apps", "manage"]), ("editor", [])):
+for sid, want in (("fsync", ["folders", "agents"]), ("mounts", ["rclone", "fuse"]), ("home", ["home_apps", "manage"]), ("editor", []), ("projects", [])):
     got = [p["id"] for p in next(s for s in ui["sections"] if s["id"] == sid).get("pages", [])]
     if got != want:
         print("    ui.sections[%s].pages is %s, not %s (#1173)" % (sid, got, "/".join(want))); bad = 1
@@ -396,8 +396,8 @@ if page is None:
 if page.get("label") != "Fsync":
     print("    the fsync section is labelled %r, not 'Fsync' (#1173)" % page.get("label")); bad = 1
 sub = [(p.get("id"), p.get("label"), p.get("icon")) for p in page.get("pages", [])]
-if [p[0] for p in sub] != ["folders", "agents", "projects"]:
-    print("    fsync declares sub-pages %s, not folders/agents/projects (#1484)" % sub); bad = 1
+if [p[0] for p in sub] != ["folders", "agents"]:
+    print("    fsync declares sub-pages %s, not folders/agents (#1491)" % sub); bad = 1
 tile = next((a for a in apps if a.get("label") == "Fsync"), None)
 if tile is None:
     print("    no Fsync tile in the Apps grid"); sys.exit(1)

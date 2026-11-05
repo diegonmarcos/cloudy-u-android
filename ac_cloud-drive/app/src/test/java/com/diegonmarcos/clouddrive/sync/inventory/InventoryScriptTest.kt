@@ -22,7 +22,8 @@ class InventoryScriptTest {
             "bare\t/root/s/git/_bare/o/b.git\thttps://x/o/b.git\n" +
             "debris\t/root/s/git/c.incoming\n" +
             "gitfile\t/root/s/git/wt\n" +
-            "tree\t/root/s/git/noorigin\t\t\t\t\t0\n"
+            "tree\t/root/s/git/noorigin\t\t\t\t\t0\n" +
+            "tree\t/root/s/git/d.git\thttps://x/o/d.git\tmain\t\t5\t0\t1\n"
         val p = InventoryScript.parse(out, host)
         assertEquals(0, p.malformed)
         val a = p.entries.first { it.name == "a" }
@@ -31,7 +32,7 @@ class InventoryScriptTest {
         assertEquals("https://x/o/a.git", a.origin); assertEquals("main", a.branch); assertEquals("origin/main", a.upstream)
         assertEquals(1700000000_000L, a.headTimeMs); assertTrue(a.shallow)
         val b = p.entries.first { it.name == "b.git" }
-        assertEquals(InventoryScript.Kind.BARE, b.kind); assertEquals("https://x/o/b.git", b.origin)
+        assertEquals("#1491 a bare repo is a TREE with the bare attribute", InventoryScript.Kind.TREE, b.kind); assertTrue(b.bare); assertFalse(a.bare); assertEquals("b", b.repoName); assertEquals("https://x/o/b.git", b.origin)
         assertEquals(InventoryScript.Kind.DEBRIS, p.entries.first { it.name == "c.incoming" }.kind)
         assertEquals(InventoryScript.Kind.GITFILE, p.entries.first { it.name == "wt" }.kind)
         val n = p.entries.first { it.name == "noorigin" }
@@ -81,7 +82,7 @@ class InventoryScriptTest {
             assertEquals(InventoryScript.Kind.TREE, byName.getValue("a").kind)
             assertEquals("https://x/o/a.git", byName.getValue("a").origin); assertEquals("main", byName.getValue("a").branch); assertEquals("origin/main", byName.getValue("a").upstream); assertTrue(byName.getValue("a").shallow)
             assertEquals(InventoryScript.Kind.TREE, byName.getValue("b").kind)
-            assertEquals(InventoryScript.Kind.BARE, byName.getValue("m.git").kind); assertEquals("https://x/o/m.git", byName.getValue("m.git").origin)
+            assertEquals(InventoryScript.Kind.TREE, byName.getValue("m.git").kind); assertTrue(byName.getValue("m.git").bare); assertEquals("https://x/o/m.git", byName.getValue("m.git").origin)
             assertEquals(InventoryScript.Kind.DEBRIS, byName.getValue("c.incoming").kind)
             assertEquals(InventoryScript.Kind.GITFILE, byName.getValue("wt").kind)
             assertNull(".hidden is never entered", byName[".hidden"])
@@ -104,7 +105,7 @@ class InventoryScriptTest {
     @Test fun `entries round-trip through the persisted form`() {
         val l = listOf(
             InventoryScript.Entry("/h/a", InventoryScript.Kind.TREE, "https://x/a.git", "main", "origin/main", 5000L, true),
-            InventoryScript.Entry("/h/b.git", InventoryScript.Kind.BARE, "https://x/b.git"),
+            InventoryScript.Entry("/h/b.git", InventoryScript.Kind.TREE, "https://x/b.git", bare = true),
             InventoryScript.Entry("/h/c.incoming", InventoryScript.Kind.DEBRIS),
         )
         assertEquals(l, InventoryScript.decode(InventoryScript.encode(l)))

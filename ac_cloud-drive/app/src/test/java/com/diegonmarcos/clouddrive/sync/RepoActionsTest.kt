@@ -92,7 +92,7 @@ class RepoActionsTest {
     }
 
     @Test fun `#1195 a repository that is not cloned keeps the remote actions and disables the clone-required ones`() {
-        for (id in listOf("web", RepoActions.PRS, RepoActions.RUNS, RepoActions.CLONE_FULL, RepoActions.CLONE_DEPTH1, RepoActions.CLONE_OAUTH, RepoActions.CLONE_SSH)) assertFalse(id, RepoActions.needsClone(id))
+        for (id in listOf("web", RepoActions.PRS, RepoActions.RUNS, RepoActions.CLONE_OAUTH, RepoActions.CLONE_SSH)) assertFalse(id, RepoActions.needsClone(id))
         for (id in listOf("fetch", "pull", "push", "commit", "stats", RepoActions.OPEN_FOLDER, RepoActions.CHECKOUT_MAIN, RepoActions.BRANCHES, RepoActions.UNPUSHED, RepoActions.SYNC_NO_WINNER, RepoActions.STASH_PUSH, "force_pull", "force_push", RepoActions.CLEAN_1, "size", "hooks", RepoActions.SYNC_NOW, RepoActions.SETTINGS)) assertTrue(id, RepoActions.needsClone(id))
         // Every action of every group is either available without a clone or explained as needing one: nothing is silently missing.
         page.repoMenu.allIds.forEach { id -> assertEquals(id !in RepoActions.NO_CLONE_NEEDED, RepoActions.needsClone(id)) }

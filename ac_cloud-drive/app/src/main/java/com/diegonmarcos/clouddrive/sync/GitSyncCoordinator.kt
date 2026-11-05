@@ -292,7 +292,6 @@ class GitSyncCoordinator(private val ctx: Context, private val scope: CoroutineS
      */
     fun onPageOpened() {
         refreshRegistry()
-        refreshBare()
         scope.launch {
             val list = loadRegistry()
             // #1256 the one exception: an EMPTY last-commit cache (first open) is filled once from the local HEADs.
@@ -799,18 +798,20 @@ class GitSyncCoordinator(private val ctx: Context, private val scope: CoroutineS
 
 
     /** The clone itself, blocking (IO): the store's exec path or the engine, [depth] null = full history; registers on success. Shared by [cloneInto] and [cloneMissing]. */
-    private fun cloneBlocking(name: String, url: String, authKind: String, username: String, token: String, sshKeyPath: String, depth: Int?, into: File? = null): GitOpResult {
-                val dir = SharedStore.repoDir(name).let { store -> into?.let { File(it, name) } ?: store }
+    private fun cloneBlocking(name: String, url: String, authKind: String, username: String, token: String, sshKeyPath: String, depth: Int?, into: File? = null, mode: com.diegonmarcos.cloudlib.gitcore.CloneMode? = null): GitOpResult {
+                val dir = cloneDir(name, mode).let { store -> into?.let { File(it, name) } ?: store }
                 val id = RepoRegistry.idFor(dir.absolutePath)
                 val managed = ManagedRepo(id = id, name = name, path = dir.absolutePath, remoteUrl = url, authKind = authKind, authUsername = username, sshKeyPath = sshKeyPath)
                 if (token.isNotBlank()) credentials.setSecret(id, token)
                 return runCatching {
                     // cloud-shared-store: not in cld.termux's uid -> clone inside it (CLOUD_EXEC).
-                    if (into == null && StoreGit.useExec(ctx)) {
+                    // #1491 a partial-clone filter mode runs the git binary in cld.termux (JGit cannot filter); the other modes run JGit unless the store needs cld.termux.
+                    if (into == null && (StoreGit.useExec(ctx) || mode?.needsGitBinary == true)) {
                         if (StoreGit.isRepository(ctx, dir)) GitOpResult(true, "already cloned")
-                        else StoreGit.clone(ctx, url, dir, token, depth = depth).also { if (!it.ok) error(it.summary + " " + it.details) }
+                        else StoreGit.clone(ctx, url, dir, token, depth = depth, mode = mode).also { if (!it.ok) error(it.summary + " " + it.details) }
                     }
-                    else if (GitEngine.isRepository(dir)) GitOpResult(true, "already cloned")
+                    else if (GitEngine.isRepository(dir) || com.diegonmarcos.cloudlib.gitrepos.RepoDetect.detect(dir) != null) GitOpResult(true, "already cloned")
+                    else if (mode != null) { GitConnect.clone(ctx, url, dir, auth = authFor(managed), mode = mode).close(); GitOpResult(true, "cloned into ${dir.name}") }
                     else { (if (depth != null) GitConnect.clone(ctx, url, dir, auth = authFor(managed), depth = depth) else GitConnect.clone(ctx, url, dir, auth = authFor(managed))).close(); GitOpResult(true, "cloned into ${dir.name}") }
                 }.getOrElse {
                     val why = it.message ?: it.toString()
@@ -846,27 +847,36 @@ class GitSyncCoordinator(private val ctx: Context, private val scope: CoroutineS
     }
 
     /**
-     * #1254 CLONE MISSING at the declared depth: ONE clone per repository — a target whose repository already has a clone
-     * ANYWHERE the page can see (by origin URL, renamed_from chains folded in; or its destination already holds a repository)
-     * is skipped and reported, never cloned a second time. At most the declared workers at once; [cancelDepthRun] stops the
-     * ones not started yet (a clone in flight finishes); the status cache is re-read after.
+     * #1491 CLONE in one DECLARED mode (ui.sync.git.clone_modes: Full, Full Depth 3, Bare Main Only, Bare Blobless, Bare Treeless), for one
+     * target or all: ONE clone per repository: a target that already has a repo folder ANYWHERE the page can see (working tree or bare, by
+     * origin URL, renamed_from chains folded in; or its destination already holds one) is skipped and reported, never cloned a second time.
+     * A bare clone is `<store git>/<repo>.git` and is registered like any clone: bare is an attribute of the one repo list. At most the declared
+     * workers at once; [cancelDepthRun] stops the ones not started yet; the status cache is re-read after.
      */
-    fun cloneMissing(action: Declarations.GitDepthActionDecl, targets: List<CloneTarget>) = depth(action, plan = {
-        val list = registry.load()
-        val plan = BulkDepth.planClones(targets.map { BulkDepth.Target(it.name, it.url) }, existingClones(list)) { Declarations.repoSot.canonical(it) }
-        targets.filter { t -> t.name !in cloning.value && (plan.toClone.any { it.name == t.name } || t.name in plan.held) }.map { t -> DepthItem(SharedStore.repoDir(t.name).absolutePath, t.name, plan.held[t.name]) to t }
-    }) { (item, t) ->
-        val held = item.held
-        if (held != null) t.name to Outcome.SKIP to "already cloned at $held"
-        else if (withContext(Dispatchers.IO) { StoreGit.useExec(ctx) && StoreGit.isRepository(ctx, SharedStore.repoDir(t.name)) || GitEngine.isRepository(SharedStore.repoDir(t.name)) }) {
-            t.name to Outcome.SKIP to "already cloned at ${SharedStore.repoDir(t.name).absolutePath}"
-        } else {
-            cloning.update { it + t.name }
-            val r = try { withContext(Dispatchers.IO) { cloneBlocking(t.name, t.url, t.authKind, t.username, t.token, "", action.depth) } } finally { cloning.update { it - t.name } }
-            withContext(Dispatchers.IO) { history.append(SyncEvent(System.currentTimeMillis() / 1000, RepoRegistry.idFor(SharedStore.repoDir(t.name).absolutePath), t.name, SyncHistory.TRIGGER_MANUAL, r.ok, "${action.id}: ${r.summary}", r.details)) }
-            t.name to (if (r.ok) Outcome.OK else Outcome.FAIL) to (if (r.ok) r.summary else BulkDepth.withTail(r.summary, r.details))
+    fun cloneMode(action: Declarations.GitDepthActionDecl, targets: List<CloneTarget>) {
+        val mode = Declarations.sync.git.cloneMode(action.mode) ?: return
+        depth(action, plan = {
+            val list = registry.load()
+            val plan = BulkDepth.planClones(targets.map { BulkDepth.Target(it.name, it.url) }, existingClones(list)) { Declarations.repoSot.canonical(it) }
+            targets.filter { t -> t.name !in cloning.value && (plan.toClone.any { it.name == t.name } || t.name in plan.held) }.map { t -> DepthItem(cloneDir(t.name, mode).absolutePath, t.name, plan.held[t.name]) to t }
+        }) { (item, t) ->
+            val held = item.held
+            val dir = File(item.path)
+            if (held != null) t.name to Outcome.SKIP to "already cloned at $held"
+            else if (withContext(Dispatchers.IO) { StoreGit.useExec(ctx) && StoreGit.isRepository(ctx, dir) || GitEngine.isRepository(dir) || com.diegonmarcos.cloudlib.gitrepos.RepoDetect.detect(dir) != null }) {
+                t.name to Outcome.SKIP to "already cloned at ${dir.absolutePath}"
+            } else {
+                cloning.update { it + t.name }
+                val r = try { withContext(Dispatchers.IO) { cloneBlocking(t.name, t.url, t.authKind, t.username, t.token, "", null, mode = mode) } } finally { cloning.update { it - t.name } }
+                withContext(Dispatchers.IO) { history.append(SyncEvent(System.currentTimeMillis() / 1000, RepoRegistry.idFor(dir.absolutePath), t.name, SyncHistory.TRIGGER_MANUAL, r.ok, "${action.id}: ${r.summary}", r.details)) }
+                t.name to (if (r.ok) Outcome.OK else Outcome.FAIL) to (if (r.ok) r.summary else BulkDepth.withTail(r.summary, r.details))
+            }
         }
     }
+
+    /** #1491 where a clone of [name] in [mode] lives: the store's repo folder, or `<repo>.git` beside it for a bare mode. */
+    private fun cloneDir(name: String, mode: com.diegonmarcos.cloudlib.gitcore.CloneMode?): File =
+        SharedStore.repoDir(name).let { d -> if (mode?.bare == true) File(d.parentFile, mode.folderName(d.name)) else d }
 
     /**
      * #1254 KEEP DEPTH in place for every registered clone, or only [only]: the gate ([BulkDepth.keepSkip]) is read from the
@@ -897,82 +907,6 @@ class GitSyncCoordinator(private val ctx: Context, private val scope: CoroutineS
     }
 
     private enum class Outcome { OK, SKIP, FAIL }
-
-    // ── #1282 Clone bare: ONE bare mirror per repository under the declared bare root (BareClones), the working clone untouched ──
-
-    /** Canonical identity -> mirror path, for the page's "bare ✓" indicator; read on IO by [refreshBare]. */
-    val bareMirrors = MutableStateFlow<Map<String, String>>(emptyMap())
-
-    private fun bareRoot(): File = File(SharedStore.gitRoot(), Declarations.sync.git.bareRoot)
-
-    private fun listMirrors(): List<BareClones.Mirror> = if (StoreGit.useExec(ctx)) StoreGit.listBare(ctx, bareRoot()) else emptyList()
-
-    fun refreshBare() { scope.launch(Dispatchers.IO) { bareMirrors.value = BareClones.index(listMirrors()) { Declarations.repoSot.canonical(it) } } }
-
-    /**
-     * #1282 CLONE BARE at the declared depth (0 = full history): a target whose repository already has a mirror (origin URL,
-     * renamed_from chains folded in) is UPDATED with `git remote update --prune`, never cloned twice; the rest get
-     * `git clone --mirror` at <store git>/<bare_root>/<owner>/<repo>.git. Bounded workers, cancel-safe, each outcome in the
-     * status window and Activity Logs. git runs in cld.termux; without it the run says so and changes nothing.
-     */
-    fun cloneBare(action: Declarations.GitDepthActionDecl, targets: List<CloneTarget>) {
-        val canonical: (String) -> String = { Declarations.repoSot.canonical(it) }
-        depth(action, plan = {
-            if (!StoreGit.useExec(ctx)) targets.map { DepthItem("", it.name, null, BARE_NO_TERMUX) to it }
-            else {
-                val plan = BareClones.plan(targets.map { BareClones.Target(it.name, it.url) }, listMirrors(), canonical)
-                val gitGuest = shell.route.guest(SharedStore.gitRoot().absolutePath)
-                targets.filter { t -> t.name in plan.toUpdate || plan.toClone.any { it.name == t.name } }.map { t ->
-                    val at = plan.toUpdate[t.name]
-                    val dest = at ?: gitGuest?.let { BareClones.path(it, Declarations.sync.git.bareRoot, t.url, t.name, canonical) }
-                    DepthItem(dest?.let { shell.route.host(it) } ?: "", t.name, at, if (dest == null) "no safe bare path for ${t.name}" else null) to t
-                }
-            }
-        }, onEnd = { withContext(Dispatchers.IO) { bareMirrors.value = BareClones.index(listMirrors(), canonical) } }) { (item, t0) ->
-            item.refusal?.let { return@depth t0.name to Outcome.FAIL to it }
-            val t = if (t0.token.isBlank()) t0.copy(token = runCatching { declaredToken() }.getOrDefault("")) else t0
-            // #1314 never while another git job runs on this repository (its working clone's operation).
-            if (repos.value.any { it.name == t.name && running.value.containsKey(it.id) }) return@depth t.name to Outcome.SKIP to "an operation is already running"
-            val r = withContext(Dispatchers.IO) {
-                val at = item.held
-                if (at != null) StoreGit.bareUpdate(ctx, at, t.token, action.depth)
-                else StoreGit.bareClone(ctx, t.url, shell.route.guestOrThrow(item.path), t.token, action.depth)
-            }
-            withContext(Dispatchers.IO) { history.append(SyncEvent(System.currentTimeMillis() / 1000, "bare:" + t.name, t.name, SyncHistory.TRIGGER_MANUAL, r.ok, "${action.id}: ${r.summary}", r.details)) }
-            t.name to (if (r.ok) Outcome.OK else Outcome.FAIL) to (if (r.ok) r.summary else BulkDepth.withTail(r.summary, r.details))
-        }
-    }
-
-    /**
-     * #1452 CLONE BARE ALL (no hist): for each target a bare, depth-1 clone (`--bare --depth 1`: the repository only, no working-tree
-     * files, the latest commit of each ref) through libs:git-core's JGit, at the bare path (<store git>/<bare_root>/<owner>/<repo>.git).
-     * One per repository: a target that already has a bare copy (or a working clone) is skipped, never doubled.
-     */
-    fun cloneBareNoHist(action: Declarations.GitDepthActionDecl, targets: List<CloneTarget>) {
-        val canonical: (String) -> String = { Declarations.repoSot.canonical(it) }
-        depth(action, plan = {
-            val gitRoot = SharedStore.gitRoot().absolutePath
-            targets.map { t ->
-                val dest = BareClones.path(gitRoot, Declarations.sync.git.bareRoot, t.url, t.name, canonical)
-                val held = dest?.takeIf { com.diegonmarcos.cloudlib.gitcore.JGitEngine.isBare(File(it)) }
-                DepthItem(dest.orEmpty(), t.name, held, if (dest == null) "no safe bare path for ${t.name}" else null) to t
-            }
-        }, onEnd = { withContext(Dispatchers.IO) { scanUnlisted() } }) { (item, t0) ->
-            item.refusal?.let { return@depth t0.name to Outcome.FAIL to it }
-            if (item.held != null) return@depth t0.name to Outcome.SKIP to "already a bare copy"
-            val t = if (t0.token.isBlank()) t0.copy(token = runCatching { declaredToken() }.getOrDefault("")) else t0
-            val managed = ManagedRepo(id = RepoRegistry.idFor(item.path), name = t.name, path = item.path, remoteUrl = t.url, authKind = t.authKind, authUsername = t.username)
-            if (t.token.isNotBlank()) credentials.setSecret(managed.id, t.token)
-            val r = withContext(Dispatchers.IO) {
-                runCatching {
-                    GitConnect.clone(ctx, t.url, File(item.path), auth = authFor(managed), depth = 1, bare = true).close()
-                    GitOpResult(true, "bare, depth 1: ${File(item.path).name}")
-                }.getOrElse { GitOpResult(false, it.message ?: it.toString()) }
-            }
-            withContext(Dispatchers.IO) { history.append(SyncEvent(System.currentTimeMillis() / 1000, "bare:" + t.name, t.name, SyncHistory.TRIGGER_MANUAL, r.ok, "${action.id}: ${r.summary}", r.details)) }
-            t.name to (if (r.ok) Outcome.OK else Outcome.FAIL) to (if (r.ok) r.summary else BulkDepth.withTail(r.summary, r.details))
-        }
-    }
 
     /** One depth command at a time; the run state and the job are the coordinator's, so a page close does not lose them. */
     /** One planned item of a depth / folder command: the path it locks (host form; "" = none), the name the report shows, what already holds it, or why it cannot run. */
@@ -1388,9 +1322,8 @@ class GitSyncCoordinator(private val ctx: Context, private val scope: CoroutineS
         /** #1315 the last inventory pass's entries (InventoryScript.encode), re-classified at start. */
         const val KEY_INVENTORY = "git.inventory"
         /** #1315 the job kinds the depth report, the depth progress line and the status window follow (depth commands and folder commands). */
-        val DEPTH_JOB_KINDS: Array<String> = arrayOf(Declarations.DEPTH_CLONE_MISSING, Declarations.DEPTH_KEEP, Declarations.DEPTH_CLONE_BARE, Declarations.DEPTH_CLONE_BARE_NOHIST, Declarations.FOLDER_RENAME, Declarations.FOLDER_ARCHIVE, Declarations.FOLDER_DELETE, Declarations.FOLDER_REPOINT)
+        val DEPTH_JOB_KINDS: Array<String> = arrayOf(Declarations.DEPTH_CLONE_MODE, Declarations.DEPTH_KEEP, Declarations.FOLDER_RENAME, Declarations.FOLDER_ARCHIVE, Declarations.FOLDER_DELETE, Declarations.FOLDER_REPOINT)
         const val CLEANUP_DEBRIS = "cleanup_debris"
-        const val BARE_NO_TERMUX = "bare clones run git in cld.termux, which is not answering; nothing changed"
         const val KEY_LAST_COMMITS = "git.last_commits"
         const val KEY_FILTERS = "git.filters"
         const val KEY_SORT = "git.sort"

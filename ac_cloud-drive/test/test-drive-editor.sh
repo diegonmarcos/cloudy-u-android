@@ -11,8 +11,8 @@
 #       and claimed by no viewer, media is view only, every viewer is one of the seven libs' ids.
 #   E3  the module boundary: no lib of the five imports this application's package, and the app's Editor
 #       glue (editor/) holds no viewer logic (no PdfBox, no zip/XML, no codec).
-#   E4  the navigation: bottom nav is explorer/editor/home/git/fsync/mounts, Home = home_apps|manage (Manage
-#       keeps apps|data), Fsync = folders|agents|projects, no `manage` or `agents` section.
+#   E4  the navigation: bottom nav is explorer/projects/editor/home/git/fsync/mounts, Home = home_apps|manage (Manage
+#       keeps apps|data), Fsync = folders|agents (#1491: Projects is a bottom-nav page), no `manage` or `agents` section.
 #   E5  the Projects page is DECLARED sample data (named sample, never the banned word).
 #
 # OWN-SOURCE ONLY. python3 and grep only.
@@ -85,7 +85,7 @@ import json, sys
 ui = json.load(open(sys.argv[1], encoding="utf-8"))["ui"]
 sec = {s["id"]: s for s in ui["sections"]}
 bad = 0
-if ui["bottom_nav"] != ["explorer", "editor", "home", "git", "fsync", "mounts"]:
+if ui["bottom_nav"] != ["explorer", "projects", "editor", "home", "git", "fsync", "mounts"]:
     print("    bottom_nav is %s" % ui["bottom_nav"]); bad = 1
 if "manage" in sec or "agents" in sec:
     print("    manage/agents are sections again"); bad = 1
@@ -94,7 +94,8 @@ if home != ["home_apps", "manage"]: print("    home pages %s" % home); bad = 1
 mp = [p["id"] for p in next((p for p in sec["home"].get("pages", []) if p["id"] == "manage"), {}).get("pages", [])]
 if mp != ["apps", "data"]: print("    manage pages %s" % mp); bad = 1
 fs = [p["id"] for p in sec["fsync"].get("pages", [])]
-if fs != ["folders", "agents", "projects"]: print("    fsync pages %s" % fs); bad = 1
+if fs != ["folders", "agents"]: print("    fsync pages %s" % fs); bad = 1
+if sec["projects"].get("pages"): print("    projects declares sub-pages"); bad = 1
 if sec["editor"].get("pages"): print("    editor declares sub-pages"); bad = 1
 ids = [p["id"] for s in ui["sections"] for p in s.get("pages", [])]
 for s in ui["sections"]:

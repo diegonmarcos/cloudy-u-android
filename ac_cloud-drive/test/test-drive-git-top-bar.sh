@@ -119,20 +119,20 @@ grep -q 'GitSearchField(query, onQuery, ""' "$tmp/B.kt" || fail "T3 mutation anc
 t3 "$SYNC/SyncScreen.kt" "$tmp/B.kt" >/dev/null 2>&1 && fail "T3 passed a search field back on the Git page (vacuous)" || pass "a search field back on the Git page → T3 RED"
 
 # T4 #1356 the top nav is Check | Sync | Clone | Logs | More ..... Settings: those five groups in that order, the first four ONE
-#    item each (check_full, sync_all, clone_missing, the open_logs item) run on tap, More keeps every other action of the bar
+#    item each (check_full, sync_all, the open_logs item; Clone is a dropdown of the five clone modes) run on tap, More keeps every other action of the bar
 #    (none lost), Settings sits after the groups' weighted row; Logs declares the tabs repos, app and App is Activity Logs.
-KEEP="check_light check_remote check_sizes scan_inventory cancel_checks pull_all force_pull_all stash_push_all fetch_all mirror_all shrink_all last_report show_archived legend"
+KEEP="check_light check_remote check_sizes scan_inventory cancel_checks pull_all force_pull_all stash_push_all fetch_all shrink_all last_report show_archived legend"
 t4() { python3 - "$1" "$2" "$3" "$KEEP" <<'PY'
 import json, sys
 g = json.load(open(sys.argv[1]))["ui"]["sync"]["git"]; bar = open(sys.argv[2]).read(); ui = open(sys.argv[3]).read(); keep = sys.argv[4].split()
 groups = g["top_bar"]["groups"]; bad = []
 if [x["id"] for x in groups] != ["check", "sync", "clone", "logs", "more"]: bad.append("groups are %s" % [x["id"] for x in groups])
 else:
-    want = [None, None, ("logs", "open_logs")]   # #1452 Clone is a dropdown of two (Clone Depth 1 All | Clone Bare All (no hist))
+    want = [None, None, ("logs", "open_logs")]   # #1491 Clone is a dropdown of the five declared clone modes
     got = [(x["items"][0]["id"], x["items"][0]["kind"]) if len(x["items"]) == 1 else None for x in (groups[0], groups[2], groups[3])]
     if got != want: bad.append("the three buttons are %s, want %s" % (got, want))
     if [(i["id"], i["kind"]) for i in groups[0]["items"]] != [("check_lite", "check_light"), ("check_full", "check_full")]: bad.append("the Check dropdown is not Check lite, Check full")
-    if [(i["id"], i["kind"], i["action"]) for i in groups[2]["items"]] != [("clone_missing", "depth", "clone_all_depth1"), ("clone_bare_nohist", "depth", "clone_all_bare_nohist")]: bad.append("the Clone dropdown is not Clone Depth 1 All, Clone Bare All (no hist)")
+    if [(i["id"], i["kind"], i["action"]) for i in groups[2]["items"]] != [("clone_all_" + m, "depth", "clone_all_" + m) for m in ("full", "depth3", "bare_main", "bare_blobless", "bare_treeless")]: bad.append("the Clone dropdown is not the five clone modes (Full, Full Depth 3, Bare Main Only, Bare Blobless, Bare Treeless)")
     # #1356 Sync is a dropdown: Sync All (Server Wins | Local Wins | No Winner) then Manual Sync (Stash All, Pull (Rebase), Stash Pop All, Conflicts All)
     sy = [(i["section"], i["kind"], i.get("op", "")) for i in groups[1]["items"]]
     want_sync = [("Sync All", "compound", "sync_remote_wins"), ("Sync All", "compound", "sync_local_wins"), ("Sync All", "compound", "sync_no_winner"),

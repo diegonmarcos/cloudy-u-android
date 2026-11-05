@@ -41,10 +41,12 @@ object TermuxGitWire {
         else -> ""
     }
 
-    private fun g(dir: String, args: String) = "git -C ${q(dir)} $args"
+    /** #1491 `-C <dir>` for a working tree, `--git-dir <dir>` for a bare repository (decided in the guest, RepoDetect.shellPrefix): every verb works on either. */
+    private fun at(dir: String) = com.diegonmarcos.cloudlib.gitrepos.RepoDetect.shellPrefix(dir) { q(it) }
+    private fun g(dir: String, args: String) = "git ${at(dir)} $args"
     /** `git` that adds the credential header held in $H (read from stdin first) when there is one. */
     private fun hdr(dir: String, args: String) =
-        "if [ -n \"\$H\" ]; then git -C ${q(dir)} -c http.extraHeader=\"\$H\" $args; else git -C ${q(dir)} $args; fi"
+        "if [ -n \"\$H\" ]; then git ${at(dir)} -c http.extraHeader=\"\$H\" $args; else git ${at(dir)} $args; fi"
     private fun gAuthed(dir: String, args: String) = "H=\"\$(cat)\"; " + hdr(dir, args)
     /**
      * #1392 a clone whose branch tracks nothing ("upstream (no upstream)") gets origin/<branch> as its upstream when that ref exists;
@@ -67,7 +69,7 @@ object TermuxGitWire {
         val header = authHeader(auth)
         fun ok(s: String, net: Boolean = false, stdin: String = "") = Plan("set -e; $s", stdin, net) to null
         return when (verb) {
-            "status" -> ok(g(dir, "status --porcelain=v2 --branch -z") + "; printf '\\n@@STATE '; GD=\"\$(git -C ${q(dir)} rev-parse --absolute-git-dir)\"; " +
+            "status" -> ok(g(dir, "status --porcelain=v2 --branch -z") + "; printf '\\n@@STATE '; GD=\"\$(git ${at(dir)} rev-parse --absolute-git-dir)\"; " +
                 "if [ -d \"\$GD/rebase-merge\" ] || [ -d \"\$GD/rebase-apply\" ]; then echo REBASING; elif [ -f \"\$GD/MERGE_HEAD\" ]; then echo MERGING; " +
                 "elif [ -f \"\$GD/CHERRY_PICK_HEAD\" ]; then echo CHERRY_PICKING; else echo SAFE; fi")
             "stage" -> paths(a)?.let { ok(g(dir, "add -- " + it.joinToString(" ") { p -> q(p) })) } ?: (null to "unsafe path")
@@ -88,7 +90,7 @@ object TermuxGitWire {
             "force_push_lease" -> ok(gAuthed(dir, "push --force-with-lease ${q(remote)}"), true, header)
             "merge_upstream" -> ok(gAuthed(dir, "fetch ${q(remote)}") + "; " + track(dir, remote) + "; if " +
                 g(dir, "-c user.name=${q(a.optString("name"))} -c user.email=${q(a.optString("email"))} merge --no-edit '@{u}'") + "; then :; else rc=\$?; " +
-                "if [ -f \"\$(git -C ${q(dir)} rev-parse --absolute-git-dir)/MERGE_HEAD\" ]; then " + g(dir, "merge --abort") +
+                "if [ -f \"\$(git ${at(dir)} rev-parse --absolute-git-dir)/MERGE_HEAD\" ]; then " + g(dir, "merge --abort") +
                 "; echo 'merge conflict: merge aborted, nothing changed' >&2; exit 3; fi; exit \$rc; fi", true, header)
             "stash" -> ok(g(dir, "-c user.name=${q(a.optString("name"))} -c user.email=${q(a.optString("email"))} stash push --include-untracked -m ${q(a.optString("message"))}"))
             // #1356 Stash Pop: the newest stash back onto the tree; a conflict leaves it in the list and is reported.
@@ -142,9 +144,11 @@ object TermuxGitWire {
             "abort_merge" -> ok(g(dir, "merge --abort") + " 2>/dev/null || " + g(dir, "reset --hard"))
             "init" -> ok("mkdir -p ${q(dir)}; git init -q ${q(dir)}")
             "clone" -> {
-                val depth = (if (a.optBoolean("bare", false)) "--bare " else "") + a.optInt("depth", 0).let { if (it > 0) "--depth $it " else "" }
-                ok("mkdir -p \"\$(dirname ${q(dir)})\"; H=\"\$(cat)\"; if [ -n \"\$H\" ]; then git -c http.extraHeader=\"\$H\" clone $depth${q(a.optString("url"))} ${q(dir)}; " +
-                    "else git clone $depth${q(a.optString("url"))} ${q(dir)}; fi; " + track(dir), true, header)
+                // #1491 the declared clone mode's words (bare, depth, single branch, filter) come from the one CloneMode.args.
+                val cm = com.diegonmarcos.cloudlib.gitcore.CloneMode("wire", depth = a.optInt("depth", 0), bare = a.optBoolean("bare", false), singleBranch = a.optBoolean("single_branch", false), filter = a.optString("filter"))
+                val clone = cm.args(a.optString("url"), dir, a.optString("branch").takeIf { it.isNotBlank() }) { q(it) }
+                ok("mkdir -p \"\$(dirname ${q(dir)})\"; H=\"\$(cat)\"; if [ -n \"\$H\" ]; then git -c http.extraHeader=\"\$H\" $clone; " +
+                    "else git $clone; fi" + (if (cm.bare) "" else "; " + track(dir)), true, header)
             }
             else -> null to "git verb '$verb' has no implementation in cld.termux"
         }

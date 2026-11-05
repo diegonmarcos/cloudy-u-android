@@ -13,7 +13,7 @@ import com.diegonmarcos.clouddrive.ui.DriveTags
  * #1315 THE INVENTORY'S OTHER SECTIONS, each the ONE folder table ([FolderRepoTable]) over one class of the ONE inventory,
  * drawn only when the class has rows; the labels are declared (ui.sync.git.inventory.labels):
  *  - duplicates: a second clone of a repository another folder holds (Archive / Delete; the primary keeps the main row);
- *  - bare: the bare mirrors the pass found (facts only; the mirror commands stay in the repository's menu);
+ *  (#1491 no bare section: a bare repository is a repo folder in the one list, its bare state an attribute.)
  *  - debris: leftover folders (`*.incoming` and the other declared globs), facts only until the executor's cleanup lands.
  */
 @Composable
@@ -39,15 +39,6 @@ internal fun InventorySections(
         subtitle = { t -> decl.label("duplicate_of") + " " + (inv.byPath(t.path)?.primaryPath?.substringAfterLast('/') ?: t.repoName) },
         onOpenReport = onOpenReport,
         modifier = Modifier.padding(vertical = DriveMetrics.pad).testTag(DriveTags.SYNC_GIT_INVENTORY + "_duplicates"),
-    )
-    val bare = inv.of(RepoInventory.RepoClass.BARE)
-    if (bare.isNotEmpty()) FolderRepoTable(
-        tableId = "bare", title = decl.label("bare"), hint = decl.label("bare_hint"), empty = "",
-        rows = bare.map { FolderActions.Target(it.path, it.origin, it.registryName) },
-        glances = glances, lastCommits = lastCommits, run = run, kinds = emptyList(), coordinator = coordinator,
-        subtitle = { it.origin.ifBlank { decl.label("no_origin") } },
-        onOpenReport = onOpenReport,
-        modifier = Modifier.padding(vertical = DriveMetrics.pad).testTag(DriveTags.SYNC_GIT_INVENTORY + "_bare"),
     )
     val debris = inv.of(RepoInventory.RepoClass.DEBRIS)
     if (debris.isNotEmpty()) FolderRepoTable(

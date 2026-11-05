@@ -98,7 +98,6 @@ fun FsyncPageScreen(
                 when (id) {
                     "folders" -> FolderSyncScreen(rclone, storage, actions, prefs, ::say)
                     "agents" -> com.diegonmarcos.clouddrive.agents.AgentsScreen()
-                    "projects" -> ProjectsPage()
                     else -> EmptyState(Icons.Filled.Sync, stringResource(R.string.chrome_unknown_tab), "")
                 }
             }

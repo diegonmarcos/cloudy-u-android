@@ -50,9 +50,9 @@ class DeclarationsTest {
 
     @Test fun tabsDeclareTheOwnersNavOrder() {
         val tabs = Declarations.tabsOf(nav())
-        // #1484 the owner's bottom nav: Explorer, Editor, Home, Git, Fsync, Mounts. Manage moved into Home and Agents into Fsync; AI and Configs stay on the top bar.
-        assertEquals(listOf("explorer", "editor", "home", "git", "fsync", "mounts"), tabs.map { it.id })
-        assertEquals(listOf("Explorer", "Editor", "Home", "Git", "Fsync", "Mounts"), tabs.map { it.label })
+        // #1491 the owner's bottom nav: Explorer, Projects, Editor, Home, Git, Fsync, Mounts. Manage moved into Home, Agents into Fsync and Projects out of Fsync; AI and Configs stay on the top bar.
+        assertEquals(listOf("explorer", "projects", "editor", "home", "git", "fsync", "mounts"), tabs.map { it.id })
+        assertEquals(listOf("Explorer", "Projects", "Editor", "Home", "Git", "Fsync", "Mounts"), tabs.map { it.label })
         assertTrue("Manage and Agents are no sections of their own", nav().section("manage") == null && nav().section("agents") == null)
         assertTrue("AI and Configs are sections the top bar opens, not island items", tabs.none { it.id == "ai" || it.id == "configs" } && nav().section("ai") != null && nav().section("configs") != null)
         assertEquals(emptyList<String>(), nav().problems())
@@ -125,7 +125,7 @@ class DeclarationsTest {
         // #1149 the former Sync pages are bottom-nav sections: Git (Me, Cloud), Fsync (folder sync rules, #1216), Mounts (Rclone, FUSE) (#1173).
         assertEquals(listOf("git", "fsync", "mounts"), sync.pages.map { it.id })
         assertEquals(listOf("me", "cloud"), nav().section("git")!!.pages.map { it.id })
-        assertEquals("#1484 Fsync = Folders (the folder sync rules), Agents, Projects", listOf("folders", "agents", "projects"), nav().section("fsync")!!.pages.map { it.id })
+        assertEquals("#1491 Fsync = Folders (the folder sync rules), Agents", listOf("folders", "agents"), nav().section("fsync")!!.pages.map { it.id })
         assertEquals(listOf("rclone", "fuse"), nav().section("mounts")!!.pages.map { it.id })
         assertEquals(listOf("Rclone", "FUSE"), nav().section("mounts")!!.pages.map { it.label })
         assertNull("the old Rsync id is gone, not kept as a second name", nav().section("rsync"))
@@ -160,12 +160,13 @@ class DeclarationsTest {
     }
 
     @Test fun homeAndFsyncDeclareTheirSubPages() {
-        // #1484 Home = Apps | Manage (Manage keeps its Apps / Data), Fsync = Folders | Agents | Projects, Editor has no strip.
+        // #1484 Home = Apps | Manage (Manage keeps its Apps / Data), Fsync = Folders | Agents (#1491: Projects moved to the bottom nav), Editor and Projects have no strip.
         assertEquals(listOf("home_apps", "manage"), Declarations.navPages(Declarations.SECTION_HOME).map { it.id })
         assertEquals(listOf("Apps", "Manage"), Declarations.navPages(Declarations.SECTION_HOME).map { it.label })
         assertEquals(listOf("apps", "data"), nav().section(Declarations.SECTION_HOME)?.pages?.first { it.id == Declarations.PAGE_MANAGE }?.pages?.map { it.id })
-        assertEquals(listOf("folders", "agents", "projects"), nav().section(Declarations.SECTION_FSYNC)?.pages?.map { it.id })
-        assertEquals(listOf("Folders", "Agents", "Projects"), nav().section(Declarations.SECTION_FSYNC)?.pages?.map { it.label })
+        assertEquals(listOf("folders", "agents"), nav().section(Declarations.SECTION_FSYNC)?.pages?.map { it.id })
+        assertEquals(listOf("Folders", "Agents"), nav().section(Declarations.SECTION_FSYNC)?.pages?.map { it.label })
+        assertTrue(nav().section(Declarations.SECTION_PROJECTS)?.pages.orEmpty().isEmpty())
         assertTrue(nav().section(Declarations.SECTION_EDITOR)?.pages.orEmpty().isEmpty())
         assertEquals(emptyList<String>(), nav().problems())
     }

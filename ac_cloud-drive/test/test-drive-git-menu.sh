@@ -26,12 +26,12 @@ allids = [i for x in groups for i in ids(x)]
 if len(allids) != len(set(allids)): print("    an id sits in two groups"); bad = 1
 previous = ["sync_no_winner", "sync_remote_wins", "sync_local_wins", "fetch", "pull", "push", "commit", "stats", "checkout_main", "branches",
             "unpushed", "open_folder", "web", "history", "runs", "actions", "prs", "clean_1", "clean_5", "clean_10", "force_pull", "force_push",
-            "remote", "metadata", "sync_now", "hooks", "size", "settings", "clone_full", "clone_depth1", "clone_oauth", "clone_ssh"]
+            "remote", "metadata", "sync_now", "hooks", "size", "settings", "clone_oauth", "clone_ssh"]
 previous += [a["id"] for a in g.get("depth_actions", []) if a.get("scope") == "repo"]
 for i in previous + [o["id"] for o in g.get("ops", [])]:
     if allids.count(i) != 1: print("    lost or doubled:", i); bad = 1
 by = {x["id"]: x for x in groups}
-depth = {a["id"] for a in g.get("depth_actions", [])} | {"clone_full", "clone_depth1"}
+depth = {a["id"] for a in g.get("depth_actions", [])}
 auth = ids(by.get("configs_auth", {}))
 if not auth or any(i in depth or "depth" in i or "bare" in i for i in auth): print("    Configs-Auth holds a clone/depth item:", auth); bad = 1
 ms = by.get("manual_sync", {})

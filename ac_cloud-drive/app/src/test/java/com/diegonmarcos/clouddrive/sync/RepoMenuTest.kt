@@ -33,8 +33,7 @@ class RepoMenuTest {
         "clean_1", "clean_5", "clean_10",
         "force_pull", "force_push",
         "remote", "metadata", "sync_now", "hooks", "size", "settings",
-        "clone_full", "clone_depth1", "clone_oauth", "clone_ssh",
-        "clone_repo_depth1", "keep_repo_depth1", "clone_repo_bare",
+        "clone_oauth", "clone_ssh", "keep_repo_depth1",
     )
 
     private fun ids(g: String) = menu.group(g)!!.allIds
@@ -60,7 +59,9 @@ class RepoMenuTest {
 
     @Test fun `Goto, Clone, Sync and Workflow hold what the owner placed there`() {
         assertEquals(listOf("web", "open_folder", "branches", "checkout_main"), ids("goto"))
-        assertTrue(ids("clone").containsAll(listOf("clone_full", "clone_depth1") + page.depthActions(Declarations.DEPTH_SCOPE_REPO).map { it.id }))
+        // #1491 the Clone group offers exactly the five declared modes (then Keep depth 1), nothing else clones from here
+        assertEquals(listOf("clone_repo_full", "clone_repo_depth3", "clone_repo_bare_main", "clone_repo_bare_blobless", "clone_repo_bare_treeless", "keep_repo_depth1"), ids("clone"))
+        assertTrue(ids("clone").containsAll(page.depthActions(Declarations.DEPTH_SCOPE_REPO).map { it.id }))
         assertTrue(ids("sync").containsAll(listOf("sync_no_winner", "sync_remote_wins", "sync_local_wins")))
         assertEquals("unpushed", ids("workflow").first())
         assertTrue(ids("workflow").containsAll(listOf("list_dirty", "list_conflicts", "fetch", "pull", "commit", "push", "stats")))
@@ -82,7 +83,7 @@ class RepoMenuTest {
 
     @Test fun `Configs-Auth keeps only the auth controls - no clone or depth item`() {
         val auth = ids("configs_auth")
-        val cloneOrDepth = setOf(RepoActions.CLONE_FULL, RepoActions.CLONE_DEPTH1) + page.depthActions.map { it.id }
+        val cloneOrDepth = page.depthActions.map { it.id }.toSet()
         assertTrue(auth.isNotEmpty())
         for (id in auth) {
             assertFalse("$id is a clone/depth item", id in cloneOrDepth)

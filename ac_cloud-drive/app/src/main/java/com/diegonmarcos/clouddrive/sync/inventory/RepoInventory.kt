@@ -10,9 +10,11 @@ import com.diegonmarcos.clouddrive.sync.RegistryNames
  * folder holds. Every table, count and filter of the Git page reads this list; nothing else decides what a folder is.
  * Pure, JVM-tested with the rows seen on the phone (RepoInventoryPhoneTest).
  *
+ * #1491 ONE list of repo folders: a bare repository (`<repo>.git`, no working tree) is classified like any other repo folder, its
+ * [Row.bare] a small attribute; there is no bare class, table or section. Its folder name is the repository name plus `.git`.
+ *
  * Classes, first match wins per folder:
  *  DEBRIS      a leftover the copy or the pack writer abandoned (declared patterns, e.g. `*.incoming`)
- *  BARE        a bare repository (a mirror)
  *  DUPLICATE   a second clone of a repository another folder already holds (the primary keeps the main-table row)
  *  MISNAMED    the folder does not carry its repository's registry name (Rename fixes it)
  *  STALE_ORIGIN the folder is named right but its origin names a retired name (Fix origin rewrites it)
@@ -22,7 +24,7 @@ import com.diegonmarcos.clouddrive.sync.RegistryNames
  */
 object RepoInventory {
 
-    enum class RepoClass { REGISTERED, STALE_ORIGIN, MISNAMED, DUPLICATE, UNLISTED, DEBRIS, BARE, NOT_CLONED }
+    enum class RepoClass { REGISTERED, STALE_ORIGIN, MISNAMED, DUPLICATE, UNLISTED, DEBRIS, NOT_CLONED }
 
     data class Row(
         /** Host path of the folder; "" for NOT_CLONED. */
@@ -48,6 +50,8 @@ object RepoInventory {
         val copies: Int = 1,
         /** The path is in the managed registry (the scheduler syncs it). */
         val managed: Boolean = false,
+        /** #1491 a bare repository (an attribute of the repo, not a class). */
+        val bare: Boolean = false,
     ) {
         /** The folder name Rename would give a MISNAMED row (the CURRENT registry name). */
         val registryName: String get() = entry?.name ?: name
@@ -74,12 +78,11 @@ object RepoInventory {
         for (e in entries) {
             when (e.kind) {
                 InventoryScript.Kind.DEBRIS -> rows += Row(e.path, e.name, "", null, RepoClass.DEBRIS, managed = e.path in managedPaths)
-                InventoryScript.Kind.BARE -> rows += Row(e.path, e.name, names.identity(e.origin.ifBlank { e.name.removeSuffix(".git") }), names.entryOf(LocalRepos.repoNameOf(e.origin).ifBlank { e.name.removeSuffix(".git") }), RepoClass.BARE, e.origin, LocalRepos.repoNameOf(e.origin))
                 InventoryScript.Kind.GITFILE -> Unit
                 InventoryScript.Kind.TREE -> {
                     val seg = LocalRepos.repoNameOf(e.origin)
                     val entry = if (seg.isBlank()) null else names.entryOf(seg)
-                    if (entry == null) rows += Row(e.path, e.name, if (seg.isBlank()) "" else seg.lowercase(), null, RepoClass.UNLISTED, e.origin, seg, e.branch, e.upstream, e.headTimeMs, e.shallow, managed = e.path in managedPaths)
+                    if (entry == null) rows += Row(e.path, e.name, if (seg.isBlank()) "" else seg.lowercase(), null, RepoClass.UNLISTED, e.origin, seg, e.branch, e.upstream, e.headTimeMs, e.shallow, managed = e.path in managedPaths, bare = e.bare)
                     else trees += e to entry.github.lowercase()
                 }
             }
@@ -88,18 +91,18 @@ object RepoInventory {
         val groups = trees.groupBy({ it.second }, { it.first })
         for ((identity, folders) in groups) {
             val entry = names.entryOf(identity) ?: continue
-            val primary = folders.sortedWith(compareBy<InventoryScript.Entry> { it.path !in managedPaths }.thenBy { !names.carries(it.name, entry.github) }.thenByDescending { it.headTimeMs }.thenBy { it.path }).first()
+            val primary = folders.sortedWith(compareBy<InventoryScript.Entry> { it.path !in managedPaths }.thenBy { !names.carries(it.repoName, entry.github) }.thenByDescending { it.headTimeMs }.thenBy { it.path }).first()
             for (e in folders) {
                 val seg = LocalRepos.repoNameOf(e.origin)
                 val stale = seg.isNotBlank() && names.isOld(seg)
-                val misnamed = !names.carries(e.name, entry.github)
+                val misnamed = !names.carries(e.repoName, entry.github)
                 val cls = when {
                     e !== primary -> RepoClass.DUPLICATE
                     misnamed -> RepoClass.MISNAMED
                     stale -> RepoClass.STALE_ORIGIN
                     else -> RepoClass.REGISTERED
                 }
-                rows += Row(e.path, e.name, identity, entry, cls, e.origin, seg, e.branch, e.upstream, e.headTimeMs, e.shallow, stale, if (e !== primary) primary.path else null, folders.size, e.path in managedPaths)
+                rows += Row(e.path, e.name, identity, entry, cls, e.origin, seg, e.branch, e.upstream, e.headTimeMs, e.shallow, stale, if (e !== primary) primary.path else null, folders.size, e.path in managedPaths, e.bare)
             }
         }
         // Every registry repository no folder holds (the index repo `self` included; a pending one cannot be cloned).

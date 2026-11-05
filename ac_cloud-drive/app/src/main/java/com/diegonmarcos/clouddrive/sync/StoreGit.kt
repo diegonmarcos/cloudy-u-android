@@ -52,13 +52,24 @@ object StoreGit {
         "set -e; mkdir -p \"\$(dirname ${q(guestDir)})\"; " +
             authed("clone ${if (depth != null && depth > 0) "--depth $depth " else ""}${q(url)} ${q(guestDir)}")
 
+    /**
+     * #1491 the script of one declared clone mode (the git binary, the path JGit cannot take for a partial-clone filter). A single-branch
+     * mode reads the remote's default branch first (`ls-remote --symref`, same credential), then `clone ... --branch <default>`.
+     */
+    fun cloneModeScript(mode: com.diegonmarcos.cloudlib.gitcore.CloneMode, url: String, guestDir: String): String {
+        val auth = "T=\"\$(cat)\"; if [ -n \"\$T\" ]; then H=\"Authorization: Basic \$(printf '${com.diegonmarcos.cloudlib.gitui.GitConnectRules.USER}:%s' \"\$T\" | base64 | tr -d '\\n')\"; set -- -c \"http.extraHeader=\$H\"; else set --; fi; "
+        val branch = if (mode.singleBranch) "B=\"\$(git \"\$@\" ls-remote --symref ${q(url)} HEAD | sed -n 's#^ref: refs/heads/\\(.*\\)[[:space:]]HEAD\$#\\1#p' | head -n 1)\"; [ -n \"\$B\" ] || { echo 'no default branch' >&2; exit 1; }; " else ""
+        return "set -e; mkdir -p \"\$(dirname ${q(guestDir)})\"; " + auth + branch +
+            "git \"\$@\" " + mode.args(url, guestDir, if (mode.singleBranch) "\"\$B\"" else null) { q(it) }
+    }
+
     fun syncScript(guestDir: String, message: String, name: String, email: String, rebase: Boolean): String =
         "set -e; cd ${q(guestDir)}; git add -A; " +
             "git diff --cached --quiet || git -c user.name=${q(name)} -c user.email=${q(email)} commit -q -m ${q(message)}; " +
             authed(if (rebase) "pull --rebase" else "pull --no-rebase") + "; " + authed("push")
 
-    fun clone(ctx: Context, url: String, dir: File, token: String, depth: Int? = null): GitOpResult {
-        val r = shell(ctx).job(cloneScript(url, guest(ctx, dir), depth), stdin = token)
+    fun clone(ctx: Context, url: String, dir: File, token: String, depth: Int? = null, mode: com.diegonmarcos.cloudlib.gitcore.CloneMode? = null): GitOpResult {
+        val r = shell(ctx).job(if (mode != null) cloneModeScript(mode, url, guest(ctx, dir)) else cloneScript(url, guest(ctx, dir), depth), stdin = token)
         return GitOpResult(r.ok, if (r.ok) "cloned into ${dir.name} (in cld.termux)" else failed("clone in cld.termux", r), (r.out + "\n" + r.err).trim().takeLast(4000))
     }
 

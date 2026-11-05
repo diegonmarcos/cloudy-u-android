@@ -8,13 +8,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import com.diegonmarcos.clouddrive.R
-import com.diegonmarcos.clouddrive.ui.DriveCard
 import com.diegonmarcos.clouddrive.ui.DriveTags
 import com.diegonmarcos.clouddrive.ui.SectionHeader
-import com.diegonmarcos.clouddrive.ui.StatusLight
+import com.diegonmarcos.superapp.uikit.KitStoreCaption
+import com.diegonmarcos.superapp.uikit.KitStoreName
+import com.diegonmarcos.superapp.uikit.KitStoreRowLine
 
 /**
- * #1484 Fsync > Projects: the projects the synced folders belong to, one dense card each. No project source exists
+ * #1491 Projects (a bottom-nav page after Explorer; #1484 had it under Fsync): the projects the synced folders belong to, one dense KitStoreRow line each (ui-kit type ramp, no size literals). No project source exists
  * yet, so the list is DECLARED SAMPLE DATA ([SAMPLE_PROJECTS], flagged as such on screen); the day a real source
  * lands it replaces the list and nothing else changes. Identifiers say sample, never a banned word (S8 guard).
  */
@@ -31,7 +32,10 @@ fun ProjectsPage(modifier: Modifier = Modifier, projects: List<ProjectDecl> = SA
     LazyColumn(modifier.fillMaxSize().testTag(DriveTags.PROJECTS)) {
         item { SectionHeader(stringResource(R.string.projects_sample_header), count = projects.size) }
         items(projects, key = { it.id }) { p ->
-            DriveCard(p.name, light = StatusLight.State.UNKNOWN, summary = p.folder, summaryMonospace = true, tag = DriveTags.PROJECT_ROW)
+            KitStoreRowLine(Modifier.testTag(DriveTags.PROJECT_ROW)) {
+                KitStoreName(p.name, Modifier.weight(1f))
+                KitStoreCaption(p.folder, mono = true)
+            }
         }
     }
 }

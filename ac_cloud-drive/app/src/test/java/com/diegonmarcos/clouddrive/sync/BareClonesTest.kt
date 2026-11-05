@@ -46,11 +46,9 @@ class BareClonesTest {
         assertEquals("-C 'd' remote update --prune", BareClones.updateArgs("d", q))
     }
 
-    @Test fun `clone_bare is declared in both scopes at depth 1 and its own bare root`() {
+    @Test fun `#1491 the old clone_bare kinds are gone and the bare root stays a plain relative folder`() {
         val git = Declarations.parseGitPage(Json.parseToJsonElement(File(root, "build.json").readText()).jsonObject["ui"]!!.jsonObject["sync"]!!.jsonObject["git"])
-        val bare = git.depthActions.filter { it.kind == Declarations.DEPTH_CLONE_BARE }
-        assertEquals(setOf(Declarations.DEPTH_SCOPE_ALL, Declarations.DEPTH_SCOPE_REPO), bare.map { it.scope }.toSet())
-        assertTrue(bare.all { it.depth == 1 })
+        assertEquals(setOf(Declarations.DEPTH_CLONE_MODE, Declarations.DEPTH_KEEP), git.depthActions.map { it.kind }.toSet())
         assertTrue(BareClones.validRoot(git.bareRoot))
     }
 
