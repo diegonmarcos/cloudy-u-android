@@ -283,8 +283,8 @@ if (!(navPages('git') instanceof List) || navPages('git').isEmpty()) {
         throw new GradleException("build.json::ui.bottom_nav / ui.sections must declare the ${sid} page, a former Sync page (#1149, #1173)")
     }
 }
-// #1173 Mounts (Rclone, FUSE) carries its second row; #1216 Fsync's main page is the folder sync rules and declares no sub-pages (no strip).
-[fsync: [], mounts: ['rclone', 'fuse']].each { sid, ids ->
+// #1173 Mounts (Rclone, FUSE) carries its second row; #1484 Fsync = Folders | Agents | Projects and Home = Apps | Manage (Manage keeps its own Apps | Data).
+[fsync: ['folders', 'agents', 'projects'], mounts: ['rclone', 'fuse'], home: ['home_apps', 'manage']].each { sid, ids ->
     if ((navPages(sid) ?: []).collect { it.id } != ids) {
         throw new GradleException("build.json::ui.sections[${sid}].pages must declare ${ids} in that order (#1173)")
     }
@@ -315,8 +315,11 @@ def cloudClasses = navPages('explorer')?.find { it.id == 'cloud' }?.pages
 if (!(cloudClasses instanceof List) || cloudClasses.isEmpty()) {
     throw new GradleException("build.json::ui.sections[explorer].pages[cloud].pages must declare the volume classes (#604)")
 }
-['explorer', 'manage'].each { id ->
+['explorer', 'home'].each { id ->
     if (!(navPages(id) instanceof List) || navPages(id).isEmpty()) throw new GradleException("build.json::ui.sections[${id}].pages must declare its strip")
+}
+if (((navPages('home')?.find { it.id == 'manage' }?.pages ?: []).collect { it.id }) != ['apps', 'data']) {
+    throw new GradleException("build.json::ui.sections[home].pages[manage].pages must declare apps and data (#1484)")
 }
 def uiSectionsB64    = b64(uiDecl.sections)
 def uiBottomNav      = uiDecl.bottom_nav.join(',')
