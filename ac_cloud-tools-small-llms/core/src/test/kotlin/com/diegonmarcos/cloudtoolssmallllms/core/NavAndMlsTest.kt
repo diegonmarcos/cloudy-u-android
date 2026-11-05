@@ -60,7 +60,7 @@ class NavAndMlsTest {
         assertTrue(tiny.libs.all { it.id.startsWith("lib-ml-t-") })
         // The Tiny-ML TFLite lib and the application categories come from the ids the Store declares.
         assertTrue(tiny.libs.any { it.label.contains("TFLite") })
-        assertTrue(setOf("voice", "text", "image", "sensor", "tabular").containsAll(groups.flatMap { g -> g.libs.mapNotNull { it.application } }))
+        assertTrue(setOf("voice", "text", "image", "sensor", "tabular", "sound").containsAll(groups.flatMap { g -> g.libs.mapNotNull { it.application } }))
         assertNotNull(lite.libs.first { it.id == "lib-ml-l-image-mlkit" })
     }
 
