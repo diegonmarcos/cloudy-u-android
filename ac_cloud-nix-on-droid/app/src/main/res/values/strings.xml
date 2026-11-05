@@ -19,7 +19,7 @@
 
 
     <string name="adb_shell_preference_title">Shell broker</string>
-    <string name="adb_shell_preference_summary">rish runs through the SuperApp's shell broker: open the SuperApp to arm it</string>
+    <string name="adb_shell_preference_summary">rish runs through the SuperApp\'s shell broker: open the SuperApp to arm it</string>
 
     <!-- Termux RUN_COMMAND permission -->
     <string name="permission_run_command_label">Run commands in &TERMUX_APP_NAME; environment</string>
