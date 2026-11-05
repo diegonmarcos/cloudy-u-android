@@ -642,11 +642,10 @@ Coverage: 9 covered, 2 gaps — call_history, file:system CallLog and BlockedNum
 
 ## cloud-drive — `com.diegonmarcos.clouddrive`
 
-Module `ac_cloud-drive`; libs: lib-ai, lib-analytics, lib-auth, lib-bottomnav, lib-core, lib-crash, lib-databackend, lib-decisions-link, lib-devtools, lib-disk, lib-disk-scan, lib-editor-core, lib-file-editor, lib-fleetconfig-model, lib-git-core, lib-git-repos, lib-git-sync, lib-git-ui, lib-json-viewer, lib-local-serve, lib-media-viewer, lib-ml-l-image, lib-model-catalogue, lib-mounts, lib-ocr, lib-odf, lib-pdf, lib-perms, lib-rclone, lib-shared-store, lib-shizuku-adb-debug-tools, lib-sysdns, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-usb-drive, lib-web-core, lib-wysiwyg.
+Module `ac_cloud-drive`; libs: lib-ai, lib-analytics, lib-auth, lib-bottomnav, lib-core, lib-crash, lib-databackend, lib-decisions-link, lib-devtools, lib-disk, lib-disk-scan, lib-editor-core, lib-file-editor, lib-fleetconfig-model, lib-git-core, lib-git-repos, lib-git-sync, lib-git-ui, lib-json-viewer, lib-local-serve, lib-media-viewer, lib-ml-l-image, lib-model-catalogue, lib-mounts, lib-ocr, lib-odf, lib-pdf, lib-perms, lib-rclone, lib-shared-store, lib-shell-client, lib-sysdns, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-usb-drive, lib-web-core, lib-wysiwyg.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
-| `adb_shell` | prefs | device | no | Per-install random token shared with the local adb shell server (install identity), the flag that this install was ever paired with Wireless Debugging (drives the Cloud Store channel control: not paired vs down), and channel_mode, the owner's Privileged channel choice (local \| embedded \| shizuku \| auto; default local where the app owns a local server). |
 | `ai_composer` | prefs | config | yes | The shared AI chat's config bar: whether it is collapsed to its one compact chip, one boolean per app (key ai_composer_collapsed.<app>). A user layout choice, so it migrates with the app's settings. |
 | `ai_sessions` | file | config | GAP | libs:ai's chat history file (text and attachment names, never a token), carried whole so a new phone keeps the conversations. |
 | `auto_update` | prefs | config (keys: last_check_at→device, last_remote_bytes→device, last_remote_digest→device, unattended_pass→device) | yes | Auto-update toggles (enabled, require_silent/unmetered) are settings; last_check/remote digest/bytes/unattended_pass are state. |
@@ -674,7 +673,6 @@ Module `ac_cloud-drive`; libs: lib-ai, lib-analytics, lib-auth, lib-bottomnav, l
 | `updater_advisory` | prefs | device | no | Update advisory feed, snooze/shown/fail state per app. |
 | `updater_apk_cache_notes` | prefs | device | no | Notes about cached downloaded APKs. |
 | `user_registry` | prefs | config (keys: applied_at→device, peer_id→device) | yes | Registry JSON, identity_email and peer_id: user identity/peer registry applied on this device. |
-| `wd_keeper` | prefs | device | no | #1467 Keep wireless debugging on: the shared keeper's armed flag, write-permission flag and leader heartbeat; per-install state the keeper rebuilds from each app's switch, so it never migrates. |
 
 | file | class | doc |
 |---|---|---|

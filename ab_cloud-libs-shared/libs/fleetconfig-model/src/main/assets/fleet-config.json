@@ -3450,7 +3450,7 @@
         "lib-perms",
         "lib-rclone",
         "lib-shared-store",
-        "lib-shizuku-adb-debug-tools",
+        "lib-shell-client",
         "lib-sysdns",
         "lib-theme-background",
         "lib-ui-icons",
