@@ -181,7 +181,8 @@
             "strace",
             "tcpdump",
             "htop",
-            "yq-go"
+            "yq-go",
+            "exfatprogs"
           ],
           "_doc_attrs_linux_tools": "ab_cloud-terminal-store/store.json::linux_tools -- util-linuxMinimal (flock) and diffutils (cmp) are here because linux-store, baked into this zip next to the termux tree's copy, refuses to start without them, and store.json::toolset now declares both so the same bake gate that proves jq proves them. util-linuxMinimal rather than util-linux: the same flock without systemd, ncurses or the translations (#665 keeps the image lean).",
           "_doc_attrs_737": "#737 -- zsh, gh, curl, jq, ripgrep, fd, openssh, sops, age and which are here because ab_cloud-terminal-store/store.json::toolset now declares the tool set BOTH terminals ship, and this list is how the nix terminal installs it. That supersedes the #641 audit's 'deliberately left out' for curl, openssh and ripgrep: the bar is no longer 'a shell or an agent calls it by name' but 'the terminal is a complete agent workstation on first launch', and the termux terminal already carried all of them through the fleet tool belt. python3 stays out (#665). The names on PATH are NOT listed in `binaries` below -- they come from the toolset, and render-store.py refuses a repeat; `provides` still maps each attr to them so the declaration-level gate can prove every toolset name has an attr behind it before nix runs.",
@@ -345,6 +346,9 @@
             "yq-go": [
               "yq"
             ],
+            "exfatprogs": [
+              "mkfs.exfat"
+            ],
             "goose": [
               "goose"
             ],
@@ -429,7 +433,8 @@
             "strace",
             "tcpdump",
             "htop",
-            "yq"
+            "yq",
+            "mkfs.exfat"
           ]
         }
       }

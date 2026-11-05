@@ -74,7 +74,7 @@ fi
 # screen must not COMPOSE anything — it renders the value the engine's own function built.
 hasf "$J/settings/screens/TextEnhanceScreen.kt" 'PromptPreview(setting, AiRouter.enhanceStyle(LocalContext.current).prompt)' \
      "T2 Enhance settings DISPLAY AiRouter.enhanceStyle().prompt"
-hasf "$J/latin/TextEnhancer.kt" 'fun enhance(context: Context, connection: RichInputConnection) = run(context, connection, AiRouter.enhanceStyle(context))' \
+hasf "$J/latin/TextEnhancer.kt" 'run(context, connection, AiRouter.enhanceStyle(context), AiTaskRouting.route(context, AiTask.ENHANCE))' \
      "T2 the ENHANCE key SENDS AiRouter.enhanceStyle(context)"
 hasf "$J/latin/EnhanceBarView.kt" 'val style = AiRouter.enhanceStyle(context)' \
      "T2 the Enhance bar SENDS AiRouter.enhanceStyle(context)"

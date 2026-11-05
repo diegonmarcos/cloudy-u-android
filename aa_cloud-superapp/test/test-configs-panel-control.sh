@@ -96,7 +96,7 @@ run  = [p['id'] for p in pages if p.get('subgroup') == 'Launcher']
 if gone:                     print('retired page(s) still declared: %r' % gone)
 elif run[-2:] != ['onehand', 'notify']:
                              print('Notify is not the page right after One-Hand: %r' % (run,))
-elif 'about' not in ids:     print('no `about` page')
+elif 'app-about' not in ids: print('no `app-about` page')
 else:                        print('OK')
 PY
 )" "no home/push/panel/control/launcher page; the Launcher group ends ..., onehand, notify"
@@ -379,8 +379,14 @@ echo "== T12: the tab a strip OPENS ON is the first declared tab, and nothing el
 land_fail=""
 grep -q 'pages.indexOfFirst { it.action.isBlank() }.coerceAtLeast(0)' "$TABS" \
   || land_fail="$land_fail no-first-tab-fallback"
-grep -qE '"default_tab"|"initial_tab"|"selected_tab"' "$BJ" \
-  && land_fail="$land_fail second-source-of-truth-in-json"
+# only the Launcher strip is asked: the Mesh strip (section wg) declares its own default_tab, and test-mesh-page.sh requires it
+python3 - "$BJ" <<'PY' || land_fail="$land_fail second-source-of-truth-in-json"
+import json, sys
+secs = json.load(open(sys.argv[1]))['ui']['sections']
+cfg = next(s for s in secs if s['id'] == 'config')
+bad = [k for p in cfg['pages'] if p.get('subgroup') == 'Launcher' for k in p if k in ('default_tab', 'initial_tab', 'selected_tab')]
+sys.exit(1 if bad else 0)
+PY
 grep -qE 'defaultTab|initialTab' "$SECTIONS" \
   && land_fail="$land_fail second-source-of-truth-in-kotlin"
 # WHICH design this app has, pinned so changing it has to be deliberate: the

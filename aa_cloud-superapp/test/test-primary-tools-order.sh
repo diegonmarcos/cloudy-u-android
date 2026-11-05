@@ -34,7 +34,8 @@ grep -q 'FOREGROUND_SERVICE_SPECIAL_USE' "$SRC/AndroidManifest.xml" && ok "foreg
 echo "== T4: persistence store declared in fleet-config.json =="
 FC="$ROOT/ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json"
 eq "light_prefs class" "$(jq -r '.stores.light_prefs.class // ""' "$FC")" "config"
-eq "light_prefs used_by" "$(jq -r '.stores.light_prefs.used_by | join(",")' "$FC")" "aa_cloud-superapp"
+# the store is the lib-light module's (generated used_by names the owner of the file, not the app that embeds the lib)
+eq "light_prefs used_by" "$(jq -r '.stores.light_prefs.used_by | join(",")' "$FC")" "lib-light"
 grep -q 'getSharedPreferences("light_prefs"' "$ROOT/ab_cloud-libs-shared/libs/light/src/main/java/com/diegonmarcos/superapp/light/LightAndroid.kt" && ok "code opens the declared file" || bad "code does not open light_prefs"
 
 echo; echo "== RESULT: $PASS passed, $FAIL failed =="

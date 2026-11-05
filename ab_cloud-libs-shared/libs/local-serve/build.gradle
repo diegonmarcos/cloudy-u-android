@@ -56,5 +56,7 @@ dependencies {
     implementation 'androidx.compose.foundation:foundation'
     implementation 'androidx.compose.material3:material3'
 
+    implementation project(':libs:web-core')   // #1371 the fleet's one web view (CloudWeb, WebProfile)
+
     testImplementation 'junit:junit:4.13.2'
 }

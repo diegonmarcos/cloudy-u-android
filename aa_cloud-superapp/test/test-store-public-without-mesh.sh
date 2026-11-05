@@ -140,7 +140,7 @@ checks = [
     ("the check HEADs the ABI release asset", "java.net.URL(url)" in fk and "val url = app.abiReleaseUrl" in fk),
     ("the check reads the .sha256 sidecar beside it", 'java.net.URL(app.abiReleaseUrl + ".sha256")' in fk),
     ("the release answers before the registry", "releaseStatus(app, installed)?.let { return it }" in fk),
-    ("the download tries the public release first", re.search(r"sources: List<ApkSource> = listOf\(ReleaseSource,", fk) is not None),
+    ("the public release is the first fallback after the mesh leg (#1093)", re.search(r"sources: List<ApkSource> = listOf\(MeshMirrorSource, ReleaseSource,", fk) is not None),
     ("the release download sends no credential", "val url = app.abiReleaseUrl" in src
         and re.search(r"Download\.toFile\((?:(?!\)\n).)*headers\s*=", src, re.S) is None),
 ]
@@ -159,15 +159,15 @@ def strings_of(o, key=""):
     elif isinstance(o, list):
         for v in o: yield from strings_of(v, key)
     elif isinstance(o, str): yield o
-# The declared mesh leg: exempt only while it is the LAST download source.
+# The declared mesh leg: exempt only while it is the FIRST download source and the public legs follow it (#1093: mesh first, public fallback).
 upd_src = os.path.join(libs, "updater/src/main/java/com/diegonmarcos/superapp/updater")
 srcs = re.search(r"val sources: List<ApkSource> = listOf\(([^)]*)\)", code(read(os.path.join(upd_src, "Fleet.kt"))))
 order = [x.strip() for x in srcs.group(1).split(",")] if srcs else []
-if order and order[-1] == "MeshMirrorSource" and {"ReleaseSource", "GhcrSource"} <= set(order[:-1]):
-    ok("the mesh leg is tried last, after the public legs: %s" % " -> ".join(order))
+if order and order[0] == "MeshMirrorSource" and {"ReleaseSource", "GhcrSource"} <= set(order[1:]):
+    ok("the mesh leg is tried first, the public legs follow it: %s" % " -> ".join(order))
     mesh_leg_ok = True
 else:
-    bad("Fleet's download sources do not keep MeshMirrorSource last after the public legs: %s" % order)
+    bad("Fleet's download sources do not keep MeshMirrorSource first with the public legs after it: %s" % order)
     mesh_leg_ok = False
 MESH_LEG = re.compile(r"^\s*const val BASE(?:_WG)? = \"[^\"]*\"\s*$", re.M)
 def exempt(f, text):

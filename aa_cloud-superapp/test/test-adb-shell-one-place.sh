@@ -217,7 +217,7 @@ mutate "Store bar reconnects by itself" ab_cloud-libs-shared/libs/appstore/src/m
 mutate "Permissions page toggles Wireless debugging" $A/configs/PermissionsFragment.kt '' $'\nfun w(c: android.content.Context) { WirelessDebugging.set(c, true) }\n' || M=$((M+1))
 mutate "a new place opens Developer options" $A/devcontrol/DevControlFragment.kt '' $'\nval i = android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS)\n' || M=$((M+1))
 mutate "Shizuku prompt in a screen" $A/configs/PermissionsFragment.kt '' $'\nfun s(c: android.content.Context) { ShizukuStatus.act(c) }\n' || M=$((M+1))
-mutate "a stale allowlist entry" $A/configs/DeviceControls.kt 'WirelessDebugging.set(' 'WirelessDebugging.isOn(' || M=$((M+1))
+mutate "a stale allowlist entry" ab_cloud-libs-shared/libs/wifi/src/main/java/com/diegonmarcos/superapp/wifi/WifiUi.kt 'Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS' 'Settings.ACTION_WIFI_SETTINGS' || M=$((M+1))
 mutate "Termux loses its page entry" ac_cloud-termux/app/src/main/java/com/termux/app/activities/SettingsActivity.java 'AdbShellLink.INSTANCE.open(' 'Unit.open(' || M=$((M+1))
 mutate "Store loses its page" $S/ConfigsPage.kt 'AdbShellHostedPage()' 'Unit' || M=$((M+1))
 mutate "the SuperApp hosts a page of its own" $A/configs/AdbShellFragment.kt 'AdbShellHostedPage()' 'AdbShellScreen(dark = true)' || M=$((M+1))

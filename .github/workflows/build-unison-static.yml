@@ -71,5 +71,6 @@ jobs:
         run: |
           TAG="unison-static-${VER}-${REV}"
           gh release create "$TAG" "out/unison-${VER}-linux-aarch64-musl-static.tar.gz" \
+            --latest=false \
             --target "$GITHUB_SHA" --title "Unison ${VER} static arm64 (${REV})" \
             --notes "Built from bcpierce00/unison v${VER} on Alpine musl, static, by build-unison-static.yml. Pinned by sha256 in unison-binary.json."

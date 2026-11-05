@@ -41,6 +41,7 @@
     {"app": "Cloud MyTerminal", "usage": "terminal frontend", "profile": "APP_PAGE", "file": "ac_cloud-myterminal/hub/src/main/java/com/diegonmarcos/ide/MainActivity.kt"},
     {"app": "Cloud MyTerminal", "usage": "native browser pane", "profile": "BROWSER", "file": "ac_cloud-myterminal/hub/src/main/java/com/diegonmarcos/ide/MainActivity.kt"},
     {"app": "C3 Morpheus", "usage": "Dagu and Paca SPAs", "profile": "APP_PAGE", "file": "ac_c3-morpheus/app/src/main/java/com/diegonmarcos/morpheus/MainActivity.kt"},
+    {"app": "Cloud Drive", "usage": "Editor served mode (loopback page)", "profile": "APP_PAGE", "file": "ab_cloud-libs-shared/libs/local-serve/src/main/java/com/diegonmarcos/cloudlib/localserve/ServedPage.kt"},
     {"app": "C3 Watchdog", "usage": "watchdog dashboard", "profile": "APP_PAGE", "file": "ac_c3-watchdog/app/src/main/java/com/diegonmarcos/watchdog/MainActivity.kt"}
   ]
 }

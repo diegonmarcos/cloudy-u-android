@@ -8,7 +8,7 @@
     "pinned": "Non-GUI, but bound to the consuming process by an OS boundary no IPC fixes; the reason is required.",
     "logic": "Non-GUI logic still compiled into its apps: the migration backlog. Each one is a candidate engine."
   },
-  "backlog_baseline": 31,
+  "backlog_baseline": 29,
   "libs": {
     "ai":                      { "class": "gui",      "why": "#823 the fleet's AI chat (renamed from search-page) in Compose: the page, the consent card, the assistant panel, the gateway and OpenRouter backends and the shared ai.json contract, hosted and themed by cloud-search, cloud-browser, cloud-drive and cloud-tools-small-llms. It stores nothing of its own (sessions go in the host's AiSessionStore), reads no OpenRouter key (the app hands an AiTokenSource) and ships no APK." },
     "analytics":               { "class": "contract", "why": "#871 engine-apk-split move 7: the contract half of the analytics sink -- the IAnalyticsSink wire, the SinkLink client, and what is per app and must survive an absent engine (the bounded per-sink queue, the consent flag, the visitor id, the site ids baked from the consuming app's build.json). The HTTP POST and the Umami/Matomo wire formats are the engine's (libs:analytics-sink). Stays dependency-free (no libs:core, no libs:databackend) because the upstream forks compile it with no shared-module graph, so the wire is its own one-method AIDL.", "budget_lines": 460 },

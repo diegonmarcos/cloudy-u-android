@@ -83,7 +83,7 @@ login)
 release)
     : "${P_TAG:?tag required}" "${P_FILE:?file required}"
     export GH_TOKEN="$P_TOKEN"
-    gh release view "$P_TAG" >/dev/null 2>&1 || gh release create "$P_TAG" --title "$P_TAG" --target "${P_SHA:-main}" --notes "$P_TAG"
+    gh release view "$P_TAG" >/dev/null 2>&1 || gh release create "$P_TAG" --latest=false --title "$P_TAG" --target "${P_SHA:-main}" --notes "$P_TAG"
     # shellcheck disable=SC2086
     gh release upload "$P_TAG" $P_FILE --clobber
     ;;

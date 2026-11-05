@@ -170,7 +170,7 @@ private fun Cell(text: String, modifier: Modifier, color: Color, style: TextStyl
 private val colName = Modifier.width(208.dp)
 private val colPrice = Modifier.width(72.dp)
 private val colSize = Modifier.width(56.dp)
-private val colQuant = Modifier.width(140.dp)   // "fp4/fp8/mxfp4/nvfp4" is 19 chars; the tester holds every width to its longest cell
+private val colQuant = Modifier.width(168.dp)   // "bf16/fp32/fp4/fp8/nvfp4" is 23 chars; the tester holds every width to its longest cell
 private val colTrained = Modifier.width(880.dp)
 private val colNote = Modifier.width(576.dp)
 private val colSlug = Modifier.widthIn(min = 280.dp)

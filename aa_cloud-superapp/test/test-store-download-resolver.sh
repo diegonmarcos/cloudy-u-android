@@ -10,7 +10,7 @@
 # promises; the hook that names it only knew the routes StoreDns had WALKED,
 # and nothing was walked when the system lookup went straight to the socket.
 #
-#   R1  the three-rung ladder stays: release, ghcr, mesh — the mesh leg last
+#   R1  the three-rung ladder stays: mesh, release, ghcr — mesh first (#1093, like every fleet endpoint), the public legs after it
 #   R2  StoreDns names the resolver that was asked, never null (the "unknown"
 #       wording stays reserved for a host without the hook). #874: that
 #       resolver is the fleet DNS bridge, and a miss lists the routes it tried
@@ -35,9 +35,9 @@ for f in "$FLEET" "$SRC/ApkSource.kt" "$SRC/DownloadFailure.kt" "$STOREDNS" "$MA
   [ -f "$f" ] || { echo "ERROR: missing $f" >&2; exit 2; }
 done
 
-echo "== R1: the ladder is release → ghcr → mesh, mesh last =="
-grep -q 'listOf(ReleaseSource, GhcrSource, MeshMirrorSource)' "$FLEET" \
-  && ok "Fleet.sources = release, ghcr, mesh" || bad "Fleet's source list is not release, ghcr, mesh"
+echo "== R1: the ladder is mesh → release → ghcr, mesh first =="
+grep -q 'listOf(MeshMirrorSource, ReleaseSource, GhcrSource)' "$FLEET" \
+  && ok "Fleet.sources = mesh, release, ghcr" || bad "Fleet's source list is not mesh, release, ghcr"
 grep -q 'declined += "${source.name} → ${com.diegonmarcos.superapp.updater.source.DownloadFailure.describe(t)}"' "$FLEET" \
   && ok "each declined rung is named with DownloadFailure.describe" || bad "a declined rung no longer carries its classified reason"
 grep -q '"DNS: cannot resolve ${host(t) ?: "the download host"} (active resolver: ${resolver?.takeIf { it.isNotBlank() } ?: "unknown"})"' "$SRC/DownloadFailure.kt" \

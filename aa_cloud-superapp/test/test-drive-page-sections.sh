@@ -267,7 +267,7 @@ import re, sys
 src = open(sys.argv[1]).read().splitlines()
 try:
     start = next(i for i, l in enumerate(src)
-                 if l.startswith("    private fun launchUri(uri: String) {"))
+                 if l.startswith(("    private fun launchUri(uri: String) {", "    internal fun launchUri(uri: String) {")))
 except StopIteration:
     print("launchUri is gone or was renamed — this whole check is asserting nothing")
     raise SystemExit

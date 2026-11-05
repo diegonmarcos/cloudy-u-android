@@ -63,8 +63,8 @@ class DraftAnswerTest {
     }
 
     @Test fun promptIsTheReplyTaskPlusTheSharedLines() {
-        val p = DraftAnswer.systemPrompt("PRE.", listOf("Use a formal, professional tone.", "", "Reply in Spanish."))
-        assertEquals("PRE. Draft a reply to this message. Use a formal, professional tone. Reply in Spanish.", p)
+        val p = DraftAnswer.systemPrompt("PRE.", listOf("TONE-A.", "", "LANG-B."))
+        assertEquals("PRE. Draft a reply to this message. TONE-A. LANG-B.", p)
     }
 
     @Test fun promptFallsBackToTheDefaultPreambleAndNeverTheRewriteOne() {
