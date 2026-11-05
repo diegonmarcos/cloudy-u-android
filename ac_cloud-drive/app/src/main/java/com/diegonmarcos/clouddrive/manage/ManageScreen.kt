@@ -1,8 +1,6 @@
 package com.diegonmarcos.clouddrive.manage
 
-import android.content.Intent
-import android.net.Uri
-import android.provider.Settings
+import com.diegonmarcos.superapp.perms.PermsPages
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -135,7 +133,7 @@ fun AppsPage(prefs: DrivePrefs, collect: (android.content.Context) -> AppSnapsho
         AppsTable(rows, column, descending, onSort = { c ->
             if (c == column) descending = !descending else { column = c; descending = c != AppColumn.NAME }
             prefs.setAppsSort(column.name, descending)
-        }, onOpen = { pkg -> runCatching { ctx.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$pkg")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } })
+        }, onOpen = { pkg -> PermsPages.openAppInfo(ctx, pkg) })
     }
 }
 

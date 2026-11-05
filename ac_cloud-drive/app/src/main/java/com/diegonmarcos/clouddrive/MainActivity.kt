@@ -9,7 +9,6 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.DocumentsContract
-import android.provider.Settings
 import android.webkit.MimeTypeMap
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -309,10 +308,8 @@ class MainActivity : ComponentActivity(), DriveActions {
 
     override fun requestStorageAccess() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return
-        // #639 the per-package toggle first; the fleet-wide list only if no activity claims it,
-        // so a refused deep link still lands somewhere the grant can be given.
-        runCatching { startActivity(Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, Uri.parse("package:$packageName"))) }
-            .onFailure { runCatching { startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)) } }
+        // #1515 All files access is granted in Configs > Perms (libs:perms): open the page on that row.
+        com.diegonmarcos.superapp.perms.PermsLink.open(this, "files", listOf("all_files"))
     }
 
     override fun requestTreeGrant() {

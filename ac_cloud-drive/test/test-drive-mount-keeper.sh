@@ -42,7 +42,8 @@ echo "── K4 permissions ──"
 for p in FOREGROUND_SERVICE FOREGROUND_SERVICE_SPECIAL_USE RECEIVE_BOOT_COMPLETED REQUEST_IGNORE_BATTERY_OPTIMIZATIONS WAKE_LOCK POST_NOTIFICATIONS; do
   chk "uses-permission $p" grep -q "android.permission.$p\"" "$MAN"
 done
-chk "battery exemption request intent" grep -q 'ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS' "$SRC/mounts/MountPermissions.kt"
+chk "battery exemption is the Perms battery_opt row (granted in Configs > Perms, #1515)" grep -q 'listOf("battery_opt")' "$SRC/mounts/MountPermissions.kt"
+chk "the mount card asks nothing itself" bash -c "! grep -q 'ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS\|RequestPermission' '$SRC/mounts/MountKeeperCard.kt' '$SRC/mounts/MountPermissions.kt'"
 chk "permission card on Sync > Mounts" grep -q 'MountKeeperCard()' "$SRC/sync/RcloneMountsScreens.kt"
 
 echo "── K5 declarative ──"

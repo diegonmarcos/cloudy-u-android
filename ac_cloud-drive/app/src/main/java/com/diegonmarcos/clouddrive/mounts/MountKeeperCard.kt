@@ -1,8 +1,6 @@
 package com.diegonmarcos.clouddrive.mounts
 
-import android.Manifest
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
+import com.diegonmarcos.superapp.perms.PermsLink
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -46,10 +44,6 @@ fun MountKeeperCard() {
     var facts by remember { mutableStateOf(MountPermissions.facts(ctx)) }
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     LaunchedEffect(lifecycle) { lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) { facts = MountPermissions.facts(ctx) } }
-    val notifLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        if (!granted) runCatching { ctx.startActivity(MountPermissions.fixIntent(ctx, MountPermissions.Need.NOTIFICATIONS, policy)) }
-        facts = MountPermissions.facts(ctx)
-    }
     val missing = MountPermissions.missing(facts, policy)
     val live = status.count { it.state == MountSessions.State.CONNECTED }
 
@@ -76,8 +70,9 @@ fun MountKeeperCard() {
                         if (need == MountPermissions.Need.OEM_BATTERY_GUIDE && guide != null) Text(guide.steps, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     TextButton(onClick = {
-                        if (need == MountPermissions.Need.NOTIFICATIONS && facts.sdk >= 33) notifLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                        else runCatching { ctx.startActivity(MountPermissions.fixIntent(ctx, need, policy)) }
+                        // #1515 notifications and the battery exemption are granted in Configs > Perms: open it on that row.
+                        if (need == MountPermissions.Need.OEM_BATTERY_GUIDE) runCatching { ctx.startActivity(MountPermissions.oemGuideIntent(ctx, policy)) }
+                        else PermsLink.open(ctx, "mounts", MountPermissions.permsIds(need))
                     }) { Text(stringResource(R.string.mount_keeper_fix)) }
                     if (need == MountPermissions.Need.OEM_BATTERY_GUIDE) TextButton(onClick = { MountPermissions.confirmOemGuide(ctx); facts = MountPermissions.facts(ctx) }) { Text(stringResource(R.string.mount_keeper_guide_done)) }
                 }

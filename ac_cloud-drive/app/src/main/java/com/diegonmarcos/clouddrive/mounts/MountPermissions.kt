@@ -1,19 +1,17 @@
 package com.diegonmarcos.clouddrive.mounts
 
+import com.diegonmarcos.superapp.perms.PermsPages
 import android.Manifest
-import android.annotation.SuppressLint
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
-import android.provider.Settings
 
 /**
  * What a mount needs from the system to LAST, and the one-tap fix for each gap. The decision is pure
- * ([missing]) so it is unit-tested; [facts] and [fixIntent] are the thin Android half.
+ * ([missing]) so it is unit-tested; [facts] and [oemGuideIntent] are the thin Android half.
  */
 object MountPermissions {
     enum class Need { NOTIFICATIONS, BATTERY_OPTIMIZATION, OEM_BATTERY_GUIDE }
@@ -52,21 +50,19 @@ object MountPermissions {
 
     fun confirmOemGuide(ctx: Context) = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(OEM_CONFIRMED, true).apply()
 
-    /**
-     * The intent that fixes [need]. NOTIFICATIONS is a runtime permission: the caller requests
-     * Manifest.permission.POST_NOTIFICATIONS through its launcher and uses this only as the fallback
-     * (app notification settings) once the user has denied it for good.
-     */
-    @SuppressLint("BatteryLife")   // a file manager holding live remote mounts is a declared exemption use
-    fun fixIntent(ctx: Context, need: Need, policy: MountPolicy): Intent = when (need) {
-        Need.NOTIFICATIONS -> Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, ctx.packageName)
-        Need.BATTERY_OPTIMIZATION -> Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:" + ctx.packageName))
-        Need.OEM_BATTERY_GUIDE -> {
-            val guide = policy.guideFor(Build.MANUFACTURER ?: "")
-            val cn = guide?.intentComponent?.takeIf { it.contains('/') }?.let { ComponentName.unflattenFromString(it) }
-            val oem = cn?.let { Intent().setComponent(it) }
-            if (oem != null && oem.resolveActivity(ctx.packageManager) != null) oem
-            else Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + ctx.packageName))
-        }
-    }.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    /** The catalogue ids of the Perms rows that fix [need] (#1515: notifications and the battery exemption are granted in Configs > Perms). */
+    fun permsIds(need: Need): List<String> = when (need) {
+        Need.NOTIFICATIONS -> listOf("notifications")
+        Need.BATTERY_OPTIMIZATION -> listOf("battery_opt")
+        Need.OEM_BATTERY_GUIDE -> emptyList()
+    }
+
+    /** The OEM's own battery screen when the guide names one and it resolves, else this app's App info. */
+    fun oemGuideIntent(ctx: Context, policy: MountPolicy): Intent {
+        val guide = policy.guideFor(Build.MANUFACTURER ?: "")
+        val cn = guide?.intentComponent?.takeIf { it.contains('/') }?.let { ComponentName.unflattenFromString(it) }
+        val oem = cn?.let { Intent().setComponent(it) }
+        return (if (oem != null && oem.resolveActivity(ctx.packageManager) != null) oem else PermsPages.appInfoIntent(ctx.packageName))
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    }
 }

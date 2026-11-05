@@ -1,8 +1,7 @@
 package com.diegonmarcos.clouddrive.sync
 
+import com.diegonmarcos.superapp.perms.PermsLink
 import android.content.Context
-import android.content.Intent
-import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import androidx.compose.foundation.layout.padding
@@ -84,15 +83,8 @@ object EngineGrant {
     /** The engine's launcher label in words (what Settings lists: "Cloud Git Sync Engine"), never its package or fleet id. */
     fun label(ctx: Context): String = com.diegonmarcos.superapp.perms.Perms.appLabel(ctx, PACKAGE)
 
-    /** The settings screens, in order: the engine's own All files access toggle, the list, its App info. */
-    fun intents(pkg: String = PACKAGE): List<Intent> = listOf(
-        Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, Uri.parse("package:$pkg")),
-        Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION),
-        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$pkg")),
-    )
-
-    /** Opens the first settings screen that starts. */
-    fun open(ctx: Context): Boolean = intents().any { i -> runCatching { ctx.startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }.isSuccess }
+    /** #1515 the grant is made in Configs > Perms (the all_files row), never from here: opens the page on that row. */
+    fun open(ctx: Context): Boolean { PermsLink.open(ctx, "git", listOf("all_files")); return true }
 
     const val TAG_BANNER = "engine_grant_banner"
 }

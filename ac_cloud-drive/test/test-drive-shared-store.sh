@@ -195,33 +195,29 @@ if with_block == 0:
 sys.exit(1 if bad else 0)
 PYTHON
 
-# ── #639 — the store is unreachable without All-Files-Access, so the app must
-#           TAKE the user to the toggle, never describe where it lives. The
-#           per-package screen first; the fleet-wide list only when no activity
-#           claims the per-package one. A swallowed failure is the defect: the
-#           user is left with an empty Files tab and no way given to fix it.
+# ── #639 / #1515 — the store is unreachable without All-Files-Access, so the app must TAKE the user to the toggle,
+#           never describe where it lives. The grant itself is made in Configs > Perms (libs:perms: per-package screen
+#           first, the fleet-wide list as fallback, from the catalogue's all_files entry); requestStorageAccess() opens
+#           that page on the all_files row. No other code in the app starts an All-files settings intent.
 echo
-echo "── #639 the all-files-access ask is a deep link, per-package first ──"
+echo "── #639 the all-files-access ask deep-links to the Perms row ──"
 MAIN="$APP/app/src/main/java/com/diegonmarcos/clouddrive/MainActivity.kt"
 deep_linked() {
-    grep -q 'ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION' "$1" \
-        && grep -q 'onFailure' "$1" \
-        && grep -q 'ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)' "$1"
+    grep -q 'PermsLink.open(this, "files", listOf("all_files"))' "$1" \
+        && ! grep -q 'ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION\|ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION' "$1"
 }
 if deep_linked "$MAIN"; then
-    pass "requestStorageAccess() opens this package's All-Files-Access screen and falls back to the fleet-wide list only if that is refused"
+    pass "requestStorageAccess() opens Configs > Perms on the all_files row and starts no settings intent itself"
 else
-    fail "requestStorageAccess() has no per-package deep link with a fleet-wide fallback — a refused intent would be swallowed and the user told nothing (#639)"
+    fail "requestStorageAccess() does not deep-link to the Perms all_files row (or still starts its own All-files intent) (#639, #1515)"
 fi
-# MUTATION PROOF: delete the fallback and the assertion above must die. Without
-# this, the grep could be satisfied by the per-package line alone and a silent
-# runCatching would pass as a working ask.
+# MUTATION PROOF: delete the deep link and the assertion above must die.
 MUT639="$(mktemp)"
-grep -v 'ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)' "$MAIN" > "$MUT639"
+grep -v 'PermsLink.open(this, "files"' "$MAIN" > "$MUT639"
 if deep_linked "$MUT639"; then
-    fail "MUTATION SURVIVED: removing the fleet-wide fallback left the deep-link assertion green — it proves nothing"
+    fail "MUTATION SURVIVED: removing the Perms deep link left the assertion green — it proves nothing"
 else
-    pass "mutation proved: removing the fleet-wide fallback makes the assertion above go red"
+    pass "mutation proved: removing the Perms deep link makes the assertion above go red"
 fi
 rm -f "$MUT639"
 if grep -qE 'Settings *(▸|→|>)' "$APP/app/src/main/res/values/strings.xml"; then
