@@ -364,8 +364,7 @@
       "class": "config",
       "doc": "#802 the browser's settings catalogue (ac_cloud-browser/build.json::ui.browser.settings): search engine, homepage, desktop site, text size, JavaScript, images, third-party cookies; one typed key per declared setting. Served by /api/browser/settings.",
       "used_by": [
-        "lib-browser",
-        "lib-headless-browser"
+        "lib-browser"
       ],
       "keys": {
         "download_dir": "device",
@@ -2435,7 +2434,8 @@
       "helper": "ab_cloud-libs-shared/libs/apify/src/main/java/com/diegonmarcos/superapp/apify/ApifyBackends.kt",
       "used_by": [
         "lib-apify"
-      ]
+      ,
+        "lib-headless-browser"]
     },
     "speedmeter": {
       "kind": "prefs",
