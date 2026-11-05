@@ -462,12 +462,12 @@
       "workflow": "ship-cloud-termux.yml"
     },
     "ac_cloud-tools-small-llms": {
-      "first_test": "NEW APP. Has 2 shell testers (test-tools-app.sh: the icon vocabulary, the token only in EncryptedSharedPreferences under a Keystore AES-256-GCM key and declared secret, nothing logged, no fleet Account key read and no DecisionsLink (decisions-use D5), recorded fixtures only, no key-shaped literal, every section id declared, each with a planted mutation that must turn it red; test-fleet-setup.sh) and a JVM suite with a PIT gate (core ToolsCoreTest: build.json::tools through the parser, every worker and chat router priced by the shared catalogue.json, Jev and chat router decisions valid / invalid / low-confidence -> clarify from recorded OpenRouter answers, worker replies, costs from usage and the day/month ledger, the token vault). Not tested: the Compose screens (no Robolectric suite yet) and a live OpenRouter call (no token in CI).",
+      "first_test": "NEW APP. Has 2 shell testers (test-tools-app.sh: the icon vocabulary, the token only in EncryptedSharedPreferences under a Keystore AES-256-GCM key and declared secret, nothing logged, no fleet Account key read and no DecisionsLink (decisions-use D5), recorded fixtures only, no key-shaped literal, every section id declared, each with a planted mutation that must turn it red; test-fleet-setup.sh) and a JVM suite with a PIT gate (core ToolsCoreTest: build.json::tools through the parser, every worker and chat router priced by the shared catalogue.json, Jev and chat router decisions valid / invalid / low-confidence -> clarify from recorded OpenRouter answers, worker replies, costs from usage, the MLs groups derived from the Cloud Store fleet file, the nav order, no Costs and the Apps filter with every app classified (NavAndMlsTest), the token vault). Not tested: the Compose screens (no Robolectric suite yet) and a live OpenRouter call (no token in CI).",
       "shell_testers": 3,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 1,
+      "unit_test_sources": 2,
       "workflow": "ship-cloud-tools-small-llms.yml"
     },
     "ac_cloud-tools-small-llms/web": {
