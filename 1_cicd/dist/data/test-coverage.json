@@ -535,11 +535,11 @@
     },
     "ad_CG-Omniverse": {
       "first_test": "NEW APP (#1335, Lnktree family). Has 3 shell testers: test-lnktree-app.sh (the declaration, Avatar | Galaxy | Store as page kinds, the shared bottom nav / kit / icons, no typed address, the declared kinds against the renderer, Compose only; mutations proven red), test-store-data.sh (data/store.json is exactly what data/gen-store.py makes of data/fwa.md, every row carried over, the generator refuses a malformed row; mutations proven red) and test-fleet-setup.sh, plus a JVM suite (PagesTest, StoreTest: the filter mapping and chips, each rule killed by a mutant of cg-omniverse-proof.yml; AvatarTest: the declared options, defaults and saved configuration) run by the ship workflow. Not tested: the Compose screens and the WebGL scenes beyond the emulator screenshots of cg-omniverse-proof.yml.",
-      "shell_testers": 3,
+      "shell_testers": 4,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 6,
+      "unit_test_sources": 8,
       "workflow": "ship-cg-omniverse.yml"
     },
     "ad_Capital-Stack-FinTerminal": {
