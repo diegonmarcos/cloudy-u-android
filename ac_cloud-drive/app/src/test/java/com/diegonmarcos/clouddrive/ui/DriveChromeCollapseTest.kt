@@ -137,6 +137,6 @@ class DriveChromeCollapseTest {
     @Test fun `git page collapses and restores the chrome`() = check("git", strip = true)
     @Test fun `fsync page collapses and restores the chrome`() = check("fsync", strip = false)
     @Test fun `mounts page collapses and restores the chrome`() = check("mounts", strip = true)
-    @Test fun `manage page collapses and restores the chrome`() = check("manage", strip = false)
+    @Test fun `editor page collapses and restores the chrome`() = check("editor", strip = false)
     @Test fun `home page collapses and restores the chrome`() = check("home", strip = false)
 }

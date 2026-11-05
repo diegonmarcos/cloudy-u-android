@@ -50,9 +50,10 @@ class DeclarationsTest {
 
     @Test fun tabsDeclareTheOwnersNavOrder() {
         val tabs = Declarations.tabsOf(nav())
-        // #1149 the owner's bottom nav: Explorer, Manager, Agents, Home, Git, Fsync (#1173: the old Rsync), Mounts. AI and Configs left it for the top bar.
-        assertEquals(listOf("explorer", "manage", "agents", "home", "git", "fsync", "mounts"), tabs.map { it.id })
-        assertEquals(listOf("Explorer", "Manage", "Agents", "Home", "Git", "Fsync", "Mounts"), tabs.map { it.label })
+        // #1484 the owner's bottom nav: Explorer, Editor, Home, Git, Fsync, Mounts. Manage moved into Home and Agents into Fsync; AI and Configs stay on the top bar.
+        assertEquals(listOf("explorer", "editor", "home", "git", "fsync", "mounts"), tabs.map { it.id })
+        assertEquals(listOf("Explorer", "Editor", "Home", "Git", "Fsync", "Mounts"), tabs.map { it.label })
+        assertTrue("Manage and Agents are no sections of their own", nav().section("manage") == null && nav().section("agents") == null)
         assertTrue("AI and Configs are sections the top bar opens, not island items", tabs.none { it.id == "ai" || it.id == "configs" } && nav().section("ai") != null && nav().section("configs") != null)
         assertEquals(emptyList<String>(), nav().problems())
         assertTrue(tabs.all { it.label.isNotBlank() && it.icon.isNotBlank() })
@@ -156,7 +157,17 @@ class DeclarationsTest {
         assertEquals(listOf("constellation", "containers", "machines", "s3"), cloud.pages.map { it.id })
         assertEquals(cloud.pages.map { it.id }, Declarations.classesOf(nav()).map { it.id })
         assertNull("Volumes is no longer a tab of its own", nav().section("volumes"))
-        assertEquals(listOf("apps", "data"), nav().section(Declarations.SECTION_MANAGE)?.pages?.map { it.id })
+    }
+
+    @Test fun homeAndFsyncDeclareTheirSubPages() {
+        // #1484 Home = Apps | Manage (Manage keeps its Apps / Data), Fsync = Folders | Agents | Projects, Editor has no strip.
+        assertEquals(listOf("home_apps", "manage"), Declarations.navPages(Declarations.SECTION_HOME).map { it.id })
+        assertEquals(listOf("Apps", "Manage"), Declarations.navPages(Declarations.SECTION_HOME).map { it.label })
+        assertEquals(listOf("apps", "data"), nav().section(Declarations.SECTION_HOME)?.pages?.first { it.id == Declarations.PAGE_MANAGE }?.pages?.map { it.id })
+        assertEquals(listOf("folders", "agents", "projects"), nav().section(Declarations.SECTION_FSYNC)?.pages?.map { it.id })
+        assertEquals(listOf("Folders", "Agents", "Projects"), nav().section(Declarations.SECTION_FSYNC)?.pages?.map { it.label })
+        assertTrue(nav().section(Declarations.SECTION_EDITOR)?.pages.orEmpty().isEmpty())
+        assertEquals(emptyList<String>(), nav().problems())
     }
 
     @Test fun volumesDeclaresTheFourClassesAndTheirRules() {

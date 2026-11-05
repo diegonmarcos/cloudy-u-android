@@ -112,12 +112,14 @@ class DriveShellTest {
     }
 
     @Test
-    fun `bottom nav is Explorer, Manager, Agents, Home, Git, Fsync, Mounts in that order and AI and Configs are not on it`() {
-        assertEquals(listOf("explorer", "manage", "agents", "home", "git", "fsync", "mounts"), Declarations.tabs.map { it.id })
+    fun `bottom nav is Explorer, Editor, Home, Git, Fsync, Mounts in that order and Manage, Agents, AI and Configs are not on it`() {
+        assertEquals(listOf("explorer", "editor", "home", "git", "fsync", "mounts"), Declarations.tabs.map { it.id })
         compose.setContent { DriveTheme { DriveShell { id, _ -> Text("content:$id") } } }
         Declarations.tabs.forEach { compose.onNodeWithTag(BottomNavTags.item(it.id)).assertIsDisplayed() }
         compose.onAllNodesWithTag(BottomNavTags.item("configs")).assertCountEquals(0)
         compose.onAllNodesWithTag(BottomNavTags.item("ai")).assertCountEquals(0)
+        compose.onAllNodesWithTag(BottomNavTags.item("manage")).assertCountEquals(0)
+        compose.onAllNodesWithTag(BottomNavTags.item("agents")).assertCountEquals(0)
     }
 
     @Test

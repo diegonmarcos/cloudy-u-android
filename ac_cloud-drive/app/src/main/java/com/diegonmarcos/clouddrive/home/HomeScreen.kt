@@ -2,7 +2,9 @@ package com.diegonmarcos.clouddrive.home
 
 import android.os.Environment
 import android.os.StatFs
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -18,6 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import com.diegonmarcos.clouddrive.Declarations
 import com.diegonmarcos.clouddrive.DriveActions
@@ -29,11 +32,15 @@ import com.diegonmarcos.clouddrive.sync.GitSyncCoordinator
 import com.diegonmarcos.clouddrive.ui.DriveCard
 import com.diegonmarcos.clouddrive.ui.DriveMetrics
 import com.diegonmarcos.clouddrive.ui.DriveTags
+import com.diegonmarcos.clouddrive.ui.EmptyState
+import com.diegonmarcos.clouddrive.ui.IconCatalog
+import com.diegonmarcos.clouddrive.ui.topIslandInsets
 import com.diegonmarcos.clouddrive.ui.Pill
 import com.diegonmarcos.clouddrive.ui.PillRow
 import com.diegonmarcos.clouddrive.ui.SectionHeader
 import com.diegonmarcos.clouddrive.ui.StatusLight
 import com.diegonmarcos.clouddrive.ui.StorageBar
+import com.diegonmarcos.superapp.navbartop2.NavBarTopSecondRow
 import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -59,12 +66,41 @@ fun HomeScreen(
     onOpenSync: () -> Unit,
     onRoute: (tab: String, page: String) -> Unit,
     onSyncAll: () -> Unit,
+    manage: @Composable () -> Unit,
     modifier: Modifier = Modifier,
     page: String? = null,
     onPageConsumed: () -> Unit = {},
 ) {
-    // Disk Management left Home for the Manage tab (Apps / Data); Home has no sub-page now.
-    LaunchedEffect(page) { if (page != null) onPageConsumed() }
+    // #1484 Home = Apps | Manage (ui.sections[home].pages): the strip is drawn here, the Manage body is the host's slot.
+    val pages = Declarations.navPages(Declarations.SECTION_HOME)
+    var current by rememberSaveable { mutableStateOf(pages.firstOrNull()?.id ?: "") }
+    LaunchedEffect(page) {
+        if (page != null && pages.any { it.id == page }) current = page
+        if (page != null) onPageConsumed()
+    }
+    Column(modifier.fillMaxSize()) {
+        NavBarTopSecondRow(pages = pages, selectedId = current, onSelect = { current = it.id }, modifier = Modifier.fillMaxWidth().padding(horizontal = DriveMetrics.gap).testTag(DriveTags.HOME_STRIP), underTopChrome = false)
+        Box(Modifier.weight(1f).consumeWindowInsets(topIslandInsets()).testTag(DriveTags.homePage(current))) {
+            when (current) {
+                "home_apps" -> HomeAppsPage(git, actions, onOpenFiles, onOpenVolumes, onOpenSync, onRoute, onSyncAll)
+                "manage" -> manage()
+                else -> EmptyState(IconCatalog.vectorOrDefault(Declarations.iconDefault), stringResource(R.string.chrome_unknown_tab), "")
+            }
+        }
+    }
+}
+
+@Composable
+private fun HomeAppsPage(
+    git: GitSyncCoordinator,
+    actions: DriveActions,
+    onOpenFiles: () -> Unit,
+    onOpenVolumes: () -> Unit,
+    onOpenSync: () -> Unit,
+    onRoute: (tab: String, page: String) -> Unit,
+    onSyncAll: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val sections = Declarations.files.sections
     val connections = Declarations.connections
     val containerConnections = remember(connections) { connections.filter { it.machine == Declarations.MACHINE_CONTAINER } }

@@ -81,7 +81,7 @@ import kotlinx.coroutines.withContext
  */
 @Composable
 fun ManageScreen(actions: DriveActions, prefs: DrivePrefs, onShowInExplorer: (String) -> Unit, page: String? = null, onPageConsumed: () -> Unit = {}, modifier: Modifier = Modifier) {
-    val pages = Declarations.navPages(Declarations.SECTION_MANAGE)
+    val pages = Declarations.managePages()
     var current by rememberSaveable { mutableStateOf(pages.firstOrNull()?.id ?: "") }
     LaunchedEffect(page) {
         if (page != null && pages.any { it.id == page }) current = page

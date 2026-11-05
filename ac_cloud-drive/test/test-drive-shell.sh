@@ -276,8 +276,10 @@ import json, sys
 ui = json.load(open(sys.argv[1]))["ui"]
 bad = 0
 tabs = ui["bottom_nav"]
-if tabs != ["explorer", "manage", "agents", "home", "git", "fsync", "mounts"]:
-    print("    ui.bottom_nav is %s, not the owner's order explorer/manage/agents/home/git/fsync/mounts (#1149, #1173)" % tabs); bad = 1
+if tabs != ["explorer", "editor", "home", "git", "fsync", "mounts"]:
+    print("    ui.bottom_nav is %s, not the owner's order explorer/editor/home/git/fsync/mounts (#1484)" % tabs); bad = 1
+if any(s["id"] in ("manage", "agents") for s in ui["sections"]):
+    print("    a `manage` or `agents` section is declared again: they are sub-pages of Home and Fsync (#1484)"); bad = 1
 if ui.get("top_bar", {}).get("drawer") is not True or ui["top_bar"].get("inline_actions") is not True:
     print("    ui.top_bar is not the hamburger plus inline AI / Profile / Configs (#1149)"); bad = 1
 if "backups" in ui:
@@ -294,7 +296,7 @@ sync_sec = next(s for s in ui["sections"] if s["id"] == "git").get("pages", [])
 sync_pages = [p["id"] for p in sync_sec]
 if sync_pages != ["me", "cloud"]:
     print("    ui.sections[git].pages is %s, not me/cloud (#1149)" % sync_pages); bad = 1
-for sid, want in (("fsync", []), ("mounts", ["rclone", "fuse"])):
+for sid, want in (("fsync", ["folders", "agents", "projects"]), ("mounts", ["rclone", "fuse"]), ("home", ["home_apps", "manage"]), ("editor", [])):
     got = [p["id"] for p in next(s for s in ui["sections"] if s["id"] == sid).get("pages", [])]
     if got != want:
         print("    ui.sections[%s].pages is %s, not %s (#1173)" % (sid, got, "/".join(want))); bad = 1
@@ -325,7 +327,7 @@ if any(not r.get("public") for r in seeded): print("    a seeded repository does
 sys.exit(0)
 PYTHON
 }
-d11_structure "$BJ" && pass "seven tabs in the #1149 order; Configs sub-pages in order; Git has Me and Cloud; two Files sections with the store in its own" || fail "the #603/#609 structure is not what build.json declares"
+d11_structure "$BJ" && pass "six tabs in the #1484 order; Configs sub-pages in order; Git has Me and Cloud; two Files sections with the store in its own" || fail "the #603/#609 structure is not what build.json declares"
 d11_seed "$REPOS" && pass "the store's seed set is public repositories only" || fail "the seed set is not public-only"
 if grep -qE 'buildConfigField "boolean", "SEED_ENABLED"' "$GRADLE" && grep -qE 'buildConfigField "int", +"SEED_DEPTH"' "$GRADLE" && grep -qE 'GitEngine\.clone\(applicationContext, url, dir, auth = auth, depth = BuildConfig\.SEED_DEPTH\)' "$SEED"; then pass "the seed is declared (storage.seed -> SEED_ENABLED/SEED_DEPTH) and cloned SHALLOW through the engine"; else fail "the first-run seed is not wired to the declaration"; fi
 if grep -qE 'GitEngine\.isRepository\(dir\)' "$SEED" && grep -qE 'RepoRegistry\(File\(applicationContext\.filesDir, GitSyncWorker\.REGISTRY_FILE\)\)' "$SEED"; then pass "seeding skips a clone that exists and registers into the SAME registry the Git page reads"; else fail "the seed does not reuse the one registry"; fi
@@ -394,8 +396,8 @@ if page is None:
 if page.get("label") != "Fsync":
     print("    the fsync section is labelled %r, not 'Fsync' (#1173)" % page.get("label")); bad = 1
 sub = [(p.get("id"), p.get("label"), p.get("icon")) for p in page.get("pages", [])]
-if sub:
-    print("    fsync declares sub-pages %s: its main page is the folder sync rules and nothing else (#1216)" % sub); bad = 1
+if [p[0] for p in sub] != ["folders", "agents", "projects"]:
+    print("    fsync declares sub-pages %s, not folders/agents/projects (#1484)" % sub); bad = 1
 tile = next((a for a in apps if a.get("label") == "Fsync"), None)
 if tile is None:
     print("    no Fsync tile in the Apps grid"); sys.exit(1)

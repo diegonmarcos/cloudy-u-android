@@ -316,7 +316,7 @@
       "kind": "on-device worker",
       "trigger": "new screenshots (incremental pass by ScreenshotAgentWorker)",
       "summary": "OCRs and labels every screenshot on the phone with on-device ML and writes the contract in data/agent-screenshots-contract.json.",
-      "open": "extapp:cloud-drive#page:agents",
+      "open": "extapp:cloud-drive#page:fsync/agents",
       "status": {
         "source": "provider",
         "authority_suffix": "agents.screenshots",

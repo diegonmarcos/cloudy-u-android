@@ -88,7 +88,7 @@
   },
   "ui": {
     "_doc": "#868 THE NAVIGATION IS ONE DECLARATION (libs:bottomnav's NavDecl): ui.bottom_nav = the island's ids, ui.sections[] = each one's label/icon and its `pages` (the strip PageTabs draws), ui.default_section = where the app opens. Volumes' four classes, Sync's three pages and Configs' three pages are those `pages` now (they were the keys ui.volumes.classes, ui.sync.pages and ui.configs.pages; ui.tabs and ui.default_tab are gone). #603/#609 THE STRUCTURE OF THE CHROME, declared. Kotlin holds no tab list, no caption, no page list, no section list, no place list and no icon name: DriveShell renders ui.bottom_nav, SyncScreen renders ui.sections[sync].pages, ConfigsScreen renders ui.sections[configs].pages, the Files Places sheet renders ui.files.sections and ui.files.places, the Files filter pills render ui.files.filters. Every `icon` here is a name IconCatalog.kt resolves to a Material glyph; a name it does not know renders ui.icons._default and test/test-drive-shell.sh fails the build. Baked by app/build.gradle as UI_SECTIONS_B64 / UI_BOTTOM_NAV / UI_DEFAULT_SECTION / UI_SYNC_B64 / UI_FILES_B64 / UI_ICON_DEFAULT and decoded ONCE by Declarations.kt. #603 replaced #579's five tabs (files/apps/sync/backups/configs) with files/volumes/home/apps/configs, moving Sync's three pages and Backups into Configs. #609 REVERSED HALF OF THAT: Apps stopped being a tab (its grid moved into Home, ui.home below) and the freed slot is now Sync, carrying Git/Rclone/Mounts back out of Configs into their own tab — the five tabs are now files/volumes/home/sync/configs. #608 REDESIGNED THE SYNC ▸ GIT SUB-PAGE and declared it whole in ui.sync.git below: two sections (the owner's PUBLIC cloud*/front* set, which needs no login, and Personal, which signs in through libs:auth for the `repo` scope and splits the account's own listing into Public and Private), one DENSE row per repository, and fourteen per-repository operations collapsed behind each row's disclosure — every one of them a verb of libs:git-sync, force push and force pull included.",
-    "bottom_nav": ["explorer", "manage", "agents", "home", "git", "fsync", "mounts"],
+    "bottom_nav": ["explorer", "editor", "home", "git", "fsync", "mounts"],
     "_doc_default_section": "Owner order (#1300): the app opens on the Git page (the git section, GitReposScreen) on every cold start. ui.default_section is the ONLY declaration of it: DriveShell seeds its selection from it, nothing persists a last page between launches (rememberSaveable survives only a config change or process death inside one session), and a deep link or Home route still reaches any other page through the shell select request. test-drive-shell.sh and DeclarationsTest hold it at git.",
     "default_section": "git",
     "configs_ui": ["nav_ui"],
@@ -141,28 +141,10 @@
         ]
       },
       {
-        "id": "manage",
-        "label": "Manage", "title_row": false,
-        "icon": "storage",
-        "_doc": "Owner restructure: the slot Volumes freed. Disk Management moved here from Home's sub-page and split into two sub-pages. Apps is a table of every installed app ranked by total size (StorageStatsManager behind usage access; running state and PSS from ActivityManager for this app and from the privileged shell channel, dumpsys meminfo and ps, for the rest; a dash plus a hint otherwise). Data is everything in shared storage and the shared store that is not an app, ranked by size, filtered by the groups and subtypes declared in manage/FileClassifier.kt (default: Media only; the filter persists in cloud-drive-prefs).",
-        "pages": [
-          {
-            "id": "apps",
-            "label": "Apps",
-            "icon": "apps"
-          },
-          {
-            "id": "data",
-            "label": "Data",
-            "icon": "bar_chart"
-          }
-        ]
-      },
-      {
-        "id": "agents",
-        "label": "Agents", "title_row": false,
-        "icon": "smart_toy",
-        "_doc": "Owner addition: on-device agents. The first, Screenshots, OCRs every screenshot and labels it with on-device ML (libs:ml-l-image's engine, detect modes text/labels/objects), incrementally, and writes the contract in data/agent-screenshots-contract.json (docs/screenshot-agent-contract.md) for other fleet apps (Cloud Tasks first)."
+        "id": "editor",
+        "label": "Editor", "title_row": false,
+        "icon": "edit_note",
+        "_doc": "#1484 the Editor takes the slot Manage left. A browser-like tab strip of the opened files, each tab with an Obsidian-style View | Edit toggle; text, Markdown and HTML in the WYSIWYG engine (libs:wysiwyg), images, audio and video view only (libs:media-viewer), PDF (libs:pdf), odt/ods/odp (libs:odf), Microsoft Office formats answered as unsupported. Which viewer handles which extension is DATA (libs:editor-core assets/editor-types.json), not Kotlin. The page has no sub-pages: its strip is the open tabs."
       },
       {
         "id": "ai",
@@ -173,7 +155,32 @@
       {
         "id": "home",
         "label": "Home", "title_row": false,
-        "icon": "home"
+        "icon": "home",
+        "_doc": "#1484 Home carries two sub-pages: Apps (page id home_apps, because a page id names ONE page in the whole app, N12; the fleet's data-app grid and the volume snapshot, HomeScreen) and Manage (moved here from the bottom nav, where it held the slot the Editor now has). Manage keeps its own two sub-pages: Apps is a table of every installed app ranked by total size (StorageStatsManager behind usage access; running state and PSS from ActivityManager for this app and from the privileged shell channel for the rest) and Data is everything in shared storage and the shared store that is not an app, ranked by size and filtered by the groups declared in manage/FileClassifier.kt (default Media only; the filter persists in cloud-drive-prefs).",
+        "pages": [
+          {
+            "id": "home_apps",
+            "label": "Apps",
+            "icon": "apps"
+          },
+          {
+            "id": "manage",
+            "label": "Manage",
+            "icon": "storage",
+            "pages": [
+              {
+                "id": "apps",
+                "label": "Apps",
+                "icon": "apps"
+              },
+              {
+                "id": "data",
+                "label": "Data",
+                "icon": "bar_chart"
+              }
+            ]
+          }
+        ]
       },
       {
         "id": "git",
@@ -199,7 +206,24 @@
         "id": "fsync",
         "label": "Fsync", "title_row": false,
         "icon": "sync",
-        "_doc": "#1216 the Fsync page is the folder sync rules and nothing else: Unison two-way pairs with conflict detection and keep-A / keep-B / keep-both (sync/FsyncPage.kt FolderSyncScreen over UnisonCoordinator). The former Backup sub-page (rsync mirror jobs) is gone, so the section declares no sub-pages and draws no strip. The servers, APIs and SFTP hosts the rules talk to are set up in Configs > Fsync. Everything drawn is real state: the pairs the user made and the last result of each run; the APK declares no job, rule or pair."
+        "_doc": "#1484 Fsync has three sub-pages: Folders (the folder sync rules below), Agents (the on-device agents, moved here from the bottom nav; the Screenshot agent first, OCR plus on-device ML labels, writing the contract in data/agent-screenshots-contract.json, docs/screenshot-agent-contract.md) and Projects (sample data declared in sync/ProjectsPage.kt until a real source exists). #1216 the Fsync page is the folder sync rules and nothing else: Unison two-way pairs with conflict detection and keep-A / keep-B / keep-both (sync/FsyncPage.kt FolderSyncScreen over UnisonCoordinator). The former Backup sub-page (rsync mirror jobs) is gone, so the section declares no sub-pages and draws no strip. The servers, APIs and SFTP hosts the rules talk to are set up in Configs > Fsync. Everything drawn is real state: the pairs the user made and the last result of each run; the APK declares no job, rule or pair.",
+        "pages": [
+          {
+            "id": "folders",
+            "label": "Folders",
+            "icon": "sync"
+          },
+          {
+            "id": "agents",
+            "label": "Agents",
+            "icon": "smart_toy"
+          },
+          {
+            "id": "projects",
+            "label": "Projects",
+            "icon": "folder"
+          }
+        ]
       },
       {
         "id": "mounts",
@@ -1497,7 +1521,7 @@
   },
   "_doc_fleet_agents": "This app's agents, in the fleet agent registry's one shape (aa_cloud-superapp/build.json::_doc_fleet_agents). Consolidated into aa_cloud-superapp/data/fleet-agents.json by 1_cicd/src/scripts/cloud-android-fleet-agents.py and shown in Cloud SuperApp ▸ Configs ▸ Apps ▸ Agents ▸ Fleet agents.",
   "fleet_agents": [
-    {"id": "screenshots", "name": "Screenshot agent", "kind": "on-device worker", "trigger": "new screenshots (incremental pass by ScreenshotAgentWorker)", "summary": "OCRs and labels every screenshot on the phone with on-device ML and writes the contract in data/agent-screenshots-contract.json.", "open": "page:agents", "contract": "ac_cloud-drive/data/agent-screenshots-contract.json", "status": {"source": "provider", "authority_suffix": "agents.screenshots", "path": "state", "permission": "com.diegonmarcos.clouddrive.permission.READ_AGENT_RESULTS"}}
+    {"id": "screenshots", "name": "Screenshot agent", "kind": "on-device worker", "trigger": "new screenshots (incremental pass by ScreenshotAgentWorker)", "summary": "OCRs and labels every screenshot on the phone with on-device ML and writes the contract in data/agent-screenshots-contract.json.", "open": "page:fsync/agents", "contract": "ac_cloud-drive/data/agent-screenshots-contract.json", "status": {"source": "provider", "authority_suffix": "agents.screenshots", "path": "state", "permission": "com.diegonmarcos.clouddrive.permission.READ_AGENT_RESULTS"}}
   ],
   "configs_pages": {
     "_doc": "Configs > General and Configs > About (libs:ui-nav-bars fleetconfigs, rule 1_cicd/src/data/configs-pages.json, #1352 v2). general.sections: the anchors of the one General page, in order (perms, battery, storage, notifications, ui, language are required; app opens this app's own Configs; update is added after perms by default). about: the hand-written part of the extensive About: tagline, description, features, screens, guide, privacy, backends (ids of ac_cloud-account/build.json::fleet_endpoints, resolved to mesh URLs at build time), related fleet apps, credits for a fork. Permissions, data stores, crash/analytics libs, name, icon, version, build sha and date, repo, licence, origin, crash sink, debug API and changelog are derived, never typed here.",

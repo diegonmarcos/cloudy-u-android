@@ -273,6 +273,12 @@ object DriveTags {
     const val UNISON_SYNC_NOW = "unison_sync_now"
     const val HOME_CARD = "home_card"
     const val HOME_STORAGE_BAR = "home_storage_bar"
+    /** #1484 Home sub-pages (Apps | Manage), the Fsync Projects page and the Editor. */
+    const val HOME_STRIP = "home_strip"
+    fun homePage(id: String) = "home_page_$id"
+    const val PROJECTS = "projects"
+    const val PROJECT_ROW = "project_row"
+    const val EDITOR = "editor"
     const val APPS_GRID = "apps_grid"
     /** #813 one tile of the Apps grid, by its declared label. */
     fun appTile(label: String) = "apps_tile_$label"

@@ -49,7 +49,7 @@ import com.diegonmarcos.clouddrive.files.FilesController
 import com.diegonmarcos.clouddrive.files.FilesScreen
 import com.diegonmarcos.clouddrive.files.ExplorerScreen
 import com.diegonmarcos.clouddrive.manage.ManageScreen
-import com.diegonmarcos.clouddrive.agents.AgentsScreen
+import com.diegonmarcos.clouddrive.editor.EditorScreen
 import com.diegonmarcos.clouddrive.ai.AiScreen
 import com.diegonmarcos.clouddrive.files.FilesUiState
 import com.diegonmarcos.clouddrive.files.Places
@@ -269,10 +269,9 @@ class MainActivity : ComponentActivity(), DriveActions {
             DriveShell(select = jumpTab, onSelected = { jumpTab = null }) { tabId, _ ->
                 when (tabId) {
                     "explorer" -> ExplorerScreen(jumpPage, onPageConsumed = { jumpPage = null }, local = { FilesScreen(files, this, hasAccess) }, cloud = { VolumesScreen(rclone, prefs, this, openPath) }, openDrive = { filesController?.reveal(it) })
-                    "manage" -> ManageScreen(this, prefs, onShowInExplorer = openPath, page = jumpPage, onPageConsumed = { jumpPage = null })
-                    "agents" -> AgentsScreen()
+                    "editor" -> EditorScreen(this, openPath)
                     "ai" -> AiScreen()
-                    "home" -> HomeScreen(git, this, onOpenFiles = { jump(Declarations.SECTION_EXPLORER, Declarations.PAGE_LOCAL) }, onOpenVolumes = { jump(Declarations.SECTION_EXPLORER, Declarations.PAGE_CLOUD) }, onOpenSync = { jumpTab = Declarations.SECTION_GIT }, onRoute = jump, onSyncAll = syncAll, page = jumpPage, onPageConsumed = { jumpPage = null })
+                    "home" -> HomeScreen(git, this, onOpenFiles = { jump(Declarations.SECTION_EXPLORER, Declarations.PAGE_LOCAL) }, onOpenVolumes = { jump(Declarations.SECTION_EXPLORER, Declarations.PAGE_CLOUD) }, onOpenSync = { jumpTab = Declarations.SECTION_GIT }, onRoute = jump, onSyncAll = syncAll, manage = { ManageScreen(this, prefs, onShowInExplorer = openPath) }, page = jumpPage, onPageConsumed = { jumpPage = null })
                     "git" -> GitPageScreen(git, prefs, this, jumpPage, onPageConsumed = { jumpPage = null })
                     "fsync" -> FsyncPageScreen(storage, rclone, this, prefs, jumpPage, onPageConsumed = { jumpPage = null })
                     "mounts" -> MountsPageScreen(storage, rclone, prefs, this, jumpPage, onPageConsumed = { jumpPage = null })

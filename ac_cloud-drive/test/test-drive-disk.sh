@@ -8,8 +8,8 @@
 #       grid nested in Home's LazyColumn (a lazy grid never composes the rows it
 #       is too short for). AppsGridLayoutTest proves the last tile on screen.
 #   K2  THE ENTRY IS DECLARED. data/drive-apps.json routes a Disk Management
-#       tile to {tab: manage, page: apps} (Disk Management moved from Home into
-#       the Manage tab), and ManageScreen dispatches the apps page.
+#       tile to {tab: home, page: manage} (#1484: Manage is a Home sub-page; it was
+#       a bottom-nav tab), and ManageScreen dispatches the apps page.
 #   K3  THE STORE CACHE IS CLEANED THROUGH ITS CONTRACT. DriveDisk previews with
 #       ApkCache.plan(..).redundantBytes and clears with ApkCache.clearRedundant
 #       (proven-installed only) — never ApkCache.clear (which drops pending
@@ -46,7 +46,7 @@ k2() {
     python3 - "$1" "$2" <<'PY'
 import json, sys
 apps = json.load(open(sys.argv[1], encoding="utf-8"))["apps"]
-if not any(a.get("route") == {"tab": "manage", "page": "apps"} for a in apps): sys.exit(1)
+if not any(a.get("route") == {"tab": "home", "page": "manage"} for a in apps): sys.exit(1)
 screen = open(sys.argv[2], encoding="utf-8").read()
 if '"apps" -> AppsPage(' not in screen: sys.exit(1)
 PY
@@ -70,7 +70,7 @@ k6() {
 
 echo "── K checks ──"
 k1 "$GRID" && pass "K1 the Apps grid sizes itself (no row-count height, no nested lazy grid)" || fail "K1"
-k2 "$APPS" "$SCREEN" && pass "K2 the Disk Management tile routes to Manage ▸ Apps" || fail "K2"
+k2 "$APPS" "$SCREEN" && pass "K2 the Disk Management tile routes to Home ▸ Manage" || fail "K2"
 k3 "$DD" && pass "K3 the Store APK cache is previewed and cleared through ApkCache's proven-installed half only" || fail "K3"
 k4 "$ENG" && pass "K4 the clean runs the previewed plan; the API deletes only with run=1&confirm=1" || fail "K4"
 k5 "$SCREEN" && pass "K5 usage access is a button over AppSizes.openPermissions" || fail "K5"
@@ -91,7 +91,7 @@ _red() { local label="$1"; shift; if "$@" >/dev/null 2>&1; then fail "MUT-SURVIV
 
 _stage; _sub "$W/AppsGrid.kt" 'Modifier.fillMaxWidth().testTag(DriveTags.APPS_GRID)' 'Modifier.fillMaxWidth().height(DriveMetrics.appTile * rows).testTag(DriveTags.APPS_GRID)'
 _red "K1 the grid is held to appTile * rows again" k1 "$W/AppsGrid.kt"
-_stage; _sub "$W/drive-apps.json" '"page": "apps"' '"page": "rclone"'
+_stage; _sub "$W/drive-apps.json" '"page": "manage"' '"page": "rclone"'
 _red "K2 the tile routes somewhere else" k2 "$W/drive-apps.json" "$W/ManageScreen.kt"
 _stage; _sub "$W/DriveDisk.kt" 'ApkCache.clearRedundant(ctx).freedBytes' 'ApkCache.clear(ctx).freedBytes'
 _red "K3 the clean evicts pending installs (ApkCache.clear)" k3 "$W/DriveDisk.kt"

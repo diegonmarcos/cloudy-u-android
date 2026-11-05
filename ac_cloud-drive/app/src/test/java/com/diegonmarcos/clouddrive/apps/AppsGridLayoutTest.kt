@@ -98,10 +98,10 @@ class AppsGridLayoutTest {
         assertTrue("the last tile has height", lastBounds.height > 0f)
 
         // The Disk Management tile routes to Manage ▸ Apps (Disk Management moved out of Home).
-        val disk = apps.first { it.routePage == Declarations.PAGE_APPS }
-        assertEquals(Declarations.SECTION_MANAGE, disk.routeTab)
+        val disk = apps.first { it.routePage == Declarations.PAGE_MANAGE }
+        assertEquals(Declarations.SECTION_HOME, disk.routeTab)
         compose.onNodeWithTag(DriveTags.appTile(disk.label)).performClick()
-        assertEquals(Declarations.SECTION_MANAGE to Declarations.PAGE_APPS, routed)
+        assertEquals(Declarations.SECTION_HOME to Declarations.PAGE_MANAGE, routed)
     }
 
     private companion object {

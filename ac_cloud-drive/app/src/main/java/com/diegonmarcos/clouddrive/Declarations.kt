@@ -554,10 +554,13 @@ object Declarations {
     const val SECTION_EXPLORER = "explorer"
     const val PAGE_LOCAL = "local"
     const val PAGE_CLOUD = "cloud"
-    const val SECTION_MANAGE = "manage"
+    const val SECTION_HOME = "home"
+    /** #1484 Manage is a sub-page of Home (ui.sections[home].pages[manage]); its own Apps / Data pages are nested under it. */
+    const val PAGE_MANAGE = "manage"
+    const val SECTION_EDITOR = "editor"
+    fun managePages(): List<NavPage> = navPages(SECTION_HOME).firstOrNull { it.id == PAGE_MANAGE }?.pages.orEmpty()
     const val PAGE_APPS = "apps"
     const val PAGE_DATA = "data"
-    const val SECTION_AGENTS = "agents"
     const val SECTION_AI = "ai"
     const val SECTION_CONFIGS = "configs"
     /** #1149 the former Sync pages, now bottom-nav sections of their own. */
