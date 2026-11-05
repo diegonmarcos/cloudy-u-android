@@ -139,6 +139,16 @@ class SectionTabsFragment : KitComposeFragment(), Collapsible, BackHandler {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         restoredState = savedInstanceState
+        // The pane hosts are created by Compose AFTER the child FragmentManager has restored its fragments, so a restored page
+        // (e.g. WifiFragment in section_pane_0) finds no container and crashes in FragmentStateManager.createView. Pages are
+        // rebuilt by render() from selectedPageId, so the restored children are dropped here, before any view exists.
+        if (savedInstanceState != null) {
+            val stale = childFragmentManager.fragments.toList()
+            if (stale.isNotEmpty()) {
+                android.util.Log.w("SectionTabs", "dropping ${stale.size} restored pane fragment(s); panes are rebuilt")
+                childFragmentManager.beginTransaction().apply { stale.forEach { remove(it) } }.commitNowAllowingStateLoss()
+            }
+        }
     }
 
     override fun palette() = LauncherPalette.kit(requireContext())
@@ -245,6 +255,11 @@ class SectionTabsFragment : KitComposeFragment(), Collapsible, BackHandler {
      *  page→Fragment routing so a pane shows exactly what opening that page
      *  on a phone would. */
     private fun render(index: Int, pageId: String) {
+        // Guard: never add into a pane whose container is not in the view tree (skip and log; the next update re-renders).
+        if (view?.findViewById<View>(paneIds[index]) == null) {
+            android.util.Log.w("SectionTabs", "pane $index has no container; skipping $pageId")
+            return
+        }
         val frag = (activity as? ShellActivity)?.nav?.pageFragment(sectionId, pageId) ?: return
         childFragmentManager.beginTransaction()
             .replace(paneIds[index], frag)
