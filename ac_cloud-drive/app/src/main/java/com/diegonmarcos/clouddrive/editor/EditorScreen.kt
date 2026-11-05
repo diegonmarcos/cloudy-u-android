@@ -1,6 +1,9 @@
 package com.diegonmarcos.clouddrive.editor
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -23,7 +26,7 @@ import com.diegonmarcos.cloudlib.editorcore.EditorHost
 import com.diegonmarcos.cloudlib.editorcore.EditorMode
 import com.diegonmarcos.cloudlib.editorcore.EditorTab
 import com.diegonmarcos.cloudlib.editorcore.EditorTabs
-import com.diegonmarcos.cloudlib.editorcore.PrefsTabsStore
+import com.diegonmarcos.cloudlib.editorcore.FileTabsStore
 import com.diegonmarcos.cloudlib.editorcore.Route
 import com.diegonmarcos.cloudlib.editorcore.Viewers
 import com.diegonmarcos.cloudlib.jsonviewer.JsonViewer
@@ -49,7 +52,7 @@ import kotlinx.coroutines.withContext
 @Composable
 fun EditorScreen(actions: DriveActions, openInExplorer: (String) -> Unit, modifier: Modifier = Modifier) {
     val ctx = LocalContext.current
-    val store = remember { PrefsTabsStore(ctx, "cloud-drive-editor") }
+    val store = remember { FileTabsStore(ctx, "cloud-drive-editor-tabs.txt") }
     var tabs by remember { mutableStateOf(store.load()) }
     LaunchedEffect(tabs) { store.save(tabs) }
     val pending by EditorHook.pending.collectAsState()
@@ -58,7 +61,8 @@ fun EditorScreen(actions: DriveActions, openInExplorer: (String) -> Unit, modifi
     }
     EditorHost(
         tabs = tabs, onTabs = { tabs = it }, modifier = modifier.fillMaxSize().testTag(DriveTags.EDITOR), router = EditorHook.router,
-        empty = { EmptyState(IconCatalog.vectorOrDefault("edit_note"), stringResource(R.string.editor_empty_title), stringResource(R.string.editor_empty_hint)) },
+        // the empty state scrolls, so the shell's chrome collapse follows it like on every other page (a viewer owns its own scrolling)
+        empty = { Box(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) { EmptyState(IconCatalog.vectorOrDefault("edit_note"), stringResource(R.string.editor_empty_title), stringResource(R.string.editor_empty_hint)) } },
     ) { tab, route -> EditorBody(tab, route) }
 }
 

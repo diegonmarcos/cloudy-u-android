@@ -1,18 +1,18 @@
 package com.diegonmarcos.cloudlib.editorcore
 
 import android.content.Context
+import java.io.File
 
-/** Keeps the tab strip across restarts in one SharedPreferences string ([EditorTabs.encode]). */
-class PrefsTabsStore(context: Context, name: String = "editor-core-tabs") {
-    private val prefs = context.applicationContext.getSharedPreferences(name, Context.MODE_PRIVATE)
+/**
+ * Keeps the tab strip across restarts in one private text file ([EditorTabs.encode]) under the app's files dir. A file, not a
+ * preferences store: the strip is session state of the Editor, not a configuration setting of the fleet.
+ */
+class FileTabsStore(context: Context, name: String = "editor-core-tabs.txt") {
+    private val file = File(context.applicationContext.filesDir, name)
 
-    fun load(): EditorTabs = EditorTabs.decode(prefs.getString(KEY, "").orEmpty())
+    fun load(): EditorTabs = runCatching { EditorTabs.decode(file.readText()) }.getOrDefault(EditorTabs())
 
     fun save(tabs: EditorTabs) {
-        prefs.edit().putString(KEY, tabs.encode()).apply()
-    }
-
-    private companion object {
-        const val KEY = "tabs"
+        runCatching { file.writeText(tabs.encode()) }
     }
 }

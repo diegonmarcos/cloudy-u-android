@@ -3381,15 +3381,21 @@
         "lib-devtools",
         "lib-disk",
         "lib-disk-scan",
+        "lib-editor-core",
         "lib-file-editor",
         "lib-fleetconfig-model",
         "lib-git-core",
         "lib-git-repos",
         "lib-git-sync",
         "lib-git-ui",
+        "lib-json-viewer",
+        "lib-local-serve",
+        "lib-media-viewer",
         "lib-ml-l-image",
         "lib-model-catalogue",
         "lib-mounts",
+        "lib-odf",
+        "lib-pdf",
         "lib-perms",
         "lib-rclone",
         "lib-shared-store",
@@ -3401,7 +3407,8 @@
         "lib-ui-nav-bars",
         "lib-updater",
         "lib-usb-drive",
-        "lib-web-core"
+        "lib-web-core",
+        "lib-wysiwyg"
       ],
       "items": [
         {
@@ -3853,8 +3860,10 @@
         "lib-perms",
         "lib-theme-background",
         "lib-ui-icons",
+        "lib-ui-kit",
         "lib-ui-nav-bars",
-        "lib-web-core"
+        "lib-web-core",
+        "lib-wysiwyg"
       ],
       "items": [
         {

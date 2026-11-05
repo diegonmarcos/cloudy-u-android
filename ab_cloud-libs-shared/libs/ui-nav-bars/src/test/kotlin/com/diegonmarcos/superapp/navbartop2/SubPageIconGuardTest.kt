@@ -63,10 +63,10 @@ class SubPageIconGuardTest {
         for (app in apps) assertTrue("$app declares no pages", decl(app).sections.sumOf { it.allPages().size } > 0)
     }
 
-    @Test fun `Cloud Drive Mounts declares its two sub-pages and Fsync none (#1173, #1216), icons the shared catalog draws`() {
+    @Test fun `Cloud Drive Mounts declares its two sub-pages and Fsync three (#1173, #1484), icons the shared catalog draws`() {
         val d = decl("ac_cloud-drive")
-        // #1216: Fsync is the folder sync rules alone (the Backup sub-page is gone), so the section declares no pages and draws no strip.
-        val want = mapOf("fsync" to emptyList<String>(), "mounts" to listOf("rclone", "fuse"))
+        // #1484: Fsync = Folders, Agents, Projects (Agents moved in from the bottom nav).
+        val want = mapOf("fsync" to listOf("folders", "agents", "projects"), "mounts" to listOf("rclone", "fuse"))
         for ((section, ids) in want) {
             val s = d.sections.firstOrNull { it.id == section } ?: throw AssertionError("ac_cloud-drive declares no $section section")
             assertEquals("$section pages", ids, s.allPages().map { it.id })
