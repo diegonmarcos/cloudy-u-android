@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -75,7 +76,7 @@ import com.diegonmarcos.superapp.bottomnav.sideMenuPresence
 import com.diegonmarcos.superapp.themebg.ThemeBackground
 import com.diegonmarcos.superapp.themebg.ThemeColors
 
-/** The side menu's sizes. */
+/** The side menu's sizes. The panel is an OPAQUE theme surface ([ThemeColors.island]); the scrim sits over the page behind the overlay. */
 public object SideMenuSpec {
     /** The semi-collapsed rail: an icon with the first letters of the name below it. */
     public val RAIL_WIDTH: Dp = 60.dp
@@ -140,7 +141,7 @@ public fun NavSideMenu(
         Modifier.width(width).fillMaxHeight()
             .padding(start = SideMenuSpec.SIDE, top = SideMenuSpec.SIDE, bottom = SideMenuSpec.SIDE)
             .testTag(SideMenuTags.MENU)
-            .clip(shape).background(palette.tabStrip, shape).border(1.dp, palette.islandBorder, shape)
+            .clip(shape).background(palette.island, shape).border(1.dp, palette.islandBorder, shape)
             .verticalScroll(rememberScrollState())
             .selectableGroup(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -271,13 +272,15 @@ private fun SideMenuLayout(
         val presence = sideMenuPresence(expandedPref, scroll)
         // Docked: the rail always, and on a wide screen the expanded menu too; on a narrow one the expanded menu overlays instead.
         val docked = if (presence == SideMenuPresence.Expanded && narrow) SideMenuPresence.Rail else presence
+        val overlay = presence == SideMenuPresence.Expanded && narrow
         Row(Modifier.fillMaxSize()) {
-            AnimatedVisibility(docked != SideMenuPresence.Away, enter = fadeIn() + expandHorizontally(), exit = fadeOut() + shrinkHorizontally()) {
+            // While the overlay drawer is open the rail is NOT drawn (only its width is kept): one menu at a time, never both.
+            if (overlay) Spacer(Modifier.width(SideMenuSpec.RAIL_WIDTH).fillMaxHeight().testTag(SideMenuTags.DOCK))
+            else AnimatedVisibility(docked != SideMenuPresence.Away, enter = fadeIn() + expandHorizontally(), exit = fadeOut() + shrinkHorizontally()) {
                 NavSideMenu(section, selectedId, onSelect, docked, toggle, Modifier.testTag(SideMenuTags.DOCK), dark, surface, iconFor)
             }
             Box(Modifier.weight(1f).fillMaxHeight()) { content() }
         }
-        val overlay = presence == SideMenuPresence.Expanded && narrow
         AnimatedVisibility(overlay, enter = fadeIn(), exit = fadeOut()) {
             Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.35f)).clickable(onClick = toggle).testTag(SideMenuTags.SCRIM))
         }

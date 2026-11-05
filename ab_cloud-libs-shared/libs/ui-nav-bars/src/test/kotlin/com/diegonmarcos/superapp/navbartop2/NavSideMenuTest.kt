@@ -7,7 +7,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -149,6 +151,32 @@ class NavSideMenuTest {
         compose.onNodeWithTag(SideMenuTags.SCRIM).performTouchInput { click(androidx.compose.ui.geometry.Offset(width - 8f, height / 2f)) }
         compose.waitForIdle()
         compose.onNodeWithTag(SideMenuTags.OVERLAY).assertDoesNotExist()
+    }
+
+    @Test fun `the panel background is opaque in both themes`() {
+        for (dark in listOf(true, false)) assertEquals("island is the panel fill", 1f, com.diegonmarcos.superapp.themebg.ThemeBackground.colors(dark).island.alpha, 0f)
+    }
+
+    @Test fun `expanded overlay draws one list only, no rail beside it, with the scrim`() {
+        val store = MemoryNavModeStore(expanded = true)
+        compose.setContent { NavSectionLayout(mail, "inbox", {}, store = store) { Box(androidx.compose.ui.Modifier.fillMaxSize().testTag("page")) { Text("body") } } }
+        compose.waitForIdle()
+        compose.onNodeWithTag(SideMenuTags.OVERLAY).assertIsDisplayed()
+        compose.onNodeWithTag(SideMenuTags.SCRIM).assertExists()
+        compose.onAllNodesWithTag(SideMenuTags.MENU).assertCountEquals(1)
+        compose.onAllNodesWithTag(SideMenuTags.rail("inbox"), useUnmergedTree = true).assertCountEquals(0)
+        compose.onAllNodesWithTag(SideMenuTags.icon("inbox"), useUnmergedTree = true).assertCountEquals(1)
+        compose.onNodeWithTag(SideMenuTags.label("inbox"), useUnmergedTree = true).assertExists()
+    }
+
+    @Test fun `collapsed draws the rail only, no full labels and no overlay`() {
+        val store = MemoryNavModeStore(expanded = false)
+        compose.setContent { NavSectionLayout(mail, "inbox", {}, store = store) { Box(androidx.compose.ui.Modifier.fillMaxSize()) {} } }
+        compose.waitForIdle()
+        compose.onAllNodesWithTag(SideMenuTags.MENU).assertCountEquals(1)
+        compose.onNodeWithTag(SideMenuTags.OVERLAY).assertDoesNotExist()
+        compose.onNodeWithTag(SideMenuTags.SCRIM).assertDoesNotExist()
+        compose.onNodeWithTag(SideMenuTags.label("inbox"), useUnmergedTree = true).assertDoesNotExist()
     }
 
     @Test fun `the rail choice is remembered in the store`() {
