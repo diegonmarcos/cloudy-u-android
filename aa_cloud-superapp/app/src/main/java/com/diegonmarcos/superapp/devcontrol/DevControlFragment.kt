@@ -86,6 +86,15 @@ class DevControlFragment : KitComposeFragment() {
     /** The text prompt on screen (web server port / document root), or null. */
     private var prompt by mutableStateOf<AboutPrompt?>(null)
 
+    /** #1504 The ADB prompt Export All raises when the shell channel is down (Compose dialog, answered through [askAdb]). */
+    private var xrayAsk by mutableStateOf<XrayAsk?>(null)
+
+    private suspend fun askAdb(message: String): com.diegonmarcos.superapp.xray.XrayAdbGate.Choice =
+        kotlinx.coroutines.suspendCancellableCoroutine { cont ->
+            xrayAsk = XrayAsk(message) { c -> xrayAsk = null; if (cont.isActive) cont.resumeWith(Result.success(c)) }
+            cont.invokeOnCancellation { xrayAsk = null }
+        }
+
     @Composable
     override fun Content() {
         val ctx = requireContext()
@@ -139,6 +148,7 @@ class DevControlFragment : KitComposeFragment() {
                 }
             }
             prompt?.let { AboutPromptDialog(it) { prompt = null } }
+            xrayAsk?.let { XrayAdbDialog(it) }
         }
     }
 
@@ -214,7 +224,7 @@ class DevControlFragment : KitComposeFragment() {
             val status = row("Last export", "never")
             for (o in XrayOut.values()) button(o.label) {
                 status.text = "working…"
-                launch { status.text = XrayExport.run(appCtx, activity, page, scope, o) { m -> status.text = m } }
+                launch { status.text = XrayExport.run(appCtx, { m -> askAdb(m) }, page, scope, o) { m -> status.text = m } }
             }
         }
 

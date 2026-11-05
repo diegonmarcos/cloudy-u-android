@@ -1,7 +1,5 @@
 package com.diegonmarcos.superapp.devcontrol
 
-import android.app.Activity
-import android.app.AlertDialog
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.ContentValues
@@ -29,11 +27,13 @@ import com.diegonmarcos.superapp.xray.XrayShell
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.coroutines.resume
 
 /** The four outputs of Export All. */
 internal enum class XrayOut(val label: String) {
@@ -50,21 +50,21 @@ internal object XrayExport {
     private const val CLIP_MAX = 400_000
     private val busy = AtomicBoolean(false)
 
-    suspend fun run(ctx: Context, activity: Activity?, page: AboutPage, scope: CoroutineScope, out: XrayOut, say: (String) -> Unit): String {
+    suspend fun run(ctx: Context, ask: suspend (String) -> XrayAdbGate.Choice, page: AboutPage, scope: CoroutineScope, out: XrayOut, say: (String) -> Unit): String {
         if (!busy.compareAndSet(false, true)) return "An export is already running"
         try {
-            return withContext(Dispatchers.IO) { go(ctx.applicationContext, activity, page, scope, out, say) }
+            return withContext(Dispatchers.IO) { go(ctx.applicationContext, ask, page, scope, out, say) }
         } finally { busy.set(false) }
     }
 
-    private suspend fun go(ctx: Context, activity: Activity?, page: AboutPage, scope: CoroutineScope, out: XrayOut, say: (String) -> Unit): String {
+    private suspend fun go(ctx: Context, ask: suspend (String) -> XrayAdbGate.Choice, page: AboutPage, scope: CoroutineScope, out: XrayOut, say: (String) -> Unit): String {
         say("checking the ADB shell…")
         val gate = XrayAdbGate.run(
             ready = { ShellChannels.active(ctx) != null },
             // the ADB Shell page's own Reconnect (lib ChannelOps), not a raw connect
             rearm = { runCatching { ChannelOps.reconnect(ctx) }.isSuccess && ShellChannels.active(ctx) != null },
             openWirelessDebugging = { openWirelessDebugging(ctx) },
-            ask = { askDialog(activity, it) },
+            ask = ask,
         )
         if (gate is XrayAdbGate.Result.Cancelled) return "Export cancelled"
         val ch = if (gate is XrayAdbGate.Result.Ready) ShellChannels.active(ctx) else null
@@ -148,20 +148,23 @@ internal object XrayExport {
     private fun openWirelessDebugging(ctx: Context) {
         runCatching { ChannelOps.setup(ctx, SetupAction.OPEN_WIRELESS_DEBUGGING) }
     }
+}
 
-    private suspend fun askDialog(activity: Activity?, message: String): XrayAdbGate.Choice = withContext(Dispatchers.Main) {
-        if (activity == null || activity.isFinishing) return@withContext XrayAdbGate.Choice.PARTIAL
-        suspendCancellableCoroutine<XrayAdbGate.Choice> { cont ->
-            fun answer(c: XrayAdbGate.Choice) { if (cont.isActive) cont.resume(c) }
-            val d = AlertDialog.Builder(activity)
-                .setTitle("X-Ray needs ADB")
-                .setMessage(message)
-                .setPositiveButton("Re-arm channel") { _, _ -> answer(XrayAdbGate.Choice.REARM) }
-                .setNeutralButton("Wireless debugging") { _, _ -> answer(XrayAdbGate.Choice.OPEN_WIRELESS_DEBUGGING) }
-                .setNegativeButton("Export partial") { _, _ -> answer(XrayAdbGate.Choice.PARTIAL) }
-                .setOnCancelListener { answer(XrayAdbGate.Choice.CANCEL) }
-                .show()
-            cont.invokeOnCancellation { runCatching { d.dismiss() } }
-        }
-    }
+/** The ADB prompt on screen: the message and where the answer goes. */
+internal class XrayAsk(val message: String, val answer: (XrayAdbGate.Choice) -> Unit)
+
+@Composable
+internal fun XrayAdbDialog(a: XrayAsk) {
+    AlertDialog(
+        onDismissRequest = { a.answer(XrayAdbGate.Choice.CANCEL) },
+        title = { Text("X-Ray needs ADB") },
+        text = { Text(a.message) },
+        confirmButton = { TextButton(onClick = { a.answer(XrayAdbGate.Choice.REARM) }) { Text("Re-arm channel") } },
+        dismissButton = {
+            androidx.compose.foundation.layout.Row {
+                TextButton(onClick = { a.answer(XrayAdbGate.Choice.OPEN_WIRELESS_DEBUGGING) }) { Text("Wireless debugging") }
+                TextButton(onClick = { a.answer(XrayAdbGate.Choice.PARTIAL) }) { Text("Export partial") }
+            }
+        },
+    )
 }
