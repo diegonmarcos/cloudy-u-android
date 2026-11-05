@@ -307,6 +307,11 @@
       "dir": "../ab_cloud-libs-shared/libs/fleet-endpoints",
       "type": "library"
     },
+    "libs:ai-usage": {
+      "_doc_dir": "#1499 the AI usage table read (AiUsageClient + AiUsageModel: GET /ai/usage of cloudy-c3-api), shared BY REFERENCE with Cloud SuperIntel's Cost page, so the Notify AI badge and Cost read one source. Plain JVM, renders nothing.",
+      "dir": "../ab_cloud-libs-shared/libs/ai-usage",
+      "type": "library"
+    },
     "libs:fleet-endpoints-android": {
       "_doc_dir": "#1093 the Android halves of the fleet endpoint design; libs:account links it (`api`) and this app hosts libs:account.",
       "dir": "../ab_cloud-libs-shared/libs/fleet-endpoints-android",

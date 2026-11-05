@@ -44,16 +44,19 @@ on:
       # fleet-refresh.yml (schedule only) ships the app for a moved cross-app dir.
       #   input: "1_cicd/src/cicd/ship-cloud-superintel.yml"
       # ── end MANAGED-PATHS-HEADER ──
+      - "ab_cloud-libs-shared/libs/ai-usage/**"
       - "ab_cloud-libs-shared/libs/ai/**"
       - "ab_cloud-libs-shared/libs/bottomnav/**"
       - "ab_cloud-libs-shared/libs/core/**"
       - "ab_cloud-libs-shared/libs/crash/**"
       - "ab_cloud-libs-shared/libs/devtools/**"
+      - "ab_cloud-libs-shared/libs/fleet-endpoints/**"
       - "ab_cloud-libs-shared/libs/fleetconfig-model/**"
       - "ab_cloud-libs-shared/libs/model-catalogue/**"
       - "ab_cloud-libs-shared/libs/perms/**"
       - "ab_cloud-libs-shared/libs/theme-background/**"
       - "ab_cloud-libs-shared/libs/ui-icons/**"
+      - "ab_cloud-libs-shared/libs/ui-kit/**"
       - "ab_cloud-libs-shared/libs/ui-nav-bars/**"
       - "ac_cloud-superintel/**"
 permissions:

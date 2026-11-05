@@ -1,0 +1,18 @@
+{
+  "_doc": "#1499 The Cost page. `usage` is the SAME source the Cloud SuperApp Notify AI badge reads: the usage table c3 publishes (GET /ai/usage of cloudy-c3-api; c3-infra-api is its alias for one release; the ai-usage hook posts to POST /ai/usage/claude there), read through libs:ai-usage's AiUsageClient (the route is AiUsageClient.PATH, not spelled here). `bases` are tried in order; the fleet bearer is read at runtime from Cloud Account's secret provider under `bearer_key` and never stored. Claude windows come from the table's `claude` block; OpenRouter spend and balance from its `openrouter` block (fetched server side by the API from the OpenRouter key, which stays in the private store). `sample_openrouter` is shown, labelled sample, only when the table has no configured OpenRouter block. Metrics: five_hour, seven_day, week_left, week_est (Claude); last_24h, last_7d, month, balance, est_30d (OpenRouter, est_30d = last_7d / 7 * 30); none.",
+  "sample_label": "sample",
+  "usage": {
+    "bases": [ "https://c3-pvt.diegonmarcos.com/cloudy-c3-api", "https://c3-pvt.diegonmarcos.com/c3-infra-api" ],
+    "private": { "authority": "com.diegonmarcos.cloudaccount.accountdata", "method": "secret" },
+    "bearer_key": "fleet.bearer"
+  },
+  "columns": [ "Claude", "OpenRouter" ],
+  "rows": [
+    { "label": "Daily", "claude": "five_hour", "openrouter": "last_24h" },
+    { "label": "Weekly", "claude": "seven_day", "openrouter": "last_7d" },
+    { "label": "Monthly", "claude": "none", "openrouter": "month" },
+    { "label": "Total", "claude": "week_left", "openrouter": "balance" },
+    { "label": "Estimate", "claude": "week_est", "openrouter": "est_30d" }
+  ],
+  "sample_openrouter": { "balance_usd": 20.0, "last_24h": { "usd": 0.5, "tokens": 400000 }, "last_7d": { "usd": 3.5, "tokens": 2800000 }, "month": { "usd": 12.0, "tokens": 9600000 } }
+}

@@ -96,6 +96,7 @@ on:
       - "aa_cloud-superapp/**"
       - "ab_cloud-libs-shared/build.json"
       - "ab_cloud-libs-shared/libs/account/**"
+      - "ab_cloud-libs-shared/libs/ai-usage/**"
       - "ab_cloud-libs-shared/libs/analytics/**"
       - "ab_cloud-libs-shared/libs/appstore/**"
       - "ab_cloud-libs-shared/libs/auth/**"

@@ -1,0 +1,1070 @@
+{
+ "_doc": "Derived by tools/derive-ai-data.py from the cloudy-u-linux SOT da_my-ai/data/claude (names and counts only, no secrets). Never edit by hand.",
+ "groups": [
+  {
+   "title": "settings.project.json · Permissions",
+   "rows": [
+    {
+     "title": "default mode",
+     "caption": "",
+     "end": "bypassPermissions"
+    },
+    {
+     "title": "Bash",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "Read",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "Edit",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "Write",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "Glob",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "Grep",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "WebFetch",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "WebSearch",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "NotebookEdit",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "Agent",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "Skill",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "mcp__cloudy-c3-mcp",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "mcp__cloudy-all-mcp",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "mcp__cloudy-android-mcp",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "mcp__cloudy-apps-communication-mcp",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "mcp__cloudy-apps-drive-mcp",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "mcp__cloudy-cgc-pub-mcp",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "mcp__cloud-me-cgc-pvt-mcp",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "mcp__cloud-infra-mcp",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "mcp__cloud-cgc-pub-mcp",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "mcp__cloud-cgc-pvt-mcp",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "mcp__cloud-services-mcp",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "mcp__cloud-vault-mcp",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "mcp__cloud-drive-mcp",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "mcp__cloud-mail-mcp",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "mcp__cloud-mattermost-mcp",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "mcp__cloud-superapp-mcp",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "mcp__google-personal-mcp",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "mcp__google-workspace-mcp",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "mcp__Claude_Code_Remote",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "mcp__claude-code-remote",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "Bash(*)",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "Read(*)",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "Edit(*)",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "Write(*)",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "WebFetch(*)",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "MultiEdit",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "TodoWrite",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "BashOutput",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "KillShell",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "SendMessage",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "ListAgents",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "Monitor",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "PushNotification",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "TaskStop",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "TaskOutput",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "SendUserFile",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "AskUserQuestion",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "ReadNotifications",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "ToolSearch",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "LSP",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "ListMcpResourcesTool",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "ReadMcpResourceTool",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "ReadMcpResourceDirTool",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "mcp__github",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "mcp__Claude_Docs",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "mcp__cloudy-a-docs-mcp",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "mcp__cloud-me-pvt-mcp",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "mcp__cloud-u-android-mcp",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "mcp__cloudy-u-android-mcp",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "mcp__cloudy-infra-mcp",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "mcp__cloudy-mail-mcp",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "mcp__cloudy-drive-mcp",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "mcp__cloudy-superapp-mcp",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "mcp__cloudy-vault-mcp",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "mcp__cloudy-mattermost-mcp",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "mcp__cloudy-services-mcp",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "Artifact",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "ArtifactComments",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "ArtifactData",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "DesignSync",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "Workflow",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "CronCreate",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "CronDelete",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "CronList",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "ScheduleWakeup",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "EnterPlanMode",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "ExitPlanMode",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "EnterWorktree",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "ExitWorktree",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "TaskCreate",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "TaskGet",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "TaskList",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "TaskUpdate",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "NotebookEdit",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "ReportFindings",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "ShowOnboardingRolePicker",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "SearchSkills",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "SuggestSkills",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "ListSkills",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "SearchPlugins",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "SuggestPluginInstall",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "ListPlugins",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "SearchMcpRegistry",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "SuggestConnectors",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "ListConnectors",
+     "caption": "deny",
+     "end": ""
+    }
+   ]
+  },
+  {
+   "title": "settings.project.json · Env names",
+   "rows": [
+    {
+     "title": "ENABLE_TOOL_SEARCH",
+     "caption": "name only, value never shown",
+     "end": ""
+    },
+    {
+     "title": "AUTHELIA_TOKEN_URL",
+     "caption": "name only, value never shown",
+     "end": ""
+    },
+    {
+     "title": "AUTHELIA_OIDC_CLIENT_ID",
+     "caption": "name only, value never shown",
+     "end": ""
+    }
+   ]
+  },
+  {
+   "title": "settings.project.json · Hooks",
+   "rows": [
+    {
+     "title": "PreToolUse [Bash]",
+     "caption": "no-pkill-pgrep-f.sh",
+     "end": ""
+    },
+    {
+     "title": "PreToolUse [Bash]",
+     "caption": "no-glob-rm-tmp.sh",
+     "end": ""
+    },
+    {
+     "title": "PreToolUse [Bash]",
+     "caption": "no-local-gradle.sh",
+     "end": ""
+    },
+    {
+     "title": "PreToolUse [Bash]",
+     "caption": "main-only-push.sh",
+     "end": ""
+    },
+    {
+     "title": "PreToolUse [Bash]",
+     "caption": "no-branch-create.sh",
+     "end": ""
+    },
+    {
+     "title": "PreToolUse [Bash]",
+     "caption": "no-secrets-commit.sh",
+     "end": ""
+    },
+    {
+     "title": "PreToolUse [Bash]",
+     "caption": "no-mass-delete.sh",
+     "end": ""
+    },
+    {
+     "title": "SessionStart",
+     "caption": "hook",
+     "end": ""
+    },
+    {
+     "title": "StopFailure [rate_limit]",
+     "caption": "ai-usage-post.sh",
+     "end": ""
+    },
+    {
+     "title": "PermissionRequest [Bash|Edit|Write]",
+     "caption": "claude",
+     "end": ""
+    },
+    {
+     "title": "UserPromptSubmit",
+     "caption": "claude",
+     "end": ""
+    }
+   ]
+  },
+  {
+   "title": "settings.project.json · Models",
+   "rows": [
+    {
+     "title": "agent build",
+     "caption": "model",
+     "end": "sonnet / medium"
+    },
+    {
+     "title": "agent explore",
+     "caption": "model",
+     "end": "sonnet / medium"
+    },
+    {
+     "title": "agent general-purpose",
+     "caption": "model",
+     "end": "sonnet / medium"
+    },
+    {
+     "title": "agent infra",
+     "caption": "model",
+     "end": "sonnet / medium"
+    },
+    {
+     "title": "agent ops",
+     "caption": "model",
+     "end": "sonnet / medium"
+    },
+    {
+     "title": "agent review",
+     "caption": "model",
+     "end": "sonnet / medium"
+    }
+   ]
+  },
+  {
+   "title": "settings.project.json · Plugins",
+   "rows": [
+    {
+     "title": "c3-infra@cloud-marketplace",
+     "caption": "enabled",
+     "end": ""
+    }
+   ]
+  },
+  {
+   "title": "settings.base.json · Permissions",
+   "rows": [
+    {
+     "title": "default mode",
+     "caption": "",
+     "end": "bypassPermissions"
+    },
+    {
+     "title": "Bash(gh run watch *)",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "Bash(systemctl --user is-active *)",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "Bash(systemctl --user show *)",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "Bash(systemctl --user is-enabled *)",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "Bash(systemctl --user cat *)",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "Bash(systemctl --user list-units *)",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "Bash(systemctl --user list-unit-files *)",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "Bash(systemctl is-active *)",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "Bash(systemctl show *)",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "Bash(systemctl status *)",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "Bash(systemctl list-units *)",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "Bash(systemctl cat *)",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "Bash(journalctl --user -u *)",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "Bash(journalctl -u *)",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "Bash(journalctl --user -b *)",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "Bash(journalctl -b *)",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "Bash(journalctl -k *)",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "Bash(journalctl --list-boots *)",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "mcp__google-workspace__workspace_drive",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "mcp__google-workspace__search_drive_files",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "mcp__cloud-cgc-pub-mcp__cgc_octocode_search",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "mcp__cloud-cgc-pvt-mcp__cgc_octocode_search",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "mcp__cloudy-cgc-pub-mcp__cgc_octocode_search",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "mcp__cloud-me-cgc-pvt-mcp__cgc_octocode_search",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "mcp__cloudy-c3-mcp",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "mcp__cloud-infra-mcp",
+     "caption": "allow",
+     "end": ""
+    },
+    {
+     "title": "Read(**/*.png)",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "Read(**/*.jpg)",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "Read(**/*.jpeg)",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "Read(**/*.gif)",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "Read(**/*.webp)",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "Read(**/*.bmp)",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "Artifact",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "ArtifactComments",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "ArtifactData",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "DesignSync",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "Workflow",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "CronCreate",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "CronDelete",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "CronList",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "ScheduleWakeup",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "EnterPlanMode",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "ExitPlanMode",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "EnterWorktree",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "ExitWorktree",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "TaskCreate",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "TaskGet",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "TaskList",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "TaskUpdate",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "NotebookEdit",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "ReportFindings",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "ShowOnboardingRolePicker",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "SearchSkills",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "SuggestSkills",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "ListSkills",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "SearchPlugins",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "SuggestPluginInstall",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "ListPlugins",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "SearchMcpRegistry",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "SuggestConnectors",
+     "caption": "deny",
+     "end": ""
+    },
+    {
+     "title": "ListConnectors",
+     "caption": "deny",
+     "end": ""
+    }
+   ]
+  },
+  {
+   "title": "settings.base.json · Env names",
+   "rows": [
+    {
+     "title": "ENABLE_TOOL_SEARCH",
+     "caption": "name only, value never shown",
+     "end": ""
+    },
+    {
+     "title": "MCP_CONNECT_TIMEOUT_MS",
+     "caption": "name only, value never shown",
+     "end": ""
+    },
+    {
+     "title": "AUTHELIA_OIDC_CLIENT_ID",
+     "caption": "name only, value never shown",
+     "end": ""
+    },
+    {
+     "title": "AUTHELIA_TOKEN_URL",
+     "caption": "name only, value never shown",
+     "end": ""
+    },
+    {
+     "title": "GIT_BASE",
+     "caption": "name only, value never shown",
+     "end": ""
+    },
+    {
+     "title": "NODE_PATH",
+     "caption": "name only, value never shown",
+     "end": ""
+    },
+    {
+     "title": "AUTHELIA_OIDC_CREDENTIALS_DIR",
+     "caption": "name only, value never shown",
+     "end": ""
+    },
+    {
+     "title": "AUTHELIA_OIDC_TOKENS_DIR",
+     "caption": "name only, value never shown",
+     "end": ""
+    }
+   ]
+  },
+  {
+   "title": "settings.base.json · Hooks",
+   "rows": [
+    {
+     "title": "none declared",
+     "caption": "",
+     "end": ""
+    }
+   ]
+  },
+  {
+   "title": "settings.base.json · Models",
+   "rows": [
+    {
+     "title": "effort",
+     "caption": "",
+     "end": "max"
+    },
+    {
+     "title": "agent build",
+     "caption": "model",
+     "end": "sonnet / medium"
+    },
+    {
+     "title": "agent explore",
+     "caption": "model",
+     "end": "sonnet / medium"
+    },
+    {
+     "title": "agent general-purpose",
+     "caption": "model",
+     "end": "sonnet / medium"
+    },
+    {
+     "title": "agent infra",
+     "caption": "model",
+     "end": "sonnet / medium"
+    },
+    {
+     "title": "agent ops",
+     "caption": "model",
+     "end": "sonnet / medium"
+    },
+    {
+     "title": "agent review",
+     "caption": "model",
+     "end": "sonnet / medium"
+    }
+   ]
+  },
+  {
+   "title": "settings.base.json · Plugins",
+   "rows": [
+    {
+     "title": "hooks-stack-framework-principles-cloud-ai-plugin@cloud-marketplace",
+     "caption": "enabled",
+     "end": ""
+    },
+    {
+     "title": "compression-cloud-ai-plugin@cloud-marketplace",
+     "caption": "enabled",
+     "end": ""
+    },
+    {
+     "title": "memory-system-cloud-ai-plugin@cloud-marketplace",
+     "caption": "enabled",
+     "end": ""
+    },
+    {
+     "title": "sub-agents-cloud-ai-plugin@cloud-marketplace",
+     "caption": "enabled",
+     "end": ""
+    },
+    {
+     "title": "skill-claude-api-plugin@cloud-marketplace",
+     "caption": "enabled",
+     "end": ""
+    },
+    {
+     "title": "ponytail@cloud-marketplace",
+     "caption": "enabled",
+     "end": ""
+    },
+    {
+     "title": "c3-infra@cloud-marketplace",
+     "caption": "enabled",
+     "end": ""
+    }
+   ]
+  }
+ ]
+}

@@ -6,6 +6,9 @@ import java.io.File
 /** The real declared data of the app (Gradle runs a module's tests from the module dir), never a copy of it. */
 object Data {
     fun asset(name: String): String = File("src/main/assets/si/$name").readText()
+
+    /** An asset of assets/ai (the AIs and Cost pages' data, #1499). */
+    fun ai(name: String): String = File("src/main/assets/ai/$name").readText()
     fun buildJson(): JSONObject = JSONObject(File("../build.json").readText())
 
     /** The page ids build.json::ui declares for one section. */

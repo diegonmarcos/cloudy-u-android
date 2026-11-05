@@ -118,7 +118,9 @@
         "libs:ui-nav-bars",
         "libs:theme-background",
         "libs:model-catalogue",
-        "libs:ai"
+        "libs:ai",
+        "libs:ui-kit",
+        "libs:ai-usage"
       ]
     },
     "libs:core": {
@@ -165,11 +167,30 @@
       "type": "library",
       "_doc": "#1154 shared navigation and theme design, shared BY REFERENCE."
     },
-    "libs:perms": {"dir": "../ab_cloud-libs-shared/libs/perms", "type": "library", "_doc": "#1360 the permission contract (libs:perms): Configs > General > Perms (AppPermsSection, linked by libs:ui-nav-bars), first run (PermsFirstRun), PermsGate, and the state provider helper apps are read through."},
+    "libs:perms": {
+      "dir": "../ab_cloud-libs-shared/libs/perms",
+      "type": "library",
+      "_doc": "#1360 the permission contract (libs:perms): Configs > General > Perms (AppPermsSection, linked by libs:ui-nav-bars), first run (PermsFirstRun), PermsGate, and the state provider helper apps are read through."
+    },
     "libs:theme-background": {
       "dir": "../ab_cloud-libs-shared/libs/theme-background",
       "type": "library",
       "_doc": "#1154 shared navigation and theme design, shared BY REFERENCE."
+    },
+    "libs:ui-kit": {
+      "_doc": "The fleet's Compose kit: KitStoreRow, the Cloud Store's dense row, for the AIs and Cost pages (#1499), shared BY REFERENCE.",
+      "dir": "../ab_cloud-libs-shared/libs/ui-kit",
+      "type": "library"
+    },
+    "libs:ai-usage": {
+      "_doc": "#1499 the AI usage table read (AiUsageClient + AiUsageModel: GET /ai/usage of cloudy-c3-api), shared BY REFERENCE with the Cloud SuperApp's Notify AI badge so the Cost page reads the very same source. Plain JVM.",
+      "dir": "../ab_cloud-libs-shared/libs/ai-usage",
+      "type": "library"
+    },
+    "libs:fleet-endpoints": {
+      "_doc": "libs:ai-usage's dependency (the fleet transport its client uses), plain JVM, shared BY REFERENCE.",
+      "dir": "../ab_cloud-libs-shared/libs/fleet-endpoints",
+      "type": "library"
     }
   },
   "tests": {
@@ -189,14 +210,18 @@
     }
   },
   "ui": {
-    "_doc": "#868 THE nav declaration (libs:bottomnav NavDecl) of Cloud SuperIntel: three sections on the bottom nav, Notebook, SI and CGCs, and Settings behind the first row. Notebook (Notebooks, Sources, Chat, Studio) is a one-row section; SI is the router chat alone (one page, so no second row); CGCs is the experts section in `horizontal_two_rows` mode (libs:ui-nav-bars NavSectionLayout; the user may switch it to one row or the side menu in Configs): one persona chat per entry of assets/si/personas.json that has a `group`, in six groups (Deep Science: Math, Physics, Chemistry; Engineers: Energy, Manufacturing, Robotics; Production: CTO; Medicine: Biology, Neuroscience; Business: Lawyer, Asset Manager; General: Wiki AI). The SI and CGCs page ids ARE the personas' ids and the CGC groups ARE personas.json's `group` values (test-superintel-app.sh and PersonasTest hold them in step, both ways). Settings has Models, Backend, About. Every icon is a libs:ui-icons name. The Profile icon at the top right of the first row opens extapp:cloud-account; the sessions drawer is the hamburger's.",
+    "_doc": "#868 THE nav declaration (libs:bottomnav NavDecl) of Cloud SuperIntel: five sections on the bottom nav, Notebook, CGCs, SI, AIs and Cost (#1499), and Settings behind the first row. Notebook (Notebooks, Sources, Chat, Studio) is a one-row section; SI is the router chat alone (one page, so no second row); CGCs is the experts section in `horizontal_two_rows` mode (libs:ui-nav-bars NavSectionLayout; the user may switch it to one row or the side menu in Configs): one persona chat per entry of assets/si/personas.json that has a `group`, in six groups (Deep Science: Math, Physics, Chemistry; Engineers: Energy, Manufacturing, Robotics; Production: CTO; Medicine: Biology, Neuroscience; Business: Lawyer, Asset Manager; General: Wiki AI). The SI and CGCs page ids ARE the personas' ids and the CGC groups ARE personas.json's `group` values (test-superintel-app.sh and PersonasTest hold them in step, both ways). Settings has Models, Backend, About. Every icon is a libs:ui-icons name. The Profile icon at the top right of the first row opens extapp:cloud-account; the sessions drawer is the hamburger's. AIs (APIs, MCP, Dotfiles, Plugins) and Cost (Claude and OpenRouter side by side) are data: their page ids are the keys of assets/ai/pages.json (test-superintel-ais.sh holds them in step), the AIs rows are derived from the cloudy-u-linux SOT by tools/derive-ai-data.py, and Cost reads the usage table the Cloud SuperApp's Notify AI badge reads.",
     "bottom_nav": [
       "notebook",
+      "cgcs",
       "si",
-      "cgcs"
+      "ais",
+      "cost"
     ],
     "default_section": "si",
-    "configs_ui": ["nav_ui"],
+    "configs_ui": [
+      "nav_ui"
+    ],
     "sections": [
       {
         "id": "notebook",
@@ -379,6 +404,50 @@
         ]
       },
       {
+        "id": "ais",
+        "label": "AIs",
+        "icon": "smart_toy",
+        "pages": [
+          {
+            "id": "apis",
+            "label": "APIs",
+            "icon": "api",
+            "pages": []
+          },
+          {
+            "id": "mcp",
+            "label": "MCP",
+            "icon": "hub",
+            "pages": []
+          },
+          {
+            "id": "dotfiles",
+            "label": "Dotfiles",
+            "icon": "description",
+            "pages": []
+          },
+          {
+            "id": "plugins",
+            "label": "Plugins",
+            "icon": "build",
+            "pages": []
+          }
+        ]
+      },
+      {
+        "id": "cost",
+        "label": "Cost",
+        "icon": "payments",
+        "pages": [
+          {
+            "id": "cost",
+            "label": "Cost",
+            "icon": "payments",
+            "pages": []
+          }
+        ]
+      },
+      {
         "id": "settings",
         "label": "Settings",
         "icon": "settings",
@@ -409,12 +478,24 @@
     "_doc": "Configs > General and Configs > About (libs:ui-nav-bars fleetconfigs, rule 1_cicd/src/data/configs-pages.json, #1352 v2). general.sections: the anchors of the one General page, in order (perms, battery, storage, notifications, ui, language are required; app opens this app's own Configs; update is added after perms by default). about: the hand-written part of the extensive About: tagline, description, features, screens, guide, privacy, backends (ids of ac_cloud-account/build.json::fleet_endpoints, resolved to mesh URLs at build time), related fleet apps, credits for a fork. Permissions, data stores, crash/analytics libs, name, icon, version, build sha and date, repo, licence, origin, crash sink, debug API and changelog are derived, never typed here.",
     "general": {
       "sections": [
-        {"id": "perms"},
-        {"id": "battery"},
-        {"id": "storage"},
-        {"id": "notifications"},
-        {"id": "ui"},
-        {"id": "language"},
+        {
+          "id": "perms"
+        },
+        {
+          "id": "battery"
+        },
+        {
+          "id": "storage"
+        },
+        {
+          "id": "notifications"
+        },
+        {
+          "id": "ui"
+        },
+        {
+          "id": "language"
+        },
         {
           "id": "app",
           "label": "App",

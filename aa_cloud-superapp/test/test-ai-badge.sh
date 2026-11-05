@@ -10,7 +10,8 @@ bad() { FAIL=$((FAIL+1)); echo "  FAIL: $1"; }
 check() { if [ "$1" = "OK" ]; then ok "$2"; else bad "$2 - $1"; fi; }
 BJ="$APP/build.json"
 SRC="$APP/app/src/main/java/com/diegonmarcos/superapp/notificationcenter"
-SVC="$SRC/AiBadgeService.kt"; CLI="$SRC/AiUsageClient.kt"; MODEL="$SRC/AiUsageModel.kt"
+LIB="$APP/../ab_cloud-libs-shared/libs/ai-usage/src/main/kotlin/com/diegonmarcos/superapp/notificationcenter"
+SVC="$SRC/AiBadgeService.kt"; CLI="$LIB/AiUsageClient.kt"; MODEL="$LIB/AiUsageModel.kt"
 MANIFEST="$APP/app/src/main/AndroidManifest.xml"
 
 echo "== T1: declared, last in the Resources group, with switches =="

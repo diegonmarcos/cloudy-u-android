@@ -1,0 +1,10 @@
+{
+  "_doc": "#1499 The data behind the AIs and Cost pages, by page id (build.json::ui sections ais and cost): the kind picks the screen (rows = grouped dense rows of a derived asset, apis = the API accounts and keys, cost = Claude and OpenRouter side by side), the asset is its declaration. test-superintel-ais.sh holds the ids in step with build.json::ui, both ways.",
+  "pages": {
+    "apis": { "kind": "apis", "asset": "ai/apis.json" },
+    "mcp": { "kind": "rows", "asset": "ai/mcp.json" },
+    "dotfiles": { "kind": "rows", "asset": "ai/dotfiles.json" },
+    "plugins": { "kind": "rows", "asset": "ai/plugins.json" },
+    "cost": { "kind": "cost", "asset": "ai/cost.json" }
+  }
+}

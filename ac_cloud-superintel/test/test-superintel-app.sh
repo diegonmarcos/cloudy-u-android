@@ -6,12 +6,12 @@
 # The chat itself (page, streaming, sessions, Markdown) is libs:ai's and is proven there (AiProtocolTest,
 # AiMarkdownTest). This proves, from the sources alone, that this app only ASSEMBLES it, on the fleet's bars:
 #   B1  every section and page id Decl.kt dispatches on is declared by build.json::ui, and every declared page is dispatched (both ways);
-#       the bottom nav is Notebook, SI, CGCs; the SI page and the CGCs pages are exactly assets/si/personas.json (the router, and the experts with a group), the
+#       the bottom nav is Notebook, CGCs, SI, AIs, Cost (#1499; the AIs and Cost pages are test-superintel-ais.sh's); the SI page and the CGCs pages are exactly assets/si/personas.json (the router, and the experts with a group), the
 #       CGCs section is horizontal_two_rows with exactly the owner's six groups, each group exactly its personas' `group` (both ways)
 #   B2  the shell draws the shared bars: first-row scaffold (Profile -> Cloud Account launcher), second row, bottom nav host,
 #       theme-background; the nav libs are in build.json modules AND in the app's build script
 #   B3  the chat is libs:ai's: AiChatPage + the sessions drawer panel in the top bar's drawer + Markdown on; no chat of this app's own
-#   B4  the backend is the fleet gateway: the gateway script applied, BuildConfig.AI_GATEWAY_URL baked and read, and no token handling at all
+#   B4  the backend is the fleet gateway: the gateway script applied, BuildConfig.AI_GATEWAY_URL baked and read, and no token handling (the AIs pages read the private store through PrivateSource only, never a stored or logged token)
 #       (no revealAiKey, no EncryptedSharedPreferences, no key-shaped literal): decisions-use guard D5
 #   B6  the sections are data and honest: the notebook refuses out of scope and cites, no answer is spelled in Kotlin
 #   B7  the News tab is gone cleanly: no News code, data, address, strings or provider query is left behind
@@ -40,7 +40,7 @@ manifest = read(os.path.join(app, "app/src/main/AndroidManifest.xml"))
 
 # B1
 declared_sections = {s["id"] for s in bj["ui"]["sections"]}
-DATA_SECTIONS = ("si", "cgcs")   # their pages are the ids of assets/si/*.json, not Kotlin constants
+DATA_SECTIONS = ("si", "cgcs", "ais", "cost")   # their pages are the ids of assets/si/*.json and assets/ai/pages.json (test-superintel-ais.sh), not Kotlin constants
 declared_pages = {p["id"] for s in bj["ui"]["sections"] if s["id"] not in DATA_SECTIONS for p in s["pages"]}
 named_sections = set(re.findall(r'SECTION_\w+\s*=\s*"([^"]+)"', decl))
 named_pages = set(re.findall(r'PAGE_\w+\s*=\s*"([^"]+)"', decl))
@@ -48,7 +48,7 @@ for x in sorted(named_sections - declared_sections): bad.append("B1 Decl.kt name
 for x in sorted(named_pages - declared_pages): bad.append("B1 Decl.kt names page %r that build.json::ui does not declare" % x)
 for x in sorted(declared_pages - named_pages): bad.append("B1 page %r is declared but Decl.kt has no id for it (the shell would draw nothing)" % x)
 for x in sorted(set(bj["ui"]["bottom_nav"]) - declared_sections): bad.append("B1 bottom_nav id %r is no section" % x)
-if bj["ui"]["bottom_nav"] != ["notebook", "si", "cgcs"]: bad.append("B1 the bottom nav must be Notebook, SI, CGCs, in that order")
+if bj["ui"]["bottom_nav"] != ["notebook", "cgcs", "si", "ais", "cost"]: bad.append("B1 the bottom nav must be Notebook, CGCs, SI, AIs, Cost, in that order")
 def ids_of(section): return [p["id"] for s in bj["ui"]["sections"] if s["id"] == section for p in s["pages"]]
 def data(name): return json.loads(read(os.path.join(app, "app/src/main/assets/si", name)))
 personas = data("personas.json")["personas"]
@@ -137,7 +137,7 @@ mutant "page dropped from Decl"        "sed -i '/PAGE_MODELS/d' $KT/Decl.kt"    
 mutant "shell loses the section layout" "sed -i 's/NavSectionLayout(/Foo(/' $KT/ui/SiShell.kt"                 "B2 SiShell does not call NavSectionLayout("
 mutant "drawer loses the sessions"     "sed -i 's/AiSessionsPanel(/Foo(/' $KT/ui/SiShell.kt"                  "B3 SiShell lacks AiSessionsPanel("
 mutant "markdown off"                  "sed -i 's/markdown = true/markdown = false/' $KT/ui/SiShell.kt"        "B3 SiShell lacks markdown = true"
-mutant "bottom nav loses CGCs"          "python3 -c \"import json;p='build.json';d=json.load(open(p));d['ui']['bottom_nav']=['notebook','si'];json.dump(d,open(p,'w'))\"" "B1 the bottom nav must be"
+mutant "bottom nav loses CGCs"          "python3 -c \"import json;p='build.json';d=json.load(open(p));d['ui']['bottom_nav']=['notebook','si','cgcs'];json.dump(d,open(p,'w'))\"" "B1 the bottom nav must be"
 mutant "CGCs loses its two rows"       "sed -i 's/horizontal_two_rows/horizontal_one_row/' build.json"        "B1 the CGCs section is not horizontal_two_rows"
 mutant "a CGC group is renamed"        "sed -i 's/\"label\": \"Engineers\"/\"label\": \"Builders\"/' build.json"  "B1 the CGCs groups are not the owner's six"
 mutant "a persona leaves its group"    "sed -i 's/\"group\": \"business\"/\"group\": \"general\"/' app/src/main/assets/si/personas.json"  "B1 CGCs group"

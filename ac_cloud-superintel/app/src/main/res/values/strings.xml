@@ -32,4 +32,13 @@
     <string name="nb_reading">Reading your sources…</string>
     <string name="nb_error">No answer: %1$s</string>
     <string name="nb_not_in_sources">Not in your sources</string>
+    <string name="ai_sample">sample</string>
+    <string name="ai_sample_note">Sample data: the real accounts load from the private store (Cloud Account) when it is reachable.</string>
+    <string name="ai_reveal_none">Not available: the private store did not answer.</string>
+    <string name="ai_empty">Nothing declared.</string>
+    <string name="cost_loading">Reading the usage table…</string>
+    <string name="cost_failed">No usage: %1$s</string>
+    <string name="cost_refresh">Refresh</string>
+    <string name="cost_source">Source: the Notify AI badge table, via %1$s.</string>
+    <string name="cost_age">Claude data pushed %1$s.</string>
 </resources>

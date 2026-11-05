@@ -1,0 +1,17 @@
+{
+  "_doc": "#1499 SAMPLE data only: fake accounts and keys so the page has a shape in a public repo. Nothing here is real and no real value ever goes in this file. The real rows (same fields) and the token of a row load at runtime from the private store: Cloud Account's `secret` provider (the cloud-me-pvt-configs / vault pattern), key `rows_key` for the rows and `token_key` (with {id}) for a token, revealed only on tap and never kept. token_masked is the mask the page draws; the bundled rows have no token.",
+  "sample_label": "sample",
+  "private": { "authority": "com.diegonmarcos.cloudaccount.accountdata", "method": "secret", "rows_key": "ai.apis", "token_key": "ai.api.{id}.token" },
+  "caption": "{provider} · {login} · {key_name}",
+  "caption2": "created {created} · last used {last_used}",
+  "rows": [
+    { "id": "claude-account-1", "label": "Claude Account 1", "provider": "Claude", "login": "owner-1@example.invalid", "key_name": "sample-session", "token_masked": "••••-sample", "created": "2026-01-01", "last_used": "2026-11-04",
+      "links": [ { "label": "console", "url": "https://claude.ai/settings" }, { "label": "docs", "url": "https://docs.claude.com" } ] },
+    { "id": "claude-api-1", "label": "Claude API 1", "provider": "Claude API", "login": "owner-1@example.invalid", "key_name": "sample-key-a", "token_masked": "••••-sample", "created": "2026-02-01", "last_used": "2026-11-03",
+      "links": [ { "label": "console", "url": "https://console.anthropic.com" }, { "label": "docs", "url": "https://docs.claude.com/en/api" } ] },
+    { "id": "openrouter-1", "label": "OpenRouter 1", "provider": "OpenRouter", "login": "owner-2@example.invalid", "key_name": "sample-key-b", "token_masked": "••••-sample", "created": "2026-03-01", "last_used": "2026-11-02",
+      "links": [ { "label": "console", "url": "https://openrouter.ai/settings/keys" }, { "label": "docs", "url": "https://openrouter.ai/docs" } ] },
+    { "id": "openrouter-2", "label": "OpenRouter 2", "provider": "OpenRouter", "login": "owner-3@example.invalid", "key_name": "sample-key-c", "token_masked": "••••-sample", "created": "2026-04-01", "last_used": "2026-10-30",
+      "links": [ { "label": "console", "url": "https://openrouter.ai/settings/keys" }, { "label": "docs", "url": "https://openrouter.ai/docs" } ] }
+  ]
+}

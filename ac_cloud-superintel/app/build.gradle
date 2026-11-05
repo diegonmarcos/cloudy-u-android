@@ -135,6 +135,9 @@ dependencies {
     // The fleet's AI chat: the page, sessions drawer, Markdown and streaming are the lib's.
     implementation project(':libs:ai')
     implementation project(':libs:model-catalogue')
+    // #1499 the AIs and Cost pages: the Cloud Store's dense row (libs:ui-kit) and the usage table read the SuperApp's Notify AI badge shares (libs:ai-usage).
+    implementation project(':libs:ui-kit')
+    implementation project(':libs:ai-usage')
 
     implementation platform('androidx.compose:compose-bom:2025.11.01')
     implementation 'androidx.compose.ui:ui'

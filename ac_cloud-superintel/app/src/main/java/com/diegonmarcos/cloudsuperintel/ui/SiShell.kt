@@ -27,6 +27,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.diegonmarcos.cloudsuperintel.AiData
 import com.diegonmarcos.cloudsuperintel.BuildConfig
 import com.diegonmarcos.cloudsuperintel.Decl
 import com.diegonmarcos.cloudsuperintel.R
@@ -81,6 +82,7 @@ fun SiShell() {
     val siDefault = remember { SiAi.defaultId(ctx) }
     val notebooks = remember { NotebookModel(ctx) }
     val nav = Decl.nav
+    val aiPages = remember { AiData.pages(AiData.asset(ctx, AiData.PAGES)) }
     var section by rememberSaveable { mutableStateOf(nav.default()?.id ?: Decl.SECTION_SI) }
     var page by rememberSaveable { mutableStateOf<String?>(null) }
     val sec = nav.section(section)
@@ -122,7 +124,8 @@ fun SiShell() {
                                     Modifier.imePadding().testTag(SiTags.CHAT), suggestions = p.suggestions,
                                 )
                             }
-                            else -> when (pageId) {
+                            // The AIs and Cost pages are data (assets/ai/pages.json, by page id): the screen kind and the asset, no name here.
+            else -> if (pageId != null && aiPages[pageId] != null) AiPage(aiPages.getValue(pageId)) else when (pageId) {
                                 Decl.PAGE_MODELS -> TextPage(R.string.models_title, stringResource(R.string.models_body)) { AiSettingsPickers(chat, theme) }
                                 Decl.PAGE_BACKEND -> TextPage(R.string.backend_title, stringResource(R.string.backend_body) + "\n\n" + stringResource(R.string.backend_gateway, BuildConfig.AI_GATEWAY_URL))
                                 Decl.PAGE_ABOUT -> TextPage(R.string.about_title, stringResource(R.string.about_body, BuildConfig.VERSION_NAME, BuildConfig.GIT_SHORT_SHA))

@@ -1082,6 +1082,8 @@ dependencies {
     implementation project(':libs:net')
     // libs:keyboard + libs:media MOVED to ac_cloud-keyboard (standalone constellation APK).
     implementation project(':libs:ops')
+    // #1499 the AI usage read (AiUsageClient, AiUsageModel) the Notify AI badge and Cloud SuperIntel's Cost page share.
+    implementation project(':libs:ai-usage')
     // libs:vault MOVED to ac_cloud-vault (standalone constellation APK hosting vault.diegonmarcos.com).
     implementation project(':libs:chat')
     // libs:wallet MOVED to ac_cloud-wallet (standalone constellation APK).

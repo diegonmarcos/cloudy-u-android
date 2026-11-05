@@ -1,0 +1,24 @@
+// libs:ai-usage (#1499) - THE read of the fleet's AI usage table, shared BY REFERENCE: AiUsageClient (GET /ai/usage of cloudy-c3-api,
+// alias c3-infra-api, mesh first then public with the fleet bearer) and AiUsageModel (the parse into Snapshot and the Card words).
+// The Cloud SuperApp's Notify AI badge and Cloud SuperIntel's Cost page both read it here, so the numbers are never computed or copied twice.
+// Plain JVM Kotlin over org.json (Android's own at runtime); renders nothing.
+plugins {
+    id 'org.jetbrains.kotlin.jvm'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
+dependencies {
+    // AiUsageClient's fleet leg is libs:fleet-endpoints' FleetHttp.
+    implementation project(':libs:fleet-endpoints')
+    compileOnly 'org.json:json:20240303'
+}

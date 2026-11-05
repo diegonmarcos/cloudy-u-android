@@ -1,0 +1,240 @@
+{
+ "_doc": "Derived by tools/derive-ai-data.py from the cloudy-u-linux SOT da_my-ai/data/claude (names and counts only, no secrets). Never edit by hand.",
+ "groups": [
+  {
+   "title": "Default (loaded in every session)",
+   "rows": [
+    {
+     "title": "cloudy-c3-mcp",
+     "caption": "default tier, grouped dispatcher",
+     "end": ""
+    }
+   ]
+  },
+  {
+   "title": "Opt-in",
+   "rows": [
+    {
+     "title": "cloud-me-cgc-pvt-mcp",
+     "caption": "opt-in tier",
+     "end": ""
+    },
+    {
+     "title": "cloudy-all-mcp",
+     "caption": "opt-in tier",
+     "end": ""
+    },
+    {
+     "title": "cloudy-apps-communication-mcp",
+     "caption": "opt-in tier",
+     "end": ""
+    },
+    {
+     "title": "cloudy-apps-drive-mcp",
+     "caption": "opt-in tier",
+     "end": ""
+    },
+    {
+     "title": "cloudy-cgc-pub-mcp",
+     "caption": "opt-in tier",
+     "end": ""
+    },
+    {
+     "title": "google-personal-mcp",
+     "caption": "opt-in tier",
+     "end": ""
+    },
+    {
+     "title": "google-workspace-mcp",
+     "caption": "opt-in tier",
+     "end": ""
+    },
+    {
+     "title": "cloud-cgc-pub-mcp",
+     "caption": "opt-in tier",
+     "end": "alias of cloudy-cgc-pub-mcp"
+    },
+    {
+     "title": "cloud-cgc-pvt-mcp",
+     "caption": "opt-in tier",
+     "end": "alias of cloud-me-cgc-pvt-mcp"
+    },
+    {
+     "title": "cloud-drive-mcp",
+     "caption": "opt-in tier",
+     "end": "alias of cloudy-apps-drive-mcp"
+    },
+    {
+     "title": "cloud-infra-mcp",
+     "caption": "opt-in tier",
+     "end": "alias of cloudy-c3-mcp"
+    },
+    {
+     "title": "cloudy-android-mcp",
+     "caption": "opt-in tier",
+     "end": "alias of cloudy-c3-mcp"
+    },
+    {
+     "title": "cloud-mail-mcp",
+     "caption": "opt-in tier",
+     "end": "alias of cloudy-apps-communication-mcp"
+    },
+    {
+     "title": "cloud-mattermost-mcp",
+     "caption": "opt-in tier",
+     "end": "alias of cloudy-apps-communication-mcp"
+    },
+    {
+     "title": "cloud-services-mcp",
+     "caption": "opt-in tier",
+     "end": "alias of cloudy-all-mcp"
+    },
+    {
+     "title": "cloud-superapp-mcp",
+     "caption": "opt-in tier",
+     "end": "alias of cloudy-c3-mcp"
+    },
+    {
+     "title": "cloud-vault-mcp",
+     "caption": "opt-in tier",
+     "end": "alias of cloudy-apps-drive-mcp"
+    }
+   ]
+  },
+  {
+   "title": "New names (#1450)",
+   "rows": [
+    {
+     "title": "cloudy-all-mcp",
+     "caption": "was cloud-services-mcp",
+     "end": "new"
+    },
+    {
+     "title": "cloudy-c3-mcp",
+     "caption": "was cloud-infra-mcp",
+     "end": "new"
+    },
+    {
+     "title": "cloudy-android-mcp",
+     "caption": "was cloud-superapp-mcp",
+     "end": "new"
+    },
+    {
+     "title": "cloudy-apps-communication-mcp",
+     "caption": "was cloud-mail-mcp",
+     "end": "new"
+    },
+    {
+     "title": "cloudy-apps-drive-mcp",
+     "caption": "was cloud-drive-mcp",
+     "end": "new"
+    },
+    {
+     "title": "cloudy-cgc-pub-mcp",
+     "caption": "was cloud-cgc-pub-mcp",
+     "end": "new"
+    },
+    {
+     "title": "cloud-me-cgc-pvt-mcp",
+     "caption": "was cloud-cgc-pvt-mcp",
+     "end": "new"
+    }
+   ]
+  },
+  {
+   "title": "Aliases (kept one release)",
+   "rows": [
+    {
+     "title": "cloud-services-mcp",
+     "caption": "old name",
+     "end": "-> cloudy-all-mcp"
+    },
+    {
+     "title": "cloud-infra-mcp",
+     "caption": "old name",
+     "end": "-> cloudy-c3-mcp"
+    },
+    {
+     "title": "cloud-superapp-mcp",
+     "caption": "old name",
+     "end": "-> cloudy-c3-mcp"
+    },
+    {
+     "title": "cloudy-android-mcp",
+     "caption": "old name",
+     "end": "-> cloudy-c3-mcp"
+    },
+    {
+     "title": "cloud-mail-mcp",
+     "caption": "old name",
+     "end": "-> cloudy-apps-communication-mcp"
+    },
+    {
+     "title": "cloud-mattermost-mcp",
+     "caption": "old name",
+     "end": "-> cloudy-apps-communication-mcp"
+    },
+    {
+     "title": "cloud-drive-mcp",
+     "caption": "old name",
+     "end": "-> cloudy-apps-drive-mcp"
+    },
+    {
+     "title": "cloud-vault-mcp",
+     "caption": "old name",
+     "end": "-> cloudy-apps-drive-mcp"
+    },
+    {
+     "title": "cloud-cgc-pub-mcp",
+     "caption": "old name",
+     "end": "-> cloudy-cgc-pub-mcp"
+    },
+    {
+     "title": "cloud-cgc-pvt-mcp",
+     "caption": "old name",
+     "end": "-> cloud-me-cgc-pvt-mcp"
+    }
+   ]
+  },
+  {
+   "title": "c3-mcp peers-control merge (#1495)",
+   "rows": [
+    {
+     "title": "cloud-superapp-mcp",
+     "caption": "merged into cloudy-c3-mcp (peers-control tool group)",
+     "end": "alias"
+    },
+    {
+     "title": "cloudy-android-mcp",
+     "caption": "merged into cloudy-c3-mcp (peers-control tool group)",
+     "end": "alias"
+    }
+   ]
+  },
+  {
+   "title": "Mesh-only",
+   "rows": [
+    {
+     "title": "cloud-me-cgc-pvt-mcp",
+     "caption": "direct on the mesh, no public route",
+     "end": ""
+    },
+    {
+     "title": "cloudy-apps-drive-mcp",
+     "caption": "direct on the mesh, no public route",
+     "end": ""
+    },
+    {
+     "title": "cloud-cgc-pvt-mcp",
+     "caption": "direct on the mesh, no public route",
+     "end": ""
+    },
+    {
+     "title": "cloud-vault-mcp",
+     "caption": "direct on the mesh, no public route",
+     "end": ""
+    }
+   ]
+  }
+ ]
+}

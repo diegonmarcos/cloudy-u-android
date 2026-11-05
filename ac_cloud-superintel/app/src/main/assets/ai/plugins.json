@@ -1,0 +1,195 @@
+{
+ "_doc": "Derived by tools/derive-ai-data.py from the cloudy-u-linux SOT da_my-ai/data/claude (names and counts only, no secrets). Never edit by hand.",
+ "groups": [
+  {
+   "title": "Enabled plugins (SOT)",
+   "rows": [
+    {
+     "title": "hooks-stack-framework-principles-cloud-ai-plugin",
+     "caption": "@cloud-marketplace",
+     "end": "on"
+    },
+    {
+     "title": "compression-cloud-ai-plugin",
+     "caption": "@cloud-marketplace",
+     "end": "on"
+    },
+    {
+     "title": "memory-system-cloud-ai-plugin",
+     "caption": "@cloud-marketplace",
+     "end": "on"
+    },
+    {
+     "title": "sub-agents-cloud-ai-plugin",
+     "caption": "@cloud-marketplace",
+     "end": "on"
+    },
+    {
+     "title": "skill-claude-api-plugin",
+     "caption": "@cloud-marketplace",
+     "end": "on"
+    },
+    {
+     "title": "ponytail",
+     "caption": "@cloud-marketplace",
+     "end": "on"
+    },
+    {
+     "title": "c3-infra",
+     "caption": "@cloud-marketplace",
+     "end": "on"
+    }
+   ]
+  },
+  {
+   "title": "c3-infra plugin",
+   "rows": [
+    {
+     "title": "c3-infra",
+     "caption": "Owner rules (skill + rules/*.md), lean agents and PreToolUse guard hooks for the c3 fleet",
+     "end": "1.0.0"
+    }
+   ]
+  },
+  {
+   "title": "Skills",
+   "rows": [
+    {
+     "title": "c3-infra",
+     "caption": "Owner rules for ANY fleet, Android app, CI, GitHub Actions, backlog/ticket, MCP, Caddy/addressing, secrets or agent-orchestration work in the c3 repos (cloud-*, _git-repos-master). Load before acting.",
+     "end": ""
+    }
+   ]
+  },
+  {
+   "title": "Rules",
+   "rows": [
+    {
+     "title": "addressing.md",
+     "caption": "Addressing and exposure (tickets #1100, #1104, #1116, #1117, #1123)",
+     "end": ""
+    },
+    {
+     "title": "agents.md",
+     "caption": "Agents and budget",
+     "end": ""
+    },
+    {
+     "title": "backlog.md",
+     "caption": "Product Backlog",
+     "end": ""
+    },
+    {
+     "title": "ci.md",
+     "caption": "CI and builds",
+     "end": ""
+    },
+    {
+     "title": "declarative.md",
+     "caption": "Declarative design",
+     "end": ""
+    },
+    {
+     "title": "owner.md",
+     "caption": "Owner workflow, quality, publication",
+     "end": ""
+    },
+    {
+     "title": "security.md",
+     "caption": "Security",
+     "end": ""
+    },
+    {
+     "title": "session-survival.md",
+     "caption": "Session survival",
+     "end": ""
+    }
+   ]
+  },
+  {
+   "title": "Agents",
+   "rows": [
+    {
+     "title": "build",
+     "caption": "Implementation worker for a single scoped change — edit files, run the build, report the diff. Use when the change is well-defined and self-contained.",
+     "end": "sonnet"
+    },
+    {
+     "title": "explore",
+     "caption": "Fast read-only scout. Use to find files, symbols, configs, or answer \"where is X / which files do Y\" across any repo. Returns locations + minimal excerpts, never edits.",
+     "end": "sonnet"
+    },
+    {
+     "title": "general-purpose",
+     "caption": "General-purpose agent for multi-step research and tasks. Lean override of the built-in: shell, file and web tools only, no MCP servers.",
+     "end": "sonnet"
+    },
+    {
+     "title": "infra",
+     "caption": "Worker for tasks that need the fleet tools (cloudy-c3-mcp incl. the phones, mail MCPs). Heavy at start (~55k tokens); use build/general-purpose when the MCPs are not needed.",
+     "end": "sonnet"
+    },
+    {
+     "title": "ops",
+     "caption": "Infra/CI runner — check gh workflow runs, tail logs, inspect docker/systemd state, verify deploys. Use for pipeline and fleet status work.",
+     "end": "sonnet"
+    },
+    {
+     "title": "review",
+     "caption": "Adversarial verifier. Give it a claim, finding, or diff — it tries to REFUTE it with evidence and returns CONFIRMED or REFUTED with proof. Read-only.",
+     "end": "sonnet"
+    }
+   ]
+  },
+  {
+   "title": "Hooks",
+   "rows": [
+    {
+     "title": "no-pkill-pgrep-f.sh",
+     "caption": "PreToolUse",
+     "end": ""
+    },
+    {
+     "title": "no-glob-rm-tmp.sh",
+     "caption": "PreToolUse",
+     "end": ""
+    },
+    {
+     "title": "no-local-gradle.sh",
+     "caption": "PreToolUse",
+     "end": ""
+    },
+    {
+     "title": "main-only-push.sh",
+     "caption": "PreToolUse",
+     "end": ""
+    },
+    {
+     "title": "no-branch-create.sh",
+     "caption": "PreToolUse",
+     "end": ""
+    },
+    {
+     "title": "no-secrets-commit.sh",
+     "caption": "PreToolUse",
+     "end": ""
+    },
+    {
+     "title": "no-mass-delete.sh",
+     "caption": "PreToolUse",
+     "end": ""
+    },
+    {
+     "title": "ai-usage-beacon.sh",
+     "caption": "posts or beacons AI usage",
+     "end": ""
+    },
+    {
+     "title": "ai-usage-post.sh",
+     "caption": "posts or beacons AI usage",
+     "end": ""
+    }
+   ]
+  }
+ ]
+}

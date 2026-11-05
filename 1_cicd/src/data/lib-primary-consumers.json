@@ -20,6 +20,7 @@
     "core": null,
     "crash": null,
     "perms": null,
+    "ai-usage": "aa_cloud-superapp",
     "databackend": "ac_cloud-contacts",
     "decisions": "ac_cloud-calc",
     "devtools": null,

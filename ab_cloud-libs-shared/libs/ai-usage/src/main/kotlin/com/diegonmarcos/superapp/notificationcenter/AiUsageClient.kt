@@ -31,10 +31,20 @@ object AiUsageClient {
 
     private val ACCEPT = mapOf("Accept" to "application/json", "User-Agent" to "Cloud-SuperApp-AiBadge/1")
 
+    /** The one route every reader of the usage table calls (#1499: the SuperApp badge and SuperIntel's Cost page). */
+    const val PATH = "/ai/usage"
+
+    /** The first of [bases] (the new API name, then its alias) that answers; the last failure when none does. */
+    fun fetchAny(bases: List<String>, bearer: String, fleet: Transport, plain: Transport): Outcome {
+        var last: Outcome = Outcome.Failed("no ops endpoint in this build")
+        for (b in bases) { last = fetch(b, bearer, fleet, plain); if (last is Outcome.Ok) return last }
+        return last
+    }
+
     fun fetch(baseUrl: String, bearer: String, fleet: Transport, plain: Transport): Outcome {
         val base = baseUrl.trimEnd('/')
         if (base.isEmpty()) return Outcome.Failed("no ops endpoint in this build")
-        val url = "$base/ai/usage"
+        val url = "$base$PATH"
         var why = ""
 
         val first = try { fleet.get(url, ACCEPT) } catch (e: IOException) { why = "mesh/fleet leg: ${e.javaClass.simpleName}"; null }
