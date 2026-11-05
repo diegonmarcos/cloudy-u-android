@@ -6,12 +6,12 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.ContentValues
 import android.content.Context
-import android.content.Intent
 import android.os.Build
 import android.provider.MediaStore
 import android.provider.Settings
 import com.diegonmarcos.superapp.BuildConfig
-import com.diegonmarcos.superapp.adbdebug.EmbeddedAdbChannel
+import com.diegonmarcos.superapp.adbdebug.ChannelOps
+import com.diegonmarcos.superapp.adbdebug.SetupAction
 import com.diegonmarcos.superapp.adbdebug.ShellChannels
 import com.diegonmarcos.superapp.battery.BatteryRepository
 import com.diegonmarcos.superapp.ops.dagu.DaguPrefs
@@ -61,7 +61,8 @@ internal object XrayExport {
         say("checking the ADB shell…")
         val gate = XrayAdbGate.run(
             ready = { ShellChannels.active(ctx) != null },
-            rearm = { runCatching { EmbeddedAdbChannel.autoConnect(ctx).first }.getOrDefault(false) },
+            // the ADB Shell page's own Reconnect (lib ChannelOps), not a raw connect
+            rearm = { runCatching { ChannelOps.reconnect(ctx) }.isSuccess && ShellChannels.active(ctx) != null },
             openWirelessDebugging = { openWirelessDebugging(ctx) },
             ask = { askDialog(activity, it) },
         )
@@ -145,15 +146,12 @@ internal object XrayExport {
     }
 
     private fun openWirelessDebugging(ctx: Context) {
-        runCatching {
-            ctx.startActivity(Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS).putExtra(":settings:fragment_args_key", "toggle_adb_wireless")
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-        }
+        runCatching { ChannelOps.setup(ctx, SetupAction.OPEN_WIRELESS_DEBUGGING) }
     }
 
     private suspend fun askDialog(activity: Activity?, message: String): XrayAdbGate.Choice = withContext(Dispatchers.Main) {
         if (activity == null || activity.isFinishing) return@withContext XrayAdbGate.Choice.PARTIAL
-        suspendCancellableCoroutine { cont ->
+        suspendCancellableCoroutine<XrayAdbGate.Choice> { cont ->
             fun answer(c: XrayAdbGate.Choice) { if (cont.isActive) cont.resume(c) }
             val d = AlertDialog.Builder(activity)
                 .setTitle("X-Ray needs ADB")

@@ -126,7 +126,7 @@ object XrayAnalyze {
         for ((i, l) in lines.withIndex()) {
             val m = SVC.find(l.trim()) ?: continue
             val fg = (i + 1 until minOf(lines.size, i + 30)).takeWhile { !lines[it].contains("ServiceRecord{") }.any { lines[it].contains("isForeground=true") }
-            by.getOrPut(m.groupValues[1]) { ArrayList() } += (m.groupValues[2].removePrefix(m.groupValues[1])) to fg
+            by.getOrPut(m.groupValues[1]) { ArrayList() }.add(m.groupValues[2].removePrefix(m.groupValues[1]) to fg)
         }
         return by.map { (p, l) -> Svc(p, l.size, l.count { it.second }, l.map { it.first }) }.sortedWith(compareByDescending<Svc> { it.foreground }.thenByDescending { it.total })
     }
@@ -170,7 +170,7 @@ object XrayAnalyze {
         val alarms = alarmWakeups(raw["alarm"].orEmpty())
         val svc = services(raw["services"].orEmpty()).associateBy { it.pkg }
         val starts = startReasons(raw["startproc"].orEmpty())
-        val jobs = jobs(raw["jobs"].orEmpty())
+        val jobsBy = jobs(raw["jobs"].orEmpty())
         return estimatedPower(dump).filter { it.mAh > 0.0 }.take(top).mapIndexed { i, p ->
             val pkgs = uidOf(p.uidName)?.let { pk[it] }.orEmpty()
             val name = pkgs.joinToString("+").ifEmpty { p.uidName }
@@ -187,7 +187,7 @@ object XrayAnalyze {
             if (aw > 0) sig += "$aw alarm wakeups"
             val sv = pkgs.mapNotNull { svc[it] }
             if (sv.isNotEmpty()) sig += "${sv.sumOf { it.total }} services running (${sv.sumOf { it.foreground }} foreground)"
-            val jb = pkgs.mapNotNull { jobs[it] }
+            val jb = pkgs.mapNotNull { jobsBy[it] }
             if (jb.isNotEmpty()) sig += "${jb.sumOf { it.first }} pending jobs (${jb.sumOf { it.second }} WorkManager)"
             val reasons = starts.filterKeys { it.first in pkgs }.entries.groupBy({ it.key.second }, { it.value }).mapValues { it.value.sum() }
             if (reasons.isNotEmpty()) sig += "process starts: " + reasons.entries.sortedByDescending { it.value }.take(3).joinToString { "${it.value} for ${it.key}" }
@@ -214,15 +214,15 @@ object XrayAnalyze {
         for ((u, mah) in power) uidOf(u)?.let { pk[it] }?.forEach { if (it.startsWith(FLEET_PREFIX)) byPkg[it] = mah }
         val svc = services(raw["services"].orEmpty()).associateBy { it.pkg }
         val alarms = alarmWakeups(raw["alarm"].orEmpty())
-        val jobs = jobs(raw["jobs"].orEmpty())
+        val jobsBy = jobs(raw["jobs"].orEmpty())
         val starts = startReasons(raw["startproc"].orEmpty())
-        val all = (byPkg.keys + svc.keys + alarms.keys + jobs.keys + starts.keys.map { it.first }).filter { it.startsWith(FLEET_PREFIX) }.toSortedSet()
+        val all = (byPkg.keys + svc.keys + alarms.keys + jobsBy.keys + starts.keys.map { it.first }).filter { it.startsWith(FLEET_PREFIX) }.toSortedSet()
         return all.map { p ->
             val parts = ArrayList<String>()
             byPkg[p]?.let { parts += String.format(Locale.US, "%.1f mAh", it) }
             svc[p]?.let { parts += "${it.total} services (${it.foreground} fg)" }
             alarms[p]?.let { parts += "$it alarm wakeups" }
-            jobs[p]?.let { parts += "${it.first} jobs" }
+            jobsBy[p]?.let { parts += "${it.first} jobs" }
             val r = starts.filterKeys { it.first == p }.entries.sortedByDescending { it.value }.take(3)
             if (r.isNotEmpty()) parts += "woken by " + r.joinToString { "${it.value}x ${it.key.second}" }
             "$p: " + parts.joinToString(" · ")
