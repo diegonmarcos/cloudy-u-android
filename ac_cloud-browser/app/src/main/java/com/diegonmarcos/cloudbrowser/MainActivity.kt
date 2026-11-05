@@ -32,6 +32,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.commit
+import com.diegonmarcos.cloudbrowser.offline.GpuPageBlock
 import com.diegonmarcos.cloudbrowser.sites.CloudyPage
 import com.diegonmarcos.cloudbrowser.sites.DomainsPage
 import com.diegonmarcos.cloudbrowser.sites.SitesDecl
@@ -121,7 +122,7 @@ class MainActivity : AppCompatActivity() {
         // #1518 the offline copy and the GPU page plug into the shared host; fullscreen events drive the refresh rate
         com.diegonmarcos.cloudbrowser.offline.SiteOffline.install(this)
         com.diegonmarcos.cloudbrowser.offline.SiteOffline.seedDeclared(this)
-        com.diegonmarcos.superapp.browser.BrowserHostHooks.gpuPage = { com.diegonmarcos.cloudbrowser.offline.GpuPageBlock() }
+        com.diegonmarcos.superapp.browser.BrowserHostHooks.gpuPage = { GpuPageBlock() }
         com.diegonmarcos.cloudlib.web.CloudChromeClient.fullscreenListener =
             com.diegonmarcos.cloudlib.web.CloudChromeClient.FullscreenListener { on -> runOnUiThread { refreshRate.fullscreen(on) } }
         supportFragmentManager.addFragmentOnAttachListener { _, f ->
