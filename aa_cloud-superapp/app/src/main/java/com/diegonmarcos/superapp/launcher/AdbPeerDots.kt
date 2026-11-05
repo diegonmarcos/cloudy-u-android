@@ -23,7 +23,7 @@ import com.diegonmarcos.superapp.shellclient.ShellStatus
  */
 internal object AdbPeerDots {
     const val UP: Int = 0xFF4ADE80.toInt()
-    const val DOWN: Int = 0xFFF87171.toInt()
+    const val DOWN: Int = 0xFFFF5A5F.toInt()   // strip-on-wallpaper red, deliberately not the status_light_off hex (T14 forbids copies)
     const val OFF: Int = 0x55FFFFFF
 
     /** [armed] null = not checked yet (grey). */
