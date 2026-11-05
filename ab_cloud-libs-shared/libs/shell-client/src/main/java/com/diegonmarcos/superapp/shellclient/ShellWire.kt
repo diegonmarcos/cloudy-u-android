@@ -14,7 +14,7 @@ object ShellWire {
     const val M_EXEC = "exec"
     const val M_STREAM = "stream"
     const val M_STATUS = "status"
-    /** The mesh door (Cloud-Webserver /shell/*): the whole request is the call's arg, a JSON `{cmd, timeoutMs?, maxBytes?}`; the reply also carries ok/mime/payload. */
+    /** The mesh door (the Cloud-Webserver shell route): the whole request is the call's arg, a JSON `{cmd, timeoutMs?, maxBytes?}`; the reply also carries ok/mime/payload. */
     const val M_EXEC_JSON = "exec_json"
     const val M_STREAM_JSON = "stream_json"
     const val K_TIMEOUT = "timeoutMs"
