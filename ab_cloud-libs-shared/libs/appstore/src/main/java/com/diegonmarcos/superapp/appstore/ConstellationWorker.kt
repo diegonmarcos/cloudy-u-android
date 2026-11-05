@@ -21,6 +21,7 @@ import androidx.work.ForegroundInfo
 import com.diegonmarcos.superapp.updater.Advisory
 import com.diegonmarcos.superapp.updater.BatchForeground
 import com.diegonmarcos.superapp.updater.AutoUpdatePrefs
+import com.diegonmarcos.superapp.updater.BackgroundGate
 import com.diegonmarcos.superapp.updater.InstallIdentity
 import com.diegonmarcos.superapp.updater.UpdateProgress
 import com.diegonmarcos.superapp.updater.Fleet
@@ -73,6 +74,7 @@ class ConstellationWorker(appCtx: Context, params: WorkerParameters) :
         }
         if (!AuConfig.AUTO_UPDATE_ENABLED || !AutoUpdatePrefs.enabled(applicationContext))
             return@withContext Result.success()
+        if (!BackgroundGate.mayRun(applicationContext)) return@withContext Result.success()   // #1502
         // #865 another app owns the fleet pass on this phone (SuperApp hands it to
         // Cloud Store once Cloud Store is installed). Two passes would race the
         // same downloads and install sessions, so this one stands down.
@@ -164,8 +166,9 @@ class ConstellationWorker(appCtx: Context, params: WorkerParameters) :
 
         /** CONNECTED, never UNMETERED (see [start]); #804 and never on a nearly
          *  full disk — Download all would only fail its storage check there. */
-        private fun constraints() = Constraints.Builder().apply {
-            setRequiredNetworkType(NetworkType.CONNECTED)
+        private fun constraints(context: Context) = Constraints.Builder().apply {
+            // #1502 UNMETERED in Cloud Store (the owner rule: no background wake off Wi-Fi), CONNECTED elsewhere.
+            setRequiredNetworkType(BackgroundGate.network(context))
             setRequiresStorageNotLow(true)
             if (AuConfig.AU_REQUIRE_CHARGING) setRequiresCharging(true)
         }.build()
@@ -195,7 +198,7 @@ class ConstellationWorker(appCtx: Context, params: WorkerParameters) :
                 if (!AuConfig.AUTO_UPDATE_ENABLED || !AutoUpdatePrefs.enabled(context)) return
                 if (!AppStoreHost.runsFleetPass(context)) return   // #865
                 val req = OneTimeWorkRequestBuilder<ConstellationWorker>()
-                    .setConstraints(constraints())
+                    .setConstraints(constraints(context))
                     .setInputData(triggerData(trigger))
                     .build()
                 WorkManager.getInstance(context).enqueueUniqueWork("$WORK_NAME-kick", ExistingWorkPolicy.KEEP, req)
@@ -206,6 +209,8 @@ class ConstellationWorker(appCtx: Context, params: WorkerParameters) :
         fun start(context: Context) {
             // #894 The SuperApp runs no Store pass, ever: clear what an older build queued and stop.
             if (!StoreNotifyGate.mayPost(context)) { cancelAll(context); return }
+            // #1502 Cloud Account never runs a background job; Store's is cancelled the moment it may not run.
+            if (BackgroundGate.never(context)) { cancelAll(context); return }
             // IDENTITY GATE (#453). A clone must not schedule the periodic
             // fleet check (the notification/badge source); if one had it
             // scheduled already, cancel is the honest state — it must never
@@ -258,7 +263,7 @@ class ConstellationWorker(appCtx: Context, params: WorkerParameters) :
             // ENQUEUED with a constraint that was never going to be met. Run on
             // metered too and decide in doWork, where we can look at the ACTIVE
             // network instead.
-            val constraints = constraints()
+            val constraints = constraints(context)
             val request = PeriodicWorkRequestBuilder<ConstellationWorker>(
                 AuConfig.AUTO_UPDATE_INTERVAL_HOURS, TimeUnit.HOURS,
             ).setConstraints(constraints).build()
@@ -288,7 +293,7 @@ class ConstellationWorker(appCtx: Context, params: WorkerParameters) :
             if (!AuConfig.AUTO_UPDATE_ENABLED || !AutoUpdatePrefs.enabled(context)) return
             if (!AppStoreHost.runsFleetPass(context)) return   // #865
             val req = OneTimeWorkRequestBuilder<ConstellationWorker>()
-                .setConstraints(constraints())
+                .setConstraints(constraints(context))
                 .setInputData(triggerData(StoreAuto.TRIGGER_APP_START))
                 .setInitialDelay(30, TimeUnit.SECONDS)
                 .build()

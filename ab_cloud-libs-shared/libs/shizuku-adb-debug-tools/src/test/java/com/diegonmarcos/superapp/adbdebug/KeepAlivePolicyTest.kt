@@ -39,4 +39,11 @@ class KeepAlivePolicyTest {
         }
         assertFalse(src("HostShellService.kt").contains("PERIOD_MS"))
     }
+
+    /** #1502 a host that may not run in the background (Account always, Store off Wi-Fi or with auto-update off) has no job for the service. */
+    @Test fun noBackgroundNoService() {
+        assertTrue(KeepAlivePolicy.needed(debugServerAllowed = true, channelEnabled = true, backgroundAllowed = true))
+        assertFalse(KeepAlivePolicy.needed(debugServerAllowed = true, channelEnabled = true, backgroundAllowed = false))
+        assertTrue(KeepAlivePolicy.needed(debugServerAllowed = false, channelEnabled = true))   // the default keeps the old behaviour
+    }
 }

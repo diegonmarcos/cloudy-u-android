@@ -75,6 +75,9 @@ class UpdateWorker(
         // This check used to run BEFORE `force` was read, so turning auto-update
         // off also silently killed "Check for updates": the worker returned
         // success without touching the network and the UI showed nothing.
+        // #1502 an unattended pass the app's background policy forbids (Account never; Store off Wi-Fi or with auto-update off)
+        // ends here, whatever queued it (an older build's persisted periodic job included).
+        if (!force && !BackgroundGate.mayRun(applicationContext)) return@withContext Result.success()
         if (!force && (!BuildConfig.AUTO_UPDATE_ENABLED || !AutoUpdatePrefs.enabled(applicationContext)))
             return@withContext Result.success()
         // FIRST, before anything that can reach a screen. The persisted twin of

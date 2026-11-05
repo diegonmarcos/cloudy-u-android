@@ -3,7 +3,6 @@ package com.diegonmarcos.cloudstore.shell
 import android.content.Context
 import androidx.work.WorkerParameters
 import com.diegonmarcos.superapp.adbdebug.HostShell
-import com.diegonmarcos.superapp.adbdebug.HostShellBootReceiver
 import com.diegonmarcos.superapp.adbdebug.HostShellWorker
 
 /**
@@ -29,5 +28,3 @@ object CloudStoreShell {
 /** Kept by name: WorkManager may still hold a job enqueued under this class by an older build. */
 class ShellChannelWorker(ctx: Context, params: WorkerParameters) : HostShellWorker(ctx, params)
 
-/** BOOT_COMPLETED, declared in the Store manifest by this name. */
-class ShellBootReceiver : HostShellBootReceiver()

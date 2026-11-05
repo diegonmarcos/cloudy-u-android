@@ -21,8 +21,9 @@ import com.diegonmarcos.superapp.devtools.AppDebugServer
  * pairing and the next daily job, Android reclaims the process, the debug port goes dead and the
  * channel is gone until something relaunches the app.
  *
- * A quiet, low-importance foreground service, START_STICKY, started by [HostShell.install] and by
- * [HostShellBootReceiver]. While running it re-arms the channel when it drops and keeps the debug
+ * A quiet, low-importance foreground service, NOT sticky (#1487), started by [HostShell.install] and by
+ * [HostShellBootReceiver], and only for a host that may run in the background (#1502: never Cloud Account, Cloud Store only
+ * with auto-update on over Wi-Fi). While running it re-arms the channel when it drops and keeps the debug
  * server listening when the host's [HostShell.debugServerAllowed] says so.
  */
 class HostShellService : Service() {
@@ -57,7 +58,7 @@ class HostShellService : Service() {
             while (!Thread.currentThread().isInterrupted) {
                 val debug = HostShell.debugServerAllowed(ctx)
                 // #1487 nothing to keep (debug mode off, channel off): stop, do not idle as a foreground service.
-                if (!KeepAlivePolicy.needed(debug, ChannelAutoArm.enabled(ctx))) { stopSelf(); return }
+                if (!KeepAlivePolicy.needed(debug, ChannelAutoArm.enabled(ctx), HostShell.mayBackground(ctx))) { stopSelf(); return }
                 val screenOn = pm.isInteractive
                 runCatching {
                     if (debug) AppDebugServer.start(ctx)

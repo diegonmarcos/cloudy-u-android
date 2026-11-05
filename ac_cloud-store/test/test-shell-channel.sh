@@ -4,7 +4,7 @@
 # Held statically (no build, no device, no network):
 #  1. build.json: shizuku_client (Shizuku fallback, NO SuperApp bridge), its own local-server
 #     port, the shizuku and fleetconfig modules on the app's dependency list.
-#  2. the app links the module, declares the pairing service + boot receiver + permissions, arms
+#  2. the app links the module, declares the pairing service + permissions (no boot receiver, #1502), arms
 #     the channel from App.onCreate and draws the ADB Shell page in Configs (its ADB Shell tab).
 #  3. SuperApp stands down: no self-update schedule, no check, no Update-all of its own when Cloud
 #     Store is installed.
@@ -48,8 +48,8 @@ ok("project(':libs:shizuku-adb-debug-tools')" in gr, "app/build.gradle links the
 mf = open(f"{R}/ac_cloud-store/app/src/main/AndroidManifest.xml", encoding="utf-8").read()
 ok("com.diegonmarcos.superapp.adbdebug.AdbPairingService" in mf and 'foregroundServiceType="specialUse"' in mf,
    "the pairing foreground service is declared", "the pairing foreground service is not declared in Cloud Store's manifest")
-ok("RECEIVE_BOOT_COMPLETED" in mf and ".shell.ShellBootReceiver" in mf and "FOREGROUND_SERVICE_SPECIAL_USE" in mf,
-   "boot receiver and foreground-service permissions are declared", "boot receiver / foreground-service permissions missing")
+ok("RECEIVE_BOOT_COMPLETED" not in mf and "ShellBootReceiver" not in mf.replace("no boot receiver", "") and "FOREGROUND_SERVICE_SPECIAL_USE" in mf,
+   "#1502 no boot receiver, foreground-service permission declared", "#1502 a boot receiver is back, or the foreground-service permission is missing")
 app = rd("ac_cloud-store/app/src/main/java/com/diegonmarcos/cloudstore/App.kt")
 ok("CloudStoreShell.install(this)" in app, "App.onCreate arms the channel", "App.onCreate never arms the channel")
 cfg = rd("ac_cloud-store/app/src/main/java/com/diegonmarcos/cloudstore/ConfigsPage.kt")
@@ -59,7 +59,8 @@ ok("AdbPairingService.start(ctx)" in lp, "the page's Pair starts the pairing ser
 # The host glue lives once in the lib (HostShell); the Store's CloudStoreShell must call it.
 cs = rd("ac_cloud-store/app/src/main/java/com/diegonmarcos/cloudstore/shell/CloudStoreShell.kt")
 ok("HostShell.install(app)" in cs, "the Store arms the shared HostShell", "the Store no longer calls HostShell")
-ok("class ShellBootReceiver : HostShellBootReceiver()" in cs, "the Store's boot receiver re-arms through HostShell", "the Store's boot receiver is not HostShell's")
+ok("ShellBootReceiver" not in cs, "#1502 the Store declares no boot receiver of its own", "#1502 the Store's shell has a boot receiver again")
+ok("HostShell.backgroundAllowed = " in app and "BackgroundGate.mayRun(it)" in app, "#1502 the Store's shell runs in the background only with auto-update on over Wi-Fi", "#1502 the Store does not gate HostShell on BackgroundGate")
 sh = rd("ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/src/main/java/com/diegonmarcos/superapp/adbdebug/HostShell.kt")
 ok("AdbPairingService.onConnected = " in sh and "WRITE_SECURE_SETTINGS" in sh, "a finished pairing grants WRITE_SECURE_SETTINGS", "a finished pairing is not followed up")
 ok("EmbeddedAdbChannel.autoConnect(ctx)" in sh, "the channel reconnects over mDNS without the user", "nothing reconnects the channel")
@@ -128,13 +129,13 @@ mutate "shell lib dropped from the app module" $S/build.json '"libs:shizuku-adb-
         "libs:fleetconfig-model"' '"libs:fleetconfig-model"' || M=$((M+1))
 mutate "app no longer links the shell lib" $S/app/build.gradle "implementation project(':libs:shizuku-adb-debug-tools')" '' || M=$((M+1))
 mutate "pairing service not declared" $S/app/src/main/AndroidManifest.xml 'foregroundServiceType="specialUse">' 'foregroundServiceType="dataSync">' || M=$((M+1))
-mutate "boot receiver dropped" $S/app/src/main/AndroidManifest.xml '.shell.ShellBootReceiver' '.shell.Gone' || M=$((M+1))
 mutate "channel never armed" $K/App.kt 'CloudStoreShell.install(this)' 'Unit' || M=$((M+1))
 mutate "no ADB Shell page in Configs" $K/ConfigsPage.kt 'AdbShellPage()' 'Unit' || M=$((M+1))
 mutate "Pair does not start the service" ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/src/main/java/com/diegonmarcos/superapp/adbdebug/ChannelDevice.kt 'AdbPairingService.start(ctx)' 'Unit' || M=$((M+1))
 H=ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/src/main/java/com/diegonmarcos/superapp/adbdebug/HostShell.kt
 mutate "Store build without HostShell" $K/shell/CloudStoreShell.kt 'fun install(app: Context) = HostShell.install(app)' 'fun install(app: Context) = Unit' || M=$((M+1))
-mutate "boot receiver bypasses HostShell" $K/shell/CloudStoreShell.kt 'class ShellBootReceiver : HostShellBootReceiver()' 'class ShellBootReceiver : android.content.BroadcastReceiver()' || M=$((M+1))
+mutate "boot receiver returns" $K/shell/CloudStoreShell.kt 'object CloudStoreShell {' 'class ShellBootReceiver
+object CloudStoreShell {' || M=$((M+1))
 mutate "pairing not followed up" $H 'AdbPairingService.onConnected' 'AdbPairingService.onConnectedX' || M=$((M+1))
 mutate "no reconnect" $H 'EmbeddedAdbChannel.autoConnect(ctx)' 'Pair(false, "")' || M=$((M+1))
 mutate "session install first" ab_cloud-libs-shared/libs/updater/src/main/java/com/diegonmarcos/superapp/updater/Fleet.kt 'listOf(ShellInstall, SessionInstall)' 'listOf(SessionInstall, ShellInstall)' || M=$((M+1))

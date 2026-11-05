@@ -34,7 +34,6 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS"
         tools:ignore="ProtectedPermissions" />
 
@@ -99,23 +98,9 @@
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="Keeps this app's on-device shell channel and its loopback debug server running between uses" />
         </service>
-        <receiver
-            android:name=".shell.ShellBootReceiver"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-            </intent-filter>
-        </receiver>
-
-        <!-- #1078 re-arms the periodic fleet check after a reboot or an update of this app. -->
-        <receiver
-            android:name=".UpdateChecksBootReceiver"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
-            </intent-filter>
-        </receiver>
+        <!-- #1502 no boot receiver (the shell re-arm and the fleet-check re-arm were two BOOT_COMPLETED receivers): WorkManager
+             keeps its own persisted jobs across a reboot, and Cloud Store runs a background job only with auto-update ON and
+             on an unmetered network (libs:core BackgroundPolicy), so nothing here may start the process at boot. -->
 
         <!-- Same provider cloud-superapp declares: lets the Shizuku install
              channel bind when Shizuku is present. -->

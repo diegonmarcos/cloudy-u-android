@@ -9,6 +9,7 @@ import android.net.Uri
 import android.os.Binder
 import android.os.Bundle
 import android.os.Process
+import com.diegonmarcos.superapp.core.BackgroundPolicy
 import com.diegonmarcos.superapp.core.FleetConfig
 
 /** Reads the channel state of every app in [AdbPeers.FLEET]: this app's directly, the others' through their [AdbStatusProvider]. */
@@ -30,15 +31,17 @@ object AdbPeerReader {
     fun own(ctx: Context, peer: AdbPeer): PeerStatus = PeerStatus(peer, ownLink(ctx), PairingClaim.held, PairingClaim.since)
 
     /** One peer's status over its provider; any failure (not installed, no permission, process dead) is [PeerLink.UNREACHABLE]. */
-    fun remote(ctx: Context, peer: AdbPeer): PeerStatus {
+    fun remote(ctx: Context, peer: AdbPeer, wake: Boolean = true): PeerStatus {
+        // #1502 a periodic reader (wake = false) never starts an app that may not be woken: it is read only when a person looks.
+        if (!wake && !BackgroundPolicy.mayWakePeer(peer.applicationId)) return PeerStatus(peer, PeerLink.UNREACHABLE)
         val b = runCatching { ctx.contentResolver.call(Uri.parse("content://${peer.authority}"), AdbPeers.METHOD_STATUS, null, null) }.getOrNull()
         if (b == null || !b.containsKey(AdbPeers.KEY_LINK)) return PeerStatus(peer, PeerLink.UNREACHABLE)
         return PeerStatus(peer, AdbPeers.parseLink(b.getString(AdbPeers.KEY_LINK)), b.getBoolean(AdbPeers.KEY_PAIRING), b.getLong(AdbPeers.KEY_PAIRING_SINCE))
     }
 
     /** Every app in the fleet, this one first-hand. Blocking (binder calls and a probe): never on the main thread. */
-    fun read(ctx: Context, peers: List<AdbPeer> = AdbPeers.FLEET): List<PeerStatus> =
-        peers.map { if (it.applicationId == ctx.packageName) own(ctx, it) else remote(ctx, it) }
+    fun read(ctx: Context, peers: List<AdbPeer> = AdbPeers.FLEET, wake: Boolean = true): List<PeerStatus> =
+        peers.map { if (it.applicationId == ctx.packageName) own(ctx, it) else remote(ctx, it, wake) }
 
     /** Who else holds the pairing window, or null. Blocking, like [read]. */
     fun pairingHeldElsewhere(ctx: Context): PeerStatus? =

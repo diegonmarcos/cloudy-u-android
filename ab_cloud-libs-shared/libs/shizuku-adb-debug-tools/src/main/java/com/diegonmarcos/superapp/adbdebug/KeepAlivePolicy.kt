@@ -9,8 +9,9 @@ object KeepAlivePolicy {
     const val MAX_MS = 30 * 60_000L
     const val SCREEN_OFF_MS = 15 * 60_000L
 
-    /** The service has a job only while the debug server may run or the channel is armed; otherwise it stops. */
-    fun needed(debugServerAllowed: Boolean, channelEnabled: Boolean): Boolean = debugServerAllowed || channelEnabled
+    /** The service has a job only while the host may run in the background (#1502) and the debug server may run or the channel is armed; otherwise it stops. */
+    fun needed(debugServerAllowed: Boolean, channelEnabled: Boolean, backgroundAllowed: Boolean = true): Boolean =
+        backgroundAllowed && (debugServerAllowed || channelEnabled)
 
     /** Wait before the next pass: doubles with each consecutive failure up to [MAX_MS]; a dark screen waits [SCREEN_OFF_MS]. */
     fun nextDelayMs(failures: Int, screenOn: Boolean): Long {

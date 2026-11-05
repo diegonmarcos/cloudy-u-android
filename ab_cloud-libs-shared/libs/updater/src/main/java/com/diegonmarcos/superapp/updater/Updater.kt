@@ -36,6 +36,8 @@ object Updater {
         // #894 The SuperApp schedules no update work at all (Cloud Store updates it) and clears
         // whatever an older build left in WorkManager.
         if (!StoreNotifyGate.mayPost(context)) { cancelAll(context); return }
+        // #1502 Cloud Account never runs a background job: clear what an older build queued and stop.
+        if (BackgroundGate.never(context)) { cancelAll(context); return }
         // IDENTITY GATE (#453). A work-profile, parallel-clone or Secure
         // Folder copy of this app is not the install the updater owns. It must
         // not schedule the periodic self-update at all — never queue work whose
@@ -56,7 +58,8 @@ object Updater {
         // NET_CAPABILITY_NOT_METERED check), so gating the worker off entirely on
         // metered would suppress the "ask for update" prompt.
         val constraints = Constraints.Builder().apply {
-            setRequiredNetworkType(NetworkType.CONNECTED)
+            // #1502 Store: UNMETERED, so a periodic or delayed job never wakes the process on mobile data.
+            setRequiredNetworkType(BackgroundGate.network(context))
             if (BuildConfig.AU_REQUIRE_CHARGING) {
                 setRequiresCharging(true)
             }

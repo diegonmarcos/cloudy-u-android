@@ -10,7 +10,7 @@ import android.provider.Settings
 
 /**
  * #1078 What keeps Cloud Store's background update checks (libs:appstore ConstellationWorker, a WorkManager periodic job
- * that WorkManager re-schedules after a reboot and [UpdateChecksBootReceiver] re-arms) running on a phone: the three
+ * that WorkManager re-schedules after a reboot; nothing of this app's own re-arms it at boot, #1502) running on a phone: the three
  * things only the user can allow. Each one is asked the way Android intends it, through its own system prompt or
  * settings screen. Nothing here grants anything: no pm grant, no WRITE_SECURE_SETTINGS, no battery-optimization
  * exemption request (the app never asks the system to exempt it; it opens the list and the user decides).

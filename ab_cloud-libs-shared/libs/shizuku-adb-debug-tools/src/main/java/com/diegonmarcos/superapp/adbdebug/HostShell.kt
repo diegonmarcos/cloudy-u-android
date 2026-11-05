@@ -40,19 +40,35 @@ object HostShell {
      */
     @Volatile var debugServerAllowed: (Context) -> Boolean = { true }
 
+    /**
+     * #1502 May this host run in the BACKGROUND (a keep-alive service, a boot re-arm, a WorkManager pass, the wireless-debugging
+     * keeper)? The host's policy, set before [install]: Cloud Account says never, Cloud Store only with auto-update on and Wi-Fi
+     * (libs:core BackgroundPolicy). Default true, as before, for a host that sets nothing (SuperApp).
+     */
+    @Volatile var backgroundAllowed: (Context) -> Boolean = { true }
+
+    fun mayBackground(ctx: Context): Boolean = runCatching { backgroundAllowed(ctx) }.getOrDefault(false)
+
     /** Called once from the host's Application.onCreate. */
     fun install(app: Context) {
         // The pairing service ends with the channel up; what follows is the host's.
         AdbPairingService.onConnected = { c -> onConnected(c.applicationContext) }
         runCatching { RishBridge.requestShizukuPermissionIfNeeded() }
-        schedule(app, replace = false)
+        if (mayBackground(app)) schedule(app, replace = false)
+        else {
+            // #1502 no WorkManager job and no service for this host: clear what an older build queued, and re-arm in-process,
+            // now, while the app is running (the process was started by the user or by a caller, never by this).
+            runCatching { WorkManager.getInstance(app).cancelUniqueWork(workName(app)) }
+            if (ChannelAutoArm.enabled(app)) Thread({ reconnect(app, 3) }, "host-shell-rearm").apply { isDaemon = true }.start()
+        }
         // The channel and the debug server are process state: the foreground service holds the process up.
-        if (KeepAlivePolicy.needed(debugServerAllowed(app), ChannelAutoArm.enabled(app))) HostShellService.start(app)
+        if (KeepAlivePolicy.needed(debugServerAllowed(app), ChannelAutoArm.enabled(app), mayBackground(app))) HostShellService.start(app)
         WdKeeper.start(app)   // #1467 keep wireless debugging on: observer, Wi-Fi callback, service, backstop
     }
 
     /** Re-arm the channel in the background: unique work, so a repeat call never stacks. */
     fun schedule(ctx: Context, replace: Boolean) {
+        if (!mayBackground(ctx)) return   // #1502
         runCatching {
             WorkManager.getInstance(ctx).enqueueUniqueWork(
                 workName(ctx),
@@ -123,7 +139,7 @@ open class HostShellBootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent?) {
         if (intent?.action == Intent.ACTION_BOOT_COMPLETED) {
             if (ChannelAutoArm.enabled(context)) HostShell.schedule(context.applicationContext, replace = true)
-            if (KeepAlivePolicy.needed(HostShell.debugServerAllowed(context), ChannelAutoArm.enabled(context))) HostShellService.start(context.applicationContext)
+            if (KeepAlivePolicy.needed(HostShell.debugServerAllowed(context), ChannelAutoArm.enabled(context), HostShell.mayBackground(context))) HostShellService.start(context.applicationContext)
             WdKeeper.start(context.applicationContext)   // #1467
         }
     }

@@ -29,7 +29,7 @@ class App : Application() {
             readThrough = false
             // Redesign task 3: the debug API's `tabs` op answers this app's five islands and their pages.
             nav = { navJson() }
-            autoBackupChanged = { AutoBackupWorker.schedule(it) }
+            autoBackupChanged = { ctx -> kotlin.concurrent.thread(name = "account-backup") { AccountForeground.backupIfDue(ctx) } }   // #1502 foreground only, no job
             // #1093 the fleet endpoint declaration (build.json::fleet_endpoints): this app's own mesh-first transport and
             // Connect > Status, and what Account publishes to the other apps (Cloud Mail reads its kind=mail services, #1090).
             fleetEndpointsDecl = { String(android.util.Base64.decode(BuildConfig.FLEET_ENDPOINTS_B64, android.util.Base64.DEFAULT)) }
@@ -49,6 +49,8 @@ class App : Application() {
         // Account's OWN uid-2000 channel (spec 2.4): embedded adb pairing, Shizuku as the fallback.
         // Re-armed after every boot; the runbook's shell and store steps run over it.
         // HostShellService keeps the debug server up only while Settings ▸ Debug API allows it.
+        // #1502 Account never runs in the background: no keep-alive service, no boot re-arm, no keeper, no WorkManager job.
+        HostShell.backgroundAllowed = { false }
         HostShell.debugServerAllowed = { com.diegonmarcos.superapp.profile.DebugApiSwitch.enabled(it) }
         runCatching { HostShell.install(this) }.onFailure { Log.w(TAG, "shell channel not armed", it) }
         // /api/account/... on the fleet debug server, as in SuperApp.
@@ -56,14 +58,9 @@ class App : Application() {
             .onFailure { Log.w(TAG, "account debug API not registered", it) }
         // Settings ▸ Debug API off keeps the loopback server stopped (it is started by DebugInitProvider).
         runCatching { com.diegonmarcos.superapp.profile.DebugApiSwitch.apply(this) }
-        // #1103 the Autocomplete rows for Cloud Keyboard: pulled from cloud-me-api now and every 6 hours, kept in this app's encrypted store.
-        kotlin.concurrent.thread(name = "account-me-autocomplete") {
-            runCatching { com.diegonmarcos.superapp.profile.MeAutocompleteSync.sync(this) }
-                .onFailure { Log.w(TAG, "autocomplete sync failed: ${it.javaClass.simpleName}") }
-        }
-        runCatching { MeAutocompleteWorker.schedule(this) }.onFailure { Log.w(TAG, "autocomplete sync not scheduled", it) }
-        // Settings ▸ Auto-backup: re-arm (or cancel) the daily job.
-        runCatching { AutoBackupWorker.schedule(this) }.onFailure { Log.w(TAG, "auto-backup not scheduled", it) }
+        // #1502 the Autocomplete pull and the auto-backup run from MainActivity (foreground) only; the two periodic jobs an older
+        // build persisted are cancelled here, so a process start by one of them is the last.
+        AccountForeground.retireLegacyJobs(this)
     }
 
     companion object {

@@ -68,10 +68,13 @@ class UpdateChecksTest {
     }
 
     @Test
-    fun `a reboot or an update re-arms the fleet check`() {
+    fun `a reboot or an update starts nothing in Cloud Store`() {
+        // #1502 no BOOT_COMPLETED / MY_PACKAGE_REPLACED receiver of this app's own: WorkManager keeps its persisted jobs, and a job
+        // exists only with auto-update on over an unmetered network.
         for (action in listOf(Intent.ACTION_BOOT_COMPLETED, Intent.ACTION_MY_PACKAGE_REPLACED)) {
-            val names = app.packageManager.queryBroadcastReceivers(Intent(action).setPackage(app.packageName), 0).map { it.activityInfo.name }
-            assertTrue("no receiver for $action: $names", names.contains(UpdateChecksBootReceiver::class.java.name))
+            val names = app.packageManager.queryBroadcastReceivers(Intent(action).setPackage(app.packageName), 0)
+                .map { it.activityInfo.name }.filterNot { it.startsWith("androidx.work.") }
+            assertTrue("a receiver for $action would start Cloud Store: $names", names.isEmpty())
         }
     }
 

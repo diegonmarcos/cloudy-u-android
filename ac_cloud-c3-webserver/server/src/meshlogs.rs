@@ -51,6 +51,8 @@ pub struct Mesh {
     pub browser_route: String,
     pub browser_package: String,
     pub browser_suffix: String,
+    /// #1502 packages whose provider is never called from the mesh (a call starts the app): Cloud Account and Cloud Store.
+    pub no_wake: Vec<String>,
 }
 
 pub fn parse_cidr(c: &str) -> Result<(Ipv4Addr, u8), String> {
@@ -93,6 +95,7 @@ impl Mesh {
             browser_route: m["browser_route"].as_str().filter(|r| r.starts_with('/') && r.len() > 1).unwrap_or("/browser").trim_end_matches('/').to_string(),
             browser_package: m["browser_package"].as_str().filter(|x| !x.is_empty()).unwrap_or("com.diegonmarcos.cloudbrowser").to_string(),
             browser_suffix: m["browser_suffix"].as_str().filter(|x| !x.is_empty()).unwrap_or("headless").to_string(),
+            no_wake: strs(&m["no_wake"]),
         };
         if !mesh.methods.contains(&mesh.default_method) {
             return Err(format!("mesh.ipc.default_method {} is not one of its methods", mesh.default_method));
@@ -175,6 +178,9 @@ pub fn route(m: &Mesh, apps: &[App], req: &Req, token: Option<&str>, src: &LogSo
         Some(a) => a,
         None => return Resp::json(404, format!("{{\"error\":{}}}", jstr(&format!("{} is not an app of the fleet manifest", rest)))),
     };
+    if m.no_wake.iter().any(|p| *p == app.package) {
+        return Resp::json(403, format!("{{\"error\":{},\"app\":{}}}", jstr("this app is never woken from the mesh; read its log in the app (Settings, Debug API) or from its own screen"), jstr(&app.id)));
+    }
     let method = req.q("method").unwrap_or(&m.default_method);
     if !m.methods.iter().any(|x| x == method) {
         return Resp::json(400, format!("{{\"error\":{}}}", jstr(&format!("method must be one of {}", m.methods.join(", ")))));
@@ -281,6 +287,17 @@ mod tests {
         } else {
             Err("down".into())
         }
+    }
+
+    #[test]
+    fn an_app_that_may_not_be_woken_is_never_called() {
+        // #1502 a provider call starts the app: Account and Store answer 403 and the log source is never reached.
+        let mut m = mesh();
+        m.no_wake = vec!["com.x.calc".into()];
+        let a = apps();
+        let spy = |_: &str, _: &str, _: &str| -> Result<(String, String), String> { panic!("a no-wake app must not be called") };
+        assert_eq!(route(&m, &a, &get("/logs/calc", Some("Bearer tok")), Some("tok"), &spy).status, 403);
+        assert_eq!(route(&m, &a, &get("/logs/com.x.calc?method=meta", Some("Bearer tok")), Some("tok"), &spy).status, 403);
     }
 
     #[test]

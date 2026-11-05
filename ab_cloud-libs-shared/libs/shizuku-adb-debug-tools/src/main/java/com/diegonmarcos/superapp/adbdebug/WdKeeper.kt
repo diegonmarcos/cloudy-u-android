@@ -19,6 +19,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.Worker
 import androidx.work.WorkerParameters
+import com.diegonmarcos.superapp.core.BackgroundPolicy
 import com.diegonmarcos.superapp.devtools.AppDebugServer
 import com.diegonmarcos.superapp.perms.PermsLink
 import java.util.concurrent.Executors
@@ -58,7 +59,8 @@ object WdKeeper {
 
     private fun p(ctx: Context) = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
-    fun armed(ctx: Context): Boolean = runCatching { ChannelAutoArm.enabled(ctx) }.getOrDefault(false)
+    /** The switch is on AND this host may run in the background (#1502: Account never, Store on Wi-Fi with auto-update on). */
+    fun armed(ctx: Context): Boolean = runCatching { ChannelAutoArm.enabled(ctx) && HostShell.mayBackground(ctx) }.getOrDefault(false)
 
     fun audit(ctx: Context): WdAuditLog = log ?: synchronized(this) {
         log ?: WdAuditLog(object : WdAuditLog.Store {
@@ -168,7 +170,8 @@ object WdKeeper {
 
     private fun claims(app: Context, now: Long): List<WdKeeperLeader.Claim> {
         val own = WdKeeperLeader.Claim(app.packageName, armed(app), HostShell.canWriteSecureSettings(app), now)
-        val peers = AdbPeers.FLEET.filter { it.applicationId != app.packageName }.mapNotNull { peer ->
+        // #1502 a binder call into a peer starts its process: never into one that may not be woken (Store, Account).
+        val peers = AdbPeers.FLEET.filter { it.applicationId != app.packageName && BackgroundPolicy.mayWakePeer(it.applicationId) }.mapNotNull { peer ->
             val b = runCatching { app.contentResolver.call(Uri.parse("content://${peer.authority}"), METHOD_CLAIM, null, null) }.getOrNull()
             if (b == null || !b.containsKey(KEY_HEARTBEAT)) null
             else WdKeeperLeader.Claim(peer.applicationId, b.getBoolean(KEY_ARMED), b.getBoolean(KEY_CAN_WRITE), b.getLong(KEY_HEARTBEAT))

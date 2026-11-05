@@ -123,7 +123,8 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
-        Updater.start(this)
+        Updater.start(this)   // #1502 Account: cancels, never schedules (BackgroundGate.never)
+        AccountForeground.onForeground(this)
     }
 
     override fun onNewIntent(intent: Intent) {

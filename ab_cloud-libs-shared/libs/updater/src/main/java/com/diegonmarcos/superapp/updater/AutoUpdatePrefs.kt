@@ -137,6 +137,9 @@ object AutoUpdatePrefs {
      * constraint, which asks the system default network and reports metered on
      * a permanently-VPN'd phone even over Wi-Fi.
      */
+    /** #1502 the ACTIVE network is unmetered (Wi-Fi), the gate Cloud Store's background work asks. */
+    fun onUnmetered(ctx: Context): Boolean = !isMetered(ctx)
+
     private fun isMetered(ctx: Context): Boolean {
         val cm = ctx.getSystemService(android.net.ConnectivityManager::class.java) ?: return true
         val caps = cm.activeNetwork?.let { cm.getNetworkCapabilities(it) } ?: return true

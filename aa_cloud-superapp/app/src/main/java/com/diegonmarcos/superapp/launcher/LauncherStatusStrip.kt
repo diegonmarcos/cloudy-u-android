@@ -489,7 +489,7 @@ class StatusStripModel(private val context: Context) {
     private val adbPeersTicker = object : Runnable {
         override fun run() {
             Thread {
-                val r = runCatching { com.diegonmarcos.superapp.adbdebug.AdbPeerReader.read(context) }.getOrNull()
+                val r = runCatching { com.diegonmarcos.superapp.adbdebug.AdbPeerReader.read(context, wake = false) }.getOrNull()   // #1502 the 15 s tick never starts Store
                 if (r != null) mainHandler.post { noteAdbPeers(r) }
             }.start()
             mainHandler.postDelayed(this, 15_000)

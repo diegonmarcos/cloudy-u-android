@@ -8,7 +8,7 @@ ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 
 check() {
 python3 - "$1" <<'PY'
-import json, sys
+import json, re, sys
 R = sys.argv[1]
 fails = 0
 def rd(p): return open(f"{R}/{p}", encoding="utf-8").read()
@@ -35,7 +35,7 @@ ok("implementation project(':libs:shizuku-adb-debug-tools')" in ga, "libs:accoun
 
 mf = rd("ac_cloud-account/app/src/main/AndroidManifest.xml")
 ok("com.diegonmarcos.superapp.adbdebug.AdbPairingService" in mf and 'foregroundServiceType="specialUse"' in mf, "pairing service declared (specialUse FGS)", "pairing service not declared")
-ok("com.diegonmarcos.superapp.adbdebug.HostShellBootReceiver" in mf and "android.intent.action.BOOT_COMPLETED" in mf and "RECEIVE_BOOT_COMPLETED" in mf, "boot re-arm declared", "boot re-arm missing")
+ok("HostShellBootReceiver" not in mf.replace("no boot receiver", "") and "<receiver" not in re.sub(r"<!--.*?-->", "", mf, flags=re.S) and "RECEIVE_BOOT_COMPLETED" not in mf, "#1502 no boot receiver, no RECEIVE_BOOT_COMPLETED (Account never wakes itself)", "#1502 Account declares a boot receiver again")
 ok("android.permission.WRITE_SECURE_SETTINGS" in mf, "WRITE_SECURE_SETTINGS declared (self-grant target)", "WRITE_SECURE_SETTINGS not declared")
 
 app = rd("ac_cloud-account/app/src/main/java/com/diegonmarcos/cloudaccount/App.kt")
@@ -80,9 +80,10 @@ ok('q["step"].isNullOrBlank() -> r.runAll(' in api and 'Op("apps"' in api and '"
 
 # spec 4.6 step 3: a foreground service holds the process up (channel + debug server are process state)
 svc = rd("ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/src/main/java/com/diegonmarcos/superapp/adbdebug/HostShellService.kt")
-ok("return START_STICKY" in svc and "startForeground(" in svc, "HostShellService is a sticky foreground service", "HostShellService is not START_STICKY / never foreground")
+ok("return START_NOT_STICKY" in svc and "START_STICKY" not in svc.replace("START_NOT_STICKY", "") and "startForeground(" in svc, "HostShellService is a NOT_STICKY foreground service (#1487)", "HostShellService is sticky again / never foreground")
 ok("HostShell.reconnect(ctx" in svc and "AppDebugServer.start(ctx)" in svc and "HostShell.debugServerAllowed(ctx)" in svc, "service re-arms the channel and keeps the debug server (host switch honoured)", "service does not keep channel + debug server")
-ok(hs.count("HostShellService.start(") >= 2, "HostShell.install and the boot receiver start the service", "service not started from install and boot")
+ok(hs.count("HostShellService.start(") >= 2 and "HostShell.mayBackground" in svc, "HostShell.install starts the service, and the service stops itself when the host may not run in the background (#1502)", "service not gated on mayBackground")
+ok("HostShell.backgroundAllowed = { false }" in app, "#1502 Account never lets HostShell run in the background", "#1502 Account does not turn HostShell's background off")
 for name, path in (("Account", "ac_cloud-account/app/src/main/AndroidManifest.xml"), ("Store", "ac_cloud-store/app/src/main/AndroidManifest.xml")):
     m = rd(path)
     blk = m.split('android:name="com.diegonmarcos.superapp.adbdebug.HostShellService"')
@@ -177,7 +178,7 @@ A=ac_cloud-account; K=$A/app/src/main/java/com/diegonmarcos/cloudaccount
 P=ab_cloud-libs-shared/libs/account/src/main/java/com/diegonmarcos/superapp/profile
 M=0
 mutate "manifest without the pairing service" $A/app/src/main/AndroidManifest.xml 'android:name="com.diegonmarcos.superapp.adbdebug.AdbPairingService"' 'android:name="gone"' || M=$((M+1))
-mutate "boot receiver dropped" $A/app/src/main/AndroidManifest.xml 'adbdebug.HostShellBootReceiver' 'adbdebug.Gone' || M=$((M+1))
+mutate "boot receiver returns" $A/app/src/main/AndroidManifest.xml 'android:name="rikka.shizuku.ShizukuProvider"' 'android:name="rikka.shizuku.ShizukuProvider"/><receiver android:name="x"' || M=$((M+1))
 mutate "channel never armed" $K/App.kt 'HostShell.install(this)' 'Unit' || M=$((M+1))
 mutate "app no longer links the shell lib" $A/app/build.gradle "implementation project(':libs:shizuku-adb-debug-tools')" '' || M=$((M+1))
 mutate "SuperApp's server port reused" $A/build.json '"port": 38097' '"port": 38099' || M=$((M+1))
@@ -201,10 +202,10 @@ mutate "debug run=1 without step is not Run all" $P/AccountDebugApi.kt 'q["step"
 
 S=ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/src/main/java/com/diegonmarcos/superapp/adbdebug
 D=ab_cloud-libs-shared/libs/devtools/src/main/java/com/diegonmarcos/superapp/devtools
-mutate "service not START_STICKY" $S/HostShellService.kt 'return START_STICKY' 'return START_NOT_STICKY' || M=$((M+1))
+mutate "service sticky again" $S/HostShellService.kt 'return START_NOT_STICKY' 'return START_STICKY' || M=$((M+1))
+mutate "Account background switched on" $K/App.kt 'HostShell.backgroundAllowed = { false }' 'HostShell.backgroundAllowed = { true }' || M=$((M+1))
 mutate "service missing from Account manifest" $A/app/src/main/AndroidManifest.xml 'android:name="com.diegonmarcos.superapp.adbdebug.HostShellService"' 'android:name="gone"' || M=$((M+1))
 mutate "service missing from Store manifest" ac_cloud-store/app/src/main/AndroidManifest.xml 'android:name="com.diegonmarcos.superapp.adbdebug.HostShellService"' 'android:name="gone"' || M=$((M+1))
-mutate "service never started at boot" ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/src/main/java/com/diegonmarcos/superapp/adbdebug/HostShell.kt '            HostShellService.start(context.applicationContext)' '' || M=$((M+1))
 mutate "exec route missing" $P/AccountDebugApi.kt 'Op("exec", "cmd=' 'Op("execX", "cmd=' || M=$((M+1))
 mutate "exec not over the channel" $P/AccountDebugApi.kt 'shell.active(ctx)?.exec(ctx, cmd)' 'null' || M=$((M+1))
 mutate "exec not gated at the IPC door" $D/FleetIpc.kt 'FleetIpcWire.gate(granted) ?: ' '' || M=$((M+1))

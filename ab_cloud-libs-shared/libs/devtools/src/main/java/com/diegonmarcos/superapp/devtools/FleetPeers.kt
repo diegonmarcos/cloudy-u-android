@@ -49,8 +49,13 @@ object FleetPeers {
      * A force-stopped app stays stopped. Nothing short of the user opening it
      * revives it, by design, and no amount of provider poking changes that.
      */
+    private val NO_WAKE = setOf("com.diegonmarcos.cloudaccount", "com.diegonmarcos.cloudstore")
+
     fun wake(ctx: Context, pkg: String): Boolean {
         if (pkg.isBlank()) return false
+        // #1502 Cloud Account and Cloud Store are never started on someone else's behalf (libs:core BackgroundPolicy.NO_WAKE_PEERS;
+        // restated here because libs:devtools does not depend on libs:core, and the guard test-no-background-wake.sh keeps them equal).
+        if (pkg in NO_WAKE) { Log.i(TAG, "wake $pkg refused: it is never woken from the background"); return false }
         val uri = Uri.parse("content://$pkg.fleet/token")
         // The row itself is the peer's token and is deliberately discarded —
         // waking a peer is not a reason to hand its credential to the caller.

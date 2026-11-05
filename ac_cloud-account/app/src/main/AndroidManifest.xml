@@ -20,7 +20,6 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS"
         tools:ignore="ProtectedPermissions" />
 
@@ -73,7 +72,11 @@
                 android:value="Pairs this app's embedded adb client with the phone's own Wireless debugging while the user types the pairing code into the notification" />
         </service>
         <!-- HostShellService (libs:shizuku-adb-debug-tools): holds the process up so the embedded adb
-             channel and the fleet debug server (both process state) survive in the background. -->
+             channel and the fleet debug server (both process state) survive in the background. #1502 Account never
+             starts it (HostShell.backgroundAllowed = false); it stays declared for the shared lib and the guard. There is
+             no boot receiver, no WorkManager job and no sticky service. Account declares no AutofillService and no
+             CredentialProviderService: nothing in this app is bound by the system on its own; its providers below
+             start the process only for the duration of a caller's own call. -->
         <service
             android:name="com.diegonmarcos.superapp.adbdebug.HostShellService"
             android:exported="false"
@@ -82,13 +85,6 @@
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="Keeps this app's on-device shell channel and its loopback debug server running between uses" />
         </service>
-        <receiver
-            android:name="com.diegonmarcos.superapp.adbdebug.HostShellBootReceiver"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-            </intent-filter>
-        </receiver>
         <!-- The declared fallback provider (build.json::shizuku_client): the stock Shizuku app
              hands its binder over this provider. -->
         <provider
