@@ -2453,6 +2453,14 @@
         "ac_cloud-news"
       ]
     },
+    "account_foreground": {
+      "kind": "prefs",
+      "class": "device",
+      "doc": "#1502 Cloud Account's foreground auto-backup clock: when the last successful auto-backup ran, so the next one is due a day later; per-install, never migrates.",
+      "used_by": [
+        "ac_cloud-account"
+      ]
+    },
     "wd_keeper": {
       "kind": "prefs",
       "class": "device",
