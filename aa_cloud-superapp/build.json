@@ -819,7 +819,7 @@
       {"id": "bluetooth", "label": "Bluetooth (BT)", "short": "BT", "kind": "network", "position": "left", "order": 3, "visible": true, "pet": "bluetooth", "opens": "network_popup"},
       {"id": "mesh", "label": "Cloud Mesh (WG)", "short": "WG", "kind": "network", "position": "left", "order": 4, "visible": true, "pet": "vpn", "opens": "network_popup"},
       {"id": "kde", "label": "Peer Control (KDE)", "short": "KDE", "kind": "network", "position": "left", "order": 5, "visible": true, "pet": "kde", "opens": "network_popup"},
-      {"id": "adb", "label": "Debugging (ADB)", "short": "ADB", "kind": "network", "position": "left", "order": 6, "visible": true, "pet": "adb", "opens": "network_popup"},
+      {"id": "adb", "label": "Debugging (ADB)", "short": "ADB", "kind": "network", "position": "left", "order": 6, "visible": true, "pet": "adb", "opens": "adb_shell_page"},
       {"id": "data", "label": "USB data", "short": "Data", "kind": "network", "position": "left", "order": 7, "visible": true, "pet": "usb", "opens": "network_popup"},
       {"id": "hotspot", "label": "Hotspot (HS)", "short": "HS", "kind": "network", "position": "left", "order": 8, "visible": true, "pet": "hotspot", "opens": "network_popup"},
       {"id": "gps", "label": "Location (GPS)", "short": "GPS", "kind": "network", "position": "left", "order": 9, "visible": true, "pet": "gps", "opens": "network_popup"},

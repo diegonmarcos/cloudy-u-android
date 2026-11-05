@@ -90,6 +90,8 @@ object ShellBroker {
 
     fun auditEntries(ctx: Context): List<AuditLog.Entry> = core(ctx).auditEntries()
 
+    fun callerSummaries(ctx: Context): List<Pair<String, String>> = core(ctx).callerSummaries()
+
     /** Called by the service when it is unbound: drop the workers if idle. */
     fun reapIfIdle() { core?.reapIfIdle() }
 }

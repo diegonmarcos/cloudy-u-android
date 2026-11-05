@@ -22,7 +22,7 @@ data class StatusElement(
     val order: Int, val visible: Boolean,
     /** The Zoomies pet tool above the element, or null. */
     val pet: String?,
-    /** What a tap opens: network_popup | system_popup | battery_popup | tasks_popup. */
+    /** What a tap opens: network_popup | system_popup | battery_popup | tasks_popup | adb_shell_page. */
     val opens: String,
     /** The clock's SimpleDateFormat pattern (clock only). */
     val format: String? = null,

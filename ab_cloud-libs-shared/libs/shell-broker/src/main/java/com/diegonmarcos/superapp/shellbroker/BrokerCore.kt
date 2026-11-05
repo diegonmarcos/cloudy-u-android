@@ -70,6 +70,9 @@ class BrokerCore(
 
     fun auditEntries(): List<AuditLog.Entry> = audit.entries()
 
+    /** Every caller of the allowlist with its one-line allowlist summary, in declared order. */
+    fun callerSummaries(): List<Pair<String, String>> = allowlist().let { a -> a.callers().map { it to a.summary(it) } }
+
     /** Called when a live check flips the verdict (the first check is not a change). */
     @Volatile var onChange: ((com.diegonmarcos.superapp.shellclient.ShellStatus) -> Unit)? = null
     @Volatile private var lastStatus: com.diegonmarcos.superapp.shellclient.ShellStatus? = null

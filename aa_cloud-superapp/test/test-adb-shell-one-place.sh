@@ -19,7 +19,7 @@
 #       AdbStatusProvider authority, the pairing window is claimed and refused across apps, and the SuperApp's home status
 #       draws one dot per app
 #   G8  ONE page: no first-party code outside the lib draws an ADB Shell page of its own, and the SuperApp and Cloud Store
-#       host the same AdbShellHostedPage with no copy beside it
+#       host exactly one page each (the SuperApp: AdbShellBrokerPage) with no copy beside it
 # Then each violation is planted in a scratch copy and must turn a check red.
 #
 # Usage: ./test-adb-shell-one-place.sh
@@ -160,10 +160,12 @@ dots = code("aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/launc
 ok("AdbPeerDots.tints(" in st and "PeerDots(" in st and "ShellBroker.status(" in st and "adbPeersTicker" not in st and "AdbPeers.FLEET" not in dots, "the home status draws ADB as ONE dot: the central broker's live status, no timer", "the home status strip does not draw one broker dot")
 
 # G8: ONE page, no copy
-copies = [p for p in sources if not p.startswith(LIB + "/") and re.search(r"\bfun\s+AdbShell\w*\s*\(|\bAdbShellScreen\(", code(p))]
+# #1522 the SuperApp's own broker page (declarative KitStoreRow rows over the broker) is the one page the SuperApp hosts; the lib page stays for AdbShellActivity
+SELF_PAGE = ("aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/configs/AdbShellBrokerPage.kt", "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/configs/AdbShellModel.kt")
+copies = [p for p in sources if not p.startswith(LIB + "/") and p not in SELF_PAGE and re.search(r"\bfun\s+AdbShell\w*\s*\(|\bAdbShellScreen\(", code(p))]
 ok(not copies, "no first-party code outside the lib draws an ADB Shell page of its own", "an ADB Shell page outside the lib: " + ", ".join(copies))
-both = [a for a in ("aa_cloud-superapp",) if "AdbShellHostedPage(" not in code(hosts[a]["file"])]
-ok(not both, "the SuperApp hosts the lib's AdbShellHostedPage (the only app with one)", "these apps do not host AdbShellHostedPage: " + ", ".join(both))
+both = [a for a in ("aa_cloud-superapp",) if "AdbShellBrokerPage(" not in code(hosts[a]["file"])]
+ok(not both, "the SuperApp hosts its AdbShellBrokerPage (the only app with one)", "these apps do not host AdbShellBrokerPage: " + ", ".join(both))
 
 if mode == "--files":
     keep = set(allow_files) | {h["file"] for h in hosts.values()} | {f"{pdir}/{f}" for f in pg["files"]}
@@ -216,14 +218,14 @@ mutate "Permissions page toggles Wireless debugging" $A/configs/PermissionsFragm
 mutate "a new place opens Developer options" $A/devcontrol/DevControlFragment.kt '' $'\nval i = android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS)\n' || M=$((M+1))
 mutate "Shizuku prompt in a screen" $A/configs/PermissionsFragment.kt '' $'\nfun s(c: android.content.Context) { ShizukuStatus.act(c) }\n' || M=$((M+1))
 mutate "a stale allowlist entry" ab_cloud-libs-shared/libs/wifi/src/main/java/com/diegonmarcos/superapp/wifi/WifiUi.kt 'Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS' 'Settings.ACTION_WIFI_SETTINGS' || M=$((M+1))
-mutate "the SuperApp hosts a page of its own" $A/configs/AdbShellFragment.kt 'AdbShellHostedPage()' 'AdbShellScreen(dark = true)' || M=$((M+1))
+mutate "the SuperApp hosts a page of its own" $A/configs/AdbShellFragment.kt 'AdbShellBrokerPage()' 'AdbShellScreen(dark = true)' || M=$((M+1))
 mutate "a second copy of the page in an app" $S/MainActivity.kt '' $'\n@androidx.compose.runtime.Composable fun AdbShellMine() {}\n' || M=$((M+1))
 mutate "the peer list drifts from build.json" $P/AdbPeers.kt '"com.diegonmarcos.cloudstore"' '"com.diegonmarcos.cloudstoreX"' || M=$((M+1))
 mutate "the status provider is not declared" ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/src/main/AndroidManifest.xml 'com.diegonmarcos.superapp.adbdebug.AdbStatusProvider' 'com.diegonmarcos.superapp.adbdebug.Gone' || M=$((M+1))
 mutate "the status provider loses its permission" ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/src/main/AndroidManifest.xml 'android:permission="com.diegonmarcos.cloud.permission.CONSTELLATION_DATA"' '' || M=$((M+1))
 mutate "pairing never claims the window" $P/AdbPairingService.kt 'PairingClaim.take()' 'Unit' || M=$((M+1))
 mutate "pairing ignores the other app's claim" $P/AdbPairingService.kt 'AdbPeerReader.pairingHeldElsewhere(app)' 'null' || M=$((M+1))
-mutate "the home status loses the per-app dots" $A/launcher/LauncherStatusStrip.kt 'AdbPeerDots.tints(adbPeers)' 'emptyList()' || M=$((M+1))
+mutate "the home status loses the broker dot" $A/launcher/LauncherStatusStrip.kt 'AdbPeerDots.tints(brokerStatus)' 'emptyList()' || M=$((M+1))
 mutate "the Store pairs under the SuperApp's name" $P/AdbManager.kt 'getDeviceName(): String = identity.deviceName' 'getDeviceName(): String = "CloudSuperApp"' || M=$((M+1))
 mutate "the key subject is the SuperApp's" $P/AdbManager.kt 'X500Name(identity.certSubject)' 'X500Name("CN=cloud-superapp, OU=adbdebug")' || M=$((M+1))
 mutate "a server restart kills the SuperApp's process" $P/AdbShellBootstrap.kt "pkill -f '\${niceName().dropLast(1)}[\${niceName().last()}]'" "pkill -f 'superapp-ad[b]'" || M=$((M+1))

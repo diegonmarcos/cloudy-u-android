@@ -17,6 +17,7 @@ import org.robolectric.annotation.Config
  *   D3 a hidden element leaves the render; a declared-invisible one can be switched on
  *   D4 the owner's order override leads its cluster; a move stops at the ends
  *   D5 a position outside left|centre|right is refused
+ *   D7 (#1522) the ADB icon opens the ADB Shell page, not the network dropdown, and is declared once
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
@@ -87,5 +88,14 @@ class StatusBarDeclTest {
         val p = StatusBarDecl.parse("""{"row_height_dp":26,"elements":[],"network_speed":{"sample_ms":500,"rows":[{"id":"now","label":"N"}],"per_interface":false}}""")
         assertEquals(NetworkSpeedDecl(500L, listOf("now" to "N"), false), p.networkSpeed)
         assertEquals(null, StatusBarDecl.parse(json(el("wifi", "left", 1))).networkSpeed)
+    }
+
+    @Test
+    fun `D7 the ADB icon opens the ADB Shell page and is declared once`() {
+        val adb = StatusBarDecl.declared.elements.filter { it.id == "adb" }
+        assertEquals(1, adb.size)
+        assertEquals("adb_shell_page", adb.single().opens)
+        assertEquals(1, StatusBarDecl.declared.elements.count { it.label.contains("ADB") })
+        assertTrue(StatusBarDecl.declared.elements.filter { it.kind == "network" && it.id != "adb" }.none { it.opens == "adb_shell_page" })
     }
 }

@@ -31,6 +31,17 @@ class Allowlist(private val callers: Map<String, Entry>, private val aliases: Ma
 
     fun callers(): Set<String> = callers.keys
 
+    /** One short line of what [key] may do (the ADB Shell page's Callers rows): rule count, exact lines, stdin, chaining. */
+    fun summary(key: String): String {
+        val e = callers[key] ?: return "no entry"
+        return buildList {
+            add("${e.rules.size} rules")
+            if (e.exact.isNotEmpty()) add("${e.exact.size} exact")
+            if (e.stdin.isNotEmpty()) add("stdin")
+            if (e.segments) add("chains")
+        }.joinToString(", ")
+    }
+
     /**
      * #1512 The stdin door: may [pkg] run [cmd] with [size] bytes on its stdin? Default deny: only a command matching one of the
      * caller's `stdin` rules, with a size in 1..min(rule.maxBytes, [ShellWire.STDIN_MAX_BYTES]), and a `-S <n>` in the command

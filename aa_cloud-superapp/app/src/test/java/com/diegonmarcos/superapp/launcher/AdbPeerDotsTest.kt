@@ -26,6 +26,7 @@ import org.robolectric.annotation.GraphicsMode
  * #1521 the home screen's top status shows ADB as ONE dot: the central broker's live status.
  *   D1 green only for a verified (armed) status; red for a failed check; grey before the first answer
  *   D2 the strip draws exactly one dot under the ADB label, and the spoken form carries the reason
+ *   D3 (#1522) the strip model's ADB dot follows the broker's live status: green only on a successful round trip
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class, qualifiers = "w384dp-h832dp-450dpi")
@@ -56,5 +57,17 @@ class AdbPeerDotsTest : KitPageHarness() {
         val d0 = compose.onNodeWithTag("strip:adb:dot:0", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
         assertTrue("the dot sits under the ADB label", d0.top >= label.top && d0.bottom <= label.bottom + 1f)
         assertEquals("exactly one", 0, compose.onAllNodes(androidx.compose.ui.test.hasTestTag("strip:adb:dot:1"), useUnmergedTree = true).fetchSemanticsNodes().size)
+    }
+
+    @Test fun `D3 the dot colour follows the live status`() {
+        fun dot(st: ShellStatus): List<Int>? {
+            val m = StatusStripModel(compose.activity)
+            m.noteBroker(st, pin = true)
+            return m.chips.getValue(com.diegonmarcos.superapp.network.NetworkSections.ADB).peerDots
+        }
+        assertEquals(listOf(AdbPeerDots.UP), dot(up))
+        assertEquals(listOf(AdbPeerDots.DOWN), dot(down))
+        // a reason alone never turns it green: only a successful round trip does
+        assertEquals(listOf(AdbPeerDots.DOWN), dot(ShellStatus(true, false, "embedded-adb", "ok", 1_000L, "id -u failed")))
     }
 }

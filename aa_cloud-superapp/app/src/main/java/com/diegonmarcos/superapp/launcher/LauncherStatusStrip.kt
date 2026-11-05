@@ -120,7 +120,7 @@ import kotlin.math.roundToInt
 /** One left-cluster icon: its label, text tint, and the dots row under it (level 0..4, or -1 for the empty footprint). */
 internal data class StripChip(
     val label: String, val tint: Int, val dots: Int = SignalLevels.NONE, val dotsTint: Int = tint,
-    /** Instead of the four signal dots: one dot per app (ADB: SuperApp, Cloud Store), each in its own tint, with the spoken form. */
+    /** Instead of the four signal dots: ADB's ONE dot (the broker's live status), with the spoken form. */
     val peerDots: List<Int>? = null, val peerDescription: String = "",
 )
 
@@ -194,7 +194,7 @@ class StatusStripModel(private val context: Context) {
     private var hasAdb = false
     private var hasHotspot = false
     private var hasKde = false
-    /** The adb channel of each app that has one (SuperApp, Cloud Store), as the other apps' providers last said. */
+    /** The central broker's last live reading (null until the first answer). */
     private var brokerStatus: com.diegonmarcos.superapp.shellclient.ShellStatus? = null
     private var brokerPinned = false
     private var wifiLevel = SignalLevels.NONE
@@ -482,7 +482,7 @@ class StatusStripModel(private val context: Context) {
     }
 
     /** One live check (an `id -u` round trip, off the main thread) when the strip opens or the screen resumes; no timer. */
-    private fun refreshBroker() {
+    internal fun refreshBroker() {
         Thread {
             val r = runCatching { com.diegonmarcos.superapp.shellbroker.ShellBroker.status(context) }.getOrNull()
             if (r != null) mainHandler.post { noteBroker(r) }
@@ -735,6 +735,13 @@ private fun LauncherStripContent(model: StatusStripModel) {
         model.start()
         onDispose { model.stop() }
     }
+    // #1522 the ADB dot is re-checked on every resume (the broker caches a verdict for seconds), never on a timer.
+    val owner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    DisposableEffect(owner, model) {
+        val o = androidx.lifecycle.LifecycleEventObserver { _, e -> if (e == androidx.lifecycle.Lifecycle.Event.ON_RESUME) model.refreshBroker() }
+        owner.lifecycle.addObserver(o)
+        onDispose { owner.lifecycle.removeObserver(o) }
+    }
     StatusStripBody(model, ctx)
 }
 
@@ -785,6 +792,8 @@ private fun StripElementView(el: StatusElement, model: StatusStripModel, ctx: Co
             "network_popup" -> NetworkInfoPopup.show(ctx, host, r, el.id)
             "system_popup" -> SystemInfoPopup.show(ctx, host, r)
             "tasks_popup" -> TasksPopup.show(host, r)
+            // #1522 the ADB icon (one dot: the broker's live status) opens the ADB Shell page itself, not the network dropdown.
+            "adb_shell_page" -> com.diegonmarcos.superapp.adbdebug.AdbShellLink.open(ctx)
             else -> Unit
         }
     }

@@ -8,6 +8,7 @@
 #       hard-coded list in LauncherStatusStrip.kt any more
 #   S5  the clock opens the Tasks popup; the strip dispatches every declared `opens` value
 #   S6  the One-Hand page's Status Bar section lists the declared elements with a visibility switch and a reorder
+#   S8  (#1522) the ADB icon opens the ADB Shell page (adb_shell_page), one dot, refreshed on resume with no timer
 #   S7  the declaration is baked (STATUS_BAR_B64) and a JVM test pins the layout to the declared order
 #
 # Usage: ./test-status-bar-declared.sh   (static only, no network, no device)
@@ -58,6 +59,10 @@ ok("StatusBarDecl.ordered(" in sec and "ConfigSwitchRow(el.label" in sec and "St
    "S6: the Status Bar section lists the declared elements with a switch and a reorder", "S6: the Status Bar section lacks the list, the switch or the reorder")
 g = read("app/build.gradle")
 ok("STATUS_BAR_B64" in g and "declaredB64('home_status_bar')" in g, "S7: the declaration is baked", "S7: STATUS_BAR_B64 is not baked")
+ok(ids.get("adb", {}).get("opens") == "adb_shell_page" and '"adb_shell_page" ->' in sc and "AdbShellLink.open(ctx)" in sc,
+   "S8: the ADB icon opens the ADB Shell page", "S8: the ADB icon does not open the ADB Shell page")
+ok("ON_RESUME" in sc and "model.refreshBroker()" in sc and "adbPeersTicker" not in sc and "postDelayed(brokerTicker" not in sc,
+   "S8: the ADB dot is refreshed on resume, no timer", "S8: the ADB dot has no resume refresh, or polls")
 import os
 t = f"{app}/app/src/test/java/com/diegonmarcos/superapp/launcher/StatusBarDeclTest.kt"
 tt = open(t, encoding="utf-8").read() if os.path.exists(t) else ""
