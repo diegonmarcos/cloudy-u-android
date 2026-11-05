@@ -27,12 +27,12 @@ import java.util.WeakHashMap
  * the whole page per frame; a host may still latch a device onto software after [configure] (Mail's crash guard).
  * WebGL2 and WebGPU have no WebSettings switch: they are on whenever the installed System WebView and GPU allow,
  * which [GpuProbe] measures at runtime. androidx.webkit has no WebGPU feature or setting either (checked against
- * WebViewFeature, #1430); the gate is Chromium's per-GPU allowlist, see [GpuCaps.reason]. The engine is
+ * WebViewFeature, #1430); the gate is Chromium's per-GPU allowlist, see [GpuCaps.reason] and [WebGpuPlan]. The engine is
  * [WebEngine.resolve]d per profile (GeckoView is declared, not linked).
  */
 object CloudWeb {
     const val ASSET_HOST: String = "appassets.androidplatform.net"   // WebViewAssetLoader.DEFAULT_DOMAIN
-    const val CHROME_PACKAGE = "com.android.chrome"
+    const val CLOUD_BROWSER_PACKAGE = "com.diegonmarcos.cloudbrowser"
     const val DESKTOP_WIDTH = 1280
 
     /** A bundled asset under `assets/`, served over https so ES modules and fetch() work (file:// cannot). */
@@ -210,10 +210,10 @@ object CloudWeb {
         m.content='width=$DESKTOP_WIDTH';}f();document.addEventListener('DOMContentLoaded',f);})();
     """.trimIndent()
 
-    /** Opens [url] in Chrome (which ships WebGPU on Android 12+), or in any browser when Chrome is absent. */
-    fun openInChrome(ctx: Context, url: String): Boolean {
+    /** Opens [url] in Cloud-Browser, the fleet's one browser (it handles http/https VIEW); never Chrome. Unpinned only when Cloud-Browser is absent. */
+    fun openInCloudBrowser(ctx: Context, url: String): Boolean {
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        return runCatching { ctx.startActivity(Intent(intent).setPackage(CHROME_PACKAGE)); true }.getOrElse {
+        return runCatching { ctx.startActivity(Intent(intent).setPackage(CLOUD_BROWSER_PACKAGE)); true }.getOrElse {
             runCatching { ctx.startActivity(intent); true }.getOrDefault(false)
         }
     }

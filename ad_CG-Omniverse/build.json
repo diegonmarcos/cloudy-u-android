@@ -5,6 +5,7 @@
     "category": "lnktree",
     "res": "app/src/main/res"
   },
+  "pin_offline": ["floor796"],
   "name": "cg-omniverse",
   "display_name": "CG-Omniverse",
   "description": "CG-Omniverse: the CG area's Android app behind the SuperApp's Cloud > Lnktree row. Three pages on the shared bottom nav: Avatar (a 3D avatar configurator: three.js in a WebView over bundled assets, options declared in data/avatar.json, the configuration saved and backed up), Galaxy (a Store world loaded full screen in a WebView, WebGL on) and Store (the worlds of data/store.json, generated from data/fwa.md, with Type / Dimension / Device multi-select filters). The pages are declared in build.json::ui and drawn by declared kinds.",

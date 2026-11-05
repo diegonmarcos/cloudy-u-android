@@ -131,6 +131,7 @@ android {
         buildConfigField "String", "UI_STACKS_B64",      "\"${uiStacksB64}\""
         buildConfigField "String", "UI_TARGETS_B64",     "\"${uiTargetsB64}\""
         buildConfigField "String", "STORE_B64",          "\"${storeB64}\""
+        buildConfigField "String", "PIN_OFFLINE",        "\"${(buildJson.pin_offline ?: []).join(',')}\""
         buildConfigField "String", "AVATAR_B64",         "\"${avatarB64}\""
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }

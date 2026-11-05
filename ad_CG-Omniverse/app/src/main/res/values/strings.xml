@@ -28,9 +28,10 @@
     <string name="world_fallback_title">This world could not load here</string>
     <string name="world_fallback_body">%1$s did not open inside the app. It may need features the in-app view lacks; it opens fully in the browser.</string>
     <string name="open_in_browser">Open in browser</string>
-    <string name="open_chrome">Open in Chrome</string>
+    <string name="open_cloud_browser">Open in Cloud-Browser</string>
+    <string name="world_gpu_stay">Stay in app</string>
     <string name="world_desktop">Desktop mode</string>
-    <string name="world_gpu_missing">No WebGPU in this in-app view (%1$s). A WebGPU world opens in Chrome.</string>
+    <string name="world_gpu_missing">No WebGPU in this in-app view (%1$s). %2$s</string>
     <string name="world_reload">Reload</string>
     <string name="world_crashed">The world stopped rendering. Reload it, or open it in the browser.</string>
     <string name="world_xr_ready">WebXR available</string>

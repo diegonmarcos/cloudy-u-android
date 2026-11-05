@@ -48,7 +48,7 @@
     <string name="git_conflicts_count">%1$d conflicted file(s)</string>
     <string name="repo_web_menu">More</string>
     <string name="repo_web_other_browser">Open in another browser</string>
-    <string name="repo_web_chrome">Open in Chrome</string>
+    <string name="repo_web_chrome">Open in Cloud Browser</string>
     <string name="repo_web_copy">Copy link</string>
     <string name="repo_web_share">Share</string>
     <string name="repo_web_reload">Reload</string>

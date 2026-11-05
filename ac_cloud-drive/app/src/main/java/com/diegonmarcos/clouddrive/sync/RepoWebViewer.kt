@@ -89,7 +89,7 @@ fun RepoWebViewer(url: String, onClose: () -> Unit) {
                                     menu = false
                                     when (item) {
                                         RepoWebMenu.Item.OTHER_BROWSER -> runCatching { ctx.startActivity(RepoWebMenu.chooser(current, ctx.getString(R.string.repo_web_other_browser))) }
-                                        RepoWebMenu.Item.CHROME -> CloudWeb.openInChrome(ctx, current)
+                                        RepoWebMenu.Item.CHROME -> CloudWeb.openInCloudBrowser(ctx, current)
                                         RepoWebMenu.Item.COPY -> ctx.getSystemService(ClipboardManager::class.java)?.setPrimaryClip(ClipData.newPlainText("url", current))
                                         RepoWebMenu.Item.SHARE -> runCatching { ctx.startActivity(RepoWebMenu.share(current, ctx.getString(R.string.repo_web_share))) }
                                         RepoWebMenu.Item.RELOAD -> web?.reload()

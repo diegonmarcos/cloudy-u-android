@@ -53,7 +53,7 @@ data class GpuCaps(
      * Why WebGPU is missing, in words a UI can show under [summary]; null when a core adapter exists (#1430).
      * "API without adapter" means Chromium's GPU blocklist refused the device's Vulkan driver: on Android, Chromium
      * enables WebGPU only for allowlisted GPUs (ARM, Qualcomm, Intel on Android 12+, Imagination on 16+; Samsung
-     * Xclipse is not yet listed), and Chrome on the same phone reads the same list. No app setting overrides it.
+     * Xclipse is not yet listed),. No app setting overrides it.
      */
     fun reason(): String? = when {
         webgpuUsable -> null
@@ -61,7 +61,7 @@ data class GpuCaps(
         compatAdapter -> "Only WebGPU compatibility mode (OpenGL ES) is available; a site that needs a core " +
             "adapter or extra features still fails."
         else -> "WebGPU is present but this GPU${renderer?.let { " ($it)" } ?: ""} is not on Chromium's WebGPU " +
-            "allowlist for Android, so no adapter is offered. Chrome on this phone uses the same list."
+            "allowlist for Android, so no adapter is offered."
     }
 }
 

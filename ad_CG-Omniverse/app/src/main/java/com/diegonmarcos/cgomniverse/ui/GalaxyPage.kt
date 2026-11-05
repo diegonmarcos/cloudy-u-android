@@ -2,6 +2,11 @@ package com.diegonmarcos.cgomniverse.ui
 
 import android.graphics.Bitmap
 import android.net.Uri
+import android.os.Build
+import com.diegonmarcos.cloudlib.web.SiteGpuChoice
+import com.diegonmarcos.cloudlib.web.WebGpuPlan
+import com.diegonmarcos.cloudlib.web.WorldRoute
+import com.diegonmarcos.cloudlib.web.WorldRouting
 import android.webkit.PermissionRequest
 import android.webkit.RenderProcessGoneDetail
 import android.webkit.WebResourceError
@@ -144,7 +149,11 @@ fun WorldView(w: World, modifier: Modifier = Modifier) {
     var attempt by remember(w.id) { mutableIntStateOf(0) }
     var finished by remember(w.id) { mutableStateOf(false) }
     var offline by remember(w.id) { mutableStateOf(false) }
-    val reload = { error = null; offline = false; finished = false; attempt++; if (web == null) generation++ else web?.reload(); Unit }
+    // an explicit reload of a pinned world is the one thing that refetches it (cache-first otherwise, never expiring)
+    var refreshing by remember(w.id) { mutableStateOf(false) }
+    val host = Uri.parse(w.url).host.orEmpty()
+    val pinned = Pinned.isPinned(ctx, w.id)
+    val reload = { refreshing = true; error = null; offline = false; finished = false; attempt++; if (web == null) generation++ else web?.reload(); Unit }
     LaunchedEffect(w.id, attempt) {
         val start = System.currentTimeMillis()
         delay(Offline.LOAD_TIMEOUT_MS)
@@ -155,6 +164,12 @@ fun WorldView(w: World, modifier: Modifier = Modifier) {
     var caps by remember { mutableStateOf(GpuProbe.last) }
     LaunchedEffect(Unit) { GpuProbe.probe(ctx) { caps = it } }
     val crashed = stringResource(R.string.world_crashed)
+    // per-site WebGPU choice: AUTO sends a WebGPU world to Cloud-Browser once the probe has measured no adapter here
+    var gpuChoice by remember(w.id) { mutableStateOf(Web.gpuChoice(ctx, w.id)) }
+    val route = WorldRouting.route(gpuChoice, Web.needsWebGpu(w), caps)
+    LaunchedEffect(w.id, route) {
+        if (route == WorldRoute.CLOUD_BROWSER && gpuChoice == SiteGpuChoice.AUTO && Web.routed.add(w.id)) Web.openInBrowser(ctx, w.url)
+    }
 
     BackHandler(enabled = canBack) { web?.goBack() }
 
@@ -183,12 +198,16 @@ fun WorldView(w: World, modifier: Modifier = Modifier) {
         if (progress in 1..99 && !offline) LinearProgressIndicator(progress = { progress / 100f }, modifier = Modifier.fillMaxWidth(), color = p.accent)
         if (w.vr && xr == false) Text(stringResource(R.string.world_xr_note), style = MaterialTheme.typography.labelSmall, color = p.textSecondary,
             modifier = Modifier.fillMaxWidth().background(p.surface).padding(horizontal = 14.dp, vertical = 4.dp))
-        // what this WebView can draw with: a world that needs WebGPU it lacks gets a clear line and Chrome (which ships WebGPU)
-        caps?.takeIf { !it.webgpuUsable }?.let { c ->
-            Row(Modifier.fillMaxWidth().background(p.surface).padding(start = 14.dp, end = 4.dp).testTag(Tags.WORLD_GPU), verticalAlignment = Alignment.CenterVertically) {
-                Text(stringResource(R.string.world_gpu_missing, c.summary()), style = MaterialTheme.typography.labelSmall, color = p.textSecondary, modifier = Modifier.weight(1f))
-                IconButton(onClick = { Web.openInBrowser(ctx, w.url) }, modifier = Modifier.testTag(Tags.WORLD_GPU_CHROME)) {
-                    Icon(Icons.Filled.OpenInBrowser, stringResource(R.string.open_chrome), tint = p.accent)
+        // what this WebView can draw with: the measured reason, and the actions (Cloud-Browser, or stay here), remembered per site
+        caps?.takeIf { !it.webgpuUsable && Web.needsWebGpu(w) }?.let { c ->
+            Column(Modifier.fillMaxWidth().background(p.surface).padding(start = 14.dp, end = 4.dp, bottom = 4.dp).testTag(Tags.WORLD_GPU)) {
+                Text(stringResource(R.string.world_gpu_missing, c.summary(), WebGpuPlan.diagnose(c, Build.TYPE != "user", false).text),
+                    style = MaterialTheme.typography.labelSmall, color = p.textSecondary)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    KitButton(onClick = { gpuChoice = SiteGpuChoice.CLOUD_BROWSER; Web.setGpuChoice(ctx, w.id, gpuChoice); Web.openInBrowser(ctx, w.url) },
+                        modifier = Modifier.testTag(Tags.WORLD_GPU_BROWSER)) { Text(stringResource(R.string.open_cloud_browser)) }
+                    KitOutlinedButton(onClick = { gpuChoice = SiteGpuChoice.IN_APP; Web.setGpuChoice(ctx, w.id, gpuChoice) },
+                        modifier = Modifier.testTag(Tags.WORLD_GPU_STAY)) { Text(stringResource(R.string.world_gpu_stay)) }
                 }
             }
         }
@@ -210,10 +229,13 @@ fun WorldView(w: World, modifier: Modifier = Modifier) {
                                 if (s == "http" || s == "https") return false
                                 Web.openInBrowser(c, request.url.toString()); return true
                             }
+                            override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? =
+                                (if (pinned) Pinned.intercept(c, host, request, refreshing) else null) ?: super.shouldInterceptRequest(view, request)
                             override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) { error = null }
                             override fun doUpdateVisitedHistory(view: WebView, url: String?, isReload: Boolean) { canBack = view.canGoBack() }
                             override fun onPageFinished(view: WebView, url: String) {
                                 if (error == null && !offline) finished = true
+                                refreshing = false
                                 if (w.vr) view.evaluateJavascript("(function(){return !!(navigator.xr&&navigator.xr.isSessionSupported)})()") { xr = it == "true" }
                             }
                             override fun onReceivedError(view: WebView, request: WebResourceRequest, err: WebResourceError) {
