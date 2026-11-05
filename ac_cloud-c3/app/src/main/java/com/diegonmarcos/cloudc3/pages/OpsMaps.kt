@@ -36,6 +36,10 @@ object OpsMaps {
     /** The one-line summary of a map. */
     fun summary(decl: JsonObject, id: String): String = decl.obj("maps")?.obj(id)?.str("summary").orEmpty()
 
+    /** #1495 The rows-only sections of a map (the catalog pages of the one hierarchy): no derived source is read. */
+    fun rows(decl: JsonObject, id: String): List<Section> =
+        decl.obj("maps")?.obj(id)?.arr("sections").orEmpty().map { Section(it.str("title"), it.arr("rows").map(::row)) }.filter { it.rows.isNotEmpty() }
+
     fun build(id: String, s: Sources): List<Section> =
         s.decl.obj("maps")?.obj(id)?.arr("sections").orEmpty().flatMap { sec ->
             val title = sec.str("title")

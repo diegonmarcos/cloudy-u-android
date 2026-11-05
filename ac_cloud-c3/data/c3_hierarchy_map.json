@@ -1,0 +1,387 @@
+{
+ "_doc": "#1495 THE DECLARED MAPPING of the one hierarchy: tree node (the Cloud-C3 app's ui.sections as data/gen_c3_hierarchy.py reads it) -> the cloudy-c3-api route patterns and the cloudy-c3-mcp tool-name patterns it owns. Route patterns: `:` is one segment, a trailing `*` is the rest; tool patterns: exact legacy dotted name or a prefix ending in `*`. The most specific pattern wins, an overlap with the same specificity is an error, and every route and tool must be owned (guarded in cloudy-u-containers cloudy-c3-api/cloudy-c3-mcp tests and by test/test_c3_hierarchy.py). A page of the Containers section other than All is the same data scoped by project (`scoped`). `catalog_pages` are the pages that have no fragment of their own: they draw their API routes and MCP tools as OpsMap rows (maps.hier_<leaf id> of data/ops_maps.json, generated). Node ids are the app's page ids with the parent's `<parent>_` prefix dropped (ops/net/wg is net_wg). Edit this file and the app's build.json, then run data/gen_c3_hierarchy.py; never edit c3_hierarchy.json.",
+ "scoped": {
+  "containers": {
+   "base": "all"
+  }
+ },
+ "catalog_pages": [
+  "infra/personal/control",
+  "ops/net/security",
+  "ops/ops_health/tests",
+  "ops/obs/metrics",
+  "ops/obs/alerts",
+  "ops/obs/notify",
+  "configs/plugins"
+ ],
+ "nodes": {
+  "home": {
+   "api": [
+    "/cloud/summary"
+   ],
+   "mcp": [
+    "obs.finops.cloud_summary",
+    "obs.finops.all"
+   ]
+  },
+  "infra/bare/providers": {
+   "api": [
+    "/cloud/oci/*",
+    "/cloud/gcp/*"
+   ],
+   "mcp": [
+    "obs.finops.*"
+   ]
+  },
+  "infra/bare/machines": {
+   "api": [
+    "/vms/:/start",
+    "/vms/:/stop",
+    "/vms/:/reset",
+    "/vms/:/backup",
+    "/files/status/:"
+   ],
+   "mcp": [
+    "devops.vm.*",
+    "devops.ssh.*",
+    "obs.debug.vm_*"
+   ]
+  },
+  "infra/bare/serverless": {
+   "api": [],
+   "mcp": []
+  },
+  "infra/bare/node_python": {
+   "api": [],
+   "mcp": [
+    "devops.cf.wrangler_write",
+    "devops.front.*"
+   ]
+  },
+  "infra/bare/storage": {
+   "api": [],
+   "mcp": [
+    "devops.docker.system_df",
+    "devops.docker.volume_*",
+    "devops.docker.image_prune"
+   ]
+  },
+  "infra/apis/api_ai": {
+   "api": [
+    "/ai/usage",
+    "/ai/usage/*"
+   ],
+   "mcp": []
+  },
+  "infra/apis/api_scraper": {
+   "api": [],
+   "mcp": []
+  },
+  "infra/personal/desktop": {
+   "api": [],
+   "mcp": []
+  },
+  "infra/personal/mobile": {
+   "api": [],
+   "mcp": []
+  },
+  "infra/personal/gadgets": {
+   "api": [],
+   "mcp": []
+  },
+  "infra/personal/control": {
+   "api": [],
+   "mcp": [
+    "peers.*",
+    "obs.debug.phone_*"
+   ]
+  },
+  "infra/domains_row/domains": {
+   "api": [
+    "/cloud-data/cloudflare-dns"
+   ],
+   "mcp": [
+    "devops.cf.api_write",
+    "devops.cf.tunnel_route_dns",
+    "devops.cf.tunnel_route_ip",
+    "devops.cf.cloudflared_write",
+    "obs.debug.cf_api",
+    "obs.debug.cf_cloudflared"
+   ]
+  },
+  "infra/domains_row/domains_public": {
+   "api": [],
+   "mcp": []
+  },
+  "containers/all/topology": {
+   "api": [
+    "/cloud-data/topology",
+    "/cloud-data/deps",
+    "/cloud-data/deps/*",
+    "/cloud-data/container-resources",
+    "/cloud-data/front-apps",
+    "/cloud-data/log-routing",
+    "/cloud-data/monitoring-targets",
+    "/cloud-data/matomo-sites",
+    "/cloud-data/backup-targets",
+    "/cloud-data/gha-config",
+    "/cloud-data/home-manager"
+   ],
+   "mcp": []
+  },
+  "containers/all/table": {
+   "api": [
+    "/services",
+    "/services/*",
+    "/cloud-data/configs",
+    "/configs/*",
+    "/files/config/*",
+    "/vms/:/containers/:/start",
+    "/vms/:/containers/:/stop",
+    "/vms/:/containers/:/restart",
+    "/vms/:/containers/:/update",
+    "/vms/:/containers/:/exec",
+    "/vms/:/containers/:/inspect",
+    "/vms/:/containers/:/stats",
+    "/vms/:/services/:/start",
+    "/vms/:/services/:/stop"
+   ],
+   "mcp": [
+    "devops.container.*",
+    "devops.service.*",
+    "devops.docker.*",
+    "obs.debug.profile_container",
+    "obs.debug.profile_service"
+   ]
+  },
+  "ops/net/wg": {
+   "api": [
+    "/security/wireguard"
+   ],
+   "mcp": []
+  },
+  "ops/net/auth": {
+   "api": [
+    "/cloud-data/authelia-acl",
+    "/cloud-data/ntfy-acl"
+   ],
+   "mcp": []
+  },
+  "ops/net/dns": {
+   "api": [
+    "/cloud-data/dns-services",
+    "/cloud-data/caddy-routes"
+   ],
+   "mcp": [
+    "devops.caddy.*"
+   ]
+  },
+  "ops/net/network": {
+   "api": [
+    "/cloud-data/firewall-rules",
+    "/cloud-data/topology/network",
+    "/reach/:"
+   ],
+   "mcp": []
+  },
+  "ops/net/security": {
+   "api": [
+    "/security/*",
+    "/cloud-data/topology/security",
+    "/files/secrets/:"
+   ],
+   "mcp": [
+    "sec.*",
+    "devops.secrets.*",
+    "devops.build.secrets_status"
+   ]
+  },
+  "ops/mail/map": {
+   "api": [],
+   "mcp": [
+    "obs.health.mail*",
+    "devops.mail.*"
+   ]
+  },
+  "ops/orch/flow": {
+   "api": [
+    "/workflows",
+    "/workflows/gha",
+    "/workflows/dispatch",
+    "/reports/*",
+    "/files/report/:"
+   ],
+   "mcp": [
+    "devops.workflows.*",
+    "obs.debug.report"
+   ]
+  },
+  "ops/orch/service": {
+   "api": [],
+   "mcp": []
+  },
+  "ops/orch/infrastructure": {
+   "api": [],
+   "mcp": []
+  },
+  "ops/orch/orchestration": {
+   "api": [
+    "/health/declared",
+    "/health/deployed",
+    "/health/deployed/:",
+    "/health/drift",
+    "/cloud-data/topology/drift"
+   ],
+   "mcp": [
+    "obs.health.declared",
+    "obs.health.deployed",
+    "obs.health.drift"
+   ]
+  },
+  "ops/orch/release": {
+   "api": [
+    "/updates"
+   ],
+   "mcp": [
+    "devops.build.*",
+    "devops.release.*",
+    "devops.repo.*"
+   ]
+  },
+  "ops/orch/agents": {
+   "api": [],
+   "mcp": []
+  },
+  "ops/ops_health/uptime": {
+   "api": [
+    "/up/:",
+    "/health/:",
+    "/v2/*",
+    "/slo",
+    "/slo/:",
+    "/profiling/*"
+   ],
+   "mcp": [
+    "obs.health.*",
+    "obs.debug.profile_*"
+   ]
+  },
+  "ops/ops_health/tests": {
+   "api": [
+    "/tests/*"
+   ],
+   "mcp": [
+    "obs.debug.test"
+   ]
+  },
+  "ops/obs/logs": {
+   "api": [
+    "/logs/search",
+    "/logs/stream/:/:",
+    "/files/logs/:/:",
+    "/public/logs",
+    "/public/events/:",
+    "/apk/:/logs",
+    "/containers/:/logs",
+    "/db/health/history",
+    "/db/uptime/report",
+    "/db/audit",
+    "/db/deploy/history",
+    "/db/prune"
+   ],
+   "mcp": [
+    "obs.debug.docker_logs*",
+    "obs.debug.db_*",
+    "obs.db.prune"
+   ]
+  },
+  "ops/obs/metrics": {
+   "api": [
+    "/metrics/*"
+   ],
+   "mcp": [
+    "obs.debug.metrics"
+   ]
+  },
+  "ops/obs/alerts": {
+   "api": [
+    "/alerts/*",
+    "/db/alert/*"
+   ],
+   "mcp": [
+    "obs.db.alert_*"
+   ]
+  },
+  "ops/obs/notify": {
+   "api": [
+    "/notify/*"
+   ],
+   "mcp": [
+    "obs.notify.*",
+    "devops.telegram.*"
+   ]
+  },
+  "observ/observability": {
+   "api": [
+    "/events"
+   ],
+   "mcp": []
+  },
+  "observ/health": {
+   "api": [
+    "/health",
+    "/health/status",
+    "/health/status/:",
+    "/health/tier1",
+    "/health/tier1/:",
+    "/health/tier2",
+    "/health/tier2/:",
+    "/health/tier3",
+    "/health/tier3/:",
+    "/stream/health"
+   ],
+   "mcp": [
+    "obs.health.cloud*",
+    "obs.health.resources_*"
+   ]
+  },
+  "observ/dagu": {
+   "api": [
+    "/workflows/dagu"
+   ],
+   "mcp": [
+    "devops.workflows.dagu*"
+   ]
+  },
+  "observ/mesh": {
+   "api": [
+    "/cloud-data/wireguard-peers"
+   ],
+   "mcp": []
+  },
+  "configs/general": {
+   "api": [
+    "/fleet/profile"
+   ],
+   "mcp": []
+  },
+  "configs/perms": {
+   "api": [],
+   "mcp": []
+  },
+  "configs/about": {
+   "api": [],
+   "mcp": []
+  },
+  "configs/build": {
+   "api": [],
+   "mcp": []
+  },
+  "configs/plugins": {
+   "api": [],
+   "mcp": [
+    "plugin.*"
+   ]
+  }
+ }
+}

@@ -128,13 +128,13 @@ class DeclarationsTest {
         // WG mesh arrived with them. The SuperApp's sample-stub page ids stay undeclared,
         // which is what keeps "no placeholder in a shipped tab" assertable.
         assertEquals("Infra = Providers | VMs | Storage | Electronics | Domains (2026-10-20); no Stack, Dbs or API page",
-            listOf("providers", "machines", "serverless", "node_python", "storage", "api_ai", "api_scraper", "desktop", "mobile", "gadgets", "domains", "domains_public"), pageIds("infra"))
+            listOf("providers", "machines", "serverless", "node_python", "storage", "api_ai", "api_scraper", "desktop", "mobile", "gadgets", "control", "domains", "domains_public"), pageIds("infra"))
         assertEquals("#1454 one page per project, in the owner's order", listOf("all", "cloudy", "cloud_me", "cg", "capital", "hardtech", "others"), pageIds("containers"))
         assertEquals("#1454 every project page keeps the Topology | Table switch",
             pageIds("containers").map { listOf("${it}_topology", "${it}_table") },
             nav().section("containers")!!.pages.map { p -> p.pages.map { it.id } })
         assertEquals(listOf("observability", "health", "dagu", "mesh"), pageIds("observ"))
-        assertEquals("#1443 Configs starts General | Perms | About, then the app's own Build card", listOf("general", "perms", "about", "build"), pageIds("configs"))
+        assertEquals("#1443 Configs starts General | Perms | About, then the app's own Build card", listOf("general", "perms", "about", "build", "plugins"), pageIds("configs"))
     }
 
     @Test

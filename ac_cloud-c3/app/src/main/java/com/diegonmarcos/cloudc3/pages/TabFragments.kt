@@ -51,6 +51,7 @@ class InfraFragment : PagedFragment() {
         "desktop" -> InfraSectionFragment.newInstance(InfraSections.DESKTOP)
         "mobile" -> InfraSectionFragment.newInstance(InfraSections.MOBILE)
         "gadgets" -> InfraSectionFragment.newInstance(InfraSections.GADGETS)
+        "control" -> InfraSectionFragment.newInstance(InfraSections.CONTROL)
         "domains_public" -> InfraSectionFragment.newInstance(InfraSections.DOMAINS_PUBLIC)
         "domains" -> InfraSectionFragment.newInstance(InfraSections.DOMAINS)
         else -> Declarations.apiProviders.groupOfPage(pageId)?.let { InfraSectionFragment.newInstance(pageId) }
@@ -99,7 +100,7 @@ class ObservFragment : PagedFragment() {
 }
 
 /**
- * OPS (#1480): Network Mail | Orchestration | Health Observability, one top page each, every one a nested strip of views (build.json,
+ * OPS (#1480, #1495: the catalog pages Security, Tests, Metrics, Alerts, Notify draw their API routes and MCP tools from data/c3_hierarchy.json via [OpsMapFragment]): Network Mail | Orchestration | Health Observability, one top page each, every one a nested strip of views (build.json,
  * ids `<page>_<view>`). Network and Mail are the maps of data/ops_maps.json ([OpsMapFragment], derived from mesh.json, infra_slice.json
  * and containers_declared.json); Orchestration is the CI/CD flow map, then the topology views and Agents ([TopologyViewFragment] over
  * ui.topology); Health is [OpsHealthFragment]; Observability is the logs catcher [OpsLogsFragment].
@@ -123,6 +124,11 @@ class OpsFragment : PagedFragment() {
         "agents" -> AgentsFragment()
         "uptime" -> OpsHealthFragment()
         "logs" -> OpsLogsFragment()
+        "security" -> OpsMapFragment.newInstance("hier_$leafId")
+        "tests" -> OpsMapFragment.newInstance("hier_$leafId")
+        "metrics" -> OpsMapFragment.newInstance("hier_$leafId")
+        "alerts" -> OpsMapFragment.newInstance("hier_$leafId")
+        "notify" -> OpsMapFragment.newInstance("hier_$leafId")
         else -> null
     }
 }
@@ -138,6 +144,7 @@ class ConfigsFragment : PagedFragment() {
         "perms" -> FleetConfigsPageFragment.newInstance(pageId)
         "about" -> FleetConfigsPageFragment.newInstance(pageId)
         "build" -> AboutFragment()
+        "plugins" -> OpsMapFragment.newInstance("hier_plugins")
         else -> null
     }
 }

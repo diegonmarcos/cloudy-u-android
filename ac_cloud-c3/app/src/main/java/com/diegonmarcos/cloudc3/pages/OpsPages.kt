@@ -110,6 +110,26 @@ fun OpsMapScreen(id: String, summary: String, sections: List<OpsMaps.Section>) {
     }
 }
 
+/** #1495 A catalog page of the one hierarchy (data/c3_hierarchy.json): one dense row per API route pattern or MCP tool of the page. */
+@Composable
+fun OpsCatalogScreen(tag: String, mapId: String, decl: JsonObject = Declarations.opsMaps) {
+    val p = LocalKitPalette.current
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).testTag(tag)) {
+        Summary(OpsMaps.summary(decl, mapId))
+        OpsMaps.rows(decl, mapId).forEach { s ->
+            SectionTitle("${s.title} (${s.rows.size})")
+            s.rows.forEach { r ->
+                KitStoreRowLine(Modifier.testTag(OpsTags.row(mapId, r.name))) {
+                    Column(Modifier.weight(1f)) {
+                        KitStoreName(r.name, color = p.textPrimary)
+                        if (r.note.isNotBlank()) KitStoreCaption(r.note, color = p.textSecondary, mono = true)
+                    }
+                }
+            }
+        }
+    }
+}
+
 /** The Ops maps as a page: the map id names a map of data/ops_maps.json; the live catalog is the API copy when it answered. */
 class OpsMapFragment : KitComposeFragment() {
 

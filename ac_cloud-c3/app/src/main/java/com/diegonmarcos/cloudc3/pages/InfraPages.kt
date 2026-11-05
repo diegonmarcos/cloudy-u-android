@@ -44,9 +44,10 @@ object InfraSections {
     const val DESKTOP = "desktop"
     const val MOBILE = "mobile"
     const val GADGETS = "gadgets"
+    const val CONTROL = "control"
     const val DOMAINS = "domains"
     const val DOMAINS_PUBLIC = "domains_public"
-    val ALL = listOf(PROVIDERS, MACHINES, SERVERLESS, NODE_PYTHON, STORAGE, DESKTOP, MOBILE, GADGETS, DOMAINS, DOMAINS_PUBLIC)
+    val ALL = listOf(PROVIDERS, MACHINES, SERVERLESS, NODE_PYTHON, STORAGE, DESKTOP, MOBILE, GADGETS, CONTROL, DOMAINS, DOMAINS_PUBLIC)
 }
 
 /** Test tags of the Infra pages, for the declaration-to-screen suite. */
@@ -75,6 +76,7 @@ fun InfraSectionScreen(
         InfraSections.DESKTOP -> DevicesScreen(InfraSections.DESKTOP, slice)
         InfraSections.MOBILE -> DevicesScreen(InfraSections.MOBILE, slice)
         InfraSections.GADGETS -> DevicesScreen(InfraSections.GADGETS, slice)
+        InfraSections.CONTROL -> OpsCatalogScreen(InfraTags.screen(InfraSections.CONTROL), "hier_control")
         InfraSections.DOMAINS_PUBLIC -> PublicDomainsScreen(slice, identities, onToken)
         InfraSections.DOMAINS -> DomainsScreen(slice, live, today)
         else -> apis.groupOfPage(section)?.let { ApiProvidersScreen(section, it, apis) }
