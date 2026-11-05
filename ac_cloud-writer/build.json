@@ -274,7 +274,7 @@
         "catalog_url": "https://openrouter.ai/api/v1/models",
         "needs_token": true,
         "default_model": "z-ai/glm-5.3-flash",
-        "pricing_as_of": "2026-11-04",
+        "pricing_as_of": "2026-11-05",
         "models": [
           {
             "id": "meta-llama/llama-3.1-8b-instruct",
@@ -319,8 +319,8 @@
               "roleplay",
               "translation"
             ],
-            "prompt": 0.082,
-            "completion": 0.245,
+            "prompt": 0.013,
+            "completion": 0.04,
             "note": "Sparse 26B (4B active): translation, academia and legal at a small-model price."
           },
           {
@@ -365,8 +365,8 @@
               "fp16",
               "fp8"
             ],
-            "prompt": 0.1,
-            "completion": 0.32,
+            "prompt": 0.2,
+            "completion": 0.52,
             "note": "70B open weights, no category ranking — a general fallback, not a specialist."
           },
           {
@@ -401,6 +401,7 @@
             "name": "DeepSeek V4 Flash 0731",
             "open": true,
             "quant": [
+              "bf16",
               "fp32",
               "fp4",
               "fp8",
@@ -419,7 +420,7 @@
               "translation",
               "trivia"
             ],
-            "prompt": 0.059,
+            "prompt": 0.054,
             "completion": 0.3,
             "note": "Ranked in all twelve categories at the second-lowest price here."
           },
@@ -465,8 +466,8 @@
               "translation",
               "trivia"
             ],
-            "prompt": 0.0269,
-            "completion": 0.0996,
+            "prompt": 0.15,
+            "completion": 0.5,
             "note": "The provider default: ranked in all twelve categories, and the cheapest all-rounder after DeepSeek."
           },
           {
