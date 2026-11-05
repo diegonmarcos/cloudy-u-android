@@ -122,8 +122,8 @@ PY
 }
 mutate "a sub-page without its route"        server/src/app.rs '"/__app__/api/sub/api-ipc"' '"/__app__/api/sub/api-gone"'
 mutate "a mesh cidr that is public"          build.json '"10.1.0.0/24"' '"203.0.113.0/24"'
-mutate "a mesh bind on the wildcard"         server/src/meshlogs.rs 'pub fn start(m: Mesh) -> Result<(), String> {
-    m.check_bind()?;' 'pub fn start(m: Mesh) -> Result<(), String> {
+mutate "a mesh bind on the wildcard"         server/src/meshlogs.rs 'pub fn start(m: Mesh, stop: Arc<std::sync::atomic::AtomicBool>) -> Result<(), String> {
+    m.check_bind()?;' 'pub fn start(m: Mesh, stop: Arc<std::sync::atomic::AtomicBool>) -> Result<(), String> {
     let _w = std::net::Ipv4Addr::UNSPECIFIED;'
 mutate "a public repo exposure"              build.json '"exposures": [ "loopback", "mesh" ]' '"exposures": [ "loopback", "mesh", "public" ]'
 mutate "a method list that drifted"          build.json '"crashes",' '"crashes", "shell",'

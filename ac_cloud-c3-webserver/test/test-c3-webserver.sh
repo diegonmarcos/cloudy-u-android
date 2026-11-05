@@ -61,7 +61,7 @@ ui = sorted(os.listdir(os.path.join(app, "server/ui"))) if os.path.isdir(os.path
 if ui != ["diag.html", "shell.html"]:
     bad.append("server/ui holds %r; the only pages this app may carry are diag.html (:8003) and shell.html (/__app__/): the file view at / is the shared Linux UI" % ui)
 src = sorted(os.path.basename(p) for p in glob.glob(os.path.join(app, "server/src/*.rs")))
-want = ["about.rs", "apis.rs", "app.rs", "crashes.rs", "diag.rs", "dns.rs", "engines.rs", "lib.rs", "meshlogs.rs", "repos.rs", "serving.rs", "sub.rs"]   # crashes.rs: libs:core's local crash sink (#1122), an app route under /__app__/, not a file-view route; apis/sub/meshlogs/repos (#1490): the API and Pages sub-pages, the mesh /logs route and the repo sites, app routes under /__app__/ or the mesh listener's own /logs and /endpoints
+want = ["about.rs", "apis.rs", "app.rs", "crashes.rs", "diag.rs", "dns.rs", "engines.rs", "lib.rs", "meshlogs.rs", "power.rs", "repos.rs", "serving.rs", "sub.rs"]   # crashes.rs: libs:core's local crash sink (#1122), an app route under /__app__/, not a file-view route; apis/sub/meshlogs/repos (#1490): the API and Pages sub-pages, the mesh /logs route and the repo sites (power.rs #1503: the Server / Keep alive state machine), app routes under /__app__/ or the mesh listener's own /logs and /endpoints
 if src != want:
     bad.append("server/src holds %r, want exactly %r (no routes/render/files of the file view: those are the shared server's)" % (src, want))
 cargo = open(os.path.join(app, "server/Cargo.toml")).read()
