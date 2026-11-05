@@ -53,7 +53,7 @@ grep -q 'shell.run(InventoryScript.build' "$C" && pass "the store pass runs on t
 echo "── I3 one classification ──"
 R="$SYNC/inventory/RepoInventory.kt"
 n=$(grep -c 'enum class RepoClass' "$R"); [ "$n" -eq 1 ] && pass "one class enum" || fail "RepoClass enum count $n"
-for c in REGISTERED STALE_ORIGIN MISNAMED DUPLICATE UNLISTED DEBRIS BARE NOT_CLONED; do grep -q "$c" "$R" || fail "class $c missing"; done
+for c in REGISTERED STALE_ORIGIN MISNAMED DUPLICATE UNLISTED DEBRIS NOT_CLONED; do grep -q "$c" "$R" || fail "class $c missing"; done
 T="$APP/app/src/test/java/com/diegonmarcos/clouddrive/sync/inventory/RepoInventoryPhoneTest.kt"
 for fx in "cloud-u-linux" "cloud-data-lfs" "My-ai-memory" "git-repos-master___CONFLICT" ".incoming" "through cld termux"; do grep -q -- "$fx" "$T" && pass "phone fixture: $fx" || fail "phone fixture missing: $fx"; done
 

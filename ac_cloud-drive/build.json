@@ -143,7 +143,7 @@
       {
         "id": "projects",
         "label": "Projects", "title_row": false,
-        "icon": "account_tree",
+        "icon": "bookmark",
         "_doc": "#1491 Projects is a bottom-nav page of its own, right after Explorer (it was the third Fsync sub-page): no sub-pages, the sample data declared in sync/ProjectsPage.kt until a real source exists. Fsync keeps Folders | Agents."
       },
       {
