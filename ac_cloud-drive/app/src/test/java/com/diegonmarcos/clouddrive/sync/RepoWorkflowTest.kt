@@ -65,7 +65,7 @@ class RepoWorkflowTest {
         val resolve = TermuxGitWire.plan("resolve", dir, JSONObject().put("path", "both.txt").put("side", "OURS"), null).first!!
         assertTrue(resolve.script.contains("checkout --ours -- 'both.txt'")); assertTrue(resolve.script.contains("add -- 'both.txt'"))
         val cont = TermuxGitWire.plan("rebase_continue", dir, JSONObject().put("name", "n").put("email", "e@x"), null).first!!
-        assertTrue(cont.script.contains("GIT_EDITOR=true git -C") && cont.script.contains("rebase --continue"))
+        assertTrue(cont.script.contains("GIT_EDITOR=true git \"\$(if [ -e") // #1491 -C for a working tree, --git-dir for a bare repo, decided in the guest && cont.script.contains("rebase --continue"))
         for (p in listOf(resolve, cont)) { assertFalse(p.script.contains("push")); assertFalse(p.network) }
         assertTrue("rebase_continue" in TermuxGitWire.OPS)
     }
