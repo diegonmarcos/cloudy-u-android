@@ -61,6 +61,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.Image
 import com.diegonmarcos.cloudc3.Declarations
+import com.diegonmarcos.cloudc3.pages.ContainerFilter
 import com.diegonmarcos.cloudc3.R
 import com.diegonmarcos.cloudc3.pages.ApiFleetLive
 import com.diegonmarcos.cloudc3.pages.ContainersSource
@@ -222,7 +223,7 @@ class C3StackFragment : KitComposeFragment() {
                     Text(text, color = colour, fontSize = 12.sp, fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(top = 8.dp).testTag("c3:stack:refresh-note"))
                 }
-                panels.forEachIndexed { i, panel ->
+                shownPanels(panels).forEachIndexed { i, panel ->
                     if (panel.kind == "section_title") SectionTitle(panel.title, Modifier.then(anchors.mark(panel.anchor)))
                     else PanelCard(i, panel)
                 }
@@ -237,6 +238,32 @@ class C3StackFragment : KitComposeFragment() {
 
         sheet?.let { target ->
             ContainerSheet.Sheet(target = target, onOpenUrl = { url -> onTargetClicked(url) }, onDismiss = { sheet = null })
+        }
+    }
+
+    /**
+     * The panels as drawn: the cloud_dashboard cards are replaced by ONE card per group of the scoped, filtered document
+     * (Stacks.cloudServices), so a project shows its own groups (Cloudy: Infra Apps, Cloud Apps, Repos; the others: their registry
+     * families), none repeats another's and an empty group draws no card; the Index tiles that jump to those cards follow the shown cards.
+     */
+    @Composable
+    private fun shownPanels(panels: List<Stacks.StackPanel>): List<Stacks.StackPanel> {
+        val first = panels.indexOfFirst { it.kind == "cloud_dashboard" }
+        if (first < 0) return panels
+        val kind = ContainerFilter.kind
+        return remember(ContainersSource.version, projectId, kind, panels) {
+            val dash = Stacks.cloudServices(projectId, kind)
+            val cards = dash.groups.filter { g -> g.subgroups.any { it.containers.isNotEmpty() } }
+                .map { g -> panels[first].copy(title = g.label, anchor = "containers-${g.id}", anchors = emptyList(), dashGroupIds = listOf(g.id)) }
+            val jump = { t: Stacks.AggTile -> t.target.startsWith("anchor:containers-") }
+            val out = panels.map { pn ->
+                if (pn.kind == "tile_row" && pn.tiles.isNotEmpty() && pn.tiles.all(jump)) {
+                    pn.copy(tiles = cards.map { c -> Stacks.AggTile(c.anchor, c.title, pn.tiles.first().iconName, "anchor:${c.anchor}") })
+                } else pn
+            }
+            val shown = out.take(first) + cards + out.drop(first).filter { it.kind != "cloud_dashboard" }
+            shown.forEachIndexed { i, pn -> if (pn.kind == "cloud_dashboard") anchors.register(pn.anchor, i) }
+            shown
         }
     }
 
@@ -1215,10 +1242,9 @@ class C3StackFragment : KitComposeFragment() {
      *  opens [ContainerSheet] on tap. Provider groups render external consoles (no ping). */
     @Composable
     private fun CloudDashboard(index: Int, panel: Stacks.StackPanel) {
-        var kind by remember { mutableStateOf<String?>(null) }
+        val kind = ContainerFilter.kind
         val dash = remember(ContainersSource.version, projectId, kind) { Stacks.cloudServices(projectId, kind) }
         val cols = Stacks.tileColumns()
-        if (projectId != null) com.diegonmarcos.cloudc3.pages.KindBar(Declarations.containerProjects.kinds, kind, { kind = it })
         val wanted = panel.dashGroupIds.ifEmpty { dash.groups.map { it.id } }
         val groups = dash.groups.filter { it.id in wanted }
         // Only label the group inside the card when one card shows >1 group.

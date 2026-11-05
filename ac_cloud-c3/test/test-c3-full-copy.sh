@@ -85,12 +85,12 @@ for fn, key, has_pub in (("services_public.json", "name", True), ("services_priv
         if (row[key], has_pub) not in _have:
             bad.append("the Table page lost %s row %r that the address cards showed" % (fn, row[key]))
 dash = [p for p in topo + infra if p.get("kind") == "cloud_dashboard"]
-if len(dash) != 3:
-    bad.append("stack_topology carries %d cloud_dashboard cards, not the three Containers groups "
-               "(Infra Apps, Cloud Apps, Project Apps)" % len(dash))
+if len(dash) != 2:
+    bad.append("stack_topology carries %d cloud_dashboard cards, not the two Containers groups "
+               "(Infra Apps, Cloud Apps; Project Apps is gone, #1454)" % len(dash))
 dash_groups = sorted(tuple(sorted(([p.get("group")] if p.get("group") else []) + (p.get("groups") or []))) for p in dash)
-if dash_groups != sorted([("infra",), ("cloud",), ("project",)]):
-    bad.append("the dashboards' group bindings are %s, not infra / cloud / project" % dash_groups)
+if dash_groups != sorted([("infra",), ("cloud",)]):
+    bad.append("the dashboards' group bindings are %s, not infra / cloud" % dash_groups)
 for _name, _stack in (("stack_topology", topo),):
     if not any(p.get("kind") == "tile_row" and p.get("title") == "Index" for p in _stack):
         bad.append("%s lost its Index row" % _name)

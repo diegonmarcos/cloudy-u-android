@@ -66,6 +66,10 @@ class InfraFragment : PagedFragment() {
  */
 class ContainersFragment : PagedFragment() {
     override fun pages(): List<NavPage> = Declarations.containersPages
+
+    /** Filters: the one kind selection of the page, above the project tabs, applied to every block of every project. */
+    @Composable
+    override fun AboveStrip() = KindBar(Declarations.containerProjects.kinds, ContainerFilter.kind) { ContainerFilter.kind = it }
     override fun pageFragment(pageId: String): Fragment? = null
 
     /** A nested page `<project>_<view>` (build.json): the project is its parent page, the view the rest of its id. */

@@ -1,5 +1,7 @@
 package com.diegonmarcos.cloudc3.pages
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -43,12 +45,19 @@ object ContainerProjects {
                 ?: projects.firstOrNull { p -> p.folderPrefix.any { e.folder.startsWith(it) } || p.namePrefix.any { e.name.startsWith(it) } }
                 ?: project(default)
 
-        /** The kind of [e]: a name rule beats a category rule, else the declared default kind. */
-        fun kindOf(e: ContainersModel.Entry): Kind? =
-            kinds.firstOrNull { k -> e.role in k.role }
-                ?: kinds.firstOrNull { k -> k.nameSuffix.any { e.name.endsWith(it) } || k.nameContains.any { e.name.contains(it) } }
-                ?: kinds.firstOrNull { k -> k.categoryPrefix.any { e.category.startsWith(it) } }
-                ?: kind(defaultKind)
+        /** Every kind of [e]: each kind whose `role` names the entity's role (a git repo is a Repo AND a DB, a data store), else the one kind its name rule, category rule or the declared default gives. */
+        fun kindsOf(e: ContainersModel.Entry): List<Kind> {
+            val byRole = kinds.filter { k -> e.role in k.role }
+            if (byRole.isNotEmpty()) return byRole
+            return listOfNotNull(
+                kinds.firstOrNull { k -> k.nameSuffix.any { e.name.endsWith(it) } || k.nameContains.any { e.name.contains(it) } }
+                    ?: kinds.firstOrNull { k -> k.categoryPrefix.any { e.category.startsWith(it) } }
+                    ?: kind(defaultKind),
+            )
+        }
+
+        /** The first (primary) kind of [e]. */
+        fun kindOf(e: ContainersModel.Entry): Kind? = kindsOf(e).firstOrNull()
     }
 
     val EMPTY = Decl("", emptyList())
@@ -83,7 +92,7 @@ object ContainerProjects {
     /** A repo as a Containers entity (role "repo"): the Table row and the Topology tile read it like any container. */
     fun entryOf(decl: Decl, r: Repo): ContainersModel.Entry = ContainersModel.Entry(
         r.name, "", "repo", r.group, r.category, "${decl.project(r.project)?.label.orEmpty()} repo, ${r.visibility}", "", "", "", null,
-        r.visibility == "pub", "", "", "", r.code, r.pagesUrl, "", "",
+        r.visibility == "pub", "", "git", "", r.code, r.pagesUrl, "", "",
         listOf("project" to r.project, "visibility" to r.visibility, "default_branch" to r.defaultBranch, "pages_url" to r.pagesUrl, "github_url" to r.githubUrl),
     )
 
@@ -112,11 +121,13 @@ object ContainerProjects {
 
     /** [c] with every container of a remapped macro group moved to its target group (declared `group_remap`, e.g. Project Apps -> Cloud Apps). */
     fun regroup(decl: Decl, c: ContainersModel.Catalog): ContainersModel.Catalog {
-        val map = decl.groupRemap.filter { (from, to) -> from != to && c.groups.any { it.label == to } }
+        val map = decl.groupRemap.filter { (from, to) -> from != to }
         if (map.isEmpty()) return c
         fun merge(cats: List<ContainersModel.Category>) =
             cats.groupBy { it.label }.map { (l, v) -> ContainersModel.Category(l, v.flatMap { it.names }) }
-        val groups = c.groups.filter { it.label !in map }.map { g ->
+        // A target the document lacks is created from its sources, so a remapped group never survives under its old name.
+        val targets = map.values.distinct().filter { t -> c.groups.none { it.label == t } }
+        val groups = (c.groups + targets.map { t -> ContainersModel.Group(t, t, emptyList()) }).filter { it.label !in map }.map { g ->
             g.copy(categories = merge(g.categories + c.groups.filter { map[it.label] == g.label }.flatMap { it.categories }))
         }
         return ContainersModel.Catalog(groups, c.entries.map { e -> map[e.group]?.let { e.copy(group = it) } ?: e })
@@ -125,7 +136,7 @@ object ContainerProjects {
     /** The containers of [projectId] (null = every project) and of [kindId] (null = every kind) only, groups and categories kept in the document's order (empty categories dropped). */
     fun scope(decl: Decl, c0: ContainersModel.Catalog, projectId: String?, kindId: String? = null): ContainersModel.Catalog {
         val c = full(decl, c0)
-        val keep = c.entries.filter { (projectId == null || decl.projectOf(it)?.id == projectId) && (kindId == null || decl.kindOf(it)?.id == kindId) }
+        val keep = c.entries.filter { (projectId == null || decl.projectOf(it)?.id == projectId) && (kindId == null || decl.kindsOf(it).any { k -> k.id == kindId }) }
         val names = keep.map { it.name }.toSet()
         val groups = c.groups.map { g ->
             g.copy(categories = g.categories.map { cat -> cat.copy(names = cat.names.filter { it in names }) }.filter { it.names.isNotEmpty() })
@@ -146,4 +157,9 @@ object ContainerProjects {
         return rows.sortedBy { r -> order.indexOf(byName[r.container]?.let { decl.projectOf(it)?.id }).let { if (it < 0) order.size else it } }
             .map { r -> byName[r.container]?.let { decl.projectOf(it) }?.let { p -> r.copy(group = "${p.label} / ${r.group}") } ?: r }
     }
+}
+
+/** The page-wide Filters selection of the Containers section (All | MCPs | APIs | Apps | DBs | Repos): drawn once above the project tabs, read by every Topology and Table page of every project. */
+object ContainerFilter {
+    var kind by androidx.compose.runtime.mutableStateOf<String?>(null)
 }

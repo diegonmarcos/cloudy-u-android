@@ -54,6 +54,10 @@ abstract class PagedFragment : KitComposeFragment() {
     /** The tab's declared section, when it declares page groups (`nav_mode: horizontal_two_rows` + `groups`, #1437). */
     open fun section(): NavSection? = null
 
+    /** A row drawn above the tab strip (null = none): the Containers page-wide Filters. */
+    @Composable
+    open fun AboveStrip() {}
+
     private var selected by mutableStateOf<String?>(null)
 
     /** The selected nested page of the selected top page (null when that page declares none). */
@@ -93,6 +97,7 @@ abstract class PagedFragment : KitComposeFragment() {
             if (tab != null && page != null) (activity as? PageListener)?.onPageShown(tab, page)
         }
         Column(Modifier.fillMaxSize()) {
+            AboveStrip()
             // A single declared page needs no strip: the tab IS that page, and a one-item
             // picker is chrome that cannot be used. #868 the strip is libs:bottomnav's; the
             // section sits under the shell's own inset padding, so the strip adds none.

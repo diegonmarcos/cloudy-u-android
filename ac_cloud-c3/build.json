@@ -348,7 +348,7 @@
         "id": "containers",
         "label": "Containers",
         "icon": "ic_p_c3_stack",
-        "_doc": "Renamed from Topology (owner request, 2026-10-16). #1454: one top page per PROJECT (All | Cloudy | Cloud-me | CG | Capital | Hardtech | Others), each with a Topology | Table switch (nested pages `<project>_topology`, `<project>_table`; ids are unique per section, the view is the id after the project). Topology = the container dashboards (C3StackFragment over ui.carried_c3.stack_topology) and Table = the sortable, filterable table (RoutesTableFragment), both scoped to the project. Which project a container belongs to is data/container_projects.json (explicit name_overrides, then folder / name prefixes; no match = Others), plus a kind chip row inside each tab (All | MCPs | APIs | Apps | DBs) and a group_remap; a project id with no entry there is All. Agents moved to Ops.",
+        "_doc": "Renamed from Topology (owner request, 2026-10-16). #1454: one top page per PROJECT (All | Cloudy | Cloud-me | CG | Capital | Hardtech | Others), each with a Topology | Table switch (nested pages `<project>_topology`, `<project>_table`; ids are unique per section, the view is the id after the project). Topology = the container dashboards (C3StackFragment over ui.carried_c3.stack_topology) and Table = the sortable, filterable table (RoutesTableFragment), both scoped to the project. Which project a container belongs to is data/container_projects.json (explicit name_overrides, then folder / name prefixes; no match = Others), plus ONE page-wide Filters row above the project strip (All | MCPs | APIs | Apps | DBs | Repos) that filters every block of every project and a group_remap; a project id with no entry there is All. Agents moved to Ops.",
         "pages": [
           {
             "id": "all",
@@ -1171,7 +1171,7 @@
       ],
       "stack_topology": [
         {
-          "_doc": "INDEX of the Containers > Topology page: one `anchor:` tile per card below. The Pub URLs / Pvt URLs tiles left with the two address cards, which became the Containers > Table page (owner request, 2026-10-16); the Stack tiles went with the Stack section to Infra.",
+          "_doc": "INDEX of the Containers > Topology page: one `anchor:` tile per card below (on the Containers pages C3StackFragment rebuilds these tiles from the project's own shown cards). The Pub URLs / Pvt URLs tiles left with the two address cards, which became the Containers > Table page (owner request, 2026-10-16); the Stack tiles went with the Stack section to Infra.",
           "kind": "tile_row",
           "title": "Index",
           "subtitle": "Jump to a table on this page",
@@ -1187,17 +1187,11 @@
               "label": "Cont. Cloud",
               "icon": "ic_p_c3_stack",
               "target": "anchor:containers-cloud"
-            },
-            {
-              "id": "containers-project",
-              "label": "Cont. Project",
-              "icon": "ic_p_c3_stack",
-              "target": "anchor:containers-project"
             }
           ]
         },
         {
-          "_doc": "Cloud dashboard (#1148): a Containers heading, then one collapsible cloud_dashboard CARD per group of containers-declared.json (Infra Apps, Cloud Apps, Project Apps), one sub-table per category in the document's order. The document is the SAME one the Containers > Table page reads: c3-infra-api GET /configs/containers (derived by the configs-sync engine from every service build.json), with the copy baked from data/containers_declared.json as fallback. `group` selects the group id.",
+          "_doc": "Cloud dashboard (#1148): a Containers heading, then one collapsible cloud_dashboard CARD per group of containers-declared.json (Infra Apps, Cloud Apps; Project Apps is remapped into Cloud Apps, #1454), one sub-table per category in the document's order. The document is the SAME one the Containers > Table page reads: c3-infra-api GET /configs/containers (derived by the configs-sync engine from every service build.json), with the copy baked from data/containers_declared.json as fallback. `group` selects the group id. On the Containers pages C3StackFragment replaces these cards by one card per group of the project's own scoped, Filters-selected document (Cloudy: Infra Apps, Cloud Apps, Repos; every other project: its registry families).",
           "kind": "section_title",
           "title": "Containers"
         },
@@ -1212,12 +1206,6 @@
           "anchor": "containers-cloud",
           "title": "Cloud Apps",
           "group": "cloud"
-        },
-        {
-          "kind": "cloud_dashboard",
-          "anchor": "containers-project",
-          "title": "Project Apps",
-          "group": "project"
         }
       ]
     },

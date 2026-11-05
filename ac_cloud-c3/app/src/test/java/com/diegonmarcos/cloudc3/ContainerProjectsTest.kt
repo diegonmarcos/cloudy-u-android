@@ -92,9 +92,45 @@ class ContainerProjectsTest {
         assertEquals("apps", k("caddy")); assertEquals("apps", k("dbgate"))
         assertEquals(listOf("mcp", "api", "apps", "db", "repo"), decl.kinds.map { it.id })
         decl.projects.forEach { p -> decl.kinds.forEach { kd ->
-            assertTrue(ContainerProjects.scope(decl, catalog, p.id, kd.id).entries.all { decl.kindOf(it)?.id == kd.id })
+            assertTrue(ContainerProjects.scope(decl, catalog, p.id, kd.id).entries.all { e -> decl.kindsOf(e).any { it.id == kd.id } })
         } }
         assertTrue(ContainerProjects.scope(decl, catalog, "cloudy", "repo").entries.all { it.role == "repo" })
+    }
+
+    @Test
+    fun `every project tab is non-empty with the bundled data, in Topology groups and Table rows`() {
+        decl.projects.forEach { p ->
+            val c = ContainerProjects.scope(decl, catalog, p.id)
+            assertTrue("${p.id} has no entry", c.entries.isNotEmpty())
+            assertTrue("${p.id} has no group with a category", c.groups.any { g -> g.categories.isNotEmpty() })
+            assertTrue("${p.id} has no Table row", ContainerProjects.rows(decl, catalog, p.id).isNotEmpty())
+            assertTrue("${p.id} has no repo under the Repos filter", ContainerProjects.scope(decl, catalog, p.id, "repo").entries.isNotEmpty())
+        }
+    }
+
+    @Test
+    fun `a git repo is both a Repo and a DB, so it shows under both filters of its project`() {
+        decl.repos.forEach { r ->
+            val e = ContainerProjects.entryOf(decl, r)
+            assertEquals(listOf("db", "repo"), decl.kindsOf(e).map { it.id }.sorted())
+            assertEquals("git", e.dbEngine)
+            listOf("db", "repo").forEach { k -> assertTrue(ContainerProjects.scope(decl, catalog, r.project, k).entries.any { it.name == r.name }) }
+        }
+        assertEquals(decl.repos.size + catalog.entries.size, ContainerProjects.rows(decl, catalog, null).size)
+    }
+
+    @Test
+    fun `Infra Apps and Cloud Apps belong to Cloudy only, no tab has Project Apps, each other project has its own families`() {
+        val macro = listOf(ContainersModel.INFRA, ContainersModel.CLOUD, ContainersModel.PROJECT)
+        decl.projects.filter { it.repoGroup.isBlank() }.forEach { p ->
+            val c = ContainerProjects.scope(decl, catalog, p.id)
+            assertTrue("${p.id} repeats a Cloudy macro group", c.groups.none { it.label in macro } && c.entries.none { it.group in macro })
+            assertTrue("${p.id} has no declared families", decl.families[p.id].orEmpty().isNotEmpty())
+            assertTrue("${p.id} groups are not its families", c.groups.all { it.label in decl.families[p.id].orEmpty() || it.label == decl.containerGroup })
+        }
+        decl.projects.forEach { p -> assertTrue(ContainerProjects.scope(decl, catalog, p.id).entries.none { it.group == ContainersModel.PROJECT }) }
+        val fam = decl.projects.filter { it.repoGroup.isBlank() }.map { decl.families[it.id].orEmpty().toSet() }
+        assertTrue("families of two projects coincide", fam.size == fam.toSet().size)
     }
 
     @Test
@@ -112,8 +148,10 @@ class ContainerProjectsTest {
             val fams = decl.families[id].orEmpty()
             assertTrue("$id groups $groups are not registry families $fams", groups.all { it in fams || it == decl.containerGroup })
         }
-        assertEquals(listOf("Terminal"), decl.containerFamily.values.toList())
-        assertTrue(decl.containerFamily.values.all { it in decl.families["capital"].orEmpty() })
+        decl.containerFamily.forEach { (n, f) ->
+            val p = decl.projectOf(catalog.entry(n)!!)!!.id
+            assertTrue("$n family $f is not a registry family of $p", f in decl.families[p].orEmpty())
+        }
         val cloudy = ContainerProjects.scope(decl, catalog, "cloudy").groups.filter { it.categories.isNotEmpty() }.map { it.label }
         assertEquals(listOf("Infra Apps", "Cloud Apps", "Repos"), cloudy)
     }
