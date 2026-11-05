@@ -94,6 +94,16 @@ gradle.ext.shippedLibs.each { name ->
 // it is compiled into the APK that needs it, it just gets no APK of its own.
 def allDirs  = modulesUnder(false)
 def included = libDirs.keySet().toSet()
+// #1490 A static lib whose JVM tests this ship runs (build.json::tests.unit.task names `:libs:<name>:...`) must be in the project
+// graph even though no shipped module depends on it (it is in lib_apks.exclude: it ships no APK). Its own dependencies are then
+// included by the loop below.
+(buildJson.tests?.unit?.task ?: '').findAll(/:libs:([\w-]+):/) { _m, mod ->
+    if (!included.contains(mod) && allDirs.containsKey(mod)) {
+        included << mod
+        include ":libs:${mod}"
+        project(":libs:${mod}").projectDir = allDirs[mod]
+    }
+}
 allDirs.each { _name, dir ->
     new File(dir, 'build.gradle').text.findAll(/project\(':libs:([\w-]+)'\)/) { _m, dep ->
         if (!included.contains(dep) && allDirs.containsKey(dep)) {
