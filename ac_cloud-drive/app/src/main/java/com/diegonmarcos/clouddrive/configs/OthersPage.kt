@@ -32,7 +32,6 @@ import com.diegonmarcos.clouddrive.ui.DriveTags
 import com.diegonmarcos.clouddrive.ui.Pill
 import com.diegonmarcos.clouddrive.ui.PillRow
 import com.diegonmarcos.clouddrive.ui.StatusLight
-import com.diegonmarcos.superapp.adbdebug.AdbShellPage
 
 /**
  * #1216 the former Configs ▸ Others page, now the last section of Configs ▸ General (the page is gone): the
@@ -62,8 +61,8 @@ fun OthersSection(prefs: DrivePrefs, actions: DriveActions, rcloneVersion: Strin
                 }
             }
         }
-        // The privileged shell is the lib's ONE page (adb-shell-one-place.json); Manage > Apps only reads its result.
-        AdbShellPage()
+        // #1510 the privileged shell is the SuperApp's broker: this app is a client (libs:shell-client) and only says whether it is armed.
+        ShellBrokerCard()
         run {
             DriveCard(stringResource(R.string.configs_about), summary = BuildConfig.VERSION_NAME, tag = DriveTags.CONFIGS_CARD) {
                 AboutRow(stringResource(R.string.configs_version), BuildConfig.VERSION_NAME + " · " + BuildConfig.VERSION_CODE)

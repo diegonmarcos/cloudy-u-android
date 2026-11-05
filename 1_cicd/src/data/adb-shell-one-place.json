@@ -36,7 +36,6 @@
     "ac_cloud-store": {"file": "ac_cloud-store/app/src/main/java/com/diegonmarcos/cloudstore/ConfigsPage.kt", "has": "AdbShellHostedPage("},
     "ac_cloud-account": {"file": "ac_cloud-account/app/src/main/java/com/diegonmarcos/cloudaccount/MainActivity.kt", "has": "AdbShellPage()"},
     "ac_cloud-termux": {"file": "ac_cloud-termux/app/src/main/java/com/termux/app/activities/SettingsActivity.java", "has": "AdbShellLink.INSTANCE.open("},
-    "ac_cloud-drive": {"file": "ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive/configs/OthersPage.kt", "has": "AdbShellPage()"},
     "ac_cloud-nix-on-droid": {"file": "ac_cloud-nix-on-droid/app/src/main/java/com/termux/app/activities/SettingsActivity.java", "has": "AdbShellLink.INSTANCE.open("}
   }
 }

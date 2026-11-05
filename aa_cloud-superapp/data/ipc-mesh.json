@@ -1060,7 +1060,8 @@
     "name": "ShellBrokerProvider",
     "authority": "<pkg>.shellbroker",
     "callers": [
-     "aa_cloud-superapp"
+     "aa_cloud-superapp",
+     "drive"
     ]
    },
    {
@@ -1088,7 +1089,8 @@
     ],
     "uris": [],
     "callers": [
-     "aa_cloud-superapp"
+     "aa_cloud-superapp",
+     "drive"
     ]
    }
   ],
@@ -1125,7 +1127,6 @@
     "callers": [
      "aa_cloud-superapp",
      "account",
-     "drive",
      "lib-rootfs-nixdroid",
      "lib-rootfs-termux",
      "nix-on-droid",
@@ -1182,7 +1183,6 @@
      "source": "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/devcontrol/AdbBridgeApi.kt",
      "callers": [
       "account",
-      "drive",
       "lib-rootfs-nixdroid",
       "lib-rootfs-termux",
       "nix-on-droid",
@@ -2007,8 +2007,7 @@
     "core",
     "devtools",
     "fleetconfig-model",
-    "perms",
-    "shizuku-adb-debug-tools"
+    "perms"
    ],
    "endpoints": [
     {

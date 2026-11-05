@@ -8,7 +8,8 @@ import android.content.pm.PackageManager
 import android.os.Process
 import android.os.storage.StorageManager
 import com.diegonmarcos.cloudlib.disk.AppSizes
-import com.diegonmarcos.superapp.adbdebug.ShellChannels
+import com.diegonmarcos.superapp.shellclient.ShellClient
+import com.diegonmarcos.superapp.shellclient.ShellResult
 
 /**
  * Manage ▸ Apps' reader: every installed app with its sizes, running state and RAM, from the best
@@ -53,9 +54,12 @@ object AppSnapshot {
             )
         }
         if (!useShell) return Snapshot(AppTable.sort(rows), usage, null)
-        val channel = runCatching { ShellChannels.active(ctx) }.getOrNull()
-        val ps = channel?.let { c -> runCatching { c.exec(ctx, "ps -A -o NAME") }.getOrNull() }?.let(AppTable::parsePs)?.takeIf { it.isNotEmpty() }
-        val mem = channel?.let { c -> runCatching { c.exec(ctx, "dumpsys meminfo") }.getOrNull() }?.let(AppTable::parseMeminfo)?.takeIf { it.isNotEmpty() }
-        return Snapshot(AppTable.sort(AppTable.withShell(rows, ps, mem)), usage, channel?.let { runCatching { it.name() }.getOrNull() })
+        // #1510 through the SuperApp's shell broker (libs:shell-client): both commands are on this app's allowlist entry; unarmed = no shell columns.
+        val client = ShellClient.over(ctx)
+        fun sh(cmd: String): ShellResult.Ok? = runCatching { client.exec(cmd, timeoutMs = 20_000L) }.getOrNull() as? ShellResult.Ok
+        val psOut = sh("ps -A -o NAME")
+        val ps = psOut?.stdout?.let(AppTable::parsePs)?.takeIf { it.isNotEmpty() }
+        val mem = sh("dumpsys meminfo")?.stdout?.let(AppTable::parseMeminfo)?.takeIf { it.isNotEmpty() }
+        return Snapshot(AppTable.sort(AppTable.withShell(rows, ps, mem)), usage, psOut?.source)
     }
 }

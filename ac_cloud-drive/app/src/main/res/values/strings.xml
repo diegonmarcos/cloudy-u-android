@@ -401,6 +401,10 @@
     <string name="configs_sync_schedule_body">Declared in build.json::storage.git_sync; per-repository periods sit on each repo card</string>
     <string name="configs_removable">Removable storage</string>
     <string name="configs_removable_none">No storage drive granted</string>
+    <string name="configs_shell_title">Privileged shell</string>
+    <string name="configs_shell_checking">Asking the SuperApp…</string>
+    <string name="configs_shell_arm">Arm in SuperApp</string>
+    <string name="configs_shell_refresh">Refresh</string>
     <string name="configs_removable_volumes">%1$d removable volume(s) visible to this app</string>
     <string name="configs_forget_grant">Forget</string>
     <string name="configs_grant_tree">Grant a drive…</string>
