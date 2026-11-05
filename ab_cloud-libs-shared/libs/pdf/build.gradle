@@ -1,0 +1,67 @@
+// libs:pdf (#1484) — PDF view AND edit, in its own lib. VIEW: the platform's android.graphics.pdf.PdfRenderer (pdfium inside the
+// OS; no extra native code in the APK). EDIT: PdfBox-Android (com.tom-roush:pdfbox-android, Apache-2.0, a port of Apache PDFBox):
+// ink and text annotations, note annotations, form fill, page delete, reorder and rotate, each applied to the file and the
+// view reloaded. Licence inventory entry: licenses/curated.json (maven:com.tom-roush:pdfbox-android).
+//
+// The owner-approved exception to the one-PDF-engine rule (1_cicd/src/data/one-pdf-engine-guard.json names this directory):
+// the Editor tab shows a PDF in a tab, next to the viewer of Cloud-Drive's own PDF reader activity. Only Cloud-Drive consumes it.
+//
+// Shared BY REFERENCE; lib-apks excludes it (compiled into its consumer, nothing to install). TESTED in src/test (JVM, no
+// emulator): the edit round-trip runs PdfBox on a tiny generated fixture; the page geometry is plain Kotlin.
+
+plugins {
+    id 'com.android.library'
+    id 'org.jetbrains.kotlin.android'
+    id 'org.jetbrains.kotlin.plugin.compose'
+}
+
+android {
+    namespace 'com.diegonmarcos.cloudlib.pdf'
+    compileSdk 36
+
+    defaultConfig {
+        minSdk 26
+    }
+
+    buildFeatures {
+        compose = true
+    }
+
+    testOptions {
+        unitTests {
+            returnDefaultValues = true
+            all {
+                testLogging {
+                    events 'failed'
+                    exceptionFormat 'full'
+                }
+            }
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
+dependencies {
+    implementation platform('androidx.compose:compose-bom:2025.11.01')
+    implementation 'androidx.compose.ui:ui'
+    implementation 'androidx.compose.foundation:foundation'
+    implementation 'androidx.compose.material3:material3'
+    implementation 'androidx.compose.material:material-icons-extended'
+    // KitDensity: the fleet's dense spacing and type ramp (no dp or sp literal in this module).
+    implementation project(':libs:ui-kit')
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
+    // The editing engine, Apache-2.0.
+    implementation 'com.tom-roush:pdfbox-android:2.0.27.0'
+
+    testImplementation 'junit:junit:4.13.2'
+}

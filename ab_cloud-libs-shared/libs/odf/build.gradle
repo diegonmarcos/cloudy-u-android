@@ -1,0 +1,71 @@
+// libs:odf (#1484) — LibreOffice / OpenDocument files (odt, ods, odp): view AND edit, in its own lib.
+//
+// THE APPROACH, and why not the alternatives. An ODF file is a ZIP of XML parts. This lib reads it with java.util.zip and the
+// platform's own javax.xml DOM, edits content.xml in place (paragraph text, cell values, slide text) and writes the package
+// back copying every other entry (styles.xml, media, settings, manifest) byte for byte, `mimetype` first and stored, as the
+// standard requires. No dependency is added, so there is no licence to inventory and no method-count or XML-stack surprise.
+//   - ODF Toolkit odfdom (Apache-2.0) was weighed first: it pulls a Xerces/Saxon-class XML stack (several MB, known Android
+//     incompatibilities with javax.xml.transform features) to give a full document object model this editor does not need:
+//     its editable surface is paragraph text, cell values and slide text.
+//   - LibreOfficeKit (MPL-2.0) was rejected: tens of MB of native code per ABI, 16 KB page-size and build cost, for text and cell edits.
+// An odt is shown in the shared WYSIWYG engine (libs:wysiwyg), an ods as a table, an odp as a list of slides with their text.
+// Microsoft Office formats are not handled here on purpose (the router answers unsupported format).
+//
+// Shared BY REFERENCE; lib-apks excludes it (compiled into its consumer, nothing to install). TESTED in src/test (JVM, no
+// emulator): the edit round-trips run on small ODF packages built in the tests.
+
+plugins {
+    id 'com.android.library'
+    id 'org.jetbrains.kotlin.android'
+    id 'org.jetbrains.kotlin.plugin.compose'
+}
+
+android {
+    namespace 'com.diegonmarcos.cloudlib.odf'
+    compileSdk 36
+
+    defaultConfig {
+        minSdk 26
+    }
+
+    buildFeatures {
+        compose = true
+    }
+
+    testOptions {
+        unitTests {
+            returnDefaultValues = true
+            all {
+                testLogging {
+                    events 'failed'
+                    exceptionFormat 'full'
+                }
+            }
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
+dependencies {
+    implementation platform('androidx.compose:compose-bom:2025.11.01')
+    implementation 'androidx.compose.ui:ui'
+    implementation 'androidx.compose.foundation:foundation'
+    implementation 'androidx.compose.material3:material3'
+    implementation 'androidx.compose.material:material-icons-extended'
+    // KitDensity: the fleet's dense spacing and type ramp (no dp or sp literal in this module).
+    implementation project(':libs:ui-kit')
+    implementation project(':libs:wysiwyg')   // an odt is read into, and written back from, the WYSIWYG document
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
+
+    testImplementation 'junit:junit:4.13.2'
+}

@@ -84,6 +84,16 @@
       "_doc": "#873 libs:core `api`s this module (the setup provider every app serves, describe / export / apply / status); listed so settings.gradle resolves the path and the ship workflow's path triggers see it, not linked in the app's own gradle.",
       "dir": "../ab_cloud-libs-shared/libs/fleetconfig-model",
       "type": "library"
+    },
+    "libs:ui-kit": {
+      "_doc": "#1484 the fleet's shared Compose kit: libs:wysiwyg takes its dense type ramp and spacing (KitDensity) from it. Shared BY REFERENCE.",
+      "dir": "../ab_cloud-libs-shared/libs/ui-kit",
+      "type": "library"
+    },
+    "libs:wysiwyg": {
+      "_doc": "#1484 THE shared WYSIWYG engine (the same one Cloud-Drive's Editor uses): the native Markdown view of this app is its WysiwygView. The BlockSuite web editor in the WebView is untouched. Shared BY REFERENCE.",
+      "dir": "../ab_cloud-libs-shared/libs/wysiwyg",
+      "type": "library"
     }
   },
   "ui": {

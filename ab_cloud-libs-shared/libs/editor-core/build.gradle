@@ -1,0 +1,65 @@
+// libs:editor-core (#1484) — the Editor's shell: a browser-like tab strip over the opened files (open, switch, close,
+// persisted), an Obsidian-style View | Edit mode per tab, and the file-type router that says which viewer or editor owns a
+// file. The mapping is DATA (src/main/resources/editor-types.json), never a `when` in Kotlin.
+//
+// It knows NO viewer: the host (Cloud-Drive today, another app tomorrow) hands the host a content slot and picks the
+// lib for the route (libs:wysiwyg, libs:media-viewer, libs:pdf, libs:odf). It imports nothing from any application.
+//
+// Shared BY REFERENCE; lib-apks excludes it (compiled into its consumers, nothing to install). TESTED in src/test (JVM,
+// no emulator) inside the consuming app's `gradle test`.
+
+plugins {
+    id 'com.android.library'
+    id 'org.jetbrains.kotlin.android'
+    id 'org.jetbrains.kotlin.plugin.compose'
+}
+
+android {
+    namespace 'com.diegonmarcos.cloudlib.editorcore'
+    compileSdk 36
+
+    defaultConfig {
+        minSdk 26
+    }
+
+    buildFeatures {
+        compose = true
+    }
+
+    testOptions {
+        unitTests {
+            returnDefaultValues = true
+            all {
+                testLogging {
+                    events 'failed'
+                    exceptionFormat 'full'
+                }
+            }
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
+dependencies {
+    implementation platform('androidx.compose:compose-bom:2025.11.01')
+    implementation 'androidx.compose.ui:ui'
+    implementation 'androidx.compose.foundation:foundation'
+    implementation 'androidx.compose.material3:material3'
+    implementation 'androidx.compose.material:material-icons-extended'
+    implementation 'androidx.core:core-ktx:1.15.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3'
+    // KitDensity: the fleet's dense spacing and type ramp (no dp or sp literal in this module).
+    implementation project(':libs:ui-kit')
+
+    testImplementation 'junit:junit:4.13.2'
+}

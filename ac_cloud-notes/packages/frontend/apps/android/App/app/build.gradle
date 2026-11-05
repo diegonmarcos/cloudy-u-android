@@ -160,6 +160,9 @@ dependencies {
     implementation project(':libs:theme-background')
     // The top bar's AI panel: the fleet's AI chat over the fleet agent gateway (no token on the phone).
     implementation project(':libs:ai')
+    // #1484 the shared WYSIWYG engine (Cloud-Drive's Editor uses it too); the native Markdown view draws through it. It takes its type ramp from libs:ui-kit.
+    implementation project(':libs:ui-kit')
+    implementation project(':libs:wysiwyg')
 
     implementation libs.androidx.appcompat
     implementation libs.androidx.browser

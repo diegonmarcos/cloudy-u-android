@@ -568,6 +568,7 @@
     <string name="manage_kind_scripts">Scripts</string>
     <string name="agents_title">Agents</string>
     <string name="projects_sample_header">Projects (sample data)</string>
+    <string name="files_open_in_editor">Open in Editor</string>
     <string name="editor_empty_title">No file open</string>
     <string name="editor_empty_hint">Open a file from Explorer to edit or view it here</string>
     <!-- #577 the PDF reader's chrome, now Compose: every caption a resource (test-drive-shell.sh D7). -->

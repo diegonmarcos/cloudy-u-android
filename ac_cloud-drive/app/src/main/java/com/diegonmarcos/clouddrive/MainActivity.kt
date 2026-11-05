@@ -49,6 +49,7 @@ import com.diegonmarcos.clouddrive.files.FilesController
 import com.diegonmarcos.clouddrive.files.FilesScreen
 import com.diegonmarcos.clouddrive.files.ExplorerScreen
 import com.diegonmarcos.clouddrive.manage.ManageScreen
+import com.diegonmarcos.clouddrive.editor.EditorHook
 import com.diegonmarcos.clouddrive.editor.EditorScreen
 import com.diegonmarcos.clouddrive.ai.AiScreen
 import com.diegonmarcos.clouddrive.files.FilesUiState
@@ -253,6 +254,7 @@ class MainActivity : ComponentActivity(), DriveActions {
         val jump: (String, String) -> Unit = { tab, page -> jumpPage = page.ifBlank { null }; jumpTab = tab }
         val openPath: (String) -> Unit = { path -> filesController?.reveal(path); jumpPage = Declarations.PAGE_LOCAL; jumpTab = Declarations.SECTION_EXPLORER }
         openInFilesHook = openPath
+        EditorHook.jump = { jump(Declarations.SECTION_EDITOR, "") }
         val usbOpen by pendingOpen
         LaunchedEffect(usbOpen) { usbOpen?.let { openPath(it); pendingOpen.value = null } }
         val syncAll: () -> Unit = { gitOrNull?.let { g -> g.repos.value.filter { it.autoSync }.forEach { g.syncNow(it) } } }

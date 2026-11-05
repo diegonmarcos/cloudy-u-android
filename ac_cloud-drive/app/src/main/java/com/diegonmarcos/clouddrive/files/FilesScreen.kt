@@ -254,6 +254,7 @@ fun FilesScreen(controller: FilesController, actions: DriveActions, hasAccess: B
                                 EntryAction.SHARE -> { (e.location as? Location.Local)?.let { actions.share(listOf(it.path)) }; null }
                                 EntryAction.OPEN_WITH -> { (e.location as? Location.Local)?.let { actions.openWith(it.path) }; null }
                                 EntryAction.EDIT -> { (e.location as? Location.Local)?.let { actions.openEngine("editor", it.path) }; null }
+                                EntryAction.EDITOR -> { (e.location as? Location.Local)?.let { com.diegonmarcos.clouddrive.editor.EditorHook.open(it.path) }; null }
                                 EntryAction.EXTRACT_HERE -> { controller.extractHere(e); null }
                                 EntryAction.UNZIP -> FilesDialog.Unzip(e)
                                 EntryAction.CONVERT -> FilesDialog.Convert(e)
@@ -314,7 +315,7 @@ fun FilesScreen(controller: FilesController, actions: DriveActions, hasAccess: B
 
 // ── one pane ─────────────────────────────────────────────────────────────
 
-private enum class EntryAction { RENAME, PROPERTIES, DELETE, SHARE, OPEN_WITH, EDIT, EXTRACT_HERE, UNZIP, CONVERT, OPEN_OTHER_PANE, BOOKMARK, CONVERT_PDF, COPY_PATH }
+private enum class EntryAction { RENAME, PROPERTIES, DELETE, SHARE, OPEN_WITH, EDIT, EDITOR, EXTRACT_HERE, UNZIP, CONVERT, OPEN_OTHER_PANE, BOOKMARK, CONVERT_PDF, COPY_PATH }
 
 private const val COPY_PATH = "copy_path"
 
@@ -604,6 +605,7 @@ private fun EntryRow(
                 val rowItems = RowMenu.itemsFor(entry.name, entry.isDirectory, local != null, ConverterRegistry.default)
                 if (RowMenu.Item.OPEN_WITH in rowItems) item(R.string.files_open_with, EntryAction.OPEN_WITH)
                 if (local != null && !entry.isDirectory && (entry.mime.startsWith("text/") || entry.extension in Declarations.files.textExtensions)) item(R.string.files_edit, EntryAction.EDIT)
+                if (local != null && !entry.isDirectory && com.diegonmarcos.clouddrive.editor.EditorHook.canOpen(entry.name)) item(R.string.files_open_in_editor, EntryAction.EDITOR)
                 if (RowMenu.Item.UNZIP in rowItems) item(R.string.files_unzip, EntryAction.UNZIP)
                 if (RowMenu.Item.CONVERT in rowItems) item(R.string.files_convert, EntryAction.CONVERT)
                 if (local != null && entry.mime == com.diegonmarcos.clouddrive.PdfConversion.PDF_MIME) item(R.string.files_convert_pdf, EntryAction.CONVERT_PDF)

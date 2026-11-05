@@ -1231,6 +1231,11 @@
         "libs:git-ui",
         "libs:ui-kit",
         "libs:file-editor",
+        "libs:editor-core",
+        "libs:wysiwyg",
+        "libs:media-viewer",
+        "libs:pdf",
+        "libs:odf",
         "libs:rclone",
         "libs:mounts",
         "libs:bottomnav",
@@ -1323,6 +1328,11 @@
       "dir": "../ab_cloud-libs-shared/libs/file-editor",
       "type": "library"
     },
+    "libs:editor-core": {"dir": "../ab_cloud-libs-shared/libs/editor-core", "type": "library", "depends_on": [], "comment": "#1484 the Editor's shell: browser-like tabs, View | Edit mode and the declarative file-type router. Shared by reference; Cloud-Drive is the consumer, the app-side glue is editor/EditorScreen.kt."},
+    "libs:wysiwyg": {"dir": "../ab_cloud-libs-shared/libs/wysiwyg", "type": "library", "depends_on": [], "comment": "#1484 THE shared WYSIWYG engine (document model, Markdown and HTML codecs, edit ops, Compose editor and viewer), consumed by Cloud-Drive's Editor and Cloud-Notes."},
+    "libs:media-viewer": {"dir": "../ab_cloud-libs-shared/libs/media-viewer", "type": "library", "depends_on": [], "comment": "#1484 view-only image, audio and video (platform APIs only)."},
+    "libs:pdf": {"dir": "../ab_cloud-libs-shared/libs/pdf", "type": "library", "depends_on": [], "comment": "#1484 PDF view (platform PdfRenderer) and edit (PdfBox-Android, Apache-2.0: annotate, form fill, page delete, reorder, rotate)."},
+    "libs:odf": {"dir": "../ab_cloud-libs-shared/libs/odf", "type": "library", "depends_on": [], "comment": "#1484 odt, ods and odp view and edit (java.util.zip plus the platform XML DOM; an odt rides the wysiwyg engine, an ods is a table, an odp a list of slides)."},
     "libs:shared-store": {
       "_doc_dir": "cloud-shared-store's store-access layer (contract): where the store is, whether the shared uid is in effect (DIRECT) or git/rclone must run inside cld.termux through CLOUD_EXEC (EXEC), and the legacy-path migration rule. Shared BY REFERENCE; reads ac_cloud-termux/build.json::shared_store.",
       "dir": "../ab_cloud-libs-shared/libs/shared-store",

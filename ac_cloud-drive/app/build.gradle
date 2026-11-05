@@ -702,6 +702,12 @@ dependencies {
     // cloud-shared-store: where the store is and how this app reaches it (direct / CLOUD_EXEC).
     implementation project(':libs:shared-store')
     implementation project(':libs:file-editor')
+    // #1484 the Editor tab: tabs and routing, the WYSIWYG engine (shared with Cloud-Notes), media view, PDF and ODF view and edit
+    implementation project(':libs:editor-core')
+    implementation project(':libs:wysiwyg')
+    implementation project(':libs:media-viewer')
+    implementation project(':libs:pdf')
+    implementation project(':libs:odf')
     implementation project(':libs:rclone')
     implementation project(':libs:mounts')
     // #579 the fleet's bottom-nav island: the five tabs are the same Compose pill

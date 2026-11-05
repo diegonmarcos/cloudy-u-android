@@ -21,9 +21,9 @@ import com.diegonmarcos.clouddrive.ui.StatusLight
 data class ProjectDecl(val id: String, val name: String, val folder: String, val repos: Int)
 
 val SAMPLE_PROJECTS: List<ProjectDecl> = listOf(
-    ProjectDecl("sample-notes", "Notes vault", "/storage/emulated/0/Documents/notes", 1),
-    ProjectDecl("sample-photos", "Photo backup", "/storage/emulated/0/DCIM", 0),
-    ProjectDecl("sample-code", "Code workspace", "/storage/emulated/0/cloud-drive-storage/code", 3),
+    ProjectDecl("sample-notes", "Notes vault", "Documents/notes", 1),
+    ProjectDecl("sample-photos", "Photo backup", "DCIM", 0),
+    ProjectDecl("sample-code", "Code workspace", "code", 3),
 )
 
 @Composable

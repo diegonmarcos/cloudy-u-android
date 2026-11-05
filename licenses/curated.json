@@ -66,6 +66,10 @@
   "com.diegonmarcos.fleet": {
    "licence": "LicenseRef-NoLicenseGranted",
    "note": "own code: the fleet-ui included build (ab_cloud-libs-shared/web), not a published dependency"
+  },
+  "com.tom-roush": {
+   "licence": "Apache-2.0",
+   "_doc": "#1484 PdfBox-Android (com.tom-roush:pdfbox-android), a port of Apache PDFBox, Apache-2.0: the edit engine of libs:pdf."
   }
  },
  "directories": {

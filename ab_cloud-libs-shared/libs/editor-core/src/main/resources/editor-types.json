@@ -1,0 +1,43 @@
+{
+  "_doc": "#1484 THE file-type to viewer/editor mapping, as data. `viewers[].id` names the lib that owns the file (wysiwyg = libs:wysiwyg, media = libs:media-viewer, pdf = libs:pdf, odf = libs:odf); `editable` says whether that viewer has an Edit mode (media is view only); `formats` maps a format the viewer understands to the extensions that carry it. `unsupported` is checked FIRST: the Microsoft Office formats are refused on purpose and answer `unsupported format`. A name no entry matches also answers unsupported. Adding a type is a data edit.",
+  "viewers": [
+    {
+      "id": "wysiwyg",
+      "editable": true,
+      "formats": {
+        "text": ["txt", "text", "log", "json", "yml", "yaml", "toml", "ini", "conf", "cfg", "csv", "xml", "sh", "kt", "kts", "java", "py", "js", "ts", "rs", "go", "c", "h", "cpp", "gradle", "properties"],
+        "markdown": ["md", "markdown", "mdown"],
+        "html": ["html", "htm", "xhtml"]
+      }
+    },
+    {
+      "id": "media",
+      "editable": false,
+      "formats": {
+        "image": ["png", "jpg", "jpeg", "gif", "webp", "bmp", "heic", "heif"],
+        "audio": ["mp3", "m4a", "aac", "wav", "ogg", "oga", "opus", "flac"],
+        "video": ["mp4", "m4v", "mkv", "webm", "3gp", "mov"]
+      }
+    },
+    {
+      "id": "pdf",
+      "editable": true,
+      "formats": {
+        "pdf": ["pdf"]
+      }
+    },
+    {
+      "id": "odf",
+      "editable": true,
+      "formats": {
+        "odt": ["odt", "ott"],
+        "ods": ["ods", "ots"],
+        "odp": ["odp", "otp"]
+      }
+    }
+  ],
+  "unsupported": {
+    "reason": "unsupported format",
+    "extensions": ["doc", "docx", "xls", "xlsx", "ppt", "pptx", "docm", "xlsm", "pptm", "dot", "dotx", "xlt", "xltx", "pot", "potx"]
+  }
+}
