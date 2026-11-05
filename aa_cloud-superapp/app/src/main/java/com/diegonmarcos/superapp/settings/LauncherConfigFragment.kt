@@ -272,6 +272,8 @@ class LauncherConfigFragment : KitComposeFragment() {
                             }
                         }
                     }.padding(12.dp).testTag("launcher:default-cta"))
+                // #1506 Battery Hunger: drainers since the last charge + the Background policy (on demand, needs the ADB shell).
+                com.diegonmarcos.superapp.bgpolicy.BatteryHungerPanel(requireActivity())
             }
         }
     }

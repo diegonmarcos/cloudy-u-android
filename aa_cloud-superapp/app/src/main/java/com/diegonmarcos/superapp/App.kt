@@ -124,6 +124,9 @@ class App : Application(), WorkManagerConfiguration.Provider {
             }, androidx.core.content.ContextCompat.RECEIVER_NOT_EXPORTED)
         }
 
+        // #1506 Background policy: PACKAGE_REPLACED re-applies the chosen policy to that package once (no service, no retry).
+        com.diegonmarcos.superapp.bgpolicy.BgReplacedReceiver.register(this)
+
         // Tell libs:appstore what it cannot know: this app's entry Activity,
         // its notification icon, how this launcher routes a tap, and the
         // host-side toggle that gates the periodic check. The store moved out

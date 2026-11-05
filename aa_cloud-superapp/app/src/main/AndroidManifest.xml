@@ -268,6 +268,14 @@
         <receiver
             android:name=".notificationcenter.AlertsNotifier$DismissReceiver"
             android:exported="false" />
+        <!-- #1506 Background policy: this app's own update re-applies the chosen policy once (PACKAGE_REPLACED for other apps is registered in App.onCreate). -->
+        <receiver
+            android:name=".bgpolicy.BgReplacedReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
         <receiver
             android:name=".notificationcenter.BadgeRestartReceiver"
             android:exported="true">

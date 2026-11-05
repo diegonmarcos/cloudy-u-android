@@ -1,0 +1,18 @@
+{
+  "_doc": "#1506 Background policy declaration (read by bgpolicy/BgConfig). essential = never restricted by any action or bulk action or Super Saving: the roles are resolved on the device (self = SuperApp, dialer = default dialer, sms = default SMS app, launcher = current home, keyboard = current input method, systemui) and the packages / prefixes cover the platform and the vendor builds of the same roles. fleet_prefixes mark the fleet apps (listed first). bulk.include_system false = Restrict all non-essential touches user-installed apps only. hunger.top = rows Battery Hunger ranks.",
+  "fleet_prefixes": ["com.diegonmarcos.", "cld."],
+  "essential": {
+    "roles": ["self", "dialer", "sms", "launcher", "keyboard", "systemui"],
+    "packages": [
+      "android", "com.android.systemui", "com.android.phone", "com.android.server.telecom", "com.android.providers.telephony",
+      "com.android.providers.contacts", "com.android.mms.service", "com.android.inputmethod.latin",
+      "com.google.android.dialer", "com.google.android.apps.messaging", "com.google.android.inputmethod.latin",
+      "com.samsung.android.dialer", "com.samsung.android.incallui", "com.samsung.android.messaging",
+      "com.sec.android.app.launcher", "com.samsung.android.honeyboard", "com.samsung.android.app.telephonyui",
+      "com.google.android.gms", "com.google.android.gsf", "com.diegonmarcos.superapp"
+    ],
+    "prefixes": ["com.android.", "android.", "com.google.android.permissioncontroller", "com.samsung.android.server."]
+  },
+  "bulk": { "include_system": false },
+  "hunger": { "top": 25 }
+}
