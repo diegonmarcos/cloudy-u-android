@@ -217,7 +217,7 @@
     },
     "unit": {
       "_doc": "Robolectric suite under app/src/test/. #512: BottomNavSelectedPillTest inflates the REAL activity_main and asserts the RESOLVED bottom-nav (itemBackground id, measured pill bounds, rendered pixel) \u2014 the selected pill vanished for a whole release while every XML-text tester stayed green, so this widget is proven on the inflated view or not at all. One module only: the shared libs run their own suites in ab_cloud-libs-shared.",
-      "task": ":app:testDebugUnitTest :libs:shell-client:testDebugUnitTest :libs:shell-broker:testDebugUnitTest",
+      "task": "superappUnitTests",
       "enabled": true
     }
   },

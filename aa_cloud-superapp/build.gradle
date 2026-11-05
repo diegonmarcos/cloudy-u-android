@@ -12,3 +12,13 @@ plugins {
     // #1093 libs:fleet-endpoints (linked by libs:account) is plain JVM Kotlin.
     id 'org.jetbrains.kotlin.jvm' version '2.3.20' apply false
 }
+
+// build.json::tests.unit.task. The test engine takes ONE task name, so the suites this app owns hang off one (#1510):
+//  - :app                       the Robolectric suite (SelfAllowlistTest proves every X-Ray / Background policy command is on the SuperApp's allowlist entry)
+//  - :libs:shell-broker         allowlist matching, default deny, audit, timeout, NeedsArm, concurrency cap, idle stop
+//  - :libs:shell-client         the wire codec, NeedsArm, the bounded stream
+tasks.register('superappUnitTests') {
+    group = 'verification'
+    description = 'Unit suites the SuperApp ship runs (see build.json::tests.unit).'
+    dependsOn ':libs:shell-client:testDebugUnitTest', ':libs:shell-broker:testDebugUnitTest', ':app:testDebugUnitTest'
+}
