@@ -102,6 +102,7 @@
     },
     "_doc_static_libs": "Section 2 of the Store Libs tab: one short description per shared lib that is NOT an engine (not installable). Which apps compile each lib in is never typed: 1_cicd/src/scripts/cloud-android-lib-consumers.py derives it from every app's build.json and regen.sh bakes it into constellation-fleet.json::lib_consumers. This map only says what the lib is; the lib-consumers guard fails when a non-engine lib has no entry here or an entry names a lib that is gone.",
     "static_libs": {
+      "apify": "The fleet's one scraper backend choice and token store: Apify Cloud, self-hosted Cloudy Crawlee or Cloudflare Browser Run, shared by Cloud News, Media and Browser (#1470, #1474); no UI.",
       "usb-drive": "USB-C drives: removable volumes and their size, the per-drive SAF grant, and raw USB mass storage through libaums (#1375, shared with the Store's Ventoy tab #1405).",
       "web-core": "The fleet's one embedded web view: GPU-first WebView built by CloudWeb.create/configure with a declared profile per use (#1371).",
       "cgc-3d": "The CG apps' 3D model viewer and editor: GLB/VRM/FBX in a WebView (three.js, three-vrm), clips, blendshapes, colour swaps, show/hide, GLB/PNG export, the avatar editor's declaration and its OpenRouter connector.",
