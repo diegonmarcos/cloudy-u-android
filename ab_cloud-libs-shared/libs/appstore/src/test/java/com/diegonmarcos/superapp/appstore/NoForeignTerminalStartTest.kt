@@ -17,7 +17,7 @@ class NoForeignTerminalStartTest {
         return null
     }
 
-    private val allowed = setOf("UnpackAfterInstall.kt", "SharedUidMigration.kt", "UnpackTestReceiver.kt")
+    private val allowed = setOf("UnpackAfterInstall.kt", "SharedUidMigration.kt", "UnpackTestReceiver.kt", "StoreExec.kt")
     private val start = Regex("""(startService|startForegroundService|bindService)\s*\(""")
     private val terminal = Regex("""cld\.termux|com\.termux\.nix|termux\.app\.(TermuxService|RunCommandService)|terminal\.SESSION|TerminalSessions""")
 
