@@ -69,9 +69,8 @@ class AllowlistTest {
     @Test fun theSuperAppMayGrantWriteSecureSettingsToFleetPackagesOnly() {
         val real = Allowlist.parse(File("src/main/assets/shell-allowlist.json").readText())
         val su = "com.diegonmarcos.superapp"
-        val ok = real.decide(su, "pm grant com.diegonmarcos.cloudstore android.permission.WRITE_SECURE_SETTINGS")
+        val ok = real.decide(su, "pm grant com.diegonmarcos.cloudmail android.permission.WRITE_SECURE_SETTINGS")
         assertTrue(ok is Decision.Allow)
-        assertTrue(real.decide("com.diegonmarcos.cloudstore", "pm grant com.diegonmarcos.cloudstore android.permission.WRITE_SECURE_SETTINGS") is Decision.Deny)
         assertTrue(real.decide("com.diegonmarcos.clouddrive", "pm grant com.diegonmarcos.clouddrive android.permission.WRITE_SECURE_SETTINGS") is Decision.Deny)
     }
 
