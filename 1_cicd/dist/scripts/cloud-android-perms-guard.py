@@ -1,3 +1,4 @@
+# ─── GENERATED: do not edit — edit 1_cicd/src/scripts/cloud-android-perms-guard.py ───
 #!/usr/bin/env python3
 """#1360 fleet permissions guard: every permission an app's code needs is declared, granted from one page, asked at
 first run, and checked on the helper app that does the work.
