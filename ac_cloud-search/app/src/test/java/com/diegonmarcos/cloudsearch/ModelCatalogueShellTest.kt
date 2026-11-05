@@ -175,6 +175,6 @@ class ModelCatalogueShellTest {
         assertEquals("sentiment", state.chat.task)
         compose.onNodeWithTag(Tags.MODEL).assertIsNotEnabled()
         compose.onNodeWithTag(AiTags.AGENT).assertIsNotEnabled()
-        assertEquals("ibm-granite/granite-4.0-h-micro", state.chat.model)
+        assertEquals("ibm-granite/granite-4.2-8b", state.chat.model)
     }
 }

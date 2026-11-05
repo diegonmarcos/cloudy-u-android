@@ -305,7 +305,7 @@
       "tier": "small",
       "macro": "understanding",
       "chat": true,
-      "openrouter_id": "ibm-granite/granite-4.0-h-micro"
+      "openrouter_id": "ibm-granite/granite-4.2-8b"
     },
     {
       "role": "Classification / Extract",

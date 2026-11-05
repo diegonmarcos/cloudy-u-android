@@ -299,7 +299,7 @@
         "params": "3B",
         "tier": "small",
         "role": "Classification / Extract",
-        "openrouter_id": "ibm-granite/granite-4.0-h-micro"
+        "openrouter_id": "ibm-granite/granite-4.2-8b"
       },
       {
         "id": "qwen2.5-3b-instruct",

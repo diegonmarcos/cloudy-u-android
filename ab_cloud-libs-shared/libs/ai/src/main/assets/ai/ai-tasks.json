@@ -91,14 +91,14 @@
       "label": "Sentiment",
       "icon": "mood",
       "agent": "openrouter",
-      "model": "ibm-granite/granite-4.0-h-micro"
+      "model": "ibm-granite/granite-4.2-8b"
     },
     {
       "id": "keywords",
       "label": "Keywords",
       "icon": "key",
       "agent": "openrouter",
-      "model": "ibm-granite/granite-4.0-h-micro"
+      "model": "ibm-granite/granite-4.2-8b"
     },
     {
       "id": "qa",
