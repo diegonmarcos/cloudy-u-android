@@ -315,7 +315,7 @@ mod tests {
         assert!(base("10.0.0.9", "10.0.0.0/24").is_ok());
         assert!(base("0.0.0.0", "0.0.0.0/1").is_err(), "wildcard");
         assert!(base("127.0.0.1", "127.0.0.0/8").is_err(), "loopback");
-        assert!(base("8.8.8.8", "10.0.0.0/24").is_err(), "a public address outside the mesh subnets");
+        assert!(base("203.0.113.7", "10.0.0.0/24").is_err(), "a public address outside the mesh subnets");
         assert!(base("10.0.0.9", "0.0.0.0/0").is_err(), "a /0 subnet");
         assert!(base("not-an-ip", "10.0.0.0/24").is_err());
     }

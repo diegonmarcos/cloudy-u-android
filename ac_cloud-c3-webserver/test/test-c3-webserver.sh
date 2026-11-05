@@ -13,7 +13,7 @@
 # to the wrong asset, package or workflow, and the guard for that is a ledger, not a hope.
 #
 #   T1  THE FILE VIEW IS THE SHARED SERVER'S. server/ui holds diag.html (:8003) and shell.html
-#       (/__app__/) only; server/src holds about, app, diag, dns, engines, lib and serving only; every
+#       (/__app__/) only; server/src holds about, apis, app, crashes, diag, dns, engines, lib, meshlogs, repos, serving and sub only; every
 #       route this crate answers is under /__app__/ (or is the :8003 page); no file-browser code in the
 #       shell; the crate depends on the shared server by path and serves the drive through
 #       drive_handler over fleet_webserver::handler. (That the shared server IS the Linux UI is
@@ -61,7 +61,7 @@ ui = sorted(os.listdir(os.path.join(app, "server/ui"))) if os.path.isdir(os.path
 if ui != ["diag.html", "shell.html"]:
     bad.append("server/ui holds %r; the only pages this app may carry are diag.html (:8003) and shell.html (/__app__/): the file view at / is the shared Linux UI" % ui)
 src = sorted(os.path.basename(p) for p in glob.glob(os.path.join(app, "server/src/*.rs")))
-want = ["about.rs", "app.rs", "crashes.rs", "diag.rs", "dns.rs", "engines.rs", "lib.rs", "serving.rs"]   # crashes.rs: libs:core's local crash sink (#1122), an app route under /__app__/, not a file-view route
+want = ["about.rs", "apis.rs", "app.rs", "crashes.rs", "diag.rs", "dns.rs", "engines.rs", "lib.rs", "meshlogs.rs", "repos.rs", "serving.rs", "sub.rs"]   # crashes.rs: libs:core's local crash sink (#1122), an app route under /__app__/, not a file-view route; apis/sub/meshlogs/repos (#1490): the API and Pages sub-pages, the mesh /logs route and the repo sites, app routes under /__app__/ or the mesh listener's own /logs and /endpoints
 if src != want:
     bad.append("server/src holds %r, want exactly %r (no routes/render/files of the file view: those are the shared server's)" % (src, want))
 cargo = open(os.path.join(app, "server/Cargo.toml")).read()
@@ -71,6 +71,8 @@ for p in sorted(glob.glob(os.path.join(app, "server/src/*.rs"))):
     body = re.split(r"#\[cfg\(test\)\]", open(p).read())[0]
     body = re.sub(r"//.*", "", body)
     for lit in re.findall(r'"(/__[a-z_-]+__[^"]*)"', body):
+        if os.path.basename(p) == "repos.rs" and lit.startswith("/__api__/ls?"):
+            continue   # #1490 a CLIENT call to a terminal's own shared server (to list its repos), not a route this crate answers
         if lit.startswith("/__app__") or lit in ("/__diag__",) or lit.startswith("/__api__/diag/") or lit in ("/__api__/health", "/__api__/serving"):
             continue
         bad.append("%s spells the route %r: the file view's routes belong to the shared server, this crate answers /__app__/ only" % (os.path.relpath(p, app), lit))

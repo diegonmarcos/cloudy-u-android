@@ -121,7 +121,7 @@ PY
   if python3 "$WORK/check.py" "$d" "$d/server/ui/shell.html" "$d/build.json" "$REPO" >/dev/null 2>&1 && node "$WORK/pure.js" "$d/server/ui/shell.html" >/dev/null 2>&1; then fail "M: '$title' stayed GREEN"; else pass "M: '$title' goes red"; fi
 }
 mutate "a sub-page without its route"        server/src/app.rs '"/__app__/api/sub/api-ipc"' '"/__app__/api/sub/api-gone"'
-mutate "a mesh cidr that is public"          build.json '"10.1.0.0/24"' '"8.8.8.0/24"'
+mutate "a mesh cidr that is public"          build.json '"10.1.0.0/24"' '"203.0.113.0/24"'
 mutate "a mesh bind on the wildcard"         server/src/meshlogs.rs 'pub fn start(m: Mesh) -> Result<(), String> {
     m.check_bind()?;' 'pub fn start(m: Mesh) -> Result<(), String> {
     let _w = std::net::Ipv4Addr::UNSPECIFIED;'
