@@ -48,8 +48,12 @@ ok(all(p.get("render") for p in lv), "every leaf declares its renderer", "a leaf
 ok(rd(SOT) == rd(MIR), "libs:account-ui's account-ui.json is byte-equal to Cloud Me's SoT", "the mirror differs from Cloud Me's SoT (copy the SoT over it)")
 def shape(ps): return [(p["id"], p["label"], p.get("icon"), shape(p.get("pages") or [])) for p in ps]
 acc = {s["id"]: s for s in json.loads(rd(ACC))["ui"]["sections"]}
-ok(all(k in acc and shape([p for p in acc[k]["pages"] if p["id"] not in ("general", "perms", "about")]) == shape(sec[k]["pages"]) and acc[k]["label"] == sec[k]["label"] for k in sec),
-   "Cloud Account's Personal Info and Configs equal Cloud Me's SoT page for page", "Cloud Account's build.json::ui drifted from Cloud Me's SoT")
+# #1482 Cloud Account re-files the SoT: Configs' pages are its bottom-nav Config (page for page), Personal Info's leaves are in its Vault
+# (IDs, PayCards, Entries, Autocomplete) and Devices (Me), same ids and icons; its own `configs` is General | Perms | About.
+def lf(ps): return {p["id"]: p.get("icon") for p in leaves(ps)}
+acc_leaves = {**lf(acc["vault"]["pages"]), **lf(acc["devices"]["pages"])}
+ok("config" in acc and shape(acc["config"]["pages"]) == shape(sec["configs"]["pages"]) and all(acc_leaves.get(i) == ic for i, ic in lf(sec["personal"]["pages"]).items()),
+   "Cloud Account's Config equals Cloud Me's Configs page for page and its Vault / Devices hold every Personal Info leaf", "Cloud Account's build.json::ui drifted from Cloud Me's SoT")
 rt = re.sub(r"(?m)^\s*//[^\n]*", "", rd(RT))
 routed = set(re.findall(r'^\s*"([a-z]+:[a-z-]+)" ->', rt[rt.index("fun AccountUiPage"):rt.index("object AccountUiTags")], re.M))
 declared = {p["render"] for p in lv}
@@ -92,7 +96,7 @@ PY
 echo "-- mutations --"
 mutate "mirror drifts from the SoT" "$MIR" '"label": "Pay Cards"' '"label": "Cards"'
 mutate "SoT drifts from the mirror" "$SOT" '"label": "Pay Cards"' '"label": "Cards"'
-mutate "Cloud Account drifts" "$ACC" '"label": "Pay Cards"' '"label": "Cards"'
+mutate "Cloud Account drifts" "$ACC" '"label": "Phone Apps"' '"label": "Phones"'
 mutate "a page leaves Configs" "$SOT" '"id": "repos"' '"id": "repos2"'
 mutate "a renderer is dropped" "$SOT" '"render": "configs:infra"' '"render": ""'
 mutate "the router loses a renderer" "$RT" '"configs:infra" -> InfraPage()' '"configs:infra2" -> InfraPage()'

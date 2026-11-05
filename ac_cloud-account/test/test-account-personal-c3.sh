@@ -41,23 +41,29 @@ ui = json.loads(rd(f"{A}/build.json"))["ui"]
 sec = {s["id"]: s for s in ui["sections"]}
 def ids(pages): return [p["id"] for p in pages]
 def sub(s, p): return ids(next(x for x in sec[s]["pages"] if x["id"] == p).get("pages", []))
-ok(ids(sec["personal"]["pages"]) == ["ids", "cards", "others", "autocomplete"], "Personal Info = IDs, Pay Cards, Others, Autocomplete", f"Personal Info is {ids(sec['personal']['pages'])}")
-ok([p["label"] for p in sec["personal"]["pages"]] == ["IDs", "Pay Cards", "Others", "Autocomplete"], "Personal Info labels as asked", "Personal Info labels drifted")
-ok(sub("personal", "others") == ["entries", "me"], "Others = Entries, Me", f"Others is {sub('personal', 'others')}")
-ok(ids(sec["configs"]["pages"]) == ["general", "perms", "about", "android", "desktop", "c3", "repos"], "Configs = General, Perms, About (#1443), Android, Desktop, C3, Repos (#1445)", f"Configs is {ids(sec['configs']['pages'])}")
-ok(sub("configs", "android") == ["cloud-apps", "phone-apps", "runbook"], "Android = Cloud Apps, Phone Apps, Runbook", f"Android is {sub('configs', 'android')}")
-ok(sub("configs", "desktop") == [], "Desktop is one page (the tree)", "Desktop grew sub-pages")
-ok(sub("configs", "c3") == ["infra", "containers"], "C3 = Infra, Containers", f"C3 is {sub('configs', 'c3')}")
+ok(ids(sec["vault"]["pages"]) == ["ids", "cards", "secrets", "autocomplete"], "Vault = IDs, PayCards, Secrets, Autocomplete (#1482)", f"Vault is {ids(sec['vault']['pages'])}")
+ok([p["label"] for p in sec["vault"]["pages"]] == ["IDs", "PayCards", "Secrets", "Autocomplete"], "Vault labels as asked", "Vault labels drifted")
+ok(sub("vault", "secrets") == ["providers", "keys", "tokens", "grants", "import", "entries"], "Secrets = Providers, Fleet keys, Tokens, Grants, Import, Entries", f"Secrets is {sub('vault', 'secrets')}")
+ok(ids(sec["config"]["pages"]) == ["android", "desktop", "c3", "repos"], "Config = Android, Desktop, C3, Repos (#1482, #1445)", f"Config is {ids(sec['config']['pages'])}")
+ok(ids(sec["configs"]["pages"]) == ["general", "perms", "about"], "the app's own Configs = General, Perms, About (#1443), not in the bottom nav", f"Configs is {ids(sec['configs']['pages'])}")
+ok(ids(sec["devices"]["pages"]) == ["mesh", "peer-control", "backup", "files", "working", "diff"] and sub("devices", "backup") == ["databases", "bundle", "me"], "Devices = Mesh, Peer Control, Backup, Files, Working, Diff", f"Devices is {ids(sec['devices']['pages'])}")
+ok(sub("config", "android") == ["cloud-apps", "phone-apps", "runbook"], "Android = Cloud Apps, Phone Apps, Runbook", f"Android is {sub('config', 'android')}")
+ok(sub("config", "desktop") == [], "Desktop is one page (the tree)", "Desktop grew sub-pages")
+ok(sub("config", "c3") == ["infra", "containers"], "C3 = Infra, Containers", f"C3 is {sub('config', 'c3')}")
 ma = code(rd(MA))
 want = {'"entries:ids" -> PersonalEntriesPage(PersonalKind.IDS)', '"entries:cards" -> PersonalEntriesPage(PersonalKind.CARDS)', '"entries:others" -> PersonalEntriesPage(PersonalKind.OTHERS)',
         '"host:me" -> AccountUiHost.current.MePage(go)', '"configs:phone-apps" -> PhoneAppsPage()', '"configs:runbook" -> RunbookTogglesPage(go)', '"configs:desktop" -> DesktopTreePage()', '"configs:repos" -> RepoConnectorPage()',
         '"configs:infra" -> InfraPage()', '"configs:containers" -> ContainersPage()', 'else -> CloudAppsPage()'}
 miss = [w for w in want if w not in ma]
 ok(not miss, "the shared router mounts every new leaf", f"the shared router does not mount {miss}")
+def leafs(ps):
+    for p in ps:
+        if p.get("pages"): yield from leafs(p["pages"])
+        else: yield p
 def shape(ps): return [(p["id"], p["label"], p.get("icon"), shape(p.get("pages") or [])) for p in ps]
 uj = {x["id"]: x for x in json.loads(rd("ab_cloud-libs-shared/libs/account-ui/account-ui.json"))["sections"]}
-ok(all(k in uj and (sec[k]["label"], shape([p for p in sec[k]["pages"] if p["id"] not in ("general", "perms", "about")])) == (uj[k]["label"], shape(uj[k]["pages"])) for k in ("personal", "configs")),
-   "Cloud Account's Personal Info and Configs match libs:account-ui's account-ui.json page for page", "Cloud Account's sections drifted from account-ui.json")
+ok(shape(sec["config"]["pages"]) == shape(uj["configs"]["pages"]) and sec["config"]["label"] != "" and all(any(q["id"] == p["id"] and q.get("icon") == p.get("icon") for q in [x for s_ in ("vault", "devices") for x in leafs(sec[s_]["pages"])]) for p in leafs(uj["personal"]["pages"])),
+   "Cloud Account's Config matches libs:account-ui's Configs page for page, and its Vault / Devices hold every Personal Info leaf", "Cloud Account's sections drifted from account-ui.json")
 
 # 2. secret values never rendered
 cd = code(rd(CD)); cp = code(rd(CP))
@@ -113,7 +119,7 @@ PY
 }
 M=0
 # nav
-mutate "the shared structure drifts from Cloud Account" "$UJ" '"label": "Pay Cards"' '"label": "Cards"' || M=1
+mutate "the shared structure drifts from Cloud Account" "$UJ" '"icon": "badge"' '"icon": "badgex"' || M=1
 mutate "Pay Cards leaves Personal Info" "$A/build.json" '"id": "cards",' '"id": "wallet",' || M=1
 mutate "Runbook leaves Android" "$A/build.json" '"id": "runbook",
                 "label": "Runbook",' '"id": "push",

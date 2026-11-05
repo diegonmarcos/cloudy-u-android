@@ -44,7 +44,7 @@ import java.io.File
 import java.time.Instant
 
 /**
- * The reorganised Cloud Account (Personal Info, Configs, Data, Connect, Activity): the nav order, every old page still
+ * The reorganised Cloud Account (Vault, Config, Connect, Devices, Activity): the nav order, every old page still
  * reachable, the Connections table built from what the account vault stores, the token import parser, reveal
  * behind device auth, the self-clearing copy, Setup per provider / app and Setup all, and no value in a log.
  * Every value here is an obvious fake.
@@ -69,12 +69,15 @@ class HubTest {
 
     // ── nav ──────────────────────────────────────────────────────────────
 
-    @Test fun bottomNavIsPersonalConfigsDataConnectActivity() {
-        assertEquals(listOf("personal", "configs", "data", "connect", "activity"), HubNav.ORDER)
-        assertEquals("personal,configs,data,connect,activity", BuildConfig.UI_BOTTOM_NAV)
+    @Test fun bottomNavIsVaultConfigConnectDevicesActivity() {
+        assertEquals(listOf("vault", "config", "connect", "devices", "activity"), HubNav.ORDER)
+        assertEquals("vault,config,connect,devices,activity", BuildConfig.UI_BOTTOM_NAV)
         assertEquals(HubNav.ORDER, MainActivity.NAV.bottomSections().map { it.id })
-        assertEquals(listOf("Personal Info", "Configs", "Data", "Connect", "Activity"), MainActivity.NAV.bottomSections().map { it.label })
-        assertEquals("personal", MainActivity.NAV.default()?.id)
+        assertEquals(listOf("Vault", "Config", "Connect", "Devices", "Activity"), MainActivity.NAV.bottomSections().map { it.label })
+        assertEquals("vault", MainActivity.NAV.default()?.id)
+        // the app's own Configs (General | Perms | About) is a section the top bar opens, never a bottom-nav item
+        assertNotNull(MainActivity.NAV.section("configs"))
+        assertFalse("configs" in MainActivity.NAV.bottomSections().map { it.id })
         assertTrue("no Setup, Profiles, Secrets or Home section any more", listOf("setup", "profiles", "secrets", "home").all { MainActivity.NAV.section(it) == null })
     }
 
@@ -88,7 +91,10 @@ class HubTest {
             "profiles" to listOf("", "apps", "autofill", "personal", "sites", "snippets", "phone", "devices", "working", "diff"),
             "secrets" to listOf("", "providers", "connections", "bundle", "secrets", "grants"),
             "home" to listOf("", "home", "account", "connections", "connect", "import"),
-            "configs" to listOf("", "settings", "setup", "runbook", "apps", "configs", "perms", "adb-shell"),
+            // #1482 the layout before Vault / Config / Devices
+            "personal" to listOf("", "ids", "cards", "entries", "me", "others", "autocomplete", "personal", "sites", "snippets", "wallet"),
+            "data" to listOf("", "providers", "keys", "tokens", "grants", "import", "databases", "bundle", "mesh", "files", "working", "diff", "devices", "backups"),
+            "configs" to listOf("settings", "setup", "runbook", "apps", "configs", "perms", "adb-shell", "android", "cloud-apps", "phone-apps", "desktop", "c3", "infra", "containers", "repos"),
         )
         for ((s, pages) in old) for (p in pages) {
             val (ns, np) = HubNav.resolve(s, p)
@@ -107,36 +113,40 @@ class HubTest {
         assertEquals("connect" to "adb-shell", HubNav.resolve("setup", "adb-shell"))
         assertEquals("connect" to "signin", HubNav.resolve("account", "connect"))
         assertEquals("connect" to "perms", HubNav.resolve("setup", "perms"))
-        assertEquals("configs" to "cloud-apps", HubNav.resolve("setup", "apps"))
-        assertEquals("personal" to "cards", HubNav.resolve("personal", "wallet"))
-        assertEquals("data" to "working", HubNav.resolve("profiles", "working"))
+        assertEquals("config" to "cloud-apps", HubNav.resolve("setup", "apps"))
+        assertEquals("vault" to "cards", HubNav.resolve("personal", "wallet"))
+        assertEquals("devices" to "working", HubNav.resolve("profiles", "working"))
         assertEquals("connect" to "settings", HubNav.resolve("settings", ""))
         // the 2026-10-13 ids: Home's one page became four, Bundle got its own id
-        assertEquals("personal" to "me", HubNav.resolve("home", "home"))
-        assertEquals("data" to "import", HubNav.resolve("home", "import"))
-        assertEquals("data" to "bundle", HubNav.resolve("secrets", "connections"))
-        assertEquals("data" to "keys", HubNav.resolve("secrets", "secrets"))
+        assertEquals("devices" to "me", HubNav.resolve("home", "home"))
+        assertEquals("vault" to "import", HubNav.resolve("home", "import"))
+        assertEquals("devices" to "bundle", HubNav.resolve("secrets", "connections"))
+        assertEquals("vault" to "keys", HubNav.resolve("secrets", "secrets"))
         // a current id passes through, an unknown section opens the default
-        assertEquals("data" to "providers", HubNav.resolve("data", "providers"))
-        assertEquals("personal" to "sites", HubNav.resolve("personal", "sites"))
-        assertEquals("personal" to null, HubNav.resolve("nowhere", "x"))
+        assertEquals("vault" to "providers", HubNav.resolve("data", "providers"))
+        assertEquals("vault" to "sites", HubNav.resolve("personal", "sites"))
+        assertEquals("config" to "runbook", HubNav.resolve("configs", "runbook"))
+        assertEquals("configs" to "about", HubNav.resolve("configs", "about"))
+        assertEquals("vault" to "ids", HubNav.resolve("vault", "ids"))
+        assertEquals("vault" to null, HubNav.resolve("nowhere", "x"))
     }
 
     @Test fun strippedPagesSitUnderOneContainerEach() {
         val nav = MainActivity.NAV
         fun path(section: String, page: String) = nav.section(section)!!.path(page).map { it.id }
-        assertEquals(listOf("autocomplete", "personal"), path("personal", "personal"))
-        assertEquals(listOf("autocomplete", "sites"), path("personal", "sites"))
-        assertEquals(listOf("devices", "diff"), path("data", "diff"))
-        assertEquals(listOf("devices", "mesh"), path("data", "mesh"))
-        assertEquals(listOf("secrets", "providers"), path("data", "providers"))
-        assertEquals(listOf("backups", "bundle"), path("data", "bundle"))
-        assertEquals(listOf("android", "runbook"), path("configs", "runbook"))
-        assertEquals(listOf("android", "cloud-apps"), path("configs", "cloud-apps"))
-        assertEquals(listOf("android", "phone-apps"), path("configs", "phone-apps"))
-        assertEquals(listOf("c3", "infra"), path("configs", "infra"))
-        assertEquals(listOf("c3", "containers"), path("configs", "containers"))
-        assertEquals(listOf("others", "me"), path("personal", "me"))
+        assertEquals(listOf("autocomplete", "personal"), path("vault", "personal"))
+        assertEquals(listOf("autocomplete", "sites"), path("vault", "sites"))
+        assertEquals(listOf("secrets", "providers"), path("vault", "providers"))
+        assertEquals(listOf("secrets", "entries"), path("vault", "entries"))
+        assertEquals(listOf("backup", "databases"), path("devices", "databases"))
+        assertEquals(listOf("backup", "bundle"), path("devices", "bundle"))
+        assertEquals(listOf("backup", "me"), path("devices", "me"))
+        assertEquals(listOf("peer-control"), path("devices", "peer-control"))
+        assertEquals(listOf("android", "runbook"), path("config", "runbook"))
+        assertEquals(listOf("android", "cloud-apps"), path("config", "cloud-apps"))
+        assertEquals(listOf("android", "phone-apps"), path("config", "phone-apps"))
+        assertEquals(listOf("c3", "infra"), path("config", "infra"))
+        assertEquals(listOf("c3", "containers"), path("config", "containers"))
         assertEquals(listOf("fleetsetup", "adb-shell"), path("connect", "adb-shell"))
         assertEquals(listOf("status", "apps"), path("connect", "apps"))
         assertEquals(listOf("auth", "signin"), path("connect", "signin"))
@@ -145,22 +155,25 @@ class HubTest {
         assertEquals(listOf("fleetsetup", "drive"), path("connect", "drive"))
         assertEquals(listOf("hub", "signin", "settings"), nav.section("connect")!!.page("auth")!!.pages.map { it.id })
         assertEquals("hub", nav.section("connect")!!.page("auth")!!.leaf().id)
-        assertEquals(listOf("desktop"), path("configs", "desktop"))
+        assertEquals(listOf("desktop"), path("config", "desktop"))
         // the owner's tabs, exactly and in order
         fun tabs(section: String) = nav.section(section)!!.pages.map { it.id }
-        assertEquals(listOf("ids", "cards", "others", "autocomplete"), tabs("personal"))
-        assertEquals(listOf("general", "perms", "about", "android", "desktop", "c3", "repos"), tabs("configs"))  // #1443 shared pages first, #1445 Repos
-        assertEquals(listOf("secrets", "backups", "devices"), tabs("data"))
+        assertEquals(listOf("ids", "cards", "secrets", "autocomplete"), tabs("vault"))
+        assertEquals(listOf("android", "desktop", "c3", "repos"), tabs("config"))  // #1482 the Fleet Config files, #1445 Repos
+        assertEquals(listOf("general", "perms", "about"), tabs("configs"))  // #1443 the app's own Configs, not in the bottom nav
+        assertEquals(listOf("mesh", "peer-control", "backup", "files", "working", "diff"), tabs("devices"))
         assertEquals(listOf("status", "auth", "fleetsetup"), tabs("connect"))
         assertEquals(listOf("activity"), tabs("activity"))
         // a container opens on its first leaf; a section opens on its first page's leaf
-        assertEquals("personal", nav.section("personal")!!.page("autocomplete")!!.leaf().id)
-        assertEquals(listOf("cloud-apps", "phone-apps", "runbook"), nav.section("configs")!!.page("android")!!.pages.map { it.id })
-        assertEquals(listOf("infra", "containers"), nav.section("configs")!!.page("c3")!!.pages.map { it.id })
-        assertEquals(listOf("entries", "me"), nav.section("personal")!!.page("others")!!.pages.map { it.id })
+        assertEquals("personal", nav.section("vault")!!.page("autocomplete")!!.leaf().id)
+        assertEquals(listOf("cloud-apps", "phone-apps", "runbook"), nav.section("config")!!.page("android")!!.pages.map { it.id })
+        assertEquals(listOf("infra", "containers"), nav.section("config")!!.page("c3")!!.pages.map { it.id })
+        assertEquals(listOf("providers", "keys", "tokens", "grants", "import", "entries"), nav.section("vault")!!.page("secrets")!!.pages.map { it.id })
+        assertEquals(listOf("databases", "bundle", "me"), nav.section("devices")!!.page("backup")!!.pages.map { it.id })
         assertEquals("general", nav.section("configs")!!.page(null)!!.leaf().id)  // #1443
-        assertEquals("ids", nav.section("personal")!!.page(null)!!.leaf().id)
-        assertEquals("providers", nav.section("data")!!.page(null)!!.leaf().id)
+        assertEquals("ids", nav.section("vault")!!.page(null)!!.leaf().id)
+        assertEquals("cloud-apps", nav.section("config")!!.page(null)!!.leaf().id)
+        assertEquals("mesh", nav.section("devices")!!.page(null)!!.leaf().id)
         // one place per thing: no leaf id repeats inside a section
         for (s in nav.sections) {
             val ids = s.allPages().filter { it.pages.isEmpty() }.map { it.id }

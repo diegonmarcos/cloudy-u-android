@@ -93,7 +93,7 @@ private fun NavShell(decl: NavDecl) {
                 PageTabs(section.pages, pageId ?: section.pages.first().id, onSelect = { page = it.id })
             }
             Box(Modifier.weight(1f).fillMaxWidth().padding(12.dp)) {
-                if (section?.id == "personal") MockPage()
+                if (section?.id == "vault") MockPage()
                 else KitEmptyState(null, "${section?.label ?: "This"} lives in the Android app for now")
             }
         }

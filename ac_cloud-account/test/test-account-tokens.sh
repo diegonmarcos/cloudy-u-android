@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# test-account-tokens: Data > Secrets > Tokens (fleet token manager), statically.
+# test-account-tokens: Vault > Secrets > Tokens (fleet token manager), statically.
 #
 # Holds that:
-#  1. the page is a Data page (build.json ui, never Configs) and MainActivity mounts it from the "data" branch;
+#  1. the page is a Vault page (build.json ui, never Config) and MainActivity mounts it from the "vault" branch;
 #  2. a token value is fetched only after device auth: every client.reveal / client.generate in TokensPage sits inside
 #     RevealGate.revealOnIo's read lambda, and revealOnIo calls authenticate BEFORE read;
 #  3. the client never logs, prints or stores a value (no Log / println / SharedPreferences / AccountVault write);
@@ -36,10 +36,10 @@ def ids(pages):
         yield p["id"]
         yield from ids(p.get("pages", []))
 sec = {s["id"]: set(ids(s["pages"])) for s in bj["ui"]["sections"]}
-ok("tokens" in sec["data"] and "tokens" not in sec["configs"], "Tokens is a Data page, not a Configs one", "Tokens is missing from Data or present in Configs")
+ok("tokens" in sec["vault"] and "tokens" not in sec["config"] and "tokens" not in sec["configs"], "Tokens is a Vault page, not a Config one", "Tokens is missing from Vault or present in Config")
 main = code(rd(f"{H}/MainActivity.kt"))
-data_branch = main.split('"data" -> when (page) {')[1].split('"connect" ->')[0] if '"data" -> when (page) {' in main else ""
-ok('"tokens" -> TokensPage()' in data_branch, "MainActivity mounts TokensPage in the data branch", "TokensPage is not mounted in the data branch")
+data_branch = main.split('"vault" -> when (page) {')[1].split('"devices" ->')[0] if '"vault" -> when (page) {' in main else ""
+ok('"tokens" -> TokensPage()' in data_branch, "MainActivity mounts TokensPage in the vault branch", "TokensPage is not mounted in the vault branch")
 
 page = code(rd(f"{H}/hub/TokensPage.kt")); client = code(rd(f"{H}/hub/TokensClient.kt")); reveal = code(rd("ab_cloud-libs-shared/libs/account-ui/src/main/java/com/diegonmarcos/cloudaccount/hub/Reveal.kt"))
 # every call that returns a value sits in a `read = { ... }` lambda handed to revealOnIo

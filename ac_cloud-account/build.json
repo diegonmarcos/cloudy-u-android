@@ -612,53 +612,73 @@
     ]
   },
   "ui": {
-    "_doc": "Cloud Account's information architecture (#1081, owner request 2026-10-21; supersedes the four islands of 2026-10-14 and #964): five sections Personal Info, Configs, Data, Connect, Activity (libs:bottomnav NavDecl), one place per thing. Configs is PUBLIC (no secret value; test-account-configs-public.sh and PublicConfigTest), Data is PRIVATE (secrets, masked by default). A page's `pages` is a second strip (NavPage.pages). MainActivity maps every leaf (section, page) to one composable; hub/HubNav.LEGACY maps every id of the earlier layouts to its place now, so libs:account links and OPEN intents (extras section/page) keep working.",
-    "bottom_nav": [
-      "personal",
-      "configs",
-      "data",
-      "connect",
-      "activity"
-    ],
+    "_doc": "Cloud Account's information architecture (#1081, reworked #1482): bottom nav Vault | Config | Connect | Devices | Activity (libs:bottomnav NavDecl), one place per thing. Vault (IDs, PayCards, Secrets, Autocomplete) is PRIVATE (masked by default); Config = the Fleet Config files (Android, Desktop, C3, Repos), PUBLIC (no secret value; test-account-configs-public.sh); Devices = Mesh, Peer Control, Backup, Files, Working, Diff. `configs` is the app's own Configs menu (General | Perms | About) opened from the top bar, NOT in the bottom nav. A page's `pages` is a second strip (NavPage.pages). MainActivity maps every leaf (section, page) to one composable; hub/HubNav.LEGACY maps every id of the earlier layouts to its place now, so libs:account links and OPEN intents (extras section/page) keep working.",
+    "bottom_nav": ["vault", "config", "connect", "devices", "activity"],
     "sections": [
       {
-        "id": "personal",
-        "label": "Personal Info",
-        "icon": "personal",
+        "id": "vault",
+        "label": "Vault",
+        "icon": "key",
         "background": "dark",
+        "_doc": "#1482 Vault = the merge of Personal Info and Data (secrets part): IDs | PayCards | Secrets | Autocomplete. PRIVATE: masked by default, reveal and copy only behind device auth. Private data is never in this repo; it is read at run time.",
         "pages": [
           {
-            "_doc": "#1438 Identity documents (passport, national id, driving licence...): type, number, country, expiry. Stored ONLY in EncryptedSharedPreferences (personal/PersonalStore.kt); the number is masked until device auth (RevealGate); nothing of it is logged.",
+            "_doc": "#1438 Identity documents (passport, national id, driving licence...): type, number, country, expiry. Stored ONLY in EncryptedSharedPreferences (personal/PersonalStore.kt); the number is masked until device auth (RevealGate); nothing of it is logged. #1482 Vault > IDs.",
             "id": "ids",
             "label": "IDs",
             "icon": "badge"
           },
           {
-            "_doc": "#1438 Payment cards: holder, number, expiry, brand. EncryptedSharedPreferences only; the number shows as its last four digits behind a mask and is revealed only after biometric / screen-lock auth (RevealGate), re-masked when the page is left. Never logged.",
+            "_doc": "#1438 Payment cards: holder, number, expiry, brand. EncryptedSharedPreferences only; the number shows as its last four digits behind a mask and is revealed only after biometric / screen-lock auth (RevealGate), re-masked when the page is left. Never logged. #1482 Vault > PayCards.",
             "id": "cards",
-            "label": "Pay Cards",
+            "label": "PayCards",
             "icon": "payments"
           },
           {
-            "_doc": "#1438 Everything else personal: labelled free entries (EncryptedSharedPreferences, masked until auth) and Me, the person and this phone (libs:account AccountProfilePage: picture, name, device card, profile tiles, Backup / Restore / Migrate).",
-            "id": "others",
-            "label": "Others",
-            "icon": "edit_note",
+            "_doc": "PRIVATE. Masked by default; reveal and copy only behind device auth. #1482 Vault > Secrets also holds the free labelled Entries.",
+            "id": "secrets",
+            "label": "Secrets",
+            "icon": "key",
             "pages": [
+              {
+                "_doc": "THE token list: SSH keys, tokens, passwords and logins grouped per provider. Masked; reveal and copy behind device auth; copy auto-clears; edit/rotate/delete; per-provider Setup.",
+                "id": "providers",
+                "label": "Providers",
+                "icon": "hub"
+              },
+              {
+                "_doc": "Was Secrets > Fleet keys (id `secrets`).",
+                "id": "keys",
+                "label": "Fleet keys",
+                "icon": "vpn_key"
+              },
+              {
+                "_doc": "Fleet token manager: every bearer token the fleet has emitted (Authelia JWTs and engine-minted ft_ tokens), reveal and copy behind device auth, generate (name, audience, scopes, expiry), revoke. Talks to cloud-u-containers infra-sec_tokens-api (tokens-api.mesh.diegonmarcos.com, c3-pvt.diegonmarcos.com/tokens-api), owner-only. Private: a Data page, never a Configs one.",
+                "id": "tokens",
+                "label": "Tokens",
+                "icon": "token"
+              },
+              {
+                "id": "grants",
+                "label": "Grants",
+                "icon": "verified_user"
+              },
+              {
+                "_doc": "THE importer: personal data and tokens, masked review before saving. Was Home > Import.",
+                "id": "import",
+                "label": "Import",
+                "icon": "file_upload"
+              },
               {
                 "id": "entries",
                 "label": "Entries",
-                "icon": "folder"
-              },
-              {
-                "id": "me",
-                "label": "Me",
-                "icon": "account_circle"
+                "icon": "folder",
+                "_doc": "Free labelled entries (EncryptedSharedPreferences, masked until device auth). Was Personal Info > Others > Entries; Others dissolved in the Vault merge (#1482)."
               }
             ]
           },
           {
-            "_doc": "The non-secret autofill Source of Truth (a0_docs/eng-specs/autofill-3-tier.md), served by AutofillSotProvider behind AUTOFILL_PROFILE_READ/WRITE. Was Profiles > Autofill; ID documents are not here: Cloud Vault.",
+            "_doc": "The non-secret autofill Source of Truth (a0_docs/eng-specs/autofill-3-tier.md), served by AutofillSotProvider behind AUTOFILL_PROFILE_READ/WRITE. #1482 Vault > Autocomplete (autofill and form data).",
             "id": "autocomplete",
             "label": "Autocomplete",
             "icon": "auto_fix_high",
@@ -686,14 +706,12 @@
         ]
       },
       {
-        "id": "configs",
-        "label": "Configs",
+        "id": "config",
+        "label": "Config",
         "icon": "configs",
         "background": "dark",
+        "_doc": "#1482 the Fleet Config files (Android | Desktop | C3 | Repos), moved from the old bottom-nav Configs. PUBLIC: no secret value on any page of this section (test-account-configs-public.sh). Not the app's own Configs menu (id `configs`).",
         "pages": [
-          {"id": "general", "label": "General", "icon": "settings", "_doc": "#1443 the fleet Configs tabs: General | Perms | About (the shared pages of libs:ui-nav-bars, FleetConfigsPageBody), then this app's own pages."},
-          {"id": "perms", "label": "Perms", "icon": "security"},
-          {"id": "about", "label": "About", "icon": "info"},
           {
             "_doc": "PUBLIC, no secret value on any page of this section (a guard test enforces it). #1438: three entries. Cloud Apps = the fleet manifest baked into libs:appstore (updater Fleet.parse) with what is installed here; Phone Apps = every launchable app the manifest does not name; Runbook = the privileged channel (ChannelModeBar, the one Cloud Store's ADB Shell page draws, over the ShellChannels ladder incl. the SuperApp bridge), the declared adb-shell switches (configs_sources.runbook_toggles) and the setup steps (libs:account RunbookPage).",
             "id": "android",
@@ -746,101 +764,6 @@
             "id": "repos",
             "label": "Repos",
             "icon": "sync"
-          }
-        ]
-      },
-      {
-        "id": "data",
-        "label": "Data",
-        "icon": "data",
-        "background": "dark",
-        "pages": [
-          {
-            "_doc": "PRIVATE. Masked by default; reveal and copy only behind device auth.",
-            "id": "secrets",
-            "label": "Secrets",
-            "icon": "key",
-            "pages": [
-              {
-                "_doc": "THE token list: SSH keys, tokens, passwords and logins grouped per provider. Masked; reveal and copy behind device auth; copy auto-clears; edit/rotate/delete; per-provider Setup.",
-                "id": "providers",
-                "label": "Providers",
-                "icon": "hub"
-              },
-              {
-                "_doc": "Was Secrets > Fleet keys (id `secrets`).",
-                "id": "keys",
-                "label": "Fleet keys",
-                "icon": "vpn_key"
-              },
-              {
-                "_doc": "Fleet token manager: every bearer token the fleet has emitted (Authelia JWTs and engine-minted ft_ tokens), reveal and copy behind device auth, generate (name, audience, scopes, expiry), revoke. Talks to cloud-u-containers infra-sec_tokens-api (tokens-api.mesh.diegonmarcos.com, c3-pvt.diegonmarcos.com/tokens-api), owner-only. Private: a Data page, never a Configs one.",
-                "id": "tokens",
-                "label": "Tokens",
-                "icon": "token"
-              },
-              {
-                "id": "grants",
-                "label": "Grants",
-                "icon": "verified_user"
-              },
-              {
-                "_doc": "THE importer: personal data and tokens, masked review before saving. Was Home > Import.",
-                "id": "import",
-                "label": "Import",
-                "icon": "file_upload"
-              }
-            ]
-          },
-          {
-            "_doc": "The runtime databases and the encrypted bundle; links to Cloud Drive > Backups.",
-            "id": "backups",
-            "label": "Backups",
-            "icon": "backup",
-            "pages": [
-              {
-                "_doc": "New in #1081: this app's runtime databases and stores (names and sizes), auto-backup mode, and the way to Cloud Drive.",
-                "id": "databases",
-                "label": "Databases",
-                "icon": "storage"
-              },
-              {
-                "_doc": "The encrypted account bundle: import and export. Was Secrets > Bundle.",
-                "id": "bundle",
-                "label": "Bundle",
-                "icon": "inventory_2"
-              }
-            ]
-          },
-          {
-            "_doc": "Every owner device the vault declares, with live mesh status, and the per-device profile files (was Profiles > Phone).",
-            "id": "devices",
-            "label": "Devices",
-            "icon": "devices",
-            "pages": [
-              {
-                "_doc": "New in #1081: declared devices with this phone's live tunnel and a probe of each other one.",
-                "id": "mesh",
-                "label": "Mesh",
-                "icon": "lan"
-              },
-              {
-                "_doc": "Per-device profile files in the vault. Was Profiles > Phone > Devices.",
-                "id": "files",
-                "label": "Files",
-                "icon": "folder"
-              },
-              {
-                "id": "working",
-                "label": "Working",
-                "icon": "edit_note"
-              },
-              {
-                "id": "diff",
-                "label": "Diff",
-                "icon": "compare_arrows"
-              }
-            ]
           }
         ]
       },
@@ -943,6 +866,88 @@
         ]
       },
       {
+        "id": "devices",
+        "label": "Devices",
+        "icon": "devices",
+        "background": "dark",
+        "_doc": "#1482 Devices, out of Data into its own bottom-nav item: Mesh | Peer Control | Backup | Files | Working | Diff. Every owner device the vault declares, with live mesh status, and the per-device profile files.",
+        "pages": [
+          {
+            "_doc": "New in #1081: declared devices with this phone's live tunnel and a probe of each other one.",
+            "id": "mesh",
+            "label": "Mesh",
+            "icon": "lan"
+          },
+          {
+            "_doc": "#1482 No device-control content existed; a declared page with SAMPLE data only (rows read from `sample` below by hub/SamplePage, nothing real, no host names). Replace the sample with the live peer-control source when it lands.",
+            "id": "peer-control",
+            "label": "Peer Control",
+            "icon": "hub",
+            "sample": {
+              "rows": [
+                {
+                  "title": "Sample peer A",
+                  "caption": "reachable over the mesh",
+                  "state": "ok"
+                },
+                {
+                  "title": "Sample peer B",
+                  "caption": "asleep, wake-on-LAN offered",
+                  "state": "warn"
+                },
+                {
+                  "title": "Sample peer C",
+                  "caption": "unreachable",
+                  "state": "bad"
+                }
+              ]
+            }
+          },
+          {
+            "_doc": "The runtime databases, the encrypted bundle and Me (picture, name, Backup / Restore / Migrate); links to Cloud Drive > Backups. #1482 Devices > Backup.",
+            "id": "backup",
+            "label": "Backup",
+            "icon": "backup",
+            "pages": [
+              {
+                "_doc": "New in #1081: this app's runtime databases and stores (names and sizes), auto-backup mode, and the way to Cloud Drive.",
+                "id": "databases",
+                "label": "Databases",
+                "icon": "storage"
+              },
+              {
+                "_doc": "The encrypted account bundle: import and export. Was Secrets > Bundle.",
+                "id": "bundle",
+                "label": "Bundle",
+                "icon": "inventory_2"
+              },
+              {
+                "id": "me",
+                "label": "Me",
+                "icon": "account_circle",
+                "_doc": "Me, the person and this phone (libs:account AccountProfilePage: picture, name, device card, profile tiles, Backup / Restore / Migrate). Was Personal Info > Others > Me; filed under Devices > Backup because Backup / Restore / Migrate live on it (#1482)."
+              }
+            ]
+          },
+          {
+            "_doc": "Per-device profile files in the vault. Was Profiles > Phone > Devices.",
+            "id": "files",
+            "label": "Files",
+            "icon": "folder"
+          },
+          {
+            "id": "working",
+            "label": "Working",
+            "icon": "edit_note"
+          },
+          {
+            "id": "diff",
+            "label": "Diff",
+            "icon": "compare_arrows"
+          }
+        ]
+      },
+      {
         "id": "activity",
         "label": "Activity",
         "icon": "activity",
@@ -955,9 +960,34 @@
             "icon": "history"
           }
         ]
+      },
+      {
+        "id": "configs",
+        "label": "Configs",
+        "icon": "configs",
+        "background": "dark",
+        "_doc": "#1482 the app's OWN Configs (General | Perms | About, the fleet pattern), opened from the gear / top bar; not in the bottom nav.",
+        "pages": [
+          {
+            "id": "general",
+            "label": "General",
+            "icon": "settings",
+            "_doc": "#1443 the fleet Configs tabs: General | Perms | About (the shared pages of libs:ui-nav-bars, FleetConfigsPageBody), then this app's own pages."
+          },
+          {
+            "id": "perms",
+            "label": "Perms",
+            "icon": "security"
+          },
+          {
+            "id": "about",
+            "label": "About",
+            "icon": "info"
+          }
+        ]
       }
     ],
-    "default_section": "personal",
+    "default_section": "vault",
     "configs_ui": ["nav_ui"],
     "account": {
       "_doc": "Cloud Account redesign, task 2 (a0_docs/eng-specs/cloud-account-redesign.md sections 2, 5, 6). Read by libs:account's build.gradle into BuildConfig.UI_ACCOUNT_B64 (ForgeClient.Decl). forges: where the vault lives, each written through its contents API; auth 'bearer' sends `Authorization: Bearer <t>` (GitHub), 'token' sends `Authorization: token <t>` (Gitea). A forge's token is read from AccountVault Connections at forge.<id>.token, the primary forge id at forge.primary (default: the first forge with a repo). vault: the branch, the folder the app writes per-device profiles to (devices/<id>.json, DEFAULT.json; never an emit.py input), and the generated secrets file the connect fetch keeps reading.",
@@ -1072,7 +1102,7 @@
         {
           "id": "app",
           "label": "App",
-          "note": "This app's own settings: Android, Desktop, C3."
+          "note": "The fleet config files (Android, Desktop, C3) are in the Config tab."
         }
       ]
     },

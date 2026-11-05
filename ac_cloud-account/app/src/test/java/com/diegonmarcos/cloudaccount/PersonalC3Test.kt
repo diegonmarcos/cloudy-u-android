@@ -76,13 +76,14 @@ class PersonalC3Test {
         val nav = MainActivity.NAV
         fun tabs(s: String) = nav.section(s)!!.pages.map { it.id }
         fun sub(s: String, p: String) = nav.section(s)!!.page(p)!!.pages.map { it.id }
-        assertEquals(listOf("ids", "cards", "others", "autocomplete"), tabs("personal"))
-        assertEquals(listOf("IDs", "Pay Cards", "Others", "Autocomplete"), nav.section("personal")!!.pages.map { it.label })
-        assertEquals(listOf("entries", "me"), sub("personal", "others"))
-        assertEquals(listOf("general", "perms", "about", "android", "desktop", "c3", "repos"), tabs("configs"))  // #1443 shared pages first, #1445 Repos
-        assertEquals(listOf("cloud-apps", "phone-apps", "runbook"), sub("configs", "android"))
-        assertEquals(listOf("infra", "containers"), sub("configs", "c3"))
-        assertTrue(nav.section("configs")!!.page("desktop")!!.pages.isEmpty())
+        assertEquals(listOf("ids", "cards", "secrets", "autocomplete"), tabs("vault"))
+        assertEquals(listOf("IDs", "PayCards", "Secrets", "Autocomplete"), nav.section("vault")!!.pages.map { it.label })
+        assertEquals(listOf("providers", "keys", "tokens", "grants", "import", "entries"), sub("vault", "secrets"))
+        assertEquals(listOf("android", "desktop", "c3", "repos"), tabs("config"))  // #1482 the Fleet Config files, #1445 Repos
+        assertEquals(listOf("general", "perms", "about"), tabs("configs"))  // #1443 the app's own Configs
+        assertEquals(listOf("cloud-apps", "phone-apps", "runbook"), sub("config", "android"))
+        assertEquals(listOf("infra", "containers"), sub("config", "c3"))
+        assertTrue(nav.section("config")!!.page("desktop")!!.pages.isEmpty())
         assertTrue(nav.problems().isEmpty())
     }
 

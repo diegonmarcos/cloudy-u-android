@@ -135,22 +135,23 @@ class SectionScreensTest(private val section: String, private val page: String) 
 
     @Composable private fun PageFor(go: (String, String) -> Unit) {
         when ("$section/$page") {
-            "personal/ids" -> PersonalEntriesPage(PersonalKind.IDS) { personalRepo(it) }
-            "personal/cards" -> PersonalEntriesPage(PersonalKind.CARDS) { personalRepo(it) }
-            "personal/entries" -> PersonalEntriesPage(PersonalKind.OTHERS) { personalRepo(it) }
-            "personal/me" -> AccountProfilePage(go)
-            "personal/personal" -> AutofillProfilesPage()
-            "configs/cloud-apps" -> CloudAppsPage { FIX_CLOUD }
-            "configs/phone-apps" -> PhoneAppsPage { FIX_PHONE }
-            "configs/runbook" -> RunbookTogglesPage(go, FIX_TOGGLES.toggles, state = { _, t -> t.id != "show-touches" }, set = { _, _, _ -> true })
-            "configs/desktop" -> DesktopTreePage { FIX_DESKTOP }
-            "configs/infra" -> InfraPage { FIX_INFRA }
-            "configs/containers" -> ContainersPage { FIX_CONTAINERS }
+            "vault/ids" -> PersonalEntriesPage(PersonalKind.IDS) { personalRepo(it) }
+            "vault/cards" -> PersonalEntriesPage(PersonalKind.CARDS) { personalRepo(it) }
+            "vault/entries" -> PersonalEntriesPage(PersonalKind.OTHERS) { personalRepo(it) }
+            "devices/me" -> AccountProfilePage(go)
+            "vault/personal" -> AutofillProfilesPage()
+            "config/cloud-apps" -> CloudAppsPage { FIX_CLOUD }
+            "config/phone-apps" -> PhoneAppsPage { FIX_PHONE }
+            "config/runbook" -> RunbookTogglesPage(go, FIX_TOGGLES.toggles, state = { _, t -> t.id != "show-touches" }, set = { _, _, _ -> true })
+            "config/desktop" -> DesktopTreePage { FIX_DESKTOP }
+            "config/infra" -> InfraPage { FIX_INFRA }
+            "config/containers" -> ContainersPage { FIX_CONTAINERS }
             "connect/perms" -> AccountPermsPage(go)
-            "data/providers" -> SecretsProvidersPage(go)
-            "data/tokens" -> TokensPage()
-            "data/databases" -> BackupsPage()
-            "data/mesh" -> DevicesMeshPage()
+            "vault/providers" -> SecretsProvidersPage(go)
+            "vault/tokens" -> TokensPage()
+            "devices/databases" -> BackupsPage()
+            "devices/mesh" -> DevicesMeshPage()
+            "devices/peer-control" -> com.diegonmarcos.cloudaccount.hub.SamplePage("devices", "peer-control")
             "connect/connections" -> ConnectionsPage(go)
             "connect/apps" -> AppProfilesPage()
             "connect/endpoints" -> FleetEndpointsPage(check = { sv -> sv.associate { it.id to EndpointCheck(meshUp = it.hasPublic, publicStatus = if (it.hasPublic) 200 else null) } })
@@ -248,16 +249,16 @@ class SectionScreensTest(private val section: String, private val page: String) 
             "services:\n  alerts-api:\n    image: ghcr.io/x/alerts-api:latest\n    environment:\n      - DB_PATH=/data/alerts.db\n      - NTFY_TOKEN=fake-value-0000\n    volumes:\n      - alerts-data:/data\n")))
 
         /** The pages #1081 added: they must render. */
-        private val MUST = setOf("personal/ids", "personal/cards", "personal/entries", "configs/cloud-apps", "configs/phone-apps",
-            "configs/runbook", "configs/desktop", "configs/infra", "configs/containers", "data/databases", "data/mesh", "activity/activity", "connect/endpoints", "connect/services", "connect/drive")
+        private val MUST = setOf("vault/ids", "vault/cards", "vault/entries", "config/cloud-apps", "config/phone-apps",
+            "config/runbook", "config/desktop", "config/infra", "config/containers", "devices/databases", "devices/mesh", "devices/peer-control", "activity/activity", "connect/endpoints", "connect/services", "connect/drive")
 
         @JvmStatic
         @ParameterizedRobolectricTestRunner.Parameters(name = "{0}/{1}")
         fun pages(): List<Array<Any>> = listOf(
-            "personal/ids", "personal/cards", "personal/entries", "personal/me", "personal/personal",
-            "configs/cloud-apps", "configs/phone-apps", "configs/runbook", "configs/desktop", "configs/infra", "configs/containers",
+            "vault/ids", "vault/cards", "vault/entries", "devices/me", "vault/personal",
+            "config/cloud-apps", "config/phone-apps", "config/runbook", "config/desktop", "config/infra", "config/containers",
             "connect/perms",
-            "data/providers", "data/tokens", "data/databases", "data/mesh",
+            "vault/providers", "vault/tokens", "devices/databases", "devices/mesh", "devices/peer-control",
             "connect/connections", "connect/apps", "connect/endpoints", "connect/services", "connect/drive",
             "activity/activity",
         ).map { it.split('/').toTypedArray<Any>() }

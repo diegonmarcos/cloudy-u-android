@@ -37,15 +37,17 @@ def leaves(pages):
     for p in pages:
         if p.get("pages"): yield from leaves(p["pages"])
         else: yield p["id"]
-cfg = next(s for s in ui["sections"] if s["id"] == "configs")
-allowed = {"general", "perms", "about", "cloud-apps", "phone-apps", "runbook", "desktop", "infra", "containers", "repos"}  # #1445 repos: the private-repo connector (libs:git-ui GitConnect; its own file, not ConfigsPages.kt)
+cfg = next(s for s in ui["sections"] if s["id"] == "config")  # #1482 the Fleet Config files (the bottom-nav Config); `configs` is the app's own General | Perms | About
+allowed = {"cloud-apps", "phone-apps", "runbook", "desktop", "infra", "containers", "repos"}  # #1445 repos: the private-repo connector (libs:git-ui GitConnect; its own file, not ConfigsPages.kt)
 have = set(leaves(cfg["pages"]))
-ok(have == allowed, "Configs declares exactly the allowed pages", f"Configs leaves are {sorted(have)}, allowed {sorted(allowed)}")
+ok(have == allowed, "Config declares exactly the allowed pages", f"Config leaves are {sorted(have)}, allowed {sorted(allowed)}")
+own = next(s for s in ui["sections"] if s["id"] == "configs")
+ok(set(leaves(own["pages"])) == {"general", "perms", "about"} and "configs" not in ui["bottom_nav"] and "config" in ui["bottom_nav"], "the app's own Configs is General | Perms | About, outside the bottom nav", "the app's own Configs drifted or is in the bottom nav")
 
 ma = code(rd(MA))
 host = code(rd(A + "/app/src/main/java/com/diegonmarcos/cloudaccount/MainActivity.kt"))
-hb = re.search(r'^\s*"configs" -> (.*)$', host, re.M)
-ok(hb is not None and hb.group(1).strip() == "AccountUiPage(section, page, go)", "MainActivity hands Configs to libs:account-ui's router only",
+hb = re.search(r'^\s*"config" -> (.*)$', host, re.M)
+ok(hb is not None and hb.group(1).strip() == "AccountUiPage(AccountUi.CONFIGS, page, go)", "MainActivity hands Configs to libs:account-ui's router only",
    f"MainActivity's configs branch mounts {hb.group(1).strip() if hb else 'nothing'}")
 block = ma[ma.index('AccountUi.CONFIGS -> when (render) {'):ma.index('object AccountUiTags')]
 calls = set(re.findall(r"\b([A-Z]\w*)\(", block))
@@ -86,7 +88,7 @@ PY
   echo "  mutation caught: $1"
 }
 M=0
-mutate "Cloud Account mounts a secret page in its own Configs branch" "$A/app/src/main/java/com/diegonmarcos/cloudaccount/MainActivity.kt" '"configs" -> AccountUiPage(section, page, go)' '"configs" -> SecretsTab(openVault = {})' || M=1
+mutate "Cloud Account mounts a secret page in its own Configs branch" "$A/app/src/main/java/com/diegonmarcos/cloudaccount/MainActivity.kt" '"config" -> AccountUiPage(AccountUi.CONFIGS, page, go)' '"config" -> SecretsTab(openVault = {})' || M=1
 mutate "the secret list mounted in Configs" "$MA" '"configs:desktop" -> DesktopTreePage()' '"configs:desktop" -> DesktopTreePage()
                 "keys" -> SecretsTab(openVault = {})' || M=1
 mutate "Settings mounted in Configs" "$MA" '"configs:infra" -> InfraPage()' '"configs:infra" -> InfraPage()

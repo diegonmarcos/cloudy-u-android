@@ -25,6 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import com.diegonmarcos.superapp.accountui.AccountUi
 import com.diegonmarcos.superapp.accountui.AccountUiHost
 import com.diegonmarcos.superapp.accountui.AccountUiPage
 import com.diegonmarcos.cloudaccount.hub.AppProfilesPage
@@ -34,6 +35,7 @@ import com.diegonmarcos.cloudaccount.hub.FleetServicesSetupPage
 import com.diegonmarcos.cloudaccount.hub.DriveSetupPage
 import com.diegonmarcos.cloudaccount.hub.ImportPage
 import com.diegonmarcos.cloudaccount.hub.LocalDeviceAuth
+import com.diegonmarcos.cloudaccount.hub.SamplePage
 import com.diegonmarcos.cloudaccount.hub.SecretsProvidersPage
 import com.diegonmarcos.cloudaccount.hub.TokensPage
 import com.diegonmarcos.cloudaccount.hub.SystemDeviceAuth
@@ -70,8 +72,9 @@ import com.diegonmarcos.superapp.uikit.CloudKitTheme
 import com.diegonmarcos.superapp.updater.Updater
 
 /**
- * Cloud Account: the five sections of build.json::ui.bottom_nav (Personal Info, Configs, Data, Connect, Activity; #1438
- * Personal Info = IDs, Pay Cards, Others, Autocomplete; Configs = Android, Desktop, C3), drawn
+ * Cloud Account: the five sections of build.json::ui.bottom_nav (Vault, Config, Connect, Devices, Activity; #1482
+ * Vault = IDs, PayCards, Secrets, Autocomplete; Config = the Fleet Config files Android, Desktop, C3; the app's own Configs
+ * is General | Perms | About from the top bar), drawn
  * by libs:ui-nav-bars (bar) and libs:ui-nav-bars (strips) from the baked NavDecl. A section's pages are its top strip; a page with pages
  * of its own (Autocomplete, Android, Secrets, Backups, Devices, Status, Authentication providers) gets a second strip
  * under it, so every leaf is at most two taps from the island. Every leaf (section, page) is mapped to ONE composable
@@ -83,7 +86,7 @@ import com.diegonmarcos.superapp.updater.Updater
  * deep link lands where that page lives now.
  */
 class MainActivity : AppCompatActivity() {
-    // Data ▸ Backups ▸ Bundle: real file pickers behind ConnectionsTab's pickBundle / export callbacks.
+    // Devices ▸ Backup ▸ Bundle: real file pickers behind ConnectionsTab's pickBundle / export callbacks.
     private var pendingPick: ((String) -> Unit)? = null
     private var pendingExport: Pair<String, String>? = null
     private val pickLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -138,12 +141,12 @@ class MainActivity : AppCompatActivity() {
         LaunchedEffect(asked) { if (asked != null) { selected = asked.first; selectedPage = asked.second; requested.value = null } }
         val openSection = NAV.section(selected)
         val ai = rememberSuperAppAiLauncher()
-        // #1154 the first row: AI hands over to the SuperApp, Profile is this app's own Personal Info section, Configs its Configs section.
+        // #1154 the first row: AI hands over to the SuperApp, Profile opens Devices > Me, Configs the app's own General | Perms | About.
         NavBarTopFirstRowScaffold(
             title = openSection?.label ?: getString(R.string.app_name),
             hierarchy = openSection?.let { titleHierarchy(it, selectedPage) }.orEmpty(),
             onNavigate = { e -> selected = e.sectionId; selectedPage = e.id.takeIf { e.depth > 0 } },
-            onAccount = { selected = "personal"; selectedPage = null },
+            onAccount = { selected = "devices"; selectedPage = "me" },
             onConfigs = { selected = "configs"; selectedPage = null },
             onAi = ai,
             modifier = Modifier.fillMaxSize().statusBarsPadding(),
@@ -203,33 +206,36 @@ class MainActivity : AppCompatActivity() {
     private fun Page(section: String, page: String, go: (String, String) -> Unit) {
         val ctx = LocalContext.current
         val model = remember { AccountModel.get(ctx) }
-        // #1443 Configs starts General | Perms | About (the shared pages of libs:ui-nav-bars), then libs:account-ui's own pages.
+        // #1443 the app's own Configs (opened from the top bar, not in the bottom nav) is General | Perms | About, the shared pages of libs:ui-nav-bars.
         if (section == "configs" && com.diegonmarcos.superapp.fleetconfigs.isFleetConfigsPage(page)) {
-            com.diegonmarcos.superapp.fleetconfigs.FleetConfigsPageBody(page, onAppConfigs = { go("configs", "cloud-apps") })
+            com.diegonmarcos.superapp.fleetconfigs.FleetConfigsPageBody(page, onAppConfigs = { go("config", "cloud-apps") })
             return
         }
         when (section) {
-            // #1439 Personal Info and Configs are libs:account-ui's (AccountUiPage), shared with Cloud Me's profile page.
-            // PUBLIC Configs: no page there may show a secret value (test-account-configs-public.sh reads the lib's router).
-            "personal" -> AccountUiPage(section, page, go)
-            "configs" -> AccountUiPage(section, page, go)
+            // #1439 Vault's IDs / PayCards / Autocomplete / Entries and Config are libs:account-ui's (AccountUiPage), shared with Cloud Me's profile page.
+            // PUBLIC Config: no page there may show a secret value (test-account-configs-public.sh reads the lib's router).
+            "config" -> AccountUiPage(AccountUi.CONFIGS, page, go)
             // PRIVATE: secrets stay masked until reveal behind device auth.
-            "data" -> when (page) {
+            "vault" -> when (page) {
+                "ids", "cards", "entries", "personal", "sites", "snippets" -> AccountUiPage(AccountUi.PERSONAL, page, go)
                 "keys" -> SecretsTab(openVault = { AccountHost.route(this, "extapp:cloud-vault") })
                 "tokens" -> TokensPage()
                 "grants" -> GrantsTab()
                 "import" -> ImportPage(::pickText)
+                else -> SecretsProvidersPage(go)
+            }
+            "devices" -> when (page) {
+                "peer-control" -> SamplePage(section, page)
                 "databases" -> BackupsPage()
                 "bundle" -> ConnectionsTab(
                     pickBundle = { onText -> pendingPick = onText; pickLauncher.launch(arrayOf("application/json", "text/plain", "text/html")) },
                     export = { name, text -> pendingExport = name to text; exportLauncher.launch(name) },
                 )
-                "mesh" -> DevicesMeshPage()
-                // Devices: the per-device profile files.
+                "me" -> AccountUiPage(AccountUi.PERSONAL, page, go)
                 "files" -> ProfilesDevicesPage()
                 "working" -> ProfilesWorkingPage()
                 "diff" -> ProfilesDiffPage(model)
-                else -> SecretsProvidersPage(go)
+                else -> DevicesMeshPage()
             }
             "connect" -> when (page) {
                 "apps" -> AppProfilesPage()
@@ -247,6 +253,7 @@ class MainActivity : AppCompatActivity() {
                 else -> ConnectionsPage(go)
             }
             "activity" -> ActivityPage()
+            "configs" -> Unit   // the app's own Configs: drawn above by FleetConfigsPageBody (General | Perms | About)
             else -> AccountPlaceholderPage(section, page, "no task: undeclared section")
         }
     }

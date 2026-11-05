@@ -26,8 +26,10 @@ class SectionsTest {
     // ── Configs holds no secret (the guard) ──────────────────────────────
 
     @Test fun configsSectionIsExactlyTheAllowedPages() {
-        val allowed = setOf("general", "perms", "about", "cloud-apps", "phone-apps", "runbook", "desktop", "infra", "containers", "repos")  // #1443 shared, public; #1445 repos = the shared GitConnect panel
-        val configs = MainActivity.NAV.section("configs")!!
+        val allowed = setOf("cloud-apps", "phone-apps", "runbook", "desktop", "infra", "containers", "repos")  // #1445 repos = the shared GitConnect panel
+        val configs = MainActivity.NAV.section("config")!!
+        // #1482 the app's own Configs is General | Perms | About, public and shared
+        assertEquals(setOf("general", "perms", "about"), MainActivity.NAV.section("configs")!!.allPages().map { it.id }.toSet())
         assertEquals(allowed, configs.allPages().filter { it.pages.isEmpty() }.map { it.id }.toSet())
         // the pages that hold or show secrets live in Data and Connect, never in Configs
         for (secretPage in listOf("providers", "keys", "tokens", "grants", "import", "bundle", "signin", "settings", "connections"))

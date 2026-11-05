@@ -40,8 +40,8 @@ def ok(c, good, bad):
     if not c: fails += 1
 
 ui = json.loads(rd(f"{A}/build.json"))["ui"]
-ok(ui["bottom_nav"] == ["personal", "configs", "data", "connect", "activity"] and ui["default_section"] == "personal",
-   "bottom nav: Personal Info, Configs, Data, Connect, Activity; default Personal Info", f"bottom nav is {ui['bottom_nav']}")
+ok(ui["bottom_nav"] == ["vault", "config", "connect", "devices", "activity"] and ui["default_section"] == "vault",
+   "bottom nav: Vault, Config, Connect, Devices, Activity; default Vault", f"bottom nav is {ui['bottom_nav']}")
 ok(all(s["id"] != "setup" for s in ui["sections"]), "no Setup island", "a Setup island is declared")
 
 nav = code(rd(f"{K}/hub/HubNav.kt"))
@@ -50,7 +50,9 @@ old = {"account": ["", "profile", "connect", "autofill", "sites", "snippets", "i
        "setup": ["", "runbook", "apps", "configs", "perms", "adb-shell"],
        "secrets": ["", "providers", "connections", "bundle", "secrets", "grants"], "settings": [""],
        "home": ["", "home", "account", "connections", "connect", "import"],
-       "configs": ["", "settings", "setup", "runbook", "apps", "configs", "perms", "adb-shell"]}
+       "configs": ["settings", "setup", "runbook", "apps", "configs", "perms", "adb-shell", "android", "cloud-apps", "phone-apps", "desktop", "c3", "infra", "containers", "repos"],
+       "personal": ["", "ids", "cards", "entries", "me", "others", "autocomplete", "personal", "sites", "snippets", "wallet"],
+       "data": ["", "providers", "keys", "tokens", "grants", "import", "databases", "bundle", "mesh", "files", "working", "diff", "devices", "backups"]}
 def leaves(pages):
     for p in pages:
         if p.get("pages"): yield from leaves(p["pages"])
@@ -61,10 +63,10 @@ missing = [f"{s}/{p}" for s, ps in old.items() for p in ps if (s, p) not in lega
 ok(not missing, "every old page (all earlier layouts) has a place in HubNav.LEGACY", f"no place for {missing}")
 dead = [f"{a}/{b}->{c}/{d}" for (a, b), (c, d) in legacy.items() if c not in pages or (d and d not in pages[c])]
 ok(not dead, "every LEGACY target is a declared leaf page", f"LEGACY points at undeclared or container pages {dead}")
-ok(nav.index("LEGACY[section to page.orEmpty()]") < nav.index("if (section in ORDER)"), "resolve() translates a renamed page before passing a current section through", "a renamed page inside a current section passes through untranslated")
+ok(nav.index("LEGACY[section to page.orEmpty()]") < nav.index("if (section in KNOWN)"), "resolve() translates a renamed page before passing a current section through", "a renamed page inside a current section passes through untranslated")
 strips = {s["id"]: [p["id"] for p in s["pages"] if p.get("pages")] for s in ui["sections"]}
-ok(strips == {"personal": ["others", "autocomplete"], "configs": ["android", "c3"], "data": ["secrets", "backups", "devices"], "connect": ["status", "auth", "fleetsetup"], "activity": []},
-   "the second strips are Personal > Others / Autocomplete, Configs > Android / C3, Data > Secrets / Backups / Devices, Connect > Status / Authentication providers / Setup", f"second strips are {strips}")
+ok(strips == {"vault": ["secrets", "autocomplete"], "config": ["android", "c3"], "connect": ["status", "auth", "fleetsetup"], "devices": ["backup"], "activity": [], "configs": []},
+   "the second strips are Vault > Secrets / Autocomplete, Config > Android / C3, Connect > Status / Authentication providers / Setup, Devices > Backup", f"second strips are {strips}")
 ok(all(s.get("background") in ("dark", "light", "theme") for s in ui["sections"]), "every section declares its strip background", "a section leaves its background undeclared")
 ma = code(rd(f"{K}/MainActivity.kt"))
 ok("HubNav.resolve(s, p)" in ma, "MainActivity's go() resolves old ids", "go() does not go through HubNav.resolve")
@@ -135,10 +137,7 @@ PY
   echo "  mutation caught: $1"
 }
 M=0
-mutate "Setup island back" "$A/build.json" '"bottom_nav": [
-      "personal",' '"bottom_nav": [
-      "setup",
-      "personal",' || M=1
+mutate "Setup island back" "$A/build.json" '"bottom_nav": ["vault",' '"bottom_nav": ["setup", "vault",' || M=1
 mutate "an old page loses its place" "$K/hub/HubNav.kt" '("setup" to "perms") to ("connect" to "perms"),' '' || M=1
 mutate "go() skips the resolver" "$K/MainActivity.kt" 'HubNav.resolve(s, p)' 'Pair(s, p)' || M=1
 mutate "gate reads before auth" "$LK/hub/Reveal.kt" 'if (!ok) { denied(); return@authenticate }' 'read(); if (!ok) { denied(); return@authenticate }' || M=1
@@ -146,13 +145,13 @@ mutate "no lock still reveals" "$LK/hub/Reveal.kt" '!km.isDeviceSecure) { finish
 mutate "copy without the gate" "$K/hub/HubPages.kt" 'SecretClipboard.copy(ctx, it)' 'SecretClipboard.copy(ctx, HubAndroid.value(ctx, e.path).orEmpty())' || M=1
 mutate "a hub file logs" "$K/hub/TokenImport.kt" 'val t = text.trim()' 'val t = text.trim(); android.util.Log.d("x", t)' || M=1
 mutate "Setup all dropped from Connections" "$K/hub/HubPages.kt" '        SetupAllCard { tick++ }' '' || M=1
-mutate "a 2026-10-13 id loses its place" "$K/hub/HubNav.kt" '("secrets" to "connections") to ("data" to "bundle"),' '' || M=1
+mutate "a 2026-10-13 id loses its place" "$K/hub/HubNav.kt" '("secrets" to "connections") to ("devices" to "bundle"),' '' || M=1
 mutate "a renamed page passes through untranslated" "$K/hub/HubNav.kt" 'val exact = LEGACY[section to page.orEmpty()]
         if (exact != null) return exact.first to exact.second.ifEmpty { null }
-        if (section in ORDER) return section to page' 'if (section in ORDER) return section to page
+        if (section in KNOWN) return section to page' 'if (section in KNOWN) return section to page
         val exact = LEGACY[section to page.orEmpty()]
         if (exact != null) return exact.first to exact.second.ifEmpty { null }' || M=1
-mutate "LEGACY points at a container" "$K/hub/HubNav.kt" '("setup" to "") to ("configs" to "runbook"),' '("setup" to "") to ("configs" to "setup"),' || M=1
+mutate "LEGACY points at a container" "$K/hub/HubNav.kt" '("setup" to "") to ("config" to "runbook"),' '("setup" to "") to ("config" to "android"),' || M=1
 mutate "a strip is flattened" "$A/build.json" '"id": "devices",' '"id": "devicesx",' || M=1
 mutate "a section drops its background" "$A/build.json" '"icon": "activity",
         "background": "dark",' '"icon": "activity",' || M=1

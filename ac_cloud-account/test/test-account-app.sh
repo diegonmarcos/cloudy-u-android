@@ -129,21 +129,22 @@ PY
   grep -q "<action android:name=\"$action\" */>" "$MF" && ok "manifest answers SuperApp's $action" || bad "manifest does not declare the action SuperApp sends ('$action')"
 
   # 5. redesign task 3: five islands declared in build.json::ui, drawn by the shared island + strips
-  python3 - "$A/build.json" <<'PY' && ok "ui.bottom_nav = personal, configs, data, connect, activity; ui.sections hold every page" || bad "build.json ui.bottom_nav/sections are not the five sections"
+  python3 - "$A/build.json" <<'PY' && ok "ui.bottom_nav = vault, config, connect, devices, activity (+ the app's own configs); ui.sections hold every page" || bad "build.json ui.bottom_nav/sections are not the five sections"
 import json, sys
 ui = json.load(open(sys.argv[1], encoding='utf-8')).get('ui') or {}
 # a0_docs/eng-specs/cloud-account-ia.md: a page's own `pages` is a second strip (Autofill, Phone, Setup)
-want = {'personal': ['ids', 'cards', 'others', 'autocomplete'],
-        'configs': ['general', 'perms', 'about', 'android', 'desktop', 'c3'],
-        'data': ['secrets', 'backups', 'devices'],
+want = {'vault': ['ids', 'cards', 'secrets', 'autocomplete'],
+        'config': ['android', 'desktop', 'c3', 'repos'],
         'connect': ['status', 'auth', 'fleetsetup'],
-        'activity': ['activity']}
-strips = {'others': ['entries', 'me'], 'autocomplete': ['personal', 'sites', 'snippets'], 'android': ['cloud-apps', 'phone-apps', 'runbook'], 'c3': ['infra', 'containers'],
-          'secrets': ['providers', 'keys', 'tokens', 'grants', 'import'], 'backups': ['databases', 'bundle'],
-          'devices': ['mesh', 'files', 'working', 'diff'], 'status': ['connections', 'apps', 'endpoints'], 'auth': ['hub', 'signin', 'settings'], 'fleetsetup': ['services', 'drive', 'push', 'perms', 'adb-shell']}
+        'devices': ['mesh', 'peer-control', 'backup', 'files', 'working', 'diff'],
+        'activity': ['activity'],
+        'configs': ['general', 'perms', 'about']}
+strips = {'autocomplete': ['personal', 'sites', 'snippets'], 'android': ['cloud-apps', 'phone-apps', 'runbook'], 'c3': ['infra', 'containers'],
+          'secrets': ['providers', 'keys', 'tokens', 'grants', 'import', 'entries'], 'backup': ['databases', 'bundle', 'me'],
+          'status': ['connections', 'apps', 'endpoints'], 'auth': ['hub', 'signin', 'settings'], 'fleetsetup': ['services', 'drive', 'push', 'perms', 'adb-shell']}
 got = {s.get('id'): [p.get('id') for p in s.get('pages') or []] for s in ui.get('sections') or []}
 gotstrips = {p.get('id'): [q.get('id') for q in p.get('pages')] for s in ui.get('sections') or [] for p in s.get('pages') or [] if p.get('pages')}
-ok = (ui.get('bottom_nav') == ['personal', 'configs', 'data', 'connect', 'activity'] and got == want and gotstrips == strips and ui.get('default_section') == 'personal'
+ok = (ui.get('bottom_nav') == ['vault', 'config', 'connect', 'devices', 'activity'] and got == want and gotstrips == strips and ui.get('default_section') == 'vault'
       and isinstance(ui.get('account', {}).get('forges'), list)
       and ui.get('account', {}).get('connect', {}).get('file', {}).get('kind') == 'vault_file')
 sys.exit(0 if ok else 1)
@@ -256,13 +257,8 @@ mutate "package name drifts" lib/profile/AccountData.kt 'const val PKG = "com.di
 mutate "OPEN action dropped" acc/app/src/main/AndroidManifest.xml '<action android:name="com.diegonmarcos.cloudaccount.OPEN" />' '' || M=$((M+1))
 mutate "island replaced by a plain box" acc/app/src/main/java/com/diegonmarcos/cloudaccount/MainActivity.kt 'NavBarBottomHost(' 'Box(' || M=$((M+1))
 mutate "island no longer fed by NavDecl" acc/app/src/main/java/com/diegonmarcos/cloudaccount/MainActivity.kt 'NavDecl.fromBuildConfig(' 'NavDeclx.fromBuildConfig(' || M=$((M+1))
-mutate "a section leaves build.json" acc/build.json '"data",
-      "connect"' '"connect"' || M=$((M+1))
-mutate "a page leaves build.json" acc/build.json '              {
-                "id": "working",
-                "label": "Working",
-                "icon": "data"
-              },' '' || M=$((M+1))
+mutate "a section leaves build.json" acc/build.json '"connect", "devices", "activity"' '"connect", "activity"' || M=$((M+1))
+mutate "a page leaves build.json" acc/build.json '"id": "working",' '"id": "workingx",' || M=$((M+1))
 mutate "a strip leaves build.json" acc/build.json '"id": "android",' '"id": "androidx",' || M=$((M+1))
 mutate "connect dispatch replaced by a literal" lib/profile/ConnectWays.kt 'fun handler(kind: String): Handler = when (kind) {' 'fun handler(kind: String): Handler = Handler.File
     private fun handlerOld(kind: String): Handler = when (kind) {' || M=$((M+1))
