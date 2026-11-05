@@ -123,7 +123,7 @@ open class HostShellBootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent?) {
         if (intent?.action == Intent.ACTION_BOOT_COMPLETED) {
             if (ChannelAutoArm.enabled(context)) HostShell.schedule(context.applicationContext, replace = true)
-            if (KeepAlivePolicy.needed(debugServerAllowed(context), ChannelAutoArm.enabled(context))) HostShellService.start(context.applicationContext)
+            if (KeepAlivePolicy.needed(HostShell.debugServerAllowed(context), ChannelAutoArm.enabled(context))) HostShellService.start(context.applicationContext)
             WdKeeper.start(context.applicationContext)   // #1467
         }
     }
