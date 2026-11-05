@@ -1,6 +1,7 @@
 package com.diegonmarcos.cloudcalc.ui
 
-import android.Manifest
+import com.diegonmarcos.superapp.perms.rememberPermsMissing
+import com.diegonmarcos.superapp.perms.PermsFixChip
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -82,20 +83,15 @@ import com.diegonmarcos.superapp.sound.SoundPrefs
 private suspend fun <T> io(block: () -> T): T = withContext(Dispatchers.IO) { block() }
 
 /**
- * THE ONE place the microphone is asked for (test/test-calc-shell.sh C4): a sound mode that
- * listens composes its content through this gate, so the dialog appears only when such a mode
- * opens and never anywhere else in the calculator.
+ * The microphone gate (#1515): a sound mode that listens composes its content through it; while RECORD_AUDIO is
+ * missing it shows the compact "Fix in Perms" chip (Configs > Perms asks and grants, nothing is asked here).
  */
 @Composable
 fun MicGate(why: Int = R.string.mic_needed, content: @Composable () -> Unit) {
-    val ctx = LocalContext.current
-    var granted by remember { mutableStateOf(Mic.granted(ctx)) }
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted = it }
-    LaunchedEffect(Unit) { if (!granted) launcher.launch(Manifest.permission.RECORD_AUDIO) }
-    if (granted) content()
+    if (rememberPermsMissing(listOf("microphone")).isEmpty()) content()
     else Column(Modifier.fillMaxSize().padding(CalcMetrics.gutter)) {
         Text(stringResource(why))
-        Button(onClick = { launcher.launch(Manifest.permission.RECORD_AUDIO) }) { Text(stringResource(R.string.mic_allow)) }
+        PermsFixChip(listOf("microphone"), "sound")
     }
 }
 

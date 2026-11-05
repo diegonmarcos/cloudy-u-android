@@ -11,7 +11,7 @@
 #       draws the "no renderer" line, a renderer no mode uses is dead code.
 #   C3  every declared tab and section icon has a branch in IconCatalog — a misspelt name
 #       would silently draw the fallback.
-#   C4  RECORD_AUDIO: the manifest declares it and exactly one Kotlin file asks for it
+#   C4  RECORD_AUDIO: the manifest declares it and no Kotlin file asks for it (Configs > Perms does, #1515)
 #       (#772: ui/SoundScreens.kt's MicGate, which every listening sound mode composes
 #       through), so no other mode can ever pop the dialog.
 #   C5  the engine stays an engine: no gradle file, settings or module map of this
@@ -26,7 +26,7 @@
 #       path (USE_EXACT_ALARM; SCHEDULE_EXACT_ALARM capped at API 32), a non-exported receiver
 #       for its own wakeups, an exported one re-planning on BOOT_COMPLETED, MY_PACKAGE_REPLACED,
 #       TIME_SET and TIMEZONE_CHANGED, a specialUse foreground service with its permission, and
-#       a full-screen ring; POST_NOTIFICATIONS asked for by ui/ClockScreens.kt alone.
+#       a full-screen ring; POST_NOTIFICATIONS asked in Configs > Perms alone (#1515).
 #   C9  one scheduler: only clock/ClockEngine.kt calls AlarmManager's set*, and a user's alarm
 #       is set as an alarm CLOCK (setAlarmClock), the one kind Doze never defers.
 #   C10 /api/<clock_group>/ documents and answers status, timer_start and timer_cancel, under
@@ -42,7 +42,7 @@
 #       through the safe-volume guard (Player.play is called by audio/SoundFlow.kt alone, which
 #       calls Generator.guard); the declared guard is sane (0 < loud_amplitude <= max_amplitude
 #       <= 1); jev.identify.sound and a `sound` model use are declared.
-#   C13 #772 the Camera tools: CAMERA is declared and asked for by ui/CameraScreens.kt alone
+#   C13 #772 the Camera tools: CAMERA is declared and asked for in Configs > Perms alone (#1515)
 #       (CameraGate); ARCore is declared OPTIONAL (required would make the app uninstallable
 #       where ARCore is not); one door to the image engine (camera/Vision.kt alone constructs
 #       ImageScanEngine) and one ARCore session owner (camera/ArMeasureActivity.kt);
@@ -160,8 +160,8 @@ if 'android.permission.RECORD_AUDIO' not in manifest:
     bad.append("C4 the manifest does not declare RECORD_AUDIO — the meter could never be granted")
 ask_mic = re.compile(r"\.launch\(\s*(android\.)?Manifest\.permission\.RECORD_AUDIO\s*\)")
 askers = sorted(os.path.relpath(p, src) for p in kts if ask_mic.search(code(p)))
-if askers != ["ui/SoundScreens.kt"]:
-    bad.append("C4 RECORD_AUDIO must be asked for by ui/SoundScreens.kt alone (MicGate), found in %s" % askers)
+if askers:
+    bad.append("C4 RECORD_AUDIO must be asked for in Configs > Perms alone (libs:perms; MicGate only shows the Fix-in-Perms chip, #1515), found in %s" % askers)
 
 # C5
 names_engine = re.compile(r"libs[:/]calc\b")
@@ -223,8 +223,8 @@ if 'android:showWhenLocked="true"' not in element("activity", ".clock.RingActivi
 if 'android.permission.INTERNET' in manifest:
     bad.append("C8 the app manifest asks for INTERNET — Calc and Clock are offline (libs:devtools merges the INTERNET its loopback server and the Jev section's one network file need)")
 asked = sorted(os.path.relpath(p, src) for p in kts if "POST_NOTIFICATIONS" in code(p))
-if asked != ["ui/ClockScreens.kt"]:
-    bad.append("C8 POST_NOTIFICATIONS must be asked for by ui/ClockScreens.kt alone, found in %s" % asked)
+if asked:
+    bad.append("C8 POST_NOTIFICATIONS must be asked for in Configs > Perms alone (libs:perms; the Clock screens show the Fix-in-Perms chip, #1515), found in %s" % asked)
 
 # C9
 setters = re.compile(r"\b(setAlarmClock|setExactAndAllowWhileIdle|setAndAllowWhileIdle|setExact|setInexactRepeating|setRepeating|setWindow)\(")
@@ -317,8 +317,8 @@ if 'android.permission.CAMERA' not in manifest:
     bad.append("C13 the manifest does not declare CAMERA — the camera tools could never be granted")
 ask_cam = re.compile(r"\.launch\(\s*(android\.)?Manifest\.permission\.CAMERA\s*\)")
 cam_askers = sorted(os.path.relpath(p, src) for p in kts if ask_cam.search(code(p)))
-if cam_askers != ["ui/CameraScreens.kt"]:
-    bad.append("C13 CAMERA must be asked for by ui/CameraScreens.kt alone (CameraGate), found in %s" % cam_askers)
+if cam_askers:
+    bad.append("C13 CAMERA must be asked for in Configs > Perms alone (libs:perms; CameraGate only shows the Fix-in-Perms chip, #1515), found in %s" % cam_askers)
 if not re.search(r'<meta-data\s+android:name="com\.google\.ar\.core"\s+android:value="optional"', manifest):
     bad.append("C13 ARCore must be declared optional — required would refuse every phone without it")
 for needle, owner in (("ImageScanEngine(", "camera/Vision.kt"), ("Session(this)", "camera/ArMeasureActivity.kt")):

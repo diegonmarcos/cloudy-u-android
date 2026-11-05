@@ -166,4 +166,15 @@ class PermsViewTest {
         assertEquals(listOf("A", "B", "s", "h"), PermsView.walk(items).map { it.id })
         assertTrue(PermsView.walk(listOf(rt("G", PermState.GRANTED))).isEmpty())
     }
+    // ── #1515 the compact "Fix in Perms" chip other pages show ──
+
+    @Test fun `the chip names only missing grants, in the caller's order, and is blank when none is missing`() {
+        val states = mapOf("camera" to PermState.DENIED, "microphone" to PermState.GRANTED, "notifications" to PermState.PERMANENTLY_DENIED,
+            "usb_host" to PermState.NOT_APPLICABLE, "vpn" to PermState.UNKNOWN)
+        assertEquals(listOf("notifications", "camera"), PermsChip.fixIds(listOf("notifications", "microphone", "camera", "usb_host", "vpn", "absent"), states))
+        assertEquals(listOf("camera"), PermsChip.fixIds(listOf("camera", "camera"), states))
+        assertTrue(PermsChip.fixIds(listOf("microphone", "usb_host"), states).isEmpty())
+        assertEquals("", PermsChip.text(emptyList<String>()))
+        assertEquals("Needs permission — Fix in Perms ›", PermsChip.text(listOf("camera")))
+    }
 }

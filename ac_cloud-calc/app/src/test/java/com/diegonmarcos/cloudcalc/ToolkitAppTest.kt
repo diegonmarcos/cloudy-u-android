@@ -1,5 +1,6 @@
 package com.diegonmarcos.cloudcalc
 
+import com.diegonmarcos.superapp.perms.PermsChip
 import android.content.ComponentName
 import android.Manifest
 import androidx.activity.ComponentActivity
@@ -81,10 +82,10 @@ class ToolkitAppTest {
         assertFalse("the one engine says the torch is off", Light.engine(app).state.rearOn)
     }
 
-    @Test fun `the Voice Recorder asks for the microphone first and shows why`() {
+    @Test fun `the Voice Recorder shows why and the Fix-in-Perms chip, and asks nothing itself (#1515)`() {
         show("recorder")
         compose.onNodeWithText(app.getString(R.string.recorder_why)).assertExists()
-        compose.onNodeWithText(app.getString(R.string.mic_allow)).assertExists()
+        compose.onNodeWithTag(PermsChip.TAG).assertExists()
         assertEquals(0, compose.onAllNodesWithTag(ToolkitTags.RECORD).fetchSemanticsNodes().size)
     }
 

@@ -1,8 +1,8 @@
 package com.diegonmarcos.cloudcalc.ui
 
-import android.Manifest
+import com.diegonmarcos.superapp.perms.rememberPermsMissing
+import com.diegonmarcos.superapp.perms.PermsFixChip
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -94,20 +94,15 @@ import kotlinx.coroutines.withContext
 private suspend fun <T> io(block: () -> T): T = withContext(Dispatchers.IO) { block() }
 
 /**
- * THE ONE place the camera is asked for (test/test-calc-shell.sh C13): a Camera mode that takes
- * a photo composes through this gate, so the dialog appears only when such a mode opens. Level
- * needs no camera and does not use it.
+ * The camera gate (#1515): a Camera mode that takes a photo composes through it; while CAMERA is missing it shows the
+ * compact "Fix in Perms" chip (Configs > Perms asks and grants, nothing is asked here). Level needs no camera.
  */
 @Composable
 fun CameraGate(content: @Composable () -> Unit) {
-    val ctx = LocalContext.current
-    var granted by remember { mutableStateOf(ContextCompat.checkSelfPermission(ctx, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) }
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted = it }
-    LaunchedEffect(Unit) { if (!granted) launcher.launch(Manifest.permission.CAMERA) }
-    if (granted) content()
+    if (rememberPermsMissing(listOf("camera")).isEmpty()) content()
     else Column(Modifier.fillMaxSize().padding(CalcMetrics.gutter)) {
         Text(stringResource(R.string.camera_needed))
-        Button(onClick = { launcher.launch(Manifest.permission.CAMERA) }) { Text(stringResource(R.string.camera_allow)) }
+        PermsFixChip(listOf("camera"), "camera")
     }
 }
 

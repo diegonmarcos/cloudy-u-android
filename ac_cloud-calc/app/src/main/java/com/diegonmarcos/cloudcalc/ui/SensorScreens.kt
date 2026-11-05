@@ -2,8 +2,10 @@
 
 package com.diegonmarcos.cloudcalc.ui
 
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
+import com.diegonmarcos.superapp.perms.rememberPermsResumes
+import com.diegonmarcos.superapp.perms.PermsNeeds
+import com.diegonmarcos.superapp.perms.PermsLink
+import com.diegonmarcos.superapp.perms.PermsChip
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -110,8 +112,9 @@ fun SensorGroupMode(mode: Declarations.Mode) {
     val group = remember(mode.id) { JSONObject(mode.spec).getString("group") }
     val sensors = remember(group) { cat.inGroup(group) }
     val latest = remember(mode.id) { mutableStateMapOf<String, DoubleArray>() }
-    val grants = remember(mode.id) { mutableStateMapOf<String, Boolean>() }
-    fun isGranted(d: Sensors.Decl) = grants[d.id] ?: SensorHub.granted(ctx, d)
+    // #1515 a grant is made in Configs > Perms; the screen re-reads it each time it resumes.
+    val resumes = rememberPermsResumes()
+    fun isGranted(d: Sensors.Decl) = resumes >= 0 && SensorHub.granted(ctx, d)
     // Every sensor of the group is fed from here, not from its card, so a card scrolled out of view still keeps its derived neighbours current.
     sensors.forEach { d -> SensorFeed(d, SensorHub.present(ctx, d) && isGranted(d), latest) }
     // A derived value may need a sensor of another group (never fed otherwise).
@@ -124,16 +127,15 @@ fun SensorGroupMode(mode: Declarations.Mode) {
         contentPadding = PaddingValues(CalcMetrics.gutter),
         verticalArrangement = Arrangement.spacedBy(CalcMetrics.gap),
     ) {
-        items(sensors, key = { it.id }) { d -> SensorCard(d, cat, latest, isGranted(d)) { grants[d.id] = it } }
+        items(sensors, key = { it.id }) { d -> SensorCard(d, cat, latest, isGranted(d)) }
     }
 }
 
 @Composable
-private fun SensorCard(d: Sensors.Decl, cat: Sensors.Catalog, latest: SnapshotStateMap<String, DoubleArray>, granted: Boolean, onGrant: (Boolean) -> Unit) {
+private fun SensorCard(d: Sensors.Decl, cat: Sensors.Catalog, latest: SnapshotStateMap<String, DoubleArray>, granted: Boolean) {
     val ctx = LocalContext.current
     val present = remember(d.id) { SensorHub.present(ctx, d) }
     var asked by remember(d.id) { mutableStateOf(false) }
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { asked = true; onGrant(it) }
     var unit by rememberSaveable(d.id) { mutableStateOf(d.unit) }
     Card(Modifier.fillMaxWidth().testTag(SensorTags.card(d.id))) {
         Column(Modifier.padding(CalcMetrics.gutter), verticalArrangement = Arrangement.spacedBy(CalcMetrics.small)) {
@@ -142,8 +144,8 @@ private fun SensorCard(d: Sensors.Decl, cat: Sensors.Catalog, latest: SnapshotSt
                 !present -> Text(stringResource(R.string.sensor_absent), color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag(SensorTags.absent(d.id)))
                 !granted -> {
                     Text(stringResource(if (asked) R.string.sensor_denied else R.string.sensor_perm_why))
-                    OutlinedButton(onClick = { launcher.launch(SensorHub.permissionOf(d.permission)) }, modifier = Modifier.testTag(SensorTags.allow(d.id))) {
-                        Text(stringResource(R.string.sensor_allow))
+                    OutlinedButton(onClick = { asked = true; PermsLink.open(ctx, "sensors", PermsNeeds.idsFor(ctx, listOf(SensorHub.permissionOf(d.permission)))) }, modifier = Modifier.testTag(SensorTags.allow(d.id))) {
+                        Text(PermsChip.TEXT)
                     }
                 }
                 else -> {

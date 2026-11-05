@@ -2,12 +2,11 @@
 
 package com.diegonmarcos.cloudcalc.ui
 
-import android.Manifest
+import com.diegonmarcos.superapp.perms.PermsFixChip
 import android.app.Activity
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Build
@@ -56,7 +55,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
-import androidx.core.content.ContextCompat
 import com.diegonmarcos.cloudcalc.Declarations
 import com.diegonmarcos.cloudcalc.R
 import com.diegonmarcos.cloudcalc.clock.Alarm
@@ -102,22 +100,6 @@ private fun rememberNow(periodMs: Long, active: Boolean = true): Long {
         }
     }
     return now
-}
-
-/**
- * POST_NOTIFICATIONS is asked for HERE and nowhere else (test/test-calc-shell.sh holds that), and
- * only when the user starts something that will need a notification — an alarm, a timer, the
- * stopwatch — never when a screen merely opens.
- */
-@Composable
-private fun rememberNotificationAsk(): () -> Unit {
-    val ctx = LocalContext.current
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
-    return {
-        if (Build.VERSION.SDK_INT >= 33 &&
-            ContextCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
-        ) launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
-    }
 }
 
 private val HHMM: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
@@ -244,7 +226,6 @@ fun AlarmsMode(mode: Declarations.Mode) {
     val ctx = LocalContext.current
     val d = rememberClock()
     val now = rememberNow(ClockLogic.MINUTE_MS)
-    val ask = rememberNotificationAsk()
     var editing by remember { mutableStateOf<Alarm?>(null) }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(CalcMetrics.gutter).testTag(ClockTags.ALARMS)) {
         RingingBar(d)
@@ -264,12 +245,11 @@ fun AlarmsMode(mode: Declarations.Mode) {
                         (if (a.snoozedUntil > now) "  ·  " + stringResource(R.string.clock_snoozed_until, HHMM.format(Instant.ofEpochMilli(a.snoozedUntil).atZone(ClockEngine.zone()))) else ""),
                         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                Switch(checked = a.enabled, onCheckedChange = { on -> if (on) ask(); ClockEngine.saveAlarm(ctx, a.copy(enabled = on)) })
+                Switch(checked = a.enabled, onCheckedChange = { on -> ClockEngine.saveAlarm(ctx, a.copy(enabled = on)) })
             }
             HorizontalDivider()
         }
         Button(onClick = {
-            ask()
             editing = Alarm(0, 7 * 60, vibrate = ClockDecl.vibrateDefault, snoozeMinutes = ClockDecl.snoozeDefault)
         }, Modifier.padding(top = CalcMetrics.gutter).testTag(ClockTags.ADD_ALARM)) { Text(stringResource(R.string.clock_add_alarm)) }
     }
@@ -292,11 +272,8 @@ private fun inWords(ms: Long): String {
 @Composable
 private fun PermissionBanners() {
     val ctx = LocalContext.current
-    if (!ClockEngine.canExact(ctx) && Build.VERSION.SDK_INT >= 31) {
-        Banner(stringResource(R.string.clock_exact_off)) {
-            ctx.startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:" + ctx.packageName)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-        }
-    }
+    // #1515 notifications and exact alarms are asked and granted in Configs > Perms only; this is the chip that points there.
+    PermsFixChip(listOf("notifications", "exact_alarm"), "clock", Modifier.padding(bottom = CalcMetrics.gap))
     val fullScreen = Build.VERSION.SDK_INT < 34 ||
         runCatching { ctx.getSystemService(NotificationManager::class.java)?.canUseFullScreenIntent() ?: true }.getOrDefault(true)
     if (!fullScreen) {
@@ -396,17 +373,16 @@ fun TimersMode(mode: Declarations.Mode) {
     val ctx = LocalContext.current
     val d = rememberClock()
     val now = rememberNow(250, d.timers.any { it.state == TimerState.RUNNING })
-    val ask = rememberNotificationAsk()
     var h by rememberSaveable { mutableStateOf("0") }
     var m by rememberSaveable { mutableStateOf("5") }
     var s by rememberSaveable { mutableStateOf("0") }
     var label by rememberSaveable { mutableStateOf("") }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(CalcMetrics.gutter).testTag(ClockTags.TIMERS)) {
         RingingBar(d)
+        PermsFixChip(listOf("notifications"), "clock", Modifier.padding(bottom = CalcMetrics.gap))
         FlowRow(horizontalArrangement = Arrangement.spacedBy(CalcMetrics.small)) {
             ClockDecl.timerPresets.forEach { sec ->
                 FilterChip(selected = false, onClick = {
-                    ask()
                     ClockEngine.addTimer(ctx, label.trim().ifBlank { durationWords(sec) }, sec * ClockLogic.SECOND_MS, start = true)
                 }, label = { Text(durationWords(sec)) })
             }
@@ -419,7 +395,6 @@ fun TimersMode(mode: Declarations.Mode) {
         OutlinedTextField(label, { label = it }, Modifier.fillMaxWidth(), singleLine = true, label = { Text(stringResource(R.string.clock_label)) })
         val total = ((h.toLongOrNull() ?: 0) * 3600 + (m.toLongOrNull() ?: 0) * 60 + (s.toLongOrNull() ?: 0)) * ClockLogic.SECOND_MS
         Button(onClick = {
-            ask()
             ClockEngine.addTimer(ctx, label.trim(), total, start = true)
         }, enabled = total > 0, modifier = Modifier.padding(vertical = CalcMetrics.gap).testTag(ClockTags.START_TIMER)) { Text(stringResource(R.string.clock_start)) }
         d.timers.forEach { t ->
@@ -435,7 +410,7 @@ fun TimersMode(mode: Declarations.Mode) {
                     when (t.state) {
                         TimerState.RUNNING -> FilledTonalButton(onClick = { ClockEngine.timer(ctx, t.id, "pause") }) { Text(stringResource(R.string.clock_pause)) }
                         TimerState.RINGING -> Button(onClick = { ClockEngine.dismiss(ctx, ClockLogic.timerKey(t.id)) }) { Text(stringResource(R.string.clock_dismiss)) }
-                        else -> FilledTonalButton(onClick = { ask(); ClockEngine.timer(ctx, t.id, "start") }) { Text(stringResource(R.string.clock_start)) }
+                        else -> FilledTonalButton(onClick = { ClockEngine.timer(ctx, t.id, "start") }) { Text(stringResource(R.string.clock_start)) }
                     }
                     OutlinedButton(onClick = { ClockEngine.timer(ctx, t.id, "add") }) { Text(stringResource(R.string.clock_plus_minute)) }
                     OutlinedButton(onClick = { ClockEngine.timer(ctx, t.id, "reset") }) { Text(stringResource(R.string.clock_reset)) }
@@ -454,12 +429,11 @@ fun StopwatchMode(mode: Declarations.Mode) {
     val d = rememberClock()
     val sw = d.stopwatch
     val now = rememberNow(47, sw.running)
-    val ask = rememberNotificationAsk()
     val elapsed = ClockLogic.elapsed(sw, now)
     Column(Modifier.fillMaxSize().padding(CalcMetrics.gutter).testTag(ClockTags.STOPWATCH), horizontalAlignment = Alignment.CenterHorizontally) {
         Text(ClockLogic.stopwatchText(elapsed), style = MaterialTheme.typography.displayMedium, fontFamily = FontFamily.Monospace)
         Row(horizontalArrangement = Arrangement.spacedBy(CalcMetrics.gap), modifier = Modifier.padding(vertical = CalcMetrics.gap)) {
-            Button(onClick = { if (!sw.running) ask(); ClockEngine.stopwatch(ctx, "toggle") }) {
+            Button(onClick = { ClockEngine.stopwatch(ctx, "toggle") }) {
                 Text(stringResource(if (sw.running) R.string.clock_pause else R.string.clock_start))
             }
             if (sw.running) FilledTonalButton(onClick = { ClockEngine.stopwatch(ctx, "lap") }) { Text(stringResource(R.string.clock_lap)) }
@@ -486,12 +460,12 @@ fun IntervalMode(mode: Declarations.Mode) {
     val d = rememberClock()
     val i = d.interval
     val now = rememberNow(250, i != null)
-    val ask = rememberNotificationAsk()
     var work by rememberSaveable { mutableStateOf("25") }
     var rest by rememberSaveable { mutableStateOf("5") }
     var rounds by rememberSaveable { mutableStateOf("4") }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(CalcMetrics.gutter).testTag(ClockTags.INTERVAL)) {
         RingingBar(d)
+        PermsFixChip(listOf("notifications"), "clock", Modifier.padding(bottom = CalcMetrics.gap))
         val phase = i?.let { ClockLogic.phaseAt(it, now) }
         if (i != null && phase != null) {
             Text(ClockNotifications.phaseName(ctx, phase.kind), style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
@@ -502,7 +476,7 @@ fun IntervalMode(mode: Declarations.Mode) {
         } else {
             FlowRow(horizontalArrangement = Arrangement.spacedBy(CalcMetrics.small)) {
                 ClockDecl.intervalPresets.forEach { p ->
-                    FilterChip(selected = false, onClick = { ask(); ClockEngine.startInterval(ctx, p) }, label = { Text(p.label) })
+                    FilterChip(selected = false, onClick = { ClockEngine.startInterval(ctx, p) }, label = { Text(p.label) })
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(CalcMetrics.gap)) {
@@ -513,7 +487,6 @@ fun IntervalMode(mode: Declarations.Mode) {
             val w = work.toLongOrNull() ?: 0
             val n = rounds.toIntOrNull() ?: 0
             Button(onClick = {
-                ask()
                 ClockEngine.startInterval(ctx, ClockDecl.IntervalPreset(ctx.getString(R.string.clock_custom), w * 60, (rest.toLongOrNull() ?: 0) * 60, 0, 0, n))
             }, enabled = w > 0 && n > 0, modifier = Modifier.padding(top = CalcMetrics.gap)) { Text(stringResource(R.string.clock_start)) }
         }
@@ -527,7 +500,6 @@ fun BedtimeMode(mode: Declarations.Mode) {
     val ctx = LocalContext.current
     val d = rememberClock()
     val now = rememberNow(ClockLogic.SECOND_MS, d.sleepUntil > 0)
-    val ask = rememberNotificationAsk()
     val bed = d.alarms.firstOrNull { it.quiet }
     var time by remember(bed?.minuteOfDay) { mutableStateOf(ClockLogic.timeText(bed?.minuteOfDay ?: ClockDecl.bedtimeDefault)) }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(CalcMetrics.gutter).testTag(ClockTags.BEDTIME)) {
@@ -538,7 +510,7 @@ fun BedtimeMode(mode: Declarations.Mode) {
             OutlinedButton(onClick = { ClockEngine.cancelSleep(ctx) }) { Text(stringResource(R.string.clock_cancel)) }
         } else {
             FlowRow(horizontalArrangement = Arrangement.spacedBy(CalcMetrics.small)) {
-                ClockDecl.sleepChoices.forEach { m -> FilterChip(selected = false, onClick = { ask(); ClockEngine.startSleep(ctx, m) }, label = { Text("$m min") }) }
+                ClockDecl.sleepChoices.forEach { m -> FilterChip(selected = false, onClick = { ClockEngine.startSleep(ctx, m) }, label = { Text("$m min") }) }
             }
         }
         HorizontalDivider(Modifier.padding(vertical = CalcMetrics.gutter))
@@ -550,7 +522,6 @@ fun BedtimeMode(mode: Declarations.Mode) {
                 checked = bed?.enabled == true,
                 onCheckedChange = { on ->
                     ClockLogic.parseTime(time)?.let { minute ->
-                        if (on) ask()
                         ClockEngine.saveAlarm(ctx, (bed ?: Alarm(0, minute, days = ClockLogic.ALL_DAYS, quiet = true, label = ctx.getString(R.string.clock_bedtime)))
                             .copy(minuteOfDay = minute, enabled = on))
                     }
