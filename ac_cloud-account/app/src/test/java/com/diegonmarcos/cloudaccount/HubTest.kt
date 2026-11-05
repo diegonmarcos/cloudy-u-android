@@ -192,9 +192,9 @@ class HubTest {
         assertNull(MainActivity.deepLink(null))
         assertEquals("connect" to "adb-shell", MainActivity.deepLink(i("setup", "adb-shell")))
         assertEquals("devices" to "bundle", MainActivity.deepLink(i("secrets", "connections")))
-        assertEquals("personal" to "me", MainActivity.deepLink(i("home", "")))
-        assertEquals("personal" to "snippets", MainActivity.deepLink(i("account", "snippets")))
-        assertEquals("personal" to null, MainActivity.deepLink(i("bogus", "x")))
+        assertEquals("devices" to "me", MainActivity.deepLink(i("home", "")))
+        assertEquals("vault" to "snippets", MainActivity.deepLink(i("account", "snippets")))
+        assertEquals("vault" to null, MainActivity.deepLink(i("bogus", "x")))
     }
 
     // ── Connections table ────────────────────────────────────────────────
