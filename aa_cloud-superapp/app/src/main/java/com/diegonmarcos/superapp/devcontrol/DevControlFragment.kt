@@ -1,5 +1,6 @@
 package com.diegonmarcos.superapp.devcontrol
 
+import com.diegonmarcos.superapp.xray.PARTIAL_LABEL
 import com.diegonmarcos.superapp.agents.AgentStatusReader
 import com.diegonmarcos.superapp.agents.FleetAgents
 import com.diegonmarcos.superapp.configs.Diagnostics
@@ -203,6 +204,19 @@ class DevControlFragment : KitComposeFragment() {
         // fragment reaching for a host it has already been detached from); the application context cannot be detached and
         // answers packageManager/packageName the same.
         val appCtx = ctx.applicationContext
+
+        // ══ EXPORT ALL macro section (#1504) — one tap: every block below plus the ADB-shell battery/wake/system probes, as
+        //    Markdown, JSON, clipboard or a post to the C3 API. On demand only; nothing here polls.
+        macro("📤  EXPORT ALL")
+        infoSection("Export All · full battery and system diagnosis") {
+            small("Walks every X-Ray group, then reads batterystats, wakelocks, alarms, jobs, services, doze, buckets and more at shell uid " +
+                "(needs ADB; without it the report is marked \"$PARTIAL_LABEL\"). Ranked suspects come first. Runs only when tapped.")
+            val status = row("Last export", "never")
+            for (o in XrayOut.values()) button(o.label) {
+                status.text = "working…"
+                launch { status.text = XrayExport.run(appCtx, activity, page, scope, o) { m -> status.text = m } }
+            }
+        }
 
         // ══ APP & BUILD macro section — this APK's identity: package/version,
         //    release channel, signing, provenance, declared sections, and the full stack scan.

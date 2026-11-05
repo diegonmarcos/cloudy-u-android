@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
  */
 internal sealed interface AboutItem {
     /** A key / value line. [text] and [color] are state so a probe can fill a "reading…" row in later. */
-    class Row(val key: String, initial: String) : AboutItem {
+    class Row(val key: String, val initial: String) : AboutItem {
         var text by mutableStateOf(initial)
         var color by mutableStateOf<Color?>(null)
     }
@@ -66,12 +66,17 @@ internal class AboutItems(private val section: AboutSection, val scope: Coroutin
     fun reload() { section.reset(); section.load(scope) }
 
     /** Work that outlives the body (a probe filling a row in): owned by the page's composition scope, so teardown cancels it. */
-    fun launch(block: suspend CoroutineScope.() -> Unit): Job = scope.launch(block = block)
+    fun launch(block: suspend CoroutineScope.() -> Unit): Job {
+        section.pending.incrementAndGet() // #1504 the export waits for every probe of every block
+        return scope.launch { try { block() } finally { section.pending.decrementAndGet() } }
+    }
 }
 
 /** One service block: its heading, its macro group (the Index card that owns it) and its lazily-run body. */
 internal class AboutSection(val macro: String, val head: String, private val body: AboutItems.() -> Unit) {
     val items = mutableStateListOf<AboutItem>()
+    /** Probes launched by the body that have not finished (#1504: Export All waits until this is 0). */
+    val pending = java.util.concurrent.atomic.AtomicInteger(0)
     val buf: StringBuilder = StringBuilder("\n## ").append(head).append("\n")
 
     /** True once the body has run — exactly once per view lifecycle, so scrolling back and forth never re-probes. */

@@ -93,7 +93,10 @@ object BatteryRepository {
         countCharge(ctx, r)
         if (r.levelPct in 0..100 && BatteryHistory.shouldStore(list.lastOrNull(), sample)) {
             runCatching { db(ctx).insert(sample, r.nowMs - BatteryHistory.RETENTION_MS) }
+            val transition = list.isNotEmpty() && list.last().onPower != sample.onPower
             list += sample
+            // #1504 append the closed sessions to the 90-day archive on a plug transition only (no polling write).
+            if (transition) runCatching { archive(ctx, list, r.nowMs) }
             val cut = r.nowMs - BatteryHistory.RETENTION_MS
             if (list.isNotEmpty() && list.first().ts < cut) list.removeAll { it.ts < cut }
         }
@@ -268,6 +271,19 @@ object BatteryRepository {
         }
     }
 
+    /** #1504 Closed sessions of [list] into the `sess` table (INSERT OR IGNORE on the start), then prune past 90 days. Under [lock]. */
+    private fun archive(ctx: Context, list: List<BatterySample>, now: Long) {
+        val d = db(ctx)
+        for (s in BatteryHistory.segment(list)) if (!s.ongoing && s.durationMs > 0) d.putSession(s)
+        d.pruneSessions(now - BatteryArchive.RETENTION_MS)
+    }
+
+    /** #1504 Archived sessions (up to 90 days) merged with the live ones, oldest first. */
+    fun sessions90(ctx: Context, live: List<BatterySession>, now: Long = System.currentTimeMillis()): List<BatterySession> {
+        val old = synchronized(lock) { runCatching { db(ctx).sessions() }.getOrDefault(emptyList()) }
+        return BatteryArchive.merge(old, live, now)
+    }
+
     /** Every recorded cycle, newest first (the open one included). */
     fun cycles(ctx: Context): List<BatteryCycles.Cycle> = synchronized(lock) { runCatching { db(ctx).cycles() }.getOrDefault(emptyList()) }
 
@@ -304,8 +320,9 @@ object BatteryRepository {
     private const val CYCLE_RETENTION_MS = 400L * 24 * 3_600_000L
     private const val CYCLE_TABLE = "CREATE TABLE IF NOT EXISTS cycle (start_ts INTEGER PRIMARY KEY, end_ts INTEGER, " +
         "start_pct INTEGER, end_pct INTEGER, apps TEXT)"
+    private const val SESS_TABLE = "CREATE TABLE IF NOT EXISTS sess (start_ts INTEGER, charging INTEGER, line TEXT, PRIMARY KEY (start_ts, charging))"
 
-    private class Db(ctx: Context) : SQLiteOpenHelper(ctx, NAME, null, 3) {
+    private class Db(ctx: Context) : SQLiteOpenHelper(ctx, NAME, null, 4) {
         private val app = ctx
 
         override fun onCreate(db: SQLiteDatabase) {
@@ -313,6 +330,7 @@ object BatteryRepository {
                 "ma INTEGER, mv INTEGER, temp_dc INTEGER, counter INTEGER, screen INTEGER)")
             db.execSQL("CREATE TABLE meta (k TEXT PRIMARY KEY, v TEXT)")
             db.execSQL(CYCLE_TABLE)
+            db.execSQL(SESS_TABLE)
             runCatching { LegacyImport.sessions(app) { s -> write(db, s) } }
             runCatching { LegacyImport.counters(app) { k, v -> putMeta(db, k, v) } }
         }
@@ -321,9 +339,10 @@ object BatteryRepository {
         override fun onUpgrade(db: SQLiteDatabase, old: Int, new: Int) {
             if (old < 2) runCatching { LegacyImport.counters(app) { k, v -> putMeta(db, k, v) } }
             if (old < 3) db.execSQL(CYCLE_TABLE)
+            if (old < 4) db.execSQL(SESS_TABLE)
         }
 
-        fun wipe() { for (t in listOf("sample", "meta", "cycle")) writableDatabase.execSQL("DELETE FROM $t") }
+        fun wipe() { for (t in listOf("sample", "meta", "cycle", "sess")) writableDatabase.execSQL("DELETE FROM $t") }
 
         private fun putMeta(db: SQLiteDatabase, k: String, v: String) =
             db.execSQL("INSERT OR REPLACE INTO meta VALUES (?, ?)", arrayOf<Any?>(k, v))
@@ -360,6 +379,19 @@ object BatteryRepository {
 
         fun putCycle(c: BatteryCycles.Cycle) = writableDatabase.execSQL("INSERT OR REPLACE INTO cycle VALUES (?,?,?,?,?)",
             arrayOf<Any?>(c.startTs, c.endTs, c.startPct, c.endPct, BatteryCycles.encode(c.apps)))
+
+        fun putSession(s: BatterySession) = writableDatabase.execSQL("INSERT OR IGNORE INTO sess VALUES (?,?,?)",
+            arrayOf<Any?>(s.startTs, if (s.charging) 1 else 0, BatteryArchive.encode(s)))
+
+        fun pruneSessions(before: Long) = writableDatabase.execSQL("DELETE FROM sess WHERE start_ts < ?", arrayOf<Any?>(before))
+
+        fun sessions(): List<BatterySession> {
+            val out = ArrayList<BatterySession>()
+            readableDatabase.rawQuery("SELECT line FROM sess ORDER BY start_ts", null).use { c ->
+                while (c.moveToNext()) BatteryArchive.decode(c.getString(0))?.let { out += it }
+            }
+            return out
+        }
 
         fun pruneCycles(before: Long) = writableDatabase.execSQL("DELETE FROM cycle WHERE start_ts < ?", arrayOf<Any?>(before))
 

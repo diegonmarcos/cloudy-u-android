@@ -31,7 +31,9 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.diegonmarcos.superapp.battery.BatteryArchive
 import com.diegonmarcos.superapp.battery.BatteryCycles
+import com.diegonmarcos.superapp.battery.BatterySession
 import com.diegonmarcos.superapp.battery.BatteryHistory
 import com.diegonmarcos.superapp.battery.BatteryLabels
 import com.diegonmarcos.superapp.battery.BatteryPrivileged
@@ -82,6 +84,7 @@ class BatteryStatsFragment : KitComposeFragment() {
         val ctx = LocalContext.current.applicationContext
         var report by remember { mutableStateOf<BatteryReport?>(null) }
         var samples by remember { mutableStateOf<List<BatterySample>>(emptyList()) }
+        var hist by remember { mutableStateOf<List<BatterySession>>(emptyList()) }
         var priv by remember { mutableStateOf<Privileged?>(null) }
         var week by remember { mutableStateOf(false) }
         LaunchedEffect(Unit) {
@@ -92,6 +95,7 @@ class BatteryStatsFragment : KitComposeFragment() {
                 withContext(Dispatchers.IO) {
                     report = runCatching { BatteryRepository.report(ctx) }.getOrNull()
                     samples = BatteryRepository.samples(ctx)
+                    hist = BatteryRepository.sessions90(ctx, report?.sessions.orEmpty())
                 }
                 delay(REFRESH_MS)
             }
@@ -102,12 +106,12 @@ class BatteryStatsFragment : KitComposeFragment() {
             Text("Configs › About › Battery · the battery Source of Truth", color = p.textSecondary, fontSize = 11.sp,
                 fontFamily = FontFamily.Monospace)
             val r = report
-            if (r == null) Line("Reading the battery…") else Body(r, samples, priv, week) { week = it }
+            if (r == null) Line("Reading the battery…") else Body(r, samples, hist, priv, week) { week = it }
         }
     }
 
     @Composable
-    private fun Body(r: BatteryReport, samples: List<BatterySample>, priv: Privileged?, week: Boolean, setWeek: (Boolean) -> Unit) {
+    private fun Body(r: BatteryReport, samples: List<BatterySample>, hist: List<BatterySession>, priv: Privileged?, week: Boolean, setWeek: (Boolean) -> Unit) {
         Column {
             val now = r.reading.nowMs
             val from = now - if (week) WEEK_MS else DAY_MS
@@ -122,7 +126,7 @@ class BatteryStatsFragment : KitComposeFragment() {
                 Toggle("7 d", week) { setWeek(true) }
             }
             LevelGraph(BatteryHistory.levelSeries(samples, from, now), from, now)
-            Line("${fmtWhen(from)}  →  now · ${samples.count { it.ts >= from }} samples, kept ${BatteryHistory.RETENTION_MS / DAY_MS} d")
+            Line("${fmtWhen(from)}  →  now · ${samples.count { it.ts >= from }} samples, graph kept ${BatteryHistory.RETENTION_MS / DAY_MS} d, cycles and sessions ${BatteryArchive.RETENTION_MS / DAY_MS} d")
 
             val f = priv?.facts
             val design = f?.designMah ?: f?.statsCapacityMah
@@ -130,13 +134,21 @@ class BatteryStatsFragment : KitComposeFragment() {
             Section(BatteryRows.spreads(BatteryHistory.tempSpread(samples, from), BatteryHistory.voltageSpread(samples, from),
                 if (week) "7 d" else "24 h"))
 
-            val cycles = r.sessions.filter { !it.charging && it.durationMs > 0 }.asReversed().take(MAX_ROWS)
+            // #1504 average %/h per day over the 90-day archive; a day well above the median is flagged.
+            val trend = BatteryArchive.trend(hist).asReversed()
+            Divider()
+            Header("Drain trend · avg %/h per day (${trend.size} d)")
+            Table(listOf("Day", "Avg %/h", "Used %", "Hours", ""),
+                trend.map { listOf(it.day, String.format(Locale.US, "%.1f", it.avgPctPerHour), it.drainedPct.toString(),
+                    String.format(Locale.US, "%.1f", it.hours), if (it.spike) "SPIKE" else "") })
+
+            val cycles = hist.filter { !it.charging && it.durationMs > 0 }.asReversed().take(MAX_ROWS)
             Divider()
             Header("Discharge cycles (${cycles.size})")
             Table(listOf("When", "%", "Time", "Avg %/h · W", "Max T"),
                 cycles.map { listOf(fmtWhen(it.startTs)) + BatteryRows.cycleRow(it) })
 
-            val charges = r.sessions.filter { it.charging && it.durationMs > 0 }.asReversed().take(MAX_ROWS)
+            val charges = hist.filter { it.charging && it.durationMs > 0 }.asReversed().take(MAX_ROWS)
             Divider()
             Header("Charge sessions (${charges.size})")
             Table(listOf("When", "%", "Source", "Time", "Avg W in"),
@@ -295,7 +307,7 @@ class BatteryStatsFragment : KitComposeFragment() {
         const val REFRESH_MS = 5_000L
         const val DAY_MS = 24 * 3_600_000L
         const val WEEK_MS = 7 * DAY_MS
-        const val MAX_ROWS = 30
+        const val MAX_ROWS = 200
         const val MAX_APPS = 10
         fun newInstance() = BatteryStatsFragment()
     }
