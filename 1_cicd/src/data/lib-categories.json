@@ -1,0 +1,161 @@
+{
+ "_doc": "#1511 THE category of every shared lib the Store's Libs pages list (Shared libs, Machine-learning libs): the same macro-group shape as app_categories / lib_apks.categories (id, label, members), declared ONCE. cloud-android-lib-consumers.py reads it into lib-consumers.json (category, class, ships, consumers per lib) and its check fails when a shared lib is in no category, in two, or a member is not a lib, so a new lib must be categorized here in the same commit. Order of this list is the order of the page's groups; engines (installable APKs) are categorized by lib_apks.categories in lib-apks/build.json instead.",
+ "categories": [
+  {
+   "id": "ui",
+   "label": "UI & Navigation",
+   "members": [
+    "ui-kit",
+    "ui-nav-bars",
+    "ui-icons",
+    "theme-background",
+    "bottomnav",
+    "scrollbar",
+    "gesture",
+    "cropper",
+    "launcher-apptabs",
+    "launcher-onehand",
+    "launcher-zoomies",
+    "keyboard"
+   ]
+  },
+  {
+   "id": "core",
+   "label": "Core & Logic",
+   "members": [
+    "core",
+    "crash",
+    "devtools",
+    "log-export",
+    "ai-usage",
+    "databackend",
+    "decisions",
+    "decisions-core",
+    "decisions-link",
+    "fleetconfig-model",
+    "shared-store",
+    "updater",
+    "auth",
+    "watchdog",
+    "text-tools",
+    "model-catalogue"
+   ]
+  },
+  {
+   "id": "data",
+   "label": "Data & Sync",
+   "members": [
+    "git-core",
+    "git-repos",
+    "git-sync",
+    "git-ui",
+    "gix",
+    "datamanager",
+    "disk",
+    "disk-scan",
+    "mounts",
+    "rclone",
+    "usb-drive",
+    "contacts"
+   ]
+  },
+  {
+   "id": "web",
+   "label": "Web & Network",
+   "members": [
+    "web-core",
+    "local-serve",
+    "browser",
+    "headless-browser",
+    "scraper",
+    "apify",
+    "net",
+    "sysdns",
+    "fleet-endpoints",
+    "fleet-endpoints-android",
+    "webserver",
+    "mail",
+    "firewall"
+   ]
+  },
+  {
+   "id": "editors",
+   "label": "Editors & Viewers",
+   "members": [
+    "editor-core",
+    "file-editor",
+    "wysiwyg",
+    "media-viewer",
+    "pdf",
+    "odf",
+    "json-viewer",
+    "panoramaviewer",
+    "cgc-3d",
+    "cad-3dm",
+    "cad-brep",
+    "cad-core",
+    "cad-dxf",
+    "cad-ifc",
+    "cad-mesh"
+   ]
+  },
+  {
+   "id": "ml",
+   "label": "ML & OCR",
+   "members": [
+    "ml-l-image",
+    "ml-l-image-ocr",
+    "ml-l-sound",
+    "ml-l-text-mlkit",
+    "ml-l-voice-vosk",
+    "ocr",
+    "voice",
+    "sound-tags",
+    "translate"
+   ]
+  },
+  {
+   "id": "system",
+   "label": "System & Shell",
+   "members": [
+    "shizuku-adb-debug-tools",
+    "battery",
+    "bluetooth",
+    "wifi",
+    "nfc",
+    "light",
+    "kde-connect",
+    "health",
+    "autofill",
+    "shell-broker",
+    "shell-client"
+   ]
+  },
+  {
+   "id": "media",
+   "label": "Media",
+   "members": [
+    "media",
+    "media-convert-audio"
+   ]
+  },
+  {
+   "id": "features",
+   "label": "App Features",
+   "members": [
+    "account-ui",
+    "account",
+    "ai",
+    "appstore",
+    "chat",
+    "maps",
+    "wallet",
+    "fin",
+    "ops",
+    "analytics",
+    "search",
+    "perms"
+   ]
+  }
+ ]
+}

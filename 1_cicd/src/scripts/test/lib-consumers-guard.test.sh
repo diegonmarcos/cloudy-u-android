@@ -68,4 +68,25 @@ d = json.load(open(p)); next(e for e in d["build_time"] if e["id"] == "ml-l-imag
 PY
 has "lib-consumers.json does not match" && ok "an ML lib flagged as non-ML fails" || fail "an ML lib mixed into the non-ML list passed"
 
+# 6. #1511 the category map: a lib in no category, in two, or a member that is no lib each fail
+python3 "$WORK/1_cicd/src/scripts/cloud-android-lib-consumers.py" write "$WORK" >/dev/null  # a clean data file to start from
+cat_edit() { python3 - "$WORK" "$1" <<'PY'
+import json, sys
+p = sys.argv[1] + "/1_cicd/src/data/lib-categories.json"
+d = json.load(open(p)); c = d["categories"]
+if sys.argv[2] == "drop": c[0]["members"].remove("ui-kit")
+if sys.argv[2] == "dup": c[1]["members"].append("ui-kit")
+if sys.argv[2] == "ghost": c[0]["members"].append("ghost-lib")
+json.dump(d, open(p, "w"))
+PY
+}
+cat_edit drop
+has "ui-kit is in no category" && ok "a lib in no category fails" || fail "an uncategorized lib passed"
+cp "$ROOT/1_cicd/src/data/lib-categories.json" "$WORK/1_cicd/src/data/"; cat_edit dup
+has "ui-kit is in 2 categories" && ok "a lib in two categories fails" || fail "a doubly categorized lib passed"
+cp "$ROOT/1_cicd/src/data/lib-categories.json" "$WORK/1_cicd/src/data/"; cat_edit ghost
+has "lists ghost-lib" && ok "a category member that is no lib fails" || fail "a ghost category member passed"
+cp "$ROOT/1_cicd/src/data/lib-categories.json" "$WORK/1_cicd/src/data/"
+chk >/dev/null && ok "the restored category map passes" || fail "the restored category map does not pass: $(chk | head -3)"
+
 [ "$FAILURES" -eq 0 ] && echo "all lib-consumers guard checks passed" || { echo "$FAILURES failed"; exit 1; }

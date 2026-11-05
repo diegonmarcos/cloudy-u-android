@@ -25,6 +25,10 @@ BuildConfig.LIB_CONSUMERS_B64), so no list of callers is typed anywhere:
               ship workflows watch: cloud_android_lib_closure.inputs), the engine APKs that
               compile it in, and a primary consumer (1_cicd/src/data/lib-primary-consumers.json; informational only, every consumer ships on a lib edit).
 
+              Each entry also carries its `category` (lib-categories.json, the one declared map), its
+              `class` (lib-classes.json) and `ships`: "apk" when only engine APKs compile it in, else "static".
+  categories  the ordered [{id,label}] the page groups by.
+
   gen ROOT      print the JSON (reads the fleet file for the lib rows)
   write ROOT    write aa_cloud-superapp/data/lib-consumers.json, for regen.sh
   check ROOT    exit 1 when the committed file differs from gen, or a non-engine lib has
@@ -43,6 +47,8 @@ OUT = "aa_cloud-superapp/data/lib-consumers.json"
 SUPERAPP = "aa_cloud-superapp/build.json"
 LIB_APKS = "ab_cloud-libs-shared/lib-apks/build.json"
 PRIMARY = "1_cicd/src/data/lib-primary-consumers.json"
+CATEGORIES = "1_cicd/src/data/lib-categories.json"   # #1511 the one category map of every shared lib
+CLASSES = "1_cicd/src/data/lib-classes.json"
 LIBS = "ab_cloud-libs-shared/libs"
 # a companion APK that compiles shared libs like an app does, though it is not under a[acd]_*
 EXTRA_APPS = ["ab_cloud-libs-shared/keyboard-engines"]
@@ -142,6 +148,9 @@ def generate(root):
         for m in closure.closure({e}, edges) - {e}:
             in_engine.setdefault(m, []).append(asset.get("lib-" + e) or "Cloud-Lib-" + e)
 
+    cats = (jload(os.path.join(root, CATEGORIES), {}) or {}).get("categories", [])
+    cat_of = {m: c["id"] for c in cats for m in c.get("members", [])}
+    classes = (jload(os.path.join(root, CLASSES), {}) or {}).get("libs", {})
     build_time = []
     for m in sorted(libs - engines):
         entry = {"id": m, "ml": bool(ML.match(m)), "description": static.get(m, ""),
@@ -149,10 +158,14 @@ def generate(root):
                  "engines": sorted(in_engine.get(m, []))}
         if primary.get(m):
             entry["primary"] = primary[m]
+        entry["category"] = cat_of.get(m, "")
+        entry["class"] = classes.get(m, {}).get("class", "")
+        entry["ships"] = "apk" if entry["engines"] and not entry["compiled_by"] else "static"
         build_time.append(entry)
     groups = ((jload(os.path.join(root, SUPERAPP), {}) or {}).get("constellation", {}).get("groups", []))
     group = next((g["id"] for g in groups if g.get("default_for_kind") == "lib"), "")
-    return {"group": group, "runtime": runtime, "build_time": build_time}
+    return {"group": group, "categories": [{"id": c["id"], "label": c["label"]} for c in cats],
+            "runtime": runtime, "build_time": build_time}
 
 
 def problems(root, gen):
@@ -160,6 +173,15 @@ def problems(root, gen):
     ids = {e["id"] for e in gen["build_time"]}
     out = ["lib_apks.static_libs has no description for %s" % m for m in sorted(ids - set(static))]
     out += ["lib_apks.static_libs describes %s, which is not a shared non-engine lib" % m for m in sorted(set(static) - ids)]
+    # #1511 every lib is in exactly one category, and a category names only libs
+    cats = (jload(os.path.join(root, CATEGORIES), {}) or {}).get("categories", [])
+    seen = {}
+    for c in cats:
+        for m in c.get("members", []):
+            seen.setdefault(m, []).append(c["id"])
+    out += ["lib-categories.json: %s is in no category (add it to one)" % m for m in sorted(ids - set(seen))]
+    out += ["lib-categories.json: %s is in %d categories" % (m, len(v)) for m, v in sorted(seen.items()) if len(v) > 1]
+    out += ["lib-categories.json lists %s, which is not a shared non-engine lib" % m for m in sorted(set(seen) - ids)]
     # ML libs never share a list with the others: flagged by the id rule, and none may be
     # unflagged or flagged without the rule (the page splits on this flag)
     out += ["%s: ml flag %s disagrees with the ml- id rule" % (e["id"], e["ml"]) for e in gen["build_time"] if e["ml"] != bool(ML.match(e["id"]))]
@@ -173,7 +195,7 @@ def dump(gen):
     j = lambda o: json.dumps(o, ensure_ascii=False, separators=(",", ":"), sort_keys=True)
     rt = ",\n".join(j(k) + ":" + j(v) for k, v in sorted(gen["runtime"].items()))
     bt = ",\n".join(j(e) for e in gen["build_time"])
-    return '{"group":%s,\n"runtime":{\n%s},\n"build_time":[\n%s\n]}\n' % (j(gen["group"]), rt, bt)
+    return '{"group":%s,\n"categories":%s,\n"runtime":{\n%s},\n"build_time":[\n%s\n]}\n' % (j(gen["group"]), j(gen["categories"]), rt, bt)
 
 
 def main(argv):

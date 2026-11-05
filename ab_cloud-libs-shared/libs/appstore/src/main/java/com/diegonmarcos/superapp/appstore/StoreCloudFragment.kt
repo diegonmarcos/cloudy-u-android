@@ -7,7 +7,6 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Base64
 import android.widget.Toast
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -815,32 +814,11 @@ class StoreCloudFragment : KitComposeFragment() {
      *  row each: name, what it is, the apps that compile it in. [ml] picks the generator's `ml` flag. */
     @Composable
     private fun BuildTimeLibs(ml: Boolean) {
-        val libs = libConsumers.optJSONArray("build_time") ?: return
-        val group = (0 until libs.length()).map { libs.getJSONObject(it) }.filter { it.optBoolean("ml") == ml }
+        val group = LibsTable.parse(libConsumers, ml)
         if (group.isEmpty()) return
-        val title = if (ml) "Machine-learning libs" else "Shared libs"
         SectionHeading("Build-time ${if (ml) "ML" else "shared"} libs — compiled in, nothing to install")
-        StoreCaption("${group.size} libs. Each is compiled into the apps listed, so it ships inside their APKs.")
-        GroupHeader("lib_group_$title", title, group.size) { for (lib in group) LibCard(lib) }
-    }
-
-    @Composable
-    private fun LibCard(lib: JSONObject) {
-        val compiledBy = appNames(lib.optJSONArray("compiled_by"))
-        val engines = lib.optJSONArray("engines")?.let { e -> (0 until e.length()).map { e.getString(it) } }.orEmpty()
-        var folded by remember(lib.getString("id")) { mutableStateOf(true) }
-        Column(Modifier.fillMaxWidth().padding(vertical = sdp(StoreDensity.S2)).background(Ink.CARD.ink())
-            .padding(horizontal = sdp(StoreDensity.S12), vertical = sdp(StoreDensity.S8))) {
-            Text(lib.getString("id"), color = Ink.WHITE.ink(), fontSize = StoreDensity.T_TITLE.sp, fontWeight = FontWeight.Bold)
-            StoreCaption(lib.optString("description"))
-            Text(buildString {
-                append(if (compiledBy.isEmpty()) "Compiled into no app directly" else "Compiled into ${compiledBy.size}: ${compiledBy.joinToString(", ")}")
-                if (engines.isNotEmpty()) append("  ·  inside ${if (engines.size > 3) "${engines.size} engine APKs" else engines.joinToString(", ")}")
-                lib.optString("primary").takeIf { it.isNotEmpty() }
-                    ?.let { append("  ·  primary: ${appNames(JSONArray().put(it)).first()}") }
-            }, color = cMiss.ink(), fontSize = StoreDensity.T_CAPTION.sp, maxLines = if (folded) 2 else Int.MAX_VALUE,
-                overflow = TextOverflow.Ellipsis, modifier = Modifier.tap { folded = !folded })
-        }
+        StoreCaption("${group.size} libs, by category. Tap a lib for the apps that compile it in.")
+        LibsTable.Page(libConsumers, ml) { key, title, count, content -> GroupHeader(key, title, count, content) }
     }
 
     /** A section or group separator: larger than a row title, with room above and below, so the
