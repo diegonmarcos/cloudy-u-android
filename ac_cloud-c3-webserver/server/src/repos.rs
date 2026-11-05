@@ -289,6 +289,7 @@ pub fn dir_handler(root: PathBuf, index: Option<String>, extra_hosts: Vec<String
 
 struct Site {
     stop: Arc<AtomicBool>,
+    port: u16,
 }
 
 /// The running sites, by entry id.
@@ -327,8 +328,26 @@ impl Host {
         };
         let stop = Arc::new(AtomicBool::new(false));
         http::listen_with(listener, handler, peer, Some(stop.clone()));
-        self.sites.lock().map_err(|_| "poisoned")?.insert(e.id.clone(), Site { stop });
+        self.sites.lock().map_err(|_| "poisoned")?.insert(e.id.clone(), Site { stop, port: e.port });
         Ok(e.port)
+    }
+
+    pub fn count(&self) -> usize {
+        self.sites.lock().map(|s| s.len()).unwrap_or(0)
+    }
+
+    pub fn ports(&self) -> Vec<u16> {
+        let mut p: Vec<u16> = self.sites.lock().map(|s| s.values().map(|x| x.port).collect()).unwrap_or_default();
+        p.sort();
+        p
+    }
+
+    /// #1502 Server OFF: stop every site (they stay enabled in the power store, so ON starts them again).
+    pub fn stop_all(&self) {
+        let ids: Vec<String> = self.sites.lock().map(|s| s.keys().cloned().collect()).unwrap_or_default();
+        for id in ids {
+            self.stop(&id);
+        }
     }
 
     pub fn stop(&self, id: &str) -> bool {

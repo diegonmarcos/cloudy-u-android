@@ -75,3 +75,6 @@ Galaxy A37 density: tree left, viewer right, toolbar on top), `test/test-c3-webs
 owners, readers, loopback-only DNS), `test/test-c3-webserver-no-kotlin.sh`, plus `cargo test` here and
 in the shared server (vendor hash == the Linux copy, every endpoint's contract, parity with the real
 Linux server).
+
+## Server and Keep alive (#1503)
+Two master controls sit at the top of Home and Configs and persist in `power.json` (build.json::power). Server OFF stops every listener (pages, mesh listener, Repos sites) and frees the ports; the app then opens on a bundled page whose button turns it back ON. Keep alive (default OFF) is the only reason a foreground service, a sticky restart or a boot receiver exists, and only with Server ON. Guard: test/test-c3-webserver-power.sh; state machine tests: server/src/power.rs.

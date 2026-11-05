@@ -56,6 +56,7 @@ pub const ROUTES: &[Route] = &[
     Route { kind: Kind::Api, path: "/__app__/api/sub/pages-repos", tab: None, post: false, summary: "Pages > Repos: the repo sites, their ports and state, and the add form", handler: sub::page_repos },
     Route { kind: Kind::Api, path: "/__app__/api/repos", tab: None, post: true, summary: "GET the repo entries; POST {op: add|remove|start|stop, ...}: the Repos store and its sites (loopback or mesh, never public)", handler: sub::api_repos },
     Route { kind: Kind::Api, path: "/__app__/api/repos/discover", tab: None, post: false, summary: "GET ?source=<id>: the git repositories a Repos source holds", handler: sub::api_discover },
+    Route { kind: Kind::Api, path: "/__app__/api/power", tab: None, post: true, summary: "GET the master controls and the live state (running, ports, sites); POST {server?, keep_alive?} sets Server ON/OFF and Keep alive ON/OFF (build.json::power)", handler: api_power },
     Route { kind: Kind::Api, path: "/__app__/api/open", tab: None, post: true, summary: "POST {url} or {id,via:name|ip}: hand an http(s) link to cloud-browser", handler: api_open },
 ];
 
@@ -176,6 +177,30 @@ fn api_routes(_ctx: &Ctx, _req: &Req) -> Resp {
 
 fn api_serving(_ctx: &Ctx, _req: &Req) -> Resp {
     Resp::json(200, serving::json(true))
+}
+
+/// #1502 the master controls: GET the state, POST {server?, keep_alive?} (either may be omitted) and get the new state.
+fn api_power(_ctx: &Ctx, req: &Req) -> Resp {
+    if req.method == "POST" {
+        let body: serde_json::Value = match serde_json::from_slice(&req.body) {
+            Ok(v) => v,
+            Err(_) => return jerr(400, "the body must be JSON"),
+        };
+        let cur = crate::power::current().sw;
+        let want = |k: &str, d: bool| match &body[k] {
+            serde_json::Value::Null => Ok(d),
+            serde_json::Value::Bool(b) => Ok(*b),
+            _ => Err(format!("{} must be true or false", k)),
+        };
+        let sw = match (want("server", cur.server), want("keep_alive", cur.keep_alive)) {
+            (Ok(server), Ok(keep_alive)) => crate::power::Switches { server, keep_alive },
+            (Err(e), _) | (_, Err(e)) => return jerr(400, &e),
+        };
+        if let Err(e) = crate::power::apply(sw) {
+            return jerr(500, &e);
+        }
+    }
+    Resp::json(200, crate::power::status_json().to_string())
 }
 
 fn api_engines(_ctx: &Ctx, _req: &Req) -> Resp {

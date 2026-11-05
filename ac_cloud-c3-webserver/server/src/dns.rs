@@ -158,7 +158,7 @@ fn bind_shared(host: &str, port: u16) -> std::io::Result<UdpSocket> {
 }
 
 /// Bind the declared address and answer on a thread of its own. Loopback bind, loopback peers only.
-pub fn start() -> Result<(), String> {
+pub fn start(stop: std::sync::Arc<std::sync::atomic::AtomicBool>) -> Result<(), String> {
     let sv = serving::get();
     let sock = bind_shared(sv.dns.host.as_str(), sv.dns.port).map_err(|e| format!("cannot bind udp {}:{} ({})", sv.dns.host, sv.dns.port, e))?;
     let answer: Ipv4Addr = sv.dns.answer.parse().map_err(|_| format!("serving.dns.answer {} is not an IPv4 address", sv.dns.answer))?;
@@ -167,7 +167,12 @@ pub fn start() -> Result<(), String> {
     std::thread::spawn(move || {
         let names = serving::names();
         let mut buf = [0u8; 512];
+        // #1502 a stopped server frees the port: the wait ends every 2 s to look at the flag (a blocking read cannot be cancelled).
+        let _ = sock.set_read_timeout(Some(std::time::Duration::from_secs(2)));
         loop {
+            if stop.load(std::sync::atomic::Ordering::SeqCst) {
+                return;
+            }
             let (n, peer) = match sock.recv_from(&mut buf) {
                 Ok(x) => x,
                 Err(_) => continue,

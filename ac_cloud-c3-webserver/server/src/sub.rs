@@ -149,6 +149,7 @@ pub fn repos_op(cfg: &Cfg, host: &Host, body: &Value) -> Result<Value, (u16, Str
         "remove" => {
             let i = find(&entries)?;
             host.stop(&entries[i].id);
+            crate::power::set_site(&entries[i].id, false);
             entries.remove(i);
             repos::save(&cfg.store, &entries).map_err(|e| (500u16, e))?;
             Ok(json!({"ok": true}))
@@ -156,10 +157,12 @@ pub fn repos_op(cfg: &Cfg, host: &Host, body: &Value) -> Result<Value, (u16, Str
         "start" => {
             let i = find(&entries)?;
             let port = host.start(cfg, &entries[i]).map_err(|e| (409u16, e))?;
+            crate::power::set_site(&entries[i].id, true);
             Ok(json!({"ok": true, "port": port, "url": repos::url(cfg, &entries[i])}))
         }
         "stop" => {
             let i = find(&entries)?;
+            crate::power::set_site(&entries[i].id, false);
             Ok(json!({"ok": true, "was_running": host.stop(&entries[i].id)}))
         }
         other => Err((400u16, format!("op {:?} is not add|remove|start|stop", other))),

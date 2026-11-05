@@ -25,6 +25,7 @@ pub mod diag;
 pub mod dns;
 pub mod engines;
 pub mod meshlogs;
+pub mod power;
 pub mod repos;
 pub mod serving;
 pub mod sub;
@@ -33,7 +34,7 @@ use fleet_webserver::http::{self, Req, Resp};
 use fleet_webserver::render::jstr;
 use std::net::{Ipv4Addr, TcpListener};
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::time::Instant;
 
 /// What the :8003 handlers know about their listener.
@@ -74,6 +75,10 @@ pub fn handle_diag(ctx: &Ctx, req: &Req) -> Resp {
     }
 }
 
+fn loopback() -> Arc<http::PeerCheck> {
+    Arc::new(|ip: std::net::IpAddr| ip.is_loopback())
+}
+
 fn host_allowed(host: &str) -> bool {
     matches!(host, "127.0.0.1" | "localhost" | "[::1]") || private_names().iter().any(|n| n == host)
 }
@@ -84,6 +89,7 @@ pub fn drive_handler(ctx: Ctx, files: Arc<http::Handler>) -> Arc<http::Handler> 
 }
 
 /// What the app hands the server. The ports come from build.json (build.rs), never from code.
+#[derive(Clone)]
 pub struct Config {
     pub drive_port: u16,
     pub diag_port: u16,
@@ -97,19 +103,68 @@ pub struct Config {
 /// The root is NOT required to be readable yet: on Android the storage grant arrives after the app has started,
 /// and every request resolves its path afresh, so a root that becomes readable later is served from then on.
 pub fn start(cfg: Config) -> Result<(), String> {
-    // One server per process: the keep-alive service (src-tauri) and the activity both call this, in either order.
-    static STARTED: AtomicBool = AtomicBool::new(false);
-    if STARTED.swap(true, Ordering::SeqCst) {
+    // #1502 every caller (the activity, the keep-alive service, an outside start request) lands here: Server OFF binds nothing.
+    *CFG.lock().map_err(|_| "poisoned")? = Some(cfg.clone());
+    if !power::plan(power::current().sw).listeners {
+        println!("c3-webserver: Server is OFF, nothing bound");
         return Ok(());
     }
-    let r = start_once(cfg);
+    // One server per process: the keep-alive service (src-tauri) and the activity both call this, in either order.
+    let stop = {
+        let mut run = RUN.lock().map_err(|_| "poisoned")?;
+        if run.is_some() {
+            return Ok(());
+        }
+        let s = Arc::new(AtomicBool::new(false));
+        *run = Some(s.clone());
+        s
+    };
+    let r = start_once(cfg, stop);
     if r.is_err() {
-        STARTED.store(false, Ordering::SeqCst);
+        stop_all();
     }
     r
 }
 
-fn start_once(cfg: Config) -> Result<(), String> {
+static CFG: Mutex<Option<Config>> = Mutex::new(None);
+/// The stop flag of the running generation of listeners; None while nothing is bound.
+static RUN: Mutex<Option<Arc<AtomicBool>>> = Mutex::new(None);
+
+pub fn running() -> bool {
+    RUN.lock().map(|r| r.is_some()).unwrap_or(false)
+}
+
+/// #1502 Server OFF: end every listener (drive, diagnostics, mesh, DNS, every Repos site) so every port is released.
+pub fn stop_all() {
+    if let Some(s) = RUN.lock().ok().and_then(|mut r| r.take()) {
+        s.store(true, Ordering::SeqCst);
+    }
+    repos::host().stop_all();
+}
+
+/// Server ON: bind again with the config the app started with (a no-op when nothing ever called [`start`] in this process).
+pub fn resume() -> Result<(), String> {
+    let cfg = CFG.lock().map_err(|_| "poisoned")?.clone();
+    match cfg {
+        Some(c) => start(c),
+        None => Ok(()),
+    }
+}
+
+/// Bind with a few short retries: a listener that was just stopped releases its port within one accept poll.
+fn bind_retry(port: u16) -> std::io::Result<TcpListener> {
+    let mut last = None;
+    for _ in 0..10 {
+        match TcpListener::bind((Ipv4Addr::LOCALHOST, port)) {
+            Ok(l) => return Ok(l),
+            Err(e) => last = Some(e),
+        }
+        std::thread::sleep(std::time::Duration::from_millis(60));
+    }
+    Err(last.unwrap())
+}
+
+fn start_once(cfg: Config, stop: Arc<AtomicBool>) -> Result<(), String> {
     let sv = serving::get();
     if cfg.drive_port != sv.drive_port || cfg.diag_port != sv.diag_port {
         return Err(format!(
@@ -117,30 +172,42 @@ fn start_once(cfg: Config) -> Result<(), String> {
             cfg.drive_port, cfg.diag_port, sv.drive_port, sv.diag_port
         ));
     }
-    let drive = TcpListener::bind((Ipv4Addr::LOCALHOST, cfg.drive_port)).map_err(|e| format!("cannot bind 127.0.0.1:{} ({})", cfg.drive_port, e))?;
+    let drive = bind_retry(cfg.drive_port).map_err(|e| format!("cannot bind 127.0.0.1:{} ({})", cfg.drive_port, e))?;
     app::check_table()?;
     app::links()?;
     let web = fleet_webserver::Config { port: cfg.drive_port, root: cfg.root.clone(), extra_hosts: private_names() };
     println!("c3-webserver {} on http://127.0.0.1:{}/ root={} pid={}", env!("CARGO_PKG_VERSION"), cfg.drive_port, cfg.root, std::process::id());
     let binary = std::env::current_exe().map(|p| p.to_string_lossy().to_string()).unwrap_or_default();
     let dctx = Ctx { root: std::path::PathBuf::from(&cfg.root), port: cfg.drive_port, started: Instant::now(), binary: binary.clone() };
-    http::listen(drive, drive_handler(dctx, fleet_webserver::handler(&web)));
+    http::listen_with(drive, drive_handler(dctx, fleet_webserver::handler(&web)), loopback(), Some(stop.clone()));
 
-    match TcpListener::bind((Ipv4Addr::LOCALHOST, cfg.diag_port)) {
+    match bind_retry(cfg.diag_port) {
         Ok(l) => {
             println!("c3-webserver diagnostics on http://127.0.0.1:{}/", cfg.diag_port);
             let ctx = Ctx { root: std::path::PathBuf::from(&cfg.root), port: cfg.diag_port, started: Instant::now(), binary };
-            http::listen(l, Arc::new(move |req: &Req| handle_diag(&ctx, req)));
+            http::listen_with(l, Arc::new(move |req: &Req| handle_diag(&ctx, req)), loopback(), Some(stop.clone()));
         }
         Err(e) => eprintln!("c3-webserver: diagnostics listener not started: cannot bind 127.0.0.1:{} ({})", cfg.diag_port, e),
     }
     // #1490 the mesh listener: /logs/<app>, mesh peers + fleet bearer only; a failure here never stops the rest.
-    match meshlogs::Mesh::from_build(apis::build()).and_then(meshlogs::start) {
+    match meshlogs::Mesh::from_build(apis::build()).and_then(|m| meshlogs::start(m, stop.clone())) {
         Ok(()) => {}
         Err(e) => eprintln!("c3-webserver: mesh listener not started: {}", e),
     }
-    if let Err(e) = dns::start() {
+    if let Err(e) = dns::start(stop.clone()) {
         eprintln!("c3-webserver: private DNS not started: {}", e);
+    }
+    // #1502 ON starts the enabled Repos sites too.
+    if let Ok(rc) = repos::cfg() {
+        if let Ok(entries) = repos::load(&rc.store) {
+            for id in power::current().sites {
+                if let Some(e) = entries.iter().find(|e| e.id == id) {
+                    if let Err(er) = repos::host().start(rc, e) {
+                        eprintln!("c3-webserver: site {} not started: {}", id, er);
+                    }
+                }
+            }
+        }
     }
     Ok(())
 }

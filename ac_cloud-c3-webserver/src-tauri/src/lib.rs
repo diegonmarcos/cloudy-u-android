@@ -34,17 +34,45 @@ pub extern "system" fn Java_com_diegonmarcos_cloudwebserver_KeepAliveService_nat
     start_servers().is_ok() as jni::sys::jboolean
 }
 
+/// #1502 the Server stopped page's way back: the served pages are down while the server is OFF, so this Tauri command (called by the
+/// bundled ui-off page) is the control that works then. Either switch may be omitted. Returns the live state as JSON.
+#[tauri::command]
+fn power_set(server: Option<bool>, keep_alive: Option<bool>) -> Result<String, String> {
+    use c3_webserver::power;
+    let cur = power::current().sw;
+    power::apply(power::Switches { server: server.unwrap_or(cur.server), keep_alive: keep_alive.unwrap_or(cur.keep_alive) })?;
+    Ok(power::status_json().to_string())
+}
+
+/// #1502 Stop on the foreground notification: Server OFF, every listener released (the service then ends itself).
+#[cfg(target_os = "android")]
+#[no_mangle]
+pub extern "system" fn Java_com_diegonmarcos_cloudwebserver_KeepAliveService_nativeStop(
+    _env: jni::JNIEnv,
+    _service: jni::objects::JObject,
+) {
+    use c3_webserver::power;
+    let _ = power::apply(power::Switches { server: false, keep_alive: power::current().sw.keep_alive });
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .invoke_handler(tauri::generate_handler![power_set])
         .setup(|app| {
             // A failed bind is logged, not fatal: the window still opens and
             // says "not available", which names the problem on the screen
             // instead of closing the app with no word.
             let port = start_servers()?;
             // The app opens on its shell (five tabs); the file view at / is one of its pages (the Files tab).
-            let url: tauri::Url = format!("http://127.0.0.1:{}/__app__/", port).parse()?;
-            let _window = WebviewWindowBuilder::new(app, "main", WebviewUrl::External(url)).build()?;
+            // Server OFF: the window opens on the bundled ui-off page (the served pages are down), whose button is the way back.
+            let target = if c3_webserver::power::current().sw.server {
+                let url: tauri::Url = format!("http://127.0.0.1:{}/__app__/", port).parse()?;
+                WebviewUrl::External(url)
+            } else {
+                WebviewUrl::App("index.html".into())
+            };
+            let _window = WebviewWindowBuilder::new(app, "main", target).build()?;
             #[cfg(target_os = "android")]
             {
                 request_storage(&_window);

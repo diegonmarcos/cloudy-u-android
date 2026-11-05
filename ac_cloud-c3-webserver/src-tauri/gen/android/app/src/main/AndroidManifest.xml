@@ -7,7 +7,7 @@
          readable at targetSdk 28 once this is granted. src-tauri/src/lib.rs
          asks for it at launch, from Rust, through the activity's JNI handle. -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <!-- The keep-alive service (KeepAliveService): foreground, started at boot and after an update. -->
+    <!-- The keep-alive service (KeepAliveService): foreground, started at boot and after an update, only with Server ON and Keep alive ON (#1502). -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
@@ -36,10 +36,11 @@
             android:exported="true"
             android:permission="com.diegonmarcos.cloud.permission.CONSTELLATION_DATA" />
 
-        <!-- Exported so the emulator test can send BOOT_COMPLETED / MY_PACKAGE_REPLACED to it by component; all it does is
+        <!-- #1502 disabled until Keep alive is ON (MainActivity.syncKeepAlive enables it). Exported so the emulator test can send BOOT_COMPLETED / MY_PACKAGE_REPLACED to it by component; all it does is
              start the app's own keep-alive service, so a spoofed broadcast gains nothing. -->
         <receiver
             android:name=".BootReceiver"
+            android:enabled="false"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />

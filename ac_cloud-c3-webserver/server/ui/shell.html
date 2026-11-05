@@ -139,6 +139,19 @@ function renderSections(sections) {
     return '<section><h2>' + esc(s.title) + '</h2>' + rows + '</section>';
   }).join('');
 }
+// #1502 the two master controls and the live state, at the top of Home and of Configs. `st` is /__app__/api/power.
+function renderPower(st) {
+  var sw = function (id, label, on, note) {
+    return '<div class="tool"><b>' + esc(label) + '</b><button data-power="' + id + '" data-to="' + (on ? 'false' : 'true') + '" aria-pressed="' + (on ? 'true' : 'false') + '">' + (on ? 'ON' : 'OFF') + '</button><span class="sum">' + esc(note) + '</span></div>';
+  };
+  var ports = st.ports.map(function (p) { return p.proto + ' ' + p.port; }).join(', ') || 'none';
+  return '<section id="power"><h2>Server</h2>' +
+    sw('server', 'Server', st.server, 'OFF stops every page, the mesh listener and every site, and frees the ports') +
+    sw('keep_alive', 'Keep alive', st.keep_alive, 'ON keeps the server up with a notification and starts it at boot; OFF stops it when the app closes') +
+    '<div class="row"><div class="k">State</div><div class="v">' + (st.running ? 'running' : 'stopped') + '</div></div>' +
+    '<div class="row"><div class="k">Ports</div><div class="v">' + esc(ports) + '</div></div>' +
+    '<div class="row"><div class="k">Active sites</div><div class="v">' + esc(String(st.sites)) + '</div></div></section>';
+}
 // Home: the cloud-superapp Configs > About shape: an Index of the macro groups, then each group's sections.
 function renderAbout(groups) {
   var cells = groups.map(function (g, i) {
@@ -461,14 +474,14 @@ if (typeof module !== 'undefined') {
   var views = {
     pages: function () { return withSubs('pages', 'drive', function () { return j('/__app__/api/serving').then(function (sv) { SERVING = sv; return renderServed(sv) + renderRoutes(ROUTES, 'page'); }); }); },
     api: function () { return withSubs('api', 'apps', function () { return Promise.resolve(renderRoutes(ROUTES, 'api')); }); },
-    home: function () { return j('/__app__/api/about').then(function (g) { ABOUT = g; return renderAbout(ABOUT); }); },
+    home: function () { return Promise.all([j('/__app__/api/power'), j('/__app__/api/about')]).then(function (rs) { ABOUT = rs[1]; return renderPower(rs[0]) + renderAbout(ABOUT); }); },
     files: function () { return Promise.resolve('<iframe id="fileview" title="Files" src="/"></iframe>'); },
     configs: function () {
       var head = renderCfgTabs(cfgPage);
       if (cfgPage === 'engines') return j('/__app__/api/engines').then(function (l) { return head + renderEngines(l); });
       if (cfgPage === 'links') return Promise.resolve(head + renderLinks(LINKS, remembered()));
-      return Promise.all([j('/__app__/api/serving'), j('/__app__/api/config')]).then(function (rs) {
-        SERVING = rs[0]; return head + renderServing(rs[0], rs[1]) + renderConfig(rs[1]);
+      return Promise.all([j('/__app__/api/serving'), j('/__app__/api/config'), j('/__app__/api/power')]).then(function (rs) {
+        SERVING = rs[0]; return head + renderPower(rs[2]) + renderServing(rs[0], rs[1]) + renderConfig(rs[1]);
       });
     }
   };
@@ -523,6 +536,16 @@ if (typeof module !== 'undefined') {
   $main.addEventListener('click', function (ev) {
     var sub = ev.target.closest('[data-sub]');
     if (sub) { var on = document.querySelector('nav button.on'); if (on) { subPage[on.getAttribute('data-tab')] = sub.getAttribute('data-sub'); show(on.getAttribute('data-tab'), false); } return; }
+    var pw = ev.target.closest('[data-power]');
+    if (pw) {
+      var body = {}; body[pw.getAttribute('data-power')] = pw.getAttribute('data-to') === 'true';
+      post('/__app__/api/power', body).then(function (st) {
+        // The served pages are down once the server is OFF: continue on the bundled page, whose button turns it back ON.
+        if (!st.server) { location.replace(st.off_url); return; }
+        refreshTab();
+      }).catch(function (e) { toast(e.message, true); });
+      return;
+    }
     var act = ev.target.closest('[data-act]');
     if (act) {
       post(act.getAttribute('data-post'), JSON.parse(act.getAttribute('data-body'))).then(function (r) { toast(r.url ? 'Serving ' + r.url : 'Done'); refreshTab(); }).catch(function (e) { toast(e.message, true); });

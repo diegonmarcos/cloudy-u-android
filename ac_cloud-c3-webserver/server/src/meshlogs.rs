@@ -220,7 +220,7 @@ pub fn browser(m: &Mesh, rest: &str, req: &Req, src: &LogSource) -> Resp {
 }
 
 /// Bind the mesh address (retrying while the tunnel is down) and serve [`route`] on it, mesh peers only.
-pub fn start(m: Mesh) -> Result<(), String> {
+pub fn start(m: Mesh, stop: Arc<std::sync::atomic::AtomicBool>) -> Result<(), String> {
     m.check_bind()?;
     let m = Arc::new(m);
     let handler: Arc<http::Handler> = {
@@ -233,15 +233,23 @@ pub fn start(m: Mesh) -> Result<(), String> {
             }
         })
     };
+    let mut wait: u32 = 0;
     std::thread::spawn(move || loop {
+        if stop.load(std::sync::atomic::Ordering::SeqCst) {
+            return;
+        }
         match TcpListener::bind((m.bind, m.port)) {
             Ok(l) => {
                 println!("c3-webserver mesh logs on http://{}:{}{}", m.bind, m.port, m.route);
                 let mm = m.clone();
-                http::listen_with(l, handler, Arc::new(move |ip| mm.is_mesh(ip)), None);
+                http::listen_with(l, handler, Arc::new(move |ip| mm.is_mesh(ip)), Some(stop.clone()));
                 return;
             }
-            Err(_) => std::thread::sleep(Duration::from_secs(m.retry_s)),
+            // #1487 no tight loop while the tunnel is down: the wait doubles up to 30 minutes.
+            Err(_) => {
+                std::thread::sleep(Duration::from_secs(m.retry_s.saturating_mul(1 << wait.min(6)).min(1800)));
+                wait += 1;
+            }
         }
     });
     Ok(())

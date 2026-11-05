@@ -36,6 +36,8 @@ pub fn install(window: &tauri::WebviewWindow) {
                     c3_webserver::meshlogs::set_log_source(Box::new(call_provider));
                     c3_webserver::meshlogs::set_token_source(Box::new(read_token));
                     c3_webserver::diag::set_opener(Box::new(open_in_browser));
+                    // #1502 the keep-alive service and the boot receiver follow the Server / Keep alive switches.
+                    c3_webserver::power::set_sync_hook(Box::new(sync_keep_alive));
                 }
                 Err(e) => {
                     let _ = env.exception_clear();
@@ -185,4 +187,12 @@ fn open_in_browser(url: &str) -> Result<(), String> {
         Ok(())
     })
     .map_err(|e| if e.contains("ActivityNotFoundException") { format!("{} is not installed", package) } else { e })
+}
+
+/// #1502 MainActivity.syncKeepAlive(): start the foreground service and enable the boot receiver only when Server and Keep alive
+/// are both ON, stop the service and disable the receiver otherwise.
+fn sync_keep_alive() {
+    if let Err(e) = with_env(|env, activity| env.call_method(activity, "syncKeepAlive", "()V", &[]).map(|_| ())) {
+        eprintln!("cloud-c3-webserver: keep-alive sync failed: {}", e);
+    }
 }
