@@ -51,7 +51,7 @@ class WdAuditLog(private val store: Store, private val capacity: Int = 200) {
 object WdKeeperStatus {
     enum class Level { OK, WARN, BAD, UNKNOWN }
 
-    data class Chip(val id: String, val label: String, val value: String, val level: Level)
+    data class StatusChip(val id: String, val label: String, val value: String, val level: Level)
 
     data class Snapshot(
         val armed: Boolean,
@@ -64,14 +64,14 @@ object WdKeeperStatus {
         val lastRearmBy: String?,
     )
 
-    fun chips(s: Snapshot, ago: (Long) -> String): List<Chip> = listOf(
-        Chip("permission", "Permission", if (s.canWrite) "held" else "missing", if (s.canWrite) Level.OK else Level.BAD),
-        Chip("battery", "Battery", if (s.batteryExempt) "unrestricted" else "optimised", if (s.batteryExempt) Level.OK else Level.WARN),
-        Chip("service", "Service", if (s.serviceRunning) "running" else if (s.armed) "stopped" else "off",
+    fun chips(s: Snapshot, ago: (Long) -> String): List<StatusChip> = listOf(
+        StatusChip("permission", "Permission", if (s.canWrite) "held" else "missing", if (s.canWrite) Level.OK else Level.BAD),
+        StatusChip("battery", "Battery", if (s.batteryExempt) "unrestricted" else "optimised", if (s.batteryExempt) Level.OK else Level.WARN),
+        StatusChip("service", "Service", if (s.serviceRunning) "running" else if (s.armed) "stopped" else "off",
             if (s.serviceRunning) Level.OK else if (s.armed) Level.BAD else Level.UNKNOWN),
-        Chip("wifi", "Wi-Fi", if (s.wifiConnected) "connected" else "none", if (s.wifiConnected) Level.OK else Level.WARN),
-        Chip("setting", "Wireless debugging", if (s.settingOn) "on" else "off", if (s.settingOn) Level.OK else Level.WARN),
-        Chip("rearm", "Last re-arm", s.lastRearmAt?.let { ago(it) + (s.lastRearmBy?.let { b -> " by $b" } ?: "") } ?: "never",
+        StatusChip("wifi", "Wi-Fi", if (s.wifiConnected) "connected" else "none", if (s.wifiConnected) Level.OK else Level.WARN),
+        StatusChip("setting", "Wireless debugging", if (s.settingOn) "on" else "off", if (s.settingOn) Level.OK else Level.WARN),
+        StatusChip("rearm", "Last re-arm", s.lastRearmAt?.let { ago(it) + (s.lastRearmBy?.let { b -> " by $b" } ?: "") } ?: "never",
             if (s.lastRearmAt != null) Level.OK else Level.UNKNOWN),
     )
 

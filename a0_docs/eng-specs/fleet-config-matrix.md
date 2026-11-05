@@ -21,7 +21,7 @@ DataStore / Room stores and declared files it cannot move yet.
 | c3-watchtower | `com.diegonmarcos.watchtower` | 4 | 0 | 100% |
 | cloud-account | `com.diegonmarcos.cloudaccount` | 19 | 1 | 95% |
 | cloud-tasks | `com.diegonmarcos.cloudagenda` | 9 | 0 | 100% |
-| cloud-browser | `com.diegonmarcos.cloudbrowser` | 15 | 0 | 100% |
+| cloud-browser | `com.diegonmarcos.cloudbrowser` | 16 | 0 | 100% |
 | cloud-c3-webserver | `com.diegonmarcos.cloudwebserver` | 4 | 0 | 100% |
 | cloud-media-center | `com.diegonmarcos.cloudmediacenter` | 4 | 0 | 100% |
 | cloud-c3 | `com.diegonmarcos.cloudc3` | 12 | 0 | 100% |
@@ -39,7 +39,7 @@ DataStore / Room stores and declared files it cannot move yet.
 | cloud-gallery | `com.diegonmarcos.mediacenter` | 7 | 1 | 87% |
 | cloud-myterminal | `com.diegonmarcos.ide` | 9 | 0 | 100% |
 | cloud-nav | `com.diegonmarcos.cloudnav` | 14 | 0 | 100% |
-| cloud-news | `com.diegonmarcos.cloudnews` | 6 | 1 | 85% |
+| cloud-news | `com.diegonmarcos.cloudnews` | 8 | 1 | 88% |
 | cloud-terminal-nix | `cld.termux.nix` | 12 | 7 | 63% |
 | cloud-notes | `com.diegonmarcos.cloudnotes` | 5 | 1 | 83% |
 | cloud-office | `com.diegonmarcos.cloudoffice` | 3 | 0 | 100% |
@@ -57,7 +57,7 @@ DataStore / Room stores and declared files it cannot move yet.
 | capital-stack-finterminal | `com.diegonmarcos.capitalfinterm` | 5 | 0 | 100% |
 | hardtech-cad | `com.diegonmarcos.hardtechcad` | 4 | 0 | 100% |
 | hardtech-sim2real | `com.diegonmarcos.hardtechsim2real` | 4 | 0 | 100% |
-| **fleet** | | **392** | **56** | **87%** |
+| **fleet** | | **395** | **56** | **87%** |
 
 ## cloud-superapp — `com.diegonmarcos.superapp`
 
@@ -154,6 +154,7 @@ Module `aa_cloud-superapp`; libs: lib-account, lib-analytics, lib-appstore, lib-
 | `vault_cockpit` | prefs | device | no | Only holds this phone's device_id used in the vault cockpit. |
 | `wd_keepalive` | prefs | config | yes | Wireless-debugging keepalive switch (`enabled`), the owner's choice in Configs ▸ Controls. |
 | `wd_keepalive_status` | prefs | device | no | Wireless-debugging keepalive worker status (ready, last tick/reconnect/failure times). |
+| `wd_keeper` | prefs | device | no | #1467 Keep wireless debugging on: the shared keeper's armed flag, write-permission flag and leader heartbeat; per-install state the keeper rebuilds from each app's switch, so it never migrates. |
 | `weather_last_fix` | prefs | device | no | SuperApp Weather badge: the last location fix (lat/lon/accuracy/time/source) and the last forecast body kept for the offline card; a cache that is re-derived on the new phone, never migrated (#1108). |
 | `wireguard_prefs` | prefs | config (keys: if_privkey→secret, relay_key→secret) | yes | WireGuard tunnel config: name, address, DNS, port, MTU, peers_json, provider, tunnel_enabled, and the mesh fallback ladder's transport_mode / transport_plan (the path the last connect chose, no key in it); the private key and the TLS-443 relay key are credentials. |
 
@@ -281,6 +282,7 @@ Module `ac_cloud-account`; libs: lib-account, lib-account-ui, lib-appstore, lib-
 | `updater_apk_cache_notes` | prefs | device | no | Notes about cached downloaded APKs. |
 | `user_registry` | prefs | config (keys: applied_at→device, peer_id→device) | yes | Registry JSON, identity_email and peer_id: user identity/peer registry applied on this device. |
 | `vault_cockpit` | prefs | device | no | Only holds this phone's device_id used in the vault cockpit. |
+| `wd_keeper` | prefs | device | no | #1467 Keep wireless debugging on: the shared keeper's armed flag, write-permission flag and leader heartbeat; per-install state the keeper rebuilds from each app's switch, so it never migrates. |
 
 | file | class | doc |
 |---|---|---|
@@ -326,11 +328,12 @@ Coverage: 9 covered, 0 gaps.
 
 ## cloud-browser — `com.diegonmarcos.cloudbrowser`
 
-Module `ac_cloud-browser`; libs: lib-ai, lib-analytics, lib-autofill, lib-bluetooth, lib-bottomnav, lib-browser, lib-core, lib-crash, lib-decisions-link, lib-devtools, lib-fleetconfig-model, lib-media-convert-audio, lib-model-catalogue, lib-perms, lib-scraper, lib-text-tools, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-web-core.
+Module `ac_cloud-browser`; libs: lib-ai, lib-analytics, lib-apify, lib-autofill, lib-bluetooth, lib-bottomnav, lib-browser, lib-core, lib-crash, lib-decisions-link, lib-devtools, lib-fleetconfig-model, lib-media-convert-audio, lib-model-catalogue, lib-perms, lib-scraper, lib-text-tools, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-web-core.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
 | `ai_composer` | prefs | config | yes | The shared AI chat's config bar: whether it is collapsed to its one compact chip, one boolean per app (key ai_composer_collapsed.<app>). A user layout choice, so it migrates with the app's settings. |
+| `apify_tokens` | encrypted | secret | yes | #1468/#1470 libs:apify, the fleet's one Apify store (Cloud Browser Scrapers > Apify, Cloud News): the chosen backend, the Apify token, the Cloudy Crawlee URL and bearer, in EncryptedSharedPreferences via libs:crash SafeEncryptedPrefs; an unreadable store resets to memory, never to plaintext. Credentials: migrate through the vault. |
 | `auto_update` | prefs | config (keys: last_check_at→device, last_remote_bytes→device, last_remote_digest→device, unattended_pass→device) | yes | Auto-update toggles (enabled, require_silent/unmetered) are settings; last_check/remote digest/bytes/unattended_pass are state. |
 | `browser_ac_profiles` | encrypted | secret | yes | #900 Autocomplete: the personal profiles (many-valued names, addresses, phones, emails, ID documents, birth dates, organisations), the per-site memory (values typed on one site: customer number, member ID) and the never-save lists. EncryptedSharedPreferences, MasterKey AES256_GCM. Imports the old browser_autofill profile once; never deletes it. |
 | `browser_ac_secrets` | encrypted | device | no | #900 Autocomplete: saved sign-ins and cards. EncryptedSharedPreferences over which every password, card number and code is sealed again (AES-256-GCM, Android Keystore key cloud_browser_ac_v1, record-bound AAD), so it never migrates in the clear: the Keystore key does not leave the phone, and Cloud Vault is the fleet's migration path for secrets. |
@@ -365,7 +368,7 @@ Module `ac_cloud-browser`; libs: lib-ai, lib-analytics, lib-autofill, lib-blueto
 |---|---|---|
 | `browser_settings` | config | #802 every user setting is a key of the declared browser_settings store (libs:browser BrowserSettings over build.json::ui.browser.settings); tabs and history are the lib's own declared stores. Nothing is kept outside them. |
 
-Coverage: 15 covered, 0 gaps.
+Coverage: 16 covered, 0 gaps.
 
 ## cloud-c3-webserver — `com.diegonmarcos.cloudwebserver`
 
@@ -666,6 +669,7 @@ Module `ac_cloud-drive`; libs: lib-ai, lib-analytics, lib-auth, lib-bottomnav, l
 | `updater_advisory` | prefs | device | no | Update advisory feed, snooze/shown/fail state per app. |
 | `updater_apk_cache_notes` | prefs | device | no | Notes about cached downloaded APKs. |
 | `user_registry` | prefs | config (keys: applied_at→device, peer_id→device) | yes | Registry JSON, identity_email and peer_id: user identity/peer registry applied on this device. |
+| `wd_keeper` | prefs | device | no | #1467 Keep wireless debugging on: the shared keeper's armed flag, write-permission flag and leader heartbeat; per-install state the keeper rebuilds from each app's switch, so it never migrates. |
 
 | file | class | doc |
 |---|---|---|
@@ -942,13 +946,15 @@ Coverage: 14 covered, 0 gaps.
 
 ## cloud-news — `com.diegonmarcos.cloudnews`
 
-Module `ac_cloud-news`; libs: lib-analytics, lib-bottomnav, lib-core, lib-crash, lib-databackend, lib-decisions-link, lib-devtools, lib-fleetconfig-model, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-nav-bars, lib-updater, lib-web-core.
+Module `ac_cloud-news`; libs: lib-analytics, lib-apify, lib-bottomnav, lib-core, lib-crash, lib-databackend, lib-decisions-link, lib-devtools, lib-fleetconfig-model, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-nav-bars, lib-updater, lib-web-core.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
+| `apify_tokens` | encrypted | secret | yes | #1468/#1470 libs:apify, the fleet's one Apify store (Cloud Browser Scrapers > Apify, Cloud News): the chosen backend, the Apify token, the Cloudy Crawlee URL and bearer, in EncryptedSharedPreferences via libs:crash SafeEncryptedPrefs; an unreadable store resets to memory, never to plaintext. Credentials: migrate through the vault. |
 | `auto_update` | prefs | config (keys: last_check_at→device, last_remote_bytes→device, last_remote_digest→device, unattended_pass→device) | yes | Auto-update toggles (enabled, require_silent/unmetered) are settings; last_check/remote digest/bytes/unattended_pass are state. |
 | `cloud_analytics` | prefs | config (keys: visitor_id→device) | yes | Analytics consent is a user choice; visitor_id is a per-install identity. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
+| `event_keys` | encrypted | secret | yes | #1470 Cloud News event-ticketer API keys (one per ticketer id) in EncryptedSharedPreferences via libs:crash SafeEncryptedPrefs; a credential, so it migrates through the vault and is masked on screen. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
 | `nav_modes` | prefs | config | yes | #1189 the user's per-section choice of how child pages are navigated (one row, two rows, side menu; overrides the build.json declaration) and whether the side menu is expanded or the rail. Written by the shared nav bars (NavModePrefs) from each app's Configs; part of the app's settings, so it migrates and backs up with them. |
@@ -967,7 +973,7 @@ Module `ac_cloud-news`; libs: lib-analytics, lib-bottomnav, lib-core, lib-crash,
 |---|---|---|
 | `data/sources.json, topics.json (bundled) and engine-held user source/topic choices and saved articles` | config | Selected sources/topics are config, saved articles are content; the engine keeps them in its own storage which the scanner did not see. |
 
-Coverage: 6 covered, 1 gaps — file:data/sources.json, topics.json (bundled) and engine-held user source/topic choices and saved articles.
+Coverage: 8 covered, 1 gaps — file:data/sources.json, topics.json (bundled) and engine-held user source/topic choices and saved articles.
 
 ## cloud-terminal-nix — `cld.termux.nix`
 
@@ -988,6 +994,7 @@ Module `ac_cloud-nix-on-droid`; libs: lib-bottomnav, lib-core, lib-crash, lib-de
 | `perm_ask_tracker` | prefs | device | no | Set of permissions already asked on this install; permission-asked tracker. #1274 libs:perms PermAskLog shares it with the app's PermAskTracker (one record of what was asked). |
 | `safe_encrypted_prefs_reset` | prefs | device | no | #1106 which encrypted prefs files SafeEncryptedPrefs had to reset (a Keystore master key that no longer matches the file, after a shared-uid migration or a restored backup), so the app can tell the user to sign in again until they acknowledge it. Describes this phone's Keystore, never configuration. |
 | `store_notify` | prefs | config | yes | Cloud Store > Configs > Notifications: which Store messages (update available, install done, failures) are posted on which channel (system notification, in-app feed); the owner's switches, everything on until turned off, so it moves with the phone. |
+| `wd_keeper` | prefs | device | no | #1467 Keep wireless debugging on: the shared keeper's armed flag, write-permission flag and leader heartbeat; per-install state the keeper rebuilds from each app's switch, so it never migrates. |
 
 | file | class | doc |
 |---|---|---|
@@ -1118,6 +1125,7 @@ Module `ac_cloud-store`; libs: lib-ai, lib-appstore, lib-bottomnav, lib-core, li
 | `update_checks` | prefs | device | no | #1078 Cloud Store: whether the one-time battery-optimization prompt has been shown on this phone; a prompt marker, never migrated (the new phone asks once itself). |
 | `updater_advisory` | prefs | device | no | Update advisory feed, snooze/shown/fail state per app. |
 | `updater_apk_cache_notes` | prefs | device | no | Notes about cached downloaded APKs. |
+| `wd_keeper` | prefs | device | no | #1467 Keep wireless debugging on: the shared keeper's armed flag, write-permission flag and leader heartbeat; per-install state the keeper rebuilds from each app's switch, so it never migrates. |
 
 Coverage: 12 covered, 0 gaps.
 
@@ -1140,6 +1148,7 @@ Module `ac_cloud-termux`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtools
 | `perm_ask_tracker` | prefs | device | no | Set of permissions already asked on this install; permission-asked tracker. #1274 libs:perms PermAskLog shares it with the app's PermAskTracker (one record of what was asked). |
 | `safe_encrypted_prefs_reset` | prefs | device | no | #1106 which encrypted prefs files SafeEncryptedPrefs had to reset (a Keystore master key that no longer matches the file, after a shared-uid migration or a restored backup), so the app can tell the user to sign in again until they acknowledge it. Describes this phone's Keystore, never configuration. |
 | `store_notify` | prefs | config | yes | Cloud Store > Configs > Notifications: which Store messages (update available, install done, failures) are posted on which channel (system notification, in-app feed); the owner's switches, everything on until turned off, so it moves with the phone. |
+| `wd_keeper` | prefs | device | no | #1467 Keep wireless debugging on: the shared keeper's armed flag, write-permission flag and leader heartbeat; per-install state the keeper rebuilds from each app's switch, so it never migrates. |
 
 | file | class | doc |
 |---|---|---|

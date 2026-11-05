@@ -15,6 +15,9 @@
     "Cloud-UI-Baseline.zip": "The CI screenshot baseline (#1320 M4): published every run by screenshot-baseline.yml (+ .sha256) so the next run can diff against it. Not an app, so no fleet row can name it; owner-approved and kept.",
     "Cloud-Agenda-x86_64.apk": "Pre-rename name of Cloud-Tasks-x86_64 (cloud-agenda -> cloud-tasks; last upload 2026-10-13). Kept so SuperApps built before the rename can still fetch it until they update. Deletion awaits the owner.",
     "Capital-FinTerm.apk": "Pre-rename name of Capital-Stack-FinTerminal.apk (ad_Capital-FinTerm -> ad_Capital-Stack-FinTerminal, 2026-10-30; same package id, so the phone updates in place). Kept so SuperApps built before the rename can still fetch it until they update. Deletion awaits the owner.",
-    "Capital-FinTerm-x86_64.apk": "Pre-rename name of Capital-Stack-FinTerminal-x86_64.apk (see Capital-FinTerm.apk). Deletion awaits the owner."
+    "Capital-FinTerm-x86_64.apk": "Pre-rename name of Capital-Stack-FinTerminal-x86_64.apk (see Capital-FinTerm.apk). Deletion awaits the owner.",
+    "Cloud-Lib-Account-Ui.apk": "Left over from before libs:account-ui became a static lib (compiled into Cloud Account and Cloud Me; lib-apks/build.json: ships no lib APK). Last upload 2026-11-04. No shipped code fetches it. Deletion of the release assets (+ .sha256, .source) awaits the owner.",
+    "Cloud-Lib-Git-Sync-Engine.apk": "Left over from before the git engine moved in-process (libs:git-core rides inside cloud-drive; no lib APK). Last upload 2026-11-03. No shipped code fetches it. Deletion of the release assets (+ .sha256, .source) awaits the owner.",
+    "Cloud-Lib-Web-Core.apk": "Left over from before libs:web-core became the compiled-in web view factory (#1371; no component, no lib APK). Last upload 2026-10-31. No shipped code fetches it. Deletion of the release assets (+ .sha256, .source) awaits the owner."
   }
 }

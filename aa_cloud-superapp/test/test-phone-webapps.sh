@@ -49,7 +49,7 @@ python3 - "$D" "$M/d.json" <<'PY'
 import json, sys
 d = json.load(open(sys.argv[1])); d["groups"][0]["apps"].pop(); json.dump(d, open(sys.argv[2], "w"))
 PY
-python3 - "$B" "$M/d.json" <<'PY' | grep -q 'SAME ok' && bad "mutation: a dropped app is invisible to T3" || ok "mutation: dropping an app turns T3 red"
+same="$(python3 - "$B" "$M/d.json" <<'PY'
 import json, sys
 b = json.load(open(sys.argv[1])); d = json.load(open(sys.argv[2]))
 def pk(p): return p if isinstance(p, str) else p["pkg"]
@@ -58,4 +58,6 @@ g = ph["phone_app_groups"][0]
 ps = [pk(p) for p in g["packages"]] + [pk(p) for f in (g.get("folders") or []) for p in f["packages"]]
 print("SAME ok" if [a["pkg"] for a in d["groups"][0]["apps"]] == ps else "SAME BAD")
 PY
+)"
+grep -q 'SAME ok' <<<"$same" && bad "mutation: a dropped app is invisible to T3" || ok "mutation: dropping an app turns T3 red"
 echo "PASS=$PASS FAIL=$FAIL"; [ "$FAIL" -eq 0 ]

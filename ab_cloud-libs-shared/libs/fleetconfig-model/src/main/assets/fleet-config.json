@@ -2411,6 +2411,22 @@
       "used_by": [
         "aa_cloud-superapp"
       ]
+    },
+    "event_keys": {
+      "kind": "encrypted",
+      "class": "secret",
+      "doc": "#1470 Cloud News event-ticketer API keys (one per ticketer id) in EncryptedSharedPreferences via libs:crash SafeEncryptedPrefs; a credential, so it migrates through the vault and is masked on screen.",
+      "used_by": [
+        "ac_cloud-news"
+      ]
+    },
+    "wd_keeper": {
+      "kind": "prefs",
+      "class": "device",
+      "doc": "#1467 Keep wireless debugging on: the shared keeper's armed flag, write-permission flag and leader heartbeat; per-install state the keeper rebuilds from each app's switch, so it never migrates.",
+      "used_by": [
+        "lib-shizuku-adb-debug-tools"
+      ]
     }
   },
   "bundle": {
@@ -2931,6 +2947,7 @@
       "libs": [
         "lib-ai",
         "lib-analytics",
+        "lib-apify",
         "lib-autofill",
         "lib-bluetooth",
         "lib-bottomnav",
@@ -3700,6 +3717,7 @@
       "schema_version": 1,
       "libs": [
         "lib-analytics",
+        "lib-apify",
         "lib-bottomnav",
         "lib-core",
         "lib-crash",
