@@ -91,8 +91,8 @@ CHECKS = [
      lambda s: 'owner = "$TAG:$trigger"' in code(s["worker"])),
     ("the periodic job and every kick require storage-not-low",
      lambda s: "setRequiresStorageNotLow(true)" in fun(code(s["worker"]), "constraints", "        ")
-               and "val constraints = constraints()" in fun(code(s["worker"]), "start", "        ")
-               and ".setConstraints(constraints())" in fun(code(s["worker"]), "kick", "        ")),
+               and "val constraints = constraints(context)" in fun(code(s["worker"]), "start", "        ")
+               and ".setConstraints(constraints(context))" in fun(code(s["worker"]), "kick", "        ")),
     ("a Store refresh is a trigger",
      lambda s: "ConstellationWorker.kick(ctx, StoreAuto.TRIGGER_STORE_REFRESH)" in fun(code(s["page"]), "checkAll")),
     ("/api/store/auto answers the chain's persisted phase, queue, current and last error",
@@ -144,7 +144,7 @@ MUTANTS = [
      "            StoreAuto.attach(context) { c, t -> kick(c, t) }\n", ""),
     ("storage-not-low dropped", "worker", "            setRequiresStorageNotLow(true)\n", ""),
     ("a Store refresh triggers nothing", "page",
-     "        ConstellationWorker.kick(ctx, StoreAuto.TRIGGER_STORE_REFRESH)\n", ""),
+     "        if (force) ConstellationWorker.kick(ctx, StoreAuto.TRIGGER_STORE_REFRESH)\n", ""),
     ("/api/store/auto goes back to the per-app alias", "api",
      '"auto" -> if (q["pkg"].isNullOrEmpty()) auto(ctx, q["run"] == "1").toString() else verb(ctx, q)',
      '"auto" -> verb(ctx, q)'),

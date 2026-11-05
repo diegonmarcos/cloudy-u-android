@@ -27,8 +27,8 @@ has "$UPD/Fleet.kt" "val releaseUrl: String" "Fleet.App carries releaseUrl"
 has "$CFG/StoreCloudFragment.kt" "app.releaseUrl" "UI shows the release URL link"
 
 echo "== T3: per-app CONCURRENT status (fixes Dialer no-status / Chat loop) =="
-has "$CFG/StoreCloudFragment.kt" "thread(name = \"fleet-check-" "each app checked on its own thread"
-grep -q 'for (app in list)' "$CFG/StoreCloudFragment.kt" && grep -q 'thread(name = "fleet-check' "$CFG/StoreCloudFragment.kt" \
+has "$CFG/StoreEngine.kt" "thread(name = \"fleet-check-" "each app checked on its own thread (#1517: StoreChecks.pass runs them in StoreEngine)"
+grep -q 'StoreChecks.pass(list)' "$CFG/StoreCloudFragment.kt" && grep -q 'thread(name = "fleet-check' "$CFG/StoreEngine.kt" \
   && ok "checkAll spawns a thread per app (non-blocking)" || bad "checkAll not concurrent"
 has "$CFG/ConstellationWorker.kt" "Result.success()" "fleet worker returns success (no retry loop)"
 

@@ -16,7 +16,7 @@ internal object StoreShell {
     /** The command's output (stderr merged by the one redirect the broker allows), the broker's refusal as a line, or null = no armed broker. Blocking. */
     fun exec(ctx: Context, cmd: String): String? = text(ShellClient.exec(ctx, if (cmd.endsWith(MERGE)) cmd else cmd + MERGE, TIMEOUT_MS))
 
-    /** `am force-stop <pkg>`: "OK" when it exited 0, else what it said; null when no broker is armed. */
+    /** Force-stop of <pkg>: "OK" when it exited 0, else what it said; null when no broker is armed. */
     fun forceStop(ctx: Context, pkg: String): String? = when (val r = ShellClient.exec(ctx, "am force-stop $pkg $ERR", TIMEOUT_MS)) {
         is ShellResult.Ok -> if (r.exitCode == 0) "OK" else (r.stdout + r.stderr).ifBlank { "exit ${r.exitCode}" }
         else -> text(r)
