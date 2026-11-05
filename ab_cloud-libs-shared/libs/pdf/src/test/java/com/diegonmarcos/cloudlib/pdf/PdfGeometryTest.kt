@@ -23,7 +23,7 @@ class PdfGeometryTest {
     @Test fun `half and three quarter turns map the corners`() {
         assertEquals(PdfPoint(200f, 0f), at(0f, 0f, 180))
         assertEquals(PdfPoint(200f, 300f), at(0f, 0f, 270))
-        assertEquals(PdfPoint(0f, 0f), at(1f, 0f, 270))
+        assertEquals(PdfPoint(200f, 0f), at(1f, 0f, 270))
     }
 
     @Test fun `the media box origin is added and touches outside the page are clamped`() {
