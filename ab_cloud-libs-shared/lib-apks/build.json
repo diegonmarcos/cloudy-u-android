@@ -85,6 +85,7 @@
       "media": "#870 static lib: compiled in via project(':libs:x'), not a runtime engine (no ENGINE service CONTRACT in its manifests) -- ships no lib APK.",
       "media-convert-audio": "#870 static lib: compiled in via project(':libs:x'), not a runtime engine (no ENGINE service CONTRACT in its manifests) -- ships no lib APK.",
       "ml-l-image-ocr": "#870 static lib: compiled in via project(':libs:x'), not a runtime engine (no ENGINE service CONTRACT in its manifests) -- ships no lib APK.",
+      "ocr": "#1507 static lib: pure Kotlin result toolkit (tables, Markdown, sidecar JSON), no ENGINE service, ships no lib APK.",
       "ml-l-text-mlkit": "#870 static lib: compiled in via project(':libs:x'), not a runtime engine (no ENGINE service CONTRACT in its manifests) -- ships no lib APK.",
       "ml-l-voice-vosk": "#870 static lib: compiled in via project(':libs:x'), not a runtime engine (no ENGINE service CONTRACT in its manifests) -- ships no lib APK.",
       "model-catalogue": "#870 static lib: compiled in via project(':libs:x'), not a runtime engine (no ENGINE service CONTRACT in its manifests) -- ships no lib APK.",
