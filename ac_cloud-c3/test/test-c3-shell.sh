@@ -552,9 +552,9 @@ if pids("containers") != ["all", "cloudy", "cloud_me", "cg", "capital", "hardtec
 for _p in (secs.get("containers") or {}).get("pages") or []:
     if [q["id"] for q in _p.get("pages") or []] != [_p["id"] + "_topology", _p["id"] + "_table"]:
         bad.append("Containers project %r lost its Topology | Table switch (nested pages %s)" % (_p["id"], [q["id"] for q in _p.get("pages") or []]))
-if pids("ops") != ["net", "mail", "orch", "health", "obs"]: bad.append("Ops pages are %s, not Network Mail | Orchestration | Health Observability (#1480)" % pids("ops"))
+if pids("ops") != ["net", "mail", "orch", "ops_health", "obs"]: bad.append("Ops pages are %s, not Network Mail | Orchestration | Health Observability (#1480)" % pids("ops"))
 _ops = (secs.get("ops") or {}).get("pages") or []
-if [p["id"] for p in _ops if p.get("separator_before")] != ["orch", "health"]: bad.append("Ops sub-group dividers are not before Orchestration and Health")
+if [p["id"] for p in _ops if p.get("separator_before")] != ["orch", "ops_health"]: bad.append("Ops sub-group dividers are not before Orchestration and Health")
 if not all(p.get("pages") for p in _ops): bad.append("an Ops page nests no views")
 if pids("infra") != ["providers", "machines", "serverless", "node_python", "storage", "api_ai", "api_scraper", "desktop", "mobile", "gadgets", "domains", "domains_public"]: bad.append("Infra pages are %s, not the four declared rows (Bare, APIs, Personal, Domains)" % pids("infra"))
 c3 = ui["carried_c3"]

@@ -193,8 +193,8 @@ class DeclarationsTest {
 
     @Test
     fun `the Ops tab reads Network Mail, Orchestration, Health Observability with a divider before each sub-group, and Agents stays`() {
-        assertEquals(listOf("net", "mail", "orch", "health", "obs"), pageIds("ops"))
-        assertEquals(listOf("orch", "health"), nav().section("ops")!!.pages.filter { it.separatorBefore }.map { it.id })
+        assertEquals(listOf("net", "mail", "orch", "ops_health", "obs"), pageIds("ops"))
+        assertEquals(listOf("orch", "ops_health"), nav().section("ops")!!.pages.filter { it.separatorBefore }.map { it.id })
         assertTrue("Agents is an Ops page", "orch_agents" in nav().section("ops")!!.allPages().map { it.id })
         assertTrue("Services and Tools are gone from Ops", pageIds("ops").none { it == "services" || it == "tools" })
         assertTrue("Agents left Containers", "agents" !in nav().section("containers")!!.allPages().map { it.id })

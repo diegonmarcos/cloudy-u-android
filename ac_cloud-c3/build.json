@@ -439,7 +439,7 @@
               {
                 "id": "net_auth",
                 "label": "Auth",
-                "icon": "ic_check_all"
+                "icon": "security"
               },
               {
                 "id": "net_dns",
@@ -507,13 +507,13 @@
             ]
           },
           {
-            "id": "health",
+            "id": "ops_health",
             "label": "Health",
             "icon": "ic_p_c3_health",
             "separator_before": true,
             "pages": [
               {
-                "id": "health_uptime",
+                "id": "ops_health_uptime",
                 "label": "Uptime",
                 "icon": "ic_p_c3_health"
               }
