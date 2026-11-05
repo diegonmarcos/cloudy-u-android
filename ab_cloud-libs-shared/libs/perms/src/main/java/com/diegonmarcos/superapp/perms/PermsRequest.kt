@@ -43,7 +43,7 @@ object PermsRequest {
      * Asks [entries]: the combined system dialog for those it can still answer ([launch] gets the expanded request), else
      * the settings page of the first permanently denied one. Returns the route taken.
      */
-    fun ask(ctx: Context, entries: List<PermEntry>, launch: (Array<String>) -> Unit, activity: Activity? = findActivity(ctx)): Route {
+    fun ask(ctx: Context, entries: List<PermEntry>, activity: Activity? = findActivity(ctx), launch: (Array<String>) -> Unit): Route {
         val vars = Perms.vars(ctx)
         val decl = Perms.declared(ctx)
         val status = { e: PermEntry -> PermStatusReader.status(ctx, e, activity, vars, decl) }

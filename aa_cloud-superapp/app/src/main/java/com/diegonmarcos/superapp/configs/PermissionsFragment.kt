@@ -131,10 +131,10 @@ class PermissionsFragment : KitComposeFragment() {
     /** The Grant button of a row: the combined dialog while Android still shows it, the settings page after a permanent denial. */
     private fun grantRow(e: com.diegonmarcos.superapp.perms.PermEntry) {
         val act = requireActivity()
-        com.diegonmarcos.superapp.perms.PermsRequest.ask(act, listOf(e), { perms ->
+        com.diegonmarcos.superapp.perms.PermsRequest.ask(act, listOf(e), act) { perms ->
             askedThisSession.addAll(perms)
             runCatching { centerLauncher.launch(perms) }
-        }, act)
+        }
         centerEpoch++
     }
 
