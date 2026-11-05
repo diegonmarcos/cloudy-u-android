@@ -192,19 +192,24 @@ class DeclarationsTest {
     }
 
     @Test
-    fun `the Ops tab declares the five topology views then Agents, and no Services or Tools`() {
-        assertEquals(listOf("service", "infrastructure", "orchestration", "network", "release", "agents"), pageIds("ops"))
+    fun `the Ops tab reads Network Mail, Orchestration, Health Observability with a divider before each sub-group, and Agents stays`() {
+        assertEquals(listOf("net", "mail", "orch", "health", "obs"), pageIds("ops"))
+        assertEquals(listOf("orch", "health"), nav().section("ops")!!.pages.filter { it.separatorBefore }.map { it.id })
+        assertTrue("Agents is an Ops page", "orch_agents" in nav().section("ops")!!.allPages().map { it.id })
         assertTrue("Services and Tools are gone from Ops", pageIds("ops").none { it == "services" || it == "tools" })
         assertTrue("Agents left Containers", "agents" !in nav().section("containers")!!.allPages().map { it.id })
     }
 
     @Test
-    fun `every Ops page has a declared view with its grouping, metric, question and a second-row icon from the shared catalog`() {
+    fun `every topology view has an Ops page, and every Ops page has an icon from the shared catalog`() {
         val topo = com.diegonmarcos.cloudc3.pages.TopologyModel.parseDecl(ui()["topology"]!!.toString())
-        assertEquals("every Ops page is a topology view except Agents", pageIds("ops") - "agents", topo.views.map { it.id })
-        topo.views.forEach { assertTrue("${it.id} lacks grouping/metric/question/missing", it.grouping.isNotBlank() && it.metric.isNotBlank() && it.question.isNotBlank() && it.missing.isNotEmpty()) }
+        val leaves = nav().section("ops")!!.pages.flatMap { it.pages }.map { it.id }
+        topo.views.forEach {
+            assertTrue("${it.id} lacks grouping/metric/question/missing", it.grouping.isNotBlank() && it.metric.isNotBlank() && it.question.isNotBlank() && it.missing.isNotEmpty())
+            assertEquals("${it.id} is shown by exactly one Ops page", 1, leaves.count { id -> id.endsWith("_${it.id}") })
+        }
         assertEquals("Ship", topo.release?.workflow)
-        nav().section("ops")!!.pages.forEach {
+        nav().section("ops")!!.allPages().forEach {
             assertTrue("${it.id} icon ${it.icon} is not in libs:ui-icons", com.diegonmarcos.superapp.uiicons.UiIcons.has(it.icon))
         }
     }

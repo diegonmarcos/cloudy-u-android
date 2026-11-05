@@ -271,11 +271,11 @@ class TopologyViewFragment : KitComposeFragment() {
             TopologyModel.Inputs(ContainersSource.current(), slice, TopologyModel.parseInfra(Declarations.infraSlice), state.live, decl)
         }
         TopologyScreen(
-            view, inputs, TopologyFocus.key, Declarations.opsPages.filter { p -> decl.views.any { it.id == p.id } }.associate { it.id to it.label },
+            view, inputs, TopologyFocus.key, decl.views.mapNotNull { v -> Declarations.opsViewPage(v.id)?.let { v.id to it.label } }.toMap(),
             onFocus = { TopologyFocus.key = it },
             onPivot = { to, key ->
                 TopologyFocus.key = key
-                (parentFragment as? PagedFragment)?.openPage(to)
+                (parentFragment as? PagedFragment)?.openPage(Declarations.opsViewPage(to)?.id ?: to)
             },
         )
     }

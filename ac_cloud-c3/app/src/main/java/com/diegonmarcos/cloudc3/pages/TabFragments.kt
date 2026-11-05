@@ -95,20 +95,30 @@ class ObservFragment : PagedFragment() {
 }
 
 /**
- * OPS (was Apps) - the five topology views, then Agents of the fleet (owner request, 2026-10-25), one page each over [TopologyViewFragment]:
- * Service (logical flow), Infrastructure (compute), Orchestration (declared vs deployed), Network and Release. Each is a tree
- * grouped by its own key with a list fallback, and a node opens the same entity in the other four. Agents is the sixth page (back from Containers, #1454);
- * Services and Tools are gone from here.
+ * OPS (#1480): Network Mail | Orchestration | Health Observability, one top page each, every one a nested strip of views (build.json,
+ * ids `<page>_<view>`). Network and Mail are the maps of data/ops_maps.json ([OpsMapFragment], derived from mesh.json, infra_slice.json
+ * and containers_declared.json); Orchestration is the CI/CD flow map, then the topology views and Agents ([TopologyViewFragment] over
+ * ui.topology); Health is [OpsHealthFragment]; Observability is the logs catcher [OpsLogsFragment].
  */
 class OpsFragment : PagedFragment() {
     override fun pages(): List<NavPage> = Declarations.opsPages
-    override fun pageFragment(pageId: String): Fragment? = when (pageId) {
-        "agents" -> AgentsFragment()
+    override fun pageFragment(pageId: String): Fragment? = null
+
+    /** A nested page `<page>_<view>`: the view is the rest of its id; the Ops pivot links open the topology views by that view id. */
+    override fun leafFragment(parentId: String, leafId: String): Fragment? = when (leafId.removePrefix("${parentId}_")) {
+        "wg" -> OpsMapFragment.newInstance("wg")
+        "auth" -> OpsMapFragment.newInstance("auth")
+        "dns" -> OpsMapFragment.newInstance("dns")
+        "network" -> TopologyViewFragment.newInstance(TopologyModel.NETWORK)
+        "map" -> OpsMapFragment.newInstance(parentId)
+        "flow" -> OpsMapFragment.newInstance("flow")
         "service" -> TopologyViewFragment.newInstance(TopologyModel.SERVICE)
         "infrastructure" -> TopologyViewFragment.newInstance(TopologyModel.INFRASTRUCTURE)
         "orchestration" -> TopologyViewFragment.newInstance(TopologyModel.ORCHESTRATION)
-        "network" -> TopologyViewFragment.newInstance(TopologyModel.NETWORK)
         "release" -> TopologyViewFragment.newInstance(TopologyModel.RELEASE)
+        "agents" -> AgentsFragment()
+        "uptime" -> OpsHealthFragment()
+        "logs" -> OpsLogsFragment()
         else -> null
     }
 }

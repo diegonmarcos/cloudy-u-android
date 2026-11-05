@@ -60,7 +60,7 @@ class C3NavTest {
         assertEquals(Target("observ", "health"), C3Nav.resolve(nav, aliases, "health"))
         assertEquals("the old Table id opens the All project's Table", Target("containers", "all_table"), C3Nav.resolve(nav, aliases, "table"))
         assertEquals(Target("containers", "cg_table"), C3Nav.resolve(nav, aliases, "cg_table"))
-        assertEquals(Target("ops", "agents"), C3Nav.resolve(nav, aliases, "agents"))
+        assertEquals(Target("ops", "orch_agents"), C3Nav.resolve(nav, aliases, "agents"))
         assertNull(C3Nav.resolve(nav, aliases, "nope"))
         assertNull(C3Nav.resolve(nav, aliases, ""))
         assertNull(C3Nav.resolve(nav, aliases, null))

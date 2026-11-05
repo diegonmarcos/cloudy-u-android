@@ -211,7 +211,13 @@
         "public": "containers/all_table",
         "private": "containers/all_table",
         "table": "containers/all_table",
-        "stack": "infra/providers"
+        "stack": "infra/providers",
+        "service": "ops/orch_service",
+        "infrastructure": "ops/orch_infrastructure",
+        "orchestration": "ops/orch_orchestration",
+        "network": "ops/net_network",
+        "release": "ops/orch_release",
+        "agents": "ops/orch_agents"
       }
     },
     "sections": [
@@ -418,38 +424,112 @@
         "id": "ops",
         "label": "Ops",
         "icon": "ic_robot",
-        "_doc": "Renamed from Apps (owner request, 2026-10-16). Since 2026-10-25 Ops is the five TOPOLOGY VIEWS of the fleet, one page each, one TopologyViewFragment over ui.topology (view | grouping key | dominant metric | incident scenario): Service (logical flow), Infrastructure (compute), Orchestration (GitOps), Network & Security and Release (CI/CD). Agents is the sixth page (#1454); Services and Tools are gone from Ops.",
+        "_doc": "#1480 Ops reads Network Mail | Orchestration | Health Observability; each \"|\" is a declared separator_before, so the sub-groups are [Network, Mail], [Orchestration] and [Health, Observability]. Every top page nests its views (ids `<page>_<view>`, resolved by OpsFragment.leafFragment). Network: WireGuard, Auth and DNS & Caddy are maps of data/ops_maps.json drawn from mesh.json / infra_slice.json / containers_declared.json, then the Network topology tree. Mail: one map. Orchestration: the CI/CD flow map, then the topology views Service, Infrastructure, Declared vs deployed and Release (ui.topology), then Agents (#1454). Health: uptime of every service and the reports. Observability: the logs catcher over c3-infra-api GET /logs/search. Old ids (service, infrastructure, orchestration, network, release, agents) are ui.aliases.pages to their new leaf.",
         "pages": [
           {
-            "id": "service",
-            "label": "Service",
-            "icon": "ic_p_c3_workflows"
-          },
-          {
-            "id": "infrastructure",
-            "label": "Infrastructure",
-            "icon": "ic_p_c3_vms"
-          },
-          {
-            "id": "orchestration",
-            "label": "Orchestration",
-            "icon": "ic_p_c3_stack"
-          },
-          {
-            "id": "network",
+            "id": "net",
             "label": "Network",
-            "icon": "ic_wg"
+            "icon": "ic_wg",
+            "pages": [
+              {
+                "id": "net_wg",
+                "label": "WireGuard",
+                "icon": "ic_wg"
+              },
+              {
+                "id": "net_auth",
+                "label": "Auth",
+                "icon": "ic_check_all"
+              },
+              {
+                "id": "net_dns",
+                "label": "DNS & Caddy",
+                "icon": "ic_link_tile"
+              },
+              {
+                "id": "net_network",
+                "label": "Routes",
+                "icon": "ic_wg",
+                "_doc": "The Network topology view of ui.topology: subnet, VM, Caddy routes, firewall rules."
+              }
+            ]
           },
           {
-            "id": "release",
-            "label": "Release",
-            "icon": "ic_code"
+            "id": "mail",
+            "label": "Mail",
+            "icon": "mail",
+            "pages": [
+              {
+                "id": "mail_map",
+                "label": "Mail",
+                "icon": "mail"
+              }
+            ]
           },
           {
-            "id": "agents",
-            "label": "Agents",
-            "icon": "ic_robot",
-            "_doc": "AgentsFragment (#1454, back under Ops from Containers): the launchable C3 siblings. Not a topology view: ui.topology.views does not list it."
+            "id": "orch",
+            "label": "Orchestration",
+            "icon": "ic_p_c3_stack",
+            "separator_before": true,
+            "pages": [
+              {
+                "id": "orch_flow",
+                "label": "Flow",
+                "icon": "ic_p_c3_workflows"
+              },
+              {
+                "id": "orch_service",
+                "label": "Service",
+                "icon": "ic_p_c3_workflows"
+              },
+              {
+                "id": "orch_infrastructure",
+                "label": "Infrastructure",
+                "icon": "ic_p_c3_vms"
+              },
+              {
+                "id": "orch_orchestration",
+                "label": "Declared",
+                "icon": "ic_p_c3_stack",
+                "_doc": "The Orchestration topology view of ui.topology: declared vs deployed."
+              },
+              {
+                "id": "orch_release",
+                "label": "Release",
+                "icon": "ic_code"
+              },
+              {
+                "id": "orch_agents",
+                "label": "Agents",
+                "icon": "ic_robot",
+                "_doc": "AgentsFragment (#1454): the launchable C3 siblings. Not a topology view."
+              }
+            ]
+          },
+          {
+            "id": "health",
+            "label": "Health",
+            "icon": "ic_p_c3_health",
+            "separator_before": true,
+            "pages": [
+              {
+                "id": "health_uptime",
+                "label": "Uptime",
+                "icon": "ic_p_c3_health"
+              }
+            ]
+          },
+          {
+            "id": "obs",
+            "label": "Observability",
+            "icon": "ic_p_logs",
+            "pages": [
+              {
+                "id": "obs_logs",
+                "label": "Logs",
+                "icon": "ic_p_logs"
+              }
+            ]
           }
         ]
       },

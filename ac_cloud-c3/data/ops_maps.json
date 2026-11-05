@@ -1,0 +1,91 @@
+{
+  "_doc": "#1480 Cloud-C3 Ops maps: Network (wg, auth, dns), Mail and the Orchestration flow, drawn from nodes and edges. A section with `from` is DERIVED at run time from the fleet's own data (mesh.json, infra_slice.json, containers_declared.json, fleet_slice.json), never copied here; a section with `rows` is the few facts no derived file holds (a planned channel, a path between named containers, the CI/CD stages). Row = name, note, state (planned | fallback | unverified | blank), edges (to, label, state). Secret values never appear: only names.",
+  "edge_cap": 14,
+  "auth_kinds": {
+    "two_factor": "Authelia SSO + 2FA behind Caddy forward_auth",
+    "none": "no gate at the edge",
+    "bypass": "gate bypassed on purpose",
+    "ntfy-3tier": "ntfy three-tier access",
+    "mesh": "mesh only, no public route",
+    "woauth": "OAuth for MCP clients",
+    "bearer": "fleet bearer token",
+    "open": "no auth of its own"
+  },
+  "mail_dns_groups": ["MX", "SPF", "DKIM", "DMARC", "MTA-STS", "TLS-RPT"],
+  "logs": { "levels": ["info", "warn", "error"], "limit": 100 },
+  "maps": {
+    "wg": {
+      "summary": "WireGuard: each subnet's hub and peers, the transports that carry it, and the channel still planned.",
+      "sections": [
+        { "title": "Subnets: hub and peers", "from": "infra_wireguard" },
+        { "title": "Transports", "from": "mesh_transports" },
+        { "title": "Planned", "rows": [
+          { "name": "WARP", "state": "planned", "note": "primary mesh channel with wg fallback (ticket #1479)",
+            "edges": [ { "to": "wg0", "label": "falls back to", "state": "planned" } ] }
+        ] }
+      ]
+    },
+    "auth": {
+      "summary": "Who gates what: the edge tier of every Caddy route, then the auth kind of every container.",
+      "sections": [
+        { "title": "Edge tier of each route", "from": "auth_routes" },
+        { "title": "Auth kind of each container", "from": "auth_containers" },
+        { "title": "Gates", "rows": [
+          { "name": "Authelia", "note": "SSO and 2FA portal", "edges": [ { "to": "two_factor", "label": "forward_auth" } ] },
+          { "name": "Cloudflare Access (Zero Trust)", "note": "one sign-in of the identity broker", "edges": [ { "to": "auth-broker-email", "label": "Access JWT" } ] },
+          { "name": "Bearer", "note": "fleet bearer token", "edges": [ { "to": "bearer", "label": "container auth kind" } ] },
+          { "name": "OAuth (MCP)", "note": "MCP clients sign in with OAuth", "edges": [ { "to": "woauth", "label": "container auth kind" } ] }
+        ] }
+      ]
+    },
+    "dns": {
+      "summary": "DNS and Caddy: every public host to its service and VM, then the mesh names.",
+      "sections": [
+        { "title": "Caddy routes by VM", "from": "caddy_routes" },
+        { "title": "Mesh DNS", "from": "mesh_dns" }
+      ]
+    },
+    "mail": {
+      "summary": "Mail: inbound and outbound paths, the containers on them, the relays and the DNS record names.",
+      "sections": [
+        { "title": "Inbound", "rows": [
+          { "name": "Sender (Internet)", "edges": [
+            { "to": "Cloudflare MX", "label": "MX records" },
+            { "to": "maddy", "label": "mail host over the caddy-public SNI mux" } ] },
+          { "name": "mail-puller", "note": "IMAP-IDLE from external providers", "edges": [ { "to": "maddy", "label": "SMTP submission 465" } ] },
+          { "name": "cloud-webmail", "edges": [ { "to": "stalwart", "label": "JMAP" } ] },
+          { "name": "cloud-mail-mcp", "edges": [ { "to": "stalwart", "label": "REST, IMAP, SMTP" } ] }
+        ] },
+        { "title": "Outbound", "rows": [
+          { "name": "maddy", "edges": [ { "to": "oci-relay", "label": "default route" }, { "to": "maddy-relay", "label": "me+maddy identity" } ] },
+          { "name": "Cloudflare Worker", "note": "GCP blocks outbound TCP/25", "edges": [ { "to": "http-to-smtp-proxy-api", "label": "JSON over bearer" } ] },
+          { "name": "http-to-smtp-proxy-api", "edges": [ { "to": "SMTP relay", "label": "bridge" } ] },
+          { "name": "Resend", "note": "email API, config in cloudy-t-infra vps_resend", "edges": [ { "to": "Outbound API relay", "label": "HTTPS" } ] }
+        ] },
+        { "title": "Containers", "from": "containers", "names": ["maddy", "stalwart", "stalwart-sorter", "mail-puller", "cloud-webmail", "cloud-mail-mcp", "auth-broker-email", "http-to-smtp-proxy-api"] },
+        { "title": "Hosts", "from": "mail_hosts" },
+        { "title": "Relays", "from": "mail_routes" },
+        { "title": "MX hosts", "from": "mail_mx" },
+        { "title": "DNS records", "from": "mail_dns" }
+      ]
+    },
+    "flow": {
+      "summary": "CI/CD to Infra to Release: a push starts the workflows, the build feeds the release assets and the fleet manifest, and the deploy lands them on the VMs.",
+      "sections": [
+        { "title": "CI/CD", "rows": [
+          { "name": "Push to main", "edges": [ { "to": "GHA workflows", "label": "paths filter" } ] },
+          { "name": "GHA workflows", "note": "Ship, guards, generated-up-to-date", "edges": [ { "to": "Build", "label": "ship job" }, { "to": "gen-configs", "label": "config change" } ] },
+          { "name": "Build", "note": "Gradle in CI only", "edges": [ { "to": "Release assets", "label": "APK" } ] }
+        ] },
+        { "title": "Infra", "rows": [
+          { "name": "gen-configs", "note": "regenerates dist from the declarations", "edges": [ { "to": "Fleet manifest", "label": "commit dist" } ] },
+          { "name": "Fleet manifest", "note": "fleet-manifest-guard, fleet-refresh", "edges": [ { "to": "VM deploy", "label": "declared state" } ] }
+        ] },
+        { "title": "Release", "rows": [
+          { "name": "Release assets", "note": "GHCR via ORAS, GitHub Release", "edges": [ { "to": "Fleet manifest", "label": "version pin" } ] },
+          { "name": "VM deploy", "note": "ship-home-manager per VM, then docker compose", "edges": [ { "to": "Health", "label": "docker ps and uptime" } ] }
+        ] }
+      ]
+    }
+  }
+}

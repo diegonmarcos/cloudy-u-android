@@ -82,6 +82,9 @@ object Declarations {
     val configsPages: List<NavPage> get() = pages("configs")
     val opsPages: List<NavPage> get() = pages("ops")
 
+    /** The nested Ops pages (`<page>_<view>`) that show a topology [view]: its pivot target and label. */
+    fun opsViewPage(view: String): NavPage? = opsPages.flatMap { it.pages }.firstOrNull { it.id.endsWith("_$view") }
+
     /** ui.top_bar (libs:bottomnav TopBarDecl): the shared first row. Null = the app declares none. */
     val topBar: TopBarDecl? by lazy { TopBarDecl.fromBuildConfig(BuildConfig.UI_TOP_BAR_B64) }
 
@@ -121,6 +124,10 @@ object Declarations {
     val apiProviders: com.diegonmarcos.cloudc3.pages.ApiProviders.Decl by lazy {
         com.diegonmarcos.cloudc3.pages.ApiProviders.parse(decode(BuildConfig.API_PROVIDERS_B64))
     }
+
+    /** data/ops_maps.json (#1480): the Ops maps, and the wg-mesh snapshot (data/mesh.json) the Network map reads. */
+    val opsMaps: JsonObject by lazy { element(decode(BuildConfig.OPS_MAPS_B64)) as? JsonObject ?: JsonObject(emptyMap()) }
+    val meshJson: JsonObject by lazy { element(decode(BuildConfig.MESH_JSON_B64)) as? JsonObject ?: JsonObject(emptyMap()) }
 
     /** data/container_projects.json: which project each container belongs to (Containers sub-pages). */
     val containerProjects: com.diegonmarcos.cloudc3.pages.ContainerProjects.Decl by lazy {

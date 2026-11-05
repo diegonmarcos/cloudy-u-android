@@ -97,6 +97,10 @@ def publicIdentitiesB64 = publicIdentitiesFile.bytes.encodeBase64().toString()
 def apiProvidersFile = file("../data/api_providers.json")
 if (!apiProvidersFile.exists()) throw new GradleException("missing data/api_providers.json - Infra > APIs would list no provider")
 def apiProvidersB64 = apiProvidersFile.bytes.encodeBase64().toString()
+// #1480 the Ops maps (Network, Mail, Orchestration flow): declared rows and edges, plus which derived source fills each section.
+def opsMapsFile = file("../data/ops_maps.json")
+if (!opsMapsFile.exists()) throw new GradleException("missing data/ops_maps.json - the Ops maps would bake empty")
+def opsMapsB64 = opsMapsFile.bytes.encodeBase64().toString()
 def containerProjectsFile = file("../data/container_projects.json")
 if (!containerProjectsFile.exists()) throw new GradleException("missing data/container_projects.json - the Containers project sub-pages would bake empty")
 def containerProjectsB64 = containerProjectsFile.bytes.encodeBase64().toString()
@@ -232,6 +236,7 @@ android {
         buildConfigField "String", "UI_PRIVATE_SOURCES_B64", "\"${uiPrivateSourcesB64}\""
         buildConfigField "String", "PUBLIC_IDENTITIES_B64", "\"${publicIdentitiesB64}\""
         buildConfigField "String", "API_PROVIDERS_B64", "\"${apiProvidersB64}\""
+        buildConfigField "String", "OPS_MAPS_B64", "\"${opsMapsB64}\""
         buildConfigField "String", "CONTAINER_PROJECTS_B64",  "\"${containerProjectsB64}\""
         buildConfigField "String", "REPOS_DECLARED_B64",      "\"${reposDeclaredB64}\""
         buildConfigField "String", "C3_OPS_BASE_URL",       "\"${c3OpsBaseUrl}\""
