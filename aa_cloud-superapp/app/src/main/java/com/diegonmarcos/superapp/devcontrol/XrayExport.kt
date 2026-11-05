@@ -80,7 +80,7 @@ internal object XrayExport {
         say(if (shell != null) "running the shell probes (batterystats, wakelocks, alarms, services…)" else "reading what the app sandbox can see ($PARTIAL_LABEL)…")
         val extra = runCatching {
             val live = runCatching { BatteryRepository.report(ctx)?.sessions }.getOrNull().orEmpty()
-            XrayBattery.sections(BatteryRepository.sessions90(ctx, live), BatteryRepository.cycles(ctx)) { uid -> BatteryRepository.appLabel(ctx, uid).second }
+            XrayBattery.sections(BatteryRepository.sessions90(ctx, live), BatteryRepository.cycles(ctx), label = { uid -> BatteryRepository.appLabel(ctx, uid).second })
         }.getOrDefault(emptyList())
         val report = XrayExporter.build(XrayInputs(
             device = "${Build.MANUFACTURER} ${Build.MODEL} (Android ${Build.VERSION.RELEASE})",
