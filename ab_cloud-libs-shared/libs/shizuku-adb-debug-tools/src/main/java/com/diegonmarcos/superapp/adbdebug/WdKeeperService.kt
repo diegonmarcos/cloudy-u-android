@@ -50,7 +50,8 @@ class WdKeeperService : Service() {
         try {
             while (!Thread.currentThread().isInterrupted) {
                 val on = (ctx.getSystemService(Context.POWER_SERVICE) as android.os.PowerManager).isInteractive
-                Thread.sleep(if (on) PERIOD_MS else KeepAlivePolicy.SCREEN_OFF_MS)   // #1487
+                val nextDelayMs = if (on) PERIOD_MS else KeepAlivePolicy.SCREEN_OFF_MS   // #1487 never below 30 s
+                Thread.sleep(nextDelayMs)
                 if (!WdKeeper.armed(ctx)) { stopSelf(); return }
                 runCatching { WdKeeper.evaluate(ctx, "service") }.onFailure { Log.w(TAG, "beat failed: ${it.javaClass.simpleName}") }
             }
