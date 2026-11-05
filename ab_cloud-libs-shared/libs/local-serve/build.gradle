@@ -1,0 +1,60 @@
+// libs:local-serve (#1484) — a tiny local HTTP server for the Editor's "Served" mode (the way QuickEdit shows an HTML page):
+// it serves ONE folder so the page's relative CSS, JS and images resolve, and ServedPage shows it in a WebView.
+//   - bound to 127.0.0.1 ONLY (never 0.0.0.0), on a random free port; nothing outside the phone can reach it;
+//   - GET and HEAD only; a Host header other than loopback is refused (DNS rebinding); a path-traversal guard resolves every
+//     request against the folder's canonical path (.. segments, encoded dots, backslashes, NUL and symlinks out of the folder are refused);
+//   - the WebView is held to loopback too: any request to another host is blocked;
+//   - close() stops it; ServedPage closes it when the tab leaves composition.
+// Plain java.net sockets: no third-party dependency, no licence entry. Shared BY REFERENCE; lib-apks excludes it.
+// TESTED in src/test (JVM, real loopback sockets, no emulator).
+
+plugins {
+    id 'com.android.library'
+    id 'org.jetbrains.kotlin.android'
+    id 'org.jetbrains.kotlin.plugin.compose'
+}
+
+android {
+    namespace 'com.diegonmarcos.cloudlib.localserve'
+    compileSdk 36
+
+    defaultConfig {
+        minSdk 26
+    }
+
+    buildFeatures {
+        compose = true
+    }
+
+    testOptions {
+        unitTests {
+            returnDefaultValues = true
+            all {
+                testLogging {
+                    events 'failed'
+                    exceptionFormat 'full'
+                }
+            }
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
+dependencies {
+    implementation platform('androidx.compose:compose-bom:2025.11.01')
+    implementation 'androidx.compose.ui:ui'
+    implementation 'androidx.compose.foundation:foundation'
+    implementation 'androidx.compose.material3:material3'
+
+    testImplementation 'junit:junit:4.13.2'
+}

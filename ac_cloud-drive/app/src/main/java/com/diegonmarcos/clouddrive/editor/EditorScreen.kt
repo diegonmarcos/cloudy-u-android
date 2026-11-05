@@ -26,6 +26,8 @@ import com.diegonmarcos.cloudlib.editorcore.EditorTabs
 import com.diegonmarcos.cloudlib.editorcore.PrefsTabsStore
 import com.diegonmarcos.cloudlib.editorcore.Route
 import com.diegonmarcos.cloudlib.editorcore.Viewers
+import com.diegonmarcos.cloudlib.jsonviewer.JsonViewer
+import com.diegonmarcos.cloudlib.localserve.ServedPage
 import com.diegonmarcos.cloudlib.mediaviewer.MediaKind
 import com.diegonmarcos.cloudlib.mediaviewer.MediaViewer
 import com.diegonmarcos.cloudlib.odf.OdfViewer
@@ -64,7 +66,18 @@ fun EditorScreen(actions: DriveActions, openInExplorer: (String) -> Unit, modifi
 private fun EditorBody(tab: EditorTab, route: Route) {
     val editing = tab.mode == EditorMode.Edit
     when (route.viewer) {
-        Viewers.WYSIWYG -> TextBody(tab.path, TextFormat.of(route.format), editing)
+        // Markdown and HTML: View = the rendered WYSIWYG, editable; Edit = the raw source; Served (HTML) = the page from a loopback server.
+        Viewers.WYSIWYG -> {
+            val format = TextFormat.of(route.format)
+            when {
+                tab.mode == EditorMode.Served -> ServedPage(File(tab.path))
+                editing -> TextBody(tab.path, TextFormat.Text, editable = true)
+                format == TextFormat.Text -> TextBody(tab.path, TextFormat.Text, editable = false)
+                else -> TextBody(tab.path, format, editable = true)
+            }
+        }
+        // JSON: View = the tree viewer; Edit falls back to the source editor.
+        Viewers.JSON -> if (editing) TextBody(tab.path, TextFormat.Text, editable = true) else TextBody(tab.path, TextFormat.Text, editable = false, json = true)
         Viewers.MEDIA -> MediaViewer(tab.path, MediaKind.of(route.format) ?: MediaKind.Image)
         Viewers.PDF -> PdfViewer(File(tab.path), editing)
         Viewers.ODF -> OdfViewer(File(tab.path), editing)
@@ -73,7 +86,7 @@ private fun EditorBody(tab: EditorTab, route: Route) {
 
 /** Text, Markdown and HTML: read the file, show it, and write edits back a moment after the last keystroke (and when the tab is left). */
 @Composable
-private fun TextBody(path: String, format: TextFormat, editing: Boolean) {
+private fun TextBody(path: String, format: TextFormat, editable: Boolean, json: Boolean = false) {
     var text by remember(path) { mutableStateOf<String?>(null) }
     LaunchedEffect(path) { text = withContext(Dispatchers.IO) { runCatching { File(path).takeIf { it.length() <= MAX_TEXT_BYTES }?.readText() }.getOrNull() ?: "" } }
     val pending = remember(path) { AtomicReference<String?>(null) }
@@ -84,7 +97,11 @@ private fun TextBody(path: String, format: TextFormat, editing: Boolean) {
     }
     DisposableEffect(path) { onDispose { flush() } }
     val loaded = text ?: return
-    if (editing) WysiwygEditor(loaded, format, { pending.set(it); tick++ }) else WysiwygView(loaded, format)
+    when {
+        json -> JsonViewer(loaded)
+        editable -> WysiwygEditor(loaded, format, { pending.set(it); tick++ })
+        else -> WysiwygView(loaded, format)
+    }
 }
 
 private const val MAX_TEXT_BYTES = 5L * 1024 * 1024

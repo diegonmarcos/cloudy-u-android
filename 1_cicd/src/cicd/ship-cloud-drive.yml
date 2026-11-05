@@ -66,6 +66,8 @@ on:
       - "ab_cloud-libs-shared/libs/git-repos/**"
       - "ab_cloud-libs-shared/libs/git-sync/**"
       - "ab_cloud-libs-shared/libs/git-ui/**"
+      - "ab_cloud-libs-shared/libs/json-viewer/**"
+      - "ab_cloud-libs-shared/libs/local-serve/**"
       - "ab_cloud-libs-shared/libs/media-viewer/**"
       - "ab_cloud-libs-shared/libs/ml-l-image/**"
       - "ab_cloud-libs-shared/libs/model-catalogue/**"

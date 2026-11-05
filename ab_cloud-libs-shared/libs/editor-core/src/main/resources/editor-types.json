@@ -1,43 +1,160 @@
 {
-  "_doc": "#1484 THE file-type to viewer/editor mapping, as data. `viewers[].id` names the lib that owns the file (wysiwyg = libs:wysiwyg, media = libs:media-viewer, pdf = libs:pdf, odf = libs:odf); `editable` says whether that viewer has an Edit mode (media is view only); `formats` maps a format the viewer understands to the extensions that carry it. `unsupported` is checked FIRST: the Microsoft Office formats are refused on purpose and answer `unsupported format`. A name no entry matches also answers unsupported. Adding a type is a data edit.",
+  "_doc": "#1484 THE file-type to viewer/editor mapping, as data. `viewers[].id` names the lib that owns the file (wysiwyg = libs:wysiwyg, json = libs:json-viewer, media = libs:media-viewer, pdf = libs:pdf, odf = libs:odf); `formats` maps a format the viewer understands to the extensions that carry it. `modes` (View, Edit, Served) lists the modes a viewer offers, `format_modes` overrides it per format: for Markdown and HTML View is the rendered WYSIWYG view, editable; Edit is the raw source file; Served (HTML only) shows the page from a loopback-only local server (libs:local-serve) so relative CSS, JS and images resolve. A viewer with the single mode View is view only (media). `unsupported` is checked FIRST: the Microsoft Office formats are refused on purpose and answer `unsupported format`. A name no entry matches also answers unsupported. Adding a type or a mode is a data edit.",
   "viewers": [
     {
       "id": "wysiwyg",
-      "editable": true,
       "formats": {
-        "text": ["txt", "text", "log", "json", "yml", "yaml", "toml", "ini", "conf", "cfg", "csv", "xml", "sh", "kt", "kts", "java", "py", "js", "ts", "rs", "go", "c", "h", "cpp", "gradle", "properties"],
-        "markdown": ["md", "markdown", "mdown"],
-        "html": ["html", "htm", "xhtml"]
+        "text": [
+          "txt",
+          "text",
+          "log",
+          "yml",
+          "yaml",
+          "toml",
+          "ini",
+          "conf",
+          "cfg",
+          "csv",
+          "xml",
+          "sh",
+          "kt",
+          "kts",
+          "java",
+          "py",
+          "js",
+          "ts",
+          "rs",
+          "go",
+          "c",
+          "h",
+          "cpp",
+          "gradle",
+          "properties"
+        ],
+        "markdown": [
+          "md",
+          "markdown",
+          "mdown"
+        ],
+        "html": [
+          "html",
+          "htm",
+          "xhtml"
+        ]
+      },
+      "modes": [
+        "View",
+        "Edit"
+      ],
+      "format_modes": {
+        "html": [
+          "View",
+          "Edit",
+          "Served"
+        ]
+      }
+    },
+    {
+      "id": "json",
+      "modes": [
+        "View",
+        "Edit"
+      ],
+      "formats": {
+        "json": [
+          "json",
+          "geojson"
+        ]
       }
     },
     {
       "id": "media",
-      "editable": false,
       "formats": {
-        "image": ["png", "jpg", "jpeg", "gif", "webp", "bmp", "heic", "heif"],
-        "audio": ["mp3", "m4a", "aac", "wav", "ogg", "oga", "opus", "flac"],
-        "video": ["mp4", "m4v", "mkv", "webm", "3gp", "mov"]
-      }
+        "image": [
+          "png",
+          "jpg",
+          "jpeg",
+          "gif",
+          "webp",
+          "bmp",
+          "heic",
+          "heif"
+        ],
+        "audio": [
+          "mp3",
+          "m4a",
+          "aac",
+          "wav",
+          "ogg",
+          "oga",
+          "opus",
+          "flac"
+        ],
+        "video": [
+          "mp4",
+          "m4v",
+          "mkv",
+          "webm",
+          "3gp",
+          "mov"
+        ]
+      },
+      "modes": [
+        "View"
+      ]
     },
     {
       "id": "pdf",
-      "editable": true,
       "formats": {
-        "pdf": ["pdf"]
-      }
+        "pdf": [
+          "pdf"
+        ]
+      },
+      "modes": [
+        "View",
+        "Edit"
+      ]
     },
     {
       "id": "odf",
-      "editable": true,
       "formats": {
-        "odt": ["odt", "ott"],
-        "ods": ["ods", "ots"],
-        "odp": ["odp", "otp"]
-      }
+        "odt": [
+          "odt",
+          "ott"
+        ],
+        "ods": [
+          "ods",
+          "ots"
+        ],
+        "odp": [
+          "odp",
+          "otp"
+        ]
+      },
+      "modes": [
+        "View",
+        "Edit"
+      ]
     }
   ],
   "unsupported": {
     "reason": "unsupported format",
-    "extensions": ["doc", "docx", "xls", "xlsx", "ppt", "pptx", "docm", "xlsm", "pptm", "dot", "dotx", "xlt", "xltx", "pot", "potx"]
+    "extensions": [
+      "doc",
+      "docx",
+      "xls",
+      "xlsx",
+      "ppt",
+      "pptx",
+      "docm",
+      "xlsm",
+      "pptm",
+      "dot",
+      "dotx",
+      "xlt",
+      "xltx",
+      "pot",
+      "potx"
+    ]
   }
 }

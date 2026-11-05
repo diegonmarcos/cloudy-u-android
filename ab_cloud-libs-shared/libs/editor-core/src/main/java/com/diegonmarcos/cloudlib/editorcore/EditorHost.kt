@@ -47,6 +47,7 @@ object EditorTags {
 data class EditorLabels(
     val view: String = "View",
     val edit: String = "Edit",
+    val served: String = "Served",
     val close: String = "Close tab",
     val unsupported: String = "Unsupported format",
     val viewOnly: String = "View only",
@@ -134,14 +135,14 @@ private fun ModeBar(mode: EditorMode, route: Route, labels: EditorLabels, onMode
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (!route.supported) return@Row
-        if (!route.editable) {
+        if (route.modes.size < 2) {
             Text(labels.viewOnly, fontSize = KitDensity.caption, color = MaterialTheme.colorScheme.onSurfaceVariant)
             return@Row
         }
-        for (m in EditorMode.entries) {
+        for (m in route.modes) {
             val on = m == mode
             Text(
-                if (m == EditorMode.View) labels.view else labels.edit,
+                when (m) { EditorMode.View -> labels.view; EditorMode.Edit -> labels.edit; EditorMode.Served -> labels.served },
                 Modifier.testTag(EditorTags.mode(m)).padding(start = KitDensity.rowPadH / 2).clip(RoundedCornerShape(KitDensity.small))
                     .background(if (on) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
                     .clickable(role = Role.Tab) { onMode(m) }

@@ -17,6 +17,19 @@ class FileTypeRouterTest {
         }
     }
 
+    @Test fun `html has three modes, markdown and text two, json has its own viewer`() {
+        assertEquals(listOf(EditorMode.View, EditorMode.Edit, EditorMode.Served), router.route("/p.html").modes)
+        assertEquals(listOf(EditorMode.View, EditorMode.Edit, EditorMode.Served), router.route("/p.HTM").modes)
+        assertEquals(listOf(EditorMode.View, EditorMode.Edit), router.route("/n.md").modes)
+        assertEquals(listOf(EditorMode.View, EditorMode.Edit), router.route("/n.txt").modes)
+        assertEquals(Viewers.JSON, router.route("/data.json").viewer)
+        assertEquals("json", router.route("/data.json").format)
+        assertEquals(listOf(EditorMode.View, EditorMode.Edit), router.route("/data.json").modes)
+        assertEquals(listOf(EditorMode.View), router.route("/a.png").modes)
+        assertEquals(listOf(EditorMode.View), router.route("/a.pdf").modes.take(1))
+        assertEquals(emptyList<EditorMode>(), router.route("/a.docx").modes)
+    }
+
     @Test fun `images audio and video go to the media viewer, view only`() {
         for ((name, format) in listOf("a.png" to "image", "a.JPG" to "image", "a.mp3" to "audio", "a.flac" to "audio", "a.mp4" to "video", "a.webm" to "video")) {
             val r = router.route("/x/$name")
@@ -53,7 +66,7 @@ class FileTypeRouterTest {
     }
 
     @Test fun `the mapping is data, a custom table routes by its own entries`() {
-        val r = FileTypeRouter("""{"viewers":[{"id":"x","editable":true,"formats":{"f":["abc"]}}],"unsupported":{"reason":"no","extensions":["abc2"]}}""")
+        val r = FileTypeRouter("""{"viewers":[{"id":"x","modes":["View","Edit"],"formats":{"f":["abc"]}}],"unsupported":{"reason":"no","extensions":["abc2"]}}""")
         assertEquals("x", r.route("/a.ABC").viewer)
         assertFalse(r.route("/a.abc2").supported)
         assertEquals(setOf("abc"), r.supportedExtensions())

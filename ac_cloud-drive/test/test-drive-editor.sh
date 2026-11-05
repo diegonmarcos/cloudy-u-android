@@ -4,11 +4,11 @@
 # ║ free type table, the new navigation shape, app-side glue only            ║
 # ╚══════════════════════════════════════════════════════════════════════════╝
 #
-#   E1  libs:editor-core, wysiwyg, media-viewer, pdf and odf are in build.json::modules (a dir that exists),
+#   E1  libs:editor-core, wysiwyg, media-viewer, pdf, odf, json-viewer and local-serve are in build.json::modules (a dir that exists),
 #       in app.depends_on, linked with `implementation project(...)` in app/build.gradle, and watched by
 #       the ship workflow source.
 #   E2  editor-core's type table (editor-types.json) is data: the Microsoft Office formats are `unsupported`
-#       and claimed by no viewer, media is view only, every viewer is one of the five libs' ids.
+#       and claimed by no viewer, media is view only, every viewer is one of the seven libs' ids.
 #   E3  the module boundary: no lib of the five imports this application's package, and the app's Editor
 #       glue (editor/) holds no viewer logic (no PdfBox, no zip/XML, no codec).
 #   E4  the navigation: bottom nav is explorer/editor/home/git/fsync/mounts, Home = home_apps|manage (Manage
@@ -23,7 +23,7 @@ APP="$ROOT/ac_cloud-drive"
 SRC="$APP/app/src/main/java/com/diegonmarcos/clouddrive"
 LIBS="$ROOT/ab_cloud-libs-shared/libs"
 SHIP="$ROOT/1_cicd/src/cicd/ship-cloud-drive.yml"
-NAMES="editor-core wysiwyg media-viewer pdf odf"
+NAMES="editor-core wysiwyg media-viewer pdf odf json-viewer local-serve"
 
 FAILURES=0
 pass() { echo "  PASS  $*"; }
@@ -32,8 +32,8 @@ for required in "$APP/build.json" "$APP/app/build.gradle" "$SRC/editor/EditorScr
     [ -f "$required" ] || { echo "ERROR missing source: $required — this tester is unrun, not passing"; exit 1; }
 done
 
-echo "── E1 the five libs are declared, linked and watched ──"
-python3 - "$APP/build.json" "$APP/app/build.gradle" "$SHIP" "$LIBS" $NAMES <<'PYTHON' && pass "map, depends_on, implementation and ship paths agree for all five" || fail "a lib is missing from the module map, the app's links or the ship paths"
+echo "── E1 the seven libs are declared, linked and watched ──"
+python3 - "$APP/build.json" "$APP/app/build.gradle" "$SHIP" "$LIBS" $NAMES <<'PYTHON' && pass "map, depends_on, implementation and ship paths agree for all seven" || fail "a lib is missing from the module map, the app's links or the ship paths"
 import json, os, re, sys
 bj, gradle, ship, libs, *names = sys.argv[1:]
 j = json.load(open(bj, encoding="utf-8")); g = open(gradle, encoding="utf-8").read(); s = open(ship, encoding="utf-8").read() if os.path.exists(ship) else None
@@ -64,9 +64,12 @@ claimed = {e for v in d["viewers"] for exts in v["formats"].values() for e in ex
 if claimed & refused:
     print("    a viewer claims a refused extension: %s" % sorted(claimed & refused)); bad = 1
 ids = {v["id"] for v in d["viewers"]}
-if ids != {"wysiwyg", "media", "pdf", "odf"}:
+if ids != {"wysiwyg", "json", "media", "pdf", "odf"}:
     print("    viewers are %s" % sorted(ids)); bad = 1
-if any(v["id"] == "media" and v["editable"] for v in d["viewers"]):
+html = next(v for v in d["viewers"] if v["id"] == "wysiwyg")
+if html.get("format_modes", {}).get("html") != ["View", "Edit", "Served"] or "Served" in html["modes"]:
+    print("    html must offer View/Edit/Served and no other text type Served"); bad = 1
+if any(v["id"] == "media" and "Edit" in v["modes"] for v in d["viewers"]):
     print("    media is editable: it is view only"); bad = 1
 sys.exit(bad)
 PYTHON

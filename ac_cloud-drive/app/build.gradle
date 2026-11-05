@@ -711,6 +711,8 @@ dependencies {
     implementation project(':libs:media-viewer')
     implementation project(':libs:pdf')
     implementation project(':libs:odf')
+    implementation project(':libs:json-viewer')
+    implementation project(':libs:local-serve')
     implementation project(':libs:rclone')
     implementation project(':libs:mounts')
     // #579 the fleet's bottom-nav island: the five tabs are the same Compose pill
