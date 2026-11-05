@@ -445,13 +445,13 @@
     "wifi_lock": true
   },
   "mesh_sshd": {
-    "_doc": "The mesh door: the sshd cloud-superapp-mcp dials over WireGuard (its build.json ssh.doors: nix 8024 user nix-on-droid). BOOT_COMPLETED -> MeshSshdBoot starts TermuxService in the foreground and runs com.termux.cloud.MeshSshd's script once: an existing listener (pidfile) is left alone, else sshd (from the profile, else nix-shell -p openssh) starts with its own host key under ~/.ssh/mesh-sshd, key auth only. bind is the WILDCARD on purpose: the tun address is the WG profile's (10.0.0.9 on the S21+, 10.0.0.10 on the A37) and a specific address breaks the moment a profile or phone changes — the A37 answered ping and refused every port because nothing ever started sshd on it. Read by app/build.gradle into BuildConfig; test/test-mesh-sshd.sh runs the script against a stub sshd.",
+    "_doc": "The mesh door: the sshd cloud-superapp-mcp dials over WireGuard (its build.json ssh.doors: nix 8024 user nix-on-droid). #1487 OFF by default (a boot-started foreground terminal plus sshd drained the battery for nothing): the owner starts the terminal. When true, BOOT_COMPLETED -> MeshSshdBoot starts TermuxService in the foreground and runs com.termux.cloud.MeshSshd's script once: an existing listener (pidfile) is left alone, else sshd (from the profile, else nix-shell -p openssh) starts with its own host key under ~/.ssh/mesh-sshd, key auth only. bind is the WILDCARD on purpose: the tun address is the WG profile's (10.0.0.9 on the S21+, 10.0.0.10 on the A37) and a specific address breaks the moment a profile or phone changes — the A37 answered ping and refused every port because nothing ever started sshd on it. Read by app/build.gradle into BuildConfig; test/test-mesh-sshd.sh runs the script against a stub sshd.",
     "port": 8024,
     "bind": [
       "0.0.0.0",
       "::"
     ],
-    "start_on_boot": true
+    "start_on_boot": false
   },
   "runtime": {
     "_doc": "Option 37.1 -- this terminal exposes its own disk through fleet-webserver (the shared ab_cloud-libs-shared/libs/fleet-webserver, built from source by rootfs-extras.nix and baked into the root). THE ONE declaration of its port: rendered by ab_cloud-terminal-store/render-local-webserver.py into the login (bin/login, inlined by app/src/main/cpp/bake_default_packages.py), which starts it once per boot -- only when nothing already LISTENs on the port. bind is a statement, not a knob: fleet-webserver hard-binds 127.0.0.1 and refuses non-loopback peers, and the renderer refuses any other value. root is the terminal's own $HOME (the same path inside the proot). Writes stay token-gated and OFF: the login unsets HTTPD_WRITE, HTTPD_WRITE_ROOTS and HTTPD_WRITE_TOKEN_FILE. Every app's localhost ports live under runtime; ac_cloud-c3-webserver/test/test-localhost-ports.sh fails when two apps declare the same one.",

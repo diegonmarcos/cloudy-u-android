@@ -47,7 +47,7 @@ object HostShell {
         runCatching { RishBridge.requestShizukuPermissionIfNeeded() }
         schedule(app, replace = false)
         // The channel and the debug server are process state: the foreground service holds the process up.
-        HostShellService.start(app)
+        if (KeepAlivePolicy.needed(debugServerAllowed(app), ChannelAutoArm.enabled(app))) HostShellService.start(app)
         WdKeeper.start(app)   // #1467 keep wireless debugging on: observer, Wi-Fi callback, service, backstop
     }
 
@@ -123,7 +123,7 @@ open class HostShellBootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent?) {
         if (intent?.action == Intent.ACTION_BOOT_COMPLETED) {
             if (ChannelAutoArm.enabled(context)) HostShell.schedule(context.applicationContext, replace = true)
-            HostShellService.start(context.applicationContext)
+            if (KeepAlivePolicy.needed(debugServerAllowed(context), ChannelAutoArm.enabled(context))) HostShellService.start(context.applicationContext)
             WdKeeper.start(context.applicationContext)   // #1467
         }
     }

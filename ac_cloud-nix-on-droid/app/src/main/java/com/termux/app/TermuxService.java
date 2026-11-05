@@ -164,6 +164,8 @@ public final class TermuxService extends Service implements AppShell.AppShellCli
             }
         }
 
+        scheduleIdleStop();
+
         // If this service really do get killed, there is no point restarting it automatically - let the user do on next
         // start of {@link Term):
         return Service.START_NOT_STICKY;
@@ -175,6 +177,7 @@ public final class TermuxService extends Service implements AppShell.AppShellCli
 
         TermuxShellUtils.clearTermuxTMPDIR(true);
 
+        mIdleHandler.removeCallbacks(mIdleCheck);
         CloudWakeLock.STATE.destroyed();
         releaseLocks();
         if (!mWantsToStop)
@@ -209,6 +212,23 @@ public final class TermuxService extends Service implements AppShell.AppShellCli
     private void runStartForeground() {
         setupNotificationChannel();
         startForeground(TermuxConstants.TERMUX_APP_NOTIFICATION_ID, buildNotification());
+    }
+
+    /** #1487 idle stop: a headless start (unpack, CloudSession prepare, boot) must not leave a foreground service up. */
+    static final long IDLE_STOP_MS = 5 * 60_000L;
+    private final Handler mIdleHandler = new Handler(android.os.Looper.getMainLooper());
+    private final Runnable mIdleCheck = new Runnable() {
+        @Override public void run() {
+            boolean idle = mShellManager.mTermuxSessions.isEmpty() && mShellManager.mTermuxTasks.isEmpty()
+                && mTermuxTerminalSessionActivityClient == null && !CloudWakeLock.STATE.held();
+            if (idle) { Logger.logInfo(LOG_TAG, "Idle, stopping the service"); requestStopService(); }
+            else mIdleHandler.postDelayed(this, IDLE_STOP_MS);
+        }
+    };
+
+    private void scheduleIdleStop() {
+        mIdleHandler.removeCallbacks(mIdleCheck);
+        mIdleHandler.postDelayed(mIdleCheck, IDLE_STOP_MS);
     }
 
     /** Make service leave foreground mode. */

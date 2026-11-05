@@ -36,7 +36,7 @@ class WdKeeperService : Service() {
         }.onFailure { Log.w(TAG, "not promoted to foreground", it) }
         WdKeeper.start(applicationContext)
         if (loop?.isAlive != true) loop = Thread({ beat() }, "wd-keeper-beat").apply { isDaemon = true; start() }
-        return START_STICKY
+        return START_NOT_STICKY
     }
 
     override fun onDestroy() {
@@ -49,7 +49,8 @@ class WdKeeperService : Service() {
         val ctx = applicationContext
         try {
             while (!Thread.currentThread().isInterrupted) {
-                Thread.sleep(PERIOD_MS)
+                val on = (ctx.getSystemService(Context.POWER_SERVICE) as android.os.PowerManager).isInteractive
+                Thread.sleep(if (on) PERIOD_MS else KeepAlivePolicy.SCREEN_OFF_MS)   // #1487
                 if (!WdKeeper.armed(ctx)) { stopSelf(); return }
                 runCatching { WdKeeper.evaluate(ctx, "service") }.onFailure { Log.w(TAG, "beat failed: ${it.javaClass.simpleName}") }
             }

@@ -41,7 +41,7 @@ class HostShellService : Service() {
             else startForeground(NOTIF_ID, notification())
         }.onFailure { Log.w(TAG, "not promoted to foreground", it) }
         if (loop?.isAlive != true) loop = Thread({ keepUp() }, "host-shell-keepalive").apply { isDaemon = true; start() }
-        return START_STICKY
+        return START_NOT_STICKY
     }
 
     override fun onDestroy() {
@@ -51,13 +51,21 @@ class HostShellService : Service() {
 
     private fun keepUp() {
         val ctx = applicationContext
+        val pm = ctx.getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
+        var failures = 0
         try {
             while (!Thread.currentThread().isInterrupted) {
+                val debug = HostShell.debugServerAllowed(ctx)
+                // #1487 nothing to keep (debug mode off, channel off): stop, do not idle as a foreground service.
+                if (!KeepAlivePolicy.needed(debug, ChannelAutoArm.enabled(ctx))) { stopSelf(); return }
+                val screenOn = pm.isInteractive
                 runCatching {
-                    if (HostShell.debugServerAllowed(ctx)) AppDebugServer.start(ctx)
-                    if (!EmbeddedAdbChannel.isReady(ctx)) HostShell.reconnect(ctx, ATTEMPTS)
-                }.onFailure { Log.w(TAG, "keep-alive pass failed: ${it.javaClass.simpleName}") }
-                Thread.sleep(PERIOD_MS)
+                    if (debug) AppDebugServer.start(ctx)
+                    if (KeepAlivePolicy.mayReconnect(screenOn) && !EmbeddedAdbChannel.isReady(ctx)) {
+                        failures = if (HostShell.reconnect(ctx, ATTEMPTS).first) 0 else failures + 1
+                    } else if (EmbeddedAdbChannel.isReady(ctx)) failures = 0
+                }.onFailure { failures++; Log.w(TAG, "keep-alive pass failed: ${it.javaClass.simpleName}") }
+                Thread.sleep(KeepAlivePolicy.nextDelayMs(failures, screenOn))
             }
         } catch (_: InterruptedException) { }
     }
@@ -78,7 +86,6 @@ class HostShellService : Service() {
         const val CHANNEL_ID = "host_shell_channel"
         private const val NOTIF_ID = 38227
         private const val ATTEMPTS = 3
-        private const val PERIOD_MS = 60_000L
 
         /** startForegroundService; refused from the background on Android 12+, which is logged, not thrown. */
         fun start(ctx: Context) {
