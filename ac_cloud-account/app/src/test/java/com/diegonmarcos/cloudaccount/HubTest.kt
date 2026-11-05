@@ -191,7 +191,7 @@ class HubTest {
         assertNull("no extras = the default", MainActivity.deepLink(i(null, null)))
         assertNull(MainActivity.deepLink(null))
         assertEquals("connect" to "adb-shell", MainActivity.deepLink(i("setup", "adb-shell")))
-        assertEquals("data" to "bundle", MainActivity.deepLink(i("secrets", "connections")))
+        assertEquals("devices" to "bundle", MainActivity.deepLink(i("secrets", "connections")))
         assertEquals("personal" to "me", MainActivity.deepLink(i("home", "")))
         assertEquals("personal" to "snippets", MainActivity.deepLink(i("account", "snippets")))
         assertEquals("personal" to null, MainActivity.deepLink(i("bogus", "x")))

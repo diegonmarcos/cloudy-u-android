@@ -4,8 +4,11 @@ import com.diegonmarcos.cloudaccount.hub.SampleRows
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
 /** #1482 Devices > Peer Control is a declared page with sample data: its rows come from build.json, none from Kotlin. */
+@RunWith(RobolectricTestRunner::class)
 class SamplePageTest {
     @Test fun rowsComeFromTheDeclaration() {
         val json = """[{"id":"devices","pages":[{"id":"peer-control","sample":{"rows":[
