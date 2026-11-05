@@ -11,7 +11,6 @@ ac_cloud-c3/app/src/main/java/com/diegonmarcos/cloudc3/cloud/NtfyCatalog.kt	ntfy
 ac_cloud-mail/app/src/main/kotlin/app/sterna/ui/home/HomeHandOffs.kt	links the user opens in the browser; no request is made here
 ac_cloud-mail/app/src/main/kotlin/app/sterna/ui/settings/AccountAuthSection.kt	hint text naming the auth host; no request is made here
 ac_cloud-vault/data/src/main/kotlin/com/bitwarden/data/repository/util/EnvironmentUrlDataJsonExtensions.kt	the self-hosted server URL, the one vault URL https://vault.diegonmarcos.com, reached directly over TLS (mesh source or mTLS client certificate); never rewritten onto a mesh name
-ac_cloud-notes/packages/frontend/apps/android/App/app/src/main/java/app/cloudnotes/pro/components/Markdown.kt	sample markdown text shown in the editor preview (data and links); no request is made here
 ab_cloud-libs-shared/libs/rclone/src/main/java/com/diegonmarcos/cloudlib/rclone/unison/UnisonConfig.kt	validation message text naming the mesh name rule; no request is made here
 ab_cloud-libs-shared/libs/scraper/src/main/java/com/diegonmarcos/superapp/scraper/ScraperApi.kt	#1426 scrappers-api is not yet declared in fleet_endpoints; DEFAULT_BASES (mesh first, public second) stays until #1426 declares it and routes through FleetHttp
 ab_cloud-libs-shared/libs/apify/src/main/java/com/diegonmarcos/superapp/apify/ApifyBackends.kt	#1470 SELF_URL is the declared default of the self-hosted Cloudy Crawlee runner (crawlee-cloud, mesh); the user-set URL and bearer are applied by the callers, not routed through the fleet transport yet
