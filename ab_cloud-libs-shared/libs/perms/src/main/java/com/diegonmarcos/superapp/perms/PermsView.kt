@@ -8,7 +8,7 @@ package com.diegonmarcos.superapp.perms
 enum class PermItemKind { RUNTIME, SPECIAL, HEALTH, HELPER, INSTALL }
 
 /** The one trailing action of a row: the system dialog ([GRANT]) or the exact settings page ([OPEN]). */
-enum class PermAction(val word: String) { GRANT("Grant"), OPEN("Open") }
+enum class PermAction(val word: String) { GRANT("Grant"), OPEN("Open"), /** #1513 an adb-only row: granted over the host's channel, or its command copied. */ ADB_GRANT("Grant") }
 
 /** The state chip: what it says and its tone (green, amber, red, grey). */
 enum class PermChip(val word: String, val tone: Tone) {
@@ -153,7 +153,7 @@ object PermsView {
     )
 
     fun action(e: PermEntry, s: PermStatus): PermAction? = when {
-        e.kind == PermKind.ADB_ONLY -> null
+        e.kind == PermKind.ADB_ONLY -> if (s.missing && e.permission.isNotEmpty()) PermAction.ADB_GRANT else null   // #1513 the adb grant row
         e.kind != PermKind.RUNTIME && s.state == PermState.UNKNOWN -> PermAction.OPEN
         !s.missing -> null
         e.kind == PermKind.RUNTIME && s.state == PermState.DENIED && e.autoRequest -> PermAction.GRANT

@@ -45,6 +45,10 @@ object WdKeeper {
     private const val KEY_HEARTBEAT = "heartbeat"
     /** The perms catalogue feature the battery row is opened on. */
     const val FEATURE = "wireless-keeper"
+    const val WSS = "android.permission.WRITE_SECURE_SETTINGS"
+    /** The catalogue row (libs:perms, kind adb_only) that asks for [WSS]. */
+    private const val WSS_ROW = "write_secure_settings"
+    private const val KEY_AUTO_GRANT_TRIED = "auto_grant_tried"
     private const val WORK = "wd-keeper-backstop"
     private const val SETTLE_MS = 2_500L
     private const val EVENT_DELAY_MS = 3_000L
@@ -77,6 +81,8 @@ object WdKeeper {
         heartbeat(app)
         hook(app)
         registerRoute(app)
+        // #1513 the Perms row granted it (or it is held on resume): re-arm at once, on the 30 s floor of evaluate.
+        com.diegonmarcos.superapp.perms.AdbGrant.onHeld = { c, perm -> if (perm == WSS) kick(c, "permission-held", 0) }
         WdKeeperService.start(app)
         runCatching {
             WorkManager.getInstance(app).enqueueUniquePeriodicWork(WORK, ExistingPeriodicWorkPolicy.KEEP,
@@ -104,6 +110,7 @@ object WdKeeper {
     fun evaluate(app: Context, trigger: String): WdKeeperCore.Action {
         heartbeat(app)
         val now = System.currentTimeMillis()
+        val autoGranted = autoSelfGrant(app)
         val on = WirelessDebugging.isOn(app)
         if (on) p(app).edit().putBoolean("owner_off", false).apply()
         val facts = WdKeeperCore.Facts(armed(app), HostShell.canWriteSecureSettings(app), on, wifiConnected(app), leader = true,
@@ -118,7 +125,7 @@ object WdKeeper {
             return WdKeeperCore.Action.NOTHING
         }
         if (action == WdKeeperCore.Action.REARM) {
-            p(app).edit().putLong("self_write_at", now).apply()
+            p(app).edit().putLong("self_write_at", now).putString("self_write_by", if (autoGranted) com.diegonmarcos.superapp.perms.AdbGrant.BY_SELF else app.packageName).apply()
             val wrote = HostShell.keepWirelessDebuggingOn(app)
             Thread.sleep(SETTLE_MS)
             val after = WirelessDebugging.isOn(app)
@@ -127,6 +134,20 @@ object WdKeeper {
             if (!after) audit(app).add(WdAuditLog.Entry(System.currentTimeMillis(), false, facts.wifiConnected, "re-arm rejected ($trigger)", app.packageName))
         } else Log.i(TAG, "tick[$trigger]: $action")
         return action
+    }
+
+    /**
+     * #1513 Keeper on, permission missing, channel armed: grant it ONCE, here, no loop (the flag stays until the permission is held,
+     * so a later revoke is asked once again). True when this call got it, so the re-arm that follows is logged as the self-grant's.
+     */
+    private fun autoSelfGrant(app: Context): Boolean {
+        val held = HostShell.canWriteSecureSettings(app)
+        if (held) { if (p(app).getBoolean(KEY_AUTO_GRANT_TRIED, false)) p(app).edit().putBoolean(KEY_AUTO_GRANT_TRIED, false).apply(); return false }
+        if (p(app).getBoolean(KEY_AUTO_GRANT_TRIED, false) || !armed(app) || !com.diegonmarcos.superapp.perms.AdbGrant.shouldAutoRequest(true, false, HostShell.channelReady(app), false)) return false
+        p(app).edit().putBoolean(KEY_AUTO_GRANT_TRIED, true).apply()
+        val ok = HostShell.selfGrant(app)
+        Log.i(TAG, "auto self-grant: $ok")
+        return ok
     }
 
     private fun hook(app: Context) {
@@ -143,7 +164,7 @@ object WdKeeper {
                             val mine = now - p(app).getLong("self_write_at", 0L) < SELF_WINDOW_MS
                             val net = if (lastNetworkEventAt == 0L) null else now - lastNetworkEventAt
                             val cause = WdKeeperCore.guessCause(wifiConnected(app), net, SystemClock.elapsedRealtime(), mine && on == 1)
-                            audit(app).add(WdAuditLog.Entry(now, on == 1, wifiConnected(app), cause.label, if (mine && on == 1) app.packageName else "-"))
+                            audit(app).add(WdAuditLog.Entry(now, on == 1, wifiConnected(app), cause.label, if (mine && on == 1) p(app).getString("self_write_by", null) ?: app.packageName else "-"))
                         }
                         kick(app, if (on == 1) "setting-on" else "setting-off")
                     }
@@ -198,6 +219,9 @@ object WdKeeper {
     }.getOrDefault(false)
 
     /** Opens this app's Permissions page on the battery row (libs:perms owns asking; a lib never opens a settings page itself). */
+    /** "Fix in Perms ›": the Permissions page on the Write secure settings row; the grant itself is libs:perms' [com.diegonmarcos.superapp.perms.AdbGrant] row. */
+    fun openPermsFix(ctx: Context) = PermsLink.open(ctx, FEATURE, listOf(WSS_ROW))
+
     fun promptBattery(ctx: Context) = PermsLink.open(ctx, FEATURE, listOf("battery_opt"))
 
     fun snapshot(ctx: Context): WdKeeperStatus.Snapshot {

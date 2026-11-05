@@ -458,12 +458,27 @@ private fun KeeperSection() {
     val ctx = LocalContext.current
     var snap by remember { mutableStateOf<WdKeeperStatus.Snapshot?>(null) }
     var entries by remember { mutableStateOf<List<WdAuditLog.Entry>>(emptyList()) }
-    LaunchedEffect(Unit) {
-        while (true) {
-            withContext(Dispatchers.IO) { runCatching { WdKeeper.snapshot(ctx) to WdKeeper.audit(ctx).entries() }.getOrNull() }
-                ?.let { snap = it.first; entries = it.second }
-            delay(5_000)
+    var tick by remember { mutableStateOf(0) }
+    // #1513 no polling: read on open and on resume. Every permission is asked in Configs > Perms, never here.
+    LaunchedEffect(tick) {
+        withContext(Dispatchers.IO) { runCatching { WdKeeper.snapshot(ctx) to WdKeeper.audit(ctx).entries() }.getOrNull() }
+            ?.let { snap = it.first; entries = it.second }
+    }
+    DisposableEffect(ctx) {
+        val app = ctx.applicationContext as? android.app.Application
+        var host: Context? = ctx
+        while (host is android.content.ContextWrapper && host !is android.app.Activity) host = host.baseContext
+        val cb = object : android.app.Application.ActivityLifecycleCallbacks {
+            override fun onActivityResumed(a: android.app.Activity) { if (a === host) tick++ }
+            override fun onActivityCreated(a: android.app.Activity, b: android.os.Bundle?) {}
+            override fun onActivityStarted(a: android.app.Activity) {}
+            override fun onActivityPaused(a: android.app.Activity) {}
+            override fun onActivityStopped(a: android.app.Activity) {}
+            override fun onActivitySaveInstanceState(a: android.app.Activity, b: android.os.Bundle) {}
+            override fun onActivityDestroyed(a: android.app.Activity) {}
         }
+        app?.registerActivityLifecycleCallbacks(cb)
+        onDispose { app?.unregisterActivityLifecycleCallbacks(cb) }
     }
     val s = snap
     if (s == null) { Dim("Reading...", size = 11); return }
@@ -480,14 +495,31 @@ private fun KeeperSection() {
         }
     }
     if (!s.armed) Dim("Off. Turn on Keep armed (or Configs > Keep Wireless debugging on) to arm the keeper.")
+    if (!s.canWrite) {
+        Dim("The keeper cannot turn wireless debugging back on without the Write secure settings permission.", size = 11)
+        DenseButton("Fix in Perms ›", primary = true, onClick = { WdKeeper.openPermsFix(ctx) })
+    }
     if (s.armed && !s.batteryExempt) {
         Dim("Android may kill this app in the background. Set its battery to Unrestricted (on Samsung also Never sleeping apps).")
         DenseButton("Battery: allow unrestricted", onClick = { WdKeeper.promptBattery(ctx) })
     }
-    Dim("Every change of Wireless debugging, newest first (time, on/off, Wi-Fi, cause guess, who re-armed it):")
+    Dim("Every change of Wireless debugging, newest first (one row per event):")
     if (entries.isEmpty()) Dim("Nothing recorded yet.")
-    else SelectionContainer {
-        Text(entries.takeLast(30).reversed().joinToString("\n") { stamp(it.at) + "  " + (if (it.on) "ON " else "OFF") + "  wifi " + (if (it.wifi) "yes" else "no") + "  " + it.cause + "  by " + it.by },
-            fontSize = 10.sp, fontFamily = FontFamily.Monospace)
+    else {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            for ((t, w) in listOf("Time" to 0.14f, "State" to 0.1f, "Wi-Fi" to 0.1f, "Cause" to 0.36f, "Re-armed by" to 0.3f))
+                Text(t, Modifier.weight(w), fontSize = 9.sp, fontWeight = FontWeight.Bold)
+        }
+        SelectionContainer {
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                for (e in entries.takeLast(30).reversed()) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(stamp(e.at), Modifier.weight(0.14f), fontSize = 10.sp, fontFamily = FontFamily.Monospace)
+                    Text(if (e.on) "ON" else "OFF", Modifier.weight(0.1f), fontSize = 10.sp, fontFamily = FontFamily.Monospace)
+                    Text(if (e.wifi) "yes" else "no", Modifier.weight(0.1f), fontSize = 10.sp, fontFamily = FontFamily.Monospace)
+                    Text(e.cause, Modifier.weight(0.36f), fontSize = 10.sp)
+                    Text(if (e.by == "-") "nobody" else e.by, Modifier.weight(0.3f), fontSize = 10.sp)
+                }
+            }
+        }
     }
 }

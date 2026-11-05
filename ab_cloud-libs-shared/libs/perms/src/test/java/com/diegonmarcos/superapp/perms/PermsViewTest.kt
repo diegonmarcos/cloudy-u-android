@@ -142,7 +142,11 @@ class PermsViewTest {
         assertEquals(PermAction.OPEN, PermsView.action(entry(PermKind.SPECIAL), PermStatus(PermState.DENIED)))
         assertEquals(PermAction.OPEN, PermsView.action(entry(PermKind.SPECIAL), PermStatus(PermState.UNKNOWN)))
         assertNull(PermsView.action(entry(PermKind.RUNTIME), PermStatus(PermState.GRANTED)))
-        assertNull(PermsView.action(entry(PermKind.ADB_ONLY), PermStatus(PermState.DENIED)))
+        assertNull(PermsView.action(entry(PermKind.ADB_ONLY), PermStatus(PermState.DENIED)))   // no permission name: nothing to grant
+        // #1513 the permission-missing state leads to the Grant action of the adb row
+        val wss = entry(PermKind.ADB_ONLY).copy(permission = "android.permission.WRITE_SECURE_SETTINGS")
+        assertEquals(PermAction.ADB_GRANT, PermsView.action(wss, PermStatus(PermState.DENIED)))
+        assertNull(PermsView.action(wss, PermStatus(PermState.GRANTED)))
         assertEquals(PermItemKind.SPECIAL, PermsView.item(entry(PermKind.APPOPS), PermStatus(PermState.GRANTED)).kind)
     }
 

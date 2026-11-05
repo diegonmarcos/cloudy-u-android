@@ -49,6 +49,15 @@ object HostShell {
 
     fun mayBackground(ctx: Context): Boolean = runCatching { backgroundAllowed(ctx) }.getOrDefault(false)
 
+    /**
+     * #1513 How this host runs the one self-grant command. The SuperApp sets its shell broker here (allowlisted for exactly
+     * that grant); a host that sets nothing uses its own embedded channel. Blocking. Output is ignored: callers read the grant back.
+     */
+    @Volatile var grantRunner: ((Context, String) -> Unit)? = null
+
+    /** #1513 Is a privileged channel armed right now (the owner's wireless debugging is on and paired)? Host hook, default the ladder. */
+    @Volatile var channelReady: (Context) -> Boolean = { runCatching { ShellChannels.active(it) != null }.getOrDefault(false) }
+
     /** Called once from the host's Application.onCreate. */
     fun install(app: Context) {
         // The pairing service ends with the channel up; what follows is the host's.
@@ -88,11 +97,11 @@ object HostShell {
 
     /** BLOCKS. `pm grant <self> WRITE_SECURE_SETTINGS` over the embedded channel; true when held after. */
     fun selfGrant(ctx: Context): Boolean {
-        if (canWriteSecureSettings(ctx)) return true
-        val out = EmbeddedAdbChannel.exec(ctx,
-            com.diegonmarcos.superapp.perms.PermsShell.grant(ctx.packageName, "android.permission.WRITE_SECURE_SETTINGS") + " 2>&1")
-        Log.i(TAG, "grant WRITE_SECURE_SETTINGS -> ${out?.trim()?.take(160) ?: "no output"}")
-        return canWriteSecureSettings(ctx)
+        return com.diegonmarcos.superapp.perms.AdbGrant.grant(ctx.packageName, WdKeeper.WSS, { cmd ->
+            val run = grantRunner
+            if (run != null) runCatching { run(ctx, cmd) }.onFailure { Log.w(TAG, "grant runner: ${it.javaClass.simpleName}") }
+            else Log.i(TAG, "grant WRITE_SECURE_SETTINGS -> ${EmbeddedAdbChannel.exec(ctx, "$cmd 2>&1")?.trim()?.take(160) ?: "no output"}")
+        }, { canWriteSecureSettings(ctx) })
     }
 
     fun canWriteSecureSettings(ctx: Context): Boolean =

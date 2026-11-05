@@ -52,6 +52,13 @@ class App : Application(), WorkManagerConfiguration.Provider {
         super.onCreate()
         // ONE auto-arm switch: Configs > Keep Wireless debugging on (default build.json::privileged_channel.default_on = off).
         com.diegonmarcos.superapp.adbdebug.ChannelAutoArm.hostSwitch = { c -> com.diegonmarcos.superapp.system.WirelessDebugKeeper.Prefs.enabled(c) }
+        // #1513 the keeper's self-grant of WRITE_SECURE_SETTINGS goes through the shell broker (allowlisted for exactly that grant).
+        com.diegonmarcos.superapp.adbdebug.HostShell.grantRunner = { c, cmd ->
+            com.diegonmarcos.superapp.shellbroker.ShellBroker.exec(c, com.diegonmarcos.superapp.shellbroker.ShellBroker.SELF, cmd)
+        }
+        com.diegonmarcos.superapp.adbdebug.HostShell.channelReady = { c ->
+            runCatching { com.diegonmarcos.superapp.shellbroker.ShellBroker.status(c).armed }.getOrDefault(false)
+        }
         // extapp: install progress — listening before any resumed install worker publishes.
         com.diegonmarcos.superapp.extinstall.ExtAppInstalls.init(this)
         // The island's haptics are the lib's; "Vibration on tap" (Configs -> Launcher -> Others) still gates them.

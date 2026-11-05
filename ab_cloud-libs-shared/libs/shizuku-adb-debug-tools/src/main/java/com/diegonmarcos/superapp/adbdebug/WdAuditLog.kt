@@ -28,11 +28,14 @@ class WdAuditLog(private val store: Store, private val capacity: Int = 200) {
 
     fun lastRearm(): Entry? = synchronized(lock) { ring.lastOrNull { it.by != "-" } }
 
-    fun asText(stamp: (Long) -> String): String = entries().joinToString("\n") {
-        "${stamp(it.at)}  ${if (it.on) "ON " else "OFF"}  wifi=${if (it.wifi) "yes" else "no"}  ${it.cause}  by ${it.by}"
-    }
+    fun asText(stamp: (Long) -> String): String = entries().joinToString("\n") { row(it, stamp) }
 
     companion object {
+        /** One readable line per event: time, on/off, Wi-Fi, cause, who re-armed it. */
+        fun row(e: Entry, stamp: (Long) -> String): String =
+            "${stamp(e.at)}  ${if (e.on) "ON " else "OFF"}  wifi ${if (e.wifi) "yes" else "no"}  ${e.cause}  by ${if (e.by == "-") "nobody" else e.by}"
+
+
         fun encode(list: List<Entry>): String = JSONArray().also { a ->
             list.forEach { a.put(JSONObject().put("at", it.at).put("on", it.on).put("wifi", it.wifi).put("cause", it.cause).put("by", it.by)) }
         }.toString()

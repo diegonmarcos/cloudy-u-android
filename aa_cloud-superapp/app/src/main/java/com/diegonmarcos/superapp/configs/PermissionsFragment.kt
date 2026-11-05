@@ -610,8 +610,11 @@ class PermissionsFragment : KitComposeFragment() {
     /** #1403 the adb channel the Perms actions row grants through, and the one place that pairs (ADB Shell). */
     private fun permsAdb() = com.diegonmarcos.superapp.perms.PermsAdb(
         channel = object : com.diegonmarcos.superapp.perms.PermsGrant.GrantChannel {
-            override fun up() = shellPlane() != null
-            override fun exec(command: String): String? = shellPlane()?.exec(ctxAny(), command)
+            // #1513 through the shell broker (its allowlist), not a channel of this screen's own
+            override fun up() = runCatching { com.diegonmarcos.superapp.shellbroker.ShellBroker.status(ctxAny()).armed }.getOrDefault(false)
+            override fun exec(command: String): String? =
+                (com.diegonmarcos.superapp.shellbroker.ShellBroker.exec(ctxAny(), com.diegonmarcos.superapp.shellbroker.ShellBroker.SELF, command)
+                    as? com.diegonmarcos.superapp.shellclient.ShellResult.Ok)?.let { it.stdout + it.stderr }
         },
         connect = { com.diegonmarcos.superapp.adbdebug.AdbShellLink.open(ctxAny()) },
     )

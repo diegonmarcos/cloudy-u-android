@@ -54,6 +54,9 @@ class AllowlistTest {
     @Test fun theShippedAllowlistParsesAndDeniesByDefault() {
         val real = Allowlist.parse(File("src/main/assets/shell-allowlist.json").readText())
         assertTrue("com.diegonmarcos.superapp" in real.callers())
+        // #1513 the SuperApp's self-grant of WRITE_SECURE_SETTINGS has its own exact rule
+        val self = real.decide("com.diegonmarcos.superapp", "pm grant com.diegonmarcos.superapp android.permission.WRITE_SECURE_SETTINGS")
+        assertTrue(self is Decision.Allow && self.rule.id == "selfgrant-wss")
         assertTrue(real.decide("com.diegonmarcos.clouddrive", "dumpsys meminfo com.x.y") is Decision.Allow)
         assertTrue(real.decide("com.diegonmarcos.clouddrive", "pm install -r /x.apk") is Decision.Deny)
         assertTrue(real.decide("com.diegonmarcos.cloudwebserver", "rm -rf /") is Decision.Deny)

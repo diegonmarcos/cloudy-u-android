@@ -50,6 +50,13 @@ class WdKeeperCoreTest {
     }
 }
 
+class WdAuditLogRowTest {
+    @Test fun `one readable row per event with time, state, Wi-Fi, cause and who re-armed`() {
+        val e = WdAuditLog.Entry(5, on = true, wifi = false, cause = "Wi-Fi lost", by = "superapp (self-grant)")
+        assertEquals("T5  ON   wifi no  Wi-Fi lost  by superapp (self-grant)", WdAuditLog.row(e) { "T$it" })
+    }
+}
+
 class WdKeeperLeaderTest {
     private val now = 1_000_000L
     private fun c(pkg: String, armed: Boolean = true, w: Boolean = true, age: Long = 1_000) = WdKeeperLeader.Claim(pkg, armed, w, now - age)
@@ -107,7 +114,7 @@ class WdAuditLogTest {
     }
 
     @Test fun `text carries time, state, wifi, cause and who`() =
-        assertEquals("T1  OFF  wifi=yes  boot  by -", WdAuditLog(Mem()).also { it.add(e(1)) }.asText { "T$it" })
+        assertEquals("T1  OFF  wifi yes  boot  by nobody", WdAuditLog(Mem()).also { it.add(e(1)) }.asText { "T$it" })
 }
 
 class WdKeeperStatusTest {

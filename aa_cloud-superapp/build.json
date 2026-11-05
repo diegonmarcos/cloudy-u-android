@@ -10841,7 +10841,8 @@
       "dnd_access",
       "device_admin",
       "vpn",
-      "battery_opt"
+      "battery_opt",
+      "write_secure_settings"
     ],
     "helpers": [],
     "first_run": "own:FirstRunPerms.kt"

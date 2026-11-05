@@ -26,7 +26,8 @@
     "dnd_access",
     "device_admin",
     "vpn",
-    "battery_opt"
+    "battery_opt",
+    "write_secure_settings"
   ],
   "first_run": "own:FirstRunPerms.kt",
   "helpers": []

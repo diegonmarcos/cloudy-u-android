@@ -4,7 +4,11 @@ import androidx.compose.foundation.layout.Column
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
 import android.app.Activity
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import android.content.ContextWrapper
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
@@ -45,6 +49,9 @@ fun rememberAppPerms(
     highlight: Set<String> = emptySet(),
     extra: List<PermItem> = emptyList(),
     onExtra: (PermItem) -> Unit = {},
+    /** #1513 the host's adb channel for the adb-only rows' Grant, and where its one-line outcome goes. */
+    adb: PermsAdb? = null,
+    onAdbResult: (String) -> Unit = {},
 ): AppPermsState {
     val ctx = LocalContext.current
     var local by remember { mutableIntStateOf(0) }
@@ -59,11 +66,17 @@ fun rememberAppPerms(
         owner?.lifecycle?.addObserver(obs)
         onDispose { owner?.lifecycle?.removeObserver(obs) }
     }
+    val scope = rememberCoroutineScope()
     val own = remember(tick, local, resumes) { AppPerms.own(ctx, activity) }
     val helpers = remember(tick, local, resumes) { AppPerms.helpers(ctx) }
     val install = remember(tick) { AppPerms.installItems(ctx) }
     val items = own.map { PermsView.item(it.entry, it.status, it.entry.id in highlight) } +
         helpers.map { PermsView.helperItem(it.helper, it.entry, it.status, it.entry.id in highlight, AppPerms.helperName(ctx, it.helper)) } + install + extra
+    // #1513 back from pairing or Settings: a held adb-only grant wakes the feature that waits on it (no polling, resume only).
+    LaunchedEffect(resumes, tick) {
+        own.filter { it.entry.kind == PermKind.ADB_ONLY && it.entry.permission.isNotEmpty() && AdbGrant.held(ctx, it.entry.permission) }
+            .forEach { AdbGrant.onHeld?.invoke(ctx, it.entry.permission) }
+    }
     val entries = own.associate { it.entry.id to it.entry }
     val helperRows = helpers.associateBy { "${it.helper.pkg}:${it.entry.id}" }
     val extraIds = extra.map { it.id }.toSet()
@@ -76,9 +89,28 @@ fun rememberAppPerms(
         PermAskLog.markAskedIds(ctx, es.map { it.id })
         ask.launch(perms.toTypedArray())
     }
+    // #1513 the adb grant row: channel armed = grant now and read it back; else copy the line and open the pairing flow.
+    fun adbGrant(i: PermItem) {
+        val up = adb?.channel?.up() == true
+        if (AdbGrant.offer(AdbGrant.held(ctx, i.permission), up) == AdbGrant.Offer.GRANT) {
+            onAdbResult("Granting ${i.title}…")
+            scope.launch {
+                val ok = withContext(Dispatchers.IO) { AdbGrant.grant(ctx.packageName, i.permission, { adb?.channel?.exec(it) }, { AdbGrant.held(ctx, i.permission) }) }
+                onAdbResult(if (ok) "${i.title}: granted." else "${i.title}: not granted, the channel refused it. Copy the command instead.")
+                if (ok) AdbGrant.onHeld?.invoke(ctx, i.permission)
+                local++
+            }
+        } else {
+            val line = AdbGrant.adbLine(ctx.packageName, i.permission)
+            (ctx.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager)?.setPrimaryClip(ClipData.newPlainText("adb grant", line))
+            onAdbResult("No channel armed. Copied: $line\nOr pair this app (opened): it then grants itself.")
+            adb?.connect?.invoke()
+        }
+    }
     fun actOn(i: PermItem) {
         when {
             i.id in extraIds -> onExtra(i)
+            i.permKind == PermKind.ADB_ONLY && i.permission.isNotEmpty() -> adbGrant(i)
             i.kind == PermItemKind.HELPER -> helperRows[i.id]?.let { AppPerms.openHelper(ctx, it) }
             i.action == PermAction.GRANT -> request(listOf(i.id))
             else -> entries[i.id]?.let { PermsSettings.open(ctx, it) }
@@ -115,7 +147,8 @@ fun AppPermsSection(
     /** #1403 a dense host page (SuperApp Configs): the toolbar and the list in their dense sizes. */
     dense: Boolean = false,
 ) {
-    val s = rememberAppPerms(tick, highlight, extra, onExtra)
+    var adbNote by remember { mutableStateOf<String?>(null) }
+    val s = rememberAppPerms(tick, highlight, extra, onExtra, adb, { adbNote = it })
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
     var states by remember { mutableStateOf(emptySet<StateFilter>()) }
@@ -124,7 +157,7 @@ fun AppPermsSection(
     androidx.compose.runtime.CompositionLocalProvider(LocalPermsDense provides dense) { Column(modifier) {
         PermsToolbar(s.items, states, kinds, { states = it }, { kinds = it }, s.grantRuntime, s.grantAll, adb,
             onAdb = { mode -> adb?.let { a -> result = "Granting over adb…"; scope.launch { result = PermsComponents.grant(ctx, s.items, mode, a) } } },
-            onCopy = { result = PermsComponents.copy(ctx, s.items) }, result = result)
+            onCopy = { result = PermsComponents.copy(ctx, s.items) }, result = adbNote ?: result)
         PermsList(PermsActions.filter(s.items, states, kinds), s.act, s.grantAll.takeIf { s.missing > 0 }, Modifier, style)
     } }
 }

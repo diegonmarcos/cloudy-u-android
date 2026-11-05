@@ -53,6 +53,10 @@
      "re": "^pm (enable|disable|disable-user|enable-user|suspend|unsuspend|trim-caches|clear)( [\\w.:/=,@+*?-]+)*$"
     },
     {
+     "id": "selfgrant-wss",
+     "re": "^pm grant com\\.diegonmarcos\\.superapp android\\.permission\\.WRITE_SECURE_SETTINGS$"
+    },
+    {
      "id": "perms-1",
      "re": "^pm (grant|revoke) [a-z][\\w.]* [\\w.]+$"
     },
