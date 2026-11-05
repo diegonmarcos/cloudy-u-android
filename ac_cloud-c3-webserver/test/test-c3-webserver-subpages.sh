@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # #1490 cloud-c3-webserver: the API and Pages sub-pages, the mesh log route and the Repos serving.
 #
-#   S1  build.json::subpages is exactly API (Public Endpoints, Mesh Endpoints, Apps Endpoints, Apps IPC) and Pages (Drive, Terminals,
+#   S1  build.json::subpages is exactly API (MCP first, Public Endpoints, Mesh Endpoints, Apps Endpoints, Apps IPC) and Pages (Drive, Terminals,
 #       Repos), and every declared route is a row of app.rs::ROUTES (cargo test's check_table also refuses the reverse).
 #   S2  the shell draws the sub-nav and every sub-page from the declaration (pure block under node), escaping what it draws.
 #   S3  the mesh listener can never be public: the declared bind comes from a WireGuard profile, the subnets are RFC 1918 ranges, the
@@ -25,7 +25,7 @@ import json, re, sys
 app, shell, build, repo = sys.argv[1:5]
 b = json.load(open(build))
 bad = []
-want = [("api", "public", "Public Endpoints"), ("api", "mesh", "Mesh Endpoints"), ("api", "apps", "Apps Endpoints"), ("api", "ipc", "Apps IPC"),
+want = [("api", "mcp", "MCP"), ("api", "public", "Public Endpoints"), ("api", "mesh", "Mesh Endpoints"), ("api", "apps", "Apps Endpoints"), ("api", "ipc", "Apps IPC"),
         ("pages", "drive", "Drive"), ("pages", "terminals", "Terminals"), ("pages", "repos", "Repos")]
 got = [(p["tab"], p["id"], p["label"]) for p in b.get("subpages", [])]
 if got != want:

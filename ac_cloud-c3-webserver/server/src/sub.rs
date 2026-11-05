@@ -22,6 +22,10 @@ fn err(status: u16, msg: &str) -> Resp {
     Resp::json(status, format!("{{\"error\":{}}}", jstr(msg)))
 }
 
+pub fn api_mcp(_c: &Ctx, _r: &Req) -> Resp {
+    ok(apis::mcp_page(apis::data()))
+}
+
 pub fn api_public(_c: &Ctx, _r: &Req) -> Resp {
     ok(apis::public_page(apis::data()))
 }

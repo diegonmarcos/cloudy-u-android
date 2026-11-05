@@ -17,7 +17,8 @@
  "nodes": {
   "home": {
    "api": [
-    "/cloud/summary"
+    "/cloud/summary",
+    "/tree"
    ],
    "mcp": [
     "obs.finops.cloud_summary",
@@ -209,7 +210,8 @@
     "/workflows/gha",
     "/workflows/dispatch",
     "/reports/*",
-    "/files/report/:"
+    "/files/report/:",
+    "/ops/push-event"
    ],
    "mcp": [
     "devops.workflows.*",

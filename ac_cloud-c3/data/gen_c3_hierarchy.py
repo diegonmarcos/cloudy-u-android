@@ -100,6 +100,7 @@ def build():
         "containers": {
             "default_project": cp["default"],
             "projects": [{k: p.get(k, []) if k.endswith("prefix") else p[k] for k in ("id", "label", "folder_prefix", "name_prefix")} for p in cp["projects"]],
+            "name_overrides": cp.get("name_overrides", {}),
             "default_kind": cp["default_kind"],
             "filters": [{"id": k["id"], "label": k["label"], "name_suffix": k.get("name_suffix", []), "name_contains": k.get("name_contains", []), "category_prefix": k.get("category_prefix", [])} for k in cp["kinds"]],
         },
