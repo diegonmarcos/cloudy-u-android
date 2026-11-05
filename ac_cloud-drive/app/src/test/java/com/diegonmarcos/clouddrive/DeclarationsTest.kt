@@ -125,7 +125,7 @@ class DeclarationsTest {
         // #1149 the former Sync pages are bottom-nav sections: Git (Me, Cloud), Fsync (folder sync rules, #1216), Mounts (Rclone, FUSE) (#1173).
         assertEquals(listOf("git", "fsync", "mounts"), sync.pages.map { it.id })
         assertEquals(listOf("me", "cloud"), nav().section("git")!!.pages.map { it.id })
-        assertEquals("#1216 Fsync's main page is the folder sync rules: no sub-pages", emptyList<String>(), nav().section("fsync")!!.pages.map { it.id })
+        assertEquals("#1484 Fsync = Folders (the folder sync rules), Agents, Projects", listOf("folders", "agents", "projects"), nav().section("fsync")!!.pages.map { it.id })
         assertEquals(listOf("rclone", "fuse"), nav().section("mounts")!!.pages.map { it.id })
         assertEquals(listOf("Rclone", "FUSE"), nav().section("mounts")!!.pages.map { it.label })
         assertNull("the old Rsync id is gone, not kept as a second name", nav().section("rsync"))
