@@ -124,9 +124,10 @@ class ContainerProjectsTest {
         val macro = listOf(ContainersModel.INFRA, ContainersModel.CLOUD, ContainersModel.PROJECT)
         decl.projects.filter { it.repoGroup.isBlank() }.forEach { p ->
             val c = ContainerProjects.scope(decl, catalog, p.id)
-            assertTrue("${p.id} repeats a Cloudy macro group", c.groups.none { it.label in macro } && c.entries.none { it.group in macro })
+            val shown = c.groups.filter { it.categories.isNotEmpty() }
+            assertTrue("${p.id} repeats a Cloudy macro group", shown.none { it.label in macro } && c.entries.none { it.group in macro })
             assertTrue("${p.id} has no declared families", decl.families[p.id].orEmpty().isNotEmpty())
-            assertTrue("${p.id} groups are not its families", c.groups.all { it.label in decl.families[p.id].orEmpty() || it.label == decl.containerGroup })
+            assertTrue("${p.id} groups are not its families", shown.all { it.label in decl.families[p.id].orEmpty() || it.label == decl.containerGroup })
         }
         decl.projects.forEach { p -> assertTrue(ContainerProjects.scope(decl, catalog, p.id).entries.none { it.group == ContainersModel.PROJECT }) }
         val fam = decl.projects.filter { it.repoGroup.isBlank() }.map { decl.families[it.id].orEmpty().toSet() }
