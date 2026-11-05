@@ -114,6 +114,7 @@ pub fn mesh_page(d: &Value, m: &Mesh, apps: &[App]) -> Value {
         vec![format!("the apps that export logs; peers from {} only; every path needs the fleet bearer", m.cidr_text())],
         vec![],
     )];
+    head.push(row(&format!("{}{}/public | mesh", base, m.endpoints_route), vec!["GET".into(), "Bearer".into()], vec!["these Public and Mesh Endpoints pages as JSON (for cloudy-c3-mcp)".to_string()], vec![]));
     head.push(row(&format!("{}{}/<app>?n=&errors=&crashes=&method=", base, m.route), vec!["GET".into(), "Bearer".into()], vec![format!("calls <package>.{} of that app: {}", m.suffix, m.methods.join(" | "))], vec![]));
     let logs: Vec<Value> = apps.iter().map(|a| row(&a.name, vec![a.id.clone()], vec![format!("{}.{}", a.package, m.suffix)], vec![(format!("{}{}/{}", base, m.route, a.id), format!("{}{}/{}", base, m.route, a.id))])).collect();
     let svc: Vec<Value> = d["services"]

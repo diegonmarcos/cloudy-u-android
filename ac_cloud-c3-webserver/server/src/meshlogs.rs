@@ -42,6 +42,8 @@ pub struct Mesh {
     pub cidrs: Vec<(Ipv4Addr, u8)>,
     pub retry_s: u64,
     pub route: String,
+    /// `<endpoints_route>/public` and `/mesh`: the API tab's Public and Mesh Endpoints pages, for cloudy-c3-mcp.
+    pub endpoints_route: String,
     pub suffix: String,
     pub default_method: String,
     pub methods: Vec<String>,
@@ -80,6 +82,7 @@ impl Mesh {
             cidrs,
             retry_s: m["retry_s"].as_u64().unwrap_or(20).clamp(1, 600),
             route: m["logs_route"].as_str().filter(|r| r.starts_with('/') && r.len() > 1).ok_or("mesh.logs_route must be a path")?.trim_end_matches('/').to_string(),
+            endpoints_route: m["endpoints_route"].as_str().filter(|r| r.starts_with('/') && r.len() > 1).unwrap_or("/endpoints").trim_end_matches('/').to_string(),
             suffix: m["ipc"]["authority_suffix"].as_str().filter(|x| !x.is_empty()).ok_or("mesh.ipc.authority_suffix missing")?.to_string(),
             default_method: m["ipc"]["default_method"].as_str().unwrap_or("export").to_string(),
             methods: strs(&m["ipc"]["methods"]),
@@ -142,6 +145,13 @@ pub fn route(m: &Mesh, apps: &[App], req: &Req, token: Option<&str>, src: &LogSo
         return deny;
     }
     let p = req.path.trim_end_matches('/');
+    if let Some(kind) = p.strip_prefix(m.endpoints_route.as_str()).and_then(|r| r.strip_prefix('/')) {
+        return match kind {
+            "public" => Resp::json(200, apis::public_page(apis::data()).to_string()),
+            "mesh" => Resp::json(200, apis::mesh_page(apis::data(), m, apps).to_string()),
+            _ => Resp::json(404, "{\"error\":\"not found\"}".to_string()),
+        };
+    }
     let rest = match p.strip_prefix(m.route.as_str()) {
         Some(r) if r.is_empty() || r.starts_with('/') => r.trim_start_matches('/'),
         _ => return Resp::json(404, "{\"error\":\"not found\"}".to_string()),
@@ -211,7 +221,7 @@ mod tests {
     fn mesh() -> Mesh {
         Mesh::from_build(&json!({
             "runtime": {"mesh": {"port": 8004}},
-            "mesh": {"bind": "10.0.0.9", "cidrs": ["10.0.0.0/24", "10.1.0.0/24"], "retry_s": 5, "logs_route": "/logs",
+            "mesh": {"bind": "10.0.0.9", "cidrs": ["10.0.0.0/24", "10.1.0.0/24"], "retry_s": 5, "logs_route": "/logs", "endpoints_route": "/endpoints",
                      "ipc": {"authority_suffix": "logexport", "default_method": "export", "methods": ["meta", "logs", "crashes", "export"]}}
         }))
         .unwrap()
@@ -241,6 +251,18 @@ mod tests {
         }
         let r = route(&m, &a, &get("/logs/calc", None), Some("tok"), &stub);
         assert!(r.headers.iter().any(|(k, v)| k == "www-authenticate" && v == "Bearer"));
+    }
+
+    #[test]
+    fn the_endpoint_pages_are_bearer_guarded_too() {
+        let (m, a) = (mesh(), apps());
+        for k in ["public", "mesh"] {
+            assert_eq!(route(&m, &a, &get(&format!("/endpoints/{}", k), None), Some("tok"), &stub).status, 401, "{} without a bearer", k);
+            let ok = route(&m, &a, &get(&format!("/endpoints/{}", k), Some("Bearer tok")), Some("tok"), &stub);
+            assert_eq!(ok.status, 200);
+            assert!(String::from_utf8_lossy(&ok.body).contains("Endpoints"), "{}", k);
+        }
+        assert_eq!(route(&m, &a, &get("/endpoints/other", Some("Bearer tok")), Some("tok"), &stub).status, 404);
     }
 
     #[test]

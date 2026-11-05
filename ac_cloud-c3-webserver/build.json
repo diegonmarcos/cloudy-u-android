@@ -88,6 +88,7 @@
     ],
     "retry_s": 20,
     "logs_route": "/logs",
+    "endpoints_route": "/endpoints",
     "token_authority_suffix": "fleet",
     "ipc": {
       "authority_suffix": "logexport",
