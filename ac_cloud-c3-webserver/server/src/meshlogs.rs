@@ -287,9 +287,10 @@ mod tests {
     #[test]
     fn only_manifest_apps_and_declared_methods_are_called() {
         let (m, a) = (mesh(), apps());
-        let called = std::sync::atomic::AtomicBool::new(false);
-        let spy = |_: &str, _: &str, _: &str| -> Result<(String, String), String> {
-            called.store(true, std::sync::atomic::Ordering::SeqCst);
+        let called = Arc::new(std::sync::atomic::AtomicBool::new(false));
+        let seen = called.clone();
+        let spy = move |_: &str, _: &str, _: &str| -> Result<(String, String), String> {
+            seen.store(true, std::sync::atomic::Ordering::SeqCst);
             Ok(("".into(), "{}".into()))
         };
         assert_eq!(route(&m, &a, &get("/logs/unknown.pkg", Some("Bearer tok")), Some("tok"), &spy).status, 404);
