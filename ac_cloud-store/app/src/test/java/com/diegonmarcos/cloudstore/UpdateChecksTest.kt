@@ -50,7 +50,7 @@ class UpdateChecksTest {
     }).around(compose)
 
     @Test
-    fun `every need is granted in Configs - Perms: its row, never a settings intent of the card (#1515)`() {
+    fun `every need is granted in Configs - Perms, its row, never a settings intent of the card (#1515)`() {
         assertEquals(listOf("notifications", "install_unknown", "battery_opt"), UpdateChecks.Need.values().map { UpdateChecks.permsId(it) })
         val src = java.io.File("src/main/java/com/diegonmarcos/cloudstore").walkTopDown().filter { it.extension == "kt" }
             .filter { it.name == "UpdateChecks.kt" || it.name == "UpdateChecksCard.kt" || it.name == "MainActivity.kt" || it.name == "AccessPage.kt" }
