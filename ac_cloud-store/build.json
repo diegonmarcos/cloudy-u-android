@@ -243,6 +243,14 @@
     "package": "com.diegonmarcos.superapp",
     "shortcut_action": "page:config/dns"
   },
+  "downloads": {
+    "_doc": "#1517 the Store download engine (libs:appstore dl): at most max_concurrent transfers at once, max_retries tries per mirror before the next one (backoff floor 30 s, #1502), the APK cache pruned least-recently-used to cache_max_mb and cache_max_age_days (never a .part, never what still awaits install), update checks cached check_ttl_sec.",
+    "max_concurrent": 2,
+    "max_retries": 3,
+    "cache_max_mb": 2048,
+    "cache_max_age_days": 30,
+    "check_ttl_sec": 120
+  },
   "ventoy": {
     "_doc": "#1405 Cloud > Ventoy: a tab of its own right after the Tiny-ML group (after_group), baked into libs:appstore's BuildConfig (VENTOY_AFTER_GROUP, VENTOY_LABEL) from THIS file, so SuperApp's embedded Store (no such block) has no Ventoy tab. Drives come from libs:usb-drive (the #1375 code Cloud Drive reads); the catalogue is libs:appstore assets/appstore-ventoy.json (four tables, official feeds, sha256 on every download). #1444 Erase & install Ventoy: the Cloud Terminal (cld.termux, CLOUD_EXEC) builds the disk (assets/ventoy-build.py: MBR, core.img, exFAT partition 1 via mkfs.exfat, VTOYEFI) and this app writes it raw over USB (libs:usb-drive RawDiskWriter, libaums SCSI) behind VentoyGate's typed confirm; a drive Android mounts itself (SD card, vold virtual disk) is not a USB device and is refused before any write. The terminal's own processes cannot open the USB node (no root), hence the split. Copy installer + Ventoy2Disk on a PC stays as the fallback. Guards: test/test-store-ventoy.sh, VentoyCatalogueTest/VentoyDriveTest/Ext2ImageTest (+ store-ventoy-mutation.yml), test-store-ventoy-emulator.yml (vold virtual disk).",
     "after_group": "libs-t-ml",

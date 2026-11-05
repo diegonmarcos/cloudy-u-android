@@ -107,6 +107,9 @@ internal class GhcrClient(
         )
     }
 
+    /** #1517 The blob URL the download engine fetches (it adds the bearer header itself). */
+    fun blobUrl(digest: String) = "https://$registry/v2/$repo/blobs/$digest"
+
     /** Drop older cache entries for the same app - [prefix] is per-app and the
      *  rest of the name is the digest, so anything matching but not [keep] is a
      *  superseded version. Without this the cache grows one APK per release

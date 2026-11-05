@@ -105,6 +105,9 @@ def taxonomyUi = new groovy.json.JsonSlurper().parse(taxonomyFile).ui
 // Tiny-ML); a host that declares none bakes an empty group and draws no Ventoy tab.
 def ventoyDeclFile = file("${rootDir}/build.json")
 def ventoyDecl = ventoyDeclFile.exists() ? new groovy.json.JsonSlurper().parse(ventoyDeclFile).ventoy : null
+// #1517 the download engine's declared limits: the CONSUMING app's build.json `downloads` block; a host that declares none gets
+// the defaults below (2 at once, 3 tries per mirror, a 2 GB / 30 day cache, update checks cached for 2 minutes).
+def dlDecl = ventoyDeclFile.exists() ? new groovy.json.JsonSlurper().parse(ventoyDeclFile).downloads : null
 def taxB64 = { obj -> groovy.json.JsonOutput.toJson(obj ?: []).bytes.encodeBase64().toString() }
 // bakeB64(): the ONE chunked bake (#654), owned by :libs:updater, which this module depends on.
 apply from: '../updater/bake-b64.gradle'
@@ -129,6 +132,11 @@ android {
         buildConfigField "String", "UI_PHONE_FOLDERS_B64",  bakeB64(taxB64(taxonomyUi.phone_folders))
         buildConfigField "String", "UI_PHONE_SECTIONS_B64", bakeB64(taxB64(taxonomyUi.phone_sections))
         buildConfigField "String", "UI_EXTERNAL_APPS_B64",  bakeB64(taxB64(taxonomyUi.external_apps))
+        buildConfigField "int", "DL_MAX_CONCURRENT", "${dlDecl?.max_concurrent ?: 2}"
+        buildConfigField "int", "DL_MAX_RETRIES", "${dlDecl?.max_retries ?: 3}"
+        buildConfigField "long", "DL_CACHE_MAX_BYTES", "${(dlDecl?.cache_max_mb ?: 2048) * 1000000L}L"
+        buildConfigField "long", "DL_CACHE_MAX_AGE_MS", "${(dlDecl?.cache_max_age_days ?: 30) * 86400000L}L"
+        buildConfigField "long", "DL_CHECK_TTL_MS", "${(dlDecl?.check_ttl_sec ?: 120) * 1000L}L"
         buildConfigField "String", "VENTOY_AFTER_GROUP", "\"${ventoyDecl?.after_group ?: ''}\""
         buildConfigField "String", "VENTOY_LABEL", "\"${ventoyDecl?.label ?: 'Ventoy'}\""
     }

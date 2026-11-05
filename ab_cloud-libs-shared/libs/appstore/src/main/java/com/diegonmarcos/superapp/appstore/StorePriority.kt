@@ -80,6 +80,8 @@ object StorePriority {
         val app = ctx.applicationContext
         val d = load(app)
         if (!updatesFirst(d, autoOn(app), unmetered(app))) return false
+        // #1517 At most once per TTL: every tab switch used to start another chain beside the user's download.
+        if (!StoreChecks.mayStartUpdatesFirst()) return false
         Log.i(TAG, "Wi-Fi + Auto-update: downloading every pending update at max priority, beside the page")
         thread(name = "store-updates-first", priority = Thread.MAX_PRIORITY) {
             runCatching { StoreAuto.run(app, fleet, StoreAuto.TRIGGER_STORE_REFRESH) }

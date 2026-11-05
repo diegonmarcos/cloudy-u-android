@@ -69,8 +69,11 @@ echo "== T2: no second download loop crept back =="
 # (now DnsLadder.kt's) pipe() relays the bytes of a local CONNECT tunnel between two sockets — neither
 # downloads anything, so neither is a second download engine.
 LOOPS=$(grep -rlF 'ByteArray(64 * 1024)' "$ROOT/$LIB/updater/src" "$ROOT/$LIB/appstore/src" 2>/dev/null \
-        | grep -v 'ApkIntegrity.kt\|StoreDns.kt\|DnsLadder.kt' | wc -l)
-[ "$LOOPS" -eq 1 ] && ok "exactly one streaming copy loop (Download.kt)" \
+        | grep -v 'ApkIntegrity.kt\|StoreDns.kt\|DnsLadder.kt\|RangeFetch.kt\|DownloadCache.kt' | wc -l)
+# #1517 The Store's download engine (appstore dl/RangeFetch.kt) is the one loop of the engine path, with validators (If-Range, ETag);
+# (DownloadCache.kt only hashes a finished file.) Download.kt stays the loop of the external-app / blob path until that moves onto the engine. Never a third.
+[ -f "$ROOT/$LIB/appstore/src/main/java/com/diegonmarcos/superapp/appstore/dl/RangeFetch.kt" ] || bad "the engine's RangeFetch.kt is missing"
+[ "$LOOPS" -eq 1 ] && ok "exactly one streaming copy loop outside the engine (Download.kt)" \
                    || bad "found $LOOPS streaming copy loops — expected 1"
 hasnt_code "$SRC" 'target.outputStream()'                     "ReleaseSource no longer opens its own output stream"
 has "$SRC" 'Download.toFile('                                 "ReleaseSource downloads through the shared engine"

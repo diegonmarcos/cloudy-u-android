@@ -228,6 +228,7 @@ class StorePhoneFragment : KitComposeFragment() {
         StoreBar.Bar(StoreBar.Verbs(
             checkAll = { checkAll() }, installAll = { installAll() }, updateAll = { updateAll() }), resume = resume)
         progress.Panel()
+        StoreDownloadsPanel()
         // The status area: declared rows vs installed and the updates' cached / to-download split, from
         // the rows and checks this page already holds. Re-read on every progress event.
         val tallyRows = rows; val tallyStates = states.toMap()

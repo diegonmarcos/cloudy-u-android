@@ -270,7 +270,7 @@ class StoreCloudFragment : KitComposeFragment() {
                 // Repaint only when a handover was resolved: the first resume
                 // must not jump ahead of #857's updates-first refresh.
                 if (runCatching { StoreInstallWatch.onForeground(c, fleet) }.getOrDefault(false))
-                    main.post { if (isAdded && composed) checkAll(c, current()) }
+                    main.post { if (isAdded && composed) checkAll(c, current(), force = true) }
             }
         }
     }
@@ -345,8 +345,10 @@ class StoreCloudFragment : KitComposeFragment() {
         // never waits on it: it runs now, always, and always settles.
         LaunchedEffect(tab) {
             shown?.rows?.takeIf { it.isNotEmpty() }?.let { rows ->
+                // #1517 A tab switch ASKS: the updates-first chain starts at most once per TTL, and the check is answered from the
+                // TTL cache. Neither touches a running download (the engine owns it).
                 StorePriority.startUpdatesAsync(ctx, fleet)
-                checkAll(ctx, rows)
+                checkAll(ctx, rows, force = false)
             }
         }
         LaunchedEffect(scrollTarget) {
@@ -461,6 +463,8 @@ class StoreCloudFragment : KitComposeFragment() {
         // Sits under the buttons that start the work and above the summary line that describes the
         // result: what the fleet is doing RIGHT NOW.
         progress.Panel()
+        // #1517 the engine's queue: observed here, owned by the process-wide engine.
+        StoreDownloadsPanel()
         // The status area: declared vs installed and the updates' cached / to-download split, for the
         // whole fleet registry, from the checks already made. Re-read on every progress event.
         val snap = states.toMap()
@@ -849,18 +853,22 @@ class StoreCloudFragment : KitComposeFragment() {
     private fun current(): List<Fleet.App> = tabs.getOrNull(tab)?.rows.orEmpty()
 
     // ── concurrent status — one thread per app, independent + non-blocking ───
-    private fun checkAll(ctx: Context, list: List<Fleet.App> = current()) {
+    private fun checkAll(ctx: Context, list: List<Fleet.App> = current(), force: Boolean = true) {
         // #804 a Store refresh is an auto-chain trigger: what it is about to
         // show as pending is what the chain downloads and installs (gated by
         // the toggle and Wi-Fi only in the worker, like every other trigger).
-        ConstellationWorker.kick(ctx, StoreAuto.TRIGGER_STORE_REFRESH)
-        for (app in list) {
-            main.post { checking[app.id] = true }
-            thread(name = "fleet-check-${app.id}") {
-                val st = Fleet.status(ctx, app)
+        // #1517 Only the user's own refresh kicks it; a tab switch (force = false) never does.
+        if (force) ConstellationWorker.kick(ctx, StoreAuto.TRIGGER_STORE_REFRESH)
+        for (app in list) main.post { checking[app.id] = true }
+        // #1517 One pass at a time, per-app checks cached for a short TTL and de-duplicated in flight; a check reads metadata only.
+        StoreChecks.pass(list) { app ->
+            try {
+                val st = StoreChecks.status(ctx, app, force)
                 val stg = StoreStages.stage(ctx, app, st)
                 // A filtered-out app still has a state worth recording, and it has no row to post to.
                 main.post { states[app.id] = st; stages[app.id] = stg; checking.remove(app.id) }
+            } catch (t: Throwable) {
+                main.post { checking.remove(app.id) }
             }
         }
     }
@@ -898,7 +906,7 @@ class StoreCloudFragment : KitComposeFragment() {
             ticker.interrupt()
             if (done.failedAt != null)
                 main.post { Toast.makeText(ctx, "${app.label}: ${done.text}", Toast.LENGTH_LONG).show() }
-            val st = Fleet.status(ctx, app)
+            val st = StoreChecks.status(ctx, app, force = true)   // #1517 refreshes the TTL cache too
             val stg = StoreStages.stage(ctx, app, st)
             main.post { states[app.id] = st; stages[app.id] = stg }
         }

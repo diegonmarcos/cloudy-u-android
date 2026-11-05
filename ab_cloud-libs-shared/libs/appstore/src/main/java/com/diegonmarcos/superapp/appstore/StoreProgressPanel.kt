@@ -27,6 +27,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
+import com.diegonmarcos.superapp.appstore.dl.UserAction
 import com.diegonmarcos.superapp.updater.Fleet
 import com.diegonmarcos.superapp.updater.UpdateProgress
 import com.diegonmarcos.superapp.updater.Updater
@@ -158,7 +159,11 @@ class StoreProgressPanel(
                 // Cancel. UpdateProgress.cancelRequested is polled by both download loops in ApkSource and by
                 // both phases of Fleet.installAll, and the shell overlay has driven it through Updater.cancelNow
                 // all along: a download started from the table can be stopped from here too.
-                StoreBar.Button(CANCEL, Ink.GREY_FILL, { Updater.cancelNow(ctx.applicationContext) }, tag = "store-progress:cancel")
+                StoreBar.Button(CANCEL, Ink.GREY_FILL, {
+                    // #1517 The user's Cancel: stops the engine's work too (the engine ignores the process-wide cancel flag on purpose).
+                    StoreEngine.engineOrNull()?.cancelAll(UserAction.tap("progress:cancel"))
+                    Updater.cancelNow(ctx.applicationContext)
+                }, tag = "store-progress:cancel")
             }
         }
     }

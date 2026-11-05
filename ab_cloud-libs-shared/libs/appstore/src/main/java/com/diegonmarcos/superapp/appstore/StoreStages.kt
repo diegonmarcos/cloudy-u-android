@@ -117,9 +117,18 @@ object StoreStages {
         return if (unpack == null) s else Stage(s.id, "${s.text} · $unpack", s.actions, s.cached, s.failedAt)
     }
 
+    /** #1517 The row of a job the engine owns: percent, bytes, speed and ETA. A paused one offers Download, which resumes it. */
+    private fun engineStage(j: com.diegonmarcos.superapp.appstore.dl.DlJob): Stage = when (j.state) {
+        com.diegonmarcos.superapp.appstore.dl.DlState.QUEUED -> Stage("queued", com.diegonmarcos.superapp.appstore.dl.DlText.line(j), emptyList())
+        com.diegonmarcos.superapp.appstore.dl.DlState.PAUSED -> Stage("paused", com.diegonmarcos.superapp.appstore.dl.DlText.line(j), listOf(DOWNLOAD))
+        else -> Stage("downloading", com.diegonmarcos.superapp.appstore.dl.DlText.line(j), emptyList())
+    }
+
     private fun stageBase(ctx: Context, app: Fleet.App, remote: Fleet.State?): Stage {
         when (busy[app.pkg]) {
             DOWNLOAD -> {
+                // #1517 the engine's own record first: bytes, speed and ETA of THIS job.
+                StoreEngine.peek(app.id)?.takeIf { it.state.active }?.let { return engineStage(it) }
                 // This row's OWN state (keyed by package), never the process-wide one another row is writing.
                 val r = StoreJobs.board.row(app.pkg)
                 if (r?.phase == JobBoard.Phase.QUEUED) return Stage("queued", r.text(), emptyList())
@@ -134,6 +143,8 @@ object StoreStages {
                 return Stage("installing", "installing from cache…", emptyList(), cachedFor(ctx, app))
             }
         }
+        // #1517 a job the engine restored after a restart has no UI thread and no `busy` entry: the engine's record is the truth.
+        StoreEngine.peek(app.id)?.takeIf { it.state.active }?.let { return engineStage(it) }
         // #858 a handover that was aborted, abandoned or never answered turns
         // into the Install-stage note read below: the row offers Retry.
         // #906 a handover still waiting says so (and what PackageInstaller last said),
@@ -249,22 +260,26 @@ object StoreStages {
 
     /** Stage 1. Blocking — call off the main thread. Errors are already in the
      *  note ([Fleet.download] writes it); the returned stage shows them. */
-    fun download(ctx: Context, app: Fleet.App): Stage = named(ctx, app, UpdateProgress.STAGE_DOWNLOADING, "") {
-        fetch(ctx, app)
-        stage(ctx, app)
+    fun download(ctx: Context, app: Fleet.App): Stage {
+        // #1517 A second ask while the engine owns this package's download (a tab switch's updates-first chain, a double tap) JOINS
+        // it. It must not run `named`: that would settle this row's job-board entry and end the process-wide job under the running one.
+        if (busy[app.pkg] == DOWNLOAD) { StoreEngine.join(ctx, app); return stage(ctx, app) }
+        return named(ctx, app, UpdateProgress.STAGE_DOWNLOADING, "") {
+            fetch(ctx, app)
+            stage(ctx, app)
+        }
     }
 
     /** Stage 1, returning what it fetched: the PUBLISHED build, verified by its
      *  sha256 (cache hit or network), or null when it did not complete. */
     private fun fetch(ctx: Context, app: Fleet.App): VerifiedApk? {
-        if (busy.putIfAbsent(app.pkg, DOWNLOAD) != null) return null
+        if (busy.putIfAbsent(app.pkg, DOWNLOAD) != null) return StoreEngine.join(ctx, app)
         return try {
             UpdateProgress.beginDownload()
-            // At most 3 downloads at once; a 4th shows "queued" on its own row.
-            StoreJobs.runner.download(app.pkg) {
-                UpdateProgress.stage(UpdateProgress.STAGE_DOWNLOADING)
-                Fleet.download(ctx, app)
-            }
+            // #1517 The process-wide DownloadEngine owns the transfer (queue, Range resume, mirrors, sha256, concurrency cap); this
+            // thread only asks and waits, so nothing that happens to a page can cancel or restart it.
+            UpdateProgress.stage(UpdateProgress.STAGE_DOWNLOADING)
+            StoreEngine.fetch(ctx, app)
         } catch (t: Throwable) {
             Log.w(TAG, "download ${app.id} stopped: ${t.message}")
             null
@@ -289,6 +304,9 @@ object StoreStages {
     fun install(ctx: Context, app: Fleet.App, remote: Fleet.State? = null): Stage {
         // SharedUidMigration: the old build refuses this one in place; no path retries it.
         if (SharedUidMigration.blocks(ctx, app)) return stage(ctx, app, remote)
+        // #1517 A package already being downloaded or installed is owned by that job; asking again joins it.
+        if (busy[app.pkg] == DOWNLOAD) { StoreEngine.join(ctx, app); return stage(ctx, app, remote) }
+        if (busy[app.pkg] != null) return stage(ctx, app, remote)
         val cached = actionableFor(ctx, app, remote)
         return named(ctx, app, if (cached != null) UpdateProgress.STAGE_VERIFYING else UpdateProgress.STAGE_DOWNLOADING,
             versionOf(remote, cached)) {

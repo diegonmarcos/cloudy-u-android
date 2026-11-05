@@ -84,7 +84,7 @@ else bad "#861 the update chain is waited on / gates work again (Store stuck on 
 FRAG="$(strip "$SRC/StoreCloudFragment.kt")"
 RF="$(printf '%s' "$FRAG" | sed -n '/LaunchedEffect(tab) {/,/^        }$/p')"
 START_L="$(printf '%s' "$RF" | grep -n 'StorePriority.startUpdatesAsync(ctx, fleet) *$' | head -1 | cut -d: -f1)"
-CHECK_L="$(printf '%s' "$RF" | grep -nE '^ *checkAll\(ctx, rows\) *$' | head -1 | cut -d: -f1)"
+CHECK_L="$(printf '%s' "$RF" | grep -nE '^ *checkAll\(ctx, rows(, force = false)?\) *$' | head -1 | cut -d: -f1)"
 if [ -n "$START_L" ] && [ -n "$CHECK_L" ] && [ "$START_L" -lt "$CHECK_L" ] &&
    ! printf '%s' "$RF" | grep -Eq "$BLOCK|runUpdatesFirst"; then
   ok "#861 the tab's effect starts the updates async, then runs the catalogue check at once"

@@ -292,8 +292,11 @@ object MeshMirror {
         }
     }
 
-    /** The leg itself; [MeshMirrorSource] is only its place in Fleet's list. */
-    fun fetch(ctx: Context, app: Fleet.App): VerifiedApk? {
+    /**
+     * #1517 Which mesh URL serves [app] and the digest its sidecar declares, or null when this leg does not apply. Throws, classified,
+     * when the leg applies and cannot answer. Shared by [fetch] and the download engine, so there is one reading of the mesh leg.
+     */
+    fun plan(ctx: Context, app: Fleet.App): Pair<String, String>? {
         if (app.releaseUrl.isBlank()) return null
         // Both origins live on wg0 and the declared name resolves only through
         // the fleet resolver the tunnel carries, so with the mesh down this leg
@@ -320,6 +323,12 @@ object MeshMirror {
             throw failures.firstOrNull { DownloadFailure.kind(it) == DownloadFailure.Kind.NOT_PUBLISHED }
                 ?: failures.firstOrNull() ?: IllegalStateException("no mesh mirror origin configured")
         }
+        return url to sha
+    }
+
+    /** The leg itself; [MeshMirrorSource] is only its place in Fleet's list. */
+    fun fetch(ctx: Context, app: Fleet.App): VerifiedApk? {
+        val (url, sha) = plan(ctx, app) ?: return null
         val target = ApkCache.file(ctx, "fleet-${app.id}-mesh.apk")
         UpdateProgress.update(UpdateProgress.State.Downloading(0, 0L, -1L))
         try {
