@@ -30,7 +30,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import com.diegonmarcos.superapp.uikit.KitTextButton
 import androidx.compose.runtime.Composable
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
@@ -159,11 +159,11 @@ internal fun XrayAdbDialog(a: XrayAsk) {
         onDismissRequest = { a.answer(XrayAdbGate.Choice.CANCEL) },
         title = { Text("X-Ray needs ADB") },
         text = { Text(a.message) },
-        confirmButton = { TextButton(onClick = { a.answer(XrayAdbGate.Choice.REARM) }) { Text("Re-arm channel") } },
+        confirmButton = { KitTextButton(onClick = { a.answer(XrayAdbGate.Choice.REARM) }) { Text("Re-arm channel") } },
         dismissButton = {
             androidx.compose.foundation.layout.Row {
-                TextButton(onClick = { a.answer(XrayAdbGate.Choice.OPEN_WIRELESS_DEBUGGING) }) { Text("Wireless debugging") }
-                TextButton(onClick = { a.answer(XrayAdbGate.Choice.PARTIAL) }) { Text("Export partial") }
+                KitTextButton(onClick = { a.answer(XrayAdbGate.Choice.OPEN_WIRELESS_DEBUGGING) }) { Text("Wireless debugging") }
+                KitTextButton(onClick = { a.answer(XrayAdbGate.Choice.PARTIAL) }) { Text("Export partial") }
             }
         },
     )

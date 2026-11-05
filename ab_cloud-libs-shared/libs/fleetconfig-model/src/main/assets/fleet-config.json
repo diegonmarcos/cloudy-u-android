@@ -2068,6 +2068,14 @@
         "ac_c3-watchtower"
       ]
     },
+    "bg_policy": {
+      "kind": "prefs",
+      "class": "config",
+      "doc": "#1506 Background policy: the chosen intent per app (restrict or allow) and the prior app-ops, bucket and doze state captured before a restrict, so Restore and Super Saving Off put back exactly what was there; also the Super Saving snapshot (ss_snapshot) and its screen-off hook flag. Written on user action only.",
+      "used_by": [
+        "aa_cloud-superapp"
+      ]
+    },
     "wd_keepalive": {
       "kind": "prefs",
       "class": "config",
@@ -2433,9 +2441,9 @@
       "doc": "#1468/#1470 libs:apify, the fleet's one Apify store (Cloud Browser Scrapers > Apify, Cloud News): the chosen backend, the Apify token, the Cloudy Crawlee URL and bearer, in EncryptedSharedPreferences via libs:crash SafeEncryptedPrefs; an unreadable store resets to memory, never to plaintext. Credentials: migrate through the vault.",
       "helper": "ab_cloud-libs-shared/libs/apify/src/main/java/com/diegonmarcos/superapp/apify/ApifyBackends.kt",
       "used_by": [
-        "lib-apify"
-      ,
-        "lib-headless-browser"]
+        "lib-apify",
+        "lib-headless-browser"
+      ]
     },
     "speedmeter": {
       "kind": "prefs",
@@ -2731,6 +2739,7 @@
       "schema_version": 1,
       "libs": [
         "lib-account",
+        "lib-ai-usage",
         "lib-analytics",
         "lib-appstore",
         "lib-auth",
@@ -2997,6 +3006,7 @@
         "lib-decisions-link",
         "lib-devtools",
         "lib-fleetconfig-model",
+        "lib-headless-browser",
         "lib-model-catalogue",
         "lib-perms",
         "lib-text-tools",
@@ -3432,6 +3442,7 @@
         "lib-ml-l-image",
         "lib-model-catalogue",
         "lib-mounts",
+        "lib-ocr",
         "lib-odf",
         "lib-pdf",
         "lib-perms",
@@ -4216,15 +4227,18 @@
       "schema_version": 1,
       "libs": [
         "lib-ai",
+        "lib-ai-usage",
         "lib-bottomnav",
         "lib-core",
         "lib-crash",
         "lib-devtools",
+        "lib-fleet-endpoints",
         "lib-fleetconfig-model",
         "lib-model-catalogue",
         "lib-perms",
         "lib-theme-background",
         "lib-ui-icons",
+        "lib-ui-kit",
         "lib-ui-nav-bars"
       ],
       "items": [

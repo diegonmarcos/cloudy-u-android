@@ -15,13 +15,13 @@ DataStore / Room stores and declared files it cannot move yet.
 
 | app | package | covered | gaps | coverage |
 |---|---|---:|---:|---:|
-| cloud-superapp | `com.diegonmarcos.superapp` | 52 | 0 | 100% |
+| cloud-superapp | `com.diegonmarcos.superapp` | 53 | 0 | 100% |
 | c3-morpheus | `com.diegonmarcos.morpheus` | 4 | 0 | 100% |
 | c3-watchdog | `com.diegonmarcos.watchdog` | 4 | 0 | 100% |
 | c3-watchtower | `com.diegonmarcos.watchtower` | 4 | 0 | 100% |
 | cloud-account | `com.diegonmarcos.cloudaccount` | 19 | 1 | 95% |
 | cloud-tasks | `com.diegonmarcos.cloudagenda` | 9 | 0 | 100% |
-| cloud-browser | `com.diegonmarcos.cloudbrowser` | 15 | 0 | 100% |
+| cloud-browser | `com.diegonmarcos.cloudbrowser` | 16 | 0 | 100% |
 | cloud-c3-webserver | `com.diegonmarcos.cloudwebserver` | 4 | 0 | 100% |
 | cloud-media-center | `com.diegonmarcos.cloudmediacenter` | 4 | 0 | 100% |
 | cloud-c3 | `com.diegonmarcos.cloudc3` | 12 | 0 | 100% |
@@ -57,11 +57,11 @@ DataStore / Room stores and declared files it cannot move yet.
 | capital-stack-finterminal | `com.diegonmarcos.capitalfinterm` | 5 | 0 | 100% |
 | hardtech-cad | `com.diegonmarcos.hardtechcad` | 4 | 0 | 100% |
 | hardtech-sim2real | `com.diegonmarcos.hardtechsim2real` | 4 | 0 | 100% |
-| **fleet** | | **394** | **56** | **87%** |
+| **fleet** | | **396** | **56** | **87%** |
 
 ## cloud-superapp — `com.diegonmarcos.superapp`
 
-Module `aa_cloud-superapp`; libs: lib-account, lib-analytics, lib-appstore, lib-auth, lib-battery, lib-bluetooth, lib-bottomnav, lib-chat, lib-core, lib-crash, lib-databackend, lib-datamanager, lib-decisions-link, lib-devtools, lib-firewall, lib-fleet-endpoints, lib-fleet-endpoints-android, lib-fleetconfig-model, lib-health, lib-kde-connect, lib-launcher-apptabs, lib-launcher-onehand, lib-launcher-zoomies, lib-light, lib-mail, lib-net, lib-ops, lib-perms, lib-search, lib-shared-store, lib-shizuku-adb-debug-tools, lib-sysdns, lib-text-tools, lib-ui-icons, lib-ui-kit, lib-updater, lib-usb-drive, lib-web-core, lib-webserver, lib-wifi.
+Module `aa_cloud-superapp`; libs: lib-account, lib-ai-usage, lib-analytics, lib-appstore, lib-auth, lib-battery, lib-bluetooth, lib-bottomnav, lib-chat, lib-core, lib-crash, lib-databackend, lib-datamanager, lib-decisions-link, lib-devtools, lib-firewall, lib-fleet-endpoints, lib-fleet-endpoints-android, lib-fleetconfig-model, lib-health, lib-kde-connect, lib-launcher-apptabs, lib-launcher-onehand, lib-launcher-zoomies, lib-light, lib-mail, lib-net, lib-ops, lib-perms, lib-search, lib-shared-store, lib-shizuku-adb-debug-tools, lib-sysdns, lib-text-tools, lib-ui-icons, lib-ui-kit, lib-updater, lib-usb-drive, lib-web-core, lib-webserver, lib-wifi.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -77,6 +77,7 @@ Module `aa_cloud-superapp`; libs: lib-account, lib-analytics, lib-appstore, lib-
 | `badge_customization` | prefs | config | yes | Per-badge notification toggles (enabled/persistent/options) the user set in the notification center. |
 | `battery_history` | prefs | device | no | The old ledger of completed battery sessions/days. Read once by the battery SoT (libs:battery BatteryRepository) to seed battery_sot.db, then cleared; hardware-specific telemetry. |
 | `battery_session` | prefs | device | no | Plug/unplug anchors and charge counters of this battery. In the SuperApp the battery SoT (libs:battery BatteryRepository) imports the unplug anchor and the counted-cycle counters into battery_sot.db once and clears it; Cloud Nav still keeps its own. |
+| `bg_policy` | prefs | config | yes | #1506 Background policy: the chosen intent per app (restrict or allow) and the prior app-ops, bucket and doze state captured before a restrict, so Restore and Super Saving Off put back exactly what was there; also the Super Saving snapshot (ss_snapshot) and its screen-off hook flag. Written on user action only. |
 | `charge_snapshots` | prefs | device | no | Local charge snapshots of this battery. |
 | `cloud_analytics` | prefs | config (keys: visitor_id→device) | yes | Analytics consent is a user choice; visitor_id is a per-install identity. |
 | `cloud_webserver` | prefs | config | yes | Local web server settings: enabled, port, doc_root, loopback_only, directory_listing. |
@@ -171,7 +172,7 @@ Module `aa_cloud-superapp`; libs: lib-account, lib-analytics, lib-appstore, lib-
 | `BuildConfig UI_* constants (UI_LAUNCHER_SETTINGS_B64, UI_PROFILE_*, UI_WG_*)` | config | Defaults baked into the APK from build.json; not device state but the fallback for unset prefs. |
 | `filesDir/<KEYSTORE_FILE>` | device | This device's KDE Connect TLS identity keystore; never migrate, re-pair |
 
-Coverage: 52 covered, 0 gaps.
+Coverage: 53 covered, 0 gaps.
 
 ## c3-morpheus — `com.diegonmarcos.morpheus`
 
@@ -329,11 +330,12 @@ Coverage: 9 covered, 0 gaps.
 
 ## cloud-browser — `com.diegonmarcos.cloudbrowser`
 
-Module `ac_cloud-browser`; libs: lib-ai, lib-analytics, lib-autofill, lib-bluetooth, lib-bottomnav, lib-browser, lib-core, lib-crash, lib-decisions-link, lib-devtools, lib-fleetconfig-model, lib-model-catalogue, lib-perms, lib-text-tools, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-web-core.
+Module `ac_cloud-browser`; libs: lib-ai, lib-analytics, lib-autofill, lib-bluetooth, lib-bottomnav, lib-browser, lib-core, lib-crash, lib-decisions-link, lib-devtools, lib-fleetconfig-model, lib-headless-browser, lib-model-catalogue, lib-perms, lib-text-tools, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-web-core.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
 | `ai_composer` | prefs | config | yes | The shared AI chat's config bar: whether it is collapsed to its one compact chip, one boolean per app (key ai_composer_collapsed.<app>). A user layout choice, so it migrates with the app's settings. |
+| `apify_tokens` | encrypted | secret | yes | #1468/#1470 libs:apify, the fleet's one Apify store (Cloud Browser Scrapers > Apify, Cloud News): the chosen backend, the Apify token, the Cloudy Crawlee URL and bearer, in EncryptedSharedPreferences via libs:crash SafeEncryptedPrefs; an unreadable store resets to memory, never to plaintext. Credentials: migrate through the vault. |
 | `auto_update` | prefs | config (keys: last_check_at→device, last_remote_bytes→device, last_remote_digest→device, unattended_pass→device) | yes | Auto-update toggles (enabled, require_silent/unmetered) are settings; last_check/remote digest/bytes/unattended_pass are state. |
 | `browser_ac_profiles` | encrypted | secret | yes | #900 Autocomplete: the personal profiles (many-valued names, addresses, phones, emails, ID documents, birth dates, organisations), the per-site memory (values typed on one site: customer number, member ID) and the never-save lists. EncryptedSharedPreferences, MasterKey AES256_GCM. Imports the old browser_autofill profile once; never deletes it. |
 | `browser_ac_secrets` | encrypted | device | no | #900 Autocomplete: saved sign-ins and cards. EncryptedSharedPreferences over which every password, card number and code is sealed again (AES-256-GCM, Android Keystore key cloud_browser_ac_v1, record-bound AAD), so it never migrates in the clear: the Keystore key does not leave the phone, and Cloud Vault is the fleet's migration path for secrets. |
@@ -350,6 +352,7 @@ Module `ac_cloud-browser`; libs: lib-ai, lib-analytics, lib-autofill, lib-blueto
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
+| `headless_audit` | prefs | content | no | #1498 the audit ring of the headless browser (audit_json, capped): every agent command with its agent name, command, URL and result; Domains > History shows it tagged agent. |
 | `nav_modes` | prefs | config | yes | #1189 the user's per-section choice of how child pages are navigated (one row, two rows, side menu; overrides the build.json declaration) and whether the side menu is expanded or the rail. Written by the shared nav bars (NavModePrefs) from each app's Configs; part of the app's settings, so it migrates and backs up with them. |
 | `nav_ui` | prefs | config | yes | The user's nav UI choice for this app (Configs > UI): the nav mode, Classic or Clean, and the scroll-hide toggle (a downward scroll hides every bar until an upward one). Written by the shared Configs card (NavUiPrefs, libs:ui-nav-bars NavUiConfigCard); part of the app's settings, so it migrates and backs up with them. The app's declared default is build.json::ui.nav_ui. |
 | `notification_store` | prefs | content | no | Stored in-app notification log (info/warn/error). |
@@ -370,7 +373,7 @@ Module `ac_cloud-browser`; libs: lib-ai, lib-analytics, lib-autofill, lib-blueto
 |---|---|---|
 | `browser_settings` | config | #802 every user setting is a key of the declared browser_settings store (libs:browser BrowserSettings over build.json::ui.browser.settings); tabs and history are the lib's own declared stores. Nothing is kept outside them. |
 
-Coverage: 15 covered, 0 gaps.
+Coverage: 16 covered, 0 gaps.
 
 ## cloud-c3-webserver — `com.diegonmarcos.cloudwebserver`
 
@@ -639,7 +642,7 @@ Coverage: 9 covered, 2 gaps — call_history, file:system CallLog and BlockedNum
 
 ## cloud-drive — `com.diegonmarcos.clouddrive`
 
-Module `ac_cloud-drive`; libs: lib-ai, lib-analytics, lib-auth, lib-bottomnav, lib-core, lib-crash, lib-databackend, lib-decisions-link, lib-devtools, lib-disk, lib-disk-scan, lib-editor-core, lib-file-editor, lib-fleetconfig-model, lib-git-core, lib-git-repos, lib-git-sync, lib-git-ui, lib-json-viewer, lib-local-serve, lib-media-viewer, lib-ml-l-image, lib-model-catalogue, lib-mounts, lib-odf, lib-pdf, lib-perms, lib-rclone, lib-shared-store, lib-shizuku-adb-debug-tools, lib-sysdns, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-usb-drive, lib-web-core, lib-wysiwyg.
+Module `ac_cloud-drive`; libs: lib-ai, lib-analytics, lib-auth, lib-bottomnav, lib-core, lib-crash, lib-databackend, lib-decisions-link, lib-devtools, lib-disk, lib-disk-scan, lib-editor-core, lib-file-editor, lib-fleetconfig-model, lib-git-core, lib-git-repos, lib-git-sync, lib-git-ui, lib-json-viewer, lib-local-serve, lib-media-viewer, lib-ml-l-image, lib-model-catalogue, lib-mounts, lib-ocr, lib-odf, lib-pdf, lib-perms, lib-rclone, lib-shared-store, lib-shizuku-adb-debug-tools, lib-sysdns, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-usb-drive, lib-web-core, lib-wysiwyg.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -1267,7 +1270,7 @@ Coverage: 4 covered, 0 gaps.
 
 ## cloud-superintel — `com.diegonmarcos.cloudsuperintel`
 
-Module `ac_cloud-superintel`; libs: lib-ai, lib-bottomnav, lib-core, lib-crash, lib-devtools, lib-fleetconfig-model, lib-model-catalogue, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-nav-bars.
+Module `ac_cloud-superintel`; libs: lib-ai, lib-ai-usage, lib-bottomnav, lib-core, lib-crash, lib-devtools, lib-fleet-endpoints, lib-fleetconfig-model, lib-model-catalogue, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
