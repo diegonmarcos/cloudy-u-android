@@ -67,7 +67,7 @@ class BrowserConfigsTabsUiTest {
     private val cfg = BrowserConfig.parse(ui.getJSONObject("browser").toString())
     private val decl = NavDecl.parse(ui.getJSONArray("sections"), (0 until ui.getJSONArray("bottom_nav").length()).joinToString(",") { ui.getJSONArray("bottom_nav").getString(it) }, ui.getString("default_section"))
     private val palette = KitPalette.fromArgb(0xFF1A0033.toInt(), 0xFF2D0A55.toInt(), 0xFFFFFFFF.toInt(), 0x99FFFFFF.toInt(), 0xFF7C3AED.toInt(), 0x33FFFFFF, 0xFF000000.toInt())
-    private val order = listOf("sites", "permissions", "autocomplete", "browsing", "headless")   // #1402/#1443 (General | Perms | About are the fleet pages the shell draws)
+    private val order = listOf("sites", "permissions", "autocomplete", "browsing", "headless", "gpu")   // #1402/#1443 (General | Perms | About are the fleet pages the shell draws)
 
     private var selected by mutableStateOf<String?>(null)
     private val taps = mutableListOf<String>()
@@ -83,7 +83,7 @@ class BrowserConfigsTabsUiTest {
     fun `the Configs section declares the categories as its tabs, in the owner's order`() {
         val pages = decl.section("configs")!!.pages
         assertEquals(listOf("general", "perms", "about") + order, pages.map { it.id })   // #1443 the fleet's three first
-        assertEquals(listOf("General", "Perms", "About", "Sites", "Permissions", "Autocomplete", "Browser", "Headless Browser"), pages.map { it.label })
+        assertEquals(listOf("General", "Perms", "About", "Sites", "Permissions", "Autocomplete", "Browser", "Headless Browser", "GPU"), pages.map { it.label })
         assertTrue("the declaration is valid", decl.problems().isEmpty())
     }
 

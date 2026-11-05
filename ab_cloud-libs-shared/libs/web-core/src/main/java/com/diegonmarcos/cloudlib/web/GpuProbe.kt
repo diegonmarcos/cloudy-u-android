@@ -26,6 +26,14 @@ data class GpuCaps(
     val adapterInfo: String? = null,
     /** The engine that was measured ([WebEngine]). */
     val engine: WebEngine = WebEngine.SYSTEM_WEBVIEW,
+    /** WEBGL_debug_renderer_info UNMASKED_VENDOR_WEBGL (the GPU vendor), when the extension exists. */
+    val vendor: String? = null,
+    /** chrome://gpu-like facts read from the WebGL context (VERSION, GLSL, MAX_TEXTURE_SIZE, ...) and the adapter limits. */
+    val glInfo: Map<String, String> = emptyMap(),
+    /** WebGL extension names the context offers. */
+    val glExtensions: List<String> = emptyList(),
+    /** Why requestAdapter gave nothing, as the page saw it: "returned null" or the exception text. */
+    val adapterNote: String? = null,
 ) {
     /** WebGPU usable in-app: the API and an adapter. */
     val webgpuUsable: Boolean get() = webgpu && adapter
@@ -72,25 +80,42 @@ object GpuProbe {
 
     private const val PAGE = """<!doctype html><script>
 (async () => {
-  const r = {webgl2: false, webgpu: false, adapter: false, compat: false, features: [], renderer: null, info: null};
+  const r = {webgl2: false, webgpu: false, adapter: false, compat: false, features: [], renderer: null, info: null,
+             vendor: null, gl: {}, ext: [], note: null};
   const info = a => { try { const i = a.info || {}; return [i.vendor, i.architecture].filter(Boolean).join('/') || null; } catch (e) { return null; } };
   try {
-    const gl = document.createElement('canvas').getContext('webgl2');
+    const c = document.createElement('canvas');
+    const gl = c.getContext('webgl2');
     r.webgl2 = !!gl;
-    const dbg = gl && gl.getExtension('WEBGL_debug_renderer_info');
-    r.renderer = gl ? String(gl.getParameter(dbg ? dbg.UNMASKED_RENDERER_WEBGL : gl.RENDERER)) : null;
+    const g = gl || document.createElement('canvas').getContext('webgl');
+    if (g) {
+      const dbg = g.getExtension('WEBGL_debug_renderer_info');
+      r.renderer = String(g.getParameter(dbg ? dbg.UNMASKED_RENDERER_WEBGL : g.RENDERER));
+      r.vendor = String(g.getParameter(dbg ? dbg.UNMASKED_VENDOR_WEBGL : g.VENDOR));
+      r.gl.VERSION = String(g.getParameter(g.VERSION));
+      r.gl.GLSL = String(g.getParameter(g.SHADING_LANGUAGE_VERSION));
+      r.gl.MAX_TEXTURE_SIZE = String(g.getParameter(g.MAX_TEXTURE_SIZE));
+      r.gl.MAX_RENDERBUFFER_SIZE = String(g.getParameter(g.MAX_RENDERBUFFER_SIZE));
+      r.gl.MAX_VERTEX_ATTRIBS = String(g.getParameter(g.MAX_VERTEX_ATTRIBS));
+      r.gl.MAX_VIEWPORT_DIMS = String(Array.from(g.getParameter(g.MAX_VIEWPORT_DIMS)));
+      r.gl.ANTIALIAS = String(!!(g.getContextAttributes() || {}).antialias);
+      r.ext = g.getSupportedExtensions() || [];
+    }
   } catch (e) {}
   try {
     if (navigator.gpu) {
       r.webgpu = true;
       const a = await navigator.gpu.requestAdapter({powerPreference: 'high-performance'});
-      if (a) { r.adapter = true; r.features = Array.from(a.features); r.info = info(a); }
-      else {
+      if (a) {
+        r.adapter = true; r.features = Array.from(a.features); r.info = info(a);
+        try { r.gl.GPU_MAX_TEXTURE_2D = String(a.limits.maxTextureDimension2D); r.gl.GPU_MAX_BUFFER = String(a.limits.maxBufferSize); } catch (e) {}
+      } else {
+        r.note = 'requestAdapter() returned null';
         const c = await navigator.gpu.requestAdapter({featureLevel: 'compatibility'});
         if (c) { r.compat = true; r.features = Array.from(c.features); r.info = info(c); }
       }
     }
-  } catch (e) {}
+  } catch (e) { r.note = 'requestAdapter() threw: ' + String(e && e.message || e); }
   CloudGpu.done(JSON.stringify(r));
 })();
 </script>"""
@@ -100,8 +125,11 @@ object GpuProbe {
      * (navigator.gpu only exists in a secure context). [done] runs on the main thread; on a 6 s timeout it gets a
      * result with everything false.
      */
-    fun probe(ctx: Context, done: (GpuCaps) -> Unit) {
-        last?.let { done(it); return }
+    fun probe(ctx: Context, done: (GpuCaps) -> Unit) = probe(ctx, false, done)
+
+    /** [force] measures again (the GPU page's Retest, after the WebView flags changed) instead of answering from [last]. */
+    fun probe(ctx: Context, force: Boolean, done: (GpuCaps) -> Unit) {
+        if (!force) last?.let { done(it); return }
         val main = Handler(Looper.getMainLooper())
         main.post {
             val app = ctx.applicationContext
@@ -130,7 +158,7 @@ object GpuProbe {
         }
     }
 
-    internal fun parse(json: String, version: String?): GpuCaps {
+    fun parse(json: String, version: String?): GpuCaps {
         val o = JSONObject(json)
         val f = o.optJSONArray("features")
         return GpuCaps(
@@ -142,6 +170,10 @@ object GpuProbe {
             renderer = o.optString("renderer").takeIf { it.isNotEmpty() && it != "null" },
             compatAdapter = o.optBoolean("compat"),
             adapterInfo = o.optString("info").takeIf { it.isNotEmpty() && it != "null" },
+            vendor = o.optString("vendor").takeIf { it.isNotEmpty() && it != "null" },
+            glInfo = o.optJSONObject("gl")?.let { g -> g.keys().asSequence().associateWith { k -> g.optString(k) } } ?: emptyMap(),
+            glExtensions = o.optJSONArray("ext")?.let { e -> List(e.length()) { e.getString(it) } } ?: emptyList(),
+            adapterNote = o.optString("note").takeIf { it.isNotEmpty() && it != "null" },
         )
     }
 

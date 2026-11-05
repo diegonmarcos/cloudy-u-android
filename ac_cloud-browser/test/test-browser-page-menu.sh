@@ -25,7 +25,7 @@ GLOBAL = ["settings", "profile", "offline_manage", "storage_manage", "default_br
 PAGEWISE = ["reload", "find", "share", "copy_url", "open_external", "desktop", "zoom", "site_settings", "clear_site_cookies",
             "clear_site_data", "site_autocomplete", "translate", "reader", "bookmark", "save_page", "download_page", "shield_trackers",
             "view_source", "print", "add_to_home", "summarize_topics", "fill_profile"]
-PAGES = ["sites", "permissions", "autocomplete", "browsing", "headless"]   # #1402/#1443 the host's pages
+PAGES = ["sites", "permissions", "autocomplete", "browsing", "headless", "gpu"]   # #1402/#1443 the host's pages
 TABS = ["general", "perms", "about"] + PAGES   # the top tabs start with the fleet's General | Perms | About
 # the settings that existed before #900: none may be dropped
 BEFORE = ["search_engine_id", "homepage", "restore_tabs_on_start", "desktop_mode", "text_zoom", "javascript", "load_images",
@@ -67,8 +67,8 @@ def check(root, ok):
         ok(r["page"] in PAGES, "P3 Configs row `%s` is on a declared page" % r["id"], r["page"])
     ok([s for s in bj["ui"]["bottom_nav"]] == ["weby", "cloudy", "browser", "tabs", "domains"], "P4 the island is Weby | Cloudy | Browser | Tabs | Domains (#1493; Configs is the ⋮)")
     nav = [s for s in bj["ui"]["sections"] if s["id"] == "configs"][0]
-    ok([p["id"] for p in nav["pages"]] == TABS, "P4 the Configs tabs are General, Perms, About, Sites, Permissions, Autocomplete, Browser, Headless Browser, in order")
-    ok([p["label"] for p in nav["pages"]] == ["General", "Perms", "About", "Sites", "Permissions", "Autocomplete", "Browser", "Headless Browser"], "P4 with the owner's names")
+    ok([p["id"] for p in nav["pages"]] == TABS, "P4 the Configs tabs are General, Perms, About, Sites, Permissions, Autocomplete, Browser, Headless Browser, GPU, in order")
+    ok([p["label"] for p in nav["pages"]] == ["General", "Perms", "About", "Sites", "Permissions", "Autocomplete", "Browser", "Headless Browser", "GPU"], "P4 with the owner's names")
     act = src.get(APP + "/MainActivity.kt", "")
     ok("NavBarTopSecondRow(" in act and 'decl.section("configs")' in act, "P4 the shell draws them with NavBarTopSecondRow from the declaration")
     keys = {s["key"]: s for s in b["settings"]}

@@ -30,6 +30,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -46,6 +47,11 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import com.diegonmarcos.cloudbrowser.offline.SiteOffline
+import com.diegonmarcos.cloudlib.web.CachedSite
+import com.diegonmarcos.cloudlib.web.CachedSites
+import com.diegonmarcos.cloudlib.web.SiteMirrorRunner
+import com.diegonmarcos.cloudlib.web.SiteMirrorStore
 import com.diegonmarcos.superapp.browser.BrowserConfig
 import com.diegonmarcos.superapp.browser.BrowserPermsList
 import com.diegonmarcos.superapp.browser.BrowserSitePermissions
@@ -236,10 +242,59 @@ private fun FilesPage(t: (String) -> String) {
     val entries = remember(files) { SiteCache.entries(files) }
     val rows = remember(files, open.toList()) { KitFileTree.rows(entries, open.toSet(), SiteCache.hosts(files)) }
     val ink = KitFileTreeInk(p.textPrimary, p.textSecondary, p.accent)
+    // #1518 Cached sites: the sites pinned or downloaded into the web-core copy, with their size and files, Refresh | Unpin | Delete
+    val runner = remember { SiteMirrorRunner.of(ctx) }
+    var tick by remember { mutableIntStateOf(0) }
+    var run by remember { mutableStateOf(runner.state) }
+    DisposableEffect(runner) { runner.onState = { run = it; if (it.done) tick++ }; onDispose { runner.onState = null } }
+    val cached by loaded(emptyList<CachedSite>(), tick) { CachedSites.rows(SiteMirrorStore.cache(ctx), SiteOffline.pinned(ctx)) }
     LazyColumn(Modifier.fillMaxSize().testTag("domains:files")) {
+        cachedSites(cached, run, t, p,
+            onRefresh = { h -> runner.refresh(h) { tick++ } },
+            onUnpin = { h -> SiteOffline.setPinned(ctx, CachedSites.unpin(SiteOffline.pinned(ctx), h)); tick++ },
+            onDelete = { h -> Thread { SiteOffline.setPinned(ctx, CachedSites.delete(SiteMirrorStore.cache(ctx), SiteOffline.pinned(ctx), h)); onMain { tick++ } }.start() },
+            onStop = { runner.cancel() })
         if (files.isEmpty()) item { KitStoreRowLine { KitStoreCaption(t("files_empty"), color = p.textSecondary) } }
         kitFileTree(rows, ink, { com.diegonmarcos.superapp.browser.SiteData.human(it) }, { if (it <= 0L) "" else rel(it) },
             onToggle = { k -> if (!open.remove(k)) open.add(k) }, onOpen = { }, tagPrefix = "domains:files")
+    }
+}
+
+/** #1518 the Cached sites section of Files Cached: one row per site (size, files, last refresh) and the running download's progress. */
+private fun LazyListScope.cachedSites(
+    rows: List<CachedSite>, run: SiteMirrorRunner.State, t: (String) -> String, p: com.diegonmarcos.superapp.uikit.KitPalette,
+    onRefresh: (String) -> Unit, onUnpin: (String) -> Unit, onDelete: (String) -> Unit, onStop: () -> Unit,
+) {
+    item { KitStoreRowLine { KitStoreName(t("cached_sites"), Modifier.weight(1f), p.textPrimary) } }
+    if (rows.isEmpty()) item { KitStoreRowLine { KitStoreCaption(t("cached_empty"), color = p.textSecondary) } }
+    items(rows, key = { "cached:" + it.host }) { r ->
+        KitStoreRowLine(Modifier.testTag("domains:cached:${r.host}")) {
+            Column(Modifier.weight(1f)) {
+                KitStoreName(r.host + if (r.pinned) " · " + t("pinned") else "", color = p.textPrimary)
+                KitStoreCaption(
+                    com.diegonmarcos.superapp.browser.SiteData.human(r.bytes) + " · " + r.files + " " + t("files") + " · " + t("refreshed") + " " +
+                        if (r.lastRefresh <= 0L) t("never") else rel(r.lastRefresh),
+                    color = p.textSecondary,
+                )
+            }
+            KitStoreQuick(t("refresh"), KitStoreRow.BLUE_FILL, Modifier.testTag("domains:cached:refresh:${r.host}"), onClick = { onRefresh(r.host) })
+            if (r.pinned) {
+                Spacer(Modifier.width(KitStoreRow.tight))
+                KitStoreQuick(t("unpin"), KitStoreRow.AMBER_FILL, Modifier.testTag("domains:cached:unpin:${r.host}"), onClick = { onUnpin(r.host) })
+            }
+            Spacer(Modifier.width(KitStoreRow.tight))
+            KitStoreQuick(t("delete"), KitStoreRow.BAD, Modifier.testTag("domains:cached:delete:${r.host}"), onClick = { onDelete(r.host) })
+        }
+    }
+    if (run.host.isNotEmpty() && (run.running || run.waiting.isNotEmpty() || run.message.isNotEmpty())) item {
+        KitStoreRowLine(Modifier.testTag("domains:cached:progress")) {
+            KitStoreCaption(
+                run.host + " · " + (run.waiting.ifEmpty { run.message }.ifEmpty { run.current }) + " · " + run.files + " " + t("files") + " · " +
+                    com.diegonmarcos.superapp.browser.SiteData.human(run.bytes) + if (run.pending > 0) " · " + run.pending + " …" else "",
+                Modifier.weight(1f), p.textSecondary,
+            )
+            if (run.running || run.waiting.isNotEmpty()) KitStoreQuick(t("stop"), KitStoreRow.BAD, onClick = onStop)
+        }
     }
 }
 

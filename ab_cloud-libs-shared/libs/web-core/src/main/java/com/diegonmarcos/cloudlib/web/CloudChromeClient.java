@@ -16,6 +16,11 @@ import androidx.core.view.WindowInsetsCompat;
  * Java for the same reason as {@link CloudWebClient}.
  */
 public class CloudChromeClient extends WebChromeClient {
+    /** #1518 told when a full-screen view starts or ends (the Browser asks for the max refresh rate only while a GPU canvas is full screen). */
+    public interface FullscreenListener { void onFullscreen(boolean on); }
+
+    public static volatile FullscreenListener fullscreenListener;
+
     private final Activity activity;
     private View custom;
     private CustomViewCallback callback;
@@ -44,6 +49,8 @@ public class CloudChromeClient extends WebChromeClient {
         callback = cb;
         ((FrameLayout) decor).addView(view, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         WindowCompat.getInsetsController(act.getWindow(), decor).hide(WindowInsetsCompat.Type.systemBars());
+        FullscreenListener l = fullscreenListener;
+        if (l != null) l.onFullscreen(true);
     }
 
     @Override
@@ -56,5 +63,7 @@ public class CloudChromeClient extends WebChromeClient {
         custom = null;
         if (callback != null) callback.onCustomViewHidden();
         callback = null;
+        FullscreenListener l = fullscreenListener;
+        if (l != null) l.onFullscreen(false);
     }
 }

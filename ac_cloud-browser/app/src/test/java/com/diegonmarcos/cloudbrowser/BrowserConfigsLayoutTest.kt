@@ -16,7 +16,7 @@ class BrowserConfigsLayoutTest {
     private val cfg = BrowserConfig.parse(root.getJSONObject("ui").getJSONObject("browser").toString())
 
     // #1402/#1443 Sites, Permissions, Autocomplete, Browser (the browser's own General); General | Perms | About come first on the top nav and are the fleet pages the shell draws
-    private val pageIds = listOf("sites", "permissions", "autocomplete", "browsing", "headless")
+    private val pageIds = listOf("sites", "permissions", "autocomplete", "browsing", "headless", "gpu")
 
     @Test
     fun `every setting sits on a declared Configs page and every page holds something`() {
@@ -34,7 +34,7 @@ class BrowserConfigsLayoutTest {
         val configs = (0 until secs.length()).map { secs.getJSONObject(it) }.first { it.getString("id") == "configs" }
         val tabs = configs.getJSONArray("pages").let { a -> (0 until a.length()).map { a.getJSONObject(it).getString("id") } }
         assertEquals(listOf("general", "perms", "about") + cfg.settingsSections.map { it.first }, tabs)
-        assertEquals(listOf("Sites", "Permissions", "Autocomplete", "Browser", "Headless Browser"), cfg.settingsSections.map { it.second })
+        assertEquals(listOf("Sites", "Permissions", "Autocomplete", "Browser", "Headless Browser", "GPU"), cfg.settingsSections.map { it.second })
     }
 
     @Test

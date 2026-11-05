@@ -1009,7 +1009,8 @@ class BrowserHostFragment : Fragment() {
                     // #1141 the Network panel's log (bounded, in memory; a private tab logs nothing).
                     if (!tab.isPrivate) DevTools.net.add(NetLog.entry(System.currentTimeMillis(), r.method, r.url.toString(), r.isForMainFrame, r.requestHeaders?.get("Accept"), block))
                     if (block) return android.webkit.WebResourceResponse("text/plain", "utf-8", java.io.ByteArrayInputStream(ByteArray(0)))
-                    return null
+                    // #1518 a pinned site is served from its offline copy (the app's hook), cache-first
+                    return BrowserHostHooks.intercept?.invoke(r)
                 }
 
                 /** #1141 the status of a failed request (WebView reports 4xx / 5xx only), onto its Network row. */
@@ -2074,6 +2075,7 @@ class BrowserHostFragment : Fragment() {
             "desktop_mode" to desktopMode,
             "remote_debug" to DevTools.remoteDebugging,
             "pinned" to (currentTab()?.pinned == true),
+            "site_pinned" to (page && BrowserHostHooks.fact?.invoke("site_pinned", wv!!.url.orEmpty()) == true),
             "bookmarked" to (page && bookmarks.has(wv!!.url ?: "")),
             "private_tab" to (currentTab()?.isPrivate == true),
             "profile_present" to (ac.hasLocalProfiles() || runCatching { !BrowserProfileStore(requireContext()).load().isEmpty }.getOrDefault(false)),
@@ -2180,6 +2182,7 @@ class BrowserHostFragment : Fragment() {
             when (id) {
                 "about" -> BrowserAboutBlock(aboutLines())
                 "site_list" -> SiteListBlock()
+                "gpu" -> BrowserHostHooks.gpuPage?.invoke(this)
                 "perms_defaults" -> PermsDefaultsBlock()
                 else -> AcBlock(id)
             }
@@ -2569,6 +2572,11 @@ class BrowserHostFragment : Fragment() {
             "summarize_topics" -> { wv ?: return needPage(); showTopics(wv); done(ok().put("started", true)) }
             "save_page" -> { wv ?: return needPage(); startSave(wv, false, done) }
             "save_site" -> { wv ?: return needPage(); startSave(wv, true, done) }
+            // #1518 the offline copy in the cache the app owns (pin = serve cache-first; download = crawl + record)
+            "pin_site", "download_site" -> {
+                wv ?: return needPage()
+                done(ok().put("toast", BrowserHostHooks.action?.invoke(id, url) ?: "Not available in this app"))
+            }
             "clear_site_cookies" -> {
                 val host = BrowserSitePolicy.hostOf(url).ifEmpty { return needPage() }
                 BrowserStorage.clearSiteCookies(url) { n ->

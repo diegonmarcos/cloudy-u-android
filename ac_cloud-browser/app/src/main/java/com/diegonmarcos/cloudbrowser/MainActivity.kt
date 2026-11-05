@@ -92,6 +92,9 @@ class MainActivity : AppCompatActivity() {
 
     private val mhtml by lazy { MhtmlOpener(this) }
 
+    /** #1518 the max refresh rate, only while a WebGL / WebGPU canvas page is fullscreen (reverted otherwise, and under Super Saving). */
+    private val refreshRate by lazy { com.diegonmarcos.cloudlib.web.GpuRefreshRate(this) }
+
     /** The island's selected item (null = none); the host moves it through [BrowserHostFragment.onOverlaysClosed]. */
     private var selectedId by mutableStateOf<String?>(null)
     /** #900 the Configs top tab showing (a ui.sections[configs].pages id), while Configs is the island's item. */
@@ -115,13 +118,19 @@ class MainActivity : AppCompatActivity() {
         // The host fragment is re-added by KitFragmentHost once Compose has a container for it.
         super.onCreate(KitFragmentHostState.withoutFragments(savedInstanceState))
         FleetChrome.apply(this)
+        // #1518 the offline copy and the GPU page plug into the shared host; fullscreen events drive the refresh rate
+        com.diegonmarcos.cloudbrowser.offline.SiteOffline.install(this)
+        com.diegonmarcos.cloudbrowser.offline.SiteOffline.seedDeclared(this)
+        com.diegonmarcos.superapp.browser.BrowserHostHooks.gpuPage = { com.diegonmarcos.cloudbrowser.offline.GpuPageBlock() }
+        com.diegonmarcos.cloudlib.web.CloudChromeClient.fullscreenListener =
+            com.diegonmarcos.cloudlib.web.CloudChromeClient.FullscreenListener { on -> runOnUiThread { refreshRate.fullscreen(on) } }
         supportFragmentManager.addFragmentOnAttachListener { _, f ->
             // The pill follows the host: Tabs while the tab switcher is what is showing, else Browser.
             if (f is BrowserHostFragment) {
                 f.externalBar = true
                 f.onWebScroll = { d -> onWebScroll(d) }
                 // the page's touch and inner scrollers feed the same collapse (a held drag hides every bar, the release shrinks them)
-                f.onWebViewCreated = { com.diegonmarcos.superapp.bottomnav.ChromeWebScroll.attach(it, chromeCollapse) }
+                f.onWebViewCreated = { com.diegonmarcos.superapp.bottomnav.ChromeWebScroll.attach(it, chromeCollapse); refreshRate.watch(it) }
                 f.onWebPageFinished = { com.diegonmarcos.superapp.bottomnav.ChromeWebScroll.attach(it, chromeCollapse); com.diegonmarcos.superapp.bottomnav.ChromeWebScroll.inject(it) }
                 f.onOverlaysClosed = {
                     selectedId = decl.section(if (f.isTabsOpen) "tabs" else "browser")?.id
@@ -335,14 +344,21 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+        refreshRate.start()
+    }
+
     override fun onStop() {
         super.onStop()
+        refreshRate.stop()   // leaving the app always hands the display back to the system's own rate
         // #1493 the visit log keeps what the browser's capped history shows, so Domains lists every site ever visited.
         Thread { runCatching { VisitLogStore(applicationContext).sync() } }.start()
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        com.diegonmarcos.cloudlib.web.CloudChromeClient.fullscreenListener = null
         UpdateProgress.setListener(null)
     }
 

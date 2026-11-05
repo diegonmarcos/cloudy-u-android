@@ -1,5 +1,6 @@
 {
   "launcher_icon": {"_doc": "The launcher icon, generated from this declaration by 1_cicd/src/scripts/cloud-android-launcher-icons.py (pattern + category colours + glyphs in 1_cicd/src/data/launcher-icons.json). Never edit the generated res files.", "glyph": "public", "category": "tools", "res": "app/src/main/res"},
+  "pin_offline": ["floor796.com"],
   "name": "cloud-browser",
   "display_name": "Cloud Browser",
   "description": "Diego's Cloud Browser — standalone WebView-based browser Android app. Lifted from Cloud SuperApp's libs:browser into its own focused APK. Multi-tab session persistence (BrowserTabPrefs), in-app URL bar, dark-chrome WebView host. Build via Nix devShell, one APK out.",
@@ -957,6 +958,24 @@
             ]
           },
           {
+            "id": "pin_site",
+            "section": "page_actions",
+            "label": "Pin this site offline",
+            "kind": "toggle",
+            "checked": "site_pinned",
+            "requires": [
+              "page"
+            ]
+          },
+          {
+            "id": "download_site",
+            "section": "page_actions",
+            "label": "Download full site (offline cache)",
+            "requires": [
+              "page"
+            ]
+          },
+          {
             "id": "fill_profile",
             "section": "page_actions",
             "label": "Autofill this page…",
@@ -1132,7 +1151,10 @@
             "cards",
             "vault"
           ],
-          "browsing": []
+          "browsing": [],
+          "gpu": [
+            "gpu"
+          ]
         },
         "rows": [
           {
@@ -1993,6 +2015,10 @@
         {
           "id": "headless",
           "label": "Headless Browser"
+        },
+        {
+          "id": "gpu",
+          "label": "GPU"
         }
       ]
     },
@@ -2090,6 +2116,11 @@
             "id": "headless",
             "label": "Headless Browser",
             "icon": "language"
+          },
+          {
+            "id": "gpu",
+            "label": "GPU",
+            "icon": "language"
           }
         ]
       }
@@ -2124,7 +2155,9 @@
         {"id": "reset_perms", "label": "Reset permissions", "detail": "back to the defaults"}
       ],
       "texts": {
-        "actions": "Actions", "done": "done", "files_empty": "No cached files yet.", "perms_empty": "No site visited yet.",
+        "actions": "Actions", "done": "done",
+        "cached_sites": "Cached sites", "cached_empty": "No site is pinned or downloaded yet.", "refresh": "Refresh", "unpin": "Unpin", "delete": "Delete",
+        "pinned": "pinned", "files": "files", "refreshed": "refreshed", "never": "never", "waiting": "waiting", "stop": "Stop", "files_empty": "No cached files yet.", "perms_empty": "No site visited yet.",
         "history_empty": "No history yet.", "visited_empty": "No site visited yet."
       }
     },

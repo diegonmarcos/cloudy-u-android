@@ -316,6 +316,7 @@ android {
         buildConfigField "String", "UI_SECTIONS_B64",            "\"${uiSectionsB64}\""
         buildConfigField "String", "UI_DEFAULT_SECTION",         "\"${uiDefaultSection}\""
         buildConfigField "String", "SITES_DECL_B64",             bcString(sitesDeclB64)
+        buildConfigField "String", "PIN_OFFLINE",                "\"${(buildJson.pin_offline ?: []).join(',')}\""   // #1518 sites pinned offline by default
         buildConfigField "String", "SEARCH_CONFIG_B64",          "\"${searchConfigB64}\""
         buildConfigField "String", "AI_CONFIG_B64",              "\"${aiContractB64}\""
         buildConfigField "String", "DEBUG_API_GROUP",           "\"${debugGroup}\""

@@ -79,6 +79,9 @@ class SiteCache(private val root: File) {
 
     fun hosts(): List<String> = root.listFiles()?.filter { manifestFile(it.name).isFile }?.map { it.name }?.sorted() ?: emptyList()
 
+    /** Every URL held for [host] (the refresh walks these). */
+    fun urls(host: String): List<String> = load(host).getJSONObject("entries").keys().asSequence().sorted().toList()
+
     fun delete(host: String) { dir(host).deleteRecursively() }
 
     companion object {
