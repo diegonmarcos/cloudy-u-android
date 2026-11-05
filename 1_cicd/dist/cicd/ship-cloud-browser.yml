@@ -64,6 +64,7 @@ on:
       - "ab_cloud-libs-shared/libs/decisions-link/**"
       - "ab_cloud-libs-shared/libs/devtools/**"
       - "ab_cloud-libs-shared/libs/fleetconfig-model/**"
+      - "ab_cloud-libs-shared/libs/headless-browser/**"
       - "ab_cloud-libs-shared/libs/model-catalogue/**"
       - "ab_cloud-libs-shared/libs/perms/**"
       - "ab_cloud-libs-shared/libs/text-tools/**"
