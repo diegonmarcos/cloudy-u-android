@@ -1098,6 +1098,8 @@ dependencies {
     // it at /api/adb/*. Carries its own IShellService.aidl + UserService,
     // independent of app/'s energy-specific ShizukuEnergy.
     implementation project(':libs:shizuku-adb-debug-tools')
+    // #1510 libs:shell-broker — the one shell broker (provider + bound service + allowlist + audit); other apps link libs:shell-client.
+    implementation project(':libs:shell-broker')
     // libs:firewall — original no-root per-app outbound firewall (local
     // VpnService). Surfaced in the About screen under Battery. Complex
     // tooling is cherry-picked from the RethinkDNS reference upstream

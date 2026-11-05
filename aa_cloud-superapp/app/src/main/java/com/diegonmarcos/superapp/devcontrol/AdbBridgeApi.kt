@@ -4,6 +4,7 @@ import android.content.Context
 import com.diegonmarcos.superapp.adbdebug.LocalShellChannel
 import com.diegonmarcos.superapp.adbdebug.ShellChannels
 import com.diegonmarcos.superapp.devtools.AppDebugServer
+import com.diegonmarcos.superapp.shellbroker.ShellBroker
 import org.json.JSONObject
 
 /**
@@ -29,7 +30,10 @@ object AdbBridgeApi {
         val ch = ShellChannels.active(ctx)
             ?: return JSONObject().put("ok", false).put("channel", "none")
                 .put("out", "ERR: no shell channel ready — ${LocalShellChannel.status(ctx)}\n")
+        val t0 = System.currentTimeMillis()
         val out = ch.exec(ctx, cmd)
+        // #1510 the legacy door (terminals, Drive) is not enforced yet, but it is audited with the broker's log until they move to libs:shell-client.
+        ShellBroker.recordLegacy(ctx, cmd, out != null, System.currentTimeMillis() - t0, ch.name())
         return JSONObject().put("ok", out != null).put("channel", ch.name()).put("out", out ?: "")
     }
 }

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- #1510 libs:shell-client: no component at all. No service, no receiver, no boot hook; only the visibility of the broker's app. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <queries>
+        <package android:name="com.diegonmarcos.superapp" />
+    </queries>
+</manifest>

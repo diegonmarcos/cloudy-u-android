@@ -9,6 +9,7 @@ import android.provider.Settings
 import android.provider.Telephony
 import android.telecom.TelecomManager
 import com.diegonmarcos.superapp.adbdebug.ShellChannels
+import com.diegonmarcos.superapp.shellbroker.ShellBroker
 import java.io.File
 
 /** SharedPreferences behind the [BgKv] seam. */
@@ -42,7 +43,8 @@ object BgHost {
         val ch = runCatching { ShellChannels.active(app) }.getOrNull() ?: return null
         return object : BgShell {
             override val channel = ch.name()
-            override fun exec(cmd: String): String? = ch.exec(app, cmd)
+            // #1510 through the SuperApp's one shell broker: allowlist (SuperApp entry), timeout, concurrency cap, audit.
+            override fun exec(cmd: String): String? = ShellBroker.execText(app, cmd)
         }
     }
 

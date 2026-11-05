@@ -1,0 +1,30 @@
+// #1510 libs:shell-client: the thin client of the SuperApp's shell broker (libs:shell-broker). Every other app that needs a
+// uid-2000 shell links THIS and nothing else: no pairing, no reconnect loop, no HostShell, no WdKeeper, no boot receivers.
+// Plain Android + org.json; no dependency on libs:core, so linking it adds no fan-out edge to a rebuild of the fleet.
+apply plugin: 'com.android.library'
+if (project.extensions.findByName('kotlin') == null) {
+    apply plugin: 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.diegonmarcos.superapp.shellclient'
+    compileSdk 36
+    defaultConfig { minSdk 26 }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+// jvmTarget via the top-level `kotlin` extension (AGP 9 removed android.kotlinOptions), as libs:devtools does.
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
+dependencies {
+    testImplementation 'junit:junit:4.13.2'
+    // Android ships org.json; the JVM test classpath does not.
+    testImplementation 'org.json:json:20250107'
+}

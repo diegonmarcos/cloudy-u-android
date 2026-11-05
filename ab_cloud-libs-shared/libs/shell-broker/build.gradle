@@ -1,0 +1,35 @@
+// #1510 libs:shell-broker: THE one owner of the privileged shell, used by the SuperApp only. It wraps the embedded ADB / Shizuku
+// channel of libs:shizuku-adb-debug-tools behind a signature-guarded provider + bound service, a per-caller command allowlist
+// (default deny), an audit log, a timeout on every call and a concurrency cap. Every other app links libs:shell-client.
+// Battery: no foreground service, no START_STICKY, no boot receiver; it works on a call or a bind and goes idle (IdlePolicy).
+apply plugin: 'com.android.library'
+if (project.extensions.findByName('kotlin') == null) {
+    apply plugin: 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.diegonmarcos.superapp.shellbroker'
+    compileSdk 36
+    defaultConfig { minSdk 26 }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
+dependencies {
+    api project(':libs:shell-client')
+    implementation project(':libs:shizuku-adb-debug-tools')
+    implementation project(':libs:core')   // RetryBackoff (libs:devtools, api of core): the 30 s floor
+    implementation 'androidx.activity:activity:1.9.3'
+    implementation 'androidx.core:core-ktx:1.13.1'
+
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.json:json:20250107'
+}

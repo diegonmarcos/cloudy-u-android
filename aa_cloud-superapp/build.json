@@ -217,7 +217,7 @@
     },
     "unit": {
       "_doc": "Robolectric suite under app/src/test/. #512: BottomNavSelectedPillTest inflates the REAL activity_main and asserts the RESOLVED bottom-nav (itemBackground id, measured pill bounds, rendered pixel) \u2014 the selected pill vanished for a whole release while every XML-text tester stayed green, so this widget is proven on the inflated view or not at all. One module only: the shared libs run their own suites in ab_cloud-libs-shared.",
-      "task": ":app:testDebugUnitTest",
+      "task": ":app:testDebugUnitTest :libs:shell-client:testDebugUnitTest :libs:shell-broker:testDebugUnitTest",
       "enabled": true
     }
   },
@@ -237,6 +237,7 @@
         "libs:launcher-apptabs",
         "libs:kde-connect",
         "libs:shizuku-adb-debug-tools",
+        "libs:shell-broker",
         "libs:firewall",
         "libs:battery",
         "libs:light",
@@ -429,6 +430,21 @@
         "libs:core"
       ],
       "comment": "Shizuku ADB debug tools — makes the SuperApp a SELF-CONTAINED 'adb shell' surface. A Shizuku UserService (IShellService.aidl + ShellUserService) runs in SHELL context (uid 2000) when Shizuku is running + granted, so it executes arbitrary `dumpsys` / `getprop` / `cat /sys/...` that the app's own uid + the SELinux-hardened proc/sys path can't reach (One UI 7+/Pixel A15+ block /sys/class/power_supply/*). ShizukuAdb is the binder facade (bindBlocking + exec + grantDump self-grant of android.permission.DUMP via `pm grant`). AdbDiagnostics runs DATA-DRIVEN command bundles declared in build.json::shizuku_diagnostics.bundles[] (charger/usb/battery/thermal/pd) and returns them as JSON. Exposed over the loopback DevControlServer at /api/adb/* (token-gated). This is the path that finally surfaces the USB-PD/PPS negotiation needed to debug 'why is the charger at 3W not 35W'."
+    },
+    "libs:shell-client": {
+      "dir": "../ab_cloud-libs-shared/libs/shell-client",
+      "type": "library",
+      "comment": "#1510 The thin client of the shell broker: ShellClient.exec/stream/status/arm over the SuperApp's signature-guarded provider, ShellResult (Ok / NeedsArm / Denied / Failed). No pairing, no reconnect loop, no service, no receiver. Every other app that needs a shell links this instead of libs:shizuku-adb-debug-tools."
+    },
+    "libs:shell-broker": {
+      "dir": "../ab_cloud-libs-shared/libs/shell-broker",
+      "type": "library",
+      "depends_on": [
+        "libs:core",
+        "libs:shizuku-adb-debug-tools",
+        "libs:shell-client"
+      ],
+      "comment": "#1510 THE one shell broker (SuperApp only): wraps the embedded ADB / Shizuku channel behind a signature-guarded provider and bound service, a per-caller command allowlist (assets/shell-allowlist.json, default deny), an audit log, a timeout on every call and a concurrency cap. No foreground service, no START_STICKY, no boot receiver."
     },
     "libs:firewall": {
       "dir": "../ab_cloud-libs-shared/libs/firewall",

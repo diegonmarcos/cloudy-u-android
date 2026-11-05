@@ -2769,6 +2769,8 @@
         "lib-perms",
         "lib-search",
         "lib-shared-store",
+        "lib-shell-broker",
+        "lib-shell-client",
         "lib-shizuku-adb-debug-tools",
         "lib-sysdns",
         "lib-text-tools",

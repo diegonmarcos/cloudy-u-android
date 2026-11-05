@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- #1510 libs:shell-broker, SuperApp only. The three doors are signature-guarded (CONSTELLATION_DATA, the fleet key).
+     NO foreground service, NO <receiver>, NO BOOT_COMPLETED, NO START_STICKY: the broker runs on a call or a bind and goes idle.
+     Guard: aa_cloud-superapp/test/test-shell-broker-guards.sh. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <provider
+            android:name="com.diegonmarcos.superapp.shellbroker.ShellBrokerProvider"
+            android:authorities="${applicationId}.shellbroker"
+            android:exported="true"
+            android:permission="com.diegonmarcos.cloud.permission.CONSTELLATION_DATA" />
+        <service
+            android:name="com.diegonmarcos.superapp.shellbroker.ShellBrokerService"
+            android:exported="true"
+            android:permission="com.diegonmarcos.cloud.permission.CONSTELLATION_DATA" />
+        <activity
+            android:name="com.diegonmarcos.superapp.shellbroker.ShellArmActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:permission="com.diegonmarcos.cloud.permission.CONSTELLATION_DATA"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="com.diegonmarcos.superapp.action.ARM_SHELL" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

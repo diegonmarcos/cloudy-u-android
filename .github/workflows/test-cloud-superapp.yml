@@ -66,6 +66,8 @@ on:
       - "ab_cloud-libs-shared/libs/perms/**"
       - "ab_cloud-libs-shared/libs/search/**"
       - "ab_cloud-libs-shared/libs/shared-store/**"
+      - "ab_cloud-libs-shared/libs/shell-broker/**"
+      - "ab_cloud-libs-shared/libs/shell-client/**"
       - "ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/**"
       - "ab_cloud-libs-shared/libs/sysdns/**"
       - "ab_cloud-libs-shared/libs/text-tools/**"

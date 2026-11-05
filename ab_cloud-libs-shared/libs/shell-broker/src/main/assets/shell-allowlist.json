@@ -1,0 +1,340 @@
+{
+ "_doc": "#1510 THE per-caller command allowlist of the SuperApp's shell broker (libs:shell-broker). Default deny: a caller with no entry, or a command no rule of that caller matches, is refused. `re` is a full-match regex over the trimmed command; a shell metacharacter (; & | ` $ < > ( ) { } \\ #) is refused unless the rule lists it in `meta`. Key = the caller package resolved from the binder uid (cld.termux and cld.termux.nix share a uid), or an alias below. An app that links libs:shell-client MUST have an entry here (guard test-shell-broker-guards.sh). `exact` = literal command lines (the SuperApp's X-Ray probes), `segments` = `;`/newline separate commands and each must match (the Background policy chains); both are per-caller data, never a client choice.",
+ "aliases": {
+  "com.diegonmarcos.cloudwebserver": "mesh"
+ },
+ "callers": {
+  "com.diegonmarcos.superapp": {
+   "why": "The broker's own host: X-Ray, Background policy, Super Saving, device tuning, perms, installs, diagnostics (internal callers).",
+   "segments": true,
+   "allow": [
+    {
+     "id": "reads-1",
+     "re": "^dumpsys [\\w.:/=,@+*?-]+( [\\w.:/=,@+*?-]+)*$"
+    },
+    {
+     "id": "reads-2",
+     "re": "^settings (get|list) (global|system|secure)( [\\w.:/=,@+*?-]+)?$"
+    },
+    {
+     "id": "reads-3",
+     "re": "^appops get [a-z][\\w.]*( [A-Z_]+)?$"
+    },
+    {
+     "id": "reads-4",
+     "re": "^getprop( [\\w.]+)?$"
+    },
+    {
+     "id": "reads-5",
+     "re": "^cat /(proc|sys)/[\\w/.:@-]+$"
+    },
+    {
+     "id": "reads-6",
+     "re": "^ps( -[\\w]+)*( -o [\\w,=]+)?$"
+    },
+    {
+     "id": "reads-7",
+     "re": "^pm (list|path|dump|get-install-location)( [\\w.:/=,@+*?-]+)*$"
+    },
+    {
+     "id": "bgpolicy-1",
+     "re": "^appops set [a-z][\\w.]* [A-Z_]+ (allow|deny|ignore|default|foreground)$"
+    },
+    {
+     "id": "bgpolicy-2",
+     "re": "^am (force-stop|kill|set-standby-bucket|set-inactive|set-idle|stop-service|broadcast)( [\\w.:/=,@+*?-]+)*$"
+    },
+    {
+     "id": "bgpolicy-3",
+     "re": "^cmd (deviceidle|appops|battery|jobscheduler|activity)( [\\w.:/=,@+*?-]+)*$"
+    },
+    {
+     "id": "bgpolicy-4",
+     "re": "^pm (enable|disable|disable-user|enable-user|suspend|unsuspend|trim-caches|clear)( [\\w.:/=,@+*?-]+)*$"
+    },
+    {
+     "id": "perms-1",
+     "re": "^pm (grant|revoke) [a-z][\\w.]* [\\w.]+$"
+    },
+    {
+     "id": "perms-2",
+     "re": "^appops set [a-z][\\w.]* [A-Z_]+ (allow|deny|ignore|default|foreground)$"
+    },
+    {
+     "id": "tuning-1",
+     "re": "^settings put (global|system|secure) [\\w.]+ [\\w.:/=,@+*?-]+$"
+    },
+    {
+     "id": "tuning-2",
+     "re": "^device_config put [\\w.:/=,@+*?-]+( [\\w.:/=,@+*?-]+)*$"
+    },
+    {
+     "id": "tuning-3",
+     "re": "^wm (density|size)( [\\w.:/=,@+*?-]+)*$"
+    },
+    {
+     "id": "tuning-4",
+     "re": "^cmd (uimode|display|power)( [\\w.:/=,@+*?-]+)*$"
+    },
+    {
+     "id": "installs-1",
+     "re": "^pm (install|install-create|install-write|install-commit|install-abandon|uninstall)( [\\w.:/=,@+*?-]+)*$"
+    },
+    {
+     "id": "selfdiag-1",
+     "re": "^(logcat|uptime|id|df|netstat|ip|ss|cmd)( [\\w.:/=,@+*?-]+)*$"
+    },
+    {
+     "id": "bg-echo",
+     "re": "^echo '[#@\\w.:-]+'$",
+     "meta": "#"
+    },
+    {
+     "id": "bg-component",
+     "re": "^pm (enable|disable) '[a-z][\\w.]*/[\\w.$]+'$",
+     "meta": "$"
+    },
+    {
+     "id": "bg-settings",
+     "re": "^settings (get|put|delete) (global|system|secure) [\\w.-]+( [\\w.-]+)?$"
+    },
+    {
+     "id": "bg-ps",
+     "re": "^ps -A -o NAME$"
+    },
+    {
+     "id": "bg-idle",
+     "re": "^cmd deviceidle (whitelist( [+-][\\w.]+)?|force-idle|unforce)$"
+    }
+   ],
+   "exact": [
+    "dumpsys usagestats | grep -E 'package=.*totalTimeForegroundServiceUsed=' | head -60",
+    "logcat -d -b system,main -v time ActivityManager:I '*:S' | grep 'Start proc'",
+    "dumpsys jobscheduler | grep -E 'JOB #|Pending queue|Active jobs|Registered|Standby bucket|Backoff' | head -400",
+    "dumpsys alarm | head -1500",
+    "dumpsys power | grep -E 'Wake Locks|WAKE_LOCK|mWakefulness|mWakeLockSummary|Suspend Blockers|Display Power|mHoldingWakeLock' | head -200",
+    "dumpsys thermalservice | head -150",
+    "dumpsys netstats --uid | head -600",
+    "echo deep=$(dumpsys deviceidle get deep) light=$(dumpsys deviceidle get light); dumpsys deviceidle whitelist",
+    "for p in $(pm list packages | grep com.diegonmarcos | cut -d: -f2); do echo \"$p $(am get-standby-bucket $p)\"; done; echo ---; dumpsys usagestats | grep -E 'package=.*bucket=' | head -300",
+    "echo ignore:; cmd appops query-op RUN_IN_BACKGROUND ignore; echo deny:; cmd appops query-op RUN_IN_BACKGROUND deny",
+    "echo credential_service=$(settings get secure credential_service); echo primary=$(settings get secure credential_service_primary)",
+    "logcat -d -v threadtime -t 300 '*:W'",
+    "dumpsys package com.diegonmarcos.superapp | grep -E 'granted=true' | head -120; echo ---; cmd appops get com.diegonmarcos.superapp | head -80"
+   ]
+  },
+  "com.diegonmarcos.cloudstore": {
+   "why": "Store installs and updates, the Play Protect switch, grants, force-stop.",
+   "allow": [
+    {
+     "id": "installs-1",
+     "re": "^pm (install|install-create|install-write|install-commit|install-abandon|uninstall)( [\\w.:/=,@+*?-]+)*$"
+    },
+    {
+     "id": "perms-1",
+     "re": "^pm (grant|revoke) [a-z][\\w.]* [\\w.]+$"
+    },
+    {
+     "id": "perms-2",
+     "re": "^appops set [a-z][\\w.]* [A-Z_]+ (allow|deny|ignore|default|foreground)$"
+    },
+    {
+     "id": "store-1",
+     "re": "^am force-stop [a-z][\\w.]*$"
+    },
+    {
+     "id": "store-2",
+     "re": "^settings (get|put) global [\\w.]+( [\\w.:/=,@+*?-]+)?$"
+    },
+    {
+     "id": "store-3",
+     "re": "^pm (list|path)( [\\w.:/=,@+*?-]+)*$"
+    },
+    {
+     "id": "store-4",
+     "re": "^getprop( [\\w.]+)?$"
+    }
+   ]
+  },
+  "com.diegonmarcos.cloudaccount": {
+   "why": "Setup runbook: install the Store, grant permissions, app-ops.",
+   "allow": [
+    {
+     "id": "installs-1",
+     "re": "^pm (install|install-create|install-write|install-commit|install-abandon|uninstall)( [\\w.:/=,@+*?-]+)*$"
+    },
+    {
+     "id": "perms-1",
+     "re": "^pm (grant|revoke) [a-z][\\w.]* [\\w.]+$"
+    },
+    {
+     "id": "perms-2",
+     "re": "^appops set [a-z][\\w.]* [A-Z_]+ (allow|deny|ignore|default|foreground)$"
+    },
+    {
+     "id": "account-1",
+     "re": "^pm (list|path)( [\\w.:/=,@+*?-]+)*$"
+    }
+   ]
+  },
+  "com.diegonmarcos.clouddrive": {
+   "why": "Manage > Apps: running state and PSS of other apps.",
+   "allow": [
+    {
+     "id": "drive-1",
+     "re": "^ps( -[\\w]+)*( -o [\\w,=]+)?$"
+    },
+    {
+     "id": "drive-2",
+     "re": "^dumpsys meminfo( [\\w.:/=,@+*?-]+)*$"
+    }
+   ]
+  },
+  "com.diegonmarcos.cloudbrowser": {
+   "why": "CDP mode: only the DevTools socket discovery of its forward.",
+   "allow": [
+    {
+     "id": "browser-1",
+     "re": "^cat /proc/net/unix$"
+    }
+   ]
+  },
+  "com.diegonmarcos.cloudc3": {
+   "why": "Cloud C3 fleet control: read-only phone probes.",
+   "allow": [
+    {
+     "id": "reads-1",
+     "re": "^dumpsys [\\w.:/=,@+*?-]+( [\\w.:/=,@+*?-]+)*$"
+    },
+    {
+     "id": "reads-2",
+     "re": "^settings (get|list) (global|system|secure)( [\\w.:/=,@+*?-]+)?$"
+    },
+    {
+     "id": "reads-3",
+     "re": "^appops get [a-z][\\w.]*( [A-Z_]+)?$"
+    },
+    {
+     "id": "reads-4",
+     "re": "^getprop( [\\w.]+)?$"
+    },
+    {
+     "id": "reads-5",
+     "re": "^cat /(proc|sys)/[\\w/.:@-]+$"
+    },
+    {
+     "id": "reads-6",
+     "re": "^ps( -[\\w]+)*( -o [\\w,=]+)?$"
+    },
+    {
+     "id": "reads-7",
+     "re": "^pm (list|path|dump|get-install-location)( [\\w.:/=,@+*?-]+)*$"
+    }
+   ]
+  },
+  "com.diegonmarcos.cloudtoolssmallllms": {
+   "why": "Tools: device facts for model sizing.",
+   "allow": [
+    {
+     "id": "tools-1",
+     "re": "^getprop( [\\w.]+)?$"
+    },
+    {
+     "id": "tools-2",
+     "re": "^cat /proc/(meminfo|cpuinfo)$"
+    }
+   ]
+  },
+  "cld.termux": {
+   "why": "Terminal: the documented needs (pm, am, settings) and shell tooling.",
+   "allow": [
+    {
+     "id": "terminal-1",
+     "re": "^(pm|am|settings|cmd|dumpsys|getprop|appops|wm|svc|input|logcat|ls|id|whoami|uname|df|du|stat|cat)( [\\w.:/=,@+*?-]+)*$"
+    }
+   ]
+  },
+  "cld.termux.nix": {
+   "why": "Nix terminal: the documented needs (pm, am, settings) and shell tooling.",
+   "allow": [
+    {
+     "id": "terminal-1",
+     "re": "^(pm|am|settings|cmd|dumpsys|getprop|appops|wm|svc|input|logcat|ls|id|whoami|uname|df|du|stat|cat)( [\\w.:/=,@+*?-]+)*$"
+    }
+   ]
+  },
+  "mesh": {
+   "why": "The Cloud-Webserver /shell/* door (bearer + mesh-only) and the c3 peers-control tools behind it: reads, bgpolicy, grants, force-stop, input. Not an arbitrary shell.",
+   "allow": [
+    {
+     "id": "reads-1",
+     "re": "^dumpsys [\\w.:/=,@+*?-]+( [\\w.:/=,@+*?-]+)*$"
+    },
+    {
+     "id": "reads-2",
+     "re": "^settings (get|list) (global|system|secure)( [\\w.:/=,@+*?-]+)?$"
+    },
+    {
+     "id": "reads-3",
+     "re": "^appops get [a-z][\\w.]*( [A-Z_]+)?$"
+    },
+    {
+     "id": "reads-4",
+     "re": "^getprop( [\\w.]+)?$"
+    },
+    {
+     "id": "reads-5",
+     "re": "^cat /(proc|sys)/[\\w/.:@-]+$"
+    },
+    {
+     "id": "reads-6",
+     "re": "^ps( -[\\w]+)*( -o [\\w,=]+)?$"
+    },
+    {
+     "id": "reads-7",
+     "re": "^pm (list|path|dump|get-install-location)( [\\w.:/=,@+*?-]+)*$"
+    },
+    {
+     "id": "bgpolicy-1",
+     "re": "^appops set [a-z][\\w.]* [A-Z_]+ (allow|deny|ignore|default|foreground)$"
+    },
+    {
+     "id": "bgpolicy-2",
+     "re": "^am (force-stop|kill|set-standby-bucket|set-inactive|set-idle|stop-service|broadcast)( [\\w.:/=,@+*?-]+)*$"
+    },
+    {
+     "id": "bgpolicy-3",
+     "re": "^cmd (deviceidle|appops|battery|jobscheduler|activity)( [\\w.:/=,@+*?-]+)*$"
+    },
+    {
+     "id": "bgpolicy-4",
+     "re": "^pm (enable|disable|disable-user|enable-user|suspend|unsuspend|trim-caches|clear)( [\\w.:/=,@+*?-]+)*$"
+    },
+    {
+     "id": "perms-1",
+     "re": "^pm (grant|revoke) [a-z][\\w.]* [\\w.]+$"
+    },
+    {
+     "id": "perms-2",
+     "re": "^appops set [a-z][\\w.]* [A-Z_]+ (allow|deny|ignore|default|foreground)$"
+    },
+    {
+     "id": "mesh-1",
+     "re": "^am force-stop [a-z][\\w.]*$"
+    },
+    {
+     "id": "mesh-2",
+     "re": "^input (tap|swipe|keyevent|text|press)( [\\w.:/=,@+*?-]+)*$"
+    },
+    {
+     "id": "mesh-3",
+     "re": "^screencap -p$"
+    },
+    {
+     "id": "mesh-4",
+     "re": "^logcat( -[\\w]+)*( [\\w.:/=,@+*?-]+)*$"
+    }
+   ]
+  }
+ }
+}

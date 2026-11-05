@@ -11,6 +11,7 @@ import com.diegonmarcos.superapp.BuildConfig
 import com.diegonmarcos.superapp.adbdebug.ChannelOps
 import com.diegonmarcos.superapp.adbdebug.SetupAction
 import com.diegonmarcos.superapp.adbdebug.ShellChannels
+import com.diegonmarcos.superapp.shellbroker.ShellBroker
 import com.diegonmarcos.superapp.battery.BatteryRepository
 import com.diegonmarcos.superapp.ops.dagu.DaguPrefs
 import com.diegonmarcos.superapp.profile.AccountData
@@ -71,7 +72,8 @@ internal object XrayExport {
         val shell = ch?.let { c ->
             object : XrayShell {
                 override val channel = c.name()
-                override fun exec(cmd: String): String? = c.exec(ctx, cmd)
+                // #1510 through the SuperApp's one shell broker (SuperApp entry: the X-Ray probes are declared `exact` lines).
+                override fun exec(cmd: String): String? = ShellBroker.execText(ctx, cmd)
             }
         }
 

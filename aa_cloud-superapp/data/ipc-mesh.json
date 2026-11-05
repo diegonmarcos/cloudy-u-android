@@ -1049,6 +1049,49 @@
     "callers": []
    }
   ],
+  "shell-broker": [
+   {
+    "permission": "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA",
+    "level": "signature",
+    "source": "libs:shell-broker/src/main/AndroidManifest.xml",
+    "component": "com.diegonmarcos.superapp.shellbroker.ShellBrokerProvider",
+    "id": "provider:<pkg>.shellbroker",
+    "kind": "provider",
+    "name": "ShellBrokerProvider",
+    "authority": "<pkg>.shellbroker",
+    "callers": [
+     "aa_cloud-superapp"
+    ]
+   },
+   {
+    "permission": "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA",
+    "level": "signature",
+    "source": "libs:shell-broker/src/main/AndroidManifest.xml",
+    "component": "com.diegonmarcos.superapp.shellbroker.ShellBrokerService",
+    "id": "service:com.diegonmarcos.superapp.shellbroker.ShellBrokerService",
+    "kind": "service",
+    "name": "ShellBrokerService",
+    "actions": [],
+    "aidl": [],
+    "callers": []
+   },
+   {
+    "permission": "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA",
+    "level": "signature",
+    "source": "libs:shell-broker/src/main/AndroidManifest.xml",
+    "component": "com.diegonmarcos.superapp.shellbroker.ShellArmActivity",
+    "id": "intent:com.diegonmarcos.superapp.shellbroker.ShellArmActivity",
+    "kind": "intent",
+    "name": "ShellArmActivity",
+    "actions": [
+     "com.diegonmarcos.superapp.action.ARM_SHELL"
+    ],
+    "uris": [],
+    "callers": [
+     "aa_cloud-superapp"
+    ]
+   }
+  ],
   "shizuku-adb-debug-tools": [
    {
     "id": "op:keeper/log",
@@ -1125,6 +1168,7 @@
     "devtools",
     "fleetconfig-model",
     "perms",
+    "shell-broker",
     "shizuku-adb-debug-tools"
    ],
    "endpoints": [
