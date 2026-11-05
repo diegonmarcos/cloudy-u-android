@@ -28,8 +28,22 @@ data class StatusElement(
     val format: String? = null,
 )
 
-/** #1508 The speed rows of the network dropdown (build.json::home_status_bar.network_speed): `rows` are ids now | avg24. */
-data class NetworkSpeedDecl(val sampleMs: Long, val rows: List<Pair<String, String>>, val perInterface: Boolean)
+/** #1523 The speed test's endpoint and sizes (build.json::home_status_bar.network_speed.speed_test); `{bytes}` in [downloadUrl]. */
+data class SpeedTestDecl(
+    val downloadUrl: String, val uploadUrl: String, val pingUrl: String, val downloadBytes: Long, val uploadBytes: Long,
+    val maxSeconds: Int, val pingCount: Int, val meteredDivisor: Int,
+)
+
+/** #1523 The meter (build.json::home_status_bar.network_speed): the open-only sample period, the public-IP lookup and the speed test. */
+data class NetworkSpeedDecl(val sampleMs: Long, val publicIpUrl: String, val publicIpTtlMs: Long, val test: SpeedTestDecl)
+
+/** One column of a grid group: [label] over [unit] in the header. */
+data class NetworkColumn(val label: String, val unit: String)
+data class NetworkTableRow(val id: String, val label: String)
+/** A group of the network table: key-value rows (no columns) or a grid (one cell per column). */
+data class NetworkTableGroup(val id: String, val label: String, val columns: List<NetworkColumn>, val rows: List<NetworkTableRow>)
+/** #1523 The rows of the network dropdown's table (build.json::home_status_bar.network_table). */
+data class NetworkTableDecl(val groups: List<NetworkTableGroup>)
 
 data class StatusBarDeclaration(
     val rowHeightDp: Int, val elements: List<StatusElement>,
@@ -37,6 +51,8 @@ data class StatusBarDeclaration(
     val toolbarRow: List<StatusElement>,
     /** The speed meter rows inside the network dropdown; null = none declared. */
     val networkSpeed: NetworkSpeedDecl? = null,
+    /** The network dropdown's table rows; null = none declared. */
+    val networkTable: NetworkTableDecl? = null,
 )
 
 object StatusBarDecl {
@@ -65,11 +81,22 @@ object StatusBarDecl {
             StatusElement(e.getString("id"), e.getString("label"), "pill", e.getString("position"), e.getInt("order"), true, null, "")
         }
         val ns = o.optJSONObject("network_speed")?.let { n ->
-            val r = n.getJSONArray("rows")
-            NetworkSpeedDecl(n.getLong("sample_ms"), (0 until r.length()).map { i -> r.getJSONObject(i).let { it.getString("id") to it.getString("label") } },
-                n.optBoolean("per_interface", true))
+            val t = n.getJSONObject("speed_test"); val ip = n.getJSONObject("public_ip")
+            NetworkSpeedDecl(n.getLong("sample_ms"), ip.getString("url"), ip.getLong("ttl_ms"), SpeedTestDecl(
+                t.getString("download_url"), t.getString("upload_url"), t.getString("ping_url"), t.getLong("download_bytes"), t.getLong("upload_bytes"),
+                t.getInt("max_seconds"), t.getInt("ping_count"), t.getInt("metered_divisor")))
         }
-        return StatusBarDeclaration(o.getInt("row_height_dp"), els, toolbar, ns)
+        val nt = o.optJSONObject("network_table")?.let { n ->
+            val g = n.getJSONArray("groups")
+            NetworkTableDecl((0 until g.length()).map { i ->
+                val e = g.getJSONObject(i)
+                val c = e.optJSONArray("columns"); val r = e.getJSONArray("rows")
+                NetworkTableGroup(e.getString("id"), e.getString("label"),
+                    if (c == null) emptyList() else (0 until c.length()).map { j -> c.getJSONObject(j).let { NetworkColumn(it.getString("label"), it.getString("unit")) } },
+                    (0 until r.length()).map { j -> r.getJSONObject(j).let { NetworkTableRow(it.getString("id"), it.getString("label")) } })
+            }.also { gs -> require(gs.flatMap { it.rows.map { r -> r.id } }.let { it.size == it.toSet().size }) { "network_table: duplicate row id" } })
+        }
+        return StatusBarDeclaration(o.getInt("row_height_dp"), els, toolbar, ns, nt)
     }
 
     /**

@@ -80,14 +80,30 @@ class StatusBarDeclTest {
     }
 
     @Test
-    fun `D6 the speed meter rows are declared for the network dropdown, not drawn on the bar`() {
+    fun `D6 the speed meter is declared for the network dropdown, not drawn on the bar`() {
         val ns = StatusBarDecl.declared.networkSpeed!!
-        assertEquals(listOf("now", "avg24"), ns.rows.map { it.first })
         assertEquals(1000L, ns.sampleMs)
-        assertTrue(ns.perInterface)
-        val p = StatusBarDecl.parse("""{"row_height_dp":26,"elements":[],"network_speed":{"sample_ms":500,"rows":[{"id":"now","label":"N"}],"per_interface":false}}""")
-        assertEquals(NetworkSpeedDecl(500L, listOf("now" to "N"), false), p.networkSpeed)
+        assertEquals(300_000L, ns.publicIpTtlMs)
+        assertTrue(ns.test.downloadUrl.contains("{bytes}"))
+        assertTrue(ns.test.meteredDivisor >= 1)
+        val j = """{"row_height_dp":26,"elements":[],"network_speed":{"sample_ms":500,"public_ip":{"url":"https://x/t","ttl_ms":9},
+            "speed_test":{"download_url":"https://x/d?b={bytes}","upload_url":"https://x/u","ping_url":"https://x/p","download_bytes":2,"upload_bytes":3,"max_seconds":4,"ping_count":5,"metered_divisor":6}}}"""
+        val p = StatusBarDecl.parse(j)
+        assertEquals(NetworkSpeedDecl(500L, "https://x/t", 9L, SpeedTestDecl("https://x/d?b={bytes}", "https://x/u", "https://x/p", 2L, 3L, 4, 5, 6)), p.networkSpeed)
         assertEquals(null, StatusBarDecl.parse(json(el("wifi", "left", 1))).networkSpeed)
+        assertEquals(null, StatusBarDecl.parse(json(el("wifi", "left", 1))).networkTable)
+    }
+
+    @Test
+    fun `D7 the network table is declared in groups and a duplicate row id is refused`() {
+        val t = StatusBarDecl.declared.networkTable!!
+        assertEquals(
+            listOf("connection", "mobile", "ip", "vpn", "metered", "usage", "speed", "peak", "test", "test_hist"), t.groups.map { it.id })
+        val ids = t.groups.flatMap { g -> g.rows.map { it.id } }
+        assertEquals(ids.size, ids.toSet().size)
+        val dup = """{"row_height_dp":26,"elements":[],"network_table":{"groups":[
+            {"id":"a","label":"A","rows":[{"id":"x","label":"X"}]},{"id":"b","label":"B","rows":[{"id":"x","label":"X"}]}]}}"""
+        assertTrue(runCatching { StatusBarDecl.parse(dup) }.isFailure)
     }
 
     @Test

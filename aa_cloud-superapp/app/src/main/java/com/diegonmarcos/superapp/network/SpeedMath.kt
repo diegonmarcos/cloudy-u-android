@@ -4,7 +4,10 @@ package com.diegonmarcos.superapp.network
  * #1446 The speedmeter's arithmetic, pure JVM: unit conversion, the rolling 24 h average and the stored-sample codec.
  * One sample = [bytes] moved in [ms] at [atMs] (wall clock), either a passive TrafficStats delta or an active test.
  */
-internal data class SpeedSample(val atMs: Long, val bytes: Long, val ms: Long, val active: Boolean, val txBytes: Long = 0L) {
+internal data class SpeedSample(val atMs: Long, val bytes: Long, val ms: Long, val active: Boolean, val txBytes: Long = 0L,
+    /** The best 1 s rate seen inside this sample, in kbps (1000 bit/s); 0 = not recorded. */
+    val peakRxKbps: Long = 0L, val peakTxKbps: Long = 0L,
+) {
     /** Megabits per second of this sample; 0 for an empty window. */
     val mbps: Double get() = SpeedMath.mbps(bytes, ms)
 }
@@ -41,9 +44,19 @@ internal object SpeedMath {
         return if (ms <= 0L) null else mbps(w.sumOf { it.txBytes }, ms)
     }
 
-    /** One dropdown row: "Now  down 1.2Mb  up 0.3Mb"; "--" for an unknown side. */
-    fun rowLine(label: String, downMbps: Double?, upMbps: Double?): String =
-        "$label  \u2193 ${fmt(downMbps)}Mb  \u2191 ${fmt(upMbps)}Mb"
+    /** The best 1 s rate in the window, in Mbps; null when no sample recorded one. */
+    fun peak(samples: List<SpeedSample>, nowMs: Long, tx: Boolean, windowMs: Long = WINDOW_MS): Double? =
+        inWindow(samples, nowMs, windowMs).maxOfOrNull { if (tx) it.peakTxKbps else it.peakRxKbps }?.takeIf { it > 0L }?.let { it / 1000.0 }
+
+    /** Latency (mean round trip) and jitter (mean absolute difference of successive round trips), both ms; null without a sample. */
+    fun latencyJitter(rttMs: List<Double>): Pair<Double?, Double?> {
+        if (rttMs.isEmpty()) return null to null
+        val jit = if (rttMs.size < 2) null else rttMs.zipWithNext { a, b -> Math.abs(b - a) }.average()
+        return rttMs.average() to jit
+    }
+
+    /** A rate in kbps (1000 bit/s) for [bytes] moved in [ms]. */
+    fun kbps(bytes: Long, ms: Long): Long = (mbps(bytes, ms) * 1000.0).toLong()
 
     /** Per-interface counters of /proc/net/dev text: name to (rx bytes, tx bytes); loopback and unparsable lines skipped. */
     fun parseNetDev(text: String): Map<String, Pair<Long, Long>> = text.lineSequence().mapNotNull { l ->
@@ -70,13 +83,14 @@ internal object SpeedMath {
         if (mbps == null) "$tag --" else "$tag ${fmt(mbps)}Mb ${fmt(mbPerSec(mbps))}MB/s"
 
     fun encode(samples: List<SpeedSample>): String =
-        samples.joinToString("\n") { "${it.atMs},${it.bytes},${it.ms},${if (it.active) 1 else 0},${it.txBytes}" }
+        samples.joinToString("\n") { "${it.atMs},${it.bytes},${it.ms},${if (it.active) 1 else 0},${it.txBytes},${it.peakRxKbps},${it.peakTxKbps}" }
 
     /** Lines that do not parse are skipped, never thrown. */
     fun decode(text: String): List<SpeedSample> = text.lineSequence().mapNotNull { l ->
         val p = l.split(',')
-        if (p.size != 4 && p.size != 5) return@mapNotNull null
+        if (p.size != 4 && p.size != 5 && p.size != 7) return@mapNotNull null
         val a = p[0].toLongOrNull(); val b = p[1].toLongOrNull(); val m = p[2].toLongOrNull()
-        if (a == null || b == null || m == null) null else SpeedSample(a, b, m, p[3] == "1", p.getOrNull(4)?.toLongOrNull() ?: 0L)
+        if (a == null || b == null || m == null) null else SpeedSample(a, b, m, p[3] == "1", p.getOrNull(4)?.toLongOrNull() ?: 0L,
+            p.getOrNull(5)?.toLongOrNull() ?: 0L, p.getOrNull(6)?.toLongOrNull() ?: 0L)
     }.toList()
 }

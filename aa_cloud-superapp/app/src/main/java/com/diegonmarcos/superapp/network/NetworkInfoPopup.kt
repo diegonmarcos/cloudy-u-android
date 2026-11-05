@@ -317,26 +317,37 @@ object NetworkInfoPopup {
                 }
             }
 
-            // ── 8. Network (DNS + private IPs)
+            // ── 8. Network: the declared table (build.json::home_status_bar.network_table), see NetworkTable
             PopTitle("Network")
-            SpeedRows(ctx)
-            for (row in remember { readNetwork(ctx) }) PopValue(row)
+            NetworkTable(ctx, grant)
         }
     }
 
-    /** #1508 The speed meter's rows (declared in build.json::home_status_bar.network_speed). The meter runs only while this
-     *  is composed, i.e. while the dropdown is open: it starts here and stops when the dropdown goes. */
+    /**
+     * #1523 The declared table. The live meter runs only while this is composed, i.e. while the dropdown is open: it starts here
+     * and stops when the dropdown goes. The public IP is looked up once per open (cached 5 min), the counters are recorded
+     * once per open, and the speed test runs only on its tap.
+     */
     @Composable
-    private fun SpeedRows(ctx: Context) {
-        val decl = remember { com.diegonmarcos.superapp.launcher.StatusBarDecl.declared.networkSpeed } ?: return
-        val meter = remember { SpeedMeter(ctx, decl.sampleMs) }
+    private fun NetworkTable(ctx: Context, onFix: () -> Unit) {
+        val decl = remember { com.diegonmarcos.superapp.launcher.StatusBarDecl.declared }
+        val table = decl.networkTable ?: return
+        val speed = decl.networkSpeed
+        val meter = remember { SpeedMeter(ctx, speed?.sampleMs ?: 1_000L) }
+        val test = remember { SpeedTest(ctx) }
         DisposableEffect(meter) { meter.start(); onDispose { meter.stop() } }
-        for ((id, label) in decl.rows) when (id) {
-            "now" -> PopValue(if (meter.testing) "$label  testing..." else SpeedMath.rowLine(label, meter.nowDownMbps, meter.nowUpMbps))
-            "avg24" -> PopValue(SpeedMath.rowLine(label, meter.avgDownMbps, meter.avgUpMbps))
+        val pub by produceState<Pair<PublicIp.Info?, Boolean>>(null to false) {
+            if (speed != null) value = withContext(Dispatchers.IO) { PublicIp.get(speed.publicIpUrl, speed.publicIpTtlMs) }.let { it to (it == null) }
         }
-        if (decl.perInterface) for ((n, d, u) in meter.ifaces) PopValue(SpeedMath.rowLine(n, d, u))
-        PopLink("Speed test \u203a") { meter.testNow() }
+        val facts by produceState(emptyMap<String, List<NetValue>>(), pub) {
+            value = withContext(Dispatchers.IO) { NetTableReader.read(ctx, pub.first, pub.second) }
+        }
+        val usage by produceState<Pair<NetUsageSpan?, NetUsageSpan?>?>(null) { value = withContext(Dispatchers.IO) { NetTableReader.usage(ctx) } }
+        val base = if (facts.isEmpty()) NetTable.ids(table).associateWith { listOf(NetValue.NA("reading")) } else facts
+        val values = base + NetTable.usageRows(usage?.first, usage?.second, if (usage == null) "reading" else NetTableReader.USAGE_WHY) +
+            NetTable.speedRows(meter.nowDownMbps, meter.nowUpMbps, usage?.second, meter.peakDownMbps, meter.peakUpMbps) +
+            NetTable.testRows(test.runs, System.currentTimeMillis(), test.running, test.phase, test.failure)
+        NetTableView(NetTable.build(table, values), test.running, { speed?.let { test.tap(it.test) } }, onFix)
     }
 
     // ──────────────── Light indicators + radio toggles ────────────────
@@ -493,18 +504,6 @@ object NetworkInfoPopup {
     }
 
     // ─────────────────────────── Cellular ───────────────────────────
-
-    private fun networkTypeLabel(t: Int): String = when (t) {
-        TelephonyManager.NETWORK_TYPE_LTE -> "LTE"
-        TelephonyManager.NETWORK_TYPE_NR  -> "5G NR"
-        TelephonyManager.NETWORK_TYPE_HSPAP, TelephonyManager.NETWORK_TYPE_HSPA -> "HSPA"
-        TelephonyManager.NETWORK_TYPE_UMTS  -> "UMTS"
-        TelephonyManager.NETWORK_TYPE_EDGE  -> "EDGE"
-        TelephonyManager.NETWORK_TYPE_GPRS  -> "GPRS"
-        TelephonyManager.NETWORK_TYPE_GSM   -> "GSM"
-        TelephonyManager.NETWORK_TYPE_UNKNOWN -> "—"
-        else -> "type $t"
-    }
 
     // ─────────────────────────── WiFi ───────────────────────────
 
@@ -745,123 +744,6 @@ object NetworkInfoPopup {
                 if (ip != null) "Tether ${nif.name}: $ip" else "Tether ${nif.name}: up"
             }.toList()
     }.getOrDefault(emptyList())
-
-    // ─────────────────────────── Network (DNS + IPs) ───────────────────────────
-
-    private fun readNetwork(ctx: Context): List<String> {
-        val rows = mutableListOf<String>()
-        val cm = ctx.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
-        val active = cm?.activeNetwork
-        val caps = active?.let { cm.getNetworkCapabilities(it) }
-        val lp = active?.let { runCatching { cm.getLinkProperties(it) }.getOrNull() }
-
-        // ── transports ───────────────────────────────────────────────────────
-        val transports = mutableListOf<String>()
-        caps?.let {
-            if (it.hasTransport(NetworkCapabilities.TRANSPORT_WIFI))     transports += "WiFi"
-            if (it.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) transports += "Cellular"
-            if (it.hasTransport(NetworkCapabilities.TRANSPORT_VPN))      transports += "VPN"
-            if (it.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)) transports += "Ethernet"
-        }
-        rows += "Active: ${if (transports.isEmpty()) "Offline" else transports.joinToString(" · ")}"
-
-        // ── capability flags + bandwidth ─────────────────────────────────────
-        caps?.let { c ->
-            val flags = mutableListOf<String>()
-            if (c.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET))  flags += "internet"
-            if (c.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)) flags += "validated"
-            flags += if (c.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_METERED)) "unmetered" else "metered"
-            if (c.hasCapability(NetworkCapabilities.NET_CAPABILITY_CAPTIVE_PORTAL)) flags += "captive-portal"
-            if (flags.isNotEmpty()) rows += "State: ${flags.joinToString(" · ")}"
-            if (c.linkDownstreamBandwidthKbps > 0 || c.linkUpstreamBandwidthKbps > 0)
-                rows += "Bandwidth: ↓ ${fmtKbps(c.linkDownstreamBandwidthKbps)} · ↑ ${fmtKbps(c.linkUpstreamBandwidthKbps)}"
-        }
-
-        // ── WiFi specifics (RSSI / link speed / frequency; SSID if permitted) ─
-        val ti = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) caps?.transportInfo else null
-        if (ti is android.net.wifi.WifiInfo) {
-            val ssid = ti.ssid?.trim('"')?.takeIf { it.isNotBlank() && it != "<unknown ssid>" }
-            if (ssid != null) rows += "SSID: $ssid"
-            rows += "WiFi: ${ti.rssi} dBm · ${ti.linkSpeed} Mbps" +
-                (if (ti.frequency > 0) " · ${ti.frequency} MHz" else "")
-        }
-
-        // ── cellular type ────────────────────────────────────────────────────
-        if (caps?.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) == true) {
-            val tm = ctx.applicationContext.getSystemService(Context.TELEPHONY_SERVICE) as? TelephonyManager
-            tm?.let {
-                @Suppress("DEPRECATION")
-                val t = runCatching { networkTypeLabel(it.networkType) }.getOrDefault("—")
-                rows += "Cell: ${it.networkOperatorName ?: "—"} · $t"
-            }
-        }
-
-        // ── link properties (iface / DNS / domains / proxy / gateway) ────────
-        lp?.let { l ->
-            l.interfaceName?.let { rows += "Iface: $it" }
-            l.dnsServers.mapNotNull { it.hostAddress }.forEach { rows += "DNS: $it" }
-            if (!l.domains.isNullOrBlank()) rows += "Domains: ${l.domains}"
-            runCatching { l.httpProxy?.let { rows += "Proxy: ${it.host}:${it.port}" } }
-            l.routes.filter { it.isDefaultRoute && it.gateway != null }
-                .mapNotNull { it.gateway?.hostAddress }.distinct()
-                .forEach { rows += "Gateway: $it" }
-        }
-
-        // ── every bound IP (v4 + v6), per interface, scope-tagged ────────────
-        runCatching {
-            NetworkInterface.getNetworkInterfaces().asSequence()
-                .filter { it.isUp && !it.isLoopback }
-                .forEach { nif ->
-                    nif.inetAddresses.asSequence()
-                        .filter { !it.isLoopbackAddress && !it.isLinkLocalAddress }
-                        .forEach { a ->
-                            val scope = if (a.isSiteLocalAddress) "private" else "public"
-                            a.hostAddress?.let { rows += "IP: ${nif.name} $it ($scope)" }
-                        }
-                }
-        }
-        // ── open ports (own-UID TCP sockets from /proc/net) ──────────────────
-        readPorts().forEach { rows += it }
-        return rows
-    }
-
-    /** Listening ports + established connections from /proc/net/tcp{,6}. Modern
-     *  Android only exposes our OWN-UID sockets here. There is no per-socket
-     *  "last activity" timestamp in /proc, so established connections (active
-     *  talks) are listed with their remote endpoint as the closest signal. */
-    private fun readPorts(): List<String> {
-        val listen = sortedSetOf<Int>()
-        val estab = mutableListOf<String>()
-        for (path in listOf("/proc/net/tcp", "/proc/net/tcp6")) {
-            runCatching {
-                java.io.File(path).readLines().drop(1).forEach { line ->
-                    val f = line.trim().split(Regex("\\s+"))
-                    if (f.size < 4) return@forEach
-                    val lport = f[1].substringAfter(':').toIntOrNull(16) ?: return@forEach
-                    when (f[3]) {
-                        "0A" -> listen += lport                                   // LISTEN
-                        "01" -> {                                                 // ESTABLISHED
-                            val rport = f[2].substringAfter(':').toIntOrNull(16)
-                            if (rport != null && rport != 0)
-                                estab += "$lport → ${hexToIp(f[2].substringBefore(':'))}:$rport"
-                        }
-                    }
-                }
-            }
-        }
-        val out = mutableListOf<String>()
-        if (listen.isNotEmpty()) out += "Listening: ${listen.joinToString(", ")}"
-        estab.distinct().take(12).forEach { out += "Conn: $it" }
-        return out
-    }
-
-    private fun hexToIp(a: String): String = runCatching {
-        if (a.length == 8) (3 downTo 0).joinToString(".") { a.substring(it * 2, it * 2 + 2).toInt(16).toString() }
-        else "[v6]"
-    }.getOrDefault("?")
-
-    private fun fmtKbps(kbps: Int): String =
-        if (kbps >= 1000) "%.1f Mbps".format(kbps / 1000.0) else "$kbps Kbps"
 
     private fun readLocalIps(): List<String> = try {
         val out = mutableListOf<String>()

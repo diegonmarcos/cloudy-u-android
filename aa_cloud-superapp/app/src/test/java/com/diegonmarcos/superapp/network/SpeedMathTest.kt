@@ -71,7 +71,6 @@ class SpeedMathTest {
         val all = listOf(SpeedSample(now - h, 1_000_000, 1000, false, txBytes = 500_000), SpeedSample(now - 2 * h, 0, 1000, false, txBytes = 500_000))
         assertEquals(4.0, SpeedMath.averageTx(all, now)!!, 1e-9)                    // 1 MB over 2 s = 4 Mbps
         assertNull(SpeedMath.averageTx(emptyList(), now))
-        assertEquals("Now  \u2193 12.3Mb  \u2191 --Mb", SpeedMath.rowLine("Now", 12.34, null))
         assertEquals(all, SpeedMath.decode(SpeedMath.encode(all)))
         assertEquals(listOf(SpeedSample(1, 2, 3, true, 0L)), SpeedMath.decode("1,2,3,1"))   // pre-#1508 four-field line
     }
@@ -80,5 +79,27 @@ class SpeedMathTest {
         val txt = "Inter-|   Receive\n face |bytes packets errs drop fifo frame compressed multicast|bytes packets\n" +
             "    lo: 100 1 0 0 0 0 0 0 200 1 0 0 0 0 0 0\n wlan0: 5000 10 0 0 0 0 0 0 7000 9 0 0 0 0 0 0\n"
         assertEquals(mapOf("wlan0" to (5000L to 7000L)), SpeedMath.parseNetDev(txt))
+    }
+
+    @Test fun peakIsTheBestSecondInTheWindow() {
+        val now = 100 * h
+        val all = listOf(
+            SpeedSample(now - h, 1, 1, false, peakRxKbps = 40_000, peakTxKbps = 5_000),
+            SpeedSample(now - 2 * h, 1, 1, false, peakRxKbps = 90_000, peakTxKbps = 0),
+            SpeedSample(now - 30 * h, 1, 1, false, peakRxKbps = 999_000),
+        )
+        assertEquals(90.0, SpeedMath.peak(all, now, tx = false)!!, 1e-9)
+        assertEquals(5.0, SpeedMath.peak(all, now, tx = true)!!, 1e-9)
+        assertNull(SpeedMath.peak(listOf(s(now - h, 1, 1)), now, tx = false))
+        assertEquals(8_000L, SpeedMath.kbps(1_000_000, 1000))
+        assertEquals(all, SpeedMath.decode(SpeedMath.encode(all)))
+    }
+
+    @Test fun latencyIsTheMeanAndJitterTheMeanStep() {
+        val (lat, jit) = SpeedMath.latencyJitter(listOf(10.0, 14.0, 12.0))
+        assertEquals(12.0, lat!!, 1e-9)
+        assertEquals(3.0, jit!!, 1e-9)               // |14-10| = 4, |12-14| = 2
+        assertNull(SpeedMath.latencyJitter(listOf(10.0)).second)
+        assertNull(SpeedMath.latencyJitter(emptyList()).first)
     }
 }

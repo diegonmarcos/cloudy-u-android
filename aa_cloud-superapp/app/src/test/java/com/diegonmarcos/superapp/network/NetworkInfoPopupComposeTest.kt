@@ -20,6 +20,7 @@ import org.robolectric.annotation.Config
  *   N1 it draws every section NetworkSections.layout declares, in order
  *   N2 a header's "Settings ›" link and a light dismiss the bubble
  *   N3 it is capped below the screen height and scrolls
+ *   N4 every row the network table declares is drawn (#1523), and the Speed test action is there
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
@@ -47,5 +48,16 @@ class NetworkInfoPopupComposeTest : KitPageHarness() {
         showKit { NetworkInfoPopup.NetworkBubble(ctx, NetworkInfoPopup.GPS) {} }
         val h = compose.onNodeWithTag("netpop:bubble").fetchSemanticsNode().size.height
         assertTrue("bubble is $h px of ${ctx.resources.displayMetrics.heightPixels}", h <= ctx.resources.displayMetrics.heightPixels)
+    }
+
+    @Test
+    fun `N4 every declared table row is drawn`() {
+        showKit { NetworkInfoPopup.NetworkBubble(ctx, null) {} }
+        val decl = com.diegonmarcos.superapp.launcher.StatusBarDecl.declared.networkTable!!
+        for (g in decl.groups) {
+            compose.onNodeWithTag("netpop:group:${g.id}").assertExists()
+            for (r in g.rows) compose.onNodeWithTag("netpop:row:${r.id}").assertExists()
+        }
+        compose.onNodeWithTag("netpop:link:Speed test").assertExists()
     }
 }

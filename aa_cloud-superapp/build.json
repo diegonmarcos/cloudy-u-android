@@ -830,13 +830,43 @@
       {"id": "battery", "label": "Battery", "short": "BAT", "kind": "battery", "position": "right", "order": 4, "visible": true, "pet": "battery", "opens": "battery_popup"}
     ],
     "network_speed": {
-      "_doc": "#1508 The network speed meter, moved off the bar INTO the dropdown the left cluster opens (the table titled Network): `rows` are the declared rows, id now = the live down/up rate, id avg24 = the rolling 24 h average down/up, each in Mb (Mbps); `per_interface` adds one row per network interface the device lets the app read (/proc/net/dev). It samples every `sample_ms` ONLY while the dropdown is open and stops with it (no loop while closed; battery rules #1487/#1502).",
+      "_doc": "#1523 The meter behind the network dropdown's table. sample_ms = the live-rate period, ONLY while the dropdown is open (no loop while closed; battery rules #1487/#1502). public_ip = the one lookup (a Cloudflare trace: ip= and warp=), made on open and cached for ttl_ms. speed_test = the endpoint of the Speed test action, which runs only on a tap: latency and jitter from ping_count requests to ping_url, then download_bytes from download_url ({bytes}) and upload_bytes to upload_url, each capped at max_seconds; on a metered link the sizes are divided by metered_divisor. No fleet speed endpoint is declared yet, so the public Cloudflare one is used; point these at a fleet host when one exists.",
       "sample_ms": 1000,
-      "rows": [
-        {"id": "now", "label": "Now"},
-        {"id": "avg24", "label": "24 h"}
-      ],
-      "per_interface": true
+      "public_ip": {"url": "https://cloudflare.com/cdn-cgi/trace", "ttl_ms": 300000},
+      "speed_test": {"download_url": "https://speed.cloudflare.com/__down?bytes={bytes}", "upload_url": "https://speed.cloudflare.com/__up", "ping_url": "https://speed.cloudflare.com/__down?bytes=0", "download_bytes": 10000000, "upload_bytes": 5000000, "max_seconds": 8, "ping_count": 6, "metered_divisor": 4}
+    },
+    "network_table": {
+      "_doc": "#1523 THE ROWS of the network dropdown's table (the one titled Network), grouped; NetworkInfoPopup draws exactly these, every id, in this order. A group without `columns` is label + value rows; with `columns` it is a grid (label column + one right-aligned monospace cell per column, label over unit in the header). A row whose source has nothing shows n/a (reason), never a hole (test NetTableTest). Units are decimal SI: 1 MB/s = 8 Mbps. Sources: connection = ConnectivityManager caps + WifiInfo (SSID / BSSID need Location); mobile = TelephonyManager through MobileProbe; ip = LinkProperties + the public-IP lookup; vpn = WgLink + the lookup's warp=; metered = NetworkCapabilities; usage = NetworkStatsManager when Usage access is granted, else TrafficStats snapshots recorded on open; speed = TrafficStats deltas while open (24 h = usage over the covered time), peak = the best 1 s rate seen while open; test = the Speed test action.",
+      "groups": [
+        {"id": "connection", "label": "Connection", "rows": [
+          {"id": "transport", "label": "Active"}, {"id": "ssid", "label": "SSID"}, {"id": "bssid", "label": "BSSID"}, {"id": "band", "label": "Band"},
+          {"id": "channel", "label": "Channel"}, {"id": "link", "label": "Link speed"}, {"id": "rssi", "label": "RSSI"}, {"id": "signal", "label": "Signal"},
+          {"id": "freq", "label": "Frequency"}, {"id": "standard", "label": "Wi-Fi std"}]},
+        {"id": "mobile", "label": "Mobile", "rows": [
+          {"id": "carrier", "label": "Carrier"}, {"id": "nettype", "label": "Net type"}, {"id": "msignal", "label": "Signal"}, {"id": "roaming", "label": "Roaming"}]},
+        {"id": "ip", "label": "IP", "rows": [
+          {"id": "ipv4", "label": "IPv4"}, {"id": "ipv6", "label": "IPv6"}, {"id": "public_ip", "label": "Public IP"}, {"id": "dns", "label": "DNS"},
+          {"id": "gateway", "label": "Gateway"}, {"id": "private_dns", "label": "Private DNS"}]},
+        {"id": "vpn", "label": "VPN / WireGuard mesh", "rows": [
+          {"id": "wg", "label": "WireGuard"}, {"id": "mesh_ip", "label": "Mesh IP"}, {"id": "warp", "label": "WARP"}]},
+        {"id": "metered", "label": "Metered", "rows": [
+          {"id": "metered", "label": "Metered"}, {"id": "validated", "label": "Validated"}, {"id": "captive", "label": "Captive portal"}]},
+        {"id": "usage", "label": "Data used", "columns": [
+          {"label": "Today", "unit": "down"}, {"label": "Today", "unit": "up"}, {"label": "24 h", "unit": "down"}, {"label": "24 h", "unit": "up"}], "rows": [
+          {"id": "use_wifi", "label": "Wi-Fi"}, {"id": "use_mobile", "label": "Mobile"}, {"id": "use_total", "label": "Total"}]},
+        {"id": "speed", "label": "Bandwidth", "columns": [
+          {"label": "Now", "unit": "MB/s"}, {"label": "Now", "unit": "Mbps"}, {"label": "24 h avg", "unit": "MB/s"}, {"label": "24 h avg", "unit": "Mbps"}], "rows": [
+          {"id": "down", "label": "Down"}, {"id": "up", "label": "Up"}]},
+        {"id": "peak", "label": "24 h peak and total", "columns": [
+          {"label": "Peak", "unit": "MB/s"}, {"label": "Peak", "unit": "Mbps"}, {"label": "Total", "unit": "MB / GB"}], "rows": [
+          {"id": "peak_down", "label": "Down"}, {"id": "peak_up", "label": "Up"}]},
+        {"id": "test", "label": "Speed test", "rows": [
+          {"id": "st_down", "label": "Download"}, {"id": "st_up", "label": "Upload"}, {"id": "st_latency", "label": "Latency"}, {"id": "st_jitter", "label": "Jitter"},
+          {"id": "st_last", "label": "Last test"}]},
+        {"id": "test_hist", "label": "Speed test, 24 h", "columns": [
+          {"label": "Best", "unit": ""}, {"label": "Worst", "unit": ""}, {"label": "Avg", "unit": ""}], "rows": [
+          {"id": "hd_mbps", "label": "Down Mbps"}, {"id": "hd_mbs", "label": "Down MB/s"}, {"id": "hu_mbps", "label": "Up Mbps"}, {"id": "hu_mbs", "label": "Up MB/s"}]}
+      ]
     },
     "toolbar_row": [
       {"id": "music_pill", "label": "Music pill (now playing)", "position": "centre", "order": 1, "render": "shell", "source": "ShellActivity: the first pill of the toolbar island; its target is the package that owns the live media session, discovered at runtime"},
