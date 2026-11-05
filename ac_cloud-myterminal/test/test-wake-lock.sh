@@ -131,8 +131,8 @@ def wiring(root):
             ("a shell killed is counted", "TerminalWakeLock.sync(ctx, shells.size)" in body(backend, "fun kill(")),
             ("disconnectAll drops it", "TerminalWakeLock.sync(ctx, 0)" in body(backend, "fun disconnectAll(")),
             ("Configs toggles the choice and re-syncs", "IdePrefs.setWakeLockWanted(this, !wakeWanted) TerminalWakeLock.sync(this)" in " ".join(configs.split())),
-            ("the exemption is requested once", "!IdePrefs.batteryExemptionAsked(app)" in owner
-             and "IdePrefs.setBatteryExemptionAsked(app)" in owner),
+            ("the exemption is the Perms battery_opt row, never asked by the wake lock (#1515)", "REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" not in owner
+             and "battery_opt" in json.loads(rd("build_json"))["perms"]["needs"]),
             ("/api/terminal and /api/terminal/wakelock answer the state",
              'if (op == "" || op == "wakelock") CloudWakeLock.STATE.json(false)' in api),
         ]
@@ -202,7 +202,7 @@ if APP == "ac_cloud-myterminal":
         "backend": [("an opened shell is not counted", "shells[id] = ShellEntry(ch, stdin, sess)\n        TerminalWakeLock.sync(ctx, shells.size)\n", "shells[id] = ShellEntry(ch, stdin, sess)\n"),
                     ("a closed shell keeps it held", "shells.remove(id)\n                TerminalWakeLock.sync(ctx, shells.size)\n", "shells.remove(id)\n")],
         "owner": [("RELEASE does nothing", "CloudWakeLock.Transition.RELEASE -> lock?.release().also { lock = null }", "CloudWakeLock.Transition.RELEASE -> Unit"),
-                  ("asks for the exemption every time", " && !IdePrefs.batteryExemptionAsked(app)", "")],
+                  ("asks for the exemption itself", "private fun acquire(app: Context) {", "private fun acquire(app: Context) { Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS;")],
         "configs": [("Configs cannot turn it off", "IdePrefs.setWakeLockWanted(this, !wakeWanted)", "IdePrefs.setWakeLockWanted(this, true)")],
         "gradle": [("default baked as a literal", '"${buildJson.wake_lock.default_on}"', '"true"')],
         "api": [("/api/terminal silent", 'if (op == "" || op == "wakelock")', 'if (op == "wakelock")')],

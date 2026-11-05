@@ -18,6 +18,7 @@ import com.getcapacitor.PluginMethod
 import com.getcapacitor.annotation.ActivityCallback
 import com.getcapacitor.annotation.CapacitorPlugin
 import com.diegonmarcos.superapp.perms.PermsGate
+import com.diegonmarcos.superapp.perms.PermsLink
 import java.io.File
 
 /**
@@ -436,19 +437,15 @@ class VaultPlugin : Plugin() {
         call.resolve()
     }
 
+    /** #1515 All files access is granted in Configs > Perms (libs:perms): the page opens on that row. */
     @PluginMethod
     fun openSettings(call: PluginCall) {
         val ctx = activity ?: context
-        val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, Uri.parse("package:${ctx.packageName}"))
-        } else {
-            Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
-        }
         try {
-            ctx.startActivity(intent)
+            PermsLink.open(ctx, "vault", listOf("all_files"))
             call.resolve()
         } catch (e: Exception) {
-            call.reject("Cannot open the settings screen. Grant the storage permission in Android Settings.", "SETTINGS_ERROR")
+            call.reject("Cannot open the permissions page. Grant the storage permission in Android Settings.", "SETTINGS_ERROR")
         }
     }
 }

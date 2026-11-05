@@ -6,6 +6,7 @@
 
 package com.diegonmarcos.mediacenter.feature_node.presentation.util
 
+import com.diegonmarcos.superapp.perms.PermsLink
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.ComponentName
@@ -378,11 +379,8 @@ val isManageFilesAllowed: Boolean
 
 @RequiresApi(Build.VERSION_CODES.S)
 fun Context.launchManageFiles() {
-    val intent = Intent().apply {
-        action = Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION
-        data = Uri.fromParts("package", packageName, null)
-    }
-    startActivity(intent)
+    // #1515 All files access is granted in Configs > Perms (libs:perms): open the page on that row.
+    PermsLink.open(this, "files", listOf("all_files"))
 }
 
 fun Context.getEditImageCapableApps(): List<ResolveInfo> {

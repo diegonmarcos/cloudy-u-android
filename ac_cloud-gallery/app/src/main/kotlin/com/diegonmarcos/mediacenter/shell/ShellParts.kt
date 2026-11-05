@@ -5,13 +5,10 @@
 
 package com.diegonmarcos.mediacenter.shell
 
+import com.diegonmarcos.superapp.perms.PermsNeeds
+import com.diegonmarcos.superapp.perms.PermsLink
 import android.content.Context
-import android.content.Intent
-import android.net.Uri
 import android.os.Build
-import android.provider.Settings
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -80,9 +77,6 @@ fun PermissionGate(tab: GalleryTab, content: @Composable () -> Unit) {
     val context = LocalContext.current
     val permissions = remember(tab) { TabPermissions.forTab(tab, Build.VERSION.SDK_INT) }
     var granted by remember(permissions) { mutableStateOf(allGranted(context, permissions)) }
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
-        granted = allGranted(context, permissions)
-    }
     // Back from the system settings page: the user may have granted them there.
     LifecycleResumeEffect(permissions) {
         granted = allGranted(context, permissions)
@@ -98,13 +92,10 @@ fun PermissionGate(tab: GalleryTab, content: @Composable () -> Unit) {
                 if (tab == GalleryTab.MAPS) R.string.shell_permission_body_maps else R.string.shell_permission_body_media
             ),
         ) {
-            Button(onClick = { launcher.launch(permissions.toTypedArray()) }) { Text(stringResource(R.string.shell_permission_allow)) }
-            OutlinedButton(onClick = {
-                context.startActivity(
-                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null))
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                )
-            }) { Text(stringResource(R.string.shell_permission_settings)) }
+            // #1515 granted in Configs > Perms: both buttons open the rows of this tab's permissions.
+            val rows = PermsNeeds.idsFor(context, permissions)
+            Button(onClick = { PermsLink.open(context, "gallery", rows) }) { Text(stringResource(R.string.shell_permission_allow)) }
+            OutlinedButton(onClick = { PermsLink.open(context, "gallery", rows) }) { Text(stringResource(R.string.shell_permission_settings)) }
         }
     }
 }

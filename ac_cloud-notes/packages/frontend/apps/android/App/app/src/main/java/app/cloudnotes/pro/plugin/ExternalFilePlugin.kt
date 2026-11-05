@@ -1,9 +1,7 @@
 package app.cloudnotes.pro.plugin
 
 import android.Manifest
-import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.provider.Settings
@@ -266,24 +264,16 @@ class ExternalFilePlugin : Plugin() {
         }
     }
 
+    /** #1515 All files access is granted in Configs > Perms (libs:perms): the page opens on that row. */
     @PluginMethod
     fun openSettings(call: PluginCall) {
         val ctx = activity ?: context
-        val intent: Intent =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                Intent(
-                    Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
-                    Uri.parse("package:${ctx.packageName}")
-                )
-            } else {
-                Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
-            }
         try {
-            ctx.startActivity(intent)
+            com.diegonmarcos.superapp.perms.PermsLink.open(ctx, "vault", listOf("all_files"))
             call.resolve()
         } catch (e: Exception) {
             call.reject(
-                "Cannot open the settings screen (${e.message ?: "unknown error"}). " +
+                "Cannot open the permissions page (${e.message ?: "unknown error"}). " +
                     "Grant the storage permission manually in Android Settings.",
                 "SETTINGS_ERROR"
             )

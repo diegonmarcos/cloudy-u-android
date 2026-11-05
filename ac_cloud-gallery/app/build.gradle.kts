@@ -431,6 +431,7 @@ dependencies {
     implementation(project(":libs:ui-icons"))
     implementation(project(":libs:theme-background"))
     implementation(project(":libs:ui-nav-bars"))
+    implementation(project(":libs:perms"))   // #1515 every grant opens its Configs > Perms row (PermsLink)
     coreLibraryDesugaring(libs.desugar.jdk.libs)
     implementation(libs.androidx.lifecycle.process)
     runtimeOnly(libs.androidx.profileinstaller)

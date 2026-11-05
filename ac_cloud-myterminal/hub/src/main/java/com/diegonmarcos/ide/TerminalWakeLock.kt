@@ -1,12 +1,8 @@
 package com.diegonmarcos.ide
 
 import android.annotation.SuppressLint
-import android.content.ActivityNotFoundException
 import android.content.Context
-import android.content.Intent
-import android.net.Uri
 import android.os.PowerManager
-import android.provider.Settings
 
 /**
  * #787 The partial wake lock an open terminal holds, so a shell keeps running with the screen
@@ -47,14 +43,6 @@ object TerminalWakeLock {
         val pm = app.getSystemService(Context.POWER_SERVICE) as PowerManager
         lock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "cloud-myterminal:terminal-sessions")
             .apply { acquire() }
-        // The standard exemption prompt, ONCE: a lock taken on every shell must not re-ask every time.
-        if (!pm.isIgnoringBatteryOptimizations(app.packageName) && !IdePrefs.batteryExemptionAsked(app)) {
-            IdePrefs.setBatteryExemptionAsked(app)
-            try {
-                app.startActivity(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
-                    .setData(Uri.parse("package:${app.packageName}"))
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-            } catch (_: ActivityNotFoundException) { /* no such screen on this ROM */ }
-        }
+        // #1515 the battery exemption is the Perms battery_opt row (Configs > Perms, asked at first run); a lock taken on every shell never asks.
     }
 }

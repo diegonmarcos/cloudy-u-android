@@ -5,17 +5,16 @@
 
 package com.diegonmarcos.mediacenter.cloud.ui
 
+import com.diegonmarcos.superapp.perms.PermsLink
 import android.Manifest
 import android.content.pm.PackageManager
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 
 /**
- * Remembers a callback that requests [Manifest.permission.ACCESS_FINE_LOCATION] at runtime if it
+ * Remembers a callback that opens the Configs > Perms row of [Manifest.permission.ACCESS_FINE_LOCATION] if it
  * is not already granted. This permission is needed for the cloud local/external URL switching to
  * read the current Wi-Fi SSID and match it against a configured network name (Android 10+ hides
  * the SSID from apps without it). If the user denies it, [ServerUrlResolver] degrades gracefully
@@ -27,15 +26,13 @@ import androidx.core.content.ContextCompat
 @Composable
 fun rememberWifiSsidPermissionRequester(): () -> Unit {
     val context = LocalContext.current
-    val launcher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { /* Result ignored: ServerUrlResolver degrades gracefully when denied. */ }
     return remember(context) {
         {
             val granted = ContextCompat.checkSelfPermission(
                 context, Manifest.permission.ACCESS_FINE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED
-            if (!granted) launcher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+            // #1515 granted in Configs > Perms (the fine_location row), not asked from here; ServerUrlResolver degrades when denied.
+            if (!granted) PermsLink.open(context, "cloud", listOf("fine_location"))
         }
     }
 }

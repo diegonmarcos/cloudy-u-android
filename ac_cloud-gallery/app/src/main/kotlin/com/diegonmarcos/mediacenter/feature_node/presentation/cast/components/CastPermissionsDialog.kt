@@ -5,9 +5,7 @@
 
 package com.diegonmarcos.mediacenter.feature_node.presentation.cast.components
 
-import android.content.Intent
-import android.net.Uri
-import android.provider.Settings
+import com.diegonmarcos.superapp.perms.PermsPages
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -71,14 +69,7 @@ fun CastPermissionsDialog(
         confirmButton = {
             TextButton(
                 onClick = {
-                    context.startActivity(
-                        Intent(
-                            Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                            Uri.fromParts("package", context.packageName, null)
-                        ).apply {
-                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        }
-                    )
+                    PermsPages.openAppInfo(context, context.packageName)
                 }
             ) {
                 Text(stringResource(R.string.cast_open_settings))

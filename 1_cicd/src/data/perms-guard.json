@@ -205,23 +205,15 @@
       "ac_cloud-camera/app/src/main/java/cld/camera/ui/activities/MainActivity.kt": "not moved into a Perms row yet (#1515)",
       "ac_cloud-dialer/": "vendored Fossify Phone fork: its own SMS and dialer screens ask",
       "ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive/sync/GitReposScreen.kt": "not moved into a Perms row yet (#1515)",
-      "ac_cloud-gallery/app/src/main/kotlin/com/diegonmarcos/mediacenter/feature_node/presentation/util/ContextExt.kt": "not moved into a Perms row yet (#1515)",
-      "ac_cloud-gallery/app/src/main/kotlin/com/diegonmarcos/mediacenter/feature_node/presentation/cast/components/CastPermissionsDialog.kt": "not moved into a Perms row yet (#1515)",
-      "ac_cloud-gallery/app/src/main/kotlin/com/diegonmarcos/mediacenter/shell/ShellParts.kt": "not moved into a Perms row yet (#1515)",
-      "ac_cloud-gallery/app/src/main/kotlin/com/diegonmarcos/mediacenter/cloud/ui/WifiSsidPermission.kt": "not moved into a Perms row yet (#1515)",
       "ac_cloud-matrix/": "vendored Element X fork: its own presenters ask; not an owner-written screen (Perms page per #1360 pending_page class)",
-      "ac_cloud-myterminal/hub/src/main/java/com/diegonmarcos/ide/AboutActivity.kt": "not moved into a Perms row yet (#1515)",
-      "ac_cloud-myterminal/hub/src/main/java/com/diegonmarcos/ide/TerminalWakeLock.kt": "not moved into a Perms row yet (#1515)",
       "ac_cloud-nav/app/src/main/java/com/diegonmarcos/cloudnav/tracker/StepsRepository.kt": "not moved into a Perms row yet (#1515)",
       "ac_cloud-nav/app/src/main/java/com/diegonmarcos/cloudnav/tracker/TrackerEngineFragment.kt": "not moved into a Perms row yet (#1515)",
       "ac_cloud-nav/app/src/main/java/com/diegonmarcos/cloudnav/configs/UpdateConfigFragment.kt": "not moved into a Perms row yet (#1515)",
       "ac_cloud-nav/app/src/main/java/com/diegonmarcos/cloudnav/configs/DevControlFragment.kt": "not moved into a Perms row yet (#1515)",
       "ac_cloud-nix-on-droid/": "vendored Termux/nix-on-droid fork (termux-shared PermissionUtils); upstream code",
-      "ac_cloud-notes/packages/frontend/apps/android/App/app/src/main/java/app/cloudnotes/pro/plugin/VaultPlugin.kt": "not moved into a Perms row yet (#1515)",
-      "ac_cloud-notes/packages/frontend/apps/android/App/app/src/main/java/app/cloudnotes/pro/plugin/ExternalFilePlugin.kt": "not moved into a Perms row yet (#1515)",
       "ac_cloud-termux/": "vendored Termux fork (termux-shared PermissionUtils); upstream code, not owner-written",
       "ac_cloud-vault/": "vendored Bitwarden fork: its own permission manager asks; replaced only with the fork's own screens"
     },
-    "baseline_max": 32
+    "baseline_max": 24
   }
 }

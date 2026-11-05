@@ -75,14 +75,6 @@ class AboutActivity : AppCompatActivity() {
     private object UpdatePanel : Item
     private class Items { val list = mutableListOf<Item>(); fun addView(i: Item) { list += i } }
 
-    private val notifPermLauncher =
-        registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestPermission()) {
-            Toast.makeText(this,
-                if (it) "Notifications: granted" else "Notifications: denied",
-                Toast.LENGTH_SHORT).show()
-            recreate()
-        }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         title = getString(R.string.about_title)
@@ -254,8 +246,8 @@ class AboutActivity : AppCompatActivity() {
                 row(ctx, it, label, permissionState(perm))
             }
             if (android.os.Build.VERSION.SDK_INT >= 33) {
-                it.addView(actionButton(ctx, "Request notifications") {
-                    notifPermLauncher.launch("android.permission.POST_NOTIFICATIONS")
+                it.addView(actionButton(ctx, "Fix notifications in Perms ›") {
+                    com.diegonmarcos.superapp.perms.PermsLink.open(this, "about", listOf("notifications"))
                 })
             } else {
                 it.addView(small(ctx, "Pre-API 33 — notifications are granted by default."))
