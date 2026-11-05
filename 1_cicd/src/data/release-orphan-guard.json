@@ -9,6 +9,7 @@
   ],
   "_doc_retained": "Orphans that are on the release ON PURPOSE or that await an owner decision, each with its reason. The list can only shrink: an entry that is no longer on the release, or that a manifest row now references, fails the guard as stale, so a retained name cannot outlive the asset it excuses. Adding an entry is the explicit, reviewable act; uploading an unreferenced asset without one is red.",
   "retained": {
+    "Cloud-Lib-Ocr.apk": "Stray from the first #1507 Libs Ship, before libs:ocr was excluded as a static lib (it ships no APK). Delete the asset and its .sha256/.source sidecars from the latest release (agent sessions may not edit releases), then drop this entry.",
     "Cloud-Sheets.apk": "Collabora's own APK under our old office name. aa_cloud-superapp/build.json (office _doc) keeps it until the owner uninstalls com.collabora.libreoffice by hand.",
     "cloud-comms-matrix-x86_64.apk": "Published every run by ship-cloud-matrix.yml for da_waydroid-container, which pins the x86_64 build; the matrix fleet row has no assets{} map to name it.",
     "Cloud-Agenda.apk": "Pre-rename name of Cloud-Tasks (cloud-agenda -> cloud-tasks; last upload 2026-10-13). Kept so SuperApps built before the rename can still fetch it until they update. Deletion awaits the owner.",
