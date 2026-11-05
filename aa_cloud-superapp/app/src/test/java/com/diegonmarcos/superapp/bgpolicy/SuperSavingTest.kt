@@ -16,13 +16,13 @@ class SuperSavingTest {
     private val cfg = BgFakeDevice.cfg()
 
     private class FakeHost(val pkgs: List<BgPkg>) : SsHost {
-        var sync = true; var idle = false; var keeper = true
-        override fun masterSync() = sync
-        override fun setMasterSync(on: Boolean) { sync = on }
-        override fun idleArmed() = idle
-        override fun armIdle(on: Boolean) { idle = on }
-        override fun keeperEnabled() = keeper
-        override fun setKeeper(on: Boolean) { keeper = on }
+        var syncOn = true; var idleOn = false; var keeperOn = true
+        override fun masterSync() = syncOn
+        override fun setMasterSync(on: Boolean) { syncOn = on }
+        override fun idleArmed() = idleOn
+        override fun armIdle(on: Boolean) { idleOn = on }
+        override fun keeperEnabled() = keeperOn
+        override fun setKeeper(on: Boolean) { keeperOn = on }
         override fun packages() = pkgs
     }
 
@@ -42,7 +42,7 @@ class SuperSavingTest {
     private fun world(r: Rig) = listOf(
         r.dev.settings.toSortedMap().toString(), r.dev.nfc, r.dev.night, r.dev.idleForced,
         r.dev.state.mapValues { listOf(it.value.any, it.value.inn, it.value.bucket, it.value.idle) }.toString(),
-        r.host.sync, r.host.idle, r.host.keeper,
+        r.host.syncOn, r.host.idleOn, r.host.keeperOn,
     )
 
     private fun seed(r: Rig) {
@@ -90,7 +90,7 @@ class SuperSavingTest {
         assertEquals("15000", r.dev.settings["system/screen_off_timeout"]); assertEquals("1", r.dev.settings["system/screen_brightness_mode"])
         assertEquals("0", r.dev.settings["global/animator_duration_scale"]); assertEquals("0", r.dev.settings["global/window_animation_scale"])
         assertEquals("off", r.dev.nfc); assertEquals("yes", r.dev.night); assertEquals("0", r.dev.settings["global/bluetooth_on"]); assertEquals("0", r.dev.settings["global/mobile_data"])
-        assertEquals("80", r.dev.settings["system/screen_brightness"]); assertFalse(r.host.sync); assertTrue(r.host.idle)
+        assertEquals("80", r.dev.settings["system/screen_brightness"]); assertFalse(r.host.syncOn); assertTrue(r.host.idleOn)
         assertEquals("ignore", r.dev.state["com.other.app"]!!.any); assertEquals("ignore", r.dev.state["com.diegonmarcos.cloudchat"]!!.any)
         assertEquals("the SuperApp itself is never restricted", "default", r.dev.state["com.diegonmarcos.superapp"]!!.any)
         for (s in steps) assertTrue("audit entry for ${s.id}", r.audit.any { it.startsWith("super-saving ${s.id}:") })
@@ -174,8 +174,8 @@ class SuperSavingTest {
             val x = out.first { it.id == s.id }
             assertEquals("${s.id} skipped", SsState.SKIPPED, x.state); assertEquals(BgOutcome.NO_ADB, x.note); assertTrue(x.needsAdb)
         }
-        assertEquals(SsState.APPLIED, out.first { it.id == "sync" }.state); assertFalse(r.host.sync)
-        assertEquals("the keeper is stopped only when no adb step needs Off", SsState.APPLIED, out.first { it.id == "keeper" }.state); assertFalse(r.host.keeper)
+        assertEquals(SsState.APPLIED, out.first { it.id == "sync" }.state); assertFalse(r.host.syncOn)
+        assertEquals("the keeper is stopped only when no adb step needs Off", SsState.APPLIED, out.first { it.id == "keeper" }.state); assertFalse(r.host.keeperOn)
         assertTrue("the shell was never used", r.dev.log.isEmpty())
         m.off()
         assertEquals(before, world(r))
@@ -184,7 +184,7 @@ class SuperSavingTest {
     @Test fun `with adb the keeper is kept because off needs the shell`() {
         val r = rig("com.a"); seed(r)
         val out = mode(r).on().first { it.id == "keeper" }
-        assertEquals(SsState.SKIPPED, out.state); assertTrue(out.note.contains("Off needs")); assertTrue(r.host.keeper)
+        assertEquals(SsState.SKIPPED, out.state); assertTrue(out.note.contains("Off needs")); assertTrue(r.host.keeperOn)
     }
 
     @Test fun `off without the shell restores what it can and keeps the adb steps for the next try`() {
@@ -192,7 +192,7 @@ class SuperSavingTest {
         mode(r).on()
         val out = mode(r, shell = null).off()
         assertTrue(out.filter { it.needsAdb }.all { it.state == SsState.SKIPPED })
-        assertTrue(r.host.sync); assertTrue("still on: adb steps await", SuperSaving.isActive(r.kv))
+        assertTrue(r.host.syncOn); assertTrue("still on: adb steps await", SuperSaving.isActive(r.kv))
         val before = world(r)
         mode(r).off() // the shell is back
         assertFalse(SuperSaving.isActive(r.kv)); assertTrue(world(r) != before)
