@@ -46,4 +46,10 @@ class KeepAlivePolicyTest {
         assertFalse(KeepAlivePolicy.needed(debugServerAllowed = true, channelEnabled = true, backgroundAllowed = false))
         assertTrue(KeepAlivePolicy.needed(debugServerAllowed = false, channelEnabled = true))   // the default keeps the old behaviour
     }
+
+    /** #1502 no keep-alive pass repeats sooner than 30 s, whatever the failure count or screen state. */
+    @Test fun noPassSoonerThanThirtySeconds() {
+        for (f in -3..50) for (on in listOf(true, false)) assertTrue("f=$f on=$on", KeepAlivePolicy.nextDelayMs(f, on) >= 30_000L)
+        assertTrue(KeepAlivePolicy.MIN_MS >= 30_000L)
+    }
 }

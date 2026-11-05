@@ -13,6 +13,9 @@ object BackgroundPolicy {
     const val ACCOUNT_PKG = "com.diegonmarcos.cloudaccount"
     const val STORE_PKG = "com.diegonmarcos.cloudstore"
 
+    /** #1502 no retry, reconnect or restart loop repeats sooner than this (libs:devtools RetryBackoff.MIN_MS is the same number). */
+    const val RETRY_MIN_MS = 30_000L
+
     enum class Mode { NEVER, AUTO_UPDATE_UNMETERED, FREE }
 
     /** Apps no other app may start from the background (provider query, binder call, "wake"). */

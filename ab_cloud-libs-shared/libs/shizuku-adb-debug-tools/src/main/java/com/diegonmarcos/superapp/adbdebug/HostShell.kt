@@ -118,7 +118,7 @@ object HostShell {
             last = msg
             if (ok) { Log.i(TAG, "channel up on attempt $n: $msg"); return true to msg }
             Log.i(TAG, "attempt $n/$attempts: $msg")
-            if (n < attempts) Thread.sleep(minOf(5_000L * n, 20_000L))
+            if (n < attempts) Thread.sleep(com.diegonmarcos.superapp.core.BackgroundPolicy.RETRY_MIN_MS)   // #1502 never sooner than 30 s
         }
         return false to last
     }

@@ -60,6 +60,9 @@ object LogPipe {
     @Volatile private var restarts = 0
     @Volatile private var lastError: String? = null
     @Volatile private var startedAtMs = 0L
+    /** #1502 last [tail] / [ensureStarted] call: a reader nobody has asked for in [IDLE_STOP_MS] stops, so one export call cannot leave a permanent system-log stream behind. */
+    @Volatile private var lastUseMs = 0L
+    private const val IDLE_STOP_MS = 2 * 60_000L
 
     /**
      * Newest [n] lines, optionally narrowed.
@@ -106,6 +109,7 @@ object LogPipe {
      */
     @Synchronized
     fun ensureStarted() {
+        lastUseMs = System.currentTimeMillis()
         if (reader?.isAlive == true) return
         startedAtMs = System.currentTimeMillis()
         reader = Thread({ pump() }, "LogPipe").apply { isDaemon = true; start() }
@@ -121,17 +125,18 @@ object LogPipe {
      * survives into [health] even after a successful reconnect.
      */
     private fun pump() {
-        var backoffMs = 1_000L
+        var backoffMs = RetryBackoff.MIN_MS
         while (true) {
             var proc: Process? = null
+            val startedAt = System.currentTimeMillis()
             try {
                 proc = ProcessBuilder(
                     "logcat", "-b", "all", "-v", "threadtime", "-v", "uid",
                     "-T", SEED_LINES.toString(),
                 ).redirectErrorStream(true).start()
                 streaming = true
-                backoffMs = 1_000L
                 proc.inputStream.bufferedReader().forEachLine { line ->
+                    if (System.currentTimeMillis() - lastUseMs > IDLE_STOP_MS) throw IdleStop()
                     synchronized(lock) {
                         lines.addLast(line)
                         while (lines.size > MAX_LINES) lines.removeFirst()
@@ -139,6 +144,11 @@ object LogPipe {
                 }
                 // forEachLine returning means EOF: logcat exited on its own.
                 lastError = "stream ended (logcat exited)"
+            } catch (_: IdleStop) {
+                lastError = "stopped: no reader for ${IDLE_STOP_MS / 1000}s"
+                runCatching { proc?.destroy() }
+                streaming = false
+                return
             } catch (t: Throwable) {
                 lastError = "${t.javaClass.simpleName}: ${t.message}"
             } finally {
@@ -151,9 +161,12 @@ object LogPipe {
             } catch (_: InterruptedException) {
                 return
             }
-            backoffMs = minOf(backoffMs * 2, 60_000L)
+            // #1502 never sooner than RetryBackoff.MIN_MS; a stream that lived a while restarts at the floor, a dying one backs off.
+            backoffMs = if (System.currentTimeMillis() - startedAt >= RetryBackoff.MIN_MS) RetryBackoff.MIN_MS else RetryBackoff.next(backoffMs)
         }
     }
+
+    private class IdleStop : RuntimeException()
 
     /**
      * uid column of a `-v threadtime -v uid` line, or -1.

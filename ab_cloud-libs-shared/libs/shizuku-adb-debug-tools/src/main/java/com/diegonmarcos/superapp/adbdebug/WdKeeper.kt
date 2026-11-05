@@ -112,6 +112,11 @@ object WdKeeper {
         // Peers are asked only when a write is about to happen: a binder call into the other app starts its process.
         if (action == WdKeeperCore.Action.REARM && !WdKeeperLeader.isLeader(app.packageName, claims(app, now), now))
             action = WdKeeperCore.decide(facts.copy(leader = false))
+        // #1502 one re-arm write per 30 s: a setting that bounces straight back off (no network for adbd) made observer -> evaluate -> write -> observer a ~6 s loop.
+        if (action == WdKeeperCore.Action.REARM && now - p(app).getLong("self_write_at", 0L) < com.diegonmarcos.superapp.core.BackgroundPolicy.RETRY_MIN_MS) {
+            Log.i(TAG, "tick[$trigger]: re-arm rate-limited")
+            return WdKeeperCore.Action.NOTHING
+        }
         if (action == WdKeeperCore.Action.REARM) {
             p(app).edit().putLong("self_write_at", now).apply()
             val wrote = HostShell.keepWirelessDebuggingOn(app)
