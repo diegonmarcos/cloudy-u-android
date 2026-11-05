@@ -7,7 +7,7 @@
 //! is a walk over that table, so "served" and "declared" are the same list; the Pages and API tabs render
 //! `/__app__/api/routes`, which is this table serialised, and the bottom nav is its `tab` rows.
 
-use crate::{about, crashes, engines, serving, Ctx};
+use crate::{about, crashes, engines, serving, sub, Ctx};
 use fleet_webserver::http::{self, Req, Resp};
 use fleet_webserver::render::jstr;
 
@@ -45,6 +45,16 @@ pub const ROUTES: &[Route] = &[
     Route { kind: Kind::Api, path: "/__app__/api/links", tab: None, post: false, summary: "The link-open declaration: link types, the choices each offers, whether a choice can be remembered", handler: api_links },
     Route { kind: Kind::Page, path: "/__app__/crashes", tab: None, post: false, summary: "Every fleet app's crashes reported to this phone (libs:core's local sink), grouped by app, newest first", handler: crashes::page },
     Route { kind: Kind::Api, path: "/__app__/api/crashes", tab: None, post: true, summary: "GET the crash reports as JSON (?app=<package>); POST one {app, time_ms, trace, phase, version, device}: libs:core's local sink, works offline", handler: crashes_api },
+    Route { kind: Kind::Api, path: "/__app__/api/subpages", tab: None, post: false, summary: "The sub-pages of the API and Pages tabs (build.json::subpages): tab, id, label and the route that answers each", handler: sub::subpages },
+    Route { kind: Kind::Api, path: "/__app__/api/sub/api-public", tab: None, post: false, summary: "API > Public Endpoints: the public URLs of the fleet services", handler: sub::api_public },
+    Route { kind: Kind::Api, path: "/__app__/api/sub/api-mesh", tab: None, post: false, summary: "API > Mesh Endpoints: this phone's mesh listener (/logs/<app>, bearer, mesh peers only) and the fleet services on the mesh", handler: sub::api_mesh },
+    Route { kind: Kind::Api, path: "/__app__/api/sub/api-apps", tab: None, post: false, summary: "API > Apps Endpoints: each app's loopback debug API and its port", handler: sub::api_apps },
+    Route { kind: Kind::Api, path: "/__app__/api/sub/api-ipc", tab: None, post: false, summary: "API > Apps IPC: each app's IPC endpoints, derived from the fleet manifest", handler: sub::api_ipc },
+    Route { kind: Kind::Api, path: "/__app__/api/sub/pages-drive", tab: None, post: false, summary: "Pages > Drive: the pages of Emulated storage and of Cloud-Drive's served mode", handler: sub::page_drive },
+    Route { kind: Kind::Api, path: "/__app__/api/sub/pages-terminals", tab: None, post: false, summary: "Pages > Terminals: each terminal app's ~/home as a servable root", handler: sub::page_terminals },
+    Route { kind: Kind::Api, path: "/__app__/api/sub/pages-repos", tab: None, post: false, summary: "Pages > Repos: the repo sites, their ports and state, and the add form", handler: sub::page_repos },
+    Route { kind: Kind::Api, path: "/__app__/api/repos", tab: None, post: true, summary: "GET the repo entries; POST {op: add|remove|start|stop, ...}: the Repos store and its sites (loopback or mesh, never public)", handler: sub::api_repos },
+    Route { kind: Kind::Api, path: "/__app__/api/repos/discover", tab: None, post: false, summary: "GET ?source=<id>: the git repositories a Repos source holds", handler: sub::api_discover },
     Route { kind: Kind::Api, path: "/__app__/api/open", tab: None, post: true, summary: "POST {url} or {id,via:name|ip}: hand an http(s) link to cloud-browser", handler: api_open },
 ];
 
@@ -72,6 +82,18 @@ pub fn check_table() -> Result<(), String> {
         }
         if r.post && r.kind != Kind::Api {
             return Err(format!("route {} answers POST but is not an API route", r.path));
+        }
+    }
+    // #1490 every declared sub-page has a route and every sub-page route is declared: one list.
+    let declared: Vec<String> = crate::apis::build()["subpages"].as_array().map(|a| a.iter().filter_map(|p| p["route"].as_str().map(str::to_string)).collect()).unwrap_or_default();
+    for d in &declared {
+        if !ROUTES.iter().any(|r| r.path == d) {
+            return Err(format!("build.json::subpages names {} but no route answers it", d));
+        }
+    }
+    for r in ROUTES.iter().filter(|r| r.path.starts_with("/__app__/api/sub/")) {
+        if !declared.iter().any(|d| d == r.path) {
+            return Err(format!("route {} is a sub-page but build.json::subpages does not declare it", r.path));
         }
     }
     if !ROUTES.iter().any(|r| r.tab.is_some()) {

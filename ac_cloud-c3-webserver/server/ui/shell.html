@@ -53,6 +53,17 @@
   .eng .nm { font-weight:600; }
   .eng .cv { color:var(--acc); font:12px ui-monospace, monospace; word-break:break-word; }
   .eng .why { color:#e6c07b; font-size:12px; margin-top:2px; }
+  /* #1490 sub-pages: dense rows (head, badges, lines, links, actions) and the Repos add form, on the same tokens as the rest. */
+  .sub .row { flex-direction:column; gap:2px; padding:5px 10px; }
+  .sub .head { font-weight:600; word-break:break-all; }
+  .sub .lines .sum { margin-top:0; word-break:break-all; }
+  .sub .links { display:flex; flex-wrap:wrap; gap:2px 14px; }
+  .sub .links a { font:12px ui-monospace, monospace; padding:4px 0; word-break:break-all; }
+  .sub .acts { display:flex; gap:8px; }
+  .sub .acts button, .sub .form button { background:none; color:var(--acc); border:1px solid var(--line); border-radius:6px; padding:5px 10px; font:13px system-ui; min-height:32px; }
+  .sub .form { padding:6px 10px; display:grid; gap:6px; }
+  .sub .form label { color:var(--dim); font-size:12px; display:grid; gap:2px; }
+  .sub .form input, .sub .form select { background:var(--bg); color:var(--fg); border:1px solid var(--line); border-radius:6px; padding:7px; font:14px system-ui; min-width:0; }
   .toast { position:fixed; left:12px; right:12px; bottom:calc(var(--nav) + 10px); background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:8px 12px; font-size:13px; z-index:9; }
   .toast.bad { border-color:#ff8a8a; color:#ff8a8a; }
   /* The link chooser: a bottom sheet over the nav. */
@@ -291,11 +302,49 @@ function renderLinks(links, remembered) {
   }).join('');
   return '<section><h2>What a tapped link does</h2>' + rows + '<div class="note">Declared in build.json::links. A remembered choice lives in this app only.</div></section>';
 }
+// #1490 sub-pages: the sub-nav is the declaration build.json::subpages (/__app__/api/subpages), one row per sub-page of the tab;
+// every sub-page is one page shape {title, note, groups:[{title, rows:[{head, badges, lines, links, actions}]}], form?}.
+function subsOf(subpages, tab) { return subpages.filter(function (p) { return p.tab === tab; }); }
+function renderSubNav(subs, current) {
+  return '<div class="seg" role="tablist">' + subs.map(function (p) {
+    return '<button role="tab" data-sub="' + esc(p.id) + '"' + (p.id === current ? ' class="on" aria-selected="true"' : '') + '>' + esc(p.label) + '</button>';
+  }).join('') + '</div>';
+}
+function renderSubRow(r) {
+  var head = '<span class="head">' + esc(r.head) + '</span>' + (r.badges || []).map(function (b) { return '<span class="badge">' + esc(b) + '</span>'; }).join('');
+  var lines = (r.lines || []).filter(function (l) { return l; }).map(function (l) { return '<div class="sum">' + esc(l) + '</div>'; }).join('');
+  var links = (r.links || []).length ? '<div class="links">' + r.links.map(function (l) { return '<a href="' + esc(l.href) + '">' + esc(l.label) + '</a>'; }).join('') + '</div>' : '';
+  var acts = (r.actions || []).length ? '<div class="acts">' + r.actions.map(function (a, i) {
+    return '<button data-act="' + i + '" data-post="' + esc(a.post) + '" data-body="' + esc(JSON.stringify(a.body)) + '">' + esc(a.label) + '</button>';
+  }).join('') + '</div>' : '';
+  return '<div class="row"><div class="v">' + head + '<div class="lines">' + lines + '</div>' + links + acts + '</div></div>';
+}
+function renderForm(f) {
+  var fields = f.fields.map(function (x) {
+    var input;
+    if (x.kind === 'select') {
+      input = '<select data-f="' + esc(x.id) + '">' + x.options.map(function (o) { return '<option value="' + esc(o.value) + '">' + esc(o.label) + '</option>'; }).join('') + '</select>';
+    } else if (x.kind === 'repo') {
+      input = '<input data-f="' + esc(x.id) + '" list="repo-list" autocomplete="off" autocapitalize="none"><datalist id="repo-list"></datalist>';
+    } else {
+      input = '<input data-f="' + esc(x.id) + '" autocomplete="off" autocapitalize="none">';
+    }
+    return '<label>' + esc(x.label) + input + '</label>';
+  }).join('');
+  return '<section class="form-sec"><h2>' + esc(f.title) + '</h2><div class="form" data-post="' + esc(f.post) + '" data-discover="' + esc(f.discover || '') + '" data-body="' + esc(JSON.stringify(f.submit.body)) + '">' +
+    fields + '<button data-submit>' + esc(f.submit.label) + '</button></div></section>';
+}
+function renderSubPage(p) {
+  var groups = p.groups.map(function (g) {
+    return '<section><h2>' + esc(g.title) + '</h2>' + (g.rows.length ? g.rows.map(renderSubRow).join('') : '<div class="note">none</div>') + '</section>';
+  }).join('');
+  return '<div class="sub">' + (p.note ? '<div class="note">' + esc(p.note) + '</div>' : '') + groups + (p.form ? renderForm(p.form) : '') + '</div>';
+}
 if (typeof module !== 'undefined') {
   module.exports = { esc: esc, tabsFrom: tabsFrom, tabFromPath: tabFromPath, defaultTab: defaultTab, renderNav: renderNav, renderRoutes: renderRoutes,
     renderSections: renderSections, renderAbout: renderAbout, aboutText: aboutText, renderConfig: renderConfig, renderServed: renderServed,
     renderCfgTabs: renderCfgTabs, renderServing: renderServing, renderEngines: renderEngines, hostIsLocal: hostIsLocal, classifyLink: classifyLink,
-    isLinkTarget: isLinkTarget, embedUrl: embedUrl, decide: decide, renderSheet: renderSheet, renderLinks: renderLinks };
+    isLinkTarget: isLinkTarget, embedUrl: embedUrl, subsOf: subsOf, renderSubNav: renderSubNav, renderSubRow: renderSubRow, renderForm: renderForm, renderSubPage: renderSubPage, decide: decide, renderSheet: renderSheet, renderLinks: renderLinks };
 }
 </script>
 
@@ -309,7 +358,8 @@ if (typeof module !== 'undefined') {
   var $gear = document.getElementById('gear');
   var $sheet = document.getElementById('sheet');
   var $scrim = document.getElementById('scrim');
-  var ROUTES = [], TABS = [], ABOUT = [], SERVING = null, LINKS = null;
+  var ROUTES = [], TABS = [], ABOUT = [], SERVING = null, LINKS = null, SUBPAGES = [];
+  var subPage = {};
   var cfgPage = 'about';
   var KEY = 'c3.link.';
 
@@ -398,9 +448,19 @@ if (typeof module !== 'undefined') {
   document.addEventListener('click', linkClick, true);
 
   // ── tabs ────────────────────────────────────────────────────────────────
+  // A tab that declares sub-pages draws their sub-nav and the current one (default: the first declared); the route table's own
+  // listing (and the served-ports list) stays below the one sub-page that is about this app, as before.
+  function withSubs(tab, extraOn, extra) {
+    var subs = subsOf(SUBPAGES, tab);
+    if (!subs.length) return extra();
+    var cur = subs.filter(function (p) { return p.id === subPage[tab]; })[0] || subs[0];
+    return j(cur.route).then(function (pg) { return renderSubNav(subs, cur.id) + renderSubPage(pg); }).then(function (html) {
+      return cur.id === extraOn ? extra().then(function (more) { return html + more; }) : html;
+    });
+  }
   var views = {
-    pages: function () { return j('/__app__/api/serving').then(function (sv) { SERVING = sv; return renderServed(sv) + renderRoutes(ROUTES, 'page'); }); },
-    api: function () { return Promise.resolve(renderRoutes(ROUTES, 'api')); },
+    pages: function () { return withSubs('pages', 'drive', function () { return j('/__app__/api/serving').then(function (sv) { SERVING = sv; return renderServed(sv) + renderRoutes(ROUTES, 'page'); }); }); },
+    api: function () { return withSubs('api', 'apps', function () { return Promise.resolve(renderRoutes(ROUTES, 'api')); }); },
     home: function () { return j('/__app__/api/about').then(function (g) { ABOUT = g; return renderAbout(ABOUT); }); },
     files: function () { return Promise.resolve('<iframe id="fileview" title="Files" src="/"></iframe>'); },
     configs: function () {
@@ -442,7 +502,38 @@ if (typeof module !== 'undefined') {
     try { document.execCommand('copy'); } finally { document.body.removeChild(t); }
   }
 
+  function formBody(box) {
+    var body = JSON.parse(box.getAttribute('data-body'));
+    box.querySelectorAll('[data-f]').forEach(function (el) { body[el.getAttribute('data-f')] = el.value; });
+    return body;
+  }
+  function loadRepoList(box) {
+    var src = box.querySelector('[data-f="source"]'); var dl = document.getElementById('repo-list');
+    if (!src || !dl || !box.getAttribute('data-discover')) return;
+    dl.innerHTML = '';
+    j(box.getAttribute('data-discover') + encodeURIComponent(src.value)).then(function (r) {
+      dl.innerHTML = r.repos.map(function (p) { return '<option value="' + esc(p) + '">'; }).join('');
+    }).catch(function () {});
+  }
+  function refreshTab() { var on = document.querySelector('nav button.on'); if (on) show(on.getAttribute('data-tab'), false); }
+  $main.addEventListener('change', function (ev) {
+    var box = ev.target.closest('.form');
+    if (box && ev.target.getAttribute('data-f') === 'source') loadRepoList(box);
+  });
   $main.addEventListener('click', function (ev) {
+    var sub = ev.target.closest('[data-sub]');
+    if (sub) { var on = document.querySelector('nav button.on'); if (on) { subPage[on.getAttribute('data-tab')] = sub.getAttribute('data-sub'); show(on.getAttribute('data-tab'), false); } return; }
+    var act = ev.target.closest('[data-act]');
+    if (act) {
+      post(act.getAttribute('data-post'), JSON.parse(act.getAttribute('data-body'))).then(function (r) { toast(r.url ? 'Serving ' + r.url : 'Done'); refreshTab(); }).catch(function (e) { toast(e.message, true); });
+      return;
+    }
+    var submit = ev.target.closest('[data-submit]');
+    if (submit) {
+      var box = submit.closest('.form');
+      post(box.getAttribute('data-post'), formBody(box)).then(function () { toast('Added'); refreshTab(); }).catch(function (e) { toast(e.message, true); });
+      return;
+    }
     var cfg = ev.target.closest('[data-cfg]');
     if (cfg) { cfgPage = cfg.getAttribute('data-cfg'); try { history.replaceState(null, '', '#' + cfgPage); } catch (x) {} show('configs', false); return; }
     var jump = ev.target.closest('[data-jump]'); var copy = ev.target.closest('[data-copy-about]');
@@ -464,8 +555,8 @@ if (typeof module !== 'undefined') {
   if (h === 'engines' || h === 'links') cfgPage = h;
   window.addEventListener('popstate', function () { show(tabFromPath(location.pathname) || defaultTab(TABS), false); });
 
-  Promise.all([j('/__app__/api/routes'), j('/__app__/api/links'), j('/__app__/api/serving')]).then(function (rs) {
-    ROUTES = rs[0]; LINKS = rs[1]; SERVING = rs[2]; TABS = tabsFrom(ROUTES);
+  Promise.all([j('/__app__/api/routes'), j('/__app__/api/links'), j('/__app__/api/serving'), j('/__app__/api/subpages')]).then(function (rs) {
+    ROUTES = rs[0]; LINKS = rs[1]; SERVING = rs[2]; SUBPAGES = rs[3]; TABS = tabsFrom(ROUTES);
     show(tabFromPath(location.pathname) || defaultTab(TABS), false);
   }).catch(function (e) {
     fail(e); setTimeout(function () { location.reload(); }, 1500);

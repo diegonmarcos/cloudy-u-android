@@ -35,6 +35,37 @@ fn main() {
         let port = node.as_u64().unwrap_or_else(|| panic!("{}/build.json {} is not an integer (serving.endpoints[{}])", owner, from, id));
         e["port"] = port.into();
     }
+    // #1490 the mesh bind address: the first IPv4 of the declared WireGuard profile's address (declared once, in its owner).
+    let pf = root["mesh"]["profile_from"].clone();
+    let owner = pf["owner"].as_str().expect("build.json::mesh.profile_from.owner");
+    let decl = read(&repo.join(owner).join("build.json"));
+    let mut node = &decl;
+    for key in pf["path"].as_str().expect("build.json::mesh.profile_from.path").split('.') {
+        node = node.get(key).unwrap_or_else(|| panic!("{}/build.json has no {} (mesh.profile_from)", owner, key));
+    }
+    let id = pf["id"].as_str().expect("build.json::mesh.profile_from.id");
+    let field = pf["field"].as_str().expect("build.json::mesh.profile_from.field");
+    let addr = node.as_array().expect("mesh.profile_from.path is not an array").iter().find(|p| p["id"] == id).unwrap_or_else(|| panic!("no profile {} in {}", id, owner))[field]
+        .as_str().expect("the profile field is not a string").to_string();
+    let bind = addr.split(',').map(|a| a.trim().split('/').next().unwrap_or("").to_string()).find(|a| a.parse::<std::net::Ipv4Addr>().is_ok())
+        .unwrap_or_else(|| panic!("profile {} has no IPv4 address ({})", id, addr));
+    root["mesh"]["bind"] = bind.into();
+
+    // #1490 the API tab's data: every source is `file#dotted.path` from the repo root, declared in build.json::api.sources.
+    let mut api = serde_json::Map::new();
+    for (name, spec) in root["api"]["sources"].as_object().expect("build.json::api.sources").iter() {
+        let spec = spec.as_str().unwrap_or_else(|| panic!("api.sources.{} is not a string", name));
+        let (file, path) = spec.split_once('#').unwrap_or_else(|| panic!("api.sources.{} must be file#path", name));
+        let blob = read(&repo.join(file));
+        let mut n = &blob;
+        for key in path.split('.') {
+            n = n.get(key).unwrap_or_else(|| panic!("{} has no {} (api.sources.{})", file, path, name));
+        }
+        api.insert(name.clone(), n.clone());
+    }
+    let out_dir = PathBuf::from(env::var("OUT_DIR").expect("OUT_DIR"));
+    fs::write(out_dir.join("api-data.json"), Value::Object(api).to_string()).expect("write api-data.json");
+
     let out = PathBuf::from(env::var("OUT_DIR").expect("OUT_DIR")).join("build.json");
     fs::write(&out, root.to_string()).unwrap_or_else(|e| panic!("write {}: {}", out.display(), e));
 }

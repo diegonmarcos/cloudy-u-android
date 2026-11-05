@@ -8,7 +8,9 @@
 //!     live under `/__app__/` only (app.rs) and never shadow a path of the shared server;
 //!   * the fleet-diagnostics page (runtime.diag.port, 8003): the SuperApp's About, Logcat and
 //!     Diagnose, read through its bridge (diag.rs);
-//!   * the private DNS (serving.dns, udp 127.0.0.1:5354) for the four names.
+//!   * the private DNS (serving.dns, udp 127.0.0.1:5354) for the four names;
+//!   * the mesh listener (build.json::mesh, runtime.mesh.port): `/logs/<app>` routes each app's log export onto the mesh, bound to
+//!     the mesh address only and bearer-guarded (meshlogs.rs).
 //!
 //! Every listener binds 127.0.0.1 only and refuses every other peer, and answers GET and HEAD. The
 //! Tauri app (../src-tauri) calls [`start`] from its own process before it opens the window on the
@@ -16,12 +18,16 @@
 //! browser when the DNS does not answer); [`start`] is idempotent, so whichever comes first binds and the other is a no-op.
 
 pub mod about;
+pub mod apis;
 pub mod app;
 pub mod crashes;
 pub mod diag;
 pub mod dns;
 pub mod engines;
+pub mod meshlogs;
+pub mod repos;
 pub mod serving;
+pub mod sub;
 
 use fleet_webserver::http::{self, Req, Resp};
 use fleet_webserver::render::jstr;
@@ -127,6 +133,11 @@ fn start_once(cfg: Config) -> Result<(), String> {
             http::listen(l, Arc::new(move |req: &Req| handle_diag(&ctx, req)));
         }
         Err(e) => eprintln!("c3-webserver: diagnostics listener not started: cannot bind 127.0.0.1:{} ({})", cfg.diag_port, e),
+    }
+    // #1490 the mesh listener: /logs/<app>, mesh peers + fleet bearer only; a failure here never stops the rest.
+    match meshlogs::Mesh::from_build(apis::build()).and_then(meshlogs::start) {
+        Ok(()) => {}
+        Err(e) => eprintln!("c3-webserver: mesh listener not started: {}", e),
     }
     if let Err(e) = dns::start() {
         eprintln!("c3-webserver: private DNS not started: {}", e);

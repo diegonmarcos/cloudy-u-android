@@ -156,11 +156,14 @@ const HEAD_LIMIT: usize = 16 * 1024;
 
 pub type Handler = dyn Fn(&Req) -> Resp + Send + Sync;
 
-fn serve(handler: &Handler, mut stream: TcpStream, port: u16) {
+/// Which peers a listener answers. The default is loopback only; a mesh listener passes its own (the mesh subnets).
+pub type PeerCheck = dyn Fn(std::net::IpAddr) -> bool + Send + Sync;
+
+fn serve(handler: &Handler, mut stream: TcpStream, port: u16, peer: &PeerCheck) {
     let started = Instant::now();
     let _ = stream.set_read_timeout(Some(Duration::from_secs(10)));
     let _ = stream.set_write_timeout(Some(Duration::from_secs(30)));
-    let peer_ok = stream.peer_addr().map(|a| a.ip().is_loopback()).unwrap_or(false);
+    let peer_ok = stream.peer_addr().map(|a| peer(a.ip())).unwrap_or(false);
 
     let mut buf: Vec<u8> = Vec::with_capacity(2048);
     let mut chunk = [0u8; 2048];
@@ -240,18 +243,32 @@ fn serve(handler: &Handler, mut stream: TcpStream, port: u16) {
     println!("{} {} {} {}ms {}B :{}", m, p, resp.status, started.elapsed().as_millis(), len, port);
 }
 
-/// Accept on `listener` forever, on a thread of its own, one thread per connection.
+/// Accept on `listener` forever, on a thread of its own, one thread per connection. Loopback peers only.
 pub fn listen(listener: TcpListener, handler: Arc<Handler>) {
+    listen_with(listener, handler, Arc::new(|ip: std::net::IpAddr| ip.is_loopback()), None);
+}
+
+/// [`listen`] with the peers it answers chosen by the caller, and an optional stop flag: when it is set the accept loop
+/// ends and the listener closes (a stopped site frees its port). Without a flag the accept is blocking, as [`listen`] always was.
+pub fn listen_with(listener: TcpListener, handler: Arc<Handler>, peer: Arc<PeerCheck>, stop: Option<Arc<std::sync::atomic::AtomicBool>>) {
     let port = listener.local_addr().map(|a| a.port()).unwrap_or(0);
-    std::thread::spawn(move || {
-        for incoming in listener.incoming() {
-            match incoming {
-                Ok(stream) => {
-                    let h = handler.clone();
-                    std::thread::spawn(move || serve(&*h, stream, port));
-                }
-                Err(e) => eprintln!("accept: {}", e),
+    if stop.is_some() {
+        let _ = listener.set_nonblocking(true);
+    }
+    std::thread::spawn(move || loop {
+        if let Some(s) = &stop {
+            if s.load(std::sync::atomic::Ordering::SeqCst) {
+                return;
             }
+        }
+        match listener.accept() {
+            Ok((stream, _)) => {
+                let _ = stream.set_nonblocking(false);
+                let (h, p) = (handler.clone(), peer.clone());
+                std::thread::spawn(move || serve(&*h, stream, port, &*p));
+            }
+            Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => std::thread::sleep(Duration::from_millis(40)),
+            Err(e) => eprintln!("accept: {}", e),
         }
     });
 }

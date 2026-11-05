@@ -69,7 +69,113 @@
     "diag": {
       "port": 8003
     },
+    "mesh": {
+      "port": 8004
+    },
     "serve_root": "/storage/emulated/0"
+  },
+  "mesh": {
+    "_doc": "#1490 THE MESH LISTENER: the fleet's log exports, routed onto the mesh. It binds the phone's own mesh address ONLY (never 0.0.0.0, never loopback, never a public address): `bind` is resolved at build time by server/build.rs from `profile_from` (the first IPv4 of that WireGuard profile's address, declared once in the SuperApp), and the listener refuses to start unless it lies inside `cidrs`; it answers only peers from those subnets AND only with the fleet bearer (the token the SuperApp mints, read through its fleet provider) on every path. While the tunnel is down the address does not exist, the bind fails and is retried every `retry_s` seconds. `/logs/<app>` calls that app's <package>.logexport provider (libs:log-export) and relays its JSON; `/logs` lists the apps. Nothing here names an app: the list is the fleet manifest.",
+    "profile_from": {
+      "owner": "aa_cloud-superapp",
+      "path": "ui.wireguard_profiles.profiles",
+      "id": "v4-split",
+      "field": "address"
+    },
+    "cidrs": [
+      "10.0.0.0/24",
+      "10.1.0.0/24"
+    ],
+    "retry_s": 20,
+    "logs_route": "/logs",
+    "token_authority_suffix": "fleet",
+    "ipc": {
+      "authority_suffix": "logexport",
+      "default_method": "export",
+      "methods": [
+        "meta",
+        "logs",
+        "crashes",
+        "export"
+      ]
+    }
+  },
+  "api": {
+    "_doc": "#1490 the data of the API tab's four sub-pages, all read from declarations that already exist (`file#dotted.path` from the repo root, resolved by server/build.rs): the public and mesh URLs of the fleet services (Cloud Account's fleet_endpoints), the per-app debug ports (the debug-port table every app's debug-api.json slice is cut from), and the app roster with its engines (the fleet manifest). `ipc` is the template of each app's IPC endpoints, `{package}` being the app's package: derived, never typed per app.",
+    "sources": {
+      "services": "ac_cloud-account/build.json#fleet_endpoints.services",
+      "debug_ports": "1_cicd/src/data/debug-ports.json#ports",
+      "debug_gateway": "1_cicd/src/data/debug-ports.json#gateway",
+      "fleet": "aa_cloud-superapp/data/constellation-fleet.json#apps"
+    },
+    "debug_routes": [
+      {
+        "path": "/api/system/ping",
+        "what": "liveness, no bearer"
+      },
+      {
+        "path": "/api/...",
+        "what": "the app's own debug routes, fleet bearer on everything but ping (libs:devtools AppDebugServer)"
+      }
+    ],
+    "ipc": [
+      {
+        "id": "logexport",
+        "kind": "provider",
+        "authority": "{package}.logexport",
+        "methods": "meta | logs | crashes | export",
+        "guard": "signature permission CONSTELLATION_DATA, caller re-checked",
+        "what": "the app's recent logcat and crash ring as JSON (libs:log-export); Cloud-Webserver serves it on the mesh as /logs/<app>"
+      },
+      {
+        "id": "fleet",
+        "kind": "provider",
+        "authority": "{package}.fleet",
+        "methods": "query token | call fleet.ipc.v1",
+        "guard": "signature permission CONSTELLATION_DATA",
+        "what": "the mesh handshake: the fleet token and the fleet IPC door (libs:devtools)"
+      },
+      {
+        "id": "fleetsetup",
+        "kind": "provider",
+        "authority": "{package}.fleetsetup",
+        "methods": "describe | export | apply | status",
+        "guard": "signature permission CONSTELLATION_DATA",
+        "what": "the setup contract of the stores the app declares (libs:fleetconfig-model)"
+      },
+      {
+        "id": "member",
+        "kind": "broadcast",
+        "authority": "com.diegonmarcos.cloud.action.MESH_MEMBER",
+        "methods": "marker intent",
+        "guard": "signature permission CONSTELLATION_DATA",
+        "what": "the visibility marker that makes every member visible to its siblings"
+      }
+    ],
+    "engine_action": "{package}.ENGINE"
+  },
+  "subpages": [
+    { "tab": "api", "id": "public", "label": "Public Endpoints", "route": "/__app__/api/sub/api-public" },
+    { "tab": "api", "id": "mesh", "label": "Mesh Endpoints", "route": "/__app__/api/sub/api-mesh" },
+    { "tab": "api", "id": "apps", "label": "Apps Endpoints", "route": "/__app__/api/sub/api-apps" },
+    { "tab": "api", "id": "ipc", "label": "Apps IPC", "route": "/__app__/api/sub/api-ipc" },
+    { "tab": "pages", "id": "drive", "label": "Drive", "route": "/__app__/api/sub/pages-drive" },
+    { "tab": "pages", "id": "terminals", "label": "Terminals", "route": "/__app__/api/sub/pages-terminals" },
+    { "tab": "pages", "id": "repos", "label": "Repos", "route": "/__app__/api/sub/pages-repos" }
+  ],
+  "repos": {
+    "_doc": "#1490 the Repos sub-page: the owner adds many entries, each (source, repo, start folder or entry file) with its OWN port and its own start/stop, so several sites serve at once. Persisted declaratively in `store` (JSON, one object per entry). Each site is a fleet-webserver on its own listener (the same one-folder, traversal-guarded, GET/HEAD-only serving as libs:local-serve, whose WebView page is Kotlin and so cannot live in this Rust-only app), bound to loopback or, when the entry says `mesh`, to the mesh address; never to a public one. `local` sources are read from disk under `root`; `terminal` sources are the terminals' own my-webserver (their $HOME), read through its loopback port and reached with a path-guarded GET proxy. Ports are allocated from port_first..port_last, outside every port the fleet declares (sshd 8023-8024 and the loopback servers 8000-8004 are below it).",
+    "store": "/storage/emulated/0/Android/data/com.diegonmarcos.cloudwebserver/files/repos.json",
+    "port_first": 8100,
+    "port_last": 8129,
+    "exposures": [ "loopback", "mesh" ],
+    "max_entries": 24,
+    "scan_depth": 3,
+    "sources": [
+      { "id": "emulated", "label": "Emulated", "kind": "local", "root": "/storage/emulated/0" },
+      { "id": "termux", "label": "Termux", "kind": "terminal", "endpoint": "termux" },
+      { "id": "nix", "label": "Nix", "kind": "terminal", "endpoint": "nix" }
+    ]
   },
   "serving": {
     "_doc": "THE ONE name -> port map of the phone's local servers, and the private DNS that names them. It holds NO port number: each endpoint names its `owner` (an app dir) and `port_from`, the path inside that owner's build.json where the port is declared (ac_cloud-termux and ac_cloud-nix-on-droid: runtime.webserver.port; this app: runtime.port and runtime.diag.port), and every reader resolves the number from there at BUILD time -- server/build.rs (the Rust crate: it compiles the resolved copy in, so src-tauri/build.rs and server/src/serving.rs see an ordinary `port`) and ac_cloud-browser/app/build.gradle (baked into the browser, which fails the build when its pinned tabs drift or an endpoint spells a literal `port`). A port number written here would be a second copy of the owner's, so test/test-c3-webserver-ports.sh fails on one. .app is a real public TLD and termux.app is a real website: only these four exact names are answered, by this app's own DNS server on loopback (udp, never :53 -- Android cannot bind it without root and cannot point the system resolver at loopback), and only our own apps ask it; nothing is changed system-wide. DNS carries no ports, so the browser maps the port from the resolved block. test/test-localhost-ports.sh fails when a port or name repeats across apps.",

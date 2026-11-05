@@ -31,6 +31,10 @@ pub fn install(window: &tauri::WebviewWindow) {
             match made {
                 Ok(()) => {
                     c3_webserver::diag::set_source(Box::new(read_bridge));
+                    // #1490 the mesh listener's two reads: an app's log export (any fleet authority the server crate names)
+                    // and the fleet bearer token the SuperApp mints.
+                    c3_webserver::meshlogs::set_log_source(Box::new(call_provider));
+                    c3_webserver::meshlogs::set_token_source(Box::new(read_token));
                     c3_webserver::diag::set_opener(Box::new(open_in_browser));
                 }
                 Err(e) => {
@@ -82,8 +86,7 @@ fn bundle_string(env: &mut JNIEnv, bundle: &JObject, key: &str) -> jni::errors::
 }
 
 /// ContentResolver.call(content://<authority>, method, arg) -> Bundle {ok, mime, payload, error}.
-fn read_bridge(method: &str, arg: &str) -> Result<(String, String), String> {
-    let authority = c3_webserver::serving::get().bridge_authority.clone();
+fn call_provider(authority: &str, method: &str, arg: &str) -> Result<(String, String), String> {
     let reply = with_env(|env, activity| {
         let cr = env.call_method(activity, "getContentResolver", "()Landroid/content/ContentResolver;", &[])?.l()?;
         let u = uri(env, &format!("content://{}", authority))?;
@@ -105,12 +108,56 @@ fn read_bridge(method: &str, arg: &str) -> Result<(String, String), String> {
         let ok = env.call_method(&bundle, "getBoolean", "(Ljava/lang/String;)Z", &[JValue::Object(&ok_key)])?.z()?;
         Ok(Some((ok, bundle_string(env, &bundle, "mime")?, bundle_string(env, &bundle, "payload")?, bundle_string(env, &bundle, "error")?)))
     })
-    .map_err(|e| friendly(&e, &authority))?;
+    .map_err(|e| friendly(&e, authority))?;
     match reply {
-        None => Err(format!("{} answered nothing: is the SuperApp installed and up to date?", authority)),
+        None => Err(format!("{} answered nothing: is the app installed and up to date?", authority)),
         Some((true, mime, payload, _)) => Ok((mime, payload)),
-        Some((false, _, _, error)) => Err(if error.is_empty() { "the SuperApp refused the call".to_string() } else { error }),
+        Some((false, _, _, error)) => Err(if error.is_empty() { format!("{} refused the call", authority) } else { error }),
     }
+}
+
+fn read_bridge(method: &str, arg: &str) -> Result<(String, String), String> {
+    let authority = c3_webserver::serving::get().bridge_authority.clone();
+    call_provider(&authority, method, arg)
+}
+
+/// The fleet bearer token: `content://<superapp>.fleet/token`, first row, first column (FleetToken's own handshake).
+/// None when the SuperApp is missing or refuses; the mesh listener then answers 503, never open.
+fn read_token() -> Option<String> {
+    let sv = c3_webserver::serving::get();
+    let suffix = c3_webserver::apis::build()["mesh"]["token_authority_suffix"].as_str().unwrap_or("fleet").to_string();
+    let target = format!("content://{}.{}/token", sv.bridge_package, suffix);
+    with_env(|env, activity| {
+        let cr = env.call_method(activity, "getContentResolver", "()Landroid/content/ContentResolver;", &[])?.l()?;
+        let u = uri(env, &target)?;
+        let null = JObject::null();
+        let cursor = env
+            .call_method(
+                &cr,
+                "query",
+                "(Landroid/net/Uri;[Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;)Landroid/database/Cursor;",
+                &[JValue::Object(&u), JValue::Object(&null), JValue::Object(&null), JValue::Object(&null), JValue::Object(&null)],
+            )?
+            .l()?;
+        if cursor.is_null() {
+            return Ok(None);
+        }
+        let first = env.call_method(&cursor, "moveToFirst", "()Z", &[])?.z()?;
+        let token = if first {
+            let v = env.call_method(&cursor, "getString", "(I)Ljava/lang/String;", &[JValue::Int(0)])?.l()?;
+            if v.is_null() {
+                None
+            } else {
+                Some(String::from(env.get_string(&JString::from(v))?))
+            }
+        } else {
+            None
+        };
+        env.call_method(&cursor, "close", "()V", &[])?;
+        Ok(token)
+    })
+    .ok()
+    .flatten()
 }
 
 fn friendly(e: &str, authority: &str) -> String {

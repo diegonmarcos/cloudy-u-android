@@ -17,6 +17,21 @@ embedded* (this app's WebView, so the system back gesture follows the WebView hi
 app). Link types, their choices and whether a choice can be remembered are `build.json::links`; the shell holds
 no type. A remembered choice lives in the WebView's localStorage; Configs > Links resets it.
 
+**Sub-pages (#1490).** API has Public Endpoints, Mesh Endpoints, Apps Endpoints and Apps IPC; Pages has Drive, Terminals and
+Repos. They are declared in `build.json::subpages` and every one is a route `/__app__/api/sub/<tab>-<id>` answering one page shape
+(`server/src/apis.rs`, `server/src/sub.rs`); the shell draws them all with one renderer. The data is read from declarations that exist
+(fleet endpoints, the debug-port table, the fleet manifest), never typed per app.
+
+**Mesh log route.** Every fleet app exports its recent logcat and crash ring through its `<package>.logexport` provider
+(`libs:log-export`, signature permission). The mesh listener (`server/src/meshlogs.rs`, `runtime.mesh.port`) serves `/logs` and
+`/logs/<app>` by calling it. It binds the phone's mesh address only (resolved from the SuperApp's WireGuard profile, refused unless it
+lies in `mesh.cidrs`), answers mesh peers only, and needs the fleet bearer on every path; with no token known it answers 503.
+
+**Repos.** `build.json::repos` plus a JSON store: each entry (source, repo, start folder or entry file) is served on its own port by the
+shared web server (loopback, or the mesh address when the entry says `mesh`; never public), started and stopped on its own. Sources are
+Emulated storage (read from disk) and the terminals' own my-webserver (a path-guarded GET proxy). Entries may not name `..`, an absolute
+path, a backslash or NUL, and a symlink cannot leave the source or the repo.
+
 **What :8002 serves.** ONLY the emulated root, `/storage/emulated/0`, with the EXACT web UI of the
 Linux `my-webserver`: folder tree on the left, viewer/renderer on the right (md, json, yaml, html with
 Eruda, images, text), toolbar on top (search, hidden files, raw). That UI is not written in this app.
