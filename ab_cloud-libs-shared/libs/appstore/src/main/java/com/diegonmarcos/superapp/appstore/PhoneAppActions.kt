@@ -5,7 +5,6 @@ import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.net.Uri
 import android.os.Build
-import com.diegonmarcos.superapp.adbdebug.ShellChannels
 import com.diegonmarcos.superapp.updater.Fleet
 import org.json.JSONObject
 
@@ -177,5 +176,5 @@ object PhoneAppActions {
     fun forceStop(ctx: Context, pkg: String): String? =
         // Package names are [A-Za-z0-9._] by the platform's own rule, so the
         // id is safe in a shell word as it stands.
-        ShellChannels.active(ctx)?.exec(ctx, "am force-stop $pkg 2>&1 && echo OK")
+        StoreShell.forceStop(ctx, pkg)
 }

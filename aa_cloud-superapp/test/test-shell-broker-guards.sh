@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
 # #1510 The shell broker is the ONE owner of the privileged shell. Static: no build, no device.
-#   B1  no app other than the SuperApp compiles libs:shizuku-adb-debug-tools, except the apps still listed in data/shell-migration.json
-#       (a ratchet: the list never grows, and a listed app that no longer compiles it must be removed from it)
-#   B2  no app other than the SuperApp (and the listed ones) names an ADB connection class: EmbeddedAdbChannel, AdbShellServer, HostShell, WdKeeper, AdbPairingService
+#   B1  STRICT (#1512): no app other than the SuperApp compiles libs:shizuku-adb-debug-tools, and data/shell-migration.json's `pending`
+#       is EMPTY (the migration is done; the file stays as the ratchet, an entry can never be added again)
+#   B2  no app other than the SuperApp names an ADB connection class: EmbeddedAdbChannel, AdbShellServer, HostShell, WdKeeper, AdbPairingService, RishBridge
+#   B7  the shared libs other apps compile (libs:account, libs:appstore, libs:updater) do not link or import the shizuku lib, except libs:updater's
+#       SuperApp-only source set (src/shell) behind its findProject guard
+#   B8  the stdin door: only install verbs may stream (`pm install -S`, `pm install-write -S`), every cap is within the hard limit, and no mesh /
+#       terminal / read-only caller has a stdin rule
 #   B3  every app that links libs:shell-client has an allowlist entry under its application id; every allowlist caller is a known app id or alias
 #   B4  the broker and the client have no sticky service, no boot receiver, no foreground service, no alarm or WorkManager loop
 #   B5  the allowlist is default-deny: no caller has a catch-all rule, and the broker lib declares no unguarded component
@@ -25,7 +29,9 @@ def rd(p):
 def strip(s): return re.sub(r"//[^\n]*|/\*.*?\*/", "", s, flags=re.S)
 SHIZ = "libs:shizuku-adb-debug-tools"
 CLIENT = "libs:shell-client"
-ADB_TOKENS = re.compile(r"\b(EmbeddedAdbChannel|AdbShellServer|HostShell\w*|WdKeeper\w*|AdbPairingService)\b")
+ADB_TOKENS = re.compile(r"\b(EmbeddedAdbChannel|AdbShellServer|HostShell\w*|WdKeeper\w*|AdbPairingService|RishBridge)\b")
+HARD_CAP = 512 * 1024 * 1024
+STDIN_CALLERS = {"com.diegonmarcos.cloudstore", "com.diegonmarcos.cloudaccount", "com.diegonmarcos.clouddrive"}
 
 def collect():
     apps = {}
@@ -51,15 +57,24 @@ def collect():
         apps[d] = {"aid": aid, "shiz": shiz, "client": client, "toks": toks}
     return apps
 
-def verdicts(apps, pending, allow, libs):
+def verdicts(apps, pending, allow, libs, shared):
     global fails
     others = {d: a for d, a in apps.items() if d != SA}
-    bad = sorted(d for d, a in others.items() if a["shiz"] and d not in pending)
-    ok(not bad, "B1 no unlisted app compiles libs:shizuku-adb-debug-tools", "B1 compiles libs:shizuku-adb-debug-tools without being pending: " + ", ".join(bad))
-    stale = sorted(d for d in pending if not (d in apps and apps[d]["shiz"]))
-    ok(not stale, "B1 every pending app still compiles it", "B1 pending but already migrated (remove from data/shell-migration.json): " + ", ".join(stale))
-    badt = sorted(d for d, a in others.items() if a["toks"] and d not in pending)
-    ok(not badt, "B2 no unlisted app starts an ADB connection", "B2 ADB connection classes in an unlisted app: " + ", ".join(badt))
+    bad = sorted(d for d, a in others.items() if a["shiz"])
+    ok(not bad, "B1 no app but the SuperApp compiles libs:shizuku-adb-debug-tools", "B1 compiles libs:shizuku-adb-debug-tools: " + ", ".join(bad))
+    ok(not pending, "B1 shell-migration.json pending is empty", "B1 pending is not empty (the migration is finished): " + ", ".join(sorted(pending)))
+    badt = sorted(d for d, a in others.items() if a["toks"])
+    ok(not badt, "B2 no app but the SuperApp starts an ADB connection", "B2 ADB connection classes in an app other than the SuperApp: " + ", ".join(badt))
+    for name, t in shared.items():
+        ok(not t["gradle_links"], f"B7 {name} does not link the shizuku lib", f"B7 {name} links libs:shizuku-adb-debug-tools outside a findProject guard")
+        ok(not t["imports"], f"B7 {name} does not import the adbdebug package", f"B7 {name} imports com.diegonmarcos.superapp.adbdebug")
+    for k, c in allow["callers"].items():
+        for r in c.get("stdin", []):
+            verb = re.match(r"\^\(?(pm|cmd package)", r["re"]) and re.search(r"install(-write)?\b", r["re"]) and not re.search(r"uninstall|\.\*", r["re"])
+            ok(verb and 0 < r.get("maxBytes", 0) <= HARD_CAP, f"B8 {k} stdin rule {r['id']} is an install verb within the hard cap",
+               f"B8 {k} stdin rule {r['id']} is not an install verb, or its maxBytes is missing / over {HARD_CAP}")
+    stray = sorted(k for k, c in allow["callers"].items() if c.get("stdin") and k not in STDIN_CALLERS)
+    ok(not stray, "B8 only the installers have stdin rules", "B8 a caller that is no installer may stream input: " + ", ".join(stray))
     callers = allow["callers"]; aliases = allow.get("aliases", {})
     clients = {d: a for d, a in others.items() if a["client"]}
     miss = sorted(d for d, a in clients.items() if a["aid"] not in callers and aliases.get(a["aid"]) not in callers)
@@ -80,6 +95,20 @@ def verdicts(apps, pending, allow, libs):
     g = libs["shell-client"]["gradle"]
     ok(not re.search(r"project\(", g), "B6 libs:shell-client links no project", "B6 libs:shell-client links another project")
 
+def shared_libs():
+    out = {}
+    for n in ("account", "appstore", "updater"):
+        g = strip(rd(f"{LIB}{n}/build.gradle"))
+        # the only allowed link: libs:updater's own `if (findProject(':libs:shizuku-adb-debug-tools') != null) { implementation project(...) }`
+        g2 = re.sub(r"if \(findProject\(':libs:shizuku-adb-debug-tools'\) != null\) \{\s*implementation project\(':libs:shizuku-adb-debug-tools'\)\s*\}", "", g) if n == "updater" else g
+        imps = False
+        for base, _, files in os.walk(f"{R}/{LIB}{n}/src"):
+            if base.replace("\\", "/").endswith("src/shell") or "/src/shell/" in base.replace("\\", "/") + "/": continue
+            for f in files:
+                if f.endswith((".kt", ".java")) and "superapp.adbdebug" in strip(open(os.path.join(base, f), encoding="utf-8", errors="replace").read()): imps = True
+        out[n] = {"gradle_links": bool(re.search(r"project\(['\"]:libs:shizuku-adb-debug-tools['\"]\)", g2)), "imports": imps}
+    return out
+
 apps = collect()
 pending = json.load(open(f"{R}/{SA}/data/shell-migration.json"))["pending"]
 allow = json.load(open(f"{R}/{LIB}shell-broker/src/main/assets/shell-allowlist.json"))
@@ -91,27 +120,37 @@ def libsrc(n):
     return {"src": s, "manifest": re.sub(r"<!--.*?-->", "", rd(f"{LIB}{n}/src/main/AndroidManifest.xml"), flags=re.S), "gradle": rd(f"{LIB}{n}/build.gradle")}
 libs = {"shell-broker": libsrc("shell-broker"), "shell-client": libsrc("shell-client")}
 ok(SA in apps and apps[SA]["shiz"], "SuperApp owns the channel", "SuperApp must compile libs:shizuku-adb-debug-tools")
-verdicts(apps, pending, allow, libs)
+shared = shared_libs()
+verdicts(apps, pending, allow, libs, shared)
 print("== planted violations must turn red")
 import copy
 def planted(label, mutate):
     global fails
-    a, p, al, l = copy.deepcopy(apps), copy.deepcopy(pending), copy.deepcopy(allow), copy.deepcopy(libs)
-    mutate(a, p, al, l)
+    a, p, al, l, sh = copy.deepcopy(apps), copy.deepcopy(pending), copy.deepcopy(allow), copy.deepcopy(libs), copy.deepcopy(shared)
+    mutate(a, p, al, l, sh)
     before = fails
     import io, contextlib
-    with contextlib.redirect_stdout(io.StringIO()): verdicts(a, p, al, l)
+    with contextlib.redirect_stdout(io.StringIO()): verdicts(a, p, al, l, sh)
     red = fails > before; fails = before
     print(("  PASS: " if red else "  FAIL: ") + label + (" turned a check red" if red else " went unnoticed")); fails += 0 if red else 1
-planted("a new app compiling the shizuku lib", lambda a, p, al, l: a.__setitem__("ac_cloud-fake", {"aid": "x.fake", "shiz": True, "client": False, "toks": set()}))
-planted("a new app naming HostShell", lambda a, p, al, l: a.__setitem__("ac_cloud-fake", {"aid": "x.fake", "shiz": False, "client": False, "toks": {"HostShell"}}))
-planted("a shell-client app with no allowlist entry", lambda a, p, al, l: a.__setitem__("ac_cloud-fake", {"aid": "x.fake", "shiz": False, "client": True, "toks": set()}))
-planted("an allowlist caller that is no app", lambda a, p, al, l: al["callers"].__setitem__("x.ghost", {"allow": []}))
-planted("a catch-all rule", lambda a, p, al, l: al["callers"]["com.diegonmarcos.clouddrive"]["allow"].append({"id": "x", "re": "^.*$"}))
-planted("a sticky service in the broker", lambda a, p, al, l: l["shell-broker"].__setitem__("src", l["shell-broker"]["src"] + "\nreturn START_STICKY\n"))
-planted("a boot receiver in the broker", lambda a, p, al, l: l["shell-broker"].__setitem__("manifest", l["shell-broker"]["manifest"] + '<receiver android:name="x"><action android:name="android.intent.action.BOOT_COMPLETED"/></receiver>'))
-planted("an unguarded broker provider", lambda a, p, al, l: l["shell-broker"].__setitem__("manifest", l["shell-broker"]["manifest"].replace("CONSTELLATION_DATA", "X", 1)))
-planted("a migrated app left in pending", lambda a, p, al, l: p.__setitem__("ac_cloud-wallet", "x"))
-planted("shell-client linking a project", lambda a, p, al, l: l["shell-client"].__setitem__("gradle", "implementation project(':libs:core')"))
+planted("a new app compiling the shizuku lib", lambda a, p, al, l, sh: a.__setitem__("ac_cloud-fake", {"aid": "x.fake", "shiz": True, "client": False, "toks": set()}))
+planted("a new app naming HostShell", lambda a, p, al, l, sh: a.__setitem__("ac_cloud-fake", {"aid": "x.fake", "shiz": False, "client": False, "toks": {"HostShell"}}))
+planted("a shell-client app with no allowlist entry", lambda a, p, al, l, sh: a.__setitem__("ac_cloud-fake", {"aid": "x.fake", "shiz": False, "client": True, "toks": set()}))
+planted("an allowlist caller that is no app", lambda a, p, al, l, sh: al["callers"].__setitem__("x.ghost", {"allow": []}))
+planted("a catch-all rule", lambda a, p, al, l, sh: al["callers"]["com.diegonmarcos.clouddrive"]["allow"].append({"id": "x", "re": "^.*$"}))
+planted("a sticky service in the broker", lambda a, p, al, l, sh: l["shell-broker"].__setitem__("src", l["shell-broker"]["src"] + "\nreturn START_STICKY\n"))
+planted("a boot receiver in the broker", lambda a, p, al, l, sh: l["shell-broker"].__setitem__("manifest", l["shell-broker"]["manifest"] + '<receiver android:name="x"><action android:name="android.intent.action.BOOT_COMPLETED"/></receiver>'))
+planted("an unguarded broker provider", lambda a, p, al, l, sh: l["shell-broker"].__setitem__("manifest", l["shell-broker"]["manifest"].replace("CONSTELLATION_DATA", "X", 1)))
+planted("an app in the pending list (the list must stay empty)", lambda a, p, al, l, sh: p.__setitem__("ac_cloud-wallet", "x"))
+planted("a migrated app re-linking the shizuku lib (Store)", lambda a, p, al, l, sh: a.__setitem__("ac_cloud-store", {"aid": "com.diegonmarcos.cloudstore", "shiz": True, "client": True, "toks": set()}))
+planted("a terminal naming HostShell again", lambda a, p, al, l, sh: a.__setitem__("ac_cloud-termux", {"aid": "cld.termux", "shiz": False, "client": True, "toks": {"HostShell"}}))
+planted("libs:appstore linking the shizuku lib", lambda a, p, al, l, sh: sh["appstore"].__setitem__("gradle_links", True))
+planted("libs:account importing adbdebug", lambda a, p, al, l, sh: sh["account"].__setitem__("imports", True))
+planted("a stdin rule for an arbitrary shell", lambda a, p, al, l, sh: al["callers"]["com.diegonmarcos.cloudstore"].setdefault("stdin", []).append({"id": "x", "re": "^sh -c .*$", "maxBytes": 10}))
+planted("a stdin rule with no cap", lambda a, p, al, l, sh: al["callers"]["com.diegonmarcos.cloudstore"]["stdin"].append({"id": "x", "re": "^pm install -S [0-9]+$"}))
+planted("a stdin rule above the hard limit", lambda a, p, al, l, sh: al["callers"]["com.diegonmarcos.cloudaccount"]["stdin"][0].__setitem__("maxBytes", HARD_CAP + 1))
+planted("the mesh door allowed to stream", lambda a, p, al, l, sh: al["callers"]["mesh"].__setitem__("stdin", [{"id": "x", "re": "^pm install -S [0-9]+$", "maxBytes": 10}]))
+planted("a terminal allowed to stream", lambda a, p, al, l, sh: al["callers"]["cld.termux"].__setitem__("stdin", [{"id": "x", "re": "^pm install -S [0-9]+$", "maxBytes": 10}]))
+planted("shell-client linking a project", lambda a, p, al, l, sh: l["shell-client"].__setitem__("gradle", "implementation project(':libs:core')"))
 print("FAILS=%d" % fails); sys.exit(1 if fails else 0)
 PY

@@ -48,7 +48,7 @@
         "libs:ui-nav-bars",
         "libs:theme-background",
         "libs:sysdns",
-        "libs:shizuku-adb-debug-tools",
+        "libs:shell-client",
         "libs:fleetconfig-model",
         "libs:ai",
         "libs:model-catalogue"
@@ -76,19 +76,16 @@
       "dir": "../ab_cloud-libs-shared/libs/fleetconfig-model",
       "type": "library"
     },
-    "libs:shizuku-adb-debug-tools": {
-      "dir": "../ab_cloud-libs-shared/libs/shizuku-adb-debug-tools",
-      "type": "library",
-      "depends_on": [
-        "libs:core"
-      ]
+    "libs:shell-client": {
+      "_doc_dir": "#1512 THE thin client of the SuperApp's shell broker (libs:shell-broker): silent installs and the self-update (stdin door), Play Protect, grants, force-stop. No channel, pairing, service or boot hook of its own.",
+      "dir": "../ab_cloud-libs-shared/libs/shell-client",
+      "type": "library"
     },
     "libs:updater": {
       "dir": "../ab_cloud-libs-shared/libs/updater",
       "type": "library",
       "depends_on": [
-        "libs:core",
-        "libs:shizuku-adb-debug-tools"
+        "libs:core"
       ]
     },
     "libs:ui-kit": {
@@ -103,7 +100,7 @@
         "libs:core",
         "libs:usb-drive",
         "libs:updater",
-        "libs:shizuku-adb-debug-tools",
+        "libs:shell-client",
         "libs:ui-kit",
         "libs:shared-store"
       ]
@@ -141,76 +138,6 @@
       "_doc_dir": "libs:ai's `api` dependency: the shared agent descriptor (assets/agents/agents.json) its Agent picker lists. Listed so settings.gradle resolves the path.",
       "dir": "../ab_cloud-libs-shared/libs/model-catalogue",
       "type": "library"
-    }
-  },
-  "shizuku_client": {
-    "_doc": "#894 Cloud Store's OWN privileged shell channel (owner decision 2026-10-07: the Store, not SuperApp, handles every fleet install and its own self-update). Read at build time by libs/shizuku-adb-debug-tools/build.gradle (BuildConfig.SHIZUKU_CLIENT_B64) exactly as cloud-termux's block is. The ladder ShellChannels walks is: the embedded wireless-adb client (paired once from Settings > Silent installs), our app_process server, then these providers in order. SuperApp's bridge is deliberately NOT listed: SuperApp stays out of the install pass, so this app must not depend on it for a channel.",
-    "providers": [
-      "moe.shizuku.privileged.api"
-    ]
-  },
-  "privileged_channel": {
-    "default_on": true,
-    "_default_on_doc": "Whether this app arms the privileged channel by itself (auto re-arm after reboot, when Wireless debugging is available, and before an install finds no channel). Cloud Store: ON so installs and updates work; the user turns it off on the ADB Shell page (Settings). Read by libs/shizuku-adb-debug-tools ChannelAutoArm.",
-    "_doc": "What THIS app declares it needs the privileged shell channel for. Read by libs/shizuku-adb-debug-tools/build.gradle into BuildConfig.CHANNEL_NEEDS_B64 and listed, as written, in the Declared needs section of the ADB Shell page (libs:shizuku-adb-debug-tools AdbShellPage). Add a need here and it shows there; nothing about it is typed in Kotlin. Each need: id (unique), label, why (one sentence), commands (the shell verbs it runs).",
-    "needs": [
-      {
-        "id": "silent-installs",
-        "label": "Silent installs",
-        "why": "Installs and updates the fleet's apps with pm install, so no per-app dialog appears.",
-        "commands": [
-          "pm install",
-          "pm install-write"
-        ]
-      },
-      {
-        "id": "perms-grant",
-        "label": "Permissions grant",
-        "why": "Access > Android Perms grants the fleet's missing runtime and signature permissions.",
-        "commands": [
-          "pm grant"
-        ]
-      },
-      {
-        "id": "appops",
-        "label": "App-ops",
-        "why": "Flips the app-op behind a permission that pm grant alone leaves denied.",
-        "commands": [
-          "appops set"
-        ]
-      },
-      {
-        "id": "force-stop",
-        "label": "Force-stop",
-        "why": "Phone apps > Stop force-stops an app through the channel.",
-        "commands": [
-          "am force-stop"
-        ]
-      },
-      {
-        "id": "play-protect",
-        "label": "Play Protect scan",
-        "why": "The bar's Play Protect switch writes the verifier settings when WRITE_SECURE_SETTINGS is not held.",
-        "commands": [
-          "settings put global"
-        ]
-      },
-      {
-        "id": "wireless-keepalive",
-        "label": "Keep wireless debugging on",
-        "why": "Grants WRITE_SECURE_SETTINGS to itself so wireless debugging comes back after a reboot.",
-        "commands": [
-          "pm grant"
-        ]
-      }
-    ]
-  },
-  "shizuku_diagnostics": {
-    "_doc": "Only the per-app local server identity. The lib reads the CONSUMER's block first and falls back to SuperApp's whole block when absent, and SuperApp's app_process server binds 38099: two apps on one port means whichever starts second silently fails to bind. Cloud Store has no diagnostic bundles of its own.",
-    "bundles": [],
-    "local_server": {
-      "port": 38098,
-      "nice_name": "cloudstore-adb"
     }
   },
   "release": {
@@ -306,7 +233,7 @@
       ]
     },
     "unit": {
-      "_doc": "The shared top bar's Compose UI suite (libs:bottomnav AppTopBarTest, Robolectric, no emulator): the drawer a page supplies, the AI panel, the Settings dropdown, the Cloud Account launch intent and the Configs callback, run through THIS app because it is the first app to adopt AppTopBar. `storeUnitTests` (this app's root build.gradle) runs :libs:bottomnav (the top bar, the page strip, the Configs menu over the declared pages), :libs:shizuku-adb-debug-tools (per-app ADB identity and state scope) and :libs:core (the notification matrix), and nothing else, so a sibling lib's suite cannot turn this release red. Run by the ship workflow's 'JVM unit tests' step, after the JDK/SDK and the vault key (this project cannot configure without the shared key), through build.sh test.",
+      "_doc": "The shared top bar's Compose UI suite (libs:bottomnav AppTopBarTest, Robolectric, no emulator): the drawer a page supplies, the AI panel, the Settings dropdown, the Cloud Account launch intent and the Configs callback, run through THIS app because it is the first app to adopt AppTopBar. `storeUnitTests` (this app's root build.gradle) runs :libs:bottomnav (the top bar, the page strip, the Configs menu over the declared pages), :libs:shell-client (the broker client: stdin limits, the rish relay) and :libs:core (the notification matrix), and nothing else, so a sibling lib's suite cannot turn this release red. Run by the ship workflow's 'JVM unit tests' step, after the JDK/SDK and the vault key (this project cannot configure without the shared key), through build.sh test.",
       "task": "storeUnitTests",
       "enabled": true
     }

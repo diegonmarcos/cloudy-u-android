@@ -1,5 +1,5 @@
 {
- "_doc": "#1510 THE per-caller command allowlist of the SuperApp's shell broker (libs:shell-broker). Default deny: a caller with no entry, or a command no rule of that caller matches, is refused. `re` is a full-match regex over the trimmed command; a shell metacharacter (; & | ` $ < > ( ) { } \\ #) is refused unless the rule lists it in `meta`. Key = the caller package resolved from the binder uid (cld.termux and cld.termux.nix share a uid), or an alias below. An app that links libs:shell-client MUST have an entry here (guard test-shell-broker-guards.sh). `exact` = literal command lines (the SuperApp's X-Ray probes), `segments` = `;`/newline separate commands and each must match (the Background policy chains); both are per-caller data, never a client choice.",
+ "_doc": "#1510 THE per-caller command allowlist of the SuperApp's shell broker (libs:shell-broker). Default deny: a caller with no entry, or a command no rule of that caller matches, is refused. `re` is a full-match regex over the trimmed command; a shell metacharacter (; & | ` $ < > ( ) { } \\ #) is refused unless the rule lists it in `meta`. Key = the caller package resolved from the binder uid (cld.termux and cld.termux.nix share a uid), or an alias below. An app that links libs:shell-client MUST have an entry here (guard test-shell-broker-guards.sh). `stdin` (#1512) = the rules of the stdin door (`pm install -S <size>`, `pm install-write -S <size> ... -`), each with a `maxBytes` cap; a caller without them may stream nothing. A trailing ` 2>&1` is the one redirect a command may end with. `exact` = literal command lines (the SuperApp's X-Ray probes), `segments` = `;`/newline separate commands and each must match (the Background policy chains); both are per-caller data, never a client choice.",
  "aliases": {
   "com.diegonmarcos.cloudwebserver": "mesh"
  },
@@ -109,6 +109,14 @@
     {
      "id": "bg-idle",
      "re": "^cmd deviceidle (whitelist( [+-][\\w.]+)?|force-idle|unforce)$"
+    },
+    {
+     "id": "account-roles",
+     "re": "^cmd role (add-role-holder|get-role-holders) android\\.app\\.role\\.[A-Z_]+( [a-z][\\w.]*)?$"
+    },
+    {
+     "id": "account-listener",
+     "re": "^cmd notification allow_listener [a-z][\\w.]*/[\\w.]+$"
     }
    ],
    "exact": [
@@ -157,11 +165,27 @@
     {
      "id": "store-4",
      "re": "^getprop( [\\w.]+)?$"
+    },
+    {
+     "id": "probe-echo",
+     "re": "^echo shell-ok$"
+    }
+   ],
+   "stdin": [
+    {
+     "id": "install-stdin",
+     "re": "^pm install( -[a-z])* -S [0-9]+$",
+     "maxBytes": 536870912
+    },
+    {
+     "id": "install-write-stdin",
+     "re": "^(pm|cmd package) install-write -S [0-9]+ [0-9]+ [\\w.-]+ -$",
+     "maxBytes": 536870912
     }
    ]
   },
   "com.diegonmarcos.cloudaccount": {
-   "why": "Setup runbook: install the Store, grant permissions, app-ops.",
+   "why": "Setup runbook: install the Store (pm install over the stdin door), grant permissions, app-ops, roles, listeners, the Play Protect switch.",
    "allow": [
     {
      "id": "installs-1",
@@ -178,11 +202,51 @@
     {
      "id": "account-1",
      "re": "^pm (list|path)( [\\w.:/=,@+*?-]+)*$"
+    },
+    {
+     "id": "probe-echo",
+     "re": "^echo shell-ok$"
+    },
+    {
+     "id": "account-2",
+     "re": "^settings get (global|system|secure) [\\w.]+$"
+    },
+    {
+     "id": "account-3",
+     "re": "^appops get [a-z][\\w.]*( [A-Z_]+)?$"
+    },
+    {
+     "id": "account-listener",
+     "re": "^cmd notification allow_listener [a-z][\\w.]*/[\\w.]+$"
+    },
+    {
+     "id": "account-roles",
+     "re": "^cmd role (add-role-holder|get-role-holders) android\\.app\\.role\\.[A-Z_]+( [a-z][\\w.]*)?$"
+    },
+    {
+     "id": "account-6",
+     "re": "^dumpsys deviceidle whitelist [+-][a-z][\\w.]*$"
+    },
+    {
+     "id": "account-7",
+     "re": "^settings put global (package_verifier_user_consent|package_verifier_enable|verifier_verify_adb_installs) -?[01]$"
+    }
+   ],
+   "stdin": [
+    {
+     "id": "install-stdin",
+     "re": "^pm install( -[a-z])* -S [0-9]+$",
+     "maxBytes": 536870912
+    },
+    {
+     "id": "install-write-stdin",
+     "re": "^(pm|cmd package) install-write -S [0-9]+ [0-9]+ [\\w.-]+ -$",
+     "maxBytes": 536870912
     }
    ]
   },
   "com.diegonmarcos.clouddrive": {
-   "why": "Manage > Apps: running state and PSS of other apps.",
+   "why": "Manage > Apps: running state and PSS of other apps; its silent self-update (updater: pm install-create / install -S over the stdin door).",
    "allow": [
     {
      "id": "drive-1",
@@ -191,6 +255,26 @@
     {
      "id": "drive-2",
      "re": "^dumpsys meminfo( [\\w.:/=,@+*?-]+)*$"
+    },
+    {
+     "id": "probe-echo",
+     "re": "^echo shell-ok$"
+    },
+    {
+     "id": "installs-1",
+     "re": "^pm (install|install-create|install-write|install-commit|install-abandon|uninstall)( [\\w.:/=,@+*?-]+)*$"
+    }
+   ],
+   "stdin": [
+    {
+     "id": "install-stdin",
+     "re": "^pm install( -[a-z])* -S [0-9]+$",
+     "maxBytes": 536870912
+    },
+    {
+     "id": "install-write-stdin",
+     "re": "^(pm|cmd package) install-write -S [0-9]+ [0-9]+ [\\w.-]+ -$",
+     "maxBytes": 536870912
     }
    ]
   },

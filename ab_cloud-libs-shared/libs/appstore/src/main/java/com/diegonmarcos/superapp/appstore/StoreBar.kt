@@ -48,11 +48,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.diegonmarcos.superapp.adbdebug.AdbShellLink
-import com.diegonmarcos.superapp.adbdebug.ChannelSelector
-import com.diegonmarcos.superapp.adbdebug.ControlStatus
-import com.diegonmarcos.superapp.adbdebug.WirelessDebugging
-import com.diegonmarcos.superapp.adbdebug.PackageVerifier
 import com.diegonmarcos.superapp.updater.AutoUpdatePrefs
 import kotlin.concurrent.thread
 
@@ -239,7 +234,7 @@ object StoreBar {
                         else {
                             // setScanning binds Shizuku, which blocks - never on the main thread.
                             thread(name = "play-protect-toggle") {
-                                val r = PackageVerifier.setScanning(ctx, pp == ControlStatus.Tri.OFF)
+                                val r = StorePlayProtect.setScanning(ctx, pp == ControlStatus.Tri.OFF)
                                 MAIN.post {
                                     if (r.ok) Toast.makeText(ctx, r.state.describe() + " - via " + r.channel, Toast.LENGTH_LONG).show()
                                     else {
@@ -295,14 +290,11 @@ object StoreBar {
             onDispose { owner.lifecycle.removeObserver(obs) }
         }
         LaunchedEffect(Unit) { while (true) { kotlinx.coroutines.delay(CHANNEL_RECHECK_MS); StoreStatus.invalidate(); tick++ } }
-        val wdOn = remember(tick) { WirelessDebugging.isOn(ctx) }
-        val chLabel = ch?.shizuku?.let { ChannelSelector.shizukuLabel(it) }
-            ?: ch?.let { ControlStatus.label(it, wdOn) } ?: ctx.getString(R.string.store_bar_channel_checking)
+        val chLabel = ch?.let { ControlStatus.label(it) } ?: ctx.getString(R.string.store_bar_channel_checking)
         Button(chLabel,
             when (ch?.state) { ControlStatus.Channel.UP -> Ink.GREEN_FILL; ControlStatus.Channel.DOWN -> AMBER
                 ControlStatus.Channel.NOT_PAIRED -> RED_FILL; null -> Ink.GREY_FILL },
-            { AdbShellLink.open(ctx, ch?.takeIf { it.state != ControlStatus.Channel.UP && it.shizuku == null }
-                ?.let { ControlStatus.channelAction(it, wdOn) }) }, modifier, itemTag(Item.WIRELESS_DEBUG))
+            { if (ch?.state != ControlStatus.Channel.UP) StoreShell.arm(ctx) }, modifier, itemTag(Item.WIRELESS_DEBUG))
     }
 
     private const val CHANNEL_RECHECK_MS = 15_000L

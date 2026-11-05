@@ -24,8 +24,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
-import com.diegonmarcos.superapp.adbdebug.ShellChannel
-import com.diegonmarcos.superapp.adbdebug.ShellChannels
 import com.diegonmarcos.superapp.uikit.KitAction
 import com.diegonmarcos.superapp.uikit.KitActionBar
 import com.diegonmarcos.superapp.uikit.KitCard
@@ -87,7 +85,7 @@ fun AccountPermsPage(go: (section: String, page: String) -> Unit) {
             KitCard(Modifier.fillMaxWidth()) {
                 val ch = channel
                 if (ch == null) {
-                    KitListRow("No shell channel", secondary = "Grant all needs one: open ADB Shell and press Connect",
+                    KitListRow("No shell channel", secondary = "Grant all needs one: arm the shell broker in the SuperApp",
                         pill = "none" to KitState.BAD, tag = "perms:channel")
                     KitActionBar(listOf(KitAction("Open ADB Shell", PermsPageTags.NO_CHANNEL) { go("setup", "adb-shell") }))
                 } else KitListRow("Shell channel", secondary = ch.name(), pill = "ready" to KitState.OK, tag = "perms:channel")

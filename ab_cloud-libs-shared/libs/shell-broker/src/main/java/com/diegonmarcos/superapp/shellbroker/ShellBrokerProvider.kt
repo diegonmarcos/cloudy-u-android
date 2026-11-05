@@ -6,6 +6,7 @@ import android.database.Cursor
 import android.net.Uri
 import android.os.Binder
 import android.os.Bundle
+import android.os.ParcelFileDescriptor
 import com.diegonmarcos.superapp.shellclient.ShellResult
 import com.diegonmarcos.superapp.shellclient.ShellWire
 
@@ -22,6 +23,7 @@ class ShellBrokerProvider : ContentProvider() {
         val uid = Binder.getCallingUid()
         if (!CallerId.permitted(ctx, uid)) return reply(ShellWire.encode(ShellResult.Denied("signature permission missing")))
         if (method == ShellWire.M_STATUS) return reply(ShellWire.encodeStatus(ShellBroker.status(ctx)))
+        if (method == ShellWire.M_EXEC_STDIN) return execStdin(ctx, uid, arg.orEmpty(), extras)
         val viaJson = method == ShellWire.M_EXEC_JSON || method == ShellWire.M_STREAM_JSON
         if (method != ShellWire.M_EXEC && method != ShellWire.M_STREAM && !viaJson) return null
         val caller = CallerId.of(ctx, uid, callingPackage) ?: return reply(ShellWire.encode(ShellResult.Denied("unknown caller")))
@@ -37,6 +39,18 @@ class ShellBrokerProvider : ContentProvider() {
             max = o.optInt("maxBytes", max)
         }
         return reply(ShellWire.encode(ShellBroker.exec(ctx, caller, cmd, timeout, max.coerceIn(1, ShellWire.EXEC_MAX_BYTES))))
+    }
+
+    /** #1512 The stdin door: the command is the arg, the input a ParcelFileDescriptor extra of [ShellWire.K_STDIN_SIZE] bytes. */
+    private fun execStdin(ctx: android.content.Context, uid: Int, cmd: String, extras: Bundle?): Bundle {
+        val caller = CallerId.of(ctx, uid, callingPackage) ?: return reply(ShellWire.encode(ShellResult.Denied("unknown caller")))
+        @Suppress("DEPRECATION")
+        val pfd = runCatching { extras?.getParcelable<ParcelFileDescriptor>(ShellWire.K_STDIN_FD) }.getOrNull()
+            ?: return reply(ShellWire.encode(ShellResult.Denied("no input descriptor")))
+        val size = extras?.getString(ShellWire.K_STDIN_SIZE)?.toLongOrNull() ?: -1L
+        val timeout = extras?.getString(ShellWire.K_TIMEOUT)?.toLongOrNull() ?: ShellWire.STDIN_DEFAULT_TIMEOUT_MS
+        val r = ParcelFileDescriptor.AutoCloseInputStream(pfd).use { ShellBroker.execStdin(ctx, caller, cmd, it, size, timeout) }
+        return reply(ShellWire.encode(r))
     }
 
     /** The client reads `json`; the Cloud-Webserver bridge reads `ok` / `mime` / `payload` (the same shape every fleet provider answers). */

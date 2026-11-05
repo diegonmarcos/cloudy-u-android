@@ -246,7 +246,7 @@ class MainActivity : AppCompatActivity() {
                 // #1438 moved here from Configs > Android.
                 "push" -> FleetSetupPage(model)
                 "perms" -> AccountPermsPage(go)
-                "adb-shell" -> Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) { com.diegonmarcos.superapp.adbdebug.AdbShellPage() }
+                "adb-shell" -> Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) { ShellBrokerPanel() }
                 "drive" -> DriveSetupPage()
                 "hub" -> AuthProvidersPage()
                 "signin" -> AccountConnectPage()

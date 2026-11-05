@@ -51,7 +51,7 @@
         "libs:ui-icons",
         "libs:ui-nav-bars",
         "libs:theme-background",
-        "libs:shizuku-adb-debug-tools",
+        "libs:shell-client",
         "libs:autofill",
         "libs:account-ui"
       ]
@@ -64,19 +64,16 @@
       "dir": "../ab_cloud-libs-shared/libs/devtools",
       "type": "library"
     },
-    "libs:shizuku-adb-debug-tools": {
-      "dir": "../ab_cloud-libs-shared/libs/shizuku-adb-debug-tools",
-      "type": "library",
-      "depends_on": [
-        "libs:core"
-      ]
+    "libs:shell-client": {
+      "_doc_dir": "#1512 THE thin client of the SuperApp's shell broker (libs:shell-broker): silent installs and the self-update (stdin door), Play Protect, grants, force-stop. No channel, pairing, service or boot hook of its own.",
+      "dir": "../ab_cloud-libs-shared/libs/shell-client",
+      "type": "library"
     },
     "libs:updater": {
       "dir": "../ab_cloud-libs-shared/libs/updater",
       "type": "library",
       "depends_on": [
-        "libs:core",
-        "libs:shizuku-adb-debug-tools"
+        "libs:core"
       ]
     },
     "libs:usb-drive": {"dir": "../ab_cloud-libs-shared/libs/usb-drive", "type": "library", "depends_on": [], "comment": "#1375/#1405 USB-C drives (StorageVolumes, UsbVolumeModel, RawUsbDrive, libaums), shared with Cloud Drive by reference; libs:appstore's Ventoy tab reads drives through it."},
@@ -87,7 +84,7 @@
         "libs:core",
         "libs:usb-drive",
         "libs:updater",
-        "libs:shizuku-adb-debug-tools",
+        "libs:shell-client",
         "libs:ui-kit",
         "libs:shared-store"
       ]
@@ -165,7 +162,7 @@
         "libs:ui-kit",
         "libs:auth",
         "libs:bottomnav",
-        "libs:shizuku-adb-debug-tools"
+        "libs:shell-client"
       ]
     },
     "libs:ui-nav-bars": {
@@ -216,61 +213,6 @@
       "_doc": "#1445 the Auto Commit message core GitConnect commits with.",
       "dir": "../ab_cloud-libs-shared/libs/git-repos",
       "type": "library"
-    }
-  },
-  "shizuku_client": {
-    "_doc": "Cloud Account's OWN privileged shell channel (account redesign, spec section 2.4: Account is the first app on an empty phone, so it pairs first and then installs Cloud Store through pm install). Declared as Cloud Store's: the embedded wireless-adb client leads, the stock Shizuku app is the one fallback provider. SuperApp's bridge is not listed: Account must work before SuperApp exists. Read by libs/shizuku-adb-debug-tools/build.gradle (BuildConfig.SHIZUKU_CLIENT_B64).",
-    "providers": [
-      "moe.shizuku.privileged.api",
-      "com.diegonmarcos.superapp"
-    ]
-  },
-  "privileged_channel": {
-    "default_on": true,
-    "_default_on_doc": "Cloud Account keeps arming the channel by itself, as before (SuperApp is the app that defaults off). Read by libs/shizuku-adb-debug-tools ChannelAutoArm.",
-    "_doc": "What THIS app declares it needs the privileged shell channel for. Read by libs/shizuku-adb-debug-tools/build.gradle into BuildConfig.CHANNEL_NEEDS_B64 and listed, as written, in the Declared needs section of the ADB Shell page (libs:shizuku-adb-debug-tools AdbShellPage). Add a need here and it shows there; nothing about it is typed in Kotlin. Each need: id (unique), label, why (one sentence), commands (the shell verbs it runs).",
-    "needs": [
-      {
-        "id": "install-store",
-        "label": "Install Cloud Store",
-        "why": "Account is the first app on an empty phone: it installs Cloud Store through pm install.",
-        "commands": [
-          "pm install",
-          "pm install-write"
-        ]
-      },
-      {
-        "id": "perms-grant",
-        "label": "Profile permissions",
-        "why": "Setup > Perms applies the working profile's permissions to every app.",
-        "commands": [
-          "pm grant"
-        ]
-      },
-      {
-        "id": "appops",
-        "label": "App-ops",
-        "why": "Applies the profile's app-ops that a runtime grant does not cover.",
-        "commands": [
-          "appops set"
-        ]
-      },
-      {
-        "id": "wireless-keepalive",
-        "label": "Keep wireless debugging on",
-        "why": "Grants WRITE_SECURE_SETTINGS to itself so wireless debugging comes back after a reboot.",
-        "commands": [
-          "pm grant"
-        ]
-      }
-    ]
-  },
-  "shizuku_diagnostics": {
-    "_doc": "Only the per-app local server identity. Without this block the lib falls back to the shared block whose app_process server binds 38099 (SuperApp's); Cloud Store holds 38098. Two apps on one port means the second silently fails to bind, so Account takes 38097 (free in 1_cicd/src/data/debug-ports.json, which starts at 38139 for debug APIs).",
-    "bundles": [],
-    "local_server": {
-      "port": 38097,
-      "nice_name": "cloudaccount-adb"
     }
   },
   "release": {

@@ -16,8 +16,7 @@ import android.provider.Settings
 import android.provider.Telephony
 import android.service.notification.NotificationListenerService
 import android.telecom.TelecomManager
-import com.diegonmarcos.superapp.adbdebug.PackageVerifier
-import com.diegonmarcos.superapp.adbdebug.ShellChannel
+import com.diegonmarcos.superapp.appstore.StorePlayProtect
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -94,7 +93,7 @@ object PermsPlan {
             Status.GRANTED -> "✓ ${item.pkg} ${item.name} granted (re-read)"
             Status.ALREADY -> "✓ ${item.pkg} ${item.name} already"
             Status.NEEDS_USER -> "✋ ${item.pkg} ${item.name} needs the user: $detail"
-            Status.NO_CHANNEL -> "✗ ${item.pkg} ${item.name}: no shell channel — open Setup ▸ ADB Shell and Connect"
+            Status.NO_CHANNEL -> "✗ ${item.pkg} ${item.name}: no shell channel — arm the shell broker in the SuperApp"
             Status.FAILED -> "✗ ${item.pkg} ${item.name}: $detail"
         }
     }
@@ -244,7 +243,7 @@ object PermsPlan {
                     ?: localRoleHolder(ctx, short)?.let { it == item.pkg }
             }
             Kind.BATTERY -> runCatching { ctx.getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(item.pkg) }.getOrNull()
-            Kind.VERIFIER -> runCatching { PackageVerifier.state(ctx).on == (item.arg == "on") }.getOrNull()
+            Kind.VERIFIER -> runCatching { StorePlayProtect.state(ctx).on == (item.arg == "on") }.getOrNull()
             Kind.USER -> when (item.name) {
                 DEVICE_ADMIN -> runCatching { ctx.getSystemService(DevicePolicyManager::class.java).activeAdmins
                     ?.any { it.packageName == item.pkg } ?: false }.getOrNull()
@@ -320,7 +319,7 @@ object PermsPlan {
         if (item.kind == Kind.USER) return Line(item, Status.NEEDS_USER, "open Settings (${item.arg})")
         val verb = decl.verbs[item.kind.id] ?: return Line(item, Status.FAILED, "no shell verb declared for ${item.kind.id}")
         if (item.kind == Kind.VERIFIER) {
-            val r = PackageVerifier.setScanning(ctx, item.arg == "on")
+            val r = StorePlayProtect.setScanning(ctx, item.arg == "on")
             val after = read(ctx, item, channel)
             return if (after == true) Line(item, Status.GRANTED, r.channel)
                    else Line(item, Status.FAILED, "$verb did not take (${r.state.describe()})")

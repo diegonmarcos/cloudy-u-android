@@ -239,7 +239,7 @@ Coverage: 4 covered, 0 gaps.
 
 ## cloud-account — `com.diegonmarcos.cloudaccount`
 
-Module `ac_cloud-account`; libs: lib-account, lib-account-ui, lib-appstore, lib-auth, lib-autofill, lib-bottomnav, lib-core, lib-crash, lib-databackend, lib-decisions-link, lib-devtools, lib-fleet-endpoints, lib-fleet-endpoints-android, lib-fleetconfig-model, lib-git-core, lib-git-repos, lib-git-sync, lib-git-ui, lib-mail, lib-net, lib-perms, lib-shared-store, lib-shizuku-adb-debug-tools, lib-text-tools, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-usb-drive, lib-web-core.
+Module `ac_cloud-account`; libs: lib-account, lib-account-ui, lib-appstore, lib-auth, lib-autofill, lib-bottomnav, lib-core, lib-crash, lib-databackend, lib-decisions-link, lib-devtools, lib-fleet-endpoints, lib-fleet-endpoints-android, lib-fleetconfig-model, lib-git-core, lib-git-repos, lib-git-sync, lib-git-ui, lib-mail, lib-net, lib-perms, lib-shared-store, lib-shell-client, lib-text-tools, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-usb-drive, lib-web-core.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -247,7 +247,6 @@ Module `ac_cloud-account`; libs: lib-account, lib-account-ui, lib-appstore, lib-
 | `account_data_migration` | prefs | device | no | #867 whether this app has already copied the imported configs, profile and S/R/L account files over from the Cloud Account app. It records this phone's progress, never configuration. |
 | `account_foreground` | prefs | device | no | #1502 Cloud Account's foreground auto-backup clock: when the last successful auto-backup ran, so the next one is due a day later; per-install, never migrates. |
 | `account_migrate` | prefs | device | no | #783 the new-phone migration journal: per app, the hash of the declared copy applied and its outcome, so a re-run resumes. It describes this phone's progress, never configuration. |
-| `adb_shell` | prefs | device | no | Per-install random token shared with the local adb shell server (install identity), the flag that this install was ever paired with Wireless Debugging (drives the Cloud Store channel control: not paired vs down), and channel_mode, the owner's Privileged channel choice (local \| embedded \| shizuku \| auto; default local where the app owns a local server). |
 | `apps_mesh` | prefs | config | yes | #793 the Apps Mesh page's chosen chip filter (`filter`): which members the page shows first. A view preference, so it moves with the phone; the probe cache itself is a cacheDir file and never migrates. |
 | `auto_update` | prefs | config (keys: last_check_at→device, last_remote_bytes→device, last_remote_digest→device, unattended_pass→device) | yes | Auto-update toggles (enabled, require_silent/unmetered) are settings; last_check/remote digest/bytes/unattended_pass are state. |
 | `autofill_sot` | prefs | config (keys: next_id→device) | yes | The non-secret autofill Source of Truth Cloud Account owns (a0_docs/eng-specs/autofill-3-tier.md): profiles_json (names, emails, phones, postal addresses), rules_json (per-site form mapping rules), snippets_json (keyboard snippets), next_id. Served to Cloud Browser and Cloud Keyboard by AutofillSotProvider behind AUTOFILL_PROFILE_READ/WRITE. Never a password, code or card: there is no column for one. |
@@ -284,7 +283,6 @@ Module `ac_cloud-account`; libs: lib-account, lib-account-ui, lib-appstore, lib-
 | `updater_apk_cache_notes` | prefs | device | no | Notes about cached downloaded APKs. |
 | `user_registry` | prefs | config (keys: applied_at→device, peer_id→device) | yes | Registry JSON, identity_email and peer_id: user identity/peer registry applied on this device. |
 | `vault_cockpit` | prefs | device | no | Only holds this phone's device_id used in the vault cockpit. |
-| `wd_keeper` | prefs | device | no | #1467 Keep wireless debugging on: the shared keeper's armed flag, write-permission flag and leader heartbeat; per-install state the keeper rebuilds from each app's switch, so it never migrates. |
 
 | file | class | doc |
 |---|---|---|
@@ -980,12 +978,11 @@ Coverage: 8 covered, 1 gaps — file:data/sources.json, topics.json (bundled) an
 
 ## cloud-terminal-nix — `cld.termux.nix`
 
-Module `ac_cloud-nix-on-droid`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtools, lib-fleetconfig-model, lib-perms, lib-shizuku-adb-debug-tools, lib-sysdns, lib-theme-background, lib-ui-icons, lib-ui-nav-bars.
+Module `ac_cloud-nix-on-droid`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtools, lib-fleetconfig-model, lib-perms, lib-shell-client, lib-sysdns, lib-theme-background, lib-ui-icons, lib-ui-nav-bars.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
 | `<default>` | prefs | config (keys: accountBiometricIntegrityValid→device, addActionCount→device, addSitePromptShown→device, app_shell_number_since_boot→device, bg_startup_tracing→device, biometricIntegritySource→device, browserAutofillDialogReshowTime→device, copyActionCount→device, crashLoggingEnabled→device, createActionCount→device, current_session→device, hasShownAccessibilityDisclaimer→device, hasUserLoggedInOrCreatedAccount→device, isVaultRegisteredForExport→device, last_notification_id→device, resumeScreen→device, shouldShowAddLoginCoachMark→device, shouldShowGeneratorCoachMark→device, showAutofillSettingBadge→device, showBrowserAutofillSettingBadge→device, showImportLoginsSettingBadge→device, showUnlockSettingBadge→device, terminal_session_number_since_boot→device, translate_recent_pairs→device, vaultLastSyncTime→device) | yes | The app's default SharedPreferences (<package>_preferences): HeliBoard keyboard settings (libs:keyboard), translate settings (libs:translate), the vault's bwPreferencesStorage keys, and the terminals' settings (Termux TermuxAppSharedPreferences: fontsize, log_level, extra keys, soft keyboard, screen-on; the session cursor, notification id and per-boot counters are device). Element X keeps only DI scaffolding here (device). bg_startup_tracing is the WebView's own startup-tracing flag, written into any app that hosts a WebView (device). Device for apps whose current code reads none of it: mail (the FairEmail-era settings the Sterna clone, 8b7ca107d, never reads — migrating them would only plant dead keys), notes (an intro-shown marker only) and office (the asset-extraction commit marker only). |
-| `adb_shell` | prefs | device | no | Per-install random token shared with the local adb shell server (install identity), the flag that this install was ever paired with Wireless Debugging (drives the Cloud Store channel control: not paired vs down), and channel_mode, the owner's Privileged channel choice (local \| embedded \| shizuku \| auto; default local where the app owns a local server). |
 | `agent-auth` | prefs | secret | yes | #790 the agent CLIs' credentials in each terminal, keyed by the environment variable each CLI reads (CLAUDE_CODE_OAUTH_TOKEN for claude, OPENROUTER_API_KEY for goose and hermes). Configs ▸ Account imports it from the declared profile (settings › termux\|nix-on-droid › agent-auth, derived from ai › tokens by the cockpit's agent_auth map); AgentAuth.java writes it on every start to $HOME/<ab_cloud-terminal-store/store.json::agent_auth.env_file> (0600), which login-init.sh sources into every session. |
 | `cloud_wake_lock` | prefs | config (keys: battery_exemption_asked→device) | yes | #787 the terminal session wake lock: 'wanted' is the notification toggle (ON until the user turns it off; default build.json::wake_lock.default_on); battery_exemption_asked records that the one-time battery-optimization prompt was shown, so a new phone asks again. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
@@ -997,7 +994,6 @@ Module `ac_cloud-nix-on-droid`; libs: lib-bottomnav, lib-core, lib-crash, lib-de
 | `perm_ask_tracker` | prefs | device | no | Set of permissions already asked on this install; permission-asked tracker. #1274 libs:perms PermAskLog shares it with the app's PermAskTracker (one record of what was asked). |
 | `safe_encrypted_prefs_reset` | prefs | device | no | #1106 which encrypted prefs files SafeEncryptedPrefs had to reset (a Keystore master key that no longer matches the file, after a shared-uid migration or a restored backup), so the app can tell the user to sign in again until they acknowledge it. Describes this phone's Keystore, never configuration. |
 | `store_notify` | prefs | config | yes | Cloud Store > Configs > Notifications: which Store messages (update available, install done, failures) are posted on which channel (system notification, in-app feed); the owner's switches, everything on until turned off, so it moves with the phone. |
-| `wd_keeper` | prefs | device | no | #1467 Keep wireless debugging on: the shared keeper's armed flag, write-permission flag and leader heartbeat; per-install state the keeper rebuilds from each app's switch, so it never migrates. |
 
 | file | class | doc |
 |---|---|---|
@@ -1094,11 +1090,10 @@ Coverage: 6 covered, 4 gaps — search_agents_state, search_chat_sessions, file:
 
 ## cloud-store — `com.diegonmarcos.cloudstore`
 
-Module `ac_cloud-store`; libs: lib-ai, lib-appstore, lib-bottomnav, lib-core, lib-crash, lib-decisions-link, lib-devtools, lib-fleetconfig-model, lib-model-catalogue, lib-perms, lib-shared-store, lib-shizuku-adb-debug-tools, lib-sysdns, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-usb-drive.
+Module `ac_cloud-store`; libs: lib-ai, lib-appstore, lib-bottomnav, lib-core, lib-crash, lib-decisions-link, lib-devtools, lib-fleetconfig-model, lib-model-catalogue, lib-perms, lib-shared-store, lib-shell-client, lib-sysdns, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-usb-drive.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
-| `adb_shell` | prefs | device | no | Per-install random token shared with the local adb shell server (install identity), the flag that this install was ever paired with Wireless Debugging (drives the Cloud Store channel control: not paired vs down), and channel_mode, the owner's Privileged channel choice (local \| embedded \| shizuku \| auto; default local where the app owns a local server). |
 | `ai_composer` | prefs | config | yes | The shared AI chat's config bar: whether it is collapsed to its one compact chip, one boolean per app (key ai_composer_collapsed.<app>). A user layout choice, so it migrates with the app's settings. |
 | `apps_mesh` | prefs | config | yes | #793 the Apps Mesh page's chosen chip filter (`filter`): which members the page shows first. A view preference, so it moves with the phone; the probe cache itself is a cacheDir file and never migrates. |
 | `auto_update` | prefs | config (keys: last_check_at→device, last_remote_bytes→device, last_remote_digest→device, unattended_pass→device) | yes | Auto-update toggles (enabled, require_silent/unmetered) are settings; last_check/remote digest/bytes/unattended_pass are state. |
@@ -1128,18 +1123,16 @@ Module `ac_cloud-store`; libs: lib-ai, lib-appstore, lib-bottomnav, lib-core, li
 | `update_checks` | prefs | device | no | #1078 Cloud Store: whether the one-time battery-optimization prompt has been shown on this phone; a prompt marker, never migrated (the new phone asks once itself). |
 | `updater_advisory` | prefs | device | no | Update advisory feed, snooze/shown/fail state per app. |
 | `updater_apk_cache_notes` | prefs | device | no | Notes about cached downloaded APKs. |
-| `wd_keeper` | prefs | device | no | #1467 Keep wireless debugging on: the shared keeper's armed flag, write-permission flag and leader heartbeat; per-install state the keeper rebuilds from each app's switch, so it never migrates. |
 
 Coverage: 12 covered, 0 gaps.
 
 ## cloud-terminal-termux — `cld.termux`
 
-Module `ac_cloud-termux`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtools, lib-fleetconfig-model, lib-perms, lib-shizuku-adb-debug-tools, lib-sysdns, lib-theme-background, lib-ui-icons, lib-ui-nav-bars.
+Module `ac_cloud-termux`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtools, lib-fleetconfig-model, lib-perms, lib-shell-client, lib-sysdns, lib-theme-background, lib-ui-icons, lib-ui-nav-bars.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
 | `<default>` | prefs | config (keys: accountBiometricIntegrityValid→device, addActionCount→device, addSitePromptShown→device, app_shell_number_since_boot→device, bg_startup_tracing→device, biometricIntegritySource→device, browserAutofillDialogReshowTime→device, copyActionCount→device, crashLoggingEnabled→device, createActionCount→device, current_session→device, hasShownAccessibilityDisclaimer→device, hasUserLoggedInOrCreatedAccount→device, isVaultRegisteredForExport→device, last_notification_id→device, resumeScreen→device, shouldShowAddLoginCoachMark→device, shouldShowGeneratorCoachMark→device, showAutofillSettingBadge→device, showBrowserAutofillSettingBadge→device, showImportLoginsSettingBadge→device, showUnlockSettingBadge→device, terminal_session_number_since_boot→device, translate_recent_pairs→device, vaultLastSyncTime→device) | yes | The app's default SharedPreferences (<package>_preferences): HeliBoard keyboard settings (libs:keyboard), translate settings (libs:translate), the vault's bwPreferencesStorage keys, and the terminals' settings (Termux TermuxAppSharedPreferences: fontsize, log_level, extra keys, soft keyboard, screen-on; the session cursor, notification id and per-boot counters are device). Element X keeps only DI scaffolding here (device). bg_startup_tracing is the WebView's own startup-tracing flag, written into any app that hosts a WebView (device). Device for apps whose current code reads none of it: mail (the FairEmail-era settings the Sterna clone, 8b7ca107d, never reads — migrating them would only plant dead keys), notes (an intro-shown marker only) and office (the asset-extraction commit marker only). |
-| `adb_shell` | prefs | device | no | Per-install random token shared with the local adb shell server (install identity), the flag that this install was ever paired with Wireless Debugging (drives the Cloud Store channel control: not paired vs down), and channel_mode, the owner's Privileged channel choice (local \| embedded \| shizuku \| auto; default local where the app owns a local server). |
 | `agent-auth` | prefs | secret | yes | #790 the agent CLIs' credentials in each terminal, keyed by the environment variable each CLI reads (CLAUDE_CODE_OAUTH_TOKEN for claude, OPENROUTER_API_KEY for goose and hermes). Configs ▸ Account imports it from the declared profile (settings › termux\|nix-on-droid › agent-auth, derived from ai › tokens by the cockpit's agent_auth map); AgentAuth.java writes it on every start to $HOME/<ab_cloud-terminal-store/store.json::agent_auth.env_file> (0600), which login-init.sh sources into every session. |
 | `cloud_wake_lock` | prefs | config (keys: battery_exemption_asked→device) | yes | #787 the terminal session wake lock: 'wanted' is the notification toggle (ON until the user turns it off; default build.json::wake_lock.default_on); battery_exemption_asked records that the one-time battery-optimization prompt was shown, so a new phone asks again. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
@@ -1151,7 +1144,6 @@ Module `ac_cloud-termux`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtools
 | `perm_ask_tracker` | prefs | device | no | Set of permissions already asked on this install; permission-asked tracker. #1274 libs:perms PermAskLog shares it with the app's PermAskTracker (one record of what was asked). |
 | `safe_encrypted_prefs_reset` | prefs | device | no | #1106 which encrypted prefs files SafeEncryptedPrefs had to reset (a Keystore master key that no longer matches the file, after a shared-uid migration or a restored backup), so the app can tell the user to sign in again until they acknowledge it. Describes this phone's Keystore, never configuration. |
 | `store_notify` | prefs | config | yes | Cloud Store > Configs > Notifications: which Store messages (update available, install done, failures) are posted on which channel (system notification, in-app feed); the owner's switches, everything on until turned off, so it moves with the phone. |
-| `wd_keeper` | prefs | device | no | #1467 Keep wireless debugging on: the shared keeper's armed flag, write-permission flag and leader heartbeat; per-install state the keeper rebuilds from each app's switch, so it never migrates. |
 
 | file | class | doc |
 |---|---|---|

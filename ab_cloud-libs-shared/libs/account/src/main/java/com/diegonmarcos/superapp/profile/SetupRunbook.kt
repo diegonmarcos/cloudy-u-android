@@ -5,11 +5,6 @@ import android.content.Context
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.os.Build
-import com.diegonmarcos.superapp.adbdebug.AdbShellLink
-import com.diegonmarcos.superapp.adbdebug.HostShell
-import com.diegonmarcos.superapp.adbdebug.ShellChannel
-import com.diegonmarcos.superapp.adbdebug.ShellChannels
-import com.diegonmarcos.superapp.adbdebug.WirelessDebugging
 import com.diegonmarcos.superapp.appstore.AppInventory
 import com.diegonmarcos.superapp.appstore.BuildConfig
 import com.diegonmarcos.superapp.appstore.PhoneAppActions
@@ -278,40 +273,17 @@ class SetupRunbook(private val ctx: Context) {
 
     private fun checkShell(): State {
         val ch = ShellChannels.active(ctx)
-        if (ch != null) return State.Already("channel ${ch.name()} up; ${grantLine()}")
-        return State.Todo(
-            if (WirelessDebugging.isOn(ctx)) "Wireless debugging on, no channel (not paired yet, or keys did not reconnect)"
-            else "Wireless debugging off, no channel")
+        if (ch != null) return State.Already("channel ${ch.name()} up")
+        return State.Todo("the SuperApp's shell broker is not armed: ${ShellChannels.status(ctx)}")
     }
 
     private fun runShell(): State {
-        ShellChannels.active(ctx)?.let { ch ->
-            selfGrant(ch)
-            return State.Already("channel ${ch.name()} up; ${grantLine()}")
-        }
-        // Stored keys from an earlier pairing: one reconnect (turns Wireless debugging on first when we may).
-        val (ok, msg) = HostShell.reconnect(ctx, 1)
-        if (ok) {
-            ShellChannels.active(ctx)?.let { selfGrant(it) }
-            return State.Done("reconnected with the stored pairing ($msg); ${grantLine()}")
-        }
-        // Connecting is ONE page's job (ADB Shell: pair, connect, start the server, the logs): the
-        // runbook opens it rather than carrying a second pairing flow, and picks up once a channel is up.
-        AdbShellLink.open(ctx)
-        return State.Running("ADB Shell is open: press Connect there (Wireless debugging on, then pair with the code " +
-            "typed into the notification). The channel and the WRITE_SECURE_SETTINGS self-grant follow on their own.")
+        ShellChannels.active(ctx)?.let { return State.Already("channel ${it.name()} up") }
+        // #1512 The channel belongs to the SuperApp's broker: the runbook opens its arm flow rather than carrying a pairing flow of its own,
+        // and picks up once the broker answers armed.
+        com.diegonmarcos.superapp.shellclient.ShellClient.arm(ctx)
+        return State.Running("The SuperApp's arm flow is open: switch Wireless debugging on and pair there. This step is done once the broker answers armed.")
     }
-
-    /** `pm grant <self> WRITE_SECURE_SETTINGS` over the live channel, so adb_wifi_enabled survives a reboot. */
-    private fun selfGrant(ch: ShellChannel) {
-        if (HostShell.canWriteSecureSettings(ctx)) return
-        runCatching { ch.exec(ctx, com.diegonmarcos.superapp.perms.PermsShell.grant(ctx.packageName, "android.permission.WRITE_SECURE_SETTINGS") + " 2>&1") }
-        HostShell.keepWirelessDebuggingOn(ctx)
-    }
-
-    private fun grantLine() =
-        if (HostShell.canWriteSecureSettings(ctx)) "WRITE_SECURE_SETTINGS held (Wireless debugging re-armed at boot)"
-        else "WRITE_SECURE_SETTINGS not held (Wireless debugging will not come back after a reboot)"
 
     // ── store ────────────────────────────────────────────────────────────
 

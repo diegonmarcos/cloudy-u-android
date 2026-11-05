@@ -11,11 +11,11 @@ plugins {
 
 // build.json::tests.unit.task. The test engine takes ONE task name, so the suites this app owns hang off one:
 //  - :libs:bottomnav            the top bar, the page strip and the Configs menu over the declared pages (Robolectric)
-//  - :libs:shizuku-adb-debug-tools  per-app ADB identity (store vs superapp) and the per-app state scope
+//  - :libs:shell-client         the broker client: the stdin door's size limits and the rish relay (#1512)
 //  - :libs:core                 the Store notification matrix behind Configs > Notifications
 // A sibling lib's suite stays out so it cannot turn this release red.
 tasks.register('storeUnitTests') {
     group = 'verification'
     description = 'Unit suites the Cloud Store ship runs (see build.json::tests.unit).'
-    dependsOn ':libs:bottomnav:testDebugUnitTest', ':libs:shizuku-adb-debug-tools:testDebugUnitTest', ':libs:core:testDebugUnitTest', ':libs:appstore:testDebugUnitTest', ':app:testDebugUnitTest'
+    dependsOn ':libs:bottomnav:testDebugUnitTest', ':libs:shell-client:testDebugUnitTest', ':libs:core:testDebugUnitTest', ':libs:appstore:testDebugUnitTest', ':app:testDebugUnitTest'
 }

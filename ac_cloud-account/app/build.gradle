@@ -249,8 +249,7 @@ dependencies {
     implementation project(':libs:bottomnav')
     implementation project(':libs:ui-nav-bars')
     implementation project(':libs:theme-background')
-    // HostShell: Account's own uid-2000 channel (embedded adb pairing, Shizuku fallback), as Cloud Store has.
-    implementation project(':libs:shizuku-adb-debug-tools')
+    implementation project(':libs:shell-client')   // #1512 the SuperApp's shell broker (thin client; installs over its stdin door)
     implementation project(':libs:updater')
     implementation project(':libs:appstore')   // StoreImport: the inventory Apply-to-Store hands to Cloud Store (#570)
     implementation project(':libs:devtools')   // AppDebugServer: the /api/account/... routes

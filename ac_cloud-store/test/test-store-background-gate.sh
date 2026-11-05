@@ -3,7 +3,7 @@
 # wakes (owner rule). Static, no build, no device. The pure rule is libs:core BackgroundPolicyTest.
 #  S1 every periodic / delayed WorkRequest of the Store passes (Updater, ConstellationWorker) takes its network type from
 #     BackgroundGate (UNMETERED in Store) and is cancelled when auto-update is off
-#  S2 no receiver, no sticky service, no boot hook of the Store's own; HostShell is gated on BackgroundGate.mayRun
+#  S2 no receiver, no sticky service, no boot hook of the Store's own; #1512 it arms no shell channel of its own (the SuperApp's broker is reached per call)
 #  S3 workers re-check the gate when they run (an older build's persisted job ends there)
 set -u
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -41,7 +41,7 @@ for root, _, files in os.walk(os.path.join(R, "ac_cloud-store/app/src/main")):
             if "START_STICKY" in s.replace("START_NOT_STICKY", "") or "AlarmManager" in s: bad.append(f)
 ok(not bad, "S2 no sticky service or alarm in the Store sources", "S2 " + ", ".join(bad))
 app = code("ac_cloud-store/app/src/main/java/com/diegonmarcos/cloudstore/App.kt")
-ok("HostShell.backgroundAllowed = { com.diegonmarcos.superapp.updater.BackgroundGate.mayRun(it) }" in app and app.index("backgroundAllowed") < app.index("CloudStoreShell.install"), "S2 the Store gates HostShell on BackgroundGate.mayRun before arming it", "S2 the Store's HostShell is not gated")
+ok("HostShell" not in app and "adbdebug" not in app and "CloudStoreShell" not in app, "S2 the Store arms no shell channel of its own (no keep-alive service, no re-arm job)", "S2 the Store names HostShell / CloudStoreShell again")
 uw = code(L + "updater/src/main/java/com/diegonmarcos/superapp/updater/UpdateWorker.kt")
 ok("!force && !BackgroundGate.mayRun(applicationContext)" in uw and "BackgroundGate.mayRun(applicationContext)" in cw, "S3 both workers re-check the gate when they run", "S3 a worker runs without the gate")
 bp = code(L + "core/src/main/java/com/diegonmarcos/superapp/core/BackgroundPolicy.kt")

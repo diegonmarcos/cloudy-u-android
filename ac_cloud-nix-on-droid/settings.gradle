@@ -6,7 +6,7 @@ include ':app', ':termux-shared', ':terminal-emulator', ':terminal-view', ':root
 // SuperApp and every sibling cannot see or reach this terminal. devtools is not
 // optional: core declares `api project(':libs:devtools')`, which resolves
 // against THIS settings file. Shared BY REFERENCE, never copied.
-include ':libs:core', ':libs:devtools', ':libs:shizuku-adb-debug-tools'
+include ':libs:core', ':libs:devtools', ':libs:shell-client'
 project(':libs').projectDir = new File(rootDir, '../ab_cloud-libs-shared/libs')
 project(':libs:core').projectDir = new File(rootDir, '../ab_cloud-libs-shared/libs/core')
 project(':libs:devtools').projectDir = new File(rootDir, '../ab_cloud-libs-shared/libs/devtools')
@@ -16,11 +16,9 @@ project(':libs:fleetconfig-model').projectDir = new File(rootDir, '../ab_cloud-l
 // #1122 libs:core declares `api project(':libs:crash')` (the default crash handler and screen): the include is not optional.
 include ':libs:crash'
 project(':libs:crash').projectDir = new File(rootDir, '../ab_cloud-libs-shared/libs/crash')
-// #<shizuku-client> the Shizuku-client + rish-bridge lib, shared BY REFERENCE. It
-// reads THIS app's build.json::shizuku_client at build time (BuildConfig) and its
-// RishBridge/SuperappBridgeChannel run at launch + enter time.
-project(':libs:shizuku-adb-debug-tools').projectDir = new File(rootDir, '../ab_cloud-libs-shared/libs/shizuku-adb-debug-tools')
-// #1274 libs:shizuku-adb-debug-tools compiles libs:perms (PermsShell: the one place a pm grant line is written): the include is not optional.
+// #1512 the SuperApp's shell broker client + the rish relay, shared BY REFERENCE (no project dependency of its own).
+project(':libs:shell-client').projectDir = new File(rootDir, '../ab_cloud-libs-shared/libs/shell-client')
+// #1274 libs:perms (PermsShell: the one place a pm grant line is written): kept included, the Compose libs below may link it.
 include ':libs:perms'
 project(':libs:perms').projectDir = new File(rootDir, '../ab_cloud-libs-shared/libs/perms')
 // #1352 Configs ▸ General / ▸ About (libs:ui-nav-bars, in the terminal's menu) and its deps.

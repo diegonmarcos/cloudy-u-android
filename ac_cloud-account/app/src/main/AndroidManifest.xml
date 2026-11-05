@@ -10,16 +10,14 @@
     <!-- The Fleet tab reads the installed version of every constellation package. -->
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
         tools:ignore="QueryAllPackagesPermission" />
-    <!-- Account redesign (spec 2.4): Account's OWN uid-2000 channel, as Cloud Store has it (#894).
-         mDNS discovery of the phone's Wireless debugging, the pairing service held in the
-         foreground while the code is typed into its notification, the re-arm after a reboot, and
-         WRITE_SECURE_SETTINGS (granted to itself over the channel after the first connect) so
-         adb_wifi_enabled can be turned back on at boot without the user. -->
+    <!-- #1512 No shell channel of its own (it had the embedded adb pairing, a keep-alive service and Shizuku): the runbook's
+         installs and grants run through the SuperApp's shell broker (libs:shell-client). INTERNET and mDNS for the fleet
+         probes, notifications for the install status; WRITE_SECURE_SETTINGS can only be held through `pm grant`. -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <!-- Configs > Perms (battery_opt): the owner may leave Account unrestricted. -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS"
         tools:ignore="ProtectedPermissions" />
 
@@ -61,39 +59,9 @@
             </intent-filter>
         </activity>
 
-        <!-- Account redesign (spec 2.4): the embedded adb pairing flow (the lib declares it too;
-             stated here so the app's guard can see it) and the boot re-arm of the channel. -->
-        <service
-            android:name="com.diegonmarcos.superapp.adbdebug.AdbPairingService"
-            android:exported="false"
-            android:foregroundServiceType="specialUse">
-            <property
-                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="Pairs this app's embedded adb client with the phone's own Wireless debugging while the user types the pairing code into the notification" />
-        </service>
-        <!-- HostShellService (libs:shizuku-adb-debug-tools): holds the process up so the embedded adb
-             channel and the fleet debug server (both process state) survive in the background. #1502 Account never
-             starts it (HostShell.backgroundAllowed = false); it stays declared for the shared lib and the guard. There is
-             no boot receiver, no WorkManager job and no sticky service. Account declares no AutofillService and no
-             CredentialProviderService: nothing in this app is bound by the system on its own; its providers below
-             start the process only for the duration of a caller's own call. -->
-        <service
-            android:name="com.diegonmarcos.superapp.adbdebug.HostShellService"
-            android:exported="false"
-            android:foregroundServiceType="specialUse">
-            <property
-                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="Keeps this app's on-device shell channel and its loopback debug server running between uses" />
-        </service>
-        <!-- The declared fallback provider (build.json::shizuku_client): the stock Shizuku app
-             hands its binder over this provider. -->
-        <provider
-            android:name="rikka.shizuku.ShizukuProvider"
-            android:authorities="${applicationId}.shizuku"
-            android:multiprocess="false"
-            android:enabled="true"
-            android:exported="true"
-            android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
+        <!-- #1502 / #1512 no pairing service, keep-alive service, boot receiver, WorkManager job or sticky service. Account declares no
+             AutofillService and no CredentialProviderService: nothing in this app is bound by the system on its own; its providers
+             below start the process only for the duration of a caller's own call. -->
 
         <!-- #867 The data Cloud Account owns (imported configs, profile, S/R/L files), read by
              SuperApp's one-shot copy. CONSTELLATION_DATA is the fleet's signature permission:

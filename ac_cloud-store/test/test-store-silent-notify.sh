@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Cloud Store's notifications are SILENT: no sound, no vibration, no light, importance LOW at most.
 #
-# Cloud Store posts on five channels, none of them its own code: the fleet-alerts fallback (libs:core
-# FleetAlerts), "tap to finish installing" (libs:updater PackageInstallerReceiver), the batch download line
-# (libs:updater BatchForeground), wireless-debugging pairing and the shell keep-alive (libs:shizuku-adb-
-# debug-tools). Those libs are compiled into many fleet apps, so the rule is PER APP: libs:core
+# Cloud Store posts on three channels, none of them its own code: the fleet-alerts fallback (libs:core
+# FleetAlerts), "tap to finish installing" (libs:updater PackageInstallerReceiver) and the batch download line
+# (libs:updater BatchForeground). Since #1512 it has no pairing or shell keep-alive notification (the channel is the
+# SuperApp's broker); those two ids stay in LEGACY_IDS so an old install's channels are still retired. Those libs are compiled into many fleet apps, so the rule is PER APP: libs:core
 # SilentChannels creates every one of them, silent only for the packages in SILENT_PACKAGES (Cloud Store).
 #
 # Android never changes an EXISTING channel's sound or vibration, so Cloud Store posts on NEW ids (legacy id +
@@ -81,7 +81,7 @@ for d in dirs:
             if n.endswith((".kt", ".java")):
                 p = os.path.relpath(os.path.join(root, n), R)
                 SRC[p] = strip(open(os.path.join(root, n), encoding="utf-8").read())
-ok(len(SRC) > 100 and any(p.endswith("FleetAlerts.kt") for p in SRC) and any(p.endswith("AdbPairingService.kt") for p in SRC),
+ok(len(SRC) > 100 and any(p.endswith("FleetAlerts.kt") for p in SRC) and any(p.endswith("PackageInstallerReceiver.kt") for p in SRC),
    "scanning %d sources across %d modules Cloud Store compiles" % (len(SRC), len(dirs)),
    "the scan is blind: %d sources found" % len(SRC))
 
@@ -128,7 +128,7 @@ for p, t in SRC.items():
         if re.search(r'setSound\(|setVibrate\(|setDefaults\(|setLights\(|DEFAULT_(SOUND|VIBRATE|LIGHTS|ALL)', c): loud.append(where)
     if ("Builder(" in t) and re.search(r'\b(?:NotificationCompat|Notification)\.Builder\(', t) and "SilentChannels.ensure(" not in t:
         bad_ch.append("%s builds a notification without SilentChannels.ensure" % os.path.basename(p))
-ok(builders >= 5, "%d notification builders found" % builders, "only %d notification builders found: the scan is blind" % builders)
+ok(builders >= 3, "%d notification builders found" % builders, "only %d notification builders found: the scan is blind" % builders)
 ok(not bad_ch, "every builder posts on the id SilentChannels.ensure returned", "; ".join(bad_ch))
 
 # 3. no sound, no vibrate
@@ -164,7 +164,7 @@ for p, t in SRC.items():
         v = resolve(a.split(".")[-1] if not a.startswith('"') else a, local)
         if v: used.add(v)
         else: unresolved.append("%s: %s" % (os.path.basename(p), a))
-ok(len(used) >= 5 and not unresolved, "ensure() is called for %d legacy ids: %s" % (len(used), sorted(used)),
+ok(len(used) >= 3 and not unresolved, "ensure() is called for %d legacy ids: %s" % (len(used), sorted(used)),
    "ensure() legacy ids found %s, unresolved %s" % (sorted(used), unresolved))
 ok(used <= set(legacy), "every legacy id Cloud Store posts on is retired", "posted on but never deleted: %s" % sorted(used - set(legacy)))
 rt = s[s.find("fun retireLegacy("):][:700] if "fun retireLegacy(" in s else ""
@@ -187,7 +187,7 @@ TMP="$(mktemp -d /dev/shm/silent-notify.XXXXXX)"; trap 'rm -rf "$TMP"' EXIT
 mutate() {  # mutate <label> <file> <old> <new>
   local label="$1" f="$2" old="$3" new="$4" d="$TMP/m"
   rm -rf "$d"; mkdir -p "$d"
-  ( cd "$ROOT" && for m in core updater appstore shizuku-adb-debug-tools bottomnav sysdns fleetconfig-model devtools; do
+  ( cd "$ROOT" && for m in core updater appstore shell-client bottomnav sysdns fleetconfig-model devtools; do
         [ -d ab_cloud-libs-shared/libs/$m/src ] && cp -r --parents ab_cloud-libs-shared/libs/$m/src "$d"; done
     cp -r --parents ac_cloud-store/build.json ac_cloud-store/app/src "$d" )
   python3 - "$d/$f" "$old" "$new" <<'PY' || { echo "  MUTATION NOT APPLIED: $label"; return 1; }
@@ -219,13 +219,11 @@ mutate "a legacy id is never deleted" $C/SilentChannels.kt '"adb_pairing", ' '' 
 mutate "the retirement deletes nothing" $C/SilentChannels.kt 'deleteNotificationChannel(it)' 'getNotificationChannel(it)' || M=$((M+1))
 mutate "the retirement runs in every app" $C/SilentChannels.kt 'if (!isSilent(ctx)) return' '' || M=$((M+1))
 mutate "Cloud Store never retires" $A 'SilentChannels.retireLegacy(this)' 'Unit' || M=$((M+1))
-mutate "a raw channel is created again" $S/AdbPairingService.kt 'override fun onCreate() {' 'override fun onCreate() { (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).createNotificationChannel(android.app.NotificationChannel("x", "x", NotificationManager.IMPORTANCE_HIGH))' || M=$((M+1))
+mutate "a raw channel is created again" $U/BatchForegroundService.kt 'override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {' 'override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int { (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).createNotificationChannel(android.app.NotificationChannel("x", "x", NotificationManager.IMPORTANCE_HIGH))' || M=$((M+1))
 mutate "a builder posts on the legacy id" $C/FleetAlerts.kt 'NotificationCompat.Builder(ctx, channel)' 'NotificationCompat.Builder(ctx, FALLBACK_CHANNEL)' || M=$((M+1))
 mutate "a builder sets the default sound" $U/PackageInstallerReceiver.kt '.setAutoCancel(true)' '.setAutoCancel(true).setDefaults(Notification.DEFAULT_SOUND)' || M=$((M+1))
-mutate "a builder vibrates" $S/AdbPairingService.kt '.setOngoing(true)' '.setOngoing(true).setVibrate(longArrayOf(0, 100))' || M=$((M+1))
+mutate "a builder vibrates" $C/FleetAlerts.kt 'NotificationCompat.Builder(ctx, channel)' 'NotificationCompat.Builder(ctx, channel).setVibrate(longArrayOf(0, 100))' || M=$((M+1))
 mutate "a builder is no longer quiet" $U/BatchForegroundService.kt '.setSilent(true)' '' || M=$((M+1))
-mutate "the shell keep-alive alerts again" $S/HostShellService.kt '.setOnlyAlertOnce(true)' '' || M=$((M+1))
-mutate "a poster is not retired" $S/HostShellService.kt 'const val CHANNEL_ID = "host_shell_channel"' 'const val CHANNEL_ID = "host_shell"' || M=$((M+1))
 fi
 echo "== RESULT: real tree $REAL failure(s), $M mutation(s) not caught =="
 [ "$REAL" -eq 0 ] && [ "$M" -eq 0 ]

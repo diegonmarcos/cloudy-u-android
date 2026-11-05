@@ -1,5 +1,6 @@
 package com.diegonmarcos.superapp.shellbroker
 
+import com.diegonmarcos.superapp.shellclient.ShellWire
 import org.json.JSONObject
 
 /**
@@ -14,8 +15,11 @@ import org.json.JSONObject
  */
 class Allowlist(private val callers: Map<String, Entry>, private val aliases: Map<String, String> = emptyMap()) {
 
-    data class Rule(val id: String, val pattern: Regex, val meta: String = "")
-    data class Entry(val rules: List<Rule>, val exact: Map<String, Rule> = emptyMap(), val segments: Boolean = false)
+    /** [maxBytes] only applies to a `stdin` rule: the most input one call may stream (never above [ShellWire.STDIN_MAX_BYTES]). */
+    data class Rule(val id: String, val pattern: Regex, val meta: String = "", val maxBytes: Long = 0L)
+    /** [stdin] = the caller's #1512 stdin rules (`pm install -S <size>`); empty = this caller may stream nothing. */
+    data class Entry(val rules: List<Rule>, val exact: Map<String, Rule> = emptyMap(), val segments: Boolean = false,
+                     val stdin: List<Rule> = emptyList())
 
     sealed class Decision {
         data class Allow(val rule: Rule) : Decision()
@@ -27,6 +31,29 @@ class Allowlist(private val callers: Map<String, Entry>, private val aliases: Ma
 
     fun callers(): Set<String> = callers.keys
 
+    /**
+     * #1512 The stdin door: may [pkg] run [cmd] with [size] bytes on its stdin? Default deny: only a command matching one of the
+     * caller's `stdin` rules, with a size in 1..min(rule.maxBytes, [ShellWire.STDIN_MAX_BYTES]), and a `-S <n>` in the command
+     * (pm reads exactly n bytes) that equals [size]. A trailing ` 2>&1` is allowed and ignored; the broker adds it anyway.
+     */
+    fun decideStdin(pkg: String, cmd: String, size: Long): Decision {
+        val key = callerKey(pkg)
+        val e = callers[key] ?: return Decision.Deny("no allowlist entry for $key")
+        if (e.stdin.isEmpty()) return Decision.Deny("$key may not stream input")
+        if (cmd.isBlank()) return Decision.Deny("empty command")
+        if (cmd.length > MAX_CMD) return Decision.Deny("command over $MAX_CMD characters")
+        if (cmd.any { it == '\u0000' || it == '\r' || it == '\n' }) return Decision.Deny("control character in command")
+        ShellWire.stdinProblem(size)?.let { return Decision.Deny(it) }
+        val c = cmd.trim()
+        val d = one(key, e.stdin, c)
+        if (d !is Decision.Allow) return d
+        if (d.rule.maxBytes <= 0L || size > minOf(d.rule.maxBytes, ShellWire.STDIN_MAX_BYTES))
+            return Decision.Deny("input of $size bytes is over the ${d.rule.id} limit of ${d.rule.maxBytes}")
+        val declared = DECLARED.find(c.removeSuffix(MERGE))?.groupValues?.get(1)?.toLongOrNull()
+        if (declared != null && declared != size) return Decision.Deny("-S $declared does not match the $size byte input")
+        return d
+    }
+
     fun decide(pkg: String, cmd: String): Decision {
         val key = callerKey(pkg)
         val e = callers[key] ?: return Decision.Deny("no allowlist entry for $key")
@@ -37,11 +64,11 @@ class Allowlist(private val callers: Map<String, Entry>, private val aliases: Ma
         e.exact[c]?.let { return Decision.Allow(it) }
         if (!e.segments) {
             if (c.contains('\n')) return Decision.Deny("multi-line command")
-            return one(key, e, c)
+            return one(key, e.rules, c)
         }
         var last: Decision.Allow? = null
         for (part in c.split(';', '\n').map { it.trim() }.filter { it.isNotEmpty() }) {
-            when (val d = one(key, e, part)) {
+            when (val d = one(key, e.rules, part)) {
                 is Decision.Deny -> return d
                 is Decision.Allow -> last = d
             }
@@ -49,9 +76,11 @@ class Allowlist(private val callers: Map<String, Entry>, private val aliases: Ma
         return last ?: Decision.Deny("empty command")
     }
 
-    private fun one(key: String, e: Entry, c: String): Decision {
+    private fun one(key: String, rules: List<Rule>, cmd: String): Decision {
+        // The one redirect a client may spell: stderr into stdout (adb `exec:` carries stdout only, and pm reports failures on stderr).
+        val c = if (cmd.endsWith(MERGE)) cmd.removeSuffix(MERGE).trimEnd() else cmd
         var matched = false
-        for (r in e.rules) {
+        for (r in rules) {
             if (!r.pattern.matches(c)) continue
             matched = true
             if (c.none { it in META && it !in r.meta }) return Decision.Allow(r)
@@ -62,6 +91,9 @@ class Allowlist(private val callers: Map<String, Entry>, private val aliases: Ma
 
     companion object {
         const val MAX_CMD = 2048
+        /** The only redirect a command may end with; the broker appends it itself to a stdin call. */
+        const val MERGE = " 2>&1"
+        private val DECLARED = Regex("""(?:^| )-S (\d+)(?: |$)""")
         /** Characters that chain, redirect, substitute or comment out the rest of a line in `sh -c`. */
         const val META = ";&|`$<>(){}\\#"
 
@@ -78,7 +110,13 @@ class Allowlist(private val callers: Map<String, Entry>, private val aliases: Ma
                 }
                 val ex = LinkedHashMap<String, Rule>()
                 c.optJSONArray("exact")?.let { a -> for (i in 0 until a.length()) ex[a.getString(i).trim()] = Rule("exact-${i + 1}", Regex("^$")) }
-                callers[k] = Entry(rules, ex, c.optBoolean("segments", false))
+                val sin = c.optJSONArray("stdin")?.let { a ->
+                    (0 until a.length()).map { i ->
+                        val r = a.getJSONObject(i)
+                        Rule(r.getString("id"), Regex(r.getString("re")), r.optString("meta", ""), r.getLong("maxBytes"))
+                    }
+                } ?: emptyList()
+                callers[k] = Entry(rules, ex, c.optBoolean("segments", false), sin)
             }
             val al = LinkedHashMap<String, String>()
             o.optJSONObject("aliases")?.let { a -> for (k in a.keys()) al[k] = a.getString(k) }

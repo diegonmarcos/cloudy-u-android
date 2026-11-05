@@ -3,6 +3,7 @@ package com.diegonmarcos.superapp.shellclient
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.os.ParcelFileDescriptor
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executors
@@ -22,6 +23,8 @@ class ShellClient(private val transport: Transport) {
     /** One round trip to the broker; null = the broker could not be reached. Pure seam, so the rules are unit-tested. */
     fun interface Transport {
         fun call(method: String, cmd: String, extras: Map<String, String>): String?
+        /** #1512 The stdin door: [stdin] is handed over as a file descriptor. Default = no such door. */
+        fun callStdin(cmd: String, extras: Map<String, String>, stdin: java.io.File): String? = null
     }
 
     /** `{exitCode, stdout, stderr, source}` or NeedsArm / Denied / Failed. */
@@ -36,6 +39,22 @@ class ShellClient(private val transport: Transport) {
         return r
     }
 
+    /**
+     * #1512 `exec` with [stdin] streamed to the command (`pm install -S <size>`, `pm install-write -S <size> ... -`). The input is
+     * bounded ([ShellWire.STDIN_MAX_BYTES]; a bigger or empty file never reaches the broker), the call has its own longer timeout,
+     * and the broker runs it only under the caller's `stdin` allowlist rule. The command carries no `2>&1`: the broker merges stderr.
+     */
+    fun execStdin(cmd: String, stdin: java.io.File, timeoutMs: Long = ShellWire.STDIN_DEFAULT_TIMEOUT_MS): ShellResult {
+        if (cmd.isBlank()) return ShellResult.Denied("empty command")
+        if (!stdin.isFile) return ShellResult.Failed("input file is missing")
+        val size = stdin.length()
+        ShellWire.stdinProblem(size)?.let { return ShellResult.Denied(it) }
+        val t = ShellWire.clampStdinTimeout(timeoutMs)
+        val extras = mapOf(ShellWire.K_TIMEOUT to t.toString(), ShellWire.K_MAX_BYTES to ShellWire.EXEC_MAX_BYTES.toString(),
+            ShellWire.K_STDIN_SIZE to size.toString())
+        return bounded(t) { transport.callStdin(cmd, extras, stdin) }
+    }
+
     fun status(): ShellStatus {
         val json = runCatching { transport.call(ShellWire.M_STATUS, "", emptyMap()) }.getOrNull()
             ?: return ShellStatus(false, false, "none", "SuperApp (the shell broker) is not installed or not reachable")
@@ -46,10 +65,14 @@ class ShellClient(private val transport: Transport) {
         if (cmd.isBlank()) return ShellResult.Denied("empty command")
         val t = ShellWire.clampTimeout(timeoutMs)
         val extras = mapOf(ShellWire.K_TIMEOUT to t.toString(), ShellWire.K_MAX_BYTES to maxBytes.toString())
+        return bounded(t) { transport.call(method, cmd, extras) }
+    }
+
+    private fun bounded(t: Long, call: () -> String?): ShellResult {
         // The broker enforces the timeout; this bound is the grace that covers the binder hop itself.
         val pool = Executors.newSingleThreadExecutor { r -> Thread(r, "shell-client").apply { isDaemon = true } }
         return try {
-            val f = pool.submit(Callable { transport.call(method, cmd, extras) })
+            val f = pool.submit(Callable { call() })
             ShellWire.decode(f.get(t + GRACE_MS, TimeUnit.MILLISECONDS))
         } catch (e: TimeoutException) {
             ShellResult.Failed("broker did not answer within ${t / 1000}s", timedOut = true)
@@ -66,17 +89,35 @@ class ShellClient(private val transport: Transport) {
         /** The client over the real provider of the SuperApp. */
         fun over(ctx: Context): ShellClient {
             val app = ctx.applicationContext
-            return ShellClient { method, cmd, extras ->
-                val client = app.contentResolver.acquireUnstableContentProviderClient(ShellWire.AUTHORITY)
-                if (client == null) null else try {
-                    val b = Bundle().apply { extras.forEach { (k, v) -> putString(k, v) } }
-                    client.call(method, cmd, b)?.getString(ShellWire.K_JSON)
-                } finally { client.close() }
-            }
+            return ShellClient(object : Transport {
+                override fun call(method: String, cmd: String, extras: Map<String, String>): String? {
+                    val client = app.contentResolver.acquireUnstableContentProviderClient(ShellWire.AUTHORITY) ?: return null
+                    return try {
+                        val b = Bundle().apply { extras.forEach { (k, v) -> putString(k, v) } }
+                        client.call(method, cmd, b)?.getString(ShellWire.K_JSON)
+                    } finally { client.close() }
+                }
+
+                override fun callStdin(cmd: String, extras: Map<String, String>, stdin: java.io.File): String? {
+                    val client = app.contentResolver.acquireUnstableContentProviderClient(ShellWire.AUTHORITY) ?: return null
+                    val pfd = ParcelFileDescriptor.open(stdin, ParcelFileDescriptor.MODE_READ_ONLY)
+                    return try {
+                        val b = Bundle().apply {
+                            extras.forEach { (k, v) -> putString(k, v) }
+                            putParcelable(ShellWire.K_STDIN_FD, pfd)
+                        }
+                        client.call(ShellWire.M_EXEC_STDIN, cmd, b)?.getString(ShellWire.K_JSON)
+                    } finally { runCatching { pfd.close() }; client.close() }
+                }
+            })
         }
 
         fun exec(ctx: Context, cmd: String, timeoutMs: Long = ShellWire.DEFAULT_TIMEOUT_MS): ShellResult = over(ctx).exec(cmd, timeoutMs)
         fun status(ctx: Context): ShellStatus = over(ctx).status()
+
+        /** #1512 The stdin door over the real provider. Blocking, off the main thread. */
+        fun execStdin(ctx: Context, cmd: String, stdin: java.io.File, timeoutMs: Long = ShellWire.STDIN_DEFAULT_TIMEOUT_MS): ShellResult =
+            over(ctx).execStdin(cmd, stdin, timeoutMs)
 
         /** "Arm in SuperApp": opens the SuperApp's re-arm flow (the ADB Shell page, or the Wireless debugging switch). */
         fun arm(ctx: Context): Boolean {

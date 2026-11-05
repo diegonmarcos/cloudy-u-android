@@ -218,14 +218,13 @@ if [ -d "$HERE/cloud-store" ] && [ -d "$ROOTFS/usr/lib/cloud-store" ]; then
 fi
 
 # startup-step: rish_bridge
-# build.json::shizuku_client — the rish bridge into the rootfs. RishBridge
-# (libs:shizuku-adb-debug-tools) writes `rish` + `rish.env` (RISH_APPLICATION_ID
-# + the fleet token) into $HERE/rish on launch; bind them so a shell INSIDE proot
-# runs commands at adb-shell (uid 2000) privilege through the fleet provider (the
-# SuperApp over loopback — app_process cannot run in here, no /system is bound).
-# Guarded on presence like cloud-store: a build without the block, or a session
-# before the app has written them, still logs in. install-in-rootfs.sh created the
-# mountpoints. The two guest paths below are the literals in
+# build.json::shizuku_client (the block keeps its name) — the rish bridge into the rootfs. ShellRish
+# (libs:shell-client, #1512) writes `rish` + `rish.env` (the in-process relay's loopback URL and a
+# per-process token) into $HERE/rish on launch; bind them so a shell INSIDE proot runs allowlisted
+# commands at adb-shell (uid 2000) privilege through the SuperApp's shell broker (app_process cannot
+# run in here, no /system is bound; the relay forwards under this terminal's own allowlist entry).
+# Guarded on presence like cloud-store: a session before the app has written them still logs in.
+# install-in-rootfs.sh created the mountpoints. The two guest paths below are the literals in
 # build.json::shizuku_client.binds[].guest — keep them in sync with that, not a copy.
 if [ -f "$HERE/rish/rish" ] && [ -f "$ROOTFS/usr/local/bin/rish" ]; then
     binds="$binds -b $HERE/rish/rish:/usr/local/bin/rish"

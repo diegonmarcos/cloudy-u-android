@@ -24,16 +24,15 @@
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"
         tools:ignore="ProtectedPermissions" />
 
-    <!-- #894 Cloud Store's own shell channel. Wireless-debugging pairing runs in a foreground
-         service (the lib's AdbPairingService, declared below), which needs the notification, the
-         foreground-service and mDNS/network permissions; WRITE_SECURE_SETTINGS can only be held
-         through `pm grant` by the channel itself and lets each boot turn Wireless debugging back
-         on; BOOT_COMPLETED re-arms the channel, whose connection is process state. -->
+    <!-- #1512 No shell channel of its own: silent installs go through the SuperApp's shell broker (libs:shell-client). INTERNET and
+         mDNS for the Apps Mesh probes; WRITE_SECURE_SETTINGS can only be held through `pm grant` (the broker runs it) and lets the
+         Play Protect switch be written directly; the foreground-service permissions are the batch service's (dataSync). -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <!-- Configs > Perms asks the owner to leave the Store unrestricted (battery_opt) when auto-update is on. -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS"
         tools:ignore="ProtectedPermissions" />
 
@@ -76,41 +75,9 @@
             </intent-filter>
         </activity>
 
-        <!-- #894 the pairing flow's foreground service (libs:shizuku-adb-debug-tools). The lib's own
-             manifest declares the same service; it is restated here so Cloud Store's manifest is the
-             record of what it runs, and the merger folds the two. -->
-        <service
-            android:name="com.diegonmarcos.superapp.adbdebug.AdbPairingService"
-            android:exported="false"
-            android:foregroundServiceType="specialUse">
-            <property
-                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="Pairs this app's embedded adb client with the phone's own Wireless debugging while the user types the pairing code into the notification" />
-        </service>
-
-        <!-- HostShellService (libs:shizuku-adb-debug-tools): holds the process up so the embedded adb
-             channel and the fleet debug server (both process state) survive in the background. -->
-        <service
-            android:name="com.diegonmarcos.superapp.adbdebug.HostShellService"
-            android:exported="false"
-            android:foregroundServiceType="specialUse">
-            <property
-                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="Keeps this app's on-device shell channel and its loopback debug server running between uses" />
-        </service>
-        <!-- #1502 no boot receiver (the shell re-arm and the fleet-check re-arm were two BOOT_COMPLETED receivers): WorkManager
-             keeps its own persisted jobs across a reboot, and Cloud Store runs a background job only with auto-update ON and
-             on an unmetered network (libs:core BackgroundPolicy), so nothing here may start the process at boot. -->
-
-        <!-- Same provider cloud-superapp declares: lets the Shizuku install
-             channel bind when Shizuku is present. -->
-        <provider
-            android:name="rikka.shizuku.ShizukuProvider"
-            android:authorities="${applicationId}.shizuku"
-            android:multiprocess="false"
-            android:enabled="true"
-            android:exported="true"
-            android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
+        <!-- #1502 no boot receiver, #1512 no pairing service, keep-alive service or Shizuku provider: the channel is the SuperApp's
+             shell broker, reached by a provider call. WorkManager keeps its own persisted jobs across a reboot, and Cloud Store runs a
+             background job only with auto-update ON and on an unmetered network (libs:core BackgroundPolicy). -->
         <!-- #903 the dataSync foreground service a running batch (Download all /
              Update all / the auto chain / one row's Install) holds, so Android
              and Samsung's freezer leave the process and its network alone.

@@ -17,6 +17,10 @@ object ShellWire {
     /** The mesh door (the Cloud-Webserver shell route): the whole request is the call's arg, a JSON `{cmd, timeoutMs?, maxBytes?}`; the reply also carries ok/mime/payload. */
     const val M_EXEC_JSON = "exec_json"
     const val M_STREAM_JSON = "stream_json"
+    /** #1512 The stdin door: `exec_stdin` carries the command as the arg and the input as a ParcelFileDescriptor extra ([K_STDIN_FD]) of [K_STDIN_SIZE] bytes. Provider door only (never the mesh). */
+    const val M_EXEC_STDIN = "exec_stdin"
+    const val K_STDIN_FD = "stdinFd"
+    const val K_STDIN_SIZE = "stdinSize"
     const val K_TIMEOUT = "timeoutMs"
     const val K_MAX_BYTES = "maxBytes"
     const val K_JSON = "json"
@@ -25,6 +29,10 @@ object ShellWire {
     const val MAX_TIMEOUT_MS = 120_000L
     const val STREAM_MAX_BYTES = 64 * 1024
     const val EXEC_MAX_BYTES = 256 * 1024
+    /** #1512 Hard cap of ONE stdin transfer (an APK, a split): a rule may lower it, never raise it. */
+    const val STDIN_MAX_BYTES = 512L * 1024 * 1024
+    const val STDIN_DEFAULT_TIMEOUT_MS = 180_000L
+    const val STDIN_MAX_TIMEOUT_MS = 600_000L
 
     private const val S_OK = "ok"
     private const val S_NEEDS_ARM = "needs_arm"
@@ -65,4 +73,14 @@ object ShellWire {
 
     /** Clamp a caller's timeout into 1 s .. [MAX_TIMEOUT_MS]; every call has one. */
     fun clampTimeout(ms: Long): Long = ms.coerceIn(1_000L, MAX_TIMEOUT_MS)
+
+    /** #1512 Clamp a stdin call's timeout into 5 s .. [STDIN_MAX_TIMEOUT_MS] (a transfer is slower than an exec). */
+    fun clampStdinTimeout(ms: Long): Long = ms.coerceIn(5_000L, STDIN_MAX_TIMEOUT_MS)
+
+    /** #1512 Why an input of [size] bytes may not be streamed, or null when its size is acceptable. Both halves apply it. */
+    fun stdinProblem(size: Long): String? = when {
+        size <= 0L -> "empty input"
+        size > STDIN_MAX_BYTES -> "input of $size bytes is over the $STDIN_MAX_BYTES byte limit"
+        else -> null
+    }
 }

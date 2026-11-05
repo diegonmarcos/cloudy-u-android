@@ -64,13 +64,9 @@ class App : Application() {
         // CONSTELLATION_DATA provider when SuperApp is installed, else the token typed
         // into this app's Settings tab. Read per request; never logged.
         FeedViewer.fleetBearer = { runCatching { FleetBearer.resolve(this) }.getOrDefault("") }
-        // #894 Cloud Store's OWN uid-2000 channel (embedded adb pairing, Shizuku as the fallback):
-        // Fleet.commit and the self-update install through it first, no prompt.
-        // #1502 the keep-alive service, the wireless-debugging keeper and the re-arm job run only with auto-update ON on an
-        // unmetered network; otherwise Store has zero background wakes (the channel is re-armed in-process while the app is open).
-        com.diegonmarcos.superapp.adbdebug.HostShell.backgroundAllowed = { com.diegonmarcos.superapp.updater.BackgroundGate.mayRun(it) }
-        runCatching { com.diegonmarcos.cloudstore.shell.CloudStoreShell.install(this) }
-            .onFailure { Log.w(TAG, "shell channel not armed", it) }
+        // #1512 No shell channel of its own: Fleet.commit and the self-update install through the SuperApp's shell broker
+        // (libs:shell-client, the stdin door), no prompt. Nothing to pair, re-arm or keep alive here, so Store has zero
+        // background wakes for it.
         // Periodic fleet check + the Wi-Fi trigger + the auto chain, which
         // updates every constellation app (SuperApp included) and this one last.
         runCatching { ConstellationWorker.start(this) }

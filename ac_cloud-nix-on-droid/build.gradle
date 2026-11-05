@@ -10,8 +10,8 @@ buildscript {
         // buildFeatures and compileSdk 36, none of which AGP 7.4.2 could build.
         classpath 'com.android.tools.build:gradle:8.7.3'
         classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:2.3.20'
-        // libs:shizuku-adb-debug-tools applies org.jetbrains.kotlin.plugin.compose (its channel panel is Compose,
-        // compiled against the host's Compose); this fork resolves plugins from the buildscript classpath, so
+        // the Compose libs (libs:ui-nav-bars, libs:bottomnav) apply org.jetbrains.kotlin.plugin.compose (compiled against the host's Compose,
+        // ); this fork resolves plugins from the buildscript classpath, so
         // the plugin has to be on it or the whole terminal build stops at that lib's `plugins {}` block.
         classpath 'org.jetbrains.kotlin:compose-compiler-gradle-plugin:2.3.20'
     }

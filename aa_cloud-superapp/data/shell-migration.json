@@ -1,9 +1,4 @@
 {
-  "_doc": "#1510 The ratchet of the shell-broker migration. An app listed here still compiles libs:shizuku-adb-debug-tools (its own embedded ADB channel) and is being moved onto libs:shell-client, one app per push with a green Ship. test-shell-broker-guards.sh fails when an app NOT listed here compiles that lib or starts an ADB connection (the list never grows), and when a listed app no longer does (remove the entry). The goal state is an empty `pending`: only the SuperApp owns an ADB channel.",
-  "pending": {
-    "ac_cloud-store": "installs over the shell channel (pm install with the APK on stdin): needs the broker's stdin door first",
-    "ac_cloud-account": "libs:account SetupRunbook / PermsPage and libs:appstore link the channel",
-    "ac_cloud-termux": "SuperappBridgeChannel + rish fallback chain",
-    "ac_cloud-nix-on-droid": "SuperappBridgeChannel + rish fallback chain"
-  }
+  "_doc": "#1510 / #1512 The ratchet of the shell-broker migration, now FINISHED: `pending` is empty and stays empty. test-shell-broker-guards.sh fails when ANY app other than the SuperApp compiles libs:shizuku-adb-debug-tools or starts an ADB connection, and when this list is not empty. Cloud Store, Cloud Account, Cloud Drive (silent installs through the broker's stdin door) and the two terminals (rish through a loopback relay, then the broker) all reach the privileged shell through libs:shell-client; only the SuperApp owns an ADB channel.",
+  "pending": {}
 }

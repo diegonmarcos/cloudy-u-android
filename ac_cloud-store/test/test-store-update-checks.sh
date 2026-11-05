@@ -4,7 +4,7 @@
 #  U1 the periodic fleet check is still scheduled at launch (App.kt -> ConstellationWorker.start); #1502 no boot/update
 #     receiver (WorkManager keeps its jobs; a job exists only with auto-update on over an unmetered network)
 #  U2 UpdateChecks asks nothing itself (#1515): notifications, install source and battery are Configs > Perms rows the
-#     card's buttons open; and it NEVER grants or exempts: no REQUEST_IGNORE_BATTERY_OPTIMIZATIONS (manifest or code),
+#     card's buttons open; and it NEVER grants or exempts: no REQUEST_IGNORE_BATTERY_OPTIMIZATIONS in code (the manifest declares it ONLY so the Perms row battery_opt can ask, perms guard P2; #1512 the shizuku lib no longer merges it),
 #     no pm grant, no secure-settings write, no shell channel in the three update-check files
 #  U3 it is reachable: Configs > Notifications draws the card, MainActivity shows the one-time battery prompt
 #  U4 the suite exists and runs through this app (UpdateChecksTest; storeUnitTests -> :app:testDebugUnitTest)
@@ -45,7 +45,7 @@ ok(all(x in uc for x in ('"notifications"', '"install_unknown"', '"battery_opt"'
 bad = [t for t in ("REQUEST_IGNORE_BATTERY_OPTIMIZATIONS", "ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS", "WRITE_SECURE_SETTINGS", "pm grant",
                    "HostShell", "PermsGrant", "setDeviceOwner", "DevicePolicyManager") if t in uc + card ]
 ok(not bad, "U2 no privileged or silent self-grant in the update-check files", f"U2 privileged/silent grant found: {bad}")
-ok("REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" not in rd("ac_cloud-store/app/src/main/AndroidManifest.xml", False), "U2 the manifest does not request a battery exemption", "U2 the manifest requests REQUEST_IGNORE_BATTERY_OPTIMIZATIONS")
+ok("REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" in rd("ac_cloud-store/app/src/main/AndroidManifest.xml", False), "U2 the manifest declares the permission the Perms row battery_opt asks for (code never asks)", "U2 the manifest lost REQUEST_IGNORE_BATTERY_OPTIMIZATIONS: the Perms row battery_opt cannot ask (perms guard P2)")
 cfg = rd(K + "ConfigsPage.kt"); ma = rd(K + "MainActivity.kt")
 ok("UpdateChecksCard()" in cfg.split("private fun NotificationsPage")[1].split("// ──")[0], "U3 Configs > Notifications draws the card", "U3 the Notifications page does not draw UpdateChecksCard")
 ok("BatteryPrompt()" in ma, "U3 MainActivity shows the one-time battery prompt", "U3 MainActivity does not show BatteryPrompt")
@@ -82,7 +82,8 @@ PY
 M=0
 mutate "fleet check not scheduled at launch" $K/App.kt 'ConstellationWorker.start(this)' 'Unit' || M=$((M+1))
 mutate "boot receiver returns" ac_cloud-store/app/src/main/AndroidManifest.xml '<!-- #1502 no boot receiver' '<receiver android:name=".X"><intent-filter><action android:name="android.intent.action.BOOT_COMPLETED"/></intent-filter></receiver><!-- #1502 no boot receiver' || M=$((M+1))
-mutate "battery exemption requested by the app" ac_cloud-store/app/src/main/AndroidManifest.xml '<uses-permission android:name="android.permission.INTERNET" />' '<uses-permission android:name="android.permission.INTERNET" /><uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />' || M=$((M+1))
+mutate "battery permission dropped from the manifest" ac_cloud-store/app/src/main/AndroidManifest.xml '<uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />' '' || M=$((M+1))
+mutate "the code asks for the battery exemption itself" $K/UpdateChecks.kt 'fun permsId(n: Need)' 'val X = "ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"; fun permsId(n: Need)' || M=$((M+1))
 mutate "silent self-grant added" $K/UpdateChecks.kt 'fun permsId(n: Need)' 'fun grantSilently(sh: HostShell) = sh.run("pm grant") ; fun permsId(n: Need)' || M=$((M+1))
 mutate "battery row id lost" $K/UpdateChecks.kt '"battery_opt"' '"battery_x"' || M=$((M+1))
 mutate "card asks the system dialog itself" $K/UpdateChecksCard.kt 'onClick = { UpdateChecks.open(ctx, n) }' 'onClick = { val l = ActivityResultContracts.RequestPermission() }' || M=$((M+1))

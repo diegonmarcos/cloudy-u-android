@@ -66,9 +66,8 @@ ok("FeedViewer.feeds(ctx)" in cp and "StoreSourcePrefs.set(ctx, f.id, it)" in cp
    "Sources lists the Store's feeds with switches, the install ladder and the fleet token", "the Sources page is not built from the Store's own declared feeds / ladder / token")
 fp = rd(K + "FeedPage.kt")
 ok("StoreSourcePrefs.enabled(ctx, feed.id)" in fp, "a feed switched off in Sources is not read by the Feed page", "the Feed page ignores the Sources switches")
-adbp = rd(LIBS + "shizuku-adb-debug-tools/src/main/java/com/diegonmarcos/superapp/adbdebug/AdbShellPage.kt")
-ok("AdbShellHostedPage(" in cp and "AdbIdentity.host(ctx.packageName)" in adbp, "ADB Shell is the shared page (the one SuperApp hosts too), under this app's own identity", "the ADB Shell page is not the shared page / does not show this app's identity")
-ok("val own = page != ConfigsPages.ADB" in cp and "Modifier.verticalScroll(rememberScrollState())" in cp, "the shared page is hosted bare (it scrolls itself), every other page in this host's scrolling column", "the ADB Shell page is nested in a second scroll, or another page lost its scroll")
+ok("ShellBrokerPage.lines(status)" in cp and "ShellClient.arm(ctx)" in cp and "adbdebug" not in cp, "ADB Shell is the SuperApp shell-broker page (status + Arm in SuperApp), not a channel of the Store's own", "the ADB Shell page is not the broker page")
+ok(".verticalScroll(rememberScrollState())" in cp and "val own = page" not in cp, "every page, the broker page included, is a column this host scrolls", "a page is nested in a second scroll, or lost its scroll")
 ok("AiSettingsPickers(" in cp and "AiFleetChat.chat(ctx, BuildConfig.AI_GATEWAY_URL)" in cp and "OutlinedTextField" not in cp.split("private fun AiPage")[1].split("// ── Notifications")[0],
    "AI is libs:ai's agent/model pickers over the fleet gateway, with no token field", "the AI page lacks the shared pickers or carries a token field")
 ok("StoreNotifyPrefs.Kind.values()" in cp and "StoreNotifyPrefs.Channel.values()" in cp and "StoreNotifyPrefs.set(ctx, kind, ch, it)" in cp,
@@ -76,11 +75,10 @@ ok("StoreNotifyPrefs.Kind.values()" in cp and "StoreNotifyPrefs.Channel.values()
 ok("versionName" in cp and "BuildConfig.GIT_SHORT_SHA" in cp and "BuildConfig.BUILD_TIMESTAMP" in cp and "LICENSING.md" in cp,
    "About shows version, build and the licence / attribution pointer", "About lacks version, build or licence")
 
-# C5 the chips open the page in the Configs frame (MainActivity is the lib's AdbShellHost), never a second screen
-ok("AdbShellHost" in ma and "override fun openAdbShellInFrame(): Boolean" in ma and "choose(TAB_SETTINGS, ConfigsPages.ADB)" in ma and "requested = TAB_SETTINGS" in ma,
-   "MainActivity hosts the ADB Shell page in Configs for every chip that opens it", "MainActivity does not open Configs > ADB Shell for the Wireless debugging chip")
-ok("ConfigsAdbShellTest" in open(f"{R}/ac_cloud-store/app/src/test/java/com/diegonmarcos/cloudstore/ConfigsAdbShellTest.kt", encoding="utf-8").read(),
-   "the in-frame opening has its own suite (ConfigsAdbShellTest)", "ConfigsAdbShellTest is missing")
+# C5 the chip arms the broker in the SuperApp; the Store hosts no second ADB screen (#1512)
+ok("AdbShellHost" not in ma and "openAdbShellInFrame" not in ma and "adbdebug" not in ma, "MainActivity hosts no ADB Shell page of its own", "MainActivity still hosts an ADB Shell page / names adbdebug")
+ok("ShellBrokerPageTest" in open(f"{R}/ac_cloud-store/app/src/test/java/com/diegonmarcos/cloudstore/ShellBrokerPageTest.kt", encoding="utf-8").read(),
+   "the broker page's lines have their own suite (ShellBrokerPageTest)", "ShellBrokerPageTest is missing")
 
 # C4
 npf = rd(LIBS + "core/src/main/java/com/diegonmarcos/superapp/core/StoreNotifyPrefs.kt")
@@ -98,12 +96,12 @@ ok("KitDenseMaterial(" in ma, "the app (Configs included) runs under KitDenseMat
 
 # C6
 gr = open(f"{R}/ac_cloud-store/build.gradle", encoding="utf-8").read()
-ok("'storeUnitTests'" in gr and all(t in gr for t in (":libs:bottomnav:testDebugUnitTest", ":libs:shizuku-adb-debug-tools:testDebugUnitTest", ":libs:core:testDebugUnitTest")) and bj["tests"]["unit"]["task"] == "storeUnitTests",
-   "tests.unit runs storeUnitTests (bottomnav + adb lib + core)", "tests.unit does not run the bottomnav, adb and core suites")
+ok("'storeUnitTests'" in gr and all(t in gr for t in (":libs:bottomnav:testDebugUnitTest", ":libs:shell-client:testDebugUnitTest", ":libs:core:testDebugUnitTest")) and bj["tests"]["unit"]["task"] == "storeUnitTests",
+   "tests.unit runs storeUnitTests (bottomnav + broker client + core)", "tests.unit does not run the bottomnav, broker client and core suites")
 t1 = rd(LIBS + "bottomnav/src/test/kotlin/com/diegonmarcos/superapp/bottomnav/ConfigsMenuTest.kt")
 ok("ac_cloud-store/build.json" in t1 and "a tap on each tab opens that page and only that page" in t1 and "performClick()" in t1, "ConfigsMenuTest drives the declared tabs from the Store's build.json", "ConfigsMenuTest is missing or no longer reads the declaration")
-t2 = rd(LIBS + "shizuku-adb-debug-tools/src/test/java/com/diegonmarcos/superapp/adbdebug/AdbIdentityTest.kt")
-ok("theStorePresentsAsCloudStoreAndNotAsTheSuperApp" in t2 and "stateIsScopedToThePackageItWasMeasuredFor" in t2, "AdbIdentityTest holds identity per host app and the state scope", "AdbIdentityTest lost the per-app identity / scope cases")
+t2 = rd(LIBS + "shell-client/src/test/java/com/diegonmarcos/superapp/shellclient/ShellClientStdinTest.kt")
+ok("anInputOverTheHardLimitNeverReachesTheBroker" in t2 and "anEmptyInputNeverReachesTheBroker" in t2, "ShellClientStdinTest holds the stdin size limits the Store installs through", "ShellClientStdinTest lost the stdin limit cases")
 sys.exit(fails)
 PY
 }
@@ -117,13 +115,12 @@ FILES="ac_cloud-store/build.json ac_cloud-store/build.gradle
 ac_cloud-store/app/src/main/java/com/diegonmarcos/cloudstore/ConfigsPage.kt
 ac_cloud-store/app/src/main/java/com/diegonmarcos/cloudstore/MainActivity.kt
 ac_cloud-store/app/src/main/java/com/diegonmarcos/cloudstore/FeedPage.kt
-$L/shizuku-adb-debug-tools/src/main/java/com/diegonmarcos/superapp/adbdebug/AdbShellPage.kt
-ac_cloud-store/app/src/test/java/com/diegonmarcos/cloudstore/ConfigsAdbShellTest.kt
+ac_cloud-store/app/src/test/java/com/diegonmarcos/cloudstore/ShellBrokerPageTest.kt
 $L/core/src/main/java/com/diegonmarcos/superapp/core/StoreNotifyPrefs.kt
 $L/updater/src/main/java/com/diegonmarcos/superapp/updater/PackageInstallerReceiver.kt
 $L/updater/src/main/java/com/diegonmarcos/superapp/updater/PassLedger.kt
 $L/bottomnav/src/test/kotlin/com/diegonmarcos/superapp/bottomnav/ConfigsMenuTest.kt
-$L/shizuku-adb-debug-tools/src/test/java/com/diegonmarcos/superapp/adbdebug/AdbIdentityTest.kt"
+$L/shell-client/src/test/java/com/diegonmarcos/superapp/shellclient/ShellClientStdinTest.kt"
 mutate() {  # mutate <label> <file> <old> <new>
   local label="$1" f="$2" old="$3" new="$4" d="$TMP/m"
   rm -rf "$d"; mkdir -p "$d"
@@ -156,10 +153,9 @@ mutate "an undeclared page body" $K/ConfigsPage.kt 'const val ABOUT = "about"' '
 mutate "MainActivity back to the single screen" $K/MainActivity.kt 'section?.let { ConfigsPage(pageOf(it)) }' 'SettingsPage()' || M=$((M+1))
 mutate "Sources forgets the feeds" $K/ConfigsPage.kt 'FeedViewer.feeds(ctx)' 'emptyList<FeedViewer.Feed>()' || M=$((M+1))
 mutate "the Feed page ignores the switch" $K/FeedPage.kt 'StoreSourcePrefs.enabled(ctx, feed.id)' 'true' || M=$((M+1))
-mutate "ADB Shell shows no identity" $L/shizuku-adb-debug-tools/src/main/java/com/diegonmarcos/superapp/adbdebug/AdbShellPage.kt 'AdbIdentity.host(ctx.packageName)' 'null' || M=$((M+1))
-mutate "ADB Shell nested in a second scroll" $K/ConfigsPage.kt 'val own = page != ConfigsPages.ADB' 'val own = true' || M=$((M+1))
-mutate "the chip no longer opens Configs" $K/MainActivity.kt 'choose(TAB_SETTINGS, ConfigsPages.ADB)' '' || M=$((M+1))
-mutate "MainActivity is no longer the host" $K/MainActivity.kt 'override fun openAdbShellInFrame(): Boolean {' 'fun openAdbShellInFrameX(): Boolean {' || M=$((M+1))
+mutate "the broker page shows no state" $K/ConfigsPage.kt 'ShellBrokerPage.lines(status)' 'emptyList<String>()' || M=$((M+1))
+mutate "the page is nested in a second scroll" $K/ConfigsPage.kt 'Modifier.fillMaxSize().testTag(ConfigsPages.body(page)).verticalScroll(rememberScrollState()).padding(pad)' 'Modifier.fillMaxSize().testTag(ConfigsPages.body(page))' || M=$((M+1))
+mutate "MainActivity hosts the ADB page again" $K/MainActivity.kt 'class MainActivity : AppCompatActivity() {' 'class MainActivity : AppCompatActivity(), AdbShellHost {' || M=$((M+1))
 mutate "AI grows a token field" $K/ConfigsPage.kt 'Head("Gateway")' 'Head("Gateway"); OutlinedTextField(value = "", onValueChange = {})' || M=$((M+1))
 mutate "AI loses the shared pickers" $K/ConfigsPage.kt 'AiSettingsPickers(chat, materialAiTheme())' '' || M=$((M+1))
 mutate "Notifications keeps one channel" $K/ConfigsPage.kt 'StoreNotifyPrefs.Channel.values().forEach' 'listOf(StoreNotifyPrefs.Channel.PUSH).forEach' || M=$((M+1))
@@ -170,7 +166,7 @@ mutate "install results ignore the switches" $L/updater/src/main/java/com/diegon
 mutate "the pass summary ignores the switches" $L/updater/src/main/java/com/diegonmarcos/superapp/updater/PassLedger.kt 'if (!StoreNotifyPrefs.allows(ctx, kind, StoreNotifyPrefs.Channel.PUSH)) return' '' || M=$((M+1))
 mutate "a dp literal in Configs" $K/ConfigsPage.kt 'padding(top = StoreDensity.dpValue(StoreDensity.S8).dp)' 'padding(top = 8.dp)' || M=$((M+1))
 mutate "dense kit dropped" $K/MainActivity.kt 'KitDenseMaterial(' 'androidx.compose.material3.MaterialTheme(' || M=$((M+1))
-mutate "unit task narrowed" $S/build.gradle ':libs:shizuku-adb-debug-tools:testDebugUnitTest' ':libs:core:testDebugUnitTest' || M=$((M+1))
+mutate "unit task narrowed" $S/build.gradle ':libs:shell-client:testDebugUnitTest' ':libs:core:testDebugUnitTest' || M=$((M+1))
 mutate "Configs menu test loses its taps" $L/bottomnav/src/test/kotlin/com/diegonmarcos/superapp/bottomnav/ConfigsMenuTest.kt 'performClick()' 'assertExists()' || M=$((M+1))
 
 echo "== RESULT: real tree $REAL failure(s), $M mutation(s) not caught =="

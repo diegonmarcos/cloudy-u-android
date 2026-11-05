@@ -8,7 +8,7 @@
 # a second control surface) and the apps that must host the page. Held here:
 #   G1  no first-party source outside the allowlist contains a channel control (comments stripped)
 #   G2  every allowlisted file still contains one (the list only shrinks)
-#   G3  every app whose gradle links the lib exposes the page and declares build.json::privileged_channel.needs
+#   G3  every app whose gradle links the lib exposes the page and declares build.json::privileged_channel.needs (#1512: that is the SuperApp alone)
 #   G4  the page is ONE composable, with no minimum height and no Material Button (which reserves 40 dp)
 #   G5  the chips (Store bar, Permissions, Dev control) open the page rather than carry a control
 #   G6  every app presents ITS OWN identity: the lib hard-codes no app label (pairing name, key subject, server
@@ -78,7 +78,7 @@ for d in sorted(os.listdir(R)):
         if os.path.isfile(gp) and re.search(r"project\(\s*[\"']:libs:shizuku-adb-debug-tools[\"']\s*\)", open(gp, encoding="utf-8", errors="replace").read()):
             consumers.append(d); break
 hosts = {k: v for k, v in D["hosts"].items() if not k.startswith("_")}
-ok(len(consumers) >= 5, f"{len(consumers)} apps link the lib: {', '.join(consumers)}", f"only {len(consumers)} consumers found; the discovery walks nothing")
+ok(consumers == ["aa_cloud-superapp"], f"#1512 only the SuperApp links the lib: {', '.join(consumers)}", f"#1512 apps other than the SuperApp link the lib (or none does): {consumers}")
 ok(not [c for c in consumers if c not in hosts], "every consumer app has a declared host for the page",
    "apps link the lib with no page host declared in the data: " + ", ".join(c for c in consumers if c not in hosts))
 for app, h in sorted(hosts.items()):
@@ -109,8 +109,8 @@ man = open(f"{R}/{pg['lib']}/src/main/AndroidManifest.xml", encoding="utf-8").re
 ok("com.diegonmarcos.superapp.adbdebug.AdbShellActivity" in man, "the lib manifest declares the page's Activity (every consumer merges it)", "AdbShellActivity is not declared in the lib manifest")
 
 # G5
-for f, why in (("ab_cloud-libs-shared/libs/appstore/src/main/java/com/diegonmarcos/superapp/appstore/StoreBar.kt", "the Store bar chip"),
-               ("aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/configs/PermissionsFragment.kt", "the Permissions page chip"),
+ok("StoreShell.arm(ctx)" in code("ab_cloud-libs-shared/libs/appstore/src/main/java/com/diegonmarcos/superapp/appstore/StoreBar.kt"), "the Store bar chip opens the SuperApp's arm flow (the Store has no channel page of its own)", "the Store bar chip no longer opens the SuperApp's arm flow")
+for f, why in (("aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/configs/PermissionsFragment.kt", "the Permissions page chip"),
                ("aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/devcontrol/DevControlFragment.kt", "the Dev control chip")):
     ok("AdbShellLink.open(" in code(f), f"{why} opens the page", f"{why} no longer opens the ADB Shell page")
 pp = code("ab_cloud-libs-shared/libs/account/src/main/java/com/diegonmarcos/superapp/profile/PermsPage.kt")
@@ -127,7 +127,7 @@ ok("identity.deviceName" in am and "identity.certSubject" in am and "AdbIdentity
 gr = open(f"{R}/{LIB}/build.gradle", encoding="utf-8").read()
 ok('"HOST_APP_NAME"' in gr and '"HOST_APP_ID"' in gr and "shizukuClientJson.name" in gr, "the lib bakes the consuming app's build.json name + application_id", "the lib does not bake HOST_APP_NAME / HOST_APP_ID from the consuming build.json")
 ss = code("ab_cloud-libs-shared/libs/appstore/src/main/java/com/diegonmarcos/superapp/appstore/StoreStatus.kt")
-ok("AdbScope" in ss and "packageName" in ss and not re.search(r"@Volatile\s+private\s+var\s+probe\b", ss), "the Store bar's channel status is held per package (AdbScope)", "StoreStatus keeps one process-wide probe that any app's state could fill")
+ok("adbdebug" not in ss and "ShellChannels" not in ss and "StoreShell.status(app)" in ss, "the Store bar's channel status is the SuperApp broker's, with no adb link of its own", "StoreStatus names the adb lib / a channel of its own again")
 bs = code(f"{adbsrc}/AdbShellBootstrap.kt")
 ok("niceName()" in bs.split("pkill", 1)[1][:80] if "pkill" in bs else False, "restarting the server kills THIS app's process name, never another app's", "the server restart kills a hard-coded process name")
 
@@ -140,7 +140,7 @@ for d in sorted(os.listdir(R)):
     ls = ((json.load(open(bp, encoding="utf-8")).get("shizuku_diagnostics") or {}).get("local_server")) or {}
     if ls: servers[d] = (ls.get("port"), ls.get("nice_name"))
 ports = [v[0] for v in servers.values()]; nices = [v[1] for v in servers.values()]
-ok(len(servers) >= 2 and all(isinstance(p, int) for p in ports) and len(set(ports)) == len(ports),
+ok(len(servers) >= 1 and all(isinstance(p, int) for p in ports) and len(set(ports)) == len(ports),
    f"every app with a server of its own has its own port ({servers})", f"two apps share a local-server port, or one has none: {servers}")
 ok(all(nices) and len(set(nices)) == len(nices), "every app with a server of its own has its own process name", f"two apps share a server process name: {servers}")
 ids = {d: json.load(open(os.path.join(R, d, "build.json"), encoding="utf-8"))["android"]["application_id"] for d in ("aa_cloud-superapp", "ac_cloud-store")}
@@ -162,8 +162,8 @@ ok("AdbPeerDots.tints(" in st and "PeerDots(" in st and "AdbPeers.FLEET.map" in 
 # G8: ONE page, no copy
 copies = [p for p in sources if not p.startswith(LIB + "/") and re.search(r"\bfun\s+AdbShell\w*\s*\(|\bAdbShellScreen\(", code(p))]
 ok(not copies, "no first-party code outside the lib draws an ADB Shell page of its own", "an ADB Shell page outside the lib: " + ", ".join(copies))
-both = [a for a in ("aa_cloud-superapp", "ac_cloud-store") if "AdbShellHostedPage(" not in code(hosts[a]["file"])]
-ok(not both, "the SuperApp and Cloud Store host the SAME AdbShellHostedPage", "these apps do not host AdbShellHostedPage: " + ", ".join(both))
+both = [a for a in ("aa_cloud-superapp",) if "AdbShellHostedPage(" not in code(hosts[a]["file"])]
+ok(not both, "the SuperApp hosts the lib's AdbShellHostedPage (the only app with one)", "these apps do not host AdbShellHostedPage: " + ", ".join(both))
 
 if mode == "--files":
     keep = set(allow_files) | {h["file"] for h in hosts.values()} | {f"{pdir}/{f}" for f in pg["files"]}
@@ -211,19 +211,13 @@ S=ac_cloud-store/app/src/main/java/com/diegonmarcos/cloudstore
 A=aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp
 P=ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/src/main/java/com/diegonmarcos/superapp/adbdebug
 M=0
-mutate "Store re-implements Pair" $S/MainActivity.kt '' $'\nfun x(ctx: android.content.Context) { AdbPairingService.start(ctx) }\n' || M=$((M+1))
-mutate "Account draws its own mode bar" ac_cloud-account/app/src/main/java/com/diegonmarcos/cloudaccount/MainActivity.kt '' $'\n@androidx.compose.runtime.Composable fun y() { ChannelModeBar() }\n' || M=$((M+1))
 mutate "Store bar reconnects by itself" ab_cloud-libs-shared/libs/appstore/src/main/java/com/diegonmarcos/superapp/appstore/StoreBar.kt '' $'\nfun z(c: android.content.Context) { ShellAccess.ensure(c) {} }\n' || M=$((M+1))
 mutate "Permissions page toggles Wireless debugging" $A/configs/PermissionsFragment.kt '' $'\nfun w(c: android.content.Context) { WirelessDebugging.set(c, true) }\n' || M=$((M+1))
 mutate "a new place opens Developer options" $A/devcontrol/DevControlFragment.kt '' $'\nval i = android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS)\n' || M=$((M+1))
 mutate "Shizuku prompt in a screen" $A/configs/PermissionsFragment.kt '' $'\nfun s(c: android.content.Context) { ShizukuStatus.act(c) }\n' || M=$((M+1))
 mutate "a stale allowlist entry" ab_cloud-libs-shared/libs/wifi/src/main/java/com/diegonmarcos/superapp/wifi/WifiUi.kt 'Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS' 'Settings.ACTION_WIFI_SETTINGS' || M=$((M+1))
-mutate "Termux loses its page entry" ac_cloud-termux/app/src/main/java/com/termux/app/activities/SettingsActivity.java 'AdbShellLink.INSTANCE.open(' 'Unit.open(' || M=$((M+1))
-mutate "Store loses its page" $S/ConfigsPage.kt 'AdbShellHostedPage()' 'Unit' || M=$((M+1))
 mutate "the SuperApp hosts a page of its own" $A/configs/AdbShellFragment.kt 'AdbShellHostedPage()' 'AdbShellScreen(dark = true)' || M=$((M+1))
 mutate "a second copy of the page in an app" $S/MainActivity.kt '' $'\n@androidx.compose.runtime.Composable fun AdbShellMine() {}\n' || M=$((M+1))
-mutate "two apps on one server port" ac_cloud-store/build.json '"port": 38098' '"port": 38099' || M=$((M+1))
-mutate "two apps with one server process name" ac_cloud-store/build.json '"nice_name": "cloudstore-adb"' '"nice_name": "superapp-adb"' || M=$((M+1))
 mutate "the peer list drifts from build.json" $P/AdbPeers.kt '"com.diegonmarcos.cloudstore"' '"com.diegonmarcos.cloudstoreX"' || M=$((M+1))
 mutate "the status provider is not declared" ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/src/main/AndroidManifest.xml 'com.diegonmarcos.superapp.adbdebug.AdbStatusProvider' 'com.diegonmarcos.superapp.adbdebug.Gone' || M=$((M+1))
 mutate "the status provider loses its permission" ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/src/main/AndroidManifest.xml 'android:permission="com.diegonmarcos.cloud.permission.CONSTELLATION_DATA"' '' || M=$((M+1))
@@ -234,16 +228,17 @@ mutate "the Store pairs under the SuperApp's name" $P/AdbManager.kt 'getDeviceNa
 mutate "the key subject is the SuperApp's" $P/AdbManager.kt 'X500Name(identity.certSubject)' 'X500Name("CN=cloud-superapp, OU=adbdebug")' || M=$((M+1))
 mutate "a server restart kills the SuperApp's process" $P/AdbShellBootstrap.kt "pkill -f '\${niceName().dropLast(1)}[\${niceName().last()}]'" "pkill -f 'superapp-ad[b]'" || M=$((M+1))
 mutate "the identity is no longer baked from the host" ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/build.gradle 'HOST_APP_NAME' 'HOST_APP_NAMEX' || M=$((M+1))
-mutate "the Store status is one process-wide probe" ab_cloud-libs-shared/libs/appstore/src/main/java/com/diegonmarcos/superapp/appstore/StoreStatus.kt 'private val probes = AdbScope<ControlStatus.Probe>()' '@Volatile private var probe: ControlStatus.Probe? = null' || M=$((M+1))
-mutate "Store drops its declared needs" ac_cloud-store/build.json '"privileged_channel"' '"privileged_channel_x"' || M=$((M+1))
-mutate "Nix-on-Droid drops its declared needs" ac_cloud-nix-on-droid/privileged-channel.json '"needs"' '"needs_x"' || M=$((M+1))
+mutate "Store re-implements Pair" $S/MainActivity.kt '' $'\nfun x(ctx: android.content.Context) { AdbPairingService.start(ctx) }\n' || M=$((M+1))
+mutate "Store bar reconnects by itself" ab_cloud-libs-shared/libs/appstore/src/main/java/com/diegonmarcos/superapp/appstore/StoreBar.kt '' $'\nfun z2(c: android.content.Context) { ShellAccess.ensure(c) {} }\n' || M=$((M+1))
+mutate "the Store chip stops arming" ab_cloud-libs-shared/libs/appstore/src/main/java/com/diegonmarcos/superapp/appstore/StoreBar.kt 'StoreShell.arm(ctx)' 'Unit' || M=$((M+1))
+mutate "the Store status names the adb lib again" ab_cloud-libs-shared/libs/appstore/src/main/java/com/diegonmarcos/superapp/appstore/StoreStatus.kt 'private val running' 'private val adbdebug = 0; private val running' || M=$((M+1))
+mutate "Store links the lib again (a second consumer)" ac_cloud-store/app/build.gradle '' $'dependencies { implementation project(\':libs:shizuku-adb-debug-tools\') }\n' || M=$((M+1))
 mutate "a sixth app links the lib with no page" ac_cloud-fake/app/build.gradle '' $'dependencies { implementation project(\':libs:shizuku-adb-debug-tools\') }\n' || M=$((M+1))
 mutate "the page reserves a minimum height" $P/AdbShellPage.kt 'Column(modifier.fillMaxWidth().padding(8.dp)' 'Column(modifier.fillMaxWidth().heightIn(min = 40.dp).padding(8.dp)' || M=$((M+1))
 mutate "the page uses a Material Button" $P/ChannelModeBar.kt '    Box(
         modifier.clip(shape)' '    androidx.compose.material3.OutlinedButton(onClick = onClick) { Text(label) }
     Box(
         modifier.clip(shape)' || M=$((M+1))
-mutate "the Store chip stops opening the page" ab_cloud-libs-shared/libs/appstore/src/main/java/com/diegonmarcos/superapp/appstore/StoreBar.kt 'AdbShellLink.open(' 'Unit.open(' || M=$((M+1))
 mutate "the Activity is not declared" ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/src/main/AndroidManifest.xml 'com.diegonmarcos.superapp.adbdebug.AdbShellActivity' 'com.diegonmarcos.superapp.adbdebug.Gone' || M=$((M+1))
 
 echo "== RESULT: real tree $REAL failure(s), $M mutation(s) not caught =="

@@ -46,7 +46,7 @@ on:
       - "ab_cloud-libs-shared/libs/fleet-webserver/**"
       - "ab_cloud-libs-shared/libs/fleetconfig-model/**"
       - "ab_cloud-libs-shared/libs/perms/**"
-      - "ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/**"
+      - "ab_cloud-libs-shared/libs/shell-client/**"
       - "ab_cloud-libs-shared/libs/sysdns/**"
       - "ab_cloud-libs-shared/libs/theme-background/**"
       - "ab_cloud-libs-shared/libs/ui-icons/**"

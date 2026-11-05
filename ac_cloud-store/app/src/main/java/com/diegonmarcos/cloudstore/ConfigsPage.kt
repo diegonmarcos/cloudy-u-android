@@ -11,6 +11,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Button
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,7 +27,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.diegonmarcos.superapp.adbdebug.AdbShellHostedPage
 import com.diegonmarcos.superapp.ai.AiFleetChat
 import com.diegonmarcos.superapp.ai.AiSettingsPickers
 import com.diegonmarcos.superapp.ai.materialAiTheme
@@ -36,6 +36,7 @@ import com.diegonmarcos.superapp.appstore.PhoneAppActions
 import com.diegonmarcos.superapp.appstore.StoreDensity
 import com.diegonmarcos.superapp.appstore.StoreSourcePrefs
 import com.diegonmarcos.superapp.core.StoreNotifyPrefs
+import com.diegonmarcos.superapp.shellclient.ShellClient
 
 /**
  * Settings > Configs: a PAGE with its own top tabs, not a screen that is one thing. The tabs are the
@@ -60,11 +61,9 @@ object ConfigsPages {
 @Composable
 fun ConfigsPage(page: String) {
     val pad = StoreDensity.dpValue(StoreDensity.S12).dp
-    // The ADB Shell page is the shared lib page and carries its own scroll and padding, so it is hosted bare, exactly as
-    // SuperApp hosts it; every other page is a column this host scrolls.
-    val own = page != ConfigsPages.ADB
+    // #1512 every page (the shell-broker page included) is a column this host scrolls.
     Column(
-        Modifier.fillMaxSize().testTag(ConfigsPages.body(page)).then(if (own) Modifier.verticalScroll(rememberScrollState()).padding(pad) else Modifier),
+        Modifier.fillMaxSize().testTag(ConfigsPages.body(page)).verticalScroll(rememberScrollState()).padding(pad),
         verticalArrangement = Arrangement.spacedBy(StoreDensity.dpValue(StoreDensity.S8).dp),
     ) {
         when (page) {
@@ -138,9 +137,24 @@ private fun FleetTokenEntry(ctx: Context) {
 
 // ── ADB Shell ─────────────────────────────────────────────────────────────────────────────────────────
 
-/** #894 this app's own shell channel (silent installs): THE ADB Shell page, with this app's own identity, keys and state. */
+/**
+ * #1512 The shell the Store installs through is the SuperApp's broker, not a channel of its own: this page reports the broker's state
+ * and opens the SuperApp's arm flow. Nothing to pair or reconnect here.
+ */
 @Composable
-private fun AdbPage() = AdbShellHostedPage()
+private fun AdbPage() {
+    val ctx = LocalContext.current
+    var status by remember { mutableStateOf<com.diegonmarcos.superapp.shellclient.ShellStatus?>(null) }
+    var tick by remember { mutableStateOf(0) }
+    androidx.compose.runtime.LaunchedEffect(tick) {
+        status = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { ShellClient.status(ctx) }
+    }
+    Head("Shell broker")
+    ShellBrokerPage.lines(status).forEach { Body(it) }
+    Button(onClick = { ShellClient.arm(ctx); tick++ }, modifier = Modifier.testTag(ShellBrokerPage.ARM_TAG), content = { Text("Arm in SuperApp") })
+    Button(onClick = { tick++ }, content = { Text("Re-check") })
+    Note("Silent installs and the self-update run through the SuperApp's shell broker (the APK is streamed over its stdin door), under this app's own allowlist entry. The broker never keeps a connection open between calls.")
+}
 
 // ── AI ────────────────────────────────────────────────────────────────────────────────────────────────
 

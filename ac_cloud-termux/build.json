@@ -82,10 +82,10 @@
       "dir": "../ab_cloud-libs-shared/libs/fleetconfig-model",
       "type": "library"
     },
-    "libs:shizuku-adb-debug-tools": {
-      "_doc_dir": "The Shizuku client + rish bridge. Reads this app's build.json::shizuku_client at build time (BuildConfig.SHIZUKU_CLIENT_B64); RishBridge exports `rish` into the rootfs and SuperappBridgeChannel delegates adb-shell to the fleet SuperApp over loopback.",
+    "libs:shell-client": {
+      "_doc_dir": "#1512 The SuperApp's shell broker client + the rish relay (ShellRish / RishRelay): `rish` inside the proot talks to a loopback relay in this app's process, which asks the broker under this terminal's own allowlist entry. No channel, pairing, service or boot hook here.",
       "type": "library",
-      "dir": "../ab_cloud-libs-shared/libs/shizuku-adb-debug-tools"
+      "dir": "../ab_cloud-libs-shared/libs/shell-client"
     },
     "libs:ui-nav-bars": {"dir": "../ab_cloud-libs-shared/libs/ui-nav-bars", "type": "library", "_doc": "#1352 Configs ▸ General and ▸ About (fleetconfigs): FleetConfigsActivity, started from this app's own menu. Shared BY REFERENCE."},
     "libs:bottomnav": {"dir": "../ab_cloud-libs-shared/libs/bottomnav", "type": "library", "_doc": "libs:ui-nav-bars' `api` dependency; listed so settings.gradle resolves the path."},
@@ -156,64 +156,27 @@
     }
   },
   "shizuku_client": {
-    "_doc": "ONE declarative block that makes this terminal a Shizuku client and puts `rish` inside its proot rootfs. Read at BUILD time by libs/shizuku-adb-debug-tools/build.gradle (consumer-wins-with-fallback, base64 -> BuildConfig.SHIZUKU_CLIENT_B64, the same way that lib bakes shizuku_diagnostics) and at ENTER time by rootfs/enter.sh, which renders the binds and the rish env from the SAME data. Adding a third terminal = one copy of this block in its build.json; no Kotlin edit, no hardcoded package name or path anywhere else (Pillar: DATA-DRIVEN). The runtime shell ladder (ShellChannels) and rish both try `providers` IN THIS ORDER, first that answers wins.",
-    "providers": [
-      "com.diegonmarcos.superapp",
-      "moe.shizuku.privileged.api"
-    ],
-    "_doc_providers": "Order is the ladder: cloud-superapp's own Shizuku-compatible provider FIRST (the fleet's privilege plane, granted and reachable over loopback from inside proot), stock Shizuku as the fallback. The user's rule, 2026-10-06.",
+    "_doc": "#1512 The rish placement for this terminal (the key keeps its name: both terminals and enter.sh read it). `rish` is written by ShellRish (libs:shell-client) into the login's rish/ dir with a rish.env holding the in-process relay's loopback URL and a random per-process token; enter.sh binds each stage file onto its guest path. rish reaches the SuperApp's shell broker through that relay, under this app's allowlist entry (libs:shell-broker assets/shell-allowlist.json, caller cld.termux). There is no Shizuku, no embedded ADB and no provider ladder here.",
     "rish": {
       "rootfs_bin": "/usr/local/bin",
       "rootfs_lib": "/usr/local/lib",
       "application_id": "cld.termux",
-      "token_env": "CLOUD_FLEET_TOKEN",
       "env_file": "rish.env"
     },
-    "_doc_rish": "rish lands at rootfs_bin/rish (RISH_APPLICATION_ID=application_id baked into its env). rootfs_lib is where Shizuku's rish_shizuku.dex would go IF app_process worked in proot; it does not here, so the dir is created for parity and the dex is optional. token_env is the environment variable the login exports (the fleet token, written 0600 by RishBridge, never a secret in source); env_file is the generated file the app writes beside the login and the login sources.",
-    "superapp_bridge": {
-      "host": "127.0.0.1",
-      "port": 38080,
-      "exec_path": "/api/adb/exec",
-      "cmd_param": "cmd"
-    },
-    "_doc_superapp_bridge": "The SuperApp DevControlServer loopback route rish and SuperappBridgeChannel POST/GET shell commands to, Bearer <fleet token>. proot shares the host network namespace, so 127.0.0.1 inside the rootfs IS the device loopback and NO networking bind is needed. port is DevControlPrefs.DEFAULT_PORT.",
+    "_doc_rish": "rish lands at rootfs_bin/rish; application_id is the allowlist caller the broker resolves from this app's binder uid. env_file is the generated file the app writes beside the login and the login sources.",
     "binds": [
       {
         "stage": "rish/rish",
         "guest": "/usr/local/bin/rish",
-        "_doc": "the rish launcher, staged beside the login by the app (RishBridge.export) and file-bound into the tree"
+        "_doc": "the rish launcher, staged beside the login by the app (ShellRish.export) and file-bound into the tree"
       },
       {
         "stage": "rish/rish.env",
         "guest": "/usr/local/etc/rish.env",
-        "_doc": "RISH_APPLICATION_ID + the fleet token + the bridge URL; sourced by rish and exported by the login"
+        "_doc": "the relay URL + the per-process token; sourced by rish"
       }
     ],
     "_doc_binds": "enter.sh binds each stage file (relative to the login's own directory, the #644 cloud-store idiom) onto its guest path; install-in-rootfs.sh creates the mountpoints so proot's file-bind always lands."
-  },
-  "privileged_channel": {
-    "_doc": "What THIS app declares it needs the privileged shell channel for. Read by libs/shizuku-adb-debug-tools/build.gradle into BuildConfig.CHANNEL_NEEDS_B64 and listed, as written, in the Declared needs section of the ADB Shell page (Settings > ADB Shell). Add a need here and it shows there; nothing about it is typed in Kotlin. A terminal runs no local server of its own, so its ADB Shell page shows none and offers no server buttons.",
-    "needs": [
-      {
-        "id": "rish-shell",
-        "label": "rish: a shell-uid shell inside the terminal",
-        "why": "The terminal exports rish into its rootfs, so a command typed there can run as the shell user through the SuperApp bridge or Shizuku.",
-        "commands": [
-          "rish",
-          "sh -c"
-        ]
-      },
-      {
-        "id": "termux-tooling",
-        "label": "Fleet tooling from the terminal",
-        "why": "Agents and scripts in the terminal use rish for pm, am and settings calls the proot cannot make itself.",
-        "commands": [
-          "pm",
-          "am",
-          "settings"
-        ]
-      }
-    ]
   },
   "release": {
     "ghcr": {

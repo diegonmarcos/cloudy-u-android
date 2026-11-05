@@ -175,8 +175,8 @@ dependencies {
     // SharedUidMigration: the generated ICloudExec client (the one AIDL, same as termux's
     // CloudExecService) — never a hand-written binder call that could drift from it.
     implementation project(':libs:shared-store')
-    // Play Protect toggle + shell channel ladder on the store's header.
-    implementation project(':libs:shizuku-adb-debug-tools')
+    // #1512 Play Protect toggle, silent installs and force-stop through the SuperApp's shell broker (a thin client, no channel of its own).
+    implementation project(':libs:shell-client')
     implementation 'androidx.core:core-ktx:1.13.1'
     implementation 'androidx.fragment:fragment-ktx:1.8.5'
     implementation 'androidx.work:work-runtime-ktx:2.12.0'

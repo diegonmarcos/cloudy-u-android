@@ -3,6 +3,7 @@ package com.diegonmarcos.superapp.shellbroker
 import com.diegonmarcos.superapp.shellclient.ShellResult
 import com.diegonmarcos.superapp.shellclient.ShellWire
 import java.io.File
+import java.io.InputStream
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Future
 import java.util.concurrent.LinkedBlockingQueue
@@ -40,6 +41,7 @@ class BrokerCore(
     private val tryArm: () -> Boolean = { false },
 ) {
     private val permits = Semaphore(maxConcurrent)
+    private val stdinPermit = Semaphore(1)
     @Volatile private var inflight = 0
     @Volatile private var lastActive = 0L
     private var pool: ThreadPoolExecutor? = null
@@ -76,11 +78,50 @@ class BrokerCore(
     fun exec(caller: String, cmd: String, timeoutMs: Long, maxBytes: Int = ShellWire.EXEC_MAX_BYTES, stdin: File? = null): ShellResult {
         val t0 = clock()
         val key = allowlist().callerKey(caller)
-        fun done(r: ShellResult, outcome: String, exit: Int, source: String = ""): ShellResult {
-            audit.add(AuditLog.Entry(t0, key, AuditLog.redact(cmd), outcome, exit, clock() - t0, source)); return r
-        }
         val d = allowlist().decide(caller, cmd)
-        if (d is Allowlist.Decision.Deny) return done(ShellResult.Denied(d.reason), "denied", -1)
+        if (d is Allowlist.Decision.Deny) return finish(key, cmd, ShellResult.Denied(d.reason), "denied", -1, t0)
+        return runDecided(key, cmd, cmd, timeoutMs, maxBytes, stdin, t0, ShellWire::clampTimeout)
+    }
+
+    /**
+     * #1512 The stdin door: stream [declaredSize] bytes of [input] to [cmd]'s stdin (`pm install -S <size>`). Default deny: the caller's
+     * `stdin` rules decide ([Allowlist.decideStdin]); at most [declaredSize] bytes are read (one more would be an over-run) into a temp
+     * file under [spool], which is deleted afterwards; one stdin call at a time (a transfer holds an APK's worth of disk); its own
+     * timeout ceiling; audited with the byte count, never the content. The broker merges stderr into stdout itself.
+     */
+    fun execStdin(caller: String, cmd: String, input: InputStream, declaredSize: Long, timeoutMs: Long, spool: File,
+                  maxBytes: Int = ShellWire.EXEC_MAX_BYTES): ShellResult {
+        val t0 = clock()
+        val key = allowlist().callerKey(caller)
+        val label = "$cmd <stdin $declaredSize B>"
+        val d = allowlist().decideStdin(caller, cmd, declaredSize)
+        if (d is Allowlist.Decision.Deny) return finish(key, label, ShellResult.Denied(d.reason), "denied", -1, t0)
+        if (!stdinPermit.tryAcquire()) return finish(key, label, ShellResult.Failed("busy: another stdin transfer is running"), "busy", -1, t0)
+        var file: File? = null
+        try {
+            spool.mkdirs()
+            sweep(spool, t0)
+            val f = File.createTempFile("stdin-", ".bin", spool).also { file = it }
+            val got = copyBounded(input, f, declaredSize)
+            if (got != declaredSize) return finish(key, label, ShellResult.Denied("input is ${if (got > declaredSize) "longer" else "shorter"} than the declared $declaredSize bytes"), "denied", -1, t0)
+            val runCmd = cmd.trim().let { if (it.endsWith(Allowlist.MERGE)) it else it + Allowlist.MERGE }
+            return runDecided(key, label, runCmd, timeoutMs, maxBytes, f, t0, ShellWire::clampStdinTimeout)
+        } catch (e: java.io.IOException) {
+            return finish(key, label, ShellResult.Failed("could not read the input: ${e.javaClass.simpleName}"), "error", -1, t0)
+        } finally {
+            file?.delete()
+            stdinPermit.release()
+        }
+    }
+
+    private fun finish(key: String, auditCmd: String, r: ShellResult, outcome: String, exit: Int, t0: Long, source: String = ""): ShellResult {
+        audit.add(AuditLog.Entry(t0, key, AuditLog.redact(auditCmd), outcome, exit, clock() - t0, source)); return r
+    }
+
+    /** Past the allowlist: concurrency cap -> channel -> timeout -> audit. */
+    private fun runDecided(key: String, auditCmd: String, cmd: String, timeoutMs: Long, maxBytes: Int, stdin: File?, t0: Long,
+                    clamp: (Long) -> Long): ShellResult {
+        fun done(r: ShellResult, outcome: String, exit: Int, source: String = ""): ShellResult = finish(key, auditCmd, r, outcome, exit, t0, source)
         if (!permits.tryAcquire()) return done(ShellResult.Failed("busy: $maxConcurrent calls already running"), "busy", -1)
         synchronized(this) { inflight++; lastActive = t0 }
         fun release() { synchronized(this) { inflight--; lastActive = clock() }; permits.release() }
@@ -94,7 +135,7 @@ class BrokerCore(
             // The worker returns the permit when the CHANNEL returns, so a wedged channel keeps its slot: that is the cap.
             val f: Future<String?> = pool().submit<String?> { try { channel.run(wrapped, stdin) } finally { release() } }
             submitted = true
-            val raw = try { f.get(ShellWire.clampTimeout(timeoutMs), TimeUnit.MILLISECONDS) }
+            val raw = try { f.get(clamp(timeoutMs), TimeUnit.MILLISECONDS) }
             catch (e: TimeoutException) { f.cancel(true); return done(ShellResult.Failed("timed out after ${timeoutMs / 1000}s", true), "timeout", -1, src) }
             catch (e: ExecutionException) { return done(ShellResult.Failed("channel threw ${e.cause?.javaClass?.simpleName}"), "error", -1, src) }
             if (raw == null) return done(ShellResult.NeedsArm, "needs_arm", -1, src)
@@ -105,8 +146,28 @@ class BrokerCore(
         }
     }
 
+    /** Pure: copy at most [limit] + 1 bytes of [input] into [out] and return the count read (> [limit] = an over-run). */
+    private fun copyBounded(input: InputStream, out: File, limit: Long): Long {
+        var total = 0L
+        out.outputStream().use { o ->
+            val buf = ByteArray(64 * 1024)
+            while (total <= limit) {
+                val n = input.read(buf, 0, minOf(buf.size.toLong(), limit + 1 - total).toInt())
+                if (n < 0) break
+                o.write(buf, 0, n); total += n
+            }
+        }
+        return total
+    }
+
+    /** A crashed process leaves its spool file behind: drop spool files older than [SPOOL_STALE_MS]. */
+    private fun sweep(spool: File, now: Long) {
+        spool.listFiles()?.forEach { if (now - it.lastModified() > SPOOL_STALE_MS) it.delete() }
+    }
+
     companion object {
         const val DEFAULT_MAX_CONCURRENT = 3
+        private const val SPOOL_STALE_MS = 60 * 60 * 1000L
         private const val MARK = "__SB_EXIT__"
         private val EXIT = Regex("""\n?$MARK(-?\d+)\s*$""")
 

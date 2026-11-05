@@ -52,9 +52,6 @@
     <queries>
         <package android:name="com.diegonmarcos.cloudlib.rootfsnixdroid" />
         <package android:name="com.diegonmarcos.superapp" />
-        <!-- build.json::shizuku_client provider: so this terminal can bind
-             Shizuku's binder and appear in its "Application management" list. -->
-        <package android:name="moe.shizuku.privileged.api" />
     </queries>
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -237,19 +234,6 @@
             android:name=".app.TermuxService"
             android:exported="false" />
 
-        <!-- Shizuku client provider. Declaring it is what makes this terminal a
-             Shizuku client: RishBridge.requestShizukuPermissionIfNeeded() calls
-             Shizuku.requestPermission, which lists the app under Shizuku ▸
-             Application management. Authority is per-app so it never collides
-             with the SuperApp's. The feature set is data-driven from
-             build.json::shizuku_client (libs:shizuku-adb-debug-tools). -->
-        <provider
-            android:name="rikka.shizuku.ShizukuProvider"
-            android:authorities="${applicationId}.shizuku"
-            android:multiprocess="false"
-            android:enabled="true"
-            android:exported="true"
-            android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
 
         <service
             android:name=".app.RunCommandService"

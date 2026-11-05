@@ -4,7 +4,6 @@ import android.app.Activity
 import android.app.Application
 import android.content.Intent
 import android.util.Log
-import com.diegonmarcos.superapp.adbdebug.HostShell
 import com.diegonmarcos.superapp.appstore.StoreImport
 import com.diegonmarcos.superapp.profile.AccountDebugApi
 import com.diegonmarcos.superapp.profile.AccountHost
@@ -46,13 +45,8 @@ class App : Application() {
         // A legacy device id renamed by a declared alias (galaxy -> galaxy-s21) is migrated now, before any page draws it.
         runCatching { com.diegonmarcos.superapp.profile.AccountDevice.migrateAtStart(this) }
             .onFailure { Log.w(TAG, "device alias migration failed: ${it.javaClass.simpleName}") }
-        // Account's OWN uid-2000 channel (spec 2.4): embedded adb pairing, Shizuku as the fallback.
-        // Re-armed after every boot; the runbook's shell and store steps run over it.
-        // HostShellService keeps the debug server up only while Settings ▸ Debug API allows it.
-        // #1502 Account never runs in the background: no keep-alive service, no boot re-arm, no keeper, no WorkManager job.
-        HostShell.backgroundAllowed = { false }
-        HostShell.debugServerAllowed = { com.diegonmarcos.superapp.profile.DebugApiSwitch.enabled(it) }
-        runCatching { HostShell.install(this) }.onFailure { Log.w(TAG, "shell channel not armed", it) }
+        // #1512 No shell channel of its own: the runbook's shell and store steps run through the SuperApp's shell broker
+        // (libs:shell-client). Nothing to arm, keep alive or re-arm at boot here.
         // /api/account/... on the fleet debug server, as in SuperApp.
         runCatching { AccountDebugApi.register(this) }
             .onFailure { Log.w(TAG, "account debug API not registered", it) }

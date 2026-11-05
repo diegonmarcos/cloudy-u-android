@@ -4,7 +4,7 @@
 #     CredentialProviderService (a system binding the app cannot refuse), no sync adapter / account authenticator
 #  W2 source: no PeriodicWorkRequest, no AlarmManager, no JobScheduler anywhere under the app; AccountForeground is the only place
 #     the Autocomplete sync and the auto-backup run, and it schedules nothing
-#  W3 services: every service Account can start is NOT sticky, and HostShell is switched off for it (backgroundAllowed = false);
+#  W3 services: every service Account can start is NOT sticky, and #1512 it arms no shell channel of its own (no HostShell);
 #     libs:updater's Updater / ConstellationWorker cancel instead of scheduling for it (BackgroundGate.never)
 #  W4 callers: no fleet code wakes Account on a schedule: FleetPeers.wake refuses it, the SuperApp strip ticker never wakes a
 #     no-wake peer, WdKeeper never queries one, the Webserver mesh answers 403 for it, and no WorkManager worker of any app
@@ -50,7 +50,7 @@ ok("AccountForeground.onForeground(this)" in mn and not os.path.exists(os.path.j
    "W2 autocomplete sync and auto-backup run from the foreground only; the two workers are gone", "W2 a worker is back or MainActivity no longer syncs")
 
 app = code(A + "/java/com/diegonmarcos/cloudaccount/App.kt")
-ok("HostShell.backgroundAllowed = { false }" in app and "AccountForeground.retireLegacyJobs(this)" in app, "W3 App turns HostShell's background off and retires the legacy jobs", "W3 App does not gate HostShell / retire legacy jobs")
+ok("HostShell" not in app and "adbdebug" not in app and "AccountForeground.retireLegacyJobs(this)" in app, "W3 #1512 App arms no shell channel of its own (no keep-alive service, no keeper) and retires the legacy jobs", "W3 App names HostShell again / does not retire the legacy jobs")
 LIB = "ab_cloud-libs-shared/libs/"
 svc = code(LIB + "shizuku-adb-debug-tools/src/main/java/com/diegonmarcos/superapp/adbdebug/HostShellService.kt")
 wd = code(LIB + "shizuku-adb-debug-tools/src/main/java/com/diegonmarcos/superapp/adbdebug/WdKeeperService.kt")

@@ -61,11 +61,10 @@
     <!-- Manage ▸ Apps lists every installed app with its sizes. -->
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" tools:ignore="QueryAllPackagesPermission" />
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" tools:ignore="ProtectedPermissions" />
-    <!-- Held only through `pm grant` (the adb-shell lib's channel); declared so the grant can be applied. No code writes settings. -->
+    <!-- Held only through `pm grant` (the SuperApp's shell broker runs it); declared so the grant can be applied. No code writes settings. -->
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS"
         tools:ignore="ProtectedPermissions" />
     <queries>
-        <package android:name="moe.shizuku.privileged.api" />
         <package android:name="com.diegonmarcos.superapp" />
         <package android:name="com.diegonmarcos.clouddrive" />
         <!-- #642 the terminal is resolved by package to tell "not installed" apart from
@@ -270,16 +269,6 @@
             android:name=".debugapi.DriveDebugApiProvider"
             android:authorities="${applicationId}.drivedebugapi"
             android:exported="false" />
-        <!-- Shizuku client provider (libs:shizuku-adb-debug-tools, build.json::shizuku_client): lets
-             Manage ▸ Apps bind Shizuku as the fallback shell for ps / dumpsys meminfo. -->
-        <provider
-            android:name="rikka.shizuku.ShizukuProvider"
-            android:authorities="${applicationId}.shizuku"
-            android:multiprocess="false"
-            android:enabled="true"
-            android:exported="true"
-            android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
-
         <!-- Agents ▸ Screenshots: the agent's output contract served read-only
              (data/agent-screenshots-contract.json, docs/screenshot-agent-contract.md), and the
              hook that arms its schedule on process start. -->

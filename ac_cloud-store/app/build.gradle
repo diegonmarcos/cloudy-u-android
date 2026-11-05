@@ -238,9 +238,9 @@ dependencies {
     // (api), so the install engine comes with it.
     implementation project(':libs:appstore')
     implementation project(':libs:updater')
-    // #894 the shell channel (Shizuku client + embedded wireless-adb pairing), shared by reference
-    // with SuperApp. libs:updater picks its shell/ source set up from this module being present.
-    implementation project(':libs:shizuku-adb-debug-tools')
+    // #1512 the SuperApp's shell broker, as a thin client: silent installs and the self-update go through its stdin
+    // door (pm install -S). libs:updater picks its broker/ source set up from this module being present.
+    implementation project(':libs:shell-client')
     implementation project(':libs:sysdns')     // #874 FleetDnsBridge: the one resolver of this process
     // #868 the bottom island + NavDecl: the Store's four pages are ui.sections.
     implementation project(':libs:bottomnav')

@@ -17,6 +17,7 @@ import java.io.File
 object ShellBroker {
     const val SELF = "com.diegonmarcos.superapp"
     private const val ALLOWLIST_ASSET = "shell-allowlist.json"
+    private const val SPOOL_DIR = "shell-stdin"
     private const val AUDIT_FILE = "shell-broker-audit.jsonl"
     private const val AUDIT_MAX_BYTES = 64 * 1024L
     private const val INTERNAL_TIMEOUT_MS = 60_000L
@@ -57,6 +58,11 @@ object ShellBroker {
     fun exec(ctx: Context, caller: String, cmd: String, timeoutMs: Long = ShellWire.DEFAULT_TIMEOUT_MS,
              maxBytes: Int = ShellWire.EXEC_MAX_BYTES, stdin: File? = null): ShellResult =
         core(ctx).also { it.reapIfIdle() }.exec(caller, cmd, timeoutMs, maxBytes, stdin)
+
+    /** #1512 The stdin door ([BrokerCore.execStdin]): [input] is the client's descriptor, read for at most [size] bytes into the cache spool. */
+    fun execStdin(ctx: Context, caller: String, cmd: String, input: java.io.InputStream, size: Long,
+                  timeoutMs: Long = ShellWire.STDIN_DEFAULT_TIMEOUT_MS): ShellResult =
+        core(ctx).also { it.reapIfIdle() }.execStdin(caller, cmd, input, size, timeoutMs, File(ctx.cacheDir, SPOOL_DIR))
 
     /**
      * The SuperApp's own features (X-Ray, Background policy, Super Saving): the command's output under the SuperApp's entry, or null

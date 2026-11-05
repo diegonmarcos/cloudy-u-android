@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # The privileged channel arms itself only when the app's switch says so. Static: no build, no device.
-#   A1  default per app is DATA: build.json::privileged_channel.default_on (SuperApp false, Cloud Store true)
+#   A1  default is DATA: build.json::privileged_channel.default_on (SuperApp false; #1512 it is the only app with a channel)
 #   A2  SuperApp's Configs switch (Keep Wireless debugging on) declares the same default
 #   A3  every implicit caller of the embedded connect goes through autoArm (gated); raw autoConnect( is explicit-only
 #   A4  both boot receivers consult ChannelAutoArm; PrivilegedPlaneWorker and HostShell.reconnect return before connecting
@@ -20,13 +20,12 @@ def src(p): return re.sub(r"//[^\n]*|/\*.*?\*/", "", open(os.path.join(R, p), en
 def bj(app): return json.load(open(f"{R}/{app}/build.json"))
 SA="aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/"
 LIB="ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/src/main/java/com/diegonmarcos/superapp/adbdebug/"
-sa, st = bj("aa_cloud-superapp"), bj("ac_cloud-store")
+sa = bj("aa_cloud-superapp")
 ok(sa["privileged_channel"].get("default_on") is False, "A1 SuperApp declares default_on=false", "A1 SuperApp must declare privileged_channel.default_on=false")
-ok(st["privileged_channel"].get("default_on") is True, "A1 Cloud Store declares default_on=true", "A1 Cloud Store must declare privileged_channel.default_on=true")
 ctl = [c for g in sa["ui"]["control_panel"]["groups"] for c in g.get("controls", []) if c.get("id") == "wireless_debugging_keepalive"]
 ok(len(ctl) == 1 and ctl[0].get("default_on") == sa["privileged_channel"].get("default_on"), "A2 the Configs switch default equals the declared default", "A2 Configs switch default_on differs from privileged_channel.default_on")
 # A3: raw autoConnect( only in the lib's explicit paths (EmbeddedAdbChannel itself, ShellAccess.ensure, ChannelDevice step) and the autoArm wrapper
-SCOPE = {"aa_cloud-superapp", "ac_cloud-store", "ac_cloud-account", "ab_cloud-libs-shared"}  # the apps this switch governs; others declare no default (on)
+SCOPE = {"aa_cloud-superapp", "ab_cloud-libs-shared"}  # the apps this switch governs; others declare no default (on)
 raw = []
 for base, dirs, files in os.walk(R):
     if base == R: dirs[:] = [d for d in dirs if d in SCOPE]
@@ -58,7 +57,7 @@ echo "== channel auto-arm =="; check "$ROOT"; REAL=$?
 MUT=0; N=0
 SAp=aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp
 LIBp=ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/src/main/java/com/diegonmarcos/superapp/adbdebug
-FILES="aa_cloud-superapp/build.json ac_cloud-store/build.json $SAp/App.kt $SAp/devcontrol/DevControlServer.kt $SAp/system/WirelessDebugKeeper.kt $SAp/system/PrivilegedPlaneWorker.kt $SAp/system/PrivilegedPlaneBootReceiver.kt ab_cloud-libs-shared/libs/updater/src/shell/java/com/diegonmarcos/superapp/updater/ShellChannelAccess.kt $LIBp/EmbeddedAdbChannel.kt $LIBp/WirelessDebugging.kt $LIBp/HostShell.kt $LIBp/ChannelAutoArm.kt $LIBp/ShellAccess.kt $LIBp/ChannelDevice.kt"
+FILES="aa_cloud-superapp/build.json $SAp/App.kt $SAp/devcontrol/DevControlServer.kt $SAp/system/WirelessDebugKeeper.kt $SAp/system/PrivilegedPlaneWorker.kt $SAp/system/PrivilegedPlaneBootReceiver.kt ab_cloud-libs-shared/libs/updater/src/shell/java/com/diegonmarcos/superapp/updater/ShellChannelAccess.kt $LIBp/EmbeddedAdbChannel.kt $LIBp/WirelessDebugging.kt $LIBp/HostShell.kt $LIBp/ChannelAutoArm.kt $LIBp/ShellAccess.kt $LIBp/ChannelDevice.kt"
 mutate() { # mutate <desc> <file> <python-expr old> <new>
   N=$((N+1)); S="$(mktemp -d)"; mkdir -p "$S/x"
   (cd "$ROOT" && for f in $FILES; do mkdir -p "$S/x/$(dirname "$f")"; cp "$f" "$S/x/$f"; done)
@@ -73,9 +72,6 @@ PY
 }
 mutate "SuperApp defaults on" aa_cloud-superapp/build.json '"default_on": false,
     "_default_on_doc"' '"default_on": true,
-    "_default_on_doc"'
-mutate "Store defaults off" ac_cloud-store/build.json '"default_on": true,
-    "_default_on_doc"' '"default_on": false,
     "_default_on_doc"'
 mutate "the DevControl start thread connects raw" $SAp/devcontrol/DevControlServer.kt 'EmbeddedAdbChannel.autoArm(app)' 'EmbeddedAdbChannel.autoConnect(app)'
 mutate "the boot receiver ignores the switch" $SAp/system/PrivilegedPlaneBootReceiver.kt 'ChannelAutoArm.enabled(context)' 'true'

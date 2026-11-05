@@ -131,7 +131,7 @@ object DeviceProfile {
         val device = JSONObject().put("id", deviceId).put("model", Build.MODEL).put("android", Build.VERSION.SDK_INT)
             .put("captured_at", now).put("by", "cloud-account/$by")
         // perms (spec 4.9): exactly Setup ▸ perms, as granted now (PermsPlan.capture).
-        val perms = runCatching { PermsPlan.capture(ctx, com.diegonmarcos.superapp.adbdebug.ShellChannels.active(ctx)) }.getOrDefault(JSONObject())
+        val perms = runCatching { PermsPlan.capture(ctx, ShellChannels.active(ctx)) }.getOrDefault(JSONObject())
         return build(device, apps, settings, cls, perms = perms)
     }
 

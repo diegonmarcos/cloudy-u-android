@@ -147,7 +147,7 @@ dependencies {
     api project(':libs:ui-kit')
     implementation project(':libs:auth')
     implementation project(':libs:bottomnav')         // #868 PageTabsView: Profile's own tab strip (the shared pill strip)
-    implementation project(':libs:shizuku-adb-debug-tools') // SetupRunbook: shell channel + pm install of Cloud Store
+    implementation project(':libs:shell-client')      // #1512 SetupRunbook / PermsPlan: the SuperApp's shell broker (no channel of its own)
 
     implementation 'androidx.core:core-ktx:1.13.1'
     implementation 'androidx.appcompat:appcompat:1.7.0'
@@ -177,5 +177,6 @@ dependencies {
         exclude group: 'com.jcraft', module: 'jsch'
     }
     implementation 'com.github.mwiede:jsch:0.2.17'
-    // ed25519 for Setup > Drive: DriveCredentialStore points jsch's EdDSA at BouncyCastle (bcprov-jdk15to18 arrives at runtime through libs:shizuku-adb-debug-tools), then at the JDK's.
+    // ed25519 for Setup > Drive: DriveCredentialStore points jsch's EdDSA at BouncyCastle (bcprov-jdk15to18, declared here since #1512), then at the JDK's.
+    implementation 'org.bouncycastle:bcprov-jdk15to18:1.81'
 }

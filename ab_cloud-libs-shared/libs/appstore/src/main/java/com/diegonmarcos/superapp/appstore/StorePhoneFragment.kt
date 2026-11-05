@@ -31,7 +31,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.diegonmarcos.superapp.adbdebug.ShellChannels
 import com.diegonmarcos.superapp.uikit.KitComposeFragment
 import com.diegonmarcos.superapp.uikit.KitPalette
 import com.diegonmarcos.superapp.updater.Fleet
@@ -624,7 +623,7 @@ class StorePhoneFragment : KitComposeFragment() {
         val fleet = PhoneAppActions.fleetByPackage(fleetList)
         val sources = PhoneAppActions.sources(ctx)
         val resolver = PhoneAppActions.resolver(sources)
-        val shellReady = ShellChannels.active(ctx) != null
+        val shellReady = StoreShell.status(ctx).armed
         // The Phone page is the FOREIGN apps' page: a fleet app — installed or not — is the Cloud
         // page's (constellation install / update all), never declared, listed or installed here.
         val declared = LinkedHashMap<String, String>()

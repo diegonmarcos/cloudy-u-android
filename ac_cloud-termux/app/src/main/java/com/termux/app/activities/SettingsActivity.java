@@ -67,12 +67,12 @@ public class SettingsActivity extends AppCompatActivity {
             configureDonatePreference(context);
         }
 
-        /** ADB Shell: the lib's one page for the privileged channel (status, connect, logs, declared needs). */
+        /** #1512 Shell broker: opens the SuperApp's arm flow (the privileged channel is the SuperApp's, rish goes through its broker). */
         private void configureAdbShellPreference(@NonNull Context context) {
             Preference adbShellPreference = findPreference("adb_shell");
             if (adbShellPreference != null) {
                 adbShellPreference.setOnPreferenceClickListener(preference -> {
-                    com.diegonmarcos.superapp.adbdebug.AdbShellLink.INSTANCE.open(context);
+                    com.diegonmarcos.superapp.shellclient.ShellClient.Companion.arm(context);
                     return true;
                 });
             }

@@ -1,41 +1,43 @@
 {
-  "_doc": "ONE PAGE FOR THE PRIVILEGED CHANNEL. The ADB Shell page (libs:shizuku-adb-debug-tools AdbShellPage) is the only place that PAIRS, CONNECTS, DISCONNECTS, starts or stops the local server, asks Shizuku for permission, switches the channel mode or opens the Wireless-debugging settings on the person's behalf. Every other screen shows a compact status chip that opens it (AdbShellLink.open / AdbShellChip / StoreBar.channelButton). Read by aa_cloud-superapp/test/test-adb-shell-one-place.sh, which fails when a first-party source file outside `allow` contains one of the `controls`, when an app that links the lib does not expose the page (`hosts`), or when the page grows a minimum height.",
-  "page": {
-    "lib": "ab_cloud-libs-shared/libs/shizuku-adb-debug-tools",
-    "dir": "ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/src/main/java/com/diegonmarcos/superapp/adbdebug",
-    "composable": "AdbShellPage",
-    "files": ["AdbShellPage.kt", "ChannelModeBar.kt"],
-    "forbidden_in_page": "minHeight|defaultMinSize|heightIn\\(\\s*min|\\bOutlinedButton\\(|\\bButton\\(|IconButton\\(|minimumInteractiveComponentSize"
+ "_doc": "ONE PAGE FOR THE PRIVILEGED CHANNEL. The ADB Shell page (libs:shizuku-adb-debug-tools AdbShellPage) is the only place that PAIRS, CONNECTS, DISCONNECTS, starts or stops the local server, asks Shizuku for permission, switches the channel mode or opens the Wireless-debugging settings on the person's behalf. Every other screen shows a compact status chip that opens it (AdbShellLink.open / AdbShellChip / StoreBar.channelButton). Read by aa_cloud-superapp/test/test-adb-shell-one-place.sh, which fails when a first-party source file outside `allow` contains one of the `controls`, when an app that links the lib does not expose the page (`hosts`), or when the page grows a minimum height.",
+ "page": {
+  "lib": "ab_cloud-libs-shared/libs/shizuku-adb-debug-tools",
+  "dir": "ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/src/main/java/com/diegonmarcos/superapp/adbdebug",
+  "composable": "AdbShellPage",
+  "files": [
+   "AdbShellPage.kt",
+   "ChannelModeBar.kt"
+  ],
+  "forbidden_in_page": "minHeight|defaultMinSize|heightIn\\(\\s*min|\\bOutlinedButton\\(|\\bButton\\(|IconButton\\(|minimumInteractiveComponentSize"
+ },
+ "controls": {
+  "pair": "AdbPairingService\\.start\\(",
+  "embedded-adb": "EmbeddedAdbChannel\\.(pair|connect|autoConnect|disconnect)\\(",
+  "ensure-channel": "ShellAccess\\.ensure\\(",
+  "wireless-debugging-write": "WirelessDebugging\\.set\\(",
+  "mode-write": "ChannelModePrefs\\.set\\(",
+  "mode-bar": "ChannelModeBar\\(",
+  "shizuku-prompt": "ShizukuStatus\\.act\\(|ShizukuAdb\\.(requestPermission|bindBlocking)\\(",
+  "server-launch": "AdbShellBootstrap\\.ensureServer\\(",
+  "developer-options": "ACTION_APPLICATION_DEVELOPMENT_SETTINGS|toggle_adb_wireless"
+ },
+ "allow": {
+  "_doc": "Every entry says why it is not a second control surface. A file listed here that no longer contains any control is STALE and fails: the list only shrinks. `dirs` are prefixes (the lib is the implementation).",
+  "dirs": {
+   "ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/": "the implementation of the channel and its page"
   },
-  "controls": {
-    "pair": "AdbPairingService\\.start\\(",
-    "embedded-adb": "EmbeddedAdbChannel\\.(pair|connect|autoConnect|disconnect)\\(",
-    "ensure-channel": "ShellAccess\\.ensure\\(",
-    "wireless-debugging-write": "WirelessDebugging\\.set\\(",
-    "mode-write": "ChannelModePrefs\\.set\\(",
-    "mode-bar": "ChannelModeBar\\(",
-    "shizuku-prompt": "ShizukuStatus\\.act\\(|ShizukuAdb\\.(requestPermission|bindBlocking)\\(",
-    "server-launch": "AdbShellBootstrap\\.ensureServer\\(",
-    "developer-options": "ACTION_APPLICATION_DEVELOPMENT_SETTINGS|toggle_adb_wireless"
-  },
-  "allow": {
-    "_doc": "Every entry says why it is not a second control surface. A file listed here that no longer contains any control is STALE and fails: the list only shrinks. `dirs` are prefixes (the lib is the implementation).",
-    "dirs": {
-      "ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/": "the implementation of the channel and its page"
-    },
-    "files": {
-      "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/devcontrol/DevControlServer.kt": "the loopback HTTP debug API (/api/adb/pair, /connect, ...) driven by curl; it is not a screen",
-      "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/system/WirelessDebugKeeper.kt": "background keeper that re-arms adb_wifi_enabled and raises one fleet alert whose deep link is the system screen only the person can use",
-      "ab_cloud-libs-shared/libs/wifi/src/main/java/com/diegonmarcos/superapp/wifi/WifiUi.kt": "#1263 WiFi page: one button opens Developer options so the person can switch Wi-Fi scan throttling off; no pairing, connecting, server or adb state",
-      "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/configs/DeviceControls.kt": "Launcher > Controls system-switch tile for the Wireless debugging setting itself, beside Wi-Fi and Bluetooth; no pairing, connecting or server"
-    }
-  },
-  "hosts": {
-    "_doc": "Every app whose gradle links the lib must expose the page, and must say what it needs the channel for (build.json::privileged_channel.needs). `has` is a string that must appear in `file`.",
-    "aa_cloud-superapp": {"file": "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/configs/AdbShellFragment.kt", "has": "AdbShellHostedPage("},
-    "ac_cloud-store": {"file": "ac_cloud-store/app/src/main/java/com/diegonmarcos/cloudstore/ConfigsPage.kt", "has": "AdbShellHostedPage("},
-    "ac_cloud-account": {"file": "ac_cloud-account/app/src/main/java/com/diegonmarcos/cloudaccount/MainActivity.kt", "has": "AdbShellPage()"},
-    "ac_cloud-termux": {"file": "ac_cloud-termux/app/src/main/java/com/termux/app/activities/SettingsActivity.java", "has": "AdbShellLink.INSTANCE.open("},
-    "ac_cloud-nix-on-droid": {"file": "ac_cloud-nix-on-droid/app/src/main/java/com/termux/app/activities/SettingsActivity.java", "has": "AdbShellLink.INSTANCE.open("}
+  "files": {
+   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/devcontrol/DevControlServer.kt": "the loopback HTTP debug API (/api/adb/pair, /connect, ...) driven by curl; it is not a screen",
+   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/system/WirelessDebugKeeper.kt": "background keeper that re-arms adb_wifi_enabled and raises one fleet alert whose deep link is the system screen only the person can use",
+   "ab_cloud-libs-shared/libs/wifi/src/main/java/com/diegonmarcos/superapp/wifi/WifiUi.kt": "#1263 WiFi page: one button opens Developer options so the person can switch Wi-Fi scan throttling off; no pairing, connecting, server or adb state",
+   "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/configs/DeviceControls.kt": "Launcher > Controls system-switch tile for the Wireless debugging setting itself, beside Wi-Fi and Bluetooth; no pairing, connecting or server"
   }
+ },
+ "hosts": {
+  "_doc": "Every app whose gradle links the lib must expose the page, and must say what it needs the channel for (build.json::privileged_channel.needs). `has` is a string that must appear in `file`. #1512: only the SuperApp links the lib; Cloud Store, Cloud Account and the terminals reach the shell through the SuperApp's broker (libs:shell-client) and host no ADB Shell page of their own.",
+  "aa_cloud-superapp": {
+   "file": "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/configs/AdbShellFragment.kt",
+   "has": "AdbShellHostedPage("
+  }
+ }
 }

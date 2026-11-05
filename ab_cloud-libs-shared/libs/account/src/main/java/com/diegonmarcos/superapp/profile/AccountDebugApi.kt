@@ -321,29 +321,30 @@ object AccountDebugApi {
     /** Setup ▸ perms (spec 4.9): dry = the plan, names and states; run=1 = PermsPlan.apply's lines. */
     private fun perms(ctx: Context, q: Map<String, String>): JSONObject {
         val profile = DeviceVault(ctx).working()?.optJSONObject("profile")
-        val channel = runCatching { com.diegonmarcos.superapp.adbdebug.ShellChannels.active(ctx) }.getOrNull()
+        val channel = runCatching { ShellChannels.active(ctx) }.getOrNull()
         val plan = PermsPlan.plan(ctx, profile, channel)
         val ch: Any = channel?.name() ?: JSONObject.NULL
         if (q["run"] != "1") return plan.json().put("channel", ch).put("profile", profile != null)
         return PermsPlan.apply(ctx, plan, channel).json().put("channel", ch).put("summary", plan.summary())
     }
 
-    /** `/api/adb/status` and `/api/adb/exec?cmd=`; null (404) for any other op. */
+    /** `/api/adb/status` and `/api/adb/exec?cmd=` through the SuperApp's shell broker (#1512), under this app's allowlist entry; null (404) for any other op. */
     private fun adb(ctx: Context, op: String, q: Map<String, String>): String? {
-        val shell = com.diegonmarcos.superapp.adbdebug.ShellChannels
         return when (op) {
             "status" -> {
-                val active = shell.active(ctx)
-                JSONObject().put("active", active?.name() ?: "none")
-                    .put("channels", org.json.JSONArray(shell.all.map { c ->
-                        JSONObject().put("name", c.name()).put("ready", c.isReady(ctx)).put("status", c.status(ctx))
-                    })).toString()
+                val s = com.diegonmarcos.superapp.shellclient.ShellClient.status(ctx)
+                JSONObject().put("active", if (s.armed) s.channel else "none").put("broker", s.brokerInstalled)
+                    .put("armed", s.armed).put("detail", s.detail).toString()
             }
             "exec" -> {
                 val cmd = q["cmd"]
                 if (cmd.isNullOrBlank()) "missing cmd\n"
-                else shell.active(ctx)?.exec(ctx, cmd)
-                    ?: "ERR: no shell channel ready — ${com.diegonmarcos.superapp.adbdebug.LocalShellChannel.status(ctx)}\n"
+                else when (val r = com.diegonmarcos.superapp.shellclient.ShellClient.exec(ctx, cmd)) {
+                    is com.diegonmarcos.superapp.shellclient.ShellResult.Ok -> r.stdout + r.stderr
+                    is com.diegonmarcos.superapp.shellclient.ShellResult.Denied -> "ERR: denied by the shell broker: ${r.reason}\n"
+                    is com.diegonmarcos.superapp.shellclient.ShellResult.NeedsArm -> "ERR: shell broker not armed — ${ShellChannels.status(ctx)}\n"
+                    is com.diegonmarcos.superapp.shellclient.ShellResult.Failed -> "ERR: ${r.reason}\n"
+                }
             }
             else -> null
         }

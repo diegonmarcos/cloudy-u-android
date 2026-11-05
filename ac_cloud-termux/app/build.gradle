@@ -83,8 +83,8 @@ android {
         implementation project(":libs:core")
         // #1352 Configs ▸ General / ▸ About in the terminal's menu (FleetConfigsEntries, libs:ui-nav-bars)
         implementation project(":libs:ui-nav-bars")
-        // Shizuku client + rish bridge, data-driven from build.json::shizuku_client.
-        implementation project(":libs:shizuku-adb-debug-tools")
+        // #1512 rish over the SuperApp's shell broker (ShellRish + RishRelay): the thin client, no channel of its own.
+        implementation project(":libs:shell-client")
         // The ADB Shell page (AdbShellActivity) is Compose, compiled against the HOST's Compose
         // (compileOnly in the lib): this terminal supplies the runtime. ONE BOM for the fleet
         // (test-compose-bom-one-version.sh): FlowRow is experimental and has no binary compatibility

@@ -19,32 +19,32 @@ def ok(c, good, bad):
 
 bj = json.loads(rd("ac_cloud-account/build.json"))
 mods = bj["modules"]
-ok("libs:shizuku-adb-debug-tools" in mods.get("app", {}).get("depends_on", []), "app module depends on the shell lib", "app module dropped the shell lib")
-ok("libs:shizuku-adb-debug-tools" in mods.get("libs:account", {}).get("depends_on", []), "libs:account depends on the shell lib", "libs:account dropped the shell lib")
-prov = bj.get("shizuku_client", {}).get("providers")
-ok(prov == ["moe.shizuku.privileged.api", "com.diegonmarcos.superapp"], "shizuku_client = Shizuku, then the SuperApp bridge (embedded first, as Cloud Store; #1438)", f"shizuku_client providers wrong: {prov}")
-port = bj.get("shizuku_diagnostics", {}).get("local_server", {}).get("port")
-ok(port not in (None, 38098, 38099), f"own local server port {port}", f"local server port {port} collides (Store 38098 / SuperApp 38099) or is missing")
+ok("libs:shell-client" in mods.get("app", {}).get("depends_on", []), "app module depends on the broker client", "app module dropped libs:shell-client")
+ok("libs:shell-client" in mods.get("libs:account", {}).get("depends_on", []), "libs:account depends on the broker client", "libs:account dropped libs:shell-client")
+ok("libs:shizuku-adb-debug-tools" not in mods and not any("libs:shizuku-adb-debug-tools" in json.dumps(v.get("depends_on", [])) for v in mods.values() if isinstance(v, dict)), "#1512 no module of Cloud Account is the shizuku lib", "#1512 Cloud Account lists the shizuku lib again")
+ok(not any(k in bj for k in ("shizuku_client", "shizuku_diagnostics", "privileged_channel")), "#1512 no shizuku_client / shizuku_diagnostics / privileged_channel block (the broker owns the channel)", "#1512 a channel block is back in build.json")
 steps = bj.get("ui", {}).get("account", {}).get("runbook", {}).get("steps", [])
 ok(steps == ["connected", "profile", "shell", "store", "apps", "configs", "perms", "verified"], "runbook declares the spec's eight steps in order", f"runbook steps wrong: {steps}")
 
 g = rd("ac_cloud-account/app/build.gradle")
-ok("implementation project(':libs:shizuku-adb-debug-tools')" in g, "app links the shell lib", "app does not link the shell lib")
+ok("implementation project(':libs:shell-client')" in g and "shizuku-adb-debug-tools" not in g, "app links the broker client and not the shizuku lib", "app does not link libs:shell-client / still links the shizuku lib")
 ga = rd("ab_cloud-libs-shared/libs/account/build.gradle")
-ok("implementation project(':libs:shizuku-adb-debug-tools')" in ga, "libs:account links the shell lib", "libs:account does not link the shell lib")
+ok("implementation project(':libs:shell-client')" in ga and "project(':libs:shizuku-adb-debug-tools')" not in ga, "libs:account links the broker client and not the shizuku lib", "libs:account does not link libs:shell-client / still links the shizuku lib")
 
 mf = rd("ac_cloud-account/app/src/main/AndroidManifest.xml")
-ok("com.diegonmarcos.superapp.adbdebug.AdbPairingService" in mf and 'foregroundServiceType="specialUse"' in mf, "pairing service declared (specialUse FGS)", "pairing service not declared")
-ok("HostShellBootReceiver" not in mf.replace("no boot receiver", "") and "<receiver" not in re.sub(r"<!--.*?-->", "", mf, flags=re.S) and "RECEIVE_BOOT_COMPLETED" not in mf, "#1502 no boot receiver, no RECEIVE_BOOT_COMPLETED (Account never wakes itself)", "#1502 Account declares a boot receiver again")
-ok("android.permission.WRITE_SECURE_SETTINGS" in mf, "WRITE_SECURE_SETTINGS declared (self-grant target)", "WRITE_SECURE_SETTINGS not declared")
+mfc = re.sub(r"<!--.*?-->", "", mf, flags=re.S)
+ok("adbdebug" not in mfc and "ShizukuProvider" not in mfc and "<service" not in mfc, "#1512 no pairing service, keep-alive service or Shizuku provider in the manifest", "#1512 the manifest declares a channel service or provider again")
+ok("<receiver" not in mfc and "RECEIVE_BOOT_COMPLETED" not in mf, "#1502 no boot receiver, no RECEIVE_BOOT_COMPLETED (Account never wakes itself)", "#1502 Account declares a boot receiver again")
+ok("android.permission.WRITE_SECURE_SETTINGS" in mf, "WRITE_SECURE_SETTINGS declared (the grant target)", "WRITE_SECURE_SETTINGS not declared")
 
 app = rd("ac_cloud-account/app/src/main/java/com/diegonmarcos/cloudaccount/App.kt")
-ok("HostShell.install(this)" in app, "App.onCreate arms HostShell", "App.onCreate never arms HostShell")
-
-hs = rd("ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/src/main/java/com/diegonmarcos/superapp/adbdebug/HostShell.kt")
-ok("android.permission.WRITE_SECURE_SETTINGS" in hs and "AdbPairingService.onConnected = " in hs, "HostShell self-grants after pairing", "HostShell does not self-grant after pairing")
+ok("HostShell" not in re.sub(r"//[^\n]*", "", app) and "adbdebug" not in app, "#1512 App.onCreate arms no channel of its own (no HostShell)", "#1512 App.onCreate still names HostShell / adbdebug")
+bp = rd("ab_cloud-libs-shared/libs/account/src/main/java/com/diegonmarcos/superapp/profile/BrokerShell.kt")
+ok("ShellClient.status(ctx).armed" in bp and "ShellClient.exec(ctx" in bp, "the runbook's shell is the SuperApp's broker (armed = a live status)", "the account shell is not the broker client")
 
 rb = rd("ab_cloud-libs-shared/libs/account/src/main/java/com/diegonmarcos/superapp/profile/SetupRunbook.kt")
+rbc = re.sub(r"//[^\n]*|/\*.*?\*/", "", rb, flags=re.S)
+ok("ShellClient.arm(ctx)" in rbc and "HostShell" not in rbc and "WdKeeper" not in rbc, "runShell opens the SuperApp's arm flow, no pairing of its own", "runShell carries a pairing flow / HostShell again")
 ok("SHELL -> Step(id, { checkShell() }, { runShell() })" in rb and "STORE -> Step(id, { checkStore() })" in rb, "runbook wires shell + store", "runbook does not wire shell/store")
 ok('private fun checkStore(): State =\n        storeInfo()?.let { State.Already("Cloud Store ${it.versionName} installed") }' in rb, "store check says ALREADY when Cloud Store is installed", "store check never says ALREADY")
 ok('if (ch == null && !allowPrompt)\n            return State.Failed("no shell channel' in rb, "no channel + no prompt -> a named FAILED", "no channel falls through silently")
@@ -79,21 +79,10 @@ ok('"configs:runbook" -> RunbookTogglesPage(go)' in rd("ab_cloud-libs-shared/lib
 ok('q["step"].isNullOrBlank() -> r.runAll(' in api and 'Op("apps"' in api and '"apps" -> SetupRunbook(ctx).appsPlan()' in api, "debug API: run=1 = Run all, apps op", "debug API lacks Run all or apps")
 
 # spec 4.6 step 3: a foreground service holds the process up (channel + debug server are process state)
-svc = rd("ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/src/main/java/com/diegonmarcos/superapp/adbdebug/HostShellService.kt")
-ok("return START_NOT_STICKY" in svc and "START_STICKY" not in svc.replace("START_NOT_STICKY", "") and "startForeground(" in svc, "HostShellService is a NOT_STICKY foreground service (#1487)", "HostShellService is sticky again / never foreground")
-ok("HostShell.reconnect(ctx" in svc and "AppDebugServer.start(ctx)" in svc and "HostShell.debugServerAllowed(ctx)" in svc, "service re-arms the channel and keeps the debug server (host switch honoured)", "service does not keep channel + debug server")
-ok(hs.count("HostShellService.start(") >= 2 and "HostShell.mayBackground" in svc, "HostShell.install starts the service, and the service stops itself when the host may not run in the background (#1502)", "service not gated on mayBackground")
-ok("HostShell.backgroundAllowed = { false }" in app, "#1502 Account never lets HostShell run in the background", "#1502 Account does not turn HostShell's background off")
-for name, path in (("Account", "ac_cloud-account/app/src/main/AndroidManifest.xml"), ("Store", "ac_cloud-store/app/src/main/AndroidManifest.xml")):
-    m = rd(path)
-    blk = m.split('android:name="com.diegonmarcos.superapp.adbdebug.HostShellService"')
-    ok(len(blk) == 2 and 'android:foregroundServiceType="specialUse"' in blk[1].split("</service>")[0] and "android.permission.FOREGROUND_SERVICE_SPECIAL_USE" in m,
-       f"{name} manifest declares HostShellService (specialUse) + its permission", f"{name} manifest lacks HostShellService or FOREGROUND_SERVICE_SPECIAL_USE")
-ok("HostShell.debugServerAllowed = { com.diegonmarcos.superapp.profile.DebugApiSwitch.enabled(it) }" in app, "Account wires Settings > Debug API into the service", "Account does not wire the Debug API switch")
 # /api/adb/exec + status on Account's port, behind the fleet token
 ok('AppDebugServer.route("adb", listOf(' in api and 'Op("exec", "cmd=' in api and 'Op("status"' in api, "Account serves /api/adb/exec and /api/adb/status (in /api/docs)", "Account has no adb route group")
 ad = api.split("private fun adb(")[1] if "private fun adb(" in api else ""
-ok('"exec" ->' in ad and "shell.active(ctx)?.exec(ctx, cmd)" in ad, "adb/exec runs over ShellChannels.active", "adb/exec does not run over the active channel")
+ok('"exec" ->' in ad and "ShellClient.exec(ctx, cmd)" in ad, "adb/exec runs through the shell broker (this app's allowlist entry)", "adb/exec does not run through the broker")
 # #ipc no app listens any more: a route group is reached through the app's IPC door (signature re-check)
 # or the SuperApp gateway (fleet token) -- a0_docs/eng-specs/fleet-ipc.md
 door = rd("ab_cloud-libs-shared/libs/devtools/src/main/java/com/diegonmarcos/superapp/devtools/FleetIpc.kt")
@@ -143,7 +132,7 @@ TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 FILES="ac_cloud-account/build.json ac_cloud-account/app/build.gradle ac_cloud-account/app/src/main/AndroidManifest.xml
 ac_cloud-account/app/src/main/java/com/diegonmarcos/cloudaccount/App.kt
 ab_cloud-libs-shared/libs/account/build.gradle
-ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/src/main/java/com/diegonmarcos/superapp/adbdebug/HostShell.kt
+ab_cloud-libs-shared/libs/account/src/main/java/com/diegonmarcos/superapp/profile/BrokerShell.kt
 ab_cloud-libs-shared/libs/account/src/main/java/com/diegonmarcos/superapp/profile/SetupRunbook.kt
 ab_cloud-libs-shared/libs/account/src/main/java/com/diegonmarcos/superapp/profile/AccountDebugApi.kt
 ab_cloud-libs-shared/libs/account/src/main/java/com/diegonmarcos/superapp/profile/RunbookPage.kt
@@ -154,7 +143,6 @@ ab_cloud-libs-shared/libs/account-ui/src/main/java/com/diegonmarcos/cloudaccount
 ab_cloud-libs-shared/libs/account-ui/src/main/java/com/diegonmarcos/superapp/accountui/AccountUi.kt
 ac_cloud-account/app/src/main/java/com/diegonmarcos/cloudaccount/AccountUiHostImpl.kt
 ac_cloud-store/app/src/main/AndroidManifest.xml
-ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/src/main/java/com/diegonmarcos/superapp/adbdebug/HostShellService.kt
 ab_cloud-libs-shared/libs/devtools/src/main/java/com/diegonmarcos/superapp/devtools/AppDebugServer.kt
 ab_cloud-libs-shared/libs/devtools/src/main/java/com/diegonmarcos/superapp/devtools/FleetIpc.kt
 aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/devcontrol/MeshGateway.kt
@@ -177,12 +165,13 @@ PY
 A=ac_cloud-account; K=$A/app/src/main/java/com/diegonmarcos/cloudaccount
 P=ab_cloud-libs-shared/libs/account/src/main/java/com/diegonmarcos/superapp/profile
 M=0
-mutate "manifest without the pairing service" $A/app/src/main/AndroidManifest.xml 'android:name="com.diegonmarcos.superapp.adbdebug.AdbPairingService"' 'android:name="gone"' || M=$((M+1))
-mutate "boot receiver returns" $A/app/src/main/AndroidManifest.xml 'android:name="rikka.shizuku.ShizukuProvider"' 'android:name="rikka.shizuku.ShizukuProvider"/><receiver android:name="x"' || M=$((M+1))
-mutate "channel never armed" $K/App.kt 'HostShell.install(this)' 'Unit' || M=$((M+1))
-mutate "app no longer links the shell lib" $A/app/build.gradle "implementation project(':libs:shizuku-adb-debug-tools')" '' || M=$((M+1))
-mutate "SuperApp's server port reused" $A/build.json '"port": 38097' '"port": 38099' || M=$((M+1))
-mutate "SuperApp bridge listed as a provider" $A/build.json '"moe.shizuku.privileged.api"' '"com.diegonmarcos.superapp"' || M=$((M+1))
+mutate "a pairing service returns" $A/app/src/main/AndroidManifest.xml '<application' '<application><service android:name="com.diegonmarcos.superapp.adbdebug.AdbPairingService"/>' || M=$((M+1))
+mutate "boot receiver returns" $A/app/src/main/AndroidManifest.xml '<application' '<application><receiver android:name="x"/>' || M=$((M+1))
+mutate "HostShell returns in App" $K/App.kt 'runCatching { AccountVault.install(this) }' 'runCatching { HostShell.install(this) }' || M=$((M+1))
+mutate "app no longer links the broker client" $A/app/build.gradle "implementation project(':libs:shell-client')" '' || M=$((M+1))
+mutate "the shizuku lib is linked again" $A/app/build.gradle "implementation project(':libs:shell-client')" "implementation project(':libs:shizuku-adb-debug-tools')" || M=$((M+1))
+mutate "a channel block returns" $A/build.json '"name": "cloud-account",' '"name": "cloud-account", "shizuku_client": {},' || M=$((M+1))
+mutate "runShell pairs by itself" $P/SetupRunbook.kt 'com.diegonmarcos.superapp.shellclient.ShellClient.arm(ctx)' 'HostShell.reconnect(ctx, 1)' || M=$((M+1))
 mutate "runbook step dropped" $A/build.json '"store",' '' || M=$((M+1))
 mutate "store never ALREADY" $P/SetupRunbook.kt 'State.Already("Cloud Store ${it.versionName} installed")' 'State.Todo("x")' || M=$((M+1))
 mutate "no channel is silent" $P/SetupRunbook.kt 'if (ch == null && !allowPrompt)' 'if (false)' || M=$((M+1))
@@ -200,14 +189,9 @@ mutate "runbook page unmounted" ab_cloud-libs-shared/libs/account-ui/src/main/ja
 mutate "setup steps dropped from the Runbook" ab_cloud-libs-shared/libs/account-ui/src/main/java/com/diegonmarcos/cloudaccount/configs/ConfigsPages.kt 'if (tab == "setup") AccountUiHost.current.RunbookSetup(go) else' 'if (tab == "setup") Unit else' || M=$((M+1))
 mutate "debug run=1 without step is not Run all" $P/AccountDebugApi.kt 'q["step"].isNullOrBlank() -> r.runAll(' 'false -> r.runAll(' || M=$((M+1))
 
-S=ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/src/main/java/com/diegonmarcos/superapp/adbdebug
 D=ab_cloud-libs-shared/libs/devtools/src/main/java/com/diegonmarcos/superapp/devtools
-mutate "service sticky again" $S/HostShellService.kt 'return START_NOT_STICKY' 'return START_STICKY' || M=$((M+1))
-mutate "Account background switched on" $K/App.kt 'HostShell.backgroundAllowed = { false }' 'HostShell.backgroundAllowed = { true }' || M=$((M+1))
-mutate "service missing from Account manifest" $A/app/src/main/AndroidManifest.xml 'android:name="com.diegonmarcos.superapp.adbdebug.HostShellService"' 'android:name="gone"' || M=$((M+1))
-mutate "service missing from Store manifest" ac_cloud-store/app/src/main/AndroidManifest.xml 'android:name="com.diegonmarcos.superapp.adbdebug.HostShellService"' 'android:name="gone"' || M=$((M+1))
 mutate "exec route missing" $P/AccountDebugApi.kt 'Op("exec", "cmd=' 'Op("execX", "cmd=' || M=$((M+1))
-mutate "exec not over the channel" $P/AccountDebugApi.kt 'shell.active(ctx)?.exec(ctx, cmd)' 'null' || M=$((M+1))
+mutate "exec not over the broker" $P/AccountDebugApi.kt 'ShellClient.exec(ctx, cmd)' 'null' || M=$((M+1))
 mutate "exec not gated at the IPC door" $D/FleetIpc.kt 'FleetIpcWire.gate(granted) ?: ' '' || M=$((M+1))
 mutate "exec not token-gated at the gateway" aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/devcontrol/MeshGateway.kt 'if (!authed) return FleetIpcWire.Reply(401' 'if (false) return FleetIpcWire.Reply(401' || M=$((M+1))
 mutate "blank id still reaches the forge" $P/SetupRunbook.kt 'if (id.isBlank()) return State.Failed("this phone has no device id' 'if (false) return State.Failed("this phone has no device id' || M=$((M+1))

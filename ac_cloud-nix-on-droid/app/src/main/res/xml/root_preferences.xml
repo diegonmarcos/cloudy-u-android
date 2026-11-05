@@ -34,7 +34,7 @@
         app:isPreferenceVisible="false"
         app:fragment="com.termux.app.fragments.settings.TermuxWidgetPreferencesFragment"/>
 
-    <!-- THE ADB Shell page (libs:shizuku-adb-debug-tools): connect, status, logs, this app's declared needs. -->
+    <!-- #1512 Shell broker: opens the SuperApp's arm flow (the privileged shell is the SuperApp's; rish goes through its broker). -->
     <Preference
         app:key="adb_shell"
         app:title="@string/adb_shell_preference_title"

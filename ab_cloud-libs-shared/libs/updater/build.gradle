@@ -126,8 +126,10 @@ android {
     // a rename in ShellChannels fails the SuperApp build out loud.
     sourceSets {
         main {
-            java.srcDir(findProject(':libs:shizuku-adb-debug-tools') != null
-                ? 'src/shell/java' : 'src/noshell/java')
+            // #1512 three variants: shell/ (the SuperApp: the real ladder), broker/ (apps on libs:shell-client: silent installs
+            // through the SuperApp's stdin door), noshell/ (no channel).
+            java.srcDir(findProject(':libs:shizuku-adb-debug-tools') != null ? 'src/shell/java'
+                : findProject(':libs:shell-client') != null ? 'src/broker/java' : 'src/noshell/java')
         }
     }
 
@@ -210,6 +212,9 @@ dependencies {
     // supplies a stub channel to the apps that opt out.
     if (findProject(':libs:shizuku-adb-debug-tools') != null) {
         implementation project(':libs:shizuku-adb-debug-tools')
+    } else if (findProject(':libs:shell-client') != null) {
+        // #1512 the broker variant (src/broker): the client of the SuperApp's shell broker, no project dependency of its own.
+        implementation project(':libs:shell-client')
     }
     implementation 'androidx.core:core-ktx:1.13.1'
     // 2026-10-15 owner decision: all apps must be Compose. UpdateOverlayFragment is a ComposeView; the

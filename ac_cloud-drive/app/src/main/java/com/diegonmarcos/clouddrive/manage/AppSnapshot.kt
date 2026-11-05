@@ -19,7 +19,7 @@ import com.diegonmarcos.superapp.shellclient.ShellResult
  *    Settings) is needed for every package but this one; without it those cells are null ("—").
  *  - running + RAM: ActivityManager.runningAppProcesses + getProcessMemoryInfo (PSS). Since Android
  *    5.1 that lists only this app's own processes, so for everyone else the fleet's privileged shell
- *    channel (libs:shizuku-adb-debug-tools: the SuperApp bridge, our embedded adb, or Shizuku) answers
+ *    channel (the SuperApp shell broker, libs:shell-client) answers
  *    `ps -A -o NAME` and `dumpsys meminfo` when one is up. Otherwise the cells are null ("—").
  */
 object AppSnapshot {
