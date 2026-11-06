@@ -32,10 +32,10 @@ class FleetDataEndpoint private constructor(private val app: Context, val author
     @Volatile private var lastNudge = 0L
 
     private val sync: FleetDataSync? by lazy {
-        FleetDataHost.source(authority)?.let { FleetDataSync(store, it, HttpFetcher(), changed = { p -> notify(p) }) }
+        FleetDataHost.source(authority)?.let { FleetDataSync(store, it, HttpFetcher(), changed = { p -> announce(p) }) }
     }
 
-    fun notify(path: String) {
+    fun announce(path: String) {
         runCatching { app.contentResolver.notifyChange(Uri.parse("content://$authority/$path"), null) }
     }
 
