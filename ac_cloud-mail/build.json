@@ -390,7 +390,7 @@
         "catalog_url": "https://openrouter.ai/api/v1/models",
         "needs_token": true,
         "default_model": "google/gemini-2.5-flash",
-        "pricing_as_of": "2026-11-05",
+        "pricing_as_of": "2026-11-06",
         "models": [
           {
             "id": "meta-llama/llama-3.1-8b-instruct",
@@ -435,8 +435,8 @@
               "roleplay",
               "translation"
             ],
-            "prompt": 0.013,
-            "completion": 0.04,
+            "prompt": 0.09,
+            "completion": 0.3,
             "note": "Sparse 26B (4B active): translation, academia and legal at a small-model price."
           },
           {
@@ -479,8 +479,8 @@
               "fp16",
               "fp8"
             ],
-            "prompt": 0.2,
-            "completion": 0.52,
+            "prompt": 0.59,
+            "completion": 0.79,
             "note": "70B open weights, no category ranking — a general fallback, not a specialist."
           },
           {
@@ -526,6 +526,7 @@
               "finance",
               "health",
               "legal",
+              "marketing",
               "marketing/seo",
               "programming",
               "roleplay",
@@ -534,7 +535,7 @@
               "translation",
               "trivia"
             ],
-            "prompt": 0.054,
+            "prompt": 0.0553,
             "completion": 0.3,
             "note": "Ranked in all twelve categories at the second-lowest price here."
           },
