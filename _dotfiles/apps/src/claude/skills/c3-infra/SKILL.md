@@ -24,6 +24,7 @@ Hard rules first, index last. Each rule has a one-line why in `rules/*.md` (read
 14. GitHub work uses the `gh` CLI or cloudy-c3-mcp. The GitHub MCP server is denied (`deniedMcpServers`). Why: about 28k tokens per session for tools that duplicate gh. Guard: settings.json deniedMcpServers.
 15. No cost-affecting changes (machine types, paid instances) without explicit approval. Why: free-tier fleet. Guard: none.
 16. **NEVER SIMPLIFY. 'Organize', 'clean up', 'redesign' or 'reorg' never means removing or reducing anything. Every declaration, group, filter, action, column, status detail, page and data point stays; organization only adds structure (grouping, filters, search, sort, hierarchy, detail views). UIs are professional operations-console grade: dense, rich, complete. Before shipping any reorg, diff the previous version and prove (with a test) that nothing was removed. Status indicators must reflect the real underlying state, never a proxy (e.g. ADB 'up' only from a real adb round-trip with Wireless debugging on). Why: owner order, reorgs silently dropped data. Guard: none.**
+   **Definition (owner): REORGANISE = new UI display, NO data field lost; fields are only rearranged. SIMPLIFY happens only when the owner literally says 'simplify'. Any reorg must ship with a field-parity test against the previous version.** Why: owner order, same as rule 16. Guard: none.
 
 ## Index (load on demand)
 | File | Topic |
