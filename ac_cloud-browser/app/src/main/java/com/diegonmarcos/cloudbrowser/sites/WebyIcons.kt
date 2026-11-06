@@ -7,11 +7,8 @@ import android.graphics.BitmapFactory
 import android.util.LruCache
 import org.json.JSONArray
 import org.json.JSONObject
-import java.io.ByteArrayOutputStream
 import java.io.File
-import java.net.HttpURLConnection
 import java.net.URI
-import java.net.URL
 import java.security.MessageDigest
 import java.util.concurrent.Executors
 
@@ -192,25 +189,14 @@ class WebyIconCache(context: Context, private val decl: JSONObject) {
         return BitmapFactory.decodeByteArray(b, 0, b.size, BitmapFactory.Options().apply { inSampleSize = s })
     }
 
-    /** GET [url] (at most [max] bytes); null when the network or the site says no. BLOCKING. */
-    private fun fetch(url: String, max: Int): ByteArray? = runCatching {
-        val c = URL(url).openConnection() as HttpURLConnection
-        c.connectTimeout = 4000; c.readTimeout = 6000; c.instanceFollowRedirects = true
-        c.setRequestProperty("User-Agent", UA)
-        if (c.responseCode !in 200..299) return null
-        c.inputStream.use { ins ->
-            val out = ByteArrayOutputStream()
-            val buf = ByteArray(8192)
-            while (out.size() < max) { val n = ins.read(buf); if (n < 0) break; out.write(buf, 0, n) }
-            out.toByteArray()
-        }
-    }.getOrNull()
+    private val ua: String by lazy { runCatching { android.webkit.WebSettings.getDefaultUserAgent(ctx) }.getOrDefault("") }
+
+    private fun fetch(url: String, max: Int): ByteArray? = iconGet(url, max, ua)
 
     private companion object {
         const val RETRY_MS = 7L * 24 * 3600 * 1000
         const val MAX_TEXT = 512 * 1024
         const val MAX_IMAGE = 2 * 1024 * 1024
-        const val UA = "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Mobile Safari/537.36 CloudBrowser"
         val POOL = Executors.newFixedThreadPool(4)
     }
 }

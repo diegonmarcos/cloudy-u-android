@@ -53,6 +53,20 @@ class CloudyCache(context: Context) {
     private companion object { const val KEY = "pages_json" }
 }
 
+/** #1531 one GET of a site's public icon or page (at most [max] bytes) with the WebView's own user agent; null when the network or the site says no. BLOCKING. */
+fun iconGet(url: String, max: Int, userAgent: String): ByteArray? = runCatching {
+    val c = URL(url).openConnection() as HttpURLConnection
+    c.connectTimeout = 4000; c.readTimeout = 6000; c.instanceFollowRedirects = true
+    if (userAgent.isNotEmpty()) c.setRequestProperty("User-Agent", userAgent)
+    if (c.responseCode !in 200..299) return@runCatching null
+    c.inputStream.use { ins ->
+        val out = java.io.ByteArrayOutputStream()
+        val buf = ByteArray(8192)
+        while (out.size() < max) { val n = ins.read(buf); if (n < 0) break; out.write(buf, 0, n) }
+        out.toByteArray()
+    }
+}.getOrNull()
+
 private val main = Handler(Looper.getMainLooper())
 
 /** Run [f] on the main thread. */
