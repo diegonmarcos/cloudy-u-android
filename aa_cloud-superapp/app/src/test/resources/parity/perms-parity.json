@@ -1,0 +1,910 @@
+{
+ "_doc": "#1550 TEST DATA, not shipped. Every field SuperApp Configs > Perms showed before #1519 (commit f93eabf6) and every #1519/#1546 addition. PermsParityTest renders PermsSummaryBar + PermsCenterSection from the real catalogue (kind ui) or evaluates the declared query model (kind model). Zero missing is the bar; entries are only ever added.",
+ "fields": [
+  {
+   "id": "header.0",
+   "group": "header",
+   "field": "granted progress text (N of M granted)",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    " granted"
+   ],
+   "before": "pre-#1519"
+  },
+  {
+   "id": "header.1",
+   "group": "header",
+   "field": "highlight banner: feature + N permission(s) highlighted below",
+   "kind": "ui",
+   "setup": "highlight",
+   "any": [
+    "Requested by Wi-Fi scan: ",
+    "permission(s) highlighted below"
+   ],
+   "before": "pre-#1519"
+  },
+  {
+   "id": "header.2",
+   "group": "header",
+   "field": "highlight Show all",
+   "kind": "ui",
+   "setup": "highlight",
+   "any": [
+    "Show all"
+   ],
+   "before": "pre-#1519"
+  },
+  {
+   "id": "filters.3",
+   "group": "filters",
+   "field": "Missing only chip",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "Missing only"
+   ],
+   "before": "pre-#1519"
+  },
+  {
+   "id": "bulk.4",
+   "group": "bulk",
+   "field": "Ask all again (N)",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "Ask all again ("
+   ],
+   "before": "pre-#1519"
+  },
+  {
+   "id": "bulk.5",
+   "group": "bulk",
+   "field": "Copy ADB block (N)",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "Copy ADB block ("
+   ],
+   "before": "pre-#1519"
+  },
+  {
+   "id": "bulk.6",
+   "group": "bulk",
+   "field": "Run via channel / ADB not connected",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "Run via ",
+    "ADB not connected \u203a"
+   ],
+   "before": "pre-#1519"
+  },
+  {
+   "id": "adb-results.7",
+   "group": "adb-results",
+   "field": "results summary n ok \u00b7 m failed",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "ADB: 1 ok \u00b7 1 failed"
+   ],
+   "before": "pre-#1519"
+  },
+  {
+   "id": "adb-results.8",
+   "group": "adb-results",
+   "field": "per-line result with output",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "\u2713 pm grant",
+    "\u2192 "
+   ],
+   "before": "pre-#1519"
+  },
+  {
+   "id": "groups.9",
+   "group": "groups",
+   "field": "group header TITLE \u2014 granted/applicable",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    " \u2014 "
+   ],
+   "before": "pre-#1519"
+  },
+  {
+   "id": "groups.10",
+   "group": "groups",
+   "field": "nothing missing (group emptied by Missing only)",
+   "kind": "ui",
+   "setup": "missing_only",
+   "any": [
+    "nothing missing"
+   ],
+   "before": "pre-#1519"
+  },
+  {
+   "id": "row.11",
+   "group": "row",
+   "field": "state icon \u2713",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "\u2713"
+   ],
+   "before": "pre-#1519"
+  },
+  {
+   "id": "row.12",
+   "group": "row",
+   "field": "state icon \u25ef",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "\u25ef"
+   ],
+   "before": "pre-#1519"
+  },
+  {
+   "id": "row.13",
+   "group": "row",
+   "field": "state icon \u2717",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "\u2717"
+   ],
+   "before": "pre-#1519"
+  },
+  {
+   "id": "row.14",
+   "group": "row",
+   "field": "state icon \u2013",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "\u2013"
+   ],
+   "before": "pre-#1519"
+  },
+  {
+   "id": "row.15",
+   "group": "row",
+   "field": "state icon ?",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "?"
+   ],
+   "before": "pre-#1519"
+  },
+  {
+   "id": "row.16",
+   "group": "row",
+   "field": "state word granted",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "granted"
+   ],
+   "before": "pre-#1519"
+  },
+  {
+   "id": "row.17",
+   "group": "row",
+   "field": "state word denied",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "denied"
+   ],
+   "before": "pre-#1519"
+  },
+  {
+   "id": "row.18",
+   "group": "row",
+   "field": "state word permanently denied",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "permanently denied"
+   ],
+   "before": "pre-#1519"
+  },
+  {
+   "id": "row.19",
+   "group": "row",
+   "field": "state word not applicable",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "not applicable"
+   ],
+   "before": "pre-#1519"
+  },
+  {
+   "id": "row.20",
+   "group": "row",
+   "field": "state word check manually",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "check manually"
+   ],
+   "before": "pre-#1519"
+  },
+  {
+   "id": "row.21",
+   "group": "row",
+   "field": "status reason in brackets",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "(reason-"
+   ],
+   "before": "pre-#1519"
+  },
+  {
+   "id": "row.22",
+   "group": "row",
+   "field": "action request dialog",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "Grant",
+    "Request"
+   ],
+   "before": "pre-#1519",
+   "note": "pre-#1519 label Request, now Grant (same action)"
+  },
+  {
+   "id": "row.23",
+   "group": "row",
+   "field": "action settings page",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "Settings",
+    "Open \u203a"
+   ],
+   "before": "pre-#1519",
+   "note": "pre-#1519 label Open \u203a, now Settings (same action)"
+  },
+  {
+   "id": "row.24",
+   "group": "row",
+   "field": "action Copy adb",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "Copy adb"
+   ],
+   "before": "pre-#1519"
+  },
+  {
+   "id": "row.25",
+   "group": "row",
+   "field": "hint Look for / instruction / App info route",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "Look for: ",
+    "Open \u203a App info"
+   ],
+   "before": "pre-#1519"
+  },
+  {
+   "id": "header.26",
+   "group": "header",
+   "field": "summary: K missing",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    " missing"
+   ],
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "header.27",
+   "group": "header",
+   "field": "Ask all missing",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "Ask all missing"
+   ],
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "search.28",
+   "group": "search",
+   "field": "search box placeholder",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "Search name, permission, group, app, reason"
+   ],
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "filters.29",
+   "group": "filters",
+   "field": "chip row Status",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "Status"
+   ],
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "filters.30",
+   "group": "filters",
+   "field": "chip row Type",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "Type"
+   ],
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "filters.31",
+   "group": "filters",
+   "field": "chip row Section",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "Section"
+   ],
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "filters.32",
+   "group": "filters",
+   "field": "chip row Category",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "Category"
+   ],
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "filters.33",
+   "group": "filters",
+   "field": "chip row Protection",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "Protection"
+   ],
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "filters.34",
+   "group": "filters",
+   "field": "chip row Group",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "Group"
+   ],
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "filters.35",
+   "group": "filters",
+   "field": "chip row Feature",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "Feature"
+   ],
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "filters.36",
+   "group": "filters",
+   "field": "chip row Group by",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "Group by"
+   ],
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "filters.37",
+   "group": "filters",
+   "field": "chip row Sort",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "Sort"
+   ],
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "filters.38",
+   "group": "filters",
+   "field": "status chips with counts",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "All "
+   ],
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "filters.39",
+   "group": "filters",
+   "field": "shown count",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "Showing "
+   ],
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "bulk.40",
+   "group": "bulk",
+   "field": "Ask shown (N)",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "Ask shown ("
+   ],
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "bulk.41",
+   "group": "bulk",
+   "field": "Shell shown (N)",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "Shell shown ("
+   ],
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "bulk.42",
+   "group": "bulk",
+   "field": "Copy report",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "Copy report"
+   ],
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "bulk.43",
+   "group": "bulk",
+   "field": "shell note",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "shell-note-fixture"
+   ],
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "groups.44",
+   "group": "groups",
+   "field": "Ask group (N)",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "Ask group ("
+   ],
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "row.45",
+   "group": "row",
+   "field": "chip word",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "Granted",
+    "Missing"
+   ],
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "row.46",
+   "group": "row",
+   "field": "type label",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "Runtime",
+    "Special access"
+   ],
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "filters.47",
+   "group": "filters",
+   "field": "status filter All",
+   "kind": "model",
+   "source": "status_words",
+   "value": "All",
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "filters.48",
+   "group": "filters",
+   "field": "status filter Missing",
+   "kind": "model",
+   "source": "status_words",
+   "value": "Missing",
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "filters.49",
+   "group": "filters",
+   "field": "status filter Granted",
+   "kind": "model",
+   "source": "status_words",
+   "value": "Granted",
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "filters.50",
+   "group": "filters",
+   "field": "status filter Denied permanently",
+   "kind": "model",
+   "source": "status_words",
+   "value": "Denied permanently",
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "filters.51",
+   "group": "filters",
+   "field": "status filter Needs shell",
+   "kind": "model",
+   "source": "status_words",
+   "value": "Needs shell",
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "filters.52",
+   "group": "filters",
+   "field": "status filter Check manually",
+   "kind": "model",
+   "source": "status_words",
+   "value": "Check manually",
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "filters.53",
+   "group": "filters",
+   "field": "status filter Info",
+   "kind": "model",
+   "source": "status_words",
+   "value": "Info",
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "filters.54",
+   "group": "filters",
+   "field": "status filter Not applicable",
+   "kind": "model",
+   "source": "status_words",
+   "value": "Not applicable",
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "filters.55",
+   "group": "filters",
+   "field": "group by Category",
+   "kind": "model",
+   "source": "groupby_words",
+   "value": "Category",
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "filters.56",
+   "group": "filters",
+   "field": "group by Section",
+   "kind": "model",
+   "source": "groupby_words",
+   "value": "Section",
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "filters.57",
+   "group": "filters",
+   "field": "group by Type",
+   "kind": "model",
+   "source": "groupby_words",
+   "value": "Type",
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "filters.58",
+   "group": "filters",
+   "field": "group by Protection",
+   "kind": "model",
+   "source": "groupby_words",
+   "value": "Protection",
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "filters.59",
+   "group": "filters",
+   "field": "group by Permission group",
+   "kind": "model",
+   "source": "groupby_words",
+   "value": "Permission group",
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "filters.60",
+   "group": "filters",
+   "field": "group by Status",
+   "kind": "model",
+   "source": "groupby_words",
+   "value": "Status",
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "filters.61",
+   "group": "filters",
+   "field": "group by Feature",
+   "kind": "model",
+   "source": "groupby_words",
+   "value": "Feature",
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "filters.62",
+   "group": "filters",
+   "field": "group by Fleet app",
+   "kind": "model",
+   "source": "groupby_words",
+   "value": "Fleet app",
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "filters.63",
+   "group": "filters",
+   "field": "group by Flat list",
+   "kind": "model",
+   "source": "groupby_words",
+   "value": "Flat list",
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "filters.64",
+   "group": "filters",
+   "field": "sort Missing first",
+   "kind": "model",
+   "source": "sort_words",
+   "value": "Missing first",
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "filters.65",
+   "group": "filters",
+   "field": "sort Catalogue order",
+   "kind": "model",
+   "source": "sort_words",
+   "value": "Catalogue order",
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "filters.66",
+   "group": "filters",
+   "field": "sort Name",
+   "kind": "model",
+   "source": "sort_words",
+   "value": "Name",
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "filters.67",
+   "group": "filters",
+   "field": "sort Type",
+   "kind": "model",
+   "source": "sort_words",
+   "value": "Type",
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "filters.68",
+   "group": "filters",
+   "field": "sort Protection",
+   "kind": "model",
+   "source": "sort_words",
+   "value": "Protection",
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "filters.69",
+   "group": "filters",
+   "field": "type Runtime",
+   "kind": "model",
+   "source": "kind_titles",
+   "value": "Runtime",
+   "before": "pre-#1519"
+  },
+  {
+   "id": "filters.70",
+   "group": "filters",
+   "field": "type Special access",
+   "kind": "model",
+   "source": "kind_titles",
+   "value": "Special access",
+   "before": "pre-#1519"
+  },
+  {
+   "id": "filters.71",
+   "group": "filters",
+   "field": "type App-ops",
+   "kind": "model",
+   "source": "kind_titles",
+   "value": "App-ops",
+   "before": "pre-#1519"
+  },
+  {
+   "id": "filters.72",
+   "group": "filters",
+   "field": "type ADB-only",
+   "kind": "model",
+   "source": "kind_titles",
+   "value": "ADB-only",
+   "before": "pre-#1519"
+  },
+  {
+   "id": "groups.73",
+   "group": "groups",
+   "field": "section RUNTIME",
+   "kind": "model",
+   "source": "section_keys",
+   "value": "RUNTIME",
+   "before": "pre-#1519"
+  },
+  {
+   "id": "groups.74",
+   "group": "groups",
+   "field": "section SPECIAL",
+   "kind": "model",
+   "source": "section_keys",
+   "value": "SPECIAL",
+   "before": "pre-#1519"
+  },
+  {
+   "id": "groups.75",
+   "group": "groups",
+   "field": "section BATTERY",
+   "kind": "model",
+   "source": "section_keys",
+   "value": "BATTERY",
+   "before": "pre-#1519"
+  },
+  {
+   "id": "groups.76",
+   "group": "groups",
+   "field": "section SAMSUNG",
+   "kind": "model",
+   "source": "section_keys",
+   "value": "SAMSUNG",
+   "before": "pre-#1519"
+  },
+  {
+   "id": "groups.77",
+   "group": "groups",
+   "field": "section ADB",
+   "kind": "model",
+   "source": "section_keys",
+   "value": "ADB",
+   "before": "pre-#1519"
+  },
+  {
+   "id": "detail.78",
+   "group": "detail",
+   "field": "detail line What",
+   "kind": "model",
+   "source": "detail_keys",
+   "value": "What",
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "detail.79",
+   "group": "detail",
+   "field": "detail line Permission",
+   "kind": "model",
+   "source": "detail_keys",
+   "value": "Permission",
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "detail.80",
+   "group": "detail",
+   "field": "detail line Type",
+   "kind": "model",
+   "source": "detail_keys",
+   "value": "Type",
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "detail.81",
+   "group": "detail",
+   "field": "detail line Protection",
+   "kind": "model",
+   "source": "detail_keys",
+   "value": "Protection",
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "detail.82",
+   "group": "detail",
+   "field": "detail line Group",
+   "kind": "model",
+   "source": "detail_keys",
+   "value": "Group",
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "detail.83",
+   "group": "detail",
+   "field": "detail line State",
+   "kind": "model",
+   "source": "detail_keys",
+   "value": "State",
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "detail.84",
+   "group": "detail",
+   "field": "detail line Used by features",
+   "kind": "model",
+   "source": "detail_keys",
+   "value": "Used by features",
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "detail.85",
+   "group": "detail",
+   "field": "detail line Used by fleet apps",
+   "kind": "model",
+   "source": "detail_keys",
+   "value": "Used by fleet apps",
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "detail.86",
+   "group": "detail",
+   "field": "detail line Shell",
+   "kind": "model",
+   "source": "detail_keys",
+   "value": "Shell",
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "detail.87",
+   "group": "detail",
+   "field": "detail line Actions",
+   "kind": "model",
+   "source": "detail_keys",
+   "value": "Actions",
+   "before": "#1519/#1546"
+  },
+  {
+   "id": "groups.88",
+   "group": "groups",
+   "field": "nothing-missing groups exist under Missing only",
+   "kind": "model",
+   "source": "nothing_missing",
+   "value": "yes",
+   "before": "pre-#1519"
+  }
+ ]
+}

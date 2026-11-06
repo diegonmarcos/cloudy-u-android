@@ -159,6 +159,20 @@ object PermsPageQuery {
         return by.entries.sortedBy { order(q.groupBy, it.key) }.map { QueryGroup(it.key, it.value.first, it.value.second) }
     }
 
+    /**
+     * #1550 (pre-#1519 parity) the groups "Missing only" empties: shown with their full granted/applicable count and the line
+     * "nothing missing", so a fully granted section stays on the page instead of vanishing. Empty unless [q] is missing-only.
+     */
+    fun nothingMissing(rows: List<PermsPage.Row>, q: PermsQuery, appsOf: (String) -> List<String> = { emptyList() }): List<QueryGroup> {
+        if (!q.missingOnly) return emptyList()
+        val shown = query(rows, q, appsOf).map { it.key }.toSet()
+        return query(rows, q.copy(missingOnly = false), appsOf).filter { it.key !in shown }
+    }
+
+    /** #1550 (pre-#1519 parity) each group's header counts the WHOLE group (granted / applicable), not only the rows a filter left. */
+    fun fullGroups(rows: List<PermsPage.Row>, q: PermsQuery, appsOf: (String) -> List<String> = { emptyList() }): Map<String, QueryGroup> =
+        query(rows, q.copy(missingOnly = false), appsOf).associateBy { it.key }
+
     /** Every value a chip row can offer, from the rows themselves (data-driven: a new catalogue group gets its chip). */
     fun groupsPresent(rows: List<PermsPage.Row>): List<String> = rows.map { it.entry.group }.filter { it.isNotEmpty() }.distinct().sorted()
     fun featuresPresent(rows: List<PermsPage.Row>): List<String> = rows.flatMap { it.entry.features }.distinct().sorted()

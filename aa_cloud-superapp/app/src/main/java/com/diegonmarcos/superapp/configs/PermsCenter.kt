@@ -175,7 +175,7 @@ internal fun PermsCenterSection(
         if (highlight != null) {
             val n = rows.count { it.entry.id in highlight.ids }
             KitStoreRowLine(Modifier.background(p.accent.copy(alpha = 0.18f)).testTag("perms:highlight")) {
-                KitStoreCaption("Requested by ${highlight.feature}: $n highlighted", Modifier.weight(1f), color = p.textPrimary)
+                KitStoreCaption("Requested by ${highlight.feature}: $n permission(s) highlighted below", Modifier.weight(1f), color = p.textPrimary)
                 KitStoreQuick("Show all", KitStoreRow.BLUE_FILL, Modifier.testTag("perms:highlight-clear"), onClearHighlight)
             }
         }
@@ -244,17 +244,29 @@ internal fun PermsCenterSection(
                 mono = true, color = if (r.ok) p.ok else p.bad)
         }
         // ── the groups ──
-        if (shown.isEmpty()) KitStoreCaption("nothing matches these filters", Modifier.padding(horizontal = KitStoreRow.padH), color = p.textSecondary)
+        val full = remember(page, q) { PermsPageQuery.fullGroups(page, q, appsOf) }
+        val cleared = remember(page, q) { PermsPageQuery.nothingMissing(page, q, appsOf) }
+        if (shown.isEmpty() && cleared.isEmpty()) KitStoreCaption("nothing matches these filters", Modifier.padding(horizontal = KitStoreRow.padH), color = p.textSecondary)
         for (g in shown) {
             val key = g.key.lowercase()
             Column(Modifier.fillMaxWidth().testTag("perms:group:$key")) {
                 KitStoreRowLine(Modifier.testTag("perms:section:$key")) {
-                    KitStoreCaption("${g.title.uppercase()} — ${g.count}" + (if (g.missing > 0) " · ${g.missing} missing" else "") + " · ${g.rows.size} rows",
+                    KitStoreCaption("${g.title.uppercase()} — ${(full[g.key] ?: g).count}" + (if (g.missing > 0) " · ${g.missing} missing" else "") + " · ${g.rows.size} rows",
                         Modifier.weight(1f), color = p.accent)
                     val ask = PermsPageQuery.dialogTargets(g.rows)
                     if (ask.isNotEmpty()) KitStoreQuick("Ask group (${ask.size})", KitStoreRow.BLUE_FILL, Modifier.testTag("perms:ask-group:$key")) { onAskMany(ask) }
                 }
                 for (r in g.rows) PermRowLine(r, highlight?.ids?.contains(r.entry.id) == true, ctx, appsOf(r.entry.id), onGrant, onShell)
+            }
+        }
+        // #1550 (pre-#1519) a group Missing only emptied stays, with its full count and "nothing missing".
+        for (g in cleared) {
+            val key = g.key.lowercase()
+            Column(Modifier.fillMaxWidth().testTag("perms:group:$key")) {
+                KitStoreRowLine(Modifier.testTag("perms:section:$key")) {
+                    KitStoreCaption("${g.title.uppercase()} — ${g.count}", Modifier.weight(1f), color = p.accent)
+                }
+                KitStoreCaption("nothing missing", Modifier.padding(horizontal = KitStoreRow.padH).testTag("perms:nothing-missing:$key"), color = p.textSecondary)
             }
         }
     }

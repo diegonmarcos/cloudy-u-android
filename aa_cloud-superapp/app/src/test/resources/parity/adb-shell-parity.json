@@ -1,0 +1,797 @@
+{
+ "_doc": "#1550 TEST DATA, not shipped. Every field the richest SuperApp ADB Shell page showed (the hosted lib console before #1522 plus #1522's broker sections). AdbShellParityTest renders the page (kind ui: the text must be on screen) or evaluates the declared model from a fixture (kind model). Zero missing is the bar; entries are only ever added.",
+ "fields": [
+  {
+   "id": "broker-sections.0",
+   "group": "broker-sections",
+   "field": "section Status",
+   "kind": "ui",
+   "any": [
+    "Status"
+   ],
+   "before": "#1522 page"
+  },
+  {
+   "id": "broker-sections.1",
+   "group": "broker-sections",
+   "field": "section Actions",
+   "kind": "ui",
+   "any": [
+    "Actions"
+   ],
+   "before": "#1522 page"
+  },
+  {
+   "id": "broker-sections.2",
+   "group": "broker-sections",
+   "field": "section Keep wireless debugging on",
+   "kind": "ui",
+   "any": [
+    "Keep wireless debugging on"
+   ],
+   "before": "#1522 page"
+  },
+  {
+   "id": "broker-sections.3",
+   "group": "broker-sections",
+   "field": "section Callers",
+   "kind": "ui",
+   "any": [
+    "Callers"
+   ],
+   "before": "#1522 page"
+  },
+  {
+   "id": "broker-sections.4",
+   "group": "broker-sections",
+   "field": "section Broker audit log",
+   "kind": "ui",
+   "any": [
+    "Broker audit log"
+   ],
+   "before": "#1522 page"
+  },
+  {
+   "id": "broker-sections.5",
+   "group": "broker-sections",
+   "field": "section Keeper change log",
+   "kind": "ui",
+   "any": [
+    "Keeper change log"
+   ],
+   "before": "#1522 page"
+  },
+  {
+   "id": "broker-status.6",
+   "group": "broker-status",
+   "field": "live round-trip state + reason + check time",
+   "kind": "ui",
+   "any": [
+    "checked"
+   ],
+   "before": "#1522 page"
+  },
+  {
+   "id": "broker-status.7",
+   "group": "broker-status",
+   "field": "Wireless debugging fact",
+   "kind": "ui",
+   "any": [
+    "Wireless debugging"
+   ],
+   "before": "#1522 page"
+  },
+  {
+   "id": "broker-status.8",
+   "group": "broker-status",
+   "field": "Paired fact",
+   "kind": "ui",
+   "any": [
+    "Paired"
+   ],
+   "before": "#1522 page"
+  },
+  {
+   "id": "broker-status.9",
+   "group": "broker-status",
+   "field": "Port fact",
+   "kind": "ui",
+   "any": [
+    "Port"
+   ],
+   "before": "#1522 page"
+  },
+  {
+   "id": "broker-status.10",
+   "group": "broker-status",
+   "field": "primary action Pair/Re-arm",
+   "kind": "ui",
+   "any": [
+    "Pair",
+    "Re-arm"
+   ],
+   "before": "#1522 page"
+  },
+  {
+   "id": "broker-actions.11",
+   "group": "broker-actions",
+   "field": "action Re-arm",
+   "kind": "ui",
+   "any": [
+    "Re-arm"
+   ],
+   "before": "#1522 page"
+  },
+  {
+   "id": "broker-actions.12",
+   "group": "broker-actions",
+   "field": "action Pair",
+   "kind": "ui",
+   "any": [
+    "Pair"
+   ],
+   "before": "#1522 page"
+  },
+  {
+   "id": "broker-actions.13",
+   "group": "broker-actions",
+   "field": "action Wireless debugging settings",
+   "kind": "ui",
+   "any": [
+    "Wireless debugging settings"
+   ],
+   "before": "#1522 page"
+  },
+  {
+   "id": "broker-actions.14",
+   "group": "broker-actions",
+   "field": "action Test now",
+   "kind": "ui",
+   "any": [
+    "Test now"
+   ],
+   "before": "#1522 page"
+  },
+  {
+   "id": "broker-keeper.15",
+   "group": "broker-keeper",
+   "field": "Keeper on/off + toggle",
+   "kind": "ui",
+   "any": [
+    "Keeper"
+   ],
+   "before": "#1522 page"
+  },
+  {
+   "id": "broker-keeper.16",
+   "group": "broker-keeper",
+   "field": "WRITE_SECURE_SETTINGS state",
+   "kind": "ui",
+   "any": [
+    "WRITE_SECURE_SETTINGS"
+   ],
+   "before": "#1522 page"
+  },
+  {
+   "id": "broker-keeper.17",
+   "group": "broker-keeper",
+   "field": "Last re-arm",
+   "kind": "ui",
+   "any": [
+    "Last re-arm"
+   ],
+   "before": "#1522 page"
+  },
+  {
+   "id": "broker-callers.18",
+   "group": "broker-callers",
+   "field": "caller row: short package",
+   "kind": "ui",
+   "any": [
+    "a.store"
+   ],
+   "before": "#1522 page"
+  },
+  {
+   "id": "broker-callers.19",
+   "group": "broker-callers",
+   "field": "caller row: allowlist summary",
+   "kind": "ui",
+   "any": [
+    "3 rules"
+   ],
+   "before": "#1522 page"
+  },
+  {
+   "id": "broker-audit.20",
+   "group": "broker-audit",
+   "field": "audit row: command",
+   "kind": "ui",
+   "any": [
+    "id -u"
+   ],
+   "before": "#1522 page"
+  },
+  {
+   "id": "broker-audit.21",
+   "group": "broker-audit",
+   "field": "audit row: outcome + exit",
+   "kind": "ui",
+   "any": [
+    "ok 0"
+   ],
+   "before": "#1522 page"
+  },
+  {
+   "id": "broker-keeperlog.22",
+   "group": "broker-keeperlog",
+   "field": "keeper log row: cause",
+   "kind": "ui",
+   "any": [
+    "user"
+   ],
+   "before": "#1522 page"
+  },
+  {
+   "id": "broker-keeperlog.23",
+   "group": "broker-keeperlog",
+   "field": "keeper log row: re-armed by",
+   "kind": "ui",
+   "any": [
+    "nobody"
+   ],
+   "before": "#1522 page"
+  },
+  {
+   "id": "console-header.24",
+   "group": "console-header",
+   "field": "title ADB Shell",
+   "kind": "ui",
+   "any": [
+    "ADB Shell"
+   ],
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-header.25",
+   "group": "console-header",
+   "field": "channel state",
+   "kind": "ui",
+   "any": [
+    "Channel "
+   ],
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-header.26",
+   "group": "console-header",
+   "field": "Wireless debugging settings button",
+   "kind": "ui",
+   "any": [
+    "Wireless debugging"
+   ],
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-header.27",
+   "group": "console-header",
+   "field": "Refresh",
+   "kind": "ui",
+   "any": [
+    "Refresh"
+   ],
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-header.28",
+   "group": "console-header",
+   "field": "live echo round trip line",
+   "kind": "ui",
+   "any": [
+    "Live check (echo round trip"
+   ],
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-header.29",
+   "group": "console-header",
+   "field": "connection name (adbd pairing name) + application id",
+   "kind": "ui",
+   "any": [
+    "Connection name: "
+   ],
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-sections.30",
+   "group": "console-sections",
+   "field": "section 1  STATUS",
+   "kind": "ui",
+   "any": [
+    "1  STATUS"
+   ],
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-sections.31",
+   "group": "console-sections",
+   "field": "section 2  CONNECT",
+   "kind": "ui",
+   "any": [
+    "2  CONNECT"
+   ],
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-sections.32",
+   "group": "console-sections",
+   "field": "section 3  ACTIVE CONNECTION",
+   "kind": "ui",
+   "any": [
+    "3  ACTIVE CONNECTION"
+   ],
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-sections.33",
+   "group": "console-sections",
+   "field": "section 4  LOGS",
+   "kind": "ui",
+   "any": [
+    "4  LOGS"
+   ],
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-sections.34",
+   "group": "console-sections",
+   "field": "section 5  DECLARED NEEDS",
+   "kind": "ui",
+   "any": [
+    "5  DECLARED NEEDS"
+   ],
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-sections.35",
+   "group": "console-sections",
+   "field": "section 6  SETUP",
+   "kind": "ui",
+   "any": [
+    "6  SETUP"
+   ],
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-sections.36",
+   "group": "console-sections",
+   "field": "section 7  KEEP WIRELESS DEBUGGING ON",
+   "kind": "ui",
+   "any": [
+    "7  KEEP WIRELESS DEBUGGING ON"
+   ],
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-connect.37",
+   "group": "console-connect",
+   "field": "Connect button",
+   "kind": "ui",
+   "any": [
+    "Connect",
+    "Connecting..."
+   ],
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-connect.38",
+   "group": "console-connect",
+   "field": "step plan line (runs: a > b)",
+   "kind": "ui",
+   "any": [
+    "runs: "
+   ],
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-active.39",
+   "group": "console-active",
+   "field": "Keep armed toggle / auto-connect note",
+   "kind": "ui",
+   "any": [
+    "Keep armed: ON",
+    "Keep armed: OFF",
+    "Auto-connect follows"
+   ],
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-actions.40",
+   "group": "console-actions",
+   "field": "channel action Disconnect",
+   "kind": "ui",
+   "any": [
+    "Disconnect"
+   ],
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-actions.41",
+   "group": "console-actions",
+   "field": "channel action Reconnect",
+   "kind": "ui",
+   "any": [
+    "Reconnect"
+   ],
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-actions.42",
+   "group": "console-actions",
+   "field": "channel action Restart server",
+   "kind": "ui",
+   "any": [
+    "Restart server"
+   ],
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-actions.43",
+   "group": "console-actions",
+   "field": "channel action Stop server",
+   "kind": "ui",
+   "any": [
+    "Stop server"
+   ],
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-actions.44",
+   "group": "console-actions",
+   "field": "channel action Test round-trip",
+   "kind": "ui",
+   "any": [
+    "Test round-trip"
+   ],
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-logs.45",
+   "group": "console-logs",
+   "field": "Copy",
+   "kind": "ui",
+   "any": [
+    "Copy"
+   ],
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-logs.46",
+   "group": "console-logs",
+   "field": "Clear",
+   "kind": "ui",
+   "any": [
+    "Clear"
+   ],
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-logs.47",
+   "group": "console-logs",
+   "field": "event count + privacy line",
+   "kind": "ui",
+   "any": [
+    "events in memory"
+   ],
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-needs.48",
+   "group": "console-needs",
+   "field": "own local server / no server line",
+   "kind": "ui",
+   "any": [
+    "own local server 127.0.0.1:",
+    "no local server of its own"
+   ],
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-footer.49",
+   "group": "console-footer",
+   "field": "one shared shell line",
+   "kind": "ui",
+   "any": [
+    "One shared shell"
+   ],
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-layers.50",
+   "group": "console-layers",
+   "field": "layer row Developer options",
+   "kind": "model",
+   "source": "layers",
+   "value": "Developer options",
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-layers.51",
+   "group": "console-layers",
+   "field": "layer row Wireless debugging",
+   "kind": "model",
+   "source": "layers",
+   "value": "Wireless debugging",
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-layers.52",
+   "group": "console-layers",
+   "field": "layer row Embedded adb",
+   "kind": "model",
+   "source": "layers",
+   "value": "Embedded adb",
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-layers.53",
+   "group": "console-layers",
+   "field": "layer row Local server",
+   "kind": "model",
+   "source": "layers",
+   "value": "Local server",
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-layers.54",
+   "group": "console-layers",
+   "field": "layer row Shizuku",
+   "kind": "model",
+   "source": "layers",
+   "value": "Shizuku",
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-layers.55",
+   "group": "console-layers",
+   "field": "layer row Active route",
+   "kind": "model",
+   "source": "layer_ids",
+   "value": "active-route",
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-setup.56",
+   "group": "console-setup",
+   "field": "setup item Developer options enabled",
+   "kind": "model",
+   "source": "setup",
+   "value": "Developer options enabled",
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-setup.57",
+   "group": "console-setup",
+   "field": "setup item Wireless debugging enabled",
+   "kind": "model",
+   "source": "setup",
+   "value": "Wireless debugging enabled",
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-setup.58",
+   "group": "console-setup",
+   "field": "setup item On Wi-Fi",
+   "kind": "model",
+   "source": "setup",
+   "value": "On Wi-Fi",
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-setup.59",
+   "group": "console-setup",
+   "field": "setup item Pairing done",
+   "kind": "model",
+   "source": "setup",
+   "value": "Pairing done",
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-setup.60",
+   "group": "console-setup",
+   "field": "setup item Notifications allowed (pairing code input)",
+   "kind": "model",
+   "source": "setup",
+   "value": "Notifications allowed (pairing code input)",
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-keeper.61",
+   "group": "console-keeper",
+   "field": "keeper chip WRITE_SECURE_SETTINGS (Write secure settings)",
+   "kind": "model",
+   "source": "keeper_chips",
+   "value": "WRITE_SECURE_SETTINGS (Write secure settings)",
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-keeper.62",
+   "group": "console-keeper",
+   "field": "keeper chip Battery",
+   "kind": "model",
+   "source": "keeper_chips",
+   "value": "Battery",
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-keeper.63",
+   "group": "console-keeper",
+   "field": "keeper chip Service",
+   "kind": "model",
+   "source": "keeper_chips",
+   "value": "Service",
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-keeper.64",
+   "group": "console-keeper",
+   "field": "keeper chip Wi-Fi",
+   "kind": "model",
+   "source": "keeper_chips",
+   "value": "Wi-Fi",
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-keeper.65",
+   "group": "console-keeper",
+   "field": "keeper chip Wireless debugging",
+   "kind": "model",
+   "source": "keeper_chips",
+   "value": "Wireless debugging",
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-keeper.66",
+   "group": "console-keeper",
+   "field": "keeper chip Last re-arm",
+   "kind": "model",
+   "source": "keeper_chips",
+   "value": "Last re-arm",
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-connect.67",
+   "group": "console-connect",
+   "field": "channel mode local",
+   "kind": "model",
+   "source": "modes",
+   "value": "local",
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-connect.68",
+   "group": "console-connect",
+   "field": "channel mode auto",
+   "kind": "model",
+   "source": "modes",
+   "value": "auto",
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-connect.69",
+   "group": "console-connect",
+   "field": "channel mode embedded",
+   "kind": "model",
+   "source": "modes",
+   "value": "embedded",
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-connect.70",
+   "group": "console-connect",
+   "field": "channel mode shizuku",
+   "kind": "model",
+   "source": "modes",
+   "value": "shizuku",
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-connect.71",
+   "group": "console-connect",
+   "field": "server launcher Embedded adb",
+   "kind": "model",
+   "source": "launch_via",
+   "value": "Embedded adb",
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-connect.72",
+   "group": "console-connect",
+   "field": "server launcher Shizuku",
+   "kind": "model",
+   "source": "launch_via",
+   "value": "Shizuku",
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-connect.73",
+   "group": "console-connect",
+   "field": "connect method Pair with code",
+   "kind": "model",
+   "source": "methods_auto",
+   "value": "Pair with code",
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "console-connect.74",
+   "group": "console-connect",
+   "field": "connect method Connect via mDNS",
+   "kind": "model",
+   "source": "methods_auto",
+   "value": "Connect via mDNS",
+   "before": "console (AdbShellPage, pre-#1522 SuperApp page)"
+  },
+  {
+   "id": "adb-transport.75",
+   "group": "adb-transport",
+   "field": "transport state ADB: Wireless debugging is off",
+   "kind": "model",
+   "source": "adb_links",
+   "value": "ADB: Wireless debugging is off",
+   "before": "#1550 (new)"
+  },
+  {
+   "id": "adb-transport.76",
+   "group": "adb-transport",
+   "field": "transport state ADB: Wireless debugging on, not paired",
+   "kind": "model",
+   "source": "adb_links",
+   "value": "ADB: Wireless debugging on, not paired",
+   "before": "#1550 (new)"
+  },
+  {
+   "id": "adb-transport.77",
+   "group": "adb-transport",
+   "field": "transport state ADB: paired, but adbd does not answer",
+   "kind": "model",
+   "source": "adb_links",
+   "value": "ADB: paired, but adbd does not answer",
+   "before": "#1550 (new)"
+  },
+  {
+   "id": "adb-transport.78",
+   "group": "adb-transport",
+   "field": "transport state ADB: connected",
+   "kind": "model",
+   "source": "adb_links",
+   "value": "ADB: connected",
+   "before": "#1550 (new)"
+  },
+  {
+   "id": "adb-transport.79",
+   "group": "adb-transport",
+   "field": "transport state ADB: USB debugging (adb) is off",
+   "kind": "model",
+   "source": "adb_links",
+   "value": "ADB: USB debugging (adb) is off",
+   "before": "#1550 (new)"
+  },
+  {
+   "id": "adb-transport.80",
+   "group": "adb-transport",
+   "field": "Shell broker row (separate from adb)",
+   "kind": "ui",
+   "any": [
+    "Shell broker"
+   ],
+   "before": "#1550 (new)"
+  }
+ ],
+ "owner_ordered_removals": [
+  {
+   "field": "7  SIDE BY SIDE (other apps' own adb links, pairing window)",
+   "by": "#1521",
+   "why": "removed on the owner's explicit request; obsolete since #1512 (only the SuperApp holds an adb link)"
+  }
+ ]
+}
