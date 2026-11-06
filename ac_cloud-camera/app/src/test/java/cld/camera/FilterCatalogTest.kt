@@ -12,9 +12,19 @@ import org.junit.Assert.fail
 import org.junit.Test
 import java.io.File
 
-/** The declared filters load from data (assets/vr-filters.json), validated; the colour LUT applies. */
+/**
+ * The declared filters load from the runtime dataset `vr-filters` (served by Cloud Store, repo path data/fleet/app/cld.camera/vr-filters.json,
+ * #1547 — never baked into the APK), validated the same way the app does through libs:fleet-data-client; the colour LUT applies. Reading the
+ * served file here proves the provider serves the identical catalogue the app used to read from assets.
+ */
 class FilterCatalogTest {
-    private val real by lazy { FilterCatalog.parse(File("src/main/assets/vr-filters.json").readText()) }
+    private val served = File("../../data/fleet/app/cld.camera/vr-filters.json")
+    private val real by lazy { FilterCatalog.parse(served.readText()) }
+
+    @Test fun theServedDatasetCarriesASchemaVersion() {
+        val v = org.json.JSONObject(served.readText()).optInt("schemaVersion", -1)
+        assertTrue("the served dataset declares an integer schemaVersion (required by the fleet-data client)", v >= 1)
+    }
 
     @Test fun theDeclaredFiltersLoad() {
         assertTrue(real.size >= 10)

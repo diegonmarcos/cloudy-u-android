@@ -25,6 +25,7 @@ import com.diegonmarcos.superapp.image.mlkit.RecognitionConfig
 import com.diegonmarcos.superapp.vision.AnalysisGate
 import com.diegonmarcos.superapp.vision.AnalyzerLifecycle
 import com.diegonmarcos.superapp.vision.CompositeFrameView
+import com.diegonmarcos.superapp.fleetdata.FleetData
 import com.diegonmarcos.superapp.vision.Detection
 import com.diegonmarcos.superapp.vision.FaceDetector
 import com.diegonmarcos.superapp.vision.FaceInfo
@@ -44,7 +45,8 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 /**
- * #1533 the VR page: AR-style filters on the live camera, all on device. The declared filters (assets/vr-filters.json) are
+ * #1533 the VR page: AR-style filters on the live camera, all on device. The declared filters (the runtime dataset `vr-filters`,
+ * served by Cloud Store through libs:fleet-data-client, #1547; never baked into the APK) are
  * switched on with the chips; each analysed frame goes through ML Kit Face Detection (landmarks, contours) and Selfie
  * Segmentation (both bundled, via libs:ml-l-vision-mlkit) and the fleet engine's object detector (for stickers on objects), is
  * composited by [VrCompositor] (hats, glasses, masks anchored to the head, a blurred or replaced background, a colour LUT,
@@ -63,11 +65,19 @@ class VrController(
     private val filtersRow: LinearLayout,
     private val recordButton: Button,
 ) {
+    // #1547 the VR filter declaration is read at RUNTIME from Cloud Store's provider (libs:fleet-data-client), never baked into the APK.
+    // `null` until the Store has served `vr-filters` (first run, provider absent, nothing synced yet); the client keeps the last-known-good copy
+    // and never throws, so the page shows a loading/failed status instead of crashing and fills itself when the dataset arrives (reloadCatalog).
+    private fun readDataset(): String? = runCatching { FleetData.get(activity, DATASET, own = true) { it } }.getOrNull()
+    private fun parseCatalog(raw: String?): Result<List<FilterDecl>> =
+        if (raw == null) Result.failure(IllegalStateException("vr-filters not available yet")) else runCatching { FilterCatalog.parse(raw) }
+
+    private val rawJson: String? = readDataset()
     private val settings: JSONObject = runCatching {
-        activity.assets.open(ASSET).use { JSONObject(it.bufferedReader().readText()).optJSONObject("analysis") }
+        rawJson?.let { JSONObject(it).optJSONObject("analysis") }
     }.getOrNull() ?: JSONObject()
-    private val catalogResult = runCatching { activity.assets.open(ASSET).use { FilterCatalog.load(it) } }
-    private val catalog: List<FilterDecl> = catalogResult.getOrDefault(emptyList())
+    private var catalogResult: Result<List<FilterDecl>> = parseCatalog(rawJson)
+    private var catalog: List<FilterDecl> = catalogResult.getOrDefault(emptyList())
 
     private val mlSide = settings.optInt("ml_side", 480)
     private val objectEvery = settings.optInt("object_every_n_frames", 3).coerceAtLeast(1)
@@ -98,6 +108,14 @@ class VrController(
     private val chips = LinkedHashMap<String, Button>()
 
     init {
+        buildChips()
+        recordButton.setOnClickListener { toggleRecord() }
+    }
+
+    /** (Re)build the filter chips from the current [catalog]; safe to call again after the dataset is served. */
+    private fun buildChips() {
+        chips.clear()
+        filtersRow.removeAllViews()
         catalog.forEach { f ->
             val chip = Button(activity).apply {
                 text = f.label; isAllCaps = false; textSize = 12f; alpha = INACTIVE
@@ -106,7 +124,14 @@ class VrController(
             chips[f.id] = chip
             filtersRow.addView(chip)
         }
-        recordButton.setOnClickListener { toggleRecord() }
+    }
+
+    /** First run / provider still syncing: read the dataset again so the page fills once Cloud Store has served `vr-filters`. */
+    private fun reloadCatalog() {
+        val raw = readDataset() ?: return
+        catalogResult = parseCatalog(raw)
+        catalog = catalogResult.getOrDefault(emptyList())
+        buildChips()
     }
 
     private fun toggle(f: FilterDecl) {
@@ -140,6 +165,7 @@ class VrController(
     fun enter() {
         panel.visibility = View.VISIBLE
         view.visibility = View.VISIBLE
+        if (catalog.isEmpty()) reloadCatalog()
         val err = catalogResult.exceptionOrNull()
         say(if (err != null) activity.getString(R.string.vr_catalog_failed, err.message ?: err.toString()) else activity.getString(R.string.vr_pick))
     }
@@ -275,7 +301,7 @@ class VrController(
     private fun toast(msg: String) = activity.runOnUiThread { Toast.makeText(activity, msg, Toast.LENGTH_LONG).show() }
 
     companion object {
-        private const val ASSET = "vr-filters.json"
+        private const val DATASET = "vr-filters"
         private const val INACTIVE = 0.55f
         private const val MAX_STILL_PIXELS = 9_000_000L
     }

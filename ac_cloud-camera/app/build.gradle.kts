@@ -185,6 +185,9 @@ dependencies {
     // #1533 Objects (and VR): detection types, frame-to-view mapping, the analyzer lifecycle, the overlay.
     implementation(project(":libs:ml-l-vision-mlkit"))
 
+    // #1547 the VR filter declaration is read at RUNTIME from Cloud Store's provider, never baked into the APK (code only, no data).
+    implementation(project(":libs:fleet-data-client"))
+
     // Fleet mesh member: libs:core (+ devtools via `api`) merges the fleet
     // provider, receiver, <queries> and the signature permission into this APK.
     implementation(project(":libs:core"))

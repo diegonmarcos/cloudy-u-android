@@ -20,6 +20,9 @@
     "com.diegonmarcos.cloudtoolssmallllms": [
       "tools-models",
       "tools/sensors"
+    ],
+    "cld.camera": [
+      "vr-filters"
     ]
   }
 }
