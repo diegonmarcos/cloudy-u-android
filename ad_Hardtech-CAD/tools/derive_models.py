@@ -84,6 +84,7 @@ def derive_skp(m, src, version):
     from openskp.export import glb, ifc
     old = copy.deepcopy(m)
     old_ifc = open(DERIVED_DIR + "%s.view.ifc" % m["id"], "rb").read() if os.path.isfile(DERIVED_DIR + "%s.view.ifc" % m["id"]) else None
+    old_glb = open(asset_ref(m, "glb"), "rb").read() if os.path.isfile(asset_ref(m, "glb")) else None
     orig = os.path.join(src, m["path"])
     if not os.path.isfile(orig) or os.path.getsize(orig) < 1000 or sha256(orig) != m["sha256"]:
         raise SystemExit("%s: missing, an LFS pointer or not the declared file (declared sha256 %s)" % (orig, m["sha256"]))
@@ -117,13 +118,18 @@ def derive_skp(m, src, version):
         "ifc.export(skp.build_scene(), ifc) wrote the IFC4 file (meshes, no BIM semantics)",
     ]
     m["updated"] = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
-    # DERIVE_FORCE re-runs the conversion on a clean machine to prove it; the same GLB from the same tool version means nothing changed
-    # (the IFC embeds a timestamp and is not byte-reproducible, so the committed one is kept)
-    if old.get("view") and old["view"].get("sha256") == m["view"]["sha256"] and old["view"].get("tool") == m["view"]["tool"] and old_ifc is not None:
-        open(ifc_path, "wb").write(old_ifc)
-        m.clear()
-        m.update(old)
-        print("%s: reproduced the committed GLB byte for byte (sha256 %s)" % (m["id"], m["view"]["sha256"]))
+    # DERIVE_FORCE re-runs the conversion on a clean machine to prove it. The same tool and version giving an EQUIVALENT file (same vertices,
+    # triangles, bounding box within a millimetre) means nothing changed: the committed bytes are kept. (Two CI runs of the same pinned tool produced two
+    # byte-different GLBs of identical content, and the IFC embeds a timestamp, so byte equality is not a usable test.)
+    if old.get("view") and old_glb is not None and old_ifc is not None and old["view"].get("tool") == m["view"]["tool"]:
+        verts, tris, lo, hi = measure(view_path)
+        near = all(abs(a - b) < 1e-3 for a, b in zip(old["bbox"]["min"] + old["bbox"]["max"], lo + hi))
+        if old.get("stats") == {"vertices": verts, "triangles": tris} and near:
+            open(view_path, "wb").write(old_glb)
+            open(ifc_path, "wb").write(old_ifc)
+            m.clear()
+            m.update(old)
+            print("%s: re-converted with %s: equivalent GLB (%d vertices, %d triangles, same bounding box); the committed bytes are kept" % (m["id"], m["view"]["tool"].split(" with ")[-1].split(" (")[0], verts, tris))
 
 
 def mirror(m, src):
