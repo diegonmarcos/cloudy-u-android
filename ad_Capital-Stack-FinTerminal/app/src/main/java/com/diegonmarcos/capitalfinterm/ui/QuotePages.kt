@@ -106,6 +106,7 @@ fun QuoteBoardPage(view: String) {
     var base by rememberSaveable { mutableStateOf(l.decl.defaultBase) }
     var matrix by rememberSaveable { mutableStateOf(false) }
     BoxWithConstraints(Modifier.fillMaxSize().testTag(QUOTE_PAGE + view)) {
+        val screen = maxWidth
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(FinDim.gap)) {
             if (view == "fx_rates") {
                 Chips {
@@ -115,11 +116,11 @@ fun QuoteBoardPage(view: String) {
                 }
                 if (!matrix) Chips { l.decl.ccys.forEach { c -> FinChip(c.id, c.id == base) { base = c.id } } }
                 val t = if (matrix) Quotes.fxMatrix(l.decl, l.snap) else Quotes.fxTable(l.decl, l.snap, base)
-                Table("fx:" + if (matrix) "matrix" else base, t, maxWidth, if (matrix) 44.dp else 128.dp)
+                Table("fx:" + if (matrix) "matrix" else base, t, screen, if (matrix) 44.dp else 128.dp)
                 Footer(l, l.decl.word("note_fx"), l.decl.ccys.mapNotNull { it.symbol }.mapNotNull { l.snap.quotes[it]?.asof }.maxOrNull())
             } else {
                 Chips { RefreshChip(l) }
-                Table("commodities", Quotes.commodityTable(l.decl, l.snap), maxWidth, 128.dp)
+                Table("commodities", Quotes.commodityTable(l.decl, l.snap), screen, 128.dp)
                 Footer(l, l.decl.word("note_commodities"), Quotes.symbolsCommodities(l.decl).mapNotNull { l.snap.quotes[it]?.asof }.maxOrNull())
             }
         }
@@ -136,13 +137,14 @@ fun FuturesBoardPage(classId: String) {
     val p = LocalFinPalette.current
     val spec = l.decl.spec(root)
     BoxWithConstraints(Modifier.fillMaxSize().testTag(FUT_PAGE + classId)) {
+        val screen = maxWidth
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(FinDim.gap)) {
             if (spec == null) {
                 Chips { RefreshChip(l) }
                 val t = Quotes.board(l.decl, l.snap, cls, today)
-                Table("fut:" + classId, t, maxWidth, 176.dp, onRow = { i -> root = cls.roots[i].id })
+                Table("fut:" + classId, t, screen, 176.dp, onRow = { i -> root = cls.roots[i].id })
                 Footer(l, l.decl.word("note_board"), Quotes.symbolsClass(l.decl, cls, today).mapNotNull { l.snap.quotes[it]?.asof }.maxOrNull())
-            } else TermStructure(l, spec, today, maxWidth) { root = "" }
+            } else TermStructure(l, spec, today, screen) { root = "" }
         }
     }
 }

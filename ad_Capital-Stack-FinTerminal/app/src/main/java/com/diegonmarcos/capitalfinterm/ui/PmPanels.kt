@@ -78,6 +78,7 @@ fun PortfoliosPanel() {
     var open by rememberSaveable { mutableStateOf("") }
     val p = LocalFinPalette.current
     BoxWithConstraints(Modifier.fillMaxSize().testTag(PM_PORTFOLIOS)) {
+        val screen = maxWidth
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(FinDim.gap)) {
             Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) { FinChip(if (live.status == "run") perf.word("refreshing") else perf.word("refresh"), false) { live.refresh() } }
             for (t in decl.tables) {
@@ -87,7 +88,7 @@ fun PortfoliosPanel() {
                     val vol = if (pf.historyVol) live.results[pf.id]?.vol1y?.let { String.format(Locale.ROOT, "%.1f", it) } else pf.modelVol
                     listOf(pf.name, vol ?: perf.word("na"), if (pf.legs.isEmpty()) perf.word("na") else PmPortfolios.topText(pf.legs, decl.top), decl.seeAll)
                 }
-                FinMatrix("pm:" + t.id, decl.columns, rows, emptyList(), emptyList(), maxWidth, decl.labels, onRow = { i -> open = if (open == ps[i].id) "" else ps[i].id })
+                FinMatrix("pm:" + t.id, decl.columns, rows, emptyList(), emptyList(), screen, decl.labels, onRow = { i -> open = if (open == ps[i].id) "" else ps[i].id })
                 ps.firstOrNull { it.id == open }?.let { pf ->
                     Column(Modifier.testTag(PM_PORTFOLIO + pf.id)) {
                         Text(decl.allTitle + ": " + pf.name, color = p.text2, style = FinType.label)
@@ -112,6 +113,7 @@ fun PerformancePanel() {
     val live = rememberPerf(perf, decl.portfolios)
     val p = LocalFinPalette.current
     BoxWithConstraints(Modifier.fillMaxSize().testTag(PM_PERFORMANCE)) {
+        val screen = maxWidth
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(FinDim.gap)) {
             Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) { FinChip(if (live.status == "run") perf.word("refreshing") else perf.word("refresh"), false) { live.refresh() } }
             val rows = ArrayList<List<String>>(); val heat = ArrayList<List<Float?>>()
@@ -121,7 +123,7 @@ fun PerformancePanel() {
                 rows += listOf(pf.name) + cells + (r?.asOf?.toString() ?: perf.word("na"))
                 heat += listOf<Float?>(null) + perf.windows.map { w -> r?.values?.get(w.id)?.let { (it * 100.0 / perf.heatPct).coerceIn(-1.0, 1.0).toFloat() } } + listOf<Float?>(null)
             }
-            FinMatrix("pm:performance", perf.columns, rows, heat, emptyList(), maxWidth, perf.labels)
+            FinMatrix("pm:performance", perf.columns, rows, heat, emptyList(), screen, perf.labels)
             Text(perf.word("rebalance") + ": " + perf.word("rebalance_rule") + ".  " + perf.word("note"), color = p.text3, style = FinType.caption)
             Text(perf.word("source") + ": " + perf.source, color = p.text3, style = FinType.caption)
             live.results.values.mapNotNull { it.na }.distinct().forEach { Text(it, color = p.text3, style = FinType.caption) }
