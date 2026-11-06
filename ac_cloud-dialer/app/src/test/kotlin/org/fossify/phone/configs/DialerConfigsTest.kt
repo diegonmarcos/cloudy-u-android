@@ -31,7 +31,11 @@ class DialerConfigsTest {
     }
 
     @Test fun bottomNavOrder() {
-        assertEquals("contacts,keypad,home,recents,sms,sims", BuildConfig.UI_BOTTOM_NAV)
+        assertEquals("sms,keypad,recents,home,voip,sims,contacts", BuildConfig.UI_BOTTOM_NAV)
+    }
+
+    @Test fun keypadVoipAndSimsAreNotPagerPages() {
+        assertEquals(setOf("keypad", "voip", "sims"), org.fossify.phone.nav.DialerNav.NON_PAGER)
     }
 
     @Test fun tablesHaveOneCellPerHeaderColumn() {

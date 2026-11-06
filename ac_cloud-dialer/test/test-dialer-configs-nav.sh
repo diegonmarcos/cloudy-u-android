@@ -5,7 +5,7 @@
 #   P  the Configs pages are tabs of the top nav bar, declared in build.json::configs_pages.top_nav in the order
 #      General | Perms | SIM | Status | Usage | About, baked into BuildConfig and each drawn by DialerConfigsActivity.
 #   S  Status / SIM / Usage / SIMs use the shared Configs v2 rows and tables (no hand-made rows that overflow), Configs has back.
-#   B  the bottom nav is Contacts | Keypad | Home | Calls | SMS | SIMs.
+#   B  the bottom nav is SMS | Keypad | Calls | Home | VoIP | SIMs | Contacts (#1528); Keypad, VoIP and SIMs are in-shell pages.
 #   R  every compileOnly dependency of a linked lib that the app reaches is linked by the app (sha-61326f78 crashed with
 #      NoClassDefFoundError androidx.security.crypto.MasterKey$Builder: libs:crash links security-crypto compileOnly).
 # Each assertion is then proven red by its own mutation of a copy of the tree.
@@ -39,12 +39,16 @@ check() { # $1 = app dir; prints FAIL lines, returns the number of failures
   grep -qE 'Text\(r\.(label|value)' "$SP" && bad "S3 a hand-made label/value row in the SIM pages"
   grep -q 'SimsOverviewPage(' "$MA" || bad "S4 the SIMs tab draws no SimsOverviewPage"
   # B
-  [ "$(jq -c '.ui.bottom_nav' "$d/build.json" 2>/dev/null)" = '["contacts","keypad","home","recents","sms","sims"]' ] \
-    || bad "B1 ui.bottom_nav is not contacts|keypad|home|recents|sms|sims"
-  [ "$(jq -c '[.ui.bottom_nav[] as $b | .ui.sections[] | select(.id == $b) | .label]' "$d/build.json" 2>/dev/null)" = '["Contacts","Keypad","Home","Calls","SMS","SIMs"]' ] \
-    || bad "B2 bottom nav labels are not Contacts|Keypad|Home|Calls|SMS|SIMs"
-  grep -q 'setOf(KEYPAD, SIMS)' "$K/nav/DialerNav.kt" || bad "B3 Keypad / SIMs are filtered out of the island (DialerNav.NON_PAGER)"
-  grep -q 'KeypadPage(c, onCall' "$MA" && grep -q 'DialerNav.KEYPAD, DialerNav.SIMS -> { selectedSection.value = sectionId' "$MA" || bad "B4 Keypad is not the in-shell keypad page"
+  [ "$(jq -c '.ui.bottom_nav' "$d/build.json" 2>/dev/null)" = '["sms","keypad","recents","home","voip","sims","contacts"]' ] \
+    || bad "B1 ui.bottom_nav is not sms|keypad|recents|home|voip|sims|contacts"
+  [ "$(jq -c '[.ui.bottom_nav[] as $b | .ui.sections[] | select(.id == $b) | .label]' "$d/build.json" 2>/dev/null)" = '["SMS","Keypad","Calls","Home","VoIP","SIMs","Contacts"]' ] \
+    || bad "B2 bottom nav labels are not SMS|Keypad|Calls|Home|VoIP|SIMs|Contacts"
+  grep -q 'setOf(KEYPAD, VOIP, SIMS)' "$K/nav/DialerNav.kt" || bad "B3 Keypad / VoIP / SIMs are filtered out of the island (DialerNav.NON_PAGER)"
+  grep -q 'KeypadPage(c, onCall' "$MA" && grep -q 'DialerNav.KEYPAD, DialerNav.VOIP, DialerNav.SIMS -> { selectedSection.value = sectionId' "$MA" || bad "B4 Keypad is not the in-shell keypad page"
+  grep -q 'VoipPage(c)' "$MA" || bad "B5 the VoIP tab draws no VoipPage"
+  grep -q 'T9.search(' "$K/nav/KeypadPage.kt" && grep -q 'k.letters' "$K/nav/KeypadPage.kt" || bad "B6 the keypad has no letters under the digits or no T9 search"
+  grep -q 'SimsNavState.selected = null' "$MA" || bad "B7 back from a SIM sub-page does not return to the SIM list"
+  grep -rqE '[0-9]\.sp\b' "$K/nav" "$K/sim/SimSubPages.kt" && bad "B8 an sp literal in the keypad / VoIP / SIM pages (use the ui-kit type ramp)"
   # R
   local libs lib dir co ga grp bridge
   libs="$(grep -oE 'project\("(:libs:[^"]+)"\)\.projectDir = file\("[^"]+"\)' "$d/settings.gradle.kts" | sed -E 's/.*file\("([^"]+)"\)/\1/')"
@@ -74,7 +78,7 @@ mutant() { # $1 name, $2 shell mutation run inside the copy, $3 expected FAIL id
   rm -rf "$W/a"; mkdir -p "$W/a/app/src/main/res" "$W/a/gradle"
   cp "$APP/build.json" "$APP/settings.gradle.kts" "$W/a/"; cp "$APP/gradle/libs.versions.toml" "$W/a/gradle/"
   cp "$APP/app/build.gradle.kts" "$APP/app/proguard-rules.pro" "$W/a/app/"; cp "$APP/app/src/main/AndroidManifest.xml" "$W/a/app/src/main/"
-  cp -r "$APP/app/src/main/kotlin" "$W/a/app/src/main/"; cp -r "$APP/app/src/main/res/menu" "$W/a/app/src/main/res/"
+  cp -r "$APP/app/src/main/kotlin" "$APP/app/src/main/assets" "$W/a/app/src/main/"; cp -r "$APP/app/src/main/res/menu" "$W/a/app/src/main/res/"
   ln -s "$APP/../ab_cloud-libs-shared" "$W/ab_cloud-libs-shared"
   ( cd "$W/a" && eval "$2" ) >/dev/null 2>&1
   local out; out="$(check "$W/a")"
@@ -104,7 +108,14 @@ mutant "SIMs tab draws nothing" "sed -i 's|SimsOverviewPage(c)|Unit|' $K/activit
 mutant "bottom nav order" "jq '.ui.bottom_nav = [\"home\",\"contacts\",\"keypad\",\"recents\",\"sms\",\"sims\"]' build.json > b && mv b build.json" B1
 mutant "SIMs off the island" "jq '.ui.bottom_nav -= [\"sims\"]' build.json > b && mv b build.json" B1
 mutant "Calls relabelled" "jq '(.ui.sections[] | select(.id == \"recents\") | .label) = \"Recents\"' build.json > b && mv b build.json" B2
-mutant "Keypad filtered out" "sed -i 's|setOf(KEYPAD, SIMS)|setOf(SIMS)|' $K/nav/DialerNav.kt" B3
+mutant "Keypad filtered out" "sed -i 's|setOf(KEYPAD, VOIP, SIMS)|setOf(SIMS)|' $K/nav/DialerNav.kt" B3
+mutant "VoIP off the island" "jq '.ui.bottom_nav -= [\"voip\"]' build.json > b && mv b build.json" B1
+mutant "VoIP relabelled" "jq '(.ui.sections[] | select(.id == \"voip\") | .label) = \"Voice\"' build.json > b && mv b build.json" B2
+mutant "VoIP draws nothing" "sed -i 's|VoipPage(c)|Unit|' $K/activities/MainActivity.kt" B5
+mutant "T9 search dropped" "sed -i 's|T9.search(|T9.none(|' $K/nav/KeypadPage.kt" B6
+mutant "letters dropped from the keys" "sed -i 's|k.letters|k.digit|g' $K/nav/KeypadPage.kt" B6
+mutant "back skips the SIM sub-page" "sed -i 's|SimsNavState.selected = null|Unit|' $K/activities/MainActivity.kt" B7
+mutant "an sp literal in the keypad" "printf 'val x = 12.sp\\n' >> $K/nav/KeypadPage.kt" B8
 mutant "Keypad opens nothing" "sed -i 's|KeypadPage(c, onCall|Unit(c, onCall|' $K/activities/MainActivity.kt" B4
 mutant "security-crypto not linked (the sha-61326f78 crash)" "sed -i '/androidx-security-crypto\|securityCrypto/d' gradle/libs.versions.toml; sed -i '/libs.androidx.security.crypto/d' app/build.gradle.kts" R1
 mutant "security-crypto linked by hand, off the catalog" "sed -i 's|implementation(libs.androidx.security.crypto)|implementation(\"androidx.security:security-crypto:1.1.0\")|' app/build.gradle.kts" R2

@@ -1,6 +1,7 @@
 package org.fossify.phone.activities
 
 import org.fossify.phone.configs.DialerConfigsActivity
+import org.fossify.phone.sim.SimsNavState
 import org.fossify.phone.sim.SimsOverviewPage
 import android.annotation.SuppressLint
 import android.app.Activity
@@ -229,6 +230,10 @@ class MainActivity : SimpleActivity() {
     override fun onBackPressedCompat(): Boolean {
         return if (binding.mainMenu.isSearchOpen) {
             binding.mainMenu.closeSearch()
+            true
+        } else if (selectedSection.value == DialerNav.SIMS && SimsNavState.selected != null) {
+            // #1528 back from one SIM's sub-page returns to the SIM list.
+            SimsNavState.selected = null
             true
         } else if (selectedSection.value in DialerNav.NON_PAGER) {
             // #1415 back from the SIMs tab returns to the pager's page.
@@ -480,8 +485,11 @@ class MainActivity : SimpleActivity() {
                 if (sectionId in DialerNav.NON_PAGER) {
                     val c = com.diegonmarcos.superapp.themebg.ThemeBackground.colors(dark)
                     Box(Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(c.top, c.bottom)))) {
-                        if (sectionId == DialerNav.SIMS) SimsOverviewPage(c)
-                        else org.fossify.phone.nav.KeypadPage(c, onCall = { n -> startCallWithProviderChooser(n, n) }, onFullDialpad = { n -> launchDialpad(n) })
+                        when (sectionId) {
+                            DialerNav.SIMS -> SimsOverviewPage(c)
+                            DialerNav.VOIP -> org.fossify.phone.nav.VoipPage(c)
+                            else -> org.fossify.phone.nav.KeypadPage(c, onCall = { n -> startCallWithProviderChooser(n, n) }, onFullDialpad = { n -> launchDialpad(n) })
+                        }
                     }
                 }
                 }
@@ -497,7 +505,7 @@ class MainActivity : SimpleActivity() {
     /** A tap on the bottom nav: show that section's page. */
     private fun selectSection(sectionId: String) {
         when (sectionId) {
-            DialerNav.KEYPAD, DialerNav.SIMS -> { selectedSection.value = sectionId; return }
+            DialerNav.KEYPAD, DialerNav.VOIP, DialerNav.SIMS -> { selectedSection.value = sectionId; return }
         }
         if (selectedSection.value in DialerNav.NON_PAGER) {
             selectedSection.value = sectionId

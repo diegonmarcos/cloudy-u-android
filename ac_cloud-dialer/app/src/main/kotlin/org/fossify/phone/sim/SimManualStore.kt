@@ -5,30 +5,32 @@ import android.content.SharedPreferences
 import com.diegonmarcos.superapp.crash.SafeEncryptedPrefs
 
 /**
- * Every manual SIM field (PIN and PUK included) is stored ONLY in an encrypted prefs file, opened through libs:crash
- * SafeEncryptedPrefs (fleet rule #1106). Values are never logged.
+ * The typed per-SIM fields (schema: [SimSchema]) keyed by [SimFields.key] (ICCID, else subscription id). Non-secret fields live in
+ * an encrypted prefs file opened through libs:crash SafeEncryptedPrefs (fleet rule #1106). A secret field (PIN, PUK) is NEVER
+ * written to prefs: it goes only to the [SimSecretVault] (Cloud Account). Values are never logged.
  */
-class SimManualStore(private val prefs: SharedPreferences) {
-    constructor(context: Context) : this(SafeEncryptedPrefs.prefs(context, FILE))
+class SimManualStore(
+    private val prefs: SharedPreferences,
+    private val vault: SimSecretVault,
+    private val schema: SimSchema,
+) {
+    constructor(context: Context, schema: SimSchema = SimSchema.load(context)) :
+        this(SafeEncryptedPrefs.prefs(context, FILE), AccountSimSecretVault(context, schema.vault), schema)
 
-    fun load(key: String): SimManual = SimManual(
-        provider = get(key, "provider"), plan = get(key, "plan"), monthlyPrice = get(key, "monthlyPrice"),
-        currency = get(key, "currency"), dataAllowance = get(key, "dataAllowance"), renewalDate = get(key, "renewalDate"),
-        number = get(key, "number"), pin = get(key, "pin"), puk = get(key, "puk"), apnNotes = get(key, "apnNotes"),
-        support = get(key, "support"),
-    )
+    /** Every non-secret field of [key], blank when never typed. */
+    fun load(key: String): SimManual =
+        SimManual(schema.fields.filter { !it.secret }.associate { it.id to (prefs.getString("$key.${it.id}", "") ?: "") })
 
-    fun save(key: String, m: SimManual) {
-        prefs.edit()
-            .putString("$key.provider", m.provider).putString("$key.plan", m.plan)
-            .putString("$key.monthlyPrice", m.monthlyPrice).putString("$key.currency", m.currency)
-            .putString("$key.dataAllowance", m.dataAllowance).putString("$key.renewalDate", m.renewalDate)
-            .putString("$key.number", m.number).putString("$key.pin", m.pin).putString("$key.puk", m.puk)
-            .putString("$key.apnNotes", m.apnNotes).putString("$key.support", m.support)
-            .apply()
+    /** Saves one field; false = unknown field, or a secret the vault did not take. */
+    fun save(key: String, id: String, value: String): Boolean {
+        val f = schema.fields.firstOrNull { it.id == id } ?: return false
+        if (f.secret) return vault.put(key, id, value)
+        prefs.edit().putString("$key.$id", value).apply()
+        return true
     }
 
-    private fun get(key: String, f: String): String = prefs.getString("$key.$f", "") ?: ""
+    /** A secret field's value: null = vault unreachable, "" = none stored. Null for a non-secret id. */
+    fun secret(key: String, id: String): String? = if (id in schema.secretIds) vault.get(key, id) else null
 
     companion object { const val FILE = "cloud_dialer_sim_manual" }
 }

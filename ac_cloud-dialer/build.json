@@ -155,14 +155,15 @@
   },
   "ui": {
     "_doc": "#868 THE navigation declaration (libs:bottomnav's NavDecl): ui.bottom_nav is the island's section ids in display order, ui.sections[] each carry the one page they show. Home, Contacts, Favorites and Calls are the upstream pager pages; Settings > Manage shown tabs still hides the three optional ones. SMS is the default-SMS-app screen. app/build.gradle.kts bakes this as UI_SECTIONS_B64 / UI_BOTTOM_NAV / UI_DEFAULT_SECTION.",
-    "_doc_bottom_nav": "#1415 the island, in this order: Contacts | Keypad | Home | Calls | SMS | SIMs. keypad opens the dialpad, sims is the per-SIM info + usage page (org.fossify.phone.sim.SimsOverviewPage); neither is a pager page (DialerNav.NON_PAGER). Favorites stays a pager page, off the island. test/test-dialer-configs-nav.sh holds the order.",
+    "_doc_bottom_nav": "#1528 the island, in this order: SMS | Keypad | Calls | Home | VoIP | SIMs | Contacts. keypad is the in-shell keypad with T9 contact search (nav/KeypadPage.kt, assets/keypad.json), voip opens a VoIP app (nav/VoipPage.kt, assets/voip_providers.json), sims is one sub-page per SIM slot and eSIM profile (org.fossify.phone.sim.SimsOverviewPage, assets/sim-fields.json); none of the three is a pager page (DialerNav.NON_PAGER). Favorites stays a pager page, off the island. test/test-dialer-configs-nav.sh holds the order.",
     "bottom_nav": [
-      "contacts",
-      "keypad",
-      "home",
-      "recents",
       "sms",
-      "sims"
+      "keypad",
+      "recents",
+      "home",
+      "voip",
+      "sims",
+      "contacts"
     ],
     "default_section": "home",
     "configs_ui": ["nav_ui"],
@@ -236,6 +237,18 @@
             "id": "keypad",
             "label": "Keypad",
             "icon": "dialpad"
+          }
+        ]
+      },
+      {
+        "id": "voip",
+        "label": "VoIP",
+        "icon": "public",
+        "pages": [
+          {
+            "id": "voip",
+            "label": "VoIP",
+            "icon": "public"
           }
         ]
       },

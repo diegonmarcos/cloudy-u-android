@@ -65,11 +65,11 @@ object SimUsage {
         return out
     }
 
-    /** Allowance in bytes from "20 GB", "500MB", "1.5 TB", "unlimited" (null). */
+    /** Allowance in bytes from "20 GB", "500MB", "1.5 TB", a bare "20" (the Data (GB) field: GB), "unlimited" (null). */
     fun allowanceBytes(text: String): Long? {
-        val m = Regex("""^\s*([\d.,]+)\s*([KMGT]?B)\s*$""", RegexOption.IGNORE_CASE).find(text) ?: return null
+        val m = Regex("""^\s*([\d.,]+)\s*([KMGT]?B)?\s*$""", RegexOption.IGNORE_CASE).find(text) ?: return null
         val n = m.groupValues[1].replace(',', '.').toDoubleOrNull() ?: return null
-        val mul = when (m.groupValues[2].uppercase()) { "KB" -> 1L shl 10; "MB" -> 1L shl 20; "GB" -> 1L shl 30; "TB" -> 1L shl 40; else -> 1L }
+        val mul = when (m.groupValues[2].uppercase().ifEmpty { "GB" }) { "KB" -> 1L shl 10; "MB" -> 1L shl 20; "GB" -> 1L shl 30; "TB" -> 1L shl 40; else -> 1L }
         return (n * mul).toLong()
     }
 

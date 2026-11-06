@@ -1,0 +1,23 @@
+{
+  "_doc": "#1528 THE keypad declaration: the keys in reading order with the letters printed under each digit (also the T9 map), the grid width and the T9 search limits. Read by nav/T9.kt (T9.parse) and nav/KeypadPage.kt.",
+  "columns": 3,
+  "keys": [
+    {"digit": "1", "letters": ""},
+    {"digit": "2", "letters": "ABC"},
+    {"digit": "3", "letters": "DEF"},
+    {"digit": "4", "letters": "GHI"},
+    {"digit": "5", "letters": "JKL"},
+    {"digit": "6", "letters": "MNO"},
+    {"digit": "7", "letters": "PQRS"},
+    {"digit": "8", "letters": "TUV"},
+    {"digit": "9", "letters": "WXYZ"},
+    {"digit": "*", "letters": ""},
+    {"digit": "0", "letters": "+"},
+    {"digit": "#", "letters": ""}
+  ],
+  "search": {
+    "results_limit": 20,
+    "min_name_substring": 2,
+    "min_number_substring": 3
+  }
+}

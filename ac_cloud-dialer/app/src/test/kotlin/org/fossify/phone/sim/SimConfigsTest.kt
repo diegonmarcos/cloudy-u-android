@@ -13,36 +13,34 @@ class SimConfigsTest {
         number = null, iccid = "8934071100001234567", embedded = true, roaming = false, defaultData = true,
         defaultVoice = false, defaultSms = true, networkType = "LTE", signalLevel = 3, eid = "89049032000001000000000000001234",
     )
-    private val manual = SimManual(provider = "Acme", plan = "Max", monthlyPrice = "9.99", currency = "EUR",
-        dataAllowance = "20 GB", renewalDate = "15", number = "+34600000000", pin = "1234", puk = "87654321")
+    private val manual = SimManual(mapOf("number" to "+34600000000", "monthlyPrice" to "9.99 EUR", "dataAllowance" to "20"))
 
     private fun row(rows: List<SimRow>, l: String) = rows.first { it.label == l }.value
 
     @Test fun mapsFields() {
-        val r = SimFields.rows(card, manual)
+        val r = SimFields.detected(card, manual)
+        assertEquals("Active", row(r, "Status"))
         assertEquals("eSIM", row(r, "Type"))
         assertEquals("214 / 07", row(r, "MCC / MNC"))
         assertEquals("ES", row(r, "Country"))
         assertEquals("+34600000000", row(r, "Number"))
         assertEquals("Data, SMS", row(r, "Defaults"))
-        assertEquals("9.99 EUR", row(r, "Monthly price"))
         assertEquals("3/4", row(r, "Signal"))
     }
 
     @Test fun masksIdsUnlessRevealed() {
-        val r = SimFields.rows(card, manual)
-        assertEquals("•••••••••••••••4567", row(r, "ICCID"))
+        val r = SimFields.detected(card, manual)
+        assertEquals("\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022" + "4567", row(r, "ICCID"))
         assertFalse(row(r, "ICCID").contains("8934"))
-        assertEquals(card.iccid, row(SimFields.rows(card, manual, reveal = true), "ICCID"))
-        assertEquals("•", row(r, "Subscription id"))
+        assertEquals(card.iccid, row(SimFields.detected(card, manual, reveal = true), "ICCID"))
+        assertEquals("\u2022", row(r, "Subscription id"))
     }
 
-    @Test fun pinPukAlwaysMasked() {
-        val r = SimFields.rows(card, manual, reveal = true)
-        assertEquals("••••", row(r, "PIN"))
-        assertEquals("••••••••", row(r, "PUK"))
-        assertTrue(r.none { it.value.contains("1234") && it.label in setOf("PIN", "PUK") })
-        assertEquals(setOf("pin", "puk"), SimFields.SECRET_KEYS)
+    @Test fun allowanceTakesBareGigabytes() {
+        assertEquals(20L shl 30, SimUsage.allowanceBytes("20"))
+        assertEquals(20L shl 30, SimUsage.allowanceBytes("20 GB"))
+        assertNull(SimUsage.allowanceBytes("unlimited"))
+        assertEquals("20", manual.dataAllowance)
     }
 
     @Test fun statusFormatting() {

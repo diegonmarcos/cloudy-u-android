@@ -40,34 +40,47 @@ class SimReader(private val ctx: Context) {
 
     private fun tmFor(subId: Int): TelephonyManager? = runCatching { tm?.createForSubscriptionId(subId) }.getOrNull()
 
-    fun cards(): List<SimCard> {
-        val dData = SubscriptionManager.getDefaultDataSubscriptionId()
-        val dVoice = SubscriptionManager.getDefaultVoiceSubscriptionId()
-        val dSms = SubscriptionManager.getDefaultSmsSubscriptionId()
-        val eid = runCatching { ctx.getSystemService(EuiccManager::class.java)?.takeIf { it.isEnabled }?.eid }.getOrNull()
-        return subs().map { s ->
-            val t = tmFor(s.subscriptionId)
-            val embedded = Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && s.isEmbedded
-            SimCard(
-                slot = s.simSlotIndex,
-                subscriptionId = s.subscriptionId,
-                carrier = s.carrierName?.toString(),
-                displayName = s.displayName?.toString(),
-                mcc = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) s.mccString else s.mcc.toString(),
-                mnc = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) s.mncString else s.mnc.toString(),
-                country = s.countryIso,
-                number = number(s),
-                iccid = runCatching { s.iccId }.getOrNull()?.takeIf { it.isNotBlank() },
-                embedded = embedded,
+    /** #1528 one card per physical slot and per eSIM profile (inactive ones too when carrier privileges allow). */
+    fun cards(): List<SimCard> = if (!hasPhoneState()) emptyList() else SimDetect.cards(AndroidSubSource())
+
+    /** SubscriptionManager / TelephonyManager / EuiccManager behind [SubSource]; whatever is not granted reads as empty or null. */
+    private inner class AndroidSubSource : SubSource {
+        override fun active(): List<SubRecord> = subs().map { record(it) }
+
+        override fun accessible(): List<SubRecord> =
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) emptyList()
+            else runCatching { sm?.accessibleSubscriptionInfoList.orEmpty() }.getOrDefault(emptyList()).map { record(it) }
+
+        override fun live(subscriptionId: Int): SubLive {
+            val t = tmFor(subscriptionId)
+            return SubLive(
                 roaming = runCatching { t?.isNetworkRoaming }.getOrNull(),
-                defaultData = s.subscriptionId == dData,
-                defaultVoice = s.subscriptionId == dVoice,
-                defaultSms = s.subscriptionId == dSms,
                 networkType = runCatching { t?.dataNetworkType }.getOrNull()?.let { StatusFormat.rat(it) },
                 signalLevel = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) runCatching { t?.signalStrength?.level }.getOrNull() else null,
-                eid = if (embedded) eid else null,
             )
-        }.sortedBy { it.slot }
+        }
+
+        override val defaultData: Int get() = SubscriptionManager.getDefaultDataSubscriptionId()
+        override val defaultVoice: Int get() = SubscriptionManager.getDefaultVoiceSubscriptionId()
+        override val defaultSms: Int get() = SubscriptionManager.getDefaultSmsSubscriptionId()
+        override val eid: String? get() = runCatching { ctx.getSystemService(EuiccManager::class.java)?.takeIf { it.isEnabled }?.eid }.getOrNull()
+        @Suppress("DEPRECATION")
+        override val slotCount: Int get() = runCatching {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) tm?.supportedModemCount ?: 0 else tm?.phoneCount ?: 0
+        }.getOrDefault(0)
+
+        private fun record(s: SubscriptionInfo) = SubRecord(
+            subscriptionId = s.subscriptionId,
+            slot = s.simSlotIndex,
+            carrier = s.carrierName?.toString(),
+            displayName = s.displayName?.toString(),
+            mcc = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) s.mccString else s.mcc.toString(),
+            mnc = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) s.mncString else s.mnc.toString(),
+            country = s.countryIso,
+            number = number(s),
+            iccid = runCatching { s.iccId }.getOrNull()?.takeIf { it.isNotBlank() },
+            embedded = Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && s.isEmbedded,
+        )
     }
 
     @Suppress("DEPRECATION")

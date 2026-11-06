@@ -49,6 +49,11 @@ object AccountData {
     const val METHOD_DRIVE_CREDENTIALS = com.diegonmarcos.superapp.fleetendpoints.DriveCredentialsContract.METHOD
     /** Cloud Drive stores or removes an rclone remote or a mount (`arg` = the JSON body); needs the `drive.write` grant. */
     const val METHOD_DRIVE_CREDENTIALS_PUT = com.diegonmarcos.superapp.fleetendpoints.DriveCredentialsContract.METHOD_PUT
+    /** #1528 Cloud Dialer's SIM PIN / PUK: `arg` = "<sim key>.<pin|puk>" (read, or write with the value in the extras); needs the [GRANT_SIM_SECRETS] grant. Held in the vault at `sim.<arg>`, never returned in an error. */
+    const val METHOD_SIM_SECRET = "sim_secret"
+    const val METHOD_SIM_SECRET_PUT = "sim_secret_put"
+    const val GRANT_SIM_SECRETS = "sim.secrets"
+    private val SIM_SECRET_ARG = Regex("[A-Za-z0-9_-]+\\.(pin|puk)")
     /** #874 the grant that lets another package take [METHOD_EXPORT] (SuperApp's one-shot copy). */
     const val GRANT_EXPORT = "account.export"
 
@@ -252,6 +257,15 @@ object AccountData {
                     val vault = AccountVault(ctx)
                     if (who != ctx.packageName && !vault.grants.allow(who, com.diegonmarcos.superapp.fleetendpoints.DriveCredentialsContract.GRANT_WRITE)) error("no grant for $who")
                     else runCatching { DriveCredentialsPublisher.put(ctx, arg, vault) }.getOrElse { error(it.javaClass.simpleName) }
+                }
+                METHOD_SIM_SECRET, METHOD_SIM_SECRET_PUT -> {
+                    val who = caller(ctx)
+                    val vault = AccountVault(ctx)
+                    if (arg == null || !SIM_SECRET_ARG.matches(arg)) error("bad key")
+                    else if (who != ctx.packageName && !vault.grants.allow(who, GRANT_SIM_SECRETS)) error("no grant for $who")
+                    else if (method == METHOD_SIM_SECRET) Bundle().apply { putBoolean(KEY_OK, true); putString(KEY_VALUE, vault.connection("sim.$arg")?.toString().orEmpty()) }
+                    else runCatching { vault.putConnection("sim.$arg", extras?.getString(KEY_VALUE).orEmpty()); Bundle().apply { putBoolean(KEY_OK, true) } }
+                        .getOrElse { error(it.javaClass.simpleName) }
                 }
                 METHOD_FLEET_ENDPOINTS -> {
                     val who = caller(ctx)
