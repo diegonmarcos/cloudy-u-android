@@ -79,7 +79,7 @@ for f in "$BJ" "$GRADLE" "$SECTIONS" "$PAGES" "$NAV" "$TABS" "$CONTROLS" \
     echo "         is indistinguishable here from a contract being kept."; exit 2; }
 done
 
-echo "== T1: Configs ▸ Home/Push/Panel/Control stay DELETED; Notify sits right after One-Hand (#580, #649) =="
+echo "== T1: Configs ▸ Home/Push/Panel/Control stay DELETED; Launcher ends One-Hand, Folders, Notify (#580, #649, #1553) =="
 # #580 put Notify immediately after One-Hand in Launcher's tab strip. #649 turned
 # that strip into the `Launcher` group of four direct tiles — so the ORDER this
 # check owns survived verbatim and only its carrier changed, from
@@ -94,12 +94,13 @@ ids  = [p['id'] for p in pages]
 gone = [i for i in ('home', 'push', 'panel', 'control', 'launcher') if i in ids]
 run  = [p['id'] for p in pages if p.get('subgroup') == 'Launcher']
 if gone:                     print('retired page(s) still declared: %r' % gone)
-elif run[-2:] != ['onehand', 'notify']:
-                             print('Notify is not the page right after One-Hand: %r' % (run,))
+elif run[-3:] != ['onehand', 'app-folders', 'notify']:
+                             # #1553 Folders sits between One-Hand and Notify (owner-mandated order); Notify stays last.
+                             print('Launcher does not end One-Hand, Folders, Notify: %r' % (run,))
 elif 'app-about' not in ids: print('no `app-about` page')
 else:                        print('OK')
 PY
-)" "no home/push/panel/control/launcher page; the Launcher group ends ..., onehand, notify"
+)" "no home/push/panel/control/launcher page; the Launcher group ends ..., onehand, app-folders, notify (#1553)"
 
 echo "== T2: Notify is a REAL, VISIBLE page of the config section, never declared inline =="
 # The contract established in 07964787e was: a tab is a declared page, so
