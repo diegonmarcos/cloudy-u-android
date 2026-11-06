@@ -23,6 +23,7 @@ on:
     paths:
       - "ad_Hardtech-CAD/app/src/main/assets/cad/models.json"
       - "ad_Hardtech-CAD/tools/**"
+      - "ab_cloud-libs-shared/libs/cad-*/src/main/assets/**"
       - "1_cicd/src/cicd/hardtech-cad-models.yml"
 
 permissions:
@@ -104,3 +105,28 @@ jobs:
           cd "$RUNNER_TEMP/gt" && npm install --no-save --no-package-lock --no-audit --no-fund @gltf-transform/core@4.5.1
       - name: Load every declared model
         run: node "$RUNNER_TEMP/gt/verify-models.mjs" "$GITHUB_WORKSPACE/$APP"
+
+  render:
+    name: "The viewer paints every model (headless Chromium, GL framebuffer read-back)"
+    needs: derive
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install Playwright Chromium (pinned)
+        run: |
+          mkdir -p "$RUNNER_TEMP/rc"
+          cp "$APP/tools/render-check.mjs" "$RUNNER_TEMP/rc/"
+          cd "$RUNNER_TEMP/rc" && npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.49.1 && npx playwright install --with-deps chromium
+      - name: Load the viewer with every declared model and read the canvas back
+        run: node "$RUNNER_TEMP/rc/render-check.mjs" "$GITHUB_WORKSPACE"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: viewer-render
+          path: ${{ runner.temp }}/render-*.png

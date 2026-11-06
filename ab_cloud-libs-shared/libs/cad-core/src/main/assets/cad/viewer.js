@@ -38,6 +38,16 @@ window.onerror = (m) => post({ type: 'error', message: String(m) });
 window.addEventListener('unhandledrejection', (e) => post({ type: 'error', message: String(e.reason && e.reason.message || e.reason) }));
 // What the canvas drew, as a PNG data URL (an emulator screenshot of a WebView does not capture WebGL, so the proof pulls this).
 window.cadSnapshot = () => { controls.update(); renderer.render(scene, camera); return renderer.domElement.toDataURL('image/png'); };
+// #1560 what the canvas holds, read back from the GL framebuffer: the share of pixels that differ from the background. A model that loads but
+// paints nothing is reported to the host (type 'painted') instead of staying a silent black box; the host logs it.
+window.cadPaint = () => {
+  controls.update(); renderer.render(scene, camera);
+  const gl = renderer.getContext(), w = gl.drawingBufferWidth, h = gl.drawingBufferHeight, px = new Uint8Array(w * h * 4);
+  gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, px);
+  let n = 0; for (let i = 0; i < px.length; i += 4) if (Math.abs(px[i] - 14) + Math.abs(px[i + 1] - 17) + Math.abs(px[i + 2] - 22) > 12) n++;
+  const dbg = gl.getExtension('WEBGL_debug_renderer_info');
+  return { type: 'painted', pct: +(100 * n / Math.max(w * h, 1)).toFixed(2), w, h, gl: dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER) };
+};
 window.cadOpen = async ({ lib, url, format }) => {
   status('Loading ' + format.toUpperCase() + '…');
   try {
@@ -48,6 +58,8 @@ window.cadOpen = async ({ lib, url, format }) => {
     let tris = 0; obj.traverse((o) => { if (o.isMesh && o.geometry) tris += (o.geometry.index ? o.geometry.index.count : o.geometry.attributes.position.count) / 3; });
     status(format.toUpperCase() + ' · libs:cad-' + lib);
     post({ type: 'shown', lib, format, triangles: Math.round(tris) });
+    const pt = window.cadPaint(); post(pt);
+    if (pt.pct < 0.1) post({ type: 'error', message: 'the canvas drew nothing (' + pt.w + 'x' + pt.h + ', ' + pt.gl + ')' });
   } catch (e) { status('Failed: ' + e.message); post({ type: 'error', message: String(e.message || e) }); }
 };
 post({ type: 'ready' });

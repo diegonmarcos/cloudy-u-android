@@ -114,7 +114,9 @@ internal fun ModelViewer(m: Model, dir: File) {
     DisposableEffect(Unit) { onDispose { web?.destroy(); web = null } }
 
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Box(Modifier.fillMaxWidth().height(300.dp).clip(RoundedCornerShape(12.dp)).background(Color(0xFF0E1116)).testTag("viewer")) {
+        // #1560 no rounded clip around the WebView: the page's GL surface is drawn by the WebView's hardware functor, which a non-rectangular
+        // Compose clip layer can drop (the only fleet WebGL world inside one; CG-Omniverse and Cloud Nav draw it unclipped). Rounded border only.
+        Box(Modifier.fillMaxWidth().height(300.dp).background(Color(0xFF0E1116)).border(1.dp, p.textSecondary.copy(alpha = 0.3f), RoundedCornerShape(12.dp)).testTag("viewer")) {
             if (plan is CadFormats.Plan.Show) AndroidView(
                 factory = { c ->
                     val loader = WebViewAssetLoader.Builder()
