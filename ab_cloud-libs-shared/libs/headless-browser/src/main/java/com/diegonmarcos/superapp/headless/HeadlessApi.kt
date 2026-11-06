@@ -22,6 +22,7 @@ object HeadlessApi {
         when (cmd) {
             "open" -> { need("url"); if (!Regex("^https?://", RegexOption.IGNORE_CASE).containsMatchIn(c.optString("url"))) throw Err("bad_request", "url must be http(s)") }
             "eval" -> need("js")
+            "readable" -> HeadlessReadable.validate(c)
             "click" -> need("selector")
             "type" -> { need("selector"); if (!c.has("text")) throw Err("bad_request", "type needs text") }
             "wait" -> if (listOf("selector", "idle", "ms").count { c.has(it) } != 1) throw Err("bad_request", "wait needs exactly one of selector|idle|ms")

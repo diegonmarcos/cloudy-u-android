@@ -120,4 +120,25 @@ class HeadlessContractTest {
         assertEquals(3, r.getJSONArray("steps").length())
         assertTrue(r.getJSONArray("steps").getJSONObject(1).getBoolean("ok"))
     }
+
+    @Test fun readableOptionsAreValidatedAndMatchTheSharedSchema() {
+        assertEquals("bad_request", code { HeadlessApi.validate(j("""{"cmd":"readable","format":"html"}""")) })
+        assertEquals("bad_request", code { HeadlessApi.validate(j("""{"cmd":"readable","maxChars":10}""")) })
+        assertEquals("bad_request", code { HeadlessApi.validate(j("""{"cmd":"readable","cursor":"x1"}""")) })
+        for (f in HeadlessReadable.FORMATS) assertNull(code { HeadlessApi.validate(j("""{"cmd":"readable","format":"$f","maxChars":2000,"cursor":"40"}""")) })
+        val f = File("../headless-api/headless-api.json")
+        if (!f.exists()) return
+        val r = j(f.readText()).getJSONObject("commands").getJSONObject("readable")
+        assertEquals(listOf("cursor", "format", "maxChars"), r.getJSONObject("params").keys().asSequence().toList().sorted())
+        assertEquals(HeadlessReadable.FORMATS.sorted(), r.getJSONObject("formats").keys().asSequence().toList().sorted())
+    }
+
+    @Test fun readableScriptCarriesTheOptionsAsOneJsonLiteralAndStripsBoilerplate() {
+        val s = HeadlessReadable.script(j("""{"cmd":"readable","format":"json","maxChars":1500,"cursor":"3"}"""))
+        assertTrue(s.startsWith("var P={"))
+        assertTrue(s.contains(""""format":"json"""") && s.contains(""""maxChars":1500""") && s.contains(""""cursor":"3""""))
+        for (needle in listOf("script,style,noscript", "utm_", "fbclid", "data:", "---\\ntitle:")) assertTrue("script lacks $needle", s.contains(needle))
+        // a hostile cursor never reaches the script: validate rejects it first
+        assertEquals("bad_request", code { HeadlessApi.validate(j("""{"cmd":"readable","cursor":"1;alert(1)"}""")) })
+    }
 }

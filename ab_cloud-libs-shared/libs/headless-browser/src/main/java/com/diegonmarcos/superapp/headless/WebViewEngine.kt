@@ -150,7 +150,7 @@ class WebViewEngine(context: Context) : HeadlessEngine {
                 else "window.scrollTo(${cmd.optInt("x", 0)},${cmd.optInt("y", 0)});return {x:scrollX,y:scrollY}", t)
             "html" -> js(h, if (cmd.has("selector")) "var e=document.querySelector(${q(cmd.getString("selector"))});return e?e.innerHTML:null" else "return document.documentElement.outerHTML", t)
             "text" -> js(h, "var e=document.querySelector(${q(cmd.optString("selector", "body"))});return e?e.innerText:null", t)
-            "readable" -> js(h, READABLE, t)
+            "readable" -> js(h, HeadlessReadable.script(cmd), t)
             "screenshot" -> shot(h)
             "cookies" -> cookies(h, cmd)
             "storage" -> js(h, storageJs(cmd), t)
@@ -210,16 +210,5 @@ class WebViewEngine(context: Context) : HeadlessEngine {
         const val W = 1080
         const val Hh = 1920
         const val DPI = 420
-        private val READABLE = """
-var root=document.querySelector('article,main,[role=main]')||document.body,out=[];
-function walk(n){if(n.nodeType===3){var t=n.textContent.replace(/\s+/g,' ');if(t.trim())out.push(t);return}
-if(n.nodeType!==1)return;var tag=n.tagName.toLowerCase();
-if(['script','style','nav','footer','aside','noscript','svg','iframe'].indexOf(tag)>=0)return;
-var m=/^h([1-6])$/.exec(tag);if(m){out.push('\n\n'+'#'.repeat(+m[1])+' '+n.innerText.trim()+'\n\n');return}
-if(tag==='a'&&n.href){out.push('['+n.innerText.trim()+']('+n.href+')');return}
-if(tag==='li')out.push('\n- ');if(tag==='p'||tag==='br')out.push('\n\n');
-n.childNodes.forEach(walk)}
-walk(root);
-return {title:document.title,markdown:out.join('').replace(/\n{3,}/g,'\n\n').trim()}"""
     }
 }

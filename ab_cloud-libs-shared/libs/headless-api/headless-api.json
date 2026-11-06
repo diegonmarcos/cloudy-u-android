@@ -87,8 +87,18 @@
       "result": "string"
     },
     "readable": {
-      "params": {},
-      "result": "{title,markdown}"
+      "params": {
+        "format": "markdown|json|xml (default markdown)",
+        "maxChars": "integer 500..200000 (default 20000)",
+        "cursor": "string? (the `next` of a truncated result)"
+      },
+      "result": "{format,title,url,content,meta{title,url,fetched_at,lang?,excerpt?},chars,truncated,next?; markdown also: markdown,links[{text,href}],tables[markdown]}",
+      "formats": {
+        "markdown": "default and usually the cheapest in tokens: frontmatter (title, source, fetched_at), headings, lists, GFM tables, fenced code, links; boilerplate, scripts, styles, nav, footers, ads, cookie banners and tracking params removed; base64 images replaced by alt text",
+        "json": "compact minified {meta:{title,url,fetched_at,lang},sections:[{h,level,text}],lists:[[item]],tables:[{headers,rows}],links:[{text,href}]}; no nulls, empty keys omitted",
+        "xml": "minimal tags, no whitespace: <doc><meta t u f l/><s h l>text</s><ul><i/></ul><table><r h=1><c/></r></table><a href>text</a></doc>"
+      },
+      "paging": "output is capped at maxChars; when truncated the result carries next, pass it back as cursor on the same session to continue (markdown: character offset at a line boundary; json/xml: block index)"
     },
     "screenshot": {
       "params": {
