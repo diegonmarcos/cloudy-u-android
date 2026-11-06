@@ -120,19 +120,24 @@ object FolderTables {
         }
         for ((_, list) in bucket) list.sortWith(compareBy({ orderOf[it.pkg] ?: 999 }, { it.label.lowercase() }))
 
-        // Declared folders that actually hold apps, plus a synthetic Others when anything landed there.
+        // Declared folders that actually hold apps, plus ONE synthetic Others when anything landed there. A declared
+        // folder whose id is `others` is NOT rendered by this loop — the synthetic block below owns Others, so an app
+        // is never added twice (once here, once as Others).
         val resolved = ArrayList<ResolvedFolder>()
-        for (def in folders) bucket[def.id]?.takeIf { it.isNotEmpty() }?.let { resolved += ResolvedFolder(def, it) }
+        for (def in folders) if (def.id != OTHERS_FOLDER_ID) bucket[def.id]?.takeIf { it.isNotEmpty() }?.let { resolved += ResolvedFolder(def, it) }
         bucket[OTHERS_FOLDER_ID]?.takeIf { it.isNotEmpty() }?.let {
             resolved += ResolvedFolder(FolderDef(OTHERS_SECTION, OTHERS_FOLDER_ID, OTHERS_FOLDER_LABEL, "", Int.MAX_VALUE), it)
         }
 
-        // Group into sections, each section ordered by its earliest folder, Others section last.
+        // Each section's position is where it first appears in Table 1 (declaration order), so two sections whose first
+        // folder shares an order keep their declared order rather than sorting alphabetically; Others is always last.
+        val sectionIndex = LinkedHashMap<String, Int>()
+        folders.forEachIndexed { i, f -> sectionIndex.putIfAbsent(f.section, i) }
         val bySection = LinkedHashMap<String, MutableList<ResolvedFolder>>()
         for (rf in resolved) bySection.getOrPut(rf.def.section) { mutableListOf() }.add(rf)
         for ((_, list) in bySection) list.sortWith(compareBy({ it.def.order }, { it.def.id }))
         return bySection.entries
-            .sortedWith(compareBy({ if (it.key == OTHERS_SECTION) 1 else 0 }, { it.value.minOf { f -> f.def.order } }, { it.key }))
+            .sortedWith(compareBy({ if (it.key == OTHERS_SECTION) 1 else 0 }, { sectionIndex[it.key] ?: Int.MAX_VALUE }))
             .map { ResolvedSection(it.key, it.value) }
     }
 }
