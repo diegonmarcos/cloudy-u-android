@@ -84,7 +84,7 @@
         "asset": "cad/models/campidoglio.view.glb",
         "format": "glb",
         "size": 481740,
-        "sha256": "af224818ec0605b1cc6090878c39c19c2980882f032f3bc198cce93905ba45ac",
+        "sha256": "785087dd709cedfaf390228c03f3a7ec048cf5ab9ab2fbfbf8d4fd6443224e17",
         "tool": "ad_Hardtech-CAD/tools/derive_models.py with openskp 1.5.0 (MIT, https://github.com/iamahsanmehmood/openskp)",
         "vertices": 10138,
         "triangles": 6444
@@ -94,7 +94,7 @@
           "path": "ad_Hardtech-CAD/data/derived/campidoglio.view.ifc",
           "format": "ifc",
           "size": 572215,
-          "sha256": "6421faa92643e642691f13e8392b4ba7134def5e43dd8b1a45e3d46d028c7c92",
+          "sha256": "35daf08f4419761b944e97de1423c4205a84109734b716442a40e476e1f5178d",
           "tool": "ad_Hardtech-CAD/tools/derive_models.py with openskp 1.5.0 (MIT, https://github.com/iamahsanmehmood/openskp)"
         }
       ],
