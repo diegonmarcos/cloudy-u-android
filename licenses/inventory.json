@@ -24,7 +24,7 @@
    "Apache-2.0": 247,
    "MIT": 28,
    "NOASSERTION": 24,
-   "LicenseRef-Google-MLKit-Terms": 11,
+   "LicenseRef-Google-MLKit-Terms": 13,
    "BSD-3-Clause": 4,
    "GNU Affero General Public License (AGPL) version 3.0 AND Element Commercial License": 3,
    "Bouncy Castle Licence": 3,
@@ -195,6 +195,7 @@
    "app_licence": "LicenseRef-NoLicenseGranted",
    "links_shared_modules": [
     "ab_cloud-libs-shared/libs/account",
+    "ab_cloud-libs-shared/libs/ai-usage",
     "ab_cloud-libs-shared/libs/analytics",
     "ab_cloud-libs-shared/libs/appstore",
     "ab_cloud-libs-shared/libs/auth",
@@ -224,6 +225,8 @@
     "ab_cloud-libs-shared/libs/perms",
     "ab_cloud-libs-shared/libs/search",
     "ab_cloud-libs-shared/libs/shared-store",
+    "ab_cloud-libs-shared/libs/shell-broker",
+    "ab_cloud-libs-shared/libs/shell-client",
     "ab_cloud-libs-shared/libs/shizuku-adb-debug-tools",
     "ab_cloud-libs-shared/libs/sysdns",
     "ab_cloud-libs-shared/libs/text-tools",
@@ -309,7 +312,7 @@
     "ab_cloud-libs-shared/libs/net",
     "ab_cloud-libs-shared/libs/perms",
     "ab_cloud-libs-shared/libs/shared-store",
-    "ab_cloud-libs-shared/libs/shizuku-adb-debug-tools",
+    "ab_cloud-libs-shared/libs/shell-client",
     "ab_cloud-libs-shared/libs/text-tools",
     "ab_cloud-libs-shared/libs/theme-background",
     "ab_cloud-libs-shared/libs/ui-icons",
@@ -325,7 +328,6 @@
    "links_shared_modules": [
     "ab_cloud-libs-shared/libs/ai",
     "ab_cloud-libs-shared/libs/analytics",
-    "ab_cloud-libs-shared/libs/apify",
     "ab_cloud-libs-shared/libs/autofill",
     "ab_cloud-libs-shared/libs/bluetooth",
     "ab_cloud-libs-shared/libs/bottomnav",
@@ -335,10 +337,9 @@
     "ab_cloud-libs-shared/libs/decisions-link",
     "ab_cloud-libs-shared/libs/devtools",
     "ab_cloud-libs-shared/libs/fleetconfig-model",
-    "ab_cloud-libs-shared/libs/media-convert-audio",
+    "ab_cloud-libs-shared/libs/headless-browser",
     "ab_cloud-libs-shared/libs/model-catalogue",
     "ab_cloud-libs-shared/libs/perms",
-    "ab_cloud-libs-shared/libs/scraper",
     "ab_cloud-libs-shared/libs/text-tools",
     "ab_cloud-libs-shared/libs/theme-background",
     "ab_cloud-libs-shared/libs/ui-icons",
@@ -420,6 +421,7 @@
     "ab_cloud-libs-shared/libs/fleetconfig-model",
     "ab_cloud-libs-shared/libs/ml-l-image",
     "ab_cloud-libs-shared/libs/ml-l-sound",
+    "ab_cloud-libs-shared/libs/ml-vision",
     "ab_cloud-libs-shared/libs/perms",
     "ab_cloud-libs-shared/libs/theme-background",
     "ab_cloud-libs-shared/libs/ui-icons",
@@ -508,6 +510,8 @@
     "ab_cloud-libs-shared/libs/git-repos",
     "ab_cloud-libs-shared/libs/git-sync",
     "ab_cloud-libs-shared/libs/git-ui",
+    "ab_cloud-libs-shared/libs/json-viewer",
+    "ab_cloud-libs-shared/libs/local-serve",
     "ab_cloud-libs-shared/libs/media-viewer",
     "ab_cloud-libs-shared/libs/ml-l-image",
     "ab_cloud-libs-shared/libs/model-catalogue",
@@ -518,7 +522,7 @@
     "ab_cloud-libs-shared/libs/perms",
     "ab_cloud-libs-shared/libs/rclone",
     "ab_cloud-libs-shared/libs/shared-store",
-    "ab_cloud-libs-shared/libs/shizuku-adb-debug-tools",
+    "ab_cloud-libs-shared/libs/shell-client",
     "ab_cloud-libs-shared/libs/sysdns",
     "ab_cloud-libs-shared/libs/theme-background",
     "ab_cloud-libs-shared/libs/ui-icons",
@@ -766,7 +770,7 @@
     "ab_cloud-libs-shared/libs/model-catalogue",
     "ab_cloud-libs-shared/libs/perms",
     "ab_cloud-libs-shared/libs/shared-store",
-    "ab_cloud-libs-shared/libs/shizuku-adb-debug-tools",
+    "ab_cloud-libs-shared/libs/shell-client",
     "ab_cloud-libs-shared/libs/sysdns",
     "ab_cloud-libs-shared/libs/theme-background",
     "ab_cloud-libs-shared/libs/ui-icons",
@@ -780,15 +784,18 @@
    "app_licence": "LicenseRef-NoLicenseGranted",
    "links_shared_modules": [
     "ab_cloud-libs-shared/libs/ai",
+    "ab_cloud-libs-shared/libs/ai-usage",
     "ab_cloud-libs-shared/libs/bottomnav",
     "ab_cloud-libs-shared/libs/core",
     "ab_cloud-libs-shared/libs/crash",
     "ab_cloud-libs-shared/libs/devtools",
+    "ab_cloud-libs-shared/libs/fleet-endpoints",
     "ab_cloud-libs-shared/libs/fleetconfig-model",
     "ab_cloud-libs-shared/libs/model-catalogue",
     "ab_cloud-libs-shared/libs/perms",
     "ab_cloud-libs-shared/libs/theme-background",
     "ab_cloud-libs-shared/libs/ui-icons",
+    "ab_cloud-libs-shared/libs/ui-kit",
     "ab_cloud-libs-shared/libs/ui-nav-bars"
    ]
   },
@@ -823,7 +830,8 @@
     "ab_cloud-libs-shared/libs/devtools",
     "ab_cloud-libs-shared/libs/fleetconfig-model",
     "ab_cloud-libs-shared/libs/perms",
-    "ab_cloud-libs-shared/libs/shizuku-adb-debug-tools",
+    "ab_cloud-libs-shared/libs/shell-client",
+    "ab_cloud-libs-shared/libs/shell-rish",
     "ab_cloud-libs-shared/libs/theme-background",
     "ab_cloud-libs-shared/libs/ui-icons",
     "ab_cloud-libs-shared/libs/ui-nav-bars"
@@ -844,6 +852,7 @@
     "ab_cloud-libs-shared/libs/text-tools",
     "ab_cloud-libs-shared/libs/theme-background",
     "ab_cloud-libs-shared/libs/ui-icons",
+    "ab_cloud-libs-shared/libs/ui-kit",
     "ab_cloud-libs-shared/libs/ui-nav-bars",
     "ac_cloud-tools-small-llms/core"
    ]
@@ -3444,6 +3453,7 @@
   "maven:androidx.activity:activity": {
    "kind": "maven",
    "declared_in": [
+    "ab_cloud-libs-shared/libs/shell-broker/build.gradle",
     "ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/build.gradle",
     "ac_cloud-matrix/gradle/libs.versions.toml"
    ],
@@ -3803,7 +3813,8 @@
     "ac_cloud-gallery/gradle/libs.versions.toml",
     "ac_cloud-news/app/build.gradle",
     "ac_cloud-tasks/app/build.gradle",
-    "ac_cloud-vault/gradle/libs.versions.toml"
+    "ac_cloud-vault/gradle/libs.versions.toml",
+    "ac_cloud-writer/app/build.gradle"
    ],
    "scope": "shipped",
    "version": "1.11.4",
@@ -3833,11 +3844,13 @@
     "ab_cloud-libs-shared/libs/git-sync/build.gradle",
     "ab_cloud-libs-shared/libs/git-ui/build.gradle",
     "ab_cloud-libs-shared/libs/health/build.gradle",
+    "ab_cloud-libs-shared/libs/json-viewer/build.gradle",
     "ab_cloud-libs-shared/libs/kde-connect/build.gradle",
     "ab_cloud-libs-shared/libs/launcher-apptabs/build.gradle",
     "ab_cloud-libs-shared/libs/launcher-onehand/build.gradle",
     "ab_cloud-libs-shared/libs/launcher-zoomies/build.gradle",
     "ab_cloud-libs-shared/libs/light/build.gradle",
+    "ab_cloud-libs-shared/libs/local-serve/build.gradle",
     "ab_cloud-libs-shared/libs/mail/build.gradle",
     "ab_cloud-libs-shared/libs/maps/build.gradle",
     "ab_cloud-libs-shared/libs/media-viewer/build.gradle",
@@ -3967,11 +3980,13 @@
     "ab_cloud-libs-shared/libs/git-sync/build.gradle",
     "ab_cloud-libs-shared/libs/git-ui/build.gradle",
     "ab_cloud-libs-shared/libs/health/build.gradle",
+    "ab_cloud-libs-shared/libs/json-viewer/build.gradle",
     "ab_cloud-libs-shared/libs/kde-connect/build.gradle",
     "ab_cloud-libs-shared/libs/keyboard/build.gradle",
     "ab_cloud-libs-shared/libs/launcher-apptabs/build.gradle",
     "ab_cloud-libs-shared/libs/launcher-onehand/build.gradle",
     "ab_cloud-libs-shared/libs/light/build.gradle",
+    "ab_cloud-libs-shared/libs/local-serve/build.gradle",
     "ab_cloud-libs-shared/libs/mail/build.gradle",
     "ab_cloud-libs-shared/libs/maps/build.gradle",
     "ab_cloud-libs-shared/libs/media-viewer/build.gradle",
@@ -4080,6 +4095,7 @@
     "ab_cloud-libs-shared/libs/editor-core/build.gradle",
     "ab_cloud-libs-shared/libs/file-editor/build.gradle",
     "ab_cloud-libs-shared/libs/git-sync/build.gradle",
+    "ab_cloud-libs-shared/libs/json-viewer/build.gradle",
     "ab_cloud-libs-shared/libs/media-viewer/build.gradle",
     "ab_cloud-libs-shared/libs/mounts/build.gradle",
     "ab_cloud-libs-shared/libs/odf/build.gradle",
@@ -4164,11 +4180,13 @@
     "ab_cloud-libs-shared/libs/git-sync/build.gradle",
     "ab_cloud-libs-shared/libs/git-ui/build.gradle",
     "ab_cloud-libs-shared/libs/health/build.gradle",
+    "ab_cloud-libs-shared/libs/json-viewer/build.gradle",
     "ab_cloud-libs-shared/libs/kde-connect/build.gradle",
     "ab_cloud-libs-shared/libs/launcher-apptabs/build.gradle",
     "ab_cloud-libs-shared/libs/launcher-onehand/build.gradle",
     "ab_cloud-libs-shared/libs/launcher-zoomies/build.gradle",
     "ab_cloud-libs-shared/libs/light/build.gradle",
+    "ab_cloud-libs-shared/libs/local-serve/build.gradle",
     "ab_cloud-libs-shared/libs/mail/build.gradle",
     "ab_cloud-libs-shared/libs/maps/build.gradle",
     "ab_cloud-libs-shared/libs/media-viewer/build.gradle",
@@ -4394,12 +4412,14 @@
     "ab_cloud-libs-shared/libs/git-sync/build.gradle",
     "ab_cloud-libs-shared/libs/git-ui/build.gradle",
     "ab_cloud-libs-shared/libs/health/build.gradle",
+    "ab_cloud-libs-shared/libs/json-viewer/build.gradle",
     "ab_cloud-libs-shared/libs/kde-connect/build.gradle",
     "ab_cloud-libs-shared/libs/keyboard/build.gradle",
     "ab_cloud-libs-shared/libs/launcher-apptabs/build.gradle",
     "ab_cloud-libs-shared/libs/launcher-onehand/build.gradle",
     "ab_cloud-libs-shared/libs/launcher-zoomies/build.gradle",
     "ab_cloud-libs-shared/libs/light/build.gradle",
+    "ab_cloud-libs-shared/libs/local-serve/build.gradle",
     "ab_cloud-libs-shared/libs/mail/build.gradle",
     "ab_cloud-libs-shared/libs/maps/build.gradle",
     "ab_cloud-libs-shared/libs/media-viewer/build.gradle",
@@ -4527,6 +4547,7 @@
     "aa_cloud-superapp/app/build.gradle",
     "ab_cloud-libs-shared/libs/account-ui/build.gradle",
     "ab_cloud-libs-shared/libs/account/build.gradle",
+    "ab_cloud-libs-shared/libs/ai/build.gradle",
     "ab_cloud-libs-shared/libs/appstore/build.gradle",
     "ab_cloud-libs-shared/libs/auth/build.gradle",
     "ab_cloud-libs-shared/libs/battery/build.gradle",
@@ -4548,6 +4569,7 @@
     "ab_cloud-libs-shared/libs/gh/build.gradle",
     "ab_cloud-libs-shared/libs/git-sync/build.gradle",
     "ab_cloud-libs-shared/libs/gix/build.gradle",
+    "ab_cloud-libs-shared/libs/headless-browser/build.gradle",
     "ab_cloud-libs-shared/libs/health/build.gradle",
     "ab_cloud-libs-shared/libs/kde-connect/build.gradle",
     "ab_cloud-libs-shared/libs/keyboard/build.gradle",
@@ -4559,6 +4581,7 @@
     "ab_cloud-libs-shared/libs/media-convert-audio/build.gradle",
     "ab_cloud-libs-shared/libs/media/build.gradle",
     "ab_cloud-libs-shared/libs/ml-l-image-ocr/build.gradle",
+    "ab_cloud-libs-shared/libs/ml-vision/build.gradle",
     "ab_cloud-libs-shared/libs/mounts/build.gradle",
     "ab_cloud-libs-shared/libs/net-wg/build.gradle",
     "ab_cloud-libs-shared/libs/net/build.gradle",
@@ -4569,6 +4592,7 @@
     "ab_cloud-libs-shared/libs/rclone/build.gradle",
     "ab_cloud-libs-shared/libs/scraper/build.gradle",
     "ab_cloud-libs-shared/libs/search/build.gradle",
+    "ab_cloud-libs-shared/libs/shell-broker/build.gradle",
     "ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/build.gradle",
     "ab_cloud-libs-shared/libs/text-tools/build.gradle",
     "ab_cloud-libs-shared/libs/theme-background/build.gradle",
@@ -5391,6 +5415,8 @@
     "aa_cloud-superapp/app/build.gradle",
     "ab_cloud-libs-shared/libs/auth/build.gradle",
     "ab_cloud-libs-shared/libs/fleetconfig-model/build.gradle",
+    "ab_cloud-libs-shared/libs/shell-client/build.gradle",
+    "ab_cloud-libs-shared/libs/shell-rish/build.gradle",
     "ac_cloud-account/app/build.gradle",
     "ac_cloud-chat/android/app/build.gradle",
     "ac_cloud-matrix/gradle/libs.versions.toml",
@@ -5476,6 +5502,7 @@
    "kind": "maven",
    "declared_in": [
     "ab_cloud-libs-shared/libs/browser/build.gradle",
+    "ab_cloud-libs-shared/libs/headless-browser/build.gradle",
     "ab_cloud-libs-shared/libs/web-core/build.gradle",
     "ac_cloud-c3-webserver/src-tauri/gen/android/app/build.gradle.kts",
     "ac_cloud-matrix/gradle/libs.versions.toml",
@@ -5702,7 +5729,6 @@
    "scope": "build",
    "licence": "Apache-2.0",
    "licence_source": "curated.maven_group_licences[com.android.tools]",
-   "note": "build tooling",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "gitsync"
   },
@@ -5723,7 +5749,6 @@
    "scope": "shipped",
    "licence": "Apache-2.0",
    "licence_source": "curated.maven_group_licences[com.android.tools]",
-   "note": "build tooling",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   },
   "maven:com.apollographql.adapters:apollo-adapters-core": {
@@ -5873,7 +5898,6 @@
    "scope": "shipped",
    "licence": "LicenseRef-NoLicenseGranted",
    "licence_source": "curated.maven_group_licences[com.diegonmarcos.fleet]",
-   "note": "own code: the fleet-ui included build (ab_cloud-libs-shared/web), not a published dependency",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   },
   "maven:com.drewnoakes:metadata-extractor": {
@@ -6198,7 +6222,6 @@
    "scope": "shipped",
    "licence": "LicenseRef-Google-Play-Services-Terms",
    "licence_source": "curated.maven_group_licences[com.google.android.gms]",
-   "note": "proprietary Play Services client libraries",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   },
   "maven:com.google.android.material:material": {
@@ -6271,7 +6294,6 @@
    "scope": "shipped",
    "licence": "LicenseRef-Google-ARCore-Terms",
    "licence_source": "curated.maven_group_licences[com.google.ar]",
-   "note": "proprietary; Google APIs ToS + ARCore Additional Terms (see ac_cloud-calc/NOTICE.md)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   },
   "maven:com.google.auto.service:auto-service": {
@@ -6517,6 +6539,17 @@
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)",
    "within_upstream_module": "nix-on-droid"
   },
+  "maven:com.google.mlkit:face-detection": {
+   "kind": "maven",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/ml-vision/build.gradle"
+   ],
+   "version": "16.1.7",
+   "scope": "shipped",
+   "licence": "LicenseRef-Google-MLKit-Terms",
+   "licence_source": "curated.maven_group_licences[com.google.mlkit]",
+   "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
+  },
   "maven:com.google.mlkit:genai-summarization": {
    "kind": "maven",
    "declared_in": [
@@ -6526,7 +6559,6 @@
    "scope": "shipped",
    "licence": "LicenseRef-Google-MLKit-Terms",
    "licence_source": "curated.maven_group_licences[com.google.mlkit]",
-   "note": "proprietary binary SDK under the ML Kit Terms of Service - not GPL-compatible if linked into a GPL app",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   },
   "maven:com.google.mlkit:image-labeling": {
@@ -6538,7 +6570,6 @@
    "scope": "shipped",
    "licence": "LicenseRef-Google-MLKit-Terms",
    "licence_source": "curated.maven_group_licences[com.google.mlkit]",
-   "note": "proprietary binary SDK under the ML Kit Terms of Service - not GPL-compatible if linked into a GPL app",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   },
   "maven:com.google.mlkit:language-id": {
@@ -6550,7 +6581,6 @@
    "scope": "shipped",
    "licence": "LicenseRef-Google-MLKit-Terms",
    "licence_source": "curated.maven_group_licences[com.google.mlkit]",
-   "note": "proprietary binary SDK under the ML Kit Terms of Service - not GPL-compatible if linked into a GPL app",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   },
   "maven:com.google.mlkit:object-detection": {
@@ -6562,7 +6592,6 @@
    "scope": "shipped",
    "licence": "LicenseRef-Google-MLKit-Terms",
    "licence_source": "curated.maven_group_licences[com.google.mlkit]",
-   "note": "proprietary binary SDK under the ML Kit Terms of Service - not GPL-compatible if linked into a GPL app",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   },
   "maven:com.google.mlkit:object-detection-custom": {
@@ -6574,7 +6603,17 @@
    "scope": "shipped",
    "licence": "LicenseRef-Google-MLKit-Terms",
    "licence_source": "curated.maven_group_licences[com.google.mlkit]",
-   "note": "proprietary binary SDK under the ML Kit Terms of Service - not GPL-compatible if linked into a GPL app",
+   "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
+  },
+  "maven:com.google.mlkit:segmentation-selfie": {
+   "kind": "maven",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/ml-vision/build.gradle"
+   ],
+   "version": "16.0.0-beta6",
+   "scope": "shipped",
+   "licence": "LicenseRef-Google-MLKit-Terms",
+   "licence_source": "curated.maven_group_licences[com.google.mlkit]",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   },
   "maven:com.google.mlkit:text-recognition": {
@@ -6588,7 +6627,6 @@
    "scope": "shipped",
    "licence": "LicenseRef-Google-MLKit-Terms",
    "licence_source": "curated.maven_group_licences[com.google.mlkit]",
-   "note": "proprietary binary SDK under the ML Kit Terms of Service - not GPL-compatible if linked into a GPL app",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   },
   "maven:com.google.mlkit:text-recognition-chinese": {
@@ -6600,7 +6638,6 @@
    "scope": "shipped",
    "licence": "LicenseRef-Google-MLKit-Terms",
    "licence_source": "curated.maven_group_licences[com.google.mlkit]",
-   "note": "proprietary binary SDK under the ML Kit Terms of Service - not GPL-compatible if linked into a GPL app",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   },
   "maven:com.google.mlkit:text-recognition-devanagari": {
@@ -6612,7 +6649,6 @@
    "scope": "shipped",
    "licence": "LicenseRef-Google-MLKit-Terms",
    "licence_source": "curated.maven_group_licences[com.google.mlkit]",
-   "note": "proprietary binary SDK under the ML Kit Terms of Service - not GPL-compatible if linked into a GPL app",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   },
   "maven:com.google.mlkit:text-recognition-japanese": {
@@ -6624,7 +6660,6 @@
    "scope": "shipped",
    "licence": "LicenseRef-Google-MLKit-Terms",
    "licence_source": "curated.maven_group_licences[com.google.mlkit]",
-   "note": "proprietary binary SDK under the ML Kit Terms of Service - not GPL-compatible if linked into a GPL app",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   },
   "maven:com.google.mlkit:text-recognition-korean": {
@@ -6636,7 +6671,6 @@
    "scope": "shipped",
    "licence": "LicenseRef-Google-MLKit-Terms",
    "licence_source": "curated.maven_group_licences[com.google.mlkit]",
-   "note": "proprietary binary SDK under the ML Kit Terms of Service - not GPL-compatible if linked into a GPL app",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   },
   "maven:com.google.mlkit:translate": {
@@ -6648,7 +6682,6 @@
    "scope": "shipped",
    "licence": "LicenseRef-Google-MLKit-Terms",
    "licence_source": "curated.maven_group_licences[com.google.mlkit]",
-   "note": "proprietary binary SDK under the ML Kit Terms of Service - not GPL-compatible if linked into a GPL app",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   },
   "maven:com.google.protobuf:protobuf-javalite": {
@@ -7925,6 +7958,7 @@
   "maven:org.bouncycastle:bcprov-jdk15to18": {
    "kind": "maven",
    "declared_in": [
+    "ab_cloud-libs-shared/libs/account/build.gradle",
     "ab_cloud-libs-shared/libs/kde-connect/build.gradle",
     "ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/build.gradle",
     "ac_cloud-myterminal/hub/build.gradle"
@@ -8029,7 +8063,6 @@
    "scope": "catalog",
    "licence": "Apache-2.0",
    "licence_source": "curated.maven_group_licences[org.jetbrains.compose]",
-   "note": "Compose Multiplatform (Kotlin/Wasm web build)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   },
   "maven:org.jetbrains.compose.foundation:foundation": {
@@ -8041,7 +8074,6 @@
    "scope": "catalog",
    "licence": "Apache-2.0",
    "licence_source": "curated.maven_group_licences[org.jetbrains.compose]",
-   "note": "Compose Multiplatform (Kotlin/Wasm web build)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   },
   "maven:org.jetbrains.compose.runtime:runtime": {
@@ -8053,7 +8085,6 @@
    "scope": "catalog",
    "licence": "Apache-2.0",
    "licence_source": "curated.maven_group_licences[org.jetbrains.compose]",
-   "note": "Compose Multiplatform (Kotlin/Wasm web build)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   },
   "maven:org.jetbrains.compose.ui:ui": {
@@ -8065,7 +8096,6 @@
    "scope": "catalog",
    "licence": "Apache-2.0",
    "licence_source": "curated.maven_group_licences[org.jetbrains.compose]",
-   "note": "Compose Multiplatform (Kotlin/Wasm web build)",
    "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   },
   "maven:org.jetbrains.kotlin:compose-compiler-gradle-plugin": {
@@ -8269,6 +8299,7 @@
     "ab_cloud-libs-shared/libs/git-core/build.gradle",
     "ab_cloud-libs-shared/libs/git-repos/build.gradle",
     "ab_cloud-libs-shared/libs/git-sync/build.gradle",
+    "ab_cloud-libs-shared/libs/json-viewer/build.gradle",
     "ab_cloud-libs-shared/libs/keyboard/build.gradle",
     "ab_cloud-libs-shared/libs/mail/build.gradle",
     "ab_cloud-libs-shared/libs/mounts-engine/build.gradle",
@@ -8307,6 +8338,7 @@
    "kind": "maven",
    "declared_in": [
     "aa_cloud-superapp/app/build.gradle",
+    "ab_cloud-libs-shared/libs/ai-usage/build.gradle",
     "ab_cloud-libs-shared/libs/ai/build.gradle",
     "ab_cloud-libs-shared/libs/analytics-sink/build.gradle",
     "ab_cloud-libs-shared/libs/apify/build.gradle",
@@ -8324,6 +8356,7 @@
     "ab_cloud-libs-shared/libs/fleet-endpoints/build.gradle",
     "ab_cloud-libs-shared/libs/git-core/build.gradle",
     "ab_cloud-libs-shared/libs/git-sync/build.gradle",
+    "ab_cloud-libs-shared/libs/headless-browser/build.gradle",
     "ab_cloud-libs-shared/libs/keyboard/build.gradle",
     "ab_cloud-libs-shared/libs/maps/build.gradle",
     "ab_cloud-libs-shared/libs/ml-l-image-mlkit/build.gradle",
@@ -8335,9 +8368,13 @@
     "ab_cloud-libs-shared/libs/mounts/build.gradle",
     "ab_cloud-libs-shared/libs/net-wg/build.gradle",
     "ab_cloud-libs-shared/libs/nfc/build.gradle",
+    "ab_cloud-libs-shared/libs/ocr/build.gradle",
     "ab_cloud-libs-shared/libs/ops-engine/build.gradle",
     "ab_cloud-libs-shared/libs/rclone-engine/build.gradle",
     "ab_cloud-libs-shared/libs/rclone/build.gradle",
+    "ab_cloud-libs-shared/libs/shell-broker/build.gradle",
+    "ab_cloud-libs-shared/libs/shell-client/build.gradle",
+    "ab_cloud-libs-shared/libs/shell-rish/build.gradle",
     "ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/build.gradle",
     "ab_cloud-libs-shared/libs/sound-tags/build.gradle",
     "ac_cloud-browser/app/build.gradle",
@@ -8348,6 +8385,7 @@
     "ac_cloud-calc/sheet/build.gradle",
     "ac_cloud-calc/sound/build.gradle",
     "ac_cloud-calc/tools/build.gradle",
+    "ac_cloud-camera/app/build.gradle.kts",
     "ac_cloud-drive/app/build.gradle",
     "ac_cloud-kg-store/app/build.gradle",
     "ac_cloud-mail/app/build.gradle.kts",
@@ -8567,6 +8605,8 @@
     "ab_cloud-libs-shared/libs/core/build.gradle",
     "ab_cloud-libs-shared/libs/fleetconfig-model/build.gradle",
     "ab_cloud-libs-shared/libs/ml-l-image-mlkit/build.gradle",
+    "ab_cloud-libs-shared/libs/shell-client/build.gradle",
+    "ab_cloud-libs-shared/libs/shell-rish/build.gradle",
     "ab_cloud-libs-shared/libs/theme-background/build.gradle",
     "ab_cloud-libs-shared/libs/ui-nav-bars/build.gradle",
     "ab_cloud-libs-shared/libs/wallet/build.gradle",

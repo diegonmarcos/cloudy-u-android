@@ -130,11 +130,11 @@
     },
     "ac_cloud-camera": {
       "first_test": "Minimal fork of GrapheneOS Camera: assert the patch series applies to the pinned upstream revision, so a silent patch-drop cannot ship an unpatched build.",
-      "shell_testers": 9,
+      "shell_testers": 10,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 4,
+      "unit_test_sources": 6,
       "workflow": "ship-cloud-camera.yml"
     },
     "ac_cloud-camera/web": {

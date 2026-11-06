@@ -85,6 +85,14 @@
     <string name="qr_scan_mode">QR CODE</string>
     <string name="objects_mode">OBJECTS</string>
     <string name="vr_mode">VR</string>
+    <string name="vr_pick">Pick a filter</string>
+    <string name="vr_no_face">No face found</string>
+    <string name="vr_record">Record</string>
+    <string name="vr_stop">Stop</string>
+    <string name="vr_saved_photo">Saved the photo with the filters</string>
+    <string name="vr_saved_video">Saved the video with the filters</string>
+    <string name="vr_save_failed">Could not save: %1$s</string>
+    <string name="vr_catalog_failed">The filter catalogue is invalid: %1$s</string>
     <string name="objects_looking">Looking for objects…</string>
     <string name="objects_nothing">No objects above the threshold</string>
     <string name="objects_pause">Pause</string>

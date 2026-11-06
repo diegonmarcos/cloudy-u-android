@@ -86,6 +86,7 @@ import cld.camera.util.CloudGallery
 import cld.camera.util.isPackageInstalled
 import cld.camera.objects.ObjectsController
 import cld.camera.ui.ModeNav
+import cld.camera.vr.VrController
 import cld.camera.ui.CountDownTimerUI
 import cld.camera.ui.CustomGrid
 import cld.camera.ui.QROverlay
@@ -169,6 +170,16 @@ open class MainActivity : AppCompatActivity(),
         ).also { objectsController = it }
 
     val objectsIfStarted: ObjectsController? get() = objectsController
+
+    private var vrController: VrController? = null
+
+    /** #1533 the VR page, wired to its views the first time it is needed. */
+    val vr: VrController
+        get() = vrController ?: VrController(
+            this, binding.vrView, binding.vrPanel, binding.vrStatus, binding.vrFilters, binding.vrRecord,
+        ).also { vrController = it }
+
+    val vrIfStarted: VrController? get() = vrController
     lateinit var thirdCircle: ImageView
     lateinit var openCloudGalleryVideo: ImageButton
     lateinit var openCloudGalleryPhoto: ImageButton
@@ -700,6 +711,7 @@ open class MainActivity : AppCompatActivity(),
         cdTimer.cancelTimer()
         // #1533 battery: an analysis page stops analysing the moment the activity leaves the screen.
         objectsIfStarted?.onActivityPaused()
+        vrIfStarted?.onActivityPaused()
         if (camConfig.isQRMode) {
             cancelFocusTimer()
         } else {
@@ -887,6 +899,8 @@ open class MainActivity : AppCompatActivity(),
                 }
             } else if (camConfig.isObjectsMode) {
                 objects.snapshot()
+            } else if (camConfig.isVrMode) {
+                vr.snapshot()
             } else if (camConfig.isQRMode) {
                 camConfig.toggleTorchState()
                 if (camConfig.isTorchOn) {
@@ -1144,7 +1158,7 @@ open class MainActivity : AppCompatActivity(),
     fun updateSelfTimerBadge() {
         cbText.text = if (timerDuration == 0) "" else "${timerDuration}s"
         // isVideoMode covers the video-only activities too, whatever mode they are nominally in.
-        val applies = timerDuration != 0 && !camConfig.isQRMode && !camConfig.isVideoMode && !camConfig.isObjectsMode
+        val applies = timerDuration != 0 && !camConfig.isQRMode && !camConfig.isVideoMode && !camConfig.isObjectsMode && !camConfig.isVrMode
         cbText.visibility = if (applies) View.VISIBLE else View.INVISIBLE
     }
 

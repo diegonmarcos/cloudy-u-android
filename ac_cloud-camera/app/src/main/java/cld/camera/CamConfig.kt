@@ -319,6 +319,10 @@ class CamConfig(private val mActivity: MainActivity) {
     var isObjectsMode = false
         private set
 
+    /** #1533 the VR page: AR-style face / object filters, the shutter saves the composited photo. */
+    var isVrMode = false
+        private set
+
     val isFlashAvailable: Boolean
         get() = camera?.cameraInfo?.hasFlashUnit() ?: false
 
@@ -650,7 +654,7 @@ class CamConfig(private val mActivity: MainActivity) {
 
     private val isInPhotoMode: Boolean
         get() {
-            return !(isQRMode || isVideoMode || isObjectsMode)
+            return !(isQRMode || isVideoMode || isObjectsMode || isVrMode)
         }
 
     val isInCaptureMode: Boolean
@@ -1600,9 +1604,12 @@ class CamConfig(private val mActivity: MainActivity) {
             }
         }
 
-        // #1533 the Objects page analyses the same stream: one KEEP_ONLY_LATEST use case, installed by its controller.
+        // #1533 the Objects and VR pages analyse the same stream: one KEEP_ONLY_LATEST use case, installed by their controllers.
         if (isObjectsMode) {
             useCasesList.add(mActivity.objects.analysisUseCase(aspectRatio))
+        }
+        if (isVrMode) {
+            useCasesList.add(mActivity.vr.analysisUseCase(aspectRatio))
         }
 
         val previewBuilder = Preview.Builder()
@@ -2006,6 +2013,10 @@ class CamConfig(private val mActivity: MainActivity) {
         val wasObjects = isObjectsMode
         isObjectsMode = mode == CameraMode.OBJECTS
         if (isObjectsMode) mActivity.objects.enter() else if (wasObjects) mActivity.objectsIfStarted?.leave()
+
+        val wasVr = isVrMode
+        isVrMode = mode == CameraMode.VR
+        if (isVrMode) mActivity.vr.enter() else if (wasVr) mActivity.vrIfStarted?.leave()
 
         isVideoMode = mode == CameraMode.VIDEO
 

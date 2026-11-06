@@ -57,6 +57,17 @@
                     app:layout_constraintEnd_toEndOf="@id/preview"
                     app:layout_constraintBottom_toBottomOf="@id/preview" />
 
+                <!-- #1533 VR: the composited frames (filters on the camera), over exactly the preview's bounds. -->
+                <com.diegonmarcos.superapp.vision.CompositeFrameView
+                    android:id="@+id/vr_view"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:visibility="gone"
+                    app:layout_constraintTop_toTopOf="@id/preview"
+                    app:layout_constraintStart_toStartOf="@id/preview"
+                    app:layout_constraintEnd_toEndOf="@id/preview"
+                    app:layout_constraintBottom_toBottomOf="@id/preview" />
+
                 <ImageView
                     android:layout_width="84dp"
                     android:layout_height="84dp"
@@ -279,6 +290,57 @@
                     android:gravity="end"
                     android:textColor="@android:color/white"
                     android:textSize="13sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- #1533 VR controls: the declared filters as chips (one per kind), Record. The shutter saves the composited photo. -->
+        <LinearLayout
+            android:id="@+id/vr_panel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_above="@id/three_buttons"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="12dp"
+            android:layout_marginBottom="8dp"
+            android:orientation="vertical"
+            android:background="#99000000"
+            android:padding="8dp"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/vr_status"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@android:color/white"
+                android:textSize="13sp"
+                android:text="@string/vr_pick" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <HorizontalScrollView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:scrollbars="none">
+
+                    <LinearLayout
+                        android:id="@+id/vr_filters"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal" />
+                </HorizontalScrollView>
+
+                <Button
+                    android:id="@+id/vr_record"
+                    style="?android:attr/buttonBarButtonStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@android:color/white"
+                    android:text="@string/vr_record" />
             </LinearLayout>
         </LinearLayout>
 

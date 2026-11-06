@@ -1,0 +1,100 @@
+{
+  "_doc": "#1533 THE declared VR filters (read by libs:ml-vision FilterCatalog, validated at load). kind: hat | glasses | mask (anchored to the face), sticker (anchored to a detected object's box), background (blur | color | gradient behind the person, via selfie segmentation), lut (a colour look: gain, lift, contrast, gamma, mono). anchor: landmark (face: face_center eyes_center left_eye right_eye nose mouth_center chin head_top forehead; object: center top_center bottom_center top_left top_right left_center right_center), offset [x, y] and scale in units of `unit` (face = the face box width, eyes = the eye distance; for a sticker, the object box width), rotate (turn with the head), pivot [x, y] (0..1) = the point of the art that sits on the anchor. art: vector paths (SVG path data, fill / stroke as #RRGGBB or #AARRGGBB, fill_rule evenodd) in a viewport [w, h], or a bundled PNG ('png': asset path) drawn into the same viewport. Nothing here is typed into Kotlin.",
+  "analysis": {"interval_ms": 40, "ml_side": 480, "object_every_n_frames": 3, "frame_target": [1280, 960]},
+  "filters": [
+    {
+      "id": "hat_party", "label": "Party hat", "kind": "hat",
+      "anchor": {"landmark": "head_top", "offset": [0, 0.04], "scale": 0.8, "unit": "face", "rotate": true, "pivot": [0.5, 1.0]},
+      "art": {"viewport": [100, 110], "paths": [
+        {"d": "M12,106 L50,8 L88,106 Z", "fill": "#E91E63"},
+        {"d": "M26,70 L74,70 L80,84 L20,84 Z", "fill": "#FFEB3B"},
+        {"d": "M42,10 a8,8 0 1,0 16,0 a8,8 0 1,0 -16,0 Z", "fill": "#FFFFFF"}
+      ]}
+    },
+    {
+      "id": "hat_crown", "label": "Crown", "kind": "hat",
+      "anchor": {"landmark": "head_top", "offset": [0, 0.03], "scale": 0.7, "unit": "face", "rotate": true, "pivot": [0.5, 1.0]},
+      "art": {"viewport": [100, 80], "paths": [
+        {"d": "M4,76 L4,22 L28,48 L50,6 L72,48 L96,22 L96,76 Z", "fill": "#FFC107", "stroke": "#FF8F00", "stroke_width": 3},
+        {"d": "M10,64 L90,64", "stroke": "#FF8F00", "stroke_width": 3}
+      ]}
+    },
+    {
+      "id": "glasses_round", "label": "Round glasses", "kind": "glasses",
+      "anchor": {"landmark": "eyes_center", "offset": [0, 0], "scale": 2.3, "unit": "eyes", "rotate": true, "pivot": [0.5, 0.5]},
+      "art": {"viewport": [100, 40], "paths": [
+        {"d": "M7,20 a17,17 0 1,0 34,0 a17,17 0 1,0 -34,0 Z", "fill": "#3300B0FF", "stroke": "#212121", "stroke_width": 3.5},
+        {"d": "M59,20 a17,17 0 1,0 34,0 a17,17 0 1,0 -34,0 Z", "fill": "#3300B0FF", "stroke": "#212121", "stroke_width": 3.5},
+        {"d": "M41,18 L59,18", "stroke": "#212121", "stroke_width": 3.5}
+      ]}
+    },
+    {
+      "id": "glasses_shades", "label": "Shades", "kind": "glasses",
+      "anchor": {"landmark": "eyes_center", "offset": [0, 0.02], "scale": 2.4, "unit": "eyes", "rotate": true, "pivot": [0.5, 0.5]},
+      "art": {"viewport": [100, 40], "paths": [
+        {"d": "M6,6 H46 V22 Q46,34 34,34 H18 Q6,34 6,22 Z", "fill": "#F2111111"},
+        {"d": "M54,6 H94 V22 Q94,34 82,34 H66 Q54,34 54,22 Z", "fill": "#F2111111"},
+        {"d": "M46,10 H54 V15 H46 Z", "fill": "#F2111111"}
+      ]}
+    },
+    {
+      "id": "mask_bandit", "label": "Bandit mask", "kind": "mask",
+      "anchor": {"landmark": "eyes_center", "offset": [0, 0], "scale": 2.6, "unit": "eyes", "rotate": true, "pivot": [0.5, 0.5]},
+      "art": {"viewport": [100, 40], "paths": [
+        {"d": "M2,20 Q2,4 28,6 Q50,12 72,6 Q98,4 98,20 Q98,36 76,34 Q62,32 50,26 Q38,32 24,34 Q2,36 2,20 Z M16,20 a10,7 0 1,0 20,0 a10,7 0 1,0 -20,0 Z M64,20 a10,7 0 1,0 20,0 a10,7 0 1,0 -20,0 Z", "fill": "#E6212121", "fill_rule": "evenodd"}
+      ]}
+    },
+    {
+      "id": "mask_cat", "label": "Cat nose", "kind": "mask",
+      "anchor": {"landmark": "nose", "offset": [0, 0], "scale": 1.2, "unit": "face", "rotate": true, "pivot": [0.5, 0.4]},
+      "art": {"viewport": [100, 60], "paths": [
+        {"d": "M40,18 L60,18 L50,31 Z", "fill": "#F06292"},
+        {"d": "M6,26 L36,31 M6,42 L36,38 M94,26 L64,31 M94,42 L64,38", "stroke": "#212121", "stroke_width": 2.5}
+      ]}
+    },
+    {
+      "id": "bg_blur", "label": "Blur background", "kind": "background",
+      "background": {"mode": "blur", "blur_downscale": 14}
+    },
+    {
+      "id": "bg_sunset", "label": "Sunset background", "kind": "background",
+      "background": {"mode": "gradient", "color": "#FF7E5F", "color2": "#FEB47B"}
+    },
+    {
+      "id": "bg_green", "label": "Green screen", "kind": "background",
+      "background": {"mode": "color", "color": "#00B140"}
+    },
+    {
+      "id": "lut_warm", "label": "Warm", "kind": "lut",
+      "lut": {"gain": [1.1, 1.0, 0.9], "lift": [0.02, 0.0, -0.02], "contrast": 1.05, "gamma": 1.0}
+    },
+    {
+      "id": "lut_cool", "label": "Cool", "kind": "lut",
+      "lut": {"gain": [0.9, 1.0, 1.1], "lift": [-0.02, 0.0, 0.02], "contrast": 1.05, "gamma": 1.0}
+    },
+    {
+      "id": "lut_vivid", "label": "Vivid", "kind": "lut",
+      "lut": {"gain": [1.0, 1.0, 1.0], "lift": [0.0, 0.0, 0.0], "contrast": 1.25, "gamma": 1.1}
+    },
+    {
+      "id": "lut_mono", "label": "Mono", "kind": "lut",
+      "lut": {"mono": true, "contrast": 1.15, "gamma": 1.0}
+    },
+    {
+      "id": "sticker_star", "label": "Star on objects", "kind": "sticker",
+      "labels": [],
+      "anchor": {"landmark": "top_center", "offset": [0, -0.02], "scale": 0.3, "unit": "face", "rotate": false, "pivot": [0.5, 1.0]},
+      "art": {"viewport": [100, 100], "paths": [
+        {"d": "M50,4 L61,37 L96,37 L68,58 L79,92 L50,71 L21,92 L32,58 L4,37 L39,37 Z", "fill": "#FFD600", "stroke": "#FF8F00", "stroke_width": 3}
+      ]}
+    },
+    {
+      "id": "sticker_heart_food", "label": "Heart on food and plants", "kind": "sticker",
+      "labels": ["Food", "Plant", "Fruit"],
+      "anchor": {"landmark": "top_right", "offset": [0, 0], "scale": 0.3, "unit": "face", "rotate": false, "pivot": [0.5, 0.5]},
+      "art": {"viewport": [100, 90], "paths": [
+        {"d": "M50,86 C10,52 2,30 20,14 C34,2 48,12 50,24 C52,12 66,2 80,14 C98,30 90,52 50,86 Z", "fill": "#E53935"}
+      ]}
+    }
+  ]
+}

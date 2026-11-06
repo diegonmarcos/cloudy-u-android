@@ -1,7 +1,8 @@
 // libs:ml-vision (#1533): the fleet's shared on-device VISION toolkit, compiled by reference like libs:bottomnav.
 // Detection (Detection, ObjectDetector, DetectionOverlayView), the frame-to-view mapping with rotation and mirroring
 // (FrameMapping) and the analyzer lifecycle (AnalysisGate, AnalyzerLifecycle: stopped whenever the page is hidden or
-// paused). Face and segmentation APIs, the declared AR filters and their anchor math join in the same module.
+// paused), the face and segmentation APIs (ML Kit Face Detection, Selfie Segmentation: bundled models), the declared AR
+// filters (FilterCatalog) with their anchor maths (FilterAnchors), the colour LUT and the compositor.
 // Pure Kotlin over the Android framework, so its logic runs in a consumer's JVM unit phase (the real org.json is
 // the consumer's testImplementation; android.jar's copy is a stub that throws).
 plugins {
@@ -35,4 +36,9 @@ kotlin {
 }
 
 dependencies {
+    // PathParser: the declared vector art is SVG path data.
+    implementation 'androidx.core:core-ktx:1.15.0'
+    // ML Kit Face Detection and Selfie Segmentation: the BUNDLED models (on-device, offline, no Play Services download).
+    implementation 'com.google.mlkit:face-detection:16.1.7'
+    implementation 'com.google.mlkit:segmentation-selfie:16.0.0-beta6'
 }
