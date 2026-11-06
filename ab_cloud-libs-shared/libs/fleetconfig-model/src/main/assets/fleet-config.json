@@ -2770,6 +2770,14 @@
     "PREFS@ac_cloud-c3/app/src/main/java/com/diegonmarcos/cloudc3/cloud/GiteaFeed.kt": {
       "store": "gitea_feed_cache",
       "why": "const val PREFS = \"gitea_feed_cache\" (GiteaFeed.kt:59, the c3 copy of the Gitea feed cache)"
+    },
+    "\"${PREFS}_unencrypted_fallback\"@ab_cloud-libs-shared/libs/apify/src/main/java/com/diegonmarcos/superapp/apify/ApifyBackends.kt": {
+      "store": "-",
+      "why": "#1474 plain-prefs fallback when security-crypto is missing from the runtime classpath; holds the same Apify keys as apify_tokens, only ever written in that broken-build case"
+    },
+    "\"${fileName}_unencrypted_fallback\"@ab_cloud-libs-shared/libs/crash/src/main/java/com/diegonmarcos/superapp/crash/SafeEncryptedPrefs.kt": {
+      "store": "-",
+      "why": "#1474 plain-prefs fallback for any SafeEncryptedPrefs file when security-crypto is missing from the runtime classpath (broken build only)"
     }
   },
   "apps": {

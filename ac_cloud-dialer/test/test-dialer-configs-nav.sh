@@ -7,7 +7,7 @@
 #   S  Status / SIM / Usage / SIMs use the shared Configs v2 rows and tables (no hand-made rows that overflow), Configs has back.
 #   B  the bottom nav is SMS | Keypad | Calls | Home | VoIP | SIMs | Contacts (#1528); Keypad, VoIP and SIMs are in-shell pages.
 #   R  every compileOnly dependency of a linked lib that the app reaches is linked by the app (sha-61326f78 crashed with
-#      NoClassDefFoundError androidx.security.crypto.MasterKey$Builder: libs:crash links security-crypto compileOnly).
+#      NoClassDefFoundError androidx.security.crypto.MasterKey$Builder: libs:crash linked security-crypto compileOnly; since #1474 libs:crash packages it, R1 stays for any lib that still does, R2 holds the app-level link).
 # Each assertion is then proven red by its own mutation of a copy of the tree.
 set -u
 APP="$(cd "$(dirname "$0")/.." && pwd)"
@@ -117,7 +117,7 @@ mutant "letters dropped from the keys" "sed -i 's|k.letters|k.digit|g' $K/nav/Ke
 mutant "back skips the SIM sub-page" "sed -i 's|SimsNavState.selected = null|Unit|' $K/activities/MainActivity.kt" B7
 mutant "an sp literal in the keypad" "printf 'val x = 12.sp\\n' >> $K/nav/KeypadPage.kt" B8
 mutant "Keypad opens nothing" "sed -i 's|KeypadPage(c, onCall|Unit(c, onCall|' $K/activities/MainActivity.kt" B4
-mutant "security-crypto not linked (the sha-61326f78 crash)" "sed -i '/androidx-security-crypto\|securityCrypto/d' gradle/libs.versions.toml; sed -i '/libs.androidx.security.crypto/d' app/build.gradle.kts" R1
+mutant "security-crypto not linked (the sha-61326f78 crash)" "sed -i '/androidx-security-crypto\|securityCrypto/d' gradle/libs.versions.toml; sed -i '/libs.androidx.security.crypto/d' app/build.gradle.kts" R2
 mutant "security-crypto linked by hand, off the catalog" "sed -i 's|implementation(libs.androidx.security.crypto)|implementation(\"androidx.security:security-crypto:1.1.0\")|' app/build.gradle.kts" R2
 mutant "keep rule dropped" "sed -i '/keep class androidx.security.crypto/d' app/proguard-rules.pro" R3
 echo "test-dialer-configs-nav: $proven mutation(s) proven red, $unproven not proven"
