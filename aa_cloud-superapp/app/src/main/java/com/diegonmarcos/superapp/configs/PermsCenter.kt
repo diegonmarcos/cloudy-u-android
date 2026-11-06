@@ -335,14 +335,20 @@ internal fun PermsCenterSection(
             }
         }
     }
-    androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxWidth().testTag("perms:center")) {
-        if (wide ?: (maxWidth >= KitStoreRow.step(1200))) Row(Modifier.fillMaxWidth().testTag("perms:two-pane")) {
+    // #1550 width from the configuration, NOT BoxWithConstraints: a SubcomposeLayout breaks performScrollTo/performClick
+    // hit-testing in Compose tests (and adds a measure-time subcomposition the page does not need).
+    val twoPane = wide ?: (androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp >= TWO_PANE_MIN_DP)
+    Column(Modifier.fillMaxWidth().testTag("perms:center")) {
+        if (twoPane) Row(Modifier.fillMaxWidth().testTag("perms:two-pane")) {
             Column(Modifier.weight(0.36f).testTag("perms:pane:controls")) { controls() }
             Box(Modifier.width(KitStoreRow.step(1)).height(KitStoreRow.step(1)).background(p.hairline))
             Column(Modifier.weight(0.64f).testTag("perms:pane:table")) { table() }
         } else Column(Modifier.fillMaxWidth()) { controls(); table() }
     }
 }
+
+/** #1550 the width at or above which a page splits into two panes (840 dp: tablet / landscape). */
+private const val TWO_PANE_MIN_DP = 840
 
 /** A labelled, horizontally scrolling row of chips. */
 @Composable

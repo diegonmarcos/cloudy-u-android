@@ -130,15 +130,14 @@ internal fun AdbShellBrokerPage() {
 /** #1550 phone: the terminal on top, then every section, one scroll. Tablet / landscape (>= 840 dp): two panes, terminal | sections. */
 @Composable
 internal fun AdbShellLayout(terminal: @Composable (androidx.compose.ui.unit.Dp) -> Unit, sections: @Composable () -> Unit, wide: Boolean? = null) {
-    androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxWidth().testTag("adb:layout")) {
-        val twoPane = wide ?: (maxWidth >= KitStoreRow.step(1200))
-        if (twoPane) androidx.compose.foundation.layout.Row(Modifier.fillMaxWidth().testTag("adb:two-pane")) {
-            Column(Modifier.weight(0.56f).testTag("adb:pane:terminal")) { terminal(KitStoreRow.step(760)) }
-            Column(Modifier.weight(0.44f).verticalScroll(rememberScrollState()).testTag("adb:pane:sections")) { sections() }
-        } else Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
-            terminal(KitStoreRow.step(520))
-            sections()
-        }
+    // #1550 width from the configuration, NOT BoxWithConstraints (a SubcomposeLayout breaks performScrollTo/performClick in tests).
+    val twoPane = wide ?: (androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp >= 840)
+    if (twoPane) androidx.compose.foundation.layout.Row(Modifier.fillMaxWidth().testTag("adb:two-pane")) {
+        Column(Modifier.weight(0.56f).testTag("adb:pane:terminal")) { terminal(KitStoreRow.step(760)) }
+        Column(Modifier.weight(0.44f).verticalScroll(rememberScrollState()).testTag("adb:pane:sections")) { sections() }
+    } else Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).testTag("adb:layout")) {
+        terminal(KitStoreRow.step(520))
+        sections()
     }
 }
 
