@@ -5006,18 +5006,18 @@
             "subgroup": "Launcher"
           },
           {
-            "_doc": "Tab 2 of Launcher — One-Hand edge-gesture overlay (libs:launcher-onehand). OneHandFragment hosts the master toggle + the two special-permission deep-links (Draw over other apps, Accessibility). Data-driven engine config lives in build.json::onehand. KEPT ITS ID: `hidden` drops it from the Configs grid, the Home Apps Configs row, the Canopus arc and the Sirius tree (all of which list Section.pages), while Section.allPages keeps `page:config/onehand` resolvable — so every existing deep link, launcher shortcut, edge gesture and App-Tabs history entry still arrives, now on this tab. Its prefs (onehand_prefs, home_swipe_prefs, floatingnav) are untouched for the same reason the id is.",
-            "id": "onehand",
-            "label": "One-Hand",
-            "icon": "ic_onehand",
+            "_doc": "#1553 Folders — Configs > Setup > Launcher, after Controls and before One-Hand (#1550: it must NOT sit between One-Hand and Notify — the #580/#649 invariant keeps Notify the page immediately after One-Hand). An in-app page that organises apps into folders, declaratively, with two scopes (Cloud | Phone). The organisation is DATA served at runtime by the fleet-data client, NOT baked into the APK: per scope, Table 1 (dataset launcher-folders/<scope>) declares the sections and folders (section, folder id, label, icon, order) and Table 2 (dataset launcher-folder-assignments/<scope>) assigns each app package to a folder with an order. Table 2 is user-editable; edits persist as a local override (FolderOverrideStore) on top of the served defaults. A Refresh action re-enumerates the installed apps (Phone) or the fleet apps (Cloud) on demand (and lazily on open when stale); any app not assigned lands in a special Others folder, so newly installed/added apps appear there until assigned. FolderResolver is the source of truth the launcher grid grouping reads (PhoneAppsFragment consults the override assignment first). Its id is app-folders (folders is taken by Mail); SectionPages routes it to FoldersFragment.",
+            "id": "app-folders",
+            "label": "Folders",
+            "icon": "ic_p_folder",
             "group": "Setup",
             "subgroup": "Launcher"
           },
           {
-            "_doc": "#1553 Folders — Configs > Setup > Launcher, after One-Hand and before Notify. An in-app page that organises apps into folders, declaratively, with two scopes (Cloud | Phone). The organisation is DATA served at runtime by the fleet-data client, NOT baked into the APK: per scope, Table 1 (dataset launcher-folders/<scope>) declares the sections and folders (section, folder id, label, icon, order) and Table 2 (dataset launcher-folder-assignments/<scope>) assigns each app package to a folder with an order. Table 2 is user-editable; edits persist as a local override (FolderOverrideStore) on top of the served defaults. A Refresh action re-enumerates the installed apps (Phone) or the fleet apps (Cloud) on demand (and lazily on open when stale); any app not assigned lands in a special Others folder, so newly installed/added apps appear there until assigned. FolderResolver is the source of truth the launcher grid grouping reads (PhoneAppsFragment consults the override assignment first). Its id is app-folders (folders is taken by Mail); SectionPages routes it to FoldersFragment.",
-            "id": "app-folders",
-            "label": "Folders",
-            "icon": "ic_p_folder",
+            "_doc": "Tab 2 of Launcher — One-Hand edge-gesture overlay (libs:launcher-onehand). OneHandFragment hosts the master toggle + the two special-permission deep-links (Draw over other apps, Accessibility). Data-driven engine config lives in build.json::onehand. KEPT ITS ID: `hidden` drops it from the Configs grid, the Home Apps Configs row, the Canopus arc and the Sirius tree (all of which list Section.pages), while Section.allPages keeps `page:config/onehand` resolvable — so every existing deep link, launcher shortcut, edge gesture and App-Tabs history entry still arrives, now on this tab. Its prefs (onehand_prefs, home_swipe_prefs, floatingnav) are untouched for the same reason the id is.",
+            "id": "onehand",
+            "label": "One-Hand",
+            "icon": "ic_onehand",
             "group": "Setup",
             "subgroup": "Launcher"
           },
