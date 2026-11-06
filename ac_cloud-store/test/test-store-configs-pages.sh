@@ -66,7 +66,7 @@ ok("FeedViewer.feeds(ctx)" in cp and "StoreSourcePrefs.set(ctx, f.id, it)" in cp
    "Sources lists the Store's feeds with switches, the install ladder and the fleet token", "the Sources page is not built from the Store's own declared feeds / ladder / token")
 fp = rd(K + "FeedPage.kt")
 ok("StoreSourcePrefs.enabled(ctx, feed.id)" in fp, "a feed switched off in Sources is not read by the Feed page", "the Feed page ignores the Sources switches")
-ok("ShellBrokerPage.lines(status)" in cp and "ShellClient.arm(ctx)" in cp and "adbdebug" not in cp, "ADB Shell is the SuperApp shell-broker page (status + Arm in SuperApp), not a channel of the Store's own", "the ADB Shell page is not the broker page")
+ok("ShellBrokerPage.lines(status)" in cp and "ShellClient.openArmPage(ctx)" in cp and "adbdebug" not in cp, "ADB Shell is the SuperApp shell-broker page (status + Arm in SuperApp), not a channel of the Store's own", "the ADB Shell page is not the broker page")
 ok(".verticalScroll(rememberScrollState())" in cp and "val own = page" not in cp, "every page, the broker page included, is a column this host scrolls", "a page is nested in a second scroll, or lost its scroll")
 ok("AiSettingsPickers(" in cp and "AiFleetChat.chat(ctx, BuildConfig.AI_GATEWAY_URL)" in cp and "OutlinedTextField" not in cp.split("private fun AiPage")[1].split("// ── Notifications")[0],
    "AI is libs:ai's agent/model pickers over the fleet gateway, with no token field", "the AI page lacks the shared pickers or carries a token field")
