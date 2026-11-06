@@ -56,9 +56,9 @@ class CbTablesTest {
         assertNull("under five actuals there is no heat", CbHeat.of(listOf(1.0, 2.0), 3.0)); assertNull(CbHeat.of(listOf(2.0, 2.0, 2.0, 2.0, 2.0), 3.0))
     }
 
-    @Test fun taylorRuleIsNeutralPlusInflationPlusWeightedGaps() {
+    @Test fun taylorRuleIsNeutralPlusTargetPlusWeightedGaps() {
         val m = decl.model
-        assertEquals(1.5 + 3.0 + 1.5 * (3.0 - 2.0) + 0.5 * -1.0, CbModel.taylor(m, 1.5, 3.0, 2.0, -1.0)!!, 1e-12)
+        assertEquals(1.5 + 2.0 + 1.5 * (3.0 - 2.0) + 0.5 * -1.0, CbModel.taylor(m, 1.5, 3.0, 2.0, -1.0)!!, 1e-12)
         assertNull("a missing input is never guessed", CbModel.taylor(m, null, 3.0, 2.0, 0.0)); assertNull(CbModel.taylor(m, 1.0, 3.0, null, 0.0)); assertNull(CbModel.taylor(m, 1.0, 3.0, 2.0, null))
         assertEquals(1, CbModel.bias(m, 5.0, 4.0)); assertEquals(-1, CbModel.bias(m, 3.0, 4.0)); assertEquals(0, CbModel.bias(m, 4.2, 4.0)); assertNull(CbModel.bias(m, null, 4.0))
     }

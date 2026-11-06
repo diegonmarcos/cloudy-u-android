@@ -62,7 +62,7 @@
    "gap": "output_gap",
    "policy": "policy_rate",
    "hold_band_pp": 0.5,
-   "_doc": "Taylor-rule implied policy rate = neutral + inflation + inflation_weight x (inflation - target) + gap_weight x output gap, where neutral is the OECD potential growth, inflation is the headline forecast of the year, target is the bank's declared inflation_target and gap the OECD output gap. Missing any input: n/a. Bias = implied minus the latest policy rate: above +hold_band_pp tightening, below -hold_band_pp easing, else hold."
+   "_doc": "Taylor-rule implied policy rate (Taylor 1999 form) = neutral + target + inflation_weight x (inflation - target) + gap_weight x output gap, where neutral is the OECD potential growth as the real neutral rate, target the bank's declared inflation_target, inflation is the headline forecast of the year and gap the OECD output gap. Missing any input: n/a. Bias = implied minus the latest policy rate: above +hold_band_pp tightening, below -hold_band_pp easing, else hold."
   },
   "predictions": [
    "real_gdp",

@@ -48,10 +48,10 @@ object CbHeat {
 
 /** #1539 the central-bank model: the Taylor-rule implied policy rate from declared inputs (data/cb-countries.json model.taylor). */
 object CbModel {
-    /** neutral + inflation + wInf x (inflation - target) + wGap x gap; null when any input is missing (never a guessed one). */
+    /** neutral + target + wInf x (inflation - target) + wGap x gap (Taylor 1999); null when any input is missing (never a guessed one). */
     fun taylor(m: CbModelDecl, neutral: Double?, inflation: Double?, target: Double?, gap: Double?): Double? {
         if (neutral == null || inflation == null || target == null || gap == null) return null
-        return neutral + inflation + m.inflationWeight * (inflation - target) + m.gapWeight * gap
+        return neutral + target + m.inflationWeight * (inflation - target) + m.gapWeight * gap
     }
 
     /** +1 tightening, -1 easing, 0 hold: the implied rate against the latest policy rate, within the declared band. */
