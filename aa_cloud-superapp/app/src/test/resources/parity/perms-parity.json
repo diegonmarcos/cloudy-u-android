@@ -905,6 +905,118 @@
    "source": "nothing_missing",
    "value": "yes",
    "before": "pre-#1519"
+  },
+  {
+   "id": "kpi.89",
+   "group": "kpi",
+   "field": "KPI tile Granted",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "Granted"
+   ],
+   "before": "#1550 (new)"
+  },
+  {
+   "id": "kpi.90",
+   "group": "kpi",
+   "field": "KPI tile Missing",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "Missing"
+   ],
+   "before": "#1550 (new)"
+  },
+  {
+   "id": "kpi.91",
+   "group": "kpi",
+   "field": "KPI tile Denied",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "Denied"
+   ],
+   "before": "#1550 (new)"
+  },
+  {
+   "id": "kpi.92",
+   "group": "kpi",
+   "field": "KPI tile Needs shell",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "Needs shell"
+   ],
+   "before": "#1550 (new)"
+  },
+  {
+   "id": "kpi.93",
+   "group": "kpi",
+   "field": "KPI tile Manual",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "Manual"
+   ],
+   "before": "#1550 (new)"
+  },
+  {
+   "id": "kpi.94",
+   "group": "kpi",
+   "field": "KPI tile N/A",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "N/A"
+   ],
+   "before": "#1550 (new)"
+  },
+  {
+   "id": "filters.95",
+   "group": "filters",
+   "field": "Advanced filters panel toggle",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "Advanced filters"
+   ],
+   "before": "#1550 (new)"
+  },
+  {
+   "id": "bulk.96",
+   "group": "bulk",
+   "field": "Select (multi-select)",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "Select"
+   ],
+   "before": "#1550 (new)"
+  },
+  {
+   "id": "row.97",
+   "group": "row",
+   "field": "protection badge",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "Dangerous",
+    "App-op / special",
+    "Signature / development"
+   ],
+   "before": "#1550 (new)"
+  },
+  {
+   "id": "row.98",
+   "group": "row",
+   "field": "permission id column",
+   "kind": "ui",
+   "setup": "default",
+   "any": [
+    "android.permission."
+   ],
+   "before": "#1550 (new)"
   }
  ]
 }

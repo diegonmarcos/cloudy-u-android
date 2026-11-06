@@ -19,6 +19,7 @@ import com.diegonmarcos.superapp.perms.Protection
 import com.diegonmarcos.superapp.perms.SortBy
 import com.diegonmarcos.superapp.perms.StatusFilter
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -38,6 +39,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -111,10 +114,28 @@ class BrokerGrantChannel(private val ctx: Context) : PermsGrant.GrantChannel {
 
 /** The sticky top of the page: "N of M granted, K missing" and Ask all missing. Never says all granted while a row is missing. */
 @Composable
-internal fun PermsSummaryBar(rows: List<PermRowState>, ctx: Context, onAskAll: () -> Unit) {
+internal fun PermsSummaryBar(rows: List<PermRowState>, ctx: Context, status: androidx.compose.runtime.MutableState<StatusFilter>? = null, onAskAll: () -> Unit) {
     val p = LocalKitPalette.current
-    val s = PermsPage.summary(pageRows(ctx, rows))
+    val page = remember(rows) { pageRows(ctx, rows) }
+    val s = PermsPage.summary(page)
     Column(Modifier.fillMaxWidth().background(p.surface).testTag("perms:summary")) {
+        // #1550 KPI strip: one tile per state with its count; a tap filters the list by it (tap again: all).
+        val counts = remember(page) { PermsPageQuery.counts(page) }
+        Row(Modifier.fillMaxWidth().padding(horizontal = KitStoreRow.padH, vertical = KitStoreRow.tight).testTag("perms:kpi"),
+            horizontalArrangement = Arrangement.spacedBy(KitStoreRow.tight)) {
+            for (k in PermsKpi.TILES) {
+                val on = status?.value == k
+                val ink = PermsKpi.ink(k, p)
+                Column(Modifier.weight(1f).background(if (on) ink.copy(alpha = 0.22f) else p.textPrimary.copy(alpha = 0.05f))
+                    .border(KitStoreRow.step(1), if (on) ink else p.hairline)
+                    .clickable(role = androidx.compose.ui.semantics.Role.Tab) { status?.let { it.value = if (on) StatusFilter.ALL else k } }
+                    .padding(horizontal = KitStoreRow.gap, vertical = KitStoreRow.tight).testTag("perms:kpi:${k.name.lowercase()}")
+                    .androidxSemantics("${counts[k] ?: 0} ${k.word}" + if (on) ", filter on" else "")) {
+                    Text("${counts[k] ?: 0}", fontSize = KitStoreRow.title, fontWeight = FontWeight.Bold, color = ink, fontFamily = FontFamily.Monospace)
+                    KitStoreCaption(PermsKpi.label(k), color = p.textSecondary)
+                }
+            }
+        }
         KitStoreRowLine {
             KitStoreName(s.text, Modifier.weight(1f).testTag("perms:progress"), color = if (s.allGranted) p.ok else p.warn)
             if (!s.allGranted) KitStoreQuick("Ask all missing", KitStoreRow.BLUE_FILL, Modifier.testTag("perms:ask-all"), onAskAll)
@@ -148,13 +169,19 @@ internal fun PermsCenterSection(
     onAskAgain: () -> Unit = {},
     onAskMany: (List<PermEntry>) -> Unit = {},
     onShellMany: (List<PermEntry>) -> Unit = {},
+    statusState: androidx.compose.runtime.MutableState<StatusFilter>? = null,
+    wide: Boolean? = null,
 ) {
     val p = LocalKitPalette.current
     val page = remember(rows) { pageRows(ctx, rows) }
     val fleet = remember { FleetPerms.index(ctx) }
     val appsOf = remember(fleet) { { id: String -> fleet.appsUsing(id) } }
     var text by rememberSaveable { mutableStateOf("") }
-    var status by rememberSaveable { mutableStateOf(StatusFilter.ALL) }
+    val localStatus = rememberSaveable { mutableStateOf(StatusFilter.ALL) }
+    var status by (statusState ?: localStatus)
+    var advanced by rememberSaveable { mutableStateOf(true) }
+    var selecting by rememberSaveable { mutableStateOf(false) }
+    var selected by remember { mutableStateOf(emptySet<String>()) }
     var missingOnly by rememberSaveable { mutableStateOf(highlight != null) }
     var groupBy by rememberSaveable { mutableStateOf(GroupBy.CATEGORY) }
     var sortBy by rememberSaveable { mutableStateOf(SortBy.MISSING_FIRST) }
@@ -171,7 +198,8 @@ internal fun PermsCenterSection(
     val counts = remember(page) { PermsPageQuery.counts(page) }
     fun <T> Set<T>.flip(v: T) = if (v in this) this - v else this + v
 
-    Column(Modifier.fillMaxWidth().testTag("perms:center")) {
+    // #1550 phone: controls then the table, one column. Tablet / landscape (>= 840 dp): two panes, controls | table.
+    val controls: @Composable () -> Unit = {
         if (highlight != null) {
             val n = rows.count { it.entry.id in highlight.ids }
             KitStoreRowLine(Modifier.background(p.accent.copy(alpha = 0.18f)).testTag("perms:highlight")) {
@@ -193,6 +221,12 @@ internal fun PermsCenterSection(
             for (f in StatusFilter.values()) PermsFilterPill("${f.word} ${counts[f] ?: 0}", status == f, "perms:filter:status:${f.name.lowercase()}") { status = f }
             PermsFilterPill(if (missingOnly) "✓ Missing only" else "Missing only", missingOnly, "perms:filter-missing") { missingOnly = !missingOnly }
         }
+        val advActive = listOf(kinds, sections, cats, prots, groups, features, apps).count { it.isNotEmpty() }
+        KitStoreRowLine(Modifier.testTag("perms:advanced-toggle"), onClick = { advanced = !advanced }) {
+            KitStoreCaption((if (advanced) "▾ " else "▸ ") + "Advanced filters" + (if (advActive > 0) " · $advActive active" else "") +
+                "  (type, section, category, protection, group, feature, app)", Modifier.weight(1f), color = p.accent)
+        }
+        if (advanced) Column(Modifier.fillMaxWidth().background(p.textPrimary.copy(alpha = 0.03f)).testTag("perms:advanced")) {
         PermsChipRow("Type") { for (k in PermsPageQuery.kindsPresent(page)) PermsFilterPill("${PermsPageQuery.kindTitle(k)} ${page.count { it.entry.kind == k }}", k in kinds, "perms:filter:type:${k.name.lowercase()}") { kinds = kinds.flip(k) } }
         PermsChipRow("Section") { for (s in PermsPageQuery.sectionsPresent(page)) PermsFilterPill("${s.title} ${page.count { it.entry.section == s }}", s in sections, "perms:filter:section:${s.name.lowercase()}") { sections = sections.flip(s) } }
         PermsChipRow("Category") { for (c in PermsPageQuery.categoriesPresent(page)) PermsFilterPill("${c.title} ${page.count { it.category == c }}", c in cats, "perms:filter:category:${c.name.lowercase()}") { cats = cats.flip(c) } }
@@ -200,6 +234,7 @@ internal fun PermsCenterSection(
         PermsChipRow("Group") { for (g in PermsPageQuery.groupsPresent(page)) PermsFilterPill(g.lowercase().replace('_', ' '), g in groups, "perms:filter:group:${g.lowercase()}") { groups = groups.flip(g) } }
         PermsChipRow("Feature") { for (f in PermsPageQuery.featuresPresent(page)) PermsFilterPill(f, f in features, "perms:filter:feature:$f") { features = features.flip(f) } }
         if (fleet.apps.isNotEmpty()) PermsChipRow("App") { for (a in fleet.labels()) PermsFilterPill(a, a in apps, "perms:filter:app:$a") { apps = apps.flip(a) } }
+        }
         PermsChipRow("Group by") { for (g in GroupBy.values()) PermsFilterPill(g.word, groupBy == g, "perms:groupby:${g.name.lowercase()}") { groupBy = g } }
         PermsChipRow("Sort") {
             for (s in SortBy.values()) PermsFilterPill(s.word, sortBy == s, "perms:sort:${s.name.lowercase()}") { sortBy = s }
@@ -208,8 +243,30 @@ internal fun PermsCenterSection(
                 prots = emptySet(); groups = emptySet(); features = emptySet(); apps = emptySet()
             }
         }
-        KitStoreCaption("Showing ${shownRows.size} of ${page.size} declarations · ${shown.size} groups", Modifier.fillMaxWidth()
-            .padding(horizontal = KitStoreRow.padH).testTag("perms:shown"), color = p.textSecondary)
+        KitStoreRowLine {
+            KitStoreCaption("Showing ${shownRows.size} of ${page.size} declarations · ${shown.size} groups", Modifier.weight(1f).testTag("perms:shown"), color = p.textSecondary)
+            KitStoreQuick(if (selecting) "Done selecting" else "Select", KitStoreRow.BLUE_FILL, Modifier.testTag("perms:select")) { selecting = !selecting; if (!selecting) selected = emptySet() }
+        }
+        // #1550 multi-select bulk bar: what the selection can do, with counts.
+        if (selecting) {
+            val sel = shownRows.filter { it.entry.id in selected }
+            val askSel = PermsPageQuery.dialogTargets(sel); val shellSel = PermsPageQuery.shellTargets(sel)
+            KitStoreRowLine(Modifier.background(p.accent.copy(alpha = 0.14f)).testTag("perms:bulkbar")) {
+                KitStoreCaption("${sel.size} selected", Modifier.weight(1f), color = p.textPrimary)
+                KitStoreQuick("All shown", KitStoreRow.BLUE_FILL, Modifier.testTag("perms:select-all")) { selected = shownRows.map { it.entry.id }.toSet() }
+                Box(Modifier.width(KitStoreRow.tight))
+                KitStoreQuick("Grant (${askSel.size})", KitStoreRow.BLUE_FILL, Modifier.testTag("perms:bulk-grant")) { if (askSel.isNotEmpty()) onAskMany(askSel) }
+                Box(Modifier.width(KitStoreRow.tight))
+                KitStoreQuick("Shell (${shellSel.size})", KitStoreRow.AMBER_FILL, Modifier.testTag("perms:bulk-shell")) { if (shellSel.isNotEmpty()) onShellMany(shellSel) }
+                Box(Modifier.width(KitStoreRow.tight))
+                KitStoreQuick("Copy adb", KitStoreRow.BLUE_FILL, Modifier.testTag("perms:bulk-copy")) {
+                    copy(ctx, AdbScript.lines(sel.map { it.entry }.filter { it.adb.isNotEmpty() }, Perms.vars(ctx)).joinToString("\n") { it.forComputer() })
+                    Toast.makeText(ctx, "Copied ${sel.size} rows", Toast.LENGTH_SHORT).show()
+                }
+                Box(Modifier.width(KitStoreRow.tight))
+                KitStoreQuick("Clear", KitStoreRow.BLUE_FILL, Modifier.testTag("perms:select-clear")) { selected = emptySet() }
+            }
+        }
         // ── bulk actions ──
         val dialogable = rows.filter { it.entry.kind == PermKind.RUNTIME && it.entry.autoRequest && it.status.state == PermState.DENIED }
         val askShown = PermsPageQuery.dialogTargets(shownRows)
@@ -243,6 +300,8 @@ internal fun PermsCenterSection(
             for (r in adbResults) KitStoreCaption((if (r.ok) "✓ " else "✗ ") + r.line.command.take(90) + (if (r.output.isNotBlank()) "  → ${r.output.trim().take(80)}" else ""),
                 mono = true, color = if (r.ok) p.ok else p.bad)
         }
+    }
+    val table: @Composable () -> Unit = {
         // ── the groups ──
         val full = remember(page, q) { PermsPageQuery.fullGroups(page, q, appsOf) }
         val cleared = remember(page, q) { PermsPageQuery.nothingMissing(page, q, appsOf) }
@@ -256,7 +315,9 @@ internal fun PermsCenterSection(
                     val ask = PermsPageQuery.dialogTargets(g.rows)
                     if (ask.isNotEmpty()) KitStoreQuick("Ask group (${ask.size})", KitStoreRow.BLUE_FILL, Modifier.testTag("perms:ask-group:$key")) { onAskMany(ask) }
                 }
-                for (r in g.rows) PermRowLine(r, highlight?.ids?.contains(r.entry.id) == true, ctx, appsOf(r.entry.id), onGrant, onShell)
+                GroupProgress(full[g.key] ?: g, key)
+                for (r in g.rows) PermRowLine(r, highlight?.ids?.contains(r.entry.id) == true, ctx, appsOf(r.entry.id), onGrant, onShell,
+                    select = if (selecting) (r.entry.id in selected) else null, onSelect = { id -> selected = if (id in selected) selected - id else selected + id })
             }
         }
         // #1550 (pre-#1519) a group Missing only emptied stays, with its full count and "nothing missing".
@@ -266,9 +327,17 @@ internal fun PermsCenterSection(
                 KitStoreRowLine(Modifier.testTag("perms:section:$key")) {
                     KitStoreCaption("${g.title.uppercase()} — ${g.count}", Modifier.weight(1f), color = p.accent)
                 }
+                GroupProgress(g, key)
                 KitStoreCaption("nothing missing", Modifier.padding(horizontal = KitStoreRow.padH).testTag("perms:nothing-missing:$key"), color = p.textSecondary)
             }
         }
+    }
+    androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxWidth().testTag("perms:center")) {
+        if (wide ?: (maxWidth >= KitStoreRow.step(1200))) Row(Modifier.fillMaxWidth().testTag("perms:two-pane")) {
+            Column(Modifier.weight(0.36f).testTag("perms:pane:controls")) { controls() }
+            Box(Modifier.width(KitStoreRow.step(1)).height(KitStoreRow.step(1)).background(p.hairline))
+            Column(Modifier.weight(0.64f).testTag("perms:pane:table")) { table() }
+        } else Column(Modifier.fillMaxWidth()) { controls(); table() }
     }
 }
 
@@ -304,7 +373,8 @@ internal fun permsReport(rows: List<PermsPage.Row>, appsOf: (String) -> List<Str
  * the actions that apply (Grant, Settings, Shell, Copy adb) and, on tap, the detail (what it is, protection, apps, state).
  */
 @Composable
-private fun PermRowLine(r: PermsPage.Row, highlighted: Boolean, ctx: Context, apps: List<String>, onGrant: (PermEntry) -> Unit, onShell: (PermEntry) -> Unit) {
+private fun PermRowLine(r: PermsPage.Row, highlighted: Boolean, ctx: Context, apps: List<String>, onGrant: (PermEntry) -> Unit, onShell: (PermEntry) -> Unit,
+                        select: Boolean? = null, onSelect: (String) -> Unit = {}) {
     val p = LocalKitPalette.current
     val e = r.entry
     var open by rememberSaveable(e.id) { mutableStateOf(false) }
@@ -321,7 +391,9 @@ private fun PermRowLine(r: PermsPage.Row, highlighted: Boolean, ctx: Context, ap
     var mod = Modifier.fillMaxWidth()
     if (highlighted) mod = mod.border(1.dp, p.accent).background(p.accent.copy(alpha = 0.12f))
     Column(mod.testTag("perms:row:${e.id}")) {
-        KitStoreRowLine(onClick = { open = !open }) {
+        KitStoreRowLine(onClick = { if (select != null) onSelect(e.id) else open = !open }) {
+            if (select != null) Text(if (select) "☑" else "☐", fontSize = KitStoreRow.title, color = if (select) p.accent else p.textSecondary,
+                modifier = Modifier.padding(end = KitStoreRow.gap).testTag("perms:selectbox:${e.id}").androidxSemantics((if (select) "Selected " else "Select ") + e.label))
             Column(Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(icon, fontSize = 12.sp, color = tone, modifier = Modifier.padding(end = 4.dp).testTag("perms:icon:${e.id}"))
@@ -329,7 +401,12 @@ private fun PermRowLine(r: PermsPage.Row, highlighted: Boolean, ctx: Context, ap
                     KitStoreCaption(r.chip.word, Modifier.padding(start = KitStoreRow.gap).background(tone.copy(alpha = 0.18f))
                         .padding(horizontal = KitStoreRow.tight).testTag("perms:chip:${e.id}"), color = tone)
                     KitStoreCaption(PermsPageQuery.kindTitle(e.kind), Modifier.padding(start = KitStoreRow.tight).testTag("perms:type:${e.id}"), color = p.textSecondary)
+                    val prot = PermsPageQuery.protection(e)
+                    KitStoreCaption(prot.word, Modifier.padding(start = KitStoreRow.tight).border(KitStoreRow.step(1), PermsKpi.protectionInk(prot, p))
+                        .padding(horizontal = KitStoreRow.tight).testTag("perms:protection:${e.id}"), color = PermsKpi.protectionInk(prot, p))
                 }
+                // #1550 the permission id (or the check it is read by), monospace: the table's id column.
+                KitStoreCaption(e.permission.ifEmpty { e.check }.ifEmpty { e.id }, Modifier.fillMaxWidth().testTag("perms:id:${e.id}"), color = p.textSecondary, mono = true)
                 KitStoreCaption("$stateWord" + (if (r.status.reason.isNotBlank()) " (${r.status.reason})" else "") + " · ${r.reason}",
                     Modifier.fillMaxWidth().testTag("perms:state:${e.id}"), color = p.textSecondary)
                 if (r.missing || r.status.state == PermState.UNKNOWN) {
@@ -366,6 +443,39 @@ private fun PermRowLine(r: PermsPage.Row, highlighted: Boolean, ctx: Context, ap
         }
     }
 }
+
+/** #1550 a group's granted / applicable as a thin bar under its header. */
+@Composable
+private fun GroupProgress(g: com.diegonmarcos.superapp.perms.QueryGroup, key: String) {
+    val p = LocalKitPalette.current
+    val n = g.counted.size; val f = if (n == 0) 1f else g.granted.toFloat() / n
+    Box(Modifier.fillMaxWidth().padding(horizontal = KitStoreRow.padH).height(KitStoreRow.step(3)).background(p.hairline).testTag("perms:progress:$key")) {
+        Box(Modifier.fillMaxWidth(f).height(KitStoreRow.step(3)).background(if (f >= 1f) p.ok else p.warn))
+    }
+}
+
+/** #1550 the KPI tiles and the one status colour system of the page (state tokens of the kit palette). */
+internal object PermsKpi {
+    val TILES = listOf(StatusFilter.GRANTED, StatusFilter.MISSING, StatusFilter.DENIED_PERMANENTLY, StatusFilter.NEEDS_SHELL, StatusFilter.UNKNOWN, StatusFilter.NOT_APPLICABLE)
+    fun label(k: StatusFilter): String = when (k) {
+        StatusFilter.DENIED_PERMANENTLY -> "Denied"; StatusFilter.NOT_APPLICABLE -> "N/A"; StatusFilter.UNKNOWN -> "Manual"
+        else -> k.word
+    }
+    fun ink(k: StatusFilter, p: com.diegonmarcos.superapp.uikit.KitPalette): Color = when (k) {
+        StatusFilter.GRANTED -> p.ok
+        StatusFilter.MISSING, StatusFilter.NEEDS_SHELL -> p.warn
+        StatusFilter.DENIED_PERMANENTLY -> p.bad
+        else -> p.textSecondary
+    }
+    fun protectionInk(x: Protection, p: com.diegonmarcos.superapp.uikit.KitPalette): Color = when (x) {
+        Protection.DANGEROUS -> p.warn
+        Protection.SIGNATURE_DEV -> p.bad
+        else -> p.accent
+    }
+}
+
+/** #1550 a spoken description for a tile / checkbox (accessibility). */
+private fun Modifier.androidxSemantics(desc: String): Modifier = semantics { contentDescription = desc }
 
 private fun copy(ctx: Context, v: String) {
     (ctx.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager)?.setPrimaryClip(ClipData.newPlainText("perms", v))

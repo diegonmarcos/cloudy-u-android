@@ -56,8 +56,14 @@
      "id": "selfgrant-wss",
      "re": "^pm grant com\\.diegonmarcos\\.superapp android\\.permission\\.WRITE_SECURE_SETTINGS$"
     },
-    {"id": "selfgrant-runtime", "re": "^pm grant com\\.diegonmarcos\\.superapp android\\.permission\\.(ACCESS_BACKGROUND_LOCATION|ACCESS_COARSE_LOCATION|ACCESS_FINE_LOCATION|ACTIVITY_RECOGNITION|BLUETOOTH_ADVERTISE|BLUETOOTH_CONNECT|BLUETOOTH_SCAN|BODY_SENSORS|CAMERA|DUMP|NEARBY_WIFI_DEVICES|PACKAGE_USAGE_STATS|POST_NOTIFICATIONS|READ_CALENDAR|READ_CONTACTS|READ_EXTERNAL_STORAGE|READ_LOGS|READ_MEDIA_AUDIO|READ_MEDIA_IMAGES|READ_MEDIA_VIDEO|READ_PHONE_NUMBERS|READ_PHONE_STATE|READ_SMS|RECORD_AUDIO|WRITE_CALENDAR|WRITE_CONTACTS|WRITE_EXTERNAL_STORAGE)$"},
-    {"id": "selfgrant-location", "re": "^cmd location set-location-enabled (true|false)$"},
+    {
+     "id": "selfgrant-runtime",
+     "re": "^pm grant com\\.diegonmarcos\\.superapp android\\.permission\\.(ACCESS_BACKGROUND_LOCATION|ACCESS_COARSE_LOCATION|ACCESS_FINE_LOCATION|ACTIVITY_RECOGNITION|BLUETOOTH_ADVERTISE|BLUETOOTH_CONNECT|BLUETOOTH_SCAN|BODY_SENSORS|CAMERA|DUMP|NEARBY_WIFI_DEVICES|PACKAGE_USAGE_STATS|POST_NOTIFICATIONS|READ_CALENDAR|READ_CONTACTS|READ_EXTERNAL_STORAGE|READ_LOGS|READ_MEDIA_AUDIO|READ_MEDIA_IMAGES|READ_MEDIA_VIDEO|READ_PHONE_NUMBERS|READ_PHONE_STATE|READ_SMS|RECORD_AUDIO|WRITE_CALENDAR|WRITE_CONTACTS|WRITE_EXTERNAL_STORAGE)$"
+    },
+    {
+     "id": "selfgrant-location",
+     "re": "^cmd location set-location-enabled (true|false)$"
+    },
     {
      "id": "fleetgrant-wss",
      "re": "^pm grant com\\.diegonmarcos\\.[a-z][a-z0-9_.]* android\\.permission\\.WRITE_SECURE_SETTINGS$"
@@ -434,5 +440,297 @@
     }
    ]
   }
+ },
+ "terminal": {
+  "_doc": "#1550 The SuperApp ADB Shell terminal's declared palette, next to the allowlist that permits it: every snippet runs as the SuperApp caller and must match one of its allow rules (TerminalDeclTest); `confirm` lists the destructive commands the terminal asks about before running (any segment matching); `suggest` feeds autocomplete with command stems. Read by aa_cloud-superapp TerminalModel; the broker ignores this block.",
+  "groups": [
+   "packages",
+   "settings",
+   "appops",
+   "dumpsys",
+   "logcat",
+   "network",
+   "battery",
+   "device"
+  ],
+  "snippets": [
+   {
+    "id": "pkg-user",
+    "group": "packages",
+    "label": "User packages",
+    "cmd": "pm list packages -3"
+   },
+   {
+    "id": "pkg-disabled",
+    "group": "packages",
+    "label": "Disabled packages",
+    "cmd": "pm list packages -d"
+   },
+   {
+    "id": "pkg-system",
+    "group": "packages",
+    "label": "System packages",
+    "cmd": "pm list packages -s"
+   },
+   {
+    "id": "pkg-path",
+    "group": "packages",
+    "label": "SuperApp APK path",
+    "cmd": "pm path com.diegonmarcos.superapp"
+   },
+   {
+    "id": "pkg-dump",
+    "group": "packages",
+    "label": "SuperApp package dump",
+    "cmd": "dumpsys package com.diegonmarcos.superapp"
+   },
+   {
+    "id": "set-global",
+    "group": "settings",
+    "label": "Global settings",
+    "cmd": "settings list global"
+   },
+   {
+    "id": "set-secure",
+    "group": "settings",
+    "label": "Secure settings",
+    "cmd": "settings list secure"
+   },
+   {
+    "id": "set-adbwifi",
+    "group": "settings",
+    "label": "Wireless debugging switch",
+    "cmd": "settings get global adb_wifi_enabled"
+   },
+   {
+    "id": "set-adb",
+    "group": "settings",
+    "label": "USB debugging switch",
+    "cmd": "settings get global adb_enabled"
+   },
+   {
+    "id": "ops-self",
+    "group": "appops",
+    "label": "SuperApp app-ops",
+    "cmd": "appops get com.diegonmarcos.superapp"
+   },
+   {
+    "id": "ops-bg",
+    "group": "appops",
+    "label": "SuperApp run in background",
+    "cmd": "appops get com.diegonmarcos.superapp RUN_ANY_IN_BACKGROUND"
+   },
+   {
+    "id": "dump-top",
+    "group": "dumpsys",
+    "label": "Top activity",
+    "cmd": "dumpsys activity top"
+   },
+   {
+    "id": "dump-mem",
+    "group": "dumpsys",
+    "label": "Memory summary",
+    "cmd": "dumpsys meminfo -s"
+   },
+   {
+    "id": "dump-display",
+    "group": "dumpsys",
+    "label": "Displays",
+    "cmd": "dumpsys display"
+   },
+   {
+    "id": "dump-idle",
+    "group": "dumpsys",
+    "label": "Device idle",
+    "cmd": "dumpsys deviceidle"
+   },
+   {
+    "id": "log-recent",
+    "group": "logcat",
+    "label": "Last 200 lines (colour)",
+    "cmd": "logcat -d -v color -t 200"
+   },
+   {
+    "id": "log-errors",
+    "group": "logcat",
+    "label": "Errors only",
+    "cmd": "logcat -d -v color *:E -t 200"
+   },
+   {
+    "id": "log-crash",
+    "group": "logcat",
+    "label": "Crash buffer",
+    "cmd": "logcat -d -b crash -t 100"
+   },
+   {
+    "id": "net-addr",
+    "group": "network",
+    "label": "Interfaces",
+    "cmd": "ip addr"
+   },
+   {
+    "id": "net-route",
+    "group": "network",
+    "label": "Routes",
+    "cmd": "ip route"
+   },
+   {
+    "id": "net-listen",
+    "group": "network",
+    "label": "Listening sockets",
+    "cmd": "ss -tlnp"
+   },
+   {
+    "id": "net-conn",
+    "group": "network",
+    "label": "Connectivity",
+    "cmd": "dumpsys connectivity"
+   },
+   {
+    "id": "net-wifi",
+    "group": "network",
+    "label": "Wi-Fi",
+    "cmd": "dumpsys wifi"
+   },
+   {
+    "id": "bat-status",
+    "group": "battery",
+    "label": "Battery",
+    "cmd": "dumpsys battery"
+   },
+   {
+    "id": "bat-stats",
+    "group": "battery",
+    "label": "Battery stats since charge",
+    "cmd": "dumpsys batterystats --charged"
+   },
+   {
+    "id": "bat-idle",
+    "group": "battery",
+    "label": "Doze whitelist",
+    "cmd": "cmd deviceidle whitelist"
+   },
+   {
+    "id": "dev-id",
+    "group": "device",
+    "label": "Shell identity",
+    "cmd": "id"
+   },
+   {
+    "id": "dev-model",
+    "group": "device",
+    "label": "Device model",
+    "cmd": "getprop ro.product.model"
+   },
+   {
+    "id": "dev-sdk",
+    "group": "device",
+    "label": "SDK level",
+    "cmd": "getprop ro.build.version.sdk"
+   },
+   {
+    "id": "dev-uptime",
+    "group": "device",
+    "label": "Uptime",
+    "cmd": "uptime"
+   },
+   {
+    "id": "dev-df",
+    "group": "device",
+    "label": "Disk usage",
+    "cmd": "df"
+   }
+  ],
+  "confirm": [
+   {
+    "id": "uninstall",
+    "re": "^pm uninstall\\b",
+    "why": "removes an app and its data"
+   },
+   {
+    "id": "clear",
+    "re": "^pm clear\\b",
+    "why": "wipes an app's data"
+   },
+   {
+    "id": "disable",
+    "re": "^pm (disable|disable-user|suspend)\\b",
+    "why": "disables or suspends an app"
+   },
+   {
+    "id": "revoke",
+    "re": "^pm revoke\\b",
+    "why": "revokes a permission"
+   },
+   {
+    "id": "install",
+    "re": "^pm install\\b",
+    "why": "installs a package"
+   },
+   {
+    "id": "kill",
+    "re": "^am (force-stop|kill)\\b",
+    "why": "stops a running app"
+   },
+   {
+    "id": "settings-write",
+    "re": "^settings (put|delete)\\b",
+    "why": "changes a system setting"
+   },
+   {
+    "id": "device-config",
+    "re": "^device_config put\\b",
+    "why": "changes a device flag"
+   },
+   {
+    "id": "display",
+    "re": "^wm (density|size)\\b",
+    "why": "changes the screen density or size"
+   },
+   {
+    "id": "power",
+    "re": "^cmd power\\b",
+    "why": "changes the power state"
+   },
+   {
+    "id": "appops-deny",
+    "re": "^appops set \\S+ \\S+ (deny|ignore)\\b",
+    "why": "blocks an app operation"
+   }
+  ],
+  "suggest": [
+   "pm list packages",
+   "pm path",
+   "pm dump",
+   "pm grant",
+   "pm revoke",
+   "settings get global",
+   "settings get secure",
+   "settings list global",
+   "settings put global",
+   "appops get",
+   "appops set",
+   "dumpsys battery",
+   "dumpsys activity",
+   "dumpsys package",
+   "dumpsys meminfo",
+   "dumpsys window",
+   "dumpsys wifi",
+   "dumpsys connectivity",
+   "logcat -d -t 100",
+   "logcat -d -v color",
+   "getprop",
+   "cmd deviceidle",
+   "cmd appops",
+   "am force-stop",
+   "ip addr",
+   "ip route",
+   "ss -tlnp",
+   "netstat -tn",
+   "uptime",
+   "id",
+   "df",
+   "ps -A"
+  ]
  }
 }

@@ -237,6 +237,7 @@ class PermissionsFragment : KitComposeFragment() {
             onAskAgain = { startAuto(force = true) },
             onAskMany = { userAsk = true; askBatch(it) },
             onShellMany = { shellAll(it) },
+            statusState = statusSel,
         )
     }
 
@@ -245,8 +246,11 @@ class PermissionsFragment : KitComposeFragment() {
     private fun SummaryBar() {
         val act = requireActivity()
         val rows = remember(centerEpoch) { readPermRows(act, act) }
-        PermsSummaryBar(rows, act) { startWalk() }
+        PermsSummaryBar(rows, act, statusSel) { startWalk() }
     }
+
+    /** #1550 the status filter shared by the sticky KPI strip and the list below it. */
+    private val statusSel = androidx.compose.runtime.mutableStateOf(com.diegonmarcos.superapp.perms.StatusFilter.ALL)
 
     /** Redraw key: bumping it re-reads every row (the old detach+attach, without tearing the fragment down). */
     private var epoch by mutableIntStateOf(0)

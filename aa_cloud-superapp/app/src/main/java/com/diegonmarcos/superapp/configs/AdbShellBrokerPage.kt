@@ -121,7 +121,25 @@ internal fun AdbShellBrokerPage() {
         toggleKeeper = { WirelessDebugKeeper.Prefs.setEnabled(ctx, !state.keeperOn); tick++ },
         fixPerms = { WdKeeper.openPermsFix(ctx) },
     )
-    Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) { AdbShellContent(state, actions, console = { AdbShellPage() }) }
+    AdbShellLayout(
+        terminal = { h -> AdbTerminal(state.status, onReconnect = rearm, outputHeight = h) },
+        sections = { AdbShellContent(state, actions, console = { AdbShellPage() }) },
+    )
+}
+
+/** #1550 phone: the terminal on top, then every section, one scroll. Tablet / landscape (>= 840 dp): two panes, terminal | sections. */
+@Composable
+internal fun AdbShellLayout(terminal: @Composable (androidx.compose.ui.unit.Dp) -> Unit, sections: @Composable () -> Unit, wide: Boolean? = null) {
+    androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxWidth().testTag("adb:layout")) {
+        val twoPane = wide ?: (maxWidth >= KitStoreRow.step(1200))
+        if (twoPane) androidx.compose.foundation.layout.Row(Modifier.fillMaxWidth().testTag("adb:two-pane")) {
+            Column(Modifier.weight(0.56f).testTag("adb:pane:terminal")) { terminal(KitStoreRow.step(760)) }
+            Column(Modifier.weight(0.44f).verticalScroll(rememberScrollState()).testTag("adb:pane:sections")) { sections() }
+        } else Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
+            terminal(KitStoreRow.step(520))
+            sections()
+        }
+    }
 }
 
 @Composable

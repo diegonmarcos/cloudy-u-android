@@ -235,6 +235,17 @@ jobs:
           UNIT_TEST_FILTER: "com.diegonmarcos.superapp.launcher.AdbPeerDotsTest"
         run: bash ./build.sh test
 
+      - name: Render the ADB Shell terminal and Configs > Perms, dark/light x phone/tablet, plus their behaviour tests (ops-*.png, #1550)
+        if: always()
+        working-directory: aa_cloud-superapp
+        env:
+          BYPASS_NIX: "1"
+          VAULT_DIR: ${{ github.workspace }}/.vault
+          SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          UNIT_TEST_FILTER: "com.diegonmarcos.superapp.configs.OpsConsole*"
+        run: bash ./build.sh test
+
       - name: Render Cloud Store Configs > ADB Shell (store-configs-adb-shell.png) and run the Store suites
         if: always()
         working-directory: ac_cloud-store
