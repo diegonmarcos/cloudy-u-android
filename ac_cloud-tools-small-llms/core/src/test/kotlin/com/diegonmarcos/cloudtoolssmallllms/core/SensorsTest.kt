@@ -253,14 +253,14 @@ class SensorsTest {
     private fun hr(vararg b: Int) = GattParse.heartRate(ByteArray(b.size) { b[it].toByte() })
     private fun v(l: List<GattParse.Value>, k: String) = l.filter { it.key == k }.map { it.value }
 
-    @Test fun `heart rate: flags bit0 picks uint8 or uint16`() {
+    @Test fun `heart rate flags bit0 picks uint8 or uint16`() {
         assertEquals(listOf(GattParse.Value("bpm", 72.0)), hr(0x00, 72))
         assertEquals(listOf(GattParse.Value("bpm", 255.0)), hr(0x00, 0xFF))
         assertEquals(listOf(GattParse.Value("bpm", 300.0)), hr(0x01, 0x2C, 0x01))
         assertEquals(listOf(GattParse.Value("bpm", 65535.0)), hr(0x01, 0xFF, 0xFF))
     }
 
-    @Test fun `heart rate: sensor contact, energy expended and R-R intervals`() {
+    @Test fun `heart rate sensor contact, energy expended and R-R intervals`() {
         assertEquals(listOf(1.0), v(hr(0x06, 60), "contact"))
         assertEquals(listOf(0.0), v(hr(0x04, 60), "contact"))
         assertTrue("contact not supported: no value", v(hr(0x02, 60), "contact").isEmpty())
