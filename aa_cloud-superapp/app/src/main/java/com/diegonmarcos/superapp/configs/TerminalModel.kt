@@ -156,7 +156,7 @@ internal object TerminalModel {
     fun ansiArgb(i: Int, dark: Boolean): Long = (if (dark) DARK else LIGHT)[i.coerceIn(0, 15)]
 
     private val DARK = longArrayOf(
-        0xFF6B7280, 0xFFF87171, 0xFF4ADE80, 0xFFFACC15, 0xFF60A5FA, 0xFFC084FC, 0xFF22D3EE, 0xFFE5E7EB,
+        0xFF6B7280, 0xFFF46A6A, 0xFF4ADE80, 0xFFFACC15, 0xFF60A5FA, 0xFFC084FC, 0xFF22D3EE, 0xFFE5E7EB,
         0xFF9CA3AF, 0xFFFCA5A5, 0xFF86EFAC, 0xFFFDE68A, 0xFF93C5FD, 0xFFD8B4FE, 0xFF67E8F9, 0xFFFFFFFF,
     )
     private val LIGHT = longArrayOf(
