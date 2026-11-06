@@ -163,7 +163,7 @@ class AiChatState(private val host: AiHost) {
         streaming = ""
         citations = emptyList()
         val before = session
-        session = before.copy(messages = before.messages + AiMsg("user", ask, attachments = atts))
+        session = before.copy(messages = before.messages + AiMsg("user", ask, attachments = atts, at = System.currentTimeMillis()))
         val out = try {
             withContext(Dispatchers.IO) { host.sendWith(before, ask, atts, model, web, System.currentTimeMillis(), sink) }
         } catch (e: CancellationException) {

@@ -111,6 +111,20 @@ android {
                   signingConfig signingConfigs.debug }
     }
 
+    // #1563 the forum/topics chat Compose + screenshot tests run on the JVM (Robolectric native graphics + Roborazzi
+    // record), as in ab_cloud-libs-shared/ui-baseline/shots: the Ship `unit` phase runs them. Record never fails on
+    // pixels (the reference PNGs are the committed output), while the behaviour assertions gate on every run.
+    testOptions {
+        unitTests {
+            includeAndroidResources = true
+            all {
+                systemProperty 'roborazzi.test.record', 'true'
+                systemProperty 'robolectric.graphicsMode', 'NATIVE'
+                testLogging { events 'failed', 'standardOut'; exceptionFormat 'full' }
+            }
+        }
+    }
+
     packaging {
         resources {
             excludes += ['META-INF/NOTICE.md', 'META-INF/LICENSE.md',
@@ -155,4 +169,13 @@ dependencies {
     // Android's own org.json at runtime; the real library for the JVM suite.
     testImplementation 'org.json:json:20240303'
     testImplementation 'junit:junit:4.13.2'
+    // #1563 the forum chat Compose + screenshot tests (Robolectric + Compose UI test + Roborazzi record).
+    testImplementation platform('androidx.compose:compose-bom:2025.11.01')
+    testImplementation 'androidx.compose.ui:ui-test-junit4'
+    testImplementation 'androidx.compose.ui:ui-test-manifest'
+    testImplementation 'androidx.activity:activity-compose:1.9.3'
+    testImplementation 'org.robolectric:robolectric:4.16.1'
+    testImplementation 'io.github.takahirom.roborazzi:roborazzi:1.43.0'
+    testImplementation 'io.github.takahirom.roborazzi:roborazzi-compose:1.43.0'
+    testImplementation 'io.github.takahirom.roborazzi:roborazzi-junit-rule:1.43.0'
 }

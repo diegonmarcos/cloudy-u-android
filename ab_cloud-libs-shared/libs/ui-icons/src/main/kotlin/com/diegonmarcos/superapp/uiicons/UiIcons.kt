@@ -307,6 +307,10 @@ public object UiIcons {
         "wifi" to Icons.Outlined.Wifi,
         "bluetooth" to Icons.Outlined.Bluetooth,
         "nfc" to Icons.Outlined.Nfc,
+        // #1563 the forum/topics chat surface (Cloud SuperIntel): the thread bar's call, the composer's emoji and attach.
+        "call" to Icons.Outlined.Call,
+        "mood" to Icons.Outlined.Mood,
+        "attach_file" to Icons.Outlined.AttachFile,
         )
     }
 

@@ -9,6 +9,8 @@ data class AiMsg(
     val prompt: Long = 0, val completion: Long = 0,
     /** Files attached to a user message, or the images an assistant answer returned (shown inline, saveable, shareable). */
     val attachments: List<AiAttachment> = emptyList(),
+    /** When the message was created (epoch millis); 0 = unknown (old stored messages, which fall back to the session's updated time). */
+    val at: Long = 0,
 )
 
 /** One chat session as the host stores it. */

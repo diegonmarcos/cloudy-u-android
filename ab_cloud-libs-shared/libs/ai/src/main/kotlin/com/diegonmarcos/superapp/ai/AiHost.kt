@@ -166,7 +166,7 @@ class AiStandardHost(
     override fun sendWith(session: AiSession, text: String, attachments: List<AiAttachment>, model: String, web: Boolean, now: Long, sink: AiSink): AiOutcome {
         val asked = session.copy(
             title = session.title.ifBlank { AiProtocol.title(text.ifBlank { attachments.firstOrNull()?.name.orEmpty() }, cfg.titleChars) },
-            model = model, updated = now, messages = session.messages + AiMsg("user", text, attachments = attachments),
+            model = model, updated = now, messages = session.messages + AiMsg("user", text, attachments = attachments, at = now),
         )
         store.put(asked)
         // An image in the message or an ask for one goes the media road (OpenRouter, the user's key) with the model the flow picks.
@@ -201,7 +201,7 @@ class AiStandardHost(
         }
         val meta = listOfNotNull(agent?.label, sendModel.takeIf { x -> x.isNotBlank() && (agent == null || agent.modelFor(x) != null) }).joinToString(" · ")
         val answered = asked.copy(
-            messages = asked.messages + AiMsg("assistant", answer, meta, reply.usage?.prompt ?: 0, reply.usage?.completion ?: 0, saved),
+            messages = asked.messages + AiMsg("assistant", answer, meta, reply.usage?.prompt ?: 0, reply.usage?.completion ?: 0, saved, at = System.currentTimeMillis()),
             updated = System.currentTimeMillis(),
         )
         store.put(answered)

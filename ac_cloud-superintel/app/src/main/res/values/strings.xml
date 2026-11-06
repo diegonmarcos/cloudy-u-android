@@ -45,4 +45,23 @@
     <string name="cost_daily">Daily (UTC)</string>
     <string name="cost_monthly">Monthly</string>
     <string name="cost_no_tokens">No token totals posted yet.</string>
+    <!-- #1563 the forum/topics chat surface on the SI tab. -->
+    <string name="forum_topics">Topics</string>
+    <string name="forum_all">All</string>
+    <string name="forum_new_topic">New Topic</string>
+    <string name="forum_admin">Admin</string>
+    <string name="forum_messages">%1$d messages</string>
+    <string name="forum_message">Message</string>
+    <string name="forum_today">Today</string>
+    <string name="forum_yesterday">Yesterday</string>
+    <string name="forum_empty_title">No messages yet</string>
+    <string name="forum_empty_sub">Say something to start the thread.</string>
+    <string name="forum_thinking">Typing…</string>
+    <string name="forum_back">Back</string>
+    <string name="forum_more">More</string>
+    <string name="forum_call">Call</string>
+    <string name="forum_info">Info</string>
+    <string name="forum_emoji">Emoji</string>
+    <string name="forum_attach">Attach</string>
+    <string name="forum_voice">Voice message</string>
 </resources>

@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -38,11 +39,29 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.diegonmarcos.superapp.ai.AiAttachHost
 import com.diegonmarcos.superapp.ai.AiChatPage
+import com.diegonmarcos.superapp.ai.AiForumChat
+import com.diegonmarcos.superapp.ai.ForumIcon
+import com.diegonmarcos.superapp.ai.ForumStrings
+import com.diegonmarcos.superapp.ai.ForumTopic
 import com.diegonmarcos.superapp.ai.AiSessionsPanel
 import com.diegonmarcos.superapp.ai.AiSettingsPickers
 import com.diegonmarcos.superapp.ai.AiStrings
 import com.diegonmarcos.superapp.ai.AiTheme
 import com.diegonmarcos.superapp.ai.materialAiTheme
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AddCircleOutline
+import androidx.compose.material.icons.outlined.AttachFile
+import androidx.compose.material.icons.outlined.Call
+import androidx.compose.material.icons.outlined.ChevronLeft
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Menu
+import androidx.compose.material.icons.outlined.Mic
+import androidx.compose.material.icons.outlined.Mood
+import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material.icons.outlined.Send
+import androidx.compose.ui.res.colorResource
+import com.diegonmarcos.cloudsuperintel.Persona
 import com.diegonmarcos.superapp.bottomnav.TopBarDrawer
 import com.diegonmarcos.superapp.bottomnav.rememberAccountLauncher
 import com.diegonmarcos.superapp.bottomnav.islandEntries
@@ -131,8 +150,11 @@ fun SiShell() {
                     Box(Modifier.fillMaxSize()) {
                         when (sec?.id) {
                             Decl.SECTION_NOTEBOOK -> NotebookPage(notebooks, pageId.orEmpty(), theme, { page = it }, NotebookIds(Decl.PAGE_NB_NOTEBOOKS, Decl.PAGE_NB_SOURCES, Decl.PAGE_NB_CHAT, Decl.PAGE_NB_STUDIO))
-                            // SI (the router) and every CGC expert are the same shared chat page, each over its own persona.
-                            Decl.SECTION_SI, Decl.SECTION_CGCS -> persona?.let { p ->
+                            // SI (the router tab) is the forum/topics chat surface: every persona is a topic, the router is
+                            // "# General", and the content sits above the unchanged bottom nav (#1563).
+                            Decl.SECTION_SI -> SiForum(ctx, personas, theme, Modifier.imePadding().testTag(SiTags.CHAT))
+                            // Every CGC expert is the same shared single chat page, each over its own persona.
+                            Decl.SECTION_CGCS -> persona?.let { p ->
                                 LaunchedEffect(p.id) { withContext(Dispatchers.IO) { SiAi.tune(ctx, p, chat) } }
                                 AiChatPage(
                                     chat, theme.copy(strings = theme.strings.copy(hello = p.label, helloSub = p.role)),
@@ -159,6 +181,88 @@ fun SiShell() {
 
 /** The libs:perms feature the attach menu's "Fix in Perms" chip reports. */
 private const val ATTACH_FEATURE = "chat"
+
+/**
+ * The SI tab as a forum/topics chat (#1563): the left topics rail is every persona (the router is "# General",
+ * each CGC expert a topic), the thread is that topic's libs:ai chat, and the whole surface sits in the content
+ * area above the unchanged bottom nav. Selecting a topic switches the thread; the router's preferred model is
+ * tuned once. The forum, bubbles, receipts and composer are libs:ai's (AiForumChat).
+ */
+@Composable
+private fun SiForum(ctx: android.content.Context, personas: List<Persona>, theme: AiTheme, modifier: Modifier) {
+    val siDefault = remember { SiAi.defaultId(ctx) }
+    val topics = remember(personas) {
+        personas.map { p ->
+            ForumTopic(
+                id = p.id,
+                label = if (p.router) "General" else p.label,
+                badge = if (p.router) "#" else p.label.take(3),
+                chat = SiAi.chat(ctx, p.id),
+                senderName = p.label,
+            )
+        }
+    }
+    var selected by rememberSaveable { mutableStateOf(siDefault) }
+    val current = personas.firstOrNull { it.id == selected } ?: personas.first()
+    LaunchedEffect(current.id) { withContext(Dispatchers.IO) { SiAi.tune(ctx, current, topics.first { it.id == current.id }.chat) } }
+    AiForumChat(
+        topics = topics,
+        selectedId = selected,
+        onSelect = { selected = it },
+        theme = theme,
+        modifier = modifier,
+        strings = forumStrings(),
+        icon = siForumIcon,
+        adminColor = colorResource(R.color.si_ok),
+        onNewTopic = null,
+        onCall = {},
+        onInfo = {},
+        onMore = {},
+    )
+}
+
+/** The forum's words from this app's resources. */
+@Composable
+private fun forumStrings(): ForumStrings = ForumStrings(
+    topics = stringResource(R.string.forum_topics),
+    all = stringResource(R.string.forum_all),
+    newTopic = stringResource(R.string.forum_new_topic),
+    admin = stringResource(R.string.forum_admin),
+    messages = stringResource(R.string.forum_messages),
+    message = stringResource(R.string.forum_message),
+    today = stringResource(R.string.forum_today),
+    yesterday = stringResource(R.string.forum_yesterday),
+    emptyTitle = stringResource(R.string.forum_empty_title),
+    emptySub = stringResource(R.string.forum_empty_sub),
+    thinking = stringResource(R.string.forum_thinking),
+    errorPrefix = stringResource(R.string.chat_failed),
+    back = stringResource(R.string.forum_back),
+    more = stringResource(R.string.forum_more),
+    call = stringResource(R.string.forum_call),
+    info = stringResource(R.string.forum_info),
+    emoji = stringResource(R.string.forum_emoji),
+    attach = stringResource(R.string.forum_attach),
+    voice = stringResource(R.string.forum_voice),
+    send = stringResource(R.string.chat_send),
+)
+
+/** The forum's icon names mapped to Material symbols (material-icons-extended), drawn tinted with a content description. */
+private val siForumIcon: ForumIcon = { name, size, tint, description ->
+    val vector = when (name) {
+        "board", "topics" -> Icons.Outlined.Menu
+        "back" -> Icons.Outlined.ChevronLeft
+        "more" -> Icons.Outlined.MoreVert
+        "call" -> Icons.Outlined.Call
+        "info" -> Icons.Outlined.Info
+        "emoji" -> Icons.Outlined.Mood
+        "attach" -> Icons.Outlined.AttachFile
+        "mic" -> Icons.Outlined.Mic
+        "send" -> Icons.Outlined.Send
+        "new" -> Icons.Outlined.AddCircleOutline
+        else -> Icons.Outlined.Info
+    }
+    Icon(imageVector = vector, contentDescription = description, tint = tint, modifier = Modifier.size(size))
+}
 
 /** A plain settings page: a title, a paragraph, and the page's own controls under them. */
 @Composable
