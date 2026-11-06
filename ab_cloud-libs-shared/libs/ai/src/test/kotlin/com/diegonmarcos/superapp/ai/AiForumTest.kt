@@ -23,10 +23,10 @@ class AiForumTest {
             user("a", "2026-09-19", "09:00"), bot("b", "2026-09-19", "09:01"),
             user("c", "2026-09-20", "10:00"),
         )
-        val rows = AiForum.rows(msgs, utc, at("2026-09-21"), at("2026-09-20"))
+        // now is well past both days, so neither is Today/Yesterday: both show a month-day label.
+        val rows = AiForum.rows(msgs, utc, at("2026-10-01"), at("2026-09-20"))
         val seps = rows.filterIsInstance<AiForum.Row.Separator>()
         assertEquals(2, seps.size)
-        // Neither day is "today" (now is the 21st) so both show a month-day label, newest-day label distinct.
         assertEquals("September 19", seps[0].label)
         assertEquals("September 20", seps[1].label)
     }
