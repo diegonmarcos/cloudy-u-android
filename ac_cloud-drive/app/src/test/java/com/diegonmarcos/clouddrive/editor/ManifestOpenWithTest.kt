@@ -33,7 +33,7 @@ class ManifestOpenWithTest {
     private val main = filters(".MainActivity")
     private val pdf = filters(".PdfReaderActivity")
 
-    /** Android's own type matching: an exact type, "type/*", or the star-star wildcard. */
+    // Android type matching: an exact type, a "<type>/<star>" wildcard, or the star-star wildcard.
     private fun claims(mimes: Set<String>, type: String) = mimes.any { it == "*/*" || it == type || (it.endsWith("/*") && type.startsWith(it.dropLast(1))) }
 
     private val openFilters get() = main.filter { view in it.actions }
