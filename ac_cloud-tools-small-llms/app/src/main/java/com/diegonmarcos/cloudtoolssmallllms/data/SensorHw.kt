@@ -205,7 +205,7 @@ class AndroidDeviceFacts(private val ctx: Context, private val hw: HardwareProbe
     }
 
     private fun touchPressure(): ProbeResult {
-        val max = android.view.InputDevice.getDeviceIds().mapNotNull { android.view.InputDevice.getDevice(it) }
+        val max = android.view.InputDevice.getDeviceIds().toList().mapNotNull { android.view.InputDevice.getDevice(it) }
             .mapNotNull { it.getMotionRange(android.view.MotionEvent.AXIS_PRESSURE, android.view.InputDevice.SOURCE_TOUCHSCREEN)?.max }.maxOrNull()
         return if (max == null) ProbeResult(false) else ProbeResult(true, listOf(ctx.getString(R.string.probe_pressure_max, Num.short(max))))
     }

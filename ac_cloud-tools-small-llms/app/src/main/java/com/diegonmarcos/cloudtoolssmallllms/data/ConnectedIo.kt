@@ -218,7 +218,7 @@ class AndroidConnectedFacts(private val ctx: Context) : ConnectedFacts {
     override fun packageInstalled(name: String): Boolean = runCatching { ctx.packageManager.getPackageInfo(name, 0); true }.getOrDefault(false)
 
     override fun input(kind: String): Boolean = runCatching {
-        android.view.InputDevice.getDeviceIds().mapNotNull { android.view.InputDevice.getDevice(it) }.any { d ->
+        android.view.InputDevice.getDeviceIds().toList().mapNotNull { android.view.InputDevice.getDevice(it) }.any { d ->
             when (kind) {
                 "gamepad" -> d.supportsSource(android.view.InputDevice.SOURCE_GAMEPAD) || d.supportsSource(android.view.InputDevice.SOURCE_JOYSTICK)
                 "stylus" -> d.supportsSource(android.view.InputDevice.SOURCE_STYLUS)

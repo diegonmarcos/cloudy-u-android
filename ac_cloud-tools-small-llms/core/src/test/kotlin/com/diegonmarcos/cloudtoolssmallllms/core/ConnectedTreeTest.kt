@@ -68,7 +68,7 @@ class ConnectedTreeTest {
         assertTrue(ConnectedTree.resolve(c, Facts()).all { it.state == ConnState.ABSENT })
     }
 
-    @Test fun `the best state wins: connected over paired over available`() {
+    @Test fun `the best state wins - connected over paired over available`() {
         val f = Facts(connected = setOf(u("1822")), bonded = setOf(u("1822")), scanned = setOf(u("1822")))
         assertEquals(ConnState.CONNECTED, state(ConnectedTree.resolve(c, f), "plx"))
         assertEquals(ConnState.PAIRED, state(ConnectedTree.resolve(c, Facts(bonded = setOf(u("1822")), scanned = setOf(u("1822")))), "plx"))
