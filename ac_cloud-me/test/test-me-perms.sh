@@ -84,7 +84,7 @@ for need, why in (("PermsList(", "the page is the shared PermsList"), ("PermsPro
     if need not in k: bad("P7 " + why + " (" + need + " missing in MePerms.kt)")
 for need, why in (("ChipView(chip, p", "rows carry the state chip"), ("HorizontalDivider(", "rows are divided"),
                   ("onGrantAll != null) Button(", "Grant all is a primary button"), ("prog.label", "Grant all shows the progress count"),
-                  ("testTag(PermsTags.DISMISS)", "the banner can be dismissed"), ("maxLines = 1, overflow = TextOverflow.Ellipsis", "row text never wraps into the chip")):
+                  ("permsTag(PermsTags.DISMISS)", "the banner can be dismissed"), ("maxLines = 1, overflow = TextOverflow.Ellipsis", "row text never wraps into the chip")):
     if need not in ui: bad("P7 " + why + " (" + need + " missing in PermsUi.kt)")
 if "Group(NOT_USED, items.filter { !it.used }, collapsed = true)" not in view: bad("P7 unused permissions are not collapsed under Not used yet")
 if re.search(r"\bfontSize = \d+\.sp|colorResource\(", k): bad("P7 MePerms.kt hardcodes a size or colour instead of the libs:ui-kit palette")
@@ -120,7 +120,7 @@ plant "a reason runs over one line"                'sub(A + "/build.json", "\"wh
 plant "nothing is flagged unused"                  'import re; s = open(A + "/build.json").read(); open(A + "/build.json", "w").write(s.replace(", \"used\": false", ""))'
 plant "Configs shows a raw build.json id"          'sub(A + "/data/ui/configs/perms.json", "What Cloud Me can access", "build.json::ui.permissions: what Cloud Me can access")'
 plant "unused rows are not collapsed"              'sub(L + "/PermsView.kt", "items.filter { !it.used }, collapsed = true)", "items.filter { !it.used })")'
-plant "the banner loses its dismiss"               'sub(L + "/PermsUi.kt", "testTag(PermsTags.DISMISS)", "testTag(\"x\")")'
+plant "the banner loses its dismiss"               'sub(L + "/PermsUi.kt", "permsTag(PermsTags.DISMISS)", "permsTag(\"x\")")'
 plant "the state chip is dropped"                  'sub(L + "/PermsUi.kt", "ChipView(chip, p", "Pill(chip.word, p.dim")'
 plant "Grant all is plain text again"              'sub(L + "/PermsUi.kt", "onGrantAll != null) Button(", "onGrantAll != null) TextButton(")'
 plant "Cloud Me draws its own list again"          'sub(K + "/MePerms.kt", "    PermsList(\n", "    MeList(\n")'
