@@ -1259,6 +1259,8 @@
     <string name="list_group_none">Без группировки</string>
     <string name="list_rank_sender">По отправителю</string>
     <string name="list_rank_subject">По теме</string>
+    <string name="list_filter_all">Все</string>
+    <string name="list_reset_defaults">Сбросить по умолчанию</string>
     <string name="list_filter_starred">Только избранные</string>
     <string name="list_filter_unread">Только непрочитанные</string>
     <string name="list_filter_attachments">Только с вложениями</string>

@@ -1345,6 +1345,8 @@
     <string name="list_group_none">No grouping</string>
     <string name="list_rank_sender">By sender</string>
     <string name="list_rank_subject">By subject</string>
+    <string name="list_filter_all">All</string>
+    <string name="list_reset_defaults">Reset to defaults</string>
     <string name="list_filter_starred">Only starred</string>
     <string name="list_filter_unread">Only unread</string>
     <string name="list_filter_attachments">Only with attachments</string>

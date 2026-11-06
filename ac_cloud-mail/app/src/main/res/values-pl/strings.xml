@@ -1256,6 +1256,8 @@
     <string name="list_group_none">Bez grupowania</string>
     <string name="list_rank_sender">Według nadawcy</string>
     <string name="list_rank_subject">Według tematu</string>
+    <string name="list_filter_all">Wszystkie</string>
+    <string name="list_reset_defaults">Przywróć domyślne</string>
     <string name="list_filter_starred">Tylko oznaczone gwiazdką</string>
     <string name="list_filter_unread">Tylko nieprzeczytane</string>
     <string name="list_filter_attachments">Tylko z załącznikami</string>

@@ -1,9 +1,14 @@
 package app.sterna.ui.inbox
 
 import android.content.Context
+import app.sterna.BuildConfig
+import app.sterna.core.data.mail.AlertScope
 import app.sterna.core.data.mail.AuthFilter
+import app.sterna.core.data.mail.InboxSplit
+import app.sterna.core.data.mail.InboxSplitRules
 import app.sterna.core.data.mail.ListShape
 import app.sterna.core.data.settings.SortOrder
+import java.util.Base64
 
 /** How rows are grouped: threads ("by subject"), by sender address, by sender domain, or not at all. */
 internal enum class GroupMode { SUBJECT, SENDER, DOMAIN, NONE }
@@ -15,24 +20,49 @@ internal enum class RankMode(val order: SortOrder) {
     SUBJECT(SortOrder.SUBJECT),
 }
 
-/** The combinable filters. UNREAD is the old funnel, now one filter among the others. */
-internal enum class ListFilter {
-    STARRED, UNREAD, ATTACHMENTS,
+/**
+ * The view every folder opens with, DECLARED in build.json::mail_list_defaults (baked as
+ * BuildConfig.LIST_DEFAULT_*) and read here, so no default lives in code. The alert rules of the two
+ * Inbox breakdown views come from build.json::mail_inbox_split the same way.
+ */
+internal object ListViewDefaults {
+    val group: GroupMode = GroupMode.valueOf(BuildConfig.LIST_DEFAULT_GROUP)
+    val rank: RankMode = RankMode.valueOf(BuildConfig.LIST_DEFAULT_RANK)
 
-    /** Rule "G0 _ Auth": Ga Code, Gb Link to auth, or either. Exclusive among themselves. */
-    AUTH_CODES, AUTH_LINKS, AUTH_ANY;
+    /** The default filter; ALL means none, and is stored as the empty set. */
+    val filter: ListFilter = ListFilter.valueOf(BuildConfig.LIST_DEFAULT_FILTER)
+    val filters: Set<ListFilter> = if (filter == ListFilter.ALL) emptySet() else setOf(filter)
 
-    val isAuth get() = this == AUTH_CODES || this == AUTH_LINKS || this == AUTH_ANY
+    val alertRules: InboxSplitRules by lazy {
+        InboxSplit.parse(String(Base64.getDecoder().decode(BuildConfig.INBOX_SPLIT_B64), Charsets.UTF_8))
+    }
 }
 
 /**
- * One folder's view choices. A folder nobody touched groups By sender (the [group] default; a saved
- * choice wins). A null [rank] means "not chosen here": the global sort order applies.
+ * The combinable filters. UNREAD is the old funnel, now one filter among the others. ALL is the first
+ * entry of the menu: "no filter", never stored, and choosing it lifts every other filter.
+ */
+internal enum class ListFilter {
+    ALL, STARRED, UNREAD, ATTACHMENTS,
+
+    /** Rule "G0 _ Auth": Ga Code, Gb Link to auth, or either. Exclusive among themselves. */
+    AUTH_CODES, AUTH_LINKS, AUTH_ANY,
+
+    /** The Inbox's two breakdown views, a strict partition (InboxSplit). Exclusive among themselves. */
+    ALERTS, NO_ALERTS;
+
+    val isAuth get() = this == AUTH_CODES || this == AUTH_LINKS || this == AUTH_ANY
+    val isAlertScope get() = this == ALERTS || this == NO_ALERTS
+}
+
+/**
+ * One folder's view choices. A folder nobody touched opens on [ListViewDefaults] (Domain, Newest
+ * first, All); a saved choice wins. A null [rank] means "not chosen here": the global sort applies.
  */
 internal data class ListView(
-    val group: GroupMode? = GroupMode.SENDER,
-    val rank: RankMode? = null,
-    val filters: Set<ListFilter> = emptySet(),
+    val group: GroupMode? = ListViewDefaults.group,
+    val rank: RankMode? = ListViewDefaults.rank,
+    val filters: Set<ListFilter> = ListViewDefaults.filters,
 ) {
     fun effectiveGroup(globalConversation: Boolean): GroupMode =
         group ?: if (globalConversation) GroupMode.SUBJECT else GroupMode.NONE
@@ -50,21 +80,30 @@ internal data class ListView(
         },
         bySender = group == GroupMode.SENDER,
         byDomain = group == GroupMode.DOMAIN,
+        alerts = when {
+            ListFilter.ALERTS in filters -> AlertScope.ALERTS
+            ListFilter.NO_ALERTS in filters -> AlertScope.NO_ALERTS
+            else -> AlertScope.ALL
+        },
+        alertRules = if (filters.any { it.isAlertScope }) ListViewDefaults.alertRules else null,
     )
 
     /** Whether the three icon groups should read as active: any non-default choice is set. */
     fun viewModeActive(globalConversation: Boolean): Boolean =
         effectiveGroup(globalConversation) != ListView().effectiveGroup(globalConversation)
 
-    fun rankActive(globalSort: SortOrder): Boolean = effectiveSort(globalSort) != SortOrder.DATE_DESC
+    fun rankActive(globalSort: SortOrder): Boolean = effectiveSort(globalSort) != ListViewDefaults.rank.order
 
-    fun filterActive(): Boolean = filters.isNotEmpty()
+    fun filterActive(): Boolean = filters != ListViewDefaults.filters
 
-    /** Toggle [filter]; choosing one auth class lifts the others (they are exclusive). */
+    /** Toggle [filter]; choosing one auth class lifts the others (they are exclusive), and so for the
+     *  two alert views. ALL lifts every filter. */
     fun toggled(filter: ListFilter): ListView = copy(
         filters = when {
+            filter == ListFilter.ALL -> emptySet()
             filter in filters -> filters - filter
             filter.isAuth -> filters.filterNot { it.isAuth }.toSet() + filter
+            filter.isAlertScope -> filters.filterNot { it.isAlertScope }.toSet() + filter
             else -> filters + filter
         },
     )
@@ -75,14 +114,16 @@ internal data class ListView(
 
     companion object {
         fun decode(raw: String?): ListView {
+            if (raw == null) return ListView()
             val parts = raw.orEmpty().split(';')
             fun <T> pick(i: Int, parse: (String) -> T): T? =
                 parts.getOrNull(i)?.takeIf { it.isNotEmpty() }?.let { runCatching { parse(it) }.getOrNull() }
             return ListView(
                 group = pick(0) { GroupMode.valueOf(it) } ?: ListView().group,
-                rank = pick(1) { RankMode.valueOf(it) },
+                rank = pick(1) { RankMode.valueOf(it) } ?: ListView().rank,
                 filters = parts.getOrNull(2).orEmpty().split(',')
-                    .mapNotNull { f -> runCatching { ListFilter.valueOf(f) }.getOrNull() }.toSet(),
+                    .mapNotNull { f -> runCatching { ListFilter.valueOf(f) }.getOrNull() }
+                    .filter { it != ListFilter.ALL }.toSet(),
             )
         }
     }
@@ -100,6 +141,11 @@ internal object ListViewPrefs {
 
     fun load(context: Context, key: String): ListView =
         ListView.decode(prefs(context).getString(key, null))
+
+    /** Reset to defaults: forget this folder's saved choices, so it opens on [ListViewDefaults] again. */
+    fun reset(context: Context, key: String) {
+        prefs(context).edit().remove(key).apply()
+    }
 
     fun save(context: Context, key: String, view: ListView) {
         prefs(context).edit().apply {

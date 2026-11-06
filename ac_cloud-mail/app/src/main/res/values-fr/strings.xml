@@ -1248,6 +1248,8 @@
     <string name="list_group_none">Ne pas grouper</string>
     <string name="list_rank_sender">Par expéditeur</string>
     <string name="list_rank_subject">Par sujet</string>
+    <string name="list_filter_all">Tous</string>
+    <string name="list_reset_defaults">Rétablir les valeurs par défaut</string>
     <string name="list_filter_starred">Favoris seulement</string>
     <string name="list_filter_unread">Non lus seulement</string>
     <string name="list_filter_attachments">Avec pièces jointes seulement</string>

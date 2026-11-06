@@ -1236,6 +1236,8 @@
     <string name="list_group_none">Nicht gruppieren</string>
     <string name="list_rank_sender">Nach Absender</string>
     <string name="list_rank_subject">Nach Betreff</string>
+    <string name="list_filter_all">Alle</string>
+    <string name="list_reset_defaults">Auf Standard zurücksetzen</string>
     <string name="list_filter_starred">Nur markierte</string>
     <string name="list_filter_unread">Nur ungelesene</string>
     <string name="list_filter_attachments">Nur mit Anhängen</string>

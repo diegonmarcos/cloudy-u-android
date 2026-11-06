@@ -50,8 +50,9 @@ class ListViewControlsTest {
             listOf(
                 "GROUP_SUBJECT", "GROUP_SENDER", "GROUP_DOMAIN", "GROUP_NONE",
                 "RANK_NEWEST", "RANK_SENDER", "RANK_SUBJECT",
-                "FILTER_STARRED", "FILTER_UNREAD", "FILTER_ATTACHMENTS",
+                "FILTER_ALL", "FILTER_STARRED", "FILTER_UNREAD", "FILTER_ATTACHMENTS",
                 "FILTER_AUTH_CODES", "FILTER_AUTH_LINKS", "FILTER_AUTH_ANY",
+                "FILTER_ALERTS", "FILTER_NO_ALERTS", "RESET_DEFAULTS",
             ),
             ListViewFunction.entries.map { it.name },
         )
@@ -74,9 +75,13 @@ class ListViewControlsTest {
         val ran = mutableListOf<String>()
         val actions = ListViewActions({ ran += "g:$it" }, { ran += "r:$it" }, { ran += "f:$it" })
         ListViewFunction.entries.forEach { it.run(actions) }
-        assertEquals(13, ran.size)
+        // Reset is not a filter: with no onReset wired it adds nothing here.
+        assertEquals(16, ran.size)
         assertEquals("g:SUBJECT", ran.first())
-        assertEquals("f:AUTH_ANY", ran.last())
+        assertEquals("f:NO_ALERTS", ran.last())
+        var reset = 0
+        ListViewFunction.RESET_DEFAULTS.run(ListViewActions({}, {}, {}, onReset = { reset++ }))
+        assertEquals(1, reset)
     }
 
     // -- an icon is active when any non-default choice is set -----------------------------------
@@ -101,7 +106,8 @@ class ListViewControlsTest {
         assertEquals(GroupMode.SUBJECT, ListView(group = GroupMode.SUBJECT).effectiveGroup(false))
         assertEquals(GroupMode.NONE, ListView(group = GroupMode.NONE).effectiveGroup(true))
         assertEquals(GroupMode.SENDER, ListView(group = GroupMode.SENDER).effectiveGroup(false))
-        assertEquals(SortOrder.FLAGGED_FIRST, ListView().effectiveSort(SortOrder.FLAGGED_FIRST))
+        assertEquals("a folder opens Newest first whatever the global sort", SortOrder.DATE_DESC, ListView().effectiveSort(SortOrder.FLAGGED_FIRST))
+        assertEquals(SortOrder.FLAGGED_FIRST, ListView(rank = null).effectiveSort(SortOrder.FLAGGED_FIRST))
         assertEquals(SortOrder.SENDER, ListView(rank = RankMode.SENDER).effectiveSort(SortOrder.DATE_DESC))
         assertEquals(SortOrder.SUBJECT, RankMode.SUBJECT.order)
         assertEquals(SortOrder.DATE_DESC, RankMode.NEWEST.order)
@@ -140,7 +146,7 @@ class ListViewControlsTest {
         val viewMode = ListViewFunction.of(ListViewGroup.VIEW_MODE).map { it.name }
         assertEquals(listOf("GROUP_SUBJECT", "GROUP_SENDER", "GROUP_DOMAIN", "GROUP_NONE"), viewMode)
         val ui = ListViewUi.of(ListView(group = GroupMode.DOMAIN), globalConversation = true, globalSort = SortOrder.DATE_DESC)
-        assertEquals(listOf("GROUP_DOMAIN", "RANK_NEWEST"), ListViewFunction.entries.filter { it.isActive(ui) }.map { it.name })
+        assertEquals(listOf("GROUP_DOMAIN", "RANK_NEWEST", "FILTER_ALL"), ListViewFunction.entries.filter { it.isActive(ui) }.map { it.name })
         assertTrue(ui.groupActive(ListViewGroup.VIEW_MODE))
         val ran = mutableListOf<GroupMode>()
         ListViewFunction.GROUP_DOMAIN.run(ListViewActions({ ran += it }, {}, {}))
@@ -155,18 +161,18 @@ class ListViewControlsTest {
         assertTrue(src("InboxScreen.kt").contains("if (domainGrouped && !fromSearch) DomainGroupHeader(DomainGroupHeading.of(row))"))
     }
 
-    @Test fun `By sender is the default list grouping, and a saved choice still wins`() {
+    @Test fun `Domain is the default list grouping, and a saved choice still wins`() {
         // fresh install, reset, or no saved choice: nothing stored for this account and folder
         val key = ListViewPrefs.keyFor("fresh", "inbox")
-        assertEquals(GroupMode.SENDER, ListViewPrefs.load(context, key).effectiveGroup(true))
-        assertEquals(GroupMode.SENDER, ListViewPrefs.load(context, key).effectiveGroup(false))
-        assertEquals(GroupMode.SENDER, ListView.decode(null).group)
-        assertEquals(GroupMode.SENDER, ListView.decode(";NEWEST;STARRED").group)
-        assertTrue(ListView().shape().bySender)
-        assertEquals(GroupMode.SENDER, ListViewUi.of(ListView(), true, SortOrder.DATE_DESC).group)
-        assertEquals(GroupMode.SENDER, ListViewUi().group)
+        assertEquals(GroupMode.DOMAIN, ListViewPrefs.load(context, key).effectiveGroup(true))
+        assertEquals(GroupMode.DOMAIN, ListViewPrefs.load(context, key).effectiveGroup(false))
+        assertEquals(GroupMode.DOMAIN, ListView.decode(null).group)
+        assertEquals(GroupMode.DOMAIN, ListView.decode(";NEWEST;STARRED").group)
+        assertTrue(ListView().shape().byDomain)
+        assertEquals(GroupMode.DOMAIN, ListViewUi.of(ListView(), true, SortOrder.DATE_DESC).group)
+        assertEquals(GroupMode.DOMAIN, ListViewUi().group)
         // a saved choice wins over the default
-        for (mode in listOf(GroupMode.SUBJECT, GroupMode.DOMAIN, GroupMode.NONE)) {
+        for (mode in listOf(GroupMode.SUBJECT, GroupMode.SENDER, GroupMode.NONE)) {
             ListViewPrefs.save(context, key, ListView(group = mode))
             assertEquals(mode, ListViewPrefs.load(context, key).effectiveGroup(true))
         }

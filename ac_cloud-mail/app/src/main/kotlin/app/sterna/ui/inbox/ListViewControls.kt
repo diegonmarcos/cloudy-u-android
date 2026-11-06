@@ -20,6 +20,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import app.sterna.R
+import app.sterna.core.data.mail.AlertCounts
 import app.sterna.core.data.settings.SortOrder
 import app.sterna.ui.components.Icon
 import app.sterna.ui.components.IconButton
@@ -34,12 +35,14 @@ internal enum class ListViewGroup(@StringRes val label: Int, val icon: ImageVect
 
 /** What the controls show: this view's effective choices, and whether each group is off its default. */
 internal data class ListViewUi(
-    val group: GroupMode = GroupMode.SENDER,
-    val rank: RankMode? = RankMode.NEWEST,
-    val filters: Set<ListFilter> = emptySet(),
+    val group: GroupMode = ListViewDefaults.group,
+    val rank: RankMode? = ListViewDefaults.rank,
+    val filters: Set<ListFilter> = ListViewDefaults.filters,
     val viewModeActive: Boolean = false,
     val rankActive: Boolean = false,
     val filterActive: Boolean = false,
+    /** The folder's All / Alerts / no-Alerts counts; null where the split is not offered (not the Inbox). */
+    val alertCounts: AlertCounts? = null,
 ) {
     fun groupActive(g: ListViewGroup) = when (g) {
         ListViewGroup.VIEW_MODE -> viewModeActive
@@ -48,13 +51,14 @@ internal data class ListViewUi(
     }
 
     companion object {
-        fun of(view: ListView, globalConversation: Boolean, globalSort: SortOrder) = ListViewUi(
+        fun of(view: ListView, globalConversation: Boolean, globalSort: SortOrder, alertCounts: AlertCounts? = null) = ListViewUi(
             group = view.effectiveGroup(globalConversation),
             rank = RankMode.entries.firstOrNull { it.order == view.effectiveSort(globalSort) },
             filters = view.filters,
             viewModeActive = view.viewModeActive(globalConversation),
             rankActive = view.rankActive(globalSort),
             filterActive = view.filterActive(),
+            alertCounts = alertCounts,
         )
     }
 }
@@ -64,6 +68,8 @@ internal class ListViewActions(
     val onGroup: (GroupMode) -> Unit,
     val onRank: (RankMode) -> Unit,
     val onFilter: (ListFilter) -> Unit,
+    /** Reset to defaults: this folder's saved choices are forgotten. */
+    val onReset: () -> Unit = {},
 )
 
 /**
@@ -78,12 +84,35 @@ internal enum class ListViewFunction(val group: ListViewGroup, @StringRes val la
     RANK_NEWEST(ListViewGroup.RANK, R.string.inbox_sort_newest_first),
     RANK_SENDER(ListViewGroup.RANK, R.string.list_rank_sender),
     RANK_SUBJECT(ListViewGroup.RANK, R.string.list_rank_subject),
+    FILTER_ALL(ListViewGroup.FILTER, R.string.list_filter_all),
     FILTER_STARRED(ListViewGroup.FILTER, R.string.list_filter_starred),
     FILTER_UNREAD(ListViewGroup.FILTER, R.string.list_filter_unread),
     FILTER_ATTACHMENTS(ListViewGroup.FILTER, R.string.list_filter_attachments),
     FILTER_AUTH_CODES(ListViewGroup.FILTER, R.string.list_filter_auth_codes),
     FILTER_AUTH_LINKS(ListViewGroup.FILTER, R.string.list_filter_auth_links),
-    FILTER_AUTH_ANY(ListViewGroup.FILTER, R.string.list_filter_auth_any);
+    FILTER_AUTH_ANY(ListViewGroup.FILTER, R.string.list_filter_auth_any),
+
+    /** The Inbox's two breakdown views; their names come from build.json::mail_inbox_split, so no string. */
+    FILTER_ALERTS(ListViewGroup.FILTER, 0),
+    FILTER_NO_ALERTS(ListViewGroup.FILTER, 0),
+    RESET_DEFAULTS(ListViewGroup.FILTER, R.string.list_reset_defaults);
+
+    /** Whether this function is offered in [ui]: the two alert views only where the counts exist (the Inbox). */
+    fun visible(ui: ListViewUi): Boolean =
+        (this != FILTER_ALERTS && this != FILTER_NO_ALERTS) || ui.alertCounts != null
+
+    /** The text drawn: the label, with the folder's count on All and on the two alert views. */
+    @Composable
+    fun text(ui: ListViewUi): String {
+        val rules = ListViewDefaults.alertRules
+        val c = ui.alertCounts
+        return when (this) {
+            FILTER_ALERTS -> rules.labelAlerts + (c?.let { "  (${it.alerts})" } ?: "")
+            FILTER_NO_ALERTS -> rules.labelNoAlerts + (c?.let { "  (${it.noAlerts})" } ?: "")
+            FILTER_ALL -> stringResource(label) + (c?.let { "  (${it.all})" } ?: "")
+            else -> stringResource(label)
+        }
+    }
 
     /** Whether this choice is the active one (checked) in [ui]. */
     fun isActive(ui: ListViewUi): Boolean = when (this) {
@@ -94,12 +123,16 @@ internal enum class ListViewFunction(val group: ListViewGroup, @StringRes val la
         RANK_NEWEST -> ui.rank == RankMode.NEWEST
         RANK_SENDER -> ui.rank == RankMode.SENDER
         RANK_SUBJECT -> ui.rank == RankMode.SUBJECT
+        FILTER_ALL -> ui.filters.isEmpty()
         FILTER_STARRED -> ListFilter.STARRED in ui.filters
         FILTER_UNREAD -> ListFilter.UNREAD in ui.filters
         FILTER_ATTACHMENTS -> ListFilter.ATTACHMENTS in ui.filters
         FILTER_AUTH_CODES -> ListFilter.AUTH_CODES in ui.filters
         FILTER_AUTH_LINKS -> ListFilter.AUTH_LINKS in ui.filters
         FILTER_AUTH_ANY -> ListFilter.AUTH_ANY in ui.filters
+        FILTER_ALERTS -> ListFilter.ALERTS in ui.filters
+        FILTER_NO_ALERTS -> ListFilter.NO_ALERTS in ui.filters
+        RESET_DEFAULTS -> false
     }
 
     fun run(actions: ListViewActions) = when (this) {
@@ -110,12 +143,16 @@ internal enum class ListViewFunction(val group: ListViewGroup, @StringRes val la
         RANK_NEWEST -> actions.onRank(RankMode.NEWEST)
         RANK_SENDER -> actions.onRank(RankMode.SENDER)
         RANK_SUBJECT -> actions.onRank(RankMode.SUBJECT)
+        FILTER_ALL -> actions.onFilter(ListFilter.ALL)
         FILTER_STARRED -> actions.onFilter(ListFilter.STARRED)
         FILTER_UNREAD -> actions.onFilter(ListFilter.UNREAD)
         FILTER_ATTACHMENTS -> actions.onFilter(ListFilter.ATTACHMENTS)
         FILTER_AUTH_CODES -> actions.onFilter(ListFilter.AUTH_CODES)
         FILTER_AUTH_LINKS -> actions.onFilter(ListFilter.AUTH_LINKS)
         FILTER_AUTH_ANY -> actions.onFilter(ListFilter.AUTH_ANY)
+        FILTER_ALERTS -> actions.onFilter(ListFilter.ALERTS)
+        FILTER_NO_ALERTS -> actions.onFilter(ListFilter.NO_ALERTS)
+        RESET_DEFAULTS -> actions.onReset()
     }
 
     companion object {
@@ -143,14 +180,14 @@ internal fun ListViewIconGroups(ui: ListViewUi, actions: ListViewActions, unread
             }
             DropdownMenu(expanded = open, onDismissRequest = { open = false }, shape = MaterialTheme.shapes.medium) {
                 ListViewFunction.of(group).forEach { fn ->
-                    DropdownMenuItem(
-                        text = { Text(stringResource(fn.label)) },
+                    if (fn.visible(ui)) DropdownMenuItem(
+                        text = { Text(fn.text(ui)) },
                         leadingIcon = { if (fn.isActive(ui)) Icon(Icons.Filled.Check, contentDescription = null) },
                         enabled = !(unreadForced && fn == ListViewFunction.FILTER_UNREAD),
                         onClick = {
                             fn.run(actions)
                             // A single choice closes its menu; the filters combine, so theirs stays open.
-                            if (!group.multi) open = false
+                            if (!group.multi || fn == ListViewFunction.RESET_DEFAULTS) open = false
                         },
                     )
                 }
@@ -168,8 +205,8 @@ internal fun ColumnScope.ListViewOverflowItems(
     onPicked: () -> Unit,
 ) {
     ListViewFunction.entries.forEach { fn ->
-        DropdownMenuItem(
-            text = { Text(stringResource(fn.label)) },
+        if (fn.visible(ui)) DropdownMenuItem(
+            text = { Text(fn.text(ui)) },
             leadingIcon = { if (fn.isActive(ui)) Icon(Icons.Filled.Check, contentDescription = null) },
             enabled = !(unreadForced && fn == ListViewFunction.FILTER_UNREAD),
             onClick = { fn.run(actions); onPicked() },

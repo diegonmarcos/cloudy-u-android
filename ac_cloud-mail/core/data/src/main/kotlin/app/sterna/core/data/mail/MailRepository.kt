@@ -604,6 +604,11 @@ internal fun listRowsWhereSql(scopeCount: Int, unreadOnly: Boolean, shape: ListS
 internal fun folderRoleMap(rows: List<AccountMailboxRole>): Map<Pair<String, String>, String> =
     rows.mapNotNull { row -> unmarkedRole(row.role)?.let { (row.accountId to row.id) to it } }.toMap()
 
+/** How many rows the flat list holds for [shape]: [listRowsWhereSql] itself, so a count and the list it
+ *  labels cannot disagree. Bind order is [pagingQuery]'s. */
+internal fun listCountSql(scopeCount: Int, shape: ListShape = ListShape.NONE): String =
+    "SELECT COUNT(*) FROM emails WHERE ${listRowsWhereSql(scopeCount, unreadOnly = false, shape = shape)}"
+
 /** The keys "Select all" may take: the same rows [pagingSql] draws, projected to (accountId, id).
  *  Bind order is [pagingQuery]'s. */
 internal fun selectionIdsSql(scopeCount: Int, unreadOnly: Boolean, shape: ListShape = ListShape.NONE): String =
@@ -1439,6 +1444,17 @@ class MailRepository(
         }
     }
 
+    /** The live All / Alerts / no-Alerts counts of [scopes], each from the list's own WHERE ([listCountSql]). */
+    fun observeAlertCounts(scopes: List<Pair<String, String>>, rules: InboxSplitRules): Flow<AlertCounts> {
+        val args = scopes.flatMap { listOf(it.first, it.second) }.toTypedArray()
+        fun count(scope: AlertScope) = emailDao.observeCount(
+            SimpleSQLiteQuery(listCountSql(scopes.size, ListShape(alerts = scope, alertRules = rules)), args),
+        )
+        return combine(count(AlertScope.ALL), count(AlertScope.ALERTS), count(AlertScope.NO_ALERTS)) { all, alerts, noAlerts ->
+            AlertCounts(all, alerts, noAlerts)
+        }.distinctUntilChanged()
+    }
+
     /**
      * Paged view of a single folder, backed by a [RemoteMediator]: scrolling past the cached rows fetches the
      * next older page, so a large folder doesn't stop at the sync window.
@@ -2193,12 +2209,43 @@ class MailRepository(
             keepIds = { load -> reconcilableIds(load, credentials.id) },
             spareIds = { recentlyMutatedIds(credentials.id) },
             reconcile = { load, keepIds, spare, evictable ->
-                emailDao.reconcileMailbox(
-                    credentials.id, load.targetMailboxId, keepIds, spare,
+                // Beyond the newest window: fetch the next bounded batch of what the server holds and the
+                // cache lacks, and KEEP the older mail it still holds, so this reconcile deletes only what
+                // LEFT the server. Null = the server's list could not be read: nothing is deleted this pass.
+                val kept = syncImapBacklog(credentials, load)
+                if (kept != null) emailDao.reconcileMailbox(
+                    credentials.id, load.targetMailboxId, keepIds + kept, spare,
                     evictableIds = evictable.takeIf { mailboxId != null && mailboxId == load.targetMailboxId },
                 )
             },
         )
+    }
+
+    /**
+     * The folder as the server holds it, beyond the newest window the walk just wrote: reads the UIDs
+     * on the server, fetches the next bounded batch of the missing ones ([ImapBacklogPlan]: new mail
+     * above the last cached UID first, then older mail newest first) and answers the ids of every
+     * cached row the server still has. Null when the server's list cannot be read.
+     */
+    private suspend fun syncImapBacklog(credentials: AccountCredentials, load: ImapFolderLoad): Set<String>? {
+        if (reconcilableIds(load, credentials.id) == null) return emptySet()
+        val mailbox = load.targetMailboxId
+        val snapshot = try {
+            imap.snapshotUids(credentials, mailbox, IMAP_SNAPSHOT_CAP)
+        } catch (c: kotlinx.coroutines.CancellationException) {
+            throw c
+        } catch (t: Throwable) {
+            return null
+        }
+        val serverIds = snapshot.uids.associateBy { ImapMailService.emailId(credentials.id, mailbox, it) }
+        val cached = emailDao.idsForMailbox(credentials.id, mailbox).filterTo(HashSet()) { it in serverIds }
+        val plan = ImapBacklogPlan.next(snapshot.uids, cached.mapNotNullTo(HashSet()) { serverIds[it] })
+        val fetched = plan.chunked(IMAP_BACKLOG_CHUNK).flatMap { imap.fetchByUids(credentials, mailbox, it) }
+        if (fetched.isNotEmpty()) {
+            checkAccountStillConfigured(credentials.id, accountStore.accounts().map { it.id })
+            emailDao.upsertAll(fetched)
+        }
+        return cached + fetched.map { it.id }
     }
 
     private suspend fun refreshImap(

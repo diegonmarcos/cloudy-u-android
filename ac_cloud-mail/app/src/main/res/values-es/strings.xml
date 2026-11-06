@@ -1292,6 +1292,8 @@
     <string name="list_group_none">Sin agrupar</string>
     <string name="list_rank_sender">Por remitente</string>
     <string name="list_rank_subject">Por asunto</string>
+    <string name="list_filter_all">Todos</string>
+    <string name="list_reset_defaults">Restablecer valores</string>
     <string name="list_filter_starred">Solo destacados</string>
     <string name="list_filter_unread">Solo no leídos</string>
     <string name="list_filter_attachments">Solo con adjuntos</string>

@@ -31,7 +31,7 @@ class SyncWindowIsWhatTheRefreshSendsTest {
 
     // -- the plug -----------------------------------------------------------------------------------
 
-    @Test fun `refreshFolder is these five statements, and the window is what it sends`() {
+    @Test fun `refreshFolder is these six statements, and the window is what it sends`() {
         assertEquals(
             "InboxViewModel.refreshFolder is no longer, line for line, what this test was written " +
                 "against. Read the new body before updating it: a number substituted for " +
@@ -44,7 +44,8 @@ class SyncWindowIsWhatTheRefreshSendsTest {
             val pruneBefore = window.maxAgeDays?.let {
             System.currentTimeMillis() - it.toLong() * MILLIS_PER_DAY
             }
-            val updated = repo.refresh(credentials, mailboxId, window.limit, pruneBefore)
+            val inboxWhole = mailboxId == null || mailboxId == store.inboxMailboxId()
+            val updated = repo.refresh(credentials, mailboxId, window.limit, if (inboxWhole) null else pruneBefore)
             if (updated.mailboxId == store.inboxMailboxId() || mailboxId == null) {
             store.saveInboxMeta(updated.mailboxId, updated.mailboxName, updated.accountName, updated.unreadCount)
             runCatching { FetchAndNotify.onInboxRefreshed(getApplication(), credentials, updated.mailboxId) }

@@ -1242,6 +1242,8 @@
     <string name="list_group_none">Nessun raggruppamento</string>
     <string name="list_rank_sender">Per mittente</string>
     <string name="list_rank_subject">Per oggetto</string>
+    <string name="list_filter_all">Tutti</string>
+    <string name="list_reset_defaults">Ripristina predefiniti</string>
     <string name="list_filter_starred">Solo con stella</string>
     <string name="list_filter_unread">Solo non letti</string>
     <string name="list_filter_attachments">Solo con allegati</string>

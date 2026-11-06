@@ -67,6 +67,10 @@ interface EmailDao {
     @RawQuery(observedEntities = [EmailEntity::class, SnoozedEntity::class])
     fun conversationPagingSource(query: SupportSQLiteQuery): PagingSource<Int, ConversationRow>
 
+    /** One live count of a list's rows, built by MailRepository.listCountSql from the list's own WHERE. */
+    @RawQuery(observedEntities = [EmailEntity::class, SnoozedEntity::class])
+    fun observeCount(query: SupportSQLiteQuery): Flow<Int>
+
     /**
      * One-shot bounded read of the latest messages across every account's inbox, for the widget
      */

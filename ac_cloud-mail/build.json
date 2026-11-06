@@ -20,6 +20,19 @@
     ],
     "_doc_excluded": "Upstream's own release plumbing, not app source: their Forgejo CI and self-hosted runner compose (we ship through cloud-mail-engine.sh), their marketing brochure, and the F-Droid listing copy — which names their product and their store entry, neither of which we publish to."
   },
+  "mail_list_defaults": {
+    "_doc": "The view EVERY folder opens with until the reader overrides it (overrides persist per account and folder in the list_view preferences; the list menu's Reset puts a folder back on these). group is a GroupMode name (SUBJECT, SENDER, DOMAIN, NONE), rank a RankMode name (NEWEST, SENDER, SUBJECT), filter a ListFilter name; ALL means no filter and is the first entry of the filter menu. Baked as BuildConfig.LIST_DEFAULT_*; read by ListViewDefaults.",
+    "group": "DOMAIN",
+    "rank": "NEWEST",
+    "filter": "ALL"
+  },
+  "mail_inbox_split": {
+    "_doc": "The two breakdown views over the Inbox, a strict partition: a message is an ALERT when its sender matches a rule below, else it is a no-Alert. One predicate, so Alerts + no-Alerts = Inbox by construction; one SQL (ListShape) and one Kotlin evaluator (InboxSplit.isAlert) read it. Rules match the lowercased sender address only (the cache keeps no other header): alert_local_parts is a local part before the @, alert_sender_domains a domain and every subdomain of it. Values are [a-z0-9.-] only. Baked as BuildConfig.INBOX_SPLIT_B64.",
+    "label_alerts": "01 - Inbox (Alerts)",
+    "label_no_alerts": "01 - Inbox (no Alerts)",
+    "alert_local_parts": ["alert", "alerts", "alarm", "monitoring", "notification", "notifications", "noreply", "no-reply", "donotreply", "do-not-reply", "security", "status", "uptime"],
+    "alert_sender_domains": ["github.com", "sentry.io", "pagerduty.com", "statuspage.io", "uptimerobot.com", "grafana.com", "cloudflare.com"]
+  },
   "ui": {
     "_doc": "#868 THE navigation declaration (libs:bottomnav NavDecl): ui.bottom_nav is the island's five ids, ui.sections the section each one opens, ui.default_section where the app opens. Each section's FIRST page is what its island item does: a page with no `action` is a DESTINATION of SternaApp's NavHost and its id IS the route (inbox / home / rss); a page whose `action` is `launch:<package>` is a LAUNCH hand-off to another app (Telegram, WhatsApp Business) that leaves mail's selected pill where it was. The labels shown on the island are the localised nav_bar_* strings keyed by section id; Home stays the centre. Reordering bottom_nav reorders the bar and changes nothing else.",
     "bottom_nav": [

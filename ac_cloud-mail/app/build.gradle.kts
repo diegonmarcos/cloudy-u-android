@@ -95,6 +95,21 @@ val mailFleetB64: String = run {
         .let { Base64.getEncoder().encodeToString(it) }
 }
 
+// build.json::mail_list_defaults (the view every folder opens with) and build.json::mail_inbox_split
+// (the alert rules of the Inbox's two breakdown views), baked for ListViewDefaults. A missing block
+// is a build failure: an app with no declaration would invent its own defaults in code.
+@Suppress("UNCHECKED_CAST")
+val mailBuildJson: Map<String, Any> = groovy.json.JsonSlurper().parse(rootProject.file("build.json")) as Map<String, Any>
+@Suppress("UNCHECKED_CAST")
+val mailListDefaults: Map<String, Any> = mailBuildJson["mail_list_defaults"] as Map<String, Any>?
+    ?: error("build.json::mail_list_defaults is missing: it declares the group, rank and filter every folder opens with.")
+@Suppress("UNCHECKED_CAST")
+val mailInboxSplitB64: String = (mailBuildJson["mail_inbox_split"] as Map<String, Any>?)
+    ?.let { groovy.json.JsonOutput.toJson(it) }
+    ?.toByteArray(Charsets.UTF_8)
+    ?.let { Base64.getEncoder().encodeToString(it) }
+    ?: error("build.json::mail_inbox_split is missing: it declares which senders are alerts.")
+
 // #868 THE navigation declaration: build.json::ui (bottom_nav, sections, default_section), baked for
 // libs:bottomnav's NavDecl. Read from THIS app's build.json and nowhere else; a missing block is a
 // build failure, because an app with no declaration opens on a blank bar.
@@ -215,6 +230,10 @@ android {
         buildConfigField("String", "UI_BOTTOM_NAV", "\"$mailUiBottomNav\"")
         buildConfigField("String", "UI_SECTIONS_B64", "\"$mailUiSectionsB64\"")
         buildConfigField("String", "UI_DEFAULT_SECTION", "\"$mailUiDefaultSection\"")
+        buildConfigField("String", "LIST_DEFAULT_GROUP", "\"${mailListDefaults["group"]}\"")
+        buildConfigField("String", "LIST_DEFAULT_RANK", "\"${mailListDefaults["rank"]}\"")
+        buildConfigField("String", "LIST_DEFAULT_FILTER", "\"${mailListDefaults["filter"]}\"")
+        buildConfigField("String", "INBOX_SPLIT_B64", "\"$mailInboxSplitB64\"")
         buildConfigField("String", "CAL_ENGINE_PACKAGE", "\"$calEnginePackage\"")
         buildConfigField("String", "CAL_ENGINE_ACTION", "\"$mailCalEngineAction\"")
         buildConfigField("int", "CAL_ENGINE_MIN_CONTRACT", "${mailCalEngine["min_contract"]}")

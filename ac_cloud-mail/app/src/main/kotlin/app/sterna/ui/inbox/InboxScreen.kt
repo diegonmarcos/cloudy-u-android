@@ -1138,6 +1138,7 @@ fun InboxScreen(
                                     onGroup = viewModel::setGroupMode,
                                     onRank = viewModel::setRankMode,
                                     onFilter = viewModel::toggleListFilter,
+                                    onReset = viewModel::resetListView,
                                 )
                             }
                             val shownViewUi = if (ui.unreadView) listViewUi.copy(filters = listViewUi.filters + ListFilter.UNREAD) else listViewUi

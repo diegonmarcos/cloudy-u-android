@@ -23,6 +23,9 @@ data class ListShape(
     val auth: AuthFilter = AuthFilter.OFF,
     val bySender: Boolean = false,
     val byDomain: Boolean = false,
+    /** One side of the Alerts split ([InboxSplit]); [alertRules] must be set for it to narrow. */
+    val alerts: AlertScope = AlertScope.ALL,
+    val alertRules: InboxSplitRules? = null,
 ) {
     /** Grouped by who sent it (an address or a domain), so the Sent folders add nothing to a group. */
     val bySenderOrDomain: Boolean get() = bySender || byDomain
@@ -32,6 +35,7 @@ data class ListShape(
         if (starred) append(" AND $table.flagged = 1")
         if (attachments) append(" AND $table.hasAttachment = 1")
         if (auth != AuthFilter.OFF) append(" AND $table.authClass IN (${auth.classes.joinToString { it.value.toString() }})")
+        append(InboxSplit.whereSql(alerts, alertRules, table))
     }
 
     companion object {

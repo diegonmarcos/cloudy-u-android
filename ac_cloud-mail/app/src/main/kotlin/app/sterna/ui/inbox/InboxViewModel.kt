@@ -31,6 +31,7 @@ import app.sterna.ui.components.attachmentKey
 import app.sterna.core.data.account.StoredAccount
 import app.sterna.core.data.db.OutboxLogic
 import app.sterna.core.data.getOrElseUnlessCancelled
+import app.sterna.core.data.mail.AlertCounts
 import app.sterna.core.data.mail.CrossAccountMove
 import app.sterna.core.data.mail.EmailKey
 import app.sterna.core.data.mail.FrozenNumbering
@@ -944,10 +945,29 @@ class InboxViewModel(
     internal fun setRankMode(mode: RankMode) = updateView { it.copy(rank = mode) }
     internal fun toggleListFilter(filter: ListFilter) = updateView { it.toggled(filter) }
 
+    /** Reset to defaults: forget this folder's saved choices and show it on the declared defaults. */
+    internal fun resetListView() {
+        val key = currentViewKey
+        ListViewPrefs.reset(getApplication<Application>(), key)
+        viewOverrides.value = viewOverrides.value + (key to ListView())
+    }
+
+    /**
+     * The Inbox's All / Alerts / no-Alerts counts (null in any other folder): three live counts from the
+     * list's own WHERE, so the owner can check that Alerts + no-Alerts = All.
+     */
+    private val alertCounts: Flow<AlertCounts?> =
+        combine(selection, currentAccountId) { sel, account ->
+            val id = (sel as? Sel.Folder)?.id
+            if (account != null && id != null && id == store.inboxMailboxId()) account to id else null
+        }.distinctUntilChanged().flatMapLatest { scope ->
+            if (scope == null) flowOf<AlertCounts?>(null) else repo.observeAlertCounts(listOf(scope), ListViewDefaults.alertRules)
+        }
+
     /** What the top bar's three icon groups and the overflow show. */
     internal val listViewUi: StateFlow<ListViewUi> =
-        combine(listView, settings.conversationView, settings.sortOrder) { view, conversation, sort ->
-            ListViewUi.of(view, conversation, sort)
+        combine(listView, settings.conversationView, settings.sortOrder, alertCounts) { view, conversation, sort, counts ->
+            ListViewUi.of(view, conversation, sort, counts)
         }.stateIn(viewModelScope, SharingStarted.Eagerly, ListViewUi())
 
     /** The sort the pager uses: this view's rank, else the global setting. */
@@ -1442,7 +1462,10 @@ class InboxViewModel(
         val pruneBefore = window.maxAgeDays?.let {
             System.currentTimeMillis() - it.toLong() * MILLIS_PER_DAY
         }
-        val updated = repo.refresh(credentials, mailboxId, window.limit, pruneBefore)
+        // The Inbox is never pruned by age: it lists every message the server holds (the window sizes
+        // only the fast newest pass; older mail is backfilled, see MailRepository.imapWriteThrough).
+        val inboxWhole = mailboxId == null || mailboxId == store.inboxMailboxId()
+        val updated = repo.refresh(credentials, mailboxId, window.limit, if (inboxWhole) null else pruneBefore)
         if (updated.mailboxId == store.inboxMailboxId() || mailboxId == null) {
             // Keep the cached inbox metadata fresh for offline display.
             store.saveInboxMeta(updated.mailboxId, updated.mailboxName, updated.accountName, updated.unreadCount)

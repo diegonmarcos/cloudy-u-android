@@ -1239,6 +1239,8 @@
     <string name="list_group_none">Niet groeperen</string>
     <string name="list_rank_sender">Op afzender</string>
     <string name="list_rank_subject">Op onderwerp</string>
+    <string name="list_filter_all">Alles</string>
+    <string name="list_reset_defaults">Standaardwaarden herstellen</string>
     <string name="list_filter_starred">Alleen met ster</string>
     <string name="list_filter_unread">Alleen ongelezen</string>
     <string name="list_filter_attachments">Alleen met bijlagen</string>
