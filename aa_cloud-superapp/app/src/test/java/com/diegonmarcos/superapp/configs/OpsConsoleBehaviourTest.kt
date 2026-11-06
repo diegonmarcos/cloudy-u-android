@@ -8,6 +8,8 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import com.diegonmarcos.superapp.perms.PermCatalogue
 import com.diegonmarcos.superapp.perms.PermState
 import com.diegonmarcos.superapp.perms.PermStatus
