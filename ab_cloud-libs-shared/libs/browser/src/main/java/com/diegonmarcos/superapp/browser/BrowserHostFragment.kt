@@ -1222,8 +1222,15 @@ class BrowserHostFragment : Fragment() {
 
     // ── Library: history, bookmarks, downloads (#802: Compose, over the page) ──
 
+    /**
+     * #1531 an app that owns a History page (Cloud Browser: Domains > History) sets this: the Tabs page's History link and the menu's
+     * History open that page instead of this library's own list, so there is one history UI. Unset = the library's list below.
+     */
+    var onHistory: (() -> Unit)? = null
+
     /** Item 5's view of the on-device history, with Clear. */
     private fun showHistory() {
+        onHistory?.let { it(); return }
         val all = history.all()
         overlay { close ->
             var q by remember { mutableStateOf("") }

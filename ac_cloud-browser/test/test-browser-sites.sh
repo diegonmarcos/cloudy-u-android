@@ -36,7 +36,7 @@ def check(root, ok):
     # W2
     secs = {s["id"]: s for s in ui["sections"]}
     ok(ui["bottom_nav"] == ["weby", "cloudy", "browser", "tabs", "domains"], "W2 the island is Weby | Cloudy | Browser | Tabs | Domains")
-    ok([p["id"] for p in secs["cloudy"]["pages"]] == ["gh_pages", "webserver"], "W2 Cloudy has GH-Pages | Webserver")
+    ok([p["id"] for p in secs["cloudy"]["pages"]] == ["gh_pages", "webserver", "private_urls", "public_urls"], "W2 Cloudy has GH Pages | Local Webserver | Cloudy Private URLs | Cloudy Public URLs")
     ok([p["id"] for p in secs["domains"]["pages"]] == ["files", "site_perms", "history", "visited"], "W2 Domains has Files | Perms&Actions | History | Visited")
     ok([a["id"] for a in ui["domains"]["actions"]] == ["cookies", "media", "cache", "storage", "reset_perms"], "W2 the five site actions are declared")
     ok(ui["domains"]["visited_sorts"][0]["id"] == "name" and ui["domains"]["visited_sorts"][1]["id"] == "last", "W2 Visited sorts by name or last visited")

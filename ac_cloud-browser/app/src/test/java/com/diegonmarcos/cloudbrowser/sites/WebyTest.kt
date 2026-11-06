@@ -80,4 +80,42 @@ class WebyTest {
         assertNull(WebyOps.fromJson(null))
         assertNull(WebyOps.fromJson("not json"))
     }
+
+    @Test
+    fun `the home grid is 8 columns by 8 rows with launcher folder tiles and a popup grid of its own`() {
+        assertEquals(8, WebyLayout.COLUMNS)
+        assertEquals(8, WebyLayout.ROWS)
+        assertEquals(64, WebyLayout.PAGE)
+        assertTrue(WebyLayout.POPUP_COLUMNS in 2..WebyLayout.COLUMNS)
+        assertEquals(1, WebyLayout.rows(8))
+        assertEquals(2, WebyLayout.rows(9))
+        assertEquals(8, WebyLayout.rows(64))
+        // a folder previews 2x2 up to four members, 3x3 from five, never more than nine
+        assertEquals(2, com.diegonmarcos.superapp.uikit.KitLauncher.previewEdge(1))
+        assertEquals(2, com.diegonmarcos.superapp.uikit.KitLauncher.previewEdge(4))
+        assertEquals(3, com.diegonmarcos.superapp.uikit.KitLauncher.previewEdge(5))
+        assertEquals(9, com.diegonmarcos.superapp.uikit.KitLauncher.previewCount(30))
+        assertEquals(3, com.diegonmarcos.superapp.uikit.KitLauncher.previewCount(3))
+        // the SuperApp phone grid's tile: 52 dp icon, 11 sp one-line label, 6 dp padding, 16 dp folder corner
+        assertEquals(52, com.diegonmarcos.superapp.uikit.KitLauncher.ICON_DP)
+        assertEquals(11, com.diegonmarcos.superapp.uikit.KitLauncher.LABEL_SP)
+        assertEquals(6, com.diegonmarcos.superapp.uikit.KitLauncher.CELL_PAD_DP)
+        assertEquals(16, com.diegonmarcos.superapp.uikit.KitLauncher.FOLDER_CORNER_DP)
+        assertEquals(33f, com.diegonmarcos.superapp.uikit.KitLauncher.iconDp(45f), 0.001f)
+        assertEquals(52f, com.diegonmarcos.superapp.uikit.KitLauncher.iconDp(200f), 0.001f)
+    }
+
+    @Test
+    fun `a section lays its apps out first and its folders after them, as the phone page does`() {
+        val f = WebyFolder("G", listOf(WebyTile("a", "A", null), WebyTile("b", "B", null)), listOf(WebyFolder("Sub", listOf(WebyTile("c", "C", null)))))
+        val cells = WebyLayout.cells(f)
+        assertEquals(listOf("a", "b"), cells.filterIsInstance<WebyLayout.Cell.App>().map { it.tile.id })
+        assertTrue(cells[2] is WebyLayout.Cell.Folder)
+        assertEquals(listOf("a", "b", "c"), WebyLayout.previewTiles(f).map { it.id })
+        // every seeded group lays out exactly its declared apps and folders
+        for ((i, folder) in seed().withIndex()) {
+            val g = groups.getJSONObject(i)
+            assertEquals(pkgs(g.optJSONArray("packages")).size + (g.optJSONArray("folders")?.length() ?: 0), WebyLayout.cells(folder).size)
+        }
+    }
 }

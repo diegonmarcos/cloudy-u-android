@@ -1,6 +1,14 @@
 package com.diegonmarcos.cloudbrowser.sites
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import com.diegonmarcos.superapp.uikit.KitLauncherFolderPopup
+import com.diegonmarcos.superapp.uikit.KitLauncherFolderTile
+import com.diegonmarcos.superapp.uikit.KitLauncherRows
+import com.diegonmarcos.superapp.uikit.KitLauncherTile
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -84,26 +92,60 @@ private fun rel(ts: Long) = KitDates.relative(Instant.ofEpochMilli(ts).toString(
 private sealed interface WebyDialog {
     data class AddBookmark(val path: String) : WebyDialog
     data object AddFolder : WebyDialog
-    data class RemoveTile(val path: String, val tile: WebyTile) : WebyDialog
+    data class TileMenu(val path: String, val tile: WebyTile) : WebyDialog
     data class RemoveFolder(val path: String) : WebyDialog
 }
 
-/** #1493 Weby: the bookmarks as a launcher icon grid in folders; a tap opens the site in the browser. */
-@OptIn(ExperimentalFoundationApi::class)
+/** A tile's icon: the site's own picture once fetched (cached on the phone), else a GREY square with the initial. */
+@Composable
+private fun WebyIcon(tile: WebyTile, sz: androidx.compose.ui.unit.Dp, icons: WebyIconCache, rev: Int) {
+    val st = remember(tile.id, tile.url, rev) { mutableStateOf(icons.peek(tile)).also { s -> if (s.value == null) icons.request(tile) { s.value = it } } }
+    val bmp = st.value
+    Box(Modifier.size(sz).clip(RoundedCornerShape(sz / 4)).background(if (bmp == null) Color.Gray else Color.White), contentAlignment = Alignment.Center) {
+        if (bmp != null) Image(bmp.asImageBitmap(), null, Modifier.fillMaxSize().padding(sz / 12), contentScale = ContentScale.Fit)
+        else Text(WebyIcons.initial(tile.label), color = Color.White, fontSize = KitDensity.display, fontWeight = FontWeight.Bold)
+    }
+}
+
+/** One launcher cell, an app or a folder tile, as the SuperApp's phone grid draws them (shared KitLauncher pieces). */
+@Composable
+private fun WebyCell(
+    cell: WebyLayout.Cell, path: String, modifier: Modifier, icons: WebyIconCache, rev: Int,
+    onTile: (WebyTile) -> Unit, onTileLong: (WebyTile) -> Unit, onFolder: (String) -> Unit, onFolderLong: (String) -> Unit,
+) {
+    when (cell) {
+        is WebyLayout.Cell.App -> KitLauncherTile(cell.tile.label, modifier.testTag("weby:tile:${cell.tile.id}"), enabled = cell.tile.url != null,
+            onClick = { onTile(cell.tile) }, onLongClick = { onTileLong(cell.tile) }) { sz -> WebyIcon(cell.tile, sz, icons, rev) }
+        is WebyLayout.Cell.Folder -> {
+            val sub = "$path/${cell.folder.title}"
+            KitLauncherFolderTile(cell.folder.title, WebyLayout.previewTiles(cell.folder).map { tl -> @Composable { sz: androidx.compose.ui.unit.Dp -> WebyIcon(tl, sz, icons, rev) } },
+                modifier.testTag("weby:foldertile:$sub"), onOpen = { onFolder(sub) }, onLongClick = { onFolderLong(sub) })
+        }
+    }
+}
+
+/**
+ * #1493/#1531 Weby: the SuperApp's phone apps as the Android launcher home screen, 8 columns by 8 rows: a titled section per group, its
+ * apps then its folders as folder tiles (2x2 / 3x3 preview); a folder opens a popup with its own grid and title. Each icon is the
+ * app's website icon (WebyIcons, cached), grey with the initial when there is none. A tap opens the site, a long-press the menu.
+ */
 @Composable
 fun WebyPage(decl: SitesDecl, onOpen: (String) -> Unit) {
     val ctx = LocalContext.current
     val p = LocalKitPalette.current
     val t = remember { decl.texts(decl.weby) }
     val store = remember { WebyStore(ctx, WebySeed.derive(decl.weby)) }
+    val icons = remember { WebyIconCache(ctx, decl.weby) }
     var folders by remember { mutableStateOf(store.load()) }
     var dialog by remember { mutableStateOf<WebyDialog?>(null) }
+    var openPath by remember { mutableStateOf<String?>(null) }
+    var rev by remember { mutableIntStateOf(0) }
     fun commit(n: List<WebyFolder>) { folders = n; store.save(n) }
     val sections = WebyOps.flatten(folders)
 
     LazyVerticalGrid(
-        GridCells.Adaptive(KitDensity.avatar + KitDensity.large), Modifier.fillMaxSize().testTag("weby:grid"),
-        contentPadding = PaddingValues(bottom = KitDensity.large), horizontalArrangement = Arrangement.spacedBy(KitDensity.small),
+        GridCells.Fixed(WebyLayout.COLUMNS), Modifier.fillMaxSize().testTag("weby:grid"),
+        contentPadding = PaddingValues(bottom = KitDensity.large),
     ) {
         item(span = { GridItemSpan(maxLineSpan) }) {
             KitStoreRowLine(Modifier.testTag("weby:actions")) {
@@ -112,31 +154,37 @@ fun WebyPage(decl: SitesDecl, onOpen: (String) -> Unit) {
                 KitStoreQuick(t("add_folder"), KitStoreRow.AMBER_FILL, Modifier.testTag("weby:add_folder"), onClick = { dialog = WebyDialog.AddFolder })
             }
         }
-        if (sections.isEmpty()) item(span = { GridItemSpan(maxLineSpan) }) { KitStoreRowLine { KitStoreCaption(t("empty"), color = p.textSecondary) } }
-        for ((path, f) in sections) {
+        if (folders.isEmpty()) item(span = { GridItemSpan(maxLineSpan) }) { KitStoreRowLine { KitStoreCaption(t("empty"), color = p.textSecondary) } }
+        for (f in folders) {
+            val path = f.title
             item(key = "h:$path", span = { GridItemSpan(maxLineSpan) }) {
                 KitStoreRowLine(Modifier.testTag("weby:folder:$path")) {
-                    KitStoreName(path.replace("/", t("path_sep")), Modifier.weight(1f), p.textPrimary)
-                    KitStoreCaption(f.tiles.size.toString(), color = p.textSecondary)
+                    KitStoreName(path, Modifier.weight(1f), p.textPrimary)
+                    KitStoreCaption(WebyLayout.cells(f).size.toString(), color = p.textSecondary)
                     Spacer(Modifier.width(KitStoreRow.gap))
                     KitStoreQuick(t("add_short"), KitStoreRow.BLUE_FILL, Modifier.testTag("weby:folder:$path:add"), onClick = { dialog = WebyDialog.AddBookmark(path) })
                     Spacer(Modifier.width(KitStoreRow.gap))
                     KitStoreQuick(t("remove_short"), KitStoreRow.BAD, Modifier.testTag("weby:folder:$path:remove"), onClick = { dialog = WebyDialog.RemoveFolder(path) })
                 }
             }
-            items(f.tiles, key = { "$path|${it.id}" }) { tile ->
-                val on = tile.url != null
-                Column(
-                    Modifier.fillMaxWidth().padding(vertical = KitDensity.small).alpha(if (on) 1f else 0.4f).testTag("weby:tile:${tile.id}")
-                        .combinedClickable(enabled = on, onClick = { tile.url?.let(onOpen) }, onLongClick = { dialog = WebyDialog.RemoveTile(path, tile) }),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Box(Modifier.size(KitDensity.avatar).clip(RoundedCornerShape(KitDensity.corner)).background(p.surfaceSelected), contentAlignment = Alignment.Center) {
-                        Text(tile.label.firstOrNull()?.uppercase().orEmpty(), color = p.textPrimary, fontSize = KitDensity.display, fontWeight = FontWeight.Bold)
-                    }
-                    Spacer(Modifier.size(KitStoreRow.tight))
-                    Text(tile.label, color = p.textPrimary, fontSize = KitStoreRow.caption, maxLines = 2, textAlign = TextAlign.Center, overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(horizontal = KitStoreRow.tight))
+            items(WebyLayout.cells(f), key = { c -> if (c is WebyLayout.Cell.App) "$path|${c.tile.id}" else "$path|f:${(c as WebyLayout.Cell.Folder).folder.title}" }) { c ->
+                WebyCell(c, path, Modifier.fillMaxWidth(), icons, rev,
+                    onTile = { tile -> tile.url?.let(onOpen) }, onTileLong = { tile -> dialog = WebyDialog.TileMenu(path, tile) },
+                    onFolder = { openPath = it }, onFolderLong = { dialog = WebyDialog.RemoveFolder(it) })
+            }
+        }
+    }
+
+    // The folder popup: its own grid and title; a tap on an app closes it and opens the site, a folder inside opens in its place.
+    val shown = openPath?.let { op -> sections.firstOrNull { it.first == op } }
+    if (shown != null) {
+        val (path, f) = shown
+        KitLauncherFolderPopup(f.title, onDismiss = { openPath = null }) {
+            Column(Modifier.testTag("weby:popup:$path")) {
+                KitLauncherRows(WebyLayout.cells(f), WebyLayout.POPUP_COLUMNS) { c, m ->
+                    WebyCell(c, path, m, icons, rev,
+                        onTile = { tile -> tile.url?.let { openPath = null; onOpen(it) } }, onTileLong = { tile -> dialog = WebyDialog.TileMenu(path, tile) },
+                        onFolder = { openPath = it }, onFolderLong = { dialog = WebyDialog.RemoveFolder(it) })
                 }
             }
         }
@@ -163,9 +211,13 @@ fun WebyPage(decl: SitesDecl, onOpen: (String) -> Unit) {
                 confirmButton = { TextButton({ commit(WebyOps.addFolder(folders, path)); dialog = null }, Modifier.testTag("weby:confirm")) { Text(t("ok")) } },
                 dismissButton = { TextButton({ dialog = null }) { Text(t("cancel")) } })
         }
-        is WebyDialog.RemoveTile -> AlertDialog(onDismissRequest = { dialog = null }, title = { Text(t("remove_bookmark")) }, text = { Text(d.tile.label) },
-            confirmButton = { TextButton({ commit(WebyOps.removeBookmark(folders, d.path, d.tile.id)); dialog = null }, Modifier.testTag("weby:confirm")) { Text(t("ok")) } },
-            dismissButton = { TextButton({ dialog = null }) { Text(t("cancel")) } })
+        is WebyDialog.TileMenu -> AlertDialog(onDismissRequest = { dialog = null }, title = { Text(d.tile.label) },
+            text = { Column {
+                d.tile.url?.let { u -> TextButton({ dialog = null; openPath = null; onOpen(u) }, Modifier.testTag("weby:menu:open")) { Text(t("menu_open")) } }
+                TextButton({ dialog = null; icons.refresh(d.tile) { rev++ } }, Modifier.testTag("weby:menu:refresh_icon")) { Text(t("menu_refresh_icon")) }
+                TextButton({ commit(WebyOps.removeBookmark(folders, d.path, d.tile.id)); dialog = null }, Modifier.testTag("weby:menu:remove")) { Text(t("menu_remove")) }
+            } },
+            confirmButton = {}, dismissButton = { TextButton({ dialog = null }) { Text(t("cancel")) } })
         is WebyDialog.RemoveFolder -> AlertDialog(onDismissRequest = { dialog = null }, title = { Text(t("remove_folder")) }, text = { Text(d.path) },
             confirmButton = { TextButton({ commit(WebyOps.removeFolder(folders, d.path)); dialog = null }, Modifier.testTag("weby:confirm")) { Text(t("ok")) } },
             dismissButton = { TextButton({ dialog = null }) { Text(t("cancel")) } })
@@ -175,7 +227,7 @@ fun WebyPage(decl: SitesDecl, onOpen: (String) -> Unit) {
 
 // ───────────────────────────── Cloudy ─────────────────────────────
 
-/** #1493 Cloudy: [page] is a ui.sections[cloudy].pages id (gh_pages | webserver). A tap opens the site in the browser. */
+/** #1493/#1531 Cloudy: [page] is a ui.sections[cloudy].pages id (gh_pages | webserver | private_urls | public_urls). A tap opens the site in the browser. */
 @Composable
 fun CloudyPage(page: String?, decl: SitesDecl, onOpen: (String) -> Unit) {
     val ctx = LocalContext.current
@@ -184,18 +236,44 @@ fun CloudyPage(page: String?, decl: SitesDecl, onOpen: (String) -> Unit) {
     val cache = remember { CloudyCache(ctx) }
     val ws = c.optJSONObject("webserver") ?: org.json.JSONObject()
     val timeout = c.optInt("timeout_ms", 0)
-    if (page == "webserver") {
-        val entries by loaded(Cloudy.declaredWebserver(ws), "ws") {
-            val store = runCatching { File(ws.optString("repos_store")).readText() }.getOrNull()
-            Cloudy.declaredWebserver(ws) + Cloudy.storeEntries(store)
+    when (page) {
+        "webserver" -> {
+            val entries by loaded(Cloudy.declaredWebserver(ws), "ws") {
+                val store = runCatching { File(ws.optString("repos_store")).readText() }.getOrNull()
+                Cloudy.declaredWebserver(ws) + Cloudy.storeEntries(store)
+            }
+            val up by loaded(emptyMap<Int, Boolean>(), entries) { entries.mapNotNull { it.port }.distinct().associateWith { Cloudy.probe(it, timeout) } }
+            Column(Modifier.fillMaxSize()) {
+                // The Cloud-Webserver APK: an explicit intent to its launcher activity, a clear message when it is not installed.
+                KitStoreRowLine(Modifier.testTag("cloudy:ws:open"), onClick = { openWebserver(ctx, ws, t) }) {
+                    KitStoreName(t("ws_open"), Modifier.weight(1f), LocalKitPalette.current.accent)
+                    KitStoreDot("›", LocalKitPalette.current.textSecondary, endPad = KitStoreRow.tight)
+                }
+                Box(Modifier.weight(1f)) { CloudyList(entries, t("ws_empty"), "cloudy:ws", { e -> e.port?.let { up[it] } }, t, onOpen) }
+            }
         }
-        val up by loaded(emptyMap<Int, Boolean>(), entries) { entries.mapNotNull { it.port }.distinct().associateWith { Cloudy.probe(it, timeout) } }
-        CloudyList(entries, t("ws_empty"), "cloudy:ws", { e -> e.port?.let { up[it] } }, t, onOpen)
-    } else {
-        val seed = remember { Cloudy.seedPages(c) }
-        val entries by loaded(Cloudy.merge(seed, cache.pagesJson()), "gh") { Cloudy.merge(seed, cache.refresh(c.optString("pages_url"), timeout) ?: cache.pagesJson()) }
-        CloudyList(entries, t("gh_empty"), "cloudy:gh", { null }, t, onOpen)
+        "private_urls", "public_urls" -> {
+            val priv = page == "private_urls"
+            val routes = c.optJSONArray("routes")
+            val entries = remember(page) { Cloudy.fleetUrls(routes, priv, c.optString("private_scheme"), c.optString("public_scheme")) }
+            CloudyList(entries, t("urls_empty"), if (priv) "cloudy:private" else "cloudy:public", { null }, t, onOpen)
+        }
+        else -> {
+            val seed = remember { Cloudy.seedPages(c) }
+            val entries by loaded(Cloudy.merge(seed, cache.pagesJson()), "gh") { Cloudy.merge(seed, cache.refresh(c.optString("pages_url"), timeout) ?: cache.pagesJson()) }
+            CloudyList(entries, t("gh_empty"), "cloudy:gh", { null }, t, onOpen)
+        }
     }
+}
+
+/** Start the Cloud-Webserver app (explicit intent to its launcher activity), or say it is not installed. */
+private fun openWebserver(ctx: android.content.Context, ws: org.json.JSONObject, t: (String) -> String) {
+    val target = Cloudy.webserverTarget(ws)
+    val comp = target?.let { android.content.ComponentName(it.pkg, it.cls) }
+    val installed = comp != null && runCatching { ctx.packageManager.getActivityInfo(comp, 0); true }.getOrDefault(false)
+    if (comp == null || !installed) { android.widget.Toast.makeText(ctx, t("ws_not_installed"), android.widget.Toast.LENGTH_LONG).show(); return }
+    runCatching { ctx.startActivity(android.content.Intent().setComponent(comp).setAction(android.content.Intent.ACTION_MAIN).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) }
+        .onFailure { android.widget.Toast.makeText(ctx, t("ws_not_installed"), android.widget.Toast.LENGTH_LONG).show() }
 }
 
 @Composable

@@ -45,6 +45,36 @@ object WebySeed {
     }
 }
 
+/**
+ * #1531 the home-screen layout spec, pure (JVM-tested): the SuperApp Phone > Apps grid's launcher look at 8 columns by 8 rows
+ * (KitLauncher, the shared ui-kit constants). A top-level folder is a titled section; its cells are its own apps first, then its
+ * folders as folder tiles, exactly as the phone page lays a group out; a folder tile opens a popup with its own grid.
+ */
+object WebyLayout {
+    const val COLUMNS = com.diegonmarcos.superapp.uikit.KitLauncher.COLUMNS
+    const val ROWS = com.diegonmarcos.superapp.uikit.KitLauncher.ROWS
+    const val PAGE = COLUMNS * ROWS
+    const val POPUP_COLUMNS = com.diegonmarcos.superapp.uikit.KitLauncher.POPUP_COLUMNS
+
+    sealed interface Cell {
+        data class App(val tile: WebyTile) : Cell
+        data class Folder(val folder: WebyFolder) : Cell
+    }
+
+    fun cells(f: WebyFolder): List<Cell> = f.tiles.map { Cell.App(it) } + f.folders.map { Cell.Folder(it) }
+
+    /** The apps a folder tile previews: its own, then its folders' (so a folder of folders still shows something). */
+    fun previewTiles(f: WebyFolder): List<WebyTile> {
+        val all = allTiles(f)
+        return all.take(com.diegonmarcos.superapp.uikit.KitLauncher.previewCount(all.size))
+    }
+
+    private fun allTiles(f: WebyFolder): List<WebyTile> = f.tiles + f.folders.flatMap { allTiles(it) }
+
+    /** Grid rows [n] cells take at [cols] columns. */
+    fun rows(n: Int, cols: Int = COLUMNS) = com.diegonmarcos.superapp.uikit.KitLauncher.rows(n, cols)
+}
+
 /** The user's edits, pure: add / remove a bookmark or a folder, addressed by a "/"-joined folder path. */
 object WebyOps {
     fun normFolder(path: String) = path.split('/').map { it.trim() }.filter { it.isNotEmpty() }

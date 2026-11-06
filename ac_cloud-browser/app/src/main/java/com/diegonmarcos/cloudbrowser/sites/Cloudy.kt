@@ -8,11 +8,16 @@ import java.net.Socket
 /** One site Cloudy lists. [port] is set for a page the phone serves (the live probe asks it). */
 data class CloudyEntry(val title: String, val url: String, val detail: String = "", val port: Int? = null)
 
+/** The Cloud-Webserver's launcher activity: [pkg] and the fully qualified [cls] an explicit intent names. */
+data class WebserverTarget(val pkg: String, val cls: String)
+
 /**
  * #1493 Cloudy, pure (JVM-tested in CloudyTest). Public GH-Pages: the declared repos' pages (ui.cloudy.gh_pages, derived from
  * ac_cloud-c3/data/repos_declared.json at build time) plus the live front-html pages.json ([merge]). Private Webserver: what the
  * Cloud-Webserver declares it serves (its serving endpoints and Pages sub-pages, from its build.json) plus the entries of its
  * Repos store when that file can be read ([storeEntries]); a missing store or a stopped server only shortens the list.
+ * #1531 Private / Public URLs: the fleet's routes (ac_cloud-c3 data/routes.json, the Caddy routes), the mesh address of each
+ * ([fleetUrls] private) or its public address (public).
  */
 object Cloudy {
     fun seedPages(decl: JSONObject): List<CloudyEntry> {
@@ -60,4 +65,20 @@ object Cloudy {
     /** Does something answer on loopback [port]? BLOCKING: off the main thread. */
     fun probe(port: Int, timeoutMs: Int): Boolean =
         runCatching { Socket().use { it.connect(InetSocketAddress("127.0.0.1", port), timeoutMs); true } }.getOrDefault(false)
+
+    /** The fleet's URLs from the declared routes: each route's mesh address (private, plain http on the mesh) or public address (https), by name. */
+    fun fleetUrls(routes: JSONArray?, private_: Boolean, privateScheme: String, publicScheme: String): List<CloudyEntry> =
+        (0 until (routes?.length() ?: 0)).mapNotNull { i ->
+            val o = routes?.optJSONObject(i) ?: return@mapNotNull null
+            val addr = o.optString(if (private_) "private_url" else "public_url").takeIf { it.isNotBlank() } ?: return@mapNotNull null
+            CloudyEntry(o.optString("container"), (if (private_) privateScheme else publicScheme) + addr,
+                listOf(o.optString("category"), o.optString("auth_type")).filter { it.isNotBlank() }.joinToString(" · "))
+        }.distinctBy { it.title + it.url }.sortedBy { it.title.lowercase() }
+
+    /** The explicit-intent target of the Cloud-Webserver: [decl] = ui.cloudy.webserver (package, launcher_activity); null when either is not declared. */
+    fun webserverTarget(decl: JSONObject): WebserverTarget? {
+        val pkg = decl.optString("package").takeIf { it.isNotBlank() } ?: return null
+        val act = decl.optString("launcher_activity").takeIf { it.isNotBlank() } ?: return null
+        return WebserverTarget(pkg, if (act.startsWith(".")) pkg + act else if ('.' in act) act else "$pkg.$act")
+    }
 }

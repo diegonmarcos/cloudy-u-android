@@ -133,6 +133,8 @@ class MainActivity : AppCompatActivity() {
                 // the page's touch and inner scrollers feed the same collapse (a held drag hides every bar, the release shrinks them)
                 f.onWebViewCreated = { com.diegonmarcos.superapp.bottomnav.ChromeWebScroll.attach(it, chromeCollapse); refreshRate.watch(it) }
                 f.onWebPageFinished = { com.diegonmarcos.superapp.bottomnav.ChromeWebScroll.attach(it, chromeCollapse); com.diegonmarcos.superapp.bottomnav.ChromeWebScroll.inject(it) }
+                // #1531 the Tabs page's History link opens Domains > History, the one history page
+                f.onHistory = { openHistory() }
                 f.onOverlaysClosed = {
                     selectedId = decl.section(if (f.isTabsOpen) "tabs" else "browser")?.id
                     chromeCollapse?.restore()
@@ -310,6 +312,13 @@ class MainActivity : AppCompatActivity() {
         }
         // closeOverlays reset the pill to Browser; an overlay that opened puts it on its own item.
         selectedId = id
+    }
+
+    /** #1531 the History link of the Tabs page and of the menu: the Domains > History page. */
+    private fun openHistory() {
+        val (section, page) = com.diegonmarcos.cloudbrowser.sites.SitesRoute.history { s, pg -> decl.section(s)?.pages.orEmpty().any { it.id == pg } } ?: return
+        openSection(section)
+        sitesPage = page
     }
 
     /** #1493 a Weby or Cloudy tile: the host opens the site in a tab and the island goes back to Browser. */

@@ -2067,10 +2067,12 @@
         "label": "Cloudy",
         "icon": "cloud",
         "pages": [
-          {"id": "gh_pages", "label": "Cloudy-Public GH-Pages", "icon": "public"},
-          {"id": "webserver", "label": "Cloudy-Private Webserver", "icon": "dns"}
+          {"id": "gh_pages", "label": "GH Pages", "icon": "public"},
+          {"id": "webserver", "label": "Local Webserver", "icon": "dns"},
+          {"id": "private_urls", "label": "Cloudy Private URLs", "icon": "lock"},
+          {"id": "public_urls", "label": "Cloudy Public URLs", "icon": "language"}
         ],
-        "_doc": "#1493 the owner's sites: the public GitHub Pages (declared repos + front-html pages.json) and the pages the phone's Cloud-Webserver serves (ui.cloudy)."
+        "_doc": "#1493/#1531 the owner's sites, four tabs: GH Pages (declared repos + front-html pages.json), Local Webserver (the pages the phone's Cloud-Webserver serves, and a link that opens its APK), Cloudy Private URLs and Cloudy Public URLs (the fleet's Caddy routes, ac_cloud-c3 data/routes.json: the mesh address / the public address of each). All derived at build time (ui.cloudy)."
       },
       {
         "id": "domains",
@@ -2130,15 +2132,25 @@
       "texts": {
         "add_bookmark": "Add bookmark", "add_folder": "New folder", "add_short": "+", "remove_short": "×", "path_sep": " › ",
         "remove_bookmark": "Remove this bookmark?", "remove_folder": "Remove this folder and everything in it?",
-        "field_title": "Title", "field_url": "Address", "field_folder": "Folder", "ok": "OK", "cancel": "Cancel", "empty": "No bookmarks."
-      }
+        "field_title": "Title", "field_url": "Address", "field_folder": "Folder", "ok": "OK", "cancel": "Cancel", "empty": "No bookmarks.",
+        "menu_open": "Open", "menu_refresh_icon": "Refresh icon", "menu_remove": "Remove"
+      },
+      "_doc_icons": "#1531 each tile's icon is its website's own picture (manifest icons, then apple-touch-icon, then favicon; sites/WebyIcons.kt), fetched on demand and kept in the app's files (weby_icons/); a tile with no website or no picture is grey with its initial. website_meta_keys is NOT here: app/build.gradle bakes the SuperApp's ui.app_urls.website_meta_keys (the declared website lookup for an app whose phone-webapps entry has no address). icon_overrides: tile id (package) or host -> icon URL, used instead of the lookup.",
+      "icon_overrides": {}
     },
     "cloudy": {
       "_doc": "#1493 Cloudy. pages_url = front-html's Pages list (the owner's GitHub Pages, public ones, refreshed over the network and kept in the cloudy_cache prefs); the declared repos' Pages (ac_cloud-c3 data/repos_declared.json) and the Cloud-Webserver's serving map, Pages sub-pages and Repos store (ac_cloud-c3-webserver/build.json) are read by app/build.gradle. webserver_base_role = the serving endpoint the Webserver's own pages are served on.",
       "pages_url": "https://raw.githubusercontent.com/diegonmarcos/front-html/main/pages.json",
       "webserver_base_role": "drive",
       "timeout_ms": 1500,
-      "texts": { "gh_empty": "No public GitHub Pages found yet.", "ws_empty": "The Cloud-Webserver declares no pages.", "up": "up", "down": "down" }
+      "private_scheme": "http://",
+      "public_scheme": "https://",
+      "_doc_webserver": "The Cloud-Webserver's package and launcher activity are NOT here: app/build.gradle reads the package from ac_cloud-c3-webserver build.json serving.keepalive and the launcher activity from its AndroidManifest.xml.",
+      "texts": {
+        "gh_empty": "No public GitHub Pages found yet.", "ws_empty": "The Cloud-Webserver declares no pages.", "up": "up", "down": "down",
+        "ws_open": "Open Cloud-Webserver", "ws_not_installed": "Cloud-Webserver is not installed on this phone. Install it from the constellation store first.",
+        "urls_empty": "The fleet declares no routes."
+      }
     },
     "domains": {
       "_doc": "#1493 Domains: the per-site actions (ids are the SiteActions plans: cookies, media, cache, storage, reset_perms), what counts as media (cached content types), the History and Visited switches and the words.",

@@ -156,13 +156,22 @@ def bcString = { String v ->
 // Cloud-Webserver's own serving map, Pages sub-pages and Repos store path (its build.json); Domains = ui.domains. The words of each
 // page are build.json::ui.<page>.texts.
 def superappDir  = new File(rootDir, '../aa_cloud-superapp')
-def phoneSection = new groovy.json.JsonSlurper().parse(new File(superappDir, 'build.json')).ui.sections.find { it.id == 'phone' }
+def superappUi    = new groovy.json.JsonSlurper().parse(new File(superappDir, 'build.json')).ui
+def phoneSection = superappUi.sections.find { it.id == 'phone' }
 if (phoneSection == null || !phoneSection.phone_app_groups) throw new GradleException("aa_cloud-superapp/build.json ui.sections[phone].phone_app_groups is missing: Weby has nothing to derive from")
 def phoneWebapps = new groovy.json.JsonSlurper().parse(new File(superappDir, 'data/phone-webapps.json'))
 def reposDeclared = new groovy.json.JsonSlurper().parse(new File(rootDir, '../ac_cloud-c3/data/repos_declared.json'))
 def webserverBuild = new groovy.json.JsonSlurper().parse(file('../../ac_cloud-c3-webserver/build.json'))
+def fleetRoutes = new groovy.json.JsonSlurper().parse(new File(rootDir, '../ac_cloud-c3/data/routes.json'))
+// the Cloud-Webserver's launcher activity: the <activity> of its manifest that carries the LAUNCHER category
+def wsManifest = file('../../ac_cloud-c3-webserver/src-tauri/gen/android/app/src/main/AndroidManifest.xml').text
+def webserverLauncher = ''
+(wsManifest =~ /(?s)<activity\b([^>]*)>(.*?)<\/activity>/).each { m ->
+    if (webserverLauncher == '' && m[2].contains('android.intent.category.LAUNCHER')) webserverLauncher = ((m[1] =~ /android:name="([^"]+)"/)[0][1]).toString()
+}
+if (webserverLauncher == '') throw new GradleException("ac_cloud-c3-webserver AndroidManifest.xml has no LAUNCHER activity: Cloudy cannot open the Cloud-Webserver")
 def sitesDecl = [
-    weby   : (buildJson.ui.weby ?: [:]) + [groups: phoneSection.phone_app_groups, webapps: phoneWebapps.groups],
+    weby   : (buildJson.ui.weby ?: [:]) + [groups: phoneSection.phone_app_groups, webapps: phoneWebapps.groups, website_meta_keys: (superappUi.app_urls?.website_meta_keys ?: [])],
     cloudy : (buildJson.ui.cloudy ?: [:]) + [
         gh_pages : reposDeclared.repos.findAll { it.visibility == 'pub' && it.pages_url }.collect { [name: it.name, url: it.pages_url] },
         webserver: [
@@ -170,7 +179,10 @@ def sitesDecl = [
             endpoints : servingDecl.endpoints.collect { [id: it.id, title: it.title, name: it.name, port: it.port, role: it.role, summary: it.summary] },
             pages     : (webserverBuild.subpages ?: []).findAll { it.tab == 'pages' }.collect { [id: it.id, label: it.label, route: it.route, tab: it.tab] },
             repos_store: (webserverBuild.repos?.store ?: '').toString(),
+            'package' : webserverPackage,
+            launcher_activity: webserverLauncher,
         ],
+        routes: fleetRoutes.collect { [container: (it.container ?: ''), category: (it.category ?: ''), auth_type: (it.auth_type ?: ''), public_url: (it.public_url ?: ''), private_url: (it.private_url ?: '')] },
     ],
     domains: buildJson.ui.domains ?: [:],
 ]
