@@ -155,6 +155,7 @@ private fun EntryPage(e: Entry, nav: FinNav) {
         when (e.kind) {
             Pages.KIND_HOLDINGS -> HoldingsPanel()
             Pages.KIND_PM_TABLE -> PmPage(e.table, nav)
+            Pages.KIND_CB_TABLE -> CbPage(e.view)
             else -> Text(e.title, color = LocalFinPalette.current.text, style = FinType.title)
         }
     }

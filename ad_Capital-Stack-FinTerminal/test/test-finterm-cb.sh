@@ -5,6 +5,7 @@
 #   C2  data/cb-countries.json: the DM and BRICS EM lists, South Korea / Australia / Canada / Indonesia once each, euro-area members never aggregated twice, both weight options
 #   C3  data/cb-snapshot.json: every series carries a source, a release and a vintage date; every value is a finite number; every series is declared by a rule of its indicator;
 #       no value is typed for a country with no declared rule (the n/a guard); the DSGE latent variables appear only from a declared source
+#   C5  Kotlin names no country or indicator, has no sp literal or type-size override and draws the table with FinMatrix; the generator parses each API's fixture (--selftest)
 #   C4  the weights: the snapshot holds PPP and market-FX GDP for every aggregated country and the euro area weight is the sum of its members
 # then plants a mutation per rule in a scratch copy and requires RED for each.
 set -u
@@ -82,14 +83,15 @@ if os.path.exists(sp):
         if c not in cid: bad.append("C3 the snapshot has the undeclared country %s" % c)
         for k, s in cd["series"].items():
             if k not in ids: bad.append("C3 %s/%s is not a declared indicator" % (c, k)); continue
-            for f in ("source", "release", "vintage", "rule"):
+            for f in ("source", "release", "vintage"):
                 if not s.get(f): bad.append("C3 %s/%s has no %s" % (c, k, f))
+            if not isinstance(s.get("rule"), int): bad.append("C3 %s/%s has no rule" % (c, k))
             if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", s.get("vintage", "")): bad.append("C3 %s/%s vintage %r is not a date" % (c, k, s.get("vintage")))
             rules = ids[k][1]["sources"]
             if not (0 <= s.get("rule", -1) < len(rules)): bad.append("C3 %s/%s names the rule %s, which the indicator does not declare" % (c, k, s.get("rule"))); continue
             r = rules[s["rule"]]
             if r["countries"] != "*" and c not in r["countries"]: bad.append("C3 %s/%s: rule %d is not declared for this country" % (c, k, s["rule"]))
-            if s["source"] != ind["sources"][r["src"]]["label"]: bad.append("C3 %s/%s source %r is not its rule's source" % (c, k, s["source"]))
+            if s["source"] != ind["sources"].get(r["src"], {}).get("label"): bad.append("C3 %s/%s source %r is not its rule's source" % (c, k, s["source"]))
             for part in ("hist", "fc"):
                 for y, v in s.get(part, {}).items():
                     if not num(v) or not re.fullmatch(r"\d{4}", y): bad.append("C3 %s/%s/%s %s=%r is not a number" % (c, k, part, y, v))
@@ -116,6 +118,16 @@ if os.path.exists(sp):
         for y, v in e.items():
             tot = sum(snap["weights"][opt + "_members"].get(m, {}).get(y, 0) for m in ea["weight_members"])
             if abs(tot - v) > 1e-6 * max(1, v): bad.append("C4 the euro area %s weight %s is %s, the members sum to %s" % (opt, y, v, tot))
+# C5 Kotlin names none of it: no country or indicator name, no sp literal, no type-size override, FinMatrix draws the table
+kt = os.path.join(app, "app/src/main/java/com/diegonmarcos/capitalfinterm")
+names = [c["name"] for c in cs] + [i["name"] for g in fg for i in g["items"]] + [i["name"] for g in sg for i in g["items"]] + [g["label"] for g in fg + sg]
+for fn in ("CbData.kt", "CbTables.kt", "CbSources.kt", "CbRefresh.kt", "CbStore.kt", "ui/CbPage.kt"):
+    src = open(os.path.join(kt, fn), encoding="utf-8").read()
+    for n in names:
+        if '"%s"' % n in src: bad.append("C5 %s names the declared %r" % (fn, n))
+    if re.search(r"\b\d+(\.\d+)?\.sp\b", src): bad.append("C5 %s has an sp literal" % fn)
+    if re.search(r"fontSize\s*=|TextStyle\(", src): bad.append("C5 %s sets a type size" % fn)
+if "FinMatrix(" not in open(os.path.join(kt, "ui/CbPage.kt"), encoding="utf-8").read(): bad.append("C5 CbPage does not draw FinMatrix")
 for b in bad: print("FAIL " + b)
 sys.exit(1 if bad else 0)
 PY
@@ -125,6 +137,7 @@ FAILS=0
 ok()  { echo "  PASS: $1"; }
 bad() { echo "  FAIL: $1"; FAILS=$((FAILS + 1)); }
 echo "[$(basename "$APP")] CB page rules (#1539)"
+if out="$(python3 -I "$APP/scripts/gen-cb-snapshot.py" --selftest 2>&1)"; then ok "the generator parses each API's response fixture"; else bad "the generator selftest fails"; echo "$out"; fi
 out="$(check "$APP")" && ok "C1-C4 hold on the real tree" || { bad "the real tree is red"; echo "$out"; }
 
 W="$(mktemp -d)"; trap 'rm -rf "$W"' EXIT
@@ -146,6 +159,12 @@ mutant "a DSGE item is not model-only"    "$J;d=L('data/cb-indicators.json');del
 mutant "a country is listed twice"        "$J;d=L('data/cb-countries.json');d['countries'].append(dict(d['countries'][0]));D('data/cb-countries.json',d)" "listed twice"
 mutant "Germany is aggregated again"      "$J;d=L('data/cb-countries.json');d['countries'][2]['aggregate']=True;D('data/cb-countries.json',d)" "aggregated again"
 mutant "Indonesia loses its explicit mark" "$J;d=L('data/cb-countries.json');[c.pop('explicit') for c in d['countries'] if c['id']=='ID'];D('data/cb-countries.json',d)" "ID is not marked explicit"
+KT="app/src/main/java/com/diegonmarcos/capitalfinterm"
+APPEND="a=lambda f,t:open(f,'a').write(t)"
+mutant "Kotlin names a country"           "$APPEND;a('$KT/CbTables.kt','\nval x = \"Brazil\"\n')" "C5 CbTables.kt names the declared 'Brazil'"
+mutant "Kotlin names an indicator"        "$APPEND;a('$KT/ui/CbPage.kt','\nval x = \"Output Gap\"\n')" "C5 ui/CbPage.kt names the declared 'Output Gap'"
+mutant "Kotlin types an sp literal"       "$APPEND;a('$KT/ui/CbPage.kt','\nval y = 12.sp\n')" "C5 ui/CbPage.kt has an sp literal"
+mutant "Kotlin overrides the type size"   "$APPEND;a('$KT/CbTables.kt','\nval y = TextStyle(fontSize = 3)\n')" "C5 CbTables.kt sets a type size"
 mutant "a weight option is dropped"       "$J;d=L('data/cb-countries.json');d['weights']['options'].pop();D('data/cb-countries.json',d)" "weight options"
 if [ -f "$APP/data/cb-snapshot.json" ]; then
 mutant "a value loses its vintage"        "$J;d=L('data/cb-snapshot.json');s=d['countries']['US']['series']['real_gdp'];del s['vintage'];D('data/cb-snapshot.json',d)" "US/real_gdp has no vintage"

@@ -11,6 +11,10 @@ object DataFiles {
     val controlJson: String get() = find("../data/control.json", "data/control.json").readText()
     val universeJson: String get() = find("../data/universe.json", "data/universe.json").readText()
     val pmJson: String get() = find("../data/pm.json", "data/pm.json").readText()
+    val cbCountriesJson: String get() = find("../data/cb-countries.json", "data/cb-countries.json").readText()
+    val cbIndicatorsJson: String get() = find("../data/cb-indicators.json", "data/cb-indicators.json").readText()
+    val cbSnapshotJson: String get() = find("../data/cb-snapshot.json", "data/cb-snapshot.json").readText()
+    fun cbFixture(name: String): String = find("src/test/resources/cb/$name", "app/src/test/resources/cb/$name").readText()
     val buildJson: String get() = find("../build.json", "build.json").readText()
     val engineFixtureJson: String get() = find("src/test/resources/engine-fixture.json", "app/src/test/resources/engine-fixture.json").readText()
 }
