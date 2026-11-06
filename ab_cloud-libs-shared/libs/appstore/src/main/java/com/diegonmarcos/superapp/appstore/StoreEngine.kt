@@ -149,6 +149,9 @@ object StoreEngine {
         return when (done.state) {
             DlState.DONE -> verified(ctx, app, done)
             DlState.FAILED -> {
+                // The engine marks the job FAILED before its onFailed callback writes the note, so a waiter that wakes in between would
+                // read a stage with no failure. Write the same note here (idempotent) so the stage the caller reads next always has it.
+                ApkCache.note(ctx.applicationContext, app.pkg, ApkCache.STAGE_DOWNLOAD, "could not download ${app.id}: ${done.error}")
                 UpdateProgress.update(UpdateProgress.State.Failed("could not download ${app.id}: ${done.error}", appId = app.id, pkg = app.pkg))
                 null
             }
