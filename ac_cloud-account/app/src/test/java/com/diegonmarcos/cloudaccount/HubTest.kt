@@ -163,7 +163,7 @@ class HubTest {
         assertEquals(listOf("general", "perms", "about"), tabs("configs"))  // #1443 the app's own Configs, not in the bottom nav
         assertEquals(listOf("mesh", "peer-control", "backup", "files", "working", "diff"), tabs("devices"))
         assertEquals(listOf("status", "auth", "fleetsetup"), tabs("connect"))
-        assertEquals(listOf("activity"), tabs("activity"))
+        assertEquals(listOf("activity", "fleetdata"), tabs("activity"))  // #1547 Fleet Data: the Cloud Account dataset browser
         // a container opens on its first leaf; a section opens on its first page's leaf
         assertEquals("personal", nav.section("vault")!!.page("autocomplete")!!.leaf().id)
         assertEquals(listOf("cloud-apps", "phone-apps", "runbook"), nav.section("config")!!.page("android")!!.pages.map { it.id })
