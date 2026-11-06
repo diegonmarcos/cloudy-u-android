@@ -20,7 +20,7 @@ class ExternalAppsTest {
 
     @Test fun `the Tasks target resolves to the declared launcher activity of Cloud Tasks`() {
         val r = ExternalApps.resolve(all, "extapp:cloud-tasks") { true }
-        val pkg = tasksBuild.getString("application_id")
+        val pkg = tasksBuild.getJSONObject("android").getString("application_id")
         assertEquals(ExternalApps.Resolution.Open(pkg, "$pkg.MainActivity"), r)
         assertTrue(tasksManifest.contains("android:name=\".MainActivity\""))
     }
