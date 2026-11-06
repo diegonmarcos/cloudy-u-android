@@ -101,11 +101,14 @@ class PermissionsFragment : KitComposeFragment() {
 
     /** One system dialog per batch; the result moves to the next batch. The session set guarantees no loop. */
     private val centerLauncher =
-        registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions()) {
+        registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions()) { result ->
             centerEpoch++
             if (walking) view?.post { if (isAdded) walkNext() }
             else if (autoChain) view?.post { if (isAdded) autoNext() }
+            // #1546 a tap's result: no dialog shown (permanent denial) -> the app's settings page; location on but the switch off -> Location settings
+            else if (userAsk) { userAsk = false; activity?.let { com.diegonmarcos.superapp.perms.PermsRequest.handleResult(it, result, it) } }
         }
+    private var userAsk = false
     private var autoChain = false
 
     private fun autoNext() {
@@ -125,12 +128,14 @@ class PermissionsFragment : KitComposeFragment() {
         askedThisSession.addAll(perms)
         com.diegonmarcos.superapp.perms.PermAskLog.markAsked(requireContext(), perms)
         com.diegonmarcos.superapp.perms.PermAskLog.markAskedIds(requireContext(), batch.map { it.id })
-        runCatching { centerLauncher.launch(perms.toTypedArray()) }.onFailure { autoChain = false; walking = false }
+        com.diegonmarcos.superapp.perms.PermsRequest.markLaunch()
+        runCatching { centerLauncher.launch(perms.toTypedArray()) }.onFailure { autoChain = false; walking = false; userAsk = false }
     }
 
     /** The Grant button of a row: the combined dialog while Android still shows it, the settings page after a permanent denial. */
     private fun grantRow(e: com.diegonmarcos.superapp.perms.PermEntry) {
         val act = requireActivity()
+        userAsk = true
         com.diegonmarcos.superapp.perms.PermsRequest.requestVia(act, listOf(e), act) { perms ->
             askedThisSession.addAll(perms)
             runCatching { centerLauncher.launch(perms) }
@@ -153,6 +158,13 @@ class PermissionsFragment : KitComposeFragment() {
             }
             view?.post { shellNote = out.message; centerEpoch++; then() }
         }.start()
+    }
+
+    /** #1546 Shell shown: each row through the shell broker in turn, read back after each. */
+    private fun shellAll(entries: List<com.diegonmarcos.superapp.perms.PermEntry>) {
+        val left = kotlin.collections.ArrayDeque(entries)
+        fun next() { val e = left.removeFirstOrNull() ?: return; shellGrant(e) { if (isAdded) next() } }
+        next()
     }
 
     // ── #1519 Ask all missing: walk the missing rows, real dialog first, then shell or settings, re-checking after each step ──
@@ -222,6 +234,9 @@ class PermissionsFragment : KitComposeFragment() {
             onRunAdb = { runAdbBlock(rows) },
             onOpenAdbShell = { com.diegonmarcos.superapp.adbdebug.AdbShellLink.open(ctxAny()) },
             ctx = act,
+            onAskAgain = { startAuto(force = true) },
+            onAskMany = { userAsk = true; askBatch(it) },
+            onShellMany = { shellAll(it) },
         )
     }
 
@@ -276,14 +291,15 @@ class PermissionsFragment : KitComposeFragment() {
         SummaryBar()
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = 10.dp, top = 8.dp, end = 10.dp, bottom = 16.dp)) {
         CatalogueHead()
-        // #1519 the older device tools (helper apps, per-fleet grants, hotspot, recovery) fold away under the grouped list
-        var legacy by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
-        PermButtonRow {
-            PermButton(if (legacy) "Hide device tools ▲" else "Device tools: helper apps, ADB, hotspot, recovery ▼", null) { legacy = !legacy }
-        }
-        if (legacy) {
+        // #1546 the device tools (the libs:perms section with its filter chips and actions, grant here, system pages, per-fleet
+        // grants, helper apps, hotspot, recovery) are always on the page again: #1519 had folded them away, closed by default
+        SectionHead("Device tools: helper apps, per-fleet grants, ADB, hotspot, recovery")
+        run {
         // #1403 the libs:perms section with its filter chips and actions row; adb = this page's shell plane
-        com.diegonmarcos.superapp.perms.AppPermsSection(tick = epoch, adb = remember { permsAdb() }, dense = true)
+        // #1546 its own tag namespace: the catalogue list above already answers perms:row:* / perms:summary / perms:progress
+        androidx.compose.runtime.CompositionLocalProvider(com.diegonmarcos.superapp.perms.LocalPermsTagNs provides "perms-app") {
+            com.diegonmarcos.superapp.perms.AppPermsSection(tick = epoch, adb = remember { permsAdb() }, dense = true)
+        }
         Small("${perms.size - runtimeMissing.size + priv.size - privMissing.size} granted here · " +
             "${runtimeMissing.size + privMissing.size} missing here · $pagesMissing need a system page")
 

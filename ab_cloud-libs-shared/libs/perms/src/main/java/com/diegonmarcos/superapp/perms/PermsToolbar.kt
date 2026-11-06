@@ -51,16 +51,16 @@ internal fun PermsToolbar(
     result: String?,
 ) {
     Column(Modifier.fillMaxWidth().padding(bottom = PermsType.pad)) {
-        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).testTag(PermsToolbarTags.FILTERS),
+        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).permsTag(PermsToolbarTags.FILTERS),
             horizontalArrangement = Arrangement.spacedBy(PermsType.gap), verticalAlignment = Alignment.CenterVertically) {
             for (f in StateFilter.values()) FilterChip(selected = f in states, onClick = { onStates(if (f in states) states - f else states + f) },
-                label = { Text(f.label, fontSize = PermsType.label) }, modifier = Modifier.testTag(PermsToolbarTags.state(f)))
+                label = { Text(f.label, fontSize = PermsType.label) }, modifier = Modifier.permsTag(PermsToolbarTags.state(f)))
             Text("·", fontSize = PermsType.label)
             for (k in PermsActions.kindsPresent(items)) FilterChip(selected = k in kinds, onClick = { onKinds(if (k in kinds) kinds - k else kinds + k) },
-                label = { Text(k.label, fontSize = PermsType.label) }, modifier = Modifier.testTag(PermsToolbarTags.kind(k)))
+                label = { Text(k.label, fontSize = PermsType.label) }, modifier = Modifier.permsTag(PermsToolbarTags.kind(k)))
         }
         val up = adb?.channel?.up() == true
-        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).testTag(PermsToolbarTags.ACTIONS),
+        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).permsTag(PermsToolbarTags.ACTIONS),
             horizontalArrangement = Arrangement.spacedBy(PermsType.gap)) {
             Action("grant-all", "Grant all", true, onGrantRuntime)
             Action("ask-missing", "Ask Missing", true, onAskMissing)
@@ -71,7 +71,7 @@ internal fun PermsToolbar(
         }
         val why = when { adb == null -> "Adb actions: this app has no adb channel; Copy Adb Grants still works."; !up -> "Adb actions: ${PermsGrant.DISABLED_REASON} (Adb Connect)."; else -> null }
         if (why != null) Text(why, fontSize = PermsType.label, modifier = Modifier.padding(top = PermsType.gap))
-        if (result != null) Text(result, fontSize = PermsType.caption, modifier = Modifier.padding(top = PermsType.gap).testTag(PermsToolbarTags.RESULT))
+        if (result != null) Text(result, fontSize = PermsType.caption, modifier = Modifier.padding(top = PermsType.gap).permsTag(PermsToolbarTags.RESULT))
     }
 }
 
@@ -79,7 +79,7 @@ internal fun PermsToolbar(
 private fun Action(id: String, label: String, enabled: Boolean, onClick: () -> Unit) {
     // 30 dp: the dense Configs pages hold buttons to 32 dp (ConfigsScreensTest)
     FilledTonalButton(onClick = onClick, enabled = enabled, contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
-        modifier = Modifier.height(30.dp).testTag(PermsToolbarTags.action(id))) {
+        modifier = Modifier.height(30.dp).permsTag(PermsToolbarTags.action(id))) {
         Text(label, fontSize = PermsType.label)
     }
 }

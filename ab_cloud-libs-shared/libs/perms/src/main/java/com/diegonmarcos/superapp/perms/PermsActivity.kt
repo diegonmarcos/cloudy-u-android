@@ -44,7 +44,7 @@ import androidx.compose.ui.unit.sp
 class PermsActivity : ComponentActivity() {
     private var tick by mutableIntStateOf(0)
 
-    private val ask = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { tick++ }
+    private val ask = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { r -> PermsRequest.handleResult(this, r, this); tick++ }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()

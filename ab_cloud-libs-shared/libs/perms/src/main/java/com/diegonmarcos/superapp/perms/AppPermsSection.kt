@@ -58,8 +58,8 @@ fun rememberAppPerms(
     var walking by remember { mutableStateOf(false) }
     var walked by remember { mutableStateOf(emptySet<String>()) }
     var resumes by remember { mutableIntStateOf(0) }
-    val ask = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { local++ }
     val activity = remember(ctx) { ctx.findActivity() }
+    val ask = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { r -> if (!walking) PermsRequest.handleResult(ctx, r, activity); local++ }
     DisposableEffect(activity) {
         val owner = activity as? androidx.lifecycle.LifecycleOwner
         val obs = androidx.lifecycle.LifecycleEventObserver { _, e -> if (e == androidx.lifecycle.Lifecycle.Event.ON_RESUME) resumes++ }

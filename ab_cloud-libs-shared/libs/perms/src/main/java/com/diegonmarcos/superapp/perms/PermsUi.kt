@@ -172,7 +172,7 @@ fun PermsList(
 ) {
     val p = style.resolve()
     val prog = PermsView.progress(items)
-    Column(modifier.fillMaxWidth().testTag(PermsTags.SECTION)) {
+    Column(modifier.fillMaxWidth().permsTag(PermsTags.SECTION)) {
         SummaryCard(items.isEmpty(), prog, onGrantAll, p)
         for (g in PermsView.groups(items)) GroupBlock(g, items, onAction, p, iconOf)
     }
@@ -186,15 +186,15 @@ private fun PermCard(p: PermsPalette, modifier: Modifier = Modifier, content: @C
 
 @Composable
 private fun SummaryCard(empty: Boolean, prog: PermsView.Progress, onGrantAll: (() -> Unit)?, p: PermsPalette) {
-    PermCard(p, Modifier.testTag(PermsTags.SUMMARY)) {
+    PermCard(p, Modifier.permsTag(PermsTags.SUMMARY)) {
         Column(Modifier.padding(PermsType.inset)) {
             if (empty || prog.total == 0) {
-                Text("This app needs no permission.", color = p.ink, fontSize = PermsType.title, modifier = Modifier.testTag(PermsTags.ALL_GRANTED))
+                Text("This app needs no permission.", color = p.ink, fontSize = PermsType.title, modifier = Modifier.permsTag(PermsTags.ALL_GRANTED))
                 return@Column
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(prog.label, color = p.ink, fontSize = PermsType.headline, fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.weight(1f).semantics { heading() }.testTag(PermsTags.PROGRESS))
+                    modifier = Modifier.weight(1f).semantics { heading() }.permsTag(PermsTags.PROGRESS))
                 Pill(if (prog.missing == 0) "All set" else "${prog.missing} missing", p.tone(if (prog.missing == 0) PermChip.Tone.OK else PermChip.Tone.WARN))
             }
             LinearProgressIndicator(
@@ -204,12 +204,12 @@ private fun SummaryCard(empty: Boolean, prog: PermsView.Progress, onGrantAll: ((
                     .semantics { stateDescription = prog.label },
             )
             if (prog.missing == 0) Text("Everything this app needs is granted.", color = p.dim, fontSize = PermsType.caption,
-                modifier = Modifier.padding(top = PermsType.inset - PermsType.gap).testTag(PermsTags.ALL_GRANTED))
+                modifier = Modifier.padding(top = PermsType.inset - PermsType.gap).permsTag(PermsTags.ALL_GRANTED))
             else if (onGrantAll != null) Button(
                 onClick = onGrantAll,
                 colors = ButtonDefaults.buttonColors(containerColor = p.accent, contentColor = p.onAccent),
                 contentPadding = if (LocalPermsDense.current) PaddingValues(horizontal = PermsType.inset, vertical = 0.dp) else ButtonDefaults.ContentPadding,
-                modifier = PermsDense.button(Modifier.fillMaxWidth().padding(top = PermsType.inset)).testTag(PermsTags.GRANT_ALL),
+                modifier = PermsDense.button(Modifier.fillMaxWidth().padding(top = PermsType.inset)).permsTag(PermsTags.GRANT_ALL),
             ) { Text("Grant all", fontSize = PermsType.title, fontWeight = FontWeight.SemiBold) }
         }
     }
@@ -220,7 +220,7 @@ private fun GroupBlock(g: PermsView.Group, all: List<PermItem>, onAction: (PermI
     var open by rememberSaveable(g.title) { mutableStateOf(!g.collapsed) }
     val ctx = LocalContext.current
     val head = Modifier.fillMaxWidth().padding(top = PermsType.pad, bottom = 0.dp).heightIn(min = 40.dp)
-        .testTag(PermsTags.group(g.title)).then(if (g.title == PermsView.HELPERS) Modifier.testTag(PermsTags.HELPERS) else Modifier)
+        .permsTag(PermsTags.group(g.title)).then(if (g.title == PermsView.HELPERS) Modifier.permsTag(PermsTags.HELPERS) else Modifier)
     Row(
         if (g.collapsed) head.clickable(onClickLabel = if (open) "Collapse" else "Expand", role = Role.Button) { open = !open }
             .semantics { stateDescription = if (open) "Expanded" else "Collapsed" } else head,
@@ -256,7 +256,7 @@ private fun HealthBlock(health: List<PermItem>, onAction: (PermItem) -> Unit, p:
     val ctx = LocalContext.current
     Row(
         Modifier.fillMaxWidth().heightIn(min = PermsDense.tap()).clickable(onClickLabel = if (open) "Hide data types" else "Show data types", role = Role.Button) { open = !open }
-            .padding(start = PermsType.dividerStart, end = PermsType.inset).testTag(PermsTags.HEALTH_EXPAND),
+            .padding(start = PermsType.dividerStart, end = PermsType.inset).permsTag(PermsTags.HEALTH_EXPAND),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(PermsView.typesToggle(health.size, open), color = p.accent, fontSize = PermsType.body, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
@@ -264,12 +264,12 @@ private fun HealthBlock(health: List<PermItem>, onAction: (PermItem) -> Unit, p:
     }
     if (open) {
         for (t in health) Row(
-            Modifier.fillMaxWidth().heightIn(min = 40.dp).padding(start = PermsType.dividerStart, end = PermsType.inset).testTag(PermsTags.row(t.id))
+            Modifier.fillMaxWidth().heightIn(min = 40.dp).padding(start = PermsType.dividerStart, end = PermsType.inset).permsTag(PermsTags.row(t.id))
                 .semantics(mergeDescendants = true) {},
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(t.title, color = p.ink, fontSize = PermsType.body, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-            ChipView(PermsView.chip(t.state), p, Modifier.testTag(PermsTags.state(t.id)))
+            ChipView(PermsView.chip(t.state), p, Modifier.permsTag(PermsTags.state(t.id)))
         }
         Spacer(Modifier.height(PermsType.pad))
     }
@@ -280,10 +280,10 @@ private fun HealthBlock(health: List<PermItem>, onAction: (PermItem) -> Unit, p:
 private fun PermRowView(it: PermItem, onAction: (PermItem) -> Unit, p: PermsPalette, iconOf: (String) -> ImageVector?) {
     val ctx = LocalContext.current
     val chip = PermsView.chip(it.state)
-    val stateChip: @Composable (Modifier) -> Unit = { m -> ChipView(chip, p, m.testTag(PermsTags.state(it.id))) }
+    val stateChip: @Composable (Modifier) -> Unit = { m -> ChipView(chip, p, m.permsTag(PermsTags.state(it.id))) }
     Row(
         Modifier.fillMaxWidth().heightIn(min = PermsDense.row()).padding(horizontal = PermsType.inset, vertical = if (LocalPermsDense.current) PermsType.gap else PermsType.pad)
-            .testTag(PermsTags.row(it.id)),
+            .permsTag(PermsTags.row(it.id)),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(Modifier.size(PermsDense.tile()).clip(RoundedCornerShape(12.dp)).background(p.tile), contentAlignment = Alignment.Center) {
@@ -306,7 +306,7 @@ private fun PermRowView(it: PermItem, onAction: (PermItem) -> Unit, p: PermsPale
             onClick = { onAction(it) },
             colors = ButtonDefaults.filledTonalButtonColors(containerColor = p.tile, contentColor = p.accent),
             contentPadding = PaddingValues(horizontal = PermsType.inset, vertical = if (LocalPermsDense.current) 0.dp else PermsType.pad),
-            modifier = PermsDense.button(Modifier).semantics { contentDescription = "${a.word} ${it.title}" }.testTag(PermsTags.grant(it.id)),
+            modifier = PermsDense.button(Modifier).semantics { contentDescription = "${a.word} ${it.title}" }.permsTag(PermsTags.grant(it.id)),
         ) { Text(a.word, fontSize = PermsType.body, fontWeight = FontWeight.SemiBold) }
     }
 }
@@ -359,10 +359,10 @@ fun PermsPromptCard(
         }
         Text(text, color = p.ink, fontSize = PermsType.body, lineHeight = 18.sp, maxLines = 3, overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f).padding(horizontal = PermsType.pad + PermsType.gap))
-        TextButton(onClick = onGrant, modifier = Modifier.heightIn(min = 48.dp).testTag(PermsTags.PROMPT_ACTION)) {
+        TextButton(onClick = onGrant, modifier = Modifier.heightIn(min = 48.dp).permsTag(PermsTags.PROMPT_ACTION)) {
             Text(button, color = p.accent, fontSize = PermsType.body, fontWeight = FontWeight.SemiBold)
         }
-        if (dismissKey != null) IconButton(onClick = { dismissed = dismissKey }, modifier = Modifier.size(48.dp).testTag(PermsTags.DISMISS)) {
+        if (dismissKey != null) IconButton(onClick = { dismissed = dismissKey }, modifier = Modifier.size(48.dp).permsTag(PermsTags.DISMISS)) {
             Icon(PermIcons.vector(ctx, "close"), contentDescription = "Dismiss", tint = p.dim, modifier = Modifier.size(18.dp))
         }
     }
@@ -394,16 +394,16 @@ internal fun FirstRunGate(
     val p = style.resolve()
     val missing = PermsView.missing(items)
     Scaffold(
-        Modifier.fillMaxSize().testTag(PermsTags.SHEET),
+        Modifier.fillMaxSize().permsTag(PermsTags.SHEET),
         bottomBar = {
             BottomAppBar {
                 Row(Modifier.fillMaxWidth().padding(horizontal = PermsType.inset), horizontalArrangement = Arrangement.spacedBy(PermsType.pad),
                     verticalAlignment = Alignment.CenterVertically) {
-                    OutlinedButton(onClick = onLater, modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag(PermsTags.LATER)) {
+                    OutlinedButton(onClick = onLater, modifier = Modifier.weight(1f).heightIn(min = 48.dp).permsTag(PermsTags.LATER)) {
                         Text("Later", color = p.accent, fontSize = PermsType.title)
                     }
                     Button(onClick = onGrantAll, colors = ButtonDefaults.buttonColors(containerColor = p.accent, contentColor = p.onAccent),
-                        modifier = Modifier.weight(2f).heightIn(min = 48.dp).testTag(PermsTags.GRANT_ALL)) {
+                        modifier = Modifier.weight(2f).heightIn(min = 48.dp).permsTag(PermsTags.GRANT_ALL)) {
                         Text("Grant all", fontSize = PermsType.title, fontWeight = FontWeight.SemiBold)
                     }
                 }
@@ -412,7 +412,7 @@ internal fun FirstRunGate(
     ) { bars ->
         Column(Modifier.padding(bars).fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = PermsType.inset, vertical = PermsType.pad)) {
             Text("Before you start", color = p.ink, fontSize = 22.sp, fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(top = PermsType.pad).semantics { heading() }.testTag(PermsTags.TITLE))
+                modifier = Modifier.padding(top = PermsType.pad).semantics { heading() }.permsTag(PermsTags.TITLE))
             Text("$appName needs ${if (missing.size == 1) "one permission" else "${missing.size} permissions"} to work fully. You can change them any time in Configs, Perms.",
                 color = p.dim, fontSize = PermsType.body, modifier = Modifier.padding(top = PermsType.gap, bottom = PermsType.inset))
             PermsList(missing, onAction, onGrantAll = null, style = style)

@@ -37,6 +37,8 @@ WRITE = "--write" in sys.argv
 POLICY_REL = "1_cicd/src/data/perms-guard.json"
 CAT_REL = "ab_cloud-libs-shared/libs/perms/src/main/assets/perms-catalogue.json"
 ASSET = "app-perms.json"
+# #1546 the fleet index the Perms page reads for "used by fleet apps" and the per-app filter (libs:perms FleetPerms)
+FLEET_REL = "ab_cloud-libs-shared/libs/perms/src/main/assets/fleet-perms.json"
 SKIP_DIRS = {"build", "test", "androidTest", "testDebug", "node_modules", ".gradle", "debug", "z_archive", ".git", "intermediates"}
 
 
@@ -274,6 +276,14 @@ def asset_body(perms):
     return json.dumps(out, indent=2, sort_keys=False) + "\n"
 
 
+def fleet_body(rows):
+    out = {
+        "_doc": "GENERATED from every fleet app's build.json::perms by 1_cicd/src/scripts/cloud-android-perms-guard.py --write. DO NOT EDIT. Read by libs:perms (FleetPerms): which fleet app needs which catalogue id (#1546).",
+        "apps": rows,
+    }
+    return json.dumps(out, indent=1, sort_keys=False) + "\n"
+
+
 def main():
     bad = []
     policy = json.loads(read(os.environ.get("PERMS_GUARD_POLICY") or os.path.join(ROOT, POLICY_REL)) or "{}")
@@ -300,6 +310,7 @@ def main():
         if pkg:
             packages[pkg] = name
     matrix = {}
+    fleet = []
     for name, (app_dir, bj, man) in sorted(apps.items()):
         perms = bj.get("perms")
         perms_ok = isinstance(perms, dict)
@@ -327,6 +338,9 @@ def main():
         row = {"code": found, "manifest": sorted(man_ids), "declared": needs, "helpers": perms.get("helpers", []),
                "links_perms": linked, "first_run": perms.get("first_run"), "gaps": []}
         matrix[name] = row
+        if needs or perms.get("helpers"):
+            fleet.append({"app": name, "package": package_of(bj, man) or "", "label": bj.get("name") or name,
+                          "needs": needs, "helpers": [h.get("package", "") for h in perms.get("helpers", [])]})
 
         def gap(msg):
             row["gaps"].append(msg)
@@ -404,6 +418,13 @@ def main():
             if not m or not glob.glob(os.path.join(app_dir, "**", m.group(1)), recursive=True):
                 gap("P6 perms.first_run %r is neither libs:perms nor own:<File.kt> naming an existing file" % fr)
 
+    fleet_path = os.path.join(ROOT, FLEET_REL)
+    fleet_want = fleet_body(fleet)
+    if WRITE:
+        with open(fleet_path, "w", encoding="utf-8") as f:
+            f.write(fleet_want)
+    elif os.path.isdir(os.path.dirname(fleet_path)) and read(fleet_path) != fleet_want:
+        bad.append("P8 %s is missing or stale: run cloud-android-perms-guard.py --write" % FLEET_REL)
     bad += one_place(policy, apps)
     pend = {k: v for k, v in policy.get("pending_page", {}).items() if not k.startswith("_")}
     for k, v in pend.items():

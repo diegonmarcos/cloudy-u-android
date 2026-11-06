@@ -81,4 +81,25 @@ class PermissionsComposeTest : KitPageHarness() {
         // Robolectric has no overlay permission: the service refuses and the label stays Start. Either way one toggle remains.
         compose.onAllNodesWithText("Floating Nav", substring = true).assertCountEquals(1)
     }
+
+    @Test
+    fun `P4 1546 the restored filters, groupings and bulk actions are on the page`() {
+        showPage()
+        for (t in listOf("perms:search", "perms:filter-missing", "perms:filter:status:all", "perms:filter:status:missing",
+            "perms:filter:type:runtime", "perms:filter:section:runtime", "perms:groupby:section", "perms:sort:name",
+            "perms:ask-again", "perms:ask-shown", "perms:shell-shown", "perms:adb-copy", "perms:copy-report", "perms:shown"))
+            compose.onNodeWithTag(t).assertExists()
+        compose.onNodeWithTag("perms:groupby:section").performScrollTo().performClick()
+        compose.waitForIdle()
+        compose.onNodeWithTag("perms:section:runtime").assertExists()
+        compose.onNodeWithTag("perms:section:adb").assertExists()
+        compose.onNodeWithTag("perms:row:fine_location").assertExists()
+    }
+
+    @Test
+    fun `P5 1546 the device tools are on the page without a fold`() {
+        showPage()
+        compose.onNodeWithText("GRANT HERE", substring = true).assertExists()
+        compose.onNodeWithText("Copy All Perms Status").assertExists()
+    }
 }

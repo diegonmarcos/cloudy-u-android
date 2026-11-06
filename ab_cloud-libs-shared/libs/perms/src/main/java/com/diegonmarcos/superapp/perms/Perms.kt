@@ -126,13 +126,11 @@ object PermStatusReader {
         if (e.kind == PermKind.RUNTIME) {
             if (ctx.checkSelfPermission(e.permission) == PackageManager.PERMISSION_GRANTED) return PermStatus(PermState.GRANTED)
             val asked = e.permission in PermAskLog.asked(ctx)
-            val rationale = activity?.shouldShowRequestPermissionRationale(e.permission) ?: false
-            return when {
-                !asked -> PermStatus(PermState.DENIED, "not asked yet")
-                rationale -> PermStatus(PermState.DENIED, "denied once: Android will ask again")
-                !e.autoRequest -> PermStatus(PermState.DENIED, "granted from its settings page")
-                else -> PermStatus(PermState.PERMANENTLY_DENIED, "don't ask again: only the settings page can grant it")
-            }
+            fun rationale(p: String) = activity?.shouldShowRequestPermissionRationale(p) ?: false
+            // #1546 one decision (PermsRequest.runtimeState): fine location with approximate granted is an upgrade, never "permanent"
+            return PermsRequest.runtimeState(e.permission, granted = false, asked = asked, rationale = rationale(e.permission),
+                autoRequest = e.autoRequest, coarseGranted = ctx.checkSelfPermission(PermsRequest.COARSE) == PackageManager.PERMISSION_GRANTED,
+                coarseRationale = rationale(PermsRequest.COARSE))
         }
         return when (e.check) {
             "all_files" -> bool(Build.VERSION.SDK_INT >= 30 && Environment.isExternalStorageManager())

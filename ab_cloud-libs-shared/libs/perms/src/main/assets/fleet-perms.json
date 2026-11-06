@@ -1,0 +1,416 @@
+{
+ "_doc": "GENERATED from every fleet app's build.json::perms by 1_cicd/src/scripts/cloud-android-perms-guard.py --write. DO NOT EDIT. Read by libs:perms (FleetPerms): which fleet app needs which catalogue id (#1546).",
+ "apps": [
+  {
+   "app": "aa_cloud-superapp",
+   "package": "com.diegonmarcos.superapp",
+   "label": "cloud-superapp",
+   "needs": [
+    "notifications",
+    "fine_location",
+    "coarse_location",
+    "nearby_wifi",
+    "bt_scan",
+    "bt_connect",
+    "camera",
+    "microphone",
+    "contacts_read",
+    "phone_state",
+    "sms_read",
+    "media_images",
+    "media_video",
+    "media_audio",
+    "health_connect",
+    "all_files",
+    "overlay",
+    "write_settings",
+    "install_unknown",
+    "usage_access",
+    "notification_listener",
+    "accessibility",
+    "dnd_access",
+    "device_admin",
+    "vpn",
+    "battery_opt",
+    "write_secure_settings"
+   ],
+   "helpers": []
+  },
+  {
+   "app": "ac_cloud-account",
+   "package": "com.diegonmarcos.cloudaccount",
+   "label": "cloud-account",
+   "needs": [
+    "notifications",
+    "install_unknown",
+    "battery_opt"
+   ],
+   "helpers": []
+  },
+  {
+   "app": "ac_cloud-browser",
+   "package": "com.diegonmarcos.cloudbrowser",
+   "label": "cloud-browser",
+   "needs": [
+    "notifications",
+    "fine_location",
+    "coarse_location",
+    "bt_scan",
+    "bt_connect",
+    "camera",
+    "microphone",
+    "storage_write",
+    "install_unknown"
+   ],
+   "helpers": []
+  },
+  {
+   "app": "ac_cloud-c3",
+   "package": "com.diegonmarcos.cloudc3",
+   "label": "cloud-c3",
+   "needs": [
+    "notifications",
+    "install_unknown"
+   ],
+   "helpers": []
+  },
+  {
+   "app": "ac_cloud-c3-webserver",
+   "package": "com.diegonmarcos.cloudwebserver",
+   "label": "cloud-c3-webserver",
+   "needs": [
+    "notifications",
+    "storage_read"
+   ],
+   "helpers": []
+  },
+  {
+   "app": "ac_cloud-calc",
+   "package": "com.diegonmarcos.cloudcalc",
+   "label": "cloud-calc",
+   "needs": [
+    "notifications",
+    "fine_location",
+    "coarse_location",
+    "nearby_wifi",
+    "bt_scan",
+    "bt_connect",
+    "camera",
+    "usb_host",
+    "microphone",
+    "activity_recognition",
+    "body_sensors",
+    "exact_alarm"
+   ],
+   "helpers": []
+  },
+  {
+   "app": "ac_cloud-camera",
+   "package": "cld.camera",
+   "label": "cloud-camera",
+   "needs": [
+    "notifications",
+    "fine_location",
+    "coarse_location",
+    "camera",
+    "microphone"
+   ],
+   "helpers": []
+  },
+  {
+   "app": "ac_cloud-chat",
+   "package": "com.diegonmarcos.comms.chat",
+   "label": "cloud-chat",
+   "needs": [
+    "notifications",
+    "bt_connect",
+    "camera",
+    "microphone",
+    "media_audio",
+    "storage_read",
+    "storage_write"
+   ],
+   "helpers": []
+  },
+  {
+   "app": "ac_cloud-contacts",
+   "package": "com.diegonmarcos.cloudcontacts",
+   "label": "cloud-contacts",
+   "needs": [
+    "notifications",
+    "contacts_read",
+    "contacts_write",
+    "install_unknown"
+   ],
+   "helpers": []
+  },
+  {
+   "app": "ac_cloud-dialer",
+   "package": "",
+   "label": "cloud-dialer",
+   "needs": [
+    "notifications",
+    "microphone",
+    "contacts_read",
+    "contacts_write",
+    "phone_state",
+    "sms_read",
+    "overlay",
+    "install_unknown",
+    "phone_numbers",
+    "usage_access"
+   ],
+   "helpers": []
+  },
+  {
+   "app": "ac_cloud-drive",
+   "package": "com.diegonmarcos.clouddrive",
+   "label": "cloud-drive",
+   "needs": [
+    "notifications",
+    "storage_read",
+    "storage_write",
+    "all_files",
+    "usb_host",
+    "install_unknown",
+    "usage_access",
+    "battery_opt"
+   ],
+   "helpers": [
+    "cld.termux"
+   ]
+  },
+  {
+   "app": "ac_cloud-gallery",
+   "package": "com.diegonmarcos.mediacenter",
+   "label": "cloud-gallery",
+   "needs": [
+    "notifications",
+    "fine_location",
+    "phone_state",
+    "media_images",
+    "media_video",
+    "storage_read",
+    "storage_write",
+    "all_files"
+   ],
+   "helpers": []
+  },
+  {
+   "app": "ac_cloud-keyboard",
+   "package": "com.diegonmarcos.cloudkeyboard",
+   "label": "cloud-keyboard",
+   "needs": [
+    "microphone",
+    "contacts_read",
+    "all_files"
+   ],
+   "helpers": []
+  },
+  {
+   "app": "ac_cloud-mail",
+   "package": "com.diegonmarcos.comms.mail",
+   "label": "cloud-mail",
+   "needs": [
+    "notifications",
+    "contacts_read",
+    "install_unknown"
+   ],
+   "helpers": []
+  },
+  {
+   "app": "ac_cloud-matrix",
+   "package": "",
+   "label": "cloud-matrix",
+   "needs": [
+    "notifications",
+    "fine_location",
+    "coarse_location",
+    "camera",
+    "microphone",
+    "install_unknown",
+    "battery_opt"
+   ],
+   "helpers": []
+  },
+  {
+   "app": "ac_cloud-me",
+   "package": "com.diegonmarcos.cloudme",
+   "label": "cloud-me",
+   "needs": [
+    "notifications",
+    "calendar_read",
+    "activity_recognition",
+    "body_sensors",
+    "health_connect",
+    "all_files",
+    "overlay",
+    "install_unknown",
+    "exact_alarm",
+    "usage_access",
+    "battery_opt"
+   ],
+   "helpers": []
+  },
+  {
+   "app": "ac_cloud-myterminal",
+   "package": "com.diegonmarcos.ide",
+   "label": "cloud-myterminal",
+   "needs": [
+    "notifications",
+    "install_unknown",
+    "battery_opt"
+   ],
+   "helpers": []
+  },
+  {
+   "app": "ac_cloud-nav",
+   "package": "com.diegonmarcos.cloudnav",
+   "label": "cloud-nav",
+   "needs": [
+    "notifications",
+    "fine_location",
+    "coarse_location",
+    "background_location",
+    "activity_recognition",
+    "health_connect",
+    "install_unknown",
+    "usage_access"
+   ],
+   "helpers": []
+  },
+  {
+   "app": "ac_cloud-news",
+   "package": "com.diegonmarcos.cloudnews",
+   "label": "cloud-news",
+   "needs": [
+    "notifications",
+    "install_unknown"
+   ],
+   "helpers": []
+  },
+  {
+   "app": "ac_cloud-nix-on-droid",
+   "package": "cld.termux",
+   "label": "cloud-terminal-nix",
+   "needs": [
+    "notifications",
+    "storage_read",
+    "storage_write",
+    "all_files",
+    "overlay",
+    "install_unknown",
+    "usage_access",
+    "battery_opt"
+   ],
+   "helpers": []
+  },
+  {
+   "app": "ac_cloud-notes",
+   "package": "com.diegonmarcos.cloudnotes",
+   "label": "cloud-notes",
+   "needs": [
+    "storage_read",
+    "all_files"
+   ],
+   "helpers": [
+    "cld.termux"
+   ]
+  },
+  {
+   "app": "ac_cloud-store",
+   "package": "com.diegonmarcos.cloudstore",
+   "label": "cloud-store",
+   "needs": [
+    "notifications",
+    "install_unknown",
+    "usage_access",
+    "battery_opt"
+   ],
+   "helpers": []
+  },
+  {
+   "app": "ac_cloud-superintel",
+   "package": "com.diegonmarcos.cloudsuperintel",
+   "label": "cloud-superintel",
+   "needs": [
+    "camera",
+    "media_images"
+   ],
+   "helpers": []
+  },
+  {
+   "app": "ac_cloud-tasks",
+   "package": "com.diegonmarcos.cloudagenda",
+   "label": "cloud-tasks",
+   "needs": [
+    "notifications",
+    "install_unknown"
+   ],
+   "helpers": []
+  },
+  {
+   "app": "ac_cloud-termux",
+   "package": "cld.termux",
+   "label": "cloud-terminal-termux",
+   "needs": [
+    "notifications",
+    "storage_read",
+    "storage_write",
+    "all_files",
+    "overlay",
+    "install_unknown",
+    "usage_access",
+    "battery_opt"
+   ],
+   "helpers": []
+  },
+  {
+   "app": "ac_cloud-tools-small-llms",
+   "package": "com.diegonmarcos.cloudtoolssmallllms",
+   "label": "cloud-tools-small-llms",
+   "needs": [
+    "fine_location",
+    "coarse_location",
+    "bt_scan",
+    "bt_connect",
+    "usb_host",
+    "activity_recognition",
+    "body_sensors"
+   ],
+   "helpers": []
+  },
+  {
+   "app": "ac_cloud-vault",
+   "package": "com.diegonmarcos.cloudvault",
+   "label": "cloud-vault",
+   "needs": [
+    "notifications",
+    "camera",
+    "accessibility"
+   ],
+   "helpers": []
+  },
+  {
+   "app": "ac_cloud-wallet",
+   "package": "com.diegonmarcos.cloudwallet",
+   "label": "cloud-wallet",
+   "needs": [
+    "notifications",
+    "camera",
+    "install_unknown"
+   ],
+   "helpers": []
+  },
+  {
+   "app": "ac_cloud-writer",
+   "package": "com.diegonmarcos.cloudwriter",
+   "label": "cloud-writer",
+   "needs": [
+    "notifications",
+    "microphone"
+   ],
+   "helpers": []
+  }
+ ]
+}
