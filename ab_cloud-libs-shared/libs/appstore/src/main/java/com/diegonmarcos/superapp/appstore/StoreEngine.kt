@@ -76,8 +76,11 @@ object StoreEngine {
 
     private val fleet by lazy { Fleet.parse(BuildConfig.CONSTELLATION_FLEET_B64) }
 
+    /** The app each ask named: the engine fetches what it was ASKED for; the baked fleet only serves jobs restored after a restart. */
+    private val asked = java.util.concurrent.ConcurrentHashMap<String, Fleet.App>()
+
     private fun mirrors(app: Context, job: DlJob): List<DlMirror> {
-        val a = fleet.firstOrNull { it.id == job.id }
+        val a = asked[job.id] ?: fleet.firstOrNull { it.id == job.id }
             ?: return emptyList()
         return EngineLegs.legs(app, a).map { leg ->
             DlMirror(leg.name) { val p = leg.plan(); DlSource(p.url, p.headers, p.sha256, p.bytes) }
@@ -115,6 +118,7 @@ object StoreEngine {
             ApkCache.clearNote(ctx.applicationContext, app.pkg)
             return hit
         }
+        asked[app.id] = app
         e.enqueue(DlSpec(
             id = app.id, pkg = app.pkg, versionCode = app.declaredVersionCode.takeIf { it > 0 } ?: -1L, label = app.label,
             namePrefix = "fleet-${app.id}-", priority = if (userStarted) 10 else 0, userStarted = userStarted,
