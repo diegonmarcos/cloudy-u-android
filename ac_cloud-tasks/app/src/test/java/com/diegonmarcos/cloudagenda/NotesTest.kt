@@ -149,7 +149,7 @@ class NotesTest {
         val sel = NotesSelection("nb-personal")
         fun by(f: String) = NotesQueries.visible(m.data, NotesQuery(sel, filter = f, sort = NoteSorts.TITLE)).map { it.title }
         assertEquals(listOf("P"), by(NoteFilters.PINNED)); assertEquals(listOf("C", "T"), by(NoteFilters.CHECKLIST))
-        assertEquals(listOf("T"), by(NoteFilters.OPEN)); assertEquals(listOf("T"), by(NoteFilters.TAGGED)); assertEquals(listOf("C", "P", "T"), by(NoteFilters.ALL))
+        assertEquals(listOf("T"), by(NoteFilters.OPEN)); assertEquals(listOf("T"), by(NoteFilters.TAGGED)); assertEquals(listOf("P", "C", "T"), by(NoteFilters.ALL))
     }
 
     @Test fun `pinned cards lead, then updated and created newest first, or title A to Z`() {
