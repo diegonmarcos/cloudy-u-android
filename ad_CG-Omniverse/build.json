@@ -161,6 +161,7 @@
       "type": "library",
       "_doc": "#1154 shared navigation and theme design, shared BY REFERENCE."
     },
+    "libs:fleet-data-client": {"dir": "../ab_cloud-libs-shared/libs/fleet-data-client", "type": "library"},
     "libs:perms": {
       "dir": "../ab_cloud-libs-shared/libs/perms",
       "type": "library",

@@ -22,6 +22,8 @@ project(':libs:shell-rish').projectDir = new File(rootDir, '../ab_cloud-libs-sha
 // #1274 libs:perms (PermsShell: the one place a pm grant line is written): kept included, the Compose libs below may link it.
 include ':libs:perms'
 project(':libs:perms').projectDir = new File(rootDir, '../ab_cloud-libs-shared/libs/perms')
+include ':libs:fleet-data-client'
+project(':libs:fleet-data-client').projectDir = new File(rootDir, '../ab_cloud-libs-shared/libs/fleet-data-client')
 // #1352 Configs ▸ General / ▸ About (libs:ui-nav-bars, in the terminal's menu) and its deps.
 include ':libs:ui-nav-bars'
 project(':libs:ui-nav-bars').projectDir = new File(rootDir, '../ab_cloud-libs-shared/libs/ui-nav-bars')

@@ -4,11 +4,22 @@
   "shared": {
     "constellation-fleet": {
       "tier": 3,
-      "consumers": ["*"],
+      "consumers": [
+        "*"
+      ],
       "source": "aa_cloud-superapp/data/constellation-fleet.json"
+    },
+    "app-perms": {
+      "tier": 3,
+      "consumers": [
+        "*"
+      ]
     }
   },
   "apps": {
-    "com.diegonmarcos.cloudtoolssmallllms": ["tools-models", "tools/sensors"]
+    "com.diegonmarcos.cloudtoolssmallllms": [
+      "tools-models",
+      "tools/sensors"
+    ]
   }
 }

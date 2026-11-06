@@ -52,6 +52,7 @@ on:
       - "ab_cloud-libs-shared/libs/databackend/**"
       - "ab_cloud-libs-shared/libs/decisions-link/**"
       - "ab_cloud-libs-shared/libs/devtools/**"
+      - "ab_cloud-libs-shared/libs/fleet-data-client/**"
       - "ab_cloud-libs-shared/libs/fleetconfig-model/**"
       - "ab_cloud-libs-shared/libs/perms/**"
       - "ab_cloud-libs-shared/libs/theme-background/**"
@@ -103,6 +104,7 @@ jobs:
         run: |
           sh 1_cicd/dist/scripts/cloud-android-test-engine.sh shell "$WORK_DIR"
           sh 1_cicd/dist/scripts/cloud-android-test-engine.sh lint  "$WORK_DIR"
+          sh 1_cicd/dist/scripts/cloud-android-test-engine.sh unit  "$WORK_DIR"
 
       # Publish-if-changed gate. Android builds are not byte-reproducible, so a
       # rebuild of unchanged source published different bytes, a different
@@ -167,16 +169,6 @@ jobs:
         uses: ./.github/actions/install-pinned-tools
         with:
           tools: oras sops
-
-      # #1474 JVM unit tests (ApifyKvLinkTest). After the vault checkout and sops: the app's signingConfig needs the shared
-      # key at configuration time. Ungated on the publish gate so a test-only change still runs.
-      - name: JVM unit tests (fatal on failure)
-        working-directory: ${{ github.workspace }}
-        env:
-          BYPASS_NIX: "1"
-          VAULT_DIR: ${{ github.workspace }}/.vault
-          SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
-        run: sh 1_cicd/dist/scripts/cloud-android-test-engine.sh unit "$WORK_DIR"
 
       - name: Determine variant
         if: steps.gate.outputs.skip != 'true'

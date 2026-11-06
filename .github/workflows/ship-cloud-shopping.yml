@@ -48,6 +48,7 @@ on:
       - "ab_cloud-libs-shared/libs/core/**"
       - "ab_cloud-libs-shared/libs/crash/**"
       - "ab_cloud-libs-shared/libs/devtools/**"
+      - "ab_cloud-libs-shared/libs/fleet-data-client/**"
       - "ab_cloud-libs-shared/libs/fleetconfig-model/**"
       - "ab_cloud-libs-shared/libs/perms/**"
       - "ab_cloud-libs-shared/libs/theme-background/**"

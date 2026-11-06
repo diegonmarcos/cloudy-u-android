@@ -56,6 +56,8 @@ include(":libs:ui-nav-bars")
 project(":libs:ui-nav-bars").projectDir = file("../ab_cloud-libs-shared/libs/ui-nav-bars")
 include(":libs:perms")
 project(":libs:perms").projectDir = file("../ab_cloud-libs-shared/libs/perms")
+include(":libs:fleet-data-client")
+project(":libs:fleet-data-client").projectDir = file("../ab_cloud-libs-shared/libs/fleet-data-client")
 include(":libs:theme-background")
 project(":libs:theme-background").projectDir = file("../ab_cloud-libs-shared/libs/theme-background")
 // Gradle 9 fails outright on a project directory that does not exist, and the

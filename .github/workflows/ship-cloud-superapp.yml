@@ -111,6 +111,7 @@ on:
       - "ab_cloud-libs-shared/libs/decisions-link/**"
       - "ab_cloud-libs-shared/libs/devtools/**"
       - "ab_cloud-libs-shared/libs/firewall/**"
+      - "ab_cloud-libs-shared/libs/fleet-data-client/**"
       - "ab_cloud-libs-shared/libs/fleet-endpoints-android/**"
       - "ab_cloud-libs-shared/libs/fleet-endpoints/**"
       - "ab_cloud-libs-shared/libs/fleetconfig-model/**"

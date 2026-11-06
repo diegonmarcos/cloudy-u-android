@@ -100,6 +100,7 @@
       "dir": "../ab_cloud-libs-shared/libs/health",
       "type": "library"
     },
+    "libs:fleet-data-client": {"dir": "../ab_cloud-libs-shared/libs/fleet-data-client", "type": "library"},
     "libs:perms": {
       "_doc": "Configs > Perms: the shared permission catalogue, live status reader and settings intents (#1274), the same ones the SuperApp's Perms page uses. build.json::ui.permissions names the entries Cloud Me needs.",
       "dir": "../ab_cloud-libs-shared/libs/perms",

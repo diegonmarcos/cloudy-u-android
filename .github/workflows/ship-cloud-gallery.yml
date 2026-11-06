@@ -76,6 +76,7 @@ on:
       - "ab_cloud-libs-shared/libs/crash/**"
       - "ab_cloud-libs-shared/libs/cropper/**"
       - "ab_cloud-libs-shared/libs/devtools/**"
+      - "ab_cloud-libs-shared/libs/fleet-data-client/**"
       - "ab_cloud-libs-shared/libs/fleetconfig-model/**"
       - "ab_cloud-libs-shared/libs/gesture/**"
       - "ab_cloud-libs-shared/libs/ml-l-image/**"

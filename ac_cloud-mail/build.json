@@ -221,6 +221,7 @@
       "_doc": "#1154 shared navigation and theme design, shared BY REFERENCE from ab_cloud-libs-shared/libs/.",
       "dir": "../ab_cloud-libs-shared/libs/ui-nav-bars"
     },
+    "libs:fleet-data-client": {"dir": "../ab_cloud-libs-shared/libs/fleet-data-client", "type": "library"},
     "libs:perms": {"dir": "../ab_cloud-libs-shared/libs/perms", "type": "library", "_doc": "#1360 the permission contract (libs:perms): Configs > General > Perms (AppPermsSection, linked by libs:ui-nav-bars), first run (PermsFirstRun), PermsGate, and the state provider helper apps are read through."},
     "libs:core": {
       "_doc_dir": "Shared BY REFERENCE from ab_cloud-libs-shared/libs/ - settings.gradle points projectDir here instead of at a local copy, so a fix lands in every consuming app at build time and copies cannot drift.",

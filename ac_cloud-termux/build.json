@@ -60,6 +60,7 @@
     }
   },
   "modules": {
+    "libs:fleet-data-client": {"dir": "../ab_cloud-libs-shared/libs/fleet-data-client", "type": "library"},
     "libs:perms": {"dir": "../ab_cloud-libs-shared/libs/perms", "type": "library", "depends_on": [], "comment": "#1274 the permission contract: the catalogue, PermsNeeds, PermsLink and PermsActivity, the Permissions page this app hosts for its libs (permissions are per package, so never another app's page)."},
     "_doc": "#744 Shared modules settings.gradle includes BY REFERENCE. Declared so the ship workflow watches them and the publish gate hashes them: a change to any of them must rebuild Cloud Terminal, not ride along unshipped. settings.gradle still names them as literals (upstream's file, not a loop over this map). Deliberately NOT in rootfs/rootfs.json's identity_files: linking core changes this app, never the ~400 MB rootfs.",
     "libs:core": {

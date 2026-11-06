@@ -102,6 +102,7 @@
       "_doc": "#1164 shared navigation and theme design, shared BY REFERENCE.",
       "dir": "../ab_cloud-libs-shared/libs/ui-nav-bars"
     },
+    "libs:fleet-data-client": {"dir": "../ab_cloud-libs-shared/libs/fleet-data-client", "type": "library"},
     "libs:perms": {
       "dir": "../ab_cloud-libs-shared/libs/perms",
       "type": "library",

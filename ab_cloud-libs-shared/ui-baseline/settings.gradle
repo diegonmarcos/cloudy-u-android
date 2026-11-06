@@ -16,7 +16,7 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = 'ui-baseline'
-['ui-icons', 'theme-background', 'bottomnav', 'ui-nav-bars', 'ui-kit', 'perms', 'fleetconfig-model', 'crash'].each { m ->
+['ui-icons', 'theme-background', 'bottomnav', 'ui-nav-bars', 'ui-kit', 'perms', 'fleet-data-client', 'fleetconfig-model', 'crash'].each { m ->
     include ":libs:${m}"
     project(":libs:${m}").projectDir = file("../libs/${m}")
 }

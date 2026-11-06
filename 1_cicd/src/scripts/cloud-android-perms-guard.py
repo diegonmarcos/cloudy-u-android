@@ -5,7 +5,7 @@ first run, and checked on the helper app that does the work.
 Usage: cloud-android-perms-guard.py [ROOT] [--matrix] [--write]
   ROOT      repo root (default .)
   --matrix  print the audit matrix (app x permission) and exit 0
-  --write   (re)generate every app's assets/app-perms.json from build.json::perms
+  --write   (re)generate the app-perms dataset data/fleet/app-perms.json (one entry per package) from every app's build.json::perms
 Policy: 1_cicd/src/data/perms-guard.json (code signatures, cross-app engines, waivers).
 Exit 1 on any finding. Rules:
   P1 code -> build.json   a permission-gated API in the app's own code needs its catalogue id in perms.needs
@@ -14,8 +14,9 @@ Exit 1 on any finding. Rules:
   P4 engines              code that runs work in another app (cld.termux, its shared-store provider) declares that
                           helper in perms.helpers with what it needs, the helper's own perms.needs holds it, and the
                           manifest can see the helper package (<queries>)
-  P5 the page             a Gradle app links libs:perms and its generated assets/app-perms.json equals build.json::perms
-                          (the asset is what the Perms page, first run and the failure prompt read); an app with its own
+  P5 the page             a Gradle app links libs:perms and the one dataset data/fleet/app-perms.json (keyed by package,
+                          served at runtime by Cloud Store, read through libs:fleet-data-client) holds its build.json::perms
+                          (what the Perms page, first run and the failure prompt read); a baked assets/app-perms.json copy is red (#1547); an app with its own
                           declared Perms section (ui.general.perms) lists every manifest permission there too
   P6 first run            perms.first_run is "libs:perms" (PermsFirstRun) or "own:<File.kt>" naming a file that exists
   P7 one place (#1515)    no app code outside libs:perms and the app's declared Perms page (policy one_place.allow) calls
@@ -36,7 +37,8 @@ MATRIX = "--matrix" in sys.argv
 WRITE = "--write" in sys.argv
 POLICY_REL = "1_cicd/src/data/perms-guard.json"
 CAT_REL = "ab_cloud-libs-shared/libs/perms/src/main/assets/perms-catalogue.json"
-ASSET = "app-perms.json"
+ASSET = "app-perms.json"   # the OLD per-app baked copy: now forbidden
+DATASET_REL = "data/fleet/app-perms.json"
 # #1546 the fleet index the Perms page reads for "used by fleet apps" and the per-app filter (libs:perms FleetPerms)
 FLEET_REL = "ab_cloud-libs-shared/libs/perms/src/main/assets/fleet-perms.json"
 SKIP_DIRS = {"build", "test", "androidTest", "testDebug", "node_modules", ".gradle", "debug", "z_archive", ".git", "intermediates"}
@@ -266,14 +268,21 @@ def one_place(policy, apps):
     return bad
 
 
-def asset_body(perms):
-    out = {
-        "_doc": "GENERATED from build.json::perms by 1_cicd/src/scripts/cloud-android-perms-guard.py --write. DO NOT EDIT. Read by libs:perms (AppPerms): the Perms page rows, Grant all, first run and PermsGate.",
+def entry_of(perms):
+    return {
         "needs": perms.get("needs", []),
         "first_run": perms.get("first_run", "libs:perms"),
         "helpers": [{k: h[k] for k in ("package", "label", "needs", "why") if k in h} for h in perms.get("helpers", [])],
     }
-    return json.dumps(out, indent=2, sort_keys=False) + "\n"
+
+
+def dataset_body(apps_by_pkg):
+    out = {
+        "schemaVersion": 1,
+        "_doc": "GENERATED from every app's build.json::perms by 1_cicd/src/scripts/cloud-android-perms-guard.py --write. DO NOT EDIT. ONE runtime dataset keyed by package (it replaces the 40 baked assets/app-perms.json copies, #1547): Cloud Store serves it as shared/app-perms, libs:perms (AppPerms) reads it through libs:fleet-data-client: the Perms page rows, Grant all, first run and PermsGate.",
+        "apps": {k: apps_by_pkg[k] for k in sorted(apps_by_pkg)},
+    }
+    return json.dumps(out, indent=1, sort_keys=False) + "\n"
 
 
 def fleet_body(rows):
@@ -311,6 +320,7 @@ def main():
             packages[pkg] = name
     matrix = {}
     fleet = []
+    dataset = {}
     for name, (app_dir, bj, man) in sorted(apps.items()):
         perms = bj.get("perms")
         perms_ok = isinstance(perms, dict)
@@ -398,14 +408,14 @@ def main():
             elif not perms.get("page"):
                 gap("P5 a non-Gradle app must name the page that grants its permissions (perms.page)")
         if linked:
-            asset = os.path.join(os.path.dirname(man), "assets", ASSET)
-            want = asset_body(perms)
-            if WRITE and perms_ok:
-                os.makedirs(os.path.dirname(asset), exist_ok=True)
-                with open(asset, "w", encoding="utf-8") as f:
-                    f.write(want)
-            elif read(asset) != want:
-                gap("P5 %s is missing or stale: run cloud-android-perms-guard.py --write" % os.path.relpath(asset, ROOT))
+            baked = os.path.join(os.path.dirname(man), "assets", ASSET)
+            if os.path.exists(baked):
+                gap("P5 %s is a baked copy: app-perms is the runtime dataset %s (#1547), delete the file" % (os.path.relpath(baked, ROOT), DATASET_REL))
+            pkg = policy.get("package_override", {}).get(name) or package_of(bj, man)
+            if not pkg:
+                gap("P5 no applicationId, so the app has no key in %s" % DATASET_REL)
+            elif perms_ok:
+                dataset[pkg] = entry_of(perms)
         gen = ((bj.get("ui") or {}).get("general") or {}).get("perms")
         if isinstance(gen, list):
             listed = {p for e in gen for p in e.get("permissions", [])}
@@ -425,6 +435,13 @@ def main():
             f.write(fleet_want)
     elif os.path.isdir(os.path.dirname(fleet_path)) and read(fleet_path) != fleet_want:
         bad.append("P8 %s is missing or stale: run cloud-android-perms-guard.py --write" % FLEET_REL)
+    want = dataset_body(dataset)
+    if WRITE:
+        os.makedirs(os.path.dirname(os.path.join(ROOT, DATASET_REL)), exist_ok=True)
+        with open(os.path.join(ROOT, DATASET_REL), "w", encoding="utf-8") as f:
+            f.write(want)
+    elif read(os.path.join(ROOT, DATASET_REL)) != want:
+        bad.append("P5 %s is missing or stale: run cloud-android-perms-guard.py --write" % DATASET_REL)
     bad += one_place(policy, apps)
     pend = {k: v for k, v in policy.get("pending_page", {}).items() if not k.startswith("_")}
     for k, v in pend.items():

@@ -148,6 +148,7 @@
       "_doc_dir": "#868 the fleet's bottom island + NavDecl, shared BY REFERENCE: MainActivity's island carries Browser | Search | Configs. The web tabs, the address bar and every overlay stay libs:browser's own UI.",
       "dir": "../ab_cloud-libs-shared/libs/bottomnav"
     },
+    "libs:fleet-data-client": {"dir": "../ab_cloud-libs-shared/libs/fleet-data-client", "type": "library"},
     "libs:perms": {
       "dir": "../ab_cloud-libs-shared/libs/perms",
       "type": "library",

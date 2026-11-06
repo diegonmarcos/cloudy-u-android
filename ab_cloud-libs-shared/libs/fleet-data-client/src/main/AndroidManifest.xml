@@ -3,7 +3,7 @@
     <!-- The providers' signature permission: a fleet-signed APK holds it, nothing else can read a dataset. -->
     <uses-permission android:name="com.diegonmarcos.cloud.permission.CONSTELLATION_DATA" />
     <queries>
-        <provider android:authorities="com.diegonmarcos.cloudaccount.accountdata" />
-        <provider android:authorities="cloud.store.data" />
+        <package android:name="com.diegonmarcos.cloudaccount" />
+        <package android:name="com.diegonmarcos.cloudstore" />
     </queries>
 </manifest>

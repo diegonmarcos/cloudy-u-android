@@ -3,10 +3,12 @@ package com.diegonmarcos.superapp.perms
 import android.content.Context
 import android.content.pm.PackageManager
 import android.net.Uri
+import com.diegonmarcos.superapp.fleetdata.FleetData
 import org.json.JSONObject
 
 /**
- * #1360 what THIS app needs, as declared in its build.json::perms and generated into assets/app-perms.json by
+ * #1360 what THIS app needs, as declared in its build.json::perms and generated into the ONE runtime dataset `app-perms` (keyed by
+ * package; data/fleet/app-perms.json, served by Cloud Store, read through libs:fleet-data-client: #1547, no baked asset) by
  * 1_cicd/src/scripts/cloud-android-perms-guard.py --write (the guard fails when the two differ, when code uses a gated
  * API that is not declared, or when the manifest asks for something the declaration leaves out).
  *  - [AppPermsDecl.needs]: catalogue ids of this app's own grants, the rows of its Perms section.
@@ -19,8 +21,13 @@ data class HelperNeed(val pkg: String, val label: String, val needs: List<String
 
 data class AppPermsDecl(val needs: List<String>, val firstRun: String, val helpers: List<HelperNeed>, val declared: Boolean) {
     companion object {
-        const val ASSET = "app-perms.json"
+        /** The runtime dataset (shared/app-perms), never an asset. */
+        const val DATASET = "app-perms"
         val NONE = AppPermsDecl(emptyList(), "libs:perms", emptyList(), declared = false)
+
+        /** The dataset `app-perms`: `{schemaVersion, apps: {<package>: <entry>}}`; the entry of [pkg], else null (not served yet, or no entry). */
+        fun forPackage(json: String, pkg: String): AppPermsDecl? =
+            JSONObject(json).optJSONObject("apps")?.optJSONObject(pkg)?.let { parse(it.toString()) }
 
         fun parse(json: String): AppPermsDecl {
             val o = JSONObject(json)
@@ -41,10 +48,12 @@ data class HelperRow(val helper: HelperNeed, val entry: PermEntry, val status: P
 object AppPerms {
     @Volatile private var cached: AppPermsDecl? = null
 
+    /** This app's declaration from the runtime dataset; [AppPermsDecl.NONE] (every applicable entry) until Cloud Store has served it, and then not cached, so the next call retries. */
     fun decl(ctx: Context): AppPermsDecl = cached ?: synchronized(this) {
         cached ?: runCatching {
-            AppPermsDecl.parse(ctx.applicationContext.assets.open(AppPermsDecl.ASSET).bufferedReader().use { it.readText() })
-        }.getOrElse { AppPermsDecl.NONE }.also { cached = it }
+            val app = ctx.applicationContext
+            FleetData.get(app, AppPermsDecl.DATASET) { AppPermsDecl.forPackage(it, app.packageName) }
+        }.getOrNull()?.also { cached = it } ?: AppPermsDecl.NONE
     }
 
     /** This app's rows: the declared needs (catalogue order); an app with no declaration gets every applicable entry. */

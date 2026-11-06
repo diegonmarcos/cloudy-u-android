@@ -1234,6 +1234,7 @@
       "type": "library"
     },
     "libs:usb-drive": {"dir": "../ab_cloud-libs-shared/libs/usb-drive", "type": "library", "depends_on": [], "comment": "#1375/#1405 USB-C drives (StorageVolumes, UsbVolumeModel, RawUsbDrive, libaums), shared with Cloud Store by reference."},
+    "libs:fleet-data-client": {"dir": "../ab_cloud-libs-shared/libs/fleet-data-client", "type": "library"},
     "libs:perms": {"dir": "../ab_cloud-libs-shared/libs/perms", "type": "library", "depends_on": [], "comment": "#1274 the permission contract: the catalogue, PermsNeeds, PermsLink and PermsActivity, the Permissions page this app hosts for its libs (permissions are per package, so never another app's page)."},
     "libs:decisions-link": {
       "type": "library",

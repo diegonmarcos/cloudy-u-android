@@ -180,6 +180,7 @@
       "dir": "../ab_cloud-libs-shared/libs/light",
       "type": "library"
     },
+    "libs:fleet-data-client": {"dir": "../ab_cloud-libs-shared/libs/fleet-data-client", "type": "library"},
     "libs:perms": {
       "dir": "../ab_cloud-libs-shared/libs/perms",
       "type": "library",

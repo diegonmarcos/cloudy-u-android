@@ -214,5 +214,10 @@
       "ac_cloud-vault/": "vendored Bitwarden fork: its own permission manager asks; replaced only with the fork's own screens"
     },
     "baseline_max": 23
+  },
+  "package_override": {
+    "_doc": "#1547 forks whose applicationId is not in build.json or their Gradle file (a Gradle property or a BuildTimeConfig constant): the real package, the key of the app's entry in the app-perms dataset.",
+    "ac_cloud-dialer": "com.diegonmarcos.comms.dialer",
+    "ac_cloud-matrix": "com.diegonmarcos.comms.matrix"
   }
 }

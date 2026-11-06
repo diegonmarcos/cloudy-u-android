@@ -62,3 +62,5 @@ project(":libs:theme-background").projectDir = file("../ab_cloud-libs-shared/lib
 // #1360 libs:ui-nav-bars draws Configs > General > Perms with libs:perms (api dependency).
 include(":libs:perms")
 project(":libs:perms").projectDir = file("../ab_cloud-libs-shared/libs/perms")
+include(":libs:fleet-data-client")
+project(":libs:fleet-data-client").projectDir = file("../ab_cloud-libs-shared/libs/fleet-data-client")

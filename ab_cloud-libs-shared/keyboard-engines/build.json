@@ -21,6 +21,7 @@
     "jdk": "17"
   },
   "modules": {
+    "libs:fleet-data-client": {"dir": "../libs/fleet-data-client", "type": "library"},
     "libs:perms": {"dir": "../libs/perms", "type": "library", "depends_on": [], "comment": "#1274 libs:voice compiles libs:perms (PermsLink: the IME opens the Permissions page, PermsActivity, for the microphone)."},
     "app": {
       "type": "application"

@@ -142,6 +142,12 @@
    "what": "build system and CI helpers",
    "proposed": "PROPOSED (owner decides): PolyForm-Noncommercial-1.0.0"
   },
+  "data": {
+   "licence": "LicenseRef-NoLicenseGranted",
+   "kind": "repo-meta",
+   "what": "public fleet data (tiers 3-4: app defaults, reference data) served at runtime by Cloud Store; owner-authored, no third-party content",
+   "proposed": "PROPOSED (owner decides): keep all rights reserved"
+  },
   "a0_docs": {
    "licence": "LicenseRef-NoLicenseGranted",
    "kind": "repo-meta",

@@ -59,6 +59,7 @@ on:
       - "ab_cloud-libs-shared/libs/crash/**"
       - "ab_cloud-libs-shared/libs/decisions-link/**"
       - "ab_cloud-libs-shared/libs/devtools/**"
+      - "ab_cloud-libs-shared/libs/fleet-data-client/**"
       - "ab_cloud-libs-shared/libs/fleetconfig-model/**"
       - "ab_cloud-libs-shared/libs/keyboard/**"
       - "ab_cloud-libs-shared/libs/media/**"

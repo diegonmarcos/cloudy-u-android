@@ -1,0 +1,401 @@
+{
+ "schemaVersion": 1,
+ "_doc": "GENERATED from every app's build.json::perms by 1_cicd/src/scripts/cloud-android-perms-guard.py --write. DO NOT EDIT. ONE runtime dataset keyed by package (it replaces the 40 baked assets/app-perms.json copies, #1547): Cloud Store serves it as shared/app-perms, libs:perms (AppPerms) reads it through libs:fleet-data-client: the Perms page rows, Grant all, first run and PermsGate.",
+ "apps": {
+  "cld.camera": {
+   "needs": [
+    "notifications",
+    "fine_location",
+    "coarse_location",
+    "camera",
+    "microphone"
+   ],
+   "first_run": "libs:perms",
+   "helpers": []
+  },
+  "cld.termux": {
+   "needs": [
+    "notifications",
+    "storage_read",
+    "storage_write",
+    "all_files",
+    "overlay",
+    "install_unknown",
+    "usage_access",
+    "battery_opt"
+   ],
+   "first_run": "libs:perms",
+   "helpers": []
+  },
+  "com.diegonmarcos.capitalfinterm": {
+   "needs": [],
+   "first_run": "libs:perms",
+   "helpers": []
+  },
+  "com.diegonmarcos.cgomniverse": {
+   "needs": [],
+   "first_run": "libs:perms",
+   "helpers": []
+  },
+  "com.diegonmarcos.cloudaccount": {
+   "needs": [
+    "notifications",
+    "install_unknown",
+    "battery_opt"
+   ],
+   "first_run": "libs:perms",
+   "helpers": []
+  },
+  "com.diegonmarcos.cloudagenda": {
+   "needs": [
+    "notifications",
+    "install_unknown"
+   ],
+   "first_run": "libs:perms",
+   "helpers": []
+  },
+  "com.diegonmarcos.cloudbrowser": {
+   "needs": [
+    "notifications",
+    "fine_location",
+    "coarse_location",
+    "bt_scan",
+    "bt_connect",
+    "camera",
+    "microphone",
+    "storage_write",
+    "install_unknown"
+   ],
+   "first_run": "libs:perms",
+   "helpers": []
+  },
+  "com.diegonmarcos.cloudc3": {
+   "needs": [
+    "notifications",
+    "install_unknown"
+   ],
+   "first_run": "libs:perms",
+   "helpers": []
+  },
+  "com.diegonmarcos.cloudcalc": {
+   "needs": [
+    "notifications",
+    "fine_location",
+    "coarse_location",
+    "nearby_wifi",
+    "bt_scan",
+    "bt_connect",
+    "camera",
+    "usb_host",
+    "microphone",
+    "activity_recognition",
+    "body_sensors",
+    "exact_alarm"
+   ],
+   "first_run": "libs:perms",
+   "helpers": []
+  },
+  "com.diegonmarcos.cloudcontacts": {
+   "needs": [
+    "notifications",
+    "contacts_read",
+    "contacts_write",
+    "install_unknown"
+   ],
+   "first_run": "libs:perms",
+   "helpers": []
+  },
+  "com.diegonmarcos.clouddrive": {
+   "needs": [
+    "notifications",
+    "storage_read",
+    "storage_write",
+    "all_files",
+    "usb_host",
+    "install_unknown",
+    "usage_access",
+    "battery_opt"
+   ],
+   "first_run": "libs:perms",
+   "helpers": [
+    {
+     "package": "cld.termux",
+     "label": "cloud-terminal-termux",
+     "needs": [
+      "all_files"
+     ],
+     "why": "Git, rsync and the shared store run inside Cloud Termux: without its All files access every clone and sync fails"
+    }
+   ]
+  },
+  "com.diegonmarcos.cloudkeyboard": {
+   "needs": [
+    "microphone",
+    "contacts_read",
+    "all_files"
+   ],
+   "first_run": "libs:perms",
+   "helpers": []
+  },
+  "com.diegonmarcos.cloudkgstore": {
+   "needs": [],
+   "first_run": "libs:perms",
+   "helpers": []
+  },
+  "com.diegonmarcos.cloudme": {
+   "needs": [
+    "notifications",
+    "calendar_read",
+    "activity_recognition",
+    "body_sensors",
+    "health_connect",
+    "all_files",
+    "overlay",
+    "install_unknown",
+    "exact_alarm",
+    "usage_access",
+    "battery_opt"
+   ],
+   "first_run": "own:MePerms.kt",
+   "helpers": []
+  },
+  "com.diegonmarcos.cloudmediacenter": {
+   "needs": [],
+   "first_run": "libs:perms",
+   "helpers": []
+  },
+  "com.diegonmarcos.cloudnav": {
+   "needs": [
+    "notifications",
+    "fine_location",
+    "coarse_location",
+    "background_location",
+    "activity_recognition",
+    "health_connect",
+    "install_unknown",
+    "usage_access"
+   ],
+   "first_run": "libs:perms",
+   "helpers": []
+  },
+  "com.diegonmarcos.cloudnews": {
+   "needs": [
+    "notifications",
+    "install_unknown"
+   ],
+   "first_run": "libs:perms",
+   "helpers": []
+  },
+  "com.diegonmarcos.cloudnotes": {
+   "needs": [
+    "storage_read",
+    "all_files"
+   ],
+   "first_run": "libs:perms",
+   "helpers": [
+    {
+     "package": "cld.termux",
+     "label": "cloud-terminal-termux",
+     "needs": [
+      "all_files"
+     ],
+     "why": "The vault is opened through Cloud Termux's shared-store provider: without its All files access the vault cannot be read or saved"
+    }
+   ]
+  },
+  "com.diegonmarcos.cloudsearch": {
+   "needs": [],
+   "first_run": "libs:perms",
+   "helpers": []
+  },
+  "com.diegonmarcos.cloudshopping": {
+   "needs": [],
+   "first_run": "libs:perms",
+   "helpers": []
+  },
+  "com.diegonmarcos.cloudstore": {
+   "needs": [
+    "notifications",
+    "install_unknown",
+    "usage_access",
+    "battery_opt"
+   ],
+   "first_run": "libs:perms",
+   "helpers": []
+  },
+  "com.diegonmarcos.cloudsuperintel": {
+   "needs": [
+    "camera",
+    "media_images"
+   ],
+   "first_run": "libs:perms",
+   "helpers": []
+  },
+  "com.diegonmarcos.cloudtoolssmallllms": {
+   "needs": [
+    "fine_location",
+    "coarse_location",
+    "bt_scan",
+    "bt_connect",
+    "usb_host",
+    "activity_recognition",
+    "body_sensors"
+   ],
+   "first_run": "libs:perms",
+   "helpers": []
+  },
+  "com.diegonmarcos.cloudvault": {
+   "needs": [
+    "notifications",
+    "camera",
+    "accessibility"
+   ],
+   "first_run": "libs:perms",
+   "helpers": []
+  },
+  "com.diegonmarcos.cloudwallet": {
+   "needs": [
+    "notifications",
+    "camera",
+    "install_unknown"
+   ],
+   "first_run": "libs:perms",
+   "helpers": []
+  },
+  "com.diegonmarcos.cloudwebserver": {
+   "needs": [
+    "notifications",
+    "storage_read"
+   ],
+   "first_run": "libs:perms",
+   "helpers": []
+  },
+  "com.diegonmarcos.cloudwriter": {
+   "needs": [
+    "notifications",
+    "microphone"
+   ],
+   "first_run": "libs:perms",
+   "helpers": []
+  },
+  "com.diegonmarcos.comms.dialer": {
+   "needs": [
+    "notifications",
+    "microphone",
+    "contacts_read",
+    "contacts_write",
+    "phone_state",
+    "sms_read",
+    "overlay",
+    "install_unknown",
+    "phone_numbers",
+    "usage_access"
+   ],
+   "first_run": "libs:perms",
+   "helpers": []
+  },
+  "com.diegonmarcos.comms.mail": {
+   "needs": [
+    "notifications",
+    "contacts_read",
+    "install_unknown"
+   ],
+   "first_run": "libs:perms",
+   "helpers": []
+  },
+  "com.diegonmarcos.comms.matrix": {
+   "needs": [
+    "notifications",
+    "fine_location",
+    "coarse_location",
+    "camera",
+    "microphone",
+    "install_unknown",
+    "battery_opt"
+   ],
+   "first_run": "libs:perms",
+   "helpers": []
+  },
+  "com.diegonmarcos.hardtechcad": {
+   "needs": [],
+   "first_run": "libs:perms",
+   "helpers": []
+  },
+  "com.diegonmarcos.hardtechsim2real": {
+   "needs": [],
+   "first_run": "libs:perms",
+   "helpers": []
+  },
+  "com.diegonmarcos.ide": {
+   "needs": [
+    "notifications",
+    "install_unknown",
+    "battery_opt"
+   ],
+   "first_run": "libs:perms",
+   "helpers": []
+  },
+  "com.diegonmarcos.mediacenter": {
+   "needs": [
+    "notifications",
+    "fine_location",
+    "phone_state",
+    "media_images",
+    "media_video",
+    "storage_read",
+    "storage_write",
+    "all_files"
+   ],
+   "first_run": "libs:perms",
+   "helpers": []
+  },
+  "com.diegonmarcos.morpheus": {
+   "needs": [],
+   "first_run": "libs:perms",
+   "helpers": []
+  },
+  "com.diegonmarcos.superapp": {
+   "needs": [
+    "notifications",
+    "fine_location",
+    "coarse_location",
+    "nearby_wifi",
+    "bt_scan",
+    "bt_connect",
+    "camera",
+    "microphone",
+    "contacts_read",
+    "phone_state",
+    "sms_read",
+    "media_images",
+    "media_video",
+    "media_audio",
+    "health_connect",
+    "all_files",
+    "overlay",
+    "write_settings",
+    "install_unknown",
+    "usage_access",
+    "notification_listener",
+    "accessibility",
+    "dnd_access",
+    "device_admin",
+    "vpn",
+    "battery_opt",
+    "write_secure_settings"
+   ],
+   "first_run": "own:FirstRunPerms.kt",
+   "helpers": []
+  },
+  "com.diegonmarcos.watchdog": {
+   "needs": [],
+   "first_run": "libs:perms",
+   "helpers": []
+  },
+  "com.diegonmarcos.watchtower": {
+   "needs": [],
+   "first_run": "libs:perms",
+   "helpers": []
+  }
+ }
+}

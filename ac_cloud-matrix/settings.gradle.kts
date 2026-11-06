@@ -98,6 +98,8 @@ include(":libs:theme-background")
 project(":libs:theme-background").projectDir = file("../ab_cloud-libs-shared/libs/theme-background")
 include(":libs:perms")
 project(":libs:perms").projectDir = file("../ab_cloud-libs-shared/libs/perms")
+include(":libs:fleet-data-client")
+project(":libs:fleet-data-client").projectDir = file("../ab_cloud-libs-shared/libs/fleet-data-client")
 // ':libs:<x>' implicitly declares a ':libs' container whose default projectDir
 // is <root>/libs, which this fork does not have — and Gradle 9 fails outright
 // on a project directory that does not exist. Point it at the shared root.
