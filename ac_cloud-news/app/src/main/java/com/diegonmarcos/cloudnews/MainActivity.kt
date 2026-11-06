@@ -52,6 +52,7 @@ import com.diegonmarcos.superapp.updater.Updater
  */
 class MainActivity : AppCompatActivity() {
     private lateinit var webView: WebView
+    private var mediaPlayer: MediaPlayerOverlay? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -81,12 +82,25 @@ class MainActivity : AppCompatActivity() {
         // links are therefore handed to the system browser via
         // NewsBridge.openExternal(), never opened in this WebView.
         webView.addJavascriptInterface(NewsBridge(this), "NewsBridge")
+        // the Media tab: its own fetch door and the in-app YouTube player (same local-asset-only rule as above)
+        mediaPlayer = MediaPlayerOverlay(this, webView) { webView.evaluateJavascript("if (window.MediaUI) MediaUI.expand()", null) }
+        webView.addJavascriptInterface(MediaBridge(this) { mediaPlayer }, "MediaBridge")
+        onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                val p = mediaPlayer
+                if (p != null && p.inFullscreen()) p.leaveFullscreen() else { isEnabled = false; onBackPressedDispatcher.onBackPressed(); isEnabled = true }
+            }
+        })
         // the scroll bridge must exist BEFORE the first load (a JavaScript interface added later only reaches later pages); the shell sets its target
         com.diegonmarcos.superapp.bottomnav.ChromeWebScroll.attach(webView, null)
         webView.loadUrl("file:///android_asset/news.html")
         setContent { NewsShell() }
         Updater.start(this)
     }
+
+    override fun onPause() { mediaPlayer?.onPause(); super.onPause() }
+    override fun onResume() { super.onResume(); mediaPlayer?.onResume() }
+    override fun onDestroy() { mediaPlayer?.destroy(); super.onDestroy() }
 
     @Composable
     private fun NewsShell() {

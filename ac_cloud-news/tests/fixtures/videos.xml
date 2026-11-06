@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns:yt="http://www.youtube.com/xml/schemas/2015" xmlns:media="http://search.yahoo.com/mrss/" xmlns="http://www.w3.org/2005/Atom">
+  <link rel="self" href="http://www.youtube.com/feeds/videos.xml?channel_id=UCYO_jab_esuFRV4b17AJtAw"/>
+  <id>yt:channel:YO_jab_esuFRV4b17AJtAw</id>
+  <yt:channelId>YO_jab_esuFRV4b17AJtAw</yt:channelId>
+  <title>3Blue1Brown</title>
+  <link rel="alternate" href="https://www.youtube.com/channel/UCYO_jab_esuFRV4b17AJtAw"/>
+  <author>
+    <name>3Blue1Brown</name>
+    <uri>https://www.youtube.com/channel/UCYO_jab_esuFRV4b17AJtAw</uri>
+  </author>
+  <published>2015-03-06T22:56:45+00:00</published>
+  <entry>
+    <id>yt:video:aaaaaaaaaa1</id>
+    <yt:videoId>aaaaaaaaaa1</yt:videoId>
+    <yt:channelId>UCYO_jab_esuFRV4b17AJtAw</yt:channelId>
+    <title>Older video &amp; its title</title>
+    <link rel="alternate" href="https://www.youtube.com/watch?v=aaaaaaaaaa1"/>
+    <author>
+      <name>3Blue1Brown</name>
+      <uri>https://www.youtube.com/channel/UCYO_jab_esuFRV4b17AJtAw</uri>
+    </author>
+    <published>2026-10-01T10:00:00+00:00</published>
+    <updated>2026-10-01T23:59:59+00:00</updated>
+    <media:group>
+      <media:title>Older video &amp; its title</media:title>
+      <media:content url="https://www.youtube.com/v/aaaaaaaaaa1?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+      <media:thumbnail url="https://i2.ytimg.com/vi/aaaaaaaaaa1/hqdefault.jpg" width="480" height="360"/>
+      <media:description>A description &amp; more.</media:description>
+      <media:community>
+        <media:starRating count="1000" average="5.00" min="1" max="5"/>
+        <media:statistics views="1200"/>
+      </media:community>
+    </media:group>
+  </entry>
+  <entry>
+    <id>yt:video:bbbbbbbbbb2</id>
+    <yt:videoId>bbbbbbbbbb2</yt:videoId>
+    <yt:channelId>UCYO_jab_esuFRV4b17AJtAw</yt:channelId>
+    <title>Newest video</title>
+    <link rel="alternate" href="https://www.youtube.com/watch?v=bbbbbbbbbb2"/>
+    <author>
+      <name>3Blue1Brown</name>
+      <uri>https://www.youtube.com/channel/UCYO_jab_esuFRV4b17AJtAw</uri>
+    </author>
+    <published>2026-11-02T08:30:00+00:00</published>
+    <updated>2026-11-02T23:59:59+00:00</updated>
+    <media:group>
+      <media:title>Newest video</media:title>
+      <media:content url="https://www.youtube.com/v/bbbbbbbbbb2?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+      <media:thumbnail url="https://i2.ytimg.com/vi/bbbbbbbbbb2/hqdefault.jpg" width="480" height="360"/>
+      <media:description>A description &amp; more.</media:description>
+      <media:community>
+        <media:starRating count="1000" average="5.00" min="1" max="5"/>
+        <media:statistics views="2500000"/>
+      </media:community>
+    </media:group>
+  </entry>
+  <entry>
+    <id>yt:video:cccccccccc3</id>
+    <yt:videoId>cccccccccc3</yt:videoId>
+    <yt:channelId>UCYO_jab_esuFRV4b17AJtAw</yt:channelId>
+    <title>A short one</title>
+    <link rel="alternate" href="https://www.youtube.com/shorts/cccccccccc3"/>
+    <author>
+      <name>3Blue1Brown</name>
+      <uri>https://www.youtube.com/channel/UCYO_jab_esuFRV4b17AJtAw</uri>
+    </author>
+    <published>2026-10-20T12:00:00+00:00</published>
+    <updated>2026-10-20T23:59:59+00:00</updated>
+    <media:group>
+      <media:title>A short one</media:title>
+      <media:content url="https://www.youtube.com/v/cccccccccc3?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+      <media:thumbnail url="https://i2.ytimg.com/vi/cccccccccc3/hqdefault.jpg" width="480" height="360"/>
+      <media:description>A description &amp; more.</media:description>
+      <media:community>
+        <media:starRating count="1000" average="5.00" min="1" max="5"/>
+        <media:statistics views="48"/>
+      </media:community>
+    </media:group>
+  </entry>
+  <entry>
+    <id>yt:video:dddddddddd4</id>
+    <yt:videoId>dddddddddd4</yt:videoId>
+    <yt:channelId>UCYO_jab_esuFRV4b17AJtAw</yt:channelId>
+    <title>Middle video</title>
+    <link rel="alternate" href="https://www.youtube.com/watch?v=dddddddddd4"/>
+    <author>
+      <name>3Blue1Brown</name>
+      <uri>https://www.youtube.com/channel/UCYO_jab_esuFRV4b17AJtAw</uri>
+    </author>
+    <published>2026-10-15T09:15:00+00:00</published>
+    <updated>2026-10-15T23:59:59+00:00</updated>
+    <media:group>
+      <media:title>Middle video</media:title>
+      <media:content url="https://www.youtube.com/v/dddddddddd4?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+      <media:thumbnail url="https://i2.ytimg.com/vi/dddddddddd4/hqdefault.jpg" width="480" height="360"/>
+      <media:description>A description &amp; more.</media:description>
+      <media:community>
+        <media:starRating count="1000" average="5.00" min="1" max="5"/>
+        <media:statistics views="1"/>
+      </media:community>
+    </media:group>
+  </entry>
+</feed>
