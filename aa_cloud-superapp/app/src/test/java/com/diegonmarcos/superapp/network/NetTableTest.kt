@@ -52,7 +52,7 @@ class NetTableTest {
         val now = 100 * h
         val s = listOf(snap(now - 20 * h, 1000, 100, 200, 10), snap(now - 10 * h, 5000, 300, 1200, 50), snap(now, 9000, 700, 1200, 50))
         val u = NetUsage.span(s, now - 24 * h, now)!!
-        assertEquals(8000L - 1000L, u.mobRx + u.wifiRx)            // total down = 9000 - 1000
+        assertEquals(9000L - 1000L, u.mobRx + u.wifiRx)            // total down = 9000 - 1000 = 8000 (1000 mobile + 7000 wifi)
         assertEquals(1000L, u.mobRx); assertEquals(7000L, u.wifiRx)
         assertEquals(40L, u.mobTx); assertEquals(560L, u.wifiTx)
         assertEquals(20 * h, u.coverageMs)                           // history starts 20 h ago, not 24
