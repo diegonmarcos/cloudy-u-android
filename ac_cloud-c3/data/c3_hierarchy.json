@@ -190,6 +190,7 @@
         "/services/*",
         "/cloud-data/configs",
         "/configs/*",
+        "/fleet-data/*",
         "/files/config/*",
         "/vms/:/containers/:/start",
         "/vms/:/containers/:/stop",
