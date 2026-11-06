@@ -89,7 +89,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 60,
+      "unit_test_sources": 62,
       "workflow": "ship-cloud-browser.yml"
     },
     "ac_cloud-browser/web": {
@@ -130,11 +130,11 @@
     },
     "ac_cloud-camera": {
       "first_test": "Minimal fork of GrapheneOS Camera: assert the patch series applies to the pinned upstream revision, so a silent patch-drop cannot ship an unpatched build.",
-      "shell_testers": 8,
+      "shell_testers": 9,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
-      "unit_task_declared": false,
-      "unit_test_sources": 0,
+      "unit_task_declared": true,
+      "unit_test_sources": 4,
       "workflow": "ship-cloud-camera.yml"
     },
     "ac_cloud-camera/web": {
@@ -188,7 +188,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 13,
+      "unit_test_sources": 17,
       "workflow": "ship-cloud-dialer.yml"
     },
     "ac_cloud-dialer/web": {
@@ -251,7 +251,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 845,
+      "unit_test_sources": 848,
       "workflow": "ship-cloud-mail.yml"
     },
     "ac_cloud-matrix": {
@@ -314,7 +314,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": false,
-      "unit_test_sources": 25,
+      "unit_test_sources": 26,
       "workflow": "ship-cloud-nav.yml"
     },
     "ac_cloud-nav/web": {
@@ -436,11 +436,11 @@
     },
     "ac_cloud-superintel": {
       "first_test": "NEW APP (#1162). Has 2 shell testers: test-superintel-app.sh (the section and page ids Kotlin dispatches on against build.json::ui in both directions, the shared first row / second row / bottom nav / theme-background / Cloud Account launcher in the shell, the chat is libs:ai's with the sessions drawer and Markdown on, the gateway address baked and no token handling anywhere (decisions-use D5), the manifest, each rule with a planted mutation that must turn it red) and test-fleet-setup.sh. The chat logic (Markdown reader, sessions rename and delete, wire cases) is tested in libs:ai (AiMarkdownTest, AiProtocolTest). Not tested: the Compose screens (no Robolectric or emulator suite yet) and a live gateway call (mesh only, no CI access).",
-      "shell_testers": 3,
+      "shell_testers": 4,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 7,
+      "unit_test_sources": 11,
       "workflow": "ship-cloud-superintel.yml"
     },
     "ac_cloud-tasks": {

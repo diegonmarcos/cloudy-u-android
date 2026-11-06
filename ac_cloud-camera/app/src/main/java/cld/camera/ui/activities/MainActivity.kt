@@ -84,6 +84,7 @@ import cld.camera.ktx.applyPreviewRatio
 import cld.camera.notifier.SensorOrientationChangeNotifier
 import cld.camera.util.CloudGallery
 import cld.camera.util.isPackageInstalled
+import cld.camera.objects.ObjectsController
 import cld.camera.ui.ModeNav
 import cld.camera.ui.CountDownTimerUI
 import cld.camera.ui.CustomGrid
@@ -157,6 +158,17 @@ open class MainActivity : AppCompatActivity(),
     lateinit var flipCameraCircle: View
     lateinit var cancelButtonView: ImageView
     lateinit var modeNav: ModeNav
+
+    private var objectsController: ObjectsController? = null
+
+    /** #1533 the Objects page, wired to its views the first time it is needed. */
+    val objects: ObjectsController
+        get() = objectsController ?: ObjectsController(
+            this, binding.objectsOverlay, binding.objectsPanel, binding.objectsStatus,
+            binding.objectsPause, binding.objectsThreshold, binding.objectsThresholdValue,
+        ).also { objectsController = it }
+
+    val objectsIfStarted: ObjectsController? get() = objectsController
     lateinit var thirdCircle: ImageView
     lateinit var openCloudGalleryVideo: ImageButton
     lateinit var openCloudGalleryPhoto: ImageButton
@@ -686,6 +698,8 @@ open class MainActivity : AppCompatActivity(),
         // The countdown would otherwise keep ticking while the app is in the background and fire a
         // capture into a camera that has already been unbound.
         cdTimer.cancelTimer()
+        // #1533 battery: an analysis page stops analysing the moment the activity leaves the screen.
+        objectsIfStarted?.onActivityPaused()
         if (camConfig.isQRMode) {
             cancelFocusTimer()
         } else {
@@ -871,6 +885,8 @@ open class MainActivity : AppCompatActivity(),
                 } else {
                     videoCapturer.startRecording()
                 }
+            } else if (camConfig.isObjectsMode) {
+                objects.snapshot()
             } else if (camConfig.isQRMode) {
                 camConfig.toggleTorchState()
                 if (camConfig.isTorchOn) {
@@ -1128,7 +1144,7 @@ open class MainActivity : AppCompatActivity(),
     fun updateSelfTimerBadge() {
         cbText.text = if (timerDuration == 0) "" else "${timerDuration}s"
         // isVideoMode covers the video-only activities too, whatever mode they are nominally in.
-        val applies = timerDuration != 0 && !camConfig.isQRMode && !camConfig.isVideoMode
+        val applies = timerDuration != 0 && !camConfig.isQRMode && !camConfig.isVideoMode && !camConfig.isObjectsMode
         cbText.visibility = if (applies) View.VISIBLE else View.INVISIBLE
     }
 

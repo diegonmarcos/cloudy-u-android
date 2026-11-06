@@ -182,6 +182,9 @@ dependencies {
     // the engine (YAMNet) is Cloud-Lib-Ml-L-Sound-Yamnet.apk, bound after a handshake, never compiled.
     implementation(project(":libs:ml-l-sound"))
 
+    // #1533 Objects (and VR): detection types, frame-to-view mapping, the analyzer lifecycle, the overlay.
+    implementation(project(":libs:ml-vision"))
+
     // Fleet mesh member: libs:core (+ devtools via `api`) merges the fleet
     // provider, receiver, <queries> and the signature permission into this APK.
     implementation(project(":libs:core"))
@@ -207,4 +210,6 @@ dependencies {
     androidTestImplementation(libs.androidx.test.runner)
 
     testImplementation("junit:junit:4.13.2")
+    // The real org.json: android.jar's copy is a stub that throws on the JVM.
+    testImplementation("org.json:json:20240303")
 }

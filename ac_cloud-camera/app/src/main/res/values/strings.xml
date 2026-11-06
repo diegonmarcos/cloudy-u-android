@@ -85,6 +85,14 @@
     <string name="qr_scan_mode">QR CODE</string>
     <string name="objects_mode">OBJECTS</string>
     <string name="vr_mode">VR</string>
+    <string name="objects_looking">Looking for objects…</string>
+    <string name="objects_nothing">No objects above the threshold</string>
+    <string name="objects_pause">Pause</string>
+    <string name="objects_resume">Resume</string>
+    <string name="objects_threshold_label">Minimum confidence</string>
+    <string name="objects_saved">Saved the frame with its detections (JSON)</string>
+    <string name="objects_save_failed">Could not save the frame: %1$s</string>
+    <string name="objects_count">%1$d object(s)</string>
     <string name="aspect_ratio_16_9">16:9</string>
     <string name="aspect_ratio_4_3">4:3</string>
     <string name="share_media">Share Media</string>

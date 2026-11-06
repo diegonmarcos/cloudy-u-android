@@ -106,6 +106,7 @@
     "ml-l-image",
     "ml-l-image-ocr",
     "ml-l-sound",
+    "ml-vision",
     "ml-l-text-mlkit",
     "ml-l-voice-vosk",
     "ocr",

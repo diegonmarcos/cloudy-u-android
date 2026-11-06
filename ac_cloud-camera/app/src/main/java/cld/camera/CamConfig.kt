@@ -315,6 +315,10 @@ class CamConfig(private val mActivity: MainActivity) {
     var isQRMode = false
         private set
 
+    /** #1533 the Objects page: live detection over the preview, the shutter is its snapshot. */
+    var isObjectsMode = false
+        private set
+
     val isFlashAvailable: Boolean
         get() = camera?.cameraInfo?.hasFlashUnit() ?: false
 
@@ -646,7 +650,7 @@ class CamConfig(private val mActivity: MainActivity) {
 
     private val isInPhotoMode: Boolean
         get() {
-            return !(isQRMode || isVideoMode)
+            return !(isQRMode || isVideoMode || isObjectsMode)
         }
 
     val isInCaptureMode: Boolean
@@ -1596,6 +1600,11 @@ class CamConfig(private val mActivity: MainActivity) {
             }
         }
 
+        // #1533 the Objects page analyses the same stream: one KEEP_ONLY_LATEST use case, installed by its controller.
+        if (isObjectsMode) {
+            useCasesList.add(mActivity.objects.analysisUseCase(aspectRatio))
+        }
+
         val previewBuilder = Preview.Builder()
             .setTargetRotation(
                 preview?.targetRotation
@@ -1993,6 +2002,10 @@ class CamConfig(private val mActivity: MainActivity) {
         mActivity.cancelFocusTimer()
 
         isQRMode = mode == CameraMode.QR_SCAN
+
+        val wasObjects = isObjectsMode
+        isObjectsMode = mode == CameraMode.OBJECTS
+        if (isObjectsMode) mActivity.objects.enter() else if (wasObjects) mActivity.objectsIfStarted?.leave()
 
         isVideoMode = mode == CameraMode.VIDEO
 

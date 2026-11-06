@@ -51,4 +51,19 @@ class NavLayoutTest {
         val flat = listOf("QR_SCAN", "OBJECTS", "AUTO", "FACE_RETOUCH", "PORTRAIT", "NIGHT", "HDR", "CAMERA", "VIDEO", "VR")
         assertEquals(flat, order)
     }
+
+    @Test fun declaredNavOrderIsQrObjectsCameraVideoVr() {
+        // The nav is data: build.json::ui.bottom_nav (the unit task runs in the app module, build.json is its parent).
+        val ui = org.json.JSONObject(java.io.File("../build.json").readText()).getJSONObject("ui")
+        val bar = ui.getJSONArray("bottom_nav")
+        assertEquals(listOf("qr_scan", "objects", "photo", "video", "vr"), (0 until bar.length()).map { bar.getString(it) })
+        // Every ui section id a bar item opens resolves to a mode: the section itself or the photo family's pages.
+        val ids = ui.getJSONArray("sections").let { a -> (0 until a.length()).map { a.getJSONObject(it).getString("id") } }
+        assertEquals(bar.length(), ids.size)
+        for (mode in CameraMode.entries) {
+            val id = mode.name.lowercase()
+            val pages = ui.getJSONArray("sections").let { a -> (0 until a.length()).flatMap { i -> a.getJSONObject(i).getJSONArray("pages").let { p -> (0 until p.length()).map { p.getJSONObject(it).getString("id") } } } }
+            assertTrue("$id is declared", id in ids || id in pages)
+        }
+    }
 }

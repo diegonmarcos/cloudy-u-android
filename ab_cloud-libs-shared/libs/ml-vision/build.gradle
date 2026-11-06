@@ -1,0 +1,38 @@
+// libs:ml-vision (#1533): the fleet's shared on-device VISION toolkit, compiled by reference like libs:bottomnav.
+// Detection (Detection, ObjectDetector, DetectionOverlayView), the frame-to-view mapping with rotation and mirroring
+// (FrameMapping) and the analyzer lifecycle (AnalysisGate, AnalyzerLifecycle: stopped whenever the page is hidden or
+// paused). Face and segmentation APIs, the declared AR filters and their anchor math join in the same module.
+// Pure Kotlin over the Android framework, so its logic runs in a consumer's JVM unit phase (the real org.json is
+// the consumer's testImplementation; android.jar's copy is a stub that throws).
+plugins {
+    id 'com.android.library'
+    // Conditional, exactly like libs:ml-l-image: AGP 8 consumers need the Kotlin plugin applied.
+    id 'org.jetbrains.kotlin.android' apply false
+}
+
+if (project.extensions.findByName('kotlin') == null) {
+    apply plugin: 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.diegonmarcos.superapp.vision'
+    compileSdk 36
+
+    defaultConfig {
+        minSdk 26
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
+dependencies {
+}

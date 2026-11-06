@@ -53,6 +53,11 @@
       "dir": "../ab_cloud-libs-shared/libs/fleetconfig-model",
       "type": "library"
     },
+    "libs:ml-vision": {
+      "_doc": "#1533 the shared on-device vision toolkit (Detection, ObjectDetector, DetectionOverlayView, FrameMapping with rotation and mirroring, AnalysisGate / AnalyzerLifecycle) compiled BY REFERENCE: the Objects and VR pages use it, other apps can too.",
+      "type": "library",
+      "dir": "../ab_cloud-libs-shared/libs/ml-vision"
+    },
     "libs:bottomnav": {
       "_doc": "#868 the fleet's bottom island + page-tab strips + NavDecl, shared BY REFERENCE: ui/ModeNav.kt draws the camera mode switcher with them (the hand-rolled snapping TabLayout is gone).",
       "type": "library",
@@ -166,7 +171,7 @@
     },
     "unit": {
       "_doc": "JVM tests of the pure logic: the nav / preview geometry (NavLayout), the detection overlay mapping, the filter anchor math and the declared-filters loading.",
-      "task": "testDebugUnitTest",
+      "task": ":app:testDebugUnitTest",
       "enabled": true
     }
   },

@@ -43,6 +43,7 @@ on:
       # app compiles is watched above: any change in it ships every consumer.
       # fleet-refresh.yml (schedule only) ships the app for a moved cross-app dir.
       #   input: "1_cicd/src/cicd/ship-cloud-tools-small-llms.yml"
+      #   input: "aa_cloud-superapp/data/constellation-fleet.json"
       # ── end MANAGED-PATHS-HEADER ──
       - "ab_cloud-libs-shared/libs/ai/**"
       - "ab_cloud-libs-shared/libs/bottomnav/**"
