@@ -151,7 +151,15 @@ class WebViewEngine(context: Context) : HeadlessEngine {
             "html" -> js(h, if (cmd.has("selector")) "var e=document.querySelector(${q(cmd.getString("selector"))});return e?e.innerHTML:null" else "return document.documentElement.outerHTML", t)
             "text" -> js(h, "var e=document.querySelector(${q(cmd.optString("selector", "body"))});return e?e.innerText:null", t)
             "readable" -> js(h, HeadlessReadable.script(cmd), t)
-            "screenshot" -> shot(h)
+            "content" -> js(h, "return document.documentElement.outerHTML", t)
+            "links" -> js(h, HeadlessExtract.linksScript(cmd.optBoolean("sameOrigin"), cmd.optBoolean("visibleOnly")), t)
+            "scrape" -> js(h, HeadlessExtract.scrapeScript(cmd.getJSONArray("elements").toString(), cmd.optInt("limit", 100)), t)
+            "snapshot" -> JSONObject()
+                .put("url", onMain { h.view.url }).put("title", onMain { h.view.title })
+                .put("html", js(h, "return document.documentElement.outerHTML", t))
+                .put("screenshot", shot(h, cmd))
+            "pdf" -> throw HeadlessApi.Err("unsupported", "pdf is not available in the phone engine (WebView prints no PDF off-screen); use backend container or cloudflare")
+            "screenshot" -> shot(h, cmd)
             "cookies" -> cookies(h, cmd)
             "storage" -> js(h, storageJs(cmd), t)
             "network" -> when (cmd.optString("action", "log")) {
@@ -191,15 +199,16 @@ class WebViewEngine(context: Context) : HeadlessEngine {
         return out
     }
 
-    private fun shot(h: H): JSONObject = onMain {
+    private fun shot(h: H, c: JSONObject): JSONObject = onMain {
         val bmp = Bitmap.createBitmap(W, Hh, Bitmap.Config.ARGB_8888)
         h.view.measure(android.view.View.MeasureSpec.makeMeasureSpec(W, android.view.View.MeasureSpec.EXACTLY), android.view.View.MeasureSpec.makeMeasureSpec(Hh, android.view.View.MeasureSpec.EXACTLY))
         h.view.layout(0, 0, W, Hh)
         h.view.draw(Canvas(bmp))
         val bos = ByteArrayOutputStream()
-        bmp.compress(Bitmap.CompressFormat.PNG, 100, bos)
+        val jpeg = c.optString("format") == "jpeg"
+        bmp.compress(if (jpeg) Bitmap.CompressFormat.JPEG else Bitmap.CompressFormat.PNG, if (jpeg) c.optInt("quality", 80) else 100, bos)
         bmp.recycle()
-        JSONObject().put("mime", "image/png").put("base64", Base64.encodeToString(bos.toByteArray(), Base64.NO_WRAP))
+        JSONObject().put("mime", if (jpeg) "image/jpeg" else "image/png").put("base64", Base64.encodeToString(bos.toByteArray(), Base64.NO_WRAP))
     }
 
     fun shutdown() {

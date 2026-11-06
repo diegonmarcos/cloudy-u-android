@@ -121,6 +121,17 @@ class HeadlessContractTest {
         assertTrue(r.getJSONArray("steps").getJSONObject(1).getBoolean("ok"))
     }
 
+    @Test fun browserRunStyleCommandsAreValidated() {
+        for (c in listOf("content", "pdf", "links", "snapshot")) assertNull(code { HeadlessApi.validate(j("""{"cmd":"$c"}""")) })
+        assertNull(code { HeadlessApi.validate(j("""{"cmd":"screenshot","format":"jpeg","quality":70}""")) })
+        assertEquals("bad_request", code { HeadlessApi.validate(j("""{"cmd":"screenshot","format":"gif"}""")) })
+        assertEquals("bad_request", code { HeadlessApi.validate(j("""{"cmd":"scrape"}""")) })
+        assertNull(code { HeadlessApi.validate(j("""{"cmd":"scrape","elements":[{"selector":"a","attrs":["href"]}],"limit":5}""")) })
+        assertEquals(501, HeadlessApi.httpStatus("unsupported"))
+        val s = HeadlessExtract.linksScript(true, true)
+        assertTrue(s.contains("location.origin") && s.contains("vis(a)"))
+    }
+
     @Test fun readableOptionsAreValidatedAndMatchTheSharedSchema() {
         assertEquals("bad_request", code { HeadlessApi.validate(j("""{"cmd":"readable","format":"html"}""")) })
         assertEquals("bad_request", code { HeadlessApi.validate(j("""{"cmd":"readable","maxChars":10}""")) })

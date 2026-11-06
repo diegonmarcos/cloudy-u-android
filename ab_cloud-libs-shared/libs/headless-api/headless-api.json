@@ -103,9 +103,11 @@
     "screenshot": {
       "params": {
         "fullPage": "boolean?",
-        "selector": "string?"
+        "selector": "string?",
+        "format": "png|jpeg (default png)",
+        "quality": "integer 1..100? (jpeg only)"
       },
-      "result": "{mime:'image/png',base64}"
+      "result": "{mime:'image/png'|'image/jpeg',base64}"
     },
     "cookies": {
       "params": {
@@ -129,6 +131,42 @@
         "patterns": "array<string>?"
       },
       "result": "array|{blocked:array}"
+    },
+    "content": {
+      "params": {
+        "selector": "string?"
+      },
+      "result": "string (the RENDERED html after scripts ran; same as html, named as Browser Run /content)"
+    },
+    "pdf": {
+      "params": {
+        "format": "string? (A4|Letter, default A4)",
+        "landscape": "boolean?",
+        "printBackground": "boolean?"
+      },
+      "result": "{mime:'application/pdf',base64}"
+    },
+    "links": {
+      "params": {
+        "visibleOnly": "boolean?",
+        "sameOrigin": "boolean?"
+      },
+      "result": "{count,links:[{text,href}]} (absolute http(s) hrefs, deduplicated, document order)"
+    },
+    "scrape": {
+      "params": {
+        "elements": "[{selector:string, attrs?:string[]}] 1..20",
+        "limit": "integer? per selector (default 100)"
+      },
+      "result": "{results:[{selector,count,items:[{text,html,attrs{name:value},visible?}]}]}"
+    },
+    "snapshot": {
+      "params": {
+        "fullPage": "boolean?",
+        "format": "png|jpeg",
+        "quality": "integer?"
+      },
+      "result": "{url,title,html,screenshot:{mime,base64}} (rendered HTML and screenshot of the same moment)"
     }
   },
   "$defs": {
@@ -153,7 +191,12 @@
             "screenshot",
             "cookies",
             "storage",
-            "network"
+            "network",
+            "content",
+            "pdf",
+            "links",
+            "scrape",
+            "snapshot"
           ]
         },
         "session": {
@@ -229,6 +272,52 @@
           "items": {
             "type": "string"
           }
+        },
+        "format": {
+          "type": "string"
+        },
+        "quality": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "landscape": {
+          "type": "boolean"
+        },
+        "printBackground": {
+          "type": "boolean"
+        },
+        "visibleOnly": {
+          "type": "boolean"
+        },
+        "sameOrigin": {
+          "type": "boolean"
+        },
+        "elements": {
+          "type": "array",
+          "maxItems": 20,
+          "items": {
+            "type": "object",
+            "required": [
+              "selector"
+            ],
+            "properties": {
+              "selector": {
+                "type": "string"
+              },
+              "attrs": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
         }
       }
     },
@@ -319,5 +408,109 @@
   "mesh": {
     "phone": "/browser/{command|run|status|stop|cdp} on Cloud-Webserver's mesh listener (bearer, mesh peers only)",
     "container": "https://mcp.diegonmarcos.com/cloudy-browser-headless/{health|command|run|sessions} (wg-only Caddy path route, bearer)"
+  },
+  "commandsDoc": "content/links/scrape/snapshot/pdf mirror the Cloudflare Browser Run endpoints (content, links, scrape, snapshot, pdf; read = markdown; json = gateway composite). The gateway (cloud-infra-mcp browser.*) turns url+options into open+command(s) on a session backend, or one REST call on the cloudflare backend.",
+  "gateway": {
+    "description": "The c3 MCP browser.* tools are the single entry point. backend auto (default) = container first, then cloudflare on a bot wall.",
+    "backends": [
+      "auto",
+      "container",
+      "phone",
+      "cloudflare"
+    ],
+    "defaultBackend": "auto",
+    "tools": {
+      "browser.read": {
+        "cloudflare": "POST /accounts/{id}/browser-rendering/markdown",
+        "formats": [
+          "markdown",
+          "json",
+          "xml"
+        ],
+        "note": "json/xml are produced by the container readable; on cloudflare the markdown is converted by the gateway"
+      },
+      "browser.content": {
+        "cloudflare": "POST .../content"
+      },
+      "browser.screenshot": {
+        "cloudflare": "POST .../screenshot (screenshotOptions{fullPage,type,quality}, binary body)"
+      },
+      "browser.pdf": {
+        "cloudflare": "POST .../pdf (binary body)"
+      },
+      "browser.links": {
+        "cloudflare": "POST .../links (visibleLinksOnly; sameOrigin filtered by the gateway)"
+      },
+      "browser.scrape": {
+        "cloudflare": "POST .../scrape (elements[{selector}])"
+      },
+      "browser.json": {
+        "cloudflare": "POST .../json (prompt, response_format{type:json_schema,json_schema}); container/phone: page markdown plus OpenRouter model chosen by C3_BROWSER_JSON_MODEL",
+        "gatewayOnly": true,
+        "params": {
+          "url": "string",
+          "prompt": "string?",
+          "schema": "object (JSON schema)?"
+        },
+        "result": "{data}"
+      },
+      "browser.snapshot": {
+        "cloudflare": "POST .../snapshot (content + base64 screenshot)"
+      }
+    },
+    "support": {
+      "read": {
+        "container": true,
+        "phone": true,
+        "cloudflare": true
+      },
+      "content": {
+        "container": true,
+        "phone": true,
+        "cloudflare": true
+      },
+      "screenshot": {
+        "container": true,
+        "phone": "viewport only, no fullPage/selector-less crop",
+        "cloudflare": true
+      },
+      "pdf": {
+        "container": true,
+        "phone": false,
+        "cloudflare": true
+      },
+      "links": {
+        "container": true,
+        "phone": true,
+        "cloudflare": true
+      },
+      "scrape": {
+        "container": true,
+        "phone": true,
+        "cloudflare": true
+      },
+      "json": {
+        "container": "openrouter",
+        "phone": "openrouter",
+        "cloudflare": true
+      },
+      "snapshot": {
+        "container": true,
+        "phone": true,
+        "cloudflare": true
+      },
+      "session tools (open,eval,click,type,wait,scroll,cookies,storage,network,run)": {
+        "container": true,
+        "phone": true,
+        "cloudflare": false
+      }
+    },
+    "fallback": {
+      "trigger": "bot wall: challenge title or markers (Just a moment, Performing security verification, Attention Required, cf-challenge, cf-turnstile, captcha, verify you are human, Access denied), HTTP 403/429/503 with a cf-mitigated or challenge header, or an empty body with a challenge redirect (/cdn-cgi/challenge-platform, challenge_redirect)",
+      "action": "retry the SAME call via the cloudflare backend (Cloudflare's own rendering service, which identifies itself as a bot); never solve CAPTCHAs, spoof fingerprints or rotate proxies; if cloudflare is refused too, the challenge result is returned honestly",
+      "result": "adds backend_used and fallback_reason",
+      "domainMemory": "per-domain 'needs cloudflare' with a 24 h TTL",
+      "cost": "each cloudflare call is logged (usage + estimated cost); a daily cap (C3_BROWSER_CF_DAILY_CAP, default 200 calls) refuses further cloudflare calls"
+    }
   }
 }

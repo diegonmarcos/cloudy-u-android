@@ -5,7 +5,7 @@ import org.json.JSONObject
 
 /** #1498 headless-api v1 (libs/headless-api/headless-api.json): the command set, validation and reply shapes shared by every backend. */
 object HeadlessApi {
-    val CMDS = listOf("open", "close", "wait", "eval", "click", "type", "scroll", "html", "text", "readable", "screenshot", "cookies", "storage", "network")
+    val CMDS = listOf("open", "close", "wait", "eval", "click", "type", "scroll", "html", "text", "readable", "screenshot", "cookies", "storage", "network", "content", "pdf", "links", "scrape", "snapshot")
     const val MAX_TIMEOUT_MS = 120_000
     const val MAX_STEPS = 50
     private val ID = Regex("^[A-Za-z0-9_-]{1,64}$")
@@ -21,6 +21,16 @@ object HeadlessApi {
         fun need(k: String) { if (c.optString(k).isEmpty()) throw Err("bad_request", "$cmd needs $k") }
         when (cmd) {
             "open" -> { need("url"); if (!Regex("^https?://", RegexOption.IGNORE_CASE).containsMatchIn(c.optString("url"))) throw Err("bad_request", "url must be http(s)") }
+            "screenshot", "snapshot" -> {
+                if (c.has("format") && c.optString("format") !in listOf("png", "jpeg")) throw Err("bad_request", "format png|jpeg")
+                if (c.has("quality")) { val q = c.optInt("quality", -1); if (q < 1 || q > 100) throw Err("bad_request", "quality 1..100") }
+            }
+            "scrape" -> {
+                val els = c.optJSONArray("elements")
+                if (els == null || els.length() < 1 || els.length() > 20) throw Err("bad_request", "scrape needs elements[1..20] with selector")
+                for (i in 0 until els.length()) if (els.optJSONObject(i)?.optString("selector").isNullOrEmpty()) throw Err("bad_request", "scrape needs elements[1..20] with selector")
+                if (c.has("limit")) { val l = c.optInt("limit", -1); if (l < 1 || l > 1000) throw Err("bad_request", "limit 1..1000") }
+            }
             "eval" -> need("js")
             "readable" -> HeadlessReadable.validate(c)
             "click" -> need("selector")
@@ -45,7 +55,7 @@ object HeadlessApi {
     fun fail(e: Throwable): JSONObject = if (e is Err) fail(e.code, e.message ?: "") else fail("internal", e.message ?: e.javaClass.simpleName)
 
     /** HTTP status of an error code, as the container maps it. */
-    fun httpStatus(code: String): Int = when (code) { "bad_request" -> 400; "unauthorized" -> 401; "not_found" -> 404; "timeout" -> 504; "limit" -> 429; "denied" -> 403; else -> 500 }
+    fun httpStatus(code: String): Int = when (code) { "bad_request" -> 400; "unauthorized" -> 401; "not_found" -> 404; "timeout" -> 504; "limit" -> 429; "denied" -> 403; "unsupported" -> 501; else -> 500 }
 
     fun stepsOf(r: JSONObject): List<JSONObject> = r.getJSONArray("steps").let { a: JSONArray -> (0 until a.length()).map { a.getJSONObject(it) } }
 }
