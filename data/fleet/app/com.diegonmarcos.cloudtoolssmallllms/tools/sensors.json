@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+ "schemaVersion": 1,
  "_doc": "The data behind the Sensors section (#1538): the Sensor.TYPE_* name table, the reporting modes, the fallback names for OEM and unknown types, the live-graph limits, the non-SensorManager hardware list, the GATT value keys and the 20 declared external sensors of the Connected page (connection, GATT service UUID or USB class, typical use, standard characteristics to read). Read by core SensorCatalogue; no sensor name is spelled in Kotlin. A sensor type that is not in `types` (a vendor or OEM type) is shown through `fallback`.",
  "types": [
   {
@@ -15,7 +15,8 @@
   {
    "id": 3,
    "const": "TYPE_ORIENTATION",
-   "label": "Orientation (deprecated)"
+   "label": "Orientation (deprecated)",
+   "derived": true
   },
   {
    "id": 4,
@@ -45,17 +46,20 @@
   {
    "id": 9,
    "const": "TYPE_GRAVITY",
-   "label": "Gravity"
+   "label": "Gravity",
+   "derived": true
   },
   {
    "id": 10,
    "const": "TYPE_LINEAR_ACCELERATION",
-   "label": "Linear acceleration"
+   "label": "Linear acceleration",
+   "derived": true
   },
   {
    "id": 11,
    "const": "TYPE_ROTATION_VECTOR",
-   "label": "Rotation vector"
+   "label": "Rotation vector",
+   "derived": true
   },
   {
    "id": 12,
@@ -75,7 +79,8 @@
   {
    "id": 15,
    "const": "TYPE_GAME_ROTATION_VECTOR",
-   "label": "Game rotation vector"
+   "label": "Game rotation vector",
+   "derived": true
   },
   {
    "id": 16,
@@ -100,7 +105,8 @@
   {
    "id": 20,
    "const": "TYPE_GEOMAGNETIC_ROTATION_VECTOR",
-   "label": "Geomagnetic rotation vector"
+   "label": "Geomagnetic rotation vector",
+   "derived": true
   },
   {
    "id": 21,
@@ -135,7 +141,8 @@
   {
    "id": 27,
    "const": "TYPE_DEVICE_ORIENTATION",
-   "label": "Device orientation"
+   "label": "Device orientation",
+   "derived": true
   },
   {
    "id": 28,
@@ -210,7 +217,8 @@
   {
    "id": 42,
    "const": "TYPE_HEADING",
-   "label": "Heading"
+   "label": "Heading",
+   "derived": true
   }
  ],
  "reporting_modes": [
@@ -380,7 +388,7 @@
    {
     "id": "hrs",
     "label": "Heart-rate strap",
-    "category": "Health",
+    "category": "wearables_health",
     "connection": "BLE",
     "uuid": "180D",
     "typical_use": "Live heart rate and R-R intervals from a chest strap or arm band",
@@ -390,12 +398,15 @@
       "parser": "heart_rate",
       "mode": "notify"
      }
+    ],
+    "transport": [
+     "ble"
     ]
    },
    {
     "id": "csc",
     "label": "Cycling speed and cadence",
-    "category": "Sport",
+    "category": "fitness_motion",
     "connection": "BLE",
     "uuid": "1816",
     "typical_use": "Wheel speed and crank cadence from a bike sensor",
@@ -405,12 +416,15 @@
       "parser": "hex",
       "mode": "notify"
      }
+    ],
+    "transport": [
+     "ble"
     ]
    },
    {
     "id": "cp",
     "label": "Cycling power meter",
-    "category": "Sport",
+    "category": "fitness_motion",
     "connection": "BLE",
     "uuid": "1818",
     "typical_use": "Pedalling power in watts from crank or pedal meters",
@@ -420,12 +434,15 @@
       "parser": "hex",
       "mode": "notify"
      }
+    ],
+    "transport": [
+     "ble"
     ]
    },
    {
     "id": "rsc",
     "label": "Running speed and cadence",
-    "category": "Sport",
+    "category": "fitness_motion",
     "connection": "BLE",
     "uuid": "1814",
     "typical_use": "Pace, cadence and stride from a foot pod",
@@ -435,12 +452,15 @@
       "parser": "hex",
       "mode": "notify"
      }
+    ],
+    "transport": [
+     "ble"
     ]
    },
    {
     "id": "bps",
     "label": "Blood-pressure monitor",
-    "category": "Health",
+    "category": "wearables_health",
     "connection": "BLE",
     "uuid": "1810",
     "typical_use": "Systolic and diastolic readings from an arm cuff",
@@ -450,12 +470,15 @@
       "parser": "blood_pressure",
       "mode": "notify"
      }
+    ],
+    "transport": [
+     "ble"
     ]
    },
    {
     "id": "gls",
     "label": "Glucose meter",
-    "category": "Health",
+    "category": "wearables_health",
     "connection": "BLE",
     "uuid": "1808",
     "typical_use": "Blood-glucose measurements from a glucometer",
@@ -465,12 +488,15 @@
       "parser": "hex",
       "mode": "notify"
      }
+    ],
+    "transport": [
+     "ble"
     ]
    },
    {
     "id": "hts",
     "label": "Health thermometer",
-    "category": "Health",
+    "category": "wearables_health",
     "connection": "BLE",
     "uuid": "1809",
     "typical_use": "Body temperature from a medical thermometer",
@@ -480,12 +506,15 @@
       "parser": "health_temperature",
       "mode": "notify"
      }
+    ],
+    "transport": [
+     "ble"
     ]
    },
    {
     "id": "wss",
     "label": "Weight scale",
-    "category": "Health",
+    "category": "wearables_health",
     "connection": "BLE",
     "uuid": "181D",
     "typical_use": "Body weight from a smart scale",
@@ -495,12 +524,15 @@
       "parser": "weight",
       "mode": "notify"
      }
+    ],
+    "transport": [
+     "ble"
     ]
    },
    {
     "id": "plx",
     "label": "Pulse oximeter",
-    "category": "Health",
+    "category": "wearables_health",
     "connection": "BLE",
     "uuid": "1822",
     "typical_use": "SpO2 and pulse from a finger clip",
@@ -510,12 +542,15 @@
       "parser": "pulse_oximeter",
       "mode": "notify"
      }
+    ],
+    "transport": [
+     "ble"
     ]
    },
    {
     "id": "ess",
     "label": "Environmental sensing",
-    "category": "Environment",
+    "category": "environment_iot",
     "connection": "BLE",
     "uuid": "181A",
     "typical_use": "Temperature, humidity and pressure from a weather node",
@@ -535,91 +570,1469 @@
       "parser": "env_pressure",
       "mode": "read"
      }
+    ],
+    "transport": [
+     "ble"
     ]
    },
    {
     "id": "airq",
     "label": "Air-quality monitor (CO2, PM2.5)",
-    "category": "Environment",
+    "category": "environment_iot",
     "connection": "BLE",
     "uuid": "f0cd1400-95da-4f4b-9ac8-aa55d312af0c",
-    "typical_use": "CO2 and particulate readings from a vendor air-quality meter (Aranet4 service)"
+    "typical_use": "CO2 and particulate readings from a vendor air-quality meter (Aranet4 service)",
+    "transport": [
+     "ble"
+    ]
    },
    {
     "id": "beacon",
     "label": "BLE beacon (iBeacon, Eddystone)",
-    "category": "Location",
+    "category": "positioning",
     "connection": "BLE",
     "uuid": "FEAA",
     "manufacturer_id": 76,
     "manufacturer_prefix": "0215",
-    "typical_use": "Proximity and room tags that only advertise"
+    "typical_use": "Proximity and room tags that only advertise",
+    "transport": [
+     "ble"
+    ]
    },
    {
     "id": "thermal_cam",
     "label": "USB-C thermal camera",
-    "category": "Imaging",
+    "category": "audio_imaging",
     "connection": "USB-C",
     "usb_class": 14,
-    "typical_use": "Heat images from a UVC thermal camera plugged into the phone"
+    "typical_use": "Heat images from a UVC thermal camera plugged into the phone",
+    "transport": [
+     "usb"
+    ]
    },
    {
     "id": "scope",
     "label": "USB-C oscilloscope or logic analyser",
-    "category": "Test",
+    "category": "automotive_other",
     "connection": "USB-C",
     "usb_class": 255,
-    "typical_use": "Signal capture from a vendor-class USB probe"
+    "typical_use": "Signal capture from a vendor-class USB probe",
+    "transport": [
+     "usb"
+    ]
    },
    {
     "id": "microscope",
     "label": "USB-C microscope or endoscope camera",
-    "category": "Imaging",
+    "category": "audio_imaging",
     "connection": "USB-C",
     "usb_class": 14,
-    "typical_use": "Close-up and inspection video from a UVC camera"
+    "typical_use": "Close-up and inspection video from a UVC camera",
+    "transport": [
+     "usb"
+    ]
    },
    {
     "id": "serial",
     "label": "Arduino or ESP32 serial",
-    "category": "Maker",
+    "category": "automotive_other",
     "connection": "BLE + USB-C",
     "uuid": "6E400001-B5A3-F393-E0A9-E50E24DCCA9E",
     "usb_class": 2,
-    "typical_use": "Sensor streams from a microcontroller over USB CDC or the BLE Nordic UART service"
+    "typical_use": "Sensor streams from a microcontroller over USB CDC or the BLE Nordic UART service",
+    "transport": [
+     "ble",
+     "usb"
+    ]
    },
    {
     "id": "gps_usb",
     "label": "USB-C GPS receiver",
-    "category": "Location",
+    "category": "positioning",
     "connection": "USB-C",
     "usb_class": 2,
-    "typical_use": "NMEA position from an external GNSS receiver over USB serial"
+    "typical_use": "NMEA position from an external GNSS receiver over USB serial",
+    "transport": [
+     "usb"
+    ]
    },
    {
     "id": "soil",
     "label": "Soil-moisture sensor",
-    "category": "Environment",
+    "category": "environment_iot",
     "connection": "BLE + USB-C",
     "uuid": "FE95",
     "usb_class": 2,
-    "typical_use": "Soil moisture and light from a plant sensor (BLE service FE95) or a USB serial probe"
+    "typical_use": "Soil moisture and light from a plant sensor (BLE service FE95) or a USB serial probe",
+    "transport": [
+     "ble",
+     "usb"
+    ]
    },
    {
     "id": "imu",
     "label": "BLE accelerometer or IMU tag",
-    "category": "Motion",
+    "category": "fitness_motion",
     "connection": "BLE",
     "uuid": "61353090-8231-49cc-b57a-886370740041",
-    "typical_use": "Acceleration and rotation streams from a wearable motion tag (Movesense service)"
+    "typical_use": "Acceleration and rotation streams from a wearable motion tag (Movesense service)",
+    "transport": [
+     "ble"
+    ]
    },
    {
     "id": "tag",
     "label": "Smart tag (Tile-like)",
-    "category": "Location",
+    "category": "positioning",
     "connection": "BLE",
     "uuid": "FEED",
-    "typical_use": "Item finders that advertise a tracker service"
+    "typical_use": "Item finders that advertise a tracker service",
+    "transport": [
+     "ble"
+    ]
+   },
+   {
+    "id": "cgm",
+    "label": "Continuous glucose monitor (CGM)",
+    "category": "wearables_health",
+    "connection": "BLE",
+    "transport": [
+     "ble"
+    ],
+    "typical_use": "Interstitial glucose from a CGM sensor or its transmitter",
+    "uuid": "181F"
+   },
+   {
+    "id": "body_comp",
+    "label": "Body-composition scale (BIA)",
+    "category": "wearables_health",
+    "connection": "BLE",
+    "transport": [
+     "ble"
+    ],
+    "typical_use": "Weight, body fat and water from a bio-impedance scale",
+    "uuid": "181B"
+   },
+   {
+    "id": "ecg_strap",
+    "label": "ECG chest strap",
+    "category": "wearables_health",
+    "connection": "BLE",
+    "transport": [
+     "ble"
+    ],
+    "typical_use": "Raw ECG and accelerometer stream of a strap that offers a measurement service",
+    "uuid": "fb005c80-02e7-f387-1cad-8acd2d8df0c8"
+   },
+   {
+    "id": "resp_belt",
+    "label": "Respiration belt",
+    "category": "wearables_health",
+    "connection": "BLE",
+    "transport": [
+     "ble"
+    ],
+    "typical_use": "Breathing rate from a belt that reports it over the heart-rate service",
+    "uuid": "180D"
+   },
+   {
+    "id": "ring",
+    "label": "Pulse-oximeter ring",
+    "category": "wearables_health",
+    "connection": "BLE",
+    "transport": [
+     "ble"
+    ],
+    "typical_use": "SpO2 and pulse from a smart ring that offers the pulse-oximeter service",
+    "uuid": "1822"
+   },
+   {
+    "id": "watch_hs",
+    "label": "Smartwatch or band (Health Services)",
+    "category": "wearables_health",
+    "connection": "Health Services",
+    "transport": [
+     "health_services"
+    ],
+    "typical_use": "Sensors of a paired smartwatch or band through Android Health Services / Health Connect",
+    "package": "com.google.android.apps.healthdata"
+   },
+   {
+    "id": "health_connect",
+    "label": "Health Connect (Google Fit data)",
+    "category": "wearables_health",
+    "connection": "On-device",
+    "transport": [
+     "health_services"
+    ],
+    "typical_use": "The phone-side store watches and fitness apps write health records to",
+    "feature": "android.software.health_connect"
+   },
+   {
+    "id": "ftms",
+    "label": "Fitness equipment (FTMS)",
+    "category": "fitness_motion",
+    "connection": "BLE",
+    "transport": [
+     "ble"
+    ],
+    "typical_use": "Treadmill, indoor bike, rower and cross-trainer data",
+    "uuid": "1826"
+   },
+   {
+    "id": "ant_hr",
+    "label": "ANT+ heart-rate sensor",
+    "category": "fitness_motion",
+    "connection": "ANT+",
+    "transport": [
+     "ant"
+    ],
+    "typical_use": "ANT+ heart-rate straps through the ANT radio service",
+    "package": "com.dsi.ant.service.socket"
+   },
+   {
+    "id": "ant_power",
+    "label": "ANT+ power meter",
+    "category": "fitness_motion",
+    "connection": "ANT+",
+    "transport": [
+     "ant"
+    ],
+    "typical_use": "ANT+ cycling power meters through the ANT radio service",
+    "package": "com.dsi.ant.service.socket"
+   },
+   {
+    "id": "ant_sc",
+    "label": "ANT+ speed and cadence",
+    "category": "fitness_motion",
+    "connection": "ANT+",
+    "transport": [
+     "ant"
+    ],
+    "typical_use": "ANT+ speed and cadence sensors through the ANT radio service",
+    "package": "com.dsi.ant.service.socket"
+   },
+   {
+    "id": "jump_rope",
+    "label": "Smart jump rope",
+    "category": "fitness_motion",
+    "connection": "BLE",
+    "transport": [
+     "ble"
+    ],
+    "typical_use": "Jump count and time from a rope that advertises a generic UART service",
+    "uuid": "FFE0"
+   },
+   {
+    "id": "racket_golf",
+    "label": "Smart racket or golf sensor",
+    "category": "fitness_motion",
+    "connection": "BLE",
+    "transport": [
+     "ble"
+    ],
+    "typical_use": "Swing speed and impact from a clip-on motion sensor with a generic UART service",
+    "uuid": "FFE5"
+   },
+   {
+    "id": "thermo_hygro",
+    "label": "External thermometer / hygrometer",
+    "category": "environment_iot",
+    "connection": "BLE",
+    "transport": [
+     "ble"
+    ],
+    "typical_use": "Temperature and humidity from a standalone BLE sensor",
+    "uuid": "181A"
+   },
+   {
+    "id": "co2",
+    "label": "CO2 sensor",
+    "category": "environment_iot",
+    "connection": "BLE",
+    "transport": [
+     "ble"
+    ],
+    "typical_use": "Carbon-dioxide concentration of an indoor air monitor",
+    "uuid": "181A"
+   },
+   {
+    "id": "pm25",
+    "label": "Air quality / PM2.5 sensor",
+    "category": "environment_iot",
+    "connection": "BLE",
+    "transport": [
+     "ble"
+    ],
+    "typical_use": "Particulate matter of an air-quality monitor",
+    "uuid": "181A"
+   },
+   {
+    "id": "voc",
+    "label": "VOC / gas sensor",
+    "category": "environment_iot",
+    "connection": "BLE",
+    "transport": [
+     "ble"
+    ],
+    "typical_use": "Volatile organic compounds and gas levels",
+    "uuid": "181A"
+   },
+   {
+    "id": "geiger",
+    "label": "Radiation / Geiger counter",
+    "category": "environment_iot",
+    "connection": "USB-C + BLE",
+    "transport": [
+     "usb",
+     "ble"
+    ],
+    "typical_use": "Dose rate and counts of a pocket Geiger counter (USB serial or BLE UART)",
+    "usb_class": 2,
+    "uuid": "6E400001-B5A3-F393-E0A9-E50E24DCCA9E"
+   },
+   {
+    "id": "uv",
+    "label": "UV sensor",
+    "category": "environment_iot",
+    "connection": "BLE",
+    "transport": [
+     "ble"
+    ],
+    "typical_use": "UV index from a wearable or standalone sensor",
+    "uuid": "181A"
+   },
+   {
+    "id": "water_leak",
+    "label": "Water-leak sensor",
+    "category": "environment_iot",
+    "connection": "BLE",
+    "transport": [
+     "ble"
+    ],
+    "typical_use": "Leak alarms of a BLE puddle sensor",
+    "uuid": "FE95"
+   },
+   {
+    "id": "smart_home",
+    "label": "Smart-home multi-sensor (Matter / Thread)",
+    "category": "environment_iot",
+    "connection": "Matter / Thread",
+    "transport": [
+     "matter"
+    ],
+    "typical_use": "Motion, contact, temperature and light sensors of Matter devices over Thread",
+    "feature": "android.hardware.thread_network"
+   },
+   {
+    "id": "weather_station",
+    "label": "Barometer / weather station",
+    "category": "environment_iot",
+    "connection": "BLE",
+    "transport": [
+     "ble"
+    ],
+    "typical_use": "Pressure, temperature and wind from a personal weather station",
+    "uuid": "181A"
+   },
+   {
+    "id": "rtk",
+    "label": "External GNSS / RTK receiver",
+    "category": "positioning",
+    "connection": "USB-C + BLE",
+    "transport": [
+     "usb",
+     "ble"
+    ],
+    "typical_use": "Centimetre-level position from an RTK receiver (NMEA over USB serial or BLE UART)",
+    "usb_class": 2,
+    "uuid": "6E400001-B5A3-F393-E0A9-E50E24DCCA9E"
+   },
+   {
+    "id": "uwb_tag",
+    "label": "UWB tag or anchor",
+    "category": "positioning",
+    "connection": "UWB",
+    "transport": [
+     "uwb"
+    ],
+    "typical_use": "Precise ranging to a UWB tag or anchor",
+    "feature": "android.hardware.uwb"
+   },
+   {
+    "id": "wifi_rtt_ap",
+    "label": "Wi-Fi RTT responder",
+    "category": "positioning",
+    "connection": "Wi-Fi",
+    "transport": [
+     "wifi"
+    ],
+    "typical_use": "Round-trip-time ranging to an access point that supports 802.11mc",
+    "feature": "android.hardware.wifi.rtt"
+   },
+   {
+    "id": "finder",
+    "label": "Item finder (Tile / AirTag style)",
+    "category": "positioning",
+    "connection": "BLE",
+    "transport": [
+     "ble"
+    ],
+    "typical_use": "Trackers that advertise a finder service",
+    "uuid": "FD44"
+   },
+   {
+    "id": "gamepad",
+    "label": "Game controller (gyro / accelerometer)",
+    "category": "input_peripheral",
+    "connection": "BLE + USB-C",
+    "transport": [
+     "ble",
+     "usb"
+    ],
+    "typical_use": "A gamepad with motion sensors",
+    "usb_class": 3,
+    "input": "gamepad",
+    "uuid": "1812"
+   },
+   {
+    "id": "stylus",
+    "label": "Stylus (pressure and tilt)",
+    "category": "input_peripheral",
+    "connection": "BLE + USB-C",
+    "transport": [
+     "ble",
+     "usb"
+    ],
+    "typical_use": "Pressure and tilt of an active pen",
+    "input": "stylus"
+   },
+   {
+    "id": "keyboard",
+    "label": "External keyboard",
+    "category": "input_peripheral",
+    "connection": "BLE + USB-C",
+    "transport": [
+     "ble",
+     "usb"
+    ],
+    "typical_use": "A hardware keyboard",
+    "usb_class": 3,
+    "input": "keyboard",
+    "uuid": "1812"
+   },
+   {
+    "id": "card_reader",
+    "label": "OTG card reader",
+    "category": "input_peripheral",
+    "connection": "USB-C",
+    "transport": [
+     "usb"
+    ],
+    "typical_use": "A mass-storage reader for SD cards",
+    "usb_class": 8
+   },
+   {
+    "id": "barcode",
+    "label": "Barcode / QR scanner",
+    "category": "input_peripheral",
+    "connection": "BLE + USB-C",
+    "transport": [
+     "ble",
+     "usb"
+    ],
+    "typical_use": "A scanner that types or streams what it reads (HID)",
+    "usb_class": 3,
+    "uuid": "1812"
+   },
+   {
+    "id": "rfid",
+    "label": "RFID / NFC reader dongle",
+    "category": "input_peripheral",
+    "connection": "USB-C",
+    "transport": [
+     "usb"
+    ],
+    "typical_use": "A smart-card (CCID) reader or NFC dongle",
+    "usb_class": 11
+   },
+   {
+    "id": "webcam",
+    "label": "USB / UVC webcam",
+    "category": "audio_imaging",
+    "connection": "USB-C",
+    "transport": [
+     "usb"
+    ],
+    "typical_use": "A UVC camera",
+    "usb_class": 14
+   },
+   {
+    "id": "usb_mic",
+    "label": "USB microphone",
+    "category": "audio_imaging",
+    "connection": "USB-C",
+    "transport": [
+     "usb"
+    ],
+    "typical_use": "A USB audio-class microphone",
+    "usb_class": 1
+   },
+   {
+    "id": "endoscope",
+    "label": "Endoscope camera",
+    "category": "audio_imaging",
+    "connection": "USB-C",
+    "transport": [
+     "usb"
+    ],
+    "typical_use": "A UVC endoscope or borescope",
+    "usb_class": 14
+   },
+   {
+    "id": "depth_ext",
+    "label": "External depth / LiDAR camera",
+    "category": "audio_imaging",
+    "connection": "USB-C",
+    "transport": [
+     "usb"
+    ],
+    "typical_use": "A depth camera that appears as a UVC or vendor device",
+    "usb_class": 255
+   },
+   {
+    "id": "thermal_ble",
+    "label": "Thermal-imaging camera (BLE)",
+    "category": "audio_imaging",
+    "connection": "BLE",
+    "transport": [
+     "ble"
+    ],
+    "typical_use": "A handheld thermal imager that streams or reports over a vendor BLE service",
+    "uuid": "0000fff0-0000-1000-8000-00805f9b34fb"
+   },
+   {
+    "id": "obd2",
+    "label": "OBD-II dongle (vehicle sensors)",
+    "category": "automotive_other",
+    "connection": "BLE + Wi-Fi",
+    "transport": [
+     "ble",
+     "wifi"
+    ],
+    "typical_use": "Speed, RPM, coolant temperature and fault codes through an ELM327-style dongle",
+    "uuid": "FFF0"
+   },
+   {
+    "id": "drone",
+    "label": "Drone telemetry",
+    "category": "automotive_other",
+    "connection": "USB-C + Wi-Fi",
+    "transport": [
+     "usb",
+     "wifi"
+    ],
+    "typical_use": "Attitude, position and battery of a drone or its controller",
+    "usb_class": 2
+   },
+   {
+    "id": "multimeter",
+    "label": "Bluetooth multimeter",
+    "category": "automotive_other",
+    "connection": "BLE",
+    "transport": [
+     "ble"
+    ],
+    "typical_use": "Voltage, current and resistance of a BLE multimeter",
+    "uuid": "FFB0"
+   },
+   {
+    "id": "smart_plug",
+    "label": "Smart plug with power meter",
+    "category": "automotive_other",
+    "connection": "Wi-Fi + Matter",
+    "transport": [
+     "wifi",
+     "matter"
+    ],
+    "typical_use": "Power and energy of a metering plug",
+    "feature": "android.hardware.wifi"
+   },
+   {
+    "id": "classic_gps",
+    "label": "Bluetooth GPS puck (SPP)",
+    "category": "positioning",
+    "connection": "Bluetooth Classic",
+    "transport": [
+     "classic"
+    ],
+    "typical_use": "NMEA position from a classic Bluetooth GPS receiver over the serial-port profile",
+    "uuid": "1101"
+   },
+   {
+    "id": "obd2_classic",
+    "label": "OBD-II dongle (Bluetooth Classic SPP)",
+    "category": "automotive_other",
+    "connection": "Bluetooth Classic",
+    "transport": [
+     "classic"
+    ],
+    "typical_use": "Vehicle speed, RPM and fault codes through an ELM327 dongle over the serial-port profile",
+    "uuid": "1101"
+   }
+  ],
+  "categories": [
+   {
+    "id": "wearables_health",
+    "label": "Wearables and health"
+   },
+   {
+    "id": "fitness_motion",
+    "label": "Fitness and motion"
+   },
+   {
+    "id": "environment_iot",
+    "label": "Environment and IoT"
+   },
+   {
+    "id": "positioning",
+    "label": "Positioning and ranging"
+   },
+   {
+    "id": "input_peripheral",
+    "label": "Input and peripherals"
+   },
+   {
+    "id": "audio_imaging",
+    "label": "Audio and imaging"
+   },
+   {
+    "id": "automotive_other",
+    "label": "Automotive and other"
+   }
+  ]
+ },
+ "catalogue": {
+  "_doc": "#1538 the exhaustive Inbuilt sensor catalogue, DECLARED here and served at runtime (never baked). Each member is found by a sensor type, a name match, a system feature or a manager probe; the page shows every member present or absent on THIS phone, and every SensorManager sensor no member claims (vendor / OEM types >= 65536 included) under `other`. kind: hardware | derived (virtual) | feature (a capability). live_only: confirmed only by a live reading.",
+  "categories": [
+   {
+    "id": "motion",
+    "label": "Motion and inertial",
+    "entries": [
+     {
+      "id": "accelerometer",
+      "label": "Accelerometer",
+      "kind": "hardware",
+      "type": 1
+     },
+     {
+      "id": "accelerometer_uncalibrated",
+      "label": "Accelerometer (uncalibrated)",
+      "kind": "hardware",
+      "type": 35
+     },
+     {
+      "id": "accelerometer_limited_axes",
+      "label": "Accelerometer (limited axes)",
+      "kind": "hardware",
+      "type": 38
+     },
+     {
+      "id": "accelerometer_limited_axes_uncalibrated",
+      "label": "Accelerometer (limited axes, uncalibrated)",
+      "kind": "hardware",
+      "type": 40
+     },
+     {
+      "id": "gyroscope",
+      "label": "Gyroscope",
+      "kind": "hardware",
+      "type": 4
+     },
+     {
+      "id": "gyroscope_uncalibrated",
+      "label": "Gyroscope (uncalibrated)",
+      "kind": "hardware",
+      "type": 16
+     },
+     {
+      "id": "gyroscope_limited_axes",
+      "label": "Gyroscope (limited axes)",
+      "kind": "hardware",
+      "type": 39
+     },
+     {
+      "id": "gyroscope_limited_axes_uncalibrated",
+      "label": "Gyroscope (limited axes, uncalibrated)",
+      "kind": "hardware",
+      "type": 41
+     },
+     {
+      "id": "gravity",
+      "label": "Gravity",
+      "kind": "derived",
+      "type": 9
+     },
+     {
+      "id": "linear_acceleration",
+      "label": "Linear acceleration",
+      "kind": "derived",
+      "type": 10
+     },
+     {
+      "id": "rotation_vector",
+      "label": "Rotation vector",
+      "kind": "derived",
+      "type": 11
+     },
+     {
+      "id": "game_rotation_vector",
+      "label": "Game rotation vector",
+      "kind": "derived",
+      "type": 15
+     },
+     {
+      "id": "geomagnetic_rotation_vector",
+      "label": "Geomagnetic rotation vector",
+      "kind": "derived",
+      "type": 20
+     },
+     {
+      "id": "significant_motion",
+      "label": "Significant motion",
+      "kind": "hardware",
+      "type": 17
+     },
+     {
+      "id": "step_detector",
+      "label": "Step detector",
+      "kind": "hardware",
+      "type": 18
+     },
+     {
+      "id": "step_counter",
+      "label": "Step counter",
+      "kind": "hardware",
+      "type": 19
+     },
+     {
+      "id": "stationary_detect",
+      "label": "Stationary detect",
+      "kind": "hardware",
+      "type": 29
+     },
+     {
+      "id": "motion_detect",
+      "label": "Motion detect",
+      "kind": "hardware",
+      "type": 30
+     },
+     {
+      "id": "tilt_detector",
+      "label": "Tilt detector",
+      "kind": "hardware",
+      "type": 22
+     },
+     {
+      "id": "wake_gesture",
+      "label": "Wake gesture",
+      "kind": "hardware",
+      "type": 23
+     },
+     {
+      "id": "pick_up_gesture",
+      "label": "Pick-up gesture",
+      "kind": "hardware",
+      "type": 25
+     },
+     {
+      "id": "glance_gesture",
+      "label": "Glance gesture",
+      "kind": "hardware",
+      "type": 24
+     },
+     {
+      "id": "wrist_tilt",
+      "label": "Wrist tilt gesture",
+      "kind": "hardware",
+      "type": 26
+     },
+     {
+      "id": "double_tap",
+      "label": "Double-tap",
+      "kind": "hardware",
+      "match": [
+       "double_tap",
+       "double tap",
+       "doubletap"
+      ]
+     },
+     {
+      "id": "pose_6dof",
+      "label": "Pose 6DOF",
+      "kind": "hardware",
+      "type": 28
+     },
+     {
+      "id": "head_tracker",
+      "label": "Head tracker",
+      "kind": "hardware",
+      "type": 37
+     },
+     {
+      "id": "heading",
+      "label": "Heading",
+      "kind": "derived",
+      "type": 42
+     },
+     {
+      "id": "device_orientation",
+      "label": "Device orientation",
+      "kind": "derived",
+      "type": 27
+     }
+    ]
+   },
+   {
+    "id": "position",
+    "label": "Position and orientation",
+    "entries": [
+     {
+      "id": "magnetometer",
+      "label": "Magnetometer",
+      "kind": "hardware",
+      "type": 2
+     },
+     {
+      "id": "magnetometer_uncalibrated",
+      "label": "Magnetometer (uncalibrated)",
+      "kind": "hardware",
+      "type": 14
+     },
+     {
+      "id": "orientation",
+      "label": "Orientation",
+      "kind": "derived",
+      "type": 3,
+      "deprecated": true,
+      "note": "Deprecated since API 8: derived from the accelerometer and magnetometer."
+     },
+     {
+      "id": "proximity",
+      "label": "Proximity",
+      "kind": "hardware",
+      "type": 8
+     },
+     {
+      "id": "hinge_angle",
+      "label": "Hinge angle (foldable)",
+      "kind": "hardware",
+      "type": 36
+     },
+     {
+      "id": "hall",
+      "label": "Hall sensor",
+      "kind": "hardware",
+      "match": [
+       "hall"
+      ],
+      "note": "Lid, case or fold magnet detection; vendor-named when the OEM exposes it."
+     },
+     {
+      "id": "grip",
+      "label": "Grip sensor",
+      "kind": "hardware",
+      "match": [
+       "grip"
+      ],
+      "note": "Hand-grip and antenna-detune sensing; vendor-named when the OEM exposes it."
+     },
+     {
+      "id": "hover",
+      "label": "Hover sensor",
+      "kind": "hardware",
+      "match": [
+       "hover"
+      ],
+      "note": "Finger-hover over the screen; vendor-named when the OEM exposes it."
+     }
+    ]
+   },
+   {
+    "id": "environment",
+    "label": "Environment",
+    "entries": [
+     {
+      "id": "ambient_light",
+      "label": "Ambient light",
+      "kind": "hardware",
+      "type": 5
+     },
+     {
+      "id": "barometer",
+      "label": "Barometer / pressure",
+      "kind": "hardware",
+      "type": 6
+     },
+     {
+      "id": "ambient_temperature",
+      "label": "Ambient temperature",
+      "kind": "hardware",
+      "type": 13
+     },
+     {
+      "id": "relative_humidity",
+      "label": "Relative humidity",
+      "kind": "hardware",
+      "type": 12
+     },
+     {
+      "id": "device_temperature",
+      "label": "Device temperature",
+      "kind": "hardware",
+      "type": 7,
+      "deprecated": true,
+      "note": "Deprecated since API 14 (TYPE_TEMPERATURE); some phones still report the battery or CPU there."
+     },
+     {
+      "id": "thermistors",
+      "label": "SoC and skin thermistors",
+      "kind": "hardware",
+      "match": [
+       "thermistor",
+       "skin_temp",
+       "skin temp",
+       "soc_temp",
+       "soc temp"
+      ],
+      "note": "Thermal zones; apps see them only when the OEM lists them as sensors."
+     },
+     {
+      "id": "thermal_status",
+      "label": "Thermal status and headroom",
+      "kind": "feature",
+      "probe": "thermal",
+      "note": "PowerManager thermal status and headroom (Android 10+)."
+     },
+     {
+      "id": "flicker",
+      "label": "Flicker sensor",
+      "kind": "hardware",
+      "match": [
+       "flicker"
+      ]
+     },
+     {
+      "id": "spectral",
+      "label": "Spectral sensor",
+      "kind": "hardware",
+      "match": [
+       "spectral"
+      ]
+     }
+    ]
+   },
+   {
+    "id": "location",
+    "label": "Location and GNSS",
+    "entries": [
+     {
+      "id": "gps",
+      "label": "GPS",
+      "kind": "feature",
+      "feature": "android.hardware.location.gps"
+     },
+     {
+      "id": "glonass",
+      "label": "GLONASS",
+      "kind": "feature",
+      "feature": "android.hardware.location.gps",
+      "live_only": true,
+      "note": "The receiver is present; this constellation is confirmed by a live fix (open GPS / GNSS live)."
+     },
+     {
+      "id": "galileo",
+      "label": "Galileo",
+      "kind": "feature",
+      "feature": "android.hardware.location.gps",
+      "live_only": true,
+      "note": "The receiver is present; this constellation is confirmed by a live fix (open GPS / GNSS live)."
+     },
+     {
+      "id": "beidou",
+      "label": "BeiDou",
+      "kind": "feature",
+      "feature": "android.hardware.location.gps",
+      "live_only": true,
+      "note": "The receiver is present; this constellation is confirmed by a live fix (open GPS / GNSS live)."
+     },
+     {
+      "id": "qzss",
+      "label": "QZSS",
+      "kind": "feature",
+      "feature": "android.hardware.location.gps",
+      "live_only": true,
+      "note": "The receiver is present; this constellation is confirmed by a live fix (open GPS / GNSS live)."
+     },
+     {
+      "id": "navic",
+      "label": "NavIC / IRNSS",
+      "kind": "feature",
+      "feature": "android.hardware.location.gps",
+      "live_only": true,
+      "note": "The receiver is present; this constellation is confirmed by a live fix (open GPS / GNSS live)."
+     },
+     {
+      "id": "dual_frequency",
+      "label": "Dual-frequency (L1 + L5)",
+      "kind": "feature",
+      "feature": "android.hardware.location.gps",
+      "live_only": true,
+      "note": "Dual-band is confirmed when the live status reports both carrier bands."
+     },
+     {
+      "id": "fused_location",
+      "label": "Fused location",
+      "kind": "feature",
+      "feature": "android.hardware.location"
+     },
+     {
+      "id": "network_location",
+      "label": "Network location",
+      "kind": "feature",
+      "feature": "android.hardware.location.network"
+     }
+    ]
+   },
+   {
+    "id": "imaging",
+    "label": "Imaging and depth",
+    "entries": [
+     {
+      "id": "camera_wide",
+      "label": "Camera: wide",
+      "kind": "feature",
+      "probe": "camera_role:wide"
+     },
+     {
+      "id": "camera_ultrawide",
+      "label": "Camera: ultra-wide",
+      "kind": "feature",
+      "probe": "camera_role:ultrawide"
+     },
+     {
+      "id": "camera_tele",
+      "label": "Camera: telephoto",
+      "kind": "feature",
+      "probe": "camera_role:tele"
+     },
+     {
+      "id": "camera_front",
+      "label": "Camera: front",
+      "kind": "feature",
+      "probe": "camera_role:front"
+     },
+     {
+      "id": "cameras_all",
+      "label": "Every camera (id, facing, pixels, focal length, flash)",
+      "kind": "feature",
+      "probe": "cameras"
+     },
+     {
+      "id": "tof_depth",
+      "label": "ToF depth sensor",
+      "kind": "hardware",
+      "match": [
+       "tof",
+       "time of flight",
+       "time-of-flight"
+      ],
+      "probe": "camera_role:depth"
+     },
+     {
+      "id": "lidar",
+      "label": "LiDAR",
+      "kind": "hardware",
+      "match": [
+       "lidar"
+      ]
+     },
+     {
+      "id": "laser_autofocus",
+      "label": "Laser autofocus",
+      "kind": "hardware",
+      "match": [
+       "laser"
+      ]
+     },
+     {
+      "id": "pdaf",
+      "label": "Phase-detect autofocus (PDAF)",
+      "kind": "hardware",
+      "match": [
+       "pdaf",
+       "phase detect"
+      ]
+     },
+     {
+      "id": "autofocus",
+      "label": "Autofocus",
+      "kind": "feature",
+      "feature": "android.hardware.camera.autofocus"
+     },
+     {
+      "id": "color_sensor",
+      "label": "Spectral / colour sensor",
+      "kind": "hardware",
+      "match": [
+       "spectral",
+       "color",
+       "colour",
+       "rgb"
+      ]
+     }
+    ]
+   },
+   {
+    "id": "connectivity",
+    "label": "Connectivity as sensor",
+    "entries": [
+     {
+      "id": "nfc",
+      "label": "NFC",
+      "kind": "feature",
+      "feature": "android.hardware.nfc"
+     },
+     {
+      "id": "bluetooth",
+      "label": "Bluetooth",
+      "kind": "feature",
+      "feature": "android.hardware.bluetooth"
+     },
+     {
+      "id": "ble",
+      "label": "Bluetooth LE",
+      "kind": "feature",
+      "feature": "android.hardware.bluetooth_le"
+     },
+     {
+      "id": "wifi",
+      "label": "Wi-Fi",
+      "kind": "feature",
+      "feature": "android.hardware.wifi"
+     },
+     {
+      "id": "wifi_rtt",
+      "label": "Wi-Fi RTT (ranging)",
+      "kind": "feature",
+      "feature": "android.hardware.wifi.rtt"
+     },
+     {
+      "id": "uwb",
+      "label": "UWB",
+      "kind": "feature",
+      "feature": "android.hardware.uwb"
+     },
+     {
+      "id": "ir_blaster",
+      "label": "IR blaster",
+      "kind": "feature",
+      "probe": "ir"
+     },
+     {
+      "id": "cellular",
+      "label": "Cellular",
+      "kind": "feature",
+      "feature": "android.hardware.telephony"
+     }
+    ]
+   },
+   {
+    "id": "audio",
+    "label": "Audio",
+    "entries": [
+     {
+      "id": "microphones",
+      "label": "Microphones (each one: description, location, address)",
+      "kind": "feature",
+      "probe": "mics",
+      "feature": "android.hardware.microphone"
+     }
+    ]
+   },
+   {
+    "id": "biometric",
+    "label": "Biometric and health",
+    "entries": [
+     {
+      "id": "fingerprint",
+      "label": "Fingerprint",
+      "kind": "feature",
+      "feature": "android.hardware.fingerprint"
+     },
+     {
+      "id": "fingerprint_optical",
+      "label": "Fingerprint: optical",
+      "kind": "hardware",
+      "match": [
+       "optical"
+      ],
+      "note": "Apps cannot read the sensor type; shown only when the OEM names it."
+     },
+     {
+      "id": "fingerprint_ultrasonic",
+      "label": "Fingerprint: ultrasonic",
+      "kind": "hardware",
+      "match": [
+       "ultrasonic"
+      ],
+      "note": "Apps cannot read the sensor type; shown only when the OEM names it."
+     },
+     {
+      "id": "fingerprint_capacitive",
+      "label": "Fingerprint: capacitive",
+      "kind": "hardware",
+      "match": [
+       "capacitive"
+      ],
+      "note": "Apps cannot read the sensor type; shown only when the OEM names it."
+     },
+     {
+      "id": "face",
+      "label": "Face (2D)",
+      "kind": "feature",
+      "feature": "android.hardware.biometrics.face"
+     },
+     {
+      "id": "face_3d",
+      "label": "Face (3D, structured light)",
+      "kind": "hardware",
+      "match": [
+       "face",
+       "structured"
+      ],
+      "note": "Shown when the OEM exposes the face sensor by name."
+     },
+     {
+      "id": "face_tof",
+      "label": "Face (ToF)",
+      "kind": "hardware",
+      "match": [
+       "face_tof",
+       "face tof"
+      ]
+     },
+     {
+      "id": "iris",
+      "label": "Iris",
+      "kind": "feature",
+      "feature": "android.hardware.biometrics.iris"
+     },
+     {
+      "id": "biometric_status",
+      "label": "Biometric strength (strong / weak)",
+      "kind": "feature",
+      "probe": "biometric"
+     },
+     {
+      "id": "heart_rate",
+      "label": "Heart rate (PPG)",
+      "kind": "hardware",
+      "type": 21
+     },
+     {
+      "id": "heart_beat",
+      "label": "Heart beat",
+      "kind": "hardware",
+      "type": 31
+     },
+     {
+      "id": "spo2",
+      "label": "SpO2 (blood oxygen)",
+      "kind": "hardware",
+      "match": [
+       "spo2",
+       "oxygen",
+       "pulse_ox",
+       "pulse ox"
+      ]
+     },
+     {
+      "id": "skin_thermometer",
+      "label": "Skin thermometer",
+      "kind": "hardware",
+      "match": [
+       "skin_temp",
+       "skin temp"
+      ]
+     },
+     {
+      "id": "body_thermometer",
+      "label": "Body thermometer",
+      "kind": "hardware",
+      "match": [
+       "body_temp",
+       "body temp"
+      ]
+     },
+     {
+      "id": "off_body",
+      "label": "Off-body detect",
+      "kind": "hardware",
+      "match": [
+       "off_body",
+       "offbody",
+       "off-body"
+      ]
+     },
+     {
+      "id": "low_latency_offbody",
+      "label": "Low-latency off-body detect",
+      "kind": "hardware",
+      "type": 34
+     }
+    ]
+   },
+   {
+    "id": "hardware",
+    "label": "Hardware and power",
+    "entries": [
+     {
+      "id": "battery_voltage",
+      "label": "Battery voltage",
+      "kind": "feature",
+      "probe": "battery:voltage"
+     },
+     {
+      "id": "battery_current",
+      "label": "Battery current",
+      "kind": "feature",
+      "probe": "battery:current"
+     },
+     {
+      "id": "battery_charge_counter",
+      "label": "Battery charge counter",
+      "kind": "feature",
+      "probe": "battery:charge_counter"
+     },
+     {
+      "id": "battery_capacity",
+      "label": "Battery capacity",
+      "kind": "feature",
+      "probe": "battery:capacity"
+     },
+     {
+      "id": "battery_temperature",
+      "label": "Battery temperature",
+      "kind": "feature",
+      "probe": "battery:temperature"
+     },
+     {
+      "id": "battery_health",
+      "label": "Battery health",
+      "kind": "feature",
+      "probe": "battery:health"
+     },
+     {
+      "id": "touch_multitouch",
+      "label": "Touchscreen multitouch",
+      "kind": "feature",
+      "feature": "android.hardware.touchscreen.multitouch"
+     },
+     {
+      "id": "touch_distinct",
+      "label": "Touchscreen distinct multitouch",
+      "kind": "feature",
+      "feature": "android.hardware.touchscreen.multitouch.distinct"
+     },
+     {
+      "id": "touch_force",
+      "label": "Touchscreen force / pressure",
+      "kind": "feature",
+      "probe": "touch_pressure"
+     }
+    ]
+   }
+  ],
+  "other": {
+   "id": "other",
+   "label": "Vendor, OEM and other sensors"
+  },
+  "camera_roles": {
+   "ultrawide_max_mm": 20,
+   "wide_max_mm": 45
+  }
+ },
+ "gnss": {
+  "constellations": [
+   {
+    "id": 1,
+    "label": "GPS"
+   },
+   {
+    "id": 2,
+    "label": "SBAS"
+   },
+   {
+    "id": 3,
+    "label": "GLONASS"
+   },
+   {
+    "id": 4,
+    "label": "QZSS"
+   },
+   {
+    "id": 5,
+    "label": "BeiDou"
+   },
+   {
+    "id": 6,
+    "label": "Galileo"
+   },
+   {
+    "id": 7,
+    "label": "NavIC"
+   },
+   {
+    "id": 8,
+    "label": "Other"
+   }
+  ],
+  "bands": [
+   {
+    "low_mhz": 1164,
+    "high_mhz": 1189,
+    "label": "L5 / E5a / B2a"
+   },
+   {
+    "low_mhz": 1190,
+    "high_mhz": 1215,
+    "label": "E5b / B2b"
+   },
+   {
+    "low_mhz": 1217,
+    "high_mhz": 1238,
+    "label": "L2"
+   },
+   {
+    "low_mhz": 1239,
+    "high_mhz": 1256,
+    "label": "G2 / E6 / B3"
+   },
+   {
+    "low_mhz": 1558,
+    "high_mhz": 1564,
+    "label": "B1"
+   },
+   {
+    "low_mhz": 1565,
+    "high_mhz": 1586,
+    "label": "L1 / E1 / B1C"
+   },
+   {
+    "low_mhz": 1596,
+    "high_mhz": 1610,
+    "label": "G1"
    }
   ]
  }

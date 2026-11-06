@@ -22,6 +22,9 @@
     <queries>
         <package android:name="com.diegonmarcos.cloudaccount" />
         <package android:name="com.diegonmarcos.cloudstore" />
+        <!-- #1538 the Connected catalogue asks whether the ANT+ radio service and Health Connect are installed -->
+        <package android:name="com.dsi.ant.service.socket" />
+        <package android:name="com.google.android.apps.healthdata" />
     </queries>
 
     <application

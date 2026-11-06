@@ -166,6 +166,8 @@ object Tags {
     const val SENSOR_LIVE = "tools_sensor_live"
     fun sensorRow(id: Int) = "tools_sensor_row_$id"
     fun hardwareRow(id: String) = "tools_hardware_row_$id"
+    fun catalogueRow(id: String) = "tools_catalogue_row_$id"
+    const val SCAN_ALL = "tools_scan_all"
     fun profileRow(id: String) = "tools_profile_row_$id"
     fun profileScan(id: String) = "tools_profile_scan_$id"
     fun mlRow(id: String) = "tools_ml_row_$id"

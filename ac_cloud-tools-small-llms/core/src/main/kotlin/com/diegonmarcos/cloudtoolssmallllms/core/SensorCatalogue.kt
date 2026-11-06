@@ -43,6 +43,8 @@ class SensorCatalogue private constructor(
     val hardware: List<HardwareItem>,
     val gattKeys: Map<String, GattKey>,
     val connected: ConnectedCatalogue,
+    val tree: SensorTree,
+    val gnss: GnssDecl,
 ) {
     /** The constant name and readable name of a sensor type; an OEM type (>= the private base) or an unknown one falls back to the data's templates. */
     fun typeOf(type: Int, stringType: String = ""): Pair<String, String> {
@@ -75,13 +77,24 @@ class SensorCatalogue private constructor(
                 )
             }
             val keys = o.getJSONObject("gatt_keys").let { k -> k.keys().asSequence().associateWith { id -> k.getJSONObject(id).let { GattKey(it.getString("label"), it.optString("unit")) } } }
+            val g = o.getJSONObject("gnss")
+            val gnss = GnssDecl(
+                objs(g.getJSONArray("constellations")).associate { it.getInt("id") to it.getString("label") },
+                objs(g.getJSONArray("bands")).map { Triple(it.getDouble("low_mhz"), it.getDouble("high_mhz"), it.getString("label")) },
+            )
             return SensorCatalogue(types, modes, fb.getInt("vendor_base"), pair("vendor"), pair("unknown"), fb.getString("mode"),
-                live.getInt("max_series"), live.getInt("history"), hw, keys, ConnectedCatalogue.parse(o.getJSONObject("connected")))
+                live.getInt("max_series"), live.getInt("history"), hw, keys, ConnectedCatalogue.parse(o.getJSONObject("connected")),
+                SensorTree.parse(o, fb.getInt("vendor_base")), gnss)
         }
 
         internal fun objs(a: JSONArray) = (0 until a.length()).map { a.getJSONObject(it) }
         internal fun strs(a: JSONArray?) = if (a == null) emptyList() else (0 until a.length()).map { a.getString(it) }
     }
+}
+
+/** The GNSS names the live status shows (assets: tools/sensors::gnss): constellation id -> label, and the carrier bands as [lowMhz, highMhz, label]. */
+data class GnssDecl(val constellations: Map<Int, String>, val bands: List<Triple<Double, Double, String>>) {
+    fun band(hz: Float): String = bands.firstOrNull { hz / 1e6 in it.first..it.second }?.third.orEmpty()
 }
 
 /** A sensor number without trailing zeros ("0.0012", "1000", "-"), for the rows and the live values. */

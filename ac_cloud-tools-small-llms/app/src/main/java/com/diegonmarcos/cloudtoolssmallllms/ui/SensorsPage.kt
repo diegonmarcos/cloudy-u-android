@@ -10,6 +10,7 @@ import android.os.Handler
 import android.os.Looper
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -40,14 +42,25 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import com.diegonmarcos.cloudtoolssmallllms.Decl
 import com.diegonmarcos.cloudtoolssmallllms.R
+import com.diegonmarcos.cloudtoolssmallllms.core.ConnState
+import com.diegonmarcos.cloudtoolssmallllms.core.ConnectedFilter
 import com.diegonmarcos.cloudtoolssmallllms.core.ConnectedProfile
+import com.diegonmarcos.cloudtoolssmallllms.core.ConnectedTree
 import com.diegonmarcos.cloudtoolssmallllms.core.HardwareItem
 import com.diegonmarcos.cloudtoolssmallllms.core.LiveReading
 import com.diegonmarcos.cloudtoolssmallllms.core.Num
+import com.diegonmarcos.cloudtoolssmallllms.core.Presence
+import com.diegonmarcos.cloudtoolssmallllms.core.ResolvedCategory
+import com.diegonmarcos.cloudtoolssmallllms.core.ResolvedEntry
+import com.diegonmarcos.cloudtoolssmallllms.core.ResolvedProfile
 import com.diegonmarcos.cloudtoolssmallllms.core.SensorCatalogue
+import com.diegonmarcos.cloudtoolssmallllms.core.SensorFilter
 import com.diegonmarcos.cloudtoolssmallllms.core.SensorRow
 import com.diegonmarcos.cloudtoolssmallllms.core.Uuid
+import com.diegonmarcos.cloudtoolssmallllms.data.AndroidConnectedFacts
+import com.diegonmarcos.cloudtoolssmallllms.data.AndroidDeviceFacts
 import com.diegonmarcos.cloudtoolssmallllms.data.AndroidRegistrar
+import com.diegonmarcos.cloudtoolssmallllms.data.ScanMemory
 import com.diegonmarcos.cloudtoolssmallllms.data.AndroidSensorSource
 import com.diegonmarcos.cloudtoolssmallllms.data.BleFound
 import com.diegonmarcos.cloudtoolssmallllms.data.BleScan
@@ -118,27 +131,84 @@ private fun Heading(text: String, tag: String? = null) {
 
 // ── Inbuilt ──────────────────────────────────────────────────────────────────
 
+/** A labelled row of single-choice chips (one filter or switch); the chosen one is filled. */
+@Composable
+private fun <T> Chips(label: String, options: List<Pair<String, T>>, selected: T, onSelect: (T) -> Unit) {
+    LazyRow(Modifier.fillMaxWidth().padding(horizontal = KitStoreRow.padH, vertical = KitStoreRow.tight), horizontalArrangement = Arrangement.spacedBy(ToolsMetrics.small)) {
+        item { KitStoreCaption(label, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+        items(options) { (text, v) -> KitStoreQuick(text, if (v == selected) KitStoreRow.BLUE_FILL else KitStoreRow.RULE, onClick = { onSelect(v) }) }
+    }
+}
+
+private fun kindText(kind: String): Int = when (kind) { "derived" -> R.string.kind_derived; "feature" -> R.string.kind_feature; else -> R.string.kind_hardware }
+
+/** The Inbuilt page: the declared sensor catalogue resolved on THIS phone, organized by category or as one filterable list. */
 @Composable
 private fun InbuiltPage(cat: SensorCatalogue) {
     val ctx = LocalContext.current
     val sm = remember { ctx.getSystemService(SensorManager::class.java) }
     val rows = remember { sm?.let { cat.rows(AndroidSensorSource(it)) }.orEmpty() }
-    var open by remember { mutableStateOf<Int?>(null) }
     var refresh by remember { mutableIntStateOf(0) }
     val probe = remember { HardwareProbe(ctx, rows) }
-    var openHw by remember { mutableStateOf<String?>(null) }
+    val resolved = remember(rows, refresh) { cat.tree.resolve(rows, AndroidDeviceFacts(ctx, probe, cat.tree)) }
+    var byList by remember { mutableStateOf(false) }
+    var filter by remember { mutableStateOf(SensorFilter()) }
+    var open by remember { mutableStateOf<Int?>(null) }
+    var openEntry by remember { mutableStateOf<String?>(null) }
+    val shown = remember(resolved, filter) { cat.tree.filter(resolved, filter) }
     LazyColumn(Modifier.fillMaxSize().testTag(Tags.SENSORS_INBUILT)) {
-        item(key = "h_sensors") { Heading(stringResource(R.string.sensors_heading, rows.size)) }
-        items(rows, key = { it.raw.id }) { r ->
-            SensorRowItem(r, cat, sm, expanded = open == r.raw.id) { open = if (open == r.raw.id) null else r.raw.id }
-        }
-        item(key = "h_hardware") {
+        item(key = "h_catalogue") {
             KitStoreRowLine(onClick = { refresh++ }) {
-                Column(Modifier.weight(1f)) { Heading(stringResource(R.string.hardware_heading)) }
+                Column(Modifier.weight(1f)) { Heading(stringResource(R.string.catalogue_heading, resolved.sumOf { it.presentCount }, resolved.sumOf { it.entries.size }, rows.size)) }
                 KitStoreQuick(stringResource(R.string.sensors_refresh), KitStoreRow.BLUE_FILL)
             }
         }
-        items(cat.hardware, key = { "hw_" + it.id }) { h -> HardwareRowItem(h, probe, refresh, expanded = openHw == h.id) { openHw = if (openHw == h.id) null else h.id } }
+        item(key = "views") { Chips(stringResource(R.string.f_view), listOf(stringResource(R.string.view_category) to false, stringResource(R.string.view_list) to true), byList) { byList = it } }
+        if (!byList) {
+            for (c in resolved) {
+                item(key = "c_" + c.id) { Heading(stringResource(R.string.category_count, c.label, c.presentCount, c.entries.size)) }
+                items(c.entries, key = { "e_" + it.entry.id }) { e -> EntryRow(e, cat, sm, open, { open = it }, openEntry, { openEntry = it }) }
+            }
+        } else {
+            item(key = "filters") { FilterBar(cat, resolved, rows, filter) { filter = it } }
+            item(key = "shown") { Heading(stringResource(R.string.list_count, shown.size)) }
+            items(shown, key = { "l_" + it.entry.id }) { e -> EntryRow(e, cat, sm, open, { open = it }, openEntry, { openEntry = it }) }
+        }
+    }
+}
+
+@Composable
+private fun FilterBar(cat: SensorCatalogue, resolved: List<ResolvedCategory>, rows: List<SensorRow>, f: SensorFilter, set: (SensorFilter) -> Unit) {
+    val all = stringResource(R.string.f_all)
+    Chips(stringResource(R.string.f_category), listOf<Pair<String, String?>>(all to null) + resolved.map { it.label to it.id }, f.category) { set(f.copy(category = it)) }
+    Chips(stringResource(R.string.f_presence), listOf(all to Presence.ALL, stringResource(R.string.f_present) to Presence.PRESENT, stringResource(R.string.f_absent) to Presence.ABSENT), f.presence) { set(f.copy(presence = it)) }
+    Chips(stringResource(R.string.f_type), listOf<Pair<String, String?>>(all to null, stringResource(R.string.kind_hardware) to "hardware", stringResource(R.string.kind_derived) to "derived", stringResource(R.string.kind_feature) to "feature"), f.kind) { set(f.copy(kind = it)) }
+    Chips(stringResource(R.string.f_reporting), listOf<Pair<String, Int?>>(all to null) + (0..3).map { cat.modeOf(it) to it }, f.reporting) { set(f.copy(reporting = it)) }
+    Chips(stringResource(R.string.f_wake), listOf<Pair<String, Boolean?>>(all to null, stringResource(R.string.wake_yes) to true, stringResource(R.string.wake_no) to false), f.wake) { set(f.copy(wake = it)) }
+    Chips(stringResource(R.string.f_power), listOf<Pair<String, Float?>>(all to null, stringResource(R.string.power_01) to 0.1f, stringResource(R.string.power_1) to 1f, stringResource(R.string.power_5) to 5f), f.maxPowerMa) { set(f.copy(maxPowerMa = it)) }
+    Chips(stringResource(R.string.f_vendor), listOf<Pair<String, String?>>(all to null) + cat.tree.vendors(rows).map { it to it }, f.vendor) { set(f.copy(vendor = it)) }
+}
+
+/** One catalogue member: present or absent on this phone, its detail lines, and the SensorManager sensors that answer it (tap one for the live graph). */
+@Composable
+private fun EntryRow(e: ResolvedEntry, cat: SensorCatalogue, sm: SensorManager?, open: Int?, onOpen: (Int?) -> Unit, openEntry: String?, onOpenEntry: (String?) -> Unit) {
+    val scheme = MaterialTheme.colorScheme
+    val gps = e.entry.id == "gps" && e.present
+    Column(Modifier.testTag(Tags.catalogueRow(e.entry.id))) {
+        KitStoreRowLine(onClick = if (gps) ({ onOpenEntry(if (openEntry == e.entry.id) null else e.entry.id) }) else null) {
+            KitStoreDot(stringResource(if (e.present) R.string.hw_yes else R.string.hw_no), if (e.present) KitStoreRow.UP else KitStoreRow.BAD)
+            Column(Modifier.weight(1f)) {
+                KitStoreName(e.entry.label, color = scheme.onSurface)
+                KitStoreCaption(stringResource(R.string.entry_line, stringResource(kindText(e.entry.kind)), stringResource(if (e.present) R.string.entry_present else R.string.entry_absent)), color = scheme.onSurfaceVariant)
+                if (e.entry.deprecated) KitStoreCaption(stringResource(R.string.entry_deprecated), color = scheme.onSurfaceVariant)
+                if (e.present && e.entry.liveOnly) KitStoreCaption(stringResource(R.string.entry_live_only), color = scheme.onSurfaceVariant)
+                e.entry.note?.let { Text(it, fontSize = KitStoreRow.caption, color = scheme.onSurfaceVariant) }
+                for (l in e.lines) Text(l, fontSize = KitStoreRow.caption, color = scheme.onSurfaceVariant)
+                if (gps && openEntry == e.entry.id) GnssLive(cat)
+            }
+        }
+        for (r in e.sensors) SensorRowItem(r, cat, sm, expanded = open == r.raw.id) { onOpen(if (open == r.raw.id) null else r.raw.id) }
+        Rule()
     }
 }
 
@@ -203,41 +273,29 @@ private fun LivePanel(sensorId: Int, cat: SensorCatalogue, sm: SensorManager) {
     }
 }
 
-@Composable
-private fun HardwareRowItem(h: HardwareItem, probe: HardwareProbe, refresh: Int, expanded: Boolean, onClick: () -> Unit) {
-    val scheme = MaterialTheme.colorScheme
-    val reading = remember(h.id, refresh) { probe.read(h) }
-    Column(Modifier.testTag(Tags.hardwareRow(h.id))) {
-        KitStoreRowLine(onClick = onClick) {
-            KitStoreDot(stringResource(if (reading.available) R.string.hw_yes else R.string.hw_no), if (reading.available) KitStoreRow.UP else KitStoreRow.BAD)
-            Column(Modifier.weight(1f)) {
-                KitStoreName(h.label, color = scheme.onSurface)
-                KitStoreCaption(stringResource(if (reading.available) R.string.hw_available else R.string.hw_missing), color = scheme.onSurfaceVariant)
-                for (l in reading.lines) Text(l, fontSize = KitStoreRow.caption, color = scheme.onSurfaceVariant)
-                if (expanded && h.probe == "gnss" && reading.available) GnssLive()
-            }
-        }
-        Rule()
-    }
-}
-
-/** The GNSS status (satellites visible and used in the fix) while this is visible; needs the location grant from Configs > Perms. */
+/** The live GNSS status while this is visible: per constellation the satellites visible and used in the fix and the mean C/N0, and the carrier bands seen; needs the location grant from Configs > Perms. */
 @SuppressLint("MissingPermission")
-@Suppress("DEPRECATION")
 @Composable
-private fun GnssLive() {
+private fun GnssLive(cat: SensorCatalogue) {
     val ctx = LocalContext.current
     val scheme = MaterialTheme.colorScheme
     if (!ConnectedGrants.location(ctx)) {
         KitStoreCaption(stringResource(R.string.hw_gnss_need_perm), color = scheme.error)
         return
     }
-    var sats by remember { mutableStateOf<Pair<Int, Int>?>(null) }
+    var sats by remember { mutableStateOf<GnssSummary?>(null) }
     val lm = remember { ctx.getSystemService(LocationManager::class.java) }
     val callback = remember {
         object : GnssStatus.Callback() {
             override fun onSatelliteStatusChanged(status: GnssStatus) {
-                sats = status.satelliteCount to (0 until status.satelliteCount).count { status.usedInFix(it) }
+                val per = java.util.TreeMap<Int, FloatArray>()   // type -> [visible, used, cn0 sum]
+                val bands = java.util.TreeSet<String>()
+                for (i in 0 until status.satelliteCount) {
+                    val a = per.getOrPut(status.getConstellationType(i)) { FloatArray(3) }
+                    a[0] += 1f; if (status.usedInFix(i)) a[1] += 1f; a[2] += status.getCn0DbHz(i)
+                    if (status.hasCarrierFrequencyHz(i)) cat.gnss.band(status.getCarrierFrequencyHz(i)).takeIf { it.isNotEmpty() }?.let { bands += it }
+                }
+                sats = GnssSummary(per.mapValues { Triple(it.value[0].toInt(), it.value[1].toInt(), if (it.value[0] > 0f) it.value[2] / it.value[0] else 0f) }, bands)
             }
         }
     }
@@ -248,33 +306,97 @@ private fun GnssLive() {
         if (registered) { runCatching { lm.unregisterGnssStatusCallback(callback) }; registered = false }
     })
     val s = sats
-    KitStoreCaption(if (s == null) stringResource(R.string.hw_gnss_waiting) else stringResource(R.string.hw_gnss_status, s.first, s.second), color = scheme.onSurface)
+    if (s == null) { KitStoreCaption(stringResource(R.string.hw_gnss_waiting), color = scheme.onSurface); return }
+    KitStoreCaption(stringResource(R.string.hw_gnss_status, s.perConstellation.values.sumOf { it.first }, s.perConstellation.values.sumOf { it.second }), color = scheme.onSurface)
+    for ((t, v) in s.perConstellation) KitStoreCaption(stringResource(R.string.hw_gnss_constellation, cat.gnss.constellations[t] ?: cat.gnss.constellations.values.last(), v.first, v.second, Num.short(v.third)), color = scheme.onSurfaceVariant)
+    if (s.bands.isNotEmpty()) KitStoreCaption(stringResource(R.string.hw_gnss_bands, s.bands.joinToString(", ")), color = scheme.onSurfaceVariant)
 }
+
+private data class GnssSummary(val perConstellation: Map<Int, Triple<Int, Int, Float>>, val bands: Set<String>)
 
 // ── Connected ────────────────────────────────────────────────────────────────
 
+private fun transportText(ctx: Context, id: String): String {
+    val ids = ctx.resources.getStringArray(R.array.transport_ids); val labels = ctx.resources.getStringArray(R.array.transport_labels)
+    return labels.getOrElse(ids.indexOf(id)) { id }
+}
+
+private fun stateText(s: ConnState): Int = when (s) {
+    ConnState.CONNECTED -> R.string.conn_state_connected; ConnState.PAIRED -> R.string.conn_state_paired
+    ConnState.AVAILABLE -> R.string.conn_state_available; ConnState.ABSENT -> R.string.conn_state_absent
+}
+
+/** The Connected page: the declared external-sensor catalogue resolved on THIS phone (connected, paired, available or absent), by category or as one filterable list. */
 @Composable
 private fun ConnectedPage(cat: SensorCatalogue) {
+    val ctx = LocalContext.current
+    val facts = remember { AndroidConnectedFacts(ctx) }
+    var tick by remember { mutableIntStateOf(0) }
+    val resolved = remember(tick) { ConnectedTree.resolve(cat.connected, facts) }
+    var byList by remember { mutableStateOf(false) }
+    var filter by remember { mutableStateOf(ConnectedFilter()) }
     var open by remember { mutableStateOf<String?>(null) }
+    var scanning by remember { mutableStateOf(false) }
+    var note by remember { mutableStateOf<Int?>(null) }
+    val scanAll = remember { BleScan(ctx, cat.connected.scanTimeoutMs, { f -> ScanMemory.remember(f) }, { scanning = false; tick++ }) }
+    WhileStarted(scanAll, start = {}, stop = { scanAll.stop(notify = false); scanning = false })
+    val shown = remember(resolved, filter) { ConnectedTree.filter(resolved, filter) }
+    val labelOf = { id: String -> cat.connected.categories.firstOrNull { it.first == id }?.second ?: id }
     LazyColumn(Modifier.fillMaxSize().testTag(Tags.SENSORS_CONNECTED)) {
-        items(cat.connected.profiles, key = { it.id }) { p ->
-            ProfileRow(p, cat, expanded = open == p.id) { open = p.id }
+        item(key = "h_connected") {
+            KitStoreRowLine(onClick = {
+                note = null
+                if (!ConnectedGrants.ble(ctx)) note = R.string.scan_need_perms
+                else if (!scanAll.startAll()) note = R.string.scan_no_bt
+                else scanning = true
+            }) {
+                Column(Modifier.weight(1f)) {
+                    Heading(stringResource(R.string.connected_heading, resolved.count { it.state != ConnState.ABSENT }, resolved.size))
+                    note?.let { KitStoreCaption(stringResource(it), color = MaterialTheme.colorScheme.error) }
+                    if (scanning) KitStoreCaption(stringResource(R.string.scan_scanning, cat.connected.scanTimeoutMs / 1000), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                KitStoreQuick(stringResource(R.string.scan_all), KitStoreRow.BLUE_FILL, Modifier.testTag(Tags.SCAN_ALL))
+            }
+        }
+        item(key = "views") { Chips(stringResource(R.string.f_view), listOf(stringResource(R.string.view_category) to false, stringResource(R.string.view_list) to true), byList) { byList = it } }
+        if (!byList) {
+            for ((c, members) in ConnectedTree.grouped(cat.connected, resolved)) {
+                item(key = "c_" + c.first) { Heading(stringResource(R.string.category_count, c.second, members.count { it.state != ConnState.ABSENT }, members.size)) }
+                items(members, key = { "p_" + it.profile.id }) { r -> ProfileRow(r, labelOf(r.profile.category), cat, expanded = open == r.profile.id) { open = r.profile.id } }
+            }
+        } else {
+            item(key = "filters") {
+                val all = stringResource(R.string.f_all)
+                Chips(stringResource(R.string.f_category), listOf<Pair<String, String?>>(all to null) + cat.connected.categories.map { it.second to it.first }, filter.category) { filter = filter.copy(category = it) }
+                Chips(stringResource(R.string.f_transport), listOf<Pair<String, String?>>(all to null) + ConnectedTree.transports(cat.connected).map { transportText(ctx, it) to it }, filter.transport) { filter = filter.copy(transport = it) }
+                Chips(stringResource(R.string.f_presence), listOf(all to Presence.ALL, stringResource(R.string.f_present) to Presence.PRESENT, stringResource(R.string.f_absent) to Presence.ABSENT), filter.present) { filter = filter.copy(present = it) }
+            }
+            item(key = "shown") { Heading(stringResource(R.string.list_count, shown.size)) }
+            items(shown, key = { "l_" + it.profile.id }) { r -> ProfileRow(r, labelOf(r.profile.category), cat, expanded = open == r.profile.id) { open = r.profile.id } }
         }
     }
 }
 
 @Composable
-private fun ProfileRow(p: ConnectedProfile, cat: SensorCatalogue, expanded: Boolean, onScan: () -> Unit) {
+private fun ProfileRow(r: ResolvedProfile, categoryLabel: String, cat: SensorCatalogue, expanded: Boolean, onScan: () -> Unit) {
+    val p = r.profile
+    val ctx = LocalContext.current
     val scheme = MaterialTheme.colorScheme
-    val ids = listOfNotNull(p.uuid?.let { stringResource(R.string.profile_uuid, Uuid.short(it)) }, p.usbClass?.let { stringResource(R.string.profile_usb, it) }).joinToString(" · ")
+    val ids = listOfNotNull(
+        p.uuid?.let { stringResource(R.string.profile_uuid, Uuid.short(it)) }, p.usbClass?.let { stringResource(R.string.profile_usb, it) },
+        p.feature?.let { stringResource(R.string.profile_feature, it) }, p.packageName?.let { stringResource(R.string.profile_package, it) },
+    ).joinToString(" · ")
+    val dot = when (r.state) { ConnState.CONNECTED -> KitStoreRow.UP; ConnState.PAIRED -> KitStoreRow.UPDATE; ConnState.AVAILABLE -> KitStoreRow.AMBER_FILL; ConnState.ABSENT -> KitStoreRow.BAD }
     Column(Modifier.testTag(Tags.profileRow(p.id))) {
         KitStoreRowLine {
+            KitStoreDot(stringResource(if (r.state == ConnState.ABSENT) R.string.hw_no else R.string.hw_yes), dot)
             Column(Modifier.weight(1f)) {
                 KitStoreName(p.label, color = scheme.onSurface)
-                KitStoreCaption(stringResource(R.string.profile_line, p.category, p.connection, ids), color = scheme.onSurfaceVariant)
+                KitStoreCaption(stringResource(R.string.conn_state_line, stringResource(stateText(r.state)), p.transport.joinToString(" · ") { transportText(ctx, it) }), color = scheme.onSurfaceVariant)
+                KitStoreCaption(stringResource(R.string.profile_line, categoryLabel, p.connection, ids), color = scheme.onSurfaceVariant)
                 Text(p.typicalUse, fontSize = KitStoreRow.caption, color = scheme.onSurfaceVariant)
             }
-            KitStoreQuick(stringResource(R.string.scan_action), KitStoreRow.BLUE_FILL, Modifier.testTag(Tags.profileScan(p.id)), onClick = onScan)
+            if (p.ble || p.usb) KitStoreQuick(stringResource(R.string.scan_action), KitStoreRow.BLUE_FILL, Modifier.testTag(Tags.profileScan(p.id)), onClick = onScan)
         }
         if (expanded) ScanPanel(p, cat)
         Rule()
@@ -294,7 +416,7 @@ private fun ScanPanel(p: ConnectedProfile, cat: SensorCatalogue) {
     var status by remember(p.id) { mutableStateOf<GattStatus?>(null) }
     var lines by remember(p.id) { mutableStateOf(listOf<GattLine>()) }
     var session by remember(p.id) { mutableStateOf<GattSession?>(null) }
-    val scan = remember(p.id) { BleScan(ctx, timeout, { f -> ble = ble.filter { it.address != f.address } + f }, { scanning = false }) }
+    val scan = remember(p.id) { BleScan(ctx, timeout, { f -> ScanMemory.remember(f); ble = ble.filter { it.address != f.address } + f }, { scanning = false }) }
 
     fun startScan() {
         note = null; ble = emptyList()

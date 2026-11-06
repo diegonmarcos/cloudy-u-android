@@ -18,7 +18,12 @@ import android.os.BatteryManager
 import android.os.Build
 import android.os.PowerManager
 import com.diegonmarcos.cloudtoolssmallllms.R
+import com.diegonmarcos.cloudtoolssmallllms.core.CameraFacts
+import com.diegonmarcos.cloudtoolssmallllms.core.CameraRoles
+import com.diegonmarcos.cloudtoolssmallllms.core.DeviceFacts
 import com.diegonmarcos.cloudtoolssmallllms.core.HardwareItem
+import com.diegonmarcos.cloudtoolssmallllms.core.ProbeResult
+import com.diegonmarcos.cloudtoolssmallllms.core.SensorTree
 import com.diegonmarcos.cloudtoolssmallllms.core.Num
 import com.diegonmarcos.cloudtoolssmallllms.core.SensorRaw
 import com.diegonmarcos.cloudtoolssmallllms.core.SensorRegistrar
@@ -154,5 +159,72 @@ class HardwareProbe(private val ctx: Context, private val rows: List<SensorRow>)
 
     companion object {
         fun has(ctx: Context, permission: String) = androidx.core.content.ContextCompat.checkSelfPermission(ctx, permission) == PackageManager.PERMISSION_GRANTED
+    }
+}
+
+/**
+ * The catalogue's view of THIS phone: PackageManager features and the manager probes the catalogue names (`probe` ids). A probe that throws or is
+ * refused answers "not present"; nothing here asks for a permission (grants are Configs > Perms rows).
+ */
+class AndroidDeviceFacts(private val ctx: Context, private val hw: HardwareProbe, private val tree: SensorTree) : DeviceFacts {
+    override fun feature(name: String): Boolean = ctx.packageManager.hasSystemFeature(name)
+
+    override fun probe(id: String): ProbeResult = runCatching {
+        when {
+            id == "cameras" -> hw.read(item("cameras", "android.hardware.camera.any")).let { ProbeResult(it.available, it.lines) }
+            id == "mics" -> hw.read(item("microphones", "android.hardware.microphone")).let { ProbeResult(it.available, it.lines) }
+            id == "ir" -> hw.read(item("ir", null)).let { ProbeResult(it.available, it.lines) }
+            id == "biometric" -> hw.read(item("biometric", "android.hardware.fingerprint")).let { ProbeResult(it.available, it.lines) }
+            id == "thermal" -> hw.read(item("thermal", null)).let { ProbeResult(it.available, it.lines) }
+            id == "touch_pressure" -> touchPressure()
+            id.startsWith("battery:") -> battery(id.removePrefix("battery:"))
+            id.startsWith("camera_role:") -> ProbeResult(id.removePrefix("camera_role:") in cameraRoles())
+            else -> ProbeResult(false)
+        }
+    }.getOrElse { ProbeResult(false) }
+
+    private fun item(probe: String, feature: String?) = HardwareItem(probe, "", probe, feature, null, emptyList(), listOf(1, 10, 30))
+
+    private fun cameraRoles(): Set<String> {
+        val cm = ctx.getSystemService(CameraManager::class.java)
+        val facts = ArrayList<CameraFacts>()
+        for (id in cm.cameraIdList) {
+            val ids = listOf(id) + if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) cm.getCameraCharacteristics(id).physicalCameraIds.toList() else emptyList()
+            for (cid in ids) {
+                val c = cm.getCameraCharacteristics(cid)
+                val size = c.get(CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE)
+                val focal = c.get(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS)?.firstOrNull() ?: 0f
+                val caps = c.get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES)?.toList().orEmpty()
+                facts += CameraFacts(
+                    c.get(CameraCharacteristics.LENS_FACING) == CameraCharacteristics.LENS_FACING_FRONT, focal, size?.width ?: 0f, size?.height ?: 0f,
+                    CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_DEPTH_OUTPUT in caps,
+                )
+            }
+        }
+        return CameraRoles.roles(facts, tree.cameraUltraMax, tree.cameraWideMax)
+    }
+
+    private fun touchPressure(): ProbeResult {
+        val max = android.view.InputDevice.getDeviceIds().mapNotNull { android.view.InputDevice.getDevice(it) }
+            .mapNotNull { it.getMotionRange(android.view.MotionEvent.AXIS_PRESSURE, android.view.InputDevice.SOURCE_TOUCHSCREEN)?.max }.maxOrNull()
+        return if (max == null) ProbeResult(false) else ProbeResult(true, listOf(ctx.getString(R.string.probe_pressure_max, Num.short(max))))
+    }
+
+    private fun battery(what: String): ProbeResult {
+        val i = ctx.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED)) ?: return ProbeResult(false)
+        val bm = ctx.getSystemService(BatteryManager::class.java)
+        fun v(unit: Int, value: Number) = ProbeResult(true, listOf(ctx.getString(R.string.probe_value, value.toString(), ctx.getString(unit))))
+        return when (what) {
+            "voltage" -> i.getIntExtra(BatteryManager.EXTRA_VOLTAGE, 0).let { if (it > 0) v(R.string.unit_mv, it) else ProbeResult(false) }
+            "temperature" -> i.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, Int.MIN_VALUE).let { if (it != Int.MIN_VALUE) v(R.string.unit_c, Num.short(it / 10f).toDouble()) else ProbeResult(false) }
+            "capacity" -> bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY).let { if (it > 0 && it != Int.MIN_VALUE) v(R.string.unit_pct, it) else ProbeResult(false) }
+            "current" -> bm.getLongProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW).let { if (it != Long.MIN_VALUE && it != 0L) v(R.string.unit_ua, it) else ProbeResult(false) }
+            "charge_counter" -> bm.getLongProperty(BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER).let { if (it != Long.MIN_VALUE && it > 0L) v(R.string.unit_uah, it) else ProbeResult(false) }
+            "health" -> i.getIntExtra(BatteryManager.EXTRA_HEALTH, 0).let { h ->
+                val names = ctx.resources.getStringArray(R.array.hw_battery_health)
+                if (h in 1..names.size) ProbeResult(true, listOf(names[h - 1])) else ProbeResult(false)
+            }
+            else -> ProbeResult(false)
+        }
     }
 }

@@ -285,9 +285,14 @@ if "AppFilters(model, data)" not in apg or "appsIn(" not in apg: bad.append("A9 
 # and the 20 declared external sensors scanned on tap; names are data (data/fleet/app/com.diegonmarcos.cloudtoolssmallllms/tools/sensors.json), rows are KitStoreRow, grants are Perms rows
 sd = json.loads(read(os.path.join(app, "../data/fleet/app/com.diegonmarcos.cloudtoolssmallllms/tools/sensors.json")))
 if [p["id"] for p in secs["sensors"]["pages"]] != ["sensors_inbuilt", "sensors_connected"] or [p["label"] for p in secs["sensors"]["pages"]] != ["Inbuilt", "Connected"]: bad.append("A10 Sensors pages are not Inbuilt, Connected")
-if len(sd["connected"]["profiles"]) != 20: bad.append("A10 %d connected sensors declared (20 expected)" % len(sd["connected"]["profiles"]))
+if len(sd["connected"]["profiles"]) < 40: bad.append("A10 %d connected sensors declared (the 20 originals plus 20 more at least)" % len(sd["connected"]["profiles"]))
+cats = {c["id"] for c in sd["connected"]["categories"]}
 for pr in sd["connected"]["profiles"]:
-    if "uuid" not in pr and "usb_class" not in pr: bad.append("A10 connected sensor %r declares neither a GATT UUID nor a USB class" % pr.get("id"))
+    if not any(k in pr for k in ("uuid", "usb_class", "feature", "package", "input")): bad.append("A10 connected sensor %r declares no GATT UUID, USB class, platform feature, package or input device" % pr.get("id"))
+    if pr.get("category") not in cats or not pr.get("transport"): bad.append("A10 connected sensor %r has no declared category or no transport" % pr.get("id"))
+cg = sd.get("catalogue", {}).get("categories", [])
+if [c["id"] for c in cg] != ["motion", "position", "environment", "location", "imaging", "connectivity", "audio", "biometric", "hardware"] or sum(len(c["entries"]) for c in cg) < 99:
+    bad.append("A10 the Inbuilt sensor catalogue is not the nine declared categories with every member")
 sp = code(os.path.join(kt, "ui/SensorsPage.kt")); hwk = code(os.path.join(kt, "data/SensorHw.kt")); cio = code(os.path.join(kt, "data/ConnectedIo.kt"))
 for need in ("KitStoreRowLine", "KitStoreName(", "KitStoreCaption(", "KitStoreQuick(", "WhileStarted(", "LiveReading(", "BleScan(", "UsbList.read(", "GattSession(", "AndroidSensorSource(", "HardwareProbe("):
     if need not in sp: bad.append("A10 SensorsPage lacks %s" % need)

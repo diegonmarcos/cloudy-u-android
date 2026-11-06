@@ -13,13 +13,14 @@ data class GattRead(val char: String, val parser: String, val mode: String)
 data class ConnectedProfile(
     val id: String, val label: String, val category: String, val connection: String, val uuid: String?, val usbClass: Int?,
     val manufacturerId: Int?, val manufacturerPrefix: ByteArray, val typicalUse: String, val reads: List<GattRead>,
+    val transport: List<String> = emptyList(), val feature: String? = null, val packageName: String? = null, val input: String? = null,
 ) {
-    val ble: Boolean get() = uuid != null || manufacturerId != null
+    val ble: Boolean get() = "ble" in transport && (uuid != null || manufacturerId != null)
     val usb: Boolean get() = usbClass != null
 }
 
-/** The Connected page's declaration: the profiles and the scan timeout. A profile with no valid UUID and no valid USB class is an error. */
-class ConnectedCatalogue(val scanTimeoutMs: Long, val profiles: List<ConnectedProfile>) {
+/** The Connected page's declaration: the profiles and the scan timeout. A profile that cannot be found (no valid UUID, USB class, platform feature, package or input device), has no transport or names an undeclared category is an error. */
+class ConnectedCatalogue(val scanTimeoutMs: Long, val profiles: List<ConnectedProfile>, val categories: List<Pair<String, String>> = emptyList()) {
     /** The profiles a BLE advertisement matches: by an advertised service UUID, or by manufacturer data (id and prefix). */
     fun bleMatches(serviceUuids: Collection<String>, manufacturerData: Map<Int, ByteArray>): List<ConnectedProfile> {
         val have = serviceUuids.mapNotNull { Uuid.normalize(it) }.toSet()
@@ -39,13 +40,21 @@ class ConnectedCatalogue(val scanTimeoutMs: Long, val profiles: List<ConnectedPr
                 val uuid = if (p.has("uuid")) requireNotNull(Uuid.normalize(p.getString("uuid"))) { "profile $id has an invalid UUID" } else null
                 val cls = if (p.has("usb_class")) p.getInt("usb_class").also { require(it in 0..255) { "profile $id has an invalid USB class" } } else null
                 val mfr = if (p.has("manufacturer_id")) p.getInt("manufacturer_id") else null
-                require(uuid != null || cls != null) { "profile $id declares neither a GATT service UUID nor a USB class" }
+                val feature = p.optString("feature").ifBlank { null }
+                val pkg = p.optString("package").ifBlank { null }
+                val input = p.optString("input").ifBlank { null }
+                require(uuid != null || cls != null || feature != null || pkg != null || input != null) { "profile $id declares no GATT service UUID, USB class, platform feature, package or input device" }
+                val transport = SensorCatalogue.strs(p.optJSONArray("transport"))
+                require(transport.isNotEmpty()) { "profile $id declares no transport" }
                 val prefix = p.optString("manufacturer_prefix").let { h -> ByteArray(h.length / 2) { h.substring(it * 2, it * 2 + 2).toInt(16).toByte() } }
                 val reads = p.optJSONArray("reads")?.let { a -> SensorCatalogue.objs(a).map { GattRead(requireNotNull(Uuid.normalize(it.getString("char"))), it.getString("parser"), it.getString("mode")) } }.orEmpty()
-                ConnectedProfile(id, p.getString("label"), p.getString("category"), p.getString("connection"), uuid, cls, mfr, prefix, p.getString("typical_use"), reads)
+                ConnectedProfile(id, p.getString("label"), p.getString("category"), p.getString("connection"), uuid, cls, mfr, prefix, p.getString("typical_use"), reads, transport, feature, pkg, input)
             }
             require(ps.map { it.id }.toSet().size == ps.size) { "duplicate connected profile id" }
-            return ConnectedCatalogue(o.getLong("scan_timeout_ms"), ps)
+            val cats = SensorCatalogue.objs(o.getJSONArray("categories")).map { it.getString("id") to it.getString("label") }
+            require(cats.map { it.first }.toSet().size == cats.size) { "duplicate connected category id" }
+            for (p in ps) require(cats.any { it.first == p.category }) { "profile ${p.id} names the undeclared category ${p.category}" }
+            return ConnectedCatalogue(o.getLong("scan_timeout_ms"), ps, cats)
         }
     }
 }

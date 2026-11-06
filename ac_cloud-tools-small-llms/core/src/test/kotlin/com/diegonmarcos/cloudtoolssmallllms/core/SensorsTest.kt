@@ -157,20 +157,23 @@ class SensorsTest {
 
     private val connected get() = cat.connected
 
-    @Test fun `twenty external sensors are declared, each with a valid GATT UUID or USB class`() {
+    @Test fun `the twenty original external sensors are kept and every declared one is findable by a UUID, USB class, feature, package or input device`() {
         val ps = connected.profiles
-        assertEquals(20, ps.size)
-        assertEquals(20, ps.map { it.id }.toSet().size)
+        assertEquals(63, ps.size)
+        assertEquals(63, ps.map { it.id }.toSet().size)
+        assertTrue(ps.map { it.id }.containsAll(listOf("hrs", "csc", "cp", "rsc", "bps", "gls", "hts", "wss", "plx", "ess", "airq", "beacon", "thermal_cam", "scope", "microscope", "serial", "gps_usb", "soil", "imu", "tag")))
         assertEquals(10000L, connected.scanTimeoutMs)
         val uuid = Regex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
         for (p in ps) {
-            assertTrue("${p.id} has neither", p.uuid != null || p.usbClass != null)
+            assertTrue("${p.id} cannot be found", p.uuid != null || p.usbClass != null || p.feature != null || p.packageName != null || p.input != null)
             p.uuid?.let { assertTrue("${p.id}: $it", uuid.matches(it)) }
             p.usbClass?.let { assertTrue("${p.id}: $it", it in 0..255) }
             assertTrue(p.label.isNotBlank() && p.category.isNotBlank() && p.typicalUse.isNotBlank())
-            assertTrue(p.connection in listOf("BLE", "USB-C", "BLE + USB-C"))
-            assertEquals(p.connection.contains("BLE"), p.ble)
-            assertEquals(p.connection.contains("USB"), p.usb)
+            assertTrue(p.transport.isNotEmpty())
+            if (p.uuid != null) assertTrue("${p.id}: a UUID needs the ble or classic transport", "ble" in p.transport || "classic" in p.transport)
+            if (p.usbClass != null) assertTrue("${p.id}: a USB class needs the usb transport", "usb" in p.transport)
+            assertEquals("ble" in p.transport && (p.uuid != null || p.manufacturerId != null), p.ble)
+            assertEquals(p.usbClass != null, p.usb)
         }
         val byId = ps.associateBy { it.id }
         assertEquals("0000180d-0000-1000-8000-00805f9b34fb", byId.getValue("hrs").uuid)
@@ -181,7 +184,7 @@ class SensorsTest {
         assertEquals(2, byId.getValue("gps_usb").usbClass); assertEquals(255, byId.getValue("scope").usbClass)
         assertEquals(76, byId.getValue("beacon").manufacturerId)
         assertEquals("6e400001-b5a3-f393-e0a9-e50e24dcca9e", byId.getValue("serial").uuid)
-        assertEquals(setOf("Health", "Sport", "Environment", "Location", "Imaging", "Test", "Maker", "Motion"), ps.map { it.category }.toSet())
+        assertEquals(setOf("wearables_health", "fitness_motion", "environment_iot", "positioning", "input_peripheral", "audio_imaging", "automotive_other"), ps.map { it.category }.toSet())
     }
 
     @Test fun `every GATT read names a valid characteristic, a mode and a parser whose keys are declared`() {
@@ -212,28 +215,35 @@ class SensorsTest {
     }
 
     @Test fun `a profile with no UUID and no USB class, a bad UUID or a bad class is an error`() {
-        fun one(extra: String) = JSONObject("""{"scan_timeout_ms":1,"profiles":[{"id":"x","label":"X","category":"C","connection":"BLE","typical_use":"u"$extra}]}""")
+        fun one(extra: String, transport: String = ""","transport":["ble"]""") = JSONObject("""{"scan_timeout_ms":1,"categories":[{"id":"C","label":"C"}],"profiles":[{"id":"x","label":"X","category":"C","connection":"BLE","typical_use":"u"$transport$extra}]}""")
         assertEquals(1, ConnectedCatalogue.parse(one(""","uuid":"180D"""")).profiles.size)
         assertEquals(1, ConnectedCatalogue.parse(one(""","usb_class":0""")).profiles.size)
         assertEquals(1, ConnectedCatalogue.parse(one(""","usb_class":255""")).profiles.size)
+        assertEquals(1, ConnectedCatalogue.parse(one(""","feature":"android.hardware.uwb"""")).profiles.size)
+        assertEquals(1, ConnectedCatalogue.parse(one(""","package":"com.dsi.ant.service.socket"""")).profiles.size)
+        assertEquals(1, ConnectedCatalogue.parse(one(""","input":"stylus"""")).profiles.size)
         for (bad in listOf("", ""","uuid":"18"""", ""","usb_class":256""", ""","usb_class":-1""")) {
             try { ConnectedCatalogue.parse(one(bad)); org.junit.Assert.fail("accepted: $bad") } catch (_: IllegalArgumentException) { }
         }
-        val dup = JSONObject("""{"scan_timeout_ms":1,"profiles":[{"id":"x","label":"X","category":"C","connection":"BLE","typical_use":"u","uuid":"180D"},{"id":"x","label":"Y","category":"C","connection":"BLE","typical_use":"u","uuid":"180F"}]}""")
+        try { ConnectedCatalogue.parse(one(""","uuid":"180D"""", transport = "")); org.junit.Assert.fail("a profile without a transport accepted") } catch (_: IllegalArgumentException) { }
+        val undeclared = JSONObject("""{"scan_timeout_ms":1,"categories":[{"id":"C","label":"C"}],"profiles":[{"id":"x","label":"X","category":"Z","connection":"BLE","transport":["ble"],"typical_use":"u","uuid":"180D"}]}""")
+        try { ConnectedCatalogue.parse(undeclared); org.junit.Assert.fail("an undeclared category accepted") } catch (_: IllegalArgumentException) { }
+        val dup = JSONObject("""{"scan_timeout_ms":1,"categories":[{"id":"C","label":"C"}],"profiles":[{"id":"x","label":"X","category":"C","connection":"BLE","transport":["ble"],"typical_use":"u","uuid":"180D"},{"id":"x","label":"Y","category":"C","connection":"BLE","transport":["ble"],"typical_use":"u","uuid":"180F"}]}""")
         try { ConnectedCatalogue.parse(dup); org.junit.Assert.fail("duplicate id accepted") } catch (_: IllegalArgumentException) { }
     }
 
     @Test fun `a BLE advertisement matches by service UUID or by manufacturer data, a USB device by any class`() {
-        assertEquals(listOf("hrs"), connected.bleMatches(listOf("0000180d-0000-1000-8000-00805f9b34fb"), emptyMap()).map { it.id })
-        assertEquals(listOf("hrs", "ess"), connected.bleMatches(listOf("180D", "0000181A-0000-1000-8000-00805F9B34FB"), emptyMap()).map { it.id })
+        assertEquals(setOf("hrs", "resp_belt"), connected.bleMatches(listOf("0000180d-0000-1000-8000-00805f9b34fb"), emptyMap()).map { it.id }.toSet())
+        assertEquals(setOf("hrs", "resp_belt", "ess", "thermo_hygro", "co2", "pm25", "voc", "uv", "weather_station"), connected.bleMatches(listOf("180D", "0000181A-0000-1000-8000-00805F9B34FB"), emptyMap()).map { it.id }.toSet())
         assertTrue(connected.bleMatches(listOf("0000ffff-0000-1000-8000-00805f9b34fb"), emptyMap()).isEmpty())
         assertEquals(listOf("beacon"), connected.bleMatches(emptyList(), mapOf(76 to byteArrayOf(2, 21, 1, 2, 3))).map { it.id })
         assertTrue("wrong prefix", connected.bleMatches(emptyList(), mapOf(76 to byteArrayOf(16, 5, 1))).isEmpty())
         assertTrue("too short", connected.bleMatches(emptyList(), mapOf(76 to byteArrayOf(2))).isEmpty())
         assertTrue("other maker", connected.bleMatches(emptyList(), mapOf(6 to byteArrayOf(2, 21))).isEmpty())
-        assertEquals(listOf("thermal_cam", "microscope"), connected.usbMatches(listOf(14)).map { it.id })
-        assertEquals(listOf("serial", "gps_usb", "soil"), connected.usbMatches(setOf(9, 2)).map { it.id })
-        assertTrue(connected.usbMatches(listOf(8, 3)).isEmpty())
+        assertEquals(setOf("thermal_cam", "microscope", "webcam", "endoscope"), connected.usbMatches(listOf(14)).map { it.id }.toSet())
+        assertEquals(setOf("serial", "gps_usb", "soil", "geiger", "rtk", "drone"), connected.usbMatches(setOf(9, 2)).map { it.id }.toSet())
+        assertEquals(setOf("card_reader", "gamepad", "keyboard", "barcode"), connected.usbMatches(listOf(8, 3)).map { it.id }.toSet())
+        assertTrue(connected.usbMatches(listOf(99)).isEmpty())
     }
 
     @Test fun `the hardware list declares the non-SensorManager items with their probes`() {

@@ -19,6 +19,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.os.ParcelUuid
+import com.diegonmarcos.cloudtoolssmallllms.core.ConnectedFacts
 import com.diegonmarcos.cloudtoolssmallllms.core.ConnectedProfile
 import com.diegonmarcos.cloudtoolssmallllms.core.GattKey
 import com.diegonmarcos.cloudtoolssmallllms.core.GattParse
@@ -62,6 +63,8 @@ class BleScan(private val ctx: Context, private val timeoutMs: Long, private val
     private val handler = Handler(Looper.getMainLooper())
     private var scanner: BluetoothLeScanner? = null
     private val stopper = Runnable { stop() }
+    /** Every scan ends by itself after the timeout. */
+    private fun arm() { handler.postDelayed(stopper, timeoutMs) }
     private val callback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, r: ScanResult) {
             val rec = r.scanRecord
@@ -70,6 +73,16 @@ class BleScan(private val ctx: Context, private val timeoutMs: Long, private val
             onResult(BleFound(r.device.address, rec?.deviceName ?: runCatching { r.device.name }.getOrNull(), r.rssi, rec?.serviceUuids?.map { it.toString() }.orEmpty(), mfr, r.device))
         }
         override fun onScanFailed(errorCode: Int) = stop()
+    }
+
+    /** An unfiltered scan (every advertiser) for [timeoutMs]: what the catalogue's AVAILABLE state is built from. False when Bluetooth is off or missing. */
+    fun startAll(): Boolean {
+        stop(notify = false)
+        val sc = ctx.getSystemService(BluetoothManager::class.java)?.adapter?.takeIf { it.isEnabled }?.bluetoothLeScanner ?: return false
+        scanner = sc
+        sc.startScan(null, ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build(), callback)
+        arm()
+        return true
     }
 
     /** False when Bluetooth is off or missing. */
@@ -81,7 +94,7 @@ class BleScan(private val ctx: Context, private val timeoutMs: Long, private val
         profile.manufacturerId?.let { filters += ScanFilter.Builder().setManufacturerData(it, profile.manufacturerPrefix).build() }
         scanner = sc
         sc.startScan(filters, ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build(), callback)
-        handler.postDelayed(stopper, timeoutMs)
+        arm()
         return true
     }
 
@@ -177,4 +190,41 @@ class GattSession(
     }
 
     private companion object { const val CCCD = "00002902-0000-1000-8000-00805f9b34fb" }
+}
+
+/** What the scans of this session saw advertising (service UUIDs, manufacturer ids): the AVAILABLE state of a BLE profile. Lives for the process. */
+object ScanMemory {
+    val serviceUuids: MutableSet<String> = java.util.Collections.synchronizedSet(HashSet())
+    val manufacturerIds: MutableSet<Int> = java.util.Collections.synchronizedSet(HashSet())
+
+    fun remember(f: BleFound) {
+        f.serviceUuids.mapNotNull { Uuid.normalize(it) }.forEach { serviceUuids += it }
+        manufacturerIds += f.manufacturerData.keys
+    }
+}
+
+/** The phone's side of the Connected catalogue: bonded and connected Bluetooth devices (with the Bluetooth grant), USB, input devices, features, packages. */
+@SuppressLint("MissingPermission")
+class AndroidConnectedFacts(private val ctx: Context) : ConnectedFacts {
+    private fun bt() = if (ConnectedGrants.ble(ctx)) ctx.getSystemService(BluetoothManager::class.java) else null
+    private fun uuidsOf(d: android.bluetooth.BluetoothDevice) = runCatching { d.uuids?.mapNotNull { Uuid.normalize(it.toString()) } }.getOrNull().orEmpty()
+
+    override fun bondedServiceUuids(): Set<String> = runCatching { bt()?.adapter?.bondedDevices?.flatMap { uuidsOf(it) }?.toSet() }.getOrNull().orEmpty()
+    override fun connectedServiceUuids(): Set<String> = runCatching { bt()?.getConnectedDevices(android.bluetooth.BluetoothProfile.GATT)?.flatMap { uuidsOf(it) }?.toSet() }.getOrNull().orEmpty()
+    override fun scannedServiceUuids(): Set<String> = synchronized(ScanMemory.serviceUuids) { ScanMemory.serviceUuids.toSet() }
+    override fun scannedManufacturerIds(): Set<Int> = synchronized(ScanMemory.manufacturerIds) { ScanMemory.manufacturerIds.toSet() }
+    override fun usbClasses(): Set<Int> = UsbList.read(ctx).flatMap { it.classes }.toSet()
+    override fun feature(name: String): Boolean = ctx.packageManager.hasSystemFeature(name)
+    override fun packageInstalled(name: String): Boolean = runCatching { ctx.packageManager.getPackageInfo(name, 0); true }.getOrDefault(false)
+
+    override fun input(kind: String): Boolean = runCatching {
+        android.view.InputDevice.getDeviceIds().mapNotNull { android.view.InputDevice.getDevice(it) }.any { d ->
+            when (kind) {
+                "gamepad" -> d.supportsSource(android.view.InputDevice.SOURCE_GAMEPAD) || d.supportsSource(android.view.InputDevice.SOURCE_JOYSTICK)
+                "stylus" -> d.supportsSource(android.view.InputDevice.SOURCE_STYLUS)
+                "keyboard" -> d.supportsSource(android.view.InputDevice.SOURCE_KEYBOARD) && d.keyboardType == android.view.InputDevice.KEYBOARD_TYPE_ALPHABETIC && !d.isVirtual
+                else -> false
+            }
+        }
+    }.getOrDefault(false)
 }
