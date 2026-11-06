@@ -219,7 +219,8 @@ class StoreAutoTest {
         val half = lib2.size / 2
         // Died with half of lib2 on disk.
         killAt(StoreAuto.DOWNLOAD, "lib2") {
-            ApkCache.file(ctx, "fleet-lib2-release.apk.part").writeBytes(lib2.copyOfRange(0, half))
+            // #1517 the engine's part name: <prefix>dl.apk.part
+            ApkCache.file(ctx, "fleet-lib2-dl.apk.part").writeBytes(lib2.copyOfRange(0, half))
         }
         runKilled(apps)
         val dead = StoreAuto.json(ctx)

@@ -344,7 +344,7 @@ class StoreCacheStagesTest {
     @Test
     fun `a killed download shows as resumable and Download fetches only the rest`() {
         val half = apk.size / 2
-        ApkCache.file(ctx, "fleet-lib-rootfs-test-release.apk.part").writeBytes(apk.copyOfRange(0, half))
+        ApkCache.file(ctx, "fleet-lib-rootfs-test-dl.apk.part").writeBytes(apk.copyOfRange(0, half))
         val before = StoreStages.stage(ctx, app())
         assertEquals(listOf("install", "download"), before.actions)
         assertTrue("the row says the bytes are kept: ${before.text}", before.text.contains("kept"))
@@ -516,7 +516,7 @@ class StoreCacheStagesTest {
     fun `784 the chain stops at Download keeping the part, and the next Install resumes it and finishes`() {
         sheet(accept = true)
         val half = apk.size / 2
-        ApkCache.file(ctx, "fleet-lib-rootfs-test-release.apk.part").writeBytes(apk.copyOfRange(0, half))
+        ApkCache.file(ctx, "fleet-lib-rootfs-test-dl.apk.part").writeBytes(apk.copyOfRange(0, half))
         // The link is down (no source can serve it): stopped at Download.
         val stopped = StoreStages.install(ctx, app(releaseUrl = ""))
         assertEquals("download", stopped.failedAt)
