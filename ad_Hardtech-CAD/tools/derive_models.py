@@ -10,7 +10,7 @@ For every model of app/src/main/assets/cad/models.json:
 and record the provenance (tool, version, input hash) in the model's `view`, `derived` and `conversion_log`. The measured facts of
 every GLB view (vertices, triangles, bounding box) are written from the file itself. The original stays the source of truth.
 """
-import datetime, hashlib, json, os, shutil, struct, sys
+import copy, datetime, hashlib, json, os, shutil, struct, sys
 
 APP = "ad_Hardtech-CAD"
 MANIFEST = APP + "/app/src/main/assets/cad/models.json"
@@ -82,6 +82,8 @@ def up_to_date_skp(m, version):
 def derive_skp(m, src, version):
     import openskp
     from openskp.export import glb, ifc
+    old = copy.deepcopy(m)
+    old_ifc = open(DERIVED_DIR + "%s.view.ifc" % m["id"], "rb").read() if os.path.isfile(DERIVED_DIR + "%s.view.ifc" % m["id"]) else None
     orig = os.path.join(src, m["path"])
     if not os.path.isfile(orig) or os.path.getsize(orig) < 1000 or sha256(orig) != m["sha256"]:
         raise SystemExit("%s: missing, an LFS pointer or not the declared file (declared sha256 %s)" % (orig, m["sha256"]))
@@ -115,6 +117,13 @@ def derive_skp(m, src, version):
         "ifc.export(skp.build_scene(), ifc) wrote the IFC4 file (meshes, no BIM semantics)",
     ]
     m["updated"] = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
+    # DERIVE_FORCE re-runs the conversion on a clean machine to prove it; the same GLB from the same tool version means nothing changed
+    # (the IFC embeds a timestamp and is not byte-reproducible, so the committed one is kept)
+    if old.get("view") and old["view"].get("sha256") == m["view"]["sha256"] and old["view"].get("tool") == m["view"]["tool"] and old_ifc is not None:
+        open(ifc_path, "wb").write(old_ifc)
+        m.clear()
+        m.update(old)
+        print("%s: reproduced the committed GLB byte for byte (sha256 %s)" % (m["id"], m["view"]["sha256"]))
 
 
 def mirror(m, src):
@@ -141,7 +150,7 @@ def main():
     for m in doc["models"]:
         v = m.get("view")
         if m["format"].lower() == "skp":
-            if not up_to_date_skp(m, version):
+            if os.environ.get("DERIVE_FORCE") == "1" or not up_to_date_skp(m, version):
                 derive_skp(m, src, version)
         elif v and v["format"] == "glb" and v.get("path"):
             mirror(m, src)
