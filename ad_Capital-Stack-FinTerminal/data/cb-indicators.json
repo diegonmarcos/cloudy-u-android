@@ -4,31 +4,32 @@
   "imf": {
    "label": "IMF World Economic Outlook (DataMapper)",
    "url": "https://www.imf.org/external/datamapper/api/v1/{series}",
+   "user_agent": "curl/8.5.0",
    "note": "public, no key; the host answers only a non-browser user agent"
   },
   "oecd_eo": {
    "label": "OECD Economic Outlook",
-   "url": "https://sdmx.oecd.org/public/rest/data/OECD.ECO.MAD,DSD_EO@DF_EO,/{areas}.{series}.A",
+   "url": "https://sdmx.oecd.org/public/rest/data/OECD.ECO.MAD,DSD_EO@DF_EO,/{areas}.{series}.A?startPeriod={from}&endPeriod={to}&format=csvfilewithlabels",
    "note": "SDMX CSV"
   },
   "wb": {
    "label": "World Bank Open Data",
-   "url": "https://api.worldbank.org/v2/country/{codes}/indicator/{series}",
+   "url": "https://api.worldbank.org/v2/country/{codes}/indicator/{series}?format=json&per_page=5000&date={from}:{to}",
    "note": "public, no key"
   },
   "bis": {
    "label": "BIS Statistics",
-   "url": "https://stats.bis.org/api/v2/data/dataflow/BIS/{series}/1.0/{key}",
+   "url": "https://stats.bis.org/api/v2/data/dataflow/BIS/{series}/1.0/{key}?startPeriod={from}-01&format=csv",
    "note": "public, no key"
   },
   "fred": {
    "label": "FRED (St. Louis Fed)",
-   "url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id={series}",
+   "url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id={series}&cosd={from}-01-01",
    "note": "public CSV, no key"
   },
   "ecb_mpd": {
    "label": "ECB staff macroeconomic projections",
-   "url": "https://data-api.ecb.europa.eu/service/data/MPD/A.U2.{series}.A.{vintage}.0000",
+   "url": "https://data-api.ecb.europa.eu/service/data/MPD/A.U2.{series}.A.{vintage}.0000?format=csvdata",
    "note": "public, no key"
   }
  },

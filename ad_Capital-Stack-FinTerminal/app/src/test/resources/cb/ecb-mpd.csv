@@ -1,0 +1,4 @@
+KEY,FREQ,REF_AREA,PD_ITEM,SERIES_DENOM,PD_SEAS_EX,PD_ORIGIN,TIME_PERIOD,OBS_VALUE,OBS_STATUS,OBS_CONF,OBS_PRE_BREAK,OBS_COM,TIME_FORMAT,BREAKS,COLLECTION,COMPILING_ORG,DISS_ORG,DOM_SER_IDS,PUBL_ECB,PUBL_MU,PUBL_PUBLIC,AGG_EQUN,COMPILATION,COVERAGE,DECIMALS,SOURCE_AGENCY,SOURCE_DETAIL,TITLE,TITLE_COMPL,UNIT,UNIT_MULT
+MPD.A.U2.YER.A.S26.0000,A,U2,YER,A,S26,0000,2026,0.9,F,F,,,P1Y,,S,,,,,,,,,,1,,,,Euro area - Economic activity - real GDP - Annual growth rate - Summer/September 2026  staff macroeconomic projections,PCCH,0
+MPD.A.U2.YER.A.S26.0000,A,U2,YER,A,S26,0000,2027,1.4,F,F,,,P1Y,,S,,,,,,,,,,1,,,,Euro area - Economic activity - real GDP - Annual growth rate - Summer/September 2026  staff macroeconomic projections,PCCH,0
+MPD.A.U2.YER.A.S26.0000,A,U2,YER,A,S26,0000,2028,1.5,F,F,,,P1Y,,S,,,,,,,,,,1,,,,Euro area - Economic activity - real GDP - Annual growth rate - Summer/September 2026  staff macroeconomic projections,PCCH,0

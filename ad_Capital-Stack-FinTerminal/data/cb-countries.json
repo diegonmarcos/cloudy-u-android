@@ -22,6 +22,56 @@
   ],
   "_doc": "The aggregate of a group is the GDP-weighted mean of the countries with a value: weights are the IMF GDP of the same year, re-normalised over the countries that have a number; a country with n/a drops out of both sums. Toggle in the page."
  },
+ "ui": {
+  "simple": "Simple",
+  "full": "Full",
+  "rows_countries": "Countries as rows",
+  "rows_indicators": "Indicators as rows",
+  "ppp": "PPP",
+  "fx": "Market FX",
+  "refresh": "Refresh",
+  "refreshing": "Refreshing",
+  "refreshed": "Refreshed",
+  "taylor": "Taylor",
+  "bias": "Bias",
+  "share": "GDP share",
+  "na": "n/a",
+  "na_long": "n/a (no free source)",
+  "model_only": "model-only",
+  "world": "World",
+  "dm": "DM",
+  "em": "EM",
+  "actual": "Actual",
+  "forecast": "Forecast",
+  "history": "History",
+  "source": "Source",
+  "vintage": "Vintage",
+  "release": "Release",
+  "projection": "Bank projection",
+  "latest": "Year to date",
+  "note_countries": "Aggregates are GDP-weighted means of the countries that have a value (weights re-normalised); heat compares a value with the country's own history. n/a = n/a (no free source).",
+  "note_groups": "World covers the economies listed here, not the whole world; the euro-area members DE, FR, IT and ES are inside the Euro Area.",
+  "note_predictions": "Forecasts: IMF WEO and OECD Economic Outlook for the current year, +1 and +2. Taylor path: the model's implied policy rate from the forecast inflation, the OECD output gap and the potential growth as the neutral rate; a model, not a bank forecast."
+ },
+ "model": {
+  "taylor": {
+   "inflation_weight": 1.5,
+   "gap_weight": 0.5,
+   "neutral": "potential_gdp",
+   "inflation": "cpi_headline",
+   "gap": "output_gap",
+   "policy": "policy_rate",
+   "hold_band_pp": 0.5,
+   "_doc": "Taylor-rule implied policy rate = neutral + inflation + inflation_weight x (inflation - target) + gap_weight x output gap, where neutral is the OECD potential growth, inflation is the headline forecast of the year, target is the bank's declared inflation_target and gap the OECD output gap. Missing any input: n/a. Bias = implied minus the latest policy rate: above +hold_band_pp tightening, below -hold_band_pp easing, else hold."
+  },
+  "predictions": [
+   "real_gdp",
+   "cpi_headline",
+   "unemployment",
+   "current_account",
+   "budget_balance"
+  ]
+ },
  "years": {
   "history": 15,
   "forecast": 3,
