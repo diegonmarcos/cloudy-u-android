@@ -172,7 +172,11 @@ dependencies {
     // #1563 the forum chat Compose + screenshot tests (Robolectric + Compose UI test + Roborazzi record).
     testImplementation platform('androidx.compose:compose-bom:2025.11.01')
     testImplementation 'androidx.compose.ui:ui-test-junit4'
-    testImplementation 'androidx.compose.ui:ui-test-manifest'
+    // ui-test-manifest declares the ComponentActivity createComposeRule hosts. In an APPLICATION module the
+    // Robolectric unit test reads the variant's MERGED manifest, so the activity must be on the variant runtime
+    // (debug + release), not testImplementation — otherwise "Unable to resolve activity for ComponentActivity".
+    debugImplementation 'androidx.compose.ui:ui-test-manifest'
+    releaseImplementation 'androidx.compose.ui:ui-test-manifest'
     testImplementation 'androidx.activity:activity-compose:1.9.3'
     testImplementation 'org.robolectric:robolectric:4.16.1'
     testImplementation 'io.github.takahirom.roborazzi:roborazzi:1.43.0'
