@@ -232,7 +232,7 @@
     }
   },
   "ui": {
-    "_doc": "#868 THE nav declaration (libs:bottomnav NavDecl) of Hardtech-CAD: the sections on the bottom bar in order, and a hidden About behind the gear of the first row. #1335 ui.stacks[<section>] is the page of that section: a list of entries drawn by declared KIND (Pages.kt: entry, section_title, holdings, about). An `entry` has a title, a one-line subtitle and ONE declared source for its target: `site` (the label of a link of aa_cloud-superapp/data/linktree.json), `registry` (a code of aa_cloud-superapp/build.json ui.app_urls.registry_sites) or `repo` + `path` (a repo under ui.app_urls.repo_base); app/build.gradle resolves them at BUILD time from the SuperApp's own declarations (fails if one does not resolve) and bakes UI_TARGETS_B64, so no address is typed in this file or in Kotlin. A `planned` entry has a note and no source and is drawn greyed. No price, rate or chart is declared: nothing real to show yet.",
+    "_doc": "#868 THE nav declaration (libs:bottomnav NavDecl) of Hardtech-CAD: the sections on the bottom bar in order, and a hidden About behind the gear of the first row. #1335 ui.stacks[<section>] is the page of that section: a list of entries drawn by declared KIND (Pages.kt: entry, section_title, holdings, about, library, models). An `entry` has a title, a one-line subtitle and ONE declared source for its target: `site` (the label of a link of aa_cloud-superapp/data/linktree.json), `registry` (a code of aa_cloud-superapp/build.json ui.app_urls.registry_sites) or `repo` + `path` (a repo under ui.app_urls.repo_base); app/build.gradle resolves them at BUILD time from the SuperApp's own declarations (fails if one does not resolve) and bakes UI_TARGETS_B64, so no address is typed in this file or in Kotlin. A `planned` entry has a note and no source and is drawn greyed. No price, rate or chart is declared: nothing real to show yet.",
     "bottom_nav": [
       "mcad",
       "bim",
@@ -275,6 +275,11 @@
           "subtitle": "Mechanical CAD: FreeCAD and AutoCAD agents (MCP)",
           "repo": "HardTech-Stack-CAD-Simulators",
           "path": "Structural-Designer/OpenCAD"
+        },
+        {
+          "kind": "models",
+          "title": "Models",
+          "subtitle": "Every model as one table: filter by category, extension and software; tap a row for the 3D view and the full data"
         },
         {
           "kind": "section_title",

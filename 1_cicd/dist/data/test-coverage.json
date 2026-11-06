@@ -89,7 +89,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 62,
+      "unit_test_sources": 63,
       "workflow": "ship-cloud-browser.yml"
     },
     "ac_cloud-browser/web": {
@@ -134,7 +134,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 7,
+      "unit_test_sources": 6,
       "workflow": "ship-cloud-camera.yml"
     },
     "ac_cloud-camera/web": {
@@ -206,7 +206,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 102,
+      "unit_test_sources": 105,
       "workflow": "ship-cloud-drive.yml"
     },
     "ac_cloud-drive/web": {
@@ -269,7 +269,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 29,
+      "unit_test_sources": 30,
       "workflow": "ship-cloud-me.yml"
     },
     "ac_cloud-me/web": {
@@ -328,7 +328,7 @@
     },
     "ac_cloud-news": {
       "first_test": "WebView over topic feeds: assert every topic declared in build.json has a feed URL and no two topics share an id.",
-      "shell_testers": 2,
+      "shell_testers": 3,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
@@ -449,7 +449,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 13,
+      "unit_test_sources": 14,
       "workflow": "ship-cloud-tasks.yml"
     },
     "ac_cloud-termux": {
@@ -467,7 +467,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 2,
+      "unit_test_sources": 3,
       "workflow": "ship-cloud-tools-small-llms.yml"
     },
     "ac_cloud-tools-small-llms/web": {
@@ -539,21 +539,21 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 8,
+      "unit_test_sources": 9,
       "workflow": "ship-cg-omniverse.yml"
     },
     "ad_Capital-Stack-FinTerminal": {
       "first_test": "NEW APP (#1335, Lnktree family). Has 3 shell testers: test-lnktree-app.sh (the declaration, the FI | EQ | EX | NW | PM | MY-PM tabs with a dashboard entry each, the hidden Config section, the shared bottom nav / kit / icons, no typed address, the declared kinds against the renderer, Compose only; mutations proven red), test-finterm-sources.sh (the source catalog, every FinTerm entry mapped to a declared source, Cloud-Fincept first with the public fallback, keys only through SafeEncryptedPrefs and never logged, the container control mesh-only with confirmation for Stop and Restart, no hard-coded address; 24 mutations proven red) and test-fleet-setup.sh, plus a JVM suite run by the ship workflow (57 tests: catalog parsing, the FRED CSV parser on a fixture, the forward-rate derivation, DBnomics / World Bank / IMF / GDELT parsers, the engine on a fake network, source priority and fallback, the control states and confirmation, the key store). Not tested: the Compose screens and live sources (no Robolectric or emulator suite yet).",
-      "shell_testers": 5,
+      "shell_testers": 6,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 27,
+      "unit_test_sources": 30,
       "workflow": "ship-capital-stack-finterminal.yml"
     },
     "ad_Hardtech-CAD": {
       "first_test": "NEW APP (#1335, Lnktree family). Has 2 shell testers: test-lnktree-app.sh (the declaration, MCAD and BIM (repo folders) and SolidWorks (planned), the shared bottom nav / kit / icons, no typed address, planned entries honest, the declared kinds against the renderer, Compose only; 17 mutations proven red) and test-fleet-setup.sh, plus a JVM suite (PagesTest, HoldingsTest) run by the ship workflow.",
-      "shell_testers": 2,
+      "shell_testers": 3,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,

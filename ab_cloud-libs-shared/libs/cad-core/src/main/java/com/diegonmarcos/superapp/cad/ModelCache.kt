@@ -38,6 +38,6 @@ object ModelCache {
 
     private fun open(url: String): HttpURLConnection = (URL(url).openConnection() as HttpURLConnection).apply {
         connectTimeout = 15000; readTimeout = 60000; instanceFollowRedirects = true
-        if (responseCode !in 200..299) throw IllegalStateException("HTTP $responseCode")
+        if (responseCode !in 200..299) throw IllegalStateException("HTTP $responseCode " + url.substringAfter("//").substringBefore("?"))
     }
 }

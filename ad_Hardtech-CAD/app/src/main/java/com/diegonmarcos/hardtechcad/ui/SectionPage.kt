@@ -40,6 +40,10 @@ fun SectionPage(sectionId: String) {
     val entries = remember(sectionId) { Pages.entries(Decl.stacks, sectionId) }
     var openLibrary by rememberSaveable(sectionId) { mutableStateOf<String?>(null) }
     openLibrary?.let { id -> LibraryPage(id) { openLibrary = null }; return }
+    // #1542 a `models` entry: the models table, and the model page a tap opens (it takes the whole screen, like a library page)
+    val catalog = if (entries.any { it.kind == Pages.KIND_MODELS }) rememberModelCatalog() else null
+    var openModel by rememberSaveable(sectionId) { mutableStateOf<String?>(null) }
+    openModel?.let { id -> catalog?.models?.firstOrNull { it.id == id } }?.let { m -> ModelPage(m, catalog!!.categories) { openModel = null }; return }
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 12.dp, vertical = 8.dp).testTag(Tags.PAGE),
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -49,6 +53,7 @@ fun SectionPage(sectionId: String) {
                 Pages.KIND_SECTION_TITLE -> GroupTitle(e.title)
                 Pages.KIND_HOLDINGS -> HoldingsPanel()
                 Pages.KIND_ABOUT -> AboutPanel()
+                Pages.KIND_MODELS -> ModelsPage(catalog) { openModel = it.id }
                 Pages.KIND_LIBRARY -> LibraryRow(e) { openLibrary = e.library }
                 else -> EntryRow(e, Pages.resolve(e, Decl.targets)) { url -> openUrl(ctx, url) }
             }

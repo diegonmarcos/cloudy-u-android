@@ -1,0 +1,178 @@
+{
+  "_doc": "The model data of Hardtech-CAD (libs:cad-core ModelManifest, schema 2), bundled in the APK. Everything the app shows is declared here: the Model, Extension and Software filters, the models table and the model page are derived from it, nothing is typed in the app. Top level: `categories` (the Model filter: id + label, in order; a category with no model still shows). `originals_repo`: the public LFS repo that holds the original files (`path` is relative to it). Per model: id, name, category (a categories id), library (boats | architecture: the app's format pages), software (the authoring software), format (lower-case extension family), path, source, licence, size (bytes), sha256 (of the original at path), updated (YYYY-MM-DD), units (of the view), stats {vertices, triangles} and bbox {min, max} (measured from the GLB view), material_count / materials, layer_count / layers, component_count, conversion_log (what was done, in order). `view` is the derived, triangulated GLB the app renders: `asset` (its path under app/src/main/assets, bundled in the APK so it renders offline and never depends on LFS or the network), `path` (where it came from in the originals repo, for a mirrored view), format, size, sha256, tool (provenance: tool and version), vertices, triangles. `derived` lists other derivatives (IFC4, under data/derived/). The original stays the source of truth. `conversion` says why a closed format has no view. Written by tools/derive_models.py (CI: .github/workflows/hardtech-cad-models.yml), checked by tools/check_models.py (test/test-models-renderable.sh) and tools/verify-models.mjs.",
+  "schema": 2,
+  "originals_repo": "hardtech-db-models",
+  "categories": [
+    {
+      "id": "boats",
+      "label": "Boats"
+    },
+    {
+      "id": "civil",
+      "label": "Civil Engineering"
+    },
+    {
+      "id": "mechanics",
+      "label": "Mechanics"
+    }
+  ],
+  "models": [
+    {
+      "id": "one-lilo",
+      "name": "One Lilo, 36 m sailing yacht",
+      "category": "boats",
+      "library": "boats",
+      "software": "Rhino",
+      "format": "iges",
+      "path": "boats/iges/one-lilo-36m-sailing-yacht.igs",
+      "source": "Owner's own file (Google Drive, archive 36-meter-sailing-yacht-1.snapshot.9.zip, member OneLilo.igs)",
+      "licence": "Owner's own; all rights reserved",
+      "size": 59423596,
+      "sha256": "efe271f619ff5c4b191f6133c56ae42a898d8e161ac837a45d6027e37d6879ac",
+      "updated": "2026-11-03",
+      "units": "m",
+      "stats": {
+        "vertices": 195709,
+        "triangles": 254076
+      },
+      "bbox": {
+        "min": [
+          3.6968,
+          2.9105,
+          -3.9643
+        ],
+        "max": [
+          40.3662,
+          54.7157,
+          3.9643
+        ]
+      },
+      "material_count": 1,
+      "layer_count": 32,
+      "component_count": 66128,
+      "view": {
+        "path": "boats/glb/one-lilo-36m-sailing-yacht.view.glb",
+        "format": "glb",
+        "size": 7747004,
+        "sha256": "2452ad7742f68eeeb4798d4af6faa80a3babb550dfcd2030bd4c17c196bbfe8a",
+        "tool": "tools/brep2glb.mjs with occt-import-js 0.0.23 (LGPL-2.1), linear deflection 0.08 of the bounding box (254k triangles), merged by colour; mirrored from the originals repo, hash-checked by ad_Hardtech-CAD/tools/derive_models.py",
+        "vertices": 195709,
+        "triangles": 254076,
+        "asset": "cad/models/one-lilo.view.glb"
+      },
+      "conversion_log": [
+        "original: IGES 5.3 written by Rhinoceros (Jun 24 2014), global section units 1HM (metres); 66128 directory entities on 32 layers; part names inside (Radar..SLDPRT) show a SolidWorks origin",
+        "view: tools/brep2glb.mjs with occt-import-js 0.0.23 (LGPL-2.1), linear deflection 0.08 of the bounding box, triangles merged by colour into one mesh with one material",
+        "view re-made lighter on 2026-11-03 (20.6 MB to 7.7 MB, 254076 triangles) so phones and the emulator can draw it (commit c8b0577)",
+        "checked: plain glTF 2.0 binary, no Draco or meshopt compression, no required extension; CI guard tools/verify-models.mjs parses it with @gltf-transform/core"
+      ]
+    },
+    {
+      "id": "campidoglio",
+      "name": "Campidoglio, Musei Capitolini, Palazzo Senatorio, Roma",
+      "category": "civil",
+      "library": "architecture",
+      "software": "SketchUp",
+      "format": "skp",
+      "path": "architecture/skp/campidoglio-palazzo-senatorio-roma.skp",
+      "source": "Owner's own file (SketchUp 2021 model)",
+      "licence": "Owner's own; all rights reserved",
+      "size": 4000076,
+      "sha256": "efa7c9a27aeab1cec0e16679652096dccfa4547d8ed658e1da425ec5e4401256",
+      "updated": "2026-11-06",
+      "view": {
+        "asset": "cad/models/campidoglio.view.glb",
+        "format": "glb",
+        "size": 481740,
+        "sha256": "af224818ec0605b1cc6090878c39c19c2980882f032f3bc198cce93905ba45ac",
+        "tool": "ad_Hardtech-CAD/tools/derive_models.py with openskp 1.5.0 (MIT, https://github.com/iamahsanmehmood/openskp)",
+        "vertices": 10138,
+        "triangles": 6444
+      },
+      "derived": [
+        {
+          "path": "ad_Hardtech-CAD/data/derived/campidoglio.view.ifc",
+          "format": "ifc",
+          "size": 572215,
+          "sha256": "6421faa92643e642691f13e8392b4ba7134def5e43dd8b1a45e3d46d028c7c92",
+          "tool": "ad_Hardtech-CAD/tools/derive_models.py with openskp 1.5.0 (MIT, https://github.com/iamahsanmehmood/openskp)"
+        }
+      ],
+      "units": "m",
+      "material_count": 41,
+      "materials": [
+        "jean blue",
+        "Image14",
+        "Image12",
+        "Image1",
+        "Image2",
+        "Image13",
+        "Pilastro Cola di Rienzo",
+        "Ara Coeli e cordonata",
+        "Cordonata e scalinata",
+        "Cornice inferiore portico",
+        "Palazzo senatorio retro corretto",
+        "Aerea AraCoeli-Palazzo Nuovo",
+        "Facciata Santa Maria Ara Coeli",
+        "Lato Est Mappa",
+        "Lato Chiesa",
+        "Aerea Campidoglio",
+        "Area Musei capitolini",
+        "Palazzo senatorio e piazza copy",
+        "Campidoglio lato Tempio di Giove 2",
+        "[Concrete_Aggregate_Smoke]",
+        "Muri Lato Cordonata",
+        "Balaustra",
+        "Arcata collegamento",
+        "Facciata Santa Maria Ara Coeli1",
+        "Facciata Palazzi",
+        "Facciate scalinata musei",
+        "Aerea Palazzi Senatorio-Conservatori1",
+        "Lato sinistro basso",
+        "Aiuola Cordonata",
+        "[Translucent_Glass_Block_Dark]",
+        "Campanile Ara Coeli",
+        "Lato Rupe Tarpea",
+        "Palazzo 2",
+        "Terreno a sud",
+        "Palazzo 1",
+        "GE - Tempio Concordia",
+        "Marco Aurelio 3",
+        "Layer_Layer0",
+        "Layer_Layer1",
+        "Layer_Google Earth Terrain",
+        "Layer_Google Earth Snapshot"
+      ],
+      "layer_count": 4,
+      "layers": [
+        "Layer0",
+        "Layer1",
+        "Google Earth Terrain",
+        "Google Earth Snapshot"
+      ],
+      "component_count": 16,
+      "conversion_log": [
+        "input architecture/skp/campidoglio-palazzo-senatorio-roma.skp sha256 efa7c9a27aeab1cec0e16679652096dccfa4547d8ed658e1da425ec5e4401256 (4000076 bytes), SketchUp 2021 file",
+        "openskp 1.5.0 parsed it: 16 definitions, 4 layers, 41 materials",
+        "glb.export(skp, view) wrote the GLB; wrapped in a 0.001 scale node (openskp writes millimetres, glTF is metres); colours, no textures",
+        "ifc.export(skp.build_scene(), ifc) wrote the IFC4 file (meshes, no BIM semantics)"
+      ],
+      "stats": {
+        "vertices": 10138,
+        "triangles": 6444
+      },
+      "bbox": {
+        "min": [
+          -239.5207,
+          -40.8738,
+          -147.4943
+        ],
+        "max": [
+          94.7849,
+          57.7414,
+          212.8791
+        ]
+      }
+    }
+  ]
+}

@@ -7,7 +7,7 @@ name: "Proof → Hardtech-CAD MCAD libraries (libs:cad-core mutants + emulator s
 #            requires the real tree GREEN. No network.
 #   screens  installs the x86_64 APK of a Ship run on an emulator, opens MCAD > Boats (default model: the One Lilo yacht, fetched
 #            from hardtech-db-models and drawn by libs:cad-mesh from its derived GLB view) and MCAD > Architecture (default model:
-#            the Campidoglio SketchUp file, store-only with its reason), and uploads the shots as `hardtech-cad-mcad-screens`.
+#            the Campidoglio SketchUp file, drawn from its OpenSKP-derived GLB since #1542), and uploads the shots as `hardtech-cad-mcad-screens`.
 
 on:
   workflow_dispatch:

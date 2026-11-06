@@ -125,7 +125,8 @@
       "ab_cloud-libs-shared/libs/ui-kit/"
     ],
     "sp_literal": [
-      "ac_cloud-writer/"
+      "ac_cloud-writer/",
+      "ad_Hardtech-CAD/"
     ]
   }
 }

@@ -1,0 +1,104 @@
+name: "Models → Hardtech-CAD: derive the render views (SketchUp via OpenSKP), verify every model renders, ship"
+
+# The model data of Hardtech-CAD is ad_Hardtech-CAD/app/src/main/assets/cad/models.json (bundled in the APK). This workflow makes and checks
+# the derived files it declares, from the originals repo (hardtech-db-models, public, LFS):
+#   derive   every declared .skp -> GLB + IFC4 with OpenSKP 1.5.0 (MIT, pure Python, no SketchUp SDK; ad_Hardtech-CAD/THIRD-PARTY.md), the
+#            existing B-rep views mirrored hash-checked; tool, version and input hash recorded in models.json; the GLBs land in the app's
+#            assets (rendered offline), the IFC4 in ad_Hardtech-CAD/data/derived; committed to main, then Ship → Hardtech-CAD is dispatched
+#            (a push made with the workflow token starts no workflow by itself).
+#   verify   a second, independent parser: @gltf-transform/core loads every declared model's GLB; RED when a model has none, when it does not
+#            parse, or when it holds no triangle. (The Python guard check_models.py runs inside the Ship tester test-models-renderable.sh.)
+# LFS bandwidth is metered: only the .skp and .glb files are pulled.
+
+on:
+  workflow_dispatch:
+    inputs:
+      ship:
+        description: "Dispatch Ship → Hardtech-CAD after a commit of derived files"
+        required: false
+        type: boolean
+        default: true
+  push:
+    branches: [main]
+    paths:
+      - "ad_Hardtech-CAD/app/src/main/assets/cad/models.json"
+      - "ad_Hardtech-CAD/tools/**"
+      - "1_cicd/src/cicd/hardtech-cad-models.yml"
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: hardtech-cad-models
+  cancel-in-progress: false
+
+env:
+  APP: ad_Hardtech-CAD
+
+jobs:
+  derive:
+    name: "Derive the views (OpenSKP) and commit them"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      committed: ${{ steps.commit.outputs.committed }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Check out the originals repo (public, LFS)
+        uses: actions/checkout@v4
+        with:
+          repository: diegonmarcos/hardtech-db-models
+          path: .models-src
+          lfs: false
+      - name: Pull the SketchUp originals and the existing views (LFS)
+        working-directory: .models-src
+        run: |
+          git lfs install --local
+          git lfs pull --include="*.skp,*.glb"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install OpenSKP (pinned, MIT)
+        run: python -m pip install -r "$APP/tools/requirements.txt"
+      - name: Derive the views
+        run: python "$APP/tools/derive_models.py" .models-src
+      - name: The guard on what was derived
+        run: python "$APP/tools/check_models.py" "$APP"
+      - name: Commit the derived files
+        id: commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$APP/app/src/main/assets/cad" "$APP/data/derived"
+          if git diff --cached --quiet; then echo "committed=false" >> "$GITHUB_OUTPUT"; echo "the derived files are current"; exit 0; fi
+          git commit -m "ci(models): derived views of the Hardtech-CAD models (OpenSKP, ad_Hardtech-CAD/tools/derive_models.py)"
+          for i in 1 2 3; do git pull --rebase origin main && git push origin HEAD:main && break || sleep 5; done
+          echo "committed=true" >> "$GITHUB_OUTPUT"
+      - name: Ship → Hardtech-CAD (the APK carries the new views)
+        if: ${{ steps.commit.outputs.committed == 'true' && (github.event_name != 'workflow_dispatch' || inputs.ship) }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run ship-hardtech-cad.yml --ref main -f variant=debug -f push_oras=true -f create_release=true
+
+  verify:
+    name: "Every model's GLB parses with triangles (@gltf-transform/core)"
+    needs: derive
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install the glTF parser (pinned, MIT) beside the guard
+        run: |
+          mkdir -p "$RUNNER_TEMP/gt"
+          cp "$APP/tools/verify-models.mjs" "$RUNNER_TEMP/gt/"
+          cd "$RUNNER_TEMP/gt" && npm install --no-save --no-package-lock --no-audit --no-fund @gltf-transform/core@4.5.1
+      - name: Load every declared model
+        run: node "$RUNNER_TEMP/gt/verify-models.mjs" "$GITHUB_WORKSPACE/$APP"

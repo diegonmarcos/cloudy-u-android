@@ -222,3 +222,11 @@ profile must be replaced with one written from scratch (the keys are device fact
   `licenses/inventory.json`.
 - A pin moves → `python3 1_cicd/src/scripts/cloud-android-licence-provenance.py . <id>` and commit
   `licenses/provenance*`.
+
+## Hardtech-CAD model pipeline tools (#1542, not vendored)
+
+`ad_Hardtech-CAD/tools/` and `.github/workflows/hardtech-cad-models.yml` use, at pinned versions installed in CI only: OpenSKP 1.5.0 (MIT, reads `.skp`, writes GLB/IFC4; no
+SketchUp SDK), its pip dependencies (trimesh MIT, numpy and shapely BSD-3-Clause, mapbox_earcut ISC, defusedxml PSF-2.0; transitive, per upstream metadata) and
+`@gltf-transform/core` 4.5.1 (MIT). The SketchUp candidates that need the proprietary SketchUp SDK or the SketchUp application (Sketchup_Importer, skp2gltf GPL-3.0,
+export-batch-sketchup-extension) are NOT used and nothing of that SDK is vendored. The derived views of the owner's own models keep the model's licence (all rights
+reserved, owner's own). Evidence and per-candidate findings: `ad_Hardtech-CAD/THIRD-PARTY.md`.

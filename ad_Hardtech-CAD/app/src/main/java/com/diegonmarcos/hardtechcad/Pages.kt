@@ -30,6 +30,8 @@ object Pages {
     const val KIND_ABOUT = "about"
     /** #1404 a model-library sub-page (ui.libraries[library]). */
     const val KIND_LIBRARY = "library"
+    /** #1542 the models table (filters, sortable rows) and the model page a row opens. */
+    const val KIND_MODELS = "models"
 
     /** The entries declared for [sectionId] in the stacks JSON (empty when the section declares none). */
     fun entries(stacks: String, sectionId: String): List<Entry> {
