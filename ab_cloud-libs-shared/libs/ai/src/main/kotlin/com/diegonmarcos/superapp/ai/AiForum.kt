@@ -40,7 +40,8 @@ object AiForum {
 
     private fun day(at: Long, zone: ZoneId): LocalDate = Instant.ofEpochMilli(at).atZone(zone).toLocalDate()
 
-    private val monthDay: DateTimeFormatter = DateTimeFormatter.ofPattern("MMMM d", Locale.ROOT)
+    // Locale.ENGLISH (not ROOT): the CLDR root locale renders "MMMM" as a numeric form, not "September".
+    private val monthDay: DateTimeFormatter = DateTimeFormatter.ofPattern("MMMM d", Locale.ENGLISH)
 
     /** The day pill's words: Today, Yesterday, or "Month day" (no year). [today]/[yesterday] are the app's localised words. */
     fun label(onDay: LocalDate, now: LocalDate, today: String, yesterday: String): String = when (onDay) {
