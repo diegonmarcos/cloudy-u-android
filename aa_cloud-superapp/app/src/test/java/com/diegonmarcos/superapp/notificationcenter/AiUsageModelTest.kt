@@ -38,18 +38,29 @@ class AiUsageModelTest {
     private fun card(b: String = body(), fetchedAgoMs: Long = 0, note: String = "") =
         AiUsageModel.card(AiUsageModel.parse(b), now - fetchedAgoMs, now, note, utc)
 
-    @Test fun `claude session and weekly percent lead the title, openrouter balance and day lead the text`() {
+    @Test fun `the weekly percent and its reset lead the title, openrouter balance and day lead the text`() {
         val c = card()
-        assertEquals("Claude 5h 24% · wk 41%", c.title)
+        assertEquals("Claude week 41% · resets in 2d 3h", c.title)
         assertEquals("OpenRouter $37.65 · 24h $2.00", c.text)
-        assertEquals(24, c.progress)
+        assertEquals("the bar is the weekly limit, not the 5-hour session", 41, c.progress)
         assertFalse(c.stale)
     }
 
     @Test fun `reset times are shown as a clock time and as time left`() {
         val lines = card().lines
         assertTrue(lines.toString(), lines.contains("5h session: 24% · resets 15:12 (in 3h 12m)"))
-        assertTrue(lines.toString(), lines.contains("Week (all models): 41% · resets Mon 15:00 (in 2d 3h)"))
+        assertTrue(lines.toString(), lines.contains("Week resets: Mon 15:00 (in 2d 3h)"))
+    }
+
+    @Test fun `the card opens with the four weekly lines, monospaced, red where the week runs out first`() {
+        val c = card()
+        assertEquals(4, c.weekCount)
+        assertEquals(AiUsageModel.weekLines(AiUsageModel.parse(body())!!.claude!!.sevenDay!!, now), c.lines.take(4))
+        assertTrue(c.lines[0], c.lines[0].startsWith("Used: 41% (in 4.9 days) | 8%/day avg"))
+        // 41% in 4.9 days = 8%/day: 59% left lasts 7.0 days, past the reset in 2.1 -> not red; 1/7 lasts 4.1 -> not red.
+        assertTrue(c.alert.isEmpty())
+        val hot = card(body(seven = """{"used_percentage":90,"resets_at":${sec + 2 * 86400}}"""))
+        assertEquals(setOf(2, 3), hot.alert)
     }
 
     @Test fun `openrouter shows balance and each window in dollars and millions of tokens`() {
@@ -84,7 +95,7 @@ class AiUsageModelTest {
 
     @Test fun `windows the server dropped and a missing key degrade to dashes and a hint`() {
         val c = card(body(five = "null", seven = "null", openrouter = """{"configured":false,"error":"OPENROUTER_MANAGEMENT_KEY not set"}"""))
-        assertEquals("Claude 5h - · wk -", c.title)
+        assertEquals("Claude week -", c.title)
         assertEquals("OpenRouter: key not set", c.text)
         assertNull(c.progress)
         assertTrue(c.lines.contains("5h session: no window"))
@@ -109,16 +120,20 @@ class AiUsageModelTest {
         val c = card()
         nm.notify(AiBadgeService.NOTIF_ID, NotificationCompat.Builder(ctx, AiBadgeService.CHANNEL_ID)
             .setSmallIcon(android.R.drawable.sym_def_app_icon).setContentTitle(c.title).setContentText(c.text)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(c.expanded)).setProgress(100, c.progress!!, false).build())
+            .setStyle(NotificationCompat.BigTextStyle().bigText(AiBadgeService.styled(c))).setProgress(100, c.progress!!, false).build())
         val b = BadgeServices.declared.first { it.id == AiBadgeService.BADGE_ID }
         BadgeCardData.override = null
         val d = BadgeCardData.read(ctx, b)
         assertEquals(c.title, d.headline)
         assertEquals(c.text, d.sub)
-        assertEquals(0.24f, d.progress!!, 0.001f)
+        assertEquals(0.41f, d.progress!!, 0.001f)
         assertEquals("the card carries every row, not the default four", c.lines.size, d.lines.size)
         assertTrue(d.lines.any { it.label == "5h session" && it.value.startsWith("24% · resets") })
         assertTrue(d.lines.any { it.label == "OR 24h" && it.value == "$2.00 · 2.0M tok" })
+        // #1543 the weekly block comes back whole and monospaced, its alignment intact
+        assertEquals(c.lines.take(4), d.lines.take(4).map { it.value })
+        assertTrue(d.lines.take(4).all { it.mono && it.label.isEmpty() })
+        assertFalse(d.lines.drop(4).any { it.mono })
         assertNotNull(NotifyGroups.groupOf(AiBadgeService.BADGE_ID))
     }
 }

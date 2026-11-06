@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -54,6 +56,9 @@ object AiTags {
     const val ROWS = "ai_rows"
     const val SAMPLE = "ai_sample"
     const val COST = "ai_cost"
+    const val COST_WEEK = "ai_cost_week_"
+    const val COST_DAILY = "ai_cost_daily"
+    const val COST_MONTHLY = "ai_cost_monthly"
 }
 
 /** One page of the AIs or Cost section: its screen is the declared kind (assets/ai/pages.json), its data the declared asset. */
@@ -168,7 +173,19 @@ private fun CostPage(text: String) {
     }
     val r = read
     val table = remember(r) { r?.let { Cost.table(cfg, it.first, it.third) } }
-    Column(Modifier.fillMaxSize().testTag(AiTags.COST)) {
+    val week = remember(r) { r?.let { Cost.week(it.first, it.third) } }
+    val tokens = r?.first?.tokens
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).testTag(AiTags.COST)) {
+        // #1543 Weekly Now: the badge's own four lines (AiUsageModel.week), red where the week runs out before its reset.
+        KitStoreCaption(stringResource(R.string.cost_week), Modifier.fillMaxWidth().padding(KitStoreRow.padH), color = p.accent)
+        if (week == null) KitStoreCaption(if (r == null) stringResource(R.string.cost_loading) else "-", Modifier.fillMaxWidth().padding(horizontal = KitStoreRow.padH), color = p.textSecondary)
+        else week.lines().forEachIndexed { i, l ->
+            KitStoreCaption(l, Modifier.fillMaxWidth().padding(horizontal = KitStoreRow.padH).testTag(AiTags.COST_WEEK + i),
+                color = if (i in week.alert) KitStoreRow.BAD else p.textPrimary, mono = true)
+        }
+        Rule()
+        TokenTable(stringResource(R.string.cost_daily), cfg.tokenColumns, tokens?.days.orEmpty(), r != null, AiTags.COST_DAILY)
+        TokenTable(stringResource(R.string.cost_monthly), cfg.tokenColumns, tokens?.months.orEmpty(), r != null, AiTags.COST_MONTHLY)
         KitStoreRowLine {
             KitStoreCaption("", Modifier.weight(LABEL_WEIGHT))
             cfg.columns.forEach { KitStoreCaption(it, Modifier.weight(1f), color = p.accent) }
@@ -195,3 +212,30 @@ private fun CostPage(text: String) {
 }
 
 private const val LABEL_WEIGHT = 0.6f
+
+/** #1543 A Daily or Monthly table: a head row, then per period a bold row and its model-family rows, indented. */
+@Composable
+private fun TokenTable(title: String, columns: List<String>, periods: List<AiUsageModel.Period>, read: Boolean, tag: String) {
+    val p = LocalKitPalette.current
+    Column(Modifier.fillMaxWidth().testTag(tag)) {
+        KitStoreCaption(title, Modifier.fillMaxWidth().padding(KitStoreRow.padH), color = p.accent)
+        KitStoreRowLine {
+            KitStoreCaption("", Modifier.weight(TOK_LABEL_WEIGHT))
+            columns.forEach { KitStoreCaption(it, Modifier.weight(1f), color = p.textSecondary, align = TextAlign.End) }
+        }
+        Rule()
+        if (periods.isEmpty()) KitStoreCaption(if (read) stringResource(R.string.cost_no_tokens) else stringResource(R.string.cost_loading),
+            Modifier.fillMaxWidth().padding(horizontal = KitStoreRow.padH), color = p.textSecondary)
+        Cost.tokenLines(periods).forEach { row ->
+            KitStoreRowLine {
+                if (row.child) KitStoreCaption("  " + row.label, Modifier.weight(TOK_LABEL_WEIGHT), color = p.textSecondary)
+                else KitStoreName(row.label, Modifier.weight(TOK_LABEL_WEIGHT), color = p.textPrimary)
+                row.cells.forEach { KitStoreCaption(it, Modifier.weight(1f), color = if (row.child) p.textSecondary else p.textPrimary, mono = true, align = TextAlign.End) }
+            }
+            if (!row.child) Rule()
+        }
+        Rule()
+    }
+}
+
+private const val TOK_LABEL_WEIGHT = 1.3f

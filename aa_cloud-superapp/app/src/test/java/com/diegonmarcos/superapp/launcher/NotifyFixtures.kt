@@ -17,7 +17,7 @@ internal object NotifyFixtures {
         return when (b.id) {
             "network_mesh" -> d("Mesh up", "wg0 · 5 peers · handshake 12 s ago", null, listOf(l("DNS", "10.0.0.1"), l("Up since", "3h 12m")))
             "network_data" -> d("4.2 GB", "Mobile this month · forecast 11 GB", 0.38f, listOf(l("SIM 1", "3.1 GB"), l("Wi-Fi", "18.4 GB")))
-            "ai_usage" -> d("Claude 5h 23% · wk 41%", "OpenRouter $37.65 · 24h $2.00", 0.23f, listOf(l("5h session", "23% · resets 15:30 (in 3h 12m)"), l("OR balance", "$37.65")))
+            "ai_usage" -> d("Claude week 41% · resets in 2d 3h", "OpenRouter $37.65 · 24h $2.00", 0.41f, listOf(l("", "Used: 41% (in 4.9 days) | 8%/day avg"), l("", "Left: 59% (2.1 days)    | 28%/day"), l("5h session", "23% · resets 15:30 (in 3h 12m)"), l("OR balance", "$37.65")))
             "battery_status" -> d("78%", "Charging · 42 min to full", 0.78f, listOf(l("Temp", "31.2 °C"), l("Health", "Good")))
             "myhealth" -> HealthBadgeModel.face(Read.Ok(HealthAgg.board(HealthFixtures.seeded(LocalDate.now()), LocalDate.now()))).let {
                 d(it.title, it.text, null, listOf(l("", HealthBadgeModel.updated(4 * 60_000L)))) }

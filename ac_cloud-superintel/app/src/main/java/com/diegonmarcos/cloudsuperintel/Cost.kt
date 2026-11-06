@@ -8,7 +8,11 @@ data class CostRowDecl(val label: String, val claude: String, val openrouter: St
 data class CostConfig(
     val sampleLabel: String, val bases: List<String>, val authority: String, val method: String, val bearerKey: String,
     val columns: List<String>, val rows: List<CostRowDecl>, val sampleOpenRouter: AiUsageModel.OpenRouter,
+    /** #1543 the Daily / Monthly token tables' column heads (cost.json `token_columns`). */
+    val tokenColumns: List<String> = emptyList(),
 )
+/** #1543 One row of the Daily or Monthly table: a period (bold) or one model family under it ([child]). */
+data class TokLine(val label: String, val child: Boolean, val cells: List<String>)
 data class CostRow(val label: String, val claude: String, val openrouter: String)
 data class CostTable(val rows: List<CostRow>, val sampleOpenRouter: Boolean, val claudeAgeMs: Long?)
 
@@ -31,6 +35,7 @@ object Cost {
             list("columns").map { it.toString() },
             list("rows").map { (it as JSONObject).let { r -> CostRowDecl(r.getString("label"), r.getString("claude"), r.getString("openrouter")) } },
             AiUsageModel.OpenRouter(true, s.getDouble("balance_usd"), spend("last_24h"), spend("last_7d"), spend("month"), null, false),
+            o.optJSONArray("token_columns")?.let { a -> (0 until a.length()).map { a.getString(it) } }.orEmpty(),
         )
     }
 
@@ -44,14 +49,28 @@ object Cost {
     private fun pct(w: AiUsageModel.Win?) = w?.let { "${Math.round(it.usedPct)}%" } ?: "-"
     private fun spend(s: AiUsageModel.Spend?) = s?.let { "${AiUsageModel.usd(it.usd)} · ${AiUsageModel.mTokens(it.tokens)}" } ?: "-"
 
-    private fun claude(metric: String, c: AiUsageModel.Claude?, nowMs: Long): String {
+    private fun tokSpend(p: AiUsageModel.Period?) = p?.let { "${AiUsageModel.usd(it.tok.costUsd)} · ${AiUsageModel.count(it.tok.total)} tok" } ?: "-"
+
+    /** #1543 The Weekly Now block: the badge's very computation ([AiUsageModel.week]); null without a seven_day window. */
+    fun week(snap: AiUsageModel.Snapshot?, nowMs: Long): AiUsageModel.Week? = snap?.claude?.sevenDay?.let { AiUsageModel.week(it, nowMs) }
+
+    /** #1543 Daily / Monthly rows: each period (Input, Output, Cache write, Cache read, Total, Cost) then its model families. */
+    fun tokenLines(periods: List<AiUsageModel.Period>): List<TokLine> {
+        fun cells(t: AiUsageModel.Tok) = listOf(AiUsageModel.count(t.input), AiUsageModel.count(t.output), AiUsageModel.count(t.cacheWrite),
+            AiUsageModel.count(t.cacheRead), AiUsageModel.count(t.total), AiUsageModel.usd(t.costUsd))
+        return periods.flatMap { p -> listOf(TokLine(p.period, false, cells(p.tok))) + p.models.map { TokLine(it.label, true, cells(it.tok)) } }
+    }
+
+    private fun claude(metric: String, c: AiUsageModel.Claude?, nowMs: Long, t: AiUsageModel.Tokens? = null): String {
         val w = c?.sevenDay
         val week = w?.let { AiUsageModel.weekLines(it, nowMs) }
         return when (metric) {
             "five_hour" -> pct(c?.fiveHour)
+            "day_tokens" -> tokSpend(t?.days?.firstOrNull())
+            "month_tokens" -> tokSpend(t?.months?.firstOrNull())
             "seven_day" -> pct(w)
             "week_left" -> week?.get(1)?.removePrefix("Left: ") ?: "-"
-            "week_est" -> week?.get(2)?.removePrefix("Est: ")?.replace(" (used avg)", "") ?: "-"
+            "week_est" -> week?.get(2)?.removePrefix("Est: ")?.replace(Regex(" \\(used avg\\) +"), " ") ?: "-"
             else -> "-"
         }
     }
@@ -71,7 +90,7 @@ object Cost {
         val or = real ?: cfg.sampleOpenRouter
         val tag = if (real == null) " (${cfg.sampleLabel})" else ""
         val c = snap?.claude
-        val rows = cfg.rows.map { CostRow(it.label, claude(it.claude, c, nowMs), openRouter(it.openrouter, or).let { v -> if (v == "-") v else v + tag }) }
+        val rows = cfg.rows.map { CostRow(it.label, claude(it.claude, c, nowMs, snap?.tokens), openRouter(it.openrouter, or).let { v -> if (v == "-") v else v + tag }) }
         val age = c?.takeIf { it.updatedAtSec > 0 }?.let { (nowMs - it.updatedAtSec * 1000).coerceAtLeast(0) }
         return CostTable(rows, real == null, age)
     }

@@ -41,4 +41,8 @@
     <string name="cost_refresh">Refresh</string>
     <string name="cost_source">Source: the Notify AI badge table, via %1$s.</string>
     <string name="cost_age">Claude data pushed %1$s.</string>
+    <string name="cost_week">Claude week (now)</string>
+    <string name="cost_daily">Daily (UTC)</string>
+    <string name="cost_monthly">Monthly</string>
+    <string name="cost_no_tokens">No token totals posted yet.</string>
 </resources>

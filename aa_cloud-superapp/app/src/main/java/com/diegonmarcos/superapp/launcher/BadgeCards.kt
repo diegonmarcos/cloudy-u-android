@@ -99,6 +99,9 @@ internal fun BadgeCards() {
     }
 }
 
+/** #1543 the red of a badge line flagged alert (the AI badge's "runs out before reset"). */
+private val BADGE_ALERT = Color(0xFFFF5252)
+
 private fun accentOf(d: BadgeCardData.Data): Color =
     runCatching { Color(android.graphics.Color.parseColor(d.badge.card.accent)) }.getOrDefault(Color(0xFF8AB4F8))
 
@@ -157,10 +160,16 @@ internal fun BadgeCard(d: BadgeCardData.Data) {
                         fontFamily = NotifCard.font, maxLines = 1)
                 }
             }
-        } else for (l in d.lines) Row(Modifier.fillMaxWidth().padding(top = 6.dp)) {
+        } else for (l in d.lines) if (l.mono) {
+            // #1543 a preformatted line (the AI badge's weekly block): monospaced so its columns line up, red when the
+            // week runs out before its reset.
+            Text(l.value, color = if (l.alert) BADGE_ALERT else NotifCard.body, fontSize = NotifCard.metaSp,
+                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, maxLines = 2, softWrap = true,
+                modifier = Modifier.fillMaxWidth().padding(top = 4.dp))
+        } else Row(Modifier.fillMaxWidth().padding(top = 6.dp)) {
             if (l.label.isNotBlank()) Text(l.label, color = NotifCard.meta, fontSize = NotifCard.bodySp,
                 fontFamily = NotifCard.font, maxLines = 1, modifier = Modifier.padding(end = 10.dp))
-            Text(l.value, color = NotifCard.body, fontSize = NotifCard.bodySp, fontFamily = NotifCard.font, maxLines = 1,
+            Text(l.value, color = if (l.alert) BADGE_ALERT else NotifCard.body, fontSize = NotifCard.bodySp, fontFamily = NotifCard.font, maxLines = 1,
                 overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
         }
         ActionRow(d, accent, hostView)

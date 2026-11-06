@@ -1,5 +1,7 @@
 package com.diegonmarcos.cloudsuperintel.ui
 
+import com.diegonmarcos.cloudsuperintel.SiOpen
+
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Box
@@ -98,6 +100,14 @@ fun SiShell() {
     // The (+) menu's Files, Image and Camera: their Perms rows are libs:perms' (build.json::perms.needs), shown as "Fix in Perms" while missing.
     val attachHost = remember { AiAttachHost(missing = { ids -> rememberPermsMissing(ids).map { it.id } }, fix = { ids -> PermsFixChip(ids, ATTACH_FEATURE) }) }
     fun open(sectionId: String, pageId: String?) { section = sectionId; page = pageId }
+    // #1543 a deep link (the SuperApp AI badge -> Cost): opened once, only when the nav declares that section.
+    val asked = SiOpen.pending
+    androidx.compose.runtime.LaunchedEffect(asked) {
+        if (asked != null) {
+            nav.section(asked.section)?.let { s -> open(s.id, asked.page?.takeIf { p -> s.pages.any { it.id == p } }) }
+            SiOpen.pending = null
+        }
+    }
 
     Box(Modifier.fillMaxSize().themeBackground(dark = true).windowInsetsPadding(WindowInsets.statusBars.union(WindowInsets.displayCutout))) {
         NavBarTopFirstRowScaffold(

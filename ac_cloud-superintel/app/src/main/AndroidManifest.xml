@@ -37,6 +37,12 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- #1543 Another app opens a page: com.diegonmarcos.cloudsuperintel.OPEN with extras section/page
+                 (the Cloud SuperApp Notify AI badge opens Cost). -->
+            <intent-filter>
+                <action android:name="com.diegonmarcos.cloudsuperintel.OPEN" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
             <!-- Share > SI of plain text lands in the chat box; nothing is sent until the user does. -->
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />

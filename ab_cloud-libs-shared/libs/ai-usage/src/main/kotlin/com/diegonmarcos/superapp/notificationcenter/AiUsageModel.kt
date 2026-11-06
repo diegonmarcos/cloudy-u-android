@@ -11,7 +11,8 @@ import java.util.TimeZone
  * wording and the stale rule are unit-tested without a phone.
  *
  * Claude comes from Claude Code's own statusLine (`rate_limits.five_hour/seven_day`), pushed to the API; the API drops a
- * window whose reset time has passed. OpenRouter is fetched server-side; its activity is DAILY (completed UTC days), so its
+ * window whose reset time has passed. #1543: the card leads with seven_day (the weekly limit), not five_hour; per-day
+ * token totals per model family come in `claude_tokens` (posted from the `my-ai usage` daemon). OpenRouter is fetched server-side; its activity is DAILY (completed UTC days), so its
  * "24h" is the latest completed day - the API says so in `basis` and the card words it "24h".
  */
 object AiUsageModel {
@@ -26,11 +27,75 @@ object AiUsageModel {
         val configured: Boolean, val balanceUsd: Double?, val day: Spend?, val week: Spend?, val month: Spend?,
         val error: String?, val stale: Boolean,
     )
-    data class Snapshot(val generatedAtSec: Long, val claude: Claude?, val openrouter: OpenRouter?)
+    /** #1543 One token bucket (the transcript usage fields summed): input, output, cache write, cache read, total, cost. */
+    data class Tok(val input: Long, val output: Long, val cacheWrite: Long, val cacheRead: Long, val total: Long, val costUsd: Double)
+    /** A model family's share of a period ("Opus"), labelled by the API's runtime catalogue. */
+    data class FamilyRow(val label: String, val tok: Tok)
+    /** One day ("2026-11-05", UTC) or month ("2026-11") with its total and per-family rows. */
+    data class Period(val period: String, val tok: Tok, val models: List<FamilyRow>)
+    /** `claude_tokens` of GET /ai/usage: newest first. */
+    data class Tokens(val updatedAtSec: Long, val days: List<Period>, val months: List<Period>)
+    data class Snapshot(val generatedAtSec: Long, val claude: Claude?, val openrouter: OpenRouter?, val tokens: Tokens? = null)
 
-    /** [lines] are "label: value" strings (BadgeCardData splits on the first ": "). [progress] is the 5-hour used %, 0..100. */
-    data class Card(val title: String, val text: String, val lines: List<String>, val progress: Int?, val stale: Boolean) {
+    /**
+     * [lines] are "label: value" strings (BadgeCardData splits on the first ": "); the first [weekCount] lines are the
+     * weekly block, drawn monospaced as whole lines; [alert] holds the indices drawn red (the week runs out before its
+     * reset). [progress] is the WEEKLY (seven_day) used %, 0..100.
+     */
+    data class Card(
+        val title: String, val text: String, val lines: List<String>, val progress: Int?, val stale: Boolean,
+        val weekCount: Int = 0, val alert: Set<Int> = emptySet(),
+    ) {
         val expanded: String get() = lines.joinToString("\n")
+    }
+
+    /**
+     * #1543 The weekly now-usage, ONE pure computation shared by the Notify badge and SuperIntel's Cost page.
+     * week start = resets_at - 7 d; elapsed = now - start; avg = used / elapsed; left = 100 - used; remaining =
+     * resets_at - now; need = left / remaining; "over in" = left / rate, for the used avg and for the flat 100/7 rate.
+     * [runsOutAvg] / [runsOutFlat]: that "over in" is shorter than [remainingDays], i.e. the week is spent before it resets.
+     */
+    data class Week(
+        val usedPct: Double, val leftPct: Double, val elapsedDays: Double, val remainingDays: Double,
+        val avgPerDay: Double?, val needPerDay: Double?, val flatPerDay: Double,
+        val overAvgDays: Double?, val overFlatDays: Double, val runsOutAvg: Boolean, val runsOutFlat: Boolean,
+    ) {
+        /** The four lines, columns aligned (the "|" under the "|", the ":" under the ":"):
+         *     Used: 58% (in 2.9 days) | 20%/day avg
+         *     Left: 42% (4.1 days)    | 10%/day
+         *     Est: 20%/day (used avg) : over in 2.1 days
+         *          14%/day (1/7)      : over in 2.9 days */
+        fun lines(): List<String> {
+            val u = "Used: ${pct(usedPct)} (in ${d1(elapsedDays)} days)"
+            val l = "Left: ${pct(leftPct)} (${d1(remainingDays)} days)"
+            val w = maxOf(u.length, l.length)
+            val a = "${avgPerDay?.let { pct(it) } ?: "-"}/day (used avg)"
+            val b = "${pct(flatPerDay)}/day (1/7)"
+            val w2 = maxOf(a.length, b.length)
+            fun over(d: Double?) = d?.let { "over in ${d1(it)} days" } ?: "-"
+            return listOf(
+                "${u.padEnd(w)} | ${avgPerDay?.let { pct(it) } ?: "-"}/day avg",
+                "${l.padEnd(w)} | ${needPerDay?.let { pct(it) } ?: "-"}/day",
+                "Est: ${a.padEnd(w2)} : ${over(overAvgDays)}",
+                "     ${b.padEnd(w2)} : ${over(overFlatDays)}",
+            )
+        }
+        /** Indices into [lines] to draw red. */
+        val alert: Set<Int> get() = buildSet { if (runsOutAvg) add(2); if (runsOutFlat) add(3) }
+    }
+
+    fun week(w: Win, nowMs: Long): Week {
+        val used = w.usedPct.coerceIn(0.0, 100.0)
+        val left = 100.0 - used
+        val remaining = ((w.resetsAtSec * 1000 - nowMs) / DAY_MS).coerceIn(0.0, 7.0)
+        val elapsed = 7.0 - remaining
+        val avg = if (elapsed > 0.01) used / elapsed else null
+        val need = if (remaining > 0.01) left / remaining else null
+        val flat = 100.0 / 7.0
+        val overAvg = avg?.takeIf { it > 0.0 }?.let { left / it }
+        val overFlat = left / flat
+        return Week(used, left, elapsed, remaining, avg, need, flat, overAvg, overFlat,
+            overAvg != null && overAvg < remaining, overFlat < remaining)
     }
 
     // ── parse ────────────────────────────────────────────────────────────
@@ -53,15 +118,45 @@ object AiUsageModel {
                 spend(o.optJSONObject("last_24h")), spend(o.optJSONObject("last_7d")), spend(o.optJSONObject("month")),
                 if (o.has("error")) o.optString("error") else null, o.optBoolean("stale", false))
         }
-        return Snapshot(root.optLong("generated_at", 0L), c, r)
+        return Snapshot(root.optLong("generated_at", 0L), c, r, root.optJSONObject("claude_tokens")?.let(::tokens))
+    }
+
+    private fun tok(o: JSONObject) = Tok(o.optLong("input"), o.optLong("output"), o.optLong("cache_write"), o.optLong("cache_read"),
+        o.optLong("total", o.optLong("input") + o.optLong("output") + o.optLong("cache_write") + o.optLong("cache_read")), o.optDouble("cost_usd", 0.0))
+
+    private fun periods(a: org.json.JSONArray?): List<Period> = if (a == null) emptyList() else (0 until a.length()).mapNotNull { i ->
+        val o = a.optJSONObject(i) ?: return@mapNotNull null
+        val m = o.optJSONArray("models")
+        Period(o.optString("period"), tok(o), if (m == null) emptyList() else (0 until m.length()).mapNotNull { j ->
+            m.optJSONObject(j)?.let { f -> FamilyRow(f.optString("label", f.optString("family", "?")), tok(f)) }
+        })
+    }
+
+    private fun tokens(o: JSONObject) = Tokens(o.optLong("updated_at", 0L), periods(o.optJSONArray("days")), periods(o.optJSONArray("months")))
+
+    /** Compact token count: 812, 35.4k, 1.2M, 3.40B. */
+    fun count(n: Long): String = when {
+        n >= 1_000_000_000L -> String.format(Locale.US, "%.2fB", n / 1e9)
+        n >= 1_000_000L -> String.format(Locale.US, "%.1fM", n / 1e6)
+        n >= 1_000L -> String.format(Locale.US, "%.1fk", n / 1e3)
+        else -> n.toString()
     }
 
     // ── words ────────────────────────────────────────────────────────────
 
     fun usd(v: Double): String = String.format(Locale.US, "$%.2f", v)
+
+    /** #1543 Tapping the badge opens Cloud SuperIntel on its Cost page: this action, this package, these extras. */
+    object SuperIntelLink {
+        const val PACKAGE = "com.diegonmarcos.cloudsuperintel"
+        const val ACTION = "com.diegonmarcos.cloudsuperintel.OPEN"
+        const val EXTRA_SECTION = "section"
+        const val EXTRA_PAGE = "page"
+        const val COST = "cost"
+    }
     fun mTokens(t: Long): String = String.format(Locale.US, "%.1fM tok", t / 1_000_000.0)
     private fun spend(s: Spend?): String = s?.let { "${usd(it.usd)} · ${mTokens(it.tokens)}" } ?: "-"
-    private fun pct(d: Double): String = "${Math.round(d)}%"
+    internal fun pct(d: Double): String = "${Math.round(d)}%"
 
     fun ago(ms: Long): String {
         val m = ms / 60_000L
@@ -76,34 +171,10 @@ object AiUsageModel {
     }
 
     /** One decimal with a point ("0.8"). */
-    private fun d1(v: Double): String = String.format(Locale.US, "%.1f", v)
+    internal fun d1(v: Double): String = String.format(Locale.US, "%.1f", v)
 
-    /**
-     * #1451 The weekly burn-rate block, computed here from the raw `seven_day` sample (so the app works without any server
-     * maths): elapsed = 7d - (resets_at - now); used avg = used / elapsed; needed = left / days left; "over in" = left / rate.
-     * Four lines, the second Est line indented so the colons align:
-     *     Used: 29% (in 0.8 days) | 35%/day avg
-     *     Left: 71% (6.2 days) | 12%/day
-     *     Est: 35%/day (used avg) : over in 2.0 days
-     *          14%/day (1/7)      : over in 5.0 days
-     */
-    fun weekLines(w: Win, nowMs: Long): List<String> {
-        val left = (100.0 - w.usedPct).coerceAtLeast(0.0)
-        val daysLeft = ((w.resetsAtSec * 1000 - nowMs) / DAY_MS).coerceIn(0.0, 7.0)
-        val elapsed = 7.0 - daysLeft
-        val avg = if (elapsed > 0.01) w.usedPct / elapsed else null
-        val need = if (daysLeft > 0.01) left / daysLeft else null
-        val flat = 100.0 / 7.0
-        fun over(rate: Double?) = if (rate == null || rate <= 0.0) "-" else "over in ${d1(left / rate)} days"
-        val a = "${avg?.let { pct(it) } ?: "-"}/day (used avg)"
-        val b = "${pct(flat)}/day (1/7)".padEnd(a.length)
-        return listOf(
-            "Used: ${pct(w.usedPct)} (in ${d1(elapsed)} days) | ${avg?.let { pct(it) } ?: "-"}/day avg",
-            "Left: ${pct(left)} (${d1(daysLeft)} days) | ${need?.let { pct(it) } ?: "-"}/day",
-            "Est: $a : ${over(avg)}",
-            "     $b : ${over(flat)}",
-        )
-    }
+    /** #1451 / #1543 The weekly block's four lines ([Week.lines] of [week]). */
+    fun weekLines(w: Win, nowMs: Long): List<String> = week(w, nowMs).lines()
 
     private const val DAY_MS = 86_400_000.0
 
@@ -126,8 +197,10 @@ object AiUsageModel {
         val stale = claudeStale || readStale
 
         val five = c?.fiveHour; val seven = c?.sevenDay
+        // #1543 The badge is the WEEKLY (seven_day, all models) figure: the title, the progress bar and the first four lines.
         val title = if (c == null) "Claude: no data yet"
-            else "Claude 5h ${five?.let { pct(it.usedPct) } ?: "-"} · wk ${seven?.let { pct(it.usedPct) } ?: "-"}" + if (claudeStale || readStale) " · stale" else ""
+            else "Claude week ${seven?.let { pct(it.usedPct) } ?: "-"}" + (seven?.let { " · resets " + until(it.resetsAtSec * 1000 - nowMs) } ?: "") +
+                if (claudeStale || readStale) " · stale" else ""
         val or = snap.openrouter
         val text = when {
             or == null -> "OpenRouter: no data"
@@ -137,9 +210,10 @@ object AiUsageModel {
         }
 
         val lines = mutableListOf<String>()
+        val wk = seven?.let { week(it, nowMs) }
+        if (wk != null) lines += wk.lines() else lines += "Week (all models): no window"
+        lines += "Week resets: " + (seven?.let { resets(it, nowMs, zone).removePrefix("resets ") } ?: "-")
         lines += "5h session: " + (five?.let { "${pct(it.usedPct)} · ${resets(it, nowMs, zone)}" } ?: "no window")
-        lines += "Week (all models): " + (seven?.let { "${pct(it.usedPct)} · ${resets(it, nowMs, zone)}" } ?: "no window")
-        if (seven != null) lines += weekLines(seven, nowMs)
         if (c != null) {
             val rl = c.rateLimitedAtSec?.takeIf { nowMs - it * 1000 < 3_600_000L }
             lines += "Claude data: " + (if (claudeStale) "STALE, " else "") + "pushed " + ago(claudeAgeMs) + (if (rl != null) " · rate limited " + ago(nowMs - rl * 1000) else "")
@@ -151,6 +225,7 @@ object AiUsageModel {
             lines += "OR month: " + spend(or.month)
         }
         if (readStale || note.isNotBlank()) lines += "App read: " + (if (note.isNotBlank()) "$note, " else "") + "last good " + ago(readAgeMs)
-        return Card(title, text, lines, five?.usedPct?.let { Math.round(it).toInt().coerceIn(0, 100) }, stale)
+        return Card(title, text, lines, seven?.usedPct?.let { Math.round(it).toInt().coerceIn(0, 100) }, stale,
+            if (wk != null) 4 else 0, wk?.alert.orEmpty())
     }
 }

@@ -124,9 +124,7 @@ class AiBadgeService : Service() {
 
     private fun build(card: AiUsageModel.Card): Notification {
         val pinned = BadgeServices.pinned(this, BADGE_ID)
-        val open = PendingIntent.getActivity(
-            this, RC_OPEN,
-            Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP),
+        val open = PendingIntent.getActivity(this, RC_OPEN, openIntent(this),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         val refresh = PendingIntent.getService(
             this, RC_REFRESH, Intent(this, AiBadgeService::class.java).setAction(ACTION_REFRESH),
@@ -137,7 +135,7 @@ class AiBadgeService : Service() {
             .setContentTitle(card.title)
             .setContentText(card.text)
             .setSubText("Cloud SA - AI")
-            .setStyle(NotificationCompat.BigTextStyle().bigText(card.expanded))
+            .setStyle(NotificationCompat.BigTextStyle().bigText(styled(card)))
             .setContentIntent(open)
             .setOngoing(pinned)
             .setOnlyAlertOnce(true)
@@ -174,13 +172,41 @@ class AiBadgeService : Service() {
         private fun bearer(ctx: Context): String = AccountData.secret(ctx, "fleet.bearer").trim()
             .ifEmpty { runCatching { DaguPrefs(ctx).bearerToken }.getOrDefault("") }
 
+        /**
+         * #1543 The tap: Cloud SuperIntel's Cost page (its OPEN action with section/page = cost, package-pinned), or the
+         * SuperApp itself when SuperIntel is not installed.
+         */
+        fun openIntent(ctx: Context): Intent {
+            val l = AiUsageModel.SuperIntelLink
+            val si = Intent(l.ACTION).setPackage(l.PACKAGE)
+                .putExtra(l.EXTRA_SECTION, l.COST).putExtra(l.EXTRA_PAGE, l.COST)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            val ok = runCatching { ctx.packageManager.resolveActivity(si, 0) != null }.getOrDefault(false)
+            return if (ok) si else Intent(ctx, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        }
+
+        /** The big text: the weekly block monospaced (its columns line up), a line whose week runs out before reset in red. */
+        fun styled(card: AiUsageModel.Card): CharSequence {
+            val sb = android.text.SpannableStringBuilder()
+            card.lines.forEachIndexed { i, l ->
+                if (i > 0) sb.append('\n')
+                val start = sb.length
+                sb.append(l)
+                if (i < card.weekCount) sb.setSpan(android.text.style.TypefaceSpan("monospace"), start, sb.length, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+                if (i in card.alert) sb.setSpan(android.text.style.ForegroundColorSpan(ALERT_RED), start, sb.length, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            }
+            return sb
+        }
+
+        const val ALERT_RED = 0xFFFF5252.toInt()
+
         fun ensureChannel(ctx: Context) {
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
             val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             if (nm.getNotificationChannel(CHANNEL_ID) != null) return
             nm.createNotificationChannel(
                 NotificationChannel(CHANNEL_ID, "AI usage", NotificationManager.IMPORTANCE_LOW).apply {
-                    description = "Claude session and weekly used %, OpenRouter balance and spend."
+                    description = "Claude weekly used % and burn rate, session %, OpenRouter balance and spend."
                     setShowBadge(false)
                 },
             )

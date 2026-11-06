@@ -16,7 +16,8 @@ import java.util.Locale
  */
 object BadgeCardData {
 
-    data class Line(val label: String, val value: String)
+    /** [mono]: a whole preformatted line (the AI badge's weekly block), drawn monospaced; [alert]: drawn red. */
+    data class Line(val label: String, val value: String, val mono: Boolean = false, val alert: Boolean = false)
 
     data class Data(
         val badge: BadgeDeclaration.Badge,
@@ -52,16 +53,19 @@ object BadgeCardData {
         val ex = n?.extras
         val title = ex?.getCharSequence(Notification.EXTRA_TITLE)?.toString().orEmpty()
         val text = ex?.getCharSequence(Notification.EXTRA_TEXT)?.toString().orEmpty()
-        val big = ex?.getCharSequence(Notification.EXTRA_BIG_TEXT)?.toString().orEmpty()
+        val bigText: CharSequence = ex?.getCharSequence(Notification.EXTRA_BIG_TEXT) ?: ""
         val max = ex?.getInt(Notification.EXTRA_PROGRESS_MAX, 0) ?: 0
         val posted = ex?.getInt(Notification.EXTRA_PROGRESS, 0) ?: 0
         val postedProgress = if (max > 0) (posted.toFloat() / max).coerceIn(0f, 1f) else null
         val live = n != null && (st == null || st.state == BadgeServices.State.LIVE)
         val note = if (live) "" else st?.reason.orEmpty()
-        val extraLines = big.lines().map { it.trim() }.filter { it.isNotEmpty() && it != title && it != text }
-            .take(maxLines(b)).map { l ->
+        val extraLines = styledLines(bigText).filter { it.first.isNotBlank() && it.first.trim() != title && it.first.trim() != text }
+            .take(maxLines(b)).map { (raw, mono, alert) ->
+                // #1543 a monospaced line keeps its own spacing (the weekly block's aligned columns): no trim, no label split.
+                if (mono) return@map Line("", raw.trimEnd(), mono = true, alert = alert)
+                val l = raw.trim()
                 val i = l.indexOf(": ")
-                if (i in 1..24 && l[i - 1] != ' ') Line(l.substring(0, i), l.substring(i + 2)) else Line("", l)
+                if (i in 1..24 && l[i - 1] != ' ') Line(l.substring(0, i), l.substring(i + 2), alert = alert) else Line("", l, alert = alert)
             }
         fun data(headline: String, sub: String, progress: Float?, lines: List<Line>) = Data(
             b, b.label, headline, sub, progress, lines, live, note, n?.`when` ?: 0L, n?.contentIntent,
@@ -94,6 +98,23 @@ object BadgeCardData {
     }
 
     private const val MAX_LINES = 4
+
+    /** The big text's lines with the styling its badge put on them: (text, monospaced, red). */
+    internal fun styledLines(cs: CharSequence): List<Triple<String, Boolean, Boolean>> {
+        val sp = cs as? android.text.Spanned
+        val out = mutableListOf<Triple<String, Boolean, Boolean>>()
+        var start = 0
+        while (start <= cs.length) {
+            var end = start
+            while (end < cs.length && cs[end] != '\n') end++
+            val mono = sp?.getSpans(start, end, android.text.style.TypefaceSpan::class.java)?.any { it.family == "monospace" && end > start } == true
+            val red = sp?.getSpans(start, end, android.text.style.ForegroundColorSpan::class.java)?.isNotEmpty() == true && end > start
+            out += Triple(cs.subSequence(start, end).toString(), mono, red)
+            if (end >= cs.length) break
+            start = end + 1
+        }
+        return out
+    }
 
     /** #1151 The AI badge carries seven "label: value" rows (two Claude windows, the push age, four OpenRouter figures). */
     private fun maxLines(b: BadgeDeclaration.Badge): Int = if (b.id == "ai_usage") 12 else MAX_LINES

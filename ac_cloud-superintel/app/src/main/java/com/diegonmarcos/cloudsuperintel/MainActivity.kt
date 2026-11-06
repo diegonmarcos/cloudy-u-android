@@ -14,12 +14,20 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         FleetChrome.apply(this)
         shared(intent)
+        opened(intent)
         setContent { SiTheme { SiShell() } }
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         shared(intent)
+        opened(intent)
+    }
+
+    /** #1543 OPEN with section/page (the SuperApp AI badge opens Cost): handed to the shell through [SiOpen]. */
+    private fun opened(i: Intent?) {
+        val l = com.diegonmarcos.superapp.notificationcenter.AiUsageModel.SuperIntelLink
+        SiOpen.target(i?.action, i?.getStringExtra(l.EXTRA_SECTION), i?.getStringExtra(l.EXTRA_PAGE))?.let { SiOpen.pending = it }
     }
 
     /** Share > SI of plain text: into the chat box; nothing is sent until the user does. */
