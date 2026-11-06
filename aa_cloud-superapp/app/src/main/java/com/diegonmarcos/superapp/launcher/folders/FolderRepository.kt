@@ -24,7 +24,7 @@ class FolderRepository(
     private val ctx: Context,
     private val overrides: FolderOverrideStore = FolderOverrideStore(ctx),
     /** App enumeration per scope — injectable so the resolution can be tested without a device. */
-    private val enumerate: (Context, FolderScope) -> List<FolderApp> = ::enumerateApps,
+    private val enumerate: (Context, FolderScope) -> List<FolderApp> = { c, s -> enumerateApps(c, s) },
     private val now: () -> Long = { SystemClock.elapsedRealtime() },
 ) {
     private class Cached(val apps: List<FolderApp>, val at: Long)
