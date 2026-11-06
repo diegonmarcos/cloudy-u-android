@@ -38,6 +38,13 @@ internal object ControlStatus {
         val shellUsable: Boolean get() = state == Channel.UP
     }
 
+    /**
+     * #1556 A DEFINITE "cannot reach the broker" status, so the Store chip never sits on grey "checking" when the probe threw or
+     * timed out. state NOT_PAIRED makes [ink] RED (it is checked before the adb colour), so it is never read as "still checking".
+     */
+    fun unreachable(reason: String): ChannelStatus =
+        ChannelStatus(Channel.NOT_PAIRED, null, reason, System.currentTimeMillis(), AdbLink.UNKNOWN, "")
+
     fun fromBroker(s: ShellStatus): ChannelStatus = when {
         !s.brokerInstalled -> ChannelStatus(Channel.NOT_PAIRED, null, s.reason.ifBlank { "SuperApp (the shell broker) is not installed" }, s.checkedAt)
         s.armed -> ChannelStatus(Channel.UP, s.channel, null, s.checkedAt, s.adb, s.adbDetail)

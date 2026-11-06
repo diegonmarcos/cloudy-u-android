@@ -276,20 +276,24 @@ object StoreBar {
         val ctx = LocalContext.current
         var tick by remember { mutableIntStateOf(0) }
         val ch = remember(tick) { StoreStatus.channel(ctx) }
+        // #1556 Re-probe only when the floor allows it (AdbRecheck, 30 s). The probe settles the chip to a definite state and its
+        // completion bumps `tick`; without the floor that completion (or a flapping adb setting / a probe that never settled)
+        // re-fired the probe forever — the owner's "keeps checking ADB". A settled state is simply shown; it is not re-probed.
         LaunchedEffect(tick) {
-            if (!StoreStatus.fresh(ctx)) StoreStatus.refresh(ctx) { MAIN.post { tick++; onChange() } }
+            if (StoreStatus.dueForRecheck()) StoreStatus.refresh(ctx) { MAIN.post { tick++; onChange() } }
         }
-        // #1442 Re-verify the live link on resume.
+        // #1442 Re-verify the live link on resume — subject to the same 30 s floor (no cache clear, so no "checking" flash).
         val owner = androidx.lifecycle.compose.LocalLifecycleOwner.current
         androidx.compose.runtime.DisposableEffect(owner) {
             val obs = androidx.lifecycle.LifecycleEventObserver { _, e ->
-                if (e == androidx.lifecycle.Lifecycle.Event.ON_RESUME) { StoreStatus.invalidate(); tick++ } }
+                if (e == androidx.lifecycle.Lifecycle.Event.ON_RESUME) tick++ }
             owner.lifecycle.addObserver(obs)
             onDispose { owner.lifecycle.removeObserver(obs) }
         }
-        // #1550 no polling: re-check when Wireless debugging / adb is switched (Settings.Global observer) and on resume.
+        // #1550 no polling: re-check when Wireless debugging / adb is switched (Settings.Global observer); #1556 floor-gated, and
+        // it asks for a re-check (tick++) rather than clearing the cache, so a flapping setting cannot drive a probe loop.
         androidx.compose.runtime.DisposableEffect(ctx) {
-            val stop = com.diegonmarcos.superapp.shellclient.AdbWatch.observe(ctx) { StoreStatus.invalidate(); tick++ }
+            val stop = com.diegonmarcos.superapp.shellclient.AdbWatch.observe(ctx) { tick++ }
             onDispose { stop() }
         }
         val chLabel = ch?.let { ControlStatus.label(it) } ?: ctx.getString(R.string.store_bar_channel_checking)
