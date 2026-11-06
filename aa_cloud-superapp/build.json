@@ -3043,7 +3043,7 @@
               {
                 "_doc": "Experiences \u2014 Cloud-Me's top-level Experiences page (Work, Study, Personal Achieves), entered at its first tab Work; replaced the Me-Study and Me-Achieves tiles once Experiences and Tasks became top-level Cloud-Me pages. Same `extapp:<appId>#<target>` hand-off as the tiles beside it: launchExternalApp opens Cloud-Me and passes everything after the '#' as the `shortcut_action` extra, which Cloud-Me's MainActivity resolves through the `page:<section>/<page>` grammar; not installed, the same download-and-install path every other extapp tile uses. The fragment names declared section/page ids of ac_cloud-me/build.json (test-dashboard-cross-app-deeplink.sh T3 proves they resolve).",
                 "id": "myexperiences",
-                "label": "Experiences",
+                "label": "Experienc.",
                 "icon": "ic_file_stack",
                 "target": "extapp:cloud-me#page:experiences/work"
               },
@@ -3063,7 +3063,7 @@
               {
                 "_doc": "Me-Inventory (was Me-Duties) \u2014 Cloud-Me's Tasks > Backlogs subpage (Day, Subject and Calendar views over the calendar engine; #1367 the former Duties section). Same `extapp:<appId>#<target>` hand-off as the tiles beside it: launchExternalApp opens Cloud-Me and passes everything after the '#' as the `shortcut_action` extra, which Cloud-Me's MainActivity resolves through the `page:<section>/<page>` grammar; not installed, the same download-and-install path every other extapp tile uses. The fragment names declared section/page ids of ac_cloud-me/build.json (test-dashboard-cross-app-deeplink.sh T3 proves they resolve).",
                 "id": "myduties",
-                "label": "Me-Inventory",
+                "label": "Me-Invent.",
                 "icon": "ic_check_all",
                 "target": "extapp:cloud-me#page:tasks/backlogs"
               },
@@ -3229,7 +3229,7 @@
               {
                 "_doc": "#571. MyTerminal opens cloud-myterminal's own applicationId (com.diegonmarcos.ide, kept by the #561 rename so installs survive). The forkless extapp:cloud-myterminal resolves to hub_package; it used to name the '/files' fork, a separate APK the rename did not make the app.",
                 "id": "drive",
-                "label": "MyTerminal",
+                "label": "MyTerm.",
                 "icon": "ic_code",
                 "target": "extapp:cloud-myterminal"
               },
@@ -3345,10 +3345,10 @@
                 "separator": true
               },
               {
-                "_doc": "C3 (#663) — cloud-c3 is a published APK, so this tile is extapp:, NOT page: — it opens the app, or offers the install when it is absent. It resolves through the ui.external_apps entry 'cloud-c3', which carries no label: the caption derives from the id. test-c3-is-an-app.sh fails if this goes back to a page: route. The in-app C3 section is still reachable from the one-hand circular menu and the Labs index, and its Watchdog tab launches com.diegonmarcos.watchdog via extapp:c3-watchdog.",
+                "_doc": "C3 (#663) — cloud-c3 is a published APK, so this tile is extapp:, NOT page: — it opens the app, or offers the install when it is absent. It resolves through the ui.external_apps entry 'cloud-c3', which carries no label: the caption derives from the id. test-c3-is-an-app.sh fails if this goes back to a page: route. The in-app C3 section is still reachable from the one-hand circular menu and the Labs index, and its Watchdog tab launches com.diegonmarcos.watchdog via extapp:c3-watchdog #1552 icon ic_cloud_control, the SAME declared drawable as Configs > Fleet > C3, so the two C3 entries share one glyph without duplicating the asset.",
                 "id": "c3",
                 "label": "C3",
-                "icon": "ic_p_watchdog",
+                "icon": "ic_cloud_control",
                 "target": "extapp:cloud-c3"
               },
               {

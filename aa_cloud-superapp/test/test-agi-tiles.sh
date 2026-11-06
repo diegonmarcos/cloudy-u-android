@@ -77,7 +77,7 @@ check("AGI" in titles and "Weby Services & Markets" in titles and "Me" in titles
 
 print("== T1: the AGI row is SI AI | Code Tools | MyTerminal Terminal (#1162, #1207, #1476), '|' being the group separators ==")
 got = [t.get("label") for t in tiles]
-want = ["SI", "AI", "|", "Code", "Tools", "|", "MyTerminal", "Terminal"]
+want = ["SI", "AI", "|", "Code", "Tools", "|", "MyTerm.", "Terminal"]
 check(got == want, "AGI captions are %s (want %s)" % (got, want))
 ids = [t.get("id") for t in tiles]
 check([i for i in ids if not str(i).startswith("agi-sep-")] == ["si", "ai-chat", "code", "tools-small-llms", "drive", "ai-tmx"], "AGI tile ids are %s" % ids)
@@ -119,7 +119,7 @@ def fleet_for(directory):
             and a.get("repo_url", "").rstrip("/").endswith("/" + directory)]
     return hits[0] if len(hits) == 1 else None
 for label, directory in (("SI", "ac_cloud-superintel"), ("KG Store", "ac_cloud-kg-store"), ("Search", "ac_cloud-search"), ("Tools", "ac_cloud-tools-small-llms"), ("Terminal", "ac_cloud-nix-on-droid"),
-                         ("MyTerminal", "ac_cloud-myterminal"), ("Code", "ac_cloud-code")):
+                         ("MyTerm.", "ac_cloud-myterminal"), ("Code", "ac_cloud-code")):
     tile, entry = by.get(label), fleet_for(directory)
     check(entry is not None, "fleet manifest has exactly one app built from %s" % directory)
     if tile is None or entry is None: continue

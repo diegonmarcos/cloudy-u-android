@@ -276,7 +276,7 @@ titles = [g["title"] for g in cloud["tile_groups"]]
 want = [c["label"] for c in json.load(open(sys.argv[2]))["app_categories"] if c["id"] != "other"]
 assert titles == want, (titles, "!=", want, "regen: data/regen.sh --constellation-only")
 g = {x["title"]: [t.get("label") for t in x["tiles"]] for x in cloud["tile_groups"]}
-assert g["Me"] == ["Me", "|", "Me-Health", "Experiences", "Tasks", "|", "Me-Inventory", "Me-Buro", "Me-LLC", "|", "Profile"], g["Me"]  # #1440 Account -> Profile (Cloud Me profile page)
+assert g["Me"] == ["Me", "|", "Me-Health", "Experienc.", "Tasks", "|", "Me-Invent.", "Me-Buro", "Me-LLC", "|", "Profile"], g["Me"]  # #1440 Account -> Profile (Cloud Me profile page)
 assert g["Tools Primary"][-2:] == ["Wallet", "Vault"] and "Account" not in g["Tools Primary"], g["Tools Primary"]  # #1155 order (Light left for Cloud Calc > Toolkit); Account moved to Me (last since #1362)
 assert "Vault" not in g["Data Apps"] and "Me" not in g["Tools Primary"], g
 assert "Account" in g["Configs"], "Account must stay in Configs (intentional duplicate)"

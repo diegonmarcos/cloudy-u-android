@@ -80,7 +80,16 @@ def icons(o):
             else: yield from icons(v)
     elif isinstance(o, list):
         for v in o: yield from icons(v)
-if 'ic_cloud_control' in list(icons(cloud)): probs.append('c3 icon collides with a Cloud page icon')
+# #1552 the Cloud ▸ Apps C3 tile shares the Fleet C3 glyph on purpose; ic_cloud_control may appear in Cloud ONLY on a C3
+# entry (id/label C3). Any other Cloud node wearing it is still a collision.
+def nodes(o):
+    if isinstance(o, dict):
+        yield o
+        for v in o.values(): yield from nodes(v)
+    elif isinstance(o, list):
+        for v in o: yield from nodes(v)
+stray = [n for n in nodes(cloud) if n.get('icon') == 'ic_cloud_control' and n.get('id') != 'c3' and n.get('label') != 'C3']
+if stray: probs.append('ic_cloud_control used by a non-C3 Cloud node: %r' % [n.get('id') or n.get('label') for n in stray])
 sep = {p['id']: p.get('separator_before') for p in sec['pages']}
 if not sep['kde']: probs.append('Peer Control lacks the sub-group divider (separator_before)')
 import os
