@@ -320,8 +320,8 @@ BEFORE = {'bluetooth-analyze', 'bluetooth-locate', 'presets', 'controls', 'oneha
           'adb-shell',  # added on purpose: Configs ▸ Network ▸ ADB Shell (the privileged channel's page)
           'c3', 'network-sep-1',   # added on purpose: Network's C3 entry and its separator
           'firewall',   # added on purpose: Configs ▸ Network ▸ Firewall hosts the firewall engine's controls (About keeps a summary)
-          'watchdog',   # #1545 added on purpose: the in-app hub page, Configs ▸ Agents ▸ Watchdog since #1548 (Network + Observability)
-          'watchtower', # #1548 added on purpose: Configs ▸ Agents ▸ Watchtower, the same hub over Observability only
+          'agents-watchdog',   # #1545/#1548 the in-app hub page Configs ▸ Agents ▸ Watchdog (Network + Observability); #1552 unique id (N12), page:config/watchdog is a page_alias
+          'agents-watchtower', # #1548 Configs ▸ Agents ▸ Watchtower, the same hub over Observability only; #1552 unique id, page:config/watchtower is a page_alias
           'dns',        # #740 added on purpose: Configs ▸ Mesh ▸ DNS (the fleet resolver)
           'bluetooth', 'bluetooth-find', 'bluetooth-connect', 'bluetooth-interact', 'bluetooth-debug', 'bluetooth-dev',  # #1221 added on purpose: Configs ▸ Fleet ▸ Bluetooth and its five hidden tabs
           'wifi', 'wifi-scan', 'wifi-channels', 'wifi-link', 'wifi-tools', 'wifi-log',  # #1263 added on purpose: Configs ▸ Setup ▸ Network ▸ WiFi and its five hidden tabs

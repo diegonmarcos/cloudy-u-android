@@ -54,7 +54,7 @@ if declared != ['Setup', 'Fleet', 'Agents']: probs.append('declared groups %r !=
 grid = [p['id'] for p in vis if p.get('group') == 'Setup' and p.get('subgroup') == 'Observability']
 if grid != ['xray', 'logcat', 'perms', 'app-about']: probs.append('Setup > Observability = %r' % grid)
 agents = [p['id'] for p in vis if p.get('group') == 'Agents']
-if agents != ['watchdog', 'watchtower']: probs.append('Agents = %r' % agents)
+if agents != ['agents-watchdog', 'agents-watchtower']: probs.append('Agents = %r' % agents)
 print('; '.join(probs) or 'OK')
 PY
 )" "Configs groups are build.json's groups (Setup, Fleet, Agents); Fleet = C3, Peer Control, Bluetooth; Agents = Watchdog, Watchtower; no agents page; Setup ▸ Observability = X-Ray, LogCat, Permissions, About"

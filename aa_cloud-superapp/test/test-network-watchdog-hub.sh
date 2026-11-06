@@ -5,7 +5,7 @@
 #      Observability, Watchtower's = Observability; Watchdog is no Network item
 #   W2 the hub's sections are DERIVED (Sections.hubSections over the subgroups), routed by data (SectionPages hub_sections
 #      branch), and drawn with the Cloud ▸ Apps heading and tile components (GroupTitle, TileStrip), not a copy
-#   W3 Cloud ▸ Apps ▸ Configs holds Watchdog (page:config/watchdog) where Firewall was, and no Firewall tile
+#   W3 Cloud ▸ Apps ▸ Configs holds Watchdog (page:config/agents-watchdog) where Firewall was, and no Firewall tile
 set -u
 APP="$(cd "$(dirname "$0")/.." && pwd)"
 KT="$APP/app/src/main/java/com/diegonmarcos/superapp/launcher"
@@ -29,18 +29,18 @@ print('ROW', '|'.join('%s=%s' % (t.get('label'), t.get('target', '')) for t in t
 PY
 )"
 echo "$out" | sed 's/^/    /'
-echo "$out" | grep -qx "AGENTS watchdog:Watchdog:'':Network,Observability watchtower:Watchtower:'':Observability" \
+echo "$out" | grep -qx "AGENTS agents-watchdog:Watchdog:'':Network,Observability agents-watchtower:Watchtower:'':Observability" \
   && ok "Agents = Watchdog (Network + Observability) and Watchtower (Observability), both in-app hub pages" \
   || bad "Agents is not Watchdog (hub Network, Observability) then Watchtower (hub Observability), both without an action"
 echo "$out" | grep -q '^NETWORK.*watchdog' && bad "Watchdog is still a Network item" || ok "Watchdog left Network"
-echo "$out" | grep -q '|Watchdog=page:config/watchdog|' && ok "Cloud ▸ Apps ▸ Configs opens page:config/watchdog" \
-  || bad "Cloud ▸ Apps ▸ Configs has no Watchdog tile on page:config/watchdog"
+echo "$out" | grep -q '|Watchdog=page:config/agents-watchdog|' && ok "Cloud ▸ Apps ▸ Configs opens page:config/agents-watchdog" \
+  || bad "Cloud ▸ Apps ▸ Configs has no Watchdog tile on page:config/agents-watchdog"
 echo "$out" | grep -q 'Firewall=' && bad "Cloud ▸ Apps ▸ Configs still has a Firewall tile" || ok "Cloud ▸ Apps ▸ Configs no longer carries Firewall"
 
 echo "== W2: derived, routed by data, drawn by the shared component =="
 grep -qE 'hubSections\.isNotEmpty\(\) -> SubgroupHubFragment\.newInstance\(sectionId, pageId\)' "$KT/SectionPages.kt" \
   && ok "SectionPages routes any hub_sections page to SubgroupHubFragment" || bad "no data-driven hub branch in SectionPages"
-grep -qE 'pageId == "(watchdog|watchtower)"' "$KT/SectionPages.kt" && bad "SectionPages names a hub page by id" || ok "no per-id branch for watchdog or watchtower"
+grep -qE 'pageId == "(agents-watchdog|agents-watchtower)"' "$KT/SectionPages.kt" && bad "SectionPages names a hub page by id" || ok "no per-id branch for the hub pages"
 grep -q 'fun hubSections(' "$KT/Sections.kt" && ok "Sections.hubSections derives the sections" || bad "Sections.hubSections missing"
 grep -q 'GroupTitle(sec.title)' "$KT/SubgroupHubFragment.kt" && ok "each section is titled with GroupTitle (Cloud ▸ Apps' heading)" || bad "the hub does not title its sections with GroupTitle"
 grep -q 'TileStrip(sec.tiles' "$KT/SubgroupHubFragment.kt" && ok "the hub draws TileStrip (Cloud ▸ Apps' tile component)" || bad "the hub does not reuse TileStrip"
