@@ -1,5 +1,15 @@
 [
   {
+    "name": "cloudy-ai-api",
+    "service": "cloudy-ai-api",
+    "vm": "oci-A1-f_0",
+    "public_url": "api.diegonmarcos.com/ai",
+    "auth": "two_factor",
+    "private_dns": "cloudy-ai-api.mesh.diegonmarcos.com:4185",
+    "port": 4185,
+    "category": "sec"
+  },
+  {
     "name": "languagetool",
     "service": "languagetool",
     "vm": "oci-A1-f_0",
@@ -10,16 +20,6 @@
     "category": "tools"
   },
   {
-    "name": "c3-infra-api",
-    "service": "c3-infra-api",
-    "vm": "oci-A1-f_0",
-    "public_url": "api.diegonmarcos.com/c3-infra-api",
-    "auth": "two_factor",
-    "private_dns": "c3-infra-api.mesh.diegonmarcos.com:8081",
-    "port": 8081,
-    "category": "sec"
-  },
-  {
     "name": "c3-public-api",
     "service": "c3-public-api",
     "vm": "oci-E2-f_1",
@@ -27,16 +27,6 @@
     "auth": "two_factor",
     "private_dns": "c3-public-api.mesh.diegonmarcos.com:8087",
     "port": 8087,
-    "category": "obs"
-  },
-  {
-    "name": "c3-services-api",
-    "service": "c3-services-api",
-    "vm": "oci-A1-f_0",
-    "public_url": "api.diegonmarcos.com/c3-services-api",
-    "auth": "two_factor",
-    "private_dns": "c3-services-api.mesh.diegonmarcos.com:8082",
-    "port": 8082,
     "category": "obs"
   },
   {
@@ -100,13 +90,73 @@
     "category": "app"
   },
   {
-    "name": "git-proxy-api",
-    "service": "git-proxy-api",
+    "name": "cloudy-all-api",
+    "service": "cloudy-all-api",
+    "vm": "oci-A1-f_0",
+    "public_url": "api.diegonmarcos.com/cloudy-all-api",
+    "auth": "two_factor",
+    "private_dns": "cloudy-all-api.mesh.diegonmarcos.com:8082",
+    "port": 8082,
+    "category": "obs"
+  },
+  {
+    "name": "cloudy-all-mcp",
+    "service": "cloudy-all-mcp",
+    "vm": "oci-A1-f_0",
+    "public_url": "mcp.diegonmarcos.com/cloudy-all-mcp",
+    "auth": "none",
+    "private_dns": "cloudy-all-mcp.mesh.diegonmarcos.com:3112",
+    "port": 3112,
+    "category": "obs"
+  },
+  {
+    "name": "cloudy-apps-communication-mcp",
+    "service": "cloudy-apps-communication-mcp",
+    "vm": "oci-A1-f_0",
+    "public_url": "mcp.diegonmarcos.com/cloudy-apps-communication-mcp",
+    "auth": "none",
+    "private_dns": "cloudy-apps-communication-mcp.mesh.diegonmarcos.com:3103",
+    "port": 3103,
+    "category": "app"
+  },
+  {
+    "name": "cloudy-apps-drive-mcp",
+    "service": "cloudy-apps-drive-mcp",
+    "vm": "oci-A1-f_0",
+    "public_url": "mcp.diegonmarcos.com/cloudy-apps-drive-mcp",
+    "auth": "none",
+    "private_dns": "cloudy-apps-drive-mcp.mesh.diegonmarcos.com:3109",
+    "port": 3109,
+    "category": "app"
+  },
+  {
+    "name": "cloudy-c3-api",
+    "service": "cloudy-c3-api",
+    "vm": "oci-A1-f_0",
+    "public_url": "api.diegonmarcos.com/cloudy-c3-api",
+    "auth": "two_factor",
+    "private_dns": "cloudy-c3-api.mesh.diegonmarcos.com:8081",
+    "port": 8081,
+    "category": "sec"
+  },
+  {
+    "name": "cloudy-drive-git-proxy-api",
+    "service": "cloudy-drive-git-proxy-api",
     "vm": "oci-E2-f_1",
     "public_url": "api.diegonmarcos.com/git",
     "auth": "two_factor",
-    "private_dns": "git-proxy-api.mesh.diegonmarcos.com:8123",
+    "private_dns": "cloudy-drive-git-proxy-api.mesh.diegonmarcos.com:8123",
     "port": 8123,
+    "category": "app"
+  },
+  {
+    "name": "cloudy-mail-http-to-smtp-api",
+    "service": "cloudy-mail-http-to-smtp-api",
+    "vm": "gcp-E2-f_0",
+    "public_url": "api.diegonmarcos.com/cloudy-mail-http-to-smtp-api",
+    "auth": "bearer",
+    "private_dns": "cloudy-mail-http-to-smtp-api.mesh.diegonmarcos.com:8090",
+    "port": 8090,
     "category": "app"
   },
   {
@@ -127,16 +177,6 @@
     "auth": "none",
     "private_dns": "g-workspace-mcp.mesh.diegonmarcos.com:3104",
     "port": 3104,
-    "category": "app"
-  },
-  {
-    "name": "http-to-smtp-proxy-api",
-    "service": "http-to-smtp-proxy-api",
-    "vm": "gcp-E2-f_0",
-    "public_url": "api.diegonmarcos.com/http-to-smtp-proxy-api",
-    "auth": "bearer",
-    "private_dns": "http-to-smtp-proxy-api.mesh.diegonmarcos.com:8090",
-    "port": 8090,
     "category": "app"
   },
   {
@@ -300,22 +340,32 @@
     "category": "app"
   },
   {
-    "name": "scrappers-api",
-    "service": "scrappers-api",
+    "name": "cloudy-browser-headless",
+    "service": "cloudy-browser-headless",
+    "vm": "oci-A1-f_0",
+    "public_url": "mcp.diegonmarcos.com",
+    "auth": "none",
+    "private_dns": "cloudy-browser-headless.mesh.diegonmarcos.com:3118",
+    "port": 3118,
+    "category": "data"
+  },
+  {
+    "name": "cloudy-browser-scrapper-api",
+    "service": "cloudy-browser-scrapper-api",
     "vm": "oci-A1-f_0",
     "public_url": "api.diegonmarcos.com",
     "auth": "two_factor",
-    "private_dns": "scrappers-api.mesh.diegonmarcos.com:3020",
+    "private_dns": "cloudy-browser-scrapper-api.mesh.diegonmarcos.com:3020",
     "port": 3020,
     "category": "data"
   },
   {
-    "name": "capital-stack-finterminal-api",
-    "service": "capital-stack-finterminal-api",
+    "name": "capital-stack-finterm-api",
+    "service": "capital-stack-finterm-api",
     "vm": "oci-A1-f_0",
-    "public_url": "api.diegonmarcos.com/capital-stack-finterminal-api",
+    "public_url": "api.diegonmarcos.com/capital-stack-finterm-api",
     "auth": "two_factor",
-    "private_dns": "capital-stack-finterminal-api.mesh.diegonmarcos.com:8340",
+    "private_dns": "capital-stack-finterm-api.mesh.diegonmarcos.com:8340",
     "port": 8340,
     "category": "fin"
   },
