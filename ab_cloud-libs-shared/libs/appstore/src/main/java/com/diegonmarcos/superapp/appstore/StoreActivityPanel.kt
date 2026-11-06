@@ -64,7 +64,13 @@ fun StoreActivityPanel(updates: Int, onUpdateAll: () -> Unit, modifier: Modifier
         StoreJobs.addObserver(o)
         onDispose { StoreJobs.removeObserver(o) }
     }
-    val items = remember(jobs, boardTick) { StoreActivity.items(jobs, StoreJobs.board.rows()) }
+    // #1551 the persisted install queue repaints the panel on every transition it saves, and only then.
+    val queueTick by StoreAuto.saves.collectAsState()
+    val items = remember(jobs, boardTick, queueTick) {
+        StoreActivity.items(jobs, StoreJobs.board.rows(), StoreAuto.activityQueue(app) { t ->
+            java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(java.util.Date(t))
+        })
+    }
     val all = StoreActivity.overall(items, updates)
 
     val prefs = remember { StoreActivity.Prefs(PrefsFlags(app)) }
@@ -127,6 +133,7 @@ private fun Item(i: StoreActivity.Item, e: DownloadEngine?) {
         StoreActivity.Phase.FAILED -> KitStoreRow.BAD
         StoreActivity.Phase.DONE -> KitStoreRow.UP
         StoreActivity.Phase.PAUSED, StoreActivity.Phase.QUEUED -> DIM
+        StoreActivity.Phase.WAITING_CONFIRM, StoreActivity.Phase.RETRY -> KitStoreRow.AMBER_FILL
         else -> KitStoreRow.UPDATE
     }
     KitStoreRowLine(Modifier.testTag("$TAG:${i.key}")) {

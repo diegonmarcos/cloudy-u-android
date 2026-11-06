@@ -88,14 +88,23 @@ object UpdateProgress {
         private set
 
     /** Cancel button → arm cancellation for any in-flight download loop. */
-    fun requestCancel() { cancelRequested = true }
+    fun requestCancel() { cancelRequested = true; stoppedBySystem = false }
+
+    /**
+     * #1551 Android stopped the background job (dataSync timeout, a lost constraint, the worker's own stop): the same cooperative
+     * stop as [requestCancel], but NOT the user's — the queue reports it as paused and schedules its own resume.
+     */
+    @Volatile var stoppedBySystem: Boolean = false
+        private set
+
+    fun requestSystemStop() { cancelRequested = true; stoppedBySystem = true }
 
     /**
      * Start of a fresh user-initiated download session — disarm any stale
      * cancel, and un-minimize: the user asking for an update again is the
      * clearest possible request to see it.
      */
-    fun beginDownload() { cancelRequested = false; minimized = false }
+    fun beginDownload() { cancelRequested = false; stoppedBySystem = false; minimized = false }
 
     /**
      * Manual pass only: the user hit Minimize and wants the screen back.

@@ -14,7 +14,9 @@ import com.diegonmarcos.superapp.appstore.dl.DlText
  */
 object StoreActivity {
 
-    enum class Phase { QUEUED, DOWNLOADING, PAUSED, VERIFYING, INSTALLING, DONE, FAILED }
+    /** #1551 WAITING_CONFIRM: handed to Android, waiting for the user's tap on the notification; RETRY: its install did not finish
+     *  and it is re-installed from the cache when the next try is due. */
+    enum class Phase { QUEUED, DOWNLOADING, PAUSED, VERIFYING, INSTALLING, DONE, FAILED, WAITING_CONFIRM, RETRY }
     /** The expanded list's sections, in order. */
     enum class Group { ACTIVE, QUEUED, FINISHED }
     /** The collapsed line's colour. */
@@ -35,11 +37,13 @@ object StoreActivity {
         val engineId: String? = null, val engineState: DlState? = null,
         val bytes: Long = 0, val total: Long = -1, val bytesPerSec: Long = 0, val etaSec: Long = -1,
         val reason: String = "", val retries: Int = 0, val waitingFor: String = "", val addedAt: Long = UNKNOWN_AT,
+        /** #1551 the queue's retry budget (n/N) and the next try, already formatted by the caller ("14:05"); 0 / "" = none. */
+        val retryMax: Int = 0, val nextText: String = "",
     ) {
         val percent: Int get() = if (total > 0) (bytes * 100 / total).toInt().coerceIn(0, 100) else -1
         val group: Group get() = when (phase) {
             Phase.DOWNLOADING, Phase.VERIFYING, Phase.INSTALLING -> Group.ACTIVE
-            Phase.QUEUED, Phase.PAUSED -> Group.QUEUED
+            Phase.QUEUED, Phase.PAUSED, Phase.WAITING_CONFIRM, Phase.RETRY -> Group.QUEUED
             Phase.DONE, Phase.FAILED -> Group.FINISHED
         }
         val canPause get() = engineState == DlState.QUEUED || engineState == DlState.RUNNING || engineState == DlState.VERIFYING
@@ -61,15 +65,43 @@ object StoreActivity {
             Phase.INSTALLING -> "Installing"
             Phase.DONE -> "Done"
             Phase.FAILED -> "Failed" + if (reason.isNotEmpty()) ": $reason" else ""
+            Phase.WAITING_CONFIRM -> "Waiting for your confirmation · tap the notification"
+            Phase.RETRY -> listOf(if (retryMax > 0) "Retry $retries/$retryMax" else "Retry $retries",
+                if (nextText.isNotEmpty()) "next $nextText" else "",
+                reason).filter { it.isNotEmpty() }.joinToString(" · ")
         }
+    }
+
+    /**
+     * #1551 One entry of the persisted install queue ([StoreAuto]): its per-item state survives process death, so after a restart
+     * (or with the engine idle) the panel still says what each app waits for. [status] is the queue's word (queued, downloading,
+     * downloaded, installing, pending, retry, installed, failed, held, handed).
+     */
+    data class QueueEntry(
+        val key: String, val label: String, val status: String,
+        val attempts: Int = 0, val retryMax: Int = 0, val nextText: String = "", val reason: String = "",
+    )
+
+    /** The panel phase of a queue status; null = not shown (the host handed to its self-updater). */
+    fun queuePhase(status: String): Phase? = when (status) {
+        "queued", "downloaded" -> Phase.QUEUED
+        "downloading" -> Phase.DOWNLOADING
+        "installing" -> Phase.INSTALLING
+        "pending" -> Phase.WAITING_CONFIRM
+        "retry" -> Phase.RETRY
+        "installed" -> Phase.DONE
+        "failed", "held" -> Phase.FAILED
+        else -> null
     }
 
     /** What the one collapsed line says. [updates] is how many updates the page knows of (shown only when nothing is in flight). */
     data class Overall(
         val downloading: Int, val installing: Int, val queued: Int, val paused: Int, val failed: Int, val done: Int,
         val percent: Int, val bytesPerSec: Long, val etaSec: Long, val updates: Int = 0,
+        /** #1551 waiting for the user's tap, and waiting for an install retry. */
+        val confirming: Int = 0, val retrying: Int = 0,
     ) {
-        val active get() = downloading + installing + queued
+        val active get() = downloading + installing + queued + confirming + retrying
         val busy get() = active > 0
         val tone: Tone get() = when {
             busy -> Tone.ACTIVE
@@ -84,6 +116,8 @@ object StoreActivity {
                 if (downloading > 0) "$downloading downloading" else "",
                 if (installing > 0) "$installing installing" else "",
                 if (queued > 0) "$queued queued" else "",
+                if (confirming > 0) "$confirming waiting for confirmation" else "",
+                if (retrying > 0) "$retrying retrying" else "",
                 if (paused > 0) "$paused paused" else "",
                 "$percent%",
                 if (bytesPerSec > 0) DlText.size(bytesPerSec) + "/s" else "",
@@ -113,8 +147,31 @@ object StoreActivity {
         JobBoard.Phase.FAILED -> Phase.FAILED
     }
 
-    /** Every download of the engine and every install row, one [Item] per app. A cancelled download is not an item. */
-    fun items(jobs: List<DlJob>, rows: List<JobBoard.Row>): List<Item> {
+    /** Every download of the engine and every install row, one [Item] per app. A cancelled download is not an item.
+     *  #1551 [queue]: the persisted install queue; an app it names that is not mid-transfer shows the queue's state (waiting for
+     *  confirmation, retry n/N with the next time, failed with the reason), and an app only the queue knows is listed too. */
+    fun items(jobs: List<DlJob>, rows: List<JobBoard.Row>, queue: List<QueueEntry> = emptyList()): List<Item> =
+        withQueue(baseItems(jobs, rows), queue)
+
+    private fun withQueue(base: List<Item>, queue: List<QueueEntry>): List<Item> {
+        if (queue.isEmpty()) return base
+        val out = base.toMutableList()
+        val at = out.withIndex().associate { it.value.key to it.index }
+        for (q in queue) {
+            val phase = queuePhase(q.status) ?: continue
+            fun apply(i: Item) = i.copy(phase = phase, retries = q.attempts, retryMax = q.retryMax, nextText = q.nextText,
+                reason = q.reason.ifEmpty { i.reason })
+            val n = at[q.key]
+            if (n == null) out += apply(Item(q.key, q.label, q.key, phase))
+            // A transfer or install under way speaks for itself; the queue speaks for what waits or ended.
+            else if (out[n].group != Group.ACTIVE && phase in QUEUE_SPEAKS) out[n] = apply(out[n])
+        }
+        return out
+    }
+
+    private val QUEUE_SPEAKS = setOf(Phase.WAITING_CONFIRM, Phase.RETRY, Phase.FAILED)
+
+    private fun baseItems(jobs: List<DlJob>, rows: List<JobBoard.Row>): List<Item> {
         val byKey = rows.associateBy { it.key }
         val out = ArrayList<Item>()
         val seen = HashSet<String>()
@@ -147,6 +204,8 @@ object StoreActivity {
     fun overall(items: List<Item>, updates: Int = 0): Overall {
         fun n(p: Phase) = items.count { it.phase == p }
         val downloading = n(Phase.DOWNLOADING) + n(Phase.VERIFYING)
+        val confirming = n(Phase.WAITING_CONFIRM)
+        val retrying = n(Phase.RETRY)
         val speed = items.filter { it.phase == Phase.DOWNLOADING }.sumOf { it.bytesPerSec.coerceAtLeast(0) }
         // What is left to fetch at the combined speed: the known sizes of running and queued downloads (an unknown size adds nothing).
         val left = items.filter { it.phase == Phase.DOWNLOADING || it.phase == Phase.QUEUED }
@@ -168,13 +227,14 @@ object StoreActivity {
             val f = when (i.phase) {
                 Phase.QUEUED -> 0.0
                 Phase.DOWNLOADING, Phase.PAUSED -> (1 - INSTALL_SHARE) * dl
-                Phase.VERIFYING, Phase.INSTALLING -> 1 - INSTALL_SHARE
+                Phase.VERIFYING, Phase.INSTALLING, Phase.WAITING_CONFIRM, Phase.RETRY -> 1 - INSTALL_SHARE
                 Phase.DONE, Phase.FAILED -> 1.0
             }
             num += w * f; den += w
         }
         val pct = if (den <= 0.0) 0 else Math.round(100 * num / den).toInt().coerceIn(0, 100)
-        return Overall(downloading, n(Phase.INSTALLING), n(Phase.QUEUED), n(Phase.PAUSED), n(Phase.FAILED), n(Phase.DONE), pct, speed, eta, updates)
+        return Overall(downloading, n(Phase.INSTALLING), n(Phase.QUEUED), n(Phase.PAUSED), n(Phase.FAILED), n(Phase.DONE), pct, speed, eta, updates,
+            confirming, retrying)
     }
 
     /** The expanded list's section [g]: Active and Queued as they come; Finished lists failures first, at most [RECENT], newest first. */

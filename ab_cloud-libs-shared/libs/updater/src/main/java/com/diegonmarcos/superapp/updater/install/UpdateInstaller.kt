@@ -151,6 +151,7 @@ internal class UpdateInstaller(private val context: Context) {
             }
         }
         reapStaleSessions(installer)
+        supersedeOlderSessions(installer, targetPackage)
         val sessionId = installer.createSession(params)
         try {
             installer.openSession(sessionId).use { session ->
@@ -388,8 +389,17 @@ internal class UpdateInstaller(private val context: Context) {
             // with no way out but answering prompts by hand. Reaping at the
             // number the budget actually uses makes the two agree by
             // construction rather than by coincidence.
+            //
+            // #1551 and NEVER a COMMITTED one here either. A committed session is
+            // an install handed to Android and waiting on the user's tap (or on
+            // the system); abandoning it is what answered INSTALL_FAILED_ABORTED
+            // "Session was abandoned" for apps whose prompt was still pending,
+            // and that note then held them off every later pass. Only
+            // uncommitted leftovers are reclaimed at the cap; committed ones are
+            // bounded at ONE per package by [supersedeOlderSessions].
             mine.size >= BUDGET_CAP ->
-                idle.sortedBy(::createdAt)
+                idle.filter { Build.VERSION.SDK_INT < Build.VERSION_CODES.Q || !it.isCommitted }
+                    .sortedBy(::createdAt)
                     .take((mine.size - BUDGET_CAP + HEADROOM).coerceAtLeast(1))
 
             // Below the cap there is no urgency, so only reclaim sessions old
@@ -415,6 +425,28 @@ internal class UpdateInstaller(private val context: Context) {
             if (runCatching { installer.abandonSession(info.sessionId) }.isSuccess) reaped++
         }
         if (reaped > 0) Log.w(tag, "abandoned $reaped of ${mine.size} install session(s)")
+    }
+
+    /**
+     * #1551 ONE LIVE SESSION PER PACKAGE. Every pass that found an app still
+     * waiting on its confirmation used to commit ANOTHER session for it, so a
+     * phone with auto-update on piled up duplicates until the cap reaper
+     * abandoned them. Before a new session for [targetPackage] opens, our older
+     * committed, unfinished sessions for the same package are abandoned and
+     * recorded in [SupersededSessions], so their abort answer is swallowed by
+     * the receiver instead of being reported as this install failing. The new
+     * session surfaces its own fresh confirmation.
+     */
+    private fun supersedeOlderSessions(installer: PackageInstaller, targetPackage: String) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return
+        val mine = runCatching { installer.mySessions }.getOrNull().orEmpty()
+        for (info in mine) {
+            if (info.appPackageName != targetPackage || !info.isCommitted || info.isActive) continue
+            SupersededSessions.add(context, info.sessionId)
+            if (runCatching { installer.abandonSession(info.sessionId) }.isSuccess)
+                Log.i(tag, "superseded session ${info.sessionId} for $targetPackage by a new one")
+            else SupersededSessions.consume(context, info.sessionId)
+        }
     }
 
     private companion object {

@@ -82,6 +82,8 @@ object StoreAuto {
     const val HELD = "held"
     /** The host's own update, given to its self-updater after everything else. */
     const val HANDED = "handed"
+    /** #1551 Its install did not finish (session abandoned, timed out): re-installed from the cache when [Item.nextAt] is due. */
+    const val RETRY = "retry"
 
     const val HOST = "host"
 
@@ -90,6 +92,8 @@ object StoreAuto {
     const val TRIGGER_WIFI = "wifi"
     const val TRIGGER_STORE_REFRESH = "store_refresh"
     const val TRIGGER_API = "api"
+    /** #1551 the queue's own scheduled resume (a due install retry, a pass Android stopped). */
+    const val TRIGGER_RETRY = "retry"
 
     /** UpdateWorker's owner name: it updates the host itself right after the chain. */
     const val UPDATER_OWNER = "Updater/Worker"
@@ -116,6 +120,9 @@ object StoreAuto {
         /** The installed "versionCode/lastUpdateTime" when its install started:
          *  after a restart, a different value is the device saying it landed. */
         var before: String? = null,
+        /** #1551 install attempts that did not finish for this build, and when the next is due (0 = now). */
+        var attempts: Int = 0,
+        var nextAt: Long = 0L,
     )
 
     class State(
@@ -135,8 +142,9 @@ object StoreAuto {
 
     // ── seams: the production default is the only one shipped ──────────────
 
-    /** The remote answer per package. */
-    @Volatile var remote: (Context, Fleet.App) -> Fleet.State = Fleet::status
+    /** The remote answer per package. #1551 through the Store's check cache: a chain started from a page open re-reads what the
+     *  page just checked instead of asking the network again; only an answer older than the declared TTL (60 s) is fetched. */
+    @Volatile var remote: (Context, Fleet.App) -> Fleet.State = { c, a -> StoreChecks.status(c, a, force = false) }
 
     /** Installs one unattended pass may start ([Fleet.unattendedInstallBudget]). */
     @Volatile var installBudget: (Context) -> Int = Fleet::unattendedInstallBudget
@@ -150,6 +158,19 @@ object StoreAuto {
 
     /** Updates still waiting on the device after [s]: everything not landed. */
     fun pending(s: State): Int = s.queue.count { it.status != INSTALLED && it.status != HANDED }
+
+    /** #1551 Schedule this chain's own resume after [delayMs]: one-shot WorkManager work with the auto-update constraints
+     *  ([ConstellationWorker.kickAfter]), never a repeating timer. A test records it instead. */
+    @Volatile var scheduleRetry: (Context, Long) -> Unit = { c, d -> ConstellationWorker.kickAfter(c, TRIGGER_RETRY, d) }
+
+    /** #1551 The clock of the retry ledger (a test moves it). */
+    @Volatile var now: () -> Long = { System.currentTimeMillis() }
+
+    /** #1551 Re-installs from the cache after a session that did not finish, before the final failure (build.json downloads). */
+    @Volatile var maxInstallRetries: Int = BuildConfig.INSTALL_MAX_RETRIES
+
+    /** #1551 The keep-alive (dataSync foreground) is held only while auto-update is ON and the network is Wi-Fi (owner rule). */
+    @Volatile var keepAliveAllowed: (Context) -> Boolean = { c -> StorePriority.autoOn(c) && StorePriority.unmetered(c) }
 
     /** Called right after a package's transition is persisted, before its work
      *  starts — a test kills the "process" here to prove the resume. */
@@ -178,9 +199,10 @@ object StoreAuto {
             Log.i(TAG, "$trigger: the auto chain is already running — this trigger is already being served")
             return live ?: load(ctx) ?: State(IDLE, trigger, System.currentTimeMillis())
         }
+        // #903 the chain holds the dataSync foreground service for its whole run; #1551 only while auto-update is on and on Wi-Fi.
+        val kept = runCatching { keepAliveAllowed(ctx) }.getOrDefault(false)
         try {
-            // #903 the chain holds the dataSync foreground service for its whole run.
-            com.diegonmarcos.superapp.updater.BatchForeground.begin(ctx)
+            if (kept) com.diegonmarcos.superapp.updater.BatchForeground.begin(ctx)
             val prev = load(ctx)
             val now = System.currentTimeMillis()
             val s = when {
@@ -190,7 +212,7 @@ object StoreAuto {
                     prev
                 }
                 prev != null && prev.phase == DONE && trigger != TRIGGER_STORE_REFRESH &&
-                    trigger != TRIGGER_API && now - prev.finishedAt in 0 until FRESH_MS -> {
+                    trigger != TRIGGER_API && trigger != TRIGGER_RETRY && now - prev.finishedAt in 0 until FRESH_MS -> {
                     Log.i(TAG, "$trigger: a chain finished ${(now - prev.finishedAt) / 1000}s ago " +
                                "(${prev.summary}) — that is this trigger's answer")
                     return prev
@@ -232,10 +254,12 @@ object StoreAuto {
             Log.i(TAG, "$trigger: chain at ${s.phase} — ${s.summary}" + (s.lastError?.let { " — $it" } ?: ""))
             return s
         } finally {
+            // #1551 Android stopped this pass (worker stop, dataSync timeout): it is persisted, so it resumes on its own.
+            if (UpdateProgress.stoppedBySystem) runCatching { scheduleRetry(ctx, com.diegonmarcos.superapp.devtools.RetryBackoff.MIN_MS) }
             live = null
             running.set(false)
             UpdateProgress.republish()
-            com.diegonmarcos.superapp.updater.BatchForeground.end(ctx)
+            if (kept) com.diegonmarcos.superapp.updater.BatchForeground.end(ctx)
         }
     }
 
@@ -302,7 +326,7 @@ object StoreAuto {
                     it.status = HELD; it.failedAt = INSTALL
                     it.error = "the last install did not finish (${held.message}) — Install it from its row"
                 }
-                else -> s.queue += itemOf(app, app.kind, r)
+                else -> s.queue += itemOf(app, app.kind, r).also { carryRetry(ctx, it, app) }
             }
         }
         // Libs (the engines apps bind to) before apps, the host last. Stable,
@@ -313,9 +337,10 @@ object StoreAuto {
     }
 
     private fun download(ctx: Context, s: State, byId: Map<String, Fleet.App>) {
-        val go = s.queue.filter { it.kind != HOST && (it.status == QUEUED || it.status == DOWNLOADING) }
+        val t = now()
+        val go = s.queue.filter { it.kind != HOST && (it.status == QUEUED || it.status == DOWNLOADING || (it.status == RETRY && t >= it.nextAt)) }
         for ((n, item) in go.withIndex()) {
-            if (UpdateProgress.cancelRequested) return stop(ctx, s, "cancelled by the user — the rest resume on the next pass")
+            if (UpdateProgress.cancelRequested) return stop(ctx, s, stopWhy("the rest resume"))
             val app = byId[item.id]
             if (app == null) { fail(item, DOWNLOAD, "no longer in the fleet"); save(ctx, s); continue }
             val r = remoteOf(item)
@@ -343,7 +368,7 @@ object StoreAuto {
                 // #812 Cancel mid-download: not a failure. Its .part stays for
                 // the Range resume, and it stays queued for the next trigger.
                 item.status = QUEUED
-                return stop(ctx, s, "cancelled by the user — ${item.id} resumes from its partial on the next pass")
+                return stop(ctx, s, stopWhy("${item.id} resumes from its partial"))
             }
             if (StoreStages.actionableFor(ctx, app, r) != null) {
                 item.status = DOWNLOADED; item.failedAt = null; item.error = null
@@ -361,7 +386,7 @@ object StoreAuto {
         val budget = installBudget(ctx)
         var started = 0
         for ((n, item) in go.withIndex()) {
-            if (UpdateProgress.cancelRequested) return stop(ctx, s, "cancelled by the user — the rest resume on the next pass")
+            if (UpdateProgress.cancelRequested) return stop(ctx, s, stopWhy("the rest resume"))
             val app = byId[item.id]
             if (app == null) { fail(item, INSTALL, "no longer in the fleet"); save(ctx, s); continue }
             // Killed mid-install: the device is the only witness that counts.
@@ -394,6 +419,9 @@ object StoreAuto {
             val after = code(ctx, app)
             when {
                 after != null && after != item.before -> landed(item)
+                // #1551 a session that did not finish is retried from the cache (backoff), not failed.
+                st.failedAt == StoreStages.INSTALL && com.diegonmarcos.superapp.updater.install.InstallFailure.transient(st.text) ->
+                    retryLater(ctx, item, st.text, now())
                 st.failedAt != null -> fail(item, st.failedAt, st.text)
                 // The device already runs the published bytes: nothing to hand over.
                 st.id == "installed" -> landed(item)
@@ -429,6 +457,11 @@ object StoreAuto {
         s.phase = DONE
         s.current = null
         s.finishedAt = System.currentTimeMillis()
+        // #1551 what still waits for its retry resumes on its own, at the earliest due time (never sooner than 30 s).
+        val waiting = s.queue.filter { it.status == RETRY }
+        if (waiting.isNotEmpty()) runCatching {
+            scheduleRetry(ctx, (waiting.minOf { it.nextAt } - now()).coerceAtLeast(com.diegonmarcos.superapp.devtools.RetryBackoff.MIN_MS))
+        }
         // Persisted BEFORE the host update: installing this app kills this process.
         save(ctx, s)
         runCatching { onPending(ctx, pending(s)) }
@@ -445,7 +478,59 @@ object StoreAuto {
 
     private fun fail(i: Item, at: String, why: String) { i.status = FAILED; i.failedAt = at; i.error = why }
 
-    private fun landed(i: Item) { i.status = INSTALLED; i.failedAt = null; i.error = null }
+    private fun landed(i: Item) { i.status = INSTALLED; i.failedAt = null; i.error = null; i.attempts = 0; i.nextAt = 0L; landedIds += i.id
+        StoreChecks.gate.invalidate(i.id)   // #1551 the cached "update available" is history once it landed
+    }
+
+    /** Ids landed since the ledger was last saved: their retry entries are dropped on the next [save]. */
+    private val landedIds = java.util.Collections.synchronizedSet(HashSet<String>())
+
+    /** Why a phase stopped early: the user's Cancel, or Android stopping the background job (#1551: never called the user's). */
+    private fun stopWhy(rest: String): String =
+        if (UpdateProgress.stoppedBySystem) "paused: Android stopped the background job — $rest automatically"
+        else "cancelled by the user — $rest on the next pass"
+
+    private fun buildOf(i: Item) = i.digest.ifEmpty { i.version }
+
+    // ── #1551 the retry ledger ───────────────────────────────────────────────
+
+    private const val RETRIES = "retries"
+
+    fun retries(ctx: Context): MutableMap<String, InstallRetries.Entry> = runCatching {
+        InstallRetries.fromJson(ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(RETRIES, null)?.let { JSONObject(it) })
+    }.getOrDefault(LinkedHashMap())
+
+    @SuppressLint("ApplySharedPref")
+    private fun saveRetries(ctx: Context, all: Map<String, InstallRetries.Entry>) {
+        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(RETRIES, InstallRetries.toJson(all).toString()).commit()
+    }
+
+    /** Apply the ledger [e] to [item]: RETRY until it is used up, then the final failure with the real reason. */
+    private fun applyRetry(item: Item, e: InstallRetries.Entry) {
+        item.attempts = e.attempts; item.nextAt = e.nextAt
+        if (e.exhausted(maxInstallRetries)) fail(item, INSTALL, "install did not finish after ${e.attempts} attempts: ${e.reason}")
+        else { item.status = RETRY; item.failedAt = INSTALL; item.error = e.reason }
+    }
+
+    /** A new queue entry takes over what the ledger knows of its build; an install note that says the session did not finish
+     *  (it arrived after the pass that committed it, at the receiver) is counted here, once. */
+    private fun carryRetry(ctx: Context, item: Item, app: Fleet.App) {
+        val all = retries(ctx)
+        var e = InstallRetries.forBuild(all[item.id], buildOf(item))
+        Fleet.transientAtInstall(ctx, app)?.let { n -> e = InstallRetries.register(e, item.id, buildOf(item), n.message, n.at) }
+        val got = e
+        if (got == null) { if (all.remove(item.id) != null) saveRetries(ctx, all); return }
+        all[item.id] = got; saveRetries(ctx, all)
+        applyRetry(item, got)
+    }
+
+    /** A session that did not finish during this pass: counted now, retried when due. */
+    private fun retryLater(ctx: Context, item: Item, why: String, at: Long) {
+        val all = retries(ctx)
+        val e = InstallRetries.register(InstallRetries.forBuild(all[item.id], buildOf(item)), item.id, buildOf(item), why, at)
+        all[item.id] = e; saveRetries(ctx, all)
+        applyRetry(item, e)
+    }
 
     private fun rank(kind: String) = when (kind) { "lib" -> 0; HOST -> 2; else -> 1 }
 
@@ -481,6 +566,23 @@ object StoreAuto {
         }
     }
 
+    /** #1551 The time of the last persisted transition: what the Activity panel observes to repaint the queue state. */
+    val saves = kotlinx.coroutines.flow.MutableStateFlow(0L)
+
+    private val baked by lazy { runCatching { Fleet.parse(BuildConfig.CONSTELLATION_FLEET_B64) }.getOrDefault(emptyList()) }
+
+    /** #1551 The persisted queue as the Activity panel's per-item state (queued, downloading, waiting for confirmation,
+     *  installing, retry n/N with the next time, done, failed with the reason). [clock] formats the next-try time. */
+    fun activityQueue(ctx: Context, clock: (Long) -> String): List<StoreActivity.QueueEntry> {
+        val s = load(ctx) ?: return emptyList()
+        val byId = baked.associateBy { it.id }
+        return s.queue.filter { it.kind != HOST }.map { i ->
+            val app = byId[i.id]
+            StoreActivity.QueueEntry(app?.pkg ?: i.id, app?.label ?: i.id, i.status, i.attempts, maxInstallRetries,
+                if (i.status == RETRY && i.nextAt > 0) clock(i.nextAt) else "", i.error.orEmpty())
+        }
+    }
+
     /** `/api/store/auto`: phase, queue, current package, last error — the
      *  persisted state, so it reads the same after the app restarted. */
     fun json(ctx: Context): JSONObject {
@@ -510,8 +612,14 @@ object StoreAuto {
     /** commit(), not apply(): the next thing may be this process dying. */
     @SuppressLint("ApplySharedPref")
     private fun save(ctx: Context, s: State) {
+        if (landedIds.isNotEmpty()) {
+            val all = retries(ctx)
+            val gone = synchronized(landedIds) { landedIds.toList().also { landedIds.clear() } }
+            if (gone.map { all.remove(it) != null }.any { it }) saveRetries(ctx, all)
+        }
         s.updatedAt = System.currentTimeMillis()
         ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY, toJson(s).toString()).commit()
+        saves.value = s.updatedAt
         UpdateProgress.republish()
     }
 
@@ -522,7 +630,7 @@ object StoreAuto {
             JSONObject().put("id", i.id).put("kind", i.kind).put("result", i.status).put("remote", i.remote)
                 .put("version", i.version).put("digest", i.digest).put("bytes", i.bytes).put("source", i.source)
                 .put("failedAt", i.failedAt ?: JSONObject.NULL).put("error", i.error ?: JSONObject.NULL)
-                .put("before", i.before ?: JSONObject.NULL)
+                .put("before", i.before ?: JSONObject.NULL).put("attempts", i.attempts).put("nextAt", i.nextAt)
         }))
 
     private fun JSONObject.str(k: String): String? = if (isNull(k)) null else optString(k)
@@ -535,7 +643,7 @@ object StoreAuto {
                 val i = q.getJSONObject(n)
                 Item(i.getString("id"), i.optString("kind"), i.getString("result"), i.optString("remote"),
                     i.optString("version"), i.optString("digest"), i.optLong("bytes"), i.optString("source"),
-                    i.str("failedAt"), i.str("error"), i.str("before"))
+                    i.str("failedAt"), i.str("error"), i.str("before"), i.optInt("attempts"), i.optLong("nextAt"))
             })
     }
 
@@ -559,6 +667,11 @@ object StoreAuto {
     fun attach(ctx: Context, kick: (Context, String) -> Unit) {
         val app = ctx.applicationContext
         Fleet.autoChain = { c, apps, owner -> pass(c, apps, owner) }
+        // #1551 an install that did not finish, reported later at the receiver, resumes the queue (30 s floor; the chain decides
+        // what is due when it runs).
+        com.diegonmarcos.superapp.updater.install.InstallRetryHook.onTransient = { c, _, _ ->
+            runCatching { scheduleRetry(c, com.diegonmarcos.superapp.devtools.RetryBackoff.MIN_MS) }
+        }
         if (!watching.compareAndSet(false, true)) return
         runCatching {
             app.getSystemService(ConnectivityManager::class.java)!!

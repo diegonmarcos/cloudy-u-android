@@ -18,7 +18,8 @@ import kotlinx.coroutines.launch
  */
 suspend fun <T> CoroutineWorker.stopCooperatively(body: suspend CoroutineScope.() -> T): T = coroutineScope {
     val watch = launch {
-        try { awaitCancellation() } finally { if (isStopped) UpdateProgress.requestCancel() }
+        // #1551 a worker stop is Android's, never the user's: the queue resumes it instead of reading "cancelled by the user".
+        try { awaitCancellation() } finally { if (isStopped) UpdateProgress.requestSystemStop() }
     }
     try { body() } finally { watch.cancel() }
 }

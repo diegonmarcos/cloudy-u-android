@@ -61,9 +61,10 @@ CHECKS = [
                and "StoreStages.install(ctx, app, remoteOf(item))" in fun(auto(s), "install")),
     ("a download that will not fit is never started (storage check first)",
      lambda s: ordered(fun(auto(s), "download"), "StoreStages.room(ctx)", "if (want > room) {", "StoreStages.download(ctx, app)")),
-    ("one package failing never stops the rest (the only early return is a user cancel)",
+    # #1551 the cancel stop names its cause (the user's Cancel, or Android stopping the job) through stopWhy().
+    ("one package failing never stops the rest (the only early return is a cancel)",
      lambda s: fun(auto(s), "download").count("return") >= 1
-               and fun(auto(s), "download").count("return") == fun(auto(s), "download").count("return stop(ctx, s, \"cancelled")),
+               and fun(auto(s), "download").count("return") == fun(auto(s), "download").count("return stop(ctx, s, stopWhy(")),
     ("libs before apps, the host last",
      lambda s: "s.queue.sortBy { rank(it.kind) }" in fun(auto(s), "refresh")
                and re.search(r'"lib" -> 0;\s*HOST -> 2;\s*else -> 1', fun(auto(s), "rank"))),

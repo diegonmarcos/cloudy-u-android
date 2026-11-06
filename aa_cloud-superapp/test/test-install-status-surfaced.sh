@@ -113,7 +113,8 @@ fi
 has_code "$RCV" 'runCatching { context.startActivity(confirm) }' "a refused dialog start is caught, not assumed impossible"
 # A tap-to-install notification for a session that already ended is an
 # instruction to do something that cannot be done.
-CLR=$(code "$RCV" | grep -c 'clearConfirmNotification(context)')
+# #1551 per package: a terminal answer clears ITS app's prompt, never another app's.
+CLR=$(code "$RCV" | grep -c 'clearConfirmNotification(context, gateKey)')
 [ "$CLR" -ge 2 ] && ok "both terminal branches clear the stale confirm notification" \
                  || bad "expected the confirm notification cleared on SUCCESS and on failure (found $CLR)"
 

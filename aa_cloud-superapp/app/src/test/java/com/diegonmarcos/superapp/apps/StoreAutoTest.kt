@@ -2,13 +2,18 @@ package com.diegonmarcos.superapp.apps
 
 import android.app.Application
 import android.content.Context
+import android.content.Intent
 import android.content.pm.ApplicationInfo
+import android.content.pm.PackageInstaller
 import android.content.pm.PackageInfo
 import androidx.test.core.app.ApplicationProvider
 import com.diegonmarcos.superapp.appstore.FleetInstall
 import com.diegonmarcos.superapp.appstore.StoreAuto
 import com.diegonmarcos.superapp.appstore.StoreStages
 import com.diegonmarcos.superapp.updater.Fleet
+import com.diegonmarcos.superapp.updater.PackageInstallerReceiver
+import com.diegonmarcos.superapp.updater.install.InstallRetryHook
+import com.diegonmarcos.superapp.updater.install.SupersededSessions
 import com.diegonmarcos.superapp.updater.UpdateProgress
 import com.diegonmarcos.superapp.updater.cache.ApkCache
 import org.junit.After
@@ -79,6 +84,8 @@ class StoreAutoTest {
     }.toByteArray()
 
     @Volatile private var cancelOn: String? = null
+    /** #1551 Android stops the background job while this one is on the wire. */
+    @Volatile private var systemStopOn: String? = null
 
     private fun gets(id: String) = gets["$id.apk"]?.get() ?: 0
     private fun totalGets() = gets.values.sumOf { it.get() }
@@ -102,6 +109,7 @@ class StoreAutoTest {
                     events += "get:${name.removeSuffix(".apk")}"
                     // #812 the user taps Cancel while this one is on the wire.
                     if (name == "$cancelOn.apk") UpdateProgress.requestCancel()
+                    if (name == "$systemStopOn.apk") UpdateProgress.requestSystemStop()
                     gets.getOrPut(name) { AtomicInteger() }.incrementAndGet()
                     val range = headers["range"]
                     if (range != null) ranges += "$name $range"
@@ -133,6 +141,12 @@ class StoreAutoTest {
         StoreAuto.selfUpdate = { com.diegonmarcos.superapp.updater.Updater.start(it) }
         StoreAuto.checkpoint = { _, _ -> }
         StoreStages.installer = FleetInstall::install
+        // #1551 the queue's seams back to production
+        StoreAuto.now = { System.currentTimeMillis() }
+        StoreAuto.scheduleRetry = { c, d -> com.diegonmarcos.superapp.appstore.ConstellationWorker.kickAfter(c, StoreAuto.TRIGGER_RETRY, d) }
+        StoreAuto.maxInstallRetries = com.diegonmarcos.superapp.appstore.BuildConfig.INSTALL_MAX_RETRIES
+        InstallRetryHook.onTransient = null
+        systemStopOn = null
         Fleet.autoChain = null
         ApkCache.freeBytes = { c -> runCatching { android.os.StatFs(ApkCache.dir(c).path).availableBytes }.getOrElse { ApkCache.dir(c).usableSpace } }
         UpdateProgress.removeObserver(watch)
@@ -510,5 +524,156 @@ class StoreAutoTest {
         assertEquals(s.summary, StoreAuto.DONE, s.phase)
         assertEquals(listOf("install:lib1", "install:lib2", "install:appa"), events.filter { it.startsWith("install:") })
         assertEquals("lib1 not fetched again after the resume", 1, gets("lib1"))
+    }
+
+    // ── #1551 the queue finishes the job ─────────────────────────────────────
+
+    private val abandoned = "INSTALL_FAILED_ABORTED: Session was abandoned"
+    private val floorMs = 30_000L
+
+    /** One app at v1 with v2 published, the clock on the device's own time (install notes carry real timestamps). */
+    private fun oneApp(): List<Fleet.App> {
+        val app = entry("appa", "app")
+        installed(ctx, app.pkg, zip("appa-v1"))
+        publish("appa")
+        return listOf(app)
+    }
+
+    @Test
+    fun `1551 an install that did not finish is retried from the cache after the backoff, across a process death`() {
+        val apps = oneApp()
+        var clock = System.currentTimeMillis() + 600_000   // ahead of the notes' real timestamps
+        StoreAuto.now = { clock }
+        val scheduled = ArrayList<Long>()
+        StoreAuto.scheduleRetry = { _, d -> scheduled += d }
+        var fails = 1
+        StoreStages.installer = { c, app, v ->
+            events += "install:${app.id}"
+            if (fails-- > 0) abandoned else { installed(c, app.pkg, v.file.readBytes()); null }
+        }
+        val first = StoreAuto.run(ctx, apps, StoreAuto.TRIGGER_WIFI).queue.single { it.id == "appa" }
+        assertEquals("a session that did not finish is queued for a retry, not failed or held", StoreAuto.RETRY, first.status)
+        assertEquals(1, first.attempts)
+        assertEquals("the first retry waits the 30 s floor", clock + floorMs, first.nextAt)
+        assertTrue("the chain scheduled its own resume, never sooner than the floor: $scheduled", scheduled.isNotEmpty() && scheduled.all { it >= floorMs })
+
+        // The process dies here: only what was persisted remains.
+        val dead = StoreAuto.load(ctx)!!
+        assertEquals(StoreAuto.RETRY, dead.queue.single { it.id == "appa" }.status)
+        assertEquals(1, StoreAuto.retries(ctx)["appa"]!!.attempts)
+
+        // Not due yet: a trigger does not re-install early.
+        clock += 10_000
+        assertEquals(StoreAuto.RETRY, statusOf(StoreAuto.run(ctx, apps, StoreAuto.TRIGGER_RETRY), "appa"))
+        assertEquals(1, events.count { it == "install:appa" })
+        assertEquals("the same failure read again is not counted twice", 1, StoreAuto.retries(ctx)["appa"]!!.attempts)
+
+        // Due: installed from the cache, no second download, the ledger cleared.
+        clock += floorMs
+        val done = StoreAuto.run(ctx, apps, StoreAuto.TRIGGER_RETRY)
+        assertEquals(done.summary, StoreAuto.INSTALLED, statusOf(done, "appa"))
+        assertEquals(2, events.count { it == "install:appa" })
+        assertEquals("the retry installed from the cache", 1, gets("appa"))
+        assertTrue("a landed app leaves the ledger", StoreAuto.retries(ctx).isEmpty())
+    }
+
+    @Test
+    fun `1551 the final failure comes only after the retries are used up, with the real reason`() {
+        val apps = oneApp()
+        var clock = System.currentTimeMillis() + 600_000   // ahead of the notes' real timestamps
+        StoreAuto.now = { clock }
+        StoreAuto.scheduleRetry = { _, _ -> }
+        StoreAuto.maxInstallRetries = 2
+        StoreStages.installer = { _, app, _ -> events += "install:${app.id}"; abandoned }
+        var s = StoreAuto.run(ctx, apps, StoreAuto.TRIGGER_WIFI)
+        var rounds = 0
+        while (statusOf(s, "appa") == StoreAuto.RETRY && rounds++ < 10) {
+            clock += 11 * 60_000L   // past any backoff (10 min cap)
+            s = StoreAuto.run(ctx, apps, StoreAuto.TRIGGER_RETRY)
+        }
+        val item = s.queue.single { it.id == "appa" }
+        assertEquals(StoreAuto.FAILED, item.status)
+        assertEquals("first try plus two retries", 3, events.count { it == "install:appa" })
+        assertTrue(item.error, item.error!!.contains("after 3 attempts") && item.error!!.contains("Session was abandoned"))
+        // Control: the final failure stays final, it does not loop.
+        clock += 11 * 60_000L
+        assertEquals(StoreAuto.FAILED, statusOf(StoreAuto.run(ctx, apps, StoreAuto.TRIGGER_RETRY), "appa"))
+        assertEquals(3, events.count { it == "install:appa" })
+    }
+
+    @Test
+    fun `1551 a permanent failure is not retried`() {
+        val apps = oneApp()
+        StoreAuto.scheduleRetry = { _, _ -> }
+        StoreStages.installer = { _, app, _ -> events += "install:${app.id}"; "INSTALL_FAILED_UPDATE_INCOMPATIBLE (signature differs from the installed copy)" }
+        val s = StoreAuto.run(ctx, apps, StoreAuto.TRIGGER_WIFI)
+        assertEquals(StoreAuto.FAILED, statusOf(s, "appa"))
+        assertTrue(StoreAuto.retries(ctx).isEmpty())
+    }
+
+    @Test
+    fun `1551 Android stopping the job is not a user cancel - the chain keeps its place and resumes itself`() {
+        val apps = oneApp()
+        val scheduled = ArrayList<Long>()
+        StoreAuto.scheduleRetry = { _, d -> scheduled += d }
+        systemStopOn = "appa"
+        val s = StoreAuto.run(ctx, apps, StoreAuto.TRIGGER_PERIODIC)
+        assertTrue("persisted, resumable: ${s.phase}", s.phase in StoreAuto.PHASES)
+        assertTrue(s.lastError.orEmpty(), s.lastError.orEmpty().startsWith("paused: Android stopped the background job"))
+        assertFalse("never called the user's cancel", s.lastError.orEmpty().contains("cancelled by the user"))
+        assertTrue("it scheduled its own resume: $scheduled", scheduled.isNotEmpty() && scheduled.all { it >= floorMs })
+    }
+
+    @Test
+    fun `1551 control - the user's own Cancel says so and schedules no resume`() {
+        val apps = oneApp()
+        val scheduled = ArrayList<Long>()
+        StoreAuto.scheduleRetry = { _, d -> scheduled += d }
+        cancelOn = "appa"
+        val c = StoreAuto.run(ctx, apps, StoreAuto.TRIGGER_PERIODIC)
+        cancelOn = null
+        assertTrue(c.lastError.orEmpty(), c.lastError.orEmpty().startsWith("cancelled by the user"))
+        assertTrue("a user cancel waits for the next trigger: $scheduled", scheduled.isEmpty())
+    }
+
+    // ── #1551 the confirmation path at the receiver ──────────────────────────
+
+    private fun aborted(pkg: String, message: String, session: Int) = Intent()
+        .putExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE_ABORTED)
+        .putExtra(PackageInstaller.EXTRA_STATUS_MESSAGE, message)
+        .putExtra(PackageInstaller.EXTRA_SESSION_ID, session)
+        .putExtra(PackageInstallerReceiver.EXTRA_TARGET_PKG, pkg)
+
+    @Test
+    fun `1551 the abort of a superseded session is swallowed, a real abandon is a retry`() {
+        val heard = ArrayList<String>()
+        InstallRetryHook.onTransient = { _, pkg, _ -> heard += pkg }
+        SupersededSessions.add(ctx, 42)
+        PackageInstallerReceiver().onReceive(ctx, aborted("org.example.sup", "Session was abandoned", 42))
+        assertNull("a superseded session writes no failure over the newer install", ApkCache.noteOf(ctx, "org.example.sup"))
+        assertTrue(heard.isEmpty())
+        // Control: the same answer for a session nobody superseded is a transient failure the queue retries.
+        PackageInstallerReceiver().onReceive(ctx, aborted("org.example.real", "Session was abandoned", 43))
+        assertEquals(ApkCache.STAGE_INSTALL, ApkCache.noteOf(ctx, "org.example.real")?.stage)
+        assertEquals(listOf("org.example.real"), heard)
+        val app = entry("real", "app", pkg = "org.example.real")
+        assertNull("an abandoned session never holds the unattended pass", Fleet.heldAtInstall(ctx, app))
+        assertEquals(ApkCache.STAGE_INSTALL, Fleet.transientAtInstall(ctx, app)?.stage)
+        // Control: the user's own No still holds, and is not retried.
+        PackageInstallerReceiver().onReceive(ctx, aborted("org.example.no", "User rejected permissions", 44))
+        assertEquals(ApkCache.STAGE_INSTALL, Fleet.heldAtInstall(ctx, entry("no", "app", pkg = "org.example.no"))?.stage)
+        assertEquals(listOf("org.example.real"), heard)
+        // Consumed once: a second abort with the same id is reported.
+        PackageInstallerReceiver().onReceive(ctx, aborted("org.example.sup", "Session was abandoned", 42))
+        assertEquals(ApkCache.STAGE_INSTALL, ApkCache.noteOf(ctx, "org.example.sup")?.stage)
+    }
+
+    @Test
+    fun `1551 every package has its own confirm notification, never the shared or progress id`() {
+        val ids = listOf("org.example.a", "org.example.b", "com.diegonmarcos.cloudlib.analyticssink").map { PackageInstallerReceiver.confirmId(it) }
+        assertEquals("distinct per package", ids.size, ids.toSet().size)
+        assertFalse(ids.contains(PackageInstallerReceiver.UPDATER_NOTIF_ID))
+        assertFalse(ids.contains(PackageInstallerReceiver.UPDATER_NOTIF_ID + 1))
+        assertEquals("stable for a package", ids[0], PackageInstallerReceiver.confirmId("org.example.a"))
     }
 }

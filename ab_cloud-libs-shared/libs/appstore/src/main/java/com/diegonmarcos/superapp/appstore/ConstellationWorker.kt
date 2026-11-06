@@ -93,7 +93,9 @@ class ConstellationWorker(appCtx: Context, params: WorkerParameters) :
         // cap in the background, then crashed (ForegroundServiceDidNotStopInTimeException). They are
         // plain background work now: the chain is persisted and a stopped pass resumes on the next.
         val userInitiated = trigger == StoreAuto.TRIGGER_STORE_REFRESH || trigger == StoreAuto.TRIGGER_API
-        fgsToken = holdDataSync(userInitiated = userInitiated) { BatchForeground.foregroundInfo(it) }
+        // #1551 keep-alive only while auto-update is on (checked above) AND the network is Wi-Fi (owner rule).
+        if (StorePriority.unmetered(applicationContext))
+            fgsToken = holdDataSync(userInitiated = userInitiated) { BatchForeground.foregroundInfo(it) }
         // The metered decision the UNMETERED constraint used to make, made here
         // instead (same place UpdateWorker makes it). Deliberately a different
         // question: WorkManager's constraint asks the system default network,
@@ -179,6 +181,7 @@ class ConstellationWorker(appCtx: Context, params: WorkerParameters) :
             wm.cancelUniqueWork(WORK_NAME)
             wm.cancelUniqueWork("$WORK_NAME-now")
             wm.cancelUniqueWork("$WORK_NAME-kick")
+            wm.cancelUniqueWork("$WORK_NAME-retry")
         }
 
         private fun triggerData(trigger: String) = Data.Builder().putString(KEY_TRIGGER, trigger).build()
@@ -203,6 +206,26 @@ class ConstellationWorker(appCtx: Context, params: WorkerParameters) :
                     .build()
                 WorkManager.getInstance(context).enqueueUniqueWork("$WORK_NAME-kick", ExistingWorkPolicy.KEEP, req)
             }.onFailure { Log.w(TAG, "auto chain kick ($trigger) not enqueued: ${it.message}") }
+        }
+
+        /**
+         * #1551 The queue's own resume after [delayMs] (a due install retry, a pass Android stopped): one-shot WorkManager work with
+         * the auto-update constraints, never sooner than the 30 s floor, no repeating timer. KEEP: an earlier resume already queued
+         * serves this one; the chain itself decides what is due when it runs.
+         */
+        fun kickAfter(context: Context, trigger: String, delayMs: Long) {
+            runCatching {
+                if (!StoreNotifyGate.mayPost(context)) return
+                if (!InstallIdentity.isManaged(context)) return
+                if (!AuConfig.AUTO_UPDATE_ENABLED || !AutoUpdatePrefs.enabled(context)) return
+                if (!AppStoreHost.runsFleetPass(context)) return
+                val req = OneTimeWorkRequestBuilder<ConstellationWorker>()
+                    .setConstraints(constraints(context))
+                    .setInputData(triggerData(trigger))
+                    .setInitialDelay(delayMs.coerceAtLeast(com.diegonmarcos.superapp.devtools.RetryBackoff.MIN_MS), TimeUnit.MILLISECONDS)
+                    .build()
+                WorkManager.getInstance(context).enqueueUniqueWork("$WORK_NAME-retry", ExistingWorkPolicy.KEEP, req)
+            }.onFailure { Log.w(TAG, "auto chain resume ($trigger) not enqueued: ${it.message}") }
         }
 
         /** Schedule the periodic fleet check. Idempotent. Call from App.onCreate. */

@@ -1352,7 +1352,18 @@ object Fleet {
      * `.part` next pass, which is continuing, not restarting.
      */
     fun heldAtInstall(ctx: Context, app: App): ApkCache.Note? =
-        ApkCache.noteOf(ctx, app.pkg)?.takeIf { it.stage == ApkCache.STAGE_INSTALL }
+        ApkCache.noteOf(ctx, app.pkg)?.takeIf {
+            // #1551 a session that merely did not finish (abandoned, timed out) is not a reason to stop: the Store queue retries
+            // it from the cache with backoff and reports the final failure itself. Only a decline or a permanent fact holds.
+            it.stage == ApkCache.STAGE_INSTALL &&
+                !com.diegonmarcos.superapp.updater.install.InstallFailure.transient(it.message)
+        }
+
+    /** #1551 The install-stage note of [app] when it says the session did not finish: the queue's retry signal. */
+    fun transientAtInstall(ctx: Context, app: App): ApkCache.Note? =
+        ApkCache.noteOf(ctx, app.pkg)?.takeIf {
+            it.stage == ApkCache.STAGE_INSTALL && com.diegonmarcos.superapp.updater.install.InstallFailure.transient(it.message)
+        }
 
     /** One-line, log-safe rendering of a [State]. No URLs, no tokens. */
     private fun describe(s: State): String = when (s) {

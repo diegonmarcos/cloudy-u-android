@@ -1,7 +1,10 @@
 package com.diegonmarcos.superapp.updater
 
 import com.diegonmarcos.superapp.updater.cache.ApkCache
+import com.diegonmarcos.superapp.updater.install.InstallFailure
 import com.diegonmarcos.superapp.updater.install.InstallGate
+import com.diegonmarcos.superapp.updater.install.InstallRetryHook
+import com.diegonmarcos.superapp.updater.install.SupersededSessions
 import android.app.ActivityManager
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -129,6 +132,14 @@ class PackageInstallerReceiver : BroadcastReceiver() {
         fun filed(outcome: PassLedger.Outcome, reason: String = ""): Boolean =
             !isUninstall && gateKey.isNotEmpty() && PassLedgerStore.record(context, outcome, gateKey, build, reason)
         Log.i(TAG, "status=$status msg=$message pkg=$pkg op=${if (isUninstall) "uninstall" else "install"}")
+        // #1551 A session this app replaced with a newer one for the same package: its abort is not news. Swallowed before the
+        // gate, the note or a notification is touched, because all three now belong to the newer session.
+        val sessionId = intent.getIntExtra(PackageInstaller.EXTRA_SESSION_ID, -1)
+        if (status != PackageInstaller.STATUS_PENDING_USER_ACTION && status != PackageInstaller.STATUS_SUCCESS &&
+            SupersededSessions.consume(context, sessionId)) {
+            Log.i(TAG, "session $sessionId for $gateKey was superseded by a newer one - its abort is expected")
+            return
+        }
 
         // Install results arrive asynchronously, and the last few can land
         // AFTER Fleet.autoPass has cleared UpdateProgress.quiet in its finally.
@@ -193,7 +204,7 @@ class PackageInstallerReceiver : BroadcastReceiver() {
                 // costs one stale notification, and the terminal status below
                 // clears it; a confirmation that is merely hoped for costs the
                 // entire download.
-                val shown = notifyConfirm(context, confirm, subject)
+                val shown = notifyConfirm(context, confirm, subject, gateKey)
                 val inPass = filed(PassLedger.Outcome.NEEDS_TAP)
                 if (isForeground(context)) {
                     // The dialog is going up NOW and this install has not
@@ -252,7 +263,7 @@ class PackageInstallerReceiver : BroadcastReceiver() {
             }
             PackageInstaller.STATUS_SUCCESS -> {
                 releaseGate()   // terminal: the next install may start
-                clearConfirmNotification(context)
+                clearConfirmNotification(context, gateKey)
                 // Drop the cached APK now that it is genuinely installed. This
                 // is the ONLY point where success is known: commit() only means
                 // the session was handed over, and a user who declines the
@@ -285,7 +296,7 @@ class PackageInstallerReceiver : BroadcastReceiver() {
             }
             else -> {
                 releaseGate()   // terminal (failure/abort): unblock the queue
-                clearConfirmNotification(context)
+                clearConfirmNotification(context, gateKey)
                 // EVERY status Android defines gets a sentence. The two added
                 // here were reaching the user as the bare text "status=7" and
                 // "status=-999", which names nothing and points nowhere.
@@ -339,7 +350,14 @@ class PackageInstallerReceiver : BroadcastReceiver() {
                     "(${legacyName ?: "none"}) other=$other msg=${message.ifEmpty { "-" }} " +
                     "extras=${intent.extras?.keySet()?.joinToString(",") ?: "-"}")
                 val inPass = filed(PassLedger.Outcome.FAILED, label)
-                surface(context, "$verb failed: $label", message.ifEmpty { label },
+                // #1551 A session that did not finish is retried from the cache by the queue (backoff, 30 s floor); it is
+                // reported as a retry, and only the queue reports the final failure once its retries are used up.
+                val why = message.ifEmpty { label } + (legacyName?.let { " · code: $it" } ?: "")
+                val transient = !isUninstall && gateKey.isNotEmpty() && InstallFailure.transient(why)
+                if (transient) runCatching { InstallRetryHook.onTransient?.invoke(context, gateKey, why) }
+                    .onFailure { Log.w(TAG, "retry hand-off for $gateKey failed: ${it.message}") }
+                surface(context, if (transient) "$verb did not finish, retrying: $label" else "$verb failed: $label",
+                    message.ifEmpty { label },
                     severity = NotificationStore.Sev.ERROR, key = "${verb.lowercase()}:$gateKey",
                     quiet = inPass || (!isUninstall && !isNew(context, gateKey, build, label)))
             }
@@ -410,10 +428,12 @@ class PackageInstallerReceiver : BroadcastReceiver() {
      *  reached a terminal state. It is an instruction to act on a session that
      *  no longer exists, and a stale one looks exactly like a live one — which
      *  would turn the guarantee added above into a new way to mislead. */
-    private fun clearConfirmNotification(context: Context) {
+    private fun clearConfirmNotification(context: Context, pkg: String) {
         runCatching {
-            (context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
-                .cancel(NOTIF_ID + 1)
+            val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            // #1551 only THIS package's prompt: one shared id let any app's outcome remove another app's pending prompt.
+            nm.cancel(confirmId(pkg))
+            nm.cancel(NOTIF_ID + 1)   // what builds before #1551 posted under the one shared id
         }
     }
 
@@ -426,7 +446,7 @@ class PackageInstallerReceiver : BroadcastReceiver() {
      *  Returns whether the user can actually SEE it: notify() on a blocked app
      *  or channel returns normally and shows nothing, so "posted" is not
      *  "shown" and the caller must not tell anyone to tap it (#588). */
-    private fun notifyConfirm(context: Context, confirm: Intent, subject: String): Boolean =
+    private fun notifyConfirm(context: Context, confirm: Intent, subject: String, pkg: String): Boolean =
         StoreNotifyGate.mayPost(context) && runCatching {
             // Configs ▸ Notifications: "update available" on the notification channel (default on).
             if (!StoreNotifyPrefs.allows(context, StoreNotifyPrefs.Kind.UPDATE_AVAILABLE, StoreNotifyPrefs.Channel.PUSH)) return@runCatching false
@@ -435,7 +455,9 @@ class PackageInstallerReceiver : BroadcastReceiver() {
             val channel = SilentChannels.ensure(context, NOTIF_CHANNEL, "Updater", NotificationManager.IMPORTANCE_HIGH)
             var flags = PendingIntent.FLAG_UPDATE_CURRENT
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) flags = flags or PendingIntent.FLAG_IMMUTABLE
-            val pi = PendingIntent.getActivity(context, NOTIF_ID + 1, confirm, flags)
+            // #1551 one notification AND one PendingIntent per package: under the one shared id each new prompt replaced the
+            // previous app's, so every app but the last waited on a tap nobody could make.
+            val pi = PendingIntent.getActivity(context, confirmId(pkg), confirm, flags)
             val notif = NotificationCompat.Builder(context, channel)
                 .apply { SilentChannels.quiet(context, this) }
                 .setContentTitle("$subject — tap to finish installing")
@@ -444,7 +466,7 @@ class PackageInstallerReceiver : BroadcastReceiver() {
                 .setContentIntent(pi)
                 .setAutoCancel(true)
                 .build()
-            nm.notify(NOTIF_ID + 1, notif)
+            nm.notify(confirmId(pkg), notif)
             nm.areNotificationsEnabled() &&
                 (Build.VERSION.SDK_INT < Build.VERSION_CODES.O ||
                     nm.getNotificationChannel(channel)?.importance != NotificationManager.IMPORTANCE_NONE)
@@ -518,6 +540,9 @@ class PackageInstallerReceiver : BroadcastReceiver() {
          *  public so the SuperApp can retire what an older build posted (#894). */
         const val UPDATER_CHANNEL = "superapp-updater"
         const val UPDATER_NOTIF_ID = 0xC10D
+
+        /** #1551 The "tap to finish installing" notification id of [pkg]: one per package, never the progress id. */
+        fun confirmId(pkg: String): Int = UPDATER_NOTIF_ID + 2 + (pkg.hashCode() and 0xFFFF)
 
         /** Set on the PendingIntent so this receiver can tell an uninstall
          *  (long-press menu) from an install/update and message accordingly. */
