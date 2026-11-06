@@ -63,7 +63,7 @@ jobs:
           python-version: "3.12"
       - name: Install OpenSKP (pinned, MIT)
         run: python -m pip install -r "$APP/tools/requirements.txt"
-      - name: Derive the views (always re-run: proves the conversion on a clean Linux machine)
+      - name: "Derive the views (always re-run, which proves the conversion on a clean Linux machine)"
         env:
           DERIVE_FORCE: "1"
         run: python "$APP/tools/derive_models.py" .models-src
