@@ -28,7 +28,8 @@ kotlin {
 
 dependencies {
     implementation project(':libs:crash')
-    compileOnly 'androidx.security:security-crypto:1.1.0'
+    // implementation, not compileOnly: SafeEncryptedPrefs needs it at runtime in every app linking this lib (News crashed with NoClassDefFoundError, #1474).
+    implementation 'androidx.security:security-crypto:1.1.0'
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.json:json:20240303'
 }

@@ -573,7 +573,7 @@ class NewsBridge(private val ctx: Context) {
         fetchJobs[job] = ""
         fetchPool.execute {
             val r = try { apify.run(sourceId, actor, inputJson, cacheHours.toDoubleOrNull() ?: 6.0, force == "1") }
-            catch (e: Exception) { JSONObject().put("ok", false).put("error", e.message ?: e.javaClass.simpleName) }
+            catch (e: Throwable) { JSONObject().put("ok", false).put("error", e.message ?: e.javaClass.simpleName) }
             fetchJobs[job] = r.toString()
         }
         return JSONObject().put("job", job).toString()

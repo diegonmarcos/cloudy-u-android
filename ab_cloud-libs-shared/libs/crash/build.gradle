@@ -32,6 +32,7 @@ android {
 
     defaultConfig {
         minSdk 26
+        consumerProguardFiles 'consumer-rules.pro'
         // The phone's local crash sink: the C3 WebServer's loopback port, read from its own declaration
         // (ac_cloud-c3-webserver/build.json::runtime.port, the number emulated.app stands for). 0 = not found at
         // build time, and the local leg is skipped rather than guessed.
@@ -68,11 +69,10 @@ kotlin {
 
 dependencies {
     implementation 'androidx.activity:activity-ktx:1.9.3'
-    // #1106 SafeEncryptedPrefs: the one place the fleet opens an EncryptedSharedPreferences file. compileOnly: every
-    // app that opens one links security-crypto itself (an app that does not, such as Cloud Mail whose own tink
-    // would clash with tink-android, or Cloud Nav whose fleet-config provider reports "cannot open" for an
-    // encrypted store, must not gain the cipher just by linking libs:core).
-    compileOnly 'androidx.security:security-crypto:1.1.0'
+    // #1106 SafeEncryptedPrefs: the one place the fleet opens an EncryptedSharedPreferences file. implementation (#1474):
+    // it was compileOnly, so an app linking libs:core/libs:apify without its own copy (Cloud News) crashed with
+    // NoClassDefFoundError at startup. SafeEncryptedPrefs also catches LinkageError and falls back to plain prefs.
+    implementation 'androidx.security:security-crypto:1.1.0'
     testImplementation 'androidx.security:security-crypto:1.1.0'
     if (composeOn) {
         implementation platform('androidx.compose:compose-bom:2025.11.01')

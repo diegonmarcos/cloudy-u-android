@@ -16,12 +16,28 @@ import java.security.KeyStore
  * 1_cicd/src/scripts/test/safe-encrypted-prefs-guard.sh fails the build on a direct call anywhere else.
  */
 object SafeEncryptedPrefs {
-    class Opened(val prefs: SharedPreferences, val wasReset: Boolean)
+    class Opened(val prefs: SharedPreferences, val wasReset: Boolean, val unencryptedFallback: Boolean = false)
 
     private const val FLAGS = "safe_encrypted_prefs_reset"
 
     @JvmStatic fun create(context: Context, fileName: String): Opened {
         val app = context.applicationContext ?: context
+        // A build without security-crypto on its runtime classpath throws NoClassDefFoundError (an Error, not an
+        // Exception): fall back to plain app-private prefs marked "unencrypted fallback", log once, never crash.
+        val opened = try { createEncrypted(app, fileName) } catch (e: LinkageError) { return unencryptedFallback(app, fileName, e) }
+        if (opened.wasReset) runCatching { app.getSharedPreferences(FLAGS, Context.MODE_PRIVATE).edit().putBoolean(fileName, true).apply() }
+        return opened
+    }
+
+    private val loggedFallback = java.util.concurrent.atomic.AtomicBoolean(false)
+
+    private fun unencryptedFallback(app: Context, fileName: String, e: Throwable): Opened {
+        if (loggedFallback.compareAndSet(false, true)) runCatching { android.util.Log.e("SafeEncryptedPrefs", "security-crypto missing from the runtime classpath, unencrypted fallback for $fileName", e) }
+        val plain = runCatching { app.getSharedPreferences("${fileName}_unencrypted_fallback", Context.MODE_PRIVATE) }.getOrElse { memoryFor(fileName) }
+        return Opened(plain, false, true)
+    }
+
+    private fun createEncrypted(app: Context, fileName: String): Opened {
         val opened = recover(
             open = {
                 EncryptedSharedPreferences.create(
@@ -35,7 +51,6 @@ object SafeEncryptedPrefs {
             deleteKey = { deleteMasterKeyAlias() },
             memory = { memoryFor(fileName) },
         )
-        if (opened.wasReset) runCatching { app.getSharedPreferences(FLAGS, Context.MODE_PRIVATE).edit().putBoolean(fileName, true).apply() }
         return opened
     }
 

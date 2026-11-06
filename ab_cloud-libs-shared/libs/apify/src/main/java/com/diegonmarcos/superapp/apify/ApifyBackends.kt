@@ -124,7 +124,10 @@ interface ApifyKv {
 }
 
 class EncryptedApifyKv(ctx: Context) : ApifyKv {
-    private val sp = SafeEncryptedPrefs.prefs(ctx.applicationContext, PREFS)
+    // SafeEncryptedPrefs already falls back to plain app-private prefs on a LinkageError; this is the second net.
+    private val sp: android.content.SharedPreferences = try { SafeEncryptedPrefs.prefs(ctx.applicationContext, PREFS) } catch (_: LinkageError) {
+        ctx.applicationContext.getSharedPreferences("${PREFS}_unencrypted_fallback", Context.MODE_PRIVATE)
+    }
     override fun get(key: String): String? = sp.getString(key, null)
     override fun set(key: String, value: String?) {
         sp.edit().apply { if (value.isNullOrBlank()) remove(key) else putString(key, value.trim()) }.apply()

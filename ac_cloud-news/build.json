@@ -295,6 +295,11 @@
     "size_budget_mb": 20
   },
   "tests": {
+    "unit": {
+      "_doc": "#1474 ApifyKvLinkTest: EncryptedApifyKv opens in this app's own classpath (security-crypto linked), debug variant so no release signingConfig is configured.",
+      "task": ":app:testDebugUnitTest",
+      "enabled": true
+    },
     "shell": {
       "dir": "test",
       "requires": [
