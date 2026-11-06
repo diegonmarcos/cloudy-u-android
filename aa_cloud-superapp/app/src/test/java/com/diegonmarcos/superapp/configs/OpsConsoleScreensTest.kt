@@ -135,10 +135,10 @@ class OpsConsoleScreensTest : KitPageHarness() {
     @Config(qualifiers = "w384dp-h832dp-notnight-450dpi")
     @Test fun `adb shell phone light`() { adb(false, false, true); compose.onNodeWithTag("term:inputbar").fetchSemanticsNode(); snap("ops-adb-shell-phone-light.png") }
 
-    @Config(qualifiers = "w1280dp-h800dp-night-land-xhdpi")
+    @Config(qualifiers = "w1280dp-h800dp-land-night-xhdpi")
     @Test fun `adb shell tablet dark`() { adb(true, true, true); compose.onNodeWithTag("adb:two-pane").fetchSemanticsNode(); snap("ops-adb-shell-tablet-dark.png") }
 
-    @Config(qualifiers = "w1280dp-h800dp-notnight-land-xhdpi")
+    @Config(qualifiers = "w1280dp-h800dp-land-notnight-xhdpi")
     @Test fun `adb shell tablet light`() { adb(false, true, false); compose.onNodeWithTag("adb:two-pane").fetchSemanticsNode(); snap("ops-adb-shell-tablet-light.png") }
 
     @Config(qualifiers = "w384dp-h832dp-night-450dpi")
@@ -147,9 +147,9 @@ class OpsConsoleScreensTest : KitPageHarness() {
     @Config(qualifiers = "w384dp-h832dp-notnight-450dpi")
     @Test fun `perms phone light`() { perms(false, false); compose.onNodeWithTag("perms:kpi").fetchSemanticsNode(); snap("ops-perms-phone-light.png") }
 
-    @Config(qualifiers = "w1280dp-h800dp-night-land-xhdpi")
+    @Config(qualifiers = "w1280dp-h800dp-land-night-xhdpi")
     @Test fun `perms tablet dark`() { perms(true, true); compose.onNodeWithTag("perms:two-pane").fetchSemanticsNode(); snap("ops-perms-tablet-dark.png") }
 
-    @Config(qualifiers = "w1280dp-h800dp-notnight-land-xhdpi")
+    @Config(qualifiers = "w1280dp-h800dp-land-notnight-xhdpi")
     @Test fun `perms tablet light`() { perms(false, true); compose.onNodeWithTag("perms:two-pane").fetchSemanticsNode(); snap("ops-perms-tablet-light.png") }
 }
