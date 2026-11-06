@@ -456,7 +456,22 @@
       "0.0.0.0",
       "::"
     ],
-    "start_on_boot": false
+    "start_on_boot": false,
+    "mesh_only": {
+      "_doc": "SSH reachable over the mesh VPN only. ON (the default) binds the sshd to the WireGuard interface's own addresses plus loopback and NEVER to the wildcard `bind` above, which is used only when this flag is OFF. The mesh addresses are resolved at start from the phone's live interfaces (com.termux.cloud.MeshAddrs): an interface whose name matches `ifaces` (the VPN tun; wlan and rmnet never match, a home LAN is often 10.0.0.x too) and an address inside `cidrs` (the 10.0.0.x, 10.1.0.x and fd0c:1d00 / fd0c:1d01 mesh ranges). No mesh address (mesh down) = FAIL CLOSED: the sshd is not started and a running one is ended, never started on the wildcard. `loopback` stays in the list because it is reachable from no network and the local clients dial 127.0.0.1 (the webserver's jump helpers, the watchdog, MyTerminal). The caller (Cloud C3 WebServer, which owns the switch and persists it) passes the flag with every start; a start without it (BOOT_COMPLETED) uses `default_on`. The SSHd tab reads this block, so none of it is written twice.",
+      "default_on": true,
+      "ifaces": "^(wg|tun)[0-9]*$",
+      "cidrs": ["10.0.0.0/24", "10.1.0.0/24", "fd0c:1d00::/32", "fd0c:1d01::/32"],
+      "loopback": ["127.0.0.1", "::1"]
+    },
+    "control": {
+      "_doc": "The hook a fleet app uses to start or stop this door without this app opening: Cloud C3 WebServer's keep-alive supervisor (ac_cloud-c3-webserver build.json::ssh_door reads this block at build time, so none of it is written twice). An EXPLICIT start of `service` with `action_start` runs the same path as BOOT_COMPLETED (MeshSshdBoot.start) whatever start_on_boot says; `action_stop` ends the sshd through its own pidfile. The service is exported only behind `permission`, the fleet's signature-level permission, and has no intent filter. The sshd, its port, its host key and its ~/.ssh/authorized_keys are unchanged. test/test-mesh-sshd-control.sh holds MeshSshdService and the manifest to this block.",
+      "service": "com.termux.app.MeshSshdService",
+      "action_start": "com.diegonmarcos.cloud.action.MESH_SSHD_START",
+      "action_stop": "com.diegonmarcos.cloud.action.MESH_SSHD_STOP",
+      "extra_mesh_only": "com.diegonmarcos.cloud.extra.MESH_ONLY",
+      "permission": "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA"
+    }
   },
   "runtime": {
     "_doc": "Option 37.1 -- this terminal exposes its own disk through fleet-webserver (the shared ab_cloud-libs-shared/libs/fleet-webserver, built from source by rootfs-extras.nix and baked into the root). THE ONE declaration of its port: rendered by ab_cloud-terminal-store/render-local-webserver.py into the login (bin/login, inlined by app/src/main/cpp/bake_default_packages.py), which starts it once per boot -- only when nothing already LISTENs on the port. bind is a statement, not a knob: fleet-webserver hard-binds 127.0.0.1 and refuses non-loopback peers, and the renderer refuses any other value. root is the terminal's own $HOME (the same path inside the proot). Writes stay token-gated and OFF: the login unsets HTTPD_WRITE, HTTPD_WRITE_ROOTS and HTTPD_WRITE_TOKEN_FILE. Every app's localhost ports live under runtime; ac_cloud-c3-webserver/test/test-localhost-ports.sh fails when two apps declare the same one.",

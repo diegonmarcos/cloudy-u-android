@@ -20,6 +20,17 @@ package com.termux.cloud;
 public final class MeshSshd {
     private MeshSshd() {}
 
+    /**
+     * The one POSIX sh script that ends the listener {@link #script} started: the pid in its own pidfile and nothing else
+     * (never a pattern, never another sshd on the phone). Idempotent: no pidfile, or a dead or non-numeric one, is "not running".
+     */
+    public static String stopScript() {
+        return "set -u\n"
+            + "d=\"$HOME/.ssh/mesh-sshd\"; p=$(cat \"$d/pid\" 2>/dev/null) || p=\n"
+            + "case \"$p\" in ''|*[!0-9]*) rm -f \"$d/pid\"; echo \"mesh-sshd: not running\"; exit 0;; esac\n"
+            + "kill \"$p\" 2>/dev/null; rm -f \"$d/pid\"; echo \"mesh-sshd: stopped\"\n";
+    }
+
     /** The one POSIX sh script that brings the listener up, idempotently. */
     public static String script(int port, String[] binds) {
         if (port < 1 || port > 65535) throw new IllegalArgumentException("mesh_sshd.port out of range: " + port);
@@ -31,13 +42,10 @@ public final class MeshSshd {
         }
         return "set -u\n"
             + "d=\"$HOME/.ssh/mesh-sshd\"; mkdir -p \"$d\"; chmod 700 \"$HOME/.ssh\" \"$d\" 2>/dev/null\n"
-            // Already up (this boot, or the owner's own sshd on the port): nothing to do.
-            + "if [ -f \"$d/pid\" ] && kill -0 \"$(cat \"$d/pid\")\" 2>/dev/null; then echo \"mesh-sshd: already running\"; exit 0; fi\n"
-            + "S=$(command -v sshd 2>/dev/null) || S=$(nix-shell -p openssh --run 'command -v sshd' 2>/dev/null) || S=\n"
-            + "[ -n \"$S\" ] || { echo \"mesh-sshd: no sshd in this env\" >&2; exit 3; }\n"
-            + "K=\"$(dirname \"$S\")/ssh-keygen\"\n"
-            + "[ -f \"$d/ssh_host_ed25519_key\" ] || \"$K\" -q -t ed25519 -N '' -f \"$d/ssh_host_ed25519_key\" || exit 4\n"
-            + "cat > \"$d/sshd_config\" <<'CFG'\n"
+            // The config this start wants is written beside the live one. An sshd that is up with the SAME config is left alone; one
+            // up with a DIFFERENT config (the wildcard one from before mesh-only, an old mesh address, a flag change) is ended and
+            // started again, so a change always takes effect and an exposed listener is never kept.
+            + "cat > \"$d/sshd_config.new\" <<'CFG'\n"
             + "Port " + port + "\n"
             + listen
             + "PasswordAuthentication no\n"
@@ -45,7 +53,16 @@ public final class MeshSshd {
             + "PubkeyAuthentication yes\n"
             + "AuthorizedKeysFile .ssh/authorized_keys\n"
             + "CFG\n"
-            + "printf 'HostKey %s\\nPidFile %s\\n' \"$d/ssh_host_ed25519_key\" \"$d/pid\" >> \"$d/sshd_config\"\n"
+            + "printf 'HostKey %s\\nPidFile %s\\n' \"$d/ssh_host_ed25519_key\" \"$d/pid\" >> \"$d/sshd_config.new\"\n"
+            + "if [ -f \"$d/pid\" ] && kill -0 \"$(cat \"$d/pid\")\" 2>/dev/null; then\n"
+            + "  if [ -f \"$d/sshd_config\" ] && [ \"$(cat \"$d/sshd_config\")\" = \"$(cat \"$d/sshd_config.new\")\" ]; then echo \"mesh-sshd: already running\"; exit 0; fi\n"
+            + "  kill \"$(cat \"$d/pid\")\" 2>/dev/null; sleep 1; rm -f \"$d/pid\"; echo \"mesh-sshd: config changed, restarting\"\n"
+            + "fi\n"
+            + "S=$(command -v sshd 2>/dev/null) || S=$(nix-shell -p openssh --run 'command -v sshd' 2>/dev/null) || S=\n"
+            + "[ -n \"$S\" ] || { echo \"mesh-sshd: no sshd in this env\" >&2; exit 3; }\n"
+            + "K=\"$(dirname \"$S\")/ssh-keygen\"\n"
+            + "[ -f \"$d/ssh_host_ed25519_key\" ] || \"$K\" -q -t ed25519 -N '' -f \"$d/ssh_host_ed25519_key\" || exit 4\n"
+            + "cat \"$d/sshd_config.new\" > \"$d/sshd_config\"\n"
             + "\"$S\" -f \"$d/sshd_config\" && echo \"mesh-sshd: listening on :" + port + "\"\n";
     }
 }

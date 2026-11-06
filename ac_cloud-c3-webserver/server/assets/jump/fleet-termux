@@ -1,0 +1,12 @@
+#!/system/bin/sh
+# fleet-termux [cmd]: into Cloud Terminal Termux (cld.termux, our constellation-signed app: a first-class fleet shell with fleet binder IPC). Nested ssh to its own sshd ({{TERMUX_PORT}}) when that answers; otherwise, for a one-shot
+# command, Termux's RUN_COMMAND intent (fire and forget, output stays in Termux). No UID magic: that app keeps its own uid.
+PORT={{TERMUX_PORT}}; USER={{TERMUX_USER}}
+up() { ssh -p "$PORT" -o BatchMode=yes -o ConnectTimeout=3 -o StrictHostKeyChecking=accept-new "$USER@127.0.0.1" true 2>/dev/null; [ $? -ne 255 ]; }
+if up; then exec ssh -p "$PORT" -o StrictHostKeyChecking=accept-new "$USER@127.0.0.1" "$@"; fi
+echo "fleet-termux: nothing answers on 127.0.0.1:$PORT (start sshd inside Termux, or this shell has no authorized key)." >&2
+if [ $# -eq 0 ]; then echo "fleet-termux: no command given, so no one-shot fallback; open Termux and run sshd." >&2; exit 1; fi
+echo "fleet-termux: trying Termux RUN_COMMAND for a one-shot (needs its permission and allow-external-apps; no output comes back)." >&2
+exec am startservice -n {{TERMUX_PKG}}/com.termux.app.RunCommandService -a {{TERMUX_PKG}}.RUN_COMMAND \
+  --es {{TERMUX_PKG}}.RUN_COMMAND_PATH /data/data/{{TERMUX_PKG}}/files/usr/bin/sh \
+  --esa {{TERMUX_PKG}}.RUN_COMMAND_ARGUMENTS "-c,$*" --ez {{TERMUX_PKG}}.RUN_COMMAND_BACKGROUND true

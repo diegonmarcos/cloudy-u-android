@@ -264,6 +264,15 @@
             </intent-filter>
         </service>
 
+        <!-- The mesh door's start/stop hook for the fleet (build.json::mesh_sshd.control): Cloud C3 WebServer's
+             keep-alive supervisor asks for the sshd through it. Exported ONLY behind the fleet's signature-level
+             CONSTELLATION_DATA permission (libs:core merges its definition), explicit component only (no intent
+             filter), so a non-fleet app is refused by the system before MeshSshdService runs. -->
+        <service
+            android:name=".app.MeshSshdService"
+            android:exported="true"
+            android:permission="com.diegonmarcos.cloud.permission.CONSTELLATION_DATA" />
+
         <!-- A login shell in a PTY for Cloud MyTerminal (ICloudSession): no sshd, no
              listening socket, no key to copy. Exported ONLY behind the signature-level
              TERMINAL_SESSION permission, and every call re-checks permission and

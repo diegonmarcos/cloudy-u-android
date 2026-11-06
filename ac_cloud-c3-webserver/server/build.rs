@@ -35,6 +35,45 @@ fn main() {
         let port = node.as_u64().unwrap_or_else(|| panic!("{}/build.json {} is not an integer (serving.endpoints[{}])", owner, from, id));
         e["port"] = port.into();
     }
+    // build.json::ssh_doors: every door's `<key>_from` (`file#dotted.path` from the repo root, the owner's own declaration) becomes
+    // `<key>`; a literal next to a `_from` is a second copy and stops the build.
+    // The same rule for ssh_doors' own keys (mesh_only_from: the hosting app's mesh_only block).
+    {
+        let top = root["ssh_doors"].as_object_mut().expect("build.json::ssh_doors must be an object");
+        let froms: Vec<String> = top.keys().filter(|k| k.ends_with("_from")).cloned().collect();
+        for k in froms {
+            let spec = top[&k].as_str().unwrap_or_else(|| panic!("ssh_doors.{} is not a string", k)).to_string();
+            let (file, path) = spec.split_once('#').unwrap_or_else(|| panic!("ssh_doors.{} must be file#path", k));
+            let blob = read(&repo.join(file));
+            let mut n = &blob;
+            for key in path.split('.') {
+                n = n.get(key).unwrap_or_else(|| panic!("{} has no {} (ssh_doors.{})", file, path, k));
+            }
+            top.insert(k.trim_end_matches("_from").to_string(), n.clone());
+        }
+    }
+    for d in root["ssh_doors"]["doors"].as_array_mut().expect("build.json::ssh_doors.doors must be an array") {
+        let id = d["id"].as_str().unwrap_or("?").to_string();
+        let froms: Vec<String> = d.as_object().expect("a door is an object").keys().filter(|k| k.ends_with("_from")).cloned().collect();
+        if d.get("port").is_some() {
+            panic!("build.json::ssh_doors[{}] spells a literal `port`: name port_from in the owner's declaration instead", id);
+        }
+        for k in froms {
+            let spec = d[k.as_str()].as_str().unwrap_or_else(|| panic!("ssh_doors[{}].{} is not a string", id, k)).to_string();
+            let (file, path) = spec.split_once('#').unwrap_or_else(|| panic!("ssh_doors[{}].{} must be file#path", id, k));
+            let blob = read(&repo.join(file));
+            let mut n = &blob;
+            for key in path.split('.') {
+                n = n.get(key).unwrap_or_else(|| panic!("{} has no {} (ssh_doors[{}].{})", file, path, id, k));
+            }
+            let name = k.trim_end_matches("_from").to_string();
+            if d.get(name.as_str()).is_some() {
+                panic!("build.json::ssh_doors[{}] spells a literal `{}` next to {}", id, name, k);
+            }
+            d[name.as_str()] = n.clone();
+        }
+    }
+
     // #1490 the mesh bind address: the first IPv4 of the declared WireGuard profile's address (declared once, in its owner).
     let pf = root["mesh"]["profile_from"].clone();
     let owner = pf["owner"].as_str().expect("build.json::mesh.profile_from.owner");

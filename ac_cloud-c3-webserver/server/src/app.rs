@@ -1,7 +1,7 @@
-//! THE APP SHELL: the pages around the file view. Five bottom tabs (Pages, API, Home, Files, Configs), the
+//! THE APP SHELL: the pages around the file view. Five bottom tabs (Pages, API, Home, SSHd, Configs), the
 //! link chooser (Open in browser / Open embedded) and their JSON, all under the one prefix `/__app__/`.
 //!
-//! The file view itself is NOT here. The Files tab embeds `/`, which is the shared fleet-webserver (the Linux
+//! The file view itself is NOT here. The SSHd tab embeds `/` below the SSH doors, which is the shared fleet-webserver (the Linux
 //! my-webserver UI, byte for byte); this module never answers a path outside [`PREFIX`], so the drive's own
 //! routes stay exactly the shared server's. Every path this module answers is a row of [`ROUTES`] and dispatch
 //! is a walk over that table, so "served" and "declared" are the same list; the Pages and API tabs render
@@ -35,7 +35,8 @@ pub const ROUTES: &[Route] = &[
     Route { kind: Kind::Page, path: "/__app__/tab/pages", tab: Some("Pages"), post: false, summary: "Every served page of the phone by port and by private DNS name, and every page this app serves, read from its own route table", handler: page_shell },
     Route { kind: Kind::Page, path: "/__app__/tab/api", tab: Some("API"), post: false, summary: "Every API route of this app shell, read from its own route table", handler: page_shell },
     Route { kind: Kind::Page, path: "/__app__/tab/home", tab: Some("Home"), post: false, summary: "About this phone: device, kernel, CPU, memory, storage, battery, network", handler: page_shell },
-    Route { kind: Kind::Page, path: "/__app__/tab/files", tab: Some("Files"), post: false, summary: "The file view: the shared web server's Linux UI on the served root, unchanged", handler: page_shell },
+    Route { kind: Kind::Page, path: "/__app__/tab/sshd", tab: Some("SSHd"), post: false, summary: "The SSH-door manager: every fleet SSH door with live state, engine, port, auth, sessions and Start / Stop, and below it the shared web server's Linux file view on the served root, unchanged", handler: page_shell },
+    Route { kind: Kind::Page, path: "/__app__/tab/files", tab: None, post: false, summary: "The old Files tab: the shell sends it to the SSHd tab, which holds the file view now", handler: page_shell },
     Route { kind: Kind::Page, path: "/__app__/tab/configs", tab: Some("Configs"), post: false, summary: "About (ports, DNS names, versions), Engines (every renderer and feature) and Links (what a tapped link does)", handler: page_shell },
     Route { kind: Kind::Api, path: "/__app__/api/routes", tab: None, post: false, summary: "This route table as JSON: kind, path, tab, summary", handler: api_routes },
     Route { kind: Kind::Api, path: "/__app__/api/config", tab: None, post: false, summary: "Effective configuration: bind, port, root, methods, route counts", handler: api_config },
@@ -56,7 +57,8 @@ pub const ROUTES: &[Route] = &[
     Route { kind: Kind::Api, path: "/__app__/api/sub/pages-repos", tab: None, post: false, summary: "Pages > Repos: the repo sites, their ports and state, and the add form", handler: sub::page_repos },
     Route { kind: Kind::Api, path: "/__app__/api/repos", tab: None, post: true, summary: "GET the repo entries; POST {op: add|remove|start|stop, ...}: the Repos store and its sites (loopback or mesh, never public)", handler: sub::api_repos },
     Route { kind: Kind::Api, path: "/__app__/api/repos/discover", tab: None, post: false, summary: "GET ?source=<id>: the git repositories a Repos source holds", handler: sub::api_discover },
-    Route { kind: Kind::Api, path: "/__app__/api/power", tab: None, post: true, summary: "GET the master controls and the live state (running, ports, sites); POST {server?, keep_alive?} sets Server ON/OFF and Keep alive ON/OFF (build.json::power)", handler: api_power },
+    Route { kind: Kind::Api, path: "/__app__/api/power", tab: None, post: true, summary: "GET the master controls and the live state (running, ports, sites); POST {server?, keep_alive?, ssh_door?} sets Server ON/OFF, Keep alive ON/OFF and the SSH door's own switch (true, false, or null to follow Keep alive) (build.json::power, ::ssh_doors)", handler: api_power },
+    Route { kind: Kind::Api, path: "/__app__/api/sshd", tab: None, post: true, summary: "GET every SSH door, probed live (declared in build.json::ssh_doors); POST {door, op: start|stop|follow} starts or stops the supervised door (the nix-on-droid mesh sshd) or hands it back to Keep alive; POST {mesh_only: true|false|null} sets SSH reachable over the mesh VPN only (default ON) and re-applies it to a running door", handler: api_sshd },
     Route { kind: Kind::Api, path: "/__app__/api/open", tab: None, post: true, summary: "POST {url} or {id,via:name|ip}: hand an http(s) link to cloud-browser", handler: api_open },
 ];
 
@@ -192,6 +194,14 @@ fn api_power(_ctx: &Ctx, req: &Req) -> Resp {
             serde_json::Value::Bool(b) => Ok(*b),
             _ => Err(format!("{} must be true or false", k)),
         };
+        // The SSH door's own switch (door.rs): true / false is the owner's choice (acts now), null hands it back to Keep alive.
+        let door_op = match &body["ssh_door"] {
+            serde_json::Value::Bool(true) => Some("start"),
+            serde_json::Value::Bool(false) => Some("stop"),
+            _ if body.get("ssh_door").map(|v| v.is_null()).unwrap_or(false) => Some("follow"),
+            serde_json::Value::Null => None,
+            _ => return jerr(400, "ssh_door must be true, false or null"),
+        };
         let sw = match (want("server", cur.server), want("keep_alive", cur.keep_alive)) {
             (Ok(server), Ok(keep_alive)) => crate::power::Switches { server, keep_alive },
             (Err(e), _) | (_, Err(e)) => return jerr(400, &e),
@@ -199,8 +209,43 @@ fn api_power(_ctx: &Ctx, req: &Req) -> Resp {
         if let Err(e) = crate::power::apply(sw) {
             return jerr(500, &e);
         }
+        if let Some(op) = door_op {
+            if let Err(e) = crate::door::set(op) {
+                return jerr(502, &e);
+            }
+        }
     }
     Resp::json(200, crate::power::status_json().to_string())
+}
+
+/// The SSH doors: GET the live list, POST {door, op} to start / stop the supervised one (or `follow` Keep alive), then the new list.
+fn api_sshd(_ctx: &Ctx, req: &Req) -> Resp {
+    if req.method == "POST" {
+        let body: serde_json::Value = match serde_json::from_slice(&req.body) {
+            Ok(v) => v,
+            Err(_) => return jerr(400, "the body must be JSON"),
+        };
+        // {mesh_only: true|false|null}: the SSH reachable over mesh VPN only switch (default ON); null = the declared default.
+        if let Some(v) = body.get("mesh_only") {
+            let on = match v {
+                serde_json::Value::Bool(b) => Some(*b),
+                serde_json::Value::Null => None,
+                _ => return jerr(400, "mesh_only must be true, false or null"),
+            };
+            return match crate::door::set_mesh_only(on) {
+                Ok(()) => Resp::json(200, crate::door::doors_json().to_string()),
+                Err(e) => jerr(502, &e),
+            };
+        }
+        let (door, op) = match (body["door"].as_str(), body["op"].as_str()) {
+            (Some(d), Some(o)) => (d, o),
+            _ => return jerr(400, "the body must be {door, op}"),
+        };
+        if let Err(e) = crate::door::command(door, op) {
+            return jerr(502, &e);
+        }
+    }
+    Resp::json(200, crate::door::doors_json().to_string())
 }
 
 fn api_engines(_ctx: &Ctx, _req: &Req) -> Resp {
@@ -350,7 +395,7 @@ mod tests {
     fn the_table_is_well_formed() {
         check_table().unwrap();
         let tabs: Vec<&str> = ROUTES.iter().filter_map(|r| r.tab).collect();
-        assert_eq!(tabs, ["Pages", "API", "Home", "Files", "Configs"], "the five bottom tabs, in order");
+        assert_eq!(tabs, ["Pages", "API", "Home", "SSHd", "Configs"], "the five bottom tabs, in order");
     }
 
     #[test]
@@ -376,6 +421,9 @@ mod tests {
             let resp = get(r.path).unwrap();
             assert_eq!(resp.status, 200, "{}", r.path);
         }
+        assert!(String::from_utf8_lossy(&get("/__app__/tab/sshd").unwrap().body).contains("id=\"nav\""));
+        // the old route still answers (the shell redirects it client-side to the SSHd tab) and is no longer a tab
+        assert_eq!(ROUTES.iter().find(|r| r.path == "/__app__/tab/files").unwrap().tab, None);
         assert!(String::from_utf8_lossy(&get("/__app__/tab/files").unwrap().body).contains("id=\"nav\""));
     }
 

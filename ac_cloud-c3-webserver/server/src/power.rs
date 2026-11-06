@@ -74,6 +74,12 @@ pub fn cfg() -> &'static Cfg {
 pub struct State {
     pub sw: Switches,
     pub sites: Vec<String>,
+    /// The SSH door's own switch (door.rs): None follows Keep alive, Some is the owner's choice.
+    pub ssh_door: Option<bool>,
+    /// This app started the door it supervises (so it may stop it again); false for a door someone else brought up.
+    pub ssh_owned: bool,
+    /// Mesh-only (door.rs): None is the declared default (ON), Some is the owner's choice.
+    pub mesh_only: Option<bool>,
 }
 
 pub fn load(path: &Path, default: Switches) -> State {
@@ -81,6 +87,9 @@ pub fn load(path: &Path, default: Switches) -> State {
     State {
         sw: Switches { server: v["server"].as_bool().unwrap_or(default.server), keep_alive: v["keep_alive"].as_bool().unwrap_or(default.keep_alive) },
         sites: v["sites"].as_array().map(|a| a.iter().filter_map(|s| s.as_str().map(str::to_string)).collect()).unwrap_or_default(),
+        ssh_door: v["ssh_door"].as_bool(),
+        ssh_owned: v["ssh_owned"].as_bool().unwrap_or(false),
+        mesh_only: v["mesh_only"].as_bool(),
     }
 }
 
@@ -90,7 +99,14 @@ pub fn save(path: &Path, st: &State) -> Result<(), String> {
         std::fs::create_dir_all(dir).map_err(|e| format!("cannot create {}: {}", dir.display(), e))?;
     }
     let tmp = path.with_extension("json.tmp");
-    let body = json!({"version": 1, "server": st.sw.server, "keep_alive": st.sw.keep_alive, "sites": st.sites}).to_string();
+    let mut doc = json!({"version": 1, "server": st.sw.server, "keep_alive": st.sw.keep_alive, "sites": st.sites, "ssh_owned": st.ssh_owned});
+    if let Some(on) = st.ssh_door {
+        doc["ssh_door"] = json!(on);
+    }
+    if let Some(on) = st.mesh_only {
+        doc["mesh_only"] = json!(on);
+    }
+    let body = doc.to_string();
     std::fs::write(&tmp, body).map_err(|e| format!("cannot write {}: {}", tmp.display(), e))?;
     std::fs::rename(&tmp, path).map_err(|e| format!("cannot replace {}: {}", path.display(), e))
 }
@@ -109,6 +125,36 @@ pub fn set_site(id: &str, on: bool) {
     if on {
         st.sites.push(id.to_string());
     }
+    if let Err(e) = save(&cfg().store, &st) {
+        eprintln!("c3-webserver: {}", e);
+    }
+}
+
+/// The SSH door's own switch: Some(on) is the owner's choice, None hands the door back to Keep alive. Persisted only; door.rs acts.
+pub fn set_ssh_door(on: Option<bool>) {
+    let _g = LOCK.lock();
+    let mut st = current();
+    st.ssh_door = on;
+    if let Err(e) = save(&cfg().store, &st) {
+        eprintln!("c3-webserver: {}", e);
+    }
+}
+
+/// The Mesh-only switch (door.rs): Some(on) is the owner's choice, None is the declared default. Persisted only; door.rs acts.
+pub fn set_mesh_only(on: Option<bool>) {
+    let _g = LOCK.lock();
+    let mut st = current();
+    st.mesh_only = on;
+    if let Err(e) = save(&cfg().store, &st) {
+        eprintln!("c3-webserver: {}", e);
+    }
+}
+
+/// Remember whether this app started the door it supervises.
+pub fn set_ssh_owned(owned: bool) {
+    let _g = LOCK.lock();
+    let mut st = current();
+    st.ssh_owned = owned;
     if let Err(e) = save(&cfg().store, &st) {
         eprintln!("c3-webserver: {}", e);
     }
@@ -138,6 +184,8 @@ pub fn apply(sw: Switches) -> Result<(), String> {
     if let Some(f) = SYNC.get() {
         f();
     }
+    // The supervised SSH door follows the same switches (start with Keep alive, stop with Server). Err = no Android bridge yet.
+    let _ = crate::door::sync(false, false);
     Ok(())
 }
 
@@ -156,10 +204,14 @@ pub fn status_json() -> Value {
         }
         ports.extend(crate::repos::host().ports().into_iter().map(|p| json!({"name": "site", "port": p, "proto": "tcp"})));
     }
+    let ssh = crate::door::summary();
+    if ssh["up"] == true {
+        ports.push(json!({"name": "ssh", "port": ssh["port"], "proto": "tcp"}));
+    }
     let p = plan(st.sw);
     json!({
         "server": st.sw.server, "keep_alive": st.sw.keep_alive, "running": running,
-        "sites": crate::repos::host().count(), "ports": ports, "off_url": cfg().off_url,
+        "sites": crate::repos::host().count(), "ports": ports, "off_url": cfg().off_url, "ssh_door": ssh,
         "plan": {"listeners": p.listeners, "service": p.service, "boot": p.boot, "sticky": p.sticky, "wake": p.wake},
     })
 }
@@ -221,10 +273,16 @@ mod tests {
         let dir = std::env::temp_dir().join(format!("c3ws-power-{}", std::process::id()));
         let f = dir.join("power.json");
         let d = Switches { server: true, keep_alive: false };
-        assert_eq!(load(&f, d), State { sw: d, sites: vec![] }, "a missing file is the default");
-        let st = State { sw: Switches { server: false, keep_alive: true }, sites: vec!["a".into()] };
+        assert_eq!(load(&f, d), State { sw: d, sites: vec![], ssh_door: None, ssh_owned: false, mesh_only: None }, "a missing file is the default");
+        let st = State { sw: Switches { server: false, keep_alive: true }, sites: vec!["a".into()], ssh_door: Some(false), ssh_owned: true, mesh_only: Some(false) };
         save(&f, &st).unwrap();
         assert_eq!(load(&f, d), st);
+        let follow = State { ssh_door: None, ..st.clone() };
+        save(&f, &follow).unwrap();
+        assert_eq!(load(&f, d).ssh_door, None, "no key means follow Keep alive");
+        assert_eq!(load(&f, d).mesh_only, Some(false));
+        save(&f, &State { mesh_only: None, ..st.clone() }).unwrap();
+        assert_eq!(load(&f, d).mesh_only, None, "no key means the declared default");
         std::fs::write(&f, "not json").unwrap();
         assert_eq!(load(&f, d).sw, d);
         let _ = std::fs::remove_dir_all(&dir);

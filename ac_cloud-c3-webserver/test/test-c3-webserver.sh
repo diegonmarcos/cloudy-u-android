@@ -18,8 +18,8 @@
 #       shell; the crate depends on the shared server by path and serves the drive through
 #       drive_handler over fleet_webserver::handler. (That the shared server IS the Linux UI is
 #       test-c3-webserver-shared.sh's business, and that it renders is test-c3-webserver-render.sh's.)
-#   T7  NAVIGATION STRUCTURE. The bottom nav is exactly Pages, API, Home, Files, Configs, each routed at
-#       /__app__/tab/<id> with a view in the shell; the Files tab embeds the file view at /; the Tauri
+#   T7  NAVIGATION STRUCTURE. The bottom nav is exactly Pages, API, Home, SSHd, Configs, each routed at
+#       /__app__/tab/<id> with a view in the shell; the SSHd tab embeds the file view at / below the SSH doors; the Tauri
 #       window opens on the shell, never straight onto one served page.
 #   T4  NO PLACEHOLDER IN A SHIPPED PAGE: no not-built wording in ui/ or src/.
 #   T5  TAURI SHAPE. build.json::tauri maps every shipped ABI to a tauri target;
@@ -107,15 +107,15 @@ src = open(os.path.join(app, "server/src/app.rs")).read()
 body = re.split(r"#\[cfg\(test\)\]", src)[0]
 rows = re.findall(r'Route \{ kind: Kind::(\w+), path: "([^"]+)", tab: (None|Some\("([^"]+)"\))', body)
 tabs = [r[3] for r in rows if r[3]]
-if tabs != ["Pages", "API", "Home", "Files", "Configs"]:
-    bad.append("the bottom nav is %r, want Pages, API, Home, Files, Configs" % tabs)
+if tabs != ["Pages", "API", "Home", "SSHd", "Configs"]:
+    bad.append("the bottom nav is %r, want Pages, API, Home, SSHd, Configs" % tabs)
 for r in rows:
     if r[3] and r[1] != "/__app__/tab/" + r[3].lower():
         bad.append("tab %s is routed at %s" % (r[3], r[1]))
 shell = open(os.path.join(app, "server/ui/shell.html")).read()
 if not re.search(r'<iframe id="fileview"[^>]*src="/"', shell):
-    bad.append("the Files tab does not embed the file view at / (the shared Linux UI)")
-for view in ("pages:", "api:", "home:", "files:", "configs:"):
+    bad.append("the SSHd tab does not embed the file view at / (the shared Linux UI)")
+for view in ("pages:", "api:", "home:", "sshd:", "configs:"):
     if view not in shell:
         bad.append("shell.html has no view for the %s tab" % view[:-1])
 tauri = open(os.path.join(app, "src-tauri/src/lib.rs")).read()
@@ -245,7 +245,7 @@ t6() {
 
 echo "── cloud-c3-webserver ──"
 t1 "$APP" && pass "T1 the file view is the shared server's: the app's own pages answer /__app__/ only, no file-browser code of its own" || fail "T1 the app shadows or reimplements the file view"
-t7 "$APP" && pass "T7 navigation structure: five tabs Pages, API, Home, Files, Configs, the file view is the Files tab, the app opens on the shell" || fail "T7 the app lost its navigation structure"
+t7 "$APP" && pass "T7 navigation structure: five tabs Pages, API, Home, SSHd, Configs, the file view is inside the SSHd tab, the app opens on the shell" || fail "T7 the app lost its navigation structure"
 t4 "$APP" && pass "T4 no placeholder wording in a shipped tab" || fail "T4 a shipped tab can render a placeholder"
 t5 "$APP" && pass "T5 Tauri shape: ABIs mapped, lib + server crate linked, identity from build.json, bind before window, storage asked from Rust, no shell residue" || fail "T5 the Tauri shape is broken"
 t6 "$APP" && pass "T6 rename ledger clean: no retired spelling anywhere in this app" || fail "T6 a retired spelling survives"
@@ -269,7 +269,7 @@ PY
 m_custom_page() { printf '<!doctype html><nav>Pages API Home</nav>' > "$1/server/ui/browse.html"; }
 m_drop_files_tab() { python3 - "$1" <<'PY'
 import sys,re; p=sys.argv[1]+"/server/src/app.rs"; s=open(p).read()
-new=s.replace('tab: Some("Files")','tab: None',1)
+new=s.replace('tab: Some("SSHd")','tab: None',1)
 assert new!=s; open(p,"w").write(new)
 PY
 }
@@ -287,7 +287,7 @@ PY
 }
 m_fileview_copy() { python3 - "$1" <<'PY'
 import sys; p=sys.argv[1]+"/server/ui/shell.html"; s=open(p).read()
-new=s.replace('<iframe id="fileview" title="Files" src="/">','<iframe id="fileview" title="Files" src="/__app__/own-browser">',1)
+new=s.replace('<iframe id="fileview" class="inline" title="Files" src="/">','<iframe id="fileview" class="inline" title="Files" src="/__app__/own-browser">',1)
 assert new!=s; open(p,"w").write(new)
 PY
 }
@@ -351,9 +351,9 @@ PY
 }
 mutate "a custom page next to the shared UI"                 t1 m_custom_page
 mutate "a route outside /__app__/ (shadows the file server)" t1 m_route_outside_prefix
-mutate "the Files tab removed from the nav"                 t7 m_drop_files_tab
+mutate "the SSHd tab removed from the nav"                 t7 m_drop_files_tab
 mutate "the app opens straight onto the file view"          t7 m_open_on_file_view
-mutate "the Files tab stops embedding the shared file view" t7 m_fileview_copy
+mutate "the SSHd tab stops embedding the shared file view" t7 m_fileview_copy
 mutate "a :8002 route spelled in this crate"                t1 m_route_in_lib
 mutate "a renderer of its own in this crate"                t1 m_own_renderer
 mutate "the shared server dependency dropped"               t1 m_drop_shared_dep

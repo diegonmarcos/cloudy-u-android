@@ -36,7 +36,7 @@ printf '#!/bin/sh\nwhile [ $# -gt 1 ]; do shift; done; : > "$1"\n' > "$T/bin/ssh
 chmod +x "$T/bin/sshd" "$T/bin/ssh-keygen"
 export STUB_OUT="$T"
 # A PATH of only what the script needs, so the host's own sshd/nix-shell cannot answer for the stub.
-mkdir -p "$T/sys"; for t in sh cat mkdir chmod dirname printf sleep sed cp; do ln -s "$(command -v $t)" "$T/sys/$t"; done
+mkdir -p "$T/sys"; for t in sh cat mkdir chmod dirname printf sleep sed cp rm; do ln -s "$(command -v $t)" "$T/sys/$t"; done
 HOME="$T/home" PATH="$T/bin:$T/sys" sh "$T/script.sh" > "$T/out1" 2>&1 || bad "first run failed: $(cat "$T/out1")"
 grep -qx "Port $PORT" "$T/cfg" && ok "sshd started on the declared port $PORT" || bad "sshd not on port $PORT"
 grep -qx "ListenAddress 0.0.0.0:$PORT" "$T/cfg" && grep -qx "ListenAddress \[::\]:$PORT" "$T/cfg" && ok "listens on 0.0.0.0 and :: (the mesh tun included, whatever its address)" || bad "wildcard ListenAddress missing"

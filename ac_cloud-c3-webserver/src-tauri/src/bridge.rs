@@ -17,6 +17,21 @@ struct Handle {
 }
 
 static HANDLE: OnceLock<Handle> = OnceLock::new();
+/// The keep-alive service as a Context, while it runs: the SSH door's start/stop signal must work at boot, when no activity exists.
+static SERVICE: std::sync::Mutex<Option<Handle>> = std::sync::Mutex::new(None);
+
+/// KeepAliveService.nativeStart: remember the service Context (None on nativeStop) and install the SSH door's sender.
+pub fn note_service(env: &mut JNIEnv, service: Option<&JObject>) {
+    let h = service.and_then(|svc| {
+        let vm = env.get_java_vm().ok()?;
+        let activity = env.new_global_ref(svc).ok()?;
+        Some(Handle { vm, activity })
+    });
+    if let Ok(mut g) = SERVICE.lock() {
+        *g = h;
+    }
+    c3_webserver::door::set_sender(Box::new(send_door));
+}
 
 /// Keep the VM and the activity, and wire the server crate's two hooks to them.
 pub fn install(window: &tauri::WebviewWindow) {
@@ -38,6 +53,8 @@ pub fn install(window: &tauri::WebviewWindow) {
                     c3_webserver::diag::set_opener(Box::new(open_in_browser));
                     // #1502 the keep-alive service and the boot receiver follow the Server / Keep alive switches.
                     c3_webserver::power::set_sync_hook(Box::new(sync_keep_alive));
+                    // The SSH door the keep-alive supervisor keeps up (door.rs): the signal to the nix-on-droid app.
+                    c3_webserver::door::set_sender(Box::new(send_door));
                 }
                 Err(e) => {
                     let _ = env.exception_clear();
@@ -51,6 +68,10 @@ pub fn install(window: &tauri::WebviewWindow) {
 /// Run `f` on this thread attached to the VM; a pending Java exception becomes the Err text.
 fn with_env<T>(f: impl FnOnce(&mut JNIEnv, &JObject) -> jni::errors::Result<T>) -> Result<T, String> {
     let h = HANDLE.get().ok_or_else(|| "the Android bridge is not installed yet (the window is still opening)".to_string())?;
+    run_on(h, f)
+}
+
+fn run_on<T>(h: &Handle, f: impl FnOnce(&mut JNIEnv, &JObject) -> jni::errors::Result<T>) -> Result<T, String> {
     let mut env = h.vm.attach_current_thread().map_err(|e| e.to_string())?;
     let out = f(&mut env, h.activity.as_obj());
     if let Some(msg) = take_exception(&mut env) {
@@ -195,4 +216,39 @@ fn sync_keep_alive() {
     if let Err(e) = with_env(|env, activity| env.call_method(activity, "syncKeepAlive", "()V", &[]).map(|_| ())) {
         eprintln!("cloud-c3-webserver: keep-alive sync failed: {}", e);
     }
+}
+
+/// The SSH door's start / stop signal (door.rs): an explicit foreground-service start of the nix-on-droid app's MeshSshdService,
+/// guarded there by the fleet's signature permission. Package, class and action names come from build.json::ssh_doors (resolved
+/// from that app's own declaration). The activity is the Context when the window is open; the keep-alive service is, at boot.
+fn send_door(cmd: c3_webserver::door::Cmd) -> Result<(), String> {
+    let c = c3_webserver::door::supervised().control;
+    let (action, mesh_only) = match cmd {
+        c3_webserver::door::Cmd::Start(m) => (c.action_start.clone(), Some(m)),
+        c3_webserver::door::Cmd::Stop => (c.action_stop.clone(), None),
+    };
+    let call = |env: &mut JNIEnv, ctx: &JObject| -> jni::errors::Result<()> {
+        let intent = env.new_object("android/content/Intent", "()V", &[])?;
+        let pkg = env.new_string(&c.package)?;
+        let cls = env.new_string(&c.service)?;
+        env.call_method(&intent, "setClassName", "(Ljava/lang/String;Ljava/lang/String;)Landroid/content/Intent;", &[JValue::Object(&pkg), JValue::Object(&cls)])?;
+        let act = env.new_string(&action)?;
+        env.call_method(&intent, "setAction", "(Ljava/lang/String;)Landroid/content/Intent;", &[JValue::Object(&act)])?;
+        if let Some(m) = mesh_only {
+            // The Mesh-only flag travels with every start; the hosting app resolves the mesh addresses itself and fails closed.
+            let key = env.new_string(&c.extra_mesh_only)?;
+            env.call_method(&intent, "putExtra", "(Ljava/lang/String;Z)Landroid/content/Intent;", &[JValue::Object(&key), JValue::Bool(m as jni::sys::jboolean)])?;
+        }
+        env.call_method(ctx, "startForegroundService", "(Landroid/content/Intent;)Landroid/content/ComponentName;", &[JValue::Object(&intent)])?;
+        Ok(())
+    };
+    let r = match HANDLE.get() {
+        Some(h) => run_on(h, call),
+        None => {
+            let g = SERVICE.lock().map_err(|_| "poisoned".to_string())?;
+            let h = g.as_ref().ok_or_else(|| "no Android context yet (neither the window nor the keep-alive service is up)".to_string())?;
+            run_on(h, call)
+        }
+    };
+    r.map_err(|e| if e.contains("SecurityException") { format!("{} refused the call: both apps must carry the fleet key and its CONSTELLATION_DATA permission", c.package) } else { e })
 }

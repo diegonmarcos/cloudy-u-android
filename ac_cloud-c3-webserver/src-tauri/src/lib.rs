@@ -20,6 +20,11 @@ fn start_servers() -> Result<u16, Box<dyn std::error::Error>> {
     if let Err(e) = c3_webserver::start(cfg) {
         eprintln!("c3-webserver did not start: {}", e);
     }
+    // The jump-host helpers (fleet-nix, fleet-termux, fleet-adb, fleet-ipc) for a shell of this app: rendered from build.json::ssh_doors.
+    let bin = format!("/data/data/{}/files/bin", env!("C3_WEBSERVER_APP_ID"));
+    if let Err(e) = c3_webserver::jump::install(std::path::Path::new(&bin)) {
+        eprintln!("c3-webserver: jump helpers not installed: {}", e);
+    }
     Ok(port)
 }
 
@@ -28,10 +33,18 @@ fn start_servers() -> Result<u16, Box<dyn std::error::Error>> {
 #[cfg(target_os = "android")]
 #[no_mangle]
 pub extern "system" fn Java_com_diegonmarcos_cloudwebserver_KeepAliveService_nativeStart(
-    _env: jni::JNIEnv,
-    _service: jni::objects::JObject,
+    mut env: jni::JNIEnv,
+    service: jni::objects::JObject,
 ) -> jni::sys::jboolean {
-    start_servers().is_ok() as jni::sys::jboolean
+    let ok = start_servers().is_ok();
+    // The SSH door (door.rs): the one supervised app brings its external access up together. With Keep alive ON this asks the
+    // nix-on-droid app to start its sshd (also at boot, which is when this service starts); the supervisor runs once here,
+    // it never polls. A refusal or a missing nix app is logged, not fatal.
+    bridge::note_service(&mut env, Some(&service));
+    if let Err(e) = c3_webserver::door::sync(false, false) {
+        eprintln!("c3-webserver: ssh door not started: {}", e);
+    }
+    ok as jni::sys::jboolean
 }
 
 /// #1502 the Server stopped page's way back: the served pages are down while the server is OFF, so this Tauri command (called by the
@@ -48,11 +61,15 @@ fn power_set(server: Option<bool>, keep_alive: Option<bool>) -> Result<String, S
 #[cfg(target_os = "android")]
 #[no_mangle]
 pub extern "system" fn Java_com_diegonmarcos_cloudwebserver_KeepAliveService_nativeStop(
-    _env: jni::JNIEnv,
-    _service: jni::objects::JObject,
+    mut env: jni::JNIEnv,
+    service: jni::objects::JObject,
 ) {
     use c3_webserver::power;
+    // power::apply also runs the SSH door's supervisor pass (Server OFF stops the door this app started), so the service Context
+    // must be known first and is dropped only afterwards.
+    bridge::note_service(&mut env, Some(&service));
     let _ = power::apply(power::Switches { server: false, keep_alive: power::current().sw.keep_alive });
+    bridge::note_service(&mut env, None);
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

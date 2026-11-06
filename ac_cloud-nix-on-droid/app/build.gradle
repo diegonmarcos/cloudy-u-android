@@ -151,6 +151,11 @@ android {
         buildConfigField "int", "CLOUD_MESH_SSHD_PORT", "${cloudMeshSshd().port}"
         buildConfigField "String", "CLOUD_MESH_SSHD_BIND", "\"${cloudMeshSshd().bind.join(',')}\""
         buildConfigField "boolean", "CLOUD_MESH_SSHD_ON_BOOT", "${cloudMeshSshd().start_on_boot}"
+        // Mesh-only (build.json::mesh_sshd.mesh_only): the default, the VPN interface name pattern, the mesh CIDRs and loopback.
+        buildConfigField "boolean", "CLOUD_MESH_ONLY_DEFAULT", "${cloudMeshSshd().mesh_only.default_on}"
+        buildConfigField "String", "CLOUD_MESH_IFACES", "\"${cloudMeshSshd().mesh_only.ifaces}\""
+        buildConfigField "String", "CLOUD_MESH_CIDRS", "\"${cloudMeshSshd().mesh_only.cidrs.join(',')}\""
+        buildConfigField "String", "CLOUD_MESH_LOOPBACK", "\"${cloudMeshSshd().mesh_only.loopback.join(',')}\""
 
         // cloud-shared-store (ac_cloud-termux/build.json::shared_store + ::storage, the owner's ONE
         // declaration): the migration notice's backup drop and marker. The store itself is linked by
@@ -777,6 +782,9 @@ def cloudMeshSshd() {
     def decl = new groovy.json.JsonSlurper().parseText(declaration.getText("UTF-8")).mesh_sshd
     if (!(decl?.port instanceof Integer) || !(decl?.bind instanceof List) || decl.bind.isEmpty() || !(decl?.start_on_boot instanceof Boolean))
         throw new GradleException(declaration.toString() + " mesh_sshd must declare integer port, non-empty bind list and boolean start_on_boot")
+    def mo = decl.mesh_only
+    if (!(mo?.default_on instanceof Boolean) || !(mo?.ifaces instanceof String) || !(mo?.cidrs instanceof List) || mo.cidrs.isEmpty() || !(mo?.loopback instanceof List) || mo.loopback.isEmpty())
+        throw new GradleException(declaration.toString() + " mesh_sshd.mesh_only must declare boolean default_on, string ifaces, non-empty cidrs and loopback lists")
     return decl
 }
 

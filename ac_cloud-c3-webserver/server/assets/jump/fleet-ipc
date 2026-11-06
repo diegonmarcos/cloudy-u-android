@@ -1,0 +1,12 @@
+#!/system/bin/sh
+# fleet-ipc <authority> <method> [arg] | query <authority> [path] | svc <package/class> [action]: fleet IPC in one command.
+# `content call` / `content query` / `am start-foreground-service`, run as THIS app's uid, which carries the fleet signature and
+# CONSTELLATION_DATA, so the signature-guarded providers (cloud.store.data, accountdata, fleet-data, ...) answer. The nix, Cloud
+# Terminal Termux and webserver shells are all constellation-signed and pass the gate; only a raw adb shell (uid 2000) is refused.
+usage() { echo "usage: fleet-ipc <authority> <method> [arg]   (content call)"; echo "       fleet-ipc query <authority> [path]   (content query)"; echo "       fleet-ipc svc <package/class> [action]  (start a fleet service)"; exit 2; }
+[ $# -ge 1 ] || usage
+case "$1" in
+  query) [ $# -ge 2 ] || usage; exec content query --uri "content://$2${3:+/$3}" ;;
+  svc) [ $# -ge 2 ] || usage; exec am start-foreground-service -n "$2" ${3:+-a "$3"} ;;
+  *) [ $# -ge 2 ] || usage; exec content call --uri "content://$1" --method "$2" ${3:+--arg "$3"} ;;
+esac

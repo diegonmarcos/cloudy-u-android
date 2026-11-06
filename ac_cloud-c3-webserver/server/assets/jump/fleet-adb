@@ -1,0 +1,9 @@
+#!/system/bin/sh
+# fleet-adb: wireless debugging on (this app holds WRITE_SECURE_SETTINGS), adb connect on loopback, then an adb shell (uid 2000).
+# No UID magic: adb is the platform's own door to the shell uid; nothing here escalates.
+settings put global adb_wifi_enabled 1 2>/dev/null || { echo "fleet-adb: cannot enable Wireless debugging: WRITE_SECURE_SETTINGS is not granted to this app (grant it on the Perms page)." >&2; exit 1; }
+n=0; P=""; while [ $n -lt 10 ]; do P=$(getprop service.adb.tls.port); [ -n "$P" ] && [ "$P" != 0 ] && break; sleep 1; n=$((n+1)); done
+[ -n "$P" ] && [ "$P" != 0 ] || { echo "fleet-adb: Wireless debugging is on but publishes no port yet (Wi-Fi needed)." >&2; exit 1; }
+command -v adb >/dev/null 2>&1 || { echo "fleet-adb: no adb client in this shell; port is $P. Use the SuperApp's embedded adb, or run fleet-nix and adb there." >&2; exit 1; }
+adb connect "127.0.0.1:$P" >/dev/null 2>&1
+exec adb -s "127.0.0.1:$P" shell "$@"

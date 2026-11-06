@@ -1,0 +1,20 @@
+#!/system/bin/sh
+# fleet-nix: nested ssh into the Nix-on-Droid shell (rich Linux userland, fleet IPC as a constellation app).
+# No UID magic: this does not enter that app's sandbox, it dials that environment's OWN sshd on loopback ({{NIX_PORT}}),
+# so the right uid, home and userland stay in force. Key auth only; keys come from ~/.ssh of THIS shell, never from here.
+PORT={{NIX_PORT}}; USER={{NIX_USER}}
+up() { ssh -p "$PORT" -o BatchMode=yes -o ConnectTimeout=3 -o StrictHostKeyChecking=accept-new "$USER@127.0.0.1" true 2>/dev/null; [ $? -ne 255 ]; }
+if ! up; then
+  echo "fleet-nix: nothing answers on 127.0.0.1:$PORT (the Nix-on-Droid sshd is down, or this shell has no authorized key)." >&2
+  if [ -t 0 ]; then
+    printf 'Start it now? [y/N] ' >&2; read -r a
+    case "$a" in y|Y)
+      am start-foreground-service -n {{NIX_PKG}}/{{NIX_SERVICE}} -a {{NIX_START}} >/dev/null 2>&1 || { echo "fleet-nix: could not signal {{NIX_PKG}} (is it installed, and does this app hold the fleet permission?)" >&2; exit 1; }
+      n=0; while [ $n -lt 20 ] && ! up; do sleep 1; n=$((n+1)); done
+      up || { echo "fleet-nix: asked, but still nothing on :$PORT after 20 s." >&2; exit 1; } ;;
+    *) exit 1 ;; esac
+  else
+    echo "fleet-nix: start it from the SSHd tab, or run fleet-nix interactively." >&2; exit 1
+  fi
+fi
+exec ssh -p "$PORT" -o StrictHostKeyChecking=accept-new "$USER@127.0.0.1" "$@"

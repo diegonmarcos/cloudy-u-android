@@ -78,3 +78,26 @@ Linux server).
 
 ## Server and Keep alive (#1503)
 Two master controls sit at the top of Home and Configs and persist in `power.json` (build.json::power). Server OFF stops every listener (pages, mesh listener, Repos sites) and frees the ports; the app then opens on a bundled page whose button turns it back ON. Keep alive (default OFF) is the only reason a foreground service, a sticky restart or a boot receiver exists, and only with Server ON. Guard: test/test-c3-webserver-power.sh; state machine tests: server/src/power.rs.
+
+## SSH doors and the jump host (#1565)
+
+This app hosts no sshd. With Keep alive ON, the keep-alive service's start (at boot too) runs the supervisor in `server/src/door.rs`,
+which asks the Nix-on-Droid app to start its mesh sshd (the real OpenSSH on tcp 8024, key auth from that app's own
+`~/.ssh/authorized_keys`) through that app's exported `MeshSshdService`, guarded by the fleet's `CONSTELLATION_DATA` signature
+permission. The supervisor stops a door only if it started it (or on an explicit Stop), never polls, and adds no service.
+
+- **SSHd tab** (replaces Files; the file view lives inside it, `/__app__/tab/files` redirects): every door in `build.json::ssh_doors`
+  with live state, engine from the SSH banner, bind (observed), auth, host app, seen-up, sessions where `/proc/net` is readable, Start /
+  Stop where a hook exists, Copy All. The SuperApp row says it hosts no sshd; Termux (8023) has no start hook from here yet.
+- **Mesh-only** (default ON): the nix sshd listens on the WireGuard mesh addresses plus loopback, never `0.0.0.0` / `::`; addresses are
+  resolved at each start from the live VPN interface, and with no mesh address it fails closed (no sshd). Loopback stays because it is
+  reachable from no network and the helpers below dial it. Each door's badge shows what actually listens: mesh-only or EXPOSED.
+- **Helpers** (`fleet-nix`, `fleet-termux`, `fleet-adb`, `fleet-ipc`, rendered from the declaration into `files/bin`): nested ssh to the
+  nix (8024) and Cloud Terminal Termux (8023) doors, wireless debugging plus `adb shell` (this app holds WRITE_SECURE_SETTINGS), and
+  `content call` / `content query` / `am` for fleet IPC. No UID magic: each routes to that environment's own door so its uid and
+  userland stay in force; nothing switches uid or enters another sandbox.
+- **Binder IPC and the signature gate**: the nix shell, the Cloud Terminal Termux shell (both constellation-signed fleet apps) and this
+  app's own uid all pass the signature-guarded providers; only a raw adb shell (uid 2000) does not.
+- **ADB handoff**: the SuperApp keeps its ADB plane and WRITE_SECURE_SETTINGS grant; this app now also holds the permission
+  (supersedes #1515's single holder) and can run `fleet-adb` itself.
+- Not built: an app-uid sshd inside this app (needs an embedded SSH server) and Termux start/stop supervision (needs a hook in that app).

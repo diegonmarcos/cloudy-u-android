@@ -71,7 +71,7 @@ const A37 = (s) => s.w === 1080 && s.h === 2340 && s.bytes > 8000;
 await go(origin + '/__app__/');
 await until(`document.querySelectorAll('nav button').length > 0 && document.querySelector('main section')`);
 let d = await dims();
-check('P0a', JSON.stringify(d.tabs) === JSON.stringify(['Pages', 'API', 'Home', 'Files', 'Configs']), `the bottom nav is ${JSON.stringify(d.tabs)}`);
+check('P0a', JSON.stringify(d.tabs) === JSON.stringify(['Pages', 'API', 'Home', 'SSHd', 'Configs']), `the bottom nav is ${JSON.stringify(d.tabs)}`);
 check('P0b', d.on === 'Home', `the app opens on Home (selected: ${d.on})`);
 
 const tabs = [['Pages', 'pages', `document.querySelector('.served')`], ['API', 'api', `document.querySelector('main section .row')`],
@@ -94,16 +94,21 @@ for (const [seg, name, ready] of [['engines', 'configs-engines', `document.query
   check('P-' + seg, d.sw <= d.vw + 1 && A37(s), `Configs > ${seg}: drawn, no sideways scroll, shot ${s.w}x${s.h}`);
 }
 
-// ── F: the Files tab IS the Linux file view, unchanged, below the shell top row ──
-await evalJs(`[...document.querySelectorAll('nav button')].find((b) => b.innerText.trim() === 'Files').click()`);
+// ── S: the SSHd tab lists the three fleet doors, live ──
+await evalJs(`[...document.querySelectorAll('nav button')].find((b) => b.innerText.trim() === 'SSHd').click()`);
+const doors = await until(`document.querySelectorAll('section.door').length >= 3`);
+check('S1', doors, doors ? 'the SSHd tab draws the fleet SSH doors' : 'the SSHd tab drew no doors');
+const dn = await evalJs(`[...document.querySelectorAll('section.door')].map((s) => s.id)`);
+check('S2', ['door-nix', 'door-superapp', 'door-termux'].every((i) => dn.includes(i)), `doors listed: ${JSON.stringify(dn)}`);
+// ── F: the file view IS the Linux file view, unchanged, inside the SSHd tab ──
 const fv = await until(`(() => { const f = document.querySelector('#fileview'); try { return f.contentDocument.querySelectorAll('#file-list .file-entry').length > 0; } catch (e) { return false; } })()`);
-check('F1', fv, fv ? 'the Files tab shows the shared file view with the served root listed' : 'the file view did not load in the Files tab');
+check('F1', fv, fv ? 'the SSHd tab shows the shared file view with the served root listed' : 'the file view did not load in the SSHd tab');
 const fg = await evalJs(`(() => { const f = document.querySelector('#fileview'), h = document.querySelector('header').getBoundingClientRect(), n = document.querySelector('nav').getBoundingClientRect(), b = f.getBoundingClientRect(), dd = f.contentDocument;
   return { title: dd.title, side: !!dd.querySelector('#sidebar'), bar: !!dd.querySelector('#viewer-toolbar'), fTop: b.top, fBottom: b.bottom, hb: h.bottom, nt: n.top, custom: dd.body.innerHTML.includes('__app__') || !!dd.querySelector('nav') }; })()`);
 check('F2', fg.title === 'File Browser' && fg.side && fg.bar && !fg.custom, `the embedded page is the unchanged Linux File Browser (title=${JSON.stringify(fg.title)}, no custom nav)`);
-check('F3', fg.fTop >= fg.hb - 1 && fg.fBottom <= fg.nt + 1, `the file view sits between the shell top row and the bottom nav (${Math.round(fg.fTop)}..${Math.round(fg.fBottom)} within ${Math.round(fg.hb)}..${Math.round(fg.nt)})`);
-const sf = await shot('shell-files');
-check('F4', A37(sf), `Files shot ${sf.w}x${sf.h}`);
+check('F3', fg.fTop >= fg.hb - 1, `the file view sits below the shell top row, after the doors (${Math.round(fg.fTop)} >= ${Math.round(fg.hb)})`);
+const sf = await shot('shell-sshd');
+check('F4', A37(sf), `SSHd shot ${sf.w}x${sf.h}`);
 
 // ── L: a link in the file view's viewer offers the choice ──
 await evalJs(`(() => { const dd = document.querySelector('#fileview').contentDocument; const e = [...dd.querySelectorAll('#file-list .file-entry')].find((x) => x.innerText.includes(${JSON.stringify(expectDir)})); e && e.click(); })()`);

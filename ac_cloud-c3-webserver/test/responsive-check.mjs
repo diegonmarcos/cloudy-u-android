@@ -39,7 +39,7 @@ const pages = [
   ['browser-root', D + '/'], ['browser-markdown', D + '/#/Documents/readme.md'], ['browser-json', D + '/#/Documents/data.json'],
   ['markdown', D + '/Documents/readme.md'], ['json', D + '/Documents/data.json'], ['json-wide', D + '/Documents/wide.json'], ['yaml', D + '/Documents/c.yaml'],
   ['shell-home', D + '/__app__/tab/home'], ['shell-pages', D + '/__app__/tab/pages'], ['shell-api', D + '/__app__/tab/api'],
-  ['shell-files', D + '/__app__/tab/files'], ['shell-configs', D + '/__app__/tab/configs'], ['diagnostics', origin(diagUrl) + '/'],
+  ['shell-sshd', D + '/__app__/tab/sshd'], ['shell-configs', D + '/__app__/tab/configs'], ['diagnostics', origin(diagUrl) + '/'],
 ];
 for (const [vn, W, H, mobile] of [['360', 360, 800, true], ['1440', 1440, 900, false]]) {
   await send('Emulation.setDeviceMetricsOverride', { width: W, height: H, deviceScaleFactor: 1, mobile, screenWidth: W, screenHeight: H });

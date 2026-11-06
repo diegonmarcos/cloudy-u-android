@@ -17,6 +17,10 @@
   main { padding:calc(var(--top) + env(safe-area-inset-top) + 8px) 10px calc(var(--nav) + env(safe-area-inset-bottom) + 12px); }
   main.files { padding:0; }
   #fileview { display:block; width:100%; border:0; position:fixed; left:0; right:0; top:calc(var(--top) + env(safe-area-inset-top)); bottom:calc(var(--nav) + env(safe-area-inset-bottom)); height:calc(100% - var(--top) - var(--nav) - env(safe-area-inset-top) - env(safe-area-inset-bottom)); background:#fff; }
+  #fileview.inline { position:static; display:block; width:100%; height:70vh; border:0; }
+  .door .row .k { flex:0 0 34%; }
+  .door h2 .badge.mesh { color:#7ee2a8; border-color:#7ee2a8; } .door h2 .badge.exposed { color:#fff; background:#c0392b; border-color:#c0392b; font-weight:600; }
+  .door h2 .badge.up { color:#7ee2a8; border-color:#7ee2a8; } .door h2 .badge.down { color:#ff8a8a; border-color:#ff8a8a; }
   nav { position:fixed; left:0; right:0; bottom:0; z-index:4; height:calc(var(--nav) + env(safe-area-inset-bottom)); display:flex; background:var(--panel); border-top:1px solid var(--line); padding-bottom:env(safe-area-inset-bottom); }
   nav button { flex:1; background:none; border:0; color:var(--dim); font:12px system-ui; padding:6px 0; }
   nav button.on { color:var(--acc); font-weight:600; }
@@ -145,12 +149,80 @@ function renderPower(st) {
     return '<div class="tool"><b>' + esc(label) + '</b><button data-power="' + id + '" data-to="' + (on ? 'false' : 'true') + '" aria-pressed="' + (on ? 'true' : 'false') + '">' + (on ? 'ON' : 'OFF') + '</button><span class="sum">' + esc(note) + '</span></div>';
   };
   var ports = st.ports.map(function (p) { return p.proto + ' ' + p.port; }).join(', ') || 'none';
+  var ssh = st.ssh_door;
   return '<section id="power"><h2>Server</h2>' +
     sw('server', 'Server', st.server, 'OFF stops every page, the mesh listener and every site, and frees the ports') +
     sw('keep_alive', 'Keep alive', st.keep_alive, 'ON keeps the server up with a notification and starts it at boot; OFF stops it when the app closes') +
+    sw('ssh_door', 'SSH door :' + ssh.port, ssh.wanted, 'ON asks Cloud Terminal Nix-on-Droid to start its sshd; follows Keep alive until set here. It is stopped again only if this app started it') +
     '<div class="row"><div class="k">State</div><div class="v">' + (st.running ? 'running' : 'stopped') + '</div></div>' +
     '<div class="row"><div class="k">Ports</div><div class="v">' + esc(ports) + '</div></div>' +
+    '<div class="row"><div class="k">SSH door</div><div class="v">tcp ' + esc(String(ssh.port)) + ' ' + esc(ssh.state) + ' · ' + (ssh.explicit === null ? 'follows Keep alive' : 'own switch') + ' · via ' + esc(ssh.via) +
+    (ssh.explicit === null ? '' : ' <button data-power="ssh_door" data-to="follow">Follow Keep alive</button>') + '</div></div>' +
     '<div class="row"><div class="k">Active sites</div><div class="v">' + esc(String(st.sites)) + '</div></div></section>';
+}
+// SSHd tab (replaces the Files tab): every SSH door, live from /__app__/api/sshd (declared in build.json::ssh_doors), then the shared file view.
+function fmtUp(sec) {
+  if (sec === null || sec === undefined) return '-';
+  return sec >= 3600 ? Math.floor(sec / 3600) + ' h ' + Math.floor(sec % 3600 / 60) + ' min' : sec >= 60 ? Math.floor(sec / 60) + ' min ' + (sec % 60) + ' s' : sec + ' s';
+}
+function doorFacts(d) {
+  var ses = (d.sessions === null || d.sessions === undefined) ? 'unknown: ' + d.sessions_note : (d.sessions.length ? d.sessions.length + ' connected: ' + d.sessions.join(', ') : 'none connected');
+  return [
+    ['State', d.state],
+    ['Engine', d.engine + (d.banner ? ' (' + d.banner + ')' : '')],
+    ['Port and bind', (d.port === null || d.port === undefined ? 'no port' : 'tcp ' + d.port) + (d.bind ? ' on ' + d.bind : '')],
+    ['Bind (observed)', bindText(d)],
+    ['Auth', d.auth],
+    ['Authorized keys', d.authorized_keys === null || d.authorized_keys === undefined ? 'not readable here: ' + d.authorized_keys_note : String(d.authorized_keys)],
+    ['Hosted by', d.app + (d.package ? ' (' + d.package + ')' : '')],
+    ['Seen up', fmtUp(d.seen_up_s)],
+    ['Sessions', ses],
+    ['Note', d.note]
+  ];
+}
+function bindText(d) {
+  var v = d.bind_state;
+  if (v === 'n/a') return 'no listener';
+  if (v === 'unknown') return 'not observable: this Android hides /proc/net from apps';
+  var a = (d.binds && d.binds.length) ? d.binds.join(', ') : 'nothing listening';
+  return a + ' (' + (v === 'mesh-only' ? 'mesh-only' : v === 'exposed' ? 'all interfaces / EXPOSED' : v) + ')';
+}
+function bindBadge(d) {
+  var v = d.bind_state;
+  if (v === 'mesh-only') return '<span class="badge mesh">mesh-only</span>';
+  if (v === 'exposed') return '<span class="badge exposed">all interfaces / EXPOSED</span>';
+  return '';
+}
+function renderDoor(d) {
+  var rows = doorFacts(d).map(function (f) { return '<div class="row"><div class="k">' + esc(f[0]) + '</div><div class="v">' + esc(f[1]) + '</div></div>'; }).join('');
+  var c = d.control, off = c.available ? '' : ' disabled title="' + esc(c.note) + '"';
+  var tools = '<div class="tool"><button data-door-op="start" data-door="' + esc(d.id) + '"' + off + '>Start</button><button data-door-op="stop" data-door="' + esc(d.id) + '"' + off + '>Stop</button>' +
+    (c.available && c.explicit !== null ? '<button data-door-op="follow" data-door="' + esc(d.id) + '">Follow Keep alive</button>' : '') +
+    '<span class="sum">' + esc(c.note) + '</span></div>';
+  var up = d.state === 'listening' || d.state === 'connected';
+  return '<section class="door" id="door-' + esc(d.id) + '"><h2>' + esc(d.title) + '<span class="badge ' + (up ? 'up' : 'down') + '">' + esc(d.state) + '</span>' + bindBadge(d) + '</h2>' + rows + tools + '</section>';
+}
+function renderOther(o) {
+  return '<section class="door"><h2>Other SSH servers answering on loopback</h2>' + o.map(function (x) {
+    return '<div class="row"><div class="k">tcp ' + esc(String(x.port)) + '</div><div class="v">' + esc(x.engine) + ' (' + esc(x.banner) + ')</div></div>';
+  }).join('') + '</section>';
+}
+function renderMeshOnly(data) {
+  var on = data.mesh_only;
+  return '<section id="mesh-only"><h2>Mesh-only<span class="badge ' + (on ? 'mesh' : 'exposed') + '">' + (on ? 'ON' : 'OFF: all interfaces') + '</span></h2><div class="tool"><b>SSH reachable over mesh VPN only</b>' +
+    '<button data-mesh-only="' + (on ? 'false' : 'true') + '" aria-pressed="' + (on ? 'true' : 'false') + '">' + (on ? 'ON' : 'OFF') + '</button>' +
+    '<span class="sum">ON binds the managed door to the WireGuard mesh addresses and loopback only (resolved at each start; with no mesh address it stays closed). OFF binds every interface, Wi-Fi, LAN and cellular included. Mesh ranges: ' + esc(data.mesh_cidrs.join(', ')) + '.</span></div></section>';
+}
+function renderSshd(data) {
+  return renderMeshOnly(data) + data.doors.map(renderDoor).join('') + (data.other.length ? renderOther(data.other) : '') +
+    '<section><h2>All doors</h2><div class="tool"><button data-copy-doors>Copy All Infos</button><span class="sum">Keep alive ' + (data.keep_alive ? 'ON' : 'OFF') + '; the supervised door is ' + (data.wanted ? 'wanted' : 'not wanted') + '</span></div></section>' +
+    '<section><h2>Files</h2><iframe id="fileview" class="inline" title="Files" src="/"></iframe></section>';
+}
+function doorsText(data) {
+  var out = ['Mesh-only (SSH reachable over mesh VPN only): ' + (data.mesh_only ? 'ON' : 'OFF') + ' (mesh ranges ' + data.mesh_cidrs.join(', ') + ')'];
+  out = out.concat(data.doors.map(function (d) { return d.title + '\n' + doorFacts(d).map(function (f) { return '  ' + f[0] + ': ' + f[1]; }).join('\n'); }));
+  data.other.forEach(function (x) { out.push('Other SSH server\n  tcp ' + x.port + ': ' + x.engine + ' (' + x.banner + ')'); });
+  return out.join('\n\n');
 }
 // Home: the cloud-superapp Configs > About shape: an Index of the macro groups, then each group's sections.
 function renderAbout(groups) {
@@ -357,7 +429,8 @@ if (typeof module !== 'undefined') {
   module.exports = { esc: esc, tabsFrom: tabsFrom, tabFromPath: tabFromPath, defaultTab: defaultTab, renderNav: renderNav, renderRoutes: renderRoutes,
     renderSections: renderSections, renderAbout: renderAbout, aboutText: aboutText, renderConfig: renderConfig, renderServed: renderServed,
     renderCfgTabs: renderCfgTabs, renderServing: renderServing, renderEngines: renderEngines, hostIsLocal: hostIsLocal, classifyLink: classifyLink,
-    isLinkTarget: isLinkTarget, embedUrl: embedUrl, subsOf: subsOf, renderSubNav: renderSubNav, renderSubRow: renderSubRow, renderForm: renderForm, renderSubPage: renderSubPage, decide: decide, renderSheet: renderSheet, renderLinks: renderLinks };
+    isLinkTarget: isLinkTarget, embedUrl: embedUrl, subsOf: subsOf, renderSubNav: renderSubNav, renderSubRow: renderSubRow, renderForm: renderForm, renderSubPage: renderSubPage, decide: decide, renderSheet: renderSheet, renderLinks: renderLinks,
+    renderPower: renderPower, renderMeshOnly: renderMeshOnly, renderSshd: renderSshd, renderDoor: renderDoor, doorsText: doorsText };
 }
 </script>
 
@@ -371,7 +444,7 @@ if (typeof module !== 'undefined') {
   var $gear = document.getElementById('gear');
   var $sheet = document.getElementById('sheet');
   var $scrim = document.getElementById('scrim');
-  var ROUTES = [], TABS = [], ABOUT = [], SERVING = null, LINKS = null, SUBPAGES = [];
+  var DOORS = null, ROUTES = [], TABS = [], ABOUT = [], SERVING = null, LINKS = null, SUBPAGES = [];
   var subPage = {};
   var cfgPage = 'about';
   var KEY = 'c3.link.';
@@ -475,7 +548,7 @@ if (typeof module !== 'undefined') {
     pages: function () { return withSubs('pages', 'drive', function () { return j('/__app__/api/serving').then(function (sv) { SERVING = sv; return renderServed(sv) + renderRoutes(ROUTES, 'page'); }); }); },
     api: function () { return withSubs('api', 'apps', function () { return Promise.resolve(renderRoutes(ROUTES, 'api')); }); },
     home: function () { return Promise.all([j('/__app__/api/power'), j('/__app__/api/about')]).then(function (rs) { ABOUT = rs[1]; return renderPower(rs[0]) + renderAbout(ABOUT); }); },
-    files: function () { return Promise.resolve('<iframe id="fileview" title="Files" src="/"></iframe>'); },
+    sshd: function () { return j('/__app__/api/sshd').then(function (d) { DOORS = d; return renderSshd(d); }); },
     configs: function () {
       var head = renderCfgTabs(cfgPage);
       if (cfgPage === 'engines') return j('/__app__/api/engines').then(function (l) { return head + renderEngines(l); });
@@ -487,6 +560,8 @@ if (typeof module !== 'undefined') {
   };
 
   function show(tabId, push) {
+    var legacy = tabId === 'files';   // the old Files tab: the file view lives in the SSHd tab now
+    if (legacy) tabId = 'sshd';
     var tab = TABS.filter(function (t) { return t.id === tabId; })[0] || TABS.filter(function (t) { return t.id === defaultTab(TABS); })[0];
     if (!tab) { fail('the route table declares no tabs'); return; }
     var view = views[tab.id];
@@ -496,8 +571,9 @@ if (typeof module !== 'undefined') {
     $sub.textContent = tab.label;
     $gear.className = tab.id === 'configs' ? 'on' : '';
     if (push) history.pushState(null, '', tab.path);
+    else if (legacy) { try { history.replaceState(null, '', tab.path); } catch (x) {} }
     view().then(function (html) {
-      $main.className = tab.id === 'files' ? 'files' : '';
+      $main.className = '';
       $main.innerHTML = html;
       var fv = document.getElementById('fileview');
       if (fv) watchFrame(fv);
@@ -538,7 +614,7 @@ if (typeof module !== 'undefined') {
     if (sub) { var on = document.querySelector('nav button.on'); if (on) { subPage[on.getAttribute('data-tab')] = sub.getAttribute('data-sub'); show(on.getAttribute('data-tab'), false); } return; }
     var pw = ev.target.closest('[data-power]');
     if (pw) {
-      var body = {}; body[pw.getAttribute('data-power')] = pw.getAttribute('data-to') === 'true';
+      var body = {}, to = pw.getAttribute('data-to'); body[pw.getAttribute('data-power')] = to === 'follow' ? null : to === 'true';
       post('/__app__/api/power', body).then(function (st) {
         // The served pages are down once the server is OFF: continue on the bundled page, whose button turns it back ON.
         if (!st.server) { location.replace(st.off_url); return; }
@@ -546,6 +622,19 @@ if (typeof module !== 'undefined') {
       }).catch(function (e) { toast(e.message, true); });
       return;
     }
+    var dop = ev.target.closest('[data-door-op]');
+    if (dop) {
+      if (dop.disabled) return;
+      post('/__app__/api/sshd', { door: dop.getAttribute('data-door'), op: dop.getAttribute('data-door-op') }).then(function () { toast('Asked'); refreshTab(); }).catch(function (e) { toast(e.message, true); });
+      return;
+    }
+    var mo = ev.target.closest('[data-mesh-only]');
+    if (mo) {
+      post('/__app__/api/sshd', { mesh_only: mo.getAttribute('data-mesh-only') === 'true' }).then(function () { toast('Mesh-only applied'); refreshTab(); }).catch(function (e) { toast(e.message, true); });
+      return;
+    }
+    var cd = ev.target.closest('[data-copy-doors]');
+    if (cd) { copyText(doorsText(DOORS), cd); return; }
     var act = ev.target.closest('[data-act]');
     if (act) {
       post(act.getAttribute('data-post'), JSON.parse(act.getAttribute('data-body'))).then(function (r) { toast(r.url ? 'Serving ' + r.url : 'Done'); refreshTab(); }).catch(function (e) { toast(e.message, true); });
