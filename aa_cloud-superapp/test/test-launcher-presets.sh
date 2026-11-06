@@ -7,7 +7,7 @@
 # owner asked for is pinned here, read from the ONE declaration (build.json),
 # and the Kotlin is checked to draw from it rather than carry a copy:
 #
-#   T1  the Launcher strip wears Presets · Quick Actions · One-Hand · Notify, by label
+#   T1  the Launcher strip wears Presets · Quick Actions · One-Hand · Folders · Notify, by label
 #   T2  Presets declares exactly Sandboxes · Themes · Modes, in that order
 #   T3  each group's rows are the owner's, in the owner's order, and no row's
 #       caption is its own id (#380: an identity string is not a caption)
@@ -51,10 +51,10 @@ by     = {p['id']: p for p in pages}
 labels = [p['label'] for p in pages if p.get('subgroup') == 'Launcher']
 tabs   = [by[i]['label'] for i in by['controls'].get('tabs', [])]
 sub    = [by[i]['label'] for i in by['panels'].get('tabs', [])]
-print('OK' if (labels, tabs, sub) == (['Quick Actions', 'One-Hand', 'Notify'], ['Presets', 'Panels'], ['UI', 'Tools'])
+print('OK' if (labels, tabs, sub) == (['Quick Actions', 'One-Hand', 'Folders', 'Notify'], ['Presets', 'Panels'], ['UI', 'Tools'])
       else 'Launcher labels = %r, Controls tabs = %r, Panels tabs = %r' % (labels, tabs, sub))
 PY
-)" "the Launcher group, by label, is Quick Actions (Presets | Panels ▸ UI | Tools) · One-Hand · Notify"
+)" "the Launcher group, by label, is Quick Actions (Presets | Panels ▸ UI | Tools) · One-Hand · Folders · Notify"
 
 echo "== T2: Presets declares Sandboxes · Themes · Modes, in order =="
 check "$(python3 - "$BJ" <<'PY'

@@ -1062,6 +1062,7 @@ dependencies {
     implementation project(':libs:fleetconfig-model')   // #825 FleetPolicy: the manifest + policy this app plans the fleet with
     implementation project(':libs:updater')
     implementation project(':libs:appstore')
+    implementation project(':libs:fleet-data-client')   // #1553 Folders page: the two folder tables served at runtime, not baked
     implementation project(':libs:devtools')
     implementation project(':libs:sysdns')     // #874 FleetDnsBridge: the one resolver of this process
     // The static HTTP engine behind Configs ▸ About ▸ WEBSERVER. Dependency-free

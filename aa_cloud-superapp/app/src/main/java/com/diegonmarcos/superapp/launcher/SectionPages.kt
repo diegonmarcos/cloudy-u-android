@@ -142,6 +142,10 @@ object SectionPages {
         sectionId == "wg"     && pageId == "config"         -> WireGuardFragment.newInstance()
         sectionId == "config" && pageId == "onehand" ->
             com.diegonmarcos.superapp.configs.OneHandFragment.newInstance()
+        // #1553 Configs ▸ Setup ▸ Launcher ▸ Folders — the declarative app-into-folder organiser (Cloud | Phone),
+        // its two tables served by the fleet-data client, not baked.
+        sectionId == "config" && pageId == "app-folders" ->
+            com.diegonmarcos.superapp.configs.FoldersFragment.newInstance()
         sectionId == "config" && pageId == "perms" ->
             com.diegonmarcos.superapp.configs.PermissionsFragment.newInstance()
         // Configs ▸ About ▸ Battery: the battery Source of Truth's full stats page (hidden; opened from

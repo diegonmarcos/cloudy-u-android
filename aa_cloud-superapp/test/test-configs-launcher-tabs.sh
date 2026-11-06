@@ -51,11 +51,11 @@ if any(p['id'] == 'launcher' for p in pages):
           'and a page of that name would tile beside its own four members')
     sys.exit()
 run = [p['id'] for p in pages if p.get('group') == 'Setup' and p.get('subgroup') == 'Launcher']
-if run != ['controls', 'onehand', 'notify']:
+if run != ['controls', 'onehand', 'app-folders', 'notify']:
     print('Setup ▸ Launcher = %r' % (run,)); sys.exit()
 ids   = [p['id'] for p in pages]
 first = ids.index('controls')
-if ids[first:first + 3] != run:
+if ids[first:first + len(run)] != run:
     print('the three are not CONSECUTIVE: %r' % (ids[first:first + 6],)); sys.exit()
 by = {p['id']: p for p in pages}
 if by['controls'].get('tabs') != ['presets', 'panels'] or by['panels'].get('tabs') != ['panels-ui', 'panels-tools']:
@@ -68,7 +68,7 @@ if hidden:
     print('still hidden, so it draws no tile of its own: %r' % (hidden,)); sys.exit()
 print('OK')
 PY
-)" "Setup ▸ Launcher = Controls (tabs Presets | Panels ▸ UI | Tools), One-Hand, Notify as three consecutive visible pages"
+)" "Setup ▸ Launcher = Controls (tabs Presets | Panels ▸ UI | Tools), One-Hand, Folders (#1553), Notify as consecutive visible pages"
 
 echo "== T2: no Configs page is a tab strip any more =="
 # #865 deleted the generic tab-owner rule: its last subject, Store, became a

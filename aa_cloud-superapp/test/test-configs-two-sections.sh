@@ -77,7 +77,7 @@ def members(g, s=''):
             if not p.get('hidden') and not p.get('is_action')
             and p.get('group', '') == g and p.get('subgroup', '') == s]
 want = {
-    ('Setup', 'Launcher'):             ['Quick Actions', 'One-Hand', 'Notify'],  # Controls = tabs Presets | Panels (UI | Tools)
+    ('Setup', 'Launcher'):             ['Quick Actions', 'One-Hand', 'Folders', 'Notify'],  # #1553 Folders between One-Hand and Notify; Controls = tabs Presets | Panels (UI | Tools)
     ('Fleet', ''):                     ['C3', 'Peer Control', 'Bluetooth'],  # #1221 Bluetooth first; Agents moved to Observability
     ('Setup', 'Connect'):          ['Account'],
     ('Setup', 'Apps'):             ['Store'],  # Permissions moved to Observability
@@ -177,9 +177,9 @@ w = {p[k] for p in pages for k in ('group', 'subgroup') if p.get(k)}
 w |= {p['label'] for p in pages if not p.get('hidden') and not p.get('is_action')}
 print(len(w))
 ")
-[ "$WORDS" = 29 ] \
-  && ok "T4 derived 29 words from the declaration (#1548: Agents and Watchtower added; #1545: Watchdog added; X-Ray regroup: About became X-Ray, a new About, Agents and Diagnostics folded into X-Ray, Logcat relabelled LogCat; Setup, Apps, Launcher, Network, Fleet, Observability + 21 page labels (#1263: WiFi added; #1221: Bluetooth added, C3 became C3 Fleet Control, later just C3 with ic_cloud_control), Diagnostics and Logcat the last two: the Agents regroup added Agents and dropped the | separator; #ipc added IPC; IPC became an Apps Mesh tab and left the labels)" \
-  || bad "T4 derived $WORDS words, expected 29 — it is checking a different set than it claims"
+[ "$WORDS" = 30 ] \
+  && ok "T4 derived 30 words from the declaration (#1553: Folders added; #1548: Agents and Watchtower added; #1545: Watchdog added; X-Ray regroup: About became X-Ray, a new About, Agents and Diagnostics folded into X-Ray, Logcat relabelled LogCat; Setup, Apps, Launcher, Network, Fleet, Observability + 21 page labels (#1263: WiFi added; #1221: Bluetooth added, C3 became C3 Fleet Control, later just C3 with ic_cloud_control), Diagnostics and Logcat the last two: the Agents regroup added Agents and dropped the | separator; #ipc added IPC; IPC became an Apps Mesh tab and left the labels)" \
+  || bad "T4 derived $WORDS words, expected 30 — it is checking a different set than it claims"
 
 # The ONE heading Kotlin may still name is the fallback for a section that
 # declares none, which is every section but this one. Pinned so it stays the only
@@ -232,9 +232,9 @@ import json
 print(len(next(s for s in json.load(open('$BJ'))['ui']['sections']
                if s['id'] == 'config')['pages']))
 ")
-[ "$COUNT" = 43 ] \
-  && ok "43 config pages declared — the set T5 walks is the whole set (#1548: plus the Agents hub watchtower; #1545: plus the hub watchdog; X-Ray regroup: minus about, diagnostics, agents and its two tabs, plus xray and app-about; #1263: plus wifi and its five hidden tabs; #1221: plus bluetooth and its five hidden tabs; #1264: plus its Analyze and Locate tabs; #649: 22 minus launcher; #723: minus ai and its 5 tabs; #733: plus apps-mesh; #740: plus dns; plus firewall; plus the hidden About ▸ Battery; Agents regroup: minus the Network separator, plus agents and its two tabs; #ipc: plus ipc; Controls merge: plus panels, panels-ui and panels-tools; Apps Mesh strip: plus apps-mesh-members and identity)" \
-  || bad "$COUNT config pages, expected 43 — a page was added or DELETED, and T5 cannot report a page that is gone"
+[ "$COUNT" = 44 ] \
+  && ok "44 config pages declared (#1553: plus folders) — the set T5 walks is the whole set (#1548: plus the Agents hub watchtower; #1545: plus the hub watchdog; X-Ray regroup: minus about, diagnostics, agents and its two tabs, plus xray and app-about; #1263: plus wifi and its five hidden tabs; #1221: plus bluetooth and its five hidden tabs; #1264: plus its Analyze and Locate tabs; #649: 22 minus launcher; #723: minus ai and its 5 tabs; #733: plus apps-mesh; #740: plus dns; plus firewall; plus the hidden About ▸ Battery; Agents regroup: minus the Network separator, plus agents and its two tabs; #ipc: plus ipc; Controls merge: plus panels, panels-ui and panels-tools; Apps Mesh strip: plus apps-mesh-members and identity)" \
+  || bad "$COUNT config pages, expected 44 — a page was added or DELETED, and T5 cannot report a page that is gone"
 
 echo "== T6: ACTIONS IS UNTOUCHED =="
 # The owner said to keep it as it is. Three things make that true: the same three
@@ -308,7 +308,7 @@ echo "== T9: NO PAGE WAS LOST — the id set before the regroup == the id set no
 # id to BEFORE below.
 check "$(python3 - "$BJ" <<'PY'
 import json, sys
-BEFORE = {'bluetooth-analyze', 'bluetooth-locate', 'presets', 'controls', 'onehand', 'notify', 'launcher',
+BEFORE = {'bluetooth-analyze', 'bluetooth-locate', 'presets', 'controls', 'onehand', 'app-folders', 'notify', 'launcher',
           'profile', 'wg', 'kde', 'ai', 'perms', 'store', 'about',
           'websearch', 'localsearch', 'textenhance', 'library', 'tokens',
           'store-cloud', 'store-phone',
@@ -422,7 +422,7 @@ for g, s, label, icon in tiles:
 want = ['H:SETUP',
         'S:CONNECT',      'Account[ic_person]',
         'S:APPS',         'Store[ic_storefront]',
-        'S:LAUNCHER',     'Quick Actions[ic_home]', 'One-Hand[ic_onehand]', 'Notify[ic_rss]',
+        'S:LAUNCHER',     'Quick Actions[ic_home]', 'One-Hand[ic_onehand]', 'Folders[ic_p_folder]', 'Notify[ic_rss]',
         'S:NETWORK',          'Firewall[ic_lock]', 'DNS[ic_world]', 'Webserver[ic_web]', 'Cloud Mesh[ic_wg]', 'Apps Access[ic_apps]', 'ADB Shell[ic_terminal]', 'WiFi[ic_wifi]',
         'S:OBSERVABILITY', 'X-Ray[ic_monitor_heart]', 'LogCat[ic_subject]', 'Permissions[ic_key]', 'About[ic_info]',
         'H:AGENTS',       'Watchdog[ic_p_watchdog]', 'Watchtower[ic_watchtower]',

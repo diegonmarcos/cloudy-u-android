@@ -174,7 +174,13 @@ internal class AllApps(val sections: List<AllAppsSection>, val grouped: Map<Stri
 internal fun allApps(ctx: Context, exclude: Set<String> = emptySet(), only: Set<String>? = null): AllApps {
     val folders = PhoneAppsFragment.cachedFolders()
     val apps = PhoneAppsFragment.snapshot(ctx).filter { it.packageName !in exclude && (only == null || it.packageName in only) }
-    val grouped = PhoneAppsFragment.groupedFor(apps, folders, unfiltered = exclude.isEmpty() && only == null)
+    // #1553 The Folders page is the source of truth: a Phone-scope assignment the user made there wins over the baked
+    // keyword classification. No override set ⇒ the grouping is unchanged, so the default grid is exactly as before.
+    val grouped = com.diegonmarcos.superapp.launcher.folders.FolderGridBridge.applyOverrides(
+        PhoneAppsFragment.groupedFor(apps, folders, unfiltered = exclude.isEmpty() && only == null),
+        com.diegonmarcos.superapp.launcher.folders.FolderGridBridge.launcherOverrides(ctx),
+        folders.map { it.id }.toSet(),
+    )
     // Skip empty folders — One UI hides them too — EXCEPT those marked `pin: true` (today: _Misc).
     val visible = folders.filter { it.pinned || (grouped[it.id]?.size ?: 0) > 0 }
     val sections = PhoneSections.loadFromBuildConfig().map { it.title to it.prefix }
