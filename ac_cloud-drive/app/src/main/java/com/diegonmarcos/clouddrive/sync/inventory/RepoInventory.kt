@@ -81,7 +81,8 @@ object RepoInventory {
                 InventoryScript.Kind.GITFILE -> Unit
                 InventoryScript.Kind.TREE -> {
                     val seg = LocalRepos.repoNameOf(e.origin)
-                    val entry = if (seg.isBlank()) null else names.entryOf(seg)
+                    // A clone whose origin is not readable yet (just cloned, config not flushed, or none written) is matched by its folder name, never dumped in UNLISTED.
+                    val entry = names.entryOf(seg.ifBlank { e.repoName })
                     if (entry == null) rows += Row(e.path, e.name, if (seg.isBlank()) "" else seg.lowercase(), null, RepoClass.UNLISTED, e.origin, seg, e.branch, e.upstream, e.headTimeMs, e.shallow, managed = e.path in managedPaths, bare = e.bare)
                     else trees += e to entry.github.lowercase()
                 }

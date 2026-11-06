@@ -158,11 +158,15 @@ class GitSyncCoordinator(private val ctx: Context, private val scope: CoroutineS
 
     /** #1195 the registry and the history only (a small file read on IO, no git status, no walk, no network): what a page open always does. */
     private suspend fun loadRegistry(): List<ManagedRepo> {
-        val list = withContext(Dispatchers.IO) { registry.load() }
+        val list = withContext(Dispatchers.IO) { CloneTruth.live(registry.load(), ::isCloneOnDisk) }
         repos.value = list
         events.value = withContext(Dispatchers.IO) { history.load() }
         return list
     }
+
+    /** Whether [dir] is a clone NOW: through cld.termux for a store folder (asked fresh, never the engine's cached answer), else the plain folder shape. Blocking: IO. */
+    private fun isCloneOnDisk(dir: File): Boolean =
+        if (StoreGit.useExec(ctx)) StoreGit.isRepository(ctx, dir) else CloneTruth.isCloneDir(dir)
 
     /** After an operation changed [repo]'s tree: its cached status is stale, re-read it. */
     private fun reread(repo: ManagedRepo) { statusReader.invalidate(statusKey(repo)); refresh() }
@@ -842,8 +846,9 @@ class GitSyncCoordinator(private val ctx: Context, private val scope: CoroutineS
         val inv = inventory.value ?: discover(list).first.let { RepoInventory.classify(it, RegistryNames.live(), Declarations.repoSot, list.map { r -> File(r.path).absolutePath }.toSet()) }
         // A managed row whose folder the pass did not see is gone (its parent is always a root): it holds nothing.
         val present = inv.rows.map { it.path }.toSet()
-        val reg = list.filter { File(it.path).absolutePath in present }.map { BulkDepth.Existing(it.path, it.remoteUrl) }
-        return reg + inv.rows.filter { it.isClone }.map { BulkDepth.Existing(it.path, it.origin) }
+        // The inventory may predate a delete: a folder that is no longer a clone must not block its own re-clone ("already cloned at").
+        val reg = CloneTruth.live(list.filter { File(it.path).absolutePath in present }, ::isCloneOnDisk).map { BulkDepth.Existing(it.path, it.remoteUrl) }
+        return reg + inv.rows.filter { it.isClone && isCloneOnDisk(File(it.path)) }.map { BulkDepth.Existing(it.path, it.origin) }
     }
 
     /**
@@ -859,7 +864,7 @@ class GitSyncCoordinator(private val ctx: Context, private val scope: CoroutineS
             val list = registry.load()
             val plan = BulkDepth.planClones(targets.map { BulkDepth.Target(it.name, it.url) }, existingClones(list)) { Declarations.repoSot.canonical(it) }
             targets.filter { t -> t.name !in cloning.value && (plan.toClone.any { it.name == t.name } || t.name in plan.held) }.map { t -> DepthItem(cloneDir(t.name, mode).absolutePath, t.name, plan.held[t.name]) to t }
-        }) { (item, t) ->
+        }, onEnd = { scanUnlisted() }) { (item, t) ->
             val held = item.held
             val dir = File(item.path)
             if (held != null) t.name to Outcome.SKIP to "already cloned at $held"
@@ -1073,8 +1078,10 @@ class GitSyncCoordinator(private val ctx: Context, private val scope: CoroutineS
             withContext(Dispatchers.IO) { events.value = history.load() }
             // #1317 the lists refresh after a run: rows that moved or were deleted go at once (list, persisted copy, status cache), then a rescan.
             val gone = moved.toSet()
+            loadRegistry()
             if (gone.isNotEmpty()) {
                 withContext(Dispatchers.IO) {
+                    if (action.kind == Declarations.FOLDER_DELETE) gone.forEach { registry.remove(RepoRegistry.idFor(it)) }
                     gone.forEach { statusReader.invalidate(UnlistedRepos.statusKey(it)) }
                     val kept = UnlistedRepos.without(unlisted.value, gone)
                     unlisted.value = kept
