@@ -56,7 +56,7 @@ class StructureTest {
     }
 
     @Test fun `every mock item sits on a real node, and no node is invented`() {
-        val items = MockTasks.parse(File("src/main/assets/mock-tasks.json").readText())
+        val items = MockTasks.parse(File("src/debug/assets/mock-tasks.json").readText())
         for (kind in listOf("inboxes", "backlogs", "library", "projects")) {
             val keys = structure.paths(kind).map(TaskTree::key).toSet()
             for (t in items.filter { it.kind == kind }) assertTrue("${t.id} hangs on '${t.subject}', which is not a $kind node", t.subject in keys)
@@ -64,7 +64,7 @@ class StructureTest {
     }
 
     @Test fun `every node is a folder even with no items, and says so`() {
-        val items = MockTasks.parse(File("src/main/assets/mock-tasks.json").readText())
+        val items = MockTasks.parse(File("src/debug/assets/mock-tasks.json").readText())
         val entries = TaskTree.entries(structure, items, "inboxes", today)
         for (inbox in top("inboxes")) assertTrue("$inbox is not in the tree", entries.any { it.dirs.first() == inbox })
         val empty = entries.filter { it.type == KitFileTree.EMPTY_TYPE }

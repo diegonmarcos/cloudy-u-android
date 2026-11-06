@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "_doc": "The fleet data manifest served by Cloud Store (tiers 3-4: app defaults and reference data). Read at runtime by the providers' sync from raw.githubusercontent.com (ETag); never baked into an APK. shared.<dataset>: who may read it (consumers: package names or \"*\"), its tier, and the repo path it is pulled from (source, default data/fleet/<dataset>.json). apps.<package>: the datasets served at app/<package>/<dataset> (file data/fleet/app/<package>/<dataset>.json), readable by that package alone. Tiers 1-2 (personal, fleet/infra) are NEVER listed here: Cloud Account serves them from the private route. Checked by 1_cicd/src/scripts/cloud-android-runtime-data-guard.py.",
+  "shared": {
+    "constellation-fleet": {
+      "tier": 3,
+      "consumers": ["*"],
+      "source": "aa_cloud-superapp/data/constellation-fleet.json"
+    }
+  },
+  "apps": {
+    "com.diegonmarcos.cloudtoolssmallllms": ["tools-models", "tools/sensors"]
+  }
+}

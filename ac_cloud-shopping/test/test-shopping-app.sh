@@ -31,7 +31,7 @@ bj = json.loads(read(os.path.join(app, "build.json")))
 kt = os.path.join(app, "app/src/main/java/com/diegonmarcos/cloudshopping")
 decl, shell, pages_kt, store = (code(os.path.join(kt, f)) for f in ("Decl.kt", "ui/ShopShell.kt", "ui/ShopPages.kt", "ShopStore.kt"))
 manifest = read(os.path.join(app, "app/src/main/AndroidManifest.xml"))
-data = json.loads(read(os.path.join(app, "app/src/main/assets/shop/shop.json")))
+data = json.loads(read(os.path.join(app, "app/src/debug/assets/shop/shop.json")))
 ui = bj["ui"]
 secs = {s["id"]: s for s in ui["sections"]}
 
@@ -125,7 +125,7 @@ mutant() {   # mutant <name> <shell edit run in the copy> <needle expected in th
   if out="$(check "$W/app" 2>&1)"; then bad "mutant '$1' stayed green"; elif grep -q -- "$3" <<<"$out"; then ok "mutant '$1' is red ($3)"; else bad "mutant '$1' is red for the wrong reason: $out"; fi
 }
 KT=app/src/main/java/com/diegonmarcos/cloudshopping
-JS=app/src/main/assets/shop/shop.json
+JS=app/src/debug/assets/shop/shop.json
 mutant "a second bottom item"       "python3 -c \"import json;p='build.json';d=json.load(open(p));d['ui']['bottom_nav'].append('shop');json.dump(d,open(p,'w'))\"" "S1 the bottom nav must be exactly one item"
 mutant "side menu becomes a row"    "sed -i 's/vertical_side_menu/horizontal_one_row/' build.json"            "S1 the shop section is not vertical_side_menu"
 mutant "a group is renamed"         "sed -i 's/\"id\": \"assets\"/\"id\": \"stuff\"/' build.json"            "S1 the shop groups are not the owner's five"

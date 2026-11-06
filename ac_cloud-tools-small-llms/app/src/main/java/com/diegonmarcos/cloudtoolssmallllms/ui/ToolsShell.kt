@@ -99,7 +99,7 @@ fun ToolsShell(model: ToolsModel) {
                             })
                             Decl.SECTION_STORE -> StorePage(model, pageId ?: Decl.PAGE_INSTALLED)
                             Decl.SECTION_MLS -> MlsPage(model.mls, pageId ?: Decl.PAGE_ML_LITE, model.mlsNote)
-                            Decl.SECTION_SENSORS -> SensorsPage(pageId ?: Decl.PAGE_SENSORS_INBUILT)
+                            Decl.SECTION_SENSORS -> SensorsPage(pageId ?: Decl.PAGE_SENSORS_INBUILT, model.sensorsJson)
                             Decl.SECTION_SETTINGS -> SettingsPage(model)
                             else -> {}
                         }

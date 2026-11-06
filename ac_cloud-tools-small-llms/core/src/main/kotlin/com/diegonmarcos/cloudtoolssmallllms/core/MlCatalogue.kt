@@ -9,8 +9,9 @@ data class MlLib(val id: String, val label: String, val description: String?, va
 data class MlGroup(val page: String, val id: String, val label: String, val blurb: String, val libs: List<MlLib>)
 
 /**
- * The MLs page's data, DERIVED from the Cloud Store's own declaration (aa_cloud-superapp/data/constellation-fleet.json, copied into the
- * assets at build time, never hand-copied): the groups named by build.json::ui.ml_pages, their members in order, and each member's row
+ * The MLs page's data, DERIVED from the Cloud Store's own declaration (the shared runtime dataset constellation-fleet, source
+ * aa_cloud-superapp/data/constellation-fleet.json; read through libs:fleet-data-client, never copied into the APK): the groups named by
+ * build.json::ui.ml_pages, their members in order, and each member's row
  * from the fleet's `apps` (real modules) or `catalogue` (reference rows). No group, lib or application name is spelled here.
  */
 object MlCatalogue {

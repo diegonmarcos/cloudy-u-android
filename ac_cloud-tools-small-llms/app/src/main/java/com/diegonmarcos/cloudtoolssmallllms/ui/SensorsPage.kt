@@ -67,12 +67,11 @@ import com.diegonmarcos.superapp.uikit.KitStoreRowLine
 
 /**
  * Sensors ([page] = Inbuilt or Connected): the phone's own sensors and other hardware, or the declared external sensors. Every name,
- * type, profile and UUID is assets/sensors.json (core SensorCatalogue); the rows are the Cloud Store's dense rows (ui-kit KitStoreRow).
+ * type, profile and UUID is the tools/sensors dataset (core SensorCatalogue); the rows are the Cloud Store's dense rows (ui-kit KitStoreRow).
  */
 @Composable
-fun SensorsPage(page: String) {
-    val ctx = LocalContext.current
-    val loaded = remember { runCatching { SensorCatalogue.parse(ctx.assets.open(SENSORS_ASSET).bufferedReader().use { it.readText() }) } }
+fun SensorsPage(page: String, json: String?) {
+    val loaded = remember(json) { runCatching { SensorCatalogue.parse(json ?: error("not served yet by Cloud Store")) } }
     val cat = loaded.getOrNull()
     if (cat == null) {
         // A missing or invalid sensors.json must never take the app down: the page says why, and nothing is logged.
@@ -82,8 +81,6 @@ fun SensorsPage(page: String) {
     }
     if (page == Decl.PAGE_SENSORS_CONNECTED) ConnectedPage(cat) else InbuiltPage(cat)
 }
-
-private const val SENSORS_ASSET = "sensors.json"
 
 /** Runs [start] while the screen is visible (the host is started) and [stop] when it is hidden or this leaves the composition: the listener lifecycle. */
 @Composable

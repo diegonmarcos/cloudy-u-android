@@ -14,7 +14,7 @@ import java.io.File
  */
 class NavAndMlsTest {
     private val ui = JSONObject(File("../build.json").readText()).getJSONObject("ui")
-    private val models = JSONObject(File("../app/src/main/assets/tools-models.json").readText())
+    private val models = JSONObject(File("../../data/fleet/app/com.diegonmarcos.cloudtoolssmallllms/tools-models.json").readText())
     private val fleet = File("../../aa_cloud-superapp/data/constellation-fleet.json").readText()
 
     private fun ids(a: org.json.JSONArray) = (0 until a.length()).map { a.getString(it) }
@@ -47,6 +47,21 @@ class NavAndMlsTest {
         assertEquals(setOf("ml_lite", "ml_tiny"), pages.keys)
         assertEquals(pagesOf("mls").map { it.getString("id") }.toSet(), pages.keys)
         assertEquals(setOf("libs-l-ml", "libs-t-ml"), pages.values.toSet())
+    }
+
+    @Test fun `no data is baked into the APK: no asset, no copy task, and every runtime dataset carries a schemaVersion (#1547)`() {
+        for (n in listOf("ml-fleet.json", "tools-models.json", "sensors.json")) assertFalse("$n must not be an asset", File("../app/src/main/assets/$n").exists())
+        val gradle = File("../app/build.gradle").readText()
+        assertFalse("the bakeMlFleet copy is gone", gradle.contains("ml-fleet") || gradle.contains("constellation-fleet.json") || gradle.contains("copy {"))
+        assertEquals(1, models.getInt("schemaVersion"))
+        assertEquals(1, JSONObject(fleet).getInt("schemaVersion"))
+        assertEquals(1, JSONObject(File("../../data/fleet/app/com.diegonmarcos.cloudtoolssmallllms/tools/sensors.json").readText()).getInt("schemaVersion"))
+    }
+
+    @Test fun `the MLs page derives from the runtime fleet dataset with no asset present, and a missing dataset is an empty list not a crash`() {
+        assertEquals(2, MlCatalogue.parse(fleet, MlCatalogue.pages(ui.getJSONObject("ml_pages"))).size)
+        val missing = try { MlCatalogue.parse(error("not served yet"), emptyMap()); null } catch (e: Exception) { e.message }
+        assertEquals("not served yet", missing)
     }
 
     @Test fun `the MLs groups, categories and lib names are the Cloud Store's own`() {

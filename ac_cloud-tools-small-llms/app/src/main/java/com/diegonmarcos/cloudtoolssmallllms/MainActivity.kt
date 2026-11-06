@@ -4,22 +4,50 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Text
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
+import com.diegonmarcos.cloudtoolssmallllms.data.ToolsData
 import com.diegonmarcos.cloudtoolssmallllms.ui.ToolsModel
 import com.diegonmarcos.cloudtoolssmallllms.ui.ToolsShell
 import com.diegonmarcos.cloudtoolssmallllms.ui.ToolsTheme
 import com.diegonmarcos.superapp.bottomnav.FleetChrome
 
-/** The one Activity: edge-to-edge through the lib's FleetChrome, the island clears its own inset. */
+/**
+ * The one Activity: edge-to-edge through the lib's FleetChrome, the island clears its own inset. The app is an ENGINE (#1547): its data is read
+ * at runtime from Cloud Store, so it draws a loading state until the data is there and rebuilds its model when the data changes. No config
+ * I/O happens in onCreate or a constructor.
+ */
 class MainActivity : ComponentActivity() {
-    private lateinit var model: ToolsModel
+    private var model: ToolsModel? = null
+    private var pendingShare: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         FleetChrome.apply(this)
-        model = ToolsModel(applicationContext, lifecycleScope)
         shared(intent)
-        setContent { ToolsTheme { ToolsShell(model) } }
+        setContent {
+            ToolsTheme {
+                val data by remember { ToolsData.observe(applicationContext) }.collectAsState(initial = null)
+                val d = data
+                if (d == null) {
+                    Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) { Text(stringResource(R.string.data_loading)) }
+                } else key(d.version) {
+                    val m = remember { ToolsModel(applicationContext, lifecycleScope, d).also { model = it; applyShare(it) } }
+                    ToolsShell(m)
+                }
+            }
+        }
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -31,7 +59,14 @@ class MainActivity : ComponentActivity() {
     private fun shared(i: Intent?) {
         if (i?.action != Intent.ACTION_SEND) return
         val text = i.getStringExtra(Intent.EXTRA_TEXT)?.takeIf { it.isNotBlank() } ?: return
-        model.chat.draft = text
-        model.section = Decl.SECTION_AI; model.page = null
+        pendingShare = text
+        model?.let { applyShare(it) }
+    }
+
+    private fun applyShare(m: ToolsModel) {
+        val text = pendingShare ?: return
+        pendingShare = null
+        m.chat.draft = text
+        m.section = Decl.SECTION_AI; m.page = null
     }
 }

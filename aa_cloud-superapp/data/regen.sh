@@ -575,7 +575,7 @@ regen_constellation() {
             | { id, label: (.label // .id), blurb: (.blurb // "") }
               + (if .build_time_libs then { build_time_libs } else {} end)
               + { members: [ ($apps[], $catalogue[]) | select(.group == $id) | .id ] } ] as $groups
-        | "{\"version\":1,",
+        | "{\"schemaVersion\":1,\"version\":1,",
           "\"groups\":[", ($groups | map(tojson) | join(",\n")), "],",
           "\"lib_categories\":[", ($libcats | map(tojson) | join(",\n")), "],",
           "\"app_categories\":[", ($appcats | map(tojson) | join(",\n")), "],",

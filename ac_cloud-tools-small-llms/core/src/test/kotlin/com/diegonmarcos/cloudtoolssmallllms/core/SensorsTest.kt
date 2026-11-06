@@ -10,11 +10,11 @@ import org.junit.Test
 import java.io.File
 
 /**
- * The Sensors section on its data (app/src/main/assets/sensors.json) and its logic: the sensor list model over a fake
+ * The Sensors section on its data (data/fleet/app/com.diegonmarcos.cloudtoolssmallllms/tools/sensors.json) and its logic: the sensor list model over a fake
  * SensorManager source, the type-name mapping, the listener lifecycle, the 20 declared external sensors and the GATT parsing.
  */
 class SensorsTest {
-    private val json = File("../app/src/main/assets/sensors.json").readText()
+    private val json = File("../../data/fleet/app/com.diegonmarcos.cloudtoolssmallllms/tools/sensors.json").readText()
     private val cat = SensorCatalogue.parse(json)
 
     private fun sensor(id: Int, type: Int, name: String = "s$id", stringType: String = "", wake: Boolean = false, dynamic: Boolean = false, mode: Int = 0) =

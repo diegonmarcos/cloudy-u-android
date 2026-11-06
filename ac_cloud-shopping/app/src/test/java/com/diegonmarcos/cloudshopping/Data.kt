@@ -5,7 +5,7 @@ import java.io.File
 
 /** The real declared data of the app (Gradle runs a module's tests from the module dir), never a copy of it. */
 object Data {
-    val data: ShopData by lazy { Shop.parse(File("src/main/assets/shop/shop.json").readText()) }
+    val data: ShopData by lazy { Shop.parse(File("src/debug/assets/shop/shop.json").readText()) }
     private val ui: JSONObject by lazy { JSONObject(File("../build.json").readText()).getJSONObject("ui") }
 
     private fun section(id: String): JSONObject {

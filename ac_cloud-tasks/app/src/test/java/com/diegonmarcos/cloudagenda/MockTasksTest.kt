@@ -16,7 +16,7 @@ import java.time.YearMonth
 /** The mock fixture (assets/mock-tasks.json) and the pure arrangement of it for each view. */
 @RunWith(RobolectricTestRunner::class)
 class MockTasksTest {
-    private val raw = File("src/main/assets/mock-tasks.json").readText()
+    private val raw = File("src/debug/assets/mock-tasks.json").readText()
     private val items = MockTasks.parse(raw)
     private val today = LocalDate.of(2026, 11, 4)
 

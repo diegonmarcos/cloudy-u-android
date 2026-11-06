@@ -20,6 +20,7 @@ import com.diegonmarcos.cloudtoolssmallllms.data.Location
 import com.diegonmarcos.cloudtoolssmallllms.data.ModelRow
 import com.diegonmarcos.cloudtoolssmallllms.data.ModelRuntime
 import com.diegonmarcos.cloudtoolssmallllms.data.ModelsData
+import com.diegonmarcos.cloudtoolssmallllms.data.ToolsData
 import com.diegonmarcos.cloudtoolssmallllms.data.OllamaRuntime
 import com.diegonmarcos.cloudtoolssmallllms.data.PhoneRuntime
 import com.diegonmarcos.cloudtoolssmallllms.data.Retrieval
@@ -54,7 +55,7 @@ import kotlinx.coroutines.withContext
  * [Dispatchers.IO] through :tools-core ([ToolsFlow], [OpenRouterChat]); this class only moves
  * their results into Compose state and the stores.
  */
-class ToolsModel(context: Context, private val scope: CoroutineScope) {
+class ToolsModel(context: Context, private val scope: CoroutineScope, data: ToolsData) {
     private val app = context.applicationContext
     val cfg: ToolsConfig = Decl.tools
     private val stores = Stores(context)
@@ -104,14 +105,16 @@ class ToolsModel(context: Context, private val scope: CoroutineScope) {
 
     // ── Chat (libs:ai's page over the fleet agent gateway) ───────────────────────────────────
 
-    /** The model data (assets/tools-models.json): the Models and Apps sections and the AI chat's model picker. */
-    val models: ModelsData = ModelsData.load(app)
-    /** The Cloud Store's Lite-ML and Tiny-ML groups, derived from its fleet declaration (assets/ml-fleet.json); one per MLs page. */
+    /** The model data (dataset tools-models, read at runtime): the Models and Apps sections and the AI chat's model picker. */
+    val models: ModelsData = ModelsData(data.modelsJson)
+    /** The sensors dataset (tools/sensors); null until Cloud Store has served it. */
+    val sensorsJson: String? = data.sensors
+    /** The Cloud Store's Lite-ML and Tiny-ML groups, derived from its fleet declaration (the shared dataset constellation-fleet); one per MLs page. */
     private val mlsLoad: Pair<List<MlGroup>, String?> = try {
-        MlCatalogue.parse(app.assets.open(ML_FLEET).bufferedReader().use { it.readText() }, Decl.mlPages) to null
+        MlCatalogue.parse(data.fleet ?: error("not served yet"), Decl.mlPages) to null
     } catch (e: Exception) {
-        // A missing or invalid ml-fleet.json must never take the app down at start: the MLs page is empty and shows this note (the app logs nothing, A3).
-        emptyList<MlGroup>() to "$ML_FLEET: ${e.message ?: e.javaClass.simpleName}"
+        // Missing or invalid data must never take the app down at start: the MLs page is empty and shows this note.
+        emptyList<MlGroup>() to "${ToolsData.FLEET}: ${e.message ?: e.javaClass.simpleName}"
     }
     val mls: List<MlGroup> = mlsLoad.first
     /** Why [mls] is empty (the asset is missing or invalid); null when it loaded. */
@@ -458,7 +461,6 @@ class ToolsModel(context: Context, private val scope: CoroutineScope) {
         /** The task id of a chat call. */
         const val CHAT_TASK = "chat"
         const val AUTO = "auto"
-        private const val ML_FLEET = "ml-fleet.json"
         const val OPENROUTER = "openrouter"
         const val LOCAL = "local"
         const val FLEET = "fleet"

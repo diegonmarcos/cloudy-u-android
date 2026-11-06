@@ -16,7 +16,7 @@
 #       and no test source opens a URL of its own
 #   A6  no key-shaped literal in the module (the leak scan's sk-or- shape)
 #   A7  every section id a Kotlin source names is one build.json::ui.sections declares
-#   A8  the model data (assets/tools-models.json): one file, both tiers plus retrieval, every field typed, macro in the
+#   A8  the model data (data/fleet/app/com.diegonmarcos.cloudtoolssmallllms/tools-models.json): one file, both tiers plus retrieval, every field typed, macro in the
 #       declared set, chat=false exactly for retrieval, the ~20% overhead stated, every role/macro/app icon in the shared
 #       catalog, every app step names declared macros and models; Models declares Small, Medium and Retrieval pages
 #       and locations (device, ollama) and the 4/8/16-bit tags are declared
@@ -131,7 +131,7 @@ for f in sources("app/src/main"):
         if lit not in sections: bad.append("A7 %s names section %r, which build.json does not declare" % (os.path.relpath(f, app), lit))
 
 # A8
-md = json.loads(read(os.path.join(app, "app/src/main/assets/tools-models.json")))
+md = json.loads(read(os.path.join(app, "../data/fleet/app/com.diegonmarcos.cloudtoolssmallllms/tools-models.json")))
 macros = [m["id"] for m in md["macros"]]
 if macros != ["retrieval", "gatekeeping", "routing", "understanding", "acting", "thinking", "producing", "seeing", "judging"]: bad.append("A8 macros are %r" % macros)
 for m in md["macros"]:
@@ -254,7 +254,7 @@ if os.path.exists(shared):
 shared_cat = os.path.join(app, "../ab_cloud-libs-shared/libs/ai/src/main/assets/ai/ai-catalogue.json")
 if os.path.exists(shared_cat):
     sc = {(m["id"], m["tier"], m["params"], m.get("openrouter_id", "")) for m in json.loads(read(shared_cat))["tools_models"]["models"]}
-    tm_rows = {(m["model"], m["tier"], m["params"], m.get("openrouter_id", "")) for m in json.loads(read(os.path.join(app, "app/src/main/assets/tools-models.json")))["models"] if m.get("chat")}
+    tm_rows = {(m["model"], m["tier"], m["params"], m.get("openrouter_id", "")) for m in json.loads(read(os.path.join(app, "../data/fleet/app/com.diegonmarcos.cloudtoolssmallllms/tools-models.json")))["models"] if m.get("chat")}
     if sc != tm_rows: bad.append("A9 libs:ai's ai-catalogue.json tools_models and tools-models.json chat rows differ: %s" % sorted(sc ^ tm_rows)[:4])
 if "Tags.pin(" not in code(os.path.join(kt, "ui/SettingsPage.kt")): bad.append("A9 Settings has no advanced pin-model option")
 if "row?.wireId ?: req.model" not in tm: bad.append("A9 the gateway is not sent the data's openrouter_id")
@@ -267,7 +267,8 @@ mls = code(os.path.join(kt, "ui/MlsPage.kt"))
 for need in ("KitStoreRowLine", "KitStoreName(", "KitStoreCaption(", "KitStoreDot(", "group.libs", "group.blurb"):
     if need not in mls: bad.append("A9 MlsPage lacks %s (the Cloud Store's dense row over the derived groups)" % need)
 if re.search(r"\d\s*\.\s*sp\b", mls + apg): bad.append("A9 MlsPage / AppsPage hold an sp literal: the type ramp is KitStoreRow's")
-if "ml_pages" not in script or "aa_cloud-superapp/data/constellation-fleet.json\")" not in script or "rename { 'ml-fleet.json' }" not in script: bad.append("A9 the build does not derive the MLs data from the Cloud Store's constellation-fleet.json")
+if "ml_pages" not in script or "ml-fleet" in script or "constellation-fleet.json" in script or "copy {" in script: bad.append("A9 the build bakes or copies MLs data into the APK: it is the runtime dataset constellation-fleet (#1547)")
+if "FleetData.observe" not in code(os.path.join(kt, "data/ToolsData.kt")) or "assets.open" in tm: bad.append("A9 the model does not read its data at runtime through libs:fleet-data-client")
 if "MlCatalogue.parse(" not in tm: bad.append("A9 the model does not read the MLs groups through MlCatalogue")
 mlp = bj["ui"].get("ml_pages", {})
 fleet = json.loads(read(os.path.join(root, "aa_cloud-superapp/data/constellation-fleet.json")))
@@ -281,8 +282,8 @@ for a in md["apps"]:
 if "AppFilters(model, data)" not in apg or "appsIn(" not in apg: bad.append("A9 the Apps page has no top filter")
 
 # A10 (#1538) the Sensors section: Inbuilt | Connected, every phone sensor listed and read live only while visible, the other hardware,
-# and the 20 declared external sensors scanned on tap; names are data (assets/sensors.json), rows are KitStoreRow, grants are Perms rows
-sd = json.loads(read(os.path.join(app, "app/src/main/assets/sensors.json")))
+# and the 20 declared external sensors scanned on tap; names are data (data/fleet/app/com.diegonmarcos.cloudtoolssmallllms/tools/sensors.json), rows are KitStoreRow, grants are Perms rows
+sd = json.loads(read(os.path.join(app, "../data/fleet/app/com.diegonmarcos.cloudtoolssmallllms/tools/sensors.json")))
 if [p["id"] for p in secs["sensors"]["pages"]] != ["sensors_inbuilt", "sensors_connected"] or [p["label"] for p in secs["sensors"]["pages"]] != ["Inbuilt", "Connected"]: bad.append("A10 Sensors pages are not Inbuilt, Connected")
 if len(sd["connected"]["profiles"]) != 20: bad.append("A10 %d connected sensors declared (20 expected)" % len(sd["connected"]["profiles"]))
 for pr in sd["connected"]["profiles"]:
@@ -320,6 +321,7 @@ S="$(mktemp -d)"; trap 'rm -rf "$S"' EXIT
 mutate() {   # mutate <name> <python statement on M (scratch module dir)>
   rm -rf "$S/m"; mkdir -p "$S/m"
   (cd "$APP" && tar --exclude=build --exclude=.gradle -cf - build.json app core) | (cd "$S/m" && tar -xf -)
+  rm -rf "$S/data"; mkdir -p "$S/data/fleet"; cp -r "$APP/../data/fleet/app" "$S/data/fleet/"
   python3 - "$S/m" <<PY
 import re, sys
 M = sys.argv[1]
@@ -339,17 +341,17 @@ mutate "test goes online" 'sub(M + "/core/src/test/kotlin/com/diegonmarcos/cloud
 mutate "missing fixture" 'sub(M + "/core/src/test/kotlin/com/diegonmarcos/cloudtoolssmallllms/core/ToolsCoreTest.kt", "fixture(\"jev-route.json\")", "fixture(\"jev-gone.json\")")'
 mutate "undeclared section" 'sub(K + "/ui/ToolsShell.kt", "Decl.SECTION_STORE -> StorePage(model, pageId ?: Decl.PAGE_INSTALLED)", "\"storez\" -> StorePage(model, \"\")")'
 mutate "section dropped from Decl" 'sub(K + "/Decl.kt", "    const val SECTION_STORE = \"store\"\n", "")'
-mutate "model data loses its guidance" 'sub(M + "/app/src/main/assets/tools-models.json", "\"medium\": \"Q4 is", "\"mediumz\": \"Q4 is")'
-mutate "overhead note dropped" 'sub(M + "/app/src/main/assets/tools-models.json", "\"overhead_pct\": 20", "\"overhead_pct\": 0")'
-mutate "retrieval model becomes a chat model" 'sub(M + "/app/src/main/assets/tools-models.json", "\"chat\": false", "\"chat\": true")'
-mutate "app names an unknown model" 'sub(M + "/app/src/main/assets/tools-models.json", "\"bge-m3\"\n", "\"bge-m4\"\n")'
+mutate "model data loses its guidance" 'sub(M + "/../data/fleet/app/com.diegonmarcos.cloudtoolssmallllms/tools-models.json", "\"medium\": \"Q4 is", "\"mediumz\": \"Q4 is")'
+mutate "overhead note dropped" 'sub(M + "/../data/fleet/app/com.diegonmarcos.cloudtoolssmallllms/tools-models.json", "\"overhead_pct\": 20", "\"overhead_pct\": 0")'
+mutate "retrieval model becomes a chat model" 'sub(M + "/../data/fleet/app/com.diegonmarcos.cloudtoolssmallllms/tools-models.json", "\"chat\": false", "\"chat\": true")'
+mutate "app names an unknown model" 'sub(M + "/../data/fleet/app/com.diegonmarcos.cloudtoolssmallllms/tools-models.json", "\"bge-m3\"\n", "\"bge-m4\"\n")'
 mutate "shell loses the second row" 'sub(K + "/ui/ToolsShell.kt", "NavSectionLayout(", "Foo(")'
 mutate "apps lose the computed totals" 'sub(K + "/ui/AppsPage.kt", "app_totals, gb(data.appRamQ4(a)), gb(data.appDiskFp16(a))", "app_totals, \"0\", \"0\"")'
-mutate "app has no ui template" 'sub(M + "/app/src/main/assets/tools-models.json", "\"template\": \"rag_search\"", "\"template\": \"nope\"")'
+mutate "app has no ui template" 'sub(M + "/../data/fleet/app/com.diegonmarcos.cloudtoolssmallllms/tools-models.json", "\"template\": \"rag_search\"", "\"template\": \"nope\"")'
 mutate "runner does not call the model" 'sub(K + "/ui/ToolsModel.kt", "call(placed.second", "callz(placed.second")'
 mutate "runner loses per-step status" 'sub(K + "/ui/ToolsModel.kt", "status = \"running\"", "status = \"busy\"")'
 mutate "app page loses its input" 'sub(K + "/ui/AppsPage.kt", "OutlinedTextField(", "Foo(")'
-mutate "app loses its category" 'sub(M + "/app/src/main/assets/tools-models.json", "\"category\": \"search\"", "\"category\": \"nowhere\"")'
+mutate "app loses its category" 'sub(M + "/../data/fleet/app/com.diegonmarcos.cloudtoolssmallllms/tools-models.json", "\"category\": \"search\"", "\"category\": \"nowhere\"")'
 mutate "apps list page dropped" 'sub(M + "/build.json", "\"id\": \"apps_list\"", "\"id\": \"apps_listz\"")'
 mutate "shell loses the apps page" 'sub(K + "/ui/ToolsShell.kt", "AppsPage(model, pageId ?: Decl.PAGE_APPS_GRID)", "Unit")'
 mutate "macro view undrawn" 'sub(K + "/ui/ModelsPages.kt", "ModelsView.MACRO -> ModelsMacro", "ModelsView.MACRO -> ModelsGrid")'
@@ -362,28 +364,28 @@ mutate "guard on the answer dropped" 'sub(K + "/ui/ToolsModel.kt", "flagged(text
 mutate "escalation ignores the score" 'sub(K + "/ui/ToolsModel.kt", "models.judgeMinScore", "0")'
 mutate "reply loses its model label" 'sub(K + "/ui/ToolsModel.kt", "text + \"\\n\\n— \" + label", "text")'
 mutate "task row dropped" 'sub(K + "/ui/ToolsModel.kt", "chat.tasks = models.chatTasks", "val unused = models.chatTasks")'
-mutate "chat task names an unknown model" 'sub(M + "/app/src/main/assets/tools-models.json", "\"small\": \"ministral-3b-2512\"", "\"small\": \"ministral-9z\"")'
+mutate "chat task names an unknown model" 'sub(M + "/../data/fleet/app/com.diegonmarcos.cloudtoolssmallllms/tools-models.json", "\"small\": \"ministral-3b-2512\"", "\"small\": \"ministral-9z\"")'
 mutate "bottom nav reordered" 'sub(M + "/build.json", "\"models\",\n      \"mls\"", "\"mls\",\n      \"models\"")'
 mutate "Costs back on the nav" 'sub(M + "/build.json", "\"store\",\n      \"sensors\"\n", "\"store\",\n      \"sensors\",\n      \"costs\"\n")'
 mutate "Costs ledger back" 'sub(K + "/Decl.kt", "SECTION_MLS", "SECTION_COSTS")'
 mutate "MLs page dropped from the shell" 'sub(K + "/ui/ToolsShell.kt", "MlsPage(model.mls, pageId ?: Decl.PAGE_ML_LITE, model.mlsNote)", "Unit")'
 mutate "MLs page renamed" 'sub(M + "/build.json", "\"Tiny MLs\"", "\"Tiny\"")'
 mutate "MLs group not the Store's" 'sub(M + "/build.json", "\"libs-t-ml\"", "\"libs-x-ml\"")'
-mutate "MLs data hand-copied" 'sub(M + "/app/build.gradle", "aa_cloud-superapp/data/constellation-fleet.json\")", "ml-copy.json\")")'
-mutate "filter loses a class" 'sub(M + "/app/src/main/assets/tools-models.json", "\"label\": \"ML Only\"", "\"label\": \"ML\"")'
-mutate "an app is unclassified" 'sub(M + "/app/src/main/assets/tools-models.json", "\"class\": \"hybrid\",\n      \"ui\"", "\"class\": \"none\",\n      \"ui\"")'
+mutate "MLs data baked again" 'sub(M + "/app/build.gradle", "def uiMlPagesB64", "copy { from(\"x\") }\ndef uiMlPagesB64")'
+mutate "filter loses a class" 'sub(M + "/../data/fleet/app/com.diegonmarcos.cloudtoolssmallllms/tools-models.json", "\"label\": \"ML Only\"", "\"label\": \"ML\"")'
+mutate "an app is unclassified" 'sub(M + "/../data/fleet/app/com.diegonmarcos.cloudtoolssmallllms/tools-models.json", "\"class\": \"hybrid\",\n      \"ui\"", "\"class\": \"none\",\n      \"ui\"")'
 mutate "apps page loses the filter" 'sub(K + "/ui/AppsPage.kt", "AppFilters(model, data)\n", "")'
 
-mutate "Sensors page dropped from the shell" 'sub(K + "/ui/ToolsShell.kt", "SensorsPage(pageId ?: Decl.PAGE_SENSORS_INBUILT)", "Unit")'
+mutate "Sensors page dropped from the shell" 'sub(K + "/ui/ToolsShell.kt", "SensorsPage(pageId ?: Decl.PAGE_SENSORS_INBUILT, model.sensorsJson)", "Unit")'
 mutate "live listener at the fast rate" 'sub(K + "/data/SensorHw.kt", "SensorManager.SENSOR_DELAY_UI", "SensorManager.SENSOR_DELAY_FASTEST")'
 mutate "sensor list without the dynamic ones" 'sub(K + "/data/SensorHw.kt", "getDynamicSensorList", "getSensorList")'
 mutate "scan without a UUID filter" 'sub(K + "/data/ConnectedIo.kt", "setServiceUuid(", "setDeviceName(")'
 mutate "scan never times out" 'sub(K + "/data/ConnectedIo.kt", "postDelayed(stopper", "post(stopper")'
 mutate "a sensor name in Kotlin" 'sub(K + "/data/SensorHw.kt", "class AndroidRegistrar", "val x = \"TYPE_ACCELEROMETER\"\nclass AndroidRegistrar")'
 mutate "an sp literal on the Sensors page" 'sub(K + "/ui/SensorsPage.kt", "fontSize = KitStoreRow.meta", "fontSize = 11.sp")'
-mutate "the page asks for a permission" 'sub(K + "/ui/SensorsPage.kt", "private const val SENSORS_ASSET", "val ask = androidx.activity.result.contract.ActivityResultContracts.RequestPermission()\nprivate const val SENSORS_ASSET")'
+mutate "the page asks for a permission" 'sub(K + "/ui/SensorsPage.kt", "/** Runs [start] while", "val ask = androidx.activity.result.contract.ActivityResultContracts.RequestPermission()\n/** Runs [start] while")'
 mutate "body sensors dropped from the perms" 'sub(M + "/build.json", "\"body_sensors\"\n", "\"body_sensorz\"\n")'
-mutate "a connected sensor loses its UUID and class" 'sub(M + "/app/src/main/assets/sensors.json", "\"uuid\": \"FEED\"", "\"note\": \"FEED\"")'
+mutate "a connected sensor loses its UUID and class" 'sub(M + "/../data/fleet/app/com.diegonmarcos.cloudtoolssmallllms/tools/sensors.json", "\"uuid\": \"FEED\"", "\"note\": \"FEED\"")'
 mutate "Sensors page renamed" 'sub(M + "/build.json", "\"Connected\"", "\"Paired\"")'
 echo "-- test-tools-app: $PASS passed, $FAILS failed"
 [ "$FAILS" -eq 0 ]

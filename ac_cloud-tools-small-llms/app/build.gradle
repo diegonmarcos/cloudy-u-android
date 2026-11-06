@@ -56,20 +56,10 @@ def uiSectionsB64    = b64(buildJson.ui.sections)
 def uiBottomNav      = buildJson.ui.bottom_nav.join(',')
 def uiDefaultSection = (buildJson.ui.default_section ?: buildJson.ui.bottom_nav[0]).toString()
 def toolsConfigB64   = b64(buildJson.tools)
-// The MLs page: build.json::ui.ml_pages names the Cloud Store group each page lists; the groups, their members and every lib name
-// are the Cloud Store's own declaration, copied (never hand-written) into the assets as ml-fleet.json and read by core's MlCatalogue.
+// The MLs page: build.json::ui.ml_pages names the Cloud Store group each page lists. The groups, their members and every lib name are the
+// Cloud Store's own declaration, read at RUNTIME as the shared dataset `constellation-fleet` (libs:fleet-data-client); nothing is copied into the APK (#1547).
 if (!buildJson.ui?.ml_pages) throw new GradleException("build.json::ui.ml_pages missing - the MLs page would list nothing")
 def uiMlPagesB64 = b64(buildJson.ui.ml_pages)
-def mlFleetFile = file("${projectDir}/../../aa_cloud-superapp/data/constellation-fleet.json")
-if (!mlFleetFile.exists()) throw new GradleException("aa_cloud-superapp/data/constellation-fleet.json missing - the MLs page has no Cloud Store declaration to derive from")
-def mlAssetsDir = layout.buildDirectory.dir('generated/ml-assets').get().asFile
-// Copied at configuration time, not by a task wired through srcDir(files().builtBy()): that wiring was dropped, so the APK
-// shipped without ml-fleet.json and the app died at start (#1485). The file now exists before any task graph is built.
-copy {
-    from(mlFleetFile) { rename { 'ml-fleet.json' } }
-    into(mlAssetsDir)
-}
-if (!new File(mlAssetsDir, 'ml-fleet.json').isFile()) throw new GradleException("ml-fleet.json was not baked into ${mlAssetsDir}")
 
 android {
     namespace 'com.diegonmarcos.cloudtoolssmallllms'
@@ -146,11 +136,12 @@ android {
     }
     kotlinOptions { jvmTarget = '17' }
 
-    sourceSets.main.assets.srcDir(mlAssetsDir)
 }
 
 dependencies {
     implementation project(':libs:core')
+    // #1547 runtime data: FleetData.observe/get (no baked asset)
+    implementation project(':libs:fleet-data-client')
     // The fleet's bottom-nav island; this app supplies its own entries from ui.bottom_nav.
     implementation project(':libs:bottomnav')
     // The shared bars (#1154, #1157): first row (Profile top right), second row, bottom nav, page gradient; icons from the catalog (#1160).
@@ -187,14 +178,4 @@ dependencies {
     testImplementation 'junit:junit:4.13.2'
 }
 
-// Guard: the merged assets of every variant must hold ml-fleet.json and it must parse with groups; a build without it fails here, not on the phone.
-tasks.configureEach { t ->
-    if (t.name ==~ /merge.*Assets/ && t.hasProperty('outputDir')) {
-        t.doLast {
-            def merged = new File(t.outputDir.get().asFile, 'ml-fleet.json')
-            if (!merged.isFile()) throw new GradleException("${t.name}: ml-fleet.json is missing from the merged assets (#1485)")
-            def parsed = new groovy.json.JsonSlurper().parse(merged)
-            if (!(parsed instanceof Map) || !parsed.groups) throw new GradleException("${t.name}: ml-fleet.json has no groups (#1485)")
-        }
-    }
-}
+// The merged-assets guard (#1485) is gone with the baked file: the MLs data is the runtime dataset constellation-fleet (#1547), and a missing one is a loading state, not a crash.

@@ -6,7 +6,7 @@ row (`News | Shopping`). It declares no network permission of its own: nothing i
 * Navigation is ONE collapsed left side menu (`libs:ui-nav-bars` NavSectionLayout, `vertical_side_menu`: the rail on a phone, the full menu on a wide screen)
   in five groups declared in `build.json::ui`: Feed (Home), Things (Groceries, Electronics, Clothing), Services (Transport, Hotels), Assets (Real Estate,
   Business, Jobs), Entertainment (Events). The bottom nav holds exactly one item, a search icon with no label (`nav-shape.json::single_bottom`).
-* Every page has its own top filter tabs and its rows, both in `app/src/main/assets/shop/shop.json` (its `_doc` lists the filter keys). The Feed page lists the
+* Every page has its own top filter tabs and its rows, both in `app/src/debug/assets/shop/shop.json` (its `_doc` lists the filter keys). The Feed page lists the
   deals (an item whose `old_price` is above its `price`) of every other page, biggest saving first; Search looks across all pages.
 * A row is the ui-kit `KitStoreRow` (the Cloud Store's dense row) in the shared type ramp; Kotlin spells no sp, no colour and no page.
 * Configs are the fleet's General | Perms | About (`build.json::configs_pages`, `perms`).

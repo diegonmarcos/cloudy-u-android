@@ -60,7 +60,7 @@ check(bar == ["inboxes", "backlogs", "tasks", "library", "projects"], "#1456 the
 check([p["id"] for p in sections["tasks"]["pages"]] == ["calendar", "list", "gantt", "kanban", "mindmap"], "#1456 Tasks has the sub-pages Calendar, List, Gantt, Kanban, Mindmap")
 check([p["id"] for p in sections["settings"]["pages"]][:3] == ["general", "perms", "about"], "Configs starts General | Perms | About (the fleet pattern)")
 check("FleetConfigsPageBody(" in strip(read(SRC, "ui/TasksApp.kt")), "General | Perms | About are drawn by libs:ui-nav-bars's FleetConfigsPageBody")
-mock = json.load(open(os.path.join(APP, "app/src/main/assets/mock-tasks.json")))
+mock = json.load(open(os.path.join(APP, "app/src/debug/assets/mock-tasks.json")))
 check(mock.get("_fake", "").startswith("MOCK DATA - FAKE") and {i["kind"] for i in mock["items"]} == set(bar), "the mock fixture is declarative JSON, marked fake, with rows for every island tab")
 
 # ── the shell dispatches every declared id ────────────────────────────────────────────────────────────────

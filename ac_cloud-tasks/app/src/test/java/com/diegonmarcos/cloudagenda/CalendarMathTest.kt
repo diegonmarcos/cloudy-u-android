@@ -58,7 +58,7 @@ class CalendarMathTest {
     }
 
     @Test fun `task days are marked with their project ring in the year grid`() {
-        val tasks = MockTasks.ofKind(MockTasks.parse(File("src/main/assets/mock-tasks.json").readText()), "tasks")
+        val tasks = MockTasks.ofKind(MockTasks.parse(File("src/debug/assets/mock-tasks.json").readText()), "tasks")
         val rings = MockTasks.rings(tasks)
         val marks = CalendarMath.markers(YearMonth.from(today), tasks, today, rings)
         assertTrue(marks.isNotEmpty())

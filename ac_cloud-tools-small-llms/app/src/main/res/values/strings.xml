@@ -75,6 +75,7 @@
     <string name="backend_load_in_store">Load a model in Store</string>
     <string name="mls_count">%1$d libs, as the Cloud Store declares them</string>
     <string name="mls_unavailable">The ML list is unavailable (%1$s).</string>
+    <string name="data_loading">Loading data from Cloud Store. If this stays, install or open Cloud Store once.</string>
     <string name="mls_dot">○</string>
 
     <!-- Sensors (#1538): the field templates; every sensor, hardware and profile name is assets/sensors.json -->

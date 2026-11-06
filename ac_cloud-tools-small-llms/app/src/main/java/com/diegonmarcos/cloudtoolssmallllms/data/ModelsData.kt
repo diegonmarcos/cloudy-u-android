@@ -1,10 +1,9 @@
 package com.diegonmarcos.cloudtoolssmallllms.data
 
-import android.content.Context
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** One row of assets/tools-models.json: a model, its role, macro task and memory figures (GB, approximate). */
+/** One row of the tools-models dataset: a model, its role, macro task and memory figures (GB, approximate). */
 data class ModelRow(
     val role: String,
     val model: String,
@@ -69,7 +68,7 @@ data class ChatTask(val id: String, val label: String, val icon: String, val mac
 data class UiTemplate(val id: String, val label: String, val flow: String)
 
 /**
- * THE model data of the app, decoded once from assets/tools-models.json: the Models section, the AI chat's model
+ * THE model data of the app, decoded once from the tools-models dataset: the Models section, the AI chat's model
  * picker, the Apps section and the overhead assumption all read it. No model, role, macro or app is spelled in Kotlin.
  */
 class ModelsData(json: String) {
@@ -151,7 +150,7 @@ class ModelsData(json: String) {
     private fun strings(a: JSONArray): List<String> = List(a.length()) { a.getString(it) }
 
     companion object {
-        const val ASSET = "tools-models.json"
-        fun load(ctx: Context): ModelsData = ModelsData(ctx.assets.open(ASSET).bufferedReader().use { it.readText() })
+        /** The runtime dataset (app/<package>/tools-models); never an asset. */
+        const val DATASET = "tools-models"
     }
 }
