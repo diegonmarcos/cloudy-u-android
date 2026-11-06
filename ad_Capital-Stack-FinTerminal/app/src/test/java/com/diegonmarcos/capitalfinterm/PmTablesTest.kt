@@ -60,7 +60,7 @@ class PmTablesTest {
         assertNull("#1539 the PM Commodities table is gone", PmTables.parse(DataFiles.pmJson, "commodities"))
         val rows = listOf(PmRow("A", "", listOf("50", "10", "x")), PmRow("B", "", listOf("25", "40", "y")))
         val h = PmTables.heat(rows, 1..2)
-        assertEquals(1f, h.flatten().filterNotNull().maxOrNull()!!, 0f); assertEquals(0.5f, h[0][1]!!, 0f); assertEquals(0.25f, h[0][2]!!, 0f)
+        assertEquals(1f, h.flatten().filterNotNull().maxOrNull()!!, 0f); assertEquals(1f, h[0][1]!!, 1e-6f); assertEquals(0.2f, h[0][2]!!, 1e-6f); assertEquals(0.5f, h[1][1]!!, 1e-6f); assertEquals(0.8f, h[1][2]!!, 1e-6f)
         assertNull(h[0][0]); assertNull(h[0][3])
         assertEquals(emptyList<Float?>(), PmTables.heat(rows, null)[0])
     }

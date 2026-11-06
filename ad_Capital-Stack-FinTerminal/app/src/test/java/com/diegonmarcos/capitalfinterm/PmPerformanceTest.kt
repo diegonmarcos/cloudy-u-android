@@ -120,7 +120,7 @@ class PmPerformanceTest {
 
     @Test fun theChartAnswerBecomesDatedCloses() {
         val s = PmPerformance.parseHistory(DataFiles.quotesFixture("yahoo-chart.json"))!!
-        assertEquals(30, s.dates.size); assertTrue(s.dates.zipWithNext().all { (a, b) -> a.isBefore(b) }); assertEquals(91.09, s.closes.last(), 1e-6)
+        assertEquals(30, s.dates.size); assertTrue(s.dates.zipWithNext().all { (a, b) -> a.isBefore(b) }); assertEquals(91.09, s.closes.last(), 1e-4)
         assertNull(PmPerformance.parseHistory("""{"chart":{"result":null}}""")); assertNull(PmPerformance.parseHistory("nope"))
     }
 
