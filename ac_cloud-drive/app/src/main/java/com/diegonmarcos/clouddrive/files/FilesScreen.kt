@@ -162,7 +162,8 @@ fun FilesScreen(controller: FilesController, actions: DriveActions, hasAccess: B
     var scopeId by remember { mutableStateOf(searchDecl.initialScope?.id ?: "") }
     val searchScope = searchDecl.scope(scopeId)
     val scopedHits by controller.scoped.collectAsState()
-    val storageRoots = remember { ExplorerSearchRoots.list() }
+    // Directory reads never run on the main thread: the roots (a /storage listing) arrive from IO, the search scope waits for them.
+    val storageRoots by produceState(emptyList<String>()) { value = withContext(Dispatchers.IO) { ExplorerSearchRoots.list() } }
     fun openSearch() { query = ""; scopeId = searchDecl.initialScope?.id ?: ""; searching = true }
     fun closeSearch() { searching = false; query = ""; controller.liveFilter = null; controller.clearScoped() }
     val snackbar = remember { SnackbarHostState() }
@@ -365,7 +366,7 @@ private fun Pane(
         TabStrip(id, pane, controller, onOpenPlaces)
         Breadcrumbs(id, loc, controller, onCopyPath)
         PaneToolbar(id, pane, controller, prefs)
-        val rootLabel = (loc as? Location.Local)?.let { Places.rootLabel(ctx, it.path) }
+        val rootLabel by produceState<String?>(null, loc) { value = withContext(Dispatchers.IO) { (loc as? Location.Local)?.let { Places.rootLabel(ctx, it.path) } } }
         if (listing?.usage != null && rootLabel != null) StorageBar(listing.usage)
         Hairline()
         // Pull down to re-scan the folder: the same reload as Retry, the thin bar along the top edge is its indicator (as on the Git page).
@@ -452,12 +453,14 @@ private fun Breadcrumbs(id: PaneId, loc: Location, controller: FilesController, 
     val ctx = LocalContext.current
     val crumbs = remember(loc) { loc.crumbs() }
     val copyDeclared = remember { Declarations.files.rowAction(COPY_PATH) != null }
+    // Places.rootLabel stats declared folders: read once per path, off the main thread, never per crumb per recomposition.
+    val rootLabels by produceState(emptyMap<String, String?>(), crumbs) { value = withContext(Dispatchers.IO) { crumbs.filterIsInstance<Location.Local>().associate { it.path to Places.rootLabel(ctx, it.path) } } }
     val listState = rememberLazyListState()
     LaunchedEffect(crumbs.size) { if (crumbs.isNotEmpty()) listState.animateScrollToItem(crumbs.lastIndex) }
     LazyRow(Modifier.fillMaxWidth().testTag(DriveTags.FILES_BREADCRUMBS).padding(horizontal = DriveMetrics.pad, vertical = DriveMetrics.gap), state = listState, verticalAlignment = Alignment.CenterVertically) {
         itemsIndexed(crumbs) { i, crumb ->
             val last = i == crumbs.lastIndex
-            val label = (crumb as? Location.Local)?.let { Places.rootLabel(ctx, it.path) } ?: crumb.name
+            val label = (crumb as? Location.Local)?.let { rootLabels[it.path] } ?: crumb.name
             Text(
                 label,
                 Modifier.clip(bottomNavPillShape).combinedClickable(onClick = { if (!last) controller.open(id, crumb) }, onLongClick = if (copyDeclared) ({ onCopyPath(crumb) }) else null).padding(horizontal = DriveMetrics.gapWide, vertical = DriveMetrics.tight),
@@ -691,7 +694,7 @@ private fun PlacesSheet(d: FilesDialog.Places, ui: FilesUiState, controller: Fil
     val declared = remember { Places.declared(ctx) }
     // #1375 a drive mounting or leaving (UsbVolumeReceiver) re-reads the places.
     val usbTick by com.diegonmarcos.superapp.usbdrive.StorageVolumes.tick.collectAsState()
-    val discovered = remember(prefs, hasAccess, usbTick) { Places.discovered(ctx, prefs, hasAccess) }
+    val discovered by produceState(emptyList<Places.Place>(), prefs, hasAccess, usbTick) { value = withContext(Dispatchers.IO) { Places.discovered(ctx, prefs, hasAccess) } }
     val bookmarks = remember(prefs) { Places.bookmarks(prefs) }
     fun go(place: Places.Place) {
         when (place.kind) {

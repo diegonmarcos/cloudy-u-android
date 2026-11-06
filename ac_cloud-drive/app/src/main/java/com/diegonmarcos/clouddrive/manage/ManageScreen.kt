@@ -296,7 +296,8 @@ fun DataPage(actions: DriveActions, prefs: DrivePrefs, onShowInExplorer: (String
     val volumes = remember { decl.switcher.mapNotNull { id -> decl.local.firstOrNull { it.id == id } } }
     var volume by rememberSaveable { mutableStateOf(decl.defaultVolume.takeIf { d -> volumes.any { it.id == d } } ?: volumes.firstOrNull()?.id ?: "") }
     val selected = volumes.firstOrNull { it.id == volume }
-    val roots = remember(volume) { selected?.let { VolumeOverview.rootsOf(it, probe).filter { r -> r.isDirectory } }.orEmpty() }
+    // rootsOf asks StorageManager and stats folders: off the main thread, the scan below waits for the answer.
+    val roots by androidx.compose.runtime.produceState(emptyList<java.io.File>(), volume) { value = withContext(Dispatchers.IO) { selected?.let { VolumeOverview.rootsOf(it, probe).filter { r -> r.isDirectory } }.orEmpty() } }
     LaunchedEffect(hasAccess, volume) { if (hasAccess && roots.isNotEmpty() && (state.key != volume || state.scannedAt == 0L)) controller.scan(scope, volumeRoots = roots, key = volume) }
 
     val shown = remember(state.items, state.key, volume, filter) { if (state.key == volume) DataScanner.filtered(state.items, filter) else emptyList() }

@@ -48,7 +48,8 @@ fun ExplorerScreen(
     // opened on the drive's root.
     val ctx = androidx.compose.ui.platform.LocalContext.current
     val usbTick by com.diegonmarcos.superapp.usbdrive.StorageVolumes.tick.collectAsState()
-    val drives = androidx.compose.runtime.remember(usbTick) { com.diegonmarcos.superapp.usbdrive.StorageVolumes.drives(ctx) }
+    // StorageManager is asked off the main thread; the drive tabs appear when the answer lands.
+    val drives by androidx.compose.runtime.produceState(emptyList<com.diegonmarcos.superapp.usbdrive.UsbVolumeModel.Drive>(), usbTick) { value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { com.diegonmarcos.superapp.usbdrive.StorageVolumes.drives(ctx) } }
     val pages = Declarations.navPages(Declarations.SECTION_EXPLORER) + drives.map { d ->
         com.diegonmarcos.superapp.bottomnav.NavPage(DRIVE_TAB + d.path, d.label, if (d.kind == com.diegonmarcos.superapp.usbdrive.UsbVolumeModel.Kind.USB) "usb" else "sd_card")
     }
