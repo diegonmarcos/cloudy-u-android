@@ -1,6 +1,7 @@
 package com.diegonmarcos.superapp.perms
 
 import java.io.File
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -18,7 +19,15 @@ class PermsGateLayoutTest {
     @Test fun `the gate is a full-height Scaffold page`() {
         assertTrue("FirstRunGate is not found", gate.isNotEmpty() && gate.length < src.length)
         assertTrue("the gate is not a Scaffold", gate.contains("Scaffold("))
-        assertTrue("the gate does not fill the screen", gate.contains("Modifier.fillMaxSize().testTag(PermsTags.SHEET)"))
+        // #1546 the Scaffold's own modifier fills the screen and carries the SHEET tag (through permsTag, the tag namespace)
+        val scaffold = gate.substringAfter("Scaffold(").substringBefore("\n")
+        assertTrue("the gate does not fill the screen", Regex("""modifier\s*=\s*Modifier\.fillMaxSize\(\)\.permsTag\(PermsTags\.SHEET\)""").containsMatchIn(scaffold) ||
+            Regex("""^\s*Modifier\.fillMaxSize\(\)\.permsTag\(PermsTags\.SHEET\)""").containsMatchIn(gate.substringAfter("Scaffold(")))
+    }
+
+    @Test fun `the sheet tag is the SHEET tag under the default namespace and moves with a host namespace`() {
+        assertEquals(PermsTags.SHEET, permsTagIn("perms", PermsTags.SHEET))
+        assertEquals("perms-app:sheet", permsTagIn("perms-app", PermsTags.SHEET))
     }
 
     @Test fun `the gate's content applies the system bar insets`() {
