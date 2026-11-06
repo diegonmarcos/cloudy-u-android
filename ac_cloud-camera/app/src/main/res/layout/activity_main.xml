@@ -16,6 +16,7 @@
 
         <FrameLayout
             android:id="@+id/main_frame"
+            android:layout_above="@id/camera_mode_tabs"
             android:layout_height="match_parent"
             android:layout_width="match_parent">
 
@@ -543,7 +544,9 @@
         </LinearLayout>
 
         <!-- #868 the mode switcher: the photo flavours as a page strip above libs:bottomnav's island
-             (QR scan | Camera | Video). cld.camera.ui.ModeNav drives both; this id is what
+             (QR Code | Objects | Camera | Video | VR). It sits at the very bottom, lifted only by the
+             navigation-bar inset (MainActivity's insets listener), and main_frame ends at its top edge,
+             so the preview never runs under it. cld.camera.ui.ModeNav drives both; this id is what
              three_buttons and the preview's reposition math are anchored to. -->
         <LinearLayout
             android:id="@+id/camera_mode_tabs"
@@ -551,8 +554,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:layout_marginTop="12dp"
-            android:layout_marginBottom="4dp">
+            android:layout_marginTop="0dp"
+            android:layout_marginBottom="0dp">
 
             <com.diegonmarcos.superapp.bottomnav.PageTabsView
                 android:id="@+id/camera_mode_strip"

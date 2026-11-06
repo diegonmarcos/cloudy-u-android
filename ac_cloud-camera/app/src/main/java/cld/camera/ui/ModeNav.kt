@@ -15,7 +15,7 @@ import com.diegonmarcos.superapp.bottomnav.PageTabsView
  * #868 THE camera mode switcher: libs:bottomnav's island and page strip in place of the
  * hand-rolled snapping TabLayout (ui/BottomTabLayout.kt, deleted).
  *
- * The modes are build.json::ui. The island carries the three families (QR scan | Camera | Video)
+ * The modes are build.json::ui. The island carries the five families (QR Code | Objects | Camera | Video | VR)
  * and the Camera family's `pages` are the photo flavours (Auto, Face retouch, Portrait, Night,
  * HDR, Camera) as a [PageTabsView] strip above it. Every declared id is the lower-cased
  * [CameraMode] name, so nothing here maps ids to modes by hand.
@@ -67,6 +67,8 @@ class ModeNav(
     init {
         island.onSelect = { id -> decl.section(id)?.let { pick(modeOfSection(it)) } }
         island.onReselect = {}
+        // The smaller nav: icons only, no labels (the island's own compact form).
+        island.collapsed = true
         strip.underTopChrome = false
         strip.onSelect = { page -> modeOf(page.id)?.let { pick(it) } }
         strip.onReselect = {}

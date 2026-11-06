@@ -4,12 +4,16 @@
 # ╚══════════════════════════════════════════════════════════════════╝
 #
 # What this certifies, statically (the nav is data, the bar and the strips are libs:bottomnav's):
-#   S1 build.json::ui is ONE declaration: bottom_nav = qr_scan|photo|video, default_section photo, and
+#   S1 build.json::ui is ONE declaration: bottom_nav = qr_scan|objects|photo|video|vr (QR Code | Objects |
+#      Camera | Video | VR, in that order), default_section photo, and
 #      the photo family's pages are the flavours (auto|face_retouch|portrait|night|hdr|camera). Every
 #      CameraMode is declared, under its lower-cased name.
 #   S2 the app compiles libs:bottomnav and bakes UI_BOTTOM_NAV + UI_SECTIONS_B64 + UI_DEFAULT_SECTION.
 #   S3 ui/ModeNav.kt draws the modes with BottomNavIslandView + PageTabsView fed by NavDecl;
 #      activity_main.xml hosts both inside camera_mode_tabs; ui/BottomTabLayout.kt is gone.
+#   S5 the preview never runs under the nav: activity_main.xml lays main_frame (the preview's host) ABOVE
+#      camera_mode_tabs, the nav is parent-bottom with no margin of its own (only the navigation-bar inset
+#      lifts it, in code), and the old "float the nav up to the preview's foot" math is gone.
 #   S4 no hand-rolled nav widget in the app (nav-shape-guard N3): not the old snapping TabLayout and
 #      not the scan dialog's never-shown encoding tabs.
 # Each check is then run against planted mutations of the real sources; a mutation that leaves
@@ -25,8 +29,10 @@ APP = os.environ["APP_DIR"]
 CFG = json.loads(r'''{
  "bottom": [
   "qr_scan",
+  "objects",
   "photo",
-  "video"
+  "video",
+  "vr"
  ],
  "default": "photo",
  "pages": {
@@ -176,6 +182,21 @@ def checks(f):
     bar = ui.get("bottom_nav") or []
     need("N1 ui.bottom_nav is exactly %s" % CFG["bottom"], bar == CFG["bottom"])
     need("N1 ui.bottom_nav holds at most 5 ids", 0 < len(bar) <= 5)
+    layout = f.get("app/src/main/res/layout/activity_main.xml", "")
+    try:
+        import xml.etree.ElementTree as ET
+        A = "{http://schemas.android.com/apk/res/android}"
+        views = {e.get(A + "id"): e for e in ET.fromstring(layout).iter() if e.get(A + "id")}
+        frame, tabs = views.get("@+id/main_frame"), views.get("@+id/camera_mode_tabs")
+        need("S5 main_frame is laid out above camera_mode_tabs", frame is not None and frame.get(A + "layout_above") == "@id/camera_mode_tabs")
+        need("S5 camera_mode_tabs is parent-bottom", tabs is not None and tabs.get(A + "layout_alignParentBottom") == "true")
+        need("S5 camera_mode_tabs has no margin of its own (the inset is applied in code)",
+             tabs is not None and all(tabs.get(A + k) in (None, "0dp") for k in ("layout_marginBottom", "layout_marginTop")))
+    except ET.ParseError:
+        need("S5 activity_main.xml parses", False)
+    main = f.get("app/src/main/java/cld/camera/ui/activities/MainActivity.kt", "")
+    need("S5 the nav is lifted by the navigation-bar inset only", "bottomMargin = insets.bottom" in code(main))
+    need("S5 the old nav-floats-up-to-the-preview math is gone", "extraHeight169" not in code(main))
     need("N1 every ui.bottom_nav id is a ui.sections id", all(b in secs for b in bar))
     need("N1 ui.default_section is %r and is in ui.bottom_nav" % CFG["default"],
          ui.get("default_section") == CFG["default"] and CFG["default"] in bar)
@@ -245,7 +266,13 @@ def edit_json(fn):
         d = json.loads(t); fn(d["ui"], d); return json.dumps(d)
     return go
 
+def layout_edit(a, b):
+    return lambda t: t.replace(a, b)
+
 MUTATIONS = [
+    ("main_frame stops being above the nav", "app/src/main/res/layout/activity_main.xml", layout_edit('android:layout_above="@id/camera_mode_tabs"\n            android:layout_height="match_parent"', 'android:layout_height="match_parent"')),
+    ("the nav gets a bottom margin", "app/src/main/res/layout/activity_main.xml", layout_edit('android:layout_marginBottom="0dp"', 'android:layout_marginBottom="40dp"')),
+    ("the nav floats up again", CFG["mutate_host"], lambda t: t + "\nval extraHeight169 = 0\n"),
     ("bottom_nav gains an undeclared id", "build.json", edit_json(lambda ui, d: ui["bottom_nav"].append("ghost"))),
     ("default_section points outside the bar", "build.json", edit_json(lambda ui, d: ui.__setitem__("default_section", "ghost"))),
     ("bottom_nav grows past five", "build.json", edit_json(lambda ui, d: ui.__setitem__("bottom_nav", ui["bottom_nav"] + ["a", "b", "c", "d", "e", "f"]))),

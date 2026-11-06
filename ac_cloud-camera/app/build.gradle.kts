@@ -205,4 +205,6 @@ dependencies {
     androidTestImplementation(libs.androidx.test.ext.junit.ktx)
     androidTestImplementation(libs.androidx.test.rules)
     androidTestImplementation(libs.androidx.test.runner)
+
+    testImplementation("junit:junit:4.13.2")
 }

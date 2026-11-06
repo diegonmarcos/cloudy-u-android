@@ -63,7 +63,6 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import androidx.core.view.marginTop
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updateMargins
 import cld.camera.App
@@ -976,6 +975,11 @@ open class MainActivity : AppCompatActivity(),
             zoomBarPanel.setPadding(0, 0, 0, insets.bottom)
             exposureBarPanel.setPadding(0, 0, 0, insets.bottom)
             bottomNavigationBarPadding = insets.bottom
+            // The mode nav is the bottom-most thing on screen: only the navigation-bar inset lifts it,
+            // and the preview (main_frame) is laid out above its top edge.
+            modeNav.view.layoutParams = (modeNav.view.layoutParams as ViewGroup.MarginLayoutParams).also {
+                it.bottomMargin = insets.bottom
+            }
 
             if (insets.top != 0 && !isInsetSet) {
                 mainFrame.layoutParams =
@@ -1095,51 +1099,9 @@ open class MainActivity : AppCompatActivity(),
     }
 
     private fun repositionTabLayout() {
-
+        // The nav no longer floats up to the preview's foot (it used to overlap it): it stays at the very
+        // bottom, margin = the navigation-bar inset (see the insets listener), so only the shutter row shows.
         threeButtons.visibility = View.VISIBLE
-
-        modeNav.view.viewTreeObserver.addOnPreDrawListener(
-            object : ViewTreeObserver.OnPreDrawListener {
-                override fun onPreDraw(): Boolean {
-
-                    modeNav.view.viewTreeObserver
-                        .removeOnPreDrawListener(
-                            this
-                        )
-
-                    val previewHeight169 = previewContainer.width * 16 / 9
-
-                    val extraHeight169 = previewContainer.height -
-                            previewHeight169 -
-                            modeNav.view.height -
-                            10 * resources.displayMetrics.density.toInt()
-
-                    // When there's no extra space in 16:9 for even the bottom nav bar to be present without
-                    // obscuring the preview or if there's sufficient space for the entire bottom UI to exist
-                    val shouldSnapAboveBottomNav = extraHeight169 < bottomNavigationBarPadding
-                            || extraHeight169 >= (threeButtons.height + modeNav.view.height + modeNav.view.marginTop)
-
-                    modeNav.view.layoutParams =
-                        (modeNav.view.layoutParams as ViewGroup.MarginLayoutParams).let {
-
-                            it.setMargins(
-                                it.leftMargin,
-                                it.topMargin,
-                                it.rightMargin,
-                                if (shouldSnapAboveBottomNav) {
-                                    bottomNavigationBarPadding
-                                } else {
-                                    extraHeight169
-                                }
-                            )
-
-                            it
-                        }
-
-                    return true
-                }
-
-            })
     }
 
     fun finalizeMode(picked: CameraMode? = null) {

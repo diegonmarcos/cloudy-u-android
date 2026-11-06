@@ -163,20 +163,33 @@
         "python3",
         "jq"
       ]
+    },
+    "unit": {
+      "_doc": "JVM tests of the pure logic: the nav / preview geometry (NavLayout), the detection overlay mapping, the filter anchor math and the declared-filters loading.",
+      "task": "testDebugUnitTest",
+      "enabled": true
     }
   },
   "ui": {
-    "_doc": "#868 THE nav declaration (libs:bottomnav NavDecl): ui.bottom_nav is the island, ui.sections[] what each item opens, ui.default_section where the app opens. The camera's MODES are the nav: the island carries the three families and the photo family's `pages` are the flavours a vendor extension may or may not offer at run time (ModeNav shows only the usable ones). Every id is the lower-cased CameraMode name (qr_scan, auto, face_retouch, portrait, night, hdr, camera, video), so the flat order below is the swipe order. The gallery's ViewPager is content, not nav.",
+    "_doc": "#868 THE nav declaration (libs:bottomnav NavDecl): ui.bottom_nav is the island, ui.sections[] what each item opens, ui.default_section where the app opens. The camera's MODES are the nav: the island carries the five families (QR Code | Objects | Camera | Video | VR) and the photo family's `pages` are the flavours a vendor extension may or may not offer at run time (ModeNav shows only the usable ones). Every id is the lower-cased CameraMode name (qr_scan, objects, auto, face_retouch, portrait, night, hdr, camera, video, vr), so the flat order below is the swipe order. The gallery's ViewPager is content, not nav.",
     "bottom_nav": [
       "qr_scan",
+      "objects",
       "photo",
-      "video"
+      "video",
+      "vr"
     ],
     "sections": [
       {
         "id": "qr_scan",
         "label": "QR scan",
         "icon": "qr_scan",
+        "pages": []
+      },
+      {
+        "id": "objects",
+        "label": "Objects",
+        "icon": "objects",
         "pages": []
       },
       {
@@ -214,6 +227,12 @@
         "id": "video",
         "label": "Video",
         "icon": "video",
+        "pages": []
+      },
+      {
+        "id": "vr",
+        "label": "VR",
+        "icon": "vr",
         "pages": []
       }
     ],
@@ -258,6 +277,14 @@
         {
           "name": "Video",
           "what": "Record video with sound."
+        },
+        {
+          "name": "Objects",
+          "what": "Live on-device object detection with boxes, labels, confidence and tracking ids."
+        },
+        {
+          "name": "VR",
+          "what": "Face and object filters (hats, glasses, masks, backgrounds, colour looks, stickers) on the live preview."
         }
       ],
       "guide": [

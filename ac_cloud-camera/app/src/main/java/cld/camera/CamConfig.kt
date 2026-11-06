@@ -69,6 +69,7 @@ import kotlin.concurrent.thread
 // note that enum constant name is used as a name of a SharedPreferences instance
 enum class CameraMode(val extensionMode: Int, val uiName: Int) {
     QR_SCAN(ExtensionMode.NONE, R.string.qr_scan_mode),
+    OBJECTS(ExtensionMode.NONE, R.string.objects_mode),
     AUTO(ExtensionMode.AUTO, R.string.auto_mode),
     FACE_RETOUCH(ExtensionMode.FACE_RETOUCH, R.string.face_retouch_mode),
     PORTRAIT(ExtensionMode.BOKEH, R.string.portrait_mode),
@@ -76,6 +77,7 @@ enum class CameraMode(val extensionMode: Int, val uiName: Int) {
     HDR(ExtensionMode.HDR, R.string.hdr_mode),
     CAMERA(ExtensionMode.NONE, R.string.camera),
     VIDEO(ExtensionMode.NONE, R.string.video),
+    VR(ExtensionMode.NONE, R.string.vr_mode),
 }
 
 @SuppressLint("UnsafeOptInUsageError")
@@ -1861,7 +1863,8 @@ class CamConfig(private val mActivity: MainActivity) {
         return CameraMode.entries.filter {
             when (it) {
                 CameraMode.CAMERA, CameraMode.VIDEO -> true
-                CameraMode.QR_SCAN -> mActivity !is SecureMainActivity
+                // The live analysis pages are not offered on the secure (lock-screen) camera.
+                CameraMode.QR_SCAN, CameraMode.OBJECTS, CameraMode.VR -> mActivity !is SecureMainActivity
                 else -> {
                     check(it.extensionMode != ExtensionMode.NONE)
                     isExtensionUsable(
