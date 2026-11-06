@@ -1,0 +1,12 @@
+[
+  {
+    "kind": "note",
+    "title": "Performance",
+    "body": "Gain, allocation and return over time, derived from the holdings in the me-portfolio pack. Shown here once signed in; nothing is estimated."
+  },
+  {
+    "kind": "note",
+    "title": "No data yet",
+    "body": "No performance to show until a portfolio pack is fetched."
+  }
+]

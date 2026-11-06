@@ -1,0 +1,14 @@
+[
+  {
+    "kind": "note",
+    "title": "Passkeys",
+    "body": "FIDO2 / WebAuthn passkeys from the Vaultwarden export, one row per credential and its relying party."
+  },
+  {
+    "kind": "fragment",
+    "id": "secrets",
+    "title": "Passkeys",
+    "secret_type": "passkeys",
+    "pack": "me-secrets"
+  }
+]

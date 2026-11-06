@@ -1,0 +1,69 @@
+[
+  {
+    "kind": "note",
+    "title": "IR — income tax",
+    "body": "Income-tax returns and obligations by year and jurisdiction."
+  },
+  {
+    "kind": "ledger",
+    "store": "buro_user",
+    "currency": "EUR",
+    "ledgers": [
+      {
+        "collection": "fin_tax",
+        "title": "Income tax",
+        "empty": "No tax records yet.",
+        "fields": [
+          {
+            "id": "name",
+            "label": "Record",
+            "type": "text",
+            "required": true
+          },
+          {
+            "id": "year",
+            "label": "Year",
+            "type": "text"
+          },
+          {
+            "id": "jurisdiction",
+            "label": "Jurisdiction",
+            "type": "choice",
+            "options": [
+              "Germany",
+              "Brazil",
+              "Spain",
+              "Other"
+            ]
+          },
+          {
+            "id": "status",
+            "label": "Status",
+            "type": "choice",
+            "options": [
+              "Open",
+              "Filed",
+              "Paid",
+              "Refunded"
+            ]
+          },
+          {
+            "id": "amount",
+            "label": "Amount",
+            "type": "money"
+          },
+          {
+            "id": "due",
+            "label": "Due",
+            "type": "date"
+          },
+          {
+            "id": "note",
+            "label": "Note",
+            "type": "text"
+          }
+        ]
+      }
+    ]
+  }
+]

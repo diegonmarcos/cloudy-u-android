@@ -1,0 +1,14 @@
+[
+  {
+    "kind": "note",
+    "title": "TOTP",
+    "body": "Time-based one-time-password seeds from the Vaultwarden export. The seed is never shown inline: open the per-row popup to reveal or copy the current code."
+  },
+  {
+    "kind": "fragment",
+    "id": "secrets",
+    "title": "TOTP",
+    "secret_type": "totp",
+    "pack": "me-secrets"
+  }
+]

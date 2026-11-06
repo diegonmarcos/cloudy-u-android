@@ -1,0 +1,19 @@
+[
+  {
+    "kind": "link_grid",
+    "title": "C3",
+    "subtitle": "Cloud control plane: infrastructure and containers.",
+    "links": [
+      {
+        "label": "Infra",
+        "icon": "cloud",
+        "target": "https://github.com/diegonmarcos/cloudy-t-infra"
+      },
+      {
+        "label": "Containers",
+        "icon": "dns",
+        "target": "https://github.com/diegonmarcos/cloudy-u-containers"
+      }
+    ]
+  }
+]

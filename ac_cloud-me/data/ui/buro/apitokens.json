@@ -1,0 +1,14 @@
+[
+  {
+    "kind": "note",
+    "title": "API tokens",
+    "body": "Service API tokens from the Vaultwarden export, one row per authenticator."
+  },
+  {
+    "kind": "fragment",
+    "id": "secrets",
+    "title": "API tokens",
+    "secret_type": "apitokens",
+    "pack": "me-secrets"
+  }
+]

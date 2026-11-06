@@ -1,0 +1,55 @@
+[
+  {
+    "kind": "note",
+    "title": "Accounts",
+    "body": "Bank, brokerage and cash accounts. Balances and flows are summarised under Accounts vs Cashflow; served figures come from the me-financial pack once signed in."
+  },
+  {
+    "kind": "ledger",
+    "store": "buro_user",
+    "currency": "EUR",
+    "ledgers": [
+      {
+        "collection": "fin_accounts",
+        "title": "Accounts",
+        "empty": "No accounts recorded yet.",
+        "fields": [
+          {
+            "id": "name",
+            "label": "Account",
+            "type": "text",
+            "required": true
+          },
+          {
+            "id": "institution",
+            "label": "Institution",
+            "type": "text"
+          },
+          {
+            "id": "type",
+            "label": "Type",
+            "type": "choice",
+            "options": [
+              "Checking",
+              "Savings",
+              "Brokerage",
+              "Crypto",
+              "Cash",
+              "Other"
+            ]
+          },
+          {
+            "id": "iban",
+            "label": "IBAN / number",
+            "type": "text"
+          },
+          {
+            "id": "note",
+            "label": "Note",
+            "type": "text"
+          }
+        ]
+      }
+    ]
+  }
+]

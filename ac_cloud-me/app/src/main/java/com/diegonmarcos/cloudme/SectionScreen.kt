@@ -147,6 +147,12 @@ private fun PageContent(section: Section, page: Page, modifier: Modifier) {
             "health" -> HostedFragment("${section.id}/${page.id}", modifier) { healthFragment(single) }
             "healthpage" -> com.diegonmarcos.cloudme.health.HealthPage(single.optString("page"), modifier)
             "agenda" -> AgendaScreen(AgendaMode.EVENTS, modifier)
+            // #1557 Buro > Secrets: the Vaultwarden export (me-secrets pack) as authenticator-first tables.
+            "secrets" -> SecretsScreen(single.optString("secret_type"), modifier)
+            // #1557 Buro > ID & DD > Pay Cards / Autocomplete: the me-iddd pack.
+            "iddd" -> IdddScreen(single.optString("view"), modifier)
+            // #1557 Buro > Configs > Import / Export: the USB-C backup surface (SAF).
+            "backup" -> BackupScreen(modifier)
             "todo" -> AgendaScreen(AgendaMode.TODOS, modifier)
             "tasks" -> TasksScreen(modifier, single.optString("subject"), single.optString("open"))
             "files" -> FilesScreen(single, modifier)

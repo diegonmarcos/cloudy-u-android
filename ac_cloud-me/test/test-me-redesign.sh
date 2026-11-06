@@ -261,7 +261,7 @@ for dead in ("page:home/", "page:house/", "page:work/", "page:me/tasks"):
 # the many_rows contract of Buro and LLC: every flat page in exactly one group, groups have a label and an icon from libs:ui-icons
 icons = open(os.path.join(libs, "ui-icons/src/main/kotlin/com/diegonmarcos/superapp/uiicons/UiIcons.kt"), encoding="utf-8").read()
 want_groups = {
-    "buro": {"ids": ["ids", "dd", "wallet", "account"], "docs": ["assets", "services", "liabilities"], "reports": ["budgeting", "cashflow"], "calendar": ["calendar"]},
+    "buro": {"iddd": ["ids", "dd", "paycards", "autocomplete", "wallet", "account"], "sec-web": ["logins", "totp", "passkeys"], "sec-cli": ["ssh", "apitokens", "jwt", "certs"], "cfg": ["repos", "android", "desktop", "c3", "backup"], "financial": ["accounts", "cards", "statements", "ir", "cashflow", "budgeting", "services"], "portfolio": ["assets", "liabilities", "nav", "performance"], "events": ["events-list", "calendar"]},
     "llc": {"income": ["employed", "side-hustles"], "manage": ["assets", "portfolio"], "calendar": ["calendar"]},
 }
 for sid, want in want_groups.items():
@@ -350,7 +350,7 @@ if "extapp:cloud-wallet" in blob:
 want_pages = {
     "health": ["Tracked", "Activities", "Body comp", "HR & HRV", "Sleep", "Index", "Anthropometrics", "Circadian", "Biomarkers", "Timeline", "Objectives", "Matrix", "Culinary", "Absorption clash", "Thermal", "Hemodynamics", "Supermarket", "Dossier", "Workout plan"],
     "llc": ["Employed", "Side hustles", "Assets", "Portfolio", "Calendar"],
-    "buro": ["IDs", "Personal DD", "Wallet", "Account", "Assets", "Services", "Liabilities & Taxes", "Budgeting", "Accounts vs Cashflow", "Calendar"],
+    "buro": ["IDs", "Personal DD", "Pay Cards", "Autocomplete", "Wallet", "Account", "Logins", "TOTP", "Passkeys", "SSH", "API Tokens", "JWT", "Certificates", "Repos", "Android", "Desktop", "C3", "Import / Export", "Accounts", "Cards", "Statements", "IR", "Accounts vs Cashflow", "Budgeting", "Services", "Assets", "Liabilities & Taxes", "NaV", "Performance", "List", "Calendar"],
 }
 for sid, labels in want_pages.items():
     if [p["label"] for p in secs.get(sid, {}).get("pages", [])] != labels:

@@ -1,0 +1,12 @@
+[
+  {
+    "kind": "note",
+    "title": "Import / Export",
+    "body": "Back up the Buro data to a USB-C drive or restore it from one. Export writes a portable bundle (the per-domain SQLite packs plus a signed manifest); the secrets pack is encrypted under a passphrase you set. Import verifies the signature, previews the changes and merges, keeping the last known good copy. Pick the drive with the system file picker; no extra storage permission is needed."
+  },
+  {
+    "kind": "fragment",
+    "id": "backup",
+    "title": "Import / Export"
+  }
+]

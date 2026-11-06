@@ -1,0 +1,14 @@
+[
+  {
+    "kind": "note",
+    "title": "SSH keys",
+    "body": "SSH keypairs from the Vaultwarden export. Private keys are huge values: they are never rendered inline, only via the file-link popup, and only decrypted on-device."
+  },
+  {
+    "kind": "fragment",
+    "id": "secrets",
+    "title": "SSH keys",
+    "secret_type": "ssh",
+    "pack": "me-secrets"
+  }
+]

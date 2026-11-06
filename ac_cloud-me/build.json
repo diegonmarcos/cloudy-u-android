@@ -935,7 +935,7 @@
         ]
       },
       {
-        "_doc": "Buro \u2014 the paperwork desk, redesigned as four many_rows groups (each page in exactly one): IDs & DD (identity documents browsed from data/files/wallet/ids, the personal due-diligence checklist, the wallet folders, Account which launches Cloud Account), Docs (Assets, Services, Liabilities & Taxes: the typed `ledger` records of the buro_user store, absorbing the retired House section), Financial Reports (Budgeting against the cashflow, Accounts vs Cashflow, both derived from typed records) and Calendar (the calendar engine's events and the tasks filed under Buro; Cloud Tasks writes). No figure is seeded: an empty ledger says so.",
+        "_doc": "Buro \u2014 the owner's bureau, redesigned (#1557) as seven many_rows groups, each page in exactly one. ID & DD (identity documents, personal due-diligence, pay cards and autocomplete fed by the me-iddd pack, the wallet file browser, Account which launches Cloud Account). Secrets \u00b7 Web (Logins, TOTP, Passkeys) and Secrets \u00b7 CLI (SSH, API Tokens, JWT, Certificates) render the Vaultwarden export from the me-secrets pack as authenticator-first tables with an All | By Folders scope control; huge values open a file-link popup, never inline. Configs lists the owner's repos by domain (Repos, Android, Desktop, C3), a read-only viewer. Financial (Accounts, Cards, Statements, IR, Accounts vs Cashflow, Budgeting, Services) and Portfolio (Assets, Liabilities & Taxes, NaV, Performance) keep every former Buro/Docs ledger. Events (List, Calendar). The former Docs group is removed and its Assets/Services/Liabilities pages moved into Portfolio and Financial (buro/docs redirects to buro/assets). Personal data is fetched at runtime from private GitHub release-asset SQLite packs with the user's own GitHub login (github-login-direct); nothing personal is bundled in the public apk. No figure is seeded.",
         "id": "buro",
         "nav_mode": "horizontal_two_rows",
         "label": "Buro",
@@ -952,6 +952,16 @@
             "icon": "verified_user"
           },
           {
+            "id": "paycards",
+            "label": "Pay Cards",
+            "icon": "payments"
+          },
+          {
+            "id": "autocomplete",
+            "label": "Autocomplete",
+            "icon": "edit_note"
+          },
+          {
             "id": "wallet",
             "label": "Wallet",
             "icon": "wallet"
@@ -961,22 +971,92 @@
             "label": "Account",
             "icon": "account_circle",
             "action": "extapp:cloud-account",
-            "_doc": "Account \u2014 a LAUNCH tab: tapping it hands `extapp:cloud-account` to MainActivity.onTarget and opens Cloud Account, which owns the account and its credentials. Cloud Me never reads the credentials."
+            "_doc": "A LAUNCH tab: hands `extapp:cloud-account` to MainActivity.onTarget instead of showing content."
           },
           {
-            "id": "assets",
-            "label": "Assets",
-            "icon": "inventory_2"
+            "id": "logins",
+            "label": "Logins",
+            "icon": "key"
           },
           {
-            "id": "services",
-            "label": "Services",
-            "icon": "miscellaneous_services"
+            "id": "totp",
+            "label": "TOTP",
+            "icon": "token"
           },
           {
-            "id": "liabilities",
-            "label": "Liabilities & Taxes",
+            "id": "passkeys",
+            "label": "Passkeys",
+            "icon": "fingerprint"
+          },
+          {
+            "id": "ssh",
+            "label": "SSH",
+            "icon": "vpn_key"
+          },
+          {
+            "id": "apitokens",
+            "label": "API Tokens",
+            "icon": "dns"
+          },
+          {
+            "id": "jwt",
+            "label": "JWT",
+            "icon": "code"
+          },
+          {
+            "id": "certs",
+            "label": "Certificates",
+            "icon": "security"
+          },
+          {
+            "id": "repos",
+            "label": "Repos",
+            "icon": "account_tree"
+          },
+          {
+            "id": "android",
+            "label": "Android",
+            "icon": "smartphone"
+          },
+          {
+            "id": "desktop",
+            "label": "Desktop",
+            "icon": "computer"
+          },
+          {
+            "id": "c3",
+            "label": "C3",
+            "icon": "cloud"
+          },
+          {
+            "id": "backup",
+            "label": "Import / Export",
+            "icon": "folder"
+          },
+          {
+            "id": "accounts",
+            "label": "Accounts",
             "icon": "account_balance"
+          },
+          {
+            "id": "cards",
+            "label": "Cards",
+            "icon": "wallet"
+          },
+          {
+            "id": "statements",
+            "label": "Statements",
+            "icon": "description"
+          },
+          {
+            "id": "ir",
+            "label": "IR",
+            "icon": "assessment"
+          },
+          {
+            "id": "cashflow",
+            "label": "Accounts vs Cashflow",
+            "icon": "compare_arrows"
           },
           {
             "id": "budgeting",
@@ -984,9 +1064,34 @@
             "icon": "pie_chart"
           },
           {
-            "id": "cashflow",
-            "label": "Accounts vs Cashflow",
-            "icon": "compare_arrows"
+            "id": "services",
+            "label": "Services",
+            "icon": "hub"
+          },
+          {
+            "id": "assets",
+            "label": "Assets",
+            "icon": "inventory_2"
+          },
+          {
+            "id": "liabilities",
+            "label": "Liabilities & Taxes",
+            "icon": "account_balance"
+          },
+          {
+            "id": "nav",
+            "label": "NaV",
+            "icon": "assessment"
+          },
+          {
+            "id": "performance",
+            "label": "Performance",
+            "icon": "trending_up"
+          },
+          {
+            "id": "events-list",
+            "label": "List",
+            "icon": "description"
           },
           {
             "id": "calendar",
@@ -996,40 +1101,82 @@
         ],
         "groups": [
           {
-            "id": "ids",
-            "label": "IDs & DD",
+            "id": "iddd",
+            "label": "ID & DD",
             "icon": "badge",
             "pages": [
               "ids",
               "dd",
+              "paycards",
+              "autocomplete",
               "wallet",
               "account"
             ]
           },
           {
-            "id": "docs",
-            "label": "Docs",
-            "icon": "folder",
+            "id": "sec-web",
+            "label": "Secrets \u00b7 Web",
+            "icon": "lock",
+            "pages": [
+              "logins",
+              "totp",
+              "passkeys"
+            ]
+          },
+          {
+            "id": "sec-cli",
+            "label": "Secrets \u00b7 CLI",
+            "icon": "terminal",
+            "pages": [
+              "ssh",
+              "apitokens",
+              "jwt",
+              "certs"
+            ]
+          },
+          {
+            "id": "cfg",
+            "label": "Configs",
+            "icon": "settings",
+            "pages": [
+              "repos",
+              "android",
+              "desktop",
+              "c3",
+              "backup"
+            ]
+          },
+          {
+            "id": "financial",
+            "label": "Financial",
+            "icon": "payments",
+            "pages": [
+              "accounts",
+              "cards",
+              "statements",
+              "ir",
+              "cashflow",
+              "budgeting",
+              "services"
+            ]
+          },
+          {
+            "id": "portfolio",
+            "label": "Portfolio",
+            "icon": "trending_up",
             "pages": [
               "assets",
-              "services",
-              "liabilities"
+              "liabilities",
+              "nav",
+              "performance"
             ]
           },
           {
-            "id": "reports",
-            "label": "Financial Reports",
-            "icon": "assessment",
-            "pages": [
-              "budgeting",
-              "cashflow"
-            ]
-          },
-          {
-            "id": "calendar",
-            "label": "Calendar",
+            "id": "events",
+            "label": "Events",
             "icon": "event",
             "pages": [
+              "events-list",
               "calendar"
             ]
           }

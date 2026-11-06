@@ -1,0 +1,63 @@
+[
+  {
+    "kind": "note",
+    "title": "Cards",
+    "body": "Debit and credit cards and their limits. Full card numbers live under ID & DD > Pay cards, not here."
+  },
+  {
+    "kind": "ledger",
+    "store": "buro_user",
+    "currency": "EUR",
+    "ledgers": [
+      {
+        "collection": "fin_cards",
+        "title": "Cards",
+        "empty": "No cards recorded yet.",
+        "fields": [
+          {
+            "id": "name",
+            "label": "Card",
+            "type": "text",
+            "required": true
+          },
+          {
+            "id": "network",
+            "label": "Network",
+            "type": "choice",
+            "options": [
+              "Visa",
+              "Mastercard",
+              "Amex",
+              "Other"
+            ]
+          },
+          {
+            "id": "last4",
+            "label": "Last 4",
+            "type": "text"
+          },
+          {
+            "id": "kind",
+            "label": "Kind",
+            "type": "choice",
+            "options": [
+              "Credit",
+              "Debit",
+              "Prepaid"
+            ]
+          },
+          {
+            "id": "account",
+            "label": "Linked account",
+            "type": "text"
+          },
+          {
+            "id": "note",
+            "label": "Note",
+            "type": "text"
+          }
+        ]
+      }
+    ]
+  }
+]

@@ -1,0 +1,52 @@
+[
+  {
+    "kind": "note",
+    "title": "Statements",
+    "body": "Account and card statements by period."
+  },
+  {
+    "kind": "ledger",
+    "store": "buro_user",
+    "currency": "EUR",
+    "ledgers": [
+      {
+        "collection": "fin_statements",
+        "title": "Statements",
+        "empty": "No statements recorded yet.",
+        "fields": [
+          {
+            "id": "name",
+            "label": "Statement",
+            "type": "text",
+            "required": true
+          },
+          {
+            "id": "account",
+            "label": "Account",
+            "type": "text"
+          },
+          {
+            "id": "period",
+            "label": "Period",
+            "type": "text"
+          },
+          {
+            "id": "amount",
+            "label": "Amount",
+            "type": "money"
+          },
+          {
+            "id": "date",
+            "label": "Date",
+            "type": "date"
+          },
+          {
+            "id": "note",
+            "label": "Note",
+            "type": "text"
+          }
+        ]
+      }
+    ]
+  }
+]

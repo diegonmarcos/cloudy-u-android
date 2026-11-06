@@ -1,0 +1,14 @@
+[
+  {
+    "kind": "note",
+    "title": "Logins",
+    "body": "Website and app logins from the Vaultwarden export. Each row is one account; a long value opens a file-link popup to view, copy or export, never inline. Read live from the encrypted me-secrets pack once signed in with GitHub."
+  },
+  {
+    "kind": "fragment",
+    "id": "secrets",
+    "title": "Logins",
+    "secret_type": "logins",
+    "pack": "me-secrets"
+  }
+]

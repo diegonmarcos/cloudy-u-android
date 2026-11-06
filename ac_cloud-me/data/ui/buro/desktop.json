@@ -1,0 +1,24 @@
+[
+  {
+    "kind": "link_grid",
+    "title": "Desktop",
+    "subtitle": "Desktop and dotfiles: Terraform, NixOS, Nix home-manager.",
+    "links": [
+      {
+        "label": "Terraform",
+        "icon": "account_tree",
+        "target": "https://github.com/diegonmarcos/cloudy-t-infra"
+      },
+      {
+        "label": "NixOS",
+        "icon": "computer",
+        "target": "https://github.com/diegonmarcos/cloudy-u-desktop"
+      },
+      {
+        "label": "Nix-HM",
+        "icon": "settings",
+        "target": "https://github.com/diegonmarcos/cloudy-u-linux"
+      }
+    ]
+  }
+]

@@ -35,10 +35,36 @@ class BuroLlcDeclTest {
         assertEquals("tasks", page("tasks", "backlogs").getJSONObject(0).getString("id"))
     }
 
-    @Test fun `Buro follows the hierarchy IDs and DD, Docs, Financial Reports, Calendar`() {
+    @Test fun `Buro follows the owner hierarchy ID&DD, Secrets Web, Secrets CLI, Configs, Financial, Portfolio, Events and Docs is gone`() {
         assertEquals("horizontal_two_rows", sections.getValue("buro").getString("nav_mode"))
-        assertEquals(mapOf("ids" to listOf("ids", "dd", "wallet", "account"), "docs" to listOf("assets", "services", "liabilities"),
-            "reports" to listOf("budgeting", "cashflow"), "calendar" to listOf("calendar")), groups("buro"))
+        assertEquals(mapOf(
+            "iddd" to listOf("ids", "dd", "paycards", "autocomplete", "wallet", "account"),
+            "sec-web" to listOf("logins", "totp", "passkeys"),
+            "sec-cli" to listOf("ssh", "apitokens", "jwt", "certs"),
+            "cfg" to listOf("repos", "android", "desktop", "c3", "backup"),
+            "financial" to listOf("accounts", "cards", "statements", "ir", "cashflow", "budgeting", "services"),
+            "portfolio" to listOf("assets", "liabilities", "nav", "performance"),
+            "events" to listOf("events-list", "calendar"),
+        ), groups("buro"))
+        assertFalse("docs" in groups("buro"))
+        val flat = ids(sections.getValue("buro").getJSONArray("pages"))
+        assertTrue(listOf("assets", "liabilities").all { it in flat })
+        assertTrue("services" in flat)
+    }
+
+    @Test fun `the removed Docs route still lands on a kept page`() {
+        val (s, p) = LegacyRoutes.resolve("buro", "docs")
+        assertEquals("buro", s); assertTrue(p == "assets" || p == "liabilities")
+    }
+
+    @Test fun `each Secrets page hosts the secrets fragment bound to the me-secrets pack`() {
+        for (p in listOf("logins", "totp", "passkeys", "ssh", "apitokens", "jwt", "certs")) {
+            val frag = page("buro", p).let { st -> (0 until st.length()).map { st.getJSONObject(it) } }
+                .single { it.optString("kind") == "fragment" }
+            assertEquals("secrets", frag.getString("id"))
+            assertEquals("me-secrets", frag.getString("pack"))
+            assertTrue("secret_type set", frag.getString("secret_type").isNotBlank())
+        }
     }
 
     @Test fun `LLC follows the hierarchy Employed, Side hustles, Assets and Portfolio, Calendar`() {
@@ -83,7 +109,7 @@ class BuroLlcDeclTest {
                 }
             }
         }
-        assertEquals("the declared ledgers: 7 in Buro, 4 in LLC", 11, ledgers)
+        assertEquals("the declared ledgers: 11 in Buro, 4 in LLC", 15, ledgers)
     }
 
     @Test fun `the reports read collections the pages really declare`() {

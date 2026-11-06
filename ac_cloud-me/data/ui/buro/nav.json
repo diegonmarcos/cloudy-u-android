@@ -1,0 +1,12 @@
+[
+  {
+    "kind": "note",
+    "title": "Net asset value",
+    "body": "Net asset value is total Assets minus total Liabilities. It is derived, not typed: enter positions under Assets and Liabilities, or sign in to read the me-portfolio pack."
+  },
+  {
+    "kind": "note",
+    "title": "No data yet",
+    "body": "Nothing to total yet — no assets or liabilities recorded, and no portfolio pack fetched."
+  }
+]

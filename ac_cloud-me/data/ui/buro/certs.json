@@ -1,0 +1,14 @@
+[
+  {
+    "kind": "note",
+    "title": "Certificates",
+    "body": "Certificates and their keys from the Vaultwarden export. Key and PEM bodies open via the file-link popup, never inline."
+  },
+  {
+    "kind": "fragment",
+    "id": "secrets",
+    "title": "Certificates",
+    "secret_type": "certs",
+    "pack": "me-secrets"
+  }
+]

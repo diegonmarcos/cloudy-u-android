@@ -1,0 +1,14 @@
+[
+  {
+    "kind": "note",
+    "title": "JWT",
+    "body": "JSON Web Tokens from the Vaultwarden export. The token body opens in the file-link popup."
+  },
+  {
+    "kind": "fragment",
+    "id": "secrets",
+    "title": "JWT",
+    "secret_type": "jwt",
+    "pack": "me-secrets"
+  }
+]

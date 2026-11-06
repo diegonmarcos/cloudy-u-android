@@ -1,0 +1,14 @@
+[
+  {
+    "kind": "note",
+    "title": "Autocomplete",
+    "body": "Addresses, phones and identity fields offered to the system autofill service, read from the me-iddd pack."
+  },
+  {
+    "kind": "fragment",
+    "id": "iddd",
+    "title": "Autocomplete",
+    "view": "autocomplete",
+    "pack": "me-iddd"
+  }
+]

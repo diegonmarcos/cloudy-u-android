@@ -1,0 +1,39 @@
+[
+  {
+    "kind": "link_grid",
+    "title": "Repos",
+    "subtitle": "The owner's repositories, grouped by domain. A read-only viewer; metadata comes from the me-configs pack.",
+    "links": [
+      {
+        "label": "Android",
+        "icon": "smartphone",
+        "target": "https://github.com/diegonmarcos/cloudy-u-android"
+      },
+      {
+        "label": "Desktop",
+        "icon": "computer",
+        "target": "https://github.com/diegonmarcos/cloudy-u-desktop"
+      },
+      {
+        "label": "Infra",
+        "icon": "cloud",
+        "target": "https://github.com/diegonmarcos/cloudy-t-infra"
+      },
+      {
+        "label": "Containers",
+        "icon": "dns",
+        "target": "https://github.com/diegonmarcos/cloudy-u-containers"
+      },
+      {
+        "label": "Docs",
+        "icon": "description",
+        "target": "https://github.com/diegonmarcos/cloudy-a-docs"
+      },
+      {
+        "label": "Vault",
+        "icon": "lock",
+        "target": "https://github.com/diegonmarcos/cloud-me-pvt-vault"
+      }
+    ]
+  }
+]

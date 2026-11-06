@@ -1,0 +1,14 @@
+[
+  {
+    "kind": "note",
+    "title": "Pay cards",
+    "body": "Payment cards used for autofill, read from the me-iddd pack once signed in. Full numbers are never shown inline; a row's popup reveals or copies a single value."
+  },
+  {
+    "kind": "fragment",
+    "id": "iddd",
+    "title": "Pay cards",
+    "view": "paycards",
+    "pack": "me-iddd"
+  }
+]
