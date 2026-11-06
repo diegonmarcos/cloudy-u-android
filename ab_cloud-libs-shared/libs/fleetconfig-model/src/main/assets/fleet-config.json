@@ -407,6 +407,14 @@
         "ac_cloud-tasks"
       ]
     },
+    "tasks_notes": {
+      "kind": "prefs",
+      "class": "content",
+      "doc": "Cloud Tasks Inboxes > Notes: the notebooks, sections, pages and cards (one JSON document under the key declared in ac_cloud-tasks/data/notes/notes.json); user notes, not config.",
+      "used_by": [
+        "ac_cloud-tasks"
+      ]
+    },
     "tasks_ai": {
       "kind": "prefs",
       "class": "device",
@@ -3007,7 +3015,8 @@
         "lib-ui-kit",
         "lib-ui-nav-bars",
         "lib-updater",
-        "lib-web-core"
+        "lib-web-core",
+        "lib-wysiwyg"
       ],
       "items": [
         {

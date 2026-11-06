@@ -16,7 +16,8 @@ object Ids {
     const val PROJECTS = "projects"
     const val SETTINGS = "settings"
 
-    const val PAGE_INBOXES = "inboxes"
+    const val PAGE_NOTES = "notes"
+    const val PAGE_SYNCED = "synced"
     const val PAGE_BACKLOGS = "backlogs"
     const val PAGE_LIBRARY = "library"
     const val PAGE_PROJECTS = "projects"

@@ -20,4 +20,6 @@
     <string name="repo_tree_private">Private</string>
     <string name="repo_tree_public">Public</string>
     <string name="section_lnktree">Lnktree</string>
+    <string name="external_app_missing">%1$s is not installed. Install it from the Store to open this.</string>
+    <string name="tasks_open_external">Open in %1$s</string>
 </resources>

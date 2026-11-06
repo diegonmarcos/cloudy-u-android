@@ -1,0 +1,86 @@
+{
+  "_doc": "Cloud Tasks > Inboxes > Notes: the declaration of the card-notes surface (a notebook / section / page / card hierarchy, shown OneNote-style: notebooks, coloured section tabs, a page list and a masonry of cards). Kotlin holds the behaviour only; every name, label, colour, breakpoint and seed here is data. Baked into the APK as an asset (app/build.gradle adds data/notes as an assets dir) and read by data/Notes.kt. The cards persist in the prefs file tasks_notes (fleet-config.json::stores.tasks_notes) under the key declared by `store`.",
+  "store": {"key": "notes_v1"},
+  "columns": [
+    {"min_dp": 0, "columns": 2},
+    {"min_dp": 600, "columns": 3},
+    {"min_dp": 840, "columns": 4}
+  ],
+  "rail_min_dp": 600,
+  "preview_blocks": 4,
+  "preview_checks": 3,
+  "default_sort": "updated",
+  "default_filter": "all",
+  "colors": [
+    {"id": "slate", "argb": "#64748B"},
+    {"id": "red", "argb": "#E5737A"},
+    {"id": "amber", "argb": "#E2B85C"},
+    {"id": "green", "argb": "#7FC98F"},
+    {"id": "teal", "argb": "#4FB3BF"},
+    {"id": "blue", "argb": "#5B8DEF"},
+    {"id": "violet", "argb": "#9F7AEA"},
+    {"id": "pink", "argb": "#E879A9"}
+  ],
+  "sorts": [
+    {"id": "updated", "label": "Updated"},
+    {"id": "created", "label": "Created"},
+    {"id": "title", "label": "Title"}
+  ],
+  "filters": [
+    {"id": "all", "label": "All"},
+    {"id": "pinned", "label": "Pinned"},
+    {"id": "checklist", "label": "Checklists"},
+    {"id": "open", "label": "Open items"},
+    {"id": "tagged", "label": "Tagged"}
+  ],
+  "labels": {
+    "search": "Search notes",
+    "search_clear": "Clear search",
+    "quick_add": "Take a note",
+    "quick_add_button": "Add",
+    "empty_title": "No notes here",
+    "empty_caption": "Take a note above, or change the notebook, section, page or filter.",
+    "no_page": "Add a page first (the + beside the pages), then take a note.",
+    "all_sections": "All",
+    "all_pages": "All pages",
+    "sort": "Sort",
+    "add_notebook": "New notebook",
+    "add_section": "New section",
+    "add_page": "New page",
+    "name_hint": "Name",
+    "create": "Create",
+    "cancel": "Cancel",
+    "editor_title": "Title",
+    "editor_label": "Label",
+    "editor_tag": "Add a tag",
+    "editor_check": "Add an item",
+    "editor_done": "Done",
+    "editor_delete": "Delete",
+    "editor_pin": "Pin",
+    "editor_unpin": "Unpin",
+    "editor_colour": "Colour",
+    "editor_created": "Created",
+    "editor_updated": "Updated",
+    "untitled": "Untitled",
+    "pinned_mark": "Pinned"
+  },
+  "seed": {
+    "notebooks": [
+      {
+        "id": "nb-personal", "name": "Personal",
+        "sections": [
+          {"id": "sec-ideas", "name": "Ideas", "color": "amber", "pages": [{"id": "pg-ideas-inbox", "name": "Inbox"}, {"id": "pg-ideas-later", "name": "Later"}]},
+          {"id": "sec-reading", "name": "Reading", "color": "teal", "pages": [{"id": "pg-reading-queue", "name": "Queue"}]},
+          {"id": "sec-home", "name": "Home", "color": "green", "pages": [{"id": "pg-home-lists", "name": "Lists"}]}
+        ]
+      },
+      {
+        "id": "nb-work", "name": "Work",
+        "sections": [
+          {"id": "sec-meetings", "name": "Meetings", "color": "blue", "pages": [{"id": "pg-meetings-notes", "name": "Notes"}]},
+          {"id": "sec-projects", "name": "Projects", "color": "violet", "pages": [{"id": "pg-projects-active", "name": "Active"}]}
+        ]
+      }
+    ]
+  }
+}

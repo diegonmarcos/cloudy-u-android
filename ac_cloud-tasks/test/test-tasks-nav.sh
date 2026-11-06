@@ -55,6 +55,7 @@ check(sec_ids == set(sections), "Ids sections == build.json sections (%s)" % sor
 check(page_ids == declared_pages, "Ids pages == build.json pages (%s)" % sorted(page_ids))
 check(all(len(s.get("pages", [])) >= 1 for s in sections.values()), "every section declares at least one page")
 check(len(sections["tasks"]["pages"]) >= 2 and len(sections["settings"]["pages"]) >= 2, "multi-page sections get a PageTabs strip")
+check([p["id"] for p in sections["inboxes"]["pages"]] == ["notes", "synced"], "Inboxes has the sub-pages Notes | Synced, in that order")
 check(bar == ["inboxes", "backlogs", "tasks", "library", "projects"], "#1456 the island is Inboxes | Backlogs | Tasks | Library | Projects")
 check([p["id"] for p in sections["tasks"]["pages"]] == ["calendar", "list", "gantt", "kanban", "mindmap"], "#1456 Tasks has the sub-pages Calendar, List, Gantt, Kanban, Mindmap")
 check([p["id"] for p in sections["settings"]["pages"]][:3] == ["general", "perms", "about"], "Configs starts General | Perms | About (the fleet pattern)")

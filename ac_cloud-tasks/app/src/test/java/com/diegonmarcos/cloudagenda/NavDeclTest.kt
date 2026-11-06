@@ -24,10 +24,16 @@ class NavDeclTest {
             listOf(Ids.PAGE_GENERAL, Ids.PAGE_PERMS, Ids.PAGE_ABOUT, Ids.PAGE_APPEARANCE, Ids.PAGE_AGENT, Ids.PAGE_INBOX, Ids.PAGE_FEEDS),
             nav.section(Ids.SETTINGS)!!.pages.map { it.id },
         )
-        assertEquals(listOf(Ids.PAGE_INBOXES), nav.section(Ids.INBOXES)!!.pages.map { it.id })
+        assertEquals(listOf(Ids.PAGE_NOTES, Ids.PAGE_SYNCED), nav.section(Ids.INBOXES)!!.pages.map { it.id })
         assertEquals(listOf(Ids.PAGE_BACKLOGS), nav.section(Ids.BACKLOGS)!!.pages.map { it.id })
         assertEquals(listOf(Ids.PAGE_LIBRARY), nav.section(Ids.LIBRARY)!!.pages.map { it.id })
         assertEquals(listOf(Ids.PAGE_PROJECTS), nav.section(Ids.PROJECTS)!!.pages.map { it.id })
+    }
+
+    @Test fun `Inboxes has the sub-pages Notes then Synced, and opens on Notes`() {
+        val pages = nav.section(Ids.INBOXES)!!.pages
+        assertEquals(listOf("Notes", "Synced"), pages.map { it.label })
+        assertEquals(Ids.PAGE_NOTES, nav.section(Ids.INBOXES)!!.page(null)?.id)
     }
 
     @Test fun `Settings is declared but not on the island`() {

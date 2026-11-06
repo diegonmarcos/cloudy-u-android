@@ -153,6 +153,8 @@ class TasksPageTest {
         )) {
             compose.onNodeWithTag(BottomNavTags.item(id)).performClick()
             compose.waitForIdle()
+            // Inboxes opens on Notes; its synced sources (the tree) are the Synced sub-page.
+            if (id == "inboxes") { compose.onNodeWithTag(PageTabsTags.tab("synced")).performClick(); compose.waitForIdle() }
             compose.onNodeWithTag(MockTags.page(id)).assertIsDisplayed()
             compose.onNodeWithTag(MockTags.tree(id) + ":dir:" + node).assertExists()
             compose.onNodeWithTag(MockTags.expand(id)).performClick()

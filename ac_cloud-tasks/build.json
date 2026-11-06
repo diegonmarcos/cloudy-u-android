@@ -51,6 +51,7 @@
         "libs:ui-nav-bars",
         "libs:theme-background",
         "libs:ui-kit",
+        "libs:wysiwyg",
         "libs:ai"
       ]
     },
@@ -82,6 +83,11 @@
     "libs:updater": {
       "_doc_dir": "Shared BY REFERENCE from aa_cloud-superapp/libs/ — settings.gradle points projectDir here instead of at a local copy. Every app used to carry its own copy-pasted tree and they drifted: 6 apps sat 228 source lines behind superapp's updater. One directory, no sync step, no drift.",
       "dir": "../ab_cloud-libs-shared/libs/updater",
+      "type": "library"
+    },
+    "libs:wysiwyg": {
+      "_doc": "#1535 Inboxes > Notes: the card editor and the card previews are the shared WYSIWYG engine (Markdown body). Compiled in, nothing to install.",
+      "dir": "../ab_cloud-libs-shared/libs/wysiwyg",
       "type": "library"
     },
     "libs:analytics": {
@@ -242,9 +248,14 @@
         "background": "theme",
         "pages": [
           {
-            "id": "inboxes",
-            "label": "Inboxes",
-            "icon": "inbox"
+            "id": "notes",
+            "label": "Notes",
+            "icon": "edit_note"
+          },
+          {
+            "id": "synced",
+            "label": "Synced",
+            "icon": "sync"
           }
         ]
       },

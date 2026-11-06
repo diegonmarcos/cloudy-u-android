@@ -147,7 +147,7 @@ ROWS = {
     # #1092: the row is "Me" (was "Projects Me"), placed right after Data Apps. The Me app leads, one rule,
     # then MySocials, MyBuro, MyHealth, MyStudy, MyTrips as the owner ordered. Agenda left the row (it is
     # reachable inside the Me app); the old rules projects-me-sep-0/1/2 went with the old layout.
-    # Owner order (Cloud Me restructure): Me | Me-Health Experiences RoadMap | Me-Duties Me-Buro Me-LLC | Profile.
+    # Owner order (Cloud Me restructure): Me | Me-Health Experiences Tasks | Me-Inventory Me-Buro Me-LLC | Profile.
     "Me": ["me", "me-sep-1", "myhealth", "myexperiences", "myroadmap", "me-sep-2", "myduties", "myburo", "myllc", "me-sep-3", "tools-account"],
     # (#1331: the row is now Lnktree; before it held seven named boards (#1212), and task 311 had removed PM Boards, PM C3 and the
     # "|" between them. The rule had marked the board LIST off from the named
@@ -276,7 +276,7 @@ titles = [g["title"] for g in cloud["tile_groups"]]
 want = [c["label"] for c in json.load(open(sys.argv[2]))["app_categories"] if c["id"] != "other"]
 assert titles == want, (titles, "!=", want, "regen: data/regen.sh --constellation-only")
 g = {x["title"]: [t.get("label") for t in x["tiles"]] for x in cloud["tile_groups"]}
-assert g["Me"] == ["Me", "|", "Me-Health", "Experiences", "RoadMap", "|", "Me-Duties", "Me-Buro", "Me-LLC", "|", "Profile"], g["Me"]  # #1440 Account -> Profile (Cloud Me profile page)
+assert g["Me"] == ["Me", "|", "Me-Health", "Experiences", "Tasks", "|", "Me-Inventory", "Me-Buro", "Me-LLC", "|", "Profile"], g["Me"]  # #1440 Account -> Profile (Cloud Me profile page)
 assert g["Tools Primary"][-2:] == ["Wallet", "Vault"] and "Account" not in g["Tools Primary"], g["Tools Primary"]  # #1155 order (Light left for Cloud Calc > Toolkit); Account moved to Me (last since #1362)
 assert "Vault" not in g["Data Apps"] and "Me" not in g["Tools Primary"], g
 assert "Account" in g["Configs"], "Account must stay in Configs (intentional duplicate)"

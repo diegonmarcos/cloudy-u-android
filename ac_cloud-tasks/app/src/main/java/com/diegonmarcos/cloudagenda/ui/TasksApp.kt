@@ -37,6 +37,7 @@ import com.diegonmarcos.cloudagenda.data.AgentConfig
 import com.diegonmarcos.cloudagenda.data.Attachment
 import com.diegonmarcos.cloudagenda.data.MockTask
 import com.diegonmarcos.cloudagenda.data.MockTasks
+import com.diegonmarcos.cloudagenda.data.NotesModel
 import com.diegonmarcos.cloudagenda.data.Structure
 import com.diegonmarcos.cloudagenda.data.ThemeMode
 import com.diegonmarcos.superapp.ai.AiAgent
@@ -74,6 +75,8 @@ interface TasksEnv {
     val mock: List<MockTask>
     /** Cloud Me's own structure for the Inboxes, Backlogs, Library and Projects tabs (data/Structure.kt); the mock items hang under its nodes. */
     val structure: Structure
+    /** Inboxes > Notes: the card notes (data/Notes.kt), persisted in the prefs file declared by data/notes/notes.json. */
+    val notes: NotesModel
     val chat: AiChatState
     val agents: List<AiAgent>
     fun loadModels(): List<AiModel>
@@ -147,7 +150,11 @@ fun TasksShell(env: TasksEnv, nav: NavDecl, themeMode: ThemeMode, onThemeMode: (
             Box(Modifier.weight(1f).fillMaxWidth()) {
                 when (section) {
                     // The collection sections list their rows in the Cloud Me Tasks layout (one page each).
-                    Ids.INBOXES -> CollectionPage(Ids.PAGE_INBOXES, env.structure, env.mock, today)
+                    // Inboxes is Notes | Synced: the card notes, then the synced inbox sources (what Inboxes showed before).
+                    Ids.INBOXES -> when (page) {
+                        Ids.PAGE_NOTES -> NotesPage(env.notes)
+                        Ids.PAGE_SYNCED -> CollectionPage(Ids.INBOXES, env.structure, env.mock, today)
+                    }
                     Ids.BACKLOGS -> CollectionPage(Ids.PAGE_BACKLOGS, env.structure, env.mock, today)
                     Ids.LIBRARY -> CollectionPage(Ids.PAGE_LIBRARY, env.structure, env.mock, today)
                     Ids.PROJECTS -> CollectionPage(Ids.PAGE_PROJECTS, env.structure, env.mock, today)

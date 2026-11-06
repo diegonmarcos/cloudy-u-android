@@ -3,6 +3,7 @@
     "kind": "fragment",
     "id": "tasks",
     "title": "Tasks",
+    "open": "extapp:cloud-tasks",
     "subtitle": "Day, Subject and Calendar views over the calendar engine"
   }
 ]

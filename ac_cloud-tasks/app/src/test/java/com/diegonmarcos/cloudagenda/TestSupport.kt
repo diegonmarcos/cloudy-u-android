@@ -14,7 +14,10 @@ import com.diegonmarcos.cloudagenda.agent.MailSource
 import com.diegonmarcos.cloudagenda.data.AgentConfig
 import com.diegonmarcos.cloudagenda.data.Attachment
 import com.diegonmarcos.cloudagenda.data.AttachmentKind
+import com.diegonmarcos.cloudagenda.data.MemoryNotesStore
 import com.diegonmarcos.cloudagenda.data.MockTasks
+import com.diegonmarcos.cloudagenda.data.NotesDecl
+import com.diegonmarcos.cloudagenda.data.NotesModel
 import com.diegonmarcos.cloudagenda.data.Structure
 import com.diegonmarcos.cloudagenda.data.TasksDb
 import com.diegonmarcos.cloudagenda.data.TasksPrefs
@@ -99,6 +102,7 @@ class FakeEnv(context: Context, seed: Boolean = true) : TasksEnv {
 
     override val mock = MockTasks.load(context)
     override val structure = Structure.load(context)
+    override val notes = NotesModel(MemoryNotesStore(), NotesDecl.load(context))
     override val chat = AiChatState(FakeAiHost())
     override val agents: List<AiAgent> = listOf(AiAgent("hermes", "Hermes", "tools", "hermes"))
     override fun loadModels(): List<AiModel> = listOf(AiModel("m/one", "Model one"))

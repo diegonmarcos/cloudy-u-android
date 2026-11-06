@@ -31,6 +31,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -95,7 +96,7 @@ fun TasksContent(items: List<TaskItem>, notice: String?, modifier: Modifier = Mo
             }
         }
         // Cloud Me reads the engine; writing an event or a task is Cloud Tasks' job (it owns the CalDAV account).
-        if (openTarget.isNotBlank()) Text("Add or edit in Cloud Tasks", Modifier.padding(top = 10.dp).clickable { onTarget(openTarget) }.padding(vertical = 6.dp),
+        if (openTarget.isNotBlank()) Text(stringResource(R.string.tasks_open_external, ExternalApps.labelFor(openTarget)), Modifier.padding(top = 10.dp).clickable { onTarget(openTarget) }.padding(vertical = 6.dp),
             color = colorResource(R.color.me_primary), fontSize = 13.sp)
         if (notice != null) Dim(notice)
         when (view) {

@@ -16,6 +16,9 @@ import com.diegonmarcos.cloudagenda.data.Attachment
 import com.diegonmarcos.cloudagenda.data.AttachmentKind
 import com.diegonmarcos.cloudagenda.data.MockTask
 import com.diegonmarcos.cloudagenda.data.MockTasks
+import com.diegonmarcos.cloudagenda.data.NotesDecl
+import com.diegonmarcos.cloudagenda.data.NotesModel
+import com.diegonmarcos.cloudagenda.data.PrefsNotesStore
 import com.diegonmarcos.cloudagenda.data.Structure
 import com.diegonmarcos.cloudagenda.data.ThemeMode
 import com.diegonmarcos.cloudagenda.data.TasksDb
@@ -68,6 +71,7 @@ class AppEnv(private val activity: ComponentActivity, private val launchPicker: 
 
     override val mock: List<MockTask> by lazy { MockTasks.load(app) }
     override val structure: Structure by lazy { Structure.load(app) }
+    override val notes: NotesModel by lazy { NotesDecl.load(app).let { NotesModel(PrefsNotesStore(app, it), it) } }
 
     override val chat: AiChatState get() = TasksAi.chat(app, repo)
     override val agents: List<AiAgent> by lazy { AiAgents.load(app) }

@@ -122,31 +122,60 @@ object Sections {
  */
 object ExternalApps {
 
-    private val packages: Map<String, String> by lazy {
-        runCatching {
-            val arr = JSONArray(String(Base64.decode(BuildConfig.UI_EXTERNAL_APPS_B64, Base64.DEFAULT)))
-            val out = mutableMapOf<String, String>()
-            for (i in 0 until arr.length()) {
-                val o: JSONObject = arr.optJSONObject(i) ?: continue
-                val id = o.optString("id")
-                val pkg = o.optString("package")
-                if (id.isNotBlank() && pkg.isNotBlank()) out[id] = pkg
-            }
-            out
-        }.getOrDefault(emptyMap())
+    /** One `ui.external_apps` row: [activity] (optional) is the explicit launcher activity, [label] the display name
+     *  used in the "not installed" message; both are declared in build.json, none is named in Kotlin. */
+    data class Entry(val id: String, val pkg: String, val activity: String = "", val label: String = "")
+
+    /** What a target resolves to: open [component] (explicit when declared, else the package's launch intent),
+     *  the app is declared but not installed, or the id is not declared at all (a silent no-op, by design). */
+    sealed class Resolution {
+        data class Open(val pkg: String, val activity: String) : Resolution()
+        data class Missing(val label: String) : Resolution()
+        object Unknown : Resolution()
+    }
+
+    fun parse(arr: JSONArray): List<Entry> = (0 until arr.length()).mapNotNull { i ->
+        val o: JSONObject = arr.optJSONObject(i) ?: return@mapNotNull null
+        val id = o.optString("id"); val pkg = o.optString("package")
+        if (id.isBlank() || pkg.isBlank()) null else Entry(id, pkg, o.optString("activity"), o.optString("label"))
+    }
+
+    private val entries: List<Entry> by lazy {
+        runCatching { parse(JSONArray(String(Base64.decode(BuildConfig.UI_EXTERNAL_APPS_B64, Base64.DEFAULT)))) }.getOrDefault(emptyList())
     }
 
     /** Target grammar is `extapp:<id>` or `extapp:<id>/<hint>`; the hint after
      *  the slash is a destination inside the other app that no launch intent
      *  can currently express, so it is parsed off and ignored rather than
      *  turned into a package lookup that would always miss. */
-    fun packageFor(target: String): String? =
-        packages[target.removePrefix("extapp:").substringBefore('/')]
+    fun entryFor(all: List<Entry>, target: String): Entry? =
+        all.firstOrNull { it.id == target.removePrefix("extapp:").substringBefore('/') }
+
+    fun packageFor(target: String): String? = entryFor(entries, target)?.pkg
+
+    fun labelFor(target: String): String = entryFor(entries, target)?.let { it.label.ifBlank { it.id } }.orEmpty()
+
+    /** Pure resolution (unit-tested): [installed] answers whether a package is on the phone. */
+    fun resolve(all: List<Entry>, target: String, installed: (String) -> Boolean): Resolution {
+        val e = entryFor(all, target) ?: return Resolution.Unknown
+        return if (installed(e.pkg)) Resolution.Open(e.pkg, e.activity) else Resolution.Missing(e.label.ifBlank { e.id })
+    }
 
     fun launch(ctx: Context, target: String): Boolean {
-        val pkg = packageFor(target) ?: return false
-        val intent = ctx.packageManager.getLaunchIntentForPackage(pkg) ?: return false
-        ctx.startActivity(intent)
-        return true
+        val installed = { pkg: String -> ctx.packageManager.getLaunchIntentForPackage(pkg) != null }
+        when (val r = resolve(entries, target, installed)) {
+            is Resolution.Open -> {
+                val intent = if (r.activity.isNotBlank())
+                    android.content.Intent(android.content.Intent.ACTION_MAIN).addCategory(android.content.Intent.CATEGORY_LAUNCHER)
+                        .setClassName(r.pkg, r.activity).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                else ctx.packageManager.getLaunchIntentForPackage(r.pkg) ?: return false
+                return runCatching { ctx.startActivity(intent) }.isSuccess
+            }
+            is Resolution.Missing -> {
+                android.widget.Toast.makeText(ctx, ctx.getString(R.string.external_app_missing, r.label), android.widget.Toast.LENGTH_LONG).show()
+                return false
+            }
+            Resolution.Unknown -> return false
+        }
     }
 }

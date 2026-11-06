@@ -9,4 +9,6 @@
     <string name="repo_tree_private">Privado</string>
     <string name="repo_tree_public">Público</string>
     <string name="section_lnktree">Lnktree</string>
+    <string name="external_app_missing">%1$s no está instalada. Instálala desde la tienda para abrir esto.</string>
+    <string name="tasks_open_external">Abrir en %1$s</string>
 </resources>

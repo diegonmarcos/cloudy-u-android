@@ -272,6 +272,7 @@ android {
         main {
             assets.srcDirs += file('../../ac_cloud-me/data/repos')
             assets.srcDirs += cloudMeDeclDir
+            assets.srcDirs += file('../data/notes')   // #1535 notes.json: the Notes surface's declaration
         }
     }
 
@@ -328,6 +329,7 @@ dependencies {
     implementation project(':libs:ui-nav-bars')
     implementation project(':libs:theme-background')
     implementation project(':libs:ui-kit')
+    implementation project(':libs:wysiwyg')   // #1535 Inboxes > Notes: the card editor and previews
     implementation project(':libs:ai')   // brings libs:model-catalogue along (api)
     // libs:cal is NOT linked: it ships as Cloud-Lib-Cal.apk and the app
     // reaches it through core's DataBackendClient (see CalBridge). Re-adding
