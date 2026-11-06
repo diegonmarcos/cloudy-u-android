@@ -142,16 +142,32 @@ class SectionTabsFragment : KitComposeFragment(), Collapsible, BackHandler {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         restoredState = savedInstanceState
-        // The pane hosts are created by Compose AFTER the child FragmentManager has restored its fragments, so a restored page
-        // (e.g. WifiFragment in section_pane_0) finds no container and crashes in FragmentStateManager.createView. Pages are
-        // rebuilt by render() from selectedPageId, so the restored children are dropped here, before any view exists.
-        if (savedInstanceState != null) {
-            val stale = childFragmentManager.fragments.toList()
-            if (stale.isNotEmpty()) {
-                android.util.Log.w("SectionTabs", "dropping ${stale.size} restored pane fragment(s); panes are rebuilt")
-                childFragmentManager.beginTransaction().apply { stale.forEach { remove(it) } }.commitNowAllowingStateLoss()
-            }
+    }
+
+    /**
+     * Drop every pane child BEFORE the child FragmentManager re-creates their views (#1544).
+     *
+     * Fragment.performViewCreated runs onViewCreated and THEN childFragmentManager.dispatchViewCreated, which builds each
+     * child's view inside its container. The pane hosts (section_pane_N) are AndroidViews Compose creates on its first
+     * composition, after that dispatch, so any child still registered then finds no container and crashes in
+     * FragmentStateManager.createView ("No view found for id section_pane_0 for fragment WifiFragment"). Children survive into
+     * that dispatch on two paths: a state restore (savedInstanceState != null) and, the one an onCreate-only guard missed, a
+     * view re-creation of a live strip (back-stack return, a nested page strip such as Configs > Network > WiFi being
+     * re-attached), where savedInstanceState is null. Panes are rebuilt by render() from selectedPageId on the next
+     * composition, so nothing the user chose is lost.
+     */
+    override fun onViewCreated(view: android.view.View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        dropPaneChildren()
+    }
+
+    /** Remove the pane children (the only children this strip adds); returns how many were dropped. */
+    internal fun dropPaneChildren(): Int {
+        val stale = childFragmentManager.fragments.filter { it.id in paneIds }
+        if (stale.isNotEmpty()) {
+            childFragmentManager.beginTransaction().apply { stale.forEach { remove(it) } }.commitNowAllowingStateLoss()
         }
+        return stale.size
     }
 
     override fun palette() = LauncherPalette.kit(requireContext())
