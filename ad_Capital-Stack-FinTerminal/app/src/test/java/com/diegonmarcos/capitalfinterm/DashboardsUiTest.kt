@@ -15,7 +15,7 @@ class DashboardsUiTest {
         assertEquals("yield_curves", Dashboards.defaultOf(dashboards, listOf("yield_curves", "forward_rates")))
         // #1399 FI opens on its Homepage: no FI dashboard is declared default
         assertTrue(dashboards.none { it.tab == "fi" && it.isDefault })
-        for ((tab, id) in mapOf("eq" to "world_equity_indices", "ex" to "fx", "nw" to "economic_calendar", "pm" to "portfolio_risk")) {
+        for ((tab, id) in mapOf("eq" to "world_equity_indices", "hg" to "fx", "nw" to "economic_calendar", "pm" to "portfolio_risk")) {
             assertEquals(tab, listOf(id), dashboards.filter { it.tab == tab && it.isDefault }.map { it.id })
         }
     }

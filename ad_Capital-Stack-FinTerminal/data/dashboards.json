@@ -2127,7 +2127,7 @@
     {
       "id": "fx",
       "entry": "FX",
-      "tab": "ex",
+      "tab": "hg",
       "panels": [
         {
           "id": "ppp_matrix",
@@ -2688,7 +2688,7 @@
     {
       "id": "onshore_usd_rates",
       "entry": "Onshore USD Rates",
-      "tab": "ex",
+      "tab": "hg",
       "panels": [
         {
           "id": "nyfed",
@@ -4478,7 +4478,7 @@
     {
       "id": "crypto",
       "entry": "Crypto",
-      "tab": "ex",
+      "tab": "hg",
       "panels": [
         {
           "id": "spot",
@@ -4631,7 +4631,7 @@
     {
       "id": "commodities",
       "entry": "Commodities",
-      "tab": "ex",
+      "tab": "hg",
       "panels": [
         {
           "id": "energy",

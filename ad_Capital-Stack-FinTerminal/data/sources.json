@@ -49,7 +49,7 @@
           ]
         },
         {
-          "tab": "ex",
+          "tab": "hg",
           "entries": [
             "*"
           ]
@@ -102,7 +102,7 @@
           ]
         },
         {
-          "tab": "ex",
+          "tab": "hg",
           "entries": [
             "FX",
             "Onshore USD Rates"
@@ -115,7 +115,7 @@
           ]
         },
         {
-          "tab": "ex",
+          "tab": "hg",
           "entries": [
             "Commodities"
           ]
@@ -153,7 +153,7 @@
           ]
         },
         {
-          "tab": "ex",
+          "tab": "hg",
           "entries": [
             "FX",
             "Onshore USD Rates"
@@ -253,7 +253,7 @@
           ]
         },
         {
-          "tab": "ex",
+          "tab": "hg",
           "entries": [
             "FX"
           ]
@@ -288,7 +288,7 @@
           ]
         },
         {
-          "tab": "ex",
+          "tab": "hg",
           "entries": [
             "Onshore USD Rates"
           ]
@@ -333,7 +333,7 @@
           ]
         },
         {
-          "tab": "ex",
+          "tab": "hg",
           "entries": [
             "*"
           ]
@@ -372,7 +372,7 @@
           ]
         },
         {
-          "tab": "ex",
+          "tab": "hg",
           "entries": [
             "FX"
           ]
@@ -580,7 +580,7 @@
       "connector": "nyfed_rates",
       "feeds": [
         {
-          "tab": "ex",
+          "tab": "hg",
           "entries": [
             "Onshore USD Rates"
           ]
@@ -924,7 +924,7 @@
       "connector": "frankfurter_rates",
       "feeds": [
         {
-          "tab": "ex",
+          "tab": "hg",
           "entries": [
             "FX"
           ]
@@ -961,7 +961,7 @@
       "connector": "coinbase_exchange",
       "feeds": [
         {
-          "tab": "ex",
+          "tab": "hg",
           "entries": [
             "Crypto",
             "Commodities"
@@ -992,7 +992,7 @@
       "connector": "cftc_cot",
       "feeds": [
         {
-          "tab": "ex",
+          "tab": "hg",
           "entries": [
             "Commodities"
           ]
@@ -1038,7 +1038,7 @@
           ]
         },
         {
-          "tab": "ex",
+          "tab": "hg",
           "entries": [
             "Commodities"
           ]
@@ -1283,7 +1283,7 @@
       "connector": null,
       "feeds": [
         {
-          "tab": "ex",
+          "tab": "hg",
           "entries": [
             "Commodities"
           ]
@@ -1305,7 +1305,7 @@
       },
       "feeds": [
         {
-          "tab": "ex",
+          "tab": "hg",
           "entries": [
             "FX"
           ]
@@ -1334,7 +1334,7 @@
       },
       "feeds": [
         {
-          "tab": "ex",
+          "tab": "hg",
           "entries": [
             "FX"
           ]

@@ -106,7 +106,7 @@ class PriorityTest {
     }
 
     @Test fun fredIsRankedBeforeDbnomicsForTheFourFredEntries() {
-        for ((tab, entry) in listOf("fi" to "Yield Curves", "fi" to "Forward Rates", "ex" to "FX", "ex" to "Onshore USD Rates")) {
+        for ((tab, entry) in listOf("fi" to "Yield Curves", "fi" to "Forward Rates", "hg" to "FX", "hg" to "Onshore USD Rates")) {
             assertEquals("$tab/$entry", listOf("cloud_fincept", "fred", "dbnomics"), Catalog.ranked(sources, tab, entry).map { it.id }.take(3))
         }
         assertTrue(sources.first { it.id == "fred" }.priority < sources.first { it.id == "dbnomics" }.priority)

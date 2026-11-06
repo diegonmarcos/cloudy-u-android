@@ -26,6 +26,8 @@ data class Entry(
     val table: String = "",
     /** #1478 a dashboard that is a detail page (a row of the PM Vol table opens it), not a sub-page of the one-row nav. */
     val detail: Boolean = false,
+    /** The view of a `cb_table` entry (countries | groups | predictions): the CB page's table. */
+    val view: String = "",
 )
 
 /** #1399 one card of a section's Homepage: the sub-page it opens, its declared label, icon and one-line description. */
@@ -40,6 +42,7 @@ object Pages {
     const val KIND_DASHBOARD = "dashboard"
     const val KIND_SOURCES = "sources"
     const val KIND_PM_TABLE = "pm_table"
+    const val KIND_CB_TABLE = "cb_table"
 
     /** The entries declared for [sectionId] in the stacks JSON (empty when the section declares none). */
     fun entries(stacks: String, sectionId: String): List<Entry> {
@@ -59,6 +62,7 @@ object Pages {
                 page = o.optString("page"),
                 table = o.optString("table"),
                 detail = o.optBoolean("detail", false),
+                view = o.optString("view"),
             )
         }
     }

@@ -8,6 +8,7 @@
 #       or the entry's `page`), in order, labelled with the entry title, each with an icon of the libs:ui-icons catalogue and a
 #       one-line description; SectionPage draws them as a grid of cards that open the sub-page
 #   N4  FI Market Monitor is gone (no dashboard, stack entry, page, or feed names it) and its deep link redirects to the FI Homepage
+#   N5  #1538+ the bottom nav is CB | FI | EQ | NW | PM | HG | MY-PM, no EX/CM section, legacy EX deep links redirect to the HG Homepage, every dashboard and redirect names a live section
 # then plants a mutation per rule in a scratch copy and requires RED for each.
 set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -62,6 +63,17 @@ if "market_monitor" in json.dumps(ui["stacks"]) or any(p["id"] == "market-monito
 if "Market Monitor" in json.dumps(srcs): bad.append("N4 a source still feeds Market Monitor")
 if not any(r.get("from") == "market_monitor" and r.get("tab") == "fi" and r.get("to") == "home" for r in ui.get("redirects", [])): bad.append("N4 the market_monitor deep link does not redirect to the FI Homepage")
 if "Pages.redirect(" not in shell: bad.append("N4 AppShell ignores ui.redirects")
+# N5
+if ui["bottom_nav"] != ["cb", "fi", "eq", "nw", "pm", "hg", "my-pm"]: bad.append("N5 the bottom nav is %s, not CB | FI | EQ | NW | PM | HG | MY-PM" % ui["bottom_nav"])
+if [secs[s]["label"] for s in ui["bottom_nav"] if s in secs] != ["CB", "FI", "EQ", "NW", "PM", "HG", "MY-PM"]: bad.append("N5 the bottom nav labels are %s" % [secs[s]["label"] for s in ui["bottom_nav"] if s in secs])
+if "ex" in secs or "cm" in secs or "ex" in ui["stacks"]: bad.append("N5 the old EX / CM sections are still declared")
+if ui.get("default_section") != ui["bottom_nav"][0]: bad.append("N5 the app does not open on the first section")
+for old in ("ex", "ex-home"):
+    if not any(r.get("from") == old and r.get("tab") == "hg" and r.get("to") == "home" for r in ui.get("redirects", [])): bad.append("N5 the legacy %s deep link does not redirect to the HG Homepage" % old)
+for r in ui.get("redirects", []):
+    if r.get("tab") not in secs: bad.append("N5 redirect %s targets the unknown section %s" % (r.get("from"), r.get("tab")))
+for d in dash:
+    if d.get("tab") not in secs: bad.append("N5 dashboard %s sits in the unknown section %s" % (d["id"], d.get("tab")))
 for b in bad: print("FAIL " + b)
 sys.exit(1 if bad else 0)
 PY
@@ -80,21 +92,25 @@ mutant() {   # mutant <name> <python statements on the scratch copy, cwd = the c
   ( cd "$W/$FOLDER" && python3 -c "$2" ) || { bad "mutant '$1' could not be planted"; return; }
   if out="$(check "$W/$FOLDER" "$ROOT" 2>&1)"; then bad "mutant '$1' stayed green"; elif grep -q -- "$3" <<<"$out"; then ok "mutant '$1' is red ($3)"; else bad "mutant '$1' is red for the wrong reason: $out"; fi
 }
-JE="import json;L=lambda p:json.load(open(p));D=lambda p,d:json.dump(d,open(p,'w'),indent=2)"
+JE="import json;L=lambda p:json.load(open(p));D=lambda p,d:json.dump(d,open(p,'w'),indent=2);SEC=lambda d,i:[s for s in d['ui']['sections'] if s['id']==i][0]"
 SUB="S=lambda f,a,b:(lambda t:open(f,'w').write(t.replace(a,b)) if a in t else (_ for _ in ()).throw(SystemExit('mutation target missing: '+a)))(open(f).read())"
 KT="app/src/main/java/com/diegonmarcos/capitalfinterm"
 mutant "the nav goes back to clean"         "$JE;d=L('build.json');d['ui']['nav_ui']['mode']='clean';D('build.json',d)" "N1 nav_ui.mode"
-mutant "a section uses two rows"            "$JE;d=L('build.json');d['ui']['sections'][1]['nav_mode']='horizontal_two_rows';D('build.json',d)" "N1 section eq nav_mode"
-mutant "a section loses its Home"           "$JE;d=L('build.json');d['ui']['sections'][2]['pages'].pop(0);D('build.json',d)" "N2 section ex does not open on Home"
+mutant "a section uses two rows"            "$JE;d=L('build.json');SEC(d,'eq')['nav_mode']='horizontal_two_rows';D('build.json',d)" "N1 section eq nav_mode"
+mutant "a section loses its Home"           "$JE;d=L('build.json');SEC(d,'hg')['pages'].pop(0);D('build.json',d)" "N2 section hg does not open on Home"
 mutant "a section opens on a dashboard"     "$SUB;S('$KT/FinNavStack.kt','fun initial(): List<String> = LIST_ONLY','fun initial(): List<String> = listOf(LIST, \"dash:fx\")')" "N2 FinNavStack.initial()"
 mutant "the shell drops the one-row nav"    "$SUB;S('$KT/ui/AppShell.kt','NavBarTopSecondRows(','NavBarTopSecondRowz(')" "N2 AppShell does not draw"
-mutant "the Homepage misses a sub-page"     "$JE;d=L('build.json');d['ui']['sections'][0]['pages'].pop();D('build.json',d)" "N3 section fi Homepage pages"
+mutant "the Homepage misses a sub-page"     "$JE;d=L('build.json');SEC(d,'fi')['pages'].pop();D('build.json',d)" "N3 section fi Homepage pages"
 mutant "a sub-page has no description"      "$JE;d=L('build.json');d['ui']['stacks']['nw'][0]['subtitle']='';D('build.json',d)" "N3 sub-page nw/economic-calendar has no one-line description"
-mutant "a page icon is not in the catalogue" "$JE;d=L('build.json');d['ui']['sections'][3]['pages'][1]['icon']='no_such_icon';D('build.json',d)" "N3 page nw/economic-calendar icon"
+mutant "a page icon is not in the catalogue" "$JE;d=L('build.json');SEC(d,'nw')['pages'][1]['icon']='no_such_icon';D('build.json',d)" "N3 page nw/economic-calendar icon"
 mutant "a card stops opening its page"      "$SUB;S('$KT/ui/SectionPage.kt','{ onOpen(c.pageId) }','{ }')" "N3 SectionPage draws no grid"
 mutant "Market Monitor comes back"          "$JE;d=L('data/dashboards.json');d['dashboards'].append(dict(d['dashboards'][0],id='market_monitor'));D('data/dashboards.json',d)" "N4 dashboard market_monitor"
 mutant "a source still feeds it"            "$JE;d=L('data/sources.json');d['sources'][1]['feeds'][0]['entries'].append('Market Monitor');D('data/sources.json',d)" "N4 a source still feeds"
 mutant "the deep link is not redirected"    "$JE;d=L('build.json');d['ui']['redirects']=[];D('build.json',d)" "N4 the market_monitor deep link"
+mutant "the bottom nav order changes"      "$JE;d=L('build.json');d['ui']['bottom_nav'].reverse();D('build.json',d)" "N5 the bottom nav is"
+mutant "EX comes back"                      "$JE;d=L('build.json');d['ui']['sections'].append(dict(SEC(d,'hg'),id='ex'));D('build.json',d)" "N5 the old EX / CM sections"
+mutant "the EX deep link is not redirected" "$JE;d=L('build.json');d['ui']['redirects']=[r for r in d['ui']['redirects'] if r['from']!='ex'];D('build.json',d)" "N5 the legacy ex deep link"
+mutant "a dashboard sits in a dead section" "$JE;d=L('data/dashboards.json');d['dashboards'][0]['tab']='ex';D('data/dashboards.json',d)" "N5 dashboard"
 mutant "the shell ignores redirects"        "$SUB;S('$KT/ui/AppShell.kt','Pages.redirect(','Pages.redirekt(')" "N4 AppShell ignores"
 
 [ "$FAILS" -eq 0 ] && echo "ALL GREEN" || { echo "$FAILS FAILED"; exit 1; }

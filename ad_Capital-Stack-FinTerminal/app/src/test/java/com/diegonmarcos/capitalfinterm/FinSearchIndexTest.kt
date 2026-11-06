@@ -16,8 +16,8 @@ class FinSearchIndexTest {
     }
 
     @Test fun aSymbolIsGroupedByWhereItWasSeen() {
-        assertEquals("Crypto" to "CR", FinSearchIndex.groupOf("ex", "crypto", "spot"))
-        assertEquals("FX" to "FX", FinSearchIndex.groupOf("ex", "fx", "ecb"))
+        assertEquals("Crypto" to "CR", FinSearchIndex.groupOf("hg", "crypto", "spot"))
+        assertEquals("FX" to "FX", FinSearchIndex.groupOf("hg", "fx", "ecb"))
         assertEquals("Rates & yields" to "FI", FinSearchIndex.groupOf("fi", "market_monitor", "ust"))
         assertEquals("Equities & indices" to "EQ", FinSearchIndex.groupOf("eq", "world_equity_indices", "cboe"))
         assertEquals("Equities & indices" to "EQ", FinSearchIndex.groupOf("fi", "market_monitor", "equity"))

@@ -57,11 +57,12 @@ EXPECT = {
   },
   "ad_Capital-Stack-FinTerminal": {
     "name": "capital-stack-finterminal", "display": "Capital-Stack-FinTerminal", "pkg": "com.diegonmarcos.capitalfinterm",
-    "nav": [("fi", "FI"), ("eq", "EQ"), ("ex", "EX"), ("nw", "NW"), ("pm", "PM"), ("my-pm", "MY-PM")],
+    "nav": [("cb", "CB"), ("fi", "FI"), ("eq", "EQ"), ("nw", "NW"), ("pm", "PM"), ("hg", "HG"), ("my-pm", "MY-PM")],
     "pages": {
       "fi": [("dashboard", "Yield Curves"), ("dashboard", "Yields Matrix"), ("dashboard", "Bonds Market"), ("dashboard", "Forward Rates"), ("dashboard", "World Interest Rate Probabilities"), ("dashboard", "World Bonds"), ("dashboard", "Credit"), ("dashboard", "Macro")],
       "eq": [("dashboard", "World Equity Indices"), ("dashboard", "DM Equity (US)"), ("dashboard", "EM Equity"), ("dashboard", "Quotes & Charts"), ("dashboard", "Fundamentals"), ("dashboard", "Earnings Calendar"), ("dashboard", "Watchlist & Alerts")],
-      "ex": [("dashboard", "FX"), ("dashboard", "Onshore USD Rates"), ("dashboard", "Crypto"), ("dashboard", "Commodities")],
+      "cb": [("cb_table", "Countries"), ("cb_table", "DM / EM / World"), ("cb_table", "Predictions")],
+      "hg": [("dashboard", "FX"), ("dashboard", "Onshore USD Rates"), ("dashboard", "Crypto"), ("dashboard", "Commodities")],
       "nw": [("dashboard", "Economic Calendar"), ("dashboard", "News"), ("dashboard", "Central Bank Calendar")],
       "pm": [("pm_table", "Vol"), ("pm_table", "Commodities"), ("pm_table", "Profiles"), ("dashboard", "Portfolio & Risk Analytics"),
              ("dashboard", "DM Cash B100"), ("dashboard", "DM E30B70"), ("dashboard", "DM E40B60"), ("dashboard", "DM E60B40"), ("dashboard", "DM E70B30"),

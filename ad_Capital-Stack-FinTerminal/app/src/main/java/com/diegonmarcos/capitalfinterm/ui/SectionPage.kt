@@ -113,7 +113,7 @@ private fun TabList(sectionId: String, entries: List<Entry>, compact: Boolean, s
     val sources = remember { AssetData.sources(ctx) }
     val dashboards = remember { AssetData.dashboards(ctx) }
     val dashEntries = entries.filter { it.kind == Pages.KIND_DASHBOARD }
-    val others = entries.filter { it.kind != Pages.KIND_DASHBOARD && it.kind != Pages.KIND_PM_TABLE }
+    val others = entries.filter { it.kind != Pages.KIND_DASHBOARD && it.kind != Pages.KIND_PM_TABLE && it.kind != Pages.KIND_CB_TABLE }
     fun status(e: Entry): DashStatus? = dashboards.firstOrNull { it.id == e.dashboard }?.let { Dashboards.status(it, sources) }
     LazyColumn(
         Modifier.fillMaxSize(),

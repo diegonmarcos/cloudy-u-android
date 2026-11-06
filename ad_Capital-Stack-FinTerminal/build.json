@@ -182,18 +182,31 @@
   "ui": {
     "_doc": "#868 THE nav declaration (libs:bottomnav NavDecl) of Capital-Stack-FinTerminal: the sections on the bottom bar in order, a hidden Config (the gear of the first row: Sources, About) and a hidden About. #1335 ui.stacks[<section>] is the page of that section: a list of entries drawn by declared KIND (Pages.kt: entry, section_title, holdings, about, dashboard, sources). A `dashboard` entry (every FinTerm entry) has a title, a one-line subtitle and `dashboard`, the id of its dashboard in data/dashboards.json; the dashboard names its declared source(s) in data/sources.json (the catalog, with endpoints, auth, coverage and the tabs/entries each source feeds), so no address is typed in this file or in Kotlin. The `sources` kind is Config > Sources: the catalog by category and the user's own API keys, stored encrypted on the phone. An `entry` (still drawn for the other Lnktree apps' shape) has ONE declared source for its target: `site` (the label of a link of aa_cloud-superapp/data/linktree.json), `registry` (a code of aa_cloud-superapp/build.json ui.app_urls.registry_sites) or `repo` + `path`; app/build.gradle resolves them at BUILD time from the SuperApp's own declarations and bakes UI_TARGETS_B64. A `planned` entry has a note and no source and is drawn greyed. Market figures are never declared here: a dashboard shows what its source returns, with its date and attribution.",
     "bottom_nav": [
+      "cb",
       "fi",
       "eq",
-      "ex",
       "nw",
       "pm",
+      "hg",
       "my-pm"
     ],
-    "default_section": "fi",
+    "default_section": "cb",
     "nav_ui": {"mode": "classic", "scroll_hide": true},
     "configs_ui": ["nav_ui"],
-    "redirects": [{"from": "pm_a2_low", "tab": "pm", "to": "home", "note": "#1478 A2 Low Risk dropped (identical to DM E30B70): its deep links open the PM Homepage"}, {"from": "market_monitor", "tab": "fi", "to": "home", "note": "#1399 FI Market Monitor removed: its deep links open the FI Homepage"}],
+    "redirects": [{"from": "pm_a2_low", "tab": "pm", "to": "home", "note": "#1478 A2 Low Risk dropped (identical to DM E30B70): its deep links open the PM Homepage"}, {"from": "market_monitor", "tab": "fi", "to": "home", "note": "#1399 FI Market Monitor removed: its deep links open the FI Homepage"}, {"from": "ex", "tab": "hg", "to": "home", "note": "The EX tab became HG (Hedging): the old EX section deep link opens the HG Homepage"}, {"from": "ex-home", "tab": "hg", "to": "home", "note": "The EX Homepage became the HG Homepage"}],
     "sections": [
+      {
+        "id": "cb",
+        "label": "CB",
+        "icon": "account_balance",
+        "nav_mode": "horizontal_one_row",
+        "pages": [
+          {"id": "cb-home", "label": "Home", "icon": "home"},
+          {"id": "cb-countries", "label": "Countries", "icon": "public"},
+          {"id": "cb-groups", "label": "DM / EM / World", "icon": "table_chart"},
+          {"id": "cb-predictions", "label": "Predictions", "icon": "insights"}
+        ]
+      },
       {
         "id": "fi",
         "label": "FI",
@@ -228,19 +241,6 @@
         ]
       },
       {
-        "id": "ex",
-        "label": "EX",
-        "icon": "payments",
-        "nav_mode": "horizontal_one_row",
-        "pages": [
-          {"id": "ex-home", "label": "Home", "icon": "home"},
-          {"id": "fx", "label": "FX", "icon": "swap_horiz"},
-          {"id": "onshore-usd-rates", "label": "Onshore USD Rates", "icon": "account_balance"},
-          {"id": "crypto", "label": "Crypto", "icon": "token"},
-          {"id": "commodities", "label": "Commodities", "icon": "inventory_2"}
-        ]
-      },
-      {
         "id": "nw",
         "label": "NW",
         "icon": "rss_feed",
@@ -262,6 +262,19 @@
           {"id": "pm-vol", "label": "Vol", "icon": "table_chart"},
           {"id": "pm-commodities", "label": "Commodities", "icon": "inventory_2"},
           {"id": "pm-profiles", "label": "Profiles", "icon": "groups"}
+        ]
+      },
+      {
+        "id": "hg",
+        "label": "HG",
+        "icon": "swap_horiz",
+        "nav_mode": "horizontal_one_row",
+        "pages": [
+          {"id": "hg-home", "label": "Home", "icon": "home"},
+          {"id": "fx", "label": "FX", "icon": "swap_horiz"},
+          {"id": "onshore-usd-rates", "label": "Onshore USD Rates", "icon": "account_balance"},
+          {"id": "crypto", "label": "Crypto", "icon": "token"},
+          {"id": "commodities", "label": "Commodities", "icon": "inventory_2"}
         ]
       },
       {
@@ -288,6 +301,29 @@
       }
     ],
     "stacks": {
+      "cb": [
+        {
+          "kind": "cb_table",
+          "page": "cb-countries",
+          "view": "countries",
+          "title": "Countries",
+          "subtitle": "Central-bank macro by country: DM, euro area, BRICS EM; DM / EM / World rows pinned, simple or full indicators, forecast year"
+        },
+        {
+          "kind": "cb_table",
+          "page": "cb-groups",
+          "view": "groups",
+          "title": "DM / EM / World",
+          "subtitle": "GDP-weighted aggregates of the countries, weighted by IMF PPP or market-FX GDP"
+        },
+        {
+          "kind": "cb_table",
+          "page": "cb-predictions",
+          "view": "predictions",
+          "title": "Predictions",
+          "subtitle": "IMF and OECD forecasts for the current year, +1 and +2, the banks' own projections and a Taylor-rule policy-rate path"
+        }
+      ],
       "fi": [
         {
           "kind": "dashboard",
@@ -380,32 +416,6 @@
           "title": "Watchlist & Alerts",
           "subtitle": "Your symbols, price alerts and event alerts, kept on this device",
           "dashboard": "watchlist"
-        }
-      ],
-      "ex": [
-        {
-          "kind": "dashboard",
-          "title": "FX",
-          "subtitle": "Comprehensive real-time currency pricing, matrix crosses, spot rates, and forwards",
-          "dashboard": "fx"
-        },
-        {
-          "kind": "dashboard",
-          "title": "Onshore USD Rates",
-          "subtitle": "Onshore USD rate benchmarks and curves",
-          "dashboard": "onshore_usd_rates"
-        },
-        {
-          "kind": "dashboard",
-          "title": "Crypto",
-          "subtitle": "Crypto spot, 24h change and daily candles",
-          "dashboard": "crypto"
-        },
-        {
-          "kind": "dashboard",
-          "title": "Commodities",
-          "subtitle": "Energy, precious metals, industrial metals and minerals, agriculture, Bitcoin and Ether (WTD to 10Y)",
-          "dashboard": "commodities"
         }
       ],
       "nw": [
@@ -527,6 +537,32 @@
           "title": "EM Carry EUR→BRL",
           "subtitle": "EM carry trade: funding currency against the EM high-yielder, breakeven and net return",
           "dashboard": "pm_d0_carry"
+        }
+      ],
+      "hg": [
+        {
+          "kind": "dashboard",
+          "title": "FX",
+          "subtitle": "Comprehensive real-time currency pricing, matrix crosses, spot rates, and forwards",
+          "dashboard": "fx"
+        },
+        {
+          "kind": "dashboard",
+          "title": "Onshore USD Rates",
+          "subtitle": "Onshore USD rate benchmarks and curves",
+          "dashboard": "onshore_usd_rates"
+        },
+        {
+          "kind": "dashboard",
+          "title": "Crypto",
+          "subtitle": "Crypto spot, 24h change and daily candles",
+          "dashboard": "crypto"
+        },
+        {
+          "kind": "dashboard",
+          "title": "Commodities",
+          "subtitle": "Energy, precious metals, industrial metals and minerals, agriculture, Bitcoin and Ether (WTD to 10Y)",
+          "dashboard": "commodities"
         }
       ],
       "my-pm": [
