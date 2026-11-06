@@ -12,7 +12,7 @@ import java.security.MessageDigest
  */
 class SiteCache(private val root: File) {
     data class Entry(val url: String, val hash: String, val mime: String, val status: Int, val headers: Map<String, String>)
-    data class Served(val status: Int, val mime: String, val headers: Map<String, String>, val body: ByteArray)
+    data class Served(val status: Int, val mime: String, val headers: Map<String, String>, val body: ByteArray, val encoding: String? = null)
     data class Stats(val files: Int, val bytes: Long, val lastRefresh: Long)
 
     private fun dir(host: String) = File(root, host.replace(Regex("[^A-Za-z0-9._-]"), "_"))
@@ -50,13 +50,24 @@ class SiteCache(private val root: File) {
             h?.keys()?.asSequence()?.associateWith { h.getString(it) } ?: emptyMap())
     }
 
-    /** The cached response for [url]: the stored status, mime and headers (+ CORS), or a 206 slice for a `Range: bytes=a-b` request. */
-    fun serve(host: String, url: String, range: String? = null): Served? {
+    /**
+     * The cached response for [url]: the stored status, mime, charset and headers, or a 206 slice for a `Range: bytes=a-b` request.
+     * A WebResourceResponse carries only the headers it is given, so everything that matters is set here explicitly: Content-Length
+     * (a worker computes download progress from it), the stored COOP / COEP / CORP / CSP / CORS headers, and CORS for the page's
+     * [origin] (echoed with `Vary: Origin`, else `*`). Cache-Control and Expires are dropped (the copy never expires).
+     */
+    fun serve(host: String, url: String, range: String? = null, origin: String? = null): Served? {
         val e = lookup(host, url) ?: return null
         val body = blob(host, e.hash).readBytes()
-        val headers = e.headers.filterKeys { !it.equals("Cache-Control", true) && !it.equals("Expires", true) && !it.equals("Content-Length", true) }.toMutableMap()
-        headers["Access-Control-Allow-Origin"] = "*"
+        val dropped = setOf("cache-control", "expires", "content-length", "content-type", "content-encoding", "transfer-encoding", "content-range", "age", "date")
+        val headers = e.headers.filterKeys { it.lowercase() !in dropped }.toMutableMap()
+        headers.keys.firstOrNull { it.equals("Access-Control-Allow-Origin", true) }?.takeIf { origin != null || headers[it] == "*" }?.let { headers.remove(it) }
+        if (headers.keys.none { it.equals("Access-Control-Allow-Origin", true) }) {
+            headers["Access-Control-Allow-Origin"] = origin ?: "*"
+            if (origin != null) { headers["Vary"] = "Origin"; headers["Access-Control-Allow-Credentials"] = "true" }
+        }
         headers["Accept-Ranges"] = "bytes"
+        val encoding = charsetOf(e.headers.entries.firstOrNull { it.key.equals("Content-Type", true) }?.value)
         val r = range?.let { Regex("bytes=(\\d*)-(\\d*)").matchEntire(it.trim()) }
         if (r != null && body.isNotEmpty()) {
             val (a, b) = r.destructured
@@ -64,10 +75,12 @@ class SiteCache(private val root: File) {
             val end = if (a.isEmpty() || b.isEmpty()) body.size - 1 else minOf(b.toInt(), body.size - 1)
             if (start in 0..end) {
                 headers["Content-Range"] = "bytes $start-$end/${body.size}"
-                return Served(206, e.mime, headers, body.copyOfRange(start, end + 1))
+                headers["Content-Length"] = (end - start + 1).toString()
+                return Served(206, e.mime, headers, body.copyOfRange(start, end + 1), encoding)
             }
         }
-        return Served(e.status, e.mime, headers, body)
+        headers["Content-Length"] = body.size.toString()
+        return Served(e.status, e.mime, headers, body, encoding)
     }
 
     fun stats(host: String): Stats {
@@ -85,6 +98,22 @@ class SiteCache(private val root: File) {
     fun delete(host: String) { dir(host).deleteRecursively() }
 
     companion object {
+        /**
+         * The response headers a copy keeps (case-insensitive): what the browser acts on. Content-Type is kept whole (its charset
+         * is served back), COOP / COEP / CORP keep cross-origin isolation and SharedArrayBuffer working, CORS and CSP keep the
+         * page's own fetches valid. Everything else (cookies, hop-by-hop, cache validators other than ETag / Last-Modified) is dropped.
+         */
+        val KEPT_HEADERS: List<String> = listOf(
+            "ETag", "Last-Modified", "Content-Type", "Content-Language", "Cross-Origin-Opener-Policy", "Cross-Origin-Embedder-Policy",
+            "Cross-Origin-Resource-Policy", "Access-Control-Allow-Origin", "Access-Control-Expose-Headers", "Timing-Allow-Origin", "Content-Security-Policy",
+        )
+
+        fun keepHeaders(h: Map<String, String>): Map<String, String> = h.filterKeys { k -> KEPT_HEADERS.any { it.equals(k, true) } }
+
+        /** The `charset=` of a Content-Type value, or null. */
+        fun charsetOf(contentType: String?): String? =
+            contentType?.let { Regex("charset=\"?([A-Za-z0-9._-]+)", RegexOption.IGNORE_CASE).find(it)?.groupValues?.get(1) }
+
         /** Fragment dropped, query kept (a different query is a different resource). */
         fun normalise(url: String): String = url.substringBefore('#')
 

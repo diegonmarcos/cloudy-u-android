@@ -3,8 +3,10 @@ package com.diegonmarcos.cgomniverse.ui
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
+import com.diegonmarcos.cloudlib.web.GpuPageModel
+import com.diegonmarcos.cloudlib.web.PageConsole
+import com.diegonmarcos.cloudlib.web.PageDiag
 import com.diegonmarcos.cloudlib.web.SiteGpuChoice
-import com.diegonmarcos.cloudlib.web.WebGpuPlan
 import com.diegonmarcos.cloudlib.web.WorldRoute
 import com.diegonmarcos.cloudlib.web.WorldRouting
 import android.webkit.PermissionRequest
@@ -30,9 +32,11 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.DesktopWindows
@@ -42,7 +46,10 @@ import androidx.compose.material.icons.filled.ViewInAr
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -135,6 +142,7 @@ fun GalaxyPage(tabs: Tabs.State, onSelect: (String) -> Unit, onClose: (String) -
  * within the load watchdog, the host never answering, or HTTP 404/410) gets the offline card instead: Open in browser, its Wayback
  * Machine copy, or Reload.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WorldView(w: World, modifier: Modifier = Modifier) {
     val ctx = LocalContext.current
@@ -171,6 +179,17 @@ fun WorldView(w: World, modifier: Modifier = Modifier) {
         if (route == WorldRoute.CLOUD_BROWSER && gpuChoice == SiteGpuChoice.AUTO && Web.routed.add(w.id)) Web.openInBrowser(ctx, w.url)
     }
 
+    // Page diagnostics (#1537): measured in the page itself, plus the console errors it logged (PageConsole)
+    var showDiag by remember(w.id) { mutableStateOf(false) }
+    var diag by remember(w.id) { mutableStateOf<PageDiag?>(null) }
+    LaunchedEffect(showDiag) {
+        if (!showDiag) return@LaunchedEffect
+        diag = null
+        web?.evaluateJavascript(PageDiag.SCRIPT, null)
+        delay(1500)
+        web?.evaluateJavascript(PageDiag.READ) { diag = PageDiag.parse(it) }
+    }
+
     BackHandler(enabled = canBack) { web?.goBack() }
 
     Column(modifier.background(Color.Black).testTag(Tags.WORLD)) {
@@ -188,6 +207,9 @@ fun WorldView(w: World, modifier: Modifier = Modifier) {
             IconButton(onClick = { desktop = !desktop; Web.setDesktop(ctx, w.id, desktop); error = null; offline = false; finished = false; attempt++ }, modifier = Modifier.testTag(Tags.WORLD_DESKTOP)) {
                 Icon(Icons.Filled.DesktopWindows, stringResource(R.string.world_desktop), tint = if (desktop) p.accent else p.textSecondary)
             }
+            IconButton(onClick = { showDiag = true }, modifier = Modifier.testTag(Tags.WORLD_DIAG)) {
+                Icon(Icons.Filled.BugReport, GpuPageModel.DIAG_TITLE, tint = p.textSecondary)
+            }
             IconButton(onClick = reload, modifier = Modifier.testTag(Tags.WORLD_RELOAD)) {
                 Icon(Icons.Filled.Refresh, stringResource(R.string.world_reload), tint = p.textPrimary)
             }
@@ -201,7 +223,7 @@ fun WorldView(w: World, modifier: Modifier = Modifier) {
         // what this WebView can draw with: the measured reason, and the actions (Cloud-Browser, or stay here), remembered per site
         caps?.takeIf { !it.webgpuUsable && Web.needsWebGpu(w) }?.let { c ->
             Column(Modifier.fillMaxWidth().background(p.surface).padding(start = 14.dp, end = 4.dp, bottom = 4.dp).testTag(Tags.WORLD_GPU)) {
-                Text(stringResource(R.string.world_gpu_missing, c.summary(), WebGpuPlan.diagnose(c, Build.TYPE != "user", false).text),
+                Text(stringResource(R.string.world_gpu_missing, c.summary(), GpuPageModel.banner(c, Build.TYPE != "user")),
                     style = MaterialTheme.typography.labelSmall, color = p.textSecondary)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     KitButton(onClick = { gpuChoice = SiteGpuChoice.CLOUD_BROWSER; Web.setGpuChoice(ctx, w.id, gpuChoice); Web.openInBrowser(ctx, w.url) },
@@ -297,6 +319,27 @@ fun WorldView(w: World, modifier: Modifier = Modifier) {
                         }
                     }
                 }
+            }
+        }
+    }
+    if (showDiag) {
+        ModalBottomSheet(onDismissRequest = { showDiag = false }, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true), containerColor = p.surface) {
+            Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(start = 16.dp, end = 16.dp, bottom = 24.dp).testTag(Tags.WORLD_DIAG_SHEET)) {
+                Text(GpuPageModel.DIAG_TITLE, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = p.textPrimary)
+                Text(w.url, style = MaterialTheme.typography.labelSmall, color = p.textSecondary, modifier = Modifier.padding(bottom = 8.dp))
+                val d = diag
+                if (d == null) Text("measuring in the page ...", style = MaterialTheme.typography.bodySmall, color = p.textSecondary)
+                else d.rows().forEach { r ->
+                    Row(Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
+                        Text(r.label, style = MaterialTheme.typography.bodySmall, color = p.textSecondary, modifier = Modifier.weight(0.45f))
+                        Text(r.value, style = MaterialTheme.typography.bodySmall, color = p.textPrimary, modifier = Modifier.weight(0.55f))
+                    }
+                }
+                val errors = PageConsole.errors().takeLast(30)
+                Text("Console errors (${errors.size})", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold,
+                    color = p.textPrimary, modifier = Modifier.padding(top = 12.dp, bottom = 4.dp))
+                if (errors.isEmpty()) Text("none logged by this page", style = MaterialTheme.typography.bodySmall, color = p.textSecondary)
+                errors.forEach { Text(PageConsole.format(it), style = MaterialTheme.typography.labelSmall, color = p.textSecondary, modifier = Modifier.padding(vertical = 1.dp)) }
             }
         }
     }

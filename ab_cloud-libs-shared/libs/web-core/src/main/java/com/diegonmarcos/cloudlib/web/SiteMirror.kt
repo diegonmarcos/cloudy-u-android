@@ -164,7 +164,7 @@ fun interface Fetcher { fun fetch(url: String, etag: String?): Fetched? }
 object SiteMirrorEngine {
     data class Progress(val files: Int, val bytes: Long, val pending: Int, val current: String, val done: Boolean = false, val stopped: String = "")
 
-    private fun keep(h: Map<String, String>) = h.filterKeys { it.equals("ETag", true) || it.equals("Last-Modified", true) }
+    private fun keep(h: Map<String, String>) = SiteCache.keepHeaders(h)
 
     /** Crawls [start]'s site into [cache]: same origin only; HTML and CSS are scanned for more. Returns the final progress. */
     fun crawl(

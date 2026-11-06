@@ -82,7 +82,7 @@ def check(root, ok):
 main("offline-gpu", check, [
     ("the retry floor drops", WC + "/SiteMirror.kt", "RETRY_FLOOR_MS = 30_000L", "RETRY_FLOOR_MS = 1_000L", "O1 a retry never"),
     ("the gate lets an unattended run go on battery", WC + "/SiteMirror.kt", "userTap || (env.charging && env.wifi)", "userTap || env.wifi", "O1 an unattended download"),
-    ("serving asks the network first", WC + "/SiteMirrorAndroid.kt", "c.serve(host, url, range)?.let { return response(it) }\n        val r = http.fetch(url, null)", "val r = http.fetch(url, null)\n        c.serve(host, url, range)?.let { return response(it) }\n        val r2 = 0", "O1 the copy is read before"),
+    ("serving asks the network first", WC + "/SiteMirrorAndroid.kt", "if (!refresh) c.serve(host, url, range, origin)?.let { return response(it) }\n        val old = c.lookup(host, url)", "val old = c.lookup(host, url)", "O1 the copy is read before"),
     ("the host stops serving the copy", LIB + "/BrowserHostFragment.kt", "return BrowserHostHooks.intercept?.invoke(r)", "return null", "O2 the shared host"),
     ("the pin default is dropped", B, '"pin_offline": ["floor796.com"]', '"pin_offline": []', "O4 floor796.com"),
     ("Delete leaves the Cached sites list", APP + "/sites/SitesUi.kt", 'testTag("domains:cached:delete:', 'testTag("domains:cached:gone:', "O5 Files Cached lists"),

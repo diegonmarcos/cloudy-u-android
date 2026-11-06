@@ -17,6 +17,19 @@ object GpuPageModel {
 
     val steps: List<String> get() = WebGpuPlan.OWNER_STEPS
 
+    /** Title of the in-page diagnostics sheet ([PageDiag]). */
+    const val DIAG_TITLE = "Page diagnostics"
+
+    /**
+     * The banner of a page that DECLARES it needs WebGPU while this WebView has no adapter: the exact measured reason, the
+     * Cloud-Browser GPU page (where the adapter test lives), and the ignore-gpu-blocklist steps. Never names another browser.
+     * A page that does not need WebGPU (a canvas / WebGL page such as floor796) never gets it.
+     */
+    fun banner(c: GpuCaps, osDebuggable: Boolean): String =
+        WebGpuPlan.diagnose(c, osDebuggable, false).text +
+            " Open this page in Cloud-Browser (Configs > GPU shows the adapter test), or try the flag: " +
+            "WebView DevTools > Flags > ignore-gpu-blocklist, force-stop the app, then Retest on that page."
+
     fun providerRow(pkg: String?, version: String?): GpuRow =
         GpuRow("WebView provider", if (pkg == null) "unknown" else listOfNotNull(pkg, version).joinToString(" "))
 

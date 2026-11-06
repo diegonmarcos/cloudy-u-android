@@ -27,22 +27,39 @@ import java.util.concurrent.TimeUnit
 
 /** #1518 the Android half of the offline copy: the one cache, the network, the pin list, serving a pinned page. */
 object SiteMirrorStore {
-    fun cache(ctx: Context) = SiteCache(File(ctx.applicationContext.filesDir, "site-cache"))
+    /**
+     * The one cache. v2 (#1537): copies made before it lack the response headers and were fetched with a bare Java user agent, so
+     * the old directory is dropped once and every pinned site is recaptured the way the page really loads.
+     */
+    fun cache(ctx: Context): SiteCache {
+        val files = ctx.applicationContext.filesDir
+        File(files, "site-cache").takeIf { it.exists() }?.let { runCatching { it.deleteRecursively() } }
+        return SiteCache(File(files, "site-cache-v2"))
+    }
     private fun prefs(ctx: Context) = ctx.applicationContext.getSharedPreferences("site_mirror", Context.MODE_PRIVATE)
 
     /** [defaults] = the declared pins (build.json::pin_offline), used until the user changes the list. */
     fun pinned(ctx: Context, defaults: List<String>): List<String> = PinnedSites.parse(prefs(ctx).getString("pinned", null), defaults)
     fun setPinned(ctx: Context, list: List<String>) = prefs(ctx).edit().putString("pinned", PinnedSites.serialise(list)).apply()
 
-    /** The network: a plain GET, conditional when [etag] is given (304 -> code 304, no body). Null when the request fails. */
+    /** The WebView's own user agent (set on the first intercepted request): a site must see the browser, not "Dalvik/..". */
+    @Volatile var userAgent: String? = null
+
+    /** A body larger than this is never buffered into memory: the request is left to Chromium (streamed, not copied). */
+    const val MAX_BODY = 48L * 1024 * 1024
+
+    /** The network: a plain GET with the WebView's UA, conditional when [etag] is given (304 -> code 304, no body). Null when the request fails or the body is too big to hold. */
     val http = Fetcher { url, etag ->
         runCatching {
             val c = (URL(url).openConnection() as HttpURLConnection).apply {
                 connectTimeout = 10_000; readTimeout = 20_000
+                userAgent?.let { setRequestProperty("User-Agent", it) }
+                setRequestProperty("Accept", "*/*")
                 etag?.let { setRequestProperty("If-None-Match", it) }
             }
             try {
                 val code = c.responseCode
+                if (code == 200 && c.contentLengthLong > MAX_BODY) return@runCatching null
                 val h = c.headerFields.filterKeys { it != null }.mapValues { it.value.last() }
                 Fetched(code, c.contentType.orEmpty(), h, if (code == 200) c.inputStream.use { it.readBytes() } else ByteArray(0))
             } finally { c.disconnect() }
@@ -51,24 +68,30 @@ object SiteMirrorStore {
 
     /**
      * Serves a request from the copy of a PINNED site, cache-first and never expiring; a miss is fetched, stored and served
-     * (so the page's own runtime requests are recorded, lazy chunks included). Same origin only, GET only. Null = not ours.
-     * Called off the main thread by shouldInterceptRequest.
+     * (so the page's own runtime requests are recorded, lazy chunks included). Same origin only, GET only. Null = not ours,
+     * Chromium loads it itself (also for a Range miss and a body too big to buffer). [refresh] (an explicit reload) refetches
+     * conditionally first; a failed refetch keeps the old copy. Called off the main thread by shouldInterceptRequest.
      */
-    fun intercept(ctx: Context, pinned: List<String>, req: WebResourceRequest): WebResourceResponse? {
+    fun intercept(ctx: Context, pinned: List<String>, req: WebResourceRequest, refresh: Boolean = false): WebResourceResponse? {
         val u = req.url
         if (req.method != "GET" || (u.scheme != "https" && u.scheme != "http")) return null
         val host = MirrorScope.hostKey(u.host.orEmpty())
         if (!PinnedSites.isPinned(pinned, host)) return null
+        if (userAgent == null) userAgent = runCatching { android.webkit.WebSettings.getDefaultUserAgent(ctx.applicationContext) }.getOrNull()
         val url = SiteCache.normalise(u.toString())
         val c = cache(ctx)
-        val range = req.requestHeaders["Range"]
-        c.serve(host, url, range)?.let { return response(it) }
-        val r = http.fetch(url, null)
-        if (r != null && r.code == 200) c.put(host, url, 200, r.mime, r.headers.filterKeys { it.equals("ETag", true) || it.equals("Last-Modified", true) }, r.body)
-        return c.serve(host, url, range)?.let { response(it) }
+        val hdr = req.requestHeaders.orEmpty()
+        val range = hdr["Range"]
+        val origin = hdr["Origin"]
+        if (!refresh) c.serve(host, url, range, origin)?.let { return response(it) }
+        val old = c.lookup(host, url)
+        val r = http.fetch(url, if (refresh) old?.headers?.entries?.firstOrNull { it.key.equals("ETag", true) }?.value else null)
+        if (r != null && r.code == 200) c.put(host, url, 200, r.mime, SiteCache.keepHeaders(r.headers), r.body)
+        if (r == null && old == null && range != null) return null
+        return c.serve(host, url, range, origin)?.let { response(it) }
     }
 
-    private fun response(s: SiteCache.Served) = WebResourceResponse(s.mime, null, s.status,
+    private fun response(s: SiteCache.Served) = WebResourceResponse(s.mime, s.encoding, s.status,
         if (s.status == 206) "Partial Content" else "OK", s.headers, ByteArrayInputStream(s.body))
 }
 

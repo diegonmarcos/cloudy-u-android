@@ -25,6 +25,7 @@ import androidx.webkit.WebViewCompat
 import com.diegonmarcos.cloudlib.web.GpuCaps
 import com.diegonmarcos.cloudlib.web.GpuPageModel
 import com.diegonmarcos.cloudlib.web.GpuProbe
+import com.diegonmarcos.cloudlib.web.PageConsole
 import com.diegonmarcos.superapp.uikit.KitSectionHeader
 import com.diegonmarcos.superapp.uikit.KitSettingsRow
 import com.diegonmarcos.superapp.uikit.LocalKitPalette
@@ -55,6 +56,11 @@ fun ColumnScope.GpuPageBlock() {
             KitSectionHeader("Features", "", Modifier.padding(top = 10.dp).testTag("browser:gpu:features"))
             features.forEach { KitSettingsRow(it.label, it.value) }
         }
+        // #1537 Page diagnostics: the errors the pages logged to their console (also in the log export, tag CloudWebConsole)
+        val errors = PageConsole.errors().takeLast(30)
+        KitSectionHeader(GpuPageModel.DIAG_TITLE, "", Modifier.padding(top = 10.dp).testTag("browser:gpu:console"))
+        if (errors.isEmpty()) Text("No page console errors logged yet.", color = p.textSecondary, style = MaterialTheme.typography.bodySmall)
+        errors.forEach { Text(PageConsole.format(it), color = p.textSecondary, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(vertical = 1.dp)) }
         KitSectionHeader("Owner steps", "", Modifier.padding(top = 10.dp))
         GpuPageModel.steps.forEachIndexed { i, s -> Text("${i + 1}. $s", color = p.textSecondary, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(vertical = 2.dp)) }
         Text("From a shell: ${GpuPageModel.DEV_UI_ADB}", color = p.textSecondary, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(vertical = 2.dp))

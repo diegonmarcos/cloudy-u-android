@@ -1107,6 +1107,8 @@ class BrowserHostFragment : Fragment() {
                     if (m != null && pageLogOn(webView?.url)) android.util.Log.d("LocalPageConsole", "${m.messageLevel()} ${m.sourceId()}:${m.lineNumber()} ${m.message()}")
                     // #1141 every page's console into the in-memory ring buffer (Dev Tools > Console); a private tab logs nothing.
                     if (m != null && !tab.isPrivate) DevTools.console.add(ConsoleLog.entry(System.currentTimeMillis(), m.messageLevel().name, m.message().orEmpty(), m.sourceId(), m.lineNumber(), webView?.url.orEmpty()))
+                    // #1537 and into the shared web-core ring + logcat (the app's log export), so a page that renders wrong shows why; a private tab logs nothing
+                    if (m != null && !tab.isPrivate) com.diegonmarcos.cloudlib.web.PageConsole.record(m.messageLevel().name, m.message(), m.sourceId(), m.lineNumber(), webView?.url, System.currentTimeMillis())
                     return false
                 }
 

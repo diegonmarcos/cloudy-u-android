@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.ContextWrapper;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.ConsoleMessage;
 import android.webkit.WebChromeClient;
 import android.widget.FrameLayout;
 import androidx.core.view.WindowCompat;
@@ -35,6 +36,14 @@ public class CloudChromeClient extends WebChromeClient {
             c = ((ContextWrapper) c).getBaseContext();
         }
         return null;
+    }
+
+    /** #1537 every page's console into {@link PageConsole} (ring for the diagnostics sheet + logcat for the log export). */
+    @Override
+    public boolean onConsoleMessage(ConsoleMessage m) {
+        if (m == null) return false;
+        PageConsole.INSTANCE.record(m.messageLevel().name(), m.message(), m.sourceId(), m.lineNumber(), null, System.currentTimeMillis());
+        return true;
     }
 
     @Override
