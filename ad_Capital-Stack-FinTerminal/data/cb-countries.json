@@ -1,0 +1,350 @@
+{
+ "_doc": "The countries of the Central Bank (CB) page: DM (US, Euro Area plus DE, FR, IT, ES, UK, Japan, Switzerland, Canada, Australia, Sweden, Norway, New Zealand, South Korea) and the BRICS EM (Brazil, Russia, India, China, South Africa and the newer members Egypt, Ethiopia, Iran, UAE, Indonesia). South Korea, Australia, Canada and Indonesia are named explicitly and appear once. Codes: id is the page key (ISO 3166 alpha-2, EA the euro area); iso3 the IMF DataMapper code (EURO is not an IMF weight series: the euro area weight is the sum of weight_members); wb the World Bank code; bis the BIS code (XM euro area); oecd the OECD Economic Outlook area (null: not covered). aggregate=false marks a member already counted inside the Euro Area, so the DM and World aggregates never count it twice. inflation_target is the bank's published target (null: none declared, the model row then answers n/a). The World aggregate covers the economies listed here, not the whole world.",
+ "groups": {
+  "DM": "Developed markets",
+  "EM": "Emerging markets (BRICS)"
+ },
+ "weights": {
+  "default": "ppp",
+  "options": [
+   {
+    "id": "ppp",
+    "label": "PPP",
+    "series": "PPPGDP",
+    "source": "IMF WEO DataMapper, GDP at purchasing power parity (international dollars)"
+   },
+   {
+    "id": "fx",
+    "label": "Market FX",
+    "series": "NGDPD",
+    "source": "IMF WEO DataMapper, GDP at current prices (US dollars)"
+   }
+  ],
+  "_doc": "The aggregate of a group is the GDP-weighted mean of the countries with a value: weights are the IMF GDP of the same year, re-normalised over the countries that have a number; a country with n/a drops out of both sums. Toggle in the page."
+ },
+ "years": {
+  "history": 15,
+  "forecast": 3,
+  "_doc": "history = years of actuals kept before the current year; forecast = current year, +1, +2"
+ },
+ "countries": [
+  {
+   "id": "US",
+   "name": "United States",
+   "group": "DM",
+   "iso3": "USA",
+   "wb": "USA",
+   "bis": "US",
+   "oecd": "USA",
+   "aggregate": true,
+   "inflation_target": 2.0
+  },
+  {
+   "id": "EA",
+   "name": "Euro Area",
+   "group": "DM",
+   "iso3": "EURO",
+   "wb": "EMU",
+   "bis": "XM",
+   "oecd": "EA17",
+   "aggregate": true,
+   "weight_members": [
+    "DEU",
+    "FRA",
+    "ITA",
+    "ESP",
+    "NLD",
+    "BEL",
+    "AUT",
+    "IRL",
+    "FIN",
+    "PRT",
+    "GRC",
+    "SVK",
+    "SVN",
+    "LTU",
+    "LVA",
+    "EST",
+    "LUX",
+    "CYP",
+    "MLT",
+    "HRV",
+    "BGR"
+   ],
+   "inflation_target": 2.0,
+   "note": "Weights are the sum of the member states' IMF GDP"
+  },
+  {
+   "id": "DE",
+   "name": "Germany",
+   "group": "DM",
+   "iso3": "DEU",
+   "wb": "DEU",
+   "bis": "DE",
+   "oecd": "DEU",
+   "aggregate": false,
+   "note": "Member of the euro area: not added again to the DM aggregate"
+  },
+  {
+   "id": "FR",
+   "name": "France",
+   "group": "DM",
+   "iso3": "FRA",
+   "wb": "FRA",
+   "bis": "FR",
+   "oecd": "FRA",
+   "aggregate": false,
+   "note": "Member of the euro area: not added again to the DM aggregate"
+  },
+  {
+   "id": "IT",
+   "name": "Italy",
+   "group": "DM",
+   "iso3": "ITA",
+   "wb": "ITA",
+   "bis": "IT",
+   "oecd": "ITA",
+   "aggregate": false,
+   "note": "Member of the euro area: not added again to the DM aggregate"
+  },
+  {
+   "id": "ES",
+   "name": "Spain",
+   "group": "DM",
+   "iso3": "ESP",
+   "wb": "ESP",
+   "bis": "ES",
+   "oecd": "ESP",
+   "aggregate": false,
+   "note": "Member of the euro area: not added again to the DM aggregate"
+  },
+  {
+   "id": "GB",
+   "name": "United Kingdom",
+   "group": "DM",
+   "iso3": "GBR",
+   "wb": "GBR",
+   "bis": "GB",
+   "oecd": "GBR",
+   "aggregate": true,
+   "inflation_target": 2.0
+  },
+  {
+   "id": "JP",
+   "name": "Japan",
+   "group": "DM",
+   "iso3": "JPN",
+   "wb": "JPN",
+   "bis": "JP",
+   "oecd": "JPN",
+   "aggregate": true,
+   "inflation_target": 2.0
+  },
+  {
+   "id": "CH",
+   "name": "Switzerland",
+   "group": "DM",
+   "iso3": "CHE",
+   "wb": "CHE",
+   "bis": "CH",
+   "oecd": "CHE",
+   "aggregate": true,
+   "inflation_target": 1.0,
+   "note": "Target: price stability below 2%, midpoint of 0 to 2 used"
+  },
+  {
+   "id": "CA",
+   "name": "Canada",
+   "group": "DM",
+   "iso3": "CAN",
+   "wb": "CAN",
+   "bis": "CA",
+   "oecd": "CAN",
+   "aggregate": true,
+   "explicit": true,
+   "inflation_target": 2.0
+  },
+  {
+   "id": "AU",
+   "name": "Australia",
+   "group": "DM",
+   "iso3": "AUS",
+   "wb": "AUS",
+   "bis": "AU",
+   "oecd": "AUS",
+   "aggregate": true,
+   "explicit": true,
+   "inflation_target": 2.5,
+   "note": "Target band 2 to 3%, midpoint used"
+  },
+  {
+   "id": "SE",
+   "name": "Sweden",
+   "group": "DM",
+   "iso3": "SWE",
+   "wb": "SWE",
+   "bis": "SE",
+   "oecd": "SWE",
+   "aggregate": true,
+   "inflation_target": 2.0
+  },
+  {
+   "id": "NO",
+   "name": "Norway",
+   "group": "DM",
+   "iso3": "NOR",
+   "wb": "NOR",
+   "bis": "NO",
+   "oecd": "NOR",
+   "aggregate": true,
+   "inflation_target": 2.0
+  },
+  {
+   "id": "NZ",
+   "name": "New Zealand",
+   "group": "DM",
+   "iso3": "NZL",
+   "wb": "NZL",
+   "bis": "NZ",
+   "oecd": "NZL",
+   "aggregate": true,
+   "inflation_target": 2.0,
+   "note": "Target band 1 to 3%, midpoint used"
+  },
+  {
+   "id": "KR",
+   "name": "South Korea",
+   "group": "DM",
+   "iso3": "KOR",
+   "wb": "KOR",
+   "bis": "KR",
+   "oecd": "KOR",
+   "aggregate": true,
+   "explicit": true,
+   "inflation_target": 2.0,
+   "note": "IMF advanced economy"
+  },
+  {
+   "id": "BR",
+   "name": "Brazil",
+   "group": "EM",
+   "iso3": "BRA",
+   "wb": "BRA",
+   "bis": "BR",
+   "oecd": "BRA",
+   "aggregate": true,
+   "brics": true,
+   "inflation_target": 3.0
+  },
+  {
+   "id": "RU",
+   "name": "Russia",
+   "group": "EM",
+   "iso3": "RUS",
+   "wb": "RUS",
+   "bis": "RU",
+   "oecd": "RUS",
+   "aggregate": true,
+   "brics": true,
+   "inflation_target": 4.0
+  },
+  {
+   "id": "IN",
+   "name": "India",
+   "group": "EM",
+   "iso3": "IND",
+   "wb": "IND",
+   "bis": "IN",
+   "oecd": "IND",
+   "aggregate": true,
+   "brics": true,
+   "inflation_target": 4.0
+  },
+  {
+   "id": "CN",
+   "name": "China",
+   "group": "EM",
+   "iso3": "CHN",
+   "wb": "CHN",
+   "bis": "CN",
+   "oecd": "CHN",
+   "aggregate": true,
+   "brics": true
+  },
+  {
+   "id": "ZA",
+   "name": "South Africa",
+   "group": "EM",
+   "iso3": "ZAF",
+   "wb": "ZAF",
+   "bis": "ZA",
+   "oecd": "ZAF",
+   "aggregate": true,
+   "brics": true,
+   "inflation_target": 3.0
+  },
+  {
+   "id": "EG",
+   "name": "Egypt",
+   "group": "EM",
+   "iso3": "EGY",
+   "wb": "EGY",
+   "bis": "EG",
+   "oecd": null,
+   "aggregate": true,
+   "brics": true,
+   "inflation_target": 7.0,
+   "note": "BRICS member since 2024"
+  },
+  {
+   "id": "ET",
+   "name": "Ethiopia",
+   "group": "EM",
+   "iso3": "ETH",
+   "wb": "ETH",
+   "bis": "ET",
+   "oecd": null,
+   "aggregate": true,
+   "brics": true,
+   "note": "BRICS member since 2024"
+  },
+  {
+   "id": "IR",
+   "name": "Iran",
+   "group": "EM",
+   "iso3": "IRN",
+   "wb": "IRN",
+   "bis": "IR",
+   "oecd": null,
+   "aggregate": true,
+   "brics": true,
+   "note": "BRICS member since 2024"
+  },
+  {
+   "id": "AE",
+   "name": "United Arab Emirates",
+   "group": "EM",
+   "iso3": "ARE",
+   "wb": "ARE",
+   "bis": "AE",
+   "oecd": null,
+   "aggregate": true,
+   "brics": true,
+   "note": "BRICS member since 2024"
+  },
+  {
+   "id": "ID",
+   "name": "Indonesia",
+   "group": "EM",
+   "iso3": "IDN",
+   "wb": "IDN",
+   "bis": "ID",
+   "oecd": "IDN",
+   "aggregate": true,
+   "brics": true,
+   "explicit": true,
+   "inflation_target": 2.5,
+   "note": "BRICS member since 2025"
+  }
+ ]
+}

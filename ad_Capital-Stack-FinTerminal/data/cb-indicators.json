@@ -1,0 +1,2368 @@
+{
+ "_doc": "THE INDICATORS of the Central Bank (CB) page. `simple` (the default view) is 5 groups of columns, each item naming the full indicators (`refs`, the first is the column, the rest are in the country detail) it is read from; `full` is the full list in 7 groups (Real Output and Expenditure 25, Labor Market 16, Prices and Inflation 16, Financial Markets and Interest Rates 22, Income, Wealth, and Fiscal Policy 15, International and Open Economy 11, Latent Variables and Structural Shocks (DSGE) 9). Every full indicator has an id, a group, a unit, the native `frequency` of its release (the snapshot is annual) and `sources`: the ordered source mapping per country. A rule is {src, series, countries ('*' = every country the source answers for, or a list of country ids), transform (yoy = percent change of the annual value), agg (avg | last, how a sub-annual series becomes a year), scale, note, role}. The first rule that has data for a country supplies its history and forecast; role cb_projection rules add the bank's own published projection beside it. An indicator with no rule for a country is shown as 'n/a (no free source)'; the DSGE latent variables are model-derived and shown only where a source publishes them, else 'model-only'. Sources: imf = IMF WEO DataMapper API, oecd_eo = OECD Economic Outlook SDMX API, wb = World Bank API, bis = BIS statistics API, fred = FRED (fredgraph.csv, includes the Fed SEP series), ecb_mpd = ECB staff macroeconomic projections (data-api). scripts/gen-cb-snapshot.py reads this file and data/cb-countries.json and writes data/cb-snapshot.json; the app's refresh follows the same rules.",
+ "sources": {
+  "imf": {
+   "label": "IMF World Economic Outlook (DataMapper)",
+   "url": "https://www.imf.org/external/datamapper/api/v1/{series}",
+   "note": "public, no key; the host answers only a non-browser user agent"
+  },
+  "oecd_eo": {
+   "label": "OECD Economic Outlook",
+   "url": "https://sdmx.oecd.org/public/rest/data/OECD.ECO.MAD,DSD_EO@DF_EO,/{areas}.{series}.A",
+   "note": "SDMX CSV"
+  },
+  "wb": {
+   "label": "World Bank Open Data",
+   "url": "https://api.worldbank.org/v2/country/{codes}/indicator/{series}",
+   "note": "public, no key"
+  },
+  "bis": {
+   "label": "BIS Statistics",
+   "url": "https://stats.bis.org/api/v2/data/dataflow/BIS/{series}/1.0/{key}",
+   "note": "public, no key"
+  },
+  "fred": {
+   "label": "FRED (St. Louis Fed)",
+   "url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id={series}",
+   "note": "public CSV, no key"
+  },
+  "ecb_mpd": {
+   "label": "ECB staff macroeconomic projections",
+   "url": "https://data-api.ecb.europa.eu/service/data/MPD/A.U2.{series}.A.{vintage}.0000",
+   "note": "public, no key"
+  }
+ },
+ "simple": {
+  "groups": [
+   {
+    "id": "real_economy",
+    "label": "Real Economy",
+    "items": [
+     {
+      "id": "gdp_output_gap",
+      "name": "GDP & output gap",
+      "refs": [
+       "real_gdp",
+       "output_gap"
+      ]
+     },
+     {
+      "id": "private_consumption",
+      "name": "Private Consumption",
+      "refs": [
+       "real_pce"
+      ]
+     },
+     {
+      "id": "private_investment",
+      "name": "Private Investment",
+      "refs": [
+       "gross_private_investment"
+      ]
+     },
+     {
+      "id": "residential_investment",
+      "name": "Residential Investment",
+      "refs": [
+       "residential_investment"
+      ]
+     },
+     {
+      "id": "government_spending",
+      "name": "Government Spending",
+      "refs": [
+       "gov_consumption_investment"
+      ]
+     }
+    ]
+   },
+   {
+    "id": "labor",
+    "label": "Labor",
+    "items": [
+     {
+      "id": "unemployment",
+      "name": "Unemployment",
+      "refs": [
+       "unemployment"
+      ]
+     },
+     {
+      "id": "employment_hours",
+      "name": "Employment/Hours",
+      "refs": [
+       "employment_level",
+       "avg_hours"
+      ]
+     },
+     {
+      "id": "nominal_wages",
+      "name": "Nominal Wages",
+      "refs": [
+       "compensation_per_hour",
+       "hourly_earnings"
+      ]
+     }
+    ]
+   },
+   {
+    "id": "prices",
+    "label": "Prices",
+    "items": [
+     {
+      "id": "headline",
+      "name": "Headline",
+      "refs": [
+       "cpi_headline"
+      ]
+     },
+     {
+      "id": "core",
+      "name": "Core",
+      "refs": [
+       "cpi_core"
+      ]
+     },
+     {
+      "id": "import_export_prices",
+      "name": "Import/Export prices",
+      "refs": [
+       "import_prices",
+       "export_prices"
+      ]
+     },
+     {
+      "id": "commodity_oil",
+      "name": "Commodity/Oil",
+      "refs": [
+       "oil_price",
+       "commodity_index"
+      ]
+     }
+    ]
+   },
+   {
+    "id": "financial_monetary",
+    "label": "Financial & Monetary",
+    "items": [
+     {
+      "id": "policy_rate",
+      "name": "Policy rate",
+      "refs": [
+       "policy_rate"
+      ]
+     },
+     {
+      "id": "yield_10y",
+      "name": "10Y yield",
+      "refs": [
+       "yield_10y"
+      ]
+     },
+     {
+      "id": "lending_rates",
+      "name": "Lending rates",
+      "refs": [
+       "lending_rate"
+      ]
+     },
+     {
+      "id": "asset_prices_wealth",
+      "name": "Asset prices & wealth",
+      "refs": [
+       "equity_index",
+       "house_prices",
+       "household_net_worth"
+      ]
+     },
+     {
+      "id": "credit_volumes",
+      "name": "Credit volumes",
+      "refs": [
+       "bank_credit",
+       "household_credit",
+       "corporate_credit"
+      ]
+     }
+    ]
+   },
+   {
+    "id": "international",
+    "label": "International",
+    "items": [
+     {
+      "id": "fx",
+      "name": "FX",
+      "refs": [
+       "fx_usd"
+      ]
+     },
+     {
+      "id": "net_exports",
+      "name": "Net exports",
+      "refs": [
+       "net_exports"
+      ]
+     },
+     {
+      "id": "foreign_demand",
+      "name": "Foreign demand",
+      "refs": [
+       "foreign_demand"
+      ]
+     },
+     {
+      "id": "foreign_rates",
+      "name": "Foreign rates",
+      "refs": [
+       "foreign_rate"
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "full": {
+  "groups": [
+   {
+    "id": "real_output",
+    "label": "Real Output and Expenditure",
+    "items": [
+     {
+      "id": "real_gdp",
+      "name": "Real GDP",
+      "unit": "% y/y",
+      "frequency": "annual",
+      "sources": [
+       {
+        "src": "imf",
+        "series": "NGDP_RPCH",
+        "countries": "*"
+       },
+       {
+        "src": "oecd_eo",
+        "series": "GDPV_ANNPCT",
+        "countries": "*"
+       },
+       {
+        "src": "wb",
+        "series": "NY.GDP.MKTP.KD.ZG",
+        "countries": "*"
+       },
+       {
+        "src": "fred",
+        "series": "GDPC1",
+        "countries": [
+         "US"
+        ],
+        "transform": "yoy",
+        "agg": "avg"
+       },
+       {
+        "src": "fred",
+        "series": "GDPC1MD",
+        "countries": [
+         "US"
+        ],
+        "role": "cb_projection",
+        "label": "Fed SEP median"
+       },
+       {
+        "src": "ecb_mpd",
+        "series": "YER",
+        "countries": [
+         "EA"
+        ],
+        "role": "cb_projection",
+        "label": "ECB staff projections"
+       }
+      ]
+     },
+     {
+      "id": "nominal_gdp",
+      "name": "Nominal GDP",
+      "unit": "USD bn",
+      "frequency": "annual",
+      "sources": [
+       {
+        "src": "imf",
+        "series": "NGDPD",
+        "countries": "*"
+       },
+       {
+        "src": "wb",
+        "series": "NY.GDP.MKTP.CD",
+        "countries": "*",
+        "scale": 1e-09
+       }
+      ]
+     },
+     {
+      "id": "potential_gdp",
+      "name": "Potential GDP",
+      "unit": "% y/y (potential growth)",
+      "frequency": "annual",
+      "sources": [
+       {
+        "src": "oecd_eo",
+        "series": "GDPVTR_ANNPCT",
+        "countries": "*"
+       },
+       {
+        "src": "fred",
+        "series": "GDPPOT",
+        "countries": [
+         "US"
+        ],
+        "transform": "yoy",
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "output_gap",
+      "name": "Output Gap",
+      "unit": "% of potential GDP",
+      "frequency": "annual",
+      "sources": [
+       {
+        "src": "oecd_eo",
+        "series": "GAP",
+        "countries": "*"
+       }
+      ]
+     },
+     {
+      "id": "real_pce",
+      "name": "Real Personal Consumption Expenditures (PCE)",
+      "unit": "% y/y",
+      "frequency": "annual",
+      "sources": [
+       {
+        "src": "oecd_eo",
+        "series": "CPV_ANNPCT",
+        "countries": "*"
+       },
+       {
+        "src": "wb",
+        "series": "NE.CON.PRVT.KD.ZG",
+        "countries": "*"
+       },
+       {
+        "src": "fred",
+        "series": "PCECC96",
+        "countries": [
+         "US"
+        ],
+        "transform": "yoy",
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "pce_durables",
+      "name": "PCE: Durable Goods",
+      "unit": "% y/y",
+      "frequency": "quarterly",
+      "sources": [
+       {
+        "src": "fred",
+        "series": "PCDGCC96",
+        "countries": [
+         "US"
+        ],
+        "transform": "yoy",
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "pce_nondurables",
+      "name": "PCE: Nondurable Goods",
+      "unit": "% y/y",
+      "frequency": "quarterly",
+      "sources": [
+       {
+        "src": "fred",
+        "series": "PCNDGC96",
+        "countries": [
+         "US"
+        ],
+        "transform": "yoy",
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "pce_services",
+      "name": "PCE: Services",
+      "unit": "% y/y",
+      "frequency": "quarterly",
+      "sources": [
+       {
+        "src": "fred",
+        "series": "PCESC96",
+        "countries": [
+         "US"
+        ],
+        "transform": "yoy",
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "gross_private_investment",
+      "name": "Gross Private Domestic Investment",
+      "unit": "% y/y",
+      "frequency": "quarterly",
+      "sources": [
+       {
+        "src": "fred",
+        "series": "GPDIC1",
+        "countries": [
+         "US"
+        ],
+        "transform": "yoy",
+        "agg": "avg"
+       },
+       {
+        "src": "oecd_eo",
+        "series": "ITV_ANNPCT",
+        "countries": "*",
+        "note": "Total gross fixed capital formation (includes government)"
+       },
+       {
+        "src": "wb",
+        "series": "NE.GDI.FTOT.KD.ZG",
+        "countries": "*",
+        "note": "Total gross fixed capital formation (includes government)"
+       }
+      ]
+     },
+     {
+      "id": "nonresidential_investment",
+      "name": "Nonresidential Fixed Investment",
+      "unit": "% y/y",
+      "frequency": "quarterly",
+      "sources": [
+       {
+        "src": "fred",
+        "series": "PNFIC1",
+        "countries": [
+         "US"
+        ],
+        "transform": "yoy",
+        "agg": "avg"
+       },
+       {
+        "src": "oecd_eo",
+        "series": "IBV",
+        "countries": "*",
+        "transform": "yoy"
+       }
+      ]
+     },
+     {
+      "id": "equipment_investment",
+      "name": "Equipment Investment",
+      "unit": "% y/y",
+      "frequency": "quarterly",
+      "sources": []
+     },
+     {
+      "id": "structures_investment",
+      "name": "Structures Investment",
+      "unit": "% y/y",
+      "frequency": "quarterly",
+      "sources": []
+     },
+     {
+      "id": "ip_investment",
+      "name": "Intellectual Property Products Investment",
+      "unit": "% y/y",
+      "frequency": "quarterly",
+      "sources": []
+     },
+     {
+      "id": "residential_investment",
+      "name": "Residential Fixed Investment",
+      "unit": "% y/y",
+      "frequency": "quarterly",
+      "sources": [
+       {
+        "src": "oecd_eo",
+        "series": "IHV",
+        "countries": "*",
+        "transform": "yoy"
+       },
+       {
+        "src": "fred",
+        "series": "PRFIC1",
+        "countries": [
+         "US"
+        ],
+        "transform": "yoy",
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "inventory_change",
+      "name": "Change in Private Inventories",
+      "unit": "contribution to real GDP growth, pp",
+      "frequency": "quarterly",
+      "sources": [
+       {
+        "src": "oecd_eo",
+        "series": "CQ_ISKV",
+        "countries": "*"
+       }
+      ]
+     },
+     {
+      "id": "gov_consumption_investment",
+      "name": "Government Consumption and Investment",
+      "unit": "% y/y",
+      "frequency": "quarterly",
+      "sources": [
+       {
+        "src": "oecd_eo",
+        "series": "CGV_ANNPCT",
+        "countries": "*"
+       },
+       {
+        "src": "wb",
+        "series": "NE.CON.GOVT.KD.ZG",
+        "countries": "*",
+        "note": "Government consumption only"
+       },
+       {
+        "src": "fred",
+        "series": "GCEC1",
+        "countries": [
+         "US"
+        ],
+        "transform": "yoy",
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "federal_spending",
+      "name": "Federal Government Spending",
+      "unit": "% y/y",
+      "frequency": "quarterly",
+      "sources": [
+       {
+        "src": "fred",
+        "series": "FGCEC1",
+        "countries": [
+         "US"
+        ],
+        "transform": "yoy",
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "state_local_spending",
+      "name": "State and Local Government Spending",
+      "unit": "% y/y",
+      "frequency": "quarterly",
+      "sources": [
+       {
+        "src": "fred",
+        "series": "SLCEC1",
+        "countries": [
+         "US"
+        ],
+        "transform": "yoy",
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "exports_gs",
+      "name": "Exports of Goods and Services",
+      "unit": "% y/y",
+      "frequency": "quarterly",
+      "sources": [
+       {
+        "src": "oecd_eo",
+        "series": "XGSV_ANNPCT",
+        "countries": "*"
+       },
+       {
+        "src": "wb",
+        "series": "NE.EXP.GNFS.KD.ZG",
+        "countries": "*"
+       },
+       {
+        "src": "fred",
+        "series": "EXPGSC1",
+        "countries": [
+         "US"
+        ],
+        "transform": "yoy",
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "exports_goods",
+      "name": "Exports of Goods",
+      "unit": "% y/y",
+      "frequency": "quarterly",
+      "sources": [
+       {
+        "src": "fred",
+        "series": "EXPGC1",
+        "countries": [
+         "US"
+        ],
+        "transform": "yoy",
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "exports_services",
+      "name": "Exports of Services",
+      "unit": "% y/y",
+      "frequency": "quarterly",
+      "sources": []
+     },
+     {
+      "id": "imports_gs",
+      "name": "Imports of Goods and Services",
+      "unit": "% y/y",
+      "frequency": "quarterly",
+      "sources": [
+       {
+        "src": "oecd_eo",
+        "series": "MGSV_ANNPCT",
+        "countries": "*"
+       },
+       {
+        "src": "wb",
+        "series": "NE.IMP.GNFS.KD.ZG",
+        "countries": "*"
+       },
+       {
+        "src": "fred",
+        "series": "IMPGSC1",
+        "countries": [
+         "US"
+        ],
+        "transform": "yoy",
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "imports_goods",
+      "name": "Imports of Goods",
+      "unit": "% y/y",
+      "frequency": "quarterly",
+      "sources": [
+       {
+        "src": "fred",
+        "series": "IMPGC1",
+        "countries": [
+         "US"
+        ],
+        "transform": "yoy",
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "imports_services",
+      "name": "Imports of Services",
+      "unit": "% y/y",
+      "frequency": "quarterly",
+      "sources": []
+     },
+     {
+      "id": "capacity_utilization",
+      "name": "Capacity Utilization",
+      "unit": "% of capacity",
+      "frequency": "monthly",
+      "sources": [
+       {
+        "src": "fred",
+        "series": "TCU",
+        "countries": [
+         "US"
+        ],
+        "agg": "avg"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "labor",
+    "label": "Labor Market",
+    "items": [
+     {
+      "id": "unemployment",
+      "name": "Unemployment Rate",
+      "unit": "% of labour force",
+      "frequency": "annual",
+      "sources": [
+       {
+        "src": "imf",
+        "series": "LUR",
+        "countries": "*"
+       },
+       {
+        "src": "oecd_eo",
+        "series": "UNR",
+        "countries": "*"
+       },
+       {
+        "src": "wb",
+        "series": "SL.UEM.TOTL.ZS",
+        "countries": "*"
+       },
+       {
+        "src": "fred",
+        "series": "UNRATE",
+        "countries": [
+         "US"
+        ],
+        "agg": "avg"
+       },
+       {
+        "src": "fred",
+        "series": "UNRATEMD",
+        "countries": [
+         "US"
+        ],
+        "role": "cb_projection",
+        "label": "Fed SEP median"
+       }
+      ]
+     },
+     {
+      "id": "employment_level",
+      "name": "Employment Level",
+      "unit": "persons",
+      "frequency": "annual",
+      "sources": [
+       {
+        "src": "oecd_eo",
+        "series": "ET",
+        "countries": "*"
+       },
+       {
+        "src": "fred",
+        "series": "CE16OV",
+        "countries": [
+         "US"
+        ],
+        "agg": "avg",
+        "scale": 1000
+       }
+      ]
+     },
+     {
+      "id": "nonfarm_payrolls",
+      "name": "Nonfarm Payrolls",
+      "unit": "persons",
+      "frequency": "monthly",
+      "sources": [
+       {
+        "src": "fred",
+        "series": "PAYEMS",
+        "countries": [
+         "US"
+        ],
+        "agg": "avg",
+        "scale": 1000
+       }
+      ]
+     },
+     {
+      "id": "participation",
+      "name": "Labor Force Participation Rate",
+      "unit": "% of population 15-74 (US: 16+)",
+      "frequency": "annual",
+      "sources": [
+       {
+        "src": "oecd_eo",
+        "series": "LFPR1574",
+        "countries": "*"
+       },
+       {
+        "src": "wb",
+        "series": "SL.TLF.CACT.ZS",
+        "countries": "*",
+        "note": "Population 15+"
+       },
+       {
+        "src": "fred",
+        "series": "CIVPART",
+        "countries": [
+         "US"
+        ],
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "employment_rate",
+      "name": "Employment-Population Ratio",
+      "unit": "% of population",
+      "frequency": "annual",
+      "sources": [
+       {
+        "src": "oecd_eo",
+        "series": "ER1574",
+        "countries": "*"
+       },
+       {
+        "src": "wb",
+        "series": "SL.EMP.TOTL.SP.ZS",
+        "countries": "*",
+        "note": "Population 15+"
+       },
+       {
+        "src": "fred",
+        "series": "EMRATIO",
+        "countries": [
+         "US"
+        ],
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "avg_hours",
+      "name": "Average Weekly Hours",
+      "unit": "hours per week",
+      "frequency": "monthly",
+      "sources": [
+       {
+        "src": "oecd_eo",
+        "series": "HRS",
+        "countries": "*",
+        "unit": "hours per worker per year"
+       },
+       {
+        "src": "fred",
+        "series": "AWHAETP",
+        "countries": [
+         "US"
+        ],
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "total_hours",
+      "name": "Total Hours Worked",
+      "unit": "% y/y",
+      "frequency": "quarterly",
+      "sources": [
+       {
+        "src": "fred",
+        "series": "HOANBS",
+        "countries": [
+         "US"
+        ],
+        "transform": "yoy",
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "job_openings",
+      "name": "Job Openings (JOLTS)",
+      "unit": "persons",
+      "frequency": "monthly",
+      "sources": [
+       {
+        "src": "fred",
+        "series": "JTSJOL",
+        "countries": [
+         "US"
+        ],
+        "agg": "avg",
+        "scale": 1000
+       }
+      ]
+     },
+     {
+      "id": "quits_rate",
+      "name": "Quits Rate",
+      "unit": "% of employment",
+      "frequency": "monthly",
+      "sources": [
+       {
+        "src": "fred",
+        "series": "JTSQUR",
+        "countries": [
+         "US"
+        ],
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "jobless_claims",
+      "name": "Initial Jobless Claims",
+      "unit": "persons per week",
+      "frequency": "weekly",
+      "sources": [
+       {
+        "src": "fred",
+        "series": "ICSA",
+        "countries": [
+         "US"
+        ],
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "long_term_unemployed",
+      "name": "Long-Term Unemployment Share",
+      "unit": "% of unemployed",
+      "frequency": "monthly",
+      "sources": []
+     },
+     {
+      "id": "hourly_earnings",
+      "name": "Average Hourly Earnings",
+      "unit": "% y/y",
+      "frequency": "monthly",
+      "sources": [
+       {
+        "src": "fred",
+        "series": "CES0500000003",
+        "countries": [
+         "US"
+        ],
+        "transform": "yoy",
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "employment_cost",
+      "name": "Employment Cost Index",
+      "unit": "% y/y",
+      "frequency": "quarterly",
+      "sources": [
+       {
+        "src": "fred",
+        "series": "ECIALLCIV",
+        "countries": [
+         "US"
+        ],
+        "transform": "yoy",
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "compensation_per_hour",
+      "name": "Compensation per Hour",
+      "unit": "% y/y",
+      "frequency": "quarterly",
+      "sources": [
+       {
+        "src": "oecd_eo",
+        "series": "WSST",
+        "countries": "*",
+        "transform": "yoy"
+       },
+       {
+        "src": "fred",
+        "series": "COMPNFB",
+        "countries": [
+         "US"
+        ],
+        "transform": "yoy",
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "unit_labor_costs",
+      "name": "Unit Labor Costs",
+      "unit": "% y/y",
+      "frequency": "quarterly",
+      "sources": [
+       {
+        "src": "oecd_eo",
+        "series": "ULC",
+        "countries": "*",
+        "transform": "yoy"
+       },
+       {
+        "src": "fred",
+        "series": "ULCNFB",
+        "countries": [
+         "US"
+        ],
+        "transform": "yoy",
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "productivity",
+      "name": "Labor Productivity (Output per Hour)",
+      "unit": "% y/y",
+      "frequency": "quarterly",
+      "sources": [
+       {
+        "src": "oecd_eo",
+        "series": "PDTY",
+        "countries": "*",
+        "transform": "yoy"
+       },
+       {
+        "src": "fred",
+        "series": "OPHNFB",
+        "countries": [
+         "US"
+        ],
+        "transform": "yoy",
+        "agg": "avg"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "prices",
+    "label": "Prices and Inflation",
+    "items": [
+     {
+      "id": "cpi_headline",
+      "name": "Headline CPI",
+      "unit": "% y/y",
+      "frequency": "monthly",
+      "sources": [
+       {
+        "src": "imf",
+        "series": "PCPIPCH",
+        "countries": "*"
+       },
+       {
+        "src": "oecd_eo",
+        "series": "CPI_YTYPCT",
+        "countries": "*"
+       },
+       {
+        "src": "wb",
+        "series": "FP.CPI.TOTL.ZG",
+        "countries": "*"
+       },
+       {
+        "src": "fred",
+        "series": "CPIAUCSL",
+        "countries": [
+         "US"
+        ],
+        "transform": "yoy",
+        "agg": "avg"
+       },
+       {
+        "src": "ecb_mpd",
+        "series": "HIC",
+        "countries": [
+         "EA"
+        ],
+        "role": "cb_projection",
+        "label": "ECB staff projections (HICP)"
+       },
+       {
+        "src": "fred",
+        "series": "PCECTPICTM",
+        "countries": [
+         "US"
+        ],
+        "role": "cb_projection",
+        "label": "Fed SEP median (PCE inflation)"
+       }
+      ]
+     },
+     {
+      "id": "cpi_core",
+      "name": "Core CPI",
+      "unit": "% y/y",
+      "frequency": "monthly",
+      "sources": [
+       {
+        "src": "oecd_eo",
+        "series": "PCORE_YTYPCT",
+        "countries": "*"
+       },
+       {
+        "src": "fred",
+        "series": "CPILFESL",
+        "countries": [
+         "US"
+        ],
+        "transform": "yoy",
+        "agg": "avg"
+       },
+       {
+        "src": "fred",
+        "series": "JCXFEMD",
+        "countries": [
+         "US"
+        ],
+        "role": "cb_projection",
+        "label": "Fed SEP median (core PCE)"
+       }
+      ]
+     },
+     {
+      "id": "pce_price",
+      "name": "Headline PCE Price Index",
+      "unit": "% y/y",
+      "frequency": "monthly",
+      "sources": [
+       {
+        "src": "oecd_eo",
+        "series": "PCP_YTYPCT",
+        "countries": "*"
+       },
+       {
+        "src": "fred",
+        "series": "PCEPI",
+        "countries": [
+         "US"
+        ],
+        "transform": "yoy",
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "pce_core",
+      "name": "Core PCE Price Index",
+      "unit": "% y/y",
+      "frequency": "monthly",
+      "sources": [
+       {
+        "src": "fred",
+        "series": "PCEPILFE",
+        "countries": [
+         "US"
+        ],
+        "transform": "yoy",
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "gdp_deflator",
+      "name": "GDP Deflator",
+      "unit": "% y/y",
+      "frequency": "quarterly",
+      "sources": [
+       {
+        "src": "oecd_eo",
+        "series": "PGDP_ANNPCT",
+        "countries": "*"
+       },
+       {
+        "src": "fred",
+        "series": "GDPDEF",
+        "countries": [
+         "US"
+        ],
+        "transform": "yoy",
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "ppi",
+      "name": "PPI Final Demand",
+      "unit": "% y/y",
+      "frequency": "monthly",
+      "sources": [
+       {
+        "src": "fred",
+        "series": "PPIFIS",
+        "countries": [
+         "US"
+        ],
+        "transform": "yoy",
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "import_prices",
+      "name": "Import Price Index",
+      "unit": "% y/y",
+      "frequency": "monthly",
+      "sources": [
+       {
+        "src": "oecd_eo",
+        "series": "PMGS",
+        "countries": "*",
+        "transform": "yoy"
+       },
+       {
+        "src": "fred",
+        "series": "IR",
+        "countries": [
+         "US"
+        ],
+        "transform": "yoy",
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "export_prices",
+      "name": "Export Price Index",
+      "unit": "% y/y",
+      "frequency": "monthly",
+      "sources": [
+       {
+        "src": "oecd_eo",
+        "series": "PXGS",
+        "countries": "*",
+        "transform": "yoy"
+       },
+       {
+        "src": "fred",
+        "series": "IQ",
+        "countries": [
+         "US"
+        ],
+        "transform": "yoy",
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "oil_price",
+      "name": "Oil Price (Brent)",
+      "unit": "USD per barrel",
+      "frequency": "daily",
+      "sources": [
+       {
+        "src": "fred",
+        "series": "DCOILBRENTEU",
+        "countries": "*",
+        "agg": "avg",
+        "note": "World price, the same for every country"
+       }
+      ]
+     },
+     {
+      "id": "commodity_index",
+      "name": "Commodity Price Index",
+      "unit": "index 2016=100",
+      "frequency": "quarterly",
+      "sources": [
+       {
+        "src": "fred",
+        "series": "PALLFNFINDEXQ",
+        "countries": "*",
+        "agg": "avg",
+        "note": "IMF global price index of all commodities, via FRED"
+       }
+      ]
+     },
+     {
+      "id": "food_prices",
+      "name": "Food Prices",
+      "unit": "% y/y",
+      "frequency": "monthly",
+      "sources": [
+       {
+        "src": "fred",
+        "series": "CPIUFDSL",
+        "countries": [
+         "US"
+        ],
+        "transform": "yoy",
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "energy_prices",
+      "name": "Energy Prices",
+      "unit": "% y/y",
+      "frequency": "monthly",
+      "sources": [
+       {
+        "src": "fred",
+        "series": "CPIENGSL",
+        "countries": [
+         "US"
+        ],
+        "transform": "yoy",
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "shelter_inflation",
+      "name": "Shelter/Rent Inflation",
+      "unit": "% y/y",
+      "frequency": "monthly",
+      "sources": [
+       {
+        "src": "fred",
+        "series": "CUSR0000SAH1",
+        "countries": [
+         "US"
+        ],
+        "transform": "yoy",
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "services_ex_housing",
+      "name": "Services Inflation ex-Housing",
+      "unit": "% y/y",
+      "frequency": "monthly",
+      "sources": [
+       {
+        "src": "fred",
+        "series": "CUSR0000SASL2RS",
+        "countries": [
+         "US"
+        ],
+        "transform": "yoy",
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "inflation_expectations_1y",
+      "name": "1Y Inflation Expectations",
+      "unit": "%",
+      "frequency": "monthly",
+      "sources": [
+       {
+        "src": "fred",
+        "series": "MICH",
+        "countries": [
+         "US"
+        ],
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "inflation_expectations_5y5y",
+      "name": "5Y5Y Forward Inflation Expectations",
+      "unit": "%",
+      "frequency": "daily",
+      "sources": [
+       {
+        "src": "fred",
+        "series": "T5YIFR",
+        "countries": [
+         "US"
+        ],
+        "agg": "avg"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "financial",
+    "label": "Financial Markets and Interest Rates",
+    "items": [
+     {
+      "id": "policy_rate",
+      "name": "Policy Rate",
+      "unit": "% (year end)",
+      "frequency": "monthly",
+      "sources": [
+       {
+        "src": "bis",
+        "series": "WS_CBPOL",
+        "countries": "*",
+        "agg": "last"
+       },
+       {
+        "src": "oecd_eo",
+        "series": "IRCB",
+        "countries": "*"
+       },
+       {
+        "src": "fred",
+        "series": "FEDTARMD",
+        "countries": [
+         "US"
+        ],
+        "role": "cb_projection",
+        "label": "Fed SEP median (year-end)"
+       }
+      ]
+     },
+     {
+      "id": "yield_3m",
+      "name": "3M Treasury/Bill Yield",
+      "unit": "%",
+      "frequency": "daily",
+      "sources": [
+       {
+        "src": "oecd_eo",
+        "series": "IRS",
+        "countries": "*",
+        "note": "Short-term interest rate"
+       },
+       {
+        "src": "fred",
+        "series": "DTB3",
+        "countries": [
+         "US"
+        ],
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "yield_2y",
+      "name": "2Y Government Yield",
+      "unit": "%",
+      "frequency": "daily",
+      "sources": [
+       {
+        "src": "fred",
+        "series": "DGS2",
+        "countries": [
+         "US"
+        ],
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "yield_5y",
+      "name": "5Y Government Yield",
+      "unit": "%",
+      "frequency": "daily",
+      "sources": [
+       {
+        "src": "fred",
+        "series": "DGS5",
+        "countries": [
+         "US"
+        ],
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "yield_10y",
+      "name": "10Y Government Yield",
+      "unit": "%",
+      "frequency": "daily",
+      "sources": [
+       {
+        "src": "oecd_eo",
+        "series": "IRL",
+        "countries": "*"
+       },
+       {
+        "src": "fred",
+        "series": "DGS10",
+        "countries": [
+         "US"
+        ],
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "yield_30y",
+      "name": "30Y Government Yield",
+      "unit": "%",
+      "frequency": "daily",
+      "sources": [
+       {
+        "src": "fred",
+        "series": "DGS30",
+        "countries": [
+         "US"
+        ],
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "term_spread",
+      "name": "Term Spread (10Y-2Y)",
+      "unit": "pp",
+      "frequency": "daily",
+      "sources": [
+       {
+        "src": "fred",
+        "series": "T10Y2Y",
+        "countries": [
+         "US"
+        ],
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "real_yield_10y",
+      "name": "Real 10Y Yield",
+      "unit": "%",
+      "frequency": "daily",
+      "sources": [
+       {
+        "src": "fred",
+        "series": "DFII10",
+        "countries": [
+         "US"
+        ],
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "mortgage_rate",
+      "name": "Mortgage Rate",
+      "unit": "%",
+      "frequency": "weekly",
+      "sources": [
+       {
+        "src": "fred",
+        "series": "MORTGAGE30US",
+        "countries": [
+         "US"
+        ],
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "lending_rate",
+      "name": "Bank Lending Rate",
+      "unit": "%",
+      "frequency": "annual",
+      "sources": [
+       {
+        "src": "wb",
+        "series": "FR.INR.LEND",
+        "countries": "*"
+       },
+       {
+        "src": "fred",
+        "series": "DPRIME",
+        "countries": [
+         "US"
+        ],
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "ig_yield",
+      "name": "Corporate Bond Yield (IG)",
+      "unit": "%",
+      "frequency": "daily",
+      "sources": [
+       {
+        "src": "fred",
+        "series": "BAMLC0A0CMEY",
+        "countries": [
+         "US"
+        ],
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "hy_spread",
+      "name": "High-Yield Spread",
+      "unit": "pp",
+      "frequency": "daily",
+      "sources": [
+       {
+        "src": "fred",
+        "series": "BAMLH0A0HYM2",
+        "countries": [
+         "US"
+        ],
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "equity_index",
+      "name": "Equity Index",
+      "unit": "% y/y (S&P 500, year end)",
+      "frequency": "daily",
+      "sources": [
+       {
+        "src": "fred",
+        "series": "SP500",
+        "countries": [
+         "US"
+        ],
+        "transform": "yoy",
+        "agg": "last"
+       }
+      ]
+     },
+     {
+      "id": "equity_volatility",
+      "name": "Equity Volatility (VIX)",
+      "unit": "index points",
+      "frequency": "daily",
+      "sources": [
+       {
+        "src": "fred",
+        "series": "VIXCLS",
+        "countries": [
+         "US"
+        ],
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "house_prices",
+      "name": "House Price Index",
+      "unit": "% y/y",
+      "frequency": "monthly",
+      "sources": [
+       {
+        "src": "fred",
+        "series": "CSUSHPINSA",
+        "countries": [
+         "US"
+        ],
+        "transform": "yoy",
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "bank_credit",
+      "name": "Bank Credit to Private Sector",
+      "unit": "% of GDP",
+      "frequency": "quarterly",
+      "sources": [
+       {
+        "src": "bis",
+        "series": "WS_TC",
+        "countries": "*",
+        "key": "Q.{bis}.P.A.M.770.A",
+        "agg": "last"
+       },
+       {
+        "src": "imf",
+        "series": "FDSAOP_GDP",
+        "countries": "*"
+       },
+       {
+        "src": "wb",
+        "series": "FS.AST.PRVT.GD.ZS",
+        "countries": "*"
+       }
+      ]
+     },
+     {
+      "id": "household_credit",
+      "name": "Household Credit",
+      "unit": "% of GDP",
+      "frequency": "quarterly",
+      "sources": [
+       {
+        "src": "imf",
+        "series": "HH_ALL",
+        "countries": "*"
+       },
+       {
+        "src": "bis",
+        "series": "WS_TC",
+        "countries": "*",
+        "key": "Q.{bis}.H.A.M.770.A",
+        "agg": "last"
+       }
+      ]
+     },
+     {
+      "id": "corporate_credit",
+      "name": "Corporate Credit",
+      "unit": "% of GDP",
+      "frequency": "quarterly",
+      "sources": [
+       {
+        "src": "imf",
+        "series": "NFC_ALL",
+        "countries": "*"
+       },
+       {
+        "src": "bis",
+        "series": "WS_TC",
+        "countries": "*",
+        "key": "Q.{bis}.N.A.M.770.A",
+        "agg": "last"
+       }
+      ]
+     },
+     {
+      "id": "money_supply",
+      "name": "Money Supply (M2)",
+      "unit": "% of GDP",
+      "frequency": "annual",
+      "sources": [
+       {
+        "src": "wb",
+        "series": "FM.LBL.BMNY.GD.ZS",
+        "countries": "*"
+       },
+       {
+        "src": "fred",
+        "series": "M2SL",
+        "countries": [
+         "US"
+        ],
+        "transform": "yoy",
+        "agg": "avg",
+        "unit": "% y/y"
+       }
+      ]
+     },
+     {
+      "id": "cb_balance_sheet",
+      "name": "Central Bank Balance Sheet",
+      "unit": "USD bn",
+      "frequency": "weekly",
+      "sources": [
+       {
+        "src": "fred",
+        "series": "WALCL",
+        "countries": [
+         "US"
+        ],
+        "agg": "last",
+        "scale": 0.001
+       }
+      ]
+     },
+     {
+      "id": "financial_conditions",
+      "name": "Financial Conditions Index",
+      "unit": "index (0 = average)",
+      "frequency": "weekly",
+      "sources": [
+       {
+        "src": "fred",
+        "series": "NFCI",
+        "countries": [
+         "US"
+        ],
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "credit_spread",
+      "name": "Credit Spread (Baa-10Y)",
+      "unit": "pp",
+      "frequency": "daily",
+      "sources": [
+       {
+        "src": "fred",
+        "series": "BAA10Y",
+        "countries": [
+         "US"
+        ],
+        "agg": "avg"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "income_fiscal",
+    "label": "Income, Wealth, and Fiscal Policy",
+    "items": [
+     {
+      "id": "personal_income",
+      "name": "Personal Income",
+      "unit": "% y/y",
+      "frequency": "monthly",
+      "sources": [
+       {
+        "src": "fred",
+        "series": "PI",
+        "countries": [
+         "US"
+        ],
+        "transform": "yoy",
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "disposable_income",
+      "name": "Disposable Personal Income",
+      "unit": "% y/y (real)",
+      "frequency": "monthly",
+      "sources": [
+       {
+        "src": "oecd_eo",
+        "series": "YDRH",
+        "countries": "*",
+        "transform": "yoy"
+       },
+       {
+        "src": "fred",
+        "series": "DSPIC96",
+        "countries": [
+         "US"
+        ],
+        "transform": "yoy",
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "saving_rate",
+      "name": "Personal Saving Rate",
+      "unit": "% of disposable income",
+      "frequency": "monthly",
+      "sources": [
+       {
+        "src": "oecd_eo",
+        "series": "SRATIO",
+        "countries": "*"
+       },
+       {
+        "src": "fred",
+        "series": "PSAVERT",
+        "countries": [
+         "US"
+        ],
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "corporate_profits",
+      "name": "Corporate Profits",
+      "unit": "% y/y",
+      "frequency": "quarterly",
+      "sources": [
+       {
+        "src": "fred",
+        "series": "CP",
+        "countries": [
+         "US"
+        ],
+        "transform": "yoy",
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "household_net_worth",
+      "name": "Household Net Worth",
+      "unit": "% y/y",
+      "frequency": "quarterly",
+      "sources": [
+       {
+        "src": "fred",
+        "series": "TNWBSHNO",
+        "countries": [
+         "US"
+        ],
+        "transform": "yoy",
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "debt_service_ratio",
+      "name": "Household Debt Service Ratio",
+      "unit": "% of disposable income",
+      "frequency": "quarterly",
+      "sources": [
+       {
+        "src": "fred",
+        "series": "TDSP",
+        "countries": [
+         "US"
+        ],
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "household_debt_gdp",
+      "name": "Household Debt to GDP",
+      "unit": "% of GDP",
+      "frequency": "quarterly",
+      "sources": [
+       {
+        "src": "imf",
+        "series": "HH_ALL",
+        "countries": "*"
+       },
+       {
+        "src": "fred",
+        "series": "HDTGPDUSQ163N",
+        "countries": [
+         "US"
+        ],
+        "agg": "avg"
+       }
+      ]
+     },
+     {
+      "id": "gov_revenue",
+      "name": "Government Revenue",
+      "unit": "% of GDP",
+      "frequency": "annual",
+      "sources": [
+       {
+        "src": "imf",
+        "series": "rev",
+        "countries": "*"
+       },
+       {
+        "src": "oecd_eo",
+        "series": "YRGTQ",
+        "countries": "*"
+       }
+      ]
+     },
+     {
+      "id": "gov_expenditure",
+      "name": "Government Expenditure",
+      "unit": "% of GDP",
+      "frequency": "annual",
+      "sources": [
+       {
+        "src": "imf",
+        "series": "exp",
+        "countries": "*"
+       },
+       {
+        "src": "oecd_eo",
+        "series": "YPGTQ",
+        "countries": "*"
+       }
+      ]
+     },
+     {
+      "id": "budget_balance",
+      "name": "Budget Balance (net lending)",
+      "unit": "% of GDP",
+      "frequency": "annual",
+      "sources": [
+       {
+        "src": "imf",
+        "series": "GGXCNL_NGDP",
+        "countries": "*"
+       },
+       {
+        "src": "oecd_eo",
+        "series": "NLGQ",
+        "countries": "*"
+       }
+      ]
+     },
+     {
+      "id": "primary_balance",
+      "name": "Primary Balance",
+      "unit": "% of GDP",
+      "frequency": "annual",
+      "sources": [
+       {
+        "src": "imf",
+        "series": "pb",
+        "countries": "*"
+       },
+       {
+        "src": "oecd_eo",
+        "series": "NLGXQ",
+        "countries": "*"
+       }
+      ]
+     },
+     {
+      "id": "gov_debt_gross",
+      "name": "Government Gross Debt",
+      "unit": "% of GDP",
+      "frequency": "annual",
+      "sources": [
+       {
+        "src": "imf",
+        "series": "GGXWDG_NGDP",
+        "countries": "*"
+       },
+       {
+        "src": "oecd_eo",
+        "series": "GGFLQ",
+        "countries": "*"
+       }
+      ]
+     },
+     {
+      "id": "gov_debt_net",
+      "name": "Government Net Debt",
+      "unit": "% of GDP",
+      "frequency": "annual",
+      "sources": [
+       {
+        "src": "oecd_eo",
+        "series": "GNFLQ",
+        "countries": "*"
+       },
+       {
+        "src": "imf",
+        "series": "GGXWDN_G01_GDP_PT",
+        "countries": "*"
+       }
+      ]
+     },
+     {
+      "id": "interest_payments",
+      "name": "Interest Payments on Debt",
+      "unit": "% of GDP",
+      "frequency": "annual",
+      "sources": [
+       {
+        "src": "imf",
+        "series": "ie",
+        "countries": "*"
+       },
+       {
+        "src": "oecd_eo",
+        "series": "GNINTQ",
+        "countries": "*"
+       }
+      ]
+     },
+     {
+      "id": "structural_balance",
+      "name": "Structural/Cyclically-Adjusted Balance",
+      "unit": "% of potential GDP",
+      "frequency": "annual",
+      "sources": [
+       {
+        "src": "imf",
+        "series": "GGCB_G01_PGDP_PT",
+        "countries": "*"
+       },
+       {
+        "src": "oecd_eo",
+        "series": "NLGQA",
+        "countries": "*"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "international",
+    "label": "International and Open Economy",
+    "items": [
+     {
+      "id": "fx_usd",
+      "name": "Exchange Rate vs USD",
+      "unit": "national currency per USD",
+      "frequency": "annual",
+      "sources": [
+       {
+        "src": "oecd_eo",
+        "series": "EXCHUD",
+        "countries": "*"
+       },
+       {
+        "src": "wb",
+        "series": "PA.NUS.FCRF",
+        "countries": "*"
+       }
+      ]
+     },
+     {
+      "id": "neer",
+      "name": "Nominal Effective Exchange Rate",
+      "unit": "index",
+      "frequency": "annual",
+      "sources": [
+       {
+        "src": "oecd_eo",
+        "series": "EXCHEB",
+        "countries": "*"
+       },
+       {
+        "src": "imf",
+        "series": "ENEER",
+        "countries": "*"
+       }
+      ]
+     },
+     {
+      "id": "reer",
+      "name": "Real Effective Exchange Rate",
+      "unit": "index",
+      "frequency": "annual",
+      "sources": [
+       {
+        "src": "oecd_eo",
+        "series": "EXCHER",
+        "countries": "*"
+       },
+       {
+        "src": "imf",
+        "series": "EREER",
+        "countries": "*"
+       },
+       {
+        "src": "wb",
+        "series": "PX.REX.REER",
+        "countries": "*"
+       }
+      ]
+     },
+     {
+      "id": "current_account",
+      "name": "Current Account Balance",
+      "unit": "% of GDP",
+      "frequency": "annual",
+      "sources": [
+       {
+        "src": "imf",
+        "series": "BCA_NGDPD",
+        "countries": "*"
+       },
+       {
+        "src": "oecd_eo",
+        "series": "CBGDPR",
+        "countries": "*"
+       }
+      ]
+     },
+     {
+      "id": "trade_balance",
+      "name": "Trade Balance",
+      "unit": "% of GDP",
+      "frequency": "annual",
+      "sources": [
+       {
+        "src": "imf",
+        "series": "BT_GDP",
+        "countries": "*"
+       }
+      ]
+     },
+     {
+      "id": "net_exports",
+      "name": "Net Exports",
+      "unit": "% of GDP",
+      "frequency": "annual",
+      "sources": [
+       {
+        "src": "oecd_eo",
+        "series": "FBGSQ",
+        "countries": "*"
+       }
+      ]
+     },
+     {
+      "id": "terms_of_trade",
+      "name": "Terms of Trade",
+      "unit": "index",
+      "frequency": "annual",
+      "sources": [
+       {
+        "src": "oecd_eo",
+        "series": "TTRADE",
+        "countries": "*"
+       },
+       {
+        "src": "imf",
+        "series": "TTT",
+        "countries": "*"
+       }
+      ]
+     },
+     {
+      "id": "fx_reserves",
+      "name": "Foreign Exchange Reserves",
+      "unit": "USD bn",
+      "frequency": "annual",
+      "sources": [
+       {
+        "src": "wb",
+        "series": "FI.RES.TOTL.CD",
+        "countries": "*",
+        "scale": 1e-09
+       }
+      ]
+     },
+     {
+      "id": "external_debt",
+      "name": "External Debt",
+      "unit": "% of GNI",
+      "frequency": "annual",
+      "sources": [
+       {
+        "src": "wb",
+        "series": "DT.DOD.DECT.GN.ZS",
+        "countries": "*"
+       }
+      ]
+     },
+     {
+      "id": "foreign_demand",
+      "name": "Foreign Demand (Export Market Growth)",
+      "unit": "% y/y",
+      "frequency": "annual",
+      "sources": [
+       {
+        "src": "oecd_eo",
+        "series": "XMKT",
+        "countries": "*",
+        "transform": "yoy"
+       }
+      ]
+     },
+     {
+      "id": "foreign_rate",
+      "name": "Foreign Interest Rate (anchor policy rate)",
+      "unit": "% (year end)",
+      "frequency": "monthly",
+      "sources": [
+       {
+        "src": "bis",
+        "series": "WS_CBPOL",
+        "countries": [
+         "EA"
+        ],
+        "ref": "US",
+        "agg": "last",
+        "note": "Anchor: the Federal Reserve"
+       },
+       {
+        "src": "bis",
+        "series": "WS_CBPOL",
+        "countries": [
+         "US"
+        ],
+        "ref": "EA",
+        "agg": "last",
+        "note": "Anchor: the ECB"
+       },
+       {
+        "src": "bis",
+        "series": "WS_CBPOL",
+        "countries": "*",
+        "ref": "US",
+        "agg": "last",
+        "note": "Anchor: the Federal Reserve"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "dsge",
+    "label": "Latent Variables and Structural Shocks (DSGE)",
+    "items": [
+     {
+      "id": "tfp",
+      "name": "Total Factor Productivity (TFP)",
+      "unit": "index (PWT, US 2017 = 1)",
+      "frequency": "annual",
+      "sources": [
+       {
+        "src": "fred",
+        "series": "RTFPNA{iso2}A632NRUG",
+        "countries": "*",
+        "note": "Penn World Table 10 TFP at constant national prices, ends 2019"
+       }
+      ],
+      "model_only": true
+     },
+     {
+      "id": "investment_technology",
+      "name": "Investment-Specific Technology",
+      "unit": "index",
+      "frequency": "quarterly",
+      "sources": [],
+      "model_only": true
+     },
+     {
+      "id": "preference_factor",
+      "name": "Preference (Discount-Factor) Shock",
+      "unit": "percent deviation",
+      "frequency": "quarterly",
+      "sources": [],
+      "model_only": true
+     },
+     {
+      "id": "wage_markup",
+      "name": "Wage Markup Shock",
+      "unit": "percent deviation",
+      "frequency": "quarterly",
+      "sources": [],
+      "model_only": true
+     },
+     {
+      "id": "price_markup",
+      "name": "Price Markup Shock",
+      "unit": "percent deviation",
+      "frequency": "quarterly",
+      "sources": [],
+      "model_only": true
+     },
+     {
+      "id": "capital_utilization",
+      "name": "Capital Utilization",
+      "unit": "percent deviation",
+      "frequency": "quarterly",
+      "sources": [],
+      "model_only": true
+     },
+     {
+      "id": "marginal_cost",
+      "name": "Marginal Cost",
+      "unit": "percent deviation",
+      "frequency": "quarterly",
+      "sources": [],
+      "model_only": true
+     },
+     {
+      "id": "tobins_q",
+      "name": "Tobin's Q",
+      "unit": "ratio",
+      "frequency": "quarterly",
+      "sources": [],
+      "model_only": true
+     },
+     {
+      "id": "external_finance_premium",
+      "name": "External Finance Premium",
+      "unit": "pp",
+      "frequency": "quarterly",
+      "sources": [],
+      "model_only": true
+     }
+    ]
+   }
+  ]
+ }
+}
