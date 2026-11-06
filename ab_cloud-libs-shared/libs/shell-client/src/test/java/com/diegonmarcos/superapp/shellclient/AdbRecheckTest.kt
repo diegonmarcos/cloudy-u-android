@@ -17,7 +17,7 @@ import org.junit.Test
 class AdbRecheckTest {
 
     /** A fake chip: holds the settled link and the last probe-start time, probes only when the gate says due. */
-    private class Chip(val floorMs: Long = AdbRecheck.FLOOR_MS) {
+    private class FakeChip(val floorMs: Long = AdbRecheck.FLOOR_MS) {
         var link: AdbLink = AdbLink.UNKNOWN
         var lastProbeAt = 0L
         var inFlight = false
@@ -33,7 +33,7 @@ class AdbRecheckTest {
     }
 
     @Test fun `wireless ON and adb answers settles to Connected once and does not re-probe in a loop`() {
-        val c = Chip()
+        val c = FakeChip()
         // First paint probes and settles Connected.
         assertTrue(c.trigger(now = 1_000, roundTrip = true, wireless = true, paired = true))
         assertEquals(AdbLink.CONNECTED, c.link)
@@ -50,7 +50,7 @@ class AdbRecheckTest {
     }
 
     @Test fun `a probe that times out resolves to a definite not-connected state, never infinite checking`() {
-        val c = Chip()
+        val c = FakeChip()
         // Wireless ON, paired, but the getprop round trip timed out (roundTrip = false): UNREACHABLE, not UNKNOWN.
         assertTrue(c.trigger(now = 1_000, roundTrip = false, wireless = true, paired = true))
         assertEquals(AdbLink.UNREACHABLE, c.link)
@@ -63,7 +63,7 @@ class AdbRecheckTest {
     }
 
     @Test fun `in-flight never starts a second probe`() {
-        val c = Chip()
+        val c = FakeChip()
         c.lastProbeAt = 1_000; c.inFlight = true
         assertFalse("a probe is running — never start another", AdbRecheck.due(c.lastProbeAt, 99_000, c.inFlight))
     }
