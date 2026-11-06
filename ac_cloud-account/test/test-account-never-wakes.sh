@@ -70,7 +70,10 @@ ok(m and "com.diegonmarcos.cloudaccount" in m.group(1) and "com.diegonmarcos.clo
 ok("BackgroundPolicy.mayWakePeer(it.applicationId)" in wk, "W4 WdKeeper never queries a no-wake peer", "W4 WdKeeper claims() can start a peer")
 pr = code(LIB + "shizuku-adb-debug-tools/src/main/java/com/diegonmarcos/superapp/adbdebug/AdbPeerReader.kt")
 ok("!wake && !BackgroundPolicy.mayWakePeer(peer.applicationId)" in pr, "W4 AdbPeerReader.remote skips a no-wake peer unless a person asked", "W4 AdbPeerReader can wake a peer unasked")
-ok("AdbPeerReader.read(context, wake = false)" in code("aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/launcher/LauncherStatusStrip.kt"), "W4 the SuperApp strip's 15 s ticker reads with wake = false", "W4 the strip ticker can wake Store")
+strip = code("aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/launcher/LauncherStatusStrip.kt")
+# #1522 the strip's ADB icon is one live broker dot and reads no peer at all; any peer read it ever regains must pass wake = false
+reads = re.findall(r'AdbPeerReader\.read\(([^)]*)\)', strip)
+ok(all("wake = false" in a for a in reads), "W4 the SuperApp strip reads no peer, or only with wake = false (%d read(s))" % len(reads), "W4 the strip ticker can wake Store")
 bj = rd("ac_cloud-c3-webserver/build.json")
 ok('"no_wake": ["com.diegonmarcos.cloudaccount", "com.diegonmarcos.cloudstore"]' in bj and "this app is never woken from the mesh" in rd("ac_cloud-c3-webserver/server/src/meshlogs.rs"), "W4 Webserver mesh /logs answers 403 for Account and Store", "W4 Webserver mesh can call Account's log provider")
 # no WorkManager Worker anywhere may query Account's or Store's providers (a scheduled poll starts them)
