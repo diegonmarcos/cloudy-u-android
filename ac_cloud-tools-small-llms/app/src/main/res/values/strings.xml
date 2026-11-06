@@ -74,6 +74,7 @@
     <string name="backend_local">Local</string>
     <string name="backend_load_in_store">Load a model in Store</string>
     <string name="mls_count">%1$d libs, as the Cloud Store declares them</string>
+    <string name="mls_unavailable">The ML list is unavailable (%1$s).</string>
     <string name="mls_dot">○</string>
 
     <string name="settings_token">OpenRouter token</string>

@@ -107,7 +107,16 @@ class ToolsModel(context: Context, private val scope: CoroutineScope) {
     /** The model data (assets/tools-models.json): the Models and Apps sections and the AI chat's model picker. */
     val models: ModelsData = ModelsData.load(app)
     /** The Cloud Store's Lite-ML and Tiny-ML groups, derived from its fleet declaration (assets/ml-fleet.json); one per MLs page. */
-    val mls: List<MlGroup> = MlCatalogue.parse(app.assets.open(ML_FLEET).bufferedReader().use { it.readText() }, Decl.mlPages)
+    private val mlsLoad: Pair<List<MlGroup>, String?> = try {
+        MlCatalogue.parse(app.assets.open(ML_FLEET).bufferedReader().use { it.readText() }, Decl.mlPages) to null
+    } catch (e: Exception) {
+        // A missing or invalid ml-fleet.json must never take the app down at start: log it and show an empty MLs page with a note.
+        android.util.Log.e("ToolsModel", "$ML_FLEET unreadable: ${e.message}", e)
+        emptyList<MlGroup>() to "$ML_FLEET: ${e.message ?: e.javaClass.simpleName}"
+    }
+    val mls: List<MlGroup> = mlsLoad.first
+    /** Why [mls] is empty (the asset is missing or invalid); null when it loaded. */
+    val mlsNote: String? = mlsLoad.second
     /** The Apps page's top filter (an id of tools-models.json::app_filters); the first is All. */
     var appFilter by mutableStateOf(models.appFilters.first().id)
 

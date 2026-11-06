@@ -58,6 +58,7 @@ on:
       - "ab_cloud-libs-shared/libs/ui-icons/**"
       - "ab_cloud-libs-shared/libs/ui-kit/**"
       - "ab_cloud-libs-shared/libs/ui-nav-bars/**"
+      - "aa_cloud-superapp/data/constellation-fleet.json"
       - "ac_cloud-tools-small-llms/**"
       - "!ac_cloud-tools-small-llms/web/**"
 permissions:

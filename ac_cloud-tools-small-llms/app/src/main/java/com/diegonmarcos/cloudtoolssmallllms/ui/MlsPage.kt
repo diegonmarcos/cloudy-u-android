@@ -29,10 +29,16 @@ import com.diegonmarcos.superapp.uikit.KitStoreRowLine
  * type ramp), under the group's blurb and one heading per application. Every name and line is the Store's own declaration.
  */
 @Composable
-fun MlsPage(groups: List<MlGroup>, page: String) {
+fun MlsPage(groups: List<MlGroup>, page: String, note: String? = null) {
     val group = groups.firstOrNull { it.page == page }
     LazyColumn(Modifier.fillMaxSize().testTag(Tags.MLS)) {
-        if (group == null) return@LazyColumn
+        if (group == null) {
+            if (note != null) item(key = "note") {
+                Text(stringResource(R.string.mls_unavailable, note), fontSize = KitStoreRow.meta, color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(horizontal = KitStoreRow.padH, vertical = KitStoreRow.padV))
+            }
+            return@LazyColumn
+        }
         item(key = "blurb") {
             Text(group.blurb, fontSize = KitStoreRow.meta, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = KitStoreRow.padH, vertical = KitStoreRow.padV))

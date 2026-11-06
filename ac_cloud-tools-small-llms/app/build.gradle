@@ -63,10 +63,13 @@ def uiMlPagesB64 = b64(buildJson.ui.ml_pages)
 def mlFleetFile = file("${projectDir}/../../aa_cloud-superapp/data/constellation-fleet.json")
 if (!mlFleetFile.exists()) throw new GradleException("aa_cloud-superapp/data/constellation-fleet.json missing - the MLs page has no Cloud Store declaration to derive from")
 def mlAssetsDir = layout.buildDirectory.dir('generated/ml-assets').get().asFile
-def bakeMlFleet = tasks.register('bakeMlFleet', Copy) {
+// Copied at configuration time, not by a task wired through srcDir(files().builtBy()): that wiring was dropped, so the APK
+// shipped without ml-fleet.json and the app died at start (#1485). The file now exists before any task graph is built.
+copy {
     from(mlFleetFile) { rename { 'ml-fleet.json' } }
     into(mlAssetsDir)
 }
+if (!new File(mlAssetsDir, 'ml-fleet.json').isFile()) throw new GradleException("ml-fleet.json was not baked into ${mlAssetsDir}")
 
 android {
     namespace 'com.diegonmarcos.cloudtoolssmallllms'
@@ -143,7 +146,7 @@ android {
     }
     kotlinOptions { jvmTarget = '17' }
 
-    sourceSets.main.assets.srcDir(files(mlAssetsDir).builtBy(bakeMlFleet))
+    sourceSets.main.assets.srcDir(mlAssetsDir)
 }
 
 dependencies {
@@ -182,4 +185,16 @@ dependencies {
     implementation 'com.google.android.material:material:1.12.0'
 
     testImplementation 'junit:junit:4.13.2'
+}
+
+// Guard: the merged assets of every variant must hold ml-fleet.json and it must parse with groups; a build without it fails here, not on the phone.
+tasks.configureEach { t ->
+    if (t.name ==~ /merge.*Assets/ && t.hasProperty('outputDir')) {
+        t.doLast {
+            def merged = new File(t.outputDir.get().asFile, 'ml-fleet.json')
+            if (!merged.isFile()) throw new GradleException("${t.name}: ml-fleet.json is missing from the merged assets (#1485)")
+            def parsed = new groovy.json.JsonSlurper().parse(merged)
+            if (!(parsed instanceof Map) || !parsed.groups) throw new GradleException("${t.name}: ml-fleet.json has no groups (#1485)")
+        }
+    }
 }
