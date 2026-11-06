@@ -66,6 +66,17 @@
         "https://mcp.diegonmarcos.com/mattermost-mcp/mcp"
       ]
     },
+    "cloud-me-cgc-pvt-mcp": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "${CLAUDE_PROJECT_DIR:-.}/.claude/mcp-connect.mjs",
+        "--mesh",
+        "http://10.0.0.6:3107/mcp",
+        "--public",
+        "https://mcp.diegonmarcos.com/cloud-me-cgc-pvt-mcp/mcp"
+      ]
+    },
     "cloud-services-mcp": {
       "type": "stdio",
       "command": "node",
@@ -95,6 +106,69 @@
         "${CLAUDE_PROJECT_DIR:-.}/.claude/mcp-connect.mjs",
         "--mesh",
         "http://10.0.0.6:3111/mcp"
+      ]
+    },
+    "cloudy-all-mcp": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "${CLAUDE_PROJECT_DIR:-.}/.claude/mcp-connect.mjs",
+        "--mesh",
+        "https://c3-cloudy-all-mcp.app/mcp",
+        "--public",
+        "https://mcp.diegonmarcos.com/cloudy-all-mcp/mcp"
+      ]
+    },
+    "cloudy-android-mcp": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "${CLAUDE_PROJECT_DIR:-.}/.claude/mcp-connect.mjs",
+        "--mesh",
+        "https://c3-cloudy-android-mcp.mesh.diegonmarcos.com/mcp",
+        "--public",
+        "https://c3-pvt.diegonmarcos.com/cloudy-android-mcp/mcp"
+      ]
+    },
+    "cloudy-apps-communication-mcp": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "${CLAUDE_PROJECT_DIR:-.}/.claude/mcp-connect.mjs",
+        "--mesh",
+        "https://c3-cloudy-apps-communication-mcp.app/mcp",
+        "--public",
+        "https://mcp.diegonmarcos.com/cloudy-apps-communication-mcp/mcp"
+      ]
+    },
+    "cloudy-apps-drive-mcp": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "${CLAUDE_PROJECT_DIR:-.}/.claude/mcp-connect.mjs",
+        "--mesh",
+        "http://10.0.0.6:3109/mcp",
+        "--public",
+        "https://mcp.diegonmarcos.com/cloudy-apps-drive-mcp/mcp"
+      ]
+    },
+    "cloudy-c3-mcp": {
+      "type": "http",
+      "url": "https://c3-pvt.diegonmarcos.com/cloudy-c3-mcp/mcp",
+      "headers": {
+        "Authorization": "Bearer ${AUTHELIA_BEARER_TOKEN:-}"
+      },
+      "headersHelper": "sh \"${CLAUDE_PROJECT_DIR:-.}/.claude/mcp-auth-headers.sh\""
+    },
+    "cloudy-cgc-pub-mcp": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "${CLAUDE_PROJECT_DIR:-.}/.claude/mcp-connect.mjs",
+        "--mesh",
+        "https://c3-cloudy-cgc-pub-mcp.app/mcp",
+        "--public",
+        "https://mcp.diegonmarcos.com/cloudy-cgc-pub-mcp/mcp"
       ]
     },
     "google-personal-mcp": {

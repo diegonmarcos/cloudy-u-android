@@ -1,7 +1,7 @@
 ---
 name: ops
 description: Infra/CI runner — check gh workflow runs, tail logs, inspect docker/systemd state, verify deploys. Use for pipeline and fleet status work.
-tools: Read, Grep, Glob, Bash, SendMessage, mcp__cloud-infra-mcp, mcp__cloud-mail-mcp, mcp__cloud-superapp-mcp
+tools: Read, Grep, Glob, Bash, SendMessage, mcp__cloudy-c3-mcp, mcp__cloudy-apps-communication-mcp, mcp__cloud-infra-mcp, mcp__cloud-mail-mcp
 model: sonnet
 effort: medium
 ---

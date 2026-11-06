@@ -35,7 +35,8 @@
     "_defaultMode_doc": "2026-10-15 OWNER DECISION: every session from every repo starts as full root (bypassPermissions) with every tool and MCP server allowed. Supersedes the earlier note that defaultMode stays user-level. Note: this file is committed to public repos, so anyone who clones one also gets this default.",
     "defaultMode": "bypassPermissions",
     "_doc": "2026-09-06: populated by the repo owner's explicit decision, reversing the earlier 'left empty on purpose'. That text held that pre-approval is a per-person trust choice; in practice the auto-mode classifier blocked plain `git commit`, `npx tsc --noEmit` and a curl to the fleet's OWN MCP mid-incident — five denials in a row, read-only steps included — so a session whose whole job is to run the fleet through c3-infra-mcp could not ship a fix. These rules pre-approve the tools that ARE the control plane: the shell, the file tools, and the MCP servers. Allow rules stay in force under auto mode (autoMode.classifyAllShell is unset, i.e. false), so matched calls never reach the classifier. defaultMode stays user-level on purpose: settings.base.json sets \"auto\", and forcing a mode from a committed file would override that choice for anyone who clones this repo.",
-    "allow": ["Bash", "Read", "Edit", "Write", "Glob", "Grep", "WebFetch", "WebSearch", "NotebookEdit", "Agent", "Skill", "mcp__cloud-infra-mcp", "mcp__cloud-cgc-pub-mcp", "mcp__cloud-cgc-pvt-mcp", "mcp__cloud-services-mcp", "mcp__cloud-vault-mcp", "mcp__cloud-drive-mcp", "mcp__cloud-mail-mcp", "mcp__cloud-mattermost-mcp", "mcp__cloud-superapp-mcp", "mcp__google-personal-mcp", "mcp__google-workspace-mcp", "mcp__Claude_Code_Remote", "mcp__claude-code-remote"],
+    "allow": ["Bash", "Read", "Edit", "Write", "Glob", "Grep", "WebFetch", "WebSearch", "NotebookEdit", "Agent", "Skill", "mcp__cloudy-c3-mcp", "mcp__cloudy-all-mcp", "mcp__cloudy-android-mcp", "mcp__cloudy-apps-communication-mcp", "mcp__cloudy-apps-drive-mcp", "mcp__cloudy-cgc-pub-mcp", "mcp__cloud-me-cgc-pvt-mcp", "mcp__cloud-infra-mcp", "mcp__cloud-cgc-pub-mcp", "mcp__cloud-cgc-pvt-mcp", "mcp__cloud-services-mcp", "mcp__cloud-vault-mcp", "mcp__cloud-drive-mcp", "mcp__cloud-mail-mcp", "mcp__cloud-mattermost-mcp", "mcp__cloud-superapp-mcp", "mcp__google-personal-mcp", "mcp__google-workspace-mcp", "mcp__Claude_Code_Remote", "mcp__claude-code-remote", "Bash(*)", "Read(*)", "Edit(*)", "Write(*)", "WebFetch(*)", "MultiEdit", "TodoWrite", "BashOutput", "KillShell", "SendMessage", "ListAgents", "Monitor", "PushNotification", "TaskStop", "TaskOutput", "SendUserFile", "AskUserQuestion", "ReadNotifications", "ToolSearch", "LSP", "ListMcpResourcesTool", "ReadMcpResourceTool", "ReadMcpResourceDirTool", "mcp__Claude_Docs", "mcp__cloudy-a-docs-mcp", "mcp__cloud-me-pvt-mcp", "mcp__cloud-u-android-mcp", "mcp__cloudy-u-android-mcp", "mcp__cloudy-infra-mcp", "mcp__cloudy-mail-mcp", "mcp__cloudy-drive-mcp", "mcp__cloudy-superapp-mcp", "mcp__cloudy-vault-mcp", "mcp__cloudy-mattermost-mcp", "mcp__cloudy-services-mcp"],
+    "_allow_extensive": "2026-11-05 OWNER ORDER: maximal allow list, covering every built-in tool, wildcard Bash/Read/Edit/Write/WebFetch, and every fleet MCP under both its old name and its rebrand name. Cloud sessions still ignore bypassPermissions, and the auto-mode classifier still reviews production deploys whatever the allow rules say.",
     "deny": [
       "Artifact",
       "ArtifactComments",
@@ -91,7 +92,7 @@
   "deniedMcpServers": [{"serverName": "github"}],
   "_deniedMcpServers_doc": "2026-10-23 owner decision: the GitHub MCP (~60 tools, ~28k tokens per session/agent) is redundant; use gh CLI (proxy-authenticated) and cloud-infra-mcp devops_workflows_gha_*. permissions.allow no longer lists mcp__github.",
 
-  "_hooks_doc": "c3-infra guard hooks (cloud-marketplace/c3-infra/hooks). Cloud sessions do not install plugins, so deploy-dotfiles copies the scripts to <repo>/.claude/hooks/c3 and this block wires them. Declared ONCE: the retired sync-to-repo.sh appended a fresh copy on every run. StopFailure(rate_limit) -> ai-usage-post.sh (#1151): cloud sessions run no statusLine and no hook input carries rate_limits, so the only usage fact a cloud session can publish to c3-infra-api is that it was rate limited; the percentages come from the statusLine path (claude-ai-usage-post.sh via statusline-assets). It reads C3_AI_USAGE_TOKEN (or mints from the AUTHELIA_* client credentials the cloud environment injects) and is a no-op without a token.",
+  "_hooks_doc": "c3-infra guard hooks (cloud-marketplace/c3-infra/hooks). Cloud sessions do not install plugins, so deploy-dotfiles copies the scripts to <repo>/.claude/hooks/c3 and this block wires them. Declared ONCE: the retired sync-to-repo.sh appended a fresh copy on every run. StopFailure(rate_limit) -> ai-usage-post.sh (#1151): cloud sessions run no statusLine and no hook input carries rate_limits, so the only usage fact a cloud session can publish to cloudy-c3-api (old c3-infra-api) is that it was rate limited; the percentages come from the statusLine path (claude-ai-usage-post.sh via statusline-assets). It reads C3_AI_USAGE_TOKEN (or mints from the AUTHELIA_* client credentials the cloud environment injects) and is a no-op without a token.",
   "hooks": {
     "PreToolUse": [
       {
@@ -104,6 +105,13 @@
           {"type": "command", "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/c3\"/no-branch-create.sh"},
           {"type": "command", "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/c3\"/no-secrets-commit.sh"},
           {"type": "command", "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/c3\"/no-mass-delete.sh"}
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {"type": "command", "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/c3\"/ai-usage-beacon.sh hook", "timeout": 5}
         ]
       }
     ],
