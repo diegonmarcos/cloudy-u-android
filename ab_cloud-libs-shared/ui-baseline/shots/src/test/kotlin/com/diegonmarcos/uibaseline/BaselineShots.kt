@@ -151,10 +151,16 @@ abstract class BaselineShots(private val device: String) {
                     appName = app, sections = decl.bottomSections(),
                 )
                 // the section's declared nav_mode: one row, or one row per group (horizontal_two_rows, e.g. Calc #1409), as the app draws it
-                if (section.pages.size > 1) NavBarTopSecondRows(section, pageId, {}, Modifier.fillMaxWidth(), underTopChrome = false)
+                // a two-level section (C3 Containers: All | Cloudy | ... each holding <group>_topology | <group>_table): the shell selects the
+                // first-row page that HOLDS the leaf and draws that page's own row under it; passing the leaf id selected nothing (#1539)
+                val held = section.pages.firstOrNull { it.holdsPage(pageId) }
+                if (section.pages.size > 1) NavBarTopSecondRows(section, held?.id ?: pageId, {}, Modifier.fillMaxWidth(), underTopChrome = false)
+                if (held != null && held.id != pageId && held.pages.size > 1) NavBarTopSecondRow(held.pages, pageId, {}, Modifier.fillMaxWidth(), underTopChrome = false)
                 Box(Modifier.weight(1f).fillMaxWidth())
                 NavBarBottom(decl.islandEntries(), sectionId, {}, dark = true)
             }
         }
     }
 }
+
+private fun NavPage.holdsPage(id: String): Boolean = this.id == id || pages.any { it.holdsPage(id) }
