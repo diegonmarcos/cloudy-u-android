@@ -32,13 +32,18 @@ class NavLayoutTest {
     }
 
     @Test fun previewEndsAtNavTopWhenTheFrameIsTheLimit() {
-        // A 20:9 phone: a 9:16 preview is height-limited, so it ends exactly at the nav's top edge.
-        val nav = NavLayout.navBounds(1080, 2400, 120, 63)
-        val frame = NavLayout.frameBounds(1080, 2400, 0, 120, 63)
+        // A 1080x1900 window: the 9:16 preview (1920 tall at full width) does not fit above the nav, so it is
+        // height-limited and ends exactly at the nav's top edge, narrower than the window.
+        val nav = NavLayout.navBounds(1080, 1900, 120, 63)
+        val frame = NavLayout.frameBounds(1080, 1900, 0, 120, 63)
         assertEquals(nav.top, frame.bottom)
         val p = NavLayout.previewBounds(frame, 9, 16)
         assertEquals(nav.top, p.bottom)
         assertTrue(p.width < 1080)
+        // A tall phone (1080x2400) fits the full-width preview with room to spare above the nav.
+        val tall = NavLayout.previewBounds(NavLayout.frameBounds(1080, 2400, 0, 120, 63), 9, 16)
+        assertEquals(1080, tall.width)
+        assertTrue(tall.bottom < NavLayout.navBounds(1080, 2400, 120, 63).top)
     }
 
     @Test fun intersectsIsFalseForTouchingEdges() {
