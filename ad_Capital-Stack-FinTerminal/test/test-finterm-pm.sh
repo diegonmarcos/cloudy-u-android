@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-# test-finterm-pm: #1478 the PM layout (Home | Vol | Commodities | Profiles), statically (no build, no network, no device).
-#   M1  the PM sub-pages are exactly Home, Vol, Commodities, Profiles, each backed by a `pm_table` stack entry whose table exists in data/pm.json
+# test-finterm-pm: #1478 / #1539 the PM layout (Home | Portfolios | Performance), statically (no build, no network, no device).
+#   M1  the PM sub-pages are exactly Home, Portfolios, Performance, each backed by a `pm_table` stack entry whose table exists in data/pm.json; the Commodities page is gone and its links (and the old Vol / Profiles links) redirect
 #   M2  Vol: the owner's columns; one row per PM portfolio dashboard (A2 dropped); allocations add up and match the dashboard; Swap No for EM portfolios, blank for DM only;
 #       rows follow the four risk levels in order, level 3 by Vol (B1, D1, C1); the filter tabs are All | DM·Low | DM·Middle | DM+EM·Middle-High | DM+EM·High
-#   M3  Commodities: the 12 commodity rows by the 7 currency columns, each row's weights add up to 100, labelled as sample values
+#   M3  Portfolios (two tables: DM vs EM, US Cyclicals; columns Portfolio | Vol | Top 3 | See all) and Performance (the windows Today, Last 7d, Last 30d, MTD, YTD, Last 1y, Last 3y CAGR; monthly rebalancing declared; the free history source declared;
+#       every portfolio of both tables baked with an as-of date or an n/a reason): all declared in data/pm.json
 #   M4  Profiles: the 8 cycle profiles, each with its phases and rows of the table's width
 #   M5  Kotlin names none of it: PmPage.kt / PmTables.kt hold no declared name, no sp literal, no type-size override, and draw FinMatrix
 # then plants a mutation per rule in a scratch copy and requires RED for each.
@@ -24,14 +25,17 @@ ui = bj["ui"]; dash = {d["id"]: d for d in dj["dashboards"]}
 kt = "app/src/main/java/com/diegonmarcos/capitalfinterm/"
 # M1
 sec = next(s for s in ui["sections"] if s["id"] == "pm")
-if [(p["id"], p["label"]) for p in sec["pages"]] != [("pm-home", "Home"), ("pm-vol", "Vol"), ("pm-commodities", "Commodities"), ("pm-profiles", "Profiles")]:
+if [(p["id"], p["label"]) for p in sec["pages"]] != [("pm-home", "Home"), ("pm-portfolios", "Portfolios"), ("pm-performance", "Performance")]:
     bad.append("M1 the PM sub-pages are %s" % [p["label"] for p in sec["pages"]])
 tabs = [e for e in ui["stacks"]["pm"] if e.get("kind") == "pm_table"]
-if [(e.get("page"), e.get("table")) for e in tabs] != [("pm-vol", "vol"), ("pm-commodities", "commodities"), ("pm-profiles", "profiles")]: bad.append("M1 the PM table entries are %s" % [(e.get("page"), e.get("table")) for e in tabs])
+if [(e.get("page"), e.get("table")) for e in tabs] != [("pm-portfolios", "portfolios"), ("pm-performance", "performance")]: bad.append("M1 the PM table entries are %s" % [(e.get("page"), e.get("table")) for e in tabs])
 for e in tabs:
     if e.get("table") not in pm: bad.append("M1 data/pm.json has no table %s" % e.get("table"))
 for e in ui["stacks"]["pm"]:
     if e.get("kind") == "dashboard" and not e.get("detail"): bad.append("M1 PM dashboard %s is not a detail page (a Vol row opens it)" % e.get("dashboard"))
+if "commodities" in pm or any(p.get("id") == "pm-commodities" for p in sec["pages"]): bad.append("M1 the PM Commodities table or page is still declared")
+for old, tab, to in (("pm-commodities", "eq", "commodity-prices"), ("pm_commodities", "eq", "commodity-prices"), ("pm-vol", "pm", "pm-portfolios"), ("pm-profiles", "pm", "pm-portfolios")):
+    if not any(r.get("from") == old and r.get("tab") == tab and r.get("to") == to for r in ui.get("redirects", [])): bad.append("M1 the legacy %s link does not redirect to %s/%s" % (old, tab, to))
 # M2
 vol = pm["vol"]
 if vol["columns"] != ["Portfolio", "DM", "DM\nBonds", "DM\nEquity", "EM", "EM\nBonds", "EM\nEquity", "Swap", "Vol"]: bad.append("M2 Vol columns are %s" % vol["columns"])
@@ -59,26 +63,49 @@ l3 = [r["dashboard"] for r in vol["rows"] if dash.get(r["dashboard"], {}).get("r
 if l3 != ["pm_b1_mid", "pm_d1_em_bonds", "pm_c1_risky"]: bad.append("M2 level 3 is %s, want B1, D1, C1" % l3)
 if "sample" not in vol["note"].lower() and "model" not in vol["note"].lower(): bad.append("M2 the Vol note does not label the values as model values")
 # M3
-cm = pm["commodities"]
-if cm["columns"] != ["Commodity", "USD", "EUR", "GBP", "CHF", "JPY", "CNY", "BRL", "Vol"]: bad.append("M3 currency columns are %s" % cm["columns"])
-if [r["name"] for r in cm["rows"]] != ["Gold", "Silver", "Platinum", "Copper", "Brent", "WTI", "Nat Gas", "Wheat", "Corn", "Soybeans", "Coffee", "Sugar"]: bad.append("M3 commodity rows are %s" % [r["name"] for r in cm["rows"]])
-for r in cm["rows"]:
-    if len(r["cells"]) != 8 or sum(int(x) for x in r["cells"][:7]) != 100: bad.append("M3 %s weights do not add up to 100: %s" % (r["name"], r["cells"]))
-if "sample" not in cm["note"].lower(): bad.append("M3 the Commodities note does not label the weights as sample values")
+po, pf = pm["portfolios"], pm["performance"]
+if po["columns"] != ["Portfolio", "Vol", "Top 3", "See all"]: bad.append("M3 the Portfolios columns are %s" % po["columns"])
+if [x["title"] for x in po["tables"]] != ["Portfolios DM vs EM", "Portfolios US Cyclicals"] or [x["table"] for x in po["tables"]] != ["vol", "profiles"]: bad.append("M3 the Portfolios tables are %s" % [(x["title"], x["table"]) for x in po["tables"]])
+if po.get("top") != 3: bad.append("M3 Top 3 is declared as top %s" % po.get("top"))
+if [w["label"] for w in pf["windows"]] != ["Today", "Last 7d", "Last 30d", "Month (MTD)", "Year (YTD)", "Last 1y", "Last 3y (CAGR, annualised)"]: bad.append("M3 the performance windows are %s" % [w["label"] for w in pf["windows"]])
+if [w["id"] for w in pf["windows"] if w.get("cagr")] != ["y3"]: bad.append("M3 only the 3y window is a CAGR")
+if pf["rebalance"] != "monthly" or pf["rebalance"] not in pf["rebalance_rules"]: bad.append("M3 the rebalancing rule is %r" % pf["rebalance"])
+if not pf["history"].get("url", "").startswith("https://") or not pf["history"].get("source"): bad.append("M3 the price history source is not declared")
+legsn = {l["name"] for l in po["tables"][0]["legs"]}
+if not legsn <= set(pf["proxies"]): bad.append("M3 legs without a proxy: %s" % sorted(legsn - set(pf["proxies"])))
+for k in pf["no_history"]:
+    if k not in dash: bad.append("M3 no_history names the unknown portfolio %s" % k)
+snap_p = os.path.join(app, "data/pm-performance.json")
+want_ids = [r["dashboard"] for r in vol["rows"]] + [t["id"] for t in pm["profiles"]["tabs"]]
+if not os.path.exists(snap_p): bad.append("M3 no data/pm-performance.json")
+else:
+    sn = json.loads(read("data/pm-performance.json"))
+    if sorted(sn["portfolios"]) != sorted(want_ids): bad.append("M3 the performance snapshot does not hold every portfolio of both tables: %s" % sorted(set(want_ids) ^ set(sn["portfolios"])))
+    for k, v in sn["portfolios"].items():
+        if "na" in v:
+            if not v["na"]: bad.append("M3 %s is n/a with no reason" % k)
+            continue
+        if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", v.get("asof", "")): bad.append("M3 %s has no as-of date" % k)
+        if set(v["values"]) != {w["id"] for w in pf["windows"]}: bad.append("M3 %s windows are %s" % (k, sorted(v["values"])))
+        for w, x in v["values"].items():
+            if x is not None and not (isinstance(x, (int, float)) and abs(x) < 20): bad.append("M3 %s/%s is not a plausible return: %r" % (k, w, x))
+    for k in pf["no_history"]:
+        if "na" not in sn["portfolios"].get(k, {}): bad.append("M3 %s has no free history but carries numbers" % k)
+    if re.search(r"(?i)\b(nan|placeholder|lorem|todo|tbd)\b", json.dumps(sn)): bad.append("M3 the performance snapshot holds a placeholder token")
 # M4
 pr = pm["profiles"]
 if [t["label"] for t in pr["tabs"]] != ["Growth", "Value", "Quality", "Cyclical", "Defensive", "Dividend", "Momentum", "Small-cap"]: bad.append("M4 profiles are %s" % [t["label"] for t in pr["tabs"]])
 for t in pr["tabs"]:
     if not t.get("leads") or not t["rows"] or any(len(r) != len(pr["columns"]) for r in t["rows"]): bad.append("M4 profile %s has no phases, no rows or a ragged row" % t["id"])
 # M5
-src = {f: re.sub(r"/\*.*?\*/", "", read(kt + f), flags=re.S) for f in ("ui/PmPage.kt", "PmTables.kt")}
-words = {x for r in cm["rows"] for x in [r["name"]]} | set(cm["columns"][1:-1]) | {t["label"] for t in pr["tabs"]} | {"Portfolio", "Commodity", "Swap"}
+src = {f: re.sub(r"/\*.*?\*/", "", read(kt + f), flags=re.S) for f in ("ui/PmPage.kt", "PmTables.kt", "ui/PmPanels.kt", "PmPortfolios.kt", "PmPerformance.kt")}
+words = {t["label"] for t in pr["tabs"]} | {"Commodity", "Swap", "Gold", "AGG", "URTH", "EEM", "EMB"} | {r["name"] for r in []}
 for f, text in src.items():
     code = "\n".join(re.sub(r"(?<![:\"])//.*$", "", l) for l in text.splitlines())
     for w in sorted(words):
         if re.search(r'"[^"]*\b%s\b[^"]*"' % re.escape(w), code): bad.append("M5 %s names %r (it is declared in data/pm.json)" % (f, w))
     if re.search(r"\d\s*\.\s*sp\b|\bfontSize\s*=", code): bad.append("M5 %s sets a type size (use the FinType ramp)" % f)
-if "FinMatrix(" not in src["ui/PmPage.kt"]: bad.append("M5 PmPage does not draw the FinMatrix")
+if "FinMatrix(" not in src["ui/PmPage.kt"] or "FinMatrix(" not in src["ui/PmPanels.kt"]: bad.append("M5 PmPage / PmPanels do not draw the FinMatrix")
 if "Pages.KIND_PM_TABLE" not in read(kt + "ui/SectionPage.kt"): bad.append("M5 SectionPage does not draw the pm_table kind")
 for b in bad: print("FAIL " + b)
 sys.exit(1 if bad else 0)
@@ -108,12 +135,21 @@ mutant "an allocation does not add up"   "$JE;d=L('data/pm.json');d['vol']['rows
 mutant "an EM portfolio loses its Swap"  "$JE;d=L('data/pm.json');d['vol']['rows'][5]['cells'][6]='';D('data/pm.json',d)" "M2 pm_b1_mid is an EM portfolio with no Swap"
 mutant "level 3 loses its Vol order"     "$JE;d=L('data/pm.json');r=d['vol']['rows'];r[5],r[6]=r[6],r[5];D('data/pm.json',d)" "M2 level 3 is"
 mutant "a filter tab is renamed"         "$JE;d=L('data/dashboards.json');d['pm_risk_tabs']['tabs'][4]['label']='EM · High';D('data/dashboards.json',d)" "M2 the filter tabs"
-mutant "a commodity row is dropped"      "$JE;d=L('data/pm.json');d['commodities']['rows'].pop();D('data/pm.json',d)" "M3 commodity rows"
-mutant "a currency column is dropped"    "$JE;d=L('data/pm.json');d['commodities']['columns'].remove('BRL');D('data/pm.json',d)" "M3 currency columns"
-mutant "a weight row stops adding up"    "$JE;d=L('data/pm.json');d['commodities']['rows'][0]['cells'][0]='51';D('data/pm.json',d)" "M3 Gold weights"
+mutant "the Commodities table comes back" "$JE;d=L('data/pm.json');d['commodities']={'columns':[],'rows':[]};D('data/pm.json',d)" "M1 the PM Commodities table or page is still declared"
+mutant "a legacy PM link stops redirecting" "$JE;d=L('build.json');d['ui']['redirects']=[r for r in d['ui']['redirects'] if r['from']!='pm-commodities'];D('build.json',d)" "M1 the legacy pm-commodities link"
+mutant "a Portfolios column is renamed"  "$JE;d=L('data/pm.json');d['portfolios']['columns'][2]='Top 5';D('data/pm.json',d)" "M3 the Portfolios columns"
+mutant "a performance window is dropped" "$JE;d=L('data/pm.json');d['performance']['windows'].pop(0);D('data/pm.json',d)" "M3 the performance windows"
+mutant "the rebalancing rule is undeclared" "$JE;d=L('data/pm.json');d['performance']['rebalance']='weekly';D('data/pm.json',d)" "M3 the rebalancing rule"
+mutant "a leg loses its proxy"           "$JE;d=L('data/pm.json');d['performance']['proxies'].pop('EM Bonds');D('data/pm.json',d)" "M3 legs without a proxy"
+mutant "a portfolio is missing from the snapshot" "$JE;d=L('data/pm-performance.json');d['portfolios'].pop('growth');D('data/pm-performance.json',d)" "M3 the performance snapshot does not hold every portfolio"
+mutant "a portfolio loses its as-of date" "$JE;d=L('data/pm-performance.json');del d['portfolios']['mp_60_40']['asof'];D('data/pm-performance.json',d)" "M3 mp_60_40 has no as-of date"
+mutant "a no-history portfolio carries numbers" "$JE;d=L('data/pm-performance.json');d['portfolios']['pm_a1_cash']=dict(d['portfolios']['mp_60_40']);D('data/pm-performance.json',d)" "M3 pm_a1_cash has no free history but carries numbers"
+mutant "an n/a has no reason"            "$JE;d=L('data/pm-performance.json');d['portfolios']['pm_d0_carry']['na']='';D('data/pm-performance.json',d)" "M3 pm_d0_carry is n/a with no reason"
+mutant "a return is implausible"         "$JE;d=L('data/pm-performance.json');d['portfolios']['mp_60_40']['values']['ytd']=55.0;D('data/pm-performance.json',d)" "M3 mp_60_40/ytd is not a plausible return"
+mutant "Kotlin names a proxy"            "$APPEND;A('$KT/PmPerformance.kt','\nval x = \"URTH\"\n')" "M5 PmPerformance.kt names 'URTH'"
 mutant "a profile is dropped"            "$JE;d=L('data/pm.json');d['profiles']['tabs'].pop();D('data/pm.json',d)" "M4 profiles are"
 mutant "Kotlin names a commodity"        "$APPEND;A('$KT/ui/PmPage.kt','\nval x = \"Gold\"\n')" "M5 ui/PmPage.kt names 'Gold'"
 mutant "Kotlin types an sp literal"      "$APPEND;A('$KT/PmTables.kt','\nval y = 12.sp\n')" "M5 PmTables.kt sets a type size"
-mutant "the page stops using FinMatrix"  "$JE;p='$KT/ui/PmPage.kt';t=open(p).read();open(p,'w').write(t.replace('FinMatrix(','FinMatrixx('))" "M5 PmPage does not draw the FinMatrix"
+mutant "the panels stop using FinMatrix" "$JE;p='$KT/ui/PmPanels.kt';t=open(p).read();open(p,'w').write(t.replace('FinMatrix(','FinMatrixx('))" "M5 PmPage / PmPanels do not draw the FinMatrix"
 
 [ "$FAILS" -eq 0 ] && echo "ALL GREEN" || { echo "$FAILS FAILED"; exit 1; }

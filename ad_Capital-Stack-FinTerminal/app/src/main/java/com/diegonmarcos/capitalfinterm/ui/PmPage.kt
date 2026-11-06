@@ -42,6 +42,9 @@ const val PM_PAGE = "pm_page:"
  */
 @Composable
 fun PmPage(key: String, nav: FinNav) {
+    // #1539 the Portfolios and Performance pages draw their own panels from data/pm.json (portfolios, performance)
+    if (key == "portfolios") { PortfoliosPanel(); return }
+    if (key == "performance") { PerformancePanel(); return }
     val ctx = LocalContext.current
     val json = remember { AssetData.read(ctx, AssetData.PM) }
     val dashboards = remember { AssetData.dashboards(ctx) }

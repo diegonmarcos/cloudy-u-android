@@ -6,7 +6,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** #1478 the PM sub-pages' tables (data/pm.json): Vol, Commodities and Profiles, declared and consistent with the dashboards. */
+/** #1478 the PM tables (data/pm.json): Vol and Profiles (the two tables of the Portfolios page since #1539), declared and consistent with the dashboards. */
 class PmTablesTest {
     private val dashboards = Dashboards.parse(DataFiles.dashboardsJson)
     private val tabs = RiskTabs.parse(DataFiles.dashboardsJson)
@@ -56,16 +56,13 @@ class PmTablesTest {
         assertEquals(tabs.drop(1).map { it.id }, listOf("dm_low", "dm_mid", "em_mid", "em_high"))
     }
 
-    @Test fun commoditiesAreRowsByCurrencyWithSampleWeightsThatSumToOneHundred() {
-        val c = PmTables.parse(DataFiles.pmJson, "commodities")!!
-        assertEquals(listOf("Commodity", "USD", "EUR", "GBP", "CHF", "JPY", "CNY", "BRL", "Vol"), c.columns)
-        assertEquals(listOf("Gold", "Silver", "Platinum", "Copper", "Brent", "WTI", "Nat Gas", "Wheat", "Corn", "Soybeans", "Coffee", "Sugar"), c.rows.map { it.name })
-        for (r in c.rows) { assertEquals(r.name, 8, r.cells.size); assertEquals(r.name, 100, (0 until 7).sumOf { n(r, it) }) }
-        assertTrue(c.note.contains("Sample"))
-        val h = PmTables.heat(c.rows, c.heat)
-        assertEquals(1f, h.flatten().filterNotNull().maxOrNull()!!, 0f)
-        assertNull(h[0][0]); assertNull(h[0][8]); assertNotNull(h[0][1])
-        assertEquals(emptyList<Float?>(), PmTables.heat(c.rows, null)[0])
+    @Test fun commoditiesAreNoLongerAPmTableAndHeatStillScalesAgainstTheLargestWeight() {
+        assertNull("#1539 the PM Commodities table is gone", PmTables.parse(DataFiles.pmJson, "commodities"))
+        val rows = listOf(PmRow("A", "", listOf("50", "10", "x")), PmRow("B", "", listOf("25", "40", "y")))
+        val h = PmTables.heat(rows, 1..2)
+        assertEquals(1f, h.flatten().filterNotNull().maxOrNull()!!, 0f); assertEquals(0.5f, h[0][1]!!, 0f); assertEquals(0.25f, h[0][2]!!, 0f)
+        assertNull(h[0][0]); assertNull(h[0][3])
+        assertEquals(emptyList<Float?>(), PmTables.heat(rows, null)[0])
     }
 
     @Test fun profilesAreTheEightCycleProfiles() {

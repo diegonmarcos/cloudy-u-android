@@ -67,7 +67,7 @@ EXPECT = {
              ("futures_board", "Agriculture Futures"), ("futures_board", "Crypto Futures"), ("futures_board", "Volatility Futures"), ("hedge_calc", "Hedge Calculator"),
              ("dashboard", "FX"), ("dashboard", "Onshore USD Rates"), ("dashboard", "Crypto")],
       "nw": [("dashboard", "Economic Calendar"), ("dashboard", "News"), ("dashboard", "Central Bank Calendar")],
-      "pm": [("pm_table", "Vol"), ("pm_table", "Commodities"), ("pm_table", "Profiles"), ("dashboard", "Portfolio & Risk Analytics"),
+      "pm": [("pm_table", "Portfolios"), ("pm_table", "Performance"), ("dashboard", "Portfolio & Risk Analytics"),
              ("dashboard", "DM Cash B100"), ("dashboard", "DM E30B70"), ("dashboard", "DM E40B60"), ("dashboard", "DM E60B40"), ("dashboard", "DM E70B30"),
              ("dashboard", "DM E40B40 · EM E10B10"), ("dashboard", "EM B100"), ("dashboard", "DM E50B10 · EM E30B10"),
              ("dashboard", "DM E70 · EM E30"), ("dashboard", "DM E60 · EM E40"), ("dashboard", "DM E40 · EM E60"), ("dashboard", "DM E30 · EM E70"), ("dashboard", "EM Carry EUR→BRL")],

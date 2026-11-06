@@ -1,5 +1,5 @@
 {
-  "_doc": "#1478 THE PM sub-pages' tables of Capital-Stack-FinTerminal (Vol, Commodities, Profiles), all MODEL / SAMPLE values, none live: the page names its table (build.json ui.stacks.pm entry `table`), Kotlin (PmTables.kt, ui/PmPage.kt) names no portfolio, commodity, currency, company or column. `columns` is the header row (a \\n is a header line break), `label_fracs` the width of the left aligned label columns (ui/fin FinMatrix), `note` the one-line caption under the table. Vol: a row names its portfolio dashboard (data/dashboards.json: the name shown is its `entry`, the filter tab is its `risk`, pm_risk_tabs) and carries the % of the portfolio in DM, DM Bonds, DM Equity, EM, EM Bonds, EM Equity, then Swap (No = the EM currency is unhedged; a blank cell is a dash) and Vol (expected annualised volatility, %). Commodities: each cell is the % of that commodity's allocation held through that currency (a row sums to 100), the last column its assumed annual Vol; `heat` = [first, last] columns tinted by weight. Profiles: sample companies per business-cycle profile and the cycle phases the profile tends to lead; a membership sample, not a screen result.",
+  "_doc": "#1539 THE PM sub-pages' data of Capital-Stack-FinTerminal. `vol` (the DM / EM portfolios and their model Vol) and `profiles` (the US cyclical profiles and their companies) are the two tables of the Portfolios page; `portfolios` declares how a table row becomes a portfolio (its legs and their weights) and the Top 3 / See all columns; `performance` declares the Performance page (the windows, the rebalancing rule, the ETF proxy of each leg, the free price-history source, the portfolios that have no free history). The Commodities table is gone: commodity prices live in EQ > Commodity prices and in HG. Kotlin (PmTables.kt, PmPortfolios.kt, PmPerformance.kt, ui/PmPage.kt) names no portfolio, company, proxy or column. Vol values of `vol` are MODEL values (assumed volatilities), Profiles weights are equal weights, performance is computed from real delayed daily closes of the legs' proxies.",
   "vol": {
     "columns": [
       "Portfolio",
@@ -188,185 +188,6 @@
           "",
           "No",
           "~15"
-        ]
-      }
-    ]
-  },
-  "commodities": {
-    "columns": [
-      "Commodity",
-      "USD",
-      "EUR",
-      "GBP",
-      "CHF",
-      "JPY",
-      "CNY",
-      "BRL",
-      "Vol"
-    ],
-    "label_fracs": [
-      0.2
-    ],
-    "heat": [
-      1,
-      7
-    ],
-    "note": "Sample model weights, not live: % of each commodity's allocation held through each currency (a row sums to 100). Vol: assumed annual volatility in %.",
-    "rows": [
-      {
-        "name": "Gold",
-        "cells": [
-          "50",
-          "15",
-          "5",
-          "10",
-          "10",
-          "10",
-          "0",
-          "15"
-        ]
-      },
-      {
-        "name": "Silver",
-        "cells": [
-          "55",
-          "15",
-          "5",
-          "5",
-          "10",
-          "10",
-          "0",
-          "28"
-        ]
-      },
-      {
-        "name": "Platinum",
-        "cells": [
-          "40",
-          "20",
-          "5",
-          "10",
-          "15",
-          "10",
-          "0",
-          "22"
-        ]
-      },
-      {
-        "name": "Copper",
-        "cells": [
-          "30",
-          "10",
-          "5",
-          "0",
-          "10",
-          "45",
-          "0",
-          "24"
-        ]
-      },
-      {
-        "name": "Brent",
-        "cells": [
-          "60",
-          "15",
-          "10",
-          "0",
-          "5",
-          "5",
-          "5",
-          "35"
-        ]
-      },
-      {
-        "name": "WTI",
-        "cells": [
-          "85",
-          "5",
-          "5",
-          "0",
-          "0",
-          "5",
-          "0",
-          "37"
-        ]
-      },
-      {
-        "name": "Nat Gas",
-        "cells": [
-          "65",
-          "20",
-          "10",
-          "0",
-          "5",
-          "0",
-          "0",
-          "55"
-        ]
-      },
-      {
-        "name": "Wheat",
-        "cells": [
-          "40",
-          "25",
-          "5",
-          "0",
-          "0",
-          "10",
-          "20",
-          "30"
-        ]
-      },
-      {
-        "name": "Corn",
-        "cells": [
-          "45",
-          "10",
-          "0",
-          "0",
-          "5",
-          "10",
-          "30",
-          "26"
-        ]
-      },
-      {
-        "name": "Soybeans",
-        "cells": [
-          "30",
-          "10",
-          "0",
-          "0",
-          "5",
-          "25",
-          "30",
-          "20"
-        ]
-      },
-      {
-        "name": "Coffee",
-        "cells": [
-          "35",
-          "20",
-          "5",
-          "5",
-          "0",
-          "0",
-          "35",
-          "32"
-        ]
-      },
-      {
-        "name": "Sugar",
-        "cells": [
-          "30",
-          "15",
-          "5",
-          "0",
-          "5",
-          "15",
-          "30",
-          "28"
         ]
       }
     ]
@@ -640,5 +461,142 @@
         ]
       }
     ]
+  },
+  "portfolios": {
+    "columns": [
+      "Portfolio",
+      "Vol",
+      "Top 3",
+      "See all"
+    ],
+    "label_fracs": [
+      0.3
+    ],
+    "top": 3,
+    "see_all": "See all",
+    "all_title": "Full allocation",
+    "weight_unit": "%",
+    "tables": [
+      {
+        "id": "dm_em",
+        "title": "Portfolios DM vs EM",
+        "table": "vol",
+        "vol_basis": "model",
+        "vol_cell": 7,
+        "no_legs": [
+          "pm_d0_carry"
+        ],
+        "legs": [
+          {
+            "name": "DM Bonds",
+            "cell": 1
+          },
+          {
+            "name": "DM Equity",
+            "cell": 2
+          },
+          {
+            "name": "EM Bonds",
+            "cell": 4
+          },
+          {
+            "name": "EM Equity",
+            "cell": 5
+          }
+        ]
+      },
+      {
+        "id": "us_cyclicals",
+        "title": "Portfolios US Cyclicals",
+        "table": "profiles",
+        "vol_basis": "history",
+        "weighting": "equal"
+      }
+    ],
+    "note": "Vol of the DM vs EM portfolios is the model's assumed annual volatility (%); Vol of the US Cyclicals is the realised volatility of the last year (%) from real daily closes, n/a where a leg has no free history. Top 3 = the three largest allocations (weights in %); equal weights in the cyclical profiles. A tap on a row lists the full allocation."
+  },
+  "performance": {
+    "windows": [
+      {
+        "id": "today",
+        "label": "Today"
+      },
+      {
+        "id": "d7",
+        "label": "Last 7d",
+        "days": 7
+      },
+      {
+        "id": "d30",
+        "label": "Last 30d",
+        "days": 30
+      },
+      {
+        "id": "mtd",
+        "label": "Month (MTD)"
+      },
+      {
+        "id": "ytd",
+        "label": "Year (YTD)"
+      },
+      {
+        "id": "y1",
+        "label": "Last 1y",
+        "years": 1
+      },
+      {
+        "id": "y3",
+        "label": "Last 3y (CAGR, annualised)",
+        "years": 3,
+        "cagr": true
+      }
+    ],
+    "columns": [
+      "Portfolio",
+      "Today",
+      "Last\n7d",
+      "Last\n30d",
+      "Month\n(MTD)",
+      "Year\n(YTD)",
+      "Last\n1y",
+      "Last 3y\nCAGR",
+      "As of"
+    ],
+    "label_fracs": [
+      0.26
+    ],
+    "rebalance": "monthly",
+    "rebalance_rules": {
+      "daily": "back to the target weights at every close",
+      "monthly": "back to the target weights at the first close of each month",
+      "none": "buy and hold"
+    },
+    "proxies": {
+      "DM Bonds": "AGG",
+      "DM Equity": "URTH",
+      "EM Bonds": "EMB",
+      "EM Equity": "EEM"
+    },
+    "no_history": {
+      "pm_a1_cash": "short-term sovereign bonds by currency: no free price history",
+      "pm_d0_carry": "a carry trade has no price history of legs"
+    },
+    "history": {
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?range=5y&interval=1d",
+      "user_agent": "Mozilla/5.0",
+      "source": "Yahoo Finance chart API (delayed daily closes)",
+      "ttl_s": 300
+    },
+    "ui": {
+      "refresh": "Refresh",
+      "refreshing": "Refreshing",
+      "na": "n/a",
+      "na_long": "n/a (no free source)",
+      "asof": "As of",
+      "source": "Source",
+      "rebalance": "Rebalanced",
+      "note": "Simple returns from the last close of each window; the 3y column is the annualised CAGR. Every row is the weighted ETF-proxy portfolio of its legs rebalanced by the declared rule, from real delayed daily closes. n/a where a leg has no free history; nothing is estimated."
+    },
+    "heat_pct": 10
   }
 }

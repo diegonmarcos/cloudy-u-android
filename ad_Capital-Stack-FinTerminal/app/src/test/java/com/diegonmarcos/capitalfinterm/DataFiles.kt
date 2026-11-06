@@ -18,6 +18,8 @@ object DataFiles {
     val quotesJson: String get() = find("../data/quotes.json", "data/quotes.json").readText()
     val quotesSnapshotJson: String get() = find("../data/quotes-snapshot.json", "data/quotes-snapshot.json").readText()
     fun quotesFixture(name: String): String = find("src/test/resources/quotes/$name", "app/src/test/resources/quotes/$name").readText()
+    val pmPerformanceJson: String get() = find("../data/pm-performance.json", "data/pm-performance.json").readText()
+    fun pmFixture(name: String): String = find("src/test/resources/pm/$name", "app/src/test/resources/pm/$name").readText()
     val buildJson: String get() = find("../build.json", "build.json").readText()
     val engineFixtureJson: String get() = find("src/test/resources/engine-fixture.json", "app/src/test/resources/engine-fixture.json").readText()
 }

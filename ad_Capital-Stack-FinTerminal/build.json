@@ -193,7 +193,7 @@
     "default_section": "cb",
     "nav_ui": {"mode": "classic", "scroll_hide": true},
     "configs_ui": ["nav_ui"],
-    "redirects": [{"from": "pm_a2_low", "tab": "pm", "to": "home", "note": "#1478 A2 Low Risk dropped (identical to DM E30B70): its deep links open the PM Homepage"}, {"from": "market_monitor", "tab": "fi", "to": "home", "note": "#1399 FI Market Monitor removed: its deep links open the FI Homepage"}, {"from": "ex", "tab": "hg", "to": "home", "note": "The EX tab became HG (Hedging): the old EX section deep link opens the HG Homepage"}, {"from": "ex-home", "tab": "hg", "to": "home", "note": "The EX Homepage became the HG Homepage"}, {"from": "cm", "tab": "eq", "to": "commodity-prices", "note": "The CM section was folded into Commodity Prices (EQ): its deep links open that page"}, {"from": "ex-commodities", "tab": "eq", "to": "commodity-prices", "note": "The old EX Commodities page moved to EQ: Commodity Prices"}],
+    "redirects": [{"from": "pm_a2_low", "tab": "pm", "to": "home", "note": "#1478 A2 Low Risk dropped (identical to DM E30B70): its deep links open the PM Homepage"}, {"from": "market_monitor", "tab": "fi", "to": "home", "note": "#1399 FI Market Monitor removed: its deep links open the FI Homepage"}, {"from": "ex", "tab": "hg", "to": "home", "note": "The EX tab became HG (Hedging): the old EX section deep link opens the HG Homepage"}, {"from": "ex-home", "tab": "hg", "to": "home", "note": "The EX Homepage became the HG Homepage"}, {"from": "cm", "tab": "eq", "to": "commodity-prices", "note": "The CM section was folded into Commodity Prices (EQ): its deep links open that page"}, {"from": "ex-commodities", "tab": "eq", "to": "commodity-prices", "note": "The old EX Commodities page moved to EQ: Commodity Prices"}, {"from": "pm-commodities", "tab": "eq", "to": "commodity-prices", "note": "The PM Commodities page was removed: commodity prices live in EQ Commodity Prices"}, {"from": "pm_commodities", "tab": "eq", "to": "commodity-prices", "note": "The PM Commodities page was removed: commodity prices live in EQ Commodity Prices"}, {"from": "pm-vol", "tab": "pm", "to": "pm-portfolios", "note": "PM Vol became Portfolios"}, {"from": "pm-profiles", "tab": "pm", "to": "pm-portfolios", "note": "PM Profiles became Portfolios (US Cyclicals)"}],
     "sections": [
       {
         "id": "cb",
@@ -262,9 +262,8 @@
         "nav_mode": "horizontal_one_row",
         "pages": [
           {"id": "pm-home", "label": "Home", "icon": "home"},
-          {"id": "pm-vol", "label": "Vol", "icon": "table_chart"},
-          {"id": "pm-commodities", "label": "Commodities", "icon": "inventory_2"},
-          {"id": "pm-profiles", "label": "Profiles", "icon": "groups"}
+          {"id": "pm-portfolios", "label": "Portfolios", "icon": "table_chart"},
+          {"id": "pm-performance", "label": "Performance", "icon": "bar_chart"}
         ]
       },
       {
@@ -471,19 +470,14 @@
       ],
       "pm": [
         {
-          "kind": "pm_table", "page": "pm-vol", "table": "vol",
-          "title": "Vol",
-          "subtitle": "The portfolios by risk level: allocation in DM and EM, Swap and expected annualised volatility; a row opens the portfolio"
+          "kind": "pm_table", "page": "pm-portfolios", "table": "portfolios",
+          "title": "Portfolios",
+          "subtitle": "Portfolios DM vs EM and Portfolios US Cyclicals: Vol, the Top 3 allocations and the full allocation list"
         },
         {
-          "kind": "pm_table", "page": "pm-commodities", "table": "commodities",
-          "title": "Commodities",
-          "subtitle": "Commodities by the currency they are held in: sample allocation weights and volatility"
-        },
-        {
-          "kind": "pm_table", "page": "pm-profiles", "table": "profiles",
-          "title": "Profiles",
-          "subtitle": "Companies by business-cycle profile: Growth, Value, Quality, Cyclical, Defensive, Dividend, Momentum, Small-cap"
+          "kind": "pm_table", "page": "pm-performance", "table": "performance",
+          "title": "Performance",
+          "subtitle": "Every portfolio: Today, Last 7d, Last 30d, MTD, YTD, Last 1y and the Last 3y CAGR, from real delayed prices of its legs"
         },
         {
           "kind": "dashboard", "detail": true,
