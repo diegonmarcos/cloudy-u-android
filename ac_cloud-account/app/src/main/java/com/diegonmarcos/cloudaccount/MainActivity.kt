@@ -28,6 +28,8 @@ import androidx.compose.ui.platform.LocalContext
 import com.diegonmarcos.superapp.accountui.AccountUi
 import com.diegonmarcos.superapp.accountui.AccountUiHost
 import com.diegonmarcos.superapp.accountui.AccountUiPage
+import com.diegonmarcos.superapp.fleetdata.FleetDataRouting
+import com.diegonmarcos.superapp.fleetdata.ui.FleetDataPage
 import com.diegonmarcos.cloudaccount.hub.AppProfilesPage
 import com.diegonmarcos.cloudaccount.hub.ConnectionsPage
 import com.diegonmarcos.cloudaccount.hub.HubNav
@@ -253,7 +255,12 @@ class MainActivity : AppCompatActivity() {
                 "settings" -> AccountSettingsPage("${BuildConfig.VERSION_NAME} · ${BuildConfig.GIT_SHORT_SHA} · built ${BuildConfig.BUILD_TIMESTAMP}")
                 else -> ConnectionsPage(go)
             }
-            "activity" -> ActivityPage()
+            "activity" -> when (page) {
+                // #1547 Fleet Data: the Cloud Account dataset browser (the accountdata provider's served tiers 1-2), the same
+                // libs:fleet-data-ui page Cloud Store shows for its public datasets. Reads the provider's live manifest + cache; nothing baked.
+                "fleetdata" -> FleetDataPage(FleetDataRouting.ACCOUNT, Modifier.fillMaxSize())
+                else -> ActivityPage()
+            }
             "configs" -> Unit   // the app's own Configs: drawn above by FleetConfigsPageBody (General | Perms | About)
             else -> AccountPlaceholderPage(section, page, "no task: undeclared section")
         }

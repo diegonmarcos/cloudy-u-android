@@ -137,7 +137,7 @@ want = {'vault': ['ids', 'cards', 'secrets', 'autocomplete'],
         'config': ['android', 'desktop', 'c3', 'repos'],
         'connect': ['status', 'auth', 'fleetsetup'],
         'devices': ['mesh', 'peer-control', 'backup', 'files', 'working', 'diff'],
-        'activity': ['activity'],
+        'activity': ['activity', 'fleetdata'],
         'configs': ['general', 'perms', 'about']}
 strips = {'autocomplete': ['personal', 'sites', 'snippets'], 'android': ['cloud-apps', 'phone-apps', 'runbook'], 'c3': ['infra', 'containers'],
           'secrets': ['providers', 'keys', 'tokens', 'grants', 'import', 'entries'], 'backup': ['databases', 'bundle', 'me'],

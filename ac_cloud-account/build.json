@@ -904,6 +904,12 @@
             "id": "activity",
             "label": "Activity",
             "icon": "history"
+          },
+          {
+            "_doc": "#1547 Fleet Data: the Cloud Account dataset browser (libs:fleet-data-ui), the accountdata provider's served tiers 1-2 grouped by IPC endpoint with sync status, consumers, Sync all, JSON view and diff. Read at runtime from the provider's cache + manifest; nothing baked.",
+            "id": "fleetdata",
+            "label": "Fleet Data",
+            "icon": "dataset"
           }
         ]
       },
