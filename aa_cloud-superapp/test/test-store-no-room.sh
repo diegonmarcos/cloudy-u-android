@@ -59,7 +59,10 @@ CHECKS = [
      lambda s: "ApkCache.roomText(ctx)" in fun(code(s["auto"]), "download")
                and '.put("room",' in fun(code(s["auto"]), "json")),
     ("Cancel keeps the partial and the package queued for the resume",
-     lambda s: "item.status = QUEUED\n                return stop(ctx, s, \"cancelled" in code(s["auto"])
+     # #1551 the stop reason now goes through stopWhy() (user cancel vs Android stopping the job); the invariant is unchanged:
+     # a cancel mid-download sets the item back to QUEUED and stops for the next pass to resume from its .part.
+     lambda s: "item.status = QUEUED\n                return stop(ctx, s, stopWhy(" in code(s["auto"])
+               and "cancelled by the user" in fun(code(s["auto"]), "stopWhy")
                and "UpdateProgress.beginDownload()" in fun(code(s["auto"]), "run")),
     ("no progress popup: the SuperApp never attaches the update overlay",
      lambda s: "UpdateOverlayFragment" not in code(s["shell"]) and ".add(" not in fun(code(s["shell"]), "handleUpdateState")),
