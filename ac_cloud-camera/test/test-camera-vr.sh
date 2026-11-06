@@ -11,8 +11,10 @@
 #   R3 the ML is LOCAL and bundled: libs:ml-l-vision-mlkit declares ML Kit Face Detection and Selfie Segmentation (the bundled
 #      artifacts, not the Play Services ones), the VR code opens no network and asks for no permission (the camera and
 #      microphone grants are Configs > Perms rows; the recorder only CHECKS the microphone).
-#   R4 the filters are DATA: assets/vr-filters.json declares hats, glasses, masks, backgrounds, colour looks and stickers
-#      with their anchors (landmark, offset, scale) and vector art; no filter id or landmark literal sits in the VR code.
+#   R4 the filters are DATA, read at RUNTIME, never baked into the APK (#1547): the dataset `vr-filters` (served by Cloud Store,
+#      repo source data/fleet/app/cld.camera/vr-filters.json) declares hats, glasses, masks, backgrounds, colour looks and
+#      stickers with their anchors (landmark, offset, scale) and vector art; the controller reads it through libs:fleet-data-client
+#      (FleetData.get + FilterCatalog.parse), never opens the asset, and no filter id or landmark literal sits in the VR code.
 #   R5 the compositor does the work through the tested maths: backgrounds through the person mask (DST_IN), the LUT, the
 #      overlays through FilterAnchors.place / placeOnBox.
 #   R6 the photo is composited at the still's own size; the video is recorded from the composited frames (MediaRecorder
@@ -35,7 +37,7 @@ V = LIB + "/src/main/java/com/diegonmarcos/superapp/vision"
 FILES = {
     "ctl": J + "/vr/VrController.kt", "rec": J + "/vr/VrRecorder.kt", "snap": J + "/vr/VrSnapshot.kt",
     "cam": J + "/CamConfig.kt", "main": J + "/ui/activities/MainActivity.kt", "layout": "app/src/main/res/layout/activity_main.xml",
-    "build": "build.json", "filters": "app/src/main/assets/vr-filters.json", "libgradle": LIB + "/build.gradle",
+    "build": "build.json", "filters": "../data/fleet/app/cld.camera/vr-filters.json", "libgradle": LIB + "/build.gradle",
     "comp": V + "/VrCompositor.kt", "anchors": V + "/FilterAnchors.kt", "catalog": V + "/FilterCatalog.kt", "lut": V + "/ColorLut.kt",
     "face": V + "/MlKitFaceDetector.kt", "seg": V + "/MlKitPersonSegmenter.kt", "view": V + "/CompositeFrameView.kt",
     "inv": "../licenses/inventory.json", "licensing": "../LICENSING.md",
@@ -89,7 +91,9 @@ def checks(f):
     need("R4 hats are on the head, glasses on the eyes", all(x["anchor"]["landmark"] == "head_top" for x in flt["filters"] if x["kind"] == "hat")
          and all(x["anchor"]["landmark"] == "eyes_center" for x in flt["filters"] if x["kind"] == "glasses"))
     need("R4 every overlay declares landmark, scale and art", all("landmark" in x["anchor"] and x["anchor"]["scale"] > 0 and x["art"] for x in flt["filters"] if "anchor" in x))
-    need("R4 the controller reads the declared catalogue", "FilterCatalog.load(" in c["ctl"] and "vr-filters.json" in c["ctl"])
+    need("R4 the controller reads the declared catalogue at runtime, not baked",
+         "FilterCatalog.parse(" in c["ctl"] and "FleetData.get(" in c["ctl"] and 'DATASET = "vr-filters"' in c["ctl"]
+         and "assets.open(" not in c["ctl"])
     ids = [x["id"] for x in flt["filters"]]
     for k in ("ctl", "comp", "face", "seg", "view", "rec", "snap"):
         need("R4 %s names no filter id" % k, not any(('"%s"' % i) in c[k] for i in ids))
@@ -149,7 +153,8 @@ M = [
     ("the catalogue loses its stickers", "filters", edit_json("filters", lambda d: d.__setitem__("filters", [x for x in d["filters"] if x["kind"] != "sticker"]))),
     ("a hat moves off the head", "filters", edit_json("filters", lambda d: [x["anchor"].__setitem__("landmark", "chin") for x in d["filters"] if x["kind"] == "hat"])),
     ("a filter id is typed into the controller", "ctl", lambda t: t + "\nval fav = \"hat_party\"\n"),
-    ("the controller stops reading the catalogue", "ctl", lambda t: t.replace("FilterCatalog.load(", "FilterCatalogX.load(")),
+    ("the controller stops reading the catalogue", "ctl", lambda t: t.replace("FilterCatalog.parse(", "FilterCatalogX.parse(")),
+    ("the controller reads the baked asset again", "ctl", lambda t: t.replace("FleetData.get(activity, DATASET, own = true) { it }", "activity.assets.open(\"vr-filters.json\").bufferedReader().readText()")),
     ("the background ignores the mask", "comp", lambda t: t.replace("PorterDuff.Mode.DST_IN", "PorterDuff.Mode.SRC_OVER")),
     ("the LUT is never applied", "comp", lambda t: t.replace("lut.apply(px)", "")),
     ("overlays skip the anchor maths", "comp", lambda t: t.replace("FilterAnchors.place(anchor", "FilterAnchors.placeX(anchor")),
