@@ -426,7 +426,7 @@ want = ['H:SETUP',
         'S:NETWORK',          'Firewall[ic_lock]', 'DNS[ic_world]', 'Webserver[ic_web]', 'Cloud Mesh[ic_wg]', 'Apps Access[ic_apps]', 'ADB Shell[ic_terminal]', 'WiFi[ic_wifi]',
         'S:OBSERVABILITY', 'X-Ray[ic_monitor_heart]', 'LogCat[ic_subject]', 'Permissions[ic_key]', 'About[ic_info]',
         'H:FLEET',        'C3[ic_cloud_control]', 'Peer Control[ic_hub]', 'Bluetooth[ic_bluetooth]',
-        'H:AGENTS',       'Watchdog[ic_p_watchdog]', 'Watchtower[ic_monitor_heart]',
+        'H:AGENTS',       'Watchdog[ic_p_watchdog]', 'Watchtower[ic_watchtower]',
         'H:ACTIONS',
         'Update All[ic_system_update]', 'KDE Connect[ic_devices]', 'Animations[ic_animation]']
 if out == want: print('OK')
@@ -483,7 +483,7 @@ echo "== T13: LOGCAT IS ITS OWN OBSERVABILITY TAB, immediately before About, and
 check "$(python3 - "$BJ" <<'PY'
 import json, sys
 ids = [p['id'] for p in next(s for s in json.load(open(sys.argv[1]))['ui']['sections']
-                             if s['id'] == 'config')['pages'] if p.get('subgroup') == 'Observability']
+                             if s['id'] == 'config')['pages'] if p.get('subgroup') == 'Observability' and not p.get('hidden')]  # the tiles; hidden Battery is not one
 sec = next(s for s in json.load(open(sys.argv[1]))['ui']['sections'] if s['id'] == 'config')
 grp = [i for i in next(g for g in sec['groups'] if g['id'] == 'setup')['pages'] if i in ids]  # #1548 Observability is a Setup subgroup
 print('OK' if ids == grp and ids[-1] == 'app-about' and ids.index('logcat') < ids.index('app-about') else 'Observability order = %r, group = %r' % (ids, grp))

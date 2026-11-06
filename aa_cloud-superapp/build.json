@@ -5152,7 +5152,7 @@
             "_doc": "#1548 Watchtower - the second Agents page: the same hub page as Watchdog (SubgroupHubFragment), declared over Observability only, so it lists X-Ray, LogCat, Permissions and About and follows that subgroup by data. An in-app page, not the C3-Watchtower APK (that stays extapp:c3-watchtower on the C3 strip).",
             "id": "watchtower",
             "label": "Watchtower",
-            "icon": "ic_monitor_heart",
+            "icon": "ic_watchtower",
             "hub_sections": ["Observability"],
             "group": "Agents"
           },
@@ -5190,7 +5190,10 @@
             "id": "battery",
             "label": "Battery",
             "icon": "ic_settings",
-            "hidden": true
+            "hidden": true,
+            "_doc_group": "#1548 declared under Setup > Observability with the X-Ray pages it is opened from (hidden, so no tile): the X-Ray export reads that subgroup as the Observability page set.",
+            "group": "Setup",
+            "subgroup": "Observability"
           },
           {
             "_doc": "Bluetooth tab: scan, filter and list nearby devices (#1221). hidden = reached through the Bluetooth strip, not as its own Configs tile.",
