@@ -155,6 +155,7 @@ Module `aa_cloud-superapp`; libs: lib-account, lib-ai-usage, lib-analytics, lib-
 | `unpack_after_install` | prefs | device | no | #1121 What the last explicit unpack of the Termux terminal / Nix-on-Droid said after Cloud Store installed it ('unpacking', 'unpacked', the error): one sentence per package, shown on the row. Never migrates. |
 | `updater_advisory` | prefs | device | no | Update advisory feed, snooze/shown/fail state per app. |
 | `updater_apk_cache_notes` | prefs | device | no | Notes about cached downloaded APKs. |
+| `updater_superseded_sessions` | prefs | device | no | #1551 PackageInstaller session ids this app abandoned because a newer session for the same package replaced them; their delayed INSTALL_FAILED_ABORTED answer is swallowed at the receiver. Device-local, ephemeral session ids; must not migrate to a new phone. |
 | `user_registry` | prefs | config (keys: applied_at→device, peer_id→device) | yes | Registry JSON, identity_email and peer_id: user identity/peer registry applied on this device. |
 | `vault_cockpit` | prefs | device | no | Only holds this phone's device_id used in the vault cockpit. |
 | `wd_keepalive` | prefs | config | yes | Wireless-debugging keepalive switch (`enabled`), the owner's choice in Configs ▸ Controls. |
@@ -289,6 +290,7 @@ Module `ac_cloud-account`; libs: lib-account, lib-account-ui, lib-appstore, lib-
 | `unpack_after_install` | prefs | device | no | #1121 What the last explicit unpack of the Termux terminal / Nix-on-Droid said after Cloud Store installed it ('unpacking', 'unpacked', the error): one sentence per package, shown on the row. Never migrates. |
 | `updater_advisory` | prefs | device | no | Update advisory feed, snooze/shown/fail state per app. |
 | `updater_apk_cache_notes` | prefs | device | no | Notes about cached downloaded APKs. |
+| `updater_superseded_sessions` | prefs | device | no | #1551 PackageInstaller session ids this app abandoned because a newer session for the same package replaced them; their delayed INSTALL_FAILED_ABORTED answer is swallowed at the receiver. Device-local, ephemeral session ids; must not migrate to a new phone. |
 | `user_registry` | prefs | config (keys: applied_at→device, peer_id→device) | yes | Registry JSON, identity_email and peer_id: user identity/peer registry applied on this device. |
 | `vault_cockpit` | prefs | device | no | Only holds this phone's device_id used in the vault cockpit. |
 
@@ -328,6 +330,7 @@ Module `ac_cloud-tasks`; libs: lib-ai, lib-analytics, lib-bottomnav, lib-core, l
 | `tasks_prefs` | prefs | config (keys: filter→device, selected_list→device) | yes | Cloud Tasks Settings > Appearance (light / dark / system) and where the user was: the top filter bar's status and tag selection and the list the Tasks page shows. The theme is the setting that moves to a new phone; the filter and the list id name rows of this phone's tasks database and mean nothing elsewhere. |
 | `updater_advisory` | prefs | device | no | Update advisory feed, snooze/shown/fail state per app. |
 | `updater_apk_cache_notes` | prefs | device | no | Notes about cached downloaded APKs. |
+| `updater_superseded_sessions` | prefs | device | no | #1551 PackageInstaller session ids this app abandoned because a newer session for the same package replaced them; their delayed INSTALL_FAILED_ABORTED answer is swallowed at the receiver. Device-local, ephemeral session ids; must not migrate to a new phone. |
 
 | file | class | doc |
 |---|---|---|
@@ -372,6 +375,7 @@ Module `ac_cloud-browser`; libs: lib-ai, lib-analytics, lib-autofill, lib-blueto
 | `tabs` | prefs | config (keys: active_url→device, defaults_seeded_v1→device) | yes | Browser tab groups/active URL are user state; defaults_seeded_v1 is a migration marker. |
 | `updater_advisory` | prefs | device | no | Update advisory feed, snooze/shown/fail state per app. |
 | `updater_apk_cache_notes` | prefs | device | no | Notes about cached downloaded APKs. |
+| `updater_superseded_sessions` | prefs | device | no | #1551 PackageInstaller session ids this app abandoned because a newer session for the same package replaced them; their delayed INSTALL_FAILED_ABORTED answer is swallowed at the receiver. Device-local, ephemeral session ids; must not migrate to a new phone. |
 | `web_bluetooth_grants` | prefs | device | no | #1222 Cloud Browser's Web Bluetooth permission memory: per site origin, the Bluetooth devices (address, name) the user picked in the chooser and the services the page named. Device addresses belong to this phone's radio and pairings, so it never migrates; a private tab keeps its grants in memory only. |
 | `web_nfc_grants` | prefs | device | no | #1225 Cloud Browser's Web NFC permission memory: per site origin, whether the user allowed the site to read and write NFC tags. The NFC radio belongs to this phone, so it never migrates; a private tab keeps its grant in memory only. |
 | `web_serial_grants` | prefs | device | no | #1225 Cloud Browser's Web Serial permission memory: per site origin, the USB serial ports (vendor:product key, name) the user picked in the chooser. A port is a cable on this phone, so it never migrates; a private tab keeps its grants in memory only. |
@@ -456,6 +460,7 @@ Module `ac_cloud-c3`; libs: lib-ai, lib-analytics, lib-bottomnav, lib-core, lib-
 | `store_notify` | prefs | config | yes | Cloud Store > Configs > Notifications: which Store messages (update available, install done, failures) are posted on which channel (system notification, in-app feed); the owner's switches, everything on until turned off, so it moves with the phone. |
 | `updater_advisory` | prefs | device | no | Update advisory feed, snooze/shown/fail state per app. |
 | `updater_apk_cache_notes` | prefs | device | no | Notes about cached downloaded APKs. |
+| `updater_superseded_sessions` | prefs | device | no | #1551 PackageInstaller session ids this app abandoned because a newer session for the same package replaced them; their delayed INSTALL_FAILED_ABORTED answer is swallowed at the receiver. Device-local, ephemeral session ids; must not migrate to a new phone. |
 
 Coverage: 12 covered, 0 gaps.
 
@@ -610,6 +615,7 @@ Module `ac_cloud-contacts`; libs: lib-analytics, lib-bottomnav, lib-contacts, li
 | `store_notify` | prefs | config | yes | Cloud Store > Configs > Notifications: which Store messages (update available, install done, failures) are posted on which channel (system notification, in-app feed); the owner's switches, everything on until turned off, so it moves with the phone. |
 | `updater_advisory` | prefs | device | no | Update advisory feed, snooze/shown/fail state per app. |
 | `updater_apk_cache_notes` | prefs | device | no | Notes about cached downloaded APKs. |
+| `updater_superseded_sessions` | prefs | device | no | #1551 PackageInstaller session ids this app abandoned because a newer session for the same package replaced them; their delayed INSTALL_FAILED_ABORTED answer is swallowed at the receiver. Device-local, ephemeral session ids; must not migrate to a new phone. |
 
 | file | class | doc |
 |---|---|---|
@@ -684,6 +690,7 @@ Module `ac_cloud-drive`; libs: lib-ai, lib-analytics, lib-auth, lib-bottomnav, l
 | `store_notify` | prefs | config | yes | Cloud Store > Configs > Notifications: which Store messages (update available, install done, failures) are posted on which channel (system notification, in-app feed); the owner's switches, everything on until turned off, so it moves with the phone. |
 | `updater_advisory` | prefs | device | no | Update advisory feed, snooze/shown/fail state per app. |
 | `updater_apk_cache_notes` | prefs | device | no | Notes about cached downloaded APKs. |
+| `updater_superseded_sessions` | prefs | device | no | #1551 PackageInstaller session ids this app abandoned because a newer session for the same package replaced them; their delayed INSTALL_FAILED_ABORTED answer is swallowed at the receiver. Device-local, ephemeral session ids; must not migrate to a new phone. |
 | `user_registry` | prefs | config (keys: applied_at→device, peer_id→device) | yes | Registry JSON, identity_email and peer_id: user identity/peer registry applied on this device. |
 
 | file | class | doc |
@@ -762,6 +769,7 @@ Module `ac_cloud-mail`; libs: lib-bottomnav, lib-core, lib-crash, lib-databacken
 | `unifiedpush_state` | prefs | device | no | UnifiedPush subscription state per account (endpoint, device id, status, timestamps); re-registered on new phone. |
 | `updater_advisory` | prefs | device | no | Update advisory feed, snooze/shown/fail state per app. |
 | `updater_apk_cache_notes` | prefs | device | no | Notes about cached downloaded APKs. |
+| `updater_superseded_sessions` | prefs | device | no | #1551 PackageInstaller session ids this app abandoned because a newer session for the same package replaced them; their delayed INSTALL_FAILED_ABORTED answer is swallowed at the receiver. Device-local, ephemeral session ids; must not migrate to a new phone. |
 | `webview_layer_guard` | prefs | device | no | WebView hardware-layer crash latch and nav fade guard; tied to this device GPU. |
 
 | file | class | doc |
@@ -848,6 +856,7 @@ Module `ac_cloud-me`; libs: lib-account-ui, lib-analytics, lib-autofill, lib-bot
 | `store_notify` | prefs | config | yes | Cloud Store > Configs > Notifications: which Store messages (update available, install done, failures) are posted on which channel (system notification, in-app feed); the owner's switches, everything on until turned off, so it moves with the phone. |
 | `updater_advisory` | prefs | device | no | Update advisory feed, snooze/shown/fail state per app. |
 | `updater_apk_cache_notes` | prefs | device | no | Notes about cached downloaded APKs. |
+| `updater_superseded_sessions` | prefs | device | no | #1551 PackageInstaller session ids this app abandoned because a newer session for the same package replaced them; their delayed INSTALL_FAILED_ABORTED answer is swallowed at the receiver. Device-local, ephemeral session ids; must not migrate to a new phone. |
 
 | file | class | doc |
 |---|---|---|
@@ -955,6 +964,7 @@ Module `ac_cloud-nav`; libs: lib-analytics, lib-bottomnav, lib-core, lib-crash, 
 | `tracker_place_addr_v2` | prefs | device | no | Cache of reverse-geocoded addresses and POI name + category (open provider answers by ~11 m grid cell) so a place is asked once; re-fetched on demand. |
 | `updater_advisory` | prefs | device | no | Update advisory feed, snooze/shown/fail state per app. |
 | `updater_apk_cache_notes` | prefs | device | no | Notes about cached downloaded APKs. |
+| `updater_superseded_sessions` | prefs | device | no | #1551 PackageInstaller session ids this app abandoned because a newer session for the same package replaced them; their delayed INSTALL_FAILED_ABORTED answer is swallowed at the receiver. Device-local, ephemeral session ids; must not migrate to a new phone. |
 
 | file | class | doc |
 |---|---|---|
@@ -989,6 +999,7 @@ Module `ac_cloud-news`; libs: lib-analytics, lib-apify, lib-bottomnav, lib-core,
 | `store_notify` | prefs | config | yes | Cloud Store > Configs > Notifications: which Store messages (update available, install done, failures) are posted on which channel (system notification, in-app feed); the owner's switches, everything on until turned off, so it moves with the phone. |
 | `updater_advisory` | prefs | device | no | Update advisory feed, snooze/shown/fail state per app. |
 | `updater_apk_cache_notes` | prefs | device | no | Notes about cached downloaded APKs. |
+| `updater_superseded_sessions` | prefs | device | no | #1551 PackageInstaller session ids this app abandoned because a newer session for the same package replaced them; their delayed INSTALL_FAILED_ABORTED answer is swallowed at the receiver. Device-local, ephemeral session ids; must not migrate to a new phone. |
 
 | file | class | doc |
 |---|---|---|
@@ -1145,6 +1156,7 @@ Module `ac_cloud-store`; libs: lib-ai, lib-appstore, lib-bottomnav, lib-core, li
 | `update_checks` | prefs | device | no | #1078 Cloud Store: whether the one-time battery-optimization prompt has been shown on this phone; a prompt marker, never migrated (the new phone asks once itself). |
 | `updater_advisory` | prefs | device | no | Update advisory feed, snooze/shown/fail state per app. |
 | `updater_apk_cache_notes` | prefs | device | no | Notes about cached downloaded APKs. |
+| `updater_superseded_sessions` | prefs | device | no | #1551 PackageInstaller session ids this app abandoned because a newer session for the same package replaced them; their delayed INSTALL_FAILED_ABORTED answer is swallowed at the receiver. Device-local, ephemeral session ids; must not migrate to a new phone. |
 
 Coverage: 12 covered, 0 gaps.
 
@@ -1238,6 +1250,7 @@ Module `ac_cloud-wallet`; libs: lib-analytics, lib-bottomnav, lib-core, lib-cras
 | `store_notify` | prefs | config | yes | Cloud Store > Configs > Notifications: which Store messages (update available, install done, failures) are posted on which channel (system notification, in-app feed); the owner's switches, everything on until turned off, so it moves with the phone. |
 | `updater_advisory` | prefs | device | no | Update advisory feed, snooze/shown/fail state per app. |
 | `updater_apk_cache_notes` | prefs | device | no | Notes about cached downloaded APKs. |
+| `updater_superseded_sessions` | prefs | device | no | #1551 PackageInstaller session ids this app abandoned because a newer session for the same package replaced them; their delayed INSTALL_FAILED_ABORTED answer is swallowed at the receiver. Device-local, ephemeral session ids; must not migrate to a new phone. |
 | `wallet_mail_connector` | prefs | config (keys: password→secret) | yes | Mail connector host/email are account links; password is a credential. |
 | `wallet_store` | prefs | content (keys: seed_version→device) | no | Wallet items (cards/passes) the user stored; seed_version is a marker. |
 

@@ -2018,6 +2018,14 @@
         "lib-updater"
       ]
     },
+    "updater_superseded_sessions": {
+      "kind": "prefs",
+      "class": "device",
+      "doc": "#1551 PackageInstaller session ids this app abandoned because a newer session for the same package replaced them; their delayed INSTALL_FAILED_ABORTED answer is swallowed at the receiver. Device-local, ephemeral session ids; must not migrate to a new phone.",
+      "used_by": [
+        "lib-updater"
+      ]
+    },
     "user_registry": {
       "kind": "prefs",
       "class": "config",
