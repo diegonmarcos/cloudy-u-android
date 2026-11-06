@@ -68,6 +68,9 @@ object StoreEngine {
         }
     }
 
+    /** Tests only: drop the process-wide engine so the next [get] binds the CURRENT app's files dir and cache (each Robolectric test has its own). */
+    fun resetForTest() = synchronized(this) { engine = null; asked.clear() }
+
     /** The engine if this process has built it yet, else null (never builds it). */
     fun engineOrNull(): DownloadEngine? = engine
 

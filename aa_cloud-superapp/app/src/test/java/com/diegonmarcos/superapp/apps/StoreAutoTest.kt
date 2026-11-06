@@ -86,6 +86,7 @@ class StoreAutoTest {
     @Before
     fun up() {
         UpdateProgress.reset()
+        com.diegonmarcos.superapp.appstore.StoreEngine.resetForTest()   // #1517 one engine per process: bind this test's dirs
         // #812 room is real free storage (StatFs); Robolectric's reads 0 — a 40 GB phone.
         ApkCache.freeBytes = { 40_000_000_000L }
         ApkCache.clear(ctx)
