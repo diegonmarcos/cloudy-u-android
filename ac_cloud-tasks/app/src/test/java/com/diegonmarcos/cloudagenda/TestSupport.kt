@@ -100,7 +100,9 @@ class FakeEnv(context: Context, seed: Boolean = true) : TasksEnv {
     override var pickedLink: Attachment? by mutableStateOf(null)
     override fun consumePicked() { pickedLink = null }
 
-    override val mock = MockTasks.load(context)
+    // The fixture is the debug-only mock file read straight from the source tree: mock data is not in the release assets (#1547), so a test
+    // never depends on what a build variant packages.
+    override val mock = MockTasks.parse(java.io.File("src/debug/assets/mock-tasks.json").readText())
     override val structure = Structure.load(context)
     override val notes = NotesModel(MemoryNotesStore(), NotesDecl.load(context))
     override val chat = AiChatState(FakeAiHost())

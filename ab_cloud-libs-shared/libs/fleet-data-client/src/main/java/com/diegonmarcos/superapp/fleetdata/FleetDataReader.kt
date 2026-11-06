@@ -24,7 +24,7 @@ class FleetDataReader(
     fun <T> get(dataset: String, ownPackage: String? = null, parse: (String) -> T): T? {
         if (!FleetDataRouting.validDataset(dataset)) return null
         val path = FleetDataRouting.path(dataset, ownPackage)
-        val key = path.replace('/', '__')
+        val key = path.replace("/", "__")
         val fresh = runCatching { source.open(FleetDataRouting.authorityFor(dataset), path)?.use { readAll(it) } }.getOrNull()
         if (fresh != null) {
             val parsed = decode(fresh, parse)
