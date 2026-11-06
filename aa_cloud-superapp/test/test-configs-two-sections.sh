@@ -77,7 +77,7 @@ def members(g, s=''):
             if not p.get('hidden') and not p.get('is_action')
             and p.get('group', '') == g and p.get('subgroup', '') == s]
 want = {
-    ('Setup', 'Launcher'):             ['Quick Actions', 'Folders', 'One-Hand', 'Notify'],  # #1553 Folders; #1550 Folders before One-Hand so Notify stays right after One-Hand (#580/#649); Controls = tabs Presets | Panels (UI | Tools)
+    ('Setup', 'Launcher'):             ['Quick Actions', 'One-Hand', 'Folders', 'Notify'],  # #1553 Folders between One-Hand and Notify; Controls = tabs Presets | Panels (UI | Tools)
     ('Fleet', ''):                     ['C3', 'Peer Control', 'Bluetooth'],  # #1221 Bluetooth first; Agents moved to Observability
     ('Setup', 'Connect'):          ['Account'],
     ('Setup', 'Apps'):             ['Store'],  # Permissions moved to Observability
@@ -422,7 +422,7 @@ for g, s, label, icon in tiles:
 want = ['H:SETUP',
         'S:CONNECT',      'Account[ic_person]',
         'S:APPS',         'Store[ic_storefront]',
-        'S:LAUNCHER',     'Quick Actions[ic_home]', 'Folders[ic_p_folder]', 'One-Hand[ic_onehand]', 'Notify[ic_rss]',
+        'S:LAUNCHER',     'Quick Actions[ic_home]', 'One-Hand[ic_onehand]', 'Folders[ic_p_folder]', 'Notify[ic_rss]',
         'S:NETWORK',          'Firewall[ic_lock]', 'DNS[ic_world]', 'Webserver[ic_web]', 'Cloud Mesh[ic_wg]', 'Apps Access[ic_apps]', 'ADB Shell[ic_terminal]', 'WiFi[ic_wifi]',
         'S:OBSERVABILITY', 'X-Ray[ic_monitor_heart]', 'LogCat[ic_subject]', 'Permissions[ic_key]', 'About[ic_info]',
         'H:AGENTS',       'Watchdog[ic_p_watchdog]', 'Watchtower[ic_watchtower]',
@@ -435,7 +435,7 @@ else:
     print('rendered != spec: ' + ' | '.join(l for l in difflib.unified_diff(want, out, lineterm='', n=0)
                                            if l[:1] in '+-' and l[:3] not in ('+++', '---')))
 PY
-)" "grid = SETUP ▸ CONNECT[Account] ▸ APPS[Store] ▸ LAUNCHER[Quick Actions,Folders,One-Hand,Notify] ▸ NETWORK[Firewall,DNS,Webserver,Cloud Mesh,Apps Access,ADB Shell,WiFi] ▸ OBSERVABILITY[X-Ray,LogCat,Permissions,About] FLEET[C3,Peer Control,Bluetooth] AGENTS[Watchdog,Watchtower] ACTIONS[Update All,KDE Connect,Animations]"
+)" "grid = SETUP ▸ CONNECT[Account] ▸ APPS[Store] ▸ LAUNCHER[Quick Actions,One-Hand,Notify] ▸ NETWORK[Firewall,DNS,Webserver,Cloud Mesh,Apps Access,ADB Shell,WiFi] ▸ OBSERVABILITY[X-Ray,LogCat,Permissions,About] FLEET[C3,Peer Control,Bluetooth] AGENTS[Watchdog,Watchtower] ACTIONS[Update All,KDE Connect,Animations]"
 
 echo "== T12: THE AI PAGE IS GONE, not hidden — no route, target or tile names it (#723) =="
 # Deleting a declaration and leaving its door behind is the dead-tile failure:
