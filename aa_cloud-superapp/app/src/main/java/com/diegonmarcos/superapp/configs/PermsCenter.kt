@@ -189,21 +189,21 @@ internal fun PermsCenterSection(
             decorationBox = { inner -> Box { if (text.isEmpty()) Text("Search name, permission, group, app, reason…", fontSize = 12.sp, color = p.textSecondary); inner() } },
         )
         // ── filters ──
-        ChipRow("Status") {
-            for (f in StatusFilter.values()) Chip("${f.word} ${counts[f] ?: 0}", status == f, "perms:filter:status:${f.name.lowercase()}") { status = f }
-            Chip(if (missingOnly) "✓ Missing only" else "Missing only", missingOnly, "perms:filter-missing") { missingOnly = !missingOnly }
+        PermsChipRow("Status") {
+            for (f in StatusFilter.values()) PermsFilterPill("${f.word} ${counts[f] ?: 0}", status == f, "perms:filter:status:${f.name.lowercase()}") { status = f }
+            PermsFilterPill(if (missingOnly) "✓ Missing only" else "Missing only", missingOnly, "perms:filter-missing") { missingOnly = !missingOnly }
         }
-        ChipRow("Type") { for (k in PermsPageQuery.kindsPresent(page)) Chip("${PermsPageQuery.kindTitle(k)} ${page.count { it.entry.kind == k }}", k in kinds, "perms:filter:type:${k.name.lowercase()}") { kinds = kinds.flip(k) } }
-        ChipRow("Section") { for (s in PermsPageQuery.sectionsPresent(page)) Chip("${s.title} ${page.count { it.entry.section == s }}", s in sections, "perms:filter:section:${s.name.lowercase()}") { sections = sections.flip(s) } }
-        ChipRow("Category") { for (c in PermsPageQuery.categoriesPresent(page)) Chip("${c.title} ${page.count { it.category == c }}", c in cats, "perms:filter:category:${c.name.lowercase()}") { cats = cats.flip(c) } }
-        ChipRow("Protection") { for (x in Protection.values()) { val n = page.count { PermsPageQuery.protection(it.entry) == x }; if (n > 0) Chip("${x.word} $n", x in prots, "perms:filter:protection:${x.name.lowercase()}") { prots = prots.flip(x) } } }
-        ChipRow("Group") { for (g in PermsPageQuery.groupsPresent(page)) Chip(g.lowercase().replace('_', ' '), g in groups, "perms:filter:group:${g.lowercase()}") { groups = groups.flip(g) } }
-        ChipRow("Feature") { for (f in PermsPageQuery.featuresPresent(page)) Chip(f, f in features, "perms:filter:feature:$f") { features = features.flip(f) } }
-        if (fleet.apps.isNotEmpty()) ChipRow("App") { for (a in fleet.labels()) Chip(a, a in apps, "perms:filter:app:$a") { apps = apps.flip(a) } }
-        ChipRow("Group by") { for (g in GroupBy.values()) Chip(g.word, groupBy == g, "perms:groupby:${g.name.lowercase()}") { groupBy = g } }
-        ChipRow("Sort") {
-            for (s in SortBy.values()) Chip(s.word, sortBy == s, "perms:sort:${s.name.lowercase()}") { sortBy = s }
-            if (q.active) Chip("Clear filters ✕", false, "perms:filter-clear") {
+        PermsChipRow("Type") { for (k in PermsPageQuery.kindsPresent(page)) PermsFilterPill("${PermsPageQuery.kindTitle(k)} ${page.count { it.entry.kind == k }}", k in kinds, "perms:filter:type:${k.name.lowercase()}") { kinds = kinds.flip(k) } }
+        PermsChipRow("Section") { for (s in PermsPageQuery.sectionsPresent(page)) PermsFilterPill("${s.title} ${page.count { it.entry.section == s }}", s in sections, "perms:filter:section:${s.name.lowercase()}") { sections = sections.flip(s) } }
+        PermsChipRow("Category") { for (c in PermsPageQuery.categoriesPresent(page)) PermsFilterPill("${c.title} ${page.count { it.category == c }}", c in cats, "perms:filter:category:${c.name.lowercase()}") { cats = cats.flip(c) } }
+        PermsChipRow("Protection") { for (x in Protection.values()) { val n = page.count { PermsPageQuery.protection(it.entry) == x }; if (n > 0) PermsFilterPill("${x.word} $n", x in prots, "perms:filter:protection:${x.name.lowercase()}") { prots = prots.flip(x) } } }
+        PermsChipRow("Group") { for (g in PermsPageQuery.groupsPresent(page)) PermsFilterPill(g.lowercase().replace('_', ' '), g in groups, "perms:filter:group:${g.lowercase()}") { groups = groups.flip(g) } }
+        PermsChipRow("Feature") { for (f in PermsPageQuery.featuresPresent(page)) PermsFilterPill(f, f in features, "perms:filter:feature:$f") { features = features.flip(f) } }
+        if (fleet.apps.isNotEmpty()) PermsChipRow("App") { for (a in fleet.labels()) PermsFilterPill(a, a in apps, "perms:filter:app:$a") { apps = apps.flip(a) } }
+        PermsChipRow("Group by") { for (g in GroupBy.values()) PermsFilterPill(g.word, groupBy == g, "perms:groupby:${g.name.lowercase()}") { groupBy = g } }
+        PermsChipRow("Sort") {
+            for (s in SortBy.values()) PermsFilterPill(s.word, sortBy == s, "perms:sort:${s.name.lowercase()}") { sortBy = s }
+            if (q.active) PermsFilterPill("Clear filters ✕", false, "perms:filter-clear") {
                 text = ""; status = StatusFilter.ALL; missingOnly = false; kinds = emptySet(); sections = emptySet(); cats = emptySet()
                 prots = emptySet(); groups = emptySet(); features = emptySet(); apps = emptySet()
             }
@@ -262,7 +262,7 @@ internal fun PermsCenterSection(
 
 /** A labelled, horizontally scrolling row of chips. */
 @Composable
-private fun ChipRow(label: String, content: @Composable RowScope.() -> Unit) {
+private fun PermsChipRow(label: String, content: @Composable RowScope.() -> Unit) {
     val p = LocalKitPalette.current
     Row(Modifier.fillMaxWidth().padding(horizontal = KitStoreRow.padH, vertical = 1.dp), verticalAlignment = Alignment.CenterVertically) {
         Text(label, fontSize = 10.sp, color = p.textSecondary, modifier = Modifier.width(62.dp))
@@ -271,7 +271,7 @@ private fun ChipRow(label: String, content: @Composable RowScope.() -> Unit) {
 }
 
 @Composable
-private fun Chip(label: String, selected: Boolean, tag: String, onClick: () -> Unit) {
+private fun PermsFilterPill(label: String, selected: Boolean, tag: String, onClick: () -> Unit) {
     val p = LocalKitPalette.current
     Text(label, fontSize = 10.5.sp, maxLines = 1, color = if (selected) Color.White else p.textPrimary,
         modifier = Modifier.padding(end = 3.dp).background(if (selected) p.accent else p.textPrimary.copy(alpha = 0.08f))
