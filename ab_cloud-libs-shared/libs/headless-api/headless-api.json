@@ -456,6 +456,21 @@
       },
       "browser.snapshot": {
         "cloudflare": "POST .../snapshot (content + base64 screenshot)"
+      },
+      "browser.ocr": {
+        "containerOnly": true,
+        "containerCommand": "ocr (container extension: not in `commands`, the phone engine does not implement it)",
+        "params": {
+          "url": "string (or session of an open page)",
+          "engine": "tesseract|paddle? (default tesseract; paddle needs the PaddleOCR sidecar PADDLE_OCR_URL)",
+          "minWidth": "integer? (default 150)",
+          "minHeight": "integer? (default 150)",
+          "includeScreenshot": "boolean? (also OCR the rendered page)",
+          "lang": "eng|fra|deu|spa|ita|por, joined with + (default eng)",
+          "maxImages": "integer? (default 12, max 50)",
+          "escalateBelow": "number 0..100? (re-run low-confidence images on paddle, default off)"
+        },
+        "result": "{images_found, images_ocr, images_failed, truncated, results:[{kind img|screenshot, src, alt, width, height, ocr_text, confidence 0..100, engine, low_confidence?, error?}], text}"
       }
     },
     "support": {
@@ -498,6 +513,11 @@
         "container": true,
         "phone": true,
         "cloudflare": true
+      },
+      "ocr": {
+        "container": true,
+        "phone": false,
+        "cloudflare": false
       },
       "session tools (open,eval,click,type,wait,scroll,cookies,storage,network,run)": {
         "container": true,
