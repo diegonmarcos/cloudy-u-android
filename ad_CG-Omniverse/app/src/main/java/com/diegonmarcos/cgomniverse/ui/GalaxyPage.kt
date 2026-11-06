@@ -74,6 +74,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.diegonmarcos.cgomniverse.Decl
 import com.diegonmarcos.cgomniverse.Offline
 import com.diegonmarcos.cgomniverse.R
+import com.diegonmarcos.cgomniverse.Store
 import com.diegonmarcos.cgomniverse.Tabs
 import com.diegonmarcos.cgomniverse.World
 import com.diegonmarcos.cloudlib.web.CloudChromeClient
@@ -272,7 +273,7 @@ fun WorldView(w: World, modifier: Modifier = Modifier) {
                                 view.destroy(); error = crashed; return true
                             }
                         }
-                        wv.loadUrl(w.url)
+                        wv.loadUrl(Store.launchUrl(w))
                         web = wv
                     }
                 }, modifier = Modifier.fillMaxSize().testTag(Tags.WORLD_WEB))

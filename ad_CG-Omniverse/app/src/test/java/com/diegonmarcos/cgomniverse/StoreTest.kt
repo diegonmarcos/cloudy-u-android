@@ -28,6 +28,20 @@ class StoreTest {
     private fun only(vararg pairs: Pair<FilterGroup, Set<String>>) = Store.allSelected() + pairs.toMap()
     private fun ids(sel: Map<FilterGroup, Set<String>>) = Store.filter(all, sel).map { it.id }
 
+    @Test fun launchUrlAppendsTheDeclaredQuery() {
+        val base = w("f", "Website", "2D", false)
+        assertEquals("https://x.example/f", Store.launchUrl(base))
+        assertEquals("https://x.example/f?old-render", Store.launchUrl(base.copy(launchQuery = "old-render")))
+        assertEquals("https://x.example/f?a=1&old-render#h", Store.launchUrl(base.copy(url = "https://x.example/f?a=1#h", launchQuery = "old-render")))
+    }
+
+    @Test fun floor796DeclaresTheLighterRenderPath() {
+        val json = listOf(File("../data/store.json"), File("data/store.json")).first { it.exists() }.readText()
+        val f = Store.parse(json).first { it.id == "floor796" }
+        assertEquals("old-render", f.launchQuery)
+        assertTrue(Store.launchUrl(f).endsWith("?old-render"))
+    }
+
     @Test fun everythingIsSelectedByDefault() {
         val sel = Store.allSelected()
         FilterGroup.entries.forEach { assertTrue(Store.isAll(sel, it)); assertEquals(it.chips.toSet(), sel[it]) }

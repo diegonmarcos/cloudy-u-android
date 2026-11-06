@@ -18,6 +18,8 @@ data class World(
     val checked: String = "",
     /** The Wayback Machine copy of [url], generated into store.json (no address is spelled in Kotlin); empty when absent. */
     val wayback: String = "",
+    /** A query string Galaxy appends to [url] (data/world-rules.json via gen-store.py), e.g. a lighter render path; empty for most worlds. */
+    val launchQuery: String = "",
 )
 
 /** What the link probe found: ONLINE answered, OFFLINE is gone (404/410, timeout, no host), UNVERIFIED the probe could not tell. */
@@ -76,6 +78,15 @@ object Store {
     const val FLAT = "Flat Screen"
     const val VR_GLASS = "VR Glass"
 
+    /** The address Galaxy loads for [w]: its url plus its declared launch query (joined with `?` or `&`, before any `#`). */
+    fun launchUrl(w: World): String {
+        if (w.launchQuery.isEmpty()) return w.url
+        val hash = w.url.indexOf('#')
+        val base = if (hash >= 0) w.url.substring(0, hash) else w.url
+        val frag = if (hash >= 0) w.url.substring(hash) else ""
+        return base + (if ('?' in base) "&" else "?") + w.launchQuery + frag
+    }
+
     fun parse(json: String): List<World> {
         val arr = runCatching { JSONObject(json).optJSONArray("entries") }.getOrNull() ?: return emptyList()
         return (0 until arr.length()).mapNotNull { arr.optJSONObject(it) }.mapNotNull { o ->
@@ -88,6 +99,7 @@ object Store {
                 stack = if (st == null) emptyList() else (0 until st.length()).map { st.optString(it) },
                 vr = o.optBoolean("vr", false), description = o.optString("description"),
                 status = LinkStatus.parse(o.optString("status")), checked = o.optString("checked"), wayback = o.optString("wayback"),
+                launchQuery = o.optString("launch_query"),
             )
         }
     }

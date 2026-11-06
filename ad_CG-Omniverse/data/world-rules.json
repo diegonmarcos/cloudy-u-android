@@ -1,0 +1,9 @@
+{
+  "_doc": "Per-world launch rules, keyed by Store id (data/fwa.md slug). gen-store.py copies each rule into store.json as launch_query; Galaxy appends it to the world's address (Store.launchUrl). Declared here, never spelled in Kotlin.",
+  "rules": {
+    "floor796": {
+      "query": "old-render",
+      "why": "The default engine downloads a 175 MB F796 file into a worker (held twice in memory, plus a Cache API write) and stays blank when the WebView renderer cannot hold it. ?old-render selects the legacy engine, which streams the 127 MB MP4 tiles for the viewport only. Remove this rule to get the best-quality engine back."
+    }
+  }
+}
