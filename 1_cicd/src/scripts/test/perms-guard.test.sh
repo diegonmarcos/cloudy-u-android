@@ -103,5 +103,26 @@ r="$(mk)"; jset "$r/1_cicd/src/data/perms-guard.json" 'd["one_place"]["baseline"
 r="$(mk)"; printf 'class B { fun g(a: Activity) = a.requestPermissions(arrayOf("x"), 1) }\n' > "$r/$A/java/a/B.kt"; jset "$r/1_cicd/src/data/perms-guard.json" 'd["one_place"]["baseline"]={"ac_cloud-a/app/src/main/java/a/B.kt":"not moved into a Perms row yet"}; d["one_place"]["baseline_max"]=0'; expect "P7 the baseline growing past its max is red" 1 "$r"
 r="$(mk)"; printf 'class B { fun g(a: Activity) = a.requestPermissions(arrayOf("x"), 1) }\n' > "$r/$A/java/a/B.kt"; jset "$r/1_cicd/src/data/perms-guard.json" 'd["one_place"]["baseline"]={"ac_cloud-a/app/src/main/java/a/B.kt":"x"}; d["one_place"]["baseline_max"]=1'; expect "P7 a baseline entry without a reason is red" 1 "$r"
 r="$(mk)"; jset "$r/1_cicd/src/data/perms-guard.json" 'd["one_place"]["min_files"]=50'; expect "P7 a guard that scans nothing (lost the fleet) is red" 1 "$r"
+# P8 (#1550): a needed permission a compiled lib caps with maxSdkVersion below target_sdk, not overridden, is red.
+bt() {  # add a capping bluetooth-style lib the app compiles, give the app target_sdk and a fine_location need
+  local r="$1"
+  mkdir -p "$r/ab_cloud-libs-shared/libs/bt/src/main"
+  echo 'dependencies { }' > "$r/ab_cloud-libs-shared/libs/bt/build.gradle"
+  echo '<manifest><uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" android:maxSdkVersion="30" /></manifest>' > "$r/ab_cloud-libs-shared/libs/bt/src/main/AndroidManifest.xml"
+  jset "$r/ac_cloud-a/build.json" 'd["android"]["target_sdk"]=34; d["modules"]["libs:bt"]={"dir":"../ab_cloud-libs-shared/libs/bt"}; d["perms"]["needs"]=d["perms"]["needs"]+["fine_location"]'
+  jset "$r/ac_cloud-a/app/src/main/AndroidManifest.xml.tmp" 'pass' 2>/dev/null || true
+}
+addfine() {  # add the app's own FINE uses-permission, optionally with tools:remove
+  local r="$1"; local attr="$2"
+  python3 - "$r/ac_cloud-a/app/src/main/AndroidManifest.xml" "$attr" <<'PY'
+import sys
+p,attr=sys.argv[1],sys.argv[2]
+s=open(p).read().replace('<application/>', '<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"%s /><application/>' % attr)
+open(p,'w').write(s)
+PY
+  regen "$r"
+}
+r="$(mk)"; bt "$r"; addfine "$r" ""; expect "P8 a lib-capped fine_location the app needs without an override is red" 1 "$r"
+r="$(mk)"; bt "$r"; addfine "$r" ' tools:remove="android:maxSdkVersion"'; expect "P8 the same with tools:remove on the app's declaration is green" 0 "$r"
 rm -f "${OUT:?}"
 [ "$fails" -eq 0 ] && echo "perms-guard.test: all green" || { echo "perms-guard.test: $fails FAILED"; exit 1; }

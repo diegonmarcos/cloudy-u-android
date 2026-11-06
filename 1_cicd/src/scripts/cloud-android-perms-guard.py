@@ -19,6 +19,10 @@ Exit 1 on any finding. Rules:
                           (what the Perms page, first run and the failure prompt read); a baked assets/app-perms.json copy is red (#1547); an app with its own
                           declared Perms section (ui.general.perms) lists every manifest permission there too
   P6 first run            perms.first_run is "libs:perms" (PermsFirstRun) or "own:<File.kt>" naming a file that exists
+  P8 merged cap (#1550)  a permission an app NEEDS that a compiled shared lib caps with android:maxSdkVersion below the
+                          app's target_sdk (libs:bluetooth caps ACCESS_FINE_LOCATION at 30) is dropped from the merged
+                          manifest on newer devices unless the app's own manifest declares it with
+                          tools:remove="android:maxSdkVersion"
   P7 one place (#1515)    no app code outside libs:perms and the app's declared Perms page (policy one_place.allow) calls
                           requestPermissions / RequestPermission(s), opens a special-access or App-info settings intent, or runs
                           `pm grant` / `appops set`. one_place.exceptions are declared in data (bgpolicy acts on OTHER apps);
@@ -28,6 +32,9 @@ Exit 1 on any finding. Rules:
 import glob
 import json
 import os
+import sys as _sys
+_sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import cloud_android_lib_closure as _lc  # noqa: E402
 import re
 import sys
 
@@ -148,6 +155,28 @@ def manifest_perms(text):
     services = set(re.findall(r'android:permission="(android\.permission\.BIND_[A-Z_]+)"', t))
     queries = set(re.findall(r'<package\s+android:name="([^"]+)"', t))
     return perms, services, queries
+
+# #1550 the merged-manifest caps and overrides for a permission: a library that declares a permission with
+# android:maxSdkVersion caps it at that SDK in the merged manifest (dropped from requestedPermissions above it),
+# unless the app's own manifest declares the same permission with tools:remove="android:maxSdkVersion".
+def capped_perms(text):
+    out = {}
+    for m in re.finditer(r'<uses-permission(?:-sdk-23)?\s([^>]*?)/?>', strip(text or "")):
+        attrs = m.group(1)
+        nm = re.search(r'android:name="([^"]+)"', attrs)
+        mx = re.search(r'android:maxSdkVersion="(\d+)"', attrs)
+        if nm and mx:
+            out[nm.group(1)] = min(out.get(nm.group(1), 1 << 30), int(mx.group(1)))
+    return out
+
+def uncapped_overrides(text):
+    out = set()
+    for m in re.finditer(r'<uses-permission(?:-sdk-23)?\s([^>]*?)/?>', strip(text or "")):
+        attrs = m.group(1)
+        nm = re.search(r'android:name="([^"]+)"', attrs)
+        if nm and 'tools:remove="android:maxSdkVersion"' in attrs:
+            out.add(nm.group(1))
+    return out
 
 
 SERVICE_IDS = {
@@ -321,6 +350,22 @@ def main():
     matrix = {}
     fleet = []
     dataset = {}
+    # #1550 P8 inputs: every shared-lib manifest's maxSdkVersion caps, and the dependency edges/libs (computed once).
+    _lc_edges = _lc.lib_edges(ROOT)
+    _lc_libs = _lc.shared_libs(ROOT)
+    lib_caps = {}  # lib dir name -> {perm: maxSdk}
+    for g in glob.glob(os.path.join(ROOT, _lc.SHARED_LIBS, "*")):
+        if not os.path.isdir(g):
+            continue
+        caps = {}
+        for lm in glob.glob(os.path.join(g, "**/src/main/AndroidManifest.xml"), recursive=True):
+            if set(os.path.relpath(lm, g).split(os.sep)) & SKIP_DIRS:
+                continue
+            for k, v in capped_perms(read(lm)).items():
+                caps[k] = min(caps.get(k, 1 << 30), v)
+        if caps:
+            lib_caps[os.path.basename(g)] = caps
+    perm_by_id = {e["id"]: e.get("permission") for e in cat["entries"] if e.get("permission")}
     for name, (app_dir, bj, man) in sorted(apps.items()):
         perms = bj.get("perms")
         perms_ok = isinstance(perms, dict)
@@ -368,6 +413,24 @@ def main():
                 gap("P2 perms.needs declares %s but the manifest (with its libs) does not ask for it" % i)
         for i in sorted(man_ids - set(needs) - set(waived)):
             gap("P3 the manifest asks for %s but build.json::perms.needs does not declare it (the Perms page would not list it)" % i)
+        # P8 (#1550) a needed permission a compiled lib caps with maxSdkVersion below the app's target_sdk is dropped from the
+        # merged manifest on newer devices (owner SM-A376B / API 36 was stuck on Approximate) unless the app strips the cap.
+        if gradle:
+            tgt = int(((bj.get("android") or {}).get("target_sdk")) or ((bj.get("android") or {}).get("compile_sdk")) or 0)
+            compiled = set(_lc.inputs(ROOT, name, _lc_edges, _lc_libs))
+            own_overrides = uncapped_overrides(read(man))
+            capped_here = {}  # perm -> (lib, maxSdk)
+            for lib in sorted(compiled):
+                for perm, mx in (lib_caps.get(lib) or {}).items():
+                    if mx < tgt and (perm not in capped_here or mx < capped_here[perm][1]):
+                        capped_here[perm] = (lib, mx)
+            for i in needs:
+                perm = perm_by_id.get(i)
+                if perm and perm in capped_here and perm not in own_overrides:
+                    lib, mx = capped_here[perm]
+                    gap("P8 %s (%s) is declared with maxSdkVersion=%d by libs:%s, which the app compiles, so the merged manifest "
+                        "drops it above API %d (target_sdk=%d); declare it in %s/app/src/main/AndroidManifest.xml with "
+                        "tools:remove=\"android:maxSdkVersion\"" % (i, perm, mx, lib, mx, tgt, name))
         for w, why in waived.items():
             if not isinstance(why, str) or len(why) < 12:
                 gap("perms.waived[%s] needs a reason" % w)

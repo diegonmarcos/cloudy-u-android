@@ -86,7 +86,9 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <!-- #1550 libs:bluetooth declares ACCESS_FINE_LOCATION with maxSdkVersion=30; strip that cap from the merged manifest so
+         precise location is requestable on API 31+ (owner SM-A376B / API 36 was stuck on Approximate). -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" tools:remove="android:maxSdkVersion" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <!-- ACCESS_BACKGROUND_LOCATION + FOREGROUND_SERVICE +
          FOREGROUND_SERVICE_LOCATION + WAKE_LOCK + the

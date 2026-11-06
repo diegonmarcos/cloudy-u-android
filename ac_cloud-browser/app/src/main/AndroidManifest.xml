@@ -12,7 +12,9 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- #802 a site may be allowed these per site (build.json::ui.browser.site_permissions);
          the app asks Android for them only when a site the user allowed first needs one. -->
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <!-- #1550 libs:bluetooth declares ACCESS_FINE_LOCATION with maxSdkVersion=30; strip that cap from the merged manifest so
+         precise location is requestable on API 31+ (owner SM-A376B / API 36 was stuck on Approximate). -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" tools:remove="android:maxSdkVersion" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />

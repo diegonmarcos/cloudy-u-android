@@ -38,7 +38,9 @@
          user taps Allow (ui/SensorScreens.kt): location for GPS / GNSS, activity recognition for the step counter and detector,
          body sensors for heart rate. Wi-Fi and network state are normal permissions (signal strength; no SSID or location is read);
          NFC only tells whether the adapter is on. A phone without any of these still installs the app. -->
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <!-- #1550 libs:bluetooth declares ACCESS_FINE_LOCATION with maxSdkVersion=30; strip that cap from the merged manifest so
+         precise location is requestable on API 31+ (owner SM-A376B / API 36 was stuck on Approximate). -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" tools:remove="android:maxSdkVersion" />
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
     <uses-permission android:name="android.permission.BODY_SENSORS" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
