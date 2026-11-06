@@ -3138,7 +3138,9 @@
       "bitwarden://",
       "otpauth://"
      ],
-     "callers": []
+     "callers": [
+      "me"
+     ]
     }
    ]
   },
