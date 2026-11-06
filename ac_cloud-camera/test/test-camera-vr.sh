@@ -8,7 +8,7 @@
 #      mode switch; the shutter saves the composited photo, Record the composited video.
 #   R2 the analysis is ONE ImageAnalysis, STRATEGY_KEEP_ONLY_LATEST, installed only through AnalyzerLifecycle; hiding
 #      the page or pausing the activity stops it, stops a recording and RELEASES the models.
-#   R3 the ML is LOCAL and bundled: libs:ml-vision declares ML Kit Face Detection and Selfie Segmentation (the bundled
+#   R3 the ML is LOCAL and bundled: libs:ml-l-vision-mlkit declares ML Kit Face Detection and Selfie Segmentation (the bundled
 #      artifacts, not the Play Services ones), the VR code opens no network and asks for no permission (the camera and
 #      microphone grants are Configs > Perms rows; the recorder only CHECKS the microphone).
 #   R4 the filters are DATA: assets/vr-filters.json declares hats, glasses, masks, backgrounds, colour looks and stickers
@@ -30,7 +30,7 @@ import json, os, re, sys
 
 APP = os.environ["APP_DIR"]
 J = "app/src/main/java/cld/camera"
-LIB = "../ab_cloud-libs-shared/libs/ml-vision"
+LIB = "../ab_cloud-libs-shared/libs/ml-l-vision-mlkit"
 V = LIB + "/src/main/java/com/diegonmarcos/superapp/vision"
 FILES = {
     "ctl": J + "/vr/VrController.kt", "rec": J + "/vr/VrRecorder.kt", "snap": J + "/vr/VrSnapshot.kt",

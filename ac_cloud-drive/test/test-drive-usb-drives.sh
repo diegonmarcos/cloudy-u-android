@@ -12,7 +12,7 @@
 #   U3 res/xml/device_filter.xml: <usb-device class="8"/>
 #   U4 an exported receiver: MEDIA_MOUNTED/EJECT/UNMOUNTED/REMOVED/BAD_REMOVAL on the file scheme (= UsbVolumeModel
 #      .MEDIA_ACTIONS) and USB_DEVICE_DETACHED
-#   U5 the USB grant is libs:perms': catalogue entry usb_host, build.json perms.needs + the generated app-perms.json
+#   U5 the USB grant is libs:perms': catalogue entry usb_host, build.json perms.needs + the generated data/fleet/app-perms.json (#1547)
 #   U6 the raw path: libaums in app/build.gradle (the code itself is libs:usb-drive since #1405) and in the licence inventory
 #   U7 no app code asks UsbManager.requestPermission itself (PermsUsb.request does)
 # Then every rule is proven: each mutant below is applied to a copy and the checker must fail on it.
@@ -58,7 +58,7 @@ cat = json.load(open(os.path.join(R, "ab_cloud-libs-shared/libs/perms/src/main/a
 e = [x for x in cat["entries"] if x["id"] == "usb_host"]
 need(e and e[0].get("check") == "usb_host" and e[0].get("icon") in cat["icons"], "U5 catalogue entry usb_host (check usb_host, known icon)")
 need("usb_host" in json.load(open(os.path.join(D, "build.json")))["perms"]["needs"], "U5 build.json perms.needs has usb_host")
-need("usb_host" in json.load(open(os.path.join(APP, "assets/app-perms.json")))["needs"], "U5 generated app-perms.json has usb_host")
+need("usb_host" in json.load(open(os.path.join(R, "data/fleet/app-perms.json")))["apps"].get("com.diegonmarcos.clouddrive", {}).get("needs", []), "U5 generated data/fleet/app-perms.json has usb_host for Cloud Drive")
 need("'me.jahnen.libaums:core:" in open(os.path.join(D, "app/build.gradle")).read(), "U6 libaums in app/build.gradle")
 inv = os.path.join(R, "licenses/inventory.json")
 need(not os.path.exists(inv) or json.load(open(inv))["entries"].get("maven:me.jahnen.libaums:core", {}).get("licence") == "Apache-2.0", "U6 libaums in the licence inventory as Apache-2.0")
@@ -85,7 +85,7 @@ python3 -I -c "$CHECK" "$ROOT" || fails=$((fails+1))
 T=$(mktemp -d)
 copy() { mkdir -p "$T/m"; for p in ac_cloud-drive/app/src/main/AndroidManifest.xml ac_cloud-drive/app/src/main/res/xml/device_filter.xml \
   ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive/usb ab_cloud-libs-shared/libs/usb-drive/src/main/java/com/diegonmarcos/superapp/usbdrive ac_cloud-drive/build.json ac_cloud-drive/app/build.gradle \
-  ac_cloud-drive/app/src/main/assets/app-perms.json ab_cloud-libs-shared/libs/perms/src/main/assets/perms-catalogue.json licenses/inventory.json; do
+  data/fleet/app-perms.json ab_cloud-libs-shared/libs/perms/src/main/assets/perms-catalogue.json licenses/inventory.json; do
   [ -e "$ROOT/$p" ] || continue; mkdir -p "$T/m/$(dirname "$p")"; cp -r "$ROOT/$p" "$T/m/$p"; done; mkdir -p "$T/m/ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive"; }
 mutate() { python3 -I -c 'import sys; p, a, b = sys.argv[1:]; a, b = a.replace(chr(92) + "n", chr(10)), b.replace(chr(92) + "n", chr(10)); s = open(p).read(); assert a in s, "anchor missing: " + a; open(p, "w").write(s.replace(a, b, 1))' "$T/m/$1" "$2" "$3"; }
 M=ac_cloud-drive/app/src/main/AndroidManifest.xml
@@ -109,7 +109,7 @@ receiver-unexported|$M|android:name=".usb.UsbVolumeReceiver"\n            androi
 model-actions|ab_cloud-libs-shared/libs/usb-drive/src/main/java/com/diegonmarcos/superapp/usbdrive/UsbVolumeModel.kt|ACTION_MEDIA_REMOVED, ACTION_MEDIA_BAD_REMOVAL)|ACTION_MEDIA_REMOVED)
 catalogue|ab_cloud-libs-shared/libs/perms/src/main/assets/perms-catalogue.json|"id": "usb_host"|"id": "usb_hostX"
 needs|ac_cloud-drive/build.json|"usb_host",|
-asset|ac_cloud-drive/app/src/main/assets/app-perms.json|"usb_host",|
+asset|data/fleet/app-perms.json|"storage_write",\n    "all_files",\n    "usb_host",|"storage_write",\n    "all_files",
 libaums|ac_cloud-drive/app/build.gradle|'me.jahnen.libaums:core:|'me.jahnen.libaumsX:core:
 inventory|licenses/inventory.json|"maven:me.jahnen.libaums:core": {|"maven:me.jahnen.libaums:coreX": {
 jni-usb|ac_cloud-drive/build.json|"**/libusb-lib.so", |

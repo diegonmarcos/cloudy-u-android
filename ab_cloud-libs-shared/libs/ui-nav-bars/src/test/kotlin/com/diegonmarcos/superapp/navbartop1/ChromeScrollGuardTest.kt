@@ -13,7 +13,7 @@ import org.junit.Test
  */
 class ChromeScrollGuardTest {
     private val apps = listOf(
-        "ac_cloud-mail", "ac_cloud-me", "ac_cloud-drive", "ac_cloud-nav", "ac_cloud-account", "ac_cloud-store", "ac_cloud-c3", "ac_cloud-tasks", "ac_cloud-contacts", "ac_cloud-news", "ac_cloud-writer", "ac_cloud-search", "ac_cloud-browser", "ac_cloud-dialer", "ac_cloud-superintel", "ac_cloud-kg-store", "ac_cloud-notes", "ac_cloud-tools-small-llms", "ac_cloud-calc", "ac_cloud-gallery", "ad_Capital-Stack-FinTerminal",
+        "ac_cloud-mail", "ac_cloud-me", "ac_cloud-drive", "ac_cloud-nav", "ac_cloud-account", "ac_cloud-store", "ac_cloud-c3", "ac_cloud-tasks", "ac_cloud-contacts", "ac_cloud-news", "ac_cloud-writer", "ac_cloud-search", "ac_cloud-browser", "ac_cloud-dialer", "ac_cloud-superintel", "ac_cloud-kg-store", "ac_cloud-notes", "ac_cloud-tools-small-llms", "ac_cloud-calc", "ac_cloud-gallery", "ad_Capital-Stack-FinTerminal", "ac_cloud-shopping",
     )
 
     /** #1356 ui.sections[id=<section>].title_row in a build.json text: false only when declared false (default true). */

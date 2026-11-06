@@ -109,7 +109,7 @@
     "ml-l-image",
     "ml-l-image-ocr",
     "ml-l-sound",
-    "ml-vision",
+    "ml-l-vision-mlkit",
     "ml-l-text-mlkit",
     "ml-l-voice-vosk",
     "ocr",

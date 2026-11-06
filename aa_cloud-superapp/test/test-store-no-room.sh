@@ -63,10 +63,12 @@ CHECKS = [
                and "UpdateProgress.beginDownload()" in fun(code(s["auto"]), "run")),
     ("no progress popup: the SuperApp never attaches the update overlay",
      lambda s: "UpdateOverlayFragment" not in code(s["shell"]) and ".add(" not in fun(code(s["shell"]), "handleUpdateState")),
-    ("no batch dialog: Download all and the batch report draw in the page's bar",
+    # #1524 the batch outcome lives in the Store's one Activity panel (StoreJobs rows), so there is no report() left to hold it
+    ("no batch dialog: Download all and Update all report through the Activity panel, never a dialog",
      lambda s: "AlertDialog" not in fun(code(s["page"]), "downloadAll")
-               and "AlertDialog" not in fun(code(s["page"]), "report")
-               and "progress.report(title, b)" in fun(code(s["page"]), "report")),
+               and "AlertDialog" not in fun(code(s["page"]), "updateAll")
+               and "StoreStages.downloadAll(ctx, targets)" in fun(code(s["page"]), "downloadAll")
+               and "StoreStages.updateAll(ctx, targets)" in fun(code(s["page"]), "updateAll")),
     ("#894 no Store badge in SuperApp: Store notifications are Cloud Store's, and the chain's pending hook stays a no-op here",
      lambda s: not any(p.get("id") == "store_updates"
                        for p in json.loads(s["bj"])["ui"]["notification_center"]["producers"])
@@ -92,7 +94,8 @@ MUTANTS = [
     ("Cancel marks the package failed", "auto", "item.status = QUEUED\n                return stop(", "item.status = FAILED\n                return stop("),
     ("the overlay comes back", "shell", "supportFragmentManager.findFragmentByTag(UPDATE_OVERLAY_TAG)?.let {",
      "supportFragmentManager.beginTransaction().add(R.id.overlay_container, com.diegonmarcos.superapp.updater.UpdateOverlayFragment.newInstance(), UPDATE_OVERLAY_TAG).commitAllowingStateLoss()\n            supportFragmentManager.findFragmentByTag(UPDATE_OVERLAY_TAG)?.let {"),
-    ("the batch report is a dialog again", "page", "        progress.report(title, b)", "        AlertDialog.Builder(requireActivity()).show()\n        progress.report(title, b)"),
+    ("the batch report is a dialog again", "page", "            StoreStages.downloadAll(ctx, targets)\n", "            StoreStages.downloadAll(ctx, targets)\n            main.post { AlertDialog.Builder(requireActivity()).show() }\n"),
+    ("Update all reports in a dialog again", "page", "            StoreStages.updateAll(ctx, targets)\n", "            StoreStages.updateAll(ctx, targets)\n            main.post { AlertDialog.Builder(requireActivity()).show() }\n"),
     ("SuperApp wires a Store badge again", "app", "StoreRetirement.run(this)", "StoreBadgeNotifier.update(this, 1)"),
     ("opening the Store does not clear the badge", "page", "StoreAuto.onPending(c.applicationContext, 0)", "Unit"),
 ]

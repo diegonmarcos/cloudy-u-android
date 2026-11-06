@@ -325,8 +325,10 @@ step_test() {
   log "Test: JVM unit tests (gradle $task)"
   _resolve_signing
   _resolve_media_keys
-  # UNIT_TEST_FILTER=<class pattern> narrows the run (CI: the Configs screenshot workflow).
-  if [ -n "${UNIT_TEST_FILTER:-}" ]; then run_gradle "$task" --tests "$UNIT_TEST_FILTER"; else run_gradle "$task"; fi
+  # UNIT_TEST_FILTER=<class pattern> narrows the run to classes of the app's Robolectric suite (CI: the Configs screenshot
+  # workflow). The unit task is an aggregate (superappUnitTests, #1510) and Gradle refuses --tests on a task that is not a
+  # Test task, so a filtered run goes to the app's own test task.
+  if [ -n "${UNIT_TEST_FILTER:-}" ]; then run_gradle :app:testDebugUnitTest --tests "$UNIT_TEST_FILTER"; else run_gradle "$task"; fi
 }
 # Same prerequisites as step_build (this project cannot even CONFIGURE without the shared signing key or compile
 # without the firestack aar) - the old bare `gradle connectedAndroidTest` could do neither. INSTRUMENT_CLASS=<fqcn>

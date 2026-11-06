@@ -57,16 +57,20 @@ EXPECT = {
   },
   "ad_Capital-Stack-FinTerminal": {
     "name": "capital-stack-finterminal", "display": "Capital-Stack-FinTerminal", "pkg": "com.diegonmarcos.capitalfinterm",
-    "nav": [("fi", "FI"), ("eq", "EQ"), ("ex", "EX"), ("nw", "NW"), ("pm", "PM"), ("my-pm", "MY-PM")],
+    "nav": [("cb", "CB"), ("fi", "FI"), ("eq", "EQ"), ("nw", "NW"), ("pm", "PM"), ("hg", "HG"), ("my-pm", "MY-PM")],
     "pages": {
-      "fi": [("dashboard", "Yield Curves"), ("dashboard", "Forward Rates"), ("dashboard", "World Interest Rate Probabilities"), ("dashboard", "World Bonds"), ("dashboard", "Credit"), ("dashboard", "Macro")],
-      "eq": [("dashboard", "World Equity Indices"), ("dashboard", "Quotes & Charts"), ("dashboard", "Fundamentals"), ("dashboard", "Earnings Calendar"), ("dashboard", "Watchlist & Alerts")],
-      "ex": [("dashboard", "FX"), ("dashboard", "Onshore USD Rates"), ("dashboard", "Crypto"), ("dashboard", "Commodities")],
+      "fi": [("dashboard", "Yield Curves"), ("dashboard", "Yields Matrix"), ("dashboard", "Bonds Market"), ("dashboard", "Forward Rates"), ("dashboard", "World Interest Rate Probabilities"), ("dashboard", "World Bonds"), ("dashboard", "Credit"), ("dashboard", "Macro")],
+      "eq": [("dashboard", "World Equity Indices"), ("dashboard", "DM Equity (US)"), ("dashboard", "EM Equity"), ("dashboard", "Quotes & Charts"), ("dashboard", "Fundamentals"), ("dashboard", "Earnings Calendar"), ("dashboard", "Watchlist & Alerts"),
+             ("quote_board", "Exchange Rates"), ("quote_board", "Commodity Prices"), ("dashboard", "Commodities")],
+      "cb": [("cb_table", "Countries"), ("cb_table", "DM / EM / World"), ("cb_table", "Predictions")],
+      "hg": [("futures_board", "Rates Futures"), ("futures_board", "Equity Index Futures"), ("futures_board", "FX Futures"), ("futures_board", "Energy Futures"), ("futures_board", "Metals Futures"),
+             ("futures_board", "Agriculture Futures"), ("futures_board", "Crypto Futures"), ("futures_board", "Volatility Futures"), ("hedge_calc", "Hedge Calculator"),
+             ("dashboard", "FX"), ("dashboard", "Onshore USD Rates"), ("dashboard", "Crypto")],
       "nw": [("dashboard", "Economic Calendar"), ("dashboard", "News"), ("dashboard", "Central Bank Calendar")],
-      "pm": [("dashboard", "Portfolio & Risk Analytics"), ("section_title", "Model portfolios: bonds / equity"),
-             ("dashboard", "40/60"), ("dashboard", "70/30"), ("dashboard", "60/40"), ("dashboard", "30/70"),
-             ("section_title", "Model portfolios: DM / EM"),
-             ("dashboard", "70/30 DM/EM"), ("dashboard", "60/40 DM/EM"), ("dashboard", "40/60 DM/EM"), ("dashboard", "30/70 DM/EM")],
+      "pm": [("pm_table", "Portfolios"), ("pm_table", "Performance"), ("dashboard", "Portfolio & Risk Analytics"),
+             ("dashboard", "DM Cash B100"), ("dashboard", "DM E30B70"), ("dashboard", "DM E40B60"), ("dashboard", "DM E60B40"), ("dashboard", "DM E70B30"),
+             ("dashboard", "DM E40B40 · EM E10B10"), ("dashboard", "EM B100"), ("dashboard", "DM E50B10 · EM E30B10"),
+             ("dashboard", "DM E70 · EM E30"), ("dashboard", "DM E60 · EM E40"), ("dashboard", "DM E40 · EM E60"), ("dashboard", "DM E30 · EM E70"), ("dashboard", "EM Carry EUR→BRL")],
       "my-pm": [("holdings", "Personal portfolio")],
       "config": [("sources", "Sources"), ("about", None)],
     },
@@ -217,7 +221,7 @@ declared_kinds = {e.get("kind", "entry") for lst in stacks.values() for e in lst
 named_kinds = set(re.findall(r'KIND_\w+\s*=\s*"([^"]+)"', pages_kt))
 for k in sorted(declared_kinds - named_kinds): bad.append("P6 build.json declares the kind %r that Pages.kt does not name" % k)
 for k in sorted(named_kinds - declared_kinds - {"holdings", "section_title", "entry"}): bad.append("P6 Pages.kt names the kind %r that build.json never declares" % k)
-for k, const in (("section_title", "KIND_SECTION_TITLE"), ("holdings", "KIND_HOLDINGS"), ("about", "KIND_ABOUT"), ("dashboard", "KIND_DASHBOARD"), ("sources", "KIND_SOURCES"),
+for k, const in (("section_title", "KIND_SECTION_TITLE"), ("holdings", "KIND_HOLDINGS"), ("about", "KIND_ABOUT"), ("dashboard", "KIND_DASHBOARD"), ("sources", "KIND_SOURCES"), ("pm_table", "KIND_PM_TABLE"),
                  ("avatar", "KIND_AVATAR"), ("galaxy", "KIND_GALAXY"), ("store", "KIND_STORE")):
     if k in named_kinds and const not in page_kt: bad.append("P6 SectionPage does not draw %s" % const)
 if "about" not in by_id: bad.append("P6 ui.sections declares no hidden about section")

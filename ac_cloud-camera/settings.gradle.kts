@@ -43,8 +43,8 @@ project(":libs:fleetconfig-model").projectDir = file("../ab_cloud-libs-shared/li
 include(":libs:crash")
 project(":libs:crash").projectDir = file("../ab_cloud-libs-shared/libs/crash")
 // #1533 the shared on-device vision toolkit (detection, frame mapping, analyzer lifecycle), by reference.
-include(":libs:ml-vision")
-project(":libs:ml-vision").projectDir = file("../ab_cloud-libs-shared/libs/ml-vision")
+include(":libs:ml-l-vision-mlkit")
+project(":libs:ml-l-vision-mlkit").projectDir = file("../ab_cloud-libs-shared/libs/ml-l-vision-mlkit")
 // #868 the fleet's bottom island + page-tab strips + NavDecl: ui/ModeNav.kt is the mode switcher.
 include(":libs:bottomnav")
 project(":libs:bottomnav").projectDir = file("../ab_cloud-libs-shared/libs/bottomnav")

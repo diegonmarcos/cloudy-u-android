@@ -46,7 +46,7 @@ import java.util.concurrent.Executors
 /**
  * #1533 the VR page: AR-style filters on the live camera, all on device. The declared filters (assets/vr-filters.json) are
  * switched on with the chips; each analysed frame goes through ML Kit Face Detection (landmarks, contours) and Selfie
- * Segmentation (both bundled, via libs:ml-vision) and the fleet engine's object detector (for stickers on objects), is
+ * Segmentation (both bundled, via libs:ml-l-vision-mlkit) and the fleet engine's object detector (for stickers on objects), is
  * composited by [VrCompositor] (hats, glasses, masks anchored to the head, a blurred or replaced background, a colour LUT,
  * stickers on objects) and shown over the preview. The shutter saves the composited photo (a full-resolution still, composited
  * again at its own size); Record saves the composited video.

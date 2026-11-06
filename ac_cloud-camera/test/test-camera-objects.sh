@@ -12,10 +12,10 @@
 #      and Pause removes it.
 #   O4 detection is LOCAL: the fleet's on-device engine through ImageContentScanner.detectLive; no HTTP client, no
 #      URL and no cloud route in the Objects or vision code.
-#   O5 boxes + labels + confidence + tracking ids go through libs:ml-vision's mapping (FrameMapping, mirrored for
+#   O5 boxes + labels + confidence + tracking ids go through libs:ml-l-vision-mlkit's mapping (FrameMapping, mirrored for
 #      the front camera); a confidence slider filters; the shutter saves the frame with its JSON detections.
 #   O6 the camera permission is a Configs > Perms row only: no permission request in the Objects or vision code.
-#   O7 libs:ml-vision is a declared, included, compiled module and a licence-inventory subject.
+#   O7 libs:ml-l-vision-mlkit is a declared, included, compiled module and a licence-inventory subject.
 # Each check is then run against planted mutations of the real sources; a mutation that leaves every check
 # green fails this tester.
 set -eu
@@ -28,7 +28,7 @@ import json, os, re, sys
 APP = os.environ["APP_DIR"]
 ROOT = os.path.join(APP, "..")
 J = "app/src/main/java/cld/camera"
-LIB = "../ab_cloud-libs-shared/libs/ml-vision/src/main/java/com/diegonmarcos/superapp/vision"
+LIB = "../ab_cloud-libs-shared/libs/ml-l-vision-mlkit/src/main/java/com/diegonmarcos/superapp/vision"
 FILES = {
     "ctl": J + "/objects/ObjectsController.kt", "det": J + "/objects/EngineObjectDetector.kt",
     "snap": J + "/objects/ObjectsSnapshot.kt", "cam": J + "/CamConfig.kt", "main": J + "/ui/activities/MainActivity.kt",
@@ -88,8 +88,8 @@ def checks(f):
     for k in ("ctl", "det", "snap", "lifecycle", "overlay", "mapping", "detection"):
         need("O6 %s asks for no permission" % k, re.search(r"requestPermission|Manifest\.permission|checkSelfPermission|RequestPermission", c[k]) is None)
     need("O6 the camera grant is a Configs > Perms row", "camera" in (b.get("perms") or {}).get("needs", []))
-    need("O7 the app includes and compiles libs:ml-vision", ":libs:ml-vision" in c["settings"] and ":libs:ml-vision" in c["gradle"])
-    need("O7 build.json::modules declares libs:ml-vision", "libs:ml-vision" in (b.get("modules") or {}))
+    need("O7 the app includes and compiles libs:ml-l-vision-mlkit", ":libs:ml-l-vision-mlkit" in c["settings"] and ":libs:ml-l-vision-mlkit" in c["gradle"])
+    need("O7 build.json::modules declares libs:ml-l-vision-mlkit", "libs:ml-l-vision-mlkit" in (b.get("modules") or {}))
     need("O7 the Objects panel is hidden until the page is picked", re.search(r'objects_panel"[^>]*android:visibility="gone"', f["layout"], re.S) is not None)
     return bad
 
@@ -127,7 +127,7 @@ M = [
     ("the Objects page asks for the camera itself", "ctl", lambda t: t + "\nfun x() { requestPermission() }\n"),
     ("the mode switch forgets to enter", "cam", lambda t: t.replace("mActivity.objects.enter()", "")),
     ("the analysis misses the bind", "cam", lambda t: t.replace("useCasesList.add(mActivity.objects.analysisUseCase(aspectRatio))", "")),
-    ("the lib is not included", "settings", lambda t: t.replace(":libs:ml-vision", ":libs:gone")),
+    ("the lib is not included", "settings", lambda t: t.replace(":libs:ml-l-vision-mlkit", ":libs:gone")),
     ("the panel is visible from the start", "layout", lambda t: re.sub(r'(objects_panel"[^>]*?)android:visibility="gone"', r'\1android:visibility="visible"', t, flags=re.S)),
 ]
 survivors = []

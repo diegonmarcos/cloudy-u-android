@@ -287,8 +287,7 @@
       {
         "id": "cloud-tasks",
         "package": "com.diegonmarcos.cloudagenda",
-        "activity": "com.diegonmarcos.cloudagenda.MainActivity",
-        "label": "Cloud Tasks"
+        "activity": "com.diegonmarcos.cloudagenda.MainActivity"
       },
       {
         "id": "cloud-media-center",

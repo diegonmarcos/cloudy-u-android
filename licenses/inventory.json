@@ -434,7 +434,7 @@
     "ab_cloud-libs-shared/libs/fleetconfig-model",
     "ab_cloud-libs-shared/libs/ml-l-image",
     "ab_cloud-libs-shared/libs/ml-l-sound",
-    "ab_cloud-libs-shared/libs/ml-vision",
+    "ab_cloud-libs-shared/libs/ml-l-vision-mlkit",
     "ab_cloud-libs-shared/libs/perms",
     "ab_cloud-libs-shared/libs/theme-background",
     "ab_cloud-libs-shared/libs/ui-icons",
@@ -3909,7 +3909,7 @@
     "ab_cloud-libs-shared/libs/maps/build.gradle",
     "ab_cloud-libs-shared/libs/media-viewer/build.gradle",
     "ab_cloud-libs-shared/libs/media/build.gradle",
-    "ab_cloud-libs-shared/libs/ml-vision/build.gradle",
+    "ab_cloud-libs-shared/libs/ml-l-vision-mlkit/build.gradle",
     "ab_cloud-libs-shared/libs/model-catalogue/build.gradle",
     "ab_cloud-libs-shared/libs/mounts/build.gradle",
     "ab_cloud-libs-shared/libs/nfc/build.gradle",
@@ -4047,7 +4047,7 @@
     "ab_cloud-libs-shared/libs/maps/build.gradle",
     "ab_cloud-libs-shared/libs/media-viewer/build.gradle",
     "ab_cloud-libs-shared/libs/media/build.gradle",
-    "ab_cloud-libs-shared/libs/ml-vision/build.gradle",
+    "ab_cloud-libs-shared/libs/ml-l-vision-mlkit/build.gradle",
     "ab_cloud-libs-shared/libs/model-catalogue/build.gradle",
     "ab_cloud-libs-shared/libs/mounts/build.gradle",
     "ab_cloud-libs-shared/libs/nfc/build.gradle",
@@ -4154,7 +4154,7 @@
     "ab_cloud-libs-shared/libs/git-sync/build.gradle",
     "ab_cloud-libs-shared/libs/json-viewer/build.gradle",
     "ab_cloud-libs-shared/libs/media-viewer/build.gradle",
-    "ab_cloud-libs-shared/libs/ml-vision/build.gradle",
+    "ab_cloud-libs-shared/libs/ml-l-vision-mlkit/build.gradle",
     "ab_cloud-libs-shared/libs/mounts/build.gradle",
     "ab_cloud-libs-shared/libs/odf/build.gradle",
     "ab_cloud-libs-shared/libs/pdf/build.gradle",
@@ -4250,7 +4250,7 @@
     "ab_cloud-libs-shared/libs/maps/build.gradle",
     "ab_cloud-libs-shared/libs/media-viewer/build.gradle",
     "ab_cloud-libs-shared/libs/media/build.gradle",
-    "ab_cloud-libs-shared/libs/ml-vision/build.gradle",
+    "ab_cloud-libs-shared/libs/ml-l-vision-mlkit/build.gradle",
     "ab_cloud-libs-shared/libs/model-catalogue/build.gradle",
     "ab_cloud-libs-shared/libs/mounts/build.gradle",
     "ab_cloud-libs-shared/libs/nfc/build.gradle",
@@ -4485,7 +4485,7 @@
     "ab_cloud-libs-shared/libs/maps/build.gradle",
     "ab_cloud-libs-shared/libs/media-viewer/build.gradle",
     "ab_cloud-libs-shared/libs/media/build.gradle",
-    "ab_cloud-libs-shared/libs/ml-vision/build.gradle",
+    "ab_cloud-libs-shared/libs/ml-l-vision-mlkit/build.gradle",
     "ab_cloud-libs-shared/libs/model-catalogue/build.gradle",
     "ab_cloud-libs-shared/libs/mounts/build.gradle",
     "ab_cloud-libs-shared/libs/nfc/build.gradle",
@@ -4644,7 +4644,7 @@
     "ab_cloud-libs-shared/libs/media-convert-audio/build.gradle",
     "ab_cloud-libs-shared/libs/media/build.gradle",
     "ab_cloud-libs-shared/libs/ml-l-image-ocr/build.gradle",
-    "ab_cloud-libs-shared/libs/ml-vision/build.gradle",
+    "ab_cloud-libs-shared/libs/ml-l-vision-mlkit/build.gradle",
     "ab_cloud-libs-shared/libs/mounts/build.gradle",
     "ab_cloud-libs-shared/libs/net-wg/build.gradle",
     "ab_cloud-libs-shared/libs/net/build.gradle",
@@ -6607,7 +6607,7 @@
   "maven:com.google.mlkit:face-detection": {
    "kind": "maven",
    "declared_in": [
-    "ab_cloud-libs-shared/libs/ml-vision/build.gradle"
+    "ab_cloud-libs-shared/libs/ml-l-vision-mlkit/build.gradle"
    ],
    "version": "16.1.7",
    "scope": "shipped",
@@ -6673,7 +6673,7 @@
   "maven:com.google.mlkit:segmentation-selfie": {
    "kind": "maven",
    "declared_in": [
-    "ab_cloud-libs-shared/libs/ml-vision/build.gradle"
+    "ab_cloud-libs-shared/libs/ml-l-vision-mlkit/build.gradle"
    ],
    "version": "16.0.0-beta6",
    "scope": "shipped",

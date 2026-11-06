@@ -12,7 +12,7 @@
     "auth": "aa_cloud-superapp",
     "autofill": "ac_cloud-account",
     "bottomnav": "aa_cloud-superapp",
-    "ml-vision": "ac_cloud-camera",
+    "ml-l-vision-mlkit": "ac_cloud-camera",
     "theme-background": "ac_cloud-mail",
     "ui-icons": "ac_cloud-mail",
     "ui-nav-bars": "ac_cloud-mail",

@@ -15,7 +15,6 @@ import android.os.Looper
 import android.text.format.DateUtils
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -893,9 +892,6 @@ class MainActivity : AppCompatActivity() {
 
         val exportMd = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/markdown")) { uri -> uri?.let { export(it) } }
         val exportTxt = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/plain")) { uri -> uri?.let { export(it) } }
-        val askMic = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { granted ->
-            if (granted[Manifest.permission.RECORD_AUDIO] == true) startListen() else say(getString(R.string.listen_no_mic))
-        }
         val listening = ListenEngine.state.value.running
         var menu by remember { mutableStateOf(false) }
 
@@ -912,7 +908,7 @@ class MainActivity : AppCompatActivity() {
                         WriterIconButton(
                             Icons.Rounded.Mic,
                             stringResource(R.string.editor_listen),
-                            { if (listening) listenOpen.value = true else requestListen(askMic) },
+                            { if (listening) listenOpen.value = true else requestListen() },
                             tint = if (listening) MaterialTheme.colorScheme.error else Color.Unspecified,
                         )
                         Box {
@@ -1019,7 +1015,7 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
                 Column(Modifier.navigationBarsPadding().imePadding()) {
-                    if (listening || listenOpen.value) ListenPanel(askMic)
+                    if (listening || listenOpen.value) ListenPanel()
                     AnimatedVisibility(
                         visible = focused,
                         enter = fadeIn(tween(WriterScreens.FADE_IN_MS)) + slideInVertically(tween(WriterScreens.FADE_IN_MS)) { it / 2 },
@@ -1200,14 +1196,17 @@ class MainActivity : AppCompatActivity() {
 
     // ── Listen ───────────────────────────────────────────────────────────
 
-    private fun requestListen(ask: ManagedActivityResultLauncher<Array<String>, Map<String, Boolean>>) {
+    private fun requestListen() {
         listenOpen.value = true
         val wanted = buildList {
-            add(Manifest.permission.RECORD_AUDIO)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) add(Manifest.permission.POST_NOTIFICATIONS)
+            add(Manifest.permission.RECORD_AUDIO to "microphone")
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) add(Manifest.permission.POST_NOTIFICATIONS to "notifications")
         }
-        if (wanted.all { checkSelfPermission(it) == PackageManager.PERMISSION_GRANTED }) startListen()
-        else ask.launch(wanted.toTypedArray())
+        val missing = wanted.filter { checkSelfPermission(it.first) != PackageManager.PERMISSION_GRANTED }
+        if (missing.isEmpty()) { startListen(); return }
+        // #1515 P7: granted in Configs > Perms (the microphone / notifications rows), never asked from here.
+        if (missing.any { it.first == Manifest.permission.RECORD_AUDIO }) say(getString(R.string.listen_no_mic))
+        com.diegonmarcos.superapp.perms.PermsLink.open(this, "listen", missing.map { it.second })
     }
 
     private fun startListen() {
@@ -1218,7 +1217,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     @Composable
-    private fun ListenPanel(ask: ManagedActivityResultLauncher<Array<String>, Map<String, Boolean>>) {
+    private fun ListenPanel() {
         val s = ListenEngine.state.value
         listenPrefs.value.let { }
         val translateOn = WriterRoutes.listenTranslate(this)
@@ -1256,7 +1255,7 @@ class MainActivity : AppCompatActivity() {
                             Icon(Icons.Rounded.Stop, contentDescription = stringResource(R.string.listen_stop))
                         }
                     } else {
-                        WriterButton(stringResource(R.string.listen_start), { requestListen(ask) }, kind = ControlKind.TONAL, icon = Icons.Rounded.Mic)
+                        WriterButton(stringResource(R.string.listen_start), { requestListen() }, kind = ControlKind.TONAL, icon = Icons.Rounded.Mic)
                         IconButton(onClick = { listenOpen.value = false }) {
                             Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.action_close))
                         }

@@ -75,8 +75,9 @@ if not any(a["id"] == "camera" and a.get("requires") and "camera" in a.get("perm
 man = read(os.path.join(app, "app/src/main/AndroidManifest.xml"))
 for perm in ("android.permission.CAMERA", "android.permission.READ_MEDIA_IMAGES"):
     if perm not in man: bad.append("M5 the manifest lacks %s" % perm)
-asset = json.loads(read(os.path.join(app, "app/src/main/assets/app-perms.json")))
-if asset["needs"] != needs: bad.append("M5 assets/app-perms.json differs from build.json::perms (rerun cloud-android-perms-guard.py --write)")
+# #1547 the grants live in the ONE runtime dataset keyed by package (data/fleet/app-perms.json), no baked per-app copy
+fleet = json.loads(read(os.path.join(root, "data/fleet/app-perms.json")))["apps"].get(bj["android"]["application_id"], {})
+if fleet.get("needs") != needs: bad.append("M5 data/fleet/app-perms.json differs from build.json::perms (rerun cloud-android-perms-guard.py --write)")
 for f in ("AiAttachUi.kt", "AiAttachments.kt", "AiComposerBar.kt"):
     if re.search(r"requestPermissions|RequestPermission|ACTION_APPLICATION_DETAILS|pm grant", code(os.path.join(LK, f))): bad.append("M5 %s asks for a permission itself" % f)
 if "PermsFixChip" not in code(os.path.join(AK, "ui/SiShell.kt")): bad.append("M5 the app does not show the Fix in Perms chip")
@@ -103,6 +104,7 @@ LIBREL=ab_cloud-libs-shared/libs/ai
 mutant() {   # mutant <name> <shell edit run in the copy's root> <needle expected in the output>
   rm -rf "$W/m"; mkdir -p "$W/m/$LIBREL"
   cp -r "$APP" "$W/m/ac_cloud-superintel"; cp -r "$ROOT/$LIBREL/src" "$ROOT/$LIBREL/tools" "$W/m/$LIBREL/"
+  mkdir -p "$W/m/data/fleet"; cp "$ROOT/data/fleet/app-perms.json" "$W/m/data/fleet/"
   ( cd "$W/m" && eval "$2" )
   if out="$(check "$W/m" 2>&1)"; then bad "mutant '$1' stayed green"; elif grep -q -- "$3" <<<"$out"; then ok "mutant '$1' is red ($3)"; else bad "mutant '$1' is red for the wrong reason: $out"; fi
 }
@@ -124,5 +126,6 @@ mutant "the key leaves the store" "sed -i 's/src[.]get(/cfg.get(/g' ac_cloud-sup
 mutant "a perms row is dropped"   "python3 -c \"import json;p='ac_cloud-superintel/build.json';d=json.load(open(p));d['perms']['needs'].remove('camera');json.dump(d,open(p,'w'))\"" "M5 attach camera needs perms row camera"
 mutant "the lib asks itself"      "echo 'val r = \"requestPermissions\"' >> $K/AiAttachUi.kt"                                           "M5 AiAttachUi.kt asks for a permission itself"
 mutant "camera loses its gate"    "sed -i 's/\"requires\": true/\"requires\": false/' $L/ai-design.json"                                "M5 Camera is not gated"
+mutant "the perms dataset drifts"  "python3 -c \"import json;p='data/fleet/app-perms.json';d=json.load(open(p));d['apps']['com.diegonmarcos.cloudsuperintel']['needs']=['camera'];json.dump(d,open(p,'w'))\"" "M5 data/fleet/app-perms.json differs"
 
 [ "$FAILS" -eq 0 ] && echo "ALL GREEN" || { echo "$FAILS FAILED"; exit 1; }

@@ -501,7 +501,7 @@ Coverage: 17 covered, 0 gaps.
 
 ## cloud-camera — `cld.camera`
 
-Module `ac_cloud-camera`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-ml-l-image, lib-ml-l-sound, lib-ml-vision, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-nav-bars.
+Module `ac_cloud-camera`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-ml-l-image, lib-ml-l-sound, lib-ml-l-vision-mlkit, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-nav-bars.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -976,6 +976,7 @@ Module `ac_cloud-news`; libs: lib-analytics, lib-apify, lib-bottomnav, lib-core,
 | `event_keys` | encrypted | secret | yes | #1470 Cloud News event-ticketer API keys (one per ticketer id) in EncryptedSharedPreferences via libs:crash SafeEncryptedPrefs; a credential, so it migrates through the vault and is masked on screen. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
+| `media_resume` | prefs | device | no | Cloud News Media tab: the playback position of each YouTube embed (video id to seconds), so a video resumes where it stopped. Per device. |
 | `nav_modes` | prefs | config | yes | #1189 the user's per-section choice of how child pages are navigated (one row, two rows, side menu; overrides the build.json declaration) and whether the side menu is expanded or the rail. Written by the shared nav bars (NavModePrefs) from each app's Configs; part of the app's settings, so it migrates and backs up with them. |
 | `nav_ui` | prefs | config | yes | The user's nav UI choice for this app (Configs > UI): the nav mode, Classic or Clean, and the scroll-hide toggle (a downward scroll hides every bar until an upward one). Written by the shared Configs card (NavUiPrefs, libs:ui-nav-bars NavUiConfigCard); part of the app's settings, so it migrates and backs up with them. The app's declared default is build.json::ui.nav_ui. |
 | `news_bridge` | prefs | device | no | News one-time 'seeded' flag for legacy saved-articles import. |

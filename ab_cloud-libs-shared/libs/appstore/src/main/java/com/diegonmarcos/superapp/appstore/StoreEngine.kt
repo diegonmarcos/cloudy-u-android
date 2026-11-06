@@ -137,7 +137,18 @@ object StoreEngine {
     }
 
     private fun waitFor(ctx: Context, app: Fleet.App, e: DownloadEngine): VerifiedApk? {
+        // await() samples the job (a wake-up per engine publish, at most every tick), so a download that ends between two samples
+        // never showed its bytes: the row went from "downloading 0 B" straight to verifying. The bytes it ended with are published
+        // once, the moment it leaves RUNNING, before the next stage.
+        var landed = false
+        fun landedBytes(j: DlJob) {
+            if (landed || j.bytes <= 0) return
+            landed = true
+            val t = if (j.total > 0) j.total else j.bytes
+            UpdateProgress.update(UpdateProgress.State.Downloading((j.bytes * 100 / t).toInt().coerceIn(0, 100), j.bytes, t))
+        }
         val done = e.await(app.id) { j ->
+            if (j.state == DlState.VERIFYING) landedBytes(j)
             val st = when (j.state) {
                 DlState.RUNNING -> UpdateProgress.State.Downloading(j.percent.coerceAtLeast(0), j.bytes, j.total)
                 DlState.QUEUED -> UpdateProgress.State.Waiting(com.diegonmarcos.superapp.appstore.dl.DlText.line(j))
@@ -146,6 +157,7 @@ object StoreEngine {
             }
             if (st != null) UpdateProgress.update(st)
         } ?: return null
+        if (done.state == DlState.DONE) landedBytes(done)
         return when (done.state) {
             DlState.DONE -> verified(ctx, app, done)
             DlState.FAILED -> {

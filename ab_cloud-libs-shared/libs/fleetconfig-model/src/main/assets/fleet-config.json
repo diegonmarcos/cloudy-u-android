@@ -1515,6 +1515,14 @@
         "token": "secret"
       }
     },
+    "media_resume": {
+      "kind": "prefs",
+      "class": "device",
+      "doc": "Cloud News Media tab: the playback position of each YouTube embed (video id to seconds), so a video resumes where it stopped. Per device.",
+      "used_by": [
+        "ac_cloud-news"
+      ]
+    },
     "media_rotation": {
       "kind": "prefs",
       "class": "device",
@@ -3247,7 +3255,7 @@
         "lib-fleetconfig-model",
         "lib-ml-l-image",
         "lib-ml-l-sound",
-        "lib-ml-vision",
+        "lib-ml-l-vision-mlkit",
         "lib-perms",
         "lib-theme-background",
         "lib-ui-icons",

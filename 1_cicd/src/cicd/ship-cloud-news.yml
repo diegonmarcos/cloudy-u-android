@@ -104,7 +104,6 @@ jobs:
         run: |
           sh 1_cicd/dist/scripts/cloud-android-test-engine.sh shell "$WORK_DIR"
           sh 1_cicd/dist/scripts/cloud-android-test-engine.sh lint  "$WORK_DIR"
-          sh 1_cicd/dist/scripts/cloud-android-test-engine.sh unit  "$WORK_DIR"
 
       # Publish-if-changed gate. Android builds are not byte-reproducible, so a
       # rebuild of unchanged source published different bytes, a different
@@ -122,20 +121,17 @@ jobs:
         run: sh 1_cicd/dist/scripts/cloud-android-publish-gate.sh check "$WORK_DIR" "${{ matrix.abi }}"
 
       - name: Set up JDK 17
-        if: steps.gate.outputs.skip != 'true'
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "17"
 
       - name: Set up Android SDK
-        if: steps.gate.outputs.skip != 'true'
         uses: android-actions/setup-android@v3
         with:
           packages: "platforms;android-36 platforms;android-35 platforms;android-26 build-tools;35.0.0 build-tools;34.0.0 platform-tools"
 
       - name: Set up Gradle 8.10.2 (cached)
-        if: steps.gate.outputs.skip != 'true'
         # v6, not v3: v3 bundles the old @actions/cache client, which talks to the
         # cache service GitHub retired. Every save AND restore 400s ("Our services
         # aren't available right now"), so the Gradle distribution, the dependency
@@ -147,12 +143,10 @@ jobs:
       # ── MANAGED-GRADLE-CACHE-HYGIENE: injected by cloud-android-gradle-cache-hygiene.py ──
       # Edit 1_cicd/src/actions/gradle-cache-hygiene, never this block.
       - name: Gradle cache hygiene (retry failed resolution, never cache a failed lookup)
-        if: steps.gate.outputs.skip != 'true'
         uses: ./.github/actions/gradle-cache-hygiene
       # ── end MANAGED-GRADLE-CACHE-HYGIENE ──
 
       - name: Checkout vault (shared Android signing key)
-        if: steps.gate.outputs.skip != 'true'
         uses: actions/checkout@v4
         with:
           repository: diegonmarcos/cloud-me-pvt-vault
@@ -160,15 +154,25 @@ jobs:
           path: .vault
 
       - name: Install jq
-        if: steps.gate.outputs.skip != 'true'
         run: |
           sudo apt-get update -y && sudo apt-get install -y jq
 
       - name: Install ORAS + sops (pinned, sha256-checked, fails at the download)
-        if: steps.gate.outputs.skip != 'true'
         uses: ./.github/actions/install-pinned-tools
         with:
           tools: oras sops
+
+      # #1536 PLACED HERE, after the vault checkout and sops, and not up with the shell testers (#531, as in
+      # ship-cloud-search.yml / ship-cloud-calc.yml): app/build.gradle's signingConfig throws during Gradle's
+      # CONFIGURATION phase without the shared key, so the key has to be resolvable before the suite can be enumerated.
+      # UNGATED on the publish gate (toolchain steps above included): a test-only change still runs the tests it changed.
+      - name: JVM unit tests (fatal on failure)
+        working-directory: ${{ github.workspace }}
+        env:
+          BYPASS_NIX: "1"
+          VAULT_DIR: ${{ github.workspace }}/.vault
+          SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
+        run: sh 1_cicd/dist/scripts/cloud-android-test-engine.sh unit "$WORK_DIR"
 
       - name: Determine variant
         if: steps.gate.outputs.skip != 'true'

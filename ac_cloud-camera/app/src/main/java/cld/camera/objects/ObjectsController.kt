@@ -27,7 +27,7 @@ import java.util.concurrent.Executors
 
 /**
  * #1533 the Objects page: live, on-device object detection over the CameraX preview. Boxes, labels, confidence and
- * tracking ids come from [EngineObjectDetector] (the fleet's ML engine), drawn by libs:ml-vision's overlay; a slider sets
+ * tracking ids come from [EngineObjectDetector] (the fleet's ML engine), drawn by libs:ml-l-vision-mlkit's overlay; a slider sets
  * the minimum confidence, Pause freezes the analysis and the boxes, and the shutter saves the frame with its JSON.
  *
  * Battery: the analyzer is an ImageAnalysis with STRATEGY_KEEP_ONLY_LATEST, spaced by recognition.json's

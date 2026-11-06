@@ -209,7 +209,7 @@ else:
         # Drive is native now (no WebView bridge / drive.html): Declarations
         # decodes the baked list and the Home page reads it from there.
         ("app/src/main/java/com/diegonmarcos/clouddrive/Declarations.kt", "parseConnections(decode(BuildConfig.CONNECTIONS_B64))"),
-        ("app/src/main/java/com/diegonmarcos/clouddrive/home/HomeScreen.kt", "Declarations.connections"),
+        ("app/src/main/java/com/diegonmarcos/clouddrive/volumes/VolumeClasses.kt", "Declarations.connections"),  # #1534 Home deleted: the Volumes Overview groups every back end
     ]
     for relative, token in carriers:
         path = os.path.join(drive_app, relative)

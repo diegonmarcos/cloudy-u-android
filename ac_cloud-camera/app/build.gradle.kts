@@ -183,7 +183,7 @@ dependencies {
     implementation(project(":libs:ml-l-sound"))
 
     // #1533 Objects (and VR): detection types, frame-to-view mapping, the analyzer lifecycle, the overlay.
-    implementation(project(":libs:ml-vision"))
+    implementation(project(":libs:ml-l-vision-mlkit"))
 
     // Fleet mesh member: libs:core (+ devtools via `api`) merges the fleet
     // provider, receiver, <queries> and the signature permission into this APK.

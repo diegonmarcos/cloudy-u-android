@@ -498,3 +498,15 @@ dependencies {
 // Account). Its suite (the order of tries, the cache, the bearer on the public path only) is Mail's proof too, so the
 // unit-test step this app already runs executes it first.
 tasks.matching { it.name == "testReleaseUnitTest" }.configureEach { dependsOn(":libs:fleet-endpoints:test") }
+
+// #1474 libs:crash links androidx.security:security-crypto (tink-android) for SafeEncryptedPrefs, and Mail's own
+// stack brings the JVM com.google.crypto.tink:tink: the two jars carry the same classes and checkReleaseDuplicateClasses
+// fails. One Tink on Android: the JVM artifact resolves to tink-android at the version Mail asks for (Cloud Matrix does
+// the same).
+configurations.all {
+    resolutionStrategy {
+        dependencySubstitution {
+            substitute(module("com.google.crypto.tink:tink")).using(module("com.google.crypto.tink:tink-android:1.18.0"))
+        }
+    }
+}

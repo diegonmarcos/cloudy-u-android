@@ -12,7 +12,10 @@ import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
-import android.webkit.WebViewClient
+import com.diegonmarcos.cloudlib.web.CloudChromeClient
+import com.diegonmarcos.cloudlib.web.CloudWeb
+import com.diegonmarcos.cloudlib.web.CloudWebClient
+import com.diegonmarcos.cloudlib.web.WebProfile
 import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.core.view.WindowInsetsCompat
@@ -34,7 +37,8 @@ class MediaPlayerOverlay(private val act: Activity, private val host: WebView, p
     private val density = act.resources.displayMetrics.density
     private val prefs = act.getSharedPreferences("media_resume", Context.MODE_PRIVATE)
     private val frame = FrameLayout(act).apply { visibility = View.GONE; setBackgroundColor(Color.BLACK); elevation = ELEVATION_DP * density }
-    private val web: WebView = WebView(act)
+    // #1371 built by libs:web-core: WEB_WORLD = JS + storage + media without a gesture + the third-party cookies the embed needs
+    private val web: WebView = CloudWeb.create(act, WebProfile.WEB_WORLD)
     private val tapToExpand = View(act)
     private val close = TextView(act)
     private var fullscreenView: View? = null
@@ -60,16 +64,13 @@ class MediaPlayerOverlay(private val act: Activity, private val host: WebView, p
     }
 
     init {
-        web.settings.javaScriptEnabled = true
-        web.settings.domStorageEnabled = true
-        web.settings.mediaPlaybackRequiresUserGesture = false
         web.setBackgroundColor(Color.BLACK)
         web.addJavascriptInterface(PosSink(), "Player")
-        web.webViewClient = object : WebViewClient() {
+        web.webViewClient = object : CloudWebClient(WebProfile.WEB_WORLD) {
             // the wrapper is the only page this WebView shows: nothing navigates it elsewhere
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean = request.isForMainFrame
         }
-        web.webChromeClient = object : WebChromeClient() {
+        web.webChromeClient = object : CloudChromeClient(act) {
             override fun onShowCustomView(view: View, callback: CustomViewCallback) = enterFullscreen(view, callback)
             override fun onHideCustomView() = exitFullscreen()
         }

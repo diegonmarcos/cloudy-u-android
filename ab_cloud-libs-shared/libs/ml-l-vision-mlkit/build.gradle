@@ -1,4 +1,4 @@
-// libs:ml-vision (#1533): the fleet's shared on-device VISION toolkit, compiled by reference like libs:bottomnav.
+// libs:ml-l-vision-mlkit (#1533): the fleet's shared on-device VISION toolkit, compiled by reference like libs:bottomnav.
 // Detection (Detection, ObjectDetector, DetectionOverlayView), the frame-to-view mapping with rotation and mirroring
 // (FrameMapping) and the analyzer lifecycle (AnalysisGate, AnalyzerLifecycle: stopped whenever the page is hidden or
 // paused), the face and segmentation APIs (ML Kit Face Detection, Selfie Segmentation: bundled models), the declared AR
