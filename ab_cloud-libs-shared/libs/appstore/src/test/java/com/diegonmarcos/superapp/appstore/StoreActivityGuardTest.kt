@@ -13,7 +13,7 @@ import org.junit.Test
 class StoreActivityGuardTest {
 
     private val panel = "StoreActivityPanel.kt"
-    private val widget = Regex("""\b(LinearProgressIndicator|CircularProgressIndicator|ProgressIndicator|progress\.Panel|StoreDownloadsPanel|PROGRESS_TAG)\b|"store-(progress|downloads)""")
+    private val widget = Regex("""\b(LinearProgressIndicator|CircularProgressIndicator|ProgressIndicator|progress\.Panel|StoreDownloadsPanel|PROGRESS_TAG)\b|"store-(progress|downloads)"""")
     private val pages = listOf("StoreCloudFragment.kt", "StorePhoneFragment.kt")
 
     private fun code(s: String) = s.replace(Regex("""/\*.*?\*/""", RegexOption.DOT_MATCHES_ALL), "").lines().joinToString("\n") { it.replace(Regex("""(?<![:"])//.*"""), "") }
