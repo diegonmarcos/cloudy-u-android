@@ -193,8 +193,12 @@ internal fun PermsCenterSection(
     var features by remember { mutableStateOf(emptySet<String>()) }
     var apps by remember { mutableStateOf(emptySet<String>()) }
     val q = PermsQuery(text, status, kinds, sections, cats, prots, groups, features, apps, missingOnly, highlight?.ids?.toSet(), groupBy, sortBy)
-    val shown = remember(page, q) { PermsPageQuery.query(page, q, appsOf) }
+    // #1550 computed fresh every recomposition (NOT remember-keyed): a stale cleared/full after a filter toggle hid the
+    // "nothing missing" groups under Missing only. The work is a few list passes over the page.
+    val shown = PermsPageQuery.query(page, q, appsOf)
     val shownRows = shown.flatMap { it.rows }.distinctBy { it.entry.id }
+    val full = PermsPageQuery.fullGroups(page, q, appsOf)
+    val cleared = PermsPageQuery.nothingMissing(page, q, appsOf)
     val counts = remember(page) { PermsPageQuery.counts(page) }
     fun <T> Set<T>.flip(v: T) = if (v in this) this - v else this + v
 
@@ -218,8 +222,9 @@ internal fun PermsCenterSection(
         )
         // ── filters ──
         PermsChipRow("Status") {
-            for (f in StatusFilter.values()) PermsFilterPill("${f.word} ${counts[f] ?: 0}", status == f, "perms:filter:status:${f.name.lowercase()}") { status = f }
+            // #1550 Missing only leads the row (a primary filter) so it is always in view, never scrolled off the right.
             PermsFilterPill(if (missingOnly) "✓ Missing only" else "Missing only", missingOnly, "perms:filter-missing") { missingOnly = !missingOnly }
+            for (f in StatusFilter.values()) PermsFilterPill("${f.word} ${counts[f] ?: 0}", status == f, "perms:filter:status:${f.name.lowercase()}") { status = f }
         }
         val advActive = listOf(kinds, sections, cats, prots, groups, features, apps).count { it.isNotEmpty() }
         KitStoreRowLine(Modifier.testTag("perms:advanced-toggle"), onClick = { advanced = !advanced }) {
@@ -303,8 +308,6 @@ internal fun PermsCenterSection(
     }
     val table: @Composable () -> Unit = {
         // ── the groups ──
-        val full = remember(page, q) { PermsPageQuery.fullGroups(page, q, appsOf) }
-        val cleared = remember(page, q) { PermsPageQuery.nothingMissing(page, q, appsOf) }
         if (shown.isEmpty() && cleared.isEmpty()) KitStoreCaption("nothing matches these filters", Modifier.padding(horizontal = KitStoreRow.padH), color = p.textSecondary)
         for (g in shown) {
             val key = g.key.lowercase()
