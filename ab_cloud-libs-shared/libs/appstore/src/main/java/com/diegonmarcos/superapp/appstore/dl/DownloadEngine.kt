@@ -246,7 +246,8 @@ class DownloadEngine(
         if (j.mirror >= mirrors.size) return fail(id, ctl, j.trail.ifEmpty { "every source failed" })
         val m = mirrors[j.mirror]
         val src = try { m.resolve() } catch (t: Throwable) {
-            return advance(id, ctl, mirrors, "${m.name}: ${t.message ?: t.javaClass.simpleName}")
+            // A leg that could not even resolve (mesh not configured, offline) wrote nothing: the part on disk is still resumable.
+            return advance(id, ctl, mirrors, "${m.name}: ${t.message ?: t.javaClass.simpleName}", dropPart = false)
         }
         update(id, ctl) { it.copy(mirrorName = m.name, sha256 = src.sha256 ?: "", total = if (src.bytes > 0) src.bytes else it.total) }
         val cur = job(id) ?: return
@@ -335,14 +336,14 @@ class DownloadEngine(
     }
 
     /** Give up on this mirror (a part from another origin is not trusted) and go to the next, or fail when none is left. */
-    private fun advance(id: String, ctl: Control, mirrors: List<DlMirror>, why: String) {
+    private fun advance(id: String, ctl: Control, mirrors: List<DlMirror>, why: String, dropPart: Boolean = true) {
         val j = job(id) ?: return
         val trail = listOf(j.trail, why).filter { it.isNotEmpty() }.joinToString(" | ")
         if (j.mirror + 1 >= mirrors.size) return fail(id, ctl, trail)
-        cache.partFile(j.namePrefix).delete()
+        if (dropPart) cache.partFile(j.namePrefix).delete()
         update(id, ctl, true) {
             it.copy(state = DlState.QUEUED, mirror = it.mirror + 1, failures = 0, nextTryAt = 0L, trail = trail, error = why,
-                bytes = 0L, etag = "", lastModified = "", bytesPerSec = 0L)
+                bytes = if (dropPart) 0L else it.bytes, etag = if (dropPart) "" else it.etag, lastModified = if (dropPart) "" else it.lastModified, bytesPerSec = 0L)
         }
     }
 
