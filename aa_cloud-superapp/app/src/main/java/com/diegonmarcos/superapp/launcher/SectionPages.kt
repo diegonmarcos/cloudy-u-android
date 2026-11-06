@@ -37,7 +37,7 @@ object SectionPages {
         val section = Sections.byId(sectionId) ?: return emptyList()
         return (if (includeHidden) section.allPages else section.pages).map { p ->
             Page(p.id, p.label, p.iconName ?: "", p.action, p.isAction, factory = {
-                factoryFor(sectionId, p.id, p.label, p.url, p.tabs)
+                factoryFor(sectionId, p.id, p.label, p.url, p.tabs, p.hubOfSubgroup)
             })
         }
     }
@@ -48,6 +48,7 @@ object SectionPages {
         label: String,
         url: String = "",
         tabs: List<String> = emptyList(),
+        hubOfSubgroup: String = "",
     ): Fragment = when {
         // A page that declares `tabs` IS a strip over them — the same
         // SectionTabsFragment a tabbed SECTION wears, so this app has one tab
@@ -58,6 +59,9 @@ object SectionPages {
         // A page that declares a `url` IS that page. Checked first and by
         // data, so embedding the next one is a build.json edit, not a branch.
         url.isNotBlank() -> WebPageFragment.newInstance(url)
+        // #1545 A page that declares `hub_of_subgroup` IS the icon grid over that subgroup (Configs ▸ Network ▸ Watchdog),
+        // by data like `tabs` and `url`, so a second hub is a build.json edit, not a branch.
+        hubOfSubgroup.isNotBlank() -> SubgroupHubFragment.newInstance(sectionId, pageId)
         sectionId == "mail"  -> MailPages.fragmentFor(pageId)
         // Phone ▸ Apps: installed Android apps, not build.json tile data — so
         // it is an ordinary page here, unlike its `facet: true` sibling Configs.

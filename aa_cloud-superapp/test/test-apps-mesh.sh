@@ -78,8 +78,8 @@ echo "$out" | grep -qx 'WG Cloud Mesh section:wg' && ok "the wg page reads Cloud
   || bad "the wg page is not 'Cloud Mesh' opening section:wg"
 echo "$out" | grep -qx 'APPS Apps Access action:open_apps_access | Apps Mesh | ' && ok "Configs holds ONE Apps Access tile (action:open_apps_access) and declares no Apps Mesh / IPC / Identity page; the Store's Access keeps Apps Mesh" \
   || bad "Configs must declare exactly the Apps Access tile and no apps-mesh, ipc, identity or apps-mesh-members page"
-echo "$out" | grep -qx 'ORDER firewall,dns,webserver,wg,apps-access,adb-shell,wifi' && ok "Setup ▸ Network = Firewall · DNS (#740) · Webserver · Cloud Mesh · Apps Access · ADB Shell · WiFi (#1263)" \
-  || bad "Setup ▸ Network is not firewall, dns, webserver, wg, apps-access, adb-shell, wifi in that order"
+echo "$out" | grep -qx 'ORDER watchdog,firewall,dns,webserver,wg,apps-access,adb-shell,wifi' && ok "Setup ▸ Network = Watchdog (#1545 hub) · Firewall · DNS (#740) · Webserver · Cloud Mesh · Apps Access · ADB Shell · WiFi (#1263)" \
+  || bad "Setup ▸ Network is not watchdog, firewall, dns, webserver, wg, apps-access, adb-shell, wifi in that order"
 
 echo "== C2: one page, two entry points =="
 code "$FRAG" | grep -qF 'AppsMesh.Page(this@AppsMeshFragment' && ok "AppsMeshFragment hosts AppsMesh.Page" \

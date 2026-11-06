@@ -189,12 +189,12 @@ for d in locales:
               "phone_install_downloading", "phone_install_no_source"):
         check('name="%s"' % s in xml, "%s/strings.xml defines %s" % (d, s))
 
-print("== T5: the Configs row reads Account │ Store, Controls, Firewall │ C3 │ About ==")
+print("== T5: the Configs row reads Account │ Store, Controls, Watchdog │ C3 │ About ==")
 configs = [g for g in groups(bj["ui"]["sections"], "Configs")]
 check(len(configs) == 1, "exactly one Configs tile group under ui.sections (found %d)" % len(configs))
 if configs:
     row = [t.get("label") for t in configs[0]["tiles"]]
-    check(row == ["Account", "|", "Store", "Quick Actions", "Firewall", "|", "C3", "|", "About"], "Configs row = Account | Store, Controls, Firewall | C3 | About (owner order 2026-10) (got %s)" % row)
+    check(row == ["Account", "|", "Store", "Quick Actions", "Watchdog", "|", "C3", "|", "About"], "Configs row = Account | Store, Controls, Watchdog | C3 | About (owner order 2026-10; #1545 Watchdog hub replaces Firewall) (got %s)" % row)
 lnk = [g for g in groups(bj["ui"]["sections"], "Lnktree")]
 if lnk:
     sa = lnk[0]["tiles"][0] if lnk[0]["tiles"] else {}

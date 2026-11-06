@@ -81,7 +81,7 @@ want = {
     ('Fleet', ''):                     ['C3', 'Peer Control', 'Bluetooth'],  # #1221 Bluetooth first; Agents moved to Observability
     ('Setup', 'Connect'):          ['Account'],
     ('Setup', 'Apps'):             ['Store'],  # Permissions moved to Observability
-    ('Setup', 'Network'):              ['Firewall', 'DNS', 'Webserver', 'Cloud Mesh', 'Apps Access', 'ADB Shell', 'WiFi'],  # #1263 WiFi right after ADB Shell; IPC is a tab of Apps Mesh, not a tile
+    ('Setup', 'Network'):              ['Watchdog', 'Firewall', 'DNS', 'Webserver', 'Cloud Mesh', 'Apps Access', 'ADB Shell', 'WiFi'],  # #1263 WiFi right after ADB Shell; IPC is a tab of Apps Mesh, not a tile
     # Observability is read from the registry: the labels of build.json groups[observability], visible pages, in order.
     ('Observability', ''):          [by[i]['label'] for i in obs['pages'] if i in by and not by[i].get('hidden')],
 }
@@ -89,7 +89,7 @@ problems = ['%s%s = %r' % (g, ' ▸ ' + s if s else '', members(g, s))
             for (g, s), exp in want.items() if members(g, s) != exp]
 print('; '.join(problems) or 'OK')
 PY
-)" "Setup ▸ Connect = Account; Setup ▸ Launcher = Controls/One-Hand/Notify; Fleet = C3/Peer Control/Bluetooth; Observability = its declared group (X-Ray/LogCat/Permissions/About); Setup ▸ Apps = Store; Network = Firewall/DNS/Webserver/Cloud Mesh/Apps Mesh/ADB Shell (#733, #740; IPC and Identity are Apps Mesh tabs); About is the last page"
+)" "Setup ▸ Connect = Account; Setup ▸ Launcher = Controls/One-Hand/Notify; Fleet = C3/Peer Control/Bluetooth; Observability = its declared group (X-Ray/LogCat/Permissions/About); Setup ▸ Apps = Store; Network = Watchdog/Firewall/DNS/Webserver/Cloud Mesh/Apps Mesh/ADB Shell (#733, #740; IPC and Identity are Apps Mesh tabs); About is the last page"
 
 echo "== T3: Store is the former Constellation, and Cloud Constellation is INSIDE it =="
 # #563 renamed the Constellation page Store; the word survives as the label of
@@ -176,9 +176,9 @@ w = {p[k] for p in pages for k in ('group', 'subgroup') if p.get(k)}
 w |= {p['label'] for p in pages if not p.get('hidden') and not p.get('is_action')}
 print(len(w))
 ")
-[ "$WORDS" = 26 ] \
-  && ok "T4 derived 26 words from the declaration (X-Ray regroup: About became X-Ray, a new About, Agents and Diagnostics folded into X-Ray, Logcat relabelled LogCat; Setup, Apps, Launcher, Network, Fleet, Observability + 21 page labels (#1263: WiFi added; #1221: Bluetooth added, C3 became C3 Fleet Control, later just C3 with ic_cloud_control), Diagnostics and Logcat the last two: the Agents regroup added Agents and dropped the | separator; #ipc added IPC; IPC became an Apps Mesh tab and left the labels)" \
-  || bad "T4 derived $WORDS words, expected 26 — it is checking a different set than it claims"
+[ "$WORDS" = 27 ] \
+  && ok "T4 derived 27 words from the declaration (#1545: Watchdog added; X-Ray regroup: About became X-Ray, a new About, Agents and Diagnostics folded into X-Ray, Logcat relabelled LogCat; Setup, Apps, Launcher, Network, Fleet, Observability + 21 page labels (#1263: WiFi added; #1221: Bluetooth added, C3 became C3 Fleet Control, later just C3 with ic_cloud_control), Diagnostics and Logcat the last two: the Agents regroup added Agents and dropped the | separator; #ipc added IPC; IPC became an Apps Mesh tab and left the labels)" \
+  || bad "T4 derived $WORDS words, expected 27 — it is checking a different set than it claims"
 
 # The ONE heading Kotlin may still name is the fallback for a section that
 # declares none, which is every section but this one. Pinned so it stays the only
@@ -231,9 +231,9 @@ import json
 print(len(next(s for s in json.load(open('$BJ'))['ui']['sections']
                if s['id'] == 'config')['pages']))
 ")
-[ "$COUNT" = 41 ] \
-  && ok "41 config pages declared — the set T5 walks is the whole set (X-Ray regroup: minus about, diagnostics, agents and its two tabs, plus xray and app-about; #1263: plus wifi and its five hidden tabs; #1221: plus bluetooth and its five hidden tabs; #1264: plus its Analyze and Locate tabs; #649: 22 minus launcher; #723: minus ai and its 5 tabs; #733: plus apps-mesh; #740: plus dns; plus firewall; plus the hidden About ▸ Battery; Agents regroup: minus the Network separator, plus agents and its two tabs; #ipc: plus ipc; Controls merge: plus panels, panels-ui and panels-tools; Apps Mesh strip: plus apps-mesh-members and identity)" \
-  || bad "$COUNT config pages, expected 41 — a page was added or DELETED, and T5 cannot report a page that is gone"
+[ "$COUNT" = 42 ] \
+  && ok "42 config pages declared — the set T5 walks is the whole set (#1545: plus the Network hub watchdog; X-Ray regroup: minus about, diagnostics, agents and its two tabs, plus xray and app-about; #1263: plus wifi and its five hidden tabs; #1221: plus bluetooth and its five hidden tabs; #1264: plus its Analyze and Locate tabs; #649: 22 minus launcher; #723: minus ai and its 5 tabs; #733: plus apps-mesh; #740: plus dns; plus firewall; plus the hidden About ▸ Battery; Agents regroup: minus the Network separator, plus agents and its two tabs; #ipc: plus ipc; Controls merge: plus panels, panels-ui and panels-tools; Apps Mesh strip: plus apps-mesh-members and identity)" \
+  || bad "$COUNT config pages, expected 42 — a page was added or DELETED, and T5 cannot report a page that is gone"
 
 echo "== T6: ACTIONS IS UNTOUCHED =="
 # The owner said to keep it as it is. Three things make that true: the same three
@@ -319,6 +319,7 @@ BEFORE = {'bluetooth-analyze', 'bluetooth-locate', 'presets', 'controls', 'oneha
           'adb-shell',  # added on purpose: Configs ▸ Network ▸ ADB Shell (the privileged channel's page)
           'c3', 'network-sep-1',   # added on purpose: Network's C3 entry and its separator
           'firewall',   # added on purpose: Configs ▸ Network ▸ Firewall hosts the firewall engine's controls (About keeps a summary)
+          'watchdog',   # #1545 added on purpose: Configs ▸ Network ▸ Watchdog, the in-app hub over the Network pages
           'dns',        # #740 added on purpose: Configs ▸ Mesh ▸ DNS (the fleet resolver)
           'bluetooth', 'bluetooth-find', 'bluetooth-connect', 'bluetooth-interact', 'bluetooth-debug', 'bluetooth-dev',  # #1221 added on purpose: Configs ▸ Fleet ▸ Bluetooth and its five hidden tabs
           'wifi', 'wifi-scan', 'wifi-channels', 'wifi-link', 'wifi-tools', 'wifi-log',  # #1263 added on purpose: Configs ▸ Setup ▸ Network ▸ WiFi and its five hidden tabs
@@ -420,7 +421,7 @@ want = ['H:SETUP',
         'S:CONNECT',      'Account[ic_person]',
         'S:APPS',         'Store[ic_storefront]',
         'S:LAUNCHER',     'Quick Actions[ic_home]', 'One-Hand[ic_onehand]', 'Notify[ic_rss]',
-        'S:NETWORK',          'Firewall[ic_lock]', 'DNS[ic_world]', 'Webserver[ic_web]', 'Cloud Mesh[ic_wg]', 'Apps Access[ic_apps]', 'ADB Shell[ic_terminal]', 'WiFi[ic_wifi]',
+        'S:NETWORK',          'Watchdog[ic_p_watchdog]', 'Firewall[ic_lock]', 'DNS[ic_world]', 'Webserver[ic_web]', 'Cloud Mesh[ic_wg]', 'Apps Access[ic_apps]', 'ADB Shell[ic_terminal]', 'WiFi[ic_wifi]',
         'H:FLEET',        'C3[ic_cloud_control]', 'Peer Control[ic_hub]', 'Bluetooth[ic_bluetooth]',
         'H:OBSERVABILITY', 'X-Ray[ic_monitor_heart]', 'LogCat[ic_subject]', 'Permissions[ic_key]', 'About[ic_info]',
         'H:ACTIONS',
@@ -431,7 +432,7 @@ else:
     print('rendered != spec: ' + ' | '.join(l for l in difflib.unified_diff(want, out, lineterm='', n=0)
                                            if l[:1] in '+-' and l[:3] not in ('+++', '---')))
 PY
-)" "grid = SETUP ▸ CONNECT[Account] ▸ APPS[Store] ▸ LAUNCHER[Quick Actions,One-Hand,Notify] ▸ NETWORK[Firewall,DNS,Webserver,Cloud Mesh,Apps Access,ADB Shell,WiFi] FLEET[C3,Peer Control,Bluetooth] OBSERVABILITY[X-Ray,LogCat,Permissions,About] ACTIONS[Update All,KDE Connect,Animations]"
+)" "grid = SETUP ▸ CONNECT[Account] ▸ APPS[Store] ▸ LAUNCHER[Quick Actions,One-Hand,Notify] ▸ NETWORK[Watchdog,Firewall,DNS,Webserver,Cloud Mesh,Apps Access,ADB Shell,WiFi] FLEET[C3,Peer Control,Bluetooth] OBSERVABILITY[X-Ray,LogCat,Permissions,About] ACTIONS[Update All,KDE Connect,Animations]"
 
 echo "== T12: THE AI PAGE IS GONE, not hidden — no route, target or tile names it (#723) =="
 # Deleting a declaration and leaving its door behind is the dead-tile failure:

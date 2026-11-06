@@ -514,6 +514,10 @@ object Sections {
          *  sits in Tools Dashboards, not Data Apps. Addressed by id so the
          *  reference survives the group being retitled or reordered. */
         val appsExtraTileIds: List<String> = emptyList(),
+
+        /** `hub_of_subgroup` (#1545): this page IS a hub over that subgroup of its own section — an icon grid of every
+         *  other visible page declared with that [subgroup], in declaration order ([hubTiles]). Blank ⇒ an ordinary page. */
+        val hubOfSubgroup: String = "",
     )
 
     /** App-level action tile shown in the Home master TileGrid below the
@@ -750,6 +754,7 @@ object Sections {
                         group    = po.optString("group", ""),
                         subgroup = po.optString("subgroup", ""),
                         settings = po.optJSONArray("settings")?.let { sa -> (0 until sa.length()).map { sa.getString(it) } }.orEmpty(),
+                        hubOfSubgroup = po.optString("hub_of_subgroup", ""),
                         appsFromTileGroup = po.optString("apps_from_tile_group", ""),
                         appsExtraTileIds = po.optJSONArray("apps_extra_tile_ids")?.let { ea ->
                             (0 until ea.length()).map { ea.getString(it) }
@@ -1053,6 +1058,22 @@ object Sections {
         cachedWalk = out
         return out
     }
+
+    /**
+     * #1545 The tiles of a hub page ([Page.hubOfSubgroup]): every other visible, non-separator page of [section] in that
+     * subgroup, in declaration order — derived, so the hub and the subgroup's own nav cannot disagree. Each tile keeps
+     * the page's OWN target: its `action` when it declares one (an app such as Webserver, a section such as Cloud Mesh,
+     * a Cloud Store hand-off such as Apps Access — dispatched exactly as the Configs grid tile is), else
+     * `page:<section>/<id>`, which opens the page inside this app.
+     */
+    fun hubTiles(section: Section, hub: Page): List<AggTile> =
+        if (hub.hubOfSubgroup.isBlank()) emptyList()
+        else section.pages
+            .filter { it.subgroup == hub.hubOfSubgroup && it.id != hub.id && !it.hidden && !it.separator }
+            .map { AggTile(it.id, it.label, it.iconName ?: "", hubTarget(section.id, it)) }
+
+    /** Where a hub tile for [page] goes: its declared `action`, else the in-app page. */
+    fun hubTarget(sectionId: String, page: Page): String = page.action.ifBlank { "page:$sectionId/${page.id}" }
 
     fun byId(id: String): Section? = all().firstOrNull { it.id == id } ?: all().firstOrNull { id in it.aliases }
 

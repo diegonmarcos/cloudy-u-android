@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Tester: the firewall engine's CONTROLS live in Configs ▸ Network ▸ Firewall; About
 # keeps a READ-ONLY summary and a link. Static (no device, no build).
-#   F1 Network page order is exactly Firewall, DNS, Webserver, Cloud Mesh, Apps Access (Cloud Store > Access), ADB Shell, WiFi (#1263)
+#   F1 Network page order is exactly Watchdog (#1545 hub), Firewall, DNS, Webserver, Cloud Mesh, Apps Access (Cloud Store > Access), ADB Shell, WiFi (#1263)
 #   F2 config/firewall embeds FirewallDialog (the controls) as a page
 #   F3 About's Firewall block opens nothing of the engine's: no FirewallDialog / FirewallController /
 #      FirewallRules write; only FirewallInfo reads + a link to config/firewall
@@ -21,7 +21,7 @@ pages = next(s for s in json.load(open(sys.argv[1]))['ui']['sections'] if s['id'
 print(','.join(p['label'] for p in pages if p.get('subgroup') == 'Network' and not p.get('hidden')))
 PY
 )"
-[ "$got" = "Firewall,DNS,Webserver,Cloud Mesh,Apps Access,ADB Shell,WiFi" ] && ok "Network = $got" || bad "Network order is: $got"
+[ "$got" = "Watchdog,Firewall,DNS,Webserver,Cloud Mesh,Apps Access,ADB Shell,WiFi" ] && ok "Network = $got" || bad "Network order is: $got"
 
 echo "== F2: Firewall page hosts the controls =="
 grep -qE 'pageId == "firewall" +-> .*FirewallDialog\(\)\.apply \{ showsDialog = false \}' "$KT/launcher/SectionPages.kt" \

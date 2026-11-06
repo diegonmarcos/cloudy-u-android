@@ -69,7 +69,7 @@ print('LABEL', dns.get('label'), dns.get('hidden', False))
 EOF
 )"
 echo "$out" | sed 's/^/    /'
-echo "$out" | grep -qE '^MESH firewall,dns,(webserver,)?wg,' && ok "DNS is the tile right after Firewall, before Cloud Mesh, in Setup ▸ Network" \
+echo "$out" | grep -qE '^MESH watchdog,firewall,dns,(webserver,)?wg,' && ok "DNS is the tile right after Firewall (after the #1545 Watchdog hub), before Cloud Mesh, in Setup ▸ Network" \
   || bad "config/dns is not declared second (after firewall, before wg) in Setup ▸ Network"
 echo "$out" | grep -qx 'LABEL DNS False' && ok "the page reads DNS and is a visible tile" \
   || bad "config/dns is missing, hidden or not labelled DNS"
