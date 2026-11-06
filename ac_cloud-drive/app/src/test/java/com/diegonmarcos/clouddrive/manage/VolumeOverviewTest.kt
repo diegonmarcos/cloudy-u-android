@@ -39,7 +39,7 @@ class VolumeOverviewTest {
 
     @Test fun externalDrivesComeFromStorageManagerVolumes() {
         val volumes = listOf(
-            vol(null, "Internal", "/storage/emulated/0", removable = false, primary = true),
+            vol(null, "Internal", "/storage/self/primary", removable = false, primary = true),
             vol("1111-2222", "SD card", "/storage/1111-2222"),
             vol("AAAA", "SanDisk USB drive", "/storage/AAAA", total = 64_000, free = 4_000),
             vol("EJECTED", "Old card", "/storage/EJECTED", state = "unmounted"),

@@ -52,7 +52,7 @@ sys.exit(bad)
 PYTHON
 
 echo "── E2 the type table is data and Office-free ──"
-python3 - "$LIBS/editor-core/src/main/resources/editor-types.json" <<'PYTHON' && pass "Office formats unsupported, media view only, five known viewers" || fail "editor-types.json breaks the rules"
+python3 - "$LIBS/editor-core/src/main/resources/editor-types.json" <<'PYTHON' && pass "Office formats unsupported, audio/video view only, images editable, sniff block and hex viewer declared" || fail "editor-types.json breaks the rules"
 import json, sys
 d = json.load(open(sys.argv[1], encoding="utf-8"))
 bad = 0
@@ -64,13 +64,19 @@ claimed = {e for v in d["viewers"] for exts in v["formats"].values() for e in ex
 if claimed & refused:
     print("    a viewer claims a refused extension: %s" % sorted(claimed & refused)); bad = 1
 ids = {v["id"] for v in d["viewers"]}
-if ids != {"wysiwyg", "json", "media", "pdf", "odf"}:
+if ids != {"wysiwyg", "json", "media", "pdf", "odf", "hex"}:
     print("    viewers are %s" % sorted(ids)); bad = 1
 html = next(v for v in d["viewers"] if v["id"] == "wysiwyg")
 if html.get("format_modes", {}).get("html") != ["View", "Edit", "Served"] or "Served" in html["modes"]:
     print("    html must offer View/Edit/Served and no other text type Served"); bad = 1
-if any(v["id"] == "media" and "Edit" in v["modes"] for v in d["viewers"]):
-    print("    media is editable: it is view only"); bad = 1
+media = next(v for v in d["viewers"] if v["id"] == "media")
+if "Edit" in media["modes"] or media.get("format_modes") != {"image": ["View", "Edit"]}:
+    print("    only images are editable (#1537): audio and video are view only"); bad = 1
+sn = d.get("sniff", {})
+if sn.get("binary", {}).get("viewer") != "hex" or sn.get("text", {}).get("viewer") != "wysiwyg" or not sn.get("magic"):
+    print("    the sniff block must send text to wysiwyg, binary to hex and declare magic numbers (#1537)"); bad = 1
+if any(m["viewer"] not in ids or not m["match"] for m in sn.get("magic", [])):
+    print("    a magic entry names an unknown viewer or has no match"); bad = 1
 sys.exit(bad)
 PYTHON
 

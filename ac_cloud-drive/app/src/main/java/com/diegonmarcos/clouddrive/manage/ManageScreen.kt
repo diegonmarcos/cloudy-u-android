@@ -54,6 +54,7 @@ import com.diegonmarcos.clouddrive.DriveActions
 import com.diegonmarcos.clouddrive.DrivePrefs
 import com.diegonmarcos.clouddrive.R
 import com.diegonmarcos.clouddrive.apps.AppsGrid
+import com.diegonmarcos.clouddrive.editor.EditorHook
 import com.diegonmarcos.clouddrive.storage.StorageCoordinator
 import com.diegonmarcos.clouddrive.ui.SectionHeader
 import com.diegonmarcos.clouddrive.files.ConfirmDialog
@@ -360,10 +361,7 @@ fun DataPage(actions: DriveActions, prefs: DrivePrefs, onShowInExplorer: (String
     }
 }
 
+/** #1537 a Manage list row opens in the Editor like every file tap; only the refused Office formats go to another app. */
 private fun open(actions: DriveActions, path: String) {
-    when (FileClassifier.classify(path.substringAfterLast('/'))) {
-        DataKind.PICTURES -> actions.openImage(path, listOf(path))
-        DataKind.PDF -> actions.openPdf(path)
-        else -> actions.openWith(path)
-    }
+    if (EditorHook.canOpen(path.substringAfterLast('/'))) EditorHook.open(path) else actions.openWith(path)
 }

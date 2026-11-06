@@ -1,5 +1,5 @@
 {
-  "_doc": "#1484 THE file-type to viewer/editor mapping, as data. `viewers[].id` names the lib that owns the file (wysiwyg = libs:wysiwyg, json = libs:json-viewer, media = libs:media-viewer, pdf = libs:pdf, odf = libs:odf); `formats` maps a format the viewer understands to the extensions that carry it. `modes` (View, Edit, Served) lists the modes a viewer offers, `format_modes` overrides it per format: for Markdown and HTML View is the rendered WYSIWYG view, editable; Edit is the raw source file; Served (HTML only) shows the page from a loopback-only local server (libs:local-serve) so relative CSS, JS and images resolve. A viewer with the single mode View is view only (media). `unsupported` is checked FIRST: the Microsoft Office formats are refused on purpose and answer `unsupported format`. A name no entry matches also answers unsupported. Adding a type or a mode is a data edit.",
+  "_doc": "#1484/#1537 THE file-type to viewer/editor mapping, as data. `viewers[].id` names the lib that owns the file (wysiwyg = libs:wysiwyg, json = libs:json-viewer, media = libs:media-viewer, pdf = libs:pdf, odf = libs:odf, hex = editor-core's own hex dump); `formats` maps a format the viewer understands to the extensions that carry it. `modes` (View, Edit, Served) lists the modes a viewer offers, `format_modes` overrides it per format: for Markdown and HTML View is the rendered WYSIWYG view, editable; Edit is the raw source file; Served (HTML only) shows the page from a loopback-only local server (libs:local-serve) so relative CSS, JS and images resolve; for an image Edit is rotate, crop and annotate; SVG is shown from the loopback server and edited as source. A viewer with the single mode View is view only (audio, video). `unsupported` is checked FIRST: the Microsoft Office formats are refused on purpose and answer `unsupported format`. #1537 A name no entry matches (no extension, or an unknown one) is never unsupported: `sniff` reads the first `sample_bytes` of the file, a `magic` entry claims known containers by their leading bytes (each `match` part is an offset and hex bytes, all must match), otherwise a UTF-8 / ASCII heuristic (no NUL, control bytes under `max_control_ratio`, printable ASCII at least `min_printable_ascii_ratio` when the bytes are not valid UTF-8) sends it to `sniff.text` and everything else to `sniff.binary` (the hex view). Adding a type, a magic number or a mode is a data edit.",
   "viewers": [
     {
       "id": "wysiwyg",
@@ -29,7 +29,65 @@
           "h",
           "cpp",
           "gradle",
-          "properties"
+          "properties",
+          "tsv",
+          "env",
+          "gitignore",
+          "lock",
+          "sql",
+          "rb",
+          "php",
+          "pl",
+          "lua",
+          "swift",
+          "cs",
+          "hpp",
+          "cc",
+          "cxx",
+          "css",
+          "scss",
+          "less",
+          "vue",
+          "svelte",
+          "tsx",
+          "jsx",
+          "nix",
+          "tex",
+          "rst",
+          "org",
+          "diff",
+          "patch",
+          "bat",
+          "ps1",
+          "md5",
+          "sha1",
+          "sha256",
+          "srt",
+          "vtt",
+          "ics",
+          "vcf",
+          "gpx",
+          "kml",
+          "plist",
+          "dart",
+          "scala",
+          "zsh",
+          "bash",
+          "fish",
+          "mjs",
+          "cjs",
+          "hs",
+          "ex",
+          "exs",
+          "erl",
+          "clj",
+          "zig",
+          "m",
+          "mm",
+          "r",
+          "tcl",
+          "awk",
+          "cmd"
         ],
         "markdown": [
           "md",
@@ -40,6 +98,9 @@
           "html",
           "htm",
           "xhtml"
+        ],
+        "svg": [
+          "svg"
         ]
       },
       "modes": [
@@ -74,21 +135,38 @@
           "png",
           "jpg",
           "jpeg",
+          "jpe",
+          "jfif",
           "gif",
           "webp",
           "bmp",
           "heic",
-          "heif"
+          "heif",
+          "avif",
+          "ico",
+          "wbmp"
         ],
         "audio": [
           "mp3",
           "m4a",
+          "m4b",
           "aac",
           "wav",
+          "wave",
           "ogg",
           "oga",
           "opus",
-          "flac"
+          "flac",
+          "amr",
+          "awb",
+          "mid",
+          "midi",
+          "mka",
+          "wma",
+          "aiff",
+          "aif",
+          "ac3",
+          "3ga"
         ],
         "video": [
           "mp4",
@@ -96,12 +174,29 @@
           "mkv",
           "webm",
           "3gp",
-          "mov"
+          "3g2",
+          "mov",
+          "avi",
+          "wmv",
+          "flv",
+          "mpg",
+          "mpeg",
+          "m2ts",
+          "mts",
+          "ogv",
+          "asf",
+          "vob"
         ]
       },
       "modes": [
         "View"
-      ]
+      ],
+      "format_modes": {
+        "image": [
+          "View",
+          "Edit"
+        ]
+      }
     },
     {
       "id": "pdf",
@@ -135,6 +230,15 @@
         "View",
         "Edit"
       ]
+    },
+    {
+      "id": "hex",
+      "formats": {
+        "hex": []
+      },
+      "modes": [
+        "View"
+      ]
     }
   ],
   "unsupported": {
@@ -155,6 +259,273 @@
       "xltx",
       "pot",
       "potx"
+    ]
+  },
+  "sniff": {
+    "sample_bytes": 4096,
+    "max_control_ratio": 0.02,
+    "min_printable_ascii_ratio": 0.95,
+    "text": {
+      "viewer": "wysiwyg",
+      "format": "text"
+    },
+    "binary": {
+      "viewer": "hex",
+      "format": "hex"
+    },
+    "magic": [
+      {
+        "name": "png",
+        "viewer": "media",
+        "format": "image",
+        "match": [
+          {
+            "offset": 0,
+            "hex": "89504E470D0A1A0A"
+          }
+        ]
+      },
+      {
+        "name": "jpeg",
+        "viewer": "media",
+        "format": "image",
+        "match": [
+          {
+            "offset": 0,
+            "hex": "FFD8FF"
+          }
+        ]
+      },
+      {
+        "name": "gif",
+        "viewer": "media",
+        "format": "image",
+        "match": [
+          {
+            "offset": 0,
+            "hex": "47494638"
+          }
+        ]
+      },
+      {
+        "name": "webp",
+        "viewer": "media",
+        "format": "image",
+        "match": [
+          {
+            "offset": 0,
+            "hex": "52494646"
+          },
+          {
+            "offset": 8,
+            "hex": "57454250"
+          }
+        ]
+      },
+      {
+        "name": "heic",
+        "viewer": "media",
+        "format": "image",
+        "match": [
+          {
+            "offset": 4,
+            "hex": "66747970"
+          },
+          {
+            "offset": 8,
+            "hex": "68656963"
+          }
+        ]
+      },
+      {
+        "name": "heix",
+        "viewer": "media",
+        "format": "image",
+        "match": [
+          {
+            "offset": 4,
+            "hex": "66747970"
+          },
+          {
+            "offset": 8,
+            "hex": "68656978"
+          }
+        ]
+      },
+      {
+        "name": "heif",
+        "viewer": "media",
+        "format": "image",
+        "match": [
+          {
+            "offset": 4,
+            "hex": "66747970"
+          },
+          {
+            "offset": 8,
+            "hex": "6D696631"
+          }
+        ]
+      },
+      {
+        "name": "avif",
+        "viewer": "media",
+        "format": "image",
+        "match": [
+          {
+            "offset": 4,
+            "hex": "66747970"
+          },
+          {
+            "offset": 8,
+            "hex": "61766966"
+          }
+        ]
+      },
+      {
+        "name": "ico",
+        "viewer": "media",
+        "format": "image",
+        "match": [
+          {
+            "offset": 0,
+            "hex": "00000100"
+          }
+        ]
+      },
+      {
+        "name": "pdf",
+        "viewer": "pdf",
+        "format": "pdf",
+        "match": [
+          {
+            "offset": 0,
+            "hex": "255044462D"
+          }
+        ]
+      },
+      {
+        "name": "wav",
+        "viewer": "media",
+        "format": "audio",
+        "match": [
+          {
+            "offset": 0,
+            "hex": "52494646"
+          },
+          {
+            "offset": 8,
+            "hex": "57415645"
+          }
+        ]
+      },
+      {
+        "name": "avi",
+        "viewer": "media",
+        "format": "video",
+        "match": [
+          {
+            "offset": 0,
+            "hex": "52494646"
+          },
+          {
+            "offset": 8,
+            "hex": "41564920"
+          }
+        ]
+      },
+      {
+        "name": "ogg",
+        "viewer": "media",
+        "format": "audio",
+        "match": [
+          {
+            "offset": 0,
+            "hex": "4F676753"
+          }
+        ]
+      },
+      {
+        "name": "flac",
+        "viewer": "media",
+        "format": "audio",
+        "match": [
+          {
+            "offset": 0,
+            "hex": "664C6143"
+          }
+        ]
+      },
+      {
+        "name": "mp3-id3",
+        "viewer": "media",
+        "format": "audio",
+        "match": [
+          {
+            "offset": 0,
+            "hex": "494433"
+          }
+        ]
+      },
+      {
+        "name": "midi",
+        "viewer": "media",
+        "format": "audio",
+        "match": [
+          {
+            "offset": 0,
+            "hex": "4D546864"
+          }
+        ]
+      },
+      {
+        "name": "matroska-webm",
+        "viewer": "media",
+        "format": "video",
+        "match": [
+          {
+            "offset": 0,
+            "hex": "1A45DFA3"
+          }
+        ]
+      },
+      {
+        "name": "mp4-m4a",
+        "viewer": "media",
+        "format": "audio",
+        "match": [
+          {
+            "offset": 4,
+            "hex": "66747970"
+          },
+          {
+            "offset": 8,
+            "hex": "4D344120"
+          }
+        ]
+      },
+      {
+        "name": "mp4",
+        "viewer": "media",
+        "format": "video",
+        "match": [
+          {
+            "offset": 4,
+            "hex": "66747970"
+          }
+        ]
+      },
+      {
+        "name": "quicktime",
+        "viewer": "media",
+        "format": "video",
+        "match": [
+          {
+            "offset": 4,
+            "hex": "6D6F6F76"
+          }
+        ]
+      }
     ]
   }
 }

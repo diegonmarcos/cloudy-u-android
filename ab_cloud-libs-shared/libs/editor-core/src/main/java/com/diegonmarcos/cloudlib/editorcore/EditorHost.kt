@@ -76,7 +76,7 @@ fun EditorHost(
         if (active == null) {
             Box(Modifier.weight(1f).fillMaxWidth()) { empty() }
         } else {
-            val route = router.route(active.path)
+            val route = remember(active.path) { router.routeFile(java.io.File(active.path)) }
             ModeBar(active.mode, route, labels, onMode = { onTabs(tabs.setMode(active.path, it)) })
             Box(Modifier.weight(1f).fillMaxWidth().testTag(EditorTags.CONTENT)) {
                 key(active.path, active.mode) {

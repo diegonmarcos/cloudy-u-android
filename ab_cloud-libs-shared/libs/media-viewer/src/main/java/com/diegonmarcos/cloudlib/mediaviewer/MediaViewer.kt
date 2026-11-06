@@ -1,7 +1,6 @@
 package com.diegonmarcos.cloudlib.mediaviewer
 
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.media.MediaPlayer
 import android.net.Uri
 import android.widget.MediaController
@@ -9,6 +8,7 @@ import android.widget.VideoView
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -49,13 +49,32 @@ object MediaViewerTags {
 }
 
 /** The words of the viewer; the host passes its translation. */
-data class MediaLabels(val play: String = "Play", val pause: String = "Pause", val cannotOpen: String = "Cannot open this file")
+data class MediaLabels(
+    val play: String = "Play",
+    val pause: String = "Pause",
+    val cannotOpen: String = "Cannot open this file",
+    val rotateLeft: String = "Rotate left",
+    val rotateRight: String = "Rotate right",
+    val info: String = "Info",
+    val crop: String = "Crop",
+    val cropLeft: String = "Left",
+    val cropTop: String = "Top",
+    val cropRight: String = "Right",
+    val cropBottom: String = "Bottom",
+    val draw: String = "Draw",
+    val color: String = "Color",
+    val undo: String = "Undo",
+    val save: String = "Save",
+    val saving: String = "Saving…",
+    val saved: String = "Saved",
+    val cannotSave: String = "Cannot save",
+)
 
-/** Shows [path] as [kind]. View only: there is no edit surface here. */
+/** Shows [path] as [kind]. Audio and video are view only; an image has an Edit surface ([edit]: rotate, crop, annotate, save, #1537). */
 @Composable
-fun MediaViewer(path: String, kind: MediaKind, modifier: Modifier = Modifier, labels: MediaLabels = MediaLabels()) {
+fun MediaViewer(path: String, kind: MediaKind, modifier: Modifier = Modifier, labels: MediaLabels = MediaLabels(), edit: Boolean = false) {
     when (kind) {
-        MediaKind.Image -> ImageViewer(path, modifier, labels)
+        MediaKind.Image -> if (edit) ImageEditor(path, modifier, labels) else ImageViewer(path, modifier, labels)
         MediaKind.Audio -> AudioViewer(path, modifier, labels)
         MediaKind.Video -> VideoViewer(path, modifier)
     }
@@ -65,36 +84,53 @@ fun MediaViewer(path: String, kind: MediaKind, modifier: Modifier = Modifier, la
 private fun ImageViewer(path: String, modifier: Modifier, labels: MediaLabels) {
     var bitmap by remember(path) { mutableStateOf<Bitmap?>(null) }
     var failed by remember(path) { mutableStateOf(false) }
-    LaunchedEffect(path) {
-        val decoded = withContext(Dispatchers.IO) {
-            runCatching {
-                val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-                BitmapFactory.decodeFile(path, bounds)
-                val opts = BitmapFactory.Options().apply { inSampleSize = MediaMath.sampleSize(bounds.outWidth, bounds.outHeight, MAX_SIDE) }
-                BitmapFactory.decodeFile(path, opts)
-            }.getOrNull()
-        }
+    var turns by remember(path) { mutableIntStateOf(0) }
+    LaunchedEffect(path, turns) {
+        // EXIF orientation applied, then the view-only quarter turns (nothing is written; Edit mode saves).
+        val decoded = withContext(Dispatchers.IO) { runCatching { ImageRender.base(path, turns, MAX_SIDE) }.getOrNull() }
         bitmap = decoded
         failed = decoded == null
     }
     var zoom by remember(path) { mutableFloatStateOf(1f) }
     var panX by remember(path) { mutableFloatStateOf(0f) }
     var panY by remember(path) { mutableFloatStateOf(0f) }
+    var showInfo by remember(path) { mutableStateOf(false) }
+    var info by remember(path) { mutableStateOf<List<Pair<String, String>>>(emptyList()) }
+    LaunchedEffect(path, showInfo) { if (showInfo && info.isEmpty()) info = withContext(Dispatchers.IO) { runCatching { ImageRender.info(path) }.getOrDefault(emptyList()) } }
     val bmp = bitmap
-    if (bmp != null) {
-        Image(
-            bmp.asImageBitmap(), contentDescription = File(path).name, contentScale = ContentScale.Fit,
-            modifier = modifier.fillMaxSize().testTag(MediaViewerTags.IMAGE)
-                .pointerInput(path) {
-                    detectTransformGestures { _, pan, gesture, _ ->
-                        zoom = MediaMath.zoom(zoom, gesture)
-                        if (zoom > 1f) { panX += pan.x; panY += pan.y } else { panX = 0f; panY = 0f }
-                    }
+    Column(modifier.fillMaxSize()) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = KitDensity.rowPadH), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
+            for ((label, tag, action) in listOf(
+                Triple(labels.rotateLeft, ImageEditTags.ROTATE_LEFT) { turns = Math.floorMod(turns - 1, 4); panX = 0f; panY = 0f },
+                Triple(labels.rotateRight, ImageEditTags.ROTATE_RIGHT) { turns = Math.floorMod(turns + 1, 4); panX = 0f; panY = 0f },
+                Triple(labels.info, ImageEditTags.INFO) { showInfo = !showInfo },
+            )) {
+                Text(label, Modifier.testTag(tag).padding(start = KitDensity.rowPadH).clickable(onClick = action).padding(vertical = KitDensity.rowPadV / 2), fontSize = KitDensity.body, color = MaterialTheme.colorScheme.primary)
+            }
+        }
+        if (showInfo) {
+            Column(Modifier.fillMaxWidth().padding(horizontal = KitDensity.rowPadH).testTag(ImageEditTags.INFO_PANEL)) {
+                for ((k, v) in info) Row(Modifier.fillMaxWidth()) {
+                    Text(k, Modifier.weight(0.35f), fontSize = KitDensity.caption, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(v, Modifier.weight(0.65f), fontSize = KitDensity.caption, color = MaterialTheme.colorScheme.onSurface)
                 }
-                .graphicsLayer(scaleX = zoom, scaleY = zoom, translationX = panX, translationY = panY),
-        )
-    } else if (failed) {
-        Text(labels.cannotOpen, modifier.padding(KitDensity.large).testTag(MediaViewerTags.ERROR), fontSize = KitDensity.body, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+        if (bmp != null) {
+            Image(
+                bmp.asImageBitmap(), contentDescription = File(path).name, contentScale = ContentScale.Fit,
+                modifier = Modifier.weight(1f).fillMaxWidth().testTag(MediaViewerTags.IMAGE)
+                    .pointerInput(path) {
+                        detectTransformGestures { _, pan, gesture, _ ->
+                            zoom = MediaMath.zoom(zoom, gesture)
+                            if (zoom > 1f) { panX += pan.x; panY += pan.y } else { panX = 0f; panY = 0f }
+                        }
+                    }
+                    .graphicsLayer(scaleX = zoom, scaleY = zoom, translationX = panX, translationY = panY),
+            )
+        } else if (failed) {
+            Text(labels.cannotOpen, Modifier.padding(KitDensity.large).testTag(MediaViewerTags.ERROR), fontSize = KitDensity.body, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
     }
 }
 

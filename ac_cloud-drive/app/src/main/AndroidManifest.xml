@@ -116,6 +116,49 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!-- #1537 "Open with Cloud Drive": the Editor is a viewer/editor for files, so Drive claims VIEW and EDIT for content:// and
+                 file:// on every type it shows. Three filters: media (image, video, audio), documents and text (text/* covers Markdown,
+                 HTML, CSV and source; JSON, XML and the OpenDocument family are named), and a generic */* so any file can be sent here,
+                 where a type the router does not know is sniffed as text or shown as hex. application/pdf is answered by PdfReaderActivity
+                 below (the fleet's one PDF engine), so it is not repeated here and Drive shows once in the chooser.
+                 MainActivity.handleOpenIntent turns the URI into a path (ExternalOpen) and opens an Editor tab. test: ManifestOpenWithTest. -->
+            <intent-filter android:label="@string/open_in_cloud_drive">
+                <action android:name="android.intent.action.VIEW" />
+                <action android:name="android.intent.action.EDIT" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content"/>
+                <data android:scheme="file"/>
+                <data android:mimeType="image/*" />
+                <data android:mimeType="video/*" />
+                <data android:mimeType="audio/*" />
+            </intent-filter>
+            <intent-filter android:label="@string/open_in_cloud_drive">
+                <action android:name="android.intent.action.VIEW" />
+                <action android:name="android.intent.action.EDIT" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content"/>
+                <data android:scheme="file"/>
+                <data android:mimeType="text/*" />
+                <data android:mimeType="application/json" />
+                <data android:mimeType="application/xml" />
+                <data android:mimeType="application/xhtml+xml" />
+                <data android:mimeType="application/x-sh" />
+                <data android:mimeType="application/vnd.oasis.opendocument.text" />
+                <data android:mimeType="application/vnd.oasis.opendocument.spreadsheet" />
+                <data android:mimeType="application/vnd.oasis.opendocument.presentation" />
+                <data android:mimeType="application/vnd.oasis.opendocument.text-template" />
+                <data android:mimeType="application/vnd.oasis.opendocument.spreadsheet-template" />
+                <data android:mimeType="application/vnd.oasis.opendocument.presentation-template" />
+            </intent-filter>
+            <intent-filter android:label="@string/open_in_cloud_drive">
+                <action android:name="android.intent.action.VIEW" />
+                <action android:name="android.intent.action.EDIT" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content"/>
+                <data android:scheme="file"/>
+                <data android:mimeType="*/*" />
+            </intent-filter>
         </activity>
 
         <!-- #458/#577: cloud-drive IS the fleet's PDF reader, and the ONE in-process PDF engine
@@ -142,17 +185,12 @@
             </intent-filter>
         </activity>
 
-        <!-- #459/#460 / #579: the image viewer, also the "Open with" target for image/*. -->
+        <!-- #459/#460 / #579: the image viewer. #1537 it no longer answers VIEW for image/*: the Editor (MainActivity's filters) opens images with
+             zoom, pan, EXIF, rotate, crop and annotate, so Drive appears once in the chooser. The activity stays for in-app callers (DriveActions.openImage). -->
         <activity
             android:name=".viewer.ImageViewerActivity"
-            android:exported="true"
-            android:theme="@style/Theme.CloudDrive">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="image/*" />
-            </intent-filter>
-        </activity>
+            android:exported="false"
+            android:theme="@style/Theme.CloudDrive" />
 
         <!-- #1115 GET_CONTENT / PICK for any type: a web page's file input and an app's "choose a file"
              list the activities with these filters. PickerActivity forwards to the system picker on

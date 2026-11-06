@@ -192,9 +192,8 @@ fun FilesScreen(controller: FilesController, actions: DriveActions, hasAccess: B
             e.isDirectory -> controller.open(pane, e.location)
             local != null && ArchiveFs.isArchiveName(e.name, Declarations.files.archiveExtensions) -> controller.open(pane, Location.Archive(local.path))
             local == null -> controller.update { it } // inside an archive: extract first (the selection bar offers it)
-            e.mime.startsWith("image/") -> actions.openImage(local.path, siblings.filter { it.mime.startsWith("image/") }.mapNotNull { (it.location as? Location.Local)?.path })
-            e.mime == "application/pdf" -> actions.openPdf(local.path)
-            e.mime.startsWith("text/") || e.extension in Declarations.files.textExtensions -> actions.openEngine("editor", local.path)
+            // #1537 EVERY file tap opens an Editor tab (image, video, audio, PDF, text, JSON, hex for binary...); only the refused Office formats go to another app.
+            com.diegonmarcos.clouddrive.editor.EditorHook.canOpen(e.name) -> com.diegonmarcos.clouddrive.editor.EditorHook.open(local.path)
             else -> actions.openWith(local.path)
         }
     }
@@ -237,7 +236,8 @@ fun FilesScreen(controller: FilesController, actions: DriveActions, hasAccess: B
             if (searching && searchScope?.recursive == true && ExplorerSearch.needle(query).isNotEmpty()) {
                 ScopedResults(scopedHits, searchDecl, onOpen = { e ->
                     closeSearch()
-                    if (e.isDirectory) controller.open(ui.active, e.location) else { controller.reveal((e.location as Location.Local).path) }
+                    // #1537 a hit that is a file opens in the Editor; a folder opens in the pane.
+                    if (e.isDirectory) controller.open(ui.active, e.location) else (e.location as? Location.Local)?.let { openEntry(ui.active, e, scopedHits.hits) }
                 })
             } else {
                 BoxWithConstraints(Modifier.fillMaxSize()) {

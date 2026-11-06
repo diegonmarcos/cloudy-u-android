@@ -252,7 +252,7 @@ PYTHON
 [ $? -eq 0 ] || FAILURES=$((FAILURES + 1))
 has "$ACTIVITY" "isReadablePlace" "a file:// hand-off is confined to places the app already browses"
 has "$MAIN" "PdfReaderActivity.intent(" "the chrome opens a PDF row in the same reader (DriveActions.openPdf)"
-has "$FILES" "actions.openPdf(" "the Files tab asks for the reader on a PDF row"
+has "$FILES" "EditorHook.open(" "the Files tab hands a PDF row to the Editor tab, whose PDF viewer is libs:pdf (#1537: every file tap opens the Editor)"
 
 echo "── P11 the executable tests exist and are wired ──"
 python3 - "$TESTSRC" "$BUILD_JSON" <<'PYTHON'

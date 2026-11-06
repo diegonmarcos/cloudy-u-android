@@ -126,6 +126,7 @@ class MainActivity : ComponentActivity(), DriveActions {
             return
         }
         pendingOpen.value = intent?.getStringExtra(com.diegonmarcos.clouddrive.usb.UsbDriveActivity.EXTRA_OPEN_PATH)
+        handleOpenIntent(intent)
         // #603 the shared store's first-run seed (build.json::storage.seed): the declared PUBLIC
         // repositories, cloned shallow into the store the first time it does not hold them.
         // (StoreSeedWorker.schedule guards itself and no-ops in safe mode.)
@@ -195,6 +196,22 @@ class MainActivity : ComponentActivity(), DriveActions {
         super.onNewIntent(intent)
         setIntent(intent)
         intent.getStringExtra(com.diegonmarcos.clouddrive.usb.UsbDriveActivity.EXTRA_OPEN_PATH)?.let { pendingOpen.value = it }
+        handleOpenIntent(intent)
+    }
+
+    /**
+     * #1537 "Open with Cloud Drive": another app's ACTION_VIEW / ACTION_EDIT on a file:// or content:// URI opens that file in an Editor tab.
+     * A content URI is copied into the cache first (ExternalOpen, off the main thread); the Editor tab is selected through EditorHook.
+     */
+    private fun handleOpenIntent(i: Intent?) {
+        val action = i?.action ?: return
+        if (action != Intent.ACTION_VIEW && action != Intent.ACTION_EDIT) return
+        val uri = i.data ?: return
+        val app = applicationContext
+        Thread {
+            val file = com.diegonmarcos.clouddrive.editor.ExternalOpen.resolve(app, uri) ?: return@Thread
+            runOnUiThread { EditorHook.open(file.absolutePath) }
+        }.start()
     }
 
     override fun onResume() {
@@ -255,6 +272,8 @@ class MainActivity : ComponentActivity(), DriveActions {
         val openPath: (String) -> Unit = { path -> filesController?.reveal(path); jumpPage = Declarations.PAGE_LOCAL; jumpTab = Declarations.SECTION_EXPLORER }
         openInFilesHook = openPath
         EditorHook.jump = { jump(Declarations.SECTION_EDITOR, "") }
+        // #1537 a file another app opened with Drive before the shell existed: select the Editor once it does.
+        LaunchedEffect(Unit) { if (EditorHook.pending.value != null) jump(Declarations.SECTION_EDITOR, "") }
         val usbOpen by pendingOpen
         LaunchedEffect(usbOpen) { usbOpen?.let { openPath(it); pendingOpen.value = null } }
 

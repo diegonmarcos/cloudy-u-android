@@ -27,6 +27,7 @@ import com.diegonmarcos.cloudlib.editorcore.EditorMode
 import com.diegonmarcos.cloudlib.editorcore.EditorTab
 import com.diegonmarcos.cloudlib.editorcore.EditorTabs
 import com.diegonmarcos.cloudlib.editorcore.FileTabsStore
+import com.diegonmarcos.cloudlib.editorcore.HexView
 import com.diegonmarcos.cloudlib.editorcore.Route
 import com.diegonmarcos.cloudlib.editorcore.Viewers
 import com.diegonmarcos.cloudlib.jsonviewer.JsonViewer
@@ -75,6 +76,8 @@ private fun EditorBody(tab: EditorTab, route: Route) {
             val format = TextFormat.of(route.format)
             when {
                 tab.mode == EditorMode.Served -> ServedPage(File(tab.path))
+                // #1537 SVG: View = the picture from the loopback server (no bitmap decoder draws it), Edit = the XML source.
+                route.format == "svg" && !editing -> ServedPage(File(tab.path))
                 editing -> TextBody(tab.path, TextFormat.Text, editable = true)
                 format == TextFormat.Text -> TextBody(tab.path, TextFormat.Text, editable = false)
                 else -> TextBody(tab.path, format, editable = true)
@@ -82,7 +85,10 @@ private fun EditorBody(tab: EditorTab, route: Route) {
         }
         // JSON: View = the tree viewer; Edit falls back to the source editor.
         Viewers.JSON -> if (editing) TextBody(tab.path, TextFormat.Text, editable = true) else TextBody(tab.path, TextFormat.Text, editable = false, json = true)
-        Viewers.MEDIA -> MediaViewer(tab.path, MediaKind.of(route.format) ?: MediaKind.Image)
+        // #1537 images: View = zoom, pan, rotate and the EXIF Info panel, Edit = rotate, crop, annotate, save; audio and video are view only.
+        Viewers.MEDIA -> MediaViewer(tab.path, MediaKind.of(route.format) ?: MediaKind.Image, edit = editing)
+        // #1537 a binary file, or a type nothing else claims: the hex dump.
+        Viewers.HEX -> HexView(File(tab.path))
         Viewers.PDF -> PdfViewer(File(tab.path), editing)
         Viewers.ODF -> OdfViewer(File(tab.path), editing)
     }
