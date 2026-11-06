@@ -95,7 +95,7 @@ class DrivePrefs(context: Context) {
     fun ruleEnabled(id: String, declared: Boolean): Boolean = prefs.getBoolean(KEY_RULE_PREFIX + id, declared)
     fun setRuleEnabled(id: String, on: Boolean) = edit { putBoolean(KEY_RULE_PREFIX + id, on) }
 
-    /** Manage ▸ Data's filter (DataFilter.encode); absent = the default, Media only. */
+    /** Manage ▸ Data's filter (DataFilter.encode); absent = the default, All (#1537). */
     fun dataFilter(): String? = prefs.getString(KEY_DATA_FILTER, null)
     fun setDataFilter(encoded: String) = edit { putString(KEY_DATA_FILTER, encoded) }
     /** Manage ▸ Data: list files (false) or folders (true). */
@@ -117,7 +117,8 @@ class DrivePrefs(context: Context) {
         edit { putInt(com.diegonmarcos.cloudlib.gitrepos.AutoChecks.intervalKey(page), minutes) }
 
     private companion object {
-        const val KEY_DATA_FILTER = "manage.data.filter"
+        // #1537 v2: "All" is the default now; a Media-only choice saved by the old build is not carried over.
+        const val KEY_DATA_FILTER = "manage.data.filter.v2"
         const val KEY_DATA_FOLDERS = "manage.data.folders"
         const val KEY_APPS_SORT = "manage.apps.sort"
         const val KEY_APPS_DESC = "manage.apps.desc"

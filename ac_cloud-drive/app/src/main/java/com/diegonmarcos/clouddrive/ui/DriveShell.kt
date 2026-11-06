@@ -61,7 +61,8 @@ fun DriveShell(select: String? = null, onSelected: () -> Unit = {}, content: @Co
     var reselectTick by rememberSaveable { mutableStateOf(0) }
     val entries = Declarations.nav.islandEntries()
     LaunchedEffect(select) {
-        if (select != null && Declarations.routable(select)) selected = select
+        // #1537 a legacy id (the deleted Home) is resolved to its new tab first.
+        if (select != null) Declarations.resolveRoute(select, "").first.let { if (Declarations.routable(it)) selected = it }
         if (select != null) onSelected()
     }
 

@@ -88,7 +88,15 @@
   },
   "ui": {
     "_doc": "#868 THE NAVIGATION IS ONE DECLARATION (libs:bottomnav's NavDecl): ui.bottom_nav = the island's ids, ui.sections[] = each one's label/icon and its `pages` (the strip PageTabs draws), ui.default_section = where the app opens. Volumes' four classes, Sync's three pages and Configs' three pages are those `pages` now (they were the keys ui.volumes.classes, ui.sync.pages and ui.configs.pages; ui.tabs and ui.default_tab are gone). #603/#609 THE STRUCTURE OF THE CHROME, declared. Kotlin holds no tab list, no caption, no page list, no section list, no place list and no icon name: DriveShell renders ui.bottom_nav, SyncScreen renders ui.sections[sync].pages, ConfigsScreen renders ui.sections[configs].pages, the Files Places sheet renders ui.files.sections and ui.files.places, the Files filter pills render ui.files.filters. Every `icon` here is a name IconCatalog.kt resolves to a Material glyph; a name it does not know renders ui.icons._default and test/test-drive-shell.sh fails the build. Baked by app/build.gradle as UI_SECTIONS_B64 / UI_BOTTOM_NAV / UI_DEFAULT_SECTION / UI_SYNC_B64 / UI_FILES_B64 / UI_ICON_DEFAULT and decoded ONCE by Declarations.kt. #603 replaced #579's five tabs (files/apps/sync/backups/configs) with files/volumes/home/apps/configs, moving Sync's three pages and Backups into Configs. #609 REVERSED HALF OF THAT: Apps stopped being a tab (its grid moved into Home, ui.home below) and the freed slot is now Sync, carrying Git/Rclone/Mounts back out of Configs into their own tab — the five tabs are now files/volumes/home/sync/configs. #608 REDESIGNED THE SYNC ▸ GIT SUB-PAGE and declared it whole in ui.sync.git below: two sections (the owner's PUBLIC cloud*/front* set, which needs no login, and Personal, which signs in through libs:auth for the `repo` scope and splits the account's own listing into Public and Private), one DENSE row per repository, and fourteen per-repository operations collapsed behind each row's disclosure — every one of them a verb of libs:git-sync, force push and force pull included.",
-    "bottom_nav": ["explorer", "projects", "editor", "home", "git", "fsync", "mounts"],
+    "bottom_nav": ["explorer", "projects", "manage", "editor", "git", "fsync", "mounts"],
+    "_doc_legacy_routes": "#1537 Home is gone. An old route (a tile, a saved jump, a deep link) that names a home id lands on its new place: Home as a whole and its Manage page on Manage Overview, Home Apps on Manage Local-Apps, the former Manage Apps and Data pages on Local-Apps and Local-Data. A route with `page` matches that page only; one without matches the whole old tab. Declarations.resolveRoute applies it, MainActivity.jump and the shell select request go through it.",
+    "legacy_routes": [
+      {"tab": "home", "page": "home_apps", "to": {"tab": "manage", "page": "local_apps"}},
+      {"tab": "home", "page": "manage", "to": {"tab": "manage", "page": "overview"}},
+      {"tab": "home", "to": {"tab": "manage", "page": "overview"}},
+      {"tab": "manage", "page": "apps", "to": {"tab": "manage", "page": "local_apps"}},
+      {"tab": "manage", "page": "data", "to": {"tab": "manage", "page": "local_data"}}
+    ],
     "_doc_default_section": "Owner order (#1300): the app opens on the Git page (the git section, GitReposScreen) on every cold start. ui.default_section is the ONLY declaration of it: DriveShell seeds its selection from it, nothing persists a last page between launches (rememberSaveable survives only a config change or process death inside one session), and a deep link or Home route still reaches any other page through the shell select request. test-drive-shell.sh and DeclarationsTest hold it at git.",
     "default_section": "git",
     "configs_ui": ["nav_ui"],
@@ -159,32 +167,25 @@
         "_doc": "Owner addition: the fleet's AI chat (libs:ai) as a tab. It talks to the fleet agent gateway (my-ai-api, mesh only) with the agent picked in the page; no token is held or read by this app (decisions-use guard D5). Declared once in libs:ai's assets/ai/ai.json; the gateway's mesh address is baked from the fleet catalogue by libs/ai/ai-gateway.gradle."
       },
       {
-        "id": "home",
-        "label": "Home", "title_row": false,
-        "icon": "home",
-        "_doc": "#1484 Home carries two sub-pages: Apps (page id home_apps, because a page id names ONE page in the whole app, N12; the fleet's data-app grid and the volume snapshot, HomeScreen) and Manage (moved here from the bottom nav, where it held the slot the Editor now has). Manage keeps its own two sub-pages: Apps is a table of every installed app ranked by total size (StorageStatsManager behind usage access; running state and PSS from ActivityManager for this app and from the privileged shell channel for the rest) and Data is everything in shared storage and the shared store that is not an app, ranked by size and filtered by the groups declared in manage/FileClassifier.kt (default Media only; the filter persists in cloud-drive-prefs).",
+        "id": "manage",
+        "label": "Manage", "title_row": false,
+        "icon": "storage",
+        "_doc": "#1537 Manage is a bottom-nav page (after Projects) and Home is deleted. Overview: every volume with its usage bar, LOCAL (Emulated, Termux home, Nix home, external drives) and CLOUD (Cloud-S3, Google Drive, the other declared mounts), from ui.manage.overview. Local-Apps: the fleet's app grid (the former Home Apps page) and the installed-apps table ranked by size (StorageStatsManager behind usage access; running state and PSS from ActivityManager for this app and from the privileged shell channel for the rest). Local-Data: everything in a chosen volume that is not an app, ranked by size, with the volume switcher and the category filters of ui.manage.local_data (All first and default; the groups and extension sets are declared in manage/FileClassifier.kt). Page ids are unique in the app (N12), hence local_apps / local_data.",
         "pages": [
           {
-            "id": "home_apps",
-            "label": "Apps",
+            "id": "overview",
+            "label": "Overview",
+            "icon": "bar_chart"
+          },
+          {
+            "id": "local_apps",
+            "label": "Local-Apps",
             "icon": "apps"
           },
           {
-            "id": "manage",
-            "label": "Manage",
-            "icon": "storage",
-            "pages": [
-              {
-                "id": "apps",
-                "label": "Apps",
-                "icon": "apps"
-              },
-              {
-                "id": "data",
-                "label": "Data",
-                "icon": "bar_chart"
-              }
-            ]
+            "id": "local_data",
+            "label": "Local-Data",
+            "icon": "storage"
           }
         ]
       },
@@ -752,6 +753,26 @@
       "tabs_per_pane_max": 6,
       "_doc_search": "#1357 THE INLINE SEARCH of the explorer: the search icon expands a compact bar (search_height_dp, the Git page's GitSearchField) over the listing, which stays visible and filters live; under it ONE row of scope chips in this order. A scope is {id, label, recursive, from (here|root), folders_only}; default_scope is the chip selected each time the bar opens. A recursive scope runs off the main thread, streams hits, is cancelled when the query or scope changes (debounce_ms), and stops at result_ceiling hits, scan_ceiling entries and depth_ceiling levels so a huge storage never freezes the UI. Back or the x collapses the bar and keeps the current folder. test-drive-explorer-search.sh pins it.",
       "search": {"search_height_dp": 40, "default_scope": "folders_here", "debounce_ms": 250, "result_ceiling": 300, "scan_ceiling": 50000, "depth_ceiling": 24, "placeholder": "Search", "scopes": [{"id": "folders_here", "label": "Only Folders Here", "recursive": false, "from": "here", "folders_only": true}, {"id": "folders_root", "label": "Only Folders Root", "recursive": true, "from": "root", "folders_only": true}, {"id": "all_here", "label": "All From Here", "recursive": true, "from": "here", "folders_only": false}, {"id": "all_root", "label": "All From Root", "recursive": true, "from": "root", "folders_only": false}]}
+    },
+    "manage": {
+      "_doc": "#1537 Manage's volume sources, declared. `kind` is the only thing Kotlin dispatches on (manage/VolumeSources.kt): emulated = internal shared storage; terminal_home = the terminal's $HOME (the parent of the shared store); app_home = `relative` under the data dir of the fleet app `fleet` (resolved from the constellation manifest, never a typed package); external_drives = every removable volume StorageManager reports (SD, USB), one row each; remote = one rclone remote, usage from `rclone about`, and when the backend reports none or the remote is declared unreachable the row shows n/a with that reason; mount_providers = the other remotes of ui.sync.mounts.providers not listed above. Local-Data's switcher reuses the local volumes (`switcher` ids).",
+      "overview": {
+        "local": [
+          {"id": "emulated", "label": "Emulated", "icon": "smartphone", "kind": "emulated"},
+          {"id": "termux", "label": "Termux home", "icon": "terminal", "kind": "terminal_home"},
+          {"id": "nix", "label": "Nix home", "icon": "terminal", "kind": "app_home", "fleet": "nix-on-droid", "relative": "files/home"},
+          {"id": "external", "label": "External drive", "icon": "usb", "kind": "external_drives"}
+        ],
+        "cloud": [
+          {"id": "cloud-s3", "label": "Cloud-S3", "icon": "cloud", "kind": "remote", "remote": "oracle_s3"},
+          {"id": "gdrive", "label": "Google Drive", "icon": "cloud", "kind": "remote", "remote": "gdrive"},
+          {"id": "mounts", "label": "Mounts", "icon": "cloud", "kind": "mount_providers"}
+        ]
+      },
+      "local_data": {
+        "switcher": ["emulated", "termux", "nix", "external"],
+        "default_volume": "emulated"
+      }
     },
     "icons": {
       "_doc": "The glyph an unknown icon name renders. IconCatalog knows this name too.",

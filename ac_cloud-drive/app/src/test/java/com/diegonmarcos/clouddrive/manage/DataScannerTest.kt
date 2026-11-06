@@ -16,11 +16,15 @@ class DataScannerTest {
         file(root, "a/small.jpg", 10); file(root, "b/big.mp4", 300); file(root, "mid.pdf", 100); file(root, "noise.unknown", 999)
         val r = DataScanner().scan(listOf(root))
         assertTrue(r.complete)
-        assertEquals(listOf("big.mp4", "mid.pdf", "small.jpg"), r.items.map { File(it.path).name })
-        assertEquals(listOf(300L, 100L, 10L), r.items.map { it.size })
-        val media = DataScanner.filtered(r.items, DataFilter.DEFAULT)
+        // #1537 an unknown extension is Others, so "All" (the default) really lists every file
+        assertEquals(listOf("noise.unknown", "big.mp4", "mid.pdf", "small.jpg"), r.items.map { File(it.path).name })
+        assertEquals(listOf(999L, 300L, 100L, 10L), r.items.map { it.size })
+        assertEquals(DataKind.OTHERS, r.items.first { it.path.endsWith("noise.unknown") }.kind)
+        assertEquals(r.items.map { it.path }, DataScanner.filtered(r.items, DataFilter.DEFAULT).map { it.path })
+        val media = DataScanner.filtered(r.items, DataFilter.DEFAULT.toggleGroup(DataGroup.MEDIA))
         assertEquals(listOf("big.mp4", "small.jpg"), media.map { File(it.path).name })
         assertEquals(listOf(300L, 10L), DataScanner.folders(media).map { it.second })
+        assertEquals(listOf("noise.unknown"), DataScanner.filtered(r.items, DataFilter.DEFAULT.toggle(DataKind.OTHERS)).map { File(it.path).name })
     }
 
     @Test fun neverFollowsSymlinksOutOfTheRoots() {

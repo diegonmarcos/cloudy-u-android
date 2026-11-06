@@ -50,10 +50,10 @@ class DeclarationsTest {
 
     @Test fun tabsDeclareTheOwnersNavOrder() {
         val tabs = Declarations.tabsOf(nav())
-        // #1491 the owner's bottom nav: Explorer, Projects, Editor, Home, Git, Fsync, Mounts. Manage moved into Home, Agents into Fsync and Projects out of Fsync; AI and Configs stay on the top bar.
-        assertEquals(listOf("explorer", "projects", "editor", "home", "git", "fsync", "mounts"), tabs.map { it.id })
-        assertEquals(listOf("Explorer", "Projects", "Editor", "Home", "Git", "Fsync", "Mounts"), tabs.map { it.label })
-        assertTrue("Manage and Agents are no sections of their own", nav().section("manage") == null && nav().section("agents") == null)
+        // #1537 the owner's bottom nav: Explorer | Projects | Manage | Editor | Git | FSync | Mounts. Home is deleted, Manage is a bottom-nav page; AI and Configs stay on the top bar.
+        assertEquals(listOf("explorer", "projects", "manage", "editor", "git", "fsync", "mounts"), tabs.map { it.id })
+        assertEquals(listOf("Explorer", "Projects", "Manage", "Editor", "Git", "Fsync", "Mounts"), tabs.map { it.label })
+        assertTrue("Home is deleted and Agents is no section of its own", nav().section("home") == null && nav().section("agents") == null)
         assertTrue("AI and Configs are sections the top bar opens, not island items", tabs.none { it.id == "ai" || it.id == "configs" } && nav().section("ai") != null && nav().section("configs") != null)
         assertEquals(emptyList<String>(), nav().problems())
         assertTrue(tabs.all { it.label.isNotBlank() && it.icon.isNotBlank() })
@@ -159,11 +159,10 @@ class DeclarationsTest {
         assertNull("Volumes is no longer a tab of its own", nav().section("volumes"))
     }
 
-    @Test fun homeAndFsyncDeclareTheirSubPages() {
-        // #1484 Home = Apps | Manage (Manage keeps its Apps / Data), Fsync = Folders | Agents (#1491: Projects moved to the bottom nav), Editor and Projects have no strip.
-        assertEquals(listOf("home_apps", "manage"), Declarations.navPages(Declarations.SECTION_HOME).map { it.id })
-        assertEquals(listOf("Apps", "Manage"), Declarations.navPages(Declarations.SECTION_HOME).map { it.label })
-        assertEquals(listOf("apps", "data"), nav().section(Declarations.SECTION_HOME)?.pages?.first { it.id == Declarations.PAGE_MANAGE }?.pages?.map { it.id })
+    @Test fun manageAndFsyncDeclareTheirSubPages() {
+        // #1537 Manage = Overview | Local-Apps | Local-Data, Fsync = Folders | Agents (#1491: Projects moved to the bottom nav), Editor and Projects have no strip.
+        assertEquals(listOf("overview", "local_apps", "local_data"), Declarations.navPages(Declarations.SECTION_MANAGE).map { it.id })
+        assertEquals(listOf("Overview", "Local-Apps", "Local-Data"), Declarations.navPages(Declarations.SECTION_MANAGE).map { it.label })
         assertEquals(listOf("folders", "agents"), nav().section(Declarations.SECTION_FSYNC)?.pages?.map { it.id })
         assertEquals(listOf("Folders", "Agents"), nav().section(Declarations.SECTION_FSYNC)?.pages?.map { it.label })
         assertTrue(nav().section(Declarations.SECTION_PROJECTS)?.pages.orEmpty().isEmpty())
@@ -344,5 +343,41 @@ class DeclarationsTest {
         assertEquals("name", Declarations.parseFiles("").defaultSort)
         assertEquals("", Declarations.decode(""))
         assertEquals("[1]", Declarations.decode(java.util.Base64.getEncoder().encodeToString("[1]".toByteArray())))
+    }
+
+    private fun legacy() = Declarations.parseLegacyRoutes(section("legacy_routes"))
+
+    @Test fun theDeletedHomeRoutesLandOnTheirNewPlaces() {
+        val routes = legacy()
+        assertTrue("the declaration holds the legacy routes", routes.isNotEmpty())
+        // the old Home ids -> their new places (#1537)
+        assertEquals("manage" to "local_apps", Declarations.resolveRoute("home", "home_apps", routes))
+        assertEquals("manage" to "overview", Declarations.resolveRoute("home", "manage", routes))
+        assertEquals("the whole old tab goes to Overview", "manage" to "overview", Declarations.resolveRoute("home", "", routes))
+        assertEquals("an unknown old Home page still lands in Manage", "manage" to "overview", Declarations.resolveRoute("home", "whatever", routes))
+        // the former Manage Apps / Data pages
+        assertEquals("manage" to "local_apps", Declarations.resolveRoute("manage", "apps", routes))
+        assertEquals("manage" to "local_data", Declarations.resolveRoute("manage", "data", routes))
+        // a live route is untouched
+        assertEquals("git" to "me", Declarations.resolveRoute("git", "me", routes))
+        assertEquals("manage" to "overview", Declarations.resolveRoute("manage", "overview", routes))
+        // every target is a declared tab and page
+        for (r in routes) {
+            assertTrue("${r.toTab} is a declared section", nav().section(r.toTab) != null)
+            assertTrue("${r.toTab}/${r.toPage} is a declared page", nav().section(r.toTab)!!.pages.any { it.id == r.toPage })
+        }
+        assertTrue("no route starts from a section that still exists as a nav item of its own except the former Manage pages", routes.none { it.tab == "home" && nav().section("home") != null })
+    }
+
+    @Test fun manageDeclaresItsVolumeSources() {
+        val m = Declarations.parseManage(section("manage"))
+        assertEquals(listOf("emulated", "termux", "nix", "external"), m.local.map { it.id })
+        assertEquals(listOf("Emulated", "Termux home", "Nix home", "External drive"), m.local.map { it.label })
+        assertEquals(listOf("cloud-s3", "gdrive", "mounts"), m.cloud.map { it.id })
+        assertEquals(listOf("emulated", "termux", "nix", "external"), m.switcher)
+        assertEquals("emulated", m.defaultVolume)
+        assertTrue("every switcher id is a local source", m.switcher.all { id -> m.local.any { it.id == id } })
+        assertEquals("oracle_s3", m.cloud.first { it.id == "cloud-s3" }.remote)
+        assertEquals("gdrive", m.cloud.first { it.id == "gdrive" }.remote)
     }
 }

@@ -81,7 +81,17 @@ class SubPageIconGuardTest {
         val projects = d.sections.firstOrNull { it.id == "projects" } ?: throw AssertionError("ac_cloud-drive declares no projects section")
         assertTrue("Projects declares no sub-pages", projects.allPages().isEmpty())
         assertTrue("projects icon '${projects.icon}' is not in libs:ui-icons", com.diegonmarcos.superapp.uiicons.UiIcons.has(projects.icon))
-        assertEquals(listOf("explorer", "projects", "editor", "home", "git", "fsync", "mounts"), d.bottomSections().map { it.id })
+        // #1537 Home is deleted; Manage is a bottom-nav page right after Projects, with Overview | Local-Apps | Local-Data.
+        assertEquals(listOf("explorer", "projects", "manage", "editor", "git", "fsync", "mounts"), d.bottomSections().map { it.id })
+        assertTrue("Home is deleted", d.sections.none { it.id == "home" })
+        val manage = d.sections.firstOrNull { it.id == "manage" } ?: throw AssertionError("ac_cloud-drive declares no manage section")
+        assertEquals(listOf("overview", "local_apps", "local_data"), manage.allPages().map { it.id })
+        assertEquals(listOf("Overview", "Local-Apps", "Local-Data"), manage.allPages().map { it.label })
+        assertTrue("manage icon '${manage.icon}' is not in libs:ui-icons", com.diegonmarcos.superapp.uiicons.UiIcons.has(manage.icon))
+        for (p in manage.allPages()) {
+            assertTrue("manage/${p.id} icon '${p.icon}' is not in libs:ui-icons", com.diegonmarcos.superapp.uiicons.UiIcons.has(p.icon))
+            assertTrue("manage/${p.id} icon '${p.icon}' is not one the second row draws", SecondRowIcons.has(p.icon))
+        }
         assertTrue("the renamed page keeps no rsync section", d.sections.none { it.id == "rsync" })
     }
 }

@@ -166,17 +166,6 @@
     <!-- Home (#603, redesigned #609 into two sections: Apps and Volumes) -->
     <string name="home_apps_section">Apps</string>
     <string name="home_apps_hint">The fleet\'s data apps, from the constellation manifest</string>
-    <string name="home_open_files">Open in Files</string>
-    <string name="home_volumes_section">Volumes</string>
-    <string name="home_classes_card">Volume classes</string>
-    <string name="home_classes_summary">%1$d fleet apps · %2$d containers · %3$d machines · %4$d remotes</string>
-    <string name="home_open_volumes">Open Volumes</string>
-    <string name="home_git_card">Git repos</string>
-    <string name="home_git_summary">%1$d repositories · %2$d dirty · ↑%3$d ↓%4$d</string>
-    <string name="home_sync_now">Sync now</string>
-    <string name="home_open_sync">Open Sync</string>
-    <string name="home_containers_card">Containers</string>
-    <string name="home_containers_summary">%1$d declared · %2$d reachable</string>
 
     <!-- Sync tab strip (#609) -->
 
@@ -556,6 +545,19 @@
     <string name="manage_group_office">Office</string>
     <string name="manage_group_structure">Data Structure</string>
     <string name="manage_group_bins">Bins</string>
+    <string name="manage_group_tmp">.tmp</string>
+    <string name="manage_group_bin">Bin</string>
+    <string name="manage_group_others">Others</string>
+    <string name="manage_filter_all">All</string>
+    <string name="manage_data_volume_na">%1$s is not available: %2$s</string>
+    <string name="manage_apps_view_fleet">Fleet apps</string>
+    <string name="manage_apps_view_installed">Installed</string>
+    <string name="manage_overview_local">LOCAL</string>
+    <string name="manage_overview_cloud">CLOUD</string>
+    <string name="manage_overview_na">n/a · %1$s</string>
+    <string name="manage_overview_checking">checking…</string>
+    <string name="manage_overview_usage">%1$s used · %2$s free · %3$s</string>
+    <string name="manage_overview_used_only">%1$s used</string>
     <string name="manage_kind_videos">Videos</string>
     <string name="manage_kind_pictures">Pictures</string>
     <string name="manage_kind_music">Music</string>
@@ -569,6 +571,9 @@
     <string name="manage_kind_apk">APK</string>
     <string name="manage_kind_archives">Archives</string>
     <string name="manage_kind_scripts">Scripts</string>
+    <string name="manage_kind_tmp">.tmp</string>
+    <string name="manage_kind_bin">Bin</string>
+    <string name="manage_kind_others">Others</string>
     <string name="agents_title">Agents</string>
     <string name="projects_sample_header">Projects (sample data)</string>
     <string name="files_open_in_editor">Open in Editor</string>

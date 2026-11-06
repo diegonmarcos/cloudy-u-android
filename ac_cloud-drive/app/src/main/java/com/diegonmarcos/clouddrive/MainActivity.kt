@@ -53,7 +53,6 @@ import com.diegonmarcos.clouddrive.editor.EditorScreen
 import com.diegonmarcos.clouddrive.ai.AiScreen
 import com.diegonmarcos.clouddrive.files.FilesUiState
 import com.diegonmarcos.clouddrive.files.Places
-import com.diegonmarcos.clouddrive.home.HomeScreen
 import com.diegonmarcos.clouddrive.sync.GitSyncCoordinator
 import com.diegonmarcos.clouddrive.sync.RcloneCoordinator
 import com.diegonmarcos.clouddrive.sync.GitPageScreen
@@ -251,13 +250,13 @@ class MainActivity : ComponentActivity(), DriveActions {
         // #1106 safe mode opens the file list.
         var jumpTab by remember { mutableStateOf<String?>(if (StartupGuard.safeMode) Declarations.SECTION_EXPLORER else null) }
         var jumpPage by remember { mutableStateOf<String?>(null) }
-        val jump: (String, String) -> Unit = { tab, page -> jumpPage = page.ifBlank { null }; jumpTab = tab }
+        // #1537 an old Home id (a saved jump, a tile) lands on its new place: Declarations.resolveRoute (ui.legacy_routes).
+        val jump: (String, String) -> Unit = { tab, page -> val (t, p) = Declarations.resolveRoute(tab, page); jumpPage = p.ifBlank { null }; jumpTab = t }
         val openPath: (String) -> Unit = { path -> filesController?.reveal(path); jumpPage = Declarations.PAGE_LOCAL; jumpTab = Declarations.SECTION_EXPLORER }
         openInFilesHook = openPath
         EditorHook.jump = { jump(Declarations.SECTION_EDITOR, "") }
         val usbOpen by pendingOpen
         LaunchedEffect(usbOpen) { usbOpen?.let { openPath(it); pendingOpen.value = null } }
-        val syncAll: () -> Unit = { gitOrNull?.let { g -> g.repos.value.filter { it.autoSync }.forEach { g.syncNow(it) } } }
 
         // #1106 the startup sequence: terminal installed -> started -> $HOME ready -> mounted -> the shell.
         // A failure shows its remedies and "Continue with local files" (degraded mode) instead of a crash.
@@ -274,7 +273,7 @@ class MainActivity : ComponentActivity(), DriveActions {
                     "projects" -> ProjectsPage()
                     "editor" -> EditorScreen(this, openPath)
                     "ai" -> AiScreen()
-                    "home" -> HomeScreen(git, this, onOpenFiles = { jump(Declarations.SECTION_EXPLORER, Declarations.PAGE_LOCAL) }, onOpenVolumes = { jump(Declarations.SECTION_EXPLORER, Declarations.PAGE_CLOUD) }, onOpenSync = { jumpTab = Declarations.SECTION_GIT }, onRoute = jump, onSyncAll = syncAll, manage = { ManageScreen(this, prefs, onShowInExplorer = openPath) }, page = jumpPage, onPageConsumed = { jumpPage = null })
+                    "manage" -> ManageScreen(this, prefs, storage, onShowInExplorer = openPath, onRoute = jump, page = jumpPage, onPageConsumed = { jumpPage = null })
                     "git" -> GitPageScreen(git, prefs, this, jumpPage, onPageConsumed = { jumpPage = null })
                     "fsync" -> FsyncPageScreen(storage, rclone, this, prefs, jumpPage, onPageConsumed = { jumpPage = null })
                     "mounts" -> MountsPageScreen(storage, rclone, prefs, this, jumpPage, onPageConsumed = { jumpPage = null })

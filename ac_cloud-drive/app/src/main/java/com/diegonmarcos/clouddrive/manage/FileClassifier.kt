@@ -3,10 +3,12 @@ package com.diegonmarcos.clouddrive.manage
 /**
  * Manage ▸ Data: the owner's four filter groups and their subtypes, and the ONE classifier that
  * puts a file in a subtype. Extension first (the cheap, exact signal), then the MIME type for a
- * file whose extension says nothing. A file that matches no subtype is [DataKind] null and is
- * never listed: the page shows what the owner asked to see, not "Other".
+ * file whose extension says nothing. #1537 a file that matches no subtype is [DataKind.OTHERS] for the
+ * scan ([FileClassifier.classifyOrOthers]), so the "All" filter (first and default) really shows every file.
+ * The filter order is All, then the groups below in declared order: .tmp, Bin (recycle-bin leftovers) and
+ * Others come after the original four. The extension sets ARE the declaration: one table, one owner per extension.
  */
-enum class DataGroup { MEDIA, OFFICE, STRUCTURE, BINS }
+enum class DataGroup { MEDIA, OFFICE, STRUCTURE, BINS, TMP, BIN, OTHERS }
 
 enum class DataKind(val group: DataGroup, val extensions: Set<String>) {
     VIDEOS(DataGroup.MEDIA, setOf("mp4", "mkv", "webm", "mov", "avi", "m4v", "3gp", "3g2", "wmv", "flv", "mpg", "mpeg", "m2ts", "vob")),
@@ -21,7 +23,13 @@ enum class DataKind(val group: DataGroup, val extensions: Set<String>) {
     BINARIES(DataGroup.BINS, setOf("bin", "exe", "dll", "so", "o", "a", "dex", "elf", "img", "iso", "dylib", "class", "jar", "aar", "wasm", "odex", "vdex", "oat", "dat", "db", "sqlite")),
     APK(DataGroup.BINS, setOf("apk", "apks", "xapk", "apkm", "aab")),
     ARCHIVES(DataGroup.BINS, setOf("zip", "7z", "tar", "gz", "tgz", "bz2", "tbz2", "xz", "txz", "zst", "lz4", "lzma", "rar", "cab", "z")),
-    SCRIPTS(DataGroup.BINS, setOf("sh", "bash", "zsh", "fish", "py", "js", "mjs", "cjs", "rb", "pl", "php", "lua", "ps1", "bat", "cmd", "awk", "r", "tcl"));
+    SCRIPTS(DataGroup.BINS, setOf("sh", "bash", "zsh", "fish", "py", "js", "mjs", "cjs", "rb", "pl", "php", "lua", "ps1", "bat", "cmd", "awk", "r", "tcl")),
+    /** #1537 ".tmp": temporary and leftover files. */
+    TMP(DataGroup.TMP, setOf("tmp", "temp", "bak", "swp", "swo", "part", "crdownload", "cache", "old", "orig")),
+    /** #1537 "Bin": what a recycle bin keeps (Android's .trashed-* files and the usual trash suffixes). */
+    BIN(DataGroup.BIN, setOf("trashed", "trash", "del", "deleted", "recycle")),
+    /** #1537 "Others": every file no other subtype owns (no extension set: it is the remainder). */
+    OTHERS(DataGroup.OTHERS, emptySet());
 
     companion object {
         fun inGroup(g: DataGroup): List<DataKind> = entries.filter { it.group == g }
@@ -35,6 +43,10 @@ object FileClassifier {
         val dot = name.lastIndexOf('.')
         return if (dot <= 0 || dot == name.length - 1) "" else name.substring(dot + 1).lowercase()
     }
+
+    /** [classify], with the remainder as [DataKind.OTHERS] (what the scan stores). A name starting ".trashed-" (Android's trash) is Bin. */
+    fun classifyOrOthers(name: String, mime: String? = null): DataKind =
+        if (name.startsWith(".trashed-")) DataKind.BIN else classify(name, mime) ?: DataKind.OTHERS
 
     /** The subtype of a file named [name] with MIME type [mime] (null when unknown), or null when it is none of them. */
     fun classify(name: String, mime: String? = null): DataKind? {
@@ -64,31 +76,37 @@ object FileClassifier {
 enum class GroupState { ALL, PARTIAL, NONE }
 
 /**
- * The Data page's filter: the set of subtypes switched on. Default is the Media group only. Each
+ * The Data page's filter: "All" (every file, the default) or the set of subtypes switched on. Each
  * subtype toggles on its own; the group toggle turns the whole group on (from NONE or PARTIAL) or
- * off (from ALL), and reports PARTIAL when only some of its subtypes are on.
+ * off (from ALL), and reports PARTIAL when only some of its subtypes are on. Picking anything leaves
+ * All; switching the last subtype off returns to All.
  */
-data class DataFilter(val on: Set<DataKind>) {
+data class DataFilter(val on: Set<DataKind>, val all: Boolean = false) {
     fun groupState(g: DataGroup): GroupState {
         val kinds = DataKind.inGroup(g)
         val n = kinds.count { it in on }
         return when (n) { 0 -> GroupState.NONE; kinds.size -> GroupState.ALL; else -> GroupState.PARTIAL }
     }
 
+    private fun of(kinds: Set<DataKind>) = if (kinds.isEmpty()) DEFAULT else DataFilter(kinds)
+
     fun toggleGroup(g: DataGroup): DataFilter =
-        if (groupState(g) == GroupState.ALL) DataFilter(on - DataKind.inGroup(g).toSet()) else DataFilter(on + DataKind.inGroup(g))
+        if (all) of(DataKind.inGroup(g).toSet())
+        else if (groupState(g) == GroupState.ALL) of(on - DataKind.inGroup(g).toSet()) else of(on + DataKind.inGroup(g))
 
-    fun toggle(k: DataKind): DataFilter = DataFilter(if (k in on) on - k else on + k)
+    fun toggle(k: DataKind): DataFilter = if (all) of(setOf(k)) else of(if (k in on) on - k else on + k)
 
-    fun accepts(k: DataKind?): Boolean = k != null && k in on
+    fun accepts(k: DataKind?): Boolean = k != null && (all || k in on)
 
-    fun encode(): String = DataKind.entries.filter { it in on }.joinToString(",") { it.name }
+    fun encode(): String = if (all) ALL_TOKEN else DataKind.entries.filter { it in on }.joinToString(",") { it.name }
 
     companion object {
-        val DEFAULT = DataFilter(DataKind.inGroup(DataGroup.MEDIA).toSet())
+        private const val ALL_TOKEN = "ALL"
+        /** #1537 All is the first and default option: every file shows until the user narrows it. */
+        val DEFAULT = DataFilter(emptySet(), all = true)
         /** [text] as written by [encode]; null or unreadable → [DEFAULT]. An explicit empty string is a filter with nothing on. */
         fun decode(text: String?): DataFilter {
-            if (text == null) return DEFAULT
+            if (text == null || text.trim() == ALL_TOKEN) return DEFAULT
             if (text.isBlank()) return DataFilter(emptySet())
             val kinds = text.split(',').mapNotNull { n -> DataKind.entries.firstOrNull { it.name == n.trim() } }.toSet()
             return if (kinds.isEmpty()) DEFAULT else DataFilter(kinds)

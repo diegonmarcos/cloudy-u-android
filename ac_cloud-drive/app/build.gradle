@@ -240,6 +240,7 @@ fleetById.each { fleetId, fleetEntry ->
         label  : (over?.label ?: fleetEntry.label ?: fleetId),
         icon   : (over?.icon ?: 'apps'),
         package: fleetEntry.package,
+        fleet  : fleetId,
     ]
 }
 resolvedConstellation.sort { it.label.toLowerCase() }
@@ -283,8 +284,8 @@ if (!(navPages('git') instanceof List) || navPages('git').isEmpty()) {
         throw new GradleException("build.json::ui.bottom_nav / ui.sections must declare the ${sid} page, a former Sync page (#1149, #1173)")
     }
 }
-// #1173 Mounts (Rclone, FUSE) carries its second row; #1491 Fsync = Folders | Agents (Projects is a bottom-nav section) and Home = Apps | Manage (Manage keeps its own Apps | Data).
-[fsync: ['folders', 'agents'], mounts: ['rclone', 'fuse'], home: ['home_apps', 'manage']].each { sid, ids ->
+// #1173 Mounts (Rclone, FUSE) carries its second row; #1491 Fsync = Folders | Agents (Projects is a bottom-nav section); #1537 Home is deleted and Manage (a bottom-nav page) = Overview | Local-Apps | Local-Data.
+[fsync: ['folders', 'agents'], mounts: ['rclone', 'fuse'], manage: ['overview', 'local_apps', 'local_data']].each { sid, ids ->
     if ((navPages(sid) ?: []).collect { it.id } != ids) {
         throw new GradleException("build.json::ui.sections[${sid}].pages must declare ${ids} in that order (#1173)")
     }
@@ -315,11 +316,14 @@ def cloudClasses = navPages('explorer')?.find { it.id == 'cloud' }?.pages
 if (!(cloudClasses instanceof List) || cloudClasses.isEmpty()) {
     throw new GradleException("build.json::ui.sections[explorer].pages[cloud].pages must declare the volume classes (#604)")
 }
-['explorer', 'home'].each { id ->
+['explorer', 'manage'].each { id ->
     if (!(navPages(id) instanceof List) || navPages(id).isEmpty()) throw new GradleException("build.json::ui.sections[${id}].pages must declare its strip")
 }
-if (((navPages('home')?.find { it.id == 'manage' }?.pages ?: []).collect { it.id }) != ['apps', 'data']) {
-    throw new GradleException("build.json::ui.sections[home].pages[manage].pages must declare apps and data (#1484)")
+if (uiDecl.sections.any { it.id == 'home' } || uiDecl.bottom_nav.contains('home')) {
+    throw new GradleException("build.json::ui.sections / ui.bottom_nav must not declare home any more: Home is deleted, its places are ui.legacy_routes (#1537)")
+}
+if (!(uiDecl.manage?.overview?.local instanceof List) || !(uiDecl.manage?.overview?.cloud instanceof List) || !(uiDecl.manage?.local_data?.switcher instanceof List)) {
+    throw new GradleException("build.json::ui.manage must declare overview.local, overview.cloud and local_data.switcher (#1537)")
 }
 def uiSectionsB64    = b64(uiDecl.sections)
 def uiBottomNav      = uiDecl.bottom_nav.join(',')
@@ -407,6 +411,9 @@ if (ghEngineMinContract < 1 || ghEnginePollMs <= 0 || ghEngineMaxMs < ghEnginePo
 def mountKeeperB64 = b64((buildJson.mount_keeper ?: [:]).findAll { k, v -> !k.startsWith('_') })
 def uiSyncB64     = b64(uiDecl.sync.findAll { k, v -> !k.startsWith('_') })
 def uiFilesB64    = b64(uiDecl.files.findAll { k, v -> !k.startsWith('_') })
+// #1537 Manage's volume sources and the legacy routes of the deleted Home (decoded by Declarations.kt).
+def uiManageB64  = b64((uiDecl.manage ?: [:]).findAll { k, v -> !k.startsWith('_') })
+def uiLegacyB64  = b64(uiDecl.legacy_routes ?: [])
 // #1333 Configs > General: the anchor row and the Perms list (ui.general), decoded by configs/GeneralDecl.kt.
 def uiGeneralB64  = b64((uiDecl.general ?: [:]).findAll { k, v -> !k.startsWith('_') })
 def uiVolumesDecl = uiDecl.volumes.findAll { k, v -> !k.startsWith('_') }
@@ -584,6 +591,8 @@ android {
         buildConfigField "long",   "GH_ENGINE_POLL_MS",      "${ghEnginePollMs}L"
         buildConfigField "long",   "GH_ENGINE_LOGIN_MAX_MS", "${ghEngineMaxMs}L"
         buildConfigField "String", "UI_FILES_B64",    "\"${uiFilesB64}\""
+        buildConfigField "String", "UI_MANAGE_B64",   "\"${uiManageB64}\""
+        buildConfigField "String", "UI_LEGACY_B64",   "\"${uiLegacyB64}\""
         buildConfigField "String", "UI_GENERAL_B64",  "\"${uiGeneralB64}\""
         buildConfigField "String", "UI_VOLUMES_B64",  "\"${uiVolumesB64}\""
         buildConfigField "String", "UI_CONSTELLATION_B64", "\"${constellationB64}\""

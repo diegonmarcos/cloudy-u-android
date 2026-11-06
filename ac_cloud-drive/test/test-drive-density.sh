@@ -44,7 +44,7 @@ THEME="$SRC/ui/DriveTheme.kt"
 FAILURES=0
 pass() { echo "  PASS  $*"; }
 fail() { echo "  FAIL  $*"; FAILURES=$((FAILURES + 1)); }
-for required in "$CHROME" "$THEME" "$SRC/files/FilesScreen.kt" "$SRC/volumes/VolumesScreen.kt" "$SRC/home/HomeScreen.kt" "$SRC/sync/SyncScreen.kt" "$SRC/configs/ConfigsScreen.kt" "$SRC/sync/GitReposScreen.kt"; do
+for required in "$CHROME" "$THEME" "$SRC/files/FilesScreen.kt" "$SRC/volumes/VolumesScreen.kt" "$SRC/manage/OverviewPage.kt" "$SRC/sync/SyncScreen.kt" "$SRC/configs/ConfigsScreen.kt" "$SRC/sync/GitReposScreen.kt"; do
     [ -f "$required" ] || { echo "ERROR missing source: $required — this tester is unrun, not passing"; exit 1; }
 done
 
@@ -109,7 +109,7 @@ t3() {
     python3 - "$1" <<'PYTHON'
 import os, sys
 src = sys.argv[1]
-surfaces = ["files/FilesScreen.kt", "volumes/VolumesScreen.kt", "volumes/VolumeClasses.kt", "home/HomeScreen.kt",
+surfaces = ["files/FilesScreen.kt", "volumes/VolumesScreen.kt", "volumes/VolumeClasses.kt", "manage/ManageScreen.kt", "manage/OverviewPage.kt",
             "sync/SyncScreen.kt", "sync/GitReposScreen.kt", "sync/RcloneMountsScreens.kt", "configs/ConfigsScreen.kt",
             "configs/GeneralPage.kt", "configs/OthersPage.kt", "configs/SignInCard.kt", "backups/BackupsScreen.kt",
             "apps/AppsGrid.kt", "files/FilesDialogs.kt", "ui/Chrome.kt"]

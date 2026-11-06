@@ -276,10 +276,10 @@ import json, sys
 ui = json.load(open(sys.argv[1]))["ui"]
 bad = 0
 tabs = ui["bottom_nav"]
-if tabs != ["explorer", "projects", "editor", "home", "git", "fsync", "mounts"]:
-    print("    ui.bottom_nav is %s, not the owner's order explorer/projects/editor/home/git/fsync/mounts (#1491)" % tabs); bad = 1
-if any(s["id"] in ("manage", "agents") for s in ui["sections"]):
-    print("    a `manage` or `agents` section is declared again: they are sub-pages of Home and Fsync (#1484)"); bad = 1
+if tabs != ["explorer", "projects", "manage", "editor", "git", "fsync", "mounts"]:
+    print("    ui.bottom_nav is %s, not the owner's order explorer/projects/manage/editor/git/fsync/mounts (#1537)" % tabs); bad = 1
+if any(s["id"] in ("home", "agents") for s in ui["sections"]):
+    print("    a `home` or `agents` section is declared again: Home is deleted (#1537), Agents is a Fsync sub-page (#1491)"); bad = 1
 if ui.get("top_bar", {}).get("drawer") is not True or ui["top_bar"].get("inline_actions") is not True:
     print("    ui.top_bar is not the hamburger plus inline AI / Profile / Configs (#1149)"); bad = 1
 if "backups" in ui:
@@ -296,7 +296,7 @@ sync_sec = next(s for s in ui["sections"] if s["id"] == "git").get("pages", [])
 sync_pages = [p["id"] for p in sync_sec]
 if sync_pages != ["me", "cloud"]:
     print("    ui.sections[git].pages is %s, not me/cloud (#1149)" % sync_pages); bad = 1
-for sid, want in (("fsync", ["folders", "agents"]), ("mounts", ["rclone", "fuse"]), ("home", ["home_apps", "manage"]), ("editor", []), ("projects", [])):
+for sid, want in (("fsync", ["folders", "agents"]), ("mounts", ["rclone", "fuse"]), ("manage", ["overview", "local_apps", "local_data"]), ("editor", []), ("projects", [])):
     got = [p["id"] for p in next(s for s in ui["sections"] if s["id"] == sid).get("pages", [])]
     if got != want:
         print("    ui.sections[%s].pages is %s, not %s (#1173)" % (sid, got, "/".join(want))); bad = 1

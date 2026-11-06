@@ -339,8 +339,14 @@ object Declarations {
         }
     }
 
+    /** #1537 one volume source of Manage (ui.manage); [kind] is what manage/VolumeSources dispatches on. */
+    data class ManageSource(val id: String, val label: String, val icon: String, val kind: String, val remote: String = "", val fleet: String = "", val relative: String = "")
+    data class ManageDecl(val local: List<ManageSource>, val cloud: List<ManageSource>, val switcher: List<String>, val defaultVolume: String)
+    /** #1537 an old route and where it lands now. An empty [page] matches the whole old tab. */
+    data class LegacyRoute(val tab: String, val page: String, val toTab: String, val toPage: String)
+
     /** #604 a fleet app Volumes ▸ Cloud-Constellation lists; the package is resolved at build time. */
-    data class ConstellationAppDecl(val label: String, val icon: String, val packageName: String)
+    data class ConstellationAppDecl(val label: String, val icon: String, val packageName: String, val fleet: String = "")
 
     /**
      * #604 a folder↔folder sync rule. [direction] is upload | download | bidirectional;
@@ -489,6 +495,14 @@ object Declarations {
     /** #1149 every section the shell can show: the bottom-nav ones plus the ones the top bar opens (AI, Configs). */
     fun routable(id: String): Boolean = nav.section(id) != null
     val files: FilesDecl by lazy { parseFiles(decode(BuildConfig.UI_FILES_B64)) }
+    /** #1537 Manage's volume sources (ui.manage) and the places of the deleted Home's routes (ui.legacy_routes). */
+    val manage: ManageDecl by lazy { parseManage(decode(BuildConfig.UI_MANAGE_B64)) }
+    val legacyRoutes: List<LegacyRoute> by lazy { parseLegacyRoutes(decode(BuildConfig.UI_LEGACY_B64)) }
+    /** Where a (tab, page) route lands now: an old Home id goes to its new place (ui.legacy_routes), anything else is unchanged. A route naming a page matches that page first, then the whole old tab. */
+    fun resolveRoute(tab: String, page: String, routes: List<LegacyRoute> = legacyRoutes): Pair<String, String> {
+        val hit = routes.firstOrNull { it.tab == tab && it.page.isNotBlank() && it.page == page } ?: routes.firstOrNull { it.tab == tab && it.page.isBlank() }
+        return if (hit == null) tab to page else hit.toTab to hit.toPage
+    }
     val volumes: VolumesDecl by lazy { parseVolumes(decode(BuildConfig.UI_VOLUMES_B64), classesOf(nav)) }
     val constellation: List<ConstellationAppDecl> by lazy { parseConstellation(decode(BuildConfig.UI_CONSTELLATION_B64)) }
     val syncRules: List<SyncRuleDecl> by lazy { parseSyncRules(decode(BuildConfig.SYNC_RULES_B64)) }
@@ -557,15 +571,15 @@ object Declarations {
     const val SECTION_EXPLORER = "explorer"
     const val PAGE_LOCAL = "local"
     const val PAGE_CLOUD = "cloud"
-    const val SECTION_HOME = "home"
-    /** #1484 Manage is a sub-page of Home (ui.sections[home].pages[manage]); its own Apps / Data pages are nested under it. */
-    const val PAGE_MANAGE = "manage"
+    /** #1537 Manage: a bottom-nav page after Projects (Home is deleted); its pages are Overview | Local-Apps | Local-Data. */
+    const val SECTION_MANAGE = "manage"
+    const val PAGE_OVERVIEW = "overview"
+    const val PAGE_LOCAL_APPS = "local_apps"
+    const val PAGE_LOCAL_DATA = "local_data"
     const val SECTION_EDITOR = "editor"
     /** #1491 Projects: a bottom-nav page right after Explorer (no sub-pages). */
     const val SECTION_PROJECTS = "projects"
-    fun managePages(): List<NavPage> = navPages(SECTION_HOME).firstOrNull { it.id == PAGE_MANAGE }?.pages.orEmpty()
-    const val PAGE_APPS = "apps"
-    const val PAGE_DATA = "data"
+    fun managePages(): List<NavPage> = navPages(SECTION_MANAGE)
     const val SECTION_AI = "ai"
     const val SECTION_CONFIGS = "configs"
     /** #1149 the former Sync pages, now bottom-nav sections of their own. */
@@ -828,9 +842,25 @@ object Declarations {
         return VolumesDecl(classes, sections, o.strings("machine_kinds"), o.strings("s3_remote_types").toSet(), o.str("constellation_path"), personalAuth, ownerOnly)
     }
 
+    fun parseManage(text: String): ManageDecl {
+        val o = element(text) as? JsonObject ?: return ManageDecl(emptyList(), emptyList(), emptyList(), "")
+        fun sources(e: JsonElement?) = objects(e).mapNotNull { s ->
+            val id = s.str("id"); if (id.isBlank()) null else ManageSource(id, s.str("label", id), s.str("icon"), s.str("kind"), s.str("remote"), s.str("fleet"), s.str("relative"))
+        }
+        val ov = o["overview"] as? JsonObject
+        val ld = o["local_data"] as? JsonObject
+        return ManageDecl(sources(ov?.get("local")), sources(ov?.get("cloud")), ld?.strings("switcher").orEmpty(), ld?.str("default_volume").orEmpty())
+    }
+
+    fun parseLegacyRoutes(text: String): List<LegacyRoute> = objects(element(text)).mapNotNull { r ->
+        val to = r["to"] as? JsonObject ?: return@mapNotNull null
+        val tab = r.str("tab"); val toTab = to.str("tab")
+        if (tab.isBlank() || toTab.isBlank()) null else LegacyRoute(tab, r.str("page"), toTab, to.str("page"))
+    }
+
     fun parseConstellation(text: String): List<ConstellationAppDecl> = objects(element(text)).mapNotNull { a ->
         val label = a.str("label"); if (label.isBlank()) return@mapNotNull null
-        ConstellationAppDecl(label, a.str("icon"), a.str("package"))
+        ConstellationAppDecl(label, a.str("icon"), a.str("package"), a.str("fleet"))
     }
 
     fun parseSyncRules(text: String): List<SyncRuleDecl> = objects(element(text)).mapNotNull { r ->

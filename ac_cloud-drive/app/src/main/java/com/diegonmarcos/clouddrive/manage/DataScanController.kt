@@ -21,30 +21,33 @@ import kotlinx.coroutines.launch
  * so leaving the tab neither cancels nor repeats a scan.
  */
 class DataScanController private constructor(private val ctx: Context) {
-    data class State(val items: List<DataScanner.Item> = emptyList(), val progress: DataScanner.Progress? = null, val running: Boolean = false, val complete: Boolean = false, val scannedAt: Long = 0L)
+    data class State(val items: List<DataScanner.Item> = emptyList(), val progress: DataScanner.Progress? = null, val running: Boolean = false, val complete: Boolean = false, val scannedAt: Long = 0L, val key: String = "")
 
     private val _state = MutableStateFlow(State())
     val state: StateFlow<State> get() = _state
     private var job: Job? = null
-    private val cacheFile get() = File(ctx.cacheDir, "manage-data-scan.txt")
+    private val cacheFile get() = File(ctx.cacheDir, "manage-data-scan-v2.txt")
 
     fun roots(): List<File> = listOfNotNull(Environment.getExternalStorageDirectory(), runCatching { SharedStore.root() }.getOrNull())
 
-    fun scan(scope: CoroutineScope, full: Boolean = false) {
-        if (job?.isActive == true) return
+    /** #1537 [volumeRoots] and [key] name the volume being scanned (Local-Data's switcher); asking for another key cancels the running scan of the first. */
+    fun scan(scope: CoroutineScope, full: Boolean = false, volumeRoots: List<File> = roots(), key: String = "") {
+        if (job?.isActive == true) { if (_state.value.key == key) return else job?.cancel() }
         job = scope.launch(Dispatchers.IO) {
-            _state.value = _state.value.copy(running = true, progress = null)
+            val sameVolume = _state.value.key == key
+            _state.value = _state.value.copy(running = true, progress = null, key = key, items = if (sameVolume) _state.value.items else emptyList())
             val cache = if (full) emptyMap() else runCatching { DataScanner.decodeCache(cacheFile.readText()) }.getOrDefault(emptyMap())
             val mime = MimeTypeMap.getSingleton()
             var last = 0L
             val res = DataScanner().scan(
-                roots(), cache,
+                volumeRoots, cache,
                 cancelled = { !isActive },
                 progress = { p -> val now = System.currentTimeMillis(); if (now - last > PROGRESS_MS) { last = now; _state.value = _state.value.copy(progress = p) } },
                 mimeOf = { name -> mime.getMimeTypeFromExtension(FileClassifier.extensionOf(name)) },
             )
             if (res.complete) runCatching { cacheFile.writeText(DataScanner.encodeCache(res.cache)) }
-            _state.value = State(items = if (res.complete || _state.value.items.isEmpty()) res.items else _state.value.items, running = false, complete = res.complete, scannedAt = System.currentTimeMillis())
+            if (!isActive) return@launch
+            _state.value = State(items = if (res.complete || _state.value.items.isEmpty()) res.items else _state.value.items, running = false, complete = res.complete, scannedAt = System.currentTimeMillis(), key = key)
         }
     }
 

@@ -70,7 +70,7 @@ class DataScanner(private val skipNames: Set<String> = DEFAULT_SKIP) {
                         when {
                             attrs.isSymbolicLink || attrs.isOther -> Unit
                             attrs.isDirectory -> if (name !in skipNames && rootReal.relativize(dirReal.resolve(name)).toString() !in APP_SANDBOXES) ds.add(child.toString())
-                            attrs.isRegularFile -> FileClassifier.classify(name, mimeOf(name))?.let { k -> fs.add(Item(child.toString(), attrs.size(), k, label)) }
+                            attrs.isRegularFile -> fs.add(Item(child.toString(), attrs.size(), FileClassifier.classifyOrOthers(name, mimeOf(name)), label))
                         }
                     }
                     DirEntry(mtime, fs, ds)

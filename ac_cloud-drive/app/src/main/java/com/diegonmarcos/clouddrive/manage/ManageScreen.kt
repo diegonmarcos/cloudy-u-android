@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.LinearProgressIndicator
@@ -52,6 +53,9 @@ import com.diegonmarcos.clouddrive.Declarations
 import com.diegonmarcos.clouddrive.DriveActions
 import com.diegonmarcos.clouddrive.DrivePrefs
 import com.diegonmarcos.clouddrive.R
+import com.diegonmarcos.clouddrive.apps.AppsGrid
+import com.diegonmarcos.clouddrive.storage.StorageCoordinator
+import com.diegonmarcos.clouddrive.ui.SectionHeader
 import com.diegonmarcos.clouddrive.files.ConfirmDialog
 import com.diegonmarcos.clouddrive.files.FileOps
 import com.diegonmarcos.clouddrive.files.Places
@@ -72,13 +76,22 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * MANAGE: the slot the Volumes tab freed. Disk Management moved here from Home and split into the
- * two sub-pages of ui.sections[manage].pages: Apps (every installed app ranked by total size) and
- * Data (everything in shared storage and the shared store that is not an app, ranked by size, with
- * the owner's group/subtype filter). The `when` is the ONE place Kotlin names the two page ids.
+ * MANAGE (#1537): a bottom-nav page, Home deleted. Three sub-pages of ui.sections[manage].pages: Overview (every volume
+ * with its usage), Local-Apps (the fleet's app grid and the installed-apps table ranked by size) and Local-Data
+ * (everything in a chosen volume that is not an app, with the owner's category filter). The `when` is the ONE place
+ * Kotlin names the three page ids.
  */
 @Composable
-fun ManageScreen(actions: DriveActions, prefs: DrivePrefs, onShowInExplorer: (String) -> Unit, page: String? = null, onPageConsumed: () -> Unit = {}, modifier: Modifier = Modifier) {
+fun ManageScreen(
+    actions: DriveActions,
+    prefs: DrivePrefs,
+    storage: StorageCoordinator,
+    onShowInExplorer: (String) -> Unit,
+    onRoute: (tab: String, page: String) -> Unit,
+    page: String? = null,
+    onPageConsumed: () -> Unit = {},
+    modifier: Modifier = Modifier,
+) {
     val pages = Declarations.managePages()
     var current by rememberSaveable { mutableStateOf(pages.firstOrNull()?.id ?: "") }
     LaunchedEffect(page) {
@@ -89,9 +102,30 @@ fun ManageScreen(actions: DriveActions, prefs: DrivePrefs, onShowInExplorer: (St
         NavBarTopSecondRow(pages = pages, selectedId = current, onSelect = { current = it.id }, modifier = Modifier.fillMaxWidth().padding(horizontal = DriveMetrics.gap).testTag(DriveTags.MANAGE_STRIP), underTopChrome = false)
         Box(Modifier.weight(1f).consumeWindowInsets(topIslandInsets()).testTag(DriveTags.managePage(current))) {
             when (current) {
-                "apps" -> AppsPage(prefs)
-                "data" -> DataPage(actions, prefs, onShowInExplorer)
+                Declarations.PAGE_OVERVIEW -> OverviewPage(storage)
+                Declarations.PAGE_LOCAL_APPS -> LocalAppsPage(actions, prefs, onRoute)
+                Declarations.PAGE_LOCAL_DATA -> DataPage(actions, prefs, onShowInExplorer)
                 else -> EmptyState(IconCatalog.vectorOrDefault(Declarations.iconDefault), stringResource(R.string.chrome_unknown_tab), "")
+            }
+        }
+    }
+}
+
+/** Local-Apps: the fleet's app grid (the former Home Apps page) and the installed-apps table, one pill to switch. */
+@Composable
+fun LocalAppsPage(actions: DriveActions, prefs: DrivePrefs, onRoute: (tab: String, page: String) -> Unit) {
+    var installed by rememberSaveable { mutableStateOf(false) }
+    Column(Modifier.fillMaxSize()) {
+        PillRow(Modifier.padding(horizontal = DriveMetrics.gutter)) {
+            Pill(stringResource(R.string.manage_apps_view_fleet), { installed = false }, modifier = Modifier.testTag(DriveTags.appsView("fleet")), filled = !installed)
+            Pill(stringResource(R.string.manage_apps_view_installed), { installed = true }, modifier = Modifier.testTag(DriveTags.appsView("installed")), filled = installed)
+        }
+        Box(Modifier.weight(1f)) {
+            if (installed) AppsPage(prefs)
+            else Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+                SectionHeader(stringResource(R.string.home_apps_section), count = Declarations.apps.size)
+                Text(stringResource(R.string.home_apps_hint), Modifier.padding(horizontal = DriveMetrics.sectionInset), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                AppsGrid(actions, onRoute)
             }
         }
     }
@@ -198,6 +232,9 @@ private fun groupLabel(g: DataGroup): String = stringResource(when (g) {
     DataGroup.OFFICE -> R.string.manage_group_office
     DataGroup.STRUCTURE -> R.string.manage_group_structure
     DataGroup.BINS -> R.string.manage_group_bins
+    DataGroup.TMP -> R.string.manage_group_tmp
+    DataGroup.BIN -> R.string.manage_group_bin
+    DataGroup.OTHERS -> R.string.manage_group_others
 })
 
 @Composable
@@ -215,12 +252,19 @@ private fun kindLabel(k: DataKind): String = stringResource(when (k) {
     DataKind.APK -> R.string.manage_kind_apk
     DataKind.ARCHIVES -> R.string.manage_kind_archives
     DataKind.SCRIPTS -> R.string.manage_kind_scripts
+    DataKind.TMP -> R.string.manage_kind_tmp
+    DataKind.BIN -> R.string.manage_kind_bin
+    DataKind.OTHERS -> R.string.manage_kind_others
 })
 
 /** The filter block: per group a tri-state toggle (on / partial / off) and one pill per subtype. */
 @Composable
 fun DataFilters(filter: DataFilter, onChange: (DataFilter) -> Unit) {
     Column(Modifier.fillMaxWidth().padding(horizontal = DriveMetrics.gutter).testTag(DriveTags.DATA_FILTERS), verticalArrangement = Arrangement.spacedBy(DriveMetrics.tight)) {
+        // #1537 "All" is the FIRST option and the default: every file shows until a group is picked.
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Pill(stringResource(R.string.manage_filter_all), { onChange(DataFilter.DEFAULT) }, modifier = Modifier.testTag(DriveTags.DATA_ALL), filled = filter.all)
+        }
         DataGroup.entries.forEach { g ->
             Row(verticalAlignment = Alignment.CenterVertically) {
                 val st = when (filter.groupState(g)) { GroupState.ALL -> ToggleableState.On; GroupState.PARTIAL -> ToggleableState.Indeterminate; GroupState.NONE -> ToggleableState.Off }
@@ -245,21 +289,31 @@ fun DataPage(actions: DriveActions, prefs: DrivePrefs, onShowInExplorer: (String
     var menuFor by remember { mutableStateOf<String?>(null) }
     var confirm by remember { mutableStateOf<String?>(null) }
     val hasAccess = remember { Places.hasAllFilesAccess(ctx) }
-    LaunchedEffect(hasAccess) { if (hasAccess && state.scannedAt == 0L) controller.scan(scope) }
+    // #1537 the volume switcher (ui.manage.local_data.switcher: Emulated | Termux | Nix | External drive): one volume is scanned at a time.
+    val probe = remember { AndroidVolumeProbe(ctx) }
+    val decl = Declarations.manage
+    val volumes = remember { decl.switcher.mapNotNull { id -> decl.local.firstOrNull { it.id == id } } }
+    var volume by rememberSaveable { mutableStateOf(decl.defaultVolume.takeIf { d -> volumes.any { it.id == d } } ?: volumes.firstOrNull()?.id ?: "") }
+    val selected = volumes.firstOrNull { it.id == volume }
+    val roots = remember(volume) { selected?.let { VolumeOverview.rootsOf(it, probe).filter { r -> r.isDirectory } }.orEmpty() }
+    LaunchedEffect(hasAccess, volume) { if (hasAccess && roots.isNotEmpty() && (state.key != volume || state.scannedAt == 0L)) controller.scan(scope, volumeRoots = roots, key = volume) }
 
-    val shown = remember(state.items, filter) { DataScanner.filtered(state.items, filter) }
+    val shown = remember(state.items, state.key, volume, filter) { if (state.key == volume) DataScanner.filtered(state.items, filter) else emptyList() }
     val rows: List<Pair<String, Long>> = remember(shown, folders) { if (folders) DataScanner.folders(shown) else shown.map { it.path to it.size } }
     val total = remember(shown) { shown.sumOf { it.size } }
 
     Column(Modifier.fillMaxSize()) {
         // #1356 no title row (the terminal shortcut is the Termux tile of Home ▸ Apps): the content starts under the top bar.
         if (!hasAccess) { EmptyState(IconCatalog.vectorOrDefault("lock"), stringResource(R.string.manage_data_no_access), "", Modifier.weight(1f), stringResource(R.string.disk_grant_files)) { actions.requestStorageAccess() }; return@Column }
+        PillRow(Modifier.padding(horizontal = DriveMetrics.gutter)) {
+            volumes.forEach { v -> Pill(v.label, { volume = v.id }, modifier = Modifier.testTag(DriveTags.dataVolume(v.id)), filled = v.id == volume) }
+        }
         DataFilters(filter) { f -> filter = f; prefs.setDataFilter(f.encode()) }
         PillRow(Modifier.padding(horizontal = DriveMetrics.gutter, vertical = DriveMetrics.gap)) {
             Pill(stringResource(R.string.manage_data_files), { folders = false; prefs.setDataFolders(false) }, filled = !folders)
             Pill(stringResource(R.string.manage_data_folders), { folders = true; prefs.setDataFolders(true) }, filled = folders)
             if (state.running) Pill(stringResource(R.string.chrome_cancel), { controller.cancel() })
-            else Pill(stringResource(R.string.manage_data_rescan), { controller.scan(scope, full = true) })
+            else Pill(stringResource(R.string.manage_data_rescan), { controller.scan(scope, full = true, volumeRoots = roots, key = volume) })
         }
         if (state.running) {
             Column(Modifier.fillMaxWidth().padding(horizontal = DriveMetrics.gutter).testTag(DriveTags.DATA_PROGRESS)) {
@@ -267,6 +321,10 @@ fun DataPage(actions: DriveActions, prefs: DrivePrefs, onShowInExplorer: (String
                 val p = state.progress
                 Text(if (p == null) stringResource(R.string.manage_data_scanning) else stringResource(R.string.manage_data_progress, p.dirs, p.files, FileOps.humanBytes(p.bytes), p.current), style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Monospace, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
+        }
+        if (roots.isEmpty()) {
+            val why = selected?.let { VolumeOverview.local(listOf(it), probe).firstOrNull()?.unavailable }.orEmpty()
+            EmptyState(IconCatalog.vectorOrDefault("storage"), stringResource(R.string.manage_data_volume_na, selected?.label.orEmpty(), why), "", Modifier.weight(1f)); return@Column
         }
         if (rows.isEmpty() && !state.running) { EmptyState(IconCatalog.vectorOrDefault("bar_chart"), stringResource(R.string.manage_data_empty), "", Modifier.weight(1f)); return@Column }
         LazyColumn(Modifier.weight(1f)) {

@@ -28,7 +28,7 @@ ROOT="${CLOUD_ANDROID_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && while [ "$P
 APP="$ROOT/ac_cloud-drive"
 SRC="$APP/app/src/main/java/com/diegonmarcos/clouddrive"
 LIB="$ROOT/ab_cloud-libs-shared/libs/disk/src/main/java/com/diegonmarcos/cloudlib/disk"
-GRID="$SRC/apps/AppsGrid.kt"; HOME_="$SRC/home/HomeScreen.kt"; APPS="$APP/data/drive-apps.json"
+GRID="$SRC/apps/AppsGrid.kt"; APPS="$APP/data/drive-apps.json"
 DD="$SRC/disk/DriveDisk.kt"; ENG="$LIB/DiskEngine.kt"; SCREEN="$SRC/manage/ManageScreen.kt"
 API="$SRC/debugapi/DriveDebugApi.kt"; DAPI="$SRC/disk/DiskDebugApi.kt"; BJ="$APP/build.json"
 
@@ -37,7 +37,7 @@ pass() { echo "  PASS  $*"; }
 fail() { echo "  FAIL  $*"; FAILURES=$((FAILURES + 1)); }
 _code() { grep -vE '^[[:space:]]*(\*|//|/\*)' "$1"; }
 
-for f in "$GRID" "$HOME_" "$APPS" "$DD" "$ENG" "$SCREEN" "$API" "$DAPI" "$BJ"; do
+for f in "$GRID" "$APPS" "$DD" "$ENG" "$SCREEN" "$API" "$DAPI" "$BJ"; do
     [ -f "$f" ] || { echo "  FAIL  missing $f"; exit 1; }
 done
 
@@ -46,9 +46,9 @@ k2() {
     python3 - "$1" "$2" <<'PY'
 import json, sys
 apps = json.load(open(sys.argv[1], encoding="utf-8"))["apps"]
-if not any(a.get("route") == {"tab": "home", "page": "manage"} for a in apps): sys.exit(1)
+if not any(a.get("route") == {"tab": "manage", "page": "overview"} for a in apps): sys.exit(1)
 screen = open(sys.argv[2], encoding="utf-8").read()
-if '"apps" -> AppsPage(' not in screen: sys.exit(1)
+if 'if (installed) AppsPage(prefs)' not in screen: sys.exit(1)
 PY
 }
 k3() {
@@ -70,7 +70,7 @@ k6() {
 
 echo "── K checks ──"
 k1 "$GRID" && pass "K1 the Apps grid sizes itself (no row-count height, no nested lazy grid)" || fail "K1"
-k2 "$APPS" "$SCREEN" && pass "K2 the Disk Management tile routes to Home ▸ Manage" || fail "K2"
+k2 "$APPS" "$SCREEN" && pass "K2 the Disk Management tile routes to Manage ▸ Overview (#1537)" || fail "K2"
 k3 "$DD" && pass "K3 the Store APK cache is previewed and cleared through ApkCache's proven-installed half only" || fail "K3"
 k4 "$ENG" && pass "K4 the clean runs the previewed plan; the API deletes only with run=1&confirm=1" || fail "K4"
 k5 "$SCREEN" && pass "K5 usage access is a button over AppSizes.openPermissions" || fail "K5"
@@ -78,7 +78,7 @@ k6 "$API" "$DAPI" "$BJ" && pass "K6 /api/disk/* registered on the shared server 
 
 echo "== M mutation-proof =="
 W="$(mktemp -d)"; trap 'rm -rf "$W"' EXIT
-_stage() { cp "$GRID" "$HOME_" "$APPS" "$DD" "$ENG" "$SCREEN" "$API" "$DAPI" "$BJ" "$W/"; }
+_stage() { cp "$GRID" "$APPS" "$DD" "$ENG" "$SCREEN" "$API" "$DAPI" "$BJ" "$W/"; }
 _sub() { python3 - "$1" "$2" "$3" <<'PY'
 import sys
 p, a, b = sys.argv[1:]
@@ -91,7 +91,7 @@ _red() { local label="$1"; shift; if "$@" >/dev/null 2>&1; then fail "MUT-SURVIV
 
 _stage; _sub "$W/AppsGrid.kt" 'Modifier.fillMaxWidth().testTag(DriveTags.APPS_GRID)' 'Modifier.fillMaxWidth().height(DriveMetrics.appTile * rows).testTag(DriveTags.APPS_GRID)'
 _red "K1 the grid is held to appTile * rows again" k1 "$W/AppsGrid.kt"
-_stage; _sub "$W/drive-apps.json" '"page": "manage"' '"page": "rclone"'
+_stage; _sub "$W/drive-apps.json" '"page": "overview"' '"page": "rclone"'
 _red "K2 the tile routes somewhere else" k2 "$W/drive-apps.json" "$W/ManageScreen.kt"
 _stage; _sub "$W/DriveDisk.kt" 'ApkCache.clearRedundant(ctx).freedBytes' 'ApkCache.clear(ctx).freedBytes'
 _red "K3 the clean evicts pending installs (ApkCache.clear)" k3 "$W/DriveDisk.kt"

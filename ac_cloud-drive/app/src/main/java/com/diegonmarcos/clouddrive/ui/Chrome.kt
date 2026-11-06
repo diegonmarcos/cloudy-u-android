@@ -271,11 +271,7 @@ object DriveTags {
     const val UNISON_PAIR_CARD = "unison_pair_card"
     const val UNISON_CONFLICT_ROW = "unison_conflict_row"
     const val UNISON_SYNC_NOW = "unison_sync_now"
-    const val HOME_CARD = "home_card"
-    const val HOME_STORAGE_BAR = "home_storage_bar"
-    /** #1484 Home sub-pages (Apps | Manage), the Fsync Projects page and the Editor. */
-    const val HOME_STRIP = "home_strip"
-    fun homePage(id: String) = "home_page_$id"
+    /** The Fsync Projects page and the Editor. */
     const val PROJECTS = "projects"
     const val PROJECT_ROW = "project_row"
     const val EDITOR = "editor"
@@ -299,6 +295,13 @@ object DriveTags {
     fun dataGroup(id: String) = "manage_data_group_$id"
     fun dataKind(id: String) = "manage_data_kind_$id"
     const val DATA_ROW = "manage_data_row"
+    /** #1537 Manage: the Overview rows, Local-Apps' two views, Local-Data's "All" filter and volume switcher. */
+    const val OVERVIEW = "manage_overview"
+    fun overviewRow(id: String) = "manage_overview_row_$id"
+    const val OVERVIEW_BAR = "manage_overview_bar"
+    fun appsView(id: String) = "manage_apps_view_$id"
+    const val DATA_ALL = "manage_data_all"
+    fun dataVolume(id: String) = "manage_data_volume_$id"
     const val DATA_PROGRESS = "manage_data_progress"
     const val AGENTS = "agents"
     const val AI = "ai"

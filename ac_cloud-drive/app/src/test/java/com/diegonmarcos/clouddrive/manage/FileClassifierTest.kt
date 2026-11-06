@@ -23,6 +23,8 @@ class FileClassifierTest {
         DataKind.APK to listOf("apk", "apks", "xapk", "aab"),
         DataKind.ARCHIVES to listOf("zip", "7z", "tar", "gz", "tgz", "bz2", "xz", "zst", "rar"),
         DataKind.SCRIPTS to listOf("sh", "bash", "py", "js", "rb", "pl", "php", "lua", "ps1"),
+        DataKind.TMP to listOf("tmp", "temp", "bak", "swp", "part", "crdownload"),
+        DataKind.BIN to listOf("trashed", "trash", "del"),
     )
 
     @Test fun everyListedExtensionLandsInItsSubtype() {
@@ -40,6 +42,21 @@ class FileClassifierTest {
         assertEquals(listOf(DataKind.PDF, DataKind.OFFICE), DataKind.inGroup(DataGroup.OFFICE))
         assertEquals(listOf(DataKind.STRUCTURED, DataKind.MARKDOWN, DataKind.TEXT, DataKind.CODE), DataKind.inGroup(DataGroup.STRUCTURE))
         assertEquals(listOf(DataKind.BINARIES, DataKind.APK, DataKind.ARCHIVES, DataKind.SCRIPTS), DataKind.inGroup(DataGroup.BINS))
+        // #1537 the new filters come after the original four, in the owner's order: .tmp, Bin, Others
+        assertEquals(listOf(DataGroup.MEDIA, DataGroup.OFFICE, DataGroup.STRUCTURE, DataGroup.BINS, DataGroup.TMP, DataGroup.BIN, DataGroup.OTHERS), DataGroup.entries.toList())
+        assertEquals(listOf(DataKind.TMP), DataKind.inGroup(DataGroup.TMP))
+        assertEquals(listOf(DataKind.BIN), DataKind.inGroup(DataGroup.BIN))
+        assertEquals(listOf(DataKind.OTHERS), DataKind.inGroup(DataGroup.OTHERS))
+        assertTrue("Others is the remainder: no extension set", DataKind.OTHERS.extensions.isEmpty())
+    }
+
+    @Test fun theRemainderIsOthersAndATrashPrefixIsBin() {
+        assertEquals(DataKind.OTHERS, FileClassifier.classifyOrOthers("weird"))
+        assertEquals(DataKind.OTHERS, FileClassifier.classifyOrOthers("a.unknownext"))
+        assertEquals(DataKind.OTHERS, FileClassifier.classifyOrOthers(".hidden"))
+        assertEquals(DataKind.BIN, FileClassifier.classifyOrOthers(".trashed-1700000000-photo.jpg"))
+        assertEquals(DataKind.TMP, FileClassifier.classifyOrOthers("download.crdownload"))
+        assertEquals(DataKind.PICTURES, FileClassifier.classifyOrOthers("a.png"))
     }
 
     @Test fun mimeClassifiesWhatTheExtensionDoesNot() {
@@ -56,16 +73,31 @@ class FileClassifierTest {
         assertEquals("extension wins over mime", DataKind.MARKDOWN, FileClassifier.classify("a.md", "text/plain"))
     }
 
-    @Test fun defaultFilterIsMediaOnly() {
+    @Test fun defaultFilterIsAllAndAcceptsEveryKind() {
         val f = DataFilter.DEFAULT
-        assertEquals(setOf(DataKind.VIDEOS, DataKind.PICTURES, DataKind.MUSIC), f.on)
-        assertEquals(GroupState.ALL, f.groupState(DataGroup.MEDIA))
-        listOf(DataGroup.OFFICE, DataGroup.STRUCTURE, DataGroup.BINS).forEach { assertEquals(GroupState.NONE, f.groupState(it)) }
+        assertTrue("All is the default", f.all)
         assertEquals(f, DataFilter.decode(null))
+        for (k in DataKind.entries) assertTrue("All accepts $k", f.accepts(k))
+        assertFalse("a file with no kind at all is never listed", f.accepts(null))
+        DataGroup.entries.forEach { assertEquals(GroupState.NONE, f.groupState(it)) }
+    }
+
+    @Test fun pickingNarrowsFromAllAndEmptyingReturnsToAll() {
+        val media = DataFilter.DEFAULT.toggleGroup(DataGroup.MEDIA)
+        assertFalse(media.all)
+        assertEquals(setOf(DataKind.VIDEOS, DataKind.PICTURES, DataKind.MUSIC), media.on)
+        assertFalse(media.accepts(DataKind.OTHERS))
+        assertEquals(DataFilter.DEFAULT, media.toggleGroup(DataGroup.MEDIA))
+        val tmp = DataFilter.DEFAULT.toggle(DataKind.TMP)
+        assertEquals(setOf(DataKind.TMP), tmp.on)
+        assertTrue(tmp.accepts(DataKind.TMP)); assertFalse(tmp.accepts(DataKind.PDF))
+        assertEquals(DataFilter.DEFAULT, tmp.toggle(DataKind.TMP))
+        val others = DataFilter.DEFAULT.toggle(DataKind.OTHERS)
+        assertTrue(others.accepts(DataKind.OTHERS)); assertFalse(others.accepts(DataKind.BIN))
     }
 
     @Test fun subtypesToggleIndependentlyAndTheGroupShowsPartial() {
-        val noPictures = DataFilter.DEFAULT.toggle(DataKind.PICTURES)
+        val noPictures = DataFilter.DEFAULT.toggleGroup(DataGroup.MEDIA).toggle(DataKind.PICTURES)
         assertEquals(setOf(DataKind.VIDEOS, DataKind.MUSIC), noPictures.on)
         assertEquals(GroupState.PARTIAL, noPictures.groupState(DataGroup.MEDIA))
         // a subtype in another group, alone
@@ -82,8 +114,10 @@ class FileClassifierTest {
     }
 
     @Test fun filterPersistsThroughEncodeDecode() {
-        val f = DataFilter.DEFAULT.toggle(DataKind.MUSIC).toggle(DataKind.SCRIPTS)
+        val f = DataFilter.DEFAULT.toggleGroup(DataGroup.MEDIA).toggle(DataKind.MUSIC).toggle(DataKind.SCRIPTS)
         assertEquals(f, DataFilter.decode(f.encode()))
+        assertEquals(DataFilter.DEFAULT, DataFilter.decode(DataFilter.DEFAULT.encode()))
+        assertEquals("ALL", DataFilter.DEFAULT.encode())
         assertEquals(DataFilter(emptySet()), DataFilter.decode(""))
         assertEquals(DataFilter.DEFAULT, DataFilter.decode("NOT_A_KIND"))
     }

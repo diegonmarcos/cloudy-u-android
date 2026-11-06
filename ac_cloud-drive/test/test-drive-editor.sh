@@ -11,8 +11,8 @@
 #       and claimed by no viewer, media is view only, every viewer is one of the seven libs' ids.
 #   E3  the module boundary: no lib of the five imports this application's package, and the app's Editor
 #       glue (editor/) holds no viewer logic (no PdfBox, no zip/XML, no codec).
-#   E4  the navigation: bottom nav is explorer/projects/editor/home/git/fsync/mounts, Home = home_apps|manage (Manage
-#       keeps apps|data), Fsync = folders|agents (#1491: Projects is a bottom-nav page), no `manage` or `agents` section.
+#   E4  the navigation: bottom nav is explorer/projects/manage/editor/git/fsync/mounts, Manage = overview|local_apps|local_data (Home is deleted,
+#       #1537), Fsync = folders|agents (#1491: Projects is a bottom-nav page), no `home` or `agents` section.
 #   E5  the Projects page is DECLARED sample data (named sample, never the banned word).
 #
 # OWN-SOURCE ONLY. python3 and grep only.
@@ -80,19 +80,17 @@ if [ -z "$hits" ]; then pass "no lib imports com.diegonmarcos.clouddrive"; else 
 if grep -rlE 'com\.tom_roush|java\.util\.zip|javax\.xml|MarkdownCodec|HtmlCodec' "$SRC/editor" >/dev/null 2>&1; then fail "the Editor glue holds viewer logic (PdfBox, zip/XML or a codec)"; else pass "the Editor glue only picks the lib for a route"; fi
 
 echo "── E4 the navigation shape ──"
-python3 - "$APP/build.json" <<'PYTHON' && pass "bottom nav explorer/editor/home/git/fsync/mounts; Home and Fsync sub-pages as declared" || fail "the navigation is not the #1484 shape"
+python3 - "$APP/build.json" <<'PYTHON' && pass "bottom nav explorer/projects/manage/editor/git/fsync/mounts; Manage and Fsync sub-pages as declared" || fail "the navigation is not the #1537 shape"
 import json, sys
 ui = json.load(open(sys.argv[1], encoding="utf-8"))["ui"]
 sec = {s["id"]: s for s in ui["sections"]}
 bad = 0
-if ui["bottom_nav"] != ["explorer", "projects", "editor", "home", "git", "fsync", "mounts"]:
+if ui["bottom_nav"] != ["explorer", "projects", "manage", "editor", "git", "fsync", "mounts"]:
     print("    bottom_nav is %s" % ui["bottom_nav"]); bad = 1
-if "manage" in sec or "agents" in sec:
-    print("    manage/agents are sections again"); bad = 1
-home = [p["id"] for p in sec["home"].get("pages", [])]
-if home != ["home_apps", "manage"]: print("    home pages %s" % home); bad = 1
-mp = [p["id"] for p in next((p for p in sec["home"].get("pages", []) if p["id"] == "manage"), {}).get("pages", [])]
-if mp != ["apps", "data"]: print("    manage pages %s" % mp); bad = 1
+if "home" in sec or "agents" in sec:
+    print("    home/agents are sections again"); bad = 1
+mp = [p["id"] for p in sec["manage"].get("pages", [])]
+if mp != ["overview", "local_apps", "local_data"]: print("    manage pages %s" % mp); bad = 1
 fs = [p["id"] for p in sec["fsync"].get("pages", [])]
 if fs != ["folders", "agents"]: print("    fsync pages %s" % fs); bad = 1
 if sec["projects"].get("pages"): print("    projects declares sub-pages"); bad = 1

@@ -63,12 +63,12 @@
       "label": "Disk Management",
       "icon": "💽",
       "route": {
-        "tab": "home",
-        "page": "manage"
+        "tab": "manage",
+        "page": "overview"
       }
     }
   ],
-  "_doc_disk": "#813/#1484 Disk Management routes to Home ▸ Manage (Manage is a Home sub-page since #1484, with its own Apps and Data pages): the page renders libs:disk, the Disk Management engine, and is the same data /api/disk/* answers.",
+  "_doc_disk": "#813/#1537 Disk Management routes to Manage ▸ Overview (Manage is a bottom-nav page since #1537 and Home is deleted; its pages are Overview, Local-Apps and Local-Data): the page renders libs:disk, the Disk Management engine, and is the same data /api/disk/* answers.",
   "_doc_routes": "#603 A tile with a `route` does not leave the app: it selects a declared tab and, inside it, a declared sub-page (ui.tabs / ui.sync.pages ids — the ONE declaration, not a second list). #609 moved both targets from Configs to the new Sync tab. GitSync is Sync ▸ Git, the native git manager's own page; RSync is Sync ▸ Rsync — the page whose id stays 'rclone' and whose label #604 changed to Rsync, where the declared folder↔folder sync rules live (data/drive-sync-rules.json, build.json::_doc_rsync). It used to route to Backups, which is the ON-DEVICE mirror set and a different subject. Neither tile is a new screen: #330, #567, #604 and #609 built all of it, and a tile that re-implemented either would be a second surface for one subject.",
-  "_doc_termux": "#1356 Termux opens Cloud Terminal Termux (fleet id termux, package resolved from the constellation manifest), the app the Git page's title-row terminal icon opened; that title row is gone and this tile is its one shortcut on Home ▸ Apps."
+  "_doc_termux": "#1356 Termux opens Cloud Terminal Termux (fleet id termux, package resolved from the constellation manifest), the app the Git page's title-row terminal icon opened; that title row is gone and this tile is its one shortcut on Manage ▸ Local-Apps."
 }
