@@ -89,7 +89,7 @@ fun ScreenshotAgentPage(title: String, modifier: Modifier = Modifier) {
             item {
                 val (total, read) = counts ?: (0 to 0)
                 val failed = state?.failed ?: 0
-                // The agent row: one dense Store row per declared agent (assets/agents.json); state, progress and the last error live in it.
+                // The agent row: one dense Store row per declared agent (served dataset `agents`, #1547, read at runtime); state, progress and the last error live in it.
                 decl?.let { agent ->
                     AgentRow(
                         agent = agent, enabled = enabled, running = status.running,

@@ -698,6 +698,8 @@ configurations.configureEach {
 
 dependencies {
     implementation project(':libs:analytics')
+    // #1547 the Agents declaration is read at RUNTIME from Cloud Store's provider, never baked into the APK (code only, no data).
+    implementation project(':libs:fleet-data-client')
     implementation project(':libs:core')
     implementation project(':libs:databackend')   // #825 DataBackendClient: this app binds an engine
     implementation project(':libs:updater')

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # #1507 Screenshot OCR agent: the declaration, the rename, the sidecar contract, the battery rules.
-#   S1 the agent is declared in assets/agents.json as "Screenshot OCR" and the title string says so (no old "Screenshots" name)
+#   S1 the agent is declared in the served dataset data/fleet/app/com.diegonmarcos.clouddrive/agents.json (#1547, read at runtime, not baked) as "Screenshot OCR" and the title string says so (no old "Screenshots" name)
 #   S2 libs:ocr is a declared, linked module and owns table detection, Markdown, JSON, naming and the sha256 skip
 #   S3 the agent writes the pair through SidecarWriter and skips on SidecarIdempotency (md first, json last)
 #   S4 battery: no PeriodicWorkRequest, a charging one-shot backfill, a content-URI watch, backoff floor >= 30 s, no sleep, delay or timer loops
@@ -10,7 +10,7 @@ set -uo pipefail
 ROOT="${CLOUD_ANDROID_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && while [ "$PWD" != "/" ] && [ ! -e "$PWD/.git" ]; do cd ..; done; printf '%s' "$PWD")}"
 D="$ROOT/ac_cloud-drive"; A="$D/app/src/main/java/com/diegonmarcos/clouddrive/agents"; L="$ROOT/ab_cloud-libs-shared/libs/ocr/src/main/java/com/diegonmarcos/superapp/ocr"
 fails=0; ok(){ echo "  PASS  $1"; }; bad(){ echo "  FAIL  $1"; fails=$((fails+1)); }
-grep -q '"name": "Screenshot OCR"' "$D/app/src/main/assets/agents.json" && grep -q '<string name="agent_shots_title">Screenshot OCR</string>' "$D/app/src/main/res/values/strings.xml" && ok "S1 agent declared and titled Screenshot OCR" || bad "S1 agent not declared as Screenshot OCR"
+grep -q '"name": "Screenshot OCR"' "$D/../data/fleet/app/com.diegonmarcos.clouddrive/agents.json" && grep -q '<string name="agent_shots_title">Screenshot OCR</string>' "$D/app/src/main/res/values/strings.xml" && ok "S1 agent declared and titled Screenshot OCR" || bad "S1 agent not declared as Screenshot OCR"
 grep -q '>Screenshots<' "$D/app/src/main/res/values/strings.xml" && bad "S1 old name still in strings" || ok "S1 no old name"
 grep -q '"libs:ocr"' "$D/build.json" && grep -q "project(':libs:ocr')" "$D/app/build.gradle" && ok "S2 libs:ocr declared and linked" || bad "S2 libs:ocr not wired"
 for f in TableDetector MarkdownFormatter SidecarJson SidecarNaming SidecarIdempotency; do [ -f "$L/$f.kt" ] || bad "S2 $f.kt missing"; done; ok "S2 the lib files exist"

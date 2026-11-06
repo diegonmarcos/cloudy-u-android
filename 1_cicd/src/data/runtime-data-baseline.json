@@ -3,7 +3,7 @@
  "seed_allowlist": {
   "_doc": "Tier-4 STATIC reference data that may stay bundled as a SEED the runtime provider overrides: path or dir/ prefix -> reason (at least 20 characters). Empty in phase 1: the tier-4 files are baselined below and move to Cloud Store packs in phase 2."
  },
- "json_max": 120,
+ "json_max": 119,
  "gradle_max": 22,
  "b64_max": 302,
  "mock_files": [
@@ -378,10 +378,6 @@
   "ac_cloud-dialer/app/src/main/assets/voip_providers.json": {
    "tier": 3,
    "target": "store app/<pkg>/voip_providers"
-  },
-  "ac_cloud-drive/app/src/main/assets/agents.json": {
-   "tier": 3,
-   "target": "store app/<pkg>/agents"
   },
   "ac_cloud-kg-store/app/src/main/assets/ai/composer.json": {
    "tier": 3,

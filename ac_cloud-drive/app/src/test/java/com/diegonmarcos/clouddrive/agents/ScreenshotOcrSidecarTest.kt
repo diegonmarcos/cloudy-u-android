@@ -15,7 +15,7 @@ class ScreenshotOcrSidecarTest {
     )
 
     @Test fun agentIsDeclaredAsScreenshotOcr() {
-        val a = AgentsDecl.parse(File("src/main/assets/agents.json").readText()).single()
+        val a = AgentsDecl.parse(File("../../data/fleet/app/com.diegonmarcos.clouddrive/agents.json").readText()).single()
         assertEquals("screenshot-ocr", a.id); assertEquals("Screenshot OCR", a.name)
         assertEquals(listOf("process_all", "retry_failed", "toggle"), a.actions.map { it.id })
         assertEquals(listOf(".md", ".json"), a.outputs)

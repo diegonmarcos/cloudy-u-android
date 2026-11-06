@@ -23,6 +23,9 @@
     ],
     "cld.camera": [
       "vr-filters"
+    ],
+    "com.diegonmarcos.clouddrive": [
+      "agents"
     ]
   }
 }

@@ -1,4 +1,5 @@
 {
+  "schemaVersion": 1,
   "_doc": "THE AGENTS declaration (Fsync > Agents). One entry per on-device agent; AgentsDecl parses it and AgentsScreen draws one dense KitStoreRow per entry. `id` is the only thing the code dispatches on. Names and captions here, not in Kotlin; sizes come from the ui-kit KitStoreRow ramp.",
   "agents": [
     {
