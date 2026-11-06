@@ -19,6 +19,7 @@ import com.diegonmarcos.cloudwriter.core.Dictation
 import com.diegonmarcos.cloudwriter.core.Edit
 import com.diegonmarcos.cloudwriter.core.Span
 import com.diegonmarcos.cloudwriter.core.SpanKind
+import com.diegonmarcos.cloudwriter.core.WriterGrid
 import com.diegonmarcos.superapp.uikit.CloudKitTheme
 import com.diegonmarcos.superapp.uikit.KitPalette
 
@@ -33,6 +34,8 @@ class MarkdownLook(
     private val spans: List<Span>,
     private val matches: List<IntRange>,
     private val scheme: ColorScheme,
+    /** #1532 focus mode: the ranges drawn at the dimmed ink (everything but the current paragraph). */
+    private val dimmed: List<IntRange> = emptyList(),
 ) : VisualTransformation {
     override fun filter(text: AnnotatedString): TransformedText {
         val b = AnnotatedString.Builder(text)
@@ -44,6 +47,10 @@ class MarkdownLook(
         for (m in matches) {
             if (m.first < 0 || m.last >= n) continue
             b.addStyle(SpanStyle(background = scheme.tertiaryContainer, color = scheme.onTertiaryContainer), m.first, m.last + 1)
+        }
+        for (d in dimmed) {
+            if (d.first < 0 || d.last >= n || d.isEmpty()) continue
+            b.addStyle(SpanStyle(color = scheme.onSurface.copy(alpha = WriterGrid.DIM_ALPHA)), d.first, d.last + 1)
         }
         return TransformedText(b.toAnnotatedString(), OffsetMapping.Identity)
     }

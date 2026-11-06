@@ -350,4 +350,9 @@
     <string name="configs_page_perms">Permisos</string>
     <string name="configs_page_about">Acerca de</string>
     <string name="configs_page_models">Modelos</string>
+    <string name="fmt_checklist">Lista de tareas</string>
+    <string name="doc_import_title">Importar</string>
+    <string name="doc_filter_all">Todos</string>
+    <string name="editor_focus">Modo concentración</string>
+    <string name="editor_focus_exit">Salir de concentración</string>
 </resources>

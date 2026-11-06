@@ -19,6 +19,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import com.diegonmarcos.cloudwriter.WriterPrefs
+import com.diegonmarcos.cloudwriter.core.Contrast
+import com.diegonmarcos.cloudwriter.core.TokenSet
 
 /**
  * cloud-writer's Material 3 theme — the design system this application did not have.
@@ -58,41 +60,51 @@ import com.diegonmarcos.cloudwriter.WriterPrefs
 private const val PureBlackPull = 0.8f
 
 /**
- * cloud-writer's own accent, carried forward from the palette the hand-drawn screens used
- * (#78c8ff) so the application still looks like itself after the migration. It is used as the
- * seed-equivalent primary on Android 11 and below, where there is no wallpaper palette to read.
+ * #1532 the schemes are painted from core's [TokenSet] (DARK and LIGHT), the one place the palette is declared and the one
+ * the AA contrast test (core DesignTest) holds. [WriterBlue] stays the accent the hand-drawn screens started with (#78c8ff);
+ * the container tiers step up (dark) or down (light) from the page so a card, a toolbar and a field each read as their own
+ * tonal level.
  */
-private val WriterBlue = Color(0xFF78C8FF)
-private val WriterBlueDeep = Color(0xFF0B4A75)
-private val WriterInk = Color(0xFF0B0E14)
+private val WriterBlue = Color(TokenSet.DARK.primary)
 
-private val WriterDarkScheme = darkColorScheme(
-    primary = WriterBlue,
-    onPrimary = Color(0xFF00344F),
-    primaryContainer = WriterBlueDeep,
-    onPrimaryContainer = Color(0xFFCDE7FF),
-    secondary = Color(0xFFB4CAD9),
-    onSecondary = Color(0xFF1E333F),
-    secondaryContainer = Color(0xFF344956),
-    onSecondaryContainer = Color(0xFFD0E6F5),
-    background = WriterInk,
-    onBackground = Color(0xFFE6EDF3),
-    surface = WriterInk,
-    onSurface = Color(0xFFE6EDF3),
-    onSurfaceVariant = Color(0xFFC8D4E0),
-    outline = Color(0xFF8A95A1),
-)
+private fun TokenSet.toScheme(dark: Boolean): ColorScheme {
+    val outlineVariant = Color(Contrast.blend(outline, background, 0.5f))
+    return if (dark) {
+        darkColorScheme(
+            primary = Color(primary), onPrimary = Color(onPrimary),
+            primaryContainer = Color(primaryContainer), onPrimaryContainer = Color(onPrimaryContainer),
+            secondary = Color(onSecondaryContainer), onSecondary = Color(secondaryContainer),
+            secondaryContainer = Color(secondaryContainer), onSecondaryContainer = Color(onSecondaryContainer),
+            background = Color(background), onBackground = Color(onSurface),
+            surface = Color(surface), onSurface = Color(onSurface), onSurfaceVariant = Color(onSurfaceVariant),
+            surfaceVariant = Color(surfaceContainerHighest),
+            surfaceContainerLowest = Color(background), surfaceContainerLow = Color(surfaceContainerLow),
+            surfaceContainer = Color(surfaceContainer), surfaceContainerHigh = Color(surfaceContainerHigh),
+            surfaceContainerHighest = Color(surfaceContainerHighest),
+            outline = Color(outline), outlineVariant = outlineVariant,
+            error = Color(error), onError = Color(onError),
+        )
+    } else {
+        lightColorScheme(
+            primary = Color(primary), onPrimary = Color(onPrimary),
+            primaryContainer = Color(primaryContainer), onPrimaryContainer = Color(onPrimaryContainer),
+            secondary = Color(onSecondaryContainer), onSecondary = Color(secondaryContainer),
+            secondaryContainer = Color(secondaryContainer), onSecondaryContainer = Color(onSecondaryContainer),
+            background = Color(background), onBackground = Color(onSurface),
+            surface = Color(surface), onSurface = Color(onSurface), onSurfaceVariant = Color(onSurfaceVariant),
+            surfaceVariant = Color(surfaceContainerHighest),
+            surfaceContainerLowest = Color.White, surfaceContainerLow = Color(surfaceContainerLow),
+            surfaceContainer = Color(surfaceContainer), surfaceContainerHigh = Color(surfaceContainerHigh),
+            surfaceContainerHighest = Color(surfaceContainerHighest),
+            outline = Color(outline), outlineVariant = outlineVariant,
+            error = Color(error), onError = Color(onError),
+        )
+    }
+}
 
-private val WriterLightScheme = lightColorScheme(
-    primary = Color(0xFF1A6590),
-    onPrimary = Color.White,
-    primaryContainer = Color(0xFFCDE7FF),
-    onPrimaryContainer = Color(0xFF001E2F),
-    secondary = Color(0xFF4D616D),
-    onSecondary = Color.White,
-    secondaryContainer = Color(0xFFD0E6F5),
-    onSecondaryContainer = Color(0xFF091E28),
-)
+private val WriterDarkScheme = TokenSet.DARK.toScheme(dark = true)
+
+private val WriterLightScheme = TokenSet.LIGHT.toScheme(dark = false)
 
 /**
  * The OLED decision, kept out of the composable so it can be executed and reasoned about on its own.
@@ -117,10 +129,9 @@ internal fun ColorScheme.pulledToBlack(): ColorScheme = copy(
 )
 
 /**
- * @param dynamicColor Material You. ON by default and only consulted on Android 12+, where the
- *   platform derives a full tonal palette from the wallpaper. That is the natural fit for a phone
- *   whose owner themes it heavily, and it is also the honest default: below S the call does not
- *   exist and the hand-built schemes above are used instead.
+ * @param dynamicColor Material You, only consulted on Android 12+. OFF by default since #1532: the designed palette (the
+ *   accent for primary actions, the tonal surfaces, the AA-tested pairs) is what the owner asked to see, and a wallpaper
+ *   palette would replace all of it. Pass true to follow the wallpaper.
  * @param pureBlack the OLED pull described above. ON by default because the owner's phone is a
  *   Samsung on a black Power Saving theme; it changes nothing in light mode.
  */
@@ -154,7 +165,7 @@ object WriterTheme {
 @Composable
 fun CloudWriterTheme(
     darkTheme: Boolean = WriterTheme.isDark(),
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,
     pureBlack: Boolean = true,
     content: @Composable () -> Unit,
 ) {

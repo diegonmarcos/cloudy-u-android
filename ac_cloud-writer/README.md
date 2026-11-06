@@ -79,3 +79,13 @@ There is no JVM in the container that maintains this, so CI is the only
 compiler. `./build.sh build` locally; `ship-cloud-writer.yml` publishes
 `Cloud-Writer.apk` to the rolling `latest` release and to
 `ghcr.io/diegonmarcos/cloud-writer`.
+
+## Design (#1532)
+
+A premium writing surface on the fleet design system. Tokens, states and rules are pure data in `core`
+(`Design.kt`: `TokenSet` DARK/LIGHT, `Contrast`, `Controls`, `WriterGrid`; `Format.kt`: `FormatAction`, `Focus`, `Tags`;
+`Nav.kt`: `Dest`, `WriterScreens`) so the AA contrast test, the control states, the toolbar actions and the navigation run
+on the JVM (`DesignTest`, `FormatTest`). `ui/WriterComponents.kt` is the component set (filled / tonal / text buttons at 40 to
+48 dp, chips, document cards, empty state with a vector illustration); icons are Material Symbols rounded only. Static guards:
+`test/test-cloud-writer-ui.sh` T7 to T10 and the density guard's `sp_literal` rule.
+

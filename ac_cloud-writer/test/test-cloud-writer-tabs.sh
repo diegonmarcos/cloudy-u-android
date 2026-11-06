@@ -72,7 +72,7 @@ def checks(f):
     box = f[J + "WriterBoxes.kt"]
     for action in ("io.loadFile(state)", "io.loadImage(state)", "io.takePicture(state)", "io.export(state, it)"):
         need("T3 the box offers %s" % action, action in box)
-    need("T3 Load file / Take picture / Load image are input-box actions", re.search(r"if \(input\) \{\s*Action\(Icons\.Filled\.FileOpen", box) is not None)
+    need("T3 Load file / Take picture / Load image are input-box actions", re.search(r"if \(input\) \{\s*Action\(Icons\.Rounded\.FileOpen", box) is not None)
     need("T3 OCR text lands in the box through Ocr.intoBox", "box.setHtml(Ocr.intoBox(box.html()" in box)
     need("T3 Load image and Take picture both run OCR", "pickImage = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> if (uri != null) ocr(uri) }" in box
          and "ok -> shot?.takeIf { ok }?.let { ocr(it) }" in box)

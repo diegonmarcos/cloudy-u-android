@@ -86,6 +86,21 @@ object Markdown {
         return Edit(text.substring(0, first) + changed + text.substring(last), first, first + changed.length)
     }
 
+    /**
+     * A link: the selection becomes the text of `[text](url)` with `url` selected for typing over; with nothing selected a
+     * `[text](url)` skeleton is inserted with `text` selected.
+     */
+    fun link(text: String, start: Int, end: Int): Edit {
+        val a = minOf(start, end).coerceIn(0, text.length)
+        val b = maxOf(start, end).coerceIn(0, text.length)
+        if (a == b) {
+            return Edit(text.substring(0, a) + "[text](url)" + text.substring(a), a + 1, a + 5)
+        }
+        val label = text.substring(a, b)
+        val urlStart = a + 1 + label.length + 2
+        return Edit(text.substring(0, a) + "[" + label + "](url)" + text.substring(b), urlStart, urlStart + 3)
+    }
+
     /** Make the caret's line a heading of [level]; the same level again turns it back into a paragraph. */
     fun heading(text: String, start: Int, end: Int, level: Int): Edit {
         val first = lineStart(text, minOf(start, end).coerceIn(0, text.length))

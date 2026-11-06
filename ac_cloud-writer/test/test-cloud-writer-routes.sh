@@ -234,7 +234,7 @@ fi
 
 # ── D ── the document UI ──────────────────────────────────────────────────
 MAINKT="$(code "$SRC/MainActivity.kt")"
-UIKT="$(code "$SRC/ui/DocumentsUi.kt" "$SRC/ui/Theme.kt")"
+UIKT="$(code "$SRC/ui/DocumentsUi.kt" "$SRC/ui/Theme.kt" "$SRC/ui/WriterComponents.kt" "$APP/core/src/main/kotlin/com/diegonmarcos/cloudwriter/core/Format.kt")"
 d() { # d <id> <message> <pattern>...  — every pattern must be in MainActivity/ui code
     local id="$1" msg="$2"; shift 2
     local p
@@ -248,7 +248,7 @@ d D1 "documents are core DocStore files under filesDir/documents" \
 d D2 "the editor draws Markdown rich over the same characters" \
     'Markdown.spans(v.text)' 'visualTransformation = look' 'OffsetMapping.Identity'
 d D3 "the toolbar applies core's Markdown actions" \
-    'Markdown.heading(t, s, e, 1)' 'Markdown.wrap(t, s, e, "**")' 'Markdown.wrap(t, s, e, "*")' 'Markdown.prefixLines(t, s, e, "- ")' 'Markdown.prefixLines(t, s, e, "> ")'
+    'Markdown.heading(text, start, end, 1)' 'Markdown.wrap(text, start, end, "**")' 'Markdown.wrap(text, start, end, "*")' 'Markdown.prefixLines(text, start, end, "- ")' 'Markdown.prefixLines(text, start, end, "> ")' 'Markdown.prefixLines(text, start, end, "- [ ] ")' 'Markdown.link(text, start, end)' 'FormatAction.GROUPS.forEachIndexed' 'a.apply(t, s, e)'
 d D4 "the outline lists core headings and jumps to them" \
     'Markdown.outline(text)' 'selection = TextRange(h.offset)'
 d D5 "find counts and steps through core matches, wrapping" \
@@ -268,7 +268,7 @@ d D9 "a tool's answer replaces exactly the range it read" \
 d D10 "shared text becomes a new document" \
     'open(store.create(shared))'
 d D11 "the fleet UI kit draws inside this app's theme" \
-    'KitBridge {' 'KitEmptyState(' 'CloudKitTheme('
+    'KitBridge {' 'list.isEmpty() -> item(key = "empty")' 'EmptyDocsIllustration()' 'CloudKitTheme('
 
 echo "── $FAILURES failed ──"
 [ "$FAILURES" = "0" ]

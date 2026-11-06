@@ -20,6 +20,50 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.automirrored.rounded.FormatListBulleted
+import androidx.compose.material.icons.rounded.AddPhotoAlternate
+import androidx.compose.material.icons.rounded.CenterFocusStrong
+import androidx.compose.material.icons.rounded.Checklist
+import androidx.compose.material.icons.rounded.FileOpen
+import androidx.compose.material.icons.rounded.FullscreenExit
+import androidx.compose.material.icons.rounded.Link
+import androidx.compose.material.icons.rounded.PhotoCamera
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.em
+import com.diegonmarcos.cloudwriter.core.ControlKind
+import com.diegonmarcos.cloudwriter.core.Dest
+import com.diegonmarcos.cloudwriter.core.Focus
+import com.diegonmarcos.cloudwriter.core.FormatAction
+import com.diegonmarcos.cloudwriter.core.Transition
+import com.diegonmarcos.cloudwriter.core.WriterGrid
+import com.diegonmarcos.cloudwriter.core.WriterScreens
+import com.diegonmarcos.cloudwriter.ui.BarDivider
+import com.diegonmarcos.cloudwriter.ui.WriterBar
+import com.diegonmarcos.cloudwriter.ui.WriterButton
+import com.diegonmarcos.cloudwriter.ui.WriterChip
+import com.diegonmarcos.cloudwriter.ui.WriterDims
+import com.diegonmarcos.cloudwriter.ui.WriterDocCard
+import com.diegonmarcos.cloudwriter.ui.WriterEmptyState
+import com.diegonmarcos.cloudwriter.ui.WriterFilterChip
+import com.diegonmarcos.cloudwriter.ui.WriterIconButton
+import com.diegonmarcos.cloudwriter.ui.WriterLabel
+import com.diegonmarcos.cloudwriter.ui.WriterSearchField
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -45,40 +89,39 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.AltRoute
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Cloud
-import androidx.compose.material.icons.filled.CloudOff
-import androidx.compose.material.icons.filled.Code
-import androidx.compose.material.icons.filled.DarkMode
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.FileDownload
-import androidx.compose.material.icons.filled.FormatBold
-import androidx.compose.material.icons.filled.FormatItalic
-import androidx.compose.material.icons.filled.FormatListBulleted
-import androidx.compose.material.icons.filled.FormatListNumbered
-import androidx.compose.material.icons.filled.FormatQuote
-import androidx.compose.material.icons.filled.Hearing
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.Spellcheck
-import androidx.compose.material.icons.filled.Stop
-import androidx.compose.material.icons.filled.Summarize
-import androidx.compose.material.icons.filled.Title
-import androidx.compose.material.icons.filled.Toc
-import androidx.compose.material.icons.filled.Translate
-import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.AltRoute
+import androidx.compose.material.icons.rounded.AutoAwesome
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Cloud
+import androidx.compose.material.icons.rounded.CloudOff
+import androidx.compose.material.icons.rounded.Code
+import androidx.compose.material.icons.rounded.DarkMode
+import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.Description
+import androidx.compose.material.icons.rounded.FileDownload
+import androidx.compose.material.icons.rounded.FormatBold
+import androidx.compose.material.icons.rounded.FormatItalic
+import androidx.compose.material.icons.rounded.FormatListNumbered
+import androidx.compose.material.icons.rounded.FormatQuote
+import androidx.compose.material.icons.rounded.Hearing
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.material.icons.rounded.KeyboardArrowUp
+import androidx.compose.material.icons.rounded.Mic
+import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material.icons.rounded.Pause
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.rounded.Share
+import androidx.compose.material.icons.rounded.Spellcheck
+import androidx.compose.material.icons.rounded.Stop
+import androidx.compose.material.icons.rounded.Summarize
+import androidx.compose.material.icons.rounded.Title
+import androidx.compose.material.icons.rounded.Toc
+import androidx.compose.material.icons.rounded.Translate
+import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
@@ -157,7 +200,7 @@ import com.diegonmarcos.superapp.navbartop1.titleHierarchy
 import com.diegonmarcos.superapp.navbartop2.NavBarTopSecondRow
 import com.diegonmarcos.superapp.bottomnav.NavPage
 import com.diegonmarcos.cloudwriter.ui.insertAtCaret
-import androidx.compose.material.icons.filled.FormatSize
+import androidx.compose.material.icons.rounded.FormatSize
 import androidx.core.content.FileProvider
 import com.diegonmarcos.superapp.fleetconfigs.FleetConfigsPageBody
 import com.diegonmarcos.superapp.mlocr.OcrImage
@@ -181,6 +224,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.concurrent.Executors
+
+/** #1532 the screens are core's [Dest], so the navigation rules (Back, the transitions) are JVM-tested. */
+private typealias Screen = Dest
 
 /**
  * Cloud Writer, v2 (#800) — from an MVP of two boxes to a writing app.
@@ -206,8 +252,6 @@ import java.util.concurrent.Executors
  * main Handler) writes into these exactly as the previous screen did.
  */
 class MainActivity : AppCompatActivity() {
-
-    private enum class Screen { DOCS, EDITOR, CONFIGS, TOOLS, ENHANCER, DRAFTER, TRANSLATOR, GRAMMAR }
 
     // #1418 the four tool tabs' boxes, kept across tab switches (WYSIWYG by default).
     private val enhIn = BoxState()
@@ -267,6 +311,8 @@ class MainActivity : AppCompatActivity() {
     private val optionsOpen: MutableState<Boolean> = mutableStateOf(false)
     private val listenOpen: MutableState<Boolean> = mutableStateOf(false)
     private val listenPrefs: MutableState<Int> = mutableStateOf(0)
+    /** #1532 focus mode: the chrome steps away and every paragraph but the current one is dimmed. */
+    private val focusMode: MutableState<Boolean> = mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -353,6 +399,7 @@ class MainActivity : AppCompatActivity() {
         report.value = null
         findOpen.value = false
         findQuery.value = ""
+        focusMode.value = false
         screen.value = Screen.EDITOR
         attachSink()
     }
@@ -360,18 +407,23 @@ class MainActivity : AppCompatActivity() {
     private fun newDoc() = open(store.create(""))
 
     private fun back() {
-        when (screen.value) {
-            Screen.EDITOR -> {
-                saveNow()
-                ListenEngine.sink = null
-                screen.value = Screen.DOCS
-                docId.value = null
-                reloadDocs()
-            }
-            Screen.CONFIGS -> screen.value = if (configsReturn.value == Screen.EDITOR && docId.value != null) Screen.EDITOR else Screen.DOCS
-            Screen.TOOLS, Screen.ENHANCER, Screen.DRAFTER, Screen.TRANSLATOR, Screen.GRAMMAR -> screen.value = Screen.DOCS
-            Screen.DOCS -> finish()
+        val from = screen.value
+        if (from == Screen.EDITOR && focusMode.value) {
+            focusMode.value = false
+            return
         }
+        val next = WriterScreens.back(from, configsReturn.value, docId.value != null)
+        if (next == null) {
+            finish()
+            return
+        }
+        if (from == Screen.EDITOR) {
+            saveNow()
+            ListenEngine.sink = null
+            docId.value = null
+            reloadDocs()
+        }
+        screen.value = next
     }
 
     /** #868 an island item: the bar is on every screen but the editor, whose own bars take its place. */
@@ -501,17 +553,37 @@ class MainActivity : AppCompatActivity() {
                 onSelect = { e -> if (e.id != sectionId) goSection(e.id) },
                 dark = dark,
             ) {
-                when (current) {
-                    Screen.DOCS -> DocsScreen()
-                    Screen.TOOLS -> ToolsScreen()
-                    Screen.CONFIGS -> ConfigsScreen()
-                    Screen.EDITOR -> EditorScreen()
-                    Screen.ENHANCER -> EnhancerScreen()
-                    Screen.DRAFTER -> DrafterScreen()
-                    Screen.TRANSLATOR -> TranslatorScreen()
-                    Screen.GRAMMAR -> GrammarScreen()
+                // #1532 fade-through between screens (the list opening a document slides forward, closing it back).
+                AnimatedContent(
+                    targetState = current,
+                    modifier = Modifier.fillMaxSize(),
+                    transitionSpec = { writerTransition(initialState, targetState) },
+                    label = "writer_screen",
+                ) { shown ->
+                    when (shown) {
+                        Screen.DOCS -> DocsScreen()
+                        Screen.TOOLS -> ToolsScreen()
+                        Screen.CONFIGS -> ConfigsScreen()
+                        Screen.EDITOR -> EditorScreen()
+                        Screen.ENHANCER -> EnhancerScreen()
+                        Screen.DRAFTER -> DrafterScreen()
+                        Screen.TRANSLATOR -> TranslatorScreen()
+                        Screen.GRAMMAR -> GrammarScreen()
+                    }
                 }
             }
+        }
+    }
+
+    /** #1532 the content transition between two screens, from core WriterScreens' timings and its forward / back / fade-through decision. */
+    private fun writerTransition(from: Screen, to: Screen): ContentTransform {
+        val leave = fadeOut(tween(WriterScreens.FADE_OUT_MS))
+        val delay = WriterScreens.FADE_OUT_MS
+        val arrive = fadeIn(tween(WriterScreens.FADE_IN_MS, delayMillis = delay))
+        return when (WriterScreens.transition(from, to)) {
+            Transition.FORWARD -> (arrive + slideInHorizontally(tween(WriterScreens.FADE_IN_MS, delayMillis = delay)) { it / WriterScreens.SLIDE_FRACTION }) togetherWith leave
+            Transition.BACKWARD -> (arrive + slideInHorizontally(tween(WriterScreens.FADE_IN_MS, delayMillis = delay)) { -it / WriterScreens.SLIDE_FRACTION }) togetherWith leave
+            else -> (arrive + scaleIn(tween(WriterScreens.FADE_IN_MS, delayMillis = delay), initialScale = 0.92f)) togetherWith leave
         }
     }
 
@@ -529,9 +601,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * #1457 Home: a search row, the status of the text-tool peer, the four ways to start (new, file, scan, image), a one-line
-     * summary with its sort chips, then the documents as dense rows (title, snippet, words and updated badges). A skeleton shows
-     * while the list loads and a real empty state (with the same actions above it) when there is nothing.
+     * #1532 Home, premium: a headline with the totals, a rounded search field, the status of the text-tool peer, the import
+     * actions as tonal buttons, sort and tag filter chips, then the documents as cards (title, two-line preview, updated
+     * time, words, reading time, tags) over a floating New document button that collapses to its icon while scrolling. A
+     * skeleton shows while the list loads; the empty state is an illustration with its call to action. Every #1457 action
+     * is still here: new, import file, scan, import image, search, sort, share, delete.
      */
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
@@ -540,106 +614,163 @@ class MainActivity : AppCompatActivity() {
         val pickImage = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> uri?.let { importImage(it) } }
         var shot by remember { mutableStateOf<Uri?>(null) }
         val takePhoto = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { ok -> shot?.takeIf { ok }?.let { importImage(it) } }
-        val list = DocList.sort(docs.value, docSort.value)
+        var tagFilter by remember { mutableStateOf<String?>(null) }
+        val sorted = DocList.sort(docs.value, docSort.value)
+        val tags = DocList.allTags(docs.value)
+        val activeTag = tagFilter?.takeIf { it in tags }
+        val list = DocList.withTag(sorted, activeTag)
+        val listState = rememberLazyListState()
+        val fabExpanded by remember { derivedStateOf { listState.firstVisibleItemIndex == 0 } }
+        val openFile = { pickFile.launch(arrayOf("text/*", "text/markdown", "text/html", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/octet-stream")) }
         KitBridge {
-            Column(
-                modifier = Modifier.fillMaxSize().padding(horizontal = KitDensity.medium),
-                verticalArrangement = Arrangement.spacedBy(KitDensity.small),
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    KitSearchBar(
-                        query = query.value,
-                        onQueryChange = { query.value = it; reloadDocs() },
-                        onSubmit = { reloadDocs() },
-                        modifier = Modifier.weight(1f),
-                        placeholder = stringResource(R.string.doc_search_hint),
-                        clearLabel = stringResource(R.string.action_clear),
-                    )
-                    ThemeMenu()
-                }
-                StatusCard()
-                KitActionBar(
-                    listOf(
-                        KitAction(stringResource(R.string.doc_new), "writer:new") { newDoc() },
-                        KitAction(stringResource(R.string.import_file), "writer:import-file") {
-                            pickFile.launch(arrayOf("text/*", "text/markdown", "text/html", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/octet-stream"))
-                        },
-                        KitAction(stringResource(R.string.import_scan), "writer:import-scan") {
-                            val dir = File(cacheDir, "ocr").apply { mkdirs() }
-                            val uri = FileProvider.getUriForFile(this@MainActivity, packageName + ".ocr", File(dir, "shot.jpg"))
-                            shot = uri
-                            takePhoto.launch(uri)
-                        },
-                        KitAction(stringResource(R.string.import_image), "writer:import-image") { pickImage.launch("image/*") },
-                    ),
-                )
-                importNote.value?.let { (line, state) -> KitStatusBanner(line, state, tag = "import") }
-                if (docsLoaded.value && list.isNotEmpty()) {
-                    KitSectionHeader(
-                        stringResource(R.string.doc_list_title),
-                        stringResource(R.string.doc_list_summary, list.size, DocList.totalWords(list)),
-                        modifier = Modifier.padding(top = KitDensity.small),
-                    )
-                    KitFilterChips(
-                        options = listOf(
-                            DocSort.RECENT.id to stringResource(R.string.sort_recent),
-                            DocSort.LONGEST.id to stringResource(R.string.sort_longest),
-                            DocSort.TITLE.id to stringResource(R.string.sort_title),
-                        ),
-                        selected = docSort.value.id,
-                        onSelect = { docSort.value = DocSort.of(it) },
-                        group = "sort",
-                    )
-                }
-                when {
-                    !docsLoaded.value -> KitSkeletonRows(5)
-                    list.isEmpty() -> {
-                        val searching = query.value.isNotBlank()
-                        KitEmptyState(
-                            title = stringResource(if (searching) R.string.doc_no_match_title else R.string.doc_empty_title),
-                            caption = stringResource(if (searching) R.string.doc_no_match_caption else R.string.doc_empty_caption),
+            Box(Modifier.fillMaxSize()) {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(start = PageGutter, end = PageGutter, top = WriterDims.gap, bottom = WriterDims.fabClearance),
+                    verticalArrangement = Arrangement.spacedBy(WriterDims.gap + WriterDims.half),
+                ) {
+                    item(key = "header") {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Column(Modifier.weight(1f)) {
+                                Text(
+                                    stringResource(R.string.doc_list_title),
+                                    style = MaterialTheme.typography.headlineMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                )
+                                if (docsLoaded.value && sorted.isNotEmpty()) {
+                                    Text(
+                                        stringResource(R.string.doc_list_summary, list.size, DocList.totalWords(list)),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                            }
+                            ThemeMenu()
+                        }
+                    }
+                    item(key = "search") {
+                        WriterSearchField(
+                            query = query.value,
+                            onQueryChange = { query.value = it; reloadDocs() },
+                            placeholder = stringResource(R.string.doc_search_hint),
+                            clearLabel = stringResource(R.string.action_clear),
                         )
                     }
-                    else -> LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(KitDensity.small),
-                        contentPadding = PaddingValues(bottom = KitDensity.large),
-                    ) {
-                        items(list, key = { it.id }) { DocCard(it) }
+                    item(key = "status") { StatusCard() }
+                    item(key = "import") {
+                        Column {
+                            WriterLabel(stringResource(R.string.doc_import_title))
+                            Row(
+                                Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(top = WriterDims.gap),
+                                horizontalArrangement = Arrangement.spacedBy(WriterDims.gap),
+                            ) {
+                                WriterButton(
+                                    stringResource(R.string.import_file), { openFile() },
+                                    Modifier.testTag("writer:import-file"), ControlKind.TONAL, Icons.Rounded.FileOpen,
+                                )
+                                WriterButton(
+                                    stringResource(R.string.import_scan),
+                                    {
+                                        val dir = File(cacheDir, "ocr").apply { mkdirs() }
+                                        val uri = FileProvider.getUriForFile(this@MainActivity, packageName + ".ocr", File(dir, "shot.jpg"))
+                                        shot = uri
+                                        takePhoto.launch(uri)
+                                    },
+                                    Modifier.testTag("writer:import-scan"), ControlKind.TONAL, Icons.Rounded.PhotoCamera,
+                                )
+                                WriterButton(
+                                    stringResource(R.string.import_image), { pickImage.launch("image/*") },
+                                    Modifier.testTag("writer:import-image"), ControlKind.TONAL, Icons.Rounded.AddPhotoAlternate,
+                                )
+                            }
+                        }
+                    }
+                    importNote.value?.let { (line, state) -> item(key = "note") { KitBridge { KitStatusBanner(line, state, tag = "import") } } }
+                    if (docsLoaded.value && sorted.isNotEmpty()) {
+                        item(key = "sort") {
+                            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(WriterDims.gap)) {
+                                listOf(
+                                    DocSort.RECENT.id to R.string.sort_recent,
+                                    DocSort.LONGEST.id to R.string.sort_longest,
+                                    DocSort.TITLE.id to R.string.sort_title,
+                                ).forEach { (id, label) ->
+                                    WriterFilterChip(id, "sort", stringResource(label), docSort.value.id == id, { docSort.value = DocSort.of(id) })
+                                }
+                            }
+                        }
+                        if (tags.isNotEmpty()) {
+                            item(key = "tags") {
+                                Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(WriterDims.gap)) {
+                                    WriterFilterChip("all", "tag", stringResource(R.string.doc_filter_all), activeTag == null, { tagFilter = null })
+                                    tags.forEach { t -> WriterFilterChip(t, "tag", "#$t", activeTag == t, { tagFilter = t }) }
+                                }
+                            }
+                        }
+                    }
+                    when {
+                        !docsLoaded.value -> item(key = "skeleton") { KitSkeletonRows(5) }
+                        list.isEmpty() -> item(key = "empty") {
+                            val searching = query.value.isNotBlank() || activeTag != null
+                            WriterEmptyState(
+                                title = stringResource(if (searching) R.string.doc_no_match_title else R.string.doc_empty_title),
+                                caption = stringResource(if (searching) R.string.doc_no_match_caption else R.string.doc_empty_caption),
+                            ) {
+                                if (searching) {
+                                    WriterButton(stringResource(R.string.action_clear), { query.value = ""; tagFilter = null; reloadDocs() }, kind = ControlKind.TONAL, icon = Icons.Rounded.Close)
+                                } else {
+                                    WriterButton(stringResource(R.string.doc_new), { newDoc() }, icon = Icons.Rounded.Add, large = true)
+                                    WriterButton(stringResource(R.string.import_file), { openFile() }, kind = ControlKind.TEXT, icon = Icons.Rounded.FileOpen)
+                                }
+                            }
+                        }
+                        else -> items(list, key = { it.id }) { DocCard(it, Modifier.animateItem()) }
                     }
                 }
+                ExtendedFloatingActionButton(
+                    onClick = { newDoc() },
+                    expanded = fabExpanded,
+                    icon = { Icon(Icons.Rounded.Add, contentDescription = null) },
+                    text = { Text(stringResource(R.string.doc_new), style = MaterialTheme.typography.labelLarge) },
+                    shape = WriterDims.cardShape,
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier.align(Alignment.BottomEnd).padding(PageGutter).testTag("writer:new"),
+                )
             }
         }
     }
 
     @Composable
-    private fun DocCard(d: DocMeta) {
+    private fun DocCard(d: DocMeta, modifier: Modifier = Modifier) {
         var menu by remember { mutableStateOf(false) }
         val minutes = DocList.readingMinutes(d.words)
-        KitDocRow(
-            title = d.title.ifBlank { stringResource(R.string.doc_untitled) },
-            snippet = d.snippet,
-            badges = listOfNotNull(
-                KitBadge(stringResource(R.string.editor_words, d.words)),
-                KitBadge(DateUtils.getRelativeTimeSpanString(d.modified).toString()),
-                if (minutes > 0) KitBadge(stringResource(R.string.doc_badge_read, minutes)) else null,
-            ),
-            initial = DocList.initial(d.title),
+        val meta = listOfNotNull(
+            DateUtils.getRelativeTimeSpanString(d.modified).toString(),
+            stringResource(R.string.editor_words, d.words),
+            if (minutes > 0) stringResource(R.string.doc_badge_read, minutes) else null,
+        ).joinToString("  ·  ")
+        WriterDocCard(
             tag = d.id,
+            title = d.title.ifBlank { stringResource(R.string.doc_untitled) },
+            preview = d.snippet,
+            meta = meta,
+            tags = d.tags,
             onClick = { open(d.id) },
+            modifier = modifier,
             trailing = {
                 Box {
-                    IconButton(onClick = { menu = true }) {
-                        Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.doc_more))
-                    }
+                    WriterIconButton(Icons.Rounded.MoreVert, stringResource(R.string.doc_more), { menu = true })
                     DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
                         DropdownMenuItem(
                             text = { Text(stringResource(R.string.doc_share)) },
-                            leadingIcon = { Icon(Icons.Filled.Share, contentDescription = null) },
+                            leadingIcon = { Icon(Icons.Rounded.Share, contentDescription = null) },
                             onClick = { menu = false; share(store.read(d.id).orEmpty()) },
                         )
                         DropdownMenuItem(
                             text = { Text(stringResource(R.string.doc_delete)) },
-                            leadingIcon = { Icon(Icons.Filled.Delete, contentDescription = null) },
+                            leadingIcon = { Icon(Icons.Rounded.Delete, contentDescription = null) },
                             onClick = { menu = false; confirmDelete.value = d.id },
                         )
                     }
@@ -699,9 +830,7 @@ class MainActivity : AppCompatActivity() {
     private fun ThemeMenu() {
         var open by remember { mutableStateOf(false) }
         Box {
-            IconButton(onClick = { open = true }) {
-                Icon(Icons.Filled.DarkMode, contentDescription = stringResource(R.string.theme_title))
-            }
+            WriterIconButton(Icons.Rounded.DarkMode, stringResource(R.string.theme_title), { open = true })
             DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
                 themes().forEach { (label, id) ->
                     DropdownMenuItem(
@@ -721,19 +850,29 @@ class MainActivity : AppCompatActivity() {
 
     // ── the editor ───────────────────────────────────────────────────────
 
+    /**
+     * #1532 the writing surface: a centred column of comfortable measure (core WriterGrid.MEASURE) at a 1.6 line height, the
+     * rich Markdown drawing over the plain text, a floating format toolbar that slides in above the keyboard while the text
+     * has focus, the four tool chips, a words / characters / reading-time line with the autosave state, and focus mode (the
+     * chrome fades away and every paragraph but the current one is dimmed). Every #1457 action stays: outline, find, Listen,
+     * share, export, options, configs, delete.
+     */
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     private fun EditorScreen() {
         val id = docId.value ?: return
         val v = field.value
         val focus = remember { FocusRequester() }
+        var focused by remember { mutableStateOf(false) }
         val scheme = MaterialTheme.colorScheme
+        val focusing = focusMode.value
         val spans = remember(v.text) { Markdown.spans(v.text) }
         val q = findQuery.value
         val matches = remember(v.text, q, findOpen.value) {
             if (findOpen.value && q.isNotEmpty()) Markdown.find(v.text, q).map { it until it + q.length } else emptyList()
         }
-        val look = remember(spans, matches, scheme) { MarkdownLook(spans, matches, scheme) }
+        val dim = if (focusing) Focus.dimmed(v.text, v.selection.max) else emptyList()
+        val look = remember(spans, matches, scheme, dim) { MarkdownLook(spans, matches, scheme, dim) }
 
         // Autosave: half a second after the last change, off the main thread.
         LaunchedEffect(id, v.text) {
@@ -744,6 +883,13 @@ class MainActivity : AppCompatActivity() {
             saveState.value = if (ok) SaveState.SAVED else SaveState.FAILED
             if (ok) savedAt.value = System.currentTimeMillis()
         }
+        // A new, empty document opens with the caret in it and the keyboard up.
+        LaunchedEffect(id) {
+            if (field.value.text.isEmpty()) {
+                delay(WriterScreens.FADE_OUT_MS + 50L)
+                runCatching { focus.requestFocus() }
+            }
+        }
 
         val exportMd = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/markdown")) { uri -> uri?.let { export(it) } }
         val exportTxt = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/plain")) { uri -> uri?.let { export(it) } }
@@ -753,127 +899,140 @@ class MainActivity : AppCompatActivity() {
         val listening = ListenEngine.state.value.running
         var menu by remember { mutableStateOf(false) }
 
-        // #1164 the title is the shared first row's; this row keeps the editor's own actions (back, outline, find, Listen, more).
-        Column(Modifier.fillMaxSize()) {
-            Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = { back() }) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
-                }
-                Spacer(Modifier.weight(1f))
-                        IconButton(onClick = { outlineOpen.value = true }) {
-                            Icon(Icons.Filled.Toc, contentDescription = stringResource(R.string.editor_outline))
-                        }
-                        IconButton(onClick = { findOpen.value = !findOpen.value }) {
-                            Icon(Icons.Filled.Search, contentDescription = stringResource(R.string.editor_find))
-                        }
-                        IconButton(onClick = { if (listening) listenOpen.value = true else requestListen(askMic) }) {
-                            Icon(
-                                Icons.Filled.Mic,
-                                contentDescription = stringResource(R.string.editor_listen),
-                                tint = if (listening) MaterialTheme.colorScheme.error else LocalContentColor.current,
-                            )
-                        }
+        Box(Modifier.fillMaxSize()) {
+            Column(Modifier.fillMaxSize()) {
+                // #1164 the title is the shared first row's; this row keeps the editor's own actions.
+                AnimatedVisibility(visible = !focusing) {
+                    Row(Modifier.fillMaxWidth().padding(horizontal = WriterDims.half), verticalAlignment = Alignment.CenterVertically) {
+                        WriterIconButton(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.action_back), { back() })
+                        Spacer(Modifier.weight(1f))
+                        WriterIconButton(Icons.Rounded.Toc, stringResource(R.string.editor_outline), { outlineOpen.value = true })
+                        WriterIconButton(Icons.Rounded.Search, stringResource(R.string.editor_find), { findOpen.value = !findOpen.value })
+                        WriterIconButton(Icons.Rounded.CenterFocusStrong, stringResource(R.string.editor_focus), { focusMode.value = true })
+                        WriterIconButton(
+                            Icons.Rounded.Mic,
+                            stringResource(R.string.editor_listen),
+                            { if (listening) listenOpen.value = true else requestListen(askMic) },
+                            tint = if (listening) MaterialTheme.colorScheme.error else Color.Unspecified,
+                        )
                         Box {
-                            IconButton(onClick = { menu = true }) {
-                                Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.doc_more))
-                            }
+                            WriterIconButton(Icons.Rounded.MoreVert, stringResource(R.string.doc_more), { menu = true })
                             DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
                                 DropdownMenuItem(
                                     text = { Text(stringResource(R.string.doc_share)) },
-                                    leadingIcon = { Icon(Icons.Filled.Share, contentDescription = null) },
+                                    leadingIcon = { Icon(Icons.Rounded.Share, contentDescription = null) },
                                     onClick = { menu = false; share(field.value.text) },
                                 )
                                 DropdownMenuItem(
                                     text = { Text(stringResource(R.string.export_md)) },
-                                    leadingIcon = { Icon(Icons.Filled.FileDownload, contentDescription = null) },
+                                    leadingIcon = { Icon(Icons.Rounded.FileDownload, contentDescription = null) },
                                     onClick = { menu = false; exportMd.launch(fileName(".md")) },
                                 )
                                 DropdownMenuItem(
                                     text = { Text(stringResource(R.string.export_txt)) },
-                                    leadingIcon = { Icon(Icons.Filled.FileDownload, contentDescription = null) },
+                                    leadingIcon = { Icon(Icons.Rounded.FileDownload, contentDescription = null) },
                                     onClick = { menu = false; exportTxt.launch(fileName(".txt")) },
                                 )
                                 DropdownMenuItem(
                                     text = { Text(stringResource(R.string.editor_options)) },
-                                    leadingIcon = { Icon(Icons.Filled.Tune, contentDescription = null) },
+                                    leadingIcon = { Icon(Icons.Rounded.Tune, contentDescription = null) },
                                     onClick = { menu = false; optionsOpen.value = true },
                                 )
                                 DropdownMenuItem(
                                     text = { Text(stringResource(R.string.action_configs)) },
-                                    leadingIcon = { Icon(Icons.Filled.Settings, contentDescription = null) },
+                                    leadingIcon = { Icon(Icons.Rounded.Settings, contentDescription = null) },
                                     onClick = { menu = false; saveNow(); openConfigs() },
                                 )
                                 DropdownMenuItem(
                                     text = { Text(stringResource(R.string.doc_delete)) },
-                                    leadingIcon = { Icon(Icons.Filled.Delete, contentDescription = null) },
+                                    leadingIcon = { Icon(Icons.Rounded.Delete, contentDescription = null) },
                                     onClick = { menu = false; confirmDelete.value = id },
                                 )
                             }
                         }
-            }
-            Column(Modifier.fillMaxWidth().weight(1f)) {
-                if (findOpen.value) FindBar(matches)
-                report.value?.let { line ->
-                    Text(
-                        line,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = PageGutter, vertical = 4.dp),
-                    )
+                    }
                 }
-                BasicTextField(
-                    value = v,
-                    onValueChange = { field.value = it },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .focusRequester(focus)
-                        .padding(horizontal = PageGutter, vertical = 8.dp),
-                    textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
-                    cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                    visualTransformation = look,
-                    decorationBox = { inner ->
-                        Box {
-                            if (v.text.isEmpty()) {
-                                Text(
-                                    stringResource(R.string.editor_placeholder),
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
-                            inner()
+                Column(Modifier.fillMaxWidth().weight(1f)) {
+                    if (findOpen.value && !focusing) FindBar(matches)
+                    report.value?.let { line ->
+                        Text(
+                            line,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(horizontal = PageGutter, vertical = WriterDims.half),
+                        )
+                    }
+                    Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.TopCenter) {
+                        BasicTextField(
+                            value = v,
+                            onValueChange = { field.value = it },
+                            modifier = Modifier
+                                .widthIn(max = WriterDims.measure)
+                                .fillMaxSize()
+                                .focusRequester(focus)
+                                .onFocusChanged { focused = it.isFocused }
+                                .padding(horizontal = WriterDims.section, vertical = WriterDims.gutter),
+                            textStyle = MaterialTheme.typography.bodyLarge.copy(
+                                color = MaterialTheme.colorScheme.onSurface,
+                                lineHeight = WriterGrid.LINE_HEIGHT_EM.em,
+                            ),
+                            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                            visualTransformation = look,
+                            decorationBox = { inner ->
+                                Box {
+                                    if (v.text.isEmpty()) {
+                                        Text(
+                                            stringResource(R.string.editor_placeholder),
+                                            style = MaterialTheme.typography.bodyLarge.copy(lineHeight = WriterGrid.LINE_HEIGHT_EM.em),
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    }
+                                    inner()
+                                }
+                            },
+                        )
+                    }
+                    AnimatedVisibility(visible = !focusing) {
+                        KitBridge {
+                            val words = Markdown.words(v.text)
+                            val minutes = DocList.readingMinutes(words)
+                            val state = saveState.value
+                            KitEditorStatus(
+                                facts = listOfNotNull(
+                                    stringResource(R.string.editor_words, words),
+                                    stringResource(R.string.editor_chars, DocList.chars(v.text)),
+                                    if (minutes > 0) stringResource(R.string.doc_badge_read, minutes) else null,
+                                ),
+                                saveWord = when (state) {
+                                    SaveState.SAVING -> stringResource(R.string.save_saving)
+                                    SaveState.FAILED -> stringResource(R.string.save_failed)
+                                    SaveState.SAVED -> if (savedAt.value == 0L) stringResource(R.string.save_saved)
+                                    else stringResource(R.string.save_saved_at, DateUtils.formatDateTime(this@MainActivity, savedAt.value, DateUtils.FORMAT_SHOW_TIME))
+                                },
+                                saveState = when (state) {
+                                    SaveState.SAVING -> KitState.BUSY
+                                    SaveState.FAILED -> KitState.BAD
+                                    SaveState.SAVED -> KitState.OK
+                                },
+                            )
                         }
-                    },
-                )
-                KitBridge {
-                    val words = Markdown.words(v.text)
-                    val minutes = DocList.readingMinutes(words)
-                    val state = saveState.value
-                    KitEditorStatus(
-                        facts = listOfNotNull(
-                            stringResource(R.string.editor_words, words),
-                            stringResource(R.string.editor_chars, DocList.chars(v.text)),
-                            if (minutes > 0) stringResource(R.string.doc_badge_read, minutes) else null,
-                        ),
-                        saveWord = when (state) {
-                            SaveState.SAVING -> stringResource(R.string.save_saving)
-                            SaveState.FAILED -> stringResource(R.string.save_failed)
-                            SaveState.SAVED -> if (savedAt.value == 0L) stringResource(R.string.save_saved)
-                            else stringResource(R.string.save_saved_at, DateUtils.formatDateTime(this@MainActivity, savedAt.value, DateUtils.FORMAT_SHOW_TIME))
-                        },
-                        saveState = when (state) {
-                            SaveState.SAVING -> KitState.BUSY
-                            SaveState.FAILED -> KitState.BAD
-                            SaveState.SAVED -> KitState.OK
-                        },
-                    )
+                    }
+                }
+                Column(Modifier.navigationBarsPadding().imePadding()) {
+                    if (listening || listenOpen.value) ListenPanel(askMic)
+                    AnimatedVisibility(
+                        visible = focused,
+                        enter = fadeIn(tween(WriterScreens.FADE_IN_MS)) + slideInVertically(tween(WriterScreens.FADE_IN_MS)) { it / 2 },
+                        exit = fadeOut(tween(WriterScreens.FADE_OUT_MS)) + slideOutVertically(tween(WriterScreens.FADE_OUT_MS)) { it / 2 },
+                    ) { FormatBar() }
+                    AnimatedVisibility(visible = !focusing) { ToolBar() }
                 }
             }
-            Column(Modifier.navigationBarsPadding().imePadding()) {
-                if (listening || listenOpen.value) ListenPanel(askMic)
-                HorizontalDivider()
-                FormatBar()
-                ToolBar()
+            if (focusing) {
+                WriterChip(
+                    "focus-exit", Icons.Rounded.FullscreenExit, stringResource(R.string.editor_focus_exit), { focusMode.value = false },
+                    Modifier.align(Alignment.TopEnd).padding(WriterDims.gap), kind = ControlKind.TONAL, showLabel = true,
+                )
             }
         }
         if (outlineOpen.value) OutlineSheet(v.text, focus)
@@ -886,60 +1045,77 @@ class MainActivity : AppCompatActivity() {
         field.value = action(v.text, v.selection.start, v.selection.end).asValue()
     }
 
-    /** #1457 the format strip: the shared kit toolbar over a declared list of groups. */
+    /**
+     * #1532 the format strip: one chip per core [FormatAction], grouped as the enum declares them. The behaviour behind each
+     * chip is FormatAction.apply, which core's FormatTest holds.
+     */
     @Composable
     private fun FormatBar() {
-        fun act(id: String, icon: ImageVector, @StringRes label: Int, f: (String, Int, Int) -> Edit) =
-            KitToolAction(id, icon, getString(label), onClick = { format(f) })
-        KitBridge {
-            KitToolbar(
-                listOf(
-                    listOf(
-                        act("h1", Icons.Filled.Title, R.string.fmt_h1) { t, s, e -> Markdown.heading(t, s, e, 1) },
-                        act("h2", Icons.Filled.FormatSize, R.string.fmt_h2) { t, s, e -> Markdown.heading(t, s, e, 2) },
-                    ),
-                    listOf(
-                        act("bold", Icons.Filled.FormatBold, R.string.fmt_bold) { t, s, e -> Markdown.wrap(t, s, e, "**") },
-                        act("italic", Icons.Filled.FormatItalic, R.string.fmt_italic) { t, s, e -> Markdown.wrap(t, s, e, "*") },
-                        act("code", Icons.Filled.Code, R.string.fmt_code) { t, s, e -> Markdown.wrap(t, s, e, "`") },
-                    ),
-                    listOf(
-                        act("bullets", Icons.Filled.FormatListBulleted, R.string.fmt_bullets) { t, s, e -> Markdown.prefixLines(t, s, e, "- ") },
-                        act("numbered", Icons.Filled.FormatListNumbered, R.string.fmt_numbered) { t, s, e -> Markdown.prefixLines(t, s, e, "1. ") },
-                        act("quote", Icons.Filled.FormatQuote, R.string.fmt_quote) { t, s, e -> Markdown.prefixLines(t, s, e, "> ") },
-                    ),
-                ),
-            )
+        WriterBar {
+            FormatAction.GROUPS.forEachIndexed { i, group ->
+                if (i > 0) BarDivider()
+                group.forEach { a ->
+                    WriterChip(a.id, iconFor(a), getString(labelFor(a)), { format { t, s, e -> a.apply(t, s, e) } })
+                }
+            }
         }
     }
 
+    /** Exhaustive over the enum WITHOUT an `else`, so adding a chip is a compile error here. */
+    private fun iconFor(a: FormatAction): ImageVector = when (a) {
+        FormatAction.H1 -> Icons.Rounded.Title
+        FormatAction.H2 -> Icons.Rounded.FormatSize
+        FormatAction.BOLD -> Icons.Rounded.FormatBold
+        FormatAction.ITALIC -> Icons.Rounded.FormatItalic
+        FormatAction.CODE -> Icons.Rounded.Code
+        FormatAction.LINK -> Icons.Rounded.Link
+        FormatAction.BULLETS -> Icons.AutoMirrored.Rounded.FormatListBulleted
+        FormatAction.NUMBERED -> Icons.Rounded.FormatListNumbered
+        FormatAction.CHECKLIST -> Icons.Rounded.Checklist
+        FormatAction.QUOTE -> Icons.Rounded.FormatQuote
+    }
+
+    @StringRes
+    private fun labelFor(a: FormatAction): Int = when (a) {
+        FormatAction.H1 -> R.string.fmt_h1
+        FormatAction.H2 -> R.string.fmt_h2
+        FormatAction.BOLD -> R.string.fmt_bold
+        FormatAction.ITALIC -> R.string.fmt_italic
+        FormatAction.CODE -> R.string.fmt_code
+        FormatAction.LINK -> R.string.fmt_link
+        FormatAction.BULLETS -> R.string.fmt_bullets
+        FormatAction.NUMBERED -> R.string.fmt_numbered
+        FormatAction.CHECKLIST -> R.string.fmt_checklist
+        FormatAction.QUOTE -> R.string.fmt_quote
+    }
+
     /**
-     * The four tools, built from the enum so a tool added there gets a chip here. Disabled while a
-     * run is in flight; the runner still refuses a second call with a sentence if one arrives.
+     * The four tools, built from the enum so a tool added there gets a chip here: Enhance is the filled accent chip, the
+     * others tonal, Options is text. Disabled while a run is in flight; the runner still refuses a second call with a
+     * sentence if one arrives.
      */
     @Composable
     private fun ToolBar() {
-        KitBridge {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                KitToolbar(
-                    listOf(
-                        WriterTool.values().map { tool ->
-                            KitToolAction(tool.name, iconFor(tool), getString(tool.label), enabled = !busy.value, showLabel = true, onClick = { start(tool) })
-                        } + KitToolAction("options", Icons.Filled.Tune, getString(R.string.editor_options), showLabel = true, onClick = { optionsOpen.value = true }),
-                    ),
-                    modifier = Modifier.weight(1f),
+        WriterBar {
+            WriterTool.values().forEach { tool ->
+                WriterChip(
+                    tool.name, iconFor(tool), getString(tool.label), { start(tool) },
+                    kind = if (tool == WriterTool.ENHANCE) ControlKind.PRIMARY else ControlKind.TONAL,
+                    enabled = !busy.value,
+                    showLabel = true,
                 )
-                if (busy.value) CircularProgressIndicator(Modifier.padding(end = KitDensity.medium).size(KitDensity.large), strokeWidth = 2.dp)
             }
+            WriterChip("options", Icons.Rounded.Tune, getString(R.string.editor_options), { optionsOpen.value = true }, showLabel = true)
+            if (busy.value) CircularProgressIndicator(Modifier.padding(horizontal = WriterDims.gap).size(WriterDims.gutter + WriterDims.gap), strokeWidth = 2.dp)
         }
     }
 
     /** Exhaustive over the enum WITHOUT an `else`, so adding a tool is a compile error here. */
     private fun iconFor(tool: WriterTool): ImageVector = when (tool) {
-        WriterTool.ENHANCE -> Icons.Filled.AutoAwesome
-        WriterTool.GRAMMAR -> Icons.Filled.Spellcheck
-        WriterTool.SUMMARY -> Icons.Filled.Summarize
-        WriterTool.TRANSLATE -> Icons.Filled.Translate
+        WriterTool.ENHANCE -> Icons.Rounded.AutoAwesome
+        WriterTool.GRAMMAR -> Icons.Rounded.Spellcheck
+        WriterTool.SUMMARY -> Icons.Rounded.Summarize
+        WriterTool.TRANSLATE -> Icons.Rounded.Translate
     }
 
     @Composable
@@ -949,23 +1125,24 @@ class MainActivity : AppCompatActivity() {
                 value = findQuery.value,
                 onValueChange = { findQuery.value = it; findIndex.value = 0 },
                 singleLine = true,
+                shape = WriterDims.cardShape,
                 modifier = Modifier.weight(1f),
                 placeholder = { Text(stringResource(R.string.editor_find_hint)) },
-                leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+                leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
             )
             Text(
                 stringResource(R.string.find_count, if (matches.isEmpty()) 0 else findIndex.value % matches.size + 1, matches.size),
                 style = MaterialTheme.typography.labelMedium,
                 modifier = Modifier.padding(horizontal = 8.dp),
             )
-            IconButton(onClick = { step(matches, -1) }, enabled = matches.isNotEmpty()) {
-                Icon(Icons.Filled.KeyboardArrowUp, contentDescription = stringResource(R.string.find_previous))
+            IconButton(onClick = { step(matches, -1) }, enabled = matches.isNotEmpty(), modifier = Modifier.size(WriterDims.touch)) {
+                Icon(Icons.Rounded.KeyboardArrowUp, contentDescription = stringResource(R.string.find_previous))
             }
-            IconButton(onClick = { step(matches, 1) }, enabled = matches.isNotEmpty()) {
-                Icon(Icons.Filled.KeyboardArrowDown, contentDescription = stringResource(R.string.find_next))
+            IconButton(onClick = { step(matches, 1) }, enabled = matches.isNotEmpty(), modifier = Modifier.size(WriterDims.touch)) {
+                Icon(Icons.Rounded.KeyboardArrowDown, contentDescription = stringResource(R.string.find_next))
             }
-            IconButton(onClick = { findOpen.value = false; findQuery.value = "" }) {
-                Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_close))
+            IconButton(onClick = { findOpen.value = false; findQuery.value = "" }, modifier = Modifier.size(WriterDims.touch)) {
+                Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.action_close))
             }
         }
     }
@@ -1052,7 +1229,7 @@ class MainActivity : AppCompatActivity() {
             Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        Icons.Filled.Mic,
+                        Icons.Rounded.Mic,
                         contentDescription = null,
                         tint = if (s.running && !s.paused) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSecondaryContainer,
                     )
@@ -1071,17 +1248,17 @@ class MainActivity : AppCompatActivity() {
                     if (s.running) {
                         IconButton(onClick = { ListenEngine.pause(!s.paused) }) {
                             Icon(
-                                if (s.paused) Icons.Filled.PlayArrow else Icons.Filled.Pause,
+                                if (s.paused) Icons.Rounded.PlayArrow else Icons.Rounded.Pause,
                                 contentDescription = stringResource(if (s.paused) R.string.listen_resume else R.string.listen_pause),
                             )
                         }
                         IconButton(onClick = { ListenService.stop(this@MainActivity) }) {
-                            Icon(Icons.Filled.Stop, contentDescription = stringResource(R.string.listen_stop))
+                            Icon(Icons.Rounded.Stop, contentDescription = stringResource(R.string.listen_stop))
                         }
                     } else {
-                        FilledTonalButton(onClick = { requestListen(ask) }) { Text(stringResource(R.string.listen_start)) }
+                        WriterButton(stringResource(R.string.listen_start), { requestListen(ask) }, kind = ControlKind.TONAL, icon = Icons.Rounded.Mic)
                         IconButton(onClick = { listenOpen.value = false }) {
-                            Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_close))
+                            Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.action_close))
                         }
                     }
                 }
@@ -1151,9 +1328,10 @@ class MainActivity : AppCompatActivity() {
         ) {
             WriterBox(inputLabel, input, io, input = true)
             tools()
-            Button(onClick = onRun, enabled = !tabBusy.value, modifier = Modifier.fillMaxWidth()) {
-                Text(if (tabBusy.value) stringResource(R.string.run_running) else runLabel)
-            }
+            WriterButton(
+                if (tabBusy.value) stringResource(R.string.run_running) else runLabel, onRun, Modifier.fillMaxWidth(),
+                icon = Icons.Rounded.AutoAwesome, enabled = !tabBusy.value, large = true,
+            )
             if (tabBusy.value) LinearProgressIndicator(Modifier.fillMaxWidth())
             tabNote.value?.let { line -> KitBridge { KitStatusBanner(line, if (tabBusy.value) KitState.BUSY else KitState.IDLE, tag = "tab") } }
             WriterBox(outputLabel, output, io, input = false)
@@ -1489,31 +1667,31 @@ class MainActivity : AppCompatActivity() {
                     Page(
                         R.string.settings_screen_enhance,
                         R.string.settings_screen_enhance_summary,
-                        Icons.Filled.AutoAwesome,
+                        Icons.Rounded.AutoAwesome,
                         TextEnhanceActivity::class.java,
                     ),
                     Page(
                         R.string.settings_screen_translation,
                         R.string.settings_screen_translation_summary,
-                        Icons.Filled.Translate,
+                        Icons.Rounded.Translate,
                         TranslationActivity::class.java,
                     ),
                     Page(
                         R.string.settings_screen_grammar,
                         R.string.settings_screen_grammar_summary,
-                        Icons.Filled.Spellcheck,
+                        Icons.Rounded.Spellcheck,
                         GrammarCheckActivity::class.java,
                     ),
                     Page(
                         R.string.settings_screen_ai_routing,
                         R.string.settings_screen_ai_routing_summary,
-                        Icons.Filled.AltRoute,
+                        Icons.Rounded.AltRoute,
                         AiRoutingActivity::class.java,
                     ),
                     Page(
                         R.string.settings_screen_routes,
                         R.string.settings_screen_routes_summary,
-                        Icons.Filled.Hearing,
+                        Icons.Rounded.Hearing,
                         RoutesActivity::class.java,
                     ),
                 )

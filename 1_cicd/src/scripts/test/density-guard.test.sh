@@ -54,6 +54,15 @@ for app in ac_cloud-tasks ac_cloud-calc ac_cloud-tools-small-llms ac_cloud-write
   d="$WORK/root-$app"; fixture "$d"; mkdir -p "$d/$app/app/src/main/java"
   echo 'fun X() { MaterialTheme(colorScheme = c) { } }' > "$d/$app/app/src/main/java/T.kt"; expect "$app is scanned" 1 "$d"
 done
+# #1532 the Writer takes its sizes from the type ramp: a literal sp fails there, an em factor and another app's sp do not
+d="$WORK/writer-sp"; fixture "$d"; mkdir -p "$d/ac_cloud-writer/app/src/main/java"
+echo 'val s = TextStyle(fontSize = 14.sp)' > "$d/ac_cloud-writer/app/src/main/java/T.kt"; expect "a literal sp in the Writer fails" 1 "$d"
+d="$WORK/writer-sp-decimal"; fixture "$d"; mkdir -p "$d/ac_cloud-writer/app/src/main/java"
+echo 'val s = TextStyle(fontSize = 13.5.sp)' > "$d/ac_cloud-writer/app/src/main/java/T.kt"; expect "a decimal sp in the Writer fails" 1 "$d"
+d="$WORK/writer-em"; fixture "$d"; mkdir -p "$d/ac_cloud-writer/app/src/main/java"
+echo 'val s = TextStyle(lineHeight = 1.6f.em, fontSize = 1.15.em)' > "$d/ac_cloud-writer/app/src/main/java/T.kt"; expect "an em factor in the Writer passes" 0 "$d"
+d="$WORK/other-sp"; fixture "$d"; mkdir -p "$d/ac_cloud-calc/app/src/main/java"
+echo 'val s = TextStyle(fontSize = 14.sp)' > "$d/ac_cloud-calc/app/src/main/java/T.kt"; expect "an sp literal outside the Writer is not this rule's business" 0 "$d"
 # a bare Material button on a Configs page fails; the kit button passes; outside the scope it is not this rule's business
 CFG="aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/configs"
 d="$WORK/cfg-button"; fixture "$d"; mkdir -p "$d/$CFG"; echo 'fun B() { Button(onClick = {}) { Text("x") } }' > "$d/$CFG/B.kt"; expect "a bare Material Button on a Configs page fails" 1 "$d"

@@ -55,7 +55,7 @@ BREAKS = [
     # stripper breaks, these two still fail — but its own header would then also
     # satisfy the greps, which is the failure this pair is here to rule out.
     ("a colour is hardcoded again instead of taken from the theme", SRC + "/ui/Theme.kt",
-     ("private val WriterBlue = Color(0xFF78C8FF)",
+     ("private val WriterBlue = Color(TokenSet.DARK.primary)",
       "private val WriterBlue = Color(android.graphics.Color.parseColor(\"#78c8ff\"))"),
      "T2 Color.parseColor is back"),
 
@@ -64,6 +64,33 @@ BREAKS = [
       "    private fun legacyPad(v: android.view.View) { v.setPadding(36, 36, 36, 36) }\n"
       "    private fun say(line: String) {"),
      "T3 setPadding() is back"),
+
+    # ── T7..T10 (#1532): the premium design is undone ───────────────────────
+    ("an sp literal comes back", SRC + "/MainActivity.kt",
+     ("    private fun say(line: String) {",
+      "    private val legacySize = 14.sp\n"
+      "    private fun say(line: String) {"),
+     "T7 an sp literal is in the source"),
+
+    ("a filled icon creeps back next to the rounded ones", SRC + "/MainActivity.kt",
+     ("    private fun say(line: String) {",
+      "    private val legacyIcon = Icons.Filled.Add\n"
+      "    private fun say(line: String) {"),
+     "T8 a non-rounded icon"),
+
+    ("the theme stops painting from the tokens", SRC + "/ui/Theme.kt",
+     ("private val WriterDarkScheme = TokenSet.DARK.toScheme(dark = true)", "private val WriterDarkScheme = darkColorScheme()"),
+     "T9 the theme no longer paints from core TokenSet"),
+
+    ("the AA contrast test is deleted", APP + "/core/src/test/kotlin/com/diegonmarcos/cloudwriter/core/DesignTest.kt",
+     ("fun everyTextPairReachesAA", "fun everyTextPairIsIgnored"),
+     "T9 the theme no longer paints from core TokenSet, or the AA contrast test"),
+
+    ("a bare Material button is back on the main screen", SRC + "/MainActivity.kt",
+     ("    private fun say(line: String) {",
+      "    @Composable private fun legacyButton() { Button(onClick = {}) { Text(\"x\") } }\n"
+      "    private fun say(line: String) {"),
+     "T10 a bare Material button"),
 
     # ── T4: a screen draws outside the theme ────────────────────────────────
     ("a screen is drawn without the theme around it", SRC + "/WriterSettingsUi.kt",

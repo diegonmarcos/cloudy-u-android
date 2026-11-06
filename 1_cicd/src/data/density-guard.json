@@ -1,5 +1,5 @@
 {
-  "_doc": "cloud-android-density-guard policy: the fleet's Compose hosts are dense and own window insets ONCE. Everything the guard knows is here. scan_roots: every Compose app and lib of the fleet except the three skip_dirs below (Matrix, Vault, Notes: not on the dense Material theme, see skip_dirs). Apps with their own Typography (Writer, Gallery, Drive, Search, Calc, Tools) are in scope: they keep their own scale but must drop the fixed lineHeight / letterSpacing. ac_cloud-store/web is the Kotlin/Wasm page (CloudKitTheme). rule_allow for scaffold_without_insets / nested_safe_drawing lists the STANDALONE Compose apps (Writer, Gallery, Drive, Search): each owns its Activity window and draws its own Scaffold / system-bar padding with no FleetChrome / BottomNavHost host above it, so those two host-stacking rules do not describe them (the typography and theme rules still do). MinimalistBlackFragment is the launcher home: no host above it, so it is the one owner of its insets. compose_roots: a ComposeView / setContent root in the SuperApp must sit under the dense theme (a file that builds one names CloudKitTheme / KitDenseMaterial / kitComposeView / KitComposeFragment).",
+  "_doc": "cloud-android-density-guard policy: the fleet's Compose hosts are dense and own window insets ONCE. Everything the guard knows is here. scan_roots: every Compose app and lib of the fleet except the three skip_dirs below (Matrix, Vault, Notes: not on the dense Material theme, see skip_dirs). Apps with their own Typography (Writer, Gallery, Drive, Search, Calc, Tools) are in scope: they keep their own scale but must drop the fixed lineHeight / letterSpacing. ac_cloud-store/web is the Kotlin/Wasm page (CloudKitTheme). rule_allow for scaffold_without_insets / nested_safe_drawing lists the STANDALONE Compose apps (Writer, Gallery, Drive, Search): each owns its Activity window and draws its own Scaffold / system-bar padding with no FleetChrome / BottomNavHost host above it, so those two host-stacking rules do not describe them (the typography and theme rules still do). MinimalistBlackFragment is the launcher home: no host above it, so it is the one owner of its insets. compose_roots: a ComposeView / setContent root in the SuperApp must sit under the dense theme (a file that builds one names CloudKitTheme / KitDenseMaterial / kitComposeView / KitComposeFragment). #1532: sp_literal (scoped to ac_cloud-writer/) forbids a literal sp size in the Writer, whose premium design takes every size from the type ramp roles or an em factor; its buttons are WriterButton (40 to 48 dp) and are not the dense kit buttons, so bare_material_button stays scoped away from the Writer.",
   "owner": "ab_cloud-libs-shared/libs/ui-kit/src/commonMain/kotlin/com/diegonmarcos/superapp/uikit/CloudKit.kt",
   "owner_needles": [
     "fun kitTypography",
@@ -42,6 +42,10 @@
     "bare_material_button": {
       "why": "Material3's Button/OutlinedButton/TextButton/FilledTonalButton carry a fixed defaultMinSize(58dp x 40dp) and 24dp x 8dp padding that NO theme can shrink: the owner's 'Configs buttons are STILL huge' (4th report, 2026-10-17). Use libs:ui-kit KitButton / KitOutlinedButton / KitTextButton / KitTonalButton (30dp, 10x4dp, labelMedium). Scoped to the Configs pages and the libs they draw (rule_scope); widen the scope as other apps convert.",
       "pattern": "(?<![\\w.])(?<!class )(?<!fun )(Button|OutlinedButton|TextButton|FilledTonalButton|ElevatedButton)\\("
+    },
+    "sp_literal": {
+      "why": "#1532 a literal sp size is a text size the type ramp does not know: Cloud Writer's sizes are MaterialTheme.typography roles, KitDensity ramp entries and em factors, so the whole app scales from one place and matches the fleet. Take the size from a role or write it as an em factor.",
+      "pattern": "(?<![\\w.])\\d+(\\.\\d+)?\\.sp\\b"
     }
   },
   "rule_allow": {
@@ -81,7 +85,8 @@
     "ac_cloud-store",
     "ac_cloud-tasks",
     "ac_cloud-calc",
-    "ac_cloud-superintel", "ac_cloud-shopping",
+    "ac_cloud-superintel",
+    "ac_cloud-shopping",
     "ad_CG-Omniverse",
     "ad_Capital-Stack-FinTerminal",
     "ad_Hardtech-CAD",
@@ -118,6 +123,9 @@
       "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/launcher/",
       "ab_cloud-libs-shared/libs/kde-connect/",
       "ab_cloud-libs-shared/libs/ui-kit/"
+    ],
+    "sp_literal": [
+      "ac_cloud-writer/"
     ]
   }
 }

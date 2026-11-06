@@ -56,6 +56,9 @@ CFG = json.loads(r'''{
    "rememberAccountLauncher()",
    "WriterNav.decl",
    "DocsScreen()",
+   "AnimatedContent(",
+   "WriterScreens.back(",
+   "WriterScreens.transition(",
    "ToolsScreen()",
    "ConfigsScreen()",
    "TextEnhanceActivity::class.java",
@@ -92,6 +95,14 @@ CFG = json.loads(r'''{
   [
    "app/src/main/java/com/diegonmarcos/cloudwriter/MainActivity.kt",
    "rememberAccountLauncher()"
+  ],
+  [
+   "app/src/main/java/com/diegonmarcos/cloudwriter/MainActivity.kt",
+   "AnimatedContent("
+  ],
+  [
+   "app/src/main/java/com/diegonmarcos/cloudwriter/MainActivity.kt",
+   "WriterScreens.back("
   ],
   [
    "app/src/main/java/com/diegonmarcos/cloudwriter/WriterNav.kt",

@@ -232,6 +232,42 @@ sys.exit(1 if bad else 0)
 PY
 [ $? -eq 0 ] || FAILURES=$((FAILURES + 1))
 
+# ── T7  the type ramp, not sp literals (#1532) ──────────────────────────────
+
+if grep -Eq '(^|[^A-Za-z0-9_.])[0-9]+(\.[0-9]+)?\.sp\b' "$ALL_KT"; then
+    fail "T7 an sp literal is in the source. Sizes come from the type ramp (MaterialTheme.typography roles, KitDensity) and from em factors; a literal sp is a size the ramp does not know and the font scale cannot be designed around."
+else
+    pass "T7 no sp literal: every text size is a ramp role or an em factor"
+fi
+
+# ── T8  Material Symbols (rounded), consistently ────────────────────────────
+
+if grep -Eq 'Icons\.(AutoMirrored\.)?(Filled|Outlined|Sharp|TwoTone)\.|material\.icons\.(automirrored\.)?(filled|outlined|sharp|twotone)\.' "$ALL_KT"; then
+    fail "T8 a non-rounded icon is in the source. One family only: Icons.Rounded (Material Symbols rounded), so no screen mixes weights."
+else
+    pass "T8 every icon is Icons.Rounded"
+fi
+
+# ── T9  the design is token-driven and the contrast is held (#1532) ─────────
+
+THEME="$(code "$SRC/ui/Theme.kt")"
+DESIGN_TEST="$APP/core/src/test/kotlin/com/diegonmarcos/cloudwriter/core/DesignTest.kt"
+if grep -q 'TokenSet.DARK.toScheme' <<<"$THEME" && grep -q 'TokenSet.LIGHT.toScheme' <<<"$THEME" \
+   && [ -f "$DESIGN_TEST" ] && grep -q 'fun everyTextPairReachesAA' "$DESIGN_TEST" && grep -q 'Contrast.AA_TEXT' "$DESIGN_TEST"; then
+    pass "T9 both schemes are painted from core TokenSet, and DesignTest holds every text pair at WCAG AA"
+else
+    fail "T9 the theme no longer paints from core TokenSet, or the AA contrast test (DesignTest.everyTextPairReachesAA) is gone. A palette nothing measures drifts below AA the first time someone nudges a colour."
+fi
+
+# ── T10 buttons are the component set's, not bare Material ones (#1532) ─────
+
+MAINKT="$(code "$SRC/MainActivity.kt")"
+if grep -Eq '(^|[^A-Za-z.])(Button|FilledTonalButton|OutlinedButton|ElevatedButton)\(' <<<"$MAINKT"; then
+    fail "T10 a bare Material button is in MainActivity. Use WriterButton (filled / tonal / text, 40 to 48 dp, icon plus label) so every button has the same height, radius and states."
+else
+    pass "T10 MainActivity draws its buttons with WriterButton"
+fi
+
 # ── verdict ─────────────────────────────────────────────────────────────────
 
 if [ "$FAILURES" -eq 0 ]; then

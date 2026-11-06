@@ -32,4 +32,13 @@ object DocList {
 
     /** Characters without line breaks, as the status line counts them. */
     fun chars(text: String): Int = text.count { it != '\n' && it != '\r' }
+
+    /** #1532 the tags of the listed documents, most used first (then A-Z), for the list's filter chips. */
+    fun allTags(docs: List<DocMeta>): List<String> =
+        docs.flatMap { it.tags }.groupingBy { it }.eachCount().entries
+            .sortedWith(compareByDescending<Map.Entry<String, Int>> { it.value }.thenBy { it.key })
+            .map { it.key }
+
+    /** The documents carrying [tag]; all of them for no tag. */
+    fun withTag(docs: List<DocMeta>, tag: String?): List<DocMeta> = if (tag == null) docs else docs.filter { tag in it.tags }
 }

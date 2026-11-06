@@ -3,7 +3,7 @@ package com.diegonmarcos.cloudwriter.core
 import java.io.File
 
 /** One document as the list shows it. */
-data class DocMeta(val id: String, val title: String, val snippet: String, val modified: Long, val words: Int)
+data class DocMeta(val id: String, val title: String, val snippet: String, val modified: Long, val words: Int, val tags: List<String> = emptyList())
 
 /**
  * Cloud Writer's documents: one Markdown file per document in [dir] (the app's private files),
@@ -66,7 +66,7 @@ class DocStore(private val dir: File, private val clock: () -> Long = System::cu
 
     private fun meta(f: File): DocMeta {
         val text = f.readText()
-        return DocMeta(f.name.removeSuffix(EXT), Markdown.title(text), Markdown.snippet(text), f.lastModified(), Markdown.words(text))
+        return DocMeta(f.name.removeSuffix(EXT), Markdown.title(text), Markdown.snippet(text), f.lastModified(), Markdown.words(text), Tags.of(text))
     }
 
     /** Ids are the store's own; anything else (a path, a dot) is refused before it can name a file outside [dir]. */

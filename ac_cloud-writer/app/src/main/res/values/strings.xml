@@ -419,4 +419,9 @@
     <string name="configs_page_perms">Perms</string>
     <string name="configs_page_about">About</string>
     <string name="configs_page_models">Models</string>
+    <string name="fmt_checklist">Checklist</string>
+    <string name="doc_import_title">Import</string>
+    <string name="doc_filter_all">All</string>
+    <string name="editor_focus">Focus mode</string>
+    <string name="editor_focus_exit">Exit focus</string>
 </resources>

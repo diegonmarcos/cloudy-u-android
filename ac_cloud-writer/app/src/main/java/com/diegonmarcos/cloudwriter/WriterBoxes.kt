@@ -19,19 +19,19 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.FormatListBulleted
-import androidx.compose.material.icons.filled.AddPhotoAlternate
-import androidx.compose.material.icons.filled.Code
-import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.FileOpen
-import androidx.compose.material.icons.filled.FileUpload
-import androidx.compose.material.icons.filled.FormatBold
-import androidx.compose.material.icons.filled.FormatItalic
-import androidx.compose.material.icons.filled.FormatListNumbered
-import androidx.compose.material.icons.filled.FormatQuote
-import androidx.compose.material.icons.filled.Link
-import androidx.compose.material.icons.filled.PhotoCamera
-import androidx.compose.material.icons.filled.Title
+import androidx.compose.material.icons.automirrored.rounded.FormatListBulleted
+import androidx.compose.material.icons.rounded.AddPhotoAlternate
+import androidx.compose.material.icons.rounded.Code
+import androidx.compose.material.icons.rounded.ContentCopy
+import androidx.compose.material.icons.rounded.FileOpen
+import androidx.compose.material.icons.rounded.FileUpload
+import androidx.compose.material.icons.rounded.FormatBold
+import androidx.compose.material.icons.rounded.FormatItalic
+import androidx.compose.material.icons.rounded.FormatListNumbered
+import androidx.compose.material.icons.rounded.FormatQuote
+import androidx.compose.material.icons.rounded.Link
+import androidx.compose.material.icons.rounded.PhotoCamera
+import androidx.compose.material.icons.rounded.Title
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
@@ -238,12 +238,12 @@ fun WriterBox(label: String, state: BoxState, io: BoxIo, input: Boolean, modifie
             }
             Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically) {
                 if (input) {
-                    Action(Icons.Filled.FileOpen, R.string.box_load_file) { io.loadFile(state) }
-                    Action(Icons.Filled.AddPhotoAlternate, R.string.box_load_image) { io.loadImage(state) }
-                    Action(Icons.Filled.PhotoCamera, R.string.box_take_picture) { io.takePicture(state) }
+                    Action(Icons.Rounded.FileOpen, R.string.box_load_file) { io.loadFile(state) }
+                    Action(Icons.Rounded.AddPhotoAlternate, R.string.box_load_image) { io.loadImage(state) }
+                    Action(Icons.Rounded.PhotoCamera, R.string.box_take_picture) { io.takePicture(state) }
                 }
                 ExportMenu { io.export(state, it) }
-                Action(Icons.Filled.ContentCopy, R.string.box_copy) { io.copy(state) }
+                Action(Icons.Rounded.ContentCopy, R.string.box_copy) { io.copy(state) }
             }
         }
     }
@@ -258,7 +258,7 @@ private fun Action(icon: ImageVector, label: Int, onClick: () -> Unit) {
 private fun ExportMenu(onPick: (ExportFormat) -> Unit) {
     var open by remember { mutableStateOf(false) }
     Box {
-        Action(Icons.Filled.FileUpload, R.string.box_export) { open = true }
+        Action(Icons.Rounded.FileUpload, R.string.box_export) { open = true }
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
             listOf(ExportFormat.MD to R.string.box_export_md, ExportFormat.TXT to R.string.box_export_txt, ExportFormat.HTML to R.string.box_export_html)
                 .forEach { (f, l) -> DropdownMenuItem(text = { Text(stringResource(l)) }, onClick = { open = false; onPick(f) }) }
@@ -271,19 +271,19 @@ private fun ExportMenu(onPick: (ExportFormat) -> Unit) {
 private fun FormatStrip(rich: RichTextState) {
     var linkOpen by remember { mutableStateOf(false) }
     Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
-        Action(Icons.Filled.FormatBold, R.string.fmt_bold) { rich.toggleSpanStyle(SpanStyle(fontWeight = FontWeight.Bold)) }
-        Action(Icons.Filled.FormatItalic, R.string.fmt_italic) { rich.toggleSpanStyle(SpanStyle(fontStyle = FontStyle.Italic)) }
+        Action(Icons.Rounded.FormatBold, R.string.fmt_bold) { rich.toggleSpanStyle(SpanStyle(fontWeight = FontWeight.Bold)) }
+        Action(Icons.Rounded.FormatItalic, R.string.fmt_italic) { rich.toggleSpanStyle(SpanStyle(fontStyle = FontStyle.Italic)) }
         // The editor's own heading styles, so its HTML writes them back as <h1>/<h2>.
-        Action(Icons.Filled.Title, R.string.fmt_h1) { rich.toggleSpanStyle(SpanStyle(fontSize = 2.em, fontWeight = FontWeight.Bold)) }
-        Action(Icons.Filled.Title, R.string.fmt_h2) { rich.toggleSpanStyle(SpanStyle(fontSize = 1.5.em, fontWeight = FontWeight.Bold)) }
-        Action(Icons.AutoMirrored.Filled.FormatListBulleted, R.string.fmt_bullets) { rich.toggleUnorderedList() }
-        Action(Icons.Filled.FormatListNumbered, R.string.fmt_numbered) { rich.toggleOrderedList() }
-        Action(Icons.Filled.FormatQuote, R.string.fmt_quote) {
-            rich.toggleParagraphStyle(ParagraphStyle(textIndent = TextIndent(firstLine = 16.sp, restLine = 16.sp)))
+        Action(Icons.Rounded.Title, R.string.fmt_h1) { rich.toggleSpanStyle(SpanStyle(fontSize = 2.em, fontWeight = FontWeight.Bold)) }
+        Action(Icons.Rounded.Title, R.string.fmt_h2) { rich.toggleSpanStyle(SpanStyle(fontSize = 1.5.em, fontWeight = FontWeight.Bold)) }
+        Action(Icons.AutoMirrored.Rounded.FormatListBulleted, R.string.fmt_bullets) { rich.toggleUnorderedList() }
+        Action(Icons.Rounded.FormatListNumbered, R.string.fmt_numbered) { rich.toggleOrderedList() }
+        Action(Icons.Rounded.FormatQuote, R.string.fmt_quote) {
+            rich.toggleParagraphStyle(ParagraphStyle(textIndent = TextIndent(firstLine = 1.em, restLine = 1.em)))
             rich.toggleSpanStyle(SpanStyle(fontStyle = FontStyle.Italic))
         }
-        Action(Icons.Filled.Code, R.string.fmt_code) { rich.toggleCodeSpan() }
-        Action(Icons.Filled.Link, R.string.fmt_link) { linkOpen = true }
+        Action(Icons.Rounded.Code, R.string.fmt_code) { rich.toggleCodeSpan() }
+        Action(Icons.Rounded.Link, R.string.fmt_link) { linkOpen = true }
     }
     if (linkOpen) LinkDialog(rich) { linkOpen = false }
 }
