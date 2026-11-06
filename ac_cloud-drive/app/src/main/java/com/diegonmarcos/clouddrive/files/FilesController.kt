@@ -122,6 +122,9 @@ class FilesController(
 
     fun refreshActive() { reload(s.activePane.location) }
 
+    /** Pull-to-refresh of one pane: re-scan the folder it shows (the same load path as every other reload, on IO). */
+    fun refreshPane(id: PaneId) { reload(s.pane(id).location) }
+
     private fun usageOf(dir: File): Pair<Long, Long>? = runCatching { val st = StatFs(dir.absolutePath); st.availableBytes to st.totalBytes }.getOrNull()
 
     /** The rows a pane shows: hidden filter, the declared filter, then the pane's sort. Pure, so the JVM suite can hold it. */

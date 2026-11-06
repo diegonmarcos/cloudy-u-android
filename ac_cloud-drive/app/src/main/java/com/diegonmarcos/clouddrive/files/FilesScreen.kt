@@ -368,7 +368,11 @@ private fun Pane(
         val rootLabel = (loc as? Location.Local)?.let { Places.rootLabel(ctx, it.path) }
         if (listing?.usage != null && rootLabel != null) StorageBar(listing.usage)
         Hairline()
-        Box(Modifier.weight(1f).fillMaxWidth()) {
+        // Pull down to re-scan the folder: the same reload as Retry, the thin bar along the top edge is its indicator (as on the Git page).
+        androidx.compose.material3.pulltorefresh.PullToRefreshBox(
+            isRefreshing = listing?.loading == true, onRefresh = { controller.refreshPane(id) }, modifier = Modifier.weight(1f).fillMaxWidth().testTag(DriveTags.FILES_REFRESH),
+            indicator = {},
+        ) {
             when {
                 listing == null || (listing.loading && listing.entries.isEmpty() && listing.error == null) -> LoadingState()
                 listing.error != null -> ErrorState(listing.error, onRetry = { controller.reload(loc) })
