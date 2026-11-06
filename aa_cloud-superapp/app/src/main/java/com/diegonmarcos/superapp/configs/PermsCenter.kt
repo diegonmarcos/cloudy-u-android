@@ -352,11 +352,14 @@ private const val TWO_PANE_MIN_DP = 840
 
 /** A labelled, horizontally scrolling row of chips. */
 @Composable
-private fun PermsChipRow(label: String, content: @Composable RowScope.() -> Unit) {
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+private fun PermsChipRow(label: String, content: @Composable () -> Unit) {
     val p = LocalKitPalette.current
-    Row(Modifier.fillMaxWidth().padding(horizontal = KitStoreRow.padH, vertical = 1.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(label, fontSize = 10.sp, color = p.textSecondary, modifier = Modifier.width(62.dp))
-        Row(Modifier.weight(1f).horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically, content = content)
+    // #1550 the chips WRAP (FlowRow) instead of scrolling off the right: every filter stays on screen and reachable
+    // (a horizontalScroll hid later chips and broke performScrollTo/performClick — it only scrolls its own axis).
+    Row(Modifier.fillMaxWidth().padding(horizontal = KitStoreRow.padH, vertical = 1.dp)) {
+        Text(label, fontSize = 10.sp, color = p.textSecondary, modifier = Modifier.width(62.dp).padding(top = 2.dp))
+        androidx.compose.foundation.layout.FlowRow(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) { content() }
     }
 }
 
