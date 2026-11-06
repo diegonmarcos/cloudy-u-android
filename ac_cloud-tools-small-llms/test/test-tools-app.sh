@@ -340,7 +340,7 @@ mutate "chat task names an unknown model" 'sub(M + "/app/src/main/assets/tools-m
 mutate "bottom nav reordered" 'sub(M + "/build.json", "\"apps\",\n      \"store\"", "\"store\",\n      \"apps\"")'
 mutate "Costs back on the nav" 'sub(M + "/build.json", "\"models\",\n      \"mls\"\n", "\"models\",\n      \"mls\",\n      \"costs\"\n")'
 mutate "Costs ledger back" 'sub(K + "/Decl.kt", "SECTION_MLS", "SECTION_COSTS")'
-mutate "MLs page dropped from the shell" 'sub(K + "/ui/ToolsShell.kt", "MlsPage(model.mls, pageId ?: Decl.PAGE_ML_LITE)", "Unit")'
+mutate "MLs page dropped from the shell" 'sub(K + "/ui/ToolsShell.kt", "MlsPage(model.mls, pageId ?: Decl.PAGE_ML_LITE, model.mlsNote)", "Unit")'
 mutate "MLs page renamed" 'sub(M + "/build.json", "\"Tiny MLs\"", "\"Tiny\"")'
 mutate "MLs group not the Store's" 'sub(M + "/build.json", "\"libs-t-ml\"", "\"libs-x-ml\"")'
 mutate "MLs data hand-copied" 'sub(M + "/app/build.gradle", "aa_cloud-superapp/data/constellation-fleet.json\")", "ml-copy.json\")")'

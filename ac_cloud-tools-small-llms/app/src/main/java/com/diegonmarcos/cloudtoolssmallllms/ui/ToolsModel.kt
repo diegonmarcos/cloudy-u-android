@@ -110,8 +110,7 @@ class ToolsModel(context: Context, private val scope: CoroutineScope) {
     private val mlsLoad: Pair<List<MlGroup>, String?> = try {
         MlCatalogue.parse(app.assets.open(ML_FLEET).bufferedReader().use { it.readText() }, Decl.mlPages) to null
     } catch (e: Exception) {
-        // A missing or invalid ml-fleet.json must never take the app down at start: log it and show an empty MLs page with a note.
-        android.util.Log.e("ToolsModel", "$ML_FLEET unreadable: ${e.message}", e)
+        // A missing or invalid ml-fleet.json must never take the app down at start: the MLs page is empty and shows this note (the app logs nothing, A3).
         emptyList<MlGroup>() to "$ML_FLEET: ${e.message ?: e.javaClass.simpleName}"
     }
     val mls: List<MlGroup> = mlsLoad.first
