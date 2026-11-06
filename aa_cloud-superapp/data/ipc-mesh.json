@@ -1442,22 +1442,54 @@
      "permission": "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA",
      "level": "signature",
      "source": "ac_cloud-account/app/src/main/AndroidManifest.xml",
-     "component": "com.diegonmarcos.superapp.profile.AccountData$Provider",
+     "component": "<pkg>.data.AccountFleetDataProvider",
      "id": "provider:<pkg>.accountdata",
      "kind": "provider",
-     "name": "AccountData$Provider",
+     "name": "AccountFleetDataProvider",
      "authority": "<pkg>.accountdata",
      "callers": [
       "aa_cloud-superapp",
       "browser",
+      "c3",
+      "c3-webserver",
+      "calc",
+      "camera",
+      "capital-stack-finterminal",
+      "cg-omniverse",
+      "code",
+      "contacts",
+      "dialer",
       "drive",
+      "gallery",
+      "hardtech-cad",
+      "hardtech-sim2real",
       "keyboard",
+      "keyboard-engines",
       "kg-store",
+      "lib-rootfs-nixdroid",
+      "lib-rootfs-termux",
       "mail",
+      "matrix",
       "me",
+      "media-center",
+      "morpheus",
+      "myterminal",
+      "nav",
+      "news",
+      "nix-on-droid",
+      "notes",
       "search",
+      "shopping",
       "store",
-      "superintel"
+      "superintel",
+      "tasks",
+      "termux",
+      "tools-small-llms",
+      "vault",
+      "wallet",
+      "watchdog",
+      "watchtower",
+      "writer"
      ]
     },
     {
@@ -2327,11 +2359,13 @@
       "matrix://"
      ],
      "callers": [
+      "account",
       "capital-stack-finterminal",
       "drive",
       "gallery",
       "mail",
       "notes",
+      "store",
       "tasks",
       "vault"
      ]
@@ -2751,6 +2785,60 @@
    ],
    "endpoints": [
     {
+     "permission": "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA",
+     "level": "signature",
+     "source": "ac_cloud-store/app/src/main/AndroidManifest.xml",
+     "component": "com.diegonmarcos.superapp.fleetdata.provider.FleetDataProvider",
+     "id": "provider:cloud.store.data",
+     "kind": "provider",
+     "name": "FleetDataProvider",
+     "authority": "cloud.store.data",
+     "callers": [
+      "aa_cloud-superapp",
+      "account",
+      "browser",
+      "c3",
+      "c3-webserver",
+      "calc",
+      "camera",
+      "capital-stack-finterminal",
+      "cg-omniverse",
+      "code",
+      "contacts",
+      "dialer",
+      "drive",
+      "gallery",
+      "hardtech-cad",
+      "hardtech-sim2real",
+      "keyboard",
+      "keyboard-engines",
+      "kg-store",
+      "lib-rootfs-nixdroid",
+      "lib-rootfs-termux",
+      "mail",
+      "matrix",
+      "me",
+      "media-center",
+      "morpheus",
+      "myterminal",
+      "nav",
+      "news",
+      "nix-on-droid",
+      "notes",
+      "search",
+      "shopping",
+      "superintel",
+      "tasks",
+      "termux",
+      "tools-small-llms",
+      "vault",
+      "wallet",
+      "watchdog",
+      "watchtower",
+      "writer"
+     ]
+    },
+    {
      "permission": null,
      "level": "none",
      "source": "ac_cloud-store/app/src/main/AndroidManifest.xml",
@@ -2781,7 +2869,24 @@
     "fleetconfig-model",
     "perms"
    ],
-   "endpoints": []
+   "endpoints": [
+    {
+     "permission": null,
+     "level": "none",
+     "source": "ac_cloud-superintel/app/src/main/AndroidManifest.xml",
+     "component": ".MainActivity",
+     "id": "intent:.MainActivity",
+     "kind": "intent",
+     "name": "MainActivity",
+     "actions": [
+      "<pkg>.OPEN"
+     ],
+     "uris": [],
+     "callers": [
+      "aa_cloud-superapp"
+     ]
+    }
+   ]
   },
   {
    "id": "tasks",
