@@ -239,7 +239,14 @@ step_dev() {
   in_nix adb shell am start -n "$(_release_var '.android.application_id')/$APP_MAIN"
 }
 
-step_test()       { log "Test: JVM unit tests"; _resolve_signing; in_nix gradle test; }   # the app signingConfig needs the shared key at configuration time
+step_test() {
+  log "Test: JVM unit tests"
+  _resolve_signing
+  local task; task="$(_release_var '.tests.unit.task')"
+  [ -n "$task" ] || task="test"
+  log "Test: gradle $task"
+  in_nix gradle "$task"
+}
 step_instrument() { log "Test: instrumented (needs device)"; in_nix gradle connectedAndroidTest; }
 step_lint()       { log "Lint"; in_nix gradle lint; }
 step_clean()      { log "Clean"; in_nix gradle clean; rm -rf "$DIST_DIR"; }
