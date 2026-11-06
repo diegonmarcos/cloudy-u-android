@@ -74,15 +74,42 @@ fun FleetDataPage(authority: String, modifier: Modifier = Modifier) {
                     val text = Route.parse(o.split('/'))?.let { ep.store.read(it) }?.decodeToString().orEmpty()
                     TextButton(onClick = { open = null }) { Text("< $o") }
                     JsonViewer(text, Modifier.fillMaxSize())
-                } else if (entries.isEmpty()) {
-                    Text("No dataset has been synced yet. Open Sync, then Sync now.", Modifier.padding(16.dp))
-                } else LazyColumn(Modifier.fillMaxSize()) {
-                    items(entries) { e ->
-                        Column(Modifier.fillMaxWidth().clickable { open = e.path }.padding(horizontal = 16.dp, vertical = 8.dp)) {
-                            Text(e.path, style = MaterialTheme.typography.bodyMedium)
-                            val m = e.meta
-                            Text(if (m == null) "no metadata" else "${kb(m.size)} | schemaVersion ${m.schemaVersion} | ETag ${m.etag ?: "-"} | synced ${stamp(m.syncedAt)}",
-                                style = MaterialTheme.typography.bodySmall)
+                } else {
+                    // Grouped by IPC endpoint (app/<pkg>, shared, index), read live from this provider's manifest + cache; nothing baked.
+                    val manifest = remember(tick) { ep.server.manifest() }
+                    val failed = remember(tick) { ep.status()?.failed?.keys ?: emptySet() }
+                    val groups = remember(tick, entries, manifest) { FleetDataView.groups(entries, manifest, failed, authority) }
+                    LazyColumn(Modifier.fillMaxSize()) {
+                        item {
+                            Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Button(onClick = { FleetDataSchedule.syncNow(ctx, authority); tick++ }) { Text("Sync all") }
+                                TextButton(onClick = { tick++ }) { Text("Refresh") }
+                            }
+                            Text("index: ${FleetDataView.uri(authority, "index")}", Modifier.padding(horizontal = 16.dp), style = MaterialTheme.typography.bodySmall)
+                        }
+                        if (groups.isEmpty()) item {
+                            Text("No dataset has been synced yet. Tap Sync all.", Modifier.padding(16.dp))
+                        }
+                        groups.forEach { grp ->
+                            item {
+                                Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+                                    Text(grp.endpoint, style = MaterialTheme.typography.titleSmall)
+                                    Text(grp.endpointUri, style = MaterialTheme.typography.bodySmall)
+                                }
+                            }
+                            items(grp.rows) { r ->
+                                Column(Modifier.fillMaxWidth().clickable { open = r.path }.padding(horizontal = 24.dp, vertical = 6.dp)) {
+                                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        Text(r.dataset, style = MaterialTheme.typography.bodyMedium)
+                                        Text(r.state.name.lowercase(), style = MaterialTheme.typography.bodySmall)
+                                    }
+                                    Text(r.uri, style = MaterialTheme.typography.bodySmall)
+                                    Text("tier ${r.tier ?: "-"} | schemaVersion ${r.schemaVersion ?: "-"} | ${r.size?.let { kb(it) } ?: "-"} | ETag ${r.etag ?: "-"} | synced ${stamp(r.syncedAt)}",
+                                        style = MaterialTheme.typography.bodySmall)
+                                    Text("source ${r.source ?: "-"}", style = MaterialTheme.typography.bodySmall)
+                                    Text("consumers ${r.consumers.joinToString().ifBlank { "-" }}", style = MaterialTheme.typography.bodySmall)
+                                }
+                            }
                         }
                     }
                 }

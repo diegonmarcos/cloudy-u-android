@@ -424,17 +424,47 @@ class StoreCloudFragment : KitComposeFragment() {
     @Composable
     private fun TabBar() {
         val groupTab = rememberStoreControls().groupTab
-        // #1405 the Ventoy tab is not a fleet group: the store's build.json `ventoy.after_group` places it (right after
-        // Tiny-ML); a host whose build.json declares none (SuperApp's embedded Store) has no such tab.
-        val labels = tabs.map { StoreControls.Control(it.label, "", groupTab) }.toMutableList()
+        // The strip is the declared groups, plus the non-group tabs injected right after Tiny-ML: Ventoy (#1405, the store's
+        // build.json `ventoy.after_group`; a host that declares none — SuperApp's embedded Store — has no such tab) and, on the
+        // provider-hosting Store only, Fleet Data (#1547, the dataset browser). Each strip slot carries its kind (a group index,
+        // or KIND_VENTOY / KIND_FLEETDATA), so no index arithmetic decides what a tap means.
+        val labelList = tabs.map { it.label }.toMutableList()
+        val kinds = tabs.indices.toMutableList()
         val vb = ventoyBar
-        if (vb >= 0) labels.add(vb, StoreControls.Control(BuildConfig.VENTOY_LABEL, "", groupTab))
-        val selectedBar = if (ventoyOpen && vb >= 0) vb else tab + (if (vb in 0..tab) 1 else 0)
-        StoreTabs.Bar(listOf(labels), selectedBar) { index ->
-            if (index == vb) { ventoyOpen = true; return@Bar }
-            ventoyOpen = false
-            val t = index - (if (vb in 0 until index) 1 else 0)
-            if (tab != t) { tab = t; filter = 0 }
+        if (vb >= 0) { labelList.add(vb, BuildConfig.VENTOY_LABEL); kinds.add(vb, KIND_VENTOY) }
+        val fb = fleetDataBar(vb)
+        if (fb >= 0) { labelList.add(fb, FLEET_DATA_LABEL); kinds.add(fb, KIND_FLEETDATA) }
+        val controls = labelList.map { StoreControls.Control(it, "", groupTab) }
+        val selectedBar = if (ventoyOpen && vb >= 0) kinds.indexOf(KIND_VENTOY) else kinds.indexOf(tab)
+        StoreTabs.Bar(listOf(controls), selectedBar) { index ->
+            when (val k = kinds[index]) {
+                KIND_VENTOY -> ventoyOpen = true
+                KIND_FLEETDATA -> openFleetData()
+                else -> { ventoyOpen = false; if (tab != k) { tab = k; filter = 0 } }
+            }
+        }
+    }
+
+    /** True on the app that actually hosts the Cloud Store data provider (so SuperApp's embedded Store shows no Fleet Data tab). */
+    private fun hostsStoreProvider(): Boolean = runCatching {
+        requireContext().packageManager.resolveContentProvider(STORE_AUTHORITY, 0)?.packageName == requireContext().packageName
+    }.getOrDefault(false)
+
+    /** #1547 Fleet Data's place on the strip: right after Tiny-ML (and after Ventoy when present); -1 off the provider host or with no Tiny-ML. */
+    private fun fleetDataBar(vb: Int): Int {
+        if (!hostsStoreProvider()) return -1
+        val g = tabs.indexOfFirst { it.id == TINY_ML_GROUP }
+        if (g < 0) return -1
+        return if (vb >= 0) vb + 1 else g + 1
+    }
+
+    /** Opens the Cloud Store Data page (libs:fleet-data-ui FleetDataActivity, bundled in this app) for the store authority. */
+    private fun openFleetData() {
+        runCatching {
+            startActivity(
+                Intent().setClassName(requireContext().packageName, "com.diegonmarcos.superapp.fleetdata.ui.FleetDataActivity")
+                    .putExtra("authority", STORE_AUTHORITY).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            )
         }
     }
 
@@ -1040,5 +1070,13 @@ class StoreCloudFragment : KitComposeFragment() {
         const val OTHER = "Other"
         /** Test tags of the filter chips: All, Updates, Missing, Installed. */
         val FILTER_TAGS = listOf("store-filter:all", "store-filter:updates", "store-filter:missing", "store-filter:installed")
+
+        /** Strip-slot kinds for non-group tabs injected after Tiny-ML (group slots carry their own index >= 0). */
+        const val KIND_VENTOY = -1
+        const val KIND_FLEETDATA = -2
+        /** #1547 the Fleet Data tab (the Cloud Store dataset browser) and the fleet group it follows. */
+        const val FLEET_DATA_LABEL = "Fleet Data"
+        const val TINY_ML_GROUP = "libs-t-ml"
+        const val STORE_AUTHORITY = "cloud.store.data"
     }
 }
