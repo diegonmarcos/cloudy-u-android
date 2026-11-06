@@ -11,6 +11,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
@@ -41,7 +43,7 @@ import org.maplibre.android.style.sources.GeoJsonSource
  * what is drawn; this only renders it.
  */
 @Composable
-fun DayRouteMap(model: RouteModel, modifier: Modifier = Modifier, styleKey: String = "light") {
+fun DayRouteMap(model: RouteModel, modifier: Modifier = Modifier, styleKey: String = "light", onPin: ((Int) -> Unit)? = null) {
     val ctx = LocalContext.current
     val mv = remember { MapLibre.getInstance(ctx); MapView(ctx).apply { onCreate(null) } }
     val lifecycle = remember(ctx) { ctx.lifecycleOwner()?.lifecycle }
@@ -57,6 +59,17 @@ fun DayRouteMap(model: RouteModel, modifier: Modifier = Modifier, styleKey: Stri
         // a map inside a scrolling list keeps its own pan / zoom gestures
         mv.setOnTouchListener { v, ev -> v.parent?.requestDisallowInterceptTouchEvent(ev.actionMasked != MotionEvent.ACTION_UP && ev.actionMasked != MotionEvent.ACTION_CANCEL); false }
         onDispose { lifecycle?.removeObserver(observer); mv.onPause(); mv.onStop(); mv.onDestroy() }
+    }
+    val pinTap by rememberUpdatedState(onPin)
+    // a tap on a pin reports the day segment it stands for (RouteMarker.seg); a tap elsewhere is left to the map
+    LaunchedEffect(mv) {
+        mv.getMapAsync { map ->
+            map.addOnMapClickListener { at ->
+                val cb = pinTap ?: return@addOnMapClickListener false
+                val seg = map.queryRenderedFeatures(map.projection.toScreenLocation(at), "day-marks").firstOrNull()?.getNumberProperty("seg")?.toInt()
+                if (seg != null && seg >= 0) { cb(seg); true } else false
+            }
+        }
     }
     LaunchedEffect(model, styleKey) {
         mv.getMapAsync { map ->

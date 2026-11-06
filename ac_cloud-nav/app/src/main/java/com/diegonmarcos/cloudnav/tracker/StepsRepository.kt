@@ -129,7 +129,7 @@ class StepsRepository(private val ctx: Context) {
         runCatching {
             MapsDb.get(ctx).readableDatabase.rawQuery(
                 "SELECT ts,lat,lon,accuracy FROM points WHERE ts BETWEEN ? AND ? ORDER BY ts", arrayOf(from.toString(), to.toString())).use { c ->
-                while (c.moveToNext()) out += PlaceFix(c.getLong(0), c.getDouble(1), c.getDouble(2), false, if (c.isNull(3)) 0.0 else c.getDouble(3))
+                while (c.moveToNext()) out += PlaceFix(c.getLong(0), c.getDouble(1), c.getDouble(2), false, if (c.isNull(3)) 0.0 else c.getDouble(3), "gps")
             }
         }
         return out.sortedBy { it.ts }

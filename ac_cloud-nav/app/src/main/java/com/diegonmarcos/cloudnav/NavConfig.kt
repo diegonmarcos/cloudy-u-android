@@ -115,6 +115,11 @@ object NavConfig {
         }
     }
 
+    /** build.json::ui.day_timeline: the Tracker > Timeline day rules (stay radius, dwell, address fields). */
+    val dayRules: com.diegonmarcos.cloudnav.tracker.DayRules by lazy {
+        com.diegonmarcos.cloudnav.tracker.DayRules.fromJson(decode(BuildConfig.UI_DAY_TIMELINE_B64))
+    }
+
     val defaultCockpitMode: String
         get() = BuildConfig.UI_DEFAULT_COCKPIT_MODE.ifBlank { cockpitModes.firstOrNull()?.id ?: "car" }
 

@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.shape.CircleShape
@@ -30,6 +31,8 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,6 +47,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import com.diegonmarcos.cloudnav.NavConfig
+import com.diegonmarcos.superapp.uikit.KitStoreCaption
+import com.diegonmarcos.superapp.uikit.KitStoreName
+import com.diegonmarcos.superapp.uikit.KitStoreQuick
+import com.diegonmarcos.superapp.uikit.KitStoreRow
+import com.diegonmarcos.superapp.uikit.KitStoreRowLine
+import kotlinx.coroutines.launch
 import com.diegonmarcos.superapp.uikit.KitCard
 import com.diegonmarcos.superapp.uikit.KitSectionHeader
 import com.diegonmarcos.superapp.uikit.LocalKitPalette
@@ -57,6 +69,8 @@ enum class DayTab(val label: String) { DAY("Day"), TRIPS("Trips"), PLACES("Place
 object DayTags {
     const val PREV = "day:prev"; const val NEXT = "day:next"; const val PICK = "day:pick"; const val ADD = "day:add"; const val MAP = "day:map"
     const val SUMMARY = "day:summary"; const val LIST = "day:list"
+    const val BAR = "day:bar"; const val MAP_DAY = "day:mapday"; const val MAP_DAY_VIEW = "day:mapday:view"
+    fun detail(i: Int) = "day:detail:$i"; fun act(i: Int, a: String) = "day:act:$i:$a"
     fun tab(t: DayTab) = "day:tab:${t.name.lowercase()}"
     fun seg(i: Int) = "day:seg:$i"
     fun confirm(i: Int) = "day:confirm:$i"
@@ -70,6 +84,7 @@ data class DayUi(
     val places: List<PlaceTotal> = emptyList(), val cities: List<CityTotal> = emptyList(), val countries: List<CountryTotal> = emptyList(),
     val loading: Boolean = false, val fixes: List<PlaceFix> = emptyList(),
     val trips: TripsResult = TripsResult(null, false, emptyList()), val homeOverride: String? = null,
+    val steps: StepsTotal = StepsTotal(null, "not read yet"),
 )
 
 class DayActions(
@@ -78,10 +93,14 @@ class DayActions(
     val onEditMode: (DaySeg.Move, Mode) -> Unit = { _, _ -> }, val onDelete: (DaySeg) -> Unit = {},
     val onHome: (String?) -> Unit = {},
     val onSplit: (DaySeg, Long) -> Unit = { _, _ -> }, val onAddVisit: (Long, Long, String) -> Unit = { _, _, _ -> },
+    /** Cached reverse-geocode of a place whose address is thin (off the main thread); the place itself when nothing is found. */
+    val onResolve: suspend (Place) -> Place = { it },
+    /** "Open in map": show the place on Cloud Nav's own map. */
+    val onOpenMap: (Place) -> Unit = {},
 )
 
 object DayFormat {
-    fun modeLabel(m: Mode) = m.name.lowercase().replaceFirstChar { it.uppercase() }
+    fun modeLabel(m: Mode) = if (m == Mode.TRAIN) "Transit" else m.name.lowercase().replaceFirstChar { it.uppercase() }
     fun modeColor(m: Mode): Color = Color(RouteGeo.modeArgb(m))
     fun dateLabel(d: LocalDate, today: LocalDate): String = when (d) {
         today -> "Today"; today.minusDays(1) -> "Yesterday"
@@ -90,7 +109,7 @@ object DayFormat {
     fun hours(ms: Long) = "%.1f h".format(Locale.US, ms / 3_600_000.0)
     fun stayTitle(s: DaySeg.Stay): String = when {
         s.missing -> "Missing visit"
-        else -> s.place?.label ?: "Unnamed place"
+        else -> "At " + (s.place?.label ?: "unnamed place")
     }
 }
 
@@ -122,15 +141,24 @@ private fun DayTabView(ui: DayUi, a: DayActions, zone: ZoneId) {
     val p = LocalKitPalette.current
     var adding by remember { mutableStateOf(false) }
     var addRange by remember { mutableStateOf<Pair<Long, Long>?>(null) }
+    val rules = remember { runCatching { NavConfig.dayRules }.getOrDefault(DayRules()) }
+    val listState = rememberLazyListState()
+    val scope = rememberCoroutineScope()
+    var open by remember(ui.date) { mutableStateOf<Int?>(null) }
+    var mapDay by remember { mutableStateOf(false) }
+    val model = remember(ui.day, ui.fixes, ui.date, ui.today) { RouteGeo.build(ui.day, ui.fixes, live = ui.date == ui.today) }
+    // a pin tap opens its row and scrolls the list to it (the header items come first)
+    val onPin: (Int) -> Unit = { i -> mapDay = false; open = i; scope.launch { listState.animateScrollToItem(HEADER_ITEMS + i) } }
     Box(Modifier.fillMaxSize()) {
-        LazyColumn(Modifier.fillMaxSize().padding(horizontal = 16.dp).testTag(DayTags.LIST), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        LazyColumn(Modifier.fillMaxSize().padding(horizontal = 16.dp).testTag(DayTags.LIST), state = listState, verticalArrangement = Arrangement.spacedBy(2.dp)) {
             item { DatePicker(ui, a) }
-            item { RouteMap(ui) }
+            item { SummaryBar(DayDetails.bar(ui.day, ui.steps)) { mapDay = true } }
+            item { RouteMap(model, onPin) }
             item { SummaryRow(ui) }
             if (ui.loading && ui.day.isEmpty()) item { Text("Loading...", color = p.textSecondary) }
             items(ui.day.size, key = { "${ui.day[it].startMs}:${ui.day[it]::class.simpleName}" }) { i ->
                 when (val s = ui.day[i]) {
-                    is DaySeg.Stay -> StayRow(i, s, a, zone) { addRange = s.startMs to s.endMs; adding = true }
+                    is DaySeg.Stay -> StayRow(i, s, a, zone, ui, rules, open == i, { open = if (open == i) null else i }) { addRange = s.startMs to s.endMs; adding = true }
                     is DaySeg.Move -> MoveRow(i, s, a, zone)
                 }
             }
@@ -141,9 +169,19 @@ private fun DayTabView(ui: DayUi, a: DayActions, zone: ZoneId) {
             addRange = (last?.startMs ?: 0L) to (last?.endMs ?: 0L); adding = true
         }, Modifier.align(Alignment.BottomEnd).padding(16.dp).testTag(DayTags.ADD)) { Text("+") }
     }
+    if (mapDay) Dialog(onDismissRequest = { mapDay = false }, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        Box(Modifier.fillMaxSize().background(p.surface).testTag(DayTags.MAP_DAY_VIEW)) {
+            if (model.isEmpty) Text("No route for this day", Modifier.align(Alignment.Center), color = p.textSecondary)
+            else DayRouteMap(model, Modifier.fillMaxSize(), onPin = onPin)
+            KitStoreQuick("Close", KitStoreRow.BLUE_FILL, Modifier.align(Alignment.TopEnd).padding(12.dp)) { mapDay = false }
+        }
+    }
     val r = addRange
     if (adding && r != null) AddVisitDialog(r, zone, onDismiss = { adding = false }) { s, e, n -> a.onAddVisit(s, e, n); adding = false }
 }
+
+/** Items above the first segment row of the day list: date picker, summary bar, map, mode chips. */
+private const val HEADER_ITEMS = 4
 
 @Composable
 private fun DatePicker(ui: DayUi, a: DayActions) {
@@ -152,6 +190,27 @@ private fun DatePicker(ui: DayUi, a: DayActions) {
         TextButton(onClick = { a.onDate(ui.date.minusDays(1)) }, modifier = Modifier.testTag(DayTags.PREV)) { Text("<", color = p.textPrimary) }
         TextButton(onClick = a.onPickDate, modifier = Modifier.testTag(DayTags.PICK)) { Text(DayFormat.dateLabel(ui.date, ui.today) + " v", color = p.textPrimary, style = MaterialTheme.typography.titleMedium) }
         TextButton(onClick = { if (ui.date < ui.today) a.onDate(ui.date.plusDays(1)) }, modifier = Modifier.testTag(DayTags.NEXT)) { Text(">", color = if (ui.date < ui.today) p.textPrimary else p.textSecondary) }
+    }
+}
+
+/** Total km, steps, time active and time stopped for the day, plus the "Map day" button. */
+@Composable
+private fun SummaryBar(b: DayBar, onMap: () -> Unit) {
+    val p = LocalKitPalette.current
+    Column(Modifier.fillMaxWidth().testTag(DayTags.BAR)) {
+        KitStoreRowLine {
+            for ((label, value) in listOf("Total km" to "%.1f".format(Locale.US, b.distanceM / 1000), "Total steps" to (b.steps.count?.let { StepsFormat.n(it) } ?: "n/a"),
+                "Time active" to StepsFormat.duration(b.activeMs), "Time stopped" to StepsFormat.duration(b.stoppedMs))) {
+                Column(Modifier.weight(1f)) {
+                    KitStoreCaption(label, color = p.textSecondary)
+                    KitStoreName(value, color = p.textPrimary)
+                }
+            }
+        }
+        KitStoreRowLine {
+            Box(Modifier.weight(1f)) { b.steps.reason?.let { Text("Steps n/a: $it", color = p.textSecondary, fontSize = KitStoreRow.caption) } }
+            KitStoreQuick("Map day", KitStoreRow.BLUE_FILL, Modifier.testTag(DayTags.MAP_DAY), onClick = onMap)
+        }
     }
 }
 
@@ -179,41 +238,43 @@ private fun SummaryRow(ui: DayUi) {
 
 /** The day's route on a real OSM basemap ([DayRouteMap]): a polyline per move in its mode's colour, mode and category icons, the current position. */
 @Composable
-private fun RouteMap(ui: DayUi) {
+private fun RouteMap(model: RouteModel, onPin: (Int) -> Unit) {
     val p = LocalKitPalette.current
-    val model = remember(ui.day, ui.fixes, ui.date, ui.today) { RouteGeo.build(ui.day, ui.fixes, live = ui.date == ui.today) }
     Box(Modifier.fillMaxWidth().height(240.dp).clip(MaterialTheme.shapes.medium).background(p.surfaceSelected).testTag(DayTags.MAP)) {
         if (model.isEmpty) Text("No route for this day", Modifier.align(Alignment.Center), color = p.textSecondary)
-        else DayRouteMap(model, Modifier.fillMaxSize())
+        else DayRouteMap(model, Modifier.fillMaxSize(), onPin = onPin)
     }
 }
 
 /** A round glyph: a vector [res] in white on [bg]. */
 @Composable
 private fun Glyph(res: Int, bg: Color, desc: String, modifier: Modifier = Modifier) {
-    Box(modifier.size(34.dp).clip(CircleShape).background(bg), contentAlignment = Alignment.Center) {
+    Box(modifier.size(30.dp).clip(CircleShape).background(bg), contentAlignment = Alignment.Center) {
         Icon(painterResource(res), desc, Modifier.size(20.dp), tint = Color.White)
     }
 }
 
 @Composable
-private fun StayRow(i: Int, s: DaySeg.Stay, a: DayActions, zone: ZoneId, onAddMissing: () -> Unit) {
+private fun StayRow(i: Int, s: DaySeg.Stay, a: DayActions, zone: ZoneId, ui: DayUi, rules: DayRules, expanded: Boolean, onToggle: () -> Unit, onAddMissing: () -> Unit) {
     val p = LocalKitPalette.current
     val ctx = LocalContext.current
     var menu by remember { mutableStateOf(false) }
     var edit by remember { mutableStateOf(false) }
-    KitCard(Modifier.testTag(DayTags.seg(i))) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+    // the full address is looked up (cached) the first time the row opens
+    var place by remember(s.startMs, s.place) { mutableStateOf(s.place) }
+    LaunchedEffect(expanded, s.startMs) { val q = place; if (expanded && q != null && q.needsAddress) place = a.onResolve(q) }
+    Column(Modifier.fillMaxWidth().testTag(DayTags.seg(i))) {
+        KitStoreRowLine(onClick = if (s.missing) null else onToggle) {
             Glyph(if (s.missing) com.diegonmarcos.cloudnav.R.drawable.ic_mode_unknown else DayIcons.stay(s),
                 if (s.kind == StayKind.SLEEP) Color(0xFF6366F1) else p.accent, s.place?.poi?.label ?: "Place")
-            Column(Modifier.weight(1f).padding(horizontal = 10.dp)) {
-                Text(DayFormat.stayTitle(s), color = p.textPrimary, style = MaterialTheme.typography.titleSmall)
-                s.place?.address?.takeIf { it.isNotBlank() }?.let { Text(it, color = p.textSecondary, style = MaterialTheme.typography.bodySmall) }
-                Text(StepsFormat.time(s.startMs, zone) + "-" + StepsFormat.time(s.endMs, zone) + "  ·  " + StepsFormat.duration(s.durationMs) + if (s.kind == StayKind.SLEEP) "  ·  sleep" else s.place?.poi?.takeIf { it != PoiCategory.OTHER }?.let { "  ·  " + it.label } ?: "",
-                    color = p.textSecondary, style = MaterialTheme.typography.bodySmall)
+            Column(Modifier.weight(1f).padding(horizontal = KitStoreRow.gap)) {
+                KitStoreName(DayFormat.stayTitle(s), color = p.textPrimary)
+                s.place?.address?.takeIf { it.isNotBlank() }?.let { KitStoreCaption(it, color = p.textSecondary) }
+                KitStoreCaption(StepsFormat.time(s.startMs, zone) + "-" + StepsFormat.time(s.endMs, zone) + "  ·  " + StepsFormat.duration(s.durationMs) + if (s.kind == StayKind.SLEEP) "  ·  sleep" else s.place?.poi?.takeIf { it != PoiCategory.OTHER }?.let { "  ·  " + it.label } ?: "",
+                    color = p.textSecondary)
             }
             Box {
-                TextButton(onClick = { menu = true }, modifier = Modifier.testTag(DayTags.menu(i))) { Text("⋮", color = p.textPrimary) }
+                Text("⋮", Modifier.testTag(DayTags.menu(i)).clickable { menu = true }.padding(KitStoreRow.gap), color = p.textPrimary)
                 DropdownMenu(menu, { menu = false }) {
                     DropdownMenuItem(text = { Text("Edit place") }, onClick = { menu = false; edit = true })
                     DropdownMenuItem(text = { Text("Split") }, onClick = { menu = false; splitAt(a, s, zone, ctx) })
@@ -221,15 +282,65 @@ private fun StayRow(i: Int, s: DaySeg.Stay, a: DayActions, zone: ZoneId, onAddMi
                 }
             }
         }
+        if (expanded) StayDetail(i, s, place, a, zone, ui, rules)
         if (s.missing && s.durationMs >= DayTimeline.MISSING_MIN_MS)
-            OutlinedButton(onClick = onAddMissing, modifier = Modifier.testTag(DayTags.missing(i))) { Text("Add visit") }
-        else if (!s.missing && !s.confirmed && s.kind == StayKind.IDLE) Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text("Visited ${s.place?.label ?: "this place"}?", color = p.textPrimary, style = MaterialTheme.typography.bodySmall)
-            OutlinedButton(onClick = { a.onConfirm(s) }, modifier = Modifier.testTag(DayTags.confirm(i))) { Text("Yes") }
-            OutlinedButton(onClick = { edit = true }, modifier = Modifier.testTag(DayTags.edit(i))) { Text("Edit") }
+            KitStoreRowLine { KitStoreQuick("Add visit", KitStoreRow.BLUE_FILL, Modifier.testTag(DayTags.missing(i)), onClick = onAddMissing) }
+        else if (!s.missing && !s.confirmed && s.kind == StayKind.IDLE) KitStoreRowLine {
+            Box(Modifier.weight(1f)) { KitStoreCaption("Visited ${s.place?.label ?: "this place"}?", color = p.textPrimary) }
+            KitStoreQuick("Yes", KitStoreRow.BLUE_FILL, Modifier.testTag(DayTags.confirm(i))) { a.onConfirm(s) }
+            Box(Modifier.padding(start = KitStoreRow.gap)) { KitStoreQuick("Edit", KitStoreRow.AMBER_FILL, Modifier.testTag(DayTags.edit(i))) { edit = true } }
         }
     }
     if (edit) NameDialog("Edit place", s.place?.name ?: s.place?.label ?: "", onDismiss = { edit = false }) { a.onEditPlace(s, it); edit = false }
+}
+
+/** The expanded part of a place row: geo code, accuracy, address, times, how you got there, visits, data source, and the three actions. */
+@Composable
+private fun StayDetail(i: Int, s: DaySeg.Stay, place: Place?, a: DayActions, zone: ZoneId, ui: DayUi, rules: DayRules) {
+    val p = LocalKitPalette.current
+    val ctx = LocalContext.current
+    val d = DayDetails.detail(ui.day, i, ui.fixes, rules)
+    Column(Modifier.fillMaxWidth().testTag(DayTags.detail(i)).background(p.surfaceSelected)) {
+        if (d == null || place == null) {
+            KitStoreRowLine { KitStoreCaption("No location was recorded for this stay.", color = p.textSecondary) }
+            return@Column
+        }
+        val address = DayDetails.fullAddress(place, rules).ifBlank { "n/a (no address found yet)" }
+        DetailLine("Geo code", d.geoCode, mono = true)
+        DetailLine("Accuracy", d.accuracy)
+        DetailLine("Address", address)
+        DetailLine("Arrival", StepsFormat.time(d.arrivalMs, zone))
+        DetailLine("Departure", StepsFormat.time(d.departureMs, zone))
+        DetailLine("Time spent", StepsFormat.duration(d.durationMs))
+        DetailLine("Arrived by", d.arrivedBy?.let { DayFormat.modeLabel(it) + "  ·  " + StepsFormat.distance(d.arrivedDistanceM ?: 0.0) } ?: "n/a (first place of the day)")
+        DetailLine("Visits today", d.visits.toString())
+        DetailLine("Data source", d.source + "  ·  " + d.fixCount + " fixes")
+        KitStoreRowLine {
+            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(KitStoreRow.gap)) {
+                KitStoreQuick("Open in map", KitStoreRow.BLUE_FILL, Modifier.testTag(DayTags.act(i, "map"))) { a.onOpenMap(place) }
+                KitStoreQuick("Copy geo code", KitStoreRow.BLUE_FILL, Modifier.testTag(DayTags.act(i, "geo"))) { copyText(ctx, "Geo code", d.geoCode) }
+                KitStoreQuick("Copy full address", KitStoreRow.BLUE_FILL, Modifier.testTag(DayTags.act(i, "address"))) {
+                    copyText(ctx, "Address", DayDetails.copyAddress(place, rules).ifBlank { address })
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DetailLine(label: String, value: String, mono: Boolean = false) {
+    val p = LocalKitPalette.current
+    KitStoreRowLine {
+        Text(label, Modifier.weight(0.35f), color = p.textSecondary, fontSize = KitStoreRow.caption)
+        Text(value, Modifier.weight(0.65f), color = p.textPrimary, fontSize = KitStoreRow.meta,
+            fontFamily = if (mono) androidx.compose.ui.text.font.FontFamily.Monospace else null)
+    }
+}
+
+private fun copyText(ctx: android.content.Context, label: String, text: String) {
+    (ctx.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager)
+        .setPrimaryClip(android.content.ClipData.newPlainText(label, text))
+    android.widget.Toast.makeText(ctx, "Copied: $text", android.widget.Toast.LENGTH_SHORT).show()
 }
 
 @Composable
@@ -238,18 +349,18 @@ private fun MoveRow(i: Int, m: DaySeg.Move, a: DayActions, zone: ZoneId) {
     val ctx = LocalContext.current
     var menu by remember { mutableStateOf(false) }
     var pick by remember { mutableStateOf(false) }
-    KitCard(Modifier.testTag(DayTags.seg(i))) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+    Column(Modifier.fillMaxWidth().testTag(DayTags.seg(i))) {
+        KitStoreRowLine {
             Glyph(DayIcons.mode(m.mode), DayFormat.modeColor(m.mode), DayFormat.modeLabel(m.mode))
-            Column(Modifier.weight(1f).padding(horizontal = 10.dp)) {
-                Text(DayFormat.modeLabel(m.mode) + "  ·  " + StepsFormat.distance(m.distanceM) + "  ·  " + StepsFormat.duration(m.durationMs), color = p.textPrimary, style = MaterialTheme.typography.titleSmall)
-                Text(StepsFormat.time(m.startMs, zone) + "-" + StepsFormat.time(m.endMs, zone) + "  ·  %.1f km/h".format(Locale.US, m.avgSpeedMps * 3.6) +
-                    if (m.steps > 0) "  ·  " + StepsFormat.n(m.steps) + " steps" else "", color = p.textSecondary, style = MaterialTheme.typography.bodySmall)
+            Column(Modifier.weight(1f).padding(horizontal = KitStoreRow.gap)) {
+                KitStoreName(DayFormat.modeLabel(m.mode) + "  ·  " + StepsFormat.distance(m.distanceM) + "  ·  " + StepsFormat.time(m.startMs, zone) + "-" + StepsFormat.time(m.endMs, zone), color = p.textPrimary)
+                KitStoreCaption(StepsFormat.duration(m.durationMs) + "  ·  %.1f km/h".format(Locale.US, m.avgSpeedMps * 3.6) +
+                    if (m.steps > 0) "  ·  " + StepsFormat.n(m.steps) + " steps" else "", color = p.textSecondary)
                 val route = listOfNotNull(m.from?.label, m.to?.label).joinToString(" to ")
-                if (route.isNotBlank()) Text(route, color = p.textSecondary, style = MaterialTheme.typography.bodySmall)
+                if (route.isNotBlank()) KitStoreCaption(route, color = p.textSecondary)
             }
             Box {
-                TextButton(onClick = { menu = true }, modifier = Modifier.testTag(DayTags.menu(i))) { Text("⋮", color = p.textPrimary) }
+                Text("⋮", Modifier.testTag(DayTags.menu(i)).clickable { menu = true }.padding(KitStoreRow.gap), color = p.textPrimary)
                 DropdownMenu(menu, { menu = false }) {
                     DropdownMenuItem(text = { Text("Edit mode") }, onClick = { menu = false; pick = true })
                     DropdownMenuItem(text = { Text("Split") }, onClick = { menu = false; splitAt(a, m, zone, ctx) })

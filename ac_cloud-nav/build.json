@@ -685,6 +685,14 @@
     ],
     "_doc_cockpit_modes": "Navigation-tab vehicle cockpit switcher. Distinct from travel_modes (routing costing) — this drives the live instrument PANEL + map camera on the Navigation tab. Per mode: accent (hex), style (map_styles key), zoom/tilt/follow_bearing (camera), speed_unit (kmh|kn|mph), alt_unit (m|ft), gauges (ordered instrument ids rendered left→right). Gauge ids: speed, heading (compass rose), attitude (artificial horizon), altitude (tape), vspeed, grade, avg, dist, eta, position, track. Add a mode = one entry here (data-driven; no Kotlin change).",
     "default_cockpit_mode": "car",
+    "_doc_day_timeline": "Tracker > Timeline day view (DayView.kt). Declared rules for turning the recorded fixes into a gapless 24 h list of stays and moves when the stop detector recorded none for the day: a stay is every run of fixes inside stay_radius_m of the run's centre lasting at least min_dwell_min; the time between two stays is a move (distance = the fixes' path, mode from the average speed plus the step cadence and, when a client supplies it, the Activity Recognition hint); fixes worse than max_fix_acc_m are ignored. Computed once when the day opens and cached per day, no new polling.",
+    "day_timeline": {
+      "stay_radius_m": 100,
+      "min_dwell_min": 5,
+      "max_fix_acc_m": 200,
+      "copy_address_fields": ["street", "postcode", "city"],
+      "full_address_fields": ["street", "postcode", "city", "country"]
+    },
     "cockpit_modes": [
       {
         "id": "bike",

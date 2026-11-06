@@ -35,9 +35,11 @@ class DayScreenTest {
         rule.setContent { CloudKitTheme(TrackerInk.palette()) { DayScreen(ui, DayTab.DAY, {}, DayActions(), zone) } }
         rule.onNodeWithTag(DayTags.MAP).assertIsDisplayed()
         rule.onNodeWithTag(DayTags.SUMMARY).assertIsDisplayed()
+        rule.onNodeWithTag(DayTags.BAR).assertIsDisplayed()
+        rule.onNodeWithTag(DayTags.MAP_DAY).assertIsDisplayed()
         rule.onNodeWithText("Seestrasse 1, 8000, Zurich, Zurich, Switzerland").assertIsDisplayed()
         rule.onNodeWithTag(DayTags.LIST).performScrollToNode(hasText("Cafe Central"))
-        rule.onNodeWithText("Cafe Central").assertExists()
+        rule.onNodeWithText("At Cafe Central").assertExists()
         rule.onNodeWithText("Bahnhofstrasse 14, 8001, Zurich, Zurich, Switzerland").assertExists()
         rule.onNodeWithText("Food and drink", substring = true).assertExists()
     }

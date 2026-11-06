@@ -7,7 +7,8 @@ import org.json.JSONObject
 data class RouteLine(val mode: Mode, val points: List<LatLon>)
 
 /** An icon on the map: [icon] is a [RouteGeo] image name (`mode_car`, `stay_sleep`, `poi_food`...). */
-data class RouteMarker(val at: LatLon, val icon: String, val label: String)
+/** [seg] = index of the day segment the pin stands for (-1 = none); a tap on the pin scrolls the list to that row. */
+data class RouteMarker(val at: LatLon, val icon: String, val label: String, val seg: Int = -1)
 
 data class RouteModel(val lines: List<RouteLine>, val markers: List<RouteMarker>, val current: LatLon?) {
     val points: List<LatLon> get() = lines.flatMap { it.points } + markers.map { it.at } + listOfNotNull(current)
@@ -34,8 +35,8 @@ object RouteGeo {
     /** [live] marks today: the newest known point is the current position. */
     fun build(day: List<DaySeg>, fixes: List<PlaceFix> = emptyList(), live: Boolean = false): RouteModel {
         val lines = ArrayList<RouteLine>(); val markers = ArrayList<RouteMarker>()
-        for (s in day) when (s) {
-            is DaySeg.Stay -> s.place?.at()?.let { markers += RouteMarker(it, stayIcon(s), s.place?.label ?: "") }
+        for ((si, s) in day.withIndex()) when (s) {
+            is DaySeg.Stay -> s.place?.at()?.let { markers += RouteMarker(it, stayIcon(s), s.place?.label ?: "", si) }
             is DaySeg.Move -> {
                 val path = ArrayList<LatLon>()
                 s.from?.at()?.let { path += it }
@@ -43,7 +44,7 @@ object RouteGeo {
                 s.to?.at()?.let { path += it }
                 if (path.size >= 2) {
                     lines += RouteLine(s.mode, path)
-                    markers += RouteMarker(path[path.size / 2], modeIcon(s.mode), s.mode.name.lowercase())
+                    markers += RouteMarker(path[path.size / 2], modeIcon(s.mode), s.mode.name.lowercase(), si)
                 }
             }
         }
@@ -63,7 +64,7 @@ object RouteGeo {
 
     fun markersJson(m: RouteModel): String {
         val f = JSONArray()
-        for (k in m.markers) f.put(feature(JSONObject().put("type", "Point").put("coordinates", coord(k.at)), JSONObject().put("icon", k.icon).put("label", k.label)))
+        for (k in m.markers) f.put(feature(JSONObject().put("type", "Point").put("coordinates", coord(k.at)), JSONObject().put("icon", k.icon).put("label", k.label).put("seg", k.seg)))
         return JSONObject().put("type", "FeatureCollection").put("features", f).toString()
     }
 

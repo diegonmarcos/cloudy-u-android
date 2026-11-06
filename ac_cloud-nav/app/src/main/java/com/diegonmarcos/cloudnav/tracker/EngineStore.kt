@@ -117,7 +117,7 @@ class EngineDb private constructor(ctx: Context) : SQLiteOpenHelper(ctx, "tracke
     fun fixes(fromMs: Long, toMs: Long): List<PlaceFix> {
         val out = mutableListOf<PlaceFix>()
         readableDatabase.rawQuery("SELECT ts,lat,lon,acc,kind FROM engine_fixes WHERE ts BETWEEN ? AND ? ORDER BY ts", arrayOf(fromMs.toString(), toMs.toString())).use { c ->
-            while (c.moveToNext()) out += PlaceFix(c.getLong(0), c.getDouble(1), c.getDouble(2), c.getString(4) == "predicted", c.getDouble(3))
+            while (c.moveToNext()) out += PlaceFix(c.getLong(0), c.getDouble(1), c.getDouble(2), c.getString(4) == "predicted", c.getDouble(3), c.getString(4) ?: "")
         }
         return out
     }

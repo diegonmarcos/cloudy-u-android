@@ -6,7 +6,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.lifecycleScope
+import com.diegonmarcos.cloudnav.NavConfig
+import com.diegonmarcos.cloudnav.maps.TimelineBuilder
 import com.diegonmarcos.cloudnav.maps.TimelineSync
+import com.diegonmarcos.cloudnav.maps.TimelineViews
 import com.diegonmarcos.superapp.uikit.KitComposeFragment
 import com.diegonmarcos.superapp.uikit.KitPalette
 import kotlinx.coroutines.Dispatchers
@@ -41,6 +44,15 @@ class DayFragment : KitComposeFragment() {
             onEditMode = { m, mode -> correct(Edits.editMode(m, mode)) },
             onDelete = { correct(Edits.delete(it)) },
             onSplit = { s, at -> correct(Edits.split(s, at)) },
+            onResolve = { p -> withContext(Dispatchers.IO) { runCatching { PlaceNamer(requireContext().applicationContext).name(listOf(p)).firstOrNull() }.getOrNull() ?: p } },
+            onOpenMap = { p ->
+                if (p.located) {
+                    // Cloud Nav's own map: the geo: hand-off MainActivity already routes to Places, kept inside this app
+                    val q = "${p.lat},${p.lon}"
+                    startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW,
+                        android.net.Uri.parse("geo:$q?q=$q(" + android.net.Uri.encode(p.label ?: "") + ")")).setPackage(requireContext().packageName))
+                }
+            },
             onHome = { HomeStore(requireContext()).set(it); load(ui.date) },
             onAddVisit = { a, b, name ->
                 val near = ui.day.filterIsInstance<DaySeg.Stay>().firstOrNull { it.place?.located == true }?.place
@@ -71,7 +83,11 @@ class DayFragment : KitComposeFragment() {
         val store = TimelineSync.view(app, DayTimeline.dayStart(first, zone) - 12 * 3_600_000L, now)
         val a = DayTimeline.dayStart(date, zone); val b = minOf(DayTimeline.dayStart(date.plusDays(1), zone), now)
         // name the unnamed places of the shown day through the open reverse-geocode provider (cached, rate-limited)
-        val raw = DayTimeline.build(store, a, b, corrections, memory)
+        // the day's recorded fixes (engine + foreground tracker), read once per open; no new polling
+        val fixes = runCatching { StepsRepository(app).fixes(a, b) }.getOrDefault(emptyList())
+        // the store already holds the stop detector's segments; only a day it recorded nothing for is cut from the raw fixes
+        val raw = if (fixes.isNotEmpty() && store.none { it.endMs > a && it.startMs < b }) FixSegmenter.segment(fixes, a, b, NavConfig.dayRules, zone)
+        else DayTimeline.build(store, a, b, corrections, memory)
         val namer = PlaceNamer(app)
         val named = namer.name(raw.map { (it as? DaySeg.Stay)?.place })
         var k = 0
@@ -81,7 +97,20 @@ class DayFragment : KitComposeFragment() {
         val homeSet = HomeStore(app).get()
         val trips = Trips.group(stats, homeSet)
         val month = dates.takeLast(30).map { d -> DayTimeline.build(store, DayTimeline.dayStart(d, zone), minOf(DayTimeline.dayStart(d.plusDays(1), zone), now), corrections, memory) }
-        val fixes = runCatching { EngineDb.get(app).fixes(a, b) }.getOrDefault(emptyList())
-        return DayUi(date, today, dayList, stats, Rankings.places(month), Rankings.cities(month), Rankings.countries(month), false, fixes, trips, homeSet)
+        return DayUi(date, today, dayList, stats, Rankings.places(month), Rankings.cities(month), Rankings.countries(month), false, fixes, trips, homeSet,
+            stepsTotal(app, store, a, b))
+    }
+
+    /** The day's steps from the step counter (recorded by the tracker engine into the store), else n/a and why. */
+    private fun stepsTotal(app: android.content.Context, store: List<com.diegonmarcos.cloudnav.maps.TlSegment>, a: Long, b: Long): StepsTotal {
+        val n = TimelineBuilder.stepsIn(TimelineViews.stepSlices(store), a, b)
+        if (n > 0) return StepsTotal(n, null)
+        val recog = android.os.Build.VERSION.SDK_INT < 29 ||
+            androidx.core.content.ContextCompat.checkSelfPermission(app, android.Manifest.permission.ACTIVITY_RECOGNITION) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        return StepsTotal(null, when {
+            !recog -> "physical-activity permission not granted (Configs > Perms)"
+            !EnginePrefs(app).config.enabled -> "tracker engine is off (Configs > Tracker)"
+            else -> "the step counter recorded no steps for this day"
+        })
     }
 }

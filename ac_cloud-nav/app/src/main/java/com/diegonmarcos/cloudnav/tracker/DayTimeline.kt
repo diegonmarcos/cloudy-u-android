@@ -54,6 +54,19 @@ object ModeInference {
     const val MIN_STEP_CADENCE = 40.0
     const val STILL_MPS = 0.2
 
+    /** The Activity Recognition class a client may supply for a move (null = none available; the step cadence stands in). */
+    enum class Hint { STILL, WALKING, RUNNING, ON_BICYCLE, IN_VEHICLE }
+
+    /** [stepsPerMin] is the cadence over the moving time (0 = no steps seen); [hint] overrides only where it is consistent with the speed. */
+    fun infer(avgMps: Double, stepsPerMin: Double, hint: Hint?): Mode = when {
+        avgMps.isNaN() -> Mode.UNKNOWN
+        hint == Hint.RUNNING && avgMps <= 6.5 -> Mode.RUN
+        hint == Hint.WALKING && avgMps <= 3.0 -> Mode.WALK
+        hint == Hint.ON_BICYCLE && avgMps > WALK_MAX_MPS && avgMps <= CAR_MAX_MPS -> Mode.BIKE
+        hint == Hint.IN_VEHICLE && avgMps > WALK_MAX_MPS && avgMps <= BIKE_MAX_MPS -> Mode.CAR
+        else -> infer(avgMps, stepsPerMin)
+    }
+
     /** [stepsPerMin] is the cadence over the moving time (0 = no steps seen). */
     fun infer(avgMps: Double, stepsPerMin: Double): Mode = when {
         avgMps.isNaN() -> Mode.UNKNOWN
@@ -116,7 +129,7 @@ object DayTimeline {
         return link(fill(segs, fromMs, toMs))
     }
 
-    private fun moveOf(a: Long, b: Long, dist: Double, steps: Long, from: Place?, to: Place?, fixed: Mode?): DaySeg.Move {
+    internal fun moveOf(a: Long, b: Long, dist: Double, steps: Long, from: Place?, to: Place?, fixed: Mode?): DaySeg.Move {
         val moving = b - a
         val avg = if (moving > 0) dist / (moving / 1000.0) else 0.0
         val cadence = if (moving > 0) steps / (moving / 60_000.0) else 0.0

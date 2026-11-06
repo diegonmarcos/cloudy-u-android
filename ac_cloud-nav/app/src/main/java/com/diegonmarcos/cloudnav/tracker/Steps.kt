@@ -144,7 +144,8 @@ object StepStats {
 }
 
 /** A position sample for the day cards. */
-data class PlaceFix(val ts: Long, val lat: Double, val lon: Double, val predicted: Boolean = false, val accuracyM: Double = 0.0)
+data class PlaceFix(val ts: Long, val lat: Double, val lon: Double, val predicted: Boolean = false, val accuracyM: Double = 0.0,
+                    /** Where the fix came from: gps, net, cell, fused ("" = not recorded). */ val source: String = "")
 
 enum class DayPart(val targetHour: Int, val fromHour: Int, val toHour: Int, val label: String) {
     MORNING(8, 5, 11, "Morning"),
