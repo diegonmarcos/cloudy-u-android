@@ -37,7 +37,7 @@ class PageImplementationsGuardTest {
     private val panels = File(main, "launcher/AggregatorPanels.kt").readText()
 
     private val delegatedSections = setOf("mail", "chat", "apptabs", "recentapps")
-    private val dataKeys = listOf("facet", "url", "upstream", "action", "is_action", "mode", "webapps_base", "hub_of_subgroup")
+    private val dataKeys = listOf("facet", "url", "upstream", "action", "is_action", "mode", "webapps_base")
 
     private data class Decl(val section: String, val page: String, val o: JSONObject)
 
@@ -60,7 +60,17 @@ class PageImplementationsGuardTest {
 
     private fun hasData(d: Decl) =
         dataKeys.any { d.o.has(it) && d.o.opt(it).toString().let { v -> v.isNotBlank() && v != "false" } } ||
-            (d.o.optJSONArray("tabs")?.length() ?: 0) > 0
+            (d.o.optJSONArray("tabs")?.length() ?: 0) > 0 ||
+            (d.o.optString("hub_of_subgroup").isNotBlank() && hubRouted && hubSubgroupHasPages(d))
+
+    /** #1545 a `hub_of_subgroup` page is implemented only while SectionPages really routes the key to SubgroupHubFragment. */
+    private val hubRouted = Regex("""hubOfSubgroup\.isNotBlank\(\)\s*->\s*SubgroupHubFragment\.newInstance""").containsMatchIn(routing)
+
+    /** ...and its subgroup holds at least one other visible page, so the grid it draws is never empty. */
+    private fun hubSubgroupHasPages(d: Decl): Boolean {
+        val sub = d.o.optString("hub_of_subgroup")
+        return declared().any { it.section == d.section && it.page != d.page && it.o.optString("subgroup") == sub && !it.o.optBoolean("hidden") }
+    }
 
     @Test fun `P1 every declared page is implemented, data-drawn, lib-hosted or declared a placeholder`() {
         val routedPairs = routed().map { it.first to it.second }.toSet()
