@@ -3,7 +3,7 @@
 # app/src/test/.../bluetooth/BluetoothLibTest.kt.
 #
 #   B1 the page is declared: Fleet group, five hidden tabs Find | Connect | Interact | Debug | Dev, every tab routed to BluetoothFragment
-#   B2 Configs declares horizontal_two_rows with the Fleet row (C3 | Peer Control, Bluetooth) and the Observability row (X-Ray, LogCat, Permissions, About; was Agents,
+#   B2 Configs declares horizontal_two_rows with the Fleet row (C3 | Peer Control, Bluetooth) and Setup's Observability sub-row (#1548: X-Ray, LogCat, Permissions, About; was a top-level row, before that Agents,
 #      Diagnostics, Logcat, About), every page of the section in exactly one group
 #   B3 the page is the lib's: BluetoothFragment is a KitComposeFragment (its scrolling reaches the shell) over BluetoothHub; the five
 #      tabs and the ATT console, hex write, notify stream and permission rows exist in the lib's Compose page
@@ -63,8 +63,10 @@ if sec.get('nav_mode') != 'horizontal_two_rows': probs.append('nav_mode = %r' % 
 groups = {g['id']: g for g in sec.get('groups', [])}
 vis = lambda ids: [i for i in ids if not next(p for p in sec['pages'] if p['id'] == i).get('hidden')]
 if vis(groups['fleet']['pages'])[:3] != ['c3', 'kde', 'bluetooth']: probs.append('fleet row = %r' % vis(groups['fleet']['pages']))
-grid_obs = [p['id'] for p in sec['pages'] if p.get('group') == 'Observability' and not p.get('hidden')]
-if vis(groups['observability']['pages']) != grid_obs: probs.append('observability row = %r, grid = %r' % (vis(groups['observability']['pages']), grid_obs))
+grid_obs = [p['id'] for p in sec['pages'] if p.get('group') == 'Setup' and p.get('subgroup') == 'Observability' and not p.get('hidden')]
+row_obs = [i for i in vis(groups['setup']['pages']) if i in grid_obs]
+if grid_obs != ['xray', 'logcat', 'perms', 'app-about'] or row_obs != grid_obs: probs.append('Setup > Observability row = %r, grid = %r' % (row_obs, grid_obs))
+if 'observability' in groups: probs.append('Observability is still a top-level group (#1548 moved it under Setup)')
 label = {p['id']: p['label'] for p in sec['pages']}
 if label['c3'] != 'C3': probs.append('c3 label = %r' % label['c3'])
 icon = {p['id']: p.get('icon') for p in sec['pages']}
@@ -90,7 +92,7 @@ for g in sec['groups']:
     if not g.get('icon') or not g.get('label'): probs.append('group %s lacks an icon or label' % g['id'])
 print('; '.join(probs) or 'OK')
 PY
-)" "horizontal_two_rows: Fleet = C3 | Peer Control Bluetooth (label C3, icon ic_cloud_control), Observability = its grid order (X-Ray | LogCat Permissions About); every page in one group"
+)" "horizontal_two_rows: Fleet = C3 | Peer Control Bluetooth (label C3, icon ic_cloud_control), Setup ▸ Observability = its grid order (X-Ray | LogCat Permissions About); every page in one group"
 
 echo "== B3: the page is the lib's, scroll wired =="
 grep -q 'class BluetoothFragment : KitComposeFragment()' "$KT/configs/BluetoothFragment.kt" && ! grep -q 'override val reportsScroll.*false' "$KT/configs/BluetoothFragment.kt" \

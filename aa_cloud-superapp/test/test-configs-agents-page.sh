@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Tester: the fleet agent registry, drawn by Configs ▸ Observability ▸ X-Ray (AGENTS group) since the Agents page was removed.
 #
-#   A1 Configs reads Setup, Fleet, Observability (the order of build.json groups); Fleet = C3 | Peer Control · Bluetooth;
-#      no agents page or tab is declared and the Observability row is exactly what its group declares
+#   A1 Configs reads Setup, Fleet, Agents (the order of build.json groups, #1548); Fleet = C3 | Peer Control · Bluetooth;
+#      Agents = Watchdog, Watchtower (hub pages); no agents page or tab is declared and Setup ▸ Observability is X-Ray, LogCat, Permissions, About
 #   A2 page:config/agents, /agents-superapp and /agents-fleet are page_aliases of xray, and each is retired to xray
 #   A3 X-Ray draws the registry: DevControlFragment declares the AGENTS macro over FleetAgents + AgentStatusReader
 #   A4 the old deep links still land: page:config/c3 and page:config/kde are the same ids
@@ -33,7 +33,7 @@ for f in "$BJ" "$PAGES" "$FRAG" "$READER" "$MODEL" "$DATA" "$GEN" "$APP/app/buil
   [ -f "$f" ] || { echo "  ABORT: no such file: $f — a check over nothing passes"; exit 2; }
 done
 
-echo "== A1: Setup, Fleet, Observability; no Agents page =="
+echo "== A1: Setup, Fleet, Agents; no agents page =="
 check "$(python3 - "$BJ" <<'PY'
 import json, sys
 sec = next(s for s in json.load(open(sys.argv[1]))['ui']['sections'] if s['id'] == 'config')
@@ -50,13 +50,14 @@ apps = [p['label'] for p in vis if p.get('group') == 'Fleet']
 if apps != ['C3', 'Peer Control', 'Bluetooth']: probs.append('Fleet = %r' % apps)
 for gone in ('agents', 'agents-superapp', 'agents-fleet'):
     if gone in by: probs.append('%s is still declared' % gone)
-obs = next(g for g in sec['groups'] if g['label'] == 'Observability')
-row = [i for i in obs['pages'] if i in by and not by[i].get('hidden')]
-grid = [p['id'] for p in vis if p.get('group') == 'Observability']
-if row != grid: probs.append('Observability row %r != grid %r' % (row, grid))
+if declared != ['Setup', 'Fleet', 'Agents']: probs.append('declared groups %r != Setup, Fleet, Agents' % declared)
+grid = [p['id'] for p in vis if p.get('group') == 'Setup' and p.get('subgroup') == 'Observability']
+if grid != ['xray', 'logcat', 'perms', 'app-about']: probs.append('Setup > Observability = %r' % grid)
+agents = [p['id'] for p in vis if p.get('group') == 'Agents']
+if agents != ['watchdog', 'watchtower']: probs.append('Agents = %r' % agents)
 print('; '.join(probs) or 'OK')
 PY
-)" "Configs groups are build.json's groups; Fleet = C3, Peer Control, Bluetooth; no agents page; Observability row = its group"
+)" "Configs groups are build.json's groups (Setup, Fleet, Agents); Fleet = C3, Peer Control, Bluetooth; Agents = Watchdog, Watchtower; no agents page; Setup ▸ Observability = X-Ray, LogCat, Permissions, About"
 
 echo "== A2: the old Agents ids land on X-Ray =="
 check "$(python3 - "$BJ" <<'PY'

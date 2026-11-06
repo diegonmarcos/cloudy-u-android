@@ -11,12 +11,12 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * #1545 Configs ▸ Setup ▸ Network ▸ Watchdog, the in-app hub over the Network pages.
+ * #1545 #1548 The Configs nav tree and its two hub pages, Agents ▸ Watchdog and Agents ▸ Watchtower.
  *
- *   H1 nav order: Watchdog is the FIRST Network page and the Configs ▸ Network row reads Watchdog, then the rest
- *   H2 the grid is every other Network page, in order, derived from the declaration
+ *   H1 nav tree: Setup (Connect, Apps, Launcher, Network, Observability), Fleet (C3, Peer Control, Bluetooth), Agents (Watchdog, Watchtower)
+ *   H2 Watchdog = two titled sections, Network then Observability; Watchtower = Observability only; each derived from the nav, in order
  *   H3 routing: in-app pages are page:config/<id>; apps / sections / Cloud Store hand-offs keep their declared action
- *   H4 the page itself routes to SubgroupHubFragment (not the C3-Watchdog APK) and draws one Cloud ▸ Apps tile per entry
+ *   H4 both pages route to SubgroupHubFragment (not the C3 APKs) and draw a section heading and a Cloud ▸ Apps tile per entry
  *   H5 Cloud ▸ Apps ▸ Configs opens page:config/watchdog where Firewall was
  */
 @RunWith(RobolectricTestRunner::class)
@@ -24,44 +24,64 @@ import org.robolectric.annotation.Config
 class SubgroupHubTest : KitPageHarness() {
 
     private val config get() = Sections.byId("config")!!
-    private val network get() = config.pages.filter { it.subgroup == "Network" }
-    private val tiles get() = SubgroupHubFragment.tilesFor("config", "watchdog")
+    private fun sub(name: String) = config.pages.filter { it.subgroup == name }
+    private fun hub(id: String) = SubgroupHubFragment.sectionsFor("config", id)
 
     @Test
-    fun `H1 Watchdog leads the Network nav`() {
-        assertEquals("watchdog", network.first().id)
-        assertEquals("Watchdog", network.first().label)
-        assertEquals("Network", network.first().hubOfSubgroup)
-        assertTrue("an in-app page, not a launch", network.first().action.isBlank())
+    fun `H1 the Configs nav is the declared tree`() {
+        val runs = config.pages.filter { !it.isAction }.map { it.group to it.subgroup }.distinct()
+        assertEquals(listOf(
+            "Setup" to "Connect", "Setup" to "Apps", "Setup" to "Launcher", "Setup" to "Network", "Setup" to "Observability",
+            "Fleet" to "", "Agents" to ""), runs)
+        assertEquals(listOf("C3", "Peer Control", "Bluetooth"), config.pages.filter { it.group == "Fleet" }.map { it.label })
+        assertEquals(listOf("watchdog", "watchtower"), config.pages.filter { it.group == "Agents" }.map { it.id })
+        assertEquals(listOf("xray", "logcat", "perms", "app-about"), sub("Observability").map { it.id })
+        assertEquals("firewall", sub("Network").first().id)
+        assertTrue("Watchdog is no Network item any more", sub("Network").none { it.id == "watchdog" })
     }
 
     @Test
-    fun `H2 the grid is every other Network page, in nav order`() {
-        assertEquals(network.drop(1).map { it.id }, tiles.map { it.id })
-        assertTrue("it lists Firewall and DNS", tiles.map { it.id }.containsAll(listOf("firewall", "dns")))
-        assertTrue("never itself", tiles.none { it.id == "watchdog" })
-        assertEquals(network.drop(1).map { it.label }, tiles.map { it.label })
+    fun `H2 Watchdog shows Network and Observability, Watchtower only Observability`() {
+        assertEquals(listOf("Network", "Observability"), hub("watchdog").map { it.title })
+        assertEquals(sub("Network").map { it.id }, hub("watchdog")[0].tiles.map { it.id })
+        assertEquals(sub("Observability").map { it.id }, hub("watchdog")[1].tiles.map { it.id })
+        assertEquals(listOf("Observability"), hub("watchtower").map { it.title })
+        assertEquals(sub("Observability").map { it.label }, hub("watchtower")[0].tiles.map { it.label })
+        assertTrue(hub("watchdog")[0].tiles.map { it.id }.containsAll(listOf("firewall", "dns")))
     }
 
     @Test
     fun `H3 pages navigate in-app, apps keep their own declared action`() {
-        val by = tiles.associateBy { it.id }
+        val by = hub("watchdog").flatMap { it.tiles }.associateBy { it.id }
         assertEquals("page:config/firewall", by.getValue("firewall").target)
         assertEquals("page:config/dns", by.getValue("dns").target)
-        assertEquals("page:config/wifi", by.getValue("wifi").target)
+        assertEquals("page:config/xray", by.getValue("xray").target)
+        assertEquals("page:config/perms", by.getValue("perms").target)
         assertEquals("action:open_webserver", by.getValue("webserver").target)
         assertEquals("action:open_apps_access", by.getValue("apps-access").target)
         assertEquals("section:wg", by.getValue("wg").target)
-        for (p in network.drop(1)) assertEquals(p.id, Sections.hubTarget("config", p), by.getValue(p.id).target)
+        for (p in sub("Network") + sub("Observability")) assertEquals(p.id, Sections.hubTarget("config", p), by.getValue(p.id).target)
     }
 
     @Test
-    fun `H4 the page is the hub fragment and draws a Cloud Apps tile per entry`() {
+    fun `H4 Watchdog is the hub fragment and draws its headings and a Cloud Apps tile per entry`() {
         val frag = SectionPages.pagesFor("config").first { it.id == "watchdog" }.factory()
         assertTrue("routes to the hub: ${frag.javaClass.simpleName}", frag is SubgroupHubFragment)
         show(frag)
         compose.onNodeWithTag(SubgroupHubFragment.TAG_GRID).assertExists()
-        for (t in tiles) compose.onNodeWithTag(GroupedTilesFragment.tileTag(t.target)).assertExists()
+        for (s in hub("watchdog")) {
+            compose.onNodeWithTag(GroupedTilesFragment.groupTag(s.title)).assertExists()
+            for (t in s.tiles) compose.onNodeWithTag(GroupedTilesFragment.tileTag(t.target)).assertExists()
+        }
+    }
+
+    @Test
+    fun `H4b Watchtower is the same hub fragment`() {
+        val frag = SectionPages.pagesFor("config").first { it.id == "watchtower" }.factory()
+        assertTrue("routes to the hub: ${frag.javaClass.simpleName}", frag is SubgroupHubFragment)
+        show(frag)
+        compose.onNodeWithTag(GroupedTilesFragment.groupTag("Observability")).assertExists()
+        compose.onNodeWithTag(GroupedTilesFragment.groupTag("Network")).assertDoesNotExist()
     }
 
     @Test

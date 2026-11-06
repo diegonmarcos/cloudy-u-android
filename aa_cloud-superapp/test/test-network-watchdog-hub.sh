@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-# Tester (#1545): Configs ▸ Setup ▸ Network ▸ Watchdog is the FIRST Network entry and an IN-APP hub page.
+# Tester (#1545, #1548): Configs ▸ Agents ▸ Watchdog and Watchtower are IN-APP hub pages.
 # Static (no device, no build).
-#   W1 Watchdog is the first visible Network page, has no action (a page, not the C3-Watchdog APK) and declares hub_of_subgroup Network
-#   W2 the hub's grid is DERIVED (Sections.hubTiles over the subgroup), routed by data (SectionPages hub_of_subgroup branch),
-#      and drawn with the Cloud ▸ Apps tile component (TileStrip), not a copy
+#   W1 Agents = Watchdog, Watchtower; neither has an action (pages, not the C3 APKs); Watchdog's hub_sections = Network,
+#      Observability, Watchtower's = Observability; Watchdog is no Network item
+#   W2 the hub's sections are DERIVED (Sections.hubSections over the subgroups), routed by data (SectionPages hub_sections
+#      branch), and drawn with the Cloud ▸ Apps heading and tile components (GroupTitle, TileStrip), not a copy
 #   W3 Cloud ▸ Apps ▸ Configs holds Watchdog (page:config/watchdog) where Firewall was, and no Firewall tile
 set -u
 APP="$(cd "$(dirname "$0")/.." && pwd)"
@@ -19,28 +20,31 @@ out="$(python3 - "$APP/build.json" <<'PY'
 import json, sys
 secs = json.load(open(sys.argv[1]))['ui']['sections']
 pages = next(s for s in secs if s['id'] == 'config')['pages']
-net = [p for p in pages if p.get('subgroup') == 'Network' and not p.get('hidden')]
-w = net[0] if net else {}
-print('FIRST', w.get('id'), w.get('label'), repr(w.get('action', '')), w.get('hub_of_subgroup'))
+ag = [p for p in pages if p.get('group') == 'Agents']
+print('AGENTS', ' '.join('%s:%s:%r:%s' % (p['id'], p['label'], p.get('action', ''), ','.join(p.get('hub_sections', []))) for p in ag))
+print('NETWORK', ','.join(p['id'] for p in pages if p.get('subgroup') == 'Network' and not p.get('hidden')))
 rows = [g for s in secs for g in s.get('tile_groups', []) if g.get('title') == 'Configs']
 tiles = rows[0]['tiles'] if rows else []
 print('ROW', '|'.join('%s=%s' % (t.get('label'), t.get('target', '')) for t in tiles if not t.get('separator')))
 PY
 )"
 echo "$out" | sed 's/^/    /'
-echo "$out" | grep -qx "FIRST watchdog Watchdog '' Network" && ok "Watchdog is the first Network page, an in-app page, hub over Network" \
-  || bad "the first Network page is not the in-app Watchdog hub (hub_of_subgroup Network, no action)"
+echo "$out" | grep -qx "AGENTS watchdog:Watchdog:'':Network,Observability watchtower:Watchtower:'':Observability" \
+  && ok "Agents = Watchdog (Network + Observability) and Watchtower (Observability), both in-app hub pages" \
+  || bad "Agents is not Watchdog (hub Network, Observability) then Watchtower (hub Observability), both without an action"
+echo "$out" | grep -q '^NETWORK.*watchdog' && bad "Watchdog is still a Network item" || ok "Watchdog left Network"
 echo "$out" | grep -q '|Watchdog=page:config/watchdog|' && ok "Cloud ▸ Apps ▸ Configs opens page:config/watchdog" \
   || bad "Cloud ▸ Apps ▸ Configs has no Watchdog tile on page:config/watchdog"
 echo "$out" | grep -q 'Firewall=' && bad "Cloud ▸ Apps ▸ Configs still has a Firewall tile" || ok "Cloud ▸ Apps ▸ Configs no longer carries Firewall"
 
 echo "== W2: derived, routed by data, drawn by the shared component =="
-grep -qE 'hubOfSubgroup\.isNotBlank\(\) -> SubgroupHubFragment\.newInstance\(sectionId, pageId\)' "$KT/SectionPages.kt" \
-  && ok "SectionPages routes any hub_of_subgroup page to SubgroupHubFragment" || bad "no data-driven hub branch in SectionPages"
-grep -q 'pageId == "watchdog"' "$KT/SectionPages.kt" && bad "SectionPages names the watchdog page by id" || ok "no per-id branch for watchdog"
-grep -q 'fun hubTiles(' "$KT/Sections.kt" && ok "Sections.hubTiles derives the tiles" || bad "Sections.hubTiles missing"
-grep -q 'TileStrip(tiles' "$KT/SubgroupHubFragment.kt" && ok "the hub draws TileStrip (Cloud ▸ Apps' tile component)" || bad "the hub does not reuse TileStrip"
-grep -qE 'Firewall|"dns"|Webserver' "$KT/SubgroupHubFragment.kt" && bad "the hub hard-codes a Network entry" || ok "the hub names no Network entry"
+grep -qE 'hubSections\.isNotEmpty\(\) -> SubgroupHubFragment\.newInstance\(sectionId, pageId\)' "$KT/SectionPages.kt" \
+  && ok "SectionPages routes any hub_sections page to SubgroupHubFragment" || bad "no data-driven hub branch in SectionPages"
+grep -qE 'pageId == "(watchdog|watchtower)"' "$KT/SectionPages.kt" && bad "SectionPages names a hub page by id" || ok "no per-id branch for watchdog or watchtower"
+grep -q 'fun hubSections(' "$KT/Sections.kt" && ok "Sections.hubSections derives the sections" || bad "Sections.hubSections missing"
+grep -q 'GroupTitle(sec.title)' "$KT/SubgroupHubFragment.kt" && ok "each section is titled with GroupTitle (Cloud ▸ Apps' heading)" || bad "the hub does not title its sections with GroupTitle"
+grep -q 'TileStrip(sec.tiles' "$KT/SubgroupHubFragment.kt" && ok "the hub draws TileStrip (Cloud ▸ Apps' tile component)" || bad "the hub does not reuse TileStrip"
+grep -qE 'Firewall|"dns"|Webserver|X-Ray|"xray"|"Network"|"Observability"' "$KT/SubgroupHubFragment.kt" && bad "the hub hard-codes an entry or a section" || ok "the hub names no entry and no section"
 
 echo; echo "== RESULT: $PASS passed, $FAIL failed =="
 [ "$FAIL" = 0 ]

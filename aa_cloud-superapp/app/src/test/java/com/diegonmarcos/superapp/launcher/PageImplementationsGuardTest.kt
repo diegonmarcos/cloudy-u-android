@@ -14,7 +14,7 @@ import java.io.File
  * The source tree mirrors the declared page hierarchy (build.json ui.sections -> ui.page_packages), and the two cannot
  * drift apart silently:
  *
- *   P1 every declared page has an implementation: it is drawn from data (facet / tabs / url / upstream / action / mode / hub_of_subgroup (#1545) /
+ *   P1 every declared page has an implementation: it is drawn from data (facet / tabs / url / upstream / action / mode / hub_sections (#1545, #1548: verified routed and non-empty) /
  *      webapps_base), delegated to a lib (mail, chat), routed by a branch in launcher/SectionPages.kt, or it says so with
  *      `placeholder: true`. A page with none of these would open the "Coming soon" stub unannounced.
  *   P2 a `placeholder: true` page really has no implementation (the flag goes stale the day one lands).
@@ -61,15 +61,18 @@ class PageImplementationsGuardTest {
     private fun hasData(d: Decl) =
         dataKeys.any { d.o.has(it) && d.o.opt(it).toString().let { v -> v.isNotBlank() && v != "false" } } ||
             (d.o.optJSONArray("tabs")?.length() ?: 0) > 0 ||
-            (d.o.optString("hub_of_subgroup").isNotBlank() && hubRouted && hubSubgroupHasPages(d))
+            (hubSectionsOf(d).isNotEmpty() && hubRouted && hubSectionsHavePages(d))
 
-    /** #1545 a `hub_of_subgroup` page is implemented only while SectionPages really routes the key to SubgroupHubFragment. */
-    private val hubRouted = Regex("""hubOfSubgroup\.isNotBlank\(\)\s*->\s*SubgroupHubFragment\.newInstance""").containsMatchIn(routing)
+    /** `hub_sections` of a page (#1545, #1548): the subgroups a hub page shows, one titled grid section each. */
+    private fun hubSectionsOf(d: Decl): List<String> =
+        d.o.optJSONArray("hub_sections")?.let { a -> (0 until a.length()).map { a.getString(it) } }.orEmpty()
 
-    /** ...and its subgroup holds at least one other visible page, so the grid it draws is never empty. */
-    private fun hubSubgroupHasPages(d: Decl): Boolean {
-        val sub = d.o.optString("hub_of_subgroup")
-        return declared().any { it.section == d.section && it.page != d.page && it.o.optString("subgroup") == sub && !it.o.optBoolean("hidden") }
+    /** A hub page is implemented only while SectionPages really routes the key to SubgroupHubFragment... */
+    private val hubRouted = Regex("""hubSections\.isNotEmpty\(\)\s*->\s*SubgroupHubFragment\.newInstance""").containsMatchIn(routing)
+
+    /** ...and EVERY subgroup it lists holds at least one other visible page, so no section it draws is empty. */
+    private fun hubSectionsHavePages(d: Decl): Boolean = hubSectionsOf(d).all { sub ->
+        declared().any { it.section == d.section && it.page != d.page && it.o.optString("subgroup") == sub && !it.o.optBoolean("hidden") }
     }
 
     @Test fun `P1 every declared page is implemented, data-drawn, lib-hosted or declared a placeholder`() {

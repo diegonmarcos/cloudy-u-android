@@ -192,8 +192,11 @@ import json
 d=json.load(open('$BJ'))
 c=[s for s in d['ui']['sections'] if s['id']=='config'][0]
 print(' '.join(p['id'] for p in c['pages']
-                if not p.get('hidden') and not p.get('is_action')))
+                if not p.get('hidden') and not p.get('is_action')
+                and p.get('group') == 'Setup' and p.get('subgroup') == 'Observability'))
 ")
+# #1548 Fleet and Agents now FOLLOW Setup in the declared tree, so "last" is scoped to where About lives: it closes
+# Setup ▸ Observability (X-Ray, LogCat, Permissions, About).
 # #580 deleted Configs ▸ Home (its two tabs merged into Launcher ▸ Notify), so
 # the page that used to sit immediately before About is gone. What is left to
 # pin is the other half of the old rule: About is opened once ever and stays the
@@ -201,9 +204,9 @@ print(' '.join(p['id'] for p in c['pages']
 if case " $ORDER " in *" home "*) true ;; *) false ;; esac; then
   bad "a Configs page named home is declared again — #580 deleted it; its tabs live in Launcher"
 elif [ "${TILED##* }" = "app-about" ]; then  # About is app-about since the X-Ray regroup (about aliases X-Ray)
-  ok "no Home page in ui.sections[config].pages, and About is its last tiled entry"
+  ok "no Home page in ui.sections[config].pages, and About is the last tiled entry of Setup ▸ Observability"
 else
-  bad "About is not the last tiled Configs entry — tiled tail is: $(echo "$TILED" | tr ' ' '\n' | tail -4 | tr '\n' ' ')"
+  bad "About is not the last tiled entry of Setup ▸ Observability — its tail is: $(echo "$TILED" | tr ' ' '\n' | tail -4 | tr '\n' ' ')"
 fi
 # Both surfaces read that one list. A Kotlin-side order would be a second truth.
 grep -qF 'SectionPages.pagesFor(section)' "$SHELL_KT" \

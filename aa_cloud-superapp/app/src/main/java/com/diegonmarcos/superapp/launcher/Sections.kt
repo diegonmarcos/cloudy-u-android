@@ -515,9 +515,10 @@ object Sections {
          *  reference survives the group being retitled or reordered. */
         val appsExtraTileIds: List<String> = emptyList(),
 
-        /** `hub_of_subgroup` (#1545): this page IS a hub over that subgroup of its own section — an icon grid of every
-         *  other visible page declared with that [subgroup], in declaration order ([hubTiles]). Blank ⇒ an ordinary page. */
-        val hubOfSubgroup: String = "",
+        /** `hub_sections` (#1545, #1548): this page IS a hub over those subgroups of its own section — one titled icon-grid
+         *  section per entry, in this order, each listing every other visible page declared with that [subgroup]
+         *  ([hubSections]). Empty ⇒ an ordinary page. */
+        val hubSections: List<String> = emptyList(),
     )
 
     /** App-level action tile shown in the Home master TileGrid below the
@@ -754,7 +755,7 @@ object Sections {
                         group    = po.optString("group", ""),
                         subgroup = po.optString("subgroup", ""),
                         settings = po.optJSONArray("settings")?.let { sa -> (0 until sa.length()).map { sa.getString(it) } }.orEmpty(),
-                        hubOfSubgroup = po.optString("hub_of_subgroup", ""),
+                        hubSections = po.optJSONArray("hub_sections")?.let { ha -> (0 until ha.length()).map { ha.getString(it) } }.orEmpty(),
                         appsFromTileGroup = po.optString("apps_from_tile_group", ""),
                         appsExtraTileIds = po.optJSONArray("apps_extra_tile_ids")?.let { ea ->
                             (0 until ea.length()).map { ea.getString(it) }
@@ -1059,18 +1060,23 @@ object Sections {
         return out
     }
 
+    /** One titled section of a hub page: the subgroup's words as its heading, its pages as tiles. */
+    data class HubSection(val title: String, val tiles: List<AggTile>)
+
     /**
-     * #1545 The tiles of a hub page ([Page.hubOfSubgroup]): every other visible, non-separator page of [section] in that
-     * subgroup, in declaration order — derived, so the hub and the subgroup's own nav cannot disagree. Each tile keeps
-     * the page's OWN target: its `action` when it declares one (an app such as Webserver, a section such as Cloud Mesh,
-     * a Cloud Store hand-off such as Apps Access — dispatched exactly as the Configs grid tile is), else
-     * `page:<section>/<id>`, which opens the page inside this app.
+     * #1545 #1548 The sections of a hub page ([Page.hubSections]), in declared order: per subgroup, every other visible,
+     * non-separator page of [section] in it, in declaration order — derived, so the hub and the section's own nav cannot
+     * disagree. Each tile keeps the page's OWN target: its `action` when it declares one (an app such as Webserver, a
+     * section such as Cloud Mesh, a Cloud Store hand-off such as Apps Access — dispatched exactly as the Configs grid tile
+     * is), else `page:<section>/<id>`, which opens the page inside this app. A subgroup with no pages yields no section.
      */
-    fun hubTiles(section: Section, hub: Page): List<AggTile> =
-        if (hub.hubOfSubgroup.isBlank()) emptyList()
-        else section.pages
-            .filter { it.subgroup == hub.hubOfSubgroup && it.id != hub.id && !it.hidden && !it.separator }
+    fun hubSections(section: Section, hub: Page): List<HubSection> = hub.hubSections.mapNotNull { sub ->
+        section.pages
+            .filter { it.subgroup == sub && it.id != hub.id && !it.hidden && !it.separator }
             .map { AggTile(it.id, it.label, it.iconName ?: "", hubTarget(section.id, it)) }
+            .takeIf { it.isNotEmpty() }
+            ?.let { HubSection(sub, it) }
+    }
 
     /** Where a hub tile for [page] goes: its declared `action`, else the in-app page. */
     fun hubTarget(sectionId: String, page: Page): String = page.action.ifBlank { "page:$sectionId/${page.id}" }
