@@ -76,6 +76,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
@@ -233,11 +234,13 @@ fun FilesScreen(controller: FilesController, actions: DriveActions, hasAccess: B
         }
 
         Box(Modifier.weight(1f).fillMaxWidth()) {
-            if (searching && searchScope?.recursive == true && ExplorerSearch.needle(query).isNotEmpty()) {
-                ScopedResults(scopedHits, searchDecl, onOpen = { e ->
+            if (searching && searchScope != null && ExplorerSearch.needle(query).isNotEmpty()) {
+                // #1537 search results are ONE sortable table (Name | Size | Folder | Modified | Created), recursive hits and the in-place filter alike.
+                val inPlace = if (searchScope.recursive) emptyList() else listings[activeLoc.key]?.let { controller.visible(ui.activePane, it) }.orEmpty()
+                ScopedResults(if (searchScope.recursive) scopedHits else FilesController.ScopedSearch(query, searchScope.id), inPlace, searchScope.recursive, searchDecl, onOpen = { e ->
                     closeSearch()
-                    // #1537 a hit that is a file opens in the Editor; a folder opens in the pane.
-                    if (e.isDirectory) controller.open(ui.active, e.location) else (e.location as? Location.Local)?.let { openEntry(ui.active, e, scopedHits.hits) }
+                    // a hit that is a file opens in the Editor; a folder opens in the pane.
+                    if (e.isDirectory) controller.open(ui.active, e.location) else (e.location as? Location.Local)?.let { openEntry(ui.active, e, listOf(e)) }
                 })
             } else {
                 BoxWithConstraints(Modifier.fillMaxSize()) {
@@ -760,27 +763,21 @@ private fun ExplorerSearchBar(query: String, onQuery: (String) -> Unit, decl: De
     }
 }
 
-/** A recursive scope's streamed hits: name, then the folder holding it. */
+/** #1537 the search results as the sortable table: a recursive scope's streamed hits, or the in-place scope's filtered listing ([inPlace]). */
 @Composable
-private fun ScopedResults(search: FilesController.ScopedSearch, decl: Declarations.FilesSearchDecl, onOpen: (FileOps.Entry) -> Unit) {
+private fun ScopedResults(search: FilesController.ScopedSearch, inPlace: List<FileOps.Entry>, recursive: Boolean, decl: Declarations.FilesSearchDecl, onOpen: (FileOps.Entry) -> Unit) {
+    var sortColumn by rememberSaveable { mutableStateOf(SearchColumn.NAME.name) }
+    var descending by rememberSaveable { mutableStateOf(false) }
+    val sort = SearchSort(SearchColumn.entries.firstOrNull { it.name == sortColumn } ?: SearchColumn.NAME, descending)
+    val created = remember { HashMap<String, Long>() }
+    val entries = if (recursive) search.hits else inPlace
+    val rows = remember(entries, sort) { SearchTable.sort(SearchTable.rows(entries) { p, m -> created.getOrPut(p) { SearchTable.createdTime(p, m) } }, sort) }
     Column(Modifier.fillMaxSize().testTag(DriveTags.FILES_SEARCH_RESULTS)) {
-        if (search.stop == ExplorerSearch.Stop.RESULTS || search.stop == ExplorerSearch.Stop.SCANNED)
+        if (recursive && (search.stop == ExplorerSearch.Stop.RESULTS || search.stop == ExplorerSearch.Stop.SCANNED))
             Row(Modifier.padding(horizontal = DriveMetrics.gutter)) { CapsuleBadge(stringResource(R.string.files_search_truncated, if (search.stop == ExplorerSearch.Stop.RESULTS) decl.resultCeiling else search.hits.size)) }
         when {
-            search.hits.isEmpty() && !search.running -> EmptyState(Icons.Filled.Search, stringResource(R.string.files_search_none, search.query), stringResource(R.string.files_search_none_hint))
-            else -> LazyColumn(Modifier.fillMaxSize()) {
-                items(search.hits, key = { it.key }) { e ->
-                    Row(Modifier.fillMaxWidth().clickable { onOpen(e) }.padding(horizontal = DriveMetrics.padWide, vertical = DriveMetrics.pad), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(IconCatalog.forEntry(e.isDirectory, e.mime, e.extension, false), contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Spacer(Modifier.width(DriveMetrics.padWide))
-                        Column(Modifier.weight(1f)) {
-                            Text(e.name, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                            Text((e.location as? Location.Local)?.parent()?.path ?: "", style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Monospace, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        }
-                    }
-                    Hairline(Modifier.padding(start = DriveMetrics.glyph + DriveMetrics.padWide))
-                }
-            }
+            rows.isEmpty() && !(recursive && search.running) -> EmptyState(Icons.Filled.Search, stringResource(R.string.files_search_none, search.query), stringResource(R.string.files_search_none_hint))
+            else -> SearchResultsTable(rows, sort, onSort = { c -> val next = sort.tap(c); sortColumn = next.column.name; descending = next.descending }, onOpen = { r -> onOpen(r.entry) })
         }
     }
 }

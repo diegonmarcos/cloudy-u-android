@@ -35,6 +35,11 @@
     <string name="files_search">Search</string>
     <string name="files_search_none">No match for “%1$s”</string>
     <string name="files_search_none_hint">Try a shorter name, or search inside text files</string>
+    <string name="files_search_col_name">Name</string>
+    <string name="files_search_col_size">Size</string>
+    <string name="files_search_col_folder">Folder</string>
+    <string name="files_search_col_modified">Modified</string>
+    <string name="files_search_col_created">Created</string>
     <string name="files_search_truncated">Stopped at %1$d results</string>
     <string name="files_places">Go to</string>
     <string name="files_places_section">Places</string>

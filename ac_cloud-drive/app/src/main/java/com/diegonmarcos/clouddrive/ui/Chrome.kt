@@ -100,6 +100,8 @@ object DriveMetrics {
     /** Manage ▸ Apps table: the app column and every numeric column, so the table scrolls sideways at phone width. */
     val tableName = 160.dp
     val tableCell = 76.dp
+    /** #1537 the search table's two date columns (yyyy-MM-dd HH:mm at the caption size). */
+    val tableDate = 100.dp
     /** #1356 the fade at the end edge of a sideways-scrolling row (table facts, quick filter chips). */
     val fadeEdge = 32.dp
     /** #1356 a compact chip (the quick filter rail). */
@@ -296,6 +298,10 @@ object DriveTags {
     fun dataKind(id: String) = "manage_data_kind_$id"
     const val DATA_ROW = "manage_data_row"
     /** #1537 Manage: the Overview rows, Local-Apps' two views, Local-Data's "All" filter and volume switcher. */
+    /** #1537 the search-results table: the table, a header per column, a row. */
+    const val SEARCH_TABLE = "files_search_table"
+    fun searchHeader(column: String) = "files_search_header_$column"
+    const val SEARCH_ROW = "files_search_row"
     const val OVERVIEW = "manage_overview"
     fun overviewRow(id: String) = "manage_overview_row_$id"
     const val OVERVIEW_BAR = "manage_overview_bar"
