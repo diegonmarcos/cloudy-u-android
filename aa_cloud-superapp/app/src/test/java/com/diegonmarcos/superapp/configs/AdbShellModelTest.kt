@@ -1,6 +1,7 @@
 package com.diegonmarcos.superapp.configs
 
 import com.diegonmarcos.superapp.shellbroker.AuditLog
+import com.diegonmarcos.superapp.shellclient.AdbLink
 import com.diegonmarcos.superapp.shellclient.ShellStatus
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -30,10 +31,16 @@ class AdbShellModelTest {
     }
 
     @Test fun `M3 status card shows reason and time`() {
-        val down = ShellStatus(true, false, "none", "", 1_000L, "wireless debugging is off")
+        val down = ShellStatus(true, false, "none", "", 1_000L, "wireless debugging is off", adb = AdbLink.WIRELESS_OFF)
         assertEquals(false, AdbShellModel.verdict(down))
         assertTrue(AdbShellModel.detail(down).contains("wireless debugging is off") && AdbShellModel.detail(down).contains("checked"))
-        assertEquals(true, AdbShellModel.verdict(ShellStatus(true, true, "embedded-adb", "ok", 1_000L)))
+        assertEquals(true, AdbShellModel.verdict(ShellStatus(true, true, "embedded-adb", "ok", 1_000L, adb = AdbLink.CONNECTED)))
+        // #1550 the reported case: broker up through the local server while Wireless debugging is off
+        val brokerOnly = ShellStatus(true, true, "local-server", "ok", 1_000L, adb = AdbLink.WIRELESS_OFF)
+        assertEquals(false, AdbShellModel.verdict(brokerOnly))
+        assertEquals(true, AdbShellModel.brokerVerdict(brokerOnly))
+        assertEquals("ADB: Wireless debugging is off", AdbShellModel.title(brokerOnly))
+        assertTrue(AdbShellModel.detail(brokerOnly).contains("shell broker up via local-server"))
         assertNull(AdbShellModel.verdict(null))
         assertEquals("37123", AdbShellModel.port("192.168.1.5:37123"))
         assertNull(AdbShellModel.port("192.168.1.5"))

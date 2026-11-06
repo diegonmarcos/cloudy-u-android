@@ -51,7 +51,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
@@ -83,6 +82,10 @@ private fun ConnState.title(): String = when (this) {
     ConnState.CONNECTING -> "Connecting"
     ConnState.DOWN -> "Down"
 }
+
+/** #1550 the shared adb transport state from this page's facts (adbConnected is an echo round trip over the embedded client). */
+internal fun adbLink(f: ChannelFacts): com.diegonmarcos.superapp.shellclient.AdbLink =
+    com.diegonmarcos.superapp.shellclient.AdbLink.classify(adbEnabled = null, wireless = f.wirelessDebug, paired = f.adbPaired, roundTrip = f.adbConnected)
 
 private fun stamp(ms: Long): String = SimpleDateFormat("HH:mm:ss", Locale.US).format(Date(ms))
 
@@ -165,11 +168,23 @@ fun AdbShellPage(modifier: Modifier = Modifier) {
             if (s != lastProbe[0]) { lastProbe[0] = s; log.add("probe", s) }
         } else log.add("probe", "could not read the layers")
     }
-    LaunchedEffect(Unit) {
-        while (true) {
-            delay(6_000)
-            if (!connecting && busy == null) tick++
+    // #1550 no polling: re-read when Wireless debugging / adb is switched and when the host activity resumes.
+    DisposableEffect(ctx) {
+        val stop = com.diegonmarcos.superapp.shellclient.AdbWatch.observe(ctx) { if (!connecting && busy == null) tick++ }
+        val app = ctx.applicationContext as? android.app.Application
+        var host: Context? = ctx
+        while (host is android.content.ContextWrapper && host !is android.app.Activity) host = host.baseContext
+        val cb = object : android.app.Application.ActivityLifecycleCallbacks {
+            override fun onActivityResumed(a: android.app.Activity) { if (a === host && !connecting && busy == null) tick++ }
+            override fun onActivityCreated(a: android.app.Activity, b: android.os.Bundle?) {}
+            override fun onActivityStarted(a: android.app.Activity) {}
+            override fun onActivityPaused(a: android.app.Activity) {}
+            override fun onActivityStopped(a: android.app.Activity) {}
+            override fun onActivitySaveInstanceState(a: android.app.Activity, b: android.os.Bundle) {}
+            override fun onActivityDestroyed(a: android.app.Activity) {}
         }
+        app?.registerActivityLifecycleCallbacks(cb)
+        onDispose { stop(); app?.unregisterActivityLifecycleCallbacks(cb) }
     }
 
     val facts = raw?.copy(mode = mode, connecting = connecting)
@@ -202,12 +217,18 @@ fun AdbShellPage(modifier: Modifier = Modifier) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Text("ADB Shell", fontSize = 14.sp, fontWeight = FontWeight.Bold)
             StateDot((conn?.dot() ?: Dot.UNKNOWN).color())
-            Text(conn?.title() ?: "Reading", fontSize = 12.sp, modifier = Modifier.weight(1f))
+            Text("Channel " + (conn?.title() ?: "reading"), fontSize = 12.sp, modifier = Modifier.weight(1f))
             DenseButton("Wireless debugging", onClick = { AdbShellLink.open(ctx, ControlStatus.Action.OPEN_SETTINGS) })
             DenseButton("Refresh", onClick = { tick++ })
         }
         Dim("Live check (echo round trip" + (facts?.let { ", " + stamp(it.probedAt) } ?: "") + "): " + when (conn) {
             ConnState.UP -> "answered"; ConnState.DOWN -> "no answer"; null -> "reading"; else -> conn.title().lowercase() }, size = 11)
+        // #1550 the adb TRANSPORT on its own line (the channel above can be up through the local server with adb down).
+        val link = facts?.let { adbLink(it) }
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.testTag("adb_console:transport")) {
+            StateDot(when (link?.verdict) { true -> C_OK; false -> C_BAD; null -> C_UNKNOWN })
+            Text((link ?: com.diegonmarcos.superapp.shellclient.AdbLink.UNKNOWN).label + (facts?.adbEndpoint?.takeIf { link?.up == true }?.let { " $it" } ?: ""), fontSize = 12.sp)
+        }
         // WHO this app is to adbd (the pairing name in the phone's paired-devices list), the same line in every app.
         val identity = remember { AdbIdentity.host(ctx.packageName) }
         Dim("Connection name: ${identity.deviceName}  ·  ${identity.applicationId}", size = 11)
@@ -426,15 +447,13 @@ private fun denseTypography(): androidx.compose.material3.Typography {
 fun AdbShellChip(modifier: Modifier = Modifier) {
     val ctx = LocalContext.current
     var facts by remember { mutableStateOf<ChannelFacts?>(null) }
-    LaunchedEffect(Unit) {
-        while (true) {
-            facts = withContext(Dispatchers.IO) { runCatching { ChannelReader.read(ctx) }.getOrNull() }
-            delay(10_000)
-        }
-    }
-    val conn = facts?.let { ChannelState.connState(it) }
+    var tick by remember { mutableStateOf(0) }
+    // #1550 read on open and when Wireless debugging / adb is switched; no timer.
+    DisposableEffect(ctx) { val stop = com.diegonmarcos.superapp.shellclient.AdbWatch.observe(ctx) { tick++ }; onDispose { stop() } }
+    LaunchedEffect(tick) { facts = withContext(Dispatchers.IO) { runCatching { ChannelReader.read(ctx) }.getOrNull() } }
+    val link = facts?.let { adbLink(it) }
     Row(modifier.clickable { AdbShellLink.open(ctx) }, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        StateDot((conn?.dot() ?: Dot.UNKNOWN).color())
+        StateDot(when (link?.verdict) { true -> C_OK; false -> C_BAD; null -> C_UNKNOWN })
         Text(ChannelState.chip(facts) + "  ›", fontSize = 11.sp)
     }
 }

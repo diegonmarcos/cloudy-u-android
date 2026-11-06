@@ -69,7 +69,8 @@ object ShellWire {
 
     fun encodeStatus(s: ShellStatus): String = JSONObject().put("brokerInstalled", s.brokerInstalled)
         .put("armed", s.armed).put("channel", s.channel).put("detail", s.detail)
-        .put("checkedAt", s.checkedAt).put("reason", s.reason).toString()
+        .put("checkedAt", s.checkedAt).put("reason", s.reason)
+        .put("adb", s.adb.id).put("adbDetail", s.adbDetail).toString()
 
     fun decodeStatus(json: String?): ShellStatus {
         val o = runCatching { JSONObject(json.orEmpty()) }.getOrNull()
@@ -79,7 +80,9 @@ object ShellWire {
             0L, "SuperApp outdated (no live check)")
         val armed = o.optBoolean("armed", false)
         return ShellStatus(true, armed, o.optString("channel", "none"), o.optString("detail"), o.optLong("checkedAt", 0L),
-            o.optString("reason").takeUnless { armed }.orEmpty())
+            o.optString("reason").takeUnless { armed }.orEmpty(),
+            // #1550 a broker that sends no adb state predates it: UNKNOWN, never green.
+            AdbLink.of(o.optString("adb", "")), o.optString("adbDetail"))
     }
 
     /** Clamp a caller's timeout into 1 s .. [MAX_TIMEOUT_MS]; every call has one. */

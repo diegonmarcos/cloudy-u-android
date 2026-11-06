@@ -351,7 +351,12 @@ class StatusStripModel(private val context: Context) {
     }
     /** USB debugging / Wireless debugging flips: Settings.Global, observed, never polled. */
     private val adbObserver = object : ContentObserver(Handler(Looper.getMainLooper())) {
-        override fun onChange(selfChange: Boolean) { refreshAdb() }
+        // #1550 a Wireless debugging / adb switch flipped: the dot re-checks the transport now (no cached green).
+        override fun onChange(selfChange: Boolean) {
+            refreshAdb()
+            runCatching { com.diegonmarcos.superapp.shellbroker.ShellBroker.invalidate(context) }
+            refreshBroker()
+        }
     }
     private val networkCallback = object : ConnectivityManager.NetworkCallback() {
         override fun onCapabilitiesChanged(network: Network, caps: NetworkCapabilities) { mainHandler.post { refreshNetworkFromConnectivity() } }

@@ -134,6 +134,7 @@ dependencies {
     // page: every consumer already has androidx.activity (AppCompat / activity-compose), so it is not bundled here.
     compileOnly 'androidx.activity:activity:1.9.3'
     implementation project(':libs:core')
+    implementation project(':libs:shell-client')   // #1550 AdbLink / AdbWatch: the one adb transport state and its change event
     // HostShell: the re-arm job a host app schedules (WorkManager), shared by Cloud Store and Cloud Account.
     implementation 'androidx.work:work-runtime-ktx:2.12.0'
 

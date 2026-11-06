@@ -24,10 +24,21 @@ sealed class ShellResult {
  * [channel] its name; [detail] one human line; [reason] why it is down ("" when armed); [checkedAt] epoch ms of the check (0 = never checked).
  */
 data class ShellStatus(val brokerInstalled: Boolean, val armed: Boolean, val channel: String, val detail: String,
-                       val checkedAt: Long = 0L, val reason: String = "") {
+                       val checkedAt: Long = 0L, val reason: String = "",
+                       /** #1550 the adb transport, separate from [armed] (see [AdbLink]); [adbDetail] its endpoint or failure. */
+                       val adb: AdbLink = AdbLink.UNKNOWN, val adbDetail: String = "") {
     /** The one line every ADB/shell indicator shows: green only when [armed]; else the real reason; always the check time. */
     fun line(): String {
         val at = if (checkedAt > 0) " (checked ${java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.US).format(java.util.Date(checkedAt))})" else ""
         return if (armed) "ADB shell: up via $channel$at" else "ADB shell: down - ${reason.ifBlank { detail }.ifBlank { "unknown" }}$at"
+    }
+
+    private fun at(): String = if (checkedAt > 0) " (checked ${java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.US).format(java.util.Date(checkedAt))})" else ""
+
+    /** #1550 The one line every ADB indicator shows: the transport state, its detail, the broker separately, the check time. */
+    fun adbLine(): String {
+        val d = if (adbDetail.isNotBlank()) " ($adbDetail)" else ""
+        val broker = if (armed) " · shell broker up via $channel" else " · shell broker down: ${reason.ifBlank { detail }.ifBlank { "unknown" }}"
+        return adb.label + d + broker + at()
     }
 }

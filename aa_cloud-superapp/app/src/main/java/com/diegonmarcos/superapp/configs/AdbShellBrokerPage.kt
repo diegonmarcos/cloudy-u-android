@@ -103,7 +103,9 @@ internal fun AdbShellBrokerPage() {
     DisposableEffect(owner) {
         val o = LifecycleEventObserver { _, e -> if (e == Lifecycle.Event.ON_RESUME) tick++ }
         owner.lifecycle.addObserver(o)
-        onDispose { owner.lifecycle.removeObserver(o) }
+        // #1550 re-check when Wireless debugging / adb is switched, and on resume; no polling.
+        val stop = com.diegonmarcos.superapp.shellclient.AdbWatch.observe(ctx) { runCatching { ShellBroker.invalidate(ctx) }; tick++ }
+        onDispose { owner.lifecycle.removeObserver(o); stop() }
     }
     LaunchedEffect(tick) { val s = withContext(Dispatchers.IO) { loadAdbPage(ctx) }; state = s.copy(note = state.note) }
     fun run(msg: String, work: () -> String) {
@@ -115,7 +117,7 @@ internal fun AdbShellBrokerPage() {
     val actions = AdbPageActions(
         primary = { if (it == AdbShellModel.Primary.PAIR) pair() else rearm() }, rearm = rearm, pair = pair,
         openSettings = { AdbShellLink.open(ctx, ControlStatus.Action.OPEN_SETTINGS) },
-        testNow = { run("Testing") { ShellBroker.status(ctx).line() } },
+        testNow = { run("Testing") { ShellBroker.invalidate(ctx); ShellBroker.status(ctx).let { it.adbLine() + "\n" + it.line() } } },
         toggleKeeper = { WirelessDebugKeeper.Prefs.setEnabled(ctx, !state.keeperOn); tick++ },
         fixPerms = { WdKeeper.openPermsFix(ctx) },
     )
@@ -168,12 +170,14 @@ internal fun AdbShellContent(
                     KitStoreRowLine(Modifier.testTag("adb:status")) {
                         KitStoreDot("●", ink(v))
                         Column(Modifier.weight(1f)) {
-                            Text(if (v == true) "Shell up" else if (v == false) "Shell down" else "Checking", fontSize = KitStoreRow.title, fontWeight = FontWeight.Bold)
+                            Text(AdbShellModel.title(s.status), fontSize = KitStoreRow.title, fontWeight = FontWeight.Bold)
                             Text(AdbShellModel.detail(s.status), fontSize = KitStoreRow.body)
                         }
                         val p = AdbShellModel.primary(s.paired)
                         KitStoreQuick(p.label, if (v == true) KitStoreRow.BLUE_FILL else KitStoreRow.AMBER_FILL, Modifier.testTag("adb:primary"), onClick = { a.primary(p) })
                     }
+                    val b = AdbShellModel.brokerVerdict(s.status)
+                    Fact("Shell broker", s.status?.line() ?: "checking", tick(b), ink(b))
                     Fact("Wireless debugging", when (s.wireless) { true -> "on"; false -> "off"; null -> "unknown" }, tick(s.wireless), ink(s.wireless))
                     Fact("Paired", if (s.paired) "yes" else "no", tick(s.paired), ink(s.paired))
                     Fact("Port", s.port ?: "-")

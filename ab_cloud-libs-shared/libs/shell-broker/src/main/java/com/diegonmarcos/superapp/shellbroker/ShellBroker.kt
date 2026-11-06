@@ -48,6 +48,17 @@ object ShellBroker {
                     else -> "connection refused: paired, but not connected"
                 }
             }.getOrDefault("no privileged channel is armed")
+            // #1550 the adb transport, read apart from the ladder: the local server and Shizuku outlive Wireless debugging.
+            override fun adbFacts(): AdbFacts {
+                fun global(k: String): Boolean? = runCatching { android.provider.Settings.Global.getInt(app.contentResolver, k) == 1 }.getOrNull()
+                val emb = com.diegonmarcos.superapp.adbdebug.EmbeddedAdbChannel
+                return AdbFacts(global("adb_enabled"), global("adb_wifi_enabled"), emb.everPaired(app),
+                    runCatching { emb.isReady(app) }.getOrDefault(false), runCatching { emb.endpoint(app) }.getOrNull())
+            }
+            override fun adbRun(cmd: String): String? {
+                val emb = com.diegonmarcos.superapp.adbdebug.EmbeddedAdbChannel
+                return if (runCatching { emb.isReady(app) }.getOrDefault(false)) emb.exec(app, cmd) else null
+            }
             override fun run(cmd: String, stdin: File?): String? {
                 val ch = ShellChannels.active(app) ?: return null
                 return if (stdin != null) ch.execWithStdin(app, cmd, stdin) else ch.exec(app, cmd)
@@ -87,6 +98,9 @@ object ShellBroker {
     @Volatile var onStatusChange: ((ShellStatus) -> Unit)? = null
 
     fun status(ctx: Context): ShellStatus = core(ctx).status()
+
+    /** #1550 A Wireless debugging / adb setting changed (or the page resumed): the next [status] re-checks instead of the cache. */
+    fun invalidate(ctx: Context) = core(ctx).invalidate()
 
     fun auditEntries(ctx: Context): List<AuditLog.Entry> = core(ctx).auditEntries()
 

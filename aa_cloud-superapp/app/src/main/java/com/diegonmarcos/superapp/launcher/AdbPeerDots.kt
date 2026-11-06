@@ -29,10 +29,11 @@ internal object AdbPeerDots {
     /** [armed] null = not checked yet (grey). */
     fun tint(armed: Boolean?): Int = when (armed) { true -> UP; false -> DOWN; null -> OFF }
 
-    fun tints(status: ShellStatus?): List<Int> = listOf(tint(status?.armed))
+    /** #1550 the ADB transport ([ShellStatus.adb]), never the broker's [ShellStatus.armed]: the local server outlives adb. */
+    fun tints(status: ShellStatus?): List<Int> = listOf(tint(status?.adb?.verdict))
 
     /** The spoken form: the status line, which carries the reason and the check time. */
-    fun describe(status: ShellStatus?): String = status?.line() ?: "checking"
+    fun describe(status: ShellStatus?): String = status?.let { it.adbLine() + "; " + it.line() } ?: "checking"
 }
 
 /** The 2 dp dot(s) in the strip's own dot size (the same footprint class as SignalDots). */

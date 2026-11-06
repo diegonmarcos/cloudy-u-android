@@ -32,10 +32,17 @@ internal object AdbShellModel {
     fun primary(paired: Boolean): Primary = if (paired) Primary.REARM else Primary.PAIR
 
     /** The state glyph key of the live round trip: true = green, false = red, null = not checked yet. */
-    fun verdict(st: ShellStatus?): Boolean? = st?.armed
+    /** #1550 the ADB TRANSPORT (adb_wifi_enabled + pairing + a getprop round trip over adb), not the broker's [ShellStatus.armed]. */
+    fun verdict(st: ShellStatus?): Boolean? = st?.adb?.verdict
+
+    /** #1550 the broker on its own line: it can be up through the local server while adb is down. */
+    fun brokerVerdict(st: ShellStatus?): Boolean? = st?.armed
+
+    /** #1550 the status card's title: the transport state. */
+    fun title(st: ShellStatus?): String = st?.adb?.label ?: "ADB: checking"
 
     /** The exact line the card shows (reason and check time included). */
-    fun detail(st: ShellStatus?): String = st?.line() ?: "Checking..."
+    fun detail(st: ShellStatus?): String = st?.adbLine() ?: "Checking..."
 
     /** "37123" from "192.168.1.5:37123"; null when no port is known. */
     fun port(endpoint: String?): String? = endpoint?.substringAfterLast(':', "")?.takeIf { it.isNotBlank() && it.all(Char::isDigit) }

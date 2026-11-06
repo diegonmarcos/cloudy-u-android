@@ -1,5 +1,6 @@
 package com.diegonmarcos.superapp.appstore
 
+import com.diegonmarcos.superapp.shellclient.AdbLink
 import com.diegonmarcos.superapp.shellclient.ShellStatus
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -37,5 +38,22 @@ class StoreChannelTest {
         assertEquals(3, off.size)
         assertTrue(off.all { it.startsWith("settings put global ") })
         assertTrue(StorePlayProtect.commands(true).all { it.endsWith(" 1") })
+    }
+
+    /** #1550 (#1442 regression) the chip's colour is the adb transport: broker up + Wireless debugging off is not green. */
+    @Test fun `chip is green only when adb is connected`() {
+        fun ink(armed: Boolean, adb: AdbLink, installed: Boolean = true) =
+            ControlStatus.ink(ControlStatus.fromBroker(ShellStatus(installed, armed, "local-server", "", 1_000L, adb = adb)))
+        assertEquals(ControlStatus.Ink.AMBER, ink(true, AdbLink.WIRELESS_OFF))
+        assertEquals(ControlStatus.Ink.AMBER, ink(true, AdbLink.NOT_PAIRED))
+        assertEquals(ControlStatus.Ink.AMBER, ink(true, AdbLink.UNREACHABLE))
+        assertEquals(ControlStatus.Ink.AMBER, ink(true, AdbLink.ADB_OFF))
+        assertEquals(ControlStatus.Ink.GREY, ink(true, AdbLink.UNKNOWN))
+        assertEquals(ControlStatus.Ink.GREEN, ink(true, AdbLink.CONNECTED))
+        assertEquals(ControlStatus.Ink.RED, ink(false, AdbLink.UNKNOWN, installed = false))
+        assertEquals(ControlStatus.Ink.GREY, ControlStatus.ink(null))
+        val s = ControlStatus.fromBroker(ShellStatus(true, true, "local-server", "", 1_000L, adb = AdbLink.WIRELESS_OFF))
+        assertTrue("broker still usable for shell work", s.shellUsable)
+        assertTrue(ControlStatus.label(s).contains("Wireless debugging is off") && ControlStatus.label(s).contains("local-server"))
     }
 }

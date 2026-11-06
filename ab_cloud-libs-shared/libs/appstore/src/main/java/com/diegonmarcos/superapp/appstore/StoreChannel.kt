@@ -1,5 +1,6 @@
 package com.diegonmarcos.superapp.appstore
 
+import com.diegonmarcos.superapp.shellclient.AdbLink
 import com.diegonmarcos.superapp.shellclient.ShellStatus
 
 /**
@@ -28,7 +29,9 @@ internal object ControlStatus {
     /** UP = the broker is armed; DOWN = reachable but not armed (arm it in the SuperApp); NOT_PAIRED = no broker (SuperApp missing). */
     enum class Channel { UP, DOWN, NOT_PAIRED }
 
-    data class ChannelStatus(val state: Channel, val via: String? = null, val reason: String? = null, val checkedAt: Long = 0L) {
+    /** #1550 [adb] = the adb transport (AdbLink), which alone decides the chip's colour; [state] stays the broker's (gates shell work). */
+    data class ChannelStatus(val state: Channel, val via: String? = null, val reason: String? = null, val checkedAt: Long = 0L,
+                             val adb: AdbLink = AdbLink.UNKNOWN, val adbDetail: String = "") {
         /** " HH:mm:ss" of the live check, or "". */
         val at: String get() = if (checkedAt > 0) " (checked " + java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.US).format(java.util.Date(checkedAt)) + ")" else ""
         /** The broker executes right now (gates shell work, never the colour). */
@@ -37,14 +40,27 @@ internal object ControlStatus {
 
     fun fromBroker(s: ShellStatus): ChannelStatus = when {
         !s.brokerInstalled -> ChannelStatus(Channel.NOT_PAIRED, null, s.reason.ifBlank { "SuperApp (the shell broker) is not installed" }, s.checkedAt)
-        s.armed -> ChannelStatus(Channel.UP, s.channel, null, s.checkedAt)
-        else -> ChannelStatus(Channel.DOWN, null, s.reason.ifBlank { s.detail }.ifBlank { "not armed" }, s.checkedAt)
+        s.armed -> ChannelStatus(Channel.UP, s.channel, null, s.checkedAt, s.adb, s.adbDetail)
+        else -> ChannelStatus(Channel.DOWN, null, s.reason.ifBlank { s.detail }.ifBlank { "not armed" }, s.checkedAt, s.adb, s.adbDetail)
+    }
+
+    /** #1550 The chip's colour: green ONLY when adb is connected; red when the broker is missing; amber otherwise; grey unknown. */
+    enum class Ink { GREEN, AMBER, RED, GREY }
+
+    fun ink(s: ChannelStatus?): Ink = when {
+        s == null -> Ink.GREY
+        s.state == Channel.NOT_PAIRED -> Ink.RED
+        s.adb.up -> Ink.GREEN
+        s.adb == AdbLink.UNKNOWN -> Ink.GREY
+        else -> Ink.AMBER
     }
 
     /** The chip's one line: green says the route, the others say why and what a tap does. */
+    private fun adbPart(s: ChannelStatus): String = s.adb.label + if (s.adbDetail.isNotBlank()) " (${s.adbDetail})" else ""
+
     fun label(s: ChannelStatus): String = when (s.state) {
-        Channel.UP -> "Shell: SuperApp broker (${s.via ?: "armed"})${s.at}"
-        Channel.DOWN -> "Shell broker: ${s.reason ?: "not armed"} - Arm in SuperApp${s.at}"
+        Channel.UP -> "${adbPart(s)} · Shell: SuperApp broker (${s.via ?: "armed"})${s.at}"
+        Channel.DOWN -> "${adbPart(s)} · Shell broker: ${s.reason ?: "not armed"} - Arm in SuperApp${s.at}"
         Channel.NOT_PAIRED -> "Shell broker: ${s.reason ?: "SuperApp missing"}${s.at}"
     }
 }

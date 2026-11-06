@@ -21,7 +21,14 @@ interface BrokerChannel {
     fun run(cmd: String, stdin: File?): String?
     /** Why no channel is ready (SuperApp-side facts: wireless debugging off, not paired, connection refused). */
     fun whyDown(): String = "no privileged channel is armed"
+    /** #1550 The adb switches and pairing record; null = this channel has no adb facts (the transport reads UNKNOWN). */
+    fun adbFacts(): AdbFacts? = null
+    /** #1550 Run [cmd] over the embedded adb session ONLY (never the local server or Shizuku); null = no session. */
+    fun adbRun(cmd: String): String? = null
 }
+
+/** #1550 [session] = the embedded client holds a socket (a flag, never trusted alone); [endpoint] "host:port" when known. */
+data class AdbFacts(val adbEnabled: Boolean?, val wireless: Boolean?, val paired: Boolean, val session: Boolean, val endpoint: String?)
 
 /** #1510 Battery: the broker holds nothing while idle. Idle = no call in flight and none for [IDLE_MS] (the fleet's 30 s floor). */
 object IdlePolicy {
@@ -86,7 +93,33 @@ class BrokerCore(
         val now = clock()
         lastStatus?.let { if (now - it.checkedAt in 0 until STATUS_TTL_MS) return it }
         val prev = lastStatus
-        return live(now).also { lastStatus = it; if (prev != null && prev.armed != it.armed) runCatching { onChange?.invoke(it) } }
+        return live(now).let { adb(it, now) }.also {
+            lastStatus = it
+            if (prev != null && (prev.armed != it.armed || prev.adb != it.adb)) runCatching { onChange?.invoke(it) }
+        }
+    }
+
+    /** #1550 Drop the cached verdict (a Wireless debugging / adb setting changed): the next [status] checks again. */
+    fun invalidate() { lastStatus = null }
+
+    /** #1550 The adb transport, checked on its own: switches, pairing, then a `getprop` over the embedded session within the timeout. */
+    private fun adb(s: com.diegonmarcos.superapp.shellclient.ShellStatus, now: Long): com.diegonmarcos.superapp.shellclient.ShellStatus {
+        val f = runCatching { channel.adbFacts() }.getOrNull() ?: return s
+        var why = ""
+        val trip: Boolean = if (!f.session) { why = "no adb session"; false } else {
+            val pool = java.util.concurrent.Executors.newSingleThreadExecutor { r -> Thread(r, "shell-broker-adb-check").apply { isDaemon = true } }
+            try {
+                val raw = pool.submit<String?> { channel.adbRun(ADB_CHECK_CMD) }.get(CHECK_TIMEOUT_MS, TimeUnit.MILLISECONDS)
+                val ok = raw != null && !raw.startsWith("ERR: ") && raw.trim().lineSequence().firstOrNull()?.trim()?.all(Char::isDigit) == true && raw.isNotBlank()
+                if (!ok) why = "no answer to getprop over adb"
+                ok
+            } catch (e: TimeoutException) { why = "adb timeout (${CHECK_TIMEOUT_MS / 1000}s)"; false }
+            catch (e: Exception) { why = "adb refused (${(e.cause ?: e).javaClass.simpleName})"; false }
+            finally { pool.shutdownNow() }
+        }
+        val link = com.diegonmarcos.superapp.shellclient.AdbLink.classify(f.adbEnabled, f.wireless, f.paired, trip)
+        val detail = if (link.up) f.endpoint.orEmpty() else why
+        return s.copy(adb = link, adbDetail = detail)
     }
 
     private fun live(now: Long): com.diegonmarcos.superapp.shellclient.ShellStatus {
@@ -201,6 +234,8 @@ class BrokerCore(
         const val DEFAULT_MAX_CONCURRENT = 3
         const val STATUS_TTL_MS = 3_000L
         const val CHECK_TIMEOUT_MS = 4_000L
+        /** #1550 the adb transport round trip: answers the SDK level, digits only. */
+        const val ADB_CHECK_CMD = "getprop ro.build.version.sdk"
         private const val SPOOL_STALE_MS = 60 * 60 * 1000L
         private const val MARK = "__SB_EXIT__"
         private val EXIT = Regex("""\n?$MARK(-?\d+)\s*$""")

@@ -279,7 +279,7 @@ object StoreBar {
         LaunchedEffect(tick) {
             if (!StoreStatus.fresh(ctx)) StoreStatus.refresh(ctx) { MAIN.post { tick++; onChange() } }
         }
-        // #1442 Re-verify the live link on resume and every CHANNEL_RECHECK_MS while shown.
+        // #1442 Re-verify the live link on resume.
         val owner = androidx.lifecycle.compose.LocalLifecycleOwner.current
         androidx.compose.runtime.DisposableEffect(owner) {
             val obs = androidx.lifecycle.LifecycleEventObserver { _, e ->
@@ -287,15 +287,18 @@ object StoreBar {
             owner.lifecycle.addObserver(obs)
             onDispose { owner.lifecycle.removeObserver(obs) }
         }
-        LaunchedEffect(Unit) { while (true) { kotlinx.coroutines.delay(CHANNEL_RECHECK_MS); StoreStatus.invalidate(); tick++ } }
+        // #1550 no polling: re-check when Wireless debugging / adb is switched (Settings.Global observer) and on resume.
+        androidx.compose.runtime.DisposableEffect(ctx) {
+            val stop = com.diegonmarcos.superapp.shellclient.AdbWatch.observe(ctx) { StoreStatus.invalidate(); tick++ }
+            onDispose { stop() }
+        }
         val chLabel = ch?.let { ControlStatus.label(it) } ?: ctx.getString(R.string.store_bar_channel_checking)
         Button(chLabel,
-            when (ch?.state) { ControlStatus.Channel.UP -> Ink.GREEN_FILL; ControlStatus.Channel.DOWN -> AMBER
-                ControlStatus.Channel.NOT_PAIRED -> RED_FILL; null -> Ink.GREY_FILL },
+            when (ControlStatus.ink(ch)) { ControlStatus.Ink.GREEN -> Ink.GREEN_FILL; ControlStatus.Ink.AMBER -> AMBER
+                ControlStatus.Ink.RED -> RED_FILL; ControlStatus.Ink.GREY -> Ink.GREY_FILL },
             { StoreShell.arm(ctx) }, modifier, itemTag(Item.WIRELESS_DEBUG))
     }
 
-    private const val CHANNEL_RECHECK_MS = 15_000L
     private const val RED_FILL = 0xFFC53030.toInt()
 
     private fun openPlayProtect(ctx: Context) {

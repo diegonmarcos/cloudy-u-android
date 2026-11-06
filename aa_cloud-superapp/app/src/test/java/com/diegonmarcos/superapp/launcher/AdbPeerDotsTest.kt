@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.test.core.app.ApplicationProvider
+import com.diegonmarcos.superapp.shellclient.AdbLink
 import com.diegonmarcos.superapp.shellclient.ShellStatus
 import com.diegonmarcos.superapp.settings.LauncherSettingsPrefs
 import com.diegonmarcos.superapp.ui.KitPageHarness
@@ -26,6 +27,7 @@ import org.robolectric.annotation.GraphicsMode
  * #1521 the home screen's top status shows ADB as ONE dot: the central broker's live status.
  *   D1 green only for a verified (armed) status; red for a failed check; grey before the first answer
  *   D2 the strip draws exactly one dot under the ADB label, and the spoken form carries the reason
+ *   D4 (#1550) the dot is the adb TRANSPORT, not the broker: broker up + Wireless debugging off is red
  *   D3 (#1522) the strip model's ADB dot follows the broker's live status: green only on a successful round trip
  */
 @RunWith(RobolectricTestRunner::class)
@@ -33,8 +35,10 @@ import org.robolectric.annotation.GraphicsMode
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class AdbPeerDotsTest : KitPageHarness() {
 
-    private val up = ShellStatus(true, true, "embedded-adb", "ok", 1_000L)
-    private val down = ShellStatus(true, false, "none", "", 1_000L, "wireless debugging is off")
+    private val up = ShellStatus(true, true, "embedded-adb", "ok", 1_000L, adb = AdbLink.CONNECTED)
+    private val down = ShellStatus(true, false, "none", "", 1_000L, "wireless debugging is off", adb = AdbLink.WIRELESS_OFF)
+    /** #1550 the reported case: the broker answers through the local server, Wireless debugging is off. */
+    private val brokerOnly = ShellStatus(true, true, "local-server", "ok", 1_000L, adb = AdbLink.WIRELESS_OFF)
 
     @Before fun petsOff() {
         val app = ApplicationProvider.getApplicationContext<Application>()
@@ -47,6 +51,9 @@ class AdbPeerDotsTest : KitPageHarness() {
         assertEquals(listOf(AdbPeerDots.DOWN), AdbPeerDots.tints(down))
         assertEquals(listOf(AdbPeerDots.OFF), AdbPeerDots.tints(null))
         assertTrue(AdbPeerDots.describe(down).contains("wireless debugging is off"))
+        assertEquals("#1550 broker up, wireless debugging off: not green", listOf(AdbPeerDots.DOWN), AdbPeerDots.tints(brokerOnly))
+        assertTrue(AdbPeerDots.describe(brokerOnly).contains("Wireless debugging is off") && AdbPeerDots.describe(brokerOnly).contains("shell broker up"))
+        assertEquals("unknown transport is grey", listOf(AdbPeerDots.OFF), AdbPeerDots.tints(ShellStatus(true, true, "x", "", 1L)))
     }
 
     @Test fun `D2 one dot under ADB`() {
@@ -68,6 +75,7 @@ class AdbPeerDotsTest : KitPageHarness() {
         assertEquals(listOf(AdbPeerDots.UP), dot(up))
         assertEquals(listOf(AdbPeerDots.DOWN), dot(down))
         // a reason alone never turns it green: only a successful round trip does
-        assertEquals(listOf(AdbPeerDots.DOWN), dot(ShellStatus(true, false, "embedded-adb", "ok", 1_000L, "id -u failed")))
+        assertEquals(listOf(AdbPeerDots.DOWN), dot(ShellStatus(true, false, "embedded-adb", "ok", 1_000L, "id -u failed", adb = AdbLink.UNREACHABLE)))
+        assertEquals("#1550 broker up through the local server, wireless debugging off", listOf(AdbPeerDots.DOWN), dot(brokerOnly))
     }
 }
