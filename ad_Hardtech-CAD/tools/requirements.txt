@@ -1,2 +1,9 @@
 # OpenSKP: open-source SketchUp (.skp) reader and converter (MIT, pure Python, no SketchUp SDK). Pinned; see ../THIRD-PARTY.md.
+# Its dependencies are pinned to what the CI run that made the committed views used (2026-11-06): the GLB bytes depend on the numpy
+# and trimesh versions, so an unpinned install would re-derive a different file every few months.
 openskp==1.5.0
+trimesh==5.2.0
+numpy==2.5.4
+shapely==2.2.0
+mapbox_earcut==2.1.0
+defusedxml==0.7.1
