@@ -55,8 +55,9 @@ class ImapWindowWiringTest {
             keepIds = { load -> reconcilableIds(load, credentials.id) },
             spareIds = { recentlyMutatedIds(credentials.id) },
             reconcile = { load, keepIds, spare, evictable ->
-            emailDao.reconcileMailbox(
-            credentials.id, load.targetMailboxId, keepIds, spare,
+            val kept = syncImapBacklog(credentials, load)
+            if (kept != null) emailDao.reconcileMailbox(
+            credentials.id, load.targetMailboxId, keepIds + kept, spare,
             evictableIds = evictable.takeIf { mailboxId != null && mailboxId == load.targetMailboxId },
             )
             },

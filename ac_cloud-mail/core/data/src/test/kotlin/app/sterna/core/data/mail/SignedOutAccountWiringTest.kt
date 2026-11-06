@@ -386,10 +386,11 @@ class SignedOutAccountWiringTest {
         val body = DaoQuerySource.mailSource("MailRepository").lines()
         val sites = body.indices.filter { body[it].trim().startsWith("$guard(") }
         assertEquals(
-            "MailRepository no longer carries thirteen guard call sites — four entries and nine " +
-                "writes. If a path was added or removed, say so here:\n" +
+            "MailRepository no longer carries fourteen guard call sites — four entries and ten " +
+                "writes (the tenth is the IMAP backlog fetch, syncImapBacklog). If a path was added or " +
+                "removed, say so here:\n" +
                 sites.joinToString("\n") { body[it].trim() },
-            13, sites.size,
+            14, sites.size,
         )
         sites.forEach { site ->
             val open = openBlocksAt(body, site).filter { "try" in it || "runCatching" in it }
@@ -409,7 +410,7 @@ class SignedOutAccountWiringTest {
         // file is where that costs the most: `AccountStillConfigured.kt` is in the SAME PACKAGE, so
         //
         // It is the same family of blindness as the hole this file was extended for: what is not
-        // pinned is invisible. So the declaration itself is pinned, once, for all thirteen sites.
+        // pinned is invisible. So the declaration itself is pinned, once, for all fourteen sites.
         val declaration = Regex("""\bfun\s+$guard\s*[(<]""")
         val found = DaoQuerySource.mailSource("MailRepository").lines()
             .map { it.trim() }

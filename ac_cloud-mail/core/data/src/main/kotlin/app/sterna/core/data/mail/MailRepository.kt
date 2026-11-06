@@ -2221,6 +2221,15 @@ class MailRepository(
         )
     }
 
+    /** The folder's UIDs on the server, or null when they cannot be read (cancellation still propagates). */
+    private suspend fun serverUidsOrNull(credentials: AccountCredentials, mailbox: String): ImapUidSnapshot? = try {
+        imap.snapshotUids(credentials, mailbox, IMAP_SNAPSHOT_CAP)
+    } catch (c: kotlinx.coroutines.CancellationException) {
+        throw c
+    } catch (t: Throwable) {
+        null
+    }
+
     /**
      * The folder as the server holds it, beyond the newest window the walk just wrote: reads the UIDs
      * on the server, fetches the next bounded batch of the missing ones ([ImapBacklogPlan]: new mail
@@ -2230,13 +2239,7 @@ class MailRepository(
     private suspend fun syncImapBacklog(credentials: AccountCredentials, load: ImapFolderLoad): Set<String>? {
         if (reconcilableIds(load, credentials.id) == null) return emptySet()
         val mailbox = load.targetMailboxId
-        val snapshot = try {
-            imap.snapshotUids(credentials, mailbox, IMAP_SNAPSHOT_CAP)
-        } catch (c: kotlinx.coroutines.CancellationException) {
-            throw c
-        } catch (t: Throwable) {
-            return null
-        }
+        val snapshot = serverUidsOrNull(credentials, mailbox) ?: return null
         val serverIds = snapshot.uids.associateBy { ImapMailService.emailId(credentials.id, mailbox, it) }
         val cached = emailDao.idsForMailbox(credentials.id, mailbox).filterTo(HashSet()) { it in serverIds }
         val plan = ImapBacklogPlan.next(snapshot.uids, cached.mapNotNullTo(HashSet()) { serverIds[it] })
