@@ -59,10 +59,10 @@ for p in pages:
     key = (p.get('group', ''), p.get('subgroup', ''))
     if key != last: shape.append(key); last = key
 want = [('Setup', 'Connect'), ('Setup', 'Apps'), ('Setup', 'Launcher'), ('Setup', 'Network'), ('Setup', 'Observability'),
-        ('Fleet', ''), ('Agents', '')]  # #1548 the declared tree: Observability under Setup, then Fleet, then Agents
+        ('Agents', ''), ('Fleet', '')]  # #1548 tree, #1554 reorder: Observability under Setup, then Agents, then Fleet (Fleet last)
 print('OK' if shape == want else 'heading runs = %r' % (shape,))
 PY
-)" "Setup ▸ Connect, ▸ Apps, ▸ Launcher, ▸ Network, ▸ Observability, then Fleet, then Agents — three sections, each appearing ONCE (#1548)"
+)" "Setup ▸ Connect, ▸ Apps, ▸ Launcher, ▸ Network, ▸ Observability, then Agents, then Fleet — three sections, each appearing ONCE (#1548, #1554)"
 
 echo "== T2: each heading holds exactly the pages the owner named =="
 check "$(python3 - "$BJ" <<'PY'
@@ -425,8 +425,8 @@ want = ['H:SETUP',
         'S:LAUNCHER',     'Quick Actions[ic_home]', 'One-Hand[ic_onehand]', 'Notify[ic_rss]',
         'S:NETWORK',          'Firewall[ic_lock]', 'DNS[ic_world]', 'Webserver[ic_web]', 'Cloud Mesh[ic_wg]', 'Apps Access[ic_apps]', 'ADB Shell[ic_terminal]', 'WiFi[ic_wifi]',
         'S:OBSERVABILITY', 'X-Ray[ic_monitor_heart]', 'LogCat[ic_subject]', 'Permissions[ic_key]', 'About[ic_info]',
-        'H:FLEET',        'C3[ic_cloud_control]', 'Peer Control[ic_hub]', 'Bluetooth[ic_bluetooth]',
         'H:AGENTS',       'Watchdog[ic_p_watchdog]', 'Watchtower[ic_watchtower]',
+        'H:FLEET',        'C3[ic_cloud_control]', 'Peer Control[ic_hub]', 'Bluetooth[ic_bluetooth]',
         'H:ACTIONS',
         'Update All[ic_system_update]', 'KDE Connect[ic_devices]', 'Animations[ic_animation]']
 if out == want: print('OK')

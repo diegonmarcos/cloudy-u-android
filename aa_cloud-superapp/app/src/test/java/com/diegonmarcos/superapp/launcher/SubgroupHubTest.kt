@@ -13,7 +13,7 @@ import org.robolectric.annotation.Config
 /**
  * #1545 #1548 The Configs nav tree and its two hub pages, Agents ▸ Watchdog and Agents ▸ Watchtower.
  *
- *   H1 nav tree: Setup (Connect, Apps, Launcher, Network, Observability), Fleet (C3, Peer Control, Bluetooth), Agents (Watchdog, Watchtower)
+ *   H1 nav tree: Setup (Connect, Apps, Launcher, Network, Observability), Agents (Watchdog, Watchtower), Fleet (C3, Peer Control, Bluetooth)
  *   H2 Watchdog = two titled sections, Network then Observability; Watchtower = Observability only; each derived from the nav, in order
  *   H3 routing: in-app pages are page:config/<id>; apps / sections / Cloud Store hand-offs keep their declared action
  *   H4 both pages route to SubgroupHubFragment (not the C3 APKs) and draw a section heading and a Cloud ▸ Apps tile per entry
@@ -32,7 +32,7 @@ class SubgroupHubTest : KitPageHarness() {
         val runs = config.pages.filter { !it.isAction }.map { it.group to it.subgroup }.distinct()
         assertEquals(listOf(
             "Setup" to "Connect", "Setup" to "Apps", "Setup" to "Launcher", "Setup" to "Network", "Setup" to "Observability",
-            "Fleet" to "", "Agents" to ""), runs)
+            "Agents" to "", "Fleet" to ""), runs)
         assertEquals(listOf("C3", "Peer Control", "Bluetooth"), config.pages.filter { it.group == "Fleet" }.map { it.label })
         assertEquals(listOf("agents-watchdog", "agents-watchtower"), config.pages.filter { it.group == "Agents" }.map { it.id })
         assertEquals(listOf("xray", "logcat", "perms", "app-about"), sub("Observability").map { it.id })

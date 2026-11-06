@@ -4963,8 +4963,8 @@
         "nav_mode": "horizontal_two_rows",
         "groups": [
           {"id": "setup", "label": "Setup", "icon": "ic_settings", "pages": ["profile", "store", "controls", "onehand", "notify", "firewall", "dns", "webserver", "wg", "apps-access", "adb-shell", "wifi", "wifi-scan", "wifi-channels", "wifi-link", "wifi-tools", "wifi-log", "xray", "logcat", "perms", "app-about", "battery", "presets", "panels", "panels-ui", "panels-tools", "store-cloud", "store-phone", "update", "kde_connect", "animations"]},
-          {"id": "fleet", "label": "Fleet", "icon": "ic_hub", "pages": ["c3", "kde", "bluetooth", "bluetooth-find", "bluetooth-analyze", "bluetooth-locate", "bluetooth-connect", "bluetooth-interact", "bluetooth-debug", "bluetooth-dev"]},
-          {"id": "agents", "label": "Agents", "icon": "ic_p_watchdog", "pages": ["agents-watchdog", "agents-watchtower"]}
+          {"id": "agents", "label": "Agents", "icon": "ic_p_watchdog", "pages": ["agents-watchdog", "agents-watchtower"]},
+          {"id": "fleet", "label": "Fleet", "icon": "ic_hub", "pages": ["c3", "kde", "bluetooth", "bluetooth-find", "bluetooth-analyze", "bluetooth-locate", "bluetooth-connect", "bluetooth-interact", "bluetooth-debug", "bluetooth-dev"]}
         ],
         "_doc_pages_order": "Order here is the single source of truth \u2014 it drives the Configs page-grid, its SECTION and SUBSECTION headings, and (via home_groups tiles_from_section: 'config') the Home Apps Configs row. TWO LEVELS, DECLARED PER PAGE (#649): `group` is the section heading a tile sits under and `subgroup` is the heading below it, both rendered verbatim by TileGridFragment \u2014 the words \"Launcher\", \"Setup\", \"Apps\", \"Network\" and \"Observability\" appear in no Kotlin file, which is the same contract `label` already keeps for a page name. There is deliberately no parallel group map: a run of consecutive pages carrying the same group/subgroup IS the group, so moving an entry in this array moves it on the screen and a group with no pages left simply stops being drawn. A page that declares no group falls under the default Pages heading, which is every other section in this file. #649 replaced the old flat shape (Account/WireGuard/KDE/AI/Permissions \u2014 Launcher \u2014 Store/About, held together by `row_break`): Launcher stopped being a page wearing four tabs and became the TITLE over its four subpages as direct tiles, and the rest became Setup \u25b8 Apps + Setup \u25b8 Observability. `row_break: true` still starts a fresh grid row at a tile without printing a heading; no page in this section needs it any more, because every row break here is now a group boundary. ACTIONS ARE UNCHANGED: the trailing `is_action` entries are the same three, rendered under the same Actions heading from the same flag, and they carry no group \u2014 the grid appends them last whatever their position in this array. #723 (#878 relabelled: group Watchdog is now Setup, subgroups Setup/Mesh are Apps/Network): OWNER REGROUP (Agents): the order is Launcher, Apps, Setup. Apps is a group with no subgroup and holds C3 · Peer Control · Agents (C3 and Peer Control moved out of Setup ▸ Network with their ids unchanged, so page:config/c3 and page:config/kde are the same links; the Network separator went with them, see removed_pages). Before that regroup, the Setup group had THREE sub-sections in this order — Apps (Account · Permissions · Store), Network (WireGuard · Peer Control) and Observability (About) — and the AI page is gone (see removed_pages). #REORG 2026-10: Configs is exactly THREE sections, in this order: Setup (subgroups Apps = Account/Permissions/Store, Launcher = Presets/Controls/One-Hand/Notify, Network), Fleet (the former Apps group: C3 · Peer Control · Agents) and Observability (About). No ids changed, so every page:config/<id> link is intact. #733: Network is Cloud Mesh (the wg page, relabelled) · Peer Control · Apps Mesh (the Store's mesh page, reached from here too).",
         "_doc_retired_pages": "#697. A config page id that no longer exists, mapped to the pages its content lives on now. The page set is guarded: test-configs-two-sections.sh T9 holds the ids as they stood before #649 regrouped this section and fails if any of them is missing from `pages` without being named here, or if a page named here is still declared, or if one of its successors is not. So a page cannot be dropped by a regroup — removing one is a declared act with a declared destination. `launcher` is the only entry: #649 dissolved the page that wore four tabs and made those four tabs direct pages under the Launcher heading. Read by the tester only; the app routes by `pages` and never needs to know what was retired.",
@@ -5117,6 +5117,22 @@
             "subgroup": "Observability"
           },
           {
+            "_doc": "#1545 #1548 #1552 Watchdog - the first Agents page (it was first in Setup > Network); canonical id agents-watchdog (unique across the app, N12; page:config/watchdog is a page_alias for the old route): an in-app hub page, not the C3-Watchdog APK (that stays extapp:c3-watchdog on the C3 strip). `hub_sections` lists the subgroups of this section it shows, each as its own titled section of the grid, in this order: Network, then Observability. The tiles are DERIVED from this array (Sections.hubSections: every visible page of this section in that subgroup, in declaration order), each carrying the page's own target - its `action` when it has one (an app, a section or a Cloud Store hand-off), else page:config/<id>, an in-app page. Adding a page to a subgroup adds its tile; there is no second list. SubgroupHubFragment draws it with GroupTitle + TileStrip/TileCell, the Cloud > Apps heading and tile components.",
+            "id": "agents-watchdog",
+            "label": "Watchdog",
+            "icon": "ic_p_watchdog",
+            "hub_sections": ["Network", "Observability"],
+            "group": "Agents"
+          },
+          {
+            "_doc": "#1548 #1552 Watchtower - the second Agents page (canonical id agents-watchtower; page:config/watchtower is a page_alias): the same hub page as Watchdog (SubgroupHubFragment), declared over Observability only, so it lists X-Ray, LogCat, Permissions and About and follows that subgroup by data. An in-app page, not the C3-Watchtower APK (that stays extapp:c3-watchtower on the C3 strip).",
+            "id": "agents-watchtower",
+            "label": "Watchtower",
+            "icon": "ic_watchtower",
+            "hub_sections": ["Observability"],
+            "group": "Agents"
+          },
+          {
             "_doc": "C3 — the Cloud Control Center app (ac_cloud-c3), reached from Configs ▸ Fleet (it moved there from Setup ▸ Network; the id `c3` did not change, so page:config/c3 and every existing link still land on it) like Store is from Setup ▸ Apps: action extapp:cloud-c3 opens the app or offers the install through ui.external_apps[id=cloud-c3]. Same target as the C3 tile of the Cloud ▸ Apps Configs group; no second C3.",
             "id": "c3",
             "label": "C3",
@@ -5139,22 +5155,6 @@
             "icon": "ic_bluetooth",
             "tabs": ["bluetooth-find", "bluetooth-analyze", "bluetooth-locate", "bluetooth-connect", "bluetooth-interact", "bluetooth-debug", "bluetooth-dev"],
             "group": "Fleet"
-          },
-          {
-            "_doc": "#1545 #1548 #1552 Watchdog - the first Agents page (it was first in Setup > Network); canonical id agents-watchdog (unique across the app, N12; page:config/watchdog is a page_alias for the old route): an in-app hub page, not the C3-Watchdog APK (that stays extapp:c3-watchdog on the C3 strip). `hub_sections` lists the subgroups of this section it shows, each as its own titled section of the grid, in this order: Network, then Observability. The tiles are DERIVED from this array (Sections.hubSections: every visible page of this section in that subgroup, in declaration order), each carrying the page's own target - its `action` when it has one (an app, a section or a Cloud Store hand-off), else page:config/<id>, an in-app page. Adding a page to a subgroup adds its tile; there is no second list. SubgroupHubFragment draws it with GroupTitle + TileStrip/TileCell, the Cloud > Apps heading and tile components.",
-            "id": "agents-watchdog",
-            "label": "Watchdog",
-            "icon": "ic_p_watchdog",
-            "hub_sections": ["Network", "Observability"],
-            "group": "Agents"
-          },
-          {
-            "_doc": "#1548 #1552 Watchtower - the second Agents page (canonical id agents-watchtower; page:config/watchtower is a page_alias): the same hub page as Watchdog (SubgroupHubFragment), declared over Observability only, so it lists X-Ray, LogCat, Permissions and About and follows that subgroup by data. An in-app page, not the C3-Watchtower APK (that stays extapp:c3-watchtower on the C3 strip).",
-            "id": "agents-watchtower",
-            "label": "Watchtower",
-            "icon": "ic_watchtower",
-            "hub_sections": ["Observability"],
-            "group": "Agents"
           },
           {
             "_doc": "Tab 1 of Launcher — the PRESETS: things you pick in one tap. Three groups, declared in ui.launcher_presets (order, names and which declaration feeds each group): Sandboxes (ui.launcher_profiles — Work · Personal · Guest), Themes (ui.launcher_themes — Cloud Purple · Cloud Minimalistic) and Modes (ui.launcher_modes — Power · Focus · Saving Energy). LauncherPresetsFragment draws them and owns no name of its own. Its id is `presets`, not `profile`, because `profile` is already this section's own top-level page (the owner's identity) and a section cannot hold two pages under one id. Nothing persisted moves with the rename: LauncherProfilePrefs/LauncherThemePrefs/LauncherModePrefs key off fixed store names, never off the page id. hidden = reached through the strip, not as its own Configs tile.",
