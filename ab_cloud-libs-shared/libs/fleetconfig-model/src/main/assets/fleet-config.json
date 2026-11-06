@@ -3232,6 +3232,7 @@
         "lib-fleetconfig-model",
         "lib-ml-l-image",
         "lib-ml-l-sound",
+        "lib-ml-vision",
         "lib-perms",
         "lib-theme-background",
         "lib-ui-icons",
@@ -3247,7 +3248,7 @@
         },
         {
           "id": "mode-prefs",
-          "path": "shared_prefs/{QR_SCAN,AUTO,FACE_RETOUCH,PORTRAIT,NIGHT,HDR,CAMERA,VIDEO}.xml",
+          "path": "shared_prefs/{QR_SCAN,OBJECTS,AUTO,FACE_RETOUCH,PORTRAIT,NIGHT,HDR,CAMERA,VIDEO,VR}.xml",
           "class": "config",
           "doc": "Per-mode camera settings.",
           "store": "camera_modes"

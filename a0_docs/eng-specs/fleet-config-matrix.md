@@ -501,7 +501,7 @@ Coverage: 17 covered, 0 gaps.
 
 ## cloud-camera — `cld.camera`
 
-Module `ac_cloud-camera`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtools, lib-fleetconfig-model, lib-ml-l-image, lib-ml-l-sound, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-nav-bars.
+Module `ac_cloud-camera`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtools, lib-fleetconfig-model, lib-ml-l-image, lib-ml-l-sound, lib-ml-vision, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-nav-bars.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -523,7 +523,7 @@ Module `ac_cloud-camera`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtools
 | file | class | doc |
 |---|---|---|
 | `SharedPreferences cloud_image_recognition:route + model (shared lib)` | config | Image identify route and model chosen by the user, shared engine. |
-| `shared_prefs/{QR_SCAN,AUTO,FACE_RETOUCH,PORTRAIT,NIGHT,HDR,CAMERA,VIDEO}.xml` | config | Per-mode camera settings. |
+| `shared_prefs/{QR_SCAN,OBJECTS,AUTO,FACE_RETOUCH,PORTRAIT,NIGHT,HDR,CAMERA,VIDEO,VR}.xml` | config | Per-mode camera settings. |
 | `filesDir vosk-model-small-en-us-0.15 (not bundled)` | device | Optional offline voice model dir; engine not present, so nothing to move. |
 
 Coverage: 11 covered, 0 gaps.

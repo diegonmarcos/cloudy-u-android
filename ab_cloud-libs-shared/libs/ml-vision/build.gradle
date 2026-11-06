@@ -14,6 +14,8 @@ plugins {
 if (project.extensions.findByName('kotlin') == null) {
     apply plugin: 'org.jetbrains.kotlin.android'
 }
+// The two views (DetectionOverlayView, CompositeFrameView) are Compose hosts (AbstractComposeView), like libs:bottomnav's island.
+apply plugin: 'org.jetbrains.kotlin.plugin.compose'
 
 android {
     namespace 'com.diegonmarcos.superapp.vision'
@@ -21,6 +23,10 @@ android {
 
     defaultConfig {
         minSdk 26
+    }
+
+    buildFeatures {
+        compose = true
     }
 
     compileOptions {
@@ -36,6 +42,9 @@ kotlin {
 }
 
 dependencies {
+    implementation platform('androidx.compose:compose-bom:2025.11.01')
+    implementation 'androidx.compose.ui:ui'
+    implementation 'androidx.compose.foundation:foundation'
     // PathParser: the declared vector art is SVG path data.
     implementation 'androidx.core:core-ktx:1.15.0'
     // ML Kit Face Detection and Selfie Segmentation: the BUNDLED models (on-device, offline, no Play Services download).

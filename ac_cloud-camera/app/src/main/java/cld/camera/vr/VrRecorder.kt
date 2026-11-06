@@ -40,9 +40,9 @@ class VrRecorder(private val ctx: Context) {
         width = first.width and 1.inv()
         height = first.height and 1.inv()
         mirrored = mirror
-        val name = "VID_" + SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date()) + "_vr"
+        val stem = "VID_" + SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date()) + "_vr"
         val values = ContentValues().apply {
-            put(MediaStore.MediaColumns.DISPLAY_NAME, "$name.mp4")
+            put(MediaStore.MediaColumns.DISPLAY_NAME, "$stem.mp4")
             put(MediaStore.MediaColumns.MIME_TYPE, "video/mp4")
             put(MediaStore.MediaColumns.RELATIVE_PATH, DEFAULT_MEDIA_STORE_CAPTURE_PATH)
             put(MediaStore.MediaColumns.IS_PENDING, 1)
