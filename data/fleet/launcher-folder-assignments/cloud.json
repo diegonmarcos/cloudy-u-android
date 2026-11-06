@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "_doc": "#1553 TABLE 2 — Cloud-scope APP → FOLDER allocation for Configs ▸ Launcher ▸ Folders. EVERY cloud (constellation-fleet) app of kind 'app' is explicitly allocated to a folder declared in launcher-folders/cloud.json. Served by the fleet-data client (Cloud Store provider, tier 3), read at runtime, NEVER baked into an APK. Each row: package, folder, order (position within the folder). 'others' is reserved for truly uncategorised / newly-installed apps at runtime and is never used here. Coverage is guarded by FolderCoverageTest: a cloud-* app with no row here fails the build. The launcher SuperApp itself (com.diegonmarcos.superapp) is the host of the grid and is allocated to System for completeness.",
+  "assignments": [
+    { "package": "com.diegonmarcos.cloudvault",          "folder": "gov",       "order": 1 },
+
+    { "package": "com.diegonmarcos.cloudshopping",       "folder": "shopping",  "order": 1 },
+
+    { "package": "com.diegonmarcos.cloudme",             "folder": "buro",      "order": 1 },
+
+    { "package": "com.diegonmarcos.comms.mail",          "folder": "mail",      "order": 1 },
+
+    { "package": "com.diegonmarcos.comms.dialer",        "folder": "dialer",    "order": 1 },
+
+    { "package": "com.diegonmarcos.comms.chat",          "folder": "messages",  "order": 1 },
+    { "package": "com.diegonmarcos.comms.matrix",        "folder": "messages",  "order": 2 },
+
+    { "package": "com.diegonmarcos.cloudcontacts",       "folder": "contacts",  "order": 1 },
+
+    { "package": "com.diegonmarcos.cloudnews",           "folder": "news",      "order": 1 },
+
+    { "package": "com.diegonmarcos.cloudmediacenter",    "folder": "video",     "order": 1 },
+
+    { "package": "com.diegonmarcos.mediacenter",         "folder": "gallery",   "order": 1 },
+
+    { "package": "cld.camera",                           "folder": "camera",    "order": 1 },
+
+    { "package": "com.diegonmarcos.cloudagenda",         "folder": "tasks",     "order": 1 },
+
+    { "package": "com.diegonmarcos.cloudnotes",          "folder": "notes",     "order": 1 },
+
+    { "package": "com.diegonmarcos.cloudwriter",         "folder": "writer",    "order": 1 },
+    { "package": "com.diegonmarcos.cloudoffice",         "folder": "writer",    "order": 2 },
+
+    { "package": "com.diegonmarcos.clouddrive",          "folder": "drive",     "order": 1 },
+
+    { "package": "com.diegonmarcos.cloudcalc",           "folder": "calc",      "order": 1 },
+
+    { "package": "com.diegonmarcos.cloudkeyboard",       "folder": "tools",     "order": 1 },
+
+    { "package": "com.diegonmarcos.ide",                 "folder": "terminal",  "order": 1 },
+    { "package": "cld.termux",                           "folder": "terminal",  "order": 2 },
+    { "package": "cld.termux.nix",                       "folder": "terminal",  "order": 3 },
+    { "package": "com.diegonmarcos.code",                "folder": "terminal",  "order": 4 },
+
+    { "package": "com.diegonmarcos.cloudnav",            "folder": "nav",       "order": 1 },
+
+    { "package": "com.diegonmarcos.capitalfinterm",      "folder": "finterm",   "order": 1 },
+
+    { "package": "com.diegonmarcos.cloudwallet",         "folder": "wallet",    "order": 1 },
+
+    { "package": "com.diegonmarcos.hardtechcad",         "folder": "cad",       "order": 1 },
+    { "package": "com.diegonmarcos.hardtechsim2real",    "folder": "cad",       "order": 2 },
+
+    { "package": "com.diegonmarcos.cgomniverse",         "folder": "omniverse", "order": 1 },
+
+    { "package": "com.diegonmarcos.cloudbrowser",        "folder": "web",       "order": 1 },
+
+    { "package": "com.diegonmarcos.superapp",            "folder": "system",    "order": 1 },
+    { "package": "com.diegonmarcos.cloudstore",          "folder": "system",    "order": 2 },
+    { "package": "com.diegonmarcos.cloudaccount",        "folder": "system",    "order": 3 },
+
+    { "package": "com.diegonmarcos.cloudc3",             "folder": "fleet",     "order": 1 },
+    { "package": "com.diegonmarcos.morpheus",            "folder": "fleet",     "order": 2 },
+    { "package": "com.diegonmarcos.watchdog",            "folder": "fleet",     "order": 3 },
+    { "package": "com.diegonmarcos.watchtower",          "folder": "fleet",     "order": 4 },
+    { "package": "com.diegonmarcos.cloudwebserver",      "folder": "fleet",     "order": 5 },
+
+    { "package": "com.diegonmarcos.cloudsuperintel",     "folder": "intel",     "order": 1 },
+    { "package": "com.diegonmarcos.cloudsearch",         "folder": "intel",     "order": 2 },
+    { "package": "com.diegonmarcos.cloudkgstore",        "folder": "intel",     "order": 3 },
+    { "package": "com.diegonmarcos.cloudtoolssmallllms", "folder": "intel",     "order": 4 }
+  ]
+}

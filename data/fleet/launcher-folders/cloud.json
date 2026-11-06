@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "_doc": "#1553 TABLE 1 — Cloud-scope folder HIERARCHY for Configs ▸ Launcher ▸ Folders. Sections (groups) → folders. Served by the fleet-data client (Cloud Store provider, tier 3), read at runtime, NEVER baked into an APK. Each row: section, id, label, icon, order. The special 'others' folder is synthesised at runtime and is never declared here. A folder may be declared even when no cloud app maps to it yet — the taxonomy is the complete category map; empty folders simply do not render in the grid until an app lands in them. Edit this file to reorganise; no cloud app is ever removed from the fleet by a change here.",
+  "folders": [
+    { "section": "Services & Buro", "id": "gov",       "label": "Gov & ID",   "icon": "ic_folder_gov",      "order": 110 },
+    { "section": "Services & Buro", "id": "finance",   "label": "Finance",    "icon": "ic_folder_finance",  "order": 120 },
+    { "section": "Services & Buro", "id": "health",    "label": "Health",     "icon": "ic_folder_health",   "order": 130 },
+    { "section": "Services & Buro", "id": "travel",    "label": "Travel",     "icon": "ic_folder_travel",   "order": 140 },
+    { "section": "Services & Buro", "id": "shopping",  "label": "Shopping",   "icon": "ic_folder_shopping", "order": 150 },
+    { "section": "Services & Buro", "id": "buro",      "label": "Buro",       "icon": "ic_folder_buro",     "order": 160 },
+
+    { "section": "Communication",   "id": "mail",      "label": "Mail",       "icon": "ic_folder_mail",     "order": 210 },
+    { "section": "Communication",   "id": "dialer",    "label": "Dialer",     "icon": "ic_folder_dialer",   "order": 220 },
+    { "section": "Communication",   "id": "messages",  "label": "Messages",   "icon": "ic_folder_messages", "order": 230 },
+    { "section": "Communication",   "id": "contacts",  "label": "Contacts",   "icon": "ic_folder_contacts", "order": 240 },
+    { "section": "Communication",   "id": "social",    "label": "Social",     "icon": "ic_folder_social",   "order": 250 },
+
+    { "section": "Media",           "id": "news",      "label": "News",       "icon": "ic_folder_news",     "order": 310 },
+    { "section": "Media",           "id": "music",     "label": "Music",      "icon": "ic_folder_music",    "order": 320 },
+    { "section": "Media",           "id": "video",     "label": "Video",      "icon": "ic_folder_video",    "order": 330 },
+    { "section": "Media",           "id": "gallery",   "label": "Gallery",    "icon": "ic_folder_gallery",  "order": 340 },
+    { "section": "Media",           "id": "camera",    "label": "Camera",     "icon": "ic_folder_camera",   "order": 350 },
+
+    { "section": "Productivity",    "id": "tasks",     "label": "Tasks",      "icon": "ic_folder_tasks",    "order": 410 },
+    { "section": "Productivity",    "id": "notes",     "label": "Notes",      "icon": "ic_folder_notes",    "order": 420 },
+    { "section": "Productivity",    "id": "calendar",  "label": "Calendar",   "icon": "ic_folder_calendar", "order": 430 },
+    { "section": "Productivity",    "id": "writer",    "label": "Writer",     "icon": "ic_folder_writer",   "order": 440 },
+    { "section": "Productivity",    "id": "drive",     "label": "Drive",      "icon": "ic_folder_drive",    "order": 450 },
+
+    { "section": "Tools",           "id": "calc",      "label": "Calc",       "icon": "ic_folder_calc",     "order": 510 },
+    { "section": "Tools",           "id": "tools",     "label": "Tools",      "icon": "ic_folder_tools",    "order": 520 },
+    { "section": "Tools",           "id": "terminal",  "label": "Terminal",   "icon": "ic_folder_terminal", "order": 530 },
+    { "section": "Tools",           "id": "scanner",   "label": "Scanner",    "icon": "ic_folder_scanner",  "order": 540 },
+
+    { "section": "Navigation",      "id": "nav",       "label": "Nav",        "icon": "ic_folder_nav",      "order": 610 },
+    { "section": "Navigation",      "id": "maps",      "label": "Maps",       "icon": "ic_folder_maps",     "order": 620 },
+
+    { "section": "Finance",         "id": "finterm",   "label": "FinTerm",    "icon": "ic_folder_finterm",  "order": 710 },
+    { "section": "Finance",         "id": "wallet",    "label": "Wallet",     "icon": "ic_folder_wallet",   "order": 720 },
+
+    { "section": "CAD/3D",          "id": "cad",       "label": "CAD",        "icon": "ic_folder_cad",      "order": 810 },
+    { "section": "CAD/3D",          "id": "omniverse", "label": "Omniverse",  "icon": "ic_folder_omniverse","order": 820 },
+
+    { "section": "Web",             "id": "web",       "label": "Browser",    "icon": "ic_folder_web",      "order": 910 },
+
+    { "section": "System & Fleet",  "id": "system",    "label": "System",     "icon": "ic_folder_system",   "order": 1010 },
+    { "section": "System & Fleet",  "id": "fleet",     "label": "C3 Fleet",   "icon": "ic_folder_fleet",    "order": 1020 },
+    { "section": "System & Fleet",  "id": "intel",     "label": "SuperIntel", "icon": "ic_folder_intel",    "order": 1030 }
+  ]
+}

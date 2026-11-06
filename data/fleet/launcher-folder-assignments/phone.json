@@ -1,0 +1,211 @@
+{
+  "schemaVersion": 1,
+  "_doc": "#1553 TABLE 2 - Phone-scope APP -> FOLDER allocation. Every fleet (constellation) app declared for the phone home is allocated to its phone folder (from aa_cloud-superapp/build.json::ui.external_apps, the launcher's own classification). Served by the fleet-data client (Cloud Store provider, tier 3), read at runtime, NEVER baked. Each row: package, folder, order. Third-party installed apps are NOT listed: they are classified by keyword at runtime and otherwise fall to Others until the user assigns them. The launcher host com.diegonmarcos.superapp is not foldered on the phone (it is the home itself).",
+  "assignments": [
+    {
+      "package": "com.diegonmarcos.comms.dialer",
+      "folder": "prod_phone",
+      "order": 1
+    },
+    {
+      "package": "com.diegonmarcos.cloudcontacts",
+      "folder": "prod_phone",
+      "order": 2
+    },
+    {
+      "package": "com.diegonmarcos.comms.chat",
+      "folder": "prod_chat",
+      "order": 1
+    },
+    {
+      "package": "com.diegonmarcos.comms.mail",
+      "folder": "prod_mail",
+      "order": 1
+    },
+    {
+      "package": "com.diegonmarcos.comms.matrix",
+      "folder": "prod_chat",
+      "order": 2
+    },
+    {
+      "package": "com.diegonmarcos.ide",
+      "folder": "sys_dev",
+      "order": 1
+    },
+    {
+      "package": "cld.termux",
+      "folder": "prod_terminals",
+      "order": 1
+    },
+    {
+      "package": "cld.termux.nix",
+      "folder": "prod_terminals",
+      "order": 2
+    },
+    {
+      "package": "com.diegonmarcos.code",
+      "folder": "prod_terminals",
+      "order": 3
+    },
+    {
+      "package": "com.diegonmarcos.cloudnav",
+      "folder": "prod_maps",
+      "order": 1
+    },
+    {
+      "package": "com.diegonmarcos.cloudagenda",
+      "folder": "prod_plan",
+      "order": 1
+    },
+    {
+      "package": "com.diegonmarcos.cloudshopping",
+      "folder": "svc_shopping",
+      "order": 1
+    },
+    {
+      "package": "com.diegonmarcos.cloudnews",
+      "folder": "hlth_news",
+      "order": 1
+    },
+    {
+      "package": "com.diegonmarcos.cloudkeyboard",
+      "folder": "sys_keyboards",
+      "order": 1
+    },
+    {
+      "package": "com.diegonmarcos.cloudwallet",
+      "folder": "sys_security",
+      "order": 1
+    },
+    {
+      "package": "com.diegonmarcos.cloudme",
+      "folder": "sys_settings",
+      "order": 1
+    },
+    {
+      "package": "com.diegonmarcos.cloudbrowser",
+      "folder": "prod_web",
+      "order": 1
+    },
+    {
+      "package": "com.diegonmarcos.cloudvault",
+      "folder": "sys_security",
+      "order": 2
+    },
+    {
+      "package": "com.diegonmarcos.watchdog",
+      "folder": "sys_dev",
+      "order": 2
+    },
+    {
+      "package": "com.diegonmarcos.morpheus",
+      "folder": "sys_dev",
+      "order": 3
+    },
+    {
+      "package": "com.diegonmarcos.watchtower",
+      "folder": "sys_dev",
+      "order": 4
+    },
+    {
+      "package": "com.diegonmarcos.cloudc3",
+      "folder": "sys_dev",
+      "order": 5
+    },
+    {
+      "package": "com.diegonmarcos.cloudwebserver",
+      "folder": "sys_dev",
+      "order": 6
+    },
+    {
+      "package": "com.diegonmarcos.cloudmediacenter",
+      "folder": "media_video",
+      "order": 1
+    },
+    {
+      "package": "com.diegonmarcos.mediacenter",
+      "folder": "media_video",
+      "order": 2
+    },
+    {
+      "package": "com.diegonmarcos.cloudoffice",
+      "folder": "prod_docs",
+      "order": 1
+    },
+    {
+      "package": "cld.camera",
+      "folder": "prod_storage",
+      "order": 1
+    },
+    {
+      "package": "com.diegonmarcos.cloudnotes",
+      "folder": "prod_docs",
+      "order": 2
+    },
+    {
+      "package": "com.diegonmarcos.cloudwriter",
+      "folder": "prod_docs",
+      "order": 3
+    },
+    {
+      "package": "com.diegonmarcos.cloudcalc",
+      "folder": "prod_utils",
+      "order": 1
+    },
+    {
+      "package": "com.diegonmarcos.cloudsearch",
+      "folder": "prod_ai",
+      "order": 1
+    },
+    {
+      "package": "com.diegonmarcos.cloudsuperintel",
+      "folder": "prod_ai",
+      "order": 2
+    },
+    {
+      "package": "com.diegonmarcos.cloudkgstore",
+      "folder": "prod_ai",
+      "order": 3
+    },
+    {
+      "package": "com.diegonmarcos.cloudtoolssmallllms",
+      "folder": "prod_ai",
+      "order": 4
+    },
+    {
+      "package": "com.diegonmarcos.cloudstore",
+      "folder": "sys_stores",
+      "order": 1
+    },
+    {
+      "package": "com.diegonmarcos.cloudaccount",
+      "folder": "sys_settings",
+      "order": 2
+    },
+    {
+      "package": "com.diegonmarcos.clouddrive",
+      "folder": "prod_storage",
+      "order": 2
+    },
+    {
+      "package": "com.diegonmarcos.cgomniverse",
+      "folder": "prod_utils",
+      "order": 2
+    },
+    {
+      "package": "com.diegonmarcos.capitalfinterm",
+      "folder": "prod_utils",
+      "order": 3
+    },
+    {
+      "package": "com.diegonmarcos.hardtechcad",
+      "folder": "prod_utils",
+      "order": 4
+    },
+    {
+      "package": "com.diegonmarcos.hardtechsim2real",
+      "folder": "prod_utils",
+      "order": 5
+    }
+  ]
+}

@@ -14,6 +14,30 @@
       "consumers": [
         "*"
       ]
+    },
+    "launcher-folders/cloud": {
+      "tier": 3,
+      "consumers": [
+        "*"
+      ]
+    },
+    "launcher-folders/phone": {
+      "tier": 3,
+      "consumers": [
+        "*"
+      ]
+    },
+    "launcher-folder-assignments/cloud": {
+      "tier": 3,
+      "consumers": [
+        "*"
+      ]
+    },
+    "launcher-folder-assignments/phone": {
+      "tier": 3,
+      "consumers": [
+        "*"
+      ]
     }
   },
   "apps": {
