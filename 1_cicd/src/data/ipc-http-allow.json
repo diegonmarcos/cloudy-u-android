@@ -60,6 +60,22 @@
     "ab_cloud-libs-shared/libs/scraper/src/main/java/com/diegonmarcos/superapp/scraper/MusicAuth.kt": {
       "max": 2,
       "why": "#1460 the default music-service declaration (Spotify, Deezer): the OAuth redirect URI http://127.0.0.1:8765/callback, a loopback redirect the user registers in the provider's developer console (RFC 8252), as printed text and the redirect the sign-in browser returns to. It is the sign-in of the app's own account at a third-party service, not an app-to-app call on the phone, and no sibling app is addressed."
+    },
+    "ab_cloud-libs-shared/libs/apify/src/main/java/com/diegonmarcos/superapp/apify/ApifyBackends.kt": {
+      "max": 1,
+      "why": "#1498 the declared address (PHONE_URL, 127.0.0.1:8765) of the Apify store's Phone Browser backend: the Apify run protocol (POST <base>/run with a per-run bearer) addressed to Cloud-Browser's HeadlessBrowserService listener. A declaration the owner can repoint (a PC forward, another host), not a socket this file opens. The in-process rung is the interim one: the same engine's signature provider (libs:headless-browser HeadlessProvider) is the IPC door a sibling app would use, and this entry goes when the Apify runner is moved onto it."
+    },
+    "ab_cloud-libs-shared/libs/local-serve/src/main/java/com/diegonmarcos/cloudlib/localserve/LocalServer.kt": {
+      "max": 1,
+      "why": "#1484 the static file server of ONE folder bound to 127.0.0.1 on a random port: the URL it hands back (url()) is opened by the SAME app's own WebView (Served mode of the editor). It is the app talking to itself through a socket it owns, not a call to a sibling app."
+    },
+    "ac_cloud-browser/app/src/main/java/com/diegonmarcos/cloudbrowser/sites/Cloudy.kt": {
+      "max": 2,
+      "why": "#1493 Cloudy tab: the sites the Repos store lists as running, each on its own loopback port: the URL the tab loads and a connect probe of that port. Those are the user's own served sites (processes in the terminal or a site mirror), not a fleet app's API, and no sibling app is addressed."
+    },
+    "ac_cloud-news/app/src/main/java/com/diegonmarcos/cloudnews/ApifyRunner.kt": {
+      "max": 1,
+      "why": "#1498 the https-only gate of the Apify runner admits the Phone Browser backend's loopback URL (http://127.0.0.1:); the address comes from libs:apify's backend declaration (ApifyBackends.PHONE_URL, see its entry) and is a string compared here, not a socket opened. Goes with that entry when the runner moves onto the headless provider."
     }
   }
 }
