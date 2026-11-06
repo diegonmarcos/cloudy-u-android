@@ -19,10 +19,16 @@ internal sealed class NetValue {
         is V -> text
         is NA -> if (fix) "$reason — Fix in Perms ›" else "n/a ($reason)"
     }
+
+    /** A grid cell: the value, or a bare "n/a" (the reason is listed once under the group). */
+    fun cell(): String = when (this) {
+        is V -> text
+        is NA -> "n/a"
+    }
 }
 
 internal data class NetRow(val id: String, val label: String, val cells: List<NetValue>)
-internal data class NetGroup(val id: String, val title: String, val columns: List<NetColumn>, val rows: List<NetRow>) {
+internal data class NetGroup(val id: String, val title: String, val columns: List<NetworkColumn>, val rows: List<NetRow>) {
     /** The distinct n/a reasons of a grid group, shown under it ("n/a (reason)"). */
     fun notes(): List<String> = rows.flatMap { it.cells }.filterIsInstance<NetValue.NA>().map { it.text() }.distinct()
 }
