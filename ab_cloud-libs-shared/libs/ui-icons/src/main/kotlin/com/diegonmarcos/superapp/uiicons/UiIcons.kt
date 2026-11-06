@@ -311,6 +311,8 @@ public object UiIcons {
         "call" to Icons.Outlined.Call,
         "mood" to Icons.Outlined.Mood,
         "attach_file" to Icons.Outlined.AttachFile,
+        // #1547 Cloud Account > Fleet Data sub-page icon (SubPageIconGuardTest holds every declared nav icon to this catalog).
+        "dataset" to Icons.Outlined.Dataset,
         )
     }
 

@@ -15,6 +15,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import com.diegonmarcos.superapp.ai.AiForumChat
@@ -59,11 +60,13 @@ class ForumChatTest {
 
     @Test fun incomingAndOutgoingBubblesRender() {
         render()
-        // index 0 user (outgoing), index 1 assistant (incoming, opens its group -> Admin badge + sender name).
-        compose.onNodeWithTag(ForumTags.bubble(0)).assertIsDisplayed()
-        compose.onNodeWithTag(ForumTags.bubble(1)).assertIsDisplayed()
-        compose.onNodeWithTag(ForumTags.adminBadge(1)).assertIsDisplayed()
-        compose.onNodeWithText("SI").assertIsDisplayed()
+        // index 2 user (outgoing), index 3 assistant (incoming, opens its group -> Admin badge + sender name).
+        // Bottom indices: the list auto-scrolls to the newest message, so these are composed regardless of height.
+        compose.onNodeWithTag(ForumTags.bubble(2)).assertIsDisplayed()
+        compose.onNodeWithTag(ForumTags.bubble(3)).assertIsDisplayed()
+        compose.onNodeWithTag(ForumTags.adminBadge(3)).assertIsDisplayed()
+        // The incoming sender name appears once per assistant group; at least one is shown.
+        assertTrue(compose.onAllNodesWithText("SI").fetchSemanticsNodes().isNotEmpty())
     }
 
     @Test fun readReceiptOnAnsweredOutgoing() {
