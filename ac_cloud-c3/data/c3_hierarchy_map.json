@@ -76,7 +76,9 @@
   },
   "infra/apis/api_scraper": {
    "api": [],
-   "mcp": []
+   "mcp": [
+    "browser.*"
+   ]
   },
   "infra/personal/desktop": {
    "api": [],
