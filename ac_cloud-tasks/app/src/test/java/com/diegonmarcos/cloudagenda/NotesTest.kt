@@ -54,7 +54,7 @@ class NotesTest {
         assertNull(m.addCard("no-such-page", "x")); assertNull(m.addCard(ideasInbox, "   "))
     }
 
-    @Test fun `saving a card bumps updated and keeps created; pin and check toggle; delete removes`() {
+    @Test fun `saving a card bumps updated and keeps created, pin and check toggle, delete removes`() {
         val m = model()
         val c = m.addCard(ideasInbox, "Plan")!!
         clock = 5_000L
@@ -130,7 +130,7 @@ class NotesTest {
 
     // ── search, filter chips, sort ──────────────────────────────────────────────────────────────────────────────────
 
-    @Test fun `search matches title, body, label, tags and checklist; a hash term matches a tag`() {
+    @Test fun `search matches title, body, label, tags and checklist, a hash term matches a tag`() {
         val m = model()
         val a = m.addCard(ideasInbox, "Lamp\nwarm light")!!
         val b = m.addCard(ideasInbox, "Taxes")!!
