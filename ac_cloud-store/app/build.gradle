@@ -233,6 +233,8 @@ android {
 
 dependencies {
     implementation project(':libs:core')
+    // #1547 the fleet data provider (authority cloud.store.data) and its Data page
+    implementation project(':libs:fleet-data-ui')
     // #865 the Store itself: the fleet list, phone list, mesh page, auto-update
     // chain and the background fleet pass. libs:appstore exposes libs:updater
     // (api), so the install engine comes with it.

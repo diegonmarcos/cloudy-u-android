@@ -31,6 +31,10 @@
     "log_sink_stream": "cloud-store"
   },
   "modules": {
+    "libs:fleet-data-client": {"dir": "../ab_cloud-libs-shared/libs/fleet-data-client", "type": "library"},
+    "libs:fleet-data-provider": {"dir": "../ab_cloud-libs-shared/libs/fleet-data-provider", "type": "library"},
+    "libs:fleet-data-ui": {"dir": "../ab_cloud-libs-shared/libs/fleet-data-ui", "type": "library"},
+    "libs:json-viewer": {"dir": "../ab_cloud-libs-shared/libs/json-viewer", "type": "library"},
     "libs:perms": {"dir": "../ab_cloud-libs-shared/libs/perms", "type": "library", "depends_on": [], "comment": "#1274 the permission contract: the catalogue, PermsNeeds, PermsLink and PermsActivity, the Permissions page this app hosts for its libs (permissions are per package, so never another app's page)."},
     "libs:decisions-link": {
       "type": "library",
@@ -383,6 +387,11 @@
             "id": "notifications",
             "label": "Notifications",
             "icon": "notifications"
+          },
+          {
+            "id": "data",
+            "label": "Data",
+            "icon": "storage"
           },
           {
             "id": "about",

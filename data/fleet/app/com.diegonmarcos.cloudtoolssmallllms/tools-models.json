@@ -1,0 +1,1752 @@
+{
+  "schemaVersion": 1,
+  "_doc": "THE data of the Cloud Tools sections: Models (small / medium / retrieval, each as Table, Grid, Details or Macro), the AI chat model picker (chat=true rows only, grouped by macro) and Apps (what the models build). One row per model. Sizes are GB, approximate. disk_gb_fp16 is the raw fp16/bf16 weights; every ram_gb_* figure is weights at that precision plus the overhead below. Optional per model: task (specific task), openrouter_id (the OpenRouter id; a model without one is not offered on the OpenRouter backend). locations are the runtimes the Store manages (kind device = this phone, ollama = a fleet host with the Ollama API). Optional per app step: backend (local | openrouter; default local when the app is phone-capable, else openrouter). Read by data/ModelsData.kt; test/test-tools-app.sh holds its shape.",
+  "overhead_pct": 20,
+  "overhead_note": "RAM figures assume about 20% overhead on top of the weights (KV cache, inference engine, activations).",
+  "phone_budget_gb_q4": 6.0,
+  "locations": [
+    {
+      "id": "phone",
+      "label": "This phone",
+      "kind": "device"
+    },
+    {
+      "id": "ollama",
+      "label": "Fleet Ollama",
+      "kind": "ollama",
+      "endpoint": "ollama",
+      "endpoint_note": "No url here: the address is the fleet declaration's `ollama` service (ac_cloud-account/build.json::fleet_endpoints, the Ollama-compatible API of my-ai-api), baked into the app as BuildConfig.FLEET_OLLAMA_URL by fleet-urls.gradle."
+    }
+  ],
+  "quant_tags": {
+    "4": "q4_K_M",
+    "8": "q8_0",
+    "16": "fp16"
+  },
+  "retrieval_service": {
+    "note": "The Retrieval steps of the Apps run on the fleet embeddings + rerank service (the `embeddings-api` service of the fleet declaration, base URL baked as BuildConfig.EMBED_API_URL; mesh only). The names are the models it serves. A step whose first model has the rerank_role reranks (keeps rerank_top passages scoring at least min_rerank, else leaves none_relevant), any other retrieval step embeds and keeps the embed_top closest. A step's input is the question, a blank line, then one passage per paragraph. Off the mesh a step reports that the service did not answer and the text goes on unchanged.",
+    "embed_model": "BAAI/bge-m3",
+    "rerank_model": "BAAI/bge-reranker-v2-m3",
+    "rerank_role": "Semantic Reranking",
+    "embed_top": 6,
+    "rerank_top": 3,
+    "min_rerank": 0.15,
+    "embed_batch": 16,
+    "probe_ms": 1500,
+    "read_ms": 60000,
+    "retry_after_ms": 60000,
+    "none_relevant": "No passage in the documents is relevant to the question."
+  },
+  "quant_tags_note": "The tag suffix a fleet Ollama pull asks for at 4, 8 and 16 bits.",
+  "phone_each_gb_q4": 2.5,
+  "phone_budget_note": "An app is phone-capable when the distinct models of its pipeline total at most phone_budget_gb_q4 of RAM at 4-bit (the largest alternative of a step counts) and no single model needs more than phone_each_gb_q4. A step with alternatives = true runs ONE of its models; a step with escalation = true runs only when the earlier step is not enough; a step with a note and no models is not a model (a deeplink).",
+  "tiers": {
+    "small": {
+      "label": "Small",
+      "hint": "Up to 4B parameters"
+    },
+    "medium": {
+      "label": "Medium",
+      "hint": "7B to 32B parameters"
+    }
+  },
+  "macros": [
+    {
+      "id": "retrieval",
+      "label": "Retrieval",
+      "icon": "search",
+      "blurb": "Find the right passages: embeddings and rerankers."
+    },
+    {
+      "id": "gatekeeping",
+      "label": "Gatekeeping",
+      "icon": "security",
+      "blurb": "Guard inputs and outputs against unsafe content."
+    },
+    {
+      "id": "routing",
+      "label": "Routing",
+      "icon": "route",
+      "blurb": "Decide which handler or model a request needs."
+    },
+    {
+      "id": "understanding",
+      "label": "Understanding",
+      "icon": "insights",
+      "blurb": "Classify, extract and read text."
+    },
+    {
+      "id": "acting",
+      "label": "Acting",
+      "icon": "build",
+      "blurb": "Call tools and run agent steps."
+    },
+    {
+      "id": "thinking",
+      "label": "Thinking",
+      "icon": "psychology",
+      "blurb": "Reason, calculate and write code."
+    },
+    {
+      "id": "producing",
+      "label": "Producing",
+      "icon": "edit",
+      "blurb": "Edit and generate text."
+    },
+    {
+      "id": "seeing",
+      "label": "Seeing",
+      "icon": "visibility",
+      "blurb": "Read images."
+    },
+    {
+      "id": "judging",
+      "label": "Judging",
+      "icon": "verified_user",
+      "blurb": "Score and evaluate answers."
+    }
+  ],
+  "roles": {
+    "Routing / Drafting": {
+      "icon": "route",
+      "purpose": "Fast first-pass work: pick the right handler for a request and draft short replies for a bigger model to polish."
+    },
+    "Safety / Guardrails": {
+      "icon": "security",
+      "purpose": "Screens prompts and answers against a safety policy before or after the main model runs."
+    },
+    "Code / Math (Edge)": {
+      "icon": "code",
+      "purpose": "Small-footprint code completion, snippets and arithmetic where a large model is overkill."
+    },
+    "Deep Reasoning": {
+      "icon": "psychology",
+      "purpose": "Step-by-step reasoning distilled from a larger model: puzzles, maths and multi-step logic."
+    },
+    "Lightweight Editing": {
+      "icon": "edit",
+      "purpose": "Quick rewrites, tone changes and grammar fixes on short text."
+    },
+    "Tool Calling": {
+      "icon": "build",
+      "purpose": "Emits well-formed function calls and JSON arguments so an agent can drive tools."
+    },
+    "Classification / Extract": {
+      "icon": "miscellaneous_services",
+      "purpose": "Labels text, pulls out fields, entities and dates, and answers short factual lookups."
+    },
+    "Vision (VLM)": {
+      "icon": "visibility",
+      "purpose": "Reads images together with text: describe, OCR, answer questions about a picture."
+    },
+    "Quality Evaluation": {
+      "icon": "verified_user",
+      "purpose": "Acts as a judge: scores and critiques another model's answers against a rubric."
+    },
+    "Code / Data Formatting": {
+      "icon": "terminal",
+      "purpose": "Writes and repairs code, JSON, CSV and structured output at workstation scale."
+    },
+    "Long-Form Generation": {
+      "icon": "description",
+      "purpose": "Fluent long answers, articles and summaries with good instruction following."
+    },
+    "Dense Text Embedding": {
+      "icon": "storage",
+      "purpose": "Turns text into vectors for semantic search; not a chat model."
+    },
+    "Multi-Vector Embedding": {
+      "icon": "layers",
+      "purpose": "Dense plus sparse (lexical) vectors for hybrid, multilingual search; not a chat model."
+    },
+    "Semantic Reranking": {
+      "icon": "compare_arrows",
+      "purpose": "Re-scores retrieved passages against the query so the best chunks come first; not a chat model."
+    },
+    "Code & Tech Retrieval": {
+      "icon": "code",
+      "purpose": "Embeds code and technical documentation for repository search; not a chat model."
+    }
+  },
+  "quant_guidance": {
+    "small": "Q8 keeps near-fp16 quality at half the RAM; Q4 is the sweet spot for a phone. Below 1B stay at Q8, the quality loss at Q4 is noticeable.",
+    "medium": "Q4 is the default for a workstation or a 16 GB laptop; use Q8 when the model must be exact (code, judging). fp16 only when there is RAM to spare."
+  },
+  "models": [
+    {
+      "role": "Routing / Drafting",
+      "model": "smollm2-360m-instruct",
+      "params": "0.36B",
+      "disk_gb_fp16": 0.7,
+      "ram_gb_fp16": 0.9,
+      "ram_gb_q8": 0.4,
+      "ram_gb_q4": 0.2,
+      "tier": "small",
+      "macro": "routing",
+      "chat": true
+    },
+    {
+      "role": "Safety / Guardrails",
+      "model": "llama-guard-3-1b",
+      "params": "1B",
+      "disk_gb_fp16": 2.0,
+      "ram_gb_fp16": 2.4,
+      "ram_gb_q8": 1.2,
+      "ram_gb_q4": 0.6,
+      "tier": "small",
+      "macro": "gatekeeping",
+      "chat": true
+    },
+    {
+      "role": "Routing / Drafting",
+      "model": "llama-3.2-1b-instruct",
+      "params": "1B",
+      "disk_gb_fp16": 2.0,
+      "ram_gb_fp16": 2.4,
+      "ram_gb_q8": 1.2,
+      "ram_gb_q4": 0.6,
+      "tier": "small",
+      "macro": "routing",
+      "chat": true,
+      "openrouter_id": "meta-llama/llama-3.2-1b-instruct"
+    },
+    {
+      "role": "Code / Math (Edge)",
+      "model": "qwen2.5-coder-1.5b-instruct",
+      "params": "1.5B",
+      "disk_gb_fp16": 3.0,
+      "ram_gb_fp16": 3.6,
+      "ram_gb_q8": 1.8,
+      "ram_gb_q4": 0.9,
+      "tier": "small",
+      "macro": "thinking",
+      "chat": true
+    },
+    {
+      "role": "Deep Reasoning",
+      "model": "deepseek-r1-distill-qwen-1.5b",
+      "params": "1.5B",
+      "disk_gb_fp16": 3.0,
+      "ram_gb_fp16": 3.6,
+      "ram_gb_q8": 1.8,
+      "ram_gb_q4": 0.9,
+      "tier": "small",
+      "macro": "thinking",
+      "chat": true
+    },
+    {
+      "role": "Lightweight Editing",
+      "model": "smollm2-1.7b-instruct",
+      "params": "1.7B",
+      "disk_gb_fp16": 3.4,
+      "ram_gb_fp16": 4.1,
+      "ram_gb_q8": 2.0,
+      "ram_gb_q4": 1.0,
+      "tier": "small",
+      "macro": "producing",
+      "chat": true
+    },
+    {
+      "role": "Safety / Guardrails",
+      "model": "shieldgemma-2b",
+      "params": "2B",
+      "disk_gb_fp16": 4.0,
+      "ram_gb_fp16": 4.8,
+      "ram_gb_q8": 2.4,
+      "ram_gb_q4": 1.2,
+      "tier": "small",
+      "macro": "gatekeeping",
+      "chat": true
+    },
+    {
+      "role": "Safety / Guardrails",
+      "model": "granite-guardian-3.1-2b",
+      "params": "2B",
+      "disk_gb_fp16": 4.0,
+      "ram_gb_fp16": 4.8,
+      "ram_gb_q8": 2.4,
+      "ram_gb_q4": 1.2,
+      "tier": "small",
+      "macro": "gatekeeping",
+      "chat": true
+    },
+    {
+      "role": "Tool Calling",
+      "model": "granite-3.1-2b-instruct",
+      "params": "2B",
+      "disk_gb_fp16": 4.0,
+      "ram_gb_fp16": 4.8,
+      "ram_gb_q8": 2.4,
+      "ram_gb_q4": 1.2,
+      "tier": "small",
+      "macro": "acting",
+      "chat": true
+    },
+    {
+      "role": "Classification / Extract",
+      "model": "ministral-3b-2512",
+      "params": "3B",
+      "disk_gb_fp16": 6.0,
+      "ram_gb_fp16": 7.2,
+      "ram_gb_q8": 3.6,
+      "ram_gb_q4": 1.8,
+      "tier": "small",
+      "macro": "understanding",
+      "chat": true,
+      "openrouter_id": "mistralai/ministral-3b-2512"
+    },
+    {
+      "role": "Classification / Extract",
+      "model": "granite-4.0-h-micro",
+      "params": "3B",
+      "disk_gb_fp16": 6.0,
+      "ram_gb_fp16": 7.2,
+      "ram_gb_q8": 3.6,
+      "ram_gb_q4": 1.8,
+      "tier": "small",
+      "macro": "understanding",
+      "chat": true,
+      "openrouter_id": "ibm-granite/granite-4.2-8b"
+    },
+    {
+      "role": "Classification / Extract",
+      "model": "qwen2.5-3b-instruct",
+      "params": "3B",
+      "disk_gb_fp16": 6.0,
+      "ram_gb_fp16": 7.2,
+      "ram_gb_q8": 3.6,
+      "ram_gb_q4": 1.8,
+      "tier": "small",
+      "macro": "understanding",
+      "chat": true
+    },
+    {
+      "role": "Tool Calling",
+      "model": "functionary-small-v3",
+      "params": "3B",
+      "disk_gb_fp16": 6.0,
+      "ram_gb_fp16": 7.2,
+      "ram_gb_q8": 3.6,
+      "ram_gb_q4": 1.8,
+      "tier": "small",
+      "macro": "acting",
+      "chat": true
+    },
+    {
+      "role": "Deep Reasoning",
+      "model": "deepseek-r1-distill-llama-3.2-3b",
+      "params": "3B",
+      "disk_gb_fp16": 6.0,
+      "ram_gb_fp16": 7.2,
+      "ram_gb_q8": 3.6,
+      "ram_gb_q4": 1.8,
+      "tier": "small",
+      "macro": "thinking",
+      "chat": true
+    },
+    {
+      "role": "Vision (VLM)",
+      "model": "qwen2.5-vl-3b-instruct",
+      "params": "3B",
+      "disk_gb_fp16": 6.0,
+      "ram_gb_fp16": 7.2,
+      "ram_gb_q8": 3.6,
+      "ram_gb_q4": 1.8,
+      "tier": "small",
+      "macro": "seeing",
+      "chat": true
+    },
+    {
+      "role": "Quality Evaluation",
+      "model": "flow-judge-3b",
+      "params": "3B",
+      "disk_gb_fp16": 6.0,
+      "ram_gb_fp16": 7.2,
+      "ram_gb_q8": 3.6,
+      "ram_gb_q4": 1.8,
+      "tier": "small",
+      "macro": "judging",
+      "chat": true
+    },
+    {
+      "role": "Code / Math (Edge)",
+      "model": "phi-3.5-mini-instruct",
+      "params": "3.8B",
+      "disk_gb_fp16": 7.6,
+      "ram_gb_fp16": 9.1,
+      "ram_gb_q8": 4.6,
+      "ram_gb_q4": 2.3,
+      "tier": "small",
+      "macro": "thinking",
+      "chat": true
+    },
+    {
+      "role": "Classification / Extract",
+      "model": "gemma-3-4b-it",
+      "params": "4B",
+      "disk_gb_fp16": 8.0,
+      "ram_gb_fp16": 9.6,
+      "ram_gb_q8": 4.8,
+      "ram_gb_q4": 2.4,
+      "tier": "small",
+      "macro": "understanding",
+      "chat": true,
+      "openrouter_id": "google/gemma-3-4b-it"
+    },
+    {
+      "role": "Code / Data Formatting",
+      "model": "qwen2.5-coder-7b-instruct",
+      "params": "7B",
+      "disk_gb_fp16": 14.0,
+      "ram_gb_fp16": 16.8,
+      "ram_gb_q8": 8.4,
+      "ram_gb_q4": 4.2,
+      "tier": "medium",
+      "macro": "thinking",
+      "chat": true
+    },
+    {
+      "role": "Vision (VLM)",
+      "model": "qwen2.5-vl-7b-instruct",
+      "params": "7B",
+      "disk_gb_fp16": 14.0,
+      "ram_gb_fp16": 16.8,
+      "ram_gb_q8": 8.4,
+      "ram_gb_q4": 4.2,
+      "tier": "medium",
+      "macro": "seeing",
+      "chat": true
+    },
+    {
+      "role": "Safety / Guardrails",
+      "model": "llama-guard-3-8b",
+      "params": "8B",
+      "disk_gb_fp16": 16.0,
+      "ram_gb_fp16": 19.2,
+      "ram_gb_q8": 9.6,
+      "ram_gb_q4": 4.8,
+      "tier": "medium",
+      "macro": "gatekeeping",
+      "chat": true,
+      "openrouter_id": "meta-llama/llama-guard-3-8b"
+    },
+    {
+      "role": "Quality Evaluation",
+      "model": "prometheus-2-8b",
+      "params": "8B",
+      "disk_gb_fp16": 16.0,
+      "ram_gb_fp16": 19.2,
+      "ram_gb_q8": 9.6,
+      "ram_gb_q4": 4.8,
+      "tier": "medium",
+      "macro": "judging",
+      "chat": true
+    },
+    {
+      "role": "Long-Form Generation",
+      "model": "llama-3.1-8b-instruct",
+      "params": "8B",
+      "disk_gb_fp16": 16.0,
+      "ram_gb_fp16": 19.2,
+      "ram_gb_q8": 9.6,
+      "ram_gb_q4": 4.8,
+      "tier": "medium",
+      "macro": "producing",
+      "chat": true,
+      "openrouter_id": "meta-llama/llama-3.1-8b-instruct"
+    },
+    {
+      "role": "Tool Calling",
+      "model": "hermes-3-llama-3.1-8b",
+      "params": "8B",
+      "disk_gb_fp16": 16.0,
+      "ram_gb_fp16": 19.2,
+      "ram_gb_q8": 9.6,
+      "ram_gb_q4": 4.8,
+      "tier": "medium",
+      "macro": "acting",
+      "chat": true
+    },
+    {
+      "role": "Tool Calling",
+      "model": "granite-3.1-8b-instruct",
+      "params": "8B",
+      "disk_gb_fp16": 16.0,
+      "ram_gb_fp16": 19.2,
+      "ram_gb_q8": 9.6,
+      "ram_gb_q4": 4.8,
+      "tier": "medium",
+      "macro": "acting",
+      "chat": true
+    },
+    {
+      "role": "Deep Reasoning",
+      "model": "deepseek-r1-distill-llama-8b",
+      "params": "8B",
+      "disk_gb_fp16": 16.0,
+      "ram_gb_fp16": 19.2,
+      "ram_gb_q8": 9.6,
+      "ram_gb_q4": 4.8,
+      "tier": "medium",
+      "macro": "thinking",
+      "chat": true
+    },
+    {
+      "role": "Safety / Guardrails",
+      "model": "shieldgemma-9b",
+      "params": "9B",
+      "disk_gb_fp16": 18.0,
+      "ram_gb_fp16": 21.6,
+      "ram_gb_q8": 10.8,
+      "ram_gb_q4": 5.4,
+      "tier": "medium",
+      "macro": "gatekeeping",
+      "chat": true
+    },
+    {
+      "role": "Vision (VLM)",
+      "model": "llama-3.2-11b-vision",
+      "params": "11B",
+      "disk_gb_fp16": 22.0,
+      "ram_gb_fp16": 26.4,
+      "ram_gb_q8": 13.2,
+      "ram_gb_q4": 6.6,
+      "tier": "medium",
+      "macro": "seeing",
+      "chat": true,
+      "openrouter_id": "meta-llama/llama-3.2-11b-vision-instruct"
+    },
+    {
+      "role": "Vision (VLM)",
+      "model": "pixtral-12b",
+      "params": "12B",
+      "disk_gb_fp16": 24.0,
+      "ram_gb_fp16": 28.8,
+      "ram_gb_q8": 14.4,
+      "ram_gb_q4": 7.2,
+      "tier": "medium",
+      "macro": "seeing",
+      "chat": true,
+      "openrouter_id": "mistralai/pixtral-12b"
+    },
+    {
+      "role": "Quality Evaluation",
+      "model": "athene-v2-chat-judge",
+      "params": "14B",
+      "disk_gb_fp16": 28.0,
+      "ram_gb_fp16": 33.6,
+      "ram_gb_q8": 16.8,
+      "ram_gb_q4": 8.4,
+      "tier": "medium",
+      "macro": "judging",
+      "chat": true
+    },
+    {
+      "role": "Long-Form Generation",
+      "model": "phi-4",
+      "params": "14B",
+      "disk_gb_fp16": 28.0,
+      "ram_gb_fp16": 33.6,
+      "ram_gb_q8": 16.8,
+      "ram_gb_q4": 8.4,
+      "tier": "medium",
+      "macro": "producing",
+      "chat": true,
+      "openrouter_id": "microsoft/phi-4"
+    },
+    {
+      "role": "Long-Form Generation",
+      "model": "qwen2.5-14b-instruct",
+      "params": "14B",
+      "disk_gb_fp16": 28.0,
+      "ram_gb_fp16": 33.6,
+      "ram_gb_q8": 16.8,
+      "ram_gb_q4": 8.4,
+      "tier": "medium",
+      "macro": "understanding",
+      "chat": true
+    },
+    {
+      "role": "Deep Reasoning",
+      "model": "deepseek-r1-distill-qwen-14b",
+      "params": "14B",
+      "disk_gb_fp16": 28.0,
+      "ram_gb_fp16": 33.6,
+      "ram_gb_q8": 16.8,
+      "ram_gb_q4": 8.4,
+      "tier": "medium",
+      "macro": "thinking",
+      "chat": true,
+      "openrouter_id": "deepseek/deepseek-r1-distill-qwen-14b"
+    },
+    {
+      "role": "Code / Data Formatting",
+      "model": "gpt-oss-20b",
+      "params": "20B",
+      "disk_gb_fp16": 40.0,
+      "ram_gb_fp16": 48.0,
+      "ram_gb_q8": 24.0,
+      "ram_gb_q4": 12.0,
+      "tier": "medium",
+      "macro": "thinking",
+      "chat": true,
+      "openrouter_id": "openai/gpt-oss-20b"
+    },
+    {
+      "role": "Long-Form Generation",
+      "model": "mistral-small-3.2-24b-instruct",
+      "params": "24B",
+      "disk_gb_fp16": 48.0,
+      "ram_gb_fp16": 57.6,
+      "ram_gb_q8": 28.8,
+      "ram_gb_q4": 14.4,
+      "tier": "medium",
+      "macro": "producing",
+      "chat": true,
+      "openrouter_id": "mistralai/mistral-small-3.2-24b-instruct"
+    },
+    {
+      "role": "Long-Form Generation",
+      "model": "gemma-2-27b-it",
+      "params": "27B",
+      "disk_gb_fp16": 54.0,
+      "ram_gb_fp16": 64.8,
+      "ram_gb_q8": 32.4,
+      "ram_gb_q4": 16.2,
+      "tier": "medium",
+      "macro": "producing",
+      "chat": true,
+      "openrouter_id": "google/gemma-2-27b-it"
+    },
+    {
+      "role": "Code / Data Formatting",
+      "model": "qwen2.5-coder-32b-instruct",
+      "params": "32B",
+      "disk_gb_fp16": 64.0,
+      "ram_gb_fp16": 76.8,
+      "ram_gb_q8": 38.4,
+      "ram_gb_q4": 19.2,
+      "tier": "medium",
+      "macro": "thinking",
+      "chat": true,
+      "openrouter_id": "qwen/qwen-2.5-coder-32b-instruct"
+    },
+    {
+      "role": "Deep Reasoning",
+      "model": "qwq-32b",
+      "params": "32B",
+      "disk_gb_fp16": 64.0,
+      "ram_gb_fp16": 76.8,
+      "ram_gb_q8": 38.4,
+      "ram_gb_q4": 19.2,
+      "tier": "medium",
+      "macro": "thinking",
+      "chat": true,
+      "openrouter_id": "qwen/qwq-32b"
+    },
+    {
+      "role": "Dense Text Embedding",
+      "model": "nomic-embed-text-v1.5",
+      "params": "0.14B",
+      "disk_gb_fp16": 0.28,
+      "ram_gb_fp16": 0.34,
+      "ram_gb_q8": 0.17,
+      "ram_gb_q4": 0.08,
+      "tier": "small",
+      "task": "Fast on-device dense passage embedding",
+      "macro": "retrieval",
+      "chat": false
+    },
+    {
+      "role": "Dense Text Embedding",
+      "model": "bge-large-en-v1.5",
+      "params": "0.34B",
+      "disk_gb_fp16": 0.68,
+      "ram_gb_fp16": 0.82,
+      "ram_gb_q8": 0.41,
+      "ram_gb_q4": 0.2,
+      "tier": "small",
+      "task": "High-precision English semantic search",
+      "macro": "retrieval",
+      "chat": false
+    },
+    {
+      "role": "Multi-Vector Embedding",
+      "model": "bge-m3",
+      "params": "0.57B",
+      "disk_gb_fp16": 1.14,
+      "ram_gb_fp16": 1.37,
+      "ram_gb_q8": 0.68,
+      "ram_gb_q4": 0.34,
+      "tier": "small",
+      "task": "Hybrid dense + sparse (lexical) multilingual search",
+      "macro": "retrieval",
+      "chat": false
+    },
+    {
+      "role": "Semantic Reranking",
+      "model": "jina-reranker-v2",
+      "params": "0.30B",
+      "disk_gb_fp16": 0.6,
+      "ram_gb_fp16": 0.72,
+      "ram_gb_q8": 0.36,
+      "ram_gb_q4": 0.18,
+      "tier": "small",
+      "task": "Cross-encoder multilingual chunk reranking",
+      "macro": "retrieval",
+      "chat": false
+    },
+    {
+      "role": "Semantic Reranking",
+      "model": "bge-reranker-large",
+      "params": "0.56B",
+      "disk_gb_fp16": 1.12,
+      "ram_gb_fp16": 1.34,
+      "ram_gb_q8": 0.67,
+      "ram_gb_q4": 0.34,
+      "tier": "small",
+      "task": "Deep context passage scoring & reranking",
+      "macro": "retrieval",
+      "chat": false
+    },
+    {
+      "role": "Dense Text Embedding",
+      "model": "llm-embedder-7b",
+      "params": "7.0B",
+      "disk_gb_fp16": 14.0,
+      "ram_gb_fp16": 16.8,
+      "ram_gb_q8": 8.4,
+      "ram_gb_q4": 4.2,
+      "tier": "medium",
+      "task": "Task-specific instruction-tuned text retrieval",
+      "macro": "retrieval",
+      "chat": false
+    },
+    {
+      "role": "Dense Text Embedding",
+      "model": "e5-mistral-7b-instruct",
+      "params": "7.1B",
+      "disk_gb_fp16": 14.2,
+      "ram_gb_fp16": 17.0,
+      "ram_gb_q8": 8.5,
+      "ram_gb_q4": 4.3,
+      "tier": "medium",
+      "task": "Long-context instruction semantic retrieval",
+      "macro": "retrieval",
+      "chat": false
+    },
+    {
+      "role": "Code & Tech Retrieval",
+      "model": "qwen2.5-coder-7b-embedding",
+      "params": "7.0B",
+      "disk_gb_fp16": 14.0,
+      "ram_gb_fp16": 16.8,
+      "ram_gb_q8": 8.4,
+      "ram_gb_q4": 4.2,
+      "tier": "medium",
+      "task": "Code repository & technical documentation search",
+      "macro": "retrieval",
+      "chat": false
+    },
+    {
+      "role": "Semantic Reranking",
+      "model": "bge-en-icl",
+      "params": "7.0B",
+      "disk_gb_fp16": 14.0,
+      "ram_gb_fp16": 16.8,
+      "ram_gb_q8": 8.4,
+      "ram_gb_q4": 4.2,
+      "tier": "medium",
+      "task": "In-context generative reranking (ICL)",
+      "macro": "retrieval",
+      "chat": false
+    }
+  ],
+  "app_filters": [
+    {
+      "id": "all",
+      "glyph": "·",
+      "label": "All",
+      "blurb": "Every app, whatever its class."
+    },
+    {
+      "id": "hybrid",
+      "class": "hybrid",
+      "glyph": "◐",
+      "label": "Hybrids",
+      "blurb": "Runs on an ML lib, and a small model exists that does that job better."
+    },
+    {
+      "id": "models_only",
+      "class": "models_only",
+      "glyph": "●",
+      "label": "Models Only",
+      "blurb": "No ML lib can do the job, so it needs a model."
+    },
+    {
+      "id": "ml_only",
+      "class": "ml_only",
+      "glyph": "○",
+      "label": "ML Only",
+      "blurb": "Classic ML can handle the task alone."
+    }
+  ],
+  "app_categories": [
+    {
+      "id": "search",
+      "label": "Search & Knowledge (Retrieval)",
+      "icon": "search"
+    },
+    {
+      "id": "documents",
+      "label": "Documents & Vision",
+      "icon": "visibility"
+    },
+    {
+      "id": "communication",
+      "label": "Communication",
+      "icon": "mail"
+    },
+    {
+      "id": "agents",
+      "label": "Agents & Automation",
+      "icon": "build"
+    },
+    {
+      "id": "reasoning",
+      "label": "Reasoning & Learning",
+      "icon": "psychology"
+    },
+    {
+      "id": "safety",
+      "label": "Safety & Quality",
+      "icon": "security"
+    },
+    {
+      "id": "personal",
+      "label": "Personal",
+      "icon": "person"
+    }
+  ],
+  "chat_tasks": [
+    {
+      "id": "understanding",
+      "label": "Understanding",
+      "icon": "insights",
+      "macro": "understanding",
+      "small": "ministral-3b-2512",
+      "medium": "qwen2.5-14b-instruct"
+    },
+    {
+      "id": "acting",
+      "label": "Acting",
+      "icon": "build",
+      "macro": "acting",
+      "small": "granite-3.1-2b-instruct",
+      "medium": "hermes-3-llama-3.1-8b"
+    },
+    {
+      "id": "thinking",
+      "label": "Thinking",
+      "icon": "psychology",
+      "macro": "thinking",
+      "small": "deepseek-r1-distill-qwen-1.5b",
+      "medium": "deepseek-r1-distill-qwen-14b"
+    },
+    {
+      "id": "producing",
+      "label": "Producing",
+      "icon": "edit",
+      "macro": "producing",
+      "small": "smollm2-1.7b-instruct",
+      "medium": "llama-3.1-8b-instruct"
+    },
+    {
+      "id": "seeing",
+      "label": "Seeing",
+      "icon": "visibility",
+      "macro": "seeing",
+      "small": "qwen2.5-vl-3b-instruct",
+      "medium": "llama-3.2-11b-vision"
+    },
+    {
+      "id": "judging",
+      "label": "Judging",
+      "icon": "verified_user",
+      "macro": "judging",
+      "small": "flow-judge-3b",
+      "medium": "prometheus-2-8b"
+    },
+    {
+      "id": "ask_docs",
+      "label": "Ask my docs",
+      "icon": "search",
+      "macro": "retrieval",
+      "small": "ministral-3b-2512",
+      "medium": "mistral-small-3.2-24b-instruct",
+      "note": "Retrieval (embedding and reranking) has no runtime yet: the question is answered without searching the documents."
+    }
+  ],
+  "chat_default_task": "understanding",
+  "chat_gate": {
+    "model": "llama-guard-3-1b",
+    "note": "Runs automatically on the question and on the answer when it can be placed (Loaded locally, or with an openrouter_id); skipped otherwise."
+  },
+  "chat_escalation": {
+    "small_judge": "flow-judge-3b",
+    "min_score": 5,
+    "note": "A small model's answer is graded 1 to 10 by the small judge; below min_score it is asked again on the task's medium model. The Stronger chip asks the medium model at once."
+  },
+  "app_ui_templates": [
+    {
+      "id": "rag_search",
+      "label": "Search",
+      "flow": "search → ranked results with sources → answer"
+    },
+    {
+      "id": "doc_extract",
+      "label": "Extract",
+      "flow": "document or image → extracted fields or JSON"
+    },
+    {
+      "id": "triage_inbox",
+      "label": "Triage",
+      "flow": "items with labels and draft replies"
+    },
+    {
+      "id": "chat_guarded",
+      "label": "Guarded chat",
+      "flow": "chat with guard badges"
+    },
+    {
+      "id": "tool_runner",
+      "label": "Tool runner",
+      "flow": "task → tool-call log → result"
+    },
+    {
+      "id": "tutor",
+      "label": "Tutor",
+      "flow": "problem → step-by-step reasoning → graded answer"
+    },
+    {
+      "id": "writer",
+      "label": "Writer",
+      "flow": "text → suggest, rewrite or expand"
+    },
+    {
+      "id": "vision_qa",
+      "label": "Vision Q&A",
+      "flow": "image and question → answer"
+    },
+    {
+      "id": "compare_judge",
+      "label": "Compare and judge",
+      "flow": "answers side by side with judge scores"
+    },
+    {
+      "id": "cluster_view",
+      "label": "Clusters",
+      "flow": "items grouped by similarity"
+    },
+    {
+      "id": "summarizer",
+      "label": "Summarizer",
+      "flow": "text → summary and key points"
+    },
+    {
+      "id": "quick_actions",
+      "label": "Quick actions",
+      "flow": "one line → parsed intent → deeplink"
+    }
+  ],
+  "step_prompts": {
+    "retrieval": "Rank the passages in the text below by relevance to the question and list the best three.",
+    "gatekeeping": "You are a safety guard. Reply SAFE or UNSAFE with one short reason for the text below.",
+    "routing": "Name the single kind of request the text below is, in one or two words.",
+    "understanding": "Read the text below and answer the request in it clearly, using only what it says.",
+    "acting": "Plan the tool calls needed for the request below as a short numbered list, then state the result.",
+    "thinking": "Think step by step about the request below and give a clear final answer.",
+    "producing": "Write or improve the text as the request below asks. Reply with the result only.",
+    "seeing": "Describe what the image shows and answer the question about it.",
+    "judging": "Score the answer below from 1 to 10 against the request and give one sentence of reasons."
+  },
+  "apps": [
+    {
+      "id": "private_rag",
+      "category": "search",
+      "class": "hybrid",
+      "ui": {
+        "template": "rag_search",
+        "params": {
+          "input_hint": "Ask a question about your documents"
+        }
+      },
+      "name": "Private RAG Search",
+      "icon": "search",
+      "description": "Search your own documents and get a grounded, self-checked answer, fully private.",
+      "pipeline": [
+        {
+          "macro": "retrieval",
+          "models": [
+            "bge-m3"
+          ]
+        },
+        {
+          "macro": "retrieval",
+          "models": [
+            "jina-reranker-v2"
+          ]
+        },
+        {
+          "macro": "understanding",
+          "models": [
+            "qwen2.5-3b-instruct"
+          ]
+        },
+        {
+          "macro": "judging",
+          "models": [
+            "flow-judge-3b"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "code_qa",
+      "category": "search",
+      "class": "hybrid",
+      "ui": {
+        "template": "rag_search",
+        "params": {
+          "input_hint": "Ask a question about the repository"
+        }
+      },
+      "name": "Code Search & Q&A",
+      "icon": "code",
+      "description": "Ask questions about a code repository: embed, rerank, answer.",
+      "pipeline": [
+        {
+          "macro": "retrieval",
+          "models": [
+            "qwen2.5-coder-7b-embedding"
+          ]
+        },
+        {
+          "macro": "retrieval",
+          "models": [
+            "bge-reranker-large"
+          ]
+        },
+        {
+          "macro": "thinking",
+          "models": [
+            "qwen2.5-coder-7b-instruct"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "multilingual_kb",
+      "category": "search",
+      "class": "hybrid",
+      "ui": {
+        "template": "rag_search",
+        "params": {
+          "input_hint": "Ask in any language"
+        }
+      },
+      "name": "Multilingual Knowledge Base",
+      "icon": "language",
+      "description": "Hybrid multilingual search over a knowledge base with a written answer.",
+      "pipeline": [
+        {
+          "macro": "retrieval",
+          "models": [
+            "bge-m3",
+            "e5-mistral-7b-instruct"
+          ],
+          "alternatives": true
+        },
+        {
+          "macro": "retrieval",
+          "models": [
+            "bge-en-icl"
+          ]
+        },
+        {
+          "macro": "understanding",
+          "models": [
+            "qwen2.5-14b-instruct"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dedup",
+      "category": "search",
+      "class": "ml_only",
+      "ui": {
+        "template": "cluster_view",
+        "params": {
+          "input_hint": "One text per line; similar ones are grouped"
+        }
+      },
+      "name": "Semantic Dedup & Clustering",
+      "icon": "account_tree",
+      "description": "Find near-duplicate and related texts by their embeddings.",
+      "pipeline": [
+        {
+          "macro": "retrieval",
+          "models": [
+            "nomic-embed-text-v1.5"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "file_search",
+      "category": "search",
+      "class": "ml_only",
+      "ui": {
+        "template": "rag_search",
+        "params": {
+          "input_hint": "Describe the file you are looking for"
+        }
+      },
+      "name": "Smart File/Drive Search",
+      "icon": "folder_open",
+      "description": "Find files by meaning, not by name.",
+      "pipeline": [
+        {
+          "macro": "retrieval",
+          "models": [
+            "nomic-embed-text-v1.5"
+          ]
+        },
+        {
+          "macro": "retrieval",
+          "models": [
+            "bge-reranker-large"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "receipt_json",
+      "category": "documents",
+      "class": "hybrid",
+      "ui": {
+        "template": "doc_extract",
+        "params": {
+          "input_hint": "Paste the text of the receipt or invoice (image pick needs the vision runtime)",
+          "output": "json"
+        }
+      },
+      "name": "Receipt/Invoice to JSON",
+      "icon": "description",
+      "description": "Read a receipt or invoice photo and return its fields as JSON.",
+      "pipeline": [
+        {
+          "macro": "seeing",
+          "models": [
+            "qwen2.5-vl-3b-instruct"
+          ]
+        },
+        {
+          "macro": "understanding",
+          "models": [
+            "ministral-3b-2512"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "photo_qa",
+      "category": "documents",
+      "class": "models_only",
+      "ui": {
+        "template": "vision_qa",
+        "params": {
+          "input_hint": "Ask a question about the picture"
+        }
+      },
+      "name": "Screenshot/Photo Q&A",
+      "icon": "visibility",
+      "description": "Ask questions about a screenshot or photo.",
+      "pipeline": [
+        {
+          "macro": "seeing",
+          "models": [
+            "pixtral-12b",
+            "llama-3.2-11b-vision"
+          ],
+          "alternatives": true
+        }
+      ]
+    },
+    {
+      "id": "doc_understanding",
+      "category": "documents",
+      "class": "hybrid",
+      "ui": {
+        "template": "doc_extract",
+        "params": {
+          "input_hint": "Paste the document text and say what to find",
+          "output": "fields"
+        }
+      },
+      "name": "Document Understanding",
+      "icon": "menu_book",
+      "description": "Read scanned documents and answer questions about them.",
+      "pipeline": [
+        {
+          "macro": "seeing",
+          "models": [
+            "qwen2.5-vl-7b-instruct"
+          ]
+        },
+        {
+          "macro": "understanding",
+          "models": [
+            "qwen2.5-14b-instruct"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "email_triage",
+      "category": "communication",
+      "class": "hybrid",
+      "ui": {
+        "template": "triage_inbox",
+        "params": {
+          "input_hint": "Paste one email per block; each gets a label and a draft reply"
+        }
+      },
+      "name": "Email Triage",
+      "icon": "mail",
+      "description": "Route each email, classify it and draft a short reply.",
+      "pipeline": [
+        {
+          "macro": "routing",
+          "models": [
+            "llama-3.2-1b-instruct"
+          ]
+        },
+        {
+          "macro": "understanding",
+          "models": [
+            "granite-4.0-h-micro"
+          ]
+        },
+        {
+          "macro": "producing",
+          "models": [
+            "smollm2-1.7b-instruct"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "meeting_notes",
+      "category": "communication",
+      "class": "models_only",
+      "ui": {
+        "template": "summarizer",
+        "params": {
+          "input_hint": "Paste the notes or transcript"
+        }
+      },
+      "name": "Meeting/Notes Summarizer",
+      "icon": "schedule",
+      "description": "Pull out decisions and action items, then write the summary.",
+      "pipeline": [
+        {
+          "macro": "understanding",
+          "models": [
+            "qwen2.5-3b-instruct"
+          ]
+        },
+        {
+          "macro": "producing",
+          "models": [
+            "phi-4"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "writing",
+      "category": "communication",
+      "class": "models_only",
+      "ui": {
+        "template": "writer",
+        "params": {
+          "input_hint": "Paste text and say how to improve it"
+        }
+      },
+      "name": "Writing Assistant",
+      "icon": "edit",
+      "description": "Quick edits first, long-form drafting when needed.",
+      "pipeline": [
+        {
+          "macro": "producing",
+          "models": [
+            "smollm2-1.7b-instruct"
+          ]
+        },
+        {
+          "macro": "producing",
+          "models": [
+            "mistral-small-3.2-24b-instruct"
+          ],
+          "escalation": true
+        }
+      ]
+    },
+    {
+      "id": "translator",
+      "category": "communication",
+      "class": "models_only",
+      "ui": {
+        "template": "writer",
+        "params": {
+          "input_hint": "Paste text and name the target language"
+        }
+      },
+      "name": "Translator/Localizer",
+      "icon": "language",
+      "description": "Translate and localize text with a strong multilingual model.",
+      "pipeline": [
+        {
+          "macro": "producing",
+          "models": [
+            "gemma-2-27b-it",
+            "qwen2.5-14b-instruct"
+          ],
+          "alternatives": true
+        }
+      ]
+    },
+    {
+      "id": "tool_runner",
+      "category": "agents",
+      "class": "models_only",
+      "ui": {
+        "template": "tool_runner",
+        "params": {
+          "input_hint": "Describe the task to run with tools"
+        }
+      },
+      "name": "Agentic Tool Runner",
+      "icon": "build",
+      "description": "An agent that calls tools, with a guard model before and after.",
+      "pipeline": [
+        {
+          "macro": "gatekeeping",
+          "models": [
+            "llama-guard-3-1b"
+          ]
+        },
+        {
+          "macro": "acting",
+          "models": [
+            "granite-3.1-2b-instruct"
+          ]
+        },
+        {
+          "macro": "acting",
+          "models": [
+            "hermes-3-llama-3.1-8b"
+          ],
+          "escalation": true
+        },
+        {
+          "macro": "gatekeeping",
+          "models": [
+            "llama-guard-3-1b"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "spec_json",
+      "category": "agents",
+      "class": "models_only",
+      "ui": {
+        "template": "writer",
+        "params": {
+          "input_hint": "Describe the structure you need",
+          "output": "json"
+        }
+      },
+      "name": "Spec-to-JSON Formatter",
+      "icon": "table_chart",
+      "description": "Turn a plain-language spec into valid JSON or code.",
+      "pipeline": [
+        {
+          "macro": "thinking",
+          "models": [
+            "qwen2.5-coder-1.5b-instruct"
+          ]
+        },
+        {
+          "macro": "thinking",
+          "models": [
+            "gpt-oss-20b"
+          ],
+          "escalation": true
+        }
+      ]
+    },
+    {
+      "id": "fleet_ops",
+      "category": "agents",
+      "class": "hybrid",
+      "ui": {
+        "template": "tool_runner",
+        "params": {
+          "input_hint": "Ask about the fleet or describe the operation"
+        }
+      },
+      "name": "Fleet Ops Copilot",
+      "icon": "dns",
+      "description": "Search runbooks and configs, then act through tools.",
+      "pipeline": [
+        {
+          "macro": "retrieval",
+          "models": [
+            "qwen2.5-coder-7b-embedding"
+          ]
+        },
+        {
+          "macro": "acting",
+          "models": [
+            "hermes-3-llama-3.1-8b"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "notification_filter",
+      "category": "agents",
+      "class": "ml_only",
+      "ui": {
+        "template": "triage_inbox",
+        "params": {
+          "input_hint": "Paste notifications, one per line; each is rated important or not"
+        }
+      },
+      "name": "Smart Notification Filter",
+      "icon": "notifications",
+      "description": "Decide which notifications deserve your attention.",
+      "pipeline": [
+        {
+          "macro": "routing",
+          "models": [
+            "smollm2-360m-instruct"
+          ]
+        },
+        {
+          "macro": "understanding",
+          "models": [
+            "granite-4.0-h-micro"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "math_tutor",
+      "category": "reasoning",
+      "class": "models_only",
+      "ui": {
+        "template": "tutor",
+        "params": {
+          "input_hint": "Type the problem"
+        }
+      },
+      "name": "Math/Logic Tutor",
+      "icon": "psychology",
+      "description": "Step-by-step solutions, escalating hard problems, with a judge on the result.",
+      "pipeline": [
+        {
+          "macro": "thinking",
+          "models": [
+            "deepseek-r1-distill-qwen-1.5b"
+          ]
+        },
+        {
+          "macro": "thinking",
+          "models": [
+            "qwq-32b"
+          ],
+          "escalation": true
+        },
+        {
+          "macro": "judging",
+          "models": [
+            "prometheus-2-8b"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "code_review",
+      "category": "reasoning",
+      "class": "models_only",
+      "ui": {
+        "template": "compare_judge",
+        "params": {
+          "input_hint": "Paste the code to review",
+          "inputs": [
+            "Code"
+          ]
+        }
+      },
+      "name": "Code Reviewer",
+      "icon": "verified_user",
+      "description": "Review code with a coding model, then have a judge grade the review.",
+      "pipeline": [
+        {
+          "macro": "thinking",
+          "models": [
+            "qwen2.5-coder-32b-instruct"
+          ]
+        },
+        {
+          "macro": "judging",
+          "models": [
+            "athene-v2-chat-judge"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "research",
+      "category": "reasoning",
+      "class": "hybrid",
+      "ui": {
+        "template": "rag_search",
+        "params": {
+          "input_hint": "State the research question"
+        }
+      },
+      "name": "Research Assistant",
+      "icon": "explore",
+      "description": "Find sources, rerank them, reason over them and write up.",
+      "pipeline": [
+        {
+          "macro": "retrieval",
+          "models": [
+            "bge-m3"
+          ]
+        },
+        {
+          "macro": "retrieval",
+          "models": [
+            "jina-reranker-v2"
+          ]
+        },
+        {
+          "macro": "thinking",
+          "models": [
+            "deepseek-r1-distill-qwen-14b"
+          ]
+        },
+        {
+          "macro": "producing",
+          "models": [
+            "phi-4"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "safe_chat",
+      "category": "safety",
+      "class": "hybrid",
+      "ui": {
+        "template": "chat_guarded",
+        "params": {
+          "input_hint": "Ask anything; the guard checks the question and the answer"
+        }
+      },
+      "name": "Safe Chat Gateway",
+      "icon": "security",
+      "description": "A chat that screens the question, routes it, answers it and screens the answer.",
+      "pipeline": [
+        {
+          "macro": "gatekeeping",
+          "models": [
+            "llama-guard-3-1b"
+          ]
+        },
+        {
+          "macro": "routing",
+          "models": [
+            "llama-3.2-1b-instruct"
+          ]
+        },
+        {
+          "macro": "understanding",
+          "models": [
+            "qwen2.5-3b-instruct"
+          ]
+        },
+        {
+          "macro": "gatekeeping",
+          "models": [
+            "shieldgemma-2b"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "moderation",
+      "category": "safety",
+      "class": "ml_only",
+      "ui": {
+        "template": "triage_inbox",
+        "params": {
+          "input_hint": "Paste the content to screen, one item per block"
+        }
+      },
+      "name": "Content Moderation",
+      "icon": "admin_panel_settings",
+      "description": "Screen user content against two safety policies at once.",
+      "pipeline": [
+        {
+          "macro": "gatekeeping",
+          "models": [
+            "shieldgemma-9b",
+            "granite-guardian-3.1-2b"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "eval_lab",
+      "category": "safety",
+      "class": "models_only",
+      "ui": {
+        "template": "compare_judge",
+        "params": {
+          "input_hint": "Paste the question, then the answers to compare",
+          "inputs": [
+            "Question",
+            "Answer A",
+            "Answer B"
+          ]
+        }
+      },
+      "name": "Answer Grader / Eval Lab",
+      "icon": "assessment",
+      "description": "Grade the same answers with three judges and compare.",
+      "pipeline": [
+        {
+          "macro": "judging",
+          "models": [
+            "flow-judge-3b",
+            "prometheus-2-8b",
+            "athene-v2-chat-judge"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "offline",
+      "category": "personal",
+      "class": "hybrid",
+      "ui": {
+        "template": "chat_guarded",
+        "params": {
+          "input_hint": "Ask the on-phone assistant"
+        }
+      },
+      "name": "Offline Phone Assistant",
+      "icon": "smartphone",
+      "description": "Chat, search and read photos with only small models, on the phone.",
+      "pipeline": [
+        {
+          "macro": "routing",
+          "models": [
+            "llama-3.2-1b-instruct"
+          ]
+        },
+        {
+          "macro": "understanding",
+          "models": [
+            "qwen2.5-3b-instruct"
+          ]
+        },
+        {
+          "macro": "retrieval",
+          "models": [
+            "nomic-embed-text-v1.5"
+          ]
+        },
+        {
+          "macro": "seeing",
+          "models": [
+            "qwen2.5-vl-3b-instruct"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "journal",
+      "category": "personal",
+      "class": "hybrid",
+      "ui": {
+        "template": "cluster_view",
+        "params": {
+          "input_hint": "Paste journal entries, one per block"
+        }
+      },
+      "name": "Journal Insights",
+      "icon": "event",
+      "description": "Find themes across your journal entries and write them up.",
+      "pipeline": [
+        {
+          "macro": "retrieval",
+          "models": [
+            "nomic-embed-text-v1.5"
+          ]
+        },
+        {
+          "macro": "producing",
+          "models": [
+            "llama-3.1-8b-instruct"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "quick_actions",
+      "category": "personal",
+      "class": "hybrid",
+      "ui": {
+        "template": "quick_actions",
+        "params": {
+          "input_hint": "Say what you want done, in one line"
+        }
+      },
+      "name": "Quick Actions",
+      "icon": "bolt",
+      "description": "Turn a short request into an action in another Cloud app.",
+      "pipeline": [
+        {
+          "macro": "routing",
+          "models": [
+            "llama-3.2-1b-instruct"
+          ]
+        },
+        {
+          "macro": "acting",
+          "models": [],
+          "note": "Cloud app deeplinks: the intent is opened as a link in the matching Cloud app"
+        }
+      ]
+    }
+  ]
+}

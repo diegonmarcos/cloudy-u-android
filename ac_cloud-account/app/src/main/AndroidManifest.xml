@@ -66,7 +66,7 @@
              only an APK signed with the fleet key gets in, and the provider re-checks the caller
              (call() is not permission-checked by the framework). Read-only. -->
         <provider
-            android:name="com.diegonmarcos.superapp.profile.AccountData$Provider"
+            android:name="com.diegonmarcos.cloudaccount.data.AccountFleetDataProvider"
             android:authorities="${applicationId}.accountdata"
             android:exported="true"
             android:permission="com.diegonmarcos.cloud.permission.CONSTELLATION_DATA" />

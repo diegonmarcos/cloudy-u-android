@@ -1,0 +1,301 @@
+{
+ "_fake": "MOCK DATA - FAKE. Only the ITEMS below are invented: each one hangs on a REAL node named in `subject` (an inbox or Library folder of Cloud Me's vault-rows.json, or a project of the fleet registry repos.outline.json). The inbox list, the registry and the Library folders are never typed here. Days are offsets from today so the views always render. Read by data/MockTasks.kt.",
+ "kinds": [
+  "inboxes",
+  "backlogs",
+  "tasks",
+  "library",
+  "projects"
+ ],
+ "statuses": [
+  "todo",
+  "doing",
+  "blocked",
+  "done"
+ ],
+ "items": [
+  {
+   "id": "t1",
+   "kind": "tasks",
+   "title": "Write the fake spec",
+   "subject": "Cloudy",
+   "status": "done",
+   "startDay": -6,
+   "days": 3,
+   "progress": 100,
+   "detail": "Mock task, not real work."
+  },
+  {
+   "id": "t2",
+   "kind": "tasks",
+   "title": "Review the fake spec",
+   "subject": "Cloudy",
+   "status": "doing",
+   "startDay": -2,
+   "days": 4,
+   "progress": 40
+  },
+  {
+   "id": "t3",
+   "kind": "tasks",
+   "title": "Ship the fake build",
+   "subject": "Cloudy",
+   "status": "todo",
+   "startDay": 3,
+   "days": 2
+  },
+  {
+   "id": "t3a",
+   "kind": "tasks",
+   "title": "Tag the fake release",
+   "subject": "Cloudy",
+   "status": "todo",
+   "startDay": 3,
+   "days": 1,
+   "parent": "t3"
+  },
+  {
+   "id": "t3b",
+   "kind": "tasks",
+   "title": "Announce the fake release",
+   "subject": "Cloudy",
+   "status": "todo",
+   "startDay": 4,
+   "days": 1,
+   "parent": "t3"
+  },
+  {
+   "id": "t4",
+   "kind": "tasks",
+   "title": "Draw the sample wireframe",
+   "subject": "Cloud-Me",
+   "status": "doing",
+   "startDay": -1,
+   "days": 5,
+   "progress": 60,
+   "detail": "Placeholder wireframe."
+  },
+  {
+   "id": "t5",
+   "kind": "tasks",
+   "title": "Wait for the sample vendor",
+   "subject": "Cloud-Me",
+   "status": "blocked",
+   "startDay": 1,
+   "days": 6,
+   "progress": 10,
+   "detail": "Blocked on a made-up vendor."
+  },
+  {
+   "id": "t5a",
+   "kind": "tasks",
+   "title": "Chase the sample vendor",
+   "subject": "Cloud-Me",
+   "status": "blocked",
+   "startDay": 2,
+   "days": 1,
+   "parent": "t5"
+  },
+  {
+   "id": "t6",
+   "kind": "tasks",
+   "title": "Plan the imaginary offsite",
+   "subject": "Galaxy",
+   "status": "todo",
+   "startDay": 7,
+   "days": 3
+  },
+  {
+   "id": "t7",
+   "kind": "tasks",
+   "title": "Archive the old mock notes",
+   "subject": "Galaxy",
+   "status": "done",
+   "startDay": -9,
+   "days": 2,
+   "progress": 100
+  },
+  {
+   "id": "t8",
+   "kind": "tasks",
+   "title": "Test the dummy pipeline",
+   "subject": "Galaxy",
+   "status": "doing",
+   "startDay": 0,
+   "days": 3,
+   "progress": 30
+  },
+  {
+   "id": "t8a",
+   "kind": "tasks",
+   "title": "Fix the dummy flaky step",
+   "subject": "Galaxy",
+   "status": "doing",
+   "startDay": 1,
+   "days": 2,
+   "progress": 20,
+   "parent": "t8"
+  },
+  {
+   "id": "i1",
+   "kind": "inboxes",
+   "title": "Mock email: please confirm the sample invoice",
+   "subject": "Raw-Captures",
+   "status": "todo",
+   "startDay": 1,
+   "days": 1,
+   "detail": "From nobody@example.invalid"
+  },
+  {
+   "id": "i2",
+   "kind": "inboxes",
+   "title": "Mock screenshot: sample booking",
+   "subject": "Mental-Models",
+   "status": "todo",
+   "startDay": 2,
+   "days": 1,
+   "detail": "Proposed by the mock agent"
+  },
+  {
+   "id": "i3",
+   "kind": "inboxes",
+   "title": "Mock note: call the imaginary dentist",
+   "subject": "Cloud-Mail Insights",
+   "status": "todo",
+   "startDay": 0,
+   "days": 1
+  },
+  {
+   "id": "i4",
+   "kind": "inboxes",
+   "title": "Mock invite: fake planning meeting",
+   "subject": "Cloud-Notes Insights",
+   "status": "todo",
+   "startDay": 5,
+   "days": 1
+  },
+  {
+   "id": "b1",
+   "kind": "backlogs",
+   "title": "Someday: tidy the mock archive",
+   "subject": "Project-Proposals",
+   "status": "todo",
+   "startDay": 14,
+   "days": 1
+  },
+  {
+   "id": "b2",
+   "kind": "backlogs",
+   "title": "Someday: try the sample tool",
+   "subject": "Content-Ideas",
+   "status": "todo",
+   "startDay": 21,
+   "days": 1,
+   "detail": "No date pressure."
+  },
+  {
+   "id": "b3",
+   "kind": "backlogs",
+   "title": "Idea: a fake dashboard",
+   "subject": "Learning-Queue",
+   "status": "todo",
+   "startDay": 30,
+   "days": 1
+  },
+  {
+   "id": "b4",
+   "kind": "backlogs",
+   "title": "Idea: a fake widget",
+   "subject": "U Cloudy",
+   "status": "todo",
+   "startDay": 35,
+   "days": 1
+  },
+  {
+   "id": "l1",
+   "kind": "library",
+   "title": "Mock reference: sample style guide",
+   "subject": "Code-Snippets",
+   "status": "done",
+   "detail": "Reading material, fake."
+  },
+  {
+   "id": "l2",
+   "kind": "library",
+   "title": "Mock reference: example checklist",
+   "subject": "Templates-Patterns",
+   "status": "done"
+  },
+  {
+   "id": "l3",
+   "kind": "library",
+   "title": "Mock reference: dummy glossary",
+   "subject": "Wisdom/Spirituality",
+   "status": "done"
+  },
+  {
+   "id": "l4",
+   "kind": "library",
+   "title": "Mock reference: fake template pack",
+   "subject": "Research-Dossiers",
+   "status": "done"
+  },
+  {
+   "id": "p1",
+   "kind": "projects",
+   "title": "Mock Cloudy: kickoff plan",
+   "subject": "Unix/Cloudy",
+   "status": "doing",
+   "startDay": -10,
+   "days": 20,
+   "progress": 45
+  },
+  {
+   "id": "p2",
+   "kind": "projects",
+   "title": "Mock Cloud-Me: design phase",
+   "subject": "Unix/Cloud-Me",
+   "status": "doing",
+   "startDay": -4,
+   "days": 12,
+   "progress": 30
+  },
+  {
+   "id": "p3",
+   "kind": "projects",
+   "title": "Mock Galaxy: research",
+   "subject": "CG/Galaxy",
+   "status": "todo",
+   "startDay": 5,
+   "days": 25
+  },
+  {
+   "id": "b5",
+   "kind": "backlogs",
+   "title": "Mock roadmap step: sample milestone",
+   "subject": "RoadMaps/Backlog-General",
+   "status": "todo",
+   "startDay": 40,
+   "days": 1
+  },
+  {
+   "id": "b6",
+   "kind": "backlogs",
+   "title": "Mock due item: sample renewal",
+   "subject": "Due",
+   "status": "todo",
+   "startDay": 3,
+   "days": 1
+  },
+  {
+   "id": "p4",
+   "kind": "projects",
+   "title": "Mock family task: sample port",
+   "subject": "Unix/Cloudy/Android",
+   "status": "doing",
+   "startDay": -1,
+   "days": 6,
+   "progress": 20
+  }
+ ]
+}

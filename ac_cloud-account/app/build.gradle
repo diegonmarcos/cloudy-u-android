@@ -240,6 +240,8 @@ android {
 
 dependencies {
     implementation project(':libs:core')
+    // #1547 Account serves tiers 1-2 through accountdata; the Data page
+    implementation project(':libs:fleet-data-ui')
     // #867 the Account page: Connect, Profiles, Runtime, Drift. libs:account exposes libs:ui-kit (api);
     // its other modules come with it. libs:updater is the self-update (Updater.start) and the install engine.
     implementation project(':libs:account')

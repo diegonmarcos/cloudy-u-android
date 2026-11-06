@@ -1,0 +1,44 @@
+// libs:fleet-data-client - the one client of the fleet data framework (a0_docs / ticket #1547): APKs are engines, data is read at
+// RUNTIME. FleetData.observe(ctx, dataset, parse): Flow<T?> and FleetData.get(...). The dataset name is all an app says: a tiny built-in
+// routing table (dataset prefix -> provider authority, NEVER data) picks Cloud Account (personal / fleet tiers) or Cloud Store (defaults
+// / reference). Reads stream through openFile, changes arrive through a ContentObserver, the last-known-good copy answers when the provider
+// is gone, a missing dataset is null (a loading state), never a crash, and a dataset whose schemaVersion is unknown is refused.
+// The pure halves (routing, schema check, reader, signature check) are plain Kotlin: JVM-tested. Shared BY REFERENCE; installs nothing
+// (lib-apks build.json::lib_apks.exclude).
+plugins {
+    id 'com.android.library'
+    id 'org.jetbrains.kotlin.android' apply false
+}
+if (project.extensions.findByName('kotlin') == null) {
+    apply plugin: 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.diegonmarcos.superapp.fleetdata'
+    compileSdk 36
+
+    defaultConfig {
+        minSdk 26
+    }
+
+    testOptions { unitTests.returnDefaultValues = true }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
+dependencies {
+    api 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
+    api 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3'
+
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3'
+}

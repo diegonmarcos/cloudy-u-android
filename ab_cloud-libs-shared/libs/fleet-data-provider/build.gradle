@@ -1,0 +1,42 @@
+// libs:fleet-data-provider - the SERVER half of the fleet data framework, small and stable on purpose (separate from the Store's fast-changing UI).
+// Both providers use it: Cloud Store (tiers 3-4: engine defaults and reference data, authority cloud.store.data) and Cloud Account (tiers 1-2:
+// personal and fleet data, through its existing accountdata provider). One generic route scheme (app/<pkg>/<dataset>, shared/<dataset>, index),
+// access by callingPackage plus a served manifest, a signature-level CONSTELLATION_DATA permission, streaming through openFile and notifyChange
+// per URI. Sync is WorkManager on the battery rules (unmetered, no polling loop, 30 s retry floor) with ETag, validation before replace and the
+// last-known-good copy kept. The pure halves (store, server, sync, diff) are plain Kotlin: JVM-tested. Installs nothing (lib-apks exclude).
+plugins {
+    id 'com.android.library'
+    id 'org.jetbrains.kotlin.android' apply false
+}
+if (project.extensions.findByName('kotlin') == null) {
+    apply plugin: 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.diegonmarcos.superapp.fleetdata.provider'
+    compileSdk 36
+
+    defaultConfig {
+        minSdk 26
+    }
+
+    testOptions { unitTests.returnDefaultValues = true }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
+dependencies {
+    api project(':libs:fleet-data-client')
+    implementation 'androidx.work:work-runtime-ktx:2.12.0'
+
+    testImplementation 'junit:junit:4.13.2'
+}

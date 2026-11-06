@@ -36,8 +36,8 @@ def ok(c, good, bad):
     fails += 0 if c else 1
 K = "ac_cloud-store/app/src/main/java/com/diegonmarcos/cloudstore/"
 LIBS = "ab_cloud-libs-shared/libs/"
-PAGES = ["sources", "adb", "ai", "notifications", "about"]
-LABELS = ["Sources", "ADB Shell", "AI", "Notifications", "About"]
+PAGES = ["sources", "adb", "ai", "notifications", "data", "about"]
+LABELS = ["Sources", "ADB Shell", "AI", "Notifications", "Data", "About"]
 
 # C1
 bj = json.load(open(f"{R}/ac_cloud-store/build.json"))
@@ -45,9 +45,9 @@ ui = bj["ui"]
 sec = {s["id"]: s for s in ui["sections"]}
 pg = sec.get("settings", {}).get("pages", [])
 ok([p["id"] for p in pg] == PAGES and [p["label"] for p in pg] == LABELS,
-   "ui.sections settings declares Sources | ADB Shell | AI | Notifications | About, in order",
+   "ui.sections settings declares Sources | ADB Shell | AI | Notifications | Data | About, in order",
    f"the settings section's pages are {[p.get('id') for p in pg]}, not {PAGES}")
-ok(all(not p.get("pages") and not p.get("action") for p in pg), "the five are flat destinations (no sub strip, no launch tab)", "a Configs page is a sub-strip or a launch tab")
+ok(all(not p.get("pages") and not p.get("action") for p in pg), "the six are flat destinations (no sub strip, no launch tab)", "a Configs page is a sub-strip or a launch tab")
 ok("settings" not in ui["bottom_nav"] and "configs" in ui["top_bar"]["settings"], "Settings stays off the island and the top bar's Settings menu offers Configs", "Configs moved onto the island or left the top bar's menu")
 
 # C2

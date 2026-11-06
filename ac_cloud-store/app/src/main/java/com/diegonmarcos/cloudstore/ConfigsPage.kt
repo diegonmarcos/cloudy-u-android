@@ -36,6 +36,10 @@ import com.diegonmarcos.superapp.appstore.PhoneAppActions
 import com.diegonmarcos.superapp.appstore.StoreDensity
 import com.diegonmarcos.superapp.appstore.StoreSourcePrefs
 import com.diegonmarcos.superapp.core.StoreNotifyPrefs
+import com.diegonmarcos.superapp.fleetdata.FleetDataRouting
+import com.diegonmarcos.superapp.fleetdata.provider.FleetDataEndpoint
+import com.diegonmarcos.superapp.fleetdata.provider.FleetDataSchedule
+import com.diegonmarcos.superapp.fleetdata.ui.FleetDataActivity
 import com.diegonmarcos.superapp.shellclient.ShellClient
 
 /**
@@ -50,6 +54,7 @@ object ConfigsPages {
     const val ADB = "adb"
     const val AI = "ai"
     const val NOTIFICATIONS = "notifications"
+    const val DATA = "data"
     const val ABOUT = "about"
 
     /** Test tags: the open page's body, and a switch by what it flips. */
@@ -70,6 +75,7 @@ fun ConfigsPage(page: String) {
             ConfigsPages.ADB -> AdbPage()
             ConfigsPages.AI -> AiPage()
             ConfigsPages.NOTIFICATIONS -> NotificationsPage()
+            ConfigsPages.DATA -> DataPage()
             ConfigsPages.ABOUT -> AboutPage()
             else -> SourcesPage()
         }
@@ -203,4 +209,20 @@ private fun AboutPage() {
     Head("Licence")
     Body("Part of the Cloud constellation (diegonmarcos/cloudy-u-android).")
     Note("The licence of every file and the attribution for the open-source components built in (Shizuku API, libadb-android, BouncyCastle, AndroidX, Compose) are in LICENSING.md and licenses/inventory.json in the repository.")
+}
+
+// ── Data (#1547) ─────────────────────────────────────────────────────────────
+
+/** The fleet data this provider serves (authority cloud.store.data): what it holds, when it last synced, and the browser (tree, JSON viewer, sync, consumers, diff). */
+@Composable
+private fun DataPage() {
+    val ctx = LocalContext.current
+    val ep = remember { FleetDataEndpoint.of(ctx, FleetDataRouting.STORE) }
+    val held = remember { ep.store.list().size }
+    val st = remember { ep.status() }
+    Head("Fleet data")
+    Note("Cloud Store serves the engine defaults and reference data every fleet app reads at runtime. Nothing here is baked into an APK.")
+    Body("$held datasets held" + if (st != null) ", ${st.failed.size} failed in the last sync" else ", not synced yet")
+    Button(onClick = { FleetDataActivity.open(ctx, FleetDataRouting.STORE) }) { Text("Open the data browser") }
+    Button(onClick = { FleetDataSchedule.syncNow(ctx, FleetDataRouting.STORE) }) { Text("Sync now") }
 }

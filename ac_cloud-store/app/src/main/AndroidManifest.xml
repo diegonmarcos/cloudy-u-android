@@ -92,5 +92,14 @@
             android:foregroundServiceType="dataSync"
             tools:node="merge"
             tools:replace="android:foregroundServiceType" />
+    
+        <!-- #1547 The fleet data provider: tiers 3-4 (app defaults, reference data) served at runtime, never baked into an APK. Routes
+             app/<pkg>/<dataset>, shared/<dataset>, index; access by callingPackage plus the served manifest; signature permission
+             CONSTELLATION_DATA; openFile streams (no Binder size limit). Only openFile does anything. -->
+        <provider
+            android:name="com.diegonmarcos.superapp.fleetdata.provider.FleetDataProvider"
+            android:authorities="cloud.store.data"
+            android:exported="true"
+            android:permission="com.diegonmarcos.cloud.permission.CONSTELLATION_DATA" />
     </application>
 </manifest>

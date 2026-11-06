@@ -216,7 +216,8 @@ object AccountData {
     @Volatile var callerResolver: (Context) -> String =
         { c -> c.packageManager.getPackagesForUid(Binder.getCallingUid())?.firstOrNull() ?: c.packageName }
 
-    class Provider : ContentProvider() {
+    /** Open for the host app's subclass (Cloud Account adds the fleet data routes: openFile of app/<pkg>/<dataset>, shared/<dataset>, index). */
+    open class Provider : ContentProvider() {
         override fun onCreate(): Boolean = true
 
         override fun call(method: String, arg: String?, extras: Bundle?): Bundle {

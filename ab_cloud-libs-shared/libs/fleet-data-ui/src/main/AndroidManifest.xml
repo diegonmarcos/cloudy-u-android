@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <!-- The Data page for the app that links this lib; not exported: the app's own Configs row opens it. -->
+        <activity android:name="com.diegonmarcos.superapp.fleetdata.ui.FleetDataActivity" android:exported="false" android:label="Data" />
+    </application>
+</manifest>

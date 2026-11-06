@@ -1,0 +1,43 @@
+// libs:fleet-data-ui - the "Data" page both provider apps (Cloud Store, Cloud Account) show: the dataset tree (size, schemaVersion, ETag, last
+// sync), a JSON viewer (libs:json-viewer), sync status with "Sync now", the consumers (served manifest plus the access log) and the diff against
+// the previous version. FleetDataActivity hosts it for an app that has no page of its own. Installs nothing (lib-apks build.json::lib_apks.exclude).
+plugins {
+    id 'com.android.library'
+    id 'org.jetbrains.kotlin.plugin.compose'
+}
+if (project.extensions.findByName('kotlin') == null) {
+    apply plugin: 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.diegonmarcos.superapp.fleetdata.ui'
+    compileSdk 36
+
+    defaultConfig {
+        minSdk 26
+    }
+
+    buildFeatures { compose = true }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
+dependencies {
+    api project(':libs:fleet-data-provider')
+    implementation project(':libs:json-viewer')
+    implementation 'androidx.core:core-ktx:1.13.1'
+    implementation platform('androidx.compose:compose-bom:2025.11.01')
+    implementation 'androidx.compose.ui:ui'
+    implementation 'androidx.compose.foundation:foundation'
+    implementation 'androidx.compose.material3:material3'
+    implementation 'androidx.activity:activity-compose:1.9.3'
+}

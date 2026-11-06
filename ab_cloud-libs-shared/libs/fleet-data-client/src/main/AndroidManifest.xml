@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- The providers' signature permission: a fleet-signed APK holds it, nothing else can read a dataset. -->
+    <uses-permission android:name="com.diegonmarcos.cloud.permission.CONSTELLATION_DATA" />
+    <queries>
+        <provider android:authorities="com.diegonmarcos.cloudaccount.accountdata" />
+        <provider android:authorities="cloud.store.data" />
+    </queries>
+</manifest>
