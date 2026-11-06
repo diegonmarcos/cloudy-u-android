@@ -15,6 +15,9 @@ object DataFiles {
     val cbIndicatorsJson: String get() = find("../data/cb-indicators.json", "data/cb-indicators.json").readText()
     val cbSnapshotJson: String get() = find("../data/cb-snapshot.json", "data/cb-snapshot.json").readText()
     fun cbFixture(name: String): String = find("src/test/resources/cb/$name", "app/src/test/resources/cb/$name").readText()
+    val quotesJson: String get() = find("../data/quotes.json", "data/quotes.json").readText()
+    val quotesSnapshotJson: String get() = find("../data/quotes-snapshot.json", "data/quotes-snapshot.json").readText()
+    fun quotesFixture(name: String): String = find("src/test/resources/quotes/$name", "app/src/test/resources/quotes/$name").readText()
     val buildJson: String get() = find("../build.json", "build.json").readText()
     val engineFixtureJson: String get() = find("src/test/resources/engine-fixture.json", "app/src/test/resources/engine-fixture.json").readText()
 }

@@ -193,7 +193,7 @@
     "default_section": "cb",
     "nav_ui": {"mode": "classic", "scroll_hide": true},
     "configs_ui": ["nav_ui"],
-    "redirects": [{"from": "pm_a2_low", "tab": "pm", "to": "home", "note": "#1478 A2 Low Risk dropped (identical to DM E30B70): its deep links open the PM Homepage"}, {"from": "market_monitor", "tab": "fi", "to": "home", "note": "#1399 FI Market Monitor removed: its deep links open the FI Homepage"}, {"from": "ex", "tab": "hg", "to": "home", "note": "The EX tab became HG (Hedging): the old EX section deep link opens the HG Homepage"}, {"from": "ex-home", "tab": "hg", "to": "home", "note": "The EX Homepage became the HG Homepage"}],
+    "redirects": [{"from": "pm_a2_low", "tab": "pm", "to": "home", "note": "#1478 A2 Low Risk dropped (identical to DM E30B70): its deep links open the PM Homepage"}, {"from": "market_monitor", "tab": "fi", "to": "home", "note": "#1399 FI Market Monitor removed: its deep links open the FI Homepage"}, {"from": "ex", "tab": "hg", "to": "home", "note": "The EX tab became HG (Hedging): the old EX section deep link opens the HG Homepage"}, {"from": "ex-home", "tab": "hg", "to": "home", "note": "The EX Homepage became the HG Homepage"}, {"from": "cm", "tab": "eq", "to": "commodity-prices", "note": "The CM section was folded into Commodity Prices (EQ): its deep links open that page"}, {"from": "ex-commodities", "tab": "eq", "to": "commodity-prices", "note": "The old EX Commodities page moved to EQ: Commodity Prices"}],
     "sections": [
       {
         "id": "cb",
@@ -237,7 +237,10 @@
           {"id": "equity-quote", "label": "Quotes & Charts", "icon": "chart"},
           {"id": "equity-fundamentals", "label": "Fundamentals", "icon": "description"},
           {"id": "earnings-calendar", "label": "Earnings Calendar", "icon": "calendar_month"},
-          {"id": "watchlist", "label": "Watchlist & Alerts", "icon": "bookmark"}
+          {"id": "watchlist", "label": "Watchlist & Alerts", "icon": "bookmark"},
+          {"id": "fx-rates", "label": "Exchange Rates", "icon": "swap_horiz"},
+          {"id": "commodity-prices", "label": "Commodity Prices", "icon": "inventory_2"},
+          {"id": "commodities", "label": "Commodities", "icon": "inventory_2"}
         ]
       },
       {
@@ -271,10 +274,18 @@
         "nav_mode": "horizontal_one_row",
         "pages": [
           {"id": "hg-home", "label": "Home", "icon": "home"},
+          {"id": "hg-rates", "label": "Rates Futures", "icon": "account_balance"},
+          {"id": "hg-equity", "label": "Equity Index Futures", "icon": "trending_up"},
+          {"id": "hg-fx", "label": "FX Futures", "icon": "swap_horiz"},
+          {"id": "hg-energy", "label": "Energy Futures", "icon": "speed"},
+          {"id": "hg-metals", "label": "Metals Futures", "icon": "inventory_2"},
+          {"id": "hg-agriculture", "label": "Agriculture Futures", "icon": "explore"},
+          {"id": "hg-crypto", "label": "Crypto Futures", "icon": "token"},
+          {"id": "hg-volatility", "label": "Volatility Futures", "icon": "insights"},
+          {"id": "hedge-calculator", "label": "Hedge Calculator", "icon": "compare_arrows"},
           {"id": "fx", "label": "FX", "icon": "swap_horiz"},
           {"id": "onshore-usd-rates", "label": "Onshore USD Rates", "icon": "account_balance"},
-          {"id": "crypto", "label": "Crypto", "icon": "token"},
-          {"id": "commodities", "label": "Commodities", "icon": "inventory_2"}
+          {"id": "crypto", "label": "Crypto", "icon": "token"}
         ]
       },
       {
@@ -416,6 +427,26 @@
           "title": "Watchlist & Alerts",
           "subtitle": "Your symbols, price alerts and event alerts, kept on this device",
           "dashboard": "watchlist"
+        },
+        {
+          "kind": "quote_board",
+          "page": "fx-rates",
+          "view": "fx_rates",
+          "title": "Exchange Rates",
+          "subtitle": "Cross-rate table of the major and EM currencies: spot, change, 1W, 1M and YTD, and the base x quote matrix"
+        },
+        {
+          "kind": "quote_board",
+          "page": "commodity-prices",
+          "view": "commodities",
+          "title": "Commodity Prices",
+          "subtitle": "Energy, metals and agriculture front-month prices: last, change, 1W, 1M, YTD, unit and currency"
+        },
+        {
+          "kind": "dashboard",
+          "title": "Commodities",
+          "subtitle": "Energy, precious metals, industrial metals and minerals, agriculture, Bitcoin and Ether (WTD to 10Y)",
+          "dashboard": "commodities"
         }
       ],
       "nw": [
@@ -541,6 +572,69 @@
       ],
       "hg": [
         {
+          "kind": "futures_board",
+          "page": "hg-rates",
+          "view": "rates",
+          "title": "Rates Futures",
+          "subtitle": "SOFR, Fed Funds, Euribor, EUR STR, SONIA, TONA and the 2y, 5y, 10y, 30y bond futures (Treasury, Bund, BTP, OAT, Gilt, JGB): delayed quotes, term structure, implied rate"
+        },
+        {
+          "kind": "futures_board",
+          "page": "hg-equity",
+          "view": "equity",
+          "title": "Equity Index Futures",
+          "subtitle": "ES, NQ, YM, RTY, Euro Stoxx 50, DAX, FTSE, Nikkei, Hang Seng, KOSPI, Nifty, Ibovespa, ASX: delayed quotes and term structure"
+        },
+        {
+          "kind": "futures_board",
+          "page": "hg-fx",
+          "view": "fx",
+          "title": "FX Futures",
+          "subtitle": "6E, 6J, 6B, 6A, 6C, 6S, 6M, BRL, INR, CNH and the dollar index: delayed quotes and term structure"
+        },
+        {
+          "kind": "futures_board",
+          "page": "hg-energy",
+          "view": "energy",
+          "title": "Energy Futures",
+          "subtitle": "WTI, Brent, natural gas (HH, TTF), RBOB, heating oil, gasoil, coal: delayed quotes and term structure"
+        },
+        {
+          "kind": "futures_board",
+          "page": "hg-metals",
+          "view": "metals",
+          "title": "Metals Futures",
+          "subtitle": "Gold, silver, copper, platinum, palladium, aluminium, nickel, zinc, iron ore: delayed quotes and term structure"
+        },
+        {
+          "kind": "futures_board",
+          "page": "hg-agriculture",
+          "view": "agriculture",
+          "title": "Agriculture Futures",
+          "subtitle": "Corn, wheat, the soy complex, coffee, sugar, cocoa, cotton, cattle, hogs: delayed quotes and term structure"
+        },
+        {
+          "kind": "futures_board",
+          "page": "hg-crypto",
+          "view": "crypto",
+          "title": "Crypto Futures",
+          "subtitle": "Bitcoin and Ether futures on CME: delayed quotes and term structure"
+        },
+        {
+          "kind": "futures_board",
+          "page": "hg-volatility",
+          "view": "volatility",
+          "title": "Volatility Futures",
+          "subtitle": "VIX and VSTOXX: delayed quotes (the VIX index is the cash level)"
+        },
+        {
+          "kind": "hedge_calc",
+          "page": "hedge-calculator",
+          "view": "hedge",
+          "title": "Hedge Calculator",
+          "subtitle": "Hedge ratio and notional: contracts needed from a future's declared multiplier and its delayed price"
+        },
+        {
           "kind": "dashboard",
           "title": "FX",
           "subtitle": "Comprehensive real-time currency pricing, matrix crosses, spot rates, and forwards",
@@ -557,12 +651,6 @@
           "title": "Crypto",
           "subtitle": "Crypto spot, 24h change and daily candles",
           "dashboard": "crypto"
-        },
-        {
-          "kind": "dashboard",
-          "title": "Commodities",
-          "subtitle": "Energy, precious metals, industrial metals and minerals, agriculture, Bitcoin and Ether (WTD to 10Y)",
-          "dashboard": "commodities"
         }
       ],
       "my-pm": [

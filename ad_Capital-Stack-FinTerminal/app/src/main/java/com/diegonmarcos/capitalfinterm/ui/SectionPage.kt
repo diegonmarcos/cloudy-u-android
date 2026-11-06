@@ -113,7 +113,7 @@ private fun TabList(sectionId: String, entries: List<Entry>, compact: Boolean, s
     val sources = remember { AssetData.sources(ctx) }
     val dashboards = remember { AssetData.dashboards(ctx) }
     val dashEntries = entries.filter { it.kind == Pages.KIND_DASHBOARD }
-    val others = entries.filter { it.kind != Pages.KIND_DASHBOARD && it.kind != Pages.KIND_PM_TABLE && it.kind != Pages.KIND_CB_TABLE }
+    val others = entries.filter { it.kind != Pages.KIND_DASHBOARD && it.kind != Pages.KIND_PM_TABLE && it.kind != Pages.KIND_CB_TABLE && it.kind != Pages.KIND_QUOTE_BOARD && it.kind != Pages.KIND_FUTURES_BOARD && it.kind != Pages.KIND_HEDGE_CALC }
     fun status(e: Entry): DashStatus? = dashboards.firstOrNull { it.id == e.dashboard }?.let { Dashboards.status(it, sources) }
     LazyColumn(
         Modifier.fillMaxSize(),
@@ -156,6 +156,9 @@ private fun EntryPage(e: Entry, nav: FinNav) {
             Pages.KIND_HOLDINGS -> HoldingsPanel()
             Pages.KIND_PM_TABLE -> PmPage(e.table, nav)
             Pages.KIND_CB_TABLE -> CbPage(e.view)
+            Pages.KIND_QUOTE_BOARD -> QuoteBoardPage(e.view)
+            Pages.KIND_FUTURES_BOARD -> FuturesBoardPage(e.view)
+            Pages.KIND_HEDGE_CALC -> HedgePage()
             else -> Text(e.title, color = LocalFinPalette.current.text, style = FinType.title)
         }
     }

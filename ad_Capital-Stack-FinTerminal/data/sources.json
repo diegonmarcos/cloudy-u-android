@@ -115,7 +115,7 @@
           ]
         },
         {
-          "tab": "hg",
+          "tab": "eq",
           "entries": [
             "Commodities"
           ]
@@ -963,7 +963,12 @@
         {
           "tab": "hg",
           "entries": [
-            "Crypto",
+            "Crypto"
+          ]
+        },
+        {
+          "tab": "eq",
+          "entries": [
             "Commodities"
           ]
         }
@@ -992,7 +997,7 @@
       "connector": "cftc_cot",
       "feeds": [
         {
-          "tab": "hg",
+          "tab": "eq",
           "entries": [
             "Commodities"
           ]
@@ -1038,7 +1043,7 @@
           ]
         },
         {
-          "tab": "hg",
+          "tab": "eq",
           "entries": [
             "Commodities"
           ]
@@ -1283,7 +1288,7 @@
       "connector": null,
       "feeds": [
         {
-          "tab": "hg",
+          "tab": "eq",
           "entries": [
             "Commodities"
           ]

@@ -43,6 +43,9 @@ object Pages {
     const val KIND_SOURCES = "sources"
     const val KIND_PM_TABLE = "pm_table"
     const val KIND_CB_TABLE = "cb_table"
+    const val KIND_QUOTE_BOARD = "quote_board"
+    const val KIND_FUTURES_BOARD = "futures_board"
+    const val KIND_HEDGE_CALC = "hedge_calc"
 
     /** The entries declared for [sectionId] in the stacks JSON (empty when the section declares none). */
     fun entries(stacks: String, sectionId: String): List<Entry> {
