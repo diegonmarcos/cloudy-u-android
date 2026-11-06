@@ -14,7 +14,7 @@ import java.io.File
  * The source tree mirrors the declared page hierarchy (build.json ui.sections -> ui.page_packages), and the two cannot
  * drift apart silently:
  *
- *   P1 every declared page has an implementation: it is drawn from data (facet / tabs / url / upstream / action / mode /
+ *   P1 every declared page has an implementation: it is drawn from data (facet / tabs / url / upstream / action / mode / hub_of_subgroup (#1545) /
  *      webapps_base), delegated to a lib (mail, chat), routed by a branch in launcher/SectionPages.kt, or it says so with
  *      `placeholder: true`. A page with none of these would open the "Coming soon" stub unannounced.
  *   P2 a `placeholder: true` page really has no implementation (the flag goes stale the day one lands).
@@ -37,7 +37,7 @@ class PageImplementationsGuardTest {
     private val panels = File(main, "launcher/AggregatorPanels.kt").readText()
 
     private val delegatedSections = setOf("mail", "chat", "apptabs", "recentapps")
-    private val dataKeys = listOf("facet", "url", "upstream", "action", "is_action", "mode", "webapps_base")
+    private val dataKeys = listOf("facet", "url", "upstream", "action", "is_action", "mode", "webapps_base", "hub_of_subgroup")
 
     private data class Decl(val section: String, val page: String, val o: JSONObject)
 
