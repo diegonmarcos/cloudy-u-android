@@ -29,8 +29,8 @@ class ExternalAppsTest {
         assertTrue(ExternalApps.resolve(all, "extapp:cloud-tasks/inbox") { true } is ExternalApps.Resolution.Open)
     }
 
-    // the fleet name is the one name (app-names T4): external_apps restates none, so the message shows the id
-    @Test fun `not installed names the app by its fleet name for the message`() {
+    // the declared label is the fleet name (app-names T4), so the message names the app as the fleet does
+    @Test fun `not installed gives the declared label for the message`() {
         assertEquals(ExternalApps.Resolution.Missing("cloud-tasks"), ExternalApps.resolve(all, "extapp:cloud-tasks") { false })
     }
 
