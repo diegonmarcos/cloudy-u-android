@@ -49,7 +49,7 @@
   "release": "Release",
   "projection": "Bank projection",
   "latest": "Year to date",
-  "note_countries": "Aggregates are GDP-weighted means of the countries that have a value (weights re-normalised); heat compares a value with the country's own history. n/a = n/a (no free source).",
+  "note_countries": "Aggregates are GDP-weighted means of the countries that have a value (weights re-normalised); heat compares a value with the country's own history. — = n/a (no free source).",
   "note_groups": "World covers the economies listed here, not the whole world; the euro-area members DE, FR, IT and ES are inside the Euro Area.",
   "note_predictions": "Forecasts: IMF WEO and OECD Economic Outlook for the current year, +1 and +2. Taylor path: the model's implied policy rate from the forecast inflation, the OECD output gap and the potential growth as the neutral rate; a model, not a bank forecast."
  },
