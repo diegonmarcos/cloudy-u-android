@@ -38,3 +38,11 @@ object Data {
         }
     }
 }
+
+/** The shared AI lib's real declared data (libs:ai assets), read from where the lib keeps it, never copied. */
+object LibAi {
+    private const val DIR = "../../ab_cloud-libs-shared/libs/ai/src/main/assets/ai/"
+    fun asset(name: String): String = java.io.File(DIR + name).readText()
+    fun tabs(): com.diegonmarcos.superapp.ai.AiModelTabs = com.diegonmarcos.superapp.ai.AiModelTabs.parse(asset("model-tabs.json"), asset("models-snapshot.json"))
+    fun config(): com.diegonmarcos.superapp.ai.AiConfig = com.diegonmarcos.superapp.ai.AiConfig.parse(asset("ai.json"))
+}

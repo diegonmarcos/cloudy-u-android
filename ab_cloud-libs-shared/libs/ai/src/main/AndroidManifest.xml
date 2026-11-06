@@ -1,2 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" />
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <!-- The chat's attachments: a camera shot is written to a cache file through this, and an image of an answer is handed to the share sheet
+             through it. Its own class and authority, so an app's own FileProvider never collides with it. -->
+        <provider
+            android:name="com.diegonmarcos.superapp.ai.AiFileProvider"
+            android:authorities="${applicationId}.aifiles"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/ai_file_paths" />
+        </provider>
+    </application>
+</manifest>

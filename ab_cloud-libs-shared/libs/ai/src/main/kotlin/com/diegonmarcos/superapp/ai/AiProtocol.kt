@@ -20,6 +20,8 @@ class AiRequest(
     val effort: String = "",
     /** Extra request headers (the optimisation plugins' toggles); only the gateway takes them. */
     val headers: Map<String, String> = emptyMap(),
+    /** Output modalities asked of the model (`modalities`: image and text for an image answer); empty sends none. */
+    val modalities: List<String> = emptyList(),
 )
 
 /** Tokens (and the cost, when the backend reports one) of one answer, as the backend REPORTED them. */
@@ -36,6 +38,8 @@ class AiReply(
     val toolCalls: List<AiToolCall> = emptyList(),
     val transport: Boolean = false,
     val usage: AiUsage? = null,
+    /** The images the answer carries (data URLs or https URLs), in order; empty = none. */
+    val images: List<String> = emptyList(),
 )
 
 /** The OpenAI-style wire the gateway and OpenRouter share, as pure functions (shared cases: assets/ai/protocol-cases.json). */
@@ -47,8 +51,14 @@ object AiProtocol {
     }
 
     /** The last [turns] messages as the wire's `messages`. */
-    fun messages(history: List<AiMsg>, turns: Int): JSONArray =
-        JSONArray(history.takeLast(turns).map { JSONObject().put("role", it.role).put("content", it.content) })
+    fun messages(history: List<AiMsg>, turns: Int, read: ((AiAttachment) -> ByteArray?)? = null): JSONArray {
+        val h = history.takeLast(turns)
+        // Only the last user message carries its files' bytes (an image is re-attached by the user for the next turn).
+        val last = h.indexOfLast { it.role == "user" }
+        return JSONArray(h.mapIndexed { i, m ->
+            JSONObject().put("role", m.role).put("content", if (read != null && i == last && m.attachments.isNotEmpty()) AiAttachWire.content(m.content, m.attachments, read) else m.content)
+        })
+    }
 
     /**
      * The request body. [openRouter] adds OpenRouter's own web fields (the gateway takes none); a null
@@ -60,6 +70,7 @@ object AiProtocol {
         o.put("messages", req.wire ?: messages(req.messages, cfg.historyTurns))
         if (stream) o.put("stream", true)
         if (req.effort.isNotBlank()) o.put("reasoning", JSONObject().put("effort", req.effort))
+        if (req.modalities.isNotEmpty()) o.put("modalities", JSONArray(req.modalities))
         if (openRouter && req.web) {
             if (req.nativeWeb) o.put(cfg.nativeWebParam, JSONObject())
             else o.put("plugins", JSONArray().put(JSONObject().put("id", cfg.webPlugin)))
@@ -139,7 +150,9 @@ object AiProtocol {
                 AiToolCall(c.optString("id"), name, f.optString("arguments", "{}").ifBlank { "{}" })
             }
         }.orEmpty()
-        return AiReply(msg?.str("content") ?: "", urlCitations(msg?.optJSONArray("annotations")), null, calls, usage = usage(j))
+        val content = msg?.opt("content")
+        val text = if (content is JSONArray) (0 until content.length()).mapNotNull { content.optJSONObject(it) }.filter { it.optString("type") == "text" }.joinToString("") { it.optString("text") } else msg?.str("content") ?: ""
+        return AiReply(text, urlCitations(msg?.optJSONArray("annotations")), null, calls, usage = usage(j), images = AiImages.urls(msg))
     }
 
     /** The gateway's /health `plugins` object: name to enabled; anything else is none. */

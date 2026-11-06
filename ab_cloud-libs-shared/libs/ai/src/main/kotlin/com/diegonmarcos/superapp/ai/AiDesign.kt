@@ -52,6 +52,12 @@ class AiDesign private constructor(private val root: JSONObject) {
     val collapsedByDefault: Boolean = composerObj.getJSONObject("collapse").getString("default") == "collapsed"
     val collapsePrefKey: String = composerObj.getJSONObject("collapse").getString("pref_key")
     val attachKinds: List<Pair<String, String>> = composerObj.getJSONObject("plus").getJSONArray("attach").objs().map { it.getString("id") to it.getString("label") }
+
+    /** The libs:perms row ids each Attach item needs (`perms`), and the items that cannot run without them (`requires`: Camera). */
+    val attachPerms: Map<String, List<String>> = composerObj.getJSONObject("plus").getJSONArray("attach").objs().associate { o ->
+        o.getString("id") to (o.optJSONArray("perms")?.let { a -> (0 until a.length()).map { a.getString(it) } } ?: emptyList())
+    }
+    val attachRequires: Set<String> = composerObj.getJSONObject("plus").getJSONArray("attach").objs().filter { it.optBoolean("requires") }.map { it.getString("id") }.toSet()
     val newChatLabel: String = composerObj.getJSONObject("plus").getString("new_chat")
     val defaultEffort: String = root.getJSONObject("effort").getString("default")
     val efforts: List<AiEffort> = root.getJSONObject("effort").getJSONArray("levels").objs().map { AiEffort(it.getString("id"), it.getString("label"), it.getString("value")) }

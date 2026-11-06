@@ -1,0 +1,129 @@
+{
+  "_doc": "THE MODEL CATALOGUE'S TABS AS DATA (libs:ai, AiModelTabs). `layout` is the page's tab rows under a header, in order; `tabs` declares, per tab id, its label and the RULES that fill it from OpenRouter's model metadata (architecture.input_modalities / output_modalities, supported_parameters, the images / videos / embeddings lists). tools/gen-model-snapshot.py applies the rules to the live API (or a saved copy) and writes assets/ai/models-snapshot.json, the baked snapshot every tab shows offline; run it at refresh time, never by hand-editing the snapshot. `search` is the live OpenRouter model search box: one GET of `url` on demand (no key needed to list), debounced, cached for `ttl_minutes`, no background polling. `image_flow` is the image in / image out routing: the Image tab's chat-capable entries are the automatic pick, `intent` the prompt verbs that ask for a picture. The guard test-model-snapshot (tools/gen-model-snapshot.py --check, AiModelTabsTest) fails when a tab is empty or an entry carries placeholder text.",
+  "snapshot": "ai/models-snapshot.json",
+  "search": {
+    "url": "https://openrouter.ai/api/v1/models",
+    "ttl_minutes": 30,
+    "debounce_ms": 400,
+    "min_chars": 2,
+    "max_results": 40
+  },
+  "layout": [
+    {
+      "header": "Core",
+      "rows": [
+        ["frontier", "text", "search"],
+        ["audio", "image", "video"],
+        ["specialist", "tasks", "medium", "small"]
+      ]
+    }
+  ],
+  "providers": {
+    "_doc": "The declared providers: the frontier labs first, then the open-weights and regional ones. A provider is the id prefix on OpenRouter; `label` is how a row names it when the model name carries no 'Provider:' prefix.",
+    "order": ["anthropic", "openai", "google", "x-ai", "meta", "meta-llama", "mistralai", "deepseek", "qwen", "moonshotai", "z-ai", "minimax", "nvidia", "cohere", "amazon", "microsoft", "xiaomi", "tencent", "bytedance-seed", "stepfun", "ibm-granite", "perplexity", "black-forest-labs", "stability", "elevenlabs"],
+    "labels": {
+      "x-ai": "xAI", "meta": "Meta", "meta-llama": "Meta", "mistralai": "Mistral", "z-ai": "Z.ai", "moonshotai": "Moonshot", "bytedance-seed": "ByteDance",
+      "ibm-granite": "IBM", "black-forest-labs": "Black Forest Labs", "openai": "OpenAI", "deepseek": "DeepSeek", "qwen": "Qwen", "nvidia": "NVIDIA", "minimax": "MiniMax"
+    },
+    "_doc_direct": "Declared providers whose speech and image models are NOT on OpenRouter today (Whisper-class STT, ElevenLabs TTS, Stability): they are listed here so the generator reports the gap; a model is added the day OpenRouter lists it, never typed in by hand."
+    ,
+    "direct_only": ["stability", "elevenlabs", "openai-whisper"]
+  },
+  "tabs": {
+    "frontier": {
+      "label": "Frontier",
+      "rules": [
+        {"source": "chat", "out_only": ["text"], "in_has": ["text"], "id_exclude": "(?i)([-/]mini\\b|nano|lite|flash|small|tiny|haiku|luna|free|image|audio|guard|embed|distill|oss|banana|omni|\\bauto\\b|:|^~|-\\d+b\\b)",
+         "min_price_out": 3.0, "min_context": 100000, "max_age_days": 270, "providers": ["anthropic", "openai", "google", "x-ai", "meta", "mistralai", "deepseek", "qwen", "moonshotai", "z-ai"], "per_provider": 3, "rank": "created"}
+      ]
+    },
+    "text": {
+      "label": "Text",
+      "rules": [
+        {"source": "chat", "out_only": ["text"], "in_has": ["text"], "id_exclude": "(?i)(image|audio|guard|embed|safeguard|:|^~|^openrouter/|roleplay|uncensored)", "min_context": 30000, "max_age_days": 400,
+         "providers": ["anthropic", "openai", "google", "x-ai", "meta", "mistralai", "deepseek", "qwen", "moonshotai", "z-ai", "minimax", "nvidia", "cohere", "amazon", "microsoft", "xiaomi", "tencent", "bytedance-seed", "stepfun", "ibm-granite"], "per_provider": 2, "rank": "created"}
+      ]
+    },
+    "search": {
+      "label": "Search",
+      "rules": [
+        {"source": "chat", "param_any": ["web_search_options"], "out_has": ["text"], "id_exclude": "(?i)(:|^openrouter/|batch)", "per_provider": 3, "rank": "created"},
+        {"source": "embeddings", "per_provider": 1, "rank": "created", "limit": 8}
+      ]
+    },
+    "audio": {
+      "label": "Audio & Speech",
+      "rules": [
+        {"source": "chat", "out_has": ["audio"], "id_exclude": "(?i)(:|^openrouter/|^~|^stealth/)", "per_provider": 3, "rank": "created"},
+        {"source": "chat", "in_has": ["audio"], "out_only": ["text"], "id_exclude": "(?i)(:|^openrouter/|^~|^stealth/|\\b(pro|flash|lite)-preview)", "per_provider": 2, "rank": "created"}
+      ]
+    },
+    "image": {
+      "label": "Image",
+      "rules": [
+        {"source": "chat", "out_has": ["image"], "id_exclude": "(?i)(:|^openrouter/)", "per_provider": 4, "rank": "created"},
+        {"source": "images", "per_provider": 2, "rank": "created", "limit": 24}
+      ]
+    },
+    "video": {
+      "label": "Video",
+      "rules": [
+        {"source": "videos", "per_provider": 3, "rank": "created", "limit": 24}
+      ]
+    },
+    "specialist": {
+      "label": "Specialist",
+      "domains": [
+        {"id": "medical", "label": "Medical", "match": "(?i)(medgemma|\\bmed(ical)?\\b|health|clinical|biomed)"},
+        {"id": "code", "label": "Code", "match": "(?i)(code|coder|codestral|devstral|codex|grok-build|swe)"},
+        {"id": "reasoning", "label": "Science and reasoning", "match": "(?i)(r1\\b|thinking|reason|\\bo[134]\\b|deep-research|deep research|math|prover)"},
+        {"id": "vision", "label": "Vision", "match": "(?i)(vision|-vl\\b|pixtral|moondream|\\bvl-)"},
+        {"id": "legal", "label": "Legal", "match": "(?i)(legal|\\blaw\\b)"},
+        {"id": "finance", "label": "Finance", "match": "(?i)(finance|financ|trading|\\bfin\\b)"},
+        {"id": "translation", "label": "Translation", "match": "(?i)(-mt\\d?-|translat)"},
+        {"id": "agent", "label": "Agents and tools", "match": "(?i)(agent|multi-agent|compound)"},
+        {"id": "long", "label": "Long context", "match": "(?i)(long|1m\\b|2m\\b)", "min_context": 1000000}
+      ],
+      "rules": [
+        {"source": "chat", "domains": true, "id_exclude": "(?i)(:|^openrouter/|^~)", "per_domain": 4, "rank": "created"}
+      ]
+    },
+    "tasks": {
+      "label": "Tasks",
+      "rules": [
+        {"source": "tasks"}
+      ]
+    },
+    "medium": {
+      "label": "Medium",
+      "rules": [
+        {"source": "tools_models", "tier": "medium"},
+        {"source": "chat", "out_only": ["text"], "params_b": [7, 32], "id_exclude": "(?i)(:|guard|^openrouter/|^~|-rp-|roleplay|dolphin|uncensored|ui-tars)", "per_provider": 1, "rank": "created", "limit": 12}
+      ]
+    },
+    "small": {
+      "label": "Small",
+      "rules": [
+        {"source": "tools_models", "tier": "small"},
+        {"source": "chat", "out_only": ["text"], "params_b": [0.1, 4], "id_exclude": "(?i)(:|guard|^openrouter/|^~)", "per_provider": 1, "rank": "created", "limit": 8}
+      ]
+    }
+  },
+  "capabilities": {
+    "_doc": "Which modalities make a model fit each use, for the lists a chat needs: `vision` = takes an image in and answers text; `image_out` = returns an image; `audio_in` / `audio_out` likewise.",
+    "vision": {"in_has": ["image"], "out_has": ["text"]},
+    "image_out": {"out_has": ["image"]},
+    "audio_in": {"in_has": ["audio"]},
+    "audio_out": {"out_has": ["audio"]}
+  },
+  "image_flow": {
+    "_doc": "Image in, image out through OpenRouter chat completions (`modalities`: image and text). A model whose output modalities include an image is used as picked; when the picked model draws none and the prompt asks for a picture (`intent_text` for text to image, `intent_edit` when an image is attached; `question` words make it a vision question instead), the first chat-capable Image-tab entry that takes the attached image (or any, for text to image) is used. An attached image with no such ask is a vision question: the picked model if it reads images, else the first Text-tab entry that does. `max_attach_bytes` bounds one attachment.",
+    "image_tab": "image",
+    "text_tab": "text",
+    "modalities": ["image", "text"],
+    "intent_text": "(?i)^\\s*(draw|paint|sketch|illustrate|render|imagine)\\b|\\b(generate|create|make|draw|paint|render|produce|design)\\b.{0,40}\\b(image|picture|photo|illustration|logo|poster|icon|wallpaper|drawing|portrait|avatar)\\b",
+    "intent_edit": "(?i)\\b(edit|retouch|restyle|recolou?r|colou?rize|remove|erase|replace|swap|turn|transform|convert|add|combine|blend|upscale|enhance|outpaint|inpaint|extend|stylize|stylise|cartoon|anime|draw|paint|sketch|render|generate|create|make|change|fix|crop)\\b",
+    "question": "(?i)^\\s*(what|who|where|when|why|how|which|whose|describe|explain|read|identify|tell me|caption|transcribe|summari[sz]e|is|are|does|do|did|count|list|translate)\\b",
+    "max_attach_bytes": 12000000
+  }
+}

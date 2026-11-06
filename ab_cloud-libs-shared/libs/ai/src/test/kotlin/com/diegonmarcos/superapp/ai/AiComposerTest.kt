@@ -92,8 +92,9 @@ class AiComposerTest {
         assertTrue(chat.collapsed)
     }
 
-    @Test fun thePlusMenuOffersTheFourAttachKindsAndNewChat() {
-        assertEquals(listOf("files", "images", "notes", "drive"), design.attachKinds.map { it.first })
+    @Test fun thePlusMenuOffersFilesImageCameraAndNewChat() {
+        assertEquals(listOf("files", "images", "camera"), design.attachKinds.map { it.first })
+        assertEquals(listOf("Files", "Image", "Camera"), design.attachKinds.map { it.second })
         assertEquals("New chat", design.newChatLabel)
     }
 

@@ -162,6 +162,21 @@ data class AiStrings(
     val answerTokens: String = "%s in · %s out",
     val noSystem: String = "No standing system prompt.",
     val close: String = "Close",
+    /** Attachments: the chip's remove button, the answer image's actions, and their outcomes. */
+    val removeAttachment: String = "Remove",
+    val saveImage: String = "Save",
+    val shareImage: String = "Share",
+    val reuseImage: String = "Use as input",
+    val savedTo: String = "Saved: %s",
+    val saveFailed: String = "Could not save the image",
+    val attachFailed: String = "Could not attach: %s",
+    /** The Model Catalogue's live search box and its states. */
+    val searchModels: String = "Search OpenRouter models: name, id, image, audio…",
+    val searchingModels: String = "Searching…",
+    val searchOffline: String = "OpenRouter list unreachable: the bundled snapshot is searched",
+    val noModelMatches: String = "No model matches",
+    val searchResults: String = "OpenRouter search",
+    val browseOnly: String = "browse only: not a chat model",
 )
 
 /** The icons the page draws, by name; the consumer maps each to its own icon set (or keeps the default glyphs). */
@@ -253,6 +268,8 @@ fun AiChatPage(
     composer: AiComposerDecl? = null,
     /** Answers the (+) menu's Attach items by id (files, images, notes, drive); null hides Attach. */
     onAttach: ((String) -> Unit)? = null,
+    /** The built-in Attach items (Files, Image, Camera) of the (+) menu, with the app's permission hooks (libs:perms); null = none. */
+    attach: AiAttachHost? = null,
     /** The app's own controls just above the input. */
     aboveInput: @Composable ColumnScope.() -> Unit = {},
     /** The app's own chips on the top line (Cloud Search's Sessions). */
@@ -284,10 +301,10 @@ fun AiChatPage(
         }
         aboveInput()
         Composer(
-            chat, theme, design, decl, onCatalogue, onAttach,
+            chat, theme, design, decl, onCatalogue, onAttach, attach,
             onSend = {
                 val ask = chat.draft.trim()
-                if (ask.isNotEmpty() && !chat.sending) {
+                if ((ask.isNotEmpty() || chat.attachments.isNotEmpty()) && !chat.sending) {
                     chat.draft = ""
                     scope.launch { chat.send(ask) }
                 }
@@ -410,10 +427,10 @@ private fun Conversation(chat: AiChatState, theme: AiTheme, design: AiDesign) {
             contentPadding = PaddingValues(horizontal = m.gutter, vertical = design.metric("list_pad_v").dp),
             verticalArrangement = Arrangement.spacedBy(design.metric("list_gap").dp),
         ) {
-            items(chat.session.messages.withIndex().toList(), key = { it.index }) { (_, msg) -> Bubble(msg, width, theme, design) }
+            items(chat.session.messages.withIndex().toList(), key = { it.index }) { (_, msg) -> Bubble(chat, msg, width, theme, design) }
             if (chat.sending) {
                 // The answer as it streams in; until the first piece, the thinking line.
-                if (chat.streaming.isNotEmpty()) item { Bubble(AiMsg("assistant", chat.streaming), width, theme, design) }
+                if (chat.streaming.isNotEmpty()) item { Bubble(chat, AiMsg("assistant", chat.streaming), width, theme, design) }
                 else item { Thinking(if (chat.web) theme.strings.searchingWeb else theme.strings.thinking, theme, design) }
             }
             if (chat.citations.isNotEmpty()) item {
@@ -434,24 +451,27 @@ private fun Conversation(chat: AiChatState, theme: AiTheme, design: AiDesign) {
 
 /** User: a bubble on the right, its bottom-right corner small. Assistant: flat Markdown at the page's width with the "agent · model" line under it. */
 @Composable
-private fun Bubble(msg: AiMsg, max: Dp, theme: AiTheme, design: AiDesign) {
+private fun Bubble(chat: AiChatState, msg: AiMsg, max: Dp, theme: AiTheme, design: AiDesign) {
     val c = theme.colors
     val r = design.metric("user_radius_top").dp
     val chatSp = design.metric("chat_font").sp
     if (msg.role == "user") {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-            Text(
-                msg.content, color = c.onUserBubble,
-                style = TextStyle(fontSize = chatSp, lineHeight = chatSp * design.metric("chat_line_height")),
-                modifier = Modifier.widthIn(max = max)
-                    .clip(RoundedCornerShape(r, r, design.metric("user_radius_tail").dp, r))
-                    .background(c.userBubble).padding(horizontal = design.metric("user_pad_h").dp, vertical = design.metric("user_pad_v").dp),
-            )
+            Column(Modifier.widthIn(max = max), horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(theme.metrics.small)) {
+                AttachmentList(chat, theme, msg.attachments, actions = false)
+                if (msg.content.isNotBlank()) Text(
+                    msg.content, color = c.onUserBubble,
+                    style = TextStyle(fontSize = chatSp, lineHeight = chatSp * design.metric("chat_line_height")),
+                    modifier = Modifier.clip(RoundedCornerShape(r, r, design.metric("user_radius_tail").dp, r))
+                        .background(c.userBubble).padding(horizontal = design.metric("user_pad_h").dp, vertical = design.metric("user_pad_v").dp),
+                )
+            }
         }
     } else {
         Column(Modifier.widthIn(max = max).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(theme.metrics.tiny)) {
             if (theme.markdown) AiMarkdownText(msg.content, theme, Modifier.fillMaxWidth(), design.metric("chat_font").sp, design.metric("chat_line_height"))
             else Text(msg.content, color = c.text, style = TextStyle(fontSize = chatSp, lineHeight = chatSp * design.metric("chat_line_height")))
+            AttachmentList(chat, theme, msg.attachments, actions = true)
             val line = listOf(msg.meta, AiContext.answer(msg, theme.strings.answerTokens)).filter { it.isNotBlank() }.joinToString(" · ")
             if (line.isNotBlank()) Text(line, color = c.text2, fontSize = design.metric("meta_font").sp)
         }
@@ -496,7 +516,7 @@ private fun SessionsSelect(chat: AiChatState, theme: AiTheme) {
  * button, then the icon row of the controls the app enabled.
  */
 @Composable
-private fun Composer(chat: AiChatState, theme: AiTheme, design: AiDesign, decl: AiComposerDecl, onCatalogue: (() -> Unit)?, onAttach: ((String) -> Unit)?, onSend: () -> Unit) {
+private fun Composer(chat: AiChatState, theme: AiTheme, design: AiDesign, decl: AiComposerDecl, onCatalogue: (() -> Unit)?, onAttach: ((String) -> Unit)?, attach: AiAttachHost?, onSend: () -> Unit) {
     val c = theme.colors
     val m = theme.metrics
     val inputShape = RoundedCornerShape(design.metric("input_radius").dp)
@@ -506,6 +526,7 @@ private fun Composer(chat: AiChatState, theme: AiTheme, design: AiDesign, decl: 
             .padding(top = design.metric("composer_pad_top").dp, start = design.metric("composer_pad_h").dp, end = design.metric("composer_pad_h").dp, bottom = design.metric("composer_pad_bottom").dp),
         verticalArrangement = Arrangement.spacedBy(design.metric("ctl_gap").dp),
     ) {
+        AttachChips(chat, theme, design)
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(design.metric("row_gap").dp)) {
             BasicTextField(
                 value = chat.draft, onValueChange = { chat.draft = it }, minLines = 1, maxLines = 6,
@@ -529,6 +550,6 @@ private fun Composer(chat: AiChatState, theme: AiTheme, design: AiDesign, decl: 
         AiContext.line(chat.session, chat.models.firstOrNull { it.id == chat.model }?.context ?: 0, theme.strings)?.let {
             Text(it, color = c.text2, fontSize = design.metric("meta_font").sp, modifier = Modifier.testTag(AiTags.CONTEXT))
         }
-        AiComposerBar(chat, theme, design, decl, onCatalogue = onCatalogue, onAttach = onAttach)
+        AiComposerBar(chat, theme, design, decl, onCatalogue = onCatalogue, onAttach = onAttach, attach = attach)
     }
 }

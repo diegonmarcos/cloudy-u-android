@@ -58,7 +58,8 @@ dependencies {
     api 'androidx.compose.material3:material3'
     api project(':libs:model-catalogue')
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
-    implementation 'androidx.activity:activity-compose:1.9.3' // BackHandler: back closes the catalogue pages
+    implementation 'androidx.activity:activity-compose:1.9.3' // BackHandler: back closes the catalogue pages; the attach pickers
+    implementation 'androidx.core:core-ktx:1.15.0' // FileProvider: the camera shot and the share sheet
 
     // Android's own org.json at runtime; the real library for the JVM suite.
     testImplementation 'org.json:json:20240303'

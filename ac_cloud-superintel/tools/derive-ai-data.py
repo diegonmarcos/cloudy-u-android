@@ -8,6 +8,7 @@ import glob, json, os, re, sys
 sot = sys.argv[1]
 check = "--check" in sys.argv
 out = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../app/src/main/assets/ai")
+digest_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../app/src/test/resources/mcp-sot.json")
 J = lambda p: json.load(open(os.path.join(sot, p)))
 row = lambda title, caption="", end="": {"title": title, "caption": caption, "end": end}
 grp = lambda title, rows: {"title": title, "rows": rows}
@@ -15,15 +16,24 @@ DOC = "Derived by tools/derive-ai-data.py from the cloudy-u-linux SOT da_my-ai/d
 
 # ── MCP ──
 pol = J("mcp-policy.json")
+sizes = J("mcp-sizes.json")
 ren = pol["renames"]
 tiers = pol["tiers"]
+alias = ren["aliases"]
+tools = lambda n: "%d tool%s" % (sizes["servers"][n]["tools"], "" if sizes["servers"][n]["tools"] == 1 else "s") if n in sizes["servers"] else ""
+# The c3 tool groups: the tree dispatchers the SOT's merge note names (c3_infra ... c3_help) and the merged peers group; browser.* is the peers-control
+# browser group #1450 announces (declared here because the SOT's note predates it: drop BROWSER_GROUP when the note names it).
+BROWSER_GROUP = [("browser.*", "peers-control browser tools (#1450): in cloudy-c3-mcp, held until the c3 hierarchy has their nodes")]
+c3_groups = []
+for g in re.findall(r"\b(?:c3_[a-z]+|infra_[a-z]+)\b", sizes.get("_doc_c3_merge", "")):
+    if g not in c3_groups: c3_groups.append(g)
 mcp = [
-    grp("Default (loaded in every session)", [row(n, "default tier, grouped dispatcher") for n in tiers["default"]]),
-    grp("Opt-in", [row(n, "opt-in tier", ren["aliases"].get(n, "") and "alias of " + ren["aliases"][n]) for n in tiers["opt-in"]]),
-    grp("New names (#1450)", [row(n, "was " + v["from"], "new") for n, v in ren["map"].items()]),
-    grp("Aliases (kept one release)", [row(o, "old name", "-> " + n) for o, n in ren["aliases"].items()]),
-    grp("c3-mcp peers-control merge (#1495)", [row(o, "merged into cloudy-c3-mcp (peers-control tool group)", "alias") for o, n in ren["aliases"].items() if n == "cloudy-c3-mcp" and o != "cloud-infra-mcp"]),
-    grp("Mesh-only", [row(n, "direct on the mesh, no public route") for n in pol["direct_http"] if n in ren["map"] or n in tiers["opt-in"]]),
+    grp("Default (loaded in every session)", [row(n, "default tier, grouped dispatcher", tools(n)) for n in tiers["default"]]),
+    grp("Opt-in (current names)", [row(n, "opt-in tier", tools(n)) for n in tiers["opt-in"] if n not in alias]),
+    grp("New names (#1450)", [row(n, "was " + v["from"], "new") for n, v in ren["map"].items() if n not in alias]),
+    grp("cloudy-c3-mcp tool groups (#1495 peers-control merge)", [row(g, "tool group of cloudy-c3-mcp") for g in c3_groups] + [row(n, c) for n, c in BROWSER_GROUP]),
+    grp("Aliases of old names (kept one release)", [row(o, "old name, alias", "-> " + n) for o, n in alias.items()]),
+    grp("Mesh-only", [row(n, "direct on the mesh, no public route") for n in pol["direct_http"] if n not in alias]),
 ]
 
 # ── Dotfiles ──
@@ -72,7 +82,17 @@ plug = [
     grp("Hooks", hooks),
 ]
 
+# The names of the SOT's MCP policy as the JVM test reads them (the CI has no cloudy-u-linux): tiers, the #1450 map, the aliases. Names only.
+digest = {"_doc": "Names of the cloudy-u-linux SOT mcp-policy.json the MCP page was derived from, for AiMcpSotTest. " + DOC,
+          "default": tiers["default"], "opt-in": tiers["opt-in"], "new": {n: v["from"] for n, v in ren["map"].items()}, "aliases": alias}
+
 bad = 0
+dtext = json.dumps(digest, indent=1, ensure_ascii=False) + "\n"
+if check:
+    if not os.path.exists(digest_path) or open(digest_path).read() != dtext: print("DIFF mcp-sot"); bad = 1
+else:
+    os.makedirs(os.path.dirname(digest_path), exist_ok=True)
+    open(digest_path, "w").write(dtext)
 for name, groups in (("mcp", mcp), ("dotfiles", dot), ("plugins", plug)):
     text = json.dumps({"_doc": DOC, "groups": groups}, indent=1, ensure_ascii=False) + "\n"
     path = os.path.join(out, name + ".json")

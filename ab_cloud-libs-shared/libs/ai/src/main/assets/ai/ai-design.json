@@ -83,7 +83,7 @@
       "pref_key": "ai_composer_collapsed"
     },
     "plus": {
-      "_doc": "The (+) menu: Attach (the app's own pickers answer: files, images, notes, Drive; an item is shown only when the app wires it) and New chat.",
+      "_doc": "The (+) menu: Attach (Files through the system document picker, any type; Image through the photo picker; Camera takes a picture into a temp file, then attaches it; an item is shown only when the app wires it) and New chat. Camera and media access are libs:perms rows, never asked here: a missing one shows the compact Fix in Perms chip.",
       "attach": [
         {
           "id": "files",
@@ -91,15 +91,14 @@
         },
         {
           "id": "images",
-          "label": "Images"
+          "label": "Image",
+          "perms": ["media_images"]
         },
         {
-          "id": "notes",
-          "label": "Notes"
-        },
-        {
-          "id": "drive",
-          "label": "Drive"
+          "id": "camera",
+          "label": "Camera",
+          "perms": ["camera"],
+          "requires": true
         }
       ],
       "new_chat": "New chat"

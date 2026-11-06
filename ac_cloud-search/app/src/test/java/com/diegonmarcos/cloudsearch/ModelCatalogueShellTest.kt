@@ -16,6 +16,7 @@ import com.diegonmarcos.cloudsearch.core.Http
 import com.diegonmarcos.cloudsearch.data.Account
 import com.diegonmarcos.cloudsearch.data.Prefs
 import com.diegonmarcos.cloudsearch.data.Services
+import com.diegonmarcos.superapp.ai.AiModelTabs
 import com.diegonmarcos.superapp.ai.AiTags
 import com.diegonmarcos.superapp.modelcataloguepage.ModelTags
 import com.diegonmarcos.cloudsearch.ui.SearchShell
@@ -38,8 +39,8 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 /**
- * Chat › Search's Model button opens the full Model Catalogue (libs:ai) at once: its subpages Frontier · Core · Specialist · Medium · Small,
- * Core being the A Text / B Search / C Audio & Speech / D Visual Media tables; the Task button opens the Task Catalogue with its two groups,
+ * Chat › Search's Model button opens the full Model Catalogue (libs:ai) at once: its tabs under Core, in the three rows model-tabs.json declares
+ * (Frontier, Text, Search / Audio & Speech, Image, Video / Specialist, Tasks, Medium, Small), each filled from the baked snapshot; the Task button opens the Task Catalogue with its two groups,
  * and selecting a task greys Agent and Model. A tap on a chat model picks it
  * (persisted in the same preference the chat reads) and returns to the chat; a model of a section
  * that is not a chat model cannot be picked. Offline: every OpenRouter call fails here, so the page
@@ -97,35 +98,35 @@ class ModelCatalogueShellTest {
         waitFor(Tags.MODEL)
         compose.onNodeWithTag(Tags.MODEL).performClick()
         waitFor(AiTags.CATALOGUE_PAGE)
-        waitFor(ModelTags.PAGE)
-        waitFor(ModelTags.section("D0"))
+        waitFor(AiTags.catTab(tabs.order.first()))
     }
+
+    private val tabs get() = AiModelTabs.load(RuntimeEnvironment.getApplication())
 
     @Test fun theChipOpensTheCatalogueAndARowPicksTheModelForTheChat() {
         compose.setContent { SearchShell(state) }
         openCatalogue()
         assertTrue("the chat gives way to the page", compose.onAllNodesWithTag(Tags.CHAT_INPUT).fetchSemanticsNodes().isEmpty())
-        waitFor(ModelTags.AS_OF)
-        val id = "meta-llama/llama-3.3-70b-instruct"
-        val row = ModelTags.row("A2", id)
-        // The row is wider than the phone (its table scrolls sideways), so the tap is its click action, not a touch at its centre.
-        compose.onNodeWithTag(row).performScrollTo().assertIsEnabled().performSemanticsAction(SemanticsActions.OnClick)
+        val tab = tabs.order.first { t -> tabs.entries(t).any { it.chatCapable } }
+        val id = tabs.entries(tab).first { it.chatCapable }.id
+        compose.onNodeWithTag(AiTags.catTab(tab)).performClick()
+        compose.onNodeWithTag(AiTags.catRow(id)).performScrollTo().assertIsEnabled().performClick()
         waitFor(Tags.CHAT_INPUT)
-        assertTrue("picking returns to the chat", compose.onAllNodesWithTag(ModelTags.PAGE).fetchSemanticsNodes().isEmpty())
+        assertTrue("picking returns to the chat", compose.onAllNodesWithTag(AiTags.CATALOGUE_PAGE).fetchSemanticsNodes().isEmpty())
         assertEquals(id, state.chat.model)
         assertEquals(id, services.prefs.model)
         val app = RuntimeEnvironment.getApplication()
         assertEquals("the pick survives a restart", id, Prefs(app.getSharedPreferences(Services.PREFS, Context.MODE_PRIVATE), services.cfg).model)
-        assertTrue("the catalogue asked OpenRouter's public models API", synchronized(http.asked) { http.asked.any { it.startsWith("https://openrouter.ai/api/v1/") } })
     }
 
     @Test fun aModelThatIsNotAChatModelCannotBePicked() {
         compose.setContent { SearchShell(state) }
         val before = state.chat.model
         openCatalogue()
-        compose.onNodeWithTag(ModelTags.reference("B0")).performScrollTo()
-        for ((section, id) in listOf("B0" to "baai/bge-m3", "C0" to "mistralai/voxtral-small-24b-2507", "D0" to "qwen/qwen-image-3"))
-            compose.onNodeWithTag(ModelTags.row(section, id)).performScrollTo().assertIsNotEnabled()
+        val tab = tabs.order.first { t -> tabs.entries(t).any { !it.chatCapable } }
+        val id = tabs.entries(tab).first { !it.chatCapable }.id
+        compose.onNodeWithTag(AiTags.catTab(tab)).performClick()
+        compose.onNodeWithTag(AiTags.catRow(id)).performScrollTo().assertIsNotEnabled()
         compose.onNodeWithTag(AiTags.CATALOGUE_CLOSE).performClick()
         waitFor(Tags.CHAT_INPUT)
         assertEquals("nothing was picked", before, state.chat.model)
@@ -142,21 +143,19 @@ class ModelCatalogueShellTest {
         assertTrue("the catalogue is gone", compose.onAllNodesWithTag(AiTags.CATALOGUE_PAGE).fetchSemanticsNodes().isEmpty())
     }
 
-    @Test fun theCatalogueHasTheFiveSubpagesAndEachListsItsModels() {
+    @Test fun theCatalogueHasTheDeclaredTabsAndEachListsItsModels() {
         compose.setContent { SearchShell(state) }
         openCatalogue()
-        for (tab in listOf("frontier", "core", "specialist", "medium", "small")) compose.onNodeWithTag(AiTags.catTab(tab)).assertExists()
-        compose.onNodeWithTag(AiTags.catTab("frontier")).performClick()
-        compose.onNodeWithTag(AiTags.catRow("anthropic/claude-opus-5.5")).performScrollTo().assertIsEnabled()
-        compose.onNodeWithTag(AiTags.catTab("specialist")).performClick()
-        compose.onNodeWithTag(AiTags.catRow("mistralai/codestral-2508")).performScrollTo().assertIsEnabled()
-        compose.onNodeWithTag(AiTags.catTab("medium")).performClick()
-        compose.onNodeWithTag(AiTags.catRow("microsoft/phi-4")).performScrollTo().assertIsEnabled()
-        compose.onNodeWithTag(AiTags.catTab("small")).performClick()
-        compose.onNodeWithTag(AiTags.catRow("smollm2-360m-instruct")).performScrollTo().assertIsNotEnabled()
-        compose.onNodeWithTag(AiTags.catRow("google/gemma-3-4b-it")).performScrollTo().performClick()
+        for (tab in tabs.order) compose.onNodeWithTag(AiTags.catTab(tab)).assertExists()
+        for (tab in tabs.order) {
+            compose.onNodeWithTag(AiTags.catTab(tab)).performClick()
+            compose.onNodeWithTag(AiTags.catRow(tabs.entries(tab).first().id)).performScrollTo().assertExists()
+        }
+        val last = tabs.order.last()
+        val pick = tabs.entries(last).first { it.chatCapable }.id
+        compose.onNodeWithTag(AiTags.catRow(pick)).performScrollTo().performClick()
         waitFor(Tags.CHAT_INPUT)
-        assertEquals("google/gemma-3-4b-it", state.chat.model)
+        assertEquals(pick, state.chat.model)
     }
 
     @Test fun theTaskButtonOpensTheTaskCatalogueAndATaskGreysAgentAndModel() {

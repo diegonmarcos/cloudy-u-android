@@ -7,6 +7,8 @@ data class AiMsg(
     val meta: String = "",
     /** Tokens the backend REPORTED for this answer (prompt incl. history, completion); 0 = none reported. */
     val prompt: Long = 0, val completion: Long = 0,
+    /** Files attached to a user message, or the images an assistant answer returned (shown inline, saveable, shareable). */
+    val attachments: List<AiAttachment> = emptyList(),
 )
 
 /** One chat session as the host stores it. */

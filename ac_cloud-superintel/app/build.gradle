@@ -138,6 +138,8 @@ dependencies {
     // #1499 the AIs and Cost pages: the Cloud Store's dense row (libs:ui-kit) and the usage table read the SuperApp's Notify AI badge shares (libs:ai-usage).
     implementation project(':libs:ui-kit')
     implementation project(':libs:ai-usage')
+    // The (+) menu's Camera and Image rows live on Configs > Perms (libs:perms); the chat shows the compact "Fix in Perms" chip while one is missing.
+    implementation project(':libs:perms')
 
     implementation platform('androidx.compose:compose-bom:2025.11.01')
     implementation 'androidx.compose.ui:ui'

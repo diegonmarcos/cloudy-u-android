@@ -34,6 +34,7 @@ import com.diegonmarcos.cloudsuperintel.R
 import com.diegonmarcos.cloudsuperintel.SiAi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import com.diegonmarcos.superapp.ai.AiAttachHost
 import com.diegonmarcos.superapp.ai.AiChatPage
 import com.diegonmarcos.superapp.ai.AiSessionsPanel
 import com.diegonmarcos.superapp.ai.AiSettingsPickers
@@ -47,6 +48,8 @@ import com.diegonmarcos.superapp.navbarbottom.NavBarBottomHost
 import com.diegonmarcos.superapp.navbartop1.NavBarTopFirstRowScaffold
 import com.diegonmarcos.superapp.navbartop1.titleHierarchy
 import com.diegonmarcos.superapp.navbartop2.NavSectionLayout
+import com.diegonmarcos.superapp.perms.PermsFixChip
+import com.diegonmarcos.superapp.perms.rememberPermsMissing
 import com.diegonmarcos.superapp.themebg.themeBackground
 
 /** The test tags the shell is driven by. */
@@ -92,6 +95,8 @@ fun SiShell() {
     val persona = personas.firstOrNull { it.id == pageId && (sec?.id == Decl.SECTION_SI || sec?.id == Decl.SECTION_CGCS) }
     val chat = remember(persona?.id) { SiAi.chat(ctx, persona?.id) }
     val entries = nav.islandEntries()
+    // The (+) menu's Files, Image and Camera: their Perms rows are libs:perms' (build.json::perms.needs), shown as "Fix in Perms" while missing.
+    val attachHost = remember { AiAttachHost(missing = { ids -> rememberPermsMissing(ids).map { it.id } }, fix = { ids -> PermsFixChip(ids, ATTACH_FEATURE) }) }
     fun open(sectionId: String, pageId: String?) { section = sectionId; page = pageId }
 
     Box(Modifier.fillMaxSize().themeBackground(dark = true).windowInsetsPadding(WindowInsets.statusBars.union(WindowInsets.displayCutout))) {
@@ -121,7 +126,7 @@ fun SiShell() {
                                 LaunchedEffect(p.id) { withContext(Dispatchers.IO) { SiAi.tune(ctx, p, chat) } }
                                 AiChatPage(
                                     chat, theme.copy(strings = theme.strings.copy(hello = p.label, helloSub = p.role)),
-                                    Modifier.imePadding().testTag(SiTags.CHAT), suggestions = p.suggestions,
+                                    Modifier.imePadding().testTag(SiTags.CHAT), suggestions = p.suggestions, attach = attachHost,
                                 )
                             }
                             // The AIs and Cost pages are data (assets/ai/pages.json, by page id): the screen kind and the asset, no name here.
@@ -141,6 +146,9 @@ fun SiShell() {
         }
     }
 }
+
+/** The libs:perms feature the attach menu's "Fix in Perms" chip reports. */
+private const val ATTACH_FEATURE = "chat"
 
 /** A plain settings page: a title, a paragraph, and the page's own controls under them. */
 @Composable

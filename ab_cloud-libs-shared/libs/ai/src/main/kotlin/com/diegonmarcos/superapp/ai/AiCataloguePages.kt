@@ -1,22 +1,25 @@
 package com.diegonmarcos.superapp.ai
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.produceState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -24,18 +27,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import com.diegonmarcos.superapp.modelcatalogue.CatalogueFetch
 import com.diegonmarcos.superapp.modelcatalogue.FileCatalogueStore
-import com.diegonmarcos.superapp.modelcatalogue.ModelCatalogue
-import com.diegonmarcos.superapp.modelcatalogue.ModelCatalogueRepository
-import com.diegonmarcos.superapp.modelcatalogue.ModelCatalogueRepository.Origin
-import com.diegonmarcos.superapp.modelcataloguepage.CatalogueTheme
-import com.diegonmarcos.superapp.modelcataloguepage.CatalogueWords
-import com.diegonmarcos.superapp.modelcataloguepage.ModelCataloguePage
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.net.HttpURLConnection
@@ -52,29 +55,31 @@ val AiPublicFetch = CatalogueFetch { url ->
 }
 
 /**
- * The Model Catalogue as a full page (the composer's Model button): the subpages Frontier · Core · Specialist · Medium · Small
- * of the shared data (ai-catalogue.json). Core is libs:model-catalogue's A Text / B Search / C Audio & Speech / D Visual Media tables;
- * the others are the declared lists. A tap on a chat model picks it and returns to the chat; a model the live list does not carry
- * says so, and a phone-only row is greyed. The page is one column: a header, the tabs (sideways only when they do not fit) and
- * ONE scroller below them; it replaces the chat, never sits inside another scroller. [fetch] is the host's network door for prices.
+ * The Model Catalogue as a full page (the composer's Model button): the tabs of model-tabs.json in the rows it declares under their header
+ * (Frontier, Text, Search / Audio & Speech, Image, Video / Specialist, Tasks, Medium, Small), each filled with the baked snapshot of
+ * OpenRouter's metadata (models-snapshot.json), and a live OpenRouter search box over all of it: one GET of the public models list on demand,
+ * debounced, kept for the declared TTL, no polling. A tap on a chat model (a tab row or a search result) picks it and returns to the chat;
+ * a model another API serves (images, videos, embeddings) is browsable and greyed. One column, ONE scroller below the tabs.
+ * [fetch] is the host's network door for the list.
  */
 @Composable
 fun AiModelCatalogue(chat: AiChatState, theme: AiTheme, fetch: CatalogueFetch = AiPublicFetch, modifier: Modifier = Modifier, onClose: (() -> Unit)? = null) {
     val ctx = LocalContext.current
     // Close, Back and a pick end the page: the chat's own page flag, or the host's own way out when it shows the catalogue outside the chat.
     val done = { chat.page = ""; onClose?.invoke(); Unit }
-    val cat = remember { runCatching { AiCatalogue.load(ctx) }.getOrNull() }
+    val data = remember { runCatching { AiModelTabs.load(ctx) }.getOrNull() }
     val c = theme.colors
     val t = theme.type
     val m = theme.metrics
     val s = theme.strings
-    var tab by remember { mutableStateOf("core") }
+    var tab by remember { mutableStateOf(data?.order?.firstOrNull().orEmpty()) }
+    var query by remember { mutableStateOf("") }
     BackHandler { done() }
-    val core by produceState<CoreSource?>(null, fetch) {
-        value = withContext(Dispatchers.IO) {
-            val k = runCatching { ModelCatalogue.parse(ctx.assets.open(ModelCatalogue.ASSET).bufferedReader().use { it.readText() }) }.getOrNull()
-            CoreSource(k, k?.let { ModelCatalogueRepository(it, fetch, FileCatalogueStore(File(ctx.filesDir, "model-catalogue")), System::currentTimeMillis) })
-        }
+    fun pick(e: AiModelEntry) {
+        AiKnownModels.remember(e)
+        if (chat.models.none { it.id == e.id }) chat.models = chat.models + e.model()
+        chat.pick(e.id)
+        done()
     }
     Column(modifier.fillMaxSize().testTag(AiTags.CATALOGUE_PAGE)) {
         Header(theme, s.catalogue, AiTags.CATALOGUE_CLOSE, { done() }) {
@@ -82,76 +87,111 @@ fun AiModelCatalogue(chat: AiChatState, theme: AiTheme, fetch: CatalogueFetch = 
             Switch(chat.web, { chat.toggleWeb() }, Modifier.padding(horizontal = m.small).testTag(AiTags.WEB),
                 colors = SwitchDefaults.colors(checkedTrackColor = c.accent, uncheckedTrackColor = c.field))
         }
-        if (cat == null) { Text(s.modelsUnavailable, color = c.negative, style = t.style(t.small), modifier = Modifier.padding(m.gutter)); return@Column }
-        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = m.gutter), horizontalArrangement = Arrangement.spacedBy(m.gap)) {
-            cat.tabs.forEach { tb ->
-                Text(tb.label, color = if (tb.id == tab) c.accent else c.text2, style = t.style(t.chatInput, if (tb.id == tab) FontWeight.Bold else FontWeight.Medium),
-                    modifier = Modifier.clickable { tab = tb.id }.padding(vertical = m.gap, horizontal = m.small).testTag(AiTags.catTab(tb.id)))
+        if (data == null) { Text(s.modelsUnavailable, color = c.negative, style = t.style(t.small), modifier = Modifier.padding(m.gutter)); return@Column }
+        val shape = RoundedCornerShape(m.cardRadius)
+        BasicTextField(
+            value = query, onValueChange = { query = it }, singleLine = true,
+            textStyle = t.style(t.chatInput).copy(color = c.text), cursorBrush = SolidColor(c.accent),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = m.gutter).clip(shape).background(c.field).border(m.hairline, c.tileBorder, shape).testTag(AiTags.CAT_SEARCH),
+            decorationBox = { inner ->
+                Box(Modifier.padding(horizontal = m.cardPad, vertical = m.gap)) {
+                    if (query.isEmpty()) Text(s.searchModels, color = c.text2, style = t.style(t.chatInput), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    inner()
+                }
+            },
+        )
+        data.layout.forEachIndexed { i, block ->
+            if (block.header.isNotBlank()) Text(block.header, color = c.text2, style = t.style(t.label, FontWeight.Bold),
+                modifier = Modifier.padding(start = m.gutter, top = m.gap).testTag(AiTags.catHeader(i)))
+            block.rows.forEach { row ->
+                Row(Modifier.fillMaxWidth().padding(horizontal = m.gutter, vertical = m.tiny), horizontalArrangement = Arrangement.spacedBy(m.gap)) {
+                    row.forEach { id ->
+                        Text(
+                            data.labels.getValue(id), Modifier.weight(1f).clip(shape).background(if (id == tab) c.field else Color.Transparent)
+                                .clickable { tab = id; query = "" }.padding(vertical = m.gap).testTag(AiTags.catTab(id)),
+                            color = if (id == tab) c.accent else c.text2, textAlign = TextAlign.Center, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                            style = t.style(t.small, if (id == tab) FontWeight.Bold else FontWeight.Medium),
+                        )
+                    }
+                }
             }
         }
-        if (tab == "core") CorePage(chat, theme, core, done)
-        else Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = m.gutter, vertical = m.gap),
-            verticalArrangement = Arrangement.spacedBy(m.gap)) {
-            val groups = when (tab) {
-                "frontier" -> cat.frontier
-                "specialist" -> cat.specialist
-                else -> listOf(AiCatalogueGroup(tab, cat.tabs.first { it.id == tab }.label, cat.tier(tab)))
+        val q = query.trim()
+        if (q.length >= data.search.minChars) SearchResults(chat, theme, data, q, fetch, ::pick, Modifier.weight(1f))
+        else Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = m.gutter, vertical = m.gap)) {
+            val entries = data.entries(tab)
+            Text("${data.labels[tab].orEmpty()} · ${entries.size} · ${data.generated}", color = c.text2, style = t.style(t.label), modifier = Modifier.padding(bottom = m.small))
+            if (entries.isEmpty()) Text(s.noModelsInTab, color = c.text2, style = t.style(t.small))
+            var domain: String? = null
+            entries.forEach { e ->
+                if (e.domain.isNotEmpty() && e.domain != domain) {
+                    domain = e.domain
+                    Text(e.domain, color = c.text, style = t.style(t.chatInput, FontWeight.Bold), modifier = Modifier.padding(top = m.gap))
+                }
+                ModelRow(chat, theme, e, AiTags.catRow(e.id)) { pick(e) }
             }
-            groups.forEach { g -> ModelGroup(chat, theme, g, cat, done) }
         }
     }
 }
 
-/** Core's source: the bundled selection and its prices (cached, live, or the snapshot), read off the main thread. */
-private class CoreSource(val catalogue: ModelCatalogue.Catalogue?, val repo: ModelCatalogueRepository?)
-
+/** The live search: debounced, one fetch of OpenRouter's public list per TTL (never polled), filtered by name, id, provider and modality. */
 @Composable
-private fun ColumnScope.CorePage(chat: AiChatState, theme: AiTheme, core: CoreSource?, done: () -> Unit) {
+private fun SearchResults(chat: AiChatState, theme: AiTheme, data: AiModelTabs, query: String, fetch: CatalogueFetch, onPick: (AiModelEntry) -> Unit, modifier: Modifier) {
+    val ctx = LocalContext.current
     val c = theme.colors
     val t = theme.type
     val m = theme.metrics
     val s = theme.strings
-    val origins = mapOf(Origin.LIVE to "live", Origin.CACHED to "cached", Origin.STALE to "stale", Origin.SNAPSHOT to "bundled snapshot")
-    val words = CatalogueWords(
-        title = s.core, current = { "Current: $it" }, pricesAsOf = { date, origin -> "Prices as of $date ($origin)" }, origin = { origins.getValue(it) },
-        refreshing = "refreshing…", unreadable = s.modelsUnavailable, footer = "Prices are OpenRouter's per 1M tokens; Floor is the cheapest provider.",
-        notChat = "browse only", noAnthropic = "no Anthropic model", none = "none", notListed = s.notListed,
-        columns = listOf("Provider", "Model", "OpenRouter Model ID", "Architecture / Params", "License", "Input", "Output (Floor)"),
-    )
-    val ct = CatalogueTheme(
-        text = c.text, text2 = c.text2, accent = c.accent, field = c.field, card = c.tile, border = c.tileBorder, negative = c.negative,
-        title = t.style(t.chat, FontWeight.Bold), groupTitle = t.style(t.chatInput, FontWeight.Bold), sectionTitle = t.style(t.small, FontWeight.SemiBold),
-        body = t.style(t.small), label = t.style(t.label),
-        gutter = m.gutter, small = m.small, gap = m.gap, tiny = m.tiny, cardRadius = m.cardRadius, cardPad = m.cardPad, tileRadius = m.cardRadius, hairline = m.hairline,
-    )
-    ModelCataloguePage(
-        catalogue = core?.catalogue, repo = core?.repo, ready = core != null,
-        current = chat.model, currentName = chat.models.firstOrNull { it.id == chat.model }?.name ?: chat.model,
-        theme = ct, words = words, onPick = { id -> chat.pick(id); done() }, modifier = Modifier.weight(1f),
-    )
+    var results by remember { mutableStateOf<List<AiModelEntry>>(emptyList()) }
+    var state by remember { mutableStateOf("") }
+    LaunchedEffect(query) {
+        state = s.searchingModels
+        delay(data.search.debounceMs)
+        val live = withContext(Dispatchers.IO) { liveList(ctx, data, fetch).get() }
+        val pool = live ?: data.all.values.toList()
+        results = AiModelSearch.filter(pool, query, data.search.maxResults)
+        state = if (live == null) s.searchOffline else if (results.isEmpty()) s.noModelMatches else ""
+    }
+    Column(modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = m.gutter, vertical = m.gap)) {
+        Text(s.searchResults + " · " + results.size, color = c.text2, style = t.style(t.label), modifier = Modifier.padding(bottom = m.small))
+        if (state.isNotEmpty()) Text(state, color = c.text2, style = t.style(t.small), modifier = Modifier.testTag(AiTags.CAT_SEARCH_STATE))
+        results.forEach { e -> ModelRow(chat, theme, e, AiTags.catResult(e.id)) { onPick(e) } }
+    }
 }
 
-/** One headed list of a declared tab: its models, a tap picks. */
+private object LiveList {
+    @Volatile var held: Triple<CatalogueFetch, String, AiModelListCache>? = null
+}
+
+/** The process's one live list per door and URL, so the TTL holds across visits to the page. */
+private fun liveList(ctx: android.content.Context, data: AiModelTabs, fetch: CatalogueFetch): AiModelListCache {
+    LiveList.held?.let { (f, u, cache) -> if (f === fetch && u == data.search.url) return cache }
+    val cache = AiModelListCache(data.search.url, data.search.ttlMs, fetch, FileCatalogueStore(File(ctx.filesDir, "model-catalogue")), data.providerLabels)
+    LiveList.held = Triple(fetch, data.search.url, cache)
+    return cache
+}
+
+/** One dense model row: name, "provider · id", then context, price and modalities; its link opens through the host. */
 @Composable
-private fun ModelGroup(chat: AiChatState, theme: AiTheme, g: AiCatalogueGroup, cat: AiCatalogue, done: () -> Unit) {
+private fun ModelRow(chat: AiChatState, theme: AiTheme, e: AiModelEntry, tag: String, onPick: () -> Unit) {
     val c = theme.colors
     val t = theme.type
     val m = theme.metrics
-    Text(g.label, color = c.text, style = t.style(t.chatInput, FontWeight.Bold), modifier = Modifier.padding(top = m.gap))
-    g.models.forEach { mod ->
-        val listed = chat.models.isEmpty() || chat.models.any { it.id == mod.id }
-        Column(
-            Modifier.fillMaxWidth().alpha(if (mod.local) 0.45f else 1f).clickable(enabled = !mod.local) { chat.pick(mod.id); done() }
-                .padding(vertical = m.small).testTag(AiTags.catRow(mod.id)),
-        ) {
-            Text(mod.name, color = if (mod.id == chat.model) c.accent else c.text, style = t.style(t.small, FontWeight.SemiBold))
-            val sub = listOf(mod.id.takeUnless { mod.local }.orEmpty(), mod.sub, if (mod.local) theme.strings.localOnly else if (!listed) theme.strings.notListed else "")
-                .filter { it.isNotBlank() }.joinToString(" · ")
-            if (sub.isNotEmpty()) Text(sub, color = c.text2, style = t.style(t.label))
-            cat.sizes(mod)?.let { Text(it.text(cat.sizeLabels), color = c.text2, style = t.style(t.label), modifier = Modifier.testTag(AiTags.catSizes(mod.id))) }
+    val on = e.chatCapable
+    Column(Modifier.fillMaxWidth().alpha(if (on) 1f else DIM).clickable(enabled = on, onClick = onPick).padding(vertical = m.small).testTag(tag)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(e.name, Modifier.weight(1f), color = if (e.id == chat.model) c.accent else c.text, style = t.style(t.small, FontWeight.SemiBold), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text("↗", color = c.accent, style = t.style(t.chatInput), modifier = Modifier.clickable { chat.host().openUrl(e.link) }.padding(horizontal = m.gap))
         }
+        Text(e.provider + " · " + e.id, color = c.text2, style = t.style(t.label), maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(AiModelText.spec(e), color = c.text2, style = t.style(t.label))
+        val note = listOf(e.note, if (on) "" else theme.strings.browseOnly).filter { it.isNotBlank() }.joinToString(" · ")
+        if (note.isNotEmpty()) Text(note, color = c.text2, style = t.style(t.label))
     }
 }
+
+/** The greyed alpha of a browse-only row: the theme's own disabled look. */
+private const val DIM = 0.45f
 
 /**
  * The Task Catalogue as a full page (the composer's Task button): the shared groups (Big LLMs; Medium & Small LLMs) with their

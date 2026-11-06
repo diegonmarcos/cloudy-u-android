@@ -1,0 +1,46 @@
+{
+ "_doc": "Names of the cloudy-u-linux SOT mcp-policy.json the MCP page was derived from, for AiMcpSotTest. Derived by tools/derive-ai-data.py from the cloudy-u-linux SOT da_my-ai/data/claude (names and counts only, no secrets). Never edit by hand.",
+ "default": [
+  "cloudy-c3-mcp"
+ ],
+ "opt-in": [
+  "cloud-me-cgc-pvt-mcp",
+  "cloudy-all-mcp",
+  "cloudy-apps-communication-mcp",
+  "cloudy-apps-drive-mcp",
+  "cloudy-cgc-pub-mcp",
+  "google-personal-mcp",
+  "google-workspace-mcp",
+  "cloud-cgc-pub-mcp",
+  "cloud-cgc-pvt-mcp",
+  "cloud-drive-mcp",
+  "cloud-infra-mcp",
+  "cloudy-android-mcp",
+  "cloud-mail-mcp",
+  "cloud-mattermost-mcp",
+  "cloud-services-mcp",
+  "cloud-superapp-mcp",
+  "cloud-vault-mcp"
+ ],
+ "new": {
+  "cloudy-all-mcp": "cloud-services-mcp",
+  "cloudy-c3-mcp": "cloud-infra-mcp",
+  "cloudy-android-mcp": "cloud-superapp-mcp",
+  "cloudy-apps-communication-mcp": "cloud-mail-mcp",
+  "cloudy-apps-drive-mcp": "cloud-drive-mcp",
+  "cloudy-cgc-pub-mcp": "cloud-cgc-pub-mcp",
+  "cloud-me-cgc-pvt-mcp": "cloud-cgc-pvt-mcp"
+ },
+ "aliases": {
+  "cloud-services-mcp": "cloudy-all-mcp",
+  "cloud-infra-mcp": "cloudy-c3-mcp",
+  "cloud-superapp-mcp": "cloudy-c3-mcp",
+  "cloudy-android-mcp": "cloudy-c3-mcp",
+  "cloud-mail-mcp": "cloudy-apps-communication-mcp",
+  "cloud-mattermost-mcp": "cloudy-apps-communication-mcp",
+  "cloud-drive-mcp": "cloudy-apps-drive-mcp",
+  "cloud-vault-mcp": "cloudy-apps-drive-mcp",
+  "cloud-cgc-pub-mcp": "cloudy-cgc-pub-mcp",
+  "cloud-cgc-pvt-mcp": "cloud-me-cgc-pvt-mcp"
+ }
+}

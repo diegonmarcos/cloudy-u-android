@@ -39,11 +39,20 @@ interface AiHost {
     fun plugins(): Map<String, Boolean> = emptyMap()
     /** Tokens and cost the backend REPORTED, for the open session and the day; empty = nothing reported yet. */
     fun usage(sessionId: String): List<AiUsageLine> = emptyList()
+    /** The same with the files attached to the message (the (+) menu); a host that takes none ignores them. */
+    fun sendWith(session: AiSession, text: String, attachments: List<AiAttachment>, model: String, web: Boolean, now: Long, sink: AiSink): AiOutcome =
+        send(session, text, model, web, now, sink)
     /** The standing system prompt in force ("" = none). */
     fun systemPrompt(): String = ""
     /** The MCP servers the MCPs control lists, blocking (the page calls it off the main thread); empty = the control shows none. */
     fun mcpServers(): List<AiMcpServer> = emptyList()
 }
+
+/**
+ * The road for a message that carries an image or asks for one: OpenRouter's chat completions with the user's own key ([backend], the key read
+ * per send from the private store, never kept here). [flow] picks the model (image out, vision, text); [store] keeps the images an answer returns.
+ */
+class AiMedia(val backend: AiBackend, val flow: AiImageFlow, val store: AiImageStore, val modalities: List<String>)
 
 /** The small choices a host remembers. */
 interface AiPrefs {
@@ -98,6 +107,10 @@ class AiStandardHost(
     private val design: AiDesign? = null,
     /** An app's own usage lines (Cloud Tools' Costs ledger); replaces the reported-usage tally when set. */
     private val usageSource: ((String) -> List<AiUsageLine>)? = null,
+    /** Image in / image out and vision: the OpenRouter road for a message with an image or an ask for one. Null = every message goes the usual way. */
+    private val media: AiMedia? = null,
+    /** A file's bytes for the wire (null = unreadable). */
+    private val files: (AiAttachment) -> ByteArray? = { a -> runCatching { a.file.readBytes() }.getOrNull() },
 ) : AiHost {
     @Volatile private var effortValue: String = ""
     @Volatile private var headers: Map<String, String> = emptyMap()
@@ -147,38 +160,57 @@ class AiStandardHost(
     internal fun standing(): String = listOf(system, design?.mode(modeId)?.instruction.orEmpty(), design?.mcpSentence(mcpOn).orEmpty())
         .filter { it.isNotBlank() }.joinToString("\n\n")
 
-    override fun send(session: AiSession, text: String, model: String, web: Boolean, now: Long, sink: AiSink): AiOutcome {
+    override fun send(session: AiSession, text: String, model: String, web: Boolean, now: Long, sink: AiSink): AiOutcome =
+        sendWith(session, text, emptyList(), model, web, now, sink)
+
+    override fun sendWith(session: AiSession, text: String, attachments: List<AiAttachment>, model: String, web: Boolean, now: Long, sink: AiSink): AiOutcome {
         val asked = session.copy(
-            title = session.title.ifBlank { AiProtocol.title(text, cfg.titleChars) },
-            model = model, updated = now, messages = session.messages + AiMsg("user", text),
+            title = session.title.ifBlank { AiProtocol.title(text.ifBlank { attachments.firstOrNull()?.name.orEmpty() }, cfg.titleChars) },
+            model = model, updated = now, messages = session.messages + AiMsg("user", text, attachments = attachments),
         )
         store.put(asked)
+        // An image in the message or an ask for one goes the media road (OpenRouter, the user's key) with the model the flow picks.
+        val m = media
+        val plan = if (m != null) m.flow.plan(text, attachments.any { it.image }, model) else null
+        val route = if (m != null && plan != null && plan.kind != AiImageFlow.Kind.TEXT) m to plan else null
+        val sendModel = route?.second?.model ?: model
+        val drawing = route?.second?.kind == AiImageFlow.Kind.IMAGE
         // With no direct backend the gateway is the only road: an app that picked no agent gets the first one.
-        val agent = if (gateway != null) agents.firstOrNull { it.id == prefs.agent } ?: (if (direct == null) agents.firstOrNull() else null) else null
-        val backend = if (agent != null) gateway else direct
+        val agent = if (route != null) null else if (gateway != null) agents.firstOrNull { it.id == prefs.agent } ?: (if (direct == null) agents.firstOrNull() else null) else null
+        val backend = if (route != null) route.first.backend else if (agent != null) gateway else direct
         if (backend == null) return AiOutcome(asked, "no AI backend is configured", emptyList())
         val via = agent?.let { "${it.label} ($gatewayNote)" }
-        val nativeWeb = agent == null && web && runCatching { models().firstOrNull { it.id == model }?.nativeWeb }.getOrNull() == true
+        val nativeWeb = agent == null && route == null && web && runCatching { models().firstOrNull { it.id == model }?.nativeWeb }.getOrNull() == true
         val standing = standing()
-        val wire = if (standing.isBlank()) null else JSONArray().put(JSONObject().put("role", "system").put("content", standing)).also { a ->
-            val h = AiProtocol.messages(asked.messages, cfg.historyTurns)
+        val wire = if (standing.isBlank() && attachments.isEmpty()) null else JSONArray().also { a ->
+            if (standing.isNotBlank()) a.put(JSONObject().put("role", "system").put("content", standing))
+            val h = AiProtocol.messages(asked.messages, cfg.historyTurns, files)
             for (i in 0 until h.length()) a.put(h.get(i))
         }
-        val reply = converse(backend, AiRequest(model, asked.messages, web, nativeWeb, agent, tools, wire, effort = effortValue, headers = if (agent != null) headers else emptyMap()), sink)
+        val request = AiRequest(
+            sendModel, asked.messages, web && route == null, nativeWeb, agent, if (route == null) tools else emptyList(), wire, stream = !drawing,
+            effort = effortValue, headers = if (agent != null) headers else emptyMap(), modalities = if (drawing && route != null) route.first.modalities else emptyList(),
+        )
+        val reply = converse(backend, request, sink, route == null)
         reply.usage?.let { used.add(Used(now, session.id, it)) }
         val answer = reply.text
-        if (answer == null || (answer.isEmpty() && reply.error == null)) {
+        val saved = reply.images.mapNotNull { u -> media?.let { runCatching { it.store.save(u) }.getOrNull() } }
+        if (answer == null || (answer.isEmpty() && reply.error == null && saved.isEmpty())) {
             val why = reply.error ?: "no choices in the answer"
             return AiOutcome(asked, if (reply.transport) listOfNotNull(via, why).joinToString(": ") else why, emptyList())
         }
-        val answered = asked.copy(messages = asked.messages + AiMsg("assistant", answer, listOfNotNull(agent?.label, model.takeIf { m -> m.isNotBlank() && (agent == null || agent.modelFor(m) != null) }).joinToString(" · "), reply.usage?.prompt ?: 0, reply.usage?.completion ?: 0), updated = System.currentTimeMillis())
+        val meta = listOfNotNull(agent?.label, sendModel.takeIf { x -> x.isNotBlank() && (agent == null || agent.modelFor(x) != null) }).joinToString(" · ")
+        val answered = asked.copy(
+            messages = asked.messages + AiMsg("assistant", answer, meta, reply.usage?.prompt ?: 0, reply.usage?.completion ?: 0, saved),
+            updated = System.currentTimeMillis(),
+        )
         store.put(answered)
         return AiOutcome(answered, null, reply.citations)
     }
 
     /** One model call, or the bounded tool loop when tools are offered. */
-    private fun converse(backend: AiBackend, req: AiRequest, sink: AiSink): AiReply {
-        if (tools.isEmpty()) return backend.chat(req, sink::delta)
+    private fun converse(backend: AiBackend, req: AiRequest, sink: AiSink, withTools: Boolean = true): AiReply {
+        if (tools.isEmpty() || !withTools) return backend.chat(req, sink::delta)
         val wire = req.wire ?: AiProtocol.messages(req.messages, cfg.historyTurns)
         var last = AiReply(null, error = "no answer")
         repeat(cfg.maxToolRounds) {

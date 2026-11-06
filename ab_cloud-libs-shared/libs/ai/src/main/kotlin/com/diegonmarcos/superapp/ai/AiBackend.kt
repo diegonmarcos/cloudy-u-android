@@ -85,7 +85,7 @@ abstract class AiChatBackend(protected val cfg: AiConfig, protected val http: Ai
 
     override fun chat(req: AiRequest, onDelta: (String) -> Unit): AiReply {
         val headers = headers(req) ?: return AiReply(null, error = why().ifBlank { "cannot be sent" })
-        val stream = req.stream && cfg.stream && http.streams && req.tools.isEmpty()
+        val stream = req.stream && cfg.stream && http.streams && req.tools.isEmpty() && req.modalities.isEmpty()
         val body = AiProtocol.body(cfg, req, model(req), stream, openRouter)
         return try {
             if (!stream) {

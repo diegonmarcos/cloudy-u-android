@@ -5,6 +5,12 @@
     <!-- The fleet agent gateway (my-ai-api, mesh only) is the only road out; Cloud Account is opened by a package-pinned intent. -->
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- The chat's (+) menu: Camera takes a picture, Image lists the phone's photos. Both are libs:perms rows (build.json::perms.needs), granted
+         on Configs > Perms; the chat asks for nothing itself and shows "Fix in Perms" while one is missing. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+
     <!-- Profile at the top right opens Cloud Account (com.diegonmarcos.cloudaccount.OPEN, libs:bottomnav AccountLaunch). -->
     <queries>
         <package android:name="com.diegonmarcos.cloudaccount" />

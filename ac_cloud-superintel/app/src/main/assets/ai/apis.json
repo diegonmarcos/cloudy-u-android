@@ -1,7 +1,7 @@
 {
-  "_doc": "#1499 SAMPLE data only: fake accounts and keys so the page has a shape in a public repo. Nothing here is real and no real value ever goes in this file. The real rows (same fields) and the token of a row load at runtime from the private store: Cloud Account's `secret` provider (the cloud-me-pvt-configs / vault pattern), key `rows_key` for the rows and `token_key` (with {id}) for a token, revealed only on tap and never kept. token_masked is the mask the page draws; the bundled rows have no token.",
+  "_doc": "#1499 SAMPLE data only: fake accounts and keys so the page has a shape in a public repo. Nothing here is real and no real value ever goes in this file. The real rows (same fields) and the token of a row load at runtime from the private store: Cloud Account's `secret` provider (the cloud-me-pvt-configs / vault pattern), key `rows_key` for the rows and `token_key` (with {id}) for a token, revealed only on tap and never kept. `key_provider` is the provider whose first real row the image flow reads its key from, per send (OpenRouterKey), never kept. token_masked is the mask the page draws; the bundled rows have no token.",
   "sample_label": "sample",
-  "private": { "authority": "com.diegonmarcos.cloudaccount.accountdata", "method": "secret", "rows_key": "ai.apis", "token_key": "ai.api.{id}.token" },
+  "private": { "authority": "com.diegonmarcos.cloudaccount.accountdata", "method": "secret", "rows_key": "ai.apis", "token_key": "ai.api.{id}.token", "key_provider": "OpenRouter" },
   "caption": "{provider} · {login} · {key_name}",
   "caption2": "created {created} · last used {last_used}",
   "rows": [

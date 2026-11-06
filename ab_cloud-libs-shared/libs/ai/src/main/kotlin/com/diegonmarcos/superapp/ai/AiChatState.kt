@@ -20,6 +20,12 @@ class AiChatState(private val host: AiHost) {
     var model by mutableStateOf(host.model)
     var web by mutableStateOf(host.web)
     var agent by mutableStateOf(host.agent())
+    /** The files attached to the next message (the (+) menu's Files, Image and Camera): chips in the composer, sent with the message, then cleared. */
+    var attachments by mutableStateOf<List<AiAttachment>>(emptyList())
+        private set
+    fun attach(a: AiAttachment) { attachments = attachments.filterNot { it.id == a.id } + a }
+    fun detach(id: String) { attachments = attachments.filterNot { it.id == id } }
+
     /** The input's text: hoisted so an app can prefill it (a shared text, a task's example) and nothing is sent until the user does. */
     var draft by mutableStateOf("")
     /** A mutating tool waiting for Allow / Deny; the page draws the consent card for it. */
@@ -108,7 +114,7 @@ class AiChatState(private val host: AiHost) {
     fun chooseAgent(id: String) { if (locked) return; agent = id; host.pickAgent(id) }
     fun pick(id: String) { if (locked) return; model = id; host.model = id }
     fun toggleWeb() { web = !web; host.web = web }
-    fun fresh() { session = host.newSession(model, System.currentTimeMillis()); error = null; citations = emptyList(); streaming = "" }
+    fun fresh() { session = host.newSession(model, System.currentTimeMillis()); attachments = emptyList(); error = null; citations = emptyList(); streaming = "" }
     fun open(s: AiSession) { session = s; error = null; citations = emptyList(); streaming = ""; if (s.model.isNotBlank()) model = s.model }
 
     /** Renames a stored session; the open one follows. A blank title is ignored. */
@@ -149,15 +155,17 @@ class AiChatState(private val host: AiHost) {
      * empty one, does nothing.
      */
     suspend fun send(ask: String) {
-        if (ask.isEmpty() || sending) return
+        if ((ask.isEmpty() && attachments.isEmpty()) || sending) return
         sending = true
+        val atts = attachments
+        attachments = emptyList()
         error = null
         streaming = ""
         citations = emptyList()
         val before = session
-        session = before.copy(messages = before.messages + AiMsg("user", ask))
+        session = before.copy(messages = before.messages + AiMsg("user", ask, attachments = atts))
         val out = try {
-            withContext(Dispatchers.IO) { host.send(before, ask, model, web, System.currentTimeMillis(), sink) }
+            withContext(Dispatchers.IO) { host.sendWith(before, ask, atts, model, web, System.currentTimeMillis(), sink) }
         } catch (e: CancellationException) {
             sending = false
             decide(false)
@@ -193,6 +201,16 @@ object AiTags {
     const val BAR_TOGGLE = "ai_bar_toggle"
     const val BAR_COMPACT = "ai_bar_compact"
     fun attach(id: String) = "ai_attach_$id"
+    /** An attachment chip in the composer and its remove button; an image of a message, and its Save / Share / Use-as-input actions. */
+    fun chip(id: String) = "ai_attach_chip_$id"
+    fun chipRemove(id: String) = "ai_attach_remove_$id"
+    fun image(id: String) = "ai_image_$id"
+    fun imageAction(id: String, action: String) = "ai_image_${action}_$id"
+    /** The Model Catalogue's search box, its status line, a result row, and a tab block's header. */
+    const val CAT_SEARCH = "ai_cat_search"
+    const val CAT_SEARCH_STATE = "ai_cat_search_state"
+    fun catResult(id: String) = "ai_cat_result_$id"
+    fun catHeader(i: Int) = "ai_cat_header_$i"
     fun effort(id: String) = "ai_effort_$id"
     fun more(id: String) = "ai_more_$id"
     fun morePlugin(id: String) = "ai_more_plugin_$id"

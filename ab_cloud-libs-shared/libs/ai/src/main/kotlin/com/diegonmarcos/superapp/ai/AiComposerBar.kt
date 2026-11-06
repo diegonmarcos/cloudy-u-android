@@ -80,6 +80,8 @@ fun AiComposerBar(
     modifier: Modifier = Modifier,
     onCatalogue: (() -> Unit)? = null,
     onAttach: ((String) -> Unit)? = null,
+    /** The built-in Attach items (Files, Image, Camera) with the app's permission hooks; takes precedence over [onAttach]. */
+    attach: AiAttachHost? = null,
 ) {
     val shown = design.ordered(decl.controls)
     if (shown.isEmpty()) return
@@ -104,7 +106,7 @@ fun AiComposerBar(
             ) {
                 shown.forEach { ctl ->
                     when (ctl.id) {
-                        "plus" -> PlusControl(chat, theme, design, ctl, onAttach)
+                        "plus" -> PlusControl(chat, theme, design, ctl, onAttach, attach)
                         "task" -> TaskControl(chat, theme, design, ctl)
                         "agent" -> AgentControl(chat, theme, design, ctl)
                         "model" -> ModelControl(chat, theme, design, ctl, onCatalogue)
@@ -186,10 +188,20 @@ private fun Btn(ctl: AiControl, theme: AiTheme, design: AiDesign, label: String,
 }
 
 @Composable
-private fun PlusControl(chat: AiChatState, theme: AiTheme, design: AiDesign, ctl: AiControl, onAttach: ((String) -> Unit)?) {
+private fun PlusControl(chat: AiChatState, theme: AiTheme, design: AiDesign, ctl: AiControl, onAttach: ((String) -> Unit)?, attach: AiAttachHost?) {
     val t = theme.type
+    val actions = attach?.let { rememberAttachActions(chat, theme, it) }
     Ctl(ctl, theme, design, "") { close ->
-        if (onAttach != null) design.attachKinds.forEach { (id, label) ->
+        if (attach != null && actions != null) design.attachKinds.forEach { (id, label) ->
+            val need = design.attachPerms[id].orEmpty()
+            val missing = if (need.isEmpty()) emptyList() else attach.missing(need)
+            val blocked = missing.isNotEmpty() && id in design.attachRequires
+            DropdownMenuItem(
+                text = { Text(label, style = t.style(t.small)) }, enabled = !blocked,
+                onClick = { close(); actions.run(id) }, modifier = Modifier.testTag(AiTags.attach(id)),
+            )
+            if (missing.isNotEmpty()) Box(Modifier.padding(horizontal = theme.metrics.gutter, vertical = theme.metrics.small)) { attach.fix(missing) }
+        } else if (onAttach != null) design.attachKinds.forEach { (id, label) ->
             DropdownMenuItem(text = { Text(label, style = t.style(t.small)) }, onClick = { close(); onAttach(id) }, modifier = Modifier.testTag(AiTags.attach(id)))
         }
         DropdownMenuItem(text = { Text(design.newChatLabel, style = t.style(t.small, FontWeight.SemiBold)) }, onClick = { chat.fresh(); close() }, modifier = Modifier.testTag(AiTags.NEW_CHAT))

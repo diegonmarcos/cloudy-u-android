@@ -208,7 +208,7 @@ class SearchShellTest {
         compose.onNodeWithTag(ai.ctl("model")).assertIsEnabled()
 
         compose.onNodeWithTag(ai.ctl("model")).performClick()
-        for (tab in listOf("frontier", "core", "specialist", "medium", "small")) waitFor(ai.catTab(tab))
+        for (tab in com.diegonmarcos.superapp.ai.AiModelTabs.load(RuntimeEnvironment.getApplication()).order) waitFor(ai.catTab(tab))
     }
 
     /** The whole config bar collapses to one compact chip behind the chevron, and the state is remembered per app. */

@@ -2,6 +2,12 @@ package com.diegonmarcos.cloudsuperintel
 
 import android.content.Context
 import com.diegonmarcos.superapp.ai.AiAgents
+import com.diegonmarcos.superapp.ai.AiAttachments
+import com.diegonmarcos.superapp.ai.AiImageFlow
+import com.diegonmarcos.superapp.ai.AiMedia
+import com.diegonmarcos.superapp.ai.AiModelTabs
+import com.diegonmarcos.superapp.ai.AiOpenRouterBackend
+import com.diegonmarcos.superapp.ai.AiTokenSource
 import com.diegonmarcos.superapp.ai.AiChatState
 import com.diegonmarcos.superapp.ai.AiConfig
 import com.diegonmarcos.superapp.ai.AiDesign
@@ -42,9 +48,23 @@ object SiAi {
             AiChatState(AiStandardHost(
                 cfg, store(app), AiMemoryPrefs(cfg.defaultModel, p.web, p.agent),
                 gateway = AiGatewayBackend(cfg, BuildConfig.AI_GATEWAY_URL), agents = AiAgents.load(app),
-                system = Personas.system(p, all), design = AiDesign.load(app),
+                system = Personas.system(p, all), design = AiDesign.load(app), media = media(app, cfg),
             )).also { it.chooseMcps(p.mcps.toSet()) }
         }
+    }
+
+    /**
+     * Image in / image out and vision (assets/ai/model-tabs.json::image_flow): a message with an image, or an ask for one, goes to OpenRouter's chat
+     * completions with the key read per send from the private store (Cloud Account's secret provider, [OpenRouterKey]); the model is the picked one
+     * when it draws, else the Image tab's. Everything else stays on the gateway.
+     */
+    private fun media(app: Context, cfg: AiConfig): AiMedia {
+        val tabs = AiModelTabs.load(app)
+        val key = OpenRouterKey.source(app)
+        return AiMedia(
+            AiOpenRouterBackend(cfg, app.getString(R.string.app_name), AiTokenSource { key() }),
+            AiImageFlow(tabs), AiAttachments.imageStore(app), tabs.imageFlow.modalities,
+        )
     }
 
     private var sessions: AiFileSessions? = null
