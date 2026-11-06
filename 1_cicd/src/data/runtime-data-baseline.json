@@ -1,0 +1,727 @@
+{
+ "_doc": "#1547 THE baseline of the runtime-data guard (cloud-android-runtime-data-guard.py): everything that is still baked into an APK, listed so a NEW baked JSON, gradle asset injection or BuildConfig base64 field fails CI. It only shrinks: migrate a dataset to the fleet data framework (libs:fleet-data-client, providers Cloud Store / Cloud Account), then drop its line here and lower the ceilings. json: path -> tier (1 personal -> Cloud Account personal/, 2 fleet/infra -> Cloud Account fleet/, 3 app defaults -> Cloud Store, 4 static reference -> Cloud Store pack or seed, mock = removed from release builds) and its target provider. The phase-2 order is in ticket #1547.",
+ "seed_allowlist": {
+  "_doc": "Tier-4 STATIC reference data that may stay bundled as a SEED the runtime provider overrides: path or dir/ prefix -> reason (at least 20 characters). Empty in phase 1: the tier-4 files are baselined below and move to Cloud Store packs in phase 2."
+ },
+ "json_max": 160,
+ "gradle_max": 22,
+ "b64_max": 302,
+ "mock_files": [
+  "shop.json",
+  "mock-tasks.json"
+ ],
+ "json": {
+  "aa_cloud-superapp/app/src/main/assets/app-perms.json": {
+   "tier": 3,
+   "target": "store shared/app-perms (one dataset keyed by package; tier 3: derived from the public build.json::perms)"
+  },
+  "aa_cloud-superapp/app/src/main/assets/bg-policy.json": {
+   "tier": 2,
+   "target": "account fleet/bg-policy"
+  },
+  "aa_cloud-superapp/app/src/main/assets/qrcodes/qrcodes.json": {
+   "tier": 1,
+   "target": "account personal/qrcodes"
+  },
+  "aa_cloud-superapp/app/src/main/assets/super-saving.json": {
+   "tier": 2,
+   "target": "account fleet/super-saving"
+  },
+  "ab_cloud-libs-shared/libs/ai/src/main/assets/ai/ai-catalogue.json": {
+   "tier": 3,
+   "target": "store app/<pkg>/ai-catalogue"
+  },
+  "ab_cloud-libs-shared/libs/ai/src/main/assets/ai/ai-design.json": {
+   "tier": 3,
+   "target": "store app/<pkg>/ai-design"
+  },
+  "ab_cloud-libs-shared/libs/ai/src/main/assets/ai/ai-tasks.json": {
+   "tier": 3,
+   "target": "store app/<pkg>/ai-tasks"
+  },
+  "ab_cloud-libs-shared/libs/ai/src/main/assets/ai/ai.json": {
+   "tier": 2,
+   "target": "account fleet/ai"
+  },
+  "ab_cloud-libs-shared/libs/ai/src/main/assets/ai/model-tabs.json": {
+   "tier": 3,
+   "target": "store app/<pkg>/model-tabs"
+  },
+  "ab_cloud-libs-shared/libs/ai/src/main/assets/ai/models-snapshot.json": {
+   "tier": 3,
+   "target": "store app/<pkg>/models-snapshot"
+  },
+  "ab_cloud-libs-shared/libs/ai/src/main/assets/ai/protocol-cases.json": {
+   "tier": 3,
+   "target": "store app/<pkg>/protocol-cases"
+  },
+  "ab_cloud-libs-shared/libs/appstore/src/main/assets/apps-mcp-api.json": {
+   "tier": 2,
+   "target": "account fleet/apps-mcp-api"
+  },
+  "ab_cloud-libs-shared/libs/appstore/src/main/assets/appstore-controls.json": {
+   "tier": 3,
+   "target": "store app/<pkg>/appstore-controls"
+  },
+  "ab_cloud-libs-shared/libs/appstore/src/main/assets/appstore-feeds.json": {
+   "tier": 2,
+   "target": "account fleet/appstore-feeds"
+  },
+  "ab_cloud-libs-shared/libs/appstore/src/main/assets/appstore-fleet-actions.json": {
+   "tier": 3,
+   "target": "store app/<pkg>/appstore-fleet-actions"
+  },
+  "ab_cloud-libs-shared/libs/appstore/src/main/assets/appstore-install-sources.json": {
+   "tier": 2,
+   "target": "account fleet/appstore-install-sources"
+  },
+  "ab_cloud-libs-shared/libs/appstore/src/main/assets/appstore-install-watch.json": {
+   "tier": 3,
+   "target": "store app/<pkg>/appstore-install-watch"
+  },
+  "ab_cloud-libs-shared/libs/appstore/src/main/assets/appstore-priority.json": {
+   "tier": 3,
+   "target": "store app/<pkg>/appstore-priority"
+  },
+  "ab_cloud-libs-shared/libs/appstore/src/main/assets/appstore-ventoy.json": {
+   "tier": 3,
+   "target": "store app/<pkg>/appstore-ventoy"
+  },
+  "ab_cloud-libs-shared/libs/bluetooth/src/main/assets/bluetooth/company-ids.json": {
+   "tier": 4,
+   "target": "store pack/company-ids (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/bluetooth/src/main/assets/bluetooth/gatt-catalog.json": {
+   "tier": 4,
+   "target": "store pack/gatt-catalog (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/browser/src/main/assets/browser/web-bluetooth-contract.json": {
+   "tier": 3,
+   "target": "store app/<pkg>/web-bluetooth-contract"
+  },
+  "ab_cloud-libs-shared/libs/browser/src/main/assets/browser/web-hardware-contract.json": {
+   "tier": 3,
+   "target": "store app/<pkg>/web-hardware-contract"
+  },
+  "ab_cloud-libs-shared/libs/cgc-3d/src/main/assets/cgc/clips.json": {
+   "tier": 4,
+   "target": "store pack/clips (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/decisions-engine/src/main/assets/decisions.json": {
+   "tier": 2,
+   "target": "account fleet/decisions"
+  },
+  "ab_cloud-libs-shared/libs/file-editor/src/main/assets/file-editor-languages.json": {
+   "tier": 4,
+   "target": "store pack/file-editor-languages (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json": {
+   "tier": 2,
+   "target": "account fleet/fleet-config"
+  },
+  "ab_cloud-libs-shared/libs/keyboard/src/main/assets/layouts/clipboard_bottom/clip_bottom_row.json": {
+   "tier": 4,
+   "target": "store pack/clip_bottom_row (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/keyboard/src/main/assets/layouts/clipboard_bottom/clip_bottom_row_with_action.json": {
+   "tier": 4,
+   "target": "store pack/clip_bottom_row_with_action (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/keyboard/src/main/assets/layouts/emoji_bottom/emoji_bottom_row.json": {
+   "tier": 4,
+   "target": "store pack/emoji_bottom_row (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/keyboard/src/main/assets/layouts/emoji_bottom/emoji_bottom_row_with_action.json": {
+   "tier": 4,
+   "target": "store pack/emoji_bottom_row_with_action (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/keyboard/src/main/assets/layouts/functional/functional_keys.json": {
+   "tier": 4,
+   "target": "store pack/functional_keys (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/keyboard/src/main/assets/layouts/functional/functional_keys_khipro.json": {
+   "tier": 4,
+   "target": "store pack/functional_keys_khipro (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/keyboard/src/main/assets/layouts/functional/functional_keys_tablet.json": {
+   "tier": 4,
+   "target": "store pack/functional_keys_tablet (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/keyboard/src/main/assets/layouts/main/azerty.json": {
+   "tier": 4,
+   "target": "store pack/azerty (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/keyboard/src/main/assets/layouts/main/bengali_akkhor.json": {
+   "tier": 4,
+   "target": "store pack/bengali_akkhor (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/keyboard/src/main/assets/layouts/main/bengali_baishakhi.json": {
+   "tier": 4,
+   "target": "store pack/bengali_baishakhi (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/keyboard/src/main/assets/layouts/main/bengali_inscript.json": {
+   "tier": 4,
+   "target": "store pack/bengali_inscript (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/keyboard/src/main/assets/layouts/main/bengali_probhat.json": {
+   "tier": 4,
+   "target": "store pack/bengali_probhat (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/keyboard/src/main/assets/layouts/main/bengali_unijoy.json": {
+   "tier": 4,
+   "target": "store pack/bengali_unijoy (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/keyboard/src/main/assets/layouts/main/colemak.json": {
+   "tier": 4,
+   "target": "store pack/colemak (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/keyboard/src/main/assets/layouts/main/colemak_dh.json": {
+   "tier": 4,
+   "target": "store pack/colemak_dh (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/keyboard/src/main/assets/layouts/main/dvorak.json": {
+   "tier": 4,
+   "target": "store pack/dvorak (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/keyboard/src/main/assets/layouts/main/georgian.json": {
+   "tier": 4,
+   "target": "store pack/georgian (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/keyboard/src/main/assets/layouts/main/greek.json": {
+   "tier": 4,
+   "target": "store pack/greek (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/keyboard/src/main/assets/layouts/main/gujarati.json": {
+   "tier": 4,
+   "target": "store pack/gujarati (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/keyboard/src/main/assets/layouts/main/hcesar.json": {
+   "tier": 4,
+   "target": "store pack/hcesar (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/keyboard/src/main/assets/layouts/main/hebrew.json": {
+   "tier": 4,
+   "target": "store pack/hebrew (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/keyboard/src/main/assets/layouts/main/hebrew_1452_2.json": {
+   "tier": 4,
+   "target": "store pack/hebrew_1452_2 (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/keyboard/src/main/assets/layouts/main/hindi.json": {
+   "tier": 4,
+   "target": "store pack/hindi (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/keyboard/src/main/assets/layouts/main/hindi_compact.json": {
+   "tier": 4,
+   "target": "store pack/hindi_compact (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/keyboard/src/main/assets/layouts/main/hindi_phonetic.json": {
+   "tier": 4,
+   "target": "store pack/hindi_phonetic (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/keyboard/src/main/assets/layouts/main/kabyle.json": {
+   "tier": 4,
+   "target": "store pack/kabyle (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/keyboard/src/main/assets/layouts/main/khmer.json": {
+   "tier": 4,
+   "target": "store pack/khmer (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/keyboard/src/main/assets/layouts/main/korean.json": {
+   "tier": 4,
+   "target": "store pack/korean (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/keyboard/src/main/assets/layouts/main/korean_phonetic.json": {
+   "tier": 4,
+   "target": "store pack/korean_phonetic (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/keyboard/src/main/assets/layouts/main/korean_sebeolsik_390.json": {
+   "tier": 4,
+   "target": "store pack/korean_sebeolsik_390 (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/keyboard/src/main/assets/layouts/main/korean_sebeolsik_final.json": {
+   "tier": 4,
+   "target": "store pack/korean_sebeolsik_final (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/keyboard/src/main/assets/layouts/main/lao.json": {
+   "tier": 4,
+   "target": "store pack/lao (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/keyboard/src/main/assets/layouts/main/marathi.json": {
+   "tier": 4,
+   "target": "store pack/marathi (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/keyboard/src/main/assets/layouts/main/nepali_romanized.json": {
+   "tier": 4,
+   "target": "store pack/nepali_romanized (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/keyboard/src/main/assets/layouts/main/nepali_traditional.json": {
+   "tier": 4,
+   "target": "store pack/nepali_traditional (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/keyboard/src/main/assets/layouts/main/pcqwerty.json": {
+   "tier": 4,
+   "target": "store pack/pcqwerty (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/keyboard/src/main/assets/layouts/main/sinhala.json": {
+   "tier": 4,
+   "target": "store pack/sinhala (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/keyboard/src/main/assets/layouts/main/thai.json": {
+   "tier": 4,
+   "target": "store pack/thai (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/keyboard/src/main/assets/layouts/main/unexpected.json": {
+   "tier": 4,
+   "target": "store pack/unexpected (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/keyboard/src/main/assets/layouts/main/urdu.json": {
+   "tier": 4,
+   "target": "store pack/urdu (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/keyboard/src/main/assets/layouts/main/uzbek.json": {
+   "tier": 4,
+   "target": "store pack/uzbek (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/keyboard/src/main/assets/layouts/number/number.json": {
+   "tier": 4,
+   "target": "store pack/number (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/keyboard/src/main/assets/layouts/number_row/number_row.json": {
+   "tier": 4,
+   "target": "store pack/number_row (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/keyboard/src/main/assets/layouts/numpad/numpad.json": {
+   "tier": 4,
+   "target": "store pack/numpad (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/keyboard/src/main/assets/layouts/numpad_landscape/numpad_landscape.json": {
+   "tier": 4,
+   "target": "store pack/numpad_landscape (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/keyboard/src/main/assets/layouts/phone/phone.json": {
+   "tier": 4,
+   "target": "store pack/phone (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/keyboard/src/main/assets/layouts/phone_symbols/phone_symbols.json": {
+   "tier": 4,
+   "target": "store pack/phone_symbols (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/maps/src/main/assets/geo/capitals.json": {
+   "tier": 4,
+   "target": "store pack/capitals (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/maps/src/main/assets/geo/region-members.json": {
+   "tier": 4,
+   "target": "store pack/region-members (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/media/src/main/assets/stickers/index.json": {
+   "tier": 4,
+   "target": "store pack/index (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/model-catalogue/src/main/assets/agents/agents.json": {
+   "tier": 3,
+   "target": "store app/<pkg>/agents"
+  },
+  "ab_cloud-libs-shared/libs/model-catalogue/src/main/assets/models/catalogue.json": {
+   "tier": 3,
+   "target": "store app/<pkg>/catalogue"
+  },
+  "ab_cloud-libs-shared/libs/nfc/src/main/assets/nfc/nfc-catalog.json": {
+   "tier": 4,
+   "target": "store pack/nfc-catalog (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/perms/src/main/assets/perms-catalogue.json": {
+   "tier": 2,
+   "target": "account fleet/perms-catalogue"
+  },
+  "ab_cloud-libs-shared/libs/rclone/src/main/assets/rclone-remote-types.json": {
+   "tier": 4,
+   "target": "store pack/rclone-remote-types (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/shell-broker/src/main/assets/shell-allowlist.json": {
+   "tier": 2,
+   "target": "account fleet/shell-allowlist"
+  },
+  "ab_cloud-libs-shared/libs/wifi/src/main/assets/wifi/channel-plans.json": {
+   "tier": 4,
+   "target": "store pack/channel-plans (downloadable data pack or seed)"
+  },
+  "ab_cloud-libs-shared/libs/wifi/src/main/assets/wifi/wifi-config.json": {
+   "tier": 3,
+   "target": "store app/<pkg>/wifi-config"
+  },
+  "ac_c3-morpheus/app/src/main/assets/app-perms.json": {
+   "tier": 3,
+   "target": "store shared/app-perms (one dataset keyed by package; tier 3: derived from the public build.json::perms)"
+  },
+  "ac_c3-morpheus/app/src/main/assets/probes.json": {
+   "tier": 2,
+   "target": "account fleet/probes"
+  },
+  "ac_c3-watchdog/app/src/main/assets/app-perms.json": {
+   "tier": 3,
+   "target": "store shared/app-perms (one dataset keyed by package; tier 3: derived from the public build.json::perms)"
+  },
+  "ac_c3-watchtower/app/src/main/assets/app-perms.json": {
+   "tier": 3,
+   "target": "store shared/app-perms (one dataset keyed by package; tier 3: derived from the public build.json::perms)"
+  },
+  "ac_cloud-account/app/src/main/assets/app-perms.json": {
+   "tier": 3,
+   "target": "store shared/app-perms (one dataset keyed by package; tier 3: derived from the public build.json::perms)"
+  },
+  "ac_cloud-browser/app/src/main/assets/app-perms.json": {
+   "tier": 3,
+   "target": "store shared/app-perms (one dataset keyed by package; tier 3: derived from the public build.json::perms)"
+  },
+  "ac_cloud-browser/app/src/main/assets/favourites_catalog.json": {
+   "tier": 1,
+   "target": "account personal/favourites_catalog"
+  },
+  "ac_cloud-c3-webserver/src-tauri/gen/android/app/src/main/assets/app-perms.json": {
+   "tier": 3,
+   "target": "store shared/app-perms (one dataset keyed by package; tier 3: derived from the public build.json::perms)"
+  },
+  "ac_cloud-c3/app/src/main/assets/app-perms.json": {
+   "tier": 3,
+   "target": "store shared/app-perms (one dataset keyed by package; tier 3: derived from the public build.json::perms)"
+  },
+  "ac_cloud-calc/app/src/main/assets/app-perms.json": {
+   "tier": 3,
+   "target": "store shared/app-perms (one dataset keyed by package; tier 3: derived from the public build.json::perms)"
+  },
+  "ac_cloud-camera/app/src/main/assets/app-perms.json": {
+   "tier": 3,
+   "target": "store shared/app-perms (one dataset keyed by package; tier 3: derived from the public build.json::perms)"
+  },
+  "ac_cloud-camera/app/src/main/assets/vr-filters.json": {
+   "tier": 3,
+   "target": "store app/<pkg>/vr-filters"
+  },
+  "ac_cloud-contacts/app/src/main/assets/app-perms.json": {
+   "tier": 3,
+   "target": "store shared/app-perms (one dataset keyed by package; tier 3: derived from the public build.json::perms)"
+  },
+  "ac_cloud-dialer/app/src/main/assets/app-perms.json": {
+   "tier": 3,
+   "target": "store shared/app-perms (one dataset keyed by package; tier 3: derived from the public build.json::perms)"
+  },
+  "ac_cloud-dialer/app/src/main/assets/call_providers.json": {
+   "tier": 3,
+   "target": "store app/<pkg>/call_providers"
+  },
+  "ac_cloud-dialer/app/src/main/assets/keypad.json": {
+   "tier": 3,
+   "target": "store app/<pkg>/keypad"
+  },
+  "ac_cloud-dialer/app/src/main/assets/sim-fields.json": {
+   "tier": 3,
+   "target": "store app/<pkg>/sim-fields"
+  },
+  "ac_cloud-dialer/app/src/main/assets/spam_patterns.json": {
+   "tier": 3,
+   "target": "store app/<pkg>/spam_patterns"
+  },
+  "ac_cloud-dialer/app/src/main/assets/voip_providers.json": {
+   "tier": 3,
+   "target": "store app/<pkg>/voip_providers"
+  },
+  "ac_cloud-drive/app/src/main/assets/agents.json": {
+   "tier": 3,
+   "target": "store app/<pkg>/agents"
+  },
+  "ac_cloud-drive/app/src/main/assets/app-perms.json": {
+   "tier": 3,
+   "target": "store shared/app-perms (one dataset keyed by package; tier 3: derived from the public build.json::perms)"
+  },
+  "ac_cloud-gallery/app/src/main/assets/app-perms.json": {
+   "tier": 3,
+   "target": "store shared/app-perms (one dataset keyed by package; tier 3: derived from the public build.json::perms)"
+  },
+  "ac_cloud-keyboard/app/src/main/assets/app-perms.json": {
+   "tier": 3,
+   "target": "store shared/app-perms (one dataset keyed by package; tier 3: derived from the public build.json::perms)"
+  },
+  "ac_cloud-kg-store/app/src/main/assets/ai/composer.json": {
+   "tier": 3,
+   "target": "store app/<pkg>/composer"
+  },
+  "ac_cloud-kg-store/app/src/main/assets/app-perms.json": {
+   "tier": 3,
+   "target": "store shared/app-perms (one dataset keyed by package; tier 3: derived from the public build.json::perms)"
+  },
+  "ac_cloud-kg-store/app/src/main/assets/kg/kg.json": {
+   "tier": 3,
+   "target": "store app/<pkg>/kg"
+  },
+  "ac_cloud-mail/app/src/main/assets/app-perms.json": {
+   "tier": 3,
+   "target": "store shared/app-perms (one dataset keyed by package; tier 3: derived from the public build.json::perms)"
+  },
+  "ac_cloud-matrix/app/src/main/assets/app-perms.json": {
+   "tier": 3,
+   "target": "store shared/app-perms (one dataset keyed by package; tier 3: derived from the public build.json::perms)"
+  },
+  "ac_cloud-me/app/src/main/assets/app-perms.json": {
+   "tier": 3,
+   "target": "store shared/app-perms (one dataset keyed by package; tier 3: derived from the public build.json::perms)"
+  },
+  "ac_cloud-media-center/src-tauri/gen/android/app/src/main/assets/app-perms.json": {
+   "tier": 3,
+   "target": "store shared/app-perms (one dataset keyed by package; tier 3: derived from the public build.json::perms)"
+  },
+  "ac_cloud-myterminal/hub/src/main/assets/app-perms.json": {
+   "tier": 3,
+   "target": "store shared/app-perms (one dataset keyed by package; tier 3: derived from the public build.json::perms)"
+  },
+  "ac_cloud-nav/app/src/main/assets/app-perms.json": {
+   "tier": 3,
+   "target": "store shared/app-perms (one dataset keyed by package; tier 3: derived from the public build.json::perms)"
+  },
+  "ac_cloud-nav/app/src/main/assets/celestial/constellations.lines.json": {
+   "tier": 4,
+   "target": "store pack/constellations.lines (downloadable data pack or seed)"
+  },
+  "ac_cloud-nav/app/src/main/assets/celestial/mw.json": {
+   "tier": 4,
+   "target": "store pack/mw (downloadable data pack or seed)"
+  },
+  "ac_cloud-nav/app/src/main/assets/celestial/planets.json": {
+   "tier": 4,
+   "target": "store pack/planets (downloadable data pack or seed)"
+  },
+  "ac_cloud-nav/app/src/main/assets/celestial/stars.6.json": {
+   "tier": 4,
+   "target": "store pack/stars.6 (downloadable data pack or seed)"
+  },
+  "ac_cloud-nav/app/src/main/assets/space/hyg_named.json": {
+   "tier": 4,
+   "target": "store pack/hyg_named (downloadable data pack or seed)"
+  },
+  "ac_cloud-news/app/src/main/assets/app-perms.json": {
+   "tier": 3,
+   "target": "store shared/app-perms (one dataset keyed by package; tier 3: derived from the public build.json::perms)"
+  },
+  "ac_cloud-nix-on-droid/app/src/main/assets/app-perms.json": {
+   "tier": 3,
+   "target": "store shared/app-perms (one dataset keyed by package; tier 3: derived from the public build.json::perms)"
+  },
+  "ac_cloud-nix-on-droid/app/src/main/assets/terminal-selftest.json": {
+   "tier": 3,
+   "target": "store app/<pkg>/terminal-selftest"
+  },
+  "ac_cloud-notes/packages/frontend/apps/android/App/app/src/main/assets/app-perms.json": {
+   "tier": 3,
+   "target": "store shared/app-perms (one dataset keyed by package; tier 3: derived from the public build.json::perms)"
+  },
+  "ac_cloud-search/app/src/main/assets/ai/composer.json": {
+   "tier": 3,
+   "target": "store app/<pkg>/composer"
+  },
+  "ac_cloud-search/app/src/main/assets/app-perms.json": {
+   "tier": 3,
+   "target": "store shared/app-perms (one dataset keyed by package; tier 3: derived from the public build.json::perms)"
+  },
+  "ac_cloud-shopping/app/src/debug/assets/shop/shop.json": {
+   "tier": "mock",
+   "target": "remove from release builds (phase 1)"
+  },
+  "ac_cloud-shopping/app/src/main/assets/app-perms.json": {
+   "tier": 3,
+   "target": "store shared/app-perms (one dataset keyed by package; tier 3: derived from the public build.json::perms)"
+  },
+  "ac_cloud-store/app/src/main/assets/app-perms.json": {
+   "tier": 3,
+   "target": "store shared/app-perms (one dataset keyed by package; tier 3: derived from the public build.json::perms)"
+  },
+  "ac_cloud-superintel/app/src/main/assets/ai/apis.json": {
+   "tier": 2,
+   "target": "account fleet/apis"
+  },
+  "ac_cloud-superintel/app/src/main/assets/ai/composer.json": {
+   "tier": 3,
+   "target": "store app/<pkg>/composer"
+  },
+  "ac_cloud-superintel/app/src/main/assets/ai/cost.json": {
+   "tier": 2,
+   "target": "account fleet/cost"
+  },
+  "ac_cloud-superintel/app/src/main/assets/ai/dotfiles.json": {
+   "tier": 1,
+   "target": "account personal/dotfiles"
+  },
+  "ac_cloud-superintel/app/src/main/assets/ai/mcp.json": {
+   "tier": 3,
+   "target": "store app/<pkg>/mcp"
+  },
+  "ac_cloud-superintel/app/src/main/assets/ai/pages.json": {
+   "tier": 3,
+   "target": "store app/<pkg>/pages"
+  },
+  "ac_cloud-superintel/app/src/main/assets/ai/plugins.json": {
+   "tier": 3,
+   "target": "store app/<pkg>/plugins"
+  },
+  "ac_cloud-superintel/app/src/main/assets/app-perms.json": {
+   "tier": 3,
+   "target": "store shared/app-perms (one dataset keyed by package; tier 3: derived from the public build.json::perms)"
+  },
+  "ac_cloud-superintel/app/src/main/assets/si/notebook.json": {
+   "tier": 3,
+   "target": "store app/<pkg>/notebook"
+  },
+  "ac_cloud-superintel/app/src/main/assets/si/personas.json": {
+   "tier": 3,
+   "target": "store app/<pkg>/personas"
+  },
+  "ac_cloud-tasks/app/src/debug/assets/mock-tasks.json": {
+   "tier": "mock",
+   "target": "remove from release builds (phase 1)"
+  },
+  "ac_cloud-tasks/app/src/main/assets/app-perms.json": {
+   "tier": 3,
+   "target": "store shared/app-perms (one dataset keyed by package; tier 3: derived from the public build.json::perms)"
+  },
+  "ac_cloud-termux/app/src/main/assets/app-perms.json": {
+   "tier": 3,
+   "target": "store shared/app-perms (one dataset keyed by package; tier 3: derived from the public build.json::perms)"
+  },
+  "ac_cloud-termux/app/src/main/assets/terminal-selftest.json": {
+   "tier": 3,
+   "target": "store app/<pkg>/terminal-selftest"
+  },
+  "ac_cloud-tools-small-llms/app/src/main/assets/ai/composer.json": {
+   "tier": 3,
+   "target": "store app/<pkg>/composer"
+  },
+  "ac_cloud-tools-small-llms/app/src/main/assets/app-perms.json": {
+   "tier": 3,
+   "target": "store shared/app-perms (one dataset keyed by package; tier 3: derived from the public build.json::perms)"
+  },
+  "ac_cloud-vault/app/src/main/assets/app-perms.json": {
+   "tier": 3,
+   "target": "store shared/app-perms (one dataset keyed by package; tier 3: derived from the public build.json::perms)"
+  },
+  "ac_cloud-vault/app/src/main/assets/fido2_privileged_community.json": {
+   "tier": 4,
+   "target": "store pack/fido2_privileged_community (downloadable data pack or seed)"
+  },
+  "ac_cloud-vault/app/src/main/assets/fido2_privileged_google.json": {
+   "tier": 4,
+   "target": "store pack/fido2_privileged_google (downloadable data pack or seed)"
+  },
+  "ac_cloud-vault/authenticator/src/main/assets/app-perms.json": {
+   "tier": 3,
+   "target": "store shared/app-perms (one dataset keyed by package; tier 3: derived from the public build.json::perms)"
+  },
+  "ac_cloud-wallet/app/src/main/assets/app-perms.json": {
+   "tier": 3,
+   "target": "store shared/app-perms (one dataset keyed by package; tier 3: derived from the public build.json::perms)"
+  },
+  "ac_cloud-wallet/app/src/main/assets/qrcodes/qrcodes.json": {
+   "tier": 1,
+   "target": "account personal/qrcodes"
+  },
+  "ac_cloud-wallet/app/src/main/assets/wallet.json": {
+   "tier": 1,
+   "target": "account personal/wallet"
+  },
+  "ac_cloud-writer/app/src/main/assets/app-perms.json": {
+   "tier": 3,
+   "target": "store shared/app-perms (one dataset keyed by package; tier 3: derived from the public build.json::perms)"
+  },
+  "ad_CG-Omniverse/app/src/main/assets/app-perms.json": {
+   "tier": 3,
+   "target": "store shared/app-perms (one dataset keyed by package; tier 3: derived from the public build.json::perms)"
+  },
+  "ad_Capital-Stack-FinTerminal/app/src/main/assets/app-perms.json": {
+   "tier": 3,
+   "target": "store shared/app-perms (one dataset keyed by package; tier 3: derived from the public build.json::perms)"
+  },
+  "ad_Hardtech-CAD/app/src/main/assets/app-perms.json": {
+   "tier": 3,
+   "target": "store shared/app-perms (one dataset keyed by package; tier 3: derived from the public build.json::perms)"
+  },
+  "ad_Hardtech-CAD/app/src/main/assets/cad/models.json": {
+   "tier": 3,
+   "target": "store app/<pkg>/models (added by Hardtech-CAD while this guard was being written; migrate in phase 2)"
+  },
+  "ad_Hardtech-Sim2Real/app/src/main/assets/app-perms.json": {
+   "tier": 3,
+   "target": "store shared/app-perms (one dataset keyed by package; tier 3: derived from the public build.json::perms)"
+  }
+ },
+ "gradle_assets": {
+  "ab_cloud-libs-shared/keyboard-engines/app/build.gradle": 1,
+  "ab_cloud-libs-shared/libs/appstore/build.gradle": 1,
+  "ab_cloud-libs-shared/libs/ml-l-image-mlkit/build.gradle": 1,
+  "ab_cloud-libs-shared/libs/ml-l-sound-yamnet/build.gradle": 1,
+  "ac_cloud-calc/app/build.gradle": 1,
+  "ac_cloud-code/build-extras.gradle": 2,
+  "ac_cloud-gallery/app/build.gradle.kts": 2,
+  "ac_cloud-me/app/build.gradle": 7,
+  "ac_cloud-nix-on-droid/rootfs-lib/build.gradle": 1,
+  "ac_cloud-tasks/app/build.gradle": 3,
+  "ac_cloud-termux/rootfs-lib/build.gradle": 1,
+  "ad_Capital-Stack-FinTerminal/app/build.gradle": 1
+ },
+ "buildconfig_b64": {
+  "aa_cloud-superapp/app/build.gradle": 60,
+  "ab_cloud-libs-shared/keyboard-engines/app/build.gradle": 1,
+  "ab_cloud-libs-shared/libs/account-ui/build.gradle": 2,
+  "ab_cloud-libs-shared/libs/account/build.gradle": 6,
+  "ab_cloud-libs-shared/libs/appstore/build.gradle": 7,
+  "ab_cloud-libs-shared/libs/auth/build.gradle": 1,
+  "ab_cloud-libs-shared/libs/cal/build.gradle": 1,
+  "ab_cloud-libs-shared/libs/contacts/build.gradle": 1,
+  "ab_cloud-libs-shared/libs/devtools/build.gradle": 1,
+  "ab_cloud-libs-shared/libs/fin/build.gradle": 1,
+  "ab_cloud-libs-shared/libs/health/build.gradle": 1,
+  "ab_cloud-libs-shared/libs/kde-connect/build.gradle": 2,
+  "ab_cloud-libs-shared/libs/keyboard/build.gradle": 2,
+  "ab_cloud-libs-shared/libs/launcher-onehand/build.gradle": 1,
+  "ab_cloud-libs-shared/libs/maps/build.gradle": 4,
+  "ab_cloud-libs-shared/libs/ml-l-image/build.gradle": 1,
+  "ab_cloud-libs-shared/libs/ml-l-sound/build.gradle": 1,
+  "ab_cloud-libs-shared/libs/news/build.gradle": 4,
+  "ab_cloud-libs-shared/libs/search/build.gradle": 1,
+  "ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/build.gradle": 4,
+  "ab_cloud-libs-shared/libs/ui-nav-bars/build.gradle": 1,
+  "ab_cloud-libs-shared/libs/updater/build.gradle": 1,
+  "ab_cloud-libs-shared/libs/voice/build.gradle": 1,
+  "ab_cloud-libs-shared/libs/wallet/build.gradle": 1,
+  "ab_cloud-libs-shared/libs/watchdog/build.gradle": 1,
+  "ac_c3-watchtower/app/build.gradle": 1,
+  "ac_cloud-account/app/build.gradle": 8,
+  "ac_cloud-browser/app/build.gradle": 12,
+  "ac_cloud-c3/app/build.gradle": 22,
+  "ac_cloud-calc/app/build.gradle": 10,
+  "ac_cloud-camera/app/build.gradle.kts": 1,
+  "ac_cloud-contacts/app/build.gradle": 5,
+  "ac_cloud-dialer/app/build.gradle.kts": 1,
+  "ac_cloud-drive/app/build.gradle": 27,
+  "ac_cloud-gallery/app/build.gradle.kts": 1,
+  "ac_cloud-keyboard/app/build.gradle": 1,
+  "ac_cloud-kg-store/app/build.gradle": 5,
+  "ac_cloud-mail/app/build.gradle.kts": 4,
+  "ac_cloud-me/app/build.gradle": 5,
+  "ac_cloud-myterminal/hub/build.gradle": 6,
+  "ac_cloud-nav/app/build.gradle": 13,
+  "ac_cloud-news/app/build.gradle": 13,
+  "ac_cloud-notes/packages/frontend/apps/android/App/app/build.gradle": 2,
+  "ac_cloud-search/app/build.gradle": 6,
+  "ac_cloud-shopping/app/build.gradle": 1,
+  "ac_cloud-store/app/build.gradle": 8,
+  "ac_cloud-superintel/app/build.gradle": 1,
+  "ac_cloud-tasks/app/build.gradle": 9,
+  "ac_cloud-tools-small-llms/app/build.gradle": 3,
+  "ac_cloud-vault/app/build.gradle.kts": 1,
+  "ac_cloud-wallet/app/build.gradle": 7,
+  "ac_cloud-writer/app/build.gradle": 4,
+  "ad_CG-Omniverse/app/build.gradle": 5,
+  "ad_Capital-Stack-FinTerminal/app/build.gradle": 6,
+  "ad_Hardtech-CAD/app/build.gradle": 4,
+  "ad_Hardtech-Sim2Real/app/build.gradle": 3
+ }
+}

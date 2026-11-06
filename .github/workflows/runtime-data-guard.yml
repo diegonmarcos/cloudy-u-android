@@ -1,0 +1,43 @@
+name: "runtime-data guard — APKs are engines: no new baked JSON, gradle asset injection or BuildConfig base64 data; the fleet data manifest stays public-safe"
+
+# WHY (#1547). Cloud Tools crashed at start (FileNotFoundException: ml-fleet.json): a gradle task copied another app's data file into its
+# assets at build time, and a config read in a constructor took the app down when the file was missing. The scan showed the pattern is
+# systemic (154 JSON files in assets/res/raw, 40 copies of app-perms.json, gradle copy tasks into assets, build.json serialized into
+# BuildConfig as base64 in about 40 modules). Data is now read at RUNTIME through libs:fleet-data-client from the provider apps (Cloud
+# Store: tiers 3-4, Cloud Account: tiers 1-2). This guard fails on any NEW baked JSON, any new gradle asset injection, any new BuildConfig
+# base64 data field and any mock data in a main source set; what already exists is baselined in
+# 1_cicd/src/data/runtime-data-baseline.json and the baseline only shrinks. It also checks data/fleet/manifest.json (every dataset exists,
+# has a schemaVersion, is tier 3-4: personal and fleet data never go in the public repo). Its mutation test proves each rule.
+#
+# Its own workflow and every push: the commit it has to catch can add a file or a gradle line anywhere.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# ── MANAGED-GUARD-CONCURRENCY: injected by cloud-android-guard-triggers.py ──
+concurrency:
+  group: runtime-data-guard-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+# ── end MANAGED-GUARD-CONCURRENCY ──
+
+jobs:
+  runtime-data:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: The guard still fails for each way data gets baked into an APK (mutation test)
+        run: bash 1_cicd/src/scripts/test/runtime-data-guard.test.sh
+
+      - name: No new baked JSON, gradle asset injection or BuildConfig base64 data
+        run: python3 1_cicd/src/scripts/cloud-android-runtime-data-guard.py .
+
+      - name: The inventory, for the run log
+        if: always()
+        run: python3 1_cicd/src/scripts/cloud-android-runtime-data-guard.py . --inventory
