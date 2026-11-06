@@ -521,12 +521,13 @@
     ]
   },
   "ui": {
-    "_doc": "#868 THE nav declaration (libs:bottomnav NavDecl): Apps, Store, Models (AI Models) and MLs on the bottom nav (the AI chat is the top bar's AI button; Costs is gone); Store (the model store and runtime manager) has Installed, Loaded and All on the second row; Settings is reached from the first row's gear. Models has Small, Medium and Retrieval on the second row, each with a Table / Grid / Details / Macro view switcher, all over app/src/main/assets/tools-models.json; Apps (second row Grid | List, a top filter All | Hybrids | Models Only | ML Only from tools-models.json::app_filters) is what those models build: an icon grid, or a list grouped by category with each pipeline and its totals. MLs (second row Lite MLs | Tiny MLs) lists the Cloud Store's Lite-ML and Tiny-ML libs as dense KitStoreRow rows. The Profile icon at the top right of the first row opens extapp:cloud-account.",
+    "_doc": "#868 THE nav declaration (libs:bottomnav NavDecl): Models (AI Models) | MLs | Apps | Store | Sensors on the bottom nav (#1538) (the AI chat is the top bar's AI button; Costs is gone); Store (the model store and runtime manager) has Installed, Loaded and All on the second row; Settings is reached from the first row's gear. Sensors (second row Inbuilt | Connected, #1538) lists every sensor the phone has with a live graph on tap, the other hardware, and the 20 declared external sensors over BLE and USB-C, all from app/src/main/assets/sensors.json. Models has Small, Medium and Retrieval on the second row, each with a Table / Grid / Details / Macro view switcher, all over app/src/main/assets/tools-models.json; Apps (second row Grid | List, a top filter All | Hybrids | Models Only | ML Only from tools-models.json::app_filters) is what those models build: an icon grid, or a list grouped by category with each pipeline and its totals. MLs (second row Lite MLs | Tiny MLs) lists the Cloud Store's Lite-ML and Tiny-ML libs as dense KitStoreRow rows. The Profile icon at the top right of the first row opens extapp:cloud-account.",
     "bottom_nav": [
+      "models",
+      "mls",
       "apps",
       "store",
-      "models",
-      "mls"
+      "sensors"
     ],
     "default_section": "models",
     "configs_ui": ["nav_ui"],
@@ -631,6 +632,25 @@
         ]
       },
       {
+        "id": "sensors",
+        "label": "Sensors",
+        "icon": "sensors",
+        "pages": [
+          {
+            "id": "sensors_inbuilt",
+            "label": "Inbuilt",
+            "icon": "smartphone",
+            "pages": []
+          },
+          {
+            "id": "sensors_connected",
+            "label": "Connected",
+            "icon": "bluetooth",
+            "pages": []
+          }
+        ]
+      },
+      {
         "id": "settings",
         "label": "Settings",
         "icon": "settings",
@@ -666,7 +686,8 @@
         "Small, medium and retrieval models",
         "Router that picks the model per task",
         "Per-request cost on every answer",
-        "Lite and Tiny ML libs of the Cloud Store"
+        "Lite and Tiny ML libs of the Cloud Store",
+        "Every phone sensor with a live graph, and external BLE and USB-C sensors"
       ],
       "screens": [
         {
@@ -688,6 +709,10 @@
         {
           "name": "MLs",
           "what": "Lite and Tiny ML libs, as the Cloud Store declares them."
+        },
+        {
+          "name": "Sensors",
+          "what": "The phone's own sensors and hardware, and external BLE and USB-C sensors."
         },
         {
           "name": "Settings",
@@ -724,7 +749,15 @@
   },
   "perms": {
     "_doc": "#1360 every grant this app needs, by libs:perms catalogue id (needs), and the fleet apps that do work for it with the grants THEY must hold (helpers). The ONE declaration: generated into assets/app-perms.json (cloud-android-perms-guard.py --write), drawn by Configs > General > Perms (libs:perms AppPermsSection) with live state, Grant / Open and Grant all, asked at first run (first_run), and reported as 'Missing permission X - Grant' when an operation fails (PermsGate). perms-guard fails when code uses a gated API or another app's engine that is not declared here, or when the manifest and this list disagree.",
-    "needs": [],
+    "needs": [
+      "fine_location",
+      "coarse_location",
+      "bt_scan",
+      "bt_connect",
+      "usb_host",
+      "activity_recognition",
+      "body_sensors"
+    ],
     "helpers": [],
     "first_run": "libs:perms"
   }

@@ -21,11 +21,18 @@ class NavAndMlsTest {
     private fun sections() = ui.getJSONArray("sections").let { a -> (0 until a.length()).map { a.getJSONObject(it) } }
     private fun pagesOf(section: String) = sections().first { it.getString("id") == section }.getJSONArray("pages").let { a -> (0 until a.length()).map { a.getJSONObject(it) } }
 
-    @Test fun `the bottom nav is Apps, Store, AI Models, MLs and every item is a declared section`() {
-        assertEquals(listOf("apps", "store", "models", "mls"), ids(ui.getJSONArray("bottom_nav")))
+    @Test fun `the bottom nav is Models, MLs, Apps, Store, Sensors and every item is a declared section`() {
+        assertEquals(listOf("models", "mls", "apps", "store", "sensors"), ids(ui.getJSONArray("bottom_nav")))
         val declared = sections().map { it.getString("id") }
         assertTrue(declared.containsAll(ids(ui.getJSONArray("bottom_nav"))))
         assertEquals("MLs", sections().first { it.getString("id") == "mls" }.getString("label"))
+        assertEquals("Models", sections().first { it.getString("id") == "models" }.getString("label"))
+        assertEquals("models", ui.getString("default_section"))
+    }
+
+    @Test fun `Sensors has the sub-pages Inbuilt and Connected`() {
+        assertEquals(listOf("sensors_inbuilt" to "Inbuilt", "sensors_connected" to "Connected"), pagesOf("sensors").map { it.getString("id") to it.getString("label") })
+        assertEquals("Sensors", sections().first { it.getString("id") == "sensors" }.getString("label"))
     }
 
     @Test fun `Costs is gone from the nav and the sections`() {

@@ -1,6 +1,14 @@
 {
   "_doc": "GENERATED from build.json::perms by 1_cicd/src/scripts/cloud-android-perms-guard.py --write. DO NOT EDIT. Read by libs:perms (AppPerms): the Perms page rows, Grant all, first run and PermsGate.",
-  "needs": [],
+  "needs": [
+    "fine_location",
+    "coarse_location",
+    "bt_scan",
+    "bt_connect",
+    "usb_host",
+    "activity_recognition",
+    "body_sensors"
+  ],
   "first_run": "libs:perms",
   "helpers": []
 }

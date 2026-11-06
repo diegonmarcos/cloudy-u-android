@@ -99,6 +99,7 @@ fun ToolsShell(model: ToolsModel) {
                             })
                             Decl.SECTION_STORE -> StorePage(model, pageId ?: Decl.PAGE_INSTALLED)
                             Decl.SECTION_MLS -> MlsPage(model.mls, pageId ?: Decl.PAGE_ML_LITE, model.mlsNote)
+                            Decl.SECTION_SENSORS -> SensorsPage(pageId ?: Decl.PAGE_SENSORS_INBUILT)
                             Decl.SECTION_SETTINGS -> SettingsPage(model)
                             else -> {}
                         }
@@ -160,6 +161,13 @@ object Tags {
     const val APP_FILTERS = "tools_app_filters"
     fun appFilter(id: String) = "tools_app_filter_$id"
     const val MLS = "tools_mls"
+    const val SENSORS_INBUILT = "tools_sensors_inbuilt"
+    const val SENSORS_CONNECTED = "tools_sensors_connected"
+    const val SENSOR_LIVE = "tools_sensor_live"
+    fun sensorRow(id: Int) = "tools_sensor_row_$id"
+    fun hardwareRow(id: String) = "tools_hardware_row_$id"
+    fun profileRow(id: String) = "tools_profile_row_$id"
+    fun profileScan(id: String) = "tools_profile_scan_$id"
     fun mlRow(id: String) = "tools_ml_row_$id"
     fun mlHeader(application: String) = "tools_ml_header_$application"
     const val APP_TOTALS = "tools_app_totals"

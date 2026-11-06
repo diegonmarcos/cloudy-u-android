@@ -31,6 +31,7 @@ object Decl {
     const val SECTION_AI = "ai"
     const val SECTION_STORE = "store"
     const val SECTION_MLS = "mls"
+    const val SECTION_SENSORS = "sensors"
     const val SECTION_SETTINGS = "settings"
     const val PAGE_APPS_GRID = "apps_grid"
     const val PAGE_APPS_LIST = "apps_list"
@@ -42,4 +43,6 @@ object Decl {
     const val PAGE_ALL = "all"
     const val PAGE_ML_LITE = "ml_lite"
     const val PAGE_ML_TINY = "ml_tiny"
+    const val PAGE_SENSORS_INBUILT = "sensors_inbuilt"
+    const val PAGE_SENSORS_CONNECTED = "sensors_connected"
 }

@@ -23,7 +23,7 @@
 #       and every app declares its own UI: a template of the declared set (all twelve used) plus params
 #       and the chat's task->model mapping (every task names declared models, a gate and a judge, escalation score)
 #   A9  the shell draws the shared bars (first row with Profile -> Cloud Account, second row, bottom nav, theme
-#       background), the bottom nav is exactly Apps, Store, Models (AI Models), MLs and there is no Costs
+#       background), the bottom nav is exactly Models (AI Models), MLs, Apps, Store, Sensors and there is no Costs
 #       section, page or ledger, the AI chat is libs:ai's over the gateway with its picker fed ONLY by the chat rows of
 #       the data file, the four views and the apps page exist, MLs has Lite MLs and Tiny MLs bound to the Cloud Store's
 #       groups and derived from its fleet file (not hand-copied), and the Apps page has the All | Hybrids | Models Only |
@@ -213,14 +213,14 @@ store = code(os.path.join(kt, "ui/StorePage.kt"))
 for need in ("it.install(", "it.uninstall(", "it.load(", "it.unload(", "store_fits", "store_not_installed", "store_loaded", "store_installed", "listOf(4, 8, 16)"):
     if need not in store: bad.append("A9 StorePage lacks %s" % need)
 if re.search(r"getSharedPreferences|mutableStateOf\(\s*listOf", store): bad.append("A9 StorePage keeps model state of its own: it must come from the runtimes")
-if bj["ui"]["bottom_nav"] != ["apps", "store", "models", "mls"]: bad.append("A9 bottom_nav is %r" % bj["ui"]["bottom_nav"])
+if bj["ui"]["bottom_nav"] != ["models", "mls", "apps", "store", "sensors"]: bad.append("A9 bottom_nav is %r" % bj["ui"]["bottom_nav"])
 if "costs" in {s["id"] for s in bj["ui"]["sections"]}: bad.append("A9 a Costs section is still declared")
 for f in sources("app/src/main", "core/src/main"):
     if re.search(r"CostsPage|SECTION_COSTS|Ledger\b|saveLedger", code(f)): bad.append("A9 %s still names the Costs page or its ledger" % os.path.relpath(f, app))
 if os.path.exists(os.path.join(kt, "ui/CostsPage.kt")): bad.append("A9 ui/CostsPage.kt still exists")
 if "libs:ui-kit" not in bj["modules"] or "project(':libs:ui-kit')" not in code(os.path.join(app, "app/build." + "gradle")): bad.append("A9 libs:ui-kit (KitStoreRow) is not linked")
 shell = code(os.path.join(kt, "ui/ToolsShell.kt"))
-for need in ("NavBarTopFirstRowScaffold(", "NavSectionLayout(", "NavBarBottomHost(", "themeBackground(", "rememberAccountLauncher()", "titleHierarchy(", "AiChatPage(", "AppsPage(", "ModelsPage(", "MlsPage("):
+for need in ("NavBarTopFirstRowScaffold(", "NavSectionLayout(", "NavBarBottomHost(", "themeBackground(", "rememberAccountLauncher()", "titleHierarchy(", "AiChatPage(", "AppsPage(", "ModelsPage(", "MlsPage(", "SensorsPage("):
     if need not in shell: bad.append("A9 ToolsShell does not call %s" % need)
 apg = code(os.path.join(kt, "ui/AppsPage.kt"))
 for need in ("appRamQ4(", "appDiskFp16(", "appModels(", "phoneCapable(", "AppsList(", "AppsGrid(", "app_totals", "app_phone_icon", "appCategories", "s.escalation", "s.alternatives"):
@@ -280,6 +280,32 @@ for a in md["apps"]:
     if a.get("class") not in fl[1:]: bad.append("A9 app %r is not classified (class %r)" % (a["id"], a.get("class")))
 if "AppFilters(model, data)" not in apg or "appsIn(" not in apg: bad.append("A9 the Apps page has no top filter")
 
+# A10 (#1538) the Sensors section: Inbuilt | Connected, every phone sensor listed and read live only while visible, the other hardware,
+# and the 20 declared external sensors scanned on tap; names are data (assets/sensors.json), rows are KitStoreRow, grants are Perms rows
+sd = json.loads(read(os.path.join(app, "app/src/main/assets/sensors.json")))
+if [p["id"] for p in secs["sensors"]["pages"]] != ["sensors_inbuilt", "sensors_connected"] or [p["label"] for p in secs["sensors"]["pages"]] != ["Inbuilt", "Connected"]: bad.append("A10 Sensors pages are not Inbuilt, Connected")
+if len(sd["connected"]["profiles"]) != 20: bad.append("A10 %d connected sensors declared (20 expected)" % len(sd["connected"]["profiles"]))
+for pr in sd["connected"]["profiles"]:
+    if "uuid" not in pr and "usb_class" not in pr: bad.append("A10 connected sensor %r declares neither a GATT UUID nor a USB class" % pr.get("id"))
+sp = code(os.path.join(kt, "ui/SensorsPage.kt")); hwk = code(os.path.join(kt, "data/SensorHw.kt")); cio = code(os.path.join(kt, "data/ConnectedIo.kt"))
+for need in ("KitStoreRowLine", "KitStoreName(", "KitStoreCaption(", "KitStoreQuick(", "WhileStarted(", "LiveReading(", "BleScan(", "UsbList.read(", "GattSession(", "AndroidSensorSource(", "HardwareProbe("):
+    if need not in sp: bad.append("A10 SensorsPage lacks %s" % need)
+if re.search(r"\d\s*\.\s*sp\b", sp + hwk + cio): bad.append("A10 the Sensors sources hold an sp literal: the type ramp is KitStoreRow's")
+if "SENSOR_DELAY_UI" not in hwk or re.search(r"SENSOR_DELAY_(FASTEST|GAME|NORMAL)", hwk): bad.append("A10 the live listener is not SENSOR_DELAY_UI")
+if "Sensor.TYPE_ALL" not in hwk or "getDynamicSensorList" not in hwk: bad.append("A10 the list is not getSensorList(TYPE_ALL) plus the dynamic sensors")
+if "setServiceUuid(" not in cio or "postDelayed(stopper" not in cio or "deviceList" not in cio: bad.append("A10 the scan is not a service-UUID ScanFilter with a timeout plus the UsbManager list")
+if re.search(r"requestPermissions|RequestPermission", sp + hwk + cio): bad.append("A10 the Sensors sources ask for a permission: grants are Configs > Perms rows only")
+for need in ("body_sensors", "bt_scan", "bt_connect", "usb_host", "fine_location", "activity_recognition"):
+    if need not in bj["perms"]["needs"]: bad.append("A10 perms.needs lacks %s" % need)
+if "android.permission.BODY_SENSORS" not in read(os.path.join(app, "app/src/main/AndroidManifest.xml")): bad.append("A10 the manifest lacks BODY_SENSORS")
+allkt = "\n".join(code(f) for f in main)
+for t in sd["types"]:
+    if '"%s"' % t["const"] in allkt: bad.append("A10 a sensor type name (%s) is spelled in Kotlin: it is data" % t["const"])
+for h in sd["hardware"]:
+    if '"%s"' % h["label"] in allkt: bad.append("A10 a hardware name (%s) is spelled in Kotlin" % h["label"])
+for pr in sd["connected"]["profiles"]:
+    if '"%s"' % pr["label"] in allkt: bad.append("A10 a connected sensor name (%s) is spelled in Kotlin" % pr["label"])
+
 for b in bad: print("  FAIL: " + b)
 sys.exit(1 if bad else 0)
 PY
@@ -337,8 +363,8 @@ mutate "escalation ignores the score" 'sub(K + "/ui/ToolsModel.kt", "models.judg
 mutate "reply loses its model label" 'sub(K + "/ui/ToolsModel.kt", "text + \"\\n\\n— \" + label", "text")'
 mutate "task row dropped" 'sub(K + "/ui/ToolsModel.kt", "chat.tasks = models.chatTasks", "val unused = models.chatTasks")'
 mutate "chat task names an unknown model" 'sub(M + "/app/src/main/assets/tools-models.json", "\"small\": \"ministral-3b-2512\"", "\"small\": \"ministral-9z\"")'
-mutate "bottom nav reordered" 'sub(M + "/build.json", "\"apps\",\n      \"store\"", "\"store\",\n      \"apps\"")'
-mutate "Costs back on the nav" 'sub(M + "/build.json", "\"models\",\n      \"mls\"\n", "\"models\",\n      \"mls\",\n      \"costs\"\n")'
+mutate "bottom nav reordered" 'sub(M + "/build.json", "\"models\",\n      \"mls\"", "\"mls\",\n      \"models\"")'
+mutate "Costs back on the nav" 'sub(M + "/build.json", "\"store\",\n      \"sensors\"\n", "\"store\",\n      \"sensors\",\n      \"costs\"\n")'
 mutate "Costs ledger back" 'sub(K + "/Decl.kt", "SECTION_MLS", "SECTION_COSTS")'
 mutate "MLs page dropped from the shell" 'sub(K + "/ui/ToolsShell.kt", "MlsPage(model.mls, pageId ?: Decl.PAGE_ML_LITE, model.mlsNote)", "Unit")'
 mutate "MLs page renamed" 'sub(M + "/build.json", "\"Tiny MLs\"", "\"Tiny\"")'
@@ -348,5 +374,16 @@ mutate "filter loses a class" 'sub(M + "/app/src/main/assets/tools-models.json",
 mutate "an app is unclassified" 'sub(M + "/app/src/main/assets/tools-models.json", "\"class\": \"hybrid\",\n      \"ui\"", "\"class\": \"none\",\n      \"ui\"")'
 mutate "apps page loses the filter" 'sub(K + "/ui/AppsPage.kt", "AppFilters(model, data)\n", "")'
 
+mutate "Sensors page dropped from the shell" 'sub(K + "/ui/ToolsShell.kt", "SensorsPage(pageId ?: Decl.PAGE_SENSORS_INBUILT)", "Unit")'
+mutate "live listener at the fast rate" 'sub(K + "/data/SensorHw.kt", "SensorManager.SENSOR_DELAY_UI", "SensorManager.SENSOR_DELAY_FASTEST")'
+mutate "sensor list without the dynamic ones" 'sub(K + "/data/SensorHw.kt", "getDynamicSensorList", "getSensorList")'
+mutate "scan without a UUID filter" 'sub(K + "/data/ConnectedIo.kt", "setServiceUuid(", "setDeviceName(")'
+mutate "scan never times out" 'sub(K + "/data/ConnectedIo.kt", "postDelayed(stopper", "post(stopper")'
+mutate "a sensor name in Kotlin" 'sub(K + "/data/SensorHw.kt", "class AndroidRegistrar", "val x = \"TYPE_ACCELEROMETER\"\nclass AndroidRegistrar")'
+mutate "an sp literal on the Sensors page" 'sub(K + "/ui/SensorsPage.kt", "fontSize = KitStoreRow.meta", "fontSize = 11.sp")'
+mutate "the page asks for a permission" 'sub(K + "/ui/SensorsPage.kt", "private const val SENSORS_ASSET", "val ask = androidx.activity.result.contract.ActivityResultContracts.RequestPermission()\nprivate const val SENSORS_ASSET")'
+mutate "body sensors dropped from the perms" 'sub(M + "/build.json", "\"body_sensors\"\n", "\"body_sensorz\"\n")'
+mutate "a connected sensor loses its UUID and class" 'sub(M + "/app/src/main/assets/sensors.json", "\"uuid\": \"FEED\"", "\"note\": \"FEED\"")'
+mutate "Sensors page renamed" 'sub(M + "/build.json", "\"Connected\"", "\"Paired\"")'
 echo "-- test-tools-app: $PASS passed, $FAILS failed"
 [ "$FAILS" -eq 0 ]

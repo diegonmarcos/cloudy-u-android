@@ -57,6 +57,7 @@ object ToolsMetrics {
     val icon: Dp = 16.dp
     val chipHeight: Dp = 26.dp
     val bubbleMax: Dp = 340.dp
+    val graph: Dp = 96.dp
 }
 
 private fun TextStyle.noFixedLine(): TextStyle =
