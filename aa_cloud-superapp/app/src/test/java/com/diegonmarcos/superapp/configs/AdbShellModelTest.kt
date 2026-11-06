@@ -18,8 +18,8 @@ class AdbShellModelTest {
     private fun e(ts: Long, caller: String) = AuditLog.Entry(ts, caller, "id -u", "ok", 0, 5, "binder")
 
     @Test fun `M1 section order and collapsed defaults`() {
-        assertEquals(listOf("status", "actions", "keeper", "callers", "audit", "keeper_log"), AdbShellModel.ORDER.map { it.id })
-        assertEquals(setOf("status", "actions", "keeper", "callers"), AdbShellModel.initiallyOpen())
+        assertEquals(listOf("status", "actions", "keeper", "callers", "audit", "keeper_log", "console"), AdbShellModel.ORDER.map { it.id })
+        assertEquals(setOf("status", "actions", "keeper", "callers", "console"), AdbShellModel.initiallyOpen())
         assertEquals(listOf("audit", "keeper_log"), AdbShellModel.ORDER.filter { it.collapsed }.map { it.id })
         assertTrue("at most one short help line per section", AdbShellModel.ORDER.all { it.help.length <= 80 && !it.help.contains('\n') })
     }

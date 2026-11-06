@@ -7,7 +7,7 @@ import com.diegonmarcos.superapp.shellclient.ShellStatus
 
 /**
  * #1522 The SuperApp's ADB Shell page as DATA: its sections in order, which of them start collapsed, the one primary action and
- * the pure row models. [AdbShellBrokerPage] draws exactly this; no section is named anywhere else.
+ * the pure row models. #1550 CONSOLE hosts the lib's full channel console (AdbShellPage, sections 1-7) that #1522 had dropped. [AdbShellBrokerPage] draws exactly this; no section is named anywhere else.
  */
 internal object AdbShellModel {
     /** [collapsed] = folded until tapped (the two logs). [help] = the section's one short line, or empty. */
@@ -18,6 +18,7 @@ internal object AdbShellModel {
         CALLERS("callers", "Callers", false, "Fleet apps that use this broker, with what each may run."),
         AUDIT("audit", "Broker audit log", true, "Newest first. Commands only, never output."),
         KEEPER_LOG("keeper_log", "Keeper change log", true, "One row per Wireless debugging change, newest first."),
+        CONSOLE("console", "Channel console", false, "Layers, connect plan, channel actions, log, declared needs, setup."),
     }
 
     val ORDER: List<Section> = Section.values().toList()

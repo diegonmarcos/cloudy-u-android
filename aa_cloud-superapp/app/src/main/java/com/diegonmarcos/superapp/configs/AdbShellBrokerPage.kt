@@ -30,6 +30,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.diegonmarcos.superapp.adbdebug.AdbShellLink
+import com.diegonmarcos.superapp.adbdebug.AdbShellPage
 import com.diegonmarcos.superapp.adbdebug.ChannelOps
 import com.diegonmarcos.superapp.adbdebug.ChannelReader
 import com.diegonmarcos.superapp.adbdebug.ControlStatus
@@ -118,7 +119,7 @@ internal fun AdbShellBrokerPage() {
         toggleKeeper = { WirelessDebugKeeper.Prefs.setEnabled(ctx, !state.keeperOn); tick++ },
         fixPerms = { WdKeeper.openPermsFix(ctx) },
     )
-    Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) { AdbShellContent(state, actions) }
+    Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) { AdbShellContent(state, actions, console = { AdbShellPage() }) }
 }
 
 @Composable
@@ -153,7 +154,10 @@ private fun tick(ok: Boolean?): String = when (ok) { true -> "âœ“"; false -> "âœ
 
 /** The page, stateless: the sections of [AdbShellModel.ORDER], each drawn from [s]. */
 @Composable
-internal fun AdbShellContent(s: AdbPageState, a: AdbPageActions, openIds: Set<String> = AdbShellModel.initiallyOpen()) {
+internal fun AdbShellContent(
+    s: AdbPageState, a: AdbPageActions, openIds: Set<String> = AdbShellModel.initiallyOpen(),
+    console: @Composable () -> Unit = {},
+) {
     var open by remember { mutableStateOf(openIds) }
     fun toggle(id: String) { open = if (id in open) open - id else open + id }
     Column(Modifier.fillMaxWidth().testTag("adb:page")) {
@@ -214,6 +218,8 @@ internal fun AdbShellContent(s: AdbPageState, a: AdbPageActions, openIds: Set<St
                         }
                     }
                 }
+                // #1550 the full channel console restored: status layers, connect, active connection, logs, declared needs, setup, keeper.
+                AdbShellModel.Section.CONSOLE -> Column(Modifier.testTag("adb:console")) { console() }
                 AdbShellModel.Section.KEEPER_LOG -> {
                     if (s.keeperLog.isEmpty()) KitStoreRowLine { KitStoreCaption("Nothing recorded yet.", color = dim()) }
                     for (e in AdbShellModel.keeperRows(s.keeperLog)) KitStoreRowLine(Modifier.testTag("adb:keeper_log")) {
