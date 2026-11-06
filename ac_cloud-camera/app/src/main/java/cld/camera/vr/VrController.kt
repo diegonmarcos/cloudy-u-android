@@ -180,14 +180,14 @@ class VrController(
             if (!gate.admits()) return
             val frame = image.toBitmap()
             val filters = active
-            val scene = try { scene(frame, filters, cached = true) } catch (e: Exception) { say(e.message ?: e.toString()); VrScene(emptyList(), emptyList(), null, filters) }
-            val out = liveCompositor.composite(frame, scene)
+            val sc = try { scene(frame, filters, cached = true) } catch (e: Exception) { say(e.message ?: e.toString()); VrScene(emptyList(), emptyList(), null, filters) }
+            val out = liveCompositor.composite(frame, sc)
             frame.recycle()
             latest = out
             view.show(out, mirrored)
             if (recorder.recording) recorder.add(out)
             if (filters.any { it.kind == FilterKind.HAT || it.kind == FilterKind.GLASSES || it.kind == FilterKind.MASK }) {
-                val msg = if (scene.faces.isEmpty()) activity.getString(R.string.vr_no_face) else filters.joinToString(", ") { it.label }
+                val msg = if (sc.faces.isEmpty()) activity.getString(R.string.vr_no_face) else filters.joinToString(", ") { it.label }
                 if (msg != lastStatus) say(msg)
             }
         } finally {
