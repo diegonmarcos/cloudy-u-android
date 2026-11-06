@@ -93,12 +93,12 @@ class ForumChatTest {
     }
 
     @Test fun bottomNavRemainsPresentBelowTheForum() {
-        val entries = listOf(
-            BottomNavEntry("notebook", "Notebook", UiIcons.painter("menu_book")),
-            BottomNavEntry("si", "SI", UiIcons.painter("auto_awesome")),
-            BottomNavEntry("cgcs", "CGCs", UiIcons.painter("hub")),
-        )
         compose.setContent {
+            val entries = listOf(
+                BottomNavEntry("notebook", "Notebook", UiIcons.painter("menu_book")),
+                BottomNavEntry("si", "SI", UiIcons.painter("auto_awesome")),
+                BottomNavEntry("cgcs", "CGCs", UiIcons.painter("hub")),
+            )
             Column(Modifier.fillMaxSize()) {
                 Box(Modifier.weight(1f).fillMaxWidth()) {
                     var sel by remember { mutableStateOf("si") }
