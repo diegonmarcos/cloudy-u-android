@@ -2476,6 +2476,38 @@
       "used_by": [
         "lib-shizuku-adb-debug-tools"
       ]
+    },
+    "netusage": {
+      "kind": "prefs",
+      "class": "device",
+      "doc": "#1525 Network table: the periodic rx/tx counter snapshots behind the 24 h and today data-used rows; per-install counters of this boot history, never migrates.",
+      "used_by": [
+        "aa_cloud-superapp"
+      ]
+    },
+    "site_mirror": {
+      "kind": "prefs",
+      "class": "config",
+      "doc": "#1523 Offline site mirror: the user's pinned-site list (the declared pins until the user changes it); a user setting that follows the user to a new phone, while the cached pages themselves are device-local.",
+      "used_by": [
+        "lib-web-core"
+      ]
+    },
+    "speedtest": {
+      "kind": "prefs",
+      "class": "device",
+      "doc": "#1525 Speed test: the history of past runs measured on this phone and link; per-install, never migrates.",
+      "used_by": [
+        "aa_cloud-superapp"
+      ]
+    },
+    "store_activity": {
+      "kind": "prefs",
+      "class": "device",
+      "doc": "#1517 Store activity panel: whether the panel is expanded and the finished list open; per-install UI state, never migrates.",
+      "used_by": [
+        "lib-appstore"
+      ]
     }
   },
   "bundle": {

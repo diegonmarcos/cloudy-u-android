@@ -15,33 +15,33 @@ DataStore / Room stores and declared files it cannot move yet.
 
 | app | package | covered | gaps | coverage |
 |---|---|---:|---:|---:|
-| cloud-superapp | `com.diegonmarcos.superapp` | 53 | 0 | 100% |
-| c3-morpheus | `com.diegonmarcos.morpheus` | 4 | 0 | 100% |
-| c3-watchdog | `com.diegonmarcos.watchdog` | 4 | 0 | 100% |
+| cloud-superapp | `com.diegonmarcos.superapp` | 54 | 0 | 100% |
+| c3-morpheus | `com.diegonmarcos.morpheus` | 5 | 0 | 100% |
+| c3-watchdog | `com.diegonmarcos.watchdog` | 5 | 0 | 100% |
 | c3-watchtower | `com.diegonmarcos.watchtower` | 4 | 0 | 100% |
-| cloud-account | `com.diegonmarcos.cloudaccount` | 19 | 1 | 95% |
-| cloud-tasks | `com.diegonmarcos.cloudagenda` | 9 | 0 | 100% |
-| cloud-browser | `com.diegonmarcos.cloudbrowser` | 16 | 0 | 100% |
+| cloud-account | `com.diegonmarcos.cloudaccount` | 20 | 1 | 95% |
+| cloud-tasks | `com.diegonmarcos.cloudagenda` | 10 | 0 | 100% |
+| cloud-browser | `com.diegonmarcos.cloudbrowser` | 17 | 0 | 100% |
 | cloud-c3-webserver | `com.diegonmarcos.cloudwebserver` | 4 | 0 | 100% |
 | cloud-media-center | `com.diegonmarcos.cloudmediacenter` | 4 | 0 | 100% |
 | cloud-c3 | `com.diegonmarcos.cloudc3` | 12 | 0 | 100% |
-| cloud-calc | `com.diegonmarcos.cloudcalc` | 16 | 0 | 100% |
+| cloud-calc | `com.diegonmarcos.cloudcalc` | 17 | 0 | 100% |
 | cloud-camera | `cld.camera` | 11 | 0 | 100% |
 | cloud-chat | `com.diegonmarcos.comms.chat` | 6 | 0 | 100% |
 | cloud-code | `com.diegonmarcos.code` | 11 | 5 | 68% |
-| cloud-contacts | `com.diegonmarcos.cloudcontacts` | 7 | 2 | 77% |
+| cloud-contacts | `com.diegonmarcos.cloudcontacts` | 8 | 2 | 80% |
 | cloud-dialer | `com.diegonmarcos.comms.dialer` | 9 | 2 | 81% |
-| cloud-drive | `com.diegonmarcos.clouddrive` | 15 | 6 | 71% |
+| cloud-drive | `com.diegonmarcos.clouddrive` | 16 | 6 | 72% |
 | cloud-keyboard | `com.diegonmarcos.cloudkeyboard` | 7 | 0 | 100% |
-| cloud-mail | `com.diegonmarcos.comms.mail` | 12 | 2 | 85% |
+| cloud-mail | `com.diegonmarcos.comms.mail` | 13 | 2 | 86% |
 | cloud-matrix | `com.diegonmarcos.comms.matrix` | 4 | 9 | 30% |
-| cloud-me | `com.diegonmarcos.cloudme` | 18 | 1 | 94% |
+| cloud-me | `com.diegonmarcos.cloudme` | 19 | 1 | 95% |
 | cloud-gallery | `com.diegonmarcos.mediacenter` | 7 | 1 | 87% |
-| cloud-myterminal | `com.diegonmarcos.ide` | 9 | 0 | 100% |
-| cloud-nav | `com.diegonmarcos.cloudnav` | 14 | 0 | 100% |
-| cloud-news | `com.diegonmarcos.cloudnews` | 8 | 1 | 88% |
+| cloud-myterminal | `com.diegonmarcos.ide` | 10 | 0 | 100% |
+| cloud-nav | `com.diegonmarcos.cloudnav` | 15 | 0 | 100% |
+| cloud-news | `com.diegonmarcos.cloudnews` | 9 | 1 | 90% |
 | cloud-terminal-nix | `cld.termux.nix` | 12 | 7 | 63% |
-| cloud-notes | `com.diegonmarcos.cloudnotes` | 5 | 1 | 83% |
+| cloud-notes | `com.diegonmarcos.cloudnotes` | 6 | 1 | 85% |
 | cloud-office | `com.diegonmarcos.cloudoffice` | 3 | 0 | 100% |
 | cloud-search | `com.diegonmarcos.cloudsearch` | 6 | 4 | 60% |
 | cloud-store | `com.diegonmarcos.cloudstore` | 12 | 0 | 100% |
@@ -53,11 +53,11 @@ DataStore / Room stores and declared files it cannot move yet.
 | cloud-superintel | `com.diegonmarcos.cloudsuperintel` | 5 | 2 | 71% |
 | cloud-kg-store | `com.diegonmarcos.cloudkgstore` | 5 | 2 | 71% |
 | cloud-tools-small-llms | `com.diegonmarcos.cloudtoolssmallllms` | 11 | 2 | 84% |
-| cg-omniverse | `com.diegonmarcos.cgomniverse` | 7 | 0 | 100% |
+| cg-omniverse | `com.diegonmarcos.cgomniverse` | 8 | 0 | 100% |
 | capital-stack-finterminal | `com.diegonmarcos.capitalfinterm` | 5 | 0 | 100% |
-| hardtech-cad | `com.diegonmarcos.hardtechcad` | 4 | 0 | 100% |
+| hardtech-cad | `com.diegonmarcos.hardtechcad` | 5 | 0 | 100% |
 | hardtech-sim2real | `com.diegonmarcos.hardtechsim2real` | 4 | 0 | 100% |
-| **fleet** | | **396** | **56** | **87%** |
+| **fleet** | | **413** | **56** | **88%** |
 
 ## cloud-superapp — `com.diegonmarcos.superapp`
 
@@ -122,6 +122,7 @@ Module `aa_cloud-superapp`; libs: lib-account, lib-ai-usage, lib-analytics, lib-
 | `myhealth_card` | prefs | device | no | SuperApp MyHealth badge: the last face (km with steps, resting HR, sleep, or the named error) and when it was read, shown at once while the card refreshes; a cache re-derived from Health Connect on the new phone, never migrated (#1029). |
 | `nav_modes` | prefs | config | yes | #1189 the user's per-section choice of how child pages are navigated (one row, two rows, side menu; overrides the build.json declaration) and whether the side menu is expanded or the rail. Written by the shared nav bars (NavModePrefs) from each app's Configs; part of the app's settings, so it migrates and backs up with them. |
 | `nav_ui` | prefs | config | yes | The user's nav UI choice for this app (Configs > UI): the nav mode, Classic or Clean, and the scroll-hide toggle (a downward scroll hides every bar until an upward one). Written by the shared Configs card (NavUiPrefs, libs:ui-nav-bars NavUiConfigCard); part of the app's settings, so it migrates and backs up with them. The app's declared default is build.json::ui.nav_ui. |
+| `netusage` | prefs | device | no | #1525 Network table: the periodic rx/tx counter snapshots behind the 24 h and today data-used rows; per-install counters of this boot history, never migrates. |
 | `notification_store` | prefs | content | no | Stored in-app notification log (info/warn/error). |
 | `notify_groups` | prefs | config | yes | Per-notification-group enabled flags and group order. |
 | `onehand_prefs` | prefs | config (keys: debug_visible→device, spurious_nones_pruned_v1→device) | yes | One-hand launcher enable, trigger and per-handle slot assignments. |
@@ -132,9 +133,12 @@ Module `aa_cloud-superapp`; libs: lib-account, lib-ai-usage, lib-analytics, lib-
 | `recent_cloud_tiles` | prefs | device | no | Most-recently-opened cloud tile list (max 12), usage history. |
 | `safe_encrypted_prefs_reset` | prefs | device | no | #1106 which encrypted prefs files SafeEncryptedPrefs had to reset (a Keystore master key that no longer matches the file, after a shared-uid migration or a restored backup), so the app can tell the user to sign in again until they acknowledge it. Describes this phone's Keystore, never configuration. |
 | `search_scope_prefs` | prefs | config | yes | The SuperApp search's scope chips as each entry point was last left (scopes_home_star, scopes_home_sheet, scopes_cloud_apps_page: the build.json::ui.search_scopes ids that are on). Absent until the owner taps a chip there, so an entry never touched starts on its defaults. |
+| `site_mirror` | prefs | config | yes | #1523 Offline site mirror: the user's pinned-site list (the declared pins until the user changes it); a user setting that follows the user to a new phone, while the cached pages themselves are device-local. |
 | `speedmeter` | prefs | device | no | #1446 the home strip's speedmeter: the rolling 24 h list of speed samples (key samples), pruned to 24 h. A measurement history of this phone's network, not configuration. |
+| `speedtest` | prefs | device | no | #1525 Speed test: the history of past runs measured on this phone and link; per-install, never migrates. |
 | `stack_filters` | prefs | config (keys: */read_keys→device, */seen_at→device) | yes | Chosen filter option per stack page ('<page>/<filterId>'); dynamic keys '<page>/seen_at' and the reads string-set are device state (cannot be keyed statically). |
 | `status_bar_prefs` | prefs | config | yes | Home status bar overrides (#1332): a visibility switch per declared element and an order per cluster, laid over build.json::home_status_bar. |
+| `store_activity` | prefs | device | no | #1517 Store activity panel: whether the panel is expanded and the finished list open; per-install UI state, never migrates. |
 | `store_auto` | prefs | device | no | #804 the auto-update chain's persisted state: phase, queue, per-package result, current package, last error. Lets a chain killed mid-download or mid-install resume on THIS phone; a new phone runs its own. |
 | `store_batch` | prefs | device | no | #804 the last Download all / Update all report served at /api/store/batch, kept across the SuperApp restarting itself. |
 | `store_declared_edits` | prefs | config | yes | Cloud Store: the user's edits to the Declared list over the built-in source map — apps declared from Search or Installed (with the rungs they install from) and declared apps removed. The user's app list, so it moves with the phone. |
@@ -172,7 +176,7 @@ Module `aa_cloud-superapp`; libs: lib-account, lib-ai-usage, lib-analytics, lib-
 | `BuildConfig UI_* constants (UI_LAUNCHER_SETTINGS_B64, UI_PROFILE_*, UI_WG_*)` | config | Defaults baked into the APK from build.json; not device state but the fallback for unset prefs. |
 | `filesDir/<KEYSTORE_FILE>` | device | This device's KDE Connect TLS identity keystore; never migrate, re-pair |
 
-Coverage: 53 covered, 0 gaps.
+Coverage: 54 covered, 0 gaps.
 
 ## c3-morpheus — `com.diegonmarcos.morpheus`
 
@@ -188,13 +192,14 @@ Module `ac_c3-morpheus`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtools,
 | `notification_store` | prefs | content | no | Stored in-app notification log (info/warn/error). |
 | `perm_ask_tracker` | prefs | device | no | Set of permissions already asked on this install; permission-asked tracker. #1274 libs:perms PermAskLog shares it with the app's PermAskTracker (one record of what was asked). |
 | `safe_encrypted_prefs_reset` | prefs | device | no | #1106 which encrypted prefs files SafeEncryptedPrefs had to reset (a Keystore master key that no longer matches the file, after a shared-uid migration or a restored backup), so the app can tell the user to sign in again until they acknowledge it. Describes this phone's Keystore, never configuration. |
+| `site_mirror` | prefs | config | yes | #1523 Offline site mirror: the user's pinned-site list (the declared pins until the user changes it); a user setting that follows the user to a new phone, while the cached pages themselves are device-local. |
 | `store_notify` | prefs | config | yes | Cloud Store > Configs > Notifications: which Store messages (update available, install done, failures) are posted on which channel (system notification, in-app feed); the owner's switches, everything on until turned off, so it moves with the phone. |
 
 | file | class | doc |
 |---|---|---|
 | `-` | device | keeps no configuration of its own; uses libs:core (fleet devtools provider). |
 
-Coverage: 4 covered, 0 gaps.
+Coverage: 5 covered, 0 gaps.
 
 ## c3-watchdog — `com.diegonmarcos.watchdog`
 
@@ -210,13 +215,14 @@ Module `ac_c3-watchdog`; libs: lib-bottomnav, lib-core, lib-crash, lib-devtools,
 | `notification_store` | prefs | content | no | Stored in-app notification log (info/warn/error). |
 | `perm_ask_tracker` | prefs | device | no | Set of permissions already asked on this install; permission-asked tracker. #1274 libs:perms PermAskLog shares it with the app's PermAskTracker (one record of what was asked). |
 | `safe_encrypted_prefs_reset` | prefs | device | no | #1106 which encrypted prefs files SafeEncryptedPrefs had to reset (a Keystore master key that no longer matches the file, after a shared-uid migration or a restored backup), so the app can tell the user to sign in again until they acknowledge it. Describes this phone's Keystore, never configuration. |
+| `site_mirror` | prefs | config | yes | #1523 Offline site mirror: the user's pinned-site list (the declared pins until the user changes it); a user setting that follows the user to a new phone, while the cached pages themselves are device-local. |
 | `store_notify` | prefs | config | yes | Cloud Store > Configs > Notifications: which Store messages (update available, install done, failures) are posted on which channel (system notification, in-app feed); the owner's switches, everything on until turned off, so it moves with the phone. |
 
 | file | class | doc |
 |---|---|---|
 | `-` | device | keeps no configuration of its own; uses libs:watchdog and libs:core (fleet devtools provider). |
 
-Coverage: 4 covered, 0 gaps.
+Coverage: 5 covered, 0 gaps.
 
 ## c3-watchtower — `com.diegonmarcos.watchtower`
 
@@ -265,6 +271,8 @@ Module `ac_cloud-account`; libs: lib-account, lib-account-ui, lib-appstore, lib-
 | `personal_info_secure` | encrypted | secret | yes | #1439 Cloud Account / Cloud Me > Personal Info: the owner's IDs, Pay Cards and Others entries (PersonalStore), one JSON array per kind. EncryptedSharedPreferences (key names AES256-SIV, values AES256-GCM) under an Android Keystore master key; the number fields are masked on screen. Personal documents and card numbers: they migrate through the vault, never in the clear. |
 | `profile_prefs` | prefs | config (keys: banner_uri→device, install_id→device, install_secret→device, picture_uri→device, schema_version→device) | yes | Owner profile card fields (name, email, phone, birth, company, location, website, titles) plus install identity. |
 | `safe_encrypted_prefs_reset` | prefs | device | no | #1106 which encrypted prefs files SafeEncryptedPrefs had to reset (a Keystore master key that no longer matches the file, after a shared-uid migration or a restored backup), so the app can tell the user to sign in again until they acknowledge it. Describes this phone's Keystore, never configuration. |
+| `site_mirror` | prefs | config | yes | #1523 Offline site mirror: the user's pinned-site list (the declared pins until the user changes it); a user setting that follows the user to a new phone, while the cached pages themselves are device-local. |
+| `store_activity` | prefs | device | no | #1517 Store activity panel: whether the panel is expanded and the finished list open; per-install UI state, never migrates. |
 | `store_auto` | prefs | device | no | #804 the auto-update chain's persisted state: phase, queue, per-package result, current package, last error. Lets a chain killed mid-download or mid-install resume on THIS phone; a new phone runs its own. |
 | `store_batch` | prefs | device | no | #804 the last Download all / Update all report served at /api/store/batch, kept across the SuperApp restarting itself. |
 | `store_declared_edits` | prefs | config | yes | Cloud Store: the user's edits to the Declared list over the built-in source map — apps declared from Search or Installed (with the rungs they install from) and declared apps removed. The user's app list, so it moves with the phone. |
@@ -289,7 +297,7 @@ Module `ac_cloud-account`; libs: lib-account, lib-account-ui, lib-appstore, lib-
 | `filesDir/git-sync/repos.json` | config | Registered repos to sync |
 | `filesDir/git-sync/known_hosts` | device | Pinned git SSH host keys |
 
-Coverage: 19 covered, 1 gaps — file:filesDir/git-sync/repos.json.
+Coverage: 20 covered, 1 gaps — file:filesDir/git-sync/repos.json.
 
 ## cloud-tasks — `com.diegonmarcos.cloudagenda`
 
@@ -313,6 +321,7 @@ Module `ac_cloud-tasks`; libs: lib-ai, lib-analytics, lib-bottomnav, lib-core, l
 | `pass_ledger` | prefs | device | no | #894 What the running fleet pass did per package (installed, needs a tap, failed), the summary signature last shown and the last failure reported per package: pass state, never a setting. |
 | `perm_ask_tracker` | prefs | device | no | Set of permissions already asked on this install; permission-asked tracker. #1274 libs:perms PermAskLog shares it with the app's PermAskTracker (one record of what was asked). |
 | `safe_encrypted_prefs_reset` | prefs | device | no | #1106 which encrypted prefs files SafeEncryptedPrefs had to reset (a Keystore master key that no longer matches the file, after a shared-uid migration or a restored backup), so the app can tell the user to sign in again until they acknowledge it. Describes this phone's Keystore, never configuration. |
+| `site_mirror` | prefs | config | yes | #1523 Offline site mirror: the user's pinned-site list (the declared pins until the user changes it); a user setting that follows the user to a new phone, while the cached pages themselves are device-local. |
 | `store_notify` | prefs | config | yes | Cloud Store > Configs > Notifications: which Store messages (update available, install done, failures) are posted on which channel (system notification, in-app feed); the owner's switches, everything on until turned off, so it moves with the phone. |
 | `tasks_ai` | prefs | device | no | Cloud Tasks AI panel (libs:ai): the model, Web switch and gateway agent last picked. The chat history itself is the sessions file ai-sessions.json under the app's files dir. |
 | `tasks_prefs` | prefs | config (keys: filter→device, selected_list→device) | yes | Cloud Tasks Settings > Appearance (light / dark / system) and where the user was: the top filter bar's status and tag selection and the list the Tasks page shows. The theme is the setting that moves to a new phone; the filter and the list id name rows of this phone's tasks database and mean nothing elsewhere. |
@@ -324,7 +333,7 @@ Module `ac_cloud-tasks`; libs: lib-ai, lib-analytics, lib-bottomnav, lib-core, l
 | `app assets data/calendars.json (bundled) and engine state in app storage` | content | Calendar and todo data synced from CalDAV; the CalDAV url/username/password is in caldav_secure_prefs. |
 | `databases/tasks.db` | content | The Tasks page's own data: projects, lists, tasks and subtasks, tags, attachment links, and the mail agent's declaration and proposals. SQLite with ordered, additive migrations; nothing ever wipes it. The JMAP / Authelia secret of the agent is in the Keystore-encrypted tasks_agent_secrets file, not here. |
 
-Coverage: 9 covered, 0 gaps.
+Coverage: 10 covered, 0 gaps.
 
 ## cloud-browser — `com.diegonmarcos.cloudbrowser`
 
@@ -357,6 +366,7 @@ Module `ac_cloud-browser`; libs: lib-ai, lib-analytics, lib-autofill, lib-blueto
 | `pass_ledger` | prefs | device | no | #894 What the running fleet pass did per package (installed, needs a tap, failed), the summary signature last shown and the last failure reported per package: pass state, never a setting. |
 | `perm_ask_tracker` | prefs | device | no | Set of permissions already asked on this install; permission-asked tracker. #1274 libs:perms PermAskLog shares it with the app's PermAskTracker (one record of what was asked). |
 | `safe_encrypted_prefs_reset` | prefs | device | no | #1106 which encrypted prefs files SafeEncryptedPrefs had to reset (a Keystore master key that no longer matches the file, after a shared-uid migration or a restored backup), so the app can tell the user to sign in again until they acknowledge it. Describes this phone's Keystore, never configuration. |
+| `site_mirror` | prefs | config | yes | #1523 Offline site mirror: the user's pinned-site list (the declared pins until the user changes it); a user setting that follows the user to a new phone, while the cached pages themselves are device-local. |
 | `store_notify` | prefs | config | yes | Cloud Store > Configs > Notifications: which Store messages (update available, install done, failures) are posted on which channel (system notification, in-app feed); the owner's switches, everything on until turned off, so it moves with the phone. |
 | `tabs` | prefs | config (keys: active_url→device, defaults_seeded_v1→device) | yes | Browser tab groups/active URL are user state; defaults_seeded_v1 is a migration marker. |
 | `updater_advisory` | prefs | device | no | Update advisory feed, snooze/shown/fail state per app. |
@@ -371,7 +381,7 @@ Module `ac_cloud-browser`; libs: lib-ai, lib-analytics, lib-autofill, lib-blueto
 |---|---|---|
 | `browser_settings` | config | #802 every user setting is a key of the declared browser_settings store (libs:browser BrowserSettings over build.json::ui.browser.settings); tabs and history are the lib's own declared stores. Nothing is kept outside them. |
 
-Coverage: 16 covered, 0 gaps.
+Coverage: 17 covered, 0 gaps.
 
 ## cloud-c3-webserver — `com.diegonmarcos.cloudwebserver`
 
@@ -474,6 +484,7 @@ Module `ac_cloud-calc`; libs: lib-ai, lib-bluetooth, lib-bottomnav, lib-core, li
 | `notification_store` | prefs | content | no | Stored in-app notification log (info/warn/error). |
 | `perm_ask_tracker` | prefs | device | no | Set of permissions already asked on this install; permission-asked tracker. #1274 libs:perms PermAskLog shares it with the app's PermAskTracker (one record of what was asked). |
 | `safe_encrypted_prefs_reset` | prefs | device | no | #1106 which encrypted prefs files SafeEncryptedPrefs had to reset (a Keystore master key that no longer matches the file, after a shared-uid migration or a restored backup), so the app can tell the user to sign in again until they acknowledge it. Describes this phone's Keystore, never configuration. |
+| `site_mirror` | prefs | config | yes | #1523 Offline site mirror: the user's pinned-site list (the declared pins until the user changes it); a user setting that follows the user to a new phone, while the cached pages themselves are device-local. |
 | `store_notify` | prefs | config | yes | Cloud Store > Configs > Notifications: which Store messages (update available, install done, failures) are posted on which channel (system notification, in-app feed); the owner's switches, everything on until turned off, so it moves with the phone. |
 
 | file | class | doc |
@@ -485,7 +496,7 @@ Module `ac_cloud-calc`; libs: lib-ai, lib-bluetooth, lib-bottomnav, lib-core, li
 | `filesDir/sound/*.csv|*.wav` | content | Saved sound-measure sessions. |
 | `filesDir/camera/last.jpg` | device | Last captured measure photo. |
 
-Coverage: 16 covered, 0 gaps.
+Coverage: 17 covered, 0 gaps.
 
 ## cloud-camera — `cld.camera`
 
@@ -594,6 +605,7 @@ Module `ac_cloud-contacts`; libs: lib-analytics, lib-bottomnav, lib-contacts, li
 | `pass_ledger` | prefs | device | no | #894 What the running fleet pass did per package (installed, needs a tap, failed), the summary signature last shown and the last failure reported per package: pass state, never a setting. |
 | `perm_ask_tracker` | prefs | device | no | Set of permissions already asked on this install; permission-asked tracker. #1274 libs:perms PermAskLog shares it with the app's PermAskTracker (one record of what was asked). |
 | `safe_encrypted_prefs_reset` | prefs | device | no | #1106 which encrypted prefs files SafeEncryptedPrefs had to reset (a Keystore master key that no longer matches the file, after a shared-uid migration or a restored backup), so the app can tell the user to sign in again until they acknowledge it. Describes this phone's Keystore, never configuration. |
+| `site_mirror` | prefs | config | yes | #1523 Offline site mirror: the user's pinned-site list (the declared pins until the user changes it); a user setting that follows the user to a new phone, while the cached pages themselves are device-local. |
 | `store_notify` | prefs | config | yes | Cloud Store > Configs > Notifications: which Store messages (update available, install done, failures) are posted on which channel (system notification, in-app feed); the owner's switches, everything on until turned off, so it moves with the phone. |
 | `updater_advisory` | prefs | device | no | Update advisory feed, snooze/shown/fail state per app. |
 | `updater_apk_cache_notes` | prefs | device | no | Notes about cached downloaded APKs. |
@@ -605,7 +617,7 @@ Module `ac_cloud-contacts`; libs: lib-analytics, lib-bottomnav, lib-contacts, li
 | `shared_prefs/<package>_preferences.xml (Fossify Config)` | config | Contacts display/sort/visible-sources settings; scanner found no named store. |
 | `-` | device | keeps no configuration of its own; uses libs:contacts, libs:core, libs:updater, libs:analytics (contacts are system data). |
 
-Coverage: 7 covered, 2 gaps — contacts_vcards, file:system ContactsContract provider, exported as vCard.
+Coverage: 8 covered, 2 gaps — contacts_vcards, file:system ContactsContract provider, exported as vCard.
 
 ## cloud-dialer — `com.diegonmarcos.comms.dialer`
 
@@ -667,6 +679,7 @@ Module `ac_cloud-drive`; libs: lib-ai, lib-analytics, lib-auth, lib-bottomnav, l
 | `pass_ledger` | prefs | device | no | #894 What the running fleet pass did per package (installed, needs a tap, failed), the summary signature last shown and the last failure reported per package: pass state, never a setting. |
 | `perm_ask_tracker` | prefs | device | no | Set of permissions already asked on this install; permission-asked tracker. #1274 libs:perms PermAskLog shares it with the app's PermAskTracker (one record of what was asked). |
 | `safe_encrypted_prefs_reset` | prefs | device | no | #1106 which encrypted prefs files SafeEncryptedPrefs had to reset (a Keystore master key that no longer matches the file, after a shared-uid migration or a restored backup), so the app can tell the user to sign in again until they acknowledge it. Describes this phone's Keystore, never configuration. |
+| `site_mirror` | prefs | config | yes | #1523 Offline site mirror: the user's pinned-site list (the declared pins until the user changes it); a user setting that follows the user to a new phone, while the cached pages themselves are device-local. |
 | `store_notify` | prefs | config | yes | Cloud Store > Configs > Notifications: which Store messages (update available, install done, failures) are posted on which channel (system notification, in-app feed); the owner's switches, everything on until turned off, so it moves with the phone. |
 | `updater_advisory` | prefs | device | no | Update advisory feed, snooze/shown/fail state per app. |
 | `updater_apk_cache_notes` | prefs | device | no | Notes about cached downloaded APKs. |
@@ -684,7 +697,7 @@ Module `ac_cloud-drive`; libs: lib-ai, lib-analytics, lib-auth, lib-bottomnav, l
 | `filesDir/rclone/rclone.conf` | secret | rclone remotes (with embedded tokens/passwords); remote definitions are the config, credentials inside are secret |
 | `filesDir/rclone/jobs.json` | config | Saved rclone sync/copy jobs |
 
-Coverage: 15 covered, 6 gaps — ai_sessions, file:filesDir/ai-sessions.json, file:filesDir/git-sync/repos.json, file:filesDir/mounts/mounts.json, file:filesDir/rclone/rclone.conf, file:filesDir/rclone/jobs.json.
+Coverage: 16 covered, 6 gaps — ai_sessions, file:filesDir/ai-sessions.json, file:filesDir/git-sync/repos.json, file:filesDir/mounts/mounts.json, file:filesDir/rclone/rclone.conf, file:filesDir/rclone/jobs.json.
 
 ## cloud-keyboard — `com.diegonmarcos.cloudkeyboard`
 
@@ -740,6 +753,7 @@ Module `ac_cloud-mail`; libs: lib-bottomnav, lib-core, lib-crash, lib-databacken
 | `push_baselines` | prefs | device | no | Sterna new-mail notification baselines (seen ids, last pass timestamp). |
 | `room:SternaDatabase` | room | content | no | Sterna Room mail cache (emails, mailboxes, bodies, FTS, local drafts, snooze); mirror of the server; migrate only the account. |
 | `safe_encrypted_prefs_reset` | prefs | device | no | #1106 which encrypted prefs files SafeEncryptedPrefs had to reset (a Keystore master key that no longer matches the file, after a shared-uid migration or a restored backup), so the app can tell the user to sign in again until they acknowledge it. Describes this phone's Keystore, never configuration. |
+| `site_mirror` | prefs | config | yes | #1523 Offline site mirror: the user's pinned-site list (the declared pins until the user changes it); a user setting that follows the user to a new phone, while the cached pages themselves are device-local. |
 | `sterna_account` | prefs | config (keys: accounts→device, current→device, pw_*→device, vault_mail→secret, vault_owner→secret) | yes | Mail accounts as a JSON blob (server, username, protocol, IMAP/SMTP endpoints — the account LINKS) and the current account; each pw_<id> slot is a password or refresh token encrypted with this phone's Keystore, so it never moves — the new phone signs in once per account. vault_mail / vault_owner are the vault bundle's mail section and owner address IN TRANSIT (cockpit derived_settings, applied by server → runtime and the migration): the app consumes them on start (VaultMailImport adds the accounts through AccountStore.add, encrypting each password) and removes them. The accounts JSON and the current id are THIS phone's state: ids key the pw_<id> slots, so a copy from another capture that lands over them leaves every account without a credential (the owner's me@ lost its login that way on 2026-10-08). They stay home; vault_mail is what travels. |
 | `store_notify` | prefs | config | yes | Cloud Store > Configs > Notifications: which Store messages (update available, install done, failures) are posted on which channel (system notification, in-app feed); the owner's switches, everything on until turned off, so it moves with the phone. |
 | `sync_states` | prefs | device | no | JMAP sync cursors (query/email state). |
@@ -755,7 +769,7 @@ Module `ac_cloud-mail`; libs: lib-bottomnav, lib-core, lib-crash, lib-databacken
 | `shared_prefs/sterna_account.xml accounts JSON` | secret | Mail account server/IMAP/SMTP/JMAP settings and credentials; account link is config but travels with the secret through the vault; passwords encrypted with a device Keystore key and cannot be copied raw. |
 | `Room SternaDatabase tables (mailboxes watched/muted/collapsed in account JSON)` | device | No settings tables in Room; per-account watched, muted (the Inbox's Notify about new mail, default on) and collapsed folders live in the account JSON. |
 
-Coverage: 12 covered, 2 gaps — datastore:settings, mail_signatures.
+Coverage: 13 covered, 2 gaps — datastore:settings, mail_signatures.
 
 ## cloud-matrix — `com.diegonmarcos.comms.matrix`
 
@@ -829,6 +843,7 @@ Module `ac_cloud-me`; libs: lib-account-ui, lib-analytics, lib-autofill, lib-bot
 | `profile_health_user` | prefs | config | yes | Cloud Me > Profile > Health record values, one JSON string under 'data' (field id to value, status, expiry), imported from the private store. Special-category data: it stays on the device and in the encrypted backup, never in a public repo; the schema (labels only) is the public asset. |
 | `repo_tree` | prefs | config | yes | Cloud Me > Lnktree > Proj (#1298): which nodes of the repository tree are expanded, one string set under 'expanded' (registry node codes such as 1.2 or 1.2.1). A view preference of the owner: it migrates so the tree reopens as it was left. |
 | `safe_encrypted_prefs_reset` | prefs | device | no | #1106 which encrypted prefs files SafeEncryptedPrefs had to reset (a Keystore master key that no longer matches the file, after a shared-uid migration or a restored backup), so the app can tell the user to sign in again until they acknowledge it. Describes this phone's Keystore, never configuration. |
+| `site_mirror` | prefs | config | yes | #1523 Offline site mirror: the user's pinned-site list (the declared pins until the user changes it); a user setting that follows the user to a new phone, while the cached pages themselves are device-local. |
 | `store_notify` | prefs | config | yes | Cloud Store > Configs > Notifications: which Store messages (update available, install done, failures) are posted on which channel (system notification, in-app feed); the owner's switches, everything on until turned off, so it moves with the phone. |
 | `updater_advisory` | prefs | device | no | Update advisory feed, snooze/shown/fail state per app. |
 | `updater_apk_cache_notes` | prefs | device | no | Notes about cached downloaded APKs. |
@@ -839,7 +854,7 @@ Module `ac_cloud-me`; libs: lib-account-ui, lib-analytics, lib-autofill, lib-bot
 | `filesDir/git-sync/repos.json` | config | Registered repos to sync |
 | `filesDir/git-sync/known_hosts` | device | Pinned git SSH host keys |
 
-Coverage: 18 covered, 1 gaps — file:filesDir/git-sync/repos.json.
+Coverage: 19 covered, 1 gaps — file:filesDir/git-sync/repos.json.
 
 ## cloud-gallery — `com.diegonmarcos.mediacenter`
 
@@ -891,6 +906,7 @@ Module `ac_cloud-myterminal`; libs: lib-analytics, lib-bottomnav, lib-core, lib-
 | `notification_store` | prefs | content | no | Stored in-app notification log (info/warn/error). |
 | `perm_ask_tracker` | prefs | device | no | Set of permissions already asked on this install; permission-asked tracker. #1274 libs:perms PermAskLog shares it with the app's PermAskTracker (one record of what was asked). |
 | `safe_encrypted_prefs_reset` | prefs | device | no | #1106 which encrypted prefs files SafeEncryptedPrefs had to reset (a Keystore master key that no longer matches the file, after a shared-uid migration or a restored backup), so the app can tell the user to sign in again until they acknowledge it. Describes this phone's Keystore, never configuration. |
+| `site_mirror` | prefs | config | yes | #1523 Offline site mirror: the user's pinned-site list (the declared pins until the user changes it); a user setting that follows the user to a new phone, while the cached pages themselves are device-local. |
 | `store_notify` | prefs | config | yes | Cloud Store > Configs > Notifications: which Store messages (update available, install done, failures) are posted on which channel (system notification, in-app feed); the owner's switches, everything on until turned off, so it moves with the phone. |
 
 | file | class | doc |
@@ -900,7 +916,7 @@ Module `ac_cloud-myterminal`; libs: lib-analytics, lib-bottomnav, lib-core, lib-
 | `filesDir/terminal_id_ecdsa and terminal_id_ecdsa.pub` | device | Hub's own generated ssh keypair (SshBackend.ensureKeyPair); device identity, never migrate; the new phone generates its own and its pubkey must be added to each env's authorized_keys. |
 | `externalFilesDir/crashes/` | device | Crash report dumps queued for DiagnosticsPush. |
 
-Coverage: 9 covered, 0 gaps.
+Coverage: 10 covered, 0 gaps.
 
 ## cloud-nav — `com.diegonmarcos.cloudnav`
 
@@ -929,6 +945,7 @@ Module `ac_cloud-nav`; libs: lib-analytics, lib-bottomnav, lib-core, lib-crash, 
 | `perm_ask_tracker` | prefs | device | no | Set of permissions already asked on this install; permission-asked tracker. #1274 libs:perms PermAskLog shares it with the app's PermAskTracker (one record of what was asked). |
 | `profile_prefs` | prefs | config (keys: banner_uri→device, install_id→device, install_secret→device, picture_uri→device, schema_version→device) | yes | Owner profile card fields (name, email, phone, birth, company, location, website, titles) plus install identity. |
 | `safe_encrypted_prefs_reset` | prefs | device | no | #1106 which encrypted prefs files SafeEncryptedPrefs had to reset (a Keystore master key that no longer matches the file, after a shared-uid migration or a restored backup), so the app can tell the user to sign in again until they acknowledge it. Describes this phone's Keystore, never configuration. |
+| `site_mirror` | prefs | config | yes | #1523 Offline site mirror: the user's pinned-site list (the declared pins until the user changes it); a user setting that follows the user to a new phone, while the cached pages themselves are device-local. |
 | `store_notify` | prefs | config | yes | Cloud Store > Configs > Notifications: which Store messages (update available, install done, failures) are posted on which channel (system notification, in-app feed); the owner's switches, everything on until turned off, so it moves with the phone. |
 | `timeline_state` | prefs | device | no | Timeline store migration marker (#1114): when the stops, step samples and raw fixes were moved into the one timeline store (maps.db timeline_segments); the store itself is re-derived on the new phone, never migrated. |
 | `tracker_corrections` | prefs | device | no | The owner's corrections to the Tracker timeline (confirmed visits, edited places and modes, deleted or split segments, added visits). Recorded data tied to the timeline store, never migrated; the store is re-derived on the new phone. |
@@ -943,7 +960,7 @@ Module `ac_cloud-nav`; libs: lib-analytics, lib-bottomnav, lib-core, lib-crash, 
 | `externalFilesDir/trace/trace.log, crashes/` | device | Debug trace and crash dumps. |
 | `databases/maps.db (timeline_segments), databases/tracker_engine.db` | device | THE timeline store (#1114): move / stop / sleep segments that Daily, Stops, Steps and the SuperApp's MyTrips read, plus the engine's step samples and fixes it is built from. Recorded data, not configuration: it is re-derived by recording on the new phone, never migrated. |
 
-Coverage: 14 covered, 0 gaps.
+Coverage: 15 covered, 0 gaps.
 
 ## cloud-news — `com.diegonmarcos.cloudnews`
 
@@ -966,6 +983,7 @@ Module `ac_cloud-news`; libs: lib-analytics, lib-apify, lib-bottomnav, lib-core,
 | `pass_ledger` | prefs | device | no | #894 What the running fleet pass did per package (installed, needs a tap, failed), the summary signature last shown and the last failure reported per package: pass state, never a setting. |
 | `perm_ask_tracker` | prefs | device | no | Set of permissions already asked on this install; permission-asked tracker. #1274 libs:perms PermAskLog shares it with the app's PermAskTracker (one record of what was asked). |
 | `safe_encrypted_prefs_reset` | prefs | device | no | #1106 which encrypted prefs files SafeEncryptedPrefs had to reset (a Keystore master key that no longer matches the file, after a shared-uid migration or a restored backup), so the app can tell the user to sign in again until they acknowledge it. Describes this phone's Keystore, never configuration. |
+| `site_mirror` | prefs | config | yes | #1523 Offline site mirror: the user's pinned-site list (the declared pins until the user changes it); a user setting that follows the user to a new phone, while the cached pages themselves are device-local. |
 | `store_notify` | prefs | config | yes | Cloud Store > Configs > Notifications: which Store messages (update available, install done, failures) are posted on which channel (system notification, in-app feed); the owner's switches, everything on until turned off, so it moves with the phone. |
 | `updater_advisory` | prefs | device | no | Update advisory feed, snooze/shown/fail state per app. |
 | `updater_apk_cache_notes` | prefs | device | no | Notes about cached downloaded APKs. |
@@ -974,7 +992,7 @@ Module `ac_cloud-news`; libs: lib-analytics, lib-apify, lib-bottomnav, lib-core,
 |---|---|---|
 | `data/sources.json, topics.json (bundled) and engine-held user source/topic choices and saved articles` | config | Selected sources/topics are config, saved articles are content; the engine keeps them in its own storage which the scanner did not see. |
 
-Coverage: 8 covered, 1 gaps — file:data/sources.json, topics.json (bundled) and engine-held user source/topic choices and saved articles.
+Coverage: 9 covered, 1 gaps — file:data/sources.json, topics.json (bundled) and engine-held user source/topic choices and saved articles.
 
 ## cloud-terminal-nix — `cld.termux.nix`
 
@@ -1029,6 +1047,7 @@ Module `ac_cloud-notes`; libs: lib-ai, lib-bottomnav, lib-core, lib-crash, lib-d
 | `notification_store` | prefs | content | no | Stored in-app notification log (info/warn/error). |
 | `perm_ask_tracker` | prefs | device | no | Set of permissions already asked on this install; permission-asked tracker. #1274 libs:perms PermAskLog shares it with the app's PermAskTracker (one record of what was asked). |
 | `safe_encrypted_prefs_reset` | prefs | device | no | #1106 which encrypted prefs files SafeEncryptedPrefs had to reset (a Keystore master key that no longer matches the file, after a shared-uid migration or a restored backup), so the app can tell the user to sign in again until they acknowledge it. Describes this phone's Keystore, never configuration. |
+| `site_mirror` | prefs | config | yes | #1523 Offline site mirror: the user's pinned-site list (the declared pins until the user changes it); a user setting that follows the user to a new phone, while the cached pages themselves are device-local. |
 | `store_notify` | prefs | config | yes | Cloud Store > Configs > Notifications: which Store messages (update available, install done, failures) are posted on which channel (system notification, in-app feed); the owner's switches, everything on until turned off, so it moves with the phone. |
 
 | file | class | doc |
@@ -1036,7 +1055,7 @@ Module `ac_cloud-notes`; libs: lib-ai, lib-bottomnav, lib-core, lib-crash, lib-d
 | `filesDir/ (NbStorePlugin appStoragePath, per-workspace sqlite)` | content | Cloud Notes local workspace docs; server is source of truth. |
 | `filesDir/logs/<date>.log` | device | Rotating logs. |
 
-Coverage: 5 covered, 1 gaps — datastore:auth-sessions.
+Coverage: 6 covered, 1 gaps — datastore:auth-sessions.
 
 ## cloud-office — `com.diegonmarcos.cloudoffice`
 
@@ -1106,6 +1125,7 @@ Module `ac_cloud-store`; libs: lib-ai, lib-appstore, lib-bottomnav, lib-core, li
 | `pass_ledger` | prefs | device | no | #894 What the running fleet pass did per package (installed, needs a tap, failed), the summary signature last shown and the last failure reported per package: pass state, never a setting. |
 | `perm_ask_tracker` | prefs | device | no | Set of permissions already asked on this install; permission-asked tracker. #1274 libs:perms PermAskLog shares it with the app's PermAskTracker (one record of what was asked). |
 | `safe_encrypted_prefs_reset` | prefs | device | no | #1106 which encrypted prefs files SafeEncryptedPrefs had to reset (a Keystore master key that no longer matches the file, after a shared-uid migration or a restored backup), so the app can tell the user to sign in again until they acknowledge it. Describes this phone's Keystore, never configuration. |
+| `store_activity` | prefs | device | no | #1517 Store activity panel: whether the panel is expanded and the finished list open; per-install UI state, never migrates. |
 | `store_auto` | prefs | device | no | #804 the auto-update chain's persisted state: phase, queue, per-package result, current package, last error. Lets a chain killed mid-download or mid-install resume on THIS phone; a new phone runs its own. |
 | `store_batch` | prefs | device | no | #804 the last Download all / Update all report served at /api/store/batch, kept across the SuperApp restarting itself. |
 | `store_declared_edits` | prefs | config | yes | Cloud Store: the user's edits to the Declared list over the built-in source map — apps declared from Search or Installed (with the rungs they install from) and declared apps removed. The user's app list, so it moves with the phone. |
@@ -1356,10 +1376,11 @@ Module `ad_CG-Omniverse`; libs: lib-bottomnav, lib-cgc-3d, lib-core, lib-crash, 
 | `notification_store` | prefs | content | no | Stored in-app notification log (info/warn/error). |
 | `perm_ask_tracker` | prefs | device | no | Set of permissions already asked on this install; permission-asked tracker. #1274 libs:perms PermAskLog shares it with the app's PermAskTracker (one record of what was asked). |
 | `safe_encrypted_prefs_reset` | prefs | device | no | #1106 which encrypted prefs files SafeEncryptedPrefs had to reset (a Keystore master key that no longer matches the file, after a shared-uid migration or a restored backup), so the app can tell the user to sign in again until they acknowledge it. Describes this phone's Keystore, never configuration. |
+| `site_mirror` | prefs | config | yes | #1523 Offline site mirror: the user's pinned-site list (the declared pins until the user changes it); a user setting that follows the user to a new phone, while the cached pages themselves are device-local. |
 | `store_notify` | prefs | config | yes | Cloud Store > Configs > Notifications: which Store messages (update available, install done, failures) are posted on which channel (system notification, in-app feed); the owner's switches, everything on until turned off, so it moves with the phone. |
 | `worlds` | prefs | config | yes | CG-Omniverse's Galaxy worlds: whether each embedded world opens in desktop mode, one boolean per world id (key desktop.<worldId>). A user view choice, so it migrates with the app's settings. |
 
-Coverage: 7 covered, 0 gaps.
+Coverage: 8 covered, 0 gaps.
 
 ## capital-stack-finterminal — `com.diegonmarcos.capitalfinterm`
 
@@ -1396,9 +1417,10 @@ Module `ad_Hardtech-CAD`; libs: lib-bottomnav, lib-cad-3dm, lib-cad-brep, lib-ca
 | `notification_store` | prefs | content | no | Stored in-app notification log (info/warn/error). |
 | `perm_ask_tracker` | prefs | device | no | Set of permissions already asked on this install; permission-asked tracker. #1274 libs:perms PermAskLog shares it with the app's PermAskTracker (one record of what was asked). |
 | `safe_encrypted_prefs_reset` | prefs | device | no | #1106 which encrypted prefs files SafeEncryptedPrefs had to reset (a Keystore master key that no longer matches the file, after a shared-uid migration or a restored backup), so the app can tell the user to sign in again until they acknowledge it. Describes this phone's Keystore, never configuration. |
+| `site_mirror` | prefs | config | yes | #1523 Offline site mirror: the user's pinned-site list (the declared pins until the user changes it); a user setting that follows the user to a new phone, while the cached pages themselves are device-local. |
 | `store_notify` | prefs | config | yes | Cloud Store > Configs > Notifications: which Store messages (update available, install done, failures) are posted on which channel (system notification, in-app feed); the owner's switches, everything on until turned off, so it moves with the phone. |
 
-Coverage: 4 covered, 0 gaps.
+Coverage: 5 covered, 0 gaps.
 
 ## hardtech-sim2real — `com.diegonmarcos.hardtechsim2real`
 
