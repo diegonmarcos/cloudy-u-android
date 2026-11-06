@@ -49,7 +49,7 @@ class NavAndMlsTest {
         assertEquals(setOf("libs-l-ml", "libs-t-ml"), pages.values.toSet())
     }
 
-    @Test fun `no data is baked into the APK: no asset, no copy task, and every runtime dataset carries a schemaVersion (#1547)`() {
+    @Test fun `no data is baked into the APK - no asset, no copy task - and every runtime dataset carries a schemaVersion`() {
         for (n in listOf("ml-fleet.json", "tools-models.json", "sensors.json")) assertFalse("$n must not be an asset", File("../app/src/main/assets/$n").exists())
         val gradle = File("../app/build.gradle").readText()
         assertFalse("the bakeMlFleet copy is gone", gradle.contains("ml-fleet") || gradle.contains("constellation-fleet.json") || gradle.contains("copy {"))
