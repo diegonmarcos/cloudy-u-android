@@ -1,5 +1,6 @@
-package com.diegonmarcos.superapp.shellclient
+package com.diegonmarcos.superapp.shellrish
 
+import com.diegonmarcos.superapp.shellclient.ShellClient
 import android.content.Context
 import java.io.File
 

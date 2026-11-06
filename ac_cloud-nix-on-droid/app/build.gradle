@@ -73,6 +73,7 @@ android {
         implementation project(":libs:ui-nav-bars")
         // #1512 rish over the SuperApp's shell broker (ShellRish + RishRelay): the thin client, no channel of its own.
         implementation project(":libs:shell-client")
+        implementation project(":libs:shell-rish")
         // The ADB Shell page (AdbShellActivity) is Compose, compiled against the HOST's Compose
         // (compileOnly in the lib): this terminal supplies the runtime. ONE BOM for the fleet
         // (test-compose-bom-one-version.sh): FlowRow is experimental and has no binary compatibility

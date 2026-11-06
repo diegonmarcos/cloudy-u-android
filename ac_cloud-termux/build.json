@@ -83,9 +83,14 @@
       "type": "library"
     },
     "libs:shell-client": {
-      "_doc_dir": "#1512 The SuperApp's shell broker client + the rish relay (ShellRish / RishRelay): `rish` inside the proot talks to a loopback relay in this app's process, which asks the broker under this terminal's own allowlist entry. No channel, pairing, service or boot hook here.",
+      "_doc_dir": "#1512 The SuperApp's shell broker client (ShellClient.arm for Settings, and what libs:shell-rish answers through). No channel, pairing, service or boot hook here.",
       "type": "library",
       "dir": "../ab_cloud-libs-shared/libs/shell-client"
+    },
+    "libs:shell-rish": {
+      "_doc_dir": "#1512 The rish relay (ShellRish / RishRelay): `rish` inside the proot talks to a loopback relay in this app's process, which asks the broker (libs:shell-client) under this terminal's own allowlist entry.",
+      "type": "library",
+      "dir": "../ab_cloud-libs-shared/libs/shell-rish"
     },
     "libs:ui-nav-bars": {"dir": "../ab_cloud-libs-shared/libs/ui-nav-bars", "type": "library", "_doc": "#1352 Configs ▸ General and ▸ About (fleetconfigs): FleetConfigsActivity, started from this app's own menu. Shared BY REFERENCE."},
     "libs:bottomnav": {"dir": "../ab_cloud-libs-shared/libs/bottomnav", "type": "library", "_doc": "libs:ui-nav-bars' `api` dependency; listed so settings.gradle resolves the path."},
@@ -156,7 +161,7 @@
     }
   },
   "shizuku_client": {
-    "_doc": "#1512 The rish placement for this terminal (the key keeps its name: both terminals and enter.sh read it). `rish` is written by ShellRish (libs:shell-client) into the login's rish/ dir with a rish.env holding the in-process relay's loopback URL and a random per-process token; enter.sh binds each stage file onto its guest path. rish reaches the SuperApp's shell broker through that relay, under this app's allowlist entry (libs:shell-broker assets/shell-allowlist.json, caller cld.termux). There is no Shizuku, no embedded ADB and no provider ladder here.",
+    "_doc": "#1512 The rish placement for this terminal (the key keeps its name: both terminals and enter.sh read it). `rish` is written by ShellRish (libs:shell-rish) into the login's rish/ dir with a rish.env holding the in-process relay's loopback URL and a random per-process token; enter.sh binds each stage file onto its guest path. rish reaches the SuperApp's shell broker through that relay, under this app's allowlist entry (libs:shell-broker assets/shell-allowlist.json, caller cld.termux). There is no Shizuku, no embedded ADB and no provider ladder here.",
     "rish": {
       "rootfs_bin": "/usr/local/bin",
       "rootfs_lib": "/usr/local/lib",

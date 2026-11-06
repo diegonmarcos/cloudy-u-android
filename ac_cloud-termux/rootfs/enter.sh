@@ -219,7 +219,7 @@ fi
 
 # startup-step: rish_bridge
 # build.json::shizuku_client (the block keeps its name) — the rish bridge into the rootfs. ShellRish
-# (libs:shell-client, #1512) writes `rish` + `rish.env` (the in-process relay's loopback URL and a
+# (libs:shell-rish, #1512) writes `rish` + `rish.env` (the in-process relay's loopback URL and a
 # per-process token) into $HERE/rish on launch; bind them so a shell INSIDE proot runs allowlisted
 # commands at adb-shell (uid 2000) privilege through the SuperApp's shell broker (app_process cannot
 # run in here, no /system is bound; the relay forwards under this terminal's own allowlist entry).

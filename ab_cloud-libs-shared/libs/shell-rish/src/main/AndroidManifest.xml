@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- #1512 libs:shell-rish: no component at all (the relay is a plain loopback socket in the app's process). -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" />

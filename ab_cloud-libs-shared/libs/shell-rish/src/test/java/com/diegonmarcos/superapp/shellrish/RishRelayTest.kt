@@ -1,5 +1,7 @@
-package com.diegonmarcos.superapp.shellclient
+package com.diegonmarcos.superapp.shellrish
 
+import com.diegonmarcos.superapp.shellclient.ShellResult
+import com.diegonmarcos.superapp.shellclient.ShellWire
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

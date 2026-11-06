@@ -1,7 +1,6 @@
 package com.diegonmarcos.superapp.launcher
 
 import android.os.Bundle
-import android.view.View
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -78,6 +77,10 @@ class SectionTabsFragment : KitComposeFragment(), Collapsible, BackHandler {
     private val paneIds = intArrayOf(
         R.id.section_pane_0, R.id.section_pane_1, R.id.section_pane_2, R.id.section_pane_3,
     )
+
+    /** The pane hosts Compose has created and not yet released, by pane index: the guard in [render] reads this instead of
+     *  looking a view up by id, so the fragment stays free of View lookups (compose ratchet, #773). */
+    private val paneHosts = arrayOfNulls<FragmentContainerView>(paneIds.size)
 
     /** Index of the tab the user last selected; the pane [Collapsible] talks
      *  to when several are on screen. */
@@ -202,7 +205,8 @@ class SectionTabsFragment : KitComposeFragment(), Collapsible, BackHandler {
                     val pageId = if (paneCount > 1) panePages.getOrNull(i)?.id else selected
                     AndroidView(
                         modifier = Modifier.weight(1f).fillMaxSize(),
-                        factory = { ctx -> FragmentContainerView(ctx).apply { id = paneIds[i] } },
+                        factory = { ctx -> FragmentContainerView(ctx).apply { id = paneIds[i]; paneHosts[i] = this } },
+                        onRelease = { if (paneHosts[i] === it) paneHosts[i] = null },
                         update = { host ->
                             if (pageId != null && shown[i] != pageId) {
                                 shown[i] = pageId
@@ -256,7 +260,7 @@ class SectionTabsFragment : KitComposeFragment(), Collapsible, BackHandler {
      *  on a phone would. */
     private fun render(index: Int, pageId: String) {
         // Guard: never add into a pane whose container is not in the view tree (skip and log; the next update re-renders).
-        if (view?.findViewById<View>(paneIds[index]) == null) {
+        if (paneHosts[index] == null) {
             android.util.Log.w("SectionTabs", "pane $index has no container; skipping $pageId")
             return
         }

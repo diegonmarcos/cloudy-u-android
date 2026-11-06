@@ -1,5 +1,8 @@
-package com.diegonmarcos.superapp.shellclient
+package com.diegonmarcos.superapp.shellrish
 
+import com.diegonmarcos.superapp.shellclient.ShellClient
+import com.diegonmarcos.superapp.shellclient.ShellResult
+import com.diegonmarcos.superapp.shellclient.ShellWire
 import java.io.BufferedInputStream
 import java.net.InetAddress
 import java.net.ServerSocket
@@ -12,7 +15,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 /**
  * #1512 The terminals' `rish`, broker-backed. `rish` runs inside the terminal's proot (no binder, no app_process, no ART), so it cannot
  * call the broker itself: it speaks one loopback HTTP request to THIS relay, which lives in the terminal's own process and forwards to
- * the broker through [ShellClient] under the TERMINAL's own allowlist entry (the binder uid, never a string `rish` typed). The relay
+ * the broker through [ShellClient] (libs:shell-client) under the TERMINAL's own allowlist entry (the binder uid, never a string `rish` typed). The relay
  * therefore grants nothing the terminal app does not already have: the allowlist decides, default deny.
  *
  *  - loopback only (127.0.0.1, ephemeral port), a fresh random bearer token per process, written 0600 into the session's rish.env;

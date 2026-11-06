@@ -617,7 +617,7 @@ mutate guard-loud build.json 's.replace("\"max_amplitude\": 0.5", "\"max_amplitu
 mutate no-sound-use build.json 's.replace("\"sound\": \"typesafe/jev-1.13\"", "\"noise\": \"typesafe/jev-1.13\"")' "C12 build.json::jev must declare identify.sound"
 
 mutate camera-undeclared app/src/main/AndroidManifest.xml 's.replace("<uses-permission android:name=\"android.permission.CAMERA\" />", "")' "C13 the manifest does not declare CAMERA"
-mutate camera-elsewhere "$J/ui/ModeScreens.kt" 's + "\nprivate fun peek(l: androidx.activity.result.ActivityResultLauncher<String>) = l.launch(android.Manifest.permission.CAMERA)\n"' "C13 CAMERA must be asked for by ui/CameraScreens.kt alone"
+mutate camera-elsewhere "$J/ui/ModeScreens.kt" 's + "\nprivate fun peek(l: androidx.activity.result.ActivityResultLauncher<String>) = l.launch(android.Manifest.permission.CAMERA)\n"' "C13 CAMERA must be asked for in Configs > Perms alone"
 mutate arcore-required app/src/main/AndroidManifest.xml 's.replace("android:name=\"com.google.ar.core\" android:value=\"optional\"", "android:name=\"com.google.ar.core\" android:value=\"required\"")' "C13 ARCore must be declared optional"
 mutate second-engine-door "$J/ui/CameraScreens.kt" 's + "\nprivate fun door(c: android.content.Context) = com.diegonmarcos.superapp.image.mlkit.ImageScanEngine(c)\n"' "C13 ImageScanEngine( must be made by camera/Vision.kt alone"
 mutate image-op-dropped "$J/debugapi/CameraDebugApi.kt" 's.replace("\"recognize\" -> recognize(app, q).toString()", "")' "C13 /api/<image_group>/recognize"

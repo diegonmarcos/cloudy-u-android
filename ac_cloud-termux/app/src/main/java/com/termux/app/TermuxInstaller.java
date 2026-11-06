@@ -311,7 +311,7 @@ final class TermuxInstaller {
         Logger.logInfo(LOG_TAG, "Bootstrap packages installed successfully.");
         // Installing replaced $PREFIX, and with it the rish export TermuxApplication made at launch.
         try {
-            com.diegonmarcos.superapp.shellclient.ShellRish.export(context, CloudRootfs.loginDir());
+            com.diegonmarcos.superapp.shellrish.ShellRish.export(context, CloudRootfs.loginDir());
         } catch (RuntimeException e) {
             Logger.logStackTraceWithMessage(LOG_TAG, "Re-exporting rish after the bootstrap failed", e);
         }

@@ -1,0 +1,34 @@
+// #1512 libs:shell-rish: `rish` for the two terminals (Cloud Terminal, Cloud Nix terminal): the in-process loopback relay (RishRelay) and the
+// launcher writer (ShellRish), split out of libs:shell-client so the six apps that only need a shell do not compile the terminal bridge.
+// Its one dependency is libs:shell-client (the broker client the relay answers through).
+apply plugin: 'com.android.library'
+if (project.extensions.findByName('kotlin') == null) {
+    apply plugin: 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.diegonmarcos.superapp.shellrish'
+    compileSdk 36
+    defaultConfig { minSdk 26 }
+    testOptions { unitTests.includeAndroidResources = true }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+// jvmTarget via the top-level `kotlin` extension (AGP 9 removed android.kotlinOptions), as libs:shell-client does.
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
+dependencies {
+    api project(':libs:shell-client')
+    testImplementation 'junit:junit:4.13.2'
+    // Android ships org.json; the JVM test classpath does not (ShellResult/ShellWire in libs:shell-client use it).
+    testImplementation 'org.json:json:20250107'
+    testImplementation 'org.robolectric:robolectric:4.16.1'
+    testImplementation 'androidx.test:core:1.6.1'
+}

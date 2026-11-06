@@ -1,9 +1,9 @@
 #!/bin/sh
 # #1512 Both Cloud Terminals reach the privileged shell through the SuperApp's shell broker, NOT a Shizuku client or an ADB channel of
-# their own. `rish` (inside the proot) talks to a loopback relay in the terminal app's process (libs:shell-client ShellRish/RishRelay),
+# their own. `rish` (inside the proot) talks to a loopback relay in the terminal app's process (libs:shell-rish ShellRish/RishRelay),
 # which asks the broker under the terminal's own allowlist entry. Asserts, for ac_cloud-termux AND ac_cloud-nix-on-droid:
 #   - neither app links libs:shizuku-adb-debug-tools, declares ShizukuProvider or queries the Shizuku package;
-#   - both link libs:shell-client (settings.gradle + app/build.gradle) and export rish on launch via ShellRish;
+#   - both link libs:shell-client and libs:shell-rish (settings.gradle + app/build.gradle) and export rish on launch via ShellRish;
 #   - both have a broker allowlist entry under their application id;
 #   - rish + its env are bound into the rootfs on enter (termux: enter.sh + install-in-rootfs.sh; nix: bake patch_bin_login_rish from binds[]);
 #   - the relay is loopback-only with a per-process token and the launcher carries no secret.
@@ -14,7 +14,7 @@ DIR="$(cd "$(dirname "$0")/.." && pwd)"                    # ac_cloud-termux
 ANDROID="$(cd "$DIR/.." && pwd)"                           # cloud-u-android
 TERMUX="$DIR"
 NIX="$ANDROID/ac_cloud-nix-on-droid"
-LIB="$ANDROID/ab_cloud-libs-shared/libs/shell-client/src/main/java/com/diegonmarcos/superapp/shellclient"
+LIB="$ANDROID/ab_cloud-libs-shared/libs/shell-rish/src/main/java/com/diegonmarcos/superapp/shellrish"
 ALLOW="$ANDROID/ab_cloud-libs-shared/libs/shell-broker/src/main/assets/shell-allowlist.json"
 
 fails=0
@@ -32,6 +32,8 @@ for pair in "termux:$TERMUX:cld.termux" "nix:$NIX:cld.termux.nix"; do
     hasnt "$repo/app/src/main/AndroidManifest.xml" 'moe.shizuku.privileged.api' "[$name] manifest queries no Shizuku package"
     has "$repo/settings.gradle" ":libs:shell-client" "[$name] settings.gradle includes libs:shell-client"
     has "$repo/app/build.gradle" 'project(":libs:shell-client")' "[$name] app depends on libs:shell-client"
+    has "$repo/settings.gradle" ":libs:shell-rish" "[$name] settings.gradle includes libs:shell-rish"
+    has "$repo/app/build.gradle" 'project(":libs:shell-rish")' "[$name] app depends on libs:shell-rish"
     has "$repo/app/src/main/java/com/termux/app/TermuxApplication.java" 'ShellRish' "[$name] exports rish through ShellRish on launch"
     hasnt "$repo/app/src/main/java/com/termux/app/TermuxApplication.java" 'RishBridge' "[$name] no RishBridge left"
     has "$repo/app/src/main/java/com/termux/app/activities/SettingsActivity.java" 'ShellClient.Companion.arm' "[$name] the settings entry opens the SuperApp's arm flow"

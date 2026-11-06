@@ -128,7 +128,8 @@
     "health",
     "autofill",
     "shell-broker",
-    "shell-client"
+    "shell-client",
+    "shell-rish"
    ]
   },
   {

@@ -75,7 +75,7 @@ public class TermuxApplication extends Application {
         // export `rish` + its env (relay URL, random token) under $PREFIX so bin/login (patched by
         // bake_default_packages.patch_bin_login_rish, mirroring the #758 DNS bind) binds them into the rootfs; a shell
         // inside proot then runs allowlisted commands at adb-shell privilege through the broker, under this terminal's entry.
-        com.diegonmarcos.superapp.shellclient.ShellRish.export(
+        com.diegonmarcos.superapp.shellrish.ShellRish.export(
             this, new java.io.File(getFilesDir(), "usr"));
 
         // Init app wide SharedProperties loaded from termux.properties

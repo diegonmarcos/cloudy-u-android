@@ -2,7 +2,7 @@ package com.termux.app;
 
 import android.app.Application;
 
-import com.diegonmarcos.superapp.shellclient.ShellRish;
+import com.diegonmarcos.superapp.shellrish.ShellRish;
 import com.termux.cloud.AgentAuth;
 import com.termux.cloud.CloudRootfs;
 import com.termux.cloud.CloudTermuxProperties;
