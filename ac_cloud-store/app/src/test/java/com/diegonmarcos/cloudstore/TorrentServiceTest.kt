@@ -4,7 +4,6 @@ import android.app.Application
 import android.app.NotificationManager
 import android.content.Intent
 import android.os.Looper
-import android.os.PowerManager
 import androidx.test.core.app.ApplicationProvider
 import com.diegonmarcos.superapp.torrent.MemorySettings
 import com.diegonmarcos.superapp.torrent.MemoryStore
@@ -25,6 +24,7 @@ import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
+import org.robolectric.shadows.ShadowPowerManager
 import java.io.File
 
 /** The torrent foreground service: starts on an active add, keeps the engine alive, updates the notification, stops when downloads end. */
@@ -98,12 +98,11 @@ class TorrentServiceTest {
     @Test fun locksAreHeldOnlyWhileBytesMoveAndReleasedAtOnce() {
         engine.addMagnet("magnet:?xt=urn:btih:$h&dn=x")
         val c = startService()
-        val pm = shadowOf(app.getSystemService(PowerManager::class.java))
-        await("wakelock held while downloading") { pm.latestWakeLock?.isHeld == true }
+        await("wakelock held while downloading") { ShadowPowerManager.getLatestWakeLock()?.isHeld == true }
         session.raw[h] = session.raw.getValue(h).copy(phase = Phase.FINISHED, progress = 1f)
         shadowOf(Looper.getMainLooper()).idleFor(java.time.Duration.ofSeconds(3))
         await("service stopped") { shadowOf(c.get()).isStoppedBySelf }
-        assertFalse("wakelock released when downloads finish", pm.latestWakeLock?.isHeld == true)
+        assertFalse("wakelock released when downloads finish", ShadowPowerManager.getLatestWakeLock()?.isHeld == true)
     }
 
     @Test fun stopsItselfWhenAllPaused() {

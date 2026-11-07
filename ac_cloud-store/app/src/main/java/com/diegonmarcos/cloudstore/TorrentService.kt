@@ -54,11 +54,11 @@ class TorrentService : Service() {
             ServiceCompat.startForeground(this, NOTE_ID, build(TorrentActivity(0, 0, -1f, 0, 0)),
                 if (Build.VERSION.SDK_INT >= 29) ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC else 0)
         }.onFailure { stopSelf(); return START_NOT_STICKY }
-        val engine = engineOf(this)
+        val tor = engineOf(this)
         when (intent?.action) {
-            ACTION_PAUSE_ALL -> worker.execute { engine.pauseAll(); main.post { poll() } }
+            ACTION_PAUSE_ALL -> worker.execute { tor.pauseAll(); main.post { poll() } }
             ACTION_STOP -> worker.execute {
-                engine.activeIds().forEach { engine.pause(it) }
+                tor.activeIds().forEach { tor.pause(it) }
                 main.post { finish() }
             }
         }
@@ -151,8 +151,8 @@ class TorrentService : Service() {
         @Volatile var engineOf: (Context) -> TorrentEngine = { TorrentEngines.get(it) }
 
         /** Starts the service when the engine has a download; does nothing at idle or while it already runs. */
-        fun sync(ctx: Context, engine: TorrentEngine = engineOf(ctx)) {
-            if (running || !engine.activity().keepAlive) return
+        fun sync(ctx: Context, tor: TorrentEngine = engineOf(ctx)) {
+            if (running || !tor.activity().keepAlive) return
             start(ctx)
         }
 
