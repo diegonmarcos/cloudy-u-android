@@ -173,6 +173,8 @@ class BrowserHostFragment : Fragment() {
     /** The host view (a ComposeView): what a Snackbar anchors to. */
     private var hostView: View? = null
     private var webView: WebView? = null
+    /** Pull-down-to-refresh around [webView]; the page client stops its spinner when the load ends or fails. */
+    private var pullRefresh: androidx.swiperefreshlayout.widget.SwipeRefreshLayout? = null
     /** The tab [webView] shows: what a snapshot taken when the page is left is filed under. */
     private var webTabKey: String? = null
     /** Tab-switcher snapshots (build.json::ui.browser.tab_thumbnails): one cache per process. */
@@ -1048,8 +1050,19 @@ class BrowserHostFragment : Fragment() {
                     onCommitted(tabKey, view, visitedUrl)
                 }
 
+                override fun onPageCommitVisible(view: WebView?, url: String?) {
+                    super.onPageCommitVisible(view, url)
+                    pullRefresh?.isRefreshing = false
+                }
+
+                override fun onReceivedError(view: WebView?, request: android.webkit.WebResourceRequest?, error: android.webkit.WebResourceError?) {
+                    super.onReceivedError(view, request, error)
+                    if (request?.isForMainFrame != false) pullRefresh?.isRefreshing = false
+                }
+
                 override fun onPageFinished(view: WebView?, finishedUrl: String?) {
                     super.onPageFinished(view, finishedUrl)
+                    pullRefresh?.isRefreshing = false
                     val u = finishedUrl ?: return
                     view?.let { onWebPageFinished?.invoke(it) }
                     // #1141 desktop view: the layout viewport is a desktop width even if the page's meta viewport says device-width.
@@ -1875,6 +1888,27 @@ class BrowserHostFragment : Fragment() {
 
     // ── #802 the declared menu, its actions, and the live-page host ───────
 
+    /**
+     * Pull down at the very top of the page to reload it. The refresh layout only claims the drag while the page cannot
+     * scroll up further (the child-scroll-up callback), so the page still scrolls normally.
+     */
+    private fun pullRefreshAround(ctx: android.content.Context, wv: WebView): View {
+        (wv.parent as? ViewGroup)?.removeView(wv)
+        val accent = config.palette["accent"] ?: 0xFF7C3AED.toInt()
+        val surface = config.palette["surface"] ?: 0xFF1A0033.toInt()
+        return androidx.swiperefreshlayout.widget.SwipeRefreshLayout(ctx).also { sr ->
+            sr.addView(wv, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+            sr.setColorSchemeColors(accent)
+            sr.setProgressBackgroundColorSchemeColor(surface)
+            sr.setOnChildScrollUpCallback { _, _ -> wv.scrollY > 0 || wv.canScrollVertically(-1) }
+            sr.setOnRefreshListener {
+                wv.reload()
+                sr.postDelayed({ sr.isRefreshing = false }, 15_000)   // safety net: never spin forever
+            }
+            pullRefresh = sr
+        }
+    }
+
     private fun palette(): KitPalette {
         val c = config.palette
         fun r(k: String, d: Int) = c[k] ?: d
@@ -2046,7 +2080,7 @@ class BrowserHostFragment : Fragment() {
             // The page area: the WebView, and over it the suggestions panel, which is a CHILD of this frame
             // (so it sits under the bar and ends at the frame's bottom: above the keyboard, never over it).
             Box(Modifier.weight(1f).fillMaxWidth()) {
-                AndroidView(factory = { sc.webView }, modifier = Modifier.fillMaxSize())
+                AndroidView(factory = { ctx -> pullRefreshAround(ctx, sc.webView) }, modifier = Modifier.fillMaxSize())
                 BrowserSuggestOverlay(suggestState, onPick = { s -> pickSuggestion(s) }, onDismiss = { dismissSuggestions() })
                 Column(Modifier.align(Alignment.BottomStart)) {
                     ac.chooser.value?.let { AcChooserSheet(it, onFill = { c -> ac.chooserFill(c) }, onDismiss = { ac.chooserDismiss() }) }
@@ -2757,6 +2791,7 @@ class BrowserHostFragment : Fragment() {
             runCatching { it.destroy() }
         }
         webView = null
+        pullRefresh = null
     }
 
     override fun onDestroyView() {

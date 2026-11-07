@@ -35,8 +35,8 @@ def check(root, ok):
     for bad in ("AutoCompleteTextView", "ListPopupWindow", "showDropDown", "setDropDownBackgroundDrawable"):
         ok(bad not in allsrc, "U1 no %s in the browser or the app" % bad)
     ok("PopupWindow(" not in allsrc, "U1 no PopupWindow")
-    ok("BrowserSuggestOverlay(suggestState" in frag and "AndroidView(factory = { sc.webView }" in frag, "U2 the panel is a child of the frame under the bar")
-    ok(0 <= frag.find("AndroidView(factory = { sc.webView }") < frag.find("BrowserSuggestOverlay(suggestState"), "U2 the panel sits OVER the page, in the page frame")
+    ok("BrowserSuggestOverlay(suggestState" in frag and "AndroidView(factory = { ctx -> pullRefreshAround(ctx, sc.webView) }" in frag, "U2 the panel is a child of the frame under the bar")
+    ok(0 <= frag.find("AndroidView(factory = { ctx -> pullRefreshAround(ctx, sc.webView) }") < frag.find("BrowserSuggestOverlay(suggestState"), "U2 the panel sits OVER the page, in the page frame")
     ok("BoxWithConstraints" in panel and "heightIn(max = maxHeight)" in panel, "U2 its height is capped by the frame, so it ends above the keyboard")
     ok("LazyColumn(modifier)" in panel, "U2 a long list scrolls")
     ok("clickable(onClick = onDismiss)" in panel, "U2 a tap on the dimmed page dismisses it")
@@ -78,7 +78,7 @@ FRAG = LIB + "/BrowserHostFragment.kt"
 PANEL = LIB + "/BrowserSuggestPanel.kt"
 main("url bar", check, [
     ("the popup dropdown comes back", FRAG, "private val suggestState = SuggestState()", "private val suggestState = SuggestState()\n    private val rogue = android.widget.AutoCompleteTextView(null)", "no AutoCompleteTextView"),
-    ("the panel leaves the page frame", FRAG, "AndroidView(factory = { sc.webView }", "AndroidView(factory = { sc.webViewX }", "child of the frame"),
+    ("the panel leaves the page frame", FRAG, "AndroidView(factory = { ctx -> pullRefreshAround(ctx, sc.webView) }", "AndroidView(factory = { ctx -> pullRefreshAround(ctx, sc.webViewX) }", "child of the frame"),
     ("the panel grows past the frame", PANEL, "heightIn(max = maxHeight)", "heightIn(max = 4000.dp)", "capped by the frame"),
     ("the list stops scrolling", PANEL, "LazyColumn(modifier)", "Column(modifier)", "scrolls"),
     ("the scrim stops dismissing", PANEL, "clickable(onClick = onDismiss)", "clickable(onClick = {})", "dimmed page dismisses"),

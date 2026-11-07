@@ -141,7 +141,7 @@ check(not leaks,
 # ── 6. suggestion dropdown, drawing on local sources ─────────────────
 # #886 the dropdown is a Compose panel laid out IN the page area (a child of the frame holding the
 # WebView), not an AutoCompleteTextView's PopupWindow, which landed on top of the bar and the keyboard.
-check(has("BrowserHostFragment", "BrowserSuggestOverlay(suggestState", "AndroidView(factory = { sc.webView }"),
+check(has("BrowserHostFragment", "BrowserSuggestOverlay(suggestState", "AndroidView(factory = { ctx -> pullRefreshAround(ctx, sc.webView) }"),
       "6: the address field has a dropdown, drawn inside the page frame")
 check(not has("BrowserHostFragment", "AutoCompleteTextView") and not has("BrowserHostFragment", "showDropDown("),
       "6: no PopupWindow dropdown is left to overlap the bar or the keyboard")
