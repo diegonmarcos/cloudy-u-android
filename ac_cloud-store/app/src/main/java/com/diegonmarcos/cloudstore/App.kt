@@ -84,8 +84,11 @@ class App : Application() {
         Thread({
             runCatching {
                 val engine = com.diegonmarcos.superapp.torrent.TorrentEngines.get(this)
+                engine.onDownloadStarted = { TorrentService.start(this) }
                 engine.start()
                 engine.startPolling()
+                // Downloads remembered from the last run resume here: the service runs only if one is active.
+                TorrentService.sync(this, engine)
             }.onFailure { Log.w(TAG, "torrent engine not started", it) }
         }, "torrent-start").start()
     }

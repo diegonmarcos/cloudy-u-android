@@ -33,6 +33,13 @@ class TorrentEngine(
     private val totals = HashMap<String, Long>()
     private var loaded = false
 
+    /** Called after a torrent is added or resumed (a download may have begun): the host starts its download service here. Never throws into the engine. */
+    @Volatile var onDownloadStarted: (() -> Unit)? = null
+    private fun downloadStarted() { runCatching { onDownloadStarted?.invoke() } }
+
+    /** What the downloads are doing right now, for the background service ([TorrentActivity.keepAlive] is its run condition). */
+    @Synchronized fun activity(): TorrentActivity = TorrentActivity.of(refresh())
+
     private fun loadOnce() { if (!loaded) { loaded = true; store.load().forEach { entries[it.id] = it } } }
 
     private fun persist() { runCatching { store.save(entries.values.toList()) } }
@@ -131,6 +138,7 @@ class TorrentEngine(
         }
         entries[id] = TorrentEntry(id, name, magnet, file, dir.path, clock(), paused, settings.seedAfterComplete, false)
         persist()
+        if (!paused) downloadStarted()
         return AddResult.Added(id)
     }
 
@@ -220,6 +228,7 @@ class TorrentEngine(
         val e = entries[id] ?: return false
         if (state is EngineState.Running) runCatching { backend.resume(id) }
         entries[id] = e.copy(paused = false, seed = e.seed || e.completed); persist()
+        if (!e.completed) downloadStarted()
         return true
     }
 
@@ -242,6 +251,9 @@ class TorrentEngine(
         if (e.completed && !e.paused && state is EngineState.Running) runCatching { if (enabled) backend.resume(id) else backend.pause(id) }
         return true
     }
+
+    /** Ids of the torrents that are downloading right now. */
+    @Synchronized fun activeIds(): List<String> = refresh().filter { it.active }.map { it.id }
 
     @Synchronized fun pauseAll() { entries.keys.toList().forEach { pause(it) } }
     @Synchronized fun resumeAll() { entries.keys.toList().forEach { resume(it) } }

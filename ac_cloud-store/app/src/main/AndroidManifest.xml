@@ -31,6 +31,10 @@
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <!-- Torrent download service (TorrentService): the ongoing notification (asked first run, Configs > Perms) and the brief wake/wifi
+         lock held only while bytes are moving. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
     <!-- #1600 Torrent: the download folder (Downloads/Cloudy-store/Torrent, or an external drive) is written by libtorrent with plain file
          I/O, which Android 11+ allows in shared storage only with all-files access. It is granted in Configs > Perms (libs:perms, catalogue
          id all_files, listed in build.json::perms.needs) and the Torrent pages degrade to the app's own folder, with the reason, without it.
@@ -103,6 +107,11 @@
              record of what the app runs, and the merger folds the two. -->
         <service
             android:name="com.diegonmarcos.superapp.updater.BatchForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+        <!-- Torrent downloads keep running with the Store closed: dataSync foreground service, alive only while a torrent is downloading. -->
+        <service
+            android:name=".TorrentService"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
         <!-- #903 WorkManager's own foreground service runs the download/install
