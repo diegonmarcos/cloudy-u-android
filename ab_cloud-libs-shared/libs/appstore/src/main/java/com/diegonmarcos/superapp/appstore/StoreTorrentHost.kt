@@ -50,15 +50,42 @@ object StoreTorrentHost {
         return if (i == 0) "$bytes B" else String.format(java.util.Locale.US, "%.1f %s", v, units[i])
     }
 
-    /** The data line of a result, every field always present ("—" when the indexer does not say): S, L, size, date, category, files. */
-    fun line(h: Hit): String = listOf(
-        "S " + (if (h.seeders >= 0) h.seeders.toString() else DASH),
-        "L " + (if (h.leechers >= 0) h.leechers.toString() else DASH),
-        if (h.sizeBytes >= 0) sizeText(h.sizeBytes) else DASH,
-        if (h.addedAt > 0) java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).apply { timeZone = java.util.TimeZone.getTimeZone("UTC") }.format(java.util.Date(h.addedAt * 1000)) else DASH,
-        h.category ?: DASH,
-        if (h.files >= 0) "${h.files} file" + (if (h.files == 1) "" else "s") else DASH,
-    ).joinToString(" · ")
+    /** The table's columns, in order. */
+    enum class Col(val label: String, val textFirst: Boolean) {
+        NAME("Name", true), SIZE("Size", false), SEEDERS("S", false), LEECHERS("L", false), SOURCE("Source", true),
+        AGE("Age", false), CATEGORY("Category", true), FILES("Files", false)
+    }
+
+    /** The first click on a column: text columns A to Z, figures biggest first (Age: newest first). */
+    fun defaultDescending(c: Col): Boolean = !c.textFirst
+
+    /** [hits] ordered by column [c]. A hit with no value for it (-1, 0, blank) is listed after the known ones in either direction. Stable. */
+    fun sorted(hits: List<Hit>, c: Col, descending: Boolean): List<Hit> {
+        fun num(h: Hit): Long? = when (c) {
+            Col.SIZE -> h.sizeBytes.takeIf { it >= 0 }; Col.SEEDERS -> h.seeders.toLong().takeIf { it >= 0 }
+            Col.LEECHERS -> h.leechers.toLong().takeIf { it >= 0 }; Col.AGE -> h.addedAt.takeIf { it > 0 }
+            Col.FILES -> h.files.toLong().takeIf { it >= 0 }; else -> null
+        }
+        fun txt(h: Hit): String? = when (c) {
+            Col.NAME -> h.title; Col.SOURCE -> h.sourceLabel.ifEmpty { h.sourceId }; Col.CATEGORY -> h.category; else -> null
+        }?.takeIf { it.isNotBlank() }?.lowercase()
+        val (known, unknown) = if (c.textFirst) hits.partition { txt(it) != null } else hits.partition { num(it) != null }
+        val cmp: Comparator<Hit> = if (c.textFirst) compareBy<Hit> { txt(it)!! } else compareBy<Hit> { num(it)!! }
+        return known.sortedWith(if (descending) cmp.reversed() else cmp) + unknown
+    }
+
+    /** Age of an upload as one short word: 5m, 3h, 12d, 7mo, 2y; "—" when unknown. [now] in epoch seconds. */
+    fun ageText(addedAt: Long, now: Long = System.currentTimeMillis() / 1000): String {
+        if (addedAt <= 0) return DASH
+        val d = (now - addedAt).coerceAtLeast(0)
+        return when {
+            d < 3600 -> "${d / 60}m"; d < 86400 -> "${d / 3600}h"; d < 30 * 86400L -> "${d / 86400}d"
+            d < 365 * 86400L -> "${d / (30 * 86400)}mo"; else -> "${d / (365 * 86400L)}y"
+        }
+    }
+
+    fun seedText(n: Int) = if (n >= 0) n.toString() else DASH
+    fun filesText(n: Int) = if (n >= 0) n.toString() else DASH
 
     const val DASH = "—"
 }

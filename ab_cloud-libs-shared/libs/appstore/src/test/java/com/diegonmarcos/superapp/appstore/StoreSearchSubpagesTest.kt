@@ -43,11 +43,28 @@ class StoreSearchSubpagesTest {
         assertNull(StoreTorrentHost.host)
     }
 
-    @Test fun torrentHostFormatsResultLines() {
-        val h = StoreTorrentHost.Hit("apibay", "Ubuntu", 120, 4, 6_000_000_000L, 1_700_000_000L, null, Any(), "The Pirate Bay", "Video", 3)
-        val l = StoreTorrentHost.line(h)
-        assertEquals("S 120 · L 4 · 5.6 GB · 2023-11-14 · Video · 3 files", l)
-        assertEquals("S — · L — · — · — · — · —", StoreTorrentHost.line(StoreTorrentHost.Hit("x", "t", -1, -1, -1, 0, null, Any())))
+    private fun hit(t: String, s: Int, l: Int, size: Long, at: Long, src: String = "The Pirate Bay", cat: String? = "Video", files: Int = 3) =
+        StoreTorrentHost.Hit("x", t, s, l, size, at, null, Any(), src, cat, files)
+
+    @Test fun theTableSortsBySeedersFirstAndLeavesUnknownCellsLast() {
+        val rows = listOf(hit("low", 2, 1, 10, 100), hit("none", -1, -1, -1, 0, "YTS", null, -1), hit("high", 120, 4, 6_000_000_000L, 1_700_000_000L))
+        assertEquals(listOf("high", "low", "none"), StoreTorrentHost.sorted(rows, StoreTorrentHost.Col.SEEDERS, true).map { it.title })
+        assertEquals(listOf("low", "high", "none"), StoreTorrentHost.sorted(rows, StoreTorrentHost.Col.SEEDERS, false).map { it.title })
+        assertEquals(listOf("high", "low", "none"), StoreTorrentHost.sorted(rows, StoreTorrentHost.Col.SIZE, true).map { it.title })
+        assertEquals(listOf("high", "low", "none"), StoreTorrentHost.sorted(rows, StoreTorrentHost.Col.AGE, true).map { it.title })
+assertEquals(listOf("none", "low", "high"), StoreTorrentHost.sorted(rows, StoreTorrentHost.Col.NAME, true).map { it.title })
+        assertEquals(listOf("high", "low", "none"), StoreTorrentHost.sorted(rows, StoreTorrentHost.Col.NAME, false).map { it.title })
+        assertEquals("a text column starts A to Z, a figure biggest first", false to true,
+            StoreTorrentHost.defaultDescending(StoreTorrentHost.Col.NAME) to StoreTorrentHost.defaultDescending(StoreTorrentHost.Col.SEEDERS))
+        assertEquals(listOf("The Pirate Bay", "The Pirate Bay", "YTS"), StoreTorrentHost.sorted(rows, StoreTorrentHost.Col.SOURCE, false).map { it.sourceLabel })
+    }
+
+    @Test fun theTableHasEveryColumnAndShowsADashForAMissingField() {
+        assertEquals(listOf("Name", "Size", "S", "L", "Source", "Age", "Category", "Files"), StoreTorrentHost.Col.values().map { it.label })
+        assertEquals("—", StoreTorrentHost.sizeText(-1)); assertEquals("—", StoreTorrentHost.seedText(-1)); assertEquals("—", StoreTorrentHost.filesText(-1))
+        assertEquals("—", StoreTorrentHost.ageText(0)); assertEquals("120", StoreTorrentHost.seedText(120))
+        assertEquals("5m", StoreTorrentHost.ageText(1_000, 1_300)); assertEquals("3h", StoreTorrentHost.ageText(0 + 1, 1 + 3 * 3600L))
+        assertEquals("12d", StoreTorrentHost.ageText(1, 1 + 12 * 86400L)); assertEquals("2y", StoreTorrentHost.ageText(1, 1 + 2 * 365 * 86400L))
         assertEquals("1.5 KB", StoreTorrentHost.sizeText(1536))
     }
 }
