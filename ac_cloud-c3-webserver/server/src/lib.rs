@@ -30,6 +30,7 @@ pub mod meshlogs;
 pub mod power;
 pub mod repos;
 pub mod serving;
+pub mod sshd;
 pub mod sub;
 
 use fleet_webserver::http::{self, Req, Resp};
@@ -142,6 +143,7 @@ pub fn stop_all() {
         s.store(true, Ordering::SeqCst);
     }
     repos::host().stop_all();
+    sshd::stop();
 }
 
 /// Server ON: bind again with the config the app started with (a no-op when nothing ever called [`start`] in this process).
@@ -199,6 +201,8 @@ fn start_once(cfg: Config, stop: Arc<AtomicBool>) -> Result<(), String> {
     if let Err(e) = dns::start(stop.clone()) {
         eprintln!("c3-webserver: private DNS not started: {}", e);
     }
+    // The webserver's own sshd (door.rs): opens while its run-state is ON (default), tied to this server being up.
+    door::sync_hosted();
     // #1502 ON starts the enabled Repos sites too.
     if let Ok(rc) = repos::cfg() {
         if let Ok(entries) = repos::load(&rc.store) {

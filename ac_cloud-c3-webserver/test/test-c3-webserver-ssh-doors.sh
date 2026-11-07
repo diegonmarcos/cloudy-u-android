@@ -78,6 +78,19 @@ if 'exec ssh -p "$PORT"' not in open(os.path.join(jd, "fleet-nix")).read() or "{
 if 'exec ssh -p "$PORT"' not in open(os.path.join(jd, "fleet-termux")).read() or "{{TERMUX_PORT}}" not in open(os.path.join(jd, "fleet-termux")).read(): bad.append("H fleet-termux does not exec ssh to the declared termux port")
 if "settings put global adb_wifi_enabled" not in open(os.path.join(jd, "fleet-adb")).read() or "adb connect" not in open(os.path.join(jd, "fleet-adb")).read(): bad.append("H fleet-adb does not enable wireless debugging and connect")
 if "content call" not in open(os.path.join(jd, "fleet-ipc")).read(): bad.append("H fleet-ipc is not a wrapper over content call")
+# E embedded sshd engine (russh): listening, pubkey only, mesh gate before auth, run-state driven
+sy = rd("server/src/sshd.rs").split("#[cfg(test)]")[0]
+ct = rd("server/Cargo.toml")
+if not re.search(r'^russh\s*=.*"ring"', ct, re.M) or "aws-lc" in ct.replace("not the default aws-lc-rs", ""): bad.append("E russh must be a dep with the ring backend (no aws-lc C build)")
+if "MethodKind::PublicKey][..]" not in sy or "auth_password" in sy or "auth_keyboard_interactive" in sy: bad.append("E the engine must offer public key auth only")
+if sy.index("mesh_gate(peer.ip()") > sy.index("run_stream("): bad.append("E the mesh gate must judge the source before any SSH is spoken")
+if "auth_publickey_offered" not in sy or "authorized(&self.keys" not in sy: bad.append("E keys outside the authorized set must be refused at the offer")
+if "openpty" not in sy or "window_change_request" not in sy or "exec_request" not in sy or "channel_close" not in sy: bad.append("E PTY shell, resize, exec and teardown are required")
+dj = rd("server/src/door.rs").split("#[cfg(test)]")[0]
+if "pub fn sync_hosted" not in dj or "sshd::start" not in dj or "sshd::stop" not in dj: bad.append("E the door run-state must start and stop the listener")
+if "door::sync_hosted()" not in rd("server/src/lib.rs") or "sshd::stop()" not in rd("server/src/lib.rs"): bad.append("E the server start/stop must drive the listener")
+if len(sd["authorized_keys"]) < 2 or not any(k.startswith("ssh-rsa ") for k in sd["authorized_keys"]): bad.append("E the authorized set must carry the constellation key and the fleet MCP deploy key")
+if any("PRIVATE KEY" in k for k in sd["authorized_keys"]): bad.append("E public halves only")
 # M mesh-only
 mo = bj["ssh_doors"].get("mesh_only_from", "")
 if "mesh_sshd.mesh_only" not in mo: bad.append("M the mesh-only policy is not read from the hosting app's declaration")

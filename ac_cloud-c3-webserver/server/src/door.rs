@@ -95,8 +95,48 @@ pub fn sync_with(send: &dyn Fn(Cmd) -> Result<(), String>, up: bool, recent_star
     Ok(act)
 }
 
+/// The hosted doors' supervisor: open the embedded sshd (sshd.rs) while the door is wanted (Server ON and its own switch, default ON),
+/// close it otherwise. Needs no Android bridge. Runs at every point `sync` does, when the server starts and when it stops.
+pub fn sync_hosted() {
+    let st = power::current();
+    for d in cfg().doors.iter().filter(|d| d.hosted) {
+        let Some(port) = d.port else { continue };
+        if hosted_wanted(&st, d) && crate::running() {
+            if !crate::sshd::running() {
+                if let Err(e) = crate::sshd::start(hosted_policy(d, port)) {
+                    eprintln!("c3-webserver: sshd {} not started: {}", d.id, e);
+                }
+            }
+        } else {
+            crate::sshd::stop();
+        }
+    }
+}
+
+/// The embedded sshd's policy: its port, its OWN Mesh-only switch (read per connection), the mesh ranges and the authorized keys.
+fn hosted_policy(d: &Door, port: u16) -> crate::sshd::Policy {
+    let id = d.id.clone();
+    let dflt = d.mesh_only_default_on;
+    let mut text = cfg().authorized_keys.join("\n");
+    let dir = power::cfg().store.parent().map(|p| p.to_path_buf());
+    if let Some(dir) = &dir {
+        if let Ok(extra) = std::fs::read_to_string(dir.join("authorized_keys")) {
+            text.push('\n');
+            text.push_str(&extra);
+        }
+    }
+    crate::sshd::Policy {
+        port,
+        mesh_only: std::sync::Arc::new(move || power::current().door_mesh.get(&id).copied().unwrap_or(dflt)),
+        cidrs: cfg().mesh.cidrs.clone(),
+        keys: crate::sshd::parse_keys(&text),
+        host_key: dir.map(|d| d.join("sshd_host_ed25519")),
+    }
+}
+
 /// One supervisor pass against the real door and the installed sender. Err when there is no Android bridge yet.
 pub fn sync(force_stop: bool, reapply: bool) -> Result<Action, String> {
+    sync_hosted();
     let send = SENDER.get().ok_or_else(|| "no Android bridge installed".to_string())?;
     let up = probe(supervised().port).up;
     let recent = LAST_START.lock().map(|l| l.map(|t| t.elapsed() < START_GRACE).unwrap_or(false)).unwrap_or(false);
@@ -156,6 +196,8 @@ pub struct Cfg {
     pub timeout: Duration,
     pub discover: Vec<u16>,
     pub doors: Vec<Door>,
+    /// The hosted door's authorized public keys (OpenSSH lines), declared in build.json::ssh_doors.authorized_keys.
+    pub authorized_keys: Vec<String>,
 }
 
 fn txt(v: &Value, k: &str) -> String {
@@ -225,7 +267,11 @@ pub fn cfg_from(b: &Value) -> Result<Cfg, String> {
     if sup.port.is_none() || sup.control.is_none() {
         return Err("ssh_doors: the supervised door needs a port and a control hook".to_string());
     }
-    Ok(Cfg { mesh, timeout, discover, doors })
+    let authorized_keys: Vec<String> = d["authorized_keys"].as_array().ok_or("ssh_doors.authorized_keys must be an array")?.iter().filter_map(|k| k.as_str().map(str::to_string)).collect();
+    if doors.iter().any(|x| x.hosted) && authorized_keys.is_empty() {
+        return Err("ssh_doors.authorized_keys is empty: the hosted door would accept nobody".to_string());
+    }
+    Ok(Cfg { mesh, timeout, discover, doors, authorized_keys })
 }
 
 pub fn cfg() -> &'static Cfg {
@@ -510,6 +556,8 @@ pub fn doors_json() -> Value {
                 Some(ips) => (json!(ips.iter().map(|i| i.to_string()).collect::<Vec<_>>()), bind_verdict(&ips, &cfg().mesh.cidrs)),
             },
         };
+        // The embedded sshd enforces Mesh-only by source address (sshd.rs::mesh_gate), not by its bind: say so while it is listening.
+        let bind_state = if d.hosted && up && door_mesh_only(&st, d) { "mesh-only" } else { bind_state };
         let sessions_note = if ses.is_none() { "This Android hides /proc/net from apps: connected sessions cannot be listed." } else { "" };
         rows.push(json!({
             "id": d.id, "title": d.title, "app": d.app, "package": d.package, "engine": engine, "banner": banner,
@@ -535,7 +583,11 @@ pub fn doors_json() -> Value {
                 "sessions": sessions(*port)}));
         }
     }
-    json!({"doors": rows, "other": other, "wanted": want, "explicit": st.ssh_door, "keep_alive": st.sw.keep_alive, "server": st.sw.server,
+    let hosted: Vec<Value> = cfg().doors.iter().filter(|d| d.hosted).map(|d| {
+        let up = d.port.map(|p| probe(p).up).unwrap_or(false);
+        json!({"id": d.id, "port": d.port, "wanted": hosted_wanted(&st, d), "listening": up, "engine_running": crate::sshd::running()})
+    }).collect();
+    json!({"doors": rows, "other": other, "hosted": hosted, "wanted": want, "explicit": st.ssh_door, "keep_alive": st.sw.keep_alive, "server": st.sw.server,
            "mesh_only": mesh_only(&st), "mesh_only_explicit": st.mesh_only, "mesh_cidrs": cfg().mesh.cidrs})
 }
 
@@ -549,6 +601,7 @@ pub fn command(door: &str, op: &str) -> Result<(), String> {
             "follow" => power::set_door_on(&d.id, None),
             _ => return Err("op must be start, stop or follow".to_string()),
         }
+        sync_hosted();
         return Ok(());
     }
     if !d.supervised {

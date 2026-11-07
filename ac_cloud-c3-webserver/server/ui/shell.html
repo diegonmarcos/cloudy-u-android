@@ -218,9 +218,10 @@ function renderMeshOnly(d, cidrs) {
 // Keep alive On/Off with its live state beside it (the same switch as the Server card, /__app__/api/power).
 function renderKeepAlive(data) {
   var on = !!data.keep_alive;
+  var hs = (data.hosted || []).map(function (h) { return 'sshd :' + h.port + ' ' + (h.listening ? 'listening' : h.wanted ? 'not listening yet' : 'off'); }).join('; ');
   return '<section class="door" id="keepalive"><h2>Keep alive<span class="badge ' + (on ? 'up' : 'down') + '" id="keepalive-status">' + (on ? 'ON' : 'OFF') + '</span></h2>' +
     '<div class="tool"><b>Keep alive</b><button data-power="keep_alive" data-to="' + (on ? 'false' : 'true') + '" aria-pressed="' + (on ? 'true' : 'false') + '">' + (on ? 'ON' : 'OFF') + '</button>' +
-    '<span class="sum">Keep alive is ' + (on ? 'ON' : 'OFF') + '; the supervised door is ' + (data.wanted ? 'wanted' : 'not wanted') + '. ON keeps the server and the hosted sshd up with a notification and starts them at boot; OFF stops them when the app closes.</span></div></section>';
+    '<span class="sum">Keep alive is ' + (on ? 'ON' : 'OFF') + '; the supervised door is ' + (data.wanted ? 'wanted' : 'not wanted') + (hs ? '; ' + esc(hs) : '') + '. ON keeps the server and the hosted sshd up with a notification and starts them at boot; OFF stops them when the app closes.</span></div></section>';
 }
 function renderSshd(data) {
   return renderKeepAlive(data) + data.doors.map(function (d) { return renderDoor(d, data.mesh_cidrs); }).join('') + (data.other.length ? renderOther(data.other) : '') +

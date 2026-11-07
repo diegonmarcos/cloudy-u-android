@@ -12,6 +12,12 @@ fleet-webserver = { path = "../../ab_cloud-libs-shared/libs/fleet-webserver" }
 libc = "0.2"
 # build.json::serving is compiled in and parsed here; the same crate the Tauri build script already uses.
 serde_json = "1"
+# The webserver's OWN sshd (src/sshd.rs): russh, pure Rust, embedded in this process. `ring` (not the default aws-lc-rs, which needs
+# a C/cmake build) is the crypto backend so it cross-compiles for Android with the NDK clang the Tauri build already provides; `rsa`
+# is there because the fleet MCP's deploy key is ssh-rsa. No compression, no agent/forwarding code is used.
+russh = { version = "0.65", default-features = false, features = ["ring", "rsa"] }
+# russh's async runtime: owned by sshd.rs on its own thread, nothing else in this crate is async.
+tokio = { version = "1", default-features = false, features = ["rt-multi-thread", "net", "sync", "time", "macros", "io-util"] }
 
 [build-dependencies]
 # build.rs resolves build.json::serving's ports from their owners' build.json (no port is written twice).
