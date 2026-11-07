@@ -55,7 +55,7 @@ import kotlinx.coroutines.withContext
  *  - EXPORT: Export (save-as), Copy, Share and Post c3-api output the SELECTED apps' logs, one titled block per app.
  *
  * Reading other apps' lines takes elevation, through the plane [AboutLogcat] already uses: READ_LOGS granted once (Shizuku or a
- * paired adb `pm grant`, then in-process with nothing running), else a shell channel `logcat --uid`. The page states which is
+ * paired adb, granted on the Perms page, then in-process with nothing running), else a shell channel `logcat --uid`. The page states which is
  * in force and offers the one-time grant; when neither is reachable the pane shows the mechanism instead of failing. It never
  * execs logcat on open (an Android 13+ consent dialog) — the user taps Load.
  */
@@ -93,7 +93,6 @@ internal fun FleetLogcatScreen(
     var logs by remember { mutableStateOf<Map<String, List<LogcatModel.Rec>>>(emptyMap()) }  // package -> lines
     var status by remember { mutableStateOf("Pick the apps, then tap Load.") }
     var held by remember { mutableStateOf(AboutLogcat.holdsReadLogs(ctx)) }
-    var granting by remember { mutableStateOf(false) }
 
     fun ensureApps(then: () -> Unit = {}) {
         if (apps.isNotEmpty()) { then(); return }
@@ -121,28 +120,20 @@ internal fun FleetLogcatScreen(
 
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         // ── the reader: the mechanism in force ────────────────────────────────
-        val reader = remember(held, granting, status) {
+        val reader = remember(held, status) {
             if (held) "Reader: READ_LOGS granted — in-process, every app, nothing needs to stay running."
             else "Reader: shell channel (${com.diegonmarcos.superapp.adbdebug.ShellChannels.active(ctx)?.name() ?: "none ready"}; " +
                 "Shizuku: ${com.diegonmarcos.superapp.adbdebug.ShizukuAdb.status()}). Other apps' logs need READ_LOGS or a live channel."
         }
         Text(reader, color = if (held) p.ok else p.textSecondary, fontSize = 11.sp, modifier = Modifier.testTag("logfleet:reader"))
         if (!held) {
-            KitButton(enabled = !granting, modifier = Modifier.fillMaxWidth().testTag("logfleet:grant"), onClick = {
-                granting = true
-                scope.launch {
-                    val r = withContext(Dispatchers.IO) {
-                        com.diegonmarcos.superapp.adbdebug.ShizukuAdb.grant(ctx, "android.permission.READ_LOGS")
-                    }
-                    status = when {
-                        r.held -> "READ_LOGS granted"
-                        !r.ran -> r.output
-                        else -> "pm grant ran but the permission is still not held: ${r.output}"
-                    }
-                    granting = false
-                    held = AboutLogcat.holdsReadLogs(ctx)
-                }
-            }) { Text(if (granting) "Granting…" else "Enable all-app logs (one-time grant)", fontSize = 12.sp) }
+            // The grant itself lives on the Perms page (one place); this only takes the user there.
+            KitButton(modifier = Modifier.fillMaxWidth().testTag("logfleet:grant"), onClick = {
+                var c: android.content.Context? = ctx
+                while (c is android.content.ContextWrapper && c !is android.app.Activity) c = c.baseContext
+                (c as? com.diegonmarcos.superapp.launcher.TileGridFragment.TileClickListener)?.onTileClicked("page:config/perms")
+                held = AboutLogcat.holdsReadLogs(ctx)
+            }) { Text("Grant all-app logs on the Perms page", fontSize = 12.sp) }
         }
 
         // ── APPS: which apps' logs ────────────────────────────────────────────
