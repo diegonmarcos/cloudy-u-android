@@ -153,7 +153,7 @@ class HomeOverflowMatrixTest(private val dpi: Int, private val fontScale: Float)
         }
         // G3
         val clock = strip.first { it.tag == "strip:clock" }
-        val rightTags = setOf("strip:ram", "strip:storage", "strip:cpu", "strip:battery")
+        val rightTags = setOf("strip:ram", "strip:storage", "strip:cpu", "strip:fps", "strip:battery")
         for (b in strip) when {
             b.tag in rightTags -> assertTrue("$name: ${b.tag} (${b.l}) runs into the clock (${clock.r})", b.l >= clock.r)
             b.tag != "strip:clock" -> assertTrue("$name: ${b.tag} (${b.r}) runs into the clock (${clock.l})", b.r <= clock.l)
