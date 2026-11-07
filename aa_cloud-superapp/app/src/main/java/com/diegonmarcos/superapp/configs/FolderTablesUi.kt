@@ -37,6 +37,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -275,7 +276,7 @@ fun FolderTablesScreen(state: FolderEditorState, onSave: () -> Unit, onReset: ()
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(KitDensity.small), verticalArrangement = Arrangement.spacedBy(KitDensity.small)) {
                             for (f in section.folders) {
                                 Row(Modifier.clip(RoundedCornerShape(KitDensity.corner)).border(KitDensity.rule, p.hairline, RoundedCornerShape(KitDensity.corner))
-                                    .background(p.surface).padding(KitDensity.small).testTag(FolderTablesTags.tile(f.def.id)),
+                                    .background(p.surface).padding(KitDensity.small).semantics(mergeDescendants = true) {}.testTag(FolderTablesTags.tile(f.def.id)),
                                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(KitDensity.small)) {
                                     Box(Modifier.size(KitDensity.dot * 2).clip(RoundedCornerShape(KitDensity.dot / 2)).background(p.surfaceSelected))
                                     Text("${f.def.label} · ${f.apps.size}", color = p.textPrimary, fontSize = KitDensity.body, maxLines = 1)
