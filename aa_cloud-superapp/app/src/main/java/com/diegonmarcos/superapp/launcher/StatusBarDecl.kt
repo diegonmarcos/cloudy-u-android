@@ -26,6 +26,8 @@ data class StatusElement(
     val opens: String,
     /** The clock's SimpleDateFormat pattern (clock only). */
     val format: String? = null,
+    /** The caption drawn on the bar (R, S, C, F, BAT, 5G ...); blank for none. */
+    val short: String = "",
 )
 
 /** #1523 The speed test's endpoint and sizes (build.json::home_status_bar.network_speed.speed_test); `{bytes}` in [downloadUrl]. */
@@ -84,6 +86,7 @@ object StatusBarDecl {
                 pet = if (e.isNull("pet")) null else e.getString("pet"),
                 opens = e.getString("opens"),
                 format = if (e.has("format")) e.getString("format") else null,
+                short = e.optString("short"),
             )
         }
         require(els.map { it.id }.toSet().size == els.size) { "home_status_bar: duplicate element id" }
