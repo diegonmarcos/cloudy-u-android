@@ -15,6 +15,15 @@ Owning the terminal replaces all four with one: a bound service, guarded by a
 signature-level permission, that only APKs signed with the constellation key
 can call. This is the DECLARATIVE env — the machine is described in Nix and rebuilt from it; commands are run in the Termux fork beside it.
 
+## Agent CLIs
+
+Both coding agents are baked into the store: `claude` (nixpkgs `claude-code`) and
+`agy`, the Antigravity CLI (Google's successor to the Gemini CLI). `agy` is built by
+`app/src/main/cpp/rootfs-extras.nix` from the same pinned glibc release tarball the
+Termux rootfs installs (`ac_cloud-termux/rootfs/rootfs.json` `tarballs.agy`, hashes in
+`build.json` `extras.pins.agy`), patched to nix's loader. Authentication is a runtime
+login (`agy`), never baked.
+
 ## What we changed
 
 Nothing yet beyond vendoring. Divergence from upstream belongs in this section

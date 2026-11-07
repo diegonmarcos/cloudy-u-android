@@ -186,7 +186,7 @@
           ],
           "_doc_attrs_linux_tools": "ab_cloud-terminal-store/store.json::linux_tools -- util-linuxMinimal (flock) and diffutils (cmp) are here because linux-store, baked into this zip next to the termux tree's copy, refuses to start without them, and store.json::toolset now declares both so the same bake gate that proves jq proves them. util-linuxMinimal rather than util-linux: the same flock without systemd, ncurses or the translations (#665 keeps the image lean).",
           "_doc_attrs_737": "#737 -- zsh, gh, curl, jq, ripgrep, fd, openssh, sops, age and which are here because ab_cloud-terminal-store/store.json::toolset now declares the tool set BOTH terminals ship, and this list is how the nix terminal installs it. That supersedes the #641 audit's 'deliberately left out' for curl, openssh and ripgrep: the bar is no longer 'a shell or an agent calls it by name' but 'the terminal is a complete agent workstation on first launch', and the termux terminal already carried all of them through the fleet tool belt. python3 stays out (#665). The names on PATH are NOT listed in `binaries` below -- they come from the toolset, and render-store.py refuses a repeat; `provides` still maps each attr to them so the declaration-level gate can prove every toolset name has an attr behind it before nix runs.",
-          "_doc_attrs_1033": "#1033 -- parity with the termux terminal's tool belt. The termux rootfs carries 56 binaries, this one carried 35; the lightweight 21 attrs added here (about 30 MB compressed in all, against a 394 MB zip under the 666 MB ceiling) close that gap, and procps now also declares the ps/top/watch/vmstat/uptime it always shipped. DELIBERATE EXCEPTIONS, each measured or decided rather than forgotten: gcc and vim (tens of MB each, #665's bar), python3 (stays out, #665: 74 MB compressed), dig/host (bind drags a large closure), agy (a vendor tarball with no nixpkgs attr; termux installs it from rootfs.json). Every other termux binary is on this PATH.",
+          "_doc_attrs_1033": "#1033 -- parity with the termux terminal's tool belt. The termux rootfs carries 56 binaries, this one carried 35; the lightweight 21 attrs added here (about 30 MB compressed in all, against a 394 MB zip under the 666 MB ceiling) close that gap, and procps now also declares the ps/top/watch/vmstat/uptime it always shipped. DELIBERATE EXCEPTIONS, each measured or decided rather than forgotten: gcc and vim (tens of MB each, #665's bar), python3 (stays out, #665: 74 MB compressed), dig/host (bind drags a large closure), agy was an exception here until now; it is an extras.attrs entry built by rootfs-extras.nix from the same rootfs.json tarball. Every other termux binary is on this PATH.",
           "login_shell_attr": "fish",
           "_doc_login_shell_attr": "#641 -- which baked attr becomes the LOGIN shell. bake_default_packages.py retargets the generated usr/lib/login-inner's `usershell=\"...\"` assignment at profile_link + /bin/<this>, and hard-fails the build if that path is not a real, chmod-ed zip entry. MEASURED, not inferred: the pinned aarch64 zip (sha256 64afc02d..., byte-identical to the pin) generates usershell=\"/nix/store/q2j9ncs2b0zd7gbla21ck3jj4knpj23y-bash-5.2-p15/bin/bash\" and contains no fish binary at all (only curl's and nix's fish COMPLETIONS), which is why #594 making fish the default for cloud-terminal-termux never reached this app. Upstream's own -x guard and its `exec -l bash` fallback below the assignment are left alone, so a fish that somehow did not ship still yields a shell.",
           "_doc_attrs_audit": "#641 -- audited as a whole rather than grown one defect at a time. git/nodejs_22/claude-code are #595's original agentic payload. coreutils (#640) is ls/cat/env. fish is the login shell. bashInteractive is NOT redundant with the bash inside the zip: that one is reachable only as /bin/sh and is on no PATH, while claude-code's own Bash tool spawns `bash` by name and login-inner's last-resort `exec -l bash` also resolves by name. findutils/gnugrep/gnused/gawk/less are what git subcommands and an agent's shell calls actually invoke (git's pager IS less; without it `git log` cannot page). DELIBERATELY LEFT OUT: curl and wget (the store already carries nix's own curl and nothing in the boot path needs a fetch), gnutar/gzip (only `git archive` wants them), procps, openssh, python3, ripgrep (claude-code ships its own), and the nix-on-droid/home-manager wizard machinery this whole block exists to avoid. Each addition is ~tens of MB in a payload that is already ~370 MB, so the bar is 'a shell or an agent calls it by name', not 'it would be nice to have'.",
@@ -352,6 +352,9 @@
             "goose": [
               "goose"
             ],
+            "agy": [
+              "agy"
+            ],
             "hermes": [
               "hermes"
             ],
@@ -365,6 +368,7 @@
             "expr": "app/src/main/cpp/rootfs-extras.nix",
             "attrs": [
               "goose",
+              "agy",
               "hermes",
               "noexec-shebang",
               "fleet-webserver"
@@ -378,6 +382,13 @@
                 "hash": {
                   "amd64": "sha256-B/68i09zvf3D7OPTTQ4hsAXzpPQwCPlbhdZTjaj2usE=",
                   "arm64": "sha256-2mywBdQhsL3Lg/6Dhrpa6AYO8XrfZGQaaE1PxLnhwV8="
+                }
+              },
+              "agy": {
+                "version": "1.2.10",
+                "hash": {
+                  "amd64": "sha256-d8tpJRKSqjWwtmL5H3BPBt14e3L3kCpi24xtaSmJID4=",
+                  "arm64": "sha256-uF/W0i92PdMxv4b95f0z/Hns9qwcslS5wZRlTf1aU8="
                 }
               },
               "hermes-agent": {
@@ -401,6 +412,7 @@
             "awk",
             "less",
             "goose",
+            "agy",
             "hermes",
             "fleet-webserver",
             "hostname",

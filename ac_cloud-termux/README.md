@@ -15,6 +15,13 @@ Owning the terminal replaces all four with one: a bound service, guarded by a
 signature-level permission, that only APKs signed with the constellation key
 can call. This is the one that RUNS commands.
 
+## Agent CLIs
+
+The glibc rootfs entered through proot carries both coding agents: `claude`
+(`@anthropic-ai/claude-code`, npm global) and `agy` (Antigravity CLI, pinned release
+tarball), both declared in `rootfs/rootfs.json`. Bionic itself cannot load them; proot
+supplies the glibc root. `agy` login is a runtime step, never baked.
+
 ## What we changed
 
 Nothing yet beyond vendoring. Divergence from upstream belongs in this section

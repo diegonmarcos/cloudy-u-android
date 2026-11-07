@@ -9,7 +9,6 @@
     "python3": "#665: 74 MB compressed, deliberately out",
     "dig": "bind drags a large closure",
     "host": "bind drags a large closure",
-    "agy": "a vendor tarball with no nixpkgs attr; termux installs it from rootfs.json",
     "unison": "#1173: Cloud Drive Fsync/Mounts run in the termux guest through CLOUD_EXEC; this terminal is not that guest, and unison needs the exact version both ends run",
     "rclone": "#1173: Cloud Drive Mounts tool of the termux guest only; about 60 MB unpacked against a zip already near its size ceiling",
     "sshfs": "#1173: a FUSE mount, and proot has no /dev/fuse, so it could not run in this terminal; the termux guest owns the mounts",

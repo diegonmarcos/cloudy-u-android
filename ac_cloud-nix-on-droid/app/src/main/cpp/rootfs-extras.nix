@@ -26,6 +26,7 @@ let
 
   goose = rootfs.tarballs.goose;
   hermes = rootfs.pip_venvs."hermes-agent";
+  agy = rootfs.tarballs.agy;
   # rootfs.json keys its arch_names by docker arch, which is Go's GOARCH (amd64, arm64).
   arch = pkgs.stdenv.hostPlatform.go.GOARCH;
   fill = s: builtins.replaceStrings [ "{version}" "{arch}" ] [ goose.version goose.arch_names.${arch} ] s;
@@ -52,6 +53,30 @@ in
     nativeInstallCheckInputs = [ pkgs.versionCheckHook pkgs.writableTmpDirAsHomeHook ];
     versionCheckKeepEnvironment = [ "HOME" ];
     meta.mainProgram = "goose";
+  };
+
+  # Antigravity CLI (`agy`), the same pinned glibc release tarball the termux rootfs installs
+  # (rootfs.json tarballs.agy: version, url, arch names; hashes in build.json extras.pins.agy).
+  # No nixpkgs attr and no npm package carry it, so this is the declarative path instead of the
+  # vendor's `curl | bash`. The archive holds one self-contained glibc ELF named `antigravity`
+  # (needs only libc, hence autoPatchelf to nix's loader). Auth is a runtime login, never baked.
+  agy = pkgs.stdenv.mkDerivation {
+    pname = "agy";
+    inherit (agy) version;
+    src = pkgs.fetchurl {
+      url = builtins.replaceStrings [ "{version}" "{arch}" ] [ agy.version agy.arch_names.${arch} ] agy.url;
+      hash = (pinned "agy" agy.version).hash.${arch};
+    };
+    unpackPhase = "tar -xzf $src";
+    nativeBuildInputs = [ pkgs.autoPatchelfHook ];
+    buildInputs = [ pkgs.stdenv.cc.cc.lib ];
+    # The ELF is stripped already; a second strip/patchelf shrink pass is not wanted on 200 MB.
+    dontStrip = true;
+    installPhase = "install -Dm755 ${agy.extracted_bin} $out/bin/agy";
+    doInstallCheck = true;
+    nativeInstallCheckInputs = [ pkgs.versionCheckHook pkgs.writableTmpDirAsHomeHook ];
+    versionCheckKeepEnvironment = [ "HOME" ];
+    meta.mainProgram = "agy";
   };
 
   # The same PyPI release the termux rootfs pip-installs into its venv. Its dependencies come
