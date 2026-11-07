@@ -11,7 +11,7 @@ import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
-import androidx.core.app.NotificationCompat
+import com.diegonmarcos.superapp.core.FleetNotify
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import com.diegonmarcos.clouddrive.Declarations
@@ -162,16 +162,12 @@ class MountKeeperService : Service() {
         val flags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         val open = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java), flags)
         val stop = PendingIntent.getService(this, 1, Intent(this, MountKeeperService::class.java).setAction(ACTION_STOP), flags)
-        return NotificationCompat.Builder(this, channel)
-            .setSmallIcon(android.R.drawable.stat_notify_sync_noanim)
-            .setContentTitle(getString(R.string.mount_keeper_title))
-            .setContentText(resources.getQuantityString(R.plurals.mount_keeper_count, count, count))
-            .setOngoing(true)
-            .setOnlyAlertOnce(true)
-            .setContentIntent(open)
-            .addAction(0, getString(R.string.mount_keeper_stop), stop)
-            .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
-            .build()
+        // The fleet's keep-alive badge (FleetNotify.keepAliveNotification): ongoing, the live-mount count, a Stop action.
+        return FleetNotify.keepAliveNotification(
+            this, android.R.drawable.stat_notify_sync_noanim, getString(R.string.mount_keeper_title),
+            listOf(resources.getQuantityString(R.plurals.mount_keeper_count, count, count)), stop, open,
+            channelId = channel, stopLabel = getString(R.string.mount_keeper_stop),
+        )
     }
 
     private fun holdWake() {

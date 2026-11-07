@@ -839,6 +839,9 @@
     <string name="notif_channel_sync">Synchronizacja poczty</string>
     <string name="notif_channel_sync_desc">Utrzymuje aktywne połączenie z serwerem poczty dla natychmiastowego odbioru wiadomości.</string>
     <string name="notif_watching">W locie, wypatruję nowych wiadomości</string>
+    <string name="notif_keepalive_unread">Nieprzeczytane: %1$d</string>
+    <string name="notif_keepalive_none">Brak nieprzeczytanych</string>
+    <string name="notif_keepalive_stop">Zatrzymaj</string>
     <string name="notif_new_message">Nowa wiadomość</string>
     <string name="notif_mark_read">Oznacz jako przeczytane</string>
     <string name="notif_delete">Usuń</string>

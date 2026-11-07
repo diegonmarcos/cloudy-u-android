@@ -48,6 +48,11 @@ object StoreStages {
     init {
         // #903 the foreground service's notification IS the Store bar line.
         BatchForeground.text = { progress()?.text }
+        // The badge's body: what runs now, how many updates wait, when the last pass ended (StoreKeepAliveText).
+        BatchForeground.statusLines = { ctx ->
+            val st = StoreAuto.load(ctx)
+            StoreKeepAliveText.lines(progress()?.text, st?.let { StoreAuto.pending(it) }, st?.finishedAt ?: 0L, System.currentTimeMillis())
+        }
         BatchForeground.icon = { AppStoreHost.notificationIcon }
         BatchForeground.launch = { ctx ->
             AppStoreHost.launchActivity?.let { Intent(ctx, it).apply { AppStoreHost.launchExtras.forEach { (k, v) -> putExtra(k, v) } } }

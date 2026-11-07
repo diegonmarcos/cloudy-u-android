@@ -12,6 +12,7 @@ import android.os.IBinder
 import android.os.Looper
 import androidx.core.app.NotificationCompat
 import com.diegonmarcos.superapp.R
+import com.diegonmarcos.superapp.core.FleetNotify
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
@@ -26,10 +27,12 @@ import java.util.Locale
  * The "Weather" badge: current temperature, the day's max/min and the
  * hour-by-hour forecast for today, titled with the place name.
  *
- * A foreground service for the same reason [HealthBadgeService] is one: this
- * badge is declared persistent, and an ongoing notify from a dead process is
- * droppable. Started ONLY by [BadgeServices.ensureAll] from the declaration —
- * no bespoke start call anywhere, which is the whole point of #515.
+ * A DATA WIDGET, not a keep-alive: an ongoing notification posted with plain
+ * notify ([FleetNotify.dataWidgetBuilder]), never startForeground, so Android
+ * does not file the app under "running in the background" for it. This service
+ * is a short job: post the cached face, fetch, post, schedule the next read
+ * ([DataWidgetRuntime.scheduleNext]), stopSelf. Started ONLY by
+ * [BadgeServices.ensureAll] from the declaration, or by its own alarm.
  *
  * DATA ROUTE, and why. MET Norway (api.met.no, the model behind yr.no): no
  * API key, only an identifying User-Agent, and ONE `locationforecast/complete`
@@ -52,7 +55,6 @@ class WeatherBadgeService : Service() {
 
     private val scope = CoroutineScope(SupervisorJob())
     private val main = Handler(Looper.getMainLooper())
-    private var tick: Runnable? = null
     private val store by lazy { WeatherFixStore(this) }
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -60,37 +62,23 @@ class WeatherBadgeService : Service() {
     override fun onCreate() {
         super.onCreate()
         ensureChannel()
-        // Foreground within the first few seconds or the platform kills us —
-        // post the "reading…" face immediately, fill in when the fetch lands.
-        startForeground(NOTIF_ID, build(initialState()))
-        schedule()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        refresh()
-        return START_STICKY
+        // The cached face at once (also what a restart or a reboot shows), then the fetch fills it in.
+        runCatching { FleetNotify.post(this, NOTIF_ID, build(initialState())) }
+        refresh(startId)
+        return START_NOT_STICKY
     }
 
     override fun onDestroy() {
-        tick?.let(main::removeCallbacks)
         scope.cancel()
-        NotifyGroups.release(this, BADGE_ID)
         super.onDestroy()
     }
 
     /** Re-fetch on the declared cadence — `refresh_minutes` is a
      *  customization option, so the owner sets how often api.met.no is hit. */
-    private fun schedule() {
-        tick?.let(main::removeCallbacks)
-        val r = object : Runnable {
-            override fun run() {
-                refresh()
-                main.postDelayed(this, refreshMs())
-            }
-        }
-        tick = r
-        main.postDelayed(r, refreshMs())
-    }
+    private fun schedule() = DataWidgetRuntime.scheduleNext(this, WeatherBadgeService::class.java, NOTIF_ID, refreshMs())
 
     private fun badge(): BadgeDeclaration.Badge? =
         BadgeServices.declared.firstOrNull { it.id == BADGE_ID }
@@ -101,14 +89,13 @@ class WeatherBadgeService : Service() {
         return m.coerceIn(15L, 360L) * 60_000L
     }
 
-    private fun refresh() {
+    private fun refresh(startId: Int) {
         scope.launch {
             val state = runCatching { compute() }.getOrElse { initialState() }
             main.post {
-                runCatching {
-                    (getSystemService(NOTIFICATION_SERVICE) as NotificationManager)
-                        .notify(NOTIF_ID, build(state))
-                }
+                runCatching { FleetNotify.post(this@WeatherBadgeService, NOTIF_ID, build(state)) }
+                schedule()
+                stopSelf(startId)
             }
         }
     }
@@ -190,15 +177,9 @@ class WeatherBadgeService : Service() {
         val text = face.text
 
         val pinned = BadgeServices.pinned(this, BADGE_ID)
-        return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_stat_notify)
-            .setColor(0xFF0A0A0A.toInt())
-            .setContentTitle(title)
-            .setContentText(text)
-            .setSubText("Cloud SA - Weather")
+        return FleetNotify.dataWidgetBuilder(this, R.drawable.ic_stat_notify, title, listOf(text), channelId = CHANNEL_ID,
+                pinned = pinned, color = 0xFF0A0A0A.toInt(), subText = "Cloud SA - Weather")
             .let { nb -> BadgeModel.add(nb, face.action?.let { a -> actionPi(a)?.let { BadgeModel.Action(a.name.lowercase(), WeatherFace.iconFor(a), face.actionLabel.orEmpty(), it) } }) }
-            .setOnlyAlertOnce(true)
-            .setOngoing(pinned)
             .apply { if (pinned) setDeleteIntent(BadgeServices.repostOnDismiss(this@WeatherBadgeService, NOTIF_ID)) }
             // Weather is not sensitive — unlike the Health badge this one may
             // sit on the lockscreen, which is exactly where a forecast helps.
@@ -219,6 +200,7 @@ class WeatherBadgeService : Service() {
             .setContentIntent(BadgeClick.pi(this, BadgeClick.weatherUrl(today?.lat, today?.lon)))
             .let { NotifyGroups.attach(this, it, BADGE_ID) } // #777 group G1
             .build()
+            .apply { if (pinned) flags = flags or android.app.Notification.FLAG_NO_CLEAR or android.app.Notification.FLAG_ONGOING_EVENT }
     }
 
     /** The card's button: where the missing piece is fixed ([WeatherFace.intentFor]). */

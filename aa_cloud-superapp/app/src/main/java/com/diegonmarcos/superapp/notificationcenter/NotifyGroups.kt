@@ -154,7 +154,11 @@ object NotifyGroups {
         val nav = FloatingNavService::class.java.name
         BadgeDeclaration.badges(BadgeServices.declared).map { it.service }.filter(String::isNotBlank).distinct()
             .filterNot { BadgeServices.wanted(app, it) || (it == nav && FloatingNavService.armed) }
-            .forEach { runCatching { app.stopService(Intent(app, Class.forName(it))) } }
+            .forEach {
+                runCatching { app.stopService(Intent(app, Class.forName(it))) }
+                // A data widget's card is not tied to its service: switching it off must take the card down itself.
+                DataWidgetRuntime.of(it)?.let { w -> DataWidgetRuntime.retire(app, w) }
+            }
         runCatching { BadgeServices.ensureAll(app) }
         if (FloatingNavService.isRunning)
             runCatching { ContextCompat.startForegroundService(app, Intent(app, FloatingNavService::class.java)) }

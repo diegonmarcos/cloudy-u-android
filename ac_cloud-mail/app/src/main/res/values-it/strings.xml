@@ -829,6 +829,9 @@
     <string name="notif_channel_sync">Sincronizzazione posta</string>
     <string name="notif_channel_sync_desc">Mantiene una connessione attiva al tuo server di posta per ricevere i messaggi immediatamente.</string>
     <string name="notif_watching">In volo, in attesa di nuova posta</string>
+    <string name="notif_keepalive_unread">%1$d da leggere</string>
+    <string name="notif_keepalive_none">Nessuna posta da leggere</string>
+    <string name="notif_keepalive_stop">Ferma</string>
     <string name="notif_new_message">Nuovo messaggio</string>
     <string name="notif_mark_read">Segna come letto</string>
     <string name="notif_delete">Elimina</string>

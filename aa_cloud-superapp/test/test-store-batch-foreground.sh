@@ -60,12 +60,14 @@ done
 echo "== F1: the service enters the foreground as dataSync =="
 grep -q 'class BatchForegroundService : Service()' "$SVC" \
   && ok "BatchForegroundService is a Service in libs:updater" || bad "no BatchForegroundService"
-grep -q 'ServiceCompat.startForeground(this, BatchForeground.ID, BatchForeground.notification(this),' "$SVC" \
-  && grep -q 'ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC else 0' "$SVC" \
-  && ok "onStartCommand → ServiceCompat.startForeground(..., FOREGROUND_SERVICE_TYPE_DATA_SYNC)" \
+grep -q 'FleetNotify.startKeepAlive(this, BatchForeground.ID, BatchForeground.notification(this), FleetNotify.dataSyncType())' "$SVC" \
+  && grep -q 'ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC' "$SVC" \
+  && ok "onStartCommand → FleetNotify.startKeepAlive(..., dataSyncType()) (ServiceCompat.startForeground with FOREGROUND_SERVICE_TYPE_DATA_SYNC)" \
   || bad "the service does not start foreground with type dataSync"
-grep -q '.setOngoing(true)' "$SVC" && grep -q '.setOnlyAlertOnce(true)' "$SVC" && grep -q '.setSilent(true)' "$SVC" \
-  && ok "the notification is ongoing, silent, alerts once" || bad "the notification is not an ongoing silent one"
+# ongoing + silent + once + Stop action are FleetNotify.keepAliveNotification's (held by core's FleetNotifyTest); the Store routes through it
+grep -q 'FleetNotify.keepAliveNotification(' "$SVC" && grep -q 'setOngoing(true)' "$LIBS/core/src/main/java/com/diegonmarcos/superapp/core/FleetNotify.kt" \
+  && grep -q 'ACTION_STOP' "$SVC" \
+  && ok "the notification is the fleet keep-alive badge: ongoing, silent, alerts once, with a Stop action" || bad "the notification is not an ongoing silent one"
 grep -q 'ContextCompat.startForegroundService(app, Intent(app, BatchForegroundService::class.java))' "$SVC" \
   && grep -q 'onFailure { Log.w(TAG, "foreground service not started' "$SVC" \
   && grep -q 'Log.w("BatchForeground", "startForeground refused' "$SVC" \
@@ -106,11 +108,13 @@ python3 - "$SVC" <<'PYC' && ok "onStartCommand: startForeground first, then stop
 import re, sys
 s = open(sys.argv[1]).read()
 b = re.search(r'override fun onStartCommand\(.*?\n    \}\n', s, re.S).group(0)
-fg, flag = b.find('ServiceCompat.startForeground('), b.find('BatchForeground.foreground = true')
-late = b.find('if (!BatchForeground.isHeld()) stopSelf()')
+fg, flag = b.find('FleetNotify.startKeepAlive('), b.find('BatchForeground.foreground = true')
+late = b.rfind('if (!BatchForeground.isHeld()) stopSelf()')
 assert 0 <= fg < flag < late, (fg, flag, late)
 # the only stop before startForeground is the not-a-Store-package exit (begin() never starts it there)
 pre = b[:fg].replace('if (!BatchForeground.allowed(this)) { stopSelf(); return START_NOT_STICKY }', '')
+# the badge's Stop is a plain start of a service that is already foreground (or ends): it needs no startForeground
+pre = re.sub(r'if \(intent\?\.action == BatchForeground\.ACTION_STOP\) \{.*?\n        \}', '', pre, flags=re.S)
 assert 'stopSelf()' not in pre, "a stop before startForeground"
 
 PYC
@@ -140,7 +144,7 @@ grep -q 'BatchForeground.text = { progress()?.text }' "$STAGES" \
 grep -q 'BatchForeground.icon = { AppStoreHost.notificationIcon }' "$STAGES" \
   && grep -q 'AppStoreHost.launchActivity?.let { Intent(ctx, it)' "$STAGES" \
   && ok "the host's icon and launch target (AppStoreHost) are reused" || bad "the host's icon / launch target are not reused"
-grep -q '.setContentText(line)' "$SVC" && grep -q 'val line = runCatching { text() }.getOrNull() ?: "working…"' "$SVC" \
+grep -q 'statusLines(ctx)' "$SVC" && grep -q 'runCatching { text() }.getOrNull() ?: "working…"' "$SVC" \
   && ok "the notification draws that line" || bad "the notification does not draw the line"
 grep -q 'const val THROTTLE_MS = 1_000L' "$SVC" && grep -q 'now - lastAt >= THROTTLE_MS' "$SVC" \
   && grep -q 'UpdateProgress.addObserver(observer)' "$SVC" && grep -q 'UpdateProgress.removeObserver(observer)' "$SVC" \

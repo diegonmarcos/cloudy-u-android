@@ -833,6 +833,9 @@
     <string name="notif_channel_sync">Synchronisation</string>
     <string name="notif_channel_sync_desc">Maintient une connexion active à votre serveur de messagerie pour recevoir les messages instantanément.</string>
     <string name="notif_watching">En vol, à l\'affût des nouveaux messages</string>
+    <string name="notif_keepalive_unread">%1$d non lus</string>
+    <string name="notif_keepalive_none">Aucun message non lu</string>
+    <string name="notif_keepalive_stop">Arrêter</string>
     <string name="notif_new_message">Nouveau message</string>
     <string name="notif_mark_read">Marquer comme lu</string>
     <string name="notif_delete">Supprimer</string>

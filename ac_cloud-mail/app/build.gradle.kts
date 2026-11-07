@@ -448,6 +448,8 @@ dependencies {
     // notification needs and which merges the constellation's signature-level
     // permission into this app.
     implementation(project(":libs:updater"))
+    // The fleet's keep-alive notification builder (FleetNotify) for the push service's badge; libs:updater only `implementation`s core.
+    implementation(project(":libs:core"))
     // The fleet setup contract's handler registry (SetupStores): the signatures store is served from here.
     // libs:core `api`s it, but libs:updater only `implementation`s core, so it is not on this app's compile path.
     implementation(project(":libs:fleetconfig-model"))

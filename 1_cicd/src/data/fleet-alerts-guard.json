@@ -62,12 +62,6 @@
       "why": "Wireless-debugging pairing (Shizuku's flow): the foreground service's code-entry notification (a RemoteInput the user types the pairing code into, which a deep link cannot carry) and its dismissible pass/fail result. Not an alert about the fleet."
     },
     {
-      "path": "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/notificationcenter/HealthBadgeService.kt",
-      "kind": "badge",
-      "notify_calls": 1,
-      "why": "G1 Health badge: a foreground service re-posting its own live readout."
-    },
-    {
       "path": "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/notificationcenter/DataBadgeService.kt",
       "kind": "badge",
       "notify_calls": 1,
@@ -86,22 +80,10 @@
       "why": "G5 Network badge: a foreground service re-posting the mesh state (connection, IP, peers, traffic), event-driven plus a 30s tick while connected."
     },
     {
-      "path": "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/notificationcenter/BatteryBadgeService.kt",
-      "kind": "badge",
-      "notify_calls": 1,
-      "why": "Battery badge: a foreground service re-posting the battery state (time to full or empty, level, current, health), driven by ACTION_BATTERY_CHANGED, no timer."
-    },
-    {
       "path": "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/notificationcenter/MarketsBadgeService.kt",
       "kind": "badge",
       "notify_calls": 1,
       "why": "G1 Markets badge: a foreground service re-posting live quotes."
-    },
-    {
-      "path": "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/notificationcenter/WeatherBadgeService.kt",
-      "kind": "badge",
-      "notify_calls": 1,
-      "why": "G1 Weather badge: a foreground service re-posting today's forecast."
     },
     {
       "path": "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/notificationcenter/KdeStatusService.kt",
@@ -270,6 +252,12 @@
       "kind": "ongoing_controls",
       "notify_calls": 1,
       "why": "#1506 The one persistent indicator of Super Saving Battery Mode with its one-tap Off action: posted once when the mode is turned on and cancelled on Off, never updated. A control for the mode the user switched on, not an alert about the fleet."
+    },
+    {
+      "path": "ab_cloud-libs-shared/libs/core/src/main/java/com/diegonmarcos/superapp/core/FleetNotify.kt",
+      "kind": "badge",
+      "notify_calls": 1,
+      "why": "The shared builder of the fleet's two persistent notification kinds: FleetNotify.post is the one notify() behind a keep-alive badge refresh (the foreground-service notification of an app that is kept alive) and behind the data-widget cards (Weather, MyHealth, Battery: ongoing info posted without a foreground service). Standing status the owner re-posts, never an alert about the fleet."
     }
   ]
 }

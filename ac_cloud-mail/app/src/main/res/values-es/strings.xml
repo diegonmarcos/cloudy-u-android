@@ -829,6 +829,9 @@
     <string name="notif_channel_sync">Sincronización de correo</string>
     <string name="notif_channel_sync_desc">Mantiene una conexión activa con tu servidor de correo para recibir mensajes al instante.</string>
     <string name="notif_watching">En vuelo, atenta al correo nuevo</string>
+    <string name="notif_keepalive_unread">%1$d sin leer</string>
+    <string name="notif_keepalive_none">Sin correo sin leer</string>
+    <string name="notif_keepalive_stop">Detener</string>
     <string name="notif_new_message">Nuevo mensaje</string>
     <string name="notif_mark_read">Marcar como leído</string>
     <string name="notif_delete">Eliminar</string>

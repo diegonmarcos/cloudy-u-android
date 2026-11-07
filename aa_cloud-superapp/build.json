@@ -9839,7 +9839,7 @@
           "id": "battery_status",
           "card": {"rank": 3, "kind": "level", "accent": "#4CD964"},
           "label": "Battery",
-          "subtitle": "The battery at a glance, time first: charging shows the time until full, discharging the time until empty from the average drain since the last unplug or full charge (h:mm, labelled as an estimate; 'learning' until 2% is used or 15 min pass). Expanded: level, status and plug, current now and average, voltage, temperature, health, cycles, charge and capacity, time and percent used since the last charge, and the short-term rate. Refreshed on the battery-changed event only; nothing polls.",
+          "subtitle": "The battery at a glance, time first: charging shows the time until full, discharging the time until empty from the average drain since the last unplug or full charge (h:mm, labelled as an estimate; 'learning' until 2% is used or 15 min pass). Expanded: level, status and plug, current now and average, voltage, temperature, health, cycles, charge and capacity, time and percent used since the last charge, and the short-term rate. Refreshed on the battery-changed event while the app runs, on plug, unplug, low and okay, and by one inexact 15-minute alarm; a plain ongoing notification, not a foreground service.",
           "icon": "ic_stat_notify",
           "surface": "system_notification",
           "channel": "battery_status",

@@ -839,6 +839,9 @@
     <string name="notif_channel_sync">Синхронизация почты</string>
     <string name="notif_channel_sync_desc">Поддерживает активное подключение к почтовому серверу для мгновенного получения писем.</string>
     <string name="notif_watching">В полёте, высматриваю новые письма</string>
+    <string name="notif_keepalive_unread">Непрочитанных: %1$d</string>
+    <string name="notif_keepalive_none">Нет непрочитанных</string>
+    <string name="notif_keepalive_stop">Остановить</string>
     <string name="notif_new_message">Новое письмо</string>
     <string name="notif_mark_read">Отметить прочитанным</string>
     <string name="notif_delete">Удалить</string>

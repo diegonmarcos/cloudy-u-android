@@ -827,6 +827,9 @@
     <string name="notif_channel_sync">E-mailsynchronisatie</string>
     <string name="notif_channel_sync_desc">Houdt een actieve verbinding met je mailserver voor directe e-mail.</string>
     <string name="notif_watching">In vlucht, speurend naar nieuwe post</string>
+    <string name="notif_keepalive_unread">%1$d ongelezen</string>
+    <string name="notif_keepalive_none">Geen ongelezen post</string>
+    <string name="notif_keepalive_stop">Stop</string>
     <string name="notif_new_message">Nieuw bericht</string>
     <string name="notif_mark_read">Als gelezen markeren</string>
     <string name="notif_delete">Verwijderen</string>

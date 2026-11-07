@@ -3,21 +3,20 @@ package app.sterna.push
 import android.app.Service
 import android.content.Context
 import android.content.Intent
-import android.content.pm.ServiceInfo
-import android.os.Build
 import android.os.IBinder
 import android.util.Log
-import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import app.sterna.container
 import app.sterna.core.data.account.AccountCredentials
 import app.sterna.core.data.account.MailProtocol
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import com.diegonmarcos.superapp.core.FleetNotify
 import java.io.Closeable
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
@@ -45,17 +44,14 @@ class PushService : Service() {
         Notifications.ensureChannels(this)
         // specialUse, not dataSync: Android 15+ budgets dataSync foreground services and then
         // forcibly stops them, which silently killed push on newer devices (#11).
-        val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
-        } else {
-            0
-        }
+        val type = FleetNotify.specialUseType()
         // Android 15+ can refuse a foreground-service start outright, and the refusal lands HERE
         // rather than at the caller's startForegroundService. Left to propagate it takes the process
         // down, and the start being retried that is a crash loop (#98); swallowed,
         // [MailFetchWorker] keeps mail flowing and the account screen reports "Periodic".
         try {
-            ServiceCompat.startForeground(this, Notifications.SERVICE_ID, Notifications.serviceNotification(this), type)
+            FleetNotify.startKeepAlive(this, Notifications.SERVICE_ID, Notifications.serviceNotification(this), type)
+            refreshBadge()
         } catch (e: RuntimeException) {
             Log.w(TAG, "startForeground refused; fallback poll carries delivery", e)
             stopSelf()
@@ -70,6 +66,11 @@ class PushService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // The badge's Stop action: end the service. Mail still arrives through [MailFetchWorker]'s periodic poll.
+        if (intent?.action == ACTION_STOP) {
+            stopSelf()
+            return START_NOT_STICKY
+        }
         val gen = ++generation
         // A silent baseline reseed is allowed only on user-initiated arms, and even then only for
         // the inbox the user is looking at. Background re-arms must DIFF, or gap mail goes
@@ -77,6 +78,21 @@ class PushService : Service() {
         val userInitiated = intent?.getBooleanExtra(EXTRA_USER_INITIATED, false) ?: false
         scope.launch { reconnectAll(gen, userInitiated) }
         return START_STICKY
+    }
+
+    /** The keep-alive badge's data (unread count, latest message): re-read a moment after the last change, so a burst of
+     *  changes is one read and one notification update. Never a timer: it runs only because mail or the arm changed. */
+    @Volatile
+    private var badgeJob: Job? = null
+
+    private fun refreshBadge() {
+        badgeJob?.cancel()
+        badgeJob = scope.launch {
+            delay(BADGE_DEBOUNCE_MS)
+            val badge = runCatching { KeepAliveBadge.read(application) }.getOrNull() ?: return@launch
+            if (!isRunning) return@launch
+            runCatching { FleetNotify.post(this@PushService, Notifications.SERVICE_ID, Notifications.serviceNotification(this@PushService, badge)) }
+        }
     }
 
     /** Consecutive failed or short-lived connections per login, and when the open one opened ([ReconnectBackoff]). */
@@ -112,6 +128,7 @@ class PushService : Service() {
         // [connections] now holds every handle this arm came away with — not the same claim as
         // "this many sockets are up"; see the summary's doc in [PushController].
         Log.i(TAG, PushController.armSummary(accounts.size, groups.size, connections.size))
+        refreshBadge()
     }
 
     /** (Re)establish the single push connection for one login and fan changes out to its accounts. */
@@ -203,6 +220,7 @@ class PushService : Service() {
                 includeExtras = credentials.protocol != MailProtocol.IMAP,
             )
         }.onFailure { Log.e(TAG, "onAccountChanged failed", it) }
+        refreshBadge()
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -220,6 +238,10 @@ class PushService : Service() {
     companion object {
         private const val TAG = "PushService"
         private const val EXTRA_USER_INITIATED = "userInitiated"
+        private const val BADGE_DEBOUNCE_MS = 1_500L
+
+        /** The keep-alive badge's Stop action ([Notifications.serviceNotification]). */
+        const val ACTION_STOP = "app.sterna.push.STOP"
 
         /** Whether the service object exists. Says nothing about whether any connection is open,
          *  the reconnect loop keeping the service alive through every failure. Only the status line

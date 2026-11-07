@@ -95,7 +95,9 @@ object BadgeServices {
 
     private fun start(ctx: Context, fqcn: String): Boolean = runCatching {
         val cls = Class.forName(fqcn)
-        ContextCompat.startForegroundService(ctx, Intent(ctx, cls))
+        // A data widget (Weather, MyHealth, Battery) is no keep-alive: plain start, never a foreground service.
+        if (DataWidgetRuntime.isWidgetService(fqcn)) DataWidgetRuntime.start(ctx, cls)
+        else ContextCompat.startForegroundService(ctx, Intent(ctx, cls))
         Log.i(TAG, "ensured $fqcn")
         true
     }.getOrElse {
@@ -113,9 +115,12 @@ object BadgeServices {
      * in its onStartCommand, which re-posts. KDE and FloatingNav already did
      * this by hand; Health, Weather and Markets did not.
      */
-    fun repostOnDismiss(svc: Service, requestCode: Int): PendingIntent =
+    fun repostOnDismiss(svc: Service, requestCode: Int): PendingIntent = repostOnDismiss(svc, requestCode, svc.javaClass)
+
+    /** The same, for a data widget posted outside its (short-lived) service. */
+    fun repostOnDismiss(ctx: Context, requestCode: Int, owner: Class<*>): PendingIntent =
         PendingIntent.getService(
-            svc, requestCode, Intent(svc, svc.javaClass),
+            ctx, requestCode, Intent(ctx, owner),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
 
@@ -222,6 +227,10 @@ object BadgeServices {
             else Status(b, State.IDLE, "Posted on demand — nothing to show right now.")
         if (b.service.isBlank())
             return Status(b, State.NO_SERVICE, "No owning service is declared for this badge.")
+        // A data widget has no service to find running: its card in the shade IS its state.
+        if (DataWidgetRuntime.isWidgetService(b.service))
+            return if (live(ctx, b) != null) Status(b, State.LIVE, "Posted as an info widget (no foreground service).")
+            else Status(b, State.DEAD, "${simpleName(b.service)} has not posted its card yet, so this badge is not in the shade.")
         return if (isServiceRunning(ctx, b.service))
             Status(b, State.LIVE, "Posted by ${simpleName(b.service)}.")
         else

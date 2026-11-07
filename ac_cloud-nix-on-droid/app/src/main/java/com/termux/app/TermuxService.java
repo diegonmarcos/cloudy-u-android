@@ -42,6 +42,8 @@ import com.termux.shared.termux.shell.TermuxShellManager;
 import com.termux.shared.termux.shell.command.runner.terminal.TermuxSession;
 import com.termux.shared.termux.terminal.TermuxTerminalSessionClientBase;
 import com.termux.shared.logger.Logger;
+import com.diegonmarcos.superapp.core.FleetNotify;
+import com.diegonmarcos.superapp.core.KeepAliveStatus;
 import com.termux.shared.notification.NotificationUtils;
 import com.termux.shared.android.PermissionUtils;
 import com.termux.shared.data.DataUtils;
@@ -830,51 +832,44 @@ public final class TermuxService extends Service implements AppShell.AppShellCli
         }
 
         final boolean wakeLockHeld = mWakeLock != null;
-        if (wakeLockHeld) notificationText += " (wake lock held)";
 
+        // The fleet's keep-alive badge (FleetNotify.keepAliveNotification): ongoing, live data, a Stop action. The wake-lock
+        // toggle rides as the one extra button. #787 it toggles the user's choice: with it ON the lock follows the sessions.
+        java.util.List<String> lines = new java.util.ArrayList<>();
+        lines.add(notificationText);
+        lines.add(wakeLockHeld ? "Wake lock held" : "No wake lock");
+        if (SSHD_PORT > 0) lines.add("sshd " + SSHD_PORT + (mSshdUp == null ? " checking" : mSshdUp ? " up" : " down"));
 
-        // Set notification priority
-        // If holding a wake or wifi lock consider the notification of high priority since it's using power,
-        // otherwise use a low priority
-        int priority = (wakeLockHeld) ? Notification.PRIORITY_HIGH : Notification.PRIORITY_LOW;
-
-
-        // Build the notification
-        Notification.Builder builder =  NotificationUtils.geNotificationBuilder(this,
-            TermuxConstants.TERMUX_APP_NOTIFICATION_CHANNEL_ID, priority,
-            TermuxConstants.TERMUX_APP_NAME, notificationText, null,
-            contentIntent, null, NotificationUtils.NOTIFICATION_MODE_SILENT);
-        if (builder == null)  return null;
-
-        // No need to show a timestamp:
-        builder.setShowWhen(false);
-
-        // Set notification icon
-        builder.setSmallIcon(R.drawable.ic_service_notification);
-
-        // Set background color for small notification icon
-        builder.setColor(0xFF607D8B);
-
-        // TermuxSessions are always ongoing
-        builder.setOngoing(true);
-
-
-        // Set Exit button action
         Intent exitIntent = new Intent(this, TermuxService.class).setAction(TERMUX_SERVICE.ACTION_STOP_SERVICE);
-        builder.addAction(android.R.drawable.ic_delete, res.getString(R.string.notification_action_exit), PendingIntent.getService(this, 0, exitIntent, 0));
+        PendingIntent stopIntent = PendingIntent.getService(this, 0, exitIntent, 0);
 
-
-        // Set Wakelock button actions. #787 it toggles the user's choice: with it ON the lock follows the sessions.
         final boolean wakeLockWanted = wakeLockWanted(this);
         String newWakeAction = wakeLockWanted ? TERMUX_SERVICE.ACTION_WAKE_UNLOCK : TERMUX_SERVICE.ACTION_WAKE_LOCK;
         Intent toggleWakeLockIntent = new Intent(this, TermuxService.class).setAction(newWakeAction);
         String actionTitle = res.getString(wakeLockWanted ? R.string.notification_action_wake_unlock : R.string.notification_action_wake_lock);
         int actionIcon = wakeLockWanted ? android.R.drawable.ic_lock_idle_lock : android.R.drawable.ic_lock_lock;
-        builder.addAction(actionIcon, actionTitle, PendingIntent.getService(this, 0, toggleWakeLockIntent, 0));
+        java.util.List<FleetNotify.Action> extra = java.util.Collections.singletonList(
+            new FleetNotify.Action(actionIcon, actionTitle, PendingIntent.getService(this, 0, toggleWakeLockIntent, 0)));
 
-
-        return builder.build();
+        return FleetNotify.keepAliveNotification(this, R.drawable.ic_service_notification, TermuxConstants.TERMUX_APP_NAME,
+            lines, stopIntent, contentIntent, extra, null, 0xFF607D8B);
     }
+
+    /** One-shot probe of the sshd door (never a timer): re-posts the badge only when the answer changed. */
+    private void probeSshd() {
+        if (SSHD_PORT <= 0) return;
+        new Thread(() -> {
+            boolean up = KeepAliveStatus.portUp(SSHD_PORT);
+            if (mSshdUp == null || mSshdUp != up) {
+                mSshdUp = up;
+                try { FleetNotify.post(this, TermuxConstants.TERMUX_APP_NOTIFICATION_ID, buildNotification()); } catch (RuntimeException ignored) { }
+            }
+        }, "sshd-probe").start();
+    }
+
+    /** The mesh sshd door this app serves (build.json::mesh_sshd.port); 0 = this app hosts no sshd. */
+    private static final int SSHD_PORT = 8024;
+    private volatile Boolean mSshdUp = null;
 
     private void setupNotificationChannel() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return;
@@ -892,6 +887,7 @@ public final class TermuxService extends Service implements AppShell.AppShellCli
             requestStopService();
         } else {
             ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).notify(TermuxConstants.TERMUX_APP_NOTIFICATION_ID, buildNotification());
+            probeSshd();
         }
     }
 

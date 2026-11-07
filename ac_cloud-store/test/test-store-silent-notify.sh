@@ -223,7 +223,7 @@ mutate "a raw channel is created again" $U/BatchForegroundService.kt 'override f
 mutate "a builder posts on the legacy id" $C/FleetAlerts.kt 'NotificationCompat.Builder(ctx, channel)' 'NotificationCompat.Builder(ctx, FALLBACK_CHANNEL)' || M=$((M+1))
 mutate "a builder sets the default sound" $U/PackageInstallerReceiver.kt '.setAutoCancel(true)' '.setAutoCancel(true).setDefaults(Notification.DEFAULT_SOUND)' || M=$((M+1))
 mutate "a builder vibrates" $C/FleetAlerts.kt 'NotificationCompat.Builder(ctx, channel)' 'NotificationCompat.Builder(ctx, channel).setVibrate(longArrayOf(0, 100))' || M=$((M+1))
-mutate "a builder is no longer quiet" $U/BatchForegroundService.kt '.setSilent(true)' '' || M=$((M+1))
+mutate "a builder is no longer quiet" $C/FleetNotify.kt '.setSilent(true)' '' || M=$((M+1))
 fi
 echo "== RESULT: real tree $REAL failure(s), $M mutation(s) not caught =="
 [ "$REAL" -eq 0 ] && [ "$M" -eq 0 ]

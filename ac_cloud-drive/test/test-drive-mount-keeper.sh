@@ -30,7 +30,7 @@ chk "foregroundServiceType specialUse" grep -q 'android:foregroundServiceType="s
 chk "special-use subtype property" grep -q 'PROPERTY_SPECIAL_USE_FGS_SUBTYPE' "$MAN"
 chk "stopWithTask=false" grep -q 'android:stopWithTask="false"' "$MAN"
 chk "START_STICKY" grep -q 'return START_STICKY' "$SVC"
-chk "notification has a Stop action" grep -q 'addAction(0, getString(R.string.mount_keeper_stop)' "$SVC"
+chk "notification has a Stop action (FleetNotify.keepAliveNotification, labelled mount_keeper_stop)" grep -q 'stopLabel = getString(R.string.mount_keeper_stop)' "$SVC"
 chk "wake lock only while transfers run" grep -q 'transfers.collectLatest' "$SVC"
 
 echo "── K3 restore on boot / update ──"

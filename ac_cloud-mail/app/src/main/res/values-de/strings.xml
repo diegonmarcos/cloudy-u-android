@@ -827,6 +827,9 @@
     <string name="notif_channel_sync">E-Mail-Synchronisierung</string>
     <string name="notif_channel_sync_desc">Hält eine aktive Verbindung zu deinem Mailserver für sofortige E-Mails aufrecht.</string>
     <string name="notif_watching">Im Flug, Ausschau nach neuer Post</string>
+    <string name="notif_keepalive_unread">%1$d ungelesen</string>
+    <string name="notif_keepalive_none">Keine ungelesene Post</string>
+    <string name="notif_keepalive_stop">Stopp</string>
     <string name="notif_new_message">Neue Nachricht</string>
     <string name="notif_mark_read">Als gelesen markieren</string>
     <string name="notif_delete">Löschen</string>

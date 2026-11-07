@@ -541,12 +541,7 @@
              starts it, from the declaration. -->
         <service
             android:name=".notificationcenter.HealthBadgeService"
-            android:exported="false"
-            android:foregroundServiceType="specialUse">
-            <property
-                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="Persistent daily activity summary badge (active calories + distance) for the Cloud SuperApp" />
-        </service>
+            android:exported="false" />
         <!-- DataBadgeService - pins the persistent "Cloud SA - Data" badge (data
              used today / this month, mobile vs Wi-Fi, top apps, read through
              libs:datamanager). type=specialUse for the same reason as its
@@ -587,6 +582,19 @@
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="Persistent mesh status badge (connection, IP, peers, traffic) for the Cloud SuperApp" />
         </service>
+        <!-- Weather, MyHealth and Battery are DATA WIDGETS (FleetNotify.dataWidgetNotification): plain ongoing notifications from
+             short-lived services, no foregroundServiceType, never startForeground, so Android does not list the app under
+             "running in the background" for them. DataWidgetWakeReceiver revives the Battery card on plug / unplug / low / okay. -->
+        <receiver
+            android:name=".notificationcenter.DataWidgetWakeReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.ACTION_POWER_CONNECTED" />
+                <action android:name="android.intent.action.ACTION_POWER_DISCONNECTED" />
+                <action android:name="android.intent.action.BATTERY_LOW" />
+                <action android:name="android.intent.action.BATTERY_OKAY" />
+            </intent-filter>
+        </receiver>
         <!-- BatteryBadgeService - pins the persistent "Cloud SA - Battery"
              badge (time to full / to empty first, then level, current,
              voltage, temperature, health, cycles, capacity). type=specialUse
@@ -595,12 +603,7 @@
              only BadgeServices.ensureAll starts it, from the declaration. -->
         <service
             android:name=".notificationcenter.BatteryBadgeService"
-            android:exported="false"
-            android:foregroundServiceType="specialUse">
-            <property
-                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="Persistent battery status badge (time to full or empty, level, current, temperature) for the Cloud SuperApp" />
-        </service>
+            android:exported="false" />
         <!-- WeatherBadgeService — pins the persistent "Cloud SA - Weather"
              badge (current temp, day max/min, hourly forecast, place name;
              Open-Meteo + last-known location, no key). type=specialUse for the
@@ -611,12 +614,7 @@
              BadgeServices.ensureAll starts it, from the declaration. -->
         <service
             android:name=".notificationcenter.WeatherBadgeService"
-            android:exported="false"
-            android:foregroundServiceType="specialUse">
-            <property
-                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="Persistent today-forecast badge (current temp, day max/min, hourly) for the Cloud SuperApp" />
-        </service>
+            android:exported="false" />
 
         <!-- #517 MarketsBadgeService — pins the persistent "Cloud SA - Markets"
              badge (declared FX / crude / gold prices from Yahoo Finance).

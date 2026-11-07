@@ -1197,6 +1197,9 @@
     <string name="notif_channel_sync">Mail sync</string>
     <string name="notif_channel_sync_desc">Keeps a live connection to your mail server for instant mail.</string>
     <string name="notif_watching">In flight, watching for new mail</string>
+    <string name="notif_keepalive_unread">%1$d unread</string>
+    <string name="notif_keepalive_none">No unread mail</string>
+    <string name="notif_keepalive_stop">Stop</string>
     <string name="notif_new_message">New message</string>
     <string name="notif_mark_read">Mark read</string>
     <string name="notif_delete">Delete</string>

@@ -61,17 +61,22 @@ else:                                           print('OK')
 PY
 )" "battery_status is a declared persistent badge on its own LOW channel with off and pin switches"
 
-echo "== T2: the service is registered and foreground =="
-check "$(python3 - "$MANIFEST" <<'PY'
+echo "== T2: the service is registered, and is a data widget: NOT a foreground service =="
+check "$(python3 - "$MANIFEST" "$SVC" <<'PY'
 import re, sys
 m = open(sys.argv[1]).read()
-b = [x for x in re.findall(r'<service\b.*?</service>', m, re.S) if 'BatteryBadgeService' in x]
-if not b:                                       print('BatteryBadgeService is not in the manifest')
-elif 'android:exported="false"' not in b[0]:    print('must not be exported')
-elif 'specialUse' not in b[0]:                  print('no foregroundServiceType')
+src = '\n'.join(l for l in open(sys.argv[2]).read().split('\n') if not l.strip().startswith(('*', '//', '/*')))
+t = [x for x in re.findall(r'<service\b[^>]*>', m) if 'BatteryBadgeService' in x]
+if not t:                                       print('BatteryBadgeService is not in the manifest')
+elif 'android:exported="false"' not in t[0]:    print('must not be exported')
+elif 'foregroundServiceType' in t[0]:           print('still declares a foregroundServiceType: Android lists the app as running in the background')
+elif re.search(r'\bstartForeground\s*\(|startForegroundService', src):
+                                                print('calls startForeground: it is a data widget, not a keep-alive')
+elif 'FleetNotify.dataWidgetBuilder(' not in src:
+                                                print('not built by the shared data-widget builder')
 else:                                           print('OK')
 PY
-)" "BatteryBadgeService is a non-exported specialUse foreground service"
+)" "BatteryBadgeService is a non-exported plain service that never goes foreground (data widget)"
 
 echo "== T3: the badge reads the battery SoT and computes nothing; the SoT's math is pure =="
 check "$(python3 - "$SVC" "$MODEL" "$SOT" <<'PY'
@@ -117,7 +122,7 @@ check "$(python3 - "$SVC" "$SRC/BadgeServices.kt" <<'PY'
 import re, sys
 s = open(sys.argv[1]).read(); b = open(sys.argv[2]).read()
 if 'POST_NOTIFICATIONS' not in s:               print('never checks the grant')
-elif not re.search(r'if \(!canPost\(this\)\) return', s):
+elif not re.search(r'if \(!canPost\((this|app)\)\) return', s):
                                                 print('refresh posts without checking the grant')
 elif '"notifications"' not in b:                print('BadgeServices cannot report a missing grant')
 else:                                           print('OK')

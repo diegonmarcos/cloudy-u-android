@@ -15,6 +15,7 @@ import app.sterna.R
 import app.sterna.core.data.settings.NotificationContent
 import app.sterna.core.jmap.model.Email
 import app.sterna.ui.message.verificationCodeFromMessage
+import com.diegonmarcos.superapp.core.FleetNotify
 
 enum class MailNotificationAction { REPLY, COPY_CODE, REMIND }
 
@@ -177,14 +178,21 @@ object Notifications {
     private fun draftUri(subject: String, body: String): Uri =
         Uri.parse("mailto:?subject=${Uri.encode(subject)}&body=${Uri.encode(body)}")
 
-    fun serviceNotification(context: Context): Notification =
-        NotificationCompat.Builder(context, CHANNEL_SERVICE)
-            .setSmallIcon(R.drawable.ic_stat_mail)
-            .setContentTitle(context.getString(R.string.notif_watching))
-            .setOngoing(true)
-            .setShowWhen(false)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
-            .build()
+    /**
+     * The push service's keep-alive badge (FleetNotify.keepAliveNotification): ongoing, a Stop action, and mail data. [badge] is
+     * the unread count and the latest message ([KeepAliveBadge.read]); null is the first frame, before that read lands.
+     */
+    fun serviceNotification(context: Context, badge: KeepAliveBadge.Content? = null): Notification {
+        val shown = badge ?: KeepAliveBadge.Content(context.getString(R.string.notif_watching), emptyList())
+        val stop = PendingIntent.getService(
+            context, 0, Intent(context, PushService::class.java).setAction(PushService.ACTION_STOP), PendingIntent.FLAG_IMMUTABLE,
+        )
+        val open = PendingIntent.getActivity(context, 0, Intent(context, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
+        return FleetNotify.keepAliveNotification(
+            context, R.drawable.ic_stat_mail, shown.title, shown.lines, stop, open,
+            stopLabel = context.getString(R.string.notif_keepalive_stop),
+        )
+    }
 
     /**
      * [folderName] marks non-inbox mail (#16), null for the inbox; [mailboxId] is that folder's id,

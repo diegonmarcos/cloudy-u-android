@@ -174,11 +174,16 @@ else:
 
 # ── L3 quiet progress ────────────────────────────────────────────────────────
 n = body(B, "fun notification(ctx: Context)") or ""
-if re.search(r"SilentChannels\.ensure\(ctx, CHANNEL, [^,]+, NotificationManager\.IMPORTANCE_(LOW|MIN), progress = true\)", n):
-    ok("L3 the progress line's channel is LOW at most (MIN and silent in Cloud Store)")
+# The progress line is the fleet keep-alive badge: its channel (LOW, made through SilentChannels.ensure) and its silent, alert-once
+# builder are libs:core FleetNotify's, which the Store's line goes through.
+fn = strip(os.path.join(core, "FleetNotify.kt"))
+kc = body(fn, "private fun keepAliveChannel(")
+ka = body(fn, "fun keepAliveNotification(")
+if "FleetNotify.keepAliveNotification(" in n and re.search(r"SilentChannels\.ensure\(ctx, CHANNEL_KEEP_ALIVE, CHANNEL_KEEP_ALIVE_NAME, NotificationManager\.IMPORTANCE_LOW\)", fn) and kc:
+    ok("L3 the progress line's channel is LOW at most (the keep-alive channel, silent in Cloud Store)")
 else:
     bad("L3 the progress line's channel is above LOW")
-if ".setSilent(true)" in n and ".setOnlyAlertOnce(true)" in n and not re.search(r"setSound|setVibrate|setDefaults", n):
+if ".setSilent(true)" in (ka or "") and ".setOnlyAlertOnce(true)" in (ka or "") and not re.search(r"setVibrate|setDefaults|setSound\(", ka or "") and not re.search(r"setSound|setVibrate|setDefaults", n):
     ok("L3 the progress line is silent and alerts once")
 else:
     bad("L3 the progress line can make a sound or alert again")
@@ -222,8 +227,8 @@ mutate "AUTO re-offers the same bytes"     "$F" 'PassLedgerStore.offeredBefore(c
 mutate "a pending offer is not remembered" "$F" 'if (mode == Mode.AUTO && candidateSha != null) PassLedgerStore.markOffered(ctx, app.pkg, candidateSha)' ''
 mutate "a landed install keeps the marker" "$F" 'PassLedgerStore.clearOffered(ctx, app.pkg)' ''
 mutate "the marker lives in memory"        "$L" 'sha256.lowercase()).commit()' 'sha256.lowercase()).apply()'
-mutate "a loud progress channel"           "$B" 'NotificationManager.IMPORTANCE_LOW, progress = true)' 'NotificationManager.IMPORTANCE_HIGH, progress = true)'
-mutate "a progress line with sound"        "$B" '.setSilent(true)' '.setSilent(false)'
+mutate "a loud progress channel"           "core/src/main/java/com/diegonmarcos/superapp/core/FleetNotify.kt" 'CHANNEL_KEEP_ALIVE_NAME, NotificationManager.IMPORTANCE_LOW)' 'CHANNEL_KEEP_ALIVE_NAME, NotificationManager.IMPORTANCE_HIGH)'
+mutate "a progress line with sound"        "core/src/main/java/com/diegonmarcos/superapp/core/FleetNotify.kt" '.setSilent(true)' '.setSilent(false)'
 
 echo "test-fleet-pass-one-owner: tree failures=$base, mutations not caught=$M"
 [ "$base" -eq 0 ] && [ "$M" -eq 0 ]

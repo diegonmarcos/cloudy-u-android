@@ -10,12 +10,11 @@ import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
-import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import androidx.work.ForegroundInfo
 import com.diegonmarcos.superapp.core.DataSyncBudget
-import com.diegonmarcos.superapp.core.SilentChannels
+import com.diegonmarcos.superapp.core.FleetNotify
 import com.diegonmarcos.superapp.core.StoreNotifyGate
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -51,10 +50,14 @@ object BatchForeground {
     private const val TAG = "BatchForeground"
     const val CHANNEL = "store_batch"
     const val ID = 0xB47C
+    /** The badge's Stop action: cancels the running batch (it is persisted and resumes on its next trigger). */
+    const val ACTION_STOP = "com.diegonmarcos.superapp.updater.BATCH_STOP"
     const val THROTTLE_MS = 1_000L
 
     /** The progress line. Null = no batch line to show; a generic one is drawn. */
     @Volatile var text: () -> String? = { null }
+    /** The keep-alive badge's data lines (update state: what runs now, N pending, last check), wired by StoreStages. Default: the progress line. */
+    @Volatile var statusLines: (Context) -> List<String> = { listOfNotNull(text()) }
     /** The host's small icon (AppStoreHost.notificationIcon via StoreStages). */
     @Volatile var icon: () -> Int = { android.R.drawable.stat_sys_download }
     /** What a tap opens. Null = no content intent. */
@@ -120,24 +123,19 @@ object BatchForeground {
 
     private fun nm(ctx: Context) = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
+    /**
+     * The Store's keep-alive badge (FleetNotify.keepAliveNotification): ongoing, an update-state body ([statusLines]) and a
+     * Stop action, on the fleet's "Running / Keep-alive" channel (low importance, no sound).
+     */
     fun notification(ctx: Context): Notification {
-        // A pure progress line: MIN and silent in Cloud Store (a new "_silent_v2" channel), LOW elsewhere.
-        val channel = SilentChannels.ensure(ctx, CHANNEL, "Store downloads", NotificationManager.IMPORTANCE_LOW, progress = true)
-        val line = runCatching { text() }.getOrNull() ?: "working…"
-        val b = NotificationCompat.Builder(ctx, channel)
-            .setSmallIcon(icon())
-            .setContentTitle(ctx.applicationInfo.loadLabel(ctx.packageManager))
-            .setContentText(line)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(line))
-            .setOngoing(true)
-            .setOnlyAlertOnce(true)
-            .setSilent(true)
-            .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
-        runCatching { launch(ctx) }.getOrNull()?.let {
-            b.setContentIntent(PendingIntent.getActivity(ctx, ID, it,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE))
+        val lines = runCatching { statusLines(ctx) }.getOrNull()?.filter { it.isNotBlank() }?.takeIf { it.isNotEmpty() }
+            ?: listOf(runCatching { text() }.getOrNull() ?: "working…")
+        val stop = PendingIntent.getService(ctx, ID, Intent(ctx, BatchForegroundService::class.java).setAction(ACTION_STOP),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        val open = runCatching { launch(ctx) }.getOrNull()?.let {
+            PendingIntent.getActivity(ctx, ID, it, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         }
-        return b.build()
+        return FleetNotify.keepAliveNotification(ctx, icon(), ctx.applicationInfo.loadLabel(ctx.packageManager).toString(), lines, stop, open)
     }
 
     /** For a CoroutineWorker's setForeground / getForegroundInfo. */
@@ -156,11 +154,17 @@ class BatchForegroundService : Service() {
         // Not a Store-posting package (the SuperApp): begin() never startForegroundService()s it
         // there, so stopping at once cannot hit the not-foreground-in-time crash.
         if (!BatchForeground.allowed(this)) { stopSelf(); return START_NOT_STICKY }
+        // The badge's Stop: cancel the batch, and end this service unless a batch still holds it. No startForeground owed:
+        // this is a plain start of a service that is either already foreground or about to end.
+        if (intent?.action == BatchForeground.ACTION_STOP) {
+            UpdateProgress.requestCancel()
+            if (!BatchForeground.isHeld()) stopSelf()
+            return START_NOT_STICKY
+        }
         // Otherwise startForeground FIRST: a started-foreground service that stops before it is
         // foreground crashes the process, whatever the reason it has to stop.
         runCatching {
-            ServiceCompat.startForeground(this, BatchForeground.ID, BatchForeground.notification(this),
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC else 0)
+            FleetNotify.startKeepAlive(this, BatchForeground.ID, BatchForeground.notification(this), FleetNotify.dataSyncType())
             BatchForeground.foreground = true
             if (budgetToken == 0L) budgetToken = DataSyncBudget.begin(this)
         }.onFailure {

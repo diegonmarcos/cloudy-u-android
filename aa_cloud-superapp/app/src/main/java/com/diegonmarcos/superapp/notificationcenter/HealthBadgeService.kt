@@ -6,11 +6,10 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import android.os.Handler
 import android.os.IBinder
-import android.os.Looper
 import androidx.core.app.NotificationCompat
 import com.diegonmarcos.superapp.R
+import com.diegonmarcos.superapp.core.FleetNotify
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
@@ -18,7 +17,10 @@ import kotlinx.coroutines.launch
 
 /**
  * The "MyHealth" badge (was "Health", #517): today's steps in km with the step count, resting heart rate and last
- * night's sleep. Foreground service like the other persistent badges; started by [BadgeServices.ensureAll].
+ * night's sleep. A DATA WIDGET, not a keep-alive: an ongoing notification posted with plain notify
+ * ([FleetNotify.dataWidgetBuilder]), never startForeground, so Android does not list the app as running in the background
+ * for it. This service is a short job (post the cached face, read, post, schedule the next read, stopSelf); started by
+ * [BadgeServices.ensureAll] or by its own alarm ([DataWidgetRuntime]).
  *
  * DATA ROUTE: the SAME one as Boards > MyHealth - `readHealthBoard` (HealthBoardReader + the pure HealthAgg) - and no
  * other. The old separate Gateway path is gone from this card. Nothing
@@ -27,44 +29,31 @@ import kotlinx.coroutines.launch
 class HealthBadgeService : Service() {
 
     private val scope = CoroutineScope(SupervisorJob())
-    private val main = Handler(Looper.getMainLooper())
-    private var tick: Runnable? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onCreate() {
         super.onCreate()
         ensureChannel()
-        // Foreground within the first few seconds or the platform kills us: post the last cached face at once.
-        startForeground(NOTIF_ID, build())
-        schedule()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        refresh()
-        return START_STICKY
+        // The last cached face at once, then the read fills it in.
+        post()
+        refresh(startId)
+        return START_NOT_STICKY
     }
 
     override fun onDestroy() {
-        tick?.let(main::removeCallbacks)
         scope.cancel()
-        NotifyGroups.release(this, BADGE_ID)
         super.onDestroy()
     }
 
-    /** Re-read on the declared cadence. `refresh_minutes` is a customization
-     *  option, so the owner sets how hard this hits Health Connect. */
-    private fun schedule() {
-        tick?.let(main::removeCallbacks)
-        val r = object : Runnable {
-            override fun run() {
-                refresh()
-                main.postDelayed(this, refreshMs())
-            }
-        }
-        tick = r
-        main.postDelayed(r, refreshMs())
-    }
+    private fun post() { runCatching { FleetNotify.post(this, NOTIF_ID, build()) } }
+
+    /** Re-read on the declared cadence. `refresh_minutes` is a customization option, so the owner sets how hard this hits
+     *  Health Connect. One inexact alarm, not a loop in a held process. */
+    private fun schedule() = DataWidgetRuntime.scheduleNext(this, HealthBadgeService::class.java, NOTIF_ID, refreshMs())
 
     private fun badge(): BadgeDeclaration.Badge? =
         BadgeServices.declared.firstOrNull { it.id == BADGE_ID }
@@ -80,7 +69,7 @@ class HealthBadgeService : Service() {
      * shared MyHealth route, for TODAY only (the card needs no 30-day window), under a timeout: whatever happens it ends
      * as data or as a named error, never as "reading".
      */
-    private fun refresh() {
+    private fun refresh(startId: Int) {
         scope.launch {
             val t0 = android.os.SystemClock.elapsedRealtime()
             val read = kotlinx.coroutines.withTimeoutOrNull(HealthBadgeModel.TIMEOUT_S * 1000L) {
@@ -92,7 +81,9 @@ class HealthBadgeService : Service() {
             val failed = face.state == HealthBadgeModel.State.ERROR || face.state == HealthBadgeModel.State.TIMEOUT
             val cached = cached()
             if (failed && cached != null) save(cached.first, cached.second, face.text) else save(face)
-            main.post { runCatching { (getSystemService(NOTIFICATION_SERVICE) as NotificationManager).notify(NOTIF_ID, build()) } }
+            post()
+            schedule()
+            stopSelf(startId)
         }
     }
 
@@ -111,14 +102,9 @@ class HealthBadgeService : Service() {
         val failure = prefs().getString("failure", "").orEmpty()
         val second = if (f == null) getString(R.string.badge_health_reading) else f.text
         val pinned = BadgeServices.pinned(this, BADGE_ID)
-        return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_stat_notify)
-            .setColor(0xFF0A0A0A.toInt())
-            .setContentTitle(f?.title ?: HealthBadgeModel.TITLE)
-            .setContentText(second)
-            .setSubText(listOfNotNull("Cloud SA - MyHealth", age).joinToString(" · "))
-            .setOnlyAlertOnce(true)
-            .setOngoing(pinned)
+        return FleetNotify.dataWidgetBuilder(this, R.drawable.ic_stat_notify, f?.title ?: HealthBadgeModel.TITLE, listOf(second),
+                channelId = CHANNEL_ID, pinned = pinned, color = 0xFF0A0A0A.toInt(),
+                subText = listOfNotNull("Cloud SA - MyHealth", age).joinToString(" · "))
             .apply { if (pinned) setDeleteIntent(BadgeServices.repostOnDismiss(this@HealthBadgeService, NOTIF_ID)) }
             .setVisibility(NotificationCompat.VISIBILITY_PRIVATE) // health data stays off the lockscreen
             .apply {
@@ -136,6 +122,7 @@ class HealthBadgeService : Service() {
             }
             .let { NotifyGroups.attach(this, it, BADGE_ID) } // #777 group G1
             .build()
+            .apply { if (pinned) flags = flags or android.app.Notification.FLAG_NO_CLEAR or android.app.Notification.FLAG_ONGOING_EVENT }
     }
 
     private fun ensureChannel() {
