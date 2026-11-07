@@ -14,7 +14,7 @@ set -u
 DIR="$(cd "$(dirname "$0")/.." && pwd)"
 APP="$DIR/app/src/main/java/com/termux/app"
 API="$APP/TerminalDebugApi.java"
-SELFTEST="$DIR/app/src/main/assets/terminal-selftest.json"
+SELFTEST="$DIR/../data/fleet/app/cld.termux.nix/terminal-selftest.json"   # #1547 served at runtime, not an asset
 SIBLING="$DIR/../ac_cloud-termux/app/src/main/assets/terminal-selftest.json"
 
 fails=0
@@ -102,6 +102,17 @@ for c in pty["checks"]:
 for p in problems:
     print("  " + p)
 sys.exit(1 if problems else 0)
+PY
+
+# #1547 the selftest list is a runtime dataset (Cloud Store), not an APK asset: no asset left, the reader goes through FleetData, the manifest lists it, the served file has a schemaVersion.
+[ ! -e "$DIR/app/src/main/assets/terminal-selftest.json" ] && ok "terminal-selftest.json is not baked into the APK" || bad "terminal-selftest.json is still an APK asset (#1547)"
+grep -q 'FleetData.INSTANCE.get(app, SELFTEST_DATASET' "$API" && ! grep -q 'getAssets().open(SELFTEST' "$API" \
+    && ok "the selftest list is read through FleetData.get (libs:fleet-data-client)" || bad "TerminalDebugApi does not read the selftest list through FleetData"
+python3 - "$DIR/../data/fleet/manifest.json" "$SELFTEST" <<'PY' && ok "manifest lists terminal-selftest for cld.termux.nix; the served file has schemaVersion" || bad "manifest/schemaVersion for terminal-selftest"
+import json, sys
+m = json.load(open(sys.argv[1]))
+assert "terminal-selftest" in m["apps"]["cld.termux.nix"]
+assert json.load(open(sys.argv[2]))["schemaVersion"] == 1
 PY
 
 [ "$fails" -eq 0 ] || { echo "$fails assertion(s) failed"; exit 1; }

@@ -23,6 +23,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import org.fossify.phone.helpers.rememberFleetDataset
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -67,12 +68,12 @@ fun copyToClipboard(ctx: Context, label: String, text: String, sensitive: Boolea
 @Composable
 fun SimsOverviewPage(c: ThemeColors) = SimPermsGate(c) {
     val ctx = LocalContext.current
-    val store = remember { SimManualStore(ctx) }
-    val schema = remember { SimSchema.load(ctx) }
+    val schema = rememberFleetDataset(SimSchema.DATASET) { SimSchema.parse(it) }
+    val store = remember(schema) { schema?.let { SimManualStore(ctx, it) } }
     val data = rememberUsage()
     val sel = SimsNavState.selected
     val block = data.firstOrNull { SimFields.key(it.card) == sel }
-    if (block != null) SimDetailPage(block, store, schema, c) else SimListPage(data, c)
+    if (block != null && store != null && schema != null) SimDetailPage(block, store, schema, c) else SimListPage(data, c)
 }
 
 @Composable

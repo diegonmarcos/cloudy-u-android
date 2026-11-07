@@ -1,0 +1,7 @@
+{
+ "schemaVersion": 1,
+ "_doc": "#1547 tier-4 downloadable pack descriptor: the HYG star database (119,614 stars, packed binary; provenance in ac_cloud-nav CREDITS) of Cloud Nav's Space View, not wired into the screen today and kept as a pack so it never ships inside the APK. The blob is fetched on demand from url, verified against bytes + sha256, cached in the app's filesDir and used offline. Regenerate sha256/bytes with: sha256sum data/fleet/packs/hyg-stars.bin (the runtime-data guard fails when they drift).",
+ "url": "https://raw.githubusercontent.com/diegonmarcos/cloudy-u-android/main/data/fleet/packs/hyg-stars.bin",
+ "sha256": "7480a10d6a42525d8dbb0fdbfd5fced5bbf27df105c97685862ed6173057164b",
+ "bytes": 2392280
+}

@@ -1,6 +1,7 @@
 package com.diegonmarcos.cloudnav.sky
 
 import android.content.Context
+import com.diegonmarcos.superapp.fleetdata.FleetData
 import org.json.JSONObject
 
 data class Star(val raDeg: Double, val decDeg: Double, val mag: Double)
@@ -9,16 +10,22 @@ data class ConstellationSegment(val a: DoubleArray /* raDeg, decDeg */, val b: D
 data class SkyPolygon(val ring: List<DoubleArray>)
 
 /**
- * Loads the real bundled sky catalog (assets/celestial JSON files, from d3-celestial —
- * see CREDITS.md) instead of a hand-typed list. GeoJSON's [lon, lat] here IS already
+ * Loads the real sky catalog (the runtime datasets celestial/stars.6, celestial/constellations.lines, celestial/mw and celestial/planets,
+ * from d3-celestial — see CREDITS.md), served by Cloud Store through libs:fleet-data-client (#1547; repo data/fleet/app/com.diegonmarcos.cloudnav/celestial/),
+ * never baked into the APK. Every loader returns null while its dataset has not been served (first run, provider absent) and NEVER throws or
+ * caches that null: the caller retries. GeoJSON's [lon, lat] here IS already
  * [RA in degrees represented in the -180..180 range, Dec in degrees] per the source
  * data's own conversion note -- feeding that lon straight in as raDeg to SkyMath.altAz
  * is correct without further conversion, since altAz only ever uses RA through a
  * mod-360 subtraction (lst - raDeg), and -180..180 vs 0..360 are the same values mod 360.
  */
 object CelestialData {
-    fun loadStars(context: Context, maxMag: Double = 6.0): List<Star> {
-        val root = JSONObject(context.assets.open("celestial/stars.6.json").bufferedReader().readText())
+    /** The served dataset as JSON, null when not served yet (or unparsable); never throws. */
+    internal fun dataset(context: Context, name: String): JSONObject? =
+        runCatching { FleetData.get(context, name, own = true) { JSONObject(it) } }.getOrNull()
+
+    fun loadStars(context: Context, maxMag: Double = 6.0): List<Star>? {
+        val root = dataset(context, "celestial/stars.6") ?: return null
         val features = root.getJSONArray("features")
         val out = ArrayList<Star>(features.length())
         for (i in 0 until features.length()) {
@@ -31,8 +38,8 @@ object CelestialData {
         return out
     }
 
-    fun loadConstellationLines(context: Context): List<ConstellationSegment> {
-        val root = JSONObject(context.assets.open("celestial/constellations.lines.json").bufferedReader().readText())
+    fun loadConstellationLines(context: Context): List<ConstellationSegment>? {
+        val root = dataset(context, "celestial/constellations.lines") ?: return null
         val features = root.getJSONArray("features")
         val out = ArrayList<ConstellationSegment>()
         for (i in 0 until features.length()) {
@@ -54,8 +61,8 @@ object CelestialData {
     }
 
     /** Milky Way band outline(s), as filled polygons — several overlapping brightness bands. */
-    fun loadMilkyWay(context: Context): List<SkyPolygon> {
-        val root = JSONObject(context.assets.open("celestial/mw.json").bufferedReader().readText())
+    fun loadMilkyWay(context: Context): List<SkyPolygon>? {
+        val root = dataset(context, "celestial/mw") ?: return null
         val features = root.getJSONArray("features")
         val out = ArrayList<SkyPolygon>()
         for (i in 0 until features.length()) {

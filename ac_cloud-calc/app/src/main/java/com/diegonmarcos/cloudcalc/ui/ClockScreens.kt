@@ -186,12 +186,12 @@ fun WorldClockMode(mode: Declarations.Mode) {
 private fun ZonePicker(onDismiss: () -> Unit, onPick: (String) -> Unit) {
     val ctx = LocalContext.current
     var query by remember { mutableStateOf("") }
-    // #1423 the declared catalogue (data/assets/worldmap/cities.json): every capital, the big countries' major cities and
+    // #1423 the declared catalogue (the runtime dataset worldmap/cities, #1547): every capital, the big countries' major cities and
     // every IANA zone; a zone the device's tzdata does not know is not offered.
-    val cat = remember { WorldAssets.catalogue(ctx) }
+    val cat = rememberServed("cities") { WorldAssets.catalogue(ctx) }
     val known = remember { ZoneId.getAvailableZoneIds() }
-    val cities = remember(query) { WorldClockData.search(cat, query).filter { it.zone in known }.take(200) }
-    val zones = remember(query) { WorldClockData.searchZones(cat, query).filter { it in known }.take(200) }
+    val cities = remember(query, cat) { cat?.let { c -> WorldClockData.search(c, query).filter { it.zone in known }.take(200) } ?: emptyList() }
+    val zones = remember(query, cat) { cat?.let { c -> WorldClockData.searchZones(c, query).filter { it in known }.take(200) } ?: emptyList() }
     AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = {},
@@ -203,7 +203,7 @@ private fun ZonePicker(onDismiss: () -> Unit, onPick: (String) -> Unit) {
                 LazyColumn(Modifier.height(CalcMetrics.plotHeight).testTag(CITY_LIST_TAG)) {
                     items(cities, key = { "c:" + it.country + it.name }) { c ->
                         Column(Modifier.fillMaxWidth().clickable { onPick(c.zone) }.padding(vertical = CalcMetrics.small)) {
-                            Text((if (c.capital) "★ " else "") + c.name + "  ·  " + (cat.countries[c.country] ?: c.country))
+                            Text((if (c.capital) "★ " else "") + c.name + "  ·  " + (cat?.countries?.get(c.country) ?: c.country))
                             Text(c.zone, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }

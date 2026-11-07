@@ -6,7 +6,7 @@ import org.junit.Test
 import java.io.File
 
 class T9Test {
-    private val spec = KeypadSpec.parse(File("src/main/assets/keypad.json").readText())
+    private val spec = KeypadSpec.parse(File("../../data/fleet/app/com.diegonmarcos.comms.dialer/keypad.json").readText())
     private fun names(typed: String, all: List<T9Contact>) = T9.search(typed, all, spec).map { it.contact.name }
 
     @Test fun lettersUnderTheDigits() {

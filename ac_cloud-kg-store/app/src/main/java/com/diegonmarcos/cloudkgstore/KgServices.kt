@@ -9,6 +9,7 @@ import com.diegonmarcos.cloudsearch.core.Http
 import com.diegonmarcos.cloudsearch.core.SearchConfig
 import com.diegonmarcos.cloudsearch.core.SearchEngine
 import com.diegonmarcos.cloudsearch.core.UrlHttp
+import com.diegonmarcos.superapp.fleetdata.FleetData
 import java.io.File
 
 /**
@@ -30,18 +31,30 @@ object KgBearer {
 }
 
 /**
- * The app's one set of collaborators: the page declaration (assets/kg/kg.json), Cloud Search's declaration run by its linked core
+ * The app's one set of collaborators: the page declaration (runtime dataset kg), Cloud Search's declaration run by its linked core
  * (the same engine and cache shape Cloud Search uses, here under filesDir/results), and the calls to the fleet services.
  */
 class KgServices(ctx: Context, val http: Http? = null) {
     val app: Context = ctx.applicationContext
-    val kg: KgConfig = KgConfig.parse(app.assets.open(KgConfig.ASSET).bufferedReader().use { it.readText() })
+    /** #1547 the page declaration is the runtime dataset `kg` served by Cloud Store, never an APK asset; [KgConfig.EMPTY] until it is served. */
+    @Volatile private var served: KgConfig? = null
+    val kg: KgConfig get() = served ?: KgConfig.EMPTY
+
+    /** Reads the dataset when not yet held (blocking, a few ms; call off the main thread when retrying). True once served; null is never cached. */
+    fun refresh(): Boolean {
+        if (served == null) served = runCatching { FleetData.get(app, KgConfig.DATASET, own = true) { KgConfig.parse(it) } }.getOrNull()
+        return served != null
+    }
     val search: SearchConfig = SearchConfig.parse(text(BuildConfig.SEARCH_CONFIG_B64))
     private val net: Http = http ?: UrlHttp(search.userAgent)
     val engine = SearchEngine(search, net, Cache(File(app.filesDir, "results")), System::currentTimeMillis)
     val apps: List<KgApp> = KgApp.parse(text(BuildConfig.FLEET_APPS_B64))
     val ports: Map<String, Int> = KgApps.ports(text(BuildConfig.DEBUG_PORTS_B64))
-    val calls = KgCalls(net, KgService.parse(text(BuildConfig.FLEET_SERVICES_B64)), search.cgc, kg.timeoutMs, kg.mcpPath) { KgBearer.token(app) }
+    private val fleetServices = KgService.parse(text(BuildConfig.FLEET_SERVICES_B64))
+    private var callsServed: KgCalls? = null
+    val calls: KgCalls get() = callsServed ?: KgCalls(net, fleetServices, search.cgc, kg.timeoutMs, kg.mcpPath) { KgBearer.token(app) }.also { if (served != null) callsServed = it }
+
+    init { refresh() }
 
     /** Opens [url] in the user's browser (the fleet's, else any). */
     fun open(url: String) {

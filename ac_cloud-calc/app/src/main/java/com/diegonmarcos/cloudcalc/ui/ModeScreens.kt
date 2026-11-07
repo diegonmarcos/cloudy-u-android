@@ -471,11 +471,11 @@ internal fun UnitPicker(
     }
 }
 
-/** The holiday rules the mode's spec names (an asset), or an empty book. */
-private fun holidayBook(ctx: android.content.Context, mode: Declarations.Mode): WorkingDays.Book {
+/** The holiday rules the mode's spec names (a runtime dataset served by Cloud Store, #1547: "datetime/holidays.json" is the dataset datetime/holidays), an empty book when the mode names none, null while not served yet. */
+private fun holidayBook(ctx: android.content.Context, mode: Declarations.Mode): WorkingDays.Book? {
     val path = runCatching { org.json.JSONObject(mode.spec).optString("holidays") }.getOrDefault("")
     if (path.isEmpty()) return WorkingDays.Book(emptyList())
-    return runCatching { WorkingDays.parse(ctx.assets.open(path).bufferedReader().use { it.readText() }) }.getOrElse { WorkingDays.Book(emptyList()) }
+    return runCatching { com.diegonmarcos.superapp.fleetdata.FleetData.get(ctx, path.removeSuffix(".json"), own = true) { WorkingDays.parse(it) } }.getOrNull()
 }
 
 // ── form: Tools ▸ Time & Date, Fin, Sound ───────────────────────────────────────────────────
@@ -505,12 +505,12 @@ private fun FormBody(mode: Declarations.Mode, form: Declarations.Form) {
     val api = LocalCalcApi.current
     val state = LocalCalcState.current
     val ctx = androidx.compose.ui.platform.LocalContext.current
-    // #1329 the declared holiday rules (an asset the mode's spec names); none when the mode declares none or the asset is missing.
-    val book = remember(mode.id) { holidayBook(ctx, mode) }
+    // #1329 the declared holiday rules (the dataset the mode's spec names, served by Cloud Store); none until it is served.
+    val book = rememberServed(mode.id) { holidayBook(ctx, mode) } ?: remember { WorkingDays.Book(emptyList()) }
     val regionOptions = remember(book) {
         listOf(Declarations.Option(WorkingDays.NONE, "None (weekends only)")) + book.regions.map { Declarations.Option(it.id, it.label) }
     }
-    val values = remember(form.id) {
+    val values = remember(form.id, book) {
         mutableStateMapOf<String, String>().apply {
             form.fields.forEach {
                 put(it.id, when {

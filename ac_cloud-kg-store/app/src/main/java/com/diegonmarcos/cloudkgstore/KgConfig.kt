@@ -2,7 +2,7 @@ package com.diegonmarcos.cloudkgstore
 
 import org.json.JSONObject
 
-/** One page of assets/kg/kg.json::pages: its [kind] picks the reader, the rest is what that reader is told. */
+/** One page of the kg dataset's pages: its [kind] picks the reader, the rest is what that reader is told. */
 class KgPage(val id: String, o: JSONObject) {
     /** The fleet service a page rerank asks (embeddings-api) and the model it names. */
     data class Rerank(val service: String, val path: String, val model: String)
@@ -21,14 +21,18 @@ class KgPage(val id: String, o: JSONObject) {
     private fun strings(o: JSONObject, k: String): List<String> = o.optJSONArray(k)?.let { a -> (0 until a.length()).map { a.getString(it) } } ?: emptyList()
 }
 
-/** assets/kg/kg.json, read once. Nothing here names a page, a service or a vertical: they are all in the JSON. */
+/** The runtime dataset kg (data/fleet/app/<package>/kg.json), read through libs:fleet-data-client. Nothing here names a page, a service or a vertical: they are all in the JSON. */
 class KgConfig(val timeoutMs: Int, val mcpPath: String, val responseChars: Int, val pages: Map<String, KgPage>, val ask: Ask) {
     data class Ask(val page: String, val system: String, val suggestions: List<String>, val mcps: List<String>)
 
     fun page(id: String): KgPage? = pages[id]
 
     companion object {
-        const val ASSET = "kg/kg.json"
+        /** #1547 the runtime dataset (Cloud Store, repo data/fleet/app/com.diegonmarcos.cloudkgstore/kg.json); no asset. */
+        const val DATASET = "kg"
+
+        /** What the app shows while Cloud Store has not served [DATASET] yet: no page, no suggestion. Never cached as the real config. */
+        val EMPTY = KgConfig(8000, "/mcp", 2000, emptyMap(), Ask("", "", emptyList(), emptyList()))
 
         const val KIND_BINARY = "binary"
         const val KIND_DEBUG = "debug"

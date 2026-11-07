@@ -6,7 +6,7 @@
 # The assistant (page, streaming, sessions, Markdown) is libs:ai's and is proven there. The Web sources and parsers and the code-index
 # protocol are Cloud Search's search-core and are proven in its suite. This proves, from the sources alone, that this app only ASSEMBLES
 # them, on the fleet's bars, with the data it shows coming from declarations and from the phone:
-#   B1  every section id Decl.kt dispatches on is declared by build.json::ui and every declared page is data (assets/kg/kg.json::pages) or a
+#   B1  every section id Decl.kt dispatches on is declared by build.json::ui and every declared page is data (data/fleet/app/com.diegonmarcos.cloudkgstore/kg.json::pages) or a
 #       settings page Decl.kt names, both ways; the bottom nav is Cloud, Phone, Web; Cloud is horizontal_two_rows with the groups
 #       Application (Binary, Web/Debug, MCP, API Data, API Debug) and Repo (Code, CGC, MCP, API Semantic, API GraphRAG); Web is News, Media,
 #       Shopping, Real Estate, Jobs, Business; every page has an icon
@@ -40,7 +40,7 @@ kt = os.path.join(app, "app/src/main/java/com/diegonmarcos/cloudkgstore")
 decl, shell, ai, main = (code(os.path.join(kt, f)) for f in ("Decl.kt", "ui/KgShell.kt", "KgAi.kt", "MainActivity.kt"))
 script = code(os.path.join(app, "app/build." + "gradle"))
 manifest = read(os.path.join(app, "app/src/main/AndroidManifest.xml"))
-kg = json.loads(read(os.path.join(app, "app/src/main/assets/kg/kg.json")))
+kg = json.loads(read(os.environ.get("KG_JSON") or os.path.join(app, "..", "data/fleet/app/com.diegonmarcos.cloudkgstore/kg.json")))
 sections = {s["id"]: s for s in bj["ui"]["sections"]}
 
 # B1
@@ -139,13 +139,14 @@ W="$(mktemp -d)"; trap 'rm -rf "$W"' EXIT
 SCRIPT="app/build.gra""dle"
 mutant() {   # mutant <name> <shell edit run in the copy> <needle expected in the output>
   rm -rf "$W/app"; cp -r "$APP" "$W/app"
+  cp "$APP/../data/fleet/app/com.diegonmarcos.cloudkgstore/kg.json" "$W/app/kg.json"   # #1547 the declaration is served data, not an asset
   ( cd "$W/app" && eval "$2" )
-  if out="$(check "$W/app" 2>&1)"; then bad "mutant '$1' stayed green"; elif grep -q -- "$3" <<<"$out"; then ok "mutant '$1' is red ($3)"; else bad "mutant '$1' is red for the wrong reason: $out"; fi
+  if out="$(KG_JSON="$W/app/kg.json" check "$W/app" 2>&1)"; then bad "mutant '$1' stayed green"; elif grep -q -- "$3" <<<"$out"; then ok "mutant '$1' is red ($3)"; else bad "mutant '$1' is red for the wrong reason: $out"; fi
 }
 KT=app/src/main/java/com/diegonmarcos/cloudkgstore
 mutant "section dropped from Decl"      "sed -i '/SECTION_WEB/d' $KT/Decl.kt"                                 "B1 section 'web' is declared"
 mutant "settings page dropped from Decl" "sed -i '/PAGE_ABOUT/d' $KT/Decl.kt"                                  "B1 Decl.kt PAGE_ ids"
-mutant "a data page loses its entry"   "python3 -c \"import json;p='app/src/main/assets/kg/kg.json';d=json.load(open(p));d['pages'].pop('web_jobs');json.dump(d,open(p,'w'))\"" "B1 kg.json::pages and build.json::ui"
+mutant "a data page loses its entry"   "python3 -c \"import json;p='kg.json';d=json.load(open(p));d['pages'].pop('web_jobs');json.dump(d,open(p,'w'))\"" "B1 kg.json::pages and build.json::ui"
 mutant "bottom nav loses Web"           "python3 -c \"import json;p='build.json';d=json.load(open(p));d['ui']['bottom_nav']=['cloud','phone'];json.dump(d,open(p,'w'))\"" "B1 the bottom nav must be"
 mutant "Cloud loses its two rows"       "sed -i 's/horizontal_two_rows/horizontal_one_row/' build.json"        "B1 the Cloud section is not horizontal_two_rows"
 mutant "a Cloud group is renamed"       "sed -i 's/\"label\": \"Application\"/\"label\": \"Apps\"/' build.json"  "B1 the Cloud groups are not"
@@ -160,7 +161,7 @@ mutant "gateway not baked"              "sed -i 's/AI_GATEWAY_URL/NOPE/g' $SCRIP
 mutant "account not visible"            "sed -i 's/com.diegonmarcos.cloudaccount/x.y/' app/src/main/AndroidManifest.xml" "B5 the manifest cannot see Cloud Account"
 mutant "installed apps not visible"     "sed -i 's/QUERY_ALL_PACKAGES/X/' app/src/main/AndroidManifest.xml"     "B5 the manifest lacks QUERY_ALL_PACKAGES"
 mutant "a host is spelled in Kotlin"    "echo 'val h = \"http://x.example\"' >> $KT/KgFleet.kt"                 "B6 KgFleet.kt spells a URL"
-mutant "the missing sentence dropped"   "python3 -c \"import json;p='app/src/main/assets/kg/kg.json';d=json.load(open(p));d['pages']['app_mcp']['missing']='';json.dump(d,open(p,'w'))\"" "B6 an MCP page with no declared service"
+mutant "the missing sentence dropped"   "python3 -c \"import json;p='kg.json';d=json.load(open(p));d['pages']['app_mcp']['missing']='';json.dump(d,open(p,'w'))\"" "B6 an MCP page with no declared service"
 mutant "search-core copied"             "sed -i 's#../ac_cloud-search/core#core#' build.json"                  "B7 search-core is not linked by reference"
 mutant "search declaration not baked"   "sed -i 's#ac_cloud-search/build.json#x/build.json#' $SCRIPT"          "B7 the build script does not bake Cloud Search"
 mutant "own parser defined"             "echo 'object Parsers' >> $KT/KgFleet.kt"                              "B7 this app defines its own"

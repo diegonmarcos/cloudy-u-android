@@ -13,7 +13,7 @@ import kotlin.math.sin
 import kotlin.math.tan
 
 /**
- * #1423 Time & Date ▸ World Clock data: the declared city catalogue (data/assets/worldmap/cities.json, generated from
+ * #1423 Time & Date ▸ World Clock data: the declared city catalogue (the runtime dataset worldmap/cities, data/fleet/app/com.diegonmarcos.cloudcalc/worldmap/cities.json, generated from
  * GeoNames by data/gen/worldclock.py), its search and its rules, plus the world map's maths: equirectangular projection,
  * nominal time-zone bands and the day/night terminator. No Android here; the app reads the assets and hands the text in.
  */
@@ -97,7 +97,7 @@ object WorldClockData {
     fun lon(x: Double, w: Double) = x / w * 360.0 - 180.0
     fun lat(y: Double, h: Double) = 90.0 - y / h * 180.0
 
-    /** Natural Earth land (data/assets/worldmap/land.json): each polygon a flat lon,lat array. */
+    /** Natural Earth land (the runtime dataset worldmap/land): each polygon a flat lon,lat array. */
     fun parseLand(text: String): List<DoubleArray> {
         val a = JSONObject(text).getJSONArray("polygons")
         return (0 until a.length()).map { i -> a.getJSONArray(i).let { p -> DoubleArray(p.length()) { p.getDouble(it) } } }

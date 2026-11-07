@@ -7,7 +7,7 @@ import org.junit.Test
 import java.io.File
 
 class VoipTest {
-    private val spec = VoipSpec.parse(File("src/main/assets/voip_providers.json").readText())
+    private val spec = VoipSpec.parse(File("../../data/fleet/app/com.diegonmarcos.comms.dialer/voip_providers.json").readText())
     private val wab = spec.providers.first { it.id == "whatsapp_business" }
 
     @Test fun declaredProviderIsWhatsAppBusinessWithFallback() {

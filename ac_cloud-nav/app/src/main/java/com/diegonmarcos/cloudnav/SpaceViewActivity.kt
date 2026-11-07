@@ -1,7 +1,11 @@
 package com.diegonmarcos.cloudnav
 
 import android.os.Bundle
+import android.webkit.WebResourceResponse
 import android.webkit.WebView
+import androidx.webkit.WebViewAssetLoader
+import com.diegonmarcos.superapp.fleetdata.FleetData
+import java.io.ByteArrayInputStream
 import com.diegonmarcos.cloudlib.web.CloudWeb
 import com.diegonmarcos.cloudlib.web.CloudWebClient
 import com.diegonmarcos.cloudlib.web.WebProfile
@@ -26,12 +30,14 @@ import com.diegonmarcos.superapp.uikit.CloudKitTheme
  * Served via WebViewAssetLoader (https://appassets.androidplatform.net/...)
  * instead of loadUrl("file:///android_asset/...") -- required because
  * Chromium's fetch() API refuses file:// requests by CORS policy, and
- * this screen's data (constellation lines, planetary elements) loads via
- * fetch(). This is Google's own documented fix for that bug class.
+ * this screen's data (constellation lines, planetary elements, served by
+ * Cloud Store under /fleetdata/, #1547) loads via fetch(). This is Google's own documented fix for that bug class.
  */
 class SpaceViewActivity : AppCompatActivity() {
 
     private var webView: WebView? = null
+
+    private companion object { val SERVED = setOf("celestial/constellations.lines", "celestial/planets") }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,11 +50,23 @@ class SpaceViewActivity : AppCompatActivity() {
     /** The scene itself stays a WebView (three.js, WEB_WORLD); Compose only hosts it. */
     private fun createWebView(ctx: android.content.Context): WebView = CloudWeb.create(ctx, WebProfile.WEB_WORLD).also { wv ->
         webView = wv
-        wv.webViewClient = object : CloudWebClient(WebProfile.WEB_WORLD, CloudWeb.assetLoader(this)) {
+        wv.webViewClient = object : CloudWebClient(WebProfile.WEB_WORLD, assetLoader()) {
             override fun onRecovered(dead: WebView, fresh: WebView?) { webView = fresh }
         }
         wv.loadUrl(CloudWeb.assetUrl("space/space_view.html"))
     }
+
+    /** CloudWeb's /assets/ and /res/, plus /fleetdata/: the sky datasets Cloud Store serves (#1547), read through libs:fleet-data-client; 404 until synced. */
+    private fun assetLoader(): WebViewAssetLoader = WebViewAssetLoader.Builder()
+        .addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(this))
+        .addPathHandler("/res/", WebViewAssetLoader.ResourcesPathHandler(this))
+        .addPathHandler("/fleetdata/") { path ->
+            val dataset = path.removeSuffix(".json").takeIf { path.endsWith(".json") && it in SERVED }
+            val text = dataset?.let { runCatching { FleetData.get(applicationContext, it, own = true) { s -> s } }.getOrNull() }
+            if (text != null) WebResourceResponse("application/json", "utf-8", ByteArrayInputStream(text.toByteArray(Charsets.UTF_8)))
+            else WebResourceResponse("text/plain", "utf-8", 404, "Not served yet", emptyMap(), ByteArrayInputStream(ByteArray(0)))
+        }
+        .build()
 
     override fun onDestroy() {
         webView?.destroy()

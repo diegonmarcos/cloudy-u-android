@@ -3,7 +3,7 @@
  "seed_allowlist": {
   "_doc": "Tier-4 STATIC reference data that may stay bundled as a SEED the runtime provider overrides: path or dir/ prefix -> reason (at least 20 characters). Empty in phase 1: the tier-4 files are baselined below and move to Cloud Store packs in phase 2."
  },
- "json_max": 111,
+ "json_max": 99,
  "gradle_max": 22,
  "b64_max": 302,
  "mock_files": [
@@ -327,57 +327,9 @@
    "tier": 1,
    "target": "account personal/favourites_catalog"
   },
-  "ac_cloud-dialer/app/src/main/assets/call_providers.json": {
-   "tier": 3,
-   "target": "store app/<pkg>/call_providers"
-  },
-  "ac_cloud-dialer/app/src/main/assets/keypad.json": {
-   "tier": 3,
-   "target": "store app/<pkg>/keypad"
-  },
-  "ac_cloud-dialer/app/src/main/assets/sim-fields.json": {
-   "tier": 3,
-   "target": "store app/<pkg>/sim-fields"
-  },
-  "ac_cloud-dialer/app/src/main/assets/spam_patterns.json": {
-   "tier": 3,
-   "target": "store app/<pkg>/spam_patterns"
-  },
-  "ac_cloud-dialer/app/src/main/assets/voip_providers.json": {
-   "tier": 3,
-   "target": "store app/<pkg>/voip_providers"
-  },
   "ac_cloud-kg-store/app/src/main/assets/ai/composer.json": {
    "tier": 3,
    "target": "store app/<pkg>/composer"
-  },
-  "ac_cloud-kg-store/app/src/main/assets/kg/kg.json": {
-   "tier": 3,
-   "target": "store app/<pkg>/kg"
-  },
-  "ac_cloud-nav/app/src/main/assets/celestial/constellations.lines.json": {
-   "tier": 4,
-   "target": "store pack/constellations.lines (downloadable data pack or seed)"
-  },
-  "ac_cloud-nav/app/src/main/assets/celestial/mw.json": {
-   "tier": 4,
-   "target": "store pack/mw (downloadable data pack or seed)"
-  },
-  "ac_cloud-nav/app/src/main/assets/celestial/planets.json": {
-   "tier": 4,
-   "target": "store pack/planets (downloadable data pack or seed)"
-  },
-  "ac_cloud-nav/app/src/main/assets/celestial/stars.6.json": {
-   "tier": 4,
-   "target": "store pack/stars.6 (downloadable data pack or seed)"
-  },
-  "ac_cloud-nav/app/src/main/assets/space/hyg_named.json": {
-   "tier": 4,
-   "target": "store pack/hyg_named (downloadable data pack or seed)"
-  },
-  "ac_cloud-nix-on-droid/app/src/main/assets/terminal-selftest.json": {
-   "tier": 3,
-   "target": "store app/<pkg>/terminal-selftest"
   },
   "ac_cloud-search/app/src/main/assets/ai/composer.json": {
    "tier": 3,

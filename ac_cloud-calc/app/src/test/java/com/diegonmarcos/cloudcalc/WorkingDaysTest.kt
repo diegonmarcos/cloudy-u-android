@@ -13,10 +13,10 @@ import java.time.LocalDate
 /**
  * #1329 Date & Time: working days, the declared holidays, the add-N-working-days walk, the range selection of the calendar and the
  * `date` / `toggle` / `choice` field declarations. Plain JVM (no Robolectric); runs from app/ over this repository's own build.json
- * and data/assets/datetime/holidays.json. Every expected count below was worked out by hand (see the comments).
+ * and data/fleet/app/com.diegonmarcos.cloudcalc/datetime/holidays.json. Every expected count below was worked out by hand (see the comments).
  */
 class WorkingDaysTest {
-    private val book = WorkingDays.parse(File("../data/assets/datetime/holidays.json").readText())
+    private val book = WorkingDays.parse(File("../../data/fleet/app/com.diegonmarcos.cloudcalc/datetime/holidays.json").readText())
     private val satSun = setOf(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY)
     private val friSat = setOf(DayOfWeek.FRIDAY, DayOfWeek.SATURDAY)
     private fun d(s: String) = LocalDate.parse(s)

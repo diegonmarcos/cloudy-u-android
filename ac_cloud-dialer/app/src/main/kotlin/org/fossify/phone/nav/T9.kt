@@ -1,6 +1,7 @@
 package org.fossify.phone.nav
 
 import android.content.Context
+import org.fossify.phone.helpers.FleetDataset
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -16,7 +17,7 @@ data class T9Limits(
     @SerialName("min_number_substring") val minNumberSubstring: Int = 3,
 )
 
-/** #1528 the keypad declaration (assets/keypad.json): the keys with their letters (also the T9 map) and the search limits. */
+/** #1528 the keypad declaration (runtime dataset keypad): the keys with their letters (also the T9 map) and the search limits. */
 @Serializable
 data class KeypadSpec(val columns: Int = 3, val keys: List<KeypadKey>, val search: T9Limits = T9Limits()) {
     val rows: List<List<KeypadKey>> get() = keys.chunked(columns)
@@ -27,10 +28,11 @@ data class KeypadSpec(val columns: Int = 3, val keys: List<KeypadKey>, val searc
     }
 
     companion object {
-        const val ASSET = "keypad.json"
+        const val DATASET = "keypad"
         private val json = Json { ignoreUnknownKeys = true }
         fun parse(raw: String): KeypadSpec = json.decodeFromString(serializer(), raw)
-        fun load(ctx: Context): KeypadSpec = parse(ctx.assets.open(ASSET).bufferedReader().use { it.readText() })
+        /** Null until Cloud Store has served `keypad` (#1547); never throws. */
+        fun load(ctx: Context): KeypadSpec? = FleetDataset.get(ctx, DATASET) { parse(it) }
     }
 }
 

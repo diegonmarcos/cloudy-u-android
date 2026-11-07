@@ -14,17 +14,14 @@ import org.fossify.phone.helpers.SCREENING_REASON_SPAM_PREFIX
 import org.fossify.phone.helpers.SCREENING_REASON_UNKNOWN
 import org.fossify.phone.helpers.ScreeningLogStore
 import org.fossify.phone.spam.SpamMatcher
+import org.fossify.phone.spam.SpamRules
 
 class SimpleCallScreeningService : CallScreeningService() {
 
     // Cloud Dialer: bundled offline spam rules (assets/spam_patterns.json),
     // parsed once per service instance. Empty on any read/parse error → fail
     // open (never blocks legit calls because the asset is missing/corrupt).
-    private val spamRules: List<SpamMatcher.Rule> by lazy {
-        runCatching {
-            assets.open("spam_patterns.json").bufferedReader().use { it.readText() }
-        }.map { SpamMatcher.parse(it) }.getOrDefault(emptyList())
-    }
+    private val spamRules: List<SpamMatcher.Rule> get() = SpamRules.get(this)
 
     override fun onScreenCall(callDetails: Call.Details) {
         val number = callDetails.handle?.schemeSpecificPart

@@ -27,7 +27,7 @@ APP="$(cd "$HERE/.." && pwd)"
 command -v python3 >/dev/null 2>&1 || { echo "ERROR python3 required"; exit 2; }
 
 J='app/src/main/java/com/diegonmarcos/cloudcalc'
-FILES="build.json NOTICE.md app/build.gradle data/assets/datetime/holidays.json $J/WorkingDays.kt $J/DateForms.kt $J/Declarations.kt $J/ui/ModeScreens.kt $J/ui/DateFields.kt app/src/test/java/com/diegonmarcos/cloudcalc/WorkingDaysTest.kt"
+FILES="build.json NOTICE.md app/build.gradle $J/WorkingDays.kt $J/DateForms.kt $J/Declarations.kt $J/ui/ModeScreens.kt $J/ui/DateFields.kt app/src/test/java/com/diegonmarcos/cloudcalc/WorkingDaysTest.kt"
 
 CHECK="$(mktemp)"
 cat > "$CHECK" <<'PY'
@@ -40,6 +40,10 @@ def read(p):
         return open(p, encoding="utf-8").read()
     except OSError:
         bad.append("missing file %s" % os.path.relpath(p, app)); return ""
+# #1547 the holiday rules are a runtime dataset (Cloud Store), the repo file data/fleet/app/<pkg>/<dataset>.json: in the tree one level up, in a mutation copy beside the app.
+def holp(h):
+    c = [os.path.join(b, "data/fleet/app/com.diegonmarcos.cloudcalc", h) for b in (app, os.path.join(app, ".."))]
+    return next((x for x in c if os.path.isfile(x)), c[0])
 def code(s):
     return re.sub(r"//[^\n]*|/\*.*?\*/", "", s, flags=re.S)
 bj = json.loads(read(os.path.join(app, "build.json")) or "{}")
@@ -83,8 +87,8 @@ for fid, f in forms.items():
         if not fld(fid, target):
             bad.append("D1 form %s binds %s to the missing field %s" % (fid, role, target))
 hol = mode.get("spec", {}).get("holidays", "")
-if not hol or not os.path.isfile(os.path.join(app, "data/assets", hol)):
-    bad.append("D1 the datetime spec must name a holiday asset under data/assets, found %r" % hol)
+if not hol or not os.path.isfile(holp(hol)):
+    bad.append("D1 the datetime spec must name a holiday asset (a dataset under data/fleet/app/<package>), found %r" % hol)
 
 # D2
 ms = code(read(os.path.join(J, "ui/ModeScreens.kt")))
@@ -101,7 +105,7 @@ if "assets.srcDirs += ['../data/assets']" not in read(os.path.join(app, "app/bui
     bad.append("D2 app/build.gradle does not add the data/assets srcDir")
 
 # D3
-data = json.loads(read(os.path.join(app, "data/assets/datetime/holidays.json")) or '{"regions": []}')
+data = json.loads(read(holp("datetime/holidays.json")) or '{"regions": []}')
 regions = {r["id"]: r for r in data.get("regions", [])}
 if len(regions) < 10:
     bad.append("D3 the holiday data declares %d regions, wants >= 10" % len(regions))
@@ -121,7 +125,7 @@ for r in regions.values():
             bad.append("D3 a rule of %s is not exactly one of fixed / easter / nth, or unnamed: %s" % (r["id"], rule))
 
 # D4
-for p in ("data/assets/datetime/holidays.json", J + "/WorkingDays.kt", J + "/DateForms.kt", J + "/ui/DateFields.kt"):
+for p in (holp("datetime/holidays.json"), J + "/WorkingDays.kt", J + "/DateForms.kt", J + "/ui/DateFields.kt"):
     full = p if os.path.isabs(p) else os.path.join(app, p)
     if re.search(r"https?://|java\.net\.|HttpURLConnection", read(full)):
         bad.append("D4 %s names an address or a network class" % os.path.basename(p))
@@ -157,6 +161,7 @@ mutate() {  # name, file (relative to the app), python expression over s, expect
     local name="$1" rel="$2" expr="$3" want="$4" copy="$WORK/$1"
     mkdir -p "$copy"
     (cd "$APP" && cp --parents $FILES "$copy/")
+    mkdir -p "$copy/$(dirname "$H")" && cp "$APP/../$H" "$copy/$H"
     if ! python3 -I - "$copy/$rel" "$expr" <<'PY'
 import sys
 p, expr = sys.argv[1], sys.argv[2]
@@ -177,7 +182,7 @@ PY
         echo "  PASS  MUT $name"
     fi
 }
-H='data/assets/datetime/holidays.json'
+H='data/fleet/app/com.diegonmarcos.cloudcalc/datetime/holidays.json'
 mutate range-end-dropped build.json 's.replace("\"range_end\": \"to\"", "\"range_endx\": \"to\"")' "D1 Days between must declare from"
 mutate toggle-not-a-toggle build.json 's.replace("\"type\": \"toggle\"", "\"type\": \"text\"")' "D1 Days between must declare the inclusive toggle"
 mutate weekend-default-changed build.json 's.replace("\"default\": \"SAT,SUN\"", "\"default\": \"FRI,SAT\"")' "D1 the weekend choice must default to SAT,SUN"

@@ -242,6 +242,7 @@ android {
 
 dependencies {
     implementation project(':libs:web-core')   // #1371 the fleet's one web view (CloudWeb, WebProfile)
+    implementation project(":libs:fleet-data-client")   // #1547 the world-clock and holiday datasets are read at RUNTIME from Cloud Store, never baked into the APK
     implementation project(':libs:core')
     implementation project(':libs:databackend')   // #825 DataBackendClient: this app binds an engine
     // The fleet's bottom-nav island; this app supplies its own entries from ui.bottom_nav.

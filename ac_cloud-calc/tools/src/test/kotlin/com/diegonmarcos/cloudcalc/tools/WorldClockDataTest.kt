@@ -18,7 +18,7 @@ import kotlin.math.abs
  * rule that stops checking fails here; PIT mutates the code itself (tools/build.gradle).
  */
 class WorldClockDataTest {
-    private val cat = W.parse(File("../data/assets/worldmap/cities.json").readText())
+    private val cat = W.parse(File("../../data/fleet/app/com.diegonmarcos.cloudcalc/worldmap/cities.json").readText())
     private val iso = Locale.getISOCountries().toList()
     private val valid = ZoneId.getAvailableZoneIds()
     private fun problems(c: W.Catalogue) = W.problems(c, iso, valid)
@@ -111,7 +111,7 @@ class WorldClockDataTest {
     }
 
     @Test fun `land polygons parse`() {
-        val land = W.parseLand(File("../data/assets/worldmap/land.json").readText())
+        val land = W.parseLand(File("../../data/fleet/app/com.diegonmarcos.cloudcalc/worldmap/land.json").readText())
         assertTrue(land.size > 100)
         assertTrue(land.all { it.size >= 6 && it.size % 2 == 0 })
         assertTrue(land.all { p -> p.indices.all { i -> if (i % 2 == 0) abs(p[i]) <= 180.0 else abs(p[i]) <= 90.0 } })

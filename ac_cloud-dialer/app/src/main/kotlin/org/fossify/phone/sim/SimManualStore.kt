@@ -14,7 +14,7 @@ class SimManualStore(
     private val vault: SimSecretVault,
     private val schema: SimSchema,
 ) {
-    constructor(context: Context, schema: SimSchema = SimSchema.load(context)) :
+    constructor(context: Context, schema: SimSchema) :
         this(SafeEncryptedPrefs.prefs(context, FILE), AccountSimSecretVault(context, schema.vault), schema)
 
     /** Every non-secret field of [key], blank when never typed. */

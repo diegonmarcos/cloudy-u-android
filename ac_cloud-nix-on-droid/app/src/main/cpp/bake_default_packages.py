@@ -1025,7 +1025,7 @@ def pty_gate(proot: str, old_proot: str, generation: str, login_shell: str, nix_
     return phone_pty_gate(proot, generation, login_shell, store_dir, store_files)
 
 
-# #797 -- the checks the PHONE runs: app/src/main/assets/terminal-selftest.json's pty-check lines,
+# #797 -- the checks the PHONE runs: data/fleet/app/cld.termux.nix/terminal-selftest.json's pty-check lines,
 # each handed to the login shell over PIPES exactly as /api/terminal/selftest hands it, with the
 # store directory this zip ships bound where bin/login binds it. pty-selftest.py above models
 # Android's ioctl policy around the python harness; this proves the harness the phone has (pty-check:
@@ -1033,7 +1033,7 @@ def pty_gate(proot: str, old_proot: str, generation: str, login_shell: str, nix_
 # declared check. Three mutants, one property each of the 2026-10-03 phone: a claude answering with
 # the --print refusal (claude-tui), a login config stalling fish 5 s so no prompt comes within 3 s of
 # its spawn (prompt), a /dev with no ptmx so no pty opens at all (tty, stty).
-SELFTEST_JSON = Path(__file__).resolve().parents[1] / "assets" / "terminal-selftest.json"  # app/src/main/assets
+SELFTEST_JSON = Path(__file__).resolve().parents[5] / "data" / "fleet" / "app" / "cld.termux.nix" / "terminal-selftest.json"  # #1547 served data, not an asset
 PRINT_REFUSAL = "Error: Input must be provided either through stdin or as a prompt argument when using --print"
 
 

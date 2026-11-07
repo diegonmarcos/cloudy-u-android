@@ -1,0 +1,540 @@
+{
+  "schemaVersion": 1,
+ "_doc": "Declared public holidays (#1329 Date & Time), offline, no library: each region is a list of RULES so every year works. A rule is a fixed date {month, day}, an offset from Western Easter Sunday {easter: days} (Good Friday -2), or the nth weekday of a month {month, weekday 1=Mon..7=Sun, nth 1..4, or -1 for the last}. A region may `extends` another (a Spanish autonomous community adds its own days to the national ones); `country` makes it the default for a device whose locale country matches. Not modelled: a Sunday holiday moved to the Monday by a community in a given year, and local (municipal) holidays - those are decreed per year; a day missing here is counted as a working day.",
+ "regions": [
+  {
+   "id": "ES",
+   "label": "Spain (national)",
+   "country": "ES",
+   "rules": [
+    {
+     "name": "Año Nuevo",
+     "month": 1,
+     "day": 1
+    },
+    {
+     "name": "Epifanía del Señor",
+     "month": 1,
+     "day": 6
+    },
+    {
+     "name": "Viernes Santo",
+     "easter": -2
+    },
+    {
+     "name": "Fiesta del Trabajo",
+     "month": 5,
+     "day": 1
+    },
+    {
+     "name": "Asunción de la Virgen",
+     "month": 8,
+     "day": 15
+    },
+    {
+     "name": "Fiesta Nacional de España",
+     "month": 10,
+     "day": 12
+    },
+    {
+     "name": "Todos los Santos",
+     "month": 11,
+     "day": 1
+    },
+    {
+     "name": "Día de la Constitución",
+     "month": 12,
+     "day": 6
+    },
+    {
+     "name": "Inmaculada Concepción",
+     "month": 12,
+     "day": 8
+    },
+    {
+     "name": "Navidad",
+     "month": 12,
+     "day": 25
+    }
+   ]
+  },
+  {
+   "id": "ES-MD",
+   "label": "Spain - Madrid",
+   "extends": "ES",
+   "rules": [
+    {
+     "name": "Jueves Santo",
+     "easter": -3
+    },
+    {
+     "name": "Día de la Comunidad de Madrid",
+     "month": 5,
+     "day": 2
+    }
+   ]
+  },
+  {
+   "id": "ES-CT",
+   "label": "Spain - Catalunya",
+   "extends": "ES",
+   "rules": [
+    {
+     "name": "Lunes de Pascua",
+     "easter": 1
+    },
+    {
+     "name": "San Juan",
+     "month": 6,
+     "day": 24
+    },
+    {
+     "name": "Diada de Catalunya",
+     "month": 9,
+     "day": 11
+    },
+    {
+     "name": "San Esteban",
+     "month": 12,
+     "day": 26
+    }
+   ]
+  },
+  {
+   "id": "ES-AN",
+   "label": "Spain - Andalucía",
+   "extends": "ES",
+   "rules": [
+    {
+     "name": "Jueves Santo",
+     "easter": -3
+    },
+    {
+     "name": "Día de Andalucía",
+     "month": 2,
+     "day": 28
+    }
+   ]
+  },
+  {
+   "id": "ES-VC",
+   "label": "Spain - Comunitat Valenciana",
+   "extends": "ES",
+   "rules": [
+    {
+     "name": "San José",
+     "month": 3,
+     "day": 19
+    },
+    {
+     "name": "Lunes de Pascua",
+     "easter": 1
+    },
+    {
+     "name": "San Juan",
+     "month": 6,
+     "day": 24
+    },
+    {
+     "name": "Día de la Comunitat Valenciana",
+     "month": 10,
+     "day": 9
+    }
+   ]
+  },
+  {
+   "id": "ES-GA",
+   "label": "Spain - Galicia",
+   "extends": "ES",
+   "rules": [
+    {
+     "name": "Jueves Santo",
+     "easter": -3
+    },
+    {
+     "name": "Día das Letras Galegas",
+     "month": 5,
+     "day": 17
+    },
+    {
+     "name": "Santiago Apóstol",
+     "month": 7,
+     "day": 25
+    }
+   ]
+  },
+  {
+   "id": "ES-PV",
+   "label": "Spain - Euskadi",
+   "extends": "ES",
+   "rules": [
+    {
+     "name": "Jueves Santo",
+     "easter": -3
+    },
+    {
+     "name": "Lunes de Pascua",
+     "easter": 1
+    },
+    {
+     "name": "Santiago Apóstol",
+     "month": 7,
+     "day": 25
+    }
+   ]
+  },
+  {
+   "id": "GB",
+   "label": "United Kingdom (England)",
+   "country": "GB",
+   "rules": [
+    {
+     "name": "New Year's Day",
+     "month": 1,
+     "day": 1
+    },
+    {
+     "name": "Good Friday",
+     "easter": -2
+    },
+    {
+     "name": "Easter Monday",
+     "easter": 1
+    },
+    {
+     "name": "Early May bank holiday",
+     "month": 5,
+     "weekday": 1,
+     "nth": 1
+    },
+    {
+     "name": "Spring bank holiday",
+     "month": 5,
+     "weekday": 1,
+     "nth": -1
+    },
+    {
+     "name": "Summer bank holiday",
+     "month": 8,
+     "weekday": 1,
+     "nth": -1
+    },
+    {
+     "name": "Christmas Day",
+     "month": 12,
+     "day": 25
+    },
+    {
+     "name": "Boxing Day",
+     "month": 12,
+     "day": 26
+    }
+   ]
+  },
+  {
+   "id": "US",
+   "label": "United States (federal)",
+   "country": "US",
+   "rules": [
+    {
+     "name": "New Year's Day",
+     "month": 1,
+     "day": 1
+    },
+    {
+     "name": "Martin Luther King Jr. Day",
+     "month": 1,
+     "weekday": 1,
+     "nth": 3
+    },
+    {
+     "name": "Presidents' Day",
+     "month": 2,
+     "weekday": 1,
+     "nth": 3
+    },
+    {
+     "name": "Memorial Day",
+     "month": 5,
+     "weekday": 1,
+     "nth": -1
+    },
+    {
+     "name": "Juneteenth",
+     "month": 6,
+     "day": 19
+    },
+    {
+     "name": "Independence Day",
+     "month": 7,
+     "day": 4
+    },
+    {
+     "name": "Labor Day",
+     "month": 9,
+     "weekday": 1,
+     "nth": 1
+    },
+    {
+     "name": "Columbus Day",
+     "month": 10,
+     "weekday": 1,
+     "nth": 2
+    },
+    {
+     "name": "Veterans Day",
+     "month": 11,
+     "day": 11
+    },
+    {
+     "name": "Thanksgiving",
+     "month": 11,
+     "weekday": 4,
+     "nth": 4
+    },
+    {
+     "name": "Christmas Day",
+     "month": 12,
+     "day": 25
+    }
+   ]
+  },
+  {
+   "id": "DE",
+   "label": "Germany (national)",
+   "country": "DE",
+   "rules": [
+    {
+     "name": "Neujahr",
+     "month": 1,
+     "day": 1
+    },
+    {
+     "name": "Karfreitag",
+     "easter": -2
+    },
+    {
+     "name": "Ostermontag",
+     "easter": 1
+    },
+    {
+     "name": "Tag der Arbeit",
+     "month": 5,
+     "day": 1
+    },
+    {
+     "name": "Christi Himmelfahrt",
+     "easter": 39
+    },
+    {
+     "name": "Pfingstmontag",
+     "easter": 50
+    },
+    {
+     "name": "Tag der Deutschen Einheit",
+     "month": 10,
+     "day": 3
+    },
+    {
+     "name": "1. Weihnachtstag",
+     "month": 12,
+     "day": 25
+    },
+    {
+     "name": "2. Weihnachtstag",
+     "month": 12,
+     "day": 26
+    }
+   ]
+  },
+  {
+   "id": "FR",
+   "label": "France",
+   "country": "FR",
+   "rules": [
+    {
+     "name": "Jour de l'an",
+     "month": 1,
+     "day": 1
+    },
+    {
+     "name": "Lundi de Pâques",
+     "easter": 1
+    },
+    {
+     "name": "Fête du Travail",
+     "month": 5,
+     "day": 1
+    },
+    {
+     "name": "Victoire 1945",
+     "month": 5,
+     "day": 8
+    },
+    {
+     "name": "Ascension",
+     "easter": 39
+    },
+    {
+     "name": "Lundi de Pentecôte",
+     "easter": 50
+    },
+    {
+     "name": "Fête nationale",
+     "month": 7,
+     "day": 14
+    },
+    {
+     "name": "Assomption",
+     "month": 8,
+     "day": 15
+    },
+    {
+     "name": "Toussaint",
+     "month": 11,
+     "day": 1
+    },
+    {
+     "name": "Armistice 1918",
+     "month": 11,
+     "day": 11
+    },
+    {
+     "name": "Noël",
+     "month": 12,
+     "day": 25
+    }
+   ]
+  },
+  {
+   "id": "IT",
+   "label": "Italy",
+   "country": "IT",
+   "rules": [
+    {
+     "name": "Capodanno",
+     "month": 1,
+     "day": 1
+    },
+    {
+     "name": "Epifania",
+     "month": 1,
+     "day": 6
+    },
+    {
+     "name": "Lunedì dell'Angelo",
+     "easter": 1
+    },
+    {
+     "name": "Festa della Liberazione",
+     "month": 4,
+     "day": 25
+    },
+    {
+     "name": "Festa del Lavoro",
+     "month": 5,
+     "day": 1
+    },
+    {
+     "name": "Festa della Repubblica",
+     "month": 6,
+     "day": 2
+    },
+    {
+     "name": "Assunzione",
+     "month": 8,
+     "day": 15
+    },
+    {
+     "name": "Ognissanti",
+     "month": 11,
+     "day": 1
+    },
+    {
+     "name": "Immacolata Concezione",
+     "month": 12,
+     "day": 8
+    },
+    {
+     "name": "Natale",
+     "month": 12,
+     "day": 25
+    },
+    {
+     "name": "Santo Stefano",
+     "month": 12,
+     "day": 26
+    }
+   ]
+  },
+  {
+   "id": "PT",
+   "label": "Portugal",
+   "country": "PT",
+   "rules": [
+    {
+     "name": "Ano Novo",
+     "month": 1,
+     "day": 1
+    },
+    {
+     "name": "Sexta-feira Santa",
+     "easter": -2
+    },
+    {
+     "name": "Páscoa",
+     "easter": 0
+    },
+    {
+     "name": "Dia da Liberdade",
+     "month": 4,
+     "day": 25
+    },
+    {
+     "name": "Dia do Trabalhador",
+     "month": 5,
+     "day": 1
+    },
+    {
+     "name": "Corpo de Deus",
+     "easter": 60
+    },
+    {
+     "name": "Dia de Portugal",
+     "month": 6,
+     "day": 10
+    },
+    {
+     "name": "Assunção de Nossa Senhora",
+     "month": 8,
+     "day": 15
+    },
+    {
+     "name": "Implantação da República",
+     "month": 10,
+     "day": 5
+    },
+    {
+     "name": "Todos os Santos",
+     "month": 11,
+     "day": 1
+    },
+    {
+     "name": "Restauração da Independência",
+     "month": 12,
+     "day": 1
+    },
+    {
+     "name": "Imaculada Conceição",
+     "month": 12,
+     "day": 8
+    },
+    {
+     "name": "Natal",
+     "month": 12,
+     "day": 25
+    }
+   ]
+  }
+ ]
+}

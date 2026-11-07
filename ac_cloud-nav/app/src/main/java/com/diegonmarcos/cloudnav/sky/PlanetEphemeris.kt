@@ -31,8 +31,9 @@ data class BodyPosition(val name: String, val raDeg: Double, val decDeg: Double,
 object PlanetEphemeris {
     private const val OBLIQUITY_DEG = 23.43928
 
-    fun loadElements(context: Context): Map<String, OrbitalElements> {
-        val root = JSONObject(context.assets.open("celestial/planets.json").bufferedReader().readText())
+    /** Null while the runtime dataset celestial/planets (Cloud Store, #1547) is not served yet; never throws, never cached. */
+    fun loadElements(context: Context): Map<String, OrbitalElements>? {
+        val root = CelestialData.dataset(context, "celestial/planets") ?: return null
         val out = LinkedHashMap<String, OrbitalElements>()
         for (key in root.keys()) {
             val body = root.getJSONObject(key)

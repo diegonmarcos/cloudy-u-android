@@ -54,4 +54,4 @@ class FakeSubSource(
     override val eid: String? = "89049032000001000000000000001234"
 }
 
-val simSchema: SimSchema = SimSchema.parse(File("src/main/assets/sim-fields.json").readText())
+val simSchema: SimSchema = SimSchema.parse(File("../../data/fleet/app/com.diegonmarcos.comms.dialer/sim-fields.json").readText())

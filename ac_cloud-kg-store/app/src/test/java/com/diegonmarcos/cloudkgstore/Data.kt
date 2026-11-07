@@ -11,7 +11,7 @@ object Data {
 
     private fun json(f: File) = JSONObject(f.readText())
 
-    val kgText: String get() = File(app, "src/main/assets/kg/kg.json").readText()
+    val kgText: String get() = File(repo, "data/fleet/app/com.diegonmarcos.cloudkgstore/kg.json").readText()
     val buildJson: JSONObject get() = json(File(module, "build.json"))
     val searchJson: JSONObject get() = json(File(repo, "ac_cloud-search/build.json")).getJSONObject("search")
     val accountJson: JSONObject get() = json(File(repo, "ac_cloud-account/build.json"))

@@ -37,9 +37,11 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import org.fossify.phone.helpers.FleetDataset
 import org.fossify.phone.helpers.isPackageInstalled
+import org.fossify.phone.helpers.rememberFleetDataset
 
-/** One VoIP app, declared in assets/voip_providers.json: [uri] with {number}, the [packages] to try in order. */
+/** One VoIP app, declared in the runtime dataset voip_providers: [uri] with {number}, the [packages] to try in order. */
 @Serializable
 data class VoipProvider(val id: String, val label: String, val uri: String, val packages: List<String> = emptyList())
 
@@ -51,10 +53,11 @@ data class VoipSpec(
     val providers: List<VoipProvider>,
 ) {
     companion object {
-        const val ASSET = "voip_providers.json"
+        const val DATASET = "voip_providers"
         private val json = Json { ignoreUnknownKeys = true }
         fun parse(raw: String): VoipSpec = json.decodeFromString(serializer(), raw)
-        fun load(ctx: Context): VoipSpec = parse(ctx.assets.open(ASSET).bufferedReader().use { it.readText() })
+        /** Null until Cloud Store has served `voip_providers` (#1547); never throws. */
+        fun load(ctx: Context): VoipSpec? = FleetDataset.get(ctx, DATASET) { parse(it) }
     }
 }
 
@@ -87,8 +90,13 @@ object Voip {
 /** #1528 the VoIP bottom tab: a number, the recent contacts, and one button per declared provider (WhatsApp Business now). */
 @Composable
 fun VoipPage(c: ThemeColors) {
+    val spec = rememberFleetDataset(VoipSpec.DATASET) { VoipSpec.parse(it) } ?: return
+    VoipPageBody(spec, c)
+}
+
+@Composable
+private fun VoipPageBody(spec: VoipSpec, c: ThemeColors) {
     val ctx = LocalContext.current
-    val spec = remember { VoipSpec.load(ctx) }
     var number by rememberSaveable { mutableStateOf("") }
     var recent by remember { mutableStateOf<List<T9Contact>>(emptyList()) }
     LaunchedEffect(Unit) {

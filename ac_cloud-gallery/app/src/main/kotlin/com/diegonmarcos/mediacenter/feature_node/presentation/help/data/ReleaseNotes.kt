@@ -8,8 +8,8 @@ package com.diegonmarcos.mediacenter.feature_node.presentation.help.data
 import androidx.compose.runtime.Immutable
 
 /**
- * A single app release, authored as an English-only markdown file under
- * `assets/changelog/<versionCode>.md` and loaded by [ChangelogRepository].
+ * A single app release, authored as an English-only markdown entry of
+ * the runtime dataset `changelog` (one entry per version code) and loaded by [ChangelogRepository].
  */
 @Immutable
 data class ReleaseNotes(

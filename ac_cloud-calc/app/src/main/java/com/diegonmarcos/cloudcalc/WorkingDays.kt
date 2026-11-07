@@ -9,7 +9,7 @@ import java.time.LocalDate
  * #1329 Date & Time: working days. libqalculate has no working-day function, so the calendar bookkeeping lives here, pure
  * (java.time and org.json only, no Android) so the JVM suite runs it. What is a weekend and which days are holidays are DATA:
  * the weekend comes from the field's declared options (build.json::ui.modes[datetime]), the holidays from the declared rules in
- * data/assets/datetime/holidays.json (no library: see that file's _doc). Calendar days between two dates stay the engine's `days()`.
+ * data/fleet/app/com.diegonmarcos.cloudcalc/datetime/holidays.json (the runtime dataset datetime/holidays, #1547; no library: see that file's _doc). Calendar days between two dates stay the engine's `days()`.
  *
  * CONVENTION: a span counts the days from `from` up to `to`, the END EXCLUDED (the engine's `days()`), or the end included when the
  * form's toggle says so. Working + weekend + holidays = the days counted; a holiday that falls on a weekend day is a weekend day.

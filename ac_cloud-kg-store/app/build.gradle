@@ -56,15 +56,15 @@ def uiDefaultSection = (buildJson.ui.default_section ?: buildJson.ui.bottom_nav[
 def searchDecl = new groovy.json.JsonSlurper().parse(file('../../ac_cloud-search/build.json')).search
 if (searchDecl == null) throw new GradleException("ac_cloud-search/build.json::search missing - the Web and Repo pages would have nothing to read")
 def searchConfigB64 = b64(searchDecl)
-// assets/kg/kg.json is this app's own page declaration; the fleet services it names (and the two code indexes') are baked with
+// data/fleet/app/com.diegonmarcos.cloudkgstore/kg.json (served at runtime by Cloud Store, #1547, not an APK asset) is this app's own page declaration; the fleet services it names (and the two code indexes') are baked with
 // their mesh and public addresses from ac_cloud-account/build.json::fleet_endpoints, never spelled here.
-def kgDecl = new groovy.json.JsonSlurper().parse(file('src/main/assets/kg/kg.json'))
+def kgDecl = new groovy.json.JsonSlurper().parse(new File(rootDir, '../data/fleet/app/com.diegonmarcos.cloudkgstore/kg.json'))
 def fleetDecl = new groovy.json.JsonSlurper().parse(new File(rootDir, '../ac_cloud-account/build.json')).fleet_endpoints.services
 def fleetUsed = (kgDecl.pages.values().collectMany { (it.services ?: []) + (it.service ? [it.service] : []) + (it.rerank ? [it.rerank.service] : []) } +
                  (searchDecl.cgc?.indexes ?: []).collect { it.service }).unique()
 def fleetServicesB64 = b64(fleetUsed.collect { id ->
     def sv = fleetDecl.find { it.id == id }
-    if (sv == null) throw new GradleException("assets/kg/kg.json names the fleet service '${id}', which ac_cloud-account/build.json::fleet_endpoints does not declare")
+    if (sv == null) throw new GradleException("data/fleet/app/com.diegonmarcos.cloudkgstore/kg.json names the fleet service '${id}', which ac_cloud-account/build.json::fleet_endpoints does not declare")
     [id: id, kind: sv.kind ?: '', health: sv.health ?: '', route_paths: sv.route_paths ?: [],
      mesh_url: sv.mesh_dns ? "${sv.mesh_scheme ?: 'http'}://${sv.mesh_dns}${sv.mesh_port ? ':' + sv.mesh_port : ''}${sv.mesh_path ?: ''}".toString() : '',
      public_url: sv.public_domain ? "${sv.public_scheme ?: 'https'}://${sv.public_domain}${sv.public_path ?: ''}".toString() : '',
@@ -159,6 +159,8 @@ android {
 
 dependencies {
     implementation project(':libs:core')
+    // #1547 the page declaration (kg) is read at RUNTIME from Cloud Store's provider, never baked into the APK.
+    implementation project(':libs:fleet-data-client')
     // The fleet's navigation: NavDecl and the top-bar scaffold's drawer (libs:bottomnav), the first row with
     // Profile at the top right, the second row with icons, the bottom nav, the page gradient (#1154).
     implementation project(':libs:bottomnav')

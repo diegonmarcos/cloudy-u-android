@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "_doc": "#1528 THE schema of the fields the owner types per SIM / eSIM (Android cannot give them). Persisted per subscription (key = ICCID, else subscription id) by sim/SimManualStore.kt; a field with secret=true (PIN, PUK) is never written to the app's prefs: it goes only to the Cloud Account vault (sim_secret / sim_secret_put, grant sim.secrets). kind: text | multiline | choice (options) | number | date.",
+  "vault": {"get": "sim_secret", "put": "sim_secret_put", "grant": "sim.secrets", "unavailable": "n/a (needs Cloud Account with the sim.secrets grant)"},
+  "groups": [
+    {"id": "line", "label": "Line"},
+    {"id": "plan", "label": "Plan"},
+    {"id": "owner", "label": "Line owner"},
+    {"id": "provider", "label": "Provider"},
+    {"id": "secrets", "label": "PIN and PUK (Cloud Account vault)"},
+    {"id": "notes", "label": "Notes"}
+  ],
+  "fields": [
+    {"id": "lineType", "group": "line", "label": "Line type", "kind": "choice",
+      "options": ["Voice + data", "Data only", "Voice only", "SMS only", "Voice + SMS", "Spare"]},
+    {"id": "number", "group": "line", "label": "Number (if hidden)", "kind": "text"},
+    {"id": "dataAllowance", "group": "plan", "label": "Data (GB)", "kind": "number"},
+    {"id": "minutes", "group": "plan", "label": "Minutes", "kind": "number"},
+    {"id": "sms", "group": "plan", "label": "SMS", "kind": "number"},
+    {"id": "roamingPlan", "group": "plan", "label": "Roaming", "kind": "text"},
+    {"id": "monthlyPrice", "group": "plan", "label": "Price", "kind": "text"},
+    {"id": "renewalDate", "group": "plan", "label": "Renewal date", "kind": "date"},
+    {"id": "plan", "group": "plan", "label": "Plan name", "kind": "text"},
+    {"id": "planNotes", "group": "plan", "label": "Plan notes", "kind": "multiline"},
+    {"id": "ownerName", "group": "owner", "label": "Owner name", "kind": "text"},
+    {"id": "ownerEmail", "group": "owner", "label": "Owner email", "kind": "text"},
+    {"id": "provider", "group": "provider", "label": "Provider", "kind": "text"},
+    {"id": "providerSite", "group": "provider", "label": "Website", "kind": "text"},
+    {"id": "providerPhone", "group": "provider", "label": "Phone", "kind": "text"},
+    {"id": "providerWhatsapp", "group": "provider", "label": "WhatsApp", "kind": "text"},
+    {"id": "pin", "group": "secrets", "label": "PIN", "kind": "text", "secret": true},
+    {"id": "puk", "group": "secrets", "label": "PUK", "kind": "text", "secret": true},
+    {"id": "notes", "group": "notes", "label": "Notes", "kind": "multiline"}
+  ]
+}

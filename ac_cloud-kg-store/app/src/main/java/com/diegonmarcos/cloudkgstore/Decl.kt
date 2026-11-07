@@ -5,7 +5,7 @@ import com.diegonmarcos.superapp.bottomnav.NavDecl
 /**
  * The navigation declaration app/build.gradle bakes from build.json::ui (bottom_nav, sections, default_section),
  * decoded once through libs:bottomnav's NavDecl. Kotlin names no section label: the bottom nav, the second row (two rows
- * in Cloud) and the title dropdown all come from it. The pages of Cloud, Phone and Web are the keys of assets/kg/kg.json::pages
+ * in Cloud) and the title dropdown all come from it. The pages of Cloud, Phone and Web are the keys of the kg dataset pages
  * (test-kg-store-app.sh and KgConfigTest hold the two in step), so Kotlin names none of them.
  */
 object Decl {

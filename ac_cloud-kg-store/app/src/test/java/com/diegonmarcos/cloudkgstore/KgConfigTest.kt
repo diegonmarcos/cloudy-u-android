@@ -9,7 +9,7 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** assets/kg/kg.json held to build.json::ui, to Cloud Search's declaration and to the fleet declaration, each both ways. */
+/** The kg dataset (data/fleet/app/com.diegonmarcos.cloudkgstore/kg.json, served at runtime, #1547) held to build.json::ui, to Cloud Search's declaration and to the fleet declaration, each both ways. */
 class KgConfigTest {
     private val kg = KgConfig.parse(Data.kgText)
     private val ui = Data.buildJson.getJSONObject("ui")

@@ -47,8 +47,9 @@
   The earlier interstellar HYG star-field / "other star systems" layer
   (119,614 real stars, hyg_stars.bin/hyg_named.json) is NOT wired into
   this screen anymore, per the explicit refocus onto the Solar System --
-  the data files are left in this folder rather than deleted, in case
-  that layer is wanted back later.
+  the data now lives in the fleet data repo (hyg_named as the app dataset
+  space/hyg_named, hyg_stars.bin as the downloadable pack packs/hyg-stars), in
+  case that layer is wanted back later.
 -->
 <html>
 <head>
@@ -146,11 +147,18 @@
     const dustSphere = new THREE.Mesh(dustGeom, dustMat);
     scene.add(dustSphere);
 
+    // #1547 the sky datasets are NOT in the APK: SpaceViewActivity serves them under /fleetdata/ from Cloud Store's provider (404 until
+    // the Store has synced them), so fetch until it answers.
+    function fetchDataset(url) {
+      return fetch(url).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        .catch(() => new Promise(res => setTimeout(res, 3000)).then(() => fetchDataset(url)));
+    }
+
     // ---- Constellation lines: reuse the already-credited celestial/ dataset. ----
     const CONST_SPHERE_R = 600;
     const constGroup = new THREE.Group();
     scene.add(constGroup);
-    fetch('../celestial/constellations.lines.json').then(r => r.json()).then(fc => {
+    fetchDataset('../../fleetdata/celestial/constellations.lines.json').then(fc => {
       const pts = [];
       for (const feat of fc.features) {
         for (const line of feat.geometry.coordinates) {
@@ -192,7 +200,7 @@
       sat: [{ name: 'Titan', periodDays: 15.945 }],
     };
 
-    fetch('../celestial/planets.json').then(r => r.json()).then(root => {
+    fetchDataset('../../fleetdata/celestial/planets.json').then(root => {
       for (const key of Object.keys(root)) {
         const body = root[key];
         const arr = body.elements;

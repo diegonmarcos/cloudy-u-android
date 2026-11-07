@@ -1,6 +1,7 @@
 package org.fossify.phone.sim
 
 import android.content.Context
+import org.fossify.phone.helpers.FleetDataset
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
@@ -21,16 +22,17 @@ data class SimField(
 @Serializable
 data class SimVaultDecl(val get: String, val put: String, val grant: String, val unavailable: String)
 
-/** #1528 the declared schema of the per-SIM fields (assets/sim-fields.json). */
+/** #1528 the declared schema of the per-SIM fields (runtime dataset sim-fields). */
 @Serializable
 data class SimSchema(val groups: List<SimGroup>, val fields: List<SimField>, val vault: SimVaultDecl) {
     val secretIds: Set<String> get() = fields.filter { it.secret }.map { it.id }.toSet()
     fun inGroup(group: String): List<SimField> = fields.filter { it.group == group }
 
     companion object {
-        const val ASSET = "sim-fields.json"
+        const val DATASET = "sim-fields"
         private val json = Json { ignoreUnknownKeys = true }
         fun parse(raw: String): SimSchema = json.decodeFromString(serializer(), raw)
-        fun load(ctx: Context): SimSchema = parse(ctx.assets.open(ASSET).bufferedReader().use { it.readText() })
+        /** Null until Cloud Store has served `sim-fields` (#1547); never throws. */
+        fun load(ctx: Context): SimSchema? = FleetDataset.get(ctx, DATASET) { parse(it) }
     }
 }

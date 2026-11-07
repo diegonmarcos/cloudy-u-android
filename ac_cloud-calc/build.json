@@ -3676,7 +3676,7 @@
           "approx": 1
         },
         "spec": {
-          "_doc": "#1329 working days: the holidays are declared RULES per region (data/assets/datetime/holidays.json, offline, no library), the weekend a field's options; a field type date renders a tappable calendar (a range when it names range_end), toggle a switch, choice a menu.",
+          "_doc": "#1329 working days: the holidays are declared RULES per region (data/fleet/app/com.diegonmarcos.cloudcalc/datetime/holidays.json, served at runtime, offline, no library), the weekend a field's options; a field type date renders a tappable calendar (a range when it names range_end), toggle a switch, choice a menu.",
           "holidays": "datetime/holidays.json",
           "_doc_tools": "#1377 Tools ▸ Time & Date: a form with `view` draws a screen of its own (world_clock = the Clock's World clock page, calendars = one date in every calendar of tools/Calendars.kt); an output with a `calc` the :tools module knows (ToolCalcs.CALCS) is counted there, the rest of the calcs are DateForms'."
         },

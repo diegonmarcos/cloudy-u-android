@@ -81,6 +81,13 @@
       "consumers": [
         "*"
       ]
+    },
+    "packs/hyg-stars": {
+      "tier": 4,
+      "consumers": [
+        "com.diegonmarcos.cloudnav"
+      ],
+      "source": "data/fleet/packs/hyg-stars.json"
     }
   },
   "apps": {
@@ -93,6 +100,34 @@
     ],
     "com.diegonmarcos.clouddrive": [
       "agents"
+    ],
+    "com.diegonmarcos.comms.dialer": [
+      "call_providers",
+      "keypad",
+      "sim-fields",
+      "spam_patterns",
+      "voip_providers"
+    ],
+    "com.diegonmarcos.cloudkgstore": [
+      "kg"
+    ],
+    "cld.termux.nix": [
+      "terminal-selftest"
+    ],
+    "com.diegonmarcos.cloudnav": [
+      "celestial/stars.6",
+      "celestial/mw",
+      "celestial/constellations.lines",
+      "celestial/planets",
+      "space/hyg_named"
+    ],
+    "com.diegonmarcos.cloudcalc": [
+      "worldmap/cities",
+      "worldmap/land",
+      "datetime/holidays"
+    ],
+    "com.diegonmarcos.mediacenter": [
+      "changelog"
     ]
   }
 }

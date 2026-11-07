@@ -37,7 +37,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-/** The Cloud section's pages: [page.kind] picks the reader, assets/kg/kg.json says what it is told. */
+/** The Cloud section's pages: [page.kind] picks the reader, the kg dataset says what it is told. */
 @Composable
 fun CloudPage(page: KgPage, svc: KgServices) {
     when (page.kind) {

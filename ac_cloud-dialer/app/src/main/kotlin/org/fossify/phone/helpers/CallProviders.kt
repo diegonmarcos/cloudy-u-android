@@ -6,8 +6,11 @@ import android.net.Uri
 import android.provider.ContactsContract
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.decodeFromJsonElement
 
-const val CALL_PROVIDERS_ASSET = "call_providers.json"
+const val CALL_PROVIDERS_DATASET = "call_providers"
 
 @Serializable
 data class CallProvider(
@@ -28,10 +31,16 @@ data class ProviderOption(
 
 private val callProvidersJson = Json { ignoreUnknownKeys = true }
 
-fun parseProviders(raw: String): List<CallProvider> = callProvidersJson.decodeFromString(raw)
+/** The served dataset is `{schemaVersion, providers:[...]}`; a bare array is accepted too. */
+fun parseProviders(raw: String): List<CallProvider> {
+    val el = callProvidersJson.parseToJsonElement(raw)
+    val arr = if (el is JsonObject) el["providers"] ?: JsonArray(emptyList()) else el
+    return callProvidersJson.decodeFromJsonElement(arr)
+}
 
+/** Empty while Cloud Store has not served `call_providers` yet (plain cellular calls); never throws, never cached. */
 fun loadCallProviders(context: Context): List<CallProvider> =
-    parseProviders(context.assets.open(CALL_PROVIDERS_ASSET).bufferedReader().use { it.readText() })
+    FleetDataset.get(context, CALL_PROVIDERS_DATASET) { parseProviders(it) } ?: emptyList()
 
 /**
  * Pure decision logic (unit-tested). Given the configured providers, which packages are

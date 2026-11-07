@@ -6,11 +6,15 @@
 package com.diegonmarcos.mediacenter.feature_node.presentation.help.data
 
 import android.content.Context
+import com.diegonmarcos.superapp.fleetdata.FleetData
+import org.json.JSONObject
 
 /**
- * Loads the changelog from English-only markdown files bundled under
- * `assets/changelog/<versionCode>.md`. The file name (its integer version code)
- * defines ordering; a small YAML-ish front-matter block carries the display
+ * Loads the changelog from English-only markdown entries of the runtime dataset `changelog`
+ * (#1547: served by Cloud Store through libs:fleet-data-client, repo
+ * data/fleet/app/com.diegonmarcos.mediacenter/changelog.json; never baked into the APK):
+ * `{schemaVersion, releases:[{versionCode, text}]}`. The integer version code
+ * defines ordering; a small YAML-ish front-matter block in `text` carries the display
  * version, date and optional linked tip ids:
  *
  * ```
@@ -23,11 +27,12 @@ import android.content.Context
  * ...markdown body...
  * ```
  *
- * Results are cached after the first read; the asset set is immutable at runtime.
+ * A non-empty result is cached; while the dataset has not been served (first run, provider absent)
+ * the list is empty, never cached, and the next call retries. Never throws.
  */
 object ChangelogRepository {
 
-    private const val DIR = "changelog"
+    private const val DATASET = "changelog"
 
     @Volatile
     private var cache: List<ReleaseNotes>? = null
@@ -35,17 +40,16 @@ object ChangelogRepository {
     /** All releases, newest (highest version code) first. */
     fun getAll(context: Context): List<ReleaseNotes> {
         cache?.let { return it }
-        val assets = context.applicationContext.assets
-        val files = runCatching { assets.list(DIR)?.toList() }.getOrNull().orEmpty()
-            .filter { it.endsWith(".md") }
-        val releases = files.mapNotNull { name ->
-            val code = name.removeSuffix(".md").toIntOrNull() ?: return@mapNotNull null
-            runCatching {
-                val text = assets.open("$DIR/$name").bufferedReader().use { it.readText() }
-                parse(code, text)
-            }.getOrNull()
-        }.sortedByDescending { it.versionCode }
-        cache = releases
+        val releases = runCatching {
+            FleetData.get(context.applicationContext, DATASET, own = true) { raw ->
+                val arr = JSONObject(raw).getJSONArray("releases")
+                (0 until arr.length()).mapNotNull { i ->
+                    val o = arr.getJSONObject(i)
+                    runCatching { parse(o.getInt("versionCode"), o.getString("text")) }.getOrNull()
+                }
+            }
+        }.getOrNull().orEmpty().sortedByDescending { it.versionCode }
+        if (releases.isNotEmpty()) cache = releases
         return releases
     }
 

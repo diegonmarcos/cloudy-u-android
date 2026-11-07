@@ -7,7 +7,15 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import com.diegonmarcos.superapp.fleetdata.FleetData
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -24,13 +32,31 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import com.diegonmarcos.cloudcalc.tools.WorldClockData as W
 
-/** #1423 the World Clock's declared data, read once from the APK assets (data/assets: worldmap/cities.json, worldmap/land.json). */
+/**
+ * #1423 the World Clock's declared data (worldmap/cities, worldmap/land), the runtime datasets Cloud Store serves through libs:fleet-data-client
+ * (#1547; repo data/fleet/app/com.diegonmarcos.cloudcalc/worldmap/), never baked into the APK. Null while not served (first run, provider absent):
+ * never throws and a null is never cached, the caller retries.
+ */
 object WorldAssets {
     @Volatile private var cat: W.Catalogue? = null
     @Volatile private var land: List<DoubleArray>? = null
-    private fun read(ctx: Context, p: String) = ctx.assets.open(p).bufferedReader().use { it.readText() }
-    fun catalogue(ctx: Context): W.Catalogue = cat ?: W.parse(read(ctx, "worldmap/cities.json")).also { cat = it }
-    fun land(ctx: Context): List<DoubleArray> = land ?: W.parseLand(read(ctx, "worldmap/land.json")).also { land = it }
+    private fun <T : Any> served(ctx: Context, dataset: String, parse: (String) -> T): T? =
+        runCatching { FleetData.get(ctx, dataset, own = true) { parse(it) } }.getOrNull()
+    fun catalogue(ctx: Context): W.Catalogue? = cat ?: served(ctx, "worldmap/cities") { W.parse(it) }?.also { cat = it }
+    fun land(ctx: Context): List<DoubleArray>? = land ?: served(ctx, "worldmap/land") { W.parseLand(it) }?.also { land = it }
+}
+
+/** The value [load] returns, null until it does (retried every few seconds off the main thread, #1547: Cloud Store has not served the dataset yet). */
+@Composable
+fun <T : Any> rememberServed(key: Any, load: () -> T?): T? {
+    var value by remember(key) { mutableStateOf<T?>(null) }
+    LaunchedEffect(key) {
+        while (value == null) {
+            value = withContext(Dispatchers.IO) { load() }
+            if (value == null) delay(3_000)
+        }
+    }
+    return value
 }
 
 const val WORLD_MAP_TAG = "clock_world_map"
@@ -43,17 +69,17 @@ const val WORLD_MAP_TAG = "clock_world_map"
 @Composable
 fun WorldMap(zones: List<String>, now: Long, onToggle: (String) -> Unit, modifier: Modifier = Modifier) {
     val ctx = LocalContext.current
-    val cat = remember { WorldAssets.catalogue(ctx) }
-    val land = remember { WorldAssets.land(ctx) }
+    val cat = rememberServed("cities") { WorldAssets.catalogue(ctx) }
+    val land = rememberServed("land") { WorldAssets.land(ctx) } ?: emptyList()
     val cs = MaterialTheme.colorScheme
     val ocean = cs.surfaceVariant; val ground = cs.secondaryContainer; val line = cs.outline
     val pin = cs.primary; val text = cs.onSurface
-    val pins = remember(zones) { zones.mapNotNull { W.pinFor(cat, it) } }
+    val pins = remember(zones, cat) { cat?.let { c -> zones.mapNotNull { W.pinFor(c, it) } } ?: emptyList() }
     Canvas(
-        modifier.fillMaxWidth().aspectRatio(2f).testTag(WORLD_MAP_TAG).semantics { contentDescription = "World map" }.pointerInput(zones) {
+        modifier.fillMaxWidth().aspectRatio(2f).testTag(WORLD_MAP_TAG).semantics { contentDescription = "World map" }.pointerInput(zones, cat) {
             detectTapGestures { o ->
                 val w = size.width.toDouble(); val h = size.height.toDouble()
-                W.nearest(cat, W.lat(o.y.toDouble(), h), W.lon(o.x.toDouble(), w), 6.0)?.let { onToggle(it.zone) }
+                cat?.let { c -> W.nearest(c, W.lat(o.y.toDouble(), h), W.lon(o.x.toDouble(), w), 6.0) }?.let { onToggle(it.zone) }
             }
         },
     ) {

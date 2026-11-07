@@ -113,10 +113,10 @@ internal fun rememberUsage(): List<SimUsageBlock> {
     LaunchedEffect(Unit) {
         data = withContext(Dispatchers.IO) {
             val reader = SimReader(ctx)
-            val store = SimManualStore(ctx)
+            val store = SimSchema.load(ctx)?.let { SimManualStore(ctx, it) }
             val usage = SimUsageReader(ctx)
             reader.cards().map { card ->
-                val m = store.load(SimFields.key(card))
+                val m = store?.load(SimFields.key(card)) ?: SimManual(emptyMap())
                 if (!card.active) return@map SimUsageBlock(card, m, emptyList())
                 val periods = SimUsage.periods(java.time.LocalDate.now(), m.renewalDate)
                 val ev = usage.events(card, periods.minOf { it.startMillis })

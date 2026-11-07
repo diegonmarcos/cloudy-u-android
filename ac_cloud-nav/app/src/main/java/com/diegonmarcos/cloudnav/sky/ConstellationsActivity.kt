@@ -54,7 +54,7 @@ class ConstellationsActivity : AppCompatActivity(), SensorEventListener {
         updateStatus()
     }
 
-    /** Parses ~1.2MB of bundled JSON (stars/lines/Milky Way/planet elements) off the main
+    /** Parses ~1.2MB of Cloud Store served JSON (stars/lines/Milky Way/planet elements) off the main
      *  thread, then hands the results to [sky]. Planet/Sun positions barely move over
      *  a single viewing session, so they're computed once here rather than every frame. */
     private fun loadCelestialDataAsync() {
@@ -64,15 +64,27 @@ class ConstellationsActivity : AppCompatActivity(), SensorEventListener {
             // this thread -- any bad-asset-read/parse hiccup here would silently crash
             // the activity with no on-screen explanation. Catch and surface it instead.
             try {
-                val stars = CelestialData.loadStars(appCtx)
-                val lines = CelestialData.loadConstellationLines(appCtx)
-                val mw = CelestialData.loadMilkyWay(appCtx)
-                val elements = PlanetEphemeris.loadElements(appCtx)
-                val bodies = PlanetEphemeris.positions(elements, System.currentTimeMillis())
+                // #1547 the catalog is served by Cloud Store (not baked): each dataset is retried until it arrives (the client keeps the last-known-good copy).
+                var stars: List<Star>? = null
+                var lines: List<ConstellationSegment>? = null
+                var mw: List<SkyPolygon>? = null
+                var elements: Map<String, OrbitalElements>? = null
+                while (stars == null || lines == null || mw == null || elements == null) {
+                    if (isDestroyed) return@thread
+                    stars = stars ?: CelestialData.loadStars(appCtx)
+                    lines = lines ?: CelestialData.loadConstellationLines(appCtx)
+                    mw = mw ?: CelestialData.loadMilkyWay(appCtx)
+                    elements = elements ?: PlanetEphemeris.loadElements(appCtx)
+                    if (stars == null || lines == null || mw == null || elements == null) Thread.sleep(3_000)
+                }
+                val fStars: List<Star> = checkNotNull(stars)
+                val fLines: List<ConstellationSegment> = checkNotNull(lines)
+                val fMw: List<SkyPolygon> = checkNotNull(mw)
+                val bodies = PlanetEphemeris.positions(checkNotNull(elements), System.currentTimeMillis())
                 Handler(Looper.getMainLooper()).post {
-                    sky.stars = stars
-                    sky.constellationLines = lines
-                    sky.milkyWay = mw
+                    sky.stars = fStars
+                    sky.constellationLines = fLines
+                    sky.milkyWay = fMw
                     sky.bodies = bodies
                     dataLoaded = true
                     updateStatus()

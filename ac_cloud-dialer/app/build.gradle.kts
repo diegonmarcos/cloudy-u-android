@@ -199,6 +199,8 @@ dependencies {
     // Fleet mesh member: libs:core (+ devtools via `api`) merges the fleet
     // provider, receiver, <queries> and the signature permission into this APK.
     implementation(project(":libs:core"))
+    // #1547 the declarations (call providers, keypad, SIM fields, VoIP, spam list) are read at RUNTIME from Cloud Store's provider, never baked into the APK.
+    implementation(project(":libs:fleet-data-client"))
     // 2026-10-16 owner decision: all apps must be Compose. Our additions (screened-call history, provider
     // chooser sheet) are composables under CloudKitTheme; upstream Fossify screens stay Views.
     implementation(project(":libs:ui-kit"))

@@ -39,6 +39,7 @@ import org.fossify.phone.helpers.*
 import org.fossify.phone.models.AudioRoute
 import org.fossify.phone.models.CallContact
 import org.fossify.phone.spam.SpamMatcher
+import org.fossify.phone.spam.SpamRules
 import kotlin.math.max
 import kotlin.math.min
 
@@ -60,11 +61,7 @@ class CallActivity : SimpleActivity() {
 
     // Cloud Dialer (patch 0014): offline spam rules for the in-call suspected-spam
     // warning — same asset + fail-open loading as SimpleCallScreeningService.
-    private val spamRules: List<SpamMatcher.Rule> by lazy {
-        runCatching {
-            assets.open("spam_patterns.json").bufferedReader().use { it.readText() }
-        }.map { SpamMatcher.parse(it) }.getOrDefault(emptyList())
-    }
+    private val spamRules: List<SpamMatcher.Rule> get() = SpamRules.get(this)
     private var proximityWakeLock: PowerManager.WakeLock? = null
     private var screenOnWakeLock: PowerManager.WakeLock? = null
     private var callDuration = 0

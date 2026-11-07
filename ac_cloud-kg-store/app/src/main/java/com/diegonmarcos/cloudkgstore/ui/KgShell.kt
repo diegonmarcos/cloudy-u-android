@@ -15,6 +15,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -63,7 +67,7 @@ fun kgAiTheme(): AiTheme = materialAiTheme(
  * The shell: the shared first row (Profile at the top right opens Cloud Account; the hamburger opens the assistant's sessions
  * drawer; the AI icon opens the assistant), the second row (two rows in Cloud), the bottom nav Cloud, Phone, Web, the shared page
  * gradient and the shared scroll collapse, all from libs (#1154, #1157). Which sections and pages exist is build.json::ui, read
- * through [Decl.nav]; what each page shows is assets/kg/kg.json, read through [KgServices].
+ * through [Decl.nav]; what each page shows is the kg dataset (Cloud Store), read through [KgServices].
  */
 @Composable
 fun KgShell() {
@@ -75,7 +79,10 @@ fun KgShell() {
     val sec = nav.section(section)
     val pageId = page?.takeIf { p -> sec?.pages?.any { it.id == p } == true } ?: sec?.pages?.firstOrNull()?.id
     val theme = kgAiTheme()
-    val chat = remember { KgAi.chat(ctx) }
+    // #1547 the page declaration is served by Cloud Store: retry (off the main thread) until it arrives, then rebuild what depends on it.
+    var ready by remember { mutableStateOf(svc.kg !== KgConfig.EMPTY) }
+    LaunchedEffect(Unit) { while (!ready) { delay(3_000); ready = withContext(Dispatchers.IO) { svc.refresh() } } }
+    val chat = remember(ready) { KgAi.chat(ctx) }
     val entries = nav.islandEntries()
     fun open(sectionId: String, pageId: String?) { section = sectionId; page = pageId }
 

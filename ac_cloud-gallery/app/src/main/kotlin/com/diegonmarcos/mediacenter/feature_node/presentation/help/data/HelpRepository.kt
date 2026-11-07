@@ -51,7 +51,7 @@ object HelpRepository {
     fun getTip(id: String): HelpTip? = ALL_TIPS.find { it.id == id }
     fun getFeaturedTips(): List<HelpTip> = listOf("search_ai", "ai_categories").mapNotNull { getTip(it) }
 
-    /** Changelog is loaded from the assets/changelog markdown files via [ChangelogRepository]. */
+    /** Changelog is the runtime dataset `changelog` (Cloud Store, #1547) read via [ChangelogRepository]. */
     fun getCurrentRelease(context: Context): ReleaseNotes? = ChangelogRepository.getCurrent(context)
     fun getAllReleases(context: Context): List<ReleaseNotes> = ChangelogRepository.getAll(context)
 

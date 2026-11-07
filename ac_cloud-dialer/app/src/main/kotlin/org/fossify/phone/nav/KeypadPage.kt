@@ -25,6 +25,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import org.fossify.phone.helpers.rememberFleetDataset
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -53,10 +54,16 @@ object KeypadPageSpec {
     const val DIGIT_SCALE = 2f
 }
 
+/** The keypad declaration is the runtime dataset `keypad` (#1547); blank until Cloud Store has served it, then the page. */
 @Composable
 fun KeypadPage(c: ThemeColors, onCall: (String) -> Unit, onFullDialpad: (String) -> Unit) {
+    val spec = rememberFleetDataset(KeypadSpec.DATASET) { KeypadSpec.parse(it) } ?: return
+    KeypadPageBody(spec, c, onCall, onFullDialpad)
+}
+
+@Composable
+private fun KeypadPageBody(spec: KeypadSpec, c: ThemeColors, onCall: (String) -> Unit, onFullDialpad: (String) -> Unit) {
     val ctx = LocalContext.current
-    val spec = remember { KeypadSpec.load(ctx) }
     var number by rememberSaveable { mutableStateOf("") }
     var contacts by remember { mutableStateOf<List<T9Contact>>(emptyList()) }
     LaunchedEffect(Unit) { contacts = withContext(Dispatchers.IO) { runCatching { ContactCandidates.load(ctx) }.getOrDefault(emptyList()) } }

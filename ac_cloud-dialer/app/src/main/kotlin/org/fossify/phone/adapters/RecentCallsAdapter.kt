@@ -65,6 +65,7 @@ import org.fossify.phone.interfaces.RefreshItemsListener
 import org.fossify.phone.models.CallLogItem
 import org.fossify.phone.models.RecentCall
 import org.fossify.phone.spam.SpamMatcher
+import org.fossify.phone.spam.SpamRules
 import org.joda.time.DateTime
 import java.util.Locale
 
@@ -93,11 +94,7 @@ class RecentCallsAdapter(
 
     // Cloud Dialer (patch 0014): offline spam rules for flagging suspected-spam
     // entries in the list — same asset + fail-open loading as the screening service.
-    private val spamRules: List<SpamMatcher.Rule> by lazy {
-        runCatching {
-            activity.assets.open("spam_patterns.json").bufferedReader().use { it.readText() }
-        }.map { SpamMatcher.parse(it) }.getOrDefault(emptyList())
-    }
+    private val spamRules: List<SpamMatcher.Rule> get() = SpamRules.get(activity)
 
     init {
         initDrawables()
