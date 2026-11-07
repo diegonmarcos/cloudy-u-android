@@ -361,7 +361,7 @@ class StoreCloudFragment : KitComposeFragment() {
             scrollTarget = null
         }
 
-        val pane = fleetDataPane
+        val pane = StorePages.fleetDataPane
         if (fleetOpen && pane != null) {
             // The Fleet Data pane scrolls itself (tabs + lazy grid), so it takes the rest of the page after the caption and strip
             // instead of sitting inside the page scroll (a lazy list cannot measure in unbounded height). Same padding as the other tabs.
@@ -459,7 +459,7 @@ class StoreCloudFragment : KitComposeFragment() {
     }
 
     /** True on the app that actually hosts the Cloud Store data provider (so SuperApp's embedded Store shows no Fleet Data tab). */
-    private fun hostsStoreProvider(): Boolean = fleetDataPane != null && runCatching {
+    private fun hostsStoreProvider(): Boolean = StorePages.fleetDataPane != null && runCatching {
         requireContext().packageManager.resolveContentProvider(STORE_AUTHORITY, 0)?.packageName == requireContext().packageName
     }.getOrDefault(false)
 
@@ -1074,7 +1074,5 @@ class StoreCloudFragment : KitComposeFragment() {
         const val FLEET_DATA_LABEL = "Fleet Data"
         const val TINY_ML_GROUP = StoreStrip.TINY_ML_GROUP
         const val STORE_AUTHORITY = "cloud.store.data"
-        /** The Fleet Data page as an embeddable pane (authority, host modifier), set by the app that hosts the provider and bundles libs:fleet-data-ui; null elsewhere. */
-        var fleetDataPane: (@Composable (String, Modifier) -> Unit)? = null
     }
 }

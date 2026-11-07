@@ -21,7 +21,7 @@ body="$(sed -n '/^fun FleetDataPage/,/^}/p' "$PAGE")"
 echo "$body" | grep -qE 'CloudKitTheme|Scaffold|statusBars|systemBars|WindowInsets|safeDrawing' && bad "the composable owns a theme/scaffold/inset" || ok "no own theme, scaffold or inset in the composable"
 grep -qF 'CloudKitTheme(palette) { Box(' "$PAGE" && ok "the Activity (standalone host) supplies the theme" || bad "the Activity no longer hosts the composable"
 echo "== T3: hosts =="
-grep -qF 'StoreCloudFragment.fleetDataPane = ' "$MAIN" && grep -qF 'FleetDataPage(authority, modifier)' "$MAIN" && ok "Store app wires the pane" || bad "Store app does not wire fleetDataPane"
+grep -qF 'StorePages.fleetDataPane = ' "$MAIN" && grep -qF 'FleetDataPage(authority, modifier)' "$MAIN" && ok "Store app wires the pane" || bad "Store app does not wire fleetDataPane"
 grep -qF 'FleetDataActivity.open(' "$CFG" && ok "Configs still opens the Activity host" || bad "Configs lost its data browser"
 echo "== RESULT: $F failed =="
 [ "$F" = 0 ]

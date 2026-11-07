@@ -66,7 +66,7 @@ class MainActivity : AppCompatActivity() {
         // #896 this host draws the child-page strips (build.json::ui sections[].pages) with libs:ui-nav-bars's NavBarTopSecondRow.
         StorePages.hostDrawsStrip = true
         // The Store tab "Fleet Data" renders libs:fleet-data-ui's page inline in the Store's own pane (no separate Activity).
-        StoreCloudFragment.fleetDataPane = { authority, modifier -> com.diegonmarcos.superapp.fleetdata.ui.FleetDataPage(authority, modifier) }
+        StorePages.fleetDataPane = { authority, modifier -> com.diegonmarcos.superapp.fleetdata.ui.FleetDataPage(authority, modifier) }
         requested = tabFrom(intent)
         setContent {
             KitDenseMaterial(darkColorScheme()) {

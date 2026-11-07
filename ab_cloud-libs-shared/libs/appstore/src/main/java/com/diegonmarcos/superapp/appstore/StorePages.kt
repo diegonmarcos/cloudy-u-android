@@ -13,6 +13,9 @@ object StorePages {
     /** Set once by a host that draws the child-page strip itself (Cloud Store's MainActivity). */
     @Volatile var hostDrawsStrip = false
 
+    /** The Fleet Data page as an embeddable pane (authority, host modifier); set by the app that hosts the provider and bundles libs:fleet-data-ui, null elsewhere. */
+    @Volatile var fleetDataPane: (@androidx.compose.runtime.Composable (String, androidx.compose.ui.Modifier) -> Unit)? = null
+
     private val current = HashMap<String, String>()
     private val observers = HashMap<String, MutableList<(String) -> Unit>>()
 
