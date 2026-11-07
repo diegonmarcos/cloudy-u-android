@@ -52,6 +52,8 @@ for op in ('"add" =>', '"remove" =>', '"start" =>', '"stop" =>', 'body["serve"]'
     if op not in sub:
         bad.append("V3 repos_op lost " + op)
 formsrc = served.split("pub fn form(")[1].split("pub fn page(")[0]
+if formsrc.count('"post"') != 1:
+    bad.append("V3 the add form declares more than one post target")
 for needle in ('"post": "/__app__/api/repos"', "Add & serve", '"op": "add"'):
     if needle not in formsrc:
         bad.append("V3 the add form no longer wires to the repos backend: " + needle)
@@ -122,7 +124,9 @@ mutate "the sub-nav back on Pages"       server/ui/shell.html "pages: function (
 mutate "no Start app button"             server/ui/shell.html "data-start-app" "data-x"
 mutate "no undeclared checker"           server/ui/shell.html "renderForm(pg.form) + renderUndeclared(pg.undeclared)" "renderForm(pg.form)"
 mutate "no Rescan"                       server/ui/shell.html "data-rescan>Rescan" "data-x>Rescan"
-mutate "the form off the repos backend"  server/src/served.rs '"post": "/__app__/api/repos",' '"post": "/__app__/api/other",'
+mutate "the form off the repos backend"  server/src/served.rs '"discover": "/__app__/api/repos/discover?source=",' '"discover": "/__app__/api/other",
+        "post": "/__app__/api/other",'
+mutate "Add & serve renamed"             server/src/served.rs '"label": "Add & serve"' '"label": "Add"'
 mutate "a row without Source"            server/ui/shell.html 'data-r="source"' 'data-r="src"'
 mutate "an unescaped source"             server/ui/shell.html "esc(r.source)" "r.source"
 mutate "the repos start op dropped"      server/src/sub.rs '"start" => {' '"begin" => {'
