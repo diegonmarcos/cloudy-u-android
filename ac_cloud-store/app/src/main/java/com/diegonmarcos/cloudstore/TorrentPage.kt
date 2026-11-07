@@ -10,13 +10,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
@@ -79,26 +79,26 @@ internal fun online(ctx: Context): Boolean = runCatching {
 /**
  * The Torrent destination (bottom nav, where Feed was): add a magnet or import a .torrent, then every torrent with its
  * progress, rates, seeds and peers, Pause / Resume / Remove and the per-torrent seed switch, in two lists: Active (downloading,
- * fetching metadata, checking, queued, paused, errors) and Completed (finished: seeding or done). The engine is libs:torrent; this
+ * fetching metadata, checking, queued, paused, errors) and Completed (finished: seeding or done). The BitTorrent engine is libs:torrent; this
  * page only polls [TorrentEngine.refresh] about once a second while it is shown (the engine's own ticker applies the seeding policy
  * while it is not). The engine being unavailable, no network and an unusable folder are each said in words.
  */
 @Composable
 fun TorrentPage() {
     val ctx = LocalContext.current
-    val engine = remember { TorrentEngines.get(ctx) }
+    val torrents = remember { TorrentEngines.get(ctx) }
     val scope = rememberCoroutineScope()
     var list by remember { mutableStateOf<List<TorrentStatus>>(emptyList()) }
-    var engineState by remember { mutableStateOf<EngineState>(engine.state) }
+    var engineState by remember { mutableStateOf<EngineState>(torrents.state) }
     var net by remember { mutableStateOf(true) }
     var magnet by remember { mutableStateOf("") }
     var note by remember { mutableStateOf<String?>(null) }
     var armed by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(Unit) {
-        withContext(Dispatchers.IO) { engine.start() }
+        withContext(Dispatchers.IO) { torrents.start() }
         while (true) {
-            list = withContext(Dispatchers.IO) { engine.refresh() }
-            engineState = engine.state
+            list = withContext(Dispatchers.IO) { torrents.refresh() }
+            engineState = torrents.state
             net = online(ctx)
             delay(1_000)
         }
@@ -121,7 +121,7 @@ fun TorrentPage() {
                     Button({
                         val m = magnet.trim()
                         if (m.isNotEmpty()) scope.launch {
-                            val r = withContext(Dispatchers.IO) { engine.addMagnet(m) }
+                            val r = withContext(Dispatchers.IO) { torrents.addMagnet(m) }
                             note = r.sentence(); if (r.idOrNull != null) magnet = ""
                         }
                     }, Modifier.testTag(TorrentTags.ADD)) { Text("Add", fontSize = StoreDensity.T_BODY.sp) }
@@ -130,15 +130,15 @@ fun TorrentPage() {
                     }
                 }
                 note?.let { Text(it, fontSize = StoreDensity.T_CAPTION.sp, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-                StatusLine(ctx, engine, engineState, net, list)
+                StatusLine(ctx, torrents, engineState, net, list)
             }
         }
         item { Heading("Active (${active.size})", TorrentTags.ACTIVE) }
         if (active.isEmpty()) item { Dim("Nothing downloading. Paste a magnet link, import a .torrent, or search the Torrent sources in Search.") }
-        items(active, key = { it.id }) { t -> TorrentRow(engine, t, armed, { armed = it }, scope) }
+        items(active, key = { it.id }) { t -> TorrentRow(torrents, t, armed, { armed = it }, scope) }
         item { Heading("Completed (${done.size})", TorrentTags.COMPLETED) }
         if (done.isEmpty()) item { Dim("Finished torrents appear here, seeding or done.") }
-        items(done, key = { it.id }) { t -> TorrentRow(engine, t, armed, { armed = it }, scope) }
+        items(done, key = { it.id }) { t -> TorrentRow(torrents, t, armed, { armed = it }, scope) }
     }
 }
 
@@ -151,14 +151,14 @@ private fun Dim(text: String) = Text(text, fontSize = StoreDensity.T_CAPTION.sp,
 
 /** Engine state, network, folder and the totals: one dense block. */
 @Composable
-private fun StatusLine(ctx: Context, engine: TorrentEngine, state: EngineState, net: Boolean, list: List<TorrentStatus>) {
+private fun StatusLine(ctx: Context, torrents: TorrentEngine, state: EngineState, net: Boolean, list: List<TorrentStatus>) {
     val bad = Color(0xFFF56565)
     when (state) {
         is EngineState.Unavailable -> Text(state.reason, Modifier.testTag(TorrentTags.STATUS), fontSize = StoreDensity.T_CAPTION.sp, color = bad)
         else -> Unit
     }
     if (!net) Text("No network: downloads wait until the phone is online.", Modifier.testTag(TorrentTags.OFFLINE), fontSize = StoreDensity.T_CAPTION.sp, color = bad)
-    val dir = engine.settings.saveDir
+    val dir = torrents.settings.saveDir
     val free = TorrentPaths.freeBytes(dir)
     val down = list.sumOf { it.downRate }; val up = list.sumOf { it.upRate }
     Text("↓ ${TorrentFormat.rate(down)} · ↑ ${TorrentFormat.rate(up)} · ${list.count { it.active }} active · ${list.count { it.finished }} completed · " +
@@ -167,28 +167,37 @@ private fun StatusLine(ctx: Context, engine: TorrentEngine, state: EngineState, 
 }
 
 @Composable
-private fun TorrentRow(engine: TorrentEngine, t: TorrentStatus, armed: String?, arm: (String?) -> Unit, scope: kotlinx.coroutines.CoroutineScope) {
+private fun TorrentRow(torrents: TorrentEngine, t: TorrentStatus, armed: String?, arm: (String?) -> Unit, scope: kotlinx.coroutines.CoroutineScope) {
     val bad = t.state == TorrentState.ERROR
     val h = StoreDensity.dpValue(StoreDensity.S12).dp
     val v = StoreDensity.dpValue(StoreDensity.S6).dp
     Column(Modifier.fillMaxWidth().testTag(TorrentTags.row(t.id)).background(Color(0xFF1C1C24)).padding(h, v), verticalArrangement = Arrangement.spacedBy(StoreDensity.dpValue(StoreDensity.S2).dp)) {
         Text(t.name, color = Color.White, fontWeight = FontWeight.Bold, fontSize = StoreDensity.T_BODY.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
-        if (!t.finished) LinearProgressIndicator(progress = { t.progress }, modifier = Modifier.fillMaxWidth().height(StoreDensity.dpValue(StoreDensity.S4).dp))
+        if (!t.finished) TorrentBar(t.progress)
         Text(TorrentFormat.line(t), fontSize = StoreDensity.T_CAPTION.sp, color = if (bad) Color(0xFFF56565) else Color(0x99FFFFFF))
         if (t.error != null) Text(t.error!!, fontSize = StoreDensity.T_CAPTION.sp, color = Color(0xFFF56565))
         Text(t.savePath, fontSize = StoreDensity.T_MICRO.sp, color = Color(0x66FFFFFF), maxLines = 1, overflow = TextOverflow.Ellipsis)
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(StoreDensity.dpValue(StoreDensity.S4).dp)) {
             if (t.state == TorrentState.PAUSED || t.state == TorrentState.COMPLETED || t.state == TorrentState.ERROR)
-                Button({ scope.launch(Dispatchers.IO) { engine.resume(t.id) } }, Modifier.testTag(TorrentTags.resume(t.id))) { Text(if (t.finished || t.state == TorrentState.COMPLETED) "Seed" else "Resume", fontSize = StoreDensity.T_CAPTION.sp) }
-            else Button({ scope.launch(Dispatchers.IO) { engine.pause(t.id) } }, Modifier.testTag(TorrentTags.pause(t.id))) { Text("Pause", fontSize = StoreDensity.T_CAPTION.sp) }
-            Button({ scope.launch(Dispatchers.IO) { engine.remove(t.id, deleteFiles = false) } }, Modifier.testTag(TorrentTags.remove(t.id))) { Text("Remove", fontSize = StoreDensity.T_CAPTION.sp) }
+                Button({ scope.launch(Dispatchers.IO) { torrents.resume(t.id) } }, Modifier.testTag(TorrentTags.resume(t.id))) { Text(if (t.finished || t.state == TorrentState.COMPLETED) "Seed" else "Resume", fontSize = StoreDensity.T_CAPTION.sp) }
+            else Button({ scope.launch(Dispatchers.IO) { torrents.pause(t.id) } }, Modifier.testTag(TorrentTags.pause(t.id))) { Text("Pause", fontSize = StoreDensity.T_CAPTION.sp) }
+            Button({ scope.launch(Dispatchers.IO) { torrents.remove(t.id, deleteFiles = false) } }, Modifier.testTag(TorrentTags.remove(t.id))) { Text("Remove", fontSize = StoreDensity.T_CAPTION.sp) }
             Button({
-                if (armed == t.id) { arm(null); scope.launch(Dispatchers.IO) { engine.remove(t.id, deleteFiles = true) } } else arm(t.id)
+                if (armed == t.id) { arm(null); scope.launch(Dispatchers.IO) { torrents.remove(t.id, deleteFiles = true) } } else arm(t.id)
             }, Modifier.testTag(TorrentTags.removeFiles(t.id))) { Text(if (armed == t.id) "Confirm: delete files" else "Remove + files", fontSize = StoreDensity.T_CAPTION.sp) }
             Row(Modifier.weight(1f), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
                 Text("seed", fontSize = StoreDensity.T_CAPTION.sp, color = Color(0x99FFFFFF), modifier = Modifier.padding(end = StoreDensity.dpValue(StoreDensity.S4).dp))
-                Switch(t.seedEnabled, { on -> scope.launch(Dispatchers.IO) { engine.setSeeding(t.id, on) } }, Modifier.testTag(TorrentTags.seed(t.id)))
+                Switch(t.seedEnabled, { on -> scope.launch(Dispatchers.IO) { torrents.setSeeding(t.id, on) } }, Modifier.testTag(TorrentTags.seed(t.id)))
             }
         }
+    }
+}
+
+/** A torrent's own thin bar (a track and a fill). Not the Store's download progress: that is drawn once, by the Activity panel. */
+@Composable
+private fun TorrentBar(fraction: Float) {
+    val h = StoreDensity.dpValue(StoreDensity.S4).dp
+    Box(Modifier.fillMaxWidth().height(h).background(Color(0xFF2A2A33))) {
+        Box(Modifier.fillMaxWidth(fraction.coerceIn(0f, 1f)).height(h).background(Color(0xFF2B6CB0)))
     }
 }

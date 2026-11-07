@@ -36,7 +36,7 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 /**
- * Cloud Store > Settings > Configs is a PAGE with its own top tabs: Sources | ADB Shell | AI | Notifications | Data | About.
+ * Cloud Store > Settings > Configs is a PAGE with its own top tabs: Sources | ADB Shell | AI | Notifications | Torrent | Data | About.
  * The tabs are READ from the Store's own build.json::ui (never restated here), then driven through the real
  * [PageTabs]: every declared page has a tab, in order, the first is open, a tap opens exactly that page's body and
  * only that one, and Configs stays off the bottom island. The host below mirrors MainActivity's contract (the strip
@@ -88,9 +88,9 @@ class ConfigsMenuTest {
     }
 
     @Test
-    fun `Configs declares exactly Sources, ADB Shell, AI, Notifications, Data, About, in that order`() {
-        assertEquals(listOf("sources", "adb", "ai", "notifications", "data", "about"), configs().map { it.id })
-        assertEquals(listOf("Sources", "ADB Shell", "AI", "Notifications", "Data", "About"), configs().map { it.label })
+    fun `Configs declares exactly Sources, ADB Shell, AI, Notifications, Torrent, Data, About, in that order`() {
+        assertEquals(listOf("sources", "adb", "ai", "notifications", "torrent", "data", "about"), configs().map { it.id })
+        assertEquals(listOf("Sources", "ADB Shell", "AI", "Notifications", "Torrent", "Data", "About"), configs().map { it.label })
     }
 
     @Test

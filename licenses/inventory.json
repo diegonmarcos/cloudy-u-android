@@ -16783,6 +16783,28 @@
    ],
    "licence": "LicenseRef-NoLicenseGranted",
    "licence_source": "licenses/curated.json"
+  },
+  "maven:com.frostwire:jlibtorrent": {
+   "kind": "maven",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/torrent/build.gradle"
+   ],
+   "version": "1.2.0.18",
+   "scope": "shipped",
+   "licence": "MIT",
+   "licence_source": "POM 1.2.0.18",
+   "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
+  },
+  "maven:com.frostwire:jlibtorrent-android-arm64": {
+   "kind": "maven",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/torrent/build.gradle"
+   ],
+   "version": "1.2.0.18",
+   "scope": "shipped",
+   "licence": "MIT",
+   "licence_source": "jlibtorrent (FrostWire) is MIT; this artifact is its prebuilt arm64 JNI library, built from the same project (libtorrent inside is BSD-3-Clause)",
+   "transitive": "not resolved (needs a Gradle/npm resolution; see script docstring)"
   }
  }
 }

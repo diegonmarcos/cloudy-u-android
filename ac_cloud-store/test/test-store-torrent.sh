@@ -88,8 +88,8 @@ ok(all(x in fp for x in ("e.ref", "e.title", "e.subtitle", "e.link", "e.state", 
 
 # T1
 tp = rd(CS + "/TorrentPage.kt")
-ok(tp is not None and all(x in strip(tp) for x in ("engine.addMagnet(", "OpenMultipleDocuments", "engine.pause(", "engine.resume(", "engine.remove(", "engine.setSeeding(",
-        "Active", "Completed", "TorrentFormat.line(", "EngineState.Unavailable", "online(ctx)", "LinearProgressIndicator")),
+ok(tp is not None and all(x in strip(tp) for x in ("torrents.addMagnet(", "OpenMultipleDocuments", "torrents.pause(", "torrents.resume(", "torrents.remove(", "torrents.setSeeding(",
+        "Active", "Completed", "TorrentFormat.line(", "EngineState.Unavailable", "online(ctx)", "TorrentBar(")),
    "T1 the Torrent page adds magnets, imports .torrent files, lists Active and Completed with progress/rates/seeds/peers, pauses, resumes, removes, switches seeding, and says engine-unavailable / offline",
    "T1 the Torrent page lost a capability")
 

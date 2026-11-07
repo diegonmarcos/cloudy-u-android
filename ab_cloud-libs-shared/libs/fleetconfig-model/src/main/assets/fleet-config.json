@@ -1879,6 +1879,14 @@
         "lib-appstore"
       ]
     },
+    "libs_torrent": {
+      "kind": "prefs",
+      "class": "device",
+      "doc": "#1600 Cloud Store > Configs > Torrent: the torrent download folder (default Downloads/Cloudy-store/Torrent, or a chosen folder or external drive), seed-after-complete and the seed ratio limit; the folder is a path on this phone's storage, so it is never migrated (a new phone starts on its own default).",
+      "used_by": [
+        "lib-torrent"
+      ]
+    },
     "store_lib_groups": {
       "kind": "prefs",
       "class": "device",
@@ -4141,6 +4149,7 @@
         "lib-shell-client",
         "lib-sysdns",
         "lib-theme-background",
+        "lib-torrent",
         "lib-ui-icons",
         "lib-ui-kit",
         "lib-ui-nav-bars",
