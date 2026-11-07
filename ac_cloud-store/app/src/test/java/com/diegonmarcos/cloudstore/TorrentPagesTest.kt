@@ -87,7 +87,7 @@ class TorrentPagesTest {
         compose.setContent { KitDenseMaterial(darkColorScheme()) { Surface(Modifier.fillMaxSize()) { 
             var open by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<String?>(null) }
             val o = open
-            if (o == null) StoreFeedPanels.Buttons { open = it } else StoreFeedPanels.Page(o) { open = null } } } }
+            if (o == null) StoreFeedPanels.Buttons { open = it } else StoreFeedPanels.Page(o, onBack = { open = null }) } } }
         compose.waitForIdle()
         compose.onNodeWithTag(StoreFeedPanels.TAG_PANELS, useUnmergedTree = true).assertExists()
         compose.onNodeWithTag(StoreFeedPanels.buttonTag("commits"), useUnmergedTree = true).assertExists()
