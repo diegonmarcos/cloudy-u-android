@@ -3,7 +3,8 @@ package com.diegonmarcos.superapp.torrent
 import java.io.File
 
 /** A session with no peers: tests set each torrent's raw status by hand and read back what the engine asked of it. */
-class FakeBackend(var failStart: Throwable? = null) : TorrentBackend {
+/** [startsPaused] mimics jlibtorrent: SessionManager.download() adds the torrent PAUSED until it is resumed. */
+class FakeBackend(var failStart: Throwable? = null, val startsPaused: Boolean = false) : TorrentBackend {
     val raw = LinkedHashMap<String, RawStatus>()
     val calls = ArrayList<String>()
     var started = false
@@ -14,12 +15,12 @@ class FakeBackend(var failStart: Throwable? = null) : TorrentBackend {
     override fun addMagnet(id: String, magnet: String, saveDir: File, paused: Boolean) {
         failAdd?.let { throw it }
         calls += "addMagnet:$id:${saveDir.path}:$paused"
-        raw[id] = RawStatus(id, "", Phase.METADATA, paused, 0f, 0, 0, 0, 0, 0, 0, 0, 0)
+        raw[id] = RawStatus(id, "", Phase.METADATA, paused || startsPaused, 0f, 0, 0, 0, 0, 0, 0, 0, 0)
     }
     override fun addTorrent(id: String, file: File, saveDir: File, paused: Boolean) {
         failAdd?.let { throw it }
         calls += "addTorrent:$id:${saveDir.path}:$paused"
-        raw[id] = RawStatus(id, "", Phase.CHECKING, paused, 0f, 0, 0, 0, 0, 0, 0, 0, 0)
+        raw[id] = RawStatus(id, "", Phase.CHECKING, paused || startsPaused, 0f, 0, 0, 0, 0, 0, 0, 0, 0)
     }
     override fun snapshot(): Map<String, RawStatus> = LinkedHashMap(raw)
     override fun pause(id: String) { calls += "pause:$id"; raw[id]?.let { raw[id] = it.copy(paused = true) } }

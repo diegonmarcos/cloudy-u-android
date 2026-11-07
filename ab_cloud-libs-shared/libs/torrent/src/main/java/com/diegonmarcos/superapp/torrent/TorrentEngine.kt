@@ -29,6 +29,8 @@ class TorrentEngine(
 
     private val entries = LinkedHashMap<String, TorrentEntry>()
     private val errors = HashMap<String, String>()
+    /** The biggest size each torrent has reported: libtorrent can report 0 once a torrent is complete. */
+    private val totals = HashMap<String, Long>()
     private var loaded = false
 
     private fun loadOnce() { if (!loaded) { loaded = true; store.load().forEach { entries[it.id] = it } } }
@@ -82,8 +84,10 @@ class TorrentEngine(
             when {
                 e.magnet != null -> backend.addMagnet(e.id, e.magnet, dir, paused)
                 e.torrentFile != null && File(e.torrentFile).isFile -> backend.addTorrent(e.id, File(e.torrentFile), dir, paused)
-                else -> errors[e.id] = "The .torrent file is gone; remove the entry and add it again."
+                else -> { errors[e.id] = "The .torrent file is gone; remove the entry and add it again."; return }
             }
+            // A session may add a torrent paused (jlibtorrent does): one that is meant to run is started explicitly.
+            if (!paused) backend.resume(e.id)
         } catch (t: Throwable) { errors[e.id] = t.message ?: t.javaClass.simpleName }
     }
 
@@ -120,6 +124,8 @@ class TorrentEngine(
         if (!prep.ok) return AddResult.Failed(prep.why.orEmpty())
         try {
             if (magnet != null) backend.addMagnet(id, magnet, dir, paused) else backend.addTorrent(id, File(file!!), dir, paused)
+            // A session may add a torrent paused (jlibtorrent does): one that is meant to run is started explicitly, no manual Resume.
+            if (!paused) backend.resume(id)
         } catch (t: Throwable) {
             return AddResult.Failed(t.message ?: t.javaClass.simpleName)
         }
@@ -137,6 +143,7 @@ class TorrentEngine(
         var changed = false
         for (id in entries.keys.toList()) {
             val r = raw[id] ?: continue
+            if (r.totalBytes > 0) totals[id] = maxOf(totals[id] ?: 0L, r.totalBytes)
             var cur = entries.getValue(id)
             if (r.name.isNotEmpty() && r.name != cur.name) { cur = cur.copy(name = r.name); changed = true }
             if (!cur.completed && done(r)) { cur = cur.copy(completed = true); changed = true }
@@ -188,7 +195,7 @@ class TorrentEngine(
         return TorrentStatus(
             id = e.id, name = r?.name?.takeIf { it.isNotEmpty() } ?: e.name, state = st,
             progress = if (e.completed) 1f else r?.progress ?: 0f,
-            totalBytes = r?.totalBytes ?: 0L, doneBytes = if (e.completed) (r?.totalBytes ?: 0L) else r?.doneBytes ?: 0L,
+            totalBytes = totals[e.id] ?: r?.totalBytes ?: 0L, doneBytes = if (e.completed) (totals[e.id] ?: r?.totalBytes ?: 0L) else r?.doneBytes ?: 0L,
             downRate = if (live) r?.downRate ?: 0L else 0L, upRate = if (live) r?.upRate ?: 0L else 0L,
             seeds = if (live) r?.seeds ?: 0 else 0, peers = if (live) r?.peers ?: 0 else 0,
             uploaded = r?.uploaded ?: 0L, downloaded = r?.downloaded ?: 0L,
@@ -222,7 +229,7 @@ class TorrentEngine(
         val e = entries.remove(id) ?: return false
         if (state is EngineState.Running) runCatching { backend.remove(id, deleteFiles) }
         e.torrentFile?.let { File(it).delete() }
-        errors.remove(id)
+        errors.remove(id); totals.remove(id)
         persist()
         return true
     }

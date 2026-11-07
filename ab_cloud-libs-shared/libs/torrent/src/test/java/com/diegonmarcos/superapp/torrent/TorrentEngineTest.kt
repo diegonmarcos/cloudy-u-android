@@ -195,4 +195,33 @@ class TorrentEngineTest {
         assertTrue(r is AddResult.Failed)
         assertNull(store.load().firstOrNull())
     }
+
+    @Test fun aFreshlyAddedTorrentLeavesPausedByItselfOnASessionThatAddsPaused() {
+        val b = FakeBackend(startsPaused = true)
+        val e = TorrentEngine(b, store, settings, tmp.newFolder(), { now++ })
+        e.addMagnet(magnet)
+        assertTrue("the engine started it, no manual Resume", b.calls.contains("resume:$hash"))
+        b.progress(hash, "x", Phase.DOWNLOADING, 0.1f, 100, down = 5, seeds = 1, peers = 1)
+        assertEquals(TorrentState.DOWNLOADING, e.refresh().single().state)
+        // a torrent added paused on purpose stays paused
+        val other = "magnet:?xt=urn:btih:${"cd".repeat(20)}"
+        e.addMagnet(other, startPaused = true)
+        assertFalse(b.calls.contains("resume:${"cd".repeat(20)}"))
+        assertEquals(TorrentState.PAUSED, e.refresh().last().state)
+        // and a restart re-adds a running torrent running
+        val b2 = FakeBackend(startsPaused = true)
+        val e2 = TorrentEngine(b2, store, settings, tmp.newFolder(), { now++ })
+        e2.start()
+        assertTrue(b2.calls.contains("resume:$hash"))
+    }
+
+    @Test fun aFinishedTorrentKeepsItsSizeWhenTheSessionReportsZero() {
+        val e = engine()
+        e.addMagnet(magnet)
+        backend.progress(hash, "x", Phase.DOWNLOADING, 0.5f, 4_000)
+        e.refresh()
+        backend.progress(hash, "x", Phase.SEEDING, 1f, 0)
+        val s = e.refresh().single()
+        assertEquals(4_000L, s.totalBytes); assertEquals(4_000L, s.doneBytes); assertTrue(s.finished)
+    }
 }

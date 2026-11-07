@@ -20,6 +20,8 @@ internal class JlibtorrentBackend : TorrentBackend {
     private var session: SessionManager? = null
     private val known = LinkedHashSet<String>()
     private val pendingPause = HashSet<String>()
+    /** Torrents that must run but whose handle libtorrent has not produced yet: SessionManager.download() adds PAUSED, so each is resumed once. */
+    private val pendingResume = HashSet<String>()
 
     @Synchronized override fun start() {
         if (session?.isRunning == true) return
@@ -31,7 +33,7 @@ internal class JlibtorrentBackend : TorrentBackend {
     @Synchronized override fun stop() {
         session?.stop()
         session = null
-        known.clear(); pendingPause.clear()
+        known.clear(); pendingPause.clear(); pendingResume.clear()
     }
 
     private fun s(): SessionManager = session ?: error("the BitTorrent session is not running")
@@ -39,13 +41,13 @@ internal class JlibtorrentBackend : TorrentBackend {
     @Synchronized override fun addMagnet(id: String, magnet: String, saveDir: File, paused: Boolean) {
         s().download(magnet, saveDir)
         known += id
-        if (paused) pendingPause += id
+        if (paused) pendingPause += id else pendingResume += id
     }
 
     @Synchronized override fun addTorrent(id: String, file: File, saveDir: File, paused: Boolean) {
         s().download(TorrentInfo(file), saveDir)
         known += id
-        if (paused) pendingPause += id
+        if (paused) pendingPause += id else pendingResume += id
     }
 
     private fun handle(id: String) = s().find(Sha1Hash(id))
@@ -57,6 +59,8 @@ internal class JlibtorrentBackend : TorrentBackend {
             val h = sm.find(Sha1Hash(id)) ?: continue
             if (!h.isValid) continue
             if (id in pendingPause) { h.unsetFlags(TorrentFlags.AUTO_MANAGED); h.pause(); pendingPause -= id }
+            // download() hands back a PAUSED, not auto-managed torrent: without this it would sit at 0 bytes until a manual Resume.
+            if (id in pendingResume) { h.unsetFlags(TorrentFlags.AUTO_MANAGED); h.resume(); pendingResume -= id }
             val st = h.status()
             out[id] = raw(id, st)
         }
@@ -76,7 +80,7 @@ internal class JlibtorrentBackend : TorrentBackend {
         return RawStatus(
             id = id, name = st.name().orEmpty(), phase = phase,
             paused = st.flags().and_(TorrentFlags.PAUSED).nonZero(),
-            progress = st.progress(), totalBytes = st.total(), doneBytes = st.totalDone(),
+            progress = st.progress(), totalBytes = maxOf(st.total(), st.totalWanted(), st.totalDone()), doneBytes = st.totalDone(),
             downRate = st.downloadPayloadRate().toLong(), upRate = st.uploadPayloadRate().toLong(),
             seeds = st.numSeeds(), peers = st.numPeers(),
             uploaded = st.allTimeUpload(), downloaded = st.allTimeDownload(),
@@ -93,7 +97,8 @@ internal class JlibtorrentBackend : TorrentBackend {
 
     @Synchronized override fun resume(id: String) {
         pendingPause -= id
-        handle(id)?.resume()
+        val h = handle(id)
+        if (h == null) pendingResume += id else { h.unsetFlags(TorrentFlags.AUTO_MANAGED); h.resume() }
     }
 
     @Synchronized override fun remove(id: String, deleteFiles: Boolean) {
