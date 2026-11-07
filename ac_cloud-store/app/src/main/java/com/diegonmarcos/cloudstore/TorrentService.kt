@@ -2,7 +2,6 @@ package com.diegonmarcos.cloudstore
 
 import android.annotation.SuppressLint
 import android.app.Notification
-import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
@@ -18,6 +17,7 @@ import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
+import com.diegonmarcos.superapp.core.SilentChannels
 import com.diegonmarcos.superapp.torrent.TorrentActivity
 import com.diegonmarcos.superapp.torrent.TorrentEngine
 import com.diegonmarcos.superapp.torrent.TorrentEngines
@@ -46,7 +46,6 @@ class TorrentService : Service() {
     override fun onCreate() {
         super.onCreate()
         running = true
-        channel(this)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -125,7 +124,7 @@ class TorrentService : Service() {
     }
 
     private fun build(a: TorrentActivity): Notification {
-        val b = NotificationCompat.Builder(this, CHANNEL)
+        val b = NotificationCompat.Builder(this, channel(this))
             .setSmallIcon(R.drawable.ic_stat_notify)
             .setContentTitle("Torrents").setContentText(if (a.downloading > 0) a.text else "Starting")
             .setOngoing(true).setOnlyAlertOnce(true).setSilent(true)
@@ -142,7 +141,7 @@ class TorrentService : Service() {
         PendingIntent.getService(this, a.hashCode(), Intent(this, TorrentService::class.java).setAction(a), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
     companion object {
-        const val CHANNEL = "torrent_downloads"
+        const val LEGACY_CHANNEL = "torrent_downloads"
         const val NOTE_ID = 0x7077
         const val TICK_MS = 2_000L
         const val ACTION_PAUSE_ALL = "com.diegonmarcos.cloudstore.torrent.PAUSE_ALL"
@@ -163,12 +162,8 @@ class TorrentService : Service() {
             runCatching { ContextCompat.startForegroundService(ctx, Intent(ctx, TorrentService::class.java)) }
         }
 
-        fun channel(ctx: Context) {
-            if (Build.VERSION.SDK_INT < 26) return
-            val nm = ctx.getSystemService(NotificationManager::class.java)
-            if (nm.getNotificationChannel(CHANNEL) == null)
-                nm.createNotificationChannel(NotificationChannel(CHANNEL, "Torrent downloads", NotificationManager.IMPORTANCE_LOW))
-        }
+        /** The channel id to post on: through libs:core SilentChannels like every Store channel (silent, low importance). */
+        fun channel(ctx: Context): String = SilentChannels.ensure(ctx, LEGACY_CHANNEL, "Torrent downloads", NotificationManager.IMPORTANCE_LOW)
 
         private fun openApp(ctx: Context): PendingIntent? {
             val i = ctx.packageManager.getLaunchIntentForPackage(ctx.packageName) ?: return null

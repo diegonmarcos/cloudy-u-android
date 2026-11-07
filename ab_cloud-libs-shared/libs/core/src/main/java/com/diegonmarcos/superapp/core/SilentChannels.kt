@@ -21,7 +21,9 @@ object SilentChannels {
     /** Every id a silent app posted on before [SUFFIX]. */
     val LEGACY_IDS = listOf("fleet_alerts", "superapp-updater", "store_batch", "adb_pairing", "host_shell_channel", "wd_keeper_channel",
         // FleetNotify's two shared channels: a silent app always posts on the suffixed id.
-        "fleet_keep_alive", "fleet_data_widget")
+        "fleet_keep_alive", "fleet_data_widget",
+        // Cloud Store's torrent download service (TorrentService).
+        "torrent_downloads")
 
     fun isSilent(packageName: String): Boolean = packageName in SILENT_PACKAGES
     fun isSilent(ctx: Context): Boolean = isSilent(ctx.packageName)
