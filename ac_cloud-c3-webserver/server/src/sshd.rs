@@ -383,6 +383,9 @@ impl Handler for Conn {
 mod tests {
     use super::*;
 
+    /// The listener is one per process (RUN), so the tests that start it take turns.
+    static TURN: Mutex<()> = Mutex::new(());
+
     const CIDRS: [&str; 4] = ["10.0.0.0/24", "10.1.0.0/24", "fd0c:1d00::/32", "fd0c:1d01::/32"];
     fn cidrs() -> Vec<String> {
         CIDRS.iter().map(|s| s.to_string()).collect()
@@ -427,6 +430,7 @@ mod tests {
 
     #[test]
     fn the_run_state_opens_and_closes_the_listener() {
+        let _t = TURN.lock().unwrap_or_else(|e| e.into_inner());
         let policy = Policy { port: 0, mesh_only: Arc::new(|| true), cidrs: cidrs(), keys: vec![], host_key: None };
         assert!(!running());
         let port = start(policy.clone()).expect("bind");
@@ -443,5 +447,52 @@ mod tests {
         assert!(!running());
         std::thread::sleep(std::time::Duration::from_millis(100));
         assert!(std::net::TcpStream::connect((std::net::Ipv4Addr::LOCALHOST, port)).is_err(), "closed after stop");
+    }
+
+    struct Cli;
+    impl russh::client::Handler for Cli {
+        type Error = russh::Error;
+        async fn check_server_key(&mut self, _k: &russh::keys::PublicKeyOrCertificate) -> Result<bool, Self::Error> {
+            Ok(true)
+        }
+    }
+
+    /// End to end over loopback: a seeded key logs in and runs a command on a PTY shell; an unknown key and a password are refused.
+    #[test]
+    fn a_seeded_key_logs_in_and_an_unknown_key_or_a_password_does_not() {
+        let _t = TURN.lock().unwrap_or_else(|e| e.into_inner());
+        let good = Arc::new(PrivateKey::from(Ed25519Keypair::from_seed(&[1u8; 32])));
+        let bad = Arc::new(PrivateKey::from(Ed25519Keypair::from_seed(&[2u8; 32])));
+        let policy = Policy { port: 0, mesh_only: Arc::new(|| true), cidrs: cidrs(), keys: vec![good.public_key().clone()], host_key: None };
+        let port = start(policy).expect("bind");
+        let rt = tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap();
+        let out = rt.block_on(async {
+            let cfg = Arc::new(russh::client::Config::default());
+            let mut c = russh::client::connect(cfg.clone(), ("127.0.0.1", port), Cli).await.expect("connect");
+            let r = c.authenticate_publickey("u", russh::keys::PrivateKeyWithHashAlg::new(good.clone(), None)).await.unwrap();
+            assert!(r.success(), "the seeded key is accepted");
+            let mut ch = c.channel_open_session().await.unwrap();
+            ch.exec(true, "echo sshd-ok").await.unwrap();
+            let mut got = String::new();
+            let mut tries = 0;
+            while let Some(m) = ch.wait().await {
+                if let russh::ChannelMsg::Data { data } = m {
+                    got.push_str(&String::from_utf8_lossy(&data));
+                }
+                tries += 1;
+                if got.contains("sshd-ok") || tries > 50 {
+                    break;
+                }
+            }
+            let mut c2 = russh::client::connect(cfg.clone(), ("127.0.0.1", port), Cli).await.expect("connect");
+            let r2 = c2.authenticate_publickey("u", russh::keys::PrivateKeyWithHashAlg::new(bad.clone(), None)).await.unwrap();
+            assert!(!r2.success(), "an unknown key is refused");
+            let mut c3 = russh::client::connect(cfg, ("127.0.0.1", port), Cli).await.expect("connect");
+            let r3 = c3.authenticate_password("u", "anything").await.unwrap();
+            assert!(!r3.success(), "passwords are refused");
+            got
+        });
+        stop();
+        assert!(out.contains("sshd-ok"), "the command ran in a shell: {:?}", out);
     }
 }
