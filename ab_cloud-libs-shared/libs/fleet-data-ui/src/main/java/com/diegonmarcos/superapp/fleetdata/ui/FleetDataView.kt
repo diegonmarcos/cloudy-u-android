@@ -2,6 +2,7 @@ package com.diegonmarcos.superapp.fleetdata.ui
 
 import com.diegonmarcos.superapp.fleetdata.provider.FleetDataStore
 import com.diegonmarcos.superapp.fleetdata.provider.FleetManifest
+import com.diegonmarcos.superapp.uikit.KitState
 
 /**
  * The pure view-model behind the "Fleet Data" page (JVM-tested; no Android, no I/O): it turns this provider's cached datasets
@@ -105,11 +106,80 @@ object FleetDataView {
         )
     }
 
-    /** Every cached dataset, grouped by endpoint (endpoints sorted: shared first, then app/<pkg> alphabetically; rows by dataset name). */
+    /** Every cached dataset, grouped by endpoint (endpoints sorted: index, shared, then app/<pkg> alphabetically; rows by dataset name). */
     fun groups(entries: List<FleetDataStore.Entry>, manifest: FleetManifest, failed: Set<String>, authority: String): List<EndpointGroup> =
         entries.map { rowOf(it, manifest, failed, authority) }
             .groupBy { endpointOf(it.path) }
             .toList()
-            .sortedBy { (ep, _) -> if (ep == "shared") "0" else "1$ep" }
+            .sortedBy { (ep, _) -> when (ep) { "index" -> "0"; "shared" -> "1"; else -> "2$ep" } }
             .map { (ep, rows) -> EndpointGroup(ep, uri(authority, "$ep/"), rows.sortedBy { it.dataset }) }
+
+    // ── presentation helpers (pure; the Composable only draws what these return) ─────────────────────────────────────────────
+
+    /** The status pill: ok = green, stale = amber, error = red. */
+    fun kitState(s: SyncState): KitState = when (s) { SyncState.OK -> KitState.OK; SyncState.STALE -> KitState.WARN; SyncState.ERROR -> KitState.BAD }
+    fun pillWord(s: SyncState): String = s.name.lowercase()
+
+    /** "T3" tier chip; "T-" when the manifest declares none. */
+    fun tierChip(tier: Int?): String = "T${tier ?: "-"}"
+    fun schemaChip(v: Int?): String = "schema v${v ?: "-"}"
+    fun sizeLabel(n: Long?): String = when {
+        n == null -> "-"
+        n < 1024 -> "$n B"
+        else -> "${n / 1024} KB"
+    }
+
+    /** "2m ago" style; never synced = "never"; a clock skew into the future reads "just now". */
+    fun relativeTime(at: Long, now: Long): String {
+        if (at <= 0L) return "never"
+        val s = (now - at) / 1000
+        return when {
+            s < 60 -> "just now"
+            s < 3600 -> "${s / 60}m ago"
+            s < 86400 -> "${s / 3600}h ago"
+            s < 86400 * 30 -> "${s / 86400}d ago"
+            else -> "${s / (86400 * 30)}mo ago"
+        }
+    }
+
+    /** An ETag cut to `head…tail` (W/"30abb9…ef83") unless [expanded] or short enough to show whole. */
+    fun etagLabel(etag: String?, expanded: Boolean): String {
+        if (etag == null) return "-"
+        return if (expanded || etag.length <= ETAG_HEAD + ETAG_TAIL + 2) etag else etag.take(ETAG_HEAD) + "…" + etag.takeLast(ETAG_TAIL)
+    }
+    private const val ETAG_HEAD = 9
+    private const val ETAG_TAIL = 5
+
+    /** "all" for the wildcard, the name for one consumer, a count for several (the full list when [expanded]). */
+    fun consumersLabel(consumers: List<String>, expanded: Boolean): String = when {
+        consumers.isEmpty() -> "none"
+        consumers == listOf("*") -> "all"
+        expanded -> consumers.joinToString()
+        consumers.size == 1 -> consumers[0]
+        else -> "${consumers.size} consumers"
+    }
+
+    /** Groups narrowed by a free-text [query] (dataset, URI, source, ETag, consumers) and an optional [status]; empty groups drop out. */
+    fun filter(groups: List<EndpointGroup>, query: String, status: SyncState?): List<EndpointGroup> {
+        val q = query.trim().lowercase()
+        fun hit(r: DatasetRow) = (status == null || r.state == status) && (q.isEmpty() ||
+            listOf(r.dataset, r.uri, r.source.orEmpty(), r.etag.orEmpty(), r.consumers.joinToString(" ")).any { it.lowercase().contains(q) })
+        return groups.mapNotNull { g -> g.rows.filter(::hit).takeIf { it.isNotEmpty() }?.let { g.copy(rows = it) } }
+    }
+
+    /** The overall line: "9 datasets · all ok · last sync 2m ago". */
+    fun summary(rows: List<DatasetRow>, now: Long): String {
+        val ok = rows.count { it.state == SyncState.OK }
+        val stale = rows.count { it.state == SyncState.STALE }
+        val err = rows.count { it.state == SyncState.ERROR }
+        val health = if (stale == 0 && err == 0) "all ok" else listOf("$ok ok", "$stale stale", "$err error").filterIndexed { i, _ -> i == 0 || (i == 1 && stale > 0) || (i == 2 && err > 0) }.joinToString(", ")
+        val last = rows.maxOfOrNull { it.syncedAt } ?: 0L
+        return "${rows.size} dataset${if (rows.size == 1) "" else "s"} · $health · last sync ${relativeTime(last, now)}"
+    }
+
+    fun summaryState(rows: List<DatasetRow>): KitState = when {
+        rows.any { it.state == SyncState.ERROR } -> KitState.BAD
+        rows.any { it.state == SyncState.STALE } -> KitState.WARN
+        else -> KitState.OK
+    }
 }

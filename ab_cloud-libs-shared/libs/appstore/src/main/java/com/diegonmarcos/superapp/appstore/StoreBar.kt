@@ -595,7 +595,11 @@ object StoreTabs {
                 val strip: @Composable () -> Unit = {
                     Row {
                         line.forEachIndexed { i, control ->
-                            Tab(control, first + i == selected, tabTag(first + i), stretch) { onSelect(first + i) }
+                            if (control.label == StoreStrip.SEPARATOR) {
+                                // the "|" slot is a divider, not a page: plain text, no surface, no tap
+                                Text(control.label, Modifier.padding(end = sdp(StoreDensity.S8), top = sdp(StoreDensity.S6)).testTag(tabTag(first + i)),
+                                    color = Ink.RULE.ink(), fontSize = StoreDensity.T_BODY.sp, maxLines = 1)
+                            } else Tab(control, first + i == selected, tabTag(first + i), stretch) { onSelect(first + i) }
                         }
                     }
                 }

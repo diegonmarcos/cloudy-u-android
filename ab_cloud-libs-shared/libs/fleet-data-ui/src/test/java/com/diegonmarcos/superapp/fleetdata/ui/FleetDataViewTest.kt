@@ -4,6 +4,7 @@ import com.diegonmarcos.superapp.fleetdata.provider.FleetDataStore
 import com.diegonmarcos.superapp.fleetdata.provider.FleetManifest
 import com.diegonmarcos.superapp.fleetdata.provider.ManifestEntry
 import org.junit.Assert.assertEquals
+import com.diegonmarcos.superapp.uikit.KitState
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -78,5 +79,70 @@ class FleetDataViewTest {
         // every row carries its full URI and endpoint URI is the content:// prefix
         assertEquals("content://cloud.store.data/shared/app-perms", g[0].rows[0].uri)
         assertTrue(g[1].endpointUri.startsWith("content://cloud.store.data/app/cld.camera/"))
+    }
+
+    @Test fun indexEndpointSortsFirst() {
+        val entries = listOf(FleetDataStore.Entry("app/cld.camera/vr-filters", meta()), FleetDataStore.Entry("shared/app-perms", meta()), FleetDataStore.Entry("index", meta()))
+        assertEquals(listOf("index", "shared", "app/cld.camera"), FleetDataView.groups(entries, manifest, emptySet(), authority).map { it.endpoint })
+    }
+
+    @Test fun statusPillMapping() {
+        assertEquals(KitState.OK, FleetDataView.kitState(SyncState.OK))
+        assertEquals(KitState.WARN, FleetDataView.kitState(SyncState.STALE))
+        assertEquals(KitState.BAD, FleetDataView.kitState(SyncState.ERROR))
+        assertEquals("stale", FleetDataView.pillWord(SyncState.STALE))
+    }
+
+    @Test fun chipsAndSize() {
+        assertEquals("T3", FleetDataView.tierChip(3)); assertEquals("T-", FleetDataView.tierChip(null))
+        assertEquals("schema v1", FleetDataView.schemaChip(1))
+        assertEquals("8 KB", FleetDataView.sizeLabel(8192)); assertEquals("100 B", FleetDataView.sizeLabel(100)); assertEquals("-", FleetDataView.sizeLabel(null))
+    }
+
+    @Test fun relativeTimeFormatting() {
+        val now = 10_000_000_000L
+        assertEquals("never", FleetDataView.relativeTime(0, now))
+        assertEquals("just now", FleetDataView.relativeTime(now - 30_000, now))
+        assertEquals("just now", FleetDataView.relativeTime(now + 5_000, now))
+        assertEquals("2m ago", FleetDataView.relativeTime(now - 120_000, now))
+        assertEquals("3h ago", FleetDataView.relativeTime(now - 3 * 3_600_000, now))
+        assertEquals("2d ago", FleetDataView.relativeTime(now - 2 * 86_400_000, now))
+        assertEquals("2mo ago", FleetDataView.relativeTime(now - 65L * 86_400_000, now))
+    }
+
+    @Test fun etagTruncatesAndExpands() {
+        val e = "W/\"30abb9c4d5e6f7a8b9ef83\""
+        assertEquals("W/\"30abb9…ef83\"", FleetDataView.etagLabel(e, false))
+        assertEquals(e, FleetDataView.etagLabel(e, true))
+        assertEquals("W/\"1\"", FleetDataView.etagLabel("W/\"1\"", false))
+        assertEquals("-", FleetDataView.etagLabel(null, false))
+    }
+
+    @Test fun consumersLabels() {
+        assertEquals("all", FleetDataView.consumersLabel(listOf("*"), false))
+        assertEquals("cld.camera", FleetDataView.consumersLabel(listOf("cld.camera"), false))
+        assertEquals("2 consumers", FleetDataView.consumersLabel(listOf("a", "b"), false))
+        assertEquals("a, b", FleetDataView.consumersLabel(listOf("a", "b"), true))
+        assertEquals("none", FleetDataView.consumersLabel(emptyList(), false))
+    }
+
+    @Test fun filterByQueryAndStatus() {
+        val entries = listOf(FleetDataStore.Entry("shared/app-perms", meta()), FleetDataStore.Entry("app/cld.camera/vr-filters", meta(synced = 0)))
+        val g = FleetDataView.groups(entries, manifest, emptySet(), authority)
+        assertEquals(listOf("shared"), FleetDataView.filter(g, "PERMS", null).map { it.endpoint })
+        assertEquals(listOf("app/cld.camera"), FleetDataView.filter(g, "", SyncState.STALE).map { it.endpoint })
+        assertEquals(2, FleetDataView.filter(g, "", null).size)
+        assertTrue(FleetDataView.filter(g, "nothing-matches", null).isEmpty())
+    }
+
+    @Test fun summaryLine() {
+        val now = 10_000_000_000L
+        val entries = listOf(FleetDataStore.Entry("shared/app-perms", meta(synced = now - 120_000)), FleetDataStore.Entry("shared/constellation-fleet", meta(synced = now - 600_000)))
+        val rows = FleetDataView.groups(entries, manifest, emptySet(), authority).flatMap { it.rows }
+        assertEquals("2 datasets · all ok · last sync 2m ago", FleetDataView.summary(rows, now))
+        assertEquals(KitState.OK, FleetDataView.summaryState(rows))
+        val bad = FleetDataView.groups(entries, manifest, setOf("shared/app-perms"), authority).flatMap { it.rows }
+        assertEquals("2 datasets · 1 ok, 1 error · last sync 2m ago", FleetDataView.summary(bad, now))
+        assertEquals(KitState.BAD, FleetDataView.summaryState(bad))
     }
 }
