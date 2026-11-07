@@ -48,9 +48,10 @@ if grep -rqE "ProcessBuilder\(|nativeLibraryDir" "$MOD/src/main"; then fail "lib
 if grep -qE "unavailableReason" "$SCREEN"; then pass "the screen says what to install when the engine is absent"; else fail "the screen does not show the engine's absence"; fi
 
 echo "── R4 catalogue + host contract ──"
-if grep -qE "assets\.open\(RcloneRemoteTypes\.ASSET\)" "$SCREEN" && grep -qE "src/main/assets/\" \+ RcloneRemoteTypes\.ASSET" "$TEST"; then pass "remote-types asset opened by name in screen and test"; else fail "remote-types asset not opened by its declared name in both screen and test"; fi
-ASSET="$MOD/src/main/assets/$(grep -oE 'const val ASSET = "[^"]+"' "$PKG/RcloneRemoteTypes.kt" | sed 's/.*= "//; s/"$//')"
-[ -f "$ASSET" ] && pass "asset file exists" || fail "asset file missing: $ASSET"
+if grep -qE "FleetData\.get\(.*RcloneRemoteTypes\.DATASET" "$SCREEN" && grep -qE "RcloneRemoteTypes\.DATASET" "$TEST"; then pass "remote-types dataset (#1547, served) read by name in screen and test"; else fail "remote-types dataset not read by its declared name in both screen and test"; fi
+DSET="$(grep -oE 'const val DATASET = "[^"]+"' "$PKG/RcloneRemoteTypes.kt" | sed 's/.*= "//; s/"$//')"
+[ -f "$ROOT/data/fleet/$DSET.json" ] && pass "served dataset file exists" || fail "served dataset file missing: data/fleet/$DSET.json"
+[ -z "$(find "$MOD/src/main/assets" -type f 2>/dev/null)" ] && pass "the lib carries no data asset" || fail "libs:rclone still ships assets"
 if grep -qE "fun declare\(jobs: List<RcloneJob>\)" "$PKG/RcloneJobs.kt" && grep -qE "\.declare\(" "$TEST"; then pass "declare() exists and is tested"; else fail "declare() contract missing or untested"; fi
 for verb in start cancel lsjson obscure download test version; do
     if grep -qE "\.$verb\(" "$SCREEN"; then pass "screen reaches runner.$verb("; else fail "screen never calls .$verb("; fi
