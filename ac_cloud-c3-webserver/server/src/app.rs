@@ -36,7 +36,7 @@ pub const ROUTES: &[Route] = &[
     Route { kind: Kind::Page, path: "/__app__/tab/api", tab: Some("API"), post: false, summary: "Every API route of this app shell, read from its own route table", handler: page_shell },
     Route { kind: Kind::Page, path: "/__app__/tab/home", tab: Some("Home"), post: false, summary: "About this phone: device, kernel, CPU, memory, storage, battery, network", handler: page_shell },
     Route { kind: Kind::Page, path: "/__app__/tab/sshd", tab: Some("SSHd"), post: false, summary: "The SSH-door manager: every fleet SSH door with live state, engine, port, auth, sessions and Start / Stop, and below it the shared web server's Linux file view on the served root, unchanged", handler: page_shell },
-    Route { kind: Kind::Page, path: "/__app__/tab/files", tab: None, post: false, summary: "The old Files tab: the shell sends it to the SSHd tab, which holds the file view now", handler: page_shell },
+    Route { kind: Kind::Page, path: "/__app__/files", tab: None, post: false, summary: "The old Files tab: the shell sends it to the SSHd tab, which holds the file view now", handler: page_shell },
     Route { kind: Kind::Page, path: "/__app__/tab/configs", tab: Some("Configs"), post: false, summary: "About (ports, DNS names, versions), Engines (every renderer and feature) and Links (what a tapped link does)", handler: page_shell },
     Route { kind: Kind::Api, path: "/__app__/api/routes", tab: None, post: false, summary: "This route table as JSON: kind, path, tab, summary", handler: api_routes },
     Route { kind: Kind::Api, path: "/__app__/api/config", tab: None, post: false, summary: "Effective configuration: bind, port, root, methods, route counts", handler: api_config },
@@ -423,8 +423,8 @@ mod tests {
         }
         assert!(String::from_utf8_lossy(&get("/__app__/tab/sshd").unwrap().body).contains("id=\"nav\""));
         // the old route still answers (the shell redirects it client-side to the SSHd tab) and is no longer a tab
-        assert_eq!(ROUTES.iter().find(|r| r.path == "/__app__/tab/files").unwrap().tab, None);
-        assert!(String::from_utf8_lossy(&get("/__app__/tab/files").unwrap().body).contains("id=\"nav\""));
+        assert_eq!(ROUTES.iter().find(|r| r.path == "/__app__/files").unwrap().tab, None);
+        assert!(String::from_utf8_lossy(&get("/__app__/files").unwrap().body).contains("id=\"nav\""));
     }
 
     #[test]

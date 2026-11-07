@@ -48,7 +48,7 @@ if "START_STICKY" in rd("src-tauri/gen/android/app/src/main/java/com/diegonmarco
 # U
 ap = rd("server/src/app.rs").split("#[cfg(test)]")[0]
 if 'tab: Some("Files")' in ap or 'tab: Some("SSHd")' not in ap: bad.append("U the nav must have SSHd and no Files tab")
-if '"/__app__/tab/files", tab: None' not in ap: bad.append("U the old Files route must stay (redirect)")
+if '"/__app__/files", tab: None' not in ap: bad.append("U the old Files route must stay (redirect)")
 if '"/__app__/api/sshd"' not in ap: bad.append("U no /__app__/api/sshd route")
 sh = rd("server/ui/shell.html")
 if "legacy" not in sh or "<iframe id=\"fileview\" class=\"inline\" title=\"Files\" src=\"/\">" not in sh: bad.append("U the file view is not kept inside the SSHd tab, or the old route does not redirect")

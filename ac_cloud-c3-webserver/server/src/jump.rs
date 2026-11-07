@@ -1,7 +1,7 @@
 //! The jump-host helpers of the webserver's shell: `fleet-nix`, `fleet-termux`, `fleet-adb`, `fleet-ipc`.
 //!
 //! They are POSIX sh templates under assets/jump/ (code only: no key, no host key, no token). [`render`] fills the `{{...}}`
-//! placeholders from build.json::ssh_doors, which build.rs resolved from each owner's own declaration, so no port, package, user
+//! tokens from build.json::ssh_doors, which build.rs resolved from each owner's own declaration, so no port, package, user
 //! or action name is written twice; [`install`] writes the rendered files, mode 755, into a directory the shell's PATH names.
 //!
 //! No UID magic. The helpers never switch uid and never enter another app's sandbox: they dial each environment's OWN door
@@ -21,7 +21,7 @@ fn door_by<'a>(doors: &'a [Door], id: &str) -> Result<&'a Door, String> {
     doors.iter().find(|d| d.id == id).ok_or_else(|| format!("build.json::ssh_doors has no door {}", id))
 }
 
-/// Fill one template from the declared doors. Err when a placeholder is left over or a door lacks what the helper needs.
+/// Fill one template from the declared doors. Err when a token is left over or a door lacks what the helper needs.
 pub fn render(tpl: &str, doors: &[Door]) -> Result<String, String> {
     let nix = door_by(doors, "nix")?;
     let termux = door_by(doors, "termux")?;
@@ -37,7 +37,7 @@ pub fn render(tpl: &str, doors: &[Door]) -> Result<String, String> {
         .replace("{{TERMUX_USER}}", &termux.user)
         .replace("{{TERMUX_PKG}}", &termux.package);
     if let Some(i) = out.find("{{") {
-        return Err(format!("unfilled placeholder near {:?}", &out[i..(i + 20).min(out.len())]));
+        return Err(format!("unfilled token near {:?}", &out[i..(i + 20).min(out.len())]));
     }
     Ok(out)
 }
@@ -91,7 +91,7 @@ mod tests {
     }
 
     #[test]
-    fn an_unfilled_placeholder_is_an_error() {
+    fn an_unfilled_token_is_an_error() {
         assert!(render("x {{NOPE}}", &door::cfg().doors).is_err());
     }
 }

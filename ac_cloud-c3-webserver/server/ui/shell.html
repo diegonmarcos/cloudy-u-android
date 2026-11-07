@@ -665,11 +665,12 @@ if (typeof module !== 'undefined') {
   $gear.addEventListener('click', function () { show('configs', true); });
   var h = (location.hash || '').replace('#', '');
   if (h === 'engines' || h === 'links') cfgPage = h;
-  window.addEventListener('popstate', function () { show(tabFromPath(location.pathname) || defaultTab(TABS), false); });
+  var startTab = function () { return tabFromPath(location.pathname) || (/\/__app__\/files\/?$/.test(location.pathname) ? 'files' : defaultTab(TABS)); };   // /__app__/files is the old Files tab
+  window.addEventListener('popstate', function () { show(startTab(), false); });
 
   Promise.all([j('/__app__/api/routes'), j('/__app__/api/links'), j('/__app__/api/serving'), j('/__app__/api/subpages')]).then(function (rs) {
     ROUTES = rs[0]; LINKS = rs[1]; SERVING = rs[2]; SUBPAGES = rs[3]; TABS = tabsFrom(ROUTES);
-    show(tabFromPath(location.pathname) || defaultTab(TABS), false);
+    show(startTab(), false);
   }).catch(function (e) {
     fail(e); setTimeout(function () { location.reload(); }, 1500);
   });
