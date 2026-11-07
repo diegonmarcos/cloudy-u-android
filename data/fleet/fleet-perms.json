@@ -1,5 +1,6 @@
 {
- "_doc": "GENERATED from every fleet app's build.json::perms by 1_cicd/src/scripts/cloud-android-perms-guard.py --write. DO NOT EDIT. Read by libs:perms (FleetPerms): which fleet app needs which catalogue id (#1546).",
+ "schemaVersion": 1,
+ "_doc": "GENERATED from every fleet app's build.json::perms by 1_cicd/src/scripts/cloud-android-perms-guard.py --write. DO NOT EDIT. Runtime dataset shared/fleet-perms (served by Cloud Store, #1547; no baked asset) read by libs:perms (FleetPerms) through libs:fleet-data-client: which fleet app needs which catalogue id (#1546).",
  "apps": [
   {
    "app": "aa_cloud-superapp",

@@ -38,6 +38,12 @@
       "consumers": [
         "*"
       ]
+    },
+    "fleet-perms": {
+      "tier": 3,
+      "consumers": [
+        "*"
+      ]
     }
   },
   "apps": {

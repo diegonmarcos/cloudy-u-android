@@ -13,7 +13,7 @@ import java.io.File
  */
 class PermsRestoreTest {
     private val cat = PermCatalogue.parse(File("../../ab_cloud-libs-shared/libs/perms/src/main/assets/perms-catalogue.json").readText())
-    private val fleet = FleetPermsIndex.parse(File("../../ab_cloud-libs-shared/libs/perms/src/main/assets/fleet-perms.json").readText())
+    private val fleet = FleetPermsIndex.parse(File("../../data/fleet/fleet-perms.json").readText())
 
     private val pre1519Ids = ("notifications fine_location coarse_location background_location nearby_wifi bt_scan bt_connect bt_advertise " +
         "camera microphone contacts_read contacts_write calendar_read calendar_write phone_state phone_numbers sms_read media_images " +

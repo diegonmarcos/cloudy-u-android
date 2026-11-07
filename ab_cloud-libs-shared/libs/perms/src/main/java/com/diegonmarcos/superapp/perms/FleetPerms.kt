@@ -1,10 +1,12 @@
 package com.diegonmarcos.superapp.perms
 
 import android.content.Context
+import com.diegonmarcos.superapp.fleetdata.FleetData
 import org.json.JSONObject
 
 /**
- * #1546 which fleet app needs which catalogue id: assets/fleet-perms.json, generated from every app's build.json::perms
+ * #1546 which fleet app needs which catalogue id: the runtime dataset `fleet-perms` (data/fleet/fleet-perms.json, served by Cloud Store through
+ * libs:fleet-data-client, #1547: no baked asset), generated from every app's build.json::perms
  * by 1_cicd/src/scripts/cloud-android-perms-guard.py --write (P8 fails when stale). The Perms page shows "used by fleet
  * apps" per permission, filters by app and groups by app. Pure parse (org.json): JVM-tested.
  */
@@ -22,7 +24,8 @@ data class FleetPermsIndex(val apps: List<FleetApp>) {
     fun labels(): List<String> = apps.map { it.label }
 
     companion object {
-        const val ASSET = "fleet-perms.json"
+        /** The runtime dataset (shared/fleet-perms), never an asset. */
+        const val DATASET = "fleet-perms"
         val EMPTY = FleetPermsIndex(emptyList())
 
         fun parse(json: String): FleetPermsIndex {
@@ -40,10 +43,10 @@ data class FleetPermsIndex(val apps: List<FleetApp>) {
 object FleetPerms {
     @Volatile private var cached: FleetPermsIndex? = null
 
+    /** The served index; [FleetPermsIndex.EMPTY] (not cached, so the next call retries) until Cloud Store has served it. Never throws. */
     fun index(ctx: Context): FleetPermsIndex = cached ?: synchronized(this) {
-        cached ?: runCatching {
-            FleetPermsIndex.parse(ctx.applicationContext.assets.open(FleetPermsIndex.ASSET).bufferedReader().use { it.readText() })
-        }.getOrElse { FleetPermsIndex.EMPTY }.also { cached = it }
+        cached ?: runCatching { FleetData.get(ctx.applicationContext, FleetPermsIndex.DATASET) { FleetPermsIndex.parse(it) } }
+            .getOrNull()?.also { cached = it } ?: FleetPermsIndex.EMPTY
     }
 
     /** The platform's own protection level of [permission] on this phone ("dangerous", "signature|development", ...). */

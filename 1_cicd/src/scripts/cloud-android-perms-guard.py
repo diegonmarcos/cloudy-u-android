@@ -47,7 +47,7 @@ CAT_REL = "ab_cloud-libs-shared/libs/perms/src/main/assets/perms-catalogue.json"
 ASSET = "app-perms.json"   # the OLD per-app baked copy: now forbidden
 DATASET_REL = "data/fleet/app-perms.json"
 # #1546 the fleet index the Perms page reads for "used by fleet apps" and the per-app filter (libs:perms FleetPerms)
-FLEET_REL = "ab_cloud-libs-shared/libs/perms/src/main/assets/fleet-perms.json"
+FLEET_REL = "data/fleet/fleet-perms.json"   # #1547 runtime dataset shared/fleet-perms (Cloud Store), never an asset of libs:perms
 SKIP_DIRS = {"build", "test", "androidTest", "testDebug", "node_modules", ".gradle", "debug", "z_archive", ".git", "intermediates"}
 
 
@@ -316,7 +316,8 @@ def dataset_body(apps_by_pkg):
 
 def fleet_body(rows):
     out = {
-        "_doc": "GENERATED from every fleet app's build.json::perms by 1_cicd/src/scripts/cloud-android-perms-guard.py --write. DO NOT EDIT. Read by libs:perms (FleetPerms): which fleet app needs which catalogue id (#1546).",
+        "schemaVersion": 1,
+        "_doc": "GENERATED from every fleet app's build.json::perms by 1_cicd/src/scripts/cloud-android-perms-guard.py --write. DO NOT EDIT. Runtime dataset shared/fleet-perms (served by Cloud Store, #1547; no baked asset) read by libs:perms (FleetPerms) through libs:fleet-data-client: which fleet app needs which catalogue id (#1546).",
         "apps": rows,
     }
     return json.dumps(out, indent=1, sort_keys=False) + "\n"
@@ -494,6 +495,7 @@ def main():
     fleet_path = os.path.join(ROOT, FLEET_REL)
     fleet_want = fleet_body(fleet)
     if WRITE:
+        os.makedirs(os.path.dirname(fleet_path), exist_ok=True)
         with open(fleet_path, "w", encoding="utf-8") as f:
             f.write(fleet_want)
     elif os.path.isdir(os.path.dirname(fleet_path)) and read(fleet_path) != fleet_want:

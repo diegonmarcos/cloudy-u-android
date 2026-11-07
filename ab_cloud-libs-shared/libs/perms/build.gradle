@@ -49,4 +49,6 @@ dependencies {
     implementation 'androidx.activity:activity-compose:1.9.3'
     // #1372 PermsViewTest: the Perms UI's view rules (grouping, chips, progress, folded groups, the walk), plain JVM.
     testImplementation 'junit:junit:4.13.2'
+    // #1547 FleetPermsDatasetTest parses the served dataset on the JVM (Android's org.json is a stub there).
+    testImplementation 'org.json:json:20240303'
 }
