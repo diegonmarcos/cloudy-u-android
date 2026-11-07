@@ -21,6 +21,7 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import com.diegonmarcos.cloudsuperintel.Data
 import com.diegonmarcos.superapp.ai.AiAttachHost
@@ -200,7 +201,7 @@ class SiChatToolsTest {
         render()
         compose.onAllNodesWithTag(AiTags.ctl("usage")).assertCountEquals(0)
         compose.onAllNodesWithTag(AiTags.ctl("cost")).assertCountEquals(0)
-        compose.onNodeWithTag(AiTags.ctl("more")).performClick()
+        compose.onNodeWithTag(AiTags.ctl("more")).performScrollTo().performClick()
         // Not in More either: Usage & Cost is the top bar's button, which opens the reported usage.
         compose.onAllNodesWithTag(AiTags.more("usage")).assertCountEquals(0)
         compose.onNodeWithTag(AiTags.more("export")).assertExists()
@@ -220,7 +221,7 @@ class SiChatToolsTest {
 
     @Test fun cloudyPrincipalsIsASkillPluginAndHeadroomAPerformancePlugin() {
         render()
-        compose.onNodeWithTag(AiTags.ctl("skills")).performClick()
+        compose.onNodeWithTag(AiTags.ctl("skills")).performScrollTo().performClick()
         for (id in listOf("principles", "caveman")) compose.onNodeWithTag(AiTags.morePlugin(id)).assertExists()
         for (id in listOf("skills", "memory")) compose.onNodeWithTag(AiTags.more(id)).assertExists()
         compose.onNodeWithText("Cloudy Principals", substring = true).assertExists()
@@ -230,21 +231,21 @@ class SiChatToolsTest {
 
     @Test fun headroomAndRtkAreUnderPluginsPerformance() {
         render()
-        compose.onNodeWithTag(AiTags.ctl("perf")).performClick()
+        compose.onNodeWithTag(AiTags.ctl("perf")).performScrollTo().performClick()
         for (id in listOf("headroom", "rtk")) compose.onNodeWithTag(AiTags.morePlugin(id)).assertExists()
         compose.onAllNodesWithTag(AiTags.morePlugin("principles")).assertCountEquals(0)
     }
 
     @Test fun pluginsLeaveTheMoreSheetButEverythingElseStays() {
         render()
-        compose.onNodeWithTag(AiTags.ctl("more")).performClick()
+        compose.onNodeWithTag(AiTags.ctl("more")).performScrollTo().performClick()
         for (id in listOf("headroom", "rtk", "caveman", "principles")) compose.onAllNodesWithTag(AiTags.morePlugin(id)).assertCountEquals(0)
         for (id in listOf("export", "retry", "undo", "system", "shortcuts", "about")) compose.onNodeWithTag(AiTags.more(id)).assertExists()
     }
 
     private fun bucket(ctl: String, present: List<String>, absent: List<String>) {
         render()
-        compose.onNodeWithTag(AiTags.ctl(ctl)).performClick()
+        compose.onNodeWithTag(AiTags.ctl(ctl)).performScrollTo().performClick()
         for (n in present) compose.onNodeWithTag(AiTags.mcp(n)).assertExists()
         for (n in absent) compose.onAllNodesWithTag(AiTags.mcp(n)).assertCountEquals(0)
     }
@@ -259,7 +260,7 @@ class SiChatToolsTest {
 
     @Test fun reposPickerOffersTheDeclaredRepositories() {
         render()
-        compose.onNodeWithTag(AiTags.ctl("repos")).performClick()
+        compose.onNodeWithTag(AiTags.ctl("repos")).performScrollTo().performClick()
         for (r in ForumFixture.composerDecl.repos) compose.onNodeWithTag(AiTags.repo(r)).assertExists()
         compose.onNodeWithTag(AiTags.repo("cloudy-t-infra")).performClick()
         assertEquals(setOf("cloudy-t-infra"), topicChat().reposOn)
@@ -267,7 +268,7 @@ class SiChatToolsTest {
 
     @Test fun specialistPickerSwitchesThePersona() {
         render()
-        compose.onNodeWithTag(AiTags.ctl("specialist")).performClick()
+        compose.onNodeWithTag(AiTags.ctl("specialist")).performScrollTo().performClick()
         for (id in listOf("si", "math", "physics")) compose.onNodeWithTag(AiTags.specialist(id)).assertExists()
         compose.onNodeWithTag(AiTags.specialist("math")).performClick()
         compose.onNodeWithText("Proofs", substring = true).assertIsDisplayed()

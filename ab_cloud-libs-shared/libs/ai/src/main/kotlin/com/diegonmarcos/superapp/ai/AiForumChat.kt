@@ -426,10 +426,10 @@ private fun SessionTopBar(
     var overflow by remember { mutableStateOf(false) }
     val limit = chat.models.firstOrNull { it.id == chat.model }?.context ?: 0
     Row(
-        Modifier.fillMaxWidth().shadow(metrics.headerElevation, shape).clip(shape)
+        Modifier.fillMaxWidth().testTag(ForumTags.TOP_BAR).shadow(metrics.headerElevation, shape).clip(shape)
             .background(Brush.horizontalGradient(listOf(c.chatBar, c.tile)))
             .border(m.hairline, c.tileBorder, shape)
-            .padding(horizontal = m.small, vertical = m.tiny).sizeIn(minHeight = metrics.touch).testTag(ForumTags.TOP_BAR),
+            .padding(horizontal = m.small, vertical = m.tiny).sizeIn(minHeight = metrics.touch),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(m.small),
     ) {
         Box(
