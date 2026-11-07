@@ -39,7 +39,8 @@ class QuickDisplayTest {
     fun `Q3 smallest width and density convert both ways`() {
         // 1080 px short side at 420 dpi is 411 dp.
         assertEquals(411, QuickDisplay.swForDensity(1080, 420))
-        assertEquals(500, QuickDisplay.swForDensity(1080, QuickDisplay.densityForSw(1080, 500)))
+        // density is an integer dpi, so the round trip is exact only to within one dp (346 dpi gives 499 dp for 500).
+        assertEquals(500.0, QuickDisplay.swForDensity(1080, QuickDisplay.densityForSw(1080, 500)).toDouble(), 1.0)
         assertEquals(2, QuickDisplay.nearest(listOf(0.85f, 1.0f, 1.15f), 1.12f))
         assertEquals(462, QuickDisplay.densityForFactor(420, 1.1f))
     }
