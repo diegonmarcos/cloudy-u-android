@@ -226,7 +226,7 @@
     "doors": [
       {
         "id": "nix",
-        "title": "Cloud Terminal Nix-on-Droid (fleet mesh door)",
+        "title": "Cloud Terminal Nix",
         "app": "ac_cloud-nix-on-droid",
         "package_from": "ac_cloud-nix-on-droid/build.json#forks.nixdroid.app_id",
         "port_from": "ac_cloud-nix-on-droid/build.json#mesh_sshd.port",
@@ -243,7 +243,7 @@
       },
       {
         "id": "webserver",
-        "title": "Cloud C3 WebServer (hosted sshd)",
+        "title": "Cloud C3 Webserver",
         "app": "ac_cloud-c3-webserver",
         "package_from": "ac_cloud-c3-webserver/build.json#android.application_id",
         "port_from": "ac_cloud-c3-webserver/build.json#runtime.sshd.port",
