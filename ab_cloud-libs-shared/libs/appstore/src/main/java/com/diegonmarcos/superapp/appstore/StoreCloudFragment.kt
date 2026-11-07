@@ -8,6 +8,7 @@ import android.os.Looper
 import android.util.Base64
 import android.widget.Toast
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -220,6 +221,8 @@ class StoreCloudFragment : KitComposeFragment() {
     /** #1405 the Ventoy tab is open (it is drawn by [ventoy], not a group's rows). */
     private var ventoyOpen by mutableStateOf(false)
     private val ventoy = com.diegonmarcos.superapp.appstore.ventoy.VentoyPage(this)
+    /** #1547 the Fleet Data tab is open (drawn in place by the host's [fleetDataPane], like Ventoy: same scaffold, same insets). */
+    private var fleetOpen by mutableStateOf(false)
     /** The Ventoy tab's place on the strip: right after the declared group, or -1 when this host declares none. */
     private val ventoyBar: Int get() = BuildConfig.VENTOY_AFTER_GROUP.takeIf { it.isNotEmpty() }
         ?.let { g -> tabs.indexOfFirst { it.id == g }.let { if (it < 0) -1 else it + 1 } } ?: -1
@@ -358,6 +361,16 @@ class StoreCloudFragment : KitComposeFragment() {
             scrollTarget = null
         }
 
+        val pane = fleetDataPane
+        if (fleetOpen && pane != null) {
+            // The Fleet Data pane scrolls itself (tabs + lazy grid), so it takes the rest of the page after the caption and strip
+            // instead of sitting inside the page scroll (a lazy list cannot measure in unbounded height). Same padding as the other tabs.
+            Column(Modifier.fillMaxSize().padding(sdp(StoreDensity.S12))) {
+                StoreCaption((tabs.map { "${it.rows.size} ${it.label}" } + "superapp is the fleet manager").joinToString(" · "))
+                TabBar()
+                pane(STORE_AUTHORITY, Modifier.weight(1f).fillMaxWidth())
+            }
+        } else
         Column(Modifier.fillMaxWidth().verticalScroll(scroll).padding(sdp(StoreDensity.S12))
             .onGloballyPositioned { columnTop = it.positionInRoot().y }) {
             // No title line: the host's toolbar names the page ("Store") and its
@@ -434,38 +447,28 @@ class StoreCloudFragment : KitComposeFragment() {
         val labelList = slots.map { it.label }
         val kinds = slots.map { it.kind }
         val controls = labelList.map { StoreControls.Control(it, "", groupTab) }
-        val selectedBar = if (ventoyOpen && vb >= 0) kinds.indexOf(KIND_VENTOY) else kinds.indexOf(tab)
+        val selectedBar = if (fleetOpen) kinds.indexOf(KIND_FLEETDATA) else if (ventoyOpen && vb >= 0) kinds.indexOf(KIND_VENTOY) else kinds.indexOf(tab)
         StoreTabs.Bar(listOf(controls), selectedBar) { index ->
             when (val k = kinds[index]) {
-                KIND_VENTOY -> ventoyOpen = true
-                KIND_FLEETDATA -> openFleetData()
+                KIND_VENTOY -> { fleetOpen = false; ventoyOpen = true }
+                KIND_FLEETDATA -> { ventoyOpen = false; fleetOpen = true }
                 KIND_SEPARATOR -> Unit
-                else -> { ventoyOpen = false; if (tab != k) { tab = k; filter = 0 } }
+                else -> { ventoyOpen = false; fleetOpen = false; if (tab != k) { tab = k; filter = 0 } }
             }
         }
     }
 
     /** True on the app that actually hosts the Cloud Store data provider (so SuperApp's embedded Store shows no Fleet Data tab). */
-    private fun hostsStoreProvider(): Boolean = runCatching {
+    private fun hostsStoreProvider(): Boolean = fleetDataPane != null && runCatching {
         requireContext().packageManager.resolveContentProvider(STORE_AUTHORITY, 0)?.packageName == requireContext().packageName
     }.getOrDefault(false)
-
-    /** Opens the Cloud Store Data page (libs:fleet-data-ui FleetDataActivity, bundled in this app) for the store authority. */
-    private fun openFleetData() {
-        runCatching {
-            startActivity(
-                Intent().setClassName(requireContext().packageName, "com.diegonmarcos.superapp.fleetdata.ui.FleetDataActivity")
-                    .putExtra("authority", STORE_AUTHORITY).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-            )
-        }
-    }
 
     /** A fleet app's detail (from the progress row): its group's tab, the row expanded and
      *  scrolled into view. An app no tab holds has no row to open. */
     private fun openDetail(app: Fleet.App) {
         val target = tabs.indexOfFirst { t -> t.rows.any { it.id == app.id } }
         if (target < 0) return
-        ventoyOpen = false
+        ventoyOpen = false; fleetOpen = false
         tab = target; filter = 0; expanded[app.id] = true
         scrollTarget = app.id
     }
@@ -1071,5 +1074,7 @@ class StoreCloudFragment : KitComposeFragment() {
         const val FLEET_DATA_LABEL = "Fleet Data"
         const val TINY_ML_GROUP = StoreStrip.TINY_ML_GROUP
         const val STORE_AUTHORITY = "cloud.store.data"
+        /** The Fleet Data page as an embeddable pane (authority, host modifier), set by the app that hosts the provider and bundles libs:fleet-data-ui; null elsewhere. */
+        var fleetDataPane: (@Composable (String, Modifier) -> Unit)? = null
     }
 }
