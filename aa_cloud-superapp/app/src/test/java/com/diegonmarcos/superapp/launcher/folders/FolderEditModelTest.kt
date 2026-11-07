@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.test.core.app.ApplicationProvider
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -105,5 +106,43 @@ class FolderEditModelTest {
         assertEquals("media", repo.editorModel(FolderScope.PHONE).apps.first { it.pkg == "x.new" }.folderId)
         repo.reset(FolderScope.PHONE)
         assertFalse(store.hasSaved(FolderScope.PHONE)); assertTrue(store.all(FolderScope.PHONE).isEmpty())
+    }
+
+    // ---- declarative seeding (the all-"No folder" bug) ----
+
+    @Test fun `E8 declared assignments come from the baked classifier when the served rows are absent`() {
+        val bakedId = com.diegonmarcos.superapp.apps.PhoneFolders.loadFromBuildConfig().firstOrNull()?.id
+        assertNotNull("the baked phone folders are available", bakedId)
+        val enumerated = listOf(FolderApp("t.third", "Third"), FolderApp("t.ghost", "Ghost"))
+        val repo = FolderRepository(ctx, enumerate = { _, _ -> enumerated },
+            classify = { _, a -> a.associate { it.pkg to (if (it.pkg == "t.ghost") "no-such-folder" else bakedId!!) } })
+        val decl = repo.declarativeModel(FolderScope.PHONE)
+        assertEquals("a classified app shows its declared folder, not No folder", bakedId, decl.apps.first { it.pkg == "t.third" }.folderId)
+        assertNull("only a genuinely undeclared app stays unassigned", decl.apps.first { it.pkg == "t.ghost" }.folderId)
+        // run-time = declarative until the owner saves; then it drifts
+        assertEquals(decl.apps.map { it.folderId }, repo.editorModel(FolderScope.PHONE).apps.map { it.folderId })
+        repo.save(FolderScope.PHONE, repo.editorModel(FolderScope.PHONE).setFolder("t.third", OTHERS_FOLDER_ID))
+        assertEquals(OTHERS_FOLDER_ID, repo.editorModel(FolderScope.PHONE).apps.first { it.pkg == "t.third" }.folderId)
+        assertEquals("the declarative side is unaffected by saved edits", bakedId, repo.declarativeModel(FolderScope.PHONE).apps.first { it.pkg == "t.third" }.folderId)
+    }
+
+    @Test fun `E9 Copy All and Export All carry every row, labelled with scope and mode`() {
+        val m = model()
+        val all = org.json.JSONObject(FolderExport.copyAll(FolderScope.CLOUD, DataMode.DECLARATIVE, m))
+        assertEquals("cloud", all.getString("scope")); assertEquals("declarative", all.getString("mode"))
+        assertEquals(m.folders, FolderTables.parseFolders(all.getJSONObject("launcher-folders").toString()))
+        assertEquals(m.toAssignments(), FolderTables.parseAssignments(all.getJSONObject("launcher-folder-assignments").toString()))
+        assertEquals(listOf("x.new"), (0 until all.getJSONArray("unassigned").length()).map { all.getJSONArray("unassigned").getString(it) })
+        val docs = FolderExport.exportAll(FolderScope.PHONE, DataMode.RUNTIME, m)
+        assertEquals(listOf("launcher-folders.phone.run-time.json", "launcher-folder-assignments.phone.run-time.json"), docs.map { it.first })
+        assertEquals(m.folders, FolderTables.parseFolders(docs[0].second))
+    }
+
+    @Test fun `E10 editor state: run-time edits, declarative stays the SoT, drift is counted`() {
+        val rt = model(); val st = com.diegonmarcos.superapp.configs.FolderEditorState(rt, rt)
+        assertEquals(0, st.drift)
+        st.edit { it.setFolder("x.ide", "media") }
+        assertEquals(1, st.drift); assertTrue(st.dirty)
+        assertEquals("dev", st.declarativeModel.apps.first { it.pkg == "x.ide" }.folderId)
     }
 }

@@ -26,6 +26,8 @@ class FolderRepository(
     /** App enumeration per scope — injectable so the resolution can be tested without a device. */
     private val enumerate: (Context, FolderScope) -> List<FolderApp> = { c, s -> enumerateApps(c, s) },
     private val now: () -> Long = { SystemClock.elapsedRealtime() },
+    /** The launcher's baked classification (PhoneAppClassifier over ui.phone_folders): app -> folder id. Injectable for tests. */
+    private val classify: (Context, List<FolderApp>) -> Map<String, String> = { c, a -> classifyPhoneApps(c, a) },
 ) {
     private class Cached(val apps: List<FolderApp>, val at: Long)
     private val cache = HashMap<FolderScope, Cached>()
@@ -66,19 +68,50 @@ class FolderRepository(
                else enumerate(ctx, scope).also { cache[scope] = Cached(it, now()) }
     }
 
-    /** The two-table editor's model for [scope]: effective tables (saved over served) + every enumerated app. */
-    fun editorModel(scope: FolderScope, force: Boolean = false): FolderEditModel =
-        FolderEditModel.build(folders(scope), assignments(scope), apps(scope, force))
+    /**
+     * DECLARATIVE Table 2: the served rows, plus - Phone scope only - the baked declarative classification
+     * (PhoneAppClassifier keywords / ui.external_apps) for every app the served rows do not name. The served dataset lists
+     * only fleet apps and is empty when no provider serves it; without this every third-party app (and every app on an
+     * unserved device) fell to "No folder" although the launcher files it by keyword. A classified id that is not a folder
+     * of the declared Table 1 is dropped, so only genuinely undeclared apps stay unassigned.
+     */
+    fun declaredAssignments(scope: FolderScope, apps: List<FolderApp>): List<FolderAssignment> {
+        val served = servedAssignments(scope)
+        if (scope != FolderScope.PHONE) return served
+        val have = served.map { it.pkg }.toSet()
+        val ids = servedFolders(scope).map { it.id }.toSet()
+        val extra = runCatching { classify(ctx, apps.filter { it.pkg !in have }) }.getOrDefault(emptyMap())
+        return served + extra.filter { (_, fid) -> fid in ids }.map { (pkg, fid) -> FolderAssignment(pkg, fid, 999) }
+    }
+
+    /** The declarative model: straight from the SoT (served folders + declared assignments), no saved edits. */
+    fun declarativeModel(scope: FolderScope, force: Boolean = false): FolderEditModel {
+        val apps = apps(scope, force)
+        return FolderEditModel.build(servedFolders(scope), declaredAssignments(scope, apps), apps)
+    }
+
+    /**
+     * The run-time model: what the device applies - the saved tables if any, else the declarative ones, then the per-app
+     * moves the launcher bridge reads - plus every enumerated app.
+     */
+    fun editorModel(scope: FolderScope, force: Boolean = false): FolderEditModel {
+        val apps = apps(scope, force)
+        val folders = folders(scope)
+        val base = overrides.savedAssignments(scope) ?: declaredAssignments(scope, apps)
+        val moves = overrides.all(scope).filter { (_, fid) -> folders.any { it.id == fid } }
+        val merged = base.filter { it.pkg !in moves } + moves.map { (pkg, fid) -> FolderAssignment(pkg, fid, base.firstOrNull { it.pkg == pkg }?.order ?: 999) }
+        return FolderEditModel.build(folders, merged, apps)
+    }
 
     /**
      * Save the editor's tables as the on-device override for [scope]. Also writes the per-app moves the launcher grid
-     * reads through [FolderGridBridge] (apps whose folder differs from the served one), replacing earlier moves.
+     * reads through [FolderGridBridge] (apps whose folder differs from the declared one), replacing earlier moves.
      */
     fun save(scope: FolderScope, model: FolderEditModel) {
-        val served = servedAssignments(scope).associate { it.pkg to it.folderId }
+        val declared = declaredAssignments(scope, apps(scope, false)).associate { it.pkg to it.folderId }
         overrides.resetScope(scope)
         overrides.saveTables(scope, model.folders, model.toAssignments())
-        for (a in model.toAssignments()) if (a.folderId != OTHERS_FOLDER_ID && a.folderId != served[a.pkg]) overrides.set(scope, a.pkg, a.folderId)
+        for (a in model.toAssignments()) if (a.folderId != OTHERS_FOLDER_ID && a.folderId != declared[a.pkg]) overrides.set(scope, a.pkg, a.folderId)
     }
 
     /** Revert [scope] to the served defaults. */
@@ -96,6 +129,16 @@ class FolderRepository(
     companion object {
         /** Reuse the Store's lazy-refresh window: a scope rescans at most this often unless Refresh is tapped. */
         const val STALE_MS = 60_000L
+
+        /** Baked classification of [apps] into the launcher's own phone folders (keywords + metadata): app -> folder id. */
+        fun classifyPhoneApps(ctx: Context, apps: List<FolderApp>): Map<String, String> {
+            val folders = com.diegonmarcos.superapp.apps.PhoneFolders.loadFromBuildConfig()
+            if (folders.isEmpty() || apps.isEmpty()) return emptyMap()
+            val me = Process.myUserHandle()
+            val grouped = com.diegonmarcos.superapp.apps.PhoneAppClassifier.groupByFolder(
+                apps.map { com.diegonmarcos.superapp.apps.PhoneApp(it.pkg, null, it.label, null, me) }, folders, ctx)
+            return grouped.flatMap { (fid, list) -> list.map { it.packageName to fid } }.toMap()
+        }
 
         /** Phone scope = the installed launchable apps; Cloud scope = the constellation fleet's apps. */
         fun enumerateApps(ctx: Context, scope: FolderScope): List<FolderApp> = when (scope) {

@@ -147,7 +147,11 @@ object ACol { const val SECTION = "section"; const val ID = "id"; const val LABE
 object BCol { const val APP = "app"; const val PACKAGE = "package"; const val FOLDER = "folder"; const val ORDER = "order" }
 
 enum class AppGroup { FOLDER, PARENT, NONE }
-enum class AppFilter { ALL, NEEDS, NO_FOLDER, OTHERS }
+/** EXACTLY three filters: everything, apps never assigned, apps in the Others bucket. */
+enum class AppFilter { ALL, NO_FOLDER, OTHERS }
+
+/** Which values the tables show: the declared SoT, or what the device actually applies. */
+enum class DataMode(val label: String) { DECLARATIVE("declarative"), RUNTIME("run-time") }
 
 private fun <T> List<T>.sortedBy2(sort: SortSpec?, key: (T, String) -> Comparable<*>): List<T> {
     if (sort == null) return this
@@ -183,7 +187,6 @@ fun FolderEditModel.appItems(query: String, filter: AppFilter, sort: SortSpec?, 
         .filter {
             when (filter) {
                 AppFilter.ALL -> true
-                AppFilter.NEEDS -> needsClassification(it)
                 AppFilter.NO_FOLDER -> isNoFolder(it)
                 AppFilter.OTHERS -> isOthers(it)
             }
@@ -230,3 +233,28 @@ fun FolderTables.foldersToJson(list: List<FolderDef>): String = JSONObject().put
 fun FolderTables.assignmentsToJson(list: List<FolderAssignment>): String = JSONObject().put("assignments", JSONArray().also { a ->
     list.forEach { a.put(JSONObject().put("package", it.pkg).put("folder", it.folderId).put("order", it.order)) }
 }).toString()
+
+/** Copy All / Export All payloads: the full tables of one scope in one mode, in the served datasets' shape. */
+object FolderExport {
+    private fun foldersDoc(m: FolderEditModel) = JSONObject(FolderTables.foldersToJson(m.folders)).put("schemaVersion", 1)
+    private fun assignDoc(m: FolderEditModel) = JSONObject(FolderTables.assignmentsToJson(m.toAssignments())).put("schemaVersion", 1)
+
+    /** The `launcher-folders/<scope>` dataset. */
+    fun foldersDataset(m: FolderEditModel): String = foldersDoc(m).toString(2)
+
+    /** The `launcher-folder-assignments/<scope>` dataset. */
+    fun assignmentsDataset(m: FolderEditModel): String = assignDoc(m).toString(2)
+
+    /** Copy All: both datasets plus the unassigned packages in one JSON object, labelled with scope and mode. */
+    fun copyAll(scope: FolderScope, mode: DataMode, m: FolderEditModel): String = JSONObject()
+        .put("scope", scope.key).put("mode", mode.label)
+        .put("launcher-folders", foldersDoc(m)).put("launcher-folder-assignments", assignDoc(m))
+        .put("unassigned", JSONArray(m.apps.filter { it.folderId == null }.map { it.pkg }))
+        .toString(2)
+
+    /** Export All: the two datasets as named documents (name embeds scope and mode), round-trippable into the served shape. */
+    fun exportAll(scope: FolderScope, mode: DataMode, m: FolderEditModel): List<Pair<String, String>> = listOf(
+        "launcher-folders.${scope.key}.${mode.label}.json" to foldersDataset(m),
+        "launcher-folder-assignments.${scope.key}.${mode.label}.json" to assignmentsDataset(m),
+    )
+}

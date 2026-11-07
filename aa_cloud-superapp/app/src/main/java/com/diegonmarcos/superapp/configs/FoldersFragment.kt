@@ -62,7 +62,9 @@ class FoldersFragment : KitComposeFragment() {
         val editor by produceState<FolderEditorState?>(null, scope, tick) {
             val c = cache[scope]
             value = if (c != null && c.first == tick) c.second
-            else withContext(Dispatchers.Default) { FolderEditorState(repo.editorModel(scope, force = tick > 0)) }
+            else withContext(Dispatchers.Default) {
+                FolderEditorState(repo.editorModel(scope, force = tick > 0), repo.declarativeModel(scope), scope)
+            }
                 .also { cache[scope] = tick to it }
         }
         Column(Modifier.fillMaxSize().padding(TILE_PAGE_PADDING)) {
@@ -71,9 +73,22 @@ class FoldersFragment : KitComposeFragment() {
             val st = editor ?: return@Column
             FolderTablesScreen(
                 st,
-                onSave = { repo.save(scope, st.model); st.dirty = false; st.notice = null },
+                onSave = { repo.save(scope, st.runtimeModel); st.dirty = false; st.notice = null },
                 onReset = { repo.reset(scope); tick++ },
                 modifier = Modifier.weight(1f).testTag(TAG_LIST),
+                onCopy = { text ->
+                    (ctx.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager)
+                        .setPrimaryClip(android.content.ClipData.newPlainText("folders", text))
+                },
+                onExport = { docs ->
+                    // Both served-shape datasets, named with scope and mode, handed to the share sheet as one text.
+                    val body = docs.joinToString("\n\n") { (name, json) -> "// $name\n$json" }
+                    ctx.startActivity(android.content.Intent.createChooser(
+                        android.content.Intent(android.content.Intent.ACTION_SEND).setType("text/plain")
+                            .putExtra(android.content.Intent.EXTRA_TEXT, body)
+                            .putExtra(android.content.Intent.EXTRA_SUBJECT, docs.firstOrNull()?.first ?: "folders"),
+                        "Export All").addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK))
+                },
             )
         }
     }
