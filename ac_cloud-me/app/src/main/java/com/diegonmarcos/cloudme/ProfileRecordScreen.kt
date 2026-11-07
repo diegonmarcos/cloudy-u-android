@@ -57,7 +57,7 @@ object ProfileStore {
 
 /** The assets `profiles/<id>.schema.json`; null when the asset is lost (the page then says so). */
 internal fun loadSchema(ctx: Context, id: String): JSONObject? =
-    runCatching { JSONObject(ctx.assets.open("profiles/$id.schema.json").bufferedReader().use { it.readText() }) }.getOrNull()
+    runCatching { JSONObject(CloudMeApiData.text(ctx, "profiles/$id.schema.json")) }.getOrNull()
 
 /**
  * `{"kind":"profile_record","schema":"health","store":"profile_health_user"}`: the completeness header with its status

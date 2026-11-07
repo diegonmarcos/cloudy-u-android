@@ -1,5 +1,6 @@
 package com.diegonmarcos.cloudme.health
 
+import com.diegonmarcos.cloudme.CloudMeApiData
 import android.content.Context
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.aggregate.AggregateMetric
@@ -63,7 +64,7 @@ object Tracked {
         }
     }
 
-    fun load(ctx: Context): List<TrackedMetric> = parse(ctx.assets.open(ASSET).bufferedReader().use { it.readText() })
+    fun load(ctx: Context): List<TrackedMetric> = parse(CloudMeApiData.text(ctx, ASSET))
 
     /** The ring: 0..1 toward the goal; a metric with no goal has no ring (null). */
     fun progress(value: Double?, goal: Double): Float? = if (goal <= 0.0) null else ((value ?: 0.0) / goal).coerceIn(0.0, 1.0).toFloat()

@@ -43,6 +43,16 @@
       "dir": "../ab_cloud-libs-shared/libs/web-core",
       "type": "library"
     },
+    "libs:fleet-endpoints": {
+      "_doc": "#1093 the fleet endpoint transport (mesh first, public host with the fleet bearer), shared BY REFERENCE; links into libs:fleet-endpoints-android (api).",
+      "dir": "../ab_cloud-libs-shared/libs/fleet-endpoints",
+      "type": "library"
+    },
+    "libs:fleet-endpoints-android": {
+      "_doc": "#1093 pull of Cloud Account's published endpoint pairs + FleetBoot; Cloud Me reads its personal data from cloud-me-api through it (CloudMeApiData), baked assets as the offline fallback.",
+      "dir": "../ab_cloud-libs-shared/libs/fleet-endpoints-android",
+      "type": "library"
+    },
     "libs:decisions-link": {
       "type": "library",
       "dir": "../ab_cloud-libs-shared/libs/decisions-link"
@@ -63,7 +73,8 @@
         "libs:theme-background",
         "libs:ui-kit",
         "libs:autofill",
-        "libs:account-ui"
+        "libs:account-ui",
+        "libs:fleet-endpoints-android"
       ]
     },
     "libs:core": {

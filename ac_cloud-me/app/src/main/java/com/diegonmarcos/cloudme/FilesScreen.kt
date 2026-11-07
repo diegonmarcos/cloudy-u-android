@@ -141,7 +141,7 @@ private fun countLeaves(ctx: Context, p: String, order: List<String>): Int {
 @Composable
 private fun FileCard(ctx: Context, p: String) {
     val body = remember(p) {
-        runCatching { ctx.assets.open(p).bufferedReader().use { it.readText() } }
+        runCatching { CloudMeApiData.text(ctx, p) }
             .getOrElse { "Could not read this file." }
     }
     Card {

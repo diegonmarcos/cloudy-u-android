@@ -43,7 +43,7 @@ object VaultFolderTags {
 fun VaultFolderScreen(asset: String, path: String, modifier: Modifier = Modifier) {
     val ctx = LocalContext.current
     val folder = remember(asset, path) {
-        runCatching { VaultRows.find(VaultRows.parse(ctx.assets.open(asset).bufferedReader().use { it.readText() }), path) }.getOrNull()
+        runCatching { VaultRows.find(VaultRows.parse(CloudMeApiData.text(ctx, asset)), path) }.getOrNull()
     }
     var sub by rememberSaveable(path) { mutableStateOf("") }
     val ink = MaterialTheme.colorScheme.onSurface

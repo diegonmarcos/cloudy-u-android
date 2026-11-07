@@ -93,7 +93,7 @@ object Sections {
         val chain = section.path(pageId).map { it.id }.ifEmpty { listOf(pageId) }
         val path = (listOf(sectionId) + chain).joinToString("/") + ".json"
         return runCatching {
-            JSONArray(ctx.assets.open(path).bufferedReader().use { it.readText() })
+            JSONArray(CloudMeApiData.text(ctx, path))
         }.getOrElse {
             // Empty-and-quiet is how a wrong path stayed invisible through a
             // whole release: every page rendered its "Nothing here yet" state

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Cloud Me reaches cloud-me-api on the mesh first (http, port 8124; the WG mesh is the transport, the bearer is checked
+     by the service itself). Everything else is HTTPS only. One named domain, never the whole .diegonmarcos.com. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">cloud-me-api.mesh.diegonmarcos.com</domain>
+    </domain-config>
+</network-security-config>

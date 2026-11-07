@@ -1,5 +1,6 @@
 package com.diegonmarcos.cloudme.health
 
+import com.diegonmarcos.cloudme.CloudMeApiData
 import android.content.Context
 import org.json.JSONArray
 import org.json.JSONObject
@@ -60,7 +61,7 @@ data class HealthContent(val home: HomeDecl, val formulas: Formulas, val plan: P
         /** Reads the four data files from assets. A file missing from the build is a bug and throws, never a blank page. */
         fun load(ctx: Context): HealthContent = parse(read(ctx, HOME), read(ctx, FORMULAS), read(ctx, PLAN), read(ctx, WORKOUT))
 
-        private fun read(ctx: Context, name: String): String = ctx.assets.open(name).bufferedReader().use { it.readText() }
+        private fun read(ctx: Context, name: String): String = CloudMeApiData.text(ctx, name)
 
         fun parse(home: String, formulas: String, plan: String, workout: String): HealthContent =
             HealthContent(parseHome(JSONObject(home)), parseFormulas(JSONObject(formulas)), parsePlan(JSONObject(plan)), parseWorkout(JSONObject(workout)))

@@ -339,6 +339,7 @@ dependencies {
     implementation project(':libs:ui-nav-bars')
     implementation project(':libs:account-ui')   // #1439 the profile page (Personal Info + Configs), shared with Cloud Account
     implementation project(':libs:theme-background')
+    implementation project(':libs:fleet-endpoints-android')   // CloudMeApiData: cloud-me-api first, baked assets as the fallback
 
     // Photo grid on Profile > Personal. Same version libs:media already pins.
     implementation 'io.coil-kt:coil:2.7.0'

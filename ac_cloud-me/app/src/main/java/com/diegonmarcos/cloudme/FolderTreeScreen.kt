@@ -42,7 +42,7 @@ object FolderTreeTags {
 fun FolderTreeScreen(asset: String, modifier: Modifier = Modifier) {
     val ctx = LocalContext.current
     val sections = remember(asset) {
-        runCatching { FolderTree.parse(ctx.assets.open(asset).bufferedReader().use { it.readText() }) }.getOrDefault(emptyList())
+        runCatching { FolderTree.parse(CloudMeApiData.text(ctx, asset)) }.getOrDefault(emptyList())
     }
     var open by rememberSaveable { mutableStateOf(listOf<String>()) }
     val rows = remember(sections, open) { FolderTree.rows(sections, open.toSet()) }

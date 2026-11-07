@@ -55,7 +55,7 @@ object RepoTreeTags {
 private object RepoOutlineAsset {
     @Volatile private var cached: List<RepoNode>? = null
     fun get(ctx: Context, asset: String): List<RepoNode> = cached ?: runCatching {
-        RepoOutline.parse(ctx.assets.open(asset).bufferedReader().use { it.readText() })
+        RepoOutline.parse(CloudMeApiData.text(ctx, asset))
     }.getOrDefault(emptyList()).also { cached = it }
 }
 
