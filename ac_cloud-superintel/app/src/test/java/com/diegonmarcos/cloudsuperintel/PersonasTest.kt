@@ -22,7 +22,7 @@ class PersonasTest {
     @Test fun uiPagesAreExactlyThePersonas() {
         assertEquals(all.filter { it.group.isEmpty() }.map { it.id }, Data.pages("si"))
         assertEquals(all.filter { it.group.isNotEmpty() }.map { it.id }, Data.pages("cgcs"))
-        assertEquals(listOf("notebook", "cgcs", "si", "ais", "cost"), Data.bottomNav())
+        assertEquals(listOf("notebook", "cgcs", "si", "tools", "ais", "cost"), Data.bottomNav())
     }
 
     /** The owner's six CGC groups, in order, each with exactly its experts; the groups in build.json::ui are the personas' `group`s. */

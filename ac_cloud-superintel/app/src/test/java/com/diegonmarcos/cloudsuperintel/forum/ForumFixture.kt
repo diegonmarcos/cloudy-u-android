@@ -5,6 +5,7 @@ import androidx.compose.ui.graphics.SolidColor
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
+import com.diegonmarcos.superapp.ai.AiAgent
 import com.diegonmarcos.superapp.ai.AiAttachment
 import com.diegonmarcos.superapp.ai.AiChatState
 import com.diegonmarcos.superapp.ai.AiComposerDecl
@@ -27,6 +28,7 @@ import java.time.ZoneOffset
 class FakeHost(override var model: String = "fake/model", override var web: Boolean = false) : AiHost {
     override fun newSession(model: String, now: Long) = AiSession("s-$model", "", model, now, emptyList())
     override fun models(): List<AiModel> = emptyList()
+    override fun agents(): List<AiAgent> = listOf(AiAgent("claude", "Claude", "Anthropic agent"), AiAgent("hermes", "Hermes", "Open agent"))
     override fun send(session: AiSession, text: String, model: String, web: Boolean, now: Long, sink: AiSink): AiOutcome =
         AiOutcome(session, null, emptyList())
 }
