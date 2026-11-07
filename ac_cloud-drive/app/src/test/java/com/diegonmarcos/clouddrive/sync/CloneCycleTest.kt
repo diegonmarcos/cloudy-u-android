@@ -72,7 +72,7 @@ class CloneCycleTest {
         assertFalse("${dir.name} is bare: no working files", File(dir, "f.txt").exists())
     }
 
-    @Test fun `clone all bare, delete all, clone all again: the status follows the disk at every step, one branch each`() {
+    @Test fun `clone all bare, delete all, clone all again - the status follows the disk at every step, one branch each`() {
         val src = tmp.newFolder("src")
         val clones = File(tmp.newFolder("store"), "git")
         val names = (1..8).map { "repo$it" }
