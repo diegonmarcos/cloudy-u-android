@@ -230,8 +230,8 @@ pub fn listen_ports(proc_net: &str) -> BTreeSet<u16> {
 /// The ports the connect probe tries when /proc says nothing: the fleet's range and a few well-known dev ports.
 fn probe_ports() -> Vec<u16> {
     let p = &apis::build()["served"]["probe"];
-    let (first, last) = (p["first"].as_u64().unwrap_or(8000) as u16, p["last"].as_u64().unwrap_or(8199) as u16);
-    let mut v: Vec<u16> = (first..=last.max(first)).collect();
+    let (first, last) = (p["first"].as_u64().unwrap_or(0) as u16, p["last"].as_u64().unwrap_or(0) as u16);
+    let mut v: Vec<u16> = (first..=last.max(first)).filter(|p| *p >= 1024).collect();
     v.extend(p["extra"].as_array().map(|a| a.iter().filter_map(|x| x.as_u64().map(|x| x as u16)).collect::<Vec<_>>()).unwrap_or_default());
     v
 }

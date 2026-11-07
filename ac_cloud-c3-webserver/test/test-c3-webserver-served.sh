@@ -51,8 +51,9 @@ for r in ("/__app__/api/repos\"", "/__app__/api/repos/discover", "/__app__/api/s
 for op in ('"add" =>', '"remove" =>', '"start" =>', '"stop" =>', 'body["serve"]'):
     if op not in sub:
         bad.append("V3 repos_op lost " + op)
+formsrc = served.split("pub fn form(")[1].split("pub fn page(")[0]
 for needle in ('"post": "/__app__/api/repos"', "Add & serve", '"op": "add"'):
-    if needle not in served:
+    if needle not in formsrc:
         bad.append("V3 the add form no longer wires to the repos backend: " + needle)
 for needle in ("fn scan(", "fn declared_ports(", "fn listen_ports(", "/proc/net/tcp", '"declare" =>', '"stop_undeclared" =>', '"forget" =>', '"start_app" =>'):
     if needle not in served:
