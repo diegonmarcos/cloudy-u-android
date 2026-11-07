@@ -415,6 +415,21 @@
       "group": "Cloudy Private/Other"
     },
     {
+      "name": "steel-browser",
+      "url": "http://steel-browser.mesh.diegonmarcos.com:3000",
+      "group": "Cloudy Private/Other"
+    },
+    {
+      "name": "steel-browser-auth",
+      "url": "http://steel-browser-auth:3000",
+      "group": "Cloudy Private/Other"
+    },
+    {
+      "name": "zap",
+      "url": "http://zap.mesh.diegonmarcos.com:8086",
+      "group": "Cloudy Private/Other"
+    },
+    {
       "name": "revealmd_app",
       "url": "http://revealmd.mesh.diegonmarcos.com:3014",
       "group": "Cloudy Private/Productivity"
