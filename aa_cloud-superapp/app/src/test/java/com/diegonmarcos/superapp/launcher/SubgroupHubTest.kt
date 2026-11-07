@@ -11,12 +11,14 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * #1545 #1548 The Configs nav tree and its two hub pages, Agents ▸ Watchdog and Agents ▸ Watchtower.
+ * #1545 #1548 The Configs nav tree and its hub page, Agents ▸ Watchdog (the Watchtower hub page is gone: its content is the
+ * Watchtower - Obsv subgroup, and page:config/watchtower and /agents-watchtower are page_aliases of X-Ray Device).
  *
- *   H1 nav tree: Setup (Connect, Apps, Launcher, Network, Observability), Agents (Watchdog, Watchtower), Fleet (C3, Peer Control, Bluetooth)
- *   H2 Watchdog = two titled sections, Network then Observability; Watchtower = Observability only; each derived from the nav, in order
+ *   H1 nav tree: Setup (Connect, Apps, Launcher, Network, Watchtower - Obsv), Agents (Watchdog), Cloudy C3 (C3, Peer Control)
+ *      Launcher = Quick Actions, One-Hand, Folders, Notify | Perms, Logcat, X-Ray App, About; Bluetooth is a Network page
+ *   H2 Watchdog = two titled sections, Network then Watchtower - Obsv, derived from the nav, in order
  *   H3 routing: in-app pages are page:config/<id>; apps / sections / Cloud Store hand-offs keep their declared action
- *   H4 both pages route to SubgroupHubFragment (not the C3 APKs) and draw a section heading and a Cloud ▸ Apps tile per entry
+ *   H4 Watchdog routes to SubgroupHubFragment (not the C3 APKs) and draws a section heading and a Cloud ▸ Apps tile per entry
  *   H5 Cloud ▸ Apps ▸ Configs opens page:config/agents-watchdog where Firewall was
  */
 @RunWith(RobolectricTestRunner::class)
@@ -31,22 +33,24 @@ class SubgroupHubTest : KitPageHarness() {
     fun `H1 the Configs nav is the declared tree`() {
         val runs = config.pages.filter { !it.isAction }.map { it.group to it.subgroup }.distinct()
         assertEquals(listOf(
-            "Setup" to "Connect", "Setup" to "Apps", "Setup" to "Launcher", "Setup" to "Network", "Setup" to "Observability",
-            "Agents" to "", "Fleet" to ""), runs)
-        assertEquals(listOf("C3", "Peer Control", "Bluetooth"), config.pages.filter { it.group == "Fleet" }.map { it.label })
-        assertEquals(listOf("agents-watchdog", "agents-watchtower"), config.pages.filter { it.group == "Agents" }.map { it.id })
-        assertEquals(listOf("xray", "logcat", "perms", "app-about"), sub("Observability").map { it.id })
+            "Setup" to "Connect", "Setup" to "Apps", "Setup" to "Launcher", "Setup" to "Network", "Setup" to "Watchtower - Obsv",
+            "Agents" to "", "Cloudy C3" to ""), runs)
+        assertEquals(listOf("C3", "Peer Control"), config.pages.filter { it.group == "Cloudy C3" }.map { it.label })
+        assertEquals(listOf("agents-watchdog"), config.pages.filter { it.group == "Agents" }.map { it.id })
+        assertEquals(listOf("controls", "onehand", "app-folders", "notify", "launcher-sep-1", "perms", "logcat", "xray-app", "app-about"),
+            sub("Launcher").map { it.id })
+        assertEquals(listOf("xray", "logcat-fleet"), sub("Watchtower - Obsv").map { it.id })
+        assertEquals(listOf("X-Ray Device", "Logcat Fleet"), sub("Watchtower - Obsv").map { it.label })
+        assertTrue("Bluetooth is a Network page", sub("Network").any { it.id == "bluetooth" })
         assertEquals("firewall", sub("Network").first().id)
         assertTrue("Watchdog is no Network item any more", sub("Network").none { it.id == "agents-watchdog" })
     }
 
     @Test
-    fun `H2 Watchdog shows Network and Observability, Watchtower only Observability`() {
-        assertEquals(listOf("Network", "Observability"), hub("agents-watchdog").map { it.title })
+    fun `H2 Watchdog shows Network and Watchtower - Obsv`() {
+        assertEquals(listOf("Network", "Watchtower - Obsv"), hub("agents-watchdog").map { it.title })
         assertEquals(sub("Network").map { it.id }, hub("agents-watchdog")[0].tiles.map { it.id })
-        assertEquals(sub("Observability").map { it.id }, hub("agents-watchdog")[1].tiles.map { it.id })
-        assertEquals(listOf("Observability"), hub("agents-watchtower").map { it.title })
-        assertEquals(sub("Observability").map { it.label }, hub("agents-watchtower")[0].tiles.map { it.label })
+        assertEquals(sub("Watchtower - Obsv").map { it.id }, hub("agents-watchdog")[1].tiles.map { it.id })
         assertTrue(hub("agents-watchdog")[0].tiles.map { it.id }.containsAll(listOf("firewall", "dns")))
     }
 
@@ -56,11 +60,12 @@ class SubgroupHubTest : KitPageHarness() {
         assertEquals("page:config/firewall", by.getValue("firewall").target)
         assertEquals("page:config/dns", by.getValue("dns").target)
         assertEquals("page:config/xray", by.getValue("xray").target)
-        assertEquals("page:config/perms", by.getValue("perms").target)
+        assertEquals("page:config/logcat-fleet", by.getValue("logcat-fleet").target)
+        assertEquals("page:config/bluetooth", by.getValue("bluetooth").target)
         assertEquals("action:open_webserver", by.getValue("webserver").target)
         assertEquals("action:open_apps_access", by.getValue("apps-access").target)
         assertEquals("section:wg", by.getValue("wg").target)
-        for (p in sub("Network") + sub("Observability")) assertEquals(p.id, Sections.hubTarget("config", p), by.getValue(p.id).target)
+        for (p in sub("Network") + sub("Watchtower - Obsv")) assertEquals(p.id, Sections.hubTarget("config", p), by.getValue(p.id).target)
     }
 
     @Test
@@ -76,12 +81,11 @@ class SubgroupHubTest : KitPageHarness() {
     }
 
     @Test
-    fun `H4b Watchtower is the same hub fragment`() {
-        val frag = SectionPages.pagesFor("config").first { it.id == "agents-watchtower" }.factory()
-        assertTrue("routes to the hub: ${frag.javaClass.simpleName}", frag is SubgroupHubFragment)
-        show(frag)
-        compose.onNodeWithTag(GroupedTilesFragment.groupTag("Observability")).assertExists()
-        compose.onNodeWithTag(GroupedTilesFragment.groupTag("Network")).assertDoesNotExist()
+    fun `H4b the removed Watchtower hub resolves to X-Ray Device, not a 404`() {
+        assertTrue("no agents-watchtower page is declared", config.pages.none { it.id == "agents-watchtower" })
+        assertEquals("config" to "xray", Sections.canonicalPage("config", "watchtower"))
+        assertEquals("config" to "xray", Sections.canonicalPage("config", "agents-watchtower"))
+        assertTrue(config.allPages.any { it.id == "xray" })
     }
 
     @Test

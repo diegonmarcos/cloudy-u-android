@@ -73,7 +73,7 @@ class DevControlFragment : KitComposeFragment() {
 
     /** What the page head wrote to the copy buffer (the title); every block owns its own buffer, assembled in DECLARED order
      *  by [copyAll] because bodies finish in whatever order the user reaches them. */
-    /** The page title (build.json label) and the macro groups it draws: all of them (X-Ray) or [ABOUT_MACROS] (About). */
+    /** The page title (build.json label) and the macro groups it draws: all of them (X-Ray Device), [ABOUT_MACROS] (About) or [APP_XRAY_MACROS] (X-Ray App). */
     private val pageTitle: String get() = arguments?.getString(ARG_TITLE) ?: "X-Ray"
     private val onlyMacros: Set<String>? get() = arguments?.getStringArrayList(ARG_MACROS)?.toSet()
 
@@ -245,6 +245,20 @@ class DevControlFragment : KitComposeFragment() {
             row("Built (UTC)",  BuildConfig.BUILD_TIMESTAMP)
             row("Build type",   BuildConfig.BUILD_TYPE)
             row("Debuggable",   BuildConfig.DEBUG.toString())
+        }
+
+        infoSection("App permissions") {
+            // What THIS app declares and holds (the Perms page edits them); the app-scoped X-Ray's permission view.
+            @Suppress("DEPRECATION")
+            val info = runCatching { appCtx.packageManager.getPackageInfo(appCtx.packageName, android.content.pm.PackageManager.GET_PERMISSIONS) }.getOrNull()
+            val asked = info?.requestedPermissions.orEmpty()
+            val flags = info?.requestedPermissionsFlags
+            val granted = asked.indices.count { (flags?.getOrNull(it) ?: 0) and android.content.pm.PackageInfo.REQUESTED_PERMISSION_GRANTED != 0 }
+            row("Declared", asked.size.toString())
+            row("Granted", granted.toString())
+            row("Not granted", (asked.size - granted).toString())
+            for (i in asked.indices) if ((flags?.getOrNull(i) ?: 0) and android.content.pm.PackageInfo.REQUESTED_PERMISSION_GRANTED == 0)
+                row("✗", asked[i].removePrefix("android.permission."))
         }
 
         infoSection("Sections (from build.json)") {
@@ -1736,6 +1750,18 @@ class DevControlFragment : KitComposeFragment() {
 
         /** The macro groups Configs ▸ About draws: this app's identity and where the build came from. */
         val ABOUT_MACROS = arrayListOf("APP & BUILD", "REPO & RELEASES")
+
+        /**
+         * The macro groups Configs ▸ Launcher ▸ X-Ray App draws: the diagnosis of THIS APP only. An entry is a whole macro group
+         * ("APP & BUILD") or "GROUP/Section" for one section of a group that mixes app and device rows (RESOURCES keeps the
+         * app's Storage, Battery & Usage and Memory & CPU Usage; AGENTS keeps the SuperApp agents, not the fleet's). The
+         * device-wide groups (Device, Security, Network, API, Mesh, Dev Tools, Webserver, Diagnostics, Export All) are absent.
+         */
+        val APP_XRAY_MACROS = arrayListOf(
+            "APP & BUILD", "REPO & RELEASES",
+            "RESOURCES/Storage", "RESOURCES/Battery & Usage", "RESOURCES/Memory & CPU Usage",
+            "AGENTS/SuperApp agents",
+        )
 
         fun newInstance(title: String = "X-Ray", macros: ArrayList<String>? = null) = DevControlFragment().apply {
             arguments = android.os.Bundle().apply { putString(ARG_TITLE, title); macros?.let { putStringArrayList(ARG_MACROS, it) } }

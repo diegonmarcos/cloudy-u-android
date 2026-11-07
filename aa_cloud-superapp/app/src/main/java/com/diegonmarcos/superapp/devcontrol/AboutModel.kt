@@ -134,12 +134,13 @@ internal class AboutPage(private val attached: () -> Boolean, private val only: 
         val label = text.dropWhile { !it.isLetter() }.trim()
         val glyph = text.takeWhile { !it.isLetter() }.trim()
         currentMacro = label
-        if (only == null || label in only) blocks += AboutBlock.Macro(label, glyph)
+        if (only == null || label in only || only.any { it.startsWith("$label/") }) blocks += AboutBlock.Macro(label, glyph)
     }
 
     /** A section under a macro group this page does not draw ([only], Configs ▸ About) is not registered at all. */
     fun infoSection(head: String, body: AboutItems.() -> Unit) {
-        if (only != null && currentMacro !in only) return
+        // `only` holds macro labels ("APP & BUILD") and, to narrow a group to some of its sections, "MACRO/Section head".
+        if (only != null && currentMacro !in only && "$currentMacro/$head" !in only) return
         blocks += AboutBlock.Section(AboutSection(currentMacro, head, body))
     }
 

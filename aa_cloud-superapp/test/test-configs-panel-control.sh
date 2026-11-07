@@ -94,13 +94,13 @@ ids  = [p['id'] for p in pages]
 gone = [i for i in ('home', 'push', 'panel', 'control', 'launcher') if i in ids]
 run  = [p['id'] for p in pages if p.get('subgroup') == 'Launcher']
 if gone:                     print('retired page(s) still declared: %r' % gone)
-elif run[-3:] != ['onehand', 'app-folders', 'notify']:
+elif run[:4] != ['controls', 'onehand', 'app-folders', 'notify'] or run[4:5] != ['launcher-sep-1']:
                              # #1553 Folders sits between One-Hand and Notify (owner-mandated order); Notify stays last.
-                             print('Launcher does not end One-Hand, Folders, Notify: %r' % (run,))
+                             print('Launcher does not start Controls, One-Hand, Folders, Notify then the | separator: %r' % (run,))
 elif 'app-about' not in ids: print('no `app-about` page')
 else:                        print('OK')
 PY
-)" "no home/push/panel/control/launcher page; the Launcher group ends ..., onehand, app-folders, notify (#1553)"
+)" "no home/push/panel/control/launcher page; the Launcher group runs ..., onehand, app-folders, notify (#1553) and then the | separator and the relocated Perms, Logcat, X-Ray App, About"
 
 echo "== T2: Notify is a REAL, VISIBLE page of the config section, never declared inline =="
 # The contract established in 07964787e was: a tab is a declared page, so

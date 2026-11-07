@@ -60,7 +60,7 @@ object SectionPages {
         // data, so embedding the next one is a build.json edit, not a branch.
         url.isNotBlank() -> WebPageFragment.newInstance(url)
         // #1545 #1548 A page that declares `hub_sections` IS the titled icon grid over those subgroups (Configs ▸ Agents ▸
-        // Watchdog, Watchtower), by data like `tabs` and `url`, so another hub is a build.json edit, not a branch.
+        // Watchdog), by data like `tabs` and `url`, so another hub is a build.json edit, not a branch.
         hubSections.isNotEmpty() -> SubgroupHubFragment.newInstance(sectionId, pageId)
         sectionId == "mail"  -> MailPages.fragmentFor(pageId)
         // Phone ▸ Apps: installed Android apps, not build.json tile data — so
@@ -120,8 +120,10 @@ object SectionPages {
         // Apps Mesh / IPC / Identity are Cloud Store > Access now (one tile, Configs > Network > Apps Access, action open_apps_access).
         // Configs > Network > ADB Shell: the privileged channel's full control (lib AdbShellPage).
         sectionId == "config" && pageId == "adb-shell"      -> com.diegonmarcos.superapp.configs.AdbShellFragment.newInstance()
-        // Configs ▸ Observability ▸ Logcat: the live logcat viewer, its own tab before About (it no longer lives inside About).
+        // Configs ▸ Setup ▸ Launcher ▸ Logcat: the DEDICATED single-app logcat (this app only, online, filters apart from actions).
         sectionId == "config" && pageId == "logcat"         -> com.diegonmarcos.superapp.devcontrol.LogcatFragment.newInstance()
+        // Configs ▸ Setup ▸ Watchtower - Obsv ▸ Logcat Fleet: the fleet-wide reader (multi-select apps, per-app view, export).
+        sectionId == "config" && pageId == "logcat-fleet"   -> com.diegonmarcos.superapp.devcontrol.FleetLogcatFragment.newInstance()
         sectionId == "config" && pageId == "wg"             -> WireGuardFragment.newInstance()
         // #740 Configs ▸ Mesh ▸ DNS — the fleet resolver, applied at the Cloud Mesh VPN.
         sectionId == "config" && pageId == "dns"            -> com.diegonmarcos.superapp.network.DnsFragment.newInstance()
@@ -152,10 +154,13 @@ object SectionPages {
         // About's Battery section, the home-screen battery popup and the Battery badge).
         sectionId == "config" && pageId == "battery"        ->
             com.diegonmarcos.superapp.batterystats.BatteryStatsFragment.newInstance()
-        // Configs ▸ Observability ▸ X-Ray (every macro group, Diagnostics and Agents folded in) and ▸ About (the same
-        // fragment, only its App & Build and Repo & Releases groups). Old ids about/diagnostics/agents are page_aliases.
+        // Configs ▸ Watchtower - Obsv ▸ X-Ray Device (every macro group, Diagnostics and Agents folded in), Launcher ▸ X-Ray App
+        // (the same fragment, only the app-scoped groups: APP_XRAY_MACROS) and Launcher ▸ About (only its App & Build and Repo &
+        // Releases groups). Old ids about/diagnostics/agents/watchtower are page_aliases.
         sectionId == "config" && pageId == "xray" ->
             com.diegonmarcos.superapp.devcontrol.DevControlFragment.newInstance(label)
+        sectionId == "config" && pageId == "xray-app" ->
+            com.diegonmarcos.superapp.devcontrol.DevControlFragment.newInstance(label, com.diegonmarcos.superapp.devcontrol.DevControlFragment.APP_XRAY_MACROS)
         sectionId == "config" && pageId == "app-about" ->
             com.diegonmarcos.superapp.devcontrol.DevControlFragment.newInstance(label, com.diegonmarcos.superapp.devcontrol.DevControlFragment.ABOUT_MACROS)
         // "browser" section is dead — tile target extapp:cloud-browser bypasses openSectionPage.

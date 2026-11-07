@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 # Tester: the fleet agent registry, drawn by Configs ▸ Observability ▸ X-Ray (AGENTS group) since the Agents page was removed.
 #
-#   A1 Configs reads Setup, Agents, Fleet (the order of build.json groups, #1548/#1554); Fleet = C3 | Peer Control · Bluetooth;
-#      Agents = Watchdog, Watchtower (hub pages); no agents page or tab is declared and Setup ▸ Observability is X-Ray, LogCat, Permissions, About
-#   A2 page:config/agents, /agents-superapp and /agents-fleet are page_aliases of xray, and each is retired to xray
+#   A1 Configs reads Setup, Agents, Cloudy C3 (the order of build.json groups, #1548/#1554); Cloudy C3 = C3 | Peer Control (Bluetooth is a Setup ▸ Network page);
+#      Agents = Watchdog (hub page; Watchtower left); no agents page or tab is declared and Setup ▸ Watchtower - Obsv is X-Ray Device, Logcat Fleet
+#      (X-Ray App, Perms, Logcat, About live in Setup ▸ Launcher)
+#   A2 page:config/agents, /agents-superapp and /agents-fleet are page_aliases of xray, and each is retired to xray; page:config/watchtower and
+#      /agents-watchtower are page_aliases of xray too and agents-watchtower is retired into xray + logcat-fleet (never a 404)
 #   A3 X-Ray draws the registry: DevControlFragment declares the AGENTS macro over FleetAgents + AgentStatusReader
 #   A4 the old deep links still land: page:config/c3 and page:config/kde are the same ids
 #   A5 the registry is baked: FLEET_AGENTS_B64 from data/fleet-agents.json, and that file is
@@ -46,18 +48,20 @@ for p in vis:
 probs = []
 declared = [g['label'] for g in sec['groups']]
 if groups != declared: probs.append('grid groups %r != declared groups %r' % (groups, declared))
-apps = [p['label'] for p in vis if p.get('group') == 'Fleet']
-if apps != ['C3', 'Peer Control', 'Bluetooth']: probs.append('Fleet = %r' % apps)
+apps = [p['label'] for p in vis if p.get('group') == 'Cloudy C3']
+if apps != ['C3', 'Peer Control']: probs.append('Cloudy C3 = %r' % apps)
+if any(p.get('group') == 'Fleet' for p in pages): probs.append('a page still wears the group Fleet')
 for gone in ('agents', 'agents-superapp', 'agents-fleet'):
     if gone in by: probs.append('%s is still declared' % gone)
-if declared != ['Setup', 'Agents', 'Fleet']: probs.append('declared groups %r != Setup, Agents, Fleet' % declared)
-grid = [p['id'] for p in vis if p.get('group') == 'Setup' and p.get('subgroup') == 'Observability']
-if grid != ['xray', 'logcat', 'perms', 'app-about']: probs.append('Setup > Observability = %r' % grid)
+if declared != ['Setup', 'Agents', 'Cloudy C3']: probs.append('declared groups %r != Setup, Agents, Cloudy C3' % declared)
+grid = [p['id'] for p in vis if p.get('group') == 'Setup' and p.get('subgroup') == 'Watchtower - Obsv']
+if grid != ['xray', 'logcat-fleet']: probs.append('Setup > Watchtower - Obsv = %r' % grid)
+if 'agents-watchtower' in by: probs.append('agents-watchtower is still declared')
 agents = [p['id'] for p in vis if p.get('group') == 'Agents']
-if agents != ['agents-watchdog', 'agents-watchtower']: probs.append('Agents = %r' % agents)
+if agents != ['agents-watchdog']: probs.append('Agents = %r' % agents)
 print('; '.join(probs) or 'OK')
 PY
-)" "Configs groups are build.json's groups (Setup, Agents, Fleet); Fleet = C3, Peer Control, Bluetooth; Agents = Watchdog, Watchtower; no agents page; Setup ▸ Observability = X-Ray, LogCat, Permissions, About"
+)" "Configs groups are build.json's groups (Setup, Agents, Cloudy C3); Cloudy C3 = C3, Peer Control; Agents = Watchdog; no agents page; Setup ▸ Watchtower - Obsv = X-Ray Device, Logcat Fleet"
 
 echo "== A2: the old Agents ids land on X-Ray =="
 check "$(python3 - "$BJ" <<'PY'
@@ -67,6 +71,11 @@ probs = []
 for old in ('agents', 'agents-superapp', 'agents-fleet'):
     if sec.get('page_aliases', {}).get(old) != 'xray': probs.append('page_aliases[%s] = %r' % (old, sec.get('page_aliases', {}).get(old)))
     if sec.get('retired_pages', {}).get(old) != ['xray']: probs.append('retired_pages[%s] = %r' % (old, sec.get('retired_pages', {}).get(old)))
+ids = {p['id'] for p in sec['pages']}
+for old in ('watchtower', 'agents-watchtower'):
+    to = sec.get('page_aliases', {}).get(old)
+    if to != 'xray' or to not in ids: probs.append('page_aliases[%s] = %r (must be the declared page xray)' % (old, to))
+if sec.get('retired_pages', {}).get('agents-watchtower') != ['xray', 'logcat-fleet']: probs.append('retired_pages[agents-watchtower] = %r' % sec.get('retired_pages', {}).get('agents-watchtower'))
 print('; '.join(probs) or 'OK')
 PY
 )" "page:config/agents, /agents-superapp, /agents-fleet alias and retire to xray"

@@ -46,9 +46,10 @@ class AgentsPageComposeTest : KitPageHarness() {
             assertTrue("$old is still declared", old !in ids)
             assertEquals("config" to "xray", Sections.canonicalPage("config", old))
         }
-        // #1548 Observability is a Setup subgroup now (Setup ▸ Observability ▸ X-Ray).
+        // The Setup subgroup that was Observability is Watchtower - Obsv now (Setup ▸ Watchtower - Obsv ▸ X-Ray Device).
         val xray = section.allPages.first { it.id == "xray" }
-        assertEquals("Setup" to "Observability", xray.group to xray.subgroup)
+        assertEquals("Setup" to "Watchtower - Obsv", xray.group to xray.subgroup)
+        assertEquals("X-Ray Device", xray.label)
     }
 
     @Test

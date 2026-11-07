@@ -51,7 +51,7 @@ if any(p['id'] == 'launcher' for p in pages):
           'and a page of that name would tile beside its own four members')
     sys.exit()
 run = [p['id'] for p in pages if p.get('group') == 'Setup' and p.get('subgroup') == 'Launcher']
-if run != ['controls', 'onehand', 'app-folders', 'notify']:
+if run != ['controls', 'onehand', 'app-folders', 'notify', 'launcher-sep-1', 'perms', 'logcat', 'xray-app', 'app-about']:
     print('Setup ▸ Launcher = %r' % (run,)); sys.exit()
 ids   = [p['id'] for p in pages]
 first = ids.index('controls')
@@ -63,12 +63,12 @@ if by['controls'].get('tabs') != ['presets', 'panels'] or by['panels'].get('tabs
 loose = [i for i in ('presets', 'panels', 'panels-ui', 'panels-tools') if i not in by or not by[i].get('hidden')]
 if loose:
     print('tab page(s) missing or drawing a tile of their own: %r' % (loose,)); sys.exit()
-hidden = [p['id'] for p in pages if p.get('subgroup') == 'Launcher' and p.get('hidden')]
+hidden = [p['id'] for p in pages if p.get('subgroup') == 'Launcher' and p.get('hidden')]  # the separator is visible too
 if hidden:
     print('still hidden, so it draws no tile of its own: %r' % (hidden,)); sys.exit()
 print('OK')
 PY
-)" "Setup ▸ Launcher = Controls (tabs Presets | Panels ▸ UI | Tools), One-Hand, Folders (#1553), Notify as consecutive visible pages"
+)" "Setup ▸ Launcher = Controls (tabs Presets | Panels ▸ UI | Tools), One-Hand, Folders (#1553), Notify | Perms, Logcat, X-Ray App, About as consecutive visible pages (the | is a separator page)"
 
 echo "== T2: no Configs page is a tab strip any more =="
 # #865 deleted the generic tab-owner rule: its last subject, Store, became a

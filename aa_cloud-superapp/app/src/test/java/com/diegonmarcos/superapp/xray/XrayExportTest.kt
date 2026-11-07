@@ -71,10 +71,13 @@ class XrayExportTest {
             is JSONArray -> (0 until o.length()).asSequence().mapNotNull { find(o.get(it)) }.firstOrNull()
             else -> null
         }
-        // #1548 Observability is the Setup subgroup now: every page declared there (visible and hidden), in declaration order.
+        // The Watchtower - Obsv subgroup (was Observability; every page declared there, visible and hidden) plus the four pages
+        // relocated to Setup > Launcher (Perms, Logcat, X-Ray App, About), in declaration order.
         val pages = find(root)!!.getJSONArray("pages")
+        val relocated = setOf("perms", "logcat", "xray-app", "app-about")
         val declared = (0 until pages.length()).map { pages.getJSONObject(it) }
-            .filter { it.optString("group") == "Setup" && it.optString("subgroup") == "Observability" }.map { it.getString("id") }
+            .filter { it.optString("group") == "Setup" && (it.optString("subgroup") == "Watchtower - Obsv" || it.getString("id") in relocated) }
+            .map { it.getString("id") }
         assertEquals(declared, XrayTree.PAGES)
         val r = build()
         val groupsSeen = r.sections.map { it.group }.toSet()

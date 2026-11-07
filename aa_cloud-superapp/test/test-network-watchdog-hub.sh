@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Tester (#1545, #1548): Configs ▸ Agents ▸ Watchdog and Watchtower are IN-APP hub pages.
+# Tester (#1545, #1548): Configs ▸ Agents ▸ Watchdog is an IN-APP hub page (the Watchtower hub page was removed: the concept is Setup ▸ Watchtower - Obsv).
 # Static (no device, no build).
-#   W1 Agents = Watchdog, Watchtower; neither has an action (pages, not the C3 APKs); Watchdog's hub_sections = Network,
-#      Observability, Watchtower's = Observability; Watchdog is no Network item
+#   W1 Agents = Watchdog only; no action (a page, not the C3 APK); Watchdog's hub_sections = Network, Watchtower - Obsv;
+#      Watchdog is no Network item; no agents-watchtower page is declared
 #   W2 the hub's sections are DERIVED (Sections.hubSections over the subgroups), routed by data (SectionPages hub_sections
 #      branch), and drawn with the Cloud ▸ Apps heading and tile components (GroupTitle, TileStrip), not a copy
 #   W3 Cloud ▸ Apps ▸ Configs holds Watchdog (page:config/agents-watchdog) where Firewall was, and no Firewall tile
@@ -29,9 +29,9 @@ print('ROW', '|'.join('%s=%s' % (t.get('label'), t.get('target', '')) for t in t
 PY
 )"
 echo "$out" | sed 's/^/    /'
-echo "$out" | grep -qx "AGENTS agents-watchdog:Watchdog:'':Network,Observability agents-watchtower:Watchtower:'':Observability" \
-  && ok "Agents = Watchdog (Network + Observability) and Watchtower (Observability), both in-app hub pages" \
-  || bad "Agents is not Watchdog (hub Network, Observability) then Watchtower (hub Observability), both without an action"
+echo "$out" | grep -qx "AGENTS agents-watchdog:Watchdog:'':Network,Watchtower - Obsv" \
+  && ok "Agents = Watchdog (Network + Watchtower - Obsv), an in-app hub page; Watchtower left Agents" \
+  || bad "Agents is not exactly Watchdog (hub Network, Watchtower - Obsv) without an action"
 echo "$out" | grep -q '^NETWORK.*watchdog' && bad "Watchdog is still a Network item" || ok "Watchdog left Network"
 echo "$out" | grep -q '|Watchdog=page:config/agents-watchdog|' && ok "Cloud ▸ Apps ▸ Configs opens page:config/agents-watchdog" \
   || bad "Cloud ▸ Apps ▸ Configs has no Watchdog tile on page:config/agents-watchdog"

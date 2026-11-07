@@ -58,11 +58,11 @@ for p in pages:
     if p.get('hidden') or p.get('is_action'): continue
     key = (p.get('group', ''), p.get('subgroup', ''))
     if key != last: shape.append(key); last = key
-want = [('Setup', 'Connect'), ('Setup', 'Apps'), ('Setup', 'Launcher'), ('Setup', 'Network'), ('Setup', 'Observability'),
-        ('Agents', ''), ('Fleet', '')]  # #1548 tree, #1554 reorder: Observability under Setup, then Agents, then Fleet (Fleet last)
+want = [('Setup', 'Connect'), ('Setup', 'Apps'), ('Setup', 'Launcher'), ('Setup', 'Network'), ('Setup', 'Watchtower - Obsv'),
+        ('Agents', ''), ('Cloudy C3', '')]  # #1548 tree, #1554 reorder; Observability became Watchtower - Obsv and Fleet became Cloudy C3 (2026-11 Configs restructure)
 print('OK' if shape == want else 'heading runs = %r' % (shape,))
 PY
-)" "Setup ▸ Connect, ▸ Apps, ▸ Launcher, ▸ Network, ▸ Observability, then Agents, then Fleet — three sections, each appearing ONCE (#1548, #1554)"
+)" "Setup ▸ Connect, ▸ Apps, ▸ Launcher, ▸ Network, ▸ Watchtower - Obsv, then Agents, then Cloudy C3 — three sections, each appearing ONCE (#1548, #1554)"
 
 echo "== T2: each heading holds exactly the pages the owner named =="
 check "$(python3 - "$BJ" <<'PY'
@@ -77,20 +77,20 @@ def members(g, s=''):
             if not p.get('hidden') and not p.get('is_action')
             and p.get('group', '') == g and p.get('subgroup', '') == s]
 want = {
-    ('Setup', 'Launcher'):             ['Quick Actions', 'One-Hand', 'Folders', 'Notify'],  # #1553 Folders between One-Hand and Notify; Controls = tabs Presets | Panels (UI | Tools)
-    ('Fleet', ''):                     ['C3', 'Peer Control', 'Bluetooth'],  # #1221 Bluetooth first; Agents moved to Observability
+    ('Setup', 'Launcher'):             ['Quick Actions', 'One-Hand', 'Folders', 'Notify', '|', 'Perms', 'Logcat', 'X-Ray App', 'About'],  # Notify | the four relocated from Observability  # #1553 Folders between One-Hand and Notify; Controls = tabs Presets | Panels (UI | Tools)
+    ('Cloudy C3', ''):                 ['C3', 'Peer Control'],  # the Fleet group renamed; Bluetooth moved to Setup ▸ Network
     ('Setup', 'Connect'):          ['Account'],
     ('Setup', 'Apps'):             ['Store'],  # Permissions moved to Observability
-    ('Setup', 'Network'):              ['Firewall', 'DNS', 'Webserver', 'Cloud Mesh', 'Apps Access', 'ADB Shell', 'WiFi'],  # #1263 WiFi right after ADB Shell; IPC is a tab of Apps Mesh, not a tile
-    # #1548 Observability is a Setup subgroup; its order is also what build.json groups[setup] lists for those pages.
-    ('Setup', 'Observability'):        ['X-Ray', 'LogCat', 'Permissions', 'About'],
-    ('Agents', ''):                    ['Watchdog', 'Watchtower'],  # #1548 the two hub pages
+    ('Setup', 'Network'):              ['Firewall', 'DNS', 'Webserver', 'Cloud Mesh', 'Apps Access', 'ADB Shell', 'WiFi', 'Bluetooth'],  # #1263 WiFi right after ADB Shell, Bluetooth after WiFi (moved in from Fleet); IPC is a tab of Apps Mesh, not a tile
+    # #1548 Observability was a Setup subgroup, now Watchtower - Obsv; its order is also what build.json groups[setup] lists for those pages.
+    ('Setup', 'Watchtower - Obsv'):    ['X-Ray Device', 'Logcat Fleet'],
+    ('Agents', ''):                    ['Watchdog'],  # #1548 the hub pages; Watchtower left (its concept is the Watchtower - Obsv subgroup)
 }
 problems = ['%s%s = %r' % (g, ' ▸ ' + s if s else '', members(g, s))
             for (g, s), exp in want.items() if members(g, s) != exp]
 print('; '.join(problems) or 'OK')
 PY
-)" "Setup ▸ Connect = Account; Setup ▸ Launcher = Controls/One-Hand/Notify; Fleet = C3/Peer Control/Bluetooth; Setup ▸ Observability = X-Ray/LogCat/Permissions/About; Agents = Watchdog/Watchtower (#1548); Setup ▸ Apps = Store; Network = Firewall/DNS/Webserver/Cloud Mesh/Apps Mesh/ADB Shell (#733, #740; IPC and Identity are Apps Mesh tabs); About is the last page"
+)" "Setup ▸ Connect = Account; Setup ▸ Launcher = Controls/One-Hand/Folders/Notify | Perms/Logcat/X-Ray App/About; Cloudy C3 = C3/Peer Control; Setup ▸ Watchtower - Obsv = X-Ray Device/Logcat Fleet; Agents = Watchdog (#1548); Setup ▸ Apps = Store; Network = Firewall/DNS/Webserver/Cloud Mesh/Apps Mesh/ADB Shell (#733, #740; IPC and Identity are Apps Mesh tabs); About is the last page"
 
 echo "== T3: Store is the former Constellation, and Cloud Constellation is INSIDE it =="
 # #563 renamed the Constellation page Store; the word survives as the label of
@@ -177,9 +177,9 @@ w = {p[k] for p in pages for k in ('group', 'subgroup') if p.get(k)}
 w |= {p['label'] for p in pages if not p.get('hidden') and not p.get('is_action')}
 print(len(w))
 ")
-[ "$WORDS" = 30 ] \
-  && ok "T4 derived 30 words from the declaration (#1553: Folders added; #1548: Agents and Watchtower added; #1545: Watchdog added; X-Ray regroup: About became X-Ray, a new About, Agents and Diagnostics folded into X-Ray, Logcat relabelled LogCat; Setup, Apps, Launcher, Network, Fleet, Observability + 21 page labels (#1263: WiFi added; #1221: Bluetooth added, C3 became C3 Fleet Control, later just C3 with ic_cloud_control), Diagnostics and Logcat the last two: the Agents regroup added Agents and dropped the | separator; #ipc added IPC; IPC became an Apps Mesh tab and left the labels)" \
-  || bad "T4 derived $WORDS words, expected 30 — it is checking a different set than it claims"
+[ "$WORDS" = 32 ] \
+  && ok "T4 derived 32 words from the declaration (2026-11 Configs restructure: Observability became Watchtower - Obsv, Fleet became Cloudy C3, X-Ray became X-Ray Device and X-Ray App, LogCat became Logcat and Logcat Fleet, Permissions became Perms, the | separator is a label, Watchtower left Agents; earlier: #1553: Folders added; #1548: Agents and Watchtower added; #1545: Watchdog added; X-Ray regroup: About became X-Ray, a new About, Agents and Diagnostics folded into X-Ray, Logcat relabelled LogCat; Setup, Apps, Launcher, Network, Fleet, Observability + 21 page labels (#1263: WiFi added; #1221: Bluetooth added, C3 became C3 Fleet Control, later just C3 with ic_cloud_control), Diagnostics and Logcat the last two: the Agents regroup added Agents and dropped the | separator; #ipc added IPC; IPC became an Apps Mesh tab and left the labels)" \
+  || bad "T4 derived $WORDS words, expected 32 — it is checking a different set than it claims"
 
 # The ONE heading Kotlin may still name is the fallback for a section that
 # declares none, which is every section but this one. Pinned so it stays the only
@@ -232,9 +232,9 @@ import json
 print(len(next(s for s in json.load(open('$BJ'))['ui']['sections']
                if s['id'] == 'config')['pages']))
 ")
-[ "$COUNT" = 44 ] \
-  && ok "44 config pages declared (#1553: plus folders) — the set T5 walks is the whole set (#1548: plus the Agents hub watchtower; #1545: plus the hub watchdog; X-Ray regroup: minus about, diagnostics, agents and its two tabs, plus xray and app-about; #1263: plus wifi and its five hidden tabs; #1221: plus bluetooth and its five hidden tabs; #1264: plus its Analyze and Locate tabs; #649: 22 minus launcher; #723: minus ai and its 5 tabs; #733: plus apps-mesh; #740: plus dns; plus firewall; plus the hidden About ▸ Battery; Agents regroup: minus the Network separator, plus agents and its two tabs; #ipc: plus ipc; Controls merge: plus panels, panels-ui and panels-tools; Apps Mesh strip: plus apps-mesh-members and identity)" \
-  || bad "$COUNT config pages, expected 44 — a page was added or DELETED, and T5 cannot report a page that is gone"
+[ "$COUNT" = 46 ] \
+  && ok "46 config pages declared (2026-11 Configs restructure: plus xray-app, logcat-fleet and the launcher-sep-1 separator, minus agents-watchtower; earlier: #1553: plus folders) — the set T5 walks is the whole set (#1548: plus the Agents hub watchtower; #1545: plus the hub watchdog; X-Ray regroup: minus about, diagnostics, agents and its two tabs, plus xray and app-about; #1263: plus wifi and its five hidden tabs; #1221: plus bluetooth and its five hidden tabs; #1264: plus its Analyze and Locate tabs; #649: 22 minus launcher; #723: minus ai and its 5 tabs; #733: plus apps-mesh; #740: plus dns; plus firewall; plus the hidden About ▸ Battery; Agents regroup: minus the Network separator, plus agents and its two tabs; #ipc: plus ipc; Controls merge: plus panels, panels-ui and panels-tools; Apps Mesh strip: plus apps-mesh-members and identity)" \
+  || bad "$COUNT config pages, expected 46 — a page was added or DELETED, and T5 cannot report a page that is gone"
 
 echo "== T6: ACTIONS IS UNTOUCHED =="
 # The owner said to keep it as it is. Three things make that true: the same three
@@ -327,6 +327,7 @@ BEFORE = {'bluetooth-analyze', 'bluetooth-locate', 'presets', 'controls', 'oneha
           'wifi', 'wifi-scan', 'wifi-channels', 'wifi-link', 'wifi-tools', 'wifi-log',  # #1263 added on purpose: Configs ▸ Setup ▸ Network ▸ WiFi and its five hidden tabs
           'agents', 'agents-superapp', 'agents-fleet',  # added on purpose: Configs ▸ Fleet ▸ Agents and its two tabs
           'diagnostics',  # added on purpose: Configs ▸ Observability ▸ Diagnostics (device numbers + remote read)
+          'xray-app', 'logcat-fleet', 'launcher-sep-1',  # added on purpose (2026-11): Setup ▸ Launcher ▸ X-Ray App (app-only diagnosis), Setup ▸ Watchtower - Obsv ▸ Logcat Fleet, and the | after Notify
           'xray', 'app-about',  # added on purpose: Configs ▸ Observability ▸ X-Ray (the former About) and the new About
           'logcat',     # added on purpose: Configs ▸ Observability ▸ Logcat, moved out of About into its own tab before it
           'battery'}    # added on purpose: Configs ▸ About ▸ Battery, the battery SoT's stats page (hidden, page:config/battery)
@@ -423,10 +424,11 @@ want = ['H:SETUP',
         'S:CONNECT',      'Account[ic_person]',
         'S:APPS',         'Store[ic_storefront]',
         'S:LAUNCHER',     'Quick Actions[ic_home]', 'One-Hand[ic_onehand]', 'Folders[ic_p_folder]', 'Notify[ic_rss]',
-        'S:NETWORK',          'Firewall[ic_lock]', 'DNS[ic_world]', 'Webserver[ic_web]', 'Cloud Mesh[ic_wg]', 'Apps Access[ic_apps]', 'ADB Shell[ic_terminal]', 'WiFi[ic_wifi]',
-        'S:OBSERVABILITY', 'X-Ray[ic_monitor_heart]', 'LogCat[ic_subject]', 'Permissions[ic_key]', 'About[ic_info]',
-        'H:AGENTS',       'Watchdog[ic_p_watchdog]', 'Watchtower[ic_watchtower]',
-        'H:FLEET',        'C3[ic_cloud_control]', 'Peer Control[ic_hub]', 'Bluetooth[ic_bluetooth]',
+                          '|[None]', 'Perms[ic_key]', 'Logcat[ic_subject]', 'X-Ray App[ic_monitor_heart]', 'About[ic_info]',
+        'S:NETWORK',          'Firewall[ic_lock]', 'DNS[ic_world]', 'Webserver[ic_web]', 'Cloud Mesh[ic_wg]', 'Apps Access[ic_apps]', 'ADB Shell[ic_terminal]', 'WiFi[ic_wifi]', 'Bluetooth[ic_bluetooth]',
+        'S:WATCHTOWER - OBSV', 'X-Ray Device[ic_monitor_heart]', 'Logcat Fleet[ic_subject]',
+        'H:AGENTS',       'Watchdog[ic_p_watchdog]',
+        'H:CLOUDY C3',    'C3[ic_cloud_control]', 'Peer Control[ic_hub]',
         'H:ACTIONS',
         'Update All[ic_system_update]', 'KDE Connect[ic_devices]', 'Animations[ic_animation]']
 if out == want: print('OK')
@@ -435,7 +437,7 @@ else:
     print('rendered != spec: ' + ' | '.join(l for l in difflib.unified_diff(want, out, lineterm='', n=0)
                                            if l[:1] in '+-' and l[:3] not in ('+++', '---')))
 PY
-)" "grid = SETUP ▸ CONNECT[Account] ▸ APPS[Store] ▸ LAUNCHER[Quick Actions,One-Hand,Notify] ▸ NETWORK[Firewall,DNS,Webserver,Cloud Mesh,Apps Access,ADB Shell,WiFi] ▸ OBSERVABILITY[X-Ray,LogCat,Permissions,About] FLEET[C3,Peer Control,Bluetooth] AGENTS[Watchdog,Watchtower] ACTIONS[Update All,KDE Connect,Animations]"
+)" "grid = SETUP ▸ CONNECT[Account] ▸ APPS[Store] ▸ LAUNCHER[Quick Actions,One-Hand,Folders,Notify | Perms,Logcat,X-Ray App,About] ▸ NETWORK[Firewall,DNS,Webserver,Cloud Mesh,Apps Access,ADB Shell,WiFi,Bluetooth] ▸ WATCHTOWER - OBSV[X-Ray Device,Logcat Fleet] AGENTS[Watchdog] CLOUDY C3[C3,Peer Control] ACTIONS[Update All,KDE Connect,Animations]"
 
 echo "== T12: THE AI PAGE IS GONE, not hidden — no route, target or tile names it (#723) =="
 # Deleting a declaration and leaving its door behind is the dead-tile failure:
@@ -479,21 +481,31 @@ grep -qE 'sectionId == "config" && pageId == "kde" +-> .*KdeConnectFragment' "$P
   && ok "SectionPages still routes config/kde to KdeConnectFragment" \
   || bad "config/kde no longer resolves to KdeConnectFragment — the Peer Control tile opens a placeholder"
 
-echo "== T13: LOGCAT IS ITS OWN OBSERVABILITY TAB, immediately before About, and About no longer carries it =="
+echo "== T13: LOGCAT — the dedicated app logcat after the | in Launcher, the fleet logcat in Watchtower - Obsv, About carries neither =="
 check "$(python3 - "$BJ" <<'PY'
 import json, sys
-ids = [p['id'] for p in next(s for s in json.load(open(sys.argv[1]))['ui']['sections']
-                             if s['id'] == 'config')['pages'] if p.get('subgroup') == 'Observability' and not p.get('hidden')]  # the tiles; hidden Battery is not one
 sec = next(s for s in json.load(open(sys.argv[1]))['ui']['sections'] if s['id'] == 'config')
-grp = [i for i in next(g for g in sec['groups'] if g['id'] == 'setup')['pages'] if i in ids]  # #1548 Observability is a Setup subgroup
-print('OK' if ids == grp and ids[-1] == 'app-about' and ids.index('logcat') < ids.index('app-about') else 'Observability order = %r, group = %r' % (ids, grp))
+launcher = [p['id'] for p in sec['pages'] if p.get('subgroup') == 'Launcher' and not p.get('hidden')]
+obsv = [p['id'] for p in sec['pages'] if p.get('subgroup') == 'Watchtower - Obsv' and not p.get('hidden')]
+grp = [i for i in next(g for g in sec['groups'] if g['id'] == 'setup')['pages'] if i in launcher + obsv]  # groups[setup] lists them in the same order
+want_l = ['controls', 'onehand', 'app-folders', 'notify', 'launcher-sep-1', 'perms', 'logcat', 'xray-app', 'app-about']
+probs = []
+if launcher != want_l: probs.append('Launcher = %r' % (launcher,))
+if obsv != ['xray', 'logcat-fleet']: probs.append('Watchtower - Obsv = %r' % (obsv,))
+if grp != launcher + obsv: probs.append('groups[setup] order %r != grid order' % (grp,))
+print('; '.join(probs) or 'OK')
 PY
-)" "Setup ▸ Observability = build.json groups[setup] order for its pages; Logcat before About, About last"
+)" "Launcher = ... Notify | Perms, Logcat, X-Ray App, About (last); Watchtower - Obsv = X-Ray Device, Logcat Fleet; same order in build.json groups[setup]"
 grep -qE 'sectionId == "config" && pageId == "logcat" +-> .*LogcatFragment' "$PAGES" \
   && ok "SectionPages routes config/logcat to LogcatFragment" \
   || bad "config/logcat does not resolve to LogcatFragment — the Logcat tab opens a placeholder"
-grep -q 'AboutLogcatViewer' "$KT/devcontrol/LogcatFragment.kt" \
-  && ok "LogcatFragment hosts the viewer" || bad "LogcatFragment does not host AboutLogcatViewer"
+grep -qE 'sectionId == "config" && pageId == "logcat-fleet" +-> .*FleetLogcatFragment' "$PAGES" \
+  && ok "SectionPages routes config/logcat-fleet to FleetLogcatFragment" \
+  || bad "config/logcat-fleet does not resolve to FleetLogcatFragment"
+grep -q 'AppLogcatScreen' "$KT/devcontrol/LogcatFragment.kt" \
+  && ok "LogcatFragment hosts the dedicated app logcat (AppLogcatScreen)" || bad "LogcatFragment does not host AppLogcatScreen"
+grep -q 'FleetLogcatScreen' "$KT/devcontrol/FleetLogcatFragment.kt" \
+  && ok "FleetLogcatFragment hosts the fleet logcat (FleetLogcatScreen)" || bad "FleetLogcatFragment does not host FleetLogcatScreen"
 if grep -nE 'AboutLogcatViewer|macro\("[^"]*LOGCAT' "$KT/devcontrol/DevControlFragment.kt" >/dev/null; then
   bad "About (DevControlFragment) still names the Logcat viewer or a LOGCAT macro — it was meant to leave About completely"
 else ok "About (DevControlFragment) carries no Logcat macro or viewer"; fi

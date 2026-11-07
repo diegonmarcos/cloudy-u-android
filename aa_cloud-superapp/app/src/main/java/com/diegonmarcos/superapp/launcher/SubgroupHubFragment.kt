@@ -15,7 +15,7 @@ import com.diegonmarcos.superapp.uikit.KitComposeFragment
 
 /**
  * #1545 #1548 A hub page: one titled icon-grid section per declared subgroup of its section (Configs ▸ Agents ▸ Watchdog =
- * Network + Observability, Watchtower = Observability).
+ * Network + Watchtower - Obsv).
  *
  * The sections are [Sections.hubSections] — derived from the section's own page declarations, never listed here — and
  * they are drawn by [GroupTitle] and [TileStrip] / [TileCell], THE heading and tile components of Cloud ▸ Apps (tiles

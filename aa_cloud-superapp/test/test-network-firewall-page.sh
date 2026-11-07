@@ -21,7 +21,7 @@ pages = next(s for s in json.load(open(sys.argv[1]))['ui']['sections'] if s['id'
 print(','.join(p['label'] for p in pages if p.get('subgroup') == 'Network' and not p.get('hidden')))
 PY
 )"
-[ "$got" = "Firewall,DNS,Webserver,Cloud Mesh,Apps Access,ADB Shell,WiFi" ] && ok "Network = $got" || bad "Network order is: $got"
+[ "$got" = "Firewall,DNS,Webserver,Cloud Mesh,Apps Access,ADB Shell,WiFi,Bluetooth" ] && ok "Network = $got" || bad "Network order is: $got"
 
 echo "== F2: Firewall page hosts the controls =="
 grep -qE 'pageId == "firewall" +-> .*FirewallDialog\(\)\.apply \{ showsDialog = false \}' "$KT/launcher/SectionPages.kt" \

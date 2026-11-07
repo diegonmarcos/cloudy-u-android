@@ -48,7 +48,7 @@ import json, sys
 pages  = next(s for s in json.load(open(sys.argv[1]))['ui']['sections']
               if s['id'] == 'config')['pages']
 by     = {p['id']: p for p in pages}
-labels = [p['label'] for p in pages if p.get('subgroup') == 'Launcher']
+labels = [p['label'] for p in pages if p.get('subgroup') == 'Launcher'][:4]  # the first four; the | and the relocated Perms, Logcat, X-Ray App, About follow
 tabs   = [by[i]['label'] for i in by['controls'].get('tabs', [])]
 sub    = [by[i]['label'] for i in by['panels'].get('tabs', [])]
 print('OK' if (labels, tabs, sub) == (['Quick Actions', 'One-Hand', 'Folders', 'Notify'], ['Presets', 'Panels'], ['UI', 'Tools'])
