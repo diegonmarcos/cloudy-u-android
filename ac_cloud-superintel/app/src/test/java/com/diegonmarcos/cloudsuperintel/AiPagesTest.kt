@@ -8,8 +8,14 @@ import org.junit.Test
 class AiPagesTest {
     private val pages = AiData.pages(Data.ai("pages.json"))
 
-    @Test fun bottomNavOrderIsNotebookCgcsSiAisCost() {
-        assertEquals(listOf("notebook", "cgcs", "si", "ais", "cost"), Data.bottomNav())
+    @Test fun bottomNavOrderIsNotebookCgcsSiToolsAisCost() {
+        assertEquals(listOf("notebook", "cgcs", "si", "tools", "ais", "cost"), Data.bottomNav())
+    }
+
+    /** What #1563 dropped and the owner restored: the AI Tools section (model catalogue, pickers, tasks, MCP) is on the bottom nav. */
+    @Test fun aiToolsAreOnTheBottomNavWithTheirPages() {
+        assertTrue("tools" in Data.bottomNav())
+        assertEquals(listOf("tools_models", "tools_pickers", "tools_tasks", "tools_mcp"), Data.pages("tools"))
     }
 
     @Test fun aisSubPagesAreApisMcpDotfilesPlugins() {

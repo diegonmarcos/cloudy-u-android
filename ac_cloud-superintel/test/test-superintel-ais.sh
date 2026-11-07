@@ -29,7 +29,7 @@ kt = os.path.join(app, "app/src/main/java/com/diegonmarcos/cloudsuperintel")
 def sec(i): return next(s for s in bj["ui"]["sections"] if s["id"] == i)
 
 # A1
-if bj["ui"]["bottom_nav"] != ["notebook", "cgcs", "si", "ais", "cost"]: bad.append("A1 the bottom nav must be Notebook, CGCs, SI, AIs, Cost")
+if bj["ui"]["bottom_nav"] != ["notebook", "cgcs", "si", "tools", "ais", "cost"]: bad.append("A1 the bottom nav must be Notebook, CGCs, SI, Tools, AIs, Cost")
 if [p["id"] for p in sec("ais")["pages"]] != ["apis", "mcp", "dotfiles", "plugins"]: bad.append("A1 AIs must have APIs, MCP, Dotfiles, Plugins in that order")
 if [p["id"] for p in sec("cost")["pages"]] != ["cost"]: bad.append("A1 Cost must have its one page")
 pages = json.loads(read(os.path.join(ai, "pages.json")))["pages"]

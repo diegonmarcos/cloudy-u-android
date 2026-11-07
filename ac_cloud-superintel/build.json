@@ -168,7 +168,10 @@
       "type": "library",
       "_doc": "#1154 shared navigation and theme design, shared BY REFERENCE."
     },
-    "libs:fleet-data-client": {"dir": "../ab_cloud-libs-shared/libs/fleet-data-client", "type": "library"},
+    "libs:fleet-data-client": {
+      "dir": "../ab_cloud-libs-shared/libs/fleet-data-client",
+      "type": "library"
+    },
     "libs:perms": {
       "dir": "../ab_cloud-libs-shared/libs/perms",
       "type": "library",
@@ -212,11 +215,12 @@
     }
   },
   "ui": {
-    "_doc": "#868 THE nav declaration (libs:bottomnav NavDecl) of Cloud SuperIntel: five sections on the bottom nav, Notebook, CGCs, SI, AIs and Cost (#1499), and Settings behind the first row. Notebook (Notebooks, Sources, Chat, Studio) is a one-row section; SI is the router chat alone (one page, so no second row); CGCs is the experts section in `horizontal_two_rows` mode (libs:ui-nav-bars NavSectionLayout; the user may switch it to one row or the side menu in Configs): one persona chat per entry of assets/si/personas.json that has a `group`, in six groups (Deep Science: Math, Physics, Chemistry; Engineers: Energy, Manufacturing, Robotics; Production: CTO; Medicine: Biology, Neuroscience; Business: Lawyer, Asset Manager; General: Wiki AI). The SI and CGCs page ids ARE the personas' ids and the CGC groups ARE personas.json's `group` values (test-superintel-app.sh and PersonasTest hold them in step, both ways). Settings has Models, Backend, About. Every icon is a libs:ui-icons name. The Profile icon at the top right of the first row opens extapp:cloud-account; the sessions drawer is the hamburger's. AIs (APIs, MCP, Dotfiles, Plugins) and Cost (Claude and OpenRouter side by side) are data: their page ids are the keys of assets/ai/pages.json (test-superintel-ais.sh holds them in step), the AIs rows are derived from the cloudy-u-linux SOT by tools/derive-ai-data.py, and Cost reads the usage table the Cloud SuperApp's Notify AI badge reads.",
+    "_doc": "#868 THE nav declaration (libs:bottomnav NavDecl) of Cloud SuperIntel: five sections on the bottom nav, Notebook, CGCs, SI, AIs and Cost (#1499), and Settings behind the first row. Notebook (Notebooks, Sources, Chat, Studio) is a one-row section; SI is the router chat alone (one page, so no second row); CGCs is the experts section in `horizontal_two_rows` mode (libs:ui-nav-bars NavSectionLayout; the user may switch it to one row or the side menu in Configs): one persona chat per entry of assets/si/personas.json that has a `group`, in six groups (Deep Science: Math, Physics, Chemistry; Engineers: Energy, Manufacturing, Robotics; Production: CTO; Medicine: Biology, Neuroscience; Business: Lawyer, Asset Manager; General: Wiki AI). The SI and CGCs page ids ARE the personas' ids and the CGC groups ARE personas.json's `group` values (test-superintel-app.sh and PersonasTest hold them in step, both ways). Settings has Models, Backend, About. Every icon is a libs:ui-icons name. The Profile icon at the top right of the first row opens extapp:cloud-account; the sessions drawer is the hamburger's. AIs (APIs, MCP, Dotfiles, Plugins) and Cost (Claude and OpenRouter side by side) are data: their page ids are the keys of assets/ai/pages.json (test-superintel-ais.sh holds them in step), the AIs rows are derived from the cloudy-u-linux SOT by tools/derive-ai-data.py, and Cost reads the usage table the Cloud SuperApp's Notify AI badge reads. Restored after #1563 (it had replaced the AI tooling with a bare chat): Tools (Models = the model catalogue with tabs, real model lists and OpenRouter search; Agent & Model; Tasks; MCP) is back on the bottom nav next to SI, so the bottom nav is Notebook, CGCs, SI, Tools, AIs, Cost. The SI tab's left rail is the user's chat sessions and its composer carries the AI tooling ((+) attach, Task, Agent, Model, Effort, Mode, MCP, More; image in and out inline).",
     "bottom_nav": [
       "notebook",
       "cgcs",
       "si",
+      "tools",
       "ais",
       "cost"
     ],
@@ -265,6 +269,37 @@
             "id": "si",
             "label": "SI",
             "icon": "auto_awesome",
+            "pages": []
+          }
+        ]
+      },
+      {
+        "id": "tools",
+        "label": "Tools",
+        "icon": "memory",
+        "pages": [
+          {
+            "id": "tools_models",
+            "label": "Models",
+            "icon": "psychology",
+            "pages": []
+          },
+          {
+            "id": "tools_pickers",
+            "label": "Agent & Model",
+            "icon": "smart_toy",
+            "pages": []
+          },
+          {
+            "id": "tools_tasks",
+            "label": "Tasks",
+            "icon": "edit_note",
+            "pages": []
+          },
+          {
+            "id": "tools_mcp",
+            "label": "MCP",
+            "icon": "hub",
             "pages": []
           }
         ]

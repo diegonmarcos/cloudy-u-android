@@ -183,6 +183,17 @@ jobs:
           SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
         run: sh 1_cicd/dist/scripts/cloud-android-test-engine.sh unit "$WORK_DIR"
 
+      # The reference screenshots of the SI chat (src/test/snapshots/**: the Roborazzi record of ForumShots and SiChatShots). Kept
+      # as a workflow artifact so the committed reference PNGs under ac_cloud-superintel/app/src/test/snapshots are exactly CI's render.
+      - name: Upload SI chat reference screenshots
+        if: ${{ always() && matrix.abi == 'arm64' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: si-chat-snapshots
+          path: ${{ env.WORK_DIR }}/app/src/test/snapshots
+          if-no-files-found: warn
+          retention-days: 30
+
       - name: Determine variant
         if: steps.gate.outputs.skip != 'true'
         id: variant

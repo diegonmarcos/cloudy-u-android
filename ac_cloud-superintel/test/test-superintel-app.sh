@@ -48,7 +48,7 @@ for x in sorted(named_sections - declared_sections): bad.append("B1 Decl.kt name
 for x in sorted(named_pages - declared_pages): bad.append("B1 Decl.kt names page %r that build.json::ui does not declare" % x)
 for x in sorted(declared_pages - named_pages): bad.append("B1 page %r is declared but Decl.kt has no id for it (the shell would draw nothing)" % x)
 for x in sorted(set(bj["ui"]["bottom_nav"]) - declared_sections): bad.append("B1 bottom_nav id %r is no section" % x)
-if bj["ui"]["bottom_nav"] != ["notebook", "cgcs", "si", "ais", "cost"]: bad.append("B1 the bottom nav must be Notebook, CGCs, SI, AIs, Cost, in that order")
+if bj["ui"]["bottom_nav"] != ["notebook", "cgcs", "si", "tools", "ais", "cost"]: bad.append("B1 the bottom nav must be Notebook, CGCs, SI, Tools, AIs, Cost, in that order")
 def ids_of(section): return [p["id"] for s in bj["ui"]["sections"] if s["id"] == section for p in s["pages"]]
 def data(name): return json.loads(read(os.path.join(app, "app/src/main/assets/si", name)))
 personas = data("personas.json")["personas"]
@@ -75,6 +75,16 @@ for lib in ("libs:ui-nav-bars", "libs:ui-nav-bars", "libs:ui-nav-bars", "libs:th
 for need in ("AiChatPage(", "AiSessionsPanel(", "TopBarDrawer", "markdown = true"):
     if need not in shell: bad.append("B3 SiShell lacks %s" % need)
 if re.search(r"\b(LazyColumn|BasicTextField|OutlinedTextField)\b", shell): bad.append("B3 SiShell draws list or input widgets of its own: the chat is libs:ai's")
+
+# B8 the AI tooling #1563 had dropped must stay (rule 16: never remove): the Tools section on the bottom nav, the sessions rail and the
+# composer's tooling on the SI tab. A regression here is red, so the chat can never again replace the AI tools with a bare composer.
+if "tools" not in bj["ui"]["bottom_nav"]: bad.append("B8 the AI Tools section left the bottom nav")
+if [p["id"] for s in bj["ui"]["sections"] if s["id"] == "tools" for p in s["pages"]] != ["tools_models", "tools_pickers", "tools_tasks", "tools_mcp"]: bad.append("B8 Tools must have Models, Agent & Model, Tasks, MCP")
+for need in ("AiModelCatalogue(", "AiTaskCatalogue(", "AiSettingsPickers(", "AiAttachHost(", "ForumSessions(", "ForumTools(", "sessions = ForumSessions", "tools = ForumTools"):
+    if need not in shell: bad.append("B8 SiShell lacks %s (the SI tab lost its sessions rail or AI tooling)" % need)
+comp = json.loads(read(os.path.join(app, "app/src/main/assets/ai/composer.json")))["controls"]
+for need in ("plus", "task", "agent", "model", "effort", "mode", "mcp", "more"):
+    if need not in comp: bad.append("B8 composer.json lost the %s control" % need)
 
 # B4
 if "ai-gateway" not in script or "AI_GATEWAY_URL" not in script: bad.append("B4 the app's build script does not bake the gateway address")
@@ -151,5 +161,9 @@ mutant "article spelled in Kotlin"     "echo 'val x = Article(\"https://a\", \"t
 mutant "token read creeps in"          "echo 'val x = revealAiKey' >> $KT/SiAi.kt"                             "B4 SiAi.kt matches revealAiKey"
 mutant "gateway not baked"             "sed -i 's/AI_GATEWAY_URL/NOPE/g' $SCRIPT"                              "B4 the app's build script does not bake"
 mutant "account not visible"           "sed -i 's/com.diegonmarcos.cloudaccount/x.y/' app/src/main/AndroidManifest.xml" "B5 the manifest cannot see Cloud Account"
+mutant "Tools leaves the bottom nav"    "python3 -c \"import json;p='build.json';d=json.load(open(p));d['ui']['bottom_nav'].remove('tools');json.dump(d,open(p,'w'))\"" "B8 the AI Tools section left the bottom nav"
+mutant "the sessions rail is dropped"  "sed -i 's/sessions = ForumSessions/sessions = null \/\/ ForumSessions/' $KT/ui/SiShell.kt" "B8 SiShell lacks sessions = ForumSessions"
+mutant "the composer tooling is dropped" "sed -i 's/tools = ForumTools/tools = null \/\/ ForumTools/' $KT/ui/SiShell.kt" "B8 SiShell lacks tools = ForumTools"
+mutant "the composer loses MCP"        "sed -i 's/\"mcp\",//' app/src/main/assets/ai/composer.json" "B8 composer.json lost the mcp control"
 
 [ "$FAILS" -eq 0 ] && echo "ALL GREEN" || { echo "$FAILS FAILED"; exit 1; }

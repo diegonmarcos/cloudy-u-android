@@ -47,6 +47,11 @@
     <string name="cost_no_tokens">No token totals posted yet.</string>
     <!-- #1563 the forum/topics chat surface on the SI tab. -->
     <string name="forum_topics">Topics</string>
+    <string name="forum_new_session">New chat</string>
+    <string name="forum_sessions">Chats</string>
+    <string name="forum_participants">Participants</string>
+    <string name="tools_pickers_title">Agent and model</string>
+    <string name="tools_pickers_body">The same Agent and Model pickers the chat composer carries, here on their own: a choice made here is the choice the chat uses. The composer also holds (+) attach, Task, Effort, Mode, MCP and More.</string>
     <string name="forum_all">All</string>
     <string name="forum_new_topic">New Topic</string>
     <string name="forum_admin">Admin</string>

@@ -40,6 +40,15 @@ import kotlinx.coroutines.withContext
 import com.diegonmarcos.superapp.ai.AiAttachHost
 import com.diegonmarcos.superapp.ai.AiChatPage
 import com.diegonmarcos.superapp.ai.AiForumChat
+import com.diegonmarcos.superapp.ai.AiCatalogue
+import com.diegonmarcos.superapp.ai.AiChatState
+import com.diegonmarcos.superapp.ai.AiComposerDecl
+import com.diegonmarcos.superapp.ai.AiDesign
+import com.diegonmarcos.superapp.ai.AiModelCatalogue
+import com.diegonmarcos.superapp.ai.AiTaskCatalogue
+import com.diegonmarcos.superapp.ai.ForumSessions
+import com.diegonmarcos.superapp.ai.ForumTools
+import androidx.compose.runtime.mutableIntStateOf
 import com.diegonmarcos.superapp.ai.ForumIcon
 import com.diegonmarcos.superapp.ai.ForumStrings
 import com.diegonmarcos.superapp.ai.ForumTopic
@@ -114,7 +123,17 @@ fun SiShell() {
     val theme = siAiTheme()
     // The chat the drawer, the Models page and the sessions follow: the open persona's, else the router's.
     val persona = personas.firstOrNull { it.id == pageId && (sec?.id == Decl.SECTION_SI || sec?.id == Decl.SECTION_CGCS) }
-    val chat = remember(persona?.id) { SiAi.chat(ctx, persona?.id) }
+    // The SI tab's thread persona (the topic strip) is hoisted here so the drawer, the Tools pages and the sessions follow it.
+    var forumPersona by rememberSaveable { mutableStateOf(siDefault) }
+    val chatPersona = if (sec?.id == Decl.SECTION_SI) forumPersona else persona?.id
+    val chat = remember(chatPersona) { SiAi.chat(ctx, chatPersona) }
+    // The composer's declaration (assets/ai/composer.json): (+) attach, Task, Agent, Model, Effort, Mode, MCP, More.
+    val composerDecl = remember { runCatching { AiComposerDecl.load(ctx) }.getOrDefault(AiComposerDecl("cloud-superintel", listOf("plus", "task", "agent", "model", "effort", "mode", "mcp", "more"))) }
+    // The AI Tools pages need the model list and the task list the chat page would have loaded.
+    if (sec?.id == Decl.SECTION_TOOLS) LaunchedEffect(chat) {
+        if (chat.models.isEmpty()) chat.models = withContext(Dispatchers.IO) { runCatching { chat.host().models() }.getOrDefault(emptyList()) }
+        if (chat.tasks.isEmpty()) chat.tasks = withContext(Dispatchers.IO) { runCatching { AiCatalogue.load(ctx).tasks }.getOrDefault(emptyList()).ifEmpty { AiDesign.loadTasks(ctx) } }
+    }
     val entries = nav.islandEntries()
     // The (+) menu's Files, Image and Camera: their Perms rows are libs:perms' (build.json::perms.needs), shown as "Fix in Perms" while missing.
     val attachHost = remember { AiAttachHost(missing = { ids -> rememberPermsMissing(ids).map { it.id } }, fix = { ids -> PermsFixChip(ids, ATTACH_FEATURE) }) }
@@ -150,9 +169,10 @@ fun SiShell() {
                     Box(Modifier.fillMaxSize()) {
                         when (sec?.id) {
                             Decl.SECTION_NOTEBOOK -> NotebookPage(notebooks, pageId.orEmpty(), theme, { page = it }, NotebookIds(Decl.PAGE_NB_NOTEBOOKS, Decl.PAGE_NB_SOURCES, Decl.PAGE_NB_CHAT, Decl.PAGE_NB_STUDIO))
-                            // SI (the router tab) is the forum/topics chat surface: every persona is a topic, the router is
-                            // "# General", and the content sits above the unchanged bottom nav (#1563).
-                            Decl.SECTION_SI -> SiForum(ctx, personas, theme, Modifier.imePadding().testTag(SiTags.CHAT))
+                            // SI (the router tab) is the chat surface: the left rail is the user's chat SESSIONS, the personas are a
+                            // strip under the header (the router is "General"), and the composer carries the full AI tooling
+                            // ((+) attach, Task, Agent, Model, Effort, Mode, MCP, More; model catalogue; image in/out).
+                            Decl.SECTION_SI -> SiForum(ctx, personas, theme, forumPersona, { forumPersona = it }, composerDecl, attachHost, Modifier.imePadding().testTag(SiTags.CHAT))
                             // Every CGC expert is the same shared single chat page, each over its own persona.
                             Decl.SECTION_CGCS -> persona?.let { p ->
                                 LaunchedEffect(p.id) { withContext(Dispatchers.IO) { SiAi.tune(ctx, p, chat) } }
@@ -163,6 +183,12 @@ fun SiShell() {
                             }
                             // The AIs and Cost pages are data (assets/ai/pages.json, by page id): the screen kind and the asset, no name here.
             else -> if (pageId != null && aiPages[pageId] != null) AiPage(aiPages.getValue(pageId)) else when (pageId) {
+                                // The AI Tools section: the model catalogue (tabs, real model lists, OpenRouter search), the agent and model pickers,
+                                // the task catalogue and the MCP servers: the tools the chat composer opens, one tap from the bottom nav.
+                                Decl.PAGE_TOOLS_MODELS -> AiModelCatalogue(chat, theme, modifier = Modifier.fillMaxSize(), onClose = { open(Decl.SECTION_SI, forumPersona) })
+                                Decl.PAGE_TOOLS_PICKERS -> TextPage(R.string.tools_pickers_title, stringResource(R.string.tools_pickers_body)) { AiSettingsPickers(chat, theme) }
+                                Decl.PAGE_TOOLS_TASKS -> AiTaskCatalogue(chat, theme, composerDecl, Modifier.fillMaxSize())
+                                Decl.PAGE_TOOLS_MCP -> aiPages["mcp"]?.let { AiPage(it) }
                                 Decl.PAGE_MODELS -> TextPage(R.string.models_title, stringResource(R.string.models_body)) { AiSettingsPickers(chat, theme) }
                                 Decl.PAGE_BACKEND -> TextPage(R.string.backend_title, stringResource(R.string.backend_body) + "\n\n" + stringResource(R.string.backend_gateway, BuildConfig.AI_GATEWAY_URL))
                                 Decl.PAGE_ABOUT -> TextPage(R.string.about_title, stringResource(R.string.about_body, BuildConfig.VERSION_NAME, BuildConfig.GIT_SHORT_SHA))
@@ -183,14 +209,17 @@ fun SiShell() {
 private const val ATTACH_FEATURE = "chat"
 
 /**
- * The SI tab as a forum/topics chat (#1563): the left topics rail is every persona (the router is "# General",
- * each CGC expert a topic), the thread is that topic's libs:ai chat, and the whole surface sits in the content
- * area above the unchanged bottom nav. Selecting a topic switches the thread; the router's preferred model is
- * tuned once. The forum, bubbles, receipts and composer are libs:ai's (AiForumChat).
+ * The SI tab as a rich chat: the left rail is the user's chat SESSIONS (the real store, one avatar each, New chat on top), the
+ * personas (the router is "General", each CGC expert a topic) are a strip under the styled header, the thread is that persona's
+ * libs:ai chat, and the composer carries the full AI tooling (ForumTools). The forum, bubbles, receipts, background and composer
+ * are libs:ai's (AiForumChat). #1563 had replaced the chat page's tooling with a bare composer; it is back, and the sessions
+ * rail replaces the topics rail.
  */
 @Composable
-private fun SiForum(ctx: android.content.Context, personas: List<Persona>, theme: AiTheme, modifier: Modifier) {
-    val siDefault = remember { SiAi.defaultId(ctx) }
+private fun SiForum(
+    ctx: android.content.Context, personas: List<Persona>, theme: AiTheme, selected: String, onSelect: (String) -> Unit,
+    decl: AiComposerDecl, attachHost: AiAttachHost, modifier: Modifier,
+) {
     val topics = remember(personas) {
         personas.map { p ->
             ForumTopic(
@@ -202,13 +231,17 @@ private fun SiForum(ctx: android.content.Context, personas: List<Persona>, theme
             )
         }
     }
-    var selected by rememberSaveable { mutableStateOf(siDefault) }
     val current = personas.firstOrNull { it.id == selected } ?: personas.first()
-    LaunchedEffect(current.id) { withContext(Dispatchers.IO) { SiAi.tune(ctx, current, topics.first { it.id == current.id }.chat) } }
+    val chat = topics.first { it.id == current.id }.chat
+    LaunchedEffect(current.id) { withContext(Dispatchers.IO) { SiAi.tune(ctx, current, chat) } }
+    var tick by remember { mutableIntStateOf(0) }
+    val stored = remember(tick, chat.session.id, chat.session.title, chat.session.messages.size, chat.sending) { chat.host().sessions() }
+    // The open session is always on the rail, first, until it is stored (a fresh chat has no message yet).
+    val list = if (stored.any { it.id == chat.session.id }) stored else listOf(chat.session) + stored
     AiForumChat(
         topics = topics,
-        selectedId = selected,
-        onSelect = { selected = it },
+        selectedId = current.id,
+        onSelect = onSelect,
         theme = theme,
         modifier = modifier,
         strings = forumStrings(),
@@ -216,8 +249,10 @@ private fun SiForum(ctx: android.content.Context, personas: List<Persona>, theme
         adminColor = colorResource(R.color.si_ok),
         onNewTopic = null,
         onCall = {},
-        onInfo = {},
+        onInfo = { chat.page = AiChatState.PAGE_MODELS },
         onMore = {},
+        sessions = ForumSessions(list, chat.session.id, onOpen = { chat.open(it) }, onNew = { chat.fresh(); tick++ }),
+        tools = ForumTools(decl, attach = attachHost),
     )
 }
 
@@ -227,6 +262,10 @@ private fun forumStrings(): ForumStrings = ForumStrings(
     topics = stringResource(R.string.forum_topics),
     all = stringResource(R.string.forum_all),
     newTopic = stringResource(R.string.forum_new_topic),
+    newSession = stringResource(R.string.forum_new_session),
+    sessions = stringResource(R.string.forum_sessions),
+    untitled = stringResource(R.string.forum_new_session),
+    participants = stringResource(R.string.forum_participants),
     admin = stringResource(R.string.forum_admin),
     messages = stringResource(R.string.forum_messages),
     message = stringResource(R.string.forum_message),
