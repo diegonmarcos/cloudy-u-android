@@ -1281,6 +1281,14 @@
         "lib-kde-connect"
       ]
     },
+    "launcher_folder_overrides": {
+      "kind": "prefs",
+      "class": "config",
+      "doc": "#1553 Configs > Launcher > Folders: the owner's own folder edits per scope (cloud/phone) on top of the served launcher-folders and launcher-folder-assignments datasets: per-app folder moves (<scope>:<package>) and the saved Table A / Table B (tbl:<scope>:folders, tbl:<scope>:assign). Absent until Save; Reset removes it and the served defaults apply again.",
+      "used_by": [
+        "aa_cloud-superapp"
+      ]
+    },
     "launcher_mode_prefs": {
       "kind": "prefs",
       "class": "config",

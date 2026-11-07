@@ -15,7 +15,7 @@ DataStore / Room stores and declared files it cannot move yet.
 
 | app | package | covered | gaps | coverage |
 |---|---|---:|---:|---:|
-| cloud-superapp | `com.diegonmarcos.superapp` | 54 | 0 | 100% |
+| cloud-superapp | `com.diegonmarcos.superapp` | 55 | 0 | 100% |
 | c3-morpheus | `com.diegonmarcos.morpheus` | 5 | 0 | 100% |
 | c3-watchdog | `com.diegonmarcos.watchdog` | 5 | 0 | 100% |
 | c3-watchtower | `com.diegonmarcos.watchtower` | 4 | 0 | 100% |
@@ -57,7 +57,7 @@ DataStore / Room stores and declared files it cannot move yet.
 | capital-stack-finterminal | `com.diegonmarcos.capitalfinterm` | 5 | 0 | 100% |
 | hardtech-cad | `com.diegonmarcos.hardtechcad` | 5 | 0 | 100% |
 | hardtech-sim2real | `com.diegonmarcos.hardtechsim2real` | 4 | 0 | 100% |
-| **fleet** | | **413** | **56** | **88%** |
+| **fleet** | | **414** | **56** | **88%** |
 
 ## cloud-superapp — `com.diegonmarcos.superapp`
 
@@ -106,6 +106,7 @@ Module `aa_cloud-superapp`; libs: lib-account, lib-ai-usage, lib-analytics, lib-
 | `kdeconnect_peer_selection` | prefs | config | yes | Which KDE peer Peer Control targets. |
 | `kdeconnect_plugin_enabled` | prefs | config | yes | Per-plugin enable/disable toggles. |
 | `kdeconnect_trust` | prefs | device | no | Pinned peer certificates and paired flags; tied to this device's keystore, must re-pair on a new phone. |
+| `launcher_folder_overrides` | prefs | config | yes | #1553 Configs > Launcher > Folders: the owner's own folder edits per scope (cloud/phone) on top of the served launcher-folders and launcher-folder-assignments datasets: per-app folder moves (<scope>:<package>) and the saved Table A / Table B (tbl:<scope>:folders, tbl:<scope>:assign). Absent until Save; Reset removes it and the served defaults apply again. |
 | `launcher_mode_prefs` | prefs | config | yes | Selected launcher mode preset (key 'mode'). |
 | `launcher_profile_prefs` | prefs | config | yes | Selected launcher profile preset (personal/work/guest). |
 | `launcher_settings` | prefs | config | yes | Launcher settings: screensaver, scale, brightness, eye intensity, screensaver timeout, animation/one-hand/control toggles, and the icons-per-row steppers grid_cols_cloud and grid_cols_phone (4..8; absent until the owner moves a stepper, so a phone that never chose follows the shipped default and a chosen value migrates with the phone). |
@@ -177,7 +178,7 @@ Module `aa_cloud-superapp`; libs: lib-account, lib-ai-usage, lib-analytics, lib-
 | `BuildConfig UI_* constants (UI_LAUNCHER_SETTINGS_B64, UI_PROFILE_*, UI_WG_*)` | config | Defaults baked into the APK from build.json; not device state but the fallback for unset prefs. |
 | `filesDir/<KEYSTORE_FILE>` | device | This device's KDE Connect TLS identity keystore; never migrate, re-pair |
 
-Coverage: 54 covered, 0 gaps.
+Coverage: 55 covered, 0 gaps.
 
 ## c3-morpheus — `com.diegonmarcos.morpheus`
 
