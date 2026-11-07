@@ -71,6 +71,9 @@ import org.json.JSONObject
  */
 class StoreCloudFragment : KitComposeFragment() {
 
+    /** The feed page open over the Cloud page ("commits" / "cicd"), or null for the fleet list. */
+    private var feedOpen by mutableStateOf<String?>(null)
+
     private val fleet by lazy { Fleet.parse(BuildConfig.CONSTELLATION_FLEET_B64) }
 
     /** One tab: a group the fleet data declares, and every row drawn in it. */
@@ -377,12 +380,15 @@ class StoreCloudFragment : KitComposeFragment() {
             // tab strip names this subpage, both from their one declaration in
             // build.json. A third copy here is how the old "Constellation
             // AppStore" heading outlived the rename it described.
+            val openFeed = feedOpen
+            if (openFeed != null) StoreFeedPanels.Page(openFeed) { feedOpen = null } else {
             StoreCaption((tabs.map { "${it.rows.size} ${it.label}" } + "superapp is the fleet manager").joinToString(" · "))
             TabBar()
             // Each blurb is data beside its group, so the caption naming the out-of-process engines moves
             // with the engines. (#896.3: Apps Mesh left this page for Access, so every tab is a group.)
             if (ventoyOpen && ventoyBar >= 0) ventoy.Content(ctx)
             else if (shown != null) FleetPage(ctx, shown.rows, shown.blurb, shown.id == libConsumers.optString("group"), shown.buildTimeLibs)
+            }
         }
 
         details.lastOrNull()?.let { (app, state) ->
@@ -486,11 +492,11 @@ class StoreCloudFragment : KitComposeFragment() {
             updateAll = { updateAll(ctx, "the whole fleet", fleet) },
             downloadAll = { downloadAll(ctx, fleet) },
         ), resume = resume)
+        // Feed moved into Cloud: Commits and CI-CD are two buttons with the action buttons, above the status row; each opens its own
+        // page (StoreFeedPanels.Page, the Store's declared feeds). The Feed bottom-nav destination is gone.
+        StoreFeedPanels.Buttons { feedOpen = it }
         // #1524 THE one Activity panel: every download and install, collapsed to one Overall line (Update all when idle).
         StoreActivityPanel(updates = states.values.count { it is Fleet.State.UpdateAvailable }, onUpdateAll = { updateAll(ctx, "the whole fleet", fleet) })
-        // Feed moved into Cloud: the repo's Commits and CI-CD panels sit right below the action buttons (StoreFeedPanels, the
-        // Store's declared feeds; the Feed bottom-nav destination is gone).
-        StoreFeedPanels.Panels()
         // The status area: declared vs installed and the updates' cached / to-download split, for the
         // whole fleet registry, from the checks already made. Re-read on every progress event.
         val snap = states.toMap()

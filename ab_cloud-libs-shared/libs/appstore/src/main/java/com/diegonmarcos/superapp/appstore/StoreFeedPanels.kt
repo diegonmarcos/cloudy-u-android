@@ -27,8 +27,8 @@ import kotlinx.coroutines.withContext
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * The Cloud page's two feed panels, "Commits" and "CI-CD", drawn BELOW the page's action buttons (Check all / Install all /
- * Update all / Download all). They were the Store's Feed destination; Feed moved into Cloud, so this is the same declared
+ * The Cloud page's two feeds, "Commits" and "CI-CD": a button each beside the page's action buttons (Check all / Install all /
+ * Update all / Download all), above the status row, and a full page of its own behind each button. They were the Store's Feed destination; Feed moved into Cloud, so this is the same declared
  * feeds ([FeedViewer.feeds], assets/appstore-feeds.json), the same proxy-first loader and the same rate-limit wording, in two
  * collapsible data-dense panels instead of a page of their own. Nothing of the old page is dropped: every row still carries
  * its ref, title, subtitle and state colour and opens the link the feed supplied; the Configs > Sources switches still turn a
@@ -46,7 +46,10 @@ object StoreFeedPanels {
     fun tag(feedId: String) = "store-cloud:feed-panel:$feedId"
     fun rowTag(feedId: String, i: Int) = "store-cloud:feed-row:$feedId:$i"
     fun moreTag(feedId: String) = "store-cloud:feed-more:$feedId"
-    const val TAG_PANELS = "store-cloud:feed-panels"
+    const val TAG_PANELS = "store-cloud:feed-buttons"
+    const val BACK_TAG = "store-cloud:feed-back"
+    fun buttonTag(feedId: String) = "store-cloud:feed-button:$feedId"
+    fun pageTag(feedId: String) = "store-cloud:feed-page:$feedId"
 
     private val OK = Color(0xFF48BB78)
     private val BAD = Color(0xFFF56565)
@@ -83,32 +86,46 @@ object StoreFeedPanels {
         return l
     }
 
-    /** Every declared feed as a panel, in declared order (Commits, CI-CD). */
+    /** The Cloud page's feed buttons, one per declared feed (Commits, CI-CD), drawn with the action buttons above the status row.
+     *  A tap hands the feed id to [onOpen], which opens that feed's page ([Page]). */
     @Composable
-    fun Panels() {
+    fun Buttons(onOpen: (String) -> Unit) {
         val ctx = LocalContext.current
         val feeds = remember(ctx) { FeedViewer.feeds(ctx) }
         if (feeds.isEmpty()) return
-        Column(Modifier.fillMaxWidth().testTag(TAG_PANELS).padding(top = sdp(StoreDensity.S4), bottom = sdp(StoreDensity.S4)),
-            verticalArrangement = Arrangement.spacedBy(sdp(StoreDensity.S4))) {
-            feeds.forEach { Panel(it) }
+        StoreRow.Actions(feeds.map { f -> StoreVerb(f.label, Ink.GREY_FILL, { onOpen(f.id) }, buttonTag(f.id)) }, Modifier.testTag(TAG_PANELS))
+    }
+
+    /** One feed as a full page of its own (opened from [Buttons]): a Back row, then the whole feed with its tally line. */
+    @Composable
+    fun Page(feedId: String, onBack: () -> Unit) {
+        val ctx = LocalContext.current
+        val feed = remember(ctx, feedId) { FeedViewer.feeds(ctx).firstOrNull { it.id == feedId } }
+        Column(Modifier.fillMaxWidth().testTag(pageTag(feedId)), verticalArrangement = Arrangement.spacedBy(sdp(StoreDensity.S4))) {
+            Text("‹ Back to Cloud", color = Ink.BLUE_FILL.ink(), fontSize = StoreDensity.T_BODY.sp, fontWeight = FontWeight.Bold,
+                modifier = Modifier.clickable { onBack() }.testTag(BACK_TAG).padding(vertical = sdp(StoreDensity.S6)))
+            if (feed == null) Text("No feed is declared.", color = Ink.DIM.ink(), fontSize = StoreDensity.T_CAPTION.sp)
+            else {
+                Text(feed.blurb, color = Ink.DIM.ink(), fontSize = StoreDensity.T_CAPTION.sp)
+                Panel(feed, full = true)
+            }
         }
     }
 
     @Composable
-    private fun Panel(feed: FeedViewer.Feed) {
+    private fun Panel(feed: FeedViewer.Feed, full: Boolean = false) {
         val ctx = LocalContext.current
         val on = remember(feed.id) { StoreSourcePrefs.enabled(ctx, feed.id) }
         var open by remember(feed.id) { mutableStateOf(true) }
-        var all by remember(feed.id) { mutableStateOf(false) }
+        var all by remember(feed.id) { mutableStateOf(full) }
         var loaded by remember(feed.id) { mutableStateOf<Loaded?>(cache[feed.id]) }
         var reload by remember(feed.id) { mutableStateOf(0) }
         LaunchedEffect(feed.id, reload, on) { if (on) loaded = read(feed, force = reload > 0) }
         val opener = remember(ctx) { FeedViewer.opener(ctx) }
         val l = loaded
         Column(Modifier.fillMaxWidth().testTag(tag(feed.id)).background(Ink.CARD.ink())) {
-            Row(Modifier.fillMaxWidth().clickable { open = !open }.padding(horizontal = sdp(StoreDensity.S12), vertical = sdp(StoreDensity.S6))) {
-                Text("${if (open) "⌄" else "›"}  ${feed.label}", color = Ink.WHITE.ink(), fontSize = StoreDensity.T_TITLE.sp, fontWeight = FontWeight.Bold,
+            Row(Modifier.fillMaxWidth().clickable(enabled = !full) { open = !open }.padding(horizontal = sdp(StoreDensity.S12), vertical = sdp(StoreDensity.S6))) {
+                Text((if (full) "" else if (open) "⌄  " else "›  ") + feed.label, color = Ink.WHITE.ink(), fontSize = StoreDensity.T_TITLE.sp, fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f))
                 if (on) Text("refresh", color = Ink.DIM.ink(), fontSize = StoreDensity.T_CAPTION.sp,
                     modifier = Modifier.clickable { reload++ }.testTag(tag(feed.id) + ":refresh"))
@@ -126,7 +143,7 @@ object StoreFeedPanels {
                         modifier = Modifier.padding(horizontal = pad))
                     val shown = if (all) l.entries else l.entries.take(ROWS)
                     shown.forEachIndexed { i, e -> FeedRow(feed, e, opener, Modifier.testTag(rowTag(feed.id, i))) }
-                    if (l.entries.size > ROWS) Text(if (all) "show fewer" else "show all ${l.entries.size}", color = Ink.BLUE_FILL.ink(),
+                    if (!full && l.entries.size > ROWS) Text(if (all) "show fewer" else "show all ${l.entries.size}", color = Ink.BLUE_FILL.ink(),
                         fontSize = StoreDensity.T_CAPTION.sp, fontWeight = FontWeight.Bold,
                         modifier = Modifier.clickable { all = !all }.testTag(moreTag(feed.id)).padding(horizontal = pad, vertical = sdp(StoreDensity.S6)))
                 }

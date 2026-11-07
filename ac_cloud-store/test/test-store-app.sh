@@ -184,7 +184,7 @@ PY
   local CS="$S/app/src/main/java/com/diegonmarcos/cloudstore"
   [ -f "$CS/TorrentPage.kt" ] && [ -f "$CS/AccessPage.kt" ] && [ ! -f "$CS/FeedPage.kt" ] && grep -q '@Composable' "$CS/TorrentPage.kt" && grep -q '@Composable' "$CS/AccessPage.kt" && grep -q 'AndroidFragment<AppsMeshFragment>' "$CS/AccessPage.kt" && grep -q 'TorrentEngines.get(' "$CS/TorrentPage.kt" && grep -q 'FeedViewer.load(' "$L/StoreFeedPanels.kt" && ok "the Torrent and Access pages are Compose (the ratchet's rule), Access hosts Apps Mesh, the Torrent page drives the engine, and the feeds are libs:appstore's StoreFeedPanels over FeedViewer" || bad "TorrentPage/AccessPage are missing, not Compose, FeedPage is back, or the feed panels no longer read FeedViewer"
   grep -q 'object StoreTabs' "$L/StoreBar.kt" && ok "the shared strip builder (StoreTabs) lives once in libs:appstore" || bad "StoreTabs is missing from libs:appstore"
-  ! grep -qE 'renderPerms|renderFeed|FeedViewer' "$L/StoreCloudFragment.kt" && grep -q 'StoreFeedPanels.Panels()' "$L/StoreCloudFragment.kt" && ok "the Cloud page draws its Commits / CI-CD feeds only as StoreFeedPanels (no Perms)" || bad "the Cloud page carries the old Feed/Perms parts, or lost the feed panels"
+  ! grep -qE 'renderPerms|renderFeed|FeedViewer' "$L/StoreCloudFragment.kt" && grep -q 'StoreFeedPanels.Buttons' "$L/StoreCloudFragment.kt" && grep -q 'StoreFeedPanels.Page(' "$L/StoreCloudFragment.kt" && ok "the Cloud page draws its Commits / CI-CD feeds only as StoreFeedPanels buttons and pages (no Perms)" || bad "the Cloud page carries the old Feed/Perms parts, or lost the feed panels"
   grep -q 'StoreTabs.Bar(' "$L/StorePhoneFragment.kt" && grep -q 'StoreTabs.Bar(' "$L/StoreCloudFragment.kt" && ok "Cloud and Phone draw their top tabs with the one StoreTabs.Bar" || bad "a Store page draws its tabs with something other than StoreTabs.Bar"
   # 8b. #896.3 Phone's action bar sits UNDER the top tabs inside the scrolling page, as Cloud's header does (no bottom frame)
   grep -q 'StorePage.Frame(strip) {' "$L/StorePhoneFragment.kt" && ! grep -qE 'fun Frame\(.*actions' "$L/StoreBar.kt" && ok "Phone's action bar is in its page under the tabs, like Cloud's (no bottom bar)" || bad "Phone's action bar left the spot under the tabs"
@@ -265,7 +265,7 @@ mutate "Search goes back under Phone" store/build.json '"phone",
       "search",' '"phone",' || M=$((M+1))
 mutate "Phone loses its Installed tab" store/build.json '"id": "installed",' '"id": "installd",' || M=$((M+1))
 mutate "Torrent page dropped" store/app/src/main/java/com/diegonmarcos/cloudstore/MainActivity.kt 'if (selected == TAB_TORRENT) TorrentPage()' 'Unit' || M=$((M+1))
-mutate "Cloud loses the feed panels" lib/StoreCloudFragment.kt 'StoreFeedPanels.Panels()' 'Unit' || M=$((M+1))
+mutate "Cloud loses the feed buttons" lib/StoreCloudFragment.kt 'StoreFeedPanels.Buttons { feedOpen = it }' 'Unit' || M=$((M+1))
 mutate "Access page dropped" store/app/src/main/java/com/diegonmarcos/cloudstore/MainActivity.kt 'AccessPage(pageOf(it))' 'Unit' || M=$((M+1))
 mutate "host stops drawing the page strip" store/app/src/main/java/com/diegonmarcos/cloudstore/MainActivity.kt 'NavSectionLayout(section, pageOf(section)' 'NavSectionLayoux(section, pageOf(section)' || M=$((M+1))
 mutate "gradle stops baking the sections" store/app/build.gradle '"UI_SECTIONS_B64"' '"UI_SECTIONS"' || M=$((M+1))

@@ -5,8 +5,12 @@ import android.content.ComponentName
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.material3.darkColorScheme
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.assertDoesNotExist
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -80,12 +84,22 @@ class TorrentPagesTest {
         compose.onNodeWithTag(TorrentConfigTags.PATH, useUnmergedTree = true).assertTextContains("Cloudy-store/Torrent", substring = true)
     }
 
-    @Test fun `the Cloud page's feed panels are the declared Commits and CI-CD feeds`() {
-        compose.setContent { KitDenseMaterial(darkColorScheme()) { Surface(Modifier.fillMaxSize()) { StoreFeedPanels.Panels() } } }
+    @Test fun `the Cloud page's Commits and CI-CD are buttons that open a page each`() {
+        compose.setContent { KitDenseMaterial(darkColorScheme()) { Surface(Modifier.fillMaxSize()) { 
+            var open by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<String?>(null) }
+            val o = open
+            if (o == null) StoreFeedPanels.Buttons { open = it } else StoreFeedPanels.Page(o) { open = null } } } }
         compose.waitForIdle()
         compose.onNodeWithTag(StoreFeedPanels.TAG_PANELS, useUnmergedTree = true).assertExists()
-        compose.onNodeWithTag(StoreFeedPanels.tag("commits"), useUnmergedTree = true).assertExists()
-        compose.onNodeWithTag(StoreFeedPanels.tag("cicd"), useUnmergedTree = true).assertExists()
+        compose.onNodeWithTag(StoreFeedPanels.buttonTag("commits"), useUnmergedTree = true).assertExists()
+        compose.onNodeWithTag(StoreFeedPanels.buttonTag("cicd"), useUnmergedTree = true).assertExists()
+        compose.onNodeWithTag(StoreFeedPanels.tag("commits"), useUnmergedTree = true).assertDoesNotExist()   // no inline dropdown
+        compose.onNodeWithTag(StoreFeedPanels.buttonTag("cicd"), useUnmergedTree = true).performClick()
+        compose.waitForIdle()
+        compose.onNodeWithTag(StoreFeedPanels.pageTag("cicd"), useUnmergedTree = true).assertExists()
+        compose.onNodeWithTag(StoreFeedPanels.BACK_TAG, useUnmergedTree = true).performClick()
+        compose.waitForIdle()
+        compose.onNodeWithTag(StoreFeedPanels.buttonTag("commits"), useUnmergedTree = true).assertExists()
     }
 
     private fun androidx.compose.ui.test.junit4.AndroidComposeTestRule<*, *>.onAllNodesWithTagCount(tag: String): Int =

@@ -70,7 +70,7 @@ assertEquals(listOf("none", "low", "high"), StoreTorrentHost.sorted(rows, StoreT
 
     @Test fun categoriesFromEveryIndexerFallInTheSixFilterBuckets() {
         val b = StoreTorrentHost.Bucket
-        assertEquals(listOf("Music", "Apps", "Video", "PDF/Books", "Games", "Other"), b.values().map { it.label })
+        assertEquals(listOf("Music", "Apps", "Movies & TV", "PDF/Books", "Gaming", "Other"), b.values().map { it.label })
         assertEquals(b.MUSIC, StoreTorrentHost.bucketOf("Audio")); assertEquals(b.APPS, StoreTorrentHost.bucketOf("Applications"))
         assertEquals(b.APPS, StoreTorrentHost.bucketOf("Software")); assertEquals(b.VIDEO, StoreTorrentHost.bucketOf("Movies"))
         assertEquals(b.VIDEO, StoreTorrentHost.bucketOf("Video")); assertEquals(b.BOOKS, StoreTorrentHost.bucketOf("Texts"))

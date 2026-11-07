@@ -57,7 +57,7 @@ object StoreTorrentHost {
     }
 
     /** The content-type filter buckets of the table. */
-    enum class Bucket(val label: String) { MUSIC("Music"), APPS("Apps"), VIDEO("Video"), BOOKS("PDF/Books"), GAMES("Games"), OTHER("Other") }
+    enum class Bucket(val label: String) { MUSIC("Music"), APPS("Apps"), VIDEO("Movies & TV"), BOOKS("PDF/Books"), GAMES("Gaming"), OTHER("Other") }
 
     /** Maps an indexer's category word (The Pirate Bay: Audio, Video, Applications, Games, Adult, Other; YTS: Movies; Archive mediatype:
      *  audio, movies, texts, software ...) to a bucket. A missing or unknown category is Other, so no result is ever unreachable. */

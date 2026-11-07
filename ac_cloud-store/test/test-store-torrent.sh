@@ -3,7 +3,7 @@
 # Static (no build, no device, no network). What this holds:
 #   N1 the island is cloud, phone, search, torrent, access: Torrent took Feed's place and Feed is gone as a destination
 #      (no feed section, no FeedPage, no TAB_FEED; an old `tab=feed` intent opens Cloud)
-#   F1 the Cloud page draws the Commits and CI-CD panels (StoreFeedPanels.Panels) BELOW its action buttons (StoreBar.Bar), over the
+#   F1 the Cloud page draws the Commits and CI-CD buttons (StoreFeedPanels.Buttons) right after its action buttons (StoreBar.Bar), above the status row, each opening a page (StoreFeedPanels.Page), over the
 #      Store's declared feeds (appstore-feeds.json commits + cicd), with the Configs > Sources switch honoured and a failed read
 #      said in words (FeedViewer.explain), none of the old Feed page's per-row data dropped (ref, title, subtitle, state colour, link)
 #   T1 the Torrent destination: add a magnet, import a .torrent, active and completed lists, progress, rates, seeds and peers,
@@ -73,10 +73,10 @@ ok(rd(CS + "/FeedPage.kt") is None and "FeedPage" not in ma and "TAB_FEED" not i
 
 # F1
 cf = strip(rd(AS + "/StoreCloudFragment.kt")); fp = strip(rd(AS + "/StoreFeedPanels.kt"))
-bar, pan = cf.find("StoreBar.Bar("), cf.find("StoreFeedPanels.Panels()")
-ok(0 <= bar < pan and "FeedViewer" not in cf,
-   "F1 the Cloud page draws StoreFeedPanels.Panels() below its action buttons (StoreBar.Bar)",
-   "F1 the Cloud page does not draw the feed panels below its action buttons")
+bar, pan, tally = cf.find("StoreBar.Bar("), cf.find("StoreFeedPanels.Buttons"), cf.find("StoreTally.Area(")
+ok(0 <= bar < pan < tally and "StoreFeedPanels.Page(" in cf and "FeedViewer" not in cf,
+   "F1 the Cloud page draws the Commits and CI-CD buttons with its action buttons (StoreBar.Bar), above the status row, and opens each as a page of its own",
+   "F1 the feed buttons are not between the action buttons and the status row, or open no page")
 feeds_s = rd("ab_cloud-libs-shared/libs/appstore/src/main/assets/appstore-feeds.json")
 fids = [f["id"] for f in json.loads(feeds_s)["feeds"]] if feeds_s else []
 ok(fids[:2] == ["commits", "cicd"] and "FeedViewer.feeds(" in fp and "FeedViewer.load(" in fp and "FeedViewer.explain(" in fp and "StoreSourcePrefs.enabled(" in fp,
@@ -198,8 +198,8 @@ mutate "Feed comes back to the island" ac_cloud-store/build.json '"search",
       "access"' '"search",
       "feed",
       "access"'
-mutate "Cloud drops the feed panels" "$AS/StoreCloudFragment.kt" 'StoreFeedPanels.Panels()' 'Unit'
-mutate "feed panels above the buttons" "$AS/StoreCloudFragment.kt" 'StoreBar.Bar(StoreBar.Verbs(' 'StoreFeedPanels.Panels(); StoreBar.Bar(StoreBar.Verbs('
+mutate "Cloud drops the feed buttons" "$AS/StoreCloudFragment.kt" 'StoreFeedPanels.Buttons { feedOpen = it }' 'Unit'
+mutate "feed buttons above the action buttons" "$AS/StoreCloudFragment.kt" 'StoreBar.Bar(StoreBar.Verbs(' 'StoreFeedPanels.Buttons { }; StoreBar.Bar(StoreBar.Verbs('
 mutate "panels ignore the Sources switch" "$AS/StoreFeedPanels.kt" 'StoreSourcePrefs.enabled(' 'StoreSourcePrefsX.enabled('
 mutate "panel row loses the link" "$AS/StoreFeedPanels.kt" 'e.link' 'e.title'
 mutate "Torrent page not hosted" "$CS/MainActivity.kt" 'if (selected == TAB_TORRENT) TorrentPage()' ''
