@@ -69,13 +69,12 @@ assertEquals(listOf("none", "low", "high"), StoreTorrentHost.sorted(rows, StoreT
     }
 
     @Test fun categoriesFromEveryIndexerFallInTheSixFilterBuckets() {
-        val b = StoreTorrentHost.Bucket
-        assertEquals(listOf("Music", "Apps", "Movies & TV", "PDF/Books", "Gaming", "Other"), b.values().map { it.label })
-        assertEquals(b.MUSIC, StoreTorrentHost.bucketOf("Audio")); assertEquals(b.APPS, StoreTorrentHost.bucketOf("Applications"))
-        assertEquals(b.APPS, StoreTorrentHost.bucketOf("Software")); assertEquals(b.VIDEO, StoreTorrentHost.bucketOf("Movies"))
-        assertEquals(b.VIDEO, StoreTorrentHost.bucketOf("Video")); assertEquals(b.BOOKS, StoreTorrentHost.bucketOf("Texts"))
-        assertEquals(b.GAMES, StoreTorrentHost.bucketOf("Games")); assertEquals(b.OTHER, StoreTorrentHost.bucketOf("Adult"))
-        assertEquals(b.OTHER, StoreTorrentHost.bucketOf(null)); assertEquals(b.OTHER, StoreTorrentHost.bucketOf("Image"))
+        assertEquals(listOf("Music", "Apps", "Movies & TV", "PDF/Books", "Gaming", "Other"), StoreTorrentHost.Bucket.values().map { it.label })
+        assertEquals(StoreTorrentHost.Bucket.MUSIC, StoreTorrentHost.bucketOf("Audio")); assertEquals(StoreTorrentHost.Bucket.APPS, StoreTorrentHost.bucketOf("Applications"))
+        assertEquals(StoreTorrentHost.Bucket.APPS, StoreTorrentHost.bucketOf("Software")); assertEquals(StoreTorrentHost.Bucket.VIDEO, StoreTorrentHost.bucketOf("Movies"))
+        assertEquals(StoreTorrentHost.Bucket.VIDEO, StoreTorrentHost.bucketOf("Video")); assertEquals(StoreTorrentHost.Bucket.BOOKS, StoreTorrentHost.bucketOf("Texts"))
+        assertEquals(StoreTorrentHost.Bucket.GAMES, StoreTorrentHost.bucketOf("Games")); assertEquals(StoreTorrentHost.Bucket.OTHER, StoreTorrentHost.bucketOf("Adult"))
+        assertEquals(StoreTorrentHost.Bucket.OTHER, StoreTorrentHost.bucketOf(null)); assertEquals(StoreTorrentHost.Bucket.OTHER, StoreTorrentHost.bucketOf("Image"))
     }
 
     @Test fun theFilterNarrowsToOneOrSeveralBucketsAndNoneMeansAll() {
