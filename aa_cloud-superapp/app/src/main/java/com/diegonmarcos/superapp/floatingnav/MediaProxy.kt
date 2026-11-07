@@ -11,6 +11,8 @@ import android.media.session.MediaController
 import android.media.session.MediaSessionManager
 import android.media.session.PlaybackState
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import androidx.core.app.NotificationCompat
 import com.diegonmarcos.superapp.notificationcenter.BadgeCustomization
 import com.diegonmarcos.superapp.notificationcenter.BadgeModel
@@ -32,6 +34,48 @@ import com.diegonmarcos.superapp.R
 class MediaProxy(private val ctx: Context) {
 
     private var lastKey: String? = null
+    private var sessionsListener: MediaSessionManager.OnActiveSessionsChangedListener? = null
+    private val watched = HashMap<MediaController, MediaController.Callback>()
+    private val mainHandler = Handler(Looper.getMainLooper())
+
+    /**
+     * Event-drive [refresh] instead of polling it: the session list changing (a player starts or ends) and each live
+     * controller's own metadata / playback callbacks re-render the badge. Idempotent; needs the notification-listener
+     * grant, so the owner calls it again on screen-on in case the grant arrived later.
+     */
+    fun watch() {
+        if (sessionsListener != null || !listenerEnabled()) return
+        runCatching {
+            val msm = ctx.getSystemService(Context.MEDIA_SESSION_SERVICE) as MediaSessionManager
+            val comp = ComponentName(ctx, PhoneNotificationListenerService::class.java)
+            val l = MediaSessionManager.OnActiveSessionsChangedListener { list -> track(list.orEmpty()); refresh() }
+            msm.addOnActiveSessionsChangedListener(l, comp, mainHandler)
+            sessionsListener = l
+            track(msm.getActiveSessions(comp))
+        }
+    }
+
+    private fun track(list: List<MediaController>) {
+        val gone = watched.keys.filter { k -> list.none { it.sessionToken == k.sessionToken } }
+        gone.forEach { k -> watched.remove(k)?.let { runCatching { k.unregisterCallback(it) } } }
+        for (c in list) {
+            if (watched.keys.any { it.sessionToken == c.sessionToken }) continue
+            val cb = object : MediaController.Callback() {
+                override fun onPlaybackStateChanged(state: PlaybackState?) { refresh() }
+                override fun onMetadataChanged(metadata: MediaMetadata?) { refresh() }
+            }
+            runCatching { c.registerCallback(cb, mainHandler); watched[c] = cb }
+        }
+    }
+
+    private fun unwatch() {
+        sessionsListener?.let { l ->
+            runCatching { (ctx.getSystemService(Context.MEDIA_SESSION_SERVICE) as MediaSessionManager).removeOnActiveSessionsChangedListener(l) }
+        }
+        sessionsListener = null
+        watched.forEach { (c, cb) -> runCatching { c.unregisterCallback(cb) } }
+        watched.clear()
+    }
 
     private fun nm() = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
@@ -57,7 +101,7 @@ class MediaProxy(private val ctx: Context) {
     fun transport(target: String) {
         // #535: the badge was swiped away. Forget what was posted so the poll
         // loop's next refresh() re-posts instead of deduping against it.
-        if (target == REPOST) { lastKey = null; return }
+        if (target == REPOST) { lastKey = null; refresh(); return }
         val c = activeController() ?: return
         when (target) {
             "media:playpause" ->
@@ -67,6 +111,7 @@ class MediaProxy(private val ctx: Context) {
             "media:prev" -> c.transportControls.skipToPrevious()
         }
         lastKey = null // force a re-render on the next refresh
+        mainHandler.postDelayed({ refresh() }, 500) // the session callbacks usually do it; this covers a silent transport
     }
 
     /** The `media_now_playing` entry of build.json::ui.notification_center —
@@ -96,6 +141,7 @@ class MediaProxy(private val ctx: Context) {
         // #777: switched off here or by its group → out of the shade, not
         // merely not re-posted.
         if (decl?.let { BadgeCustomization.isEnabled(ctx, it) } == false) { cancel(); return }
+        watch() // idempotent: a later grant or a switch back on picks the session events up again
         val c = activeController()
         if (c == null) {
             // A persistent badge holds its place with an idle state rather
@@ -176,6 +222,7 @@ class MediaProxy(private val ctx: Context) {
     }
 
     fun cancel() {
+        unwatch()
         runCatching { nm().cancel(NOTIF_MEDIA) }; lastKey = null
         NotifyGroups.release(ctx, BADGE_ID)
     }

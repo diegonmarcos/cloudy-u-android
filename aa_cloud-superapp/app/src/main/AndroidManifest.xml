@@ -549,24 +549,14 @@
              from the declaration. -->
         <service
             android:name=".notificationcenter.DataBadgeService"
-            android:exported="false"
-            android:foregroundServiceType="specialUse">
-            <property
-                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="Persistent data-usage badge (today, month, top apps) for the Cloud SuperApp" />
-        </service>
+            android:exported="false" />
         <!-- AiBadgeService - pins the persistent "Cloud SA - AI" badge (Claude session and
              weekly used %, OpenRouter balance and spend, read from c3-infra-api
              GET /ai/usage). type=specialUse for the same reason as its siblings.
              Not exported - only BadgeServices.ensureAll starts it, from the declaration. -->
         <service
             android:name=".notificationcenter.AiBadgeService"
-            android:exported="false"
-            android:foregroundServiceType="specialUse">
-            <property
-                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="Persistent AI usage badge (Claude limits, OpenRouter spend) for the Cloud SuperApp" />
-        </service>
+            android:exported="false" />
         <!-- NetworkBadgeService — pins the persistent "Cloud SA - Network"
              badge (mesh state, IP, peers, rx/tx; Always On / Connect / More).
              type=specialUse for the same reason as its siblings: a standing
@@ -582,7 +572,8 @@
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="Persistent mesh status badge (connection, IP, peers, traffic) for the Cloud SuperApp" />
         </service>
-        <!-- Weather, MyHealth and Battery are DATA WIDGETS (FleetNotify.dataWidgetNotification): plain ongoing notifications from
+        <!-- Data, AI and Markets are DATA WIDGETS too (they were specialUse foreground services): same pattern, see below.
+             Weather, MyHealth and Battery are DATA WIDGETS (FleetNotify.dataWidgetNotification): plain ongoing notifications from
              short-lived services, no foregroundServiceType, never startForeground, so Android does not list the app under
              "running in the background" for them. DataWidgetWakeReceiver revives the Battery card on plug / unplug / low / okay. -->
         <receiver
@@ -624,12 +615,7 @@
              from the declaration. -->
         <service
             android:name=".notificationcenter.MarketsBadgeService"
-            android:exported="false"
-            android:foregroundServiceType="specialUse">
-            <property
-                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="Persistent market price badge (FX, crude and gold last prices) for the Cloud SuperApp" />
-        </service>
+            android:exported="false" />
 
         <!-- Shizuku provider — required by the Shizuku client lib so the
              app can talk to the Shizuku server (binder + permission).

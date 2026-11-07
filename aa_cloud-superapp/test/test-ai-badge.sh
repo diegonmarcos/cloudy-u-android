@@ -32,15 +32,20 @@ else:                                           print('OK')
 PY
 )" "ai_usage is a declared persistent badge in Resources"
 
-echo "== T2: the service is registered, not exported =="
-check "$(python3 - "$MANIFEST" <<'PY'
+echo "== T2: the service is registered, and is a data widget: NOT a foreground service =="
+check "$(python3 - "$MANIFEST" "$SVC" <<'PY'
 import re, sys
-b = [x for x in re.findall(r'<service\b.*?</service>', open(sys.argv[1]).read(), re.S) if 'AiBadgeService' in x]
-if not b:                                       print('AiBadgeService is not in the manifest')
-elif 'android:exported="false"' not in b[0] or 'specialUse' not in b[0]: print('must be non-exported specialUse')
+m = open(sys.argv[1]).read()
+src = '\n'.join(l for l in open(sys.argv[2]).read().split('\n') if not l.strip().startswith(('*', '//', '/*')))
+t = [x for x in re.findall(r'<service\b[^>]*>', m) if 'AiBadgeService' in x]
+if not t:                                       print('AiBadgeService is not in the manifest')
+elif 'android:exported="false"' not in t[0]:    print('must not be exported')
+elif 'foregroundServiceType' in t[0]:           print('still declares a foregroundServiceType')
+elif re.search(r'\bstartForeground\s*\(|startForegroundService', src): print('calls startForeground: it is a data widget')
+elif 'FleetNotify.dataWidgetBuilder(' not in src: print('not built by the shared data-widget builder')
 else:                                           print('OK')
 PY
-)" "AiBadgeService is a non-exported specialUse foreground service"
+)" "AiBadgeService is a non-exported plain service that never goes foreground (data widget)"
 
 echo "== T3: one source, mesh first, no literal address, no secret =="
 check "$(python3 - "$SVC" "$CLI" "$MODEL" <<'PY'
@@ -66,7 +71,7 @@ if 'ACTION_SCREEN_ON' not in s or 'ACTION_SCREEN_OFF' not in s: print('no screen
 elif 'isInteractive' not in s:                  print('the tick does not check the screen')
 elif 'removeCallbacks(tick)' not in s:          print('the tick is never cancelled')
 elif 'TICK_MS = 5 * 60_000L' not in s:          print('tick is not 5 minutes')
-elif not re.search(r'if \(!NetworkBadgeService\.canPost\(this\)\) return', s): print('reads without the notification grant')
+elif not re.search(r'if \(!NetworkBadgeService\.canPost\((this|app)\)\) return', s): print('reads without the notification grant')
 else:                                           print('OK')
 PY
 )" "5-minute tick only while the screen is on"

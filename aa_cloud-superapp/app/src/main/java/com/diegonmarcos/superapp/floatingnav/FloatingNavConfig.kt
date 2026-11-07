@@ -110,7 +110,7 @@ data class FloatingNavConfig(
             return FloatingNavConfig(
                 enabled = o.optBoolean("enabled", true),
                 defaultOn = o.optBoolean("default_on", false),
-                pollMs = o.optLong("poll_ms", 1000L).coerceAtLeast(250L),
+                pollMs = o.optLong("poll_ms", 5000L).coerceAtLeast(5000L),
                 topOffsetDp = o.optInt("top_offset_dp", 88).coerceIn(0, 600),
                 widthPct = o.optInt("width_pct", 90).coerceIn(40, 100),
                 root = item(o.optJSONObject("root")),

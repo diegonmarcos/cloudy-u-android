@@ -29,6 +29,9 @@ class DataWidgetNotFgsTest {
         "WeatherBadgeService" to "$dir/WeatherBadgeService.kt",
         "HealthBadgeService" to "$dir/HealthBadgeService.kt",
         "BatteryBadgeService" to "$dir/BatteryBadgeService.kt",
+        "DataBadgeService" to "$dir/DataBadgeService.kt",
+        "AiBadgeService" to "$dir/AiBadgeService.kt",
+        "MarketsBadgeService" to "$dir/MarketsBadgeService.kt",
         "DataWidgetRuntime" to "$dir/DataWidgetRuntime.kt",
         "DataWidgetWakeReceiver" to "$dir/DataWidgetWakeReceiver.kt",
     )
@@ -46,8 +49,8 @@ class DataWidgetNotFgsTest {
         }
     }
 
-    @Test fun theThreeCardsAreBuiltByTheSharedDataWidgetBuilder() {
-        listOf("WeatherBadgeService", "HealthBadgeService", "BatteryBadgeService").forEach {
+    @Test fun everyDataWidgetCardIsBuiltByTheSharedDataWidgetBuilder() {
+        listOf("WeatherBadgeService", "HealthBadgeService", "BatteryBadgeService", "DataBadgeService", "AiBadgeService", "MarketsBadgeService").forEach {
             val c = code(sources.getValue(it))
             assertTrue("$it does not use FleetNotify.dataWidgetBuilder", c.contains("FleetNotify.dataWidgetBuilder("))
             assertTrue("$it does not post with FleetNotify.post", c.contains("FleetNotify.post("))
@@ -57,14 +60,14 @@ class DataWidgetNotFgsTest {
 
     @Test fun theManifestDeclaresNoForegroundTypeForThem() {
         val m = File("src/main/AndroidManifest.xml").readText()
-        listOf("WeatherBadgeService", "HealthBadgeService", "BatteryBadgeService").forEach { n ->
+        listOf("WeatherBadgeService", "HealthBadgeService", "BatteryBadgeService", "DataBadgeService", "AiBadgeService", "MarketsBadgeService").forEach { n ->
             val svc = Regex("""<service\b[^>]*notificationcenter\.$n[^>]*?/?>""", RegexOption.DOT_MATCHES_ALL).find(m)!!.value.substringBefore(">")
             assertFalse("$n still declares a foregroundServiceType", svc.contains("foregroundServiceType"))
         }
     }
 
     @Test fun everyDeclaredWidgetBadgeIsRoutedThroughTheRuntime() {
-        assertEquals(setOf("weather_today", "myhealth", "battery_status"), DataWidgetRuntime.widgets.map { it.badgeId }.toSet())
+        assertEquals(setOf("weather_today", "myhealth", "battery_status", "network_data", "ai_usage", "markets_prices"), DataWidgetRuntime.widgets.map { it.badgeId }.toSet())
         DataWidgetRuntime.widgets.forEach { w ->
             val b = BadgeServices.declared.first { it.id == w.badgeId }
             assertEquals(w.cls.name, b.service)
@@ -76,9 +79,29 @@ class DataWidgetNotFgsTest {
     }
 
     @Test fun theWidgetServicesNeverGoForeground() {
-        listOf(WeatherBadgeService::class.java, HealthBadgeService::class.java, BatteryBadgeService::class.java).forEach { cls ->
+        listOf(WeatherBadgeService::class.java, HealthBadgeService::class.java, BatteryBadgeService::class.java,
+            DataBadgeService::class.java, AiBadgeService::class.java, MarketsBadgeService::class.java).forEach { cls ->
             val svc = Robolectric.buildService(cls).create().get()
             assertNull("${cls.simpleName} went foreground", shadowOf(svc).lastForegroundNotification)
+        }
+    }
+
+    @Test fun dataAiAndMarketsAreNoLongerStickyAndNeverStartedAsForeground() {
+        listOf("DataBadgeService", "AiBadgeService", "MarketsBadgeService").forEach {
+            val c = code(sources.getValue(it))
+            assertTrue("$it is still START_STICKY", c.contains("START_NOT_STICKY") && !c.contains("START_STICKY"))
+            assertTrue("$it does not schedule through DataWidgetRuntime", c.contains("DataWidgetRuntime.scheduleNext("))
+        }
+        assertTrue(DataWidgetRuntime.isWidgetService(DataBadgeService::class.java.name))
+        assertTrue(DataWidgetRuntime.isWidgetService(AiBadgeService::class.java.name))
+        assertTrue(DataWidgetRuntime.isWidgetService(MarketsBadgeService::class.java.name))
+    }
+
+    @Test fun theTrueKeepAlivesStayForeground() {
+        // FloatingNav (overlay), Network (the VPN's only indicator) and KDE (a live TCP link to the desktop) need the process.
+        listOf("floatingnav/FloatingNavService.kt", "notificationcenter/NetworkBadgeService.kt", "notificationcenter/KdeStatusService.kt").forEach {
+            val c = code("src/main/java/com/diegonmarcos/superapp/$it")
+            assertTrue("$it must stay a foreground service", Regex("""\bstartForeground\s*\(""").containsMatchIn(c))
         }
     }
 

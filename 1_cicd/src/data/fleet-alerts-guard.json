@@ -62,28 +62,10 @@
       "why": "Wireless-debugging pairing (Shizuku's flow): the foreground service's code-entry notification (a RemoteInput the user types the pairing code into, which a deep link cannot carry) and its dismissible pass/fail result. Not an alert about the fleet."
     },
     {
-      "path": "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/notificationcenter/DataBadgeService.kt",
-      "kind": "badge",
-      "notify_calls": 1,
-      "why": "G5 Data badge (Network group): a foreground service re-posting data usage (today, month, top apps) when the screen comes on or on Refresh."
-    },
-    {
-      "path": "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/notificationcenter/AiBadgeService.kt",
-      "kind": "badge",
-      "notify_calls": 1,
-      "why": "AI usage badge (Resources group): a foreground service re-posting Claude session and weekly used % and OpenRouter spend from c3-infra-api when the screen comes on, every 5 minutes while it is on, or on Refresh."
-    },
-    {
       "path": "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/notificationcenter/NetworkBadgeService.kt",
       "kind": "badge",
       "notify_calls": 1,
-      "why": "G5 Network badge: a foreground service re-posting the mesh state (connection, IP, peers, traffic), event-driven plus a 30s tick while connected."
-    },
-    {
-      "path": "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/notificationcenter/MarketsBadgeService.kt",
-      "kind": "badge",
-      "notify_calls": 1,
-      "why": "G1 Markets badge: a foreground service re-posting live quotes."
+      "why": "G5 Network badge: a foreground service re-posting the mesh state (connection, IP, peers, traffic), event-driven plus a 5 minute tick while connected and the screen is on."
     },
     {
       "path": "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/notificationcenter/KdeStatusService.kt",

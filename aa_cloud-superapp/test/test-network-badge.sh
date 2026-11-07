@@ -80,17 +80,18 @@ else:                                           print('OK')
 PY
 )" "state read through WgState/AidlBackend; the model is pure"
 
-echo "== T4: refresh is event-driven, with a light tick only while connected =="
+echo "== T4: refresh is event-driven, with a light tick only while connected and the screen is on =="
 check "$(python3 - "$SVC" <<'PY'
 import re, sys
 s = '\n'.join(l for l in open(sys.argv[1]).read().split('\n') if not l.strip().startswith(('*', '//', '/*')))
-t = re.search(r'TICK_MS\s*=\s*([\d_]+)L', s)
+t = re.search(r'TICK_MS\s*=\s*([\d_ *]+)L', s)
 if not t:                                       print('no TICK_MS')
-elif int(t.group(1).replace('_', '')) < 30_000: print('tick under 30s')
+elif eval(t.group(1).replace('_', '')) < 300_000: print('tick under 5 minutes')
 elif 'TRANSPORT_VPN' not in s or 'registerNetworkCallback' not in s:
                                                 print('not driven by VPN network events')
 elif 'stateListener' not in s:                  print('not driven by the app\'s own connect/disconnect')
-elif not re.search(r'if \(!connected\) return', s): print('the tick is not gated on being connected')
+elif not re.search(r'if \(!shouldTick\(connected, interactive\(\)\)\) return', s): print('the tick is not gated on being connected and the screen being on')
+elif 'ACTION_SCREEN_ON' not in s or 'ACTION_SCREEN_OFF' not in s: print('no screen on/off handling')
 elif len(re.findall(r'postDelayed\(', s)) > 2:  print('more timers than debounce + tick')
 else:                                           print('OK')
 PY

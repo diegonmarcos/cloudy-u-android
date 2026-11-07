@@ -36,13 +36,30 @@ object MeshSupervisorRunner {
     private const val TAG = "MeshSupervisor"
     private const val PREFS = "mesh_supervisor"
     private const val DEBOUNCE_MS = 1_500L
-    private const val WATCH_MS = 30_000L
+    /** While the tunnel is NOT healthy and nothing sets a sooner look: 5 min (it was 30 s). A healthy tunnel has no self-kick at all. */
+    internal const val WATCH_MS = 5 * 60_000L
     private const val WORK = "mesh-supervisor"
 
     private val main = Handler(Looper.getMainLooper())
     private val worker = Executors.newSingleThreadExecutor { r -> Thread(r, "mesh-supervisor").apply { isDaemon = true } }
     @Volatile private var started = false
     private var pending: Runnable? = null
+    @Volatile private var lastCapSig = ""
+
+    /** The part of a capability report worth a look: which transports, validated, internet. */
+    internal fun capSig(wifi: Boolean, cell: Boolean, eth: Boolean, vpn: Boolean, validated: Boolean, internet: Boolean): String =
+        listOf(wifi, cell, eth, vpn, validated, internet).joinToString("") { if (it) "1" else "0" }
+
+    /**
+     * When to look again on our own: null = never (a healthy tunnel waits for the network / VPN callbacks and the
+     * 15-minute WorkManager job). Otherwise the sooner of the backoff and the alert debounce, else [WATCH_MS].
+     */
+    internal fun nextLookMs(wanted: Boolean, installed: Boolean, healthy: Boolean, retryAt: Long?, debounceAt: Long?, now: Long): Long? {
+        if (!wanted || !installed) return null
+        val at = listOfNotNull(retryAt, debounceAt).minOrNull()
+        if (healthy && at == null) return null
+        return (at?.minus(now) ?: WATCH_MS).coerceIn(DEBOUNCE_MS, WATCH_MS)
+    }
 
     private fun sp(ctx: Context) = ctx.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
@@ -58,7 +75,14 @@ object MeshSupervisorRunner {
                     cm.registerDefaultNetworkCallback(object : ConnectivityManager.NetworkCallback() {
                         override fun onAvailable(network: Network) { kick(app) }
                         override fun onLost(network: Network) { kick(app) }
-                        override fun onCapabilitiesChanged(network: Network, caps: NetworkCapabilities) { kick(app) }
+                        // Only a real change of transport / validation kicks; signal-strength updates arrive here too.
+                        override fun onCapabilitiesChanged(network: Network, caps: NetworkCapabilities) {
+                            val sig = capSig(
+                                caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI), caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR),
+                                caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET), caps.hasTransport(NetworkCapabilities.TRANSPORT_VPN),
+                                caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED), caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET))
+                            if (sig != lastCapSig) { lastCapSig = sig; kick(app) }
+                        }
                     })
                 }
                 runCatching {
@@ -99,11 +123,11 @@ object MeshSupervisorRunner {
     fun lastNote(ctx: Context): String = sp(ctx).getString("note", "").orEmpty()
 
     private fun note(ctx: Context, s: String) {
-        val changed = lastNote(ctx) != s
+        if (lastNote(ctx) == s) return // unchanged: no preference write, no log line
         sp(ctx).edit().putString("note", s).apply()
         Log.i(TAG, s)
         // #1153 the supervisor's decisions (reconnects, retries, why it stopped) go to the journal the Logs section reads
-        if (changed) com.diegonmarcos.superapp.network.mesh.MeshEventLog.log(ctx, "supervisor", s)
+        com.diegonmarcos.superapp.network.mesh.MeshEventLog.log(ctx, "supervisor", s)
     }
 
     fun netKind(ctx: Context): MeshSupervisor.Net {
@@ -140,6 +164,9 @@ object MeshSupervisorRunner {
         return label ?: "another app"
     }
 
+    private fun isInteractive(ctx: Context): Boolean =
+        runCatching { (ctx.getSystemService(Context.POWER_SERVICE) as android.os.PowerManager).isInteractive }.getOrDefault(true)
+
     /** One look at the world and one action. Blocking: never on the main thread. */
     @Synchronized
     fun tick(ctx: Context, force: Boolean = false) {
@@ -150,6 +177,9 @@ object MeshSupervisorRunner {
         val installed = runCatching { backend.isEngineInstalled() }.getOrDefault(false)
         var up = installed && runCatching { backend.getState(WgState.tunnel) == Tunnel.State.UP }.getOrDefault(false)
         val s = sp(ctx)
+
+        // Screen off and the tunnel up with no alert open: nothing to decide, nothing to write.
+        if (!force && up && !isInteractive(ctx) && !s.getBoolean("raised", false) && s.getLong("down_since", 0L) == 0L) return
 
         if (force && policy.wanted && installed) {
             runCatching { backend.setState(WgState.tunnel, Tunnel.State.DOWN, null) }
@@ -209,11 +239,11 @@ object MeshSupervisorRunner {
             MeshDownModel.Effect.NONE -> {}
         }
 
-        // Look again: at the backoff, at the end of the debounce, and every WATCH_MS while the owner wants the mesh.
-        if (policy.wanted && installed) {
-            val at = listOfNotNull(retryAt, if (!after.raised && after.downSinceMs > 0) after.downSinceMs + MeshDownModel.DEBOUNCE_MS else null).minOrNull()
-            kick(ctx, (at?.minus(now) ?: WATCH_MS).coerceIn(DEBOUNCE_MS, WATCH_MS))
-        }
+        // Look again: at the backoff or the end of the debounce, else every WATCH_MS while the mesh is wanted but NOT healthy.
+        // A healthy tunnel has no self-kick: the network / VPN callbacks and the 15-minute job wake it when that changes.
+        val healthy = up && d.why == MeshSupervisor.Why.UP && !after.raised && after.downSinceMs == 0L
+        val debounceAt = if (!after.raised && after.downSinceMs > 0) after.downSinceMs + MeshDownModel.DEBOUNCE_MS else null
+        nextLookMs(policy.wanted, installed, healthy, retryAt, debounceAt, now)?.let { kick(ctx, it) }
     }
 }
 

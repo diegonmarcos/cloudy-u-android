@@ -19,8 +19,10 @@ import androidx.core.content.ContextCompat
 import com.diegonmarcos.superapp.BuildConfig
 import com.diegonmarcos.superapp.MainActivity
 import com.diegonmarcos.superapp.R
+import com.diegonmarcos.superapp.core.FleetNotify
 import com.diegonmarcos.superapp.ops.dagu.DaguPrefs
 import com.diegonmarcos.superapp.profile.AccountData
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.Executors
 
 /**
@@ -29,126 +31,27 @@ import java.util.concurrent.Executors
  * c3-infra-api `GET /ai/usage` through [AiUsageClient] (mesh first, then public with the fleet bearer) and is worded by
  * [AiUsageModel]; nothing here computes a figure.
  *
- * Refresh: on start, when the screen comes on, on the Refresh button, and every [TICK_MS] while the screen is on (the
- * tick stops with the screen). A failed read keeps the last good figures on the card and says why; data older than
+ * A DATA WIDGET, not a keep-alive: plain notify ([FleetNotify.dataWidgetBuilder]), never startForeground (see
+ * [DataWidgetRuntime]). Refresh: on start, when the screen comes on, on the Refresh button, every [TICK_MS] while the
+ * screen is on (the tick stops with the screen; a process-level receiver), and one inexact [REFRESH_MS] alarm while the
+ * process is gone. A failed read keeps the last good figures on the card and says why; data older than
  * [AiUsageModel.STALE_MS] is marked stale. Without POST_NOTIFICATIONS (Android 13+) it posts and reads nothing.
  */
 class AiBadgeService : Service() {
-
-    private val main = Handler(Looper.getMainLooper())
-    private val worker = Executors.newSingleThreadExecutor { r -> Thread(r, "ai-badge").apply { isDaemon = true } }
-    private var receiver: BroadcastReceiver? = null
-    private var pending: Runnable? = null
-    @Volatile private var lastReadMs = 0L
-
-    private val tick = object : Runnable {
-        override fun run() {
-            val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
-            if (!pm.isInteractive) return // the screen-on receiver restarts the tick
-            requestRefresh(force = false)
-            main.postDelayed(this, TICK_MS)
-        }
-    }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onCreate() {
         super.onCreate()
         ensureChannel(this)
-        startForeground(NOTIF_ID, build(drawCached("")))
-        val r = object : BroadcastReceiver() {
-            override fun onReceive(context: Context, intent: Intent) {
-                main.removeCallbacks(tick)
-                if (intent.action == Intent.ACTION_SCREEN_ON) {
-                    requestRefresh(force = false)
-                    main.postDelayed(tick, TICK_MS)
-                }
-            }
-        }
-        receiver = r
-        val filter = IntentFilter(Intent.ACTION_SCREEN_ON).apply { addAction(Intent.ACTION_SCREEN_OFF) }
-        ContextCompat.registerReceiver(this, r, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
-        requestRefresh(force = true)
-        main.postDelayed(tick, TICK_MS)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        requestRefresh(force = intent?.action == ACTION_REFRESH)
-        return START_STICKY
-    }
-
-    override fun onDestroy() {
-        receiver?.let { runCatching { unregisterReceiver(it) } }
-        main.removeCallbacks(tick)
-        pending?.let(main::removeCallbacks)
-        worker.shutdownNow()
-        NotifyGroups.release(this, BADGE_ID)
-        super.onDestroy()
-    }
-
-    /** Coalesce a burst into one read, at most one per [MIN_GAP_MS] unless the owner forced it. */
-    private fun requestRefresh(force: Boolean) = main.post {
-        if (pending != null) return@post
-        val wait = if (force) 0L else (MIN_GAP_MS - (System.currentTimeMillis() - lastReadMs)).coerceIn(0L, MIN_GAP_MS)
-        val r = Runnable { pending = null; runCatching { worker.execute { refreshNow() } } }
-        pending = r
-        main.postDelayed(r, wait)
-    }
-
-    // ── worker thread ────────────────────────────────────────────────────
-
-    private fun refreshNow() {
-        if (!NetworkBadgeService.canPost(this)) return
-        lastReadMs = System.currentTimeMillis()
-        var note = ""
-        val out = runCatching { AiUsageClient.fetch(BuildConfig.UI_C3_OPS_BASE_URL, bearer(this), AiUsageClient.fleetTransport, AiUsageClient.plainTransport) }
-            .getOrElse { AiUsageClient.Outcome.Failed(it.javaClass.simpleName) }
-        when (out) {
-            is AiUsageClient.Outcome.Ok -> {
-                if (AiUsageModel.parse(out.body) != null) {
-                    prefs(this).edit().putString(KEY_BODY, out.body).putLong(KEY_AT, lastReadMs).apply()
-                } else note = "unreadable reply"
-            }
-            is AiUsageClient.Outcome.Failed -> note = out.reason
-        }
-        runCatching { (getSystemService(NOTIFICATION_SERVICE) as NotificationManager).notify(NOTIF_ID, build(drawCached(note))) }
-    }
-
-    private fun drawCached(note: String): AiUsageModel.Card {
-        val p = prefs(this)
-        val snap = p.getString(KEY_BODY, null)?.let(AiUsageModel::parse)
-        return AiUsageModel.card(snap, p.getLong(KEY_AT, 0L), System.currentTimeMillis(), note)
-    }
-
-    // ── drawing ──────────────────────────────────────────────────────────
-
-    private fun build(card: AiUsageModel.Card): Notification {
-        val pinned = BadgeServices.pinned(this, BADGE_ID)
-        val open = PendingIntent.getActivity(this, RC_OPEN, openIntent(this),
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
-        val refresh = PendingIntent.getService(
-            this, RC_REFRESH, Intent(this, AiBadgeService::class.java).setAction(ACTION_REFRESH),
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
-        val b = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_stat_notify)
-            .setColor(0xFF0A0A0A.toInt())
-            .setContentTitle(card.title)
-            .setContentText(card.text)
-            .setSubText("Cloud SA - AI")
-            .setStyle(NotificationCompat.BigTextStyle().bigText(styled(card)))
-            .setContentIntent(open)
-            .setOngoing(pinned)
-            .setOnlyAlertOnce(true)
-            .setShowWhen(false)
-            .setCategory(NotificationCompat.CATEGORY_STATUS)
-            .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
-            .apply {
-                card.progress?.let { setProgress(100, it, false) }
-                if (pinned) setDeleteIntent(BadgeServices.repostOnDismiss(this@AiBadgeService, NOTIF_ID))
-            }
-        BadgeModel.add(b, BadgeModel.Action("refresh", R.drawable.ic_act_refresh, "Refresh", refresh))
-        return NotifyGroups.attach(this, b, BADGE_ID).build()
-            .apply { if (pinned) flags = flags or Notification.FLAG_NO_CLEAR or Notification.FLAG_ONGOING_EVENT }
+        val app = applicationContext
+        ensureReceiver(app)
+        // A short job: read, post, schedule the next inexact read, stopSelf.
+        requestRefresh(app, force = true) { stopSelf(startId) }
+        return START_NOT_STICKY
     }
 
     companion object {
@@ -162,9 +65,129 @@ class AiBadgeService : Service() {
         private const val RC_REFRESH = 0x4152
         private const val MIN_GAP_MS = 20_000L
         private const val TICK_MS = 5 * 60_000L
+        /** The one inexact alarm that carries the card while the process is gone. */
+        internal const val REFRESH_MS = 30 * 60_000L
         private const val PREFS = "ai_usage_badge"
         private const val KEY_BODY = "last_body"
         private const val KEY_AT = "last_at_ms"
+
+        private val main = Handler(Looper.getMainLooper())
+        private val worker by lazy { Executors.newSingleThreadExecutor { r -> Thread(r, "ai-badge").apply { isDaemon = true } } }
+        @Volatile private var receiver: BroadcastReceiver? = null
+        @Volatile private var pending: Runnable? = null
+        @Volatile private var lastReadMs = 0L
+        private val waiting = CopyOnWriteArrayList<() -> Unit>()
+
+        private val tick = object : Runnable {
+            @Volatile var app: Context? = null
+            override fun run() {
+                val a = app ?: return
+                val pm = a.getSystemService(Context.POWER_SERVICE) as PowerManager
+                if (!pm.isInteractive) return // the screen-on receiver restarts the tick
+                requestRefresh(a, force = false)
+                main.postDelayed(this, TICK_MS)
+            }
+        }
+
+        /** The process-level screen receiver (application context, so no service holds it): the tick runs only with the screen on. */
+        @Synchronized
+        fun ensureReceiver(app: Context) {
+            if (receiver != null) return
+            val r = object : BroadcastReceiver() {
+                override fun onReceive(context: Context, intent: Intent) {
+                    main.removeCallbacks(tick)
+                    if (intent.action == Intent.ACTION_SCREEN_ON) {
+                        requestRefresh(app, force = false)
+                        tick.app = app
+                        main.postDelayed(tick, TICK_MS)
+                    }
+                }
+            }
+            val filter = IntentFilter(Intent.ACTION_SCREEN_ON).apply { addAction(Intent.ACTION_SCREEN_OFF) }
+            ContextCompat.registerReceiver(app, r, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
+            receiver = r
+            tick.app = app
+            main.removeCallbacks(tick)
+            main.postDelayed(tick, TICK_MS)
+        }
+
+        @Synchronized
+        private fun dropReceiver(app: Context) {
+            receiver?.let { runCatching { app.unregisterReceiver(it) } }
+            receiver = null
+            main.removeCallbacks(tick)
+        }
+
+        /** Coalesce a burst into one read, at most one per [MIN_GAP_MS] unless the owner forced it; [done] runs after it. */
+        fun requestRefresh(app: Context, force: Boolean, done: (() -> Unit)? = null) {
+            if (done != null) waiting += done
+            main.post {
+                if (pending != null) return@post
+                val wait = if (force) 0L else (MIN_GAP_MS - (System.currentTimeMillis() - lastReadMs)).coerceIn(0L, MIN_GAP_MS)
+                val r = Runnable {
+                    pending = null
+                    runCatching { worker.execute { try { refreshNow(app) } finally { finish() } } }.onFailure { finish() }
+                }
+                pending = r
+                main.postDelayed(r, wait)
+            }
+        }
+
+        private fun finish() {
+            val l = waiting.toList(); waiting.clear()
+            main.post { l.forEach { runCatching(it) } }
+        }
+
+        // ── worker thread ────────────────────────────────────────────────
+
+        private fun refreshNow(app: Context) {
+            // Switched off (or its grants gone): stop reading; the owner retires the card.
+            if (!BadgeServices.wanted(app, AiBadgeService::class.java.name)) { dropReceiver(app); return }
+            if (!NetworkBadgeService.canPost(app)) return
+            ensureChannel(app)
+            lastReadMs = System.currentTimeMillis()
+            var note = ""
+            val out = runCatching { AiUsageClient.fetch(BuildConfig.UI_C3_OPS_BASE_URL, bearer(app), AiUsageClient.fleetTransport, AiUsageClient.plainTransport) }
+                .getOrElse { AiUsageClient.Outcome.Failed(it.javaClass.simpleName) }
+            when (out) {
+                is AiUsageClient.Outcome.Ok -> {
+                    if (AiUsageModel.parse(out.body) != null) {
+                        prefs(app).edit().putString(KEY_BODY, out.body).putLong(KEY_AT, lastReadMs).apply()
+                    } else note = "unreadable reply"
+                }
+                is AiUsageClient.Outcome.Failed -> note = out.reason
+            }
+            DataWidgetRuntime.scheduleNext(app, AiBadgeService::class.java, NOTIF_ID, REFRESH_MS)
+            runCatching { FleetNotify.post(app, NOTIF_ID, build(app, drawCached(app, note))) }
+        }
+
+        private fun drawCached(ctx: Context, note: String): AiUsageModel.Card {
+            val p = prefs(ctx)
+            val snap = p.getString(KEY_BODY, null)?.let(AiUsageModel::parse)
+            return AiUsageModel.card(snap, p.getLong(KEY_AT, 0L), System.currentTimeMillis(), note)
+        }
+
+        // ── drawing ──────────────────────────────────────────────────────────
+
+        private fun build(ctx: Context, card: AiUsageModel.Card): Notification {
+            val pinned = BadgeServices.pinned(ctx, BADGE_ID)
+            val open = PendingIntent.getActivity(ctx, RC_OPEN, openIntent(ctx),
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+            val refresh = PendingIntent.getService(
+                ctx, RC_REFRESH, Intent(ctx, AiBadgeService::class.java).setAction(ACTION_REFRESH),
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+            val b = FleetNotify.dataWidgetBuilder(ctx, R.drawable.ic_stat_notify, card.title, listOf(card.text), open,
+                    channelId = CHANNEL_ID, pinned = pinned, color = 0xFF0A0A0A.toInt(), subText = "Cloud SA - AI")
+                .setStyle(NotificationCompat.BigTextStyle().bigText(styled(card)))
+                .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
+                .apply {
+                    card.progress?.let { setProgress(100, it, false) }
+                    if (pinned) setDeleteIntent(BadgeServices.repostOnDismiss(ctx, NOTIF_ID, AiBadgeService::class.java))
+                }
+            BadgeModel.add(b, BadgeModel.Action("refresh", R.drawable.ic_act_refresh, "Refresh", refresh))
+            return NotifyGroups.attach(ctx, b, BADGE_ID).build()
+                .apply { if (pinned) flags = flags or Notification.FLAG_NO_CLEAR or Notification.FLAG_ONGOING_EVENT }
+        }
 
         private fun prefs(ctx: Context) = ctx.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 

@@ -10197,7 +10197,7 @@
                 "60",
                 "120"
               ],
-              "default": "30"
+              "default": "60"
             }
           ]
         },
@@ -10276,7 +10276,7 @@
       "enabled": true,
       "_doc_default_on": "`enabled` is the BUILD's kill-switch: false removes the feature for everyone, including a user who switched it on. `default_on` is only where the Configs > One-Hand > Floating button switch starts on a device that has never touched it. Off by default: the button is a foreground service drawn over every app, so it is opted into, not opted out of. A user who flipped the switch keeps their choice, because the stored pref is read first and this value is only its fallback.",
       "default_on": false,
-      "poll_ms": 1000,
+      "poll_ms": 5000,
       "_doc_layout": "The expanded menu renders the SAME 3-line box wherever it is triggered (single engine: FloatingNavService.showBar). Line 1 = `root` (the constellation apex, BIGGEST font) = Cloud SuperApp. Line 2 = `parents` (the sibling hubs cloud-myterminal · Cloud Comms · Cloud Nav, medium font), constant everywhere, centred; the hub matching the current foreground app is bold. Line 3 = the `children` of the context matched from the foreground package (cloud-myterminal → Acode·Amaze; Cloud-Comms → Mail·Chat·Messenger·Dialer; Cloud-Nav → none; otherwise the `default` context = Cloud-SuperApp's first-level pages), SMALLEST font. Font size strictly decreases per line (root > parents > children). Layout: `top_offset_dp` = distance from the top edge (renders below the centred island cluster); `width_pct` = box width as % of screen width. Every item has a `target`: `self` brings Cloud-SuperApp home; `app:<pkg>` launches that package (installing the `install_app` companion APK if absent); `section:<id>` / `action:<id>` / `page:<...>` bring Cloud-SuperApp forward and dispatch via its shortcut_action handler (onTileClicked). Bolding of the current hub is data-driven from each context's `match_prefixes` — nothing in Kotlin hardcodes a label or package. Add a hub / child = edit here.",
       "top_offset_dp": 150,
       "width_pct": 90,

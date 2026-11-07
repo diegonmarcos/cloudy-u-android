@@ -41,17 +41,20 @@ else:                                           print('OK')
 PY
 )" "network_data is a declared persistent badge in the Network group with its own switches"
 
-echo "== T2: the service is registered =="
-check "$(python3 - "$MANIFEST" <<'PY'
+echo "== T2: the service is registered, and is a data widget: NOT a foreground service =="
+check "$(python3 - "$MANIFEST" "$SVC" <<'PY'
 import re, sys
 m = open(sys.argv[1]).read()
-b = [x for x in re.findall(r'<service\b.*?</service>', m, re.S) if 'DataBadgeService' in x]
-if not b:                                       print('DataBadgeService is not in the manifest')
-elif 'android:exported="false"' not in b[0]:    print('must not be exported')
-elif 'specialUse' not in b[0]:                  print('no foregroundServiceType')
+src = '\n'.join(l for l in open(sys.argv[2]).read().split('\n') if not l.strip().startswith(('*', '//', '/*')))
+t = [x for x in re.findall(r'<service\b[^>]*>', m) if 'DataBadgeService' in x]
+if not t:                                       print('DataBadgeService is not in the manifest')
+elif 'android:exported="false"' not in t[0]:    print('must not be exported')
+elif 'foregroundServiceType' in t[0]:           print('still declares a foregroundServiceType')
+elif re.search(r'\bstartForeground\s*\(|startForegroundService', src): print('calls startForeground: it is a data widget')
+elif 'FleetNotify.dataWidgetBuilder(' not in src: print('not built by the shared data-widget builder')
 else:                                           print('OK')
 PY
-)" "DataBadgeService is a non-exported specialUse foreground service"
+)" "DataBadgeService is a non-exported plain service that never goes foreground (data widget)"
 
 echo "== T3: figures come from the Data Manager engine, not a second NetworkStats reader =="
 check "$(python3 - "$SVC" "$MODEL" <<'PY'
@@ -71,9 +74,9 @@ import re, sys
 s = '\n'.join(l for l in open(sys.argv[1]).read().split('\n') if not l.strip().startswith(('*', '//', '/*')))
 if 'ACTION_SCREEN_ON' not in s:                 print('not refreshed on screen-on')
 elif 'ACTION_REFRESH' not in s:                 print('no Refresh action')
-elif re.search(r'postDelayed\(', s) and not re.search(r'val r = Runnable \{ pending = null', s): print('an unexpected timer')
+elif re.search(r'postDelayed\(', s) and not re.search(r'val r = Runnable \{\s*pending = null', s): print('an unexpected timer')
 elif len(re.findall(r'postDelayed\(', s)) != 1: print('only the debounce may be delayed')
-elif not re.search(r'if \(!NetworkBadgeService\.canPost\(this\)\) return', s): print('reads without the notification grant')
+elif not re.search(r'if \(!NetworkBadgeService\.canPost\((this|app)\)\) return', s): print('reads without the notification grant')
 else:                                           print('OK')
 PY
 )" "no timer beyond the debounce; no grant, no read"
@@ -84,7 +87,7 @@ import sys
 s, m = open(sys.argv[1]).read(), open(sys.argv[2]).read()
 if 'hasUsageAccess' not in s:                   print('never checks the grant')
 elif 'Usage access needed' not in m:            print('the badge does not say the grant is missing')
-elif 'PermsActivity.intent(this, DataUsageProvider.PERMS_FEATURE, listOf("usage_access"))' not in s or 'Grant access' not in m: print('no grant button (the Permissions page, #1274)')
+elif 'PermsActivity.intent(ctx, DataUsageProvider.PERMS_FEATURE, listOf("usage_access"))' not in s or 'Grant access' not in m: print('no grant button (the Permissions page, #1274)')
 else:                                           print('OK')
 PY
 )" "missing grant -> titled, explained, with a Grant access button"

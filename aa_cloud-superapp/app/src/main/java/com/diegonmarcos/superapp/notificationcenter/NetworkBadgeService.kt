@@ -6,8 +6,10 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.Network
@@ -17,6 +19,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.os.PowerManager
 import android.provider.Settings
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
@@ -45,9 +48,12 @@ import java.util.concurrent.Executors
  * Refresh is EVENT-DRIVEN: the app's own connect/disconnect (the
  * [WgState.stateListener] hook) and the system's VPN-transport network
  * callback, which also catches the engine dropping the tunnel or another app
- * taking the slot. The only timer runs while connected, every
- * [TICK_MS] (30s), so handshake ages and rx/tx move; disconnected, nothing is
- * scheduled at all. Binder calls block, so all of it runs on one worker thread.
+ * taking the slot. The only timer runs while connected AND the screen is on,
+ * every [TICK_MS] (5 min); the screen-on edge refreshes at once (handshake ages
+ * are computed from the handshake timestamp at that moment, so nothing needs to
+ * tick while the screen is off); disconnected, nothing is scheduled at all.
+ * Binder calls block, so all of it runs on one worker thread. It stays a
+ * foreground service because it is the only keep-alive indicator of the VPN.
  *
  * Without the Android 13+ POST_NOTIFICATIONS grant the badge posts nothing and
  * polls nothing (the shade would hide it anyway); BadgeServices names the
@@ -60,6 +66,7 @@ class NetworkBadgeService : Service() {
     private var tick: Runnable? = null
     private var netCb: ConnectivityManager.NetworkCallback? = null
     private var debounce: Runnable? = null
+    private var screenRx: BroadcastReceiver? = null
 
     // Worker-thread state, for uptime and for the last action's refusal.
     private var wasConnected: Boolean? = null
@@ -75,6 +82,7 @@ class NetworkBadgeService : Service() {
         startForeground(NOTIF_ID, build(placeholder()))
         WgState.stateListener = { requestRefresh() }
         watchVpnTransport()
+        watchScreen()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -87,6 +95,7 @@ class NetworkBadgeService : Service() {
 
     override fun onDestroy() {
         WgState.stateListener = null
+        screenRx?.let { runCatching { unregisterReceiver(it) } }
         netCb?.let { runCatching { (getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager).unregisterNetworkCallback(it) } }
         tick?.let(main::removeCallbacks)
         debounce?.let(main::removeCallbacks)
@@ -110,6 +119,21 @@ class NetworkBadgeService : Service() {
         if (runCatching { cm.registerNetworkCallback(req, cb) }.isSuccess) netCb = cb
     }
 
+    /** Screen off cancels the tick; screen on refreshes once (fresh ages, rx/tx) and, if connected, resumes it. */
+    private fun watchScreen() {
+        val r = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                if (intent.action == Intent.ACTION_SCREEN_ON) requestRefresh()
+                else scheduleTick(false)
+            }
+        }
+        screenRx = r
+        ContextCompat.registerReceiver(this, r,
+            IntentFilter(Intent.ACTION_SCREEN_ON).apply { addAction(Intent.ACTION_SCREEN_OFF) }, ContextCompat.RECEIVER_NOT_EXPORTED)
+    }
+
+    private fun interactive(): Boolean = runCatching { (getSystemService(POWER_SERVICE) as PowerManager).isInteractive }.getOrDefault(true)
+
     /** Coalesce a burst of events (a tunnel coming up fires several) into one read. */
     private fun requestRefresh() = main.post {
         debounce?.let(main::removeCallbacks)
@@ -118,12 +142,12 @@ class NetworkBadgeService : Service() {
         main.postDelayed(r, DEBOUNCE_MS)
     }
 
-    /** Light periodic refresh: scheduled only after a read that found the tunnel up. */
+    /** Light periodic refresh: scheduled only after a read that found the tunnel up, and only while the screen is on. */
     private fun scheduleTick(connected: Boolean) {
         main.post {
             tick?.let(main::removeCallbacks)
             tick = null
-            if (!connected) return@post
+            if (!shouldTick(connected, interactive())) return@post
             val r = Runnable { runCatching { worker.execute { refreshNow() } } }
             tick = r
             main.postDelayed(r, TICK_MS)
@@ -263,7 +287,10 @@ class NetworkBadgeService : Service() {
         private const val RC_ALWAYS_ON = 0x4E31
         private const val RC_TOGGLE = 0x4E32
         private const val RC_MORE = 0x4E33
-        private const val TICK_MS = 30_000L
+        internal const val TICK_MS = 5 * 60_000L
+
+        /** The tick runs only while the tunnel is up and the screen is on. */
+        internal fun shouldTick(connected: Boolean, interactive: Boolean): Boolean = connected && interactive
         private const val DEBOUNCE_MS = 400L
 
         /** The deep link of the Cloud Mesh page (build.json: section:wg, page:config/wg). */

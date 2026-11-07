@@ -63,7 +63,7 @@ class BatteryBadgeService : Service() {
         val app = applicationContext
         ensureReceiver(app)
         // Renotify (a swipe on 14+, an alarm, a plug event), then let the service go.
-        requestRefresh(app) { stopSelf(startId) }
+        requestRefresh(app, immediate = true) { stopSelf(startId) }
         return START_NOT_STICKY
     }
 
@@ -74,7 +74,7 @@ class BatteryBadgeService : Service() {
         const val BADGE_ID = "battery_status"
 
         private const val RC_OPEN = 0x4231
-        private const val MIN_GAP_MS = 10_000L
+        internal const val MIN_GAP_MS = 90_000L
         /** The inexact alarm that carries the card while the process is gone. */
         private const val REFRESH_MS = 15 * 60_000L
 
@@ -83,6 +83,8 @@ class BatteryBadgeService : Service() {
         @Volatile private var receiver: BroadcastReceiver? = null
         @Volatile private var pending: Runnable? = null
         @Volatile private var lastPostMs = 0L
+        @Volatile private var lastPct = -1
+        @Volatile private var lastPlug = -2
         private val waiting = CopyOnWriteArrayList<() -> Unit>()
 
         /** The process-level receiver (application context, so no service has to hold it). Idempotent. */
@@ -90,7 +92,19 @@ class BatteryBadgeService : Service() {
         fun ensureReceiver(app: Context) {
             if (receiver != null) return
             val r = object : BroadcastReceiver() {
-                override fun onReceive(context: Context, intent: Intent) { requestRefresh(app) }
+                override fun onReceive(context: Context, intent: Intent) {
+                    when (intent.action) {
+                        // The screen edge is a reason to look; on is the moment the owner sees the card.
+                        // Both edges bypass the gap: the history splits screen-on from screen-off drain at them.
+                        Intent.ACTION_SCREEN_ON, Intent.ACTION_SCREEN_OFF -> requestRefresh(app, immediate = true)
+                        // Voltage / temperature jitter is not a reason to wake: only a level or plug change is.
+                        else -> {
+                            val pct = intent.getIntExtra(android.os.BatteryManager.EXTRA_LEVEL, -1)
+                            val plug = intent.getIntExtra(android.os.BatteryManager.EXTRA_PLUGGED, -1)
+                            if (changed(pct, plug)) requestRefresh(app)
+                        }
+                    }
+                }
             }
             val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED).apply {
                 addAction(Intent.ACTION_SCREEN_ON); addAction(Intent.ACTION_SCREEN_OFF)
@@ -99,18 +113,29 @@ class BatteryBadgeService : Service() {
             receiver = r
         }
 
+        /** True (and remembered) when the level or the plug state differs from the last one acted on. */
+        @Synchronized
+        internal fun changed(pct: Int, plug: Int): Boolean {
+            if (pct == lastPct && plug == lastPlug) return false
+            lastPct = pct; lastPlug = plug
+            return true
+        }
+
         @Synchronized
         private fun dropReceiver(app: Context) {
             receiver?.let { runCatching { app.unregisterReceiver(it) } }
             receiver = null
         }
 
-        /** Coalesce a burst of events into one read, at most one per [MIN_GAP_MS]; [done] runs when it has been posted. */
-        fun requestRefresh(app: Context, done: (() -> Unit)? = null) {
+        /** Coalesce a burst of events into one read, at most one per [MIN_GAP_MS] (a screen edge goes at once); [done] runs when it has been posted. */
+        fun requestRefresh(app: Context, immediate: Boolean = false, done: (() -> Unit)? = null) {
             if (done != null) waiting += done
             main.post {
-                if (pending != null) return@post
-                val wait = (MIN_GAP_MS - (System.currentTimeMillis() - lastPostMs)).coerceIn(0L, MIN_GAP_MS)
+                if (pending != null) {
+                    if (!immediate) return@post
+                    main.removeCallbacks(pending!!); pending = null
+                }
+                val wait = if (immediate) 0L else (MIN_GAP_MS - (System.currentTimeMillis() - lastPostMs)).coerceIn(0L, MIN_GAP_MS)
                 val r = Runnable {
                     pending = null
                     runCatching { worker.execute { try { refreshNow(app) } finally { finish() } } }.onFailure { finish() }

@@ -10,12 +10,15 @@ import android.app.PendingIntent
 import android.app.Service
 import android.app.usage.UsageEvents
 import android.app.usage.UsageStatsManager
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.os.PowerManager
 import android.provider.Settings
 import android.view.Gravity
 import android.view.MotionEvent
@@ -67,6 +70,10 @@ class FloatingNavService : Service() {
     private var forced = false
     private var currentContextId: String? = null
     private var lastForeground: String? = null
+    // Battery: how many polls in a row saw the same foreground package (backs the poll off), and the screen gate.
+    private var unchangedTicks = 0
+    private var polledForeground: String? = null
+    private var screenReceiver: BroadcastReceiver? = null
     // Persisted bubble position (px). Int.MIN_VALUE = unset → default top-centre.
     private var bubbleX = Int.MIN_VALUE
     private var bubbleY = Int.MIN_VALUE
@@ -86,7 +93,31 @@ class FloatingNavService : Service() {
         wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
         startForeground(NOTIF_ID, buildNotification())
         FloatingNavPrefs.observe(this, prefListener)
+        registerScreenGate()
+        nudger = { main.post { unchangedTicks = 0; main.removeCallbacks(pollTick); main.post(pollTick) } }
+        // Media follows the player's own session events, not the poll.
+        main.post { runCatching { media.watch(); media.refresh() } }
         main.post(pollTick)
+    }
+
+    private fun interactive(): Boolean =
+        (getSystemService(Context.POWER_SERVICE) as? PowerManager)?.isInteractive ?: true
+
+    /** Screen off: no poll at all (nobody sees the bubble). Screen on: one look at once, then the loop resumes. */
+    private fun registerScreenGate() {
+        val r = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                main.removeCallbacks(pollTick)
+                if (intent.action == Intent.ACTION_SCREEN_ON) {
+                    unchangedTicks = 0
+                    main.post { runCatching { media.watch(); media.refresh() } }
+                    main.post(pollTick)
+                }
+            }
+        }
+        screenReceiver = r
+        val f = IntentFilter(Intent.ACTION_SCREEN_ON).apply { addAction(Intent.ACTION_SCREEN_OFF) }
+        androidx.core.content.ContextCompat.registerReceiver(this, r, f, androidx.core.content.ContextCompat.RECEIVER_NOT_EXPORTED)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -132,6 +163,9 @@ class FloatingNavService : Service() {
     override fun onDestroy() {
         isRunning = false
         armed = false
+        nudger = null
+        screenReceiver?.let { runCatching { unregisterReceiver(it) } }
+        screenReceiver = null
         FloatingNavPrefs.unobserve(this, prefListener)
         main.removeCallbacksAndMessages(null)
         removeBubble(); removeBar()
@@ -149,10 +183,12 @@ class FloatingNavService : Service() {
             } else {
                 refresh(foregroundPackage())
             }
-            // Media-session notification tracks the active player independently
-            // of the overlay (it only needs notification access).
-            runCatching { media.refresh() }
-            main.postDelayed(this, cfg.pollMs)
+            // Media is NOT refreshed here: MediaProxy.watch() drives it from the session events.
+            // Screen off: no next tick (the screen-on receiver resumes the loop).
+            if (!interactive()) return
+            val fg = lastForeground
+            if (fg == polledForeground) unchangedTicks++ else { polledForeground = fg; unchangedTicks = 0 }
+            main.postDelayed(this, pollDelayMs(cfg.pollMs, unchangedTicks))
         }
     }
 
@@ -160,7 +196,7 @@ class FloatingNavService : Service() {
     private fun foregroundPackage(): String? = runCatching {
         val usm = getSystemService(Context.USAGE_STATS_SERVICE) as? UsageStatsManager ?: return null
         val now = System.currentTimeMillis()
-        val events = usm.queryEvents(now - 5_000, now)
+        val events = usm.queryEvents(now - EVENT_WINDOW_MS, now) // wider than the longest back-off, so a quick switch is still seen
         val e = UsageEvents.Event()
         var pkg: String? = lastForeground
         while (events.hasNextEvent()) {
@@ -645,6 +681,18 @@ class FloatingNavService : Service() {
          *  still on screen, and the floating circle drew itself over us. */
         private val hostVisible = java.util.concurrent.atomic.AtomicInteger(0)
 
+        /** Polls with the same foreground package before the loop backs off to [IDLE_POLL_MS]. */
+        const val IDLE_AFTER_TICKS = 3
+        const val IDLE_POLL_MS = 15_000L
+        private const val EVENT_WINDOW_MS = 35_000L
+
+        /** The next poll delay: the declared `poll_ms`, backed off to [IDLE_POLL_MS] once the foreground has not changed. */
+        fun pollDelayMs(pollMs: Long, unchangedTicks: Int): Long =
+            if (unchangedTicks >= IDLE_AFTER_TICKS) maxOf(pollMs, IDLE_POLL_MS) else pollMs
+
+        /** Set while the service lives: re-polls at once when the host app comes or goes (a host edge, not a timer). */
+        @Volatile private var nudger: (() -> Unit)? = null
+
         /** True while any Cloud-SuperApp shell is in the foreground. The
          *  reliable signal for "we're home" — the floating circle must never
          *  show here (the in-app trigger is the Sirius Star). Maintained by
@@ -652,12 +700,12 @@ class FloatingNavService : Service() {
         val hostForeground: Boolean get() = hostVisible.get() > 0
 
         /** ShellActivity.onResume. */
-        fun hostEnter() { hostVisible.incrementAndGet() }
+        fun hostEnter() { hostVisible.incrementAndGet(); nudger?.invoke() }
 
         /** ShellActivity.onPause. Clamped at zero so a stray unbalanced pause
          *  (process death mid-transition) cannot wedge the counter negative and
          *  suppress the overlay forever. */
-        fun hostExit() { if (hostVisible.decrementAndGet() < 0) hostVisible.set(0) }
+        fun hostExit() { if (hostVisible.decrementAndGet() < 0) hostVisible.set(0); nudger?.invoke() }
 
         /** Start the overlay iff the user has it ON, the build allows it, and
          *  "display over other apps" is granted. Returns whether it started
