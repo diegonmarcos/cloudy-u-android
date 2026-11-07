@@ -388,7 +388,7 @@
                 "version": "1.2.10",
                 "hash": {
                   "amd64": "sha256-d8tpJRKSqjWwtmL5H3BPBt14e3L3kCpi24xtaSmJID4=",
-                  "arm64": "sha256-uF/W0i92PdMxv4b95f0z/Hns9qwcslS5wZRlTf1aU8="
+                  "arm64": "sha256-uF/W0i92PdMxv4b95f0z/Hns9qwcslS5wrZRlTf1aU8="
                 }
               },
               "hermes-agent": {
