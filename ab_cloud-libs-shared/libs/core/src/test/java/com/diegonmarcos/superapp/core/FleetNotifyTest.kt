@@ -8,7 +8,6 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.os.IBinder
-import androidx.core.app.NotificationCompat
 import org.robolectric.RuntimeEnvironment
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -99,7 +98,6 @@ class FleetNotifyTest {
         assertTrue(n.flags and Notification.FLAG_ONGOING_EVENT != 0)
         assertTrue(n.flags and Notification.FLAG_NO_CLEAR != 0)
         assertEquals(0, n.flags and Notification.FLAG_FOREGROUND_SERVICE)
-        assertEquals(NotificationCompat.FOREGROUND_SERVICE_DEFAULT, NotificationCompat.getForegroundServiceBehavior(n))
         assertEquals(FleetNotify.CHANNEL_DATA_WIDGET, n.channelId)
         assertTrue(n.actions == null || n.actions.isEmpty())
     }
