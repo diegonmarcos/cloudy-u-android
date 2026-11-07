@@ -28,7 +28,7 @@ class CloneTruthTest {
     @get:Rule val tmp = TemporaryFolder()
 
     private fun repo(root: File, name: String) = ManagedRepo(id = name, name = name, path = File(root, name).absolutePath)
-    private fun clone(root: File, name: String) { File(root, "$name/.git").mkdirs() }
+    private fun clone(root: File, name: String) { File(root, "$name/.git/objects").mkdirs(); File(root, "$name/.git/HEAD").writeText("ref: refs/heads/main\n") }
     private val labels = { k: String -> if (k == "c_cloned") "cloned" else "not cloned" }
     private fun summary(total: Int, cloned: Int) = GitTopBarState.summary(listOf("cloned", "not_cloned"), total, cloned, 0, 0, 0, "", labels)
 

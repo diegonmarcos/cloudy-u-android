@@ -41,8 +41,8 @@ class BareClonesTest {
     @Test fun `origin is read from a bare config and the commands never touch a working clone`() {
         val cfg = "[core]\n\tbare = true\n[remote \"upstream\"]\n\turl = x\n[remote \"origin\"]\n\turl = https://github.com/o/r.git\n\tfetch = +refs/*:refs/*\n\tmirror = true\n"
         assertEquals("https://github.com/o/r.git", BareClones.originOfConfig(cfg))
-        assertEquals("clone --mirror 'u' '/g/_bare/o/r.git'", BareClones.cloneArgs("u", "/g/_bare/o/r.git", 0, q))
-        assertEquals("clone --mirror --depth 1 'u' 'd'", BareClones.cloneArgs("u", "d", 1, q))
+        assertEquals("clone --bare --single-branch --branch main 'u' '/g/_bare/o/r.git'", BareClones.cloneArgs("u", "/g/_bare/o/r.git", 0, q))
+        assertEquals("clone --bare --single-branch --branch main --depth 1 'u' 'd'", BareClones.cloneArgs("u", "d", 1, q))
         assertEquals("-C 'd' remote update --prune", BareClones.updateArgs("d", q))
     }
 
@@ -53,7 +53,7 @@ class BareClonesTest {
     }
 
     @Test fun `a bare mirror is depth 1 - the clone is shallow and the update is a depth fetch, never remote update`() {
-        assertEquals("clone --mirror --depth 1 'u' 'd'", BareClones.cloneArgs("u", "d", 1, q))
+        assertEquals("clone --bare --single-branch --branch main --depth 1 'u' 'd'", BareClones.cloneArgs("u", "d", 1, q))
         assertEquals("-C 'd' fetch --prune --depth 1 origin", BareClones.updateArgs("d", q, 1))
         assertEquals("-C 'd' remote update --prune", BareClones.updateArgs("d", q, 0))
         val auth: (String) -> String = { "git $it" }

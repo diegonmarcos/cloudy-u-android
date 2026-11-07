@@ -13,6 +13,7 @@ import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.material3.FilterChip
 import androidx.compose.foundation.layout.Box
@@ -376,11 +377,12 @@ private fun Pane(
         ) {
             when {
                 listing == null || (listing.loading && listing.entries.isEmpty() && listing.error == null) -> LoadingState()
-                listing.error != null -> ErrorState(listing.error, onRetry = { controller.reload(loc) })
+                listing.error != null -> ErrorState(listing.error, Modifier.fillMaxSize().verticalScroll(rememberScrollState()), onRetry = { controller.reload(loc) })
                 rows.isEmpty() -> EmptyState(
                     if (loc.isArchive) Icons.Filled.Archive else Icons.Filled.FolderOpen,
                     stringResource(if (loc.isArchive) R.string.files_empty_archive_title else R.string.files_empty_title),
                     if (loc.isArchive) "" else stringResource(R.string.files_empty_hint),
+                    Modifier.fillMaxSize().verticalScroll(rememberScrollState()), // scrollable, so a pull on an EMPTY folder still reaches PullToRefreshBox
                 )
                 else -> EntryList(id, pane, rows, controller, prefs.thumbnails, onOpenEntry = { e -> onOpenEntry(e, rows.map { it.entry }) }, onMenu = onMenu, onActivate = { if (!isActive) controller.activate(id) })
             }
@@ -425,8 +427,9 @@ private fun PaneHeader(id: PaneId, ui: FilesUiState, listings: Map<String, Files
 @Composable
 private fun TabStrip(id: PaneId, pane: PaneState, controller: FilesController, onOpenPlaces: () -> Unit) {
     Row(Modifier.fillMaxWidth().testTag(DriveTags.FILES_TAB_STRIP).padding(start = DriveMetrics.gapWide, end = DriveMetrics.tight, top = DriveMetrics.gapWide), verticalAlignment = Alignment.CenterVertically) {
+        // One tab = the breadcrumb already names the folder: no duplicate title chip (tabs show from the second one on).
         LazyRow(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(DriveMetrics.gapWide)) {
-            itemsIndexed(pane.tabs) { i, tab ->
+            itemsIndexed(if (pane.tabs.size > 1) pane.tabs else emptyList()) { i, tab ->
                 val selected = i == pane.activeTab
                 Row(
                     Modifier.clip(bottomNavPillShape)
@@ -460,7 +463,8 @@ private fun Breadcrumbs(id: PaneId, loc: Location, controller: FilesController, 
     LazyRow(Modifier.fillMaxWidth().testTag(DriveTags.FILES_BREADCRUMBS).padding(horizontal = DriveMetrics.pad, vertical = DriveMetrics.gap), state = listState, verticalAlignment = Alignment.CenterVertically) {
         itemsIndexed(crumbs) { i, crumb ->
             val last = i == crumbs.lastIndex
-            val label = (crumb as? Location.Local)?.let { rootLabels[it.path] } ?: crumb.name
+            // A declared place label only names an ANCESTOR; the folder you are IN always shows its real name ("git", not the place alias "Terminal clones").
+            val label = (crumb as? Location.Local)?.takeIf { !last }?.let { rootLabels[it.path] } ?: crumb.name
             Text(
                 label,
                 Modifier.clip(bottomNavPillShape).combinedClickable(onClick = { if (!last) controller.open(id, crumb) }, onLongClick = if (copyDeclared) ({ onCopyPath(crumb) }) else null).padding(horizontal = DriveMetrics.gapWide, vertical = DriveMetrics.tight),

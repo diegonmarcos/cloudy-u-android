@@ -13,6 +13,11 @@ object CloneTruth {
     /** [repos] whose folder is a clone right now; blocking when [isClone] touches disk or cld.termux: call on IO. */
     fun live(repos: List<ManagedRepo>, isClone: (File) -> Boolean): List<ManagedRepo> = repos.filter { runCatching { isClone(File(it.path)) }.getOrDefault(false) }
 
-    /** A working tree (`.git`) or a bare mirror (HEAD + objects): the on-disk shape of a clone. */
-    fun isCloneDir(dir: File): Boolean = dir.isDirectory && (File(dir, ".git").exists() || (File(dir, "HEAD").isFile && File(dir, "objects").isDirectory))
+    /** A working tree (a valid `.git` dir with HEAD, or a `.git` file for a worktree/submodule), a `.git`-only clone, or a bare mirror (HEAD + objects): the on-disk shape of a clone. An empty `.git` folder is NOT one. */
+    fun isCloneDir(dir: File): Boolean = dir.isDirectory && (isGitDir(File(dir, ".git")) || isGitDir(dir))
+
+    private fun isGitDir(g: File): Boolean = g.isFile || (g.isDirectory && File(g, "HEAD").isFile && File(g, "objects").isDirectory)
+
+    /** Every immediate subfolder of [root] that is a clone right now (the real scan of the clones folder). */
+    fun scan(root: File): List<File> = (root.listFiles() ?: emptyArray()).filter { isCloneDir(it) }.sortedBy { it.name }
 }

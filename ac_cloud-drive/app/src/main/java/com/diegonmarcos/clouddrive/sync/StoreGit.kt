@@ -50,7 +50,7 @@ object StoreGit {
 
     fun cloneScript(url: String, guestDir: String, depth: Int?): String =
         "set -e; mkdir -p \"\$(dirname ${q(guestDir)})\"; " +
-            authed("clone ${if (depth != null && depth > 0) "--depth $depth " else ""}${q(url)} ${q(guestDir)}")
+            authed("clone --single-branch --branch main ${if (depth != null && depth > 0) "--depth $depth " else ""}${q(url)} ${q(guestDir)}")
 
     /**
      * #1491 the script of one declared clone mode (the git binary, the path JGit cannot take for a partial-clone filter). A single-branch

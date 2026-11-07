@@ -135,7 +135,8 @@ class GitSyncCoordinator(private val ctx: Context, private val scope: CoroutineS
         val cached = runCatching { statusCache.load() }.getOrDefault(emptyMap())
         statusReader.seed(rekey(cached) { Declarations.repoSot.canonical(it) })
         glances.value = statusReader.statuses.value.mapValues { (_, st) -> glanceOf(st) }
-        runCatching { registry.load() }.getOrNull()?.let { repos.value = it }
+        // THE FALSE "Cloned (18)": this used to publish the RAW registry (every folder ever registered, deleted or not) as the clones until the first loadRegistry(). Disk filter first.
+        runCatching { CloneTruth.live(registry.load(), CloneTruth::isCloneDir) }.getOrNull()?.let { repos.value = it }
         runCatching { history.load() }.getOrNull()?.let { events.value = it }
         scope.launch {
             statusReader.statuses.collect { m ->
