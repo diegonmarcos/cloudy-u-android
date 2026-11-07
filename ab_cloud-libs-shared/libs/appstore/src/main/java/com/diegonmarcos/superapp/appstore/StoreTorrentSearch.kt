@@ -48,6 +48,7 @@ internal object StoreTorrentSearch {
     const val TAG_NO_HOST = "store-search:torrent:no-host"
     fun sourceTag(id: String) = "store-search:torrent:source:$id"
     fun groupTag(id: String) = "store-search:torrent:group:$id"
+    fun rowTag(id: String, i: Int) = "store-search:torrent:row:$id:$i"
     fun downloadTag(id: String, i: Int) = "store-search:torrent:download:$id:$i"
 
     private sealed class St {
@@ -123,7 +124,8 @@ internal object StoreTorrentSearch {
                         val noteKey = s.id + ":" + i
                         Column(Modifier.fillMaxWidth().background(Ink.CARD.ink()).padding(KitDensity.small)) {
                             Text(h.title, color = p.textPrimary, fontSize = KitDensity.title, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                            Text(StoreTorrentHost.line(h), color = p.textSecondary, fontSize = KitDensity.caption)
+                            Text(StoreTorrentHost.line(h), color = p.textSecondary, fontSize = KitDensity.caption, modifier = Modifier.testTag(rowTag(s.id, i)))
+                            Text("via " + h.sourceLabel.ifEmpty { s.label }, color = p.textSecondary, fontSize = KitDensity.caption)
                             Row {
                                 Text("Download", color = p.textPrimary, fontSize = KitDensity.caption, fontWeight = FontWeight.Bold,
                                     modifier = Modifier.testTag(downloadTag(s.id, i)).background(p.accent).clickable {

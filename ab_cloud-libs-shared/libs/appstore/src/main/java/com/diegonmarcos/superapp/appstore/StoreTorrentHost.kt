@@ -22,6 +22,11 @@ object StoreTorrentHost {
         val addedAt: Long,
         val page: String?,
         val key: Any,
+        /** the indexer's display name (Pirate Bay, YTS, Internet Archive) */
+        val sourceLabel: String = "",
+        val category: String? = null,
+        /** -1 = the indexer does not say */
+        val files: Int = -1,
     )
 
     interface Host {
@@ -38,18 +43,22 @@ object StoreTorrentHost {
 
     /** 1536 -> "1.5 KB". */
     fun sizeText(bytes: Long): String {
-        if (bytes < 0) return "?"
+        if (bytes < 0) return DASH
         val units = arrayOf("B", "KB", "MB", "GB", "TB")
         var v = bytes.toDouble(); var i = 0
         while (v >= 1024 && i < units.lastIndex) { v /= 1024; i++ }
         return if (i == 0) "$bytes B" else String.format(java.util.Locale.US, "%.1f %s", v, units[i])
     }
 
-    /** The data line of a result: seeders, leechers, size, date. */
-    fun line(h: Hit): String = buildList {
-        add(if (h.seeders >= 0) "S ${h.seeders}" else "S ?")
-        add(if (h.leechers >= 0) "L ${h.leechers}" else "L ?")
-        add(sizeText(h.sizeBytes))
-        if (h.addedAt > 0) add(java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(java.util.Date(h.addedAt * 1000)))
-    }.joinToString(" · ")
+    /** The data line of a result, every field always present ("—" when the indexer does not say): S, L, size, date, category, files. */
+    fun line(h: Hit): String = listOf(
+        "S " + (if (h.seeders >= 0) h.seeders.toString() else DASH),
+        "L " + (if (h.leechers >= 0) h.leechers.toString() else DASH),
+        if (h.sizeBytes >= 0) sizeText(h.sizeBytes) else DASH,
+        if (h.addedAt > 0) java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).apply { timeZone = java.util.TimeZone.getTimeZone("UTC") }.format(java.util.Date(h.addedAt * 1000)) else DASH,
+        h.category ?: DASH,
+        if (h.files >= 0) "${h.files} file" + (if (h.files == 1) "" else "s") else DASH,
+    ).joinToString(" · ")
+
+    const val DASH = "—"
 }

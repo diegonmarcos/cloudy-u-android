@@ -44,10 +44,10 @@ class StoreSearchSubpagesTest {
     }
 
     @Test fun torrentHostFormatsResultLines() {
-        val h = StoreTorrentHost.Hit("apibay", "Ubuntu", 120, 4, 6_000_000_000L, 1_700_000_000L, null, Any())
+        val h = StoreTorrentHost.Hit("apibay", "Ubuntu", 120, 4, 6_000_000_000L, 1_700_000_000L, null, Any(), "The Pirate Bay", "Video", 3)
         val l = StoreTorrentHost.line(h)
-        assertTrue(l, l.startsWith("S 120 · L 4 · 5.6 GB"))
-        assertEquals("S ? · L ? · ?", StoreTorrentHost.line(StoreTorrentHost.Hit("x", "t", -1, -1, -1, 0, null, Any())))
+        assertEquals("S 120 · L 4 · 5.6 GB · 2023-11-14 · Video · 3 files", l)
+        assertEquals("S — · L — · — · — · — · —", StoreTorrentHost.line(StoreTorrentHost.Hit("x", "t", -1, -1, -1, 0, null, Any())))
         assertEquals("1.5 KB", StoreTorrentHost.sizeText(1536))
     }
 }

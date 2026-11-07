@@ -23,6 +23,10 @@ class TorrentHit(
     val addedAt: Long,
     /** the indexer's page for this result, or null */
     val page: String?,
+    /** the indexer's category in words, or null when it does not say */
+    val category: String? = null,
+    /** number of files in the torrent, -1 when the indexer does not say */
+    val files: Int = -1,
 ) {
     /** The magnet to hand the engine, or null for a hit that is only a .torrent url. */
     fun magnetUri(): String? = magnet ?: infoHash?.let { Magnet.build(it, title, Magnet.PUBLIC_TRACKERS) }
@@ -48,6 +52,11 @@ object TorrentIndexers {
     private fun enc(q: String) = URLEncoder.encode(q.trim(), "UTF-8")
     private fun num(o: JSONObject, k: String): Long = o.opt(k)?.toString()?.toLongOrNull() ?: 0L
 
+    /** The Pirate Bay's top-level category codes (100 audio ... 600 other); a sub-category code maps to its hundred. */
+    fun tpbCategory(code: String): String? = when ((code.toIntOrNull() ?: -1) / 100) {
+        1 -> "Audio"; 2 -> "Video"; 3 -> "Applications"; 4 -> "Games"; 5 -> "Adult"; 6 -> "Other"; else -> null
+    }
+
     /** The Pirate Bay's public JSON API: every category, hash-only results (the magnet is built with public trackers). */
     object ApiBay : TorrentIndexer {
         override val id = "apibay"
@@ -63,7 +72,8 @@ object TorrentIndexers {
                 // The API answers "No results returned" with an all-zero hash: that is an empty list, not a hit.
                 if (hash.length != 40 || hash.all { it == '0' }) return@mapNotNull null
                 TorrentHit(id, o.optString("name"), hash, null, null, num(o, "seeders").toInt(), num(o, "leechers").toInt(),
-                    num(o, "size"), num(o, "added"), "https://thepiratebay.org/description.php?id=${o.optString("id")}")
+                    num(o, "size"), num(o, "added"), "https://thepiratebay.org/description.php?id=${o.optString("id")}",
+                    category = tpbCategory(o.optString("category")), files = num(o, "num_files").toInt().takeIf { it > 0 } ?: -1)
             }
         }
     }
@@ -85,7 +95,8 @@ object TorrentIndexers {
                     val t = ts.optJSONObject(j) ?: continue
                     val hash = t.optString("hash").lowercase().takeIf { it.length == 40 } ?: continue
                     out += TorrentHit(id, "${m.optString("title_long")} [${t.optString("quality")} ${t.optString("type")}]".trim(), hash, null, null,
-                        num(t, "seeds").toInt(), num(t, "peers").toInt(), num(t, "size_bytes"), num(t, "date_uploaded_unix"), m.optString("url").takeIf { it.isNotEmpty() })
+                        num(t, "seeds").toInt(), num(t, "peers").toInt(), num(t, "size_bytes"), num(t, "date_uploaded_unix"), m.optString("url").takeIf { it.isNotEmpty() },
+                        category = "Movies", files = 1)
                 }
             }
             return out
@@ -100,14 +111,17 @@ object TorrentIndexers {
         override val homepage = "https://archive.org"
         override fun searchUrl(query: String) =
             "https://archive.org/advancedsearch.php?q=${enc("(" + query.trim() + ") AND format:(Archive BitTorrent)")}" +
-                "&fl%5B%5D=identifier&fl%5B%5D=title&fl%5B%5D=item_size&fl%5B%5D=publicdate&sort%5B%5D=downloads+desc&rows=30&output=json"
+                "&fl%5B%5D=identifier&fl%5B%5D=title&fl%5B%5D=item_size&fl%5B%5D=publicdate&fl%5B%5D=mediatype&fl%5B%5D=files_count&sort%5B%5D=downloads+desc&rows=30&output=json"
         override fun parse(body: String): List<TorrentHit> {
             val docs = JSONObject(body).optJSONObject("response")?.optJSONArray("docs") ?: return emptyList()
             return (0 until docs.length()).mapNotNull { i ->
                 val d = docs.optJSONObject(i) ?: return@mapNotNull null
                 val ident = d.optString("identifier").takeIf { it.isNotEmpty() } ?: return@mapNotNull null
                 TorrentHit(id, d.optString("title").ifEmpty { ident }, null, null, "https://archive.org/download/$ident/${ident}_archive.torrent",
-                    -1, -1, num(d, "item_size"), 0L, "https://archive.org/details/$ident")
+                    -1, -1, num(d, "item_size"),
+                    runCatching { java.time.Instant.parse(d.optString("publicdate")).epochSecond }.getOrDefault(0L), "https://archive.org/details/$ident",
+                    category = d.optString("mediatype").takeIf { it.isNotEmpty() }?.replaceFirstChar { it.uppercase() },
+                    files = num(d, "files_count").toInt().takeIf { it > 0 } ?: -1)
             }
         }
     }

@@ -20,7 +20,7 @@ class TorrentHost(private val app: Context) : StoreTorrentHost.Host {
 
     override fun search(sourceId: String, query: String): List<StoreTorrentHost.Hit> {
         val ix = TorrentIndexers.byId(sourceId) ?: error("unknown torrent source '$sourceId'")
-        return TorrentSearch.search(ix, query).map { StoreTorrentHost.Hit(ix.id, it.title, it.seeders, it.leechers, it.sizeBytes, it.addedAt, it.page, it) }
+        return TorrentSearch.search(ix, query).map { StoreTorrentHost.Hit(ix.id, it.title, it.seeders, it.leechers, it.sizeBytes, it.addedAt, it.page, it, ix.label, it.category, it.files) }
     }
 
     override fun download(hit: StoreTorrentHost.Hit): String {
