@@ -67,10 +67,15 @@ import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material.icons.outlined.Mood
+import androidx.compose.material.icons.outlined.Paid
+import androidx.compose.material.icons.outlined.DataUsage
+import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Send
 import androidx.compose.ui.res.colorResource
 import com.diegonmarcos.cloudsuperintel.Persona
+import com.diegonmarcos.superapp.bottomnav.LocalAppTopBar
 import com.diegonmarcos.superapp.bottomnav.TopBarDrawer
 import com.diegonmarcos.superapp.bottomnav.rememberAccountLauncher
 import com.diegonmarcos.superapp.bottomnav.islandEntries
@@ -127,8 +132,8 @@ fun SiShell() {
     var forumPersona by rememberSaveable { mutableStateOf(siDefault) }
     val chatPersona = if (sec?.id == Decl.SECTION_SI) forumPersona else persona?.id
     val chat = remember(chatPersona) { SiAi.chat(ctx, chatPersona) }
-    // The composer's declaration (assets/ai/composer.json): (+) attach, Task, Agent, Model, Effort, Mode, MCP, More.
-    val composerDecl = remember { runCatching { AiComposerDecl.load(ctx) }.getOrDefault(AiComposerDecl("cloud-superintel", listOf("plus", "task", "agent", "model", "effort", "mode", "mcp", "more"))) }
+    // The composer's declaration (assets/ai/composer.json): (+) attach, Task, Specialist, Agent, Model, Effort, Mode, Repos, Plugins, MCP buckets, More.
+    val composerDecl = remember { runCatching { AiComposerDecl.load(ctx) }.getOrDefault(AiComposerDecl("cloud-superintel", listOf("plus", "task", "specialist", "agent", "model", "effort", "mode", "repos", "skills", "mcp_kg", "mcp_infra", "mcp_user", "mcp_ext", "perf", "more"))) }
     // The AI Tools pages need the model list and the task list the chat page would have loaded.
     if (sec?.id == Decl.SECTION_TOOLS) LaunchedEffect(chat) {
         if (chat.models.isEmpty()) chat.models = withContext(Dispatchers.IO) { runCatching { chat.host().models() }.getOrDefault(emptyList()) }
@@ -235,6 +240,7 @@ private fun SiForum(
     val chat = topics.first { it.id == current.id }.chat
     LaunchedEffect(current.id) { withContext(Dispatchers.IO) { SiAi.tune(ctx, current, chat) } }
     var tick by remember { mutableIntStateOf(0) }
+    val topBar = LocalAppTopBar.current
     val stored = remember(tick, chat.session.id, chat.session.title, chat.session.messages.size, chat.sending) { chat.host().sessions() }
     // The open session is always on the rail, first, until it is stored (a fresh chat has no message yet).
     val list = if (stored.any { it.id == chat.session.id }) stored else listOf(chat.session) + stored
@@ -251,7 +257,7 @@ private fun SiForum(
         onCall = {},
         onInfo = { chat.page = AiChatState.PAGE_MODELS },
         onMore = {},
-        sessions = ForumSessions(list, chat.session.id, onOpen = { chat.open(it) }, onNew = { chat.fresh(); tick++ }),
+        sessions = ForumSessions(list, chat.session.id, onOpen = { chat.open(it) }, onNew = { chat.fresh(); tick++ }, onMenu = { topBar?.openDrawer() }),
         tools = ForumTools(decl, attach = attachHost),
     )
 }
@@ -298,6 +304,11 @@ private val siForumIcon: ForumIcon = { name, size, tint, description ->
         "mic" -> Icons.Outlined.Mic
         "send" -> Icons.Outlined.Send
         "new" -> Icons.Outlined.AddCircleOutline
+        "menu" -> Icons.Outlined.Menu
+        "usage" -> Icons.Outlined.Paid
+        "context" -> Icons.Outlined.DataUsage
+        "files" -> Icons.Outlined.Folder
+        "camera" -> Icons.Outlined.PhotoCamera
         else -> Icons.Outlined.Info
     }
     Icon(imageVector = vector, contentDescription = description, tint = tint, modifier = Modifier.size(size))

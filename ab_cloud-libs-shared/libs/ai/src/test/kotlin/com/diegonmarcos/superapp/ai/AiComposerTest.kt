@@ -18,7 +18,7 @@ class AiComposerTest {
     private val design = AiDesign.parse(File(dir, "ai-design.json").readText())
     private val cfg = AiConfig.parse(File(dir, "ai.json").readText())
 
-    @Test fun theBarIsPlusTaskAgentModelEffortPermsMcpMoreInThatOrderWhateverSubsetAnAppEnables() {
+    @Test fun theBarKeepsItsOrderWhateverSubsetAnAppEnables() {
         assertEquals(listOf("plus", "task", "agent", "model", "effort", "mode", "mcp", "more"), design.controls.map { it.id })
         assertEquals("Perms", design.controls.first { it.id == "mode" }.label)
         assertEquals(listOf("task", "mcp"), design.ordered(listOf("mcp", "task", "nonsense")).map { it.id })
@@ -272,5 +272,83 @@ class AiComposerTest {
         plain.send(plain.newSession("m", 1), "hello", "m", false, 2, AiSink.None)
         assertEquals(null, seen!!.wire)
         assertNotNull(JSONObject(AiProtocol.body(cfg, seen!!, "m", false, false)).getJSONArray("messages"))
+    }
+
+    @Test fun controlsLiveOnTheInputRowAndTwoToolbarRows() {
+        fun row(r: Int) = design.layout.filter { it.row == r }.map { it.id }
+        assertEquals(listOf("plus"), row(0))
+        assertEquals(listOf("task", "specialist", "agent", "model", "effort", "mode"), row(1))
+        assertEquals(listOf("repos", "skills", "mcp_kg", "mcp_infra", "mcp_user", "mcp_ext", "perf", "more"), row(2))
+        // The divider falls between (Task)(Specialist) and (Agent)(Model)(Effort)(Mode).
+        assertEquals(listOf("agent"), design.layout.filter { it.dividerBefore }.map { it.id })
+        // Every prior control keeps its label and icon in the layout; the single MCP control became the four buckets.
+        for (c in design.controls.filter { it.id != "mcp" }) assertEquals(c, design.layout.first { it.id == c.id }.copy(row = 1, dividerBefore = false))
+        assertEquals(listOf("task", "specialist", "mode"), design.orderedLayout(listOf("mode", "specialist", "task", "mcp", "nonsense")).map { it.id })
+        assertEquals(design.mcpBuckets.map { it.control }, design.layout.map { it.id }.filter { it.startsWith("mcp_") })
+    }
+
+    @Test fun pluginsAreSkillPluginsOrPerformancePlugins() {
+        val items = design.moreGroups.flatMap { it.items }.associateBy { it.id }
+        assertEquals("Cloudy Principals", items.getValue("principles").label)
+        assertTrue(items.values.none { it.label == "Principles" })
+        assertEquals(listOf("caveman", "principles", "skills", "memory"), pickerGroups(design, "skill").single().items.map { it.id })
+        assertEquals(listOf("headroom", "rtk"), pickerGroups(design, "performance").single().items.map { it.id })
+        assertEquals(mapOf("skill" to "skills", "performance" to "perf"), design.pluginClassControl)
+        // The plugin's gateway key and header did not change with the rename.
+        assertEquals("agents_principles", items.getValue("principles").plugin)
+        assertEquals("x-principles", items.getValue("principles").header)
+    }
+
+    @Test fun everyMcpServerIsSortedIntoOneOfTheFourBuckets() {
+        assertEquals(listOf("kg", "infra", "user", "ext"), design.mcpBuckets.map { it.id })
+        assertEquals(listOf("mcp_kg", "mcp_infra", "mcp_user", "mcp_ext"), design.mcpBuckets.map { it.control })
+        fun b(n: String) = design.mcpBucket(n)!!.id
+        assertEquals("infra", b("cloudy-c3-mcp"))
+        assertEquals("infra", b("cloud-infra-mcp"))
+        for (n in listOf("cloudy-all-mcp", "cloudy-apps-communication-mcp", "cloudy-apps-drive-mcp", "cloudy-cgc-pub-mcp", "cloud-me-cgc-pvt-mcp", "cloudy-android-mcp", "cloud-vault-mcp")) assertEquals(n, "user", b(n))
+        for (n in listOf("google-personal-mcp", "google-workspace-mcp", "browser-mcp")) assertEquals(n, "ext", b(n))
+        assertEquals("kg", b("cloudy-kg-mcp"))
+        assertEquals("kg", b("neo4j-graph"))
+        // Every declared known server lands in the bucket that lists it, and the infra bucket has the one MCP there is so far.
+        for (k in design.mcpBuckets) for (n in k.known) assertEquals(n, k.id, b(n))
+        assertEquals(listOf("cloudy-c3-mcp"), design.mcpBuckets.first { it.id == "infra" }.known)
+    }
+
+    @Test fun nothingOfTheMoreSheetIsLostByTheReorganisation() {
+        val before = listOf("usage", "headroom", "rtk", "caveman", "principles", "skills", "memory", "export", "retry", "undo", "system", "shortcuts", "about")
+        val items = design.moreGroups.flatMap { it.items }
+        assertEquals(before.toSet(), items.map { it.id }.toSet())
+        val inPickers = listOf("skill", "performance").flatMap { pickerGroups(design, it).single().items }.map { it.id }
+        // Each item has exactly one home: Usage & Cost in the top bar, class items in their picker, the rest in More.
+        for (item in items) {
+            val home = when { item.kind == "usage" -> "topbar"; item.cls.isNotEmpty() -> "picker"; else -> "more" }
+            assertEquals(item.id, home == "picker", item.id in inPickers)
+        }
+    }
+
+    @Test fun exposedReposRideAsAStandingSentenceOrNothing() {
+        assertEquals("", design.reposSentence(emptySet()))
+        assertEquals("Repositories exposed to you for this session: a, b. Read code from these only.", design.reposSentence(setOf("b", "a")))
+        val decl = AiComposerDecl.parse("""{"app":"x","controls":["repos"],"repos":["r1","r2"]}""", design)
+        assertEquals(listOf("r1", "r2"), decl.repos)
+        val chat = AiChatState(FakeHost())
+        chat.toggleRepo("r1"); chat.toggleRepo("r2"); chat.toggleRepo("r1")
+        assertEquals(setOf("r2"), chat.reposOn)
+    }
+
+    @Test fun contextBreakdownIsCountedOrReportedNeverEstimated() {
+        val file = AiAttachment("f1", "a.txt", "text/plain", "/x/a.txt", 10)
+        val s = AiSession("s", "t", "m", 0, listOf(
+            AiMsg("user", "hello", attachments = listOf(file)),
+            AiMsg("assistant", "hi there", prompt = 100, completion = 20),
+        ))
+        val lines = AiContext.breakdown(s, 1000, "be brief", listOf(file)).associate { it.label to it.value }
+        assertEquals("1,000 tokens", lines["Window"])
+        assertEquals("120 tokens (12.0%)", lines["In context (reported)"])
+        assertEquals("1 you · 1 assistant", lines["Messages"])
+        assertEquals("8 characters", lines["System prompt"])
+        assertEquals("1 · 10 bytes", lines["Files"])
+        assertEquals(listOf(file), AiContext.files(s, listOf(file)))
+        assertEquals("nothing reported yet", AiContext.breakdown(AiSession("s", "", "m", 0, emptyList()), 0, "").associate { it.label to it.value }["In context (reported)"])
     }
 }

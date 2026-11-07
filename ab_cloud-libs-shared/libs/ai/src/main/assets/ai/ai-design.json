@@ -76,6 +76,88 @@
         "icon": "more_vert"
       }
     ],
+    "layout": {
+      "_doc": "The two-row layout of the Compose chat (Cloud SuperIntel; AiComposerBar twoRows). Cloud Code and the other apps keep `controls` above, in its order, untouched. `row` 0 = the input row ((+) attachments dropdown), 1 = toolbar row 1 (Task, Specialist | Agent, Model, Effort, Mode; `divider_before` draws the bar), 2 = toolbar row 2 (Repos, Plugins -> Skills, the four MCP buckets, Plugins: performance, More). An id of `controls` takes its label and icon from there; the others declare theirs. The single `mcp` control has no place here: its servers are the four MCP buckets (mcp.buckets).",
+      "controls": [
+        {
+          "id": "plus",
+          "row": 0
+        },
+        {
+          "id": "task",
+          "row": 1
+        },
+        {
+          "id": "specialist",
+          "label": "Specialist",
+          "icon": "school",
+          "row": 1
+        },
+        {
+          "id": "agent",
+          "row": 1,
+          "divider_before": true
+        },
+        {
+          "id": "model",
+          "row": 1
+        },
+        {
+          "id": "effort",
+          "row": 1
+        },
+        {
+          "id": "mode",
+          "row": 1
+        },
+        {
+          "id": "repos",
+          "label": "Repos",
+          "icon": "folder_open",
+          "row": 2
+        },
+        {
+          "id": "skills",
+          "label": "Plugins → Skills",
+          "icon": "extension",
+          "row": 2
+        },
+        {
+          "id": "mcp_kg",
+          "label": "MCP: KG-Graph",
+          "icon": "hub",
+          "row": 2
+        },
+        {
+          "id": "mcp_infra",
+          "label": "MCP: Cloudy infra",
+          "icon": "dns",
+          "row": 2
+        },
+        {
+          "id": "mcp_user",
+          "label": "MCP: Cloudy user-facing",
+          "icon": "person",
+          "row": 2
+        },
+        {
+          "id": "mcp_ext",
+          "label": "MCP: Non-Cloudy",
+          "icon": "public",
+          "row": 2
+        },
+        {
+          "id": "perf",
+          "label": "Plugins: performance",
+          "icon": "speed",
+          "row": 2
+        },
+        {
+          "id": "more",
+          "row": 2
+        }
+      ]
+    },
     "no_task": "No task",
     "collapse": {
       "_doc": "Chevron toggle at the bar's end. `default` is the first state of an app that never toggled (expanded); the state is kept per app under `pref_key` in the app's own SharedPreferences (Cloud Code: localStorage) so it survives restarts.",
@@ -92,12 +174,16 @@
         {
           "id": "images",
           "label": "Image",
-          "perms": ["media_images"]
+          "perms": [
+            "media_images"
+          ]
         },
         {
           "id": "camera",
           "label": "Camera",
-          "perms": ["camera"],
+          "perms": [
+            "camera"
+          ],
           "requires": true
         }
       ],
@@ -140,8 +226,71 @@
     ]
   },
   "mcp": {
-    "_doc": "The MCPs control toggles the MCP servers the gateway lists for the session (GET ai.json::gateway.mcp_path). The gateway has no per-request server switch yet, so the chosen set rides as a standing instruction; `instruction` is its sentence, {servers} the comma-separated names. An empty selection adds nothing.",
-    "instruction": "MCP servers for this session: use only {servers} when you call tools."
+    "_doc": "The MCPs control toggles the MCP servers the gateway lists for the session (GET ai.json::gateway.mcp_path). The gateway has no per-request server switch yet, so the chosen set rides as a standing instruction; `instruction` is its sentence, {servers} the comma-separated names. An empty selection adds nothing. `buckets` sort a server into the four pickers (first match wins, in order: exact name, then contains, then prefix; the last bucket takes the rest): KG-Graph, Cloudy infra (one so far), Cloudy user-facing (non-infra), Non-Cloudy (internet). `known` names are listed in their picker even before the gateway lists them (greyed, 'not listed').",
+    "instruction": "MCP servers for this session: use only {servers} when you call tools.",
+    "buckets": [
+      {
+        "id": "kg",
+        "control": "mcp_kg",
+        "label": "MCP: KG-Graph",
+        "match": {
+          "contains": [
+            "kg",
+            "graph",
+            "knowledge"
+          ]
+        },
+        "known": []
+      },
+      {
+        "id": "infra",
+        "control": "mcp_infra",
+        "label": "MCP: Cloudy infra",
+        "match": {
+          "exact": [
+            "cloudy-c3-mcp",
+            "cloud-infra-mcp"
+          ]
+        },
+        "known": [
+          "cloudy-c3-mcp"
+        ]
+      },
+      {
+        "id": "user",
+        "control": "mcp_user",
+        "label": "MCP: Cloudy user-facing",
+        "match": {
+          "prefix": [
+            "cloudy-",
+            "cloud-"
+          ]
+        },
+        "known": [
+          "cloudy-all-mcp",
+          "cloudy-apps-communication-mcp",
+          "cloudy-apps-drive-mcp",
+          "cloudy-cgc-pub-mcp",
+          "cloud-me-cgc-pvt-mcp",
+          "cloudy-android-mcp",
+          "cloud-superapp-mcp",
+          "cloud-vault-mcp",
+          "cloud-mattermost-mcp"
+        ]
+      },
+      {
+        "id": "ext",
+        "control": "mcp_ext",
+        "label": "MCP: Non-Cloudy",
+        "match": {
+          "default": true
+        },
+        "known": [
+          "google-personal-mcp",
+          "google-workspace-mcp"
+        ]
+      }
+    ]
   },
   "agents_extra": {
     "_doc": "Gateway modes ai.json lists that the shared agent descriptor (model-catalogue agents.json) does not: `openrouter` runs any OpenRouter model, the model the request names. Task mappings use it. Cloud Code already lists it as its direct backend, so only Compose adds it.",
@@ -186,7 +335,7 @@
     ]
   },
   "more": {
-    "_doc": "The More sheet: groups with headers, each with items. kind: usage = tokens and cost the backend REPORTED (per session and per day; the Costs ledger in Cloud Tools; nothing is invented, a backend that reports nothing says so); plugins = the gateway's optimisation plugins that its live /health.plugins lists, each a request-header toggle (`header`, `plugin`); prompt = fills the input with `prompt` (nothing is sent until the user does); export = the open session as Markdown; system = the standing system prompt in force; info = the declared `text`; retry / undo act on the last exchange.",
+    "_doc": "The More sheet: groups with headers, each with items. kind: usage = tokens and cost the backend REPORTED (per session and per day; the Costs ledger in Cloud Tools; nothing is invented, a backend that reports nothing says so); plugins = the gateway's optimisation plugins that its live /health.plugins lists, each a request-header toggle (`header`, `plugin`); prompt = fills the input with `prompt` (nothing is sent until the user does); export = the open session as Markdown; system = the standing system prompt in force; info = the declared `text`; retry / undo act on the last exchange. An item with a `class` (skill | performance) is shown in the Plugins -> Skills / Plugins: performance picker of a two-row app, and left out of its More sheet; an app without those controls keeps them here.",
     "groups": [
       {
         "id": "usage",
@@ -208,28 +357,32 @@
             "label": "Headroom compression",
             "kind": "plugin",
             "header": "x-headroom",
-            "plugin": "headroom"
+            "plugin": "headroom",
+            "class": "performance"
           },
           {
             "id": "rtk",
             "label": "RTK noise stripping",
             "kind": "plugin",
             "header": "x-rtk",
-            "plugin": "rtk"
+            "plugin": "rtk",
+            "class": "performance"
           },
           {
             "id": "caveman",
             "label": "Caveman filler stripping",
             "kind": "plugin",
             "header": "x-caveman",
-            "plugin": "caveman"
+            "plugin": "caveman",
+            "class": "skill"
           },
           {
             "id": "principles",
-            "label": "Principles",
+            "label": "Cloudy Principals",
             "kind": "plugin",
             "header": "x-principles",
-            "plugin": "agents_principles"
+            "plugin": "agents_principles",
+            "class": "skill"
           }
         ]
       },
@@ -241,13 +394,15 @@
             "id": "skills",
             "label": "Skills and toolsets",
             "kind": "prompt",
-            "prompt": "List the skills and toolsets you can use right now, one line each."
+            "prompt": "List the skills and toolsets you can use right now, one line each.",
+            "class": "skill"
           },
           {
             "id": "memory",
             "label": "Memory",
             "kind": "prompt",
-            "prompt": "What do you remember about me and my current work? Read your memory first."
+            "prompt": "What do you remember about me and my current work? Read your memory first.",
+            "class": "skill"
           }
         ]
       },
@@ -302,5 +457,9 @@
         ]
       }
     ]
+  },
+  "repos": {
+    "_doc": "The Repos picker: which repositories the model may see (an app's list is composer.json::repos). The chosen set rides as a standing instruction, like the MCP sentence; {repos} is the comma-separated names. An empty selection adds nothing.",
+    "instruction": "Repositories exposed to you for this session: {repos}. Read code from these only."
   }
 }

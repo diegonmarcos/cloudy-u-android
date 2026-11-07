@@ -67,7 +67,11 @@ object ForumFixture {
     )
 
     /** The composer declaration of the app (assets/ai/composer.json): every control the shared design has. */
-    val composerDecl = AiComposerDecl("cloud-superintel", listOf("plus", "task", "agent", "model", "effort", "mode", "mcp", "more"))
+    val composerDecl = AiComposerDecl(
+        "cloud-superintel",
+        listOf("plus", "task", "specialist", "agent", "model", "effort", "mode", "repos", "skills", "mcp_kg", "mcp_infra", "mcp_user", "mcp_ext", "perf", "more"),
+        repos = listOf("cloudy-u-android", "cloudy-t-infra"),
+    )
 
     /** A real PNG on disk, so the inline image path (decode, draw) runs for real: image in (the user's) and image out (the answer's). */
     fun image(id: String): AiAttachment {

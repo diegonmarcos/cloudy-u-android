@@ -108,6 +108,14 @@ class AiChatState(private val host: AiHost) {
         host.pickMcps(mcpOn)
     }
 
+    /** The Repos picker's selection (names the model may see). */
+    var reposOn by mutableStateOf<Set<String>>(emptySet())
+        private set
+    fun toggleRepo(name: String) {
+        reposOn = if (name in reposOn) reposOn - name else reposOn + name
+        host.pickRepos(reposOn)
+    }
+
     /** Sets the MCP selection at once (a persona's preferred servers). */
     fun chooseMcps(names: Set<String>) { mcpOn = names; host.pickMcps(names) }
 
@@ -231,6 +239,10 @@ object AiTags {
     fun taskGroup(id: String) = "ai_task_group_$id"
     fun mode(id: String) = "ai_mode_$id"
     fun mcp(name: String) = "ai_mcp_$name"
+    const val TOOLBAR_DIVIDER = "ai_toolbar_divider"
+    fun toolbarRow(n: Int) = "ai_toolbar_row_$n"
+    fun specialist(id: String) = "ai_specialist_$id"
+    fun repo(name: String) = "ai_repo_$name"
     /** The context-usage line above the composer bar. */
     const val CONTEXT = "ai_context_usage"
     const val SESSIONS = "ai_sessions"

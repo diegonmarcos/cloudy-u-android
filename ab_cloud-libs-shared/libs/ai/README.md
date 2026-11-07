@@ -80,6 +80,8 @@ Compose reads it through `AiDesign`; Cloud Code (HTML) gets it copied into `targ
 `metrics` entry as a `--ai-*` CSS custom property. Colours stay the host's own (Acode's theme in Cloud Code, the app's theme in Compose).
 
 An app declares which controls it enables and nothing else: Kotlin apps in `assets/ai/composer.json` (`controls`, `default_task`, `task_required`), Cloud Code in `nav.json::chat.composer`.
+
+**Two-row layout (Cloud SuperIntel, `AiComposerBar(twoRows = true)`, `ai-design.json::composer.layout`).** The forum surface (`AiForumChat` with `ForumSessions`) draws row 1 as a full-width top bar (circle hamburger, the session pill "Chat Session 1 · repo/Model", Usage & Cost, Context Breakdown, Files in this chat; Call, Info and More behind the overflow), row 2 the specialists strip, and the sessions rail starts under both. The input row is (+) attachments dropdown, input, Voice, Camera, Enter. Toolbar row 1 is Task, Specialist | Agent, Model, Effort, Mode; row 2 is Repos, Plugins -> Skills, the four MCP buckets (`ai-design.json::mcp.buckets`: KG-Graph, Cloudy infra, Cloudy user-facing, Non-Cloudy), Plugins: performance, More. A More item with a `class` (skill, performance) lives in its picker; the other apps keep the one-row bar and the whole More sheet.
 A selected Task greys Agent and Model and sets them from the mapping. Permission Mode, MCP selection and the optimisation-plugin toggles ride the request (a standing system
 instruction, and request headers on the gateway); Effort is `reasoning.effort`. Usage & Cost shows only what the backend reported (or the app's Costs ledger).
 

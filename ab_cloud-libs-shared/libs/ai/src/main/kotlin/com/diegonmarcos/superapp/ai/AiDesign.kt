@@ -5,7 +5,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /** One composer control of the shared row (Task, Agent, Model, Mode, MCPs): [icon] is a Material symbol name. */
-data class AiControl(val id: String, val label: String, val icon: String)
+data class AiControl(val id: String, val label: String, val icon: String, val row: Int = 1, val dividerBefore: Boolean = false)
 
 /** One Permission Mode: [instruction] is the standing system sentence the mode sends ("" adds nothing). */
 data class AiPermissionMode(val id: String, val label: String, val short: String, val icon: String, val instruction: String)
@@ -14,7 +14,7 @@ data class AiPermissionMode(val id: String, val label: String, val short: String
 data class AiEffort(val id: String, val label: String, val value: String)
 
 /** One item of the More sheet; [kind] says what it does (ai-design.json more). */
-data class AiMoreItem(val id: String, val label: String, val kind: String, val header: String = "", val plugin: String = "", val prompt: String = "", val text: String = "")
+data class AiMoreItem(val id: String, val label: String, val kind: String, val header: String = "", val plugin: String = "", val prompt: String = "", val text: String = "", val cls: String = "")
 
 /** A headed group of the More sheet. */
 data class AiMoreGroup(val id: String, val label: String, val items: List<AiMoreItem>)
@@ -24,6 +24,9 @@ data class AiPlugin(val id: String, val label: String, val live: Boolean, val on
 
 /** One line of the Usage & Cost view. */
 data class AiUsageLine(val label: String, val value: String)
+
+/** One of the four MCP pickers (ai-design.json mcp.buckets): [control] is its composer control id, [known] the names listed before the gateway does. */
+data class AiMcpBucket(val id: String, val control: String, val label: String, val known: List<String>, val exact: Set<String>, val contains: List<String>, val prefix: List<String>, val default: Boolean)
 
 /** One MCP server the gateway lists for the session. */
 data class AiMcpServer(val name: String, val tools: Int? = null)
@@ -45,13 +48,19 @@ class AiDesign private constructor(private val root: JSONObject) {
     val metricKeys: Set<String> get() = metrics.keys().asSequence().toSet()
 
     val controls: List<AiControl> = root.getJSONObject("composer").getJSONArray("controls").objs().map {
-        AiControl(it.getString("id"), it.getString("label"), it.getString("icon"))
+        AiControl(it.getString("id"), it.getString("label"), it.getString("icon"), it.optInt("row", 1), it.optBoolean("divider_before"))
     }
     val noTask: String = root.getJSONObject("composer").getString("no_task")
     private val composerObj = root.getJSONObject("composer")
     val collapsedByDefault: Boolean = composerObj.getJSONObject("collapse").getString("default") == "collapsed"
     val collapsePrefKey: String = composerObj.getJSONObject("collapse").getString("pref_key")
     val attachKinds: List<Pair<String, String>> = composerObj.getJSONObject("plus").getJSONArray("attach").objs().map { it.getString("id") to it.getString("label") }
+
+    /** The two-row layout (composer.layout): the same controls plus Specialist, Repos, the plugin and MCP pickers, each with its row (0 input row, 1 and 2 toolbar rows). */
+    val layout: List<AiControl> = composerObj.optJSONObject("layout")?.getJSONArray("controls")?.objs().orEmpty().map { o ->
+        val base = controls.firstOrNull { it.id == o.getString("id") }
+        AiControl(o.getString("id"), o.optString("label", base?.label.orEmpty()), o.optString("icon", base?.icon.orEmpty()), o.optInt("row", 1), o.optBoolean("divider_before"))
+    }
 
     /** The libs:perms row ids each Attach item needs (`perms`), and the items that cannot run without them (`requires`: Camera). */
     val attachPerms: Map<String, List<String>> = composerObj.getJSONObject("plus").getJSONArray("attach").objs().associate { o ->
@@ -63,7 +72,7 @@ class AiDesign private constructor(private val root: JSONObject) {
     val efforts: List<AiEffort> = root.getJSONObject("effort").getJSONArray("levels").objs().map { AiEffort(it.getString("id"), it.getString("label"), it.getString("value")) }
     val moreGroups: List<AiMoreGroup> = root.getJSONObject("more").getJSONArray("groups").objs().map { g ->
         AiMoreGroup(g.getString("id"), g.getString("label"), g.getJSONArray("items").objs().map {
-            AiMoreItem(it.getString("id"), it.getString("label"), it.getString("kind"), it.optString("header"), it.optString("plugin"), it.optString("prompt"), it.optString("text"))
+            AiMoreItem(it.getString("id"), it.getString("label"), it.getString("kind"), it.optString("header"), it.optString("plugin"), it.optString("prompt"), it.optString("text"), it.optString("class"))
         })
     }
 
@@ -78,6 +87,29 @@ class AiDesign private constructor(private val root: JSONObject) {
     val modes: List<AiPermissionMode> = perm.getJSONArray("modes").objs().map {
         AiPermissionMode(it.getString("id"), it.getString("label"), it.getString("short"), it.getString("icon"), it.getString("instruction"))
     }
+    val mcpBuckets: List<AiMcpBucket> = root.getJSONObject("mcp").optJSONArray("buckets")?.objs().orEmpty().map { b ->
+        val m = b.getJSONObject("match")
+        AiMcpBucket(
+            b.getString("id"), b.getString("control"), b.getString("label"), b.optJSONArray("known")?.strings().orEmpty(),
+            m.optJSONArray("exact")?.strings().orEmpty().toSet(), m.optJSONArray("contains")?.strings().orEmpty(), m.optJSONArray("prefix")?.strings().orEmpty(), m.optBoolean("default"),
+        )
+    }
+
+    /** The bucket a server belongs to: first match in order (exact name, contains, prefix), the default bucket takes the rest. */
+    fun mcpBucket(name: String): AiMcpBucket? {
+        val n = name.lowercase()
+        return mcpBuckets.firstOrNull { b -> n in b.exact || b.contains.any { it in n } || b.prefix.any { n.startsWith(it) } } ?: mcpBuckets.firstOrNull { it.default }
+    }
+    private val reposObj = root.optJSONObject("repos")
+    private val reposInstruction: String = reposObj?.optString("instruction").orEmpty()
+
+    /** The standing sentence for the exposed [repos] ("" for none). */
+    fun reposSentence(repos: Collection<String>): String =
+        if (repos.isEmpty() || reposInstruction.isEmpty()) "" else reposInstruction.replace("{repos}", repos.sorted().joinToString(", "))
+
+    /** The composer control that shows the plugins of a More item class ("skill", "performance"). */
+    val pluginClassControl: Map<String, String> = mapOf("skill" to "skills", "performance" to "perf")
+
     val mcpInstruction: String = root.getJSONObject("mcp").getString("instruction")
     val extraAgents: List<AiAgent> = root.getJSONObject("agents_extra").getJSONArray("agents").objs().map {
         AiAgent(it.getString("id"), it.getString("label"), it.getString("sub"), it.getString("mode"))
@@ -91,6 +123,9 @@ class AiDesign private constructor(private val root: JSONObject) {
 
     /** [enabled] (an app's declared controls) in the design's order; unknown ids are dropped. */
     fun ordered(enabled: Collection<String>): List<AiControl> = controls.filter { it.id in enabled }
+
+    /** The same in the two-row layout's order (with its rows); the single `mcp` control has no place there. */
+    fun orderedLayout(enabled: Collection<String>): List<AiControl> = layout.filter { it.id in enabled }
 
     companion object {
         const val ASSET = "ai/ai-design.json"
@@ -123,7 +158,7 @@ class AiDesign private constructor(private val root: JSONObject) {
  * An app's composer declaration (assets/ai/composer.json): WHICH of the shared controls it enables, the task it opens on
  * and whether a task is always set (Cloud Tools: a task, never a model, picks the model).
  */
-data class AiComposerDecl(val app: String, val controls: List<String>, val defaultTask: String = "", val taskRequired: Boolean = false) {
+data class AiComposerDecl(val app: String, val controls: List<String>, val defaultTask: String = "", val taskRequired: Boolean = false, val repos: List<String> = emptyList()) {
     companion object {
         const val ASSET = "ai/composer.json"
 
@@ -131,10 +166,11 @@ data class AiComposerDecl(val app: String, val controls: List<String>, val defau
         fun parse(text: String, design: AiDesign): AiComposerDecl {
             val o = JSONObject(text)
             val ids = o.getJSONArray("controls").let { a -> (0 until a.length()).map { a.getString(it) } }
-            val known = design.controls.map { it.id }
+            val known = design.controls.map { it.id } + design.layout.map { it.id }
             require(ids.all { it in known }) { "composer.json names a control the design lacks: ${ids.filter { it !in known }}" }
             require(ids.toSet().size == ids.size) { "composer.json lists a control twice" }
-            return AiComposerDecl(o.getString("app"), ids, o.optString("default_task"), o.optBoolean("task_required"))
+            return AiComposerDecl(o.getString("app"), ids, o.optString("default_task"), o.optBoolean("task_required"),
+                o.optJSONArray("repos")?.let { a -> (0 until a.length()).map { a.getString(it) } }.orEmpty())
         }
 
         fun load(ctx: Context): AiComposerDecl =

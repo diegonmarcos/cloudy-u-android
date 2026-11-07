@@ -60,7 +60,11 @@ class PersonasTest {
         val design = com.diegonmarcos.superapp.ai.AiDesign.parse(java.io.File("../../ab_cloud-libs-shared/libs/ai/src/main/assets/ai/ai-design.json").readText())
         val decl = com.diegonmarcos.superapp.ai.AiComposerDecl.parse(Data.asset("../ai/composer.json"), design)
         assertEquals("cloud-superintel", decl.app)
-        assertEquals(listOf("plus", "task", "agent", "model", "effort", "mode", "mcp", "more"), design.ordered(decl.controls).map { it.id })
+        assertEquals(
+            listOf("plus", "task", "specialist", "agent", "model", "effort", "mode", "repos", "skills", "mcp_kg", "mcp_infra", "mcp_user", "mcp_ext", "perf", "more"),
+            design.orderedLayout(decl.controls).map { it.id },
+        )
+        assertTrue("the Repos picker offers repositories", decl.repos.isNotEmpty())
     }
 
     @Test fun everyPersonaIsFullyDeclared() {

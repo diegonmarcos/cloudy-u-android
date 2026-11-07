@@ -87,6 +87,8 @@ class ForumSessions(
     val currentId: String,
     val onOpen: (AiSession) -> Unit,
     val onNew: () -> Unit,
+    /** The top bar's hamburger (opens the host's sessions drawer); null = the button does nothing. */
+    val onMenu: (() -> Unit)? = null,
 )
 
 /**
@@ -133,6 +135,14 @@ data class ForumStrings(
     val untitled: String = "New chat",
     /** The topic strip (the personas / agents of a session) and the composer's attached-tools hint. */
     val participants: String = "Participants",
+    /** The top bar's buttons (hamburger, Usage & Cost, Context Breakdown, Files in this chat, the overflow) and their dialogs. */
+    val menu: String = "Sessions menu",
+    val usageCost: String = "Usage & Cost",
+    val contextBreakdown: String = "Context Breakdown",
+    val filesInChat: String = "Files in this chat",
+    val noFiles: String = "No files in this chat yet.",
+    val overflow: String = "More actions",
+    val camera: String = "Camera",
 )
 
 /** The forum's own sizes (dp tokens, defined once; the surface spells no literal). */
@@ -153,6 +163,10 @@ data class ForumMetrics(
     val headerRadius: Dp = 20.dp,
     val headerElevation: Dp = 6.dp,
     val headerAvatar: Dp = 40.dp,
+    /** The top bar's buttons (hamburger, Usage & Cost, Context, Files, overflow): smaller than a full touch target so five fit a phone. */
+    val topAction: Dp = 40.dp,
+    val pillAvatar: Dp = 28.dp,
+    val disabledAlpha: Float = 0.4f,
     /** The persona strip's chip height and the model badge radius. */
     val chipHeight: Dp = 36.dp,
     /** The chat background doodle: tile size, stroke, and how faint it is (alpha) and the colour wash on top. */
@@ -185,6 +199,17 @@ object ForumTags {
     const val TOPIC_STRIP = "forum_topic_strip"
     const val HEADER_AVATAR = "forum_header_avatar"
     const val TOOLS_BAR = "forum_tools_bar"
+    const val TOP_BAR = "forum_top_bar"
+    const val MENU = "forum_menu"
+    const val SESSION_PILL = "forum_session_pill"
+    const val USAGE = "forum_usage_cost"
+    const val CONTEXT = "forum_context_breakdown"
+    const val FILES = "forum_files_in_chat"
+    const val OVERFLOW = "forum_overflow"
+    const val DIALOG = "forum_dialog"
+    const val CAMERA = "forum_camera"
+    const val INPUT_ROW = "forum_input_row"
+    const val BODY = "forum_body"
     fun session(id: String) = "forum_session_$id"
     fun modelBadge(index: Int) = "forum_model_$index"
     fun topic(id: String) = "forum_topic_$id"
@@ -194,7 +219,7 @@ object ForumTags {
     fun adminBadge(index: Int) = "forum_admin_$index"
 }
 
-/** How the surface draws one named icon; a host maps the name to its own icon set. Names: board, back, more, call, info, emoji, attach, mic, send, new. */
+/** How the surface draws one named icon; a host maps the name to its own icon set. Names: board, back, more, call, info, emoji, attach, mic, send, new, menu, usage, context, files, camera. */
 typealias ForumIcon = @Composable (name: String, size: Dp, tint: Color, description: String?) -> Unit
 
 /** A plain Unicode fallback so a host with no icon set still renders every control. */
@@ -203,7 +228,7 @@ val ForumGlyphs: ForumIcon = { name, size, tint, description ->
         when (name) {
             "board", "topics" -> "☰"; "back" -> "‹"; "more" -> "⋮"; "call" -> "☎"
             "info" -> "ⓘ"; "emoji" -> "☺"; "attach" -> "📎"; "mic" -> "🎙"
-            "send" -> "↑"; "new" -> "+"; else -> "•"
+            "send" -> "↑"; "new" -> "+"; "menu" -> "☰"; "usage" -> "$"; "context" -> "◔"; "files" -> "🗂"; "camera" -> "📷"; else -> "•"
         },
         color = tint, fontSize = size.value.sp,
         modifier = if (description != null) Modifier.semantics { contentDescription = description } else Modifier,
@@ -248,17 +273,24 @@ fun AiForumChat(
     BoxWithConstraints(modifier.fillMaxSize().testTag(ForumTags.SURFACE)) {
         val twoPane = maxWidth >= metrics.twoPaneMin
         val railWidth = if (twoPane) metrics.tabletRail else metrics.railWidth
-        Row(Modifier.fillMaxSize()) {
-            // On a narrow screen the rail is always visible (Telegram's forum rail); on a tablet it is the first pane.
-            if (sessions != null) SessionsRail(sessions, theme, strings, metrics, icon, railWidth)
-            else TopicsRail(topics, topic?.id, onSelect, theme, strings, metrics, icon, railWidth, onNewTopic)
-            if (topic != null) {
-                Thread(
-                    topic, theme, strings, metrics, icon, adminColor, onCall, onInfo, onMore, onAttach, zone, now, Modifier.weight(1f),
-                    topics = if (sessions != null) topics else emptyList(), onSelect = onSelect, tools = tools, backdrop = backdrop,
-                )
-            } else {
-                Box(Modifier.weight(1f).fillMaxSize())
+        Column(Modifier.fillMaxSize()) {
+            // With sessions: row 1 is the full-width top bar and row 2 the specialists; the sessions rail starts under them.
+            if (sessions != null && topic != null) {
+                SessionTopBar(topic, sessions, theme, strings, metrics, icon, onCall, onInfo, onMore)
+                TopicStrip(topics, topic.id, onSelect, theme, strings, metrics)
+            }
+            Row(Modifier.weight(1f).fillMaxWidth().testTag(ForumTags.BODY)) {
+                // On a narrow screen the rail is always visible (Telegram's forum rail); on a tablet it is the first pane.
+                if (sessions != null) SessionsRail(sessions, theme, strings, metrics, icon, railWidth)
+                else TopicsRail(topics, topic?.id, onSelect, theme, strings, metrics, icon, railWidth, onNewTopic)
+                if (topic != null) {
+                    Thread(
+                        topic, theme, strings, metrics, icon, adminColor, onCall, onInfo, onMore, onAttach, zone, now, Modifier.weight(1f),
+                        topics = if (sessions != null) topics else emptyList(), onSelect = onSelect, tools = tools, backdrop = backdrop,
+                    )
+                } else {
+                    Box(Modifier.weight(1f).fillMaxSize())
+                }
             }
         }
     }
@@ -355,8 +387,8 @@ private fun Thread(
     if (tools != null && chat.page == AiChatState.PAGE_MODELS) { AiModelCatalogue(chat, theme, tools.catalogueFetch, modifier); return }
     if (tools != null && chat.page == AiChatState.PAGE_TASKS) { AiTaskCatalogue(chat, theme, tools.decl, modifier); return }
     Column(modifier.fillMaxHeight()) {
-        ThreadHeader(topic, chat.session.messages.size, theme, strings, metrics, icon, onCall, onInfo, onMore, topics.isNotEmpty())
-        if (topics.isNotEmpty()) TopicStrip(topics, topic.id, onSelect, theme, strings, metrics)
+        // With sessions the header is the surface's full-width top bar and the strip its second row (SessionTopBar, TopicStrip).
+        if (topics.isEmpty()) ThreadHeader(topic, chat.session.messages.size, theme, strings, metrics, icon, onCall, onInfo, onMore, false)
         Box(Modifier.weight(1f).fillMaxWidth()) {
             if (backdrop) ChatBackdrop(theme, metrics)
             if (chat.session.messages.isEmpty() && !chat.sending) EmptyThread(theme, strings)
@@ -365,8 +397,100 @@ private fun Thread(
         if (tools != null) chat.consent?.let { req ->
             AiConsentCard(req, onAllow = { chat.decide(true) }, onDeny = { chat.decide(false) }, theme = theme, modifier = Modifier.padding(horizontal = theme.metrics.small))
         }
-        Composer(chat, theme, strings, metrics, icon, onAttach, tools, design)
+        Composer(chat, theme, strings, metrics, icon, onAttach, tools, design, if (topics.isNotEmpty()) topics.map { it.id to it.label } else emptyList(), topic.id, onSelect, topics.isNotEmpty())
     }
+}
+
+/** The top-bar text of a session: its name, then the model as repo/Model. */
+internal fun sessionPill(title: String, model: String): String = listOf(title, model).filter { it.isNotBlank() }.joinToString(" · ")
+
+/**
+ * The surface's first row, full width (the sessions rail starts below it): a circle hamburger (opens the sessions drawer), the
+ * rounded session pill ("Chat Session 1 · repo/Model", with who is in the thread and the count under it), then, right-aligned,
+ * Usage & Cost, Context Breakdown and Files in this chat. Call, Info and More stay one tap away behind the overflow button.
+ */
+@Composable
+private fun SessionTopBar(
+    topic: ForumTopic, sessions: ForumSessions, theme: AiTheme, strings: ForumStrings, metrics: ForumMetrics, icon: ForumIcon,
+    onCall: (() -> Unit)?, onInfo: (() -> Unit)?, onMore: (() -> Unit)?,
+) {
+    val c = theme.colors
+    val m = theme.metrics
+    val chat = topic.chat
+    val shape = RoundedCornerShape(bottomStart = metrics.headerRadius, bottomEnd = metrics.headerRadius)
+    val pill = RoundedCornerShape(metrics.headerRadius)
+    val title = chat.session.title.ifBlank { strings.untitled }
+    val who = listOf(topic.senderName, chat.model.substringAfterLast('/')).filter { it.isNotBlank() }.joinToString(" · ")
+    val sub = if (chat.sending) strings.thinking else listOf(who, strings.messages.format(chat.session.messages.size)).filter { it.isNotBlank() }.joinToString(" · ")
+    var dialog by remember { mutableStateOf<Pair<String, String>?>(null) }
+    var overflow by remember { mutableStateOf(false) }
+    val limit = chat.models.firstOrNull { it.id == chat.model }?.context ?: 0
+    Row(
+        Modifier.fillMaxWidth().shadow(metrics.headerElevation, shape).clip(shape)
+            .background(Brush.horizontalGradient(listOf(c.chatBar, c.tile)))
+            .border(m.hairline, c.tileBorder, shape)
+            .padding(horizontal = m.small, vertical = m.tiny).sizeIn(minHeight = metrics.touch).testTag(ForumTags.TOP_BAR),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(m.small),
+    ) {
+        Box(
+            Modifier.size(metrics.topAction).clip(CircleShape).border(m.hairline, c.tileBorder, CircleShape).background(c.field)
+                .clickable { sessions.onMenu?.invoke() }.semantics { contentDescription = strings.menu }.testTag(ForumTags.MENU),
+            contentAlignment = Alignment.Center,
+        ) { icon("menu", m.icon, c.text, null) }
+        Row(
+            Modifier.weight(1f).clip(pill).background(c.field).border(m.hairline, c.tileBorder, pill)
+                .padding(horizontal = m.small, vertical = m.tiny).testTag(ForumTags.HEADER),
+            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(m.small),
+        ) {
+            Box(
+                Modifier.size(metrics.pillAvatar).clip(CircleShape).background(c.ai).testTag(ForumTags.HEADER_AVATAR),
+                contentAlignment = Alignment.Center,
+            ) { androidx.compose.material3.Text(topic.badge, color = c.onAi, style = theme.type.style(theme.type.label, FontWeight.Bold), maxLines = 1) }
+            Column(Modifier.weight(1f).testTag(ForumTags.SESSION_PILL)) {
+                androidx.compose.material3.Text(
+                    sessionPill(title, chat.model), color = c.text, style = theme.type.style(theme.type.small, FontWeight.SemiBold),
+                    maxLines = 1, overflow = TextOverflow.Ellipsis,
+                )
+                androidx.compose.material3.Text(
+                    sub, color = if (chat.sending) c.accent else c.text2, style = theme.type.style(theme.type.label),
+                    maxLines = 1, overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+        TopAction(icon, "usage", strings.usageCost, theme, metrics, ForumTags.USAGE) {
+            dialog = strings.usageCost to chat.host().usage(chat.session.id).joinToString("\n") { "${it.label}: ${it.value}" }.ifBlank { theme.strings.noUsage }
+        }
+        TopAction(icon, "context", strings.contextBreakdown, theme, metrics, ForumTags.CONTEXT) {
+            dialog = strings.contextBreakdown to AiContext.breakdown(chat.session, limit, chat.host().systemPrompt(), chat.attachments).joinToString("\n") { "${it.label}: ${it.value}" }
+        }
+        TopAction(icon, "files", strings.filesInChat, theme, metrics, ForumTags.FILES) {
+            dialog = strings.filesInChat to AiContext.files(chat.session, chat.attachments).joinToString("\n") { "${it.name} · ${it.mime} · ${it.bytes} B" }.ifBlank { strings.noFiles }
+        }
+        Box {
+            TopAction(icon, "more", strings.overflow, theme, metrics, ForumTags.OVERFLOW) { overflow = true }
+            androidx.compose.material3.DropdownMenu(expanded = overflow, onDismissRequest = { overflow = false }) {
+                if (onCall != null) androidx.compose.material3.DropdownMenuItem(text = { androidx.compose.material3.Text(strings.call) }, onClick = { overflow = false; onCall() })
+                if (onInfo != null) androidx.compose.material3.DropdownMenuItem(text = { androidx.compose.material3.Text(strings.info) }, onClick = { overflow = false; onInfo() })
+                androidx.compose.material3.DropdownMenuItem(text = { androidx.compose.material3.Text(strings.more) }, onClick = { overflow = false; onMore?.invoke() })
+            }
+        }
+    }
+    dialog?.let { (head, body) ->
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { dialog = null },
+            title = { androidx.compose.material3.Text(head) },
+            text = { Column(Modifier.verticalScroll(rememberScrollState()).testTag(ForumTags.DIALOG)) { androidx.compose.material3.Text(body) } },
+            confirmButton = { androidx.compose.material3.TextButton({ dialog = null }) { androidx.compose.material3.Text(theme.strings.close) } },
+        )
+    }
+}
+
+@Composable
+private fun TopAction(icon: ForumIcon, name: String, desc: String, theme: AiTheme, metrics: ForumMetrics, tag: String, onClick: () -> Unit) {
+    Box(
+        Modifier.size(metrics.topAction).clickable(onClick = onClick).semantics { contentDescription = desc }.testTag(tag),
+        contentAlignment = Alignment.Center,
+    ) { icon(name, theme.metrics.icon, theme.colors.text2, null) }
 }
 
 /** The top bar: a rounded, elevated, gradient bar with the avatar, the title (topic or session), who is in the thread and the actions. */
@@ -695,7 +819,11 @@ private fun ThinkingBubble(topic: ForumTopic, theme: AiTheme, strings: ForumStri
 }
 
 @Composable
-private fun Composer(chat: AiChatState, theme: AiTheme, strings: ForumStrings, metrics: ForumMetrics, icon: ForumIcon, onAttach: (() -> Unit)?, tools: ForumTools? = null, design: AiDesign? = null) {
+private fun Composer(
+    chat: AiChatState, theme: AiTheme, strings: ForumStrings, metrics: ForumMetrics, icon: ForumIcon, onAttach: (() -> Unit)?,
+    tools: ForumTools? = null, design: AiDesign? = null,
+    specialists: List<Pair<String, String>> = emptyList(), specialist: String = "", onSpecialist: (String) -> Unit = {}, sessionLayout: Boolean = false,
+) {
     val c = theme.colors
     val m = theme.metrics
     val scope = rememberCoroutineScope()
@@ -705,13 +833,17 @@ private fun Composer(chat: AiChatState, theme: AiTheme, strings: ForumStrings, m
         val ask = chat.draft.trim()
         if ((ask.isNotEmpty() || (rich && chat.attachments.isNotEmpty())) && !chat.sending) { chat.draft = ""; scope.launch { chat.send(ask) } }
     }
+    // The session layout's input row: (+) dropdown, input, Voice, Camera, Enter. Without it the plain forum keeps its mic that becomes Send.
+    val rowLayout = sessionLayout && tools != null && design != null
+    val camera = if (rowLayout) rememberCameraAction(chat, theme, design!!, tools!!.attach) else null
     Column(Modifier.fillMaxWidth().background(c.chatBar)) {
         if (tools != null && design != null) Box(Modifier.padding(horizontal = m.small)) { AttachChips(chat, theme, design) }
         Row(
-            Modifier.fillMaxWidth().padding(horizontal = m.small, vertical = m.small),
+            Modifier.fillMaxWidth().padding(horizontal = m.small, vertical = m.small).testTag(ForumTags.INPUT_ROW),
             verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(m.tiny),
         ) {
-            Box(Modifier.size(metrics.touch).clickable { if (!chat.sending) chat.draft += "\uD83D\uDE42" }.testTag(ForumTags.EMOJI), contentAlignment = Alignment.Center) {
+            if (rowLayout) Box(Modifier.size(metrics.touch), contentAlignment = Alignment.Center) { AiPlusMenu(chat, theme, design!!, tools!!.decl, tools.onAttach, tools.attach) }
+            else Box(Modifier.size(metrics.touch).clickable { if (!chat.sending) chat.draft += "\uD83D\uDE42" }.testTag(ForumTags.EMOJI), contentAlignment = Alignment.Center) {
                 icon("emoji", m.icon, c.text2, strings.emoji)
             }
             Box(Modifier.weight(1f).heightIn(min = metrics.touch), contentAlignment = Alignment.CenterStart) {
@@ -722,9 +854,15 @@ private fun Composer(chat: AiChatState, theme: AiTheme, strings: ForumStrings, m
                     cursorBrush = SolidColor(c.accent),
                     modifier = Modifier.fillMaxWidth().clip(shape).background(c.field).border(m.hairline, c.tileBorder, shape).testTag(ForumTags.INPUT),
                     decorationBox = { inner ->
-                        Box(Modifier.padding(horizontal = m.bubblePadH, vertical = m.bubblePadV)) {
-                            if (chat.draft.isEmpty()) androidx.compose.material3.Text(strings.message, color = c.text2, style = TextStyle(fontSize = theme.type.chatInput))
-                            inner()
+                        Row(Modifier.padding(horizontal = m.bubblePadH, vertical = m.bubblePadV), verticalAlignment = Alignment.CenterVertically) {
+                            Box(Modifier.weight(1f)) {
+                                if (chat.draft.isEmpty()) androidx.compose.material3.Text(strings.message, color = c.text2, style = TextStyle(fontSize = theme.type.chatInput))
+                                inner()
+                            }
+                            // The emoji button stays, inside the input's end, so the row keeps room on a phone.
+                            if (rowLayout) Box(Modifier.clickable { if (!chat.sending) chat.draft += "\uD83D\uDE42" }.testTag(ForumTags.EMOJI), contentAlignment = Alignment.Center) {
+                                icon("emoji", m.icon, c.text2, strings.emoji)
+                            }
                         }
                     },
                 )
@@ -732,17 +870,31 @@ private fun Composer(chat: AiChatState, theme: AiTheme, strings: ForumStrings, m
             if (onAttach != null) Box(Modifier.size(metrics.touch).clickable(onClick = onAttach).testTag(ForumTags.ATTACH), contentAlignment = Alignment.Center) {
                 icon("attach", m.icon, c.text2, strings.attach)
             }
-            // The mic becomes Send once there is text (Telegram's toggle).
-            Box(
-                Modifier.size(metrics.touch).clip(CircleShape).background(if (hasText) c.ai else SolidColor(Color.Transparent))
-                    .clickable(enabled = !chat.sending) { if (hasText) send() }
-                    .testTag(if (hasText) ForumTags.SEND else ForumTags.MIC),
-                contentAlignment = Alignment.Center,
-            ) {
-                if (hasText) icon("send", m.icon, c.onAi, strings.send) else icon("mic", m.icon, c.text2, strings.voice)
+            if (rowLayout) {
+                // Voice (the mic), Camera, Enter: all three always on the row; Enter is live once there is text or a file.
+                Box(Modifier.size(metrics.touch).clip(CircleShape).testTag(ForumTags.MIC), contentAlignment = Alignment.Center) { icon("mic", m.icon, c.text2, strings.voice) }
+                Box(
+                    Modifier.size(metrics.touch).clip(CircleShape).clickable(enabled = camera != null) { camera?.invoke() }.testTag(ForumTags.CAMERA),
+                    contentAlignment = Alignment.Center,
+                ) { icon("camera", m.icon, if (camera != null) c.text2 else c.text2.copy(alpha = metrics.disabledAlpha), strings.camera) }
+                Box(
+                    Modifier.size(metrics.touch).clip(CircleShape).background(if (hasText) c.ai else SolidColor(Color.Transparent))
+                        .clickable(enabled = !chat.sending && hasText) { send() }.testTag(ForumTags.SEND),
+                    contentAlignment = Alignment.Center,
+                ) { icon("send", m.icon, if (hasText) c.onAi else c.text2, strings.send) }
+            } else {
+                // The mic becomes Send once there is text (Telegram's toggle).
+                Box(
+                    Modifier.size(metrics.touch).clip(CircleShape).background(if (hasText) c.ai else SolidColor(Color.Transparent))
+                        .clickable(enabled = !chat.sending) { if (hasText) send() }
+                        .testTag(if (hasText) ForumTags.SEND else ForumTags.MIC),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    if (hasText) icon("send", m.icon, c.onAi, strings.send) else icon("mic", m.icon, c.text2, strings.voice)
+                }
             }
         }
-        // The AI tooling of the plain chat page: the context line, then (+) attach, Task, Agent, Model, Effort, Mode, MCP, More.
+        // The AI tooling of the plain chat page: the context line, then the toolbar: row 1 Task, Specialist | Agent, Model, Effort, Mode; row 2 Repos, Plugins, MCPs, More.
         if (tools != null && design != null) {
             AiContext.line(chat.session, chat.models.firstOrNull { it.id == chat.model }?.context ?: 0, theme.strings)?.let {
                 androidx.compose.material3.Text(it, color = c.text2, style = theme.type.style(theme.type.small), modifier = Modifier.padding(horizontal = m.gutter).testTag(AiTags.CONTEXT))
@@ -750,6 +902,7 @@ private fun Composer(chat: AiChatState, theme: AiTheme, strings: ForumStrings, m
             AiComposerBar(
                 chat, theme, design, tools.decl, Modifier.padding(horizontal = m.small, vertical = m.small).testTag(ForumTags.TOOLS_BAR),
                 onAttach = tools.onAttach, attach = tools.attach,
+                twoRows = rowLayout, specialists = specialists, specialist = specialist, onSpecialist = onSpecialist, usageInTopBar = rowLayout,
             )
         }
     }

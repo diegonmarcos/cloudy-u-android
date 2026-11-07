@@ -1,16 +1,34 @@
 {
-  "_doc": "Which of the shared AI composer's controls Cloud SuperIntel enables (libs:ai assets/ai/ai-design.json defines them and their order: Task, Agent, Model, Mode, MCPs). The persona chats (SI and the CGC experts) open on their declared agent, model and MCPs (assets/si/personas.json); the user can change them here. PersonasTest holds this file to the design.",
+  "_doc": "Which of the shared AI composer's controls Cloud SuperIntel enables (libs:ai assets/ai/ai-design.json defines them, their rows and their order). Input row: (+). Toolbar row 1: Task, Specialist | Agent, Model, Effort, Mode. Toolbar row 2: Repos, Plugins -> Skills, the four MCP buckets (KG-Graph, Cloudy infra, Cloudy user-facing, Non-Cloudy), Plugins: performance, More. Usage & Cost lives in the top bar. The persona chats (SI and the CGC experts) open on their declared agent, model and MCPs (assets/si/personas.json); the user can change them here. PersonasTest holds this file to the design. `repos` are the repositories the Repos picker offers the model (the owner confirms the list).",
   "app": "cloud-superintel",
   "controls": [
     "plus",
     "task",
+    "specialist",
     "agent",
     "model",
     "effort",
     "mode",
-    "mcp",
+    "repos",
+    "skills",
+    "mcp_kg",
+    "mcp_infra",
+    "mcp_user",
+    "mcp_ext",
+    "perf",
     "more"
   ],
   "default_task": "",
-  "task_required": false
+  "task_required": false,
+  "repos": [
+    "cloudy-u-android",
+    "cloudy-u-containers",
+    "cloudy-t-infra",
+    "cloudy-a-docs",
+    "cloud-u-linux",
+    "cloudy-u-desktop",
+    "cloudy-h-webapps-desk",
+    "cloudy-h-webapps-mob",
+    "git-repos-master"
+  ]
 }

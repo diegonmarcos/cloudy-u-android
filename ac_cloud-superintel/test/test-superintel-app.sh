@@ -15,6 +15,7 @@
 #       (no revealAiKey, no EncryptedSharedPreferences, no key-shaped literal): decisions-use guard D5
 #   B6  the sections are data and honest: the notebook refuses out of scope and cites, no answer is spelled in Kotlin
 #   B7  the News tab is gone cleanly: no News code, data, address, strings or provider query is left behind
+#   B9  chat layout: top bar (hamburger, session pill, Usage & Cost, Context, Files) then specialists then the sessions rail; (+) on the input row; toolbar rows 1 and 2; plugin and MCP buckets
 #   B5  Profile opens Cloud Account, the manifest can see its package, the launcher shows the app and Share > SI is declared
 # then plants a mutation per rule in a scratch copy and requires RED for each.
 set -u
@@ -83,8 +84,23 @@ if [p["id"] for s in bj["ui"]["sections"] if s["id"] == "tools" for p in s["page
 for need in ("AiModelCatalogue(", "AiTaskCatalogue(", "AiSettingsPickers(", "AiAttachHost(", "ForumSessions(", "ForumTools(", "sessions = ForumSessions", "tools = ForumTools"):
     if need not in shell: bad.append("B8 SiShell lacks %s (the SI tab lost its sessions rail or AI tooling)" % need)
 comp = json.loads(read(os.path.join(app, "app/src/main/assets/ai/composer.json")))["controls"]
-for need in ("plus", "task", "agent", "model", "effort", "mode", "mcp", "more"):
+# Chat UI restructure: every prior control (plus, task, agent, model, effort, mode, mcp, more) keeps a home; mcp is now the four MCP buckets.
+want = ["plus", "task", "specialist", "agent", "model", "effort", "mode", "repos", "skills", "mcp_kg", "mcp_infra", "mcp_user", "mcp_ext", "perf", "more"]
+for need in want:
     if need not in comp: bad.append("B8 composer.json lost the %s control" % need)
+if "cost" in comp or "usage" in comp: bad.append("B8 Usage & Cost belongs in the top bar, not the toolbar")
+libai = os.path.join(app, "..", "ab_cloud-libs-shared", "libs", "ai")
+dj = json.loads(read(os.path.join(libai, "src/main/assets/ai/ai-design.json")))
+rows = {c["id"]: c.get("row", 1) for c in dj["composer"]["layout"]["controls"]}
+if [c for c in want if rows.get(c) == 0] != ["plus"]: bad.append("B9 (+) must be the input row's control (row 0)")
+if [c for c in want if rows.get(c) == 1] != ["task", "specialist", "agent", "model", "effort", "mode"]: bad.append("B9 toolbar row 1 must be Task, Specialist, Agent, Model, Effort, Mode")
+if [c for c in want if rows.get(c) == 2] != ["repos", "skills", "mcp_kg", "mcp_infra", "mcp_user", "mcp_ext", "perf", "more"]: bad.append("B9 toolbar row 2 must be Repos, Skills, 4 MCP buckets, Performance, More")
+items = {i["id"]: i for g in dj["more"]["groups"] for i in g["items"]}
+if items.get("principles", {}).get("label") != "Cloudy Principals" or items["principles"].get("class") != "skill": bad.append("B9 Principles must be 'Cloudy Principals' under Plugins > Skills")
+if items.get("headroom", {}).get("class") != "performance": bad.append("B9 Headroom must be a performance plugin")
+forum = read(os.path.join(libai, "src/main/kotlin/com/diegonmarcos/superapp/ai/AiForumChat.kt"))
+if not (0 <= forum.find("SessionTopBar(topic, sessions") < forum.find("TopicStrip(topics, topic.id") < forum.find("SessionsRail(sessions, theme")): bad.append("B9 order must be top bar, specialists, then the sessions rail")
+if "onMenu" not in shell: bad.append("B9 SiShell does not wire the top bar's hamburger")
 
 # B4
 if "ai-gateway" not in script or "AI_GATEWAY_URL" not in script: bad.append("B4 the app's build script does not bake the gateway address")
@@ -138,7 +154,8 @@ out="$(check "$APP")" && ok "B1-B5 hold on the real tree" || { bad "the real tre
 W="$(mktemp -d)"; trap 'rm -rf "$W"' EXIT
 SCRIPT="app/build.gra""dle"
 mutant() {   # mutant <name> <shell edit run in the copy> <needle expected in the output>
-  rm -rf "$W/app"; cp -r "$APP" "$W/app"
+  rm -rf "$W/app" "$W/ab_cloud-libs-shared"; cp -r "$APP" "$W/app"
+  mkdir -p "$W/ab_cloud-libs-shared/libs"; cp -r "$APP/../ab_cloud-libs-shared/libs/ai" "$W/ab_cloud-libs-shared/libs/ai"   # B9 reads the shared chat's sources next to the app
   ( cd "$W/app" && eval "$2" )
   if out="$(check "$W/app" 2>&1)"; then bad "mutant '$1' stayed green"; elif grep -q -- "$3" <<<"$out"; then ok "mutant '$1' is red ($3)"; else bad "mutant '$1' is red for the wrong reason: $out"; fi
 }
@@ -164,6 +181,8 @@ mutant "account not visible"           "sed -i 's/com.diegonmarcos.cloudaccount/
 mutant "Tools leaves the bottom nav"    "python3 -c \"import json;p='build.json';d=json.load(open(p));d['ui']['bottom_nav'].remove('tools');json.dump(d,open(p,'w'))\"" "B8 the AI Tools section left the bottom nav"
 mutant "the sessions rail is dropped"  "sed -i 's/sessions = ForumSessions/sessions = null \/\/ ForumSessions/' $KT/ui/SiShell.kt" "B8 SiShell lacks sessions = ForumSessions"
 mutant "the composer tooling is dropped" "sed -i 's/tools = ForumTools/tools = null \/\/ ForumTools/' $KT/ui/SiShell.kt" "B8 SiShell lacks tools = ForumTools"
-mutant "the composer loses MCP"        "sed -i 's/\"mcp\",//' app/src/main/assets/ai/composer.json" "B8 composer.json lost the mcp control"
+mutant "the composer loses MCP"        "sed -i 's/\"mcp_kg\",//' app/src/main/assets/ai/composer.json" "B8 composer.json lost the mcp_kg control"
+mutant "Principles is not renamed"     "sed -i 's/Cloudy Principals/Principles/' ../ab_cloud-libs-shared/libs/ai/src/main/assets/ai/ai-design.json" "B9 Principles must be"
+mutant "the rail climbs to the top"    "sed -i 's/SessionTopBar(topic, sessions/SessionTopBarX(topic, sessions/' ../ab_cloud-libs-shared/libs/ai/src/main/kotlin/com/diegonmarcos/superapp/ai/AiForumChat.kt" "B9 order must be top bar"
 
 [ "$FAILS" -eq 0 ] && echo "ALL GREEN" || { echo "$FAILS FAILED"; exit 1; }
