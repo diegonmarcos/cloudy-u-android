@@ -113,42 +113,18 @@ internal class UpdateInstaller(private val context: Context) {
             // matrix=io.element.android.x) makes PackageInstaller reject it with
             // INSTALL_FAILED_INVALID_APK. Let the APK declare its own package —
             // correct for self-update + patched forks + stock upstream alike.
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                // Auto-update toggle (default ON) → silent install; OFF → the
-                // normal system prompt. NOT_REQUIRED degrades to a prompt on its
-                // own when "install unknown apps" isn't granted, so the About
-                // grant row is what turns it truly silent.
-                setRequireUserAction(
-                    if (AutoUpdatePrefs.silent(context)) PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED
-                    else PackageInstaller.SessionParams.USER_ACTION_REQUIRED
-                )
-            }
-            if (Build.VERSION.SDK_INT >= 34) {
-                // Claim UPDATE OWNERSHIP (Android 14+).
-                //
-                // UPDATE_PACKAGES_WITHOUT_USER_ACTION only silences the confirm
-                // dialog when we are the installer of record / update owner for
-                // that package. Without this, ownership sits with whatever
-                // installed the app last - Files, adb, another store - and every
-                // later update prompts again no matter what permission we hold.
-                // That is the real reason a fleet update still shows a dialog
-                // per app; serialising the queue only makes the dialogs orderly.
-                //
-                // Trade-off, deliberately accepted: if another installer already
-                // owns the package, REQUESTING ownership forces user action for
-                // THIS install. So the first update after adopting an app still
-                // prompts, and every one after it is silent.
-                setRequestUpdateOwnership(true)
-            }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                // Without an explicit package source, Android 14/15 Enhanced
-                // Confirmation Mode treats the install as an untrusted sideload
-                // and RESTRICTS the installed app — Settings then refuses to
-                // grant it protected roles/permissions with the "restricted
-                // setting" denial. Our GHCR fleet updater IS the constellation's
-                // app store.
-                setPackageSource(PackageInstaller.PACKAGE_SOURCE_STORE)
-            }
+            // Layer 1, decided by the pure SilentUpdate.plan: NOT_REQUIRED + update ownership only for a FLEET-signed package
+            // with the toggle on (Android 12+/14+); any other package is asked for the ordinary confirmed session. The OS still
+            // decides: a package this app does not own yet shows ONE dialog on its first Store update, then updates silently.
+            // Without the "install unknown apps" grant NOT_REQUIRED degrades to a prompt on its own.
+            val plan = SilentUpdate.plan(Build.VERSION.SDK_INT, AutoUpdatePrefs.silent(context),
+                SilentUpdate.isFleetSigned(context, targetPackage, apk))
+            Log.i(tag, "silent plan for $targetPackage: ${if (plan.layer1) "native silent" else plan.why}")
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) plan.requireUserAction?.let { setRequireUserAction(it) }
+            if (plan.requestOwnership && Build.VERSION.SDK_INT >= 34) setRequestUpdateOwnership(true)
+            // Without an explicit package source, Android 14/15 Enhanced Confirmation Mode treats the install as an untrusted
+            // sideload and RESTRICTS the installed app; our GHCR fleet updater IS the constellation's app store.
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) plan.packageSource?.let { setPackageSource(it) }
         }
         reapStaleSessions(installer)
         supersedeOlderSessions(installer, targetPackage)

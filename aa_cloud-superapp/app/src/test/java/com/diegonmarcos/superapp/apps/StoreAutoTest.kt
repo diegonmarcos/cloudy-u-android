@@ -540,6 +540,37 @@ class StoreAutoTest {
     }
 
     @Test
+    fun `silent - a fleet app update with auto-update ON reaches installed with no user-action step`() {
+        val apps = oneApp()
+        // The session for a fleet-signed app on Android 14 is the native silent one (USER_ACTION_NOT_REQUIRED + ownership).
+        val plan = com.diegonmarcos.superapp.updater.install.SilentUpdate.plan(34, silentOn = true, fleetSigned = true)
+        assertTrue(plan.layer1 && plan.requestOwnership)
+        val states = ArrayList<String>()
+        val watcher: (UpdateProgress.State) -> Unit = { states += it.javaClass.simpleName }
+        UpdateProgress.addObserver(watcher)
+        StoreStages.installer = { c, app, v ->
+            events += "install:${app.id}"
+            installed(c, app.pkg, v.file.readBytes())   // the OS applies it with no dialog: the device runs the new bytes
+            null
+        }
+        val done = StoreAuto.run(ctx, apps, StoreAuto.TRIGGER_WIFI)
+        UpdateProgress.removeObserver(watcher)
+        assertEquals(done.summary, StoreAuto.INSTALLED, statusOf(done, "appa"))
+        assertEquals("nothing waited on a confirmation", 0, done.count(StoreAuto.PENDING))
+        assertFalse("no 'needs your confirmation' state was ever shown: $states", states.contains("Waiting"))
+        assertEquals(1, events.count { it == "install:appa" })
+    }
+
+    @Test
+    fun `silent - control - an app the OS still asks about stays pending, shown, not installed`() {
+        val apps = oneApp()
+        assertFalse(com.diegonmarcos.superapp.updater.install.SilentUpdate.plan(34, silentOn = true, fleetSigned = false).layer1)
+        StoreStages.installer = { _, app, _ -> events += "install:${app.id}"; null }   // handed over, dialog unanswered
+        val done = StoreAuto.run(ctx, apps, StoreAuto.TRIGGER_WIFI)
+        assertEquals(done.summary, StoreAuto.PENDING, statusOf(done, "appa"))
+    }
+
+    @Test
     fun `1551 an install that did not finish is retried from the cache after the backoff, across a process death`() {
         val apps = oneApp()
         var clock = System.currentTimeMillis() + 600_000   // ahead of the notes' real timestamps
