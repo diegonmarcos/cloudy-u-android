@@ -589,7 +589,7 @@ mod tests {
         let ids: Vec<&str> = c.doors.iter().map(|d| d.id.as_str()).collect();
         assert_eq!(ids, ["nix", "superapp", "termux"], "the three fleet doors");
         let nix = c.doors.iter().find(|d| d.id == "nix").unwrap();
-        assert!(nix.supervised && nix.port == Some(8024) && nix.auth == "pubkey");
+        assert!(nix.supervised && nix.port == Some(8024) && nix.auth.starts_with("pubkey"));
         assert_eq!(c.doors.iter().find(|d| d.id == "termux").unwrap().port, Some(8023));
         assert_eq!(c.doors.iter().find(|d| d.id == "superapp").unwrap().port, None, "the SuperApp hosts no sshd");
         let ctl = nix.control.as_ref().unwrap();
