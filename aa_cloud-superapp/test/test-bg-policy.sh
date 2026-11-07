@@ -9,7 +9,7 @@
 #   T2  NOTHING polls or keeps alive: no WorkManager, AlarmManager, JobScheduler, Handler.postDelayed, Timer, foreground service,
 #       or loop in the feature's code. It runs on a tap, or once on PACKAGE_REPLACED.
 #   T3  no sp literal, no hand-made Text: the rows are KitStoreRowLine / KitStoreQuick and the ui-kit type ramp.
-#   T4  Battery Hunger is drawn in Quick Actions > Panels > Tools (the tools scope of LauncherConfigFragment).
+#   T4  Battery Hunger is drawn in Quick Actions > Panels > Battery Hungers (the battery scope of LauncherConfigFragment; All shows it too).
 #   T5  PACKAGE_REPLACED: registered at run time in App.onCreate, MY_PACKAGE_REPLACED in the manifest, the receiver ends its async work.
 #   T6  Battery Hunger ranks with X-Ray's own analyser and probe, not a second copy.
 #   T7  the allowlist is checked in the engine for restrict and force-stop, so no caller can skip it.
@@ -62,10 +62,10 @@ else bad "T3 Battery Hunger does not use KitStoreRowLine and KitStoreQuick"; fi
 
 # T4
 LCF="$(cat "$SRC/settings/LauncherConfigFragment.kt")"
-IN_TOOLS="$(awk '/if \(showTools\) \{/{f=1} f&&/BatteryHungerPanel/{print "yes"; exit}' "$SRC/settings/LauncherConfigFragment.kt")"
+IN_TOOLS="$(awk '/if \(showBattery\) \{/{f=1} f&&/BatteryHungerPanel/{print "yes"; exit}' "$SRC/settings/LauncherConfigFragment.kt")"
 if grep -q 'BatteryHungerPanel' <<<"$LCF" && [ "$IN_TOOLS" = "yes" ]; then
-  ok "T4 Battery Hunger is drawn inside the tools scope"
-else bad "T4 Battery Hunger is not drawn in the Tools tab"; fi
+  ok "T4 Battery Hunger is drawn inside the battery scope"
+else bad "T4 Battery Hunger is not drawn in the Battery Hungers tab"; fi
 
 # T5
 MAN="$(cat "$APP/app/src/main/AndroidManifest.xml")"; APPKT="$(cat "$SRC/App.kt")"

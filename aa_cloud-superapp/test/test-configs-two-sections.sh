@@ -232,9 +232,9 @@ import json
 print(len(next(s for s in json.load(open('$BJ'))['ui']['sections']
                if s['id'] == 'config')['pages']))
 ")
-[ "$COUNT" = 46 ] \
-  && ok "46 config pages declared (2026-11 Configs restructure: plus xray-app, logcat-fleet and the launcher-sep-1 separator, minus agents-watchtower; earlier: #1553: plus folders) — the set T5 walks is the whole set (#1548: plus the Agents hub watchtower; #1545: plus the hub watchdog; X-Ray regroup: minus about, diagnostics, agents and its two tabs, plus xray and app-about; #1263: plus wifi and its five hidden tabs; #1221: plus bluetooth and its five hidden tabs; #1264: plus its Analyze and Locate tabs; #649: 22 minus launcher; #723: minus ai and its 5 tabs; #733: plus apps-mesh; #740: plus dns; plus firewall; plus the hidden About ▸ Battery; Agents regroup: minus the Network separator, plus agents and its two tabs; #ipc: plus ipc; Controls merge: plus panels, panels-ui and panels-tools; Apps Mesh strip: plus apps-mesh-members and identity)" \
-  || bad "$COUNT config pages, expected 46 — a page was added or DELETED, and T5 cannot report a page that is gone"
+[ "$COUNT" = 48 ] \
+  && ok "48 config pages declared (2026-11 Quick Actions tabs: plus panels-all and panels-battery; 2026-11 Configs restructure: plus xray-app, logcat-fleet and the launcher-sep-1 separator, minus agents-watchtower; earlier: #1553: plus folders) — the set T5 walks is the whole set (#1548: plus the Agents hub watchtower; #1545: plus the hub watchdog; X-Ray regroup: minus about, diagnostics, agents and its two tabs, plus xray and app-about; #1263: plus wifi and its five hidden tabs; #1221: plus bluetooth and its five hidden tabs; #1264: plus its Analyze and Locate tabs; #649: 22 minus launcher; #723: minus ai and its 5 tabs; #733: plus apps-mesh; #740: plus dns; plus firewall; plus the hidden About ▸ Battery; Agents regroup: minus the Network separator, plus agents and its two tabs; #ipc: plus ipc; Controls merge: plus panels, panels-ui and panels-tools; Apps Mesh strip: plus apps-mesh-members and identity)" \
+  || bad "$COUNT config pages, expected 48 — a page was added or DELETED, and T5 cannot report a page that is gone"
 
 echo "== T6: ACTIONS IS UNTOUCHED =="
 # The owner said to keep it as it is. Three things make that true: the same three
@@ -286,7 +286,7 @@ grep -qF 'shownSub = null' "$GRID" \
 echo "== T8: each of Launcher's four pages opens on its OWN, not via a tab owner =="
 # They were tabs until #649. A tile that still resolves to an owner page would
 # land the owner on a tab strip that no longer exists.
-for pid in presets panels-ui panels-tools onehand notify; do
+for pid in presets panels-all panels-ui panels-battery panels-tools onehand notify; do
   case "$pid" in
     notify) grep -qF '"mirror_page": "communication/my-rss"' "$BJ" \
               && ok "notify renders through its declared mirror_page, no factory branch needed" \
@@ -312,7 +312,7 @@ BEFORE = {'bluetooth-analyze', 'bluetooth-locate', 'presets', 'controls', 'oneha
           'profile', 'wg', 'kde', 'ai', 'perms', 'store', 'about',
           'websearch', 'localsearch', 'textenhance', 'library', 'tokens',
           'store-cloud', 'store-phone',
-          'panels', 'panels-ui', 'panels-tools',  # added on purpose: Configs ▸ Setup ▸ Launcher ▸ Controls ▸ Panels (UI | Tools), hidden tabs of the merged Controls
+          'panels', 'panels-all', 'panels-ui', 'panels-battery', 'panels-tools',  # added on purpose: Configs ▸ Setup ▸ Launcher ▸ Controls ▸ Panels (UI | Tools), hidden tabs of the merged Controls
           'update', 'kde_connect', 'animations',
           'webserver',  # added on purpose: Configs ▸ Network ▸ Webserver (opens the Cloud C3 Webserver app, else localhost in Cloud Browser)
           'apps-mesh', 'ipc', 'apps-mesh-members', 'identity',  # were Apps Mesh and its tabs; now removed_pages (Cloud Store > Access)

@@ -80,6 +80,9 @@ import androidx.compose.ui.unit.sp
  * rounded capsule holds ICON-ONLY tabs; the selected tab is a highlighted pill that ALSO shows its name. Same
  * palettes and strokes as above; [iconFor] hands the glyph of a page (null = its initial). See [IconPillStrip].
  *
+ * [fitText] (default off): size each pill to its own label at the full size - no font step-down, no ellipsis - and scroll the
+ * strip when the pills outgrow it. For strips whose labels are long or numerous (Quick Actions' tabs); see [fitTextPlan].
+ *
  * [onSelect] fires for a tap on an unselected pill - including a launch pill, whose [NavPage.action]
  * the host dispatches and which it should NOT make [selectedId] - and [onReselect] for the
  * selected one. [selectedId] only MOVES the pill; it never calls back.
@@ -96,8 +99,9 @@ public fun PageTabs(
     surface: TabSurface = TabSurface.Dark,
     flushTop: Boolean = false,
     iconFor: (@Composable (NavPage) -> Painter?)? = null,
+    fitText: Boolean = false,
 ) {
-    PageTabsImpl(pages, selectedId, onSelect, modifier, onReselect, underTopChrome, null, surface, flushTop, iconFor)
+    PageTabsImpl(pages, selectedId, onSelect, modifier, onReselect, underTopChrome, null, surface, flushTop, iconFor, fitText)
 }
 
 /** What a page-tab strip is drawn over; picks one of the two lib-owned palettes in [NavTokens]. */
@@ -116,13 +120,14 @@ internal fun PageTabsImpl(
     surface: TabSurface = TabSurface.Dark,
     flushTop: Boolean = false,
     iconFor: (@Composable (NavPage) -> Painter?)? = null,
+    fitText: Boolean = false,
 ) {
     // An app's MaterialTheme text style (line height, family) must not reach the pills.
     CompositionLocalProvider(LocalTextStyle provides TextStyle.Default) {
         if (iconFor != null) {
             IconPillStrip(pages, selectedId, onSelect, modifier, onReselect, underTopChrome, insets, surface, flushTop, iconFor)
         } else {
-            PageTabsContent(pages, selectedId, onSelect, modifier, onReselect, underTopChrome, insets, surface, flushTop)
+            PageTabsContent(pages, selectedId, onSelect, modifier, onReselect, underTopChrome, insets, surface, flushTop, fitText)
         }
     }
 }
@@ -138,6 +143,7 @@ private fun PageTabsContent(
     insets: WindowInsets?,
     surface: TabSurface,
     flushTop: Boolean,
+    fitText: Boolean,
 ) {
     if (pages.isEmpty()) return
     val tokens = navTokens()
@@ -177,8 +183,8 @@ private fun PageTabsContent(
             (w + 2 * dividerPad) * dividers.size
         }
         val avail = widthPx - 2 * stripPad - dividerPx
-        val plan = remember(labels, avail, density.density, density.fontScale, spacing) {
-            planPills(
+        val plan = remember(labels, avail, density.density, density.fontScale, spacing, fitText) {
+            if (fitText) fitTextPlan(startPx) else planPills(
                 availPx = avail,
                 count = pages.size,
                 longest = labels.maxOf { it.length },
@@ -296,6 +302,12 @@ private fun pillStyle(density: Density, px: Float, spacing: Float, color: Color)
     fontSize = with(density) { px.toSp() },
     letterSpacing = spacing.em,
 ).withPlatformFontPadding() // a TextView keeps the font's ascent/descent padding; matching it keeps the pill height equal
+
+/**
+ * Fit-the-text strip ([PageTabs] `fitText`): every pill is as wide as its OWN label at the full size, so no label is ever shrunk
+ * or cut to an ellipsis; a strip wider than the screen scrolls instead. [PillPlan.pillPx] 0 = wrap the content.
+ */
+internal fun fitTextPlan(startPx: Float): PillPlan = PillPlan(startPx, 0f, true)
 
 /** How the strip lays its pills out. [pillPx] is the pill's width including its own padding. */
 internal data class PillPlan(val textPx: Float, val pillPx: Float, val scrollable: Boolean)

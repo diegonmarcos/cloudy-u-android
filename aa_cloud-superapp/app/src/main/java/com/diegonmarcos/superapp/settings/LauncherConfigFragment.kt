@@ -101,24 +101,21 @@ class LauncherConfigFragment : KitComposeFragment() {
         val ctx = requireContext()
         val epoch = repaintEpoch
 
-        // Configs ▸ Launcher ▸ Controls ▸ Panels is two tabs over this ONE producer:
-        // UI (look, layout, animation, screensaver, brightness) and Tools (the device
-        // switch board + default-launcher action). No scope draws both, as before.
+        // Configs ▸ Launcher ▸ Controls ▸ Panels is four tabs over this ONE producer: UI (UI controls only: screensaver,
+        // icons per row, brightness, Cloud-superapp Scale / Font Size / Zoom Size), Battery Hungers (the battery-effect
+        // switches, the heaviest consumers, the Battery Hunger panel), Tools (the device switch board, Connectivity,
+        // Notifications, Others, default-launcher action) and All = UI + Battery Hungers + Tools in that order.
         val scope = arguments?.getString(ARG_SCOPE).orEmpty()
-        val showUi = scope != SCOPE_TOOLS
-        val showTools = scope != SCOPE_UI
+        val all = scope.isEmpty() || scope == SCOPE_ALL
+        val showUi = all || scope == SCOPE_UI
+        val showBattery = all || scope == SCOPE_BATTERY
+        val showTools = all || scope == SCOPE_TOOLS
 
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
-            // The device switch board leads. ControlFragment is embedded, not
-            // re-implemented: one implementation of every tile, one place its
-            // behaviour is asserted. It is committed only when nothing is already
-            // attached at the host — on a restore the FragmentManager re-binds the
-            // existing child to the same stable id and must not be overwritten.
-            if (showTools) ControlsGridHost()
+            val settingsPrefs = remember { LauncherSettingsPrefs(ctx) }
 
             if (showUi) {
                 // ── Screensaver section ────────────────────────────────────
-                val settingsPrefs = remember { LauncherSettingsPrefs(ctx) }
                 GapDp(24)
                 SectionHeaderUi("Screensaver",
                     "Which screensaver the floating-nav ‘Screensaver’ action shows, and the idle auto-start timer.")
@@ -137,95 +134,6 @@ class LauncherConfigFragment : KitComposeFragment() {
                 sliderRow(st.label, st.subtitle, st.min, st.max,
                     settingsPrefs.screensaverTimeout) { v -> settingsPrefs.screensaverTimeout = v }
 
-                // ── Toggles ────────────────────────────────────────────────
-                // One box per build.json::ui.launcher_settings.toggle_groups entry, in
-                // declared order, holding the toggles that name it. This replaced a
-                // `filter { it.battery }` / `filter { !it.battery }` split, which could
-                // express exactly two boxes and no more — the four the owner asked for
-                // were a Kotlin change under that shape and are a data change under this
-                // one. A group with no toggles draws nothing rather than an empty header.
-                val allToggles = LauncherSettingsPrefs.Config.toggles
-                for (group in LauncherSettingsPrefs.Config.groups) {
-                    val rows = allToggles.filter { it.group == group.id }
-                    if (rows.isEmpty()) continue
-
-                    GapDp(24)
-                    SectionHeaderUi(group.label, group.subtitle)
-
-                    if (group.master) {
-                        // The master's own position is DERIVED from its children, so it
-                        // is passed as a question, not an answer: flipping one child
-                        // below has to move this switch, and it re-asks instead of
-                        // being told.
-                        toggleRow(group.masterLabel, group.masterSubtitle, epoch,
-                            { rows.all { settingsPrefs.toggle(it) } }) { on ->
-                            // A master must not stomp a user-owned switch either: the
-                            // edge menus are not the master's to turn off.
-                            rows.filterNot { it.userOwned }.forEach { settingsPrefs.setToggle(it, on) }
-                            onToggleChanged()
-                            repaintFromStore() // reflect the child switches
-                        }
-                        GapDp(8)
-                    }
-
-                    toggleGrid(rows, settingsPrefs, epoch) { t, on ->
-                        // Dark mode is a device-wide setting written over the shell
-                        // channel, so it is the one switch that must not be flipped
-                        // on this thread — and the one that has to say so when
-                        // there is no channel, instead of lighting up and doing nothing.
-                        if (t.store == LauncherSettingsPrefs.Config.STORE_NIGHTMODE) {
-                            if (!SystemDisplay.hasChannel(ctx)) Toast.makeText(
-                                ctx, "Dark mode needs the shell channel — turn on wireless debugging first.",
-                                Toast.LENGTH_LONG).show()
-                            // A switch thumb moved under the finger; a tile does not. So
-                            // the repaint has to be asked for, and only AFTER the write
-                            // lands — repaint eagerly and the grid draws the old value.
-                            else Thread({
-                                settingsPrefs.setToggle(t, on)
-                                view?.post { repaintFromStore() }
-                            }, "night-mode").start()
-                            return@toggleGrid
-                        }
-                        settingsPrefs.setToggle(t, on)
-                        // Eye protection = the ANDROID SYSTEM night-light (blue-light
-                        // filter), NOT a custom overlay — open its settings to enable.
-                        if (t.id == "eye_protection" && on) {
-                            runCatching { startActivity(Intent("android.settings.NIGHT_DISPLAY_SETTINGS")) }
-                                .onFailure { runCatching { startActivity(Intent(Settings.ACTION_DISPLAY_SETTINGS)) } }
-                        }
-                        onToggleChanged()
-                        // The tile that was tapped repaints itself, and the mode tiles
-                        // refill — a hand-flip can move the selected mode into its
-                        // "modified" state, and that label is derived, not stored. What
-                        // this used to do was detach and re-attach the whole fragment
-                        // for those two facts: #349's "the page reloads".
-                        repaintFromStore()
-                    }
-                    GapDp(8)
-
-                    // Scale lives in the Others box because it is the same kind of
-                    // whole-UI preference as the switches above it — Samsung draws
-                    // Screen zoom and Font size on this screen too, as two separate
-                    // knobs that drift apart. SystemDisplay drives both from this one.
-                    if (group.id == "others") {
-                        val sc = LauncherSettingsPrefs.Config.scale
-                        // ticks, the one-tap sizes AND the shipped default all come off
-                        // the SAME declared record the range does (#384, #408). Nothing
-                        // about this control is written twice, so no edit to build.json
-                        // can leave a button setting a number the slider never had, or
-                        // a button called "Default" that is not what the app installs
-                        // with — Slider.default IS the shipped preset's value.
-                        sliderRow(sc.label, sc.subtitle, sc.min, sc.max, settingsPrefs.scale,
-                            ticks = sc.ticks, presets = sc.presets) { v ->
-                            // #601: SystemDisplay.wrap applies this in-process, so the
-                            // change needs no shell channel — just a re-read, which
-                            // recreate() gets by re-running attachBaseContext.
-                            settingsPrefs.scale = v
-                            SystemDisplay.applyScale(ctx)
-                        }
-                        GapDp(8)
-                    }
-                }
                 // ── Icons per row ──────────────────────────────────────────
                 // Two separate steppers, one per grid family. Neither writes until it is
                 // tapped, so a phone that never touches them keeps following the
@@ -248,10 +156,28 @@ class LauncherConfigFragment : KitComposeFragment() {
                     settingsPrefs.brightness = v
                     applySystemBrightness(ctx, v)
                 }
+
+                // Cloud-superapp Scale (ruler centred on 411), Font Size, Zoom Size: live status + privileged write.
+                DisplayControlsSection()
             }
 
-            // "Set as default launcher" CTA
+            // ── Battery Hungers: the effect switches, the heaviest consumers, the Battery Hunger panel ──
+            if (showBattery) {
+                toggleGroups("battery", settingsPrefs, epoch)
+                GapDp(24)
+                // Per-app mAh per charge cycle / month, resolved to app names (BatteryRepository; needs the ADB channel for mAh).
+                com.diegonmarcos.superapp.launcher.BatteryUsageBody()
+                // #1506 Battery Hunger: drainers since the last charge + the Background policy (on demand, needs the ADB shell).
+                com.diegonmarcos.superapp.bgpolicy.BatteryHungerPanel(requireActivity())
+            }
+
+            // ── Tools: the device switch board, Connectivity, Notifications, Others, default launcher ──
             if (showTools) {
+                // The device switch board. ControlFragment is embedded, not re-implemented: one implementation of every
+                // tile, one place its behaviour is asserted. It is committed only when nothing is already attached at
+                // the host — on a restore the FragmentManager re-binds the existing child to the same stable id.
+                ControlsGridHost()
+                toggleGroups("tools", settingsPrefs, epoch)
                 val p = LocalKitPalette.current
                 val view = LocalView.current
                 GapDp(16)
@@ -272,8 +198,101 @@ class LauncherConfigFragment : KitComposeFragment() {
                             }
                         }
                     }.padding(12.dp).testTag("launcher:default-cta"))
-                // #1506 Battery Hunger: drainers since the last charge + the Background policy (on demand, needs the ADB shell).
-                com.diegonmarcos.superapp.bgpolicy.BatteryHungerPanel(requireActivity())
+            }
+        }
+    }
+
+    /** The switch boxes declared for [tab] (`battery` / `tools`), in declared order; Scale rides the Others box. */
+    @Composable
+    private fun toggleGroups(tab: String, settingsPrefs: LauncherSettingsPrefs, epoch: Int) {
+        val ctx = requireContext()
+        // ── Toggles ────────────────────────────────────────────────
+        // One box per build.json::ui.launcher_settings.toggle_groups entry, in
+        // declared order, holding the toggles that name it. This replaced a
+        // `filter { it.battery }` / `filter { !it.battery }` split, which could
+        // express exactly two boxes and no more — the four the owner asked for
+        // were a Kotlin change under that shape and are a data change under this
+        // one. A group with no toggles draws nothing rather than an empty header.
+        val allToggles = LauncherSettingsPrefs.Config.toggles
+        for (group in LauncherSettingsPrefs.Config.groups.filter { it.tab == tab }) {
+            val rows = allToggles.filter { it.group == group.id }
+            if (rows.isEmpty()) continue
+
+            GapDp(24)
+            SectionHeaderUi(group.label, group.subtitle)
+
+            if (group.master) {
+                // The master's own position is DERIVED from its children, so it
+                // is passed as a question, not an answer: flipping one child
+                // below has to move this switch, and it re-asks instead of
+                // being told.
+                toggleRow(group.masterLabel, group.masterSubtitle, epoch,
+                    { rows.all { settingsPrefs.toggle(it) } }) { on ->
+                    // A master must not stomp a user-owned switch either: the
+                    // edge menus are not the master's to turn off.
+                    rows.filterNot { it.userOwned }.forEach { settingsPrefs.setToggle(it, on) }
+                    onToggleChanged()
+                    repaintFromStore() // reflect the child switches
+                }
+                GapDp(8)
+            }
+
+            toggleGrid(rows, settingsPrefs, epoch) { t, on ->
+                // Dark mode is a device-wide setting written over the shell
+                // channel, so it is the one switch that must not be flipped
+                // on this thread — and the one that has to say so when
+                // there is no channel, instead of lighting up and doing nothing.
+                if (t.store == LauncherSettingsPrefs.Config.STORE_NIGHTMODE) {
+                    if (!SystemDisplay.hasChannel(ctx)) Toast.makeText(
+                        ctx, "Dark mode needs the shell channel — turn on wireless debugging first.",
+                        Toast.LENGTH_LONG).show()
+                    // A switch thumb moved under the finger; a tile does not. So
+                    // the repaint has to be asked for, and only AFTER the write
+                    // lands — repaint eagerly and the grid draws the old value.
+                    else Thread({
+                        settingsPrefs.setToggle(t, on)
+                        view?.post { repaintFromStore() }
+                    }, "night-mode").start()
+                    return@toggleGrid
+                }
+                settingsPrefs.setToggle(t, on)
+                // Eye protection = the ANDROID SYSTEM night-light (blue-light
+                // filter), NOT a custom overlay — open its settings to enable.
+                if (t.id == "eye_protection" && on) {
+                    runCatching { startActivity(Intent("android.settings.NIGHT_DISPLAY_SETTINGS")) }
+                        .onFailure { runCatching { startActivity(Intent(Settings.ACTION_DISPLAY_SETTINGS)) } }
+                }
+                onToggleChanged()
+                // The tile that was tapped repaints itself, and the mode tiles
+                // refill — a hand-flip can move the selected mode into its
+                // "modified" state, and that label is derived, not stored. What
+                // this used to do was detach and re-attach the whole fragment
+                // for those two facts: #349's "the page reloads".
+                repaintFromStore()
+            }
+            GapDp(8)
+
+            // Scale lives in the Others box because it is the same kind of
+            // whole-UI preference as the switches above it — Samsung draws
+            // Screen zoom and Font size on this screen too, as two separate
+            // knobs that drift apart. SystemDisplay drives both from this one.
+            if (group.id == "others") {
+                val sc = LauncherSettingsPrefs.Config.scale
+                // ticks, the one-tap sizes AND the shipped default all come off
+                // the SAME declared record the range does (#384, #408). Nothing
+                // about this control is written twice, so no edit to build.json
+                // can leave a button setting a number the slider never had, or
+                // a button called "Default" that is not what the app installs
+                // with — Slider.default IS the shipped preset's value.
+                sliderRow(sc.label, sc.subtitle, sc.min, sc.max, settingsPrefs.scale,
+                    ticks = sc.ticks, presets = sc.presets) { v ->
+                    // #601: SystemDisplay.wrap applies this in-process, so the
+                    // change needs no shell channel — just a re-read, which
+                    // recreate() gets by re-running attachBaseContext.
+                    settingsPrefs.scale = v
+                    SystemDisplay.applyScale(ctx)
+                }
+                GapDp(8)
             }
         }
     }
@@ -607,13 +626,15 @@ class LauncherConfigFragment : KitComposeFragment() {
     }
 
     companion object {
-        /** [scope] "ui" / "tools" draws one Panels tab; "" draws the whole page. */
+        /** [scope] "all" (or "") / "ui" / "battery" / "tools" draws one Panels tab; All is UI + Battery Hungers + Tools. */
         fun newInstance(scope: String = "") = LauncherConfigFragment().apply {
             arguments = android.os.Bundle().apply { putString(ARG_SCOPE, scope) }
         }
 
         private const val ARG_SCOPE = "scope"
+        const val SCOPE_ALL = "all"
         const val SCOPE_UI = "ui"
+        const val SCOPE_BATTERY = "battery"
         const val SCOPE_TOOLS = "tools"
 
         // The same two numbers Configs ▸ Panel ▸ Control uses for its badges, so

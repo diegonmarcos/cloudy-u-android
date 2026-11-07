@@ -92,7 +92,9 @@ object SectionPages {
         // Configs ▸ Setup ▸ Launcher ▸ Controls is a strip over Presets | Panels (`controls` declares
         // `tabs`, so the strip branch at the top answered it); Panels is a strip over UI | Tools,
         // two scopes of the ONE switch-board producer.
+        sectionId == "config" && pageId == "panels-all" -> LauncherConfigFragment.newInstance(LauncherConfigFragment.SCOPE_ALL)
         sectionId == "config" && pageId == "panels-ui" -> LauncherConfigFragment.newInstance(LauncherConfigFragment.SCOPE_UI)
+        sectionId == "config" && pageId == "panels-battery" -> LauncherConfigFragment.newInstance(LauncherConfigFragment.SCOPE_BATTERY)
         sectionId == "config" && pageId == "panels-tools" -> LauncherConfigFragment.newInstance(LauncherConfigFragment.SCOPE_TOOLS)
         sectionId == "config" && pageId == "kde"            -> com.diegonmarcos.superapp.kdeconnect.KdeConnectFragment.newInstance()
         // Configs ▸ Fleet ▸ Bluetooth (#1221): the `bluetooth` page declares `tabs`, so the strip branch at the top answered it;

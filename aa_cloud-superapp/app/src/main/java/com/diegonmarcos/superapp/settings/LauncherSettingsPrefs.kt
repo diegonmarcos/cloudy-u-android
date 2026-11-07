@@ -132,6 +132,8 @@ class LauncherSettingsPrefs(context: Context) {
         val master: Boolean = false,
         val masterLabel: String = "",
         val masterSubtitle: String = "",
+        /** Which Quick Actions ▸ Panels tab draws this box: `battery` or `tools` (UI draws no switch box). */
+        val tab: String = "tools",
     )
     /** A named step the user can jump the slider to in one tap (#408). The
      *  one flagged [shipped] is ALSO the value a fresh install starts at —
@@ -208,6 +210,7 @@ class LauncherSettingsPrefs(context: Context) {
                     master         = o.optBoolean("master", false),
                     masterLabel    = o.optString("master_label", ""),
                     masterSubtitle = o.optString("master_subtitle", ""),
+                    tab            = o.optString("tab", "tools"),
                 )
             }
         }
@@ -241,6 +244,8 @@ class LauncherSettingsPrefs(context: Context) {
                 o.optInt("min", 0), o.optInt("max", 100), shipped,
                 o.optBoolean("ticks", false), presets)
         }
+        /** build.json::ui.launcher_settings.display_controls: Cloud-superapp Scale, Font Size, Zoom Size (see QuickDisplay). */
+        val displayControls: JSONObject by lazy { settings.optJSONObject("display_controls") ?: JSONObject() }
         val scale: Slider by lazy { slider("scale") }
         val brightness: Slider by lazy { slider("brightness") }
         val eyeIntensity: Slider by lazy { slider("eye_intensity", 35) }

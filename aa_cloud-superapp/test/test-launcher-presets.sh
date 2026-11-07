@@ -36,7 +36,7 @@ for f in "$BJ" "$KT/settings/LauncherPresetsFragment.kt" "$KT/settings/LauncherM
   [ -f "$f" ] || { echo "  ABORT: no such file: $f"; exit 2; }
 done
 
-echo "== T1: the Launcher group is Controls (Presets | Panels ▸ UI | Tools) | One-Hand | Notify (#580, #649) =="
+echo "== T1: the Launcher group is Controls (Presets | Panels ▸ All | UI | Battery Hungers | Tools) | One-Hand | Notify (#580, #649) =="
 # Asserted by LABEL, which is what the owner reads on the screen, and the four
 # labels are unchanged across #649 — it moved them from a tab strip to four
 # direct tiles under a `Launcher` heading, which is the same four words in the
@@ -51,10 +51,10 @@ by     = {p['id']: p for p in pages}
 labels = [p['label'] for p in pages if p.get('subgroup') == 'Launcher'][:4]  # the first four; the | and the relocated Perms, Logcat, X-Ray App, About follow
 tabs   = [by[i]['label'] for i in by['controls'].get('tabs', [])]
 sub    = [by[i]['label'] for i in by['panels'].get('tabs', [])]
-print('OK' if (labels, tabs, sub) == (['Quick Actions', 'One-Hand', 'Folders', 'Notify'], ['Presets', 'Panels'], ['UI', 'Tools'])
+print('OK' if (labels, tabs, sub) == (['Quick Actions', 'One-Hand', 'Folders', 'Notify'], ['Presets', 'Panels'], ['All', 'UI', 'Battery Hungers', 'Tools'])
       else 'Launcher labels = %r, Controls tabs = %r, Panels tabs = %r' % (labels, tabs, sub))
 PY
-)" "the Launcher group, by label, is Quick Actions (Presets | Panels ▸ UI | Tools) · One-Hand · Folders · Notify"
+)" "the Launcher group, by label, is Quick Actions (Presets | Panels ▸ All | UI | Battery Hungers | Tools) · One-Hand · Folders · Notify"
 
 echo "== T2: Presets declares Sandboxes · Themes · Modes, in order =="
 check "$(python3 - "$BJ" <<'PY'

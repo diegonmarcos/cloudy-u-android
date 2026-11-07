@@ -44,7 +44,11 @@ object SystemDisplay {
         val factor = factor(LauncherSettingsPrefs(base).scale).toFloat()
         val config = Configuration(base.resources.configuration)
         config.fontScale = factor
-        config.densityDpi = Math.round(base.resources.displayMetrics.densityDpi * factor)
+        // Quick Actions > UI > Cloud-superapp Scale: a chosen smallest width (dp) decides the density outright; none = the factor.
+        val dm = base.resources.displayMetrics
+        val sw = QuickDisplay.swOverride(base)
+        config.densityDpi = if (sw > 0) QuickDisplay.densityForSw(minOf(dm.widthPixels, dm.heightPixels), sw)
+                            else Math.round(dm.densityDpi * factor)
         return base.createConfigurationContext(config)
     }
 

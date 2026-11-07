@@ -4982,7 +4982,7 @@
         "_doc_nav_mode": "#1548 the declared tree is Setup (Connect, Apps, Launcher, Network, Watchtower - Obsv), Agents (Watchdog - the hub page, hub_sections), Cloudy C3 (C3, Peer Control); Launcher reads Quick Actions, One-Hand, Folders, Notify | Perms, Logcat, X-Ray App, About; Bluetooth is a Network page; Watchtower - Obsv holds X-Ray Device and Logcat Fleet; page ids did not change, so every page:config/<id> still lands. #1221 horizontal_two_rows: the second row of Configs is one row per declared group, each [group label] | [that group's page icons]. Cloudy C3 (the group id stays fleet) reads C3 | Peer Control (the | is separator_before on Peer Control; Bluetooth moved to Setup ▸ Network); Watchtower - Obsv (the Setup subgroup that was Observability) reads X-Ray Device, Logcat Fleet; Perms, Logcat, X-Ray App and About moved to Setup ▸ Launcher after a | separator; Setup keeps the rest. Every page of the section is in exactly one group (the nav-shape guard, N10), the hidden tab pages with their parent. The groups only REFERENCE pages: the Configs grid headings still come from each page's group / subgroup.",
         "nav_mode": "horizontal_two_rows",
         "groups": [
-          {"id": "setup", "label": "Setup", "icon": "ic_settings", "pages": ["profile", "store", "controls", "onehand", "app-folders", "notify", "launcher-sep-1", "perms", "logcat", "xray-app", "app-about", "firewall", "dns", "webserver", "wg", "apps-access", "adb-shell", "wifi", "wifi-scan", "wifi-channels", "wifi-link", "wifi-tools", "wifi-log", "bluetooth", "bluetooth-find", "bluetooth-analyze", "bluetooth-locate", "bluetooth-connect", "bluetooth-interact", "bluetooth-debug", "bluetooth-dev", "xray", "logcat-fleet", "battery", "presets", "panels", "panels-ui", "panels-tools", "store-cloud", "store-phone", "update", "kde_connect", "animations"]},
+          {"id": "setup", "label": "Setup", "icon": "ic_settings", "pages": ["profile", "store", "controls", "onehand", "app-folders", "notify", "launcher-sep-1", "perms", "logcat", "xray-app", "app-about", "firewall", "dns", "webserver", "wg", "apps-access", "adb-shell", "wifi", "wifi-scan", "wifi-channels", "wifi-link", "wifi-tools", "wifi-log", "bluetooth", "bluetooth-find", "bluetooth-analyze", "bluetooth-locate", "bluetooth-connect", "bluetooth-interact", "bluetooth-debug", "bluetooth-dev", "xray", "logcat-fleet", "battery", "presets", "panels", "panels-all", "panels-ui", "panels-battery", "panels-tools", "store-cloud", "store-phone", "update", "kde_connect", "animations"]},
           {"id": "agents", "label": "Agents", "icon": "ic_p_watchdog", "pages": ["agents-watchdog"]},
           {"id": "fleet", "label": "Cloudy C3", "icon": "ic_hub", "pages": ["c3", "kde"]}
         ],
@@ -5213,18 +5213,32 @@
             "id": "panels",
             "label": "Panels",
             "icon": "ic_home",
-            "tabs": ["panels-ui", "panels-tools"],
+            "tabs": ["panels-all", "panels-ui", "panels-battery", "panels-tools"],
             "hidden": true
           },
           {
-            "_doc": "Panels ▸ UI — the look, layout and behaviour panels: Screensaver (+ idle timer), every ui.launcher_settings toggle group (Battery Hungers, Connectivity, Notifications, Others incl. Screen scale), Icons per row, Screen brightness. LauncherConfigFragment scope ui.",
+            "_doc": "Panels ▸ All — the UNION view: UI, then Battery Hungers, then Tools, in one scrollable list (LauncherConfigFragment scope all). Every section on the other three tabs appears here once, in that order.",
+            "id": "panels-all",
+            "label": "All",
+            "icon": "ic_home",
+            "hidden": true
+          },
+          {
+            "_doc": "Panels ▸ UI — UI controls ONLY: Screensaver (+ idle timer), Icons per row, Screen brightness and the three display controls (Cloud-superapp Scale ruler centred on 411, Font Size, Zoom Size; ui.launcher_settings.display_controls). Connectivity, Notifications and Others live on Tools, the battery effects on Battery Hungers. LauncherConfigFragment scope ui.",
             "id": "panels-ui",
             "label": "UI",
             "icon": "ic_home",
             "hidden": true
           },
           {
-            "_doc": "Panels ▸ Tools — the action/utility panels: the device switch board (ui.control_panel: Device, Network and Tools groups — Torch, DND, Wi-Fi, Firewall, Wireless debugging …) and the Set-as-default-launcher action. LauncherConfigFragment scope tools.",
+            "_doc": "Panels ▸ Battery Hungers — the launcher's battery-hungry effect switches (toggle group `battery`, with its master), the heaviest consumers per charge cycle or month resolved to app names (BatteryRepository per-uid mAh, the batterystats probe; ADB channel for the mAh) and the Battery Hunger panel (rank drainers, restrict, stop). LauncherConfigFragment scope battery.",
+            "id": "panels-battery",
+            "label": "Battery Hungers",
+            "icon": "ic_settings",
+            "hidden": true
+          },
+          {
+            "_doc": "Panels ▸ Tools — everything that is not UI or a battery effect: the device switch board (ui.control_panel: Device, Network and Tools groups — Torch, DND, Wi-Fi, Firewall, Wireless debugging …), the Connectivity, Notifications and Others switch groups (incl. the in-app Scale slider) and the Set-as-default-launcher action. LauncherConfigFragment scope tools.",
             "id": "panels-tools",
             "label": "Tools",
             "icon": "ic_settings",
@@ -9205,6 +9219,7 @@
       "toggle_groups": [
         {
           "id": "battery",
+          "tab": "battery",
           "label": "Launcher Battery Hungers",
           "subtitle": "Continuous motion, the 3D home pane, live stats and background work — the effects that actually drain the cell. Off = leaner.",
           "master": true,
@@ -9213,20 +9228,56 @@
         },
         {
           "id": "connectivity",
+          "tab": "tools",
           "label": "Connectivity",
           "subtitle": "What the launcher keeps talking to the network about. Power Saving cuts compute but PINS the tunnel up, mirroring Samsung / Apple / Pixel power-save."
         },
         {
           "id": "notifications",
+          "tab": "tools",
           "label": "Notifications",
           "subtitle": "Delivery of messages the launcher pushes at you. Pausing background work silently stops these, which is why the switch has to be visible."
         },
         {
           "id": "others",
+          "tab": "tools",
           "label": "Others",
           "subtitle": "Chrome, haptics, eye protection and the edge menus — preferences that cost no battery worth naming."
         }
       ],
+      "_doc_display_controls": "Configs > Launcher > Quick Actions > UI: the three display controls, declared once (QuickDisplay reads this, nothing is restated in Kotlin). `scale` = Cloud-superapp Scale: a ruler of the smallest-width in dp centred on `center` (411, Android's usual Minimum width), min/max symmetric around it, with one-tap `presets` (Set 411, Set 500). It sets THIS app's smallest width in-process (SystemDisplay.wrap, no ADB, no grant) and shows the device's own value next to it. `font` = the system font scale (`settings system font_scale`) and `zoom` = the system Display size (`wm density`, factor x the device's stable density; reads `settings secure display_density_forced`): both are device-wide, so they write through the privileged path (font: WRITE_SETTINGS if granted, else the ADB shell channel; zoom: the ADB shell channel) and with neither they show a `needs ADB` state with the exact command. `steps` are the factors, `names` their Android-style names.",
+      "display_controls": {
+        "scale": {
+          "label": "Cloud-superapp Scale",
+          "subtitle": "Smallest width of this app in dp, like Android's Minimum width. Lower = bigger UI, higher = more on screen.",
+          "unit": "dp",
+          "center": 411,
+          "min": 261,
+          "max": 561,
+          "tick_minor": 10,
+          "tick_major": 50,
+          "presets": [
+            { "label": "Set 411", "value": 411 },
+            { "label": "Set 500", "value": 500 }
+          ]
+        },
+        "font": {
+          "label": "Font Size",
+          "subtitle": "System font scale (settings system font_scale), like Android's Font size.",
+          "key": "font_scale",
+          "default": 1.0,
+          "steps": [0.85, 1.0, 1.15, 1.3],
+          "names": ["Small", "Default", "Large", "Largest"]
+        },
+        "zoom": {
+          "label": "Zoom Size",
+          "subtitle": "System Display size (wm density / display_density_forced), like Android's Display size.",
+          "key": "display_density_forced",
+          "default": 1.0,
+          "steps": [0.85, 1.0, 1.1, 1.2, 1.3],
+          "names": ["Small", "Default", "Large", "Larger", "Largest"]
+        }
+      },
       "_doc_feature_exposure": "THE ANTI-INVISIBILITY CONTRACT. Every key in a theme's `features` block is a device state the theme changes behind the user's back, so every key must be accounted for here: either it maps to the id of the toggle that exposes it, or it is listed in `feature_not_toggleable` with the reason it is not a switch. The tester walks ui.launcher_themes and fails on any feature key that appears in neither, which is what stops the next feature flag from shipping with no way for the user to see or undo it — the defect this whole change exists to fix.",
       "feature_exposure": {
         "home_3d": "home_3d",

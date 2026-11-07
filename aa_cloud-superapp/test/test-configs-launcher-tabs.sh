@@ -58,9 +58,9 @@ first = ids.index('controls')
 if ids[first:first + len(run)] != run:
     print('the three are not CONSECUTIVE: %r' % (ids[first:first + 6],)); sys.exit()
 by = {p['id']: p for p in pages}
-if by['controls'].get('tabs') != ['presets', 'panels'] or by['panels'].get('tabs') != ['panels-ui', 'panels-tools']:
-    print('Controls is not Presets | Panels(UI | Tools): %r / %r' % (by['controls'].get('tabs'), by['panels'].get('tabs'))); sys.exit()
-loose = [i for i in ('presets', 'panels', 'panels-ui', 'panels-tools') if i not in by or not by[i].get('hidden')]
+if by['controls'].get('tabs') != ['presets', 'panels'] or by['panels'].get('tabs') != ['panels-all', 'panels-ui', 'panels-battery', 'panels-tools']:
+    print('Controls is not Presets | Panels(All | UI | Battery Hungers | Tools): %r / %r' % (by['controls'].get('tabs'), by['panels'].get('tabs'))); sys.exit()
+loose = [i for i in ('presets', 'panels', 'panels-all', 'panels-ui', 'panels-battery', 'panels-tools') if i not in by or not by[i].get('hidden')]
 if loose:
     print('tab page(s) missing or drawing a tile of their own: %r' % (loose,)); sys.exit()
 hidden = [p['id'] for p in pages if p.get('subgroup') == 'Launcher' and p.get('hidden')]  # the separator is visible too

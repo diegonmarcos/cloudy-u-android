@@ -115,9 +115,9 @@ pages = next(s for s in json.load(open(sys.argv[1]))['ui']['sections']
              if s['id'] == 'config')['pages']
 by_id = {p['id']: p for p in pages}
 problems = []
-for pid in ('presets', 'controls', 'panels', 'panels-ui', 'panels-tools', 'onehand', 'notify'):
+for pid in ('presets', 'controls', 'panels', 'panels-all', 'panels-ui', 'panels-battery', 'panels-tools', 'onehand', 'notify'):
     p = by_id.get(pid)
-    tab = pid in ('presets', 'panels', 'panels-ui', 'panels-tools')  # tabs of Controls: declared, hidden, reached through the strip
+    tab = pid in ('presets', 'panels', 'panels-all', 'panels-ui', 'panels-battery', 'panels-tools')  # tabs of Controls: declared, hidden, reached through the strip
     if p is None:                       problems.append('page %r is GONE — its target dead-ends' % pid)
     elif tab:
         if not p.get('hidden'):         problems.append('tab %r draws a tile of its own' % pid)
