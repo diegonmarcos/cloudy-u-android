@@ -155,8 +155,8 @@ fun FolderTablesScreen(state: FolderEditorState, onSave: () -> Unit, onReset: ()
 
         // ---------------- Table A ----------------
         item(key = "a-title") { TableBar("Table A - Folder structure", state.aQuery, { state.aQuery = it }, FolderTablesTags.A_FILTER, "Filter folders") {
-            Chip(if (state.aGroupSection) "Group: Parent (Section)" else "Group: off", FolderTablesTags.A_GROUP, state.aGroupSection) { state.aGroupSection = !state.aGroupSection }
-            Chip("+ Add folder", FolderTablesTags.A_ADD, false) { state.edit { it.addFolder() } }
+            FilterPill(if (state.aGroupSection) "Group: Parent (Section)" else "Group: off", FolderTablesTags.A_GROUP, state.aGroupSection) { state.aGroupSection = !state.aGroupSection }
+            FilterPill("+ Add folder", FolderTablesTags.A_ADD, false) { state.edit { it.addFolder() } }
         } }
         item(key = "a-head") {
             TableRow(aScroll) {
@@ -178,13 +178,13 @@ fun FolderTablesScreen(state: FolderEditorState, onSave: () -> Unit, onReset: ()
                     val isNew = f.id in m.newFolderIds
                     TableRow(aScroll, Modifier.testTag(FolderTablesTags.aRow(f.id))) {
                         Cell(1) { Num(item.n.toString()) }
-                        Cell(4) { EditText(f.section, FolderTablesTags.aCell("section", f.id), accent = true) { v -> state.edit { it.updateFolder(f.id) { d -> d.copy(section = v) } } } }
+                        Cell(4) { EditCell(f.section, FolderTablesTags.aCell("section", f.id), accent = true) { v -> state.edit { it.updateFolder(f.id) { d -> d.copy(section = v) } } } }
                         Cell(3) {
                             if (isNew) EditId(f.id, FolderTablesTags.aCell("id", f.id)) { v -> state.edit { it.renameFolderId(f.id, v) } }
                             else Mono(f.id, FolderTablesTags.aCell("id", f.id))
                         }
-                        Cell(3) { EditText(f.label, FolderTablesTags.aCell("label", f.id)) { v -> state.edit { it.updateFolder(f.id) { d -> d.copy(label = v) } } } }
-                        Cell(4) { EditText(f.icon, FolderTablesTags.aCell("icon", f.id), mono = true) { v -> state.edit { it.updateFolder(f.id) { d -> d.copy(icon = v) } } } }
+                        Cell(3) { EditCell(f.label, FolderTablesTags.aCell("label", f.id)) { v -> state.edit { it.updateFolder(f.id) { d -> d.copy(label = v) } } } }
+                        Cell(4) { EditCell(f.icon, FolderTablesTags.aCell("icon", f.id), mono = true) { v -> state.edit { it.updateFolder(f.id) { d -> d.copy(icon = v) } } } }
                         Cell(2) { EditInt(f.order, FolderTablesTags.aCell("order", f.id)) { v -> state.edit { it.updateFolder(f.id) { d -> d.copy(order = v) } } } }
                         Cell(1) { Num(m.appCount(f.id).toString(), FolderTablesTags.aCount(f.id)) }
                         Box(Modifier.width(ACTIONS_W)) { Action("Delete", FolderTablesTags.aDel(f.id)) { state.deleteFolder(f.id) } }
@@ -198,9 +198,9 @@ fun FolderTablesScreen(state: FolderEditorState, onSave: () -> Unit, onReset: ()
         item(key = "b-title") {
             Column(verticalArrangement = Arrangement.spacedBy(KitDensity.small)) {
                 TableBar("Table B - App allocation", state.bQuery, { state.bQuery = it }, FolderTablesTags.B_FILTER, "Filter apps") {
-                    Chip("Group: Folder", FolderTablesTags.bGroup(AppGroup.FOLDER), state.bGroup == AppGroup.FOLDER) { state.bGroup = AppGroup.FOLDER }
-                    Chip("Group: Parent", FolderTablesTags.bGroup(AppGroup.PARENT), state.bGroup == AppGroup.PARENT) { state.bGroup = AppGroup.PARENT }
-                    Chip("Flat", FolderTablesTags.bGroup(AppGroup.NONE), state.bGroup == AppGroup.NONE) { state.bGroup = AppGroup.NONE }
+                    FilterPill("Group: Folder", FolderTablesTags.bGroup(AppGroup.FOLDER), state.bGroup == AppGroup.FOLDER) { state.bGroup = AppGroup.FOLDER }
+                    FilterPill("Group: Parent", FolderTablesTags.bGroup(AppGroup.PARENT), state.bGroup == AppGroup.PARENT) { state.bGroup = AppGroup.PARENT }
+                    FilterPill("Flat", FolderTablesTags.bGroup(AppGroup.NONE), state.bGroup == AppGroup.NONE) { state.bGroup = AppGroup.NONE }
                 }
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(KitDensity.small), verticalArrangement = Arrangement.spacedBy(KitDensity.small)) {
                     val needs = m.needsCount
@@ -210,9 +210,9 @@ fun FolderTablesScreen(state: FolderEditorState, onSave: () -> Unit, onReset: ()
                             .background(if (state.bFilter == AppFilter.NEEDS) p.surfaceSelected else Color.Transparent)
                             .clickable { state.bFilter = if (state.bFilter == AppFilter.NEEDS) AppFilter.ALL else AppFilter.NEEDS }
                             .padding(horizontal = KitDensity.medium, vertical = KitDensity.rowPadV).testTag(FolderTablesTags.B_NEEDS))
-                    Chip("No folder (${m.noFolderCount})", FolderTablesTags.bChip(AppFilter.NO_FOLDER), state.bFilter == AppFilter.NO_FOLDER) {
+                    FilterPill("No folder (${m.noFolderCount})", FolderTablesTags.bChip(AppFilter.NO_FOLDER), state.bFilter == AppFilter.NO_FOLDER) {
                         state.bFilter = if (state.bFilter == AppFilter.NO_FOLDER) AppFilter.ALL else AppFilter.NO_FOLDER }
-                    Chip("Others (${m.othersCount})", FolderTablesTags.bChip(AppFilter.OTHERS), state.bFilter == AppFilter.OTHERS) {
+                    FilterPill("Others (${m.othersCount})", FolderTablesTags.bChip(AppFilter.OTHERS), state.bFilter == AppFilter.OTHERS) {
                         state.bFilter = if (state.bFilter == AppFilter.OTHERS) AppFilter.ALL else AppFilter.OTHERS }
                 }
             }
@@ -252,9 +252,9 @@ fun FolderTablesScreen(state: FolderEditorState, onSave: () -> Unit, onReset: ()
             var pkg by remember { mutableStateOf("") }
             var name by remember { mutableStateOf("") }
             Row(horizontalArrangement = Arrangement.spacedBy(KitDensity.small), verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.width(KitDensity.glyph * 6)) { EditText(pkg, FolderTablesTags.B_ADD_PKG, mono = true, hint = "package") { pkg = it } }
-                Box(Modifier.width(KitDensity.glyph * 3)) { EditText(name, FolderTablesTags.B_ADD_NAME, hint = "app name") { name = it } }
-                Chip("+ Add app", FolderTablesTags.B_ADD, false) {
+                Box(Modifier.width(KitDensity.glyph * 6)) { EditCell(pkg, FolderTablesTags.B_ADD_PKG, mono = true, hint = "package") { pkg = it } }
+                Box(Modifier.width(KitDensity.glyph * 3)) { EditCell(name, FolderTablesTags.B_ADD_NAME, hint = "app name") { name = it } }
+                FilterPill("+ Add app", FolderTablesTags.B_ADD, false) {
                     if (pkg.isNotBlank()) { state.edit { it.addApp(pkg, name, null) }; pkg = ""; name = "" }
                 }
             }
@@ -264,7 +264,7 @@ fun FolderTablesScreen(state: FolderEditorState, onSave: () -> Unit, onReset: ()
         item(key = "p-title") {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(KitDensity.small)) {
                 Text("Live grid preview", color = p.textPrimary, fontSize = KitDensity.title, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
-                Chip(if (state.previewOpen) "Hide" else "Show", FolderTablesTags.PREVIEW_TOGGLE, false) { state.previewOpen = !state.previewOpen }
+                FilterPill(if (state.previewOpen) "Hide" else "Show", FolderTablesTags.PREVIEW_TOGGLE, false) { state.previewOpen = !state.previewOpen }
             }
         }
         if (state.previewOpen) {
@@ -303,14 +303,14 @@ private fun TableBar(title: String, query: String, onQuery: (String) -> Unit, ta
         Text(title, color = p.textPrimary, fontSize = KitDensity.title, fontWeight = FontWeight.SemiBold)
         Row(horizontalArrangement = Arrangement.spacedBy(KitDensity.small), verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.width(KitDensity.glyph * 5).border(KitDensity.rule, p.hairline, RoundedCornerShape(KitDensity.corner))
-                .padding(horizontal = KitDensity.small, vertical = KitDensity.rowPadV)) { EditText(query, tag, hint = hint, onChange = onQuery) }
+                .padding(horizontal = KitDensity.small, vertical = KitDensity.rowPadV)) { EditCell(query, tag, hint = hint, onChange = onQuery) }
             actions()
         }
     }
 }
 
 @Composable
-private fun Chip(label: String, tag: String, on: Boolean, onClick: () -> Unit) {
+private fun FilterPill(label: String, tag: String, on: Boolean, onClick: () -> Unit) {
     val p = LocalKitPalette.current
     Text(label, color = if (on) p.accent else p.textSecondary, fontSize = KitDensity.body,
         modifier = Modifier.clip(RoundedCornerShape(KitDensity.corner))
@@ -376,7 +376,7 @@ private fun Action(label: String, tag: String, onClick: () -> Unit) {
 }
 
 @Composable
-private fun EditText(value: String, tag: String, mono: Boolean = false, accent: Boolean = false, hint: String = "", onChange: (String) -> Unit) {
+private fun EditCell(value: String, tag: String, mono: Boolean = false, accent: Boolean = false, hint: String = "", onChange: (String) -> Unit) {
     val p = LocalKitPalette.current
     BasicTextField(
         value = value, onValueChange = onChange, singleLine = true,
@@ -406,7 +406,7 @@ private fun EditId(value: String, tag: String, onCommit: (String) -> Unit) {
 @Composable
 private fun EditInt(value: Int, tag: String, onChange: (Int) -> Unit) {
     var text by remember(value) { mutableStateOf(value.toString()) }
-    EditText(text, tag, mono = true) { t -> text = t; t.trim().toIntOrNull()?.let(onChange) }
+    EditCell(text, tag, mono = true) { t -> text = t; t.trim().toIntOrNull()?.let(onChange) }
 }
 
 /** Table B's Folder cell: the options are Table A's folders (+ Others); picking one sets the folder and the Parent follows. */
