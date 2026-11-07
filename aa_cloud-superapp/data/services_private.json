@@ -420,6 +420,36 @@
     "db_engine": null
   },
   {
+    "name": "steel-browser",
+    "service": "steel-browser",
+    "vm": "oci-A1-f_0",
+    "private_dns": "steel-browser.mesh.diegonmarcos.com:3000",
+    "port": 3000,
+    "protocol": "http",
+    "category": "sec",
+    "db_engine": null
+  },
+  {
+    "name": "steel-browser-auth",
+    "service": "steel-browser",
+    "vm": "oci-A1-f_0",
+    "private_dns": "steel-browser-auth:3000",
+    "port": 3000,
+    "protocol": "http",
+    "category": "sec",
+    "db_engine": null
+  },
+  {
+    "name": "zap",
+    "service": "zap",
+    "vm": "oci-A1-f_0",
+    "private_dns": "zap.mesh.diegonmarcos.com:8086",
+    "port": 8086,
+    "protocol": "http",
+    "category": "sec",
+    "db_engine": null
+  },
+  {
     "name": "cloud-me-cgc-pvt-graph-api",
     "service": "cloud-me-cgc-pvt-graph-api",
     "vm": "oci-A1-f_0",
