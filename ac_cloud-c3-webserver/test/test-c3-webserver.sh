@@ -113,8 +113,8 @@ for r in rows:
     if r[3] and r[1] != "/__app__/tab/" + r[3].lower():
         bad.append("tab %s is routed at %s" % (r[3], r[1]))
 shell = open(os.path.join(app, "server/ui/shell.html")).read()
-if not re.search(r'<iframe id="fileview"[^>]*src="/"', shell):
-    bad.append("the SSHd tab does not embed the file view at / (the shared Linux UI)")
+if re.search(r'<iframe id="fileview"', shell) or "<h2>Files</h2>" in shell:
+    bad.append("the stale Files table/iframe is back in the SSHd tab")
 for view in ("pages:", "api:", "home:", "sshd:", "configs:"):
     if view not in shell:
         bad.append("shell.html has no view for the %s tab" % view[:-1])
@@ -287,7 +287,7 @@ PY
 }
 m_fileview_copy() { python3 - "$1" <<'PY'
 import sys; p=sys.argv[1]+"/server/ui/shell.html"; s=open(p).read()
-new=s.replace('<iframe id="fileview" class="inline" title="Files" src="/">','<iframe id="fileview" class="inline" title="Files" src="/__app__/own-browser">',1)
+new=s.replace("(data.other.length ? renderOther(data.other) : '') +","(data.other.length ? renderOther(data.other) : '') + '<section><h2>Files</h2><iframe id=\"fileview\" class=\"inline\" title=\"Files\" src=\"/\"></iframe></section>' +",1)
 assert new!=s; open(p,"w").write(new)
 PY
 }
@@ -353,7 +353,7 @@ mutate "a custom page next to the shared UI"                 t1 m_custom_page
 mutate "a route outside /__app__/ (shadows the file server)" t1 m_route_outside_prefix
 mutate "the SSHd tab removed from the nav"                 t7 m_drop_files_tab
 mutate "the app opens straight onto the file view"          t7 m_open_on_file_view
-mutate "the SSHd tab stops embedding the shared file view" t7 m_fileview_copy
+mutate "the stale Files table put back in the SSHd tab"     t7 m_fileview_copy
 mutate "a :8002 route spelled in this crate"                t1 m_route_in_lib
 mutate "a renderer of its own in this crate"                t1 m_own_renderer
 mutate "the shared server dependency dropped"               t1 m_drop_shared_dep

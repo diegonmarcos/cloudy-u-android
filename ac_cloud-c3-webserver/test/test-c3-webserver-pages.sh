@@ -74,7 +74,7 @@ for l in sys.stdin:
     print("  %s  %s %s" % ("PASS" if r["ok"] else "FAIL", r["id"], r["msg"]))
 '
 [ "$RC" -eq 0 ] || { FAILURES=$((FAILURES + 1)); tail -5 "$WORK/render.err"; }
-grep -q '^OPENED https://example.org/' "$WORK/server.log" && pass "L8 Open in browser reached the opener with the tapped URL" || fail "L8 Open in browser never reached the opener"
+grep -q '^OPENED http://emulated.app/' "$WORK/server.log" && pass "L8 Open in browser reached the opener with the tapped served-page URL" || fail "L8 Open in browser never reached the opener"
 
 echo "  shots: $SHOTS"; ls "$SHOTS" | sed 's/^/    /'
 echo

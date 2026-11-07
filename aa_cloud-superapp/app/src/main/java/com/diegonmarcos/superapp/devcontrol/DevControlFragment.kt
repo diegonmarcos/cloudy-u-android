@@ -1170,9 +1170,8 @@ class DevControlFragment : KitComposeFragment() {
         }
 
         // ══ API macro section — the on-device HTTP control surface (Dev
-        //    Control) and the curl shortcuts that drive it. The SSH servers and
-        //    the adb/Shizuku channels that used to share this section live in
-        //    DEV TOOLS now: one heading, one question — "is the control plane
+        //    Control) and the curl shortcuts that drive it. The adb/Shizuku channels that used to share this section live in
+        //    DEV TOOLS now (the SuperApp hosts no sshd and has no sshd page): one heading, one question — "is the control plane
         //    up and what is its bearer".
         macro("🔌  API")
 
@@ -1244,35 +1243,11 @@ class DevControlFragment : KitComposeFragment() {
         infoSection("VPN / WireGuard / Mesh") { renderVpnMesh() }
 
         // ══ DEV TOOLS macro section — the debugging channels that are NOT
-        //    the HTTP API: the terminal apps' sshd, Wireless Debugging, the
+        //    the HTTP API: Wireless Debugging, the
         //    embedded adb pairing walkthrough and Shizuku. Split out of the old
         //    combined section so API above answers "is the control plane up"
         //    and this one answers "how do I get a shell on this phone".
         macro("🛠️  DEV TOOLS")
-
-        infoSection("SSH servers (Termux & co.)") {
-            // ── SSH (Termux & co.) — detect installed terminal emulators and
-            //    whether each is running an sshd we can reach on localhost.
-            //    Installed-check is synchronous (PackageManager); the port
-            //    probe is async (no network on the main thread).
-            small("SSH servers on this device — terminal apps + whether their sshd is listening on localhost (probes 127.0.0.1 across common ports).")
-            for (term in SSH_TERMINALS) {
-                val installed = isPackageInstalled(ctx, term.pkg)
-                val portList = term.ports.joinToString(",")
-                val valueView = row(term.label,
-                    if (!installed) "not installed" else "installed · probing :$portList…")
-                if (installed) launch {
-                    val open = withContext(Dispatchers.IO) { term.ports.filter { p -> portOpen("127.0.0.1", p) } }
-                    if (open.isNotEmpty()) {
-                        valueView.text = "installed · sshd ✓ up :${open.joinToString(",")}"
-                        valueView.color = Color(0xFF8BE9A0)
-                    } else {
-                        valueView.text = "installed · sshd ✗ down (tried :$portList)"
-                        valueView.color = Color(0xFFFFB199)
-                    }
-                }
-            }
-        }
 
         infoSection("Self-contained ADB, W-less Debuging & Shizuku") {
             // The token is read here too: the pairing walkthrough below prints
@@ -1401,17 +1376,6 @@ class DevControlFragment : KitComposeFragment() {
 
     // ── helpers ──────────────────────────────────────────────────────
 
-    // Known on-device terminal emulators that can run an sshd. The sshd port is
-    // user-configurable, so each probes a list of common candidates (8022 is the
-    // Termux/nix default; 8024 and 22 are common manual choices).
-    private data class SshTerminal(val label: String, val pkg: String, val ports: List<Int>)
-    private val SSH_TERMINALS = listOf(
-        SshTerminal("Termux", "com.termux", listOf(8022, 8024, 22)),
-        SshTerminal("Nix-on-droid", "com.termux.nix", listOf(8022, 8024, 22)),
-        SshTerminal("Termux (F-Droid)", "com.termux.fdroid", listOf(8022, 8024, 22)),
-        SshTerminal("UserLAnd", "tech.ula", listOf(2022, 8022, 22)),
-    )
-
     /**
      * Open a URL on the app's OWN browser surface instead of handing it to an
      * external one. #156: an action on an About row must not eject the user
@@ -1479,16 +1443,6 @@ class DevControlFragment : KitComposeFragment() {
             },
         )
     }
-
-    private fun isPackageInstalled(ctx: Context, pkg: String): Boolean = runCatching {
-        ctx.packageManager.getPackageInfo(pkg, 0); true
-    }.getOrDefault(false)
-
-    /** Is something listening on host:port? Short-timeout TCP connect.
-     *  MUST run off the main thread (Android blocks network on the UI thread). */
-    private fun portOpen(host: String, port: Int): Boolean = runCatching {
-        java.net.Socket().use { it.connect(java.net.InetSocketAddress(host, port), 350); true }
-    }.getOrDefault(false)
 
     /** Everything the Storage section paints, gathered in one off-thread pass
      *  so the two recursive dirSize() walks never touch the main thread. */

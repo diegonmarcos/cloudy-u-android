@@ -123,6 +123,12 @@ pub struct Door {
     pub bind: String,
     pub auth: String,
     pub supervised: bool,
+    /// This app hosts the sshd itself (the webserver); its run switch is the door's own, default `default_on`.
+    pub hosted: bool,
+    /// The run-state the door has until the owner sets its switch: the webserver's is ON, both terminals' OFF.
+    pub default_on: bool,
+    /// This port's Mesh-only until the owner sets its switch: ON (secure by default).
+    pub mesh_only_default_on: bool,
     pub note: String,
     pub control: Option<Control>,
 }
@@ -193,6 +199,7 @@ pub fn cfg_from(b: &Value) -> Result<Cfg, String> {
             }),
             _ => None,
         };
+        let id_s = id.clone();
         doors.push(Door {
             id,
             title: txt(r, "title"),
@@ -204,6 +211,9 @@ pub fn cfg_from(b: &Value) -> Result<Cfg, String> {
             bind,
             auth: txt(r, "auth"),
             supervised: r["supervised"].as_bool().unwrap_or(false),
+            hosted: r["hosted"].as_bool().unwrap_or(false),
+            default_on: r["default_on"].as_bool().ok_or(format!("ssh_doors door {}: default_on must be a boolean", id_s))?,
+            mesh_only_default_on: r["mesh_only_default_on"].as_bool().unwrap_or(mesh.default_on),
             note: txt(r, "note"),
             control,
         });
@@ -234,9 +244,23 @@ pub fn supervised() -> Supervised {
     Supervised { port: d.port.expect("checked"), control: d.control.clone().expect("checked") }
 }
 
-/// Mesh-only now: the owner's switch, else the declared default (ON).
+/// Mesh-only now for the supervised (nix) door: the owner's switch, else the declared default (ON).
 pub fn mesh_only(st: &power::State) -> bool {
     st.mesh_only.unwrap_or(cfg().mesh.default_on)
+}
+
+/// Mesh-only for one port: the supervised door keeps its own persisted switch, every other door has `door_mesh_only.<id>`; the
+/// default is the door's declared `mesh_only_default_on` (ON).
+pub fn door_mesh_only(st: &power::State, d: &Door) -> bool {
+    if d.supervised {
+        return mesh_only(st);
+    }
+    st.door_mesh.get(&d.id).copied().unwrap_or(d.mesh_only_default_on)
+}
+
+/// Is a hosted door running (wanted)? Server OFF never; otherwise its own switch, else the declared default (webserver ON).
+pub fn hosted_wanted(st: &power::State, d: &Door) -> bool {
+    st.sw.server && st.door_on.get(&d.id).copied().unwrap_or(d.default_on)
 }
 
 // ── live facts ──────────────────────────────────────────────────────────────
@@ -466,8 +490,13 @@ pub fn doors_json() -> Value {
         let banner = p.as_ref().map(|p| p.banner.clone()).unwrap_or_default();
         let engine = if !banner.is_empty() { engine_of(&banner) } else { d.engine.clone() };
         let n = ses.as_ref().map(|s| s.len()).unwrap_or(0);
+        let mesh_explicit = if d.supervised { st.mesh_only } else { st.door_mesh.get(&d.id).copied() };
+        let hosted_on = d.hosted && hosted_wanted(&st, d);
         let state = state_of(d.port.is_some(), up, n, d.supervised && want && asked);
-        let control = if d.supervised {
+        let control = if d.hosted {
+            json!({"available": true, "wanted": hosted_on, "explicit": st.door_on.get(&d.id), "owned": false,
+                   "note": "This app hosts this sshd: Start and Stop set its own switch (default ON); Mesh-only below is this port's own switch."})
+        } else if d.supervised {
             json!({"available": true, "wanted": want, "explicit": st.ssh_door, "owned": st.ssh_owned,
                    "note": "Start and Stop ask the hosting app's own sshd through its signature-guarded service; the key list stays in that app."})
         } else {
@@ -485,6 +514,9 @@ pub fn doors_json() -> Value {
         rows.push(json!({
             "id": d.id, "title": d.title, "app": d.app, "package": d.package, "engine": engine, "banner": banner,
             "port": d.port, "bind": d.bind, "binds": binds, "bind_state": bind_state, "state": state, "auth": d.auth, "supervised": d.supervised,
+            "hosted": d.hosted, "default_on": d.default_on,
+            "mesh_only": door_mesh_only(&st, d), "mesh_only_explicit": mesh_explicit,
+            "mesh_only_default": d.mesh_only_default_on,
             "authorized_keys": Value::Null,
             "authorized_keys_note": "Held in the hosting app's private home; not readable from this app's uid.",
             "seen_up_s": seen_up_s(&d.id, up),
@@ -510,6 +542,15 @@ pub fn doors_json() -> Value {
 /// POST {door, op}: `start` / `stop` set the supervised door's own switch (and act now), `follow` hands it back to Keep alive.
 pub fn command(door: &str, op: &str) -> Result<(), String> {
     let d = cfg().doors.iter().find(|x| x.id == door).ok_or_else(|| format!("no door named {}", door))?;
+    if d.hosted {
+        match op {
+            "start" => power::set_door_on(&d.id, Some(true)),
+            "stop" => power::set_door_on(&d.id, Some(false)),
+            "follow" => power::set_door_on(&d.id, None),
+            _ => return Err("op must be start, stop or follow".to_string()),
+        }
+        return Ok(());
+    }
     if !d.supervised {
         return Err(format!("{} has no start/stop hook: use its own terminal", door));
     }
@@ -533,6 +574,20 @@ pub fn set(op: &str) -> Result<(), String> {
 pub fn set_mesh_only(on: Option<bool>) -> Result<(), String> {
     power::set_mesh_only(on);
     sync(false, true).map(|_| ())
+}
+
+/// One port's Mesh-only switch (any door): the supervised door restarts on the new bind; a hosted door just records it (its
+/// listener binds the mesh addresses and loopback only while it is ON). None hands the switch back to the declared default.
+pub fn set_door_mesh_only(door: &str, on: Option<bool>) -> Result<(), String> {
+    let d = cfg().doors.iter().find(|x| x.id == door).ok_or_else(|| format!("no door named {}", door))?;
+    if d.supervised {
+        return set_mesh_only(on);
+    }
+    if d.port.is_none() {
+        return Err(format!("{} hosts no sshd", door));
+    }
+    power::set_door_mesh_only(&d.id, on);
+    Ok(())
 }
 
 #[cfg(test)]
@@ -587,11 +642,19 @@ mod tests {
     fn the_declaration_is_valid_and_resolved() {
         let c = cfg_from(apis::build()).unwrap();
         let ids: Vec<&str> = c.doors.iter().map(|d| d.id.as_str()).collect();
-        assert_eq!(ids, ["nix", "superapp", "termux"], "the three fleet doors");
+        assert_eq!(ids, ["nix", "webserver", "termux"], "the three doors that may host an sshd (the SuperApp hosts none)");
         let nix = c.doors.iter().find(|d| d.id == "nix").unwrap();
         assert!(nix.supervised && nix.port == Some(8024) && nix.auth.starts_with("pubkey"));
         assert_eq!(c.doors.iter().find(|d| d.id == "termux").unwrap().port, Some(8023));
-        assert_eq!(c.doors.iter().find(|d| d.id == "superapp").unwrap().port, None, "the SuperApp hosts no sshd");
+        let web = c.doors.iter().find(|d| d.id == "webserver").unwrap();
+        assert!(web.hosted && web.default_on && web.port == Some(8025) && web.mesh_only_default_on, "webserver sshd: own port 8025, ON and mesh-only ON by default");
+        for t in ["nix", "termux"] {
+            let d = c.doors.iter().find(|d| d.id == t).unwrap();
+            assert!(!d.default_on && !d.hosted && d.mesh_only_default_on, "{} sshd is OFF by default, mesh-only ON", t);
+        }
+        let ports: Vec<_> = c.doors.iter().filter_map(|d| d.port).collect();
+        assert_eq!(ports.len(), 3, "each hosting app has its own port");
+        assert!(ports[0] != ports[1] && ports[1] != ports[2] && ports[0] != ports[2]);
         let ctl = nix.control.as_ref().unwrap();
         assert!(ctl.service.ends_with("MeshSshdService") && ctl.action_start.ends_with("MESH_SSHD_START") && ctl.action_stop.ends_with("MESH_SSHD_STOP"));
         assert_eq!(nix.package, "cld.termux.nix");
@@ -641,9 +704,21 @@ mod tests {
         assert!(c.mesh.cidrs.iter().any(|x| x == "10.0.0.0/24") && c.mesh.cidrs.iter().any(|x| x.starts_with("fd0c:1d00")));
         let nix = c.doors.iter().find(|d| d.id == "nix").unwrap();
         assert_eq!(nix.control.as_ref().unwrap().extra_mesh_only, "com.diegonmarcos.cloud.extra.MESH_ONLY");
-        let st = power::State { sw: power::Switches { server: true, keep_alive: true }, sites: vec![], ssh_door: None, ssh_owned: false, mesh_only: None };
+        let st = power::State { sw: power::Switches { server: true, keep_alive: true }, sites: vec![], ssh_door: None, ssh_owned: false, mesh_only: None, door_on: Default::default(), door_mesh: Default::default() };
         assert!(mesh_only(&st));
         assert!(!mesh_only(&power::State { mesh_only: Some(false), ..st.clone() }));
+        for d in &c.doors {
+            assert!(door_mesh_only(&st, d), "every port is mesh-only by default");
+        }
+        let web = c.doors.iter().find(|d| d.id == "webserver").unwrap();
+        let mut off = st.clone();
+        off.door_mesh.insert("webserver".to_string(), false);
+        assert!(!door_mesh_only(&off, web) && door_mesh_only(&off, c.doors.iter().find(|d| d.id == "termux").unwrap()), "the switch is per port");
+        assert!(hosted_wanted(&st, web), "the webserver sshd is ON by default");
+        assert!(!hosted_wanted(&power::State { sw: power::Switches { server: false, keep_alive: true }, ..st.clone() }, web), "Server OFF closes it");
+        for t in ["nix", "termux"] {
+            assert!(!hosted_wanted(&st, c.doors.iter().find(|d| d.id == t).unwrap()), "the terminals' sshd is OFF by default");
+        }
     }
 
     #[test]

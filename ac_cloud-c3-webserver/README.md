@@ -4,8 +4,8 @@ The phone's local web server, as an APK, in the cloud-c3 family: Rust and web on
 Android app: the Rust library in `src-tauri/` starts the web servers on threads of the app's own
 process, waits for the bind, and opens the app's one webview on its shell, `http://127.0.0.1:8002/__app__/`.
 
-**The app is five tabs around the file view.** Pages, API, Home, Files, Configs (`server/ui/shell.html`, served
-under `/__app__/` only). The Files tab embeds `/`, the file view below, unchanged and shell-free. The tabs are the
+**The app is five tabs around the file view.** Pages, API, Home, SSHd, Configs (`server/ui/shell.html`, served
+under `/__app__/` only). The file view at `/` is the shared server's, unchanged and shell-free (no longer embedded in a tab). The tabs are the
 rows of `server/src/app.rs::ROUTES` that carry a caption, so a row added there appears and a row removed
 disappears. Pages lists every served page by port and private name; API lists the shell's routes; Home is the
 About-this-phone page in the SuperApp's Configs > About shape; Configs has About, Engines (read-only registry,
@@ -86,10 +86,12 @@ which asks the Nix-on-Droid app to start its mesh sshd (the real OpenSSH on tcp 
 `~/.ssh/authorized_keys`) through that app's exported `MeshSshdService`, guarded by the fleet's `CONSTELLATION_DATA` signature
 permission. The supervisor stops a door only if it started it (or on an explicit Stop), never polls, and adds no service.
 
-- **SSHd tab** (replaces Files; the file view lives inside it, `/__app__/tab/files` redirects): every door in `build.json::ssh_doors`
-  with live state, engine from the SSH banner, bind (observed), auth, host app, seen-up, sessions where `/proc/net` is readable, Start /
-  Stop where a hook exists, Copy All. The SuperApp row says it hosts no sshd; Termux (8023) has no start hook from here yet.
-- **Mesh-only** (default ON): the nix sshd listens on the WireGuard mesh addresses plus loopback, never `0.0.0.0` / `::`; addresses are
+- **SSHd tab** (replaces Files; `/__app__/tab/files` redirects; the stale Files table is gone): a **Keep alive** On/Off toggle with its live
+  ON/OFF status beside it (the same switch as the Server card), then every door in `build.json::ssh_doors` with live state, engine from the
+  SSH banner, bind (observed), auth, host app, seen-up, sessions where `/proc/net` is readable, Start / Stop where a hook exists, a
+  per-port Mesh-only switch and Copy All. Only three apps may host an sshd, each on its own port: this webserver (`runtime.sshd.port`
+  8025, ON by default), Termux (8023, OFF by default) and Nix-on-Droid (8024, OFF by default). The SuperApp hosts none and has no row.
+- **Mesh-only** (default ON, one switch per port: `door_mesh_only.<id>` in the power store, `mesh_only` for nix): the nix sshd listens on the WireGuard mesh addresses plus loopback, never `0.0.0.0` / `::`; addresses are
   resolved at each start from the live VPN interface, and with no mesh address it fails closed (no sshd). Loopback stays because it is
   reachable from no network and the helpers below dial it. Each door's badge shows what actually listens: mesh-only or EXPOSED.
 - **Helpers** (`fleet-nix`, `fleet-termux`, `fleet-adb`, `fleet-ipc`, rendered from the declaration into `files/bin`): nested ssh to the

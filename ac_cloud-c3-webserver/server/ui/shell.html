@@ -160,7 +160,7 @@ function renderPower(st) {
     (ssh.explicit === null ? '' : ' <button data-power="ssh_door" data-to="follow">Follow Keep alive</button>') + '</div></div>' +
     '<div class="row"><div class="k">Active sites</div><div class="v">' + esc(String(st.sites)) + '</div></div></section>';
 }
-// SSHd tab (replaces the Files tab): every SSH door, live from /__app__/api/sshd (declared in build.json::ssh_doors), then the shared file view.
+// SSHd tab (replaces the Files tab): every SSH door, live from /__app__/api/sshd (declared in build.json::ssh_doors), then Keep alive. The stale Files table is gone.
 function fmtUp(sec) {
   if (sec === null || sec === undefined) return '-';
   return sec >= 3600 ? Math.floor(sec / 3600) + ' h ' + Math.floor(sec % 3600 / 60) + ' min' : sec >= 60 ? Math.floor(sec / 60) + ' min ' + (sec % 60) + ' s' : sec + ' s';
@@ -173,6 +173,7 @@ function doorFacts(d) {
     ['Port and bind', (d.port === null || d.port === undefined ? 'no port' : 'tcp ' + d.port) + (d.bind ? ' on ' + d.bind : '')],
     ['Bind (observed)', bindText(d)],
     ['Auth', d.auth],
+    ['Mesh-only (this port)', d.mesh_only === undefined ? '-' : d.mesh_only ? 'ON' : 'OFF'],
     ['Authorized keys', d.authorized_keys === null || d.authorized_keys === undefined ? 'not readable here: ' + d.authorized_keys_note : String(d.authorized_keys)],
     ['Hosted by', d.app + (d.package ? ' (' + d.package + ')' : '')],
     ['Seen up', fmtUp(d.seen_up_s)],
@@ -193,12 +194,12 @@ function bindBadge(d) {
   if (v === 'exposed') return '<span class="badge exposed">all interfaces / EXPOSED</span>';
   return '';
 }
-function renderDoor(d) {
+function renderDoor(d, cidrs) {
   var rows = doorFacts(d).map(function (f) { return '<div class="row"><div class="k">' + esc(f[0]) + '</div><div class="v">' + esc(f[1]) + '</div></div>'; }).join('');
   var c = d.control, off = c.available ? '' : ' disabled title="' + esc(c.note) + '"';
   var tools = '<div class="tool"><button data-door-op="start" data-door="' + esc(d.id) + '"' + off + '>Start</button><button data-door-op="stop" data-door="' + esc(d.id) + '"' + off + '>Stop</button>' +
     (c.available && c.explicit !== null ? '<button data-door-op="follow" data-door="' + esc(d.id) + '">Follow Keep alive</button>' : '') +
-    '<span class="sum">' + esc(c.note) + '</span></div>';
+    '<span class="sum">' + esc(c.note) + '</span></div>' + (d.port === null || d.port === undefined ? '' : renderMeshOnly(d, cidrs || []));
   var up = d.state === 'listening' || d.state === 'connected';
   return '<section class="door" id="door-' + esc(d.id) + '"><h2>' + esc(d.title) + '<span class="badge ' + (up ? 'up' : 'down') + '">' + esc(d.state) + '</span>' + bindBadge(d) + '</h2>' + rows + tools + '</section>';
 }
@@ -207,19 +208,26 @@ function renderOther(o) {
     return '<div class="row"><div class="k">tcp ' + esc(String(x.port)) + '</div><div class="v">' + esc(x.engine) + ' (' + esc(x.banner) + ')</div></div>';
   }).join('') + '</section>';
 }
-function renderMeshOnly(data) {
-  var on = data.mesh_only;
-  return '<section id="mesh-only"><h2>Mesh-only<span class="badge ' + (on ? 'mesh' : 'exposed') + '">' + (on ? 'ON' : 'OFF: all interfaces') + '</span></h2><div class="tool"><b>SSH reachable over mesh VPN only</b>' +
-    '<button data-mesh-only="' + (on ? 'false' : 'true') + '" aria-pressed="' + (on ? 'true' : 'false') + '">' + (on ? 'ON' : 'OFF') + '</button>' +
-    '<span class="sum">ON binds the managed door to the WireGuard mesh addresses and loopback only (resolved at each start; with no mesh address it stays closed). OFF binds every interface, Wi-Fi, LAN and cellular included. Mesh ranges: ' + esc(data.mesh_cidrs.join(', ')) + '.</span></div></section>';
+// Per-port Mesh-only: one switch per hosted port (default ON), the mesh ranges from the hosting app's declaration.
+function renderMeshOnly(d, cidrs) {
+  var on = d.mesh_only;
+  return '<div class="tool" id="mesh-only-' + esc(d.id) + '"><b>SSH reachable over mesh VPN only</b><span class="badge ' + (on ? 'mesh' : 'exposed') + '">' + (on ? 'ON' : 'OFF: all interfaces') + '</span>' +
+    '<button data-door="' + esc(d.id) + '" data-mesh-only="' + (on ? 'false' : 'true') + '" aria-pressed="' + (on ? 'true' : 'false') + '">' + (on ? 'ON' : 'OFF') + '</button>' +
+    '<span class="sum">Port ' + esc(String(d.port)) + ' only. ON restricts it to loopback and the mesh ranges ' + esc(cidrs.join(', ')) + ' (resolved at each start; with no mesh address it stays closed). OFF opens every interface, Wi-Fi, LAN and cellular included.</span></div>';
+}
+// Keep alive On/Off with its live state beside it (the same switch as the Server card, /__app__/api/power).
+function renderKeepAlive(data) {
+  var on = !!data.keep_alive;
+  return '<section class="door" id="keepalive"><h2>Keep alive<span class="badge ' + (on ? 'up' : 'down') + '" id="keepalive-status">' + (on ? 'ON' : 'OFF') + '</span></h2>' +
+    '<div class="tool"><b>Keep alive</b><button data-power="keep_alive" data-to="' + (on ? 'false' : 'true') + '" aria-pressed="' + (on ? 'true' : 'false') + '">' + (on ? 'ON' : 'OFF') + '</button>' +
+    '<span class="sum">Keep alive is ' + (on ? 'ON' : 'OFF') + '; the supervised door is ' + (data.wanted ? 'wanted' : 'not wanted') + '. ON keeps the server and the hosted sshd up with a notification and starts them at boot; OFF stops them when the app closes.</span></div></section>';
 }
 function renderSshd(data) {
-  return renderMeshOnly(data) + data.doors.map(renderDoor).join('') + (data.other.length ? renderOther(data.other) : '') +
-    '<section><h2>All doors</h2><div class="tool"><button data-copy-doors>Copy All Infos</button><span class="sum">Keep alive ' + (data.keep_alive ? 'ON' : 'OFF') + '; the supervised door is ' + (data.wanted ? 'wanted' : 'not wanted') + '</span></div></section>' +
-    '<section><h2>Files</h2><iframe id="fileview" class="inline" title="Files" src="/"></iframe></section>';
+  return renderKeepAlive(data) + data.doors.map(function (d) { return renderDoor(d, data.mesh_cidrs); }).join('') + (data.other.length ? renderOther(data.other) : '') +
+    '<section><h2>All doors</h2><div class="tool"><button data-copy-doors>Copy All Infos</button><span class="sum">Keep alive ' + (data.keep_alive ? 'ON' : 'OFF') + '; the supervised door is ' + (data.wanted ? 'wanted' : 'not wanted') + '</span></div></section>';
 }
 function doorsText(data) {
-  var out = ['Mesh-only (SSH reachable over mesh VPN only): ' + (data.mesh_only ? 'ON' : 'OFF') + ' (mesh ranges ' + data.mesh_cidrs.join(', ') + ')'];
+  var out = ['Keep alive: ' + (data.keep_alive ? 'ON' : 'OFF') + ' (mesh ranges ' + data.mesh_cidrs.join(', ') + ')'];
   out = out.concat(data.doors.map(function (d) { return d.title + '\n' + doorFacts(d).map(function (f) { return '  ' + f[0] + ': ' + f[1]; }).join('\n'); }));
   data.other.forEach(function (x) { out.push('Other SSH server\n  tcp ' + x.port + ': ' + x.engine + ' (' + x.banner + ')'); });
   return out.join('\n\n');
@@ -630,7 +638,7 @@ if (typeof module !== 'undefined') {
     }
     var mo = ev.target.closest('[data-mesh-only]');
     if (mo) {
-      post('/__app__/api/sshd', { mesh_only: mo.getAttribute('data-mesh-only') === 'true' }).then(function () { toast('Mesh-only applied'); refreshTab(); }).catch(function (e) { toast(e.message, true); });
+      post('/__app__/api/sshd', { door: mo.getAttribute('data-door'), mesh_only: mo.getAttribute('data-mesh-only') === 'true' }).then(function () { toast('Mesh-only applied'); refreshTab(); }).catch(function (e) { toast(e.message, true); });
       return;
     }
     var cd = ev.target.closest('[data-copy-doors]');

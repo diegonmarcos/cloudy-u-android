@@ -99,32 +99,26 @@ await evalJs(`[...document.querySelectorAll('nav button')].find((b) => b.innerTe
 const doors = await until(`document.querySelectorAll('section.door').length >= 3`);
 check('S1', doors, doors ? 'the SSHd tab draws the fleet SSH doors' : 'the SSHd tab drew no doors');
 const dn = await evalJs(`[...document.querySelectorAll('section.door')].map((s) => s.id)`);
-check('S2', ['door-nix', 'door-superapp', 'door-termux'].every((i) => dn.includes(i)), `doors listed: ${JSON.stringify(dn)}`);
-// ── F: the file view IS the Linux file view, unchanged, inside the SSHd tab ──
-const fv = await until(`(() => { const f = document.querySelector('#fileview'); try { return f.contentDocument.querySelectorAll('#file-list .file-entry').length > 0; } catch (e) { return false; } })()`);
-check('F1', fv, fv ? 'the SSHd tab shows the shared file view with the served root listed' : 'the file view did not load in the SSHd tab');
-const fg = await evalJs(`(() => { const f = document.querySelector('#fileview'), h = document.querySelector('header').getBoundingClientRect(), n = document.querySelector('nav').getBoundingClientRect(), b = f.getBoundingClientRect(), dd = f.contentDocument;
-  return { title: dd.title, side: !!dd.querySelector('#sidebar'), bar: !!dd.querySelector('#viewer-toolbar'), fTop: b.top, fBottom: b.bottom, hb: h.bottom, nt: n.top, custom: dd.body.innerHTML.includes('__app__') || !!dd.querySelector('nav') }; })()`);
-check('F2', fg.title === 'File Browser' && fg.side && fg.bar && !fg.custom, `the embedded page is the unchanged Linux File Browser (title=${JSON.stringify(fg.title)}, no custom nav)`);
-check('F3', fg.fTop >= fg.hb - 1, `the file view sits below the shell top row, after the doors (${Math.round(fg.fTop)} >= ${Math.round(fg.hb)})`);
+check('S2', ['door-nix', 'door-webserver', 'door-termux'].every((i) => dn.includes(i)), `doors listed: ${JSON.stringify(dn)}`);
+// ── F: the stale Files table is gone from the SSHd tab; Keep alive has its toggle and status ──
+const fv = await evalJs(`!!document.querySelector('#fileview') || [...document.querySelectorAll('main h2')].some((h) => h.innerText.trim() === 'Files')`);
+check('F1', !fv, fv ? 'the stale Files table is still in the SSHd tab' : 'the SSHd tab has no Files table');
+const ka = await evalJs(`(() => { const s = document.querySelector('#keepalive-status'), b = document.querySelector('#keepalive button[data-power=keep_alive]'); return !!s && !!b && /^(ON|OFF)$/.test(s.innerText.trim()) && s.innerText.trim() === b.innerText.trim(); })()`);
+check('F2', ka, 'Keep alive toggle and its ON/OFF status sit together on the SSHd page');
 const sf = await shot('shell-sshd');
 check('F4', A37(sf), `SSHd shot ${sf.w}x${sf.h}`);
 
-// ── L: a link in the file view's viewer offers the choice ──
-await evalJs(`(() => { const dd = document.querySelector('#fileview').contentDocument; const e = [...dd.querySelectorAll('#file-list .file-entry')].find((x) => x.innerText.includes(${JSON.stringify(expectDir)})); e && e.click(); })()`);
-await until(`[...document.querySelector('#fileview').contentDocument.querySelectorAll('#file-list .file-entry')].some((e) => e.innerText.includes(${JSON.stringify(expectFile)}))`);
-await evalJs(`(() => { const dd = document.querySelector('#fileview').contentDocument; const e = [...dd.querySelectorAll('#file-list .file-entry')].find((x) => x.innerText.includes(${JSON.stringify(expectFile)})); e && e.click(); })()`);
-const linkReady = await until(`(() => { try { return !!document.querySelector('#fileview').contentDocument.querySelector('#viewer').contentDocument.querySelector('.markdown-body a[href^="https://example.org"]'); } catch (e) { return false; } })()`);
-const hooked = await until(`(() => { try { return document.querySelector('#fileview').contentDocument.querySelector('#viewer').contentDocument.__c3 === true; } catch (e) { return false; } })()`);
-check('L1', linkReady && hooked, 'the rendered Markdown in the file view carries a link and the shell has hooked its document');
-await evalJs(`document.querySelector('#fileview').contentDocument.querySelector('#viewer').contentDocument.querySelector('.markdown-body a[href^="https://example.org"]').click()`);
+// ── L: a served link asks (Pages tab) ──
+await evalJs(`[...document.querySelectorAll('nav button')].find((b) => b.innerText.trim() === 'Pages').click()`);
+await until(`document.querySelector('.served a')`);
+await evalJs(`document.querySelector('.served a[href^="http://emulated.app"]').click()`);
 const sheet = await until(`document.querySelector('#sheet.on button[data-choice]')`);
 const labels = await evalJs(`[...document.querySelectorAll('#sheet button.ch')].map((b) => b.innerText.trim())`);
-check('L2', sheet && JSON.stringify(labels) === JSON.stringify(['Open in browser', 'Open embedded']), `a tapped link in the file view asks: ${JSON.stringify(labels)}`);
+check('L2', sheet && JSON.stringify(labels) === JSON.stringify(['Open in browser', 'Open embedded']), `a tapped link asks: ${JSON.stringify(labels)}`);
 const hit = await evalJs(`[...document.querySelectorAll('#sheet button')].map((b) => { const r = b.getBoundingClientRect(); return Math.min(r.width, r.height); })`);
 check('L3', hit.every((x) => x >= 40), `every choice is at least 40 dp tall (${hit.map(Math.round).join(', ')})`);
 const sl = await shot('shell-link-chooser-file-view');
-check('L4', A37(sl), `link chooser over the file view, shot ${sl.w}x${sl.h}`);
+check('L4', A37(sl), `link chooser, shot ${sl.w}x${sl.h}`);
 // choose browser, and remember: the server's opener stub prints OPENED; the sheet closes
 await evalJs(`document.querySelector('#sheet button[data-choice=browser]').click()`);
 const closed = await until(`!document.querySelector('#sheet.on')`);

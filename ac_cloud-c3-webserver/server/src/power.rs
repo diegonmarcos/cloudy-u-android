@@ -8,6 +8,7 @@
 
 use crate::apis;
 use serde_json::{json, Value};
+use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use std::sync::{Mutex, OnceLock};
 
@@ -80,6 +81,14 @@ pub struct State {
     pub ssh_owned: bool,
     /// Mesh-only (door.rs): None is the declared default (ON), Some is the owner's choice.
     pub mesh_only: Option<bool>,
+    /// The hosted doors' own run switches (door id -> owner's choice); absent = the door's declared `default_on`.
+    pub door_on: BTreeMap<String, bool>,
+    /// Per-port Mesh-only for every door but the supervised one (door id -> owner's choice); absent = the door's declared default (ON).
+    pub door_mesh: BTreeMap<String, bool>,
+}
+
+fn bool_map(v: &Value) -> BTreeMap<String, bool> {
+    v.as_object().map(|o| o.iter().filter_map(|(k, b)| b.as_bool().map(|b| (k.clone(), b))).collect()).unwrap_or_default()
 }
 
 pub fn load(path: &Path, default: Switches) -> State {
@@ -90,6 +99,8 @@ pub fn load(path: &Path, default: Switches) -> State {
         ssh_door: v["ssh_door"].as_bool(),
         ssh_owned: v["ssh_owned"].as_bool().unwrap_or(false),
         mesh_only: v["mesh_only"].as_bool(),
+        door_on: bool_map(&v["door_on"]),
+        door_mesh: bool_map(&v["door_mesh_only"]),
     }
 }
 
@@ -105,6 +116,12 @@ pub fn save(path: &Path, st: &State) -> Result<(), String> {
     }
     if let Some(on) = st.mesh_only {
         doc["mesh_only"] = json!(on);
+    }
+    if !st.door_on.is_empty() {
+        doc["door_on"] = json!(st.door_on);
+    }
+    if !st.door_mesh.is_empty() {
+        doc["door_mesh_only"] = json!(st.door_mesh);
     }
     let body = doc.to_string();
     std::fs::write(&tmp, body).map_err(|e| format!("cannot write {}: {}", tmp.display(), e))?;
@@ -145,6 +162,32 @@ pub fn set_mesh_only(on: Option<bool>) {
     let _g = LOCK.lock();
     let mut st = current();
     st.mesh_only = on;
+    if let Err(e) = save(&cfg().store, &st) {
+        eprintln!("c3-webserver: {}", e);
+    }
+}
+
+/// A hosted door's own run switch: Some(on) is the owner's choice, None hands it back to the declared default.
+pub fn set_door_on(id: &str, on: Option<bool>) {
+    let _g = LOCK.lock();
+    let mut st = current();
+    match on {
+        Some(b) => st.door_on.insert(id.to_string(), b),
+        None => st.door_on.remove(id),
+    };
+    if let Err(e) = save(&cfg().store, &st) {
+        eprintln!("c3-webserver: {}", e);
+    }
+}
+
+/// One port's Mesh-only switch (every door but the supervised one): Some(on) is the owner's choice, None the declared default.
+pub fn set_door_mesh_only(id: &str, on: Option<bool>) {
+    let _g = LOCK.lock();
+    let mut st = current();
+    match on {
+        Some(b) => st.door_mesh.insert(id.to_string(), b),
+        None => st.door_mesh.remove(id),
+    };
     if let Err(e) = save(&cfg().store, &st) {
         eprintln!("c3-webserver: {}", e);
     }
@@ -273,8 +316,8 @@ mod tests {
         let dir = std::env::temp_dir().join(format!("c3ws-power-{}", std::process::id()));
         let f = dir.join("power.json");
         let d = Switches { server: true, keep_alive: false };
-        assert_eq!(load(&f, d), State { sw: d, sites: vec![], ssh_door: None, ssh_owned: false, mesh_only: None }, "a missing file is the default");
-        let st = State { sw: Switches { server: false, keep_alive: true }, sites: vec!["a".into()], ssh_door: Some(false), ssh_owned: true, mesh_only: Some(false) };
+        assert_eq!(load(&f, d), State { sw: d, sites: vec![], ssh_door: None, ssh_owned: false, mesh_only: None, door_on: BTreeMap::new(), door_mesh: BTreeMap::new() }, "a missing file is the default");
+        let st = State { sw: Switches { server: false, keep_alive: true }, sites: vec!["a".into()], ssh_door: Some(false), ssh_owned: true, mesh_only: Some(false), door_on: BTreeMap::from([("webserver".to_string(), false)]), door_mesh: BTreeMap::from([("webserver".to_string(), false)]) };
         save(&f, &st).unwrap();
         assert_eq!(load(&f, d), st);
         let follow = State { ssh_door: None, ..st.clone() };

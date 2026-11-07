@@ -120,6 +120,9 @@
     "mesh": {
       "port": 8004
     },
+    "sshd": {
+      "port": 8025
+    },
     "serve_root": "/storage/emulated/0"
   },
   "mesh": {
@@ -215,9 +218,9 @@
     "engine_action": "{package}.ENGINE"
   },
   "ssh_doors": {
-    "_doc": "THE ONE declaration of the fleet's SSH doors, read by server/src/door.rs and drawn by the SSHd tab (the Files tab's replacement, #1565) and the Server card. This app hosts NO sshd of its own: the supervised door is the nix-on-droid mesh sshd (real OpenSSH, key auth, the door cloud-superapp-mcp already dials). Keep alive (or the door's own switch) makes this app ask that app to start it through its exported, CONSTELLATION_DATA-guarded MeshSshdService (ac_cloud-nix-on-droid build.json::mesh_sshd.control), at the keep-alive service's start (so at boot) and on a switch change; the sshd, its port, host key and ~/.ssh/authorized_keys stay in that app's uid and home. Every `<key>_from` is `file#dotted.path` from the repo root and server/build.rs resolves it into `<key>`: no port, package, action name or bind is written twice, and a literal `port` here fails the build. The SuperApp row is a statement of fact, not a door: the SuperApp embeds no sshd (its reachable surface is the ADB-over-mesh plane and the DevControl loopback API, both reached through the nix door), so it has no port and no controls. A literal `bind` is used only where the owner's sshd_config is private. Nothing live is stored: state, banner, sessions and uptime are probed when the page asks.",
+    "_doc": "THE ONE declaration of the fleet's SSH doors, read by server/src/door.rs and drawn by the SSHd tab (the Files tab's replacement, #1565) and the Server card. HOSTING MODEL (owner decision): exactly three apps may host an sshd, each on its own port: this webserver (ON by default, `hosted`), Cloud Terminal Termux and Cloud Terminal Nix-on-Droid (both OFF by default, `default_on` false). The SuperApp hosts no sshd and has no sshd page or row. The supervised door is the nix-on-droid mesh sshd (real OpenSSH, key auth, the door cloud-superapp-mcp already dials). Keep alive (or the door's own switch) makes this app ask that app to start it through its exported, CONSTELLATION_DATA-guarded MeshSshdService (ac_cloud-nix-on-droid build.json::mesh_sshd.control), at the keep-alive service's start (so at boot) and on a switch change; the sshd, its port, host key and ~/.ssh/authorized_keys stay in that app's uid and home. Every `<key>_from` is `file#dotted.path` from the repo root and server/build.rs resolves it into `<key>`: no port, package, action name or bind is written twice, and a literal `port` here fails the build. The SuperApp's reachable surface (the ADB-over-mesh plane and the DevControl loopback API) is reached through the nix door. A literal `bind` is used only where the owner's sshd_config is private. Nothing live is stored: state, banner, sessions and uptime are probed when the page asks.",
     "mesh_only_from": "ac_cloud-nix-on-droid/build.json#mesh_sshd.mesh_only",
-    "_doc_mesh_only": "MESH-ONLY (SSH reachable over the mesh VPN only), ON by default. The switch is persisted here (power store key mesh_only; absent = the hosting app's declared default_on) and travels with every start signal; the hosting app binds the sshd to the WireGuard mesh addresses plus loopback, resolved at start from its live interfaces, and FAILS CLOSED (no sshd) when the mesh has no address. A change restarts a wanted door that is up on the new bind. The SSHd tab shows each door's OBSERVED listening addresses (from /proc/net where Android lets this app read it) as mesh-only or EXPOSED. Enforcement reaches the doors that have a hook (the nix door); Termux has none, so its badge is observation only.",
+    "_doc_mesh_only": "MESH-ONLY (SSH reachable over the mesh VPN only), ON by default, PER PORT: every door has its own switch (power store: `mesh_only` for the nix door, `door_mesh_only.<id>` for the others; absent = the door's `mesh_only_default_on`, true). The switch is persisted here (power store key mesh_only; absent = the hosting app's declared default_on) and travels with every start signal; the hosting app binds the sshd to the WireGuard mesh addresses plus loopback, resolved at start from its live interfaces, and FAILS CLOSED (no sshd) when the mesh has no address. A change restarts a wanted door that is up on the new bind. The SSHd tab shows each door's OBSERVED listening addresses (from /proc/net where Android lets this app read it) as mesh-only or EXPOSED. Enforcement reaches the doors that have a hook (the nix door); Termux has none, so its badge is observation only.",
     "probe_timeout_ms": 400,
     "discover_ports": [8022, 22],
     "doors": [
@@ -233,18 +236,26 @@
         "engine": "OpenSSH",
         "auth": "pubkey (password and keyboard-interactive off)",
         "supervised": true,
+        "hosted": false,
+        "default_on": false,
+        "mesh_only_default_on": true,
         "note": "Started and stopped by this app's keep-alive supervisor; the key list is the terminal's own ~/.ssh/authorized_keys."
       },
       {
-        "id": "superapp",
-        "title": "Cloud SuperApp",
-        "app": "aa_cloud-superapp",
-        "package_from": "aa_cloud-superapp/build.json#android.application_id",
-        "engine": "none",
-        "bind": "",
-        "auth": "none",
+        "id": "webserver",
+        "title": "Cloud C3 WebServer (hosted sshd)",
+        "app": "ac_cloud-c3-webserver",
+        "package_from": "ac_cloud-c3-webserver/build.json#android.application_id",
+        "port_from": "ac_cloud-c3-webserver/build.json#runtime.sshd.port",
+        "user": "webserver",
+        "engine": "sshd (hosted by this app)",
+        "bind": "mesh addresses and loopback only while Mesh-only is ON",
+        "auth": "pubkey (password and keyboard-interactive off)",
         "supervised": false,
-        "note": "Hosts no sshd. Its ADB-over-mesh plane and DevControl loopback API are reached through the nix door (ssh in, then adb / curl on loopback); WRITE_SECURE_SETTINGS is held there and, since the parity decision, here too."
+        "hosted": true,
+        "default_on": true,
+        "mesh_only_default_on": true,
+        "note": "Hosted by this app: ON by default, on its own port, supervised by this app's Keep alive and Server switches. Mesh-only has its own switch (default ON)."
       },
       {
         "id": "termux",
@@ -257,6 +268,9 @@
         "engine": "OpenSSH",
         "auth": "pubkey",
         "supervised": false,
+        "hosted": false,
+        "default_on": false,
+        "mesh_only_default_on": true,
         "note": "The sshd of Cloud Terminal Termux (our constellation-signed fleet app): its shell has fleet binder IPC like the nix and webserver shells. Started from that terminal; no start hook from here yet."
       }
     ]
