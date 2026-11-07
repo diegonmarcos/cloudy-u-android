@@ -369,14 +369,6 @@
       ],
       "reason": "Existing duplicate page ids under different parents, found by the #1199 scan; to be renamed per app with legacy aliases for stored routes (the breadcrumb resolves to the first owner meanwhile)."
     },
-    "ac_cloud-me": {
-      "ids": [
-        "assets",
-        "calendar",
-        "dd"
-      ],
-      "reason": "Existing duplicate page ids under different parents, found by the #1199 scan; to be renamed per app with legacy aliases for stored routes (the breadcrumb resolves to the first owner meanwhile)."
-    },
     "ac_cloud-notes": {
       "ids": [
         "new",

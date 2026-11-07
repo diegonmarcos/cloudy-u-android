@@ -261,8 +261,8 @@ for dead in ("page:home/", "page:house/", "page:work/", "page:me/tasks"):
 # the many_rows contract of Buro and LLC: every flat page in exactly one group, groups have a label and an icon from libs:ui-icons
 icons = open(os.path.join(libs, "ui-icons/src/main/kotlin/com/diegonmarcos/superapp/uiicons/UiIcons.kt"), encoding="utf-8").read()
 want_groups = {
-    "buro": {"iddd": ["ids", "dd", "paycards", "autocomplete", "wallet", "account"], "sec-web": ["logins", "totp", "passkeys"], "sec-cli": ["ssh", "apitokens", "jwt", "certs"], "cfg": ["repos", "android", "desktop", "c3", "backup"], "financial": ["accounts", "cards", "statements", "ir", "cashflow", "budgeting", "services"], "portfolio": ["assets", "liabilities", "nav", "performance"], "events": ["events-list", "calendar"]},
-    "llc": {"income": ["employed", "side-hustles"], "manage": ["assets", "portfolio"], "calendar": ["calendar"]},
+    "buro": {"iddd": ["ids", "personal-dd", "paycards", "autocomplete", "wallet", "account"], "sec-web": ["logins", "totp", "passkeys"], "sec-cli": ["ssh", "apitokens", "jwt", "certs"], "cfg": ["repos", "android", "desktop", "c3", "backup"], "financial": ["accounts", "cards", "statements", "ir", "cashflow", "budgeting", "services"], "portfolio": ["assets", "liabilities", "nav-value", "performance"], "events": ["events-list", "calendar"]},
+    "llc": {"income": ["employed", "side-hustles"], "manage": ["company-assets", "portfolio"], "calendar": ["llc-calendar"]},
 }
 for sid, want in want_groups.items():
     sec = secs.get(sid, {})

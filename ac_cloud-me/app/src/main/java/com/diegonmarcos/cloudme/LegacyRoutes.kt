@@ -41,6 +41,11 @@ object LegacyRoutes {
         "duties" to "tasks/backlogs",
         // #1439 Configs was one page; it is now General | Perms | About | Navigation | Apps.
         "configs/configs" to "configs/general",
+        // #1199 N12 a page id names one page in the app: the duplicated ids were disambiguated.
+        "buro/dd" to "buro/personal-dd",
+        "buro/nav" to "buro/nav-value",
+        "llc/assets" to "llc/company-assets",
+        "llc/calendar" to "llc/llc-calendar",
     )
 
     /** The new (section, page) for an old one; the arguments come back unchanged when nothing moved. */

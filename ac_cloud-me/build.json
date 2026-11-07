@@ -958,7 +958,7 @@
             "icon": "ids"
           },
           {
-            "id": "dd",
+            "id": "personal-dd",
             "label": "Personal DD",
             "icon": "verified_user"
           },
@@ -1090,7 +1090,7 @@
             "icon": "account_balance"
           },
           {
-            "id": "nav",
+            "id": "nav-value",
             "label": "NaV",
             "icon": "assessment"
           },
@@ -1117,7 +1117,7 @@
             "icon": "badge",
             "pages": [
               "ids",
-              "dd",
+              "personal-dd",
               "paycards",
               "autocomplete",
               "wallet",
@@ -1178,7 +1178,7 @@
             "pages": [
               "assets",
               "liabilities",
-              "nav",
+              "nav-value",
               "performance"
             ]
           },
@@ -1211,7 +1211,7 @@
             "icon": "rocket_launch"
           },
           {
-            "id": "assets",
+            "id": "company-assets",
             "label": "Assets",
             "icon": "inventory_2"
           },
@@ -1221,7 +1221,7 @@
             "icon": "trending_up"
           },
           {
-            "id": "calendar",
+            "id": "llc-calendar",
             "label": "Calendar",
             "icon": "calendar_month"
           }
@@ -1241,7 +1241,7 @@
             "label": "Assets & Portfolio",
             "icon": "account_balance",
             "pages": [
-              "assets",
+              "company-assets",
               "portfolio"
             ]
           },
@@ -1250,7 +1250,7 @@
             "label": "Calendar",
             "icon": "event",
             "pages": [
-              "calendar"
+              "llc-calendar"
             ]
           }
         ]

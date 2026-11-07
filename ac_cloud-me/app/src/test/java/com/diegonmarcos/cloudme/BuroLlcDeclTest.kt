@@ -38,12 +38,12 @@ class BuroLlcDeclTest {
     @Test fun `Buro follows the owner hierarchy ID&DD, Secrets Web, Secrets CLI, Configs, Financial, Portfolio, Events and Docs is gone`() {
         assertEquals("horizontal_two_rows", sections.getValue("buro").getString("nav_mode"))
         assertEquals(mapOf(
-            "iddd" to listOf("ids", "dd", "paycards", "autocomplete", "wallet", "account"),
+            "iddd" to listOf("ids", "personal-dd", "paycards", "autocomplete", "wallet", "account"),
             "sec-web" to listOf("logins", "totp", "passkeys"),
             "sec-cli" to listOf("ssh", "apitokens", "jwt", "certs"),
             "cfg" to listOf("repos", "android", "desktop", "c3", "backup"),
             "financial" to listOf("accounts", "cards", "statements", "ir", "cashflow", "budgeting", "services"),
-            "portfolio" to listOf("assets", "liabilities", "nav", "performance"),
+            "portfolio" to listOf("assets", "liabilities", "nav-value", "performance"),
             "events" to listOf("events-list", "calendar"),
         ), groups("buro"))
         assertFalse("docs" in groups("buro"))
@@ -69,7 +69,7 @@ class BuroLlcDeclTest {
 
     @Test fun `LLC follows the hierarchy Employed, Side hustles, Assets and Portfolio, Calendar`() {
         assertEquals("horizontal_two_rows", sections.getValue("llc").getString("nav_mode"))
-        assertEquals(mapOf("income" to listOf("employed", "side-hustles"), "manage" to listOf("assets", "portfolio"), "calendar" to listOf("calendar")), groups("llc"))
+        assertEquals(mapOf("income" to listOf("employed", "side-hustles"), "manage" to listOf("company-assets", "portfolio"), "calendar" to listOf("llc-calendar")), groups("llc"))
     }
 
     @Test fun `every page is in exactly one group and has a data file`() {
@@ -122,8 +122,8 @@ class BuroLlcDeclTest {
     }
 
     @Test fun `the calendar pages host the calendar engine tasks view filtered to their subject, and writing is Cloud Tasks`() {
-        for ((s, subject) in mapOf("buro" to "Buro", "llc" to "LLC")) {
-            val b = page(s, "calendar").getJSONObject(0)
+        for ((s, pg, subject) in listOf(Triple("buro", "calendar", "Buro"), Triple("llc", "llc-calendar", "LLC"))) {
+            val b = page(s, pg).getJSONObject(0)
             assertEquals("fragment", b.getString("kind")); assertEquals("tasks", b.getString("id"))
             assertEquals(subject, b.getString("subject")); assertEquals("extapp:cloud-tasks", b.getString("open"))
         }
