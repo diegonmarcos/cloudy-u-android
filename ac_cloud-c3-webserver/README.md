@@ -22,6 +22,15 @@ Repos. They are declared in `build.json::subpages` and every one is a route `/__
 (`server/src/apis.rs`, `server/src/sub.rs`); the shell draws them all with one renderer. The data is read from declarations that exist
 (fleet endpoints, the debug-port table, the fleet manifest), never typed per app.
 
+**Pages tab.** One list of the pages actually served (`server/src/served.rs`, `GET /__app__/api/served`): the four declared endpoints
+(Termux, Nix, Local, Cloud), the places added below and the ports adopted from the checker. Each row has Status (serving on/off; Termux and
+Nix also app open/not open and Start app), Metadata (auth, exposure, host), Source and Links, and its own Start/Stop serving. Local and Cloud
+stop by a persisted pause (503) because this app owns them; Termux and Nix are the terminals' own my-webserver, which this app cannot stop,
+so only Start app (launch) is offered. "Add a place to serve" is the Repos add API (`POST /__app__/api/repos`, any folder or file of a source,
+"Add & serve" starts it). "Undeclared served pages" lists loopback TCP ports that answer (via /proc/net/tcp when Android allows it, plus the
+probe range `build.json::served.probe`) and are in no declaration; Declare adopts one, Stop ends it only when this app holds it. The old
+Drive, Terminals and Repos sub-page routes still answer. Tests: `test/test-c3-webserver-served.sh`, `test/render-pages.mjs` (G1-G9).
+
 **Mesh log route.** Every fleet app exports its recent logcat and crash ring through its `<package>.logexport` provider
 (`libs:log-export`, signature permission). The mesh listener (`server/src/meshlogs.rs`, `runtime.mesh.port`) serves `/logs` and
 `/logs/<app>` by calling it. It binds the phone's mesh address only (resolved from the SuperApp's WireGuard profile, refused unless it

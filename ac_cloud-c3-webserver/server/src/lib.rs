@@ -29,6 +29,7 @@ pub mod jump;
 pub mod meshlogs;
 pub mod power;
 pub mod repos;
+pub mod served;
 pub mod serving;
 pub mod sshd;
 pub mod sub;
@@ -57,6 +58,10 @@ fn private_names() -> Vec<String> {
 /// The :8003 listener: the diagnostics page and its three bridge reads, plus liveness and the
 /// served-ports map the page's header draws. It serves no files.
 pub fn handle_diag(ctx: &Ctx, req: &Req) -> Resp {
+    // Pages > Stop serving (served.rs): a paused page answers 503 until it is started again.
+    if serving::get().endpoints.iter().any(|e| e.role == serving::Role::Diag && served::is_paused(&e.id)) {
+        return Resp::text(503, "This page is stopped (Pages > Start serving)");
+    }
     if let Some(h) = req.header("host") {
         let host = http::host_of(h);
         if !(matches!(host.as_str(), "127.0.0.1" | "localhost" | "[::1]") || private_names().iter().any(|n| *n == host)) {
@@ -88,7 +93,15 @@ fn host_allowed(host: &str) -> bool {
 
 /// The drive listener: `/__app__/...` is the app shell, everything else is the shared fleet-webserver.
 pub fn drive_handler(ctx: Ctx, files: Arc<http::Handler>) -> Arc<http::Handler> {
-    Arc::new(move |req: &Req| app::handle(&ctx, req, &host_allowed).unwrap_or_else(|| files(req)))
+    Arc::new(move |req: &Req| {
+        app::handle(&ctx, req, &host_allowed).unwrap_or_else(|| {
+            // The app shell stays up; the drive's files answer 503 while Pages > Stop serving has paused them.
+            if serving::get().endpoints.iter().any(|e| e.role == serving::Role::Drive && served::is_paused(&e.id)) {
+                return Resp::text(503, "This page is stopped (Pages > Start serving)");
+            }
+            files(req)
+        })
+    })
 }
 
 /// What the app hands the server. The ports come from build.json (build.rs), never from code.

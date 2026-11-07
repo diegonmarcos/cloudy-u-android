@@ -177,7 +177,7 @@ pub enum Target {
     Proxy { port: u16, base: String, index: Option<String> },
 }
 
-/// Resolve an entry to what a site serves. Local: the repo must exist under the source root and hold `.git`, the start must stay inside
+/// Resolve an entry to what a site serves. Local: the path (a folder, a git repository or one file) must exist under the source root, the start must stay inside
 /// the repo after symlinks are resolved. Terminal: the (guarded) path prefix on the terminal's own server.
 pub fn resolve(cfg: &Cfg, e: &Entry) -> Result<Target, String> {
     let src = cfg.source(&e.source).ok_or_else(|| format!("no source {}", e.source))?;
@@ -186,12 +186,20 @@ pub fn resolve(cfg: &Cfg, e: &Entry) -> Result<Target, String> {
     match &src.kind {
         Kind::Local { root } => {
             let base = std::fs::canonicalize(root).map_err(|_| format!("{} is not readable (storage access not granted yet?)", root.display()))?;
-            let repo_dir = std::fs::canonicalize(base.join(&repo)).map_err(|_| format!("repo {} not found in {}", repo, src.label))?;
+            let repo_dir = std::fs::canonicalize(base.join(&repo)).map_err(|_| format!("{} not found in {}", repo, src.label))?;
             if !repo_dir.starts_with(&base) {
-                return Err(format!("repo {} resolves outside {}", repo, src.label));
+                return Err(format!("{} resolves outside {}", repo, src.label));
             }
-            if !repo_dir.is_dir() || !repo_dir.join(".git").exists() {
-                return Err(format!("{} is not a git repository", repo));
+            // A place to serve is any folder or single file under the source (a git repository is just the common case).
+            if repo_dir.is_file() {
+                if !start.is_empty() {
+                    return Err(format!("{} is a file: it has no start folder", repo));
+                }
+                let name = repo_dir.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
+                return Ok(Target::Dir { root: repo_dir.parent().map(Path::to_path_buf).unwrap_or(base), index: Some(name) });
+            }
+            if !repo_dir.is_dir() {
+                return Err(format!("{} is neither a file nor a folder", repo));
             }
             let target = std::fs::canonicalize(repo_dir.join(&start)).map_err(|_| format!("start {} not found in {}", if start.is_empty() { "." } else { start.as_str() }, repo))?;
             if !target.starts_with(&repo_dir) {
@@ -348,6 +356,12 @@ impl Host {
         for id in ids {
             self.stop(&id);
         }
+    }
+
+    /// Stop whichever site holds `port` (an orphan: running here but no longer in the store).
+    pub fn stop_port(&self, port: u16) -> bool {
+        let id = self.sites.lock().ok().and_then(|s| s.iter().find(|(_, v)| v.port == port).map(|(k, _)| k.clone()));
+        id.map(|i| self.stop(&i)).unwrap_or(false)
     }
 
     pub fn stop(&self, id: &str) -> bool {

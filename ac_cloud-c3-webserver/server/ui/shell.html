@@ -44,12 +44,29 @@
   .seg { display:flex; gap:6px; padding:6px 10px; border-bottom:1px solid var(--line); }
   .seg button { flex:1; background:var(--bg); color:var(--dim); border:1px solid var(--line); border-radius:8px; padding:7px 0; font:600 13px system-ui; }
   .seg button.on { color:var(--acc); border-color:var(--acc); }
-  .served { display:grid; grid-template-columns:auto 1fr; gap:2px 10px; align-items:center; }
-  .served .dot { width:9px; height:9px; border-radius:50%; background:var(--dim); display:inline-block; }
-  .served .dot.up { background:#7ee2a8; } .served .dot.down { background:#ff8a8a; }
-  .served .links { display:flex; flex-wrap:wrap; gap:4px 14px; }
-  .served .links a { padding:6px 0; min-height:32px; display:inline-flex; align-items:center; }
-  .served .head { font-weight:600; }
+  /* Pages: ONE list of served pages. Each row: header (dot, name, badges, Start/Stop) and four stacked detail rows. */
+  .served .pg { padding:8px 10px; border-bottom:1px solid var(--line); }
+  .served .pg:last-child { border-bottom:0; }
+  .served .rh, .drift .rh { display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
+  .dot { width:9px; height:9px; border-radius:50%; background:var(--dim); display:inline-block; flex:none; }
+  .dot.up { background:#7ee2a8; } .dot.down { background:#ff8a8a; }
+  .served .nm { font-weight:600; }
+  .badge.g { color:#7ee2a8; border-color:#2b5f5a; } .badge.a { color:#e0a35a; border-color:#5a3a2b; }
+  .spc { margin-left:auto; }
+  .pg .cfg { margin-top:6px; padding:6px 8px; background:var(--bg); border:1px solid var(--line); border-radius:8px; display:grid; gap:4px; }
+  .pg .kv { display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px; min-width:0; }
+  .pg .kv .k { color:var(--dim); font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; }
+  .pg .kv .v { font-size:12px; word-break:break-all; margin-right:6px; }
+  .pg .kv a { padding:6px 0; min-height:32px; display:inline-flex; align-items:center; font-size:12px; }
+  .pill { font-size:10.5px; border-radius:12px; padding:1px 8px; border:1px solid var(--line); }
+  .pill.on { color:#7ee2a8; border-color:#2b5f4a; } .pill.off { color:#e0a35a; border-color:#5a3a2b; }
+  .act { background:none; color:var(--acc); border:1px solid var(--line); border-radius:6px; padding:5px 10px; font:12px system-ui; min-height:32px; }
+  .act.p { color:#7ee2a8; border-color:#2b5f5a; } .act.x { color:#ff8a8a; border-color:#5a2b2b; }
+  .act:disabled { opacity:.4; }
+  .pages section h2 { display:flex; align-items:center; gap:8px; }
+  .drift { background:#160f09; border-color:#5a3a2b; }
+  .drift h2 { color:#e0b483; border-color:#3a2a1b; display:flex; align-items:center; gap:8px; }
+  .drift .it { padding:8px 10px; border-top:1px solid #3a2a1b; }
   .note { color:var(--dim); font-size:12px; padding:6px 10px; }
   .eng { display:flex; gap:10px; padding:6px 10px; border-bottom:1px solid var(--line); align-items:flex-start; }
   .eng:last-child { border-bottom:0; }
@@ -266,22 +283,51 @@ function renderConfig(cfg) {
   });
   return out;
 }
-// Pages: every served page of the phone, by port and by private DNS name (/__app__/api/serving). A link here
-// goes through the link chooser like any other link; it never navigates this view by itself.
-function renderServed(sv) {
-  var rows = sv.endpoints.map(function (e) {
-    var state = e.up === true ? 'up' : (e.up === false ? 'down' : '');
-    var label = e.up === true ? 'answering' : (e.up === false ? 'not answering' : '');
-    return '<div class="row"><div class="v served">' +
-      '<span class="dot ' + state + '" title="' + esc(label) + '"></span>' +
-      '<span class="head">' + esc(e.title) + '<span class="badge">:' + esc(e.port) + '</span><span class="badge">' + esc(e.role) + '</span></span>' +
-      '<span></span><span class="links">' +
-        '<a href="' + esc(e.url_name) + '">' + esc(e.name) + '</a>' +
-        '<a href="' + esc(e.url_ip) + '">127.0.0.1:' + esc(e.port) + '</a></span>' +
-      '<span></span><span class="sum">' + esc(e.summary) + '</span></div></div>';
+// Pages: ONE list of the pages that are actually served (/__app__/api/served): declared endpoints, user-added places and adopted ports,
+// each with a header (status dot, name, :port, role, serving badge, Start/Stop) and four stacked rows: Status, Metadata, Source, Links.
+// A link goes through the link chooser like any other link; it never navigates this view by itself.
+function renderAct(a, cls) {
+  if (!a) return '';
+  return '<button class="act ' + (cls || '') + '" data-act="0" data-post="' + esc(a.post) + '" data-body="' + esc(JSON.stringify(a.body)) + '"' +
+    (a.disabled ? ' disabled title="' + esc(a.why || '') + '"' : '') + '>' + esc(a.label) + '</button>';
+}
+function renderPage(r) {
+  var on = r.serving === true;
+  var t = r.toggle || null;
+  var head = '<div class="rh"><span class="dot ' + (on ? 'up' : 'down') + '" title="' + (on ? 'serving' : 'not serving') + '"></span><span class="nm">' + esc(r.name) + '</span>' +
+    '<span class="badge">:' + esc(r.port) + '</span><span class="badge">' + esc(r.role) + '</span>' +
+    '<span class="badge ' + (on ? 'g' : '') + '">' + (on ? 'serving' : (r.paused ? 'stopped' : 'not serving')) + '</span><span class="spc"></span>' +
+    (t ? '<button class="act ' + (t.danger ? 'x' : 'p') + '" data-act="0" data-post="' + esc(t.post) + '" data-body="' + esc(JSON.stringify(t.body)) + '" data-toggle' +
+      (t.disabled ? ' disabled title="' + esc(t.why || '') + '"' : '') + '>' + (t.danger ? '&#9209; ' : '&#9205; ') + esc(t.label) + '</button>' : '') + '</div>';
+  var status = '<div class="kv" data-r="status"><span class="k">serving</span><span class="pill ' + (on ? 'on' : 'off') + '">' + (on ? 'on' : 'off') + '</span>' +
+    (r.app ? '<span class="k">app</span><span class="pill ' + (r.app === 'open' ? 'on' : 'off') + '">' + esc(r.app) + '</span>' : '') +
+    (r.start_app ? '<button class="act p" data-act="0" data-start-app data-post="' + esc(r.start_app.post) + '" data-body="' + esc(JSON.stringify(r.start_app.body)) + '">&#9205; Start app</button>' : '') + '</div>';
+  var meta = '<div class="kv" data-r="meta"><span class="k">auth</span><span class="v">' + esc(r.auth) + '</span><span class="k">exposure</span><span class="v">' + esc(r.exposure) +
+    '</span><span class="k">host</span><span class="v">' + esc(r.host) + '</span></div>';
+  var source = '<div class="kv" data-r="source"><span class="k">source</span><span class="v path">' + esc(r.source) + '</span>' +
+    (r.source_open ? '<a href="' + esc(r.source_open) + '">open &#8599;</a>' : '') + '</div>';
+  var links = '<div class="kv" data-r="links"><span class="k">links</span>' + (r.links.length ? r.links.map(function (l) { return '<a href="' + esc(l.href) + '">' + esc(l.label) + '</a>'; }).join(' &middot; ') : '<span class="v">none while stopped</span>') + '</div>';
+  var cfg = '<div class="kv" data-r="config"><a href="#" data-goto="' + esc(r.config || 'configs') + '">&#9881; edit config &rsaquo;</a>' + (r.remove ? '<span class="spc"></span>' + renderAct(r.remove, 'x') : '') + '</div>';
+  return '<div class="pg" data-pg="' + esc(r.id) + '">' + head + '<div class="cfg">' + status + meta + source + links + cfg + '</div></div>';
+}
+function renderUndeclared(u) {
+  var items = u.items.map(function (x) {
+    var stop = { post: '/__app__/api/served', body: { op: 'stop_undeclared', port: x.port }, label: 'Stop', disabled: !x.ours, why: 'held by another app: Android does not let this app stop it' };
+    var decl = { post: '/__app__/api/served', body: { op: 'declare', port: x.port }, label: 'Declare' };
+    return '<div class="it" data-undeclared="' + esc(x.port) + '"><div class="rh"><span class="dot up"></span><span class="nm">:' + esc(x.port) + '</span><span class="badge a">undeclared</span>' +
+      '<span class="v path">' + esc(x.addr) + ' &mdash; ' + esc(x.label) + '</span><span class="spc"></span>' + renderAct(decl, 'p') + renderAct(stop, 'x') + '</div></div>';
   }).join('');
-  return '<section><h2>Served pages · tap a link to choose how to open it</h2>' + rows +
-    '<div class="note">Names resolve through this app\'s private DNS (udp ' + esc(sv.dns.host) + ':' + esc(sv.dns.port) + '), only inside our apps.</div></section>';
+  return '<section class="drift" id="undeclared"><h2><span>&#9888;</span> Undeclared served pages &middot; ' + u.items.length +
+    '<span class="spc"></span><button class="act" data-rescan>Rescan</button></h2>' +
+    (items || '<div class="note">none: every port found is in the declared list above (' + esc(u.declared) + ' declared ports).</div>') +
+    '<div class="note">Checked by ' + esc(u.method) + '. ' + esc(u.scope) + ' Tap Declare to adopt a port into the list, Stop to end a listener this app holds.</div></section>';
+}
+function renderPages(pg) {
+  var rows = pg.rows.map(renderPage).join('');
+  return '<div class="sub pages"><section><h2>Served pages &middot; ' + pg.rows.length + '<span class="spc"></span><span style="text-transform:none;letter-spacing:0">each page: status, config &amp; links</span></h2>' +
+    '<div class="served">' + rows + '</div>' +
+    '<div class="note">Names resolve through this app\'s private DNS (udp ' + esc(pg.dns.host) + ':' + esc(pg.dns.port) + '), only inside our apps. Termux and Nix pages are served by each terminal\'s own my-webserver: if the app is not open its page cannot answer, so Start app wakes it.</div></section>' +
+    renderForm(pg.form) + renderUndeclared(pg.undeclared) + '</div>';
 }
 function renderCfgTabs(current) {
   return '<div class="seg" role="tablist">' + [['about', 'About'], ['engines', 'Engines'], ['links', 'Links']].map(function (t) {
@@ -436,7 +482,7 @@ function renderSubPage(p) {
 }
 if (typeof module !== 'undefined') {
   module.exports = { esc: esc, tabsFrom: tabsFrom, tabFromPath: tabFromPath, defaultTab: defaultTab, renderNav: renderNav, renderRoutes: renderRoutes,
-    renderSections: renderSections, renderAbout: renderAbout, aboutText: aboutText, renderConfig: renderConfig, renderServed: renderServed,
+    renderSections: renderSections, renderAbout: renderAbout, aboutText: aboutText, renderConfig: renderConfig, renderPages: renderPages, renderPage: renderPage, renderUndeclared: renderUndeclared,
     renderCfgTabs: renderCfgTabs, renderServing: renderServing, renderEngines: renderEngines, hostIsLocal: hostIsLocal, classifyLink: classifyLink,
     isLinkTarget: isLinkTarget, embedUrl: embedUrl, subsOf: subsOf, renderSubNav: renderSubNav, renderSubRow: renderSubRow, renderForm: renderForm, renderSubPage: renderSubPage, decide: decide, renderSheet: renderSheet, renderLinks: renderLinks,
     renderPower: renderPower, renderMeshOnly: renderMeshOnly, renderSshd: renderSshd, renderDoor: renderDoor, doorsText: doorsText };
@@ -554,7 +600,7 @@ if (typeof module !== 'undefined') {
     });
   }
   var views = {
-    pages: function () { return withSubs('pages', 'drive', function () { return j('/__app__/api/serving').then(function (sv) { SERVING = sv; return renderServed(sv) + renderRoutes(ROUTES, 'page'); }); }); },
+    pages: function () { return j('/__app__/api/served').then(function (pg) { return renderPages(pg); }); },
     api: function () { return withSubs('api', 'apps', function () { return Promise.resolve(renderRoutes(ROUTES, 'api')); }); },
     home: function () { return Promise.all([j('/__app__/api/power'), j('/__app__/api/about')]).then(function (rs) { ABOUT = rs[1]; return renderPower(rs[0]) + renderAbout(ABOUT); }); },
     sshd: function () { return j('/__app__/api/sshd').then(function (d) { DOORS = d; return renderSshd(d); }); },
@@ -644,7 +690,16 @@ if (typeof module !== 'undefined') {
     }
     var cd = ev.target.closest('[data-copy-doors]');
     if (cd) { copyText(doorsText(DOORS), cd); return; }
+    var gt = ev.target.closest('[data-goto]');
+    if (gt) {
+      ev.preventDefault();
+      var g = gt.getAttribute('data-goto');
+      if (g === 'form') { var fs = document.querySelector('.form-sec'); if (fs) fs.scrollIntoView(); } else show(g, true);
+      return;
+    }
+    if (ev.target.closest('[data-rescan]')) { post('/__app__/api/served', { op: 'rescan' }).then(function () { toast('Rescanned'); refreshTab(); }).catch(function (e) { toast(e.message, true); }); return; }
     var act = ev.target.closest('[data-act]');
+    if (act && act.disabled) return;
     if (act) {
       post(act.getAttribute('data-post'), JSON.parse(act.getAttribute('data-body'))).then(function (r) { toast(r.url ? 'Serving ' + r.url : 'Done'); refreshTab(); }).catch(function (e) { toast(e.message, true); });
       return;

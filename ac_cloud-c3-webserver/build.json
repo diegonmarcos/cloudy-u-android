@@ -290,6 +290,10 @@
     { "tab": "pages", "id": "terminals", "label": "Terminals", "route": "/__app__/api/sub/pages-terminals" },
     { "tab": "pages", "id": "repos", "label": "Repos", "route": "/__app__/api/sub/pages-repos" }
   ],
+  "served": {
+    "_doc": "The Pages tab (server/src/served.rs): ONE list of served pages, the add form and the undeclared-pages checker. `probe` is what the checker connects to on 127.0.0.1 besides /proc/net/tcp (which Android 10+ may hide): the fleet's own range and a few well-known dev ports. A TCP port that answers there and is in none of: serving.endpoints, every `port` under runtime, ssh_doors ports, the Repos store, the adopted ports, is UNDECLARED. Nothing outside the probe is claimed.",
+    "probe": { "first": 8000, "last": 8199, "extra": [ 3000, 4000, 5000, 5173, 8080, 8443, 9000, 9090 ] }
+  },
   "repos": {
     "_doc": "#1490 the Repos sub-page: the owner adds many entries, each (source, repo, start folder or entry file) with its OWN port and its own start/stop, so several sites serve at once. Persisted declaratively in `store` (JSON, one object per entry). Each site is a fleet-webserver on its own listener (the same one-folder, traversal-guarded, GET/HEAD-only serving as libs:local-serve, whose WebView page is Kotlin and so cannot live in this Rust-only app), bound to loopback or, when the entry says `mesh`, to the mesh address; never to a public one. `local` sources are read from disk under `root`; `terminal` sources are the terminals' own my-webserver (their $HOME), read through its loopback port and reached with a path-guarded GET proxy. Ports are allocated from port_first..port_last, outside every port the fleet declares (sshd 8023-8024 and the loopback servers 8000-8004 are below it).",
     "store": "/storage/emulated/0/Android/data/com.diegonmarcos.cloudwebserver/files/repos.json",

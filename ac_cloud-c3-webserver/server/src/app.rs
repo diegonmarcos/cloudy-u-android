@@ -7,7 +7,7 @@
 //! is a walk over that table, so "served" and "declared" are the same list; the Pages and API tabs render
 //! `/__app__/api/routes`, which is this table serialised, and the bottom nav is its `tab` rows.
 
-use crate::{about, crashes, engines, serving, sub, Ctx};
+use crate::{about, crashes, engines, served, serving, sub, Ctx};
 use fleet_webserver::http::{self, Req, Resp};
 use fleet_webserver::render::jstr;
 
@@ -57,6 +57,7 @@ pub const ROUTES: &[Route] = &[
     Route { kind: Kind::Api, path: "/__app__/api/sub/pages-repos", tab: None, post: false, summary: "Pages > Repos: the repo sites, their ports and state, and the add form", handler: sub::page_repos },
     Route { kind: Kind::Api, path: "/__app__/api/repos", tab: None, post: true, summary: "GET the repo entries; POST {op: add|remove|start|stop, ...}: the Repos store and its sites (loopback or mesh, never public)", handler: sub::api_repos },
     Route { kind: Kind::Api, path: "/__app__/api/repos/discover", tab: None, post: false, summary: "GET ?source=<id>: the git repositories a Repos source holds", handler: sub::api_discover },
+    Route { kind: Kind::Api, path: "/__app__/api/served", tab: None, post: true, summary: "GET the Pages tab: every served page (declared, user-added, adopted) with status, metadata, source and links, the add form and the undeclared-pages scan; POST {op: start|stop|start_app|rescan|declare|forget|stop_undeclared, ...}", handler: served::api_served },
     Route { kind: Kind::Api, path: "/__app__/api/power", tab: None, post: true, summary: "GET the master controls and the live state (running, ports, sites); POST {server?, keep_alive?, ssh_door?} sets Server ON/OFF, Keep alive ON/OFF and the SSH door's own switch (true, false, or null to follow Keep alive) (build.json::power, ::ssh_doors)", handler: api_power },
     Route { kind: Kind::Api, path: "/__app__/api/sshd", tab: None, post: true, summary: "GET every SSH door, probed live (declared in build.json::ssh_doors); POST {door, op: start|stop|follow} starts or stops the supervised door (the nix-on-droid mesh sshd) or this app's own hosted sshd (webserver, :8025, ON by default) or hands it back to its default; POST {door?, mesh_only: true|false|null} sets that port's SSH reachable over the mesh VPN only (default ON, one switch per port) and re-applies it to a running door", handler: api_sshd },
     Route { kind: Kind::Api, path: "/__app__/api/open", tab: None, post: true, summary: "POST {url} or {id,via:name|ip}: hand an http(s) link to cloud-browser", handler: api_open },

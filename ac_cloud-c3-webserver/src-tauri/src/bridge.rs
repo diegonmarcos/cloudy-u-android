@@ -51,6 +51,8 @@ pub fn install(window: &tauri::WebviewWindow) {
                     c3_webserver::meshlogs::set_log_source(Box::new(call_provider));
                     c3_webserver::meshlogs::set_token_source(Box::new(read_token));
                     c3_webserver::diag::set_opener(Box::new(open_in_browser));
+                    // Pages > Start app: launch a terminal app whose own my-webserver serves its page.
+                    c3_webserver::served::set_launcher(Box::new(launch_app));
                     // #1502 the keep-alive service and the boot receiver follow the Server / Keep alive switches.
                     c3_webserver::power::set_sync_hook(Box::new(sync_keep_alive));
                     // The SSH door the keep-alive supervisor keeps up (door.rs): the signal to the nix-on-droid app.
@@ -201,6 +203,23 @@ fn open_in_browser(url: &str) -> Result<(), String> {
         let action = env.new_string("android.intent.action.VIEW")?;
         let u = uri(env, url)?;
         let intent = env.new_object("android/content/Intent", "(Ljava/lang/String;Landroid/net/Uri;)V", &[JValue::Object(&action), JValue::Object(&u)])?;
+        let pkg = env.new_string(&package)?;
+        env.call_method(&intent, "setPackage", "(Ljava/lang/String;)Landroid/content/Intent;", &[JValue::Object(&pkg)])?;
+        env.call_method(&intent, "addFlags", "(I)Landroid/content/Intent;", &[JValue::Int(0x1000_0000)])?; // FLAG_ACTIVITY_NEW_TASK
+        env.call_method(activity, "startActivity", "(Landroid/content/Intent;)V", &[JValue::Object(&intent)])?;
+        Ok(())
+    })
+    .map_err(|e| if e.contains("ActivityNotFoundException") { format!("{} is not installed", package) } else { e })
+}
+
+/// MAIN / LAUNCHER aimed at one package and nobody else's: wakes a closed terminal app so its own my-webserver answers again.
+fn launch_app(package: &str) -> Result<(), String> {
+    let package = package.to_string();
+    with_env(|env, activity| {
+        let action = env.new_string("android.intent.action.MAIN")?;
+        let intent = env.new_object("android/content/Intent", "(Ljava/lang/String;)V", &[JValue::Object(&action)])?;
+        let cat = env.new_string("android.intent.category.LAUNCHER")?;
+        env.call_method(&intent, "addCategory", "(Ljava/lang/String;)Landroid/content/Intent;", &[JValue::Object(&cat)])?;
         let pkg = env.new_string(&package)?;
         env.call_method(&intent, "setPackage", "(Ljava/lang/String;)Landroid/content/Intent;", &[JValue::Object(&pkg)])?;
         env.call_method(&intent, "addFlags", "(I)Landroid/content/Intent;", &[JValue::Int(0x1000_0000)])?; // FLAG_ACTIVITY_NEW_TASK

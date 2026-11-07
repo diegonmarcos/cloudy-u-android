@@ -144,6 +144,12 @@ pub fn repos_op(cfg: &Cfg, host: &Host, body: &Value) -> Result<Value, (u16, Str
         "add" => {
             let e = repos::add(cfg, &mut entries, t("label"), t("source"), t("repo"), t("start"), t("exposure")).map_err(|e| (400u16, e))?;
             repos::save(&cfg.store, &entries).map_err(|e| (500u16, e))?;
+            // "Add & serve" (Pages tab): the new place starts at once, on its own port, exactly like a `start` op.
+            if body["serve"].as_bool() == Some(true) {
+                let port = host.start(cfg, &e).map_err(|m| (409u16, format!("added, but not started: {}", m)))?;
+                crate::power::set_site(&e.id, true);
+                return Ok(json!({"ok": true, "entry": e.to_json(), "port": port, "url": repos::url(cfg, &e)}));
+            }
             Ok(json!({"ok": true, "entry": e.to_json()}))
         }
         "remove" => {
@@ -257,6 +263,24 @@ mod tests {
         let expo: Vec<&str> = f[4]["options"].as_array().unwrap().iter().filter_map(|o| o["value"].as_str()).collect();
         assert_eq!(expo, vec!["loopback"]);
         assert!(!p.to_string().contains("public\""), "no public exposure is ever offered");
+        let _ = fs::remove_dir_all(&d);
+    }
+
+    #[test]
+    fn add_with_serve_starts_the_place_and_any_file_or_folder_is_a_place() {
+        let (d, cfg) = setup("serve");
+        fs::create_dir_all(d.join("plain")).unwrap();
+        fs::write(d.join("plain/index.html"), "PLAIN-HOME").unwrap();
+        fs::write(d.join("one.html"), "ONE-FILE").unwrap();
+        let host = Host::default();
+        let r = repos_op(&cfg, &host, &json!({"op": "add", "label": "Plain", "source": "emu", "repo": "plain", "exposure": "loopback", "serve": true})).unwrap();
+        let port = r["port"].as_u64().unwrap() as u16;
+        let (st, _, body) = repos::http_get(port, "/index.html", std::time::Duration::from_secs(3)).unwrap();
+        assert_eq!((st, String::from_utf8_lossy(&body).contains("PLAIN-HOME")), (200, true), "a folder that is not a git repository is served");
+        let f = repos_op(&cfg, &host, &json!({"op": "add", "label": "One", "source": "emu", "repo": "one.html", "exposure": "loopback", "serve": true})).unwrap();
+        let (_, _, body) = repos::http_get(f["port"].as_u64().unwrap() as u16, "/", std::time::Duration::from_secs(3)).unwrap();
+        assert!(String::from_utf8_lossy(&body).contains("ONE-FILE"), "a single file is served as the index");
+        host.stop_all();
         let _ = fs::remove_dir_all(&d);
     }
 }

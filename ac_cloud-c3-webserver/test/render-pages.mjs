@@ -85,6 +85,31 @@ for (const [label, name, ready] of tabs) {
     `${label}: no sideways scroll (${d.sw} <= ${d.vw}), content starts below the top row (${Math.round(d.firstTop)} >= ${Math.round(d.headBottom)}), shot ${s.w}x${s.h}`);
 }
 
+// ── G: the Pages tab is ONE list of served pages (no Drive | Terminals | Repos sub-nav), each row with its four detail rows ──
+await evalJs(`[...document.querySelectorAll('nav button')].find((b) => b.innerText.trim() === 'Pages').click()`);
+await until(`document.querySelectorAll('.served .pg').length >= 4`);
+const subnav = await evalJs(`[...document.querySelectorAll('main .seg button, main [data-sub]')].map((b) => b.innerText.trim())`);
+check('G1', subnav.length === 0 && await evalJs(`!document.querySelector('[data-sub]')`), `no Drive|Terminals|Repos sub-nav on Pages (${JSON.stringify(subnav)})`);
+const pgs = await evalJs(`[...document.querySelectorAll('.served .pg')].map((p) => ({ name: p.querySelector('.nm').innerText.trim(), rows: ['status', 'meta', 'source', 'links', 'config'].filter((r) => p.querySelector('[data-r=' + r + ']')),
+  port: (p.querySelector('.rh .badge') || {}).innerText, toggle: !!p.querySelector('.rh button[data-toggle]'), app: (p.querySelector('[data-r=status]').innerText.match(/app\\s*(not open|open)/i) || [])[1] || null,
+  startApp: !!p.querySelector('[data-start-app]'), hrefs: [...p.querySelectorAll('[data-r=links] a')].map((a) => a.getAttribute('href')), srcOpen: !!p.querySelector('[data-r=source] a'), meta: p.querySelector('[data-r=meta]').innerText }))`);
+check('G2', ['Termux', 'Nix', 'Local', 'Cloud'].every((n) => pgs.some((p) => p.name === n)), `the declared endpoints all appear as rows: ${pgs.map((p) => p.name).join(', ')}`);
+check('G3', pgs.every((p) => p.rows.length === 5 && p.toggle && /auth/i.test(p.meta) && /exposure/i.test(p.meta) && /host/i.test(p.meta)),
+  'every served row has Status, Metadata (auth, exposure, host), Source, Links, an edit-config link and a Start/Stop serving button');
+const tn = pgs.filter((p) => p.name === 'Termux' || p.name === 'Nix');
+check('G4', tn.length === 2 && tn.every((p) => p.app && (p.app.toLowerCase() === 'open' || p.startApp)) && pgs.filter((p) => p.name === 'Local' || p.name === 'Cloud').every((p) => !p.app && !p.startApp),
+  `Termux and Nix show app open/not open (+ Start app when not open); Local and Cloud do not (${JSON.stringify(tn.map((p) => [p.name, p.app, p.startApp]))})`);
+check('G5', pgs.every((p) => p.hrefs.length === 2 && p.hrefs[0].startsWith('http://') && p.hrefs[0].includes('.app') && p.hrefs[1].startsWith('http://127.0.0.1:')),
+  `every row lists its private name and its 127.0.0.1:port link (${pgs.map((p) => p.hrefs.join(' ')).join(' | ')})`);
+check('G6', pgs.filter((p) => p.name !== 'Cloud').every((p) => p.srcOpen), 'a path source (Termux, Nix, Local) has an open link');
+const frm = await evalJs(`(() => { const f = document.querySelector('.form-sec .form'); if (!f) return null; return { post: f.getAttribute('data-post'), fields: [...f.querySelectorAll('[data-f]')].map((x) => x.getAttribute('data-f')), labels: [...f.querySelectorAll('label')].map((l) => l.firstChild.textContent.trim()), submit: f.querySelector('[data-submit]').innerText.trim(), title: document.querySelector('.form-sec h2').innerText.trim() }; })()`);
+check('G7', frm && frm.post === '/__app__/api/repos' && ['label', 'source', 'repo', 'exposure', 'auth'].every((k) => frm.fields.includes(k)) && /Add a place to serve/.test(frm.title) && /Add & serve/.test(frm.submit),
+  `the Add-a-place form exists and posts to the repos-serving backend: ${JSON.stringify(frm)}`);
+const und = await evalJs(`(() => { const u = document.querySelector('#undeclared'); return u ? { h: u.querySelector('h2').innerText.replace(/\\s+/g, ' ').trim(), rescan: !!u.querySelector('[data-rescan]'), items: [...u.querySelectorAll('[data-undeclared]')].map((i) => ({ declare: !!i.querySelector('button[data-body*='"op":"declare"']'), stop: !!i.querySelector('button[data-body*=stop_undeclared]') })) } : null; })()`);
+check('G8', und && /Undeclared served pages\s*·\s*\d+/.test(und.h) && und.rescan && und.items.every((i) => i.declare && i.stop), `the undeclared-pages checker renders with Rescan: ${JSON.stringify(und)}`);
+const sg = await shot('shell-pages-single-list');
+check('G9', A37(sg), `Pages single list, shot ${sg.w}x${sg.h}`);
+
 // Configs > Engines and Links
 for (const [seg, name, ready] of [['engines', 'configs-engines', `document.querySelector('.eng')`], ['links', 'configs-links', `document.querySelector('select[data-remember]')`]]) {
   await evalJs(`document.querySelector('[data-cfg=${seg}]').click()`);
