@@ -15,7 +15,7 @@ DataStore / Room stores and declared files it cannot move yet.
 
 | app | package | covered | gaps | coverage |
 |---|---|---:|---:|---:|
-| cloud-superapp | `com.diegonmarcos.superapp` | 55 | 0 | 100% |
+| cloud-superapp | `com.diegonmarcos.superapp` | 56 | 0 | 100% |
 | c3-morpheus | `com.diegonmarcos.morpheus` | 5 | 0 | 100% |
 | c3-watchdog | `com.diegonmarcos.watchdog` | 5 | 0 | 100% |
 | c3-watchtower | `com.diegonmarcos.watchtower` | 4 | 0 | 100% |
@@ -57,7 +57,7 @@ DataStore / Room stores and declared files it cannot move yet.
 | capital-stack-finterminal | `com.diegonmarcos.capitalfinterm` | 5 | 0 | 100% |
 | hardtech-cad | `com.diegonmarcos.hardtechcad` | 5 | 0 | 100% |
 | hardtech-sim2real | `com.diegonmarcos.hardtechsim2real` | 4 | 0 | 100% |
-| **fleet** | | **414** | **56** | **88%** |
+| **fleet** | | **415** | **56** | **88%** |
 
 ## cloud-superapp — `com.diegonmarcos.superapp`
 
@@ -69,6 +69,7 @@ Module `aa_cloud-superapp`; libs: lib-account, lib-ai-usage, lib-analytics, lib-
 | `account_data_migration` | prefs | device | no | #867 whether this app has already copied the imported configs, profile and S/R/L account files over from the Cloud Account app. It records this phone's progress, never configuration. |
 | `account_migrate` | prefs | device | no | #783 the new-phone migration journal: per app, the hash of the declared copy applied and its outcome, so a re-run resumes. It describes this phone's progress, never configuration. |
 | `adb_shell` | prefs | device | no | Per-install random token shared with the local adb shell server (install identity), the flag that this install was ever paired with Wireless Debugging (drives the Cloud Store channel control: not paired vs down), and channel_mode, the owner's Privileged channel choice (local \| embedded \| shizuku \| auto; default local where the app owns a local server). |
+| `adb_terminal` | prefs | config | yes | Configs > ADB Terminal: the owner's favourite shell commands (string set under key 'favourites', command ids from the shipped shell allowlist) pinned to the top of the terminal. Absent until the first star. |
 | `advisory_feed` | prefs | device | no | Single 'last' poll timestamp throttling the ntfy advisory feed; sync cursor. |
 | `ai_usage_badge` | prefs | device | no | SuperApp AI usage badge: the last usage reply body (body) and when it was read (at), shown at once while the card refreshes; a cache re-fetched from the C3 ops endpoint on the new phone, never migrated. |
 | `app_tabs` | prefs | config | yes | User-arranged launcher app-tab entries (JSON list under 'entries'). |
@@ -178,7 +179,7 @@ Module `aa_cloud-superapp`; libs: lib-account, lib-ai-usage, lib-analytics, lib-
 | `BuildConfig UI_* constants (UI_LAUNCHER_SETTINGS_B64, UI_PROFILE_*, UI_WG_*)` | config | Defaults baked into the APK from build.json; not device state but the fallback for unset prefs. |
 | `filesDir/<KEYSTORE_FILE>` | device | This device's KDE Connect TLS identity keystore; never migrate, re-pair |
 
-Coverage: 55 covered, 0 gaps.
+Coverage: 56 covered, 0 gaps.
 
 ## c3-morpheus — `com.diegonmarcos.morpheus`
 

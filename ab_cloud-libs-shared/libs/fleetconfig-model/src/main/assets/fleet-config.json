@@ -179,6 +179,14 @@
         "lib-shizuku-adb-debug-tools"
       ]
     },
+    "adb_terminal": {
+      "kind": "prefs",
+      "class": "config",
+      "doc": "Configs > ADB Terminal: the owner's favourite shell commands (string set under key 'favourites', command ids from the shipped shell allowlist) pinned to the top of the terminal. Absent until the first star.",
+      "used_by": [
+        "aa_cloud-superapp"
+      ]
+    },
     "ads": {
       "kind": "encrypted",
       "class": "device",
