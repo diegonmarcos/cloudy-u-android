@@ -381,7 +381,7 @@ class StoreCloudFragment : KitComposeFragment() {
             // build.json. A third copy here is how the old "Constellation
             // AppStore" heading outlived the rename it described.
             val openFeed = feedOpen
-            if (openFeed != null) StoreFeedPanels.Page(openFeed) { feedOpen = null } else {
+            if (openFeed != null) StoreFeedPanels.Page(openFeed, onBack = { feedOpen = null }) else {
             StoreCaption((tabs.map { "${it.rows.size} ${it.label}" } + "superapp is the fleet manager").joinToString(" · "))
             TabBar()
             // Each blurb is data beside its group, so the caption naming the out-of-process engines moves
