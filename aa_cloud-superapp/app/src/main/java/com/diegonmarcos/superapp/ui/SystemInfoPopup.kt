@@ -2,26 +2,24 @@ package com.diegonmarcos.superapp.ui
 import com.diegonmarcos.superapp.BuildConfig
 import com.diegonmarcos.superapp.App
 import com.diegonmarcos.superapp.system.AppProcessUptime
-import com.diegonmarcos.superapp.battery.SysfsProc
+import com.diegonmarcos.superapp.system.StatusDropdowns
+import com.diegonmarcos.superapp.uikit.KitStoreRow
 
-import android.app.ActivityManager
 import android.content.Context
 import android.os.Build
-import android.os.Environment
-import android.os.StatFs
 import android.os.SystemClock
 import android.view.View
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 
 /**
  * System info popup — shown when the user taps the RAM% or Storage%
@@ -30,17 +28,14 @@ import androidx.compose.ui.unit.sp
  * icon. Headline is the device model so the user can read it at a
  * glance.
  *
- * Rows:
- *   • Device   — manufacturer · model
- *   • Android  — version (SDK API)
- *   • App      — versionName · git sha · build timestamp (BuildConfig)
- *   • Memory   — used / total · free
- *   • Swap     — used / total · free (/proc/meminfo; "none" if no swap)
- *   • Storage  — used / total · free (/data)
- *   • CPU      — cores · arch
- *   • Uptime   — process uptime (AppProcessUptime)
+ * Header: Device, Android, App, Uptime. Body: one block per group declared in
+ * build.json::home_status_bar.dropdowns[right_system], headed by its status-bar icon
+ * (Memory, Storage, CPU, Graphics, Running Services, Last 3h Memory Usage); see
+ * system/StatusDropdowns.
  */
 object SystemInfoPopup {
+
+    private val DIM = Color(0xAAFFFFFF)
 
     fun show(ctx: Context, anchor: View) {
         KitPopup.show(anchor, KitPopup.Align.END) { SystemInfoBubble(ctx) }
@@ -54,111 +49,21 @@ object SystemInfoPopup {
     /** The bubble itself, split from [show] so it can be drawn without a window. */
     @Composable
     internal fun SystemInfoBubble(ctx: Context) {
-        KitBubble(Modifier.testTag("sysinfo:bubble")) {
-            Label("Device")
-            ValueBig("${Build.MANUFACTURER} · ${Build.MODEL}")
-            Gap(10)
-
-            Label("Android")
-            ValueSmall("${Build.VERSION.RELEASE} (SDK ${Build.VERSION.SDK_INT})")
-            Gap(4)
-
-            Label("App")
-            ValueSmall("${BuildConfig.VERSION_NAME} · ${BuildConfig.GIT_SHORT_SHA}")
-            ValueSmall(BuildConfig.BUILD_TIMESTAMP)
-            Gap(6)
-
-            Label("Memory")
-            ValueSmall(readMemory(ctx))
-            Gap(4)
-
-            Label("Swap")
-            ValueSmall(readSwap())
-            Gap(4)
-
-            Label("Storage")
-            ValueSmall(readStorage())
-            Gap(4)
-
-            Label("CPU")
-            ValueSmall("${Runtime.getRuntime().availableProcessors()} cores · ${primaryAbi()}")
-            Gap(4)
-
-            // CPU load — /proc/loadavg three windows (1m · 5m · 15m) +
-            // /proc/uptime busy seconds. No perm needed. Hidden when the
-            // kernel files aren't readable on this device (very rare).
-            SysfsProc.cpuLoad()?.let { c ->
-                Label("CPU load  (1m · 5m · 15m)")
-                ValueSmall("${" %.2f".format(c.loadAvg1m).trim()} (${"%.1f".format(c.loadAvg1m / c.cores)}x) · ${"%.2f".format(c.loadAvg5m)} · ${"%.2f".format(c.loadAvg15m)}")
-                Gap(4)
-                Label("CPU usage")
-                ValueSmall("${(c.busyFraction * 100).toInt()}% (${c.cores}c)")
-                Gap(4)
-                Label("CPU busy / idle  (Σ ${c.cores} cores)")
-                ValueSmall("busy %s · idle %s · %.1f %%".format(
-                    fmtSecs(c.busyAggregateSec.toLong()), fmtSecs(c.idleAggregateSec.toLong()), c.busyFraction * 100.0))
-                Gap(4)
-            }
-
-            // PSI — /proc/pressure/{cpu,io,memory}. Available on Android
-            // kernels with CONFIG_PSI. Silently omitted when unreadable.
-            val cpu = readPsi("cpu")
-            val io  = readPsi("io")
-            val mem = readPsi("memory")
-            if (cpu != null || io != null || mem != null) {
-                Label("PSI  (some 10s/1min · full 10s/1min)")
-                val f2 = { v: Float -> "%.2f".format(v) }
-                fun psiRow(name: String, p: Map<String, Float>?): String {
-                    if (p == null) return "$name  —"
-                    return "%-4s  some ${f2(p["some10"] ?: 0f)}/${f2(p["some60"] ?: 0f)}  full ${f2(p["full10"] ?: 0f)}/${f2(p["full60"] ?: 0f)}".format(name)
-                }
-                ValueSmall(psiRow("CPU", cpu))
-                ValueSmall(psiRow("IO", io))
-                ValueSmall(psiRow("MEM", mem))
-                Gap(4)
-            }
-
-            Label("Uptime")
-            ValueSmall(readUptime())
+        // Capped below the screen and scrolling: the grouped body is longer than one screenful (Running Services, 3 h memory).
+        val maxH = (LocalConfiguration.current.screenHeightDp * 0.85f).dp
+        KitBubble(Modifier.heightIn(max = maxH).testTag("sysinfo:bubble"), scroll = rememberScrollState()) {
+            Cap("Device", color = DIM); Cap("${Build.MANUFACTURER} · ${Build.MODEL}", bold = true)
+            Cap("Android", color = DIM); Cap("${Build.VERSION.RELEASE} (SDK ${Build.VERSION.SDK_INT})")
+            Cap("App", color = DIM); Cap("${BuildConfig.VERSION_NAME} · ${BuildConfig.GIT_SHORT_SHA} · ${BuildConfig.BUILD_TIMESTAMP}")
+            Cap("Uptime", color = DIM); Cap(readUptime())
+            // One block per declared group, headed by its status-bar icon (build.json::home_status_bar.dropdowns[right_system]).
+            StatusDropdowns.SystemGroupsView(ctx)
         }
     }
 
-    private fun readMemory(ctx: Context): String {
-        return try {
-            val am = ctx.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
-                ?: return "—"
-            val mi = ActivityManager.MemoryInfo().also { am.getMemoryInfo(it) }
-            val total = mi.totalMem
-            val avail = mi.availMem
-            val used = (total - avail).coerceAtLeast(0L)
-            val pct = if (total > 0L) (used * 100 / total).toInt() else 0
-            "${fmtBytes(used)} / ${fmtBytes(total)} · $pct% used · ${fmtBytes(avail)} free"
-        } catch (_: Throwable) { "—" }
-    }
-
-    private fun readSwap(): String {
-        return try {
-            val (total, free) = SysfsProc.swapBytes() ?: return "—"
-            if (total <= 0L) "none" else {
-                val used = (total - free).coerceAtLeast(0L)
-                val pct = (used * 100 / total).toInt()
-                "${fmtBytes(used)} / ${fmtBytes(total)} · $pct% used · ${fmtBytes(free)} free"
-            }
-        } catch (_: Throwable) { "—" }
-    }
-
-    private fun readStorage(): String = try {
-        val stat = StatFs(Environment.getDataDirectory().path)
-        val total = stat.blockCountLong * stat.blockSizeLong
-        val avail = stat.availableBlocksLong * stat.blockSizeLong
-        val used = (total - avail).coerceAtLeast(0L)
-        val pct = if (total > 0L) (used * 100 / total).toInt() else 0
-        "${fmtBytes(used)} / ${fmtBytes(total)} · $pct% used · ${fmtBytes(avail)} free"
-    } catch (_: Throwable) { "—" }
-
-    private fun primaryAbi(): String = try {
-        Build.SUPPORTED_ABIS.firstOrNull() ?: "—"
-    } catch (_: Throwable) { "—" }
+    @Composable
+    private fun Cap(t: String, color: Color = Color.White, bold: Boolean = false) =
+        Text(t, color = color, fontSize = KitStoreRow.caption, fontFamily = FontFamily.Monospace, fontWeight = if (bold) FontWeight.Bold else null)
 
     private fun readUptime(): String {
         // AppProcessUptime exposes startedAtElapsed (an absolute
@@ -177,62 +82,4 @@ object SystemInfoPopup {
             else  -> "%d s".format(sec)
         }
     }
-
-    private fun fmtSecs(s: Long): String {
-        if (s <= 0L) return "0 s"
-        val h = s / 3600
-        val m = (s % 3600) / 60
-        val sec = s % 60
-        return when {
-            h > 0 -> "%d h %02d m".format(h, m)
-            m > 0 -> "%d m %02d s".format(m, sec)
-            else  -> "%d s".format(sec)
-        }
-    }
-
-    private fun fmtBytes(b: Long): String = when {
-        b >= 1_073_741_824L -> "%.2f GB".format(b / 1_073_741_824.0)
-        b >= 1_048_576L     -> "%.2f MB".format(b / 1_048_576.0)
-        b >= 1024L          -> "%.1f kB".format(b / 1024.0)
-        else                -> "$b B"
-    }
-
-    /**
-     * Read /proc/pressure/<resource> and return a map with keys
-     * some10, some60, full10, full60 (all as Float percentages).
-     * CPU has no "full" line — those entries default to 0f.
-     * Returns null if the file is absent or unreadable.
-     */
-    private fun readPsi(resource: String): Map<String, Float>? = runCatching {
-        val file = java.io.File("/proc/pressure/$resource")
-        if (!file.canRead()) return@runCatching null
-        val result = mutableMapOf(
-            "some10" to 0f, "some60" to 0f, "full10" to 0f, "full60" to 0f
-        )
-        for (line in file.readLines()) {
-            val prefix = when {
-                line.startsWith("some") -> "some"
-                line.startsWith("full") -> "full"
-                else -> continue
-            }
-            val avg10 = Regex("avg10=([0-9.]+)").find(line)?.groupValues?.get(1)?.toFloatOrNull()
-            val avg60 = Regex("avg60=([0-9.]+)").find(line)?.groupValues?.get(1)?.toFloatOrNull()
-            if (avg10 != null) result["${prefix}10"] = avg10
-            if (avg60 != null) result["${prefix}60"] = avg60
-        }
-        result
-    }.getOrNull()
-
-    @Composable
-    private fun Label(t: String) = Text(t, color = Color(0xAAFFFFFF), fontSize = 11.sp, fontFamily = FontFamily.Monospace)
-
-    @Composable
-    private fun ValueBig(t: String) =
-        Text(t, color = Color.White, fontSize = 18.sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold)
-
-    @Composable
-    private fun ValueSmall(t: String) = Text(t, color = Color.White, fontSize = 12.sp, fontFamily = FontFamily.Monospace)
-
-    @Composable
-    private fun Gap(dp: Int) = Spacer(Modifier.height(dp.dp))
 }

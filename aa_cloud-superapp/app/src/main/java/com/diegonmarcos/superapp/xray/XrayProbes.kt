@@ -26,6 +26,7 @@ object XrayProbes {
             "dumpsys usagestats | grep -E 'package=.*totalTimeForegroundServiceUsed=' | head -60", cap = 12_000),
         // ── Running state ──
         Probe("services", G_RUNNING, "Running and foreground services per package (dumpsys activity services)", "dumpsys activity services", cap = 60_000),
+        Probe("procstats", G_RUNNING, "Process memory over the last 3 hours (dumpsys procstats --hours 3)", "dumpsys procstats --hours 3", cap = 60_000),
         Probe("startproc", G_RUNNING, "Process start reasons (logcat ActivityManager: Start proc)",
             "logcat -d -b system,main -v time ActivityManager:I '*:S' | grep 'Start proc'", cap = 60_000),
         Probe("jobs", G_RUNNING, "JobScheduler and WorkManager jobs (dumpsys jobscheduler)",

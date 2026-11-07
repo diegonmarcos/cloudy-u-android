@@ -178,7 +178,7 @@ class StatusStripModel(private val context: Context) {
     }
 
     /** The reading a declared `metric` element shows. */
-    internal fun metricText(id: String): String = when (id) { "ram" -> ram; "storage" -> storage; "cpu" -> cpu; else -> "" }
+    internal fun metricText(id: String): String = when (id) { "ram" -> ram; "storage" -> storage; "cpu" -> cpu; "fps" -> "F${com.diegonmarcos.superapp.system.FpsMeter.fps}"; else -> "" }
     var batteryPct by mutableIntStateOf(-1)
         private set
     var batteryCharging by mutableStateOf(false)
@@ -406,6 +406,7 @@ class StatusStripModel(private val context: Context) {
         }
         mobileWatch.start()
         gpsWatch.start()
+        (context as? android.app.Activity)?.window?.let { com.diegonmarcos.superapp.system.FpsMeter.attach(it, mainHandler) }
         refreshAdb()
         com.diegonmarcos.superapp.shellbroker.ShellBroker.onStatusChange = { st -> mainHandler.post { noteBroker(st) } }
         refreshBroker()
@@ -432,6 +433,7 @@ class StatusStripModel(private val context: Context) {
         runCatching { context.contentResolver.unregisterContentObserver(adbObserver) }
         mobileWatch.stop()
         gpsWatch.stop()
+        com.diegonmarcos.superapp.system.FpsMeter.detach()
         runCatching {
             (context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager)?.unregisterNetworkCallback(networkCallback)
         }
@@ -835,7 +837,7 @@ private fun StripElementView(el: StatusElement, model: StatusStripModel, ctx: Co
                         // An icon-only button needs a label: TalkBack reads it, and the emulator driver taps it by it.
                         contentDescription = "Battery status"
                         setOnClickListener {
-                            if (el.opens == "battery_popup") BatteryEstimatePopup.show(c, this) { com.diegonmarcos.superapp.batterystats.BatteryStatsPage.open(c) }
+                            if (el.opens == "battery_popup") BatteryEstimatePopup.show(c, this, openStats = { com.diegonmarcos.superapp.batterystats.BatteryStatsPage.open(c) }, extra = { com.diegonmarcos.superapp.system.StatusDropdowns.BatterySinceCharge(c) })
                         }
                     }
                 },

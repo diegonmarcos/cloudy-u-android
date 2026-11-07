@@ -67,5 +67,13 @@ import os
 t = f"{app}/app/src/test/java/com/diegonmarcos/superapp/launcher/StatusBarDeclTest.kt"
 tt = open(t, encoding="utf-8").read() if os.path.exists(t) else ""
 ok("swapping two declared orders changes the render order" in tt, "S7: a JVM test pins the render order to the declared one", "S7: StatusBarDeclTest is missing its order-mutation test")
+dd = {d["id"]: d for d in sb.get("dropdowns", [])}
+ok({"left_network", "right_system", "right_battery"} <= set(dd), "S9: the left dropdown and the right System and Battery dropdowns are declared", "S9: a status-bar dropdown is not declared in home_status_bar.dropdowns")
+ok([g["id"] for g in dd.get("right_system", {}).get("groups", [])] == ["memory", "storage", "cpu", "graphics", "running_services", "memory_3h"],
+   "S9: System groups are Memory, Storage, CPU, Graphics, Running Services, Last 3h Memory", "S9: the System dropdown groups are wrong")
+ok([g["id"] for g in dd.get("right_battery", {}).get("groups", [])] == ["since_charge_usage", "since_charge_apps"], "S9: Battery has the two since-last-charge sections", "S9: the Battery dropdown sections are wrong")
+ok(ids.get("fps", {}).get("position") == "right" and ids.get("fps", {}).get("opens") == "system_popup", "S9: the FPS icon is a right-cluster element opening the System dropdown", "S9: fps is not a right system_popup element")
+probes = read("app/src/main/java/com/diegonmarcos/superapp/xray/XrayProbes.kt")
+ok(all(f'Probe("{g["probe"]}"' in probes for d in dd.values() for g in d.get("groups", []) if g.get("probe")), "S9: every dropdown probe is an X-Ray probe", "S9: a dropdown names a probe XrayProbes lacks")
 sys.exit(1 if fails else 0)
 PY

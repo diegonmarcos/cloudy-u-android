@@ -828,7 +828,27 @@
       {"id": "ram", "label": "RAM load (R)", "short": "R", "kind": "metric", "position": "right", "order": 1, "visible": true, "pet": "ram", "opens": "system_popup"},
       {"id": "storage", "label": "Storage load (S)", "short": "S", "kind": "metric", "position": "right", "order": 2, "visible": true, "pet": "storage", "opens": "system_popup"},
       {"id": "cpu", "label": "CPU load (C)", "short": "C", "kind": "metric", "position": "right", "order": 3, "visible": true, "pet": "cpu", "opens": "system_popup"},
-      {"id": "battery", "label": "Battery", "short": "BAT", "kind": "battery", "position": "right", "order": 4, "visible": true, "pet": "battery", "opens": "battery_popup"}
+      {"id": "fps", "label": "Frame rate (F)", "short": "F", "kind": "metric", "position": "right", "order": 4, "visible": true, "pet": null, "opens": "system_popup"},
+      {"id": "battery", "label": "Battery", "short": "BAT", "kind": "battery", "position": "right", "order": 5, "visible": true, "pet": "battery", "opens": "battery_popup"}
+    ],
+    "dropdowns": [
+      {"id": "left_network", "side": "left", "title": "Network", "popup": "network_popup",
+       "_doc": "THE LEFT DROPDOWN: what the left cluster's icons open (NetworkInfoPopup). Its table groups are the network_table groups below (groups_from), one block per group.",
+       "opened_by": ["cellular", "wifi", "bluetooth", "mesh", "kde", "data", "hotspot", "gps"], "groups_from": "network_table"},
+      {"id": "right_system", "side": "right", "title": "System", "popup": "system_popup",
+       "_doc": "THE RIGHT 'SYSTEM' DROPDOWN (ui/SystemInfoPopup). Grouped by status-bar icon: `element` is the strip element whose icon heads the group (null = no icon of its own). source app = read in the app; source adb = `probe` names a row of xray/XrayProbes run through the shell broker (uid 2000), shown as 'needs ADB' when no channel is armed. `rows` caps the lines of an adb group; an app group that also names a `probe` (CPU: thermal) appends that probe's lines when ADB is up.",
+       "opened_by": ["ram", "storage", "cpu", "fps"], "groups": [
+        {"id": "memory", "label": "Memory", "element": "ram", "source": "app", "rows": 0},
+        {"id": "storage", "label": "Storage", "element": "storage", "source": "app", "rows": 0},
+        {"id": "cpu", "label": "CPU", "element": "cpu", "source": "app", "probe": "thermal", "rows": 12},
+        {"id": "graphics", "label": "Graphics", "element": "fps", "source": "app", "rows": 0},
+        {"id": "running_services", "label": "Running Services", "element": null, "source": "adb", "probe": "services", "rows": 40},
+        {"id": "memory_3h", "label": "Last 3h Memory Usage", "element": null, "source": "adb", "probe": "procstats", "rows": 25}]},
+      {"id": "right_battery", "side": "right", "title": "Battery", "popup": "battery_popup",
+       "_doc": "THE RIGHT 'BATTERY' DROPDOWN (battery lib BatteryEstimatePopup: Now and Since last charge stay its own); these two sections follow them, from `dumpsys batterystats --charged` (probe batterystats): the overall usage, then the per-app (per-uid) breakdown since the last unplug.",
+       "opened_by": ["battery"], "groups": [
+        {"id": "since_charge_usage", "label": "Since Last Charge - Usage Infos", "element": "battery", "source": "adb", "probe": "batterystats", "rows": 20},
+        {"id": "since_charge_apps", "label": "Since Last Charge - Per-App Usage", "element": "battery", "source": "adb", "probe": "batterystats", "rows": 15}]}
     ],
     "network_speed": {
       "_doc": "#1523 The meter behind the network dropdown's table. sample_ms = the live-rate period, ONLY while the dropdown is open (no loop while closed; battery rules #1487/#1502). public_ip = the one lookup (a Cloudflare trace: ip= and warp=), made on open and cached for ttl_ms. speed_test = the endpoint of the Speed test action, which runs only on a tap: latency and jitter from ping_count requests to ping_url, then download_bytes from download_url ({bytes}) and upload_bytes to upload_url, each capped at max_seconds; on a metered link the sizes are divided by metered_divisor. No fleet speed endpoint is declared yet, so the public Cloudflare one is used; point these at a fleet host when one exists.",

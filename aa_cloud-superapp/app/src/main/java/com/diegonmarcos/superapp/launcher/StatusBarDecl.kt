@@ -45,6 +45,14 @@ data class NetworkTableGroup(val id: String, val label: String, val columns: Lis
 /** #1523 The rows of the network dropdown's table (build.json::home_status_bar.network_table). */
 data class NetworkTableDecl(val groups: List<NetworkTableGroup>)
 
+/**
+ * One block of a status-bar dropdown, headed by the icon of strip element [element] (null = none). [source] app = read in the
+ * app; adb = [probe] names a row of xray/XrayProbes, run through the shell broker; [rows] caps the lines of an adb group.
+ */
+data class DropdownGroup(val id: String, val label: String, val element: String?, val source: String, val probe: String?, val rows: Int)
+/** A dropdown a cluster opens (build.json::home_status_bar.dropdowns): [side] left | right, opened by the [openedBy] elements. */
+data class DropdownDecl(val id: String, val side: String, val title: String, val popup: String, val openedBy: List<String>, val groups: List<DropdownGroup>)
+
 data class StatusBarDeclaration(
     val rowHeightDp: Int, val elements: List<StatusElement>,
     /** Read-only: the toolbar island's pills, listed for the settings section; the strip does not draw them. */
@@ -53,7 +61,11 @@ data class StatusBarDeclaration(
     val networkSpeed: NetworkSpeedDecl? = null,
     /** The network dropdown's table rows; null = none declared. */
     val networkTable: NetworkTableDecl? = null,
-)
+    /** The left and right dropdowns, declared; empty = none declared. */
+    val dropdowns: List<DropdownDecl> = emptyList(),
+) {
+    fun dropdown(id: String): DropdownDecl? = dropdowns.firstOrNull { it.id == id }
+}
 
 object StatusBarDecl {
     const val LEFT = "left"; const val CENTRE = "centre"; const val RIGHT = "right"
@@ -96,7 +108,23 @@ object StatusBarDecl {
                     (0 until r.length()).map { j -> r.getJSONObject(j).let { NetworkTableRow(it.getString("id"), it.getString("label")) } })
             }.also { gs -> require(gs.flatMap { it.rows.map { r -> r.id } }.let { it.size == it.toSet().size }) { "network_table: duplicate row id" } })
         }
-        return StatusBarDeclaration(o.getInt("row_height_dp"), els, toolbar, ns, nt)
+        val dd = o.optJSONArray("dropdowns")?.let { a ->
+            (0 until a.length()).map { i ->
+                val e = a.getJSONObject(i); val id = e.getString("id")
+                val side = e.getString("side").also { require(it == LEFT || it == RIGHT) { "dropdown $id: side '$it'" } }
+                val by = e.getJSONArray("opened_by").let { b -> (0 until b.length()).map { b.getString(it) } }
+                by.forEach { b -> require(els.isEmpty() || els.any { it.id == b }) { "dropdown $id: opened_by '$b' is not a status element" } }
+                val groups = e.optJSONArray("groups")?.let { g ->
+                    (0 until g.length()).map { j ->
+                        val x = g.getJSONObject(j)
+                        DropdownGroup(x.getString("id"), x.getString("label"), if (x.isNull("element")) null else x.getString("element"),
+                            x.getString("source"), if (x.has("probe")) x.getString("probe") else null, x.optInt("rows", 0))
+                    }
+                } ?: if (e.optString("groups_from") == "network_table") nt?.groups.orEmpty().map { DropdownGroup(it.id, it.label, null, "app", null, 0) } else emptyList()
+                DropdownDecl(id, side, e.getString("title"), e.getString("popup"), by, groups)
+            }.also { ds -> require(ds.map { it.id }.toSet().size == ds.size) { "home_status_bar: duplicate dropdown id" } }
+        }.orEmpty()
+        return StatusBarDeclaration(o.getInt("row_height_dp"), els, toolbar, ns, nt, dd)
     }
 
     /**

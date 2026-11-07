@@ -13,6 +13,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -69,7 +70,7 @@ object BatteryEstimatePopup {
     const val REFRESH_MS = 2_000L
 
     /** [openStats] opens Configs › About › Battery (the host app owns navigation); null hides the link. */
-    fun show(ctx: Context, anchor: View, openStats: (() -> Unit)? = null) {
+    fun show(ctx: Context, anchor: View, openStats: (() -> Unit)? = null, extra: (@Composable ColumnScope.() -> Unit)? = null) {
         val dm = ctx.resources.displayMetrics
         val d = dm.density
         val dialog = ComponentDialog(ctx)
@@ -89,6 +90,7 @@ object BatteryEstimatePopup {
                         minWidthDp = (dm.widthPixels * 0.5f / d).dp,
                         maxHeightDp = (dm.heightPixels * 0.85f / d).dp,
                         openStats = openStats?.let { go -> { dialog.dismiss(); go() } },
+                        extra = extra,
                     )
                 }
             }
@@ -113,7 +115,7 @@ object BatteryEstimatePopup {
     }
 
     @Composable
-    private fun Bubble(minWidthDp: androidx.compose.ui.unit.Dp, maxHeightDp: androidx.compose.ui.unit.Dp, openStats: (() -> Unit)?) {
+    private fun Bubble(minWidthDp: androidx.compose.ui.unit.Dp, maxHeightDp: androidx.compose.ui.unit.Dp, openStats: (() -> Unit)?, extra: (@Composable ColumnScope.() -> Unit)? = null) {
         val ctx = LocalContext.current
         // Re-read every REFRESH_MS while the bubble is composed (it leaves composition when closed).
         var tick by remember { mutableIntStateOf(0) }
@@ -155,6 +157,8 @@ object BatteryEstimatePopup {
                         fontFamily = FontFamily.Monospace)
                 }
             }
+            // The host app's own sections, after the battery SoT's (e.g. the since-last-charge usage from batterystats).
+            extra?.invoke(this)
         }
     }
 }
