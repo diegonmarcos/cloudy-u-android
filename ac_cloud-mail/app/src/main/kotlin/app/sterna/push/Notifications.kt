@@ -187,7 +187,10 @@ object Notifications {
         val stop = PendingIntent.getService(
             context, 0, Intent(context, PushService::class.java).setAction(PushService.ACTION_STOP), PendingIntent.FLAG_IMMUTABLE,
         )
-        val open = PendingIntent.getActivity(context, 0, Intent(context, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
+        val open = PendingIntent.getActivity(
+            context, 0, Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
         return FleetNotify.keepAliveNotification(
             context, R.drawable.ic_stat_mail, shown.title, shown.lines, stop, open,
             stopLabel = context.getString(R.string.notif_keepalive_stop),

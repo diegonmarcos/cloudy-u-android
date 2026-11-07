@@ -35,9 +35,12 @@ class KeepAliveService : Service() {
         val stop = PendingIntent.getService(
             this, 0, Intent(this, KeepAliveService::class.java).setAction(ACTION_STOP), PendingIntent.FLAG_IMMUTABLE,
         )
-        val open = packageManager.getLaunchIntentForPackage(packageName)?.let {
-            PendingIntent.getActivity(this, 1, it, PendingIntent.FLAG_IMMUTABLE)
-        }
+        // Tap opens this app: explicit component, new task (a service has no task to join).
+        val open = PendingIntent.getActivity(
+            this, 1,
+            Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
         return FleetNotify.keepAliveNotification(this, R.mipmap.ic_launcher, "Cloud C3 WebServer", lines, stop, open)
     }
 

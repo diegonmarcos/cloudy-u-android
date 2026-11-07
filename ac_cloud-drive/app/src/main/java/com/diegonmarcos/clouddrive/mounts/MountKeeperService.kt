@@ -160,7 +160,7 @@ class MountKeeperService : Service() {
             nm.createNotificationChannel(NotificationChannel(channel, getString(R.string.mount_keeper_channel), NotificationManager.IMPORTANCE_LOW))
         }
         val flags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        val open = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java), flags)
+        val open = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK), flags)
         val stop = PendingIntent.getService(this, 1, Intent(this, MountKeeperService::class.java).setAction(ACTION_STOP), flags)
         // The fleet's keep-alive badge (FleetNotify.keepAliveNotification): ongoing, the live-mount count, a Stop action.
         return FleetNotify.keepAliveNotification(

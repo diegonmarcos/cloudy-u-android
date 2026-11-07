@@ -65,6 +65,7 @@ class KeepAliveBadgeTest {
         assertTrue(n.flags and Notification.FLAG_ONGOING_EVENT != 0)
         assertTrue(n.flags and Notification.FLAG_NO_CLEAR != 0)
         assertEquals(FleetNotify.CHANNEL_KEEP_ALIVE, n.channelId)
+        assertTrue("a tap must open the app", n.contentIntent != null)
         assertEquals(listOf(app.getString(R.string.notif_keepalive_stop)), n.actions.map { it.title.toString() })
         assertEquals(badge.title, n.extras.getCharSequence(Notification.EXTRA_TITLE).toString())
         assertTrue(n.extras.getCharSequence(Notification.EXTRA_TITLE).toString().contains("3"))

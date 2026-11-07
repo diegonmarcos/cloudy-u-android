@@ -34,7 +34,7 @@
     "glue": {
       "_doc": "The ONLY Kotlin/Java files the app may commit: Tauri 2.12.1's Android template (MainActivity.kt additionally promotes the servers to the keep-alive service) plus the two declared keep-alive files KeepAliveService.kt and BootReceiver.kt (serving.keepalive: a persistent foreground service has no Rust-only form, so they are the one declared exception, pinned like the template) (templates/mobile/android in the tauri-cli crate) rendered for this identifier, byte for byte. A file here whose bytes change, a .kt/.java/standalone .kts anywhere else in the app, or a file listed here that is missing fails test/test-c3-webserver-no-kotlin.sh. Regenerating the template on a tauri-cli bump is the one legitimate reason to update a hash.",
       "src-tauri/gen/android/app/src/main/java/com/diegonmarcos/cloudwebserver/MainActivity.kt": "98764d1d6f1e4d880bf8a823517921d3b7b604b2b0bf985a0e854a04fe618514",
-    "src-tauri/gen/android/app/src/main/java/com/diegonmarcos/cloudwebserver/KeepAliveService.kt": "d0843a979cf35c19da775f01ec723ace9e9bb58dce9d0921a4fcf0251572f045",
+    "src-tauri/gen/android/app/src/main/java/com/diegonmarcos/cloudwebserver/KeepAliveService.kt": "a4df370bde5394d4d48e4b5b09c59397d6b9073a6216c79a73d88133634aafe2",
     "src-tauri/gen/android/app/src/main/java/com/diegonmarcos/cloudwebserver/BootReceiver.kt": "846c61f2e2c272a395b97500a57cd790826a2f48d3afef5a202655c2a915fda6",
    "src-tauri/gen/android/app/src/main/java/com/diegonmarcos/cloudwebserver/PowerState.kt": "26a315a1b917c8d40a6addafb51c393a9bc5d298c6ad69df89040654ee64483e",
       "src-tauri/gen/android/buildSrc/src/main/java/com/diegonmarcos/cloudwebserver/kotlin/BuildTask.kt": "a23fc50bb35704302240dcfc02d30b972ec67aee59eaf14b23443e7fb4a02236",

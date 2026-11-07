@@ -132,7 +132,8 @@ object BatchForeground {
             ?: listOf(runCatching { text() }.getOrNull() ?: "working…")
         val stop = PendingIntent.getService(ctx, ID, Intent(ctx, BatchForegroundService::class.java).setAction(ACTION_STOP),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-        val open = runCatching { launch(ctx) }.getOrNull()?.let {
+        // The host's launch target, else the package's launcher activity: a tap always opens the app.
+        val open = (runCatching { launch(ctx) }.getOrNull() ?: ctx.packageManager.getLaunchIntentForPackage(ctx.packageName))?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)?.let {
             PendingIntent.getActivity(ctx, ID, it, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         }
         return FleetNotify.keepAliveNotification(ctx, icon(), ctx.applicationInfo.loadLabel(ctx.packageManager).toString(), lines, stop, open)

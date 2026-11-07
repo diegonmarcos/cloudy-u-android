@@ -32,6 +32,7 @@ class StoreKeepAliveBadgeTest {
         val n = BatchForeground.notification(app)
         assertTrue(n.flags and Notification.FLAG_ONGOING_EVENT != 0)
         assertTrue(n.flags and Notification.FLAG_NO_CLEAR != 0)
+        assertTrue("a tap must open the app", n.contentIntent != null)
         assertEquals(listOf("Stop"), n.actions.map { it.title.toString() })
         assertEquals("Downloading Maps 1.2 · 40% · 2 of 5", n.extras.getCharSequence(Notification.EXTRA_TEXT).toString())
         assertTrue(n.extras.getCharSequence(Notification.EXTRA_BIG_TEXT).toString().contains("3 updates pending"))
