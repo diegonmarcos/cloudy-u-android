@@ -25,7 +25,7 @@ class StoreGitFishShellTest {
         assertTrue("fish must be on PATH (the guest's login shell; the Ship workflow installs it)", which("fish"))
         assertTrue("git must be on PATH", which("git"))
         home = Files.createTempDirectory("fishguest").toFile()
-        shellFile = File(home, ".termux/shell").apply { parentFile.mkdirs(); writeText("#!/bin/sh\nexec fish \"\$@\"\n"); setExecutable(true) }
+        shellFile = File(home, ".termux/shell").apply { parentFile!!.mkdirs(); writeText("#!/bin/sh\nexec fish \"\$@\"\n"); setExecutable(true) }
         // the owner's ~/.gitconfig on the phone carries an identity; a rebase that replays a commit needs one
         File(home, ".gitconfig").writeText("[user]\n\tname = t\n\temail = t@t\n[init]\n\tdefaultBranch = main\n")
     }
@@ -77,12 +77,8 @@ class StoreGitFishShellTest {
     }
 
     @Test fun bareCloneAllSucceedsThroughFish() {
-        val local = localRemote("cloudy-___")
-        val targets = listOf(
-            "https://github.com/octocat/Hello-World.git" to "Hello-World",
-            "https://github.com/octocat/Spoon-Knife.git" to "Spoon-Knife",
-            "file://" + local.absolutePath to "cloudy-___",
-        )
+        // local origins only: no network in the test, and the single-branch rule clones main (the public octocat repos default to master)
+        val targets = listOf("Hello-World", "Spoon-Knife", "cloudy-___").map { n -> "file://" + localRemote(n).absolutePath to n }
         val failures = targets.mapNotNull { (url, name) ->
             val g = File(home, "store/git/bare/o/$name.git").absolutePath
             val r = job("set -e; mkdir -p \"\$(dirname ${q(g)})\"; " + StoreGit.authed(BareClones.cloneArgs(url, g, 1) { q(it) }), stdin = "")

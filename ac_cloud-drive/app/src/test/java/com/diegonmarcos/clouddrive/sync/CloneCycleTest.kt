@@ -109,8 +109,10 @@ class CloneCycleTest {
         val (rc, out) = sh(null, "sh", "-c", StoreGit.cloneScript("file://${o.absolutePath}", dest.absolutePath, null), stdin = "")
         assertEquals(out, 0, rc)
         assertTrue(CloneTruth.isCloneDir(dest))
-        val refs = git(dest, "for-each-ref", "--format=%(refname)").lines().filter { it.isNotBlank() }.toSet()
-        assertEquals(setOf("refs/heads/main", "refs/remotes/origin/main", "refs/remotes/origin/HEAD"), refs)
+        val refs = git(dest, "for-each-ref", "--format=%(refname)").lines().filter { it.isNotBlank() }
+        assertEquals(listOf("refs/heads/main"), refs.filter { it.startsWith("refs/heads/") })
+        // remote-tracking refs (origin/HEAD, origin/main) are expected; no other branch may have been fetched
+        assertTrue(refs.toString(), refs.filter { it.startsWith("refs/remotes/") }.all { it == "refs/remotes/origin/main" || it == "refs/remotes/origin/HEAD" })
         dest.deleteRecursively()
         assertFalse(CloneTruth.isCloneDir(dest))
     }
