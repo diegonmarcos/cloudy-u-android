@@ -127,7 +127,7 @@
     "bottom_nav": [
       "backlog",
       "editor",
-      "repos",
+      "git",
       "ai",
       "agents",
       "browser",
@@ -168,8 +168,8 @@
         "icon": "code"
       },
       {
-        "id": "repos",
-        "label": "Repos",
+        "id": "git",
+        "label": "Git",
         "icon": "git"
       },
       {
