@@ -56,6 +56,8 @@ object StoreTorrentSearch {
     fun sourceTag(id: String) = "store-search:torrent:source:$id"
     fun groupTag(id: String) = "store-search:torrent:group:$id"
     const val NOTE_TAG = "store-search:torrent:note"
+    const val FILTER_TAG = "store-search:torrent:filter"
+    fun bucketTag(b: StoreTorrentHost.Bucket?) = "store-search:torrent:bucket:${b?.name?.lowercase() ?: "all"}"
     const val TABLE_TAG = "store-search:torrent:table"
     fun headerTag(c: StoreTorrentHost.Col) = "store-search:torrent:col:${c.name.lowercase()}"
     fun rowTag(i: Int) = "store-search:torrent:row:$i"
@@ -84,6 +86,7 @@ object StoreTorrentSearch {
         var retry by remember { mutableStateOf(0) }
         var sortCol by remember { mutableStateOf(StoreTorrentHost.Col.SEEDERS) }
         var sortDesc by remember { mutableStateOf(true) }
+        val buckets = remember { mutableStateListOf<StoreTorrentHost.Bucket>() }
         var notes by remember { mutableStateOf<String?>(null) }
         val offKey = off.sorted().joinToString(",")
         LaunchedEffect(asked, offKey, host, retry) {
@@ -137,7 +140,16 @@ object StoreTorrentSearch {
             }
             val all = states.values.filterIsInstance<St.Done>().flatMap { it.hits }
             if (all.isNotEmpty()) {
-                val rows = StoreTorrentHost.sorted(all, sortCol, sortDesc)
+                // Content type, after the source pills: none picked = everything; pick one or several to narrow the table.
+                Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).testTag(FILTER_TAG)) {
+                    StoreSearchPage.SourcePill("All ${all.size}", buckets.isEmpty(), bucketTag(null)) { buckets.clear() }
+                    StoreTorrentHost.Bucket.values().forEach { b ->
+                        val n = all.count { StoreTorrentHost.bucketOf(it.category) == b }
+                        StoreSearchPage.SourcePill("${b.label} $n", b in buckets, bucketTag(b)) { if (b in buckets) buckets.remove(b) else buckets.add(b) }
+                    }
+                }
+                val rows = StoreTorrentHost.sorted(StoreTorrentHost.filtered(all, buckets), sortCol, sortDesc)
+                if (rows.isEmpty()) Text("No ${buckets.joinToString(" / ") { it.label }} results among ${all.size}.", color = p.textSecondary, fontSize = KitDensity.caption)
                 ResultTable(rows, sortCol, sortDesc, { c -> if (c == sortCol) sortDesc = !sortDesc else { sortCol = c; sortDesc = StoreTorrentHost.defaultDescending(c) } }) { i, h ->
                     notes = "adding…"
                     scope.launch {

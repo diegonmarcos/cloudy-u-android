@@ -56,6 +56,27 @@ object StoreTorrentHost {
         AGE("Age", false), CATEGORY("Category", true), FILES("Files", false)
     }
 
+    /** The content-type filter buckets of the table. */
+    enum class Bucket(val label: String) { MUSIC("Music"), APPS("Apps"), VIDEO("Video"), BOOKS("PDF/Books"), GAMES("Games"), OTHER("Other") }
+
+    /** Maps an indexer's category word (The Pirate Bay: Audio, Video, Applications, Games, Adult, Other; YTS: Movies; Archive mediatype:
+     *  audio, movies, texts, software ...) to a bucket. A missing or unknown category is Other, so no result is ever unreachable. */
+    fun bucketOf(category: String?): Bucket {
+        val c = category?.lowercase()?.trim().orEmpty()
+        return when {
+            c.contains("audio") || c.contains("music") || c.contains("etree") -> Bucket.MUSIC
+            c.contains("app") || c.contains("software") -> Bucket.APPS
+            c.contains("video") || c.contains("movie") || c.contains("film") || c.contains("tv") -> Bucket.VIDEO
+            c.contains("text") || c.contains("book") || c.contains("pdf") || c.contains("comic") -> Bucket.BOOKS
+            c.contains("game") -> Bucket.GAMES
+            else -> Bucket.OTHER
+        }
+    }
+
+    /** [hits] narrowed to the picked [buckets]; none picked = all of them. */
+    fun filtered(hits: List<Hit>, buckets: Collection<Bucket>): List<Hit> =
+        if (buckets.isEmpty()) hits else hits.filter { bucketOf(it.category) in buckets }
+
     /** The first click on a column: text columns A to Z, figures biggest first (Age: newest first). */
     fun defaultDescending(c: Col): Boolean = !c.textFirst
 

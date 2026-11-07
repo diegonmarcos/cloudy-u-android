@@ -67,4 +67,22 @@ assertEquals(listOf("none", "low", "high"), StoreTorrentHost.sorted(rows, StoreT
         assertEquals("12d", StoreTorrentHost.ageText(1, 1 + 12 * 86400L)); assertEquals("2y", StoreTorrentHost.ageText(1, 1 + 2 * 365 * 86400L))
         assertEquals("1.5 KB", StoreTorrentHost.sizeText(1536))
     }
+
+    @Test fun categoriesFromEveryIndexerFallInTheSixFilterBuckets() {
+        val b = StoreTorrentHost.Bucket
+        assertEquals(listOf("Music", "Apps", "Video", "PDF/Books", "Games", "Other"), b.values().map { it.label })
+        assertEquals(b.MUSIC, StoreTorrentHost.bucketOf("Audio")); assertEquals(b.APPS, StoreTorrentHost.bucketOf("Applications"))
+        assertEquals(b.APPS, StoreTorrentHost.bucketOf("Software")); assertEquals(b.VIDEO, StoreTorrentHost.bucketOf("Movies"))
+        assertEquals(b.VIDEO, StoreTorrentHost.bucketOf("Video")); assertEquals(b.BOOKS, StoreTorrentHost.bucketOf("Texts"))
+        assertEquals(b.GAMES, StoreTorrentHost.bucketOf("Games")); assertEquals(b.OTHER, StoreTorrentHost.bucketOf("Adult"))
+        assertEquals(b.OTHER, StoreTorrentHost.bucketOf(null)); assertEquals(b.OTHER, StoreTorrentHost.bucketOf("Image"))
+    }
+
+    @Test fun theFilterNarrowsToOneOrSeveralBucketsAndNoneMeansAll() {
+        val rows = listOf(hit("song", 1, 1, 1, 1, cat = "Audio"), hit("film", 2, 1, 1, 1, cat = "Movies"), hit("app", 3, 1, 1, 1, cat = "Applications"), hit("mystery", 4, 1, 1, 1, cat = null))
+        assertEquals(4, StoreTorrentHost.filtered(rows, emptyList()).size)
+        assertEquals(listOf("film"), StoreTorrentHost.filtered(rows, listOf(StoreTorrentHost.Bucket.VIDEO)).map { it.title })
+        assertEquals(listOf("song", "app"), StoreTorrentHost.filtered(rows, listOf(StoreTorrentHost.Bucket.MUSIC, StoreTorrentHost.Bucket.APPS)).map { it.title })
+        assertEquals(listOf("mystery"), StoreTorrentHost.filtered(rows, listOf(StoreTorrentHost.Bucket.OTHER)).map { it.title })
+    }
 }
