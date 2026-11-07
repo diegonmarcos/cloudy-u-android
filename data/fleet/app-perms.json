@@ -300,6 +300,21 @@
    "first_run": "libs:perms",
    "helpers": []
   },
+  "com.diegonmarcos.code": {
+   "needs": [
+    "notifications",
+    "microphone",
+    "storage_read",
+    "storage_write",
+    "media_images",
+    "media_video",
+    "media_audio",
+    "all_files",
+    "usage_access"
+   ],
+   "first_run": "libs:perms",
+   "helpers": []
+  },
   "com.diegonmarcos.comms.dialer": {
    "needs": [
     "notifications",

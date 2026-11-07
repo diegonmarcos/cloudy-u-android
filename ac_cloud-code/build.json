@@ -65,6 +65,15 @@
     },
     "artifact_assert": {
       "_doc": "Read by cloud-code-engine.sh::_assert_apk_payload. gradle signs a perfectly valid APK around an empty www/, so the BUILT ARTIFACT must carry the web bundle AND this app's own layer: the nav module's marker string is looked for inside the shipped main.js, so an APK built from a tree that lost the seam fails here, not on the phone.",
+      "required_permissions": [
+        "android.permission.PACKAGE_USAGE_STATS",
+        "android.permission.MANAGE_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_MEDIA_VIDEO",
+        "android.permission.READ_MEDIA_AUDIO",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.RECORD_AUDIO"
+      ],
       "web_entry": "assets/www/index.html",
       "web_entry_min_bytes": 1024,
       "js_prefix": "assets/www/build/",
@@ -319,5 +328,21 @@
       ],
       "credits": "Upstream: Acode (github.com/Acode-Foundation/Acode), MIT licence, by Ajit Kumar and the Acode Foundation. Cloud Code vendors it as owned code and adds the backlog, repository, AI, agent, browser and terminal tabs."
     }
+  },
+  "perms": {
+    "_doc": "#1360 every grant this app needs, by libs:perms catalogue id. Cloud Code is a Cordova app (its Android tree is generated at build time), so the guard reads the permissions it declares from config.xml (`manifest`). Drawn by Configs > General > Perms (libs:perms AppPermsSection): runtime grants through the request contract, all_files and usage_access through their settings pages (MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, USAGE_ACCESS_SETTINGS) with live state (Environment.isExternalStorageManager, AppOpsManager get_usage_stats). The SAF OpenDocumentTree picker is the non-all-files file path and needs no grant.",
+    "manifest": "config.xml",
+    "needs": [
+      "notifications",
+      "microphone",
+      "storage_read",
+      "storage_write",
+      "media_images",
+      "media_video",
+      "media_audio",
+      "all_files",
+      "usage_access"
+    ],
+    "first_run": "libs:perms"
   }
 }

@@ -114,7 +114,6 @@
   },
   "not_android": {
     "_doc": "apps with an application_id whose Android tree is fetched from upstream at build time (no manifest in this repository): the guard cannot read them; their Perms page is the upstream app's own.",
-    "ac_cloud-code": "Acode, fetched upstream at build time: its manifest and permission asks are upstream's",
     "ac_cloud-office": "Collabora Office, fetched upstream at build time (materialize): its manifest is upstream's"
   },
   "scan_skip": {},
@@ -210,10 +209,11 @@
       "ac_cloud-nav/app/src/main/java/com/diegonmarcos/cloudnav/configs/UpdateConfigFragment.kt": "not moved into a Perms row yet (#1515)",
       "ac_cloud-nav/app/src/main/java/com/diegonmarcos/cloudnav/configs/DevControlFragment.kt": "not moved into a Perms row yet (#1515)",
       "ac_cloud-nix-on-droid/": "vendored Termux/nix-on-droid fork (termux-shared PermissionUtils); upstream code",
+      "ac_cloud-code/src/plugins/": "Acode Cordova plugins (terminal notification ask, Chat microphone ask, System all-files/storage ask): the grants are listed in Configs > Perms now; moving the plugin asks into libs:perms is the follow-up",
       "ac_cloud-termux/": "vendored Termux fork (termux-shared PermissionUtils); upstream code, not owner-written",
       "ac_cloud-vault/": "vendored Bitwarden fork: its own permission manager asks; replaced only with the fork's own screens"
     },
-    "baseline_max": 23
+    "baseline_max": 24
   },
   "package_override": {
     "_doc": "#1547 forks whose applicationId is not in build.json or their Gradle file (a Gradle property or a BuildTimeConfig constant): the real package, the key of the app's entry in the app-perms dataset.",

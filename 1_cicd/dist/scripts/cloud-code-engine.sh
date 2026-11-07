@@ -109,6 +109,22 @@ _assert_apk_identity() {
   log "identity: OK $(basename "$apk") is $APP_ID"
 }
 
+# Prove the MERGED manifest of the built APK asks for the permissions the Perms page lists. A special/app-op
+# permission (PACKAGE_USAGE_STATS, MANAGE_EXTERNAL_STORAGE) that is not declared is invisible to its Settings page
+# ("Usage access" never lists the app), so a missing declaration reads on the phone as a dead Perms row.
+# The list is data: build.json::release.artifact_assert.required_permissions.
+_assert_apk_permissions() {
+  local apk="$1" bt dump p
+  [ -n "${ANDROID_HOME:-}" ] || die "ANDROID_HOME is not set"
+  bt="$(ls -d "$ANDROID_HOME"/build-tools/* 2>/dev/null | sort -V | tail -1)"
+  dump="$("$bt/aapt" dump permissions "$apk" 2>/dev/null || true)"
+  [ -n "$dump" ] || die "permissions: FATAL aapt could not read the merged manifest of $(basename "$apk")"
+  for p in $(jq -r '.release.artifact_assert.required_permissions[]' "$BUILD_JSON"); do
+    echo "$dump" | grep -q "name='$p'" || die "permissions: FATAL merged manifest of $(basename "$apk") does not declare $p"
+  done
+  log "permissions: OK merged manifest declares every required permission"
+}
+
 # Prove the built APK carries the web bundle AND this app's own layer.
 #
 # gradle wraps whatever www/ holds, including nothing, in a structurally
@@ -225,6 +241,7 @@ PY
   mkdir -p "$DIST_DIR"
   _enforce_signature "$apk"
   _assert_apk_identity "$apk"
+  _assert_apk_permissions "$apk"
   _assert_apk_payload "$apk"
   cp "$apk" "$DIST_DIR/$ASSET"
   log "build-fork: OK $DIST_DIR/$ASSET"
