@@ -30,4 +30,33 @@ class FolderOverrideStore(ctx: Context) {
     }
 
     fun clear(scope: FolderScope, pkg: String) = sp.edit().remove(key(scope, pkg)).apply()
+
+    // ---- whole-table overrides (Save on the two-table editor) ----
+
+    private fun tblKey(scope: FolderScope, which: String) = "tbl:${scope.key}:$which"
+
+    /** The user's saved Table A for [scope], or null when none was saved (the served table applies). */
+    fun savedFolders(scope: FolderScope): List<FolderDef>? =
+        sp.getString(tblKey(scope, "folders"), null)?.let { FolderTables.parseFolders(it) }
+
+    /** The user's saved Table B for [scope], or null when none was saved. */
+    fun savedAssignments(scope: FolderScope): List<FolderAssignment>? =
+        sp.getString(tblKey(scope, "assign"), null)?.let { FolderTables.parseAssignments(it) }
+
+    fun saveTables(scope: FolderScope, folders: List<FolderDef>, assignments: List<FolderAssignment>) {
+        sp.edit()
+            .putString(tblKey(scope, "folders"), FolderTables.foldersToJson(folders))
+            .putString(tblKey(scope, "assign"), FolderTables.assignmentsToJson(assignments))
+            .apply()
+    }
+
+    /** Drop every override of [scope] (tables and per-app moves): the served defaults apply again. */
+    fun resetScope(scope: FolderScope) {
+        val p = prefix(scope)
+        val e = sp.edit()
+        sp.all.keys.filter { it.startsWith(p) || it.startsWith("tbl:${scope.key}:") }.forEach { e.remove(it) }
+        e.apply()
+    }
+
+    fun hasSaved(scope: FolderScope) = sp.contains(tblKey(scope, "folders")) || sp.contains(tblKey(scope, "assign"))
 }

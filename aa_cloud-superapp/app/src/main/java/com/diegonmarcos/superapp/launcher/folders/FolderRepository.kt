@@ -36,7 +36,10 @@ class FolderRepository(
      * reassignment there is therefore meaningful to the launcher grid at once (see [FolderGridBridge]). Cloud has no
      * such baked taxonomy, so it stays empty (everything in Others) until the dataset is served.
      */
-    fun folders(scope: FolderScope): List<FolderDef> {
+    fun folders(scope: FolderScope): List<FolderDef> = overrides.savedFolders(scope) ?: servedFolders(scope)
+
+    /** Table 1 as served (plus the Phone taxonomy fallback), ignoring the user's saved edits. */
+    fun servedFolders(scope: FolderScope): List<FolderDef> {
         val served = FleetData.get(ctx, "launcher-folders/${scope.key}", parse = FolderTables::parseFolders).orEmpty()
         if (served.isNotEmpty() || scope != FolderScope.PHONE) return served
         return runCatching {
@@ -46,17 +49,40 @@ class FolderRepository(
         }.getOrDefault(emptyList())
     }
 
-    /** Table 2 for [scope] from the served dataset (empty when unserved). */
-    fun assignments(scope: FolderScope): List<FolderAssignment> =
+    /** Table 2 for [scope]: the user's saved table, else the served dataset (empty when unserved). */
+    fun assignments(scope: FolderScope): List<FolderAssignment> = overrides.savedAssignments(scope) ?: servedAssignments(scope)
+
+    /** Table 2 as served, ignoring the user's saved edits. */
+    fun servedAssignments(scope: FolderScope): List<FolderAssignment> =
         FleetData.get(ctx, "launcher-folder-assignments/${scope.key}", parse = FolderTables::parseAssignments).orEmpty()
 
     /** The resolved sections for [scope], recomputing the app enumeration only when stale (or when [force]). */
-    fun snapshot(scope: FolderScope, force: Boolean = false): List<ResolvedSection> {
+    fun snapshot(scope: FolderScope, force: Boolean = false): List<ResolvedSection> =
+        FolderTables.resolve(folders(scope), assignments(scope), overrides.all(scope), apps(scope, force))
+
+    private fun apps(scope: FolderScope, force: Boolean): List<FolderApp> {
         val c = cache[scope]
-        val apps = if (!force && c != null && now() - c.at < STALE_MS) c.apps
-                   else enumerate(ctx, scope).also { cache[scope] = Cached(it, now()) }
-        return FolderTables.resolve(folders(scope), assignments(scope), overrides.all(scope), apps)
+        return if (!force && c != null && now() - c.at < STALE_MS) c.apps
+               else enumerate(ctx, scope).also { cache[scope] = Cached(it, now()) }
     }
+
+    /** The two-table editor's model for [scope]: effective tables (saved over served) + every enumerated app. */
+    fun editorModel(scope: FolderScope, force: Boolean = false): FolderEditModel =
+        FolderEditModel.build(folders(scope), assignments(scope), apps(scope, force))
+
+    /**
+     * Save the editor's tables as the on-device override for [scope]. Also writes the per-app moves the launcher grid
+     * reads through [FolderGridBridge] (apps whose folder differs from the served one), replacing earlier moves.
+     */
+    fun save(scope: FolderScope, model: FolderEditModel) {
+        val served = servedAssignments(scope).associate { it.pkg to it.folderId }
+        overrides.resetScope(scope)
+        overrides.saveTables(scope, model.folders, model.toAssignments())
+        for (a in model.toAssignments()) if (a.folderId != OTHERS_FOLDER_ID && a.folderId != served[a.pkg]) overrides.set(scope, a.pkg, a.folderId)
+    }
+
+    /** Revert [scope] to the served defaults. */
+    fun reset(scope: FolderScope) = overrides.resetScope(scope)
 
     /** The on-demand Refresh action: re-enumerate now, so new apps surface in Others. */
     fun refresh(scope: FolderScope): List<ResolvedSection> = snapshot(scope, force = true)

@@ -4,13 +4,10 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -29,11 +26,9 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.diegonmarcos.superapp.launcher.GroupTitle
 import com.diegonmarcos.superapp.launcher.TILE_PAGE_PADDING
 import com.diegonmarcos.superapp.launcher.folders.FolderRepository
 import com.diegonmarcos.superapp.launcher.folders.FolderScope
-import com.diegonmarcos.superapp.launcher.folders.ResolvedSection
 import com.diegonmarcos.superapp.ui.LauncherPalette
 import com.diegonmarcos.superapp.uikit.KitComposeFragment
 import com.diegonmarcos.superapp.uikit.LocalKitPalette
@@ -41,6 +36,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /**
+ * Rebuilt as a TWO-TABLE editor ([FolderTablesScreen]): Table A folder structure, Table B app allocation, then a read-only
+ * live grid preview; Save writes the per-scope on-device override ([FolderRepository.save]).
+ *
  * #1553 Configs ▸ Setup ▸ Launcher ▸ Folders — the declarative app-into-folder organiser.
  *
  * Two scopes (Cloud | Phone) chosen with a toggle, the same Cloud/Phone split other pages use. In each scope the
@@ -58,16 +56,25 @@ class FoldersFragment : KitComposeFragment() {
         val ctx = LocalContext.current
         val repo = remember { FolderRepository(ctx.applicationContext) }
         var scope by remember { mutableStateOf(FolderScope.PHONE) }
-        var refreshTick by remember { mutableIntStateOf(0) }
-        val sections by produceState<List<ResolvedSection>?>(null, scope, refreshTick) {
-            value = withContext(Dispatchers.Default) {
-                if (refreshTick == 0) repo.snapshot(scope) else repo.refresh(scope)
-            }
+        var tick by remember { mutableIntStateOf(0) }
+        // One editor state per scope, so Cloud and Phone edits stay isolated while toggling; a Refresh/Reset tick reloads.
+        val cache = remember { HashMap<FolderScope, Pair<Int, FolderEditorState>>() }
+        val editor by produceState<FolderEditorState?>(null, scope, tick) {
+            val c = cache[scope]
+            value = if (c != null && c.first == tick) c.second
+            else withContext(Dispatchers.Default) { FolderEditorState(repo.editorModel(scope, force = tick > 0)) }
+                .also { cache[scope] = tick to it }
         }
         Column(Modifier.fillMaxSize().padding(TILE_PAGE_PADDING)) {
             ScopeToggle(scope) { scope = it }
-            RefreshBar { refreshTick++ }
-            FolderSections(sections)
+            RefreshBar { tick++ }
+            val st = editor ?: return@Column
+            FolderTablesScreen(
+                st,
+                onSave = { repo.save(scope, st.model); st.dirty = false; st.notice = null },
+                onReset = { repo.reset(scope); tick++ },
+                modifier = Modifier.weight(1f).testTag(TAG_LIST),
+            )
         }
     }
 
@@ -110,38 +117,6 @@ class FoldersFragment : KitComposeFragment() {
                 .semantics { contentDescription = "Refresh: re-scan apps; unassigned apps go to Others" }
                 .testTag(TAG_REFRESH),
         )
-    }
-
-    @OptIn(ExperimentalLayoutApi::class)
-    @Composable
-    private fun FolderSections(sections: List<ResolvedSection>?) {
-        val p = LocalKitPalette.current
-        if (sections == null) return
-        if (sections.isEmpty()) {
-            Text("No folders yet — tap Refresh to scan apps into Others.",
-                color = p.textSecondary, style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.testTag(TAG_EMPTY))
-            return
-        }
-        LazyColumn(Modifier.fillMaxSize().testTag(TAG_LIST)) {
-            for (section in sections) {
-                item(key = "s:${section.title}") { GroupTitle(section.title) }
-                for (folder in section.folders) {
-                    item(key = "f:${folder.def.id}") {
-                        Column(Modifier.fillMaxWidth().padding(bottom = GAP).testTag(folderTag(folder.def.id))) {
-                            Text(folder.def.label, color = p.textPrimary, style = MaterialTheme.typography.titleSmall)
-                            FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(GAP)) {
-                                for (app in folder.apps) {
-                                    Text(app.label.ifBlank { app.pkg },
-                                        color = p.textSecondary, style = MaterialTheme.typography.bodySmall,
-                                        modifier = Modifier.testTag(appTag(app.pkg)))
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
     }
 
     companion object {
