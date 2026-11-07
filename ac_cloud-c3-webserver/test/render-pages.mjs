@@ -106,9 +106,12 @@ const frm = await evalJs(`(() => { const f = document.querySelector('.form-sec .
 check('G7', frm && frm.post === '/__app__/api/repos' && ['label', 'source', 'repo', 'exposure', 'auth'].every((k) => frm.fields.includes(k)) && /Add a place to serve/i.test(frm.title) && /Add & serve/.test(frm.submit),
   `the Add-a-place form exists and posts to the repos-serving backend: ${JSON.stringify(frm)}`);
 const und = await evalJs(`(() => { const u = document.querySelector('#undeclared'); return u ? { h: u.querySelector('h2').innerText.replace(/\\s+/g, ' ').trim(), rescan: !!u.querySelector('[data-rescan]'), items: [...u.querySelectorAll('[data-undeclared]')].map((i) => ({ declare: !!i.querySelector('button[data-body*=declare]:not([data-body*=stop_undeclared])'), stop: !!i.querySelector('button[data-body*=stop_undeclared]') })) } : null; })()`);
-check('G8', und && /Undeclared served pages\s*·\s*\d+/.test(und.h) && und.rescan && und.items.every((i) => i.declare && i.stop), `the undeclared-pages checker renders with Rescan: ${JSON.stringify(und)}`);
+check('G8', und && /Undeclared served pages\s*·\s*\d+/i.test(und.h) && und.rescan && und.items.every((i) => i.declare && i.stop), `the undeclared-pages checker renders with Rescan: ${JSON.stringify(und)}`);
 const sg = await shot('shell-pages-single-list');
 check('G9', A37(sg), `Pages single list, shot ${sg.w}x${sg.h}`);
+// back to Configs, where the Engines and Links checks below start
+await evalJs(`[...document.querySelectorAll('nav button')].find((b) => b.innerText.trim() === 'Configs').click()`);
+await until(`document.querySelector('.seg')`);
 
 // Configs > Engines and Links
 for (const [seg, name, ready] of [['engines', 'configs-engines', `document.querySelector('.eng')`], ['links', 'configs-links', `document.querySelector('select[data-remember]')`]]) {
