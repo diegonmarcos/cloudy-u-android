@@ -9,6 +9,8 @@ object StoreStrip {
     const val KIND_FLEETDATA = -2
     const val KIND_SEPARATOR = -3
     const val SEPARATOR = "|"
+    /** The declared fleet group Fleet Data follows on the strip (the strip's own anchor; the page names no group). */
+    const val TINY_ML_GROUP = "libs-t-ml"
 
     data class Slot(val label: String, val kind: Int)
 

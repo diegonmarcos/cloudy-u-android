@@ -1069,7 +1069,7 @@ class StoreCloudFragment : KitComposeFragment() {
         const val KIND_SEPARATOR = StoreStrip.KIND_SEPARATOR
         /** #1547 the Fleet Data tab (the Cloud Store dataset browser) and the fleet group it follows. */
         const val FLEET_DATA_LABEL = "Fleet Data"
-        const val TINY_ML_GROUP = "libs-t-ml"
+        const val TINY_ML_GROUP = StoreStrip.TINY_ML_GROUP
         const val STORE_AUTHORITY = "cloud.store.data"
     }
 }

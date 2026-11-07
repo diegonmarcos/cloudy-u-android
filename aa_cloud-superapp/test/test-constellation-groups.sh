@@ -101,11 +101,18 @@ grep -qF 'updateAll(ctx, "the whole fleet", fleet)' "$PAGE" \
   || bad "Update all is no longer built from the parsed fleet"
 
 echo "== T5: StoreCloudFragment names no group =="
+STRIP="$LIBS/appstore/src/main/java/com/diegonmarcos/superapp/appstore/StoreStrip.kt"
+[ -f "$STRIP" ] || { echo "ERROR: missing $STRIP" >&2; exit 2; }
 for literal in $(jq -r '.groups[] | .id, .label' "$FLEET"); do
   grep -nF "\"$literal\"" "$PAGE" \
     && bad "StoreCloudFragment hardcodes group literal \"$literal\"" \
     || ok "no \"$literal\" literal"
 done
+# The strip's order is ONE pure declaration (StoreStrip): the only group it names is Fleet Data's anchor, and that group is a declared one.
+strip_groups="$(grep -oE '"libs-[a-z-]+"|"apps"' "$STRIP" | tr -d '"' | sort -u)"
+[ "$strip_groups" = "libs-t-ml" ] && jq -e '.groups[] | select(.id == "libs-t-ml")' "$FLEET" >/dev/null \
+  && ok "StoreStrip names exactly one group (Fleet Data's Tiny-ML anchor) and the fleet declares it" \
+  || bad "StoreStrip names group literals beyond its declared anchor, or the anchor is not a declared group: $strip_groups"
 grep -nF 'listOf("Apps"' "$PAGE" && bad "hardcoded tab list is back" || ok "no hardcoded tab list"
 grep -nF 'filter { it.kind' "$PAGE" && bad "a kind partition is back" || ok "no kind partition"
 grep -qF 'fleetObjects("groups")' "$PAGE" \
@@ -313,10 +320,21 @@ merged="$(command grep -nE '\{ it\.label \}[[:space:]]*\+[[:space:]]*FeedViewer\
 # 1 IS the declared groups and line 2 IS the declared feeds plus Perms.
 # #732 each line's entries are now Controls carrying their declared look, so
 # the line list is two lists of Controls; the membership asserted is the same.
-command grep -qF 'tabs.map { StoreControls.Control(it.label, "", groupTab) }' "$PAGE" \
+# The strip is now StoreStrip.slots(declared group labels, ...): the declared groups, then Fleet Data, the "|" separator and Ventoy, in that order.
+command grep -qF 'StoreStrip.slots(tabs.map { it.label }' "$PAGE" \
+  && command grep -qF 'StoreControls.Control(it, "", groupTab)' "$PAGE" \
   && ! command grep -qF 'rememberStoreControls().page' "$PAGE" \
-  && ok "the Cloud page is ONE line, the declared groups; Mesh, the feeds and Perms are Access/Feed pages since #896/#896.3" \
+  && ok "the Cloud page is ONE line, the declared groups through StoreStrip; Mesh, the feeds and Perms are Access/Feed pages since #896/#896.3" \
   || bad "the tab lines are not built from the two declarations"
+slots_body="$(awk '/fun slots\(/{f=1} f{print} f && /^    }$/{exit}' "$STRIP")"
+fd_at="$(printf '%s' "$slots_body" | grep -n 'KIND_FLEETDATA' | head -1 | cut -d: -f1)"
+sep_at="$(printf '%s' "$slots_body" | grep -n 'out.add(at, Slot(SEPARATOR, KIND_SEPARATOR))' | head -1 | cut -d: -f1)"
+ven_at="$(printf '%s' "$slots_body" | grep -n 'KIND_VENTOY' | head -1 | cut -d: -f1)"
+[ -n "$fd_at" ] && [ -n "$sep_at" ] && [ -n "$ven_at" ] && [ "$fd_at" -lt "$sep_at" ] && printf '%s' "$slots_body" | grep -F 'out.add(at, Slot(SEPARATOR, KIND_SEPARATOR)); out.add(at + 1, Slot(ventoyLabel, KIND_VENTOY))' >/dev/null \
+  && ok "StoreStrip orders the Cloud strip: groups, Fleet Data, \"|\" separator, Ventoy" \
+  || bad "StoreStrip no longer orders Fleet Data, then the \"|\" separator, then Ventoy"
+[ -f "$LIBS/appstore/src/test/java/com/diegonmarcos/superapp/appstore/StoreStripTest.kt" ] \
+  && ok "StoreStripTest pins that order" || bad "StoreStripTest is missing"
 
 # (c) TWO strips inside one column, from ONE button builder - not a second
 #     differently-styled control set beside the first.
@@ -440,7 +458,7 @@ printf '%s' "$DIV" | command grep -qE 'padding\(top = sdp\(StoreDensity\.S[0-9]+
 
 # (e) Everything #660 proved must survive: membership still derived, empty line
 #     still draws nothing.
-printf '%s' "$TABBAR" | command grep -qF 'tabs.map { StoreControls.Control(it.label' \
+printf '%s' "$TABBAR" | command grep -qF 'StoreStrip.slots(tabs.map { it.label }' \
   && ok "line membership is still which declaration the tab came from" \
   || bad "the tab lines are no longer built from the two declarations"
 printf '%s' "$BARBODY" | command grep -qF 'if (line.isEmpty()) continue' \
