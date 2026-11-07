@@ -138,7 +138,7 @@ class FolderEditModelTest {
         assertEquals(m.folders, FolderTables.parseFolders(docs[0].second))
     }
 
-    @Test fun `E10 editor state: run-time edits, declarative stays the SoT, drift is counted`() {
+    @Test fun `E10 editor state, run-time edits, declarative stays the SoT, drift is counted`() {
         val rt = model(); val st = com.diegonmarcos.superapp.configs.FolderEditorState(rt, rt)
         assertEquals(0, st.drift)
         st.edit { it.setFolder("x.ide", "media") }
