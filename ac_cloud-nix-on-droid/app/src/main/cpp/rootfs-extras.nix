@@ -72,7 +72,21 @@ in
     buildInputs = [ pkgs.stdenv.cc.cc.lib ];
     # The ELF is stripped already; a second strip/patchelf shrink pass is not wanted on 200 MB.
     dontStrip = true;
-    installPhase = "install -Dm755 ${agy.extracted_bin} $out/bin/agy";
+    # The 207 MB ELF is not exec'd through its own PT_INTERP: patchelf grows its program-header
+    # table (6 -> 9 LOAD segments, PT_INTERP moved to the file end), which the phone's proot
+    # loader could not start (ENOENT on a file that exists). bin/agy is a tiny launcher that
+    # runs nix's own ld.so on the real ELF (libexec/agy.real) with an explicit library path, so
+    # proot only maps the launcher shell and ld.so (the goose-proven path) and ld.so maps the ELF.
+    # Loader and libs are interpolated store paths, so they are in the runtime closure.
+    installPhase = ''
+      install -Dm755 ${agy.extracted_bin} $out/libexec/agy.real
+      mkdir -p $out/bin
+      cat > $out/bin/agy <<EOF
+      #!${pkgs.runtimeShell}
+      exec ${pkgs.stdenv.cc.bintools.dynamicLinker} --library-path ${pkgs.stdenv.cc.libc}/lib:${pkgs.stdenv.cc.cc.lib}/lib $out/libexec/agy.real "\$@"
+      EOF
+      chmod 755 $out/bin/agy
+    '';
     doInstallCheck = true;
     nativeInstallCheckInputs = [ pkgs.versionCheckHook pkgs.writableTmpDirAsHomeHook ];
     versionCheckKeepEnvironment = [ "HOME" ];
