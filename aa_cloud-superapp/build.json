@@ -5079,7 +5079,7 @@
             "_doc": "Configs ▸ Setup ▸ Launcher ▸ X-Ray App: the diagnosis of THIS APP ONLY, not the phone. The SAME DevControlFragment as X-Ray Device with an app-scoped macro filter (DevControlFragment.APP_XRAY_MACROS, like ABOUT_MACROS): App & Build (with App permissions), Repo & Releases, the app-scoped Resources sections (Storage, Battery & Usage, Memory & CPU Usage) and the SuperApp agents. It EXCLUDES the device-wide groups (Device, Security, Network, API, Mesh, Dev Tools, Webserver, Diagnostics, Export All, Fleet agents).",
             "id": "xray-app",
             "label": "X-Ray App",
-            "icon": "ic_monitor_heart",
+            "icon": "ic_p_c3_health",
             "group": "Setup",
             "subgroup": "Launcher"
           },
@@ -5173,7 +5173,7 @@
             "_doc": "Configs ▸ Setup ▸ Watchtower - Obsv ▸ Logcat Fleet: fleet-wide logcat (FleetLogcatFragment). A multi-select app picker chooses WHICH apps' logs to include (all, none, the fleet's com.diegonmarcos.* apps, or any installed app), a per-app view shows one app's lines, and Export / Copy / Share / Post c3-api output the selected apps' logs. Logs are read through the SAME plane the old Logcat page used: READ_LOGS granted once through Shizuku or a paired adb (then in-process, nothing needs to stay running), else a shell channel `logcat --uid`; when neither is reachable the page shows the mechanism and the one-time grant button instead of failing.",
             "id": "logcat-fleet",
             "label": "Logcat Fleet",
-            "icon": "ic_subject",
+            "icon": "ic_p_logs",
             "group": "Setup",
             "subgroup": "Watchtower - Obsv"
           },

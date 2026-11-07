@@ -77,8 +77,9 @@ class PageImplementationsGuardTest {
 
     @Test fun `P1 every declared page is implemented, data-drawn, lib-hosted or declared a placeholder`() {
         val routedPairs = routed().map { it.first to it.second }.toSet()
+        // A `separator` page (the | between two runs of Configs tiles) is a character, never a destination: nothing to implement.
         val missing = declared().filter { d ->
-            d.section !in delegatedSections && !hasData(d) && (d.section to d.page) !in routedPairs && !d.o.optBoolean("placeholder")
+            !d.o.optBoolean("separator") && d.section !in delegatedSections && !hasData(d) && (d.section to d.page) !in routedPairs && !d.o.optBoolean("placeholder")
         }.map { "${it.section}/${it.page}" }
         assertTrue("declared pages with no implementation (implement them or declare placeholder:true): $missing", missing.isEmpty())
     }
