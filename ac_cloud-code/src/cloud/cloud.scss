@@ -351,6 +351,56 @@ body.cloud-collapsed {
   gap: 6px;
 }
 
+.cloud-vols {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.cloud-vol {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.cloud-vol-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  margin: 0 0 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.cloud-vol-path {
+  margin: 0;
+  font-size: 0.65rem;
+  word-break: break-all;
+}
+
+.cloud-list .cloud-repo {
+  gap: 4px;
+  padding: 3px 4px;
+  font-size: 0.75rem;
+}
+
+.cloud-repo-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cloud-repo-info {
+  opacity: 0.6;
+  font-size: 0.65rem;
+  white-space: nowrap;
+}
+
 .cloud-row {
   display: flex;
   align-items: center;

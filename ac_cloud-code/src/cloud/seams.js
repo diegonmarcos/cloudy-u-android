@@ -25,13 +25,24 @@ export async function listAgents() {
 
 // SEAM: repos — a small real engine for now: the children of the declared root
 // that hold a .git directory. Replace with gitea / the workspace broker.
+// Each repo carries its current branch, read from .git/HEAD (null when unreadable).
 export async function listRepos(rootUrl) {
 	const entries = await fsOperation(rootUrl).lsDir();
 	const repos = [];
 	for (const e of entries) {
 		if (!e.isDirectory) continue;
-		if (await fsOperation(e.url, ".git").exists()) repos.push(e);
+		if (await fsOperation(e.url, ".git").exists()) repos.push({ ...e, branch: await branchOf(e.url) });
 	}
 	repos.sort((a, b) => a.name.localeCompare(b.name));
 	return { stub: false, items: repos };
+}
+
+async function branchOf(repoUrl) {
+	try {
+		const head = String(await fsOperation(repoUrl, ".git/HEAD").readFile("utf8")).trim();
+		const m = /^ref: refs\/heads\/(.+)$/.exec(head);
+		return m ? m[1] : head.slice(0, 7);
+	} catch {
+		return null;
+	}
 }

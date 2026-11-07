@@ -51,14 +51,14 @@ for (const t of tabs) for (const p of t.pages) {
 	out(!!p.icon && hasIcon(p.icon) && !!p.label && /^P-Backlog-[a-z]+\.md$/.test(p.file), `sub-page ${t.id}/${p.id} has a name, a file and the icon '${p.icon}' (exists in the icon font)`);
 }
 out(B.secondRowShown(tabs.find((t) => t.id === "backlog")) && B.secondRowShown(tabs.find((t) => t.id === "agents")), "Backlog and Agents show the second row");
-out(["editor", "repos", "ai", "browser", "myterminal"].every((id) => !B.secondRowShown(tabs.find((t) => t.id === id))), "a page with fewer than two sub-pages has no second row");
+out(["editor", "git", "ai", "browser", "myterminal"].every((id) => !B.secondRowShown(tabs.find((t) => t.id === id))), "a page with fewer than two sub-pages has no second row");
 for (const k of ["backlog", "agents"]) {
 	const t = tabs.find((x) => x.id === k);
 	out(t.pages[0].file === nav[k].entry, `${k}: the first sub-page's file is the tab's entry (${nav[k].entry})`);
 }
 const h = B.titleHierarchy(tabs.find((t) => t.id === "backlog"), "prj");
 out(h.length === 5 && h[0].depth === 0 && h[0].label === "Backlog" && h.slice(1).every((e) => e.depth === 1) && h.filter((e) => e.selected).map((e) => e.id).join() === "prj", "the dropdown lists the bottom page then its sub-pages, the open one marked");
-out(B.titleHierarchy(tabs.find((t) => t.id === "repos"), null).length === 1, "a page without sub-pages lists itself");
+out(B.titleHierarchy(tabs.find((t) => t.id === "git"), null).length === 1, "a page without sub-pages lists itself");
 out(B.pageOfFile(tabs.find((t) => t.id === "backlog"), "P-Backlog-eff.md") === "eff" && B.pageOfFile(tabs.find((t) => t.id === "backlog"), "x.md") === null, "a followed dist link selects its sub-page");
 
 // ── scroll-collapse ──

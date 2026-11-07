@@ -200,48 +200,81 @@ function renderBacklog(panel) {
 	return renderBacklogView(panel, "Backlog", nav.backlog.entry);
 }
 
-// ── Repos: small engine behind the seam ────────────────────────────────────
-async function renderRepos(panel) {
-	const root = stored("repos.root", gitPath(nav.repos.root));
-	const list = el("div", { className: "cloud-list" }, "Scanning …");
-	const change = el("button", {
-		className: "icon folder_open",
-		title: "Repos root folder",
-		onclick: async () => {
-			const { default: prompt } = await import("dialogs/prompt");
-			const next = await prompt("Repos root folder (URL)", root, "text");
-			if (!next) return;
-			store("repos.root", next.endsWith("/") ? next : `${next}/`);
-			renderRepos(panel);
-		},
-	});
-	panel.replaceChildren(panelHeader("Repos"), el("p", { className: "cloud-muted" }, root), list);
-	MENUS[panel.dataset.tab] = () => ({ items: [
-		{ id: "rescan", label: "Rescan", icon: "refresh", run: () => renderRepos(panel) },
-		{ id: "root", label: "Repos root folder", icon: "folder_open", run: () => change.click() },
-	] });
+// Create `<parent>/<name>` when missing (the Git volumes). Never throws: false = could not.
+async function ensureDir(parentUrl, name) {
 	try {
+		if (await fsOperation(parentUrl, name).exists()) return true;
+		await fsOperation(parentUrl).createDirectory(name);
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+// ── Git (was Repos): two volumes side by side, repos listed under each ──────
+// nav.repos.volumes: Cloud-Shared-Store/Git (the store's git folder) and Emulated/Git (the primary
+// emulated volume). Each is one column; a repo is an immediate subdirectory holding .git.
+async function volumeRoot(v) {
+	if (v.id === "emulated") {
+		const base = cordova.file.externalRootDirectory;
+		await ensureDir(base, v.subdir);
+		return `${base}${v.subdir}/`;
+	}
+	// Shared store: the store's real home first (readable under the shared uid), else the legacy
+	// mirror cloud-drive still clones into for this app (sharedRoot()/git_subdir).
+	const home = `${v.store_home}/${targets.git_subdir}/`;
+	try {
+		await fsOperation(home).lsDir();
+		return home;
+	} catch {
+		await ensureDir(sharedRoot(), targets.git_subdir);
+		return gitPath(nav.repos.root);
+	}
+}
+
+function repoRow(r, panel) {
+	return el("button", {
+		className: "cloud-row cloud-repo",
+		title: r.url,
+		onclick: () => {
+			openFolder(r.url, { name: r.name });
+			showTab("editor");
+		},
+	}, el("span", { className: "icon git" }), el("span", { className: "cloud-repo-name" }, r.name), el("span", { className: "cloud-repo-info" }, r.branch || ""));
+}
+
+async function fillVolume(v, body, count, panel) {
+	try {
+		const root = await volumeRoot(v);
 		const { items } = await listRepos(root);
-		list.replaceChildren(
-			...(items.length
-				? items.map((r) =>
-						el("button", {
-							className: "cloud-row",
-							onclick: () => {
-								openFolder(r.url, { name: r.name });
-								showTab("editor");
-							},
-						}, el("span", { className: "icon git" }), r.name),
-					)
-				: [el("p", { className: "cloud-muted" }, "No git repositories under this folder.")]),
+		count.textContent = String(items.length);
+		body.replaceChildren(
+			el("p", { className: "cloud-muted cloud-vol-path" }, root.replace(/^file:\/\//, "")),
+			...(items.length ? items.map((r) => repoRow(r, panel)) : [el("p", { className: "cloud-muted" }, "No repos")]),
 		);
 	} catch (err) {
-		const grant = el("button", {
-			className: "cloud-row",
-			onclick: () => system.manageAllFiles(() => renderRepos(panel), (e) => toast(String(e))),
-		}, el("span", { className: "icon folder_open" }), "Allow access to all files, then retry");
-		list.replaceChildren(el("p", {}, `Cannot list ${root}: ${err?.message || err}`), grant);
+		count.textContent = "!";
+		body.replaceChildren(
+			el("p", { className: "cloud-muted" }, `Not available: ${err?.message || err}`),
+			el("button", {
+				className: "cloud-row",
+				onclick: () => system.manageAllFiles(() => renderGit(panel), (e) => toast(String(e))),
+			}, el("span", { className: "icon folder_open" }), "Grant all-files access, then retry"),
+		);
 	}
+}
+
+async function renderGit(panel) {
+	const cols = nav.repos.volumes.map((v) => {
+		const count = el("span", { className: "cloud-vol-count" }, "…");
+		const body = el("div", { className: "cloud-list" }, "Scanning …");
+		fillVolume(v, body, count, panel);
+		return el("section", { className: "cloud-vol", "data-volume": v.id }, el("h3", { className: "cloud-vol-head" }, el("span", {}, v.label), count), body);
+	});
+	panel.replaceChildren(panelHeader("Git"), el("div", { className: "cloud-vols" }, ...cols));
+	MENUS[panel.dataset.tab] = () => ({ items: [
+		{ id: "rescan", label: "Rescan", icon: "refresh", run: () => renderGit(panel) },
+	] });
 }
 
 // ── Agents: the backlog's own agent views, plus the live seam ──────────────
@@ -290,7 +323,7 @@ function launchMyTerminal() {
 const VIEWS = {
 	editor: null,
 	backlog: renderBacklog,
-	repos: renderRepos,
+	git: renderGit,
 	chat: renderChatTab,
 	agents: renderAgents,
 	browser: renderBrowser,
@@ -305,7 +338,7 @@ const panels = {};
 let bars = null;
 
 function showTab(id, pageId) {
-	const tab = tabs.find((t) => t.id === id);
+	const tab = tabs.find((t) => t.id === id || (t.aliases || []).includes(id));
 	const next = select(state, tab, LAUNCH_VIEWS);
 	if (next.launch) {
 		LAUNCH[tab.view]();

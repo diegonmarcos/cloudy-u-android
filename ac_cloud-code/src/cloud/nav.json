@@ -41,10 +41,11 @@
       "view": "editor"
     },
     {
-      "id": "repos",
-      "label": "Repos",
+      "id": "git",
+      "label": "Git",
       "icon": "git",
-      "view": "repos"
+      "view": "git",
+      "aliases": ["repos"]
     },
     {
       "id": "ai",
@@ -108,7 +109,12 @@
   },
   "repos": {
     "_doc": "On-device directory whose children are listed as repositories (a child holding .git): the shared store's git folder itself (#575/#676: shared_root/git_subdir, where cloud-drive actually clones), so what cloud-drive cloned is what Repos lists. `root` is RELATIVE to that git folder ('' = the folder itself). SEAM: seams.js::listRepos is the stub a real provider (gitea / cloud-myterminal's workspace broker) replaces.",
-    "root": ""
+    "root": "",
+    "_doc_volumes": "The Git tab (was Repos) shows TWO volumes side by side, each a column headed by its name with the repos found in it listed below (a repo = an immediate subdirectory holding .git). `shared`: Cloud-Shared-Store/Git = the fleet store's git folder: tried at the store's real home (cld.termux private home, readable only under the shared uid) and, when that is unreadable, at the legacy shared-storage mirror (<shared storage>/<shared_root>/<git_subdir>) where cloud-drive still clones for this app. `emulated`: Emulated/Git = the Git folder of the primary emulated volume (storage/emulated/0), reached through cordova.file.externalRootDirectory (the primary emulated volume). Each folder is created when missing and both need all-files access (routed through Perms).",
+    "volumes": [
+      {"id": "shared", "label": "Cloud-Shared-Store/Git", "store_home": "file:///data/user/0/cld.termux/files/home/cloud-shared-store"},
+      {"id": "emulated", "label": "Emulated/Git", "subdir": "Git"}
+    ]
   },
   "browser": {
     "_doc": "The Browser tab opens LOCAL pages in Acode's own in-app browser plugin (src/plugins/browser, the one Acode's Run command uses). `presets` are local servers the owner runs on the phone.",

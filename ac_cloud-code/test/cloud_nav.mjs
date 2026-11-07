@@ -31,7 +31,7 @@ try {
 
 // #562's order is the requirement; the RENDERED labels are what is compared.
 // Chat replaced Home (the owner's request): same place in the bar, its own renderer.
-const required = "Backlog|Editor|Repos|AI|Agents|Browser|MyTerminal";
+const required = "Backlog|Editor|Git|AI|Agents|Browser|MyTerminal";
 const rendered = model.map((t) => t.label).join("|");
 out(rendered === required, `rendered order ${rendered} (required ${required})`);
 
@@ -105,7 +105,17 @@ out(/def git_subdir\(app_root, fleet_id\)/.test(resolver) && /"git_subdir": git_
 out(/\("storage"\) or \{\}\)\.get\("git_subdir"\)/.test(resolver) && /sub\.startswith\("\/"\) or "\/" in sub/.test(resolver), "the resolver reads storage.git_subdir and refuses an absolute or nested one");
 out(/function sharedRoot\(\) \{\s*return `\$\{cordova\.file\.externalRootDirectory\}\$\{targets\.shared_root\}\/`;/.test(index), "index.js composes the root from the device's externalRootDirectory + targets.shared_root");
 out(/function gitPath\(relative\) \{\s*return `\$\{sharedRoot\(\)\}\$\{targets\.git_subdir\}\/\$\{relative\}`;/.test(index), "index.js composes every git-tree path through the store's declared git folder (#676)");
-out(/stored\("backlog\.dir", gitPath\(nav\.backlog\.source_dir\)\)/.test(index) && /stored\("repos\.root", gitPath\(nav\.repos\.root\)\)/.test(index), "Backlog and Repos default to paths under the store's git folder");
+out(/stored\("backlog\.dir", gitPath\(nav\.backlog\.source_dir\)\)/.test(index) && /gitPath\(nav\.repos\.root\)/.test(index), "Backlog and Git default to paths under the store's git folder");
+// Git tab (was Repos): labelled Git, two mounted volumes, repos enumerated per volume in two horizontal columns.
+const gitTab = nav.tabs.find((t) => t.id === "git");
+out(gitTab?.label === "Git" && gitTab.view === "git" && gitTab.aliases?.includes("repos") && !nav.tabs.some((t) => /repos/i.test(t.label)), "the section is labelled Git (id git, old id repos kept as alias)");
+const vols = nav.repos?.volumes || [];
+out(vols.length === 2 && vols[0].label === "Cloud-Shared-Store/Git" && vols[1].label === "Emulated/Git", "both volumes are declared: Cloud-Shared-Store/Git and Emulated/Git");
+out(/cloud-shared-store/.test(vols[0]?.store_home || "") && /cordova\.file\.externalRootDirectory/.test(index) && vols[1]?.subdir === "Git", "shared-store path resolves under the store home (legacy mirror fallback); emulated = externalRootDirectory + Git");
+out(/await listRepos\(root\)/.test(index) && /nav\.repos\.volumes\.map/.test(index) && /ensureDir\(/.test(index) && /manageAllFiles/.test(index.slice(index.indexOf("async function fillVolume"))), "repos are enumerated per volume; missing folders are created; denied volumes offer the all-files grant");
+const scss = read("src/cloud/cloud.scss");
+out(/\.cloud-vols \{[^}]*flex-direction: row/.test(scss) && /\.cloud-vol \{[^}]*flex: 1 1 0/.test(scss), "the two volumes sit side by side in horizontal columns, repos stacked under each header");
+out(/fsOperation\(e\.url, "\.git"\)\.exists\(\)/.test(read("src/cloud/seams.js")), "a repo is an immediate subdirectory holding .git");
 out(!/\/storage\/emulated/.test(index), "index.js writes no device-absolute /storage path");
 out(/openFile\(`\$\{dir\}\$\{current\}`/.test(index) && /openFolder\(gitPath\(repoName\)/.test(index), "Backlog WRITES through the store: edit-in-place and open-repository actions go through Acode's editor");
 const configXml = read("config.xml");

@@ -114,7 +114,7 @@ function storageSection() {
 		() => { status.textContent = "not granted"; });
 	refresh();
 	return section("Storage",
-		row("All-files access (Backlog, Repos)", status, btn("Grant", "folder_open", () => system.manageAllFiles(refresh, (e) => toast(String(e))))));
+		row("All-files access (Backlog, Git)", status, btn("Grant", "folder_open", () => system.manageAllFiles(refresh, (e) => toast(String(e))))));
 }
 
 function about() {
