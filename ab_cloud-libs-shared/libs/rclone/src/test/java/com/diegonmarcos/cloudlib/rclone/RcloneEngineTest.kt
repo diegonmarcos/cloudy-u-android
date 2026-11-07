@@ -139,7 +139,7 @@ class RcloneEngineTest {
     }
 
     @Test fun remoteTypesCatalogueIsWellFormed() {
-        val types = RcloneRemoteTypes.parse(File("src/main/assets/" + RcloneRemoteTypes.ASSET).readText())
+        val types = RcloneRemoteTypes.parse(File("../../../data/fleet/" + RcloneRemoteTypes.DATASET + ".json").readText())
         assertTrue(types.size >= 5)
         assertEquals(types.size, types.map { it.type }.toSet().size)
         val sftp = types.first { it.type == "sftp" }

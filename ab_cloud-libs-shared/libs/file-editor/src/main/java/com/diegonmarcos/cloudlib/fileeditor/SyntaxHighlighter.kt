@@ -103,6 +103,7 @@ class SyntaxHighlighter(private val languages: List<LanguageSpec>) {
         fun fromJson(catalogText: String): SyntaxHighlighter =
             SyntaxHighlighter(json.decodeFromString(LanguageCatalog.serializer(), catalogText).languages)
 
-        const val ASSET = "file-editor-languages.json"
+        /** The runtime dataset (shared/file-editor-languages, #1547), never an asset. */
+        const val DATASET = "file-editor-languages"
     }
 }

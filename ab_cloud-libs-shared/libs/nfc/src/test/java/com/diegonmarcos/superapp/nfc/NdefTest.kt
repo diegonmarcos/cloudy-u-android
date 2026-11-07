@@ -162,7 +162,7 @@ class NdefTest {
     }
 
     @Test fun declaredCatalogParsesAndHoldsNoKeys() {
-        val f = listOf("src/main/assets/nfc/nfc-catalog.json", "ab_cloud-libs-shared/libs/nfc/src/main/assets/nfc/nfc-catalog.json").map(::File).first { it.exists() }
+        val f = listOf("../../../data/fleet/nfc-catalog.json", "data/fleet/nfc-catalog.json").map(::File).first { it.exists() }
         val text = f.readText()
         val c = NfcCatalog.parse(text)
         assertEquals("NXP Semiconductors", c.manufacturer(0x04))

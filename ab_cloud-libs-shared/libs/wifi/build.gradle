@@ -4,7 +4,7 @@
 // The rules (ChannelMath, SecurityParser, OuiTable, ChannelRating, ApTracker, ScanThrottle, NetParsers, Pcap, Exporter: plain Kotlin,
 // JVM-tested in the SuperApp) and the Android half (AndroidWifiSource: WifiManager scans, WifiRttManager ranging, ConnectivityManager
 // link snapshot, NsdManager / SSDP / ping sweep discovery, ping, port scan, throughput) live here once, with the Compose page
-// (WifiPanel: Scan, Channels, Link, Tools, Log). Vendors (assets/wifi/oui.tsv, the IEEE MA-L registry), channel plans per regulatory
+// (WifiPanel: Scan, Channels, Link, Tools, Log). Vendors (the IEEE MA-L registry: downloadable pack `wifi-oui`, data/fleet/packs, NOT in this lib, #1547), channel plans per regulatory
 // domain (assets/wifi/channel-plans.json) and thresholds / tool defaults (assets/wifi/wifi-config.json) are DATA. The SuperApp draws
 // WifiPanel in Configs > Setup > Network > WiFi; Cloud Calc embeds the same panel. Runtime permissions are in this lib manifest.
 plugins {
@@ -35,6 +35,8 @@ android {
 dependencies {
     // The page icons come from the one catalog (the only lib dependency: the lib stays app-agnostic).
     implementation project(':libs:ui-icons')
+    // #1547 the OUI registry is a downloadable pack (FleetPack), fetched on demand and cached; the lib carries code only.
+    implementation project(':libs:fleet-data-client')
     // #1274 the permission contract (PermsNeeds / PermsLink): the lib never asks for permissions itself.
     implementation project(':libs:perms')
     implementation platform('androidx.compose:compose-bom:2025.11.01')

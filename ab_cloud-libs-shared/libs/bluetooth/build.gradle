@@ -3,7 +3,7 @@
 // libs:bluetooth (#1221): Android Bluetooth as one shared lib. The rules (Uuids, GattCatalog, GattDecoders, BleFilters, BleLog,
 // GattSession, BleController: plain Kotlin over the BleAdapter port) and the Android half (AndroidBleAdapter: the LE scanner, GATT,
 // bonding, classic bonded list; BlePermissions) live here once, with the Compose page (BluetoothPanel: Find, Connect, Interact, Debug,
-// Dev). The known services, characteristics, scan filters and test payloads are DATA (assets/bluetooth/gatt-catalog.json), not code.
+// Dev). The known services, characteristics, scan filters and test payloads are DATA (runtime dataset gatt-catalog, #1547), not code.
 // The SuperApp draws BluetoothPanel in Configs > Fleet > Bluetooth; Cloud Browser's Web Bluetooth polyfill (#1222) drives the same
 // GattSession through libs:browser. The runtime permissions are declared in this lib's manifest, so a host merges them in.
 plugins {
@@ -33,6 +33,8 @@ android {
 }
 
 dependencies {
+    // #1547 the data is read at RUNTIME from Cloud Store's provider, never bundled in this lib (code only).
+    implementation project(':libs:fleet-data-client')
     // The nav glyphs and the page's icons come from the one catalog.
     implementation project(':libs:ui-icons')
     // #1274 the permission contract (PermsNeeds / PermsLink).

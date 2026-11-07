@@ -138,7 +138,7 @@ class WebHardwareCoreTest {
     }
 
     private val ORIGIN = "https://lab.example.test"
-    private val contract = JSONObject(File("../../ab_cloud-libs-shared/libs/browser/src/main/assets/browser/web-hardware-contract.json").readText())
+    private val contract = JSONObject(File("../../ab_cloud-libs-shared/libs/browser/contract/web-hardware-contract.json").readText())
 
     private lateinit var usb: FakeUsb
     private lateinit var serial: CdcAcmSerial

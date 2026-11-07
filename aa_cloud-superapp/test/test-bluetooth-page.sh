@@ -23,7 +23,7 @@ BJ="$APP/build.json"
 KT="$APP/app/src/main/java/com/diegonmarcos/superapp"
 LIB="$ROOT/ab_cloud-libs-shared/libs/bluetooth"
 LK="$LIB/src/main/java/com/diegonmarcos/superapp/bluetooth"
-for f in "$BJ" "$KT/configs/BluetoothFragment.kt" "$KT/launcher/SectionPages.kt" "$LIB/build.gradle" "$LIB/src/main/AndroidManifest.xml" "$LK/BluetoothUi.kt" "$LK/GattDecoders.kt" "$LIB/src/main/assets/bluetooth/gatt-catalog.json"; do
+for f in "$BJ" "$KT/configs/BluetoothFragment.kt" "$KT/launcher/SectionPages.kt" "$LIB/build.gradle" "$LIB/src/main/AndroidManifest.xml" "$LK/BluetoothUi.kt" "$LK/GattDecoders.kt" "$ROOT/data/fleet/gatt-catalog.json"; do
   [ -f "$f" ] || { echo "  ABORT: no such file: $f"; exit 2; }
 done
 command -v python3 >/dev/null 2>&1 || { echo "  ABORT: python3 missing"; exit 2; }

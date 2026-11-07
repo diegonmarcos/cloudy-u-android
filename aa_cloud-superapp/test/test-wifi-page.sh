@@ -28,8 +28,9 @@ KT="$APP/app/src/main/java/com/diegonmarcos/superapp"
 LIB="$ROOT/ab_cloud-libs-shared/libs/wifi"
 LK="$LIB/src/main/java/com/diegonmarcos/superapp/wifi"
 LA="$LIB/src/main/assets/wifi"
+PK="$ROOT/data/fleet/packs"   # #1547 the OUI table is a downloadable pack, no longer a lib asset
 for f in "$BJ" "$KT/configs/WifiFragment.kt" "$KT/launcher/SectionPages.kt" "$LIB/build.gradle" "$LIB/src/main/AndroidManifest.xml" "$LK/WifiUi.kt" \
-         "$LK/WifiTabs.kt" "$LA/oui.tsv" "$LA/channel-plans.json" "$LA/wifi-config.json" "$LIB/src/main/res/values/strings.xml" "$LIB/src/main/res/values-es/strings.xml"; do
+         "$LK/WifiTabs.kt" "$PK/wifi-oui.tsv" "$PK/wifi-oui.json" "$LA/channel-plans.json" "$LA/wifi-config.json" "$LIB/src/main/res/values/strings.xml" "$LIB/src/main/res/values-es/strings.xml"; do
   [ -f "$f" ] || { echo "  ABORT: no such file: $f"; exit 2; }
 done
 command -v python3 >/dev/null 2>&1 || { echo "  ABORT: python3 missing"; exit 2; }
@@ -101,10 +102,10 @@ for w in 'startScan' 'isScanThrottleEnabled' 'is80211mcResponder' 'is80211azNtbR
 done
 
 echo "== W4: the vocabulary is data =="
-check "$(python3 - "$LA" "$BJ" <<'PY'
+check "$(python3 - "$LA" "$BJ" "$PK" <<'PY'
 import json, re, sys
 d = sys.argv[1]; probs = []
-keys = [l[:6] for l in open(d + '/oui.tsv', encoding='utf-8') if l and l[0] != '#']
+keys = [l[:6] for l in open(sys.argv[3] + '/wifi-oui.tsv', encoding='utf-8') if l and l[0] != '#']
 if len(keys) < 30000: probs.append('OUI table has %d entries' % len(keys))
 if keys != sorted(set(keys)): probs.append('OUI keys not sorted / unique')
 if any(not re.fullmatch(r'[0-9A-F]{6}', k) for k in keys): probs.append('OUI key not 6 hex')
@@ -129,7 +130,7 @@ if not wa.get('throughput', {}).get('download_url', '').startswith('https://'): 
 print('; '.join(probs) or 'OK')
 PY
 )" "OUI = sorted IEEE registry, channel plans valid, config bounds every tool, build.json declares the throughput endpoint"
-grep -rqE '"(F0D1A9|001A11|B827EB)"' "$LK" && bad "a vendor prefix is typed in Kotlin" || ok "no vendor table in Kotlin (oui.tsv is the only list)"
+grep -rqE '"(F0D1A9|001A11|B827EB)"' "$LK" && bad "a vendor prefix is typed in Kotlin" || ok "no vendor table in Kotlin (packs/wifi-oui.tsv is the only list)"
 grep -rqE 'listOf\((36, 40, 44, 48|1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)' "$LK" && bad "a channel list is typed in Kotlin" || ok "no channel plan in Kotlin (channel-plans.json is the only list)"
 
 echo "== W5: permissions =="

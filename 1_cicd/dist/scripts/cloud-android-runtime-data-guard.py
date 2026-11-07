@@ -17,6 +17,7 @@ Policy: 1_cicd/src/data/runtime-data-baseline.json. Exit 1 on any finding. Rules
              public repo), and no personal/ or fleet/ dataset file sits under data/fleet.
 Every list only shrinks (json_max / gradle_max / b64_max are the ceilings).
 """
+import hashlib
 import json
 import os
 import re
@@ -152,6 +153,16 @@ def fleet(files):
             bad.append("D5 %s: %s has no integer schemaVersion" % (label, path))
         if tier not in (3, 4):
             bad.append("D5 %s is tier %s: tiers 1-2 are never served from the public repo" % (label, tier))
+        if isinstance(d, dict) and "sha256" in d:  # a downloadable pack descriptor: the blob it points at must match it byte for byte
+            blob = "data/fleet/packs/" + str(d.get("url", "")).rsplit("/", 1)[-1]
+            try:
+                with open(os.path.join(ROOT, blob), "rb") as bf:
+                    raw = bf.read()
+            except OSError:
+                bad.append("D5 %s: pack blob %s does not exist" % (label, blob))
+                return
+            if hashlib.sha256(raw).hexdigest() != d["sha256"] or len(raw) != d.get("bytes"):
+                bad.append("D5 %s: pack blob %s does not match its descriptor sha256/bytes" % (label, blob))
 
     for name, e in (m.get("shared") or {}).items():
         if name.startswith(("personal/", "fleet/", "infra/")):

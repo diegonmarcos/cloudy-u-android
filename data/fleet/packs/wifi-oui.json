@@ -1,0 +1,7 @@
+{
+ "schemaVersion": 1,
+ "_doc": "#1547 tier-4 downloadable pack descriptor: the IEEE MA-L registry (6 hex, tab, organization; sorted) read by libs:wifi OuiTable through FleetPack. The blob is fetched on demand from url, verified against bytes + sha256, cached in the app's filesDir and used offline. Regenerate sha256/bytes with: sha256sum data/fleet/packs/wifi-oui.tsv (the runtime-data guard fails when they drift).",
+ "url": "https://raw.githubusercontent.com/diegonmarcos/cloudy-u-android/main/data/fleet/packs/wifi-oui.tsv",
+ "sha256": "33ab9e7c4cae95d895376268e519e000ad03f8580712cfa0f6a627d39599f108",
+ "bytes": 1063637
+}

@@ -14,7 +14,7 @@ import org.junit.Test
  */
 class SyntaxHighlighterTest {
 
-    private val highlighter = SyntaxHighlighter.fromJson(File("src/main/assets/" + SyntaxHighlighter.ASSET).readText())
+    private val highlighter = SyntaxHighlighter.fromJson(File("../../../data/fleet/" + SyntaxHighlighter.DATASET + ".json").readText())
 
     private fun kinds(text: String, name: String): List<Pair<String, TokenKind>> {
         val lang = highlighter.languageFor(name)
@@ -22,7 +22,7 @@ class SyntaxHighlighterTest {
     }
 
     @Test fun everyDeclaredExtensionResolvesToItsLanguage() {
-        val catalog = kotlinx.serialization.json.Json.parseToJsonElement(File("src/main/assets/" + SyntaxHighlighter.ASSET).readText())
+        val catalog = kotlinx.serialization.json.Json.parseToJsonElement(File("../../../data/fleet/" + SyntaxHighlighter.DATASET + ".json").readText())
         val langs = catalog.jsonObject["languages"]!!.jsonArray
         assertTrue(langs.size >= 10)
         for (l in langs) {

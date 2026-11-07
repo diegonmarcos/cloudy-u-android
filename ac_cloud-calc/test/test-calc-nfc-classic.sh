@@ -10,7 +10,7 @@
 set -uo pipefail
 ROOT="${CLOUD_ANDROID_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && while [ "$PWD" != "/" ] && [ ! -e "$PWD/.git" ]; do cd ..; done; printf '%s' "$PWD")}"
 LIB="$ROOT/ab_cloud-libs-shared/libs/nfc/src"
-CAT="$LIB/main/assets/nfc/nfc-catalog.json"; PK="$LIB/main/java/com/diegonmarcos/superapp/nfc"
+CAT="$ROOT/data/fleet/nfc-catalog.json"; PK="$LIB/main/java/com/diegonmarcos/superapp/nfc"
 MIF="$PK/Mifare.kt"; RDR="$PK/NfcReader.kt"; CTL="$PK/NfcController.kt"; UI="$PK/NfcUi.kt"
 TST="$LIB/test/java/com/diegonmarcos/superapp/nfc/MifareTest.kt"
 FAILURES=0

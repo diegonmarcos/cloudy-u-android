@@ -44,6 +44,43 @@
       "consumers": [
         "*"
       ]
+    },
+    "packs/wifi-oui": {
+      "tier": 4,
+      "consumers": [
+        "*"
+      ],
+      "source": "data/fleet/packs/wifi-oui.json"
+    },
+    "company-ids": {
+      "tier": 4,
+      "consumers": [
+        "*"
+      ]
+    },
+    "gatt-catalog": {
+      "tier": 4,
+      "consumers": [
+        "*"
+      ]
+    },
+    "nfc-catalog": {
+      "tier": 4,
+      "consumers": [
+        "*"
+      ]
+    },
+    "rclone-remote-types": {
+      "tier": 4,
+      "consumers": [
+        "*"
+      ]
+    },
+    "file-editor-languages": {
+      "tier": 4,
+      "consumers": [
+        "*"
+      ]
     }
   },
   "apps": {

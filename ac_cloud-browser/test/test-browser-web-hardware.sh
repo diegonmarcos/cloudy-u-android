@@ -23,7 +23,7 @@ ROOT=$(cd "$(dirname "$0")/../.." && pwd)
 cd "$(dirname "$0")"
 LIB="$ROOT/ab_cloud-libs-shared/libs/browser/src/main"
 JS="$LIB/assets/browser/web_hardware.js"
-CONTRACT="$LIB/assets/browser/web-hardware-contract.json"
+CONTRACT="$ROOT/ab_cloud-libs-shared/libs/browser/contract/web-hardware-contract.json"
 KT="$LIB/java/com/diegonmarcos/superapp/browser"
 FLEET="$ROOT/ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json"
 PASS=0; FAIL=0

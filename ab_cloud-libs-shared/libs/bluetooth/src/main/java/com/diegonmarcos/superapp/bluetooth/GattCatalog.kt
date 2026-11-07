@@ -1,6 +1,7 @@
 package com.diegonmarcos.superapp.bluetooth
 
 import android.content.Context
+import com.diegonmarcos.superapp.fleetdata.FleetData
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -54,9 +55,13 @@ class GattCatalog(
     companion object {
         /** The device families, most specific first. */
         val FAMILY_ORDER = listOf("ring", "hrm", "env", "cycling", "health", "uart", "dfu")
-        const val ASSET = "bluetooth/gatt-catalog.json"
+        /** The runtime dataset (shared/gatt-catalog, #1547), never an asset. */
+        const val DATASET = "gatt-catalog"
 
-        fun load(ctx: Context): GattCatalog = parse(ctx.assets.open(ASSET).bufferedReader().use { it.readText() })
+        /** The served catalogue; null until Cloud Store has served it (a loading state, never a crash). */
+        fun served(ctx: Context): GattCatalog? = FleetData.get(ctx.applicationContext, DATASET) { parse(it) }
+
+        fun load(ctx: Context): GattCatalog = served(ctx) ?: parse("{}")
 
         fun parse(text: String): GattCatalog {
             val o = JSONObject(text)

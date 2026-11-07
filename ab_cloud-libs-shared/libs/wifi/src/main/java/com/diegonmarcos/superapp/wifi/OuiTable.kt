@@ -1,7 +1,7 @@
 package com.diegonmarcos.superapp.wifi
 
 /**
- * The vendor of a MAC address from the IEEE MA-L registry (assets/wifi/oui.tsv: `<6 hex>\t<organization>`, sorted) (#1263).
+ * The vendor of a MAC address from the IEEE MA-L registry (pack `wifi-oui`, data/fleet/packs/wifi-oui.tsv, #1547: `<6 hex>\t<organization>`, sorted) (#1263).
  * A locally administered BSSID (bit 0x02 of the first octet) is usually a virtual BSSID the AP derived from its own OUI, so a miss is
  * retried with that bit cleared and reported as `<vendor> (virtual)`. Binary search over a sorted int array: ~40k entries, no map.
  */

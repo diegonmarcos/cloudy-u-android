@@ -13,7 +13,7 @@ private fun hex(s: String) = Bytes.parse(s)!!
 /** #1322 MIFARE Classic (public keys only), the MAD, DESFire identification and the "locked is not an error" summary, on the plain JVM. */
 class MifareTest {
     private val catalog: NfcCatalog = NfcCatalog.parse(
-        listOf("src/main/assets/nfc/nfc-catalog.json", "ab_cloud-libs-shared/libs/nfc/src/main/assets/nfc/nfc-catalog.json").map(::File).first { it.exists() }.readText()
+        listOf("../../../data/fleet/nfc-catalog.json", "data/fleet/nfc-catalog.json").map(::File).first { it.exists() }.readText()
     )
 
     // ---- SAK -> type ----

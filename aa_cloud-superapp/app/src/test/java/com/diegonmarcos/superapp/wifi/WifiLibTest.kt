@@ -12,7 +12,8 @@ import java.io.File
 /** #1263 libs:wifi: channel math, security parsing, the OUI and channel-plan assets, rating, tracking, throttle, tool parsers, export. */
 class WifiLibTest {
     private val assets = File("../../ab_cloud-libs-shared/libs/wifi/src/main/assets/wifi")
-    private fun asset(n: String) = File(assets, n).readText()
+    private fun asset(n: String) = File(if (n == "oui.tsv") pack else assets, if (n == "oui.tsv") "wifi-oui.tsv" else n).readText()
+    private val pack = File("../../data/fleet/packs")   // #1547 the OUI registry is a downloadable pack, not a lib asset
 
     private fun ap(bssid: String, ssid: String, freq: Int, rssi: Int, width: Int = 0, cf0: Int = 0, caps: String = "[WPA2-PSK-CCMP][ESS]", now: Long = 1_000_000L): AccessPoint =
         ApTracker().ingest(listOf(RawScan(bssid, ssid, freq, cf0, 0, width, rssi, caps)), now).first()
@@ -84,6 +85,16 @@ class WifiLibTest {
         assertTrue(OuiTable.isLocallyAdministered("02:00:00:00:00:00")); assertFalse(OuiTable.isLocallyAdministered("00:1a:11:00:00:00"))
         val keys = asset("oui.tsv").lineSequence().filter { it.length > 7 && it[0] != '#' }.map { it.substring(0, 6) }.toList()
         assertEquals("keys sorted and unique", keys.sorted().distinct(), keys)
+    }
+
+    @Test fun `OUI is a downloadable pack, not a lib asset, and the descriptor matches the blob`() {
+        assertFalse("the .aar must carry no OUI table", File(assets, "oui.tsv").exists())
+        assertTrue(File("../../ab_cloud-libs-shared/libs/wifi/src/main/java/com/diegonmarcos/superapp/wifi/WifiHub.kt").readText().contains("FleetPack.text("))
+        val blob = File(pack, "wifi-oui.tsv").readBytes()
+        val d = org.json.JSONObject(File(pack, "wifi-oui.json").readText())
+        assertEquals(blob.size.toLong(), d.getLong("bytes"))
+        assertEquals(java.security.MessageDigest.getInstance("SHA-256").digest(blob).joinToString("") { "%02x".format(it) }, d.getString("sha256"))
+        assertTrue(d.getString("url").endsWith("/data/fleet/packs/wifi-oui.tsv"))
     }
 
     // ---- plans + config ----

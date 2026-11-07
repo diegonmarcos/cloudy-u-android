@@ -1,6 +1,7 @@
 package com.diegonmarcos.superapp.bluetooth
 
 import android.content.Context
+import com.diegonmarcos.superapp.fleetdata.FleetData
 import org.json.JSONObject
 
 /**
@@ -18,9 +19,13 @@ class CompanyIds(val companies: Map<Int, String>, val appleTypes: Map<Int, Strin
     fun serviceDataName(uuid: String): String? = Uuids.assigned(uuid)?.let { serviceData[Uuids.short(uuid).lowercase()] }
 
     companion object {
-        const val ASSET = "bluetooth/company-ids.json"
+        /** The runtime dataset (shared/company-ids, #1547), never an asset. */
+        const val DATASET = "company-ids"
 
-        fun load(ctx: Context): CompanyIds = parse(ctx.assets.open(ASSET).bufferedReader().use { it.readText() })
+        /** The served table; null until Cloud Store has served it (a loading state, never a crash). */
+        fun served(ctx: Context): CompanyIds? = FleetData.get(ctx.applicationContext, DATASET) { parse(it) }
+
+        fun load(ctx: Context): CompanyIds = served(ctx) ?: parse("{}")
 
         fun parse(text: String): CompanyIds {
             val o = JSONObject(text)

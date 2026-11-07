@@ -106,7 +106,7 @@ class AdvParserTest {
     }
 
     @Test fun `the company table is data and names apple continuity`() {
-        val f = File("src/main/assets/bluetooth/company-ids.json")
+        val f = File("../../../data/fleet/company-ids.json")
         assertTrue(f.exists())
         val c = CompanyIds.parse(f.readText())
         assertEquals("Apple", c.name(0x004C))

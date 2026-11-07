@@ -50,6 +50,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
+import com.diegonmarcos.superapp.fleetdata.FleetData
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -92,7 +94,7 @@ fun RcloneScreen(
     val snackbar = remember { SnackbarHostState() }
     val runner = remember { RcloneRunner(context) }
     val store = remember { RcloneJobStore(File(context.filesDir, "rclone/jobs.json")) }
-    val types = remember { runCatching { RcloneRemoteTypes.parse(context.assets.open(RcloneRemoteTypes.ASSET).bufferedReader().readText()) }.getOrElse { emptyList() } }
+    val types by produceState(emptyList<RemoteType>()) { value = withContext(Dispatchers.IO) { runCatching { FleetData.get(context.applicationContext, RcloneRemoteTypes.DATASET) { RcloneRemoteTypes.parse(it) } }.getOrNull().orEmpty() } }
     var tab by remember { mutableIntStateOf(when (target) { "jobs" -> 1; "browse" -> 2; null, "remotes" -> 0; else -> 1 }) }
     var remotes by remember { mutableStateOf(runner.remotes()) }
     var jobs by remember { mutableStateOf(store.load()) }

@@ -1,4 +1,5 @@
 {
+ "schemaVersion": 1,
  "_doc": "#1264 / #1322 THE declared NFC vocabulary of libs:nfc (NfcCatalog.parse): IC manufacturers by UID byte 0 (ISO/IEC 7816-6), SAK meanings, NXP GET_VERSION products of the Type 2 family with their user memory, ISO 15693 manufacturers. Data only, no keys: adding a product is a row here, no Kotlin.",
  "ic_manufacturers": {
   "01": "Motorola",

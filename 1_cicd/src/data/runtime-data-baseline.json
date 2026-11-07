@@ -3,7 +3,7 @@
  "seed_allowlist": {
   "_doc": "Tier-4 STATIC reference data that may stay bundled as a SEED the runtime provider overrides: path or dir/ prefix -> reason (at least 20 characters). Empty in phase 1: the tier-4 files are baselined below and move to Cloud Store packs in phase 2."
  },
- "json_max": 118,
+ "json_max": 111,
  "gradle_max": 22,
  "b64_max": 302,
  "mock_files": [
@@ -83,22 +83,6 @@
    "tier": 3,
    "target": "store app/<pkg>/appstore-ventoy"
   },
-  "ab_cloud-libs-shared/libs/bluetooth/src/main/assets/bluetooth/company-ids.json": {
-   "tier": 4,
-   "target": "store pack/company-ids (downloadable data pack or seed)"
-  },
-  "ab_cloud-libs-shared/libs/bluetooth/src/main/assets/bluetooth/gatt-catalog.json": {
-   "tier": 4,
-   "target": "store pack/gatt-catalog (downloadable data pack or seed)"
-  },
-  "ab_cloud-libs-shared/libs/browser/src/main/assets/browser/web-bluetooth-contract.json": {
-   "tier": 3,
-   "target": "store app/<pkg>/web-bluetooth-contract"
-  },
-  "ab_cloud-libs-shared/libs/browser/src/main/assets/browser/web-hardware-contract.json": {
-   "tier": 3,
-   "target": "store app/<pkg>/web-hardware-contract"
-  },
   "ab_cloud-libs-shared/libs/cgc-3d/src/main/assets/cgc/clips.json": {
    "tier": 4,
    "target": "store pack/clips (downloadable data pack or seed)"
@@ -106,10 +90,6 @@
   "ab_cloud-libs-shared/libs/decisions-engine/src/main/assets/decisions.json": {
    "tier": 2,
    "target": "account fleet/decisions"
-  },
-  "ab_cloud-libs-shared/libs/file-editor/src/main/assets/file-editor-languages.json": {
-   "tier": 4,
-   "target": "store pack/file-editor-languages (downloadable data pack or seed)"
   },
   "ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json": {
    "tier": 2,
@@ -323,17 +303,9 @@
    "tier": 3,
    "target": "store app/<pkg>/catalogue"
   },
-  "ab_cloud-libs-shared/libs/nfc/src/main/assets/nfc/nfc-catalog.json": {
-   "tier": 4,
-   "target": "store pack/nfc-catalog (downloadable data pack or seed)"
-  },
   "ab_cloud-libs-shared/libs/perms/src/main/assets/perms-catalogue.json": {
    "tier": 2,
    "target": "account fleet/perms-catalogue"
-  },
-  "ab_cloud-libs-shared/libs/rclone/src/main/assets/rclone-remote-types.json": {
-   "tier": 4,
-   "target": "store pack/rclone-remote-types (downloadable data pack or seed)"
   },
   "ab_cloud-libs-shared/libs/shell-broker/src/main/assets/shell-allowlist.json": {
    "tier": 2,

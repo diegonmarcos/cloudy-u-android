@@ -1,4 +1,5 @@
 {
+ "schemaVersion": 1,
  "_doc": "#1221 THE declared Bluetooth vocabulary of libs:bluetooth: services, characteristics and descriptors by UUID (16-bit short form or full 128-bit), the decoder that turns a characteristic's bytes into a value (GattDecoders: battery_level, heart_rate, sensor_location, temperature_measurement, temperature_c, humidity, pressure, csc, utf8, uint, cccd), the scan filter presets and the Dev tab's test payloads. `alias` is the Web Bluetooth name (navigator.bluetooth requestDevice filters services:['heart_rate']). Adding a device family is a row here, no Kotlin.",
  "categories": [
   {

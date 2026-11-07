@@ -37,6 +37,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
+import com.diegonmarcos.superapp.fleetdata.FleetData
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -86,7 +88,7 @@ fun FileEditorScreen(
     val scope = rememberCoroutineScope()
     val snackbar = remember { SnackbarHostState() }
     val file = remember(target) { target?.takeIf { it.isNotBlank() }?.let { File(it) } }
-    val highlighter = remember { runCatching { SyntaxHighlighter.fromJson(context.assets.open(SyntaxHighlighter.ASSET).bufferedReader().readText()) }.getOrElse { SyntaxHighlighter(emptyList()) } }
+    val highlighter by produceState(SyntaxHighlighter(emptyList())) { value = withContext(Dispatchers.IO) { runCatching { FleetData.get(context.applicationContext, SyntaxHighlighter.DATASET) { SyntaxHighlighter.fromJson(it) } }.getOrNull() } ?: value }
     val language = remember(file) { file?.let { highlighter.languageFor(it.name) } }
 
     var document by remember { mutableStateOf<EditorDocument?>(null) }

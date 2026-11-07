@@ -1,6 +1,7 @@
 package com.diegonmarcos.superapp.nfc
 
 import android.content.Context
+import com.diegonmarcos.superapp.fleetdata.FleetData
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -9,7 +10,7 @@ data class DesfireName(val hwType: Int, val hwMajor: Int?, val name: String)
 
 data class NxpVersion(val version: String, val name: String, val userPages: Int)
 
-/** The declared NFC vocabulary (assets/nfc/nfc-catalog.json, #1264). Unknown values are spelled raw, never an error. */
+/** The declared NFC vocabulary (runtime dataset nfc-catalog, #1264/#1547). Unknown values are spelled raw, never an error. */
 class NfcCatalog(
     val icManufacturers: Map<Int, String>,
     val sak: Map<Int, String>,
@@ -37,9 +38,13 @@ class NfcCatalog(
     fun version(v: ByteArray): NxpVersion? = Bytes.hex(v).let { h -> nxpVersions.firstOrNull { it.version.equals(h, true) } }
 
     companion object {
-        const val ASSET = "nfc/nfc-catalog.json"
+        /** The runtime dataset (shared/nfc-catalog, #1547), never an asset. */
+        const val DATASET = "nfc-catalog"
 
-        fun load(ctx: Context): NfcCatalog = parse(ctx.assets.open(ASSET).bufferedReader().use { it.readText() })
+        /** The served catalogue; null until Cloud Store has served it (a loading state, never a crash). */
+        fun served(ctx: Context): NfcCatalog? = FleetData.get(ctx.applicationContext, DATASET) { parse(it) }
+
+        fun load(ctx: Context): NfcCatalog = served(ctx) ?: parse("{}")
 
         fun parse(text: String): NfcCatalog {
             val o = JSONObject(text)

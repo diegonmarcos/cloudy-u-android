@@ -37,7 +37,7 @@ class FakeAdapter : BleAdapter {
 
 /** #1221 libs:bluetooth: the UUID catalog, the decoders, the filters, the serial GATT session and the controller, over a fake radio. */
 class BluetoothLibTest {
-    private val catalogFile = File("../../ab_cloud-libs-shared/libs/bluetooth/src/main/assets/bluetooth/gatt-catalog.json")
+    private val catalogFile = File("../../data/fleet/gatt-catalog.json")
     private val catalog by lazy { GattCatalog.parse(catalogFile.readText()) }
 
     private val HR = Uuids.normalize("180d")!!

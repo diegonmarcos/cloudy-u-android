@@ -1,4 +1,5 @@
 {
+ "schemaVersion": 1,
   "_doc": "The remote types the Remotes tab can create, as DATA: rclone's own backend names and the keys each needs. `fields` are shown as inputs in order; a field with secret=true is passed through `rclone obscure` before it is written, exactly as `rclone config` does, and never echoed back. Anything rclone accepts beyond these can still be typed into the free-form extra options box. Adding a backend is adding an entry here.",
   "types": [
     { "type": "sftp", "label": "SFTP (ssh)", "fields": [

@@ -66,8 +66,8 @@ class WebBluetoothCoreTest {
     private val ORIGIN = "https://hr.example.test"
     private val ADDR = "AA:BB:CC:00:00:01"
 
-    private val contract = JSONObject(File("../../ab_cloud-libs-shared/libs/browser/src/main/assets/browser/web-bluetooth-contract.json").readText())
-    private val catalog = GattCatalog.parse(File("../../ab_cloud-libs-shared/libs/bluetooth/src/main/assets/bluetooth/gatt-catalog.json").readText())
+    private val contract = JSONObject(File("../../ab_cloud-libs-shared/libs/browser/contract/web-bluetooth-contract.json").readText())
+    private val catalog = GattCatalog.parse(File("../../data/fleet/gatt-catalog.json").readText())
 
     private lateinit var radio: FakeRadio
     private lateinit var session: GattSession

@@ -1,4 +1,5 @@
 {
+ "schemaVersion": 1,
   "_doc": "The syntax colouring the editor knows, as DATA: one entry per language, matched by file extension (lower-cased, no dot). SyntaxHighlighter reads this file and nothing else — adding a language is adding an entry here. Each rule is optional: line_comment (prefix to end of line), block_comment ([open, close]), strings (each delimiter, with backslash escapes honoured), keywords (whole words), heading_prefix (markdown-style: a line starting with it is a heading), number (whether bare numeric literals are coloured). Kept deliberately regex-free at the data level so a typo here cannot hang the tokenizer.",
   "languages": [
     { "id": "kotlin", "extensions": ["kt", "kts"], "line_comment": "//", "block_comment": ["/*", "*/"], "strings": ["\"", "'"], "number": true,

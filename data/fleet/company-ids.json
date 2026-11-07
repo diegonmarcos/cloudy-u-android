@@ -1,4 +1,5 @@
 {
+ "schemaVersion": 1,
  "_doc": "#1264 Bluetooth SIG company identifiers (Assigned Numbers, section 7: the 16-bit value that opens manufacturer specific data) the scanner names, plus Apple's continuity message types (the first byte of Apple's manufacturer data) and well-known 16-bit service-data UUIDs. A subset, by hex id: an id not listed shows as its hex value, never an error. Adding a vendor is a row here, no Kotlin (CompanyIds.parse).",
  "companies": {
   "0000": "Ericsson",

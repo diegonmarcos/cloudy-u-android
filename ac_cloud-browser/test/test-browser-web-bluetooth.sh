@@ -22,7 +22,7 @@ ROOT=$(cd "$(dirname "$0")/../.." && pwd)
 cd "$(dirname "$0")"
 LIB="$ROOT/ab_cloud-libs-shared/libs/browser/src/main"
 JS="$LIB/assets/browser/web_bluetooth.js"
-CONTRACT="$LIB/assets/browser/web-bluetooth-contract.json"
+CONTRACT="$ROOT/ab_cloud-libs-shared/libs/browser/contract/web-bluetooth-contract.json"
 KT="$LIB/java/com/diegonmarcos/superapp/browser"
 PASS=0; FAIL=0
 ok()  { PASS=$((PASS+1)); echo "  PASS: $1"; }
