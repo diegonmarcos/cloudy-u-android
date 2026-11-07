@@ -77,6 +77,17 @@ class App : Application() {
         // An import a self-update (or any process death) cut short picks up where it stopped.
         runCatching { StoreDebugApi.resumePendingImport(this) }
             .onFailure { Log.w(TAG, "pending import not resumed", it) }
+        // Search > Torrent hands its results to the torrent engine (libs:torrent) through this host; the engine itself
+        // starts off the main thread, re-adds the remembered list, and keeps applying the seeding policy while no screen is open.
+        // A device where libtorrent cannot load leaves the engine Unavailable with a reason: nothing here can crash the app.
+        com.diegonmarcos.superapp.appstore.StoreTorrentHost.host = TorrentHost(this)
+        Thread({
+            runCatching {
+                val engine = com.diegonmarcos.superapp.torrent.TorrentEngines.get(this)
+                engine.start()
+                engine.startPolling()
+            }.onFailure { Log.w(TAG, "torrent engine not started", it) }
+        }, "torrent-start").start()
     }
 
     private companion object { const val TAG = "CloudStore" }

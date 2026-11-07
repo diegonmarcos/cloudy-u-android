@@ -44,7 +44,7 @@ import com.diegonmarcos.superapp.shellclient.ShellClient
 
 /**
  * Settings > Configs: a PAGE with its own top tabs, not a screen that is one thing. The tabs are the
- * build.json::ui.sections `settings` pages (Sources | ADB Shell | AI | Notifications | About), drawn by MainActivity's
+ * build.json::ui.sections `settings` pages (Sources | ADB Shell | AI | Notifications | Torrent | Data | About), drawn by MainActivity's
  * PageTabs like every other section's; [page] is the open one. Each page below is declarative: it lists what the
  * Store already declares (its feeds, the installer ladder, its privileged-channel needs, the fleet AI gateway) and
  * writes only the owner's switches. All sizes read [StoreDensity]; the app is wrapped in KitDenseMaterial.
@@ -55,6 +55,7 @@ object ConfigsPages {
     const val AI = "ai"
     const val NOTIFICATIONS = "notifications"
     const val DATA = "data"
+    const val TORRENT = "torrent"
     const val ABOUT = "about"
 
     /** Test tags: the open page's body, and a switch by what it flips. */
@@ -76,18 +77,19 @@ fun ConfigsPage(page: String) {
             ConfigsPages.AI -> AiPage()
             ConfigsPages.NOTIFICATIONS -> NotificationsPage()
             ConfigsPages.DATA -> DataPage()
+            ConfigsPages.TORRENT -> TorrentConfigPage()
             ConfigsPages.ABOUT -> AboutPage()
             else -> SourcesPage()
         }
     }
 }
 
-@Composable private fun Head(text: String) = Text(text, fontSize = StoreDensity.T_TITLE.sp, color = MaterialTheme.colorScheme.onSurface)
-@Composable private fun Note(text: String) = Text(text, fontSize = StoreDensity.T_CAPTION.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-@Composable private fun Body(text: String) = Text(text, fontSize = StoreDensity.T_BODY.sp, color = MaterialTheme.colorScheme.onSurface)
+@Composable internal fun Head(text: String) = Text(text, fontSize = StoreDensity.T_TITLE.sp, color = MaterialTheme.colorScheme.onSurface)
+@Composable internal fun Note(text: String) = Text(text, fontSize = StoreDensity.T_CAPTION.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+@Composable internal fun Body(text: String) = Text(text, fontSize = StoreDensity.T_BODY.sp, color = MaterialTheme.colorScheme.onSurface)
 
 @Composable
-private fun SwitchRow(label: String, sub: String?, on: Boolean, tag: String, onChange: (Boolean) -> Unit) {
+internal fun SwitchRow(label: String, sub: String?, on: Boolean, tag: String, onChange: (Boolean) -> Unit) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
         Column(Modifier.weight(1f)) { Body(label); if (sub != null) Note(sub) }
         Switch(on, onChange, Modifier.testTag(tag))
@@ -100,7 +102,7 @@ private fun SwitchRow(label: String, sub: String?, on: Boolean, tag: String, onC
 private fun SourcesPage() {
     val ctx = LocalContext.current
     Head("Feeds")
-    Note("The repository feeds the Feed section reads (appstore-feeds.json). Off = not read.")
+    Note("The repository feeds the Cloud page's Commits and CI-CD panels read (appstore-feeds.json). Off = not read.")
     val feeds = remember { FeedViewer.feeds(ctx) }
     feeds.forEach { f ->
         var on by remember(f.id) { mutableStateOf(StoreSourcePrefs.enabled(ctx, f.id)) }

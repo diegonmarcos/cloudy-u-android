@@ -40,6 +40,7 @@
       "type": "library",
       "dir": "../ab_cloud-libs-shared/libs/decisions-link"
     },
+    "libs:torrent": {"dir": "../ab_cloud-libs-shared/libs/torrent", "type": "library", "depends_on": [], "comment": "#1600 the BitTorrent engine (libtorrent through jlibtorrent), the declarative torrent search sources and the Downloads/Cloudy-store/Torrent folder rule, as code only: the Torrent destination, Search > Torrent and Configs > Torrent drive it. Only this app links it, so no other app carries libtorrent's native library."},
     "_doc": "Single source of truth for the Gradle module graph. settings.gradle iterates this list. Every lib is shared BY REFERENCE from ab_cloud-libs-shared/libs, the same directories cloud-superapp builds, so the store code exists once.",
     "app": {
       "type": "application",
@@ -55,7 +56,8 @@
         "libs:shell-client",
         "libs:fleetconfig-model",
         "libs:ai",
-        "libs:model-catalogue"
+        "libs:model-catalogue",
+        "libs:torrent"
       ]
     },
     "libs:core": {
@@ -263,12 +265,12 @@
     "catalogue": "appstore-ventoy.json"
   },
   "ui": {
-    "_doc": "#868 THE nav declaration (libs:bottomnav NavDecl): ui.bottom_nav is the island, ui.sections[] what each item opens, ui.default_section where the app opens. The island reads exactly Cloud, Phone, Search, Feed, Access and the app opens on Cloud (default_section; a deep link or a restored back-stack still opens where it points). Settings is not an island item: it is the top bar's round Settings button (Account | Configs). #896/#896.3 child pages: Phone = Installed | Declared (Search is its own island item, hosted by the same libs:appstore StorePhoneFragment on its search page), Feed = Commits | CI-CD (ids = appstore-feeds.json feed ids), Access = Apps Mesh | IPC | Identity | Android Perms | Cloud Perms (#ipc: IPC is the fleet's IPC Mesh, libs:appstore IpcMeshPage, the same page SuperApp > Configs > Network > IPC draws; Identity is libs:appstore FleetIdentityPage, the same page SuperApp > Configs > Apps Mesh > Identity draws: each fleet app's Linux uid, its sharedUserId group from data/fleet-identity.json, the live uid and signer, and any mismatch). MainActivity draws them with PageTabs and StorePages tells the pages below which is open; a host with no strip (SuperApp's embedded Store) gets Phone's drawn by the fragment. Cloud keeps its data-driven group tabs (one per constellation group, so not declared here) and nothing else: Apps Mesh and Perms moved to Access, Commits and CI-CD to Feed.",
+    "_doc": "#868 THE nav declaration (libs:bottomnav NavDecl): ui.bottom_nav is the island, ui.sections[] what each item opens, ui.default_section where the app opens. The island reads exactly Cloud, Phone, Search, Torrent, Access and the app opens on Cloud (default_section; a deep link or a restored back-stack still opens where it points). Settings is not an island item: it is the top bar's round Settings button (Account | Configs). #896/#896.3 child pages: Phone = Installed | Declared (Search is its own island item, hosted by the same libs:appstore StorePhoneFragment on its search page), Search = Cloudy | Android | Torrent (ids search-cloudy, search-android, search-torrent: the source subpages: our repo releases, the Android APK sources, the torrent indexers), Torrent is the downloader destination (active, completed, seeding; Configs > Torrent holds its folder and imports), Access = Apps Mesh | IPC | Identity | Android Perms | Cloud Perms (#ipc: IPC is the fleet's IPC Mesh, libs:appstore IpcMeshPage, the same page SuperApp > Configs > Network > IPC draws; Identity is libs:appstore FleetIdentityPage, the same page SuperApp > Configs > Apps Mesh > Identity draws: each fleet app's Linux uid, its sharedUserId group from data/fleet-identity.json, the live uid and signer, and any mismatch). MainActivity draws them with PageTabs and StorePages tells the pages below which is open; a host with no strip (SuperApp's embedded Store) gets Phone's drawn by the fragment. Cloud keeps its data-driven group tabs (one per constellation group, so not declared here) and nothing else: Apps Mesh and Perms moved to Access, Commits and CI-CD to Feed, and Feed then moved INTO Cloud as two panels (Commits, CI-CD) below the action buttons (libs:appstore StoreFeedPanels), so the Feed destination is gone and Torrent took its place on the island.",
     "bottom_nav": [
       "cloud",
       "phone",
       "search",
-      "feed",
+      "torrent",
       "access"
     ],
     "top_bar": {
@@ -308,24 +310,29 @@
         "id": "search",
         "label": "Search",
         "icon": "search",
-        "pages": []
-      },
-      {
-        "id": "feed",
-        "label": "Feed",
-        "icon": "feed",
         "pages": [
           {
-            "id": "commits",
-            "label": "Commits",
-            "icon": "code"
+            "id": "search-cloudy",
+            "label": "Cloudy",
+            "icon": "cloud"
           },
           {
-            "id": "cicd",
-            "label": "CI-CD",
-            "icon": "build"
+            "id": "search-android",
+            "label": "Android",
+            "icon": "android"
+          },
+          {
+            "id": "search-torrent",
+            "label": "Torrent",
+            "icon": "torrent"
           }
         ]
+      },
+      {
+        "id": "torrent",
+        "label": "Torrent",
+        "icon": "torrent",
+        "pages": []
       },
       {
         "id": "access",
@@ -388,6 +395,11 @@
             "id": "notifications",
             "label": "Notifications",
             "icon": "notifications"
+          },
+          {
+            "id": "torrent",
+            "label": "Torrent",
+            "icon": "torrent"
           },
           {
             "id": "data",
@@ -492,7 +504,8 @@
       "notifications",
       "install_unknown",
       "usage_access",
-      "battery_opt"
+      "battery_opt",
+      "all_files"
     ],
     "helpers": [],
     "first_run": "libs:perms"

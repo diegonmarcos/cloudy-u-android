@@ -62,6 +62,7 @@ on:
       - "ab_cloud-libs-shared/libs/shell-client/**"
       - "ab_cloud-libs-shared/libs/sysdns/**"
       - "ab_cloud-libs-shared/libs/theme-background/**"
+      - "ab_cloud-libs-shared/libs/torrent/**"
       - "ab_cloud-libs-shared/libs/ui-icons/**"
       - "ab_cloud-libs-shared/libs/ui-kit/**"
       - "ab_cloud-libs-shared/libs/ui-nav-bars/**"

@@ -31,6 +31,12 @@
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <!-- #1600 Torrent: the download folder (Downloads/Cloudy-store/Torrent, or an external drive) is written by libtorrent with plain file
+         I/O, which Android 11+ allows in shared storage only with all-files access. It is granted in Configs > Perms (libs:perms, catalogue
+         id all_files, listed in build.json::perms.needs) and the Torrent pages degrade to the app's own folder, with the reason, without it.
+         INTERNET is already declared below (the engine lib declares it too). -->
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+        tools:ignore="ScopedStorage" />
     <!-- Configs > Perms asks the owner to leave the Store unrestricted (battery_opt) when auto-update is on. -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
@@ -65,6 +71,20 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <!-- #1600 a magnet link or a .torrent opened from another app is added to the Torrent engine. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="magnet" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="application/x-bittorrent" />
             </intent-filter>
             <!-- SuperApp opens a given tab: com.diegonmarcos.cloudstore.OPEN + extra "tab". -->
             <intent-filter>

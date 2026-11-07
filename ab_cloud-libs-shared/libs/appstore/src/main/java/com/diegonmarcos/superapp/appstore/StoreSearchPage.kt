@@ -89,7 +89,35 @@ object StoreSearchPage {
     /** The ids a searcher exists for: the asset may order, label and drop them, not invent one. */
     private val SEARCHERS = setOf(FLEET, DECLARED, SourceResolver.KIND_FDROID, SourceResolver.KIND_IZZY, GITHUB, PLAY)
 
+    // ── the source subpages below Search ──────────────────────────────
+    /** The Store section these subpages belong to (build.json::ui.sections[].id) and its pages, in strip order. */
+    const val SECTION = "search"
+    /** Cloudy: our repo releases (the constellation fleet and the declared list). */
+    const val PAGE_CLOUDY = "search-cloudy"
+    /** Android: Aurora (Play, anonymous), F-Droid, IzzyOnDroid and GitHub APK sources. */
+    const val PAGE_ANDROID = "search-android"
+    /** Torrent: the host's torrent indexers; a result is downloaded by the torrent engine, not installed. */
+    const val PAGE_TORRENT = "search-torrent"
+    val PAGES = listOf(PAGE_CLOUDY, PAGE_ANDROID, PAGE_TORRENT)
+
+    /** Which subpage an install-source search source belongs to: the fleet and the declared list are Cloudy, every other APK source is Android. */
+    fun pageOf(sourceId: String): String = if (sourceId == FLEET || sourceId == DECLARED) PAGE_CLOUDY else PAGE_ANDROID
+
+    /** Where a result goes: Torrent results are downloaded by the torrent engine, the others are installed (or opened) by the APK path. */
+    fun handlerOf(page: String): String = if (page == PAGE_TORRENT) "torrent-download" else "install"
+
+    fun pageLabel(page: String): String = when (page) { PAGE_CLOUDY -> "Cloudy"; PAGE_ANDROID -> "Android"; else -> "Torrent" }
+
+    /** What a subpage searches, in a sentence (the pre-query line of Android; Cloudy shows our list, Torrent its sources). */
+    fun pageBlurb(page: String): String = when (page) {
+        PAGE_CLOUDY -> "Our repo releases: the Cloud constellation apps and the apps you declared."
+        PAGE_ANDROID -> "Android APK sources: Aurora (Google Play, anonymous), F-Droid, IzzyOnDroid and GitHub. Results install through the Store's install path."
+        else -> "Torrent indexers. Results download with the Torrent engine."
+    }
+
     /** Compose test tags. */
+    const val TAG_PAGES = "store-search:pages"
+    fun pageTag(page: String) = "store-search:page:$page"
     const val TAG_LANDING = "store-search:landing"
     const val TAG_SHELF = "store-search:shelf:"
     const val TAG_SHELF_ROW = "store-search:shelf-row:"
@@ -295,6 +323,10 @@ object StoreSearchPage {
     private fun resolveCfg(ctx: Context, cfg: () -> SourceResolver.Config?): SourceResolver.Config =
         cfg() ?: cfgMemo ?: PhoneAppActions.resolver(sourcesOf(ctx)).also { cfgMemo = it }
 
+    /** The source pill the Torrent subpage draws too. */
+    @Composable
+    internal fun SourcePill(label: String, on: Boolean, tag: String, onClick: () -> Unit) = Pill(label, on, tag, onClick)
+
     @Composable
     private fun Pill(label: String, on: Boolean, tag: String, onClick: () -> Unit) {
         val p = LocalKitPalette.current
@@ -312,6 +344,9 @@ object StoreSearchPage {
         val off = remember { mutableStateListOf<String>() }
         val states = remember { mutableStateMapOf<String, SrcState>() }
         var declState by remember { mutableStateOf<Decl?>(null) }
+        // The source subpage (Cloudy | Android | Torrent): the host's strip sets it through StorePages; a host that draws no strip
+        // (SuperApp's embedded Store) gets the same pages as pills above the search field.
+        var sub by remember { mutableStateOf(StorePages.page(SECTION, PAGE_CLOUDY)) }
         var generation by remember { mutableStateOf(0) }
         // Install progress per package, and a bump whenever the phone's packages or the declared
         // list change, which redraws every row and card that reads them.
@@ -332,9 +367,11 @@ object StoreSearchPage {
         }
         DisposableEffect(Unit) {
             loadLanding()
+            sub = StorePages.page(SECTION, PAGE_CLOUDY)
+            val stopSub = StorePages.observe(SECTION) { p -> main.post { sub = p } }
             // A package added, replaced or removed: every installed mark may have changed.
             val stop = StoreSizeProbe.watch(ctx) { main.post { tick++; loadLanding() } }
-            onDispose { stop() }
+            onDispose { stop(); stopSub() }
         }
 
         fun runSource(c: SourceResolver.Config, d: Decl, s: SearchSource, q: String, gen: Int) {
@@ -354,16 +391,31 @@ object StoreSearchPage {
             generation++
             states.clear()
             if (q.isEmpty()) return
+            // The Torrent subpage runs its own sources from `asked` (StoreTorrentSearch); the APK sources below are Cloudy and Android.
+            if (sub == PAGE_TORRENT) return
             val c = runCatching { resolveCfg(ctx, cfg) }.getOrElse { landingError = it.message ?: it.javaClass.simpleName; asked = ""; return }
             val d = declState ?: decl(sourcesOf(ctx), c).also { declState = it }
             val gen = generation
-            for (s in d.sources) if (s.id in off) states[s.id] = SrcState.Off else runSource(c, d, s, q, gen)
+            for (s in d.sources) if (pageOf(s.id) != sub) continue else if (s.id in off) states[s.id] = SrcState.Off else runSource(c, d, s, q, gen)
         }
+        // Switching the subpage re-asks the open query on that page's sources.
+        androidx.compose.runtime.LaunchedEffect(sub) { if (asked.isNotEmpty()) run() }
 
         Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(KitDensity.small)) {
+            if (!StorePages.hostDrawsStrip) {
+                Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).testTag(TAG_PAGES)) {
+                    PAGES.forEach { pg -> Pill(pageLabel(pg), sub == pg, pageTag(pg)) { StorePages.select(SECTION, pg) } }
+                }
+            }
             KitSearchBar(query, { query = it; if (it.isBlank()) { asked = ""; generation++; states.clear() } }, { run() },
                 placeholder = ctx.getString(R.string.store_search_hint), clearLabel = ctx.getString(R.string.store_search_clear))
-            val d = declState
+            val full = declState
+            // This subpage's sources only; Results sees a declaration narrowed to them, so its counts and groups are the page's.
+            val d = full?.let { f -> Decl(f.sources.filter { pageOf(it.id) == sub }, f.foss) }
+            if (sub == PAGE_TORRENT) {
+                StoreTorrentSearch.Content(ctx, asked)
+                return@Column
+            }
             Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
                 d?.sources?.forEach { s ->
                     Pill(s.label, s.id !in off, "store-search:source:${s.id}") {
@@ -373,7 +425,9 @@ object StoreSearchPage {
                 }
             }
             if (asked.isEmpty()) {
-                LandingView(ctx, cfg, landingState, landingError, lines, tick)
+                // Our list is the Cloudy landing; Android has no list of its own before a query, only the sources above.
+                if (sub == PAGE_CLOUDY) LandingView(ctx, cfg, landingState, landingError, lines, tick)
+                else Text(pageBlurb(sub), color = LocalKitPalette.current.textSecondary, fontSize = KitDensity.caption)
             } else if (d != null) {
                 Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
                     Licence.values().forEach { l -> Pill(ctx.getString(l.label), licence == l, "store-search:licence:${l.name}") { licence = l } }

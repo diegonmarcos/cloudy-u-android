@@ -1,0 +1,64 @@
+// libs:torrent (#1600) — the fleet's BitTorrent engine, as code only. It owns: the engine API an app drives
+// (TorrentEngine: add a magnet or a .torrent, per-torrent status, pause / resume / remove, a save folder,
+// seed control), the declarative torrent search sources (TorrentIndexers: one entry per public indexer, the
+// result list parsed by a pure function), the Downloads/Cloudy-store/Torrent folder rule (TorrentPaths) and
+// the .torrent reader (info-hash and name without the native library). NO DATA IS BAKED INTO THIS AAR: no
+// asset, no raw resource, no BuildConfig field, no mock list; the torrent list, the settings and the save
+// folder are read from the app's private storage at runtime.
+//
+// THE BITTORRENT IMPLEMENTATION is libtorrent through jlibtorrent (FrostWire): real DHT, trackers, uTP,
+// magnet metadata fetch, resume. Its prebuilt JNI libraries ship in the artifacts below
+// (lib/arm64-v8a/libjlibtorrent-<ver>.so, PT_LOAD aligned 64 KB), so nothing is cross-compiled in CI. The engine talks to it only through TorrentBackend
+// (JlibtorrentBackend is the one class that touches the native classes), so the engine logic is tested on
+// the JVM against a fake backend, with no peers and no .so. If the native library cannot load on a device
+// the engine reports EngineState.Unavailable with the reason; it never crashes the host.
+//
+// Shared BY REFERENCE; lib-apks excludes it (a static lib, no component).
+plugins {
+    id 'com.android.library'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.diegonmarcos.superapp.torrent'
+    compileSdk 36
+
+    defaultConfig {
+        minSdk 26
+    }
+
+    testOptions {
+        unitTests {
+            returnDefaultValues = true
+            all {
+                testLogging {
+                    events 'failed'
+                    exceptionFormat 'full'
+                }
+            }
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
+dependencies {
+    // libtorrent 1.2 JNI. The Java half, then the prebuilt native half per ABI (jar-packed lib/<abi>/*.so, merged by AGP).
+    implementation 'com.frostwire:jlibtorrent:1.2.0.18'
+    // arm64-v8a only (the phone). Upstream's x86_64 build links 4 KB LOAD segments, which the fleet's 16 KB page-size guard
+    // rejects, so the x86_64 CI APK (an emulator build) carries no libtorrent and its engine reports EngineState.Unavailable.
+    runtimeOnly 'com.frostwire:jlibtorrent-android-arm64:1.2.0.18'
+
+    testImplementation 'junit:junit:4.13.2'
+    // The real org.json: android.jar's copy is a stub that throws on the JVM.
+    testImplementation 'org.json:json:20240303'
+}

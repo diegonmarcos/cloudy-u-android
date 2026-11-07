@@ -428,8 +428,9 @@ class StoreCloudFragment : KitComposeFragment() {
     /**
      * A declared group is a TYPE OF APK: Apps, Libs, Lite-ML, Tiny-ML partition the fleet, and
      * picking one narrows what the page is showing you, so they are the segmented `tab` style (#671/#732).
-     * The Commits and CI-CD feeds, Perms and Apps Mesh used to be a second line of page chips; they
-     * are bottom-nav pages now (#896 Feed, #896.3 Access), so this page is one line.
+     * Perms and Apps Mesh used to be a second line of page chips; they are a bottom-nav page now (#896.3
+     * Access), so this page is one line. The Commits and CI-CD feeds are panels under the action buttons
+     * ([StoreFeedPanels]; the Feed destination moved into this page).
      *
      * The strip itself is [StoreTabs.Bar], the same builder Phone draws with. WHICH TABS EXIST is
      * not written here: it is the declared groups.
@@ -487,6 +488,9 @@ class StoreCloudFragment : KitComposeFragment() {
         ), resume = resume)
         // #1524 THE one Activity panel: every download and install, collapsed to one Overall line (Update all when idle).
         StoreActivityPanel(updates = states.values.count { it is Fleet.State.UpdateAvailable }, onUpdateAll = { updateAll(ctx, "the whole fleet", fleet) })
+        // Feed moved into Cloud: the repo's Commits and CI-CD panels sit right below the action buttons (StoreFeedPanels, the
+        // Store's declared feeds; the Feed bottom-nav destination is gone).
+        StoreFeedPanels.Panels()
         // The status area: declared vs installed and the updates' cached / to-download split, for the
         // whole fleet registry, from the checks already made. Re-read on every progress event.
         val snap = states.toMap()

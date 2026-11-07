@@ -13,9 +13,10 @@ plugins {
 //  - :libs:bottomnav            the top bar, the page strip and the Configs menu over the declared pages (Robolectric)
 //  - :libs:shell-client         the broker client: the stdin door's size limits and the rish relay (#1512)
 //  - :libs:core                 the Store notification matrix behind Configs > Notifications
+//  - :libs:torrent              the torrent engine API against a fake session, the indexer parsers, the folder rule, the no-data-in-aar check
 // A sibling lib's suite stays out so it cannot turn this release red.
 tasks.register('storeUnitTests') {
     group = 'verification'
     description = 'Unit suites the Cloud Store ship runs (see build.json::tests.unit).'
-    dependsOn ':libs:bottomnav:testDebugUnitTest', ':libs:shell-client:testDebugUnitTest', ':libs:core:testDebugUnitTest', ':libs:appstore:testDebugUnitTest', ':app:testDebugUnitTest'
+    dependsOn ':libs:bottomnav:testDebugUnitTest', ':libs:shell-client:testDebugUnitTest', ':libs:core:testDebugUnitTest', ':libs:appstore:testDebugUnitTest', ':libs:torrent:testDebugUnitTest', ':app:testDebugUnitTest'
 }

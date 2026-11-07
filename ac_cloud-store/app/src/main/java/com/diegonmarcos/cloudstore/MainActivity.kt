@@ -41,7 +41,7 @@ import com.diegonmarcos.superapp.updater.Updater
 
 /**
  * #865 The three store pages SuperApp shows under Config, as sections of the fleet island (#868):
- * Cloud (the constellation fleet), Phone (installed apps), Search, Feed and Access (#866). They are
+ * Cloud (the constellation fleet, with the Commits and CI-CD panels under its action buttons), Phone (installed apps), Search (Cloudy | Android | Torrent sources), Torrent (the downloader) and Access (#866). They are
  * build.json::ui.sections and ui.bottom_nav; [NAV] reads them, the island draws them. Settings is the
  * fifth section but no longer an island item: it is the page the top bar's Settings > Configs opens.
  *
@@ -68,6 +68,8 @@ class MainActivity : AppCompatActivity() {
         // The Store tab "Fleet Data" renders libs:fleet-data-ui's page inline in the Store's own pane (no separate Activity).
         StorePages.fleetDataPane = { authority, modifier -> com.diegonmarcos.superapp.fleetdata.ui.FleetDataPage(authority, modifier) }
         requested = tabFrom(intent)
+        // A magnet link or a .torrent opened with this app goes to the engine and lands on the Torrent tab.
+        if (TorrentIntake.handle(this, intent)) requested = TAB_TORRENT
         setContent {
             KitDenseMaterial(darkColorScheme()) {
                 Surface(Modifier.fillMaxSize()) { StoreShell() }
@@ -82,6 +84,7 @@ class MainActivity : AppCompatActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         tabFrom(intent)?.let { requested = it }
+        if (TorrentIntake.handle(this, intent)) requested = TAB_TORRENT
     }
 
     @androidx.compose.runtime.Composable
@@ -112,17 +115,18 @@ class MainActivity : AppCompatActivity() {
             TopBarDrawer { close ->
                 StoreDrawer(NAV, selected, section?.takeIf { it.pages.size > 1 }?.let { pageOf(it) }, onSection = { selected = it }, onPage = { s, p -> selected = s; choose(s, p) }, close = close)
             }
-            // A section with child pages gets the fleet's navigation (Phone: Installed | Declared, Feed: Commits | CI-CD) in the mode
-            // it declares or the user chose in Configs > About (one row, two rows, side menu); the page below reads the choice
-            // (Phone from StorePages, Feed from here).
+            // A section with child pages gets the fleet's navigation (Phone: Installed | Declared, Search: Cloudy | Android | Torrent)
+            // in the mode it declares or the user chose in Configs > About (one row, two rows, side menu); the page below reads the
+            // choice (Phone and Search from StorePages).
             val pageBody: @androidx.compose.runtime.Composable () -> Unit = {
             Box(Modifier.fillMaxSize()) {
                 val shown = Modifier.fillMaxSize()
                 val hidden = Modifier.size(0.dp)
                 AndroidFragment<StoreCloudFragment>(if (selected == TAB_CLOUD) shown else hidden)
                 AndroidFragment<StorePhoneFragment>(if (selected == TAB_PHONE || selected == TAB_SEARCH) shown else hidden)
-                // Feed and Access are composed only while shown: the feeds read GitHub on open, the mesh probes.
-                if (selected == TAB_FEED) section?.let { FeedPage(pageOf(it)) }
+                // Torrent and Access are composed only while shown: the torrent list polls the engine, the mesh probes.
+                // (The feeds are panels on the Cloud page now: libs:appstore StoreFeedPanels.)
+                if (selected == TAB_TORRENT) TorrentPage()
                 if (selected == TAB_ACCESS) section?.let { AccessPage(pageOf(it)) }
                 if (selected == TAB_SETTINGS) section?.let { ConfigsPage(pageOf(it)) }
             }
@@ -167,16 +171,20 @@ class MainActivity : AppCompatActivity() {
         val tab = i?.getStringExtra(EXTRA_TAB)
         // SuperApp's apps-mesh page used to open the Mesh tab; Apps Mesh is Access's first page now.
         if (tab == LEGACY_MESH) { choose(TAB_ACCESS, PAGE_MESH); return TAB_ACCESS }
+        // Feed moved into the Cloud page (Commits and CI-CD panels): an intent asking for the old tab opens Cloud.
+        if (tab == LEGACY_FEED) return TAB_CLOUD
         return tab?.takeIf { t -> NAV.section(t) != null }
     }
 
     companion object {
-        /** Intent extra naming the tab to open: [TAB_CLOUD], [TAB_PHONE], [TAB_FEED] or [TAB_ACCESS]. */
+        /** Intent extra naming the tab to open: [TAB_CLOUD], [TAB_PHONE], [TAB_SEARCH], [TAB_TORRENT] or [TAB_ACCESS]. */
         const val EXTRA_TAB = "tab"
         const val TAB_CLOUD = "cloud"
         const val TAB_PHONE = "phone"
         const val TAB_SEARCH = "search"
-        const val TAB_FEED  = "feed"
+        const val TAB_TORRENT = "torrent"
+        /** The old Feed tab: its Commits and CI-CD feeds are panels on the Cloud page now. */
+        private const val LEGACY_FEED = "feed"
         const val TAB_ACCESS = "access"
         /** The old Mesh tab: Apps Mesh is Access's first page now; an intent asking for `mesh` opens it. */
         private const val LEGACY_MESH = "mesh"

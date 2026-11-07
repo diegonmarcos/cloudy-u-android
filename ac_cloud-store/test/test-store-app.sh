@@ -146,7 +146,7 @@ v = [float(re.search(r'const val %s = ([0-9.]+)f' % n, s).group(1)) if re.search
 sys.exit(0 if 'object StoreDensity' in s and all(0 < x < 1 for x in v) else 1)
 PY
   local lit=0 f
-  for f in "$L"/*.kt "$LA"/*.kt "$MA" "$S"/app/src/main/java/com/diegonmarcos/cloudstore/ConfigsPage.kt "$S"/app/src/main/java/com/diegonmarcos/cloudstore/FeedPage.kt "$S"/app/src/main/java/com/diegonmarcos/cloudstore/AccessPage.kt; do
+  for f in "$L"/*.kt "$LA"/*.kt "$MA" "$S"/app/src/main/java/com/diegonmarcos/cloudstore/ConfigsPage.kt "$S"/app/src/main/java/com/diegonmarcos/cloudstore/TorrentPage.kt "$S"/app/src/main/java/com/diegonmarcos/cloudstore/TorrentConfigPage.kt "$S"/app/src/main/java/com/diegonmarcos/cloudstore/AccessPage.kt; do
     [ "$(basename "$f")" = StoreDensity.kt ] && continue
     if strip "$f" | grep -Eq 'dp\([^()]+(\(\))?, *[0-9]+\)|textSize *= *[0-9.]+f|, *[0-9]{2}f *[,)]|[0-9] *\* *[a-z]*\.?resources\.displayMetrics\.density|[1-9][0-9.]*\.(dp|sp)\b'; then
       echo "    size literal in $(basename "$f")"; lit=$((lit+1)); fi
@@ -161,17 +161,17 @@ PY
   grep -q 'StoreDensity\.' "$S/app/src/main/java/com/diegonmarcos/cloudstore/ConfigsPage.kt" && ok "Cloud Store's screens read StoreDensity" || bad "Cloud Store's Configs page does not read StoreDensity"
   grep -q 'StoreDensity\.T_' "$L/StoreCloudFragment.kt" && grep -q 'StoreDensity\.T_' "$L/StorePhoneFragment.kt" && ok "the Cloud and Phone shelves draw their type from the ramp" || bad "a shelf page does not use the StoreDensity type ramp"
   # 7. #868 the fleet nav pattern: the island's five pages (#896) are build.json::ui.sections, the bar is the shared island
-  python3 - "$S/build.json" "$L/../../../../../assets/appstore-feeds.json" <<'PY' && ok "ui.bottom_nav is EXACTLY cloud, phone, search, feed, access (five, each a ui.sections id; settings is the section the top bar's Configs opens), Phone's pages are installed|declared (Search is its own item with no child pages), Feed's the declared feeds, Access's mesh|ipc|identity|android|cloud, default Cloud" || bad "build.json ui.bottom_nav/sections/default_section do not declare cloud, phone, search, feed, access (+ the settings section), default cloud"
+  python3 - "$S/build.json" "$L/../../../../../assets/appstore-feeds.json" <<'PY' && ok "ui.bottom_nav is EXACTLY cloud, phone, search, torrent, access (five, each a ui.sections id; settings is the section the top bar's Configs opens), Phone's pages are installed|declared, Search's the source subpages search-cloudy|search-android|search-torrent, Feed is not a destination (it is two panels on the Cloud page), Access's mesh|ipc|identity|android|cloud, default Cloud" || bad "build.json ui.bottom_nav/sections/default_section do not declare cloud, phone, search, feed, access (+ the settings section), default cloud"
 import json, os, sys
 ui = json.load(open(sys.argv[1], encoding='utf-8')).get('ui') or {}
 secs = {s.get('id'): s for s in ui.get('sections') or []}
 feeds = json.load(open(sys.argv[2]))['feeds'] if os.path.exists(sys.argv[2]) else None
+assert feeds is None or [f['id'] for f in feeds][:2] == ['commits', 'cicd'], 'the Cloud page panels need the commits + cicd feeds'
 pg = lambda i: [p.get('id') for p in secs.get(i, {}).get('pages') or []]
-ok = (ui.get('bottom_nav') == ['cloud', 'phone', 'search', 'feed', 'access']
+ok = (ui.get('bottom_nav') == ['cloud', 'phone', 'search', 'torrent', 'access'] and 'feed' not in secs and 'torrent' in secs
       and set(ui['bottom_nav']) <= set(secs) and 'settings' in secs and 'mesh' not in secs and 'perms' not in secs
       and pg('access') == ['mesh', 'mcpapi', 'ipc', 'identity', 'android', 'cloud']
-      and pg('phone') == ['installed', 'declared'] and 'search' in secs and pg('search') == []
-      and (pg('feed') == [f['id'] for f in feeds] if feeds else len(pg('feed')) >= 2)
+      and pg('phone') == ['installed', 'declared'] and 'search' in secs and pg('search') == ['search-cloudy', 'search-android', 'search-torrent']
       and ui.get('default_section') == 'cloud')
 sys.exit(0 if ok else 1)
 PY
@@ -179,12 +179,12 @@ PY
   printf '%s' "$bg" | grep -q 'UI_BOTTOM_NAV' && printf '%s' "$bg" | grep -q 'UI_SECTIONS_B64' && printf '%s' "$bg" | grep -q "project(':libs:bottomnav')" && ok "build.gradle bakes the declaration and links libs:bottomnav" || bad "build.gradle does not bake UI_BOTTOM_NAV/UI_SECTIONS_B64 or link libs:bottomnav"
   printf '%s' "$ma" | grep -q 'NavBarBottomHost(' && printf '%s' "$ma" | grep -q 'NavDecl.fromBuildConfig(' && printf '%s' "$ma" | grep -q 'islandEntries' && ok "MainActivity draws the island from the baked NavDecl" || bad "MainActivity does not feed the shared island from NavDecl"
   # 8. #896 the Feed and Perms pages are hosted, the child-page strips are the fleet's PageTabs, and the Cloud page no longer carries the moved parts
-  printf '%s' "$ma" | grep -q 'FeedPage(pageOf(it))' && printf '%s' "$ma" | grep -q 'AccessPage(pageOf(it))' && ok "MainActivity hosts the Feed and Access pages" || bad "MainActivity does not host FeedPage and AccessPage"
+  printf '%s' "$ma" | grep -q 'TorrentPage()' && printf '%s' "$ma" | grep -q 'AccessPage(pageOf(it))' && ! printf '%s' "$ma" | grep -q 'FeedPage' && ok "MainActivity hosts the Torrent and Access pages (Feed moved into Cloud)" || bad "MainActivity does not host TorrentPage and AccessPage, or still hosts FeedPage"
   printf '%s' "$ma" | grep -q 'NavSectionLayout(section, pageOf(section)' && printf '%s' "$ma" | grep -q 'StorePages.hostDrawsStrip = true' && ok "MainActivity draws the declared child pages with PageTabs and tells the pages it does" || bad "MainActivity does not draw section.pages with PageTabs"
   local CS="$S/app/src/main/java/com/diegonmarcos/cloudstore"
-  [ -f "$CS/FeedPage.kt" ] && [ -f "$CS/AccessPage.kt" ] && grep -q '@Composable' "$CS/FeedPage.kt" && grep -q '@Composable' "$CS/AccessPage.kt" && grep -q 'AndroidFragment<AppsMeshFragment>' "$CS/AccessPage.kt" && grep -q 'FeedViewer.load(' "$CS/FeedPage.kt" && ok "the Feed and Access pages are Compose (the ratchet's rule), Access hosts Apps Mesh, and read libs:appstore's FeedViewer declaration" || bad "FeedPage/PermsPage are missing, not Compose, or no longer read FeedViewer"
+  [ -f "$CS/TorrentPage.kt" ] && [ -f "$CS/AccessPage.kt" ] && [ ! -f "$CS/FeedPage.kt" ] && grep -q '@Composable' "$CS/TorrentPage.kt" && grep -q '@Composable' "$CS/AccessPage.kt" && grep -q 'AndroidFragment<AppsMeshFragment>' "$CS/AccessPage.kt" && grep -q 'TorrentEngines.get(' "$CS/TorrentPage.kt" && grep -q 'FeedViewer.load(' "$L/StoreFeedPanels.kt" && ok "the Torrent and Access pages are Compose (the ratchet's rule), Access hosts Apps Mesh, the Torrent page drives the engine, and the feeds are libs:appstore's StoreFeedPanels over FeedViewer" || bad "TorrentPage/AccessPage are missing, not Compose, FeedPage is back, or the feed panels no longer read FeedViewer"
   grep -q 'object StoreTabs' "$L/StoreBar.kt" && ok "the shared strip builder (StoreTabs) lives once in libs:appstore" || bad "StoreTabs is missing from libs:appstore"
-  ! grep -qE 'renderPerms|renderFeed|FeedViewer' "$L/StoreCloudFragment.kt" && ok "the Cloud page draws neither feeds nor Perms" || bad "the Cloud page still carries the moved Feed/Perms parts"
+  ! grep -qE 'renderPerms|renderFeed|FeedViewer' "$L/StoreCloudFragment.kt" && grep -q 'StoreFeedPanels.Panels()' "$L/StoreCloudFragment.kt" && ok "the Cloud page draws its Commits / CI-CD feeds only as StoreFeedPanels (no Perms)" || bad "the Cloud page carries the old Feed/Perms parts, or lost the feed panels"
   grep -q 'StoreTabs.Bar(' "$L/StorePhoneFragment.kt" && grep -q 'StoreTabs.Bar(' "$L/StoreCloudFragment.kt" && ok "Cloud and Phone draw their top tabs with the one StoreTabs.Bar" || bad "a Store page draws its tabs with something other than StoreTabs.Bar"
   # 8b. #896.3 Phone's action bar sits UNDER the top tabs inside the scrolling page, as Cloud's header does (no bottom frame)
   grep -q 'StorePage.Frame(strip) {' "$L/StorePhoneFragment.kt" && ! grep -qE 'fun Frame\(.*actions' "$L/StoreBar.kt" && ok "Phone's action bar is in its page under the tabs, like Cloud's (no bottom bar)" || bad "Phone's action bar left the spot under the tabs"
@@ -248,13 +248,13 @@ mutate "a section leaves the bar" store/build.json '"bottom_nav": [
       "cloud",
       "phone",
       "search",
-      "feed",
+      "torrent",
       "access"
     ]' '"bottom_nav": [
       "cloud",
       "phone",
       "search",
-      "feed",
+      "torrent",
       "perms"
     ]' || M=$((M+1))
 mutate "Phone's action bar goes to the bottom again" lib/StorePhoneFragment.kt 'StorePage.Frame(strip) {' 'StorePage.Frame(strip, actions = col) {' || M=$((M+1))
@@ -264,7 +264,8 @@ mutate "the app opens on Search, not Cloud" store/build.json '"default_section":
 mutate "Search goes back under Phone" store/build.json '"phone",
       "search",' '"phone",' || M=$((M+1))
 mutate "Phone loses its Installed tab" store/build.json '"id": "installed",' '"id": "installd",' || M=$((M+1))
-mutate "Feed page dropped" store/app/src/main/java/com/diegonmarcos/cloudstore/MainActivity.kt 'FeedPage(pageOf(it))' 'Unit' || M=$((M+1))
+mutate "Torrent page dropped" store/app/src/main/java/com/diegonmarcos/cloudstore/MainActivity.kt 'if (selected == TAB_TORRENT) TorrentPage()' 'Unit' || M=$((M+1))
+mutate "Cloud loses the feed panels" lib/StoreCloudFragment.kt 'StoreFeedPanels.Panels()' 'Unit' || M=$((M+1))
 mutate "Access page dropped" store/app/src/main/java/com/diegonmarcos/cloudstore/MainActivity.kt 'AccessPage(pageOf(it))' 'Unit' || M=$((M+1))
 mutate "host stops drawing the page strip" store/app/src/main/java/com/diegonmarcos/cloudstore/MainActivity.kt 'NavSectionLayout(section, pageOf(section)' 'NavSectionLayoux(section, pageOf(section)' || M=$((M+1))
 mutate "gradle stops baking the sections" store/app/build.gradle '"UI_SECTIONS_B64"' '"UI_SECTIONS"' || M=$((M+1))

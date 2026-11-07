@@ -66,6 +66,7 @@
    "id": "web",
    "label": "Web & Network",
    "members": [
+    "torrent",
     "web-core",
     "local-serve",
     "browser",

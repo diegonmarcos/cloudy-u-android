@@ -126,11 +126,11 @@ class StoreScreensTest(private val section: String, private val shot: String) {
     @Composable private fun PageFor() {
         when ("$section/$page") {
             "cloud/cloud" -> AndroidFragment<StoreCloudFragment>(Modifier.fillMaxSize())
-            "phone/installed", "phone/declared", "search/search" -> AndroidFragment<StorePhoneFragment>(Modifier.fillMaxSize())
-            "feed/commits", "feed/cicd" -> FeedPage(page)
+            "phone/installed", "phone/declared", "search/search-cloudy", "search/search-android", "search/search-torrent" -> AndroidFragment<StorePhoneFragment>(Modifier.fillMaxSize())
+            "torrent/torrent" -> TorrentPage()
             "access/identity" -> FleetIdentityPage(registry, live)
             "access/mesh", "access/ipc", "access/android", "access/cloud" -> AccessPage(page)
-            "settings/sources", "settings/adb", "settings/ai", "settings/notifications", "settings/about" -> ConfigsPage(page)
+            "settings/sources", "settings/adb", "settings/ai", "settings/notifications", "settings/torrent", "settings/about" -> ConfigsPage(page)
             else -> error("no page for $section/$page")
         }
     }
@@ -190,8 +190,8 @@ class StoreScreensTest(private val section: String, private val shot: String) {
                     last.assertIsDisplayed()
                 }
             }
-            if (section == "feed") {
-                // the feed reads GitHub on open (no seam to seed): shoot what it settled on (rows, or its own "why" line), not "loading..."
+            if (section == "cloud") {
+                // the Cloud page's Commits / CI-CD panels read GitHub on open (no seam to seed): shoot what they settled on (rows, or their own "why" line), not "loading..."
                 runCatching { compose.waitUntil(30_000) { compose.onAllNodesWithText("loading…", useUnmergedTree = true).fetchSemanticsNodes().isEmpty() } }
             }
             if ("$section/$page" == "settings/notifications") {
@@ -220,9 +220,9 @@ class StoreScreensTest(private val section: String, private val shot: String) {
         @JvmStatic
         @ParameterizedRobolectricTestRunner.Parameters(name = "{0}/{1}")
         fun pages(): List<Array<Any>> = listOf(
-            "cloud/cloud", "phone/installed", "phone/declared", "search/search", "feed/commits", "feed/cicd",
+            "cloud/cloud", "phone/installed", "phone/declared", "search/search-cloudy", "search/search-android", "search/search-torrent", "torrent/torrent",
             "access/mesh", "access/ipc", "access/identity", "access/identity-bottom", "access/android", "access/cloud",
-            "settings/sources", "settings/adb", "settings/ai", "settings/notifications", "settings/about",
+            "settings/sources", "settings/adb", "settings/ai", "settings/notifications", "settings/torrent", "settings/about",
         ).map { it.split('/').toTypedArray<Any>() }
     }
 }

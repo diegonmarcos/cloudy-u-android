@@ -36,8 +36,8 @@ def ok(c, good, bad):
     fails += 0 if c else 1
 K = "ac_cloud-store/app/src/main/java/com/diegonmarcos/cloudstore/"
 LIBS = "ab_cloud-libs-shared/libs/"
-PAGES = ["sources", "adb", "ai", "notifications", "data", "about"]
-LABELS = ["Sources", "ADB Shell", "AI", "Notifications", "Data", "About"]
+PAGES = ["sources", "adb", "ai", "notifications", "torrent", "data", "about"]
+LABELS = ["Sources", "ADB Shell", "AI", "Notifications", "Torrent", "Data", "About"]
 
 # C1
 bj = json.load(open(f"{R}/ac_cloud-store/build.json"))
@@ -45,9 +45,9 @@ ui = bj["ui"]
 sec = {s["id"]: s for s in ui["sections"]}
 pg = sec.get("settings", {}).get("pages", [])
 ok([p["id"] for p in pg] == PAGES and [p["label"] for p in pg] == LABELS,
-   "ui.sections settings declares Sources | ADB Shell | AI | Notifications | Data | About, in order",
+   "ui.sections settings declares Sources | ADB Shell | AI | Notifications | Torrent | Data | About, in order",
    f"the settings section's pages are {[p.get('id') for p in pg]}, not {PAGES}")
-ok(all(not p.get("pages") and not p.get("action") for p in pg), "the six are flat destinations (no sub strip, no launch tab)", "a Configs page is a sub-strip or a launch tab")
+ok(all(not p.get("pages") and not p.get("action") for p in pg), "the seven are flat destinations (no sub strip, no launch tab)", "a Configs page is a sub-strip or a launch tab")
 ok("settings" not in ui["bottom_nav"] and "configs" in ui["top_bar"]["settings"], "Settings stays off the island and the top bar's Settings menu offers Configs", "Configs moved onto the island or left the top bar's menu")
 
 # C2
@@ -64,8 +64,8 @@ ok("if (selected == TAB_SETTINGS) section?.let { ConfigsPage(pageOf(it)) }" in m
 # C3
 ok("FeedViewer.feeds(ctx)" in cp and "StoreSourcePrefs.set(ctx, f.id, it)" in cp and "PhoneAppActions.resolver(" in cp and "FleetBearer.Own(" in cp,
    "Sources lists the Store's feeds with switches, the install ladder and the fleet token", "the Sources page is not built from the Store's own declared feeds / ladder / token")
-fp = rd(K + "FeedPage.kt")
-ok("StoreSourcePrefs.enabled(ctx, feed.id)" in fp, "a feed switched off in Sources is not read by the Feed page", "the Feed page ignores the Sources switches")
+fp = rd("ab_cloud-libs-shared/libs/appstore/src/main/java/com/diegonmarcos/superapp/appstore/StoreFeedPanels.kt")
+ok("StoreSourcePrefs.enabled(ctx, feed.id)" in fp, "a feed switched off in Sources is not read by the Cloud page's feed panels", "the Cloud page's feed panels ignore the Sources switches")
 ok("ShellBrokerPage.lines(status)" in cp and "ShellClient.openArmPage(ctx)" in cp and "adbdebug" not in cp, "ADB Shell is the SuperApp shell-broker page (status + Arm in SuperApp), not a channel of the Store's own", "the ADB Shell page is not the broker page")
 ok(".verticalScroll(rememberScrollState())" in cp and "val own = page" not in cp, "every page, the broker page included, is a column this host scrolls", "a page is nested in a second scroll, or lost its scroll")
 ok("AiSettingsPickers(" in cp and "AiFleetChat.chat(ctx, BuildConfig.AI_GATEWAY_URL)" in cp and "OutlinedTextField" not in cp.split("private fun AiPage")[1].split("// ── Notifications")[0],
@@ -114,7 +114,7 @@ L=ab_cloud-libs-shared/libs
 FILES="ac_cloud-store/build.json ac_cloud-store/build.gradle
 ac_cloud-store/app/src/main/java/com/diegonmarcos/cloudstore/ConfigsPage.kt
 ac_cloud-store/app/src/main/java/com/diegonmarcos/cloudstore/MainActivity.kt
-ac_cloud-store/app/src/main/java/com/diegonmarcos/cloudstore/FeedPage.kt
+ab_cloud-libs-shared/libs/appstore/src/main/java/com/diegonmarcos/superapp/appstore/StoreFeedPanels.kt
 ac_cloud-store/app/src/test/java/com/diegonmarcos/cloudstore/ShellBrokerPageTest.kt
 $L/core/src/main/java/com/diegonmarcos/superapp/core/StoreNotifyPrefs.kt
 $L/updater/src/main/java/com/diegonmarcos/superapp/updater/PackageInstallerReceiver.kt
@@ -152,7 +152,7 @@ mutate "an undeclared page body" $K/ConfigsPage.kt 'const val ABOUT = "about"' '
     const val EXTRA = "extra"' || M=$((M+1))
 mutate "MainActivity back to the single screen" $K/MainActivity.kt 'section?.let { ConfigsPage(pageOf(it)) }' 'SettingsPage()' || M=$((M+1))
 mutate "Sources forgets the feeds" $K/ConfigsPage.kt 'FeedViewer.feeds(ctx)' 'emptyList<FeedViewer.Feed>()' || M=$((M+1))
-mutate "the Feed page ignores the switch" $K/FeedPage.kt 'StoreSourcePrefs.enabled(ctx, feed.id)' 'true' || M=$((M+1))
+mutate "the feed panels ignore the switch" $L/appstore/src/main/java/com/diegonmarcos/superapp/appstore/StoreFeedPanels.kt 'StoreSourcePrefs.enabled(ctx, feed.id)' 'true' || M=$((M+1))
 mutate "the broker page shows no state" $K/ConfigsPage.kt 'ShellBrokerPage.lines(status)' 'emptyList<String>()' || M=$((M+1))
 mutate "the page is nested in a second scroll" $K/ConfigsPage.kt 'Modifier.fillMaxSize().testTag(ConfigsPages.body(page)).verticalScroll(rememberScrollState()).padding(pad)' 'Modifier.fillMaxSize().testTag(ConfigsPages.body(page))' || M=$((M+1))
 mutate "MainActivity hosts the ADB page again" $K/MainActivity.kt 'class MainActivity : AppCompatActivity() {' 'class MainActivity : AppCompatActivity(), AdbShellHost {' || M=$((M+1))

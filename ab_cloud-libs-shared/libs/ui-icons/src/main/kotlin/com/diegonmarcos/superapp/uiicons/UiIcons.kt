@@ -273,6 +273,7 @@ public object UiIcons {
         "phone" to Icons.Outlined.PhoneAndroid,
         "feed" to Icons.Outlined.RssFeed,
         "access" to Icons.Outlined.Security,
+        "torrent" to Icons.Outlined.CloudDownload,
         "calendar" to Icons.Outlined.DateRange,
         "costs" to Icons.Outlined.Payments,
         "documents" to Icons.Outlined.Description,

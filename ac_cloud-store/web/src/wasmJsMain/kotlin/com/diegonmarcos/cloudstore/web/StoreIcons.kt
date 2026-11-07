@@ -10,7 +10,7 @@ import androidx.compose.ui.unit.dp
 /**
  * The glyphs of the store's sections (ui.sections[].icon in ac_cloud-store/build.json), drawn
  * as plain path data so the page needs no icon artifact. The Android shell maps the same names to
- * Material icons (Cloud, PhoneAndroid, Search, RssFeed, Security, Settings); the shapes here are the same idea, not a
+ * Material icons (Cloud, PhoneAndroid, Search, CloudDownload, Security, Settings); the shapes here are the same idea, not a
  * pixel copy.
  */
 internal object StoreIcons {
@@ -42,6 +42,11 @@ internal object StoreIcons {
         "M6.18,17.82a2.18,2.18 0 1,1 -4.36,0a2.18,2.18 0 1,1 4.36,0zM4,4.44v2.83c7.03,0 12.73,5.7 12.73,12.73h2.83C19.56,11.27 12.73,4.44 4,4.44z" +
             "M4,10.1v2.83c3.9,0 7.07,3.17 7.07,7.07h2.83c0,-5.47 -4.43,-9.9 -9.9,-9.9z",
     )
+    private val torrent = glyph(
+        "torrent",
+        "M19.35,10.04C18.67,6.59 15.64,4 12,4 9.11,4 6.6,5.64 5.35,8.04 2.34,8.36 0,10.91 0,14c0,3.31 2.69,6 6,6h13c2.76,0 5,-2.24 5,-5 0,-2.64 -2.05,-4.78 -4.65,-4.96z" +
+            "M17,13l-5,5 -5,-5h3V9h4v4z",
+    )
     private val perms = glyph(
         "perms",
         "M12,1L3,5v6c0,5.55 3.84,10.74 9,12 5.16,-1.26 9,-6.45 9,-12V5l-9,-4zM12,11.99h7c-0.53,4.12 -3.28,7.79 -7,8.94V12H5V6.3l7,-3.11v8.8z",
@@ -58,6 +63,7 @@ internal object StoreIcons {
         "search" -> search
         "mesh" -> mesh
         "feed" -> feed
+        "torrent" -> torrent
         "access" -> perms
         else -> settings
     }

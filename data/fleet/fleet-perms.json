@@ -365,7 +365,8 @@
     "notifications",
     "install_unknown",
     "usage_access",
-    "battery_opt"
+    "battery_opt",
+    "all_files"
    ],
    "helpers": []
   },

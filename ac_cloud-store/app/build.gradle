@@ -250,6 +250,8 @@ dependencies {
     implementation project(':libs:theme-background')
     // The top bar's AI panel: the fleet's AI chat over the fleet agent gateway (no token on the phone). It brings libs:model-catalogue along.
     implementation project(':libs:ai')
+    // #1600 the BitTorrent engine, the torrent search sources and the download-folder rule: the Torrent destination, Search > Torrent and Configs > Torrent.
+    implementation project(':libs:torrent')
 
     implementation 'androidx.core:core-ktx:1.13.1'
     implementation 'androidx.appcompat:appcompat:1.7.0'
