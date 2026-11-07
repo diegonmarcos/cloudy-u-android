@@ -53,12 +53,14 @@ for verb in $VERBS; do
     if grep -qE "\.$verb\(" "$BUFFER_TEST"; then pass "test exercises .$verb("; else fail "no test calls .$verb("; fi
 done
 
-echo "── F3 the colouring catalogue is one named asset, read by screen and test alike ──"
-ASSET_NAME="$(grep -oE 'const val ASSET = "[^"]+"' "$HIGHLIGHTER" | sed 's/.*= "//; s/"$//')"
-if [ -n "$ASSET_NAME" ] && [ -f "$ASSET_DIR/$ASSET_NAME" ]; then pass "asset $ASSET_NAME exists where the highlighter says"; else fail "SyntaxHighlighter.ASSET ('$ASSET_NAME') does not name a file in src/main/assets"; fi
-if grep -qE "assets\.open\(SyntaxHighlighter\.ASSET\)" "$SCREEN"; then pass "screen opens the asset by the declared name"; else fail "screen does not open SyntaxHighlighter.ASSET"; fi
-if grep -qE "src/main/assets/\" \+ SyntaxHighlighter\.ASSET" "$HL_TEST"; then pass "test reads the same asset file"; else fail "SyntaxHighlighterTest does not read the real asset"; fi
-python3 - "$ASSET_DIR/$ASSET_NAME" <<'PYTHON' && pass "every language has an id and a non-empty extension list; no extension is claimed twice" || fail "catalogue shape (see above)"
+echo "── F3 the colouring catalogue is one named runtime dataset (#1547: served by Cloud Store, no lib asset), read by screen and test alike ──"
+DS_NAME="$(grep -oE 'const val DATASET = "[^"]+"' "$HIGHLIGHTER" | sed 's/.*= "//; s/"$//')"
+DS_FILE="$ROOT/data/fleet/$DS_NAME.json"
+if [ -n "$DS_NAME" ] && [ -f "$DS_FILE" ]; then pass "dataset $DS_NAME is served from data/fleet where the highlighter says"; else fail "SyntaxHighlighter.DATASET ('$DS_NAME') does not name a file in data/fleet"; fi
+if [ -z "$(find "$ASSET_DIR" -type f 2>/dev/null)" ]; then pass "the lib carries no data asset"; else fail "file-editor still ships assets: $(ls "$ASSET_DIR")"; fi
+if grep -qE "FleetData\.get\(.*SyntaxHighlighter\.DATASET" "$SCREEN"; then pass "screen reads the dataset through FleetData"; else fail "screen does not read SyntaxHighlighter.DATASET through FleetData"; fi
+if grep -qE "SyntaxHighlighter\.DATASET" "$HL_TEST"; then pass "test reads the same served file"; else fail "SyntaxHighlighterTest does not read the served dataset"; fi
+python3 - "$DS_FILE" <<'PYTHON' && pass "every language has an id and a non-empty extension list; no extension is claimed twice" || fail "catalogue shape (see above)"
 import json, sys
 d = json.load(open(sys.argv[1], encoding="utf-8"))
 seen = {}

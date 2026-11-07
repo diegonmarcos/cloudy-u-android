@@ -117,7 +117,7 @@ for w in 'Path-loss exponent' 'Classic discovery' 'Export JSON' 'Export CSV' 'Be
 done
 
 echo "== B4: the vocabulary is data =="
-check "$(python3 - "$LIB/src/main/assets/bluetooth/gatt-catalog.json" "$LK/GattDecoders.kt" <<'PY'
+check "$(python3 - "$ROOT/data/fleet/gatt-catalog.json" "$LK/GattDecoders.kt" <<'PY'
 import json, re, sys
 d = json.load(open(sys.argv[1])); src = open(sys.argv[2]).read()
 probs = []

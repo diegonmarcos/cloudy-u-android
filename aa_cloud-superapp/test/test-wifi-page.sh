@@ -171,14 +171,14 @@ check "$(python3 - "$LIB" <<'PY'
 import glob, re, sys
 lib = sys.argv[1]; probs = []
 deps = re.findall(r"project\('(:[^']+)'\)", open(lib + '/build.gradle').read())
-if deps != [':libs:ui-icons', ':libs:perms']: probs.append('project deps = %r' % deps)
+if deps != [':libs:ui-icons', ':libs:fleet-data-client', ':libs:perms']: probs.append('project deps = %r' % deps)
 for f in glob.glob(lib + '/src/main/java/**/*.kt', recursive=True):
     for imp in re.findall(r'^import (com\.diegonmarcos\.[\w.]+)', open(f).read(), re.M):
-        if not (imp.startswith('com.diegonmarcos.superapp.wifi.') or imp.startswith('com.diegonmarcos.superapp.uiicons.') or imp.startswith('com.diegonmarcos.superapp.perms.')): probs.append('%s imports %s' % (f.rsplit('/', 1)[1], imp))
+        if not (imp.startswith('com.diegonmarcos.superapp.wifi.') or imp.startswith('com.diegonmarcos.superapp.uiicons.') or imp.startswith('com.diegonmarcos.superapp.perms.') or imp.startswith('com.diegonmarcos.superapp.fleetdata.')): probs.append('%s imports %s' % (f.rsplit('/', 1)[1], imp))
     if re.search(r'BuildConfig\.[A-Z_]', open(f).read()): probs.append(f.rsplit('/', 1)[1] + ' reads a BuildConfig')
 print('; '.join(probs) or 'OK')
 PY
-)" "libs:wifi depends on libs:ui-icons and libs:perms only, imports no host class and reads no BuildConfig (the host injects WifiHostConfig)"
+)" "libs:wifi depends on libs:ui-icons, libs:fleet-data-client (#1547 packs) and libs:perms only, imports no host class and reads no BuildConfig (the host injects WifiHostConfig)"
 grep -q 'class WifiHostConfig' "$LK/WifiConfig.kt" && grep -q 'fun controller(ctx: Context, host: WifiHostConfig' "$LK/WifiHub.kt" \
   && ok "the entry point takes the host config (Cloud Calc and the SuperApp each inject theirs)" || bad "the host config is not injected"
 
