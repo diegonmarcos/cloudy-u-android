@@ -2617,6 +2617,18 @@
      ]
     },
     {
+     "permission": "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA",
+     "level": "signature",
+     "source": "ac_cloud-nix-on-droid/app/src/main/AndroidManifest.xml",
+     "component": ".app.MeshSshdService",
+     "id": "service:.app.MeshSshdService",
+     "kind": "service",
+     "name": "MeshSshdService",
+     "actions": [],
+     "aidl": [],
+     "callers": []
+    },
+    {
      "permission": "com.diegonmarcos.cloud.permission.TERMINAL_SESSION",
      "level": "signature",
      "source": "ac_cloud-nix-on-droid/app/src/main/AndroidManifest.xml",
@@ -3682,6 +3694,18 @@
       "nix-on-droid",
       "termux"
      ]
+    },
+    {
+     "permission": "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA",
+     "level": "signature",
+     "source": "ac_cloud-nix-on-droid/app/src/main/AndroidManifest.xml",
+     "component": ".app.MeshSshdService",
+     "id": "service:.app.MeshSshdService",
+     "kind": "service",
+     "name": "MeshSshdService",
+     "actions": [],
+     "aidl": [],
+     "callers": []
     },
     {
      "permission": "com.diegonmarcos.cloud.permission.TERMINAL_SESSION",
