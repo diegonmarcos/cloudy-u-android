@@ -1,8 +1,9 @@
 //! #1502 the two master controls: Server ON/OFF and Keep alive ON/OFF, as one declared state machine.
 //!
 //! build.json::power declares the store (a JSON file both this crate and the Kotlin keep-alive glue read), the defaults and the
-//! decision table (`matrix`); [`plan`] is the rules and the tests hold it equal to the table. Server OFF: no listener (the
-//! loopback pages, the mesh listener, every Repos site) and no port held. Keep alive OFF: no foreground service, no sticky
+//! decision table (`matrix`); [`plan`] is the rules and the tests hold it equal to the table. Server OFF: no CONTENT listener (the
+//! diagnostics page, DNS, the mesh listener, every Repos site, sshd) and the drive answers 503 for everything but `/__app__`;
+//! the ADMIN surface (:8002 `/__app__` + `/api/power`) is never unbound (`admin`), so Server ON is always one click away. Keep alive OFF: no foreground service, no sticky
 //! restart, no boot receiver, no scheduled wake; the server lives only while the app process does. Only Server ON with Keep
 //! alive ON runs the foreground service and the boot autostart.
 
@@ -21,7 +22,10 @@ pub struct Switches {
 /// What a state allows. `wake` (an alarm or a scheduled job) is never allowed in any state.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct Plan {
+    /// Content listeners (diag, DNS, mesh, sites, sshd, the drive's files). Follows Server.
     pub listeners: bool,
+    /// The admin surface (:8002 /__app__ + /api/power) stays bound in EVERY state: the way back on.
+    pub admin: bool,
     pub service: bool,
     pub boot: bool,
     pub sticky: bool,
@@ -30,7 +34,7 @@ pub struct Plan {
 
 pub fn plan(s: Switches) -> Plan {
     let svc = s.server && s.keep_alive;
-    Plan { listeners: s.server, service: svc, boot: svc, sticky: svc, wake: false }
+    Plan { listeners: s.server, admin: true, service: svc, boot: svc, sticky: svc, wake: false }
 }
 
 /// May another app's start request (SuperApp wake, MCP phone tool, log export) bring the server up from outside the UI?
@@ -54,7 +58,7 @@ impl Cfg {
             .as_array()
             .ok_or("build.json::power.matrix must be an array")?
             .iter()
-            .map(|r| Ok::<_, String>((sw(r)?, Plan { listeners: flag(r, "listeners")?, service: flag(r, "service")?, boot: flag(r, "boot")?, sticky: flag(r, "sticky")?, wake: flag(r, "wake")? })))
+            .map(|r| Ok::<_, String>((sw(r)?, Plan { listeners: flag(r, "listeners")?, admin: flag(r, "admin")?, service: flag(r, "service")?, boot: flag(r, "boot")?, sticky: flag(r, "sticky")?, wake: flag(r, "wake")? })))
             .collect::<Result<Vec<_>, String>>()?;
         Ok(Cfg {
             store: PathBuf::from(p["store"].as_str().ok_or("build.json::power.store is missing")?),
@@ -222,7 +226,8 @@ pub fn apply(sw: Switches) -> Result<(), String> {
     if plan(sw).listeners {
         crate::resume()?;
     } else {
-        crate::stop_all();
+        // Content only: the admin surface (:8002) stays bound so the owner can switch back on.
+        crate::stop_content();
     }
     if let Some(f) = SYNC.get() {
         f();
@@ -239,7 +244,9 @@ pub fn status_json() -> Value {
     let running = crate::running();
     let mut ports = vec![];
     if running {
-        ports.push(json!({"name": "drive", "port": sv.drive_port, "proto": "tcp"}));
+        ports.push(json!({"name": "admin", "port": sv.drive_port, "proto": "tcp"}));
+    }
+    if crate::content_running() {
         ports.push(json!({"name": "diagnostics", "port": sv.diag_port, "proto": "tcp"}));
         ports.push(json!({"name": "dns", "port": sv.dns.port, "proto": "udp"}));
         if let Some(p) = apis::build()["mesh"]["port"].as_u64().or_else(|| apis::build()["runtime"]["mesh"]["port"].as_u64()) {
@@ -253,9 +260,9 @@ pub fn status_json() -> Value {
     }
     let p = plan(st.sw);
     json!({
-        "server": st.sw.server, "keep_alive": st.sw.keep_alive, "running": running,
+        "server": st.sw.server, "keep_alive": st.sw.keep_alive, "running": running, "content": crate::content_running(), "admin": true,
         "sites": crate::repos::host().count(), "ports": ports, "off_url": cfg().off_url, "ssh_door": ssh,
-        "plan": {"listeners": p.listeners, "service": p.service, "boot": p.boot, "sticky": p.sticky, "wake": p.wake},
+        "plan": {"listeners": p.listeners, "admin": p.admin, "service": p.service, "boot": p.boot, "sticky": p.sticky, "wake": p.wake},
     })
 }
 
@@ -282,11 +289,16 @@ mod tests {
     }
 
     #[test]
-    fn server_off_means_no_listeners_in_every_keep_alive_state() {
+    fn server_off_means_no_content_listeners_but_the_admin_surface_stays_in_every_keep_alive_state() {
         for ka in [false, true] {
             let p = plan(Switches { server: false, keep_alive: ka });
-            assert_eq!(p, Plan { listeners: false, service: false, boot: false, sticky: false, wake: false });
+            assert_eq!(p, Plan { listeners: false, admin: true, service: false, boot: false, sticky: false, wake: false });
         }
+    }
+
+    #[test]
+    fn the_admin_surface_is_bound_in_every_state() {
+        assert!(ALL.iter().all(|s| plan(*s).admin), "Server OFF must never unbind /__app__ and /api/power");
     }
 
     #[test]

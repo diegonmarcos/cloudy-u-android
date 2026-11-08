@@ -95,7 +95,10 @@ fn host_allowed(host: &str) -> bool {
 pub fn drive_handler(ctx: Ctx, files: Arc<http::Handler>) -> Arc<http::Handler> {
     Arc::new(move |req: &Req| {
         app::handle(&ctx, req, &host_allowed).unwrap_or_else(|| {
-            // The app shell stays up; the drive's files answer 503 while Pages > Stop serving has paused them.
+            // The app shell stays up; the drive's files answer 503 while Server is OFF or Pages > Stop serving has paused them.
+            if !power::plan(power::current().sw).listeners {
+                return Resp::text(503, "Server is OFF (open /__app__/ > Home > Server ON)");
+            }
             if serving::get().endpoints.iter().any(|e| e.role == serving::Role::Drive && served::is_paused(&e.id)) {
                 return Resp::text(503, "This page is stopped (Pages > Start serving)");
             }
@@ -119,44 +122,77 @@ pub struct Config {
 /// The root is NOT required to be readable yet: on Android the storage grant arrives after the app has started,
 /// and every request resolves its path afresh, so a root that becomes readable later is served from then on.
 pub fn start(cfg: Config) -> Result<(), String> {
-    // #1502 every caller (the activity, the keep-alive service, an outside start request) lands here: Server OFF binds nothing.
     *CFG.lock().map_err(|_| "poisoned")? = Some(cfg.clone());
+    // The admin surface (:8002 /__app__ + /api/power) is ALWAYS bound, so Server OFF can always be turned back on from the web UI.
+    let admin = {
+        let mut run = RUN.lock().map_err(|_| "poisoned")?;
+        if run.is_none() {
+            *run = Some(Arc::new(AtomicBool::new(false)));
+            true
+        } else {
+            false
+        }
+    };
+    if admin {
+        let stop = RUN.lock().map_err(|_| "poisoned")?.clone().unwrap();
+        if let Err(e) = start_admin(&cfg, stop) {
+            stop_all();
+            return Err(e);
+        }
+    }
+    // #1502 Server OFF binds no content listener (diag, mesh, DNS, sites, sshd); the drive answers 503 for everything but /__app__.
     if !power::plan(power::current().sw).listeners {
-        println!("c3-webserver: Server is OFF, nothing bound");
+        println!("c3-webserver: Server is OFF, content stopped (admin surface stays bound)");
+        stop_content();
         return Ok(());
     }
-    // One server per process: the keep-alive service (src-tauri) and the activity both call this, in either order.
-    let stop = {
-        let mut run = RUN.lock().map_err(|_| "poisoned")?;
-        if run.is_some() {
+    let cstop = {
+        let mut c = CONTENT.lock().map_err(|_| "poisoned")?;
+        if c.is_some() {
             return Ok(());
         }
         let s = Arc::new(AtomicBool::new(false));
-        *run = Some(s.clone());
+        *c = Some(s.clone());
         s
     };
-    let r = start_once(cfg, stop);
+    let r = start_content(cfg, cstop);
     if r.is_err() {
-        stop_all();
+        stop_content();
     }
     r
 }
 
 static CFG: Mutex<Option<Config>> = Mutex::new(None);
-/// The stop flag of the running generation of listeners; None while nothing is bound.
+/// The stop flag of the admin (drive) listener; None while nothing is bound.
 static RUN: Mutex<Option<Arc<AtomicBool>>> = Mutex::new(None);
+/// The stop flag of the content listeners (diag, mesh, DNS, sites); None while Server is OFF.
+static CONTENT: Mutex<Option<Arc<AtomicBool>>> = Mutex::new(None);
 
 pub fn running() -> bool {
     RUN.lock().map(|r| r.is_some()).unwrap_or(false)
 }
 
-/// #1502 Server OFF: end every listener (drive, diagnostics, mesh, DNS, every Repos site) so every port is released.
-pub fn stop_all() {
-    if let Some(s) = RUN.lock().ok().and_then(|mut r| r.take()) {
+/// True while the content listeners (diag, mesh, DNS, sites) are bound, i.e. Server ON.
+pub fn content_running() -> bool {
+    CONTENT.lock().map(|r| r.is_some()).unwrap_or(false)
+}
+
+/// #1502 Server OFF: end every CONTENT listener (diagnostics, mesh, DNS, every Repos site, sshd). The admin listener (:8002
+/// `/__app__` and `/api/power`) stays bound so the owner can always switch the server back on from the web UI.
+pub fn stop_content() {
+    if let Some(s) = CONTENT.lock().ok().and_then(|mut r| r.take()) {
         s.store(true, Ordering::SeqCst);
     }
     repos::host().stop_all();
     sshd::stop();
+}
+
+/// Process teardown / failed start: end everything including the admin listener. Server OFF never calls this.
+pub fn stop_all() {
+    stop_content();
+    if let Some(s) = RUN.lock().ok().and_then(|mut r| r.take()) {
+        s.store(true, Ordering::SeqCst);
+    }
 }
 
 /// Server ON: bind again with the config the app started with (a no-op when nothing ever called [`start`] in this process).
@@ -181,7 +217,7 @@ fn bind_retry(port: u16) -> std::io::Result<TcpListener> {
     Err(last.unwrap())
 }
 
-fn start_once(cfg: Config, stop: Arc<AtomicBool>) -> Result<(), String> {
+fn start_admin(cfg: &Config, stop: Arc<AtomicBool>) -> Result<(), String> {
     let sv = serving::get();
     if cfg.drive_port != sv.drive_port || cfg.diag_port != sv.diag_port {
         return Err(format!(
@@ -195,9 +231,13 @@ fn start_once(cfg: Config, stop: Arc<AtomicBool>) -> Result<(), String> {
     let web = fleet_webserver::Config { port: cfg.drive_port, root: cfg.root.clone(), extra_hosts: private_names() };
     println!("c3-webserver {} on http://127.0.0.1:{}/ root={} pid={}", env!("CARGO_PKG_VERSION"), cfg.drive_port, cfg.root, std::process::id());
     let binary = std::env::current_exe().map(|p| p.to_string_lossy().to_string()).unwrap_or_default();
-    let dctx = Ctx { root: std::path::PathBuf::from(&cfg.root), port: cfg.drive_port, started: Instant::now(), binary: binary.clone() };
-    http::listen_with(drive, drive_handler(dctx, fleet_webserver::handler(&web)), loopback(), Some(stop.clone()));
+    let dctx = Ctx { root: std::path::PathBuf::from(&cfg.root), port: cfg.drive_port, started: Instant::now(), binary };
+    http::listen_with(drive, drive_handler(dctx, fleet_webserver::handler(&web)), loopback(), Some(stop));
+    Ok(())
+}
 
+fn start_content(cfg: Config, stop: Arc<AtomicBool>) -> Result<(), String> {
+    let binary = std::env::current_exe().map(|p| p.to_string_lossy().to_string()).unwrap_or_default();
     match bind_retry(cfg.diag_port) {
         Ok(l) => {
             println!("c3-webserver diagnostics on http://127.0.0.1:{}/", cfg.diag_port);

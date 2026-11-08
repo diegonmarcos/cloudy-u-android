@@ -65,7 +65,7 @@
     ]
   },
   "power": {
-    "_doc": "#1502 THE TWO MASTER CONTROLS (Home and Configs > General, server/src/power.rs, KeepAliveService.kt). Server ON/OFF: OFF stops every listener (loopback pages, mesh listener, every Repos site) and frees every port; ON starts them and the Repos sites enabled. Keep alive ON/OFF (default OFF): OFF means no foreground service, no sticky restart, no boot receiver and no scheduled wake, so the server runs while the app process does and nothing revives it; ON runs the foreground service (notification with a Stop action) and the boot autostart, only while Server is ON. `store` is read by both the Rust crate and the Kotlin glue. `matrix` is the decision table; power.rs::plan is held equal to it by a test. Any other app's start request (SuperApp wake, MCP phone tools, log export, Cloud Browser) is honoured by the service only in the one row where `service` is true. `off_url` is the Tauri-bundled page shown while the server is off (it is the way back to ON, because the served pages are down).",
+    "_doc": "#1502 THE TWO MASTER CONTROLS (Home and Configs > General, server/src/power.rs, KeepAliveService.kt). Server ON/OFF: OFF stops every CONTENT listener (diagnostics, DNS, mesh listener, every Repos site, sshd) and makes the drive answer 503 for everything but /__app__; the ADMIN surface (:8002 /__app__ + /api/power, `admin` true in every row) is never unbound, so the web UI can always switch the server back on; ON starts them and the Repos sites enabled. Keep alive ON/OFF (default OFF): OFF means no foreground service, no sticky restart, no boot receiver and no scheduled wake, so the server runs while the app process does and nothing revives it; ON runs the foreground service (notification with a Stop action) and the boot autostart, only while Server is ON. `store` is read by both the Rust crate and the Kotlin glue. `matrix` is the decision table; power.rs::plan is held equal to it by a test. Any other app's start request (SuperApp wake, MCP phone tools, log export, Cloud Browser) is honoured by the service only in the one row where `service` is true. `off_url` is the Tauri-bundled page shown while the server is off (a backstop only: the web UI at /__app__ stays up while OFF and is the primary way back to ON).",
     "store": "/storage/emulated/0/Android/data/com.diegonmarcos.cloudwebserver/files/power.json",
     "default": {
       "server": true,
@@ -77,6 +77,7 @@
         "server": false,
         "keep_alive": false,
         "listeners": false,
+        "admin": true,
         "service": false,
         "boot": false,
         "sticky": false,
@@ -86,6 +87,7 @@
         "server": false,
         "keep_alive": true,
         "listeners": false,
+        "admin": true,
         "service": false,
         "boot": false,
         "sticky": false,
@@ -95,6 +97,7 @@
         "server": true,
         "keep_alive": false,
         "listeners": true,
+        "admin": true,
         "service": false,
         "boot": false,
         "sticky": false,
@@ -104,6 +107,7 @@
         "server": true,
         "keep_alive": true,
         "listeners": true,
+        "admin": true,
         "service": true,
         "boot": true,
         "sticky": true,

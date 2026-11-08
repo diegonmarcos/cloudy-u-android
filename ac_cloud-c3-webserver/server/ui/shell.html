@@ -168,7 +168,7 @@ function renderPower(st) {
   var ports = st.ports.map(function (p) { return p.proto + ' ' + p.port; }).join(', ') || 'none';
   var ssh = st.ssh_door;
   return '<section id="power"><h2>Server</h2>' +
-    sw('server', 'Server', st.server, 'OFF stops every page, the mesh listener and every site, and frees the ports') +
+    sw('server', 'Server', st.server, 'OFF stops the served pages, DNS, the mesh listener, sshd and every site; this admin page stays up so you can switch it back ON') +
     sw('keep_alive', 'Keep alive', st.keep_alive, 'ON keeps the server up with a notification and starts it at boot; OFF stops it when the app closes') +
     sw('ssh_door', 'SSH door :' + ssh.port, ssh.wanted, 'ON asks Cloud Terminal Nix-on-Droid to start its sshd; follows Keep alive until set here. It is stopped again only if this app started it') +
     '<div class="row"><div class="k">State</div><div class="v">' + (st.running ? 'running' : 'stopped') + '</div></div>' +
@@ -669,10 +669,11 @@ if (typeof module !== 'undefined') {
     if (sub) { var on = document.querySelector('nav button.on'); if (on) { subPage[on.getAttribute('data-tab')] = sub.getAttribute('data-sub'); show(on.getAttribute('data-tab'), false); } return; }
     var pw = ev.target.closest('[data-power]');
     if (pw) {
-      var body = {}, to = pw.getAttribute('data-to'); body[pw.getAttribute('data-power')] = to === 'follow' ? null : to === 'true';
-      post('/__app__/api/power', body).then(function (st) {
-        // The served pages are down once the server is OFF: continue on the bundled page, whose button turns it back ON.
-        if (!st.server) { location.replace(st.off_url); return; }
+      var body = {}, to = pw.getAttribute('data-to');
+      if (pw.getAttribute('data-power') === 'server' && to === 'false' && !confirm('Turn the Server OFF? Served pages, sshd, DNS and sites stop. This admin page stays up, so you can turn it back ON here.')) return;
+      body[pw.getAttribute('data-power')] = to === 'follow' ? null : to === 'true';
+      post('/__app__/api/power', body).then(function () {
+        // The admin surface (/__app__, /api/power) stays bound while OFF: just redraw.
         refreshTab();
       }).catch(function (e) { toast(e.message, true); });
       return;
