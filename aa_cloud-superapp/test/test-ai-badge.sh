@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Tester (#1151): the "AI" badge of the Resources group keeps its contract.
+# Tester (#1151): the "AI" badge of the Device Infos group keeps its contract.
 # Declared + grouped + registered; reads ONLY c3-infra-api GET /ai/usage through AiUsageClient (mesh first, public bearer
 # second, base URL from the build, never a literal); no secret in the source; the periodic tick stops with the screen.
 set -u
@@ -14,7 +14,7 @@ LIB="$APP/../ab_cloud-libs-shared/libs/ai-usage/src/main/kotlin/com/diegonmarcos
 SVC="$SRC/AiBadgeService.kt"; CLI="$LIB/AiUsageClient.kt"; MODEL="$LIB/AiUsageModel.kt"
 MANIFEST="$APP/app/src/main/AndroidManifest.xml"
 
-echo "== T1: declared, last in the Resources group, with switches =="
+echo "== T1: declared, last in the Device Infos group, with switches =="
 check "$(python3 - "$BJ" "$SVC" <<'PY'
 import json, sys
 nc = json.load(open(sys.argv[1]))['ui']['notification_center']
@@ -26,11 +26,11 @@ elif not (p.get('badge') and p.get('persistent') and p.get('enabled')): print('n
 elif not p.get('service', '').endswith('.AiBadgeService'): print('no owning service')
 elif 'notifications' not in p.get('requires', []): print('does not declare the notification grant')
 elif not {'enabled', 'persistent'} <= {o['key'] for o in p.get('customization', [])}: print('missing off / pin switch')
-elif g is None or g['label'] != 'Resources' or g['members'][-1] != 'ai_usage': print('not the last member of Resources')
+elif g is None or g['label'] != 'Device Infos' or g['members'][-1] != 'ai_usage': print('not the last member of Device Infos')
 elif p.get('channel') != 'ai_usage' or 'CHANNEL_ID = "ai_usage"' not in src or 'BADGE_ID = "ai_usage"' not in src: print('channel / id mismatch')
 else:                                           print('OK')
 PY
-)" "ai_usage is a declared persistent badge in Resources"
+)" "ai_usage is a declared persistent badge in Device Infos"
 
 echo "== T2: the service is registered, and is a data widget: NOT a foreground service =="
 check "$(python3 - "$MANIFEST" "$SVC" <<'PY'

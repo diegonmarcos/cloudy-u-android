@@ -157,16 +157,10 @@ class WeatherBadgeService : Service() {
         return WeatherToday(place, loc.lat, loc.lon, f)
     }
 
-    private fun coords(lat: Double, lon: Double) = String.format(Locale.US, "%.2f, %.2f", lat, lon)
+    private fun coords(lat: Double, lon: Double) = PlaceName.coords(lat, lon)
 
-    /** City-ish name via the platform geocoder; honest coordinates when the
-     *  device has no geocoder backend. */
-    private fun placeName(loc: WeatherLocation.Fix): String = runCatching {
-        @Suppress("DEPRECATION")
-        Geocoder(this, Locale.getDefault()).getFromLocation(loc.lat, loc.lon, 1)
-            ?.firstOrNull()
-            ?.let { it.locality ?: it.subAdminArea ?: it.adminArea }
-    }.getOrNull() ?: coords(loc.lat, loc.lon)
+    /** City name via [PlaceName] (locality -> subAdmin -> admin -> country, cached); "lat, lon" when unresolved. */
+    private fun placeName(loc: WeatherLocation.Fix): String = PlaceName.resolve(this, loc.lat, loc.lon)
 
     private fun build(state: WeatherFace.State): android.app.Notification {
         val b = badge()

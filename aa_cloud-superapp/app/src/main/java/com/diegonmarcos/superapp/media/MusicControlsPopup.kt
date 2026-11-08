@@ -169,6 +169,8 @@ private class MusicSnapshot(c: MediaController?) {
 internal fun MusicControlsCard(ctx: Context, controller: MediaController?, playingPackage: String?, close: () -> Unit) {
     val dm = ctx.resources.displayMetrics
     val snap = remember(controller) { MusicSnapshot(controller) }
+    // Nothing playing: the persisted last session (package, track, art, position) - art dimmed, Play resumes it.
+    val last = remember(controller) { if (controller == null) LastMediaSession.load(ctx) else null }
     // Registered while the card is composed, unregistered with it - the old attach/detachController.
     DisposableEffect(controller) {
         val cb = object : MediaController.Callback() {
@@ -189,34 +191,35 @@ internal fun MusicControlsCard(ctx: Context, controller: MediaController?, playi
     val shape = RoundedCornerShape(20.dp)
     Box(Modifier.width((dm.widthPixels * 0.92f / dm.density).dp).height(MusicControlsPopup.POPUP_HEIGHT_DP.dp)
         .clip(shape).background(Color.Black).border(1.dp, Color(0x55B794F4), shape).testTag("music:card")) {
-        snap.art?.let {
-            Image(it.asImageBitmap(), contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+        (snap.art ?: last?.art)?.let {
+            Image(it.asImageBitmap(), contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize().testTag("music:art"))
         }
-        // Dark scrim over the art for text/button contrast.
-        Box(Modifier.fillMaxSize().background(Color(0xA6000000)))
+        // Dark scrim over the art for text/button contrast; heavier when it is only the last session (dimmed art).
+        Box(Modifier.fillMaxSize().background(Color(if (last != null) 0xCC000000 else 0xA6000000)).testTag(if (last != null) "music:dimmed" else "music:scrim"))
         Column(Modifier.align(Alignment.Center).fillMaxWidth().padding(horizontal = 14.dp, vertical = 7.dp)) {
             // Row 1: app icon (tap → open the playing app) + title / artist (+ the idle quick-launch strip).
             Row(verticalAlignment = Alignment.CenterVertically) {
-                val icon by produceState<android.graphics.drawable.Drawable?>(null, playingPackage) {
-                    value = playingPackage?.let { withContext(Dispatchers.IO) { AppIconCache.load(ctx, it) } }
+                val iconPkg = playingPackage ?: last?.pkg
+                val icon by produceState<android.graphics.drawable.Drawable?>(null, iconPkg) {
+                    value = iconPkg?.let { withContext(Dispatchers.IO) { AppIconCache.load(ctx, it) } }
                 }
-                Box(Modifier.size(44.dp).clickable(enabled = playingPackage != null) {
+                Box(Modifier.size(44.dp).clickable(enabled = iconPkg != null) {
                     runCatching {
-                        val intent = ctx.packageManager.getLaunchIntentForPackage(playingPackage!!)
+                        val intent = ctx.packageManager.getLaunchIntentForPackage(iconPkg!!)
                         if (intent != null) ctx.startActivity(intent)
                     }
                     close()
                 }.testTag("music:app-icon")) { AppIcon(icon, 44.dp) }
                 Column(Modifier.weight(1f).padding(start = 10.dp)) {
-                    Text(if (controller == null) "Nothing playing" else snap.title, color = Color(0xFFF5F5F5), fontSize = 14.sp,
+                    Text(if (controller == null) (last?.title ?: "Nothing playing") else snap.title, color = Color(0xFFF5F5F5), fontSize = 14.sp,
                         fontWeight = FontWeight.Medium, maxLines = 1, style = SHADOW.copy(fontSize = 14.sp),
                         modifier = Modifier.basicMarquee().testTag("music:title"))
-                    Text(snap.artist, color = Color(0xFFD4D4D4), fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    Text(if (controller == null) last?.artist.orEmpty() else snap.artist, color = Color(0xFFD4D4D4), fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
                         style = SHADOW.copy(fontSize = 11.sp), modifier = Modifier.padding(top = 2.dp))
                 }
-                if (controller == null) IdleLaunchers(ctx, close)
+                if (controller == null && last == null) IdleLaunchers(ctx, close)
             }
-            if (controller != null) LiveRows(ctx, controller, snap) else IdleRows()
+            if (controller != null) LiveRows(ctx, controller, snap) else IdleRows(last)
             // Row 3: Shazam | prev | play/pause | next | heart.
             Row(Modifier.fillMaxWidth().padding(top = 2.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
                 Glyph(R.drawable.ic_music_recognise, 34, "music:shazam", Color.White) {
@@ -233,7 +236,8 @@ internal fun MusicControlsCard(ctx: Context, controller: MediaController?, playi
                 }
                 Spacer(Modifier.width(14.dp))
                 Glyph(if (snap.playing) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play, 46, "music:play", Color.White) {
-                    controller?.let { c ->
+                    if (controller == null) LastMediaSession.resume(ctx) // one tap restarts the last session
+                    else controller.let { c ->
                         val playing = c.playbackState?.state == PlaybackState.STATE_PLAYING
                         runCatching { if (playing) c.transportControls.pause() else c.transportControls.play() }
                     }
@@ -285,13 +289,13 @@ private fun IdleLaunchers(ctx: Context, close: () -> Unit) {
 
 /** Idle placeholder - no track, an inert progress bar. */
 @Composable
-private fun IdleRows() {
+private fun IdleRows(last: LastMediaSession.Last? = null) {
     Spacer(Modifier.height(14.dp))
-    Slider(value = 0f, onValueChange = {}, enabled = false, modifier = Modifier.fillMaxWidth().padding(top = 6.dp).testTag("music:progress"))
+    Slider(value = last?.fraction ?: 0f, onValueChange = {}, enabled = false, modifier = Modifier.fillMaxWidth().padding(top = 6.dp).testTag("music:progress"))
     Row(Modifier.fillMaxWidth()) {
-        Text("0:00", color = Color(0xFFE0E0E0), fontSize = 10.sp)
+        Text(MusicControlsPopup.formatTime(last?.positionMs ?: 0L), color = Color(0xFFE0E0E0), fontSize = 10.sp)
         Spacer(Modifier.weight(1f))
-        Text("0:00", color = Color(0xFFE0E0E0), fontSize = 10.sp)
+        Text(MusicControlsPopup.formatTime(last?.durationMs ?: 0L), color = Color(0xFFE0E0E0), fontSize = 10.sp)
     }
 }
 

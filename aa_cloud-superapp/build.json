@@ -9649,22 +9649,12 @@
     "_doc_notification_center": "Configs ▸ Launcher ▸ Notify ▸ persistent badges (#497; the Push tab until #580 merged it into Notify) — the ONE declaration of every notification-center / badge producer this app ships, and the source the badge panes render verbatim: nothing it lists is invented in Kotlin, and nothing this app draws as a badge or a notification is missing from it. Diego asked for 'the kde badge, the music badge, the quickmarks badge….' and trailed off on purpose — that trailing off is what makes this a declaration instead of his list of three: BadgePanes iterates `producers` and draws whatever is here, so adding or dropping an entry changes the tab with no Kotlin edit, the same contract configs/DeviceControls.kt keeps for Control.\n\nSplit exactly like Control/DeviceControls: this file owns PRESENTATION — which producers exist, what each one IS (label/subtitle/icon), which surface it occupies (`surface`: a system notification, an in-app card, or a launcher-icon badge count) and whether it is declared on. The CAPABILITY — the actual channel, the actual notify()/cancel() calls, the actual read of NotificationListenerService — stays owned by that producer's own Kotlin file, named in `owner` below, exactly where DeviceControls keeps a control's read/set next to the declaration that names it.\n\n`enabled` is the declared default of the owner's per-badge switch (BadgeCustomization); since #777 a badge is shown only when its switch AND its group's switch (`groups` below) are on. A producer with no capability behind it — an id with no file in `owner` implementing it — is exactly the DeviceControls failure mode (a row that draws and means nothing), which is why the tester for this page checks `owner` resolves to a real file, not just that the JSON parses.\n\nQUICKMARKS: swept for an actual unread-count badge on Phone ▸ Apps ▸ Quickmarks tiles and found none — AppIconTile draws a 'Not installed' placeholder glyph, not a notification count. What IS real and what an owner would call 'the quickmarks badge' is the system launcher-icon badge every tile can carry, driven by whichever channels below have `shows_badge: true` and cleared when a notification surface calls cancelAll() — declared here as `launcher_icon_badge`, coupled to `phone_notification_listener` rather than invented as a fourth independent mechanism.",
     "notification_center": {
       "_doc": "One entry per PRODUCER. `badge` is what splits a shade badge from the rest of the channel inventory: true means this producer puts a PERSISTENT entry in the notification centre, and Configs > Home > Push renders exactly those — one box in section 1, one customization menu in section 2, derived, never a hand-kept name list. `persistent` means it must survive an app update and a reboot: BadgeRestartReceiver re-ensures every persistent producer's `service` on MY_PACKAGE_REPLACED / BOOT_COMPLETED. Before that existed, only KdeStatusService restarted itself (App.kt) and everything owned by FloatingNavService — Quickmarks, Media, Alerts — stayed dead after an update. `requires` names the grants a badge needs so a dead badge can say WHY instead of reading absent. Adding a badge means adding an entry HERE and nothing else.",
-      "_doc_groups": "#777 THE FOUR shade groups of Configs ▸ Launcher ▸ Notify, as data: NotifyGroups gives every member's notification its group's key (setGroup) and posts one summary per group, so the shade shows four bundles instead of seven loose badges. `members` are producer ids below, in the order they sort inside the group; a producer in no group posts ungrouped. Group order and on/off are the owner's (Notify page, stored per group id); the declaration order is the default order. `alerts: true` marks the group whose member is the fleet alerts channel (FleetAlerts → AlertStore → AlertsNotifier); the Notify page draws its filters and Clear all from that flag, never from a name. `max_in_shade` caps how many alert children are posted (the store keeps more; Android drops an app's notifications past ~50). #1113 A GROUP IS ALSO A SECTION OF THE NOTIFY PAGE: the page draws a plain (not collapsible) subtitle with the group label, then the cards of its members in this order, groups in the owner's order, so the shade bundles and the page sections come from this one list (card.rank is no longer read). Section order: Resources (Mesh, Data, Battery), Infos (Weather, Markets, MyHealth), Actions (Quick Actions, KDE Connect), Media (Media Player), Alerts. A future AI badge is a producer id appended to `live` (Infos), with no Kotlin edit.",
+      "_doc_groups": "#777 THE FOUR shade groups of Configs ▸ Launcher ▸ Notify, as data: NotifyGroups gives every member's notification its group's key (setGroup) and posts one summary per group, so the shade shows four bundles instead of seven loose badges. `members` are producer ids below, in the order they sort inside the group; a producer in no group posts ungrouped. Group order and on/off are the owner's (Notify page, stored per group id); the declaration order is the default order. `alerts: true` marks the group whose member is the fleet alerts channel (FleetAlerts → AlertStore → AlertsNotifier); the Notify page draws its filters and Clear all from that flag, never from a name. `max_in_shade` caps how many alert children are posted (the store keeps more; Android drops an app's notifications past ~50). #1113 A GROUP IS ALSO A SECTION OF THE NOTIFY PAGE: the page draws a plain (not collapsible) subtitle with the group label, then the cards of its members in this order, groups in the owner's order, so the shade bundles and the page sections come from this one list (card.rank is no longer read). Section order (redesign 2026-11-08, see _doc_sections): Me Infos (Weather, Health, Fin Terminal), Media (Media Player), Device Infos (Mesh, Data, Battery, AI), then the Apps Push / Apps Keep Alive sections, then Actions (Quick Actions, KDE Connect). Alerts is gone. A future AI badge is a producer id appended to `live` (Infos), with no Kotlin edit.",
       "groups": [
         {
-          "id": "network",
-          "label": "Resources",
-          "members": ["network_mesh", "network_data", "battery_status", "ai_usage"]
-        },
-        {
           "id": "live",
-          "label": "Infos",
-          "members": ["weather_today", "markets_prices", "myhealth"]
-        },
-        {
-          "id": "actions",
-          "label": "Actions",
-          "members": ["floating_nav_quick_actions", "kde_status"]
+          "label": "Me Infos",
+          "members": ["weather_today", "myhealth", "markets_prices"]
         },
         {
           "id": "media",
@@ -9672,11 +9662,36 @@
           "members": ["media_now_playing"]
         },
         {
-          "id": "alerts",
-          "label": "Alerts",
-          "members": ["fleet_alerts"],
-          "alerts": true,
-          "max_in_shade": 20
+          "id": "network",
+          "label": "Device Infos",
+          "members": ["network_mesh", "network_data", "battery_status", "ai_usage"]
+        },
+        {
+          "id": "actions",
+          "label": "Actions",
+          "members": ["floating_nav_quick_actions", "kde_status"]
+        }
+      ],
+      "_doc_sections": "NOTIFY-CENTER REDESIGN (owner 2026-11-08): the Notify page and the bottom Config badge sections are `page_order`, top to bottom: Me Infos (live: Weather, Health, Fin Terminal), Media, Device Infos (network: Mesh, Data, Battery, AI), Apps Push Notifications, Apps Keep Alive, Actions. Alerts is REMOVED as a section and a badge (redundant: the fleet collector still stores, nothing posts a shade group for it). Ids in page_order are either a shade group above or an `app_sections` id. An app section has no producer: its rows are APPS, split into two labelled sub-groups by AppSplit - Cloudy (package com.diegonmarcos.*) and Phone (every other app) - so push and keep-alive each read as two clearly separated blocks. push = the owner's per-app allow switch for the phone-notification history (PhoneNotificationListenerService skips a muted app); keepalive = the owner's per-app keep-alive list (KeepAliveStore). Pinned by NotifySectionsTest and test-notify-sections.sh.",
+      "page_order": ["live", "media", "network", "apps_push", "apps_keepalive", "actions"],
+      "app_sections": [
+        {
+          "id": "apps_push",
+          "label": "Apps Push Notifications",
+          "kind": "push",
+          "subgroups": [
+            {"id": "cloudy", "label": "Cloudy"},
+            {"id": "phone", "label": "Phone"}
+          ]
+        },
+        {
+          "id": "apps_keepalive",
+          "label": "Apps Keep Alive",
+          "kind": "keepalive",
+          "subgroups": [
+            {"id": "cloudy", "label": "Cloudy"},
+            {"id": "phone", "label": "Phone"}
+          ]
         }
       ],
       "producers": [
@@ -9853,37 +9868,6 @@
           ]
         },
         {
-          "id": "fleet_alerts",
-          "card": {"rank": 7, "kind": "alerts", "accent": "#FFB340"},
-          "label": "Alerts",
-          "subtitle": "#777 The fleet's ONE alerts channel. Every Cloud app raises its user-facing alerts through FleetAlerts (libs:core) and they land here, one child per alert under one 'Cloud SA - Alerts' summary. Only real alerts: an empty store posts nothing. It replaced the 'Grouped alerts' badge, which showed sample data baked from ui.notification_infos.",
-          "icon": "ic_stat_notify",
-          "surface": "system_notification",
-          "channel": "fleet_alerts",
-          "owner": "notificationcenter/AlertsNotifier.kt",
-          "shows_badge": true,
-          "enabled": true,
-          "badge": true,
-          "persistent": false,
-          "service": "",
-          "requires": [],
-          "shows": "One row per alert a fleet app raised: app, severity, title, text; tap opens the alert's deep link.",
-          "customization": [
-            {
-              "key": "enabled",
-              "type": "toggle",
-              "label": "Show this badge",
-              "default": true
-            },
-            {
-              "key": "persistent",
-              "type": "toggle",
-              "label": "Keep the summary pinned (ongoing)",
-              "default": false
-            }
-          ]
-        },
-        {
           "id": "network_mesh",
           "card": {"rank": 1, "kind": "text", "accent": "#3DDC97"},
           "label": "Mesh",
@@ -10019,7 +10003,7 @@
           "id": "myhealth",
           "aliases": ["health_activity", "health"],
           "card": {"rank": 6, "kind": "text", "accent": "#FF6B6B"},
-          "label": "MyHealth",
+          "label": "Health",
           "subtitle": "Today's steps in km with the step count, resting heart rate and last night's sleep, from the same Health Connect read as Boards > MyHealth. Never estimated; a missing grant shows the reason and a Grant access button. Tap opens Boards > MyHealth.",
           "click_target": "page:boards/my-pm",
           "icon": "ic_p_health_activity",
@@ -10143,7 +10127,7 @@
         {
           "id": "markets_prices",
           "card": {"rank": 5, "kind": "quotes", "accent": "#F5C542"},
-          "label": "Markets",
+          "label": "Fin Terminal",
           "subtitle": "Live last-traded prices for the declared instruments, from Yahoo Finance. One action button per instrument opens that instrument's Yahoo ticker page in the app's own embedded browser. A quote that could not be fetched reads '—', never the last good number.",
           "icon": "ic_p_markets_prices",
           "surface": "system_notification",

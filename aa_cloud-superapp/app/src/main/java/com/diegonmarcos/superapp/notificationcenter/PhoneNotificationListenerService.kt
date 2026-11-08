@@ -40,6 +40,7 @@ class PhoneNotificationListenerService : NotificationListenerService() {
     private fun record(sbn: StatusBarNotification) {
         val pkg = sbn.packageName
         if (pkg == packageName) return
+        if (!AppSwitches.pushAllowed(this, pkg)) return // Apps Push Notifications: the owner muted this app
         val n = sbn.notification ?: return
         val extras = n.extras
         val title = extras?.getCharSequence(Notification.EXTRA_TITLE)?.toString().orEmpty()

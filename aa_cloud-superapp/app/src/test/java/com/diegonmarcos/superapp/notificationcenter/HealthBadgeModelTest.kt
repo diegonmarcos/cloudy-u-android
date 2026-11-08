@@ -93,7 +93,7 @@ class HealthBadgeModelTest {
         val all = BadgeDeclaration.parse(root.getJSONObject("ui").getJSONObject("notification_center").toString())
         val mine = BadgeDeclaration.resolve(all, "myhealth")
         assertNotNull(mine)
-        assertEquals("MyHealth", mine!!.label)
+        assertEquals("Health", mine!!.label)
         assertEquals("page:boards/my-pm", root.getJSONObject("ui").getJSONObject("notification_center").getJSONArray("producers")
             .let { a -> (0 until a.length()).map { a.getJSONObject(it) }.first { it.getString("id") == "myhealth" }.getString("click_target") })
         assertEquals(mine, BadgeDeclaration.resolve(all, "health_activity"))

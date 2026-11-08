@@ -52,6 +52,10 @@ object PhoneNotificationStore {
         }.getOrDefault(emptyList())
     }
 
+    /** package -> app label of every app that has posted into the history. */
+    fun apps(ctx: Context): Map<String, String> =
+        all(ctx).associate { it.packageName to it.appLabel.ifBlank { it.packageName } }
+
     /** Upsert by key, newest first, capped at MAX. */
     fun push(ctx: Context, e: Entry) {
         val sp = ctx.getSharedPreferences(PREF, Context.MODE_PRIVATE)

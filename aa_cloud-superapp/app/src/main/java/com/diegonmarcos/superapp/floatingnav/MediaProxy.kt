@@ -22,6 +22,7 @@ import com.diegonmarcos.superapp.notificationcenter.NotifyGate
 import com.diegonmarcos.superapp.notificationcenter.NotifyGroups
 import com.diegonmarcos.superapp.notificationcenter.PhoneNotificationListenerService
 import com.diegonmarcos.superapp.R
+import com.diegonmarcos.superapp.media.LastMediaSession
 
 /**
  * "Cloud SuperApp - Notification Center Media Session" — a rich media-control
@@ -62,8 +63,8 @@ class MediaProxy(private val ctx: Context) {
         for (c in list) {
             if (watched.keys.any { it.sessionToken == c.sessionToken }) continue
             val cb = object : MediaController.Callback() {
-                override fun onPlaybackStateChanged(state: PlaybackState?) { refresh() }
-                override fun onMetadataChanged(metadata: MediaMetadata?) { refresh() }
+                override fun onPlaybackStateChanged(state: PlaybackState?) { LastMediaSession.save(ctx, c); refresh() }
+                override fun onMetadataChanged(metadata: MediaMetadata?) { LastMediaSession.save(ctx, c); refresh() }
             }
             runCatching { c.registerCallback(cb, mainHandler); watched[c] = cb }
         }
@@ -103,7 +104,12 @@ class MediaProxy(private val ctx: Context) {
         // #535: the badge was swiped away. Forget what was posted so the poll
         // loop's next refresh() re-posts instead of deduping against it.
         if (target == REPOST) { lastKey = null; refresh(); return }
-        val c = activeController() ?: return
+        val c = activeController()
+        if (c == null) {
+            // Nothing playing: Play restarts the persisted last session (package + track), the rest have nothing to act on.
+            if (target == "media:playpause") LastMediaSession.resume(ctx)
+            return
+        }
         when (target) {
             "media:playpause" ->
                 if (c.playbackState?.state == PlaybackState.STATE_PLAYING) c.transportControls.pause()
@@ -152,6 +158,7 @@ class MediaProxy(private val ctx: Context) {
             return
         }
         ensureChannel()
+        LastMediaSession.save(ctx, c) // survive the player being backgrounded or killed
         val md = c.metadata
         val title = md?.getString(MediaMetadata.METADATA_KEY_TITLE)?.takeIf { it.isNotBlank() } ?: "Now playing"
         val artist = md?.getString(MediaMetadata.METADATA_KEY_ARTIST)
@@ -202,20 +209,22 @@ class MediaProxy(private val ctx: Context) {
      */
     private fun postIdle() {
         ensureChannel()
-        val key = "idle"
+        val last = LastMediaSession.load(ctx)
+        val key = "idle|${last?.pkg}|${last?.title}"
         if (key == lastKey) return
         lastKey = key
         val b = NotificationCompat.Builder(ctx, MEDIA_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_notify)
             .setColor(0xFF0A0A0A.toInt())
-            .setContentTitle(ctx.getString(R.string.badge_media_idle_title))
-            .setContentText(ctx.getString(R.string.badge_media_idle_text))
+            .setContentTitle(last?.title ?: ctx.getString(R.string.badge_media_idle_title))
+            .setContentText(last?.artist?.takeIf { it.isNotBlank() } ?: ctx.getString(R.string.badge_media_idle_text))
             .setSubText("Cloud SA - Media")
             .setOnlyAlertOnce(true)
             .setOngoing(persistent())
             .setDeleteIntent(pi(REPOST))
             .let { NotifyGroups.attach(ctx, it, BADGE_ID) }
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+        last?.art?.let { b.setLargeIcon(it) }
         // Play is the only transport that means anything with no session; the
         // other two would be buttons that silently do nothing.
         BadgeModel.add(b, BadgeModel.Action("play", android.R.drawable.ic_media_play, "Play", pi("media:playpause")))

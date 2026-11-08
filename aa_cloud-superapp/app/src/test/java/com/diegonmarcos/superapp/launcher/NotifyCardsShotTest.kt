@@ -82,12 +82,18 @@ class NotifyCardsShotTest : KitPageHarness() {
     }
 
     @Test
-    fun `the Notify page draws the five section subtitles`() {
+    fun `the Notify page draws the six section subtitles`() {
         BadgeCardData.override = null
         val sections = badgeSections(ctx).filter { it.title.isNotBlank() }
-        assertEquals(listOf("Resources", "Infos", "Actions", "Media", "Alerts"), sections.map { it.title })
+        assertEquals(listOf("Me Infos", "Media", "Device Infos", "Actions"), sections.map { it.title })
         showKit { Column(Modifier.fillMaxSize().background(NotifCard.panel).padding(12.dp)) { BadgeCards() } }
         for (s in sections) compose.onNodeWithTag(BadgeCardTags.section(s.id), useUnmergedTree = true).assertExists().assertTextEquals(s.title)
+        // The two app sections sit between Device Infos and Actions, each with a Cloudy and a Phone sub-group.
+        for (id in listOf("apps_push", "apps_keepalive")) {
+            compose.onNodeWithTag(BadgeCardTags.section(id), useUnmergedTree = true).assertExists()
+            for (sub in listOf("cloudy", "phone")) compose.onNodeWithTag(BadgeCardTags.sub(id, sub), useUnmergedTree = true).assertExists()
+        }
+        compose.onNodeWithTag(BadgeCardTags.TITLE, useUnmergedTree = true).assertExists()
         snap("notify-page-sections.png")
     }
 

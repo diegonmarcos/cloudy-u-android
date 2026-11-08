@@ -41,7 +41,7 @@ class NetworkGroupTest {
     @Test fun `they share the shade group Resources and nothing else is in it`() {
         val g = NotifyGroups.groupOf(NetworkBadgeService.BADGE_ID)!!
         assertEquals("network", g.id)
-        assertEquals("Resources", g.label)
+        assertEquals("Device Infos", g.label)
         assertEquals(g, NotifyGroups.groupOf(DataBadgeService.BADGE_ID))
         assertEquals(g, NotifyGroups.groupOf(BatteryBadgeService.BADGE_ID))
         assertEquals(listOf(NetworkBadgeService.BADGE_ID, DataBadgeService.BADGE_ID, BatteryBadgeService.BADGE_ID, AiBadgeService.BADGE_ID), g.members)

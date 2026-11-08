@@ -73,16 +73,15 @@ class NotifyGroupsAlertsTest {
     // ── the groups ──────────────────────────────────────────────────────
 
     @Test fun `exactly the declared groups, in the brief's order and membership`() {
-        assertEquals(listOf("network", "live", "actions", "media", "alerts"), NotifyGroups.declared.map { it.id })
+        assertEquals(listOf("live", "media", "network", "actions"), NotifyGroups.declared.map { it.id })
         assertTrue("#894 no Store group or badge: Store notifications are Cloud Store's",
             NotifyGroups.declared.none { it.id == "store" } && BadgeServices.declared.none { it.id == "store_updates" })
-        assertEquals(listOf("weather_today", "markets_prices", "myhealth"), group("live").members)
+        assertEquals(listOf("weather_today", "myhealth", "markets_prices"), group("live").members)
         assertEquals(listOf("floating_nav_quick_actions", "kde_status"), group("actions").members)
         assertEquals(listOf("media_now_playing"), group("media").members)
         assertEquals(listOf(NetworkBadgeService.BADGE_ID, DataBadgeService.BADGE_ID, BatteryBadgeService.BADGE_ID, AiBadgeService.BADGE_ID), group("network").members)
-        assertEquals(listOf(AlertsNotifier.BADGE_ID), group("alerts").members)
-        assertEquals("only the alerts group is the alerts group", listOf("alerts"),
-            NotifyGroups.declared.filter { it.alerts }.map { it.id })
+        assertTrue("Alerts is removed: no alerts group, no fleet_alerts badge",
+            NotifyGroups.declared.none { it.alerts || it.id == "alerts" } && BadgeDeclaration.badges(BadgeServices.declared).none { it.id == AlertsNotifier.BADGE_ID })
         // Every member is a declared badge — a typo would be a member nothing posts.
         val badges = BadgeDeclaration.badges(BadgeServices.declared).map { it.id }.toSet()
         for (g in NotifyGroups.declared) for (m in g.members) assertTrue("$m in ${g.id}", m in badges)
@@ -127,10 +126,10 @@ class NotifyGroupsAlertsTest {
     }
 
     @Test fun `order is the owner's and survives a re-read`() {
-        NotifyGroups.move(ctx, group("alerts"), -4)
-        assertEquals(listOf("alerts", "network", "live", "actions", "media"), NotifyGroups.ordered(ctx).map { it.id })
+        NotifyGroups.move(ctx, group("actions"), -3)
+        assertEquals(listOf("actions", "live", "media", "network"), NotifyGroups.ordered(ctx).map { it.id })
         NotifyGroups.move(ctx, group("live"), +1)
-        assertEquals(listOf("alerts", "network", "actions", "live", "media"), NotifyGroups.ordered(ctx).map { it.id })
+        assertEquals(listOf("actions", "media", "live", "network"), NotifyGroups.ordered(ctx).map { it.id })
     }
 
     // ── mock data is gone ───────────────────────────────────────────────
@@ -143,92 +142,6 @@ class NotifyGroupsAlertsTest {
     }
 
     // ── cross-app delivery ──────────────────────────────────────────────
-
-    @Test fun `an alert raised by another fleet app lands in the store and the shade under THAT app`() {
-        collectorCalledBy(raiser)
-        val d = FleetAlerts.raise(ctx, FleetAlerts.Alert(
-            title = "Backup failed", text = "3 files", severity = FleetAlerts.WARN,
-            deepLink = "page:config/store-cloud", dedupeKey = "backup"))
-        assertEquals(FleetAlerts.Delivery.SUPERAPP, d)
-        val stored = AlertStore.all(ctx).single()
-        assertEquals("the caller's package, from the platform — never the payload", raiser, stored.app)
-        assertEquals("Backup failed", stored.title)
-        assertEquals(FleetAlerts.WARN, stored.severity)
-
-        val key = NotifyGroups.key(group("alerts"))
-        val child = posted().single { !isSummary(it) && it.group == key }
-        assertEquals("Backup failed", child.extras.getString(Notification.EXTRA_TITLE))
-        assertEquals(AlertsNotifier.CHANNEL_ID, child.channelId)
-        assertNotNull("a tap goes somewhere", child.contentIntent)
-        assertNotNull("a swipe removes it from the store", child.deleteIntent)
-        assertTrue(posted().any { isSummary(it) && it.group == key })
-    }
-
-    @Test fun `same dedupe key replaces, withdraw removes, another app's key is its own`() {
-        collectorCalledBy(raiser)
-        FleetAlerts.raise(ctx, FleetAlerts.Alert("1 update available", dedupeKey = "updates"))
-        FleetAlerts.raise(ctx, FleetAlerts.Alert("2 updates available", dedupeKey = "updates"))
-        assertEquals(listOf("2 updates available"), AlertStore.all(ctx).map { it.title })
-
-        AlertStore.add(ctx, "org.example.other", FleetAlerts.Alert("theirs", dedupeKey = "updates"))
-        assertEquals(2, AlertStore.all(ctx).size)
-
-        FleetAlerts.withdraw(ctx, "updates")
-        assertEquals("only the caller's own alert is withdrawn", listOf("theirs"), AlertStore.all(ctx).map { it.title })
-    }
-
-    @Test fun `no collector reachable - the alert falls back to the app's own notification`() {
-        val d = FleetAlerts.raise(ctx, FleetAlerts.Alert("Save failed", "disk full", FleetAlerts.ERROR, dedupeKey = "save"),
-            authority = "org.example.no.such.collector")
-        assertEquals(FleetAlerts.Delivery.LOCAL, d)
-        assertTrue("nothing reached the SuperApp store", AlertStore.all(ctx).isEmpty())
-        val n = shadowOf(nm).getNotification("save", 0xA1E7)
-        assertNotNull("posted locally, tagged by its dedupe key", n)
-        assertEquals(FleetAlerts.FALLBACK_CHANNEL, n.channelId)
-    }
-
-    @Test fun `errors ring on the urgent channel, the rest on Alerts`() {
-        collectorCalledBy(raiser)
-        FleetAlerts.raise(ctx, FleetAlerts.Alert("Cannot update", severity = FleetAlerts.ERROR))
-        FleetAlerts.raise(ctx, FleetAlerts.Alert("FYI", severity = FleetAlerts.INFO))
-        val byTitle = posted().filterNot { isSummary(it) }.associateBy { it.extras.getString(Notification.EXTRA_TITLE) }
-        assertEquals(AlertsNotifier.CHANNEL_URGENT, byTitle["Cannot update"]!!.channelId)
-        assertEquals(AlertsNotifier.CHANNEL_ID, byTitle["FYI"]!!.channelId)
-    }
-
-    @Test fun `filters hide without deleting, Clear all empties store and shade`() {
-        collectorCalledBy(raiser)
-        FleetAlerts.raise(ctx, FleetAlerts.Alert("a", severity = FleetAlerts.INFO))
-        FleetAlerts.raise(ctx, FleetAlerts.Alert("b", severity = FleetAlerts.ERROR))
-        AlertStore.setSeverityMuted(ctx, FleetAlerts.INFO, true)
-        assertEquals(listOf("b"), AlertsNotifier.refresh(ctx).map { it.title })
-        assertEquals("muted is still stored", 2, AlertStore.all(ctx).size)
-
-        AlertStore.setAppMuted(ctx, raiser, true)
-        assertTrue(AlertsNotifier.refresh(ctx).isEmpty())
-        assertTrue(posted().none { it.group == NotifyGroups.key(group("alerts")) })
-
-        assertEquals(2, AlertStore.clear(ctx))
-        AlertsNotifier.refresh(ctx)
-        assertTrue(AlertStore.all(ctx).isEmpty())
-    }
-
-    @Test fun `the alerts group switched off keeps alerts out of the shade`() {
-        collectorCalledBy(raiser)
-        FleetAlerts.raise(ctx, FleetAlerts.Alert("x"))
-        assertTrue(posted().any { it.group == NotifyGroups.key(group("alerts")) })
-        NotifyGroups.setEnabled(ctx, group("alerts"), false)
-        assertTrue(posted().none { it.group == NotifyGroups.key(group("alerts")) })
-        assertEquals("still stored", 1, AlertStore.all(ctx).size)
-    }
-
-    @Test fun `the Alerts badge reads IDLE with nothing to show and LIVE once an alert is in the shade`() {
-        val b = BadgeServices.declared.first { it.id == AlertsNotifier.BADGE_ID }
-        assertEquals(BadgeServices.State.IDLE, BadgeServices.status(ctx, b).state)
-        collectorCalledBy(raiser)
-        FleetAlerts.raise(ctx, FleetAlerts.Alert("x"))
-        assertEquals(BadgeServices.State.LIVE, BadgeServices.status(ctx, b).state)
-    }
 
     // ── the contract other apps depend on ───────────────────────────────
 
