@@ -59,6 +59,21 @@ object DataUsageHistoryStore {
     private const val KEY_MONTHS = "months"
     private const val KEY_APPS = "apps"
     private const val KEY_SUBS = "subs"
+    private const val KEY_LAST = "last_refresh_ms"
+    private const val KEY_LAST_FULL = "last_full_refresh_ms"
+
+    /** NetworkStatsManager opens a netstats session per query (~8 per month folded). Callers fire this often
+     *  (15-min worker + every Data Usage open), and settled months do not change, so: at most one fold per
+     *  [MIN_GAP_MS], and the 6-month backfill at most once per [FULL_GAP_MS]; otherwise only the current month. */
+    const val MIN_GAP_MS = 60_000L
+    const val FULL_GAP_MS = 24L * 60 * 60_000
+
+    /** How many months (newest first) a fold at [now] should query: 0 = skip, 1 = current only, else the full backfill. */
+    fun monthsToQuery(now: Long, lastRunMs: Long, lastFullMs: Long): Int = when {
+        lastRunMs in 1..now && now - lastRunMs < MIN_GAP_MS -> 0
+        lastFullMs <= 0L || lastFullMs > now || now - lastFullMs >= FULL_GAP_MS -> BACKFILL_MONTHS
+        else -> 1
+    }
 
     /** One stored month of device-wide usage. */
     data class MonthTotals(val month: String, val totals: DataUsageProvider.Totals)
@@ -118,13 +133,17 @@ object DataUsageHistoryStore {
      */
     fun refresh(ctx: Context, now: Long = System.currentTimeMillis()) {
         if (!DataUsageProvider.hasUsageAccess(ctx)) return
+        val sp = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val lastFull = sp.getLong(KEY_LAST_FULL, 0L)
+        val count = monthsToQuery(now, sp.getLong(KEY_LAST, 0L), lastFull)
+        if (count == 0) return
 
         val storedMonths = lines(ctx, KEY_MONTHS).mapNotNull { parseMonth(it) }
             .associateBy { it.month }.toMutableMap()
         val storedApps = lines(ctx, KEY_APPS).mapNotNull { parseApp(it) }.toMutableList()
         val storedSubs = lines(ctx, KEY_SUBS).mapNotNull { parseSub(it) }.toMutableList()
 
-        for (back in 0 until BACKFILL_MONTHS) {
+        for (back in 0 until count) {
             val (start, end) = monthBounds(now, back)
             if (start >= now) continue
             val key = monthKey(start)
@@ -173,6 +192,8 @@ object DataUsageHistoryStore {
             .putString(KEY_SUBS, storedSubs.filter { m -> monthsOut.any { it.month == m.month } }
                 .sortedBy { it.month }
                 .joinToString("\n") { "${it.month}|${it.slot}|${it.carrier}|${it.rx}|${it.tx}" })
+            .putLong(KEY_LAST, now)
+            .putLong(KEY_LAST_FULL, if (count == BACKFILL_MONTHS) now else lastFull)
             .apply()
     }
 

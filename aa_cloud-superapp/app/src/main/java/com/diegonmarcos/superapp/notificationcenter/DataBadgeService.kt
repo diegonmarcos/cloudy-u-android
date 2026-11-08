@@ -71,6 +71,15 @@ class DataBadgeService : Service() {
         private const val RC_OPEN = 0x4443
         private const val RC_GRANT_PHONE = 0x4444
         private const val MIN_GAP_MS = 30_000L
+        /** Even an owner-forced read (service start, Refresh) is floored: a restart storm must not re-open netstats sessions. */
+        internal const val FORCE_FLOOR_MS = 10_000L
+
+        /** Pure gate for one netstats read: never with the screen off; forced reads floored at [FORCE_FLOOR_MS], others at [MIN_GAP_MS]. */
+        internal fun mayRead(force: Boolean, interactive: Boolean, nowMs: Long, lastReadMs: Long): Boolean {
+            if (!interactive) return false
+            val gap = if (force) FORCE_FLOOR_MS else MIN_GAP_MS
+            return lastReadMs <= 0L || nowMs < lastReadMs || nowMs - lastReadMs >= gap
+        }
         /** The one inexact alarm that carries the card while the process is gone. */
         internal const val REFRESH_MS = 60 * 60_000L
 
@@ -124,6 +133,9 @@ class DataBadgeService : Service() {
             // Switched off (or its grants gone): stop reading; the owner retires the card.
             if (!BadgeServices.wanted(app, DataBadgeService::class.java.name)) { dropReceiver(app); return }
             if (!NetworkBadgeService.canPost(app)) return
+            // Screen off (the hourly alarm) or read a moment ago: no netstats sessions. Screen-on refreshes it.
+            val awake = runCatching { (app.getSystemService(Context.POWER_SERVICE) as android.os.PowerManager).isInteractive }.getOrDefault(true)
+            if (!mayRead(true, awake, System.currentTimeMillis(), lastPostMs)) return
             ensureChannel(app)
             val snap = gather(app)
             lastPostMs = System.currentTimeMillis()
