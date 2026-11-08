@@ -3065,6 +3065,8 @@
         "lib-devtools",
         "lib-fleet-data-client",
         "lib-fleetconfig-model",
+        "lib-fleetconfigs-logcat",
+        "lib-fleetconfigs-xray",
         "lib-model-catalogue",
         "lib-perms",
         "lib-theme-background",
