@@ -4,7 +4,9 @@ import com.diegonmarcos.superapp.fleetdata.provider.FleetDataStore
 import com.diegonmarcos.superapp.fleetdata.provider.FleetManifest
 import com.diegonmarcos.superapp.fleetdata.provider.ManifestEntry
 import org.junit.Assert.assertEquals
+import com.diegonmarcos.superapp.uikit.KitFileTree
 import com.diegonmarcos.superapp.uikit.KitState
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -133,6 +135,62 @@ class FleetDataViewTest {
         assertEquals(listOf("app/cld.camera"), FleetDataView.filter(g, "", SyncState.STALE).map { it.endpoint })
         assertEquals(2, FleetDataView.filter(g, "", null).size)
         assertTrue(FleetDataView.filter(g, "nothing-matches", null).isEmpty())
+    }
+
+    private fun row(path: String, tier: Int?) = DatasetRow(path, "content://a/$path", path.substringAfterLast('/'), tier, 1, 100, "e", 1000, null, emptyList(), SyncState.OK)
+
+    @Test fun bucketTierMapping() {
+        // an app/<pkg> endpoint is always App Files, whatever its tier
+        assertEquals(FileBucket.APP, FleetDataView.bucketOf(row("app/cld.camera/vr-filters", 3)))
+        // tier 1 (personal) and 2 (Account) are User Files — only the Account host serves these
+        assertEquals(FileBucket.USER, FleetDataView.bucketOf(row("shared/profile", 1)))
+        assertEquals(FileBucket.USER, FleetDataView.bucketOf(row("shared/prefs", 2)))
+        // tier 4 is RunTime reference data
+        assertEquals(FileBucket.RUNTIME, FleetDataView.bucketOf(row("shared/lookups", 4)))
+        // shared tier-3 defaults, the index, and an undeclared null tier are Others
+        assertEquals(FileBucket.OTHER, FleetDataView.bucketOf(row("shared/app-perms", 3)))
+        assertEquals(FileBucket.OTHER, FleetDataView.bucketOf(row("index", null)))
+    }
+
+    @Test fun filterByBucket() {
+        val entries = listOf(
+            FleetDataStore.Entry("app/cld.camera/vr-filters", meta()),   // App Files (tier 3, app endpoint)
+            FleetDataStore.Entry("shared/app-perms", meta()),            // Others (shared tier 3)
+            FleetDataStore.Entry("index", meta()),                       // Others (null tier)
+        )
+        val g = FleetDataView.groups(entries, manifest, emptySet(), authority)
+        assertEquals(listOf("app/cld.camera"), FleetDataView.filter(g, "", null, FileBucket.APP).map { it.endpoint })
+        assertEquals(listOf("index", "shared"), FleetDataView.filter(g, "", null, FileBucket.OTHER).map { it.endpoint })
+        assertTrue("no tier 1/2 data on the Store authority", FleetDataView.filter(g, "", null, FileBucket.USER).isEmpty())
+        assertTrue(FleetDataView.filter(g, "", null, FileBucket.RUNTIME).isEmpty())
+        // ALL (and null) do not narrow; bucket composes with the sync-state filter
+        assertEquals(3, FleetDataView.filter(g, "", null, FileBucket.ALL).flatMap { it.rows }.size)
+        assertEquals(3, FleetDataView.filter(g, "", null).flatMap { it.rows }.size)
+    }
+
+    @Test fun treeEntriesFoldersAndCollapseAllOpenSet() {
+        val entries = listOf(
+            FleetDataStore.Entry("app/cld.camera/vr-filters", meta()),
+            FleetDataStore.Entry("shared/app-perms", meta()),
+            FleetDataStore.Entry("shared/constellation-fleet", meta()),
+        )
+        val g = FleetDataView.groups(entries, manifest, emptySet(), authority)
+        val te = FleetDataView.treeEntries(g)
+        // one entry per dataset, each foldered under exactly its endpoint, payload carried through
+        assertEquals(3, te.size)
+        assertEquals(listOf("shared"), te.first { it.name == "app-perms" }.dirs)
+        assertEquals("shared/app-perms", te.first { it.name == "app-perms" }.payload.path)
+        // containers() = every collapsible folder key; Expand-all opens exactly this set
+        val all = KitFileTree.containers(te)
+        assertEquals(setOf("shared", "app/cld.camera"), all)
+        // collapsed (empty open set): only folder rows, no leaves
+        val collapsed = KitFileTree.rows(te, emptySet())
+        assertTrue(collapsed.all { it is KitFileTree.Row.Dir })
+        assertEquals(2, collapsed.size)
+        // expanded (open = all containers): every file leaf shows
+        val expanded = KitFileTree.rows(te, all)
+        assertEquals(3, expanded.count { it is KitFileTree.Row.Leaf<*> })
+        assertFalse(expanded.none { it is KitFileTree.Row.Leaf<*> })
     }
 
     @Test fun summaryLine() {

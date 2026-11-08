@@ -16,23 +16,23 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items as gridItems
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -59,6 +59,8 @@ import com.diegonmarcos.superapp.uikit.KitAction
 import com.diegonmarcos.superapp.uikit.KitActionBar
 import com.diegonmarcos.superapp.uikit.KitCard
 import com.diegonmarcos.superapp.uikit.KitDensity
+import com.diegonmarcos.superapp.uikit.KitFileTree
+import com.diegonmarcos.superapp.uikit.KitFileTreeInk
 import com.diegonmarcos.superapp.uikit.KitPalette
 import com.diegonmarcos.superapp.uikit.KitSearchBar
 import com.diegonmarcos.superapp.uikit.KitState
@@ -66,6 +68,7 @@ import com.diegonmarcos.superapp.uikit.KitStatePill
 import com.diegonmarcos.superapp.uikit.KitStatusBanner
 import com.diegonmarcos.superapp.uikit.KitTextButton
 import com.diegonmarcos.superapp.uikit.LocalKitPalette
+import com.diegonmarcos.superapp.uikit.kitFileTree
 import java.text.DateFormat
 import java.util.Date
 
@@ -97,9 +100,6 @@ private fun copy(ctx: Context, label: String, text: String) {
 
 /** Everything the Datasets tab reads in one pass; a throw while reading becomes the page's error state. */
 private class Loaded(val groups: List<EndpointGroup>, val rows: List<DatasetRow>, val previous: Set<String>)
-
-/** Card width at which the grid goes to two columns (a tablet), derived from kit tokens. */
-private val CardMinWidth = KitDensity.avatar * 6
 
 /** The Data page: Datasets | Sync | Consumers | Diff, all read from this app's own provider store (no network here). Needs a CloudKitTheme above it. */
 @Composable
@@ -145,7 +145,12 @@ private fun DatasetsTab(
     }
     var query by remember { mutableStateOf("") }
     var status by remember { mutableStateOf<SyncState?>(null) }
+    var bucket by remember { mutableStateOf(FileBucket.ALL) }
     var queued by remember { mutableStateOf(false) }
+    // The set of OPEN folder keys; null = "not touched yet", drawn as fully expanded. Collapse/Expand all swap it wholesale.
+    var openFolders by remember { mutableStateOf<Set<String>?>(null) }
+    // The tapped file whose per-file action sheet is showing (mirrors StoreInspect's ModalBottomSheet over the page).
+    var sheetFor by remember { mutableStateOf<DatasetRow?>(null) }
     val loaded = remember(tick, entries) {
         if (entries == null) null else runCatching {
             // Grouped by IPC endpoint (app/<pkg>, shared, index), read live from this provider's manifest + cache; nothing baked.
@@ -158,16 +163,28 @@ private fun DatasetsTab(
     val error = failure ?: loaded?.exceptionOrNull()
     val data = loaded?.getOrNull()
     val now = remember(tick, queued) { System.currentTimeMillis() }
+    // Every collapsible folder key (one per endpoint). Expand-all opens exactly this set; the default (null) draws them open too.
+    val allFolders = remember(data) { data?.let { KitFileTree.containers(FleetDataView.treeEntries(it.groups)) } ?: emptySet() }
+    val openSet = openFolders ?: allFolders
+    val allOpen = allFolders.isNotEmpty() && openSet.containsAll(allFolders)
     Column(Modifier.fillMaxSize()) {
         Column(Modifier.padding(KitDensity.medium), verticalArrangement = Arrangement.spacedBy(KitDensity.small)) {
             KitActionBar(listOf(
                 KitAction("Sync all", "fleetdata:sync-all") { FleetDataSchedule.syncNow(ctx, authority); queued = true },
                 KitAction("Refresh", "fleetdata:refresh") { queued = false; onRefresh() },
+                KitAction(if (allOpen) "Collapse all" else "Expand all", "fleetdata:collapse-all") {
+                    openFolders = if (allOpen) emptySet() else allFolders
+                },
             ))
             if (data != null) {
                 val text = if (queued) "Sync queued · ${FleetDataView.summary(data.rows, now)}" else FleetDataView.summary(data.rows, now)
                 KitStatusBanner(text, if (queued) KitState.BUSY else FleetDataView.summaryState(data.rows), tag = "fleetdata-summary")
                 KitSearchBar(query, { query = it }, {}, placeholder = "Filter datasets, URIs, sources, consumers")
+                // Bucket chips: All · App Files · User Files · RunTime Files · Others.
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(KitDensity.small), verticalArrangement = Arrangement.spacedBy(KitDensity.small / 2)) {
+                    FileBucket.values().forEach { b -> FilterChip(b.label, bucket == b) { bucket = b } }
+                }
+                // The existing sync-state chips stay, below the bucket row.
                 Row(horizontalArrangement = Arrangement.spacedBy(KitDensity.small)) {
                     FilterChip("all", status == null) { status = null }
                     SyncState.values().forEach { s -> FilterChip(FleetDataView.pillWord(s), status == s) { status = if (status == s) null else s } }
@@ -179,80 +196,76 @@ private fun DatasetsTab(
             data == null -> Notice("Loading datasets", "Reading this provider's cache.", null) {}
             data.groups.isEmpty() -> Notice("No dataset has been synced yet", "Tap Sync all to fetch them.", "Sync all") { FleetDataSchedule.syncNow(ctx, authority); queued = true }
             else -> {
-                val shown = FleetDataView.filter(data.groups, query, status)
-                val indexUri = FleetDataView.uri(authority, "index")
-                LazyVerticalGrid(
-                    GridCells.Adaptive(CardMinWidth), Modifier.fillMaxSize().testTag("fleetdata:list"),
-                    contentPadding = PaddingValues(horizontal = KitDensity.medium, vertical = KitDensity.small),
-                    horizontalArrangement = Arrangement.spacedBy(KitDensity.small), verticalArrangement = Arrangement.spacedBy(KitDensity.small),
-                ) {
-                    if (data.groups.none { it.endpoint == "index" }) item(span = { GridItemSpan(maxLineSpan) }) {
-                        EndpointHeader("index", indexUri, null) { copy(ctx, "index URI", indexUri) }
-                    }
-                    if (shown.isEmpty()) item(span = { GridItemSpan(maxLineSpan) }) {
+                val shown = FleetDataView.filter(data.groups, query, status, bucket)
+                val treeEntries = FleetDataView.treeEntries(shown)
+                val rows = KitFileTree.rows(treeEntries, openSet, rootOrder = shown.map { it.endpoint })
+                val ink = KitFileTreeInk(p.textPrimary, p.textSecondary, p.accent)
+                LazyColumn(Modifier.fillMaxSize().testTag("fleetdata:list")) {
+                    if (shown.isEmpty()) item {
                         Text("No dataset matches the filter.", color = p.textSecondary, fontSize = KitDensity.body, modifier = Modifier.padding(KitDensity.medium))
-                    }
-                    shown.forEach { grp ->
-                        item(span = { GridItemSpan(maxLineSpan) }) { EndpointHeader(grp.endpoint, grp.endpointUri, grp.rows.size) { copy(ctx, "endpoint URI", grp.endpointUri) } }
-                        gridItems(grp.rows, key = { it.path }) { r ->
-                            DatasetCard(ctx, r, now, r.path in data.previous, { onOpen(r.path) }, { onDiff(r.path) }) {
-                                FleetDataSchedule.syncNow(ctx, authority); queued = true
-                            }
-                        }
-                    }
+                    } else kitFileTree(
+                        rows, ink, size = { FleetDataView.sizeLabel(it) },
+                        date = { if (it <= 0L) "never" else FleetDataView.relativeTime(it, now) },
+                        onToggle = { key -> openFolders = (openSet).let { if (key in it) it - key else it + key } },
+                        onOpen = { entry -> sheetFor = entry.payload },
+                        tagPrefix = "fleetdata",
+                    )
                 }
             }
         }
     }
-}
-
-/** A section header: endpoint name, its content:// URI (muted mono, tap to copy) and the dataset count. */
-@Composable
-private fun EndpointHeader(endpoint: String, uri: String, count: Int?, onCopy: () -> Unit) {
-    val p = LocalKitPalette.current
-    Column(Modifier.fillMaxWidth().padding(top = KitDensity.small)) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(KitDensity.small)) {
-            GroupTitle(endpoint, Modifier.weight(1f, fill = false))
-            if (count != null) Text("$count", color = p.textSecondary, fontSize = KitDensity.caption)
-        }
-        Text(uri, color = p.textSecondary, fontSize = KitDensity.caption, fontFamily = FontFamily.Monospace, maxLines = 1, overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.fillMaxWidth().combinedClickableCopy(onCopy).testTag("fleetdata:endpoint:$endpoint"))
+    sheetFor?.let { r ->
+        FileActionSheet(ctx, r, (data?.previous?.contains(r.path) == true),
+            onViewJson = { sheetFor = null; onOpen(r.path) },
+            onSync = { FleetDataSchedule.syncNow(ctx, authority); queued = true; sheetFor = null },
+            onDiff = { sheetFor = null; onDiff(r.path) },
+            onDismiss = { sheetFor = null })
     }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
 private fun Modifier.combinedClickableCopy(onCopy: () -> Unit): Modifier = combinedClickable(onClick = onCopy, onLongClick = onCopy)
 
-/** One dataset as a card: name + status pill + tier + schema, the URI, metadata chips, then the per-card actions. */
-@OptIn(ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
+/**
+ * The per-file action sheet: a [ModalBottomSheet] OVER the pane (mirrors StoreInspect.Sheet, so the Store nav and Back stay
+ * put). It shows only REAL actions — the provider is read-only openFile, so no delete/download. View JSON, Sync now, Copy URI,
+ * and Diff only when a previous version exists ([hasPrevious]); plus the file's live metadata (tier, schema, size, ETag, consumers).
+ */
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-private fun DatasetCard(ctx: Context, r: DatasetRow, now: Long, hasPrevious: Boolean, onJson: () -> Unit, onDiff: () -> Unit, onSync: () -> Unit) {
+private fun FileActionSheet(
+    ctx: Context, r: DatasetRow, hasPrevious: Boolean,
+    onViewJson: () -> Unit, onSync: () -> Unit, onDiff: () -> Unit, onDismiss: () -> Unit,
+) {
     val p = LocalKitPalette.current
-    var absolute by remember(r.path) { mutableStateOf(false) }
-    var etagOpen by remember(r.path) { mutableStateOf(false) }
-    var consumersOpen by remember(r.path) { mutableStateOf(false) }
-    KitCard(Modifier.testTag("fleetdata:card:${r.path}")) {
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(KitDensity.small), verticalArrangement = Arrangement.spacedBy(KitDensity.small / 2),
-            itemVerticalAlignment = Alignment.CenterVertically) {
-            Text(r.dataset, color = p.textPrimary, fontSize = KitDensity.title, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            KitStatePill(FleetDataView.pillWord(r.state), FleetDataView.kitState(r.state))
-            Chip(FleetDataView.tierChip(r.tier))
-            Chip(FleetDataView.schemaChip(r.schemaVersion))
-        }
-        Text(r.uri, color = p.textSecondary, fontSize = KitDensity.caption, fontFamily = FontFamily.Monospace, maxLines = 1, overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.fillMaxWidth().combinedClickableCopy { copy(ctx, "URI", r.uri) })
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(KitDensity.small), verticalArrangement = Arrangement.spacedBy(KitDensity.small / 2)) {
-            Chip(FleetDataView.sizeLabel(r.size))
-            Chip("synced " + if (absolute) stamp(r.syncedAt) else FleetDataView.relativeTime(r.syncedAt, now), Modifier.combinedClickable { absolute = !absolute })
-            Chip("ETag " + FleetDataView.etagLabel(r.etag, etagOpen), Modifier.combinedClickable(onClick = { etagOpen = !etagOpen },
-                onLongClick = { r.etag?.let { copy(ctx, "ETag", it) } }), mono = true)
-            Chip("consumers " + FleetDataView.consumersLabel(r.consumers, consumersOpen), Modifier.combinedClickable { consumersOpen = !consumersOpen })
-        }
-        Text("source ${r.source ?: "-"}", color = p.textSecondary, fontSize = KitDensity.caption, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        Row(horizontalArrangement = Arrangement.spacedBy(KitDensity.small / 2)) {
-            KitTextButton(onClick = onSync, modifier = Modifier.testTag("fleetdata:sync:${r.path}")) { Text("↻ Sync now") }
-            KitTextButton(onClick = onJson, modifier = Modifier.testTag("fleetdata:json:${r.path}")) { Text("{ } View JSON") }
-            KitTextButton(onClick = onDiff, enabled = hasPrevious, modifier = Modifier.testTag("fleetdata:diff:${r.path}")) { Text("± Diff") }
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        containerColor = p.surface,
+        modifier = Modifier.testTag("fleetdata:sheet:${r.path}"),
+    ) {
+        Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = KitDensity.medium, vertical = KitDensity.small),
+            verticalArrangement = Arrangement.spacedBy(KitDensity.small)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(KitDensity.small)) {
+                Text(r.dataset, color = p.textPrimary, fontSize = KitDensity.title, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false))
+                KitStatePill(FleetDataView.pillWord(r.state), FleetDataView.kitState(r.state))
+            }
+            Text(r.uri, color = p.textSecondary, fontSize = KitDensity.caption, fontFamily = FontFamily.Monospace, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.fillMaxWidth().combinedClickableCopy { copy(ctx, "URI", r.uri) })
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(KitDensity.small), verticalArrangement = Arrangement.spacedBy(KitDensity.small / 2)) {
+                Chip(FleetDataView.tierChip(r.tier)); Chip(FleetDataView.schemaChip(r.schemaVersion)); Chip(FleetDataView.sizeLabel(r.size))
+                Chip("ETag " + FleetDataView.etagLabel(r.etag, true), mono = true)
+                Chip("consumers " + FleetDataView.consumersLabel(r.consumers, true))
+            }
+            Text("source ${r.source ?: "-"}", color = p.textSecondary, fontSize = KitDensity.caption, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text("synced " + (if (r.syncedAt <= 0L) "never" else stamp(r.syncedAt)), color = p.textSecondary, fontSize = KitDensity.caption)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(KitDensity.small / 2), verticalArrangement = Arrangement.spacedBy(KitDensity.small / 2)) {
+                KitTextButton(onClick = onViewJson, modifier = Modifier.testTag("fleetdata:json:${r.path}")) { Text("{ } View JSON") }
+                KitTextButton(onClick = onSync, modifier = Modifier.testTag("fleetdata:sync:${r.path}")) { Text("↻ Sync now") }
+                KitTextButton(onClick = onDiff, enabled = hasPrevious, modifier = Modifier.testTag("fleetdata:diff:${r.path}")) { Text("± Diff") }
+                KitTextButton(onClick = { copy(ctx, "URI", r.uri) }, modifier = Modifier.testTag("fleetdata:copy:${r.path}")) { Text("⧉ Copy URI") }
+            }
         }
     }
 }

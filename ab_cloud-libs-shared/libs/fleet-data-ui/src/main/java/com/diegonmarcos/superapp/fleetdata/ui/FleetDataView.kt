@@ -2,6 +2,7 @@ package com.diegonmarcos.superapp.fleetdata.ui
 
 import com.diegonmarcos.superapp.fleetdata.provider.FleetDataStore
 import com.diegonmarcos.superapp.fleetdata.provider.FleetManifest
+import com.diegonmarcos.superapp.uikit.KitFileTree
 import com.diegonmarcos.superapp.uikit.KitState
 
 /**
@@ -28,6 +29,15 @@ data class DatasetRow(
 
 /** The datasets one IPC endpoint serves (endpoint = `app/<pkg>`, `shared`, or `index`). */
 data class EndpointGroup(val endpoint: String, val endpointUri: String, val rows: List<DatasetRow>)
+
+/**
+ * The file-browser bucket a dataset falls in, for the pane's top filter chip row:
+ *  - [APP]     — an `app/<pkg>` endpoint (tier 3 by construction): a per-app file served to that one package.
+ *  - [USER]    — tier 1 (personal) / tier 2 (Account) data: only the Account host serves these; EMPTY on the Store authority.
+ *  - [RUNTIME] — tier 4 reference data (lookups the fleet reads at runtime).
+ *  - [OTHER]   — the index, shared tier-3 defaults, and anything whose tier the manifest does not declare (null).
+ */
+enum class FileBucket(val label: String) { ALL("All"), APP("App Files"), USER("User Files"), RUNTIME("RunTime Files"), OTHER("Others") }
 
 object FleetDataView {
     fun uri(authority: String, path: String): String = "content://$authority/$path"
@@ -114,6 +124,26 @@ object FleetDataView {
             .sortedBy { (ep, _) -> when (ep) { "index" -> "0"; "shared" -> "1"; else -> "2$ep" } }
             .map { (ep, rows) -> EndpointGroup(ep, uri(authority, "$ep/"), rows.sortedBy { it.dataset }) }
 
+    /**
+     * The file-browser bucket of a row: an `app/<pkg>` dataset is always [FileBucket.APP]; otherwise the tier decides —
+     * 1/2 = [FileBucket.USER] (personal/Account, empty on the Store authority), 4 = [FileBucket.RUNTIME] reference data,
+     * everything else (shared tier-3 defaults, index, and an undeclared null tier) = [FileBucket.OTHER].
+     */
+    fun bucketOf(row: DatasetRow): FileBucket = when {
+        endpointOf(row.path).startsWith("app/") -> FileBucket.APP
+        row.tier == 1 || row.tier == 2 -> FileBucket.USER
+        row.tier == 4 -> FileBucket.RUNTIME
+        else -> FileBucket.OTHER
+    }
+
+    /**
+     * The dense collapsible tree's input: one [KitFileTree.Entry] per dataset, foldered by its endpoint (`index`, `shared`,
+     * `app/<pkg>`) so each endpoint draws as one collapsible folder with its files beneath. Payload is the row itself (a tap
+     * hands it back for the per-file action sheet). Pure; the Composable only draws what [KitFileTree.rows] makes of this.
+     */
+    fun treeEntries(groups: List<EndpointGroup>): List<KitFileTree.Entry<DatasetRow>> =
+        groups.flatMap { g -> g.rows.map { r -> KitFileTree.Entry(listOf(g.endpoint), r.dataset, r.size ?: 0L, r.syncedAt, "json", r) } }
+
     // ── presentation helpers (pure; the Composable only draws what these return) ─────────────────────────────────────────────
 
     /** The status pill: ok = green, stale = amber, error = red. */
@@ -159,10 +189,14 @@ object FleetDataView {
         else -> "${consumers.size} consumers"
     }
 
-    /** Groups narrowed by a free-text [query] (dataset, URI, source, ETag, consumers) and an optional [status]; empty groups drop out. */
-    fun filter(groups: List<EndpointGroup>, query: String, status: SyncState?): List<EndpointGroup> {
+    /**
+     * Groups narrowed by a free-text [query] (dataset, URI, source, ETag, consumers), an optional sync [status], and an
+     * optional [bucket] (App / User / RunTime / Others; [FileBucket.ALL] or null does not narrow). Empty groups drop out.
+     */
+    fun filter(groups: List<EndpointGroup>, query: String, status: SyncState?, bucket: FileBucket? = null): List<EndpointGroup> {
         val q = query.trim().lowercase()
-        fun hit(r: DatasetRow) = (status == null || r.state == status) && (q.isEmpty() ||
+        val b = bucket.takeUnless { it == FileBucket.ALL }
+        fun hit(r: DatasetRow) = (status == null || r.state == status) && (b == null || bucketOf(r) == b) && (q.isEmpty() ||
             listOf(r.dataset, r.uri, r.source.orEmpty(), r.etag.orEmpty(), r.consumers.joinToString(" ")).any { it.lowercase().contains(q) })
         return groups.mapNotNull { g -> g.rows.filter(::hit).takeIf { it.isNotEmpty() }?.let { g.copy(rows = it) } }
     }
