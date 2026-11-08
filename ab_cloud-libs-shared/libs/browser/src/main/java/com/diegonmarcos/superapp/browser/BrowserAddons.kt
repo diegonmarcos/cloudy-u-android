@@ -94,7 +94,7 @@ class BrowserAddons(val all: List<BrowserAddon>) {
                 val menu = entries.filter { it.optString("scope") != "global" }.let { a ->
                     a.map { m ->
                         val req = m.optJSONArray("requires")?.let { r -> (0 until r.length()).map { r.optString(it) } }.orEmpty()
-                        BrowserMenuItem(m.optString("id"), "addons", m.optString("label", m.optString("id")),
+                        BrowserMenuItem(m.optString("id"), "page_tools", m.optString("label", m.optString("id")),
                             m.optString("kind", "action"), listOf("addon:$id") + req, m.optString("checked").ifBlank { null },
                             m.optBoolean("api", false))
                     }

@@ -30,7 +30,7 @@ class BrowserMenuTest {
         val ids = menu.sections.map { it.id }
         val declared = browser.getJSONObject("menu").getJSONArray("sections").let { a -> (0 until a.length()).map { a.getJSONObject(it).getString("id") } }
         assertEquals(declared, ids)
-        assertEquals("#1401 Actions comes first", "page_actions", ids.first())
+        assertEquals("#1401 Actions comes first", "actions", ids.first())
         menu.items.forEach { assertTrue("${it.id} in ${it.section}", it.section in ids) }
     }
 

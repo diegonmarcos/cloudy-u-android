@@ -22,7 +22,7 @@ class BrowserAddonsTest {
         cfg.addons.all.forEach { a ->
             a.permissions.forEach { assertTrue("${a.id}: $it is in the vocabulary", it in BrowserAddons.PERMISSIONS) }
             a.menu.forEach { row ->
-                assertEquals("addons", row.section)
+                assertEquals("page_tools", row.section)
                 assertTrue("${row.id} requires its add-on", "addon:${a.id}" in row.requires)
                 assertTrue("${row.id} is in the merged menu", cfg.menu.item(row.id) != null)
             }

@@ -136,8 +136,8 @@ data class BrowserConfig(
             val defaultId = o.optString("default_engine", DEFAULT.defaultEngineId)
             val addons = BrowserAddons.parse(o.optJSONArray("addons"))
             val menu = BrowserMenu.parse(o.optJSONObject("menu")).let { m ->
-                // An add-on's rows join the Add-ons section (when the menu declares one).
-                if (m.sections.none { it.id == "addons" }) m
+                // An add-on's rows join the Page Tools section (when the menu declares one).
+                if (m.sections.none { it.id == "page_tools" }) m
                 else BrowserMenu(m.sections, m.items + addons.all.flatMap { it.menu }, m.whys)
             }
             val sections = o.optJSONArray("settings_sections").let { a ->

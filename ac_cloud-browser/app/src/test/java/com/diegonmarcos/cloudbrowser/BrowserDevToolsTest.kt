@@ -25,13 +25,13 @@ class BrowserDevToolsTest {
     @Test fun `#1401 no icon rows - the former icon actions are Page Actions and Page Tools rows`() {
         assertTrue(cfg.menu.iconRows(facts).isEmpty())
         val sec = { id: String -> cfg.menu.item(id)!!.section }
-        listOf("back", "forward", "reload", "bookmark", "copy_url", "open_external", "add_to_home", "hard_refresh", "light_refresh").forEach { assertEquals(it, "page_actions", sec(it)) }
-        listOf("find", "share", "desktop", "print", "download_page", "save_page", "save_site", "fill_profile", "translate").forEach { assertEquals(it, "addons", sec(it)) }
+        listOf("back", "forward", "reload", "bookmark", "copy_url", "open_external", "add_to_home", "hard_refresh", "light_refresh").forEach { assertEquals(it, "actions", sec(it)) }
+        listOf("find", "share", "desktop", "print", "download_page", "save_page", "save_site", "fill_profile", "translate").forEach { assertEquals(it, "page_tools", sec(it)) }
         assertEquals(listOf("Actions", "Page Tools", "Site Data", "Site Perms", "Dev Tools"), cfg.menu.sections.map { it.label })
     }
 
     @Test fun `Page Tools rows are grouped under categories`() {
-        val cats = cfg.menu.items.filter { it.section == "addons" && it.category != null }.groupBy { it.category }.mapValues { e -> e.value.map { it.id } }
+        val cats = cfg.menu.items.filter { it.section == "page_tools" && it.category != null }.groupBy { it.category }.mapValues { e -> e.value.map { it.id } }
         assertEquals(listOf("Reading", "Save & Export", "Find & Share", "View mode", "Autofill"), cats.keys.toList())
         assertEquals(listOf("reader", "translate", "zoom", "summarize_topics", "view_source"), cats["Reading"])
         assertEquals(listOf("print", "download_page", "save_page", "save_site"), cats["Save & Export"])
@@ -43,11 +43,11 @@ class BrowserDevToolsTest {
 
     @Test fun `dev tools is the last section holding the debugger rows and the JS toggle, view source is a Page Tool`() {
         val ids = cfg.menu.sections.map { it.id }
-        assertEquals("Dev Tools", cfg.menu.sections.first { it.id == "devtools" }.label)
-        assertEquals("devtools", ids.last())
-        val dev = cfg.menu.listSections(facts).first { it.first.id == "devtools" }.second.map { it.item.id }
+        assertEquals("Dev Tools", cfg.menu.sections.first { it.id == "dev_tools" }.label)
+        assertEquals("dev_tools", ids.last())
+        val dev = cfg.menu.listSections(facts).first { it.first.id == "dev_tools" }.second.map { it.item.id }
         assertEquals(listOf("dev_console", "dev_network", "dev_elements", "dev_storage", "dev_graphics", "dev_remote_debug", "shield_js"), dev)
-        assertEquals("addons", cfg.menu.item("view_source")!!.section)
+        assertEquals("page_tools", cfg.menu.item("view_source")!!.section)
         assertTrue("no debugger row is reachable over the loopback API", dev.none { cfg.menu.item(it)!!.api })
         assertTrue("icon sections are not list sections", cfg.menu.listSections(facts).none { it.first.id.startsWith("icons") })
     }

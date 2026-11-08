@@ -787,19 +787,19 @@
       },
       "_doc_reader_css": "#802 the stylesheet reader mode renders the extracted article with (assets/browser/reader.js does the extraction).",
       "reader_css": "body{max-width:42em;margin:auto;padding:1em;font:18px/1.6 Georgia,serif;background:#111;color:#eee}img,video{max-width:100%;height:auto}a{color:#a78bfa}pre{white-space:pre-wrap}",
-      "_doc_menu": "#802/#900/#1401 BROWSING TOOLS, declared: the page-tools dropdown: the sheet opened by the icon at the far right of the tab row (the app bar's ⋮ opens Configs). It holds ONLY what acts on the current page or domain, as five TABS in this order: Actions (navigation, reload/refresh, bookmark, copy URL, open in another app, home screen, pin/download site), Page Tools (grouped by `category`: Reading, Save & Export, Find & Share, View mode, Autofill; add-on page rows join here), Site Data (cookies and storage of this site, clear, autocomplete, trackers, images), Site Perms (one row, Perms: every permission a site can request), Dev Tools (console, network, elements, storage, graphics stats, remote debugging, JavaScript for this site). Global things live on the Configs pages.",
+      "_doc_menu": "#802/#900/#1401 BROWSING TOOLS, declared: the page-tools dropdown (section ids match the tab labels: actions, page_tools, site_data, site_perms, dev_tools): the sheet opened by the icon at the far right of the tab row (the app bar's ⋮ opens Configs). It holds ONLY what acts on the current page or domain, as five TABS in this order: Actions (navigation, reload/refresh, bookmark, copy URL, open in another app, home screen, pin/download site), Page Tools (grouped by `category`: Reading, Save & Export, Find & Share, View mode, Autofill; add-on page rows join here), Site Data (cookies and storage of this site, clear, autocomplete, trackers, images), Site Perms (one row, Perms: every permission a site can request), Dev Tools (console, network, elements, storage, graphics stats, remote debugging, JavaScript for this site). Global things live on the Configs pages.",
       "menu": {
         "sections": [
           {
-            "id": "page_actions",
+            "id": "actions",
             "label": "Actions"
           },
           {
-            "id": "addons",
+            "id": "page_tools",
             "label": "Page Tools"
           },
           {
-            "id": "site",
+            "id": "site_data",
             "label": "Site Data"
           },
           {
@@ -807,7 +807,7 @@
             "label": "Site Perms"
           },
           {
-            "id": "devtools",
+            "id": "dev_tools",
             "label": "Dev Tools"
           }
         ],
@@ -822,7 +822,7 @@
         "items": [
           {
             "id": "back",
-            "section": "page_actions",
+            "section": "actions",
             "label": "Back",
             "requires": [
               "page",
@@ -832,7 +832,7 @@
           },
           {
             "id": "forward",
-            "section": "page_actions",
+            "section": "actions",
             "label": "Forward",
             "requires": [
               "page",
@@ -842,7 +842,7 @@
           },
           {
             "id": "reload",
-            "section": "page_actions",
+            "section": "actions",
             "label": "Reload",
             "requires": [
               "page"
@@ -851,7 +851,7 @@
           },
           {
             "id": "hard_refresh",
-            "section": "page_actions",
+            "section": "actions",
             "label": "Hard refresh (cache, cookies, storage)",
             "requires": [
               "page"
@@ -860,7 +860,7 @@
           },
           {
             "id": "light_refresh",
-            "section": "page_actions",
+            "section": "actions",
             "label": "Light refresh (cache)",
             "requires": [
               "page"
@@ -869,7 +869,7 @@
           },
           {
             "id": "bookmark",
-            "section": "page_actions",
+            "section": "actions",
             "label": "Bookmark this page",
             "kind": "toggle",
             "checked": "bookmarked",
@@ -879,7 +879,7 @@
           },
           {
             "id": "reader",
-            "section": "addons",
+            "section": "page_tools",
             "category": "Reading",
             "label": "Reader mode",
             "kind": "toggle",
@@ -891,7 +891,7 @@
           },
           {
             "id": "translate",
-            "section": "addons",
+            "section": "page_tools",
             "category": "Reading",
             "label": "Translate page",
             "requires": [
@@ -903,7 +903,7 @@
           },
           {
             "id": "zoom",
-            "section": "addons",
+            "section": "page_tools",
             "category": "Reading",
             "label": "Zoom (this site)…",
             "requires": [
@@ -913,7 +913,7 @@
           },
           {
             "id": "summarize_topics",
-            "section": "addons",
+            "section": "page_tools",
             "category": "Reading",
             "label": "Summarise page by topics",
             "requires": [
@@ -922,7 +922,7 @@
           },
           {
             "id": "view_source",
-            "section": "addons",
+            "section": "page_tools",
             "category": "Reading",
             "label": "View source",
             "requires": [
@@ -931,7 +931,7 @@
           },
           {
             "id": "print",
-            "section": "addons",
+            "section": "page_tools",
             "category": "Save & Export",
             "label": "Print / Save as PDF",
             "requires": [
@@ -940,7 +940,7 @@
           },
           {
             "id": "download_page",
-            "section": "addons",
+            "section": "page_tools",
             "category": "Save & Export",
             "label": "Download this page",
             "requires": [
@@ -949,7 +949,7 @@
           },
           {
             "id": "save_page",
-            "section": "addons",
+            "section": "page_tools",
             "category": "Save & Export",
             "label": "Save this page offline",
             "requires": [
@@ -958,7 +958,7 @@
           },
           {
             "id": "save_site",
-            "section": "addons",
+            "section": "page_tools",
             "category": "Save & Export",
             "label": "Save this site offline",
             "requires": [
@@ -967,7 +967,7 @@
           },
           {
             "id": "find",
-            "section": "addons",
+            "section": "page_tools",
             "category": "Find & Share",
             "label": "Find in page",
             "requires": [
@@ -977,7 +977,7 @@
           },
           {
             "id": "share",
-            "section": "addons",
+            "section": "page_tools",
             "category": "Find & Share",
             "label": "Share…",
             "requires": [
@@ -986,7 +986,7 @@
           },
           {
             "id": "desktop",
-            "section": "addons",
+            "section": "page_tools",
             "category": "View mode",
             "label": "Desktop site",
             "kind": "toggle",
@@ -995,7 +995,7 @@
           },
           {
             "id": "fill_profile",
-            "section": "addons",
+            "section": "page_tools",
             "category": "Autofill",
             "label": "Autofill this page…",
             "requires": [
@@ -1005,7 +1005,7 @@
           },
           {
             "id": "copy_url",
-            "section": "page_actions",
+            "section": "actions",
             "label": "Copy URL",
             "requires": [
               "page"
@@ -1013,7 +1013,7 @@
           },
           {
             "id": "open_external",
-            "section": "page_actions",
+            "section": "actions",
             "label": "Open in another app…",
             "requires": [
               "page"
@@ -1021,7 +1021,7 @@
           },
           {
             "id": "add_to_home",
-            "section": "page_actions",
+            "section": "actions",
             "label": "Add to home screen",
             "requires": [
               "page"
@@ -1029,7 +1029,7 @@
           },
           {
             "id": "pin_site",
-            "section": "page_actions",
+            "section": "actions",
             "label": "Pin this site offline",
             "kind": "toggle",
             "checked": "site_pinned",
@@ -1039,7 +1039,7 @@
           },
           {
             "id": "download_site",
-            "section": "page_actions",
+            "section": "actions",
             "label": "Download full site (offline cache)",
             "requires": [
               "page"
@@ -1047,7 +1047,7 @@
           },
           {
             "id": "clear_site_data",
-            "section": "site",
+            "section": "site_data",
             "label": "Site data: cookies & storage…",
             "requires": [
               "page"
@@ -1056,7 +1056,7 @@
           },
           {
             "id": "clear_site_cookies",
-            "section": "site",
+            "section": "site_data",
             "label": "Clear cookies for this site",
             "requires": [
               "page"
@@ -1064,7 +1064,7 @@
           },
           {
             "id": "site_autocomplete",
-            "section": "site",
+            "section": "site_data",
             "label": "Autocomplete for this site…",
             "requires": [
               "page"
@@ -1072,7 +1072,7 @@
           },
           {
             "id": "shield_trackers",
-            "section": "site",
+            "section": "site_data",
             "label": "Block trackers here",
             "kind": "toggle",
             "checked": "shield_trackers",
@@ -1082,7 +1082,7 @@
           },
           {
             "id": "shield_images",
-            "section": "site",
+            "section": "site_data",
             "label": "Block images here",
             "kind": "toggle",
             "checked": "shield_images",
@@ -1100,7 +1100,7 @@
           },
           {
             "id": "dev_console",
-            "section": "devtools",
+            "section": "dev_tools",
             "label": "Console and JS REPL",
             "requires": [
               "page"
@@ -1108,7 +1108,7 @@
           },
           {
             "id": "dev_network",
-            "section": "devtools",
+            "section": "dev_tools",
             "label": "Network requests",
             "requires": [
               "page"
@@ -1116,7 +1116,7 @@
           },
           {
             "id": "dev_elements",
-            "section": "devtools",
+            "section": "dev_tools",
             "label": "Elements (live DOM)",
             "requires": [
               "page"
@@ -1124,7 +1124,7 @@
           },
           {
             "id": "dev_storage",
-            "section": "devtools",
+            "section": "dev_tools",
             "label": "Storage: cookies, local, session, workers",
             "requires": [
               "page"
@@ -1132,7 +1132,7 @@
           },
           {
             "id": "dev_graphics",
-            "section": "devtools",
+            "section": "dev_tools",
             "label": "Graphics: FPS, draw calls, GPU (debugger)",
             "requires": [
               "page"
@@ -1141,14 +1141,14 @@
           },
           {
             "id": "dev_remote_debug",
-            "section": "devtools",
+            "section": "dev_tools",
             "label": "Remote debugging (chrome://inspect)",
             "kind": "toggle",
             "checked": "remote_debug"
           },
           {
             "id": "shield_js",
-            "section": "devtools",
+            "section": "dev_tools",
             "label": "Block JavaScript here",
             "kind": "toggle",
             "checked": "shield_js",

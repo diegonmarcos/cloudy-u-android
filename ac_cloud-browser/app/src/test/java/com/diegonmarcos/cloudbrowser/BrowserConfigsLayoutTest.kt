@@ -122,7 +122,7 @@ class BrowserConfigsLayoutTest {
         assertEquals("toggle", t.kind); assertEquals("translated", t.checked)
         assertEquals("Summarise page by topics", cfg.menu.item("summarize_topics")!!.label)
         // #1401 both are Page Tools (section id `addons`).
-        assertEquals("addons", t.section)
-        assertEquals("addons", cfg.menu.item("summarize_topics")!!.section)
+        assertEquals("page_tools", t.section)
+        assertEquals("page_tools", cfg.menu.item("summarize_topics")!!.section)
     }
 }

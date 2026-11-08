@@ -73,7 +73,7 @@ def check(root, ok):
     ok("BrowserClearCategories.siteOrigins(host)" in site and "deleteOrigin(it)" in site and "deleteAllData" not in site, "S3 a per-site clear deletes only that site's origins")
     ok("BrowserClearCategories.SITE_COOKIES in boxes" in site and "BrowserClearCategories.SITE_STORAGE in boxes" in site, "S3 a box per category")
     mi = {i["id"]: i for i in build_json(root)["ui"]["browser"]["menu"]["items"]}
-    ok(mi.get("clear_site_data", {}).get("section") == "site" and "page" in mi["clear_site_data"].get("requires", []) and '"clear_site_data" ->' in frag,
+    ok(mi.get("clear_site_data", {}).get("section") == "site_data" and "page" in mi["clear_site_data"].get("requires", []) and '"clear_site_data" ->' in frag,
        "S3 Clear site data is a page-menu row with its branch")
     # S4
     code = re.sub(r"(?m)^\s*//.*$", "", engine)
