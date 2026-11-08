@@ -94,16 +94,17 @@ object StoreInspect {
     }
 
     /** Grant every DENIED runtime (dangerous) permission of [pkg] through the store's EXISTING
-     *  privileged door — the [StoreShell] broker that Stop uses — with `pm grant`. The broker
-     *  returning null means no channel is armed: say so (there is no requestPermissions for another
-     *  package), the same fallback Stop gives. */
+     *  privileged door — the [StoreShell] broker that Stop uses — running the grant line that
+     *  libs:perms owns ([PermsShell.grant], #1274: the one place a permission grant is written;
+     *  no lib builds that line itself). The broker returning null means no channel is armed: say so
+     *  (there is no requestPermissions for another package), the same fallback Stop gives. */
     private fun askGrantAll(ctx: Context, pkg: String, missing: List<String>, onDone: () -> Unit) {
         if (missing.isEmpty()) { Toast.makeText(ctx, "Nothing to grant", Toast.LENGTH_SHORT).show(); return }
         val main = android.os.Handler(android.os.Looper.getMainLooper())
         thread(name = "store-perms-grant-$pkg") {
             // Package names are [A-Za-z0-9._]; safe as a shell word.
             var served = false
-            missing.forEach { if (StoreShell.exec(ctx, "pm grant $pkg $it") != null) served = true }
+            missing.forEach { if (StoreShell.exec(ctx, com.diegonmarcos.superapp.perms.PermsShell.grant(pkg, it)) != null) served = true }
             val ok = served
             main.post {
                 if (!ok) Toast.makeText(ctx, "No shell channel armed — use Open to grant in Android settings", Toast.LENGTH_LONG).show()

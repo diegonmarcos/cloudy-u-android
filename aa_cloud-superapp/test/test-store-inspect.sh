@@ -57,8 +57,8 @@ for tag in ("Manifest", "Auto grants", "Runtime"):
 if "PROTECTION_DANGEROUS" in insp and "REQUESTED_PERMISSION_GRANTED" in insp:
     ok("Runtime is the dangerous perms with granted/denied state; Auto grants the install-time normal ones")
 else: bad("Perms does not split dangerous (runtime) from normal (auto-granted)")
-if "PermsPages.appInfoIntent(" in insp and "Ask Grant All" in insp and "StoreShell.exec(" in insp and "pm grant" in insp:
-    ok("top row: Open (Android app screen) + Ask Grant All (StoreShell `pm grant`, the broker Stop uses)")
+if "PermsPages.appInfoIntent(" in insp and "Ask Grant All" in insp and "StoreShell.exec(" in insp and "PermsShell.grant(" in insp:
+    ok("top row: Open (Android app screen) + Ask Grant All (StoreShell runs libs:perms' PermsShell.grant line, the broker Stop uses; #1274 owns the grant string)")
 else: bad("the Perms top action row (Open / Ask Grant All) is not wired to the real paths")
 
 print("== T3: Routes — MCP/IPC/API tabs over REAL declared route data ==")

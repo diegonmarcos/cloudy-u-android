@@ -84,10 +84,10 @@ class StoreSharedControlsTest : KitPageHarness() {
         val firstRow = tagged("store-head:").first().tag()!!
         compose.onNodeWithTag(firstRow).invokeClick()
         idle()
-        val rowButtons = compose.onAllNodes(tagStartsWith("store-verb:details:")).fetchSemanticsNodes()
-        assertTrue("no app row drew its Details button", rowButtons.isNotEmpty())
+        val rowButtons = compose.onAllNodes(tagStartsWith("store-verb:about:")).fetchSemanticsNodes()
+        assertTrue("no app row drew its About button", rowButtons.isNotEmpty())
         assertTrue("an app row's button is not the shared button", rowButtons.all { control(it) == StoreBar.BUTTON })
-        assertTrue("an app row's Details button is not labelled Details", rowButtons.all { it.text() == "Details" })
+        assertTrue("an app row's About button is not labelled About", rowButtons.all { it.text() == "About" })
         val storeChips = compose.onAllNodes(hasStoreControl(StoreBar.CHIP)).fetchSemanticsNodes()
         assertEquals("the Store's filter is not four shared chips", 4, storeChips.size)
         val storeButtonLook = look(barButtons.first())!!
