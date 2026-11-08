@@ -18,6 +18,7 @@ import com.diegonmarcos.superapp.notificationcenter.BadgeCustomization
 import com.diegonmarcos.superapp.notificationcenter.BadgeModel
 import com.diegonmarcos.superapp.notificationcenter.BadgeDeclaration
 import com.diegonmarcos.superapp.notificationcenter.BadgeServices
+import com.diegonmarcos.superapp.notificationcenter.NotifyGate
 import com.diegonmarcos.superapp.notificationcenter.NotifyGroups
 import com.diegonmarcos.superapp.notificationcenter.PhoneNotificationListenerService
 import com.diegonmarcos.superapp.R
@@ -147,7 +148,7 @@ class MediaProxy(private val ctx: Context) {
             // A persistent badge holds its place with an idle state rather
             // than vanishing — vanishing is indistinguishable from broken,
             // which is exactly how this one got reported as missing.
-            if (persistent() && showWhenIdle()) postIdle() else { nm().cancel(NOTIF_MEDIA); lastKey = null }
+            if (persistent() && showWhenIdle()) postIdle() else { NotifyGate.invalidate(null, NOTIF_MEDIA); nm().cancel(NOTIF_MEDIA); lastKey = null }
             return
         }
         ensureChannel()
@@ -190,7 +191,7 @@ class MediaProxy(private val ctx: Context) {
         b.setStyle(
             androidx.media.app.NotificationCompat.MediaStyle().setShowActionsInCompactView(0, 1, 2),
         )
-        runCatching { nm().notify(NOTIF_MEDIA, b.build()) }
+        runCatching { NotifyGate.post(nm(), null, NOTIF_MEDIA, b.build()) }
     }
 
     /**
@@ -218,12 +219,12 @@ class MediaProxy(private val ctx: Context) {
         // Play is the only transport that means anything with no session; the
         // other two would be buttons that silently do nothing.
         BadgeModel.add(b, BadgeModel.Action("play", android.R.drawable.ic_media_play, "Play", pi("media:playpause")))
-        runCatching { nm().notify(NOTIF_MEDIA, b.build()) }
+        runCatching { NotifyGate.post(nm(), null, NOTIF_MEDIA, b.build()) }
     }
 
     fun cancel() {
         unwatch()
-        runCatching { nm().cancel(NOTIF_MEDIA) }; lastKey = null
+        runCatching { NotifyGate.invalidate(null, NOTIF_MEDIA); nm().cancel(NOTIF_MEDIA) }; lastKey = null
         NotifyGroups.release(ctx, BADGE_ID)
     }
 

@@ -109,7 +109,7 @@ object NotifyGroups {
                 SUMMARY_CHANNEL, "Notification groups", NotificationManager.IMPORTANCE_LOW,
             ).apply { setShowBadge(false) })
         runCatching {
-            nm.notify(g.id, SUMMARY_ID, NotificationCompat.Builder(ctx, SUMMARY_CHANNEL)
+            NotifyGate.post(nm, g.id, SUMMARY_ID, NotificationCompat.Builder(ctx, SUMMARY_CHANNEL)
                 .setSmallIcon(R.drawable.ic_stat_notify)
                 .setColor(0xFF0A0A0A.toInt())
                 .setContentTitle(g.label)
@@ -124,7 +124,7 @@ object NotifyGroups {
         }
     }
 
-    fun cancelSummary(ctx: Context, g: Group) = runCatching { nm(ctx).cancel(g.id, SUMMARY_ID) }
+    fun cancelSummary(ctx: Context, g: Group) = runCatching { NotifyGate.invalidate(g.id, SUMMARY_ID); nm(ctx).cancel(g.id, SUMMARY_ID) }
 
     /** [badgeId] is leaving the shade: drop its group's summary unless another
      *  member is still posted. The leaving badge is excluded by its declared

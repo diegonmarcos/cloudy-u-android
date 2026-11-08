@@ -311,9 +311,11 @@ private fun LiveRows(ctx: Context, c: MediaController, snap: MusicSnapshot) {
                 val elapsed = SystemClock.elapsedRealtime() - state.lastPositionUpdateTime
                 state.position + (elapsed * state.playbackSpeed).toLong()
             } else state?.position ?: 0L
-            routeOf(ctx)?.let { route = it }
-            volume = volumeLabel(ctx, c)
-            delay(500L)
+            // AudioManager binder reads off the composition (main) coroutine.
+            val (r, v) = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { routeOf(ctx) to volumeLabel(ctx, c) }
+            r?.let { route = it }
+            volume = v
+            delay(1000L)
         }
     }
     // Audio-route + volume info row. Left: where the media is playing. Right: the session volume percent.

@@ -161,7 +161,7 @@ class BatteryBadgeService : Service() {
             DataWidgetRuntime.scheduleNext(app, BatteryBadgeService::class.java, NOTIF_ID, REFRESH_MS)
             if (!canPost(app)) return
             ensureChannel(app)
-            runCatching { FleetNotify.post(app, NOTIF_ID, build(app, BatteryBadgeModel.card(report))) }
+            runCatching { NotifyGate.postCtx(app, NOTIF_ID, build(app, BatteryBadgeModel.card(report))) }
         }
 
         // ── drawing ──────────────────────────────────────────────────────

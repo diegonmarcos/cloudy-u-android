@@ -613,36 +613,48 @@ class StatusStripModel(private val context: Context) {
         updateBoolPet("kde", hasKde)
     }
 
-    /** RAM + /data storage + CPU load into the right cluster. Cheap reads, safe on the main thread. */
+    private val metricsIo by lazy { java.util.concurrent.Executors.newSingleThreadExecutor { r -> Thread(r, "strip-metrics").apply { isDaemon = true } } }
+
+    /** RAM + /data storage + CPU load into the right cluster. The reads (a binder call, StatFs, /proc) run on a worker
+     *  thread so the 10s tick never hitches the foreground app; only the result is applied on the main thread. */
     private fun refreshMetrics() {
-        runCatching {
-            val am = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
-            am?.let {
-                val info = ActivityManager.MemoryInfo()
-                it.getMemoryInfo(info)
-                val pct = ((1.0 - info.availMem.toDouble() / info.totalMem.toDouble()) * 100).toInt()
-                ram = "R$pct%"
-                toolCfg["ram"]?.let { c -> updatePet("ram", bucketLevel(pct, c.buckets)) }
-            }
-        }
-        runCatching {
-            val stat = StatFs(Environment.getDataDirectory().absolutePath)
-            val total = stat.blockCountLong * stat.blockSizeLong
-            val avail = stat.availableBlocksLong * stat.blockSizeLong
-            val pct = ((1.0 - avail.toDouble() / total.toDouble()) * 100).toInt()
-            storage = "S$pct%"
-            toolCfg["storage"]?.let { c -> updatePet("storage", bucketLevel(pct, c.buckets)) }
-        }
-        runCatching {
+        runCatching { metricsIo.execute {
+            val ramPct = runCatching {
+                val am = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
+                am?.let {
+                    val info = ActivityManager.MemoryInfo()
+                    it.getMemoryInfo(info)
+                    ((1.0 - info.availMem.toDouble() / info.totalMem.toDouble()) * 100).toInt()
+                }
+            }.getOrNull()
+            val storagePct = runCatching {
+                val stat = StatFs(Environment.getDataDirectory().absolutePath)
+                val total = stat.blockCountLong * stat.blockSizeLong
+                val avail = stat.availableBlocksLong * stat.blockSizeLong
+                ((1.0 - avail.toDouble() / total.toDouble()) * 100).toInt()
+            }.getOrNull()
             // The raw 1-minute /proc/loadavg figure, the SAME source + value the SystemInfoPopup shows, suffixed "s";
             // NOT a core-normalised percentage (that rounded to 0 on an idle phone).
-            com.diegonmarcos.superapp.battery.SysfsProc.cpuLoad()?.let { c ->
-                cpu = "C%.2fs".format(c.loadAvg1m)
-                // the pet bucket still wants an int "level"; the normalised load% serves purely for that
-                val lvlPct = (c.loadAvg1m / c.cores.coerceAtLeast(1) * 100).toInt().coerceAtLeast(0)
-                toolCfg["cpu"]?.let { cfg -> updatePet("cpu", bucketLevel(lvlPct, cfg.buckets)) }
+            val load = runCatching { com.diegonmarcos.superapp.battery.SysfsProc.cpuLoad() }.getOrNull()
+            mainHandler.post {
+                runCatching {
+                    if (ramPct != null) {
+                        ram = "R$ramPct%"
+                        toolCfg["ram"]?.let { c -> updatePet("ram", bucketLevel(ramPct, c.buckets)) }
+                    }
+                    if (storagePct != null) {
+                        storage = "S$storagePct%"
+                        toolCfg["storage"]?.let { c -> updatePet("storage", bucketLevel(storagePct, c.buckets)) }
+                    }
+                    load?.let { c ->
+                        cpu = "C%.2fs".format(c.loadAvg1m)
+                        // the pet bucket still wants an int "level"; the normalised load% serves purely for that
+                        val lvlPct = (c.loadAvg1m / c.cores.coerceAtLeast(1) * 100).toInt().coerceAtLeast(0)
+                        toolCfg["cpu"]?.let { cfg -> updatePet("cpu", bucketLevel(lvlPct, cfg.buckets)) }
+                    }
+                }
             }
-        }
+        } }
     }
 
     private companion object {

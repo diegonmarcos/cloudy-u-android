@@ -177,7 +177,7 @@ class MarketsBadgeService : Service() {
 
         private fun renotify(ctx: Context) {
             if (!BadgeServices.wanted(ctx, MarketsBadgeService::class.java.name)) return // switched off: the owner retires the card
-            runCatching { FleetNotify.post(ctx, NOTIF_ID, build(ctx)) }
+            runCatching { NotifyGate.postCtx(ctx, NOTIF_ID, build(ctx)) }
         }
 
         private fun build(ctx: Context): android.app.Notification {

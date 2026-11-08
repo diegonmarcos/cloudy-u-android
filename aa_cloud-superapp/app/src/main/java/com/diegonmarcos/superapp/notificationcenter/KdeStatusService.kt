@@ -38,7 +38,7 @@ class KdeStatusService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         // Both ACTION_REFRESH (state changed) and ACTION_RENOTIFY (user swiped
         // it away on Android 14+) just rebuild + re-post in place.
-        repost()
+        repost(force = true)
         return START_STICKY
     }
 
@@ -47,10 +47,10 @@ class KdeStatusService : Service() {
         super.onDestroy()
     }
 
-    private fun repost() {
+    private fun repost(force: Boolean = false) {
         runCatching {
-            (getSystemService(NOTIFICATION_SERVICE) as NotificationManager)
-                .notify(NOTIF_ID, KdeStatusNotifier.build(this))
+            NotifyGate.post(getSystemService(NOTIFICATION_SERVICE) as NotificationManager, null, NOTIF_ID,
+                KdeStatusNotifier.build(this), force)
         }
     }
 

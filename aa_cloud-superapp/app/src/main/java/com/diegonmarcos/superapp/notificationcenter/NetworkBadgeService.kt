@@ -161,7 +161,7 @@ class NetworkBadgeService : Service() {
         val snap = gather()
         scheduleTick(snap.connected)
         runCatching {
-            (getSystemService(NOTIFICATION_SERVICE) as NotificationManager).notify(NOTIF_ID, build(snap))
+            NotifyGate.post(getSystemService(NOTIFICATION_SERVICE) as NotificationManager, null, NOTIF_ID, build(snap))
         }
     }
 

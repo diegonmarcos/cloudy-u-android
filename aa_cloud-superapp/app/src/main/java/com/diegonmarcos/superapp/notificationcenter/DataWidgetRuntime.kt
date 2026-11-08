@@ -58,7 +58,7 @@ object DataWidgetRuntime {
     fun retire(ctx: Context, w: Widget) {
         val am = ctx.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         runCatching { am.cancel(pi(ctx, w.cls, w.notifId)) }
-        runCatching { (ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).cancel(w.notifId) }
+        runCatching { NotifyGate.invalidate(null, w.notifId); (ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).cancel(w.notifId) }
         NotifyGroups.release(ctx, w.badgeId)
     }
 }

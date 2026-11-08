@@ -158,7 +158,7 @@ class AiBadgeService : Service() {
                 is AiUsageClient.Outcome.Failed -> note = out.reason
             }
             DataWidgetRuntime.scheduleNext(app, AiBadgeService::class.java, NOTIF_ID, REFRESH_MS)
-            runCatching { FleetNotify.post(app, NOTIF_ID, build(app, drawCached(app, note))) }
+            runCatching { NotifyGate.postCtx(app, NOTIF_ID, build(app, drawCached(app, note))) }
         }
 
         private fun drawCached(ctx: Context, note: String): AiUsageModel.Card {

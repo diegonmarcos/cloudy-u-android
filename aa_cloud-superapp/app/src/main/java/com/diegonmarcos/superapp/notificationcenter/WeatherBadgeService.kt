@@ -66,7 +66,7 @@ class WeatherBadgeService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         // The cached face at once (also what a restart or a reboot shows), then the fetch fills it in.
-        runCatching { FleetNotify.post(this, NOTIF_ID, build(initialState())) }
+        runCatching { NotifyGate.postCtx(this, NOTIF_ID, build(initialState())) }
         refresh(startId)
         return START_NOT_STICKY
     }
@@ -93,7 +93,7 @@ class WeatherBadgeService : Service() {
         scope.launch {
             val state = runCatching { compute() }.getOrElse { initialState() }
             main.post {
-                runCatching { FleetNotify.post(this@WeatherBadgeService, NOTIF_ID, build(state)) }
+                runCatching { NotifyGate.postCtx(this@WeatherBadgeService, NOTIF_ID, build(state)) }
                 schedule()
                 stopSelf(startId)
             }

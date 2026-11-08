@@ -49,7 +49,7 @@ class HealthBadgeService : Service() {
         super.onDestroy()
     }
 
-    private fun post() { runCatching { FleetNotify.post(this, NOTIF_ID, build()) } }
+    private fun post() { runCatching { NotifyGate.postCtx(this, NOTIF_ID, build()) } }
 
     /** Re-read on the declared cadence. `refresh_minutes` is a customization option, so the owner sets how hard this hits
      *  Health Connect. One inexact alarm, not a loop in a held process. */

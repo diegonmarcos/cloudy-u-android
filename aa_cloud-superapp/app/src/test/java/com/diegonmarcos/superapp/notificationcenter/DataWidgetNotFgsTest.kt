@@ -53,7 +53,7 @@ class DataWidgetNotFgsTest {
         listOf("WeatherBadgeService", "HealthBadgeService", "BatteryBadgeService", "DataBadgeService", "AiBadgeService", "MarketsBadgeService").forEach {
             val c = code(sources.getValue(it))
             assertTrue("$it does not use FleetNotify.dataWidgetBuilder", c.contains("FleetNotify.dataWidgetBuilder("))
-            assertTrue("$it does not post with FleetNotify.post", c.contains("FleetNotify.post("))
+            assertTrue("$it does not post with NotifyGate.postCtx (a plain notify through the gate)", c.contains("NotifyGate.postCtx("))
             assertFalse("$it hand-builds its notification", c.contains("NotificationCompat.Builder("))
         }
     }

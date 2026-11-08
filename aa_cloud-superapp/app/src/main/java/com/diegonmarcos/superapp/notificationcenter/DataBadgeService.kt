@@ -128,7 +128,7 @@ class DataBadgeService : Service() {
             val snap = gather(app)
             lastPostMs = System.currentTimeMillis()
             DataWidgetRuntime.scheduleNext(app, DataBadgeService::class.java, NOTIF_ID, REFRESH_MS)
-            runCatching { FleetNotify.post(app, NOTIF_ID, build(app, snap)) }
+            runCatching { NotifyGate.postCtx(app, NOTIF_ID, build(app, snap)) }
         }
 
     private fun gather(ctx: Context): DataBadgeModel.Snapshot {

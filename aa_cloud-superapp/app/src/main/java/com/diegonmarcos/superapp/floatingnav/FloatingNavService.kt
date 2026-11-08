@@ -69,7 +69,7 @@ class FloatingNavService : Service() {
     // keep it shown even while Cloud-SuperApp is foreground; cleared on collapse.
     private var forced = false
     private var currentContextId: String? = null
-    private var lastForeground: String? = null
+    @Volatile private var lastForeground: String? = null
     // Battery: how many polls in a row saw the same foreground package (backs the poll off), and the screen gate.
     private var unchangedTicks = 0
     private var polledForeground: String? = null
@@ -142,8 +142,8 @@ class FloatingNavService : Service() {
             null -> main.post {
                 runCatching { media.repost() }
                 runCatching {
-                    (getSystemService(NOTIFICATION_SERVICE) as NotificationManager)
-                        .notify(NOTIF_ID, buildNotification())
+                    com.diegonmarcos.superapp.notificationcenter.NotifyGate.post(
+                        getSystemService(NOTIFICATION_SERVICE) as NotificationManager, null, NOTIF_ID, buildNotification(), force = true)
                 }
             }
             ACTION_RENOTIFY -> {
@@ -151,8 +151,8 @@ class FloatingNavService : Service() {
                 // Android 14+ — re-post it immediately.
                 main.post {
                     runCatching {
-                        (getSystemService(NOTIFICATION_SERVICE) as NotificationManager)
-                            .notify(NOTIF_ID, buildNotification())
+                        com.diegonmarcos.superapp.notificationcenter.NotifyGate.post(
+                            getSystemService(NOTIFICATION_SERVICE) as NotificationManager, null, NOTIF_ID, buildNotification(), force = true)
                     }
                 }
             }
@@ -175,14 +175,24 @@ class FloatingNavService : Service() {
     }
 
     // ── Poll loop ──────────────────────────────────────────────────
+    private val pollIo by lazy { java.util.concurrent.Executors.newSingleThreadExecutor { r -> Thread(r, "floatnav-poll").apply { isDaemon = true } } }
+
     private val pollTick = object : Runnable {
         override fun run() {
             armed = overlayAllowed(this@FloatingNavService)
             if (!armed) {
                 removeBubble(); removeBar(); expanded = false; forced = false
+                reschedule()
             } else {
-                refresh(foregroundPackage())
+                // UsageStats.queryEvents is a binder call: read it off the main thread, apply the result on it.
+                runCatching { pollIo.execute {
+                    val fg = foregroundPackage()
+                    main.post { if (isRunning) { refresh(fg); reschedule() } }
+                } }.onFailure { reschedule() }
             }
+        }
+
+        private fun reschedule() {
             // Media is NOT refreshed here: MediaProxy.watch() drives it from the session events.
             // Screen off: no next tick (the screen-on receiver resumes the loop).
             if (!interactive()) return

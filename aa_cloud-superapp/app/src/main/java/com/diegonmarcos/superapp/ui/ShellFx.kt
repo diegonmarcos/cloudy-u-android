@@ -81,16 +81,39 @@ object ShellFxState {
     }
 }
 
-/** A looping 0..1 phase on the frame clock, [periodMs] per lap; frozen (keeping its place) while [running] is false. */
+/** True while the host lifecycle is RESUMED and the screen is on: the decorative frame loops run only then. */
+@Composable
+internal fun rememberDrawing(): Boolean {
+    val owner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    val resumed = remember(owner) { mutableStateOf(owner.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) }
+    androidx.compose.runtime.DisposableEffect(owner) {
+        val o = androidx.lifecycle.LifecycleEventObserver { _, _ ->
+            resumed.value = owner.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)
+        }
+        owner.lifecycle.addObserver(o)
+        onDispose { owner.lifecycle.removeObserver(o) }
+    }
+    return resumed.value
+}
+
+/** Frame period of the decorative loops (~30 fps): a backdrop does not need the display's full rate. */
+internal const val FX_FRAME_NS = 33_000_000L
+
+/** A looping 0..1 phase on the frame clock, [periodMs] per lap; frozen (keeping its place) while [running] is false
+ *  or the app is not RESUMED (no frame callbacks while backgrounded / screen off); redrawn at ~30 fps. */
 @Composable
 private fun rememberPhase(periodMs: Long, running: Boolean): androidx.compose.runtime.FloatState {
     val phase = remember { mutableFloatStateOf(0f) }
-    LaunchedEffect(running, periodMs, ShellFxState.frozen) {
-        if (!running || ShellFxState.frozen) return@LaunchedEffect
+    val drawing = rememberDrawing()
+    LaunchedEffect(running, periodMs, ShellFxState.frozen, drawing) {
+        if (!running || ShellFxState.frozen || !drawing) return@LaunchedEffect
         val start = withFrameNanos { it }
         val base = phase.floatValue
+        var last = start
         while (true) {
             val now = withFrameNanos { it }
+            if (now - last < FX_FRAME_NS) continue
+            last = now
             phase.floatValue = (base + (now - start) / (periodMs * 1_000_000f)) % 1f
         }
     }

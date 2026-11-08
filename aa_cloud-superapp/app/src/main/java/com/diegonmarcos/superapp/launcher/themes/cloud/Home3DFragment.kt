@@ -159,8 +159,9 @@ internal fun NeonCube(animate: Boolean, interactive: Boolean, modifier: Modifier
     val animating by rememberUpdatedState(animate)
 
     // The frame clock. Interactive: only while coasting; otherwise whenever animation is on.
-    LaunchedEffect(animate, interactive) {
-        while (isActive) {
+    val drawing = com.diegonmarcos.superapp.ui.rememberDrawing() // no frame callbacks while backgrounded / screen off
+    LaunchedEffect(animate, interactive, drawing) {
+        while (isActive && drawing) {
             androidx.compose.runtime.withFrameNanos { frame.longValue = it }
             if (interactive) {
                 if (!dragging[0]) {      // coast: apply + decay momentum

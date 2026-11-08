@@ -58,15 +58,15 @@ object AlertsNotifier {
         val keep = shown.map { TAG_PREFIX + it.id }.toSet()
         runCatching {
             nm.activeNotifications.filter { it.tag?.startsWith(TAG_PREFIX) == true && it.tag !in keep }
-                .forEach { nm.cancel(it.tag, it.id) }
+                .forEach { NotifyGate.invalidate(it.tag, it.id); nm.cancel(it.tag, it.id) }
         }
-        if (shown.isEmpty()) { runCatching { nm.cancel(SUMMARY_ID) }; return emptyList() }
+        if (shown.isEmpty()) { NotifyGate.invalidate(null, SUMMARY_ID); runCatching { nm.cancel(SUMMARY_ID) }; return emptyList() }
         ensureChannels(ctx)
         val key = NotifyGroups.key(g!!)
         // #883 Jev may make the FRESH alert arrive silently; no opinion = it rings, as before
         val quiet = if (fresh == null) emptySet() else JevNotify.quietIds(ctx, shown.firstOrNull { it.id == fresh })
         for (a in shown) runCatching {
-            nm.notify(TAG_PREFIX + a.id, CHILD_ID, NotificationCompat.Builder(ctx, channelFor(a.severity))
+            NotifyGate.post(nm, TAG_PREFIX + a.id, CHILD_ID, NotificationCompat.Builder(ctx, channelFor(a.severity))
                 .setSmallIcon(R.drawable.ic_stat_notify)
                 .setColor(0xFF0A0A0A.toInt())
                 .setContentTitle(a.title)
@@ -88,7 +88,7 @@ object AlertsNotifier {
         shown.take(5).forEach { inbox.addLine("${appLabel(ctx, it.app)} · ${it.title}") }
         inbox.setSummaryText("${shown.size} alert${if (shown.size == 1) "" else "s"}")
         runCatching {
-            nm.notify(SUMMARY_ID, NotificationCompat.Builder(ctx, CHANNEL_ID)
+            NotifyGate.post(nm, null, SUMMARY_ID, NotificationCompat.Builder(ctx, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_stat_notify)
                 .setColor(0xFF0A0A0A.toInt())
                 .setContentTitle("Cloud SA - Alerts")
