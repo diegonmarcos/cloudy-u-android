@@ -138,6 +138,42 @@ eq('H1 a row per served page', (hhome.match(/data-home-page=/g) || []).length, 2
 eq('H1 a row per sshd door', (hhome.match(/data-home-door=/g) || []).length, 2);
 eq('H1 device facts', S.deviceFacts(habout).map(f => f[1]), ['5 min', '3 GB free of 8 GB', null, '80% Charging', null]);
 if (!S.renderHealth({ ...hpw, server: false, running: false }, null, hsv).includes('admin page stays up')) bad.push('H1 OFF banner must say the admin page stays up');
+// T1 the API topology view: /api/topology rendered as 3 layers + a detail panel + search/group
+const T = { nodes: [
+  { layer: 'mcp', id: 'mcp:srv', label: 'srv', meta: { kind: 'server', auth: 'tok', endpoint: 'https://x/mcp', tools_count: 3, tools_listed: 3 } },
+  { layer: 'mcp', id: 'mcp:srv/remote_tool', label: 'remote_tool', meta: { kind: 'tool', server: 'srv' } },
+  { layer: 'mcp', id: 'mcp:srv/only_tool', label: 'only_tool', meta: { kind: 'tool', server: 'srv' } },
+  { layer: 'mcp', id: 'mcp:srv/local_tool', label: 'local_tool', meta: { kind: 'tool', server: 'srv' } },
+  { layer: 'api', id: 'api:c3:a.b', label: 'a.b', meta: { surface: 'c3', kind: 'api', method: null, auth: 'tok', summary: '/a/b' } },
+  { layer: 'api', id: 'api:app:/__app__/api/power', label: '/__app__/api/power', meta: { surface: 'app', kind: 'api', method: 'GET', auth: 'loopback', summary: 'Power state' } },
+  { layer: 'api', id: 'api:app:/__app__/api/open', label: '/__app__/api/open', meta: { surface: 'app', kind: 'api', method: 'POST', auth: 'loopback', summary: 'Open' } },
+  { layer: 'ipc', id: 'ipc:power.get', label: 'power.get', meta: { kind: 'query', authority: 'app', what: 'read power' } } ],
+  edges: [ { from: 'mcp:srv', to: 'mcp:srv/remote_tool', kind: 'exposes' }, { from: 'mcp:srv/remote_tool', to: 'api:c3:a.b', kind: 'maps_to' },
+    { from: 'mcp:srv/local_tool', to: 'api:app:/__app__/api/power', kind: 'served_by' }, { from: 'api:app:/__app__/api/power', to: 'ipc:power.get', kind: 'dispatches' } ],
+  routes: [ { mcp_tool: 'remote_tool', mcp_server: 'srv', api_route: 'a.b', ipc_route: null, method: null, auth: 'tok', summary: '/a/b', status: 'unknown', ipc_state: 'n/a' },
+    { mcp_tool: 'only_tool', mcp_server: 'srv', api_route: null, ipc_route: null, method: null, auth: 'tok', summary: 'x', status: 'mcp_only', ipc_state: 'n/a' },
+    { mcp_tool: 'local_tool', mcp_server: 'srv', api_route: '/__app__/api/power', ipc_route: 'ipc:power.get', method: 'GET', auth: 'loopback', summary: 'Power state', status: 'unknown', ipc_state: 'mapped' } ] };
+const tt = S.renderTopology(T, { q: '', group: 'layer', sel: null });
+eq('T1 three layer groups', ['mcp', 'api', 'ipc'].map(l => tt.includes('<h2>' + l + '<')), [true, true, true]);
+eq('T1 a row per node', (tt.match(/data-topo="/g) || []).length, T.nodes.length);
+eq('T1 search box and group toggles', [tt.includes('data-topo-q'), (tt.match(/data-topo-group=/g) || []).length], [true, 3]);
+eq('T1 mcp_only badge', (tt.match(/mcp_only<\/span>/g) || []).length >= 1, true);
+eq('T1 remote c3-api badge', tt.includes('remote c3-api, no local IPC'), true);
+eq('T1 local route badge', tt.includes('local route'), true);
+const dl = S.topoDetail(T, 'mcp:srv/local_tool');
+eq('T1 tool detail follows edges to api+ipc+state', [dl.includes('/__app__/api/power'), dl.includes('power.get'), dl.includes('mapped'), dl.includes('unknown')], [true, true, true, true]);
+eq('T1 remote tool detail', S.topoDetail(T, 'mcp:srv/remote_tool').includes('remote c3-api, no local IPC'), true);
+eq('T1 mcp_only tool detail', S.topoDetail(T, 'mcp:srv/only_tool').includes('none (mcp_only)'), true);
+const da = S.topoDetail(T, 'api:app:/__app__/api/power');
+eq('T1 api detail lists tools, ipc, method, auth, Try it', [da.includes('local_tool'), da.includes('power.get'), da.includes('<b>GET</b>'), da.includes('loopback'), da.includes('data-topo-try')], [true, true, true, true, true]);
+eq('T1 POST route has no Try it', S.topoDetail(T, 'api:app:/__app__/api/open').includes('data-topo-try'), false);
+eq('T1 ipc detail lists its api route', S.topoDetail(T, 'ipc:power.get').includes('/__app__/api/power'), true);
+eq('T1 selection marks related nodes', (S.renderTopology(T, { q: '', group: 'layer', sel: 'mcp:srv/local_tool' }).match(/class="tn l-\w+ rel"/g) || []).length, 2);
+eq('T1 search by tool / ipc id / server', ['only_tool', 'power.get', 'srv'].map(q => (S.topoTree(T, { q, group: 'layer', sel: null }).match(/data-topo="/g) || []).length), [1, 1, 4]);
+eq('T1 group by surface', ['app', 'c3'].map(g => S.topoTree(T, { q: '', group: 'surface', sel: null }).includes('<h2>' + g + '<')), [true, true]);
+eq('T1 group by server', S.topoTree(T, { q: '', group: 'server', sel: null }).includes('<h2>srv<'), true);
+eq('T1 the API tab fetches /__app__/api/topology and draws it', [html.includes("j('/__app__/api/topology')"), /api: function[\s\S]{0,400}renderTopology\(t, topoSt\)/.test(html)], [true, true]);
+eq('T1 nothing selected', S.topoDetail(T, null).includes('Select'), true);
 bad.forEach(b => console.log('    ' + b));
 process.exit(bad.length ? 1 : 0);
 JS
@@ -145,7 +181,7 @@ JS
 run() { node "$WORK/check.js" "$1" "$2"; }
 
 if run "$APP/server/ui/shell.html" "$APP/build.json"; then
-  pass "L1-L5 N1 links are classified by build.json::links, the sheet offers the declared choices, remembered choices skip it, embedded works in the WebView, the tabs are the route table"
+  pass "T1 topology view (3 layers, detail, search, groups); L1-L5 N1 links are classified by build.json::links, the sheet offers the declared choices, remembered choices skip it, embedded works in the WebView, the tabs are the route table"
 else
   fail "L1-L5 N1 the shell's link chooser or tabs disagree with their declaration"
 fi
@@ -171,6 +207,7 @@ mutate "a chooser that never asks"                shell.html "return 'ask';
 function renderSheet" "return cls.choices[0];
 }
 function renderSheet"
+mutate "topology view no longer fetches /api/topology" shell.html "j('/__app__/api/topology')" "j('/__app__/api/routes')"
 mutate "private names not rewritten for the WebView" shell.html "u.hostname = '127.0.0.1';" "/* gone */"
 mutate "the file view no longer hooked"           shell.html "if (fv) watchFrame(fv);" ""
 mutate "embedded stops navigating the WebView"    shell.html "window.location.assign(embedUrl(" "window.open(embedUrl("

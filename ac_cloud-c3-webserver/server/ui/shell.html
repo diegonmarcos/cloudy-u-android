@@ -113,6 +113,20 @@
   .strip { display:flex; flex-wrap:wrap; gap:6px 14px; padding:8px 10px; }
   .strip .it { min-width:0; } .strip .it .k { color:var(--dim); font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; display:block; }
   .strip .it .v { font-size:13px; }
+  /* API topology: glass panel, tree left, Swagger-style detail right (stacked on a phone). */
+  .topo { background:var(--glass); -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px); border-color:var(--glass-line); border-radius:16px; }
+  .topo h2 { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .tsearch { padding:6px 10px; } .tsearch input { width:100%; box-sizing:border-box; background:var(--bg); color:var(--fg); border:1px solid var(--line); border-radius:10px; padding:9px 10px; font:14px system-ui; }
+  .tcols { display:grid; grid-template-columns:1fr; gap:8px; padding:0 8px 8px; }
+  .ttree { max-height:48vh; overflow:auto; } .tdetail { min-width:0; }
+  @media (min-width:700px) { .tcols { grid-template-columns:minmax(0,1fr) minmax(0,1fr); } .ttree { max-height:70vh; } }
+  .tg h2 { font-size:11px; } .tg h2 .badge { margin-left:auto; }
+  .tn { display:flex; align-items:center; gap:6px; flex-wrap:wrap; padding:7px 10px; border-bottom:1px solid var(--line); min-height:32px; }
+  .tn .tl { font-size:10px; text-transform:uppercase; color:var(--dim); width:28px; flex:none; }
+  .tn.l-mcp .tl { color:var(--acc); } .tn.l-api .tl { color:#7ee2a8; } .tn.l-ipc .tl { color:#e0a35a; }
+  .tn.rel { background:rgba(124,196,255,.10); } .tn.sel { background:rgba(10,132,255,.25); border-left:3px solid var(--nav-acc); }
+  .td .row .k { flex-basis:30%; }
+  .tryout { margin:6px 10px; padding:8px; background:var(--bg); border:1px solid var(--line); border-radius:8px; white-space:pre-wrap; word-break:break-all; max-height:30vh; overflow:auto; }
   /* Desktop: the phone layout, centred in a readable column; the tab bar stays at the bottom, centred. */
   @media (min-width:900px) {
     main { max-width:960px; margin:0 auto; }
@@ -580,8 +594,122 @@ function renderHome(m) {
   return renderHealth(m.power, m.health, m.serving) + renderPower(m.power) + renderServedStrip(m.served) + renderSshdStrip(m.sshd) +
     renderPortsStrip(m.serving) + renderDeviceStrip(m.about) + renderTopologyLink();
 }
+// ── API topology (MCP -> API -> IPC), Swagger-style: left a tree, right the detail of the selected node. `t` is /__app__/api/topology.
+// `st` = { q: search text, group: 'layer'|'server'|'surface', sel: node id|null }.
+function topoById(t) { var m = {}; (t.nodes || []).forEach(function (n) { m[n.id] = n; }); return m; }
+// Everything reachable from `id` along the edges in one direction ('from' follows outgoing, 'to' follows incoming).
+function topoReach(t, id, dir) {
+  var seen = {}, todo = [id], k = dir === 'from' ? 'from' : 'to', o = dir === 'from' ? 'to' : 'from';
+  while (todo.length) { var c = todo.pop(); (t.edges || []).forEach(function (e) { if (e[k] === c && !seen[e[o]]) { seen[e[o]] = 1; todo.push(e[o]); } }); }
+  return Object.keys(seen);
+}
+function topoRelated(t, id) { return id ? topoReach(t, id, 'from').concat(topoReach(t, id, 'to')) : []; }
+function topoRows(t, n) {
+  return (t.routes || []).filter(function (r) {
+    if (n.layer === 'mcp') return n.meta.kind === 'tool' ? (r.mcp_tool === n.label && r.mcp_server === n.meta.server) : r.mcp_server === n.label;
+    if (n.layer === 'api') return r.api_route === n.label;
+    return r.ipc_route === n.id;
+  });
+}
+function topoMcpOnly(t, n) { return n.layer === 'mcp' && n.meta.kind === 'tool' && topoRows(t, n).every(function (r) { return r.status === 'mcp_only'; }); }
+function topoMatch(n, q) {
+  if (!q) return true;
+  var h = [n.id, n.label, n.meta && n.meta.server, n.meta && n.meta.summary, n.meta && n.meta.surface].join(' ').toLowerCase();
+  return q.toLowerCase().split(/\s+/).every(function (w) { return h.indexOf(w) >= 0; });
+}
+function topoRemote(t, n) { return topoReach(t, n.id, 'from').some(function (x) { return x.indexOf('api:c3:') === 0; }) || n.id.indexOf('api:c3:') === 0; }
+function topoBadges(t, n) {
+  var b = [];
+  if (n.layer === 'mcp' && n.meta.kind === 'tool') {
+    if (topoMcpOnly(t, n)) b.push('<span class="badge a">mcp_only</span>');
+    else if (topoRemote(t, n)) b.push('<span class="badge">remote c3-api, no local IPC</span>');
+    else b.push('<span class="badge g">local route</span>');
+  }
+  if (n.layer === 'api') {
+    if (n.meta.method) b.push('<span class="badge">' + esc(n.meta.method) + '</span>');
+    b.push('<span class="badge">' + esc(n.meta.surface) + '</span>');
+  }
+  return b.join('');
+}
+function topoRow(t, n, st, rel) {
+  var cls = 'tn l-' + n.layer + (st.sel === n.id ? ' sel' : rel[n.id] ? ' rel' : '');
+  return '<div class="' + cls + '" data-topo="' + esc(n.id) + '"><span class="tl">' + esc(n.layer) + '</span><span class="path">' + esc(n.label) + '</span>' + topoBadges(t, n) + '</div>';
+}
+function topoGroups(group, nodes) {
+  var g = {}, order = [];
+  nodes.forEach(function (n) {
+    var k = group === 'server' ? (n.layer === 'mcp' ? (n.meta.kind === 'tool' ? n.meta.server : n.label) : n.layer === 'api' ? 'api: ' + n.meta.surface : 'ipc')
+      : group === 'surface' ? (n.layer === 'api' ? n.meta.surface : n.layer === 'mcp' ? 'mcp' : 'ipc') : n.layer;
+    if (!g[k]) { g[k] = []; order.push(k); }
+    g[k].push(n);
+  });
+  return order.map(function (k) { return { name: k, nodes: g[k] }; });
+}
+// Left pane: the filtered nodes, grouped (by layer / MCP server / API surface app|mesh|diag|c3), the selection and its edge-neighbours marked.
+function topoTree(t, st) {
+  var nodes = (t.nodes || []).filter(function (n) { return topoMatch(n, st.q); });
+  var rel = {}; topoRelated(t, st.sel).forEach(function (i) { rel[i] = 1; });
+  if (!nodes.length) return '<div class="note">No node matches.</div>';
+  return topoGroups(st.group, nodes).map(function (g) {
+    return '<section class="tg"><h2>' + esc(g.name) + '<span class="badge">' + g.nodes.length + '</span></h2>' + g.nodes.map(function (n) { return topoRow(t, n, st, rel); }).join('') + '</section>';
+  }).join('');
+}
+function topoKv(k, v) { return '<div class="row"><div class="k">' + esc(k) + '</div><div class="v">' + v + '</div></div>'; }
+function topoLink(t, id) { var n = topoById(t)[id]; return '<a href="#" data-topo="' + esc(id) + '">' + esc(n ? n.label : id) + '</a>'; }
+function topoTryable(n) {
+  return n.layer === 'api' && n.meta.surface === 'app' && n.meta.method === 'GET' && n.meta.kind === 'api' && /^\/__app__\/api\/[a-z0-9_\/-]+$/.test(n.label);
+}
+// Right pane: Swagger-style detail of the selected node (method, path, auth, summary, tools, IPC route and state, status).
+function topoDetail(t, sel) {
+  var n = sel ? topoById(t)[sel] : null;
+  if (!n) return '<div class="note">Select an MCP tool, an API route or an IPC node on the left.</div>';
+  var rows = topoRows(t, n), m = n.meta || {}, h = '';
+  var tools = n.layer === 'api' ? topoReach(t, n.id, 'to').filter(function (x) { return x.indexOf('mcp:') === 0 && x.indexOf('/') > 0; }) : [];
+  var apis = n.layer === 'mcp' && m.kind === 'tool' ? topoReach(t, n.id, 'from').filter(function (x) { return x.indexOf('api:') === 0; }) : [];
+  var ipcs = n.layer === 'ipc' ? [] : topoReach(t, n.id, 'from').filter(function (x) { return x.indexOf('ipc:') === 0; });
+  var states = {}; rows.forEach(function (r) { states[r.ipc_state] = 1; });
+  var status = rows.length ? rows[0].status : 'unknown';
+  h += '<section class="td"><h2>' + esc(n.layer) + ' ' + esc(m.kind || '') + topoBadges(t, n) + '</h2>';
+  h += '<div class="row"><div class="v"><span class="path">' + (m.method ? '<b>' + esc(m.method) + '</b> ' : '') + esc(n.label) + '</span></div></div>';
+  if (m.summary) h += topoKv('Summary', esc(m.summary));
+  if (m.what) h += topoKv('What', esc(m.what));
+  if (m.auth !== undefined && m.auth !== null) h += topoKv('Auth', esc(m.auth));
+  if (m.authority) h += topoKv('Authority', esc(m.authority));
+  if (m.server) h += topoKv('MCP server', esc(m.server));
+  if (m.endpoint) h += topoKv('Endpoint', '<span class="path">' + esc(m.endpoint) + '</span>');
+  if (m.kind === 'server') h += topoKv('Tools', esc(m.tools_count) + ' (' + esc(m.tools_listed) + ' listed)');
+  if (m.surface) h += topoKv('Surface', esc(m.surface));
+  if (tools.length) h += topoKv('MCP tool(s)', tools.map(function (x) { return topoLink(t, x); }).join(', '));
+  if (apis.length) h += topoKv('API route', apis.map(function (x) { return topoLink(t, x); }).join(', '));
+  if (n.layer === 'ipc') {
+    h += topoKv('API route(s)', topoReach(t, n.id, 'to').filter(function (x) { return x.indexOf('api:') === 0; }).map(function (x) { return topoLink(t, x); }).join(', ') || 'none');
+    if (m.per_app) h += topoKv('Per app', esc(m.apps) + ' app(s)');
+  } else if (m.kind !== 'server') {
+    h += topoKv('IPC route', ipcs.length ? ipcs.map(function (x) { return topoLink(t, x); }).join(', ') : (topoMcpOnly(t, n) ? 'none (mcp_only)' : topoRemote(t, n) ? 'remote c3-api, no local IPC' : 'none'));
+    h += topoKv('IPC state', esc(Object.keys(states).join(', ') || 'n/a'));
+  }
+  if (n.layer !== 'ipc') h += topoKv('Status', '<span class="pill off">' + esc(status) + '</span> <span class="sum">(live status later)</span>');
+  if (topoTryable(n)) h += '<div class="tool"><button data-topo-try="' + esc(n.label) + '">Try it (GET)</button></div><pre class="path tryout" id="topo-try" hidden></pre>';
+  return h + '</section>';
+}
+function topoCounts(t) {
+  var c = { mcp: 0, api: 0, ipc: 0 }; (t.nodes || []).forEach(function (n) { c[n.layer]++; });
+  var only = (t.nodes || []).filter(function (n) { return topoMcpOnly(t, n); }).length;
+  return c.mcp + ' mcp / ' + c.api + ' api / ' + c.ipc + ' ipc nodes, ' + (t.edges || []).length + ' edges, ' + only + ' mcp_only';
+}
+function renderTopology(t, st) {
+  st = st || { q: '', group: 'server', sel: null };
+  var seg = [['layer', 'By layer'], ['server', 'By server'], ['surface', 'By surface']].map(function (g) {
+    return '<button data-topo-group="' + g[0] + '"' + (st.group === g[0] ? ' class="on"' : '') + '>' + g[1] + '</button>';
+  }).join('');
+  return '<section class="topo" id="topo"><h2>API topology: MCP &rarr; API &rarr; IPC<span class="spc"></span><span class="sum">' + esc(topoCounts(t)) + '</span></h2>' +
+    '<div class="tsearch"><input data-topo-q type="search" placeholder="Filter: tool, server, route, ipc id" autocomplete="off" autocapitalize="none" value="' + esc(st.q) + '"></div>' +
+    '<div class="seg">' + seg + '</div>' +
+    '<div class="tcols"><div class="ttree" id="topo-tree">' + topoTree(t, st) + '</div><div class="tdetail" id="topo-detail">' + topoDetail(t, st.sel) + '</div></div></section>';
+}
 if (typeof module !== 'undefined') {
-  module.exports = { esc: esc, tabsFrom: tabsFrom, tabFromPath: tabFromPath, defaultTab: defaultTab, renderNav: renderNav, renderRoutes: renderRoutes,
+  module.exports = { topoTree: topoTree, topoDetail: topoDetail, renderTopology: renderTopology, topoRelated: topoRelated, topoMatch: topoMatch,
+    esc: esc, tabsFrom: tabsFrom, tabFromPath: tabFromPath, defaultTab: defaultTab, renderNav: renderNav, renderRoutes: renderRoutes,
     renderSections: renderSections, renderAbout: renderAbout, aboutText: aboutText, renderConfig: renderConfig, renderPages: renderPages, renderPage: renderPage, renderUndeclared: renderUndeclared,
     renderCfgTabs: renderCfgTabs, renderServing: renderServing, renderEngines: renderEngines, hostIsLocal: hostIsLocal, classifyLink: classifyLink,
     isLinkTarget: isLinkTarget, embedUrl: embedUrl, subsOf: subsOf, renderSubNav: renderSubNav, renderSubRow: renderSubRow, renderForm: renderForm, renderSubPage: renderSubPage, decide: decide, renderSheet: renderSheet, renderLinks: renderLinks,
@@ -602,6 +730,7 @@ if (typeof module !== 'undefined') {
   var $scrim = document.getElementById('scrim');
   var DOORS = null, ROUTES = [], TABS = [], ABOUT = [], SERVING = null, LINKS = null, SUBPAGES = [];
   var subPage = {};
+  var TOPO = null, topoSt = { q: '', group: 'server', sel: null };
   var cfgPage = 'about';
   var KEY = 'c3.link.';
 
@@ -702,7 +831,10 @@ if (typeof module !== 'undefined') {
   }
   var views = {
     pages: function () { return j('/__app__/api/served').then(function (pg) { return renderPages(pg); }); },
-    api: function () { return withSubs('api', 'apps', function () { return Promise.resolve(renderRoutes(ROUTES, 'api')); }); },
+    api: function () {
+      var topo = j('/__app__/api/topology').then(function (t) { TOPO = t; return renderTopology(t, topoSt); }).catch(function (e) { return '<div class="err">Topology: ' + esc(e.message) + '</div>'; });
+      return Promise.all([topo, withSubs('api', 'apps', function () { return Promise.resolve(renderRoutes(ROUTES, 'api')); })]).then(function (r) { return r[0] + r[1]; });
+    },
     home: function () {
       var opt = function (p) { return p.catch(function () { return null; }); };
       return Promise.all([j('/__app__/api/power'), j('/__app__/api/about'), opt(j('/__api__/health')), j('/__app__/api/served'), j('/__app__/api/sshd'), j('/__app__/api/serving')]).then(function (rs) {
@@ -779,7 +911,25 @@ if (typeof module !== 'undefined') {
     var box = ev.target.closest('.form');
     if (box && ev.target.getAttribute('data-f') === 'source') loadRepoList(box);
   });
+  function topoRedraw(whole) {
+    if (!TOPO) return;
+    if (whole) { var el = document.getElementById('topo'); if (el) el.outerHTML = renderTopology(TOPO, topoSt); return; }
+    var tr = document.getElementById('topo-tree'); if (tr) tr.innerHTML = topoTree(TOPO, topoSt);
+  }
+  $main.addEventListener('input', function (ev) {
+    if (ev.target.hasAttribute && ev.target.hasAttribute('data-topo-q')) { topoSt.q = ev.target.value; topoRedraw(false); }
+  });
   $main.addEventListener('click', function (ev) {
+    var tg = ev.target.closest('[data-topo-group]');
+    if (tg) { topoSt.group = tg.getAttribute('data-topo-group'); topoRedraw(true); return; }
+    var tt = ev.target.closest('[data-topo-try]');
+    if (tt) {
+      var out = document.getElementById('topo-try'); out.hidden = false; out.textContent = '...';
+      fetch(tt.getAttribute('data-topo-try'), { cache: 'no-store' }).then(function (r) { return r.text().then(function (x) { out.textContent = r.status + '\n' + x.slice(0, 4000); }); }).catch(function (e) { out.textContent = e.message; });
+      return;
+    }
+    var tn = ev.target.closest('[data-topo]');
+    if (tn) { topoSt.sel = tn.getAttribute('data-topo'); topoRedraw(true); ev.preventDefault(); return; }
     var sub = ev.target.closest('[data-sub]');
     if (sub) { var on = document.querySelector('nav button.on'); if (on) { subPage[on.getAttribute('data-tab')] = sub.getAttribute('data-sub'); show(on.getAttribute('data-tab'), false); } return; }
     var pw = ev.target.closest('[data-power]');
