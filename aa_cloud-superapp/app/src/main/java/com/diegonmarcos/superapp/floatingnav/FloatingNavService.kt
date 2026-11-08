@@ -185,7 +185,7 @@ class FloatingNavService : Service() {
                 reschedule()
             } else {
                 // UsageStats.queryEvents is a binder call: read it off the main thread, apply the result on it.
-                runCatching { pollIo.execute {
+                runCatching { (pollExecutor ?: pollIo).execute {
                     val fg = foregroundPackage()
                     main.post { if (isRunning) { refresh(fg); reschedule() } }
                 } }.onFailure { reschedule() }
@@ -656,6 +656,10 @@ class FloatingNavService : Service() {
         @Volatile
         var armed: Boolean = false
             private set
+
+        /** Test seam: where the UsageStats read of a poll runs (null = the single background thread). A JVM test sets a direct executor so the
+         *  read and its main-thread apply happen inside Looper.idle(), not on a thread the test cannot wait for. */
+        @Volatile internal var pollExecutor: java.util.concurrent.Executor? = null
 
         /** The overlay windows actually added to the WindowManager right now
          *  (read by /api/overlays). */

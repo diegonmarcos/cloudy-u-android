@@ -11,7 +11,7 @@ import com.diegonmarcos.superapp.network.MeshIntent
 import com.diegonmarcos.superapp.network.MeshSupervisorRunner
 
 /**
- * #1120 The mesh-down alert: raised in the notification centre (the Alerts group, and so on the Notify page)
+ * #1120 The mesh-down alert: raised in the notification centre (a plain ungrouped shade notification; the Alerts group is gone)
  * once [MeshDownModel] says the mesh has stayed down, withdrawn by itself when it recovers. Its one button,
  * Reconnect, is a [BadgeModel.Action] like every badge button (#1113), so the notification and the Notify
  * card read it from the same place.

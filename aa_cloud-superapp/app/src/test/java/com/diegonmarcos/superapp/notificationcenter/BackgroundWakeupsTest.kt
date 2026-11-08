@@ -46,7 +46,7 @@ class BackgroundWakeupsTest {
         .filterNot { it.trim().startsWith("*") || it.trim().startsWith("//") || it.trim().startsWith("/*") }.joinToString("\n")
 
     private var svc: ServiceController<FloatingNavService>? = null
-    @After fun tearDown() { svc?.destroy() }
+    @After fun tearDown() { svc?.destroy(); FloatingNavService.pollExecutor = null }
 
     // ── 1. FloatingNav ───────────────────────────────────────────────────
 
@@ -73,6 +73,7 @@ class BackgroundWakeupsTest {
         Shadow.extract<ShadowWindowManagerImpl>(ctx.getSystemService(WindowManager::class.java)).views.size
 
     @Test fun `floating nav does not poll while the screen is off and resumes on screen on`() {
+        FloatingNavService.pollExecutor = java.util.concurrent.Executor { it.run() } // the poll's UsageStats read runs inline, so idle() sees its result
         val ctx = ApplicationProvider.getApplicationContext<Application>()
         ctx.getSharedPreferences("floatingnav_prefs", Context.MODE_PRIVATE).edit().clear().commit()
         ShadowSettings.setCanDrawOverlays(true)

@@ -45,6 +45,7 @@ class FloatingNavOffSticksTest {
     private var svc: ServiceController<FloatingNavService>? = null
 
     @Before fun setUp() {
+        FloatingNavService.pollExecutor = java.util.concurrent.Executor { it.run() } // the poll's UsageStats read runs inline, so idle() sees its result
         ctx = ApplicationProvider.getApplicationContext()
         ctx.getSharedPreferences("floatingnav_prefs", Context.MODE_PRIVATE).edit().clear().commit()
         ShadowSettings.setCanDrawOverlays(true)
@@ -53,7 +54,7 @@ class FloatingNavOffSticksTest {
             "org.example.other", System.currentTimeMillis() - 1_000, UsageEvents.Event.MOVE_TO_FOREGROUND)
     }
 
-    @After fun tearDown() { svc?.destroy() }
+    @After fun tearDown() { svc?.destroy(); FloatingNavService.pollExecutor = null }
 
     private fun windows(): Int =
         Shadow.extract<ShadowWindowManagerImpl>(ctx.getSystemService(WindowManager::class.java)).views.size

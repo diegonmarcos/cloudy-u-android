@@ -1,8 +1,8 @@
 package com.diegonmarcos.superapp.ui
 
 import android.app.Application
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.onNodeWithText
 import androidx.test.core.app.ApplicationProvider
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -25,7 +25,8 @@ class SystemInfoPopupComposeTest : KitPageHarness() {
         val ctx = ApplicationProvider.getApplicationContext<Application>()
         showKit { SystemInfoPopup.SystemInfoBubble(ctx) }
         for (row in listOf("Device", "Android", "App", "Memory", "Storage", "CPU", "Uptime"))
-            compose.onNodeWithText(row).assertExists()
+            // the four-tier reorg's TIER 1 "Device" group repeats the header's Device / Android / Uptime labels, so a row may draw twice: at least once is the contract
+            assertTrue("no '$row' row", compose.onAllNodesWithText(row).fetchSemanticsNodes().isNotEmpty())
     }
 
     @Test

@@ -56,6 +56,7 @@ class NotifyGroupsAlertsTest {
             ctx.getSharedPreferences(p, Context.MODE_PRIVATE).edit().clear().commit()
         nm = ctx.getSystemService(NotificationManager::class.java)
         nm.cancelAll()
+        NotifyGate.reset() // cancelAll bypasses the gate, so its memory of the last post must go too or an identical summary is dropped as a duplicate
     }
 
     @After fun tearDown() { svc?.destroy() }

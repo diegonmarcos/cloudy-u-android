@@ -53,7 +53,10 @@ object AlertsNotifier {
     fun refresh(ctx: Context, fresh: String? = null): List<AlertStore.Alert> {
         val g = NotifyGroups.alertsGroup
         val on = g != null && badge()?.let { BadgeCustomization.isEnabled(ctx, it) } == true
-        val shown = if (on) AlertStore.visible(ctx).take(g!!.maxInShade) else emptyList()
+        // The Alerts group and badge are gone (notify redesign 2026-11-08), but an alert the owner can ACT on (the mesh-down
+        // Reconnect) still reaches the shade: a plain ungrouped notification, no group, no summary.
+        val shown = if (on) AlertStore.visible(ctx).take(g!!.maxInShade)
+        else AlertStore.visible(ctx).filter { it.dedupeKey == MeshDownAlert.DEDUPE }
         val nm = nm(ctx)
         val keep = shown.map { TAG_PREFIX + it.id }.toSet()
         runCatching {
@@ -62,7 +65,7 @@ object AlertsNotifier {
         }
         if (shown.isEmpty()) { NotifyGate.invalidate(null, SUMMARY_ID); runCatching { nm.cancel(SUMMARY_ID) }; return emptyList() }
         ensureChannels(ctx)
-        val key = NotifyGroups.key(g!!)
+        val key = g?.let(NotifyGroups::key)
         // #883 Jev may make the FRESH alert arrive silently; no opinion = it rings, as before
         val quiet = if (fresh == null) emptySet() else JevNotify.quietIds(ctx, shown.firstOrNull { it.id == fresh })
         for (a in shown) runCatching {
@@ -74,7 +77,7 @@ object AlertsNotifier {
                 .setSubText("${appLabel(ctx, a.app)} · ${a.severity}")
                 .setStyle(NotificationCompat.BigTextStyle().bigText(a.text))
                 .setWhen(a.ts).setShowWhen(true)
-                .setGroup(key)
+                .apply { if (key != null) setGroup(key) }
                 .setSortKey("%020d".format(Long.MAX_VALUE - a.ts))
                 .setOnlyAlertOnce(true)
                 .setSilent(silent(a.id, fresh, quiet))
@@ -83,6 +86,7 @@ object AlertsNotifier {
                 .setDeleteIntent(dismissIntent(ctx, a.id))
                 .build())
         }
+        if (g == null || key == null) return shown
         val pinned = BadgeServices.pinned(ctx, BADGE_ID)
         val inbox = NotificationCompat.InboxStyle().setBigContentTitle("Cloud SA - Alerts")
         shown.take(5).forEach { inbox.addLine("${appLabel(ctx, it.app)} · ${it.title}") }
