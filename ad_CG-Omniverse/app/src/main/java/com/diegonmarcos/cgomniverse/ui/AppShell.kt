@@ -58,6 +58,8 @@ object Tags {
     const val WORLD_DESKTOP = "world_desktop"
     const val WORLD_DIAG = "world_diag"
     const val WORLD_DIAG_SHEET = "world_diag_sheet"
+    const val WORLD_STATS = "world_stats"
+    const val WORLD_STATS_HUD = "world_stats_hud"
     const val WORLD_GPU = "world_gpu"
     const val WORLD_GPU_BROWSER = "world_gpu_browser"
     const val WORLD_GPU_STAY = "world_gpu_stay"

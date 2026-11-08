@@ -4,7 +4,7 @@ import org.json.JSONObject
 
 /**
  * The editor's configuration (one option id per category) and how it becomes scene ops for cgc.js's apply():
- *   {"clip": id, "colors": {target: hex|null}, "tints": {target: hex|null}, "visible": {target: bool}, "morphs": {name: 0..1}}.
+ *   {"clip": id, "colors": {target: hex|null}, "tints": {target: hex|null}, "visible": {target: bool}, "morphs": {name: 0..1}, "background": {type: solid|gradient|stars|studio, color?}}.
  * Pure (org.json only), so the JVM suite holds every rule; .github/workflows/cg-omniverse-avatar-proof.yml plants mutants in it.
  */
 object CgcConfig {
@@ -45,6 +45,7 @@ object CgcConfig {
                     for (t in c.targets) into.put(t, opt.color ?: JSONObject.NULL)
                 }
                 CgcSpec.KIND_VISIBLE -> for ((t, on) in opt.visible) visible.put(t, on)
+                CgcSpec.KIND_BACKGROUND -> out.put("background", JSONObject().put("type", opt.id).also { b -> opt.color?.let { b.put("color", it) } })
                 CgcSpec.KIND_MORPH -> {
                     for (o in c.options) for (name in o.morphs.keys) if (!morphs.has(name)) morphs.put(name, 0.0)
                     for ((name, v) in opt.morphs) morphs.put(name, v.coerceIn(0.0, 1.0))

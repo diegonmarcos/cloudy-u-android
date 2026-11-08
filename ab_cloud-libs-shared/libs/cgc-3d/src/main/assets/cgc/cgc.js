@@ -53,7 +53,8 @@ export function createViewer(container, cfgIn = {}) {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(cfg.background);
   const pmrem = new THREE.PMREMGenerator(renderer);
-  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+  const studioEnv = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+  scene.environment = studioEnv;
   scene.environmentIntensity = 0.55;
 
   // studio light: warm key (casts the contact shadow), cool fill, rim from behind
@@ -216,7 +217,45 @@ export function createViewer(container, cfgIn = {}) {
   }
   function setVisible(name, on) { const t = targets(name); t.forEach((m) => { m.visible = !!on; }); return t.length; }
 
-  /** Applies scene ops: {clip, colors: {target: hex|null}, tints: {target: hex|null}, visible: {target: bool}, morphs: {name: 0..1}, autoRotate, camera: "reset"}. */
+  // Background types (apply({background: {type, color?, top?, bottom?}}) or a hex string): solid | gradient (sky) | stars (space) |
+  // studio (the RoomEnvironment shown as backdrop, blurred). All cheap: one clear colour, one 2 px-wide texture, ~1500 points, or
+  // the PMREM texture the lighting already uses; nothing is re-rendered per frame beyond the scene's own pass.
+  let bgPoints = null, bgTex = null, bgName = 'solid';
+  function clearBackground() {
+    if (bgPoints) { scene.remove(bgPoints); bgPoints.geometry.dispose(); bgPoints.material.dispose(); bgPoints = null; }
+    if (bgTex) { bgTex.dispose(); bgTex = null; }
+    scene.backgroundBlurriness = 0; scene.backgroundIntensity = 1;
+  }
+  function setBackground(b) {
+    const o = typeof b === 'string' ? { type: 'solid', color: b } : b || {};
+    const type = ['solid', 'gradient', 'stars', 'studio'].includes(o.type) ? o.type : 'solid';
+    clearBackground();
+    if (type === 'gradient') {
+      const c = document.createElement('canvas'); c.width = 2; c.height = 256;
+      const g = c.getContext('2d'), grad = g.createLinearGradient(0, 0, 0, 256);
+      grad.addColorStop(0, o.top || '#1d4e89'); grad.addColorStop(0.6, o.mid || '#7fb2e5'); grad.addColorStop(1, o.bottom || '#f2e3c6');
+      g.fillStyle = grad; g.fillRect(0, 0, 2, 256);
+      bgTex = new THREE.CanvasTexture(c); bgTex.colorSpace = THREE.SRGBColorSpace;
+      scene.background = bgTex;
+    } else if (type === 'stars') {
+      scene.background = new THREE.Color(o.color || '#03040b');
+      const n = o.count || 1500, pos = new Float32Array(n * 3);
+      for (let i = 0; i < n; i++) {
+        const u = Math.random() * 2 - 1, t = Math.random() * Math.PI * 2, r = Math.sqrt(1 - u * u), d = 30 + Math.random() * 10;
+        pos[i * 3] = d * r * Math.cos(t); pos[i * 3 + 1] = d * u; pos[i * 3 + 2] = d * r * Math.sin(t);
+      }
+      const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      bgPoints = new THREE.Points(geo, new THREE.PointsMaterial({ color: 0xffffff, size: 1.6, sizeAttenuation: false, fog: false, depthWrite: false }));
+      bgPoints.frustumCulled = false; bgPoints.renderOrder = -1; scene.add(bgPoints);
+    } else if (type === 'studio') {
+      scene.background = studioEnv; scene.backgroundBlurriness = 0.5; scene.backgroundIntensity = 0.45;
+    } else {
+      scene.background = new THREE.Color(o.color || cfg.background);
+    }
+    bgName = type;
+  }
+
+  /** Applies scene ops: {background: {type: solid|gradient|stars|studio, color?}, clip, colors: {target: hex|null}, tints: {target: hex|null}, visible: {target: bool}, morphs: {name: 0..1}, autoRotate, camera: "reset"}. */
   function apply(ops) {
     const o = typeof ops === 'string' ? JSON.parse(ops) : ops || {};
     if (o.colors) for (const [t, hex] of Object.entries(o.colors)) setColor(t, hex);
@@ -226,6 +265,7 @@ export function createViewer(container, cfgIn = {}) {
     if ('clip' in o && (o.clip == null || state.actions.has(o.clip)) && (!state.current || state.current !== state.actions.get(o.clip))) play(o.clip);
     if ('autoRotate' in o) { controls.autoRotate = !!o.autoRotate; emit('camera', { autoRotate: controls.autoRotate }); }
     if (o.camera === 'reset') resetCamera();
+    if (o.background) setBackground(o.background);
     if (o.insets) { state.insets = { ...state.insets, ...o.insets }; resize(); frameModel(); }
   }
 
@@ -276,11 +316,24 @@ export function createViewer(container, cfgIn = {}) {
     renderer.setPixelRatio(1); renderer.shadowMap.enabled = false; key.castShadow = false; ground.visible = false;
     frameMs = 1000 / 15; resize(); emit('quality', { lite: true, why });
   }
+  let gpuName = 'n/a';
   try {
     const gl = renderer.getContext(); const ext = gl.getExtension('WEBGL_debug_renderer_info');
     const name = String(ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER));
+    gpuName = name;
     if (/swiftshader|llvmpipe|softpipe|software/i.test(name)) goLite('software renderer: ' + name);
   } catch (e) { /* no renderer string: the frame timer decides */ }
+  // live stats for the host's debug HUD: fps over the last second, the CPU time of the last render() call, three.js's own per-frame
+  // counters (renderer.info resets every render), and the visible vertices (summed on request only, never per frame)
+  let fpsFrames = 0, fpsT = performance.now(), fps = 0, renderMs = 0;
+  function stats() {
+    const i = renderer.info; let vertices = 0;
+    scene.traverse((m) => { if ((m.isMesh || m.isPoints || m.isLine) && m.visible && m.geometry && m.geometry.attributes.position) vertices += m.geometry.attributes.position.count; });
+    const c = renderer.domElement;
+    return { fps, frameMs: +(1000 / Math.max(fps, 0.001)).toFixed(1), renderMs: +renderMs.toFixed(2), drawCalls: i.render.calls, triangles: i.render.triangles,
+      points: i.render.points, lines: i.render.lines, vertices, geometries: i.memory.geometries, textures: i.memory.textures,
+      programs: i.programs ? i.programs.length : 0, gpu: gpuName, lite, dpr: renderer.getPixelRatio(), canvas: [c.width, c.height], background: bgName, targetFps: Math.round(1000 / frameMs) };
+  }
   function tick() {
     const now = performance.now();
     // no document.hidden test: an Android WebView can report its page hidden while it is on screen, and the loop then
@@ -292,13 +345,16 @@ export function createViewer(container, cfgIn = {}) {
     state.vrm && state.vrm.update(dt);
     controls.update();
     const t0 = performance.now();
+    if (bgPoints) bgPoints.rotation.y += dt * 0.01;
     renderer.render(scene, camera);
+    renderMs = performance.now() - t0; fpsFrames++;
+    if (t0 - fpsT >= 1000) { fps = Math.round(fpsFrames * 10000 / (t0 - fpsT)) / 10; fpsFrames = 0; fpsT = t0; }
     if (!lite && state.model) { slow = performance.now() - t0 > 45 ? slow + 1 : 0; if (slow >= 4) goLite('slow frames'); }
   }
   renderer.setAnimationLoop(tick);
   resize();
 
-  return { load, play, apply, setMorph, setColor, setVisible, addMixamoClip, exportGLB, snapshotPNG, resetCamera, describe,
+  return { load, play, apply, stats, setBackground, setMorph, setColor, setVisible, addMixamoClip, exportGLB, snapshotPNG, resetCamera, describe,
     get three() { return { THREE, scene, camera, renderer, controls }; } };
 }
 

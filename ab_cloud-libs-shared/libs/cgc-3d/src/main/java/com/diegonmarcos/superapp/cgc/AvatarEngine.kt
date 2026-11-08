@@ -30,7 +30,8 @@ interface AvatarEngine {
 object ModelFileEngine : AvatarEngine {
     override val id = "model-file"
     override val formats = setOf("glb", "gltf", "vrm", "fbx")
-    override val kinds = setOf(CgcSpec.KIND_CLIP, CgcSpec.KIND_COLOR, CgcSpec.KIND_TINT, CgcSpec.KIND_VISIBLE, CgcSpec.KIND_MORPH)
+    override val kinds = setOf(CgcSpec.KIND_CLIP, CgcSpec.KIND_COLOR, CgcSpec.KIND_TINT, CgcSpec.KIND_VISIBLE, CgcSpec.KIND_MORPH,
+        CgcSpec.KIND_BACKGROUND)
     override val available = true
 }
 

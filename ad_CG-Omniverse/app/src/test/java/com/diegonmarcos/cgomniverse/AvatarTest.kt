@@ -40,9 +40,10 @@ class AvatarTest {
     }
 
     @Test fun theCategoriesAreMetaPersonsInOrder() {
-        assertEquals(listOf("outfit", "body", "skin", "features", "head", "hair", "glasses", "presets", "animations"), spec.categories.map { it.id })
+        assertEquals(listOf("outfit", "body", "skin", "features", "head", "hair", "glasses", "presets", "background", "animations"), spec.categories.map { it.id })
         val wired = spec.categories.filter { !Avatar.soon(spec, it.id) }.map { it.id }
-        assertEquals(listOf("outfit", "skin", "features", "glasses", "animations"), wired)
+        assertEquals(listOf("outfit", "skin", "features", "glasses", "background", "animations"), wired)
+        assertEquals(listOf("solid", "stars", "gradient", "studio"), spec.category("background")!!.options.map { it.id })
         spec.categories.forEach { c -> assertTrue(c.id, c.options.isNotEmpty() && c.options.any { it.id == spec.defaults[c.id] }) }
     }
 

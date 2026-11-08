@@ -42,6 +42,7 @@ import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.DesktopWindows
 import androidx.compose.material.icons.filled.OpenInBrowser
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.ViewInAr
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -67,11 +68,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.diegonmarcos.cgomniverse.Decl
+import com.diegonmarcos.cgomniverse.GraphicsStats
 import com.diegonmarcos.cgomniverse.Offline
 import com.diegonmarcos.cgomniverse.R
 import com.diegonmarcos.cgomniverse.Store
@@ -191,6 +195,22 @@ fun WorldView(w: World, modifier: Modifier = Modifier) {
         web?.evaluateJavascript(PageDiag.READ) { diag = PageDiag.parse(it) }
     }
 
+    // Graphics stats HUD: fps / frame time from an injected requestAnimationFrame loop, draw calls and triangles from a wrap of the WebGL
+    // draw calls (best effort: a page that blocks injection or never draws shows n/a), the GPU from the app's own probe
+    var showStats by remember(w.id) { mutableStateOf(false) }
+    var stats by remember(w.id) { mutableStateOf<GraphicsStats.Stats?>(null) }
+    LaunchedEffect(showStats, generation, desktop, attempt) {
+        if (!showStats) return@LaunchedEffect
+        while (true) {
+            val wv = web
+            if (wv != null) runCatching {
+                wv.evaluateJavascript(GraphicsStats.PAGE_SCRIPT, null) // idempotent: re-injected after every navigation
+                wv.evaluateJavascript(GraphicsStats.PAGE_READ) { stats = GraphicsStats.parseWorld(it, caps?.renderer ?: caps?.vendor) }
+            }
+            delay(750)
+        }
+    }
+
     BackHandler(enabled = canBack) { web?.goBack() }
 
     Column(modifier.background(Color.Black).testTag(Tags.WORLD)) {
@@ -210,6 +230,9 @@ fun WorldView(w: World, modifier: Modifier = Modifier) {
             }
             IconButton(onClick = { showDiag = true }, modifier = Modifier.testTag(Tags.WORLD_DIAG)) {
                 Icon(Icons.Filled.BugReport, GpuPageModel.DIAG_TITLE, tint = p.textSecondary)
+            }
+            IconButton(onClick = { showStats = !showStats }, modifier = Modifier.testTag(Tags.WORLD_STATS)) {
+                Icon(Icons.Filled.Speed, stringResource(R.string.world_stats), tint = if (showStats) p.accent else p.textSecondary)
             }
             IconButton(onClick = reload, modifier = Modifier.testTag(Tags.WORLD_RELOAD)) {
                 Icon(Icons.Filled.Refresh, stringResource(R.string.world_reload), tint = p.textPrimary)
@@ -277,6 +300,14 @@ fun WorldView(w: World, modifier: Modifier = Modifier) {
                         web = wv
                     }
                 }, modifier = Modifier.fillMaxSize().testTag(Tags.WORLD_WEB))
+            }
+            if (showStats && !offline && error == null) Column(
+                Modifier.align(Alignment.TopStart).padding(8.dp).widthIn(max = 240.dp).clip(RoundedCornerShape(8.dp))
+                    .background(Color(0xB3000000)).padding(horizontal = 8.dp, vertical = 6.dp).testTag(Tags.WORLD_STATS_HUD),
+            ) {
+                GraphicsStats.lines(stats).forEach {
+                    Text(it, color = Color(0xFFB6FFB6), fontSize = 10.sp, fontFamily = FontFamily.Monospace, maxLines = 1)
+                }
             }
             // a world that cannot load here gets a clear card, never the WebView's raw error page
             if (offline) {

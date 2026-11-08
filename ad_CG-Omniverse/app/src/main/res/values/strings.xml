@@ -31,6 +31,7 @@
     <string name="open_cloud_browser">Open in Cloud-Browser</string>
     <string name="world_gpu_stay">Stay in app</string>
     <string name="world_desktop">Desktop mode</string>
+    <string name="world_stats">Graphics stats</string>
     <string name="world_gpu_missing">No WebGPU in this in-app view (%1$s). %2$s</string>
     <string name="world_reload">Reload</string>
     <string name="world_crashed">The world stopped rendering. Reload it, or open it in the browser.</string>

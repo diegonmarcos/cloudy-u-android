@@ -19,7 +19,7 @@ data class CgcOption(
 )
 
 /**
- * One category of the editor (a bottom-bar icon). [kind] is clip | color | tint | visible | morph, or anything else for a category
+ * One category of the editor (a bottom-bar icon). [kind] is clip | color | tint | visible | morph | background, or anything else for a category
  * no engine draws yet; [engine] names the AvatarEngine capability it needs ("" = none). [targets] are the meshes, materials or
  * nodes a color/tint category paints. [soon] marks a category declared but not wired: its cards show "coming soon".
  */
@@ -65,7 +65,9 @@ data class CgcSpec(
         const val KIND_TINT = "tint"
         const val KIND_VISIBLE = "visible"
         const val KIND_MORPH = "morph"
-        val WIRED_KINDS = setOf(KIND_CLIP, KIND_COLOR, KIND_TINT, KIND_VISIBLE, KIND_MORPH)
+        /** The 3D backdrop: each option id is a cgc.js background type (solid | gradient | stars | studio), [CgcOption.color] its colour. */
+        const val KIND_BACKGROUND = "background"
+        val WIRED_KINDS = setOf(KIND_CLIP, KIND_COLOR, KIND_TINT, KIND_VISIBLE, KIND_MORPH, KIND_BACKGROUND)
 
         /** Parses the declaration; a malformed document gives an empty spec (the editor then shows nothing rather than crash). */
         fun parse(json: String): CgcSpec {

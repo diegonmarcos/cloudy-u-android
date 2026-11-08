@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -45,7 +46,13 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Autorenew
 import androidx.compose.material.icons.filled.Checkroom
 import androidx.compose.material.icons.filled.ContentCut
+import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Face
+import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Landscape
+import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.LocalFlorist
 import androidx.compose.material.icons.filled.Palette
@@ -80,6 +87,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -90,6 +98,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.diegonmarcos.cgomniverse.Avatar
 import com.diegonmarcos.cgomniverse.AvatarSpec
 import com.diegonmarcos.cgomniverse.Decl
+import com.diegonmarcos.cgomniverse.GraphicsStats
 import com.diegonmarcos.cloudlib.web.CloudWeb
 import com.diegonmarcos.cloudlib.web.CloudWebClient
 import com.diegonmarcos.cloudlib.web.WebProfile
@@ -121,6 +130,11 @@ object AvatarTags {
     const val SHEET = "avatar_sheet"
     const val HANDLE = "avatar_sheet_handle"
     const val LOADING = "avatar_loading"
+    const val TOOLS = "avatar_tools"
+    const val DEBUG = "avatar_debug"
+    const val DEBUG_PANEL = "avatar_debug_panel"
+    const val STATS = "avatar_stats"
+    const val STATS_HUD = "avatar_stats_hud"
     fun category(id: String) = "avatar_cat_$id"
     fun card(category: String, id: String) = "avatar_card_${category}_$id"
 }
@@ -145,6 +159,7 @@ private fun iconFor(name: String): ImageVector = when (name) {
     "glasses" -> Icons.Filled.Visibility
     "presets" -> Icons.Filled.Groups
     "animations" -> Icons.AutoMirrored.Filled.DirectionsRun
+    "background" -> Icons.Filled.Landscape
     else -> Icons.Filled.AutoAwesome
 }
 
@@ -198,9 +213,9 @@ private class CgcBridge(private val ctx: Context, private val onEvent: (JSONObje
 
 /**
  * The Avatar editor, laid out like MetaPerson Creator's mobile editor: the owner's avatar full screen on a dark stage
- * (libs:cgc-3d over three.js in a WEB_WORLD view: drag rotates, pinch zooms), Home and AI at the top left, Rotate and Export
- * (GLB, PNG) at the top right, a bottom sheet (drag handle, the category's title, a row of option cards) over a bar of category
- * icons. Everything shown comes from data/avatar.json; a category without an engine yet shows its cards as coming soon. Every
+ * (libs:cgc-3d over three.js in a WEB_WORLD view: drag rotates, pinch zooms), a collapsible toolbar at the bottom (Home, AI, Rotate, Export
+ * GLB / PNG, Debugger, graphics Stats HUD), over it a sheet (drag handle, the category's title, a row of option cards) and a bar of
+ * category icons (the 3D Background picker is one of them). Everything shown comes from data/avatar.json; a category without an engine yet shows its cards as coming soon. Every
  * change is saved at once and announced to Android's backup.
  */
 @Composable
@@ -227,11 +242,15 @@ fun AvatarPage() {
     var sheetOpen by rememberSaveable { mutableStateOf(true) }
     var exportOpen by remember { mutableStateOf(false) }
     var aiOpen by remember { mutableStateOf(false) }
+    var toolsOpen by rememberSaveable { mutableStateOf(true) }
+    var statsOn by rememberSaveable { mutableStateOf(false) }
+    var debugOpen by remember { mutableStateOf(false) }
+    var stats by remember { mutableStateOf<GraphicsStats.Stats?>(null) }
+    var events by remember { mutableStateOf(listOf<String>()) }
     var web by remember { mutableStateOf<WebView?>(null) }
     var loaded by remember { mutableStateOf(false) }
     var rotating by remember { mutableStateOf(false) }
     var note by remember { mutableStateOf<String?>(null) }
-    var topPx by remember { mutableStateOf(0) }
     var bottomPx by remember { mutableStateOf(0) }
     fun css(px: Int) = (px / density.density).toInt()
 
@@ -244,14 +263,24 @@ fun AvatarPage() {
     fun js(code: String) { web?.evaluateJavascript("window.cgc&&($code)", null) }
 
     LaunchedEffect(cfg, loaded) { if (loaded) js("window.cgc.apply(" + JSONObject.quote(Avatar.sceneOps(spec, cfg)) + ")") }
-    LaunchedEffect(topPx, bottomPx, loaded) {
-        if (loaded) js("window.cgc.apply({insets:{top:${css(topPx)},bottom:${css(bottomPx)}}})")
+    // the tools moved into the bottom bar: nothing is pinned at the top any more, the bar's height (toolbar included) is the bottom inset
+    LaunchedEffect(bottomPx, loaded) {
+        if (loaded) js("window.cgc.apply({insets:{top:0,bottom:${css(bottomPx)}}})")
+    }
+    // the debug HUD / panel poll cgc.js stats() twice a second while shown (three.js renderer.info, free and exact)
+    LaunchedEffect(statsOn, debugOpen, loaded) {
+        if (!loaded || !(statsOn || debugOpen)) return@LaunchedEffect
+        while (true) {
+            web?.evaluateJavascript("window.cgc?window.cgc.stats():null") { stats = GraphicsStats.parseAvatar(it) }
+            delay(500)
+        }
     }
     LaunchedEffect(note) { if (note != null) { delay(2600); note = null } }
     DisposableEffect(Unit) { onDispose { web?.destroy(); web = null } }
 
     val bridge = remember {
         CgcBridge(ctx) { e ->
+            events = (events + e.toString().take(90)).takeLast(8)
             when (e.optString("type")) {
                 "loaded" -> loaded = true
                 "camera" -> rotating = e.optBoolean("autoRotate")
@@ -269,7 +298,7 @@ fun AvatarPage() {
                     wv.webViewClient = object : CloudWebClient(WebProfile.WEB_WORLD, CloudWeb.assetLoader(c)) {
                         override fun onPageFinished(view: WebView, url: String?) {
                             super.onPageFinished(view, url)
-                            val conf = Avatar.sceneConfig(spec, css(topPx), css(bottomPx))
+                            val conf = Avatar.sceneConfig(spec, 0, css(bottomPx))
                             view.evaluateJavascript("window.cgcBoot&&window.cgcBoot(" + JSONObject.quote(conf) + ")", null)
                         }
                         override fun onRecovered(dead: WebView, fresh: WebView?) {
@@ -292,32 +321,31 @@ fun AvatarPage() {
             Text(spec.text("loading"), color = Muted, fontSize = 13.sp)
         }
 
-        // top chrome: Home (+ AI) at the left, Rotate + Export at the right
-        Row(
-            Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp).onSizeChanged { topPx = it.height },
-            verticalAlignment = Alignment.Top,
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                SquareButton(Icons.Outlined.Home, spec.text("home"), AvatarTags.HOME) { exportOpen = false; js("window.cgc.apply({camera:'reset'})") }
-                if (spec.ai != null) SquareButton(Icons.Filled.AutoAwesome, spec.text("ai"), AvatarTags.AI) { aiOpen = !aiOpen; exportOpen = false }
-            }
-            Spacer(Modifier.weight(1f))
-            SquareButton(Icons.Filled.Autorenew, spec.text("rotate"), AvatarTags.ROTATE, active = rotating) {
-                js("window.cgc.apply({autoRotate:${!rotating}})")
-            }
-            Spacer(Modifier.width(12.dp))
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp), horizontalAlignment = Alignment.End) {
-                PurplePill(spec.text("export"), AvatarTags.EXPORT) { exportOpen = !exportOpen }
-                if (exportOpen) {
-                    PurplePill(spec.text("export_glb"), AvatarTags.EXPORT_GLB) { exportOpen = false; js("window.cgc.exportGLB('avatar.glb')") }
-                    PurplePill(spec.text("export_png"), AvatarTags.EXPORT_PNG) { exportOpen = false; js("window.cgc.snapshotPNG('avatar.png')") }
-                }
-            }
-        }
-
         // bottom: the sheet (handle, title, cards) over the category bar
         Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().onSizeChanged { bottomPx = it.height }) {
             val cat = spec.category(catId)
+            // the former top icons as a small collapsible toolbar above the sheet (collapsed: just the chevron). Tags are unchanged.
+            if (exportOpen && toolsOpen) Row(Modifier.align(Alignment.End).padding(end = 8.dp, bottom = 6.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                PurplePill(spec.text("export_glb"), AvatarTags.EXPORT_GLB) { exportOpen = false; js("window.cgc.exportGLB('avatar.glb')") }
+                PurplePill(spec.text("export_png"), AvatarTags.EXPORT_PNG) { exportOpen = false; js("window.cgc.snapshotPNG('avatar.png')") }
+            }
+            Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                if (toolsOpen) {
+                    SquareButton(Icons.Outlined.Home, spec.text("home"), AvatarTags.HOME) { exportOpen = false; js("window.cgc.apply({camera:'reset'})") }
+                    if (spec.ai != null) SquareButton(Icons.Filled.AutoAwesome, spec.text("ai"), AvatarTags.AI) { aiOpen = !aiOpen; exportOpen = false }
+                    SquareButton(Icons.Filled.Autorenew, spec.text("rotate"), AvatarTags.ROTATE, active = rotating) {
+                        js("window.cgc.apply({autoRotate:${!rotating}})")
+                    }
+                    SquareButton(Icons.Filled.FileDownload, spec.text("export"), AvatarTags.EXPORT, active = exportOpen) { exportOpen = !exportOpen }
+                    SquareButton(Icons.Filled.BugReport, spec.text("debug"), AvatarTags.DEBUG, active = debugOpen) { debugOpen = !debugOpen }
+                    SquareButton(Icons.Filled.Speed, spec.text("stats"), AvatarTags.STATS, active = statsOn) { statsOn = !statsOn }
+                }
+                Spacer(Modifier.weight(1f))
+                SquareButton(if (toolsOpen) Icons.Filled.KeyboardArrowDown else Icons.Filled.KeyboardArrowUp, spec.text("tools"), AvatarTags.TOOLS) {
+                    toolsOpen = !toolsOpen; if (!toolsOpen) exportOpen = false
+                }
+            }
             Column(
                 Modifier.fillMaxWidth().clip(RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp)).background(SheetBg)
                     .testTag(AvatarTags.SHEET),
@@ -356,22 +384,22 @@ fun AvatarPage() {
                 Modifier.fillMaxWidth().background(BarBg).padding(horizontal = 4.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                // one equal slot per category, so all nine fit a 360 dp phone (fixed 44 dp tiles pushed the last off-screen)
+                // one equal slot per category, so all ten fit a 360 dp phone (fixed 44 dp tiles pushed the last off-screen)
                 spec.categories.forEach { c ->
                     val on = c.id == catId
                     Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
                         Box(
-                            Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(if (on) Color.Black else Color.Transparent)
+                            Modifier.size(if (spec.categories.size > 9) 34.dp else 40.dp).clip(RoundedCornerShape(12.dp)).background(if (on) Color.Black else Color.Transparent)
                                 .clickable { catId = c.id; sheetOpen = true }.testTag(AvatarTags.category(c.id)),
                             contentAlignment = Alignment.Center,
-                        ) { Icon(iconFor(c.icon), contentDescription = c.label, tint = Color.White, modifier = Modifier.size(26.dp)) }
+                        ) { Icon(iconFor(c.icon), contentDescription = c.label, tint = Color.White, modifier = Modifier.size(if (spec.categories.size > 9) 22.dp else 26.dp)) }
                     }
                 }
             }
         }
 
         if (aiOpen && spec.ai != null) {
-            AiPanel(spec, keys, Modifier.align(Alignment.TopCenter).padding(top = 84.dp, start = 16.dp, end = 16.dp),
+            AiPanel(spec, keys, Modifier.align(Alignment.TopCenter).padding(top = 24.dp, start = 16.dp, end = 16.dp),
                 onClose = { aiOpen = false }) { text, done ->
                 scope.launch {
                     val r = withContext(Dispatchers.IO) { OpenRouterAvatar(keys, UrlConnectionHttp()).describe(spec, cfg, text, Avatar.engine(spec)) }
@@ -388,6 +416,21 @@ fun AvatarPage() {
             }
         }
 
+        if (statsOn) StatsHud(stats, Modifier.align(Alignment.TopStart).padding(start = 10.dp, top = 10.dp).testTag(AvatarTags.STATS_HUD))
+        if (debugOpen) Column(
+            Modifier.align(Alignment.TopCenter).padding(top = 24.dp, start = 16.dp, end = 16.dp).fillMaxWidth().clip(RoundedCornerShape(16.dp))
+                .background(Color(0xE61B1B1B)).padding(14.dp).testTag(AvatarTags.DEBUG_PANEL),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(spec.text("debug"), color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                Text("×", color = Muted, fontSize = 22.sp, modifier = Modifier.clickable { debugOpen = false }.padding(horizontal = 8.dp))
+            }
+            GraphicsStats.lines(stats).forEach { Text(it, color = Color(0xFFB6FFB6), fontSize = 11.sp, fontFamily = FontFamily.Monospace) }
+            Text("scene events", color = Muted, fontSize = 11.sp)
+            events.takeLast(5).forEach { Text(it, color = Muted, fontSize = 10.sp, fontFamily = FontFamily.Monospace, maxLines = 1) }
+        }
+
         note?.let {
             Text(
                 it, color = Color.White, fontSize = 13.sp,
@@ -398,21 +441,29 @@ fun AvatarPage() {
     }
 }
 
+/** The geeky HUD: dark translucent monospace, never takes a touch (the scene stays draggable beneath it). */
+@Composable
+private fun StatsHud(s: GraphicsStats.Stats?, modifier: Modifier) {
+    Column(modifier.widthIn(max = 260.dp).clip(RoundedCornerShape(8.dp)).background(Color(0xB3000000)).padding(horizontal = 8.dp, vertical = 6.dp)) {
+        GraphicsStats.lines(s).forEach { Text(it, color = Color(0xFFB6FFB6), fontSize = 10.sp, fontFamily = FontFamily.Monospace, maxLines = 1) }
+    }
+}
+
 @Composable
 private fun SquareButton(icon: ImageVector, label: String, tag: String, active: Boolean = false, onClick: () -> Unit) {
     Box(
-        Modifier.size(56.dp).clip(RoundedCornerShape(18.dp)).then(if (active) Modifier.background(Purple) else Modifier.background(Chip))
+        Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).then(if (active) Modifier.background(Purple) else Modifier.background(Chip))
             .clickable(onClick = onClick).testTag(tag),
         contentAlignment = Alignment.Center,
-    ) { Icon(icon, contentDescription = label, tint = Color.White, modifier = Modifier.size(28.dp)) }
+    ) { Icon(icon, contentDescription = label, tint = Color.White, modifier = Modifier.size(24.dp)) }
 }
 
 @Composable
 private fun PurplePill(label: String, tag: String, onClick: () -> Unit) {
     Box(
-        Modifier.width(104.dp).height(56.dp).clip(RoundedCornerShape(18.dp)).background(Purple).clickable(onClick = onClick).testTag(tag),
+        Modifier.width(72.dp).height(44.dp).clip(RoundedCornerShape(14.dp)).background(Purple).clickable(onClick = onClick).testTag(tag),
         contentAlignment = Alignment.Center,
-    ) { Text(label, color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Bold) }
+    ) { Text(label, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold) }
 }
 
 private val thumbs = HashMap<String, ImageBitmap?>()

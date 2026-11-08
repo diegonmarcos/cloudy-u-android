@@ -18,6 +18,7 @@
     "hair": "long",
     "glasses": "on",
     "presets": "default",
+    "background": "solid",
     "animations": "idle"
   },
   "categories": [
@@ -61,6 +62,11 @@
       {"id": "default", "label": "Default", "thumb": "thumbs/body-rest.png"},
       {"id": "lean", "label": "Lean", "thumb": "thumbs/body-rest.png"},
       {"id": "strong", "label": "Strong", "thumb": "thumbs/body-rest.png"}]},
+    {"id": "background", "label": "Background", "title": "3D background", "icon": "background", "kind": "background", "options": [
+      {"id": "solid", "label": "Dark", "color": "#121212"},
+      {"id": "stars", "label": "Space"},
+      {"id": "gradient", "label": "Sky"},
+      {"id": "studio", "label": "Studio"}]},
     {"id": "animations", "label": "Animations", "title": "Animations", "icon": "animations", "kind": "clip", "options": [
       {"id": "idle", "label": "Idle", "clip": "idle", "thumb": "thumbs/clip-idle.png"},
       {"id": "walk", "label": "Walk", "clip": "walk", "thumb": "thumbs/clip-walk.png"},
@@ -84,6 +90,9 @@
     "soon": "Coming soon",
     "home": "Home view",
     "rotate": "Rotate",
+    "tools": "Tools",
+    "debug": "Debugger",
+    "stats": "Graphics stats",
     "ai": "Describe your avatar",
     "ai_hint": "e.g. navy hoodie, no glasses, smiling, dancing",
     "ai_go": "Apply",
