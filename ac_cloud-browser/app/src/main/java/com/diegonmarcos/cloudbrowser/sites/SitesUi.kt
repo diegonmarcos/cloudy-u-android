@@ -297,17 +297,54 @@ private fun CloudyList(entries: List<CloudyEntry>, empty: String, tag: String, u
 
 // ───────────────────────────── Domains ─────────────────────────────
 
-/** #1493 Domains: [page] is a ui.sections[domains].pages id (files | perms | history | visited). */
+/** #1493 Domains: [page] is a ui.sections[domains].pages id (headless | files | site_perms | history | visited). */
 @Composable
-fun DomainsPage(page: String?, decl: SitesDecl) {
+fun DomainsPage(page: String?, decl: SitesDecl, onOpen: (String) -> Unit = {}) {
     val ctx = LocalContext.current
     val d = decl.domains
     val t = remember { decl.texts(d) }
     when (page) {
+        "headless", null -> HeadlessPage(d, t, onOpen)
         "files" -> FilesPage(t)
         "site_perms" -> PermsPage(d, t)
         "history" -> HistoryPage(d, t)
         else -> VisitedPage(d, t)
+    }
+}
+
+/** Headless Browsers: one card per ui.domains.headless service (title, tagline, stack bullets, note, tappable link row). */
+@Composable
+private fun HeadlessPage(d: org.json.JSONObject, t: (String) -> String, onOpen: (String) -> Unit) {
+    val p = LocalKitPalette.current
+    val svcs = d.optJSONArray("headless")
+    val rows = (0 until (svcs?.length() ?: 0)).mapNotNull { svcs?.optJSONObject(it) }
+    LazyColumn(Modifier.fillMaxSize().testTag("domains:headless")) {
+        items(rows, key = { it.optString("id") }) { s ->
+            val id = s.optString("id")
+            val stack = s.optJSONObject("stack")
+            val link = s.optJSONObject("link")
+            Column(Modifier.testTag("domains:headless:$id")) {
+                KitStoreRowLine {
+                    Column(Modifier.weight(1f)) {
+                        KitStoreName(s.optString("title"), color = p.textPrimary)
+                        KitStoreCaption(s.optString("tagline"), color = p.textSecondary)
+                    }
+                }
+                KitStoreRowLine { KitStoreCaption(t("stack"), color = p.textSecondary) }
+                for (k in listOf("engine", "proxy", "stealth", "output")) {
+                    val v = stack?.optString(k).orEmpty()
+                    if (v.isNotEmpty()) KitStoreRowLine { KitStoreCaption("\u2022 " + t(k) + ": " + v, color = p.textPrimary) }
+                }
+                s.optString("note").takeIf { it.isNotEmpty() }?.let { KitStoreRowLine { KitStoreCaption(it, color = p.textSecondary) } }
+                if (link != null) KitStoreRowLine(Modifier.testTag("domains:headless:link:$id"), onClick = { onOpen(link.optString("url")) }) {
+                    Column(Modifier.weight(1f)) {
+                        KitStoreName(t("link") + ": " + link.optString("label"), color = p.accent)
+                        KitStoreCaption(link.optString("url"), color = p.textSecondary, mono = true)
+                        link.optString("detail").takeIf { it.isNotEmpty() }?.let { KitStoreCaption(it, color = p.textSecondary) }
+                    }
+                }
+            }
+        }
     }
 }
 

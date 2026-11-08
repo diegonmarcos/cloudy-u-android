@@ -2045,7 +2045,7 @@
         }
       ]
     },
-    "_doc_nav": "#868/#1493 THE nav declaration (libs:bottomnav NavDecl): ui.bottom_nav is the island, ui.sections[] what each item opens, ui.default_section where the app opens. Island order (#1493): Weby, Cloudy, Browser, Tabs, Domains. browser = BrowserHostFragment's page (its address bar, tab strip and overlays are the lib's own UI, so the section has no pages), tabs = the tab switcher (BrowserHostFragment.openTabs, #886), weby = the bookmarks as a launcher icon grid in folders, seeded from the SuperApp phone apps, cloudy = Cloudy-Public GH-Pages | Cloudy-Private Webserver, domains = Files Cached | Perms&Actions | History | Visited; those three are drawn by MainActivity over the host from sites/ (top tabs = ui.sections[<id>].pages). favourites and search stay declared sections reached from the first row (the AI icon opens Search), no longer island items; configs = the browser settings over the host (showSettings), one top tab per Configs page: ui.sections[configs].pages = settings_sections (#900). MainActivity feeds the island from NavDecl and follows the host's overlays so the pill goes back to Browser when one closes.",
+    "_doc_nav": "#868/#1493 THE nav declaration (libs:bottomnav NavDecl): ui.bottom_nav is the island, ui.sections[] what each item opens, ui.default_section where the app opens. Island order (#1493): Weby, Cloudy, Browser, Tabs, Domains. browser = BrowserHostFragment's page (its address bar, tab strip and overlays are the lib's own UI, so the section has no pages), tabs = the tab switcher (BrowserHostFragment.openTabs, #886), weby = the bookmarks as a launcher icon grid in folders, seeded from the SuperApp phone apps, cloudy = Cloudy-Public GH-Pages | Cloudy-Private Webserver, domains = Headless Browsers | Files Cached | Perms&Actions | History | Visited; those three are drawn by MainActivity over the host from sites/ (top tabs = ui.sections[<id>].pages). favourites and search stay declared sections reached from the first row (the AI icon opens Search), no longer island items; configs = the browser settings over the host (showSettings), one top tab per Configs page: ui.sections[configs].pages = settings_sections (#900). MainActivity feeds the island from NavDecl and follows the host's overlays so the pill goes back to Browser when one closes.",
     "bottom_nav": [
       "weby",
       "cloudy",
@@ -2102,6 +2102,7 @@
         "label": "Domains",
         "icon": "language",
         "pages": [
+          {"id": "headless", "label": "Headless Browsers", "icon": "web"},
           {"id": "files", "label": "Files Cached", "icon": "folder_open"},
           {"id": "site_perms", "label": "Perms&Actions", "icon": "security"},
           {"id": "history", "label": "History", "icon": "history"},
@@ -2177,6 +2178,40 @@
     },
     "domains": {
       "_doc": "#1493 Domains: the per-site actions (ids are the SiteActions plans: cookies, media, cache, storage, reset_perms), what counts as media (cached content types), the History and Visited switches and the words.",
+      "headless": [
+        {
+          "id": "cloudflare_browser_run", "title": "Cloudflare Browser Run", "tagline": "Edge Chromium renderer \u2014 stateless fallback",
+          "stack": {
+            "engine": "Headless Chromium at Cloudflare's edge (Browser Rendering REST API)",
+            "proxy": "none \u2014 but egresses from Cloudflare IPs, which dodges datacenter-IP bot walls",
+            "stealth": "none",
+            "output": "rendered HTML, markdown, screenshot, PDF, JSON, links"
+          },
+          "note": "Used as the fallback when the self-hosted browser hits a bot wall; capped ~200/day.",
+          "link": {"label": "Browser Rendering REST API", "url": "https://developers.cloudflare.com/browser-rendering/rest-api/", "detail": "API base api.cloudflare.com/client/v4/accounts/{account}/browser-rendering/"}
+        },
+        {
+          "id": "cloudy_browser_headless", "title": "Cloud Headless", "service": "cloudy-browser-headless", "tagline": "Self-hosted Playwright browser \u2014 the default",
+          "stack": {
+            "engine": "Playwright 1.55 + Chromium (mcr.microsoft.com/playwright:v1.55.0-noble) + Node, on oci-apps:3118",
+            "proxy": "none (only a per-session URL blocklist)",
+            "stealth": "none \u2014 detects a bot wall, never evades it",
+            "output": "HTML, text, readable\u2192markdown/json/xml, screenshot, PDF, OCR (tesseract+paddle), links, scrape; stateful sessions with persistent cookies + run(steps)"
+          },
+          "link": {"label": "MCP endpoint", "url": "https://mcp.diegonmarcos.com/cloudy-browser-headless", "detail": "WireGuard-only, BROWSER_TOKEN bearer; mesh cloudy-browser-headless.mesh.diegonmarcos.com"}
+        },
+        {
+          "id": "steel_browser", "title": "Cloud Stealth", "service": "steel-browser", "tagline": "Steel Browser \u2014 authorized security testing",
+          "stack": {
+            "engine": "upstream Steel Browser (ghcr.io/steel-dev/steel-browser, Apache-2.0) behind a Caddy bearer sidecar",
+            "proxy": "none configured (optional ZAP route 10.0.0.6:8086)",
+            "stealth": "upstream Steel defaults only \u2014 no residential/mobile proxy pool, no CAPTCHA solver configured by the fleet",
+            "output": "full stateful session browser"
+          },
+          "note": "Mesh-only, no public route; for owner-authorized security testing of own services.",
+          "link": {"label": "Steel API", "url": "https://steel-browser.mesh.diegonmarcos.com:3000", "detail": "mesh-only, Bearer STEEL_API_KEY"}
+        }
+      ],
       "media_mime_prefixes": ["image/", "audio/", "video/"],
       "history_default": "pages",
       "history_modes": [ {"id": "pages", "label": "Pages"}, {"id": "domains", "label": "Domains"} ],
@@ -2193,6 +2228,7 @@
         "actions": "Actions", "done": "done",
         "cached_sites": "Cached sites", "cached_empty": "No site is pinned or downloaded yet.", "refresh": "Refresh", "unpin": "Unpin", "delete": "Delete",
         "pinned": "pinned", "files": "files", "refreshed": "refreshed", "never": "never", "waiting": "waiting", "stop": "Stop", "files_empty": "No cached files yet.", "perms_empty": "No site visited yet.",
+        "stack": "Stack", "engine": "Engine", "proxy": "Proxy", "stealth": "Stealth", "output": "Output", "link": "Link",
         "history_empty": "No history yet.", "visited_empty": "No site visited yet."
       }
     },

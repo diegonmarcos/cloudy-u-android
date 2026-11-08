@@ -268,7 +268,7 @@ class MainActivity : AppCompatActivity() {
                             when (selectedId) {
                                 "weby" -> WebyPage(sites) { url -> openUrl(url) }
                                 "cloudy" -> CloudyPage(sitesPage, sites) { url -> openUrl(url) }
-                                else -> DomainsPage(sitesPage, sites)
+                                else -> DomainsPage(sitesPage, sites) { url -> openUrl(url) }
                             }
                         }
                     }
