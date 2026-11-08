@@ -83,7 +83,7 @@ class DataBadgeService : Service() {
         /** The one inexact alarm that carries the card while the process is gone. */
         internal const val REFRESH_MS = 60 * 60_000L
 
-        private val main = Handler(Looper.getMainLooper())
+        private val main by lazy { Handler(Looper.getMainLooper()) }
         private val worker by lazy { Executors.newSingleThreadExecutor { r -> Thread(r, "data-badge").apply { isDaemon = true } } }
         @Volatile private var receiver: BroadcastReceiver? = null
         @Volatile private var pending: Runnable? = null

@@ -73,7 +73,8 @@ class StoreFeedProxyTest {
         for (i in 0 until a.length()) {
             val f = a.getJSONObject(i)
             f.put("url", f.getString("url").replace("https://api.github.com", "http://127.0.0.1:$port/gh"))
-            val p = f.getJSONObject("proxy")
+            // a feed the fleet does not serve yet (prs) declares "proxy": null - GitHub-only, nothing to repoint
+            val p = f.optJSONObject("proxy") ?: continue
             p.put("url", p.getString("url").replace("https://api.diegonmarcos.com", "http://127.0.0.1:$port/fleet"))
         }
         return FeedViewer.parse(d)
@@ -169,7 +170,7 @@ class StoreFeedProxyTest {
         val e401 = """{"error":"authorization required","code":"missing_authorization"}"""
         server(hits, mapOf(CP to (401 to e401), GC to (200 to ghCommits), RP to (200 to proxyRuns))).use { ss ->
             FeedViewer.fleetBearer = { "tok-test" }
-            val feeds = feedsAt(ss.localPort)
+            val feeds = feedsAt(ss.localPort).filter { it.id == "commits" || it.id == "cicd" } // prs has no proxy leg and no route here
             feeds.forEach { FeedViewer.load(it) }
             assertEquals(FeedViewer.LEG_FALLBACK, FeedViewer.lastServed("commits")!!.leg)
             assertTrue(FeedViewer.lastServed("commits")!!.proxyError!!.contains("HTTP 401"))
