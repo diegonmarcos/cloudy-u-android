@@ -14,7 +14,7 @@ import org.robolectric.annotation.Config
 /**
  * The right dropdowns draw their declared groups.
  *
- *   C1 the System bubble has a block, titled and headed by its icon, for each of its declared groups, in four tiers
+ *   C1 the System bubble has a block, titled and headed by its icon, for each of its declared groups, in two macro buckets (Device Profile Scan, Profiling Trackers 01-13)
  *   C2 the Battery sections draw both since-last-charge blocks
  */
 @RunWith(RobolectricTestRunner::class)
@@ -23,15 +23,18 @@ class StatusDropdownsComposeTest : KitPageHarness() {
     private val ctx get() = ApplicationProvider.getApplicationContext<Application>()
 
     @Test
-    fun `C1 the System bubble draws the four tiers and their groups`() {
+    fun `C1 the System bubble draws the two macro buckets, the 13 trackers and their groups`() {
         showKit { SystemInfoPopup.SystemInfoBubble(ctx) }
-        for (id in listOf("t1_profile", "t2_runtime", "t3_diagnosis", "t4_suspects", "memory", "storage", "cpu", "graphics", "thermal", "device", "wakelocks",
+        for (id in listOf("m1_profile_scan", "m2_trackers", "tr01_performance", "tr02_render", "tr03_storage", "tr04_battery", "tr05_thermal", "tr06_memory", "tr07_notif",
+            "tr08_resp", "tr09_crash", "tr10_network", "tr11_process", "tr12_security", "tr13_suspects",
+            "memory", "storage", "cpu", "graphics", "thermal", "device", "wakelocks", "df", "diskstats", "app_sizes", "crashes", "net_usage", "net_conn", "net_signal", "oom_adj", "sec_perms",
             "running_services", "jank", "notif_rate", "memory_3h", "meminfo_detail", "anr", "suspects")) compose.onNodeWithTag("sysdd:group:$id").assertExists()
-        for (t in listOf("Memory", "Storage", "CPU", "Graphics", "Running Services", "Last 3h Memory Usage", "Thermal", "Notification post rate per app", "Ranked culprits (cross-family)"))
+        for (t in listOf("RAM pressure", "Storage (app APIs)", "CPU load + top processes", "Frame timing + gfxinfo", "Running Services", "Last 3h Memory Usage", "Sensors, throttle, cooling devices", "Notification post rate per app", "Ranked culprits"))
             compose.onNodeWithText(t).assertExists()
-        // a tier header has its rule and title but no lines
-        compose.onNodeWithTag("sysdd:title:t3_diagnosis").assertExists()
-        compose.onNodeWithTag("sysdd:row:t3_diagnosis:0").assertDoesNotExist()
+        // a macro or tracker header has its rule and title but no lines
+        compose.onNodeWithTag("sysdd:title:m2_trackers").assertExists()
+        compose.onNodeWithTag("sysdd:row:m2_trackers:0").assertDoesNotExist()
+        compose.onNodeWithTag("sysdd:row:tr04_battery:0").assertDoesNotExist()
         for (id in listOf("memory", "storage", "cpu", "graphics")) compose.onNodeWithTag("sysdd:icon:$id").assertExists()
     }
 

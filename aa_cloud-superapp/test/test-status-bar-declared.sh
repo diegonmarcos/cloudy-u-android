@@ -70,18 +70,38 @@ ok("swapping two declared orders changes the render order" in tt, "S7: a JVM tes
 dd = {d["id"]: d for d in sb.get("dropdowns", [])}
 ok({"left_network", "right_system", "right_battery"} <= set(dd), "S9: the left dropdown and the right System and Battery dropdowns are declared", "S9: a status-bar dropdown is not declared in home_status_bar.dropdowns")
 sysg = [g["id"] for g in dd.get("right_system", {}).get("groups", [])]
-TIERS = ["t1_profile", "t2_runtime", "t3_diagnosis", "t4_suspects"]
-ok([i for i in sysg if i in TIERS] == TIERS, "S9: System dropdown is four tiers in order: Profile, Runtime, Diagnosis, Suspects", "S9: the four tier headers are missing or out of order")
+MACROS = ["m1_profile_scan", "m2_trackers"]
+ok([i for i in sysg if i in MACROS] == MACROS, "S9: System dropdown is two macro buckets in order: Device Profile Scan, Profiling Trackers", "S9: the two macro headers are missing or out of order")
+TRK = ["tr01_performance", "tr02_render", "tr03_storage", "tr04_battery", "tr05_thermal", "tr06_memory", "tr07_notif", "tr08_resp", "tr09_crash", "tr10_network", "tr11_process", "tr12_security", "tr13_suspects"]
+ok([i for i in sysg if i in TRK] == TRK and sysg.index("m2_trackers") + 1 == sysg.index("tr01_performance"), "S9: the 13 trackers follow the Trackers macro header in order (Performance .. Suspects)", "S9: the tracker headers are missing or out of order")
 def between(a, b): return sysg[sysg.index(a) + 1: sysg.index(b)] if a in sysg and b in sysg else None
-ok(between("t1_profile", "t2_runtime") == ["device", "soc", "gpu", "display", "capacity"], "S9: tier 1 Profile = device, SoC, GPU, display, capacity", "S9: tier 1 groups are wrong")
-ok(between("t2_runtime", "t3_diagnosis") == ["memory", "cpu", "thermal", "graphics", "storage", "battery_live"], "S9: tier 2 Runtime = memory, cpu, thermal, graphics, storage, battery", "S9: tier 2 groups are wrong")
-ok(sysg[sysg.index("t3_diagnosis") + 1:sysg.index("t4_suspects")] == ["f_power", "wakelocks", "power_by_uid", "alarms", "jobs", "running_services", "f_jank", "jank", "f_notif", "notif_rate", "binder", "f_memory", "memory_3h", "meminfo_detail", "f_resp", "anr"] if "t3_diagnosis" in sysg and "t4_suspects" in sysg else False,
-   "S9: tier 3 Diagnosis families: power, jank, notification/IPC, memory, responsiveness", "S9: tier 3 families are wrong")
-ok(sysg[-2:] == ["t4_suspects", "suspects"], "S9: tier 4 ends the dropdown with the suspects verdict", "S9: tier 4 Suspects is not last")
+ok(between("m1_profile_scan", "m2_trackers") == ["device", "soc", "gpu", "display", "capacity"], "S9: Profile Scan = device, SoC, GPU, display, capacity", "S9: Profile Scan groups are wrong")
+EXP = {"tr01_performance": ["cpu"], "tr02_render": ["graphics", "jank"], "tr03_storage": ["storage", "df", "diskstats", "app_sizes"],
+       "tr04_battery": ["battery_live", "wakelocks", "power_by_uid", "alarms", "jobs"], "tr05_thermal": ["thermal"], "tr06_memory": ["memory", "memory_3h", "meminfo_detail"],
+       "tr07_notif": ["notif_rate", "binder"], "tr08_resp": ["anr"], "tr09_crash": ["crashes"], "tr10_network": ["net_usage", "net_conn", "net_signal"],
+       "tr11_process": ["running_services", "oom_adj"], "tr12_security": ["sec_perms"]}
+ok(all(between(a, b) == EXP[a] for a, b in zip(TRK, TRK[1:])), "S9: each tracker owns its groups (nothing deleted: every old group is in one tracker)", "S9: a tracker's groups are wrong")
+ok(sysg[-2:] == ["tr13_suspects", "suspects"], "S9: tracker 13 Suspects (the verdict) ends the dropdown", "S9: Suspects is not last")
 ok([g["id"] for g in dd.get("right_battery", {}).get("groups", [])] == ["since_charge_usage", "since_charge_apps"], "S9: Battery has the two since-last-charge sections", "S9: the Battery dropdown sections are wrong")
 ok(ids.get("fps", {}).get("position") == "right" and ids.get("fps", {}).get("opens") == "system_popup", "S9: the FPS icon is a right-cluster element opening the System dropdown", "S9: fps is not a right system_popup element")
 probes = read("app/src/main/java/com/diegonmarcos/superapp/xray/XrayProbes.kt")
-ok(all(f'Probe("{p}"' in probes for p in ("gfxinfo", "top", "notification", "binder", "meminfo", "anr", "thermal", "profile")), "S9: the new diagnosis probes exist (gfxinfo, top, notification, binder, meminfo, anr, thermal, profile)", "S9: a new diagnosis probe is missing from XrayProbes")
+OLD = ("profile", "packages", "deviceidle", "buckets", "appops", "listeners", "a11y", "autofill", "credential", "thermal", "top", "battery", "netstats", "batterystats", "batterystats-top",
+       "services", "startproc", "jobs", "alarm", "power", "gfxinfo", "surfaceflinger", "notification", "binder", "procstats", "meminfo", "anr", "logcat", "perms")
+NEW = ("df", "diskstats", "dropbox", "connectivity", "telephony", "procs", "pkgperms")
+ok(all(f'Probe("{p}"' in probes for p in OLD), "S9: every pre-existing probe is still declared (nothing deleted)", "S9: a pre-existing X-Ray probe was deleted")
+ok(all(f'Probe("{p}"' in probes for p in NEW), "S9: the new tracker probes exist (df, diskstats, dropbox, connectivity, telephony, procs, pkgperms)", "S9: a new tracker probe is missing from XrayProbes")
+ok(all(f'Tracker({n}, ' in probes for n in range(1, 14)), "S9: XrayProbes declares the 13 trackers", "S9: a tracker row is missing from XrayProbes.trackers")
 ok(all(f'Probe("{g["probe"]}"' in probes for d in dd.values() for g in d.get("groups", []) if g.get("probe")), "S9: every dropdown probe is an X-Ray probe", "S9: a dropdown names a probe XrayProbes lacks")
+import json as _j
+al = _j.load(open(f"{app}/../ab_cloud-libs-shared/libs/shell-broker/src/main/assets/shell-allowlist.json", encoding="utf-8"))
+exact = set(al["callers"]["com.diegonmarcos.superapp"]["exact"])
+import re as _re
+# each NEW probe's command (first string literal after its id) is an exact allowlist line; the full proof is SelfAllowlistTest.everyXrayProbeIsAllowed
+def _cmd(pid):
+    m = _re.search(r'Probe\("%s",[^"]*"[^"]*",\s*(?:"[^"]*",\s*)?"((?:[^"\\\\]|\\\\.)*)"' % _re.escape(pid), probes)
+    return _j.loads('"' + m.group(1).replace("\\$", "$") + '"') if m else None
+ok(all(_cmd(p) in exact for p in NEW), "S9: every new tracker probe command is an exact rule of the SuperApp self-allowlist", "S9: a new tracker probe is NOT in the self-allowlist (SelfAllowlistTest.everyXrayProbeIsAllowed would fail)")
+xr = read("app/src/main/java/com/diegonmarcos/superapp/xray/XrayRender.kt"); xm = read("app/src/main/java/com/diegonmarcos/superapp/xray/XrayModel.kt")
+ok("fun html(" in xr and "fun compact(" in xr and "fun html(" in xm and "fun markdownCompact(" in xm, "S9: the export renders HTML and compact AI Markdown from one digest", "S9: XrayRender html/compact entry points are missing")
 sys.exit(1 if fails else 0)
 PY

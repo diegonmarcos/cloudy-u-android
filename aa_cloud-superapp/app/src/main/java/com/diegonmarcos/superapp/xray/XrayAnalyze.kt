@@ -73,7 +73,7 @@ object XrayAnalyze {
     }
 
     private val UID_HEAD = Regex("^  (u\\d+[as]\\d+|\\d+):\\s*$")
-    private val WAKELOCK = Regex("^\\s+Wake lock (.+?): ((?:\\d+(?:ms|[dhms]) ?)+)(?: ?\\((\\d+) times\\))?")
+    private val WAKELOCK = Regex("^\\s+Wake lock (.+?): ((?:\\d+(?:ms|[dhms]) ?)+)(?:\\s*(?:partial|full|window|draw)?\\s*\\((\\d+) times\\))?")
     private val JOB = Regex("^\\s+Job (.+?): ((?:\\d+(?:ms|[dhms]) ?)+)")
     private val SYNC = Regex("^\\s+Sync (.+?): ((?:\\d+(?:ms|[dhms]) ?)+)")
     private val CPU = Regex("^\\s+Cpu: ((?:\\d+(?:ms|[dhms]) ?)+) usr \\+ ((?:\\d+(?:ms|[dhms]) ?)+) krn")
@@ -143,7 +143,7 @@ object XrayAnalyze {
 
     data class Svc(val pkg: String, val total: Int, val foreground: Int, val names: List<String>)
 
-    private val SVC = Regex("ServiceRecord\\{\\S+ u\\d+ ([\\w.]+)/(\\S+?)\\}?\\s*$")
+    private val SVC = Regex("ServiceRecord\\{\\S+ u\\d+ ([\\w.]+)/(\\S+?)(?:\\}|\\s.*)?$")
 
     /** Running services per package, with the foreground ones counted (the `isForeground=true` line under each record). */
     fun services(out: String): List<Svc> {

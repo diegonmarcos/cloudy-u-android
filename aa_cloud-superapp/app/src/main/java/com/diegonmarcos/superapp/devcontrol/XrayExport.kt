@@ -36,9 +36,10 @@ import androidx.compose.runtime.Composable
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
 
-/** The four outputs of Export All. */
+/** The outputs of Export All: HTML (visual, for a person), compact Markdown (token-optimised, for an LLM), both at once, the verbose Markdown, JSON, clipboard, post. */
 internal enum class XrayOut(val label: String) {
-    MARKDOWN("Export Markdown file"), JSON("Export JSON file"), COPY("Copy to clipboard"), POST("Post to the C3 API")
+    HTML("Export HTML report (visual)"), MD_AI("Export Markdown for AI (compact)"), BOTH("Export HTML + AI Markdown"),
+    MARKDOWN("Export Markdown file (verbose, raw dumps)"), JSON("Export JSON file"), COPY("Copy AI Markdown to clipboard"), POST("Post to the C3 API")
 }
 
 /**
@@ -94,10 +95,14 @@ internal object XrayExport {
         ))
         val tag = if (report.partial) " [$PARTIAL_LABEL]" else ""
         return when (out) {
+            XrayOut.HTML -> "Saved " + save(ctx, XrayFormat.fileStem(report) + ".html", "text/html", XrayFormat.html(report)) + tag
+            XrayOut.MD_AI -> "Saved " + save(ctx, XrayFormat.fileStem(report) + ".ai.md", "text/markdown", XrayFormat.markdownCompact(report)) + tag
+            XrayOut.BOTH -> "Saved " + save(ctx, XrayFormat.fileStem(report) + ".html", "text/html", XrayFormat.html(report)) + " and " +
+                save(ctx, XrayFormat.fileStem(report) + ".ai.md", "text/markdown", XrayFormat.markdownCompact(report)) + tag
             XrayOut.MARKDOWN -> "Saved " + save(ctx, XrayFormat.fileStem(report) + ".md", "text/markdown", XrayFormat.markdown(report)) + tag
             XrayOut.JSON -> "Saved " + save(ctx, XrayFormat.fileStem(report) + ".json", "application/json", XrayFormat.jsonText(report)) + tag
             XrayOut.COPY -> {
-                val md = XrayFormat.markdown(report)
+                val md = XrayFormat.markdownCompact(report)
                 val text = if (md.length > CLIP_MAX) md.take(CLIP_MAX) + "\n…(clipboard cut; export the file for the whole report)" else md
                 withContext(Dispatchers.Main) {
                     (ctx.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager).setPrimaryClip(ClipData.newPlainText("X-Ray report", text))

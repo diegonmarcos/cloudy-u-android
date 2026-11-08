@@ -28,12 +28,7 @@ object SystemGroups {
 
     const val NEEDS_ADB = "needs ADB: arm the channel on Configs > Network > ADB Shell"
 
-    fun bytes(b: Long): String = when {
-        b >= 1_073_741_824L -> String.format(Locale.US, "%.2f GB", b / 1_073_741_824.0)
-        b >= 1_048_576L -> String.format(Locale.US, "%.1f MB", b / 1_048_576.0)
-        b >= 1024L -> String.format(Locale.US, "%.0f kB", b / 1024.0)
-        else -> "$b B"
-    }
+    fun bytes(b: Long): String = DumpsysParsers.bytes(b)
 
     private fun usage(total: Long, free: Long): String {
         val used = (total - free).coerceAtLeast(0L)
@@ -150,7 +145,7 @@ object SystemGroups {
     /** Live graphics: the home window's FPS (the dropdown appends the gfxinfo frame stats when ADB is up). */
     fun graphics(ctx: Context): List<DdLine> = listOf(DdLine("FPS (home window)", FpsMeter.fps.toString()))
 
-    // ── ① Profile (static machine) ──
+    // ── ① Device Profile Scan (static machine) ──
 
     fun device(ctx: Context): List<DdLine> = listOf(
         DdLine("Model", "${Build.MANUFACTURER} ${Build.MODEL}"),
@@ -209,7 +204,7 @@ object SystemGroups {
         return out
     }
 
-    // ── ② Runtime: battery vitals ──
+    // ── ② Battery & Power tracker: live vitals ──
 
     fun battery(ctx: Context): List<DdLine> {
         val b = ctx.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED)) ?: return listOf(DdLine("Battery", "—"))
@@ -242,6 +237,15 @@ object SystemGroups {
             "binder" -> DumpsysParsers.binder(text, rows, label)
             "meminfo_detail" -> DumpsysParsers.meminfoDetail(text, rows)
             "anr" -> DumpsysParsers.anrLines(text, rows)
+            "df" -> DumpsysParsers.dfLines(text, rows)
+            "diskstats" -> DumpsysParsers.diskstats(text, rows)
+            "app_sizes" -> DumpsysParsers.appSizeLines(text, rows)
+            "crashes" -> DumpsysParsers.crashLines(text, rows)
+            "net_usage" -> DumpsysParsers.netUsageLines(text, rows, label)
+            "net_conn" -> DumpsysParsers.connectivity(text, rows)
+            "net_signal" -> DumpsysParsers.signal(text, rows)
+            "oom_adj" -> DumpsysParsers.oomLines(text, rows)
+            "sec_perms" -> DumpsysParsers.permLines(text, rows)
             "since_charge_usage" -> DumpsysParsers.usageInfos(DumpsysParsers.batteryStats(text), label)
             "since_charge_apps" -> DumpsysParsers.perApp(DumpsysParsers.batteryStats(text), rows, label)
             else -> emptyList()

@@ -3,6 +3,7 @@ package com.diegonmarcos.superapp.shellbroker
 import com.diegonmarcos.superapp.bgpolicy.BgCmd
 import com.diegonmarcos.superapp.bgpolicy.BgPrior
 import com.diegonmarcos.superapp.xray.XrayProbes
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
@@ -21,6 +22,9 @@ class SelfAllowlistTest {
     @Test fun everyXrayProbeIsAllowed() {
         assertTrue(XrayProbes.all.isNotEmpty())
         XrayProbes.all.forEach { allowed(it.cmd) }
+        // the 13-tracker reorganisation: every NEW tracker probe is declared and has its exact rule
+        for (id in listOf("df", "diskstats", "dropbox", "connectivity", "telephony", "procs", "pkgperms")) allowed(XrayProbes.all.single { it.id == id }.cmd)
+        assertEquals("probe ids are unique", XrayProbes.all.size, XrayProbes.all.map { it.id }.toSet().size)
     }
 
     @Test fun everyBackgroundPolicyCommandShapeIsAllowed() {

@@ -152,7 +152,14 @@
     "echo ignore:; cmd appops query-op RUN_IN_BACKGROUND ignore; echo deny:; cmd appops query-op RUN_IN_BACKGROUND deny",
     "echo credential_service=$(settings get secure credential_service); echo primary=$(settings get secure credential_service_primary)",
     "logcat -d -v threadtime -t 300 '*:W'",
-    "dumpsys package com.diegonmarcos.superapp | grep -E 'granted=true' | head -120; echo ---; cmd appops get com.diegonmarcos.superapp | head -80"
+    "dumpsys package com.diegonmarcos.superapp | grep -E 'granted=true' | head -120; echo ---; cmd appops get com.diegonmarcos.superapp | head -80",
+    "df -h 2>&1 | head -40",
+    "dumpsys diskstats | head -120",
+    "dumpsys dropbox --print 2>/dev/null | grep -E '^(Process|Package|Subject): |^[0-9]{4}-[0-9]{2}-[0-9]{2} .*(crash|anr)' | head -300",
+    "dumpsys connectivity | head -200",
+    "dumpsys telephony.registry | grep -E 'mSignalStrength|mServiceState|mDataConnectionState|mCallState|mNetworkType' | head -40",
+    "dumpsys activity processes | head -200",
+    "dumpsys package com.diegonmarcos.superapp | grep -E -A70 'requested permissions:|install permissions:|runtime permissions:' | head -260"
    ]
   },
   "com.diegonmarcos.cloudstore": {

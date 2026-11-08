@@ -17,8 +17,8 @@ const val SRC_APP = "app sandbox"
 const val SRC_SKIPPED = "skipped (needs adb)"
 const val PARTIAL_LABEL = "partial: no adb"
 
-/** One block of the report: the X-Ray group it belongs to, its title, where it was read from, and the text. */
-data class XSection(val group: String, val title: String, val source: String, val text: String, val ok: Boolean = true)
+/** One block of the report ([id] = the probe that produced it, blank for app-side blocks): the X-Ray group it belongs to, its title, where it was read from, and the text. */
+data class XSection(val group: String, val title: String, val source: String, val text: String, val ok: Boolean = true, val id: String = "")
 
 /** One ranked suspect: the composite [score] in [unit] (points, 0-100), its dominant [cause], the signals behind it, and its estimated [mAh] (power is one input). */
 data class Suspect(val rank: Int, val pkg: String, val score: Double, val unit: String, val cause: String, val detail: String, val fleet: Boolean, val mAh: Double = 0.0)
@@ -51,15 +51,26 @@ object XrayFormat {
         sb.append("- generated: ").append(iso(r.generatedAt)).append("\n")
         sb.append("- app: ").append(r.appVersion).append("\n")
         sb.append("- adb: ").append(r.adbChannel).append("\n")
-        sb.append("- order: ① Profile → ② Runtime → ③ Diagnosis by family → ④ Suspects (last)\n")
+        sb.append("- order: ① Device Profile Scan → ② Profiling Trackers 01-12 → ② 13 Suspects (verdict)\n")
         if (r.partial) sb.append("\n> **").append(PARTIAL_LABEL).append("** — ").append(r.partialReason).append("\n")
         var group = ""
+        var verdict = false
         for (s in r.sections) {
-            if (s.group != group) { group = s.group; sb.append("\n# ").append(group).append("\n") }
+            if (s.group != group) {
+                group = s.group
+                if (!verdict && !group.startsWith("①") && !group.startsWith("②") && group != "Report") { verdict = true; suspectsBlock(sb, r) }
+                sb.append("\n# ").append(group).append("\n")
+            }
             sb.append("\n## ").append(s.title).append("\n\n_source: ").append(s.source).append(if (s.ok) "" else " · failed").append("_\n\n```text\n")
                 .append(s.text.trimEnd()).append("\n```\n")
         }
-        sb.append("\n# ④ SUSPECTS (verdict)\n\n## Suspects (ranked)\n\n")
+        if (!verdict) suspectsBlock(sb, r)
+        return XrayRedact.scrub(sb.toString())
+    }
+
+    /** The 13th tracker, the cross-tracker verdict, in the verbose Markdown (placed after the probed groups). */
+    private fun suspectsBlock(sb: StringBuilder, r: XReport) {
+        sb.append("\n# ").append(XrayProbes.G_SUSPECTS).append("\n\n## Suspects (ranked)\n\n")
         if (r.suspects.isEmpty()) sb.append("none ranked (no per-uid battery or notification stats in this report)\n")
         else {
             sb.append("| # | App | Score | Cause (dominant signal) | Why and other signals |\n|---|---|---|---|---|\n")
@@ -70,7 +81,6 @@ object XrayFormat {
             sb.append("\n## Fleet apps\n\n")
             for (l in r.fleet) sb.append("- ").append(l).append("\n")
         }
-        return XrayRedact.scrub(sb.toString())
     }
 
     private fun esc(s: String) = s.replace("|", "/").replace("\n", " ")
@@ -97,4 +107,10 @@ object XrayFormat {
     }
 
     fun jsonText(r: XReport): String = json(r).toString(2)
+
+    /** The styled, self-contained HTML report (visual, for a person). See [XrayRender]. */
+    fun html(r: XReport): String = XrayRender.html(r)
+
+    /** The token-optimised Markdown (terse, parsed signals only, for an LLM). See [XrayRender]. */
+    fun markdownCompact(r: XReport): String = XrayRender.compact(r)
 }

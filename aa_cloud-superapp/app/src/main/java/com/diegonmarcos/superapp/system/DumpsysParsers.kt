@@ -14,6 +14,14 @@ object DumpsysParsers {
 
     private fun f1(d: Double) = String.format(Locale.US, "%.1f", d)
 
+    /** Bytes as B / kB / MB / GB (the one formatter; SystemGroups.bytes delegates here so the parsers stay JVM-pure). */
+    fun bytes(b: Long): String = when {
+        b >= 1_073_741_824L -> String.format(Locale.US, "%.2f GB", b / 1_073_741_824.0)
+        b >= 1_048_576L -> String.format(Locale.US, "%.1f MB", b / 1_048_576.0)
+        b >= 1024L -> String.format(Locale.US, "%.0f kB", b / 1024.0)
+        else -> "$b B"
+    }
+
     // ── dumpsys activity services (Developer options > Running services) ──
 
     data class Svc(val pkg: String, val cls: String, val foreground: Boolean, val pid: Int?, val process: String?, val since: String?)
@@ -23,7 +31,7 @@ object DumpsysParsers {
         val out = ArrayList<Svc>()
         for (block in text.split("* ServiceRecord{").drop(1)) {
             val head = block.lineSequence().first()
-            val cmp = Regex("""u\d+\s+(\S+?)\}""").find(head)?.groupValues?.get(1) ?: continue
+            val cmp = Regex("""u\d+\s+(\S+?)(?:\}|\s)""").find(head)?.groupValues?.get(1) ?: continue
             val pkg = cmp.substringBefore('/')
             val cls = cmp.substringAfter('/', "").let { if (it.startsWith(".")) pkg + it else it }
             val app = Regex("""app=ProcessRecord\{\S+ (\d+):([^/}]+)""").find(block)
@@ -202,7 +210,7 @@ object DumpsysParsers {
         val jm = Regex("""Janky frames:\s*(\d+)\s*\(([\d.]+)%\)""").find(text)
         val janky = jm?.groupValues?.get(1)?.toLongOrNull()
         val pct = jm?.groupValues?.get(2)?.toDoubleOrNull() ?: if (total != null && total > 0 && janky != null) janky * 100.0 / total else null
-        val perc = Regex("""(\d+)th percentile:\s*([\d.]+)\s*ms""").findAll(text).mapNotNull { m -> m.groupValues[2].toDoubleOrNull()?.let { m.groupValues[1].toInt() to it } }.toMap()
+        val perc = Regex("""(\d+)th percentile:\s*([\d.]+)\s*ms""").findAll(text).mapNotNull { m -> m.groupValues[2].toDoubleOrNull()?.let { m.groupValues[1].toInt() to it } }.distinctBy { it.first }.toMap()
         val slow = GFX_SLOW.findAll(text).mapNotNull { m -> m.groupValues[2].toLongOrNull()?.let { m.groupValues[1].trim() to it } }.distinctBy { it.first }.toList()
         val hist = Regex("""(?m)^\s*HISTOGRAM:(.*)$""").find(text)?.groupValues?.get(1)?.let { h ->
             Regex("""(\d+)ms=(\d+)""").findAll(h).mapNotNull { m -> m.groupValues[2].toLongOrNull()?.let { m.groupValues[1].toInt() to it } }.toList()
@@ -393,4 +401,167 @@ object DumpsysParsers {
     /** Scheduled jobs per package (WorkManager's share), from `dumpsys jobscheduler`. */
     fun jobLines(text: String, rows: Int): List<DdLine> =
         XrayAnalyze.jobs(text).entries.sortedByDescending { it.value.first }.take(rows).map { DdLine(short(it.key), "${it.value.first} jobs (${it.value.second} WorkManager)") }
+
+    // ── ② Storage tracker: df, dumpsys diskstats ──
+
+    private fun kbText(kb: Long): String = bytes(kb * 1024)
+
+    /** `df -h`: one line per real mount (/data, /storage/emulated, /sdcard, /cache...): size, used, free, use%. Pseudo filesystems are skipped. */
+    fun dfLines(text: String, rows: Int): List<DdLine> =
+        text.lineSequence().mapNotNull { l ->
+            val t = l.trim().split(Regex("\\s+"))
+            if (t.size < 6 || !t[4].endsWith("%")) return@mapNotNull null
+            val mount = t[5]
+            if (!(mount == "/data" || mount == "/" || mount.startsWith("/storage") || mount == "/sdcard" || mount == "/cache" || mount == "/system" || mount == "/product")) return@mapNotNull null
+            DdLine(mount, "${t[2]} used of ${t[1]} (${t[4]}) · ${t[3]} free")
+        }.distinctBy { it.label }.take(rows).toList()
+
+    /** Use percent of /data (or the first real mount) from `df -h`, null when absent. */
+    fun dfDataPercent(text: String): Int? =
+        dfLines(text, 99).let { ls -> (ls.firstOrNull { it.label == "/data" } ?: ls.firstOrNull())?.value?.let { Regex("""\((\d+)%\)""").find(it)?.groupValues?.get(1)?.toIntOrNull() } }
+
+    /** The disk-wide lines of `dumpsys diskstats`: Data / Cache / System free, then the media, app and cache sizes. */
+    fun diskstats(text: String, rows: Int): List<DdLine> {
+        val out = ArrayList<DdLine>()
+        for (l in text.lineSequence()) {
+            val t = l.trim()
+            Regex("""^(Data|Cache|System)-Free: (\d+)K / (\d+)K total = (\d+)% free""").find(t)?.let {
+                val (n, free, total, pct) = it.destructured
+                out += DdLine("$n free", "${kbText(free.toLong())} of ${kbText(total.toLong())} ($pct% free)")
+            }
+            Regex("""^(Photos|Videos|Audio|Downloads|Documents|Other|App|App Data|App Cache) Size: (\d+)$""").find(t)?.let {
+                out += DdLine(it.groupValues[1] + " size", bytes(it.groupValues[2].toLong()))
+            }
+        }
+        return out.take(rows)
+    }
+
+    data class AppSize(val pkg: String, val app: Long, val data: Long, val cache: Long) { val total get() = app + data + cache }
+
+    private fun numArray(text: String, key: String): List<Long> =
+        Regex("^" + Regex.escape(key) + """: \[(.*)]""", RegexOption.MULTILINE).find(text)?.groupValues?.get(1)
+            ?.split(',')?.mapNotNull { it.trim().toLongOrNull() }.orEmpty()
+
+    /** Per-app sizes of `dumpsys diskstats` (parallel arrays: Package Names, App Sizes, App Data Sizes, Cache Sizes); biggest total first. */
+    fun appSizes(text: String): List<AppSize> {
+        val names = Regex("""^Package Names: \[(.*)]""", RegexOption.MULTILINE).find(text)?.groupValues?.get(1)
+            ?.split(',')?.map { it.trim().trim('"') }.orEmpty()
+        if (names.isEmpty()) return emptyList()
+        val a = numArray(text, "App Sizes"); val d = numArray(text, "App Data Sizes"); val c = numArray(text, "Cache Sizes")
+        return names.indices.map { i -> AppSize(names[i], a.getOrElse(i) { 0L }, d.getOrElse(i) { 0L }, c.getOrElse(i) { 0L }) }.sortedByDescending { it.total }
+    }
+
+    fun appSizeLines(text: String, rows: Int): List<DdLine> =
+        appSizes(text).take(rows).map { DdLine(short(it.pkg).take(30), "${bytes(it.total)} (app ${bytes(it.app)} · data ${bytes(it.data)} · cache ${bytes(it.cache)})") }
+
+    // ── ② Crash tracker: dumpsys dropbox --print ──
+
+    data class Crash(val whenText: String, val tag: String, val proc: String?)
+
+    /** Dropbox entries tagged *crash / *anr (header line `yyyy-MM-dd HH:mm:ss tag (...)`), with the Process: / Package: line that follows. */
+    fun crashes(text: String): List<Crash> {
+        val out = ArrayList<Crash>()
+        var cur: Crash? = null
+        for (l in text.lineSequence()) {
+            val h = Regex("""^(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d) (\S*(?:crash|anr)\S*)""", RegexOption.IGNORE_CASE).find(l.trim())
+            if (h != null) { cur?.let { out += it }; cur = Crash(h.groupValues[1], h.groupValues[2], null); continue }
+            val c = cur ?: continue
+            val m = Regex("""^(?:Process|Package): (\S+)""").find(l.trim())
+            if (m != null && c.proc == null) cur = c.copy(proc = m.groupValues[1])
+        }
+        cur?.let { out += it }
+        return out
+    }
+
+    fun crashLines(text: String, rows: Int): List<DdLine> {
+        val all = crashes(text)
+        if (all.isEmpty()) return if (text.isNotBlank()) listOf(DdLine("Crashes", "none recorded")) else emptyList()
+        return listOf(DdLine("Crashes", "${all.size} recorded")) + all.takeLast(rows).reversed().map { DdLine(it.whenText, it.tag + (it.proc?.let { p -> " · " + short(p) } ?: "")) }
+    }
+
+    // ── ② Network tracker: netstats per uid, connectivity, radio signal ──
+
+    data class NetUse(val uid: String, val rx: Long, val tx: Long) { val total get() = rx + tx }
+
+    /** `dumpsys netstats --uid`: sums rb/tb (bytes) of every bucket per `uid=` (untagged, tag=0x0); heaviest first. */
+    fun netUsage(text: String): List<NetUse> {
+        val rx = LinkedHashMap<String, Long>(); val tx = LinkedHashMap<String, Long>()
+        var uid: String? = null
+        for (l in text.lineSequence()) {
+            val t = l.trim()
+            val h = Regex("""\buid=(\d+) set=\w+ tag=(\S+)""").find(t)
+            if (h != null) { uid = if (h.groupValues[2] == "0x0") h.groupValues[1] else null; continue }
+            val u = uid ?: continue
+            val b = Regex("""\brb=(\d+) rp=\d+ tb=(\d+)""").find(t) ?: continue
+            rx[u] = (rx[u] ?: 0L) + b.groupValues[1].toLong(); tx[u] = (tx[u] ?: 0L) + b.groupValues[2].toLong()
+        }
+        return rx.keys.map { NetUse(it, rx.getValue(it), tx[it] ?: 0L) }.sortedByDescending { it.total }
+    }
+
+    fun netUsageLines(text: String, rows: Int, label: (String) -> String = { it }): List<DdLine> =
+        netUsage(text).filter { it.total > 0 }.take(rows).map {
+            DdLine(runCatching { label("u0a" + (it.uid.toInt() - 10000)) }.getOrDefault(it.uid).takeIf { n -> !n.startsWith("u0a-") } ?: "uid ${it.uid}",
+                "down ${bytes(it.rx)} · up ${bytes(it.tx)}")
+        }
+
+    /** `dumpsys connectivity`: the default network and its transport/validation, as far as the dump shows them. */
+    fun connectivity(text: String, rows: Int): List<DdLine> {
+        val out = ArrayList<DdLine>()
+        Regex("""Active default network: (\S+)""").find(text)?.let { out += DdLine("Default network", "id ${it.groupValues[1]}") }
+        val nets = Regex("""NetworkAgentInfo\{.*?type: (\w+)""").findAll(text).map { it.groupValues[1] }.toList()
+        if (nets.isNotEmpty()) out += DdLine("Networks up", nets.groupingBy { it }.eachCount().entries.joinToString(" · ") { "${it.key} x${it.value}" })
+        val validated = Regex("""\bVALIDATED\b""").findAll(text).count(); val not = Regex("""NOT_VALIDATED""").findAll(text).count()
+        if (validated + not > 0) out += DdLine("Validation", "$validated validated · $not not")
+        Regex("""Airplane Mode: (\w+)""", RegexOption.IGNORE_CASE).find(text)?.let { out += DdLine("Airplane", it.groupValues[1]) }
+        return out.take(rows)
+    }
+
+    /** `dumpsys telephony.registry` radio state: signal strength level/dbm, data state, network type, service state. */
+    fun signal(text: String, rows: Int): List<DdLine> {
+        val out = ArrayList<DdLine>()
+        Regex("""mSignalStrength=(.*)""").find(text)?.let { m ->
+            val v = m.groupValues[1]
+            val dbm = Regex("""rsrp=(-?\d+)""").find(v)?.groupValues?.get(1) ?: Regex("""mDbm=(-?\d+)""").find(v)?.groupValues?.get(1)
+            val lvl = Regex("""level=(\d)""").find(v)?.groupValues?.get(1) ?: Regex("""mLevel=(\d)""").find(v)?.groupValues?.get(1)
+            out += DdLine("Signal", listOfNotNull(lvl?.let { "level $it/4" }, dbm?.let { "$it dBm" }).joinToString(" · ").ifEmpty { v.take(60) })
+        }
+        Regex("""mDataConnectionState=(-?\d+)""").find(text)?.let { out += DdLine("Data state", when (it.groupValues[1]) { "2" -> "connected"; "0" -> "disconnected"; "1" -> "connecting"; else -> it.groupValues[1] }) }
+        Regex("""mNetworkType=(\w+)""").find(text)?.let { out += DdLine("Network type", it.groupValues[1]) }
+        Regex("""mCallState=(\d)""").find(text)?.let { out += DdLine("Call state", if (it.groupValues[1] == "0") "idle" else "active") }
+        Regex("""(?:mServiceState|mVoiceRegState)=(.*)""").find(text)?.let { out += DdLine("Service", it.groupValues[1].take(60)) }
+        return out.take(rows)
+    }
+
+    // ── ② Process & Lifecycle tracker: dumpsys activity processes (oom-adj) ──
+
+    data class Proc(val adj: String, val pid: Int, val name: String)
+
+    /** `Proc #n: adj ... pid:name/uid (reason)` rows of the process LRU list; adj = persistent/fg/vis/svc/cch... as the dump prints it. */
+    fun oomProcs(text: String): List<Proc> =
+        text.lineSequence().mapNotNull { l ->
+            val m = Regex("""Proc #\d+:\s+(\S+)\s+.*?(\d+):([\w.:-]+)/u\d+""").find(l) ?: return@mapNotNull null
+            Proc(m.groupValues[1], m.groupValues[2].toInt(), m.groupValues[3])
+        }.toList()
+
+    fun oomLines(text: String, rows: Int): List<DdLine> {
+        val all = oomProcs(text)
+        if (all.isEmpty()) return emptyList()
+        val byClass = all.groupingBy { it.adj.takeWhile { c -> c.isLetter() } }.eachCount().entries.sortedByDescending { it.value }
+        return listOf(DdLine("Processes", "${all.size} · " + byClass.take(6).joinToString(" ") { "${it.key} ${it.value}" })) +
+            all.filter { !it.adj.startsWith("cch") }.take(rows).map { DdLine(it.adj, short(it.name) + " (pid ${it.pid})") }
+    }
+
+    // ── ② Security & Perms tracker: dumpsys package <this app> ──
+
+    /** Permissions of the app: requested count, then the granted runtime/install ones (`android.permission.X: granted=true`). */
+    fun grantedPerms(text: String): List<String> =
+        Regex("""([\w.]+): granted=true""").findAll(text).map { it.groupValues[1].substringAfterLast('.') }.distinct().toList()
+
+    fun permLines(text: String, rows: Int): List<DdLine> {
+        val req = Regex("""requested permissions:""").find(text)?.let { text.substring(it.range.last).lineSequence().drop(1).takeWhile { l -> l.startsWith("      ") || l.startsWith("\t") }.count() }
+        val granted = grantedPerms(text)
+        if (req == null && granted.isEmpty()) return emptyList()
+        return listOfNotNull(req?.let { DdLine("Requested", "$it") }, DdLine("Granted", "${granted.size}")) +
+            granted.take(rows).map { DdLine("granted", it) }
+    }
 }

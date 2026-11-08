@@ -386,4 +386,145 @@ HAL Cooling Devices:
         FpsMeter.publish(t0 + 10_000_000_000L)
         assertEquals(0, FpsMeter.fps)
     }
+
+    // ── the 13-tracker parsers: Storage, Crash, Network, Process & Lifecycle, Security & Perms ──
+
+    @Test
+    fun `K1 storage - df mounts and dumpsys diskstats free, media and per-app sizes`() {
+        val df = """
+Filesystem            Size  Used Avail Use% Mounted on
+tmpfs                 2.5G  1.1M  2.5G   1% /dev
+/dev/block/dm-9       220G  190G   30G  87% /data
+/dev/fuse             220G  190G   30G  87% /storage/emulated
+"""
+        val l = DumpsysParsers.dfLines(df, 5)
+        assertEquals(listOf("/data", "/storage/emulated"), l.map { it.label })
+        assertEquals("190G used of 220G (87%) · 30G free", l[0].value)
+        assertEquals(87, DumpsysParsers.dfDataPercent(df))
+        val ds = """
+Latency: 8ms [512B Data Write]
+Data-Free: 31457280K / 230686720K total = 13% free
+Cache-Free: 1024K / 4096K total = 25% free
+System-Free: 2097152K / 4194304K total = 50% free
+App Size: 1073741824
+App Data Size: 536870912
+App Cache Size: 104857600
+Photos Size: 2147483648
+Package Names: ["com.a.big","com.diegonmarcos.superapp","com.c.small"]
+App Sizes: [900000000, 50000000, 1000]
+App Data Sizes: [3000000000, 20000000, 500]
+Cache Sizes: [100000000, 5000000, 0]
+"""
+        val d = DumpsysParsers.diskstats(ds, 20)
+        assertEquals("Data free", d.first().label); assertTrue(d.first().value.contains("13% free"))
+        assertTrue(d.any { it.label == "Photos size" && it.value == "2.00 GB" })
+        val sizes = DumpsysParsers.appSizes(ds)
+        assertEquals(listOf("com.a.big", "com.diegonmarcos.superapp", "com.c.small"), sizes.map { it.pkg })
+        assertEquals(4_000_000_000L, sizes.first().total)
+        assertEquals("superapp", DumpsysParsers.appSizeLines(ds, 2)[1].label)
+        for (junk in listOf("", "garbage\n\u0000", "Package Names: [")) { assertTrue(DumpsysParsers.diskstats(junk, 5).isEmpty()); assertTrue(DumpsysParsers.appSizes(junk).isEmpty()); assertTrue(DumpsysParsers.dfLines(junk, 5).isEmpty()) }
+        assertEquals("no data in the dump", SystemGroups.adbLines("df", "nothing", 5).single().value)
+        assertEquals(SystemGroups.NEEDS_ADB, SystemGroups.adbLines("app_sizes", null, 5).single().value)
+    }
+
+    @Test
+    fun `K2 crash - dropbox crash and anr entries with their process`() {
+        val db = """
+2026-11-05 12:07:44 data_app_anr (text, 2322 bytes)
+Process: com.diegonmarcos.superapp
+Subject: Input dispatching timed out
+2026-11-06 02:17:23 system_app_crash (text, 900 bytes)
+Package: com.sec.android.x v1
+2026-11-06 03:00:00 data_app_native_crash (text, 100 bytes)
+Process: com.foo.native
+2026-11-06 04:00:00 event_data (text, 10 bytes)
+"""
+        val c = DumpsysParsers.crashes(db)
+        assertEquals(listOf("data_app_anr", "system_app_crash", "data_app_native_crash"), c.map { it.tag })
+        assertEquals("com.diegonmarcos.superapp", c[0].proc); assertEquals("com.sec.android.x", c[1].proc)
+        val l = DumpsysParsers.crashLines(db, 2)
+        assertEquals("3 recorded", l.first().value); assertEquals(3, l.size)
+        assertEquals("none recorded", DumpsysParsers.crashLines("no crashes here", 3).single().value)
+        assertTrue(DumpsysParsers.crashLines("", 3).isEmpty())
+        assertEquals("3 recorded", SystemGroups.adbLines("crashes", db, 5).first().value)
+    }
+
+    @Test
+    fun `K3 network - netstats per uid, connectivity and radio signal`() {
+        val ns = """
+  ident=[{type=MOBILE}] uid=10150 set=DEFAULT tag=0x0
+    NetworkStatsHistory: bucketDuration=3600
+      st=1762000000 rb=1000 rp=2 tb=500 tp=1 op=0
+      st=1762003600 rb=2000 rp=3 tb=100 tp=1 op=0
+  ident=[{type=WIFI}] uid=10150 set=DEFAULT tag=0x1
+      st=1762000000 rb=999999 rp=2 tb=999999 tp=1 op=0
+  ident=[{type=WIFI}] uid=10151 set=FOREGROUND tag=0x0
+      st=1762000000 rb=50 rp=2 tb=40 tp=1 op=0
+"""
+        val u = DumpsysParsers.netUsage(ns)
+        assertEquals(listOf("10150", "10151"), u.map { it.uid })
+        assertEquals(3000L, u[0].rx); assertEquals(600L, u[0].tx)
+        assertTrue(DumpsysParsers.netUsageLines(ns, 5).first().value.contains("down"))
+        assertTrue(DumpsysParsers.netUsage("junk").isEmpty())
+        val cn = "Active default network: 100\n  NetworkAgentInfo{network{100}  type: WIFI[]  VALIDATED\n  NetworkAgentInfo{network{101}  type: MOBILE[] NOT_VALIDATED\n"
+        val c = DumpsysParsers.connectivity(cn, 6)
+        assertEquals("id 100", c.first { it.label == "Default network" }.value)
+        assertTrue(c.first { it.label == "Networks up" }.value.contains("WIFI x1"))
+        assertTrue(c.first { it.label == "Validation" }.value.contains("not"))
+        val tr = "mSignalStrength=SignalStrength: level=3 rsrp=-98\nmDataConnectionState=2\nmNetworkType=LTE\nmCallState=0\n"
+        val s = DumpsysParsers.signal(tr, 6)
+        assertEquals("level 3/4 · -98 dBm", s.first { it.label == "Signal" }.value)
+        assertEquals("connected", s.first { it.label == "Data state" }.value)
+        assertEquals("LTE", s.first { it.label == "Network type" }.value)
+        assertTrue(DumpsysParsers.signal("junk", 6).isEmpty() && DumpsysParsers.connectivity("junk", 6).isEmpty())
+        assertEquals("no data in the dump", SystemGroups.adbLines("net_signal", "junk", 5).single().value)
+    }
+
+    @Test
+    fun `K4 process lifecycle - oom-adj LRU rows`() {
+        val pr = """
+  Process LRU list (sorted by oom_adj, 3 total, non-act at 1, non-svc at 1):
+    Proc #0: fg     T/A/T  trm: 0 19937:com.diegonmarcos.superapp/u0a355 (top-activity)
+    Proc #1: vis    T/A/T  trm: 0 2411:com.android.systemui/u0a12 (service)
+    Proc #2: cch+5  CE     LRU 0 5000:com.old.app/u0a99 (cch-empty)
+"""
+        val p = DumpsysParsers.oomProcs(pr)
+        assertEquals(listOf("fg", "vis", "cch+5"), p.map { it.adj })
+        assertEquals(19937, p[0].pid); assertEquals("com.old.app", p[2].name)
+        val l = DumpsysParsers.oomLines(pr, 5)
+        assertTrue(l.first().value.startsWith("3 · "))
+        assertEquals(3, l.size) // header + the two non-cached rows
+        assertTrue(DumpsysParsers.oomLines("junk", 5).isEmpty())
+        assertEquals("no data in the dump", SystemGroups.adbLines("oom_adj", "junk", 5).single().value)
+    }
+
+    @Test
+    fun `K5 security - requested and granted permissions of this app`() {
+        val pk = """
+    requested permissions:
+      android.permission.INTERNET
+      android.permission.CAMERA
+      android.permission.RECORD_AUDIO
+    install permissions:
+      android.permission.INTERNET: granted=true
+    runtime permissions:
+      android.permission.CAMERA: granted=true
+      android.permission.RECORD_AUDIO: granted=false
+"""
+        assertEquals(listOf("INTERNET", "CAMERA"), DumpsysParsers.grantedPerms(pk))
+        val l = DumpsysParsers.permLines(pk, 5)
+        assertEquals("3", l.first { it.label == "Requested" }.value)
+        assertEquals("2", l.first { it.label == "Granted" }.value)
+        assertTrue(DumpsysParsers.permLines("junk", 5).isEmpty())
+        assertEquals("2", SystemGroups.adbLines("sec_perms", pk, 5).first { it.label == "Granted" }.value)
+    }
+
+    @Test
+    fun `K6 Android 16 formats - wakelock duration before partial, service record with a trailing c colon`() {
+        val b = "  u0a150:\n    Wake lock Prevent Sleep: 15m 38s 1ms partial (229348 times) max=100 realtime\n"
+        assertEquals(229348L, com.diegonmarcos.superapp.xray.XrayAnalyze.wakelocks(b).single().count)
+        val sv = "  * ServiceRecord{dac7255 u0 com.google.android.gms/.nearby.Life c:com.google.android.gms}\n    isForeground=true\n"
+        assertEquals("com.google.android.gms", DumpsysParsers.services(sv).single().pkg)
+        assertEquals(1, com.diegonmarcos.superapp.xray.XrayAnalyze.services(sv).single().foreground)
+    }
 }

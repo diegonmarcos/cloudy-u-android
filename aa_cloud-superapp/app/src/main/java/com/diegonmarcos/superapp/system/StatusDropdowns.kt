@@ -38,8 +38,9 @@ object StatusDropdowns {
     const val REFRESH_MS = 1_000L
     const val SYSTEM = "right_system"
     const val BATTERY = "right_battery"
-    /** A group of this source is a tier sub-header: its rule and title, no lines. */
+    /** A group of this source is a header: its rule and title, no lines. A MACRO header (id starts with "m"; Device Profile Scan, Profiling Trackers) is set apart; a tracker header (id "trNN_...") labels one tracker. */
     const val HEADER = "header"
+    fun isMacro(g: DropdownGroup) = g.source == HEADER && g.id.startsWith("m")
 
     private val INK = Color.White
     private val DIM = Color(0xAAFFFFFF)
@@ -107,8 +108,9 @@ object StatusDropdowns {
                 }
             }
         }
-        Column(Modifier.fillMaxWidth().padding(top = KitStoreRow.padV).testTag("$tagPrefix:group:${g.id}")) {
-            Box(Modifier.fillMaxWidth().height(1.dp).background(KitStoreRow.RULE))
+        val macro = isMacro(g)
+        Column(Modifier.fillMaxWidth().padding(top = if (macro) KitStoreRow.padV + KitStoreRow.padV else KitStoreRow.padV).testTag("$tagPrefix:group:${g.id}")) {
+            Box(Modifier.fillMaxWidth().height(1.dp).background(if (macro) ACCENT else KitStoreRow.RULE))
             Row(Modifier.padding(top = KitStoreRow.tight, bottom = KitStoreRow.tight)) {
                 if (short != null) Cap(short, Modifier.padding(end = KitStoreRow.gap).testTag("$tagPrefix:icon:${g.id}"), ACCENT, bold = true)
                 Cap(g.label, Modifier.testTag("$tagPrefix:title:${g.id}"), if (g.source == HEADER) ACCENT else INK, bold = true)

@@ -35,10 +35,10 @@ object XrayExporter {
         for (p in i.probes) {
             val shell = i.shell?.let { s -> runCatching { s.exec(p.cmd) }.getOrNull() }
             val sec = when {
-                shell != null -> { raw[p.id] = shell; XSection(p.group, p.title, SRC_SHELL, cap(shell, p.cap)) }
-                p.appKey != null && i.app(p.appKey) != null -> XSection(p.group, p.title, SRC_APP, cap(i.app(p.appKey).orEmpty(), p.cap))
-                i.shell == null -> XSection(p.group, p.title, SRC_SKIPPED, "not read: no adb shell (${PARTIAL_LABEL})", ok = false)
-                else -> XSection(p.group, p.title, SRC_SHELL, "the shell channel could not serve this command", ok = false)
+                shell != null -> { raw[p.id] = shell; XSection(p.group, p.title, SRC_SHELL, cap(shell, p.cap), id = p.id) }
+                p.appKey != null && i.app(p.appKey) != null -> XSection(p.group, p.title, SRC_APP, cap(i.app(p.appKey).orEmpty(), p.cap), id = p.id)
+                i.shell == null -> XSection(p.group, p.title, SRC_SKIPPED, "not read: no adb shell (${PARTIAL_LABEL})", ok = false, id = p.id)
+                else -> XSection(p.group, p.title, SRC_SHELL, "the shell channel could not serve this command", ok = false, id = p.id)
             }
             probed += p to sec
         }

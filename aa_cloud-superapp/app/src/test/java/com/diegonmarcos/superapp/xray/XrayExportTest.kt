@@ -36,6 +36,7 @@ class XrayExportTest {
     private val STARTS = "11-05 10:00:00.000 I/ActivityManager( 1): Start proc 123:com.diegonmarcos.fleet/u0a150 for broadcast {com.diegonmarcos.fleet/.Boot}\n" +
         "11-05 10:01:00.000 I/ActivityManager( 1): Start proc 124:com.diegonmarcos.fleet/u0a150 for service {com.diegonmarcos.fleet/.S}\n"
     private val ALARM = "  Alarm Stats:\n  u0a150:com.diegonmarcos.fleet +1s234ms running, 25 wakeups:\n"
+    private val GFX = "Total frames rendered: 100\nJanky frames: 40 (40.00%)\n50th percentile: 20ms\n90th percentile: 40ms\nNumber Slow UI thread: 30\n"
     private val JOBS = "  JOB #u0a150/9: 1a2b com.diegonmarcos.fleet/androidx.work.impl.background.systemjob.SystemJobService\n"
 
     private fun fixtureFor(cmd: String): String = when {
@@ -46,6 +47,16 @@ class XrayExportTest {
         cmd.startsWith("dumpsys jobscheduler") -> JOBS
         cmd.startsWith("dumpsys alarm") -> ALARM
         else -> "ok for ${cmd.take(30)}"
+    }
+
+    /** What a stressed device answers on top of [fixtureFor]: 40% jank, thermal status 3, /data 93% full, a recorded crash. */
+    private fun richFor(cmd: String): String = when {
+        cmd.startsWith("dumpsys gfxinfo") -> GFX
+        cmd.startsWith("dumpsys thermalservice") -> "Thermal Status: 3\n  Temperature{mValue=47.5, mType=3, mName=skin, mStatus=2}\n"
+        cmd.startsWith("df -h") -> "Filesystem Size Used Avail Use% Mounted on\n/dev/block/dm-9 220G 205G 15G 93% /data\n"
+        cmd.startsWith("dumpsys diskstats") -> "Data-Free: 15728640K / 230686720K total = 7% free\nPackage Names: [\"com.big\"]\nApp Sizes: [5000000000]\nApp Data Sizes: [0]\nCache Sizes: [0]\n"
+        cmd.startsWith("dumpsys dropbox") -> "2026-11-05 12:07:44 data_app_crash (text, 1 bytes)\nProcess: com.diegonmarcos.fleet\n"
+        else -> fixtureFor(cmd)
     }
 
     private val shell = object : XrayShell {
@@ -115,14 +126,33 @@ class XrayExportTest {
         assertTrue(r.fleet.single().contains("woken by"))
     }
 
-    @Test fun `the probe list is ordered by tier and carries the new diagnosis probes`() {
+    @Test fun `the probe list is ordered Profile Scan then the trackers 01-12 and carries every old and new probe`() {
         val ids = XrayProbes.all.map { it.id }
-        for (n in listOf("gfxinfo", "top", "notification", "binder", "meminfo", "anr", "thermal", "profile")) assertTrue(n, n in ids)
-        fun tier(g: String) = g.first()
-        val tiers = XrayProbes.all.map { tier(it.group) }.filter { it in "①②③" }
-        assertEquals("probes never go back to an earlier tier", tiers.sorted(), tiers)
-        assertEquals(XrayProbes.G_JANK, XrayProbes.all.first { it.id == "gfxinfo" }.group)
-        assertEquals(XrayProbes.G_NOTIF, XrayProbes.all.first { it.id == "notification" }.group)
+        val old = listOf("profile", "packages", "deviceidle", "buckets", "appops", "listeners", "a11y", "autofill", "credential", "thermal", "top", "battery", "netstats",
+            "batterystats", "batterystats-top", "services", "startproc", "jobs", "alarm", "power", "gfxinfo", "surfaceflinger", "notification", "binder", "procstats", "meminfo", "anr", "logcat", "perms")
+        for (n in old) assertTrue("nothing deleted: $n", n in ids)
+        val new = listOf("df", "diskstats", "dropbox", "connectivity", "telephony", "procs", "pkgperms")
+        for (n in new) assertTrue("new probe $n", n in ids)
+        assertEquals(old.size + new.size, ids.size)
+        // macro order: the Profile Scan group first, then the trackers by number; the group index never goes back
+        val order = listOf(XrayProbes.G_DEVICE) + XrayProbes.trackers.map { it.group }
+        val idx = XrayProbes.all.map { order.indexOf(it.group) }
+        assertTrue("every probe sits in the Profile Scan or a tracker", idx.all { it >= 0 })
+        assertEquals("probes never go back to an earlier tracker", idx.sorted(), idx)
+        assertEquals(13, XrayProbes.trackers.size); assertEquals((1..13).toList(), XrayProbes.trackers.map { it.num })
+        fun g(id: String) = XrayProbes.all.first { it.id == id }.group
+        assertEquals(XrayProbes.G_PERF, g("top")); assertEquals(XrayProbes.G_RENDER, g("gfxinfo")); assertEquals(XrayProbes.G_RENDER, g("surfaceflinger"))
+        assertEquals(XrayProbes.G_STORAGE, g("df")); assertEquals(XrayProbes.G_STORAGE, g("diskstats"))
+        for (b in listOf("battery", "batterystats", "batterystats-top", "jobs", "alarm", "power")) assertEquals(XrayProbes.G_BATTERY, g(b))
+        assertEquals(XrayProbes.G_THERMAL, g("thermal"))
+        assertEquals(XrayProbes.G_MEMORY, g("procstats")); assertEquals(XrayProbes.G_MEMORY, g("meminfo"))
+        assertEquals(XrayProbes.G_NOTIF, g("notification")); assertEquals(XrayProbes.G_NOTIF, g("binder"))
+        assertEquals(XrayProbes.G_RESP, g("anr"))
+        assertEquals(XrayProbes.G_CRASH, g("dropbox")); assertEquals(XrayProbes.G_CRASH, g("logcat"))
+        for (n in listOf("netstats", "connectivity", "telephony")) assertEquals(XrayProbes.G_NETWORK, g(n))
+        for (n in listOf("services", "startproc", "procs")) assertEquals(XrayProbes.G_PROCESS, g(n))
+        assertEquals(XrayProbes.G_SECURITY, g("perms")); assertEquals(XrayProbes.G_SECURITY, g("pkgperms"))
+        for (n in listOf("profile", "packages", "deviceidle", "buckets", "appops", "listeners", "a11y", "autofill", "credential")) assertEquals(XrayProbes.G_DEVICE, g(n))
     }
 
     @Test fun `a notification storm outranks a heavier power user in the composite suspects`() {
@@ -150,23 +180,95 @@ class XrayExportTest {
         assertTrue(j.getJSONArray("fleet").length() >= 1)
         val groups = j.getJSONArray("groups")
         val names = (0 until groups.length()).map { groups.getJSONObject(it).getString("group") }
-        assertTrue(names.containsAll(listOf("Report", XrayProbes.G_BATTERY, XrayProbes.G_POWER, XrayProbes.G_RUNTIME, XrayProbes.G_DEVICE, "X-Ray · APP & BUILD")))
+        assertTrue(names.containsAll(listOf("Report", XrayProbes.G_BATTERY, XrayProbes.G_PERF, XrayProbes.G_RENDER, XrayProbes.G_DEVICE, "X-Ray · APP & BUILD")))
         val s = groups.getJSONObject(0).getJSONArray("sections").getJSONObject(0)
         assertTrue(s.has("title") && s.has("source") && s.has("ok") && s.has("text"))
     }
 
-    @Test fun `the Markdown follows the four tiers, the verdict last, and names each source`() {
+    @Test fun `the verbose Markdown follows Profile Scan, the trackers 01-12 and the 13th Suspects verdict in order, and names each source`() {
         val md = XrayFormat.markdown(build())
         assertTrue(md.startsWith("# X-Ray report · Pixel Test"))
-        val order = listOf(XrayProbes.G_DEVICE, XrayProbes.G_RUNTIME, XrayProbes.G_BATTERY, XrayProbes.G_POWER, XrayProbes.G_JANK, XrayProbes.G_NOTIF,
-            XrayProbes.G_MEMORY, XrayProbes.G_RESP, "# ④ SUSPECTS (verdict)").map { md.indexOf(if (it.startsWith("#")) it else "\n# $it\n") }
-        assertTrue("every tier is present", order.all { it >= 0 })
-        assertEquals("tiers are in order", order.sorted(), order)
-        assertTrue(md.indexOf("## Suspects (ranked)") > md.indexOf("# ③ Diagnosis · Memory"))
+        val order = (listOf(XrayProbes.G_DEVICE) + XrayProbes.trackers.map { it.group }).map { md.indexOf("\n# $it\n") }
+        assertTrue("every macro group is present: $order", order.all { it >= 0 })
+        assertEquals("in order", order.sorted(), order)
+        assertTrue(md.indexOf("## Suspects (ranked)") > md.indexOf("\n# ${XrayProbes.G_PROCESS}\n"))
+        assertTrue("the verdict precedes the walked pages", md.indexOf("\n# ${XrayProbes.G_SUSPECTS}\n") < md.indexOf("\n# X-Ray · APP & BUILD\n"))
         assertTrue(md.contains("_source: shell_"))
         assertTrue(md.contains("_source: app sandbox_"))
         assertTrue(md.contains("**com.diegonmarcos.fleet** (fleet)"))
         assertFalse(md.contains(PARTIAL_LABEL))
+    }
+
+    // ── the two light renderings: HTML for a person, compact Markdown for an AI ───
+
+    /** A shell that answers like a device that has plenty to say: every unknown command returns 400 lines of raw dump noise. */
+    private fun noisyShell(): XrayShell = object : XrayShell {
+        override val channel = "embedded-adb"
+        override fun exec(cmd: String): String? = richFor(cmd).let { f -> if (f.startsWith("ok for")) (1..400).joinToString("\n") { "  raw dump line $it: value=${it * 7919} some=noise" } else f + (1..400).joinToString("\n", prefix = "\n") { "  extra raw line $it" } }
+    }
+
+    private fun noisy() = XrayExporter.build(XrayInputs("Pixel Test", "1.0 abc", 1_790_000_000_000L, walk, noisyShell(), extra = listOf(XSection(XrayProbes.G_BATTERY, "Battery history", SRC_APP, "d1 | 9.0"))))
+
+    @Test fun `the HTML is self-contained and carries the macro sections, every tracker and a status light each`() {
+        val h = XrayFormat.html(noisy())
+        assertTrue(h.startsWith("<!doctype html>"))
+        assertFalse("no external deps", Regex("""(src|href)="https?://""").containsMatchIn(h) || h.contains("<link") || h.contains("<script"))
+        assertTrue(h.contains("<style>"))
+        fun light(n: Int, c: String) = Regex("""id="t$n"( open)?><summary><span class="dot $c"></span><h2 style="display:inline">%02d """.format(n)).containsMatchIn(h)
+        val order = listOf("id=\"profile\"", "Profiling Trackers</h2>") + XrayProbes.trackers.map { "id=\"t${it.num}\"" }
+        val idx = order.map { h.indexOf(it) }
+        assertTrue("macro sections and all 13 trackers present: $idx", idx.all { it >= 0 })
+        assertEquals("in order", idx.sorted(), idx)
+        assertTrue(h.contains(XrayProbes.G_DEVICE))
+        for (t in XrayProbes.trackers) assertTrue("tracker ${t.num} ${t.label} is named, with a status", h.contains(t.label.replace("&", "&amp;")) && listOf("ok", "warn", "bad", "na").any { light(t.num, it) })
+        assertTrue(h.contains("<details"))
+        assertTrue("jank 40% is red", light(2, "bad"))
+        assertTrue("storage 93% used is red", light(3, "bad"))
+        assertTrue("thermal status 3 is red", light(5, "bad"))
+        assertTrue("inline bar meters", h.contains("class=\"bar") && h.contains("style=\"width:"))
+        assertTrue("verdict summarised on top, full at the end", h.indexOf("Verdict (summary)") < h.indexOf(XrayProbes.G_DEVICE) && h.indexOf("id=\"t13\"") > h.indexOf("id=\"t12\""))
+        assertTrue(h.contains("com.diegonmarcos.fleet"))
+        assertFalse("html escapes", h.contains("<b>x</b>"))
+    }
+
+    @Test fun `a partial export marks the trackers na in both renderings`() {
+        val r = XrayExporter.build(XrayInputs("Pixel", "1", 1L, walk, null, "no adb"))
+        val h = XrayFormat.html(r); val c = XrayFormat.markdownCompact(r)
+        assertTrue(h.contains("class=\"dot na\"") && h.contains(PARTIAL_LABEL))
+        assertTrue(c.contains("T02:na") && c.contains("T13:na"))
+        assertTrue("an unread tracker is one line", c.lines().count { it.startsWith("## T03") } == 1 && !c.lines().any { it.startsWith("df:") })
+    }
+
+    @Test fun `the compact Markdown has the trackers in order, the verdict first, and is far shorter than the verbose form`() {
+        val r = noisy()
+        val v = XrayFormat.markdown(r); val c = XrayFormat.markdownCompact(r)
+        assertTrue(c.startsWith("xray/2 Pixel Test"))
+        val sections = c.lines().filter { it.startsWith("## ") }
+        assertEquals(listOf("## VERDICT", "## STATUS", "## P device"), sections.take(3).map { it.substringBefore(" st:") })
+        val trackers = sections.drop(3)
+        assertEquals((1..13).map { "%02d".format(it) }, trackers.map { it.substring(4, 6) })
+        assertEquals(XrayProbes.trackers.map { it.label }, trackers.map { it.substring(7).substringBefore(" st:") })
+        assertTrue("verdict before the trackers", c.indexOf("## VERDICT") < c.indexOf("## T01"))
+        assertTrue(c.contains("T02:bad") && c.contains("T03:bad") && c.contains("T05:bad"))
+        assertTrue("signals survive: janky frames, disk use, top suspect", c.contains("jank 40.0%") && c.contains("data 93% used") && c.contains("dm.fleet*"))
+        assertTrue("crash parsed", c.contains("data_app_crash"))
+        assertFalse("no raw dump noise: " + c.lines().filter { it.contains("raw") }.take(5), c.contains("raw dump line 2") || c.contains("extra raw line"))
+        assertFalse("no code fences or emoji headers", c.contains("```") || c.contains("📤"))
+        assertTrue("package prefix abbreviated, legend kept", c.contains("dm.=com.diegonmarcos.") && !c.substringAfter("\n").substringAfter("\n").contains("com.diegonmarcos."))
+        // materially shorter: well under a tenth of the verbose characters and lines
+        assertTrue("chars ${c.length} vs ${v.length}", c.length * 10 < v.length)
+        assertTrue("lines ${c.lines().size} vs ${v.lines().size}", c.lines().size * 10 < v.lines().size)
+        assertTrue(XrayFormat.html(r).length * 10 < v.length)
+    }
+
+    @Test fun `a tracker with nothing to say collapses to one line`() {
+        val r = build()
+        val c = XrayFormat.markdownCompact(r)
+        // the plain fixture answers "ok for ..." to the unparsed probes: no signal, so the tracker is a single header line
+        for (n in listOf("T08", "T10", "T12")) {
+            val i = c.lines().indexOfFirst { it.startsWith("## $n") }
+            assertTrue(n, i >= 0 && (c.lines().getOrNull(i + 1)?.startsWith("## ") ?: true))
+        }
     }
 
     // ── redaction ────────────────────────────────────────────────────────
