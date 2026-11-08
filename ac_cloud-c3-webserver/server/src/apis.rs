@@ -211,6 +211,47 @@ pub fn ipc_page(apps: &[App], b: &Value) -> Value {
     page("Apps IPC", "Each app's IPC endpoints, derived from the fleet manifest and the templates in build.json::api.ipc.", groups)
 }
 
+/// #1495/#1580 the UNIFIED IPC holder as page groups: the ACL scopes, the mesh peers (the centralized access, held once
+/// here instead of per app) and, per app class, every declared `/ipc/<app>/<route>` with its tool, IPC authority template,
+/// method(s), required scope, status and the per-app endpoint it retires. Appended to the API > MCP and Mesh pages so the
+/// registry is surfaced as API page content next to the catalogue it joins (topology view).
+pub fn gateway_groups(reg: &crate::ipc::Registry, apps: &[App]) -> Vec<Value> {
+    use std::collections::BTreeMap;
+    let mut groups = vec![];
+    let scope_rows: Vec<Value> = reg.scopes.iter().map(|(k, v)| row(k, vec![], vec![v.clone()], vec![])).collect();
+    groups.push(group(&format!("Unified IPC holder /{} · {} scopes", reg.prefix.trim_start_matches('/'), reg.scopes.len()), scope_rows));
+    let peer_rows: Vec<Value> = reg.peers.iter().map(|(k, sc)| row(k, sc.clone(), vec![if sc.iter().any(|s| s == "*") { "full access".to_string() } else { format!("{} scope(s)", sc.len()) }], vec![])).collect();
+    groups.push(group(&format!("Mesh peers · centralized access · {}", reg.peers.len()), peer_rows));
+    let mut by_class: BTreeMap<String, Vec<&crate::ipc::Entry>> = BTreeMap::new();
+    for e in &reg.entries {
+        by_class.entry(e.app_class.clone()).or_default().push(e);
+    }
+    for (class, entries) in by_class {
+        let rows: Vec<Value> = entries
+            .iter()
+            .map(|e| {
+                let mut lines = vec![format!("{}/<app>/{}  ·  {}", reg.prefix, e.route, if e.ipc.post { "POST" } else { "GET" }), format!("authority {}", e.ipc.authority)];
+                if !e.ipc.methods.is_empty() {
+                    lines.push(format!("methods {}", e.ipc.methods.join(" | ")));
+                } else if let Some(m) = &e.ipc.method {
+                    lines.push(format!("method {}", m));
+                }
+                if let Some(t) = &e.mcp_tool {
+                    lines.push(format!("MCP tool {}", t));
+                }
+                if let Some(l) = &e.legacy_route {
+                    lines.push(format!("retires per-app endpoint {}", l));
+                }
+                lines.push(e.what.clone());
+                row(&e.route, vec![e.acl.clone(), e.status.clone(), e.ipc.kind.clone()], lines, vec![])
+            })
+            .collect();
+        let cover = if class == "fleet" { format!("every manifest app ({})", apps.len()) } else { class.trim_start_matches("package:").to_string() };
+        groups.push(group(&format!("{} · {}", class, cover), rows));
+    }
+    groups
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -286,6 +327,22 @@ mod tests {
         assert!(r[0]["lines"][0].as_str().unwrap().contains("/ops/orch/flow <- /workflows"));
         assert!(r[1]["lines"].to_string().contains("old name superapp_shell"));
         assert_eq!(g[1]["rows"][0]["head"], "9 tools");
+    }
+
+    #[test]
+    fn the_gateway_groups_surface_the_registry() {
+        let reg = crate::ipc::Registry::from_map(crate::topology::map()).expect("the committed registry parses");
+        let g = gateway_groups(&reg, apps());
+        let titles: Vec<String> = g.iter().map(|x| x["title"].as_str().unwrap_or("").to_string()).collect();
+        assert!(titles.iter().any(|t| t.contains("scopes")), "the ACL scopes are a group");
+        assert!(titles.iter().any(|t| t.contains("Mesh peers")), "the peers are a group");
+        assert!(titles.iter().any(|t| t.starts_with("fleet")), "the fleet app class is a group");
+        // the fleet logs route is a row carrying its scope, the authority template and the endpoint it retires.
+        let fleet = g.iter().find(|x| x["title"].as_str().unwrap_or("").starts_with("fleet")).unwrap();
+        let logs = fleet["rows"].as_array().unwrap().iter().find(|r| r["head"] == "logs").unwrap();
+        assert!(logs["badges"].as_array().unwrap().iter().any(|b| b == "logs.read"));
+        assert!(logs["lines"].to_string().contains("{package}.logexport"));
+        assert!(logs["lines"].to_string().contains("retires per-app endpoint /logs/<app>"));
     }
 
     #[test]

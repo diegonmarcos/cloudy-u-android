@@ -42,6 +42,9 @@ pub struct Mesh {
     pub cidrs: Vec<(Ipv4Addr, u8)>,
     pub retry_s: u64,
     pub route: String,
+    /// #1495/#1580 the UNIFIED holder prefix: `<ipc_route>/<app>/<route>` fronts every fleet app's IPC through one gateway
+    /// with centralized per-peer, per-route ACL (ipc.rs, data/api-ipc-map.json). The per-app routes below are retired behind it.
+    pub ipc_route: String,
     /// `<endpoints_route>/public` and `/mesh`: the API tab's Public and Mesh Endpoints pages, for cloudy-c3-mcp.
     pub endpoints_route: String,
     pub suffix: String,
@@ -93,6 +96,7 @@ impl Mesh {
             cidrs,
             retry_s: m["retry_s"].as_u64().unwrap_or(20).clamp(1, 600),
             route: m["logs_route"].as_str().filter(|r| r.starts_with('/') && r.len() > 1).ok_or("mesh.logs_route must be a path")?.trim_end_matches('/').to_string(),
+            ipc_route: m["ipc_route"].as_str().filter(|r| r.starts_with('/') && r.len() > 1).unwrap_or("/ipc").trim_end_matches('/').to_string(),
             endpoints_route: m["endpoints_route"].as_str().filter(|r| r.starts_with('/') && r.len() > 1).unwrap_or("/endpoints").trim_end_matches('/').to_string(),
             suffix: m["ipc"]["authority_suffix"].as_str().filter(|x| !x.is_empty()).ok_or("mesh.ipc.authority_suffix missing")?.to_string(),
             default_method: m["ipc"]["default_method"].as_str().unwrap_or("export").to_string(),
@@ -163,6 +167,17 @@ pub fn route(m: &Mesh, apps: &[App], req: &Req, token: Option<&str>, src: &LogSo
         return deny;
     }
     let p = req.path.trim_end_matches('/');
+    // #1495/#1580 the UNIFIED holder, after the bearer gate: /ipc/<app>/<route>, dispatched through the declared registry with
+    // centralized per-peer, per-route ACL (ipc.rs). The per-app /browser, /shell and /logs routes below are served through it too.
+    if let Some(rest) = p.strip_prefix(m.ipc_route.as_str()).filter(|r| r.is_empty() || r.starts_with('/')) {
+        return match crate::ipc::registry() {
+            Ok(reg) => match crate::ipc::resolve_peer(reg, req.header("x-c3-peer")) {
+                Ok(peer) => crate::ipc::gateway(reg, apps, rest, req, &peer, &m.no_wake, src),
+                Err(resp) => resp,
+            },
+            Err(e) => Resp::json(500, format!("{{\"error\":{}}}", jstr(e))),
+        };
+    }
     if let Some(rest) = p.strip_prefix(m.browser_route.as_str()).filter(|r| r.is_empty() || r.starts_with('/')) {
         return browser(m, rest.trim_start_matches('/'), req, src);
     }

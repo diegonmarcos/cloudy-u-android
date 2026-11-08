@@ -143,6 +143,8 @@
     ],
     "retry_s": 20,
     "logs_route": "/logs",
+    "ipc_route": "/ipc",
+    "_doc_ipc_route": "#1495/#1580 the UNIFIED holder prefix: /ipc/<app>/<route> fronts every fleet app's on-device IPC through one gateway with centralized per-peer, per-route ACL read from data/api-ipc-map.json (acl_scopes, peers, ipc_registry). The per-app routes below (/logs, /browser, /shell) are served through it and retired behind it (#1580).",
     "no_wake": ["com.diegonmarcos.cloudaccount", "com.diegonmarcos.cloudstore"],
     "_doc_no_wake": "#1502 a /logs/<app> call starts that app (ContentResolver.call on its provider). Cloud Account must never be woken in the background and Cloud Store only with auto-update on over Wi-Fi, so these two answer 403 here instead.",
     "browser_route": "/browser",

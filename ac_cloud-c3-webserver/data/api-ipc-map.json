@@ -428,5 +428,205 @@
    "ipc": null,
    "via": "lib::handle_diag, in-process"
   }
- ]
+ ],
+ "acl_scopes": {
+  "_doc": "#1495/#1580 the access scopes the UNIFIED /ipc holder enforces. A mesh peer is granted a set of these in `peers`; each ipc_registry route requires exactly one (entries[].acl). A peer whose scopes contain \"*\" is granted every scope.",
+  "logs.read": "read an app's recent logcat and crash ring (logexport provider)",
+  "browser.control": "drive the headless browser (headless provider)",
+  "shell.exec": "run a command through the SuperApp shell broker (shellbroker provider)",
+  "diag.read": "read the SuperApp fleet diagnostics (fleetdiag provider)"
+ },
+ "peers": {
+  "_doc": "#1495/#1580 CENTRALIZED mesh-peer access, held once by the holder (Cloud-Webserver) instead of by each app. After the fleet-bearer membership gate (mesh-only + Bearer, meshlogs::authorize), the caller's peer identity is the `X-C3-Peer` header; no header means the default peer `fleet`. cloud-mesh (SuperApp > Networks > Mesh) owns peer DISCOVERY and the per-peer token binding (phase 2); NO token value is ever stored here. `fleet` keeps full access for back-compat (the SuperApp-minted fleet bearer).",
+  "fleet": {
+   "scopes": ["*"],
+   "what": "the SuperApp-minted fleet bearer; full access (back-compat with the per-app endpoints being retired)"
+  },
+  "ops-console": {
+   "scopes": ["logs.read", "diag.read"],
+   "what": "a read-only operations peer: logs and diagnostics only, never shell or browser control"
+  },
+  "browser-peer": {
+   "scopes": ["browser.control", "logs.read"],
+   "what": "a peer allowed to drive the headless browser and read logs"
+  }
+ },
+ "ipc_registry": {
+  "_doc": "#1495/#1580 THE ONE DECLARED REGISTRY of the unified holder. Each on-device IPC route of every fleet app, as MCP tool <-> gateway route <-> IPC target <-> required ACL. Cloud-Webserver serves them ALL at `<route_prefix>/<app>/<route>` (app by fleet-manifest id or package; the authority is NEVER taken from the request, always `{package}` of a manifest app). `app_class` is `fleet` (every manifest app) or `package:<pkg>` (that one app). `legacy_route` is the per-app mesh endpoint this unifies; #1580 removes each legacy endpoint once its app is reachable here. `ipc.endpoint` is an id of `ipc_endpoints`. `status`: active | deprecated.",
+  "route_prefix": "/ipc",
+  "entries": [
+   {
+    "route": "logs",
+    "app_class": "fleet",
+    "mcp_tool": "obs.debug.phone_logs",
+    "legacy_route": "/logs/<app>",
+    "acl": "logs.read",
+    "status": "active",
+    "what": "the app's recent logcat and crash ring, as JSON",
+    "ipc": {
+     "endpoint": "logexport",
+     "kind": "provider",
+     "authority": "{package}.logexport",
+     "methods": ["meta", "logs", "crashes", "export"],
+     "default_method": "export",
+     "post": false
+    }
+   },
+   {
+    "route": "status",
+    "app_class": "package:com.diegonmarcos.cloudbrowser",
+    "mcp_tool": null,
+    "legacy_route": "/browser/status",
+    "acl": "browser.control",
+    "status": "active",
+    "what": "the headless browser's session status",
+    "ipc": {
+     "endpoint": "headless",
+     "kind": "provider",
+     "authority": "{package}.headless",
+     "method": "status",
+     "post": false
+    }
+   },
+   {
+    "route": "command",
+    "app_class": "package:com.diegonmarcos.cloudbrowser",
+    "mcp_tool": null,
+    "legacy_route": "/browser/command",
+    "acl": "browser.control",
+    "status": "active",
+    "what": "one headless-api v1 command",
+    "ipc": {
+     "endpoint": "headless",
+     "kind": "provider",
+     "authority": "{package}.headless",
+     "method": "command",
+     "post": true,
+     "max_body": 1000000
+    }
+   },
+   {
+    "route": "run",
+    "app_class": "package:com.diegonmarcos.cloudbrowser",
+    "mcp_tool": null,
+    "legacy_route": "/browser/run",
+    "acl": "browser.control",
+    "status": "active",
+    "what": "a headless-api v1 run of steps",
+    "ipc": {
+     "endpoint": "headless",
+     "kind": "provider",
+     "authority": "{package}.headless",
+     "method": "run",
+     "post": true,
+     "max_body": 1000000
+    }
+   },
+   {
+    "route": "stop",
+    "app_class": "package:com.diegonmarcos.cloudbrowser",
+    "mcp_tool": null,
+    "legacy_route": "/browser/stop",
+    "acl": "browser.control",
+    "status": "active",
+    "what": "stop the headless browser",
+    "ipc": {
+     "endpoint": "headless",
+     "kind": "provider",
+     "authority": "{package}.headless",
+     "method": "stop",
+     "post": true,
+     "max_body": 1000000
+    }
+   },
+   {
+    "route": "cdp",
+    "app_class": "package:com.diegonmarcos.cloudbrowser",
+    "mcp_tool": null,
+    "legacy_route": "/browser/cdp",
+    "acl": "browser.control",
+    "status": "active",
+    "what": "turn CDP on or off (body {on: bool})",
+    "ipc": {
+     "endpoint": "headless",
+     "kind": "provider",
+     "authority": "{package}.headless",
+     "method_from_body": {"field": "on", "true": "cdp_on", "false": "cdp_off"},
+     "post": true,
+     "max_body": 1000000
+    }
+   },
+   {
+    "route": "status",
+    "app_class": "package:com.diegonmarcos.superapp",
+    "mcp_tool": null,
+    "legacy_route": "/shell/status",
+    "acl": "shell.exec",
+    "status": "active",
+    "what": "the shell broker's status",
+    "ipc": {
+     "endpoint": "shellbroker",
+     "kind": "provider",
+     "authority": "{package}.shellbroker",
+     "method": "status",
+     "post": false
+    }
+   },
+   {
+    "route": "exec",
+    "app_class": "package:com.diegonmarcos.superapp",
+    "mcp_tool": null,
+    "legacy_route": "/shell/exec",
+    "acl": "shell.exec",
+    "status": "active",
+    "what": "run one command via the shell broker (body {cmd, timeoutMs})",
+    "ipc": {
+     "endpoint": "shellbroker",
+     "kind": "provider",
+     "authority": "{package}.shellbroker",
+     "method": "exec_json",
+     "post": true,
+     "max_body": 8192,
+     "require_cmd": true,
+     "broker_status": true
+    }
+   },
+   {
+    "route": "stream",
+    "app_class": "package:com.diegonmarcos.superapp",
+    "mcp_tool": null,
+    "legacy_route": "/shell/stream",
+    "acl": "shell.exec",
+    "status": "active",
+    "what": "stream a command via the shell broker (body {cmd, timeoutMs})",
+    "ipc": {
+     "endpoint": "shellbroker",
+     "kind": "provider",
+     "authority": "{package}.shellbroker",
+     "method": "stream_json",
+     "post": true,
+     "max_body": 8192,
+     "require_cmd": true,
+     "broker_status": true
+    }
+   },
+   {
+    "route": "diag",
+    "app_class": "package:com.diegonmarcos.superapp",
+    "mcp_tool": "obs.debug.phone_mesh",
+    "legacy_route": null,
+    "acl": "diag.read",
+    "status": "active",
+    "what": "the SuperApp fleet diagnostics (about | logcat | diagnose via ?method)",
+    "ipc": {
+     "endpoint": "fleetdiag",
+     "kind": "provider",
+     "authority": "{package}.fleetdiag",
+     "methods": ["about", "logcat", "diagnose"],
+     "default_method": "about",
+     "post": false
+    }
+   }
+  ]
+ }
 }

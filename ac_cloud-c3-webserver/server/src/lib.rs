@@ -25,6 +25,7 @@ pub mod diag;
 pub mod door;
 pub mod dns;
 pub mod engines;
+pub mod ipc;
 pub mod jump;
 pub mod meshlogs;
 pub mod power;

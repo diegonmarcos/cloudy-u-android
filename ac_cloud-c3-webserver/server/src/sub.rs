@@ -22,8 +22,18 @@ fn err(status: u16, msg: &str) -> Resp {
     Resp::json(status, format!("{{\"error\":{}}}", jstr(msg)))
 }
 
+/// Append the unified IPC holder's registry (scopes, peers, per-app `/ipc/<app>/<route>` routes) to a page's groups.
+fn with_gateway(mut page: Value) -> Value {
+    if let Ok(reg) = crate::ipc::registry() {
+        if let Some(g) = page["groups"].as_array_mut() {
+            g.extend(apis::gateway_groups(reg, apis::apps()));
+        }
+    }
+    page
+}
+
 pub fn api_mcp(_c: &Ctx, _r: &Req) -> Resp {
-    ok(apis::mcp_page(apis::data()))
+    ok(with_gateway(apis::mcp_page(apis::data())))
 }
 
 pub fn api_public(_c: &Ctx, _r: &Req) -> Resp {
@@ -32,7 +42,7 @@ pub fn api_public(_c: &Ctx, _r: &Req) -> Resp {
 
 pub fn api_mesh(_c: &Ctx, _r: &Req) -> Resp {
     match crate::meshlogs::Mesh::from_build(apis::build()) {
-        Ok(m) => ok(apis::mesh_page(apis::data(), &m, apis::apps())),
+        Ok(m) => ok(with_gateway(apis::mesh_page(apis::data(), &m, apis::apps()))),
         Err(e) => err(500, &e),
     }
 }
