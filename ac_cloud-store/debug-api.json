@@ -49,6 +49,8 @@
     "com.diegonmarcos.cloudlib.fin": 38188,
     "com.diegonmarcos.cloudlib.firewall": 38189,
     "com.diegonmarcos.cloudlib.fleetconfig": 38224,
+    "com.diegonmarcos.cloudlib.fleetconfigslogcat": 38244,
+    "com.diegonmarcos.cloudlib.fleetconfigsxray": 38245,
     "com.diegonmarcos.cloudlib.gh": 38190,
     "com.diegonmarcos.cloudlib.gitsync": 38191,
     "com.diegonmarcos.cloudlib.gix": 38192,

@@ -120,6 +120,8 @@
     "com.diegonmarcos.hardtechsim2real": 38241,
     "com.diegonmarcos.cloudshopping": 38242,
     "com.diegonmarcos.cloudlib.apify": 38243,
+    "com.diegonmarcos.cloudlib.fleetconfigslogcat": 38244,
+    "com.diegonmarcos.cloudlib.fleetconfigsxray": 38245,
     "com.diegonmarcos.cloudlib.accountui": 38090
   }
 }

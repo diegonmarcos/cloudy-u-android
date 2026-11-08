@@ -13,11 +13,11 @@
     },
     "aa_cloud-superapp": {
       "first_test": "Has 91 shell testers. tests.unit.enabled=false, so its step named 'JVM unit tests (fatal on failure)' executes nothing and goes green \u2014 its own task, not this one.",
-      "shell_testers": 171,
+      "shell_testers": 178,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 236,
+      "unit_test_sources": 261,
       "workflow": "ship-cloud-superapp.yml"
     },
     "ab_cloud-libs-shared/keyboard-engines": {
@@ -85,11 +85,11 @@
     },
     "ac_cloud-browser": {
       "first_test": "COVERED NOW: app/src/test/BrowserFeaturesTest.kt asserts the behaviour of the seven tab features against the SHIPPED build.json::ui.browser - the four first-run tabs arrive pinned and in order, a second launch re-seeds nothing, a pinned tab REFUSES to close, a drag stamps an order that outlives recency, and a non-URL entry resolves to Qwant. test/test-browser-config-boundary.sh holds the #209 line: the shared libs:browser carries none of his URLs and its own default pins nothing, so no other consumer can inherit them. test/test-browser-features-wired.sh proves each feature is reachable from the UI rather than merely modelled. NOT COVERED: nothing instruments the WebView itself. No test loads a page, so a URL that 404s, a viewport that renders blank, or a drag that never fires on real hardware would all still ship green - those need the androidTest source set and a device, and this app has neither.",
-      "shell_testers": 41,
+      "shell_testers": 42,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 63,
+      "unit_test_sources": 64,
       "workflow": "ship-cloud-browser.yml"
     },
     "ac_cloud-browser/web": {
@@ -112,7 +112,7 @@
     },
     "ac_cloud-c3-webserver": {
       "first_test": "#712 the app is Tauri 2 (Rust + the server's own web UI); the hand-written Kotlin shell is deleted. src-tauri/ starts the server/ library in-process and opens the one webview on it after the bind. Shell testers. test/test-c3-webserver-ports.sh: the name -> port map (build.json::serving) is one declaration, unique and agreeing with each owner's runtime port, read by the browser's pins and gradle bake, the server and the SuperApp provider, typed nowhere else, and the private DNS client stays loopback-only (25 mutations red). test/test-c3-webserver-pages.sh: every page of the app in headless Chrome at Galaxy A37 density (1080x2340 px, one PNG per page, uploaded by the ship job as c3-webserver-shots): the app opens on Home with the five tabs, Pages/API/Home/Configs (About, Engines, Links) draw without sideways scroll and start below the shell top row, the Files tab is the unchanged Linux file view between the top row and the bottom nav, a link tapped in the file view's rendered Markdown and a served-page link on Pages open the chooser with exactly Open in browser / Open embedded (choices at least 40 dp), Open embedded loads the page in the WebView with the private name rewritten to loopback, Open in browser reaches the opener, nothing is fetched off the phone. test/test-c3-webserver-shell.sh: the shell's pure block under node: links are classified by build.json::links (served, web, other), the sheet offers exactly the declared choices and labels, a single-choice type does not ask, a remembered choice skips the sheet and a stale one asks again, private names are rewritten for the WebView, the click hooks cover the file view and its frames, the tabs are the route table (a planted row appears, a removed one disappears); 7 mutations red. test/test-c3-webserver.sh: the file view is the shared server's (the app's own routes answer /__app__/ only, no file-browser code in the shell, the drive is served through drive_handler over fleet_webserver::handler) and the navigation structure holds (the bottom nav is exactly Pages/API/Home/Files/Configs in app.rs, each routed at /__app__/tab/<id> with a view in the shell, the Files tab embeds the file view at /, the Tauri window opens on the shell, never straight onto one served page); no placeholder wording; the Tauri shape (ABIs mapped to tauri targets and Rust triples, [lib] = build.json::tauri.lib_name linking the server crate, tauri.conf.json identity = build.json, NO declared window so the webview never races the bind, lib.rs binds before it opens the window and asks the storage permission from Rust, gradle reads identity/SDK/label from build.json and stores the Rust library compressed); the retired spellings appear nowhere. 14 mutations red. test/test-c3-webserver-no-kotlin.sh: the only .kt/.java/.kts in the app are the three Tauri template glue files pinned by sha256 in build.json::tauri.glue, the build-time names in tauri.generated_kotlin (only while untracked) and the declared gradle scripts; build.sh runs it before and after the gradle build; 7 mutations red, 1 control green. test/test-c3-webserver-about-mirror.sh: Home's macro groups (server/src/about.rs::MACROS) are superapp's About macroHeader labels in superapp's order (reads superapp source, so kept apart); 3 mutations red. cargo test on the server crate runs in the ship job on the host: groups come out in MACROS order with rows, the API group equals the table's API rows, every shell route answers, the open endpoint refuses a missing header, a foreign origin and a non-web URL, build.json::links is well-formed and refuses an undeclared choice, and the composed drive keeps / byte for byte the shared Linux UI while /__app__/ is the shell. NOT COVERED: nothing launches the APK on a phone before install \u2014 Tauri's activity, the JNI storage request and the webview loading http://127.0.0.1 are first exercised by the install itself.",
-      "shell_testers": 14,
+      "shell_testers": 17,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": false,
@@ -125,7 +125,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 40,
+      "unit_test_sources": 41,
       "workflow": "ship-cloud-calc.yml"
     },
     "ac_cloud-camera": {
@@ -157,7 +157,7 @@
     },
     "ac_cloud-code": {
       "first_test": "Has 2 shell testers (#562), executed before any toolchain. test-cordova-plugin-surface.sh is the Cordova form of #543: every service name the web bundle hands cordova.exec is DERIVED and must be registered by a plugin.xml <feature> of a plugin this flavour installs (package.json cordova.plugins minus build.json's removals). test-cloud-nav.sh renders the 7-tab bar through the real tabs.js + nav.json (order, icons in Acode's icon font, no tab without a renderer, touch floor at 360 px, compact-not-clip fit, selection semantics), proves the one main.js seam, resolves the MyTerminal target from the fleet and finds its activity source, holds English as first-run language (#299), and keeps the GPL proot binaries pruned. The APK payload assert (engine) finds the nav module inside the shipped main.js. #575 the nav driver also proves the Backlog and Repos tabs address the ONE shared store (nav.shared_store.app \u2192 the store app's build.json::storage.shared_root, resolved at build time, composed on the device from externalRootDirectory) with no absolute /storage path anywhere and an edit-in-place write path through Acode's editor. NOT COVERED: nothing renders the WebView -- layout on a real phone, the Backlog read from the device clone, and the MyTerminal launch are unverified until install.",
-      "shell_testers": 5,
+      "shell_testers": 6,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": false,
@@ -188,7 +188,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 17,
+      "unit_test_sources": 18,
       "workflow": "ship-cloud-dialer.yml"
     },
     "ac_cloud-dialer/web": {
@@ -206,7 +206,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 105,
+      "unit_test_sources": 110,
       "workflow": "ship-cloud-drive.yml"
     },
     "ac_cloud-drive/web": {
@@ -224,7 +224,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 25,
+      "unit_test_sources": 26,
       "workflow": "ship-cloud-gallery.yml"
     },
     "ac_cloud-keyboard": {
@@ -242,7 +242,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 5,
+      "unit_test_sources": 6,
       "workflow": "ship-cloud-kg-store.yml"
     },
     "ac_cloud-mail": {
@@ -251,7 +251,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 848,
+      "unit_test_sources": 849,
       "workflow": "ship-cloud-mail.yml"
     },
     "ac_cloud-matrix": {
@@ -265,11 +265,11 @@
     },
     "ac_cloud-me": {
       "first_test": "HAD one tester that no workflow ever called. Now executed, plus a second: the release contract (release.variants[].gh_asset / gh_release.asset_name / phone_install.asset_name / artifact.debug) must name ONE file, or the ship publishes an asset the phone never downloads and every run stays green.",
-      "shell_testers": 15,
+      "shell_testers": 16,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 30,
+      "unit_test_sources": 32,
       "workflow": "ship-cloud-me.yml"
     },
     "ac_cloud-me/web": {
@@ -314,7 +314,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": false,
-      "unit_test_sources": 26,
+      "unit_test_sources": 27,
       "workflow": "ship-cloud-nav.yml"
     },
     "ac_cloud-nav/web": {
@@ -346,7 +346,7 @@
     },
     "ac_cloud-nix-on-droid": {
       "first_test": "Now has 1 shell tester (test-bootstrap-baked.sh, #348): the proot+glibc runtime is baked in, pinned by sha256, and rewritten for THIS app id \u2014 the three ways this APK could install, launch and still have no shell. 21 JVM unit test classes still have never executed; declare tests.unit.task.",
-      "shell_testers": 22,
+      "shell_testers": 24,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": false,
@@ -418,11 +418,11 @@
     },
     "ac_cloud-store": {
       "first_test": "#865 NEW APP (the Store split out of cloud-superapp). Has 1 shell tester (test-store-app.sh): the three Store pages come from libs:appstore with no copy here; Cloud Store claims the fleet pass; libs:appstore honours AppStoreHost.runsFleetPass at all four entry points (start, kick, checkNow, doWork); SuperApp hands the pass and its three Store pages to Cloud Store exactly when it is installed; one package name and one OPEN action across hand-off, build.json, manifest and the fleet manifest - 10 planted mutations each go red. NOT COVERED: the store pages themselves (libs:appstore and cloud-superapp's 91 store testers cover them), and the hand-off on a real phone (install Cloud Store, then confirm SuperApp's Store pages show the Open button and SuperApp's fleet pass stands down).",
-      "shell_testers": 24,
+      "shell_testers": 25,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 6,
+      "unit_test_sources": 10,
       "workflow": "ship-cloud-store.yml"
     },
     "ac_cloud-store/web": {
@@ -440,7 +440,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 11,
+      "unit_test_sources": 16,
       "workflow": "ship-cloud-superintel.yml"
     },
     "ac_cloud-tasks": {
@@ -467,7 +467,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 3,
+      "unit_test_sources": 5,
       "workflow": "ship-cloud-tools-small-llms.yml"
     },
     "ac_cloud-tools-small-llms/web": {
@@ -539,7 +539,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 9,
+      "unit_test_sources": 10,
       "workflow": "ship-cg-omniverse.yml"
     },
     "ad_Capital-Stack-FinTerminal": {
