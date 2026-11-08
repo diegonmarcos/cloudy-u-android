@@ -139,7 +139,7 @@ private fun SectionHeader(text: String, tag: String) =
  * switch each. Push = the app may land in the notification history; Keep Alive = the owner's keep-alive list.
  */
 @Composable
-private fun AppSectionBlock(sec: NotifySections.AppSection) {
+internal fun AppSectionBlock(sec: NotifySections.AppSection) {
     val ctx = LocalContext.current
     val apps = remember { AppSwitches.knownApps(ctx) }
     val (cloudy, phone) = remember(apps) { AppSplit.split(apps) }

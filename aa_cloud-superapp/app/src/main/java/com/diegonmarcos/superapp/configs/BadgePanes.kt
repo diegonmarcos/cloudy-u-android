@@ -34,6 +34,7 @@ import com.diegonmarcos.superapp.notificationcenter.BadgeServices
 import com.diegonmarcos.superapp.notificationcenter.AlertStore
 import com.diegonmarcos.superapp.notificationcenter.AlertsNotifier
 import com.diegonmarcos.superapp.notificationcenter.NotifyGroups
+import com.diegonmarcos.superapp.notificationcenter.NotifySections
 import com.diegonmarcos.superapp.core.FleetAlerts
 import com.diegonmarcos.superapp.uikit.LocalKitPalette
 
@@ -93,7 +94,14 @@ object BadgePanes {
             caption(ctx.getString(R.string.push_section_badges_sub))
             PaneButton(ctx.getString(R.string.push_launch_all)) { launched(ctx, view, redraw, BadgeServices.launchAll(ctx)) }
             val groups = NotifyGroups.ordered(ctx)
-            groups.forEachIndexed { i, g -> groupBox(redraw, g, i, groups.size, badges) }
+            // Same taxonomy as the shade / Notify page: shade groups plus the Apps Push / Apps Keep Alive sections (Cloudy | Phone).
+            val apps = NotifySections.appSections
+            val layout = NotifySections.layout(NotifySections.pageOrder, groups.map { it.id }, apps.map { it.id })
+            for (id in layout) {
+                val gi = groups.indexOfFirst { it.id == id }
+                if (gi >= 0) groupBox(redraw, groups[gi], gi, groups.size, badges)
+                else apps.firstOrNull { it.id == id }?.let { com.diegonmarcos.superapp.launcher.AppSectionBlock(it) }
+            }
             val grouped = groups.flatMap { it.members }.toSet()
             for (b in badges.filter { it.id !in grouped }) badgeBox(redraw, b)
         }

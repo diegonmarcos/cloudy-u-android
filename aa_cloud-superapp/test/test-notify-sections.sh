@@ -40,4 +40,6 @@ grep -q 'LastMediaSession.resume' "$SRC/media/MusicControlsPopup.kt" && grep -q 
   && ok "media: last session saved from the live controller, Play resumes it" || bad "media last session wiring"
 grep -q 'AppSwitches.pushAllowed' "$SRC/notificationcenter/PhoneNotificationListenerService.kt" \
   && ok "muted push apps are skipped by the listener" || bad "push switch not honoured"
+grep -q 'AppSectionBlock' "$SRC/configs/BadgePanes.kt" && grep -q 'NotifySections.layout' "$SRC/configs/BadgePanes.kt" \
+  && ok "Config pane draws the app sections in the same layout as the shade" || bad "Config pane lacks the app sections"
 echo "notify-sections: $PASS passed, $FAIL failed"; [ "$FAIL" = 0 ]
