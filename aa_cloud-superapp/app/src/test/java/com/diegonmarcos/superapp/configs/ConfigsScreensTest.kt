@@ -62,7 +62,7 @@ class ConfigsScreensTest(private val screen: String, private val fontScale: Floa
         /** The Configs grid and every page/tab under build.json::ui.sections[config] that opens IN this app. */
         val SCREENS = listOf(
             "grid", "perms", "controls", "presets", "panels", "panels-ui", "panels-tools", "onehand",
-            "firewall", "dns", "adb-shell", "kde",
+            "firewall", "dns", "adb-status", "adb-term", "adb-perms", "adb-all", "kde",  // ADB Shell is a strip over its four tabs; each tab is rendered as its own screen
             "xray", "xray-app", "logcat", "logcat-fleet", "app-about", "battery", "profile", "store-cloud", "store-phone",
         )
 

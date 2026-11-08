@@ -232,9 +232,9 @@ import json
 print(len(next(s for s in json.load(open('$BJ'))['ui']['sections']
                if s['id'] == 'config')['pages']))
 ")
-[ "$COUNT" = 48 ] \
-  && ok "48 config pages declared (2026-11 Quick Actions tabs: plus panels-all and panels-battery; 2026-11 Configs restructure: plus xray-app, logcat-fleet and the launcher-sep-1 separator, minus agents-watchtower; earlier: #1553: plus folders) — the set T5 walks is the whole set (#1548: plus the Agents hub watchtower; #1545: plus the hub watchdog; X-Ray regroup: minus about, diagnostics, agents and its two tabs, plus xray and app-about; #1263: plus wifi and its five hidden tabs; #1221: plus bluetooth and its five hidden tabs; #1264: plus its Analyze and Locate tabs; #649: 22 minus launcher; #723: minus ai and its 5 tabs; #733: plus apps-mesh; #740: plus dns; plus firewall; plus the hidden About ▸ Battery; Agents regroup: minus the Network separator, plus agents and its two tabs; #ipc: plus ipc; Controls merge: plus panels, panels-ui and panels-tools; Apps Mesh strip: plus apps-mesh-members and identity)" \
-  || bad "$COUNT config pages, expected 48 — a page was added or DELETED, and T5 cannot report a page that is gone"
+[ "$COUNT" = 52 ] \
+  && ok "52 config pages declared (2026-11 ADB Shell tabs: plus adb-status, adb-term, adb-perms and adb-all; 2026-11 Quick Actions tabs: plus panels-all and panels-battery; 2026-11 Configs restructure: plus xray-app, logcat-fleet and the launcher-sep-1 separator, minus agents-watchtower; earlier: #1553: plus folders) — the set T5 walks is the whole set (#1548: plus the Agents hub watchtower; #1545: plus the hub watchdog; X-Ray regroup: minus about, diagnostics, agents and its two tabs, plus xray and app-about; #1263: plus wifi and its five hidden tabs; #1221: plus bluetooth and its five hidden tabs; #1264: plus its Analyze and Locate tabs; #649: 22 minus launcher; #723: minus ai and its 5 tabs; #733: plus apps-mesh; #740: plus dns; plus firewall; plus the hidden About ▸ Battery; Agents regroup: minus the Network separator, plus agents and its two tabs; #ipc: plus ipc; Controls merge: plus panels, panels-ui and panels-tools; Apps Mesh strip: plus apps-mesh-members and identity)" \
+  || bad "$COUNT config pages, expected 52 — a page was added or DELETED, and T5 cannot report a page that is gone"
 
 echo "== T6: ACTIONS IS UNTOUCHED =="
 # The owner said to keep it as it is. Three things make that true: the same three
@@ -318,6 +318,7 @@ BEFORE = {'bluetooth-analyze', 'bluetooth-locate', 'presets', 'controls', 'oneha
           'apps-mesh', 'ipc', 'apps-mesh-members', 'identity',  # were Apps Mesh and its tabs; now removed_pages (Cloud Store > Access)
           'apps-access',  # added on purpose: Configs ▸ Network ▸ Apps Access (opens Cloud Store > Access, else the Store install offer)
           'adb-shell',  # added on purpose: Configs ▸ Network ▸ ADB Shell (the privileged channel's page)
+          'adb-status', 'adb-term', 'adb-perms', 'adb-all',  # added on purpose: ADB Shell's four hidden tabs (Status cockpit, Shell, Perms, All)
           'c3', 'network-sep-1',   # added on purpose: Network's C3 entry and its separator
           'firewall',   # added on purpose: Configs ▸ Network ▸ Firewall hosts the firewall engine's controls (About keeps a summary)
           'agents-watchdog',   # #1545/#1548 the in-app hub page Configs ▸ Agents ▸ Watchdog (Network + Observability); #1552 unique id (N12), page:config/watchdog is a page_alias

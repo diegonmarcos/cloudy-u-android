@@ -5008,7 +5008,7 @@
         "_doc_nav_mode": "#1548 the declared tree is Setup (Connect, Apps, Launcher, Network, Watchtower - Obsv), Agents (Watchdog - the hub page, hub_sections), Cloudy C3 (C3, Peer Control); Launcher reads Quick Actions, One-Hand, Folders, Notify | Perms, Logcat, X-Ray App, About; Bluetooth is a Network page; Watchtower - Obsv holds X-Ray Device and Logcat Fleet; page ids did not change, so every page:config/<id> still lands. #1221 horizontal_two_rows: the second row of Configs is one row per declared group, each [group label] | [that group's page icons]. Cloudy C3 (the group id stays fleet) reads C3 | Peer Control (the | is separator_before on Peer Control; Bluetooth moved to Setup ▸ Network); Watchtower - Obsv (the Setup subgroup that was Observability) reads X-Ray Device, Logcat Fleet; Perms, Logcat, X-Ray App and About moved to Setup ▸ Launcher after a | separator; Setup keeps the rest. Every page of the section is in exactly one group (the nav-shape guard, N10), the hidden tab pages with their parent. The groups only REFERENCE pages: the Configs grid headings still come from each page's group / subgroup.",
         "nav_mode": "horizontal_two_rows",
         "groups": [
-          {"id": "setup", "label": "Setup", "icon": "ic_settings", "pages": ["profile", "store", "controls", "onehand", "app-folders", "notify", "launcher-sep-1", "perms", "logcat", "xray-app", "app-about", "firewall", "dns", "webserver", "wg", "apps-access", "adb-shell", "wifi", "wifi-scan", "wifi-channels", "wifi-link", "wifi-tools", "wifi-log", "bluetooth", "bluetooth-find", "bluetooth-analyze", "bluetooth-locate", "bluetooth-connect", "bluetooth-interact", "bluetooth-debug", "bluetooth-dev", "xray", "logcat-fleet", "battery", "presets", "panels", "panels-all", "panels-ui", "panels-battery", "panels-tools", "store-cloud", "store-phone", "update", "kde_connect", "animations"]},
+          {"id": "setup", "label": "Setup", "icon": "ic_settings", "pages": ["profile", "store", "controls", "onehand", "app-folders", "notify", "launcher-sep-1", "perms", "logcat", "xray-app", "app-about", "firewall", "dns", "webserver", "wg", "apps-access", "adb-shell", "wifi", "wifi-scan", "wifi-channels", "wifi-link", "wifi-tools", "wifi-log", "adb-status", "adb-term", "adb-perms", "adb-all", "bluetooth", "bluetooth-find", "bluetooth-analyze", "bluetooth-locate", "bluetooth-connect", "bluetooth-interact", "bluetooth-debug", "bluetooth-dev", "xray", "logcat-fleet", "battery", "presets", "panels", "panels-all", "panels-ui", "panels-battery", "panels-tools", "store-cloud", "store-phone", "update", "kde_connect", "animations"]},
           {"id": "agents", "label": "Agents", "icon": "ic_p_watchdog", "pages": ["agents-watchdog"]},
           {"id": "fleet", "label": "Cloudy C3", "icon": "ic_hub", "pages": ["c3", "kde"]}
         ],
@@ -5162,12 +5162,41 @@
             "subgroup": "Network"
           },
           {
-            "_doc": "ADB SHELL - THE page for the privileged channel (libs:shizuku-adb-debug-tools AdbShellPage), the same one Cloud Store (Settings), Cloud Account (Setup), the terminals (Settings) and every status chip draw. Six sections: the status table (Developer options, Wireless debugging, embedded adb, the local server on 38099, Shizuku, the active route and mode, each with a colour dot and when it was probed), Connect (the method that applies to the chosen mode, run step by step with the step that failed named), Active connection (Disconnect / Reconnect / Restart server / Stop server / Test round-trip, each disabled when it does not apply), Logs (an in-memory ring, tokens redacted, Copy and Clear), Declared needs (this app's privileged_channel above) and Setup (the checklist, each item opening its exact settings screen). The label is this one string: rename it here and nowhere else. Sits right after Apps Mesh.",
+            "_doc": "ADB SHELL - THE page for the privileged channel (libs:shizuku-adb-debug-tools AdbShellPage), the same one Cloud Store (Settings), Cloud Account (Setup), the terminals (Settings) and every status chip draw. Six sections: the status table (Developer options, Wireless debugging, embedded adb, the local server on 38099, Shizuku, the active route and mode, each with a colour dot and when it was probed), Connect (the method that applies to the chosen mode, run step by step with the step that failed named), Active connection (Disconnect / Reconnect / Restart server / Stop server / Test round-trip, each disabled when it does not apply), Logs (an in-memory ring, tokens redacted, Copy and Clear), Declared needs (this app's privileged_channel above) and Setup (the checklist, each item opening its exact settings screen). The label is this one string: rename it here and nowhere else. Sits right after Apps Mesh. FOUR TABS (the shared strip, like WiFi; one hidden page each, routed in SectionPages): Status (landing; the cockpit: a top control bar with Connect / Disconnect, Reconnect and the Mode selector Shizuku / Local Server / Embedded, a master health pill, Auto-fix, the dependency-ordered chain Perms (light only) > Setup (Developer Options, Wireless Debugging, live Settings flags) > Shizuku > Local Server > Embedded > Connection, and a live severity-tinted tail of the channel log with filter / copy / clear; every light binds to ChannelReader.read facts and the Permissions catalogue, see AdbCockpitModel), Shell (the terminal and the command bookmarks), Perms (the permission checker) and All (the combined page above, unchanged).",
             "id": "adb-shell",
             "label": "ADB Shell",
             "icon": "ic_terminal",
+            "tabs": ["adb-status", "adb-term", "adb-perms", "adb-all"],
             "group": "Setup",
             "subgroup": "Network"
+          },
+          {
+            "_doc": "ADB Shell tab: Status cockpit: lights, messages and actions per setup step, Auto-fix, the log tail (AdbCockpitModel / AdbCockpit). hidden = reached through the ADB Shell strip, not as its own Configs tile.",
+            "id": "adb-status",
+            "label": "Status",
+            "icon": "ic_settings",
+            "hidden": true
+          },
+          {
+            "_doc": "ADB Shell tab: terminal and command bookmarks (AdbTerminal). hidden = reached through the ADB Shell strip, not as its own Configs tile.",
+            "id": "adb-term",
+            "label": "Shell",
+            "icon": "ic_terminal",
+            "hidden": true
+          },
+          {
+            "_doc": "ADB Shell tab: permission checker, granted or not per permission (readPermRows). hidden = reached through the ADB Shell strip, not as its own Configs tile.",
+            "id": "adb-perms",
+            "label": "Perms",
+            "icon": "ic_settings",
+            "hidden": true
+          },
+          {
+            "_doc": "ADB Shell tab: the combined page, unchanged (AdbShellBrokerPage). hidden = reached through the ADB Shell strip, not as its own Configs tile.",
+            "id": "adb-all",
+            "label": "All",
+            "icon": "ic_terminal",
+            "hidden": true
           },
           {
             "_doc": "#1263 Configs ▸ Setup ▸ Network ▸ WiFi: the phone's Wi-Fi analyzer as a page over libs:wifi (WifiFragment draws WifiPanel), right after ADB Shell. Five tabs over one process-wide controller, so scans, the throttle window and running tools survive a tab switch: Scan (live AP list: SSID / BSSID / vendor from the IEEE OUI asset, smoothed RSSI + sparkline, band / channel / width / centre, 802.11 standard, security incl. WPA3 / OWE / Enterprise / PMF / WPS, hidden, 802.11mc / az RTT, Wi-Fi 7 MLO, age; filter, sort, search, group by SSID; the scan throttle state), Channels (spectrum per band, channel rating and best-channel recommendation per regulatory plan, congestion, RSSI over time), Link (the connected network: speeds, frequency, signal / quality / SNR estimate, IPv4 / IPv6 / gateway / DNS / DHCP lease / MTU, captive / validated / metered / private DNS, MAC randomization, roaming log), Tools (ping / jitter / loss, traceroute, DNS, bounded port scan, LAN discovery via NSD / SSDP / sweep / NetBIOS, throughput to build.json wifi_analyzer.throughput, RTT ranging, hot / cold locator) and Log (heatmap grid, events, CSV / JSON / PCAP export and share). Vendors, channel plans and defaults are DATA in the lib's assets; this app's overrides are build.json wifi_analyzer. hidden tabs: reached through the WiFi strip.",

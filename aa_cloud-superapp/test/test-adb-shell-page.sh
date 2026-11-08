@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Configs > Network > ADB Shell: the privileged channel's ONE page. Static (no build, no device).
 #  1. build.json: the page is declared once, in Setup > Network, RIGHT AFTER Apps Mesh, labelled "ADB Shell".
-#  2. SectionPages routes it to AdbShellFragment, which hosts AdbShellBrokerPage (#1522: six sections over the broker, see test-adb-shell-broker-page.sh).
+#  2. The page declares FOUR TABS (Status, Shell, Perms, All; see test-adb-shell-cockpit.sh); SectionPages routes them to AdbShellFragment, whose All tab hosts AdbShellBrokerPage (#1522: six sections over the broker, see test-adb-shell-broker-page.sh).
 #  3. The page lives in libs:shizuku-adb-debug-tools with its seven sections in order (status table, connect,
 #     active connection, logs, declared needs, setup, keeper), the four modes, the five connection buttons and the
 #     log's Copy / Clear; every rule behind it is a pure, tested model.
