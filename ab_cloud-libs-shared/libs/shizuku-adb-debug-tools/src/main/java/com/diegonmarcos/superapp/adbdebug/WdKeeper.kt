@@ -20,6 +20,7 @@ import androidx.work.WorkManager
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.diegonmarcos.superapp.core.BackgroundPolicy
+import com.diegonmarcos.superapp.core.LogGate
 import com.diegonmarcos.superapp.devtools.AppDebugServer
 import com.diegonmarcos.superapp.perms.PermsLink
 import java.util.concurrent.Executors
@@ -60,6 +61,11 @@ object WdKeeper {
     @Volatile private var lastNetworkEventAt = 0L
     @Volatile private var wifiEvent: Boolean? = null
     @Volatile private var log: WdAuditLog? = null
+
+    /** The per-tick heartbeat repeats the SAME line every pass and used to flood logcat; route it through a
+     *  dedupe/rate-limit so an unchanged `tick[...]` collapses to one line a minute with a repeat count. State-change
+     *  lines (re-arm wrote, auto self-grant) stay direct — they are rare and each one matters. */
+    private val tickGate = LogGate(sink = { Log.i(TAG, it) })
 
     private fun p(ctx: Context) = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
@@ -121,7 +127,7 @@ object WdKeeper {
             action = WdKeeperCore.decide(facts.copy(leader = false))
         // #1502 one re-arm write per 30 s: a setting that bounces straight back off (no network for adbd) made observer -> evaluate -> write -> observer a ~6 s loop.
         if (action == WdKeeperCore.Action.REARM && now - p(app).getLong("self_write_at", 0L) < com.diegonmarcos.superapp.core.BackgroundPolicy.RETRY_MIN_MS) {
-            Log.i(TAG, "tick[$trigger]: re-arm rate-limited")
+            tickGate.log("tick[$trigger]: re-arm rate-limited")
             return WdKeeperCore.Action.NOTHING
         }
         if (action == WdKeeperCore.Action.REARM) {
@@ -132,7 +138,7 @@ object WdKeeper {
             Log.i(TAG, "re-arm[$trigger]: wrote=$wrote on=$after")
             // The observer logs a change that landed; one that did not is logged here, so the log never says "ok" for nothing.
             if (!after) audit(app).add(WdAuditLog.Entry(System.currentTimeMillis(), false, facts.wifiConnected, "re-arm rejected ($trigger)", app.packageName))
-        } else if (action != WdKeeperCore.Action.NOTHING) Log.i(TAG, "tick[$trigger]: $action")
+        } else if (action != WdKeeperCore.Action.NOTHING) tickGate.log("tick[$trigger]: $action")
         return action
     }
 
