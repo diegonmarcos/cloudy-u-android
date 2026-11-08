@@ -34,7 +34,8 @@ class WdKeeperService : Service() {
             if (Build.VERSION.SDK_INT >= 34) startForeground(NOTIF_ID, notification(channel), ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
             else startForeground(NOTIF_ID, notification(channel))
         }.onFailure { Log.w(TAG, "not promoted to foreground", it) }
-        WdKeeper.start(applicationContext)
+        // NOT WdKeeper.start() here: start() starts this service, so calling it from onStartCommand looped
+        // start -> startForegroundService -> onStartCommand -> start at ~140 Hz ("tick[start]: NOTHING" every 7 ms).
         if (loop?.isAlive != true) loop = Thread({ beat() }, "wd-keeper-beat").apply { isDaemon = true; start() }
         return START_NOT_STICKY
     }
@@ -77,6 +78,7 @@ class WdKeeperService : Service() {
         @Volatile var running = false
 
         fun start(ctx: Context) {
+            if (running) return // already up: a second startForegroundService only re-enters onStartCommand
             runCatching { ContextCompat.startForegroundService(ctx, Intent(ctx, WdKeeperService::class.java)) }
                 .onFailure { Log.w(TAG, "service not started: ${it.javaClass.simpleName}") }
         }

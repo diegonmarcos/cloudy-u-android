@@ -132,7 +132,7 @@ object WdKeeper {
             Log.i(TAG, "re-arm[$trigger]: wrote=$wrote on=$after")
             // The observer logs a change that landed; one that did not is logged here, so the log never says "ok" for nothing.
             if (!after) audit(app).add(WdAuditLog.Entry(System.currentTimeMillis(), false, facts.wifiConnected, "re-arm rejected ($trigger)", app.packageName))
-        } else Log.i(TAG, "tick[$trigger]: $action")
+        } else if (action != WdKeeperCore.Action.NOTHING) Log.i(TAG, "tick[$trigger]: $action")
         return action
     }
 

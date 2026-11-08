@@ -41,6 +41,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.diegonmarcos.superapp.ui.ShellFxState
+import com.diegonmarcos.superapp.ui.FX_FRAME_NS
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -85,10 +86,17 @@ private val SUN = Color(0xFFFFCC33)
 @Composable
 private fun rememberSeconds(): Float {
     var sec by remember { mutableFloatStateOf(0f) }
-    LaunchedEffect(ShellFxState.frozen) {
-        if (ShellFxState.frozen) return@LaunchedEffect
+    val drawing = com.diegonmarcos.superapp.ui.rememberDrawing() // no frame callbacks while backgrounded / screen off
+    LaunchedEffect(ShellFxState.frozen, drawing) {
+        if (ShellFxState.frozen || !drawing) return@LaunchedEffect
         val t0 = withFrameNanos { it }
-        while (true) sec = (withFrameNanos { it } - t0) / 1_000_000_000f
+        var last = t0
+        while (true) {
+            val now = withFrameNanos { it }
+            if (now - last < FX_FRAME_NS) continue // ~30 fps: this value is read in composition, so every tick recomposes
+            last = now
+            sec = (now - t0) / 1_000_000_000f
+        }
     }
     return sec
 }
