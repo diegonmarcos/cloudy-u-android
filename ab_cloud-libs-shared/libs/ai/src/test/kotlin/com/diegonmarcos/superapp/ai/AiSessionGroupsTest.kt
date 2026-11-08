@@ -41,6 +41,12 @@ class AiSessionGroupsTest {
         assertEquals("g3", g.add("C"))
     }
 
+    @Test fun archivedChatsAreRememberedToo() {
+        val g = open()
+        g.archive("s1", true); g.archive("s2", true); g.archive("s2", false)
+        assertTrue(open().isArchived("s1")); assertTrue(!open().isArchived("s2"))
+    }
+
     @Test fun garbageOnDiskIsNoGroups() {
         disk = "not json"
         assertTrue(open().groups.isEmpty())

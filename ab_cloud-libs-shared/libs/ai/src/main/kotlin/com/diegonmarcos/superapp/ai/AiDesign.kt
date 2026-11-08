@@ -28,6 +28,12 @@ data class AiUsageLine(val label: String, val value: String)
 /** One of the four MCP pickers (ai-design.json mcp.buckets): [control] is its composer control id, [known] the names listed before the gateway does. */
 data class AiMcpBucket(val id: String, val control: String, val label: String, val known: List<String>, val exact: Set<String>, val contains: List<String>, val prefix: List<String>, val default: Boolean)
 
+/** One item of a KG-Store tab; [kind] = web (the chat's web search), source (a public source), mcp (an MCP server). */
+data class AiKgItem(val id: String, val label: String, val detail: String, val kind: String)
+
+/** One KG-Store tab; [dynamic] = it also lists the other internet MCPs the gateway lists. */
+data class AiKgTab(val id: String, val label: String, val items: List<AiKgItem>, val dynamic: Boolean)
+
 /** One MCP server the gateway lists for the session. */
 data class AiMcpServer(val name: String, val tools: Int? = null)
 
@@ -100,6 +106,19 @@ class AiDesign private constructor(private val root: JSONObject) {
         val n = name.lowercase()
         return mcpBuckets.firstOrNull { b -> n in b.exact || b.contains.any { it in n } || b.prefix.any { n.startsWith(it) } } ?: mcpBuckets.firstOrNull { it.default }
     }
+    val kgStoreTabs: List<AiKgTab> = root.optJSONObject("kg_store")?.optJSONArray("tabs")?.objs().orEmpty().map { t ->
+        AiKgTab(
+            t.getString("id"), t.getString("label"),
+            t.getJSONArray("items").objs().map { AiKgItem(it.getString("id"), it.getString("label"), it.optString("detail"), it.getString("kind")) },
+            t.optBoolean("dynamic"),
+        )
+    }
+    private val sourcesInstruction: String = root.optJSONObject("kg_store")?.optString("instruction").orEmpty()
+
+    /** The standing sentence for the chosen public [sources] ("" for none). */
+    fun sourcesSentence(sources: Collection<String>): String =
+        if (sources.isEmpty() || sourcesInstruction.isEmpty()) "" else sourcesInstruction.replace("{sources}", sources.sorted().joinToString(", "))
+
     private val reposObj = root.optJSONObject("repos")
     private val reposInstruction: String = reposObj?.optString("instruction").orEmpty()
 

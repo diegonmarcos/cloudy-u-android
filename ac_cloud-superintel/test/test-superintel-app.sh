@@ -84,8 +84,8 @@ if [p["id"] for s in bj["ui"]["sections"] if s["id"] == "tools" for p in s["page
 for need in ("AiModelCatalogue(", "AiTaskCatalogue(", "AiSettingsPickers(", "AiAttachHost(", "ForumSessions(", "ForumTools(", "sessions = ForumSessions", "tools = ForumTools"):
     if need not in shell: bad.append("B8 SiShell lacks %s (the SI tab lost its sessions rail or AI tooling)" % need)
 comp = json.loads(read(os.path.join(app, "app/src/main/assets/ai/composer.json")))["controls"]
-# Chat UI restructure: every prior control (plus, task, agent, model, effort, mode, mcp, more) keeps a home; mcp is now the four MCP buckets.
-want = ["plus", "task", "specialist", "agent", "model", "effort", "mode", "repos", "skills", "mcp_kg", "mcp_infra", "mcp_user", "mcp_ext", "perf", "more"]
+# Chat UI restructure: every prior control (plus, task, agent, model, effort, mode, mcp, more) keeps a home; mcp is now KG-Store, KG-Cloud-apps and KG-Cloud-infra.
+want = ["plus", "task", "specialist", "agent", "model", "effort", "mode", "skills", "kg_store", "kg_apps", "kg_repos", "kg_infra", "perf", "more"]
 for need in want:
     if need not in comp: bad.append("B8 composer.json lost the %s control" % need)
 if "cost" in comp or "usage" in comp: bad.append("B8 Usage & Cost belongs in the top bar, not the toolbar")
@@ -94,7 +94,11 @@ dj = json.loads(read(os.path.join(libai, "src/main/assets/ai/ai-design.json")))
 rows = {c["id"]: c.get("row", 1) for c in dj["composer"]["layout"]["controls"]}
 if [c for c in want if rows.get(c) == 0] != ["plus"]: bad.append("B9 (+) must be the input row's control (row 0)")
 if [c for c in want if rows.get(c) == 1] != ["task", "specialist", "agent", "model", "effort", "mode"]: bad.append("B9 toolbar row 1 must be Task, Specialist, Agent, Model, Effort, Mode")
-if [c for c in want if rows.get(c) == 2] != ["repos", "skills", "mcp_kg", "mcp_infra", "mcp_user", "mcp_ext", "perf", "more"]: bad.append("B9 toolbar row 2 must be Repos, Skills, 4 MCP buckets, Performance, More")
+if [c for c in want if rows.get(c) == 2] != ["skills", "kg_store", "kg_apps", "kg_repos", "kg_infra", "perf", "more"]: bad.append("B9 toolbar row 2 must be Plugins-Skills, KG-Store, KG-Cloud-apps, KG-Repos, KG-Cloud-infra, Plugins-Perf, More")
+lay = {c["id"]: c for c in dj["composer"]["layout"]["controls"]}
+if [c for c in want if lay[c].get("divider_before")] != ["agent", "kg_store", "kg_repos", "more"]: bad.append("B9 dividers belong before Agent, KG-Store, KG-Repos and More")
+if [lay[c]["label"] for c in ("skills", "kg_store", "kg_apps", "kg_repos", "kg_infra", "perf")] != ["Plugins-Skills", "KG-Store", "KG-Cloud-apps", "KG-Repos", "KG-Cloud-infra", "Plugins-Perf"]: bad.append("B9 row 2 labels")
+if [t["id"] for t in dj["kg_store"]["tabs"]] != ["web", "releases", "workspace", "personal", "other"]: bad.append("B9 KG-Store tabs")
 items = {i["id"]: i for g in dj["more"]["groups"] for i in g["items"]}
 if items.get("principles", {}).get("label") != "Cloudy Principals" or items["principles"].get("class") != "skill": bad.append("B9 Principles must be 'Cloudy Principals' under Plugins > Skills")
 if items.get("headroom", {}).get("class") != "performance": bad.append("B9 Headroom must be a performance plugin")
@@ -185,7 +189,7 @@ mutant "account not visible"           "sed -i 's/com.diegonmarcos.cloudaccount/
 mutant "Tools leaves the bottom nav"    "python3 -c \"import json;p='build.json';d=json.load(open(p));d['ui']['bottom_nav'].remove('tools');json.dump(d,open(p,'w'))\"" "B8 the AI Tools section left the bottom nav"
 mutant "the sessions rail is dropped"  "sed -i 's/sessions = ForumSessions/sessions = null \/\/ ForumSessions/' $KT/ui/SiShell.kt" "B8 SiShell lacks sessions = ForumSessions"
 mutant "the composer tooling is dropped" "sed -i 's/tools = ForumTools/tools = null \/\/ ForumTools/' $KT/ui/SiShell.kt" "B8 SiShell lacks tools = ForumTools"
-mutant "the composer loses MCP"        "sed -i 's/\"mcp_kg\",//' app/src/main/assets/ai/composer.json" "B8 composer.json lost the mcp_kg control"
+mutant "the composer loses MCP"        "sed -i 's/\"kg_store\",//' app/src/main/assets/ai/composer.json" "B8 composer.json lost the kg_store control"
 mutant "Principles is not renamed"     "sed -i 's/Cloudy Principals/Principles/' ../ab_cloud-libs-shared/libs/ai/src/main/assets/ai/ai-design.json" "B9 Principles must be"
 mutant "the rail climbs to the top"    "sed -i 's/SessionTopBar(topic, sessions/SessionTopBarX(topic, sessions/' ../ab_cloud-libs-shared/libs/ai/src/main/kotlin/com/diegonmarcos/superapp/ai/AiForumChat.kt" "B9 order must be top bar"
 

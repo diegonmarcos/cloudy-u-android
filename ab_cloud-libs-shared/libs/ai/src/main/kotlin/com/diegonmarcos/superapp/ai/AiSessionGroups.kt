@@ -16,7 +16,7 @@ data class AiSessionGroup(val id: String, val name: String, val collapsed: Boole
  * membership survive restarts. Membership of a deleted group falls back to ungrouped.
  */
 class AiSessionGroups(private val load: () -> String = { "" }, private val save: (String) -> Unit = {}) {
-    private class Snapshot(val groups: List<AiSessionGroup>, val members: Map<String, String>)
+    private class Snapshot(val groups: List<AiSessionGroup>, val members: Map<String, String>, val archived: Set<String> = emptySet())
 
     private var state by mutableStateOf(parse(load()))
 
@@ -29,28 +29,33 @@ class AiSessionGroups(private val load: () -> String = { "" }, private val save:
         val n = name.trim()
         if (n.isEmpty()) return null
         val id = "g" + (state.groups.mapNotNull { it.id.drop(1).toIntOrNull() }.maxOrNull() ?: 0).plus(1)
-        put(Snapshot(state.groups + AiSessionGroup(id, n), state.members))
+        put(Snapshot(state.groups + AiSessionGroup(id, n), state.members, state.archived))
         return id
     }
 
-    fun toggle(groupId: String) = put(Snapshot(state.groups.map { if (it.id == groupId) it.copy(collapsed = !it.collapsed) else it }, state.members))
+    fun toggle(groupId: String) = put(Snapshot(state.groups.map { if (it.id == groupId) it.copy(collapsed = !it.collapsed) else it }, state.members, state.archived))
 
     fun rename(groupId: String, name: String) {
         if (name.isBlank()) return
-        put(Snapshot(state.groups.map { if (it.id == groupId) it.copy(name = name.trim()) else it }, state.members))
+        put(Snapshot(state.groups.map { if (it.id == groupId) it.copy(name = name.trim()) else it }, state.members, state.archived))
     }
 
-    fun remove(groupId: String) = put(Snapshot(state.groups.filterNot { it.id == groupId }, state.members.filterValues { it != groupId }))
+    fun remove(groupId: String) = put(Snapshot(state.groups.filterNot { it.id == groupId }, state.members.filterValues { it != groupId }, state.archived))
 
     /** Moves a session into [groupId] (null = ungrouped). */
     fun assign(sessionId: String, groupId: String?) =
-        put(Snapshot(state.groups, if (groupId == null) state.members - sessionId else state.members + (sessionId to groupId)))
+        put(Snapshot(state.groups, if (groupId == null) state.members - sessionId else state.members + (sessionId to groupId), state.archived))
+
+    /** Archived chats leave the All and Groups views and the rail, and list under Archived. */
+    fun isArchived(sessionId: String): Boolean = sessionId in state.archived
+    fun archive(sessionId: String, on: Boolean) =
+        put(Snapshot(state.groups, state.members, if (on) state.archived + sessionId else state.archived - sessionId))
 
     private fun put(s: Snapshot) { state = s; save(encode(s)) }
 
     private fun encode(s: Snapshot): String = JSONObject()
         .put("groups", JSONArray(s.groups.map { JSONObject().put("id", it.id).put("name", it.name).put("collapsed", it.collapsed) }))
-        .put("members", JSONObject(s.members)).toString()
+        .put("members", JSONObject(s.members)).put("archived", JSONArray(s.archived.toList())).toString()
 
     private fun parse(text: String): Snapshot = runCatching {
         val o = JSONObject(text)
@@ -59,6 +64,7 @@ class AiSessionGroups(private val load: () -> String = { "" }, private val save:
         Snapshot(
             (0 until ga.length()).map { ga.getJSONObject(it) }.map { AiSessionGroup(it.getString("id"), it.getString("name"), it.optBoolean("collapsed")) },
             mo.keys().asSequence().associateWith { mo.getString(it) },
+            (o.optJSONArray("archived") ?: JSONArray()).let { a -> (0 until a.length()).map { a.getString(it) }.toSet() },
         )
     }.getOrDefault(Snapshot(emptyList(), emptyMap()))
 

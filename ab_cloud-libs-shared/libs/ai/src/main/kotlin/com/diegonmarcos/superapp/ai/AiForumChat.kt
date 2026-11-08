@@ -155,6 +155,12 @@ data class ForumStrings(
     val moveTo: String = "Move to",
     val ungroup: String = "Remove from group",
     val sessionActions: String = "Chat actions",
+    val tabAll: String = "All",
+    val tabGroups: String = "Groups",
+    val tabArchived: String = "Archived",
+    val archive: String = "Archive",
+    val unarchive: String = "Unarchive",
+    val closeDrawer: String = "Close",
 )
 
 /** The forum's own sizes (dp tokens, defined once; the surface spells no literal). */
@@ -229,6 +235,9 @@ object ForumTags {
     const val ALLCHATS_NEW = "forum_allchats_new"
     const val ALLCHATS_SEARCH = "forum_allchats_search"
     const val ALLCHATS_SCRIM = "forum_allchats_scrim"
+    const val ALLCHATS_CLOSE = "forum_allchats_close"
+    fun allChatsTab(id: String) = "forum_allchats_tab_$id"
+    fun archive(sessionId: String) = "forum_archive_$sessionId"
     const val NEW_GROUP = "forum_new_group"
     const val GROUP_FIELD = "forum_group_field"
     const val GROUP_ADD = "forum_group_add"
@@ -414,6 +423,7 @@ private fun Thread(
     }
     // The Model button and the Task button swap their full catalogue pages in for the thread, as in the plain chat page.
     if (tools != null && chat.page == AiChatState.PAGE_MODELS) { AiModelCatalogue(chat, theme, tools.catalogueFetch, modifier); return }
+    if (tools != null && design != null && chat.page == AiChatState.PAGE_KGSTORE) { AiKgStorePage(chat, theme, design, modifier); return }
     if (tools != null && chat.page == AiChatState.PAGE_TASKS) { AiTaskCatalogue(chat, theme, tools.decl, modifier); return }
     Column(modifier.fillMaxHeight()) {
         // With sessions the header is the surface's full-width top bar (SessionTopBar); the specialists are the Specialist tool.
@@ -588,7 +598,7 @@ private fun SessionsRail(s: ForumSessions, theme: AiTheme, strings: ForumStrings
         Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState())) {
             // The rail shows the open chat's group (ungrouped chats when it has none); the all-chats drawer shows every group.
             val here = s.groups?.groupOf(s.currentId)
-            s.list.filter { s.groups == null || s.groups.groupOf(it.id) == here }.forEach { sess ->
+            s.list.filter { s.groups == null || (!s.groups.isArchived(it.id) && s.groups.groupOf(it.id) == here) }.forEach { sess ->
                 val label = sess.title.ifBlank { strings.untitled }
                 RailEntry(sessionInitials(label), label, sess.id == s.currentId, theme, metrics, { s.onOpen(sess) }, ForumTags.session(sess.id))
             }

@@ -61,7 +61,7 @@ class PersonasTest {
         val decl = com.diegonmarcos.superapp.ai.AiComposerDecl.parse(Data.asset("../ai/composer.json"), design)
         assertEquals("cloud-superintel", decl.app)
         assertEquals(
-            listOf("plus", "task", "specialist", "agent", "model", "effort", "mode", "repos", "skills", "mcp_kg", "mcp_infra", "mcp_user", "mcp_ext", "perf", "more"),
+            listOf("plus", "task", "specialist", "agent", "model", "effort", "mode", "skills", "kg_store", "kg_apps", "kg_repos", "kg_infra", "perf", "more"),
             design.orderedLayout(decl.controls).map { it.id },
         )
         assertTrue("the Repos picker offers repositories", decl.repos.isNotEmpty())

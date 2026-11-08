@@ -249,7 +249,7 @@ private fun TaskRow(chat: AiChatState, theme: AiTheme, id: String, label: String
 }
 
 @Composable
-private fun Header(theme: AiTheme, title: String, closeTag: String, onClose: () -> Unit, extra: @Composable () -> Unit = {}) {
+internal fun Header(theme: AiTheme, title: String, closeTag: String, onClose: () -> Unit, extra: @Composable () -> Unit = {}) {
     val c = theme.colors
     val t = theme.type
     val m = theme.metrics

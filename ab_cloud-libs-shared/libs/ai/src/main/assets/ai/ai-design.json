@@ -77,7 +77,7 @@
       }
     ],
     "layout": {
-      "_doc": "The two-row layout of the Compose chat (Cloud SuperIntel; AiComposerBar twoRows). Cloud Code and the other apps keep `controls` above, in its order, untouched. `row` 0 = the input row ((+) attachments dropdown), 1 = toolbar row 1 (Task, Specialist | Agent, Model, Effort, Mode; `divider_before` draws the bar), 2 = toolbar row 2 (Repos, Plugins -> Skills, the four MCP buckets, Plugins: performance, More). An id of `controls` takes its label and icon from there; the others declare theirs. The single `mcp` control has no place here: its servers are the four MCP buckets (mcp.buckets).",
+      "_doc": "The two-row layout of the Compose chat (Cloud SuperIntel; AiComposerBar twoRows). Cloud Code and the other apps keep `controls` above, in its order, untouched. `row` 0 = the input row ((+) attachments dropdown), 1 = toolbar row 1 (Task, Specialist | Agent, Model, Effort, Mode), 2 = toolbar row 2 (Plugins-Skills | KG-Store, KG-Cloud-apps | KG-Repos, KG-Cloud-infra, Plugins-Perf | More); `divider_before` draws a visible bar before that control. An id of `controls` takes its label and icon from there; the others declare theirs. KG-Store opens a full tabbed page (kg_store); KG-Cloud-apps and KG-Cloud-infra are MCP pickers (mcp.buckets); KG-Repos picks the repositories exposed to the model. The single `mcp` control has no place here.",
       "controls": [
         {
           "id": "plus",
@@ -111,50 +111,47 @@
           "row": 1
         },
         {
-          "id": "repos",
-          "label": "Repos",
-          "icon": "folder_open",
-          "row": 2
-        },
-        {
           "id": "skills",
-          "label": "Plugins → Skills",
+          "label": "Plugins-Skills",
           "icon": "extension",
           "row": 2
         },
         {
-          "id": "mcp_kg",
-          "label": "MCP: KG-Graph",
-          "icon": "hub",
+          "id": "kg_store",
+          "label": "KG-Store",
+          "icon": "public",
+          "row": 2,
+          "divider_before": true
+        },
+        {
+          "id": "kg_apps",
+          "label": "KG-Cloud-apps",
+          "icon": "cloud",
           "row": 2
         },
         {
-          "id": "mcp_infra",
-          "label": "MCP: Cloudy infra",
+          "id": "kg_repos",
+          "label": "KG-Repos",
+          "icon": "folder_open",
+          "row": 2,
+          "divider_before": true
+        },
+        {
+          "id": "kg_infra",
+          "label": "KG-Cloud-infra",
           "icon": "dns",
           "row": 2
         },
         {
-          "id": "mcp_user",
-          "label": "MCP: Cloudy user-facing",
-          "icon": "person",
-          "row": 2
-        },
-        {
-          "id": "mcp_ext",
-          "label": "MCP: Non-Cloudy",
-          "icon": "public",
-          "row": 2
-        },
-        {
           "id": "perf",
-          "label": "Plugins: performance",
+          "label": "Plugins-Perf",
           "icon": "speed",
           "row": 2
         },
         {
           "id": "more",
-          "row": 2
+          "row": 2,
+          "divider_before": true
         }
       ]
     },
@@ -226,30 +223,18 @@
     ]
   },
   "mcp": {
-    "_doc": "The MCPs control toggles the MCP servers the gateway lists for the session (GET ai.json::gateway.mcp_path). The gateway has no per-request server switch yet, so the chosen set rides as a standing instruction; `instruction` is its sentence, {servers} the comma-separated names. An empty selection adds nothing. `buckets` sort a server into the four pickers (first match wins, in order: exact name, then contains, then prefix; the last bucket takes the rest): KG-Graph, Cloudy infra (one so far), Cloudy user-facing (non-infra), Non-Cloudy (internet). `known` names are listed in their picker even before the gateway lists them (greyed, 'not listed').",
+    "_doc": "The MCPs control toggles the MCP servers the gateway lists for the session (GET ai.json::gateway.mcp_path). The gateway has no per-request server switch yet, so the chosen set rides as a standing instruction; `instruction` is its sentence, {servers} the comma-separated names. An empty selection adds nothing. `buckets` sort a server into the three MCP homes (first match wins, in order: exact name, then prefix; the last bucket takes the rest): KG-Cloud-infra (mesh-only, one so far), KG-Cloud-apps (Cloudy user-facing, non-infra), KG-Store (everything else on the public internet, google-workspace and google-personal included). `known` names are listed in their picker even before the gateway lists them (greyed, 'not listed').",
     "instruction": "MCP servers for this session: use only {servers} when you call tools.",
     "buckets": [
       {
-        "id": "kg",
-        "control": "mcp_kg",
-        "label": "MCP: KG-Graph",
-        "match": {
-          "contains": [
-            "kg",
-            "graph",
-            "knowledge"
-          ]
-        },
-        "known": []
-      },
-      {
         "id": "infra",
-        "control": "mcp_infra",
-        "label": "MCP: Cloudy infra",
+        "control": "kg_infra",
+        "label": "KG-Cloud-infra",
         "match": {
           "exact": [
             "cloudy-c3-mcp",
-            "cloud-infra-mcp"
+            "cloud-infra-mcp",
+            "c3-infra-mcp"
           ]
         },
         "known": [
@@ -257,9 +242,9 @@
         ]
       },
       {
-        "id": "user",
-        "control": "mcp_user",
-        "label": "MCP: Cloudy user-facing",
+        "id": "apps",
+        "control": "kg_apps",
+        "label": "KG-Cloud-apps",
         "match": {
           "prefix": [
             "cloudy-",
@@ -279,15 +264,15 @@
         ]
       },
       {
-        "id": "ext",
-        "control": "mcp_ext",
-        "label": "MCP: Non-Cloudy",
+        "id": "store",
+        "control": "kg_store",
+        "label": "KG-Store",
         "match": {
           "default": true
         },
         "known": [
-          "google-personal-mcp",
-          "google-workspace-mcp"
+          "google-workspace-mcp",
+          "google-personal-mcp"
         ]
       }
     ]
@@ -461,5 +446,83 @@
   "repos": {
     "_doc": "The Repos picker: which repositories the model may see (an app's list is composer.json::repos). The chosen set rides as a standing instruction, like the MCP sentence; {repos} is the comma-separated names. An empty selection adds nothing.",
     "instruction": "Repositories exposed to you for this session: {repos}. Read code from these only."
+  },
+  "kg_store": {
+    "_doc": "The KG-Store page (a full page with tabs, like the Model Catalogue): public-web sources the model may use. kind: web = the chat's own web-search switch; source = a public source whose choice rides as a standing instruction ({sources}); mcp = an MCP server (its toggle is the MCPs selection). The last tab lists whatever other internet MCPs the gateway lists.",
+    "instruction": "Public sources to use for this session: {sources}.",
+    "tabs": [
+      {
+        "id": "web",
+        "label": "Web Search",
+        "items": [
+          {
+            "id": "web-search",
+            "label": "Web search",
+            "detail": "public internet, the model's own or OpenRouter search",
+            "kind": "web"
+          },
+          {
+            "id": "fetch",
+            "label": "Fetch public pages",
+            "detail": "read a URL you give it",
+            "kind": "source"
+          },
+          {
+            "id": "news",
+            "label": "News and feeds",
+            "detail": "public news and RSS",
+            "kind": "source"
+          }
+        ]
+      },
+      {
+        "id": "releases",
+        "label": "Store / Releases",
+        "items": [
+          {
+            "id": "releases",
+            "label": "Our public repo releases",
+            "detail": "GitHub releases of the fleet repos",
+            "kind": "source"
+          },
+          {
+            "id": "store",
+            "label": "App store listings",
+            "detail": "public store pages",
+            "kind": "source"
+          }
+        ]
+      },
+      {
+        "id": "workspace",
+        "label": "Google Workspace",
+        "items": [
+          {
+            "id": "google-workspace-mcp",
+            "label": "google-workspace-mcp",
+            "detail": "drive, docs, sheets, gmail",
+            "kind": "mcp"
+          }
+        ]
+      },
+      {
+        "id": "personal",
+        "label": "Google Personal",
+        "items": [
+          {
+            "id": "google-personal-mcp",
+            "label": "google-personal-mcp",
+            "detail": "personal gmail",
+            "kind": "mcp"
+          }
+        ]
+      },
+      {
+        "id": "other",
+        "label": "Other internet MCPs",
+        "items": [],
+        "dynamic": true
+      }
+    ]
   }
 }

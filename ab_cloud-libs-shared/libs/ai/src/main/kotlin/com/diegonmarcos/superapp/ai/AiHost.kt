@@ -34,6 +34,8 @@ interface AiHost {
     fun pickMcps(names: Set<String>) {}
     /** The Repos picker's selection: the repositories the model may see; a host that sends them keeps them for the next [send]. */
     fun pickRepos(names: Set<String>) {}
+    /** The KG-Store page's public sources (ids) the user switched on; a host that sends them keeps them for the next [send]. */
+    fun pickSources(ids: Set<String>) {}
     /** The composer's Effort (`reasoning.effort` value, "" = none) and the optimisation plugins' request headers. */
     fun pickEffort(value: String) {}
     fun pickPlugins(headers: Map<String, String>) {}
@@ -121,6 +123,7 @@ class AiStandardHost(
     @Volatile private var modeId: String = ""
     @Volatile private var mcpOn: Set<String> = emptySet()
     @Volatile private var reposOn: Set<String> = emptySet()
+    @Volatile private var sourcesOn: Set<String> = emptySet()
 
     override var model: String
         get() = prefs.model
@@ -143,6 +146,7 @@ class AiStandardHost(
     override fun pickMode(id: String) { modeId = id }
     override fun pickMcps(names: Set<String>) { mcpOn = names }
     override fun pickRepos(names: Set<String>) { reposOn = names }
+    override fun pickSources(ids: Set<String>) { sourcesOn = ids }
     override fun pickEffort(value: String) { effortValue = value }
     override fun pickPlugins(headers: Map<String, String>) { this.headers = headers }
     override fun plugins(): Map<String, Boolean> = gateway?.plugins().orEmpty()
@@ -161,7 +165,7 @@ class AiStandardHost(
     override fun mcpServers(): List<AiMcpServer> = if (gateway == null) emptyList() else gateway.mcpServers()
 
     /** The standing system text of a send: the persona's, then the Permission Mode's sentence, then the chosen MCP servers', then the exposed repos'. */
-    internal fun standing(): String = listOf(system, design?.mode(modeId)?.instruction.orEmpty(), design?.mcpSentence(mcpOn).orEmpty(), design?.reposSentence(reposOn).orEmpty())
+    internal fun standing(): String = listOf(system, design?.mode(modeId)?.instruction.orEmpty(), design?.mcpSentence(mcpOn).orEmpty(), design?.reposSentence(reposOn).orEmpty(), design?.sourcesSentence(sourcesOn).orEmpty())
         .filter { it.isNotBlank() }.joinToString("\n\n")
 
     override fun send(session: AiSession, text: String, model: String, web: Boolean, now: Long, sink: AiSink): AiOutcome =

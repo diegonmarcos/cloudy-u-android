@@ -158,6 +158,9 @@ data class AiStrings(
     /** The label a collapsed toolbar row keeps next to its chevron. */
     val toolbarRow1: String = "Task · Specialist · Agent · Model · Effort · Mode",
     val toolbarRow2: String = "Repos · Plugins · MCPs · More",
+    val searchKgStore: String = "Search sources: web, releases, Google, other MCPs…",
+    val kgStoreTitle: String = "KG-Store",
+    val noKgItems: String = "Nothing in this tab matches.",
     val noRepos: String = "No repository is declared for this app",
     val noUsage: String = "The backend has reported no usage yet. Tokens and cost appear here once an answer carries them.",
     /** The context-usage line: used / limit / percent, and the same without a reported limit; per-answer tokens. */

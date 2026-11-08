@@ -116,6 +116,14 @@ class AiChatState(private val host: AiHost) {
         host.pickRepos(reposOn)
     }
 
+    /** The KG-Store page's public sources switched on (ids). */
+    var sourcesOn by mutableStateOf<Set<String>>(emptySet())
+        private set
+    fun toggleSource(id: String) {
+        sourcesOn = if (id in sourcesOn) sourcesOn - id else sourcesOn + id
+        host.pickSources(sourcesOn)
+    }
+
     /** Sets the MCP selection at once (a persona's preferred servers). */
     fun chooseMcps(names: Set<String>) { mcpOn = names; host.pickMcps(names) }
 
@@ -194,6 +202,7 @@ class AiChatState(private val host: AiHost) {
     companion object {
         const val PAGE_MODELS = "models"
         const val PAGE_TASKS = "tasks"
+        const val PAGE_KGSTORE = "kg_store"
     }
 }
 
@@ -240,6 +249,11 @@ object AiTags {
     fun mode(id: String) = "ai_mode_$id"
     fun mcp(name: String) = "ai_mcp_$name"
     const val TOOLBAR_DIVIDER = "ai_toolbar_divider"
+    const val KGSTORE_PAGE = "ai_kgstore_page"
+    const val KGSTORE_CLOSE = "ai_kgstore_close"
+    const val KGSTORE_SEARCH = "ai_kgstore_search"
+    fun kgTab(id: String) = "ai_kgstore_tab_$id"
+    fun kgItem(id: String) = "ai_kgstore_item_$id"
     fun toolbarRow(n: Int) = "ai_toolbar_row_$n"
     fun rowToggle(n: Int) = "ai_toolbar_row_toggle_$n"
     fun specialist(id: String) = "ai_specialist_$id"

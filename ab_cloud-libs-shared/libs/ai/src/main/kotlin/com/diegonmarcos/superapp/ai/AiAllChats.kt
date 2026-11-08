@@ -37,6 +37,10 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 
+private const val TAB_ALL = "all"
+private const val TAB_GROUPS = "groups"
+private const val TAB_ARCHIVED = "archived"
+
 /**
  * The hamburger's drawer: EVERY chat, searchable, with "+ New" on top and the chats organised in named groups (collapsible
  * headers, "+ New group", a per-chat menu to move it to a group or out of it). Groups and membership persist in [AiSessionGroups].
@@ -48,6 +52,7 @@ internal fun AllChatsDrawer(s: ForumSessions, theme: AiTheme, strings: ForumStri
     val m = theme.metrics
     val groups = s.groups
     var query by remember { mutableStateOf("") }
+    var tab by remember { mutableStateOf(TAB_ALL) }
     var naming by remember { mutableStateOf(false) }
     var name by remember { mutableStateOf("") }
     val q = query.trim()
@@ -80,6 +85,10 @@ internal fun AllChatsDrawer(s: ForumSessions, theme: AiTheme, strings: ForumStri
                             onClick = { groups.assign(sess.id, g.id); menu = false }, modifier = Modifier.testTag(ForumTags.moveTo(sess.id, g.id)),
                         )
                     }
+                    DropdownMenuItem(
+                        text = { Text(if (groups.isArchived(sess.id)) strings.unarchive else strings.archive, style = theme.type.style(theme.type.small), color = c.text) },
+                        onClick = { groups.archive(sess.id, !groups.isArchived(sess.id)); menu = false }, modifier = Modifier.testTag(ForumTags.archive(sess.id)),
+                    )
                     if (groups.groupOf(sess.id) != null) DropdownMenuItem(
                         text = { Text(strings.ungroup, style = theme.type.style(theme.type.small), color = c.text) },
                         onClick = { groups.assign(sess.id, null); menu = false }, modifier = Modifier.testTag(ForumTags.ungroup(sess.id)),
@@ -98,6 +107,19 @@ internal fun AllChatsDrawer(s: ForumSessions, theme: AiTheme, strings: ForumStri
                     "+ " + strings.newSession, color = c.accent, style = theme.type.style(theme.type.small, FontWeight.SemiBold),
                     modifier = Modifier.sizeIn(minHeight = metrics.touch).clickable { s.onNew(); onClose() }.padding(horizontal = m.gap, vertical = m.gap).testTag(ForumTags.ALLCHATS_NEW),
                 )
+                Box(
+                    Modifier.sizeIn(minWidth = metrics.touch, minHeight = metrics.touch).clickable(onClick = onClose)
+                        .semantics { contentDescription = strings.closeDrawer }.testTag(ForumTags.ALLCHATS_CLOSE),
+                    contentAlignment = Alignment.Center,
+                ) { Text("✕", color = c.text2) }
+            }
+            if (groups != null) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(m.gap)) {
+                listOf(TAB_ALL to strings.tabAll, TAB_GROUPS to strings.tabGroups, TAB_ARCHIVED to strings.tabArchived).forEach { (id, label) ->
+                    Text(
+                        label, color = if (id == tab) c.accent else c.text2, style = theme.type.style(theme.type.small, if (id == tab) FontWeight.Bold else FontWeight.Medium),
+                        modifier = Modifier.sizeIn(minHeight = metrics.touch).clickable { tab = id }.padding(horizontal = m.gap, vertical = m.gap).testTag(ForumTags.allChatsTab(id)),
+                    )
+                }
             }
             val field = RoundedCornerShape(m.chatBarRadius)
             BasicTextField(
@@ -112,23 +134,31 @@ internal fun AllChatsDrawer(s: ForumSessions, theme: AiTheme, strings: ForumStri
                 },
             )
             Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(m.tiny)) {
-                if (groups != null) groups.groups.forEach { g ->
-                    val members = shown.filter { groups.groupOf(it.id) == g.id }
-                    if (q.isNotEmpty() && members.isEmpty()) return@forEach
-                    Row(
-                        Modifier.fillMaxWidth().sizeIn(minHeight = metrics.touch).clickable { groups.toggle(g.id) }.testTag(ForumTags.group(g.id)),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Box(Modifier.testTag(ForumTags.groupToggle(g.id)).padding(horizontal = m.gap)) { Text(if (g.collapsed) "▸" else "▾", color = c.text2) }
-                        Text(g.name, color = c.text2, style = theme.type.style(theme.type.label, FontWeight.Bold), modifier = Modifier.weight(1f))
-                        Text(members.size.toString(), color = c.text2, style = theme.type.style(theme.type.label), modifier = Modifier.padding(end = m.gap))
+                val live = shown.filter { groups == null || !groups.isArchived(it.id) }
+                when {
+                    groups == null -> live.forEach { Row1(it) }
+                    tab == TAB_ALL -> live.forEach { Row1(it) }
+                    tab == TAB_ARCHIVED -> shown.filter { groups.isArchived(it.id) }.forEach { Row1(it) }
+                    else -> {
+                        groups.groups.forEach { g ->
+                            val members = live.filter { groups.groupOf(it.id) == g.id }
+                            if (q.isNotEmpty() && members.isEmpty()) return@forEach
+                            Row(
+                                Modifier.fillMaxWidth().sizeIn(minHeight = metrics.touch).clickable { groups.toggle(g.id) }.testTag(ForumTags.group(g.id)),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Box(Modifier.testTag(ForumTags.groupToggle(g.id)).padding(horizontal = m.gap)) { Text(if (g.collapsed) "▸" else "▾", color = c.text2) }
+                                Text(g.name, color = c.text2, style = theme.type.style(theme.type.label, FontWeight.Bold), modifier = Modifier.weight(1f))
+                                Text(members.size.toString(), color = c.text2, style = theme.type.style(theme.type.label), modifier = Modifier.padding(end = m.gap))
+                            }
+                            if (!g.collapsed || q.isNotEmpty()) members.forEach { Row1(it) }
+                        }
+                        Text(strings.ungrouped, color = c.text2, style = theme.type.style(theme.type.label, FontWeight.Bold), modifier = Modifier.padding(horizontal = m.gap, vertical = m.small))
+                        live.filter { groups.groupOf(it.id) == null }.forEach { Row1(it) }
                     }
-                    if (!g.collapsed || q.isNotEmpty()) members.forEach { Row1(it) }
                 }
-                if (groups != null) Text(strings.ungrouped, color = c.text2, style = theme.type.style(theme.type.label, FontWeight.Bold), modifier = Modifier.padding(horizontal = m.gap, vertical = m.small))
-                shown.filter { groups == null || groups.groupOf(it.id) == null }.forEach { Row1(it) }
             }
-            if (groups != null) {
+            if (groups != null && tab == TAB_GROUPS) {
                 if (naming) Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(m.small)) {
                     BasicTextField(
                         value = name, onValueChange = { name = it }, singleLine = true,

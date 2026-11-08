@@ -278,13 +278,19 @@ class AiComposerTest {
         fun row(r: Int) = design.layout.filter { it.row == r }.map { it.id }
         assertEquals(listOf("plus"), row(0))
         assertEquals(listOf("task", "specialist", "agent", "model", "effort", "mode"), row(1))
-        assertEquals(listOf("repos", "skills", "mcp_kg", "mcp_infra", "mcp_user", "mcp_ext", "perf", "more"), row(2))
-        // The divider falls between (Task)(Specialist) and (Agent)(Model)(Effort)(Mode).
-        assertEquals(listOf("agent"), design.layout.filter { it.dividerBefore }.map { it.id })
-        // Every prior control keeps its label and icon in the layout; the single MCP control became the four buckets.
+        // Row 2: Plugins-Skills | KG-Store, KG-Cloud-apps | KG-Repos, KG-Cloud-infra, Plugins-Perf | More
+        assertEquals(listOf("skills", "kg_store", "kg_apps", "kg_repos", "kg_infra", "perf", "more"), row(2))
+        assertEquals(
+            listOf("Plugins-Skills", "KG-Store", "KG-Cloud-apps", "KG-Repos", "KG-Cloud-infra", "Plugins-Perf", "More"),
+            design.layout.filter { it.row == 2 }.map { it.label },
+        )
+        // Dividers: before Agent in row 1, then after Plugins-Skills, after KG-Cloud-apps, after Plugins-Perf in row 2.
+        assertEquals(listOf("agent", "kg_store", "kg_repos", "more"), design.layout.filter { it.dividerBefore }.map { it.id })
+        // Every prior control keeps its label and icon in the layout; the single MCP control became KG-Store / KG-Cloud-apps / KG-Cloud-infra.
         for (c in design.controls.filter { it.id != "mcp" }) assertEquals(c, design.layout.first { it.id == c.id }.copy(row = 1, dividerBefore = false))
         assertEquals(listOf("task", "specialist", "mode"), design.orderedLayout(listOf("mode", "specialist", "task", "mcp", "nonsense")).map { it.id })
-        assertEquals(design.mcpBuckets.map { it.control }, design.layout.map { it.id }.filter { it.startsWith("mcp_") })
+        assertEquals(design.mcpBuckets.map { it.control }.sorted(), listOf("kg_apps", "kg_infra", "kg_store"))
+        assertTrue(design.mcpBuckets.all { b -> design.layout.any { it.id == b.control } })
     }
 
     @Test fun pluginsAreSkillPluginsOrPerformancePlugins() {
@@ -299,19 +305,30 @@ class AiComposerTest {
         assertEquals("x-principles", items.getValue("principles").header)
     }
 
-    @Test fun everyMcpServerIsSortedIntoOneOfTheFourBuckets() {
-        assertEquals(listOf("kg", "infra", "user", "ext"), design.mcpBuckets.map { it.id })
-        assertEquals(listOf("mcp_kg", "mcp_infra", "mcp_user", "mcp_ext"), design.mcpBuckets.map { it.control })
+    @Test fun everyMcpServerIsSortedIntoOneOfTheThreeHomes() {
+        assertEquals(listOf("infra", "apps", "store"), design.mcpBuckets.map { it.id })
         fun b(n: String) = design.mcpBucket(n)!!.id
-        assertEquals("infra", b("cloudy-c3-mcp"))
-        assertEquals("infra", b("cloud-infra-mcp"))
-        for (n in listOf("cloudy-all-mcp", "cloudy-apps-communication-mcp", "cloudy-apps-drive-mcp", "cloudy-cgc-pub-mcp", "cloud-me-cgc-pvt-mcp", "cloudy-android-mcp", "cloud-vault-mcp")) assertEquals(n, "user", b(n))
-        for (n in listOf("google-personal-mcp", "google-workspace-mcp", "browser-mcp")) assertEquals(n, "ext", b(n))
-        assertEquals("kg", b("cloudy-kg-mcp"))
-        assertEquals("kg", b("neo4j-graph"))
-        // Every declared known server lands in the bucket that lists it, and the infra bucket has the one MCP there is so far.
+        for (n in listOf("cloudy-c3-mcp", "cloud-infra-mcp", "c3-infra-mcp")) assertEquals(n, "infra", b(n))
+        for (n in listOf("cloudy-all-mcp", "cloudy-apps-communication-mcp", "cloudy-apps-drive-mcp", "cloudy-cgc-pub-mcp", "cloud-me-cgc-pvt-mcp", "cloudy-android-mcp",
+            "cloud-superapp-mcp", "cloud-vault-mcp", "cloud-mattermost-mcp", "cloud-drive-mcp", "cloud-mail-mcp", "cloudy-kg-mcp")) assertEquals(n, "apps", b(n))
+        for (n in listOf("google-personal-mcp", "google-workspace-mcp", "browser-mcp", "neo4j-graph")) assertEquals(n, "store", b(n))
+        // Every declared known server lands in the bucket that lists it; infra has the one MCP there is so far.
         for (k in design.mcpBuckets) for (n in k.known) assertEquals(n, k.id, b(n))
         assertEquals(listOf("cloudy-c3-mcp"), design.mcpBuckets.first { it.id == "infra" }.known)
+    }
+
+    @Test fun kgStoreIsAFullTabbedPageDeclaredInTheDesign() {
+        assertEquals(listOf("web", "releases", "workspace", "personal", "other"), design.kgStoreTabs.map { it.id })
+        assertEquals(listOf("Web Search", "Store / Releases", "Google Workspace", "Google Personal", "Other internet MCPs"), design.kgStoreTabs.map { it.label })
+        assertEquals(listOf("google-workspace-mcp"), design.kgStoreTabs.first { it.id == "workspace" }.items.map { it.id })
+        assertEquals(listOf("google-personal-mcp"), design.kgStoreTabs.first { it.id == "personal" }.items.map { it.id })
+        assertTrue(design.kgStoreTabs.first { it.id == "other" }.dynamic)
+        assertTrue(design.kgStoreTabs.flatMap { it.items }.all { it.kind in listOf("web", "source", "mcp") })
+        assertEquals("", design.sourcesSentence(emptySet()))
+        assertEquals("Public sources to use for this session: fetch, news.", design.sourcesSentence(setOf("news", "fetch")))
+        val chat = AiChatState(FakeHost())
+        chat.toggleSource("fetch"); chat.toggleSource("news"); chat.toggleSource("fetch")
+        assertEquals(setOf("news"), chat.sourcesOn)
     }
 
     @Test fun nothingOfTheMoreSheetIsLostByTheReorganisation() {
@@ -329,7 +346,7 @@ class AiComposerTest {
     @Test fun exposedReposRideAsAStandingSentenceOrNothing() {
         assertEquals("", design.reposSentence(emptySet()))
         assertEquals("Repositories exposed to you for this session: a, b. Read code from these only.", design.reposSentence(setOf("b", "a")))
-        val decl = AiComposerDecl.parse("""{"app":"x","controls":["repos"],"repos":["r1","r2"]}""", design)
+        val decl = AiComposerDecl.parse("""{"app":"x","controls":["kg_repos"],"repos":["r1","r2"]}""", design)
         assertEquals(listOf("r1", "r2"), decl.repos)
         val chat = AiChatState(FakeHost())
         chat.toggleRepo("r1"); chat.toggleRepo("r2"); chat.toggleRepo("r1")

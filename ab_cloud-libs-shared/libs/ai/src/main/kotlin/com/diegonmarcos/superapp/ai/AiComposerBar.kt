@@ -58,13 +58,12 @@ internal fun controlGlyph(id: String): String = when (id) {
     "mcp" -> "🔌"
     "more" -> "⋮"
     "specialist" -> "🎓"
-    "repos" -> "📂"
-    "skills" -> "🧩"
-    "mcp_kg" -> "🕸"
-    "mcp_infra" -> "🛠"
-    "mcp_user" -> "👤"
-    "mcp_ext" -> "🌐"
-    "perf" -> "🚀"
+    "kg_repos" -> "📁"
+    "skills" -> "◆"
+    "kg_store" -> "🌎"
+    "kg_apps" -> "☁"
+    "kg_infra" -> "⚙"
+    "perf" -> "⚡"
     else -> "•"
 }
 
@@ -92,7 +91,7 @@ fun AiComposerBar(
     onAttach: ((String) -> Unit)? = null,
     /** The built-in Attach items (Files, Image, Camera) with the app's permission hooks; takes precedence over [onAttach]. */
     attach: AiAttachHost? = null,
-    /** Two toolbar rows (row 1: Task, Specialist | Agent, Model, Effort, Mode; row 2: Repos, Plugins, MCP buckets, More); (+) belongs to the host's input row. False = the one-row bar. */
+    /** Two toolbar rows (row 1: Task, Specialist | Agent, Model, Effort, Mode; row 2: Plugins-Skills | KG-Store, KG-Cloud-apps | KG-Repos, KG-Cloud-infra, Plugins-Perf | More); (+) belongs to the host's input row. False = the one-row bar. */
     twoRows: Boolean = false,
     /** The Specialist picker's entries (id to label), the selected id and the pick callback. */
     specialists: List<Pair<String, String>> = emptyList(),
@@ -124,9 +123,10 @@ fun AiComposerBar(
             "model" -> ModelControl(chat, theme, design, ctl, onCatalogue)
             "effort" -> EffortControl(chat, theme, design, ctl)
             "mode" -> ModeControl(chat, theme, design, ctl)
-            "repos" -> ReposControl(chat, theme, design, ctl, decl.repos)
+            "kg_repos" -> ReposControl(chat, theme, design, ctl, decl.repos)
+            "kg_store" -> KgStoreControl(chat, theme, design, ctl)
             "skills", "perf" -> ItemMenu(chat, theme, design, ctl, pickerGroups(design, if (ctl.id == "skills") "skill" else "performance"))
-            "mcp_kg", "mcp_infra", "mcp_user", "mcp_ext" -> McpBucketControl(chat, theme, design, ctl)
+            "kg_apps", "kg_infra" -> McpBucketControl(chat, theme, design, ctl)
             "mcp" -> McpControl(chat, theme, design, ctl)
             "more" -> MoreControl(chat, theme, design, ctl, shown.map { it.id }.toSet(), usageInTopBar)
         }
@@ -501,4 +501,12 @@ private fun McpBucketControl(chat: AiChatState, theme: AiTheme, design: AiDesign
             )
         }
     }
+}
+
+/** The KG-Store chip: opens the full tabbed KG-Store page in the chat's place; its label counts the sources and MCPs switched on there. */
+@Composable
+private fun KgStoreControl(chat: AiChatState, theme: AiTheme, design: AiDesign, ctl: AiControl) {
+    val named = design.kgStoreTabs.flatMap { it.items }.filter { it.kind == "mcp" }.map { it.id }.toSet()
+    val on = chat.sourcesOn.size + (if (chat.web) 1 else 0) + chat.mcpOn.count { design.mcpBucket(it)?.control == ctl.id || it in named }
+    Btn(ctl, theme, design, if (on == 0) ctl.label else "${ctl.label} $on") { chat.page = AiChatState.PAGE_KGSTORE }
 }

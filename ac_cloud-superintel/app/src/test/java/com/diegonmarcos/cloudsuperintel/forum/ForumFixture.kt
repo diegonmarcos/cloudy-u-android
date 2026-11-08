@@ -69,7 +69,7 @@ object ForumFixture {
     /** The composer declaration of the app (assets/ai/composer.json): every control the shared design has. */
     val composerDecl = AiComposerDecl(
         "cloud-superintel",
-        listOf("plus", "task", "specialist", "agent", "model", "effort", "mode", "repos", "skills", "mcp_kg", "mcp_infra", "mcp_user", "mcp_ext", "perf", "more"),
+        listOf("plus", "task", "specialist", "agent", "model", "effort", "mode", "skills", "kg_store", "kg_apps", "kg_repos", "kg_infra", "perf", "more"),
         repos = listOf("cloudy-u-android", "cloudy-t-infra"),
     )
 

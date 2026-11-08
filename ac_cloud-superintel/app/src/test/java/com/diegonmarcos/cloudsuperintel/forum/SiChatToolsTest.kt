@@ -23,6 +23,9 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.click
+import androidx.compose.ui.test.centerY
 import androidx.compose.ui.test.performTextInput
 import com.diegonmarcos.cloudsuperintel.Data
 import com.diegonmarcos.superapp.ai.AiAttachHost
@@ -119,6 +122,12 @@ class SiChatToolsTest {
 
     /** A node's rectangle in the root, unclipped (a control scrolled out of its row still has its place). */
     private fun rect(tag: String): Rect = compose.onNodeWithTag(tag).fetchSemanticsNode().let { Rect(it.positionInRoot, it.size.toSize()) }
+    /** The left edge of the one divider in toolbar row 1 (the toolbar has four in all: one here, three in row 2). */
+    private fun row1DividerLeft(): Float {
+        val r1 = rect(AiTags.toolbarRow(1))
+        return compose.onAllNodesWithTag(AiTags.TOOLBAR_DIVIDER).fetchSemanticsNodes().map { Rect(it.positionInRoot, it.size.toSize()) }.single { it.center.y in r1.top..r1.bottom }.left
+    }
+
     private fun left(tag: String) = rect(tag).left
     private fun top(tag: String) = rect(tag).top
     private fun bottom(tag: String) = rect(tag).bottom
@@ -127,7 +136,7 @@ class SiChatToolsTest {
     @Test fun composerCarriesTheWholeAiToolRow() {
         render()
         compose.onNodeWithTag(ForumTags.TOOLS_BAR).assertExists()
-        for (ctl in listOf("plus", "task", "specialist", "agent", "model", "effort", "mode", "repos", "skills", "mcp_kg", "mcp_infra", "mcp_user", "mcp_ext", "perf", "more")) {
+        for (ctl in listOf("plus", "task", "specialist", "agent", "model", "effort", "mode", "skills", "kg_store", "kg_apps", "kg_repos", "kg_infra", "perf", "more")) {
             compose.onNodeWithTag(AiTags.ctl(ctl)).assertExists()
         }
     }
@@ -162,8 +171,7 @@ class SiChatToolsTest {
 
     @Test fun dividerStandsBetweenSpecialistAndAgent() {
         render()
-        compose.onNodeWithTag(AiTags.TOOLBAR_DIVIDER).assertExists()
-        val d = left(AiTags.TOOLBAR_DIVIDER)
+        val d = row1DividerLeft()
         assertTrue(left(AiTags.ctl("specialist")) < d && d < left(AiTags.ctl("agent")))
         // Directly between them: nothing else sits in between.
         for (other in listOf("task", "model", "effort", "mode")) assertTrue(other, left(AiTags.ctl(other)) < left(AiTags.ctl("specialist")) || left(AiTags.ctl(other)) > left(AiTags.ctl("agent")))
@@ -176,29 +184,29 @@ class SiChatToolsTest {
     @Test fun eachToolbarRowCollapsesAndExpandsOnItsOwnAndRemembersIt() {
         render()
         compose.onNodeWithTag(AiTags.ctl("task")).assertExists()
-        compose.onNodeWithTag(AiTags.ctl("repos")).assertExists()
+        compose.onNodeWithTag(AiTags.ctl("kg_repos")).assertExists()
         // Collapse row 1 only.
         compose.onNodeWithTag(AiTags.rowToggle(1)).performClick()
         compose.onAllNodesWithTag(AiTags.ctl("task")).assertCountEquals(0)
         compose.onAllNodesWithTag(AiTags.ctl("mode")).assertCountEquals(0)
-        compose.onNodeWithTag(AiTags.ctl("repos")).assertExists()
+        compose.onNodeWithTag(AiTags.ctl("kg_repos")).assertExists()
         assertTrue(prefs.getBoolean(row1Key, false)); assertFalse(prefs.getBoolean(row2Key, false))
         // Collapse row 2 as well, then expand row 1 again: independent.
         compose.onNodeWithTag(AiTags.rowToggle(2)).performClick()
-        compose.onAllNodesWithTag(AiTags.ctl("repos")).assertCountEquals(0)
+        compose.onAllNodesWithTag(AiTags.ctl("kg_repos")).assertCountEquals(0)
         compose.onNodeWithTag(AiTags.rowToggle(1)).performClick()
         compose.onNodeWithTag(AiTags.ctl("task")).assertExists()
         compose.onAllNodesWithTag(AiTags.ctl("more")).assertCountEquals(0)
         assertFalse(prefs.getBoolean(row1Key, true)); assertTrue(prefs.getBoolean(row2Key, false))
         compose.onNodeWithTag(AiTags.rowToggle(2)).performClick()
-        for (c in listOf("repos", "skills", "mcp_kg", "mcp_infra", "mcp_user", "mcp_ext", "perf", "more")) compose.onNodeWithTag(AiTags.ctl(c)).assertExists()
+        for (c in listOf("skills", "kg_store", "kg_apps", "kg_repos", "kg_infra", "perf", "more")) compose.onNodeWithTag(AiTags.ctl(c)).assertExists()
     }
 
     @Test fun aRowCollapsedInAPreviousSessionStartsCollapsed() {
         prefs.edit().putBoolean(row2Key, true).commit()
         render()
         compose.onNodeWithTag(AiTags.ctl("task")).assertExists()
-        compose.onAllNodesWithTag(AiTags.ctl("repos")).assertCountEquals(0)
+        compose.onAllNodesWithTag(AiTags.ctl("kg_repos")).assertCountEquals(0)
         compose.onAllNodesWithTag(AiTags.ctl("more")).assertCountEquals(0)
         compose.onNodeWithTag(AiTags.rowToggle(2)).assertExists()
     }
@@ -230,6 +238,7 @@ class SiChatToolsTest {
         val app = org.robolectric.RuntimeEnvironment.getApplication()
         render(groups = AiSessionGroups.prefs(app, "t"))
         compose.onNodeWithTag(ForumTags.MENU).performClick()
+        compose.onNodeWithTag(ForumTags.allChatsTab("groups")).performClick()
         // Create a group.
         compose.onNodeWithTag(ForumTags.NEW_GROUP).performClick()
         compose.onNodeWithTag(ForumTags.GROUP_FIELD).performTextInput("Work")
@@ -256,6 +265,35 @@ class SiChatToolsTest {
         compose.onNodeWithTag(ForumTags.chatMenu("s-proofs")).performClick()
         compose.onNodeWithTag(ForumTags.ungroup("s-proofs")).performClick()
         assertEquals(null, AiSessionGroups.prefs(app, "t").groupOf("s-proofs"))
+    }
+
+    @Test fun drawerClosesOnTapOutsideAndOnTheCloseButtonAndHasAllGroupsArchivedTabs() {
+        val app = org.robolectric.RuntimeEnvironment.getApplication()
+        render(groups = AiSessionGroups.prefs(app, "t2"))
+        compose.onNodeWithTag(ForumTags.MENU).performClick()
+        for (t in listOf("all", "groups", "archived")) compose.onNodeWithTag(ForumTags.allChatsTab(t)).assertExists()
+        // Tap outside the drawer (on the scrim, right of it) closes it.
+        compose.onNodeWithTag(ForumTags.ALLCHATS_SCRIM).performTouchInput { click(androidx.compose.ui.geometry.Offset(width - 10f, centerY)) }
+        compose.onAllNodesWithTag(ForumTags.ALLCHATS).assertCountEquals(0)
+        // The close button does too.
+        compose.onNodeWithTag(ForumTags.MENU).performClick()
+        compose.onNodeWithTag(ForumTags.ALLCHATS_CLOSE).performClick()
+        compose.onAllNodesWithTag(ForumTags.ALLCHATS).assertCountEquals(0)
+    }
+
+    @Test fun archivingMovesAChatToTheArchivedTabAndItPersists() {
+        val app = org.robolectric.RuntimeEnvironment.getApplication()
+        render(groups = AiSessionGroups.prefs(app, "t3"))
+        compose.onNodeWithTag(ForumTags.MENU).performClick()
+        // All tab is first and lists every chat.
+        ForumFixture.sessionList().forEach { compose.onNodeWithTag(ForumTags.allChat(it.id)).assertExists() }
+        compose.onNodeWithTag(ForumTags.chatMenu("s-law")).performClick()
+        compose.onNodeWithTag(ForumTags.archive("s-law")).performClick()
+        compose.onAllNodesWithTag(ForumTags.allChat("s-law")).assertCountEquals(0)
+        compose.onAllNodesWithTag(ForumTags.session("s-law")).assertCountEquals(0)
+        compose.onNodeWithTag(ForumTags.allChatsTab("archived")).performClick()
+        compose.onNodeWithTag(ForumTags.allChat("s-law")).assertExists()
+        assertTrue(AiSessionGroups.prefs(app, "t3").isArchived("s-law"))
     }
 
     @Test fun topBarActionsAreIconOnlyWithContentDescriptions() {
@@ -287,23 +325,33 @@ class SiChatToolsTest {
         val r1 = rect(AiTags.toolbarRow(1))
         for (tag in row) assertTrue(tag, centerY(tag) in r1.top..r1.bottom)
         // A divider stands between (Task)(Specialist) and (Agent).
-        compose.onNodeWithTag(AiTags.TOOLBAR_DIVIDER).assertExists()
-        assertTrue(left(AiTags.ctl("specialist")) < left(AiTags.TOOLBAR_DIVIDER) && left(AiTags.TOOLBAR_DIVIDER) < left(AiTags.ctl("agent")))
+        assertTrue(left(AiTags.ctl("specialist")) < row1DividerLeft() && row1DividerLeft() < left(AiTags.ctl("agent")))
         // The (+) is not on the toolbar any more.
         assertTrue(centerY(AiTags.ctl("plus")) < r1.top)
     }
 
-    @Test fun toolbarRowTwoIsReposPluginsFourMcpBucketsPerformanceAndMore() {
+    @Test fun toolbarRowTwoIsSkillsStoreAppsReposInfraPerfMoreWithThreeDividers() {
         render()
-        val row = listOf("repos", "skills", "mcp_kg", "mcp_infra", "mcp_user", "mcp_ext", "perf", "more").map { AiTags.ctl(it) }
+        val ids = listOf("skills", "kg_store", "kg_apps", "kg_repos", "kg_infra", "perf", "more")
+        val row = ids.map { AiTags.ctl(it) }
         val xs = row.map { left(it) }
         assertEquals(xs.sorted(), xs)
         val r2 = rect(AiTags.toolbarRow(2))
         for (tag in row) assertTrue(tag, centerY(tag) in r2.top..r2.bottom)
         // Row 2 is a NEW row under row 1.
         assertTrue(r2.top >= bottom(AiTags.toolbarRow(1)) - 1f)
-        // The legacy single MCP chip is gone from the Cloud-SI toolbar (its servers are in the four buckets).
-        compose.onAllNodesWithTag(AiTags.ctl("mcp")).assertCountEquals(0)
+        // Three visible dividers in row 2 (after Plugins-Skills, after KG-Cloud-apps, after Plugins-Perf), each with real size, plus the one in row 1.
+        val dividers = compose.onAllNodesWithTag(AiTags.TOOLBAR_DIVIDER).fetchSemanticsNodes()
+        assertEquals(4, dividers.size)
+        val inRow2 = dividers.map { Rect(it.positionInRoot, it.size.toSize()) }.filter { it.center.y in r2.top..r2.bottom }.sortedBy { it.left }
+        assertEquals(3, inRow2.size)
+        for (d in inRow2) assertTrue(d.width > 0f && d.height > 0f)
+        fun x(id: String) = left(AiTags.ctl(id))
+        assertTrue(x("skills") < inRow2[0].left && inRow2[0].left < x("kg_store"))
+        assertTrue(x("kg_apps") < inRow2[1].left && inRow2[1].left < x("kg_repos"))
+        assertTrue(x("perf") < inRow2[2].left && inRow2[2].left < x("more"))
+        // The legacy single MCP chip and the old four-bucket chips are gone.
+        for (old in listOf("mcp", "mcp_kg", "mcp_user", "mcp_ext", "mcp_infra", "repos")) compose.onAllNodesWithTag(AiTags.ctl(old)).assertCountEquals(0)
     }
 
     @Test fun costIsOnTheTopBarNotOnTheToolbar() {
@@ -359,17 +407,66 @@ class SiChatToolsTest {
         for (n in absent) compose.onAllNodesWithTag(AiTags.mcp(n)).assertCountEquals(0)
     }
 
-    @Test fun cloudyInfraMcpsHoldTheOneInfraMcp() = bucket("mcp_infra", listOf("cloudy-c3-mcp"), listOf("cloudy-all-mcp", "google-workspace-mcp"))
+    @Test fun kgCloudInfraHoldsTheOneInfraMcp() = bucket("kg_infra", listOf("cloudy-c3-mcp"), listOf("cloudy-all-mcp", "google-workspace-mcp"))
 
-    @Test fun cloudyUserFacingMcpsHoldTheNonInfraCloudyOnes() =
-        bucket("mcp_user", listOf("cloudy-all-mcp", "cloudy-apps-drive-mcp", "cloudy-cgc-pub-mcp"), listOf("cloudy-c3-mcp", "google-personal-mcp"))
+    @Test fun kgCloudAppsHoldTheUserFacingCloudyMcps() = bucket(
+        "kg_apps", listOf("cloudy-all-mcp", "cloudy-apps-drive-mcp", "cloudy-apps-communication-mcp", "cloud-superapp-mcp", "cloud-mattermost-mcp"),
+        listOf("cloudy-c3-mcp", "google-personal-mcp"),
+    )
 
-    @Test fun nonCloudyMcpsHoldTheInternetOnes() =
-        bucket("mcp_ext", listOf("google-personal-mcp", "google-workspace-mcp"), listOf("cloudy-c3-mcp", "cloudy-all-mcp"))
+    @Test fun kgStoreOpensAFullTabbedPageNotASheet() {
+        render()
+        compose.onAllNodesWithTag(AiTags.KGSTORE_PAGE).assertCountEquals(0)
+        compose.onNodeWithTag(AiTags.ctl("kg_store")).performScrollTo().performClick()
+        compose.onNodeWithTag(AiTags.KGSTORE_PAGE).assertIsDisplayed()
+        // It replaces the thread like the Model Catalogue does (no input, no message list), under the same top bar.
+        compose.onAllNodesWithTag(ForumTags.INPUT).assertCountEquals(0)
+        compose.onNodeWithTag(ForumTags.TOP_BAR).assertIsDisplayed()
+        compose.onNodeWithTag(AiTags.KGSTORE_SEARCH).assertExists()
+        compose.onNodeWithTag(AiTags.KGSTORE_CLOSE).assertExists()
+        val tabs = listOf("web", "releases", "workspace", "personal", "other")
+        for (t in tabs) compose.onNodeWithTag(AiTags.kgTab(t)).assertExists()
+        assertEquals(tabs.map { left(AiTags.kgTab(it)) }.sorted(), tabs.map { left(AiTags.kgTab(it)) })
+        // The page is as wide as the thread, i.e. a page and not a dropdown.
+        assertTrue(rect(AiTags.KGSTORE_PAGE).width > rect(ForumTags.SURFACE).width / 2f)
+        // Web Search tab: the web switch and public sources; a source toggles and persists on the chat.
+        compose.onNodeWithTag(AiTags.kgItem("web-search")).assertExists()
+        compose.onNodeWithTag(AiTags.kgItem("fetch")).performClick()
+        assertEquals(setOf("fetch"), topicChat().sourcesOn)
+        compose.onNodeWithTag(AiTags.kgTab("workspace")).performClick()
+        compose.onNodeWithTag(AiTags.kgItem("google-workspace-mcp")).assertExists()
+        compose.onAllNodesWithTag(AiTags.kgItem("fetch")).assertCountEquals(0)
+        compose.onNodeWithTag(AiTags.kgTab("personal")).performClick()
+        compose.onNodeWithTag(AiTags.kgItem("google-personal-mcp")).assertExists()
+        compose.onNodeWithTag(AiTags.kgTab("releases")).performClick()
+        compose.onNodeWithTag(AiTags.kgItem("releases")).assertExists()
+        // The chip counts what is on, and Close returns to the chat.
+        compose.onNodeWithTag(AiTags.KGSTORE_CLOSE).performClick()
+        compose.onAllNodesWithTag(AiTags.KGSTORE_PAGE).assertCountEquals(0)
+        compose.onNodeWithTag(ForumTags.INPUT).assertExists()
+    }
+
+    @Test fun kgStoreSearchLooksAcrossEveryTab() {
+        render()
+        compose.onNodeWithTag(AiTags.ctl("kg_store")).performScrollTo().performClick()
+        compose.onNodeWithTag(AiTags.KGSTORE_SEARCH).performTextInput("gmail")
+        compose.onNodeWithTag(AiTags.kgItem("google-workspace-mcp")).assertExists()
+        compose.onNodeWithTag(AiTags.kgItem("google-personal-mcp")).assertExists()
+        compose.onAllNodesWithTag(AiTags.kgItem("fetch")).assertCountEquals(0)
+    }
+
+    @Test fun kgStoreOtherTabIsDeclaredOrListedInternetMcpsOnly() {
+        render()
+        compose.onNodeWithTag(AiTags.ctl("kg_store")).performScrollTo().performClick()
+        compose.onNodeWithTag(AiTags.kgTab("other")).performClick()
+        // Nothing Cloudy is offered here: the user-facing and infra MCPs live in their own pickers.
+        compose.onAllNodesWithTag(AiTags.kgItem("cloudy-all-mcp")).assertCountEquals(0)
+        compose.onAllNodesWithTag(AiTags.kgItem("cloudy-c3-mcp")).assertCountEquals(0)
+    }
 
     @Test fun reposPickerOffersTheDeclaredRepositories() {
         render()
-        compose.onNodeWithTag(AiTags.ctl("repos")).performScrollTo().performClick()
+        compose.onNodeWithTag(AiTags.ctl("kg_repos")).performScrollTo().performClick()
         for (r in ForumFixture.composerDecl.repos) compose.onNodeWithTag(AiTags.repo(r)).assertExists()
         compose.onNodeWithTag(AiTags.repo("cloudy-t-infra")).performClick()
         assertEquals(setOf("cloudy-t-infra"), topicChat().reposOn)
@@ -386,7 +483,7 @@ class SiChatToolsTest {
     /** The composer controls of the previous layout, each with a home in the new one: nothing was dropped. */
     @Test fun noPriorComposerControlWasLost() {
         val prior = listOf("plus", "task", "agent", "model", "effort", "mode", "mcp", "more")
-        val home = mapOf("mcp" to listOf("mcp_kg", "mcp_infra", "mcp_user", "mcp_ext"))
+        val home = mapOf("mcp" to listOf("kg_store", "kg_apps", "kg_infra"))
         render()
         for (c in prior) for (n in home[c] ?: listOf(c)) compose.onNodeWithTag(AiTags.ctl(n)).assertExists()
         // (+) menu: the attach kinds and New chat.
