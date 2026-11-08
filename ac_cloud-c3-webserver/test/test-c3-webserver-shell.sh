@@ -120,6 +120,24 @@ eq('N1 removed row disappears', S.tabsFrom(routes.filter(r => r.tab !== 'Home'))
 eq('N1 default tab is home', S.defaultTab(S.tabsFrom(routes)), 'home');
 eq('N1 nav buttons', (S.renderNav(S.tabsFrom(routes), 'home').match(/<button /g) || []).length, 3);
 eq('N1 tab from path', [S.tabFromPath('/__app__/tab/files'), S.tabFromPath('/__app__/'), S.tabFromPath('/files')], ['files', null, null]);
+// N2 the nav keeps its hooks (data-tab, .on, label text only) and carries the NavBarBottom icon-over-label cells
+const hnv = S.renderNav(S.tabsFrom(routes), 'home');
+eq('N2 on class only on the current tab', (hnv.match(/class="on"/g) || []).length, 1);
+eq('N2 every cell has an svg icon and a label span', [(hnv.match(/<svg /g) || []).length, (hnv.match(/<span>/g) || []).length], [3, 3]);
+eq('N2 data-tab ids', (hnv.match(/data-tab="[a-z]+"/g) || []), ['data-tab="pages"', 'data-tab="home"', 'data-tab="files"']);
+// H1 Home is the status cockpit, built from the data the server already serves
+const hpw = { server: true, keep_alive: false, running: true, content: true, sites: 1, ports: [], ssh_door: { port: 8024, wanted: false, explicit: null, state: 'listening', via: 'nix' } };
+const hsv = { app: 'C3', version_name: '1.2', endpoints: [{ name: 'emulated.app', port: 8002, role: 'drive', up: true }, { name: 'cloud.app', port: 8003, role: 'diag', up: false }], dns: { host: '127.0.0.1', port: 5354, answer: 'A 127.0.0.1' } };
+const hsshd = { keep_alive: true, doors: [{ id: 'nix', title: 'Nix', port: 8024, state: 'listening', control: { explicit: null } }, { id: 'termux', title: 'Termux', port: 8023, state: 'closed', control: { explicit: true } }] };
+const hserved = { rows: [{ id: 'emulated', name: 'Local', port: 8002, role: 'drive', serving: true }, { id: 'termux', name: 'Termux', port: 8100, role: 'external', serving: false, paused: true, app: 'not open' }], undeclared: { items: [] } };
+const habout = [{ macro: 'x', sections: [{ title: 'Memory', rows: [['Total RAM', '8 GB'], ['Available', '3 GB']] }, { title: 'Battery & Usage', rows: [['Level', '80%'], ['Status', 'Charging']] }, { title: 'App', rows: [['Server uptime', '5 min']] }] }];
+const hhome = S.renderHome({ power: hpw, health: { ok: true, pid: 7, uptime_s: 90 }, served: hserved, sshd: hsshd, serving: hsv, about: habout });
+for (const id of ['home-status', 'home-pages', 'home-sshd', 'home-ports', 'home-device', 'home-topology', 'id="power"']) if (!hhome.includes(id)) bad.push('H1 Home lacks ' + id);
+eq('H1 power switches still on Home', (hhome.match(/data-power="server"/g) || []).length, 1);
+eq('H1 a row per served page', (hhome.match(/data-home-page=/g) || []).length, 2);
+eq('H1 a row per sshd door', (hhome.match(/data-home-door=/g) || []).length, 2);
+eq('H1 device facts', S.deviceFacts(habout).map(f => f[1]), ['5 min', '3 GB free of 8 GB', null, '80% Charging', null]);
+if (!S.renderHealth({ ...hpw, server: false, running: false }, null, hsv).includes('admin page stays up')) bad.push('H1 OFF banner must say the admin page stays up');
 bad.forEach(b => console.log('    ' + b));
 process.exit(bad.length ? 1 : 0);
 JS

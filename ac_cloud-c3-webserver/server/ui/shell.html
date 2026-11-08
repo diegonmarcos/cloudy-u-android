@@ -5,15 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>cloud-c3-webserver</title>
 <style>
-  :root { --bg:#0b0e14; --panel:#131824; --line:#1e2634; --fg:#e6e9ef; --dim:#8b95a7; --acc:#7cc4ff; --nav:52px; --top:44px; }
+  :root { --bg:#0b0e14; --panel:#131824; --line:#1e2634; --fg:#e6e9ef; --dim:#8b95a7; --acc:#7cc4ff; --nav:84px; --top:52px; --glass:rgba(15,23,42,.70); --glass-line:rgba(255,255,255,.10); --nav-acc:#0A84FF; --nav-idle:#94A3B8; }
   * { box-sizing: border-box; }
   html, body { margin:0; background:var(--bg); color:var(--fg); font:14px/1.35 system-ui, sans-serif; }
-  /* The shell top row: pages start below it. */
-  header { position:fixed; top:0; left:0; right:0; z-index:4; height:calc(var(--top) + env(safe-area-inset-top)); padding:env(safe-area-inset-top) 12px 0; background:var(--bg); border-bottom:1px solid var(--line); display:flex; align-items:center; gap:10px; }
-  header h1 { font-size:15px; margin:0; font-weight:600; }
-  header .sub { flex:1; color:var(--dim); font-size:12px; }
-  #gear { background:none; border:1px solid var(--line); color:var(--dim); border-radius:8px; width:32px; height:32px; font:17px system-ui; padding:0; }
-  #gear.on { color:var(--acc); border-color:var(--acc); }
+  /* The shell top row = libs:ui-nav-bars NavBarTopFirstRow: 52 dp, NO fill and NO outline (the page shows through), a 20 dp title island
+     (14/7 padding, 13 sp semibold), plain 44 dp icon targets with a 24 dp glyph and no circle behind. */
+  header { position:fixed; top:0; left:0; right:0; z-index:4; height:calc(var(--top) + env(safe-area-inset-top)); padding:env(safe-area-inset-top) 4px 0 7px; background:var(--bg); border:0; display:flex; align-items:center; gap:4px; }
+  header h1 { font-size:13px; margin:0; font-weight:600; padding:7px 14px; border-radius:20px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  header .sub { flex:1; color:var(--nav-idle); font-size:12px; min-width:0; }
+  #gear { background:none; border:0; color:var(--nav-idle); border-radius:50%; width:44px; height:44px; font:24px/1 system-ui; padding:0; }
+  #gear.on { color:var(--nav-acc); }
   main { padding:calc(var(--top) + env(safe-area-inset-top) + 8px) 10px calc(var(--nav) + env(safe-area-inset-bottom) + 12px); }
   main.files { padding:0; }
   #fileview { display:block; width:100%; border:0; position:fixed; left:0; right:0; top:calc(var(--top) + env(safe-area-inset-top)); bottom:calc(var(--nav) + env(safe-area-inset-bottom)); height:calc(100% - var(--top) - var(--nav) - env(safe-area-inset-top) - env(safe-area-inset-bottom)); background:#fff; }
@@ -21,9 +22,18 @@
   .door .row .k { flex:0 0 34%; }
   .door h2 .badge.mesh { color:#7ee2a8; border-color:#7ee2a8; } .door h2 .badge.exposed { color:#fff; background:#c0392b; border-color:#c0392b; font-weight:600; }
   .door h2 .badge.up { color:#7ee2a8; border-color:#7ee2a8; } .door h2 .badge.down { color:#ff8a8a; border-color:#ff8a8a; }
-  nav { position:fixed; left:0; right:0; bottom:0; z-index:4; height:calc(var(--nav) + env(safe-area-inset-bottom)); display:flex; background:var(--panel); border-top:1px solid var(--line); padding-bottom:env(safe-area-inset-bottom); }
-  nav button { flex:1; background:none; border:0; color:var(--dim); font:12px system-ui; padding:6px 0; }
-  nav button.on { color:var(--acc); font-weight:600; }
+  /* The bottom nav = libs:ui-nav-bars NavBarBottom: a 64 dp glass pill (radius 32, hairline) inset 16 dp from the sides, 20 dp above the bottom,
+     at most 440 dp wide; 56 dp cells with a 24 dp icon lifted 6 dp and a 12 sp medium label 4 dp from the cell bottom; the selected item takes the
+     accent, the rest the idle ink. Scrolled down it collapses to 52 dp: only the selected label stays. */
+  nav { position:fixed; left:16px; right:16px; max-width:440px; margin:0 auto; bottom:calc(20px + env(safe-area-inset-bottom)); z-index:4; height:64px; display:flex; align-items:center; justify-content:space-around; padding:0 8px; border-radius:32px; background:var(--glass); border:1px solid var(--glass-line); -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px); transition:height .2s; }
+  nav button { position:relative; flex:1; min-width:0; max-width:56px; height:56px; background:none; border:0; border-radius:50%; color:var(--nav-idle); font:500 12px system-ui; padding:0; -webkit-tap-highlight-color:transparent; transition:height .2s; }
+  nav button svg { position:absolute; left:50%; top:50%; width:24px; height:24px; margin:-12px 0 0 -12px; transform:translateY(-6px); transition:transform .2s; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+  nav button span { position:absolute; left:0; right:0; bottom:4px; text-align:center; white-space:nowrap; overflow:visible; transition:opacity .2s; }
+  nav button.on { color:var(--nav-acc); font-weight:500; }
+  nav.collapsed { height:52px; }
+  nav.collapsed button { height:44px; }
+  nav.collapsed button:not(.on) svg { transform:none; }
+  nav.collapsed button:not(.on) span { opacity:0; }
   section { background:var(--panel); border:1px solid var(--line); border-radius:10px; margin-bottom:8px; overflow:hidden; }
   section h2 { font-size:12px; margin:0; padding:6px 10px; color:var(--dim); text-transform:uppercase; letter-spacing:.04em; border-bottom:1px solid var(--line); }
   .row { display:flex; gap:10px; padding:6px 10px; border-bottom:1px solid var(--line); word-break:break-word; }
@@ -97,12 +107,16 @@
   #sheet button.ch { display:block; width:100%; margin:6px 0; min-height:44px; background:var(--bg); color:var(--acc); border:1px solid var(--line); border-radius:10px; font:600 14px system-ui; }
   #sheet label { display:flex; gap:8px; align-items:center; color:var(--dim); font-size:13px; margin:8px 0 2px; }
   #sheet button.cancel { background:none; border:0; color:var(--dim); width:100%; min-height:40px; font:14px system-ui; }
+  /* Home = the status cockpit. */
+  .stat h2 { display:flex; align-items:center; gap:6px; } .stat .row { align-items:center; }
+  .stat .big { font-weight:600; }
+  .strip { display:flex; flex-wrap:wrap; gap:6px 14px; padding:8px 10px; }
+  .strip .it { min-width:0; } .strip .it .k { color:var(--dim); font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; display:block; }
+  .strip .it .v { font-size:13px; }
   /* Desktop: the phone layout, centred in a readable column; the tab bar stays at the bottom, centred. */
   @media (min-width:900px) {
     main { max-width:960px; margin:0 auto; }
-    header { padding-left:max(12px, calc((100vw - 960px) / 2 + 10px)); padding-right:max(12px, calc((100vw - 960px) / 2 + 10px)); }
-    nav { justify-content:center; }
-    nav button { flex:0 0 160px; }
+    header { padding-left:max(7px, calc((100vw - 960px) / 2 + 7px)); padding-right:max(4px, calc((100vw - 960px) / 2)); }
     .row .k { flex-basis:30%; }
   }
 </style>
@@ -136,9 +150,20 @@ function defaultTab(tabs) {
   var home = tabs.filter(function (t) { return t.id === 'home'; })[0];
   return home ? home.id : (tabs[0] ? tabs[0].id : null);
 }
+// NavBarBottom look: an icon (inline SVG, no text) over the label; the icon is a decoration keyed by the tab id, never the tab set.
+var NAV_ICONS = {
+  pages: '<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5"/>',
+  api: '<path d="M8 8l-4 4 4 4M16 8l4 4-4 4M13.5 6l-3 12"/>',
+  home: '<path d="M4 11l8-7 8 7"/><path d="M6 10v10h12V10"/>',
+  sshd: '<rect x="3.5" y="5" width="17" height="14" rx="2"/><path d="M7 10l3 2-3 2M12 15h5"/>',
+  configs: '<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/>'
+};
+function navIcon(id) {
+  return '<svg viewBox="0 0 24 24" aria-hidden="true">' + (NAV_ICONS[id] || '<circle cx="12" cy="12" r="6"/>') + '</svg>';
+}
 function renderNav(tabs, current) {
   return tabs.map(function (t) {
-    return '<button data-tab="' + esc(t.id) + '"' + (t.id === current ? ' class="on"' : '') + '>' + esc(t.label) + '</button>';
+    return '<button data-tab="' + esc(t.id) + '"' + (t.id === current ? ' class="on"' : '') + '>' + navIcon(t.id) + '<span>' + esc(t.label) + '</span></button>';
   }).join('');
 }
 // Pages and API tabs: one section, one row per route of that kind.
@@ -480,11 +505,87 @@ function renderSubPage(p) {
   }).join('');
   return '<div class="sub">' + (p.note ? '<div class="note">' + esc(p.note) + '</div>' : '') + groups + (p.form ? renderForm(p.form) : '') + '</div>';
 }
+// Home = the STATUS cockpit (one scrolling page). Every renderer maps JSON the server already serves to HTML; nothing is invented here.
+function dot(up) { return '<span class="dot ' + (up ? 'up' : 'down') + '"></span>'; }
+// Master banner: /__app__/api/power (switches, running, content, sites, ports) + /__api__/health (pid, uptime_s; null when unreachable) + /__app__/api/serving (version).
+function renderHealth(pw, health, sv) {
+  var on = !!pw.server, ok = !!(health && health.ok);
+  var state = on ? (pw.running ? 'Server ON, serving' : 'Server ON, starting') : 'Server OFF: pages, sshd, DNS and sites stopped; this admin page stays up';
+  var ver = sv && sv.version_name ? sv.app + ' ' + sv.version_name : '-';
+  return '<section class="stat" id="home-status"><h2>Status<span class="badge ' + (on ? 'g' : '') + '">' + (on ? 'ON' : 'OFF') + '</span></h2>' +
+    '<div class="row"><div class="k">' + dot(on && pw.running) + ' State</div><div class="v big">' + esc(state) + '</div></div>' +
+    '<div class="row"><div class="k">Version</div><div class="v">' + esc(ver) + '</div></div>' +
+    '<div class="row"><div class="k">Uptime</div><div class="v">' + (health && health.uptime_s !== undefined ? esc(fmtUp(health.uptime_s)) + ' (pid ' + esc(String(health.pid)) + ')' : '-') + '</div></div>' +
+    '<div class="row"><div class="k">Health</div><div class="v">' + (health ? (ok ? 'ok' : 'not ok') : 'not answering (Server OFF stops :8003)') + '</div></div>' +
+    '<div class="row"><div class="k">Keep alive</div><div class="v">' + (pw.keep_alive ? 'ON' : 'OFF') + ' &middot; ' + esc(String(pw.sites)) + ' active sites</div></div></section>';
+}
+// Served pages: /__app__/api/served rows, a reachable light each.
+function renderServedStrip(pg) {
+  var rows = pg.rows.map(function (r) {
+    var on = r.serving === true;
+    return '<div class="row" data-home-page="' + esc(r.id) + '"><div class="k">' + dot(on) + ' ' + esc(r.name) + '</div><div class="v">:' + esc(r.port) + ' &middot; ' + esc(r.role) + ' &middot; ' +
+      (on ? 'serving' : (r.paused ? 'stopped' : 'not serving')) + (r.app ? ' &middot; app ' + esc(r.app) : '') + '</div></div>';
+  }).join('');
+  var und = pg.undeclared && pg.undeclared.items ? pg.undeclared.items.length : 0;
+  return '<section class="stat" id="home-pages"><h2>Served pages &middot; ' + pg.rows.length + '<span class="spc"></span><a href="#" data-goto="pages">Pages &rsaquo;</a></h2>' + rows +
+    '<div class="row"><div class="k">Undeclared ports</div><div class="v">' + und + '</div></div></section>';
+}
+// SSHd engines: /__app__/api/sshd doors (nix 8024, termux 8023, webserver 8025) with state and keep-alive.
+function renderSshdStrip(d) {
+  var rows = d.doors.map(function (x) {
+    var up = x.state === 'listening' || x.state === 'connected';
+    var own = x.control && x.control.explicit !== null && x.control.explicit !== undefined;
+    return '<div class="row" data-home-door="' + esc(x.id) + '"><div class="k">' + dot(up) + ' ' + esc(x.title) + '</div><div class="v">' +
+      (x.port === null || x.port === undefined ? 'no port' : 'tcp ' + esc(String(x.port))) + ' &middot; ' + esc(x.state) + ' &middot; ' + (own ? 'own switch' : 'follows keep alive') + '</div></div>';
+  }).join('');
+  return '<section class="stat" id="home-sshd"><h2>SSHd engines &middot; keep alive ' + (d.keep_alive ? 'ON' : 'OFF') + '<span class="spc"></span><a href="#" data-goto="sshd">SSHd &rsaquo;</a></h2>' + rows + '</section>';
+}
+// Ports and DNS: /__app__/api/serving ("answers now").
+function renderPortsStrip(sv) {
+  var rows = sv.endpoints.map(function (e) {
+    return '<div class="row"><div class="k">' + dot(e.up === true) + ' ' + esc(e.name) + '</div><div class="v">127.0.0.1:' + esc(String(e.port)) + ' &middot; ' + esc(e.role) +
+      (e.up === true ? ' &middot; answering now' : (e.up === false ? ' &middot; not answering' : '')) + '</div></div>';
+  }).join('');
+  return '<section class="stat" id="home-ports"><h2>Ports &amp; DNS</h2>' + rows +
+    '<div class="row"><div class="k">DNS</div><div class="v">udp ' + esc(sv.dns.host) + ':' + esc(String(sv.dns.port)) + ' &middot; ' + esc(sv.dns.answer) + '</div></div></section>';
+}
+// Device strip: the key About groups (uptime, memory, storage, battery, network) as one compact strip. `groups` is /__app__/api/about.
+function deviceFacts(groups) {
+  var sec = function (title) {
+    var hit = null;
+    groups.forEach(function (g) { g.sections.forEach(function (s) { if (!hit && s.title === title) hit = s; }); });
+    return hit;
+  };
+  var val = function (s, key) { var r = s && s.rows.filter(function (kv) { return kv[0] === key; })[0]; return r ? String(r[1]) : null; };
+  var first = function (s) { return s && s.rows.length ? s.rows[0][0] + ' ' + s.rows[0][1] : null; };
+  var up = val(sec('App'), 'Server uptime') || val(sec('Kernel'), 'System uptime');
+  groups.forEach(function (g) { g.sections.forEach(function (s) { up = up || val(s, 'Server uptime'); }); });
+  var mem = sec('Memory'), bat = sec('Battery & Usage');
+  var ram = mem && val(mem, 'Available') ? val(mem, 'Available') + ' free of ' + val(mem, 'Total RAM') : null;
+  var batt = bat && val(bat, 'Level') ? val(bat, 'Level') + (val(bat, 'Status') ? ' ' + val(bat, 'Status') : '') : null;
+  return [['Uptime', up], ['Memory', ram], ['Storage', first(sec('Storage'))], ['Battery', batt], ['Network', first(sec('Network'))]];
+}
+function renderDeviceStrip(groups) {
+  var items = deviceFacts(groups).map(function (f) {
+    return '<div class="it"><span class="k">' + esc(f[0]) + '</span><span class="v">' + esc(f[1] === null || f[1] === undefined ? '-' : f[1]) + '</span></div>';
+  }).join('');
+  return '<section class="stat" id="home-device"><h2>Device<span class="spc"></span><a href="#" data-goto="configs">Full report &rsaquo;</a></h2><div class="strip">' + items + '</div>' +
+    '<div class="tool"><button data-copy-about>Copy All Infos</button></div></section>';
+}
+// Link to the API topology page (the topology page is a later task: the link opens the API tab for now).
+function renderTopologyLink() {
+  return '<section class="stat" id="home-topology"><h2>API topology</h2><div class="row"><div class="k">Topology</div><div class="v"><a href="#" data-goto="api">Open the API topology &rsaquo;</a> <span class="sum">(the topology view is a separate page, linked here)</span></div></div></section>';
+}
+function renderHome(m) {
+  return renderHealth(m.power, m.health, m.serving) + renderPower(m.power) + renderServedStrip(m.served) + renderSshdStrip(m.sshd) +
+    renderPortsStrip(m.serving) + renderDeviceStrip(m.about) + renderTopologyLink();
+}
 if (typeof module !== 'undefined') {
   module.exports = { esc: esc, tabsFrom: tabsFrom, tabFromPath: tabFromPath, defaultTab: defaultTab, renderNav: renderNav, renderRoutes: renderRoutes,
     renderSections: renderSections, renderAbout: renderAbout, aboutText: aboutText, renderConfig: renderConfig, renderPages: renderPages, renderPage: renderPage, renderUndeclared: renderUndeclared,
     renderCfgTabs: renderCfgTabs, renderServing: renderServing, renderEngines: renderEngines, hostIsLocal: hostIsLocal, classifyLink: classifyLink,
     isLinkTarget: isLinkTarget, embedUrl: embedUrl, subsOf: subsOf, renderSubNav: renderSubNav, renderSubRow: renderSubRow, renderForm: renderForm, renderSubPage: renderSubPage, decide: decide, renderSheet: renderSheet, renderLinks: renderLinks,
+    renderHealth: renderHealth, renderServedStrip: renderServedStrip, renderSshdStrip: renderSshdStrip, renderPortsStrip: renderPortsStrip, deviceFacts: deviceFacts, renderDeviceStrip: renderDeviceStrip, renderTopologyLink: renderTopologyLink, renderHome: renderHome,
     renderPower: renderPower, renderMeshOnly: renderMeshOnly, renderSshd: renderSshd, renderDoor: renderDoor, doorsText: doorsText };
 }
 </script>
@@ -602,7 +703,13 @@ if (typeof module !== 'undefined') {
   var views = {
     pages: function () { return j('/__app__/api/served').then(function (pg) { return renderPages(pg); }); },
     api: function () { return withSubs('api', 'apps', function () { return Promise.resolve(renderRoutes(ROUTES, 'api')); }); },
-    home: function () { return Promise.all([j('/__app__/api/power'), j('/__app__/api/about')]).then(function (rs) { ABOUT = rs[1]; return renderPower(rs[0]) + renderAbout(ABOUT); }); },
+    home: function () {
+      var opt = function (p) { return p.catch(function () { return null; }); };
+      return Promise.all([j('/__app__/api/power'), j('/__app__/api/about'), opt(j('/__api__/health')), j('/__app__/api/served'), j('/__app__/api/sshd'), j('/__app__/api/serving')]).then(function (rs) {
+        ABOUT = rs[1]; DOORS = rs[4];
+        return renderHome({ power: rs[0], about: rs[1], health: rs[2], served: rs[3], sshd: rs[4], serving: rs[5] });
+      });
+    },
     sshd: function () { return j('/__app__/api/sshd').then(function (d) { DOORS = d; return renderSshd(d); }); },
     configs: function () {
       var head = renderCfgTabs(cfgPage);
@@ -659,6 +766,14 @@ if (typeof module !== 'undefined') {
       dl.innerHTML = r.repos.map(function (p) { return '<option value="' + esc(p) + '">'; }).join('');
     }).catch(function () {});
   }
+  // NavBarBottom's scroll collapse: scrolling down folds the non-selected labels and shrinks the bar; scrolling up (or the top) restores it.
+  var lastY = 0;
+  window.addEventListener('scroll', function () {
+    var y = window.pageYOffset || 0;
+    if (Math.abs(y - lastY) < 6) return;
+    $nav.classList.toggle('collapsed', y > lastY && y > 40);
+    lastY = y;
+  }, { passive: true });
   function refreshTab() { var on = document.querySelector('nav button.on'); if (on) show(on.getAttribute('data-tab'), false); }
   $main.addEventListener('change', function (ev) {
     var box = ev.target.closest('.form');

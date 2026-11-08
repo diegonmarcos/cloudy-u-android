@@ -75,7 +75,7 @@ check('P0a', JSON.stringify(d.tabs) === JSON.stringify(['Pages', 'API', 'Home', 
 check('P0b', d.on === 'Home', `the app opens on Home (selected: ${d.on})`);
 
 const tabs = [['Pages', 'pages', `document.querySelector('.served')`], ['API', 'api', `document.querySelector('main section .row')`],
-  ['Home', 'home', `document.querySelector('#about-index')`], ['Configs', 'configs-about', `document.querySelector('.seg')`]];
+  ['Home', 'home', `document.querySelector('#home-status')`], ['Configs', 'configs-about', `document.querySelector('.seg')`]];
 for (const [label, name, ready] of tabs) {
   await evalJs(`[...document.querySelectorAll('nav button')].find((b) => b.innerText.trim() === ${JSON.stringify(label)}).click()`);
   await until(`document.querySelector('nav button.on') && document.querySelector('nav button.on').innerText.trim() === ${JSON.stringify(label)} && ${ready}`);
