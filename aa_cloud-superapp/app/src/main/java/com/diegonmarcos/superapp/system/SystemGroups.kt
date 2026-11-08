@@ -46,8 +46,17 @@ object SystemGroups {
     fun probeCmd(id: String): String? = XrayProbes.all.firstOrNull { it.id == id }?.cmd
 
     /** The probe's output, or null when no ADB channel answered (not armed, refused, timed out). Blocking: call off the main thread. */
-    fun adb(ctx: Context, probeId: String): String? =
-        probeCmd(probeId)?.let { cmd -> runCatching { ShellBroker.execText(ctx, cmd) }.getOrNull() }?.takeIf { it.isNotBlank() }
+    fun adb(ctx: Context, probeId: String): String? {
+        val now = System.currentTimeMillis()
+        probeCache[probeId]?.takeIf { now - it.first < PROBE_TTL_MS }?.let { return it.second }
+        val out = probeCmd(probeId)?.let { cmd -> runCatching { ShellBroker.execText(ctx, cmd) }.getOrNull() }?.takeIf { it.isNotBlank() }
+        if (out != null) probeCache[probeId] = now to out
+        return out
+    }
+
+    /** Several groups share one probe (batterystats, gfxinfo): one read serves them all while the dropdown is open. */
+    private const val PROBE_TTL_MS = 10_000L
+    private val probeCache = java.util.concurrent.ConcurrentHashMap<String, Pair<Long, String>>()
 
     // ── Memory ──
 
@@ -120,8 +129,6 @@ object SystemGroups {
     fun cpu(ctx: Context): List<DdLine> {
         val out = ArrayList<DdLine>()
         val cores = Runtime.getRuntime().availableProcessors()
-        val soc = if (Build.VERSION.SDK_INT >= 31) "${Build.SOC_MANUFACTURER} ${Build.SOC_MODEL}" else Build.HARDWARE
-        out += DdLine("Cores", "$cores · ${Build.SUPPORTED_ABIS.firstOrNull() ?: "—"} · $soc")
         SysfsProc.cpuLoad()?.let { c ->
             out += DdLine("Load 1m / 5m / 15m", String.format(Locale.US, "%.2f / %.2f / %.2f (%.1fx per core)", c.loadAvg1m, c.loadAvg5m, c.loadAvg15m, c.loadAvg1m / c.cores.coerceAtLeast(1)))
             out += DdLine("Usage", "${(c.busyFraction * 100).toInt()}% busy over ${c.cores} cores")
@@ -140,16 +147,34 @@ object SystemGroups {
 
     // ── Graphics ──
 
-    fun graphics(ctx: Context): List<DdLine> {
+    /** Live graphics: the home window's FPS (the dropdown appends the gfxinfo frame stats when ADB is up). */
+    fun graphics(ctx: Context): List<DdLine> = listOf(DdLine("FPS (home window)", FpsMeter.fps.toString()))
+
+    // ── ① Profile (static machine) ──
+
+    fun device(ctx: Context): List<DdLine> = listOf(
+        DdLine("Model", "${Build.MANUFACTURER} ${Build.MODEL}"),
+        DdLine("Android", "${Build.VERSION.RELEASE} · SDK ${Build.VERSION.SDK_INT} · patch ${Build.VERSION.SECURITY_PATCH}"),
+        DdLine("Build", "${Build.ID} · ${Build.VERSION.INCREMENTAL}"),
+        DdLine("Uptime", android.os.SystemClock.elapsedRealtime().let { ms -> String.format(Locale.US, "%dd %dh %dm", ms / 86_400_000, ms / 3_600_000 % 24, ms / 60_000 % 60) }),
+    )
+
+    fun soc(ctx: Context): List<DdLine> {
         val out = ArrayList<DdLine>()
-        out += DdLine("FPS (home window)", FpsMeter.fps.toString())
-        runCatching {
-            val d = (ctx.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager).getDisplay(android.view.Display.DEFAULT_DISPLAY)
-            val m = d.mode
-            out += DdLine("Display", "${m.physicalWidth}x${m.physicalHeight} · ${String.format(Locale.US, "%.0f", d.refreshRate)} Hz")
-            out += DdLine("Refresh modes", d.supportedModes.map { Math.round(it.refreshRate) }.distinct().sorted().joinToString(" / ") { "$it Hz" })
-            out += DdLine("Density", "${ctx.resources.displayMetrics.densityDpi} dpi")
-        }
+        val cores = Runtime.getRuntime().availableProcessors()
+        val soc = if (Build.VERSION.SDK_INT >= 31) "${Build.SOC_MANUFACTURER} ${Build.SOC_MODEL}" else Build.HARDWARE
+        out += DdLine("Cores", "$cores · ${Build.SUPPORTED_ABIS.firstOrNull() ?: "—"} · $soc")
+        val maxes = (0 until cores).map { i -> safe("max") { File("/sys/devices/system/cpu/cpu$i/cpufreq/cpuinfo_max_freq").readText().trim().toLong() / 1000 } }
+        val known = maxes.filterNotNull()
+        if (known.isNotEmpty()) out += DdLine("Clusters (max MHz)", known.groupingBy { it }.eachCount().toSortedMap().entries.joinToString(" · ") { "${it.value}x ${it.key}" })
+        else out += DdLine("Clusters", "n/a (kernel hides cpufreq)")
+        safe("gov") { File("/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor").readText().trim() }?.let { out += DdLine("Governor", it) }
+        return out
+    }
+
+    fun gpu(ctx: Context): List<DdLine> {
+        val out = ArrayList<DdLine>()
+        out += DdLine("GPU / board", "${Build.HARDWARE} · ${Build.BOARD}")
         runCatching {
             val am = ctx.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
             out += DdLine("OpenGL ES", am.deviceConfigurationInfo.glEsVersion)
@@ -158,8 +183,45 @@ object SystemGroups {
             val v = ctx.packageManager.systemAvailableFeatures.firstOrNull { it.name == PackageManager.FEATURE_VULKAN_HARDWARE_VERSION }?.version
             out += DdLine("Vulkan", if (v == null) "none" else "${(v shr 22) and 0x3ff}.${(v shr 12) and 0x3ff}")
         }
-        out += DdLine("GPU / board", "${Build.HARDWARE} · ${Build.BOARD}")
         return out
+    }
+
+    fun display(ctx: Context): List<DdLine> {
+        val out = ArrayList<DdLine>()
+        runCatching {
+            val d = (ctx.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager).getDisplay(android.view.Display.DEFAULT_DISPLAY)
+            val m = d.mode
+            out += DdLine("Display", "${m.physicalWidth}x${m.physicalHeight} · ${String.format(Locale.US, "%.0f", d.refreshRate)} Hz")
+            out += DdLine("Refresh modes", d.supportedModes.map { Math.round(it.refreshRate) }.distinct().sorted().joinToString(" / ") { "$it Hz" })
+            out += DdLine("Density", "${ctx.resources.displayMetrics.densityDpi} dpi")
+        }
+        return out
+    }
+
+    fun capacity(ctx: Context): List<DdLine> {
+        val out = ArrayList<DdLine>()
+        runCatching {
+            val am = ctx.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+            out += DdLine("RAM total", bytes(ActivityManager.MemoryInfo().also { am.getMemoryInfo(it) }.totalMem))
+        }
+        val total = safe("t") { (ctx.getSystemService(Context.STORAGE_STATS_SERVICE) as? StorageStatsManager)?.getTotalBytes(StorageManager.UUID_DEFAULT) }
+        out += DdLine("Storage total", total?.let { bytes(it) } ?: "—")
+        return out
+    }
+
+    // ── ② Runtime: battery vitals ──
+
+    fun battery(ctx: Context): List<DdLine> {
+        val b = ctx.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED)) ?: return listOf(DdLine("Battery", "—"))
+        val lvl = b.getIntExtra(BatteryManager.EXTRA_LEVEL, -1); val scale = b.getIntExtra(BatteryManager.EXTRA_SCALE, 100)
+        val st = b.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
+        val charging = st == BatteryManager.BATTERY_STATUS_CHARGING || st == BatteryManager.BATTERY_STATUS_FULL
+        val t = b.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, Int.MIN_VALUE)
+        return listOf(
+            DdLine("Level", if (lvl < 0) "—" else "${lvl * 100 / scale.coerceAtLeast(1)}%"),
+            DdLine("Charging", if (charging) "yes" else "no"),
+            DdLine("Temperature", if (t == Int.MIN_VALUE) "—" else "${t / 10.0} C"),
+        )
     }
 
     // ── ADB groups ──
@@ -170,10 +232,31 @@ object SystemGroups {
         val lines = when (groupId) {
             "running_services" -> DumpsysParsers.runningServices(text, rows)
             "memory_3h" -> DumpsysParsers.memory3h(text, rows)
+            "thermal" -> DumpsysParsers.thermalFull(text).take(rows)
+            "wakelocks" -> DumpsysParsers.wakelockLines(text, rows, label)
+            "power_by_uid" -> DumpsysParsers.uidActivityLines(text, rows, label)
+            "alarms" -> DumpsysParsers.alarmLines(text, rows)
+            "jobs" -> DumpsysParsers.jobLines(text, rows)
+            "jank" -> DumpsysParsers.gfxinfoJank(text)
+            "notif_rate" -> DumpsysParsers.notifications(text, rows)
+            "binder" -> DumpsysParsers.binder(text, rows, label)
+            "meminfo_detail" -> DumpsysParsers.meminfoDetail(text, rows)
+            "anr" -> DumpsysParsers.anrLines(text, rows)
             "since_charge_usage" -> DumpsysParsers.usageInfos(DumpsysParsers.batteryStats(text), label)
             "since_charge_apps" -> DumpsysParsers.perApp(DumpsysParsers.batteryStats(text), rows, label)
             else -> emptyList()
         }
         return lines.ifEmpty { listOf(DdLine("Status", "no data in the dump")) }
+    }
+
+    /** ④ Suspects: the cross-family ranking over the probes it needs (each cached for the open), one line per suspect: score, why. Null with no ADB. */
+    fun suspectLines(ctx: Context, rows: Int): List<DdLine>? {
+        val raw = LinkedHashMap<String, String>()
+        for (id in listOf("batterystats", "packages", "services", "alarm", "jobs", "notification", "gfxinfo")) adb(ctx, id)?.let { raw[id] = it }
+        if (raw["batterystats"] == null && raw["notification"] == null) return null
+        return com.diegonmarcos.superapp.xray.XrayAnalyze.suspects(raw, rows).map {
+            DdLine("#${it.rank} ${it.pkg.removePrefix("com.diegonmarcos.").take(26)}",
+                String.format(Locale.US, "%.0f pts · %s · %s", it.score, it.cause, it.detail.substringBefore(';').removePrefix("why: ")))
+        }
     }
 }

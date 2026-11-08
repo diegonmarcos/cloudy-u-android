@@ -1,5 +1,6 @@
 package com.diegonmarcos.superapp.system
 
+import com.diegonmarcos.superapp.xray.XrayAnalyze
 import java.util.Locale
 
 /** One label/value line of a dropdown group. */
@@ -161,4 +162,235 @@ object DumpsysParsers {
     /** `Temperature{mValue=36.5, mType=3, mName=skin, ...}` of `dumpsys thermalservice`. */
     fun thermal(text: String): List<DdLine> =
         Regex("""Temperature\{mValue=(-?[\d.]+), mType=\d+, mName=([^,}]+)""").findAll(text).map { DdLine(it.groupValues[2], "${it.groupValues[1]} C") }.distinctBy { it.label }.toList()
+
+    private fun short(name: String) = name.removePrefix("com.diegonmarcos.")
+
+    /** `dumpsys thermalservice`, in full: the throttling status, every sensor (with its throttle level when above none) and the cooling devices. */
+    fun thermalFull(text: String): List<DdLine> {
+        val out = ArrayList<DdLine>()
+        val names = listOf("none", "light", "moderate", "severe", "critical", "emergency", "shutdown")
+        Regex("""(?i)(?:current )?thermal status:?\s*(-?\d+)""").find(text)?.groupValues?.get(1)?.toIntOrNull()?.let {
+            out += DdLine("Throttle status", "${names.getOrNull(it) ?: "unknown"} ($it)")
+        }
+        Regex("""(?i)thermal headroom\D{0,12}(-?[\d.]+)""").find(text)?.groupValues?.get(1)?.let { out += DdLine("Headroom", it) }
+        val types = mapOf(0 to "cpu", 1 to "gpu", 2 to "battery", 3 to "skin", 4 to "usb", 5 to "pa", 6 to "bcl-v", 7 to "bcl-i", 8 to "bcl-%", 9 to "npu")
+        val sensors = Regex("""Temperature\{mValue=(-?[\d.]+), mType=(-?\d+), mName=([^,}]+)(?:, mStatus=(-?\d+))?""").findAll(text)
+            .map { m ->
+                val st = m.groupValues[4].toIntOrNull() ?: 0
+                DdLine(m.groupValues[3], "${m.groupValues[1]} C" + (types[m.groupValues[2].toIntOrNull()]?.let { " · $it" } ?: "") + if (st > 0) " · THROTTLE ${names.getOrNull(st) ?: st}" else "")
+            }.distinctBy { it.label }.toList()
+        out += sensors
+        out += Regex("""CoolingDevice\{mValue=(-?\d+), mType=-?\d+, mName=([^,}]+)""").findAll(text)
+            .map { DdLine("cool " + it.groupValues[2], "level ${it.groupValues[1]}") }.distinctBy { it.label }.toList()
+        return out
+    }
+
+    // ── dumpsys gfxinfo <pkg> framestats ──
+
+    /** The summary of `dumpsys gfxinfo`: frames, jank, percentiles (ms), the slow-frame counters, the frame-time histogram, and any draw/triangle/GPU-memory lines this build prints. */
+    data class GfxStats(
+        val total: Long?, val janky: Long?, val jankyPct: Double?, val percentiles: Map<Int, Double>,
+        val slow: List<Pair<String, Long>>, val histogram: List<Pair<Int, Long>>, val extras: List<DdLine>,
+    ) { val isEmpty get() = total == null && percentiles.isEmpty() && slow.isEmpty() && histogram.isEmpty() && extras.isEmpty() }
+
+    private val GFX_EXTRA = Regex("""(?im)^[ \t]*([^:=\n]*(?:draw ?calls?|triangles?|vertices|vertex|gpu memory|total memory usage|texture memory|layer memory|path cache|font cache)[^:=\n]*?)[ \t]*[:=][ \t]*(\S[^\n]*)$""")
+    private val GFX_SLOW = Regex("""(?m)^\s*Number ([^:(\n]+?):\s*(\d+)\s*$""")
+
+    /** Null when [text] holds no gfxinfo at all. Draw-call / triangle / GPU-memory lines exist only on some builds: parsed when present, skipped silently otherwise. */
+    fun gfxinfo(text: String): GfxStats? {
+        val total = Regex("""Total frames rendered:\s*(\d+)""").find(text)?.groupValues?.get(1)?.toLongOrNull()
+        val jm = Regex("""Janky frames:\s*(\d+)\s*\(([\d.]+)%\)""").find(text)
+        val janky = jm?.groupValues?.get(1)?.toLongOrNull()
+        val pct = jm?.groupValues?.get(2)?.toDoubleOrNull() ?: if (total != null && total > 0 && janky != null) janky * 100.0 / total else null
+        val perc = Regex("""(\d+)th percentile:\s*([\d.]+)\s*ms""").findAll(text).mapNotNull { m -> m.groupValues[2].toDoubleOrNull()?.let { m.groupValues[1].toInt() to it } }.toMap()
+        val slow = GFX_SLOW.findAll(text).mapNotNull { m -> m.groupValues[2].toLongOrNull()?.let { m.groupValues[1].trim() to it } }.distinctBy { it.first }.toList()
+        val hist = Regex("""(?m)^\s*HISTOGRAM:(.*)$""").find(text)?.groupValues?.get(1)?.let { h ->
+            Regex("""(\d+)ms=(\d+)""").findAll(h).mapNotNull { m -> m.groupValues[2].toLongOrNull()?.let { m.groupValues[1].toInt() to it } }.toList()
+        }.orEmpty()
+        val extras = GFX_EXTRA.findAll(text).map { DdLine(it.groupValues[1].trim(), it.groupValues[2].trim().take(60)) }.distinctBy { it.label }.take(12).toList()
+        return GfxStats(total, janky, pct, perc, slow, hist, extras).takeUnless { it.isEmpty }
+    }
+
+    /** Live graphics lines: frames and jank, the percentiles, then the draw-call / triangle / GPU-memory lines when the build prints them. */
+    fun gfxinfoLines(text: String): List<DdLine> {
+        val g = gfxinfo(text) ?: return emptyList()
+        val out = ArrayList<DdLine>()
+        if (g.total != null) out += DdLine("Frames", "${g.total} rendered" + (g.janky?.let { " · $it janky" + (g.jankyPct?.let { p -> " (${f1(p)}%)" } ?: "") } ?: ""))
+        if (g.percentiles.isNotEmpty()) out += DdLine("Frame time", g.percentiles.toSortedMap().entries.joinToString(" · ") { "p${it.key} ${f1(it.value)} ms" })
+        out += g.extras
+        return out
+    }
+
+    /** Jank diagnosis: the slow-frame causes, biggest first, then the frame-time histogram (non-empty buckets). */
+    fun gfxinfoJank(text: String): List<DdLine> {
+        val g = gfxinfo(text) ?: return emptyList()
+        val out = ArrayList<DdLine>()
+        if (g.jankyPct != null) out += DdLine("Jank", "${f1(g.jankyPct)}%" + (g.janky?.let { " · $it frames" } ?: ""))
+        out += g.slow.sortedByDescending { it.second }.filter { it.second > 0 }.map { DdLine(it.first, it.second.toString()) }
+        val buckets = g.histogram.filter { it.second > 0 }
+        if (buckets.isNotEmpty()) out += DdLine("Histogram", buckets.take(14).joinToString(" ") { "${it.first}ms:${it.second}" })
+        return out
+    }
+
+    // ── top / dumpsys cpuinfo ──
+
+    data class TopProc(val pid: Int, val cpu: Double, val name: String)
+
+    private val TOP_ROW = Regex("""^\s*(\d+)\s+(\S+)\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+[A-Za-z]\s+(\d+(?:\.\d+)?)\s+\d+(?:\.\d+)?\s+\S+\s+(.+?)\s*$""")
+    private val CPUINFO_ROW = Regex("""^\s*([\d.]+)%\s+(\d+)/([^:]+):""")
+
+    /** Processes by CPU, busiest first: toybox `top -b -n 1` rows, or `dumpsys cpuinfo` rows as the fallback. */
+    fun topProcs(text: String): List<TopProc> {
+        val out = ArrayList<TopProc>()
+        for (l in text.lineSequence()) {
+            val t = TOP_ROW.find(l)
+            if (t != null) { out += TopProc(t.groupValues[1].toInt(), t.groupValues[3].toDouble(), t.groupValues[4]); continue }
+            val c = CPUINFO_ROW.find(l) ?: continue
+            out += TopProc(c.groupValues[2].toInt(), c.groupValues[1].toDouble(), c.groupValues[3].trim())
+        }
+        return out.filter { it.name != "top" }.sortedByDescending { it.cpu }
+    }
+
+    /** The load line (when printed), then the top [rows] processes: name, %cpu, pid. */
+    fun topLines(text: String, rows: Int): List<DdLine> {
+        val procs = topProcs(text)
+        if (procs.isEmpty()) return emptyList()
+        val out = ArrayList<DdLine>()
+        Regex("""Load:\s*([\d.]+)\s*/\s*([\d.]+)\s*/\s*([\d.]+)""").find(text)?.let { out += DdLine("Load 1/5/15m", "${it.groupValues[1]} / ${it.groupValues[2]} / ${it.groupValues[3]}") }
+        Regex("""(\d+)%cpu\s+(\d+)%user.*?(\d+)%idle""").find(text)?.let { m ->
+            val all = m.groupValues[1].toInt(); val idle = m.groupValues[3].toInt()
+            out += DdLine("CPU busy", "${all - idle}% of ${all}%")
+        }
+        out += procs.take(rows).map { DdLine("top " + short(it.name), "${f1(it.cpu)}% · pid ${it.pid}") }
+        return out
+    }
+
+    // ── dumpsys notification ──
+
+    /** Notifications an app posted ([posts] new + [updates] re-posts, from the usage stats) and how many are active now. */
+    data class NotifStat(val pkg: String, val posts: Long, val updates: Long, val active: Int) { val total get() = posts + updates }
+
+    /** Per-app notification counts, busiest first: `AggregatedStats{key=..., numPostedByApp=..., numUpdatedByApp=...}` blocks plus the active `NotificationRecord(... pkg=...)` ones. */
+    fun notificationStats(text: String): List<NotifStat> {
+        val posted = HashMap<String, Long>(); val updated = HashMap<String, Long>(); val active = HashMap<String, Int>()
+        for (chunk in text.split("AggregatedStats{").drop(1)) {
+            val key = Regex("""key='?([A-Za-z0-9_.]+)'?""").find(chunk)?.groupValues?.get(1)?.takeIf { '.' in it } ?: continue
+            // the chunk runs to the next AggregatedStats, so it holds this key's counters only
+            Regex("""numPostedByApp=(\d+)""").find(chunk)?.groupValues?.get(1)?.toLongOrNull()?.let { posted.merge(key, it, Long::plus) }
+            Regex("""numUpdatedByApp=(\d+)""").find(chunk)?.groupValues?.get(1)?.toLongOrNull()?.let { updated.merge(key, it, Long::plus) }
+        }
+        for (m in Regex("""NotificationRecord\([^)\n]*?pkg=([A-Za-z0-9_.]+)""").findAll(text)) active.merge(m.groupValues[1], 1, Int::plus)
+        return (posted.keys + updated.keys + active.keys).map { NotifStat(it, posted[it] ?: 0, updated[it] ?: 0, active[it] ?: 0) }
+            .sortedWith(compareByDescending<NotifStat> { it.total }.thenByDescending { it.active }.thenBy { it.pkg })
+    }
+
+    fun notifications(text: String, rows: Int): List<DdLine> {
+        val all = notificationStats(text)
+        if (all.isEmpty()) return emptyList()
+        val head = DdLine("Total posts", "${all.sumOf { it.total }} from ${all.size} apps · ${all.sumOf { it.active }} active")
+        return listOf(head) + all.take(rows).map {
+            DdLine(short(it.pkg), "${it.total} posts (${it.posts} new + ${it.updates} updates)" + if (it.active > 0) " · ${it.active} active" else "")
+        }
+    }
+
+    // ── dumpsys binder_calls_stats (what a non-root shell can get; absent or empty on many builds) ──
+
+    data class BinderStat(val uid: String, val calls: Long)
+
+    fun binderCalls(text: String): List<BinderStat> {
+        val by = HashMap<String, Long>()
+        for (l in text.lineSequence()) {
+            val m = Regex("""(?i)\buid[=: ]+(\d+)\b.*?\b(?:call_?count|calls?|count|transactions?)[=: ]+(\d+)""").find(l) ?: continue
+            m.groupValues[2].toLongOrNull()?.let { by.merge(m.groupValues[1], it, Long::plus) }
+        }
+        return by.map { BinderStat(it.key, it.value) }.sortedByDescending { it.calls }
+    }
+
+    fun binder(text: String, rows: Int, label: (String) -> String = { it }): List<DdLine> {
+        val all = binderCalls(text)
+        if (all.isEmpty()) return emptyList()
+        return listOf(DdLine("Total calls", "${all.sumOf { it.calls }} from ${all.size} uids")) +
+            all.take(rows).map { DdLine(runCatching { label(it.uid) }.getOrDefault(it.uid), "${it.calls} calls") }
+    }
+
+    // ── dumpsys meminfo (full) ──
+
+    data class PssProc(val name: String, val pid: Int?, val kb: Long)
+
+    /** The "Total PSS by process:" table: `123,456K: system_server (pid 1234 / activities)`. */
+    fun meminfoProcs(text: String): List<PssProc> {
+        val out = ArrayList<PssProc>()
+        var inTable = false
+        for (l in text.lineSequence()) {
+            if (l.trimStart().startsWith("Total PSS by process")) { inTable = true; continue }
+            if (!inTable) continue
+            if (l.isBlank()) { if (out.isNotEmpty()) break else continue }
+            val m = Regex("""^\s*([\d,]+)K:\s+(\S+)(?:\s+\(pid (\d+))?""").find(l) ?: if (out.isNotEmpty()) break else continue
+            m.groupValues[1].replace(",", "").toLongOrNull()?.let { out += PssProc(m.groupValues[2], m.groupValues[3].toIntOrNull(), it) }
+        }
+        return out
+    }
+
+    /** RAM totals of the dump (Total / Free / Used / Lost RAM, ZRAM), then the heaviest processes by PSS. */
+    fun meminfoDetail(text: String, rows: Int): List<DdLine> {
+        val head = listOf("Total RAM", "Free RAM", "Used RAM", "Lost RAM", "ZRAM").mapNotNull { k ->
+            Regex("""^\s*$k:\s*(.+)$""", RegexOption.MULTILINE).find(text)?.let { DdLine(k, it.groupValues[1].trim()) }
+        }
+        val procs = meminfoProcs(text).sortedByDescending { it.kb }.take(rows).map { DdLine(short(it.name), "${f1(it.kb / 1024.0)} MB PSS" + (it.pid?.let { p -> " · pid $p" } ?: "")) }
+        return head + procs
+    }
+
+    // ── ANR / responsiveness ──
+
+    data class Anr(val whenText: String, val pkg: String?, val detail: String)
+
+    /** `am_anr` events of the events log (`[user,pid,package,flags,reason]`) and `ls -l /data/anr` trace files. */
+    fun anrs(text: String): List<Anr> {
+        val out = ArrayList<Anr>()
+        for (l in text.lineSequence()) {
+            val e = Regex("""^(\d\d-\d\d \d\d:\d\d:\d\d)\S*.*?am_anr\W+\[(-?\d+),(\d+),([^,\]]+),(-?\d+),([^\]]*)\]""").find(l)
+            if (e != null) { out += Anr(e.groupValues[1], e.groupValues[4], e.groupValues[6].trim().take(80)); continue }
+            val f = Regex("""^\S+\s+\d+\s+\S+\s+\S+\s+(\d+)\s+(\d{4}-\d\d-\d\d \d\d:\d\d)\s+(\S+)\s*$""").find(l) ?: continue
+            if (f.groupValues[3].contains("anr", true)) out += Anr(f.groupValues[2], null, "trace ${f.groupValues[3]} (${f.groupValues[1].toLong() / 1024} kB)")
+        }
+        return out
+    }
+
+    /** A healthy device has none: a readable dump with no ANR says so, an empty/unreadable one yields nothing. */
+    fun anrLines(text: String, rows: Int): List<DdLine> {
+        val all = anrs(text)
+        if (all.isEmpty()) return if (text.isNotBlank() && !text.contains("No such file", true) && !text.contains("Permission denied", true)) listOf(DdLine("ANRs", "none recorded")) else emptyList()
+        return listOf(DdLine("ANRs", "${all.size} recorded")) + all.takeLast(rows).reversed().map { DdLine(it.whenText, (it.pkg?.let { p -> short(p) + " · " } ?: "") + it.detail) }
+    }
+
+    // ── batterystats diagnosis rows (power family) ──
+
+    /** Wakelocks of the batterystats dump: the top by acquire COUNT, then the top by held DURATION. */
+    fun wakelockLines(text: String, rows: Int, label: (String) -> String = { it }): List<DdLine> {
+        val all = XrayAnalyze.wakelocks(text)
+        if (all.isEmpty()) return emptyList()
+        fun row(w: XrayAnalyze.Wake) = DdLine(w.name.take(34), "${w.count}x · ${f1(w.ms / 60_000.0)} min · ${runCatching { label(w.uidName) }.getOrDefault(w.uidName)}")
+        val n = (rows / 2).coerceAtLeast(1)
+        return listOf(DdLine("By count", "top $n")) + all.sortedByDescending { it.count }.take(n).map(::row) +
+            listOf(DdLine("By duration", "top $n")) + all.sortedByDescending { it.ms }.take(n).map(::row)
+    }
+
+    /** CPU per uid (background share = cpu beyond foreground time), foreground services, GPS, sensors and alarm wakeups; busiest first. */
+    fun uidActivityLines(text: String, rows: Int, label: (String) -> String = { it }): List<DdLine> =
+        XrayAnalyze.uidStats(text).values.filter { it.cpuMs + it.gpsMs + it.sensorMs + it.fgsMs > 0 }
+            .sortedByDescending { it.cpuMs + it.gpsMs + it.sensorMs }.take(rows).map { s ->
+                fun m(ms: Long) = f1(ms / 60_000.0)
+                DdLine(runCatching { label(s.uidName) }.getOrDefault(s.uidName),
+                    "cpu ${m(s.cpuMs)} min (bg ${m(s.bgCpuMs)})" + (if (s.fgsMs > 0) " · fgs ${m(s.fgsMs)}" else "") +
+                        (if (s.gpsMs > 0) " · gps ${m(s.gpsMs)}" else "") + (if (s.sensorMs > 0) " · sensors ${m(s.sensorMs)}" else "") +
+                        (if (s.wakeups > 0) " · ${s.wakeups} wakeups" else ""))
+            }
+
+    /** Alarm wakeups per package, from `dumpsys alarm`. */
+    fun alarmLines(text: String, rows: Int): List<DdLine> =
+        XrayAnalyze.alarmWakeups(text).entries.sortedByDescending { it.value }.take(rows).map { DdLine(short(it.key), "${it.value} wakeups") }
+
+    /** Scheduled jobs per package (WorkManager's share), from `dumpsys jobscheduler`. */
+    fun jobLines(text: String, rows: Int): List<DdLine> =
+        XrayAnalyze.jobs(text).entries.sortedByDescending { it.value.first }.take(rows).map { DdLine(short(it.key), "${it.value.first} jobs (${it.value.second} WorkManager)") }
 }

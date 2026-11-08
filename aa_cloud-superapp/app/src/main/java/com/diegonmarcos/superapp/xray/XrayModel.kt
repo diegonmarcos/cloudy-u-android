@@ -20,8 +20,8 @@ const val PARTIAL_LABEL = "partial: no adb"
 /** One block of the report: the X-Ray group it belongs to, its title, where it was read from, and the text. */
 data class XSection(val group: String, val title: String, val source: String, val text: String, val ok: Boolean = true)
 
-/** One ranked drainer: [score] in [unit] (estimated mAh), the [cause] and the signals behind it. */
-data class Suspect(val rank: Int, val pkg: String, val score: Double, val unit: String, val cause: String, val detail: String, val fleet: Boolean)
+/** One ranked suspect: the composite [score] in [unit] (points, 0-100), its dominant [cause], the signals behind it, and its estimated [mAh] (power is one input). */
+data class Suspect(val rank: Int, val pkg: String, val score: Double, val unit: String, val cause: String, val detail: String, val fleet: Boolean, val mAh: Double = 0.0)
 
 data class XReport(
     val device: String,
@@ -51,23 +51,24 @@ object XrayFormat {
         sb.append("- generated: ").append(iso(r.generatedAt)).append("\n")
         sb.append("- app: ").append(r.appVersion).append("\n")
         sb.append("- adb: ").append(r.adbChannel).append("\n")
+        sb.append("- order: ① Profile → ② Runtime → ③ Diagnosis by family → ④ Suspects (last)\n")
         if (r.partial) sb.append("\n> **").append(PARTIAL_LABEL).append("** — ").append(r.partialReason).append("\n")
-        sb.append("\n## Suspects (ranked)\n\n")
-        if (r.suspects.isEmpty()) sb.append("none ranked (no per-uid battery stats in this report)\n")
+        var group = ""
+        for (s in r.sections) {
+            if (s.group != group) { group = s.group; sb.append("\n# ").append(group).append("\n") }
+            sb.append("\n## ").append(s.title).append("\n\n_source: ").append(s.source).append(if (s.ok) "" else " · failed").append("_\n\n```text\n")
+                .append(s.text.trimEnd()).append("\n```\n")
+        }
+        sb.append("\n# ④ SUSPECTS (verdict)\n\n## Suspects (ranked)\n\n")
+        if (r.suspects.isEmpty()) sb.append("none ranked (no per-uid battery or notification stats in this report)\n")
         else {
-            sb.append("| # | App | mAh | Cause | Detail |\n|---|---|---|---|---|\n")
+            sb.append("| # | App | Score | Cause (dominant signal) | Why and other signals |\n|---|---|---|---|---|\n")
             for (s in r.suspects) sb.append("| ${s.rank} | ${if (s.fleet) "**${s.pkg}** (fleet)" else s.pkg} | ")
                 .append(String.format(Locale.US, "%.1f", s.score)).append(" | ").append(esc(s.cause)).append(" | ").append(esc(s.detail)).append(" |\n")
         }
         if (r.fleet.isNotEmpty()) {
             sb.append("\n## Fleet apps\n\n")
             for (l in r.fleet) sb.append("- ").append(l).append("\n")
-        }
-        var group = ""
-        for (s in r.sections) {
-            if (s.group != group) { group = s.group; sb.append("\n# ").append(group).append("\n") }
-            sb.append("\n## ").append(s.title).append("\n\n_source: ").append(s.source).append(if (s.ok) "" else " · failed").append("_\n\n```text\n")
-                .append(s.text.trimEnd()).append("\n```\n")
         }
         return XrayRedact.scrub(sb.toString())
     }

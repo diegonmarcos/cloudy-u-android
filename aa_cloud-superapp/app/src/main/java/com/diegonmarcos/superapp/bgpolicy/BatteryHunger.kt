@@ -80,7 +80,7 @@ fun BatteryHungerPanel(activity: Activity) {
 
     fun rank() = task("reading batterystats since the last charge…") { e, cfg ->
         val raw = HashMap<String, String>()
-        for (id in listOf("batterystats", "packages", "services", "alarm", "jobs")) {
+        for (id in listOf("batterystats", "packages", "services", "alarm", "jobs", "notification", "gfxinfo")) {
             val cmd = XrayProbes.all.first { it.id == id }.cmd
             raw[id] = BgHost.shell(activity)?.exec(cmd).orEmpty()
         }
@@ -92,7 +92,7 @@ fun BatteryHungerPanel(activity: Activity) {
         val states = e.readAll(pm.filter { it.pkg in first }, cfg).orEmpty().associate { it.first.pkg to it.second }
         drainers = sus.map { s ->
             val pkgs = s.pkg.split('+')
-            val sub = String.format(Locale.US, "%.0f mAh · %s", s.score, s.cause) + if (s.detail.isNotEmpty()) " · ${s.detail}" else ""
+            val sub = (if (s.mAh > 0) String.format(Locale.US, "%.0f mAh · ", s.mAh) else "") + s.cause + if (s.detail.isNotEmpty()) " · ${s.detail}" else ""
             HungerRow(pkgs, labels[pkgs.first()] ?: s.pkg, sub, states[pkgs.first()], pkgs.any { ess.isEssential(it) }, s.fleet)
         }
         status = if (sus.isEmpty()) "No drainers ranked (no per-app battery stats since the last charge)." else "${sus.size} drainers ranked since the last charge."

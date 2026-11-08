@@ -14,7 +14,7 @@ import org.robolectric.annotation.Config
  * The status-bar dropdowns are declared (build.json::home_status_bar.dropdowns).
  *
  *   X1 the LEFT dropdown and the RIGHT System and Battery dropdowns are all declared, each opened by real strip elements
- *   X2 the System dropdown's icon groups: Memory, Storage, CPU, Graphics, Running Services, Last 3h Memory Usage
+ *   X2 the System dropdown is four tiers (Profile, Runtime, Diagnosis by family, Suspects), icon groups kept, new probes declared
  *   X3 the Battery dropdown's two since-last-charge sections
  *   X4 every adb group names an X-Ray probe that exists; the FPS icon is a right element that opens the System dropdown
  *   X5 a bad side or an unknown opener is refused
@@ -37,11 +37,27 @@ class StatusDropdownDeclTest {
     }
 
     @Test
-    fun `X2 the System dropdown groups by icon`() {
+    fun `X2 the System dropdown is four tiers`() {
         val g = d.dropdown("right_system")!!.groups
-        assertEquals(listOf("Memory", "Storage", "CPU", "Graphics", "Running Services", "Last 3h Memory Usage"), g.map { it.label })
-        assertEquals(listOf("ram", "storage", "cpu", "fps", null, null), g.map { it.element })
-        assertEquals("Running Services is the last-but-one, Last 3h the last", listOf("services", "procstats"), g.takeLast(2).map { it.probe })
+        val ids = g.map { it.id }
+        val tiers = listOf("t1_profile", "t2_runtime", "t3_diagnosis", "t4_suspects")
+        assertEquals(tiers, ids.filter { it in tiers })
+        assertTrue(g.filter { it.id in tiers || it.id.startsWith("f_") }.all { it.source == "header" && it.probe == null })
+        fun between(a: String, b: String) = ids.subList(ids.indexOf(a) + 1, ids.indexOf(b))
+        assertEquals(listOf("device", "soc", "gpu", "display", "capacity"), between("t1_profile", "t2_runtime"))
+        assertEquals(listOf("memory", "cpu", "thermal", "graphics", "storage", "battery_live"), between("t2_runtime", "t3_diagnosis"))
+        val diag = between("t3_diagnosis", "t4_suspects")
+        assertEquals(listOf("f_power", "f_jank", "f_notif", "f_memory", "f_resp"), diag.filter { it.startsWith("f_") })
+        assertEquals(listOf("wakelocks", "power_by_uid", "alarms", "jobs", "running_services"), diag.subList(1, diag.indexOf("f_jank")))
+        assertEquals(listOf("jank"), diag.subList(diag.indexOf("f_jank") + 1, diag.indexOf("f_notif")))
+        assertEquals(listOf("notif_rate", "binder"), diag.subList(diag.indexOf("f_notif") + 1, diag.indexOf("f_memory")))
+        assertEquals(listOf("memory_3h", "meminfo_detail"), diag.subList(diag.indexOf("f_memory") + 1, diag.indexOf("f_resp")))
+        assertEquals(listOf("anr"), diag.subList(diag.indexOf("f_resp") + 1, diag.size))
+        assertEquals(listOf("t4_suspects", "suspects"), ids.takeLast(2))
+        val by = g.associateBy { it.id }
+        assertEquals("top", by.getValue("cpu").probe); assertEquals("gfxinfo", by.getValue("graphics").probe); assertEquals("gfxinfo", by.getValue("jank").probe)
+        assertEquals("notification", by.getValue("notif_rate").probe); assertEquals("meminfo", by.getValue("meminfo_detail").probe)
+        assertEquals("fps", by.getValue("graphics").element); assertEquals("ram", by.getValue("memory").element)
     }
 
     @Test

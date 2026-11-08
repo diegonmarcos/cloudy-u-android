@@ -69,11 +69,19 @@ tt = open(t, encoding="utf-8").read() if os.path.exists(t) else ""
 ok("swapping two declared orders changes the render order" in tt, "S7: a JVM test pins the render order to the declared one", "S7: StatusBarDeclTest is missing its order-mutation test")
 dd = {d["id"]: d for d in sb.get("dropdowns", [])}
 ok({"left_network", "right_system", "right_battery"} <= set(dd), "S9: the left dropdown and the right System and Battery dropdowns are declared", "S9: a status-bar dropdown is not declared in home_status_bar.dropdowns")
-ok([g["id"] for g in dd.get("right_system", {}).get("groups", [])] == ["memory", "storage", "cpu", "graphics", "running_services", "memory_3h"],
-   "S9: System groups are Memory, Storage, CPU, Graphics, Running Services, Last 3h Memory", "S9: the System dropdown groups are wrong")
+sysg = [g["id"] for g in dd.get("right_system", {}).get("groups", [])]
+TIERS = ["t1_profile", "t2_runtime", "t3_diagnosis", "t4_suspects"]
+ok([i for i in sysg if i in TIERS] == TIERS, "S9: System dropdown is four tiers in order: Profile, Runtime, Diagnosis, Suspects", "S9: the four tier headers are missing or out of order")
+def between(a, b): return sysg[sysg.index(a) + 1: sysg.index(b)] if a in sysg and b in sysg else None
+ok(between("t1_profile", "t2_runtime") == ["device", "soc", "gpu", "display", "capacity"], "S9: tier 1 Profile = device, SoC, GPU, display, capacity", "S9: tier 1 groups are wrong")
+ok(between("t2_runtime", "t3_diagnosis") == ["memory", "cpu", "thermal", "graphics", "storage", "battery_live"], "S9: tier 2 Runtime = memory, cpu, thermal, graphics, storage, battery", "S9: tier 2 groups are wrong")
+ok(sysg[sysg.index("t3_diagnosis") + 1:sysg.index("t4_suspects")] == ["f_power", "wakelocks", "power_by_uid", "alarms", "jobs", "running_services", "f_jank", "jank", "f_notif", "notif_rate", "binder", "f_memory", "memory_3h", "meminfo_detail", "f_resp", "anr"] if "t3_diagnosis" in sysg and "t4_suspects" in sysg else False,
+   "S9: tier 3 Diagnosis families: power, jank, notification/IPC, memory, responsiveness", "S9: tier 3 families are wrong")
+ok(sysg[-2:] == ["t4_suspects", "suspects"], "S9: tier 4 ends the dropdown with the suspects verdict", "S9: tier 4 Suspects is not last")
 ok([g["id"] for g in dd.get("right_battery", {}).get("groups", [])] == ["since_charge_usage", "since_charge_apps"], "S9: Battery has the two since-last-charge sections", "S9: the Battery dropdown sections are wrong")
 ok(ids.get("fps", {}).get("position") == "right" and ids.get("fps", {}).get("opens") == "system_popup", "S9: the FPS icon is a right-cluster element opening the System dropdown", "S9: fps is not a right system_popup element")
 probes = read("app/src/main/java/com/diegonmarcos/superapp/xray/XrayProbes.kt")
+ok(all(f'Probe("{p}"' in probes for p in ("gfxinfo", "top", "notification", "binder", "meminfo", "anr", "thermal", "profile")), "S9: the new diagnosis probes exist (gfxinfo, top, notification, binder, meminfo, anr, thermal, profile)", "S9: a new diagnosis probe is missing from XrayProbes")
 ok(all(f'Probe("{g["probe"]}"' in probes for d in dd.values() for g in d.get("groups", []) if g.get("probe")), "S9: every dropdown probe is an X-Ray probe", "S9: a dropdown names a probe XrayProbes lacks")
 sys.exit(1 if fails else 0)
 PY

@@ -38,6 +38,8 @@ object StatusDropdowns {
     const val REFRESH_MS = 1_000L
     const val SYSTEM = "right_system"
     const val BATTERY = "right_battery"
+    /** A group of this source is a tier sub-header: its rule and title, no lines. */
+    const val HEADER = "header"
 
     private val INK = Color.White
     private val DIM = Color(0xAAFFFFFF)
@@ -56,6 +58,12 @@ object StatusDropdowns {
         "storage" -> SystemGroups.storage(ctx)
         "cpu" -> SystemGroups.cpu(ctx)
         "graphics" -> SystemGroups.graphics(ctx)
+        "device" -> SystemGroups.device(ctx)
+        "soc" -> SystemGroups.soc(ctx)
+        "gpu" -> SystemGroups.gpu(ctx)
+        "display" -> SystemGroups.display(ctx)
+        "capacity" -> SystemGroups.capacity(ctx)
+        "battery_live" -> SystemGroups.battery(ctx)
         else -> emptyList()
     }
 
@@ -73,13 +81,25 @@ object StatusDropdowns {
         val short = StatusBarDecl.declared.elements.firstOrNull { it.id == g.element }?.short?.ifBlank { null }
         val lines by produceState<List<DdLine>?>(null, g.id) {
             val probeText = if (g.probe != null) withContext(Dispatchers.IO) { SystemGroups.adb(ctx, g.probe) } else null
-            if (g.source == "adb") {
+            if (g.source == HEADER) {
+                value = emptyList()
+            } else if (g.id == "suspects") {
+                value = withContext(Dispatchers.IO) { SystemGroups.suspectLines(ctx, g.rows) }
+                    ?.ifEmpty { listOf(DdLine("Status", "no suspects ranked")) } ?: listOf(DdLine("Status", SystemGroups.NEEDS_ADB))
+            } else if (g.source == "adb") {
                 value = withContext(Dispatchers.IO) { SystemGroups.adbLines(g.id, probeText, g.rows, appName(ctx)) }
             } else {
-                val thermal = if (g.probe == "thermal") {
-                    if (probeText == null) listOf(DdLine("Thermal", SystemGroups.NEEDS_ADB))
-                    else DumpsysParsers.thermal(probeText).take(g.rows).ifEmpty { listOf(DdLine("Thermal", "no sensors in the dump")) }
-                } else emptyList()
+                // an app group may append the lines of a probe (CPU: top processes, Graphics: gfxinfo)
+                val thermal = when {
+                    g.probe == null -> emptyList()
+                    probeText == null -> listOf(DdLine(g.label, SystemGroups.NEEDS_ADB))
+                    else -> (when (g.probe) {
+                        "thermal" -> DumpsysParsers.thermalFull(probeText).take(g.rows)
+                        "top" -> DumpsysParsers.topLines(probeText, g.rows)
+                        "gfxinfo" -> DumpsysParsers.gfxinfoLines(probeText)
+                        else -> emptyList()
+                    }).ifEmpty { listOf(DdLine(g.label, "no data in the dump")) }
+                }
                 while (true) {
                     value = withContext(Dispatchers.IO) { appLines(ctx, g) } + thermal
                     delay(REFRESH_MS)
@@ -90,10 +110,11 @@ object StatusDropdowns {
             Box(Modifier.fillMaxWidth().height(1.dp).background(KitStoreRow.RULE))
             Row(Modifier.padding(top = KitStoreRow.tight, bottom = KitStoreRow.tight)) {
                 if (short != null) Cap(short, Modifier.padding(end = KitStoreRow.gap).testTag("$tagPrefix:icon:${g.id}"), ACCENT, bold = true)
-                Cap(g.label, Modifier.testTag("$tagPrefix:title:${g.id}"), INK, bold = true)
+                Cap(g.label, Modifier.testTag("$tagPrefix:title:${g.id}"), if (g.source == HEADER) ACCENT else INK, bold = true)
             }
             val ls = lines
-            if (ls == null) Cap("reading...", color = DIM)
+            if (g.source == HEADER) Unit
+            else if (ls == null) Cap("reading...", color = DIM)
             else ls.forEachIndexed { i, l ->
                 Row(Modifier.fillMaxWidth().padding(vertical = KitStoreRow.step(1)).testTag("$tagPrefix:row:${g.id}:$i")) {
                     Cap(l.label, Modifier.width(LABEL_W), DIM)

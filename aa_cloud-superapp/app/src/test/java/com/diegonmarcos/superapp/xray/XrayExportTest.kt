@@ -115,6 +115,30 @@ class XrayExportTest {
         assertTrue(r.fleet.single().contains("woken by"))
     }
 
+    @Test fun `the probe list is ordered by tier and carries the new diagnosis probes`() {
+        val ids = XrayProbes.all.map { it.id }
+        for (n in listOf("gfxinfo", "top", "notification", "binder", "meminfo", "anr", "thermal", "profile")) assertTrue(n, n in ids)
+        fun tier(g: String) = g.first()
+        val tiers = XrayProbes.all.map { tier(it.group) }.filter { it in "①②③" }
+        assertEquals("probes never go back to an earlier tier", tiers.sorted(), tiers)
+        assertEquals(XrayProbes.G_JANK, XrayProbes.all.first { it.id == "gfxinfo" }.group)
+        assertEquals(XrayProbes.G_NOTIF, XrayProbes.all.first { it.id == "notification" }.group)
+    }
+
+    @Test fun `a notification storm outranks a heavier power user in the composite suspects`() {
+        val raw = mapOf(
+            "batterystats" to BATTERYSTATS, "packages" to PACKAGES + "package:com.chatty.app uid:10160\n",
+            "notification" to "  AggregatedStats{\n    key='com.chatty.app',\n    numPostedByApp=1000,\n    numUpdatedByApp=216000,\n  }\n",
+            "gfxinfo" to "Total frames rendered: 100\nJanky frames: 40 (40.00%)\n",
+        )
+        val sus = XrayAnalyze.suspects(raw)
+        assertEquals("com.chatty.app", sus.first().pkg)
+        assertEquals("notification storm", sus.first().cause)
+        assertTrue(sus.first().detail.startsWith("why: 217000 notification posts"))
+        assertTrue(sus.any { it.pkg == "com.diegonmarcos.superapp" && it.cause == "jank" })
+        assertEquals("power is still an input", true, sus.any { it.pkg == "com.diegonmarcos.fleet" && it.mAh > 100 })
+    }
+
     // ── schema ───────────────────────────────────────────────────────────
 
     @Test fun `the JSON schema carries suspects, fleet, groups and the source of every section`() {
@@ -126,15 +150,19 @@ class XrayExportTest {
         assertTrue(j.getJSONArray("fleet").length() >= 1)
         val groups = j.getJSONArray("groups")
         val names = (0 until groups.length()).map { groups.getJSONObject(it).getString("group") }
-        assertTrue(names.containsAll(listOf("Report", XrayProbes.G_BATTERY, XrayProbes.G_RUNNING, XrayProbes.G_DEVICE, "X-Ray · APP & BUILD")))
+        assertTrue(names.containsAll(listOf("Report", XrayProbes.G_BATTERY, XrayProbes.G_POWER, XrayProbes.G_RUNTIME, XrayProbes.G_DEVICE, "X-Ray · APP & BUILD")))
         val s = groups.getJSONObject(0).getJSONArray("sections").getJSONObject(0)
         assertTrue(s.has("title") && s.has("source") && s.has("ok") && s.has("text"))
     }
 
-    @Test fun `the Markdown puts the ranked suspects before every section and names each source`() {
+    @Test fun `the Markdown follows the four tiers, the verdict last, and names each source`() {
         val md = XrayFormat.markdown(build())
         assertTrue(md.startsWith("# X-Ray report · Pixel Test"))
-        assertTrue(md.indexOf("## Suspects (ranked)") < md.indexOf("# Battery"))
+        val order = listOf(XrayProbes.G_DEVICE, XrayProbes.G_RUNTIME, XrayProbes.G_BATTERY, XrayProbes.G_POWER, XrayProbes.G_JANK, XrayProbes.G_NOTIF,
+            XrayProbes.G_MEMORY, XrayProbes.G_RESP, "# ④ SUSPECTS (verdict)").map { md.indexOf(if (it.startsWith("#")) it else "\n# $it\n") }
+        assertTrue("every tier is present", order.all { it >= 0 })
+        assertEquals("tiers are in order", order.sorted(), order)
+        assertTrue(md.indexOf("## Suspects (ranked)") > md.indexOf("# ③ Diagnosis · Memory"))
         assertTrue(md.contains("_source: shell_"))
         assertTrue(md.contains("_source: app sandbox_"))
         assertTrue(md.contains("**com.diegonmarcos.fleet** (fleet)"))
