@@ -4,7 +4,9 @@ import android.content.Context
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.content.pm.PermissionInfo
+import android.os.Build
 import android.widget.Toast
+import java.security.MessageDigest
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -22,11 +24,15 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -60,6 +66,7 @@ object StoreInspect {
     const val TAG_PERMS = "store-inspect-perms"
     const val TAG_ROUTES = "store-inspect-routes"
     const val TAG_LIBS = "store-inspect-libs"
+    const val TAG_ACCESS = "store-inspect-access"
 
     private const val SHEET_BG = 0xFF140E1F.toInt()
     private val cText = 0xFFECE6F5.toInt(); private val cDim = 0xFF9B93AB.toInt()
@@ -110,22 +117,30 @@ object StoreInspect {
     fun Perms(app: Fleet.App, onDismiss: () -> Unit) {
         val ctx = LocalContext.current
         val pkg = remember(app.id) { Fleet.installedId(ctx, app) ?: app.pkg }
+        Sheet(TAG_PERMS, app.label, pkg, onDismiss) { PermsContent(app, pkg) }
+    }
+
+    /** The per-app perms tables + top action row — Manifest / Auto grants / Runtime, drawn
+     *  from PackageManager. This IS the dropdown's Perms action, reused VERBATIM by the Access
+     *  page's Android-Perms tab (so the two never drift and nothing is reimplemented). */
+    @Composable
+    private fun ColumnScope.PermsContent(app: Fleet.App, pkg: String) {
+        val ctx = LocalContext.current
         var tick by remember(app.id) { mutableIntStateOf(0) }
         val all = remember(app.id, tick) { perms(ctx, pkg) }
-        Sheet(TAG_PERMS, app.label, pkg, onDismiss) {
-            val runtime = all.filter { it.base == PermissionInfo.PROTECTION_DANGEROUS }
-            val missing = runtime.filter { !it.granted }.map { it.name }
-            // TOP action row: Open (system per-app screen) · Ask Grant All (missing runtime).
-            Row(Modifier.fillMaxWidth().padding(bottom = sdp(StoreDensity.S8)), horizontalArrangement = Arrangement.spacedBy(sdp(StoreDensity.S4))) {
-                StoreBar.Button("Open", 0xFF2B6CB0.toInt(), {
-                    runCatching { ctx.startActivity(com.diegonmarcos.superapp.perms.PermsPages.appInfoIntent(pkg)) }
-                        .onFailure { Toast.makeText(ctx, it.message, Toast.LENGTH_LONG).show() }
-                }, Modifier.weight(1f).testTag("$TAG_PERMS:open"))
-                StoreBar.Button("Ask Grant All", 0xFF7C3AED.toInt(), {
-                    askGrantAll(ctx, pkg, missing) { tick++ }
-                }, Modifier.weight(1f).testTag("$TAG_PERMS:grant-all"))
-            }
-            if (all.isEmpty()) { Note("none declared"); return@Sheet }
+        val runtime = all.filter { it.base == PermissionInfo.PROTECTION_DANGEROUS }
+        val missing = runtime.filter { !it.granted }.map { it.name }
+        // TOP action row: Open (system per-app screen) · Ask Grant All (missing runtime).
+        Row(Modifier.fillMaxWidth().padding(bottom = sdp(StoreDensity.S8)), horizontalArrangement = Arrangement.spacedBy(sdp(StoreDensity.S4))) {
+            StoreBar.Button("Open", 0xFF2B6CB0.toInt(), {
+                runCatching { ctx.startActivity(com.diegonmarcos.superapp.perms.PermsPages.appInfoIntent(pkg)) }
+                    .onFailure { Toast.makeText(ctx, it.message, Toast.LENGTH_LONG).show() }
+            }, Modifier.weight(1f).testTag("$TAG_PERMS:open"))
+            StoreBar.Button("Ask Grant All", 0xFF7C3AED.toInt(), {
+                askGrantAll(ctx, pkg, missing) { tick++ }
+            }, Modifier.weight(1f).testTag("$TAG_PERMS:grant-all"))
+        }
+        if (all.isEmpty()) { Note("none declared") } else {
             // SEPARATED tables.
             Table("Manifest", "$TAG_PERMS:manifest", all.size) {
                 all.forEach { PermRow(it.name, level(it), null) }
@@ -237,6 +252,135 @@ object StoreInspect {
             }
         }
     }
+
+    // ── ACCESS ──────────────────────────────────────────────────────────────
+
+    /**
+     * The per-app ACCESS SURFACE: FIVE tabs, one per layer of the fleet's
+     * MCP → API → IPC → identity → Android-permission design, each a dense
+     * CHECKABLE table (DECLARED beside ACTUAL where the device can tell). It is a
+     * READER over ONE declaration — [StoreAccess] is handed already-parsed rows
+     * from the generated [AppsMcpApi] projection of the webserver's unified
+     * registry (api-ipc-map.json), the baked [IpcMesh] registry, and the baked
+     * fleet beside PackageManager — so it names no route, tool or authority and
+     * grows with the declaration. Opens as a [ModalBottomSheet] OVER the page, so
+     * the store's bottom nav and Back are untouched.
+     *  - MCP   : the app's exposed MCP tools; each → its API route (pending edge).
+     *  - API   : the app's API routes; each → its IPC target (pending edge).
+     *  - IPC   : content:// providers, bound services + AIDL, intent actions, deep
+     *            links, fleet-IPC ops; declared vs. does-it-resolve on this phone.
+     *  - ID    : package, version, versionCode, UID, signing-cert SHA, fleet id.
+     *  - Perms : the SAME per-app perms tables the Perms action draws ([PermsContent]).
+     */
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    fun Access(app: Fleet.App, onDismiss: () -> Unit) {
+        val ctx = LocalContext.current
+        var tab by remember(app.id) { mutableIntStateOf(0) }
+        val tabStyle = rememberStoreControls().groupTab
+        // MCP + API from AppsMcpApi (apps-mcp-api.json), IPC from IpcMesh (baked ipc-mesh.json),
+        // ID from the baked fleet row beside PackageManager. Same sources Routes reads — no new data path.
+        val mcpApi = remember(app.id) {
+            runCatching { AppsMcpApi.rows(AppsMcpApi.load(ctx), listOf(app.id to app.label)).firstOrNull() }.getOrNull()
+        }
+        val member = remember(app.id) {
+            runCatching { IpcMesh.baked().members.firstOrNull { it.id == app.id } }.getOrNull()
+        }
+        val ipcEndpoints = member?.endpoints.orEmpty()
+        val identity = remember(app.id) { identity(ctx, app) }
+        val pkg = identity.actualPkg ?: app.pkg
+        // ACTUAL half of the IPC tab: does each declared endpoint resolve on this phone
+        // (PackageManager only, starts nothing). Off the main thread.
+        var resolves by remember(app.id) { mutableStateOf<Map<String, Boolean>>(emptyMap()) }
+        LaunchedEffect(app.id) {
+            val m = member ?: return@LaunchedEffect
+            val reg = IpcMesh.Registry(listOf(m), "", "")
+            val live = withContext(Dispatchers.IO) { IpcMesh.probe(ctx, reg) }
+            resolves = ipcEndpoints.associate { it.id to (live.resolves[IpcMesh.key(m, it)] ?: false) }
+        }
+        val mcp = remember(app.id) { StoreAccess.mcp(mcpApi) }
+        val api = remember(app.id) { StoreAccess.api(mcpApi) }
+        val ipc = remember(app.id, resolves) { StoreAccess.ipc(ipcEndpoints, resolves) }
+        val idSecs = remember(app.id, identity) { StoreAccess.id(identity) }
+        Sheet(TAG_ACCESS, app.label, app.pkg, onDismiss) {
+            StoreTabs.Bar(listOf(listOf(
+                StoreControls.Control("MCP", "", tabStyle),
+                StoreControls.Control("API", "", tabStyle),
+                StoreControls.Control("IPC", "", tabStyle),
+                StoreControls.Control("ID", "", tabStyle),
+                StoreControls.Control("Perms", "", tabStyle),
+            )), tab) { tab = it }
+            when (tab) {
+                0 -> AccessTab(StoreAccess.Tab.MCP, "MCP tools", mcp, "$TAG_ACCESS:mcp")
+                1 -> AccessTab(StoreAccess.Tab.API, "API routes", api, "$TAG_ACCESS:api")
+                2 -> AccessTab(StoreAccess.Tab.IPC, "IPC endpoints", ipc, "$TAG_ACCESS:ipc")
+                3 -> AccessTab(StoreAccess.Tab.ID, "Identity", idSecs, "$TAG_ACCESS:id")
+                else -> PermsContent(app, pkg)
+            }
+        }
+    }
+
+    /** One Access tab: a summary line, then the declared rows in a dense table, or
+     *  "none declared" when the registry names none for this app. */
+    @Composable
+    private fun AccessTab(tab: StoreAccess.Tab, title: String, sections: List<StoreAccess.Section>, tag: String) {
+        Text(StoreAccess.summary(tab, sections), color = cDim.ink(), fontSize = StoreDensity.T_CAPTION.sp,
+            modifier = Modifier.testTag("$tag:summary").padding(vertical = sdp(StoreDensity.S4)))
+        val rows = sections.flatMap { it.rows }
+        if (rows.isEmpty()) { Note("none declared") } else {
+            Table(title, tag, rows.size) { rows.forEach { AccessRow(it) } }
+        }
+    }
+
+    @Composable
+    private fun AccessRow(r: StoreAccess.Row) {
+        Column(Modifier.fillMaxWidth().padding(vertical = sdp(StoreDensity.S4))) {
+            Row(Modifier.fillMaxWidth()) {
+                Text(r.lead, color = cLink.ink(), fontSize = StoreDensity.T_CAPTION.sp, fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(end = sdp(StoreDensity.S8)))
+                Text(r.addr, color = cText.ink(), fontSize = StoreDensity.T_META.sp, fontFamily = FontFamily.Monospace,
+                    modifier = Modifier.weight(1f))
+                StatusChip(r.status)
+            }
+            if (r.what.isNotBlank()) Text(r.what, color = cDim.ink(), fontSize = StoreDensity.T_CAPTION.sp)
+            if (r.link != null) Text("→ " + r.link, color = cDim.ink(), fontSize = StoreDensity.T_CAPTION.sp)
+        }
+    }
+
+    @Composable
+    private fun StatusChip(s: StoreAccess.Status) {
+        val (txt, col) = when (s) {
+            StoreAccess.Status.MATCH -> "match" to cOk
+            StoreAccess.Status.MISMATCH -> "mismatch" to cBad
+            StoreAccess.Status.ACTUAL -> "actual" to cOk
+            StoreAccess.Status.DECLARED -> "declared" to cDim
+            StoreAccess.Status.PENDING -> "pending" to cLink
+            StoreAccess.Status.NONE -> "—" to cDim
+        }
+        Text(txt, color = col.ink(), fontSize = StoreDensity.T_CAPTION.sp, fontWeight = FontWeight.Bold)
+    }
+
+    /** App identity off the baked fleet (declared) and this phone's PackageManager (actual):
+     *  package, version, versionCode, UID and the first signing cert's SHA-256. */
+    private fun identity(ctx: Context, app: Fleet.App): StoreAccess.Id {
+        val pm = ctx.packageManager
+        val pkg = Fleet.installedId(ctx, app) ?: app.pkg
+        val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) PackageManager.GET_SIGNING_CERTIFICATES
+            else @Suppress("DEPRECATION") PackageManager.GET_SIGNATURES
+        val pi = runCatching { pm.getPackageInfo(pkg, flags) }.getOrNull()
+        val vCode = pi?.let {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) it.longVersionCode else @Suppress("DEPRECATION") it.versionCode.toLong()
+        }
+        val uid = runCatching { pm.getApplicationInfo(pkg, 0).uid }.getOrNull()
+        return StoreAccess.Id(app.id, app.pkg, app.declaredVersionName, app.declaredVersionCode,
+            pi != null, pi?.packageName, pi?.versionName, vCode, uid, pi?.let { signingSha(it) })
+    }
+
+    private fun signingSha(pi: PackageInfo): String? = runCatching {
+        val sigs = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) pi.signingInfo?.apkContentsSigners
+            else @Suppress("DEPRECATION") pi.signatures
+        sigs?.firstOrNull()?.toByteArray()?.let { MessageDigest.getInstance("SHA-256").digest(it).joinToString("") { b -> "%02x".format(b) } }
+    }.getOrNull()
 
     // ── sheet frame + small helpers ──────────────────────────────────────────
 

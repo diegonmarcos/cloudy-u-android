@@ -243,6 +243,7 @@ class StoreCloudFragment : KitComposeFragment() {
         class Perms(app: Fleet.App) : Inspect(app)
         class Routes(app: Fleet.App) : Inspect(app)
         class Libs(app: Fleet.App) : Inspect(app)
+        class Access(app: Fleet.App) : Inspect(app)
     }
     /** A row to scroll to (opened from the progress line). */
     private var scrollTarget by mutableStateOf<String?>(null)
@@ -411,6 +412,7 @@ class StoreCloudFragment : KitComposeFragment() {
                 is Inspect.Perms -> StoreInspect.Perms(top.app, close)
                 is Inspect.Routes -> StoreInspect.Routes(top.app, close)
                 is Inspect.Libs -> StoreInspect.Libs(top.app, close)
+                is Inspect.Access -> StoreInspect.Access(top.app, close)
             }
         }
         downgrade?.let { d ->
@@ -1006,6 +1008,7 @@ class StoreCloudFragment : KitComposeFragment() {
             "perms" -> verb { inspect.add(Inspect.Perms(app)) }
             "routes" -> verb { inspect.add(Inspect.Routes(app)) }
             "libs" -> verb { inspect.add(Inspect.Libs(app)) }
+            "access" -> verb { inspect.add(Inspect.Access(app)) }
             "about", "details" -> verb { details.add(app to states[app.id]) }
             else -> StoreVerb(a.label, 0xFF4A4A55.toInt(), {
                 Toast.makeText(ctx, "'${a.id}' is declared in ${FleetActions.ASSET} but this build has no handler for it",

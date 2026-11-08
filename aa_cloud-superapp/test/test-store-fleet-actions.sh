@@ -55,8 +55,8 @@ print("== T1: the declaration is the two grouped lines the owner asked for ==")
 if [a["id"] for a in rows[0]] == ["download", "install_toggle", "direct_install", "clear"]:
     ok("row 0 = Download · Install/Uninstall · Direct Install · Clear")
 else: bad("row 0 is not the install/lifecycle line: %s" % [a["id"] for a in rows[0]])
-if [a["id"] for a in rows[1]] == ["open", "stop", "perms", "routes", "libs", "about"]:
-    ok("row 1 = Open · Stop │ Perms · Routes · Libs · About")
+if [a["id"] for a in rows[1]] == ["open", "stop", "perms", "routes", "libs", "about", "access"]:
+    ok("row 1 = Open · Stop │ Perms · Routes · Libs · About · Access")
 else: bad("row 1 is not the open/inspect line: %s" % [a["id"] for a in rows[1]])
 tog = next((a for a in flat if a["id"] == "install_toggle"), {})
 if tog.get("label") == "Install" and tog.get("label_installed") == "Uninstall":
@@ -96,7 +96,7 @@ else: bad("install_toggle does not toggle uninstall vs prompted install")
 if '"direct_install" ->' in ra and "StoreStages.INSTALL" in ra:
     ok("Direct Install is the silent StoreStages install, distinct from the toggle")
 else: bad("Direct Install is not wired to the silent StoreStages install")
-for vid, kind in (("perms", "Perms"), ("routes", "Routes"), ("libs", "Libs")):
+for vid, kind in (("perms", "Perms"), ("routes", "Routes"), ("libs", "Libs"), ("access", "Access")):
     if re.search(r'"%s" ->.*?inspect\.add\(Inspect\.%s\(' % (vid, kind), ra, re.S): ok("%s opens the %s inspect sheet" % (vid, kind))
     else: bad("%s does not open an inspect sheet" % vid)
 if re.search(r'"about", "details" ->.*?details\.add', ra, re.S): ok("About opens the full detail sheet (supersedes Details)")

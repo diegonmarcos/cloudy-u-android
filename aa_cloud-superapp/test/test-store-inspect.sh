@@ -85,6 +85,41 @@ if "ApkDetailSheet.Sheet(" in store and "InstalledCard" in sheet and "AvailableC
     ok("About opens ApkDetailSheet — version, package, install state, built-from, size")
 else: bad("About does not reuse ApkDetailSheet")
 
+print("== T6: Access — five tabs, one per access layer, a READER over the registry ==")
+access = read(os.path.join(kt, "StoreAccess.kt"))
+if re.search(r"fun Access\(app: Fleet\.App", insp): ok("StoreInspect.Access(app, onDismiss) exists")
+else: bad("StoreInspect.Access is missing")
+# the five layer tabs, drawn through the SAME tab strip Routes uses
+if "StoreTabs.Bar(" in insp and '"MCP"' in insp and '"API"' in insp and '"IPC"' in insp and '"ID"' in insp:
+    ok("Access draws MCP · API · IPC · ID · Perms tabs")
+else: bad("Access does not draw the five access-layer tabs")
+# each tab sources from the registry projection — no new data path, same as Routes
+for needle, what in (
+        ("StoreAccess.mcp(", "MCP tab from StoreAccess.mcp (AppsMcpApi projection)"),
+        ("StoreAccess.api(", "API tab from StoreAccess.api (AppsMcpApi projection)"),
+        ("StoreAccess.ipc(", "IPC tab from StoreAccess.ipc (baked IpcMesh)"),
+        ("StoreAccess.id(", "ID tab from StoreAccess.id (fleet + PackageManager)"),
+        ("AppsMcpApi.rows(", "Access reads AppsMcpApi for MCP/API"),
+        ("IpcMesh.baked()", "Access reads IpcMesh for IPC")):
+    if needle in insp: ok(what)
+    else: bad("Access: missing " + needle)
+# the Android-Perms tab REUSES the same per-app perms tables the Perms action draws (not reimplemented)
+if "PermsContent(" in insp and insp.count("fun perms(ctx: Context") == 1:
+    ok("the Perms tab reuses PermsContent — one per-app perms implementation, shared with the Perms action")
+else: bad("the Perms tab reimplements perms instead of reusing PermsContent")
+# ID is real identity off PackageManager (declared vs actual)
+if "GET_SIGNING_CERTIFICATES" in insp and "signingSha(" in insp and ".uid" in insp:
+    ok("ID reads package identity + signing cert from PackageManager")
+else: bad("ID does not read real package identity from PackageManager")
+# StoreAccess is a reader: it names the pending edge rather than inventing one, and parses no JSON
+if access and 'PENDING = "declared: pending"' in access and "JSONObject" not in access and "ctx.assets" not in access:
+    ok("StoreAccess is a pure reader over parsed rows — pending edges shown, never fabricated, no JSON of its own")
+else: bad("StoreAccess parses its own data or fabricates missing edges")
+# the fragment renders the Access sheet as an overlay, like the other inspect sheets
+if "Inspect.Access" in store and "StoreInspect.Access(" in store:
+    ok("StoreCloudFragment renders the Access inspect sheet over the page")
+else: bad("the fragment does not render the Access inspect sheet")
+
 print("\n%d passed, %d failed" % (PASS, FAIL))
 sys.exit(1 if FAIL else 0)
 PY
