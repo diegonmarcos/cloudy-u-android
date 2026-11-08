@@ -85,9 +85,25 @@ print(','.join(p['id'] for p in pages if p.get('tabs')))
 # Agents (folded into Configs ▸ Observability ▸ X-Ray) and Apps Mesh (Apps | IPC |
 # Identity) have checks of their own: test-configs-agents-page.sh A2, test-ipc-mesh-page.sh R1 and
 # test-fleet-shared-uid.sh U4.
-[ "$OWNERS" = "controls,wifi,bluetooth,panels" ] \
-  && ok "the Configs tab strips are Controls (Presets | Panels), Panels (UI | Tools), Bluetooth (Find | Connect | Interact | Debug | Dev; test-bluetooth-page.sh B1), WiFi (Scan | Channels | Link | Tools | Log; test-wifi-page.sh W1); Agents was folded into X-Ray (no strip of its own) (Apps Mesh, IPC and Identity are Cloud Store > Access now: no strip here) (Store opens Cloud Store since #865)" \
-  || bad "Configs tab strips are [$OWNERS], expected controls,wifi,bluetooth,panels - a new one must bring a check of its own"
+[ "$OWNERS" = "controls,adb-shell,wifi,bluetooth,panels" ] \
+  && ok "the Configs tab strips are Controls (Presets | Panels), ADB Shell (Status | Shell | Perms | All; check T2b and test-adb-shell-cockpit.sh), Panels (UI | Tools), Bluetooth (Find | Connect | Interact | Debug | Dev; test-bluetooth-page.sh B1), WiFi (Scan | Channels | Link | Tools | Log; test-wifi-page.sh W1); Agents was folded into X-Ray (no strip of its own) (Apps Mesh, IPC and Identity are Cloud Store > Access now: no strip here) (Store opens Cloud Store since #865)" \
+  || bad "Configs tab strips are [$OWNERS], expected controls,adb-shell,wifi,bluetooth,panels - a new one must bring a check of its own"
+
+echo "== T2b: ADB Shell is a strip over Status | Shell | Perms | All, each tab a hidden, routed page =="
+check "$(python3 - "$BJ" <<'PY'
+import json, sys
+pages = next(s for s in json.load(open(sys.argv[1]))['ui']['sections'] if s['id'] == 'config')['pages']
+by = {p['id']: p for p in pages}
+tabs = ['adb-status', 'adb-term', 'adb-perms', 'adb-all']
+if by['adb-shell'].get('tabs') != tabs: print('adb-shell tabs = %r' % (by['adb-shell'].get('tabs'),)); sys.exit()
+if [by[t]['label'] for t in tabs] != ['Status', 'Shell', 'Perms', 'All']: print('tab labels = %r' % [by[t]['label'] for t in tabs]); sys.exit()
+loose = [t for t in tabs if not by[t].get('hidden')]
+print('tab(s) drawing a tile of their own: %r' % (loose,) if loose else 'OK')
+PY
+)" "adb-shell tabs Status | Shell | Perms | All are hidden pages"
+for t in adb-status adb-term adb-perms adb-all; do
+  grep -qF "pageId == \"$t\"" "$PAGES" && ok "$t routes to its fragment" || bad "$t has no route"
+done
 
 echo "== T3: the One-Hand id SURVIVES (page:config/onehand must still resolve) =="
 check "$(python3 - "$BJ" <<'PY'

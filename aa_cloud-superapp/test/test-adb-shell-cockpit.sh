@@ -39,7 +39,7 @@ for t in adb-status:STATUS adb-term:SHELL adb-perms:PERMS adb-all:ALL; do
   grep -q "pageId == \"${t%%:*}\".*AdbShellFragment.newInstance(.*Tab.${t##*:})" "$D/launcher/SectionPages.kt" && ok "${t%%:*} routed to AdbShellFragment (${t##*:})" || bad "${t%%:*} is not routed"
 done
 F="$(code "$C/AdbShellFragment.kt")"
-for w in 'AdbStatusTab()' 'AdbShellTermTab()' 'AdbPermsTab()' 'AdbShellBrokerPage()'; do echo "$F" | grep -qF "$w" && ok "the fragment hosts $w" || bad "the fragment does not host $w"; done
+for w in 'AdbStatusTab()' 'AdbTermTab()' 'AdbPermsTab()' 'AdbShellBrokerPage()'; do echo "$F" | grep -qF "$w" && ok "the fragment hosts $w" || bad "the fragment does not host $w"; done
 M="$(code "$C/AdbCockpitModel.kt")"
 python3 - "$C/AdbCockpitModel.kt" <<'PY' && ok "the chain is perms, setup, shizuku, local, embedded, connection" || bad "the chain is missing or out of order"
 import re, sys

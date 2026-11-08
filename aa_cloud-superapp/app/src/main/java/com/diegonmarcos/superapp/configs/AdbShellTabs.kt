@@ -49,7 +49,7 @@ private fun resumeTick(): Int {
 
 /** Shell tab: the terminal (input, output, tabs) and the command bookmarks (the snippet palette with its starred favourites) from [AdbTerminal]. */
 @Composable
-internal fun AdbShellTermTab() {
+internal fun AdbTermTab() {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
     var status by remember { mutableStateOf<ShellStatus?>(null) }

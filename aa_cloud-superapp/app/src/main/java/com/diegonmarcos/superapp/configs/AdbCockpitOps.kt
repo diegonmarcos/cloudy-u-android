@@ -10,7 +10,6 @@ import com.diegonmarcos.superapp.adbdebug.ConnectOutcome
 import com.diegonmarcos.superapp.adbdebug.ConnectPlan
 import com.diegonmarcos.superapp.adbdebug.ConnectStatus
 import com.diegonmarcos.superapp.adbdebug.DeviceConnectExecutor
-import com.diegonmarcos.superapp.adbdebug.EmbeddedAdbChannel
 import com.diegonmarcos.superapp.adbdebug.LaunchViaPrefs
 import com.diegonmarcos.superapp.adbdebug.SetupAction
 import com.diegonmarcos.superapp.adbdebug.ShizukuStatus
@@ -118,13 +117,9 @@ internal object AdbCockpitOps {
             AdbCockpitModel.Do.LOCAL_START -> said(ChannelOps.startServer(app, restart = false))
             AdbCockpitModel.Do.LOCAL_STOP -> said(ChannelOps.stopServer(app))
             AdbCockpitModel.Do.LOCAL_RESTART -> said(ChannelOps.startServer(app, restart = true))
-            AdbCockpitModel.Do.EMB_INIT ->
-                if (!paired) said(ChannelOps.setup(app, SetupAction.PAIR))
-                else EmbeddedAdbChannel.autoConnect(app).let { (ok, msg) -> log.add("embedded", "init: ${if (ok) "ok" else "failed"} $msg"); said(msg) }
-            AdbCockpitModel.Do.EMB_RESET -> {
-                ChannelOps.disconnect(app)
-                EmbeddedAdbChannel.autoConnect(app).let { (ok, msg) -> log.add("embedded", "reset: ${if (ok) "ok" else "failed"} $msg"); said("Reset: $msg") }
-            }
+            // Explicit taps go through the lib's own connect path (ShellAccess.ensure via ChannelOps.reconnect), never the raw embedded autoConnect.
+            AdbCockpitModel.Do.EMB_INIT -> if (!paired) said(ChannelOps.setup(app, SetupAction.PAIR)) else said(ChannelOps.reconnect(app))
+            AdbCockpitModel.Do.EMB_RESET -> { ChannelOps.disconnect(app); said("Reset: " + ChannelOps.reconnect(app)) }
             AdbCockpitModel.Do.CONNECT -> connect(app)
             AdbCockpitModel.Do.DISCONNECT -> said(ChannelOps.disconnect(app))
             AdbCockpitModel.Do.RECONNECT -> said(ChannelOps.reconnect(app))
