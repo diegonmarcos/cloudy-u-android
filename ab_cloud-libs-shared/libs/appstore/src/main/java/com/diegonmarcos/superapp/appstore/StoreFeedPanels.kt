@@ -54,8 +54,20 @@ object StoreFeedPanels {
     /** The tally over a feed's rows: how many are ok / bad / neither (a run still going is neither, never red). */
     class Tally(val ok: Int, val bad: Int, val other: Int)
 
-    fun tally(feed: FeedViewer.Feed, entries: List<FeedViewer.Entry>): Tally =
-        Tally(entries.count { it.state in feed.ok }, entries.count { it.state in feed.bad }, entries.count { it.state !in feed.ok && it.state !in feed.bad })
+    /** A row's verdict from its state word. A state in neither the feed's ok nor its bad list falls to the NEUTRAL
+     *  branch — an in-flight run is neither passed nor failed, and must never be coloured or counted as a failure. */
+    enum class Verdict { OK, BAD, NEUTRAL }
+
+    fun verdict(feed: FeedViewer.Feed, state: String): Verdict = when (state) {
+        in feed.ok -> Verdict.OK
+        in feed.bad -> Verdict.BAD
+        else -> Verdict.NEUTRAL
+    }
+
+    fun tally(feed: FeedViewer.Feed, entries: List<FeedViewer.Entry>): Tally {
+        val by = entries.groupingBy { verdict(feed, it.state) }.eachCount()
+        return Tally(by[Verdict.OK] ?: 0, by[Verdict.BAD] ?: 0, by[Verdict.NEUTRAL] ?: 0)
+    }
 
     /** One line of facts over a feed's rows, in the feed's own terms. */
     fun summary(feed: FeedViewer.Feed, entries: List<FeedViewer.Entry>): String {
@@ -136,7 +148,7 @@ object StoreFeedPanels {
                     // The tally line over the table, then the sortable / groupable / filterable columns (StoreFeedTable).
                     Text(summary(feed, l.entries), color = Ink.DIM.ink(), fontSize = StoreDensity.T_CAPTION.sp,
                         modifier = Modifier.padding(horizontal = pad))
-                    StoreFeedTable.Table(feed, l.entries, opener, Modifier.padding(horizontal = pad))
+                    StoreFeedTable.Table(feed, l.entries, Modifier.padding(horizontal = pad), open = opener)
                 }
             }
         }

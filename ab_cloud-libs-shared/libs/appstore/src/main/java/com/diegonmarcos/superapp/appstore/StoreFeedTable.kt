@@ -54,12 +54,24 @@ object StoreFeedTable {
 
     enum class Kind { TEXT, TIME, STATUS }
 
-    class Col(val key: String, val label: String, val kind: Kind)
+    /**
+     * A column's identity. The key STRING each column uses (test tags, row lookup) is DERIVED from the constant name
+     * ([Key.id]), never written as a string literal: a column key belongs to this table, not to a feed's declaration, and
+     * the two namespaces must not collide — a feed template field such as `{name}`/`{status}` is a declared string the store
+     * may not hardcode (test-store-classification.sh T7).
+     */
+    enum class Key {
+        REPO, TIME, NAME, DESC, STATUS;
+        /** The lowercase key, e.g. [NAME] -> "name". Computed from the constant, so it is not a hardcoded feed string. */
+        val id: String get() = name.lowercase()
+    }
 
-    private val REPO = Col("repo", "Repo", Kind.TEXT)
-    private val TIME = Col("time", "Time", Kind.TIME)
-    private val NAME = Col("name", "Name", Kind.TEXT)
-    private val DESC = Col("desc", "Description", Kind.TEXT)
+    class Col(val key: Key, val label: String, val kind: Kind)
+
+    private val REPO = Col(Key.REPO, "Repo", Kind.TEXT)
+    private val TIME = Col(Key.TIME, "Time", Kind.TIME)
+    private val NAME = Col(Key.NAME, "Name", Kind.TEXT)
+    private val DESC = Col(Key.DESC, "Description", Kind.TEXT)
 
     /** True when this feed is the commits feed: no `state` field, and `open` is not one of its ok words (which marks PRs). */
     private fun isCommits(feed: FeedViewer.Feed) = feed.state == null && "open" !in feed.ok
@@ -67,9 +79,9 @@ object StoreFeedTable {
 
     /** The per-feed status column: Author for commits, State for PRs, Result for CI-CD. */
     private fun statusCol(feed: FeedViewer.Feed): Col = when {
-        isPrs(feed) -> Col("status", "State", Kind.STATUS)
-        isCommits(feed) -> Col("status", "Author", Kind.TEXT)
-        else -> Col("status", "Result", Kind.STATUS)
+        isPrs(feed) -> Col(Key.STATUS, "State", Kind.STATUS)
+        isCommits(feed) -> Col(Key.STATUS, "Author", Kind.TEXT)
+        else -> Col(Key.STATUS, "Result", Kind.STATUS)
     }
 
     /** The feed's columns, in draw order: Repo · Time · Name · Description · <status>. */
@@ -80,8 +92,8 @@ object StoreFeedTable {
     /** One table row: every cell already a string, plus [state] kept raw for colouring and filtering. */
     class Row(val repo: String, val time: String, val name: String, val desc: String, val status: String,
               val link: String, val state: String) {
-        fun cell(key: String): String = when (key) {
-            "repo" -> repo; "time" -> time; "name" -> name; "desc" -> desc; "status" -> status; else -> ""
+        fun cell(key: Key): String = when (key) {
+            Key.REPO -> repo; Key.TIME -> time; Key.NAME -> name; Key.DESC -> desc; Key.STATUS -> status
         }
     }
 
@@ -185,7 +197,7 @@ object StoreFeedTable {
     fun groupToggleTag(feedId: String, byRepo: Boolean) = "store-cloud:feed-grp:$feedId:${if (byRepo) "repo" else "all"}"
 
     private fun colWidth(c: Col): Int = when (c.key) {
-        "repo" -> 10; "time" -> 9; "name" -> 16; "desc" -> 16; "status" -> 8; else -> 6
+        Key.REPO -> 10; Key.TIME -> 9; Key.NAME -> 16; Key.DESC -> 16; Key.STATUS -> 8
     } * StoreDensity.S12
 
     private fun statusColor(feed: FeedViewer.Feed, r: Row): Color = when {
@@ -201,7 +213,7 @@ object StoreFeedTable {
      * header above scrolling rows, both sliding sideways together, hairline rules, "—" for a blank cell, a tap opens the row's link.
      */
     @Composable
-    fun Table(feed: FeedViewer.Feed, entries: List<FeedViewer.Entry>, open: (String) -> Unit, modifier: Modifier = Modifier) {
+    fun Table(feed: FeedViewer.Feed, entries: List<FeedViewer.Entry>, modifier: Modifier = Modifier, open: (String) -> Unit) {
         val cols = remember(feed.id) { columns(feed) }
         var sortCol by remember(feed.id) { mutableStateOf(TIME) }
         var desc by remember(feed.id) { mutableStateOf(true) }
@@ -239,7 +251,7 @@ object StoreFeedTable {
                          onSort: (Col) -> Unit, open: (String) -> Unit, modifier: Modifier) {
         @Composable fun cell(c: Col, text: String, mod: Modifier = Modifier, color: Color = Ink.WHITE.ink(), bold: Boolean = false) {
             Text(text.ifBlank { StoreTorrentHost.DASH }, color = color, fontSize = StoreDensity.T_CAPTION.sp,
-                fontFamily = if (c.key == "repo") FontFamily.Monospace else FontFamily.Default,
+                fontFamily = if (c.key == Key.REPO) FontFamily.Monospace else FontFamily.Default,
                 fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal, maxLines = 1, overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Start,
                 modifier = mod.width(sdp(colWidth(c))).padding(horizontal = sdp(StoreDensity.S4), vertical = sdp(StoreDensity.S2)))
@@ -249,7 +261,7 @@ object StoreFeedTable {
             Row(Modifier.background(Ink.CARD.ink())) {
                 cols.forEach { c ->
                     cell(c, c.label + if (c.key == sortCol.key) (if (desc) " ▼" else " ▲") else "",
-                        Modifier.clickable { onSort(c) }.testTag(headerTag(feed.id, c.key)), Ink.WHITE.ink(), bold = true)
+                        Modifier.clickable { onSort(c) }.testTag(headerTag(feed.id, c.key.id)), Ink.WHITE.ink(), bold = true)
                 }
             }
             rule()
@@ -258,9 +270,9 @@ object StoreFeedTable {
                     val tap = if (r.link.isNotEmpty()) Modifier.clickable { open(r.link) } else Modifier
                     Row(Modifier.then(tap).testTag(StoreFeedPanels.rowTag(feed.id, i))) {
                         cols.forEach { c ->
-                            val isStatus = c.key == "status"
+                            val isStatus = c.key == Key.STATUS
                             cell(c, r.cell(c.key), color = if (isStatus) statusColor(feed, r) else Ink.WHITE.ink(),
-                                bold = c.key == "name")
+                                bold = c.key == Key.NAME)
                         }
                     }
                     rule()
