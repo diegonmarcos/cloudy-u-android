@@ -92,6 +92,20 @@ object AdvisoryFeed {
     private const val MIN_INTERVAL_MS = 60L * 60L * 1000L
 
     /**
+     * SHORT timeouts, deliberately. [poll] runs on the one `advisory-feed`
+     * thread that also drives the recovery notification, and it fetches each
+     * topic in turn — so a 10s connect timeout per topic (the previous value)
+     * held that thread, and the banner/notification it feeds, for up to 20s on a
+     * bad network before falling back. A stranded phone on a flaky link is
+     * exactly the case this channel exists for, so it must fail FAST and leave
+     * the stored advisory intact (the `null` fallback in [fetch]) rather than
+     * hang. ntfy on the mesh answers in well under a second when it answers at
+     * all, so a few seconds is ample; retrying next hour costs nothing.
+     */
+    internal const val CONNECT_TIMEOUT_MS = 3_000
+    internal const val READ_TIMEOUT_MS = 6_000
+
+    /**
      * One topic's answer, and the reason it is a type rather than a bare list.
      *
      * A `Fetch` with no items means "this topic answered, and there are
@@ -162,8 +176,8 @@ object AdvisoryFeed {
     private fun fetch(topic: String): Fetch? = runCatching {
         val c = (URL("$BASE/$topic/json?poll=1&since=all").openConnection()
             as HttpURLConnection).apply {
-            connectTimeout = 10_000
-            readTimeout = 15_000
+            connectTimeout = CONNECT_TIMEOUT_MS
+            readTimeout = READ_TIMEOUT_MS
             // NO REDIRECTS. On the mesh path there is no legitimate hop at all
             // — ntfy answers directly — so any 3xx means we are not talking to
             // ntfy, and following it is how the public path turned an SSO
