@@ -50,15 +50,6 @@ pub struct Mesh {
     pub suffix: String,
     pub default_method: String,
     pub methods: Vec<String>,
-    /// #1498 `/browser/*`: the headless browser API (headless-api v1) of Cloud-Browser's `<package>.headless` provider.
-    pub browser_route: String,
-    pub browser_package: String,
-    pub browser_suffix: String,
-    /// #1510 `/shell/*`: the SuperApp's shell broker (`<package>.<suffix>` provider). The mesh is ONE caller of the broker (the Webserver's
-    /// own package, allowlist entry "mesh"); the broker decides what it may run, this door only carries the request.
-    pub shell_route: String,
-    pub shell_package: String,
-    pub shell_suffix: String,
     /// #1502 packages whose provider is never called from the mesh (a call starts the app): Cloud Account and Cloud Store.
     pub no_wake: Vec<String>,
 }
@@ -101,12 +92,6 @@ impl Mesh {
             suffix: m["ipc"]["authority_suffix"].as_str().filter(|x| !x.is_empty()).ok_or("mesh.ipc.authority_suffix missing")?.to_string(),
             default_method: m["ipc"]["default_method"].as_str().unwrap_or("export").to_string(),
             methods: strs(&m["ipc"]["methods"]),
-            browser_route: m["browser_route"].as_str().filter(|r| r.starts_with('/') && r.len() > 1).unwrap_or("/browser").trim_end_matches('/').to_string(),
-            browser_package: m["browser_package"].as_str().filter(|x| !x.is_empty()).unwrap_or("com.diegonmarcos.cloudbrowser").to_string(),
-            browser_suffix: m["browser_suffix"].as_str().filter(|x| !x.is_empty()).unwrap_or("headless").to_string(),
-            shell_route: m["shell_route"].as_str().filter(|r| r.starts_with('/') && r.len() > 1).unwrap_or("/shell").trim_end_matches('/').to_string(),
-            shell_package: m["shell_package"].as_str().filter(|x| !x.is_empty()).unwrap_or("com.diegonmarcos.superapp").to_string(),
-            shell_suffix: m["shell_suffix"].as_str().filter(|x| !x.is_empty()).unwrap_or("shellbroker").to_string(),
             no_wake: strs(&m["no_wake"]),
         };
         if !mesh.methods.contains(&mesh.default_method) {
@@ -168,7 +153,8 @@ pub fn route(m: &Mesh, apps: &[App], req: &Req, token: Option<&str>, src: &LogSo
     }
     let p = req.path.trim_end_matches('/');
     // #1495/#1580 the UNIFIED holder, after the bearer gate: /ipc/<app>/<route>, dispatched through the declared registry with
-    // centralized per-peer, per-route ACL (ipc.rs). The per-app /browser, /shell and /logs routes below are served through it too.
+    // centralized per-peer, per-route ACL (ipc.rs). #1580 the per-app /browser and /shell endpoints are now served ONLY here;
+    // /logs is still served below too (kept until its mesh_page row moves to the gateway).
     if let Some(rest) = p.strip_prefix(m.ipc_route.as_str()).filter(|r| r.is_empty() || r.starts_with('/')) {
         return match crate::ipc::registry() {
             Ok(reg) => match crate::ipc::resolve_peer(reg, req.header("x-c3-peer")) {
@@ -177,12 +163,6 @@ pub fn route(m: &Mesh, apps: &[App], req: &Req, token: Option<&str>, src: &LogSo
             },
             Err(e) => Resp::json(500, format!("{{\"error\":{}}}", jstr(e))),
         };
-    }
-    if let Some(rest) = p.strip_prefix(m.browser_route.as_str()).filter(|r| r.is_empty() || r.starts_with('/')) {
-        return browser(m, rest.trim_start_matches('/'), req, src);
-    }
-    if let Some(rest) = p.strip_prefix(m.shell_route.as_str()).filter(|r| r.is_empty() || r.starts_with('/')) {
-        return shell(m, rest.trim_start_matches('/'), req, src);
     }
     if let Some(kind) = p.strip_prefix(m.endpoints_route.as_str()).and_then(|r| r.strip_prefix('/')) {
         return match kind {
@@ -224,70 +204,6 @@ pub fn route(m: &Mesh, apps: &[App], req: &Req, token: Option<&str>, src: &LogSo
     match src(&format!("{}.{}", app.package, m.suffix), method, &arg.join("&")) {
         Ok((_, payload)) => Resp::bytes(200, "application/json", payload.into_bytes()),
         Err(e) => Resp::json(502, format!("{{\"error\":{},\"app\":{}}}", jstr(&e), jstr(&app.id))),
-    }
-}
-
-/// #1498 `/browser/*`, after the bearer check: the same headless-api v1 as the container, served from this phone. Only the Cloud-Browser provider is
-/// ever called, only with the five declared provider methods, and the body is capped; nothing from the request names an authority or a method.
-pub fn browser(m: &Mesh, rest: &str, req: &Req, src: &LogSource) -> Resp {
-    let (method, post) = match rest {
-        "" | "status" | "sessions" => ("status", false),
-        "command" => ("command", true),
-        "run" => ("run", true),
-        "stop" => ("stop", true),
-        "cdp" => (if serde_json::from_slice::<Value>(&req.body).ok().and_then(|v| v["on"].as_bool()).unwrap_or(false) { "cdp_on" } else { "cdp_off" }, true),
-        _ => return Resp::json(404, "{\"error\":\"not found\"}".to_string()),
-    };
-    if post != (req.method == "POST") {
-        return Resp::json(405, format!("{{\"error\":{}}}", jstr(if post { "POST required" } else { "GET required" }))).with("allow", if post { "POST" } else { "GET" });
-    }
-    if req.body.len() > 1_000_000 {
-        return Resp::json(413, "{\"error\":\"body too large\"}".to_string());
-    }
-    let arg = String::from_utf8_lossy(&req.body).to_string();
-    match src(&format!("{}.{}", m.browser_package, m.browser_suffix), method, &arg) {
-        Ok((_, payload)) => Resp::bytes(200, "application/json", payload.into_bytes()),
-        Err(e) => Resp::json(502, format!("{{\"error\":{},\"app\":\"browser\"}}", jstr(&e))),
-    }
-}
-
-/// #1510 `/shell/*`, after the bearer check, on the mesh listener only: `GET /shell/status`, `POST /shell/exec` and `POST /shell/stream` with a JSON body
-/// `{"cmd": "...", "timeoutMs": n}`. Only the SuperApp's shell-broker provider is ever called and only with its three declared methods; the request names
-/// neither an authority nor a method. The broker owns the policy (a per-caller allowlist, default deny; this door is its "mesh" entry), the timeout, the
-/// concurrency cap and the audit, and answers `{state: ok|needs_arm|denied|failed|timeout, ...}`, which is mapped to a status here: ok 200, needs_arm 409,
-/// denied 403, failed 502, timeout 504. A phone with the Server switch off runs no mesh listener at all (#1503), so this door is closed with it.
-pub fn shell(m: &Mesh, rest: &str, req: &Req, src: &LogSource) -> Resp {
-    let (method, post) = match rest {
-        "status" => ("status", false),
-        "exec" => ("exec_json", true),
-        "stream" => ("stream_json", true),
-        _ => return Resp::json(404, "{\"error\":\"not found\"}".to_string()),
-    };
-    if post != (req.method == "POST") {
-        return Resp::json(405, format!("{{\"error\":{}}}", jstr(if post { "POST required" } else { "GET required" }))).with("allow", if post { "POST" } else { "GET" });
-    }
-    if req.body.len() > 8_192 {
-        return Resp::json(413, "{\"error\":\"body too large\"}".to_string());
-    }
-    let arg = String::from_utf8_lossy(&req.body).to_string();
-    if post {
-        let ok = serde_json::from_str::<Value>(&arg).ok().map(|v| v["cmd"].as_str().map_or(false, |c| !c.trim().is_empty() && c.len() <= 2048)).unwrap_or(false);
-        if !ok {
-            return Resp::json(400, "{\"error\":\"body must be {\\\"cmd\\\": \\\"...\\\", \\\"timeoutMs\\\": n}\"}".to_string());
-        }
-    }
-    match src(&format!("{}.{}", m.shell_package, m.shell_suffix), method, &arg) {
-        Ok((_, payload)) => {
-            let status = match serde_json::from_str::<Value>(&payload).ok().as_ref().and_then(|v| v["state"].as_str()) {
-                Some("needs_arm") => 409,
-                Some("denied") => 403,
-                Some("timeout") => 504,
-                Some("failed") => 502,
-                _ => 200,
-            };
-            Resp::bytes(status, "application/json", payload.into_bytes())
-        }
-        Err(e) => Resp::json(502, format!("{{\"error\":{},\"app\":\"superapp\"}}", jstr(&e))),
     }
 }
 
@@ -430,82 +346,6 @@ mod tests {
         let mut r = http::parse_request(&format!("POST {} HTTP/1.1\r\nhost: 10.0.0.9\r\n{}content-length: {}\r\n\r\n", path, a, body.len())).unwrap();
         r.body = body.as_bytes().to_vec();
         r
-    }
-
-    #[test]
-    fn browser_routes_are_bearer_gated_and_call_only_the_browser_provider() {
-        let (m, a) = (mesh(), apps());
-        for (path, body) in [("/browser/command", "{\"cmd\":\"open\"}"), ("/browser/run", "{}"), ("/browser/stop", ""), ("/browser/cdp", "{\"on\":true}")] {
-            assert_eq!(route(&m, &a, &post(path, None, body), Some("tok"), &stub).status, 401, "{} without a bearer", path);
-            assert_eq!(route(&m, &a, &post(path, Some("Bearer wrong"), body), Some("tok"), &stub).status, 401, "{} with a wrong bearer", path);
-        }
-        assert_eq!(route(&m, &a, &get("/browser/status", None), Some("tok"), &stub).status, 401);
-        assert_eq!(route(&m, &a, &post("/browser/command", Some("Bearer tok"), "{}"), None, &stub).status, 503, "no token known fails closed");
-        let seen = Arc::new(std::sync::Mutex::new(vec![]));
-        let sink = seen.clone();
-        let spy = move |auth: &str, method: &str, arg: &str| -> Result<(String, String), String> {
-            sink.lock().unwrap().push((auth.to_string(), method.to_string(), arg.to_string()));
-            Ok(("application/json".into(), "{\"ok\":true}".into()))
-        };
-        assert_eq!(route(&m, &a, &post("/browser/command", Some("Bearer tok"), "{\"cmd\":\"html\"}"), Some("tok"), &spy).status, 200);
-        assert_eq!(route(&m, &a, &post("/browser/run", Some("Bearer tok"), "{\"steps\":[]}"), Some("tok"), &spy).status, 200);
-        assert_eq!(route(&m, &a, &get("/browser/status", Some("Bearer tok")), Some("tok"), &spy).status, 200);
-        assert_eq!(route(&m, &a, &post("/browser/cdp", Some("Bearer tok"), "{\"on\":true}"), Some("tok"), &spy).status, 200);
-        assert_eq!(route(&m, &a, &post("/browser/cdp", Some("Bearer tok"), "{\"on\":false}"), Some("tok"), &spy).status, 200);
-        let s = seen.lock().unwrap().clone();
-        assert!(s.iter().all(|x| x.0 == "com.diegonmarcos.cloudbrowser.headless"), "only the Cloud-Browser provider: {:?}", s);
-        assert_eq!(s.iter().map(|x| x.1.as_str()).collect::<Vec<_>>(), ["command", "run", "status", "cdp_on", "cdp_off"]);
-        assert_eq!(s[0].2, "{\"cmd\":\"html\"}");
-    }
-
-    #[test]
-    fn browser_wrong_verb_unknown_path_and_dead_phone() {
-        let (m, a) = (mesh(), apps());
-        assert_eq!(route(&m, &a, &get("/browser/command", Some("Bearer tok")), Some("tok"), &stub).status, 405);
-        assert_eq!(route(&m, &a, &post("/browser/status", Some("Bearer tok"), ""), Some("tok"), &stub).status, 405);
-        assert_eq!(route(&m, &a, &post("/browser/shell", Some("Bearer tok"), ""), Some("tok"), &stub).status, 404);
-        assert_eq!(route(&m, &a, &post("/browsers", Some("Bearer tok"), ""), Some("tok"), &stub).status, 404);
-        assert_eq!(route(&m, &a, &post("/browser/command", Some("Bearer tok"), "{}"), Some("tok"), &stub).status, 502, "the stub knows no headless authority");
-    }
-
-    #[test]
-    fn shell_routes_are_bearer_gated_and_call_only_the_broker_provider() {
-        let (m, a) = (mesh(), apps());
-        for (path, body) in [("/shell/exec", "{\"cmd\":\"getprop\"}"), ("/shell/stream", "{\"cmd\":\"getprop\"}")] {
-            assert_eq!(route(&m, &a, &post(path, None, body), Some("tok"), &stub).status, 401, "{} without a bearer", path);
-            assert_eq!(route(&m, &a, &post(path, Some("Bearer wrong"), body), Some("tok"), &stub).status, 401, "{} with a wrong bearer", path);
-        }
-        assert_eq!(route(&m, &a, &get("/shell/status", None), Some("tok"), &stub).status, 401);
-        assert_eq!(route(&m, &a, &post("/shell/exec", Some("Bearer tok"), "{\"cmd\":\"id\"}"), None, &stub).status, 503, "no token known fails closed");
-        let seen = Arc::new(std::sync::Mutex::new(vec![]));
-        let sink = seen.clone();
-        let spy = move |auth: &str, method: &str, arg: &str| -> Result<(String, String), String> {
-            sink.lock().unwrap().push((auth.to_string(), method.to_string(), arg.to_string()));
-            Ok(("application/json".into(), "{\"state\":\"ok\",\"exitCode\":0}".into()))
-        };
-        assert_eq!(route(&m, &a, &post("/shell/exec", Some("Bearer tok"), "{\"cmd\":\"getprop ro.x\",\"timeoutMs\":5000}"), Some("tok"), &spy).status, 200);
-        assert_eq!(route(&m, &a, &post("/shell/stream", Some("Bearer tok"), "{\"cmd\":\"logcat -d\"}"), Some("tok"), &spy).status, 200);
-        assert_eq!(route(&m, &a, &get("/shell/status", Some("Bearer tok")), Some("tok"), &spy).status, 200);
-        let s = seen.lock().unwrap().clone();
-        assert!(s.iter().all(|x| x.0 == "com.diegonmarcos.superapp.shellbroker"), "only the broker provider: {:?}", s);
-        assert_eq!(s.iter().map(|x| x.1.as_str()).collect::<Vec<_>>(), ["exec_json", "stream_json", "status"]);
-        assert_eq!(s[0].2, "{\"cmd\":\"getprop ro.x\",\"timeoutMs\":5000}");
-    }
-
-    #[test]
-    fn shell_maps_the_brokers_answer_and_refuses_a_bad_request_before_the_phone() {
-        let (m, a) = (mesh(), apps());
-        let answer = |state: &'static str| move |_: &str, _: &str, _: &str| -> Result<(String, String), String> { Ok(("application/json".into(), format!("{{\"state\":\"{}\"}}", state))) };
-        let call = |state: &'static str| route(&m, &a, &post("/shell/exec", Some("Bearer tok"), "{\"cmd\":\"id\"}"), Some("tok"), &answer(state)).status;
-        assert_eq!((call("ok"), call("needs_arm"), call("denied"), call("timeout"), call("failed")), (200, 409, 403, 504, 502));
-        let spy = |_: &str, _: &str, _: &str| -> Result<(String, String), String> { panic!("a refused request must not reach the phone") };
-        assert_eq!(route(&m, &a, &post("/shell/exec", Some("Bearer tok"), "not json"), Some("tok"), &spy).status, 400);
-        assert_eq!(route(&m, &a, &post("/shell/exec", Some("Bearer tok"), "{\"cmd\":\"  \"}"), Some("tok"), &spy).status, 400);
-        assert_eq!(route(&m, &a, &post("/shell/exec", Some("Bearer tok"), &format!("{{\"cmd\":\"{}\"}}", "a".repeat(9000))), Some("tok"), &spy).status, 413);
-        assert_eq!(route(&m, &a, &get("/shell/exec", Some("Bearer tok")), Some("tok"), &spy).status, 405);
-        assert_eq!(route(&m, &a, &post("/shell/status", Some("Bearer tok"), "{}"), Some("tok"), &spy).status, 405);
-        assert_eq!(route(&m, &a, &post("/shell/arm", Some("Bearer tok"), "{}"), Some("tok"), &spy).status, 404);
-        assert_eq!(route(&m, &a, &post("/shell/exec", Some("Bearer tok"), "{\"cmd\":\"id\"}"), Some("tok"), &stub).status, 502, "the stub knows no broker authority");
     }
 
     #[test]

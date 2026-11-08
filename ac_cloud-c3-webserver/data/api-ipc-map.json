@@ -30,20 +30,14 @@
   {
    "id": "headless",
    "kind": "provider",
-   "authority_mesh": [
-    "browser_package",
-    "browser_suffix"
-   ],
-   "what": "Cloud-Browser headless provider (build.json::mesh)"
+   "authority": "com.diegonmarcos.cloudbrowser.headless",
+   "what": "Cloud-Browser headless provider (served via /ipc, #1580)"
   },
   {
    "id": "shellbroker",
    "kind": "provider",
-   "authority_mesh": [
-    "shell_package",
-    "shell_suffix"
-   ],
-   "what": "SuperApp shell broker provider (build.json::mesh)"
+   "authority": "com.diegonmarcos.superapp.shellbroker",
+   "what": "SuperApp shell broker provider (served via /ipc, #1580)"
   },
   {
    "id": "fleetdiag",
@@ -308,86 +302,6 @@
    ]
   },
   {
-   "path": "/browser/status",
-   "surface": "mesh",
-   "method": "GET",
-   "ipc": [
-    "fleet",
-    "headless"
-   ],
-   "via": "meshlogs::browser -> LogSource(<browser_package>.<browser_suffix>, status)"
-  },
-  {
-   "path": "/browser/command",
-   "surface": "mesh",
-   "method": "POST",
-   "ipc": [
-    "fleet",
-    "headless"
-   ],
-   "via": "meshlogs::browser -> method command"
-  },
-  {
-   "path": "/browser/run",
-   "surface": "mesh",
-   "method": "POST",
-   "ipc": [
-    "fleet",
-    "headless"
-   ],
-   "via": "meshlogs::browser -> method run"
-  },
-  {
-   "path": "/browser/stop",
-   "surface": "mesh",
-   "method": "POST",
-   "ipc": [
-    "fleet",
-    "headless"
-   ],
-   "via": "meshlogs::browser -> method stop"
-  },
-  {
-   "path": "/browser/cdp",
-   "surface": "mesh",
-   "method": "POST",
-   "ipc": [
-    "fleet",
-    "headless"
-   ],
-   "via": "meshlogs::browser -> method cdp_on|cdp_off"
-  },
-  {
-   "path": "/shell/status",
-   "surface": "mesh",
-   "method": "GET",
-   "ipc": [
-    "fleet",
-    "shellbroker"
-   ],
-   "via": "meshlogs::shell -> method status"
-  },
-  {
-   "path": "/shell/exec",
-   "surface": "mesh",
-   "method": "POST",
-   "ipc": [
-    "fleet",
-    "shellbroker"
-   ],
-   "via": "meshlogs::shell -> method exec_json"
-  },
-  {
-   "path": "/shell/stream",
-   "surface": "mesh",
-   "method": "POST",
-   "ipc": [
-    "fleet",
-    "shellbroker"
-   ],
-   "via": "meshlogs::shell -> method stream_json"
-  },
-  {
    "path": "/__api__/diag/about",
    "surface": "diag",
    "method": "GET",
@@ -476,7 +390,7 @@
     "route": "status",
     "app_class": "package:com.diegonmarcos.cloudbrowser",
     "mcp_tool": null,
-    "legacy_route": "/browser/status",
+    "legacy_route": null,
     "acl": "browser.control",
     "status": "active",
     "what": "the headless browser's session status",
@@ -492,7 +406,7 @@
     "route": "command",
     "app_class": "package:com.diegonmarcos.cloudbrowser",
     "mcp_tool": null,
-    "legacy_route": "/browser/command",
+    "legacy_route": null,
     "acl": "browser.control",
     "status": "active",
     "what": "one headless-api v1 command",
@@ -509,7 +423,7 @@
     "route": "run",
     "app_class": "package:com.diegonmarcos.cloudbrowser",
     "mcp_tool": null,
-    "legacy_route": "/browser/run",
+    "legacy_route": null,
     "acl": "browser.control",
     "status": "active",
     "what": "a headless-api v1 run of steps",
@@ -526,7 +440,7 @@
     "route": "stop",
     "app_class": "package:com.diegonmarcos.cloudbrowser",
     "mcp_tool": null,
-    "legacy_route": "/browser/stop",
+    "legacy_route": null,
     "acl": "browser.control",
     "status": "active",
     "what": "stop the headless browser",
@@ -543,7 +457,7 @@
     "route": "cdp",
     "app_class": "package:com.diegonmarcos.cloudbrowser",
     "mcp_tool": null,
-    "legacy_route": "/browser/cdp",
+    "legacy_route": null,
     "acl": "browser.control",
     "status": "active",
     "what": "turn CDP on or off (body {on: bool})",
@@ -560,7 +474,7 @@
     "route": "status",
     "app_class": "package:com.diegonmarcos.superapp",
     "mcp_tool": null,
-    "legacy_route": "/shell/status",
+    "legacy_route": null,
     "acl": "shell.exec",
     "status": "active",
     "what": "the shell broker's status",
@@ -576,7 +490,7 @@
     "route": "exec",
     "app_class": "package:com.diegonmarcos.superapp",
     "mcp_tool": null,
-    "legacy_route": "/shell/exec",
+    "legacy_route": null,
     "acl": "shell.exec",
     "status": "active",
     "what": "run one command via the shell broker (body {cmd, timeoutMs})",
@@ -595,7 +509,7 @@
     "route": "stream",
     "app_class": "package:com.diegonmarcos.superapp",
     "mcp_tool": null,
-    "legacy_route": "/shell/stream",
+    "legacy_route": null,
     "acl": "shell.exec",
     "status": "active",
     "what": "stream a command via the shell broker (body {cmd, timeoutMs})",
