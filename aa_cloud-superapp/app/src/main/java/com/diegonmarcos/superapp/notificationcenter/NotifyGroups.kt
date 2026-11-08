@@ -95,7 +95,19 @@ object NotifyGroups {
     fun attach(ctx: Context, b: NotificationCompat.Builder, badgeId: String): NotificationCompat.Builder {
         val g = groupOf(badgeId) ?: return b
         if (!g.alerts) postSummary(ctx, g)
-        return b.setGroup(key(g)).setSortKey("%02d".format(g.members.indexOf(badgeId)))
+        return b.setGroup(key(g)).setSortKey("%02d".format(memberSortIndex(g, badgeId)))
+    }
+
+    /** A member's place inside its group's shade bundle: the SAME card.rank
+     *  order the Notify page renders ([BadgeDeclaration.rankOrder]), so the one
+     *  build.json declaration drives both surfaces and they cannot drift. Falls
+     *  back to plain declaration order when a member is not resolvable. */
+    private fun memberSortIndex(g: Group, badgeId: String): Int {
+        val members = BadgeDeclaration.rankOrder(
+            BadgeServices.declared,
+            g.members.mapNotNull { id -> BadgeServices.declared.firstOrNull { it.id == id } },
+        )
+        return members.indexOfFirst { it.id == badgeId }.let { if (it >= 0) it else g.members.indexOf(badgeId) }
     }
 
     /** Summary text for the alerts group is [AlertsNotifier]'s; every other
