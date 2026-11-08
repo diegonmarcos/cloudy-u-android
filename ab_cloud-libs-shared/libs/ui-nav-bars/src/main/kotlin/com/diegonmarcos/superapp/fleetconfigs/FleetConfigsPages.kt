@@ -129,6 +129,8 @@ public object FleetConfigsTags {
     public fun section(id: String): String = "fleetcfg_section_$id"
     public fun about(field: String): String = "fleetcfg_about_$field"
     public fun page(p: FleetConfigsPage): String = when (p) { FleetConfigsPage.General -> GENERAL; FleetConfigsPage.Perms -> PERMS; FleetConfigsPage.About -> ABOUT }
+    /** The screen tag for any tab id: a base page's fixed tag, or `fleetcfg_page_<id>` for an opted-in tab (Logcat, X-Ray). */
+    public fun pageTag(id: String): String = FleetConfigsPage.entries.firstOrNull { it.id == id }?.let { page(it) } ?: "fleetcfg_page_$id"
 }
 
 /** The label of the first row's and the Clean drawer's entry for [p]. */
@@ -161,11 +163,15 @@ public fun FleetConfigsScreen(
         val c = ThemeBackground.colors(dark)
         val generalScroll = rememberScrollState()
         // #1439 the three shared pages are tabs of the top nav (General | Perms | About); [page] is the one opened first.
-        var shown by remember(page) { mutableStateOf(page) }
+        // #1443 an app may opt extra tabs (Logcat, X-Ray) in through FleetConfigsExtensions; they draw between Perms and About,
+        // so the selected tab is tracked by id, not only by FleetConfigsPage.
+        var shown by remember(page) { mutableStateOf(page.id) }
+        val shownBase = FleetConfigsPage.entries.firstOrNull { it.id == shown }
+        val shownExtra = if (shownBase == null) FleetConfigsExtensions.byId(shown) else null
         val titleScope = rememberCoroutineScope()
         Column(
             Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(c.top, c.bottom)))
-                .semantics { testTagsAsResourceId = true }.testTag(FleetConfigsTags.page(shown))
+                .semantics { testTagsAsResourceId = true }.testTag(FleetConfigsTags.pageTag(shown))
                 .statusBarsPadding().navigationBarsPadding(),
         ) {
             Row(Modifier.fillMaxWidth().height(52.dp).padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -175,18 +181,20 @@ public fun FleetConfigsScreen(
                     contentAlignment = Alignment.Center,
                 ) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, tint = c.ink) }
                 Text(
-                    fleetConfigsEntryLabel(shown),
+                    shownExtra?.let { "Configs ▸ " + it.label } ?: fleetConfigsEntryLabel(shownBase ?: FleetConfigsPage.General),
                     Modifier.padding(start = 4.dp).clip(RoundedCornerShape(8.dp))
-                        .clickable(enabled = shown == FleetConfigsPage.General) { titleScope.launch { generalScroll.scrollTo(0) } }
+                        .clickable(enabled = shownBase == FleetConfigsPage.General) { titleScope.launch { generalScroll.scrollTo(0) } }
                         .semantics { heading() }.testTag(FleetConfigsTags.TITLE),
                     color = c.ink, fontSize = 18.sp, fontWeight = FontWeight.SemiBold,
                 )
             }
             FleetConfigsTabs(shown, dark) { shown = it }
-            when (shown) {
-                FleetConfigsPage.General -> FleetGeneralPage(decl, dark, c, onAppConfigs = { onDismiss(); onAppConfigs() }, scroll = generalScroll)
+            if (shownExtra != null) {
+                shownExtra.body(dark)
+            } else when (shownBase) {
                 FleetConfigsPage.Perms -> FleetPermsPage(c)
                 FleetConfigsPage.About -> FleetAboutPage(decl, c)
+                FleetConfigsPage.General, null -> FleetGeneralPage(decl, dark, c, onAppConfigs = { onDismiss(); onAppConfigs() }, scroll = generalScroll)
             }
         }
     }
@@ -273,11 +281,18 @@ private const val COLUMNS = 4
 
 /** #1439 General | Perms | About on the top nav: the shared strip (libs:ui-nav-bars NavBarTopSecondRow), first on every app's Configs. */
 @Composable
-public fun FleetConfigsTabs(selected: FleetConfigsPage, dark: Boolean, onSelect: (FleetConfigsPage) -> Unit) {
+public fun FleetConfigsTabs(selectedId: String, dark: Boolean, onSelect: (String) -> Unit) {
+    val pages = FleetConfigsPage.entries.map { com.diegonmarcos.superapp.bottomnav.NavPage(it.id, it.label, it.icon) }
+    // #1443 opted-in tabs (Logcat, X-Ray) draw between Perms and About; an app that opts into none shows the three base tabs.
+    val extras = FleetConfigsExtensions.all()
+    val shownPages = if (extras.isEmpty()) pages else {
+        val at = pages.indexOfFirst { it.id == FleetConfigsPage.About.id }.let { if (it < 0) pages.size else it }
+        pages.toMutableList().apply { addAll(at, extras.map { com.diegonmarcos.superapp.bottomnav.NavPage(it.id, it.label, it.icon) }) }
+    }
     com.diegonmarcos.superapp.navbartop2.NavBarTopSecondRow(
-        pages = FleetConfigsPage.entries.map { com.diegonmarcos.superapp.bottomnav.NavPage(it.id, it.label, it.icon) },
-        selectedId = selected.id,
-        onSelect = { p -> FleetConfigsPage.entries.firstOrNull { it.id == p.id }?.let(onSelect) },
+        pages = shownPages,
+        selectedId = selectedId,
+        onSelect = { p -> onSelect(p.id) },
         modifier = Modifier.testTag(FleetConfigsTags.TABS),
         dark = dark,
         underTopChrome = false,
@@ -288,18 +303,23 @@ public fun FleetConfigsTabs(selected: FleetConfigsPage, dark: Boolean, onSelect:
  * #1443 The three shared pages inside an app's OWN Configs screen (the app's Configs strip starts General | Perms | About, then its own
  * pages): true when [id] is one of them. A host maps its page id with this and draws [FleetConfigsPageBody] for it.
  */
-public fun isFleetConfigsPage(id: String?): Boolean = FleetConfigsPage.entries.any { it.id == id }
+public fun isFleetConfigsPage(id: String?): Boolean =
+    FleetConfigsPage.entries.any { it.id == id } || (id != null && FleetConfigsExtensions.byId(id) != null)
 
 /** #1443 The body of the shared page [id] (General, Perms or About) for an app's own Configs strip; [onAppConfigs] opens the app's own pages. */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 public fun FleetConfigsPageBody(id: String, dark: Boolean = true, onAppConfigs: () -> Unit = {}, modifier: Modifier = Modifier) {
     val c = ThemeBackground.colors(dark)
-    Box(modifier.fillMaxSize().semantics { testTagsAsResourceId = true }.testTag(FleetConfigsTags.page(FleetConfigsPage.entries.firstOrNull { it.id == id } ?: FleetConfigsPage.General))) {
+    Box(modifier.fillMaxSize().semantics { testTagsAsResourceId = true }.testTag(FleetConfigsTags.pageTag(id))) {
         when (id) {
+            FleetConfigsPage.General.id -> FleetGeneralPage(FleetConfigs.current, dark, c, onAppConfigs = onAppConfigs)
             FleetConfigsPage.Perms.id -> FleetPermsPage(c)
             FleetConfigsPage.About.id -> FleetAboutPage(FleetConfigs.current, c)
-            else -> FleetGeneralPage(FleetConfigs.current, dark, c, onAppConfigs = onAppConfigs)
+            else -> {
+                val extra = FleetConfigsExtensions.byId(id)
+                if (extra != null) extra.body(dark) else FleetGeneralPage(FleetConfigs.current, dark, c, onAppConfigs = onAppConfigs)
+            }
         }
     }
 }

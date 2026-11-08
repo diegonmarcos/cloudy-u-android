@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <!-- #1443 registers the Configs ▸ X-Ray tab at process start (FleetXrayTab → FleetConfigsExtensions). Merged into every
+             app that links libs:fleetconfigs-xray; not exported, answers no query. -->
+        <provider
+            android:name="com.diegonmarcos.superapp.fleetxray.FleetXrayInitProvider"
+            android:authorities="${applicationId}.fleetxray.init"
+            android:exported="false" />
+    </application>
+</manifest>

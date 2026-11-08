@@ -327,6 +327,9 @@ dependencies {
     // (sessions, persistent history, Agent and Model pickers) -- one implementation each, shared by reference.
     implementation project(':libs:bottomnav')
     implementation project(':libs:ui-nav-bars')
+    // #1443 pilot opt-in: the Configs Logcat and X-Ray tabs register themselves on the shared Configs screen.
+    implementation project(':libs:fleetconfigs-logcat')
+    implementation project(':libs:fleetconfigs-xray')
     implementation project(':libs:theme-background')
     implementation project(':libs:ui-kit')
     implementation project(':libs:wysiwyg')   // #1535 Inboxes > Notes: the card editor and previews

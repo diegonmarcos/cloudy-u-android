@@ -7,6 +7,8 @@
    "members": [
     "ui-kit",
     "ui-nav-bars",
+    "fleetconfigs-logcat",
+    "fleetconfigs-xray",
     "ui-icons",
     "theme-background",
     "bottomnav",

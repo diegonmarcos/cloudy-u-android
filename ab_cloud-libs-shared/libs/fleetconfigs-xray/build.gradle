@@ -1,0 +1,50 @@
+// libs:fleetconfigs-xray — the opt-in Configs ▸ X-Ray tab (#1443). An app that links this module gets an X-Ray tab on the
+// shared Configs screen (between Perms and About): the app profiler (the thirteen trackers of FleetXrayProbes read live, plus
+// the Device Profile Scan), the two-way export (HTML + token-optimized Markdown) and a deep link to the adb-shell cockpit.
+// Reverse dependency: this module depends on libs:ui-nav-bars (the Configs framework and its extension registry), NOT the other
+// way round, so adding X-Ray to one app never changes any other app's APK. The cockpit is launched by class name, so this module
+// does NOT compile against libs:shizuku-adb-debug-tools; the button is inert in an app that does not host that activity. Built
+// like libs:ui-nav-bars (same compose BOM). TESTED through the consumer: the unit task of an app that links it runs src/test/
+// here (FleetXrayExportTest is a plain JVM test).
+plugins {
+    id 'com.android.library'
+}
+if (project.extensions.findByName('kotlin') == null) {
+    apply plugin: 'org.jetbrains.kotlin.android'
+}
+apply plugin: 'org.jetbrains.kotlin.plugin.compose'
+
+android {
+    namespace 'com.diegonmarcos.superapp.fleetxray'
+    compileSdk 36
+
+    defaultConfig {
+        minSdk 26
+    }
+
+    buildFeatures {
+        compose = true
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
+dependencies {
+    api project(':libs:ui-nav-bars')     // the Configs framework + FleetConfigsExtensions registry (brings theme-background via api)
+    implementation platform('androidx.compose:compose-bom:2025.11.01')
+    implementation 'androidx.compose.ui:ui'
+    implementation 'androidx.compose.foundation:foundation'
+    implementation 'androidx.compose.material3:material3'
+    implementation 'androidx.core:core-ktx:1.15.0'
+
+    testImplementation 'junit:junit:4.13.2'
+}

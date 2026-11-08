@@ -52,7 +52,9 @@
         "libs:theme-background",
         "libs:ui-kit",
         "libs:wysiwyg",
-        "libs:ai"
+        "libs:ai",
+        "libs:fleetconfigs-logcat",
+        "libs:fleetconfigs-xray"
       ]
     },
     "libs:core": {
@@ -107,6 +109,16 @@
       "dir": "../ab_cloud-libs-shared/libs/ui-nav-bars",
       "type": "library",
       "_doc": "#1157 shared navigation and theme design, shared BY REFERENCE."
+    },
+    "libs:fleetconfigs-logcat": {
+      "dir": "../ab_cloud-libs-shared/libs/fleetconfigs-logcat",
+      "type": "library",
+      "_doc": "#1443 pilot opt-in: the Configs ▸ Logcat tab (this app's uid-filtered log stream + HTML/Markdown export). Depends on libs:ui-nav-bars and libs:devtools; registers its tab from its own init provider, so the app writes no Kotlin."
+    },
+    "libs:fleetconfigs-xray": {
+      "dir": "../ab_cloud-libs-shared/libs/fleetconfigs-xray",
+      "type": "library",
+      "_doc": "#1443 pilot opt-in: the Configs ▸ X-Ray tab (app profiler: 13 trackers + Device Profile Scan, HTML/Markdown export, deep link to the adb-shell cockpit). Depends on libs:ui-nav-bars; registers its tab from its own init provider."
     },
     "libs:fleet-data-client": {"dir": "../ab_cloud-libs-shared/libs/fleet-data-client", "type": "library"},
     "libs:perms": {"dir": "../ab_cloud-libs-shared/libs/perms", "type": "library", "_doc": "#1360 the permission contract (libs:perms): Configs > General > Perms (AppPermsSection, linked by libs:ui-nav-bars), first run (PermsFirstRun), PermsGate, and the state provider helper apps are read through."},

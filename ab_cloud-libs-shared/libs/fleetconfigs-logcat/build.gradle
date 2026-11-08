@@ -1,0 +1,50 @@
+// libs:fleetconfigs-logcat — the opt-in Configs ▸ Logcat tab (#1443). An app that links this module gets a Logcat tab on the
+// shared Configs screen (between Perms and About): its own uid-filtered log stream (libs:devtools LogPipe, one reader per
+// process) with an errors-only toggle and the two-way export (HTML + token-optimized Markdown) the X-Ray tab also offers.
+// Reverse dependency: this module depends on libs:ui-nav-bars (the Configs framework and its extension registry), NOT the other
+// way round, so adding Logcat to one app never changes any other app's APK. Built like libs:ui-nav-bars (same compose BOM) so it
+// compiles under whichever AGP the consuming app uses. TESTED through the consumer: the unit task of an app that links it runs
+// src/test/ here (FleetLogExportTest is a plain JVM test).
+plugins {
+    id 'com.android.library'
+}
+if (project.extensions.findByName('kotlin') == null) {
+    apply plugin: 'org.jetbrains.kotlin.android'
+}
+apply plugin: 'org.jetbrains.kotlin.plugin.compose'
+
+android {
+    namespace 'com.diegonmarcos.superapp.fleetlogcat'
+    compileSdk 36
+
+    defaultConfig {
+        minSdk 26
+    }
+
+    buildFeatures {
+        compose = true
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
+dependencies {
+    api project(':libs:ui-nav-bars')     // the Configs framework + FleetConfigsExtensions registry (brings theme-background via api)
+    implementation project(':libs:devtools')   // LogPipe: the one per-process logcat reader
+    implementation platform('androidx.compose:compose-bom:2025.11.01')
+    implementation 'androidx.compose.ui:ui'
+    implementation 'androidx.compose.foundation:foundation'
+    implementation 'androidx.compose.material3:material3'
+    implementation 'androidx.core:core-ktx:1.15.0'
+
+    testImplementation 'junit:junit:4.13.2'
+}

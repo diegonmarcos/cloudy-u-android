@@ -35,6 +35,8 @@
     "ui-nav-bars": { "class": "gui", "why": "#1154 shared navigation + theme: the bottom nav in Compose." },
     "ui-nav-bars": { "class": "gui", "why": "#1154 shared navigation + theme: the first top row in Compose." },
     "ui-nav-bars": { "class": "gui", "why": "#1154 shared navigation + theme: the second top row in Compose." },
+    "fleetconfigs-logcat": { "class": "gui", "why": "#1443 the opt-in Configs Logcat tab in Compose: this app's uid-filtered log stream and its HTML/Markdown export; compiled in only by an app that opts in." },
+    "fleetconfigs-xray": { "class": "gui", "why": "#1443 the opt-in Configs X-Ray tab in Compose: the app profiler (13 trackers + Device Profile Scan), its HTML/Markdown export and the adb-shell cockpit deep link; compiled in only by an app that opts in." },
     "theme-background": { "class": "gui", "why": "#1154 shared navigation + theme: the page background and colour roles." },
     "ui-icons": { "class": "gui", "why": "#1160 shared navigation icon catalog: name to ImageVector for every nav bar." },
     "light": { "class": "gui", "why": "#1155 the Light tool shared by reference: the LightPanel page the SuperApp and Cloud Calc's Toolkit both render, over one engine and torch service." },
