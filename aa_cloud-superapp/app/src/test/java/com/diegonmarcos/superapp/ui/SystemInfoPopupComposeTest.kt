@@ -24,9 +24,12 @@ class SystemInfoPopupComposeTest : KitPageHarness() {
     fun `S1 the bubble draws its rows`() {
         val ctx = ApplicationProvider.getApplicationContext<Application>()
         showKit { SystemInfoPopup.SystemInfoBubble(ctx) }
+        // Header caps (Device/Android/App/Uptime) draw verbatim; the Memory/Storage/CPU
+        // groups survive the Profile-Scan + 13-tracker reorg under richer labels — "06  Memory"
+        // / "RAM pressure", "03  Storage" / "Storage (app APIs)", "CPU load + top processes" — so
+        // match as substrings: the contract is that the bubble still surfaces each, not its old exact label.
         for (row in listOf("Device", "Android", "App", "Memory", "Storage", "CPU", "Uptime"))
-            // the four-tier reorg's TIER 1 "Device" group repeats the header's Device / Android / Uptime labels, so a row may draw twice: at least once is the contract
-            assertTrue("no '$row' row", compose.onAllNodesWithText(row).fetchSemanticsNodes().isNotEmpty())
+            assertTrue("no '$row' row", compose.onAllNodesWithText(row, substring = true).fetchSemanticsNodes().isNotEmpty())
     }
 
     @Test
