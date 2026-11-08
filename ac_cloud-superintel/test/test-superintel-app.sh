@@ -99,7 +99,11 @@ items = {i["id"]: i for g in dj["more"]["groups"] for i in g["items"]}
 if items.get("principles", {}).get("label") != "Cloudy Principals" or items["principles"].get("class") != "skill": bad.append("B9 Principles must be 'Cloudy Principals' under Plugins > Skills")
 if items.get("headroom", {}).get("class") != "performance": bad.append("B9 Headroom must be a performance plugin")
 forum = read(os.path.join(libai, "src/main/kotlin/com/diegonmarcos/superapp/ai/AiForumChat.kt"))
-if not (0 <= forum.find("SessionTopBar(topic, sessions") < forum.find("TopicStrip(topics, topic.id") < forum.find("SessionsRail(sessions, theme")): bad.append("B9 order must be top bar, specialists, then the sessions rail")
+if not (0 <= forum.find("SessionTopBar(topic, sessions") < forum.find("SessionsRail(sessions, theme")): bad.append("B9 order must be top bar, then the sessions rail")
+if "TopicStrip" in forum: bad.append("B9 the standalone specialists chip row is gone (specialists are the Specialist tool)")
+bar = read(os.path.join(libai, "src/main/kotlin/com/diegonmarcos/superapp/ai/AiComposerBar.kt"))
+if "AiTags.rowToggle(n)" not in bar or '".row$n"' not in bar: bad.append("B9 each toolbar row needs its own remembered collapse toggle")
+if not any(c.get("divider_before") and c["id"] == "agent" for c in dj["composer"]["layout"]["controls"]): bad.append("B9 the divider must stand before Agent (after Specialist)")
 if "onMenu" not in shell: bad.append("B9 SiShell does not wire the top bar's hamburger")
 
 # B4

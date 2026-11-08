@@ -274,10 +274,9 @@ fun AiForumChat(
         val twoPane = maxWidth >= metrics.twoPaneMin
         val railWidth = if (twoPane) metrics.tabletRail else metrics.railWidth
         Column(Modifier.fillMaxSize()) {
-            // With sessions: row 1 is the full-width top bar and row 2 the specialists; the sessions rail starts under them.
+            // With sessions: the full-width top bar is the first row; the sessions rail and thread start right under it.
             if (sessions != null && topic != null) {
                 SessionTopBar(topic, sessions, theme, strings, metrics, icon, onCall, onInfo, onMore)
-                TopicStrip(topics, topic.id, onSelect, theme, strings, metrics)
             }
             Row(Modifier.weight(1f).fillMaxWidth().testTag(ForumTags.BODY)) {
                 // On a narrow screen the rail is always visible (Telegram's forum rail); on a tablet it is the first pane.
@@ -387,7 +386,7 @@ private fun Thread(
     if (tools != null && chat.page == AiChatState.PAGE_MODELS) { AiModelCatalogue(chat, theme, tools.catalogueFetch, modifier); return }
     if (tools != null && chat.page == AiChatState.PAGE_TASKS) { AiTaskCatalogue(chat, theme, tools.decl, modifier); return }
     Column(modifier.fillMaxHeight()) {
-        // With sessions the header is the surface's full-width top bar and the strip its second row (SessionTopBar, TopicStrip).
+        // With sessions the header is the surface's full-width top bar (SessionTopBar); the specialists are the Specialist tool.
         if (topics.isEmpty()) ThreadHeader(topic, chat.session.messages.size, theme, strings, metrics, icon, onCall, onInfo, onMore, false)
         Box(Modifier.weight(1f).fillMaxWidth()) {
             if (backdrop) ChatBackdrop(theme, metrics)
@@ -541,36 +540,6 @@ private fun ThreadHeader(
         if (onCall != null) HeaderIcon(icon, "call", strings.call, theme, metrics, onCall)
         if (onInfo != null) HeaderIcon(icon, "info", strings.info, theme, metrics, onInfo)
         HeaderIcon(icon, "more", strings.more, theme, metrics, onMore ?: {})
-    }
-}
-
-/** The topics (personas / agents) as a horizontal chip strip under the header, used when the left rail is the sessions. */
-@Composable
-private fun TopicStrip(topics: List<ForumTopic>, selectedId: String, onSelect: (String) -> Unit, theme: AiTheme, strings: ForumStrings, metrics: ForumMetrics) {
-    val c = theme.colors
-    val m = theme.metrics
-    Row(
-        Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = m.small)
-            .semantics { contentDescription = strings.participants }.testTag(ForumTags.TOPIC_STRIP),
-        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(m.chipGap),
-    ) {
-        topics.forEach { t ->
-            val sel = t.id == selectedId
-            val shape = RoundedCornerShape(metrics.pillRadius)
-            Box(
-                Modifier.sizeIn(minHeight = metrics.touch).clickable { onSelect(t.id) }.semantics { contentDescription = t.label }.testTag(ForumTags.topic(t.id)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Row(
-                    Modifier.clip(shape).background(if (sel) c.userBubble else c.tile).border(m.hairline, if (sel) c.accent else c.tileBorder, shape)
-                        .padding(horizontal = m.cardPad, vertical = m.small),
-                    verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(m.chipGap),
-                ) {
-                    androidx.compose.material3.Text(t.badge, color = if (sel) c.accent else c.text2, style = theme.type.style(theme.type.label, FontWeight.Bold), maxLines = 1)
-                    androidx.compose.material3.Text(t.label, color = if (sel) c.text else c.text2, style = theme.type.style(theme.type.small, FontWeight.Medium), maxLines = 1)
-                }
-            }
-        }
     }
 }
 

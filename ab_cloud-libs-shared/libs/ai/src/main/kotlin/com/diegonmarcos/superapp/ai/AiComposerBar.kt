@@ -140,8 +140,22 @@ fun AiComposerBar(
                 Box(Modifier.weight(1f))
             } else Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(design.metric("ctl_gap").dp)) {
                 rows.forEachIndexed { i, row ->
-                    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).testTag(AiTags.toolbarRow(i + 1)), horizontalArrangement = gap, verticalAlignment = Alignment.CenterVertically) {
-                        row.forEach { Control(it) }
+                    val n = i + 1
+                    // Each row collapses on its own (its chevron) and remembers it across sessions, per app and per row.
+                    val key = design.collapseKey(decl.app) + ".row$n"
+                    var rowCollapsed by remember(key) { mutableStateOf(ctx.getSharedPreferences(BAR_PREFS, Context.MODE_PRIVATE).getBoolean(key, false)) }
+                    fun flip() {
+                        rowCollapsed = !rowCollapsed
+                        ctx.getSharedPreferences(BAR_PREFS, Context.MODE_PRIVATE).edit().putBoolean(key, rowCollapsed).apply()
+                    }
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Box(Modifier.clickable { flip() }.padding(end = theme.metrics.small).testTag(AiTags.rowToggle(n)), contentAlignment = Alignment.Center) {
+                            Text(if (rowCollapsed) "▸" else "▾", color = theme.colors.text2, fontSize = design.metric("ctl_icon").sp)
+                        }
+                        if (rowCollapsed) Text((if (n == 1) theme.strings.toolbarRow1 else theme.strings.toolbarRow2), color = theme.colors.text2, fontSize = design.metric("compact_font").sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        else Row(Modifier.weight(1f).horizontalScroll(rememberScrollState()).testTag(AiTags.toolbarRow(n)), horizontalArrangement = gap, verticalAlignment = Alignment.CenterVertically) {
+                            row.forEach { Control(it) }
+                        }
                     }
                 }
             }

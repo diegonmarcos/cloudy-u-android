@@ -155,6 +155,9 @@ data class AiStrings(
     /** The empty chat's second line when [helloSub] is blank and no agent is picked. */
     val noAgentLine: String = "No agent",
     val notListed: String = "not listed by the gateway",
+    /** The label a collapsed toolbar row keeps next to its chevron. */
+    val toolbarRow1: String = "Task · Specialist · Agent · Model · Effort · Mode",
+    val toolbarRow2: String = "Repos · Plugins · MCPs · More",
     val noRepos: String = "No repository is declared for this app",
     val noUsage: String = "The backend has reported no usage yet. Tokens and cost appear here once an answer carries them.",
     /** The context-usage line: used / limit / percent, and the same without a reported limit; per-answer tokens. */

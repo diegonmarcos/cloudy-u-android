@@ -78,10 +78,10 @@ class SiChatToolsTest {
     @Test fun leftRailIsTheSessionsNotTheTopics() {
         render()
         compose.onNodeWithTag(ForumTags.SESSIONS_RAIL).assertIsDisplayed()
-        // The topics rail (Mat, Phy, ...) is gone from the left; the personas are a strip under the header.
+        // The topics rail (Mat, Phy, ...) is gone from the left, and so is the persona chip strip: specialists are the Specialist tool.
         compose.onAllNodesWithTag(ForumTags.RAIL).assertCountEquals(0)
-        compose.onNodeWithTag(ForumTags.TOPIC_STRIP).assertExists()
-        compose.onNodeWithTag(ForumTags.topic("math")).assertExists()
+        compose.onAllNodesWithTag(ForumTags.TOPIC_STRIP).assertCountEquals(0)
+        compose.onAllNodesWithTag(ForumTags.topic("math")).assertCountEquals(0)
         ForumFixture.sessionList().forEach { compose.onNodeWithTag(ForumTags.session(it.id)).assertExists() }
         compose.onNodeWithTag(ForumTags.NEW_SESSION).assertIsDisplayed()
     }
@@ -97,7 +97,8 @@ class SiChatToolsTest {
     @Test fun choosingAPersonaSwitchesTheThreadAndItsTitle() {
         render()
         compose.onNodeWithText("Release planning", substring = true).assertIsDisplayed()
-        compose.onNodeWithTag(ForumTags.topic("math")).performClick()
+        compose.onNodeWithTag(AiTags.ctl("specialist")).performScrollTo().performClick()
+        compose.onNodeWithTag(AiTags.specialist("math")).performClick()
         compose.onNodeWithText("Proofs", substring = true).assertIsDisplayed()
     }
 
@@ -145,17 +146,59 @@ class SiChatToolsTest {
         assertEquals(surface.width, bar.width, 1f)
     }
 
-    @Test fun sessionsRailStartsBelowTheTopBarAndTheSpecialistsAreTheSecondRow() {
+    @Test fun sessionsRailStartsDirectlyBelowTheTopBarWithNoSpecialistsRowBetween() {
         render()
         val bar = bottom(ForumTags.TOP_BAR)
-        // Row 2: the specialists sit directly under the top bar and above the rail and the thread.
-        assertTrue(top(ForumTags.TOPIC_STRIP) >= bar - 1f)
-        assertTrue(bottom(ForumTags.TOPIC_STRIP) <= top(ForumTags.SESSIONS_RAIL) + 1f)
-        // The sessions rail does NOT reach the top: it starts under the top bar and the specialists.
-        assertTrue(top(ForumTags.SESSIONS_RAIL) >= bar)
+        // The sessions rail does NOT reach the top: it starts right under the top bar, and the thread beside it.
+        assertTrue(top(ForumTags.SESSIONS_RAIL) >= bar - 1f)
         assertTrue(top(ForumTags.SESSIONS_RAIL) > top(ForumTags.TOP_BAR))
-        assertTrue(top(ForumTags.SESSIONS_RAIL) >= bottom(ForumTags.TOPIC_STRIP) - 1f)
-        assertTrue(top(ForumTags.LIST) >= bottom(ForumTags.TOPIC_STRIP) - 1f)
+        assertTrue(top(ForumTags.SESSIONS_RAIL) - bar < 8f)
+        // The standalone specialists chip row is gone; specialists are reached through the Specialist tool only.
+        compose.onAllNodesWithTag(ForumTags.TOPIC_STRIP).assertCountEquals(0)
+        compose.onNodeWithTag(AiTags.ctl("specialist")).assertExists()
+    }
+
+    @Test fun dividerStandsBetweenSpecialistAndAgent() {
+        render()
+        compose.onNodeWithTag(AiTags.TOOLBAR_DIVIDER).assertExists()
+        val d = left(AiTags.TOOLBAR_DIVIDER)
+        assertTrue(left(AiTags.ctl("specialist")) < d && d < left(AiTags.ctl("agent")))
+        // Directly between them: nothing else sits in between.
+        for (other in listOf("task", "model", "effort", "mode")) assertTrue(other, left(AiTags.ctl(other)) < left(AiTags.ctl("specialist")) || left(AiTags.ctl(other)) > left(AiTags.ctl("agent")))
+    }
+
+    private val prefs get() = org.robolectric.RuntimeEnvironment.getApplication().getSharedPreferences("ai_composer", android.content.Context.MODE_PRIVATE)
+    private val row1Key = "ai_composer_collapsed.cloud-superintel.row1"
+    private val row2Key = "ai_composer_collapsed.cloud-superintel.row2"
+
+    @Test fun eachToolbarRowCollapsesAndExpandsOnItsOwnAndRemembersIt() {
+        render()
+        compose.onNodeWithTag(AiTags.ctl("task")).assertExists()
+        compose.onNodeWithTag(AiTags.ctl("repos")).assertExists()
+        // Collapse row 1 only.
+        compose.onNodeWithTag(AiTags.rowToggle(1)).performClick()
+        compose.onAllNodesWithTag(AiTags.ctl("task")).assertCountEquals(0)
+        compose.onAllNodesWithTag(AiTags.ctl("mode")).assertCountEquals(0)
+        compose.onNodeWithTag(AiTags.ctl("repos")).assertExists()
+        assertTrue(prefs.getBoolean(row1Key, false)); assertFalse(prefs.getBoolean(row2Key, false))
+        // Collapse row 2 as well, then expand row 1 again: independent.
+        compose.onNodeWithTag(AiTags.rowToggle(2)).performClick()
+        compose.onAllNodesWithTag(AiTags.ctl("repos")).assertCountEquals(0)
+        compose.onNodeWithTag(AiTags.rowToggle(1)).performClick()
+        compose.onNodeWithTag(AiTags.ctl("task")).assertExists()
+        compose.onAllNodesWithTag(AiTags.ctl("more")).assertCountEquals(0)
+        assertFalse(prefs.getBoolean(row1Key, true)); assertTrue(prefs.getBoolean(row2Key, false))
+        compose.onNodeWithTag(AiTags.rowToggle(2)).performClick()
+        for (c in listOf("repos", "skills", "mcp_kg", "mcp_infra", "mcp_user", "mcp_ext", "perf", "more")) compose.onNodeWithTag(AiTags.ctl(c)).assertExists()
+    }
+
+    @Test fun aRowCollapsedInAPreviousSessionStartsCollapsed() {
+        prefs.edit().putBoolean(row2Key, true).commit()
+        render()
+        compose.onNodeWithTag(AiTags.ctl("task")).assertExists()
+        compose.onAllNodesWithTag(AiTags.ctl("repos")).assertCountEquals(0)
+        compose.onAllNodesWithTag(AiTags.ctl("more")).assertCountEquals(0)
+        compose.onNodeWithTag(AiTags.rowToggle(2)).assertExists()
     }
 
     @Test fun inputRowIsPlusInputVoiceCameraEnter() {
@@ -339,7 +382,8 @@ class SiChatToolsTest {
         render(topics)
         compose.onNodeWithTag(ForumTags.THINKING).assertExists()
         compose.onNodeWithTag(ForumTags.ERROR).assertExists()
-        compose.onNodeWithTag(ForumTags.topic("physics")).performClick()
+        compose.onNodeWithTag(AiTags.ctl("specialist")).performScrollTo().performClick()
+        compose.onNodeWithTag(AiTags.specialist("physics")).performClick()
         compose.onNodeWithTag(ForumTags.EMPTY).assertIsDisplayed()
     }
 

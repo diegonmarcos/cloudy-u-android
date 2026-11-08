@@ -241,6 +241,7 @@ object AiTags {
     fun mcp(name: String) = "ai_mcp_$name"
     const val TOOLBAR_DIVIDER = "ai_toolbar_divider"
     fun toolbarRow(n: Int) = "ai_toolbar_row_$n"
+    fun rowToggle(n: Int) = "ai_toolbar_row_toggle_$n"
     fun specialist(id: String) = "ai_specialist_$id"
     fun repo(name: String) = "ai_repo_$name"
     /** The context-usage line above the composer bar. */
