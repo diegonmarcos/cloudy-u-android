@@ -33,6 +33,7 @@ pub mod served;
 pub mod serving;
 pub mod sshd;
 pub mod sub;
+pub mod topology;
 
 use fleet_webserver::http::{self, Req, Resp};
 use fleet_webserver::render::jstr;

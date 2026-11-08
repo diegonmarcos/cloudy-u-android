@@ -1,0 +1,432 @@
+{
+ "_doc": "API -> IPC mapping, the missing middle of the MCP -> API -> IPC chain (the MCP -> API half is data/mcp-catalogue.json, generated). Hand-declared from the real dispatch in server/src (each route's `via` names the code path). `ipc` is null (pure HTTP, no IPC leg), \"unmapped\" (link not determinable from the code) or a list of ipc_endpoints ids. Surfaces: app = ROUTES in app.rs (loopback :8002, /__app__), mesh = the mesh listener (meshlogs.rs, routes from build.json::mesh), diag = the :8003 listener (lib.rs handle_diag). Every ROUTES row MUST appear here (test: api_ipc_map_covers_every_route). `mcp_tools` links a catalogue tool to a webserver route (meshlogs.rs: /endpoints is 'for cloudy-c3-mcp'; basis is the phone_* tool names); the catalogue itself carries no such link.",
+ "surfaces": {
+  "app": {
+   "listener": "loopback :8002 /__app__",
+   "auth": "loopback + allowed host; POST needs x-c3-write and application/json"
+  },
+  "mesh": {
+   "listener": "mesh address (build.json::mesh)",
+   "auth": "Bearer fleet token + mesh peers only"
+  },
+  "diag": {
+   "listener": "loopback :8003",
+   "auth": "loopback + allowed host"
+  }
+ },
+ "ipc_endpoints": [
+  {
+   "id": "logexport",
+   "kind": "provider",
+   "template": "build.json::api.ipc#logexport",
+   "what": "per-app log export provider"
+  },
+  {
+   "id": "fleet",
+   "kind": "provider",
+   "template": "build.json::api.ipc#fleet",
+   "what": "per-app fleet handshake; the mesh bearer token is read through it"
+  },
+  {
+   "id": "headless",
+   "kind": "provider",
+   "authority_mesh": [
+    "browser_package",
+    "browser_suffix"
+   ],
+   "what": "Cloud-Browser headless provider (build.json::mesh)"
+  },
+  {
+   "id": "shellbroker",
+   "kind": "provider",
+   "authority_mesh": [
+    "shell_package",
+    "shell_suffix"
+   ],
+   "what": "SuperApp shell broker provider (build.json::mesh)"
+  },
+  {
+   "id": "fleetdiag",
+   "kind": "provider",
+   "authority": "<superapp>.fleetdiag",
+   "what": "SuperApp FleetDiagnosticsProvider (diag.rs set_source)"
+  },
+  {
+   "id": "browser-open",
+   "kind": "intent",
+   "authority": null,
+   "what": "Intent handing an http(s) URL to cloud-browser (diag.rs set_opener)"
+  },
+  {
+   "id": "nix-door",
+   "kind": "intent",
+   "authority": null,
+   "what": "Intent to the nix app's service starting/stopping the supervised SSH door (door.rs set_sender)"
+  },
+  {
+   "id": "app-launch",
+   "kind": "intent",
+   "authority": null,
+   "what": "Launch activity of a terminal app's package (served.rs set_launcher)"
+  }
+ ],
+ "routes": [
+  {
+   "path": "/__app__",
+   "surface": "app",
+   "ipc": null,
+   "via": "in-process handler, no IPC leg"
+  },
+  {
+   "path": "/__app__/tab/pages",
+   "surface": "app",
+   "ipc": null,
+   "via": "in-process handler, no IPC leg"
+  },
+  {
+   "path": "/__app__/tab/api",
+   "surface": "app",
+   "ipc": null,
+   "via": "in-process handler, no IPC leg"
+  },
+  {
+   "path": "/__app__/tab/home",
+   "surface": "app",
+   "ipc": null,
+   "via": "in-process handler, no IPC leg"
+  },
+  {
+   "path": "/__app__/tab/sshd",
+   "surface": "app",
+   "ipc": null,
+   "via": "in-process handler, no IPC leg"
+  },
+  {
+   "path": "/__app__/files",
+   "surface": "app",
+   "ipc": null,
+   "via": "in-process handler, no IPC leg"
+  },
+  {
+   "path": "/__app__/tab/configs",
+   "surface": "app",
+   "ipc": null,
+   "via": "in-process handler, no IPC leg"
+  },
+  {
+   "path": "/__app__/api/routes",
+   "surface": "app",
+   "ipc": null,
+   "via": "in-process handler, no IPC leg"
+  },
+  {
+   "path": "/__app__/api/topology",
+   "surface": "app",
+   "ipc": null,
+   "via": "topology::api_topology, in-process join of the declarations"
+  },
+  {
+   "path": "/__app__/api/config",
+   "surface": "app",
+   "ipc": null,
+   "via": "in-process handler, no IPC leg"
+  },
+  {
+   "path": "/__app__/api/serving",
+   "surface": "app",
+   "ipc": null,
+   "via": "in-process handler, no IPC leg"
+  },
+  {
+   "path": "/__app__/api/engines",
+   "surface": "app",
+   "ipc": null,
+   "via": "in-process handler, no IPC leg"
+  },
+  {
+   "path": "/__app__/api/about",
+   "surface": "app",
+   "ipc": null,
+   "via": "in-process handler, no IPC leg"
+  },
+  {
+   "path": "/__app__/api/links",
+   "surface": "app",
+   "ipc": null,
+   "via": "in-process handler, no IPC leg"
+  },
+  {
+   "path": "/__app__/crashes",
+   "surface": "app",
+   "ipc": null,
+   "via": "in-process handler, no IPC leg"
+  },
+  {
+   "path": "/__app__/api/crashes",
+   "surface": "app",
+   "ipc": null,
+   "via": "in-process handler, no IPC leg"
+  },
+  {
+   "path": "/__app__/api/subpages",
+   "surface": "app",
+   "ipc": null,
+   "via": "in-process handler, no IPC leg"
+  },
+  {
+   "path": "/__app__/api/sub/api-mcp",
+   "surface": "app",
+   "ipc": null,
+   "via": "in-process handler, no IPC leg"
+  },
+  {
+   "path": "/__app__/api/sub/api-public",
+   "surface": "app",
+   "ipc": null,
+   "via": "in-process handler, no IPC leg"
+  },
+  {
+   "path": "/__app__/api/sub/api-mesh",
+   "surface": "app",
+   "ipc": null,
+   "via": "in-process handler, no IPC leg"
+  },
+  {
+   "path": "/__app__/api/sub/api-apps",
+   "surface": "app",
+   "ipc": null,
+   "via": "in-process handler, no IPC leg"
+  },
+  {
+   "path": "/__app__/api/sub/api-ipc",
+   "surface": "app",
+   "ipc": null,
+   "via": "in-process handler, no IPC leg"
+  },
+  {
+   "path": "/__app__/api/sub/pages-drive",
+   "surface": "app",
+   "ipc": null,
+   "via": "in-process handler, no IPC leg"
+  },
+  {
+   "path": "/__app__/api/sub/pages-terminals",
+   "surface": "app",
+   "ipc": null,
+   "via": "in-process handler, no IPC leg"
+  },
+  {
+   "path": "/__app__/api/sub/pages-repos",
+   "surface": "app",
+   "ipc": null,
+   "via": "in-process handler, no IPC leg"
+  },
+  {
+   "path": "/__app__/api/repos",
+   "surface": "app",
+   "ipc": null,
+   "via": "in-process handler, no IPC leg"
+  },
+  {
+   "path": "/__app__/api/repos/discover",
+   "surface": "app",
+   "ipc": null,
+   "via": "in-process handler, no IPC leg"
+  },
+  {
+   "path": "/__app__/api/served",
+   "surface": "app",
+   "ipc": [
+    "app-launch"
+   ],
+   "via": "api_served op start_app -> served LAUNCHER (opens a package's launch activity)"
+  },
+  {
+   "path": "/__app__/api/power",
+   "surface": "app",
+   "ipc": [
+    "nix-door"
+   ],
+   "via": "api_power -> power::apply -> door::sync -> door SENDER (Intent to the nix app's service)"
+  },
+  {
+   "path": "/__app__/api/sshd",
+   "surface": "app",
+   "ipc": [
+    "nix-door"
+   ],
+   "via": "api_sshd -> door::command -> door::set -> door SENDER (supervised door only; hosted doors are in-process)"
+  },
+  {
+   "path": "/__app__/api/open",
+   "surface": "app",
+   "ipc": [
+    "browser-open"
+   ],
+   "via": "api_open -> diag::open -> the installed opener (Intent to cloud-browser)"
+  },
+  {
+   "path": "/endpoints/public",
+   "surface": "mesh",
+   "method": "GET",
+   "ipc": null,
+   "via": "meshlogs::route: apis::public_page, in-process",
+   "mcp_tools": [
+    "obs.debug.phone_public"
+   ]
+  },
+  {
+   "path": "/endpoints/mesh",
+   "surface": "mesh",
+   "method": "GET",
+   "ipc": null,
+   "via": "meshlogs::route: apis::mesh_page, in-process",
+   "mcp_tools": [
+    "obs.debug.phone_mesh"
+   ]
+  },
+  {
+   "path": "/logs",
+   "surface": "mesh",
+   "method": "GET",
+   "ipc": [
+    "fleet"
+   ],
+   "via": "meshlogs::route index: bearer checked against the fleet token (fleet provider); lists apps, no logexport call"
+  },
+  {
+   "path": "/logs/<app>",
+   "surface": "mesh",
+   "method": "GET",
+   "ipc": [
+    "fleet",
+    "logexport"
+   ],
+   "via": "meshlogs::route -> LogSource(<package>.logexport, meta|logs|crashes|export)",
+   "mcp_tools": [
+    "obs.debug.phone_logs"
+   ]
+  },
+  {
+   "path": "/browser/status",
+   "surface": "mesh",
+   "method": "GET",
+   "ipc": [
+    "fleet",
+    "headless"
+   ],
+   "via": "meshlogs::browser -> LogSource(<browser_package>.<browser_suffix>, status)"
+  },
+  {
+   "path": "/browser/command",
+   "surface": "mesh",
+   "method": "POST",
+   "ipc": [
+    "fleet",
+    "headless"
+   ],
+   "via": "meshlogs::browser -> method command"
+  },
+  {
+   "path": "/browser/run",
+   "surface": "mesh",
+   "method": "POST",
+   "ipc": [
+    "fleet",
+    "headless"
+   ],
+   "via": "meshlogs::browser -> method run"
+  },
+  {
+   "path": "/browser/stop",
+   "surface": "mesh",
+   "method": "POST",
+   "ipc": [
+    "fleet",
+    "headless"
+   ],
+   "via": "meshlogs::browser -> method stop"
+  },
+  {
+   "path": "/browser/cdp",
+   "surface": "mesh",
+   "method": "POST",
+   "ipc": [
+    "fleet",
+    "headless"
+   ],
+   "via": "meshlogs::browser -> method cdp_on|cdp_off"
+  },
+  {
+   "path": "/shell/status",
+   "surface": "mesh",
+   "method": "GET",
+   "ipc": [
+    "fleet",
+    "shellbroker"
+   ],
+   "via": "meshlogs::shell -> method status"
+  },
+  {
+   "path": "/shell/exec",
+   "surface": "mesh",
+   "method": "POST",
+   "ipc": [
+    "fleet",
+    "shellbroker"
+   ],
+   "via": "meshlogs::shell -> method exec_json"
+  },
+  {
+   "path": "/shell/stream",
+   "surface": "mesh",
+   "method": "POST",
+   "ipc": [
+    "fleet",
+    "shellbroker"
+   ],
+   "via": "meshlogs::shell -> method stream_json"
+  },
+  {
+   "path": "/__api__/diag/about",
+   "surface": "diag",
+   "method": "GET",
+   "ipc": [
+    "fleetdiag"
+   ],
+   "via": "lib::handle_diag -> diag::answer -> SOURCE (<superapp>.fleetdiag provider)"
+  },
+  {
+   "path": "/__api__/diag/logcat",
+   "surface": "diag",
+   "method": "GET",
+   "ipc": [
+    "fleetdiag"
+   ],
+   "via": "lib::handle_diag -> diag::answer -> SOURCE (<superapp>.fleetdiag provider)"
+  },
+  {
+   "path": "/__api__/diag/diagnose",
+   "surface": "diag",
+   "method": "GET",
+   "ipc": [
+    "fleetdiag"
+   ],
+   "via": "lib::handle_diag -> diag::answer -> SOURCE (<superapp>.fleetdiag provider)"
+  },
+  {
+   "path": "/__api__/health",
+   "surface": "diag",
+   "method": "GET",
+   "ipc": null,
+   "via": "lib::handle_diag, in-process"
+  },
+  {
+   "path": "/__api__/serving",
+   "surface": "diag",
+   "method": "GET",
+   "ipc": null,
+   "via": "lib::handle_diag, in-process"
+  }
+ ]
+}

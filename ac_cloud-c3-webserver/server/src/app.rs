@@ -39,6 +39,7 @@ pub const ROUTES: &[Route] = &[
     Route { kind: Kind::Page, path: "/__app__/files", tab: None, post: false, summary: "The old Files tab: the shell sends it to the SSHd tab", handler: page_shell },
     Route { kind: Kind::Page, path: "/__app__/tab/configs", tab: Some("Configs"), post: false, summary: "About (ports, DNS names, versions), Engines (every renderer and feature) and Links (what a tapped link does)", handler: page_shell },
     Route { kind: Kind::Api, path: "/__app__/api/routes", tab: None, post: false, summary: "This route table as JSON: kind, path, tab, summary", handler: api_routes },
+    Route { kind: Kind::Api, path: "/__app__/api/topology", tab: None, post: false, summary: "The MCP -> API -> IPC topology as one graph: nodes by layer, edges, and one row per route with method, auth, summary and status (data/mcp-catalogue.json + data/api-ipc-map.json + build.json::api.ipc)", handler: crate::topology::api_topology },
     Route { kind: Kind::Api, path: "/__app__/api/config", tab: None, post: false, summary: "Effective configuration: bind, port, root, methods, route counts", handler: api_config },
     Route { kind: Kind::Api, path: "/__app__/api/serving", tab: None, post: false, summary: "The served ports and their private DNS names, whether each answers now, the DNS server and the versions", handler: api_serving },
     Route { kind: Kind::Api, path: "/__app__/api/engines", tab: None, post: false, summary: "Every render and feature engine of the web server, read-only", handler: api_engines },
