@@ -275,7 +275,7 @@
           "what": "The Acode editor."
         },
         {
-          "name": "Repos",
+          "name": "Git",
           "what": "The fleet's repositories."
         },
         {
@@ -297,7 +297,7 @@
       ],
       "guide": [
         "Pick a ticket in Backlog.",
-        "Open its repository in Repos and edit in Editor.",
+        "Open its repository in Git and edit in Editor.",
         "Ask the AI or start an agent batch for bigger changes.",
         "Run commands in MyTerminal."
       ],
