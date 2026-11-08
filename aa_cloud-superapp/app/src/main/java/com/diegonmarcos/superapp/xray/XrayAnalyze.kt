@@ -73,7 +73,7 @@ object XrayAnalyze {
     }
 
     private val UID_HEAD = Regex("^  (u\\d+[as]\\d+|\\d+):\\s*$")
-    private val WAKELOCK = Regex("^\\s+Wake lock (.+?): ((?:\\d+(?:ms|[dhms]) ?)+)(?: \\((\\d+) times\\))?")
+    private val WAKELOCK = Regex("^\\s+Wake lock (.+?): ((?:\\d+(?:ms|[dhms]) ?)+)(?: ?\\((\\d+) times\\))?")
     private val JOB = Regex("^\\s+Job (.+?): ((?:\\d+(?:ms|[dhms]) ?)+)")
     private val SYNC = Regex("^\\s+Sync (.+?): ((?:\\d+(?:ms|[dhms]) ?)+)")
     private val CPU = Regex("^\\s+Cpu: ((?:\\d+(?:ms|[dhms]) ?)+) usr \\+ ((?:\\d+(?:ms|[dhms]) ?)+) krn")

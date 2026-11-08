@@ -61,7 +61,7 @@ class XrayAnalyzeTest {
         assertTrue("heavier on power, lower overall", sus[1].mAh > sus[0].mAh)
         val spin = sus.first { it.pkg == "com.spin" }
         assertEquals("wakelock count", spin.cause)
-        assertTrue(spin.detail.startsWith("why: 5000 wakelock acquires (top: Spin x5000)"))
+        assertTrue(spin.detail.startsWith("why: 5002 wakelock acquires (top: Spin x5000)"))
         assertEquals(10.0, spin.mAh, 0.001)
         assertEquals("pts", spin.unit)
     }

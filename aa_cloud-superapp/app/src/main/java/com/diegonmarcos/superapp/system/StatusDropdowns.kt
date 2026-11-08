@@ -90,15 +90,16 @@ object StatusDropdowns {
                 value = withContext(Dispatchers.IO) { SystemGroups.adbLines(g.id, probeText, g.rows, appName(ctx)) }
             } else {
                 // an app group may append the lines of a probe (CPU: top processes, Graphics: gfxinfo)
+                val what = when (g.probe) { "top" -> "Top processes"; "gfxinfo" -> "Frame stats"; else -> "Probe" }
                 val thermal = when {
                     g.probe == null -> emptyList()
-                    probeText == null -> listOf(DdLine(g.label, SystemGroups.NEEDS_ADB))
+                    probeText == null -> listOf(DdLine(what, SystemGroups.NEEDS_ADB))
                     else -> (when (g.probe) {
                         "thermal" -> DumpsysParsers.thermalFull(probeText).take(g.rows)
                         "top" -> DumpsysParsers.topLines(probeText, g.rows)
                         "gfxinfo" -> DumpsysParsers.gfxinfoLines(probeText)
                         else -> emptyList()
-                    }).ifEmpty { listOf(DdLine(g.label, "no data in the dump")) }
+                    }).ifEmpty { listOf(DdLine(what, "no data in the dump")) }
                 }
                 while (true) {
                     value = withContext(Dispatchers.IO) { appLines(ctx, g) } + thermal
