@@ -11,6 +11,13 @@ use fleet_webserver::render::jstr;
 use std::sync::Mutex;
 
 const KEEP: usize = 200;
+/// ...and no single app may hold more than this many of the newest 200. The cap
+/// used to be the global KEEP alone, whose scope is the WHOLE store: one app
+/// that crash-loops would fill all 200 slots and evict every other app's reports
+/// — a quiet app's single crash, the one most worth keeping, pushed out by a
+/// chatty neighbour. Scoping eviction per app stops that; the global KEEP stays
+/// as the memory ceiling.
+const KEEP_PER_APP: usize = 50;
 const MAX_BODY: usize = 256 * 1024;
 
 static STORE: Mutex<Option<Vec<serde_json::Value>>> = Mutex::new(None);
@@ -20,15 +27,39 @@ fn file() -> std::path::PathBuf {
     dir.join("c3-crashes.jsonl")
 }
 
+/// Trim `rows` (oldest first) so no app keeps more than [`KEEP_PER_APP`] of its
+/// newest reports, then enforce the global [`KEEP`] ceiling. The per-app pass is
+/// the scope fix: eviction reaches only the app that is over its own share, so a
+/// flood in one app can no longer delete another app's reports.
+fn evict(rows: &mut Vec<serde_json::Value>) {
+    let mut per_app: std::collections::HashMap<String, usize> = std::collections::HashMap::new();
+    let mut keep = vec![false; rows.len()];
+    for i in (0..rows.len()).rev() {
+        let app = rows[i]["app"].as_str().unwrap_or("").to_string();
+        let count = per_app.entry(app).or_insert(0);
+        if *count < KEEP_PER_APP {
+            *count += 1;
+            keep[i] = true;
+        }
+    }
+    let mut idx = 0;
+    rows.retain(|_| {
+        let k = keep[idx];
+        idx += 1;
+        k
+    });
+    let n = rows.len();
+    if n > KEEP {
+        rows.drain(..n - KEEP);
+    }
+}
+
 fn with_store<T>(f: impl FnOnce(&mut Vec<serde_json::Value>) -> T) -> T {
     let mut g = STORE.lock().unwrap_or_else(|e| e.into_inner());
     let v = g.get_or_insert_with(|| {
         let text = std::fs::read_to_string(file()).unwrap_or_default();
         let mut rows: Vec<serde_json::Value> = text.lines().filter_map(|l| serde_json::from_str(l).ok()).collect();
-        let n = rows.len();
-        if n > KEEP {
-            rows.drain(..n - KEEP);
-        }
+        evict(&mut rows);
         rows
     });
     f(v)
@@ -53,10 +84,7 @@ pub fn accept(body: &[u8]) -> Result<serde_json::Value, &'static str> {
         // A device-side retry of the same report (same app + time + trace) is stored once.
         if !rows.iter().any(|r| r["app"] == row["app"] && r["time_ms"] == row["time_ms"] && r["trace"] == row["trace"]) {
             rows.push(row.clone());
-            let n = rows.len();
-            if n > KEEP {
-                rows.drain(..n - KEEP);
-            }
+            evict(rows);
             use std::io::Write;
             if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open(file()) {
                 let _ = writeln!(f, "{}", row);
@@ -135,6 +163,35 @@ mod tests {
         assert_eq!(list(Some("x.one")).len(), 1);
         let html = render(&rows);
         assert!(html.contains("x.one") && html.contains("boom&lt;1&gt;") && !html.contains("boom<1>"));
+    }
+
+    #[test]
+    fn a_flood_in_one_app_cannot_evict_another_apps_report() {
+        // The quiet app's single crash, then a flood from a chatty one. Under the
+        // old global-only cap the 250 chatty rows would fill all 200 slots and the
+        // quiet app's lone report would be gone. Per-app scoping keeps it.
+        let mut rows: Vec<serde_json::Value> =
+            vec![serde_json::json!({"app":"y.quiet","time_ms":0,"trace":"only"})];
+        for i in 0..250 {
+            rows.push(serde_json::json!({"app":"x.chatty","time_ms":i,"trace":format!("t{i}")}));
+        }
+        evict(&mut rows);
+        assert_eq!(rows.iter().filter(|r| r["app"] == "y.quiet").count(), 1, "the quiet app's sole report survives the flood");
+        assert_eq!(rows.iter().filter(|r| r["app"] == "x.chatty").count(), KEEP_PER_APP, "the chatty app is capped at its per-app share");
+    }
+
+    #[test]
+    fn the_global_ceiling_still_bounds_total_memory() {
+        // Ten apps each within their per-app share (50) is 500 rows; the global
+        // KEEP must still cap the whole store.
+        let mut rows: Vec<serde_json::Value> = Vec::new();
+        for a in 0..10 {
+            for i in 0..KEEP_PER_APP {
+                rows.push(serde_json::json!({"app":format!("app{a}"),"time_ms":i,"trace":format!("{a}-{i}")}));
+            }
+        }
+        evict(&mut rows);
+        assert!(rows.len() <= KEEP, "the global ceiling bounds total memory");
     }
 
     #[test]
