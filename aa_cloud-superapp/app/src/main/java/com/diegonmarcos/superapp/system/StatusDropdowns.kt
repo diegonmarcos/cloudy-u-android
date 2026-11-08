@@ -59,9 +59,13 @@ object StatusDropdowns {
         else -> emptyList()
     }
 
-    /** The "Name" of a batterystats uid ("u0a143" -> the app's label). */
+    private val nameCache = java.util.concurrent.ConcurrentHashMap<String, String>()
+
+    /** The "Name" of a batterystats uid ("u0a143" -> the app's label); cached per uid name (the dump has ~80 rows). */
     private fun appName(ctx: Context): (String) -> String = { n ->
-        DumpsysParsers.uidOf(n)?.let { runCatching { BatteryRepository.appLabel(ctx, it).second }.getOrNull() } ?: n
+        nameCache.getOrPut(n) {
+            DumpsysParsers.uidOf(n)?.let { runCatching { BatteryRepository.appLabel(ctx, it).second }.getOrNull() } ?: n
+        }
     }
 
     @Composable

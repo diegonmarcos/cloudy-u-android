@@ -93,6 +93,28 @@ Statistics since last charge:
     }
 
     @Test
+    fun `P3b uid rows in usage infos gain the app name, categories and unknown uids stay`() {
+        val dump = """
+  Estimated power use (mAh):
+    Capacity: 5000, Computed drain: 245, actual drain: 200-250
+    UID u0a355: 282.0 ( cpu=200.0 )
+    UID 1000: 271.0 ( cpu=10.0 )
+    UID u0a463: 104.0
+    Screen: 82.0
+    Wifi: 3.0
+"""
+        val names = mapOf("u0a355" to "Cloud Store", "1000" to "Android system (uid 1000)")
+        val u = DumpsysParsers.usageInfos(DumpsysParsers.batteryStats(dump)) { names[it] ?: it }
+        assertEquals("UID u0a355 \u00b7 Cloud Store", u.first { it.value == "282.0 mAh" }.label)
+        assertEquals("UID 1000 \u00b7 Android system (uid 1000)", u.first { it.value == "271.0 mAh" }.label)
+        assertEquals("UID u0a463", u.first { it.value == "104.0 mAh" }.label)
+        assertEquals(listOf("Screen", "Wifi"), u.filter { it.label in listOf("Screen", "Wifi") }.map { it.label })
+        val throwing = DumpsysParsers.usageInfos(DumpsysParsers.batteryStats(dump)) { error("no pm") }
+        assertEquals("UID u0a463", throwing.first { it.value == "104.0 mAh" }.label)
+        assertEquals(u.size, throwing.size)
+    }
+
+    @Test
     fun `P4 no adb and an empty dump degrade to a status line`() {
         for (g in listOf("running_services", "memory_3h", "since_charge_usage", "since_charge_apps")) {
             assertEquals(SystemGroups.NEEDS_ADB, SystemGroups.adbLines(g, null, 5).single().value)

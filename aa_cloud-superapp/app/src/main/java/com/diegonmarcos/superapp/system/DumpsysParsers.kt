@@ -118,10 +118,23 @@ object DumpsysParsers {
         return BatteryStats(times, capacity, comps, uids)
     }
 
-    /** Since-last-charge overall usage: the time on battery, the capacity and drain, then each component's mAh. */
-    fun usageInfos(s: BatteryStats): List<DdLine> =
+    private val UID_ROW = Regex("""^uid\s+(\S+)$""", RegexOption.IGNORE_CASE)
+
+    /**
+     * Since-last-charge overall usage: the time on battery, the capacity and drain, then each component's mAh.
+     * A component that is really a uid row ("UID u0a355") keeps its raw uid and gains the name [label] resolves
+     * ("UID u0a355 · Cloud Store"); categories (screen, wifi, cpu...) are untouched.
+     */
+    fun usageInfos(s: BatteryStats, label: (String) -> String = { it }): List<DdLine> =
         s.times + listOfNotNull(s.capacity?.let { DdLine("Capacity (mAh)", it) }) +
-            s.components.sortedByDescending { it.mah }.map { DdLine(it.name, "${f1(it.mah)} mAh") }
+            s.components.sortedByDescending { it.mah }.map { DdLine(uidRowName(it.name, label), "${f1(it.mah)} mAh") }
+
+    /** "UID u0a355" -> "UID u0a355 · <name>" when [label] knows it (name == uid or blank: unchanged); other names as is. */
+    fun uidRowName(name: String, label: (String) -> String): String {
+        val uid = UID_ROW.find(name)?.groupValues?.get(1) ?: return name
+        val n = runCatching { label(uid) }.getOrNull()?.trim().orEmpty()
+        return if (n.isEmpty() || n == uid) name else "$name · $n"
+    }
 
     /** Since-last-charge per-app (per-uid) usage, heaviest first; [label] turns "u0a143" into an app name. */
     fun perApp(s: BatteryStats, rows: Int, label: (String) -> String): List<DdLine> {

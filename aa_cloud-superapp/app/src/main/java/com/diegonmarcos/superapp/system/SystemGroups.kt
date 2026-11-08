@@ -170,7 +170,7 @@ object SystemGroups {
         val lines = when (groupId) {
             "running_services" -> DumpsysParsers.runningServices(text, rows)
             "memory_3h" -> DumpsysParsers.memory3h(text, rows)
-            "since_charge_usage" -> DumpsysParsers.usageInfos(DumpsysParsers.batteryStats(text))
+            "since_charge_usage" -> DumpsysParsers.usageInfos(DumpsysParsers.batteryStats(text), label)
             "since_charge_apps" -> DumpsysParsers.perApp(DumpsysParsers.batteryStats(text), rows, label)
             else -> emptyList()
         }
