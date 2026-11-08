@@ -75,9 +75,9 @@ class BadgePanesLiveBadgeTest : KitPageHarness() {
     fun `the Config pane shows the same taxonomy as the shade - app sections with Cloudy and Phone`() {
         render()
         val texts = composeTexts()
-        for (label in listOf("Me Infos", "Media", "Device Infos", "Apps Push Notifications", "Apps Keep Alive", "Actions"))
+        for (label in listOf("Me Infos", "Media", "Device Infos", "Apps Push Notifications", "Apps Keep Alive Badges", "Actions"))
             org.junit.Assert.assertTrue("$label missing from the pane", label in texts)
-        val order = listOf("Me Infos", "Media", "Device Infos", "Apps Push Notifications", "Apps Keep Alive", "Actions").map { texts.indexOf(it) }
+        val order = listOf("Me Infos", "Media", "Device Infos", "Apps Push Notifications", "Apps Keep Alive Badges", "Actions").map { texts.indexOf(it) }
         org.junit.Assert.assertEquals("sections in the redesigned order", order.sorted(), order)
         org.junit.Assert.assertTrue(texts.count { it == "Cloudy" } == 2 && texts.count { it == "Phone" } == 2)
     }

@@ -5,14 +5,14 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-/** The notification centre's title line: `Berlin - Sun 08.11.2026 - 12:17` (24 h; no city yet = `Sun 08.11.2026 - 12:17`). */
+/** The notification centre's title line: `Dublin · Sat 8 Nov 2026 · 14:22` (city · weekday, date · 24 h; no city yet = `Sat 8 Nov 2026 · 14:22`). */
 object NotifyTitle {
-    private val FMT = DateTimeFormatter.ofPattern("EEE dd.MM.yyyy - HH:mm", Locale.US)
+    private val FMT = DateTimeFormatter.ofPattern("EEE d MMM yyyy · HH:mm", Locale.US)
 
     fun format(city: String?, nowMs: Long, zone: ZoneId = ZoneId.systemDefault()): String {
         val dt = FMT.format(Instant.ofEpochMilli(nowMs).atZone(zone))
         val c = city?.trim().orEmpty()
-        return if (c.isEmpty() || PlaceName.isCoords(c)) dt else "$c - $dt"
+        return if (c.isEmpty() || PlaceName.isCoords(c)) dt else "$c · $dt"
     }
 
     /** The city the Weather badge resolved (its saved forecast's place), or null. */

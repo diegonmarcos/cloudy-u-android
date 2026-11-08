@@ -174,6 +174,19 @@ object BadgeDeclaration {
     fun badges(all: List<Badge>): List<Badge> = all.filter { it.isBadge }
 
     /**
+     * The owner's page order: [Card.rank] ascending, ties in declaration order
+     * (#1068). The render honours this so once `card.rank` is set in build.json
+     * the sequence is exact and never map/hash/arbitrary. [declared] is the full
+     * declaration (it fixes the tie order); [subset] is the slice to order (a
+     * group's members, or every badge). Ranks default to [Int.MAX_VALUE], so an
+     * unranked set keeps pure declaration order.
+     */
+    fun rankOrder(declared: List<Badge>, subset: List<Badge>): List<Badge> {
+        val idx = declared.withIndex().associate { (i, b) -> b.id to i }
+        return subset.sortedWith(compareBy({ it.card.rank }, { idx[it.id] ?: Int.MAX_VALUE }))
+    }
+
+    /**
      * The services that must be running for every persistent badge, resolved
      * and de-duplicated — FloatingNavService owns three badges and must be
      * started once, not three times.

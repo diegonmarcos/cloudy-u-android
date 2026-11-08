@@ -101,6 +101,32 @@ class BadgeDeclarationTest {
         assertFalse(ids.contains("launcher_icon_badge"))
     }
 
+    // ── #4 / #1068: the page orders badges by card.rank, ties in decl order ──
+
+    /**
+     * The owner's page order is `card.rank` ascending; equal ranks keep the
+     * order they were declared in, and an unranked badge (default
+     * [Int.MAX_VALUE]) goes last. [BadgeDeclaration.rankOrder] is the single
+     * sort the Notify page and the Push pane both run, so the sequence is
+     * deterministic and never map/hash order. This hands it ranks OUT of
+     * declaration order plus a rank tie and asserts the resolved sequence.
+     */
+    @Test
+    fun `badges render in card rank order, ties keep declaration order`() {
+        val decl = """
+            {"producers":[
+              {"id":"c","label":"C","badge":true,"card":{"rank":3}},
+              {"id":"a","label":"A","badge":true,"card":{"rank":1}},
+              {"id":"t1","label":"T1","badge":true,"card":{"rank":2}},
+              {"id":"t2","label":"T2","badge":true,"card":{"rank":2}},
+              {"id":"z","label":"Z","badge":true}
+            ]}
+        """.trimIndent()
+        val all = BadgeDeclaration.badges(BadgeDeclaration.parse(decl))
+        val ordered = BadgeDeclaration.rankOrder(all, all).map { it.id }
+        assertEquals(listOf("a", "t1", "t2", "c", "z"), ordered)
+    }
+
     // ── Contract 2: BOTH sections derive from the declaration ────────────
 
     /**

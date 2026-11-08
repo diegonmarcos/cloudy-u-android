@@ -9693,7 +9693,7 @@
     "_doc_notification_center": "Configs ▸ Launcher ▸ Notify ▸ persistent badges (#497; the Push tab until #580 merged it into Notify) — the ONE declaration of every notification-center / badge producer this app ships, and the source the badge panes render verbatim: nothing it lists is invented in Kotlin, and nothing this app draws as a badge or a notification is missing from it. Diego asked for 'the kde badge, the music badge, the quickmarks badge….' and trailed off on purpose — that trailing off is what makes this a declaration instead of his list of three: BadgePanes iterates `producers` and draws whatever is here, so adding or dropping an entry changes the tab with no Kotlin edit, the same contract configs/DeviceControls.kt keeps for Control.\n\nSplit exactly like Control/DeviceControls: this file owns PRESENTATION — which producers exist, what each one IS (label/subtitle/icon), which surface it occupies (`surface`: a system notification, an in-app card, or a launcher-icon badge count) and whether it is declared on. The CAPABILITY — the actual channel, the actual notify()/cancel() calls, the actual read of NotificationListenerService — stays owned by that producer's own Kotlin file, named in `owner` below, exactly where DeviceControls keeps a control's read/set next to the declaration that names it.\n\n`enabled` is the declared default of the owner's per-badge switch (BadgeCustomization); since #777 a badge is shown only when its switch AND its group's switch (`groups` below) are on. A producer with no capability behind it — an id with no file in `owner` implementing it — is exactly the DeviceControls failure mode (a row that draws and means nothing), which is why the tester for this page checks `owner` resolves to a real file, not just that the JSON parses.\n\nQUICKMARKS: swept for an actual unread-count badge on Phone ▸ Apps ▸ Quickmarks tiles and found none — AppIconTile draws a 'Not installed' placeholder glyph, not a notification count. What IS real and what an owner would call 'the quickmarks badge' is the system launcher-icon badge every tile can carry, driven by whichever channels below have `shows_badge: true` and cleared when a notification surface calls cancelAll() — declared here as `launcher_icon_badge`, coupled to `phone_notification_listener` rather than invented as a fourth independent mechanism.",
     "notification_center": {
       "_doc": "One entry per PRODUCER. `badge` is what splits a shade badge from the rest of the channel inventory: true means this producer puts a PERSISTENT entry in the notification centre, and Configs > Home > Push renders exactly those — one box in section 1, one customization menu in section 2, derived, never a hand-kept name list. `persistent` means it must survive an app update and a reboot: BadgeRestartReceiver re-ensures every persistent producer's `service` on MY_PACKAGE_REPLACED / BOOT_COMPLETED. Before that existed, only KdeStatusService restarted itself (App.kt) and everything owned by FloatingNavService — Quickmarks, Media, Alerts — stayed dead after an update. `requires` names the grants a badge needs so a dead badge can say WHY instead of reading absent. Adding a badge means adding an entry HERE and nothing else.",
-      "_doc_groups": "#777 THE FOUR shade groups of Configs ▸ Launcher ▸ Notify, as data: NotifyGroups gives every member's notification its group's key (setGroup) and posts one summary per group, so the shade shows four bundles instead of seven loose badges. `members` are producer ids below, in the order they sort inside the group; a producer in no group posts ungrouped. Group order and on/off are the owner's (Notify page, stored per group id); the declaration order is the default order. `alerts: true` marks the group whose member is the fleet alerts channel (FleetAlerts → AlertStore → AlertsNotifier); the Notify page draws its filters and Clear all from that flag, never from a name. `max_in_shade` caps how many alert children are posted (the store keeps more; Android drops an app's notifications past ~50). #1113 A GROUP IS ALSO A SECTION OF THE NOTIFY PAGE: the page draws a plain (not collapsible) subtitle with the group label, then the cards of its members in this order, groups in the owner's order, so the shade bundles and the page sections come from this one list (card.rank is no longer read). Section order (redesign 2026-11-08, see _doc_sections): Me Infos (Weather, Health, Fin Terminal), Media (Media Player), Device Infos (Mesh, Data, Battery, AI), then the Apps Push / Apps Keep Alive sections, then Actions (Quick Actions, KDE Connect). Alerts is gone. A future AI badge is a producer id appended to `live` (Infos), with no Kotlin edit.",
+      "_doc_groups": "#777 THE FOUR shade groups of Configs ▸ Launcher ▸ Notify, as data: NotifyGroups gives every member's notification its group's key (setGroup) and posts one summary per group, so the shade shows four bundles instead of seven loose badges. `members` are producer ids below, in the order they sort inside the group; a producer in no group posts ungrouped. Group order and on/off are the owner's (Notify page, stored per group id); the declaration order is the default order. `alerts: true` marks the group whose member is the fleet alerts channel (FleetAlerts → AlertStore → AlertsNotifier); the Notify page draws its filters and Clear all from that flag, never from a name. `max_in_shade` caps how many alert children are posted (the store keeps more; Android drops an app's notifications past ~50). #1113 A GROUP IS ALSO A SECTION OF THE NOTIFY PAGE: the page draws a plain (not collapsible) subtitle with the group label, then the cards of its members in this order, groups in the owner's order, so the shade bundles and the page sections come from this one list (the render orders members by card.rank ascending, ties in declaration order — ranks are set to match this sequence). Section order (redesign 2026-11-08, see _doc_sections): Me Infos (Weather, Health, Fin Terminal), Media (Media Player), Device Infos (Mesh, Data, Battery, AI), then the Apps Push / Apps Keep Alive sections, then Actions (Quick Actions, KDE Connect). Alerts is gone. A future AI badge is a producer id appended to `live` (Infos), with no Kotlin edit.",
       "groups": [
         {
           "id": "live",
@@ -9730,7 +9730,7 @@
         },
         {
           "id": "apps_keepalive",
-          "label": "Apps Keep Alive",
+          "label": "Apps Keep Alive Badges",
           "kind": "keepalive",
           "subgroups": [
             {"id": "cloudy", "label": "Cloudy"},
@@ -9795,7 +9795,7 @@
         },
         {
           "id": "media_now_playing",
-          "card": {"rank": 8, "kind": "media", "accent": "#FF5C8D"},
+          "card": {"rank": 4, "kind": "media", "accent": "#FF5C8D"},
           "label": "Media Playing",
           "subtitle": "The 'Cloud SA - Media' transport badge mirroring the active media session. Pinned even when paused so the transport is always reachable.",
           "icon": "ic_music",
@@ -9913,7 +9913,7 @@
         },
         {
           "id": "network_mesh",
-          "card": {"rank": 1, "kind": "text", "accent": "#3DDC97"},
+          "card": {"rank": 5, "kind": "text", "accent": "#3DDC97"},
           "label": "Mesh",
           "subtitle": "The mesh at a glance (the Mesh badge of the Network group): connected or not, the tunnel, this device's mesh IP, peer count and rx/tx; expanded, the last handshake per peer, the interface and peer addresses, DNS (the mesh DNS, the resolvers Android uses now, the 127.0.0.1 bridge status, Private DNS mode) and uptime. Buttons: Always On (shows the system state, opens the VPN settings where it is switched), Connect/Disconnect, More (the Cloud Mesh page). Read over INetBackend from Cloud-Lib-Net-Wg; refreshed on connect/disconnect and VPN network events, plus every 30s only while connected.",
           "icon": "ic_stat_notify",
@@ -9946,7 +9946,7 @@
         },
         {
           "id": "network_data",
-          "card": {"rank": 2, "kind": "text", "accent": "#4DB6FF"},
+          "card": {"rank": 6, "kind": "text", "accent": "#4DB6FF"},
           "label": "Data",
           "subtitle": "The Data badge of the Network group: data used today and this month, mobile vs Wi-Fi, and the top apps of the month, all from the Data Manager engine (libs:datamanager, the one behind Configs > About > Data Usage). Buttons: Data Manager (opens it), Refresh; without Usage Access the badge says so and offers Grant access. Read when the screen comes on and on Refresh; nothing polls.",
           "icon": "ic_stat_notify",
@@ -9979,7 +9979,7 @@
         },
         {
           "id": "battery_status",
-          "card": {"rank": 3, "kind": "level", "accent": "#4CD964"},
+          "card": {"rank": 7, "kind": "level", "accent": "#4CD964"},
           "label": "Battery",
           "subtitle": "The battery at a glance, time first: charging shows the time until full, discharging the time until empty from the average drain since the last unplug or full charge (h:mm, labelled as an estimate; 'learning' until 2% is used or 15 min pass). Expanded: level, status and plug, current now and average, voltage, temperature, health, cycles, charge and capacity, time and percent used since the last charge, and the short-term rate. Refreshed on the battery-changed event while the app runs, on plug, unplug, low and okay, and by one inexact 15-minute alarm; a plain ongoing notification, not a foreground service.",
           "icon": "ic_stat_notify",
@@ -10012,7 +10012,7 @@
         },
         {
           "id": "ai_usage",
-          "card": {"rank": 11, "kind": "text", "accent": "#D97757"},
+          "card": {"rank": 8, "kind": "text", "accent": "#D97757"},
           "label": "AI",
           "subtitle": "AI usage at a glance (#1151): Claude 5-hour session used % and weekly all-models used % with their reset times, then the OpenRouter balance in dollars and the spend of the last day, 7 days and this month, each in dollars and millions of tokens. Read from c3-infra-api GET /ai/usage (mesh first, then the public address with the fleet bearer): Claude Code pushes its rate limits there from the statusLine poster, OpenRouter is fetched server-side. Read on start, when the screen comes on and every 5 minutes while it is on, and on Refresh. Data older than 15 minutes is marked stale.",
           "icon": "ic_stat_notify",
@@ -10046,7 +10046,7 @@
         {
           "id": "myhealth",
           "aliases": ["health_activity", "health"],
-          "card": {"rank": 6, "kind": "text", "accent": "#FF6B6B"},
+          "card": {"rank": 2, "kind": "text", "accent": "#FF6B6B"},
           "label": "Health",
           "subtitle": "Today's steps in km with the step count, resting heart rate and last night's sleep, from the same Health Connect read as Boards > MyHealth. Never estimated; a missing grant shows the reason and a Grant access button. Tap opens Boards > MyHealth.",
           "click_target": "page:boards/my-pm",
@@ -10108,7 +10108,7 @@
         },
         {
          "id": "weather_today",
-         "card": {"rank": 4, "kind": "text", "accent": "#58C4FF"},
+         "card": {"rank": 1, "kind": "text", "accent": "#58C4FF"},
          "label": "Weather",
          "click_target": "https://open-meteo.com/en/docs#latitude={lat}&longitude={lon}",
          "subtitle": "Today where the device is: current temperature, the day's max/min and the hour-by-hour forecast, from Open-Meteo (no key, no account) for the last known position. The place name comes from Android's own geocoder. Location is never actively requested — the badge reads the position someone else already paid for.",
@@ -10170,8 +10170,8 @@
         },
         {
           "id": "markets_prices",
-          "card": {"rank": 5, "kind": "quotes", "accent": "#F5C542"},
-          "label": "Fin Terminal",
+          "card": {"rank": 3, "kind": "quotes", "accent": "#F5C542"},
+          "label": "Fin Terminal Markets",
           "subtitle": "Live last-traded prices for the declared instruments, from Yahoo Finance. One action button per instrument opens that instrument's Yahoo ticker page in the app's own embedded browser. A quote that could not be fetched reads '—', never the last good number.",
           "icon": "ic_p_markets_prices",
           "surface": "system_notification",

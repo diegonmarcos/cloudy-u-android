@@ -16,12 +16,12 @@ gl = {g['id']: g for g in nc['groups']}
 apps = {a['id']: a for a in nc['app_sections']}
 order = nc['page_order']
 labels = [gl[i]['label'] if i in gl else apps[i]['label'] for i in order]
-want = ['Me Infos', 'Media', 'Device Infos', 'Apps Push Notifications', 'Apps Keep Alive', 'Actions']
+want = ['Me Infos', 'Media', 'Device Infos', 'Apps Push Notifications', 'Apps Keep Alive Badges', 'Actions']
 prod = {p['id']: p for p in nc['producers']}
 if labels != want: print('page order %s' % labels)
 elif any(g.get('alerts') or g['label'] == 'Alerts' for g in gl.values()): print('Alerts group is back')
 elif 'fleet_alerts' in prod and prod['fleet_alerts'].get('badge'): print('fleet_alerts is a badge again')
-elif [prod[m]['label'] for m in gl['live']['members']] != ['Weather', 'Health', 'Fin Terminal']: print('Me Infos rows wrong')
+elif [prod[m]['label'] for m in gl['live']['members']] != ['Weather', 'Health', 'Fin Terminal Markets']: print('Me Infos rows wrong')
 elif any([s['label'] for s in a['subgroups']] != ['Cloudy', 'Phone'] for a in apps.values()): print('Cloudy/Phone split missing')
 else:
     placed = {m for g in gl.values() for m in g['members']}
@@ -30,8 +30,8 @@ else:
 PY
 )" "page_order, labels, Alerts removed, Cloudy/Phone split, every badge placed"
 
-grep -q 'EEE dd.MM.yyyy - HH:mm' "$SRC/notificationcenter/NotifyTitle.kt" && grep -q 'Locale.US' "$SRC/notificationcenter/NotifyTitle.kt" \
-  && ok "title format is EEE dd.MM.yyyy - HH:mm (24h, Locale.US)" || bad "title format"
+grep -q 'EEE d MMM yyyy · HH:mm' "$SRC/notificationcenter/NotifyTitle.kt" && grep -q 'Locale.US' "$SRC/notificationcenter/NotifyTitle.kt" \
+  && ok "title format is {City} · {EEE d MMM yyyy} · HH:mm (24h, Locale.US)" || bad "title format"
 grep -q 'NotifyTitle.cityOf' "$SRC/launcher/BadgeCards.kt" && grep -q 'loadForecast' "$SRC/notificationcenter/NotifyTitle.kt" \
   && ok "title city comes from the Weather badge's resolved place" || bad "title city source"
 grep -q 'GeocodeListener' "$SRC/notificationcenter/PlaceName.kt" && grep -q 'PlaceName.resolve' "$SRC/notificationcenter/WeatherBadgeService.kt" \

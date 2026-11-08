@@ -103,7 +103,7 @@ object BadgePanes {
                 else apps.firstOrNull { it.id == id }?.let { com.diegonmarcos.superapp.launcher.AppSectionBlock(it) }
             }
             val grouped = groups.flatMap { it.members }.toSet()
-            for (b in badges.filter { it.id !in grouped }) badgeBox(redraw, b)
+            for (b in BadgeDeclaration.rankOrder(badges, badges.filter { it.id !in grouped })) badgeBox(redraw, b)
         }
     }
 
@@ -129,9 +129,9 @@ object BadgePanes {
                 if (index < count - 1) PaneButton("▼", ctx.getString(R.string.notify_group_down)) { NotifyGroups.move(ctx, g, +1); redraw() }
             }
             if (!on) return@Column
-            for (id in g.members) {
-                val b = badges.firstOrNull { it.id == id } ?: continue
-                if (g.members.size > 1) LabelSwitch(
+            val members = BadgeDeclaration.rankOrder(badges, g.members.mapNotNull { id -> badges.firstOrNull { it.id == id } })
+            for (b in members) {
+                if (members.size > 1) LabelSwitch(
                     ctx.getString(R.string.notify_member_show, b.label), BadgeCustomization.bool(ctx, b, BadgeCustomization.KEY_ENABLED),
                     13, "member:${b.id}",
                 ) { v ->

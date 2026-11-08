@@ -82,10 +82,10 @@ internal fun badgeSections(ctx: android.content.Context): List<BadgeSection> {
     val seen = mutableSetOf<String>()
     val out = mutableListOf<BadgeSection>()
     for (g in NotifyGroups.ordered(ctx)) {
-        val m = g.members.mapNotNull { byId[it] }.filter { seen.add(it.id) }
+        val m = BadgeDeclaration.rankOrder(all, g.members.mapNotNull { byId[it] }).filter { seen.add(it.id) }
         if (m.isNotEmpty()) out += BadgeSection(g.id, g.label, m)
     }
-    val rest = all.filter { it.id !in seen }
+    val rest = BadgeDeclaration.rankOrder(all, all.filter { it.id !in seen })
     if (rest.isNotEmpty()) out += BadgeSection("", "", rest)
     return out
 }

@@ -20,16 +20,16 @@ class NotifySectionsTest {
         val order = NotifySections.layout(NotifySections.pageOrder(nc), groups.map { it.id }, apps.map { it.id })
         assertEquals(listOf("live", "media", "network", "apps_push", "apps_keepalive", "actions"), order)
         assertEquals(listOf("Me Infos", "Media", "Device Infos", "Actions"), groups.map { it.label })
-        assertEquals(listOf("Apps Push Notifications", "Apps Keep Alive"), apps.map { it.label })
+        assertEquals(listOf("Apps Push Notifications", "Apps Keep Alive Badges"), apps.map { it.label })
         assertTrue(groups.none { it.alerts || it.id == "alerts" })
         assertTrue(BadgeDeclaration.badges(BadgeDeclaration.parse(nc)).none { it.id == "fleet_alerts" })
     }
 
-    @Test fun `Me Infos rows are Weather, Health, Fin Terminal and nothing else was lost`() {
+    @Test fun `Me Infos rows are Weather, Health, Fin Terminal Markets and nothing else was lost`() {
         val groups = BadgeDeclaration.groups(nc)
         assertEquals(listOf("weather_today", "myhealth", "markets_prices"), groups.first { it.id == "live" }.members)
         val labels = BadgeDeclaration.parse(nc).associate { it.id to it.label }
-        assertEquals(listOf("Weather", "Health", "Fin Terminal"), groups.first { it.id == "live" }.members.map { labels[it] })
+        assertEquals(listOf("Weather", "Health", "Fin Terminal Markets"), groups.first { it.id == "live" }.members.map { labels[it] })
         val placed = groups.flatMap { it.members }.toSet()
         assertEquals(setOf("kde_status", "media_now_playing", "floating_nav_quick_actions", "network_mesh", "network_data",
             "battery_status", "ai_usage", "myhealth", "weather_today", "markets_prices"), placed)
@@ -47,13 +47,13 @@ class NotifySectionsTest {
         assertEquals(listOf("com.android.systemui", "com.whatsapp"), p.map { it.first })
     }
 
-    @Test fun `title is City - Weekday DD_MM_YYYY - HH_MM in 24 hour time`() {
+    @Test fun `title is City mid Weekday D Mon YYYY mid HH_MM in 24 hour time`() {
         val ms = ZonedDateTime.of(2026, 11, 8, 12, 17, 0, 0, ZoneId.of("Europe/Berlin")).toInstant().toEpochMilli()
-        assertEquals("Berlin - Sun 08.11.2026 - 12:17", NotifyTitle.format("Berlin", ms, ZoneId.of("Europe/Berlin")))
+        assertEquals("Berlin · Sun 8 Nov 2026 · 12:17", NotifyTitle.format("Berlin", ms, ZoneId.of("Europe/Berlin")))
         val pm = ZonedDateTime.of(2026, 11, 9, 18, 5, 0, 0, ZoneId.of("UTC")).toInstant().toEpochMilli()
-        assertEquals("Mon 09.11.2026 - 18:05", NotifyTitle.format(null, pm, ZoneId.of("UTC")))
-        assertEquals("a coordinate is not a city", "Mon 09.11.2026 - 18:05", NotifyTitle.format("42.53, 1.52", pm, ZoneId.of("UTC")))
-        assertEquals("Mon 09.11.2026 - 18:05", NotifyTitle.format("42.53", pm, ZoneId.of("UTC")))
+        assertEquals("Mon 9 Nov 2026 · 18:05", NotifyTitle.format(null, pm, ZoneId.of("UTC")))
+        assertEquals("a coordinate is not a city", "Mon 9 Nov 2026 · 18:05", NotifyTitle.format("42.53, 1.52", pm, ZoneId.of("UTC")))
+        assertEquals("Mon 9 Nov 2026 · 18:05", NotifyTitle.format("42.53", pm, ZoneId.of("UTC")))
     }
 
     private class Mem(val m: MutableMap<String, String> = mutableMapOf()) : PlaceName.Cache {

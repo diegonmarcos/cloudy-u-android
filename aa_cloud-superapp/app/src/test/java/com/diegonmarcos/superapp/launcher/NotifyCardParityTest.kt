@@ -75,6 +75,27 @@ class NotifyCardParityTest {
         else -> throw AssertionError("badge '${b.id}' has no notification in NotifyCardParityTest: add it, so its card is proven equal")
     }
 
+    /**
+     * #4 — the owner's redesigned order (2026-11-08): Me Infos (Weather,
+     * Health, Fin Terminal Markets), Media, Device Infos (Mesh, Data, Battery,
+     * AI), then Actions (Quickmarks, KDE). The shipped build.json's groups and
+     * `card.rank` must render EXACTLY this on the Notify page, deterministically
+     * — never map/hash/arbitrary order. Guards the render against a rank or
+     * member-order regression.
+     */
+    @Test
+    fun `the notify page renders badges in the owner's declared order`() {
+        assertEquals(
+            listOf(
+                "weather_today", "myhealth", "markets_prices",
+                "media_now_playing",
+                "network_mesh", "network_data", "battery_status", "ai_usage",
+                "floating_nav_quick_actions", "kde_status",
+            ),
+            orderedBadges(ctx).map { it.id },
+        )
+    }
+
     @Test
     fun `every badge card carries the actions and info of its notification`() {
         val badges = orderedBadges(ctx)
