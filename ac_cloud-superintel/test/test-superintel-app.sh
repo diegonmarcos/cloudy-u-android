@@ -104,7 +104,7 @@ if "TopicStrip" in forum: bad.append("B9 the standalone specialists chip row is 
 bar = read(os.path.join(libai, "src/main/kotlin/com/diegonmarcos/superapp/ai/AiComposerBar.kt"))
 if "AiTags.rowToggle(n)" not in bar or '".row$n"' not in bar: bad.append("B9 each toolbar row needs its own remembered collapse toggle")
 if not any(c.get("divider_before") and c["id"] == "agent" for c in dj["composer"]["layout"]["controls"]): bad.append("B9 the divider must stand before Agent (after Specialist)")
-if "onMenu" not in shell: bad.append("B9 SiShell does not wire the top bar's hamburger")
+if "groups = groups" not in shell or "AiSessionGroups" not in shell: bad.append("B9 SiShell does not give the all-chats drawer its session groups")
 
 # B4
 if "ai-gateway" not in script or "AI_GATEWAY_URL" not in script: bad.append("B4 the app's build script does not bake the gateway address")

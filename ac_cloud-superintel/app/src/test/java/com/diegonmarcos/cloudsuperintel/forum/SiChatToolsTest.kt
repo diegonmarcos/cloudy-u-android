@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.unit.toSize
@@ -26,6 +27,7 @@ import androidx.compose.ui.test.performTextInput
 import com.diegonmarcos.cloudsuperintel.Data
 import com.diegonmarcos.superapp.ai.AiAttachHost
 import com.diegonmarcos.superapp.ai.AiForumChat
+import com.diegonmarcos.superapp.ai.AiSessionGroups
 import com.diegonmarcos.superapp.ai.AiTags
 import com.diegonmarcos.superapp.ai.ForumGlyphs
 import com.diegonmarcos.superapp.ai.ForumSessions
@@ -60,7 +62,7 @@ class SiChatToolsTest {
 
     private var topicsHolder: List<ForumTopic> = emptyList()
 
-    private fun render(topics: List<ForumTopic> = ForumFixture.richTopics(), tools: Boolean = true) {
+    private fun render(topics: List<ForumTopic> = ForumFixture.richTopics(), tools: Boolean = true, groups: AiSessionGroups? = null) {
         topicsHolder = topics
         compose.setContent {
             var persona by remember { mutableStateOf("si") }
@@ -69,7 +71,7 @@ class SiChatToolsTest {
                 topics = topics, selectedId = persona, onSelect = { persona = it },
                 theme = ForumFixture.theme(dark = true), icon = ForumGlyphs,
                 adminColor = ForumFixture.adminColor(true), zone = ForumFixture.zone, now = ForumFixture.now,
-                sessions = ForumSessions(ForumFixture.sessionList(), current, { current = it.id; opened += it.id }, { created++ }),
+                sessions = ForumSessions(ForumFixture.sessionList(), current, { current = it.id; opened += it.id }, { created++ }, groups = groups),
                 tools = if (tools) ForumTools(ForumFixture.composerDecl, attach = AiAttachHost()) else null,
             )
         }
@@ -199,6 +201,70 @@ class SiChatToolsTest {
         compose.onAllNodesWithTag(AiTags.ctl("repos")).assertCountEquals(0)
         compose.onAllNodesWithTag(AiTags.ctl("more")).assertCountEquals(0)
         compose.onNodeWithTag(AiTags.rowToggle(2)).assertExists()
+    }
+
+    @Test fun hamburgerOpensTheDrawerWithEveryChatSearchableAndNew() {
+        render()
+        compose.onAllNodesWithTag(ForumTags.ALLCHATS).assertCountEquals(0)
+        compose.onNodeWithTag(ForumTags.MENU).performClick()
+        compose.onNodeWithTag(ForumTags.ALLCHATS).assertIsDisplayed()
+        compose.onNodeWithTag(ForumTags.ALLCHATS_NEW).assertExists()
+        ForumFixture.sessionList().forEach { compose.onNodeWithTag(ForumTags.allChat(it.id)).assertExists() }
+        compose.onNodeWithTag(ForumTags.ALLCHATS_SEARCH).performTextInput("proof")
+        compose.onNodeWithTag(ForumTags.allChat("s-proofs")).assertExists()
+        for (id in listOf("s-release", "s-energy", "s-law")) compose.onAllNodesWithTag(ForumTags.allChat(id)).assertCountEquals(0)
+        compose.onNodeWithTag(ForumTags.allChat("s-proofs")).performClick()
+        assertEquals(listOf("s-proofs"), opened)
+        compose.onAllNodesWithTag(ForumTags.ALLCHATS).assertCountEquals(0)
+    }
+
+    @Test fun newInTheDrawerStartsAChatAndCloses() {
+        render()
+        compose.onNodeWithTag(ForumTags.MENU).performClick()
+        compose.onNodeWithTag(ForumTags.ALLCHATS_NEW).performClick()
+        assertEquals(1, created)
+        compose.onAllNodesWithTag(ForumTags.ALLCHATS).assertCountEquals(0)
+    }
+
+    @Test fun sessionsAreOrganisedInPersistentCollapsibleGroups() {
+        val app = org.robolectric.RuntimeEnvironment.getApplication()
+        render(groups = AiSessionGroups.prefs(app, "t"))
+        compose.onNodeWithTag(ForumTags.MENU).performClick()
+        // Create a group.
+        compose.onNodeWithTag(ForumTags.NEW_GROUP).performClick()
+        compose.onNodeWithTag(ForumTags.GROUP_FIELD).performTextInput("Work")
+        compose.onNodeWithTag(ForumTags.GROUP_ADD).performClick()
+        compose.onNodeWithTag(ForumTags.group("g1")).assertExists()
+        // Assign a chat to it from the chat's menu.
+        compose.onNodeWithTag(ForumTags.chatMenu("s-proofs")).performClick()
+        compose.onNodeWithTag(ForumTags.moveTo("s-proofs", "g1")).performClick()
+        var reread = AiSessionGroups.prefs(app, "t")
+        assertEquals(listOf("Work"), reread.groups.map { it.name })
+        assertEquals("g1", reread.groupOf("s-proofs"))
+        // The rail follows the open chat's group: the open chat is ungrouped, so the grouped one is not on the rail.
+        compose.onAllNodesWithTag(ForumTags.session("s-proofs")).assertCountEquals(0)
+        compose.onNodeWithTag(ForumTags.session("s-release")).assertExists()
+        // Collapse the group: its chat leaves the list; the collapsed state persists. Expand it back.
+        compose.onNodeWithTag(ForumTags.group("g1")).performClick()
+        compose.onAllNodesWithTag(ForumTags.allChat("s-proofs")).assertCountEquals(0)
+        reread = AiSessionGroups.prefs(app, "t")
+        assertTrue(reread.groups.single().collapsed)
+        compose.onNodeWithTag(ForumTags.group("g1")).performClick()
+        compose.onNodeWithTag(ForumTags.allChat("s-proofs")).assertExists()
+        assertTrue(!AiSessionGroups.prefs(app, "t").groups.single().collapsed)
+        // Move it back out.
+        compose.onNodeWithTag(ForumTags.chatMenu("s-proofs")).performClick()
+        compose.onNodeWithTag(ForumTags.ungroup("s-proofs")).performClick()
+        assertEquals(null, AiSessionGroups.prefs(app, "t").groupOf("s-proofs"))
+    }
+
+    @Test fun topBarActionsAreIconOnlyWithContentDescriptions() {
+        render()
+        compose.onNodeWithTag(ForumTags.USAGE).assertContentDescriptionEquals("Usage & Cost")
+        compose.onNodeWithTag(ForumTags.CONTEXT).assertContentDescriptionEquals("Context Breakdown")
+        compose.onNodeWithTag(ForumTags.FILES).assertContentDescriptionEquals("Files in this chat")
+        // No text label is drawn for them.
+        for (label in listOf("Usage & Cost", "Context Breakdown", "Files in this chat")) compose.onAllNodesWithText(label).assertCountEquals(0)
     }
 
     @Test fun inputRowIsPlusInputVoiceCameraEnter() {

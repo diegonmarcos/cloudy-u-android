@@ -89,6 +89,8 @@ class ForumSessions(
     val onNew: () -> Unit,
     /** The top bar's hamburger (opens the host's sessions drawer); null = the button does nothing. */
     val onMenu: (() -> Unit)? = null,
+    /** The named groups sessions are organised in (all-chats drawer: group headers, new group, move); null = no groups. */
+    val groups: AiSessionGroups? = null,
 )
 
 /**
@@ -143,6 +145,16 @@ data class ForumStrings(
     val noFiles: String = "No files in this chat yet.",
     val overflow: String = "More actions",
     val camera: String = "Camera",
+    /** The all-chats drawer the hamburger opens. */
+    val allChats: String = "All chats",
+    val searchChats: String = "Search chats",
+    val newGroup: String = "New group",
+    val groupName: String = "Group name",
+    val addGroup: String = "Add",
+    val ungrouped: String = "Ungrouped",
+    val moveTo: String = "Move to",
+    val ungroup: String = "Remove from group",
+    val sessionActions: String = "Chat actions",
 )
 
 /** The forum's own sizes (dp tokens, defined once; the surface spells no literal). */
@@ -167,6 +179,9 @@ data class ForumMetrics(
     val topAction: Dp = 40.dp,
     val pillAvatar: Dp = 28.dp,
     val disabledAlpha: Float = 0.4f,
+    /** The all-chats drawer's width and the scrim's alpha. */
+    val drawerWidth: Dp = 300.dp,
+    val scrimAlpha: Float = 0.5f,
     /** The persona strip's chip height and the model badge radius. */
     val chipHeight: Dp = 36.dp,
     /** The chat background doodle: tile size, stroke, and how faint it is (alpha) and the colour wash on top. */
@@ -210,6 +225,19 @@ object ForumTags {
     const val CAMERA = "forum_camera"
     const val INPUT_ROW = "forum_input_row"
     const val BODY = "forum_body"
+    const val ALLCHATS = "forum_allchats"
+    const val ALLCHATS_NEW = "forum_allchats_new"
+    const val ALLCHATS_SEARCH = "forum_allchats_search"
+    const val ALLCHATS_SCRIM = "forum_allchats_scrim"
+    const val NEW_GROUP = "forum_new_group"
+    const val GROUP_FIELD = "forum_group_field"
+    const val GROUP_ADD = "forum_group_add"
+    fun group(id: String) = "forum_group_$id"
+    fun groupToggle(id: String) = "forum_group_toggle_$id"
+    fun allChat(id: String) = "forum_allchat_$id"
+    fun chatMenu(id: String) = "forum_chat_menu_$id"
+    fun moveTo(sessionId: String, groupId: String) = "forum_move_${sessionId}_$groupId"
+    fun ungroup(sessionId: String) = "forum_ungroup_$sessionId"
     fun session(id: String) = "forum_session_$id"
     fun modelBadge(index: Int) = "forum_model_$index"
     fun topic(id: String) = "forum_topic_$id"
@@ -273,10 +301,11 @@ fun AiForumChat(
     BoxWithConstraints(modifier.fillMaxSize().testTag(ForumTags.SURFACE)) {
         val twoPane = maxWidth >= metrics.twoPaneMin
         val railWidth = if (twoPane) metrics.tabletRail else metrics.railWidth
+        var drawer by remember { mutableStateOf(false) }
         Column(Modifier.fillMaxSize()) {
             // With sessions: the full-width top bar is the first row; the sessions rail and thread start right under it.
             if (sessions != null && topic != null) {
-                SessionTopBar(topic, sessions, theme, strings, metrics, icon, onCall, onInfo, onMore)
+                SessionTopBar(topic, sessions, theme, strings, metrics, icon, onCall, onInfo, onMore) { drawer = true; sessions.onMenu?.invoke() }
             }
             Row(Modifier.weight(1f).fillMaxWidth().testTag(ForumTags.BODY)) {
                 // On a narrow screen the rail is always visible (Telegram's forum rail); on a tablet it is the first pane.
@@ -292,6 +321,7 @@ fun AiForumChat(
                 }
             }
         }
+        if (drawer && sessions != null) AllChatsDrawer(sessions, theme, strings, metrics, icon, onClose = { drawer = false })
     }
 }
 
@@ -411,7 +441,7 @@ internal fun sessionPill(title: String, model: String): String = listOf(title, m
 @Composable
 private fun SessionTopBar(
     topic: ForumTopic, sessions: ForumSessions, theme: AiTheme, strings: ForumStrings, metrics: ForumMetrics, icon: ForumIcon,
-    onCall: (() -> Unit)?, onInfo: (() -> Unit)?, onMore: (() -> Unit)?,
+    onCall: (() -> Unit)?, onInfo: (() -> Unit)?, onMore: (() -> Unit)?, onMenu: () -> Unit,
 ) {
     val c = theme.colors
     val m = theme.metrics
@@ -433,7 +463,7 @@ private fun SessionTopBar(
     ) {
         Box(
             Modifier.size(metrics.topAction).clip(CircleShape).border(m.hairline, c.tileBorder, CircleShape).background(c.field)
-                .clickable { sessions.onMenu?.invoke() }.semantics { contentDescription = strings.menu }.testTag(ForumTags.MENU),
+                .clickable(onClick = onMenu).semantics { contentDescription = strings.menu }.testTag(ForumTags.MENU),
             contentAlignment = Alignment.Center,
         ) { icon("menu", m.icon, c.text, null) }
         Row(
@@ -556,7 +586,9 @@ private fun SessionsRail(s: ForumSessions, theme: AiTheme, strings: ForumStrings
             icon("new", m.iconLg, c.accent, strings.newSession)
         }
         Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState())) {
-            s.list.forEach { sess ->
+            // The rail shows the open chat's group (ungrouped chats when it has none); the all-chats drawer shows every group.
+            val here = s.groups?.groupOf(s.currentId)
+            s.list.filter { s.groups == null || s.groups.groupOf(it.id) == here }.forEach { sess ->
                 val label = sess.title.ifBlank { strings.untitled }
                 RailEntry(sessionInitials(label), label, sess.id == s.currentId, theme, metrics, { s.onOpen(sess) }, ForumTags.session(sess.id))
             }

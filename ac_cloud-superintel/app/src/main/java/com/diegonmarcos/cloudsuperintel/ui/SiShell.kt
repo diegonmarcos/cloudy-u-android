@@ -52,6 +52,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import com.diegonmarcos.superapp.ai.ForumIcon
 import com.diegonmarcos.superapp.ai.ForumStrings
 import com.diegonmarcos.superapp.ai.ForumTopic
+import com.diegonmarcos.superapp.ai.AiSessionGroups
 import com.diegonmarcos.superapp.ai.AiSessionsPanel
 import com.diegonmarcos.superapp.ai.AiSettingsPickers
 import com.diegonmarcos.superapp.ai.AiStrings
@@ -75,7 +76,6 @@ import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Send
 import androidx.compose.ui.res.colorResource
 import com.diegonmarcos.cloudsuperintel.Persona
-import com.diegonmarcos.superapp.bottomnav.LocalAppTopBar
 import com.diegonmarcos.superapp.bottomnav.TopBarDrawer
 import com.diegonmarcos.superapp.bottomnav.rememberAccountLauncher
 import com.diegonmarcos.superapp.bottomnav.islandEntries
@@ -240,7 +240,8 @@ private fun SiForum(
     val chat = topics.first { it.id == current.id }.chat
     LaunchedEffect(current.id) { withContext(Dispatchers.IO) { SiAi.tune(ctx, current, chat) } }
     var tick by remember { mutableIntStateOf(0) }
-    val topBar = LocalAppTopBar.current
+    // The hamburger opens the all-chats drawer (every chat, searchable, in named groups that persist).
+    val groups = remember { AiSessionGroups.prefs(ctx, "cloud-superintel") }
     val stored = remember(tick, chat.session.id, chat.session.title, chat.session.messages.size, chat.sending) { chat.host().sessions() }
     // The open session is always on the rail, first, until it is stored (a fresh chat has no message yet).
     val list = if (stored.any { it.id == chat.session.id }) stored else listOf(chat.session) + stored
@@ -257,7 +258,7 @@ private fun SiForum(
         onCall = {},
         onInfo = { chat.page = AiChatState.PAGE_MODELS },
         onMore = {},
-        sessions = ForumSessions(list, chat.session.id, onOpen = { chat.open(it) }, onNew = { chat.fresh(); tick++ }, onMenu = { topBar?.openDrawer() }),
+        sessions = ForumSessions(list, chat.session.id, onOpen = { chat.open(it) }, onNew = { chat.fresh(); tick++ }, groups = groups),
         tools = ForumTools(decl, attach = attachHost),
     )
 }
