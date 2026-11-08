@@ -507,15 +507,24 @@ object StoreRow {
         }
     }
 
-    /** The row's buttons, all visible: lines of at most [PER_LINE] buttons sharing the width. */
+    /**
+     * The row's buttons, all visible: lines of at most [perLine] buttons sharing the width. [dividers]
+     * holds the verb indices (in the whole [verbs] list) to draw the owner's `│` rule before — used by
+     * the Cloud page's grouped menu (Open/Stop │ Perms/Routes/Libs/About); the Phone page passes none.
+     * A caller that wants ONE visual line per declared group passes [perLine] = that group's size.
+     */
     @Composable
-    fun Actions(verbs: List<StoreVerb>, modifier: Modifier = Modifier) {
+    fun Actions(verbs: List<StoreVerb>, modifier: Modifier = Modifier, perLine: Int = PER_LINE, dividers: Set<Int> = emptySet()) {
         Column(modifier.testTag(ACTIONS)) {
-            verbs.chunked(PER_LINE).forEach { line ->
+            var i = 0
+            verbs.chunked(perLine.coerceAtLeast(1)).forEach { line ->
                 Row {
                     line.forEach { v ->
+                        if (i in dividers) Text("│", color = Ink.RULE.ink(), fontSize = StoreDensity.T_TITLE.sp,
+                            modifier = Modifier.testTag("$ACTIONS:divider:$i").padding(horizontal = sdp(StoreDensity.S4)))
                         StoreBar.Button(v.label, v.fill, v.onClick, Modifier.weight(1f), v.tag,
                             alpha = v.alpha, live = v.live, description = v.description)
+                        i++
                     }
                 }
             }

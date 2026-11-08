@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import com.diegonmarcos.superapp.uikit.KitComposeFragment
 import com.diegonmarcos.superapp.uikit.KitPalette
+import com.diegonmarcos.superapp.updater.BootstrapInstall
 import com.diegonmarcos.superapp.updater.Fleet
 import com.diegonmarcos.superapp.updater.FleetIdentity
 import com.diegonmarcos.superapp.updater.Updater
@@ -232,8 +233,17 @@ class StoreCloudFragment : KitComposeFragment() {
     private var filter by mutableIntStateOf(0)
     /** Bumped when the page comes back to the front: the bar re-reads the device. */
     private var resume by mutableIntStateOf(0)
-    /** The Details sheets, newest on top (a lib's own Details opens over its app's). */
+    /** The About/Details sheets, newest on top (a lib's own About opens over its app's). */
     private val details = mutableStateListOf<Pair<Fleet.App, Fleet.State?>>()
+    /** #redesign the Perms/Routes/Libs inspect sheets open over the page, newest on top. */
+    private val inspect = mutableStateListOf<Inspect>()
+
+    /** Which per-app inspect sheet is open (About is the existing [details] stack, [ApkDetailSheet]). */
+    private sealed class Inspect(val app: Fleet.App) {
+        class Perms(app: Fleet.App) : Inspect(app)
+        class Routes(app: Fleet.App) : Inspect(app)
+        class Libs(app: Fleet.App) : Inspect(app)
+    }
     /** A row to scroll to (opened from the progress line). */
     private var scrollTarget by mutableStateOf<String?>(null)
     private var downgrade by mutableStateOf<Downgrade?>(null)
@@ -393,6 +403,15 @@ class StoreCloudFragment : KitComposeFragment() {
 
         details.lastOrNull()?.let { (app, state) ->
             ApkDetailSheet.Sheet(app, state, { details.removeAt(details.lastIndex) }, { details.add(it to null) })
+        }
+        // #redesign the inspect sheets (Perms/Routes/Libs), newest on top, each over the page.
+        inspect.lastOrNull()?.let { top ->
+            val close = { inspect.removeAt(inspect.lastIndex); Unit }
+            when (top) {
+                is Inspect.Perms -> StoreInspect.Perms(top.app, close)
+                is Inspect.Routes -> StoreInspect.Routes(top.app, close)
+                is Inspect.Libs -> StoreInspect.Libs(top.app, close)
+            }
         }
         downgrade?.let { d ->
             AlertDialog(
@@ -831,11 +850,22 @@ class StoreCloudFragment : KitComposeFragment() {
                 modifier = Modifier.testTag("store-full:${app.id}").padding(top = sdp(StoreDensity.S2), bottom = sdp(StoreDensity.S4)))
             if (reference != null) return
 
-            // Order and captions are appstore-fleet-actions.json; this only says
-            // what each declared id DOES. Direct install lives on the Details
-            // sheet now (still one tap from here), and Stop sits before Uninstall.
-            // Laid out by StoreRow.Actions, the Phone page's own button lines.
-            StoreRow.Actions(FleetActions.row(ctx).mapNotNull { rowAction(ctx, app, it, stg) })
+            // #redesign Order, captions, colours and the two-line GROUPING are
+            // appstore-fleet-actions.json; this only says what each declared id
+            // DOES. Line 0 is install/lifecycle, line 1 open/inspect; a `│` rule
+            // (dividerBefore) sets Open/Stop apart from the Perms/Routes/Libs/About
+            // inspect set. Install⇄Uninstall is one toggle; Perms/Routes/Libs/About
+            // open sub-sheets over the page (the nav bar and Back stay).
+            // Each declared line is ONE visual row of weight-1 buttons (perLine = the line's own size,
+            // never re-chunked), drawn by the SAME shared StoreRow.Actions the Phone page uses; the owner's
+            // `│` rule is drawn before any button whose declaration carries dividerBefore. A null verb
+            // (Install on an unpublished app) is dropped, so no slot draws an empty divider.
+            for (line in FleetActions.rows(ctx)) {
+                val drawn = line.mapNotNull { a -> rowAction(ctx, app, a, stg)?.let { a to it } }
+                if (drawn.isEmpty()) continue
+                val dividers = drawn.mapIndexedNotNull { i, (a, _) -> i.takeIf { a.dividerBefore } }.toSet()
+                StoreRow.Actions(drawn.map { it.second }, perLine = drawn.size, dividers = dividers)
+            }
         }
     }
 
@@ -952,24 +982,49 @@ class StoreCloudFragment : KitComposeFragment() {
     private fun rowAction(ctx: Context, app: Fleet.App, a: FleetActions.Action, stg: StoreStages.Stage?): StoreVerb? {
         val tag = "store-verb:${a.id}:${app.id}"
         fun verb(onClick: () -> Unit) = StoreVerb(a.label, a.color, onClick, tag)
+        val installed = Fleet.installedId(ctx, app) != null
         return when (a.id) {
-            // #496: installed vs. available, side by side, plus Direct install and
-            // App settings — see ApkDetailSheet.
-            "details" -> verb { details.add(app to states[app.id]) }
             "open" -> verb { openApp(ctx, Fleet.installedId(ctx, app) ?: app.pkg) }
-            // #774 three stages, three buttons; which are live is StoreStages' call.
+            // #774 three stages; which are live is StoreStages' call. Download only fetches; Clear wipes the cache.
             "download" -> if (app.blocked) null else stageVerb(ctx, app, a, StoreStages.DOWNLOAD, stg, tag)
-            "install" -> if (app.blocked) null else stageVerb(ctx, app, a, StoreStages.INSTALL, stg, tag)
             "clear" -> if (app.blocked) null else stageVerb(ctx, app, a, StoreStages.CLEAR, stg, tag)
+            // #redesign ONE toggle: Uninstall when present, else the NORMAL (user-confirmed) install —
+            // BootstrapInstall's system-sheet floor, which needs no shell channel. Its label/colour are
+            // the declaration's install vs installed pair.
+            "install_toggle" -> if (installed)
+                StoreVerb(a.labelInstalled ?: a.label, a.colorInstalled, {
+                    runCatching { Fleet.uninstall(ctx, Fleet.installedId(ctx, app) ?: app.pkg) }
+                        .onFailure { Toast.makeText(ctx, "Uninstall: ${it.message}", Toast.LENGTH_LONG).show() }
+                }, tag)
+            else if (app.blocked) null
+            else verb { promptedInstall(ctx, app) }
+            // #redesign Direct Install is the SILENT path: the store's own cached install (StoreStages,
+            // downgrade-gated), no Android confirmation sheet. Distinct from the toggle's prompted install above.
+            "direct_install" -> if (app.blocked) null else stageVerb(ctx, app, a, StoreStages.INSTALL, stg, tag)
             "stop" -> verb { stop(ctx, app) }
-            "uninstall" -> verb {
-                runCatching { Fleet.uninstall(ctx, Fleet.installedId(ctx, app) ?: app.pkg) }
-                    .onFailure { Toast.makeText(ctx, "Uninstall: ${it.message}", Toast.LENGTH_LONG).show() }
-            }
+            // #redesign the inspect sheets (open OVER the page: nav + Back stay). About supersedes the old Details.
+            "perms" -> verb { inspect.add(Inspect.Perms(app)) }
+            "routes" -> verb { inspect.add(Inspect.Routes(app)) }
+            "libs" -> verb { inspect.add(Inspect.Libs(app)) }
+            "about", "details" -> verb { details.add(app to states[app.id]) }
             else -> StoreVerb(a.label, 0xFF4A4A55.toInt(), {
                 Toast.makeText(ctx, "'${a.id}' is declared in ${FleetActions.ASSET} but this build has no handler for it",
                     Toast.LENGTH_LONG).show()
             }, tag)
+        }
+    }
+
+    /** #redesign the toggle's NORMAL install: fetch through the verified source ladder and hand the APK
+     *  to the SYSTEM installer ([BootstrapInstall] — Android's confirmation sheet, no shell channel). The
+     *  silent path is Direct Install (StoreStages). Off the main thread; the sheet reports its own result. */
+    private fun promptedInstall(ctx: Context, app: Fleet.App) {
+        Toast.makeText(ctx, "Fetching ${app.label}…", Toast.LENGTH_SHORT).show()
+        thread(name = "fleet-prompted-install-${app.id}") {
+            val r = BootstrapInstall.launch(ctx, app)
+            main.post {
+                r.onSuccess { c -> Toast.makeText(ctx, "${app.label}: ${c.versionName ?: c.versionCode}", Toast.LENGTH_LONG).show() }
+                    .onFailure { Toast.makeText(ctx, "${app.label}: ${it.message}", Toast.LENGTH_LONG).show() }
+            }
         }
     }
 

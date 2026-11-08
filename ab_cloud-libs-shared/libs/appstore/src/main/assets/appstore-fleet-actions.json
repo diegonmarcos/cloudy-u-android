@@ -1,17 +1,23 @@
 {
-  "_doc": "Store ▸ Cloud: the buttons a fleet row and its Details sheet offer, IN ORDER, with their captions. The Kotlin only maps an id to what it does (StoreCloudFragment.rowAction / ApkDetailSheet.detailAction); order and wording are this file. Direct install moved OFF the row into Details beside App settings, and the row gained Stop (force-stop through the shell channel ladder ShellChannels, the same door Phone Apps' Stop uses) immediately before Uninstall. #774 split the old one-shot Install / Update into the three cache stages Download → Install → Clear (StoreStages decides which are live; Install only ever uses the cached APK). When no shell channel is armed, Stop says so and offers App settings, where Android's own Force stop lives. test-store-fleet-actions.sh holds: row ends [..., stop, uninstall], row has no direct_install, details has direct_install and app_settings, and every id has a handler.",
-  "_doc_fields": "id = the verb the code dispatches on; label = the caption drawn; color = the button fill (ARGB hex) on the row. Details entries also carry `detail`, the right-hand hint on the sheet's action line.",
-  "row": [
-    { "id": "details",   "label": "Details",          "color": "0xFF2A2A33" },
-    { "id": "open",      "label": "Open",             "color": "0xFF2A2A33" },
-    { "id": "download",  "label": "Download",         "color": "0xFF2B6CB0" },
-    { "id": "install",   "label": "Install",          "color": "0xFF7C3AED" },
-    { "id": "clear",     "label": "Clear",            "color": "0xFF4A4A55" },
-    { "id": "stop",      "label": "Stop",             "color": "0xFF9C4221" },
-    { "id": "uninstall", "label": "Uninstall",        "color": "0xFF4A4A55" }
+  "_doc": "Store ▸ Cloud: the buttons a fleet row's detail offers, IN ORDER, on TWO lines, with their captions and colours. The Kotlin only maps an id to what it does (StoreCloudFragment.rowAction / ApkDetailSheet.detailAction); order, wording and grouping are this file. #redesign split the single button strip into two grouped lines: `rows[0]` is the install/lifecycle line (Download · Install⇄Uninstall · Direct Install · Clear), `rows[1]` the open/inspect line (Open · Stop │ Perms · Routes · Libs · About). `install_toggle` is ONE button that shows `label` when the package is absent and `label_installed` when it is present, and runs the matching action (prompted system-sheet install, via BootstrapInstall, when absent; Uninstall when present). `direct_install` is the SILENT path (StoreStages' cached install, downgrade-gated — the store's own installer, no system sheet). `divider_before` draws the owner's `│` rule before a button, grouping Open/Stop apart from the Perms/Routes/Libs/About inspect set. The four inspect ids open sub-sheets over the page (nav bar and back stay — they never replace the bottom nav): Perms (Manifest / Auto grants / Runtime tables), Routes (MCP · IPC · API tabs), Libs (compiled-in + bound engines), About (the full detail sheet, ApkDetailSheet, which supersedes the old `details` button). Stop goes through the fleet's EXISTING privileged door — ShellChannels — and says so with no channel armed. test-store-fleet-actions.sh holds the two-line shape, the toggle, the divider, and that every id has a handler; test-store-inspect.sh holds the four inspect sheets and their data sources.",
+  "_doc_fields": "id = the verb the code dispatches on; label = the caption drawn; color = the button fill (ARGB hex). `label_installed`/`color_installed` = the toggle's caption/fill while the package is installed. `divider_before` = draw a `│` rule before this button. The `details` entries feed the About sheet's Actions card (ApkDetailSheet.detailAction); each carries `detail`, the right-hand hint on the sheet's action line.",
+  "rows": [
+    [
+      { "id": "download",       "label": "Download",      "color": "0xFF2B6CB0" },
+      { "id": "install_toggle", "label": "Install",       "color": "0xFF7C3AED", "label_installed": "Uninstall", "color_installed": "0xFF4A4A55" },
+      { "id": "direct_install", "label": "Direct Install", "color": "0xFF2F855A" },
+      { "id": "clear",          "label": "Clear",         "color": "0xFF4A4A55" }
+    ],
+    [
+      { "id": "open",   "label": "Open",   "color": "0xFF2A2A33" },
+      { "id": "stop",   "label": "Stop",   "color": "0xFF9C4221" },
+      { "id": "perms",  "label": "Perms",  "color": "0xFF2A2A33", "divider_before": true },
+      { "id": "routes", "label": "Routes", "color": "0xFF2A2A33" },
+      { "id": "libs",   "label": "Libs",   "color": "0xFF2A2A33" },
+      { "id": "about",  "label": "About",  "color": "0xFF2A2A33" }
+    ]
   ],
   "details": [
-    { "id": "direct_install", "label": "Direct install", "detail": "system install sheet, no shell channel needed" },
-    { "id": "app_settings",   "label": "App settings",   "detail": "Android's page: Force stop, storage, permissions" }
+    { "id": "app_settings", "label": "App settings", "detail": "Android's page: Force stop, storage, permissions" }
   ]
 }
