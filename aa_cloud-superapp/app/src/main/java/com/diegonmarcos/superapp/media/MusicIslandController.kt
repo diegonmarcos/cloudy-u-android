@@ -28,8 +28,11 @@ class MusicIslandController(private val activity: AppCompatActivity, private val
             island.setContent {
                 com.diegonmarcos.superapp.uikit.CloudKitTheme(com.diegonmarcos.superapp.ui.LauncherPalette.kit(activity)) {
                     MusicIsland(state, onTap = {
-                        val pkg = monitor?.currentPackage
-                        val ctrl = monitor?.currentController
+                        // activeController, not currentController: a PAUSED player is
+                        // still a live session, so its transport (prev/play/next/seek)
+                        // stays reachable from the card instead of going dead.
+                        val ctrl = monitor?.activeController
+                        val pkg = monitor?.currentPackage ?: ctrl?.packageName
                         if (popup == null) popup = MusicControlsPopup(activity)
                         popup?.show(island, ctrl, pkg)
                     })

@@ -104,6 +104,17 @@ class NowPlayingMonitor(
     @Volatile var currentController: MediaController? = null
         private set
 
+    /** The session the controls popup should drive: the PLAYING one, else the
+     *  most-recently-listed active session. Unlike [currentController] (which
+     *  the island light reads, so it is null when nothing plays) this stays
+     *  non-null while ANY session exists — a PAUSED player is still a live
+     *  session, and its prev / play / next / seek must reach it. That is the
+     *  media badge's promise: "pinned even when paused so the transport is
+     *  always reachable". Null only when there is genuinely no session, where
+     *  the card falls back to the persisted last session + resume. */
+    @Volatile var activeController: MediaController? = null
+        private set
+
     fun start() {
         val m = mgr ?: return
         // Initial subscribe + initial evaluation. SecurityException
@@ -156,6 +167,9 @@ class NowPlayingMonitor(
                 ?: it.getString(MediaMetadata.METADATA_KEY_DISPLAY_SUBTITLE)
         }?.takeIf { it.isNotBlank() }
         currentController = playing
+        // Controllable session for the popup: the playing one, else the most
+        // recently listed session so a PAUSED player is still reachable.
+        activeController = playing ?: tracked.firstOrNull()
         currentPackage = playingPkg
         currentTitle = title
         currentArtist = artist
