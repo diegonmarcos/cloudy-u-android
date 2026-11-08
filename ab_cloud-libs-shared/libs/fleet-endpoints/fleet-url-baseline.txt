@@ -44,6 +44,8 @@ ac_cloud-browser/build.json	analytics.matomo.endpoint	pending	request endpoint r
 ac_cloud-browser/build.json	analytics.umami.endpoint	pending	request endpoint read from build config; its consumer is not yet routed through libs:fleet-endpoints
 ac_cloud-browser/build.json	diagnostics.log_sink_url	pending	request endpoint read from build config; its consumer is not yet routed through libs:fleet-endpoints
 ac_cloud-browser/build.json	ui.browser.favourites.extra.*.url	link	a link the user opens in the browser or a WebView page; no request is made by the app
+ac_cloud-browser/build.json	ui.domains.headless.*.link.detail	link	catalog detail text on the Browser domains info page; names the service's mesh host in prose, the app makes no request from this value
+ac_cloud-browser/build.json	ui.domains.headless.*.link.url	link	catalog entry on the Browser domains info page (MCP endpoint / Steel API links the user opens); no request is made by the app from this value
 ac_cloud-c3/build.json	ui.c3_ops.base_url	pending	request endpoint read from build config; its consumer is not yet routed through libs:fleet-endpoints
 ac_cloud-c3/build.json	ui.carried_c3.pages.*.dagu_default_server	pending	request endpoint read from build config; its consumer is not yet routed through libs:fleet-endpoints
 ac_cloud-c3/build.json	ui.ntfy.web_base_url	link	web link to the ntfy page
