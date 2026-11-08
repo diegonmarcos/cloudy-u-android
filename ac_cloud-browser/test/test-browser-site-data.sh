@@ -35,7 +35,7 @@ def check(root, ok):
     mi = {i["id"]: i for i in b["menu"]["items"]}
     st = {s["key"]: s for s in b["settings"]}
     # D1
-    for i, sec in (("save_page", "page_actions"), ("save_site", "page_actions"), ("clear_site_cookies", "site")):
+    for i, sec in (("save_page", "addons"), ("save_site", "addons"), ("clear_site_cookies", "site")):
         ok(i in mi and mi[i]["section"] == sec and "page" in mi[i].get("requires", []), "D1 `%s` is a page-menu row (per-site)" % i)
         ok('"%s" ->' % i in frag, "D1 `%s` has its runAction branch" % i)
     crow = {r["id"]: r for r in b["configs"]["rows"]}

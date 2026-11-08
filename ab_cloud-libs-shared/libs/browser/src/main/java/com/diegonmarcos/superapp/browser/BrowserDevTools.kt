@@ -1,5 +1,7 @@
 package com.diegonmarcos.superapp.browser
 
+import org.json.JSONObject
+
 /**
  * #1141 the pure half of the in-app debugger (JVM-tested in BrowserDevToolsTest): the bounded console and
  * network logs, what a Hard / Light refresh clears, what the Desktop / Mobile toggle sets, and the source
@@ -109,6 +111,69 @@ object DevTools {
     val console = RingBuffer<ConsoleEntry>(ConsoleLog.CAPACITY)
     val net = RingBuffer<NetEntry>(NetLog.CAPACITY)
     @Volatile var remoteDebugging = false
+}
+
+/**
+ * Graphics tab: what the injected [JS] sampled on the current page (FPS, frame time, WebGL draw calls and triangles per frame,
+ * GPU name). Pure parse of the BrowserJs.await answer, JVM-tested; every figure the page cannot give reads "n/a" with a note.
+ */
+data class GraphicsStats(
+    val available: Boolean, val fps: Double?, val frameMs: Double?, val draws: Long?, val tris: Long?,
+    val gpu: String?, val webgl: Boolean, val note: String?,
+) {
+    /** label / value rows for the HUD, "n/a" where unknown. */
+    fun rows(): List<Pair<String, String>> = listOf(
+        "FPS" to (fps?.let { "%.1f".format(java.util.Locale.ROOT, it) } ?: NA),
+        "Frame time" to (frameMs?.let { "%.1f ms".format(java.util.Locale.ROOT, it) } ?: NA),
+        "Draw calls / frame" to (draws?.toString() ?: NA),
+        "Triangles / frame" to (tris?.toString() ?: NA),
+        "GPU" to (gpu ?: NA),
+    )
+
+    fun asText(): String = rows().joinToString("\n") { "${it.first}: ${it.second}" } + (note?.let { "\nNote: $it" } ?: "")
+
+    companion object {
+        const val NA = "n/a"
+        const val BLOCKED = "the page blocked the injected script or did not answer"
+
+        private fun none(note: String) = GraphicsStats(false, null, null, null, null, null, false, note)
+
+        /** [raw] is BrowserJs.await's answer: `{"v":{fps,ms,draws,tris,gpu,webgl}}`, `{"error":..}` or null. */
+        fun parse(raw: String?): GraphicsStats {
+            if (raw.isNullOrBlank()) return none(BLOCKED)
+            val o = runCatching { JSONObject(raw) }.getOrNull() ?: return none(BLOCKED)
+            if (o.has("error")) return none("script error: ${o.optString("error")}")
+            val v = o.optJSONObject("v") ?: return none(BLOCKED)
+            fun num(k: String): Double? = if (v.has(k) && !v.isNull(k)) v.optDouble(k, Double.NaN).takeIf { !it.isNaN() } else null
+            val fps = num("fps")?.takeIf { it > 0 }
+            val webgl = v.optBoolean("webgl", false)
+            val gpu = v.optString("gpu").trim().takeIf { webgl && it.isNotEmpty() && it != "null" }
+            val note = when {
+                fps == null -> "sampling: refresh in a second"
+                !webgl -> "no WebGL context on this page: FPS and frame time only"
+                else -> null
+            }
+            return GraphicsStats(true, fps, num("ms")?.takeIf { fps != null && it > 0 },
+                if (webgl) num("draws")?.toLong() else null, if (webgl) num("tris")?.toLong() else null, gpu, webgl, note)
+        }
+
+        /**
+         * Idempotent: the first run installs a requestAnimationFrame loop and wraps the WebGL / WebGL2 draw calls (counted per
+         * ~1 s window, shown per frame) and reads the GPU from WEBGL_debug_renderer_info; later runs only report.
+         */
+        const val JS = "(function(){var g=window.__c3gfx;if(!g){g=window.__c3gfx={n:0,t0:performance.now(),last:performance.now(),ms:0,fps:0,d:0,t:0,dpf:0,tpf:0,gpu:null,webgl:false};" +
+            "function tri(m,c){return m===4?Math.floor(c/3):(m===5||m===6)?Math.max(c-2,0):0}" +
+            "function wrap(C){if(!C||!C.prototype)return;var P=C.prototype;g.webgl=true;" +
+            "['drawArrays','drawElements','drawArraysInstanced','drawElementsInstanced'].forEach(function(k){var o=P[k];if(!o)return;" +
+            "P[k]=function(){var a=arguments,c=k.indexOf('Elements')>=0?a[1]:a[2],i=k.indexOf('Instanced')>=0?(a[a.length-1]||1):1;g.d++;g.t+=tri(a[0],c)*i;return o.apply(this,a)}})}" +
+            "try{wrap(window.WebGLRenderingContext);wrap(window.WebGL2RenderingContext)}catch(e){}" +
+            "try{var cv=document.createElement('canvas'),gl=cv.getContext('webgl')||cv.getContext('experimental-webgl');if(gl){g.webgl=true;" +
+            "var x=gl.getExtension('WEBGL_debug_renderer_info');g.gpu=String(x?gl.getParameter(x.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER))}}catch(e){}" +
+            "(function loop(t){var d=t-g.last;g.last=t;g.n++;g.ms=g.ms?g.ms*0.9+d*0.1:d;" +
+            "if(t-g.t0>=1000){g.fps=g.n*1000/(t-g.t0);g.dpf=Math.round(g.d/g.n);g.tpf=Math.round(g.t/g.n);g.n=0;g.d=0;g.t=0;g.t0=t}" +
+            "requestAnimationFrame(loop)})(performance.now())}" +
+            "return {fps:g.fps,ms:g.ms,draws:g.dpf,tris:g.tpf,gpu:g.gpu,webgl:g.webgl}})()"
+    }
 }
 
 enum class RefreshMode { HARD, LIGHT }

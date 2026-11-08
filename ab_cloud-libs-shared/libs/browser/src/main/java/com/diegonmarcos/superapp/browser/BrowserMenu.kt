@@ -20,6 +20,8 @@ data class BrowserMenuItem(
     val settingsSection: String? = null,
     /** #1141 the small word under an icon-row glyph. */
     val caption: String? = null,
+    /** optional sub-header the row is grouped under inside its section (Page Tools: Reading, Save & Export ...). */
+    val category: String? = null,
 )
 
 data class BrowserMenuSection(val id: String, val label: String)
@@ -72,7 +74,7 @@ class BrowserMenu(
             rows.forEach {
                 r.put(JSONObject().put("id", it.item.id).put("label", it.item.label).put("kind", it.item.kind)
                     .put("enabled", it.enabled).put("why", it.why ?: JSONObject.NULL)
-                    .put("checked", it.checked ?: JSONObject.NULL).put("api", it.item.api))
+                    .put("checked", it.checked ?: JSONObject.NULL).put("api", it.item.api).put("category", it.item.category ?: JSONObject.NULL))
             }
             arr.put(JSONObject().put("section", s.id).put("label", s.label).put("rows", r))
         }
@@ -102,6 +104,7 @@ class BrowserMenu(
                     api = it.optBoolean("api", false),
                     settingsSection = it.optString("settings_section").ifBlank { null },
                     caption = it.optString("caption").ifBlank { null },
+                    category = it.optString("category").ifBlank { null },
                 )
             }
             val whys = HashMap<String, String>()

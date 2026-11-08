@@ -35,6 +35,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,15 +56,23 @@ import com.diegonmarcos.superapp.uikit.LocalKitPalette
  */
 
 /** One row of a sheet: what [BrowserMenuRow] resolves to, or an ad-hoc row (the tab card menu). */
-data class SheetRow(val id: String, val label: String, val enabled: Boolean = true, val why: String? = null, val checked: Boolean? = null, val caption: String? = null)
+data class SheetRow(val id: String, val label: String, val enabled: Boolean = true, val why: String? = null, val checked: Boolean? = null, val caption: String? = null, val category: String? = null)
 
-fun BrowserMenuRow.sheet() = SheetRow(item.id, item.label, enabled, why, checked, item.caption)
+fun BrowserMenuRow.sheet() = SheetRow(item.id, item.label, enabled, why, checked, item.caption, item.category)
+
+/** Rows grouped under their category sub-headers (null category = no header), categories in first-appearance order. */
+fun List<SheetRow>.byCategory(): List<Pair<String?, List<SheetRow>>> =
+    map { it.category }.distinct().map { c -> c to filter { it.category == c } }
 
 /** #1141 icon cell: a 48 dp touch target, a 28 sp glyph, an optional one-word caption; a lit (checked) toggle shows in the accent. */
 const val ICON_TOUCH_DP = 48
 const val ICON_GLYPH_SP = 28
 
-/** A bottom sheet over a scrim: an optional icon row, then titled sections. Scrim tap dismisses. */
+/**
+ * A bottom sheet over a scrim: an optional [title], an optional icon row, then the sections. Two or more sections render as
+ * TABS (one FilterChip per section, "browser:menu:tab:$i"); a lone section is a titled flat list. Rows carrying a
+ * `category` sit under category sub-headers. Scrim tap dismisses.
+ */
 @Composable
 fun BrowserSheet(
     icons: List<SheetRow>,
@@ -71,34 +81,54 @@ fun BrowserSheet(
     onDismiss: () -> Unit,
     /** #1141 further icon rows under [icons] (row 2 …). */
     moreIcons: List<List<SheetRow>> = emptyList(),
+    /** the sheet's heading ("page-tools" for the page dropdown). */
+    title: String? = null,
 ) {
     val p = LocalKitPalette.current
+    var tab by remember { mutableIntStateOf(0) }
+    val tabbed = sections.size > 1
     Box(Modifier.fillMaxSize().background(Color(0x99000000)).clickable(onClick = onDismiss)) {
         Column(
             Modifier.align(Alignment.BottomCenter).fillMaxWidth().heightIn(max = 560.dp)
                 .background(p.surface, RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
                 .clickable(remember { MutableInteractionSource() }, null) {}   // the sheet itself does not dismiss
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 10.dp)
+                .padding(horizontal = 16.dp, vertical = 12.dp)
                 .testTag("browser:sheet"),
         ) {
+            if (title != null) Text(title, color = p.textPrimary, fontSize = 16.sp, fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.padding(bottom = 8.dp).testTag("browser:menu:title"))
             (listOf(icons) + moreIcons).filter { it.isNotEmpty() }.forEach { row ->
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                     row.forEach { r -> IconCell(r, Modifier.weight(1f), onPick) }
                 }
             }
-            sections.forEach { (title, rows) ->
-                HorizontalDivider(color = p.hairline)
-                Text(title, color = p.textSecondary, style = MaterialTheme.typography.labelLarge,
-                    modifier = Modifier.padding(top = 10.dp, bottom = 2.dp))
-                rows.forEach { r ->
-                    val suffix = when (r.checked) { true -> "  ✓"; false -> ""; null -> "" }
-                    KitSettingsRow(
-                        title = r.label + suffix,
-                        subtitle = if (r.enabled) "" else r.why.orEmpty(),
-                        modifier = Modifier.testTag("browser:menu:${r.id}"),
-                        onClick = if (r.enabled) ({ onPick(r.id) }) else null,
-                    )
+            if (tabbed) Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(bottom = 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                sections.forEachIndexed { i, (name, _) ->
+                    FilterChip(tab == i, { tab = i }, { Text(name) }, modifier = Modifier.testTag("browser:menu:tab:$i"))
+                }
+            }
+            val shown = if (tabbed) listOf(sections[tab.coerceIn(0, sections.lastIndex)]) else sections
+            Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) {
+                shown.forEach { (name, rows) ->
+                    if (!tabbed) {
+                        HorizontalDivider(color = p.hairline)
+                        Text(name, color = p.textSecondary, fontSize = 13.sp, fontWeight = FontWeight.Medium,
+                            modifier = Modifier.padding(top = 10.dp, bottom = 2.dp))
+                    }
+                    rows.byCategory().forEach { (cat, group) ->
+                        if (cat != null) Text(cat.uppercase(), color = p.accent, fontSize = 11.sp, fontWeight = FontWeight.Medium,
+                            modifier = Modifier.padding(top = 10.dp, bottom = 2.dp).testTag("browser:menu:category:$cat"))
+                        group.forEach { r ->
+                            val suffix = when (r.checked) { true -> "  ✓"; false -> ""; null -> "" }
+                            KitSettingsRow(
+                                title = r.label + suffix,
+                                subtitle = if (r.enabled) "" else r.why.orEmpty(),
+                                modifier = Modifier.testTag("browser:menu:${r.id}"),
+                                onClick = if (r.enabled) ({ onPick(r.id) }) else null,
+                            )
+                        }
+                    }
                 }
             }
         }

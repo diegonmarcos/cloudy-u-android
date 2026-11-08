@@ -58,13 +58,23 @@ class BrowserPageDropdownUiTest {
     private fun show(facts: Map<String, Boolean>) {
         val iconRows = cfg.menu.iconRows(facts).map { r -> r.map { it.sheet() } }
         val sections = cfg.menu.listSections(facts).map { (s, rows) -> s.label to rows.map { it.sheet() } }
-        compose.setContent { CloudKitTheme(palette) { BrowserSheet(iconRows.firstOrNull().orEmpty(), sections, onPick = { picked += it }, onDismiss = {}, moreIcons = iconRows.drop(1)) } }
+        compose.setContent { CloudKitTheme(palette) { BrowserSheet(iconRows.firstOrNull().orEmpty(), sections, onPick = { picked += it }, onDismiss = {}, moreIcons = iconRows.drop(1), title = "page-tools") } }
         compose.waitForIdle()
     }
 
-    private fun tap(id: String) = compose.onNodeWithTag("browser:menu:$id", useUnmergedTree = true).performScrollTo().performClick()
+    private fun openTab(i: Int) { compose.onNodeWithTag("browser:menu:tab:$i", useUnmergedTree = true).performClick(); compose.waitForIdle() }
 
-    private fun has(id: String) = compose.onAllNodesWithTag("browser:menu:$id", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+    /** the sheet is tabbed: show the tab of the section [id] is declared in, then tap the row. */
+    private fun tap(id: String) {
+        openTab(cfg.menu.sections.indexOfFirst { it.id == cfg.menu.item(id)!!.section })
+        compose.onNodeWithTag("browser:menu:$id", useUnmergedTree = true).performScrollTo().performClick()
+    }
+
+    /** is the row drawn in ANY tab */
+    private fun has(id: String) = cfg.menu.sections.indices.any { i ->
+        openTab(i)
+        compose.onAllNodesWithTag("browser:menu:$id", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+    }
 
     private val pageFacts = mapOf("page" to true, "can_go_back" to true, "can_go_forward" to true, "text_tools" to true, "profile_present" to true)
 
@@ -85,11 +95,21 @@ class BrowserPageDropdownUiTest {
     }
 
     @Test
-    fun `the sections read Page Actions, Page Tools, Site Data, Site Perms, DevTools`() {
+    fun `the sheet is titled page-tools with the tabs Actions, Page Tools, Site Data, Site Perms, Dev Tools`() {
         show(pageFacts)
-        // a section title is drawn as text; the rows under it carry the tags
-        listOf("Page Actions", "Page Tools", "Site Data", "Site Perms", "DevTools").forEach { title ->
-            assertTrue("section $title is drawn", compose.onAllNodesWithTagOrText(title))
+        assertTrue("title is drawn", compose.onAllNodesWithTagOrText("page-tools"))
+        listOf("Actions", "Page Tools", "Site Data", "Site Perms", "Dev Tools").forEachIndexed { i, title ->
+            assertTrue("tab $title is drawn", compose.onAllNodesWithTag("browser:menu:tab:$i", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty())
+            assertTrue("tab $title is labelled", compose.onAllNodesWithTagOrText(title))
+        }
+    }
+
+    @Test
+    fun `Page Tools shows its category sub-headers`() {
+        show(pageFacts)
+        openTab(1)
+        listOf("Reading", "Save & Export", "Find & Share", "View mode", "Autofill").forEach { c ->
+            assertTrue("category $c is drawn", compose.onAllNodesWithTag("browser:menu:category:$c", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty())
         }
     }
 

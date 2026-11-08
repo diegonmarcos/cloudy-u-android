@@ -2140,7 +2140,7 @@ class BrowserHostFragment : Fragment() {
         overlay { close -> BrowserSourceViewer(title, text, onCopy = { copyText("source", it, "Copied") }, onClose = close) }
     }
 
-    /** #1141 Dev Tools: console + REPL (0), network (1), storage (2) of the current page. */
+    /** #1141 Dev Tools: console + REPL (0), network (1), storage (2), graphics (3) of the current page. */
     private fun showDevTools(tab: Int) {
         overlay { close -> BrowserDevToolsScreen(tab, DevToolsBridge({ webView }) { label, text -> copyText(label, text, "Copied") }, close) }
     }
@@ -2150,7 +2150,7 @@ class BrowserHostFragment : Fragment() {
         val iconRows = config.menu.iconRows(facts).map { r -> r.map { it.sheet() } }
         val sections = config.menu.listSections(facts).map { (s, rows) -> s.label to rows.map { it.sheet() } }
         overlay { close ->
-            BrowserSheet(iconRows.firstOrNull().orEmpty(), sections, onPick = { id -> close(); runAction(id) }, onDismiss = close, moreIcons = iconRows.drop(1))
+            BrowserSheet(iconRows.firstOrNull().orEmpty(), sections, onPick = { id -> close(); runAction(id) }, onDismiss = close, moreIcons = iconRows.drop(1), title = "page-tools")
         }
     }
 
@@ -2544,6 +2544,7 @@ class BrowserHostFragment : Fragment() {
             "dev_console" -> { showDevTools(0); done(ok()) }
             "dev_network" -> { showDevTools(1); done(ok()) }
             "dev_storage" -> { showDevTools(2); done(ok()) }
+            "dev_graphics" -> { showDevTools(3); done(ok()) }
             "dev_remote_debug" -> {
                 DevTools.remoteDebugging = !DevTools.remoteDebugging
                 WebView.setWebContentsDebuggingEnabled(DevTools.remoteDebugging)

@@ -66,7 +66,7 @@ def check(root, ok):
     ok(c["native"].get("permissions") == ["perms_defaults"] and "BrowserPermsList(null, config.sitePerms" in frag, "C9 Permissions is the defaults and the overrides, the Perms component")
     ok("groups.forEach { g ->" in screen and "groups = pages.groupsFor(page)" in frag, "C5 a page draws its groups under their titles")
     ok("KitSectionHeader(" in screen and "KitSettingsRow(" in screen, "C3 with the fleet kit's header and rows")
-    ok("KitSwitchRow(" in sheets and "FilterChip(" in sheets and "FlowRow(" in sheets, "C3 a bool is a switch, an enum a dense chip row")
+    ok("KitSwitchRow(" in sheets and "FilterChip(selected = v == opt" in sheets and "FlowRow(" in sheets, "C3 a bool is a switch, an enum a dense chip row")
     ok("pages.resolve(page, allFacts(), config.menu.whys)" in frag and "native = { ConfigsNative(pages.nativeFor(page)) }" in frag, "C3 the host hands the page its rows and blocks")
     ok('optJSONArray("settings_sections")' in cfg and "BrowserConfigPages.parse(" in cfg, "C3 the config parses them")
     ok("@Composable" in screen and "BrowserConfigsPageScreen" in screen, "C4 the page is Compose")

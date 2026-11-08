@@ -42,7 +42,19 @@ def check(root, ok):
     menu = b["menu"]
     items = {i["id"]: i for i in menu["items"]}
     secs = [s["id"] for s in menu["sections"]]
-    ok(secs == ["page_actions", "addons", "site", "site_perms", "devtools"], "P1 Browsing Tools' sections are Page Actions, Page Tools, Site Data, Site Perms, DevTools", str(secs))
+    ok(secs == ["page_actions", "addons", "site", "site_perms", "devtools"], "P1 the page-tools tabs are Actions, Page Tools, Site Data, Site Perms, Dev Tools", str(secs))
+    ok([s["label"] for s in menu["sections"]] == ["Actions", "Page Tools", "Site Data", "Site Perms", "Dev Tools"], "P1 with the owner's tab labels")
+    for i in ("find", "share", "desktop", "print", "download_page", "save_page", "save_site", "fill_profile"):
+        ok(items.get(i, {}).get("section") == "addons", "P1 `%s` is a Page Tool" % i)
+    for i in ("back", "forward", "reload", "bookmark", "copy_url", "open_external", "add_to_home", "hard_refresh", "light_refresh"):
+        ok(items.get(i, {}).get("section") == "page_actions", "P1 `%s` stays an Action" % i)
+    cats = {}
+    for i in menu["items"]:
+        if i["section"] == "addons" and i.get("category"):
+            cats.setdefault(i["category"], []).append(i["id"])
+    ok(list(cats) == ["Reading", "Save & Export", "Find & Share", "View mode", "Autofill"], "P1 Page Tools rows are grouped in categories", str(list(cats)))
+    ok(items.get("dev_graphics", {}).get("section") == "devtools" and '"dev_graphics" ->' in run, "P1 the Graphics debugger row has its runAction branch")
+    ok('title = "page-tools"' in frag and "browser:menu:tab:" in src.get(LIB + "/BrowserSheets.kt", ""), "P1 the sheet is titled page-tools and drawn as tabs")
     for g in GLOBAL:
         ok(g not in items, "P1 `%s` is not a dropdown row" % g)
     ok(all("settings_section" not in i for i in items.values()), "P1 no dropdown row sits inside a settings topic")
@@ -80,8 +92,8 @@ def check(root, ok):
 BJ = "ac_cloud-browser/build.json"
 FRAG = LIB + "/BrowserHostFragment.kt"
 main("page menu is page-only", check, [
-    ("a global row comes back in the dropdown", BJ, '"id": "find",\n            "section": "page_actions"', '"id": "history",\n            "section": "page_actions"', "`history` is not a dropdown row"),
-    ("a settings section comes back", BJ, '"id": "addons",\n            "label": "Page Tools"\n          },', '"id": "addons",\n            "label": "Page Tools"\n          },\n          {"id": "settings", "label": "Settings"},', "sections are Page Actions"),
+    ("a global row comes back in the dropdown", BJ, '"id": "find",\n            "section": "addons"', '"id": "history",\n            "section": "addons"', "`history` is not a dropdown row"),
+    ("a settings section comes back", BJ, '"id": "addons",\n            "label": "Page Tools"\n          },', '"id": "addons",\n            "label": "Page Tools"\n          },\n          {"id": "settings", "label": "Settings"},', "page-tools tabs are Actions"),
     ("a page row leaves the dropdown", BJ, '"id": "view_source",\n            "section": "addons"', '"id": "view_source_gone",\n            "section": "addons"', "`view_source` is in the dropdown"),
     ("a global row loses its Configs page", BJ, '"id": "clear_data",\n            "label": "Clear browsing data…",\n            "page": "browsing"', '"id": "clear_data",\n            "label": "Clear browsing data…",\n            "page": "nowhere"', "Configs row `clear_data`"),
     ("trackers stop being blocked", FRAG, "override fun shouldInterceptRequest", "override fun shouldInterceptRequestGone", "Block trackers is wired"),

@@ -2,6 +2,7 @@ package com.diegonmarcos.cloudbrowser
 
 import com.diegonmarcos.superapp.browser.BrowserConfig
 import com.diegonmarcos.superapp.browser.ConsoleLog
+import com.diegonmarcos.superapp.browser.GraphicsStats
 import com.diegonmarcos.superapp.browser.LineSelection
 import com.diegonmarcos.superapp.browser.NetLog
 import com.diegonmarcos.superapp.browser.RefreshMode
@@ -24,19 +25,50 @@ class BrowserDevToolsTest {
     @Test fun `#1401 no icon rows - the former icon actions are Page Actions and Page Tools rows`() {
         assertTrue(cfg.menu.iconRows(facts).isEmpty())
         val sec = { id: String -> cfg.menu.item(id)!!.section }
-        listOf("back", "forward", "reload", "bookmark", "download_page", "desktop", "hard_refresh", "light_refresh").forEach { assertEquals(it, "page_actions", sec(it)) }
-        assertEquals("addons", sec("translate"))
+        listOf("back", "forward", "reload", "bookmark", "copy_url", "open_external", "add_to_home", "hard_refresh", "light_refresh").forEach { assertEquals(it, "page_actions", sec(it)) }
+        listOf("find", "share", "desktop", "print", "download_page", "save_page", "save_site", "fill_profile", "translate").forEach { assertEquals(it, "addons", sec(it)) }
+        assertEquals(listOf("Actions", "Page Tools", "Site Data", "Site Perms", "Dev Tools"), cfg.menu.sections.map { it.label })
+    }
+
+    @Test fun `Page Tools rows are grouped under categories`() {
+        val cats = cfg.menu.items.filter { it.section == "addons" && it.category != null }.groupBy { it.category }.mapValues { e -> e.value.map { it.id } }
+        assertEquals(listOf("Reading", "Save & Export", "Find & Share", "View mode", "Autofill"), cats.keys.toList())
+        assertEquals(listOf("reader", "translate", "zoom", "summarize_topics", "view_source"), cats["Reading"])
+        assertEquals(listOf("print", "download_page", "save_page", "save_site"), cats["Save & Export"])
+        assertEquals(listOf("find", "share"), cats["Find & Share"])
+        assertEquals(listOf("desktop"), cats["View mode"])
+        assertEquals(listOf("fill_profile"), cats["Autofill"])
+        assertEquals(null, cfg.menu.item("back")!!.category)
     }
 
     @Test fun `dev tools is the last section holding the debugger rows and the JS toggle, view source is a Page Tool`() {
         val ids = cfg.menu.sections.map { it.id }
-        assertEquals("DevTools", cfg.menu.sections.first { it.id == "devtools" }.label)
+        assertEquals("Dev Tools", cfg.menu.sections.first { it.id == "devtools" }.label)
         assertEquals("devtools", ids.last())
         val dev = cfg.menu.listSections(facts).first { it.first.id == "devtools" }.second.map { it.item.id }
-        assertEquals(listOf("dev_console", "dev_network", "dev_elements", "dev_storage", "dev_remote_debug", "shield_js"), dev)
+        assertEquals(listOf("dev_console", "dev_network", "dev_elements", "dev_storage", "dev_graphics", "dev_remote_debug", "shield_js"), dev)
         assertEquals("addons", cfg.menu.item("view_source")!!.section)
         assertTrue("no debugger row is reachable over the loopback API", dev.none { cfg.menu.item(it)!!.api })
         assertTrue("icon sections are not list sections", cfg.menu.listSections(facts).none { it.first.id.startsWith("icons") })
+    }
+
+    @Test fun `graphics stats parse the injected sampler's answer and degrade to n-a`() {
+        val ok = GraphicsStats.parse("""{"v":{"fps":59.6,"ms":16.8,"draws":42,"tris":12000,"gpu":"Adreno (TM) 740","webgl":true}}""")
+        assertTrue(ok.available); assertEquals(59.6, ok.fps!!, 0.001); assertEquals(42L, ok.draws); assertEquals(12000L, ok.tris)
+        assertEquals("Adreno (TM) 740", ok.gpu); assertEquals(null, ok.note)
+        assertEquals("59.6", ok.rows()[0].second); assertEquals("16.8 ms", ok.rows()[1].second)
+        val noGl = GraphicsStats.parse("""{"v":{"fps":30,"ms":33,"draws":0,"tris":0,"gpu":null,"webgl":false}}""")
+        assertEquals(listOf("30.0", "33.0 ms", "n/a", "n/a", "n/a"), noGl.rows().map { it.second })
+        assertTrue(noGl.note!!.contains("no WebGL"))
+        val warm = GraphicsStats.parse("""{"v":{"fps":0,"ms":0,"draws":0,"tris":0,"gpu":"x","webgl":true}}""")
+        assertEquals("n/a", warm.rows()[0].second); assertTrue(warm.note!!.contains("sampling"))
+        listOf(null, "", "not json", """{"v":null}""").forEach {
+            val g = GraphicsStats.parse(it)
+            assertFalse(g.available); assertEquals(GraphicsStats.BLOCKED, g.note); assertTrue(g.rows().all { r -> r.second == "n/a" })
+        }
+        assertEquals("script error: boom", GraphicsStats.parse("""{"error":"boom"}""").note)
+        assertTrue(GraphicsStats.JS.contains("requestAnimationFrame") && GraphicsStats.JS.contains("WEBGL_debug_renderer_info") && GraphicsStats.JS.contains("drawElements"))
+        assertTrue(ok.asText().contains("GPU: Adreno"))
     }
 
     @Test fun `hard refresh clears cache cookies storage and workers, light only cache and workers`() {

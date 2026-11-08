@@ -6,7 +6,7 @@
 #
 #   T1 the app bar's ⋮ opens the app's Configs (MainActivity onConfigs), never the page menu;
 #   T2 the tab row's icon (browser:tabrow:tools) opens the Browsing Tools sheet, and the page bar has no ⋮ of its own;
-#   T3 the sheet's sections are, in order: Page Actions, Page Tools, Site Data, Site Perms, DevTools; Site Perms is one row, "Perms";
+#   T3 the sheet's sections are, in order: Actions, Page Tools, Site Data, Site Perms, Dev Tools; Site Perms is one row, "Perms";
 #   T4 every action the sheet held before #1401 is still a row of it (none lost);
 #   T5 the Perms list: the most-used first, in the owner's order, then all the rest; the list is complete;
 #      each permission is either enforced (webview + enforced_by) or declared not supported in WebView with a reason;
@@ -51,7 +51,7 @@ def check(root, ok):
     ok('BarButton("⋮")' not in frag, "T2 the page bar has no ⋮ of its own")
     m = b["menu"]
     secs = [(s["id"], s["label"]) for s in m["sections"]]
-    ok([l for _, l in secs] == ["Page Actions", "Page Tools", "Site Data", "Site Perms", "DevTools"], "T3 the five sections, in order", str(secs))
+    ok([l for _, l in secs] == ["Actions", "Page Tools", "Site Data", "Site Perms", "Dev Tools"], "T3 the five sections, in order", str(secs))
     perms_rows = [i for i in m["items"] if i["section"] == "site_perms"]
     ok([(i["id"], i["label"]) for i in perms_rows] == [("site_settings", "Perms")], "T3 Site Perms is the single row Perms")
     ok('"site_settings" -> { showSiteSettings(' in frag, "T3 Perms opens the Perms page")

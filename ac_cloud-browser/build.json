@@ -787,12 +787,12 @@
       },
       "_doc_reader_css": "#802 the stylesheet reader mode renders the extracted article with (assets/browser/reader.js does the extraction).",
       "reader_css": "body{max-width:42em;margin:auto;padding:1em;font:18px/1.6 Georgia,serif;background:#111;color:#eee}img,video{max-width:100%;height:auto}a{color:#a78bfa}pre{white-space:pre-wrap}",
-      "_doc_menu": "#802/#900/#1401 BROWSING TOOLS, declared: the sheet opened by the icon at the far right of the tab row (the app bar's ⋮ opens Configs). It holds ONLY what acts on the current page or domain, in five titled sections in this order: Page Actions (navigation, reload/refresh, bookmark, find, share, copy URL, open in another app, desktop site, home screen, print, download/save offline, autofill), Page Tools (reader, translate, zoom, summarise, view source; add-on page rows join here), Site Data (cookies and storage of this site, clear, autocomplete, trackers, images), Site Perms (one row, Perms: every permission a site can request), DevTools (console, network, elements, storage, remote debugging, JavaScript for this site). Global things live on the Configs pages.",
+      "_doc_menu": "#802/#900/#1401 BROWSING TOOLS, declared: the page-tools dropdown: the sheet opened by the icon at the far right of the tab row (the app bar's ⋮ opens Configs). It holds ONLY what acts on the current page or domain, as five TABS in this order: Actions (navigation, reload/refresh, bookmark, copy URL, open in another app, home screen, pin/download site), Page Tools (grouped by `category`: Reading, Save & Export, Find & Share, View mode, Autofill; add-on page rows join here), Site Data (cookies and storage of this site, clear, autocomplete, trackers, images), Site Perms (one row, Perms: every permission a site can request), Dev Tools (console, network, elements, storage, graphics stats, remote debugging, JavaScript for this site). Global things live on the Configs pages.",
       "menu": {
         "sections": [
           {
             "id": "page_actions",
-            "label": "Page Actions"
+            "label": "Actions"
           },
           {
             "id": "addons",
@@ -808,7 +808,7 @@
           },
           {
             "id": "devtools",
-            "label": "DevTools"
+            "label": "Dev Tools"
           }
         ],
         "requires_why": {
@@ -878,8 +878,97 @@
             ]
           },
           {
+            "id": "reader",
+            "section": "addons",
+            "category": "Reading",
+            "label": "Reader mode",
+            "kind": "toggle",
+            "checked": "reader_on",
+            "requires": [
+              "page"
+            ],
+            "api": true
+          },
+          {
+            "id": "translate",
+            "section": "addons",
+            "category": "Reading",
+            "label": "Translate page",
+            "requires": [
+              "page",
+              "text_tools"
+            ],
+            "kind": "toggle",
+            "checked": "translated"
+          },
+          {
+            "id": "zoom",
+            "section": "addons",
+            "category": "Reading",
+            "label": "Zoom (this site)…",
+            "requires": [
+              "page"
+            ],
+            "api": true
+          },
+          {
+            "id": "summarize_topics",
+            "section": "addons",
+            "category": "Reading",
+            "label": "Summarise page by topics",
+            "requires": [
+              "page"
+            ]
+          },
+          {
+            "id": "view_source",
+            "section": "addons",
+            "category": "Reading",
+            "label": "View source",
+            "requires": [
+              "page"
+            ]
+          },
+          {
+            "id": "print",
+            "section": "addons",
+            "category": "Save & Export",
+            "label": "Print / Save as PDF",
+            "requires": [
+              "page"
+            ]
+          },
+          {
+            "id": "download_page",
+            "section": "addons",
+            "category": "Save & Export",
+            "label": "Download this page",
+            "requires": [
+              "page"
+            ]
+          },
+          {
+            "id": "save_page",
+            "section": "addons",
+            "category": "Save & Export",
+            "label": "Save this page offline",
+            "requires": [
+              "page"
+            ]
+          },
+          {
+            "id": "save_site",
+            "section": "addons",
+            "category": "Save & Export",
+            "label": "Save this site offline",
+            "requires": [
+              "page"
+            ]
+          },
+          {
             "id": "find",
-            "section": "page_actions",
+            "section": "addons",
+            "category": "Find & Share",
             "label": "Find in page",
             "requires": [
               "page"
@@ -888,10 +977,30 @@
           },
           {
             "id": "share",
-            "section": "page_actions",
+            "section": "addons",
+            "category": "Find & Share",
             "label": "Share…",
             "requires": [
               "page"
+            ]
+          },
+          {
+            "id": "desktop",
+            "section": "addons",
+            "category": "View mode",
+            "label": "Desktop site",
+            "kind": "toggle",
+            "checked": "desktop_mode",
+            "api": true
+          },
+          {
+            "id": "fill_profile",
+            "section": "addons",
+            "category": "Autofill",
+            "label": "Autofill this page…",
+            "requires": [
+              "page",
+              "profile_present"
             ]
           },
           {
@@ -911,49 +1020,9 @@
             ]
           },
           {
-            "id": "desktop",
-            "section": "page_actions",
-            "label": "Desktop site",
-            "kind": "toggle",
-            "checked": "desktop_mode",
-            "api": true
-          },
-          {
             "id": "add_to_home",
             "section": "page_actions",
             "label": "Add to home screen",
-            "requires": [
-              "page"
-            ]
-          },
-          {
-            "id": "print",
-            "section": "page_actions",
-            "label": "Print / Save as PDF",
-            "requires": [
-              "page"
-            ]
-          },
-          {
-            "id": "download_page",
-            "section": "page_actions",
-            "label": "Download this page",
-            "requires": [
-              "page"
-            ]
-          },
-          {
-            "id": "save_page",
-            "section": "page_actions",
-            "label": "Save this page offline",
-            "requires": [
-              "page"
-            ]
-          },
-          {
-            "id": "save_site",
-            "section": "page_actions",
-            "label": "Save this site offline",
             "requires": [
               "page"
             ]
@@ -972,62 +1041,6 @@
             "id": "download_site",
             "section": "page_actions",
             "label": "Download full site (offline cache)",
-            "requires": [
-              "page"
-            ]
-          },
-          {
-            "id": "fill_profile",
-            "section": "page_actions",
-            "label": "Autofill this page…",
-            "requires": [
-              "page",
-              "profile_present"
-            ]
-          },
-          {
-            "id": "reader",
-            "section": "addons",
-            "label": "Reader mode",
-            "kind": "toggle",
-            "checked": "reader_on",
-            "requires": [
-              "page"
-            ],
-            "api": true
-          },
-          {
-            "id": "translate",
-            "section": "addons",
-            "label": "Translate page",
-            "requires": [
-              "page",
-              "text_tools"
-            ],
-            "kind": "toggle",
-            "checked": "translated"
-          },
-          {
-            "id": "zoom",
-            "section": "addons",
-            "label": "Zoom (this site)…",
-            "requires": [
-              "page"
-            ],
-            "api": true
-          },
-          {
-            "id": "summarize_topics",
-            "section": "addons",
-            "label": "Summarise page by topics",
-            "requires": [
-              "page"
-            ]
-          },
-          {
-            "id": "view_source",
-            "section": "addons",
-            "label": "View source",
             "requires": [
               "page"
             ]
@@ -1118,6 +1131,15 @@
             ]
           },
           {
+            "id": "dev_graphics",
+            "section": "devtools",
+            "label": "Graphics: FPS, draw calls, GPU (debugger)",
+            "requires": [
+              "page"
+            ],
+            "_doc": "Opens Dev Tools on its Graphics tab: injected JS samples FPS, frame time, WebGL draw calls, triangles and the GPU name of the current page; n/a with a note when the page blocks injection or has no WebGL."
+          },
+          {
             "id": "dev_remote_debug",
             "section": "devtools",
             "label": "Remote debugging (chrome://inspect)",
@@ -1134,7 +1156,7 @@
               "page"
             ]
           }
-        ]
+]
       },
       "_doc_configs": "#900 CONFIGS, declared. Each Configs page (ui.sections[configs].pages = the top tabs = settings_sections) draws the settings whose `section` is that page, then its `rows` (global actions that used to sit in the page menu; same runAction branches), then its `native` blocks (the Autocomplete, Passwords, Cards, Vault and About sections libs:browser draws itself). An add-on menu entry with scope:global and page:<id> joins that page's rows. The page dropdown holds none of these (test-browser-page-menu.sh).",
       "configs": {

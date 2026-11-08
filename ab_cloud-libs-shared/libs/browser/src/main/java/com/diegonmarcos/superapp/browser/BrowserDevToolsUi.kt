@@ -70,6 +70,12 @@ class DevToolsBridge(val webView: () -> WebView?, val copy: (label: String, text
         }
     }
 
+    /** Graphics tab: inject [GraphicsStats.JS] (idempotent) and parse what it sampled; blocked / no page degrades to n/a. */
+    fun loadGraphics(done: (GraphicsStats) -> Unit) {
+        val wv = webView() ?: return done(GraphicsStats.parse(null))
+        BrowserJs.await(wv, GraphicsStats.JS) { done(GraphicsStats.parse(it)) }
+    }
+
     fun clear(what: String, done: () -> Unit) {
         val wv = webView() ?: return done()
         when (what) {
@@ -140,7 +146,7 @@ fun BrowserSourceViewer(title: String, text: String, onCopy: (String) -> Unit, o
     }
 }
 
-/** Console + JS REPL, Network and Storage for the current page. [startTab]: 0 console, 1 network, 2 storage. */
+/** Console + JS REPL, Network, Storage and Graphics for the current page. [startTab]: 0 console, 1 network, 2 storage, 3 graphics. */
 @Composable
 fun BrowserDevToolsScreen(startTab: Int, bridge: DevToolsBridge, onClose: () -> Unit) {
     val p = LocalKitPalette.current
@@ -161,7 +167,7 @@ fun BrowserDevToolsScreen(startTab: Int, bridge: DevToolsBridge, onClose: () -> 
     }
     Column(Modifier.fillMaxSize().background(p.surface).padding(8.dp).testTag("browser:devtools")) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-            listOf("Console", "Network", "Storage").forEachIndexed { i, t ->
+            listOf("Console", "Network", "Storage", "Graphics").forEachIndexed { i, t ->
                 FilterChip(tab == i, { tab = i }, { Text(t) }, modifier = Modifier.testTag("browser:devtools:tab:$i"))
             }
             Text("", Modifier.weight(1f))
@@ -170,7 +176,8 @@ fun BrowserDevToolsScreen(startTab: Int, bridge: DevToolsBridge, onClose: () -> 
         when (tab) {
             0 -> ConsoleTab(tick, bridge)
             1 -> NetworkTab(tick, bridge)
-            else -> StorageTab(bridge)
+            2 -> StorageTab(bridge)
+            else -> GraphicsTab(bridge)
         }
     }
 }
@@ -255,6 +262,38 @@ private fun StorageTab(bridge: DevToolsBridge) {
             SelectionContainer {
                 Text(if (rows.isEmpty()) "(none)" else rows.joinToString("\n") { it.take(300) }, color = p.textSecondary, fontFamily = MONO, fontSize = 11.sp)
             }
+        }
+    }
+}
+
+/** Graphics HUD: FPS, frame time, WebGL draw calls / triangles per frame and the GPU of the current page, sampled by injected JS. */
+@Composable
+private fun GraphicsTab(bridge: DevToolsBridge) {
+    val p = LocalKitPalette.current
+    var stats by remember { mutableStateOf<GraphicsStats?>(null) }
+    var live by remember { mutableStateOf(true) }
+    var reload by remember { mutableIntStateOf(0) }
+    LaunchedEffect(reload, live) {
+        bridge.loadGraphics { stats = it }
+        if (live) { kotlinx.coroutines.delay(1000); reload++ }
+    }
+    val s = stats
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).testTag("browser:devtools:graphics")) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+            FilterChip(live, { live = !live }, { Text("Live") }, modifier = Modifier.testTag("browser:devtools:graphics:live"))
+            TextButton({ reload++ }) { Text("Sample") }
+            TextButton({ s?.let { bridge.copy("graphics", it.asText()) } }) { Text("Copy") }
+        }
+        if (s == null) Text("Injecting the sampler…", color = p.textSecondary)
+        else {
+            s.rows().forEach { (k, v) ->
+                Row(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                    Text(k, color = p.textSecondary, modifier = Modifier.weight(1f))
+                    Text(v, color = if (v == GraphicsStats.NA) p.textSecondary else p.textPrimary, fontFamily = MONO,
+                        modifier = Modifier.testTag("browser:devtools:graphics:$k"))
+                }
+            }
+            s.note?.let { Text(it, color = p.warn, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(top = 8.dp)) }
         }
     }
 }
