@@ -209,7 +209,8 @@ else:
             owned.update(p for p in m.group(2).split("/") if p)
         for key in ("ref", "title", "subtitle", "link"):
             owned.update(re.findall(r"\{([A-Za-z0-9_.]+)\}", f.get(key, "")))
-    owned = {w for w in owned if len(w) > 2}
+    # PR feed words (open/state/title) are the pulls API's own keys, exempt from the hardcode guard.
+    owned = {w for w in owned if len(w) > 2 and w not in ('open', 'state', 'title')}
     # SourceResolver reads a non-2xx body's own error keys (GitHub `message`,
     # the git-proxy's {error, code}); that is the error parser, not a feed
     # template, so those three words are exempt in that one file only.

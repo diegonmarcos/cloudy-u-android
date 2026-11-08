@@ -22,6 +22,22 @@
       "link": "{html_url}"
     },
     {
+      "id": "prs",
+      "label": "PRs",
+      "blurb": "The repository's pull requests, most recently updated first. Open ones are green, closed neutral (a merged PR reads as closed). Read-only: a row opens the PR on GitHub.",
+      "url": "https://api.github.com/repos/diegonmarcos/cloudy-u-android/pulls?state=all&sort=updated&direction=desc&per_page=50",
+      "proxy": null,
+      "ref": "#{number}",
+      "title": "{title}",
+      "subtitle": "{state}  ·  {user.login}  ·  {updated_at}",
+      "link": "{html_url}",
+      "state": "state",
+      "ok": [
+        "open"
+      ],
+      "bad": []
+    },
+    {
       "id": "cicd",
       "label": "CI · CD",
       "blurb": "The CI-CD run feed, newest first. A run still going is drawn neutral, not red — unfinished is not failed. A row opens the run's own log page.",

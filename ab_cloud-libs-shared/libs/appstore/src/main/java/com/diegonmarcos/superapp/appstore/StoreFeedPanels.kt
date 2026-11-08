@@ -67,6 +67,7 @@ object StoreFeedPanels {
     fun summary(feed: FeedViewer.Feed, entries: List<FeedViewer.Entry>): String {
         if (entries.isEmpty()) return "0 entries"
         val t = tally(feed, entries)
+        if ("open" in feed.ok) return "${entries.size} PRs · ${t.ok} open · ${t.other} closed"
         return if (feed.state != null) "${entries.size} runs · ${t.ok} passed · ${t.bad} failed · ${t.other} running or other"
         else {
             val authors = entries.mapNotNull { it.subtitle.substringBefore("  ·  ").takeIf { a -> a.isNotBlank() } }.distinct().size

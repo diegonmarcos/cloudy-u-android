@@ -11,7 +11,7 @@ class StoreFeedPanelsTest {
     private val feeds = FeedViewer.parse(JSONObject(File("src/main/assets/appstore-feeds.json").readText()))
 
     @Test fun thePanelsAreTheDeclaredCommitsAndCicdFeedsInOrder() {
-        assertEquals(listOf("commits", "cicd"), feeds.map { it.id })
+        assertEquals(listOf("commits", "prs", "cicd"), feeds.map { it.id })
         assertEquals(listOf("Commits"), feeds.filter { it.id == "commits" }.map { it.label })
         assertTrue(feeds.first { it.id == "cicd" }.state != null)   // runs carry a state, commits do not
     }
@@ -22,6 +22,12 @@ class StoreFeedPanelsTest {
         val t = StoreFeedPanels.tally(f, e)
         assertEquals(2, t.ok); assertEquals(1, t.bad); assertEquals(2, t.other)
         assertEquals("5 runs · 2 passed · 1 failed · 2 running or other", StoreFeedPanels.summary(f, e))
+    }
+
+    @Test fun prsSummaryCountsOpenAndClosed() {
+        val f = feeds.first { it.id == "prs" }
+        val e = listOf("open", "closed", "closed").mapIndexed { i, s -> FeedViewer.Entry("#$i", "t$i", "$s  ·  a  ·  d", "", s) }
+        assertEquals("3 PRs · 1 open · 2 closed", StoreFeedPanels.summary(f, e))
     }
 
     @Test fun commitsSummaryNamesTheAuthorsAndTheLatestSha() {

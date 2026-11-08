@@ -166,7 +166,7 @@ import json, os, sys
 ui = json.load(open(sys.argv[1], encoding='utf-8')).get('ui') or {}
 secs = {s.get('id'): s for s in ui.get('sections') or []}
 feeds = json.load(open(sys.argv[2]))['feeds'] if os.path.exists(sys.argv[2]) else None
-assert feeds is None or [f['id'] for f in feeds][:2] == ['commits', 'cicd'], 'the Cloud page panels need the commits + cicd feeds'
+assert feeds is None or [f['id'] for f in feeds][:3] == ['commits', 'prs', 'cicd'], 'the Cloud page panels need the commits + prs + cicd feeds'
 pg = lambda i: [p.get('id') for p in secs.get(i, {}).get('pages') or []]
 ok = (ui.get('bottom_nav') == ['cloud', 'phone', 'search', 'torrent', 'access'] and 'feed' not in secs and 'torrent' in secs
       and set(ui['bottom_nav']) <= set(secs) and 'settings' in secs and 'mesh' not in secs and 'perms' not in secs
