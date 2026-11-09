@@ -391,7 +391,7 @@
         "catalog_url": "https://openrouter.ai/api/v1/models",
         "needs_token": true,
         "default_model": "google/gemini-2.5-flash",
-        "pricing_as_of": "2026-11-08",
+        "pricing_as_of": "2026-11-09",
         "models": [
           {
             "id": "meta-llama/llama-3.1-8b-instruct",
@@ -403,8 +403,8 @@
               "bf16"
             ],
             "trained_for": [],
-            "prompt": 0.05,
-            "completion": 0.08,
+            "prompt": 0.02,
+            "completion": 0.04,
             "note": "Cheapest and smallest row; translation-ranked, best for short fixes."
           },
           {
@@ -416,8 +416,8 @@
               "fp8",
               "bf16"
             ],
-            "prompt": 0.075,
-            "completion": 0.2,
+            "prompt": 0.1,
+            "completion": 0.3,
             "note": "24B open weights, no category ranking; cheap European-language rewriting."
           },
           {
@@ -436,8 +436,8 @@
               "roleplay",
               "translation"
             ],
-            "prompt": 0.0675,
-            "completion": 0.225,
+            "prompt": 0.09,
+            "completion": 0.3,
             "note": "Sparse 26B (4B active): translation, academia and legal at a small-model price."
           },
           {
@@ -450,7 +450,7 @@
             ],
             "trained_for": ["marketing/seo"],
             "prompt": 0.08,
-            "completion": 0.35,
+            "completion": 0.45,
             "note": "Ranked for marketing/SEO only; light and predictable on short rewrites."
           },
           {
