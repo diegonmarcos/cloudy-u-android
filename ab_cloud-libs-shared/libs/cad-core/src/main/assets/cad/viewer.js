@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { OrbitControls } from '../space/OrbitControls.js';
 const post = (o) => { try { window.CadHost && CadHost.post(JSON.stringify(o)); } catch (e) {} };
 const status = (t) => { document.getElementById('s').textContent = t; };
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
 renderer.setPixelRatio(1); // software GL on emulators and low-end phones: never more than one sample per pixel
 document.body.appendChild(renderer.domElement);
 const scene = new THREE.Scene(); scene.background = new THREE.Color(0x0e1116);
@@ -21,8 +21,10 @@ function draw() { queued = false; controls.update(); renderer.render(scene, came
 function render() { if (!queued) { queued = true; requestAnimationFrame(draw); } }
 controls.addEventListener('change', render);
 let current = null;
-function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / Math.max(h, 1); camera.updateProjectionMatrix(); render(); }
-addEventListener('resize', resize); resize();
+function resize() { const w = innerWidth || document.documentElement.clientWidth || 1, h = innerHeight || document.documentElement.clientHeight || 1; renderer.setSize(w, h, false); camera.aspect = w / Math.max(h, 1); camera.updateProjectionMatrix(); render(); }
+addEventListener('resize', resize);
+// #1560 the Compose WebView lays out after the page loads, and a layout change there does not always fire a window 'resize'; observe the body so a 0-sized first paint corrects itself instead of staying a black canvas.
+if (window.ResizeObserver) new ResizeObserver(resize).observe(document.body); resize();
 function frame(obj) {
   const box = new THREE.Box3().setFromObject(obj); const size = box.getSize(new THREE.Vector3()); const c = box.getCenter(new THREE.Vector3());
   const r = Math.max(size.x, size.y, size.z) || 1;
