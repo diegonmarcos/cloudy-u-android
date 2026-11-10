@@ -259,7 +259,7 @@ private fun PanelBody(state: AggregatorState, index: Int, panel: Sections.StackP
         // The two halves of the retired Push tab (#580): views into the one notification centre, drawn by BadgePanes
         // from ui.notification_center — no second producer.
         "notification_badges" -> BadgeCards()
-        "notification_badge_configs" -> BadgePane(state) { redraw -> BadgePanes.configs(redraw) }
+        "notification_badge_configs" -> BadgePane(state) { redraw -> BadgePanes.badges(redraw) }
         "feed" -> FeedBody(panel, onOpen)
         "stats" -> { StatsBody(panel); InboxNotifications(state, panel, onOpen) }
         "class_inbox" -> ClassInboxBody(state, panel, onOpen)
