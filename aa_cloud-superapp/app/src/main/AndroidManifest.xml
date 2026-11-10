@@ -164,6 +164,14 @@
          declares. Signature-level: granted because both APKs carry the fleet key. -->
     <uses-permission android:name="com.diegonmarcos.clouddrive.permission.READ_AGENT_RESULTS" />
 
+    <!-- #1600 Privileged-channel and terminal integration permissions, surfaced on the
+         Perms page (catalogue ids shizuku / termux_run_command). Shizuku's API permission
+         lets the app use the Shizuku service as a privileged shell channel; Termux's
+         RUN_COMMAND lets the app drive the Termux terminal. Both are defined by their owner
+         apps, so they are inert (not-granted, no effect) until that app is installed. -->
+    <uses-permission android:name="moe.shizuku.manager.permission.API_V23" />
+    <uses-permission android:name="com.termux.permission.RUN_COMMAND" />
+
     <!-- READ_LOGS — Configs → Observability → Logcat, "All Apps" / "Select a App".
          Android hands an unprivileged app only its OWN log lines, which made
          the log viewer able to see everything except the app you are usually
