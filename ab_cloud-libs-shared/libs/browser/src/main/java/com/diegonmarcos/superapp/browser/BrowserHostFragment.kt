@@ -1429,14 +1429,23 @@ class BrowserHostFragment : Fragment() {
         permsNeeded(listOf(perm))
     }
 
-    /** Pin [url] to the launcher; it opens here (MainActivity takes VIEW intents). */
-    private fun addToHome(url: String, title: String): Boolean {
+    /**
+     * Pin [url] to the launcher; it opens here (MainActivity takes VIEW intents).
+     * #1604 the shortcut carries the page's real title and [favicon]; a page with no
+     * usable favicon falls back to this app's launcher icon so the pin never fails for want of an icon.
+     */
+    private fun addToHome(url: String, title: String, favicon: android.graphics.Bitmap? = null): Boolean {
         val ctx = requireContext()
         if (!androidx.core.content.pm.ShortcutManagerCompat.isRequestPinShortcutSupported(ctx)) return false
+        val label = title.ifBlank { url }
+        val icon = favicon?.takeIf { !it.isRecycled && it.width > 0 && it.height > 0 }
+            ?.let { androidx.core.graphics.drawable.IconCompat.createWithBitmap(it) }
+            ?: androidx.core.graphics.drawable.IconCompat.createWithResource(ctx, ctx.applicationInfo.icon)
         val info = androidx.core.content.pm.ShortcutInfoCompat.Builder(ctx, "page:" + sha256(url).take(16))
-            .setShortLabel(title.ifBlank { url }.take(24))
+            .setShortLabel(label.take(24))
+            .setLongLabel(label.take(64))
             .setIntent(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url)).setPackage(ctx.packageName))
-            .setIcon(androidx.core.graphics.drawable.IconCompat.createWithResource(ctx, ctx.applicationInfo.icon))
+            .setIcon(icon)
             .build()
         return androidx.core.content.pm.ShortcutManagerCompat.requestPinShortcut(ctx, info, null)
     }
@@ -2655,7 +2664,7 @@ class BrowserHostFragment : Fragment() {
                 done(ok().put("id", d.id).put("file", d.file).put("toast", "Downloading ${d.file}"))
             }
             "add_to_home" -> {
-                val asked = addToHome(url, wv?.title.orEmpty())
+                val asked = addToHome(url, wv?.title.orEmpty(), wv?.favicon)
                 done(ok().put("requested", asked).put("toast", if (asked) "" else "This launcher cannot pin shortcuts"))
             }
             "settings" -> { showSettings(); done(ok()) }
