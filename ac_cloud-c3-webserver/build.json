@@ -286,7 +286,8 @@
     { "tab": "api", "id": "ipc", "label": "Apps IPC", "route": "/__app__/api/sub/api-ipc" },
     { "tab": "pages", "id": "drive", "label": "Drive", "route": "/__app__/api/sub/pages-drive" },
     { "tab": "pages", "id": "terminals", "label": "Terminals", "route": "/__app__/api/sub/pages-terminals" },
-    { "tab": "pages", "id": "repos", "label": "Repos", "route": "/__app__/api/sub/pages-repos" }
+    { "tab": "pages", "id": "repos", "label": "Repos", "route": "/__app__/api/sub/pages-repos" },
+    { "tab": "pages", "id": "git", "label": "Git Sites", "route": "/__app__/api/sub/pages-git" }
   ],
   "served": {
     "_doc": "The Pages tab (server/src/served.rs): ONE list of served pages, the add form and the undeclared-pages checker. `probe` is what the checker connects to on 127.0.0.1 besides /proc/net/tcp (which Android 10+ may hide): the fleet's own range and a few well-known dev ports. A TCP port that answers there and is in none of: serving.endpoints, every `port` under runtime, ssh_doors ports, the Repos store, the adopted ports, is UNDECLARED. Nothing outside the probe is claimed.",
@@ -304,7 +305,14 @@
       { "id": "emulated", "label": "Emulated", "kind": "local", "root": "/storage/emulated/0" },
       { "id": "termux", "label": "Termux", "kind": "terminal", "endpoint": "termux" },
       { "id": "nix", "label": "Nix", "kind": "terminal", "endpoint": "nix" }
-    ]
+    ],
+    "direct": {
+      "_doc": "#1615 the Git Sites sub-page (Pages > Git Sites, server/src/sub.rs::page_git): repositories offered for ONE-CLICK direct serving over this webserver, through the same repos.rs host / fleet-webserver render path as any repo site (md + html rendered, every other file downloadable, loopback or mesh only, never public). Each entry names a `source` declared under `sources` above and a `repo` (path/folder relative to that source). The Termux home git dir lives in another app's uid/home and is NOT resolvable from this app's process, so the Termux git-area repos are DECLARED here (configurable) rather than scanned; serving a `termux`/`nix` source still needs that terminal's own my-webserver answering. Local (emulated) git repos are additionally auto-discovered on the page.",
+      "repos": [
+        { "label": "front-html", "source": "termux", "repo": "git-repos-master/front-html" },
+        { "label": "git-repos-master", "source": "termux", "repo": "git-repos-master" }
+      ]
+    }
   },
   "serving": {
     "_doc": "THE ONE name -> port map of the phone's local servers, and the private DNS that names them. It holds NO port number: each endpoint names its `owner` (an app dir) and `port_from`, the path inside that owner's build.json where the port is declared (ac_cloud-termux and ac_cloud-nix-on-droid: runtime.webserver.port; this app: runtime.port and runtime.diag.port), and every reader resolves the number from there at BUILD time -- server/build.rs (the Rust crate: it compiles the resolved copy in, so src-tauri/build.rs and server/src/serving.rs see an ordinary `port`) and ac_cloud-browser/app/build.gradle (baked into the browser, which fails the build when its pinned tabs drift or an endpoint spells a literal `port`). A port number written here would be a second copy of the owner's, so test/test-c3-webserver-ports.sh fails on one. .app is a real public TLD and termux.app is a real website: only these four exact names are answered, by this app's own DNS server on loopback (udp, never :53 -- Android cannot bind it without root and cannot point the system resolver at loopback), and only our own apps ask it; nothing is changed system-wide. DNS carries no ports, so the browser maps the port from the resolved block. test/test-localhost-ports.sh fails when a port or name repeats across apps.",

@@ -145,6 +145,68 @@ pub fn page_repos(_c: &Ctx, _r: &Req) -> Resp {
     }
 }
 
+// ── Pages > Git Sites (#1615) ────────────────────────────────────────────────────────────────────
+/// Serve repositories DIRECTLY over this webserver: the declared repos (front-html, git-repos-master and the other
+/// Termux git-area repos, build.json::repos.direct) one-click served through the repos host, plus the local git repos
+/// auto-discovered under the emulated source, opened straight on the drive's own fleet-webserver (md + html rendered).
+pub fn page_git(_c: &Ctx, _r: &Req) -> Resp {
+    let cfg = match repos::cfg() {
+        Ok(c) => c,
+        Err(e) => return err(500, &e),
+    };
+    let host = repos::host();
+    let entries = repos::load(&cfg.store).unwrap_or_default();
+    let b = apis::build();
+
+    // Declared repos: each is one-click served (add + serve) through the repos API, or, when an entry already serves it,
+    // opened and stopped from here. Matching is by (source, repo), so a repeated click reuses the running site's link.
+    let direct = b["repos"]["direct"]["repos"].as_array().cloned().unwrap_or_default();
+    let mut declared_rows = vec![];
+    for d in &direct {
+        let (label, source, repo) = (d["label"].as_str().unwrap_or(""), d["source"].as_str().unwrap_or(""), d["repo"].as_str().unwrap_or(""));
+        let src_label = cfg.source(source).map(|s| s.label.clone()).unwrap_or_else(|| source.to_string());
+        let existing = entries.iter().find(|e| e.source == source && e.repo == repo);
+        let running = existing.map(|e| host.running(&e.id)).unwrap_or(false);
+        let (links, actions) = match (existing, running) {
+            (Some(e), true) => (
+                vec![link(&repos::url(cfg, e), &repos::url(cfg, e))],
+                vec![json!({"label": "Stop", "post": "/__app__/api/repos", "body": {"op": "stop", "id": e.id}})],
+            ),
+            (Some(e), false) => (
+                vec![],
+                vec![json!({"label": "Serve & open", "post": "/__app__/api/repos", "body": {"op": "start", "id": e.id}})],
+            ),
+            (None, _) => (
+                vec![],
+                vec![json!({"label": "Serve & open", "post": "/__app__/api/repos", "body": {"op": "add", "label": label, "source": source, "repo": repo, "start": "", "exposure": "loopback", "serve": true}})],
+            ),
+        };
+        declared_rows.push(json!({
+            "head": label,
+            "badges": [src_label, repo, if running { "serving" } else { "stopped" }],
+            "lines": ["Served directly over this webserver (md & html rendered, other files downloadable), loopback only."],
+            "links": links,
+            "actions": actions
+        }));
+    }
+    let mut groups = vec![group(&format!("Declared repositories · {}", declared_rows.len()), declared_rows)];
+
+    // Local git repos under the emulated source, opened straight on the drive (its fleet-webserver renders md & html).
+    if let Some(d) = serving::get().endpoints.iter().find(|e| e.role == serving::Role::Drive) {
+        if let Some(src) = cfg.sources.iter().find(|s| matches!(s.kind, Kind::Local { .. })) {
+            let rows: Vec<Value> = repos::discover(cfg, &src.id)
+                .unwrap_or_default()
+                .iter()
+                .map(|rel| json!({"head": rel, "badges": ["git", src.label.clone()], "lines": [], "links": [link("open rendered", &format!("http://127.0.0.1:{}/{}/", d.port, rel))]}))
+                .collect();
+            groups.push(group(&format!("Local git repositories on {} · {}", src.label, rows.len()), rows));
+        }
+    }
+
+    let note = "Repositories served directly over this webserver through the same light-serve / fleet-webserver render path as any repo site: Markdown and HTML are rendered, every other file is downloadable. The Termux home git dir is in another app's storage and cannot be resolved from this app's process, so its repos are declared in build.json::repos.direct (configurable); serving a Termux/Nix source needs that terminal's own my-webserver answering. Local (emulated) git repos are auto-discovered above and open straight on the drive.";
+    ok(page("Git Sites", note, groups))
+}
+
 /// One Repos operation against a store and a host: add | remove | start | stop. Err = (status, message).
 pub fn repos_op(cfg: &Cfg, host: &Host, body: &Value) -> Result<Value, (u16, String)> {
     let t = |k: &str| body[k].as_str().unwrap_or("");

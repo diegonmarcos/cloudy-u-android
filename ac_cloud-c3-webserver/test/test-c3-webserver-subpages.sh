@@ -26,7 +26,7 @@ app, shell, build, repo = sys.argv[1:5]
 b = json.load(open(build))
 bad = []
 want = [("api", "mcp", "MCP"), ("api", "public", "Public Endpoints"), ("api", "mesh", "Mesh Endpoints"), ("api", "apps", "Apps Endpoints"), ("api", "ipc", "Apps IPC"),
-        ("pages", "drive", "Drive"), ("pages", "terminals", "Terminals"), ("pages", "repos", "Repos")]
+        ("pages", "drive", "Drive"), ("pages", "terminals", "Terminals"), ("pages", "repos", "Repos"), ("pages", "git", "Git Sites")]
 got = [(p["tab"], p["id"], p["label"]) for p in b.get("subpages", [])]
 if got != want:
     bad.append("S1 subpages are %r, want %r" % (got, want))
