@@ -20,7 +20,7 @@
 {"id":"weby-services-markets","label":"Weby Services & Markets","members":["search","news","shopping","kg-store"]},
 {"id":"agi","label":"AGI","members":["superintel","code","tools-small-llms","myterminal","nix-on-droid"]},
 {"id":"lnktree","label":"Lnktree","members":["aa_cloud-superapp","cg-omniverse","capital-stack-finterminal","hardtech-cad","hardtech-sim2real"]},
-{"id":"configs","label":"Configs","members":["store","c3"]},
+{"id":"configs","label":"Configs","members":["c3","store"]},
 {"id":"other","label":"Other","members":["morpheus","watchdog","watchtower","account","c3-webserver","termux"]}
 ],
 "apps":[

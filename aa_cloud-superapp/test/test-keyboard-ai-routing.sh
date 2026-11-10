@@ -24,7 +24,7 @@
 #       provider, an offline snapshot on every priced row, and, live, every curated id still listed by
 #       the OpenRouter catalogue (models / embeddings / images / videos) that prices its section
 #   T8  the AI Model Routing table: slugs non-empty and unique, every price renders
-#       #.### dollars per million -- the provider's own unit, unscaled, with a
+#       #.#### dollars per million -- the provider's own unit, unscaled, with a
 #       published per-token price pinned to the exact cell it must produce so no
 #       stray factor can creep back onto that path -- size sorts numerically
 #       and not lexically, a row missing size/quant/category renders the unknown
@@ -241,16 +241,17 @@ for pid, pv in d["providers"].items():
     assert all(n.strip() for n in names), f"{pid}: a model row has an empty short name"
     assert len(set(names)) == len(names), f"{pid}: duplicate short name {sorted(n for n in names if names.count(n) > 1)}"
 
-    # Every price cell is US dollars per million tokens at three decimals, printed UNCHANGED from
-    # the registry (AiRoutingScreen.usdPerMillionTokens). Three decimals is not a style choice: at
-    # two, 0.065 / 0.07 / 0.075 $/M all render "0.07" and the column hides a real price difference.
-    # A real cost that renders as zero would read as free, so that is checked too.
+    # Every price cell is US dollars per million tokens at four decimals, printed UNCHANGED from
+    # the registry (AiRoutingScreen.usdPerMillionTokens). Four decimals is not a style choice: at
+    # two, 0.065 / 0.07 / 0.075 $/M all render "0.07"; at three, 0.0399 and 0.04 $/M both render
+    # "0.040" — each time the column hides a real price difference. A real cost that renders as
+    # zero would read as free, so that is checked too.
     seen = {}
     for m in ms:
         for k in ("prompt", "completion"):
             if k not in m: continue
-            cell = "%.3f" % m[k]
-            assert re.fullmatch(r"\d+\.\d{3}", cell), f"{pid}/{m['id']}: {k} renders {cell!r}, not #.###"
+            cell = "%.4f" % m[k]
+            assert re.fullmatch(r"\d+\.\d{4}", cell), f"{pid}/{m['id']}: {k} renders {cell!r}, not #.####"
             assert m[k] == 0 or float(cell) > 0, \
                 f"{pid}/{m['id']}: {k}={m[k]} $/M renders as {cell} — the column is lying about a real cost"
             if cell in seen and seen[cell] != m[k]:
@@ -310,7 +311,7 @@ for old in ["google/gemini-2.5-flash", "anthropic/claude-haiku-4.5", "openai/gpt
             "google/gemma-3-27b-it", "z-ai/glm-5.3-flash", "moonshotai/kimi-k2-0905"]:
     assert old in [m["id"] for m in orm], f"{old} was removed — every phone that had it selected silently re-routes"
 EOF
-then ok "T8 table data: unique slugs, #.### dollars per million, numeric sort, unknown markers reachable, routing pinned"; else bad "T8 table data"; fi
+then ok "T8 table data: unique slugs, #.#### dollars per million, numeric sort, unknown markers reachable, routing pinned"; else bad "T8 table data"; fi
 
 # T8 rendering, read off the Kotlin (this runner cannot build, so the render is proved by its source)
 S="$J/settings/screens/AiRoutingScreen.kt"
@@ -356,10 +357,10 @@ def cell(per_token_string):
 # Chosen because these four are quoted per million in public price lists as $1, $5, $0.40 and
 # $0.05 -- so the rendered cell is checkable against the vendor's own page by eye.
 KNOWN = [
-    ("anthropic/claude-haiku-4.5",       "prompt",     "0.000001",   "1.000"),
-    ("anthropic/claude-haiku-4.5",       "completion", "0.000005",   "5.000"),
-    ("openai/gpt-4.1-mini",              "prompt",     "0.0000004",  "0.400"),
-    ("meta-llama/llama-3.1-8b-instruct", "prompt",     "0.00000005", "0.050"),
+    ("anthropic/claude-haiku-4.5",       "prompt",     "0.000001",   "1.0000"),
+    ("anthropic/claude-haiku-4.5",       "completion", "0.000005",   "5.0000"),
+    ("openai/gpt-4.1-mini",              "prompt",     "0.0000004",  "0.4000"),
+    ("meta-llama/llama-3.1-8b-instruct", "prompt",     "0.00000005", "0.0500"),
 ]
 wrong = [f"{i} {k}: catalog {v} $/token renders {cell(v)!r}, must be {want!r}"
          for i, k, v, want in KNOWN if cell(v) != want]
@@ -426,7 +427,7 @@ ms = [m for pv in reg["providers"].values() for m in pv["models"]]
 # and lands the author here, which is the point.
 longest = [
     ("colName",    max(m["name"] + (strings["ai_model_open_suffix"] if m.get("open") else "") for m in ms)),
-    ("colPrice",   max(("%.3f" % m[k] for m in ms for k in ("prompt", "completion") if k in m), key=len)),
+    ("colPrice",   max(("%.4f" % m[k] for m in ms for k in ("prompt", "completion") if k in m), key=len)),
     ("colPrice",   ""),
     ("colSize",    max((f'{m["params_b"]}B' for m in ms if "params_b" in m), key=len)),
     ("colQuant",   max(("/".join(m.get("quant", [])) for m in ms), key=len)),

@@ -122,12 +122,14 @@ fun createAiRoutingSettings(context: Context): List<Setting> = listOf(
  * This column briefly printed US cents instead — the same prices multiplied by a hundred — to stop
  * two prices rounding into one cell. The rounding problem was real but the unit change was the
  * wrong remedy for it: at two decimals $0.065, $0.07 and $0.075 per million all render "0.07", and
- * that is a want of PRECISION, not of unit. Three decimals separate every price in the registry,
- * and leave a price a further order of magnitude cheaper still visible rather than reading "0.000".
+ * that is a want of PRECISION, not of unit. Three decimals was not enough either — the registry now
+ * bakes $0.0399 and $0.04 per million for two different models, and both render "0.040". Four
+ * decimals separate every price in the registry, and leave a price a further order of magnitude
+ * cheaper still visible rather than reading "0.0000".
  */
-private const val PRICE_DECIMALS = 3
+private const val PRICE_DECIMALS = 4
 
-/** Always three decimals, always a dot: the column's shape is asserted, so it cannot follow the locale. */
+/** Always four decimals, always a dot: the column's shape is asserted, so it cannot follow the locale. */
 private fun usdPerMillionTokens(v: Double) = String.format(Locale.US, "%.${PRICE_DECIMALS}f", v)
 
 /**

@@ -26,7 +26,8 @@
 #       is a folder any more
 #   T4  a not-installed extapp tile draws the #249 placeholder, with strings in
 #       every locale, and the install snack is a string resource
-#   T5  the Configs group starts Account | Store (owner 2026-10-30: the SuperApp tile moved to lead Lnktree; #803 had put it here) —
+#   T5  the Configs row reads Quick Actions, Watchdog | Account, C3 | Store (#1611 owner order 2026-11:
+#       About dropped from the row, still reachable from the Configs grid) —
 #       and SuperApp is declared in exactly one tile group under ui.sections
 #   T6  (#803) the Search tile declares tint:false (its glyph is the mockup's gradient), the
 #       tile parser reads `tint`, and tileCell tints only a missing or tint:true tile
@@ -189,12 +190,12 @@ for d in locales:
               "phone_install_downloading", "phone_install_no_source"):
         check('name="%s"' % s in xml, "%s/strings.xml defines %s" % (d, s))
 
-print("== T5: the Configs row reads Account │ Store, Controls, Watchdog │ C3 │ About ==")
+print("== T5: the Configs row reads Quick Actions, Watchdog │ Account, C3 │ Store ==")
 configs = [g for g in groups(bj["ui"]["sections"], "Configs")]
 check(len(configs) == 1, "exactly one Configs tile group under ui.sections (found %d)" % len(configs))
 if configs:
     row = [t.get("label") for t in configs[0]["tiles"]]
-    check(row == ["Account", "|", "Store", "Quick Actions", "Watchdog", "|", "C3", "|", "About"], "Configs row = Account | Store, Controls, Watchdog | C3 | About (owner order 2026-10; #1545 Watchdog hub replaces Firewall) (got %s)" % row)
+    check(row == ["Quick Actions", "Watchdog", "|", "Account", "C3", "|", "Store"], "Configs row = Quick Actions, Watchdog | Account, C3 | Store (#1611 owner order 2026-11; About dropped from the row) (got %s)" % row)
 lnk = [g for g in groups(bj["ui"]["sections"], "Lnktree")]
 if lnk:
     sa = lnk[0]["tiles"][0] if lnk[0]["tiles"] else {}
