@@ -252,6 +252,8 @@
     <string name="clipboard_import_json">Import clipboard (JSON)</string>
     <string name="clipboard_import_json_summary">Replace the clipboard with the contents of .cloud-keyboard/clipboard</string>
     <string name="clipboard_import_replace_warning">This replaces all %d clips currently stored. Images are kept; text clips and pins are rewritten from the exported files.</string>
+    <string name="clipboard_clear_history_summary">Remove every un-pinned clip from the clipboard history</string>
+    <string name="clipboard_clear_history_warning">This removes all %d un-pinned clips from the clipboard history. Pinned clips are kept.</string>
     <string name="clipboard_needs_storage_access">Permissions needed: All files access. Grant it on the Permissions page, then tap again</string>
     <string name="clipboard_export_success">Exported %d clips</string>
     <string name="clipboard_import_success">Imported %d clips</string>

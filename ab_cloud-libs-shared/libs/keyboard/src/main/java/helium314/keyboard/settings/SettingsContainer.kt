@@ -98,4 +98,6 @@ object SettingsWithoutKey {
     const val CLIPBOARD_EXPORT_JSON = "clipboard_export_json"
     const val CLIPBOARD_IMPORT_JSON = "clipboard_import_json"
     const val CLIPBOARD_RENAME_LIST = "clipboard_rename_list"
+    // Clear-clipboard action: removed from the keyboard toolchain (owner), lives only here.
+    const val CLIPBOARD_CLEAR_HISTORY = "clipboard_clear_history"
 }

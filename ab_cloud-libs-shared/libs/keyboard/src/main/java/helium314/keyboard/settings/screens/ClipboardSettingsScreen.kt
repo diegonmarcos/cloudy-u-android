@@ -52,6 +52,7 @@ fun ClipboardSettingsScreen(onClickBack: () -> Unit) {
         if (clipboardHistoryEnabled) SettingsWithoutKey.CLIPBOARD_EXPORT_JSON else null,
         if (clipboardHistoryEnabled) SettingsWithoutKey.CLIPBOARD_IMPORT_JSON else null,
         if (clipboardHistoryEnabled) SettingsWithoutKey.CLIPBOARD_RENAME_LIST else null,
+        if (clipboardHistoryEnabled) SettingsWithoutKey.CLIPBOARD_CLEAR_HISTORY else null,
     )
     SearchSettingsScreen(
         onClickBack = onClickBack,
@@ -182,6 +183,25 @@ fun createClipboardSettings(context: Context) = listOf(
                 title = { Text(stringResource(R.string.clipboard_rename_list)) },
                 initialText = old,
                 textInputLabel = { Text(stringResource(R.string.clipboard_rename_list_hint)) },
+            )
+        }
+    },
+    // Clear the clipboard history. Owner: this action was removed from the keyboard toolchain
+    // (the clipboard toolbar's clear-clipboard key is gone), so Config is now its only home.
+    Setting(context, SettingsWithoutKey.CLIPBOARD_CLEAR_HISTORY, R.string.clear_clipboard, R.string.clipboard_clear_history_summary) {
+        val ctx = LocalContext.current
+        var confirm by remember { mutableStateOf(false) }
+        Preference(name = stringResource(R.string.clear_clipboard), onClick = { confirm = true })
+        if (confirm) {
+            val dao = ClipboardDao.getInstance(ctx)
+            ConfirmationDialog(
+                onDismissRequest = { confirm = false },
+                onConfirmed = {
+                    dao?.clearNonPinned()
+                    Toast.makeText(ctx, R.string.clear_clipboard, Toast.LENGTH_SHORT).show()
+                },
+                title = { Text(stringResource(R.string.clear_clipboard)) },
+                content = { Text(stringResource(R.string.clipboard_clear_history_warning, dao?.count() ?: 0)) },
             )
         }
     },

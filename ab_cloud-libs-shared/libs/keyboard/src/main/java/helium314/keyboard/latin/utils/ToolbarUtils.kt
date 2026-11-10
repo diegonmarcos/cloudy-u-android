@@ -217,7 +217,10 @@ val defaultToolbarPref by lazy {
         ANDROID_SETTINGS, VAULT,
         FULL_RIGHT, SELECT_ALL, WORD_RIGHT, WORD_LEFT, REDO, UNDO, SELECT_WORD, COPY, PASTE, PAGE_START, CUT, EMOJI, DEV_KEYBOARD,
     )
-    val others = entries.filterNot { it in default || it == CLOSE_HISTORY }
+    // CLEAR_CLIPBOARD is removed from the keyboard toolchain entirely (owner): clearing the
+    // clipboard history lives only in Config ▸ Clipboard, never as a toolbar key. Excluding it
+    // from `others` keeps it out of every toolbar's customiser, not merely off by default.
+    val others = entries.filterNot { it in default || it == CLOSE_HISTORY || it == CLEAR_CLIPBOARD }
     default.joinToString(Separators.ENTRY) { it.name + Separators.KV + true } + Separators.ENTRY +
             others.joinToString(Separators.ENTRY) { it.name + Separators.KV + false }
 }
@@ -227,14 +230,15 @@ val defaultToolbarPref by lazy {
 // first row is scrolled to. (Upstream calls this row "pinned keys".)
 val defaultSecondRowToolbarPref by lazy {
     val secondRow = listOf(SETTINGS)
-    val others = entries.filterNot { it in secondRow || it == CLOSE_HISTORY }
+    val others = entries.filterNot { it in secondRow || it == CLOSE_HISTORY || it == CLEAR_CLIPBOARD }
     secondRow.joinToString(Separators.ENTRY) { it.name + Separators.KV + true } + Separators.ENTRY +
             others.joinToString(Separators.ENTRY) { it.name + Separators.KV + false }
 }
 
 val defaultClipboardToolbarPref by lazy {
-    val default = listOf(CLEAR_CLIPBOARD, UP, DOWN, LEFT, RIGHT, UNDO, CUT, COPY, PASTE, SELECT_WORD, CLOSE_HISTORY)
-    val others = entries.filterNot { it in default }
+    // CLEAR_CLIPBOARD intentionally absent: the clear-clipboard action is Config-only now.
+    val default = listOf(UP, DOWN, LEFT, RIGHT, UNDO, CUT, COPY, PASTE, SELECT_WORD, CLOSE_HISTORY)
+    val others = entries.filterNot { it in default || it == CLEAR_CLIPBOARD }
     default.joinToString(Separators.ENTRY) { it.name + Separators.KV + true } + Separators.ENTRY +
             others.joinToString(Separators.ENTRY) { it.name + Separators.KV + false }
 }
@@ -349,6 +353,9 @@ private fun getEnabledToolbarKeys(prefs: SharedPreferences, pref: String, defaul
             }
         } else null
     }
+        // CLEAR_CLIPBOARD was removed from the toolchain (owner): never render it even if a phone
+        // upgraded from a build that had it stored enabled. Clearing is Config ▸ Clipboard only.
+        .filterNot { it == ToolbarKey.CLEAR_CLIPBOARD }
 }
 
 fun writeCustomKeyCodes(prefs: SharedPreferences, codes: EnumMap<ToolbarKey, Pair<Int?, Int?>>) {
