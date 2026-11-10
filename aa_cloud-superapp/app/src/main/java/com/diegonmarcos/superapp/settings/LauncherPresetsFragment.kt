@@ -166,10 +166,30 @@ class LauncherPresetsFragment : KitComposeFragment() {
                 // flip on the Controls tab does, minus the Activity recreate.
                 (activity as? ShellActivity)?.applyLauncherChrome()
                 applyShellLiveToggles(activity)
+                // #1591 a preset can trigger a shell action: run its command through the adb-shell broker.
+                if (mode.cmd.isNotBlank()) runPresetCmd(mode)
                 com.diegonmarcos.superapp.appstore.ConstellationWorker.start(ctx)
                 repaintAll()
             }
         }
+    }
+
+    /**
+     * #1591 A preset that declares a `cmd` runs it through the adb-shell broker
+     * (ShellBroker.execText — the same privileged channel X-Ray and Super Saving
+     * use), off the UI thread, and toasts whether the shell carried it. No engine
+     * of its own: the broker is the one door, a no-op when no channel is armed.
+     */
+    private fun runPresetCmd(mode: LauncherModes.Mode) {
+        val app = requireContext().applicationContext
+        val act = requireActivity()
+        Thread({
+            val out = com.diegonmarcos.superapp.shellbroker.ShellBroker.execText(app, mode.cmd)
+            com.diegonmarcos.superapp.bgpolicy.BgUi.toast(
+                act,
+                if (out != null) "${mode.label}: ran its action" else "${mode.label}: shell not ready",
+            )
+        }, "preset-cmd").start()
     }
 
     /** #1506 The Super Saving tile: ● while the mode is on; a tap turns it on (snapshot, then every step) or, when on, off (restore the snapshot). */

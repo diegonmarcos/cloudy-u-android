@@ -80,7 +80,9 @@ object AlertsNotifier {
                 .apply { if (key != null) setGroup(key) }
                 .setSortKey("%020d".format(Long.MAX_VALUE - a.ts))
                 .setOnlyAlertOnce(true)
-                .setSilent(silent(a.id, fresh, quiet))
+                // #1596 Focus Mode holds back non-essential interruptions: while Focus is on a
+                // non-urgent alert posts silently (no sound, no heads-up). An ERROR still rings.
+                .setSilent(silent(a.id, fresh, quiet) || focusSilences(ctx, a.severity))
                 .apply { contentIntent(ctx, a)?.let { setContentIntent(it) } }
                 .apply { BadgeModel.add(this, MeshDownAlert.actionsFor(ctx, a)) }
                 .setDeleteIntent(dismissIntent(ctx, a.id))
@@ -113,6 +115,10 @@ object AlertsNotifier {
 
     /** Only the [fresh] alert may make a sound, and not when Jev judged it not worth one ([quiet] is empty without an opinion). */
     internal fun silent(alertId: String, fresh: String?, quiet: Set<String>): Boolean = alertId != fresh || alertId in quiet
+
+    /** #1596 True when Focus Mode is on AND this alert is not urgent — the non-essential ones it quietens. */
+    internal fun focusSilences(ctx: Context, severity: String): Boolean =
+        severity != FleetAlerts.ERROR && com.diegonmarcos.superapp.settings.FocusMode.active(ctx)
 
     fun channelFor(severity: String) = if (severity == FleetAlerts.ERROR) CHANNEL_URGENT else CHANNEL_ID
 

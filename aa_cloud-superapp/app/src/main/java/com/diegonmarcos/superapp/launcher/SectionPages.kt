@@ -157,6 +157,9 @@ object SectionPages {
             com.diegonmarcos.superapp.configs.FoldersFragment.newInstance()
         sectionId == "config" && pageId == "perms" ->
             com.diegonmarcos.superapp.configs.PermissionsFragment.newInstance()
+        // #1596 Configs ▸ Focus Mode — the one Focus switch (FocusMode.active, read by AlertsNotifier to hold back non-urgent alerts).
+        sectionId == "config" && pageId == "focus" ->
+            com.diegonmarcos.superapp.configs.FocusModeFragment.newInstance()
         // Configs ▸ About ▸ Battery: the battery Source of Truth's full stats page (hidden; opened from
         // About's Battery section, the home-screen battery popup and the Battery badge).
         sectionId == "config" && pageId == "battery"        ->

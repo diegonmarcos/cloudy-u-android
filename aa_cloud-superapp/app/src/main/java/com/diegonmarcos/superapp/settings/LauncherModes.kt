@@ -29,6 +29,9 @@ object LauncherModes {
         val toggles: Map<String, Boolean>,
         /** #1506 Non-empty = the pick is handed to that engine (bgpolicy.SuperSavingRuntime.ENGINE) instead of writing [toggles]. */
         val engine: String = "",
+        /** #1591 Non-empty = picking this preset ALSO runs this shell command through the adb-shell broker
+         *  (ShellBroker.execText), after its toggles are applied. A quick action a preset can trigger. */
+        val cmd: String = "",
     )
 
     private fun declaration(): JSONArray =
@@ -43,7 +46,7 @@ object LauncherModes {
         (0 until arr.length()).map { i ->
             val o: JSONObject = arr.getJSONObject(i)
             val id = o.optString("id")
-            Mode(id, o.optString("label"), o.optString("subtitle"), toggles[id] ?: emptyMap(), o.optString("engine"))
+            Mode(id, o.optString("label"), o.optString("subtitle"), toggles[id] ?: emptyMap(), o.optString("engine"), o.optString("cmd"))
         }
     }.getOrDefault(emptyList())
 

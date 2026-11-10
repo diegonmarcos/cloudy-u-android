@@ -232,9 +232,9 @@ import json
 print(len(next(s for s in json.load(open('$BJ'))['ui']['sections']
                if s['id'] == 'config')['pages']))
 ")
-[ "$COUNT" = 52 ] \
-  && ok "52 config pages declared (2026-11 ADB Shell tabs: plus adb-status, adb-term, adb-perms and adb-all; 2026-11 Quick Actions tabs: plus panels-all and panels-battery; 2026-11 Configs restructure: plus xray-app, logcat-fleet and the launcher-sep-1 separator, minus agents-watchtower; earlier: #1553: plus folders) — the set T5 walks is the whole set (#1548: plus the Agents hub watchtower; #1545: plus the hub watchdog; X-Ray regroup: minus about, diagnostics, agents and its two tabs, plus xray and app-about; #1263: plus wifi and its five hidden tabs; #1221: plus bluetooth and its five hidden tabs; #1264: plus its Analyze and Locate tabs; #649: 22 minus launcher; #723: minus ai and its 5 tabs; #733: plus apps-mesh; #740: plus dns; plus firewall; plus the hidden About ▸ Battery; Agents regroup: minus the Network separator, plus agents and its two tabs; #ipc: plus ipc; Controls merge: plus panels, panels-ui and panels-tools; Apps Mesh strip: plus apps-mesh-members and identity)" \
-  || bad "$COUNT config pages, expected 52 — a page was added or DELETED, and T5 cannot report a page that is gone"
+[ "$COUNT" = 53 ] \
+  && ok "53 config pages declared (#1596: plus focus, the Focus Mode switch; 2026-11 ADB Shell tabs: plus adb-status, adb-term, adb-perms and adb-all; 2026-11 Quick Actions tabs: plus panels-all and panels-battery; 2026-11 Configs restructure: plus xray-app, logcat-fleet and the launcher-sep-1 separator, minus agents-watchtower; earlier: #1553: plus folders) — the set T5 walks is the whole set (#1548: plus the Agents hub watchtower; #1545: plus the hub watchdog; X-Ray regroup: minus about, diagnostics, agents and its two tabs, plus xray and app-about; #1263: plus wifi and its five hidden tabs; #1221: plus bluetooth and its five hidden tabs; #1264: plus its Analyze and Locate tabs; #649: 22 minus launcher; #723: minus ai and its 5 tabs; #733: plus apps-mesh; #740: plus dns; plus firewall; plus the hidden About ▸ Battery; Agents regroup: minus the Network separator, plus agents and its two tabs; #ipc: plus ipc; Controls merge: plus panels, panels-ui and panels-tools; Apps Mesh strip: plus apps-mesh-members and identity)" \
+  || bad "$COUNT config pages, expected 53 — a page was added or DELETED, and T5 cannot report a page that is gone"
 
 echo "== T6: ACTIONS IS UNTOUCHED =="
 # The owner said to keep it as it is. Three things make that true: the same three
@@ -331,7 +331,8 @@ BEFORE = {'bluetooth-analyze', 'bluetooth-locate', 'presets', 'controls', 'oneha
           'xray-app', 'logcat-fleet', 'launcher-sep-1',  # added on purpose (2026-11): Setup ▸ Launcher ▸ X-Ray App (app-only diagnosis), Setup ▸ Watchtower - Obsv ▸ Logcat Fleet, and the | after Notify
           'xray', 'app-about',  # added on purpose: Configs ▸ Observability ▸ X-Ray (the former About) and the new About
           'logcat',     # added on purpose: Configs ▸ Observability ▸ Logcat, moved out of About into its own tab before it
-          'battery'}    # added on purpose: Configs ▸ About ▸ Battery, the battery SoT's stats page (hidden, page:config/battery)
+          'battery',    # added on purpose: Configs ▸ About ▸ Battery, the battery SoT's stats page (hidden, page:config/battery)
+          'focus'}      # #1596 added on purpose: Configs ▸ Focus Mode, the one Focus switch (hidden, page:config/focus; FocusMode.active)
 sec     = next(s for s in json.load(open(sys.argv[1]))['ui']['sections']
                if s['id'] == 'config')
 pages   = sec['pages']

@@ -5011,7 +5011,7 @@
         "_doc_nav_mode": "#1548 the declared tree is Setup (Connect, Apps, Launcher, Network, Watchtower - Obsv), Agents (Watchdog - the hub page, hub_sections), Cloudy C3 (C3, Peer Control); Launcher reads Quick Actions, One-Hand, Folders, Notify | Perms, Logcat, X-Ray App, About; Bluetooth is a Network page; Watchtower - Obsv holds X-Ray Device and Logcat Fleet; page ids did not change, so every page:config/<id> still lands. #1221 horizontal_two_rows: the second row of Configs is one row per declared group, each [group label] | [that group's page icons]. Cloudy C3 (the group id stays fleet) reads C3 | Peer Control (the | is separator_before on Peer Control; Bluetooth moved to Setup ▸ Network); Watchtower - Obsv (the Setup subgroup that was Observability) reads X-Ray Device, Logcat Fleet; Perms, Logcat, X-Ray App and About moved to Setup ▸ Launcher after a | separator; Setup keeps the rest. Every page of the section is in exactly one group (the nav-shape guard, N10), the hidden tab pages with their parent. The groups only REFERENCE pages: the Configs grid headings still come from each page's group / subgroup.",
         "nav_mode": "horizontal_two_rows",
         "groups": [
-          {"id": "setup", "label": "Setup", "icon": "ic_settings", "pages": ["profile", "store", "controls", "onehand", "app-folders", "notify", "launcher-sep-1", "perms", "logcat", "xray-app", "app-about", "firewall", "dns", "webserver", "wg", "apps-access", "adb-shell", "wifi", "wifi-scan", "wifi-channels", "wifi-link", "wifi-tools", "wifi-log", "adb-status", "adb-term", "adb-perms", "adb-all", "bluetooth", "bluetooth-find", "bluetooth-analyze", "bluetooth-locate", "bluetooth-connect", "bluetooth-interact", "bluetooth-debug", "bluetooth-dev", "xray", "logcat-fleet", "battery", "presets", "panels", "panels-all", "panels-ui", "panels-battery", "panels-tools", "store-cloud", "store-phone", "update", "kde_connect", "animations"]},
+          {"id": "setup", "label": "Setup", "icon": "ic_settings", "pages": ["profile", "store", "controls", "onehand", "app-folders", "notify", "launcher-sep-1", "perms", "logcat", "xray-app", "app-about", "firewall", "dns", "webserver", "wg", "apps-access", "adb-shell", "wifi", "wifi-scan", "wifi-channels", "wifi-link", "wifi-tools", "wifi-log", "adb-status", "adb-term", "adb-perms", "adb-all", "bluetooth", "bluetooth-find", "bluetooth-analyze", "bluetooth-locate", "bluetooth-connect", "bluetooth-interact", "bluetooth-debug", "bluetooth-dev", "xray", "logcat-fleet", "battery", "presets", "panels", "panels-all", "panels-ui", "panels-battery", "panels-tools", "store-cloud", "store-phone", "update", "kde_connect", "animations", "focus"]},
           {"id": "agents", "label": "Agents", "icon": "ic_p_watchdog", "pages": ["agents-watchdog"]},
           {"id": "fleet", "label": "Cloudy C3", "icon": "ic_hub", "pages": ["c3", "kde"]}
         ],
@@ -5433,6 +5433,14 @@
             "icon": "ic_animation",
             "action": "action:toggle_animations",
             "is_action": true
+          },
+          {
+            "_doc": "#1596 Focus Mode — the one Focus switch (page:config/focus, FocusModeFragment). Turning it on sets FocusMode.active, the readable boolean other parts consult to quieten themselves: AlertsNotifier keeps a non-urgent fleet alert silent (no sound, no heads-up) while urgent ones still ring. hidden with no subgroup: reached by its action (the Configs Actions row, #1610) and by page:config/focus, never a grid tile of its own — so it sits under no Launcher sub-heading. Its words are NOT declared here — the page reads ui.launcher_modes[id=focus]'s label and subtitle, so the page and the Presets ▸ Modes tile cannot drift.",
+            "id": "focus",
+            "label": "Focus Mode",
+            "icon": "ic_nav_dnd",
+            "group": "Setup",
+            "hidden": true
           }
         ]
       }
@@ -5605,7 +5613,9 @@
           "ntfy_poll": true,
           "background_pause": false,
           "oled_black": false
-        }
+        },
+        "_doc_cmd": "#1591 presets→adb: picking a preset can also run a shell command through the adb-shell broker (ShellBroker.execText), run after the toggles by LauncherPresetsFragment.runPresetCmd. Power restores heads-up (peek) notifications that Focus turned off; a safe, reversible global setting, a no-op toast when no shell channel is armed.",
+        "cmd": "settings put global heads_up_notifications_enabled 1"
       },
       {
         "id": "focus",
@@ -5619,7 +5629,9 @@
           "star_twinkle": false,
           "dynamic_island": false,
           "ntfy_poll": false
-        }
+        },
+        "_doc_cmd": "#1591 presets→adb: Focus silences heads-up (peek) notifications via the adb-shell broker, the shell counterpart to #1596's in-app non-urgent-alert hush. Reversible — Power turns it back on.",
+        "cmd": "settings put global heads_up_notifications_enabled 0"
       },
       {
         "id": "saving_energy",
