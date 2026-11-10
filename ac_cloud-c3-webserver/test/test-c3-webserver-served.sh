@@ -65,7 +65,7 @@ if "set_launcher" not in bridge or "fn launch_app" not in bridge:
 got = [(e["id"], e["name"], e["role"]) for e in b["serving"]["endpoints"]]
 if got != [("termux", "termux.app", "external"), ("nix", "nix.app", "external"), ("emulated", "emulated.app", "drive"), ("cloud", "cloud.app", "diag")]:
     bad.append("V5 serving.endpoints changed: %r" % got)
-if [p["id"] for p in b["subpages"] if p["tab"] == "pages"] != ["drive", "terminals", "repos"]:
+if [p["id"] for p in b["subpages"] if p["tab"] == "pages"] != ["drive", "terminals", "repos", "git"]:
     bad.append("V5 the declared Pages sub-pages changed")
 if not b["repos"]["store"].endswith(".json") or set(b["repos"]["exposures"]) != {"loopback", "mesh"}:
     bad.append("V5 the repos store / exposures changed")
