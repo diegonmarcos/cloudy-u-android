@@ -6,11 +6,12 @@ import java.io.File
 import java.io.InputStream
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Future
-import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.Semaphore
+import java.util.concurrent.SynchronousQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
+import java.util.concurrent.atomic.AtomicBoolean
 
 /** The privileged channel as the broker sees it (the SuperApp plugs the embedded ADB / Shizuku ladder in). */
 interface BrokerChannel {
@@ -58,10 +59,14 @@ class BrokerCore(
     /** True while worker threads exist (false after [reapIfIdle], and before the first call). */
     fun poolAlive(): Boolean = synchronized(this) { pool != null }
 
+    // The real concurrency cap is [permits], not the pool: the pool must always have a free thread for a
+    // permitted call, so a wedged channel (a worker stuck in channel.run that ignores interruption after a
+    // timeout) can never block a fresh call behind it in a bounded queue. A cached pool with a SynchronousQueue
+    // hands every submit its own thread; an orphaned wedged thread sits out of the way and dies on IDLE_MS.
     private fun pool(): ThreadPoolExecutor = synchronized(this) {
-        pool ?: ThreadPoolExecutor(maxConcurrent, maxConcurrent, IdlePolicy.IDLE_MS, TimeUnit.MILLISECONDS, LinkedBlockingQueue<Runnable>()) { r ->
+        pool ?: ThreadPoolExecutor(0, Int.MAX_VALUE, IdlePolicy.IDLE_MS, TimeUnit.MILLISECONDS, SynchronousQueue<Runnable>()) { r ->
             Thread(r, "shell-broker").apply { isDaemon = true }
-        }.apply { allowCoreThreadTimeOut(true) }.also { pool = it }
+        }.also { pool = it }
     }
 
     /** Stop the workers when idle; the next call recreates them. Returns true when it stopped them. */
@@ -189,7 +194,12 @@ class BrokerCore(
         fun done(r: ShellResult, outcome: String, exit: Int, source: String = ""): ShellResult = finish(key, auditCmd, r, outcome, exit, t0, source)
         if (!permits.tryAcquire()) return done(ShellResult.Failed("busy: $maxConcurrent calls already running"), "busy", -1)
         synchronized(this) { inflight++; lastActive = t0 }
-        fun release() { synchronized(this) { inflight--; lastActive = clock() }; permits.release() }
+        // Exactly one release per acquired permit: the worker returns it when the channel returns, and the
+        // timeout path returns it when we give up. A wedged channel that never returns (and may ignore the
+        // cancel/interrupt) must not keep its slot, or three such calls wedge the whole broker ("busy: 3
+        // calls already running") until the process dies. Guarded so a late worker return is a no-op.
+        val released = AtomicBoolean(false)
+        fun release() { if (released.compareAndSet(false, true)) { synchronized(this) { inflight--; lastActive = clock() }; permits.release() } }
         var submitted = false
         try {
             if (!runCatching { channel.ready() }.getOrDefault(false) && !(runCatching { tryArm() }.getOrDefault(false) && channel.ready())) {
@@ -197,11 +207,10 @@ class BrokerCore(
             }
             val src = channel.name()
             val wrapped = "$cmd; printf '\\n$MARK%s\\n' \$?"
-            // The worker returns the permit when the CHANNEL returns, so a wedged channel keeps its slot: that is the cap.
             val f: Future<String?> = pool().submit<String?> { try { channel.run(wrapped, stdin) } finally { release() } }
             submitted = true
             val raw = try { f.get(clamp(timeoutMs), TimeUnit.MILLISECONDS) }
-            catch (e: TimeoutException) { f.cancel(true); return done(ShellResult.Failed("timed out after ${timeoutMs / 1000}s", true), "timeout", -1, src) }
+            catch (e: TimeoutException) { f.cancel(true); release(); return done(ShellResult.Failed("timed out after ${timeoutMs / 1000}s", true), "timeout", -1, src) }
             catch (e: ExecutionException) { return done(ShellResult.Failed("channel threw ${e.cause?.javaClass?.simpleName}"), "error", -1, src) }
             if (raw == null) return done(ShellResult.NeedsArm, "needs_arm", -1, src)
             val r = parse(raw, src, maxBytes)

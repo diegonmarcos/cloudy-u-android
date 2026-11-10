@@ -103,6 +103,31 @@ class BrokerCoreTest {
         assertTrue(c.exec("app.a", "dumpsys battery", 5_000) is ShellResult.Ok)   // the slots came back
     }
 
+    // Regression: a channel that wedges (never returns, ignores the timeout's interrupt) must not keep its
+    // slot. Three such calls once pegged every permit forever, so the broker answered "busy: N calls already"
+    // to everything and the owner's shell went dead. After each call times out its slot must come back.
+    @Test fun aWedgedChannelReleasesItsSlotOnTimeoutAndDoesNotWedgeTheBroker() {
+        val neverReleased = CountDownLatch(1)
+        val calls = java.util.concurrent.atomic.AtomicInteger(0)
+        val started = CountDownLatch(3)
+        val ch = FakeChannel { _ ->
+            if (calls.getAndIncrement() < 3) {
+                started.countDown()
+                // Block uninterruptibly, as a real socket read stuck on a dead transport would.
+                while (true) { try { if (neverReleased.await(1, TimeUnit.HOURS)) break } catch (_: InterruptedException) {} }
+            }
+            "x\n__SB_EXIT__0\n"
+        }
+        val c = core(ch, max = 3, now = System::currentTimeMillis)
+        val ts = (1..3).map { Thread { c.exec("app.a", "dumpsys battery", 400) }.apply { start() } }
+        assertTrue("all three reached the channel", started.await(5, TimeUnit.SECONDS))
+        ts.forEach { it.join(5_000) }   // each call times out and (with the fix) returns its permit
+        // The three workers are still wedged, but their slots were reclaimed: a fresh call must be served,
+        // not rejected with "busy". Without the fix this is Failed("busy: 3 calls already running").
+        val r = c.exec("app.a", "getprop ro.x", 5_000)
+        assertTrue("the broker recovered after wedged calls timed out, got $r", r is ShellResult.Ok)
+    }
+
     @Test fun outputIsCapped() {
         val r = core(FakeChannel { "x".repeat(500) + "\n__SB_EXIT__0\n" }).exec("app.a", "dumpsys battery", 5_000, maxBytes = 100) as ShellResult.Ok
         assertTrue(r.stdout.startsWith("x".repeat(100)) && r.stdout.contains("[truncated"))
