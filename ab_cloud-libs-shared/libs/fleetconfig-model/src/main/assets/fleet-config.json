@@ -2556,6 +2556,54 @@
       "used_by": [
         "lib-appstore"
       ]
+    },
+    "ai_session_groups": {
+      "kind": "prefs",
+      "class": "config",
+      "doc": "The shared AI chat's user-made session folders, one SharedPreferences entry per app (key = app): the groups the user created (id, name, collapsed), which session belongs to which group, and which sessions are archived. The folder names and layout are a user organization choice, so they migrate with the app's settings; the member session ids are local and simply do not match on a new phone until those sessions exist again.",
+      "used_by": [
+        "lib-ai"
+      ]
+    },
+    "display_controls": {
+      "kind": "prefs",
+      "class": "device",
+      "doc": "Cloud SuperApp QuickDisplay's smallest-width override (key sw_dp) used to compute the density/font ADB commands for THIS device's panel. It is calibrated to the current screen's pixels, so it must not migrate to a phone with a different display.",
+      "used_by": [
+        "aa_cloud-superapp"
+      ]
+    },
+    "focus_mode_prefs": {
+      "kind": "prefs",
+      "class": "device",
+      "doc": "Cloud SuperApp Focus mode's current on/off state (key active). This is momentary runtime state — whether Focus is engaged right now — not a configured preference, so it does not migrate (a new phone should not boot into Focus because the old one happened to be in it).",
+      "used_by": [
+        "aa_cloud-superapp"
+      ]
+    },
+    "last_media_session": {
+      "kind": "prefs",
+      "class": "device",
+      "doc": "Cloud SuperApp's cache of the last seen media session for the resume tile (pkg, title, artist, position, duration; album art in a sibling file). A playback cursor/cache, not a setting, so it does not migrate.",
+      "used_by": [
+        "aa_cloud-superapp"
+      ]
+    },
+    "notify_app_switches": {
+      "kind": "prefs",
+      "class": "config",
+      "doc": "Cloud SuperApp Notification Center's per-app notification choices: push allowed (key push.<pkg>) and keep-alive (key keep.<pkg>) for each app the user toggled. A user-facing notification policy, so it migrates with the app's settings.",
+      "used_by": [
+        "aa_cloud-superapp"
+      ]
+    },
+    "weather_place_cache": {
+      "kind": "prefs",
+      "class": "device",
+      "doc": "Cloud SuperApp Notification Center's reverse-geocoding cache mapping a rounded lat/lon cell to a place name (PlaceName.PrefsCache). A derived cache that is refilled on demand, so it does not migrate.",
+      "used_by": [
+        "aa_cloud-superapp"
+      ]
     }
   },
   "bundle": {
@@ -3740,6 +3788,8 @@
         "lib-devtools",
         "lib-fin",
         "lib-fleet-data-client",
+        "lib-fleet-endpoints",
+        "lib-fleet-endpoints-android",
         "lib-fleetconfig-model",
         "lib-git-core",
         "lib-git-repos",

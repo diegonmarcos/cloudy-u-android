@@ -15,23 +15,23 @@ DataStore / Room stores and declared files it cannot move yet.
 
 | app | package | covered | gaps | coverage |
 |---|---|---:|---:|---:|
-| cloud-superapp | `com.diegonmarcos.superapp` | 56 | 0 | 100% |
+| cloud-superapp | `com.diegonmarcos.superapp` | 57 | 0 | 100% |
 | c3-morpheus | `com.diegonmarcos.morpheus` | 5 | 0 | 100% |
 | c3-watchdog | `com.diegonmarcos.watchdog` | 5 | 0 | 100% |
 | c3-watchtower | `com.diegonmarcos.watchtower` | 4 | 0 | 100% |
 | cloud-account | `com.diegonmarcos.cloudaccount` | 20 | 1 | 95% |
-| cloud-tasks | `com.diegonmarcos.cloudagenda` | 10 | 0 | 100% |
-| cloud-browser | `com.diegonmarcos.cloudbrowser` | 17 | 0 | 100% |
+| cloud-tasks | `com.diegonmarcos.cloudagenda` | 11 | 0 | 100% |
+| cloud-browser | `com.diegonmarcos.cloudbrowser` | 18 | 0 | 100% |
 | cloud-c3-webserver | `com.diegonmarcos.cloudwebserver` | 4 | 0 | 100% |
 | cloud-media-center | `com.diegonmarcos.cloudmediacenter` | 4 | 0 | 100% |
-| cloud-c3 | `com.diegonmarcos.cloudc3` | 12 | 0 | 100% |
-| cloud-calc | `com.diegonmarcos.cloudcalc` | 17 | 0 | 100% |
+| cloud-c3 | `com.diegonmarcos.cloudc3` | 13 | 0 | 100% |
+| cloud-calc | `com.diegonmarcos.cloudcalc` | 18 | 0 | 100% |
 | cloud-camera | `cld.camera` | 11 | 0 | 100% |
 | cloud-chat | `com.diegonmarcos.comms.chat` | 6 | 0 | 100% |
-| cloud-code | `com.diegonmarcos.code` | 11 | 5 | 68% |
+| cloud-code | `com.diegonmarcos.code` | 12 | 5 | 70% |
 | cloud-contacts | `com.diegonmarcos.cloudcontacts` | 8 | 2 | 80% |
 | cloud-dialer | `com.diegonmarcos.comms.dialer` | 9 | 2 | 81% |
-| cloud-drive | `com.diegonmarcos.clouddrive` | 16 | 6 | 72% |
+| cloud-drive | `com.diegonmarcos.clouddrive` | 17 | 6 | 73% |
 | cloud-keyboard | `com.diegonmarcos.cloudkeyboard` | 7 | 0 | 100% |
 | cloud-mail | `com.diegonmarcos.comms.mail` | 13 | 2 | 86% |
 | cloud-matrix | `com.diegonmarcos.comms.matrix` | 4 | 9 | 30% |
@@ -41,23 +41,23 @@ DataStore / Room stores and declared files it cannot move yet.
 | cloud-nav | `com.diegonmarcos.cloudnav` | 15 | 0 | 100% |
 | cloud-news | `com.diegonmarcos.cloudnews` | 9 | 1 | 90% |
 | cloud-terminal-nix | `cld.termux.nix` | 12 | 7 | 63% |
-| cloud-notes | `com.diegonmarcos.cloudnotes` | 6 | 1 | 85% |
+| cloud-notes | `com.diegonmarcos.cloudnotes` | 7 | 1 | 87% |
 | cloud-office | `com.diegonmarcos.cloudoffice` | 3 | 0 | 100% |
-| cloud-search | `com.diegonmarcos.cloudsearch` | 6 | 4 | 60% |
-| cloud-store | `com.diegonmarcos.cloudstore` | 12 | 0 | 100% |
+| cloud-search | `com.diegonmarcos.cloudsearch` | 7 | 4 | 63% |
+| cloud-store | `com.diegonmarcos.cloudstore` | 13 | 0 | 100% |
 | cloud-terminal-termux | `cld.termux` | 12 | 7 | 63% |
 | cloud-vault | `com.diegonmarcos.cloudvault` | 5 | 1 | 83% |
 | cloud-wallet | `com.diegonmarcos.cloudwallet` | 8 | 0 | 100% |
 | cloud-writer | `com.diegonmarcos.cloudwriter` | 5 | 0 | 100% |
 | cloud-shopping | `com.diegonmarcos.cloudshopping` | 4 | 0 | 100% |
-| cloud-superintel | `com.diegonmarcos.cloudsuperintel` | 5 | 2 | 71% |
-| cloud-kg-store | `com.diegonmarcos.cloudkgstore` | 5 | 2 | 71% |
-| cloud-tools-small-llms | `com.diegonmarcos.cloudtoolssmallllms` | 11 | 2 | 84% |
+| cloud-superintel | `com.diegonmarcos.cloudsuperintel` | 6 | 2 | 75% |
+| cloud-kg-store | `com.diegonmarcos.cloudkgstore` | 6 | 2 | 75% |
+| cloud-tools-small-llms | `com.diegonmarcos.cloudtoolssmallllms` | 12 | 2 | 85% |
 | cg-omniverse | `com.diegonmarcos.cgomniverse` | 8 | 0 | 100% |
 | capital-stack-finterminal | `com.diegonmarcos.capitalfinterm` | 5 | 0 | 100% |
 | hardtech-cad | `com.diegonmarcos.hardtechcad` | 5 | 0 | 100% |
 | hardtech-sim2real | `com.diegonmarcos.hardtechsim2real` | 4 | 0 | 100% |
-| **fleet** | | **415** | **56** | **88%** |
+| **fleet** | | **428** | **56** | **88%** |
 
 ## cloud-superapp — `com.diegonmarcos.superapp`
 
@@ -88,6 +88,7 @@ Module `aa_cloud-superapp`; libs: lib-account, lib-ai-usage, lib-analytics, lib-
 | `data_usage_history` | prefs | device | no | Per-app/sub data usage history measured on this device. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
 | `device_tuning` | prefs | device | no | DeviceTuning engine (aa_cloud-superapp/data/device-tuning.json): per-entry APPLIED/PENDING/FAILED state, detail and timestamp of the Android device tuning applied through the SuperApp's own ADB shell (phantom process killer off). Device-bound: a new phone re-applies from the declaration. |
+| `display_controls` | prefs | device | no | Cloud SuperApp QuickDisplay's smallest-width override (key sw_dp) used to compute the density/font ADB commands for THIS device's panel. It is calibrated to the current screen's pixels, so it must not migrate to a phone with a different display. |
 | `firewall` | prefs | config | yes | Firewall enabled toggle. |
 | `firewall_policies` | prefs | config | yes | Per-app firewall policies (wifi/cellular/background/vpn/direction) the user set. |
 | `fleet_alerts` | prefs | device | no | Local ring buffer (max 100) of received fleet alerts; derived inbox, regenerated by the fleet. |
@@ -96,6 +97,7 @@ Module `aa_cloud-superapp`; libs: lib-account, lib-ai-usage, lib-analytics, lib-
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
 | `floating_nav_pos` | prefs | device | no | Floating button x/y screen coordinates, tied to this screen. |
 | `floatingnav_prefs` | prefs | config | yes | Floating navigation button enabled toggle. |
+| `focus_mode_prefs` | prefs | device | no | Cloud SuperApp Focus mode's current on/off state (key active). This is momentary runtime state — whether Focus is engaged right now — not a configured preference, so it does not migrate (a new phone should not boot into Focus because the old one happened to be in it). |
 | `gh_feed_cache` | prefs | device | no | 15-minute TTL cache of GitHub commits/workflow-run feeds. |
 | `gitea_feed_cache` | prefs | device | no | 15-minute TTL cache of Gitea commit feed responses (GiteaFeed PREFS constant), pure cache. |
 | `health_store` | prefs | device | no | Health Connect snapshots, history and source last-seen; cache of device data. |
@@ -107,6 +109,7 @@ Module `aa_cloud-superapp`; libs: lib-account, lib-ai-usage, lib-analytics, lib-
 | `kdeconnect_peer_selection` | prefs | config | yes | Which KDE peer Peer Control targets. |
 | `kdeconnect_plugin_enabled` | prefs | config | yes | Per-plugin enable/disable toggles. |
 | `kdeconnect_trust` | prefs | device | no | Pinned peer certificates and paired flags; tied to this device's keystore, must re-pair on a new phone. |
+| `last_media_session` | prefs | device | no | Cloud SuperApp's cache of the last seen media session for the resume tile (pkg, title, artist, position, duration; album art in a sibling file). A playback cursor/cache, not a setting, so it does not migrate. |
 | `launcher_folder_overrides` | prefs | config | yes | #1553 Configs > Launcher > Folders: the owner's own folder edits per scope (cloud/phone) on top of the served launcher-folders and launcher-folder-assignments datasets: per-app folder moves (<scope>:<package>) and the saved Table A / Table B (tbl:<scope>:folders, tbl:<scope>:assign). Absent until Save; Reset removes it and the served defaults apply again. |
 | `launcher_mode_prefs` | prefs | config | yes | Selected launcher mode preset (key 'mode'). |
 | `launcher_profile_prefs` | prefs | config | yes | Selected launcher profile preset (personal/work/guest). |
@@ -126,6 +129,7 @@ Module `aa_cloud-superapp`; libs: lib-account, lib-ai-usage, lib-analytics, lib-
 | `nav_ui` | prefs | config | yes | The user's nav UI choice for this app (Configs > UI): the nav mode, Classic or Clean, and the scroll-hide toggle (a downward scroll hides every bar until an upward one). Written by the shared Configs card (NavUiPrefs, libs:ui-nav-bars NavUiConfigCard); part of the app's settings, so it migrates and backs up with them. The app's declared default is build.json::ui.nav_ui. |
 | `netusage` | prefs | device | no | #1525 Network table: the periodic rx/tx counter snapshots behind the 24 h and today data-used rows; per-install counters of this boot history, never migrates. |
 | `notification_store` | prefs | content | no | Stored in-app notification log (info/warn/error). |
+| `notify_app_switches` | prefs | config | yes | Cloud SuperApp Notification Center's per-app notification choices: push allowed (key push.<pkg>) and keep-alive (key keep.<pkg>) for each app the user toggled. A user-facing notification policy, so it migrates with the app's settings. |
 | `notify_groups` | prefs | config | yes | Per-notification-group enabled flags and group order. |
 | `onehand_prefs` | prefs | config (keys: debug_visible→device, spurious_nones_pruned_v1→device) | yes | One-hand launcher enable, trigger and per-handle slot assignments. |
 | `pass_ledger` | prefs | device | no | #894 What the running fleet pass did per package (installed, needs a tap, failed), the summary signature last shown and the last failure reported per package: pass state, never a setting. |
@@ -164,6 +168,7 @@ Module `aa_cloud-superapp`; libs: lib-account, lib-ai-usage, lib-analytics, lib-
 | `wd_keepalive_status` | prefs | device | no | Wireless-debugging keepalive worker status (ready, last tick/reconnect/failure times). |
 | `wd_keeper` | prefs | device | no | #1467 Keep wireless debugging on: the shared keeper's armed flag, write-permission flag and leader heartbeat; per-install state the keeper rebuilds from each app's switch, so it never migrates. |
 | `weather_last_fix` | prefs | device | no | SuperApp Weather badge: the last location fix (lat/lon/accuracy/time/source) and the last forecast body kept for the offline card; a cache that is re-derived on the new phone, never migrated (#1108). |
+| `weather_place_cache` | prefs | device | no | Cloud SuperApp Notification Center's reverse-geocoding cache mapping a rounded lat/lon cell to a place name (PlaceName.PrefsCache). A derived cache that is refilled on demand, so it does not migrate. |
 | `wireguard_prefs` | prefs | config (keys: if_privkey→secret, relay_key→secret) | yes | WireGuard tunnel config: name, address, DNS, port, MTU, peers_json, provider, tunnel_enabled, and the mesh fallback ladder's transport_mode / transport_plan (the path the last connect chose, no key in it); the private key and the TLS-443 relay key are credentials. |
 
 | file | class | doc |
@@ -179,7 +184,7 @@ Module `aa_cloud-superapp`; libs: lib-account, lib-ai-usage, lib-analytics, lib-
 | `BuildConfig UI_* constants (UI_LAUNCHER_SETTINGS_B64, UI_PROFILE_*, UI_WG_*)` | config | Defaults baked into the APK from build.json; not device state but the fallback for unset prefs. |
 | `filesDir/<KEYSTORE_FILE>` | device | This device's KDE Connect TLS identity keystore; never migrate, re-pair |
 
-Coverage: 56 covered, 0 gaps.
+Coverage: 57 covered, 0 gaps.
 
 ## c3-morpheus — `com.diegonmarcos.morpheus`
 
@@ -310,6 +315,7 @@ Module `ac_cloud-tasks`; libs: lib-ai, lib-analytics, lib-bottomnav, lib-core, l
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
 | `ai_composer` | prefs | config | yes | The shared AI chat's config bar: whether it is collapsed to its one compact chip, one boolean per app (key ai_composer_collapsed.<app>). A user layout choice, so it migrates with the app's settings. |
+| `ai_session_groups` | prefs | config | yes | The shared AI chat's user-made session folders, one SharedPreferences entry per app (key = app): the groups the user created (id, name, collapsed), which session belongs to which group, and which sessions are archived. The folder names and layout are a user organization choice, so they migrate with the app's settings; the member session ids are local and simply do not match on a new phone until those sessions exist again. |
 | `auto_update` | prefs | config (keys: last_check_at→device, last_remote_bytes→device, last_remote_digest→device, unattended_pass→device) | yes | Auto-update toggles (enabled, require_silent/unmetered) are settings; last_check/remote digest/bytes/unattended_pass are state. |
 | `cal_agents` | prefs | content | no | Cloud Tasks agents: the screenshot agent's on/off switch, last scan time, dismissed candidate keys and the events the user accepted from screenshots; user decisions, not config. |
 | `cal_bridge` | prefs | device | no | Cloud Tasks one-time 'seeded' flag for legacy todo import. |
@@ -339,7 +345,7 @@ Module `ac_cloud-tasks`; libs: lib-ai, lib-analytics, lib-bottomnav, lib-core, l
 | `app assets data/calendars.json (bundled) and engine state in app storage` | content | Calendar and todo data synced from CalDAV; the CalDAV url/username/password is in caldav_secure_prefs. |
 | `databases/tasks.db` | content | The Tasks page's own data: projects, lists, tasks and subtasks, tags, attachment links, and the mail agent's declaration and proposals. SQLite with ordered, additive migrations; nothing ever wipes it. The JMAP / Authelia secret of the agent is in the Keystore-encrypted tasks_agent_secrets file, not here. |
 
-Coverage: 10 covered, 0 gaps.
+Coverage: 11 covered, 0 gaps.
 
 ## cloud-browser — `com.diegonmarcos.cloudbrowser`
 
@@ -348,6 +354,7 @@ Module `ac_cloud-browser`; libs: lib-ai, lib-analytics, lib-autofill, lib-blueto
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
 | `ai_composer` | prefs | config | yes | The shared AI chat's config bar: whether it is collapsed to its one compact chip, one boolean per app (key ai_composer_collapsed.<app>). A user layout choice, so it migrates with the app's settings. |
+| `ai_session_groups` | prefs | config | yes | The shared AI chat's user-made session folders, one SharedPreferences entry per app (key = app): the groups the user created (id, name, collapsed), which session belongs to which group, and which sessions are archived. The folder names and layout are a user organization choice, so they migrate with the app's settings; the member session ids are local and simply do not match on a new phone until those sessions exist again. |
 | `apify_tokens` | encrypted | secret | yes | #1468/#1470 libs:apify, the fleet's one Apify store (Cloud Browser Scrapers > Apify, Cloud News): the chosen backend, the Apify token, the Cloudy Crawlee URL and bearer, in EncryptedSharedPreferences via libs:crash SafeEncryptedPrefs; an unreadable store resets to memory, never to plaintext. Credentials: migrate through the vault. |
 | `auto_update` | prefs | config (keys: last_check_at→device, last_remote_bytes→device, last_remote_digest→device, unattended_pass→device) | yes | Auto-update toggles (enabled, require_silent/unmetered) are settings; last_check/remote digest/bytes/unattended_pass are state. |
 | `browser_ac_profiles` | encrypted | secret | yes | #900 Autocomplete: the personal profiles (many-valued names, addresses, phones, emails, ID documents, birth dates, organisations), the per-site memory (values typed on one site: customer number, member ID) and the never-save lists. EncryptedSharedPreferences, MasterKey AES256_GCM. Imports the old browser_autofill profile once; never deletes it. |
@@ -388,7 +395,7 @@ Module `ac_cloud-browser`; libs: lib-ai, lib-analytics, lib-autofill, lib-blueto
 |---|---|---|
 | `browser_settings` | config | #802 every user setting is a key of the declared browser_settings store (libs:browser BrowserSettings over build.json::ui.browser.settings); tabs and history are the lib's own declared stores. Nothing is kept outside them. |
 
-Coverage: 17 covered, 0 gaps.
+Coverage: 18 covered, 0 gaps.
 
 ## cloud-c3-webserver — `com.diegonmarcos.cloudwebserver`
 
@@ -441,6 +448,7 @@ Module `ac_cloud-c3`; libs: lib-ai, lib-analytics, lib-bottomnav, lib-core, lib-
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
 | `ai_composer` | prefs | config | yes | The shared AI chat's config bar: whether it is collapsed to its one compact chip, one boolean per app (key ai_composer_collapsed.<app>). A user layout choice, so it migrates with the app's settings. |
+| `ai_session_groups` | prefs | config | yes | The shared AI chat's user-made session folders, one SharedPreferences entry per app (key = app): the groups the user created (id, name, collapsed), which session belongs to which group, and which sessions are archived. The folder names and layout are a user organization choice, so they migrate with the app's settings; the member session ids are local and simply do not match on a new phone until those sessions exist again. |
 | `auto_update` | prefs | config (keys: last_check_at→device, last_remote_bytes→device, last_remote_digest→device, unattended_pass→device) | yes | Auto-update toggles (enabled, require_silent/unmetered) are settings; last_check/remote digest/bytes/unattended_pass are state. |
 | `c3_private` | encrypted | secret | yes | #1454 Cloud C3's private-data source: the GitHub token (github_token) used to read the private identities file, in EncryptedSharedPreferences via libs:crash SafeEncryptedPrefs. A credential: shown masked, migrates through the vault. |
 | `c3_routes_table` | prefs | config | yes | Cloud C3 > Containers > Table: the chosen sort column and direction, the Auth Type and VM filters, the category filter and the search text, as one string under the key 'state'. |
@@ -464,7 +472,7 @@ Module `ac_cloud-c3`; libs: lib-ai, lib-analytics, lib-bottomnav, lib-core, lib-
 | `updater_apk_cache_notes` | prefs | device | no | Notes about cached downloaded APKs. |
 | `updater_superseded_sessions` | prefs | device | no | #1551 PackageInstaller session ids this app abandoned because a newer session for the same package replaced them; their delayed INSTALL_FAILED_ABORTED answer is swallowed at the receiver. Device-local, ephemeral session ids; must not migrate to a new phone. |
 
-Coverage: 12 covered, 0 gaps.
+Coverage: 13 covered, 0 gaps.
 
 ## cloud-calc — `com.diegonmarcos.cloudcalc`
 
@@ -473,6 +481,7 @@ Module `ac_cloud-calc`; libs: lib-ai, lib-bluetooth, lib-bottomnav, lib-core, li
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
 | `ai_composer` | prefs | config | yes | The shared AI chat's config bar: whether it is collapsed to its one compact chip, one boolean per app (key ai_composer_collapsed.<app>). A user layout choice, so it migrates with the app's settings. |
+| `ai_session_groups` | prefs | config | yes | The shared AI chat's user-made session folders, one SharedPreferences entry per app (key = app): the groups the user created (id, name, collapsed), which session belongs to which group, and which sessions are archived. The folder names and layout are a user organization choice, so they migrate with the app's settings; the member session ids are local and simply do not match on a new phone until those sessions exist again. |
 | `cloud_calc` | prefs | content | no | cloud-calc calculation history ('history' key, CalcState); user data, small and local. |
 | `cloud_calc_jev` | prefs | config (keys: catalog→device, catalog_at→device) | yes | Jev decision config: config_override (the edited routing declaration), model_<use> picked models; catalog and catalog_at are a cached OpenRouter model list. |
 | `cloud_calc_jev_secret` | encrypted | secret | yes | EncryptedSharedPreferences holding the manual OpenRouter token (openrouter_token). |
@@ -504,7 +513,7 @@ Module `ac_cloud-calc`; libs: lib-ai, lib-bluetooth, lib-bottomnav, lib-core, li
 | `filesDir/sound/*.csv|*.wav` | content | Saved sound-measure sessions. |
 | `filesDir/camera/last.jpg` | device | Last captured measure photo. |
 
-Coverage: 17 covered, 0 gaps.
+Coverage: 18 covered, 0 gaps.
 
 ## cloud-camera — `cld.camera`
 
@@ -572,6 +581,7 @@ Module `ac_cloud-code`; libs: lib-ai, lib-bottomnav, lib-core, lib-crash, lib-de
 | `acode_theme` | prefs | config | yes | Acode editor colour scheme (key per theme colour) written by System.java so the crash/launch screens match the chosen theme; a user theme choice. |
 | `ads` | encrypted | device | no | Acode RewardPassManager ad-reward pass state; per-install ad counters, not configuration. |
 | `ai_composer` | prefs | config | yes | The shared AI chat's config bar: whether it is collapsed to its one compact chip, one boolean per app (key ai_composer_collapsed.<app>). A user layout choice, so it migrates with the app's settings. |
+| `ai_session_groups` | prefs | config | yes | The shared AI chat's user-made session folders, one SharedPreferences entry per app (key = app): the groups the user created (id, name, collapsed), which session belongs to which group, and which sessions are archived. The folder names and layout are a user organization choice, so they migrate with the app's settings; the member session ids are local and simply do not match on a new phone until those sessions exist again. |
 | `cloud_code_chat_secrets` | encrypted | secret | yes | Cloud Code Chat's OpenRouter token, pasted in Profile & Config: EncryptedSharedPreferences under a Keystore AES-256-GCM master key, shown masked, never handed to the WebView. A credential: migrates through the vault. |
 | `code_chat_sessions` | file | config | GAP | Cloud Code's chats, mirrored by the web layer from localStorage to files/chat-sessions.json (text and attachment names, never bytes or a token) and seeded back from it on a restored phone. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
@@ -593,7 +603,7 @@ Module `ac_cloud-code`; libs: lib-ai, lib-bottomnav, lib-core, lib-crash, lib-de
 | `ac_cloud-code/src/cloud/chat/model.js localStorage cloud-code.chat.sessions` | config | The chats kept on this phone (text and attachment names, never attachment bytes); mirrored to files/chat-sessions.json and carried through the code_chat_sessions store. |
 | `encrypted prefs cloud_code_chat_secrets` | secret | The OpenRouter token pasted in Profile & Config; vault. |
 
-Coverage: 11 covered, 5 gaps — code_chat_sessions, file:filesDir or app storage: Acode settings (www/ settings, keybindings, installed plugins, themes, fonts), file:ac_cloud-code/src/lib/projects.js saved folders list (localStorage), file:ac_cloud-code/src/cloud/chat/model.js localStorage cloud-code.chat.settings, .mcp.<agent>, .toggles.<agent>, file:ac_cloud-code/src/cloud/chat/model.js localStorage cloud-code.chat.sessions.
+Coverage: 12 covered, 5 gaps — code_chat_sessions, file:filesDir or app storage: Acode settings (www/ settings, keybindings, installed plugins, themes, fonts), file:ac_cloud-code/src/lib/projects.js saved folders list (localStorage), file:ac_cloud-code/src/cloud/chat/model.js localStorage cloud-code.chat.settings, .mcp.<agent>, .toggles.<agent>, file:ac_cloud-code/src/cloud/chat/model.js localStorage cloud-code.chat.sessions.
 
 ## cloud-contacts — `com.diegonmarcos.cloudcontacts`
 
@@ -666,6 +676,7 @@ Module `ac_cloud-drive`; libs: lib-ai, lib-analytics, lib-auth, lib-bottomnav, l
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
 | `ai_composer` | prefs | config | yes | The shared AI chat's config bar: whether it is collapsed to its one compact chip, one boolean per app (key ai_composer_collapsed.<app>). A user layout choice, so it migrates with the app's settings. |
+| `ai_session_groups` | prefs | config | yes | The shared AI chat's user-made session folders, one SharedPreferences entry per app (key = app): the groups the user created (id, name, collapsed), which session belongs to which group, and which sessions are archived. The folder names and layout are a user organization choice, so they migrate with the app's settings; the member session ids are local and simply do not match on a new phone until those sessions exist again. |
 | `ai_sessions` | file | config | GAP | libs:ai's chat history file (text and attachment names, never a token), carried whole so a new phone keeps the conversations. |
 | `auto_update` | prefs | config (keys: last_check_at→device, last_remote_bytes→device, last_remote_digest→device, unattended_pass→device) | yes | Auto-update toggles (enabled, require_silent/unmetered) are settings; last_check/remote digest/bytes/unattended_pass are state. |
 | `cloud-drive-pdf-reader` | prefs | config (keys: last:*→device) | yes | PDF reader night-mode and paged-mode toggles are viewing preferences; per-document last page ('last:<source>') is device. |
@@ -707,7 +718,7 @@ Module `ac_cloud-drive`; libs: lib-ai, lib-analytics, lib-auth, lib-bottomnav, l
 | `filesDir/rclone/rclone.conf` | secret | rclone remotes (with embedded tokens/passwords); remote definitions are the config, credentials inside are secret |
 | `filesDir/rclone/jobs.json` | config | Saved rclone sync/copy jobs |
 
-Coverage: 16 covered, 6 gaps — ai_sessions, file:filesDir/ai-sessions.json, file:filesDir/git-sync/repos.json, file:filesDir/mounts/mounts.json, file:filesDir/rclone/rclone.conf, file:filesDir/rclone/jobs.json.
+Coverage: 17 covered, 6 gaps — ai_sessions, file:filesDir/ai-sessions.json, file:filesDir/git-sync/repos.json, file:filesDir/mounts/mounts.json, file:filesDir/rclone/rclone.conf, file:filesDir/rclone/jobs.json.
 
 ## cloud-keyboard — `com.diegonmarcos.cloudkeyboard`
 
@@ -826,7 +837,7 @@ Coverage: 4 covered, 9 gaps — datastore:elementx_featureflag, datastore:elemen
 
 ## cloud-me — `com.diegonmarcos.cloudme`
 
-Module `ac_cloud-me`; libs: lib-account-ui, lib-analytics, lib-autofill, lib-bottomnav, lib-core, lib-crash, lib-databackend, lib-decisions-link, lib-devtools, lib-fin, lib-fleet-data-client, lib-fleetconfig-model, lib-git-core, lib-git-repos, lib-git-sync, lib-git-ui, lib-health, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-web-core.
+Module `ac_cloud-me`; libs: lib-account-ui, lib-analytics, lib-autofill, lib-bottomnav, lib-core, lib-crash, lib-databackend, lib-decisions-link, lib-devtools, lib-fin, lib-fleet-data-client, lib-fleet-endpoints, lib-fleet-endpoints-android, lib-fleetconfig-model, lib-git-core, lib-git-repos, lib-git-sync, lib-git-ui, lib-health, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-web-core.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -1052,6 +1063,7 @@ Module `ac_cloud-notes`; libs: lib-ai, lib-bottomnav, lib-core, lib-crash, lib-d
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
 | `ai_composer` | prefs | config | yes | The shared AI chat's config bar: whether it is collapsed to its one compact chip, one boolean per app (key ai_composer_collapsed.<app>). A user layout choice, so it migrates with the app's settings. |
+| `ai_session_groups` | prefs | config | yes | The shared AI chat's user-made session folders, one SharedPreferences entry per app (key = app): the groups the user created (id, name, collapsed), which session belongs to which group, and which sessions are archived. The folder names and layout are a user organization choice, so they migrate with the app's settings; the member session ids are local and simply do not match on a new phone until those sessions exist again. |
 | `datastore:auth-sessions` | datastore | secret | GAP | Cloud Notes per-server auth session cookies/tokens. |
 | `datastore:cloud-notes` | datastore | device | no | Cloud Notes generic key/value DataStore written by the web layer via a plugin (caches/state, no Kotlin-defined settings); not a curated config. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
@@ -1070,7 +1082,7 @@ Module `ac_cloud-notes`; libs: lib-ai, lib-bottomnav, lib-core, lib-crash, lib-d
 | `filesDir/ (NbStorePlugin appStoragePath, per-workspace sqlite)` | content | Cloud Notes local workspace docs; server is source of truth. |
 | `filesDir/logs/<date>.log` | device | Rotating logs. |
 
-Coverage: 6 covered, 1 gaps — datastore:auth-sessions.
+Coverage: 7 covered, 1 gaps — datastore:auth-sessions.
 
 ## cloud-office — `com.diegonmarcos.cloudoffice`
 
@@ -1099,6 +1111,7 @@ Module `ac_cloud-search`; libs: lib-ai, lib-bottomnav, lib-core, lib-crash, lib-
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
 | `ai_composer` | prefs | config | yes | The shared AI chat's config bar: whether it is collapsed to its one compact chip, one boolean per app (key ai_composer_collapsed.<app>). A user layout choice, so it migrates with the app's settings. |
+| `ai_session_groups` | prefs | config | yes | The shared AI chat's user-made session folders, one SharedPreferences entry per app (key = app): the groups the user created (id, name, collapsed), which session belongs to which group, and which sessions are archived. The folder names and layout are a user organization choice, so they migrate with the app's settings; the member session ids are local and simply do not match on a new phone until those sessions exist again. |
 | `cloud_search` | prefs | config (keys: agents_seen_*→device, agents_spent_*→device, q:*→device, things_location_asked→device) | yes | Cloud Search settings: dark theme, home city, chosen AI model, web-search toggle, and the saved listings (`saved`, a small JSON list kept only on this phone). #903 Things: the search radius (things_radius_km), the typed fallback city (things_city) and whether to use the coarse location (things_use_location) are configuration; whether the location permission was already asked (things_location_asked) is device state, as the permission itself is per phone. The last query per vertical (q:<vertical>) is device state. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
@@ -1120,7 +1133,7 @@ Module `ac_cloud-search`; libs: lib-ai, lib-bottomnav, lib-core, lib-crash, lib-
 | `filesDir/agents` | config | Agents run log and reports (runs.json, reports.json); carried to a new phone through the search_agents_state store |
 | `filesDir/things` | device | cached Things answers (OpenStreetMap stores per area, Open Prices, the store-site price service, geocoded cities), refetched from the sources |
 
-Coverage: 6 covered, 4 gaps — search_agents_state, search_chat_sessions, file:filesDir/chat-sessions.json, file:filesDir/agents.
+Coverage: 7 covered, 4 gaps — search_agents_state, search_chat_sessions, file:filesDir/chat-sessions.json, file:filesDir/agents.
 
 ## cloud-store — `com.diegonmarcos.cloudstore`
 
@@ -1129,6 +1142,7 @@ Module `ac_cloud-store`; libs: lib-ai, lib-appstore, lib-bottomnav, lib-core, li
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
 | `ai_composer` | prefs | config | yes | The shared AI chat's config bar: whether it is collapsed to its one compact chip, one boolean per app (key ai_composer_collapsed.<app>). A user layout choice, so it migrates with the app's settings. |
+| `ai_session_groups` | prefs | config | yes | The shared AI chat's user-made session folders, one SharedPreferences entry per app (key = app): the groups the user created (id, name, collapsed), which session belongs to which group, and which sessions are archived. The folder names and layout are a user organization choice, so they migrate with the app's settings; the member session ids are local and simply do not match on a new phone until those sessions exist again. |
 | `apps_mesh` | prefs | config | yes | #793 the Apps Mesh page's chosen chip filter (`filter`): which members the page shows first. A view preference, so it moves with the phone; the probe cache itself is a cacheDir file and never migrates. |
 | `auto_update` | prefs | config (keys: last_check_at→device, last_remote_bytes→device, last_remote_digest→device, unattended_pass→device) | yes | Auto-update toggles (enabled, require_silent/unmetered) are settings; last_check/remote digest/bytes/unattended_pass are state. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
@@ -1161,7 +1175,7 @@ Module `ac_cloud-store`; libs: lib-ai, lib-appstore, lib-bottomnav, lib-core, li
 | `updater_apk_cache_notes` | prefs | device | no | Notes about cached downloaded APKs. |
 | `updater_superseded_sessions` | prefs | device | no | #1551 PackageInstaller session ids this app abandoned because a newer session for the same package replaced them; their delayed INSTALL_FAILED_ABORTED answer is swallowed at the receiver. Device-local, ephemeral session ids; must not migrate to a new phone. |
 
-Coverage: 12 covered, 0 gaps.
+Coverage: 13 covered, 0 gaps.
 
 ## cloud-terminal-termux — `cld.termux`
 
@@ -1303,6 +1317,7 @@ Module `ac_cloud-superintel`; libs: lib-ai, lib-ai-usage, lib-bottomnav, lib-cor
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
 | `ai_composer` | prefs | config | yes | The shared AI chat's config bar: whether it is collapsed to its one compact chip, one boolean per app (key ai_composer_collapsed.<app>). A user layout choice, so it migrates with the app's settings. |
+| `ai_session_groups` | prefs | config | yes | The shared AI chat's user-made session folders, one SharedPreferences entry per app (key = app): the groups the user created (id, name, collapsed), which session belongs to which group, and which sessions are archived. The folder names and layout are a user organization choice, so they migrate with the app's settings; the member session ids are local and simply do not match on a new phone until those sessions exist again. |
 | `ai_sessions` | file | config | GAP | libs:ai's chat history file (text and attachment names, never a token), carried whole so a new phone keeps the conversations. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
@@ -1318,7 +1333,7 @@ Module `ac_cloud-superintel`; libs: lib-ai, lib-ai-usage, lib-bottomnav, lib-cor
 |---|---|---|
 | `filesDir/ai-sessions.json` | config | The chat history of the sessions drawer (libs:ai's file session store; never carries a token); carried to a new phone through the ai_sessions store |
 
-Coverage: 5 covered, 2 gaps — ai_sessions, file:filesDir/ai-sessions.json.
+Coverage: 6 covered, 2 gaps — ai_sessions, file:filesDir/ai-sessions.json.
 
 ## cloud-kg-store — `com.diegonmarcos.cloudkgstore`
 
@@ -1327,6 +1342,7 @@ Module `ac_cloud-kg-store`; libs: lib-ai, lib-bottomnav, lib-core, lib-crash, li
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
 | `ai_composer` | prefs | config | yes | The shared AI chat's config bar: whether it is collapsed to its one compact chip, one boolean per app (key ai_composer_collapsed.<app>). A user layout choice, so it migrates with the app's settings. |
+| `ai_session_groups` | prefs | config | yes | The shared AI chat's user-made session folders, one SharedPreferences entry per app (key = app): the groups the user created (id, name, collapsed), which session belongs to which group, and which sessions are archived. The folder names and layout are a user organization choice, so they migrate with the app's settings; the member session ids are local and simply do not match on a new phone until those sessions exist again. |
 | `ai_sessions` | file | config | GAP | libs:ai's chat history file (text and attachment names, never a token), carried whole so a new phone keeps the conversations. |
 | `dev_control` | prefs | config (keys: token→device) | yes | Dev-control server enable and port; token is a credential. |
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
@@ -1343,7 +1359,7 @@ Module `ac_cloud-kg-store`; libs: lib-ai, lib-bottomnav, lib-core, lib-crash, li
 | `filesDir/results` | device | cached answers of the Web pages' sources (Cloud Search's declared sources, read through its linked core), refetched from the sources |
 | `filesDir/ai-sessions.json` | config | The assistant's chat history (libs:ai's file session store; never carries a token); carried to a new phone through the ai_sessions store |
 
-Coverage: 5 covered, 2 gaps — ai_sessions, file:filesDir/ai-sessions.json.
+Coverage: 6 covered, 2 gaps — ai_sessions, file:filesDir/ai-sessions.json.
 
 ## cloud-tools-small-llms — `com.diegonmarcos.cloudtoolssmallllms`
 
@@ -1352,6 +1368,7 @@ Module `ac_cloud-tools-small-llms`; libs: lib-ai, lib-bottomnav, lib-core, lib-c
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
 | `ai_composer` | prefs | config | yes | The shared AI chat's config bar: whether it is collapsed to its one compact chip, one boolean per app (key ai_composer_collapsed.<app>). A user layout choice, so it migrates with the app's settings. |
+| `ai_session_groups` | prefs | config | yes | The shared AI chat's user-made session folders, one SharedPreferences entry per app (key = app): the groups the user created (id, name, collapsed), which session belongs to which group, and which sessions are archived. The folder names and layout are a user organization choice, so they migrate with the app's settings; the member session ids are local and simply do not match on a new phone until those sessions exist again. |
 | `ai_sessions` | file | config | GAP | libs:ai's chat history file (text and attachment names, never a token), carried whole so a new phone keeps the conversations. |
 | `cloud_tools_small_llms` | prefs | content (keys: backend→config, jev_checked_at→device, jev_listed→device, jev_price_in→device, pinned_model→config, router→config, workers→config) | no | Cloud Tools Small LLMs: the cost ledger (ledger: every priced call, for the day and month totals), the router choice (router), the AI chat's backend (backend: auto, openrouter or local) and pinned model (pinned_model), the local runtime usage (local_usage: calls as tokens and time, no cost; the user's content), the per-task worker overrides (workers) and the last read of Jev's availability on OpenRouter (jev_listed, jev_price_in, jev_checked_at). The ledger is the user's content (the AI tab's chat lives in filesDir/ai-sessions.json, an item of this app); router and workers are configuration; the Jev read is a cache of this phone's last network check. |
 | `cloud_tools_small_llms_secrets` | encrypted | secret | yes | Cloud Tools Small LLMs' OpenRouter token (openrouter_token), pasted in Settings: EncryptedSharedPreferences under a Keystore AES-256-GCM master key, shown masked, never logged. The fleet Account's key is never read (decisions-use guard D5). A credential: migrates through the vault. |
@@ -1376,7 +1393,7 @@ Module `ac_cloud-tools-small-llms`; libs: lib-ai, lib-bottomnav, lib-core, lib-c
 | `SharedPreferences cloud_tools_small_llms:local_usage` | content | Every chat call served by a local runtime (time, model, estimated tokens, duration; no cost): the Local usage section on Costs. |
 | `filesDir/ai-sessions.json` | config | AI tab chat history (libs:ai's file session store; never carries a token); carried to a new phone through the ai_sessions store |
 
-Coverage: 11 covered, 2 gaps — ai_sessions, file:filesDir/ai-sessions.json.
+Coverage: 12 covered, 2 gaps — ai_sessions, file:filesDir/ai-sessions.json.
 
 ## cg-omniverse — `com.diegonmarcos.cgomniverse`
 
