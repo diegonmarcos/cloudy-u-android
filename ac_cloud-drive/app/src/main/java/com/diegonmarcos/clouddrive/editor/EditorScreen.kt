@@ -12,6 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -22,6 +23,7 @@ import com.diegonmarcos.clouddrive.R
 import com.diegonmarcos.clouddrive.ui.DriveTags
 import com.diegonmarcos.clouddrive.ui.EmptyState
 import com.diegonmarcos.clouddrive.ui.IconCatalog
+import com.diegonmarcos.cloudlib.editorcore.EditorExport
 import com.diegonmarcos.cloudlib.editorcore.EditorHost
 import com.diegonmarcos.cloudlib.editorcore.EditorMode
 import com.diegonmarcos.cloudlib.editorcore.EditorTab
@@ -43,6 +45,7 @@ import java.io.File
 import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
@@ -57,6 +60,7 @@ fun EditorScreen(actions: DriveActions, openInExplorer: (String) -> Unit, modifi
     var tabs by remember { mutableStateOf(store.load()) }
     LaunchedEffect(tabs) { store.save(tabs) }
     val pending by EditorHook.pending.collectAsState()
+    val scope = rememberCoroutineScope()
     LaunchedEffect(pending) {
         pending?.let { tabs = tabs.open(it); EditorHook.pending.value = null }
     }
@@ -64,6 +68,14 @@ fun EditorScreen(actions: DriveActions, openInExplorer: (String) -> Unit, modifi
         tabs = tabs, onTabs = { tabs = it }, modifier = modifier.fillMaxSize().testTag(DriveTags.EDITOR), router = EditorHook.router,
         // the empty state scrolls, so the shell's chrome collapse follows it like on every other page (a viewer owns its own scrolling)
         empty = { Box(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) { EmptyState(IconCatalog.vectorOrDefault("edit_note"), stringResource(R.string.editor_empty_title), stringResource(R.string.editor_empty_hint)) } },
+        // #1607 Export: whole-file Copy to clipboard (read off the main thread), Copy to Download (MediaStore), Copy path.
+        onExport = { action, path ->
+            when (action) {
+                EditorExport.CLIPBOARD -> scope.launch { val text = withContext(Dispatchers.IO) { runCatching { File(path).readText() }.getOrNull() }; if (text != null) actions.copyText(text) }
+                EditorExport.DOWNLOAD -> actions.copyToDownload(listOf(path))
+                EditorExport.PATH -> actions.copyText(path)
+            }
+        },
     ) { tab, route -> EditorBody(tab, route) }
 }
 

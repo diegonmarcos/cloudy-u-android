@@ -75,6 +75,37 @@ private fun BrowserRow(text: String, onClick: () -> Unit) {
     Text(text, Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = DriveMetrics.gapWide), style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
 }
 
+/**
+ * #1607 Row menu ▸ Compress: choose the archive format (.zip or .tar.gz) and whether the archive
+ * lands beside the item or in the device's Downloads. The job itself (progress card, cancel, de-dup
+ * naming, the real zip / tar.gz writers) is FilesController.compress.
+ */
+@Composable
+fun CompressDialog(entry: FileOps.Entry, onDismiss: () -> Unit, onCompress: (tarGz: Boolean, toDownloads: Boolean) -> Unit) {
+    var tarGz by remember { mutableStateOf(false) }
+    var toDownloads by remember { mutableStateOf(false) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.files_compress_title, entry.name), maxLines = 2, overflow = TextOverflow.Ellipsis) },
+        text = {
+            Column {
+                Text(stringResource(R.string.files_compress_format), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Row {
+                    TextButton(onClick = { tarGz = false }) { Text((if (!tarGz) "● " else "   ") + stringResource(R.string.files_compress_zip)) }
+                    TextButton(onClick = { tarGz = true }) { Text((if (tarGz) "● " else "   ") + stringResource(R.string.files_compress_targz)) }
+                }
+                Text(stringResource(R.string.files_compress_destination), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = DriveMetrics.gap))
+                Row {
+                    TextButton(onClick = { toDownloads = false }) { Text((if (!toDownloads) "● " else "   ") + stringResource(R.string.files_compress_beside)) }
+                    TextButton(onClick = { toDownloads = true }) { Text((if (toDownloads) "● " else "   ") + stringResource(R.string.files_compress_downloads)) }
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = { onCompress(tarGz, toDownloads) }) { Text(stringResource(R.string.files_compress_action)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.chrome_cancel)) } },
+    )
+}
+
 /** Row menu ▸ Convert…: one row per registry converter that reads this file's type. */
 @Composable
 fun ConvertDialog(entry: FileOps.Entry, converters: List<Converter>, onDismiss: () -> Unit, onConvert: (Converter) -> Unit) {

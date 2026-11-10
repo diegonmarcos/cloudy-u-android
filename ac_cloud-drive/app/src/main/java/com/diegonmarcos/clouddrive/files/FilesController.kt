@@ -323,6 +323,28 @@ class FilesController(
         }
     }
 
+    /**
+     * #1607 Compress one entry into a .zip or .tar.gz (when [tarGz]) archive, beside the item or
+     * into [downloadsDir] (Download) when given, as a cancellable job with byte progress. The real
+     * writers are [FileOps.archive] / [FileOps.archiveTarGz]; the name is the item's, de-duped in place.
+     */
+    fun compress(entry: FileOps.Entry, tarGz: Boolean, downloadsDir: File?) {
+        val src = entry.localFile ?: return
+        val destDir = (downloadsDir ?: src.parentFile) ?: return
+        if (!destDir.exists()) destDir.mkdirs()
+        val suffix = if (tarGz) ".tar.gz" else ".zip"
+        val base = if (entry.isDirectory) src.name else src.nameWithoutExtension
+        val target = FileOps.uniqueIn(destDir, base + suffix)
+        val title = ctx.getString(R.string.files_job_compress, src.name)
+        startJob(title) { job, set ->
+            val n = if (tarGz) FileOps.archiveTarGz(listOf(src), target, progressOf(job, set)) { job.cancelRequested.get() }
+            else FileOps.archive(listOf(src), target, progressOf(job, set)) { job.cancelRequested.get() }
+            refreshShowing(Location.Local(destDir.absolutePath))
+            src.parentFile?.let { refreshShowing(Location.Local(it.absolutePath)) }
+            true to ctx.getString(R.string.files_job_done, "$title · ${target.name} · $n")
+        }
+    }
+
     private fun mutate(id: PaneId, block: (Location.Local) -> File) {
         val loc = s.pane(id).location as? Location.Local ?: return
         scope.launch {

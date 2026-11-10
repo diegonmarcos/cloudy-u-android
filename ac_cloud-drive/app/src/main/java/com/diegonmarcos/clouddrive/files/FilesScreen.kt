@@ -58,6 +58,7 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -141,6 +142,8 @@ private sealed class FilesDialog {
     /** Row menu ▸ Unzip… (destination picker) and Convert… (registry converters). */
     data class Unzip(val entry: FileOps.Entry) : FilesDialog()
     data class Convert(val entry: FileOps.Entry) : FilesDialog()
+    /** #1607 Row menu ▸ Compress: pick .zip or .tar.gz and whether it lands beside the item or in Downloads. */
+    data class Compress(val entry: FileOps.Entry) : FilesDialog()
     /** The Places sheet: open in [pane], or pick a destination for the active selection. */
     data class Places(val pane: PaneId, val pickDestination: Boolean, val move: Boolean) : FilesDialog()
 }
@@ -267,6 +270,10 @@ fun FilesScreen(controller: FilesController, actions: DriveActions, hasAccess: B
                                 EntryAction.BOOKMARK -> { (e.location as? Location.Local)?.let { controller.prefs.toggleBookmark(it.path) }; null }
                                 EntryAction.CONVERT_PDF -> FilesDialog.ConvertPdf(e)
                                 EntryAction.COPY_PATH -> { copyPath(listOf(e.location)); null }
+                                EntryAction.COPY_TO_DOWNLOADS -> { (e.location as? Location.Local)?.let { actions.copyToDownload(listOf(it.path)) }; null }
+                                EntryAction.COPY_TO_CLIPBOARD -> { (e.location as? Location.Local)?.let { loc -> scope.launch { val text = withContext(Dispatchers.IO) { runCatching { File(loc.path).readText() }.getOrNull() }; if (text != null) { actions.copyText(text); snackbar.showSnackbar(ctx.getString(R.string.files_copied_to_clipboard, e.name)) } } }; null }
+                                EntryAction.COMPRESS -> FilesDialog.Compress(e)
+                                EntryAction.GIT_OPEN -> { (e.location as? Location.Local)?.let { loc -> scope.launch { val root = withContext(Dispatchers.IO) { GitWorkTree.rootOf(loc.path) }; root?.let { actions.openEngine("git", it.absolutePath) } } }; null }
                             } })
                     }
                     when {
@@ -311,6 +318,10 @@ fun FilesScreen(controller: FilesController, actions: DriveActions, hasAccess: B
         is FilesDialog.BulkRename -> BulkRenameDialog(d.files, { dialog = null }) { plan -> controller.applyRenamePlan(plan, d.location); dialog = null }
         is FilesDialog.Unzip -> UnzipDialog(d.entry, remember(d.entry.key) { d.entry.localFile?.let { f -> File(f.parentFile, ArchiveExtractor.defaultFolderName(f.name)).path } ?: "" }, { dialog = null }) { dest -> controller.unzip(d.entry, dest); dialog = null }
         is FilesDialog.Convert -> ConvertDialog(d.entry, ConverterRegistry.default.forName(d.entry.name), { dialog = null }) { c -> controller.convert(d.entry, c); dialog = null }
+        is FilesDialog.Compress -> CompressDialog(d.entry, { dialog = null }) { tarGz, toDownloads ->
+            val downloads = if (toDownloads) @Suppress("DEPRECATION") android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS) else null
+            controller.compress(d.entry, tarGz, downloads); dialog = null
+        }
         is FilesDialog.ConvertPdf -> ConvertPdfDialog(d.entry, { dialog = null }) { target -> controller.convertPdf(d.entry, target); dialog = null }
         is FilesDialog.Duplicates -> DuplicatesDialog(dups, onReveal = { p -> controller.closeDuplicates(); dialog = null; controller.reveal(p) }) { controller.closeDuplicates(); dialog = null }
         is FilesDialog.Places -> PlacesSheet(d, ui, controller, prefs, actions, onDismiss = { dialog = null })
@@ -320,7 +331,56 @@ fun FilesScreen(controller: FilesController, actions: DriveActions, hasAccess: B
 
 // ── one pane ─────────────────────────────────────────────────────────────
 
-private enum class EntryAction { RENAME, PROPERTIES, DELETE, SHARE, OPEN_WITH, EDIT, EDITOR, EXTRACT_HERE, UNZIP, CONVERT, OPEN_OTHER_PANE, BOOKMARK, CONVERT_PDF, COPY_PATH }
+private enum class EntryAction { RENAME, PROPERTIES, DELETE, SHARE, OPEN_WITH, EDIT, EDITOR, EXTRACT_HERE, UNZIP, CONVERT, OPEN_OTHER_PANE, BOOKMARK, CONVERT_PDF, COPY_PATH, COPY_TO_DOWNLOADS, COPY_TO_CLIPBOARD, COMPRESS, GIT_OPEN }
+
+/** #1607 map the grouped data model's action onto the screen's dispatch enum (1:1 by name for the shared ones). */
+private fun EntryMenu.Action.toEntryAction(): EntryAction = when (this) {
+    EntryMenu.Action.OPEN_WITH -> EntryAction.OPEN_WITH
+    EntryMenu.Action.EDIT -> EntryAction.EDIT
+    EntryMenu.Action.EDITOR -> EntryAction.EDITOR
+    EntryMenu.Action.OPEN_OTHER_PANE -> EntryAction.OPEN_OTHER_PANE
+    EntryMenu.Action.UNZIP -> EntryAction.UNZIP
+    EntryMenu.Action.CONVERT -> EntryAction.CONVERT
+    EntryMenu.Action.CONVERT_PDF -> EntryAction.CONVERT_PDF
+    EntryMenu.Action.COPY_PATH -> EntryAction.COPY_PATH
+    EntryMenu.Action.COPY_TO_DOWNLOADS -> EntryAction.COPY_TO_DOWNLOADS
+    EntryMenu.Action.COPY_TO_CLIPBOARD -> EntryAction.COPY_TO_CLIPBOARD
+    EntryMenu.Action.SHARE -> EntryAction.SHARE
+    EntryMenu.Action.COMPRESS -> EntryAction.COMPRESS
+    EntryMenu.Action.RENAME -> EntryAction.RENAME
+    EntryMenu.Action.DELETE -> EntryAction.DELETE
+    EntryMenu.Action.PROPERTIES -> EntryAction.PROPERTIES
+    EntryMenu.Action.BOOKMARK -> EntryAction.BOOKMARK
+    EntryMenu.Action.GIT_OPEN -> EntryAction.GIT_OPEN
+}
+
+/** The dropdown's group-header label; COPY_PATH keeps its declared label, the rest are string resources. */
+private fun EntryMenu.Group.labelRes(): Int = when (this) {
+    EntryMenu.Group.OPEN -> R.string.files_menu_group_open
+    EntryMenu.Group.SHARE -> R.string.files_menu_group_share
+    EntryMenu.Group.META -> R.string.files_menu_group_meta
+    EntryMenu.Group.GIT -> R.string.files_menu_group_git
+}
+
+private fun EntryMenu.Action.labelRes(): Int = when (this) {
+    EntryMenu.Action.OPEN_WITH -> R.string.files_open_with
+    EntryMenu.Action.EDIT -> R.string.files_edit
+    EntryMenu.Action.EDITOR -> R.string.files_open_in_editor
+    EntryMenu.Action.OPEN_OTHER_PANE -> R.string.files_copy_to_other
+    EntryMenu.Action.UNZIP -> R.string.files_unzip
+    EntryMenu.Action.CONVERT -> R.string.files_convert
+    EntryMenu.Action.CONVERT_PDF -> R.string.files_convert_pdf
+    EntryMenu.Action.COPY_PATH -> R.string.files_copy_to // unused: COPY_PATH renders via its declared action
+    EntryMenu.Action.COPY_TO_DOWNLOADS -> R.string.files_copy_to_downloads
+    EntryMenu.Action.COPY_TO_CLIPBOARD -> R.string.files_copy_to_clipboard
+    EntryMenu.Action.SHARE -> R.string.files_share
+    EntryMenu.Action.COMPRESS -> R.string.files_compress
+    EntryMenu.Action.RENAME -> R.string.files_rename
+    EntryMenu.Action.DELETE -> R.string.chrome_delete
+    EntryMenu.Action.PROPERTIES -> R.string.files_properties
+    EntryMenu.Action.BOOKMARK -> R.string.files_bookmark_add
+    EntryMenu.Action.GIT_OPEN -> R.string.files_git_open
+}
 
 private const val COPY_PATH = "copy_path"
 
@@ -614,22 +674,29 @@ private fun EntryRow(
         Box {
             IconButton(onClick = { menu = true }, Modifier.size(DriveMetrics.tap)) { Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.chrome_more), Modifier.size(DriveMetrics.icon)) }
             DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-                @Composable fun item(label: Int, action: EntryAction) = DropdownMenuItem(text = { Text(stringResource(label)) }, onClick = { menu = false; onMenu(action) })
-                // Open with… / Unzip… / Convert… come from RowMenu: the archive types and the converter registry decide, not this screen.
+                // #1607 the dropdown is DATA: EntryMenu groups the actions into Open / Share / Meta / Git and
+                // gates each; this block only renders the sections with their headers. Open with… / Unzip… /
+                // Convert… still come from RowMenu (the archive types and the converter registry decide those).
                 val rowItems = RowMenu.itemsFor(entry.name, entry.isDirectory, local != null, ConverterRegistry.default)
-                if (RowMenu.Item.OPEN_WITH in rowItems) item(R.string.files_open_with, EntryAction.OPEN_WITH)
-                if (local != null && !entry.isDirectory && (entry.mime.startsWith("text/") || entry.extension in Declarations.files.textExtensions)) item(R.string.files_edit, EntryAction.EDIT)
-                if (local != null && !entry.isDirectory && com.diegonmarcos.clouddrive.editor.EditorHook.canOpen(entry.name)) item(R.string.files_open_in_editor, EntryAction.EDITOR)
-                if (RowMenu.Item.UNZIP in rowItems) item(R.string.files_unzip, EntryAction.UNZIP)
-                if (RowMenu.Item.CONVERT in rowItems) item(R.string.files_convert, EntryAction.CONVERT)
-                if (local != null && entry.mime == com.diegonmarcos.clouddrive.PdfConversion.PDF_MIME) item(R.string.files_convert_pdf, EntryAction.CONVERT_PDF)
-                if (entry.isDirectory) item(R.string.files_copy_to_other, EntryAction.OPEN_OTHER_PANE)
-                if (local != null && entry.isDirectory) item(R.string.files_bookmark_add, EntryAction.BOOKMARK)
-                item(R.string.files_properties, EntryAction.PROPERTIES)
-                Declarations.files.rowAction(COPY_PATH)?.let { a -> DropdownMenuItem(text = { Text(a.label) }, leadingIcon = { Icon(IconCatalog.vectorOrDefault(a.icon), null, Modifier.size(DriveMetrics.icon)) }, onClick = { menu = false; onMenu(EntryAction.COPY_PATH) }) }
-                if (local != null && !entry.isDirectory) item(R.string.files_share, EntryAction.SHARE)
-                if (local != null) item(R.string.files_rename, EntryAction.RENAME)
-                if (local != null) item(R.string.chrome_delete, EntryAction.DELETE)
+                val canEdit = local != null && !entry.isDirectory && (entry.mime.startsWith("text/") || entry.extension in Declarations.files.textExtensions)
+                val canEditor = local != null && !entry.isDirectory && com.diegonmarcos.clouddrive.editor.EditorHook.canOpen(entry.name)
+                val isPdf = local != null && entry.mime == com.diegonmarcos.clouddrive.PdfConversion.PDF_MIME
+                // The .git walk-up is a disk read, so it runs off the main thread once the menu opens (default: no Git group).
+                val underGit by produceState(false, menu, entry.key) {
+                    value = if (menu && local != null) withContext(Dispatchers.IO) { GitWorkTree.isUnderGit(local.path) } else false
+                }
+                val sections = EntryMenu.sectionsFor(entry.isDirectory, local != null, rowItems, canEdit, canEditor, isPdf, underGit)
+                sections.forEachIndexed { i, section ->
+                    if (i > 0) HorizontalDivider()
+                    DropdownMenuItem(enabled = false, text = { Text(stringResource(section.group.labelRes()), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary) }, onClick = {})
+                    for (action in section.actions) {
+                        if (action == EntryMenu.Action.COPY_PATH) {
+                            Declarations.files.rowAction(COPY_PATH)?.let { a -> DropdownMenuItem(text = { Text(a.label) }, leadingIcon = { Icon(IconCatalog.vectorOrDefault(a.icon), null, Modifier.size(DriveMetrics.icon)) }, onClick = { menu = false; onMenu(EntryAction.COPY_PATH) }) }
+                        } else {
+                            DropdownMenuItem(text = { Text(stringResource(action.labelRes())) }, onClick = { menu = false; onMenu(action.toEntryAction()) })
+                        }
+                    }
+                }
             }
         }
     }

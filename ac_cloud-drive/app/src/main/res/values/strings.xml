@@ -105,6 +105,25 @@
     <string name="files_open_with">Open with…</string>
     <string name="files_edit">Edit in the editor</string>
     <string name="files_properties">Properties</string>
+    <!-- #1607 per-item dropdown groups and the new actions -->
+    <string name="files_menu_group_open">Open</string>
+    <string name="files_menu_group_share">Share</string>
+    <string name="files_menu_group_meta">Meta</string>
+    <string name="files_menu_group_git">Git</string>
+    <string name="files_copy_to_downloads">Copy to Downloads</string>
+    <string name="files_copy_to_clipboard">Copy contents to clipboard</string>
+    <string name="files_copied_to_clipboard">Copied the contents of %1$s</string>
+    <string name="files_compress">Compress to .zip or .tar.gz…</string>
+    <string name="files_compress_title">Compress %1$s</string>
+    <string name="files_compress_format">Format</string>
+    <string name="files_compress_zip">.zip</string>
+    <string name="files_compress_targz">.tar.gz</string>
+    <string name="files_compress_destination">Destination</string>
+    <string name="files_compress_beside">Beside the item</string>
+    <string name="files_compress_downloads">Downloads</string>
+    <string name="files_compress_action">Compress</string>
+    <string name="files_job_compress">Compressing %1$s</string>
+    <string name="files_git_open">Open in Git (status · log · versions · restore)</string>
     <string name="files_select_all">Select all</string>
     <string name="files_invert">Invert selection</string>
     <string name="files_clear_selection">Clear selection</string>

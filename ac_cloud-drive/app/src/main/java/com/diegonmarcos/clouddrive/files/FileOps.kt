@@ -10,9 +10,12 @@ import java.security.MessageDigest
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.zip.GZIPOutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry
+import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream
 
 /**
  * #579 the typed file-IO core of the Files tab: what the pre-redesign bridge did in
@@ -278,6 +281,54 @@ object FileOps {
             }
         } catch (e: Exception) {
             zipFile.delete()
+            throw if (e is IOException) e else IOException(e.message ?: "the archive did not finish")
+        }
+        return entries
+    }
+
+    /**
+     * Tars [sources] into [tarGzFile] (which must not exist) with gzip compression, through
+     * commons-compress's TAR writer and java.util.zip's GZIP stream — the same TAR/GZIP pair
+     * [ArchiveExtractor] reads back. Entry names, de-duping and the folder walk mirror [archive];
+     * a failure deletes the partial archive. Returns the number of file entries written.
+     */
+    @Throws(IOException::class)
+    fun archiveTarGz(sources: List<File>, tarGzFile: File, progress: Progress, cancelled: () -> Boolean): Int {
+        if (tarGzFile.exists()) throw IOException("${tarGzFile.name} already exists")
+        if (sources.isEmpty()) throw IOException("nothing to archive")
+        val total = totalSize(sources)
+        var done = 0L
+        var entries = 0
+        try {
+            TarArchiveOutputStream(GZIPOutputStream(BufferedOutputStream(FileOutputStream(tarGzFile)))).use { tar ->
+                tar.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX)
+                tar.setBigNumberMode(TarArchiveOutputStream.BIGNUMBER_POSIX)
+                val used = mutableSetOf<String>()
+                fun put(file: File, entryName: String) {
+                    val entry = TarArchiveEntry(file, entryName)
+                    tar.putArchiveEntry(entry)
+                    FileInputStream(file).use { input ->
+                        val buf = ByteArray(BUFFER)
+                        while (true) {
+                            if (cancelled()) throw IOException("cancelled")
+                            val n = input.read(buf); if (n < 0) break
+                            tar.write(buf, 0, n); done += n
+                            progress.report(done, total, file.name)
+                        }
+                    }
+                    tar.closeArchiveEntry(); entries++
+                }
+                fun folder(src: File, prefix: String, depth: Int) {
+                    if (depth <= 0) return
+                    src.listFiles()?.forEach { c -> if (c.isDirectory) folder(c, prefix + c.name + "/", depth - 1) else put(c, prefix + c.name) }
+                }
+                sources.forEach { s ->
+                    if (s.isDirectory) folder(s, uniqueZipName(used, s.name, true), DEPTH_CEILING)
+                    else put(s, uniqueZipName(used, s.name, false))
+                }
+            }
+        } catch (e: Exception) {
+            tarGzFile.delete()
             throw if (e is IOException) e else IOException(e.message ?: "the archive did not finish")
         }
         return entries

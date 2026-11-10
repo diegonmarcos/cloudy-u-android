@@ -25,4 +25,6 @@ interface DriveActions {
     fun openAuthProfile(pkg: String, target: String, extra: String): Boolean
     /** #1289 reveal [path] in Explorer ▸ Local (Drive Files). Default no-op for a host without the Files tab. */
     fun openInFiles(path: String) {}
+    /** #1607 copy each path (a file, or a folder tree) into the device's public Downloads via MediaStore. Default no-op. */
+    fun copyToDownload(paths: List<String>) {}
 }

@@ -3,12 +3,15 @@ package com.diegonmarcos.clouddrive
 import com.diegonmarcos.clouddrive.ui.scrollFadeEnd
 import android.content.ClipData
 import android.content.ClipboardManager
+import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.provider.DocumentsContract
+import android.provider.MediaStore
 import android.webkit.MimeTypeMap
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -382,6 +385,41 @@ class MainActivity : ComponentActivity(), DriveActions {
 
     override fun copyText(text: String) {
         (getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager).setPrimaryClip(ClipData.newPlainText("cloud-drive", text))
+    }
+
+    // #1607 copy files/folders into the public Downloads. API 29+ goes through MediaStore
+    // (RELATIVE_PATH keeps a folder's shape under Download/<name>/…); older devices write to the
+    // public Downloads directory directly. A folder is walked; each file is copied.
+    override fun copyToDownload(paths: List<String>) {
+        kotlin.concurrent.thread(name = "copy-to-download") {
+          runCatching {
+            paths.map(::File).filter { it.exists() }.forEach { src ->
+                if (src.isDirectory) src.walkTopDown().filter { it.isFile }.forEach { f ->
+                    val sub = src.name + (f.parentFile?.absolutePath?.removePrefix(src.absolutePath)?.takeIf { it.isNotEmpty() } ?: "")
+                    writeToDownload(f, sub)
+                } else writeToDownload(src, "")
+            }
+          }
+        }
+    }
+
+    private fun writeToDownload(file: File, subDir: String) {
+        val relDir = (Environment.DIRECTORY_DOWNLOADS + "/" + subDir.trim('/')).trimEnd('/')
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val values = ContentValues().apply {
+                put(MediaStore.Downloads.DISPLAY_NAME, file.name)
+                put(MediaStore.Downloads.MIME_TYPE, mimeOf(file))
+                put(MediaStore.Downloads.RELATIVE_PATH, relDir)
+            }
+            val uri = contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values) ?: return
+            contentResolver.openOutputStream(uri)?.use { out -> file.inputStream().use { it.copyTo(out) } }
+        } else {
+            @Suppress("DEPRECATION")
+            val base = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+            val destDir = if (subDir.isBlank()) base else File(base, subDir.trim('/')).apply { mkdirs() }
+            val dest = com.diegonmarcos.clouddrive.files.FileOps.uniqueIn(destDir, file.name)
+            file.inputStream().use { input -> dest.outputStream().use { input.copyTo(it) } }
+        }
     }
 
     override fun openUrl(url: String) {
