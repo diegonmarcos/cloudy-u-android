@@ -61,6 +61,30 @@
     <uses-permission android:name="com.diegonmarcos.clouddrive.permission.READ_AGENT_RESULTS" />
     <uses-permission android:name="android.permission.READ_LOGS"
         tools:ignore="ProtectedPermissions" />
+    <!-- #1597/#1600 parity additions: the remaining catalogue permissions the SuperApp holds so its whole scope is
+         mirrored here and the webserver drives the same X-Ray Device profile itself. The policy-sensitive ones
+         (SEND_SMS, body sensors, all-time background location) were owner-authorised on the SuperApp and are carried
+         here knowingly. Storage write carries tools:remove so a library's maxSdkVersion cap does not drop it from the
+         merged manifest. Asked and shown by Configs > General > Perms (build.json::perms.needs), never from app code. -->
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
+    <uses-permission android:name="android.permission.WRITE_CONTACTS" />
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
+    <uses-permission android:name="android.permission.WRITE_CALENDAR" />
+    <uses-permission android:name="android.permission.READ_PHONE_NUMBERS" />
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+    <uses-permission android:name="android.permission.BODY_SENSORS" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"
+        tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.SEND_SMS" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        tools:remove="android:maxSdkVersion" tools:ignore="ScopedStorage" />
+    <!-- #1600 privileged-channel / terminal integration (catalogue ids shizuku / termux_run_command): Shizuku's API
+         permission lets this app use the Shizuku service as a privileged shell channel; Termux's RUN_COMMAND lets it
+         run commands in Termux. Both belong to other apps, so they are inert (not-granted, no effect) until that app
+         is installed. -->
+    <uses-permission android:name="moe.shizuku.manager.permission.API_V23" />
+    <uses-permission android:name="com.termux.permission.RUN_COMMAND" />
     <!-- battery_opt: the always-on keep-alive host asks to be exempt from Doze (the SuperApp gets it from a lib). -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 

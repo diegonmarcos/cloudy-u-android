@@ -879,7 +879,19 @@
       "usage_access",
       "dnd_access",
       "battery_opt",
-      "write_secure_settings"
+      "write_secure_settings",
+      "background_location",
+      "bt_advertise",
+      "contacts_write",
+      "calendar_read",
+      "calendar_write",
+      "phone_numbers",
+      "activity_recognition",
+      "body_sensors",
+      "exact_alarm",
+      "send_sms",
+      "storage_write",
+      "keep_unused"
     ],
     "_doc_parity": "PERMISSIONS PARITY with aa_cloud-superapp (owner decision): needs is the SuperApp's perms.needs plus this app's own storage_read. Not carried, because each is bound to a Kotlin service class the SuperApp owns and this Rust-only app may not add (test-c3-webserver-no-kotlin.sh): notification_listener, accessibility, device_admin, vpn. write_secure_settings supersedes #1515, which kept it on the SuperApp alone; it is pm-granted per app, and the SuperApp keeps its grant. test/test-c3-webserver-perms-parity.sh holds the manifest and this list to the SuperApp's.",
     "parity": {

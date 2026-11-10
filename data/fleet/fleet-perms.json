@@ -116,7 +116,19 @@
     "usage_access",
     "dnd_access",
     "battery_opt",
-    "write_secure_settings"
+    "write_secure_settings",
+    "background_location",
+    "bt_advertise",
+    "contacts_write",
+    "calendar_read",
+    "calendar_write",
+    "phone_numbers",
+    "activity_recognition",
+    "body_sensors",
+    "exact_alarm",
+    "send_sms",
+    "storage_write",
+    "keep_unused"
    ],
    "helpers": []
   },
