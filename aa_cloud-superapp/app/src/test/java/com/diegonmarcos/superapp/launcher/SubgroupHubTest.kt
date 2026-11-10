@@ -31,16 +31,26 @@ class SubgroupHubTest : KitPageHarness() {
 
     @Test
     fun `H1 the Configs nav is the declared tree`() {
+        // #1610: the flat Setup/Agents/Cloudy C3 tree is restructured into Device / Setup groups.
         val runs = config.pages.filter { !it.isAction }.map { it.group to it.subgroup }.distinct()
         assertEquals(listOf(
-            "Setup" to "Connect", "Setup" to "Apps", "Setup" to "Launcher", "Setup" to "Network", "Setup" to "Watchtower - Obsv",
-            "Agents" to "", "Cloudy C3" to ""), runs)
-        assertEquals(listOf("C3", "Peer Control"), config.pages.filter { it.group == "Cloudy C3" }.map { it.label })
-        assertEquals(listOf("agents-watchdog"), config.pages.filter { it.group == "Agents" }.map { it.id })
-        assertEquals(listOf("controls", "onehand", "app-folders", "notify", "launcher-sep-1", "perms", "logcat", "xray-app", "app-about"),
-            sub("Launcher").map { it.id })
-        assertEquals(listOf("xray", "logcat-fleet"), sub("Watchtower - Obsv").map { it.id })
-        assertEquals(listOf("X-Ray Device", "Logcat Fleet"), sub("Watchtower - Obsv").map { it.label })
+            "Device" to "UI", "Device" to "Notification Center", "Device" to "Network", "Device" to "Configs",
+            "Setup" to "Connect", "Setup" to "Apps", "Setup" to "Configs"), runs)
+        // Connect carries Account, Cloudy C3 and Peer Control.
+        assertEquals(listOf("Account", "Cloudy C3", "Peer Control"), sub("Connect").map { it.label })
+        // Agents is the in-app agents-watchdog hub, declared in the Device ▸ Configs subgroup.
+        assertEquals(listOf("agents-watchdog"), config.pages.filter { it.hubSections.isNotEmpty() }.map { it.id })
+        assertEquals("Device" to "Configs", config.pages.first { it.id == "agents-watchdog" }.let { it.group to it.subgroup })
+        // Watchdog is the extapp:c3-watchdog tile under Setup ▸ Configs.
+        assertEquals("extapp:c3-watchdog", config.pages.first { it.id == "c3-watchdog" }.action)
+        assertEquals("Setup" to "Configs", config.pages.first { it.id == "c3-watchdog" }.let { it.group to it.subgroup })
+        // Device groups as declared: UI, then the Configs column (incl. the moved X-Ray/Logcat Fleet).
+        assertEquals(listOf("controls", "onehand", "app-folders"), sub("UI").map { it.id })
+        assertEquals(listOf("agents-watchdog", "perms", "logcat", "xray-app", "app-about", "launcher-sep-1", "xray", "logcat-fleet"),
+            sub("Configs").filter { it.group == "Device" }.map { it.id })
+        assertEquals(listOf("c3-watchdog"), sub("Configs").filter { it.group == "Setup" }.map { it.id })
+        assertEquals(listOf("X-Ray Device", "Logcat Fleet"),
+            sub("Configs").filter { it.id == "xray" || it.id == "logcat-fleet" }.map { it.label })
         assertTrue("Bluetooth is a Network page", sub("Network").any { it.id == "bluetooth" })
         assertEquals("firewall", sub("Network").first().id)
         assertTrue("Watchdog is no Network item any more", sub("Network").none { it.id == "agents-watchdog" })
@@ -48,9 +58,9 @@ class SubgroupHubTest : KitPageHarness() {
 
     @Test
     fun `H2 Watchdog shows Network and Watchtower - Obsv`() {
-        assertEquals(listOf("Network", "Watchtower - Obsv"), hub("agents-watchdog").map { it.title })
+        // #1610: agents-watchdog now hubs the Network subgroup only.
+        assertEquals(listOf("Network"), hub("agents-watchdog").map { it.title })
         assertEquals(sub("Network").map { it.id }, hub("agents-watchdog")[0].tiles.map { it.id })
-        assertEquals(sub("Watchtower - Obsv").map { it.id }, hub("agents-watchdog")[1].tiles.map { it.id })
         assertTrue(hub("agents-watchdog")[0].tiles.map { it.id }.containsAll(listOf("firewall", "dns")))
     }
 
@@ -59,13 +69,11 @@ class SubgroupHubTest : KitPageHarness() {
         val by = hub("agents-watchdog").flatMap { it.tiles }.associateBy { it.id }
         assertEquals("page:config/firewall", by.getValue("firewall").target)
         assertEquals("page:config/dns", by.getValue("dns").target)
-        assertEquals("page:config/xray", by.getValue("xray").target)
-        assertEquals("page:config/logcat-fleet", by.getValue("logcat-fleet").target)
         assertEquals("page:config/bluetooth", by.getValue("bluetooth").target)
         assertEquals("action:open_webserver", by.getValue("webserver").target)
         assertEquals("action:open_apps_access", by.getValue("apps-access").target)
         assertEquals("section:wg", by.getValue("wg").target)
-        for (p in sub("Network") + sub("Watchtower - Obsv")) assertEquals(p.id, Sections.hubTarget("config", p), by.getValue(p.id).target)
+        for (p in sub("Network")) assertEquals(p.id, Sections.hubTarget("config", p), by.getValue(p.id).target)
     }
 
     @Test

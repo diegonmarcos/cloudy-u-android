@@ -5376,7 +5376,7 @@
             "_doc": "#1610 Configs ▸ Setup ▸ Configs ▸ Watchdog — a thin launch tile for the C3-Watchdog APK (com.diegonmarcos.watchdog), the same extapp:c3-watchdog the C3 strip's Watchdog tab dispatches; opens the app or offers the install via ui.external_apps[id=c3-watchdog]. Distinct from the in-app Agents hub (agents-watchdog, Device ▸ Configs). The id is c3-watchdog, not watchdog, because page:config/watchdog is already a page_alias of agents-watchdog.",
             "id": "c3-watchdog",
             "label": "Watchdog",
-            "icon": "ic_p_watchdog",
+            "icon": "ic_watchtower",
             "action": "extapp:c3-watchdog",
             "group": "Setup",
             "subgroup": "Configs"
@@ -5601,7 +5601,7 @@
             "_doc": "#1610 Actions ▸ Sync Clipboard — PLACEHOLDER pending its own ticket. No handler yet; dispatchHomeAction's else-branch shows a snackbar. Part of the single shared Actions row.",
             "id": "sync-clipboard",
             "label": "Sync Clipboard",
-            "icon": "ic_devices",
+            "icon": "ic_copy",
             "action": "action:sync_clipboard",
             "is_action": true
           },

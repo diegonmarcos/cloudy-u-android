@@ -82,12 +82,12 @@ class XrayExportTest {
             is JSONArray -> (0 until o.length()).asSequence().mapNotNull { find(o.get(it)) }.firstOrNull()
             else -> null
         }
-        // The Watchtower - Obsv subgroup (was Observability; every page declared there, visible and hidden) plus the four pages
-        // relocated to Setup > Launcher (Perms, Logcat, X-Ray App, About), in declaration order.
+        // #1610: the Observability pages now live in the Device > Configs column — every page declared there, visible and
+        // hidden, except the Agents hub and the layout separator, in declaration order.
         val pages = find(root)!!.getJSONArray("pages")
-        val relocated = setOf("perms", "logcat", "xray-app", "app-about")
         val declared = (0 until pages.length()).map { pages.getJSONObject(it) }
-            .filter { it.optString("group") == "Setup" && (it.optString("subgroup") == "Watchtower - Obsv" || it.getString("id") in relocated) }
+            .filter { it.optString("group") == "Device" && it.optString("subgroup") == "Configs" &&
+                !it.optBoolean("separator", false) && !it.has("hub_sections") }
             .map { it.getString("id") }
         assertEquals(declared, XrayTree.PAGES)
         val r = build()
