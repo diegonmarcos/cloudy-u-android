@@ -194,7 +194,7 @@
     "default_section": "cb",
     "nav_ui": {"mode": "classic", "scroll_hide": true},
     "configs_ui": ["nav_ui"],
-    "redirects": [{"from": "pm_a2_low", "tab": "pm", "to": "home", "note": "#1478 A2 Low Risk dropped (identical to DM E30B70): its deep links open the PM Homepage"}, {"from": "market_monitor", "tab": "fi", "to": "home", "note": "#1399 FI Market Monitor removed: its deep links open the FI Homepage"}, {"from": "ex", "tab": "hg", "to": "home", "note": "The EX tab became HG (Hedging): the old EX section deep link opens the HG Homepage"}, {"from": "ex-home", "tab": "hg", "to": "home", "note": "The EX Homepage became the HG Homepage"}, {"from": "cm", "tab": "eq", "to": "commodity-prices", "note": "The CM section was folded into Commodity Prices (EQ): its deep links open that page"}, {"from": "ex-commodities", "tab": "eq", "to": "commodity-prices", "note": "The old EX Commodities page moved to EQ: Commodity Prices"}, {"from": "pm-commodities", "tab": "eq", "to": "commodity-prices", "note": "The PM Commodities page was removed: commodity prices live in EQ Commodity Prices"}, {"from": "pm_commodities", "tab": "eq", "to": "commodity-prices", "note": "The PM Commodities page was removed: commodity prices live in EQ Commodity Prices"}, {"from": "pm-vol", "tab": "pm", "to": "pm-portfolios", "note": "PM Vol became Portfolios"}, {"from": "pm-profiles", "tab": "pm", "to": "pm-portfolios", "note": "PM Profiles became Portfolios (US Cyclicals)"}],
+    "redirects": [{"from": "pm_a2_low", "tab": "pm", "to": "home", "note": "#1478 A2 Low Risk dropped (identical to DM E30B70): its deep links open the PM Homepage"}, {"from": "market_monitor", "tab": "fi", "to": "home", "note": "#1399 FI Market Monitor removed: its deep links open the FI Homepage"}, {"from": "ex", "tab": "hg", "to": "home", "note": "The EX tab became HG (Hedging): the old EX section deep link opens the HG Homepage"}, {"from": "ex-home", "tab": "hg", "to": "home", "note": "The EX Homepage became the HG Homepage"}, {"from": "cm", "tab": "eq", "to": "commodity-prices", "note": "The CM section was folded into Commodity Prices (EQ): its deep links open that page"}, {"from": "ex-commodities", "tab": "eq", "to": "commodity-prices", "note": "The old EX Commodities page moved to EQ: Commodity Prices"}, {"from": "pm-commodities", "tab": "eq", "to": "commodity-prices", "note": "The PM Commodities page was removed: commodity prices live in EQ Commodity Prices"}, {"from": "pm_commodities", "tab": "eq", "to": "commodity-prices", "note": "The PM Commodities page was removed: commodity prices live in EQ Commodity Prices"}, {"from": "pm-vol", "tab": "pm", "to": "pm-portfolios", "note": "PM Vol became Portfolios"}, {"from": "pm-profiles", "tab": "pm", "to": "pm-portfolios", "note": "PM Profiles became Portfolios (US Cyclicals)"}, {"from": "eq_dm_us", "tab": "eq", "to": "world-equity-indices", "note": "#1612 DM Equity (US) merged into World Indices Equity: its deep links open that page"}, {"from": "eq_em", "tab": "eq", "to": "world-equity-indices", "note": "#1612 EM Equity merged into World Indices Equity: its deep links open that page"}],
     "sections": [
       {
         "id": "cb",
@@ -232,16 +232,14 @@
         "nav_mode": "horizontal_one_row",
         "pages": [
           {"id": "eq-home", "label": "Home", "icon": "home"},
-          {"id": "world-equity-indices", "label": "World Equity Indices", "icon": "public"},
-          {"id": "eq-dm-us", "label": "DM Equity (US)", "icon": "trending_up"},
-          {"id": "eq-em", "label": "EM Equity", "icon": "explore"},
-          {"id": "equity-quote", "label": "Quotes & Charts", "icon": "chart"},
+          {"id": "world-equity-indices", "label": "World Indices Equity", "icon": "public"},
+          {"id": "commodities", "label": "Commodities", "icon": "inventory_2"},
+          {"id": "commodity-prices", "label": "Commodity Prices", "icon": "inventory_2"},
+          {"id": "fx-rates", "label": "Exchange Rates", "icon": "swap_horiz"},
           {"id": "equity-fundamentals", "label": "Fundamentals", "icon": "description"},
           {"id": "earnings-calendar", "label": "Earnings Calendar", "icon": "calendar_month"},
-          {"id": "watchlist", "label": "Watchlist & Alerts", "icon": "bookmark"},
-          {"id": "fx-rates", "label": "Exchange Rates", "icon": "swap_horiz"},
-          {"id": "commodity-prices", "label": "Commodity Prices", "icon": "inventory_2"},
-          {"id": "commodities", "label": "Commodities", "icon": "inventory_2"}
+          {"id": "equity-quote", "label": "Quotes", "icon": "chart"},
+          {"id": "watchlist", "label": "Watchlist", "icon": "bookmark"}
         ]
       },
       {
@@ -387,28 +385,38 @@
       ],
       "eq": [
         {
+          "kind": "section_title",
+          "title": "Performance"
+        },
+        {
           "kind": "dashboard",
-          "title": "World Equity Indices",
-          "subtitle": "Major equity index levels and moves worldwide",
+          "title": "World Indices Equity",
+          "subtitle": "Major equity index levels and moves worldwide, with DM (US sectors, strategies, mega-caps) and EM (sectors, USD sovereigns) below; tap an index for its holdings treemap",
           "dashboard": "world_equity_indices"
         },
         {
           "kind": "dashboard",
-          "title": "DM Equity (US)",
-          "subtitle": "US sectors and strategies (growth, value, momentum, quality, min-vol, small-cap, dividend, equal-weight)",
-          "dashboard": "eq_dm_us"
+          "title": "Commodities",
+          "subtitle": "Energy, precious metals, industrial metals and minerals, agriculture, Bitcoin and Ether (WTD to 10Y)",
+          "dashboard": "commodities"
         },
         {
-          "kind": "dashboard",
-          "title": "EM Equity",
-          "subtitle": "EM sectors and EM government bonds in USD (1y, 10y, 25y)",
-          "dashboard": "eq_em"
+          "kind": "quote_board",
+          "page": "commodity-prices",
+          "view": "commodities",
+          "title": "Commodity Prices",
+          "subtitle": "Energy, metals and agriculture front-month prices: last, change, 1W, 1M, YTD, unit and currency"
         },
         {
-          "kind": "dashboard",
-          "title": "Quotes & Charts",
-          "subtitle": "Delayed quotes and daily charts for stocks, ETFs and indices",
-          "dashboard": "equity_quote"
+          "kind": "quote_board",
+          "page": "fx-rates",
+          "view": "fx_rates",
+          "title": "Exchange Rates",
+          "subtitle": "Cross-rate table of the major and EM currencies: spot, change, 1W, 1M and YTD, and the base x quote matrix"
+        },
+        {
+          "kind": "section_title",
+          "title": "Data"
         },
         {
           "kind": "dashboard",
@@ -424,29 +432,15 @@
         },
         {
           "kind": "dashboard",
-          "title": "Watchlist & Alerts",
-          "subtitle": "Your symbols, price alerts and event alerts, kept on this device",
-          "dashboard": "watchlist"
-        },
-        {
-          "kind": "quote_board",
-          "page": "fx-rates",
-          "view": "fx_rates",
-          "title": "Exchange Rates",
-          "subtitle": "Cross-rate table of the major and EM currencies: spot, change, 1W, 1M and YTD, and the base x quote matrix"
-        },
-        {
-          "kind": "quote_board",
-          "page": "commodity-prices",
-          "view": "commodities",
-          "title": "Commodity Prices",
-          "subtitle": "Energy, metals and agriculture front-month prices: last, change, 1W, 1M, YTD, unit and currency"
+          "title": "Quotes",
+          "subtitle": "Delayed quotes and daily charts for stocks, ETFs and indices",
+          "dashboard": "equity_quote"
         },
         {
           "kind": "dashboard",
-          "title": "Commodities",
-          "subtitle": "Energy, precious metals, industrial metals and minerals, agriculture, Bitcoin and Ether (WTD to 10Y)",
-          "dashboard": "commodities"
+          "title": "Watchlist",
+          "subtitle": "Your symbols, price alerts and event alerts, kept on this device",
+          "dashboard": "watchlist"
         }
       ],
       "nw": [

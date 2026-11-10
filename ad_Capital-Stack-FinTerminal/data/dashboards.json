@@ -1587,351 +1587,8 @@
       ]
     },
     {
-      "id": "eq_dm_us",
-      "entry": "DM Equity (US)",
-      "tab": "eq",
-      "panels": [
-        {
-          "id": "sectors",
-          "title": "US sectors (SPDR ETFs, total return USD)",
-          "source": "cboe",
-          "view": "table",
-          "derive": "performance",
-          "fetch": {
-            "provider": "cboe_quotes",
-            "path": "/charts/historical/{each}.json",
-            "last": 100000,
-            "each": [
-              "SPY",
-              "XLK",
-              "XLF",
-              "XLV",
-              "XLY",
-              "XLP",
-              "XLE",
-              "XLI",
-              "XLB",
-              "XLU",
-              "XLRE",
-              "XLC"
-            ],
-            "labels": {
-              "SPY": "S&P 500 (SPY)",
-              "XLK": "Technology (XLK)",
-              "XLF": "Financials (XLF)",
-              "XLV": "Health Care (XLV)",
-              "XLY": "Consumer Discretionary (XLY)",
-              "XLP": "Consumer Staples (XLP)",
-              "XLE": "Energy (XLE)",
-              "XLI": "Industrials (XLI)",
-              "XLB": "Materials (XLB)",
-              "XLU": "Utilities (XLU)",
-              "XLRE": "Real Estate (XLRE)",
-              "XLC": "Communication Services (XLC)"
-            },
-            "primary": {
-              "source": "cloud_fincept",
-              "api": "/v1/history",
-              "params": {
-                "symbol": "{each}",
-                "interval": "1d",
-                "range": "max"
-              },
-              "parse": "finterm_v1"
-            }
-          },
-          "columns": [
-            "Name",
-            "Last",
-            "WTD",
-            "MTD",
-            "YTD",
-            "1M",
-            "3M",
-            "1Y",
-            "3Y",
-            "10Y"
-          ],
-          "unit": "%"
-        },
-        {
-          "id": "strategies",
-          "title": "US strategies / factors (ETFs, USD)",
-          "source": "cboe",
-          "view": "table",
-          "derive": "performance",
-          "fetch": {
-            "provider": "cboe_quotes",
-            "path": "/charts/historical/{each}.json",
-            "last": 100000,
-            "each": [
-              "SPY",
-              "IWF",
-              "IWD",
-              "MTUM",
-              "QUAL",
-              "USMV",
-              "IWM",
-              "SCHD",
-              "RSP"
-            ],
-            "labels": {
-              "SPY": "S&P 500 (SPY)",
-              "IWF": "Growth (IWF)",
-              "IWD": "Value (IWD)",
-              "MTUM": "Momentum (MTUM)",
-              "QUAL": "Quality (QUAL)",
-              "USMV": "Min-Vol (USMV)",
-              "IWM": "Small-cap (IWM)",
-              "SCHD": "Dividend (SCHD)",
-              "RSP": "Equal-weight (RSP)"
-            },
-            "primary": {
-              "source": "cloud_fincept",
-              "api": "/v1/history",
-              "params": {
-                "symbol": "{each}",
-                "interval": "1d",
-                "range": "max"
-              },
-              "parse": "finterm_v1"
-            }
-          },
-          "columns": [
-            "Name",
-            "Last",
-            "WTD",
-            "MTD",
-            "YTD",
-            "1M",
-            "3M",
-            "1Y",
-            "3Y",
-            "10Y"
-          ],
-          "unit": "%"
-        },
-        {
-          "id": "screener",
-          "title": "Equity screener: 12 US mega-caps ranked by performance (price return, USD; tap a column to sort)",
-          "source": "cboe",
-          "view": "table",
-          "derive": "performance",
-          "fetch": {
-            "provider": "cboe_quotes",
-            "path": "/charts/historical/{each}.json",
-            "last": 100000,
-            "each": [
-              "AAPL",
-              "MSFT",
-              "NVDA",
-              "AMZN",
-              "GOOGL",
-              "META",
-              "BRK.B",
-              "JPM",
-              "XOM",
-              "UNH",
-              "LLY",
-              "TSLA"
-            ],
-            "labels": {
-              "AAPL": "Apple (AAPL)",
-              "MSFT": "Microsoft (MSFT)",
-              "NVDA": "Nvidia (NVDA)",
-              "AMZN": "Amazon (AMZN)",
-              "GOOGL": "Alphabet (GOOGL)",
-              "META": "Meta (META)",
-              "BRK.B": "Berkshire B (BRK.B)",
-              "JPM": "JPMorgan (JPM)",
-              "XOM": "Exxon (XOM)",
-              "UNH": "UnitedHealth (UNH)",
-              "LLY": "Eli Lilly (LLY)",
-              "TSLA": "Tesla (TSLA)"
-            },
-            "primary": {
-              "source": "cloud_fincept",
-              "api": "/v1/history",
-              "params": {
-                "symbol": "{each}",
-                "interval": "1d",
-                "range": "max"
-              },
-              "parse": "finterm_v1"
-            }
-          },
-          "columns": [
-            "Name",
-            "Last",
-            "WTD",
-            "MTD",
-            "YTD",
-            "1M",
-            "3M",
-            "1Y",
-            "3Y",
-            "10Y"
-          ],
-          "unit": "%"
-        }
-      ]
-    },
-    {
-      "id": "eq_em",
-      "entry": "EM Equity",
-      "tab": "eq",
-      "panels": [
-        {
-          "id": "sectors",
-          "title": "EM sectors (MSCI EM sector indices, USD)",
-          "source": "cboe",
-          "view": "table",
-          "derive": "performance",
-          "fetch": {
-            "provider": "cboe_quotes",
-            "path": "/charts/historical/{each}.json",
-            "last": 100000,
-            "each": [
-              "EEM",
-              "EMQQ",
-              "EMFN",
-              "EMIT",
-              "EMHC",
-              "EMCS",
-              "EMCD",
-              "EMEN",
-              "EMIN",
-              "EMMT",
-              "EMUT",
-              "EMRE",
-              "EMCM"
-            ],
-            "labels": {
-              "EEM": "MSCI EM (EEM)",
-              "EMQQ": "EM Internet & E-commerce (EMQQ)",
-              "EMFN": "EM Financials",
-              "EMIT": "EM Information Technology",
-              "EMHC": "EM Health Care",
-              "EMCS": "EM Consumer Staples",
-              "EMCD": "EM Consumer Discretionary",
-              "EMEN": "EM Energy",
-              "EMIN": "EM Industrials",
-              "EMMT": "EM Materials",
-              "EMUT": "EM Utilities",
-              "EMRE": "EM Real Estate",
-              "EMCM": "EM Communication Services"
-            },
-            "symbol_map": {
-              "EEM": "EEM",
-              "EMQQ": "EMQQ"
-            },
-            "primary": {
-              "source": "cloud_fincept",
-              "api": "/v1/history",
-              "params": {
-                "symbol": "{each}",
-                "interval": "1d",
-                "range": "max"
-              },
-              "parse": "finterm_v1",
-              "symbol_map": {
-                "EEM": "EEM",
-                "EMQQ": "EMQQ",
-                "EMFN": "MSCIEM:FN",
-                "EMIT": "MSCIEM:IT",
-                "EMHC": "MSCIEM:HC",
-                "EMCS": "MSCIEM:CS",
-                "EMCD": "MSCIEM:CD",
-                "EMEN": "MSCIEM:EN",
-                "EMIN": "MSCIEM:IN",
-                "EMMT": "MSCIEM:MT",
-                "EMUT": "MSCIEM:UT",
-                "EMRE": "MSCIEM:RE",
-                "EMCM": "MSCIEM:CM"
-              }
-            }
-          },
-          "columns": [
-            "Name",
-            "Last",
-            "WTD",
-            "MTD",
-            "YTD",
-            "1M",
-            "3M",
-            "1Y",
-            "3Y",
-            "10Y"
-          ],
-          "unit": "%"
-        },
-        {
-          "id": "bonds",
-          "title": "EM government bonds in USD (total return)",
-          "source": "cboe",
-          "view": "table",
-          "derive": "performance",
-          "fetch": {
-            "provider": "cboe_quotes",
-            "path": "/charts/historical/{each}.json",
-            "last": 100000,
-            "each": [
-              "EMB",
-              "PCY",
-              "EMBOND:BR",
-              "EMBOND:MX",
-              "EMBOND:ID",
-              "EMBOND:TR",
-              "EMBOND:SA",
-              "EMBOND:PL",
-              "EMBOND:IN",
-              "EMBOND:CN",
-              "EMBOND:AR",
-              "EMBOND:ZA"
-            ],
-            "labels": {
-              "EMB": "EM USD sovereigns (EMB)",
-              "PCY": "EM USD sovereigns (PCY)",
-              "EMBOND:BR": "Brazil USD sovereign",
-              "EMBOND:MX": "Mexico USD sovereign",
-              "EMBOND:ID": "Indonesia USD sovereign",
-              "EMBOND:TR": "Turkey USD sovereign",
-              "EMBOND:SA": "Saudi Arabia USD sovereign",
-              "EMBOND:PL": "Poland USD sovereign",
-              "EMBOND:IN": "India USD sovereign",
-              "EMBOND:CN": "China USD sovereign",
-              "EMBOND:AR": "Argentina USD sovereign",
-              "EMBOND:ZA": "South Africa USD sovereign"
-            },
-            "symbol_map": {
-              "EMB": "EMB",
-              "PCY": "PCY"
-            },
-            "primary": {
-              "source": "cloud_fincept",
-              "api": "/v1/history",
-              "params": {
-                "symbol": "{each}",
-                "interval": "1d",
-                "range": "max"
-              },
-              "parse": "finterm_v1"
-            }
-          },
-          "columns": [
-            "Name",
-            "Last",
-            "1Y",
-            "10Y",
-            "25Y"
-          ],
-          "unit": "%"
-        }
-      ]
-    },
-    {
       "id": "world_equity_indices",
-      "entry": "World Equity Indices",
+      "entry": "World Indices Equity",
       "tab": "eq",
       "panels": [
         {
@@ -2118,6 +1775,335 @@
             "1Y",
             "3Y",
             "10Y"
+          ],
+          "unit": "%"
+        },
+        {
+          "id": "dm_sectors",
+          "title": "US sectors (SPDR ETFs, total return USD)",
+          "source": "cboe",
+          "view": "table",
+          "derive": "performance",
+          "fetch": {
+            "provider": "cboe_quotes",
+            "path": "/charts/historical/{each}.json",
+            "last": 100000,
+            "each": [
+              "SPY",
+              "XLK",
+              "XLF",
+              "XLV",
+              "XLY",
+              "XLP",
+              "XLE",
+              "XLI",
+              "XLB",
+              "XLU",
+              "XLRE",
+              "XLC"
+            ],
+            "labels": {
+              "SPY": "S&P 500 (SPY)",
+              "XLK": "Technology (XLK)",
+              "XLF": "Financials (XLF)",
+              "XLV": "Health Care (XLV)",
+              "XLY": "Consumer Discretionary (XLY)",
+              "XLP": "Consumer Staples (XLP)",
+              "XLE": "Energy (XLE)",
+              "XLI": "Industrials (XLI)",
+              "XLB": "Materials (XLB)",
+              "XLU": "Utilities (XLU)",
+              "XLRE": "Real Estate (XLRE)",
+              "XLC": "Communication Services (XLC)"
+            },
+            "primary": {
+              "source": "cloud_fincept",
+              "api": "/v1/history",
+              "params": {
+                "symbol": "{each}",
+                "interval": "1d",
+                "range": "max"
+              },
+              "parse": "finterm_v1"
+            }
+          },
+          "columns": [
+            "Name",
+            "Last",
+            "WTD",
+            "MTD",
+            "YTD",
+            "1M",
+            "3M",
+            "1Y",
+            "3Y",
+            "10Y"
+          ],
+          "unit": "%"
+        },
+        {
+          "id": "dm_strategies",
+          "title": "US strategies / factors (ETFs, USD)",
+          "source": "cboe",
+          "view": "table",
+          "derive": "performance",
+          "fetch": {
+            "provider": "cboe_quotes",
+            "path": "/charts/historical/{each}.json",
+            "last": 100000,
+            "each": [
+              "SPY",
+              "IWF",
+              "IWD",
+              "MTUM",
+              "QUAL",
+              "USMV",
+              "IWM",
+              "SCHD",
+              "RSP"
+            ],
+            "labels": {
+              "SPY": "S&P 500 (SPY)",
+              "IWF": "Growth (IWF)",
+              "IWD": "Value (IWD)",
+              "MTUM": "Momentum (MTUM)",
+              "QUAL": "Quality (QUAL)",
+              "USMV": "Min-Vol (USMV)",
+              "IWM": "Small-cap (IWM)",
+              "SCHD": "Dividend (SCHD)",
+              "RSP": "Equal-weight (RSP)"
+            },
+            "primary": {
+              "source": "cloud_fincept",
+              "api": "/v1/history",
+              "params": {
+                "symbol": "{each}",
+                "interval": "1d",
+                "range": "max"
+              },
+              "parse": "finterm_v1"
+            }
+          },
+          "columns": [
+            "Name",
+            "Last",
+            "WTD",
+            "MTD",
+            "YTD",
+            "1M",
+            "3M",
+            "1Y",
+            "3Y",
+            "10Y"
+          ],
+          "unit": "%"
+        },
+        {
+          "id": "dm_screener",
+          "title": "Equity screener: 12 US mega-caps ranked by performance (price return, USD; tap a column to sort)",
+          "source": "cboe",
+          "view": "table",
+          "derive": "performance",
+          "fetch": {
+            "provider": "cboe_quotes",
+            "path": "/charts/historical/{each}.json",
+            "last": 100000,
+            "each": [
+              "AAPL",
+              "MSFT",
+              "NVDA",
+              "AMZN",
+              "GOOGL",
+              "META",
+              "BRK.B",
+              "JPM",
+              "XOM",
+              "UNH",
+              "LLY",
+              "TSLA"
+            ],
+            "labels": {
+              "AAPL": "Apple (AAPL)",
+              "MSFT": "Microsoft (MSFT)",
+              "NVDA": "Nvidia (NVDA)",
+              "AMZN": "Amazon (AMZN)",
+              "GOOGL": "Alphabet (GOOGL)",
+              "META": "Meta (META)",
+              "BRK.B": "Berkshire B (BRK.B)",
+              "JPM": "JPMorgan (JPM)",
+              "XOM": "Exxon (XOM)",
+              "UNH": "UnitedHealth (UNH)",
+              "LLY": "Eli Lilly (LLY)",
+              "TSLA": "Tesla (TSLA)"
+            },
+            "primary": {
+              "source": "cloud_fincept",
+              "api": "/v1/history",
+              "params": {
+                "symbol": "{each}",
+                "interval": "1d",
+                "range": "max"
+              },
+              "parse": "finterm_v1"
+            }
+          },
+          "columns": [
+            "Name",
+            "Last",
+            "WTD",
+            "MTD",
+            "YTD",
+            "1M",
+            "3M",
+            "1Y",
+            "3Y",
+            "10Y"
+          ],
+          "unit": "%"
+        },
+        {
+          "id": "em_sectors",
+          "title": "EM sectors (MSCI EM sector indices, USD)",
+          "source": "cboe",
+          "view": "table",
+          "derive": "performance",
+          "fetch": {
+            "provider": "cboe_quotes",
+            "path": "/charts/historical/{each}.json",
+            "last": 100000,
+            "each": [
+              "EEM",
+              "EMQQ",
+              "EMFN",
+              "EMIT",
+              "EMHC",
+              "EMCS",
+              "EMCD",
+              "EMEN",
+              "EMIN",
+              "EMMT",
+              "EMUT",
+              "EMRE",
+              "EMCM"
+            ],
+            "labels": {
+              "EEM": "MSCI EM (EEM)",
+              "EMQQ": "EM Internet & E-commerce (EMQQ)",
+              "EMFN": "EM Financials",
+              "EMIT": "EM Information Technology",
+              "EMHC": "EM Health Care",
+              "EMCS": "EM Consumer Staples",
+              "EMCD": "EM Consumer Discretionary",
+              "EMEN": "EM Energy",
+              "EMIN": "EM Industrials",
+              "EMMT": "EM Materials",
+              "EMUT": "EM Utilities",
+              "EMRE": "EM Real Estate",
+              "EMCM": "EM Communication Services"
+            },
+            "symbol_map": {
+              "EEM": "EEM",
+              "EMQQ": "EMQQ"
+            },
+            "primary": {
+              "source": "cloud_fincept",
+              "api": "/v1/history",
+              "params": {
+                "symbol": "{each}",
+                "interval": "1d",
+                "range": "max"
+              },
+              "parse": "finterm_v1",
+              "symbol_map": {
+                "EEM": "EEM",
+                "EMQQ": "EMQQ",
+                "EMFN": "MSCIEM:FN",
+                "EMIT": "MSCIEM:IT",
+                "EMHC": "MSCIEM:HC",
+                "EMCS": "MSCIEM:CS",
+                "EMCD": "MSCIEM:CD",
+                "EMEN": "MSCIEM:EN",
+                "EMIN": "MSCIEM:IN",
+                "EMMT": "MSCIEM:MT",
+                "EMUT": "MSCIEM:UT",
+                "EMRE": "MSCIEM:RE",
+                "EMCM": "MSCIEM:CM"
+              }
+            }
+          },
+          "columns": [
+            "Name",
+            "Last",
+            "WTD",
+            "MTD",
+            "YTD",
+            "1M",
+            "3M",
+            "1Y",
+            "3Y",
+            "10Y"
+          ],
+          "unit": "%"
+        },
+        {
+          "id": "em_bonds",
+          "title": "EM government bonds in USD (total return)",
+          "source": "cboe",
+          "view": "table",
+          "derive": "performance",
+          "fetch": {
+            "provider": "cboe_quotes",
+            "path": "/charts/historical/{each}.json",
+            "last": 100000,
+            "each": [
+              "EMB",
+              "PCY",
+              "EMBOND:BR",
+              "EMBOND:MX",
+              "EMBOND:ID",
+              "EMBOND:TR",
+              "EMBOND:SA",
+              "EMBOND:PL",
+              "EMBOND:IN",
+              "EMBOND:CN",
+              "EMBOND:AR",
+              "EMBOND:ZA"
+            ],
+            "labels": {
+              "EMB": "EM USD sovereigns (EMB)",
+              "PCY": "EM USD sovereigns (PCY)",
+              "EMBOND:BR": "Brazil USD sovereign",
+              "EMBOND:MX": "Mexico USD sovereign",
+              "EMBOND:ID": "Indonesia USD sovereign",
+              "EMBOND:TR": "Turkey USD sovereign",
+              "EMBOND:SA": "Saudi Arabia USD sovereign",
+              "EMBOND:PL": "Poland USD sovereign",
+              "EMBOND:IN": "India USD sovereign",
+              "EMBOND:CN": "China USD sovereign",
+              "EMBOND:AR": "Argentina USD sovereign",
+              "EMBOND:ZA": "South Africa USD sovereign"
+            },
+            "symbol_map": {
+              "EMB": "EMB",
+              "PCY": "PCY"
+            },
+            "primary": {
+              "source": "cloud_fincept",
+              "api": "/v1/history",
+              "params": {
+                "symbol": "{each}",
+                "interval": "1d",
+                "range": "max"
+              },
+              "parse": "finterm_v1"
+            }
+          },
+          "columns": [
+            "Name",
+            "Last",
+            "1Y",
+            "10Y",
+            "25Y"
           ],
           "unit": "%"
         }
@@ -4169,7 +4155,7 @@
     },
     {
       "id": "equity_quote",
-      "entry": "Quotes & Charts",
+      "entry": "Quotes",
       "tab": "eq",
       "panels": [
         {
@@ -4387,7 +4373,7 @@
     },
     {
       "id": "watchlist",
-      "entry": "Watchlist & Alerts",
+      "entry": "Watchlist",
       "tab": "eq",
       "panels": [
         {
