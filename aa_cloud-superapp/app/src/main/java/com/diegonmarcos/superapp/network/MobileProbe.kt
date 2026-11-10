@@ -243,11 +243,34 @@ object MobileProbe {
         private val listeners = mutableListOf<Any>()
         private var started = false
 
+        // Re-entrancy guard + coalescer, all on the main thread. The observer below watches Settings.Global
+        // switches; if the consumer's [onChange] (directly, or anything it recreates/writes) touches one of
+        // those URIs, the observer fires again. Calling [onChange] straight from the observer made that a
+        // self-feeding loop — the crash log is hundreds of identical onChange frames (StackOverflowError),
+        // and even async it would peg the CPU and the shell. So every source routes through [fire]: a change
+        // provoked while we are already delivering one is dropped ([inDispatch]), and a burst of switch flips
+        // is coalesced into one delivery ([coalesce]).
+        private var inDispatch = false
+        private val coalesce = Runnable { dispatch(false) }
+
+        private fun dispatch(signalOnly: Boolean) {
+            inDispatch = true
+            try { onChange(signalOnly) } finally { inDispatch = false }
+        }
+
+        /** Hand one change to the consumer, never re-entrantly: the single point every event goes through. */
+        private fun fire(signalOnly: Boolean) {
+            if (inDispatch) return               // a change we provoked while reacting: ignore, no feedback loop
+            if (signalOnly) { main.post { dispatch(true) }; return }
+            main.removeCallbacks(coalesce)
+            main.postDelayed(coalesce, COALESCE_MS)
+        }
+
         private val observer = object : ContentObserver(main) {
-            override fun onChange(selfChange: Boolean) { onChange(false) }
+            override fun onChange(selfChange: Boolean) { fire(false) }
         }
         private val receiver = object : BroadcastReceiver() {
-            override fun onReceive(c: Context, i: Intent) { rebind(); onChange(false) }
+            override fun onReceive(c: Context, i: Intent) { rebind(); fire(false) }
         }
 
         fun start() {
@@ -266,8 +289,14 @@ object MobileProbe {
         fun stop() {
             if (!started) return
             started = false
+            main.removeCallbacks(coalesce)
             unbind()
             runCatching { app.unregisterReceiver(receiver) }
+        }
+
+        private companion object {
+            /** A burst of switch flips (the system writes several of the observed keys at once) is one repaint. */
+            const val COALESCE_MS = 150L
         }
 
         private fun rebind() {
@@ -287,7 +316,7 @@ object MobileProbe {
                     (if (sub >= 0) listOf("mobile_data$sub", "data_roaming$sub") else emptyList())
                 for (k in keys) cr.registerContentObserver(Settings.Global.getUriFor(k), false, observer)
             }
-            val changed: (Boolean) -> Unit = { signalOnly -> main.post { onChange(signalOnly) } }
+            val changed: (Boolean) -> Unit = { signalOnly -> fire(signalOnly) }
             if (Build.VERSION.SDK_INT >= 31) {
                 // One callback per listener, each registered alone: a listener this app may not use
                 // throws, and must not take the others down with it.
