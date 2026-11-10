@@ -33,7 +33,7 @@ CFG = json.loads(r'''{
  ],
  "pages": {
   "cloudy": ["gh_pages", "webserver", "private_urls", "public_urls"],
-  "domains": ["headless", "files", "site_perms", "history", "visited"]
+  "domains": ["headless_browsers", "files", "site_perms", "history", "visited"]
  },
  "gone_modules": [
   "libs:scraper",

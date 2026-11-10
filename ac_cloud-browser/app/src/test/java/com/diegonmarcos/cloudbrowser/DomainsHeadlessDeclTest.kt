@@ -14,7 +14,7 @@ class DomainsHeadlessDeclTest {
     fun `Headless Browsers is the first Domains tab`() {
         val secs = ui.getJSONArray("sections")
         val pages = (0 until secs.length()).map { secs.getJSONObject(it) }.first { it.getString("id") == "domains" }.getJSONArray("pages")
-        assertEquals(listOf("headless", "files", "site_perms", "history", "visited"), (0 until pages.length()).map { pages.getJSONObject(it).getString("id") })
+        assertEquals(listOf("headless_browsers", "files", "site_perms", "history", "visited"), (0 until pages.length()).map { pages.getJSONObject(it).getString("id") })
         assertEquals("Headless Browsers", pages.getJSONObject(0).getString("label"))
     }
 

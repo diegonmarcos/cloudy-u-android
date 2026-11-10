@@ -297,14 +297,14 @@ private fun CloudyList(entries: List<CloudyEntry>, empty: String, tag: String, u
 
 // ───────────────────────────── Domains ─────────────────────────────
 
-/** #1493 Domains: [page] is a ui.sections[domains].pages id (headless | files | site_perms | history | visited). */
+/** #1493 Domains: [page] is a ui.sections[domains].pages id (headless_browsers | files | site_perms | history | visited). */
 @Composable
 fun DomainsPage(page: String?, decl: SitesDecl, onOpen: (String) -> Unit = {}) {
     val ctx = LocalContext.current
     val d = decl.domains
     val t = remember { decl.texts(d) }
     when (page) {
-        "headless", null -> HeadlessPage(d, t, onOpen)
+        "headless_browsers", null -> HeadlessPage(d, t, onOpen)
         "files" -> FilesPage(t)
         "site_perms" -> PermsPage(d, t)
         "history" -> HistoryPage(d, t)

@@ -181,10 +181,10 @@
         { "url": "http://termux.app", "title": "Termux" },
         { "url": "http://nix.app", "title": "Nix" },
         { "url": "http://emulated.app", "title": "Local" },
-        { "url": "http://cloud.app", "title": "Cloud" }
+        { "url": "http://cloud.app", "title": "X-Ray Device" }
       ],
       "_doc_local_pinned_tabs": "The last four pins are the phone's own localhost servers, by their PRIVATE NAMES, in this order: Termux = termux.app (:8000, cloud-terminal-termux's $HOME via my-webserver), Nix = nix.app (:8001, cloud-terminal-nix's $HOME), Local = emulated.app (:8002, c3-webserver, phone storage /storage/emulated/0) and Cloud = cloud.app (:8003, c3-webserver's fleet diagnostics: the SuperApp's About, Logcat and Diagnose). THE name -> port map is ONE declaration, ac_cloud-c3-webserver/build.json::serving; app/build.gradle fails the build when a pin drifts from it or when its port disagrees with the owner's runtime port, and bakes the same map below as private_names. A name is resolved by this browser through the c3-webserver's own DNS server on loopback (udp 127.0.0.1:5354, libs:browser PrivateNames), only for these four exact names and only inside this app; it is never handed to the system resolver (termux.app is a real website). These are first-run pins: a phone that already seeded its tabs keeps the localhost pins it has. Each default_pinned_tabs entry is {url, title} with title = its name here, so the tab shows that name instead of the page title (libs:browser also still accepts a plain URL string); app/build.gradle checks the title too.",
-      "local_pinned_tabs": { "Termux": "http://termux.app", "Nix": "http://nix.app", "Local": "http://emulated.app", "Cloud": "http://cloud.app" },
+      "local_pinned_tabs": { "Termux": "http://termux.app", "Nix": "http://nix.app", "Local": "http://emulated.app", "X-Ray Device": "http://cloud.app" },
       "_doc_private_names": "Baked at build time by app/build.gradle from ac_cloud-c3-webserver/build.json::serving as ui.browser.private_names = {dns:{host,port}, names:{<name>: <port>}}; absent from this file on purpose, so the map has exactly one declaration. libs:browser PrivateNames reads it.",
       "_doc_search_engines": "Address-bar engines. {q} is where the URL-encoded query goes, so an engine whose query parameter is not last still works. default_engine is the SHIPPED default; BrowserSettings persists the user's own pick and BrowserConfig.engine() resolves an unknown or unset id back to this one. suggest (optional) is the engine's query-suggestion feed (https, {q}, OpenSearch JSON), asked only while the search_suggestions setting is on (BrowserRemoteSuggest); an engine without one simply offers its search row.",
       "default_engine": "duckduckgo",
@@ -2102,7 +2102,7 @@
         "label": "Domains",
         "icon": "language",
         "pages": [
-          {"id": "headless", "label": "Headless Browsers", "icon": "web"},
+          {"id": "headless_browsers", "label": "Headless Browsers", "icon": "smart_toy"},
           {"id": "files", "label": "Files Cached", "icon": "folder_open"},
           {"id": "site_perms", "label": "Perms&Actions", "icon": "security"},
           {"id": "history", "label": "History", "icon": "history"},
