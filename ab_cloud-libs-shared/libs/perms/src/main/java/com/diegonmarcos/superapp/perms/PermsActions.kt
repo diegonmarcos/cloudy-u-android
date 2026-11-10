@@ -113,6 +113,48 @@ object PermsActions {
         return Plan(steps, cannot)
     }
 
+    /**
+     * #1601 "Reset all to default": the inverse of [commands] — the shell lines that put [i] back to its default state
+     * (runtime / development permission revoked, app-op back to default, battery / DND / listener / accessibility / device
+     * admin undone), or why the shell cannot reset it. Mirrors [commands] one-for-one so the page resets exactly what it grants.
+     */
+    fun resetCommands(pkg: String, i: PermItem, components: Map<String, String> = emptyMap(), enabledA11y: String = ""): Grant {
+        val entry = i.id.substringAfter(':')
+        val target = if (i.kind == PermItemKind.HELPER) i.id.substringBefore(':') else pkg
+        fun sh(vararg c: String) = Grant.Shell(c.toList())
+        fun component(what: String, use: (String) -> Grant) = components[entry]?.let(use) ?: Grant.Cannot("the app declares no $what")
+        return when {
+            i.kind == PermItemKind.INSTALL -> Grant.Cannot("granted at install, nothing to reset")
+            i.kind == PermItemKind.HEALTH || entry == "health_connect" -> Grant.Cannot("Health Connect resets only on its own screen")
+            entry == "usb_host" -> Grant.Cannot("USB access is per device, nothing to reset")
+            entry == "location_services" -> Grant.Cannot("a device-wide switch, not this app's to reset")
+            entry == "standby_active" -> Grant.Cannot("the system owns the standby bucket, nothing to reset")
+            entry in OPS -> sh(PermsShell.appop(target, OPS.getValue(entry), "default"))
+            entry == "battery_opt" -> sh("cmd deviceidle whitelist -$target")
+            entry == "dnd" || entry == "dnd_access" -> sh("cmd notification disallow_dnd $target")
+            entry == "notification_listener" -> component("notification listener service") { sh("cmd notification disallow_listener $it") }
+            entry == "accessibility" -> component("accessibility service") { c ->
+                val list = enabledA11y.split(':').filter { it.isNotBlank() && it != c }.joinToString(":")
+                sh("settings put secure enabled_accessibility_services $list")
+            }
+            entry == "device_admin" -> component("device admin receiver") { sh("dpm remove-active-admin --user 0 $it") }
+            i.permKind == PermKind.RUNTIME || i.permKind == PermKind.ADB_ONLY || i.kind == PermItemKind.RUNTIME ->
+                if (i.permission.isNotEmpty()) sh(PermsShell.revoke(target, i.permission)) else Grant.Cannot("no permission name declared")
+            i.appop.isNotEmpty() -> sh(PermsShell.appop(target, i.appop.removePrefix("android:").uppercase(), "default"))
+            else -> Grant.Cannot("adb cannot reset ${i.title}; only its Settings page can")
+        }
+    }
+
+    /** #1601 the reset-everything plan: every row the shell can reset (install-time rows skipped), each with its reset commands. */
+    fun resetPlan(pkg: String, items: List<PermItem>, components: Map<String, String> = emptyMap(), enabledA11y: String = ""): Plan {
+        val steps = ArrayList<Pair<PermItem, List<String>>>(); val cannot = ArrayList<Pair<PermItem, String>>()
+        for (i in items.filter { it.kind != PermItemKind.INSTALL }) when (val g = resetCommands(pkg, i, components, enabledA11y)) {
+            is Grant.Shell -> steps += i to g.commands
+            is Grant.Cannot -> cannot += i to g.reason
+        }
+        return Plan(steps, cannot)
+    }
+
     /** Copy Adb Grants: one `adb shell` line per command for everything missing, and a comment for what adb cannot set. */
     fun copyText(plan: Plan): String =
         (plan.steps.flatMap { (_, cs) -> cs.map { "adb shell $it" } } + plan.cannot.map { (i, why) -> "# ${i.title}: $why" }).joinToString("\n")

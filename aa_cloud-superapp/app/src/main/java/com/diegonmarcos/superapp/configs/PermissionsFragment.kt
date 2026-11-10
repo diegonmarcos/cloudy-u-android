@@ -167,6 +167,45 @@ class PermissionsFragment : KitComposeFragment() {
         next()
     }
 
+    // ── #1601 Reset all to default ───────────────────────────────────────
+    /** The components (listener / accessibility / device-admin) the reset lines need, from this device's manifest. */
+    private fun resetComponents(ctx: Context): Map<String, String> {
+        val v = com.diegonmarcos.superapp.perms.Perms.vars(ctx)
+        return buildMap {
+            v["listener"]?.takeIf { it.isNotEmpty() }?.let { put("notification_listener", it) }
+            v["a11y"]?.takeIf { it.isNotEmpty() }?.let { put("accessibility", it) }
+            v["admin"]?.takeIf { it.isNotEmpty() }?.let { put("device_admin", it) }
+        }
+    }
+
+    /** Confirm, then revoke every runtime permission and reset every app-op / special access of this app to its default state. */
+    private fun confirmResetAll() {
+        android.app.AlertDialog.Builder(requireContext())
+            .setTitle("Reset all permissions to default")
+            .setMessage("This revokes every runtime permission and resets every app-op, special access, Do Not Disturb, " +
+                "notification access, accessibility and device-admin grant of this app back to its default state. You will " +
+                "have to grant them again. It runs through the ADB Shell channel. Continue?")
+            .setPositiveButton("Reset all") { _, _ -> resetAllToDefault() }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun resetAllToDefault() {
+        val ctx = requireContext().applicationContext
+        val rows = readPermRows(ctx, null).filter { it.status.state != com.diegonmarcos.superapp.perms.PermState.NOT_APPLICABLE }
+        val items = rows.map { com.diegonmarcos.superapp.perms.PermsView.item(it.entry, it.status) }
+        val comps = resetComponents(ctx)
+        val a11y = runCatching {
+            android.provider.Settings.Secure.getString(ctx.contentResolver, android.provider.Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES)
+        }.getOrNull().orEmpty()
+        val plan = com.diegonmarcos.superapp.perms.PermsActions.resetPlan(ctx.packageName, items, comps, a11y)
+        shellNote = "Resetting ${plan.steps.size} permissions to default…"
+        Thread {
+            val res = com.diegonmarcos.superapp.perms.PermsActions.run(plan, BrokerGrantChannel(ctx))
+            view?.post { shellNote = "Reset all: ${res.text()}"; centerEpoch++; rebuildFragment() }
+        }.start()
+    }
+
     // ── #1519 Ask all missing: walk the missing rows, real dialog first, then shell or settings, re-checking after each step ──
     private var walking = false
     private var awaitingResume = false
@@ -526,6 +565,12 @@ class PermissionsFragment : KitComposeFragment() {
                 togglePlayProtect(!playProtect)
             }
         }
+
+        // ── #1601 RESET ──────────────────────────────────────────────────
+        SectionHead("RESET — put every permission back to its default state")
+        Small("Revokes every runtime permission and resets every app-op, special access, Do Not Disturb, notification access, accessibility and device-admin grant for this app to default. Runs through the ADB Shell channel; needs it connected.")
+        shellNote?.let { Small(it) }
+        ActionButton("Reset all to default", 0xFF991B1B.toInt()) { confirmResetAll() }
 
         ActionButton("Copy All Perms Status", DARK_VIOLET) {
             copy(ctxAny(), buildAllPermsStatus(ctxAny()))

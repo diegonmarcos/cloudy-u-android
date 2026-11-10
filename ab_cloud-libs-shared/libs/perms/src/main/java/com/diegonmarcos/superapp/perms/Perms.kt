@@ -312,6 +312,8 @@ object PermsBanner {
 /** The shell lines that grant a permission (adb, Shizuku, the embedded channel): written here only (#1274). */
 object PermsShell {
     fun grant(pkg: String, permission: String): String = "pm grant $pkg $permission"
+    /** #1601 the inverse of [grant]: return a runtime / development permission to its default (not-granted) state. */
+    fun revoke(pkg: String, permission: String): String = "pm revoke $pkg $permission"
     fun appop(pkg: String, op: String, mode: String = "allow"): String = "appops set $pkg $op $mode"
 }
 
