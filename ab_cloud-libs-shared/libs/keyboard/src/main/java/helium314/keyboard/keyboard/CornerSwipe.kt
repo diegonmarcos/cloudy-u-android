@@ -32,10 +32,16 @@ object CornerSwipe {
         KeyboardSwitcher.getInstance().setThemeNeedsReload()
     }
 
-    /** corner swipes apply on the alphabet keyboard of the "unexpected" layout while Dev Keyboard is on */
+    /**
+     * Corner swipes apply on the alphabet keyboard while Dev Keyboard is on. The alphabet main
+     * layout is forced to [LAYOUT] by LayoutParser whenever [enabled], so this is just the flag
+     * plus "is this the alphabet keyboard" — it no longer requires the subtype itself to already
+     * be the "unexpected" layout (which is why enabling Dev Keyboard used to do nothing on a
+     * normal qwerty subtype: the layout was never switched in).
+     */
     @JvmStatic
     fun isActive(keyboard: Keyboard?): Boolean =
-        enabled && keyboard != null && keyboard.mId.isAlphabetKeyboard && keyboard.mId.mSubtype.mainLayoutName == LAYOUT
+        enabled && keyboard != null && keyboard.mId.isAlphabetKeyboard
 
     private val display = mapOf("left" to "←", "right" to "→", "up" to "↑", "down" to "↓")
 

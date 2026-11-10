@@ -2,6 +2,7 @@
 package helium314.keyboard.keyboard.internal.keyboard_parser
 
 import android.content.Context
+import helium314.keyboard.keyboard.CornerSwipe
 import helium314.keyboard.keyboard.internal.KeyboardParams
 import helium314.keyboard.keyboard.internal.keyboard_parser.floris.AbstractKeyData
 import helium314.keyboard.keyboard.internal.keyboard_parser.floris.AutoTextKeyData
@@ -37,8 +38,15 @@ object LayoutParser {
     fun parseLayout(layoutType: LayoutType, params: KeyboardParams, context: Context): MutableList<MutableList<KeyData>> {
         if (layoutType == LayoutType.FUNCTIONAL && !params.mId.isAlphaOrSymbolKeyboard)
             return mutableListOf(mutableListOf()) // no functional keys
-        val layoutName = if (layoutType == LayoutType.MAIN) params.mId.mSubtype.mainLayoutName
-            else params.mId.mSubtype.layouts[layoutType] ?: Settings.readDefaultLayoutName(layoutType, context.prefs())
+        val layoutName = if (layoutType == LayoutType.MAIN) {
+            // #1413 Dev Keyboard: while enabled, the alphabet main layout is forced to the
+            // "unexpected" layout (corner swipes + corner-labelled symbols), whatever the subtype's
+            // own layout is — enabling Dev Keyboard is what actually loads it. refresh() syncs the
+            // in-memory flag from the pref so a freshly built keyboard loads it before the first draw.
+            CornerSwipe.refresh(context)
+            if (CornerSwipe.enabled && params.mId.isAlphabetKeyboard) CornerSwipe.LAYOUT
+            else params.mId.mSubtype.mainLayoutName
+        } else params.mId.mSubtype.layouts[layoutType] ?: Settings.readDefaultLayoutName(layoutType, context.prefs())
         return layoutCache.getOrPut(layoutType.name + layoutName) {
             createCacheLambda(layoutType, layoutName, context)
         }(params).apply {
