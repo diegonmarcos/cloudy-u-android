@@ -233,7 +233,7 @@ print(len(next(s for s in json.load(open('$BJ'))['ui']['sections']
                if s['id'] == 'config')['pages']))
 ")
 [ "$COUNT" = 57 ] \
-  && ok "57 config pages declared (#1596 added the hidden `focus` page; #1610 added four: c3-watchdog (Setup ▸ Configs ▸ Watchdog) and the three Actions sync-clipboard, saving-mode, focus-mode; previous ids unchanged) — the set T5 walks is the whole set" \
+  && ok "57 config pages declared (#1596 added the hidden focus page; #1610 added four: c3-watchdog (Setup ▸ Configs ▸ Watchdog) and the three Actions sync-clipboard, saving-mode, focus-mode; previous ids unchanged) — the set T5 walks is the whole set" \
   || bad "$COUNT config pages, expected 56 — a page was added or DELETED, and T5 cannot report a page that is gone"
 
 echo "== T6: ACTIONS — the single shared row (#1610) =="
@@ -436,9 +436,9 @@ want = ['H:DEVICE',
         'H:SETUP',
         'S:CONNECT',            'Account[ic_person]', 'Cloudy C3[ic_cloud_control]', 'Peer Control[ic_hub]',
         'S:APPS',               'Store[ic_storefront]',
-        'S:CONFIGS',            'Watchdog[ic_p_watchdog]',
+        'S:CONFIGS',            'Watchdog[ic_watchtower]',
         'H:ACTIONS',
-        'Update All[ic_system_update]', 'KDE Connect[ic_devices]', 'Animations[ic_animation]', 'Sync Clipboard[ic_devices]', 'Saving Mode[ic_settings]', 'Focus Mode[ic_nav_dnd]']
+        'Update All[ic_system_update]', 'KDE Connect[ic_devices]', 'Animations[ic_animation]', 'Sync Clipboard[ic_copy]', 'Saving Mode[ic_settings]', 'Focus Mode[ic_nav_dnd]']
 if out == want: print('OK')
 else:
     import difflib
