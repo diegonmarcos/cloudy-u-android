@@ -11230,7 +11230,20 @@
       "device_admin",
       "vpn",
       "battery_opt",
-      "write_secure_settings"
+      "write_secure_settings",
+      "background_location",
+      "bt_advertise",
+      "contacts_write",
+      "calendar_read",
+      "calendar_write",
+      "phone_numbers",
+      "storage_read",
+      "storage_write",
+      "activity_recognition",
+      "body_sensors",
+      "exact_alarm",
+      "send_sms",
+      "keep_unused"
     ],
     "helpers": [],
     "first_run": "own:FirstRunPerms.kt"

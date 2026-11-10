@@ -105,6 +105,28 @@
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
     <uses-permission android:name="android.permission.READ_SMS" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <!-- #1597 "hold every Android permission the app's scope implies": the remaining
+         catalogue permissions the SuperApp can hold, declared so the Perms page lists
+         them as real grantable rows (not "Not applicable - not declared") and the
+         shell broker (libs:perms PermsShell.grant) can auto-grant them. The owner
+         authorised the policy-sensitive ones (SEND_SMS, body sensors, all-time
+         background location) knowingly. Storage read/write carry tools:remove so a
+         library's maxSdkVersion cap does not drop them from the merged manifest. -->
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
+    <uses-permission android:name="android.permission.WRITE_CONTACTS" />
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
+    <uses-permission android:name="android.permission.WRITE_CALENDAR" />
+    <uses-permission android:name="android.permission.READ_PHONE_NUMBERS" />
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+    <uses-permission android:name="android.permission.BODY_SENSORS" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"
+        tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.SEND_SMS" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        tools:remove="android:maxSdkVersion" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        tools:remove="android:maxSdkVersion" tools:ignore="ScopedStorage" />
 
     <!-- PACKAGE_USAGE_STATS is a "signature|appop" permission: regular
          apps can't be auto-granted by the runtime-permission dialog, but

@@ -79,6 +79,7 @@ object PermsActions {
             entry == "location_services" -> sh("cmd location set-location-enabled true")
             entry == "dnd" || entry == "dnd_access" -> sh("cmd notification allow_dnd $target")
             entry == "standby_active" -> sh("am set-standby-bucket $target active")
+            entry == "keep_unused" -> sh(PermsShell.appop(target, "AUTO_REVOKE_PERMISSIONS_IF_UNUSED", "ignore"))
             entry == "notification_listener" -> component("notification listener service") { sh("cmd notification allow_listener $it") }
             entry == "accessibility" -> component("accessibility service") { c ->
                 val list = (enabledA11y.split(':').filter { it.isNotBlank() && it != c } + c).joinToString(":")
@@ -129,6 +130,7 @@ object PermsActions {
             entry == "usb_host" -> Grant.Cannot("USB access is per device, nothing to reset")
             entry == "location_services" -> Grant.Cannot("a device-wide switch, not this app's to reset")
             entry == "standby_active" -> Grant.Cannot("the system owns the standby bucket, nothing to reset")
+            entry == "keep_unused" -> sh(PermsShell.appop(target, "AUTO_REVOKE_PERMISSIONS_IF_UNUSED", "default"))
             entry in OPS -> sh(PermsShell.appop(target, OPS.getValue(entry), "default"))
             entry == "battery_opt" -> sh("cmd deviceidle whitelist -$target")
             entry == "dnd" || entry == "dnd_access" -> sh("cmd notification disallow_dnd $target")
