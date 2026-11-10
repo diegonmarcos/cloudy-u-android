@@ -2,15 +2,17 @@
 # Store ▸ Cloud per-app menu: DECLARED in libs:appstore's
 # assets/appstore-fleet-actions.json, dispatched by id in the code.
 #
-# #redesign the menu is TWO grouped lines now:
-#   rows[0] install/lifecycle : Download · Install⇄Uninstall · Direct Install · Clear
-#   rows[1] open/inspect      : Open · Stop │ Perms · Routes · Libs · About
+# #1588 the menu is TWO grouped lines:
+#   rows[0] fetch/install lifecycle : Update · Uninstall⇄Install · Fetch · Clear · Download
+#   rows[1] open/inspect            : Open · Stop │ Access · Perm │ Libs · About
+# Update fetches (reusing the cache) AND installs through the prompted BootstrapInstall system sheet.
 # `install_toggle` is ONE button that reads Install (absent) / Uninstall (installed) and runs the
-# matching action: the toggle's Install is the NORMAL prompted install (BootstrapInstall's system
-# sheet), while `direct_install` is the SILENT path (StoreStages' cached install, no sheet) — the two
-# are deliberately distinct, not the same path twice. `divider_before` draws the owner's `│` rule
-# before Perms, setting Open/Stop apart from the Perms/Routes/Libs/About inspect set. About supersedes
-# the old Details button. Stop still goes through the fleet's EXISTING privileged door (StoreShell).
+# matching action. Fetch is the cache-only download (StoreStages.DOWNLOAD, no install); Clear wipes
+# the cache; Download copies the apk into the phone's public Downloads for the user to keep. The
+# `direct_install` and `routes` handlers stay wired in the code but are no longer drawn on the row.
+# `divider_before` draws the owner's `│` rule before Access and before Libs, setting Open/Stop apart
+# from the Access/Perm pair and that apart from the Libs/About pair. About opens the full detail sheet.
+# Stop still goes through the fleet's EXISTING privileged door (StoreShell).
 #
 # Order, captions, colours and grouping are the asset's; this guard reads them from there and checks
 # the code draws exactly that and can act on every id.
@@ -51,22 +53,29 @@ ids = [a["id"] for line in rows for a in line]
 details = [a["id"] for a in decl["details"]]
 label = {a["id"]: a["label"] for a in flat + decl["details"]}
 
-print("== T1: the declaration is the two grouped lines the owner asked for ==")
-if [a["id"] for a in rows[0]] == ["download", "install_toggle", "direct_install", "clear"]:
-    ok("row 0 = Download · Install/Uninstall · Direct Install · Clear")
-else: bad("row 0 is not the install/lifecycle line: %s" % [a["id"] for a in rows[0]])
-if [a["id"] for a in rows[1]] == ["open", "stop", "perms", "routes", "libs", "about", "access"]:
-    ok("row 1 = Open · Stop │ Perms · Routes · Libs · About · Access")
+print("== T1: the declaration is the two grouped lines the owner asked for (#1588) ==")
+if [a["id"] for a in rows[0]] == ["update", "install_toggle", "fetch", "clear", "download"]:
+    ok("row 0 = Update · Uninstall/Install · Fetch · Clear · Download")
+else: bad("row 0 is not the fetch/install lifecycle line: %s" % [a["id"] for a in rows[0]])
+if [a["id"] for a in rows[1]] == ["open", "stop", "access", "perms", "libs", "about"]:
+    ok("row 1 = Open · Stop │ Access · Perm │ Libs · About")
 else: bad("row 1 is not the open/inspect line: %s" % [a["id"] for a in rows[1]])
 tog = next((a for a in flat if a["id"] == "install_toggle"), {})
 if tog.get("label") == "Install" and tog.get("label_installed") == "Uninstall":
     ok("install_toggle reads Install / Uninstall")
 else: bad("install_toggle is not an Install/Uninstall toggle: %s" % tog)
-perms = next((a for a in flat if a["id"] == "perms"), {})
-if perms.get("divider_before") is True: ok("the `│` divider is declared before Perms")
-else: bad("Perms carries no divider_before (the Open/Stop | inspect rule)")
-if "direct_install" in ids and "install" not in ids: ok("Direct Install is on the row; the old plain `install` id is gone")
-else: bad("row install ids wrong: %s" % ids)
+if label.get("update") == "Update" and label.get("fetch") == "Fetch" \
+        and label.get("download") == "Download" and label.get("perms") == "Perm":
+    ok("captions relabelled: Update, Fetch, Download, Perm")
+else: bad("captions not relabelled per #1588: %s" % {k: label.get(k) for k in ("update","fetch","download","perms")})
+access = next((a for a in flat if a["id"] == "access"), {})
+libsd = next((a for a in flat if a["id"] == "libs"), {})
+if access.get("divider_before") is True and libsd.get("divider_before") is True:
+    ok("the `│` dividers are declared before Access and before Libs")
+else: bad("the group dividers are not before Access and Libs: access=%s libs=%s" % (access, libsd))
+if {"update", "fetch", "download"} <= set(ids) and "install" not in ids and "direct_install" not in ids:
+    ok("Update/Fetch/Download are on the row; plain `install` and `direct_install` are off it")
+else: bad("row lifecycle ids wrong: %s" % ids)
 if details == ["app_settings"]: ok("the About sheet keeps App settings: %s" % details)
 else: bad("details is not [app_settings]: %s" % details)
 
@@ -93,9 +102,21 @@ else: bad("declared ids with no handler: %s" % (missing or "rowAction/detailActi
 if re.search(r'"install_toggle" ->.*?installed.*?Fleet\.uninstall', ra, re.S) and "promptedInstall(" in ra:
     ok("install_toggle: Uninstall when installed, else the prompted BootstrapInstall path")
 else: bad("install_toggle does not toggle uninstall vs prompted install")
+# #1588 the relabelled lifecycle verbs reach their real backing paths.
+if re.search(r'"update" ->.*?promptedInstall\(', ra, re.S):
+    ok("Update fetches+installs through the prompted BootstrapInstall path")
+else: bad("Update is not wired to the prompted install path")
+if re.search(r'"fetch" ->.*?StoreStages\.DOWNLOAD', ra, re.S):
+    ok("Fetch is the cache-only StoreStages download")
+else: bad("Fetch is not wired to the cache-only StoreStages download")
+if re.search(r'"download" ->.*?saveToDownloads\(', ra, re.S) and \
+        "MediaStore.Downloads" in store and "DIRECTORY_DOWNLOADS" in store:
+    ok("Download copies the apk into the phone's public Downloads (MediaStore)")
+else: bad("Download is not wired to a public-Downloads copy")
+# direct_install stays wired in the code though it is no longer drawn on the row (#1588).
 if '"direct_install" ->' in ra and "StoreStages.INSTALL" in ra:
-    ok("Direct Install is the silent StoreStages install, distinct from the toggle")
-else: bad("Direct Install is not wired to the silent StoreStages install")
+    ok("the silent StoreStages install (direct_install) stays wired")
+else: bad("the silent StoreStages install is not wired")
 for vid, kind in (("perms", "Perms"), ("routes", "Routes"), ("libs", "Libs"), ("access", "Access")):
     if re.search(r'"%s" ->.*?inspect\.add\(Inspect\.%s\(' % (vid, kind), ra, re.S): ok("%s opens the %s inspect sheet" % (vid, kind))
     else: bad("%s does not open an inspect sheet" % vid)

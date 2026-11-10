@@ -1,10 +1,14 @@
 package com.diegonmarcos.superapp.appstore
 
+import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
+import android.os.Environment
 import android.os.Handler
 import android.os.Looper
+import android.provider.MediaStore
 import android.util.Base64
 import android.widget.Toast
 import androidx.compose.foundation.layout.Column
@@ -43,6 +47,7 @@ import com.diegonmarcos.superapp.updater.BootstrapInstall
 import com.diegonmarcos.superapp.updater.Fleet
 import com.diegonmarcos.superapp.updater.FleetIdentity
 import com.diegonmarcos.superapp.updater.Updater
+import java.io.File
 import kotlin.concurrent.thread
 import org.json.JSONArray
 import org.json.JSONObject
@@ -987,9 +992,15 @@ class StoreCloudFragment : KitComposeFragment() {
         val installed = Fleet.installedId(ctx, app) != null
         return when (a.id) {
             "open" -> verb { openApp(ctx, Fleet.installedId(ctx, app) ?: app.pkg) }
-            // #774 three stages; which are live is StoreStages' call. Download only fetches; Clear wipes the cache.
-            "download" -> if (app.blocked) null else stageVerb(ctx, app, a, StoreStages.DOWNLOAD, stg, tag)
+            // #1588 Fetch = cache the apk ONLY (StoreStages' cache-only download, #774); Clear wipes the cache.
+            "fetch" -> if (app.blocked) null else stageVerb(ctx, app, a, StoreStages.DOWNLOAD, stg, tag)
             "clear" -> if (app.blocked) null else stageVerb(ctx, app, a, StoreStages.CLEAR, stg, tag)
+            // #1588 Update = fetch (reusing the cache when present) AND install, through the prompted
+            // BootstrapInstall system sheet — the same install path the toggle's Install uses.
+            "update" -> if (app.blocked) null else verb { promptedInstall(ctx, app) }
+            // #1588 Download = keep a copy: stream the apk into the phone's public Downloads
+            // (/storage/emulated/0/Download via MediaStore), fetching into the cache first when needed.
+            "download" -> if (app.blocked) null else verb { saveToDownloads(ctx, app) }
             // #redesign ONE toggle: Uninstall when present, else the NORMAL (user-confirmed) install —
             // BootstrapInstall's system-sheet floor, which needs no shell channel. Its label/colour are
             // the declaration's install vs installed pair.
@@ -1028,6 +1039,60 @@ class StoreCloudFragment : KitComposeFragment() {
                 r.onSuccess { c -> Toast.makeText(ctx, "${app.label}: ${c.versionName ?: c.versionCode}", Toast.LENGTH_LONG).show() }
                     .onFailure { Toast.makeText(ctx, "${app.label}: ${it.message}", Toast.LENGTH_LONG).show() }
             }
+        }
+    }
+
+    /**
+     * #1588 Download = keep a copy for the user: stream the cached apk into the phone's public
+     * Downloads (/storage/emulated/0/Download) through MediaStore on Android 10+, or the legacy
+     * public directory below it. Off the main thread; if nothing installable is cached yet it
+     * fetches into the cache first (the same cache-only path Fetch uses), then publishes.
+     */
+    private fun saveToDownloads(ctx: Context, app: Fleet.App) {
+        Toast.makeText(ctx, "${app.label}: preparing download…", Toast.LENGTH_SHORT).show()
+        thread(name = "fleet-download-${app.id}") {
+            val entry = StoreStages.cachedFor(ctx, app)
+                ?: run { StoreStages.download(ctx, app); StoreStages.cachedFor(ctx, app) }
+            val src = entry?.file
+            if (entry == null || src == null || !src.exists()) {
+                main.post { if (isAdded) Toast.makeText(ctx, "${app.label}: no apk to download", Toast.LENGTH_LONG).show() }
+                return@thread
+            }
+            val name = "${app.id}-${entry.record?.versionCode ?: src.length()}.apk"
+            val saved = runCatching { publishApk(ctx, src, name) }.getOrNull()
+            main.post {
+                if (!isAdded) return@post
+                if (saved != null) Toast.makeText(ctx, "${app.label}: saved to Downloads ($name)", Toast.LENGTH_LONG).show()
+                else Toast.makeText(ctx, "${app.label}: could not save to Downloads", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    /** Copy [src] into the public Downloads folder as [name]; @return its address, or null on failure. */
+    private fun publishApk(ctx: Context, src: File, name: String): String? {
+        val mime = "application/vnd.android.package-archive"
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val cr = ctx.contentResolver
+            val cv = ContentValues().apply {
+                put(MediaStore.MediaColumns.DISPLAY_NAME, name)
+                put(MediaStore.MediaColumns.MIME_TYPE, mime)
+                put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
+                put(MediaStore.MediaColumns.IS_PENDING, 1)
+            }
+            val uri = cr.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, cv) ?: return null
+            try {
+                cr.openOutputStream(uri)?.use { o -> src.inputStream().use { it.copyTo(o, 256 * 1024) } } ?: error("no stream")
+                cr.update(uri, ContentValues().apply { put(MediaStore.MediaColumns.IS_PENDING, 0) }, null, null)
+                uri.toString()
+            } catch (e: Exception) {
+                runCatching { cr.delete(uri, null, null) }
+                null
+            }
+        } else {
+            @Suppress("DEPRECATION")
+            val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).apply { mkdirs() }
+            val dst = File(dir, name)
+            runCatching { src.copyTo(dst, overwrite = true) }.getOrNull()?.let { Uri.fromFile(dst).toString() }
         }
     }
 

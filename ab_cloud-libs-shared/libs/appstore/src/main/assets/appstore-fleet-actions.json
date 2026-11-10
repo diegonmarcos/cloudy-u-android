@@ -1,21 +1,21 @@
 {
-  "_doc": "Store ▸ Cloud: the buttons a fleet row's detail offers, IN ORDER, on TWO lines, with their captions and colours. The Kotlin only maps an id to what it does (StoreCloudFragment.rowAction / ApkDetailSheet.detailAction); order, wording and grouping are this file. #redesign split the single button strip into two grouped lines: `rows[0]` is the install/lifecycle line (Download · Install⇄Uninstall · Direct Install · Clear), `rows[1]` the open/inspect line (Open · Stop │ Perms · Routes · Libs · About · Access). `install_toggle` is ONE button that shows `label` when the package is absent and `label_installed` when it is present, and runs the matching action (prompted system-sheet install, via BootstrapInstall, when absent; Uninstall when present). `direct_install` is the SILENT path (StoreStages' cached install, downgrade-gated — the store's own installer, no system sheet). `divider_before` draws the owner's `│` rule before a button, grouping Open/Stop apart from the Perms/Routes/Libs/About/Access inspect set. The five inspect ids open sub-sheets over the page (nav bar and back stay — they never replace the bottom nav): Perms (Manifest / Auto grants / Runtime tables), Routes (MCP · IPC · API tabs), Libs (compiled-in + bound engines), About (the full detail sheet, ApkDetailSheet, which supersedes the old `details` button), Access (the per-app access surface — MCP · API · IPC · ID · Perms tabs, StoreInspect.Access over StoreAccess, reading the same registry projections Routes does). Stop goes through the fleet's EXISTING privileged door — ShellChannels — and says so with no channel armed. test-store-fleet-actions.sh holds the two-line shape, the toggle, the divider, and that every id has a handler; test-store-inspect.sh holds the four inspect sheets and their data sources.",
+  "_doc": "Store ▸ Cloud: the buttons a fleet row's detail offers, IN ORDER, on TWO lines, with their captions and colours. The Kotlin only maps an id to what it does (StoreCloudFragment.rowAction / ApkDetailSheet.detailAction); order, wording and grouping are this file. #1588 redefined the two lines. `rows[0]` is the fetch/install lifecycle line (Update · Uninstall⇄Install · Fetch · Clear · Download), `rows[1]` the open/inspect line (Open · Stop │ Access · Perm │ Libs · About). Verb meanings: Update = fetch the apk AND install it, reusing the cache when present (the prompted BootstrapInstall system-sheet path). `install_toggle` is ONE button that shows `label` (Install) when the package is absent and `label_installed` (Uninstall) when it is present, and runs the matching action (prompted system-sheet install when absent, Uninstall when present). Fetch = cache the apk only, no install (StoreStages' cache-only download). Clear = delete the cached apk (StoreStages' clear). Download = copy/stream the apk into the phone's public Downloads (/storage/emulated/0/Download, via MediaStore) for the user to keep. `divider_before` draws the owner's `│` rule before a button, grouping Open/Stop apart from the Access/Perm pair and that apart from the Libs/About pair. The inspect ids open sub-sheets over the page (nav bar and back stay — they never replace the bottom nav): Access (the per-app access surface — MCP · API · IPC · ID · Perms tabs, StoreInspect.Access over StoreAccess), Perm (the per-app perms sheet — Manifest / Auto grants / Runtime tables), Libs (compiled-in + bound engines), About (the full detail sheet, ApkDetailSheet). Stop goes through the fleet's EXISTING privileged door — ShellChannels — and says so with no channel armed. The `routes` and `direct_install` handlers stay wired in the code but are no longer drawn on the row per #1588. test-store-fleet-actions.sh holds the two-line shape, the toggle, the dividers, and that every id has a handler; test-store-inspect.sh holds the inspect sheets and their data sources.",
   "_doc_fields": "id = the verb the code dispatches on; label = the caption drawn; color = the button fill (ARGB hex). `label_installed`/`color_installed` = the toggle's caption/fill while the package is installed. `divider_before` = draw a `│` rule before this button. The `details` entries feed the About sheet's Actions card (ApkDetailSheet.detailAction); each carries `detail`, the right-hand hint on the sheet's action line.",
   "rows": [
     [
-      { "id": "download",       "label": "Download",      "color": "0xFF2B6CB0" },
-      { "id": "install_toggle", "label": "Install",       "color": "0xFF7C3AED", "label_installed": "Uninstall", "color_installed": "0xFF4A4A55" },
-      { "id": "direct_install", "label": "Direct Install", "color": "0xFF2F855A" },
-      { "id": "clear",          "label": "Clear",         "color": "0xFF4A4A55" }
+      { "id": "update",         "label": "Update",    "color": "0xFF2F855A" },
+      { "id": "install_toggle", "label": "Install",   "color": "0xFF7C3AED", "label_installed": "Uninstall", "color_installed": "0xFF4A4A55" },
+      { "id": "fetch",          "label": "Fetch",     "color": "0xFF2B6CB0" },
+      { "id": "clear",          "label": "Clear",     "color": "0xFF4A4A55" },
+      { "id": "download",       "label": "Download",  "color": "0xFF2C7A7B" }
     ],
     [
       { "id": "open",   "label": "Open",   "color": "0xFF2A2A33" },
       { "id": "stop",   "label": "Stop",   "color": "0xFF9C4221" },
-      { "id": "perms",  "label": "Perms",  "color": "0xFF2A2A33", "divider_before": true },
-      { "id": "routes", "label": "Routes", "color": "0xFF2A2A33" },
-      { "id": "libs",   "label": "Libs",   "color": "0xFF2A2A33" },
-      { "id": "about",  "label": "About",  "color": "0xFF2A2A33" },
-      { "id": "access", "label": "Access", "color": "0xFF2A2A33" }
+      { "id": "access", "label": "Access", "color": "0xFF2A2A33", "divider_before": true },
+      { "id": "perms",  "label": "Perm",   "color": "0xFF2A2A33" },
+      { "id": "libs",   "label": "Libs",   "color": "0xFF2A2A33", "divider_before": true },
+      { "id": "about",  "label": "About",  "color": "0xFF2A2A33" }
     ]
   ],
   "details": [
