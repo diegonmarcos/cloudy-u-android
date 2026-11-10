@@ -152,6 +152,23 @@ class AdbCockpitModelTest {
         assertNull(AdbCockpitModel.toggle(facts()).why)
     }
 
+    @Test fun `C8c keep-alive panel reflects the real keeper state`() {
+        // off: grey, nothing claimed up
+        val off = AdbCockpitModel.keepAlive(on = false, armed = false, serviceRunning = false, canWrite = true, batteryExempt = true, lastRearm = null)
+        assertEquals(Light.GREY, off.light); assertEquals("off", off.status)
+        assertEquals(listOf(Light.GREY, Light.GREY, Light.GREEN, Light.GREEN), off.subs.map { it.light })
+        // on, service up and armed, all granted: green and "keeping the channel alive"
+        val up = AdbCockpitModel.keepAlive(on = true, armed = true, serviceRunning = true, canWrite = true, batteryExempt = true, lastRearm = "2m ago")
+        assertEquals(Light.GREEN, up.light); assertTrue(up.status.contains("alive")); assertTrue(up.detail.contains("re-armed 2m ago"))
+        // on but no WRITE_SECURE_SETTINGS: red, says it cannot run (never a proxy for the secure-settings fact, rule 16)
+        val blocked = AdbCockpitModel.keepAlive(on = true, armed = true, serviceRunning = true, canWrite = false, batteryExempt = true, lastRearm = "1m ago")
+        assertEquals(Light.RED, blocked.light); assertEquals("cannot run", blocked.status); assertTrue(blocked.detail.contains("Write secure settings"))
+        // on, armed, but the service is not up yet: amber, idle
+        val idle = AdbCockpitModel.keepAlive(on = true, armed = false, serviceRunning = false, canWrite = true, batteryExempt = false, lastRearm = null)
+        assertEquals(Light.AMBER, idle.light); assertTrue(idle.detail.contains("battery-optimised"))
+        assertEquals(listOf("Service", "Armed", "Secure settings", "Battery"), up.subs.map { it.label })
+    }
+
     @Test fun `C9 auto-fix order and gates`() {
         assertEquals(listOf("PERMS", "DEV_OPTIONS", "WIRELESS_DEBUG", "PAIR", "ADB_CONNECT", "START_SERVER", "VERIFY"),
             AdbCockpitModel.autoFixOrder(ChannelMode.LOCAL_SERVER, LaunchVia.ADB, true))

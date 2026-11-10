@@ -235,6 +235,44 @@ internal object AdbCockpitModel {
         return Act(Do.DISCONNECT, en.enabled, en.why)
     }
 
+    /**
+     * The keep-alive panel on the Status cockpit: the ONE "Keep Wireless debugging on" switch (its state in [on]) plus the keeper's
+     * real state read from [WdKeeper] — never a proxy (rule 16). [light] GREEN = switch on, the foreground keeper up and the channel
+     * armed; AMBER = on but idle or not yet armed; RED = on but it cannot work (no WRITE_SECURE_SETTINGS); GREY = switch off.
+     */
+    data class KeepAlive(val on: Boolean, val light: Light, val status: String, val detail: String, val subs: List<Sub>)
+
+    /**
+     * Pure: shape the keep-alive panel from the switch and the keeper facts. [armed] Wireless debugging re-armed, [serviceRunning]
+     * the foreground keeper thread/service is up, [canWrite] WRITE_SECURE_SETTINGS held, [batteryExempt] battery-optimisation off,
+     * [lastRearm] a human "x ago" of the last re-arm or null.
+     */
+    fun keepAlive(on: Boolean, armed: Boolean, serviceRunning: Boolean, canWrite: Boolean, batteryExempt: Boolean, lastRearm: String?): KeepAlive {
+        val light = when {
+            !on -> Light.GREY
+            !canWrite -> Light.RED
+            serviceRunning && armed -> Light.GREEN
+            else -> Light.AMBER
+        }
+        val status = when {
+            !on -> "off"
+            light == Light.RED -> "cannot run"
+            serviceRunning -> "keeping the channel alive"
+            else -> "on · idle"
+        }
+        val subs = listOf(
+            Sub("Service", if (serviceRunning) Light.GREEN else if (on) Light.AMBER else Light.GREY),
+            Sub("Armed", if (armed) Light.GREEN else if (on) Light.AMBER else Light.GREY),
+            Sub("Secure settings", if (canWrite) Light.GREEN else Light.RED),
+            Sub("Battery", if (batteryExempt) Light.GREEN else Light.AMBER),
+        )
+        val detail = if (!on) "the channel is not re-armed on its own; turn it on to keep the shell reachable"
+            else (lastRearm?.let { "re-armed $it" } ?: "no re-arm yet") +
+                (if (!canWrite) " · needs Write secure settings" else "") +
+                (if (!batteryExempt) " · battery-optimised (may be killed)" else "")
+        return KeepAlive(on, light, status, detail, subs)
+    }
+
     /** What Auto-fix walks, in order: grant the perms, then the mode's connect plan (Developer Options, Wireless Debugging, pair / Shizuku, start the server, connect, verify). */
     fun autoFixOrder(mode: ChannelMode, via: LaunchVia, ownsServer: Boolean): List<String> =
         listOf("PERMS") + ConnectPlan.steps(mode, via, ownsServer).map { it.name }

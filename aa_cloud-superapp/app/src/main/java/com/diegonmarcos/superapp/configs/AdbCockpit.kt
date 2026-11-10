@@ -67,7 +67,7 @@ import java.util.Locale
 /** The cockpit's verbs; the stateful wrapper wires them, a test passes no-ops. */
 internal class CockpitActions(
     val act: (AdbCockpitModel.Do) -> Unit = {}, val autoFix: () -> Unit = {}, val pickMode: (ChannelMode) -> Unit = {},
-    val copyLog: () -> Unit = {}, val clearLog: () -> Unit = {},
+    val copyLog: () -> Unit = {}, val clearLog: () -> Unit = {}, val setKeepAlive: (Boolean) -> Unit = {},
 )
 
 @Composable
@@ -108,7 +108,7 @@ private fun hms(ms: Long): String = SimpleDateFormat("HH:mm:ss", Locale.US).form
 @Composable
 internal fun AdbCockpitContent(
     inputs: AdbCockpitModel.Inputs?, busy: String, note: String, log: List<ChannelLog.Entry>, a: CockpitActions,
-    modeMenuOpen: Boolean = false, filterOpen: Boolean = false, query: String = "",
+    modeMenuOpen: Boolean = false, filterOpen: Boolean = false, query: String = "", keepAlive: AdbCockpitModel.KeepAlive? = null,
 ) {
     val p = LocalKitPalette.current
     var menu by remember { mutableStateOf(modeMenuOpen) }
@@ -148,6 +148,8 @@ internal fun AdbCockpitContent(
         if (menu) FlowRow(Modifier.fillMaxWidth().testTag("adbc:mode-menu"), Arrangement.spacedBy(KitStoreRow.tight), Arrangement.spacedBy(KitStoreRow.tight)) {
             for (md in AdbCockpitModel.SELECTABLE) Chip(AdbCockpitModel.modeName(md), "adbc:mode:${md.id}", { menu = false; a.pickMode(md) }, primary = md == mode)
         }
+        // ── keep-alive: the "Keep Wireless debugging on" switch + the keeper's real state ──
+        keepAlive?.let { ka -> KeepAliveRow(ka, a.setKeepAlive) }
         // ── Auto-fix ──
         Row(Modifier.fillMaxWidth().background(p.accent.copy(alpha = 0.10f)).border(KitStoreRow.step(1), p.accent)
             .clickable(enabled = busy.isEmpty() && inputs != null, role = Role.Button, onClick = a.autoFix).padding(KitStoreRow.gap).testTag("adbc:autofix"),
@@ -190,6 +192,34 @@ internal fun AdbCockpitContent(
                 }
             }
         }
+    }
+}
+
+/**
+ * The keep-alive panel: a light + the live keeper status, its four sub-lights (Service, Armed, Secure settings, Battery) and an
+ * ON/OFF switch bound to the one "Keep Wireless debugging on" preference. Every light is a real [AdbCockpitModel.KeepAlive] fact.
+ */
+@Composable
+private fun KeepAliveRow(ka: AdbCockpitModel.KeepAlive, set: (Boolean) -> Unit) {
+    val p = LocalKitPalette.current
+    Column(Modifier.fillMaxWidth().border(KitStoreRow.step(1), p.hairline).padding(KitStoreRow.gap).testTag("adbc:keepalive"),
+        verticalArrangement = Arrangement.spacedBy(KitStoreRow.tight)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(KitStoreRow.gap)) {
+            Dot(ka.light)
+            Column(Modifier.weight(1f)) {
+                Text("Keep-alive", fontSize = KitStoreRow.body, fontWeight = FontWeight.Bold, color = p.textPrimary)
+                KitStoreCaption(ka.status, color = p.textSecondary)
+            }
+            Chip(if (ka.on) "ON ✓" else "OFF", "adbc:keepalive-toggle", { set(!ka.on) }, primary = ka.on)
+        }
+        if (ka.subs.isNotEmpty()) FlowRow(horizontalArrangement = Arrangement.spacedBy(KitStoreRow.tight), verticalArrangement = Arrangement.spacedBy(KitStoreRow.tight)) {
+            for (x in ka.subs) Row(Modifier.border(KitStoreRow.step(1), p.hairline).padding(horizontal = KitStoreRow.gap, vertical = KitStoreRow.step(1)).testTag("adbc:ka-sub:${x.label}"),
+                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(KitStoreRow.tight)) {
+                Dot(x.light, size = 6)
+                KitStoreCaption(x.label, color = p.textSecondary)
+            }
+        }
+        KitStoreCaption(ka.detail, color = p.textSecondary, modifier = Modifier.testTag("adbc:ka-detail"))
     }
 }
 
@@ -267,7 +297,16 @@ internal fun AdbStatusTab() {
             note = "Log copied."
         },
         clearLog = { ChannelLog.shared.clear() },
+        setKeepAlive = { on -> com.diegonmarcos.superapp.system.WirelessDebugKeeper.Prefs.setEnabled(ctx, on); tick++ },
     )
     val log = remember(logTick, tick) { ChannelLog.shared.entries() }
-    AdbCockpitContent(inputs, busy, note, log, a)
+    val keepAlive = remember(tick) {
+        runCatching {
+            val on = com.diegonmarcos.superapp.system.WirelessDebugKeeper.Prefs.enabled(ctx)
+            val s = com.diegonmarcos.superapp.adbdebug.WdKeeper.snapshot(ctx)
+            AdbCockpitModel.keepAlive(on, s.armed, s.serviceRunning, s.canWrite, s.batteryExempt,
+                s.lastRearmAt?.let { com.diegonmarcos.superapp.adbdebug.WdKeeper.ago(it) })
+        }.getOrNull()
+    }
+    AdbCockpitContent(inputs, busy, note, log, a, keepAlive = keepAlive)
 }
