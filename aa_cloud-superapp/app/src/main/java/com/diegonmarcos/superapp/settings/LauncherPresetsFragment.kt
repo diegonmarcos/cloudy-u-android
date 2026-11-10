@@ -93,6 +93,11 @@ class LauncherPresetsFragment : KitComposeFragment() {
 
     /** Re-read every group from the store; the composition repaints what changed. */
     internal fun repaintAll() {
+        // #1506 A worker (Super Saving, line 187) and other deferred callbacks post this back to the UI
+        // thread; by the time it runs the fragment may be detached. The fillers below call requireContext(),
+        // which then throws IllegalStateException "not attached to a context" and crashes the app. Bail when
+        // the fragment is gone — there is nothing to repaint.
+        if (!isAdded) return
         page = LauncherPresets.groups().map { group ->
             group to when (group.kind) {
                 LauncherPresets.KIND_PROFILE -> fillSandboxes()

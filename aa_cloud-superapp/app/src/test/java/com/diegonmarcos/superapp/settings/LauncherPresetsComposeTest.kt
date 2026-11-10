@@ -102,6 +102,19 @@ class LauncherPresetsComposeTest : KitPageHarness() {
     }
 
     @Test
+    fun `#1506 repaintAll after the fragment is detached is a no-op, not a crash`() {
+        val page = showPresets()
+        val fm = compose.activity.supportFragmentManager
+        // Detach the page the way leaving the screen does: it is no longer attached to a context.
+        fm.beginTransaction().remove(page).commitNow()
+        assertFalse("precondition: the fragment must be detached", page.isAdded)
+        // The Super Saving worker (superSavingTile) posts repaintAll() back to the UI thread after the
+        // user has left; before the isAdded guard this reached requireContext() and threw
+        // IllegalStateException "not attached to a context", crashing the app. Now it must do nothing.
+        page.repaintAll()
+    }
+
+    @Test
     fun `P3 every tile is announced as a selectable choice`() {
         val page = showPresets()
         for ((group, tiles) in page.page) for (t in tiles) {
