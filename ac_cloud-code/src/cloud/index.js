@@ -29,6 +29,8 @@ import openFile from "lib/openFile";
 import browser from "plugins/browser";
 import markdownIt from "markdown-it";
 import DOMPurify from "dompurify";
+import FileTree from "components/fileTree";
+import { renderMarkdown } from "pages/markdownPreview/renderer";
 import nav from "./nav.json";
 import targets from "./targets.gen.json";
 import { buildTabs, menuFor, select } from "./tabs";
@@ -112,7 +114,7 @@ function gitPath(relative) {
 // ── Backlog: render the ONE existing source, as-is ─────────────────────────
 // Backlog and Agents are two entry files of the same backlog dist, read from
 // the same folder (one localStorage key), through this one renderer.
-async function renderBacklogView(panel, title, entry, ...extra) {
+async function renderBacklogView(panel, title, entry, { extra = [], docs = false } = {}) {
 	const md = markdownIt({ html: false, linkify: true });
 	let dir = stored("backlog.dir", gitPath(nav.backlog.source_dir));
 	let current = entry;
@@ -184,20 +186,93 @@ async function renderBacklogView(panel, title, entry, ...extra) {
 			showTab("editor");
 		},
 	});
-	panel.replaceChildren(panelHeader(title), body, ...extra);
-	MENUS[panel.dataset.tab] = () => ({ items: [
+	// #1589 Docs child menu: a LEFT collapsible file tree of the cloud-a-docs clone
+	// (the Product-Backlog repo). It is NOT the editor's sidebar — a secondary tree
+	// scoped to this one repo (components/fileTree). Clicking a .md or .html renders
+	// it in place through the shared preview (pages/markdownPreview renderer + html),
+	// so the backlog repo is served and read inside the tab. The root is declared in
+	// nav.docs.root (RELATIVE to the store git folder) and overridable per device.
+	let docsDir = stored("docs.dir", gitPath(nav.docs.root));
+	let docsTree = null;
+	const buildDocsPane = () => {
+		const treeBox = el("div", { className: "cloud-docs-treebox" });
+		const aside = el("aside", { className: "cloud-docs-tree" });
+		const toggle = el("button", {
+			className: "cloud-docs-toggle",
+			onclick: () => aside.classList.toggle("collapsed"),
+		}, el("span", { className: "icon chevron_right cloud-docs-caret" }), el("span", { className: "cloud-docs-title" }, nav.docs.label || "Docs"));
+		aside.append(toggle, treeBox);
+
+		const openDoc = async (url, name) => {
+			body.textContent = `Loading ${name} …`;
+			try {
+				const text = await fsOperation(url).readFile("utf8");
+				if (/\.html?$/i.test(name)) {
+					body.innerHTML = DOMPurify.sanitize(text);
+				} else if (/\.md$/i.test(name)) {
+					const { html } = await renderMarkdown(text, { uri: url });
+					body.innerHTML = DOMPurify.sanitize(html);
+				} else {
+					await openFile(url, { render: true });
+					showTab("editor");
+				}
+			} catch (err) {
+				body.replaceChildren(
+					el("p", {}, `Cannot read ${name}`),
+					el("p", { className: "cloud-muted" }, String(err?.message || err)),
+					el("button", {
+						className: "cloud-row",
+						onclick: () => system.manageAllFiles(() => openDoc(url, name), (e) => toast(String(e))),
+					}, el("span", { className: "icon folder_open" }), "Allow access to all files, then retry"),
+				);
+			}
+		};
+
+		const loadTree = () => {
+			if (docsTree) docsTree.destroy();
+			docsTree = new FileTree(treeBox, {
+				getEntries: (dirUrl) => fsOperation(dirUrl).lsDir(),
+				onFileClick: openDoc,
+			});
+			docsTree.load(docsDir).catch((err) => {
+				treeBox.replaceChildren(el("p", { className: "cloud-muted" }, `cloud-docs not found at ${docsDir.replace(/^file:\/\//, "")} — set its folder from the Backlog menu. (${err?.message || err})`));
+			});
+		};
+		loadTree();
+		aside._reload = loadTree;
+		aside._setDir = (next) => { docsDir = next; loadTree(); };
+		return aside;
+	};
+
+	const asidePane = docs ? buildDocsPane() : null;
+	if (asidePane) panel.replaceChildren(panelHeader(title), el("div", { className: "cloud-backlog-split" }, asidePane, body), ...extra);
+	else panel.replaceChildren(panelHeader(title), body, ...extra);
+
+	const items = [
 		{ id: "reload", label: "Reload", icon: "refresh", run: () => load(current) },
 		{ id: "entry", label: `Back to ${entry}`, icon: "home", run: () => load(entry) },
 		{ id: "edit", label: "Edit this file", icon: "edit", run: () => edit.click() },
 		{ id: "repo", label: "Open the repository", icon: "git", run: () => repo.click() },
 		{ id: "folder", label: "Backlog folder", icon: "folder_open", run: () => change.click() },
-	] });
+	];
+	if (asidePane) {
+		items.push({ id: "docs-reload", label: "Reload docs tree", icon: "refresh", run: () => asidePane._reload() });
+		items.push({ id: "docs-folder", label: "cloud-docs folder", icon: "folder_open", run: async () => {
+			const { default: prompt } = await import("dialogs/prompt");
+			const next = await prompt("cloud-docs repo folder (URL)", docsDir, "text");
+			if (!next) return;
+			const url = next.endsWith("/") ? next : `${next}/`;
+			store("docs.dir", url);
+			asidePane._setDir(url);
+		} });
+	}
+	MENUS[panel.dataset.tab] = () => ({ items });
 	LOADERS[panel.dataset.tab] = load;
 	await load(pageFileOf(panel.dataset.tab, entry));
 }
 
 function renderBacklog(panel) {
-	return renderBacklogView(panel, "Backlog", nav.backlog.entry);
+	return renderBacklogView(panel, "Backlog", nav.backlog.entry, { docs: true });
 }
 
 // Create `<parent>/<name>` when missing (the Git volumes). Never throws: false = could not.
@@ -285,7 +360,7 @@ async function renderAgents(panel) {
 	const live = items.length
 		? el("div", { className: "cloud-list" }, items.map((a) => el("div", { className: "cloud-row" }, a.name)))
 		: el("p", { className: "cloud-muted" }, note);
-	await renderBacklogView(panel, "Agents", nav.agents.entry, live);
+	await renderBacklogView(panel, "Agents", nav.agents.entry, { extra: [live] });
 }
 
 // ── AI (was Chat, replaced Home): src/cloud/chat ────────────────────────────

@@ -103,6 +103,11 @@
     "source_dir": "cloud-a-docs/1___BACKLOG___/1.1.Product-Backlog/dist/",
     "entry": "P-Backlog-sts.md"
   },
+  "docs": {
+    "_doc": "#1589 the Backlog tab's LEFT collapsible child file tree: the on-device clone of cloud-a-docs (the Product-Backlog repo cloud-drive keeps in the shared store, #575/#676). `root` is RELATIVE to the store's git folder (shared_root/git_subdir), so no device-absolute path is written here; index.js composes it with gitPath(). It is a secondary tree (components/fileTree), not Acode's sidebar: a .md or .html opens RENDERED in place through the shared markdown/html preview (pages/markdownPreview). The folder is overridable per device (kept in localStorage docs.dir) for when the clone lives elsewhere.",
+    "root": "cloud-a-docs",
+    "label": "cloud-a-docs"
+  },
   "agents": {
     "_doc": "The Agents tab reads the SAME source as Backlog (#562: 'they must read ONE source'): the backlog engine already derives task-effort, task-complexity and agent-model per task and curates agent-slot from assignments.json, and emits them as its own views — 'agent batches' (entry, below) and 'per agent-model', which the entry links to in its Views line. This tab renders `entry` through the very renderer Backlog uses, from backlog.source_dir; nothing about agents is derived here. SEAM: seams.js::listAgents is where the LIVE half (running status, token utilisation from the agent runner) plugs in; until then the tab shows its note under the view.",
     "entry": "P-Backlog-bat.md"

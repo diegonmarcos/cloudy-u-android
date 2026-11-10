@@ -426,6 +426,58 @@ body.cloud-collapsed {
   }
 }
 
+// #1589 Backlog split: left collapsible cloud-docs file tree beside the rendered body.
+.cloud-backlog-split {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.cloud-docs-tree {
+  flex: 0 0 auto;
+  width: 44%;
+  max-width: 320px;
+  min-width: 0;
+  overflow: auto;
+  border-right: 1px solid var(--border-color);
+  padding-right: 6px;
+
+  &.collapsed {
+    width: auto;
+    border-right: 0;
+    padding-right: 0;
+
+    .cloud-docs-treebox {
+      display: none;
+    }
+
+    .cloud-docs-caret {
+      transform: none;
+    }
+  }
+}
+
+.cloud-docs-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  text-align: left;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 4px 2px;
+}
+
+.cloud-docs-caret {
+  transform: rotate(90deg);
+}
+
+.cloud-backlog-split .cloud-md {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
 .cloud-md {
   table {
     border-collapse: collapse;
