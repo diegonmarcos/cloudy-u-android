@@ -4,8 +4,13 @@
 
   Bundles libs:media (stickers/GIF), libs:translate (ML Kit), and libs:voice
   (Vosk offline dictation) as a standalone installable so they can be updated
-  independently of the keyboard APK. No IME components — this is a launcher
-  app only.
+  independently of the keyboard APK. No IME components.
+
+  release.kind=="lib": this ships as an APK only because it hosts the AIDL
+  engine services (Translate/Voice) and the media providers that other apps
+  bind to — it is NOT a launcher app. It therefore declares NO MAIN/LAUNCHER
+  activity: it must not appear in the Android apps grid. Updates are driven by
+  the SuperApp Store (Libs tab), not by a self-launched page.
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
@@ -30,15 +35,9 @@
         android:label="@string/app_name"
         android:allowBackup="false">
 
-        <activity
-            android:name=".MainActivity"
-            android:exported="true"
-            android:label="@string/app_name">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+        <!-- No MAIN/LAUNCHER activity: this is a lib APK (engine services +
+             media providers), not a launcher app, so it stays out of the
+             Android apps grid. -->
 
         <!-- FileProvider for libs:media sticker/GIF panel (content:// URIs). -->
         <provider
