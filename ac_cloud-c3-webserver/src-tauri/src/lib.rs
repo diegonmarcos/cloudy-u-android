@@ -81,15 +81,13 @@ pub fn run() {
             // says "not available", which names the problem on the screen
             // instead of closing the app with no word.
             let port = start_servers()?;
-            // The app opens on its shell (five tabs); the file view at / is one of its pages (the Files tab).
-            // Server OFF: the window opens on the bundled ui-off page (the served pages are down), whose button is the way back.
-            let target = if c3_webserver::power::current().sw.server {
-                let url: tauri::Url = format!("http://127.0.0.1:{}/__app__/", port).parse()?;
-                WebviewUrl::External(url)
-            } else {
-                WebviewUrl::App("index.html".into())
-            };
-            let _window = WebviewWindowBuilder::new(app, "main", target).build()?;
+            // #1618 The app ALWAYS opens on its shell (five tabs), whether the Server is ON or OFF. The admin surface
+            // (/__app__ and /api/power) is bound in every power state (lib.rs start_admin), so with the Server OFF the
+            // shell still renders the normal pages and shows Server = stopped with a Start control. The ON/OFF switch
+            // only binds or unbinds the HTTP content listeners; it never gates navigation, rendering or any in-app
+            // feature, and the window is never sent to the bundled off page (which blocked the whole UI while OFF).
+            let url: tauri::Url = format!("http://127.0.0.1:{}/__app__/", port).parse()?;
+            let _window = WebviewWindowBuilder::new(app, "main", WebviewUrl::External(url)).build()?;
             #[cfg(target_os = "android")]
             {
                 request_storage(&_window);
