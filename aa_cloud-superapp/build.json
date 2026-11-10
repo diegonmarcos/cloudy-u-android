@@ -3365,45 +3365,34 @@
           {
             "_doc": "Configs (#324) — the surfaces that configure the fleet rather than being part of it (led by Account; the SuperApp tile moved to Lnktree on 2026-10-30), pulled out of Tools Primary so a config errand is one recognisable row instead of a hunt through the tool tiles. It sits LAST among the declared groups on purpose: GroupedTilesFragment appends a synthetic 'Actions' header after every data group it renders (see LauncherNavController.GROUP_ACTIONS), so 'after Lnktree and before Actions' is exactly this position and there is no Actions group in this array to sit before.",
             "title": "Configs",
+            "_doc_row_order": "#1611 OWNER ORDER (2026-11): the Cloud ▸ Apps ▸ Configs row reads exactly Quick Actions, Watchdog | Account, C3 | Store — three tile groups divided by two '|' separators. Quick Actions and Watchdog are the device-side pair; Account and C3 the connect pair; Store stands alone. The About tile that used to close this row was dropped from the row on owner order; the About page itself (page:config/app-about) is untouched and still reachable from the Configs grid. test-c3-is-an-app.sh finds this group by its CONTENT (a group holding both Store and Quick Actions labels), so the reorder keeps it identifiable.",
             "tiles": [
               {
-                "_doc": "Configs ▸ Setup ▸ Apps ▸ Account, as a tile in row 1 of the Cloud ▸ Apps ▸ Configs group (owner order 2026-10: Account, Configs | Store, Presets, Watchdog | C3). Opens the same page the Configs grid tile does.",
-                "id": "configs-account",
-                "label": "Account",
-                "icon": "ic_p_accounts",
-                "target": "page:config/profile"
-              },
-              {
-                "_doc": "Rule between tile groups (owner order: Account | Store, Controls, Watchdog | C3 | About).",
-                "id": "configs-sep-2",
-                "label": "|",
-                "separator": true
-              },
-              {
-                "_doc": "The Configs row's way into Configs ▸ Store (#563). Its label must equal the store page's label — test-store-identity.sh derives both and fails if they drift.",
-                "label": "Store",
-                "icon": "ic_refresh",
-                "target": "extapp:cloud-store"
-              },
-              {
-                "_doc": "Configs ▸ Setup ▸ Launcher ▸ Controls — the merged Controls entry (tabs Presets | Panels ▸ UI | Tools); replaces the old Presets tile in this row.",
+                "_doc": "#1611 Configs ▸ (Device) ▸ UI ▸ Quick Actions — the merged Controls entry (tabs Presets | Panels ▸ UI | Tools). First of the owner-ordered row (Quick Actions, Watchdog | Account, C3 | Store).",
                 "id": "configs-controls",
                 "label": "Quick Actions",
                 "icon": "ic_home",
                 "target": "page:config/controls"
               },
               {
-                "_doc": "#1545 Configs ▸ Setup ▸ Network ▸ Watchdog (the Network hub page), as a tile in row 2 of the Cloud ▸ Apps ▸ Configs group, in the place the Firewall tile held; Firewall is one tap further, on the hub. page:, so it opens the in-app page, never the C3-Watchdog APK.",
+                "_doc": "#1545 #1611 Configs ▸ Watchdog (the in-app Agents/Watchdog hub page), paired with Quick Actions in group 1 of the Cloud ▸ Apps ▸ Configs row. page:, so it opens the in-app page, never the C3-Watchdog APK.",
                 "id": "configs-watchdog",
                 "label": "Watchdog",
                 "icon": "ic_p_watchdog",
                 "target": "page:config/agents-watchdog"
               },
               {
-                "_doc": "Rule between tile groups (owner order: Account | Store, Controls, Watchdog | C3 | About).",
-                "id": "configs-sep-3",
+                "_doc": "Rule between tile groups (#1611 owner order: Quick Actions, Watchdog | Account, C3 | Store).",
+                "id": "configs-sep-2",
                 "label": "|",
                 "separator": true
+              },
+              {
+                "_doc": "#1611 Configs ▸ (Setup) ▸ Connect ▸ Account, opening the same page the Configs grid tile does. First of group 2 (Account, C3).",
+                "id": "configs-account",
+                "label": "Account",
+                "icon": "ic_p_accounts",
+                "target": "page:config/profile"
               },
               {
                 "_doc": "C3 (#663) — cloud-c3 is a published APK, so this tile is extapp:, NOT page: — it opens the app, or offers the install when it is absent. It resolves through the ui.external_apps entry 'cloud-c3', which carries no label: the caption derives from the id. test-c3-is-an-app.sh fails if this goes back to a page: route. The in-app C3 section is still reachable from the one-hand circular menu and the Labs index, and its Watchdog tab launches com.diegonmarcos.watchdog via extapp:c3-watchdog #1552 icon ic_cloud_control, the SAME declared drawable as Configs > Fleet > C3, so the two C3 entries share one glyph without duplicating the asset.",
@@ -3413,17 +3402,16 @@
                 "target": "extapp:cloud-c3"
               },
               {
-                "_doc": "Rule between tile groups (owner order: Account | Store, Controls, Watchdog | C3 | About).",
-                "id": "configs-sep-4",
+                "_doc": "Rule between tile groups (#1611 owner order: Quick Actions, Watchdog | Account, C3 | Store).",
+                "id": "configs-sep-3",
                 "label": "|",
                 "separator": true
               },
               {
-                "_doc": "Configs ▸ Observability ▸ About, last of the owner-ordered tiles (Configs | Presets, Store, C3, About).",
-                "id": "configs-about",
-                "label": "About",
-                "icon": "ic_settings",
-                "target": "page:config/app-about"
+                "_doc": "#1611 The Configs row's way into Configs ▸ Store (#563), the final group of the row. Its label must equal the store page's label — test-store-identity.sh derives both and fails if they drift.",
+                "label": "Store",
+                "icon": "ic_refresh",
+                "target": "extapp:cloud-store"
               }
             ]
           }
