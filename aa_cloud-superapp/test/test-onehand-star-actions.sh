@@ -53,10 +53,12 @@ case "$STAR_ACTIONS" in
   *)             check OK "'Copy Info' is absent from the star actions list" ;;
 esac
 
-# Nothing else moved. The original ask was one entry out, order untouched.
+# Nothing else moved. Copy Info is out; the shared Actions row (#1596/#1610)
+# then added Sync Clipboard, Saving Mode and Focus Mode after Animations.
 # The star's order is data, and a silent reshuffle of it is a UI regression no
-# other assertion in this file would catch.
-EXPECTED="Update All · KDE Connect · Animations"
+# other assertion in this file would catch, so this list is pinned in lockstep
+# with onehand.arc_menu.actions + the config section's is_action pages.
+EXPECTED="Update All · KDE Connect · Animations · Sync Clipboard · Saving Mode · Focus Mode"
 [ "$STAR_ACTIONS" = "$EXPECTED" ] \
   && check OK "the remaining actions are exactly [$EXPECTED], in order" \
   || check "got [$STAR_ACTIONS]" "the remaining actions are exactly [$EXPECTED], in order"

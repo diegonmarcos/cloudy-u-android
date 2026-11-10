@@ -57,7 +57,7 @@ print("== T1: the declaration is the two grouped lines the owner asked for (#158
 if [a["id"] for a in rows[0]] == ["update", "install_toggle", "fetch", "clear", "download"]:
     ok("row 0 = Update · Uninstall/Install · Fetch · Clear · Download")
 else: bad("row 0 is not the fetch/install lifecycle line: %s" % [a["id"] for a in rows[0]])
-if [a["id"] for a in rows[1]] == ["open", "stop", "access", "perms", "libs", "about"]:
+if [a["id"] for a in rows[1]] == ["open", "stop", "access", "perms", "app_libs", "about"]:
     ok("row 1 = Open · Stop │ Access · Perm │ Libs · About")
 else: bad("row 1 is not the open/inspect line: %s" % [a["id"] for a in rows[1]])
 tog = next((a for a in flat if a["id"] == "install_toggle"), {})
@@ -69,7 +69,7 @@ if label.get("update") == "Update" and label.get("fetch") == "Fetch" \
     ok("captions relabelled: Update, Fetch, Download, Perm")
 else: bad("captions not relabelled per #1588: %s" % {k: label.get(k) for k in ("update","fetch","download","perms")})
 access = next((a for a in flat if a["id"] == "access"), {})
-libsd = next((a for a in flat if a["id"] == "libs"), {})
+libsd = next((a for a in flat if a["id"] == "app_libs"), {})
 if access.get("divider_before") is True and libsd.get("divider_before") is True:
     ok("the `│` dividers are declared before Access and before Libs")
 else: bad("the group dividers are not before Access and Libs: access=%s libs=%s" % (access, libsd))
@@ -117,7 +117,7 @@ else: bad("Download is not wired to a public-Downloads copy")
 if '"direct_install" ->' in ra and "StoreStages.INSTALL" in ra:
     ok("the silent StoreStages install (direct_install) stays wired")
 else: bad("the silent StoreStages install is not wired")
-for vid, kind in (("perms", "Perms"), ("routes", "Routes"), ("libs", "Libs"), ("access", "Access")):
+for vid, kind in (("perms", "Perms"), ("routes", "Routes"), ("app_libs", "Libs"), ("access", "Access")):
     if re.search(r'"%s" ->.*?inspect\.add\(Inspect\.%s\(' % (vid, kind), ra, re.S): ok("%s opens the %s inspect sheet" % (vid, kind))
     else: bad("%s does not open an inspect sheet" % vid)
 if re.search(r'"about", "details" ->.*?details\.add', ra, re.S): ok("About opens the full detail sheet (supersedes Details)")

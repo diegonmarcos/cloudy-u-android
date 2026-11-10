@@ -68,19 +68,29 @@ PY
 [ -f "$APP/app/src/main/res/drawable/ic_wifi.xml" ] && ok "ic_wifi resolves to a drawable" || bad "ic_wifi is not a drawable (the tile would fall back to ic_link_tile)"
 
 echo "== W2: the group row holds the page and its tabs =="
+# #1610 Configs restructure: ADB Shell, WiFi and Bluetooth belong to the Device
+# group (Device ▸ Network), none to Setup — asserted by test-configs-restructure
+# R6. This row check moved from the retired 'setup' group to 'device' in lockstep
+# with that declaration; the page + its five tabs must all sit in device, none in
+# setup, WiFi must be the visible Network tile right after ADB Shell, and every
+# Configs page must still live in exactly one group.
 check "$(python3 - "$BJ" <<'PY'
 import json, sys
 sec = next(s for s in json.load(open(sys.argv[1]))['ui']['sections'] if s['id'] == 'config')
-setup = next(g for g in sec['groups'] if g['id'] == 'setup')['pages']
+device = next(g for g in sec['groups'] if g['id'] == 'device')['pages']
+setup  = next(g for g in sec['groups'] if g['id'] == 'setup')['pages']
 probs = []
 need = ['wifi', 'wifi-scan', 'wifi-channels', 'wifi-link', 'wifi-tools', 'wifi-log']
-if any(i not in setup for i in need): probs.append('setup group lacks %r' % [i for i in need if i not in setup])
-elif setup.index('wifi') != setup.index('adb-shell') + 1: probs.append('wifi is not after adb-shell in the setup row')
+if any(i not in device for i in need): probs.append('device group lacks %r' % [i for i in need if i not in device])
+if any(i in setup for i in need): probs.append('setup row still lists wifi pages %r' % [i for i in need if i in setup])
+net = [p['id'] for p in sec['pages'] if p.get('group') == 'Device' and p.get('subgroup') == 'Network' and not p.get('hidden')]
+if 'adb-shell' not in net or net[net.index('adb-shell') + 1:net.index('adb-shell') + 2] != ['wifi']:
+    probs.append('WiFi is not the Network tile right after ADB Shell: %r' % net)
 seen = [i for g in sec['groups'] for i in g['pages']]
 if sorted(seen) != sorted(p['id'] for p in sec['pages']): probs.append('a page is not in exactly one group')
 print('; '.join(probs) or 'OK')
 PY
-)" "Setup row: adb-shell, wifi (+ its five tabs); every Configs page in exactly one group"
+)" "Device ▸ Network row: WiFi (+ its five tabs) after ADB Shell, in the device group not Setup; every Configs page in exactly one group"
 
 echo "== W3: the page is the lib's, scroll and clearance wired, features present =="
 F="$KT/configs/WifiFragment.kt"

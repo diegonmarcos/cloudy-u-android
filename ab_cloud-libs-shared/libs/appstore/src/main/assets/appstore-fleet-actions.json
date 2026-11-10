@@ -14,7 +14,7 @@
       { "id": "stop",   "label": "Stop",   "color": "0xFF9C4221" },
       { "id": "access", "label": "Access", "color": "0xFF2A2A33", "divider_before": true },
       { "id": "perms",  "label": "Perm",   "color": "0xFF2A2A33" },
-      { "id": "libs",   "label": "Libs",   "color": "0xFF2A2A33", "divider_before": true },
+      { "id": "app_libs", "label": "Libs",  "color": "0xFF2A2A33", "divider_before": true },
       { "id": "about",  "label": "About",  "color": "0xFF2A2A33" }
     ]
   ],

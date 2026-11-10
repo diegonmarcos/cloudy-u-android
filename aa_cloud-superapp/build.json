@@ -9497,7 +9497,7 @@
       "_doc_display_controls": "Configs > Launcher > Quick Actions > UI: the three display controls, declared once (QuickDisplay reads this, nothing is restated in Kotlin). `scale` = Cloud-superapp Scale: a ruler of the smallest-width in dp centred on `center` (411, Android's usual Minimum width), min/max symmetric around it, with one-tap `presets` (Set 411, Set 500). It sets THIS app's smallest width in-process (SystemDisplay.wrap, no ADB, no grant) and shows the device's own value next to it. `font` = the system font scale (`settings system font_scale`) and `zoom` = the system Display size (`wm density`, factor x the device's stable density; reads `settings secure display_density_forced`): both are device-wide, so they write through the privileged path (font: WRITE_SETTINGS if granted, else the ADB shell channel; zoom: the ADB shell channel) and with neither they show a `needs ADB` state with the exact command. `steps` are the factors, `names` their Android-style names.",
       "display_controls": {
         "scale": {
-          "label": "Cloud-superapp Scale",
+          "label": "UI Scale",
           "subtitle": "Smallest width of this app in dp, like Android's Minimum width. Lower = bigger UI, higher = more on screen.",
           "unit": "dp",
           "center": 411,

@@ -1018,7 +1018,7 @@ class StoreCloudFragment : KitComposeFragment() {
             // #redesign the inspect sheets (open OVER the page: nav + Back stay). About supersedes the old Details.
             "perms" -> verb { inspect.add(Inspect.Perms(app)) }
             "routes" -> verb { inspect.add(Inspect.Routes(app)) }
-            "libs" -> verb { inspect.add(Inspect.Libs(app)) }
+            "app_libs" -> verb { inspect.add(Inspect.Libs(app)) }
             "access" -> verb { inspect.add(Inspect.Access(app)) }
             "about", "details" -> verb { details.add(app to states[app.id]) }
             else -> StoreVerb(a.label, 0xFF4A4A55.toInt(), {
