@@ -391,7 +391,7 @@
         "catalog_url": "https://openrouter.ai/api/v1/models",
         "needs_token": true,
         "default_model": "google/gemini-2.5-flash",
-        "pricing_as_of": "2026-11-09",
+        "pricing_as_of": "2026-11-10",
         "models": [
           {
             "id": "meta-llama/llama-3.1-8b-instruct",
@@ -436,8 +436,8 @@
               "roleplay",
               "translation"
             ],
-            "prompt": 0.09,
-            "completion": 0.3,
+            "prompt": 0.08,
+            "completion": 0.1,
             "note": "Sparse 26B (4B active): translation, academia and legal at a small-model price."
           },
           {
@@ -480,8 +480,8 @@
               "fp16",
               "fp8"
             ],
-            "prompt": 0.59,
-            "completion": 0.79,
+            "prompt": 0.71,
+            "completion": 0.71,
             "note": "70B open weights, no category ranking — a general fallback, not a specialist."
           },
           {
@@ -516,7 +516,6 @@
             "name": "DeepSeek V4 Flash 0731",
             "open": true,
             "quant": [
-              "bf16",
               "fp32",
               "fp4",
               "fp8",
@@ -555,7 +554,7 @@
               "programming",
               "roleplay"
             ],
-            "prompt": 0.006,
+            "prompt": 0.0062,
             "completion": 6.8,
             "note": "Ranked in ten categories including translation; the formal-register GLM."
           },
@@ -582,8 +581,8 @@
               "translation",
               "trivia"
             ],
-            "prompt": 0.0335,
-            "completion": 0.083,
+            "prompt": 0.0399,
+            "completion": 0.0784,
             "note": "Ranked in all twelve categories; the cheapest all-rounder after DeepSeek."
           },
           {
@@ -608,9 +607,7 @@
           {
             "id": "openai/gpt-4.1-mini",
             "name": "GPT-4.1 mini",
-            "trained_for": [
-              "translation"
-            ],
+            "trained_for": [],
             "prompt": 0.4,
             "completion": 1.6,
             "note": "Translation-ranked and closed-weight; steady, conservative English grammar fixes."
