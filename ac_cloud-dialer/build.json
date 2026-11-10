@@ -366,7 +366,8 @@
       "overlay",
       "install_unknown",
       "phone_numbers",
-      "usage_access"
+      "usage_access",
+      "send_sms"
     ],
     "helpers": [],
     "first_run": "libs:perms"

@@ -327,7 +327,8 @@
     "overlay",
     "install_unknown",
     "phone_numbers",
-    "usage_access"
+    "usage_access",
+    "send_sms"
    ],
    "first_run": "libs:perms",
    "helpers": []
