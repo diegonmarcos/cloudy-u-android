@@ -136,10 +136,11 @@ private fun SectionHeader(text: String, tag: String) =
         fontFamily = NotifCard.font, maxLines = 1, modifier = Modifier.padding(start = 4.dp, top = 6.dp).testTag(tag))
 
 /**
- * Cloud Publisher / Phone Publisher / Apps Keep Alive (#1603): its own header, then its app rows with a switch each. A
- * push section carries a `filter` (cloudy | phone) and draws the one matching AppSplit side as a flat list — no inner
- * sub-header, the section label already names the side. The keep-alive section has no filter and keeps its two labelled
- * sub-groups (Cloudy, Phone). Push = the app may land in the notification history; Keep Alive = the owner's keep-alive list.
+ * Cloud Publisher / Phone Publisher / Apps Keep Alive (#1603): its own header, then its app rows — READ-ONLY on the
+ * viewer (#1603a: the Notify page the user reads carries NO switches on any card or section). A push section carries a
+ * `filter` (cloudy | phone) and draws the one matching AppSplit side as a flat list — no inner sub-header, the section
+ * label already names the side. The keep-alive section has no filter and keeps its two labelled sub-groups (Cloudy,
+ * Phone). The owner's per-app on/off lives in Settings' flat declared-badge list (BadgePanes), never here.
  */
 @Composable
 internal fun AppSectionBlock(sec: NotifySections.AppSection) {
@@ -158,17 +159,10 @@ internal fun AppSectionBlock(sec: NotifySections.AppSection) {
             if (subLabel != null) Text(subLabel, color = NotifCard.meta, fontSize = NotifCard.nameSp, fontWeight = FontWeight.Medium, fontFamily = NotifCard.font)
             if (rows.isEmpty()) Text("No apps yet", color = NotifCard.body, fontSize = NotifCard.bodySp, fontFamily = NotifCard.font,
                 modifier = Modifier.padding(top = 4.dp))
+            // Read-only: the app name only. No Switch, no mutable state — the viewer shows WHAT the shade groups, it does not control it.
             for ((pkg, label) in rows) androidx.compose.runtime.key(pkg) {
-                var on by remember { androidx.compose.runtime.mutableStateOf(
-                    if (sec.kind == "push") AppSwitches.pushAllowed(ctx, pkg) else AppSwitches.keepAlive(ctx, pkg)) }
-                Row(Modifier.fillMaxWidth().padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text(label, color = NotifCard.title, fontSize = NotifCard.bodySp, fontFamily = NotifCard.font, maxLines = 1,
-                        overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-                    androidx.compose.material3.Switch(checked = on, onCheckedChange = { v ->
-                        on = v
-                        if (sec.kind == "push") AppSwitches.setPushAllowed(ctx, pkg, v) else AppSwitches.setKeepAlive(ctx, pkg, v)
-                    }, modifier = Modifier.testTag(BadgeCardTags.appSwitch(sec.id, pkg)))
-                }
+                Text(label, color = NotifCard.title, fontSize = NotifCard.bodySp, fontFamily = NotifCard.font, maxLines = 1,
+                    overflow = TextOverflow.Ellipsis, modifier = Modifier.fillMaxWidth().padding(top = 4.dp))
             }
         }
     }

@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.onNodeWithTag
@@ -96,6 +98,16 @@ class NotifyCardsShotTest : KitPageHarness() {
         for (sub in listOf("cloudy", "phone")) compose.onNodeWithTag(BadgeCardTags.sub("apps_keepalive", sub), useUnmergedTree = true).assertExists()
         compose.onNodeWithTag(BadgeCardTags.TITLE, useUnmergedTree = true).assertExists()
         snap("notify-page-sections.png")
+    }
+
+    @Test
+    fun `the viewer page is read-only - no toggles anywhere`() {
+        BadgeCardData.override = null
+        showKit { Column(Modifier.fillMaxSize().background(NotifCard.panel).padding(12.dp)) { BadgeCards() } }
+        compose.waitForIdle()
+        // #1603a: every switch exposes a ToggleableState; the viewer must draw none (control lives in Settings).
+        val toggles = compose.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.ToggleableState)).fetchSemanticsNodes()
+        org.junit.Assert.assertTrue("the viewer drew ${toggles.size} toggle(s); it must be read-only", toggles.isEmpty())
     }
 
     private fun snap(name: String) {

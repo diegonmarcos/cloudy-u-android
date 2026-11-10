@@ -45,8 +45,16 @@ grep -q 'LastMediaSession.resume' "$SRC/media/MusicControlsPopup.kt" && grep -q 
   && ok "media: last session saved from the live controller, Play resumes it" || bad "media last session wiring"
 grep -q 'AppSwitches.pushAllowed' "$SRC/notificationcenter/PhoneNotificationListenerService.kt" \
   && ok "muted push apps are skipped by the listener" || bad "push switch not honoured"
-grep -q 'AppSectionBlock' "$SRC/configs/BadgePanes.kt" && grep -q 'NotifySections.layout' "$SRC/configs/BadgePanes.kt" \
-  && ok "Config pane draws the app sections in the same layout as the shade" || bad "Config pane lacks the app sections"
+# #1603a: the VIEWER is read-only — BadgeCards carries no interactive toggle (no switch writes, no onCheckedChange).
+if grep -q 'onCheckedChange' "$SRC/launcher/BadgeCards.kt" || grep -q 'AppSwitches.set' "$SRC/launcher/BadgeCards.kt"; then
+  bad "#1603a viewer still renders a toggle (onCheckedChange / AppSwitches.set in BadgeCards.kt)"
+else ok "#1603a viewer (BadgeCards) is read-only — no toggle control"; fi
+# #1603b: SETTINGS is ONE flat declared-badge list — turn-all master + per-badge enabled/persistent, no app-section tables.
+if grep -q 'AppSectionBlock' "$SRC/configs/BadgePanes.kt"; then
+  bad "#1603b settings still draws the Apps Push / Keep Alive tables (AppSectionBlock in BadgePanes.kt)"
+elif grep -q 'KEY_ENABLED' "$SRC/configs/BadgePanes.kt" && grep -q 'KEY_PERSISTENT' "$SRC/configs/BadgePanes.kt" && grep -q 'notify-all' "$SRC/configs/BadgePanes.kt" && grep -q 'notify_turn_all' "$SRC/configs/BadgePanes.kt"; then
+  ok "#1603b settings is the flat declared-badge list (turn-all + enabled + persistent)"
+else bad "#1603b settings is not the flat enabled/persistent/turn-all list"; fi
 grep -q 'card.kind == "media"' "$SRC/launcher/BadgeCards.kt" && grep -q 'albumArt' "$SRC/notificationcenter/BadgeCardData.kt" \
   && ok "#1603 media card draws the posted album art behind the transport (Samsung-UI)" || bad "media album-art card missing"
 grep -q '"filter"' "$APP/build.json" && grep -q 'sec.filter' "$SRC/launcher/BadgeCards.kt" \

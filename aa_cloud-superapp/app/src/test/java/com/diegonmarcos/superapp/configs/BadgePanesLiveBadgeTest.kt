@@ -1,50 +1,33 @@
 package com.diegonmarcos.superapp.configs
 
-import android.app.ActivityManager
 import android.app.Application
-import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.PendingIntent
-import android.content.ComponentName
 import android.content.Context
-import android.content.Intent
-import android.view.View
-import android.view.ViewGroup
-import android.widget.TextView
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
-import androidx.compose.foundation.verticalScroll
-import com.diegonmarcos.superapp.ui.KitPageHarness
-import androidx.core.app.NotificationCompat
-import androidx.fragment.app.FragmentActivity
 import androidx.test.core.app.ApplicationProvider
-import com.diegonmarcos.superapp.R
 import com.diegonmarcos.superapp.notificationcenter.BadgeCustomization
 import com.diegonmarcos.superapp.notificationcenter.BadgeDeclaration
 import com.diegonmarcos.superapp.notificationcenter.BadgeServices
-import org.junit.Assert.assertEquals
+import com.diegonmarcos.superapp.ui.KitPageHarness
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
 /**
- * #535 — the persistent-badges view of Configs ▸ Launcher ▸ Notify (#580; the
- * Push tab before it) renders the badge AS POSTED, not a sentence about it, and
- * gives it a button that does what the badge's own tap does.
- *
- * Driven through the real view ([BadgePanes.badges]) against the SHIPPED declaration
- * ([BadgeServices.declared]): a notification is posted on a declared badge
- * channel exactly as its producer would, and the assertions read the rendered
- * view tree. Expected strings are read back off the posted Notification, so
- * nothing here passes on a value this file typed twice.
+ * #1603b — the SETTINGS pane ([BadgePanes.configs]) is ONE clean list of the declared badges: a turn-all master, then a
+ * row per declared badge with its `enabled` and `persistent` switches. No group boxes, no Apps Push / Apps Keep Alive
+ * tables, no live-badge boxes — those moved out (the viewer is read-only, the control is this list). Driven against the
+ * SHIPPED declaration ([BadgeServices.declared]); expectations are recomputed from it, never a second hardcoded copy.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
@@ -55,159 +38,51 @@ class BadgePanesLiveBadgeTest : KitPageHarness() {
     @org.junit.Before
     fun logToStdout() { org.robolectric.shadows.ShadowLog.stream = System.out }
 
-    private fun all(v: View): List<View> =
-        listOf(v) + if (v is ViewGroup) (0 until v.childCount).flatMap { all(v.getChildAt(it)) } else emptyList()
-
-    /** Draws the pane under the dense theme and returns the window's view tree (the notification's own RemoteViews live in it). */
-    private fun render(): View {
-        // Scrollable like the page that hosts it: the pane is taller than the test screen.
-        showKit {
-            androidx.compose.foundation.layout.Box(
-                androidx.compose.ui.Modifier.verticalScroll(androidx.compose.foundation.rememberScrollState())) {
-                BadgePanes.badges {}
-            }
-        }
+    private fun render() {
+        showKit { Box(Modifier.verticalScroll(rememberScrollState())) { BadgePanes.configs {} } }
         compose.waitForIdle()
-        return compose.activity.window.decorView
     }
 
-    @org.junit.Test
-    fun `the Config pane shows the same taxonomy as the shade - six categories then keep-alive below`() {
-        render()
-        val texts = composeTexts()
-        // #1603: six categories in order, then the keep-alive block below.
-        val want = listOf("Me Infos", "Media", "Device Infos", "Actions", "Cloud Publisher", "Phone Publisher", "Apps Keep Alive Badges")
-        for (label in want) org.junit.Assert.assertTrue("$label missing from the pane", label in texts)
-        val order = want.map { texts.indexOf(it) }
-        org.junit.Assert.assertEquals("sections in the #1603 order", order.sorted(), order)
-        // Only the keep-alive block keeps the Cloudy / Phone sub-headers; the publishers render one flat side each.
-        org.junit.Assert.assertTrue(texts.count { it == "Cloudy" } == 1 && texts.count { it == "Phone" } == 1)
-    }
-
-    /** Every text the pane draws in Compose. */
     private fun composeTexts(): List<String> =
         compose.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.Text)).fetchSemanticsNodes()
             .flatMap { n -> n.config[SemanticsProperties.Text].map { it.text } }
 
-    private fun tapPaneButton(label: String) {
-        compose.onAllNodesWithTag("pane-button:$label")[0].performScrollTo().performClick()
+    private fun badges() = BadgeDeclaration.badges(BadgeServices.declared)
+
+    private fun hasTag(tag: String) =
+        compose.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty()
+
+    @Test
+    fun `the pane is a flat declared-badge list - turn-all plus enabled and persistent per badge`() {
+        render()
+        val texts = composeTexts()
+        assertTrue("no turn-all master", hasTag("switch:notify-all"))
+        var examined = 0
+        for (b in badges()) {
+            examined++
+            assertTrue("${b.id}: no enabled switch", hasTag("switch:enabled:${b.id}"))
+            assertTrue("${b.id}: no persistent switch", hasTag("switch:persistent:${b.id}"))
+            assertTrue("${b.id}: label '${b.label}' missing from the pane", b.label in texts)
+        }
+        assertTrue("examined no badges", examined > 0)
+        // The app-section categories belong to the VIEWER only; the settings list must not draw them.
+        for (gone in listOf("Cloud Publisher", "Phone Publisher", "Apps Keep Alive Badges"))
+            assertFalse("$gone must not be a settings section — it is viewer-only", gone in texts)
+    }
+
+    @Test
+    fun `turn-all off disables every declared badge`() {
+        render()
+        // Default is enabled, so the master starts ON; one tap turns the whole list off.
+        compose.onAllNodesWithTag("switch:notify-all")[0].performScrollTo().performClick()
         compose.waitForIdle()
-    }
-
-    /** A badge that needs no grant, so its state is decided by its service and
-     *  its notification alone — the two things these tests control. */
-    private fun badge(): BadgeDeclaration.Badge =
-        BadgeDeclaration.badges(BadgeServices.declared)
-            .first { it.channel.isNotBlank() && it.requires.isEmpty() && it.service.isNotBlank() }
-
-    private fun ownerRunning(b: BadgeDeclaration.Badge) {
-        shadowOf(ctx.getSystemService(ActivityManager::class.java)).setServices(listOf(
-            ActivityManager.RunningServiceInfo().apply { service = ComponentName(ctx.packageName, b.service) },
-        ))
-    }
-
-    private fun stateRow(texts: List<String>, b: BadgeDeclaration.Badge, state: Int) =
-        texts.filter { it.startsWith(ctx.getString(state) + " ·") }
-
-    private fun post(b: BadgeDeclaration.Badge): Notification {
-        val nm = ctx.getSystemService(NotificationManager::class.java)
-        nm.createNotificationChannel(NotificationChannel(b.channel, b.label, NotificationManager.IMPORTANCE_LOW))
-        val tap = PendingIntent.getActivity(
-            ctx, 0, Intent(ctx, FragmentActivity::class.java), PendingIntent.FLAG_IMMUTABLE,
-        )
-        val n = NotificationCompat.Builder(ctx, b.channel)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
-            .setContentTitle("${b.label} as posted")
-            .setContentText("value ${System.nanoTime()}")
-            .setContentIntent(tap)
-            .build()
-        nm.notify(b.id.hashCode(), n)
-        return n
+        val stillOn = badges().filter { BadgeCustomization.bool(ctx, it, BadgeCustomization.KEY_ENABLED) }
+        assertTrue("turn-all off left these enabled: ${stillOn.map { it.id }}", stillOn.isEmpty())
     }
 
     @Test
-    fun `a posted badge renders its own title and text and an Open button that fires its tap`() {
-        val b = badge()
-        val n = post(b)
-        val view = render()
-        val texts = all(view).filterIsInstance<TextView>().map { it.text.toString() } + composeTexts()
-
-        val title = n.extras.getCharSequence(Notification.EXTRA_TITLE).toString()
-        val text = n.extras.getCharSequence(Notification.EXTRA_TEXT).toString()
-        assertTrue("posted title '$title' not rendered; pane shows $texts", texts.contains(title))
-        // The platform template drew it, not a TextView this fragment made: only
-        // the template's title carries android.R.id.title.
-        assertTrue(
-            "title '$title' is not in the notification template's own title view — the pane drew it itself",
-            all(view).any { it.id == android.R.id.title && (it as? TextView)?.text?.toString() == title },
-        )
-        assertTrue("posted text '$text' not rendered; pane shows $texts", texts.any { it.contains(text) })
-        if (b.shows.isNotBlank())
-            assertFalse("the pane still prints the declared description", texts.any { it.contains(b.shows) })
-
-        assertTrue("no Open button for the posted badge",
-            compose.onAllNodesWithTag("pane-button:${ctx.getString(R.string.push_open)}").fetchSemanticsNodes().isNotEmpty())
-        tapPaneButton(ctx.getString(R.string.push_open))
-        shadowOf(android.os.Looper.getMainLooper()).idle()
-        val app = shadowOf(ctx as Application)
-        // The harness's own activity launch may sit in the queue ahead of the tap: look at everything started.
-        val started = generateSequence { app.nextStartedActivity }.toList()
-        assertTrue(
-            "Open did not fire the notification's own contentIntent; started $started",
-            started.any { it.component?.className == FragmentActivity::class.java.name },
-        )
-    }
-
-    /** Owner running, nothing posted — the swiped-away badge. The previous
-     *  pane called this LIVE because it only asked whether the service ran. */
-    @Test
-    fun `a running owner with nothing posted reads not-in-the-shade`() {
-        val b = badge()
-        ownerRunning(b)
-        render()
-        val texts = composeTexts()
-        assertTrue(
-            "${b.id}: service running, nothing posted, yet the pane said LIVE: $texts",
-            stateRow(texts, b, R.string.push_state_live).isEmpty(),
-        )
-        assertTrue(
-            "${b.id}: expected NOT IN THE SHADE: $texts",
-            stateRow(texts, b, R.string.push_state_dead).isNotEmpty(),
-        )
-    }
-
-    /** The control for the test above: running AND posted is LIVE, so that
-     *  one cannot pass on a pane that never says LIVE at all. */
-    @Test
-    fun `a running owner with its badge posted reads LIVE`() {
-        val b = badge()
-        ownerRunning(b)
-        post(b)
-        render()
-        val texts = composeTexts()
-        assertTrue("${b.id}: running and posted, not LIVE: $texts",
-            stateRow(texts, b, R.string.push_state_live).isNotEmpty())
-    }
-
-    /** Launch all — the way back from a badge that was cleared: every declared
-     *  badge that may launch has its owning service started. */
-    @Test
-    fun `Launch all starts the owner of every launchable badge`() {
-        val b = badge()
-        render()
-        assertTrue("no Launch all button",
-            compose.onAllNodesWithTag("pane-button:${ctx.getString(R.string.push_launch_all)}").fetchSemanticsNodes().isNotEmpty())
-        tapPaneButton(ctx.getString(R.string.push_launch_all))
-        val app = shadowOf(ctx as Application)
-        val started = generateSequence { app.nextStartedService }.mapNotNull { it.component?.className }.toSet()
-        assertTrue("${b.id}: its owner ${b.service} was not started; started $started", b.service in started)
-    }
-
-    /** "Keep it pinned" is read at post time: on by default, and switching it
-     *  off is what a producer sees. It was decoration for six of seven badges. */
-    @Test
-    fun `pinned follows the Keep it pinned switch`() {
-        val b = badge()
+    fun `the persistent switch follows Keep it pinned`() {
+        val b = badges().first { it.persistent }
         assertTrue("${b.id} is declared persistent, so it pins by default", BadgeServices.pinned(ctx, b.id))
         BadgeCustomization.set(ctx, b, BadgeCustomization.KEY_PERSISTENT, false)
         assertFalse("${b.id}: switched off, still pinned", BadgeServices.pinned(ctx, b.id))

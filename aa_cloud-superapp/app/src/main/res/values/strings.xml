@@ -187,6 +187,8 @@
          The two card titles are named by stack_my-rss title_res. -->
     <string name="notify_badges_title">Persistent badges</string>
     <string name="notify_configs_title">Configs</string>
+    <string name="notify_settings_sub">Every declared badge. Show turns the badge on or off; Keep it pinned holds its place in the shade. The viewer page shows them read-only.</string>
+    <string name="notify_turn_all">Turn all badges on / off</string>
     <string name="push_producer_off">Declared off</string>
 
     <!-- #515/#518 the two views: the badge boxes, and their customization. -->
