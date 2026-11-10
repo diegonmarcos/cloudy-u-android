@@ -216,6 +216,12 @@
    "via": "in-process handler, no IPC leg"
   },
   {
+   "path": "/__app__/api/sub/pages-git",
+   "surface": "app",
+   "ipc": null,
+   "via": "in-process handler, no IPC leg (lists the declared/discovered git repos; serving a repo goes through /__app__/api/repos)"
+  },
+  {
    "path": "/__app__/api/repos",
    "surface": "app",
    "ipc": null,
@@ -258,6 +264,14 @@
     "browser-open"
    ],
    "via": "api_open -> diag::open -> the installed opener (Intent to cloud-browser)"
+  },
+  {
+   "path": "/__app__/api/launch",
+   "surface": "app",
+   "ipc": [
+    "app-launch"
+   ],
+   "via": "api_launch -> served::launch -> served LAUNCHER (opens a build.json-declared package's launch activity: the X-Ray Device page's Start Superapp)"
   },
   {
    "path": "/endpoints/public",
