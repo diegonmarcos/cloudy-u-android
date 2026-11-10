@@ -134,7 +134,9 @@ fn endpoint_row(e: &serving::Endpoint, paused: &BTreeSet<String>) -> Value {
         "id": e.id, "kind": "declared", "name": e.title, "port": e.port, "role": e.role.name(), "up": tcp, "serving": on,
         "paused": paused.contains(&e.id),
         "app": if external { json!(if tcp { "open" } else { "not open" }) } else { Value::Null },
-        "start_app": if external && !tcp { json!({"post": "/__app__/api/served", "body": {"op": "start_app", "id": e.id}}) } else { Value::Null },
+        // #1613 the terminal pages (Termux, Nix) always carry a Start App button, whether or not the app's own
+        // my-webserver is answering now: launching it brings a closed app up and brings an open one to the front.
+        "start_app": if external { json!({"post": "/__app__/api/served", "body": {"op": "start_app", "id": e.id}}) } else { Value::Null },
         "auth": "loopback peers only", "exposure": "loopback", "host": e.owner,
         "source": source, "source_open": if e.role == serving::Role::Diag { String::new() } else { e.url_name() },
         "links": [link(&e.name, &e.url_name()), link(&format!("127.0.0.1:{}", e.port), &e.url_ip())],
@@ -416,6 +418,8 @@ mod tests {
                 assert!(r.get(k).is_some(), "{} lacks {}", e.id, k);
             }
             assert_eq!(r["app"].is_string(), e.role == serving::Role::External, "app status only for the terminals");
+            // #1613 the terminal pages always offer Start App; the in-app pages (Local, Cloud/X-Ray Device) never do.
+            assert_eq!(r["start_app"].is_object(), e.role == serving::Role::External, "Start App only for the terminals, and always");
         }
         let d = declared_ports();
         assert!(d.contains(&serving::get().drive_port) && d.contains(&serving::get().diag_port) && d.contains(&serving::get().dns.port));
