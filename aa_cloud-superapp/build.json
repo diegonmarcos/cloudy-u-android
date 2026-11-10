@@ -5008,21 +5008,331 @@
         "module": null,
         "_doc_grid_columns": "Icons per row of the Configs page grid: a fixed 8, declared here, NOT the Cloud/Phone stepper (GridColumns.cloud). 8 is GridColumns.MAX; at 360 dp a cell is 45 dp, the icon is 27 dp (cell minus 18 dp of margin, padding and the inline separator) and labels autosize 9 sp and end-ellipsize. A `separator` page takes no cell: it is a wrap_content character between tiles, as in Data Apps.",
         "grid_columns": 8,
-        "_doc_nav_mode": "#1548 the declared tree is Setup (Connect, Apps, Launcher, Network, Watchtower - Obsv), Agents (Watchdog - the hub page, hub_sections), Cloudy C3 (C3, Peer Control); Launcher reads Quick Actions, One-Hand, Folders, Notify | Perms, Logcat, X-Ray App, About; Bluetooth is a Network page; Watchtower - Obsv holds X-Ray Device and Logcat Fleet; page ids did not change, so every page:config/<id> still lands. #1221 horizontal_two_rows: the second row of Configs is one row per declared group, each [group label] | [that group's page icons]. Cloudy C3 (the group id stays fleet) reads C3 | Peer Control (the | is separator_before on Peer Control; Bluetooth moved to Setup ▸ Network); Watchtower - Obsv (the Setup subgroup that was Observability) reads X-Ray Device, Logcat Fleet; Perms, Logcat, X-Ray App and About moved to Setup ▸ Launcher after a | separator; Setup keeps the rest. Every page of the section is in exactly one group (the nav-shape guard, N10), the hidden tab pages with their parent. The groups only REFERENCE pages: the Configs grid headings still come from each page's group / subgroup.",
+        "_doc_nav_mode": "#1610 Configs is TWO subpages, rendered as the two horizontal_two_rows groups Device and Setup. Device ▸ UI (Quick Actions, One-Hand, Folders) · Notification Center (Notify) · Network (Firewall, DNS, Webserver, Cloud Mesh, Apps Access, ADB Shell, WiFi, Bluetooth) · Configs (Agents hub, Perms, Logcat, X-Ray App, About | X-Ray Device, Logcat Fleet). Setup ▸ Connect (Account, Cloudy C3, Peer Control) · Apps (Store) · Configs (Watchdog → extapp:c3-watchdog). A SINGLE shared Actions row follows (is_action, one GROUP_ACTIONS per section): Update All, KDE Connect, Animations, Sync Clipboard, Saving Mode, Focus Mode (opens the #1596 page:config/focus). Owner decision downgraded the ticket's per-subpage Actions columns to one shared row (no renderer change). Page ids unchanged except the new c3-watchdog/sync-clipboard/saving-mode/focus-mode (the #1596 `focus` page stays), so every page:config/<id> link still lands. Grid headings come from each page's group/subgroup (TileGridFragment); the second-row groups from groups[] (nav-shape N10).",
         "nav_mode": "horizontal_two_rows",
         "groups": [
-          {"id": "setup", "label": "Setup", "icon": "ic_settings", "pages": ["profile", "store", "controls", "onehand", "app-folders", "notify", "launcher-sep-1", "perms", "logcat", "xray-app", "app-about", "firewall", "dns", "webserver", "wg", "apps-access", "adb-shell", "wifi", "wifi-scan", "wifi-channels", "wifi-link", "wifi-tools", "wifi-log", "adb-status", "adb-term", "adb-perms", "adb-all", "bluetooth", "bluetooth-find", "bluetooth-analyze", "bluetooth-locate", "bluetooth-connect", "bluetooth-interact", "bluetooth-debug", "bluetooth-dev", "xray", "logcat-fleet", "battery", "presets", "panels", "panels-all", "panels-ui", "panels-battery", "panels-tools", "store-cloud", "store-phone", "update", "kde_connect", "animations", "focus"]},
-          {"id": "agents", "label": "Agents", "icon": "ic_p_watchdog", "pages": ["agents-watchdog"]},
-          {"id": "fleet", "label": "Cloudy C3", "icon": "ic_hub", "pages": ["c3", "kde"]}
+          {
+            "id": "device",
+            "label": "Device",
+            "icon": "ic_settings",
+            "pages": [
+              "controls",
+              "onehand",
+              "app-folders",
+              "notify",
+              "firewall",
+              "dns",
+              "webserver",
+              "wg",
+              "apps-access",
+              "adb-shell",
+              "adb-status",
+              "adb-term",
+              "adb-perms",
+              "adb-all",
+              "wifi",
+              "wifi-scan",
+              "wifi-channels",
+              "wifi-link",
+              "wifi-tools",
+              "wifi-log",
+              "bluetooth",
+              "bluetooth-find",
+              "bluetooth-analyze",
+              "bluetooth-locate",
+              "bluetooth-connect",
+              "bluetooth-interact",
+              "bluetooth-debug",
+              "bluetooth-dev",
+              "agents-watchdog",
+              "perms",
+              "logcat",
+              "xray-app",
+              "app-about",
+              "launcher-sep-1",
+              "xray",
+              "logcat-fleet",
+              "battery",
+              "focus",
+              "presets",
+              "panels",
+              "panels-all",
+              "panels-ui",
+              "panels-battery",
+              "panels-tools"
+            ]
+          },
+          {
+            "id": "setup",
+            "label": "Setup",
+            "icon": "ic_hub",
+            "pages": [
+              "profile",
+              "c3",
+              "kde",
+              "store",
+              "store-cloud",
+              "store-phone",
+              "c3-watchdog",
+              "update",
+              "kde_connect",
+              "animations",
+              "sync-clipboard",
+              "saving-mode",
+              "focus-mode"
+            ]
+          }
         ],
-        "_doc_pages_order": "Order here is the single source of truth \u2014 it drives the Configs page-grid, its SECTION and SUBSECTION headings, and (via home_groups tiles_from_section: 'config') the Home Apps Configs row. TWO LEVELS, DECLARED PER PAGE (#649): `group` is the section heading a tile sits under and `subgroup` is the heading below it, both rendered verbatim by TileGridFragment \u2014 the words \"Launcher\", \"Setup\", \"Apps\", \"Network\" and \"Observability\" appear in no Kotlin file, which is the same contract `label` already keeps for a page name. There is deliberately no parallel group map: a run of consecutive pages carrying the same group/subgroup IS the group, so moving an entry in this array moves it on the screen and a group with no pages left simply stops being drawn. A page that declares no group falls under the default Pages heading, which is every other section in this file. #649 replaced the old flat shape (Account/WireGuard/KDE/AI/Permissions \u2014 Launcher \u2014 Store/About, held together by `row_break`): Launcher stopped being a page wearing four tabs and became the TITLE over its four subpages as direct tiles, and the rest became Setup \u25b8 Apps + Setup \u25b8 Observability. `row_break: true` still starts a fresh grid row at a tile without printing a heading; no page in this section needs it any more, because every row break here is now a group boundary. ACTIONS ARE UNCHANGED: the trailing `is_action` entries are the same three, rendered under the same Actions heading from the same flag, and they carry no group \u2014 the grid appends them last whatever their position in this array. #723 (#878 relabelled: group Watchdog is now Setup, subgroups Setup/Mesh are Apps/Network): OWNER REGROUP (Agents): the order is Launcher, Apps, Setup. Apps is a group with no subgroup and holds C3 · Peer Control · Agents (C3 and Peer Control moved out of Setup ▸ Network with their ids unchanged, so page:config/c3 and page:config/kde are the same links; the Network separator went with them, see removed_pages). Before that regroup, the Setup group had THREE sub-sections in this order — Apps (Account · Permissions · Store), Network (WireGuard · Peer Control) and Observability (About) — and the AI page is gone (see removed_pages). #REORG 2026-10: Configs is exactly THREE sections, in this order: Setup (subgroups Apps = Account/Permissions/Store, Launcher = Presets/Controls/One-Hand/Notify, Network), Fleet (the former Apps group: C3 · Peer Control · Agents) and Observability (About). No ids changed, so every page:config/<id> link is intact. #733: Network is Cloud Mesh (the wg page, relabelled) · Peer Control · Apps Mesh (the Store's mesh page, reached from here too).",
+        "_doc_pages_order": "Order here is the single source of truth — it drives the Configs page-grid, its SECTION and SUBSECTION headings, and (via home_groups tiles_from_section: 'config') the Home Apps Configs row. TWO LEVELS, DECLARED PER PAGE (#649): `group` is the section heading a tile sits under and `subgroup` is the heading below it, both rendered verbatim by TileGridFragment — the words \"Launcher\", \"Setup\", \"Apps\", \"Network\" and \"Observability\" appear in no Kotlin file, which is the same contract `label` already keeps for a page name. There is deliberately no parallel group map: a run of consecutive pages carrying the same group/subgroup IS the group, so moving an entry in this array moves it on the screen and a group with no pages left simply stops being drawn. A page that declares no group falls under the default Pages heading, which is every other section in this file. #649 replaced the old flat shape (Account/WireGuard/KDE/AI/Permissions — Launcher — Store/About, held together by `row_break`): Launcher stopped being a page wearing four tabs and became the TITLE over its four subpages as direct tiles, and the rest became Setup ▸ Apps + Setup ▸ Observability. `row_break: true` still starts a fresh grid row at a tile without printing a heading; no page in this section needs it any more, because every row break here is now a group boundary. ACTIONS ARE UNCHANGED: the trailing `is_action` entries are the same three, rendered under the same Actions heading from the same flag, and they carry no group — the grid appends them last whatever their position in this array. #723 (#878 relabelled: group Watchdog is now Setup, subgroups Setup/Mesh are Apps/Network): OWNER REGROUP (Agents): the order is Launcher, Apps, Setup. Apps is a group with no subgroup and holds C3 · Peer Control · Agents (C3 and Peer Control moved out of Setup ▸ Network with their ids unchanged, so page:config/c3 and page:config/kde are the same links; the Network separator went with them, see removed_pages). Before that regroup, the Setup group had THREE sub-sections in this order — Apps (Account · Permissions · Store), Network (WireGuard · Peer Control) and Observability (About) — and the AI page is gone (see removed_pages). #REORG 2026-10: Configs is exactly THREE sections, in this order: Setup (subgroups Apps = Account/Permissions/Store, Launcher = Presets/Controls/One-Hand/Notify, Network), Fleet (the former Apps group: C3 · Peer Control · Agents) and Observability (About). No ids changed, so every page:config/<id> link is intact. #733: Network is Cloud Mesh (the wg page, relabelled) · Peer Control · Apps Mesh (the Store's mesh page, reached from here too).",
         "_doc_retired_pages": "#697. A config page id that no longer exists, mapped to the pages its content lives on now. The page set is guarded: test-configs-two-sections.sh T9 holds the ids as they stood before #649 regrouped this section and fails if any of them is missing from `pages` without being named here, or if a page named here is still declared, or if one of its successors is not. So a page cannot be dropped by a regroup — removing one is a declared act with a declared destination. `launcher` is the only entry: #649 dissolved the page that wore four tabs and made those four tabs direct pages under the Launcher heading. Read by the tester only; the app routes by `pages` and never needs to know what was retired.",
-        "retired_pages": { "launcher": ["controls", "onehand", "notify"], "about": ["xray", "app-about"], "diagnostics": ["xray"], "agents": ["xray"], "agents-superapp": ["xray"], "agents-fleet": ["xray"], "agents-watchtower": ["xray", "logcat-fleet"] },
+        "retired_pages": {
+          "launcher": [
+            "controls",
+            "onehand",
+            "notify"
+          ],
+          "about": [
+            "xray",
+            "app-about"
+          ],
+          "diagnostics": [
+            "xray"
+          ],
+          "agents": [
+            "xray"
+          ],
+          "agents-superapp": [
+            "xray"
+          ],
+          "agents-fleet": [
+            "xray"
+          ],
+          "agents-watchtower": [
+            "xray",
+            "logcat-fleet"
+          ]
+        },
         "_doc_page_aliases": "(`watchtower` and `agents-watchtower`, the removed Agents hub over Observability, land on X-Ray Device, the first page of the Watchtower - Obsv subgroup that replaced it.) Old config page ids still spoken by links (launcher shortcuts, App-Tabs history, other apps, the debug API open op): Sections.canonicalPage resolves each to the page that holds its content now. About became X-Ray (a new About is app-about); Diagnostics and Agents were folded into X-Ray.",
-        "page_aliases": {"about": "xray", "diagnostics": "xray", "agents": "xray", "agents-superapp": "xray", "agents-fleet": "xray", "watchdog": "agents-watchdog", "watchtower": "xray", "agents-watchtower": "xray"},
+        "page_aliases": {
+          "about": "xray",
+          "diagnostics": "xray",
+          "agents": "xray",
+          "agents-superapp": "xray",
+          "agents-fleet": "xray",
+          "watchdog": "agents-watchdog",
+          "watchtower": "xray",
+          "agents-watchtower": "xray"
+        },
         "_doc_removed_pages": "#723. A config page id that was DELETED rather than moved, with the reason. Distinct from retired_pages on purpose: a retired page names the visible pages its content lives on now, and these have none in Configs — the owner removed the AI page outright because AI tokens are managed in Account (the vault cockpit AI card applies them), so the five-tab AI strip and every tab under it went with it, and the Account card's link to the page was removed rather than left pointing at nothing. Guarded by test-configs-two-sections.sh T9 (the id may not be declared, must have existed, must carry a reason) and T12 (no route, page: target or Kotlin branch may still name it). Read by the tester only.",
-        "removed_pages": { "apps-mesh": "Apps Mesh is Cloud Store > Access now; one Apps Access tile opens it", "ipc": "tab of Apps Mesh, now Cloud Store > Access > IPC", "apps-mesh-members": "tab of Apps Mesh, now Cloud Store > Access > Apps Mesh", "identity": "tab of Apps Mesh, now Cloud Store > Access > Identity", "ai": "AI page deleted; AI tokens are managed in Account", "websearch": "tab of the deleted AI page (an unbuilt agent placeholder)", "localsearch": "tab of the deleted AI page (an unbuilt agent placeholder)", "textenhance": "tab of the deleted AI page; each app keeps its own Text Enhance editor", "library": "tab of the deleted AI page (an unbuilt agent placeholder)", "tokens": "tab of the deleted AI page; AI tokens are managed in Account", "network-sep-1": "the Setup ▸ Network separator divided C3 and Peer Control from the network engines; both moved to the Configs ▸ Fleet group (then named Apps), so it had nothing left to divide" },
+        "removed_pages": {
+          "apps-mesh": "Apps Mesh is Cloud Store > Access now; one Apps Access tile opens it",
+          "ipc": "tab of Apps Mesh, now Cloud Store > Access > IPC",
+          "apps-mesh-members": "tab of Apps Mesh, now Cloud Store > Access > Apps Mesh",
+          "identity": "tab of Apps Mesh, now Cloud Store > Access > Identity",
+          "ai": "AI page deleted; AI tokens are managed in Account",
+          "websearch": "tab of the deleted AI page (an unbuilt agent placeholder)",
+          "localsearch": "tab of the deleted AI page (an unbuilt agent placeholder)",
+          "textenhance": "tab of the deleted AI page; each app keeps its own Text Enhance editor",
+          "library": "tab of the deleted AI page (an unbuilt agent placeholder)",
+          "tokens": "tab of the deleted AI page; AI tokens are managed in Account",
+          "network-sep-1": "the Setup ▸ Network separator divided C3 and Peer Control from the network engines; both moved to the Configs ▸ Fleet group (then named Apps), so it had nothing left to divide"
+        },
         "pages": [
+          {
+            "_doc": "Tab 2 of Launcher — the CONTROLS (#574): ONE producer, LauncherConfigFragment, drawing the device/fleet switchboard (the Samsung-style icon grid declared in ui.control_panel and implemented in configs/DeviceControls.kt, formerly Configs ▸ Panel ▸ Control) followed by the launcher's own screensaver, switches, sliders and set-as-default-launcher. The theme picker that used to open this tab moved to Presets ▸ Themes — the SAME LauncherThemes.apply, not a copy. Nothing persisted moves with it: LauncherSettingsPrefs keys off fixed store names, never off the page id. hidden = reached through the strip, not as its own Configs tile.",
+            "id": "controls",
+            "label": "Quick Actions",
+            "icon": "ic_home",
+            "tabs": [
+              "presets",
+              "panels"
+            ],
+            "group": "Device",
+            "subgroup": "UI"
+          },
+          {
+            "_doc": "Tab 2 of Launcher — One-Hand edge-gesture overlay (libs:launcher-onehand). OneHandFragment hosts the master toggle + the two special-permission deep-links (Draw over other apps, Accessibility). Data-driven engine config lives in build.json::onehand. KEPT ITS ID: `hidden` drops it from the Configs grid, the Home Apps Configs row, the Canopus arc and the Sirius tree (all of which list Section.pages), while Section.allPages keeps `page:config/onehand` resolvable — so every existing deep link, launcher shortcut, edge gesture and App-Tabs history entry still arrives, now on this tab. Its prefs (onehand_prefs, home_swipe_prefs, floatingnav) are untouched for the same reason the id is.",
+            "id": "onehand",
+            "label": "One-Hand",
+            "icon": "ic_onehand",
+            "group": "Device",
+            "subgroup": "UI"
+          },
+          {
+            "_doc": "#1553 Folders — Configs > Setup > Launcher, after One-Hand and before Notify. An in-app page that organises apps into folders, declaratively, with two scopes (Cloud | Phone). The organisation is DATA served at runtime by the fleet-data client, NOT baked into the APK: per scope, Table 1 (dataset launcher-folders/<scope>) declares the sections and folders (section, folder id, label, icon, order) and Table 2 (dataset launcher-folder-assignments/<scope>) assigns each app package to a folder with an order. Table 2 is user-editable; edits persist as a local override (FolderOverrideStore) on top of the served defaults. A Refresh action re-enumerates the installed apps (Phone) or the fleet apps (Cloud) on demand (and lazily on open when stale); any app not assigned lands in a special Others folder, so newly installed/added apps appear there until assigned. FolderResolver is the source of truth the launcher grid grouping reads (PhoneAppsFragment consults the override assignment first). Its id is app-folders (folders is taken by Mail); SectionPages routes it to FoldersFragment.",
+            "id": "app-folders",
+            "label": "Folders",
+            "icon": "ic_p_folder",
+            "group": "Device",
+            "subgroup": "UI"
+          },
+          {
+            "_doc": "Tab 4 of Launcher — NOTIFY (#580), the notification centre in one place. It was Configs ▸ Home ▸ Notify, and Home's other tab, Push, was merged INTO it: the persistent-badge boxes now lead the page and Push's customization menus sit under the Filters as a collapsed Configs card. Then the page moved here and the emptied Home was deleted. `mirror_page` names sections[communication].pages[my-rss] and LauncherNavController.aggregatorPage renders that page's own fragment, so the cards, the filter row and the stack_my-rss declaration all stay owned by the Communication section — the two badge panes are stack_my-rss panels (kinds notification_badges / notification_badge_configs), not a copy declared here. mirror_page is the page-level twin of `mirror_section` (Cloud ▸ Configs / Cloud ▸ C3) and exists for the same reason those do: a tab that IS the other surface cannot drift from it, a second copy of it always does. Mirroring one PAGE rather than the section is what keeps this one tab instead of the Communication section's own six-tab strip nested inside ours. KEPT ITS ID: `hidden` keeps it out of the Configs grid while Section.allPages keeps `page:config/notify` resolvable, and the tab-owner lookup lands that target on this tab of Launcher.",
+            "id": "notify",
+            "label": "Notify",
+            "icon": "ic_rss",
+            "facet": true,
+            "mirror_page": "communication/my-rss",
+            "group": "Device",
+            "subgroup": "Notification Center"
+          },
+          {
+            "_doc": "Firewall — the no-root per-app firewall (libs:firewall, firestack VPN) as a Network page. SectionPages embeds the engine's FirewallDialog (master switch, VPN consent, per-app rules) as the page; Configs ▸ Observability ▸ About keeps only a read-only status summary with a 'Manage in Network ▸ Firewall' link. First after the Watchdog hub in Network: it owns the one VPN slot the Cloud Mesh and DNS below depend on.",
+            "id": "firewall",
+            "label": "Firewall",
+            "icon": "ic_lock",
+            "group": "Device",
+            "subgroup": "Network"
+          },
+          {
+            "_doc": "#740 DNS — the fleet's resolver, chosen once and applied at the SuperApp VPN (ui.dns is its declaration; network/DnsFragment.kt draws it). Sits right after Firewall (Webserver follows it) and before Cloud Mesh: Network reads C3, Peer Control, |, Firewall, DNS, Cloud Mesh, Apps Mesh.",
+            "id": "dns",
+            "label": "DNS",
+            "icon": "ic_world",
+            "group": "Device",
+            "subgroup": "Network"
+          },
+          {
+            "_doc": "Webserver - opens the Cloud C3 Webserver app (fleet id c3-webserver; the package is read from data/constellation-fleet.json at run time, WebserverLaunch.kt) through its explicit launch intent. If that app is not installed it opens http://localhost:8002 in Cloud Browser. Sits right after DNS.",
+            "id": "webserver",
+            "label": "Webserver",
+            "icon": "ic_web",
+            "action": "action:open_webserver",
+            "group": "Device",
+            "subgroup": "Network"
+          },
+          {
+            "_doc": "WireGuard is a CHILD of Configs. It lives in its own module-backed section (sections[wg], module libs:net) but is surfaced here as a real config page so it appears in the Configs grid + Home-Apps Configs row in order. action=section:wg opens that section; sections[wg].parent=config makes Back from it return to Configs (MainActivity.navigateUpToParent).",
+            "_doc_label": "#733 RENAMED WireGuard → Cloud Mesh, the caption only: the tile opens the same section:wg and the id stays `wg` (page:config/wg and the wizard's section:wg route name it; an id is identity, not a caption).",
+            "id": "wg",
+            "label": "Cloud Mesh",
+            "icon": "ic_wg",
+            "action": "section:wg",
+            "group": "Device",
+            "subgroup": "Network"
+          },
+          {
+            "_doc": "APPS ACCESS - the ONE Configs tile for what used to be Apps Mesh (+ IPC + Identity). Cloud Store's Access section is the single source of truth for Apps Mesh, IPC, Identity, Android Perms and Cloud Perms (ac_cloud-store build.json ui access.pages); this tile opens Cloud Store on it (CloudStoreHandoff.open tab=access, ShellActivity action open_apps_access). Cloud Store absent: the Store's install offer (launchExternalApp cloud-store, ui.external_apps[id=cloud-store]). SuperApp declares no Apps Mesh, IPC or Identity page of its own; libs:appstore keeps the shared pages Cloud Store hosts.",
+            "id": "apps-access",
+            "label": "Apps Access",
+            "icon": "ic_apps",
+            "action": "action:open_apps_access",
+            "group": "Device",
+            "subgroup": "Network"
+          },
+          {
+            "_doc": "ADB SHELL - THE page for the privileged channel (libs:shizuku-adb-debug-tools AdbShellPage), the same one Cloud Store (Settings), Cloud Account (Setup), the terminals (Settings) and every status chip draw. Six sections: the status table (Developer options, Wireless debugging, embedded adb, the local server on 38099, Shizuku, the active route and mode, each with a colour dot and when it was probed), Connect (the method that applies to the chosen mode, run step by step with the step that failed named), Active connection (Disconnect / Reconnect / Restart server / Stop server / Test round-trip, each disabled when it does not apply), Logs (an in-memory ring, tokens redacted, Copy and Clear), Declared needs (this app's privileged_channel above) and Setup (the checklist, each item opening its exact settings screen). The label is this one string: rename it here and nowhere else. Sits right after Apps Mesh. FOUR TABS (the shared strip, like WiFi; one hidden page each, routed in SectionPages): Status (landing; the cockpit: a top control bar with Connect / Disconnect, Reconnect and the Mode selector Shizuku / Local Server / Embedded, a master health pill, Auto-fix, a Keep-alive panel (the one 'Keep Wireless debugging on' switch with an ON/OFF toggle, the keeper's live state and its four sub-lights Service / Armed / Secure settings / Battery, all real WdKeeper.snapshot facts, never a proxy), the dependency-ordered chain Perms (light only) > Setup (Developer Options, Wireless Debugging, live Settings flags) > Shizuku > Local Server > Embedded > Connection, and a live severity-tinted tail of the channel log with filter / copy / clear; every light binds to ChannelReader.read facts and the Permissions catalogue, see AdbCockpitModel), Shell (the terminal and the command bookmarks), Perms (the permission checker) and All (the combined page above, unchanged).",
+            "id": "adb-shell",
+            "label": "ADB Shell",
+            "icon": "ic_terminal",
+            "tabs": [
+              "adb-status",
+              "adb-term",
+              "adb-perms",
+              "adb-all"
+            ],
+            "group": "Device",
+            "subgroup": "Network"
+          },
+          {
+            "_doc": "#1263 Configs ▸ Setup ▸ Network ▸ WiFi: the phone's Wi-Fi analyzer as a page over libs:wifi (WifiFragment draws WifiPanel), right after ADB Shell. Five tabs over one process-wide controller, so scans, the throttle window and running tools survive a tab switch: Scan (live AP list: SSID / BSSID / vendor from the IEEE OUI asset, smoothed RSSI + sparkline, band / channel / width / centre, 802.11 standard, security incl. WPA3 / OWE / Enterprise / PMF / WPS, hidden, 802.11mc / az RTT, Wi-Fi 7 MLO, age; filter, sort, search, group by SSID; the scan throttle state), Channels (spectrum per band, channel rating and best-channel recommendation per regulatory plan, congestion, RSSI over time), Link (the connected network: speeds, frequency, signal / quality / SNR estimate, IPv4 / IPv6 / gateway / DNS / DHCP lease / MTU, captive / validated / metered / private DNS, MAC randomization, roaming log), Tools (ping / jitter / loss, traceroute, DNS, bounded port scan, LAN discovery via NSD / SSDP / sweep / NetBIOS, throughput to build.json wifi_analyzer.throughput, RTT ranging, hot / cold locator) and Log (heatmap grid, events, CSV / JSON / PCAP export and share). Vendors, channel plans and defaults are DATA in the lib's assets; this app's overrides are build.json wifi_analyzer. hidden tabs: reached through the WiFi strip.",
+            "id": "wifi",
+            "label": "WiFi",
+            "icon": "ic_wifi",
+            "tabs": [
+              "wifi-scan",
+              "wifi-channels",
+              "wifi-link",
+              "wifi-tools",
+              "wifi-log"
+            ],
+            "group": "Device",
+            "subgroup": "Network"
+          },
+          {
+            "_doc": "#1221 Configs ▸ Setup ▸ Network ▸ Bluetooth (moved from the Fleet group, now Cloudy C3; the id and its seven tabs are unchanged): the phone's Bluetooth as a page over libs:bluetooth (BluetoothFragment draws BluetoothPanel). Tabs, one shared stack so a connection survives a tab switch: Find (scan with name / service / RSSI filters, the device list, paired devices), Analyze, Locate, Connect (the selected device: connect, bond, GATT discovery, MTU, RSSI), Interact (the live dashboard and the GATT tree: read, write, notify, indicate, descriptors), Debug (the ATT event log, copy and export) and Dev (raw hex write, test payloads, notify stream, permissions, adb grant commands). The known services, characteristics, decoders, filter presets and payloads are DATA (libs/bluetooth assets/bluetooth/gatt-catalog.json). hidden tabs: reached through the Bluetooth strip.",
+            "id": "bluetooth",
+            "label": "Bluetooth",
+            "icon": "ic_bluetooth",
+            "tabs": [
+              "bluetooth-find",
+              "bluetooth-analyze",
+              "bluetooth-locate",
+              "bluetooth-connect",
+              "bluetooth-interact",
+              "bluetooth-debug",
+              "bluetooth-dev"
+            ],
+            "group": "Device",
+            "subgroup": "Network"
+          },
+          {
+            "_doc": "#1545 #1548 #1552 Watchdog - the only Agents page (it was first in Setup > Network); canonical id agents-watchdog (unique across the app, N12; page:config/watchdog is a page_alias for the old route): an in-app hub page, not the C3-Watchdog APK (that stays extapp:c3-watchdog on the C3 strip). `hub_sections` lists the subgroups of this section it shows, each as its own titled section of the grid, in this order: Network, then Watchtower - Obsv. The tiles are DERIVED from this array (Sections.hubSections: every visible page of this section in that subgroup, in declaration order), each carrying the page's own target - its `action` when it has one (an app, a section or a Cloud Store hand-off), else page:config/<id>, an in-app page. Adding a page to a subgroup adds its tile; there is no second list. SubgroupHubFragment draws it with GroupTitle + TileStrip/TileCell, the Cloud > Apps heading and tile components. The former Watchtower hub page (agents-watchtower, a hub over Observability only) is gone: the Watchtower concept is the Watchtower - Obsv subgroup (X-Ray Device, Logcat Fleet) and this hub shows it as its second section.",
+            "id": "agents-watchdog",
+            "label": "Agents",
+            "icon": "ic_p_watchdog",
+            "hub_sections": [
+              "Network"
+            ],
+            "group": "Device",
+            "subgroup": "Configs"
+          },
+          {
+            "_doc": "Configs ▸ Setup ▸ Launcher ▸ Perms (label only was Permissions): every grant the app holds or lacks (PermissionsFragment). Relocated from Observability to Launcher, after the | separator that follows Notify; id and content unchanged, so page:config/perms is the same link.",
+            "id": "perms",
+            "label": "Perms",
+            "icon": "ic_key",
+            "group": "Device",
+            "subgroup": "Configs"
+          },
+          {
+            "_doc": "Configs ▸ Setup ▸ Launcher ▸ Logcat: the DEDICATED single-app logcat (LogcatFragment). It streams this app's lines (com.diegonmarcos.superapp, its own uid) online by default, with two separate control rows: FILTERS (level, tag, search, autoscroll) and ACTIONS (clear, pause/resume, copy, export, share). The all-app / one-app / multi-app reader that used to be this page moved to Setup ▸ Watchtower - Obsv ▸ Logcat Fleet (page logcat-fleet); id logcat unchanged.",
+            "id": "logcat",
+            "label": "Logcat",
+            "icon": "ic_subject",
+            "group": "Device",
+            "subgroup": "Configs"
+          },
+          {
+            "_doc": "Configs ▸ Setup ▸ Launcher ▸ X-Ray App: the diagnosis of THIS APP ONLY, not the phone. The SAME DevControlFragment as X-Ray Device with an app-scoped macro filter (DevControlFragment.APP_XRAY_MACROS, like ABOUT_MACROS): App & Build (with App permissions), Repo & Releases, the app-scoped Resources sections (Storage, Battery & Usage, Memory & CPU Usage) and the SuperApp agents. It EXCLUDES the device-wide groups (Device, Security, Network, API, Mesh, Dev Tools, Webserver, Diagnostics, Export All, Fleet agents).",
+            "id": "xray-app",
+            "label": "X-Ray App",
+            "icon": "ic_p_c3_health",
+            "group": "Device",
+            "subgroup": "Configs"
+          },
+          {
+            "_doc": "Configs ▸ Setup ▸ Launcher ▸ About, the LAST Launcher page (relocated from Observability): what this app is and where this build came from. The SAME DevControlFragment as X-Ray, restricted to its APP & BUILD and REPO & RELEASES macro groups (DevControlFragment.ABOUT_MACROS), so nothing is drawn twice in code. The id is app-about because `about` is the old X-Ray id and redirects there (page_aliases).",
+            "id": "app-about",
+            "label": "About",
+            "icon": "ic_info",
+            "group": "Device",
+            "subgroup": "Configs"
+          },
+          {
+            "_doc": "The | between Notify and the pages relocated from Observability (Perms, Logcat, X-Ray App, About): a CHARACTER, not a tile (`separator: true`, as Data Apps does). It takes no grid cell, is never a destination and never opens anything.",
+            "id": "launcher-sep-1",
+            "label": "|",
+            "separator": true,
+            "group": "Device",
+            "subgroup": "Configs"
+          },
+          {
+            "_doc": "Configs ▸ Setup ▸ Watchtower - Obsv ▸ X-Ray Device (label was X-Ray): the full diagnosis of the phone and the mesh, formerly the About page (DevControlFragment, all 13 macro groups: Export All, App & Build, Repo & Releases, Device, Security, Resources with Battery, Network, API, Mesh, Dev Tools, Webserver, Diagnostics, Agents). It carries what the removed Diagnostics page drew and the removed Agents page's live status. Old links page:config/about, /diagnostics, /agents, /agents-superapp, /agents-fleet, /watchtower and /agents-watchtower land here (page_aliases). The app-only variant is X-Ray App (xray-app) under Launcher.",
+            "id": "xray",
+            "label": "X-Ray Device",
+            "icon": "ic_monitor_heart",
+            "group": "Device",
+            "subgroup": "Configs"
+          },
+          {
+            "_doc": "Configs ▸ Setup ▸ Watchtower - Obsv ▸ Logcat Fleet: fleet-wide logcat (FleetLogcatFragment). A multi-select app picker chooses WHICH apps' logs to include (all, none, the fleet's com.diegonmarcos.* apps, or any installed app), a per-app view shows one app's lines, and Export / Copy / Share / Post c3-api output the selected apps' logs. Logs are read through the SAME plane the old Logcat page used: READ_LOGS granted once through Shizuku or a paired adb (then in-process, nothing needs to stay running), else a shell channel `logcat --uid`; when neither is reachable the page shows the mechanism and the one-time grant button instead of failing.",
+            "id": "logcat-fleet",
+            "label": "Logcat Fleet",
+            "icon": "ic_p_logs",
+            "group": "Device",
+            "subgroup": "Configs"
+          },
           {
             "_doc": "Profile now owns config import. The old `import` page entry (action:import_configs) was REMOVED from this list and its two entries live inside ProfileFragment instead: 'Import · file · paste' (re-fires action:import_configs through MainActivity, so the launcher shortcut in res/xml/shortcuts.xml and the radial menu still reach ImportConfigsFragment unchanged) and 'OWebAuth Authelia · Auto Import Configs' (paste a bearer, fetch ui.config_source, apply via ConfigAutoImport).",
             "_doc_label": "#626 RENAMED Profile → Account. This is the ONE declaration of the words: the Configs tile, the Home-Apps Configs row entry and the page title all read `label`, so the rename is this string and nothing else. The `id` deliberately stays `profile` — it is the page's IDENTITY, not a user-visible label (#380/#381/#499 is the rule that an identity string must not sit in a label, not that the two must be spelled the same). Renaming it would break three things that name it and have no reason to change: SectionPages.kt's route, the launcher-shortcut deep link, and ac_cloud-drive/build.json::…personal_auth.target = `page:config/profile`, which is another SHIPPED app's cross-app contract.",
@@ -5035,143 +5345,41 @@
             "subgroup": "Connect"
           },
           {
+            "_doc": "C3 — the Cloud Control Center app (ac_cloud-c3), reached from Configs ▸ Fleet (it moved there from Setup ▸ Network; the id `c3` did not change, so page:config/c3 and every existing link still land on it) like Store is from Setup ▸ Apps: action extapp:cloud-c3 opens the app or offers the install through ui.external_apps[id=cloud-c3]. Same target as the C3 tile of the Cloud ▸ Apps Configs group; no second C3.",
+            "id": "c3",
+            "label": "Cloudy C3",
+            "icon": "ic_cloud_control",
+            "action": "extapp:cloud-c3",
+            "group": "Setup",
+            "subgroup": "Connect"
+          },
+          {
+            "_doc_label": "#723 RENAMED KDE → Peer Control and moved, with WireGuard, out of Setup ▸ Apps into the new Setup ▸ Network sub-section. Only the label moved: the id stays `kde` because page:config/kde is spoken by KdeStatusNotifier and KdeConfigsPageTest, and a page id is identity, not a caption. Moved again, with C3, into the Configs ▸ Fleet group (Setup, Fleet, Observability): the id is unchanged, so page:config/kde still opens it.",
+            "id": "kde",
+            "label": "Peer Control",
+            "icon": "ic_hub",
+            "group": "Setup",
+            "subgroup": "Connect"
+          },
+          {
             "_doc": "#563 THE STORE — the one declaration of its identity (id `store`) and its display title (label). It was 'Constellation', an action page (action:constellation) with its own branch in ShellActivity; it is now an ordinary tabbed page, so every way in is a page: target resolved by the same strip Home/Launcher/AI use. Tab 1 is the fleet (every constellation APK: install/update/uninstall/open, per-app versions and digests); tab 2 is every launchable APK on the phone, each row with Update (fleet apps only, through the fleet's own install path) / Open / Stop / Remove / App info / its origin store read from the real installer (#564; map in libs/appstore assets/appstore-install-sources.json). Both tabs group by the central classification (ui.phone_folders + ui.phone_sections, through PhoneTaxonomy) — the store holds no taxonomy of its own. test-store-identity.sh guards that nothing routes here by the old name and that every tile pointing here carries this label.",
             "_doc_tabs_order": "Cloud first: the fleet is what the store exists to manage, and it is the tab the Update-All action, the update notification and a lib tile all land on (page:config/store-cloud).",
             "id": "store",
             "label": "Store",
             "icon": "ic_storefront",
             "action": "extapp:cloud-store",
-          "_doc_865": "#865 the Store is its own app (ac_cloud-store, com.diegonmarcos.cloudstore). This entry opens it: its action extapp:cloud-store is the tile's target. Not is_action, so the tile keeps its place under Setup ▸ Apps instead of moving to the Actions row, and when it is not installed ui.external_apps[id=cloud-store].install_apk_url is offered. The two tab pages below stay, hidden, for page: links (the update notification, Update All); CloudStoreHandoff shows Open Cloud Store on them once the app is installed.",
+            "_doc_865": "#865 the Store is its own app (ac_cloud-store, com.diegonmarcos.cloudstore). This entry opens it: its action extapp:cloud-store is the tile's target. Not is_action, so the tile keeps its place under Setup ▸ Apps instead of moving to the Actions row, and when it is not installed ui.external_apps[id=cloud-store].install_apk_url is offered. The two tab pages below stay, hidden, for page: links (the update notification, Update All); CloudStoreHandoff shows Open Cloud Store on them once the app is installed.",
             "group": "Setup",
             "subgroup": "Apps"
           },
           {
-            "_doc": "Tab 2 of Launcher — the CONTROLS (#574): ONE producer, LauncherConfigFragment, drawing the device/fleet switchboard (the Samsung-style icon grid declared in ui.control_panel and implemented in configs/DeviceControls.kt, formerly Configs ▸ Panel ▸ Control) followed by the launcher's own screensaver, switches, sliders and set-as-default-launcher. The theme picker that used to open this tab moved to Presets ▸ Themes — the SAME LauncherThemes.apply, not a copy. Nothing persisted moves with it: LauncherSettingsPrefs keys off fixed store names, never off the page id. hidden = reached through the strip, not as its own Configs tile.",
-            "id": "controls",
-            "label": "Quick Actions",
-            "icon": "ic_home",
-            "tabs": ["presets", "panels"],
+            "_doc": "#1610 Configs ▸ Setup ▸ Configs ▸ Watchdog — a thin launch tile for the C3-Watchdog APK (com.diegonmarcos.watchdog), the same extapp:c3-watchdog the C3 strip's Watchdog tab dispatches; opens the app or offers the install via ui.external_apps[id=c3-watchdog]. Distinct from the in-app Agents hub (agents-watchdog, Device ▸ Configs). The id is c3-watchdog, not watchdog, because page:config/watchdog is already a page_alias of agents-watchdog.",
+            "id": "c3-watchdog",
+            "label": "Watchdog",
+            "icon": "ic_p_watchdog",
+            "action": "extapp:c3-watchdog",
             "group": "Setup",
-            "subgroup": "Launcher"
-          },
-          {
-            "_doc": "Tab 2 of Launcher — One-Hand edge-gesture overlay (libs:launcher-onehand). OneHandFragment hosts the master toggle + the two special-permission deep-links (Draw over other apps, Accessibility). Data-driven engine config lives in build.json::onehand. KEPT ITS ID: `hidden` drops it from the Configs grid, the Home Apps Configs row, the Canopus arc and the Sirius tree (all of which list Section.pages), while Section.allPages keeps `page:config/onehand` resolvable — so every existing deep link, launcher shortcut, edge gesture and App-Tabs history entry still arrives, now on this tab. Its prefs (onehand_prefs, home_swipe_prefs, floatingnav) are untouched for the same reason the id is.",
-            "id": "onehand",
-            "label": "One-Hand",
-            "icon": "ic_onehand",
-            "group": "Setup",
-            "subgroup": "Launcher"
-          },
-          {
-            "_doc": "#1553 Folders — Configs > Setup > Launcher, after One-Hand and before Notify. An in-app page that organises apps into folders, declaratively, with two scopes (Cloud | Phone). The organisation is DATA served at runtime by the fleet-data client, NOT baked into the APK: per scope, Table 1 (dataset launcher-folders/<scope>) declares the sections and folders (section, folder id, label, icon, order) and Table 2 (dataset launcher-folder-assignments/<scope>) assigns each app package to a folder with an order. Table 2 is user-editable; edits persist as a local override (FolderOverrideStore) on top of the served defaults. A Refresh action re-enumerates the installed apps (Phone) or the fleet apps (Cloud) on demand (and lazily on open when stale); any app not assigned lands in a special Others folder, so newly installed/added apps appear there until assigned. FolderResolver is the source of truth the launcher grid grouping reads (PhoneAppsFragment consults the override assignment first). Its id is app-folders (folders is taken by Mail); SectionPages routes it to FoldersFragment.",
-            "id": "app-folders",
-            "label": "Folders",
-            "icon": "ic_p_folder",
-            "group": "Setup",
-            "subgroup": "Launcher"
-          },
-          {
-            "_doc": "Tab 4 of Launcher — NOTIFY (#580), the notification centre in one place. It was Configs ▸ Home ▸ Notify, and Home's other tab, Push, was merged INTO it: the persistent-badge boxes now lead the page and Push's customization menus sit under the Filters as a collapsed Configs card. Then the page moved here and the emptied Home was deleted. `mirror_page` names sections[communication].pages[my-rss] and LauncherNavController.aggregatorPage renders that page's own fragment, so the cards, the filter row and the stack_my-rss declaration all stay owned by the Communication section — the two badge panes are stack_my-rss panels (kinds notification_badges / notification_badge_configs), not a copy declared here. mirror_page is the page-level twin of `mirror_section` (Cloud ▸ Configs / Cloud ▸ C3) and exists for the same reason those do: a tab that IS the other surface cannot drift from it, a second copy of it always does. Mirroring one PAGE rather than the section is what keeps this one tab instead of the Communication section's own six-tab strip nested inside ours. KEPT ITS ID: `hidden` keeps it out of the Configs grid while Section.allPages keeps `page:config/notify` resolvable, and the tab-owner lookup lands that target on this tab of Launcher.",
-            "id": "notify",
-            "label": "Notify",
-            "icon": "ic_rss",
-            "facet": true,
-            "mirror_page": "communication/my-rss",
-            "group": "Setup",
-            "subgroup": "Launcher"
-          },
-          {
-            "_doc": "The | between Notify and the pages relocated from Observability (Perms, Logcat, X-Ray App, About): a CHARACTER, not a tile (`separator: true`, as Data Apps does). It takes no grid cell, is never a destination and never opens anything.",
-            "id": "launcher-sep-1",
-            "label": "|",
-            "separator": true,
-            "group": "Setup",
-            "subgroup": "Launcher"
-          },
-          {
-            "_doc": "Configs ▸ Setup ▸ Launcher ▸ Perms (label only was Permissions): every grant the app holds or lacks (PermissionsFragment). Relocated from Observability to Launcher, after the | separator that follows Notify; id and content unchanged, so page:config/perms is the same link.",
-            "id": "perms",
-            "label": "Perms",
-            "icon": "ic_key",
-            "group": "Setup",
-            "subgroup": "Launcher"
-          },
-          {
-            "_doc": "Configs ▸ Setup ▸ Launcher ▸ Logcat: the DEDICATED single-app logcat (LogcatFragment). It streams this app's lines (com.diegonmarcos.superapp, its own uid) online by default, with two separate control rows: FILTERS (level, tag, search, autoscroll) and ACTIONS (clear, pause/resume, copy, export, share). The all-app / one-app / multi-app reader that used to be this page moved to Setup ▸ Watchtower - Obsv ▸ Logcat Fleet (page logcat-fleet); id logcat unchanged.",
-            "id": "logcat",
-            "label": "Logcat",
-            "icon": "ic_subject",
-            "group": "Setup",
-            "subgroup": "Launcher"
-          },
-          {
-            "_doc": "Configs ▸ Setup ▸ Launcher ▸ X-Ray App: the diagnosis of THIS APP ONLY, not the phone. The SAME DevControlFragment as X-Ray Device with an app-scoped macro filter (DevControlFragment.APP_XRAY_MACROS, like ABOUT_MACROS): App & Build (with App permissions), Repo & Releases, the app-scoped Resources sections (Storage, Battery & Usage, Memory & CPU Usage) and the SuperApp agents. It EXCLUDES the device-wide groups (Device, Security, Network, API, Mesh, Dev Tools, Webserver, Diagnostics, Export All, Fleet agents).",
-            "id": "xray-app",
-            "label": "X-Ray App",
-            "icon": "ic_p_c3_health",
-            "group": "Setup",
-            "subgroup": "Launcher"
-          },
-          {
-            "_doc": "Configs ▸ Setup ▸ Launcher ▸ About, the LAST Launcher page (relocated from Observability): what this app is and where this build came from. The SAME DevControlFragment as X-Ray, restricted to its APP & BUILD and REPO & RELEASES macro groups (DevControlFragment.ABOUT_MACROS), so nothing is drawn twice in code. The id is app-about because `about` is the old X-Ray id and redirects there (page_aliases).",
-            "id": "app-about",
-            "label": "About",
-            "icon": "ic_info",
-            "group": "Setup",
-            "subgroup": "Launcher"
-          },
-          {
-            "_doc": "Firewall — the no-root per-app firewall (libs:firewall, firestack VPN) as a Network page. SectionPages embeds the engine's FirewallDialog (master switch, VPN consent, per-app rules) as the page; Configs ▸ Observability ▸ About keeps only a read-only status summary with a 'Manage in Network ▸ Firewall' link. First after the Watchdog hub in Network: it owns the one VPN slot the Cloud Mesh and DNS below depend on.",
-            "id": "firewall",
-            "label": "Firewall",
-            "icon": "ic_lock",
-            "group": "Setup",
-            "subgroup": "Network"
-          },
-          {
-            "_doc": "#740 DNS — the fleet's resolver, chosen once and applied at the SuperApp VPN (ui.dns is its declaration; network/DnsFragment.kt draws it). Sits right after Firewall (Webserver follows it) and before Cloud Mesh: Network reads C3, Peer Control, |, Firewall, DNS, Cloud Mesh, Apps Mesh.",
-            "id": "dns",
-            "label": "DNS",
-            "icon": "ic_world",
-            "group": "Setup",
-            "subgroup": "Network"
-          },
-          {
-            "_doc": "Webserver - opens the Cloud C3 Webserver app (fleet id c3-webserver; the package is read from data/constellation-fleet.json at run time, WebserverLaunch.kt) through its explicit launch intent. If that app is not installed it opens http://localhost:8002 in Cloud Browser. Sits right after DNS.",
-            "id": "webserver",
-            "label": "Webserver",
-            "icon": "ic_web",
-            "action": "action:open_webserver",
-            "group": "Setup",
-            "subgroup": "Network"
-          },
-          {
-            "_doc": "WireGuard is a CHILD of Configs. It lives in its own module-backed section (sections[wg], module libs:net) but is surfaced here as a real config page so it appears in the Configs grid + Home-Apps Configs row in order. action=section:wg opens that section; sections[wg].parent=config makes Back from it return to Configs (MainActivity.navigateUpToParent).",
-            "_doc_label": "#733 RENAMED WireGuard → Cloud Mesh, the caption only: the tile opens the same section:wg and the id stays `wg` (page:config/wg and the wizard's section:wg route name it; an id is identity, not a caption).",
-            "id": "wg",
-            "label": "Cloud Mesh",
-            "icon": "ic_wg",
-            "action": "section:wg",
-            "group": "Setup",
-            "subgroup": "Network"
-          },
-          {
-            "_doc": "APPS ACCESS - the ONE Configs tile for what used to be Apps Mesh (+ IPC + Identity). Cloud Store's Access section is the single source of truth for Apps Mesh, IPC, Identity, Android Perms and Cloud Perms (ac_cloud-store build.json ui access.pages); this tile opens Cloud Store on it (CloudStoreHandoff.open tab=access, ShellActivity action open_apps_access). Cloud Store absent: the Store's install offer (launchExternalApp cloud-store, ui.external_apps[id=cloud-store]). SuperApp declares no Apps Mesh, IPC or Identity page of its own; libs:appstore keeps the shared pages Cloud Store hosts.",
-            "id": "apps-access",
-            "label": "Apps Access",
-            "icon": "ic_apps",
-            "action": "action:open_apps_access",
-            "group": "Setup",
-            "subgroup": "Network"
-          },
-          {
-            "_doc": "ADB SHELL - THE page for the privileged channel (libs:shizuku-adb-debug-tools AdbShellPage), the same one Cloud Store (Settings), Cloud Account (Setup), the terminals (Settings) and every status chip draw. Six sections: the status table (Developer options, Wireless debugging, embedded adb, the local server on 38099, Shizuku, the active route and mode, each with a colour dot and when it was probed), Connect (the method that applies to the chosen mode, run step by step with the step that failed named), Active connection (Disconnect / Reconnect / Restart server / Stop server / Test round-trip, each disabled when it does not apply), Logs (an in-memory ring, tokens redacted, Copy and Clear), Declared needs (this app's privileged_channel above) and Setup (the checklist, each item opening its exact settings screen). The label is this one string: rename it here and nowhere else. Sits right after Apps Mesh. FOUR TABS (the shared strip, like WiFi; one hidden page each, routed in SectionPages): Status (landing; the cockpit: a top control bar with Connect / Disconnect, Reconnect and the Mode selector Shizuku / Local Server / Embedded, a master health pill, Auto-fix, a Keep-alive panel (the one 'Keep Wireless debugging on' switch with an ON/OFF toggle, the keeper's live state and its four sub-lights Service / Armed / Secure settings / Battery, all real WdKeeper.snapshot facts, never a proxy), the dependency-ordered chain Perms (light only) > Setup (Developer Options, Wireless Debugging, live Settings flags) > Shizuku > Local Server > Embedded > Connection, and a live severity-tinted tail of the channel log with filter / copy / clear; every light binds to ChannelReader.read facts and the Permissions catalogue, see AdbCockpitModel), Shell (the terminal and the command bookmarks), Perms (the permission checker) and All (the combined page above, unchanged).",
-            "id": "adb-shell",
-            "label": "ADB Shell",
-            "icon": "ic_terminal",
-            "tabs": ["adb-status", "adb-term", "adb-perms", "adb-all"],
-            "group": "Setup",
-            "subgroup": "Network"
+            "subgroup": "Configs"
           },
           {
             "_doc": "ADB Shell tab: Status cockpit: lights, messages and actions per setup step, Auto-fix, the log tail (AdbCockpitModel / AdbCockpit). hidden = reached through the ADB Shell strip, not as its own Configs tile.",
@@ -5202,115 +5410,39 @@
             "hidden": true
           },
           {
-            "_doc": "#1263 Configs ▸ Setup ▸ Network ▸ WiFi: the phone's Wi-Fi analyzer as a page over libs:wifi (WifiFragment draws WifiPanel), right after ADB Shell. Five tabs over one process-wide controller, so scans, the throttle window and running tools survive a tab switch: Scan (live AP list: SSID / BSSID / vendor from the IEEE OUI asset, smoothed RSSI + sparkline, band / channel / width / centre, 802.11 standard, security incl. WPA3 / OWE / Enterprise / PMF / WPS, hidden, 802.11mc / az RTT, Wi-Fi 7 MLO, age; filter, sort, search, group by SSID; the scan throttle state), Channels (spectrum per band, channel rating and best-channel recommendation per regulatory plan, congestion, RSSI over time), Link (the connected network: speeds, frequency, signal / quality / SNR estimate, IPv4 / IPv6 / gateway / DNS / DHCP lease / MTU, captive / validated / metered / private DNS, MAC randomization, roaming log), Tools (ping / jitter / loss, traceroute, DNS, bounded port scan, LAN discovery via NSD / SSDP / sweep / NetBIOS, throughput to build.json wifi_analyzer.throughput, RTT ranging, hot / cold locator) and Log (heatmap grid, events, CSV / JSON / PCAP export and share). Vendors, channel plans and defaults are DATA in the lib's assets; this app's overrides are build.json wifi_analyzer. hidden tabs: reached through the WiFi strip.",
-            "id": "wifi",
-            "label": "WiFi",
-            "icon": "ic_wifi",
-            "tabs": ["wifi-scan", "wifi-channels", "wifi-link", "wifi-tools", "wifi-log"],
-            "group": "Setup",
-            "subgroup": "Network"
+            "_doc": "WiFi tab: the live AP list, filters and the scan throttle (#1263). hidden = reached through the WiFi strip, not as its own Configs tile.",
+            "id": "wifi-scan",
+            "label": "Scan",
+            "icon": "ic_search",
+            "hidden": true
           },
           {
-            "_doc": "#1221 Configs ▸ Setup ▸ Network ▸ Bluetooth (moved from the Fleet group, now Cloudy C3; the id and its seven tabs are unchanged): the phone's Bluetooth as a page over libs:bluetooth (BluetoothFragment draws BluetoothPanel). Tabs, one shared stack so a connection survives a tab switch: Find (scan with name / service / RSSI filters, the device list, paired devices), Analyze, Locate, Connect (the selected device: connect, bond, GATT discovery, MTU, RSSI), Interact (the live dashboard and the GATT tree: read, write, notify, indicate, descriptors), Debug (the ATT event log, copy and export) and Dev (raw hex write, test payloads, notify stream, permissions, adb grant commands). The known services, characteristics, decoders, filter presets and payloads are DATA (libs/bluetooth assets/bluetooth/gatt-catalog.json). hidden tabs: reached through the Bluetooth strip.",
-            "id": "bluetooth",
-            "label": "Bluetooth",
-            "icon": "ic_bluetooth",
-            "tabs": ["bluetooth-find", "bluetooth-analyze", "bluetooth-locate", "bluetooth-connect", "bluetooth-interact", "bluetooth-debug", "bluetooth-dev"],
-            "group": "Setup",
-            "subgroup": "Network"
-          },
-          {
-            "_doc": "Configs ▸ Setup ▸ Watchtower - Obsv ▸ X-Ray Device (label was X-Ray): the full diagnosis of the phone and the mesh, formerly the About page (DevControlFragment, all 13 macro groups: Export All, App & Build, Repo & Releases, Device, Security, Resources with Battery, Network, API, Mesh, Dev Tools, Webserver, Diagnostics, Agents). It carries what the removed Diagnostics page drew and the removed Agents page's live status. Old links page:config/about, /diagnostics, /agents, /agents-superapp, /agents-fleet, /watchtower and /agents-watchtower land here (page_aliases). The app-only variant is X-Ray App (xray-app) under Launcher.",
-            "id": "xray",
-            "label": "X-Ray Device",
+            "_doc": "WiFi tab: spectrum, channel rating, best channel, RSSI over time (#1263). hidden = reached through the WiFi strip, not as its own Configs tile.",
+            "id": "wifi-channels",
+            "label": "Channels",
             "icon": "ic_monitor_heart",
-            "group": "Setup",
-            "subgroup": "Watchtower - Obsv"
-          },
-          {
-            "_doc": "Configs ▸ Setup ▸ Watchtower - Obsv ▸ Logcat Fleet: fleet-wide logcat (FleetLogcatFragment). A multi-select app picker chooses WHICH apps' logs to include (all, none, the fleet's com.diegonmarcos.* apps, or any installed app), a per-app view shows one app's lines, and Export / Copy / Share / Post c3-api output the selected apps' logs. Logs are read through the SAME plane the old Logcat page used: READ_LOGS granted once through Shizuku or a paired adb (then in-process, nothing needs to stay running), else a shell channel `logcat --uid`; when neither is reachable the page shows the mechanism and the one-time grant button instead of failing.",
-            "id": "logcat-fleet",
-            "label": "Logcat Fleet",
-            "icon": "ic_p_logs",
-            "group": "Setup",
-            "subgroup": "Watchtower - Obsv"
-          },
-          {
-            "_doc": "#1545 #1548 #1552 Watchdog - the only Agents page (it was first in Setup > Network); canonical id agents-watchdog (unique across the app, N12; page:config/watchdog is a page_alias for the old route): an in-app hub page, not the C3-Watchdog APK (that stays extapp:c3-watchdog on the C3 strip). `hub_sections` lists the subgroups of this section it shows, each as its own titled section of the grid, in this order: Network, then Watchtower - Obsv. The tiles are DERIVED from this array (Sections.hubSections: every visible page of this section in that subgroup, in declaration order), each carrying the page's own target - its `action` when it has one (an app, a section or a Cloud Store hand-off), else page:config/<id>, an in-app page. Adding a page to a subgroup adds its tile; there is no second list. SubgroupHubFragment draws it with GroupTitle + TileStrip/TileCell, the Cloud > Apps heading and tile components. The former Watchtower hub page (agents-watchtower, a hub over Observability only) is gone: the Watchtower concept is the Watchtower - Obsv subgroup (X-Ray Device, Logcat Fleet) and this hub shows it as its second section.",
-            "id": "agents-watchdog",
-            "label": "Watchdog",
-            "icon": "ic_p_watchdog",
-            "hub_sections": ["Network", "Watchtower - Obsv"],
-            "group": "Agents"
-          },
-          {
-            "_doc": "C3 — the Cloud Control Center app (ac_cloud-c3), reached from Configs ▸ Fleet (it moved there from Setup ▸ Network; the id `c3` did not change, so page:config/c3 and every existing link still land on it) like Store is from Setup ▸ Apps: action extapp:cloud-c3 opens the app or offers the install through ui.external_apps[id=cloud-c3]. Same target as the C3 tile of the Cloud ▸ Apps Configs group; no second C3.",
-            "id": "c3",
-            "label": "C3",
-            "icon": "ic_cloud_control",
-            "action": "extapp:cloud-c3",
-            "group": "Cloudy C3"
-          },
-          {
-            "_doc_label": "#723 RENAMED KDE → Peer Control and moved, with WireGuard, out of Setup ▸ Apps into the new Setup ▸ Network sub-section. Only the label moved: the id stays `kde` because page:config/kde is spoken by KdeStatusNotifier and KdeConfigsPageTest, and a page id is identity, not a caption. Moved again, with C3, into the Configs ▸ Fleet group (Setup, Fleet, Observability): the id is unchanged, so page:config/kde still opens it.",
-            "id": "kde",
-            "label": "Peer Control",
-            "icon": "ic_hub",
-            "separator_before": true,
-            "group": "Cloudy C3"
-          },
-          {
-            "_doc": "Tab 1 of Launcher — the PRESETS: things you pick in one tap. Three groups, declared in ui.launcher_presets (order, names and which declaration feeds each group): Sandboxes (ui.launcher_profiles — Work · Personal · Guest), Themes (ui.launcher_themes — Cloud Purple · Cloud Minimalistic) and Modes (ui.launcher_modes — Power · Focus · Saving Energy). LauncherPresetsFragment draws them and owns no name of its own. Its id is `presets`, not `profile`, because `profile` is already this section's own top-level page (the owner's identity) and a section cannot hold two pages under one id. Nothing persisted moves with the rename: LauncherProfilePrefs/LauncherThemePrefs/LauncherModePrefs key off fixed store names, never off the page id. hidden = reached through the strip, not as its own Configs tile.",
-            "id": "presets",
-            "label": "Presets",
-            "icon": "ic_p_sol_personal",
             "hidden": true
           },
           {
-            "_doc": "Configs ▸ Setup ▸ Launcher ▸ Controls ▸ Panels — today's Controls content (device switch board, screensaver, toggles, icons per row, brightness) as a strip over its two halves, UI and Tools. A hidden tab of `controls`; the id `controls` now names the strip itself, so page:config/controls and page:config/presets both land on the Controls entry.",
-            "id": "panels",
-            "label": "Panels",
-            "icon": "ic_home",
-            "tabs": ["panels-all", "panels-ui", "panels-battery", "panels-tools"],
+            "_doc": "WiFi tab: the connected network and the roaming log (#1263). hidden = reached through the WiFi strip, not as its own Configs tile.",
+            "id": "wifi-link",
+            "label": "Link",
+            "icon": "ic_world",
             "hidden": true
           },
           {
-            "_doc": "Panels ▸ All — the UNION view: UI, then Battery Hungers, then Tools, in one scrollable list (LauncherConfigFragment scope all). Every section on the other three tabs appears here once, in that order.",
-            "id": "panels-all",
-            "label": "All",
-            "icon": "ic_home",
-            "hidden": true
-          },
-          {
-            "_doc": "Panels ▸ UI — UI controls ONLY: Screensaver (+ idle timer), Icons per row, Screen brightness and the three display controls (Cloud-superapp Scale ruler centred on 411, Font Size, Zoom Size; ui.launcher_settings.display_controls). Connectivity, Notifications and Others live on Tools, the battery effects on Battery Hungers. LauncherConfigFragment scope ui.",
-            "id": "panels-ui",
-            "label": "UI",
-            "icon": "ic_home",
-            "hidden": true
-          },
-          {
-            "_doc": "Panels ▸ Battery Hungers — the launcher's battery-hungry effect switches (toggle group `battery`, with its master), the heaviest consumers per charge cycle or month resolved to app names (BatteryRepository per-uid mAh, the batterystats probe; ADB channel for the mAh) and the Battery Hunger panel (rank drainers, restrict, stop). LauncherConfigFragment scope battery.",
-            "id": "panels-battery",
-            "label": "Battery Hungers",
-            "icon": "ic_settings",
-            "hidden": true
-          },
-          {
-            "_doc": "Panels ▸ Tools — everything that is not UI or a battery effect: the device switch board (ui.control_panel: Device, Network and Tools groups — Torch, DND, Wi-Fi, Firewall, Wireless debugging …), the Connectivity, Notifications and Others switch groups (incl. the in-app Scale slider) and the Set-as-default-launcher action. LauncherConfigFragment scope tools.",
-            "id": "panels-tools",
+            "_doc": "WiFi tab: ping, traceroute, DNS, port scan, LAN discovery, throughput, RTT, locator (#1263). hidden = reached through the WiFi strip, not as its own Configs tile.",
+            "id": "wifi-tools",
             "label": "Tools",
-            "icon": "ic_settings",
+            "icon": "ic_terminal",
             "hidden": true
           },
           {
-            "_doc": "Configs ▸ About ▸ Battery — the battery Source of Truth's full stats page (aa_cloud-superapp batterystats/BatteryStatsFragment over libs:battery BatteryRepository/BatteryTruth): Now + Since last charge (the home-screen popup's sections, the same rows), the level graph over 24 h / 7 d, estimated vs design capacity, cycles, temperature/voltage spreads, the discharge-cycle and charge-session tables, and the privileged extras (gauge sysfs, per-app power) through the shell channel. hidden = no tile of its own: About's Battery section, the battery popup's 'Battery stats ›' and the Battery badge open it as page:config/battery.",
-            "id": "battery",
-            "label": "Battery",
-            "icon": "ic_settings",
-            "hidden": true,
-            "_doc_group": "#1548 declared under Setup > Observability with the X-Ray pages it is opened from (hidden, so no tile): the X-Ray export reads that subgroup as the Observability page set.",
-            "group": "Setup",
-            "subgroup": "Watchtower - Obsv"
+            "_doc": "WiFi tab: heatmap, event log, export and share (#1263). hidden = reached through the WiFi strip, not as its own Configs tile.",
+            "id": "wifi-log",
+            "label": "Log",
+            "icon": "ic_p_logs",
+            "hidden": true
           },
           {
             "_doc": "Bluetooth tab: scan, filter and list nearby devices (#1221). hidden = reached through the Bluetooth strip, not as its own Configs tile.",
@@ -5362,38 +5494,69 @@
             "hidden": true
           },
           {
-            "_doc": "WiFi tab: the live AP list, filters and the scan throttle (#1263). hidden = reached through the WiFi strip, not as its own Configs tile.",
-            "id": "wifi-scan",
-            "label": "Scan",
-            "icon": "ic_search",
+            "_doc": "Tab 1 of Launcher — the PRESETS: things you pick in one tap. Three groups, declared in ui.launcher_presets (order, names and which declaration feeds each group): Sandboxes (ui.launcher_profiles — Work · Personal · Guest), Themes (ui.launcher_themes — Cloud Purple · Cloud Minimalistic) and Modes (ui.launcher_modes — Power · Focus · Saving Energy). LauncherPresetsFragment draws them and owns no name of its own. Its id is `presets`, not `profile`, because `profile` is already this section's own top-level page (the owner's identity) and a section cannot hold two pages under one id. Nothing persisted moves with the rename: LauncherProfilePrefs/LauncherThemePrefs/LauncherModePrefs key off fixed store names, never off the page id. hidden = reached through the strip, not as its own Configs tile.",
+            "id": "presets",
+            "label": "Presets",
+            "icon": "ic_p_sol_personal",
             "hidden": true
           },
           {
-            "_doc": "WiFi tab: spectrum, channel rating, best channel, RSSI over time (#1263). hidden = reached through the WiFi strip, not as its own Configs tile.",
-            "id": "wifi-channels",
-            "label": "Channels",
-            "icon": "ic_monitor_heart",
+            "_doc": "Configs ▸ Setup ▸ Launcher ▸ Controls ▸ Panels — today's Controls content (device switch board, screensaver, toggles, icons per row, brightness) as a strip over its two halves, UI and Tools. A hidden tab of `controls`; the id `controls` now names the strip itself, so page:config/controls and page:config/presets both land on the Controls entry.",
+            "id": "panels",
+            "label": "Panels",
+            "icon": "ic_home",
+            "tabs": [
+              "panels-all",
+              "panels-ui",
+              "panels-battery",
+              "panels-tools"
+            ],
             "hidden": true
           },
           {
-            "_doc": "WiFi tab: the connected network and the roaming log (#1263). hidden = reached through the WiFi strip, not as its own Configs tile.",
-            "id": "wifi-link",
-            "label": "Link",
-            "icon": "ic_world",
+            "_doc": "Panels ▸ All — the UNION view: UI, then Battery Hungers, then Tools, in one scrollable list (LauncherConfigFragment scope all). Every section on the other three tabs appears here once, in that order.",
+            "id": "panels-all",
+            "label": "All",
+            "icon": "ic_home",
             "hidden": true
           },
           {
-            "_doc": "WiFi tab: ping, traceroute, DNS, port scan, LAN discovery, throughput, RTT, locator (#1263). hidden = reached through the WiFi strip, not as its own Configs tile.",
-            "id": "wifi-tools",
+            "_doc": "Panels ▸ UI — UI controls ONLY: Screensaver (+ idle timer), Icons per row, Screen brightness and the three display controls (Cloud-superapp Scale ruler centred on 411, Font Size, Zoom Size; ui.launcher_settings.display_controls). Connectivity, Notifications and Others live on Tools, the battery effects on Battery Hungers. LauncherConfigFragment scope ui.",
+            "id": "panels-ui",
+            "label": "UI",
+            "icon": "ic_home",
+            "hidden": true
+          },
+          {
+            "_doc": "Panels ▸ Battery Hungers — the launcher's battery-hungry effect switches (toggle group `battery`, with its master), the heaviest consumers per charge cycle or month resolved to app names (BatteryRepository per-uid mAh, the batterystats probe; ADB channel for the mAh) and the Battery Hunger panel (rank drainers, restrict, stop). LauncherConfigFragment scope battery.",
+            "id": "panels-battery",
+            "label": "Battery Hungers",
+            "icon": "ic_settings",
+            "hidden": true
+          },
+          {
+            "_doc": "Panels ▸ Tools — everything that is not UI or a battery effect: the device switch board (ui.control_panel: Device, Network and Tools groups — Torch, DND, Wi-Fi, Firewall, Wireless debugging …), the Connectivity, Notifications and Others switch groups (incl. the in-app Scale slider) and the Set-as-default-launcher action. LauncherConfigFragment scope tools.",
+            "id": "panels-tools",
             "label": "Tools",
-            "icon": "ic_terminal",
+            "icon": "ic_settings",
             "hidden": true
           },
           {
-            "_doc": "WiFi tab: heatmap, event log, export and share (#1263). hidden = reached through the WiFi strip, not as its own Configs tile.",
-            "id": "wifi-log",
-            "label": "Log",
-            "icon": "ic_p_logs",
+            "_doc": "Configs ▸ About ▸ Battery — the battery Source of Truth's full stats page (aa_cloud-superapp batterystats/BatteryStatsFragment over libs:battery BatteryRepository/BatteryTruth): Now + Since last charge (the home-screen popup's sections, the same rows), the level graph over 24 h / 7 d, estimated vs design capacity, cycles, temperature/voltage spreads, the discharge-cycle and charge-session tables, and the privileged extras (gauge sysfs, per-app power) through the shell channel. hidden = no tile of its own: About's Battery section, the battery popup's 'Battery stats ›' and the Battery badge open it as page:config/battery.",
+            "id": "battery",
+            "label": "Battery",
+            "icon": "ic_settings",
+            "hidden": true,
+            "_doc_group": "#1548 declared under Setup > Observability with the X-Ray pages it is opened from (hidden, so no tile): the X-Ray export reads that subgroup as the Observability page set.",
+            "group": "Device",
+            "subgroup": "Configs"
+          },
+          {
+            "_doc": "#1596 Focus Mode — the one Focus switch (page:config/focus, FocusModeFragment). Turning it on sets FocusMode.active, the readable boolean other parts consult to quieten themselves: AlertsNotifier keeps a non-urgent fleet alert silent (no sound, no heads-up) while urgent ones still ring. hidden with no subgroup: reached by its action (the Configs Actions row, #1610) and by page:config/focus, never a grid tile of its own — so it sits under no Launcher sub-heading. Its words are NOT declared here — the page reads ui.launcher_modes[id=focus]'s label and subtitle, so the page and the Presets ▸ Modes tile cannot drift.",
+            "id": "focus",
+            "label": "Focus Mode",
+            "icon": "ic_nav_dnd",
+            "group": "Device",
             "hidden": true
           },
           {
@@ -5435,12 +5598,28 @@
             "is_action": true
           },
           {
-            "_doc": "#1596 Focus Mode — the one Focus switch (page:config/focus, FocusModeFragment). Turning it on sets FocusMode.active, the readable boolean other parts consult to quieten themselves: AlertsNotifier keeps a non-urgent fleet alert silent (no sound, no heads-up) while urgent ones still ring. hidden with no subgroup: reached by its action (the Configs Actions row, #1610) and by page:config/focus, never a grid tile of its own — so it sits under no Launcher sub-heading. Its words are NOT declared here — the page reads ui.launcher_modes[id=focus]'s label and subtitle, so the page and the Presets ▸ Modes tile cannot drift.",
-            "id": "focus",
+            "_doc": "#1610 Actions ▸ Sync Clipboard — PLACEHOLDER pending its own ticket. No handler yet; dispatchHomeAction's else-branch shows a snackbar. Part of the single shared Actions row.",
+            "id": "sync-clipboard",
+            "label": "Sync Clipboard",
+            "icon": "ic_devices",
+            "action": "action:sync_clipboard",
+            "is_action": true
+          },
+          {
+            "_doc": "#1610 Actions ▸ Saving Mode — PLACEHOLDER pending its own ticket (the launcher 'Saving Energy' mode lives in Presets ▸ Modes today; no one-tap action yet). dispatchHomeAction's else-branch snackbars until wired.",
+            "id": "saving-mode",
+            "label": "Saving Mode",
+            "icon": "ic_settings",
+            "action": "action:saving_mode",
+            "is_action": true
+          },
+          {
+            "_doc": "#1610 #1596 Actions ▸ Focus Mode — the shared Actions-row tile that opens the #1596 Focus switch page (page:config/focus, FocusModeFragment). The hidden `focus` page carries the real toggle; this is the Actions-row door the owner's #1596 _doc points at.",
+            "id": "focus-mode",
             "label": "Focus Mode",
             "icon": "ic_nav_dnd",
-            "group": "Setup",
-            "hidden": true
+            "action": "page:config/focus",
+            "is_action": true
           }
         ]
       }

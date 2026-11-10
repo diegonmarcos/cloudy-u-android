@@ -48,13 +48,14 @@ import json, sys
 pages  = next(s for s in json.load(open(sys.argv[1]))['ui']['sections']
               if s['id'] == 'config')['pages']
 by     = {p['id']: p for p in pages}
-labels = [p['label'] for p in pages if p.get('subgroup') == 'Launcher'][:4]  # the first four; the | and the relocated Perms, Logcat, X-Ray App, About follow
+labels = [p['label'] for p in pages if p.get('group') == 'Device' and p.get('subgroup') == 'UI'] \
+         + [p['label'] for p in pages if p.get('group') == 'Device' and p.get('subgroup') == 'Notification Center']  # #1610 the former Launcher pages: UI then Notify
 tabs   = [by[i]['label'] for i in by['controls'].get('tabs', [])]
 sub    = [by[i]['label'] for i in by['panels'].get('tabs', [])]
 print('OK' if (labels, tabs, sub) == (['Quick Actions', 'One-Hand', 'Folders', 'Notify'], ['Presets', 'Panels'], ['All', 'UI', 'Battery Hungers', 'Tools'])
-      else 'Launcher labels = %r, Controls tabs = %r, Panels tabs = %r' % (labels, tabs, sub))
+      else 'labels = %r, Controls tabs = %r, Panels tabs = %r' % (labels, tabs, sub))
 PY
-)" "the Launcher group, by label, is Quick Actions (Presets | Panels ▸ All | UI | Battery Hungers | Tools) · One-Hand · Folders · Notify"
+)" "Device ▸ UI = Quick Actions (Presets | Panels ▸ All | UI | Battery Hungers | Tools) · One-Hand · Folders, then Notification Center ▸ Notify (#1610)"
 
 echo "== T2: Presets declares Sandboxes · Themes · Modes, in order =="
 check "$(python3 - "$BJ" <<'PY'

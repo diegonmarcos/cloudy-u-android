@@ -92,15 +92,18 @@ pages = next(s for s in json.load(open(sys.argv[1]))['ui']['sections']
              if s['id'] == 'config')['pages']
 ids  = [p['id'] for p in pages]
 gone = [i for i in ('home', 'push', 'panel', 'control', 'launcher') if i in ids]
-run  = [p['id'] for p in pages if p.get('subgroup') == 'Launcher']
+def run(g, s): return [p['id'] for p in pages if p.get('group') == g and p.get('subgroup') == s]
+ui = run('Device', 'UI'); notif = run('Device', 'Notification Center')
 if gone:                     print('retired page(s) still declared: %r' % gone)
-elif run[:4] != ['controls', 'onehand', 'app-folders', 'notify'] or run[4:5] != ['launcher-sep-1']:
-                             # #1553 Folders sits between One-Hand and Notify (owner-mandated order); Notify stays last.
-                             print('Launcher does not start Controls, One-Hand, Folders, Notify then the | separator: %r' % (run,))
+elif ui != ['controls', 'onehand', 'app-folders']:
+                             # #1610 the former Launcher pages split across the Device subpage; #1553 Folders after One-Hand
+                             print('Device ▸ UI is not Quick Actions, One-Hand, Folders: %r' % (ui,))
+elif notif != ['notify']:    print('Device ▸ Notification Center is not Notify: %r' % (notif,))
+elif 'launcher-sep-1' not in ids: print('the | separator page is gone')
 elif 'app-about' not in ids: print('no `app-about` page')
 else:                        print('OK')
 PY
-)" "no home/push/panel/control/launcher page; the Launcher group runs ..., onehand, app-folders, notify (#1553) and then the | separator and the relocated Perms, Logcat, X-Ray App, About"
+)" "no home/push/panel/control/launcher page; Device ▸ UI = Quick Actions, One-Hand, Folders; Notification Center = Notify; the | separator and the relocated Perms, Logcat, X-Ray App, About live in Device ▸ Configs (#1610)"
 
 echo "== T2: Notify is a REAL, VISIBLE page of the config section, never declared inline =="
 # The contract established in 07964787e was: a tab is a declared page, so
@@ -122,7 +125,10 @@ for pid in ('presets', 'controls', 'panels', 'panels-all', 'panels-ui', 'panels-
     elif tab:
         if not p.get('hidden'):         problems.append('tab %r draws a tile of its own' % pid)
     elif p.get('hidden'):               problems.append('page %r is hidden — #649 gave it its own tile' % pid)
-    elif not tab and p.get('subgroup') != 'Launcher':  problems.append('page %r left the Launcher group: %r' % (pid, p.get('subgroup')))
+    else:
+        want = {'controls': ('Device', 'UI'), 'onehand': ('Device', 'UI'), 'notify': ('Device', 'Notification Center')}[pid]  # #1610 placement
+        if (p.get('group'), p.get('subgroup')) != want:
+            problems.append('page %r is under %r, not %r' % (pid, (p.get('group'), p.get('subgroup')), want))
 if by_id.get('notify', {}).get('mirror_page') != 'communication/my-rss':
     problems.append('notify stopped mirroring communication/my-rss — a second '
                     'notification centre is exactly what #497/#515 deleted')

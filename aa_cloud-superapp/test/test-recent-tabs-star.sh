@@ -193,20 +193,19 @@ d=json.load(open('$BJ'))
 c=[s for s in d['ui']['sections'] if s['id']=='config'][0]
 print(' '.join(p['id'] for p in c['pages']
                 if not p.get('hidden') and not p.get('is_action')
-                and p.get('group') == 'Setup' and p.get('subgroup') == 'Launcher'))
+                and p.get('group') == 'Device' and p.get('subgroup') == 'Configs'))
 ")
-# #1548 Fleet and Agents now FOLLOW Setup in the declared tree, so "last" is scoped to where About lives: it closes
-# Setup ▸ Launcher (Quick Actions, One-Hand, Folders, Notify | Perms, Logcat, X-Ray App, About; About moved there from Observability).
-# #580 deleted Configs ▸ Home (its two tabs merged into Launcher ▸ Notify), so
-# the page that used to sit immediately before About is gone. What is left to
-# pin is the other half of the old rule: About is opened once ever and stays the
-# LAST tiled entry, and no `home` page creeps back into the list.
+# #1610 About (app-about) now closes the PRIMARY run of Device ▸ Configs — Agents, Perms, Logcat, X-Ray App, About — right
+# before the | separator (launcher-sep-1), after which the observability pair X-Ray Device, Logcat Fleet follows. #580 deleted
+# Configs ▸ Home (its two tabs merged into Notify), so the page that used to sit immediately before About is gone. What is left
+# to pin: About is opened once ever and stays the entry just before the | separator, and no `home` page creeps into the list.
+BEFORE_SEP=$(echo "$TILED" | tr ' ' '\n' | awk '/^launcher-sep-1$/{print prev; exit} {prev=$0}')
 if case " $ORDER " in *" home "*) true ;; *) false ;; esac; then
-  bad "a Configs page named home is declared again — #580 deleted it; its tabs live in Launcher"
-elif [ "${TILED##* }" = "app-about" ]; then  # About is app-about since the X-Ray regroup (about aliases X-Ray)
-  ok "no Home page in ui.sections[config].pages, and About is the last tiled entry of Setup ▸ Launcher"
+  bad "a Configs page named home is declared again — #580 deleted it; its tabs live in Notify"
+elif [ "$BEFORE_SEP" = "app-about" ]; then  # About is app-about since the X-Ray regroup (about aliases X-Ray)
+  ok "no Home page in ui.sections[config].pages, and About closes the primary run of Device ▸ Configs (just before the | separator)"
 else
-  bad "About is not the last tiled entry of Setup ▸ Launcher — its tail is: $(echo "$TILED" | tr ' ' '\n' | tail -4 | tr '\n' ' ')"
+  bad "About is not the entry before the | separator in Device ▸ Configs — before-sep is: $BEFORE_SEP (run: $TILED)"
 fi
 # Both surfaces read that one list. A Kotlin-side order would be a second truth.
 grep -qF 'SectionPages.pagesFor(section)' "$SHELL_KT" \

@@ -35,7 +35,7 @@ pages = {p['id']: p for p in next(s for s in json.load(open(sys.argv[1]))['ui'][
 probs = []
 b = pages.get('bluetooth')
 if not b: print('no bluetooth page'); sys.exit()
-if (b.get('group'), b.get('subgroup')) != ('Setup', 'Network') or b.get('label') != 'Bluetooth' or b.get('hidden'): probs.append('page = %r' % b)
+if (b.get('group'), b.get('subgroup')) != ('Device', 'Network') or b.get('label') != 'Bluetooth' or b.get('hidden'): probs.append('page = %r' % b)
 want = ['bluetooth-find', 'bluetooth-analyze', 'bluetooth-locate', 'bluetooth-connect', 'bluetooth-interact', 'bluetooth-debug', 'bluetooth-dev']
 if b.get('tabs') != want: probs.append('tabs = %r' % b.get('tabs'))
 for t, label in zip(want, ['Find', 'Analyze', 'Locate', 'Connect', 'Interact', 'Debug', 'Dev']):
@@ -61,16 +61,15 @@ sec = next(s for s in json.load(open(sys.argv[1]))['ui']['sections'] if s['id'] 
 probs = []
 if sec.get('nav_mode') != 'horizontal_two_rows': probs.append('nav_mode = %r' % sec.get('nav_mode'))
 groups = {g['id']: g for g in sec.get('groups', [])}
-vis = lambda ids: [i for i in ids if not next(p for p in sec['pages'] if p['id'] == i).get('hidden')]
-if vis(groups['fleet']['pages']) != ['c3', 'kde']: probs.append('Cloudy C3 row = %r' % vis(groups['fleet']['pages']))
-if groups['fleet']['label'] != 'Cloudy C3': probs.append('fleet group label = %r' % groups['fleet']['label'])
-if 'bluetooth' not in groups['setup']['pages'] or not set(['bluetooth-find', 'bluetooth-dev']) <= set(groups['setup']['pages']): probs.append('bluetooth and its tabs are not in the Setup row')
-grid_obs = [p['id'] for p in sec['pages'] if p.get('group') == 'Setup' and p.get('subgroup') == 'Watchtower - Obsv' and not p.get('hidden')]
-row_obs = [i for i in vis(groups['setup']['pages']) if i in grid_obs]
-if grid_obs != ['xray', 'logcat-fleet'] or row_obs != grid_obs: probs.append('Setup > Watchtower - Obsv row = %r, grid = %r' % (row_obs, grid_obs))
-if 'observability' in groups: probs.append('Observability is still a top-level group (#1548 moved it under Setup)')
+if set(groups) != {'device', 'setup'}: probs.append('groups = %r (want device, setup)' % sorted(groups))  # #1610 two subpages
+# #1610 bluetooth and its tabs live in the Device row (subgroup Network)
+dev_pages = set(groups.get('device', {}).get('pages', []))
+if 'bluetooth' not in dev_pages or not {'bluetooth-find', 'bluetooth-dev'} <= dev_pages: probs.append('bluetooth and its tabs are not in the Device row')
+for stale in ('fleet', 'agents', 'observability'):
+    if stale in groups: probs.append('%s is still a top-level group (#1610 made Configs Device + Setup)' % stale)
 label = {p['id']: p['label'] for p in sec['pages']}
-if label['c3'] != 'C3': probs.append('c3 label = %r' % label['c3'])
+if label['c3'] != 'Cloudy C3': probs.append('c3 label = %r' % label['c3'])  # #1610 C3 moved to Setup ▸ Connect, relabelled Cloudy C3
+if label['kde'] != 'Peer Control': probs.append('kde label = %r' % label['kde'])
 icon = {p['id']: p.get('icon') for p in sec['pages']}
 if icon['c3'] != 'ic_cloud_control': probs.append('c3 icon = %r' % icon['c3'])
 if icon['c3'] in [p.get('icon') for p in sec['pages'] if p['id'] != 'c3']: probs.append('c3 icon collides with another Configs page')
@@ -92,9 +91,7 @@ def nodes(o):
         for v in o: yield from nodes(v)
 stray = [n for n in nodes(cloud) if n.get('icon') == 'ic_cloud_control' and n.get('id') != 'c3' and n.get('label') != 'C3']
 if stray: probs.append('ic_cloud_control used by a non-C3 Cloud node: %r' % [n.get('id') or n.get('label') for n in stray])
-sep = {p['id']: p.get('separator_before') for p in sec['pages']}
-if not sep['kde']: probs.append('Peer Control lacks the sub-group divider (separator_before)')
-import os
+import os  # #1610 Peer Control joined Setup ▸ Connect (Account, Cloudy C3, Peer Control); the old Fleet-group divider was dropped
 if not os.path.exists(os.path.join(os.path.dirname(sys.argv[1]), 'app/src/main/res/drawable/ic_cloud_control.xml')): probs.append('ic_cloud_control drawable missing')
 flat = [p['id'] for p in sec['pages']]
 seen = [i for g in sec['groups'] for i in g['pages']]
@@ -103,7 +100,7 @@ for g in sec['groups']:
     if not g.get('icon') or not g.get('label'): probs.append('group %s lacks an icon or label' % g['id'])
 print('; '.join(probs) or 'OK')
 PY
-)" "horizontal_two_rows: Cloudy C3 = C3 | Peer Control (label C3, icon ic_cloud_control), Bluetooth and its tabs in the Setup row, Setup ▸ Watchtower - Obsv = its grid order (X-Ray Device, Logcat Fleet); every page in one group"
+)" "horizontal_two_rows with groups device + setup (#1610): C3 (label Cloudy C3, icon ic_cloud_control) and Peer Control in Setup ▸ Connect, Bluetooth and its tabs in the Device row; every page in exactly one group"
 
 echo "== B3: the page is the lib's, scroll wired =="
 grep -q 'class BluetoothFragment : KitComposeFragment()' "$KT/configs/BluetoothFragment.kt" && ! grep -q 'override val reportsScroll.*false' "$KT/configs/BluetoothFragment.kt" \

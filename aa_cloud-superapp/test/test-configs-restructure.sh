@@ -1,18 +1,22 @@
 #!/usr/bin/env bash
-# Tester: the 2026-11 Configs restructure (a REORGANISE: pages moved, renamed or split, none deleted).
+# Tester: the 2026-11 Configs restructure into TWO subpages, Device and Setup (#1610). A REORGANISE (pages moved, renamed,
+# split or added as placeholders — none deleted). The two subpages are the config section's two horizontal_two_rows groups.
 #
-#   R1 Setup ▸ Launcher reads Quick Actions, One-Hand, Folders, Notify | Perms, Logcat, X-Ray App, About (the | is a separator
-#      page right after Notify); the Permissions page is labelled Perms and keeps its id and fragment
+#   R1 Device ▸ UI = Quick Actions, One-Hand, Folders; Device ▸ Notification Center = Notify; the Perms page keeps its id
+#      `perms`, its icon and its PermissionsFragment route (it moved from Launcher to Device ▸ Configs, label unchanged)
 #   R2 the app Logcat (page logcat) is single-app (this app's uid, polled online) and its FILTERS (level, tag, search, autoscroll)
 #      and ACTIONS (clear, pause/resume, copy, export, share) are two separate blocks
 #   R3 X-Ray App (page xray-app) is the same DevControlFragment under APP_XRAY_MACROS, which names app groups only: no device-wide
 #      group (Device, Security, Network, API, Mesh, Dev Tools, Webserver, Diagnostics, Export All, Fleet agents)
-#   R4 Setup ▸ Watchtower - Obsv (was Observability) holds X-Ray Device (the unfiltered X-Ray, all 13 macro groups) and Logcat
-#      Fleet (multi-select app picker, per-app view, export / share / copy / post)
-#   R5 Agents has Watchdog only; watchtower and agents-watchtower are page_aliases of a DECLARED page (never a 404) and
-#      agents-watchtower is retired; Watchdog's hub shows Network and Watchtower - Obsv
-#   R6 Bluetooth and its seven tabs are under Setup ▸ Network (page and group row), none under Cloudy C3
-#   R7 the Fleet group is Cloudy C3 (group id fleet) with C3 and Peer Control
+#   R4 Device ▸ Configs = Agents, Perms, Logcat, X-Ray App, About, |, X-Ray Device, Logcat Fleet (the | is a separator page);
+#      X-Ray Device is the unfiltered X-Ray (all 13 macro groups); Logcat Fleet is the multi-select fleet reader; Battery stays
+#      a hidden Device ▸ Configs page (page:config/battery)
+#   R5 the Agents hub is the page agents-watchdog, relabelled Agents, hub_sections = [Network]; watchtower and agents-watchtower
+#      are page_aliases of a DECLARED page (never a 404) and agents-watchtower is retired; the watchdog alias still lands on it
+#   R6 Device ▸ Network = Firewall, DNS, Webserver, Cloud Mesh, Apps Access, ADB Shell, WiFi, Bluetooth; Bluetooth and its seven
+#      tabs belong to the Device group, none to Setup
+#   R7 Setup ▸ Connect = Account, Cloudy C3, Peer Control; Setup ▸ Apps = Store; Setup ▸ Configs = Watchdog (the new c3-watchdog
+#      launch page → extapp:c3-watchdog); exactly two groups device + setup, and no page wears the old Agents/Cloudy C3/Fleet
 #   R8 COVERAGE: every config page id of the tree before the restructure is still declared, retired or removed; every alias and
 #      retirement lands on a declared page; every declared page is in exactly one group
 # Static (no device, no build).
@@ -31,23 +35,22 @@ FLEET="$KT/devcontrol/FleetLogcatFragment.kt"
 for f in "$BJ" "$PAGES" "$DEV" "$LOG" "$FLEET" "$KT/devcontrol/LogcatModel.kt"; do
   [ -f "$f" ] || { echo "  ABORT: no such file: $f"; exit 2; }; done
 
-echo "== R1: Setup ▸ Launcher = ... Notify | Perms, Logcat, X-Ray App, About =="
+echo "== R1: Device ▸ UI and Notification Center; Perms kept its id, icon and route =="
 check "$(python3 - "$BJ" <<'PY'
 import json, sys
 sec = next(s for s in json.load(open(sys.argv[1]))['ui']['sections'] if s['id'] == 'config')
 by = {p['id']: p for p in sec['pages']}
-run = [p for p in sec['pages'] if p.get('group') == 'Setup' and p.get('subgroup') == 'Launcher']
+def run(g, s):
+    return [p['id'] for p in sec['pages'] if p.get('group') == g and p.get('subgroup') == s and not p.get('hidden')]
 probs = []
-if [p['id'] for p in run] != ['controls', 'onehand', 'app-folders', 'notify', 'launcher-sep-1', 'perms', 'logcat', 'xray-app', 'app-about']:
-    probs.append('Launcher = %r' % [p['id'] for p in run])
-sep = by.get('launcher-sep-1', {})
-if not sep.get('separator') or sep.get('label') != '|': probs.append('launcher-sep-1 is not a "|" separator page: %r' % sep)
-if [p['label'] for p in run if not p.get('separator')][4:] != ['Perms', 'Logcat', 'X-Ray App', 'About']: probs.append('labels = %r' % [p['label'] for p in run])
+if run('Device', 'UI') != ['controls', 'onehand', 'app-folders']: probs.append('UI = %r' % run('Device', 'UI'))
+if [by[i]['label'] for i in ('controls', 'onehand', 'app-folders')] != ['Quick Actions', 'One-Hand', 'Folders']: probs.append('UI labels drifted')
+if run('Device', 'Notification Center') != ['notify']: probs.append('Notification Center = %r' % run('Device', 'Notification Center'))
 if by['perms'].get('label') != 'Perms' or by['perms'].get('icon') != 'ic_key': probs.append('perms = %r' % by['perms'])
-if any(p.get('hidden') for p in run): probs.append('a Launcher page is hidden')
+if (by['perms'].get('group'), by['perms'].get('subgroup')) != ('Device', 'Configs'): probs.append('perms not under Device ▸ Configs')
 print('; '.join(probs) or 'OK')
 PY
-)" "Launcher order and labels; the separator is a | page; Perms keeps id perms and its icon"
+)" "Device ▸ UI = Quick Actions, One-Hand, Folders; Device ▸ Notification Center = Notify; Perms keeps id perms and ic_key, under Device ▸ Configs"
 grep -qE 'pageId == "perms" ->' "$PAGES" && grep -A1 'pageId == "perms" ->' "$PAGES" | grep -q 'PermissionsFragment' \
   && ok "page:config/perms still opens PermissionsFragment (label-only rename, nothing removed)" || bad "perms no longer routes to PermissionsFragment"
 
@@ -87,19 +90,23 @@ assert re.search(r'pageId == "xray-app" ->\s*\n?\s*com\.diegonmarcos\.superapp\.
 assert 'ABOUT_MACROS = arrayListOf("APP & BUILD", "REPO & RELEASES")' in dev
 PY
 
-echo "== R4: Watchtower - Obsv = X-Ray Device (unfiltered) + Logcat Fleet =="
+echo "== R4: Device ▸ Configs = Agents, Perms, Logcat, X-Ray App, About, |, X-Ray Device, Logcat Fleet =="
 check "$(python3 - "$BJ" <<'PY'
 import json, sys
 sec = next(s for s in json.load(open(sys.argv[1]))['ui']['sections'] if s['id'] == 'config')
 by = {p['id']: p for p in sec['pages']}
-obsv = [p for p in sec['pages'] if p.get('subgroup') == 'Watchtower - Obsv' and not p.get('hidden')]
+cfg = [p for p in sec['pages'] if p.get('group') == 'Device' and p.get('subgroup') == 'Configs' and not p.get('hidden')]
 probs = []
-if [(p['id'], p['label']) for p in obsv] != [('xray', 'X-Ray Device'), ('logcat-fleet', 'Logcat Fleet')]: probs.append('Watchtower - Obsv = %r' % [(p['id'], p['label']) for p in obsv])
-if any(p.get('subgroup') == 'Observability' for p in sec['pages']): probs.append('a page still wears the subgroup Observability')
-if by['battery'].get('subgroup') != 'Watchtower - Obsv': probs.append('battery left the subgroup')
+want = [('agents-watchdog', 'Agents'), ('perms', 'Perms'), ('logcat', 'Logcat'), ('xray-app', 'X-Ray App'), ('app-about', 'About'), ('launcher-sep-1', '|'), ('xray', 'X-Ray Device'), ('logcat-fleet', 'Logcat Fleet')]
+if [(p['id'], p['label']) for p in cfg] != want:
+    probs.append('Device ▸ Configs = %r' % [(p['id'], p['label']) for p in cfg])
+sep = by.get('launcher-sep-1', {})
+if not sep.get('separator') or sep.get('label') != '|': probs.append('launcher-sep-1 is not a "|" separator page: %r' % sep)
+if any(p.get('subgroup') == 'Watchtower - Obsv' for p in sec['pages']): probs.append('a page still wears the retired subgroup Watchtower - Obsv')
+if (by['battery'].get('group'), by['battery'].get('subgroup')) != ('Device', 'Configs') or not by['battery'].get('hidden'): probs.append('battery left Device ▸ Configs or stopped being hidden')
 print('; '.join(probs) or 'OK')
 PY
-)" "the subgroup was renamed (no Observability left) and holds X-Ray Device and Logcat Fleet"
+)" "Device ▸ Configs holds Agents, Perms, Logcat, X-Ray App, About, |, X-Ray Device, Logcat Fleet; Battery is hidden there; no Watchtower - Obsv subgroup remains"
 python3 - "$DEV" "$PAGES" <<'PY' && ok "X-Ray Device is DevControlFragment.newInstance(label) with no filter and all 13 macro groups are still declared" || bad "X-Ray Device lost its macro groups or got a filter"
 import re, sys
 dev = open(sys.argv[1]).read(); pages = open(sys.argv[2]).read()
@@ -116,54 +123,64 @@ for need in ('Checkbox(', 'logfleet:pick', 'logfleet:fleet', 'logfleet:view:', '
     assert need in src, need
 PY
 
-echo "== R5: Agents has Watchdog only; the old Watchtower ids resolve =="
+echo "== R5: the Agents hub (agents-watchdog, relabelled Agents); the old Watchtower ids resolve =="
 check "$(python3 - "$BJ" <<'PY'
 import json, sys
 sec = next(s for s in json.load(open(sys.argv[1]))['ui']['sections'] if s['id'] == 'config')
 by = {p['id']: p for p in sec['pages']}
 probs = []
-if [p['id'] for p in sec['pages'] if p.get('group') == 'Agents'] != ['agents-watchdog']: probs.append('Agents = %r' % [p['id'] for p in sec['pages'] if p.get('group') == 'Agents'])
+w = by.get('agents-watchdog', {})
+if w.get('label') != 'Agents': probs.append('agents-watchdog label = %r (want Agents)' % w.get('label'))
+if (w.get('group'), w.get('subgroup')) != ('Device', 'Configs'): probs.append('agents-watchdog not under Device ▸ Configs')
+if w.get('hub_sections') != ['Network']: probs.append('Agents hub = %r (want [Network])' % w.get('hub_sections'))
 if 'agents-watchtower' in by: probs.append('agents-watchtower is still declared')
 al = sec['page_aliases']
 for old in ('watchtower', 'agents-watchtower'):
     if al.get(old) not in by: probs.append('alias %s -> %r is not a declared page (a 404)' % (old, al.get(old)))
 if 'agents-watchtower' not in sec['retired_pages']: probs.append('agents-watchtower is not in retired_pages')
-if by['agents-watchdog'].get('hub_sections') != ['Network', 'Watchtower - Obsv']: probs.append('Watchdog hub = %r' % by['agents-watchdog'].get('hub_sections'))
 if al.get('watchdog') != 'agents-watchdog': probs.append('the watchdog alias changed')
 print('; '.join(probs) or 'OK')
 PY
-)" "Watchdog alone in Agents; watchtower and agents-watchtower alias to a declared page; retired; Watchdog's hub reads Network + Watchtower - Obsv"
+)" "agents-watchdog is the Agents hub under Device ▸ Configs, hub_sections [Network]; watchtower and agents-watchtower alias to a declared page; retired; the watchdog alias is unchanged"
 
-echo "== R6: Bluetooth is under Setup ▸ Network =="
+echo "== R6: Device ▸ Network = Firewall, DNS, Webserver, Cloud Mesh, Apps Access, ADB Shell, WiFi, Bluetooth =="
 check "$(python3 - "$BJ" <<'PY'
 import json, sys
 sec = next(s for s in json.load(open(sys.argv[1]))['ui']['sections'] if s['id'] == 'config')
 by = {p['id']: p for p in sec['pages']}
-net = [p['id'] for p in sec['pages'] if p.get('subgroup') == 'Network' and not p.get('hidden')]
+net = [p['id'] for p in sec['pages'] if p.get('group') == 'Device' and p.get('subgroup') == 'Network' and not p.get('hidden')]
 tabs = by['bluetooth']['tabs']
 probs = []
-if (by['bluetooth'].get('group'), by['bluetooth'].get('subgroup')) != ('Setup', 'Network'): probs.append('bluetooth is under %r' % ((by['bluetooth'].get('group'), by['bluetooth'].get('subgroup')),))
-if net[-2:] != ['wifi', 'bluetooth']: probs.append('Network tail = %r' % net[-2:])
-setup = next(g for g in sec['groups'] if g['id'] == 'setup')['pages']; fleet = next(g for g in sec['groups'] if g['id'] == 'fleet')['pages']
-if not set(['bluetooth'] + tabs) <= set(setup): probs.append('Setup row lacks bluetooth pages')
-if any(i.startswith('bluetooth') for i in fleet): probs.append('Cloudy C3 row still lists bluetooth pages %r' % [i for i in fleet if i.startswith('bluetooth')])
+if net != ['firewall', 'dns', 'webserver', 'wg', 'apps-access', 'adb-shell', 'wifi', 'bluetooth']: probs.append('Network = %r' % net)
+device = next(g for g in sec['groups'] if g['id'] == 'device')['pages']; setup = next(g for g in sec['groups'] if g['id'] == 'setup')['pages']
+if not set(['bluetooth'] + tabs) <= set(device): probs.append('device row lacks bluetooth pages')
+if any(i.startswith('bluetooth') for i in setup): probs.append('setup row still lists bluetooth pages %r' % [i for i in setup if i.startswith('bluetooth')])
 if len(tabs) != 7: probs.append('%d tabs' % len(tabs))
 print('; '.join(probs) or 'OK')
 PY
-)" "bluetooth and its seven tabs belong to Setup ▸ Network and the Setup row, none to Cloudy C3"
+)" "Device ▸ Network reads Firewall … Bluetooth; bluetooth and its seven tabs belong to the device group, none to setup"
 
-echo "== R7: the Fleet group is Cloudy C3 =="
+echo "== R7: Setup ▸ Connect / Apps / Configs; two groups device + setup =="
 check "$(python3 - "$BJ" <<'PY'
 import json, sys
 sec = next(s for s in json.load(open(sys.argv[1]))['ui']['sections'] if s['id'] == 'config')
-g = next(g for g in sec['groups'] if g['id'] == 'fleet')
+by = {p['id']: p for p in sec['pages']}
+def run(g, s):
+    return [p['label'] for p in sec['pages'] if p.get('group') == g and p.get('subgroup') == s and not p.get('hidden')]
 probs = []
-if g['label'] != 'Cloudy C3' or g['pages'] != ['c3', 'kde']: probs.append('group = %r' % g)
-if [p['label'] for p in sec['pages'] if p.get('group') == 'Cloudy C3'] != ['C3', 'Peer Control']: probs.append('pages = %r' % [p['label'] for p in sec['pages'] if p.get('group') == 'Cloudy C3'])
-if any(p.get('group') == 'Fleet' for p in sec['pages']): probs.append('a page still wears the group Fleet')
+gids = [g['id'] for g in sec['groups']]
+if gids != ['device', 'setup']: probs.append('group ids = %r (want device, setup)' % gids)
+if run('Setup', 'Connect') != ['Account', 'Cloudy C3', 'Peer Control']: probs.append('Connect = %r' % run('Setup', 'Connect'))
+if run('Setup', 'Apps') != ['Store']: probs.append('Apps = %r' % run('Setup', 'Apps'))
+if run('Setup', 'Configs') != ['Watchdog']: probs.append('Configs = %r' % run('Setup', 'Configs'))
+cw = by.get('c3-watchdog', {})
+if cw.get('action') != 'extapp:c3-watchdog': probs.append('c3-watchdog action = %r' % cw.get('action'))
+if by['c3'].get('action') != 'extapp:cloud-c3': probs.append('Cloudy C3 lost its extapp target')
+for stale in ('Agents', 'Cloudy C3', 'Fleet'):
+    if any(p.get('group') == stale for p in sec['pages']): probs.append('a page still wears the group %r' % stale)
 print('; '.join(probs) or 'OK')
 PY
-)" "group fleet is labelled Cloudy C3 and holds C3 and Peer Control; no page wears Fleet"
+)" "two groups device, setup; Setup ▸ Connect = Account, Cloudy C3, Peer Control; Apps = Store; Configs = Watchdog (c3-watchdog → extapp:c3-watchdog); no page wears Agents/Cloudy C3/Fleet as a group"
 
 echo "== R8: coverage — nothing was dropped =="
 check "$(python3 - "$BJ" <<'PY'
@@ -171,7 +188,7 @@ import json, sys
 BEFORE = """profile store controls onehand app-folders notify firewall dns webserver wg apps-access adb-shell wifi xray logcat perms app-about
 agents-watchdog agents-watchtower c3 kde bluetooth presets panels panels-ui panels-tools battery bluetooth-find bluetooth-analyze
 bluetooth-locate bluetooth-connect bluetooth-interact bluetooth-debug bluetooth-dev wifi-scan wifi-channels wifi-link wifi-tools wifi-log
-store-cloud store-phone update kde_connect animations""".split()
+store-cloud store-phone update kde_connect animations xray-app logcat-fleet launcher-sep-1 adb-status adb-term adb-perms adb-all panels-all panels-battery focus""".split()
 sec = next(s for s in json.load(open(sys.argv[1]))['ui']['sections'] if s['id'] == 'config')
 now = {p['id'] for p in sec['pages']}
 probs = []
@@ -192,7 +209,7 @@ for i in now:
     if len(seen.get(i, [])) != 1: probs.append('%s is in groups %r' % (i, seen.get(i, [])))
 print('; '.join(probs) or 'OK')
 PY
-)" "all 44 pre-restructure page ids are declared, retired or removed; every alias and retirement lands on a declared page; each page is in exactly one group"
+)" "every pre-restructure page id is declared, retired or removed; every alias and retirement lands on a declared page; each page is in exactly one group"
 
 echo; echo "== RESULT: $PASS passed, $FAIL failed =="
 [ "$FAIL" = 0 ]

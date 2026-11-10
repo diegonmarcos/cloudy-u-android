@@ -35,7 +35,7 @@ for f in "$BJ" "$PAGES" "$FRAG" "$READER" "$MODEL" "$DATA" "$GEN" "$APP/app/buil
   [ -f "$f" ] || { echo "  ABORT: no such file: $f — a check over nothing passes"; exit 2; }
 done
 
-echo "== A1: Setup, Agents, Fleet; no agents page =="
+echo "== A1: Device, Setup (#1610); the Agents hub, no agents page =="
 check "$(python3 - "$BJ" <<'PY'
 import json, sys
 sec = next(s for s in json.load(open(sys.argv[1]))['ui']['sections'] if s['id'] == 'config')
@@ -48,20 +48,21 @@ for p in vis:
 probs = []
 declared = [g['label'] for g in sec['groups']]
 if groups != declared: probs.append('grid groups %r != declared groups %r' % (groups, declared))
-apps = [p['label'] for p in vis if p.get('group') == 'Cloudy C3']
-if apps != ['C3', 'Peer Control']: probs.append('Cloudy C3 = %r' % apps)
-if any(p.get('group') == 'Fleet' for p in pages): probs.append('a page still wears the group Fleet')
-for gone in ('agents', 'agents-superapp', 'agents-fleet'):
+if declared != ['Device', 'Setup']: probs.append('declared groups %r != Device, Setup' % declared)
+connect = [p['label'] for p in vis if p.get('group') == 'Setup' and p.get('subgroup') == 'Connect']
+if connect != ['Account', 'Cloudy C3', 'Peer Control']: probs.append('Setup ▸ Connect = %r' % connect)
+for stale in ('Fleet', 'Cloudy C3', 'Agents'):
+    if any(p.get('group') == stale for p in pages): probs.append('a page still wears the group %r' % stale)
+for gone in ('agents', 'agents-superapp', 'agents-fleet', 'agents-watchtower'):
     if gone in by: probs.append('%s is still declared' % gone)
-if declared != ['Setup', 'Agents', 'Cloudy C3']: probs.append('declared groups %r != Setup, Agents, Cloudy C3' % declared)
-grid = [p['id'] for p in vis if p.get('group') == 'Setup' and p.get('subgroup') == 'Watchtower - Obsv']
-if grid != ['xray', 'logcat-fleet']: probs.append('Setup > Watchtower - Obsv = %r' % grid)
-if 'agents-watchtower' in by: probs.append('agents-watchtower is still declared')
-agents = [p['id'] for p in vis if p.get('group') == 'Agents']
-if agents != ['agents-watchdog']: probs.append('Agents = %r' % agents)
+obsv = [p['id'] for p in vis if p.get('group') == 'Device' and p.get('subgroup') == 'Configs' and p['id'] in ('xray', 'logcat-fleet')]
+if obsv != ['xray', 'logcat-fleet']: probs.append('X-Ray Device/Logcat Fleet not in Device ▸ Configs: %r' % obsv)
+w = by.get('agents-watchdog', {})
+if w.get('label') != 'Agents' or (w.get('group'), w.get('subgroup')) != ('Device', 'Configs'):
+    probs.append('the Agents hub is %r' % {k: w.get(k) for k in ('label', 'group', 'subgroup')})
 print('; '.join(probs) or 'OK')
 PY
-)" "Configs groups are build.json's groups (Setup, Agents, Cloudy C3); Cloudy C3 = C3, Peer Control; Agents = Watchdog; no agents page; Setup ▸ Watchtower - Obsv = X-Ray Device, Logcat Fleet"
+)" "Configs groups are build.json's groups (Device, Setup); Setup ▸ Connect = Account, Cloudy C3, Peer Control; no agents page; X-Ray Device, Logcat Fleet in Device ▸ Configs; the Agents hub is agents-watchdog relabelled Agents (#1610)"
 
 echo "== A2: the old Agents ids land on X-Ray =="
 check "$(python3 - "$BJ" <<'PY'

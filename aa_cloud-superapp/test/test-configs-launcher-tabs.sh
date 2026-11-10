@@ -36,39 +36,37 @@ PAGES="$APP/app/src/main/java/com/diegonmarcos/superapp/launcher/SectionPages.kt
 STRIP="$APP/app/src/main/java/com/diegonmarcos/superapp/launcher/SectionTabsFragment.kt"
 NAV="$APP/app/src/main/java/com/diegonmarcos/superapp/launcher/LauncherNavController.kt"
 
-echo "== T1: Launcher is a declared GROUP over four DIRECT pages, in order (#649) =="
-# The four ids and their order are unchanged from the tab strip this replaced
-# (Notify AFTER One-Hand, #580) — only what carries them changed: a `group`
-# string on each page instead of a `tabs` array on a fifth page. Consecutive is
-# part of the assertion: the grid prints a heading when the group CHANGES, so a
-# member parked elsewhere in the array would print "LAUNCHER" a second time.
+echo "== T1: the former Launcher pages are DIRECT pages, now split across Device ▸ UI / Notification Center / Configs (#649, #1610) =="
+# #649 dissolved the Launcher tab-strip into direct pages (a `group` string per page, not a `tabs` array on a fifth page);
+# #1610 split them across the Device subpage's subgroups. Consecutiveness within each subgroup is still part of the assertion:
+# the grid prints a heading when the subgroup CHANGES, so a member parked elsewhere would print the heading a second time.
 check "$(python3 - "$BJ" <<'PY'
 import json, sys
 pages = next(s for s in json.load(open(sys.argv[1]))['ui']['sections']
              if s['id'] == 'config')['pages']
 if any(p['id'] == 'launcher' for p in pages):
     print('a `launcher` page is declared again — #649 made Launcher a heading, '
-          'and a page of that name would tile beside its own four members')
+          'and a page of that name would tile beside its own members')
     sys.exit()
-run = [p['id'] for p in pages if p.get('group') == 'Setup' and p.get('subgroup') == 'Launcher']
-if run != ['controls', 'onehand', 'app-folders', 'notify', 'launcher-sep-1', 'perms', 'logcat', 'xray-app', 'app-about']:
-    print('Setup ▸ Launcher = %r' % (run,)); sys.exit()
-ids   = [p['id'] for p in pages]
-first = ids.index('controls')
-if ids[first:first + len(run)] != run:
-    print('the three are not CONSECUTIVE: %r' % (ids[first:first + 6],)); sys.exit()
+def run(g, s): return [p['id'] for p in pages if p.get('group') == g and p.get('subgroup') == s and not p.get('hidden')]
+ui = run('Device', 'UI'); notif = run('Device', 'Notification Center'); cfg = run('Device', 'Configs')
+if ui != ['controls', 'onehand', 'app-folders']: print('Device ▸ UI = %r' % (ui,)); sys.exit()
+if notif != ['notify']: print('Device ▸ Notification Center = %r' % (notif,)); sys.exit()
+if cfg != ['agents-watchdog', 'perms', 'logcat', 'xray-app', 'app-about', 'launcher-sep-1', 'xray', 'logcat-fleet']:
+    print('Device ▸ Configs = %r' % (cfg,)); sys.exit()
+ids = [p['id'] for p in pages]
+for r in (ui, notif, cfg):
+    first = ids.index(r[0])
+    if ids[first:first + len(r)] != r: print('not CONSECUTIVE: %r' % (ids[first:first + len(r)],)); sys.exit()
 by = {p['id']: p for p in pages}
 if by['controls'].get('tabs') != ['presets', 'panels'] or by['panels'].get('tabs') != ['panels-all', 'panels-ui', 'panels-battery', 'panels-tools']:
     print('Controls is not Presets | Panels(All | UI | Battery Hungers | Tools): %r / %r' % (by['controls'].get('tabs'), by['panels'].get('tabs'))); sys.exit()
 loose = [i for i in ('presets', 'panels', 'panels-all', 'panels-ui', 'panels-battery', 'panels-tools') if i not in by or not by[i].get('hidden')]
 if loose:
     print('tab page(s) missing or drawing a tile of their own: %r' % (loose,)); sys.exit()
-hidden = [p['id'] for p in pages if p.get('subgroup') == 'Launcher' and p.get('hidden')]  # the separator is visible too
-if hidden:
-    print('still hidden, so it draws no tile of its own: %r' % (hidden,)); sys.exit()
 print('OK')
 PY
-)" "Setup ▸ Launcher = Controls (tabs Presets | Panels ▸ UI | Tools), One-Hand, Folders (#1553), Notify | Perms, Logcat, X-Ray App, About as consecutive visible pages (the | is a separator page)"
+)" "Device ▸ UI = Quick Actions (tabs Presets | Panels ▸ UI | Tools), One-Hand, Folders; Notification Center = Notify; Configs = Agents, Perms, Logcat, X-Ray App, About | X-Ray Device, Logcat Fleet — all consecutive direct pages (#1610)"
 
 echo "== T2: no Configs page is a tab strip any more =="
 # #865 deleted the generic tab-owner rule: its last subject, Store, became a

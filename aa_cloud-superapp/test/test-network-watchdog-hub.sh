@@ -20,7 +20,7 @@ out="$(python3 - "$APP/build.json" <<'PY'
 import json, sys
 secs = json.load(open(sys.argv[1]))['ui']['sections']
 pages = next(s for s in secs if s['id'] == 'config')['pages']
-ag = [p for p in pages if p.get('group') == 'Agents']
+ag = [p for p in pages if p['id'] == 'agents-watchdog']  # #1610 the hub is relabelled Agents and lives under Device ▸ Configs
 print('AGENTS', ' '.join('%s:%s:%r:%s' % (p['id'], p['label'], p.get('action', ''), ','.join(p.get('hub_sections', []))) for p in ag))
 print('NETWORK', ','.join(p['id'] for p in pages if p.get('subgroup') == 'Network' and not p.get('hidden')))
 rows = [g for s in secs for g in s.get('tile_groups', []) if g.get('title') == 'Configs']
@@ -29,9 +29,9 @@ print('ROW', '|'.join('%s=%s' % (t.get('label'), t.get('target', '')) for t in t
 PY
 )"
 echo "$out" | sed 's/^/    /'
-echo "$out" | grep -qx "AGENTS agents-watchdog:Watchdog:'':Network,Watchtower - Obsv" \
-  && ok "Agents = Watchdog (Network + Watchtower - Obsv), an in-app hub page; Watchtower left Agents" \
-  || bad "Agents is not exactly Watchdog (hub Network, Watchtower - Obsv) without an action"
+echo "$out" | grep -qx "AGENTS agents-watchdog:Agents:'':Network" \
+  && ok "the Agents hub (agents-watchdog, relabelled Agents) has hub_sections [Network] and no action (an in-app hub page, #1610)" \
+  || bad "agents-watchdog is not exactly the Agents hub (hub_sections [Network]) without an action"
 echo "$out" | grep -q '^NETWORK.*watchdog' && bad "Watchdog is still a Network item" || ok "Watchdog left Network"
 echo "$out" | grep -q '|Watchdog=page:config/agents-watchdog|' && ok "Cloud ▸ Apps ▸ Configs opens page:config/agents-watchdog" \
   || bad "Cloud ▸ Apps ▸ Configs has no Watchdog tile on page:config/agents-watchdog"

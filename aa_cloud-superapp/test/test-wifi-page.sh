@@ -43,7 +43,7 @@ pages = sec['pages']; by = {p['id']: p for p in pages}
 probs = []
 w = by.get('wifi')
 if not w: print('no wifi page'); sys.exit()
-if (w.get('group'), w.get('subgroup'), w.get('label'), w.get('icon')) != ('Setup', 'Network', 'WiFi', 'ic_wifi') or w.get('hidden'): probs.append('page = %r' % {k: w.get(k) for k in ('group', 'subgroup', 'label', 'icon', 'hidden')})
+if (w.get('group'), w.get('subgroup'), w.get('label'), w.get('icon')) != ('Device', 'Network', 'WiFi', 'ic_wifi') or w.get('hidden'): probs.append('page = %r' % {k: w.get(k) for k in ('group', 'subgroup', 'label', 'icon', 'hidden')})
 vis = [p['id'] for p in pages if not p.get('hidden') and not p.get('is_action')]
 if 'adb-shell' not in vis or vis[vis.index('adb-shell') + 1:vis.index('adb-shell') + 2] != ['wifi']: probs.append('WiFi is not the tile right after ADB Shell: %r' % vis)
 want = ['wifi-scan', 'wifi-channels', 'wifi-link', 'wifi-tools', 'wifi-log']
