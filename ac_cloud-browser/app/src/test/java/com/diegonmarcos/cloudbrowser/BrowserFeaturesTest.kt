@@ -156,7 +156,7 @@ class BrowserFeaturesTest {
             "http://termux.app" to "Termux",
             "http://nix.app" to "Nix",
             "http://emulated.app" to "Local",
-            "http://cloud.app" to "Cloud",
+            "http://cloud.app" to "X-Ray Device",
         )
         assertEquals(want, cfg.defaultPinnedTitles)
         val plan = BrowserSeed.plan(false, emptySet(), cfg.defaultPinnedTabs, 1L, cfg.defaultPinnedTitles)
