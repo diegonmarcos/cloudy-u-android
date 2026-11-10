@@ -91,6 +91,42 @@ class LauncherSettingsPrefs(context: Context) {
         get() = sp.getInt("screensaver_timeout", Config.screensaverTimeout.default)
         set(v) { sp.edit().putInt("screensaver_timeout", v).apply() }
 
+    // ── #1621 Background (the launcher animated backdrop) ─────────────────
+    /** Draw the rotating shape on the home pane at all. */
+    var backgroundEnabled: Boolean
+        get() = sp.getBoolean(Config.background.enableKey, Config.background.enableDefault)
+        set(v) { sp.edit().putBoolean(Config.background.enableKey, v).apply() }
+
+    /** The selected background shape id (one of PolytopeMath.SHAPE_IDS). */
+    var backgroundShape: String
+        get() = sp.getString(Config.background.shapeKey, null) ?: Config.background.defaultShape
+        set(v) { sp.edit().putString(Config.background.shapeKey, v).apply() }
+
+    /** Auto-cycle through the ticked shapes. */
+    var backgroundCycleEnabled: Boolean
+        get() = sp.getBoolean(Config.background.cycleEnableKey, Config.background.cycleDefaultEnabled)
+        set(v) { sp.edit().putBoolean(Config.background.cycleEnableKey, v).apply() }
+
+    /** Minutes between shape changes while auto-cycling. */
+    var backgroundCycleMinutes: Int
+        get() = sp.getInt(Config.background.cycleMinutesKey, Config.background.cycleMinutes.default)
+        set(v) { sp.edit().putInt(Config.background.cycleMinutesKey, v).apply() }
+
+    /** Is [shapeId] a member of the auto-cycle set? Defaults to true, so a fresh
+     *  install cycles through every shape rather than through an empty set. */
+    fun cycleShapeEnabled(shapeId: String): Boolean =
+        sp.getBoolean("t_${Config.background.cycleMemberPrefix}$shapeId", true)
+    fun setCycleShapeEnabled(shapeId: String, v: Boolean) {
+        sp.edit().putBoolean("t_${Config.background.cycleMemberPrefix}$shapeId", v).apply()
+    }
+
+    /** The shapes to auto-cycle through, in declared order, filtered to the
+     *  ticked members (falling back to the single selected shape if none are). */
+    fun cycleShapeIds(): List<String> {
+        val all = Config.background.shapes.map { it.id }.filter { cycleShapeEnabled(it) }
+        return if (all.isEmpty()) listOf(backgroundShape) else all
+    }
+
     // ── Data-driven metadata (for the picker UI + defaults) ──────────────
     /**
      * [group] is the id of the [Group] this switch is drawn under. It replaced a
@@ -153,6 +189,25 @@ class LauncherSettingsPrefs(context: Context) {
     data class Slider(val label: String, val subtitle: String, val min: Int, val max: Int,
                       val default: Int, val ticks: Boolean = false,
                       val presets: List<Preset> = emptyList())
+
+    // ── #1621 Background config (parsed from launcher_settings.background) ──
+    /** One selectable background shape. [dim] 3 = Platonic solid drawn directly,
+     *  4 = regular 4D polytope drawn as a 4D→3D projection. [dualOf] names the 3D
+     *  twin a 4D shape generalises (empty for the self-dual 24-cell). */
+    data class Shape(val id: String, val label: String, val dim: Int,
+                     val group: String, val dualOf: String, val isDefault: Boolean)
+    /** The whole background declaration: the enable switch, the shape catalogue,
+     *  the galaxy-stars toggle it REFERENCES (never a second copy of), and the
+     *  auto-cycle settings. */
+    data class Background(
+        val label: String, val subtitle: String,
+        val enableKey: String, val enableLabel: String, val enableSubtitle: String, val enableDefault: Boolean,
+        val starsToggle: String,
+        val shapeKey: String, val defaultShape: String, val shapes: List<Shape>,
+        val cycleEnableKey: String, val cycleEnableLabel: String, val cycleEnableSubtitle: String,
+        val cycleDefaultEnabled: Boolean, val cycleMemberPrefix: String,
+        val cycleMinutesKey: String, val cycleMinutes: Slider,
+    )
 
     object Config {
         /** `store` value routing a switch at the launcher-onehand library. */
@@ -246,6 +301,43 @@ class LauncherSettingsPrefs(context: Context) {
         }
         /** build.json::ui.launcher_settings.display_controls: Cloud-superapp Scale, Font Size, Zoom Size (see QuickDisplay). */
         val displayControls: JSONObject by lazy { settings.optJSONObject("display_controls") ?: JSONObject() }
+
+        /** #1621 the launcher background declaration. Falls back to a cube-only,
+         *  enabled, no-cycle default if the block is absent, so the renderer
+         *  always has a shape to draw. */
+        val background: Background by lazy {
+            val o = settings.optJSONObject("background") ?: JSONObject()
+            val en = o.optJSONObject("enable") ?: JSONObject()
+            val cy = o.optJSONObject("cycle") ?: JSONObject()
+            val shapesArr = o.optJSONArray("shapes") ?: JSONArray()
+            val shapes = (0 until shapesArr.length()).map {
+                val s = shapesArr.getJSONObject(it)
+                Shape(s.optString("id"), s.optString("label"), s.optInt("dim", 3),
+                    s.optString("group", ""), s.optString("dual_of", ""), s.optBoolean("default", false))
+            }
+            val minO = cy.optJSONObject("minutes") ?: JSONObject()
+            Background(
+                label = o.optString("label", "Background"),
+                subtitle = o.optString("subtitle", ""),
+                enableKey = en.optString("key", "background_enabled"),
+                enableLabel = en.optString("label", "Animated background"),
+                enableSubtitle = en.optString("subtitle", ""),
+                enableDefault = en.optBoolean("default", true),
+                starsToggle = o.optString("stars_toggle", "stars_anim"),
+                shapeKey = o.optString("shape_key", "background_shape"),
+                defaultShape = o.optString("default_shape",
+                    shapes.firstOrNull { it.isDefault }?.id ?: shapes.firstOrNull()?.id ?: "cube"),
+                shapes = shapes,
+                cycleEnableKey = cy.optString("enable_key", "background_cycle_enabled"),
+                cycleEnableLabel = cy.optString("enable_label", "Auto-cycle shapes"),
+                cycleEnableSubtitle = cy.optString("enable_subtitle", ""),
+                cycleDefaultEnabled = cy.optBoolean("default_enabled", false),
+                cycleMemberPrefix = cy.optString("member_key_prefix", "bgcycle_"),
+                cycleMinutesKey = minO.optString("key", "background_cycle_minutes"),
+                cycleMinutes = Slider(minO.optString("label", "Change every"), minO.optString("subtitle", ""),
+                    minO.optInt("min", 1), minO.optInt("max", 60), minO.optInt("default", 5)),
+            )
+        }
         val scale: Slider by lazy { slider("scale") }
         val brightness: Slider by lazy { slider("brightness") }
         val eyeIntensity: Slider by lazy { slider("eye_intensity", 35) }

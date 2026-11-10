@@ -5140,11 +5140,13 @@
         "pages": [
           {
             "_doc": "Tab 2 of Launcher — the CONTROLS (#574): ONE producer, LauncherConfigFragment, drawing the device/fleet switchboard (the Samsung-style icon grid declared in ui.control_panel and implemented in configs/DeviceControls.kt, formerly Configs ▸ Panel ▸ Control) followed by the launcher's own screensaver, switches, sliders and set-as-default-launcher. The theme picker that used to open this tab moved to Presets ▸ Themes — the SAME LauncherThemes.apply, not a copy. Nothing persisted moves with it: LauncherSettingsPrefs keys off fixed store names, never off the page id. hidden = reached through the strip, not as its own Configs tile.",
+            "_doc_ui_promoted": "#1621: the Quick Actions strip now reads Presets | UI | Panels — UI was promoted out of Panels to sit as a sibling of Presets and Panels. It is the SAME page (panels-ui, LauncherConfigFragment scope ui); only its parent moved from `panels` to `controls`, so page:config/panels-ui still resolves and nothing persisted moved. Panels keeps its union All view (which still unions UI + Battery Hungers + Tools) plus Battery Hungers and Tools — the UI content is therefore still reachable under Panels ▸ All, it is no longer a second nested tab there.",
             "id": "controls",
             "label": "Quick Actions",
             "icon": "ic_home",
             "tabs": [
               "presets",
+              "panels-ui",
               "panels"
             ],
             "group": "Device",
@@ -5501,13 +5503,12 @@
             "hidden": true
           },
           {
-            "_doc": "Configs ▸ Setup ▸ Launcher ▸ Controls ▸ Panels — today's Controls content (device switch board, screensaver, toggles, icons per row, brightness) as a strip over its two halves, UI and Tools. A hidden tab of `controls`; the id `controls` now names the strip itself, so page:config/controls and page:config/presets both land on the Controls entry.",
+            "_doc": "Configs ▸ Setup ▸ Launcher ▸ Controls ▸ Panels — today's Controls content (device switch board, screensaver, toggles, icons per row, brightness) as a strip. A hidden tab of `controls`; the id `controls` now names the strip itself, so page:config/controls and page:config/presets both land on the Controls entry. #1621: UI was promoted to the parent Quick Actions strip (Presets | UI | Panels), so it is no longer a nested tab here — Panels is now All | Battery Hungers | Tools, and the All union still draws the UI section first, so no UI control was dropped.",
             "id": "panels",
             "label": "Panels",
             "icon": "ic_home",
             "tabs": [
               "panels-all",
-              "panels-ui",
               "panels-battery",
               "panels-tools"
             ],
@@ -5521,7 +5522,7 @@
             "hidden": true
           },
           {
-            "_doc": "Panels ▸ UI — UI controls ONLY: Screensaver (+ idle timer), Icons per row, Screen brightness and the three display controls (Cloud-superapp Scale ruler centred on 411, Font Size, Zoom Size; ui.launcher_settings.display_controls). Connectivity, Notifications and Others live on Tools, the battery effects on Battery Hungers. LauncherConfigFragment scope ui.",
+            "_doc": "#1621 Quick Actions ▸ UI — PROMOTED to the parent Quick Actions strip (Presets | UI | Panels): it is a direct tab of `controls` now, no longer nested under `panels`. The id is unchanged, so page:config/panels-ui still resolves and LauncherConfigFragment scope ui still owns it. UI controls ONLY: Screensaver (+ idle timer), Icons per row, Screen brightness, the three display controls (Cloud-superapp Scale ruler centred on 411, Font Size, Zoom Size; ui.launcher_settings.display_controls) and the #1621 Background section (ui.launcher_settings.background: enable, star animation, the 3D/4D polytope shape picker and auto-cycle). Connectivity, Notifications and Others live on Tools, the battery effects on Battery Hungers. The Panels ▸ All union still draws this UI section first, so nothing here was dropped by the promotion.",
             "id": "panels-ui",
             "label": "UI",
             "icon": "ic_home",
@@ -9463,6 +9464,48 @@
         "min": 0,
         "max": 120,
         "default": 10
+      },
+      "_doc_background": "#1621 the launcher's animated BACKGROUND, finally given a settings surface (Configs ▸ Launcher ▸ Quick Actions ▸ UI ▸ Background). The background is two layers: the galaxy backdrop (220 stars + comets, shell/ShellFx.kt, gated by the existing `stars_anim` toggle — referenced here by `stars_toggle`, NOT duplicated) and the rotating wireframe shape in the 3D home pane (themes/cloud/Home3DFragment.kt). The shape was a hard-wired cube; it is now any of the declared `shapes` and can auto-cycle. DECLARATION-DRIVEN: this block is baked into BuildConfig.UI_LAUNCHER_SETTINGS_B64 (whole launcher_settings object, _doc stripped) and read by LauncherSettingsPrefs.Config.background; the renderer reads the user's choices through LauncherSettingsPrefs (enable key `background_enabled`, shape key `background_shape`, cycle keys `background_cycle_enabled` / `background_cycle_minutes`, per-shape cycle membership `t_bgcycle_<id>`) and maps each shape id to the geometry in PolytopeMath. The geometry (vertex/edge sets + the 4D rotation & projection) is maths and lives in PolytopeMath.kt, proven by PolytopeMathTest; only the catalogue, labels and defaults are data here. `shapes` are the regular polytopes: the 3D Platonic solids and their 4D analogues (`dual_of` names the 3D twin the 4D one generalises; the 24-cell has none — it is the unique self-dual regular 4D polytope). `dim` 3 draws directly; `dim` 4 renders a rotating 4D→3D→2D projection (Schlegel-style) in the SAME slot the cube uses. The 4D clock reuses the one withFrameNanos loop the cube already runs — no second animator, for battery.",
+      "background": {
+        "label": "Background",
+        "subtitle": "The animated launcher backdrop — the rotating shape in the 3D home pane and the galaxy stars behind it.",
+        "enable": {
+          "key": "background_enabled",
+          "label": "Animated background",
+          "subtitle": "Draw the rotating shape on the home pane. Off = a still, dark home (leanest).",
+          "default": true
+        },
+        "stars_toggle": "stars_anim",
+        "shape_key": "background_shape",
+        "default_shape": "cube",
+        "shapes": [
+          { "id": "tetrahedron", "label": "Tetrahedron", "dim": 3, "group": "3D Platonic" },
+          { "id": "cube", "label": "Cube", "dim": 3, "group": "3D Platonic", "default": true },
+          { "id": "octahedron", "label": "Octahedron", "dim": 3, "group": "3D Platonic" },
+          { "id": "dodecahedron", "label": "Dodecahedron", "dim": 3, "group": "3D Platonic" },
+          { "id": "icosahedron", "label": "Icosahedron", "dim": 3, "group": "3D Platonic" },
+          { "id": "cell5", "label": "5-cell (4D simplex)", "dim": 4, "group": "4D polytopes", "dual_of": "tetrahedron" },
+          { "id": "tesseract", "label": "8-cell · Tesseract", "dim": 4, "group": "4D polytopes", "dual_of": "cube" },
+          { "id": "cell16", "label": "16-cell", "dim": 4, "group": "4D polytopes", "dual_of": "octahedron" },
+          { "id": "cell120", "label": "120-cell", "dim": 4, "group": "4D polytopes", "dual_of": "dodecahedron" },
+          { "id": "cell600", "label": "600-cell", "dim": 4, "group": "4D polytopes", "dual_of": "icosahedron" },
+          { "id": "cell24", "label": "24-cell (self-dual)", "dim": 4, "group": "4D polytopes" }
+        ],
+        "cycle": {
+          "enable_key": "background_cycle_enabled",
+          "enable_label": "Auto-cycle shapes",
+          "enable_subtitle": "Rotate through the ticked shapes below, changing every few minutes.",
+          "default_enabled": false,
+          "member_key_prefix": "bgcycle_",
+          "minutes": {
+            "key": "background_cycle_minutes",
+            "label": "Change every",
+            "subtitle": "Minutes between shape changes while auto-cycle is on.",
+            "min": 1,
+            "max": 60,
+            "default": 5
+          }
+        }
       },
       "_doc_toggle_groups": "The four boxes Configs > Launcher > Theme draws its switches into, in this order. A toggle names its group by id; the fragment renders one box per entry here and drops an empty one. This REPLACED a hardcoded Kotlin split (`toggles.filter { it.battery }` vs `!it.battery`) that could only ever express two groups, so a third box was a code change. Adding a fifth box is now one entry here plus a `group` on the toggles that belong in it.",
       "toggle_groups": [

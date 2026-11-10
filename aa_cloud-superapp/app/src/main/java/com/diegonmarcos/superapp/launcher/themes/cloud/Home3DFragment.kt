@@ -27,21 +27,30 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import com.diegonmarcos.superapp.settings.LauncherSettingsPrefs
 import com.diegonmarcos.superapp.uikit.KitComposeFragment
 import com.diegonmarcos.superapp.uikit.LocalKitPalette
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.withContext
 
 /**
- * Home — neon-violet wireframe rotating cube. Edges only, no faces,
- * with a soft outer glow + sharp inner stroke for a "neon tube" feel
- * that matches the linktree palette without needing per-face shaders
- * (which would require a real GL textured cube — out of scope for the
- * Canvas pipeline).
+ * Home — the launcher's animated background: a neon-violet WIREFRAME regular
+ * polytope, continuously rotating, edges only with a soft glow for the "neon
+ * tube" feel that matches the linktree palette (no per-face shaders needed).
  *
- * Compose since #773 (was a FrameLayout around the RotatingCubeView custom View): [NeonCube] is a
- * Canvas whose frame clock is `withFrameNanos`, painted in the launcher palette's roles. The glow is
- * three widening low-alpha strokes: a Compose Canvas stays hardware-accelerated, where the old
- * BlurMaskFilter needed a software layer.
+ * The shape used to be a hard-wired cube. Since #1621 it is any of the regular
+ * polytopes [PolytopeMath] builds — the five 3D Platonic solids and their 4D
+ * analogues (a 4D polytope renders as a rotating 4D→3D→2D projection in this
+ * same slot) — chosen in Configs ▸ Launcher ▸ Quick Actions ▸ UI ▸ Background,
+ * and optionally auto-cycled every N minutes. The maths is all in PolytopeMath;
+ * this file owns only the drawing and the one `withFrameNanos` loop (reused for
+ * the 4D clock too — no second animator, for battery).
+ *
+ * Compose since #773 (was a FrameLayout around a RotatingCubeView custom View):
+ * the Canvas frame clock is `withFrameNanos`, painted in the launcher palette's
+ * roles; the glow is widening low-alpha strokes, which stays hardware-accelerated
+ * where the old BlurMaskFilter needed a software layer.
  */
 class Home3DFragment : KitComposeFragment() {
 
@@ -50,117 +59,79 @@ class Home3DFragment : KitComposeFragment() {
     @Composable
     override fun Content() {
         val ctx = LocalContext.current
-        // Configs → Launcher → Others → "Cube animation" / "Cube drag-to-spin". Read once; the
-        // fragment recreates its view when the toggle flips via chrome re-render.
-        val animate = remember {
-            runCatching { com.diegonmarcos.superapp.settings.LauncherSettingsPrefs(ctx).anim("cube_anim") }.getOrDefault(true)
-        }
-        val interactive = remember {
-            runCatching { com.diegonmarcos.superapp.settings.LauncherSettingsPrefs(ctx).toggle("cube_interactive") }.getOrDefault(false)
-        }
-        // Galaxy backdrop lives at the shell level (R.id.galaxy_backdrop in activity_main.xml) so it
-        // extends edge-to-edge into the status-bar area. This pane only draws the cube on top.
-        // Double-tap anywhere on the home root → lock the screen (ScreenLocker); single taps on
-        // tiles / chips still reach their own handlers.
+        val prefs = remember { runCatching { LauncherSettingsPrefs(ctx) }.getOrNull() }
+        // Read the choices once; the fragment recreates its view when a toggle
+        // flips via the chrome re-render, exactly as the cube toggle already did.
+        val enabled = remember { runCatching { prefs?.backgroundEnabled }.getOrNull() ?: true }
+        // "Cube animation" (battery group) still gates MOTION; "Animated background" gates DRAWING.
+        val animate = remember { runCatching { prefs?.anim("cube_anim") }.getOrNull() ?: true }
+        val interactive = remember { runCatching { prefs?.toggle("cube_interactive") }.getOrNull() ?: false }
+        val baseShape = remember { runCatching { prefs?.backgroundShape }.getOrNull() ?: PolytopeMath.DEFAULT_SHAPE }
+        val cycleOn = remember { runCatching { prefs?.backgroundCycleEnabled }.getOrNull() ?: false }
+        val cycleMinutes = remember { runCatching { prefs?.backgroundCycleMinutes }.getOrNull() ?: 5 }
+        val cycleIds = remember { runCatching { prefs?.cycleShapeIds() }.getOrNull() ?: listOf(baseShape) }
+
         Box(Modifier.fillMaxSize().lockOnDoubleTap(ctx), contentAlignment = Alignment.Center) {
-            // Oversize host so the cube's rotated corners don't clip against its own bounds.
-            NeonCube(animate, interactive, Modifier.size(360.dp).testTag(TAG_CUBE))
+            if (enabled) {
+                // Oversize host so rotated corners don't clip against its own bounds.
+                PolytopeBackground(
+                    animate = animate, interactive = interactive,
+                    baseShape = baseShape, cycleOn = cycleOn, cycleMinutes = cycleMinutes, cycleIds = cycleIds,
+                    modifier = Modifier.size(360.dp).testTag(TAG_CUBE),
+                )
+            }
         }
     }
 
     companion object {
+        /** Kept from the cube era: the home background's test tag. */
         const val TAG_CUBE = "home3d:cube"
         fun newInstance() = Home3DFragment()
     }
 }
 
-/** The cube's maths, pure: 8 vertices, 12 edges, perspective projection. */
-internal object CubeMath {
-    /** Y full rotation period (ms) — 16s = matches the old feel. */
-    const val PERIOD_Y_MS = 16_000.0
-    /** X period — picked independently. With both axes driven from the same epoch and their own
-     *  period, they always wrap cleanly: at no point does either angle skip a value. Different
-     *  periods give a non-repeating wobble that reads as organic rather than mechanical. */
-    const val PERIOD_X_MS = 23_500.0
-    const val ROT_Y0 = -Math.PI.toFloat() / 5.5f
-    const val ROT_X0 = Math.PI.toFloat() / 7f
-
-    val vertices = arrayOf(
-        floatArrayOf(-1f, -1f, -1f),
-        floatArrayOf( 1f, -1f, -1f),
-        floatArrayOf( 1f,  1f, -1f),
-        floatArrayOf(-1f,  1f, -1f),
-        floatArrayOf(-1f, -1f,  1f),
-        floatArrayOf( 1f, -1f,  1f),
-        floatArrayOf( 1f,  1f,  1f),
-        floatArrayOf(-1f,  1f,  1f),
-    )
-    val edges = arrayOf(
-        intArrayOf(0, 1), intArrayOf(1, 2), intArrayOf(2, 3), intArrayOf(3, 0),
-        intArrayOf(4, 5), intArrayOf(5, 6), intArrayOf(6, 7), intArrayOf(7, 4),
-        intArrayOf(0, 4), intArrayOf(1, 5), intArrayOf(2, 6), intArrayOf(3, 7),
-    )
-
-    /**
-     * Rotation is computed each frame from the monotonic clock — never reset. A ValueAnimator that
-     * looped 0 → 2π over 16s while rotX advanced by `t * 0.4` left rotX at 0.8π at loop end — not a
-     * multiple of 2π — so the cube visibly snapped back -144° on X every 16s. Time-based wrap
-     * guarantees both axes are always continuous because we never reset the accumulator.
-     */
-    fun angleY(elapsedMs: Double): Float = (ROT_Y0 + (elapsedMs / PERIOD_Y_MS) * (2.0 * Math.PI)).toFloat()
-    fun angleX(elapsedMs: Double): Float = (ROT_X0 + (elapsedMs / PERIOD_X_MS) * (2.0 * Math.PI)).toFloat()
-
-    class Projected(val x: FloatArray, val y: FloatArray, val z: FloatArray)
-
-    /** Project the 8 vertices into a [width] × [height] box at rotation ([rotX], [rotY]). */
-    fun project(rotX: Float, rotY: Float, width: Float, height: Float): Projected {
-        val cx = width / 2f
-        val cy = height / 2f
-        // Smaller scale denominator → larger cube; ~3.4f clipped at rotated corners. 4.6 keeps the
-        // cube safely inside the 360dp host on every rotation.
-        val scale = minOf(width, height) / 4.6f
-        val perspective = 4.5f
-        val cyR = Math.cos(rotY.toDouble()).toFloat()
-        val syR = Math.sin(rotY.toDouble()).toFloat()
-        val cxR = Math.cos(rotX.toDouble()).toFloat()
-        val sxR = Math.sin(rotX.toDouble()).toFloat()
-        val px = FloatArray(8); val py = FloatArray(8); val pz = FloatArray(8)
-        for (i in 0..7) {
-            val v = vertices[i]
-            val x1 = v[0] * cyR + v[2] * syR
-            val z1 = -v[0] * syR + v[2] * cyR
-            val y2 = v[1] * cxR - z1 * sxR
-            val z2 = v[1] * sxR + z1 * cxR
-            val k = perspective / (perspective + z2)
-            px[i] = cx + x1 * scale * k
-            py[i] = cy + y2 * scale * k
-            pz[i] = z2
-        }
-        return Projected(px, py, pz)
-    }
-
-    /** Edges in the back fade slightly so depth reads: alpha 255 at the front down to 135. */
-    fun edgeAlpha(avgZ: Float): Float = (255 - (avgZ * 80f).coerceIn(0f, 120f)) / 255f
-}
-
 /**
- * Wireframe cube with a neon-glow stroke (outer soft halo + inner sharp line), continuously
- * rotating. [animate] off freezes it; [interactive] lets a drag spin it and coasts on release.
+ * The wireframe polytope background. [baseShape] is the chosen shape; when
+ * [cycleOn] and more than one [cycleIds] shape is selected, the active shape
+ * advances every [cycleMinutes] minutes off the SAME monotonic clock the
+ * rotation reads (so no second timer runs). [animate] off freezes it;
+ * [interactive] lets a drag spin the 3D stage and coast on release.
  */
 @Composable
-internal fun NeonCube(animate: Boolean, interactive: Boolean, modifier: Modifier = Modifier) {
+internal fun PolytopeBackground(
+    animate: Boolean,
+    interactive: Boolean,
+    baseShape: String,
+    cycleOn: Boolean,
+    cycleMinutes: Int,
+    cycleIds: List<String>,
+    modifier: Modifier = Modifier,
+) {
     val p = LocalKitPalette.current
     val start = remember { SystemClock.elapsedRealtime() }
-    // Drag / momentum state (only used when interactive).
-    val rot = remember { floatArrayOf(CubeMath.ROT_X0, CubeMath.ROT_Y0) }   // [x, y]
-    val vel = remember { floatArrayOf(0f, 0f) }                              // angular velocity, rad/frame
+    val cycling = cycleOn && cycleIds.size > 1
+    // Drag / momentum state (only used when interactive, which only applies to the 3D stage).
+    val rot = remember { floatArrayOf(PolytopeMath.ROT_X0, PolytopeMath.ROT_Y0) }   // [x, y]
+    val vel = remember { floatArrayOf(0f, 0f) }
     val dragging = remember { booleanArrayOf(false) }
     val frame = remember { mutableLongStateOf(0L) }
     val animating by rememberUpdatedState(animate)
 
-    // The frame clock. Interactive: only while coasting; otherwise whenever animation is on.
+    // Pre-warm the meshes we may draw, OFF the main thread, so the first frame a
+    // big polytope (120-/600-cell) appears never hitches building it inline.
+    LaunchedEffect(baseShape, cycleIds) {
+        withContext(Dispatchers.Default) {
+            runCatching {
+                PolytopeMath.mesh(baseShape)
+                for (id in cycleIds) PolytopeMath.mesh(id)
+            }
+        }
+    }
+
+    // The frame clock — the ONE loop. Interactive: runs while coasting; otherwise whenever animation
+    // is on. Auto-cycle keeps it running (the shape must be able to change even on a still shape).
     val drawing = com.diegonmarcos.superapp.ui.rememberDrawing() // no frame callbacks while backgrounded / screen off
-    LaunchedEffect(animate, interactive, drawing) {
+    LaunchedEffect(animate, interactive, cycling, drawing) {
         while (isActive && drawing) {
             androidx.compose.runtime.withFrameNanos { frame.longValue = it }
             if (interactive) {
@@ -170,7 +141,7 @@ internal fun NeonCube(animate: Boolean, interactive: Boolean, modifier: Modifier
                     if (kotlin.math.abs(vel[1]) < 1e-4f) vel[1] = 0f
                     if (kotlin.math.abs(vel[0]) < 1e-4f) vel[0] = 0f
                 }
-            } else if (!animating) {
+            } else if (!animating && !cycling) {
                 break
             }
         }
@@ -184,30 +155,42 @@ internal fun NeonCube(animate: Boolean, interactive: Boolean, modifier: Modifier
         ) { change, drag ->
             change.consume()
             val k = 0.01f   // radians per pixel
-            vel[1] = drag.x * k           // horizontal drag → spin about Y
-            vel[0] = -drag.y * k          // vertical drag → tumble about X
+            vel[1] = drag.x * k
+            vel[0] = -drag.y * k
             rot[1] += vel[1]; rot[0] += vel[0]
-            frame.longValue++             // repaint now
+            frame.longValue++
         }
     } else Modifier)) {
         frame.longValue   // read: every frame tick repaints
-        val (rx, ry) = if (interactive) rot[0] to rot[1] else {
-            // Animation off → the cube is frozen at its resting angles, however often it repaints.
-            val elapsed = if (animating) (SystemClock.elapsedRealtime() - start).toDouble() else 0.0
-            CubeMath.angleX(elapsed) to CubeMath.angleY(elapsed)
-        }
-        val pr = CubeMath.project(rx, ry, size.width, size.height)
-        fun pt(i: Int) = Offset(pr.x[i], pr.y[i])
+        // Which shape right now (auto-cycle reads the shared wall clock so it is
+        // stable across view recreations).
+        val shapeId = if (cycling)
+            cycleIds[PolytopeMath.cycleIndex(cycleIds.size, cycleMinutes, SystemClock.elapsedRealtime().toDouble())]
+        else baseShape
+        val mesh = PolytopeMath.mesh(shapeId)
 
-        // Draw in 3 passes: outer glow → sharp → accent dots at vertices.
+        val elapsed = if (animating) (SystemClock.elapsedRealtime() - start).toDouble() else 0.0
+        val pr = if (interactive)
+            PolytopeMath.project(mesh, elapsed, size.width, size.height, rotXOverride = rot[0], rotYOverride = rot[1])
+        else
+            PolytopeMath.project(mesh, elapsed, size.width, size.height)
+
+        fun pt(i: Int) = Offset(pr.x[i], pr.y[i])
+        val edges = pr.edges
         val glow = p.accent
-        for ((w, a) in listOf(18f to 0.12f, 12f to 0.22f, 7f to 0.32f)) {
-            for (e in CubeMath.edges) drawLine(glow.copy(alpha = a), pt(e[0]), pt(e[1]), w, StrokeCap.Round)
+        // Performance: the big polytopes carry hundreds of edges, so the three-pass
+        // glow (which triples the draw count) is reserved for the lighter shapes;
+        // dense hulls get one soft pass + the sharp line. The sharp pass always runs.
+        val heavy = edges.size > 120
+        val glowPasses = if (heavy) listOf(10f to 0.16f) else listOf(18f to 0.12f, 12f to 0.22f, 7f to 0.32f)
+        for ((w, a) in glowPasses) {
+            for (e in edges) drawLine(glow.copy(alpha = a), pt(e[0]), pt(e[1]), w, StrokeCap.Round)
         }
-        for (e in CubeMath.edges) {
-            val avgZ = (pr.z[e[0]] + pr.z[e[1]]) / 2f
-            drawLine(p.textPrimary.copy(alpha = CubeMath.edgeAlpha(avgZ)), pt(e[0]), pt(e[1]), 4f, StrokeCap.Round)
+        for (e in edges) {
+            val avgZ = (pr.depth[e[0]] + pr.depth[e[1]]) / 2f
+            drawLine(p.textPrimary.copy(alpha = PolytopeMath.edgeAlpha(avgZ)), pt(e[0]), pt(e[1]), 4f, StrokeCap.Round)
         }
-        for (i in 0..7) drawCircle(p.accent, 4f, pt(i))
+        // Accent dots at the vertices — skipped for dense hulls (a sea of dots reads as noise and costs draws).
+        if (!heavy) for (i in pr.x.indices) drawCircle(p.accent, 4f, pt(i))
     }
 }

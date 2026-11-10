@@ -6,8 +6,8 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performTextInput
 import androidx.test.core.app.ApplicationProvider
-import com.diegonmarcos.superapp.launcher.themes.cloud.CubeMath
 import com.diegonmarcos.superapp.launcher.themes.cloud.Home3DFragment
+import com.diegonmarcos.superapp.launcher.themes.cloud.PolytopeMath
 import com.diegonmarcos.superapp.launcher.themes.minimalist.MinimalistBlackFragment
 import com.diegonmarcos.superapp.launcher.themes.minimalist.MinimalistDesign
 import com.diegonmarcos.superapp.settings.LauncherSettingsPrefs
@@ -46,20 +46,25 @@ class HomePanesComposeTest : KitPageHarness() {
         compose.onNodeWithTag(Home3DFragment.TAG_CUBE).assertExists()
     }
 
+    // #1621 the cube is one shape of PolytopeMath now; the cube's maths moved
+    // there whole, so these three assertions are ported verbatim onto it (the
+    // cube mesh's vertex order, projection constants and rotation clocks are
+    // unchanged, so the default home background is pixel-identical).
     @Test
     fun `H2 the projection of the unit cube`() {
-        assertEquals(8, CubeMath.vertices.size)
-        assertEquals(12, CubeMath.edges.size)
+        val cube = PolytopeMath.mesh(PolytopeMath.CUBE)
+        assertEquals(8, cube.verts.size)
+        assertEquals(12, cube.edges.size)
         val ends = IntArray(8)
-        for (e in CubeMath.edges) {
+        for (e in cube.edges) {
             assertTrue(e[0] != e[1])
             // An edge joins two vertices that differ in exactly one coordinate.
-            val a = CubeMath.vertices[e[0]]; val b = CubeMath.vertices[e[1]]
+            val a = cube.verts[e[0]]; val b = cube.verts[e[1]]
             assertEquals(1, (0..2).count { a[it] != b[it] })
             ends[e[0]]++; ends[e[1]]++
         }
         assertTrue("every vertex has three edges", ends.all { it == 3 })
-        val p = CubeMath.project(0f, 0f, 460f, 460f)
+        val p = PolytopeMath.project(cube, 0.0, 460f, 460f, rotXOverride = 0f, rotYOverride = 0f)
         // No rotation: the near face (z = -1 here) is projected larger than the far face (z = +1).
         val nearSpan = p.x[1] - p.x[0]
         val farSpan = p.x[5] - p.x[4]
@@ -70,24 +75,24 @@ class HomePanesComposeTest : KitPageHarness() {
 
     @Test
     fun `H3 the rotation is continuous through a full period`() {
-        var prevY = CubeMath.angleY(0.0); var prevX = CubeMath.angleX(0.0)
-        val perMsY = (2.0 * Math.PI / CubeMath.PERIOD_Y_MS).toFloat()
-        val perMsX = (2.0 * Math.PI / CubeMath.PERIOD_X_MS).toFloat()
+        var prevY = PolytopeMath.angleY(0.0); var prevX = PolytopeMath.angleX(0.0)
+        val perMsY = (2.0 * Math.PI / PolytopeMath.PERIOD_Y_MS).toFloat()
+        val perMsX = (2.0 * Math.PI / PolytopeMath.PERIOD_X_MS).toFloat()
         var t = 16.0
         while (t <= 24_000.0) {
-            val y = CubeMath.angleY(t); val x = CubeMath.angleX(t)
+            val y = PolytopeMath.angleY(t); val x = PolytopeMath.angleX(t)
             assertTrue("Y stepped at $t", y > prevY && y - prevY < perMsY * 17f)
             assertTrue("X stepped at $t", x > prevX && x - prevX < perMsX * 17f)
             prevY = y; prevX = x; t += 16.0
         }
-        assertEquals(CubeMath.angleY(0.0) + 2f * Math.PI.toFloat(), CubeMath.angleY(CubeMath.PERIOD_Y_MS), 1e-3f)
+        assertEquals(PolytopeMath.angleY(0.0) + 2f * Math.PI.toFloat(), PolytopeMath.angleY(PolytopeMath.PERIOD_Y_MS), 1e-3f)
     }
 
     @Test
     fun `H4 the depth fade`() {
-        assertEquals(1f, CubeMath.edgeAlpha(0f), 1e-6f)
-        assertEquals(1f, CubeMath.edgeAlpha(-2f), 1e-6f)
-        assertEquals(135f / 255f, CubeMath.edgeAlpha(5f), 1e-6f)
+        assertEquals(1f, PolytopeMath.edgeAlpha(0f), 1e-6f)
+        assertEquals(1f, PolytopeMath.edgeAlpha(-2f), 1e-6f)
+        assertEquals(135f / 255f, PolytopeMath.edgeAlpha(5f), 1e-6f)
     }
 
     @Test

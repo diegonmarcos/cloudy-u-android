@@ -43,10 +43,19 @@ check() { # check <desc> <python>
 # body of a brace block opened by a line matching $1 in $CFG (to the matching same-indent close)
 block() { awk -v pat="$1" 'index($0,pat){f=1; ind=match($0,/[^ ]/); print; next} f{print; if (match($0,/[^ ]/)==ind && $0 ~ /^ *\}/) exit}' "$CFG"; }
 
-echo "== T1: the four tabs, in order, each routed =="
-check "Panels = All | UI | Battery Hungers | Tools" "
-labels = [by[i]['label'] for i in by['panels']['tabs']]
-print('OK' if labels == ['All', 'UI', 'Battery Hungers', 'Tools'] and by['panels']['tabs'] == ['panels-all','panels-ui','panels-battery','panels-tools'] and all(by[i].get('hidden') for i in by['panels']['tabs']) else labels)"
+echo "== T1: #1621 UI promoted to the Quick Actions parent (Presets | UI | Panels); Panels = All | Battery Hungers | Tools; every scope still routed =="
+# #1621 moved panels-ui out of Panels and up to the Controls strip so the row
+# reads Presets | UI | Panels. The four LauncherConfigFragment scope pages
+# (panels-all/ui/battery/tools) all still exist and route; only panels-ui's
+# PARENT changed (panels -> controls), so page:config/panels-ui still resolves
+# and the UI content is still reachable under Panels ▸ All (the union view).
+check "Controls strip = Presets | UI | Panels; Panels = All | Battery Hungers | Tools" "
+ctrl = [by[i]['label'] for i in by['controls']['tabs']]
+pnl  = [by[i]['label'] for i in by['panels']['tabs']]
+ok = (by['controls']['tabs'] == ['presets','panels-ui','panels'] and ctrl == ['Presets','UI','Panels']
+      and by['panels']['tabs'] == ['panels-all','panels-battery','panels-tools'] and pnl == ['All','Battery Hungers','Tools']
+      and all(by[i].get('hidden') for i in ('panels-ui','panels-all','panels-battery','panels-tools','panels','presets')))
+print('OK' if ok else 'Controls=%r Panels=%r' % (ctrl, pnl))"
 for pair in "panels-all:SCOPE_ALL" "panels-ui:SCOPE_UI" "panels-battery:SCOPE_BATTERY" "panels-tools:SCOPE_TOOLS"; do
   grep -qF "pageId == \"${pair%%:*}\" -> LauncherConfigFragment.newInstance(LauncherConfigFragment.${pair##*:})" "$PAGES" \
     && ok "${pair%%:*} -> ${pair##*:}" || bad "${pair%%:*} is not routed to ${pair##*:}"
@@ -113,7 +122,7 @@ grep -q 'QuickDisplay.swOverride' "$SD" && grep -q 'densityForSw' "$SD" && ok "C
 
 echo "== T9: top buttons fit their text; no literals =="
 grep -q 'FIT_TEXT_OWNERS = setOf("controls", "panels")' "$TABS" && grep -q 'fitText = ownerPageId in FIT_TEXT_OWNERS' "$TABS" \
-  && ok "both Quick Actions strips (Presets|Panels and All|UI|Battery Hungers|Tools) ask for fit-text" || bad "the strips do not ask for fit-text"
+  && ok "both Quick Actions strips (Presets|UI|Panels and All|Battery Hungers|Tools) ask for fit-text" || bad "the strips do not ask for fit-text"
 grep -q 'fun fitTextPlan' "$LIB" && grep -q 'if (fitText) fitTextPlan(startPx)' "$LIB" && ok "fit-text pills wrap their own label, full size, no ellipsis; the strip scrolls" || bad "PageTabs has no fit-text plan"
 if grep -nE '[0-9]\.dp|[0-9]\.sp|[0-9]f?\.sp|[0-9]f?\.dp' "$DCU" "$QD"; then bad "dp/sp literal in the new code"; else ok "no dp/sp literal in DisplayControlsUi / QuickDisplay (KitStoreRow tokens)"; fi
 

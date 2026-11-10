@@ -59,14 +59,14 @@ for r in (ui, notif, cfg):
     first = ids.index(r[0])
     if ids[first:first + len(r)] != r: print('not CONSECUTIVE: %r' % (ids[first:first + len(r)],)); sys.exit()
 by = {p['id']: p for p in pages}
-if by['controls'].get('tabs') != ['presets', 'panels'] or by['panels'].get('tabs') != ['panels-all', 'panels-ui', 'panels-battery', 'panels-tools']:
-    print('Controls is not Presets | Panels(All | UI | Battery Hungers | Tools): %r / %r' % (by['controls'].get('tabs'), by['panels'].get('tabs'))); sys.exit()
+if by['controls'].get('tabs') != ['presets', 'panels-ui', 'panels'] or by['panels'].get('tabs') != ['panels-all', 'panels-battery', 'panels-tools']:
+    print('Controls is not Presets | UI | Panels(All | Battery Hungers | Tools) [#1621]: %r / %r' % (by['controls'].get('tabs'), by['panels'].get('tabs'))); sys.exit()
 loose = [i for i in ('presets', 'panels', 'panels-all', 'panels-ui', 'panels-battery', 'panels-tools') if i not in by or not by[i].get('hidden')]
 if loose:
     print('tab page(s) missing or drawing a tile of their own: %r' % (loose,)); sys.exit()
 print('OK')
 PY
-)" "Device ▸ UI = Quick Actions (tabs Presets | Panels ▸ UI | Tools), One-Hand, Folders; Notification Center = Notify; Configs = Agents, Perms, Logcat, X-Ray App, About | X-Ray Device, Logcat Fleet — all consecutive direct pages (#1610)"
+)" "Device ▸ UI = Quick Actions (#1621 tabs Presets | UI | Panels ▸ All | Battery Hungers | Tools), One-Hand, Folders; Notification Center = Notify; Configs = Agents, Perms, Logcat, X-Ray App, About | X-Ray Device, Logcat Fleet — all consecutive direct pages (#1610)"
 
 echo "== T2: no Configs page is a tab strip any more =="
 # #865 deleted the generic tab-owner rule: its last subject, Store, became a
@@ -84,7 +84,7 @@ print(','.join(p['id'] for p in pages if p.get('tabs')))
 # Identity) have checks of their own: test-configs-agents-page.sh A2, test-ipc-mesh-page.sh R1 and
 # test-fleet-shared-uid.sh U4.
 [ "$OWNERS" = "controls,adb-shell,wifi,bluetooth,panels" ] \
-  && ok "the Configs tab strips are Controls (Presets | Panels), ADB Shell (Status | Shell | Perms | All; check T2b and test-adb-shell-cockpit.sh), Panels (UI | Tools), Bluetooth (Find | Connect | Interact | Debug | Dev; test-bluetooth-page.sh B1), WiFi (Scan | Channels | Link | Tools | Log; test-wifi-page.sh W1); Agents was folded into X-Ray (no strip of its own) (Apps Mesh, IPC and Identity are Cloud Store > Access now: no strip here) (Store opens Cloud Store since #865)" \
+  && ok "the Configs tab strips are Controls (#1621 Presets | UI | Panels), ADB Shell (Status | Shell | Perms | All; check T2b and test-adb-shell-cockpit.sh), Panels (All | Battery Hungers | Tools), Bluetooth (Find | Connect | Interact | Debug | Dev; test-bluetooth-page.sh B1), WiFi (Scan | Channels | Link | Tools | Log; test-wifi-page.sh W1); Agents was folded into X-Ray (no strip of its own) (Apps Mesh, IPC and Identity are Cloud Store > Access now: no strip here) (Store opens Cloud Store since #865)" \
   || bad "Configs tab strips are [$OWNERS], expected controls,adb-shell,wifi,bluetooth,panels - a new one must bring a check of its own"
 
 echo "== T2b: ADB Shell is a strip over Status | Shell | Perms | All, each tab a hidden, routed page =="

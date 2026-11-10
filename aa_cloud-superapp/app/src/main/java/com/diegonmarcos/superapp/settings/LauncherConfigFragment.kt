@@ -159,6 +159,9 @@ class LauncherConfigFragment : KitComposeFragment() {
 
                 // Cloud-superapp Scale (ruler centred on 411), Font Size, Zoom Size: live status + privileged write.
                 DisplayControlsSection()
+
+                // #1621 Background: enable, star animation, the 3D/4D polytope shape picker and auto-cycle.
+                BackgroundSection(settingsPrefs, epoch)
             }
 
             // ── Battery Hungers: the effect switches, the heaviest consumers, the Battery Hunger panel ──
@@ -294,6 +297,77 @@ class LauncherConfigFragment : KitComposeFragment() {
                 }
                 GapDp(8)
             }
+        }
+    }
+
+    /**
+     * #1621 Background — Configs ▸ Launcher ▸ Quick Actions ▸ UI ▸ Background.
+     * The one settings surface the animated launcher backdrop never had:
+     * enable/disable, the galaxy-stars toggle (a VIEW onto the existing
+     * `stars_anim`, not a copy), the 3D/4D regular-polytope shape picker and the
+     * auto-cycle (on/off, minutes, which shapes take part). Entirely declared in
+     * build.json::ui.launcher_settings.background and read through
+     * LauncherSettingsPrefs; the renderer (Home3DFragment / PolytopeMath) obeys
+     * the same keys, so flipping a control here changes the live home background.
+     */
+    @Composable
+    private fun BackgroundSection(settingsPrefs: LauncherSettingsPrefs, epoch: Int) {
+        val bg = LauncherSettingsPrefs.Config.background
+        GapDp(24)
+        SectionHeaderUi(bg.label, bg.subtitle)
+
+        // Draw the animated background at all.
+        toggleRow(bg.enableLabel, bg.enableSubtitle, epoch, { settingsPrefs.backgroundEnabled }) { on ->
+            settingsPrefs.backgroundEnabled = on; onToggleChanged(); repaintFromStore()
+        }
+        GapDp(8)
+
+        // Star animation — a VIEW onto the existing stars_anim switch, never a second copy of it.
+        val starsItem = LauncherSettingsPrefs.Config.toggles.firstOrNull { it.id == bg.starsToggle }
+        if (starsItem != null) {
+            toggleRow(starsItem.label, starsItem.subtitle, epoch, { settingsPrefs.toggle(starsItem.id) }) { on ->
+                settingsPrefs.setToggle(starsItem.id, on); onToggleChanged(); repaintFromStore()
+            }
+            GapDp(8)
+        }
+
+        // Shape picker, grouped (3D Platonic solids, then their 4D analogues).
+        GapDp(8)
+        SectionHeaderUi("Background shape",
+            "The rotating shape on the home pane. 4D polytopes render as a rotating 4D→3D projection in the same slot.")
+        val currentShape = epoch.let { settingsPrefs.backgroundShape }
+        var lastGroup = ""
+        for (s in bg.shapes) {
+            if (s.group.isNotBlank() && s.group != lastGroup) { lastGroup = s.group; GapDp(8); SectionHeaderUi(s.group, "") }
+            val sub = when {
+                s.dim == 4 && s.dualOf.isBlank() -> "4D · self-dual (no regular 3D twin)"
+                s.dim == 4 -> "4D · analogue of the ${s.dualOf}"
+                else -> "3D Platonic solid"
+            }
+            GenericTileUi(s.label, sub, s.id == currentShape) {
+                settingsPrefs.backgroundShape = s.id; repaintFromStore()
+            }
+            GapDp(8)
+        }
+
+        // Auto-cycle: on/off, the cadence, and which shapes take part.
+        GapDp(16)
+        SectionHeaderUi("Auto-cycle", bg.cycleEnableSubtitle)
+        toggleRow(bg.cycleEnableLabel, bg.cycleEnableSubtitle, epoch, { settingsPrefs.backgroundCycleEnabled }) { on ->
+            settingsPrefs.backgroundCycleEnabled = on; onToggleChanged(); repaintFromStore()
+        }
+        GapDp(8)
+        val cm = bg.cycleMinutes
+        sliderRow(cm.label, cm.subtitle, cm.min, cm.max, settingsPrefs.backgroundCycleMinutes) { v ->
+            settingsPrefs.backgroundCycleMinutes = v
+        }
+        GapDp(8)
+        SectionHeaderUi("Shapes in the cycle", "Ticked shapes take part in the auto-cycle rotation (all on by default).")
+        for (s in bg.shapes) {
+            toggleRow(s.label, "", epoch, { settingsPrefs.cycleShapeEnabled(s.id) }) { on ->
+                settingsPrefs.setCycleShapeEnabled(s.id, on); repaintFromStore()
+            }
+            GapDp(4)
         }
     }
 
