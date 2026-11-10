@@ -385,6 +385,25 @@ class PermissionsFragment : KitComposeFragment() {
             }
         }
 
+        // ── #1602 ESSENTIAL-APP FLAG ──────────────────────────────────────
+        // The SuperApp's own flag: ON (default) marks this package essential so the fleet background policy and Super Saving
+        // Battery Mode never restrict or force-stop it, which is what keeps it alive on Samsung's aggressive power management.
+        // Turning it OFF drops that self-protection so Samsung's super-saving mode is allowed to hibernate the app.
+        SectionHead("ESSENTIAL-APP FLAG — keep the SuperApp out of battery hibernation")
+        val essProtected = com.diegonmarcos.superapp.bgpolicy.EssentialSelfPolicy.protectedSelf(ctxAny())
+        KvRow("Essential-app flag", if (essProtected) "✓ ON — protected from hibernation" else "✗ OFF — may be hibernated")
+        Small("ON: battery policy and Super Saving never restrict this app (the default). OFF: Samsung's super-saving mode is allowed to hibernate the app — turn it off only if you want the OS to sleep the SuperApp.")
+        PermButtonRow {
+            PermButton("Essential-app flag: " + (if (essProtected) "ON" else "OFF"), essProtected) {
+                val now = !com.diegonmarcos.superapp.bgpolicy.EssentialSelfPolicy.protectedSelf(ctxAny())
+                com.diegonmarcos.superapp.bgpolicy.EssentialSelfPolicy.setProtectedSelf(ctxAny(), now)
+                Toast.makeText(ctxAny(),
+                    "Essential-app flag " + (if (now) "ON — protected from hibernation" else "OFF — may be hibernated"),
+                    Toast.LENGTH_SHORT).show()
+                rebuildFragment()
+            }
+        }
+
         // ── B. OPEN A SYSTEM PAGE ─────────────────────────────────────────
         SectionHead("OPEN A SYSTEM PAGE — Grant-All can NOT reach these")
         Small("Nothing can grant these for you: each button opens the exact system page, you flip it, come back. Missing ones listed first.")

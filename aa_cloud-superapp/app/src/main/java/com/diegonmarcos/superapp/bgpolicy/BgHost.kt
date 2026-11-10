@@ -12,6 +12,21 @@ import com.diegonmarcos.superapp.adbdebug.ShellChannels
 import com.diegonmarcos.superapp.shellbroker.ShellBroker
 import java.io.File
 
+/**
+ * #1602 The SuperApp's own "essential app" flag, user-controllable. ON by default: the app marks itself essential so battery
+ * policy and Super Saving never restrict or hibernate it. The owner can turn it OFF to let Samsung's super-saving mode put the
+ * app to sleep. Stored in the same `bg_policy` prefs the engine already uses; read into [BgEssential] by [BgHost.essential].
+ */
+object EssentialSelfPolicy {
+    private const val PREFS = "bg_policy"
+    private const val KEY = "self_essential_protected"
+    fun protectedSelf(ctx: Context): Boolean =
+        ctx.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(KEY, true)
+    fun setProtectedSelf(ctx: Context, on: Boolean) {
+        ctx.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(KEY, on).apply()
+    }
+}
+
 /** SharedPreferences behind the [BgKv] seam. */
 class BgPrefsKv(ctx: Context) : BgKv {
     private val sp = ctx.applicationContext.getSharedPreferences("bg_policy", Context.MODE_PRIVATE)
@@ -75,7 +90,8 @@ object BgHost {
         return out
     }
 
-    fun essential(ctx: Context, cfg: BgConfig = config(ctx)) = BgEssential(cfg, roles(ctx, cfg))
+    fun essential(ctx: Context, cfg: BgConfig = config(ctx)) =
+        BgEssential(cfg, roles(ctx, cfg), ctx.packageName, EssentialSelfPolicy.protectedSelf(ctx))   // #1602 honour the self-essential flag
 
     /** Receivers and services the package declares, as class names. */
     fun components(ctx: Context, pkg: String): List<Pair<String, Boolean>> = runCatching {

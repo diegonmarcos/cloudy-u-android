@@ -41,6 +41,17 @@ data class BgConfig(
  * keyboard, systemui), resolved once per screen by the Android layer. A package is essential when the declaration names it, a
  * declared prefix covers it, or a role resolved to it.
  */
-class BgEssential(private val cfg: BgConfig, private val roles: Set<String>) {
-    fun isEssential(pkg: String) = pkg in roles || cfg.isFixedEssential(pkg)
+class BgEssential(
+    private val cfg: BgConfig,
+    private val roles: Set<String>,
+    private val selfPkg: String? = null,
+    private val selfProtected: Boolean = true,
+) {
+    // #1602 The SuperApp's own "essential app" flag. ON (default) keeps this package out of every restrict / force-stop /
+    // "restrict all non-essential" pass, so Samsung Super Saving and battery policy never hibernate it. OFF drops the self
+    // protection even when the `self` role and the fixed essential list still name it, so the OS is free to hibernate the app.
+    fun isEssential(pkg: String): Boolean {
+        if (!selfProtected && selfPkg != null && pkg == selfPkg) return false
+        return pkg in roles || cfg.isFixedEssential(pkg)
+    }
 }
