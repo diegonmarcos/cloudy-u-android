@@ -38,6 +38,8 @@ object BadgeCardData {
         val actions: List<BadgeModel.Action> = emptyList(),
         /** The notification's sub-text ("3/8 plugins - 1 paired - ..."), the info line under the text. */
         val subText: String = "",
+        /** #1603 Samsung-UI media card: the album art the media notification carries as its large icon, else null. */
+        val albumArt: android.graphics.Bitmap? = null,
     )
 
     /** Test seam: a JVM/Robolectric render has no running services, so it supplies the data a phone would have. */
@@ -93,9 +95,34 @@ object BadgeCardData {
                     a.firstOrNull()?.let { it.title } ?: "Nothing raised by the fleet",
                     null, a.drop(1).take(MAX_LINES).map { Line(it.app, it.title) })
             }
+            // #1603 Samsung-UI media card: track as the headline, artist/album under it, the transport progress, and the
+            // album art the notification posted as its large icon (the renderer draws it dimmed behind the card).
+            "media" -> data(title.ifBlank { b.label }, text, postedProgress, extraLines).copy(albumArt = mediaArt(ctx, n))
             else -> data(title.ifBlank { b.label }, text, postedProgress, extraLines)
         }
     }
+
+    /** The album art a media notification carries as its large icon, as a Bitmap; null if it has none or it cannot be
+     *  decoded. Best-effort and total: any failure drops the art and the card renders plain. */
+    private fun mediaArt(ctx: Context, n: Notification?): android.graphics.Bitmap? = runCatching {
+        if (n == null) return null
+        (n.extras?.get(Notification.EXTRA_LARGE_ICON))?.let { v ->
+            if (v is android.graphics.Bitmap) return v
+            if (v is android.graphics.drawable.Icon) iconToBitmap(ctx, v)?.let { return it }
+        }
+        n.getLargeIcon()?.let { return iconToBitmap(ctx, it) }
+        null
+    }.getOrNull()
+
+    private fun iconToBitmap(ctx: Context, icon: android.graphics.drawable.Icon): android.graphics.Bitmap? = runCatching {
+        val d = icon.loadDrawable(ctx) ?: return null
+        if (d is android.graphics.drawable.BitmapDrawable) return d.bitmap
+        val w = d.intrinsicWidth.coerceIn(1, 1024); val h = d.intrinsicHeight.coerceIn(1, 1024)
+        val bmp = android.graphics.Bitmap.createBitmap(w, h, android.graphics.Bitmap.Config.ARGB_8888)
+        val canvas = android.graphics.Canvas(bmp)
+        d.setBounds(0, 0, w, h); d.draw(canvas)
+        bmp
+    }.getOrNull()
 
     private const val MAX_LINES = 4
 

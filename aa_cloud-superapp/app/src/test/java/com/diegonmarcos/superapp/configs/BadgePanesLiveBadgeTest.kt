@@ -72,14 +72,16 @@ class BadgePanesLiveBadgeTest : KitPageHarness() {
     }
 
     @org.junit.Test
-    fun `the Config pane shows the same taxonomy as the shade - app sections with Cloudy and Phone`() {
+    fun `the Config pane shows the same taxonomy as the shade - six categories then keep-alive below`() {
         render()
         val texts = composeTexts()
-        for (label in listOf("Me Infos", "Media", "Device Infos", "Apps Push Notifications", "Apps Keep Alive Badges", "Actions"))
-            org.junit.Assert.assertTrue("$label missing from the pane", label in texts)
-        val order = listOf("Me Infos", "Media", "Device Infos", "Apps Push Notifications", "Apps Keep Alive Badges", "Actions").map { texts.indexOf(it) }
-        org.junit.Assert.assertEquals("sections in the redesigned order", order.sorted(), order)
-        org.junit.Assert.assertTrue(texts.count { it == "Cloudy" } == 2 && texts.count { it == "Phone" } == 2)
+        // #1603: six categories in order, then the keep-alive block below.
+        val want = listOf("Me Infos", "Media", "Device Infos", "Actions", "Cloud Publisher", "Phone Publisher", "Apps Keep Alive Badges")
+        for (label in want) org.junit.Assert.assertTrue("$label missing from the pane", label in texts)
+        val order = want.map { texts.indexOf(it) }
+        org.junit.Assert.assertEquals("sections in the #1603 order", order.sorted(), order)
+        // Only the keep-alive block keeps the Cloudy / Phone sub-headers; the publishers render one flat side each.
+        org.junit.Assert.assertTrue(texts.count { it == "Cloudy" } == 1 && texts.count { it == "Phone" } == 1)
     }
 
     /** Every text the pane draws in Compose. */

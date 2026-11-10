@@ -12,8 +12,12 @@ object NotifySections {
 
     data class Sub(val id: String, val label: String)
 
-    /** An app section: no producer, its rows are apps, in two labelled sub-groups. [kind] is "push" or "keepalive". */
-    data class AppSection(val id: String, val label: String, val kind: String, val subs: List<Sub>)
+    /**
+     * An app section: no producer, its rows are apps. [kind] is "push" or "keepalive". [filter] (#1603) is "cloudy" or
+     * "phone" for a section that renders ONE AppSplit side as a flat list (the Cloud Publisher / Phone Publisher push
+     * categories); blank keeps [subs], the two labelled sub-groups (the keep-alive block below the six categories).
+     */
+    data class AppSection(val id: String, val label: String, val kind: String, val subs: List<Sub>, val filter: String = "")
 
     fun pageOrder(json: String): List<String> {
         val a = runCatching { JSONObject(json) }.getOrNull()?.optJSONArray("page_order") ?: return emptyList()
@@ -28,7 +32,7 @@ object NotifySections {
             val subs = o.optJSONArray("subgroups")?.let { s ->
                 (0 until s.length()).mapNotNull { j -> s.optJSONObject(j)?.let { Sub(it.optString("id"), it.optString("label")) } }
             }.orEmpty()
-            AppSection(id, o.optString("label", id), o.optString("kind"), subs)
+            AppSection(id, o.optString("label", id), o.optString("kind"), subs, o.optString("filter"))
         }
     }
 

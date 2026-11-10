@@ -22,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -135,8 +136,10 @@ private fun SectionHeader(text: String, tag: String) =
         fontFamily = NotifCard.font, maxLines = 1, modifier = Modifier.padding(start = 4.dp, top = 6.dp).testTag(tag))
 
 /**
- * Apps Push Notifications / Apps Keep Alive: its own header, then two labelled sub-groups (Cloudy, Phone) of app rows with a
- * switch each. Push = the app may land in the notification history; Keep Alive = the owner's keep-alive list.
+ * Cloud Publisher / Phone Publisher / Apps Keep Alive (#1603): its own header, then its app rows with a switch each. A
+ * push section carries a `filter` (cloudy | phone) and draws the one matching AppSplit side as a flat list — no inner
+ * sub-header, the section label already names the side. The keep-alive section has no filter and keeps its two labelled
+ * sub-groups (Cloudy, Phone). Push = the app may land in the notification history; Keep Alive = the owner's keep-alive list.
  */
 @Composable
 internal fun AppSectionBlock(sec: NotifySections.AppSection) {
@@ -144,11 +147,15 @@ internal fun AppSectionBlock(sec: NotifySections.AppSection) {
     val apps = remember { AppSwitches.knownApps(ctx) }
     val (cloudy, phone) = remember(apps) { AppSplit.split(apps) }
     SectionHeader(sec.label, BadgeCardTags.section(sec.id))
-    for (sub in sec.subs) {
-        val rows = if (sub.id == AppSplit.CLOUDY) cloudy else phone
+    // A filtered push section is ONE flat block of its side; otherwise the declared sub-groups, each a block.
+    val blocks: List<Triple<String, String?, List<Pair<String, String>>>> =
+        if (sec.filter.isNotBlank())
+            listOf(Triple(sec.filter, null, if (sec.filter == AppSplit.CLOUDY) cloudy else phone))
+        else sec.subs.map { Triple(it.id, it.label, if (it.id == AppSplit.CLOUDY) cloudy else phone) }
+    for ((subId, subLabel, rows) in blocks) {
         Column(Modifier.fillMaxWidth().clip(NotifCard.shape).background(NotifCard.surface)
-            .padding(horizontal = NotifCard.pad, vertical = 10.dp).testTag(BadgeCardTags.sub(sec.id, sub.id))) {
-            Text(sub.label, color = NotifCard.meta, fontSize = NotifCard.nameSp, fontWeight = FontWeight.Medium, fontFamily = NotifCard.font)
+            .padding(horizontal = NotifCard.pad, vertical = 10.dp).testTag(BadgeCardTags.sub(sec.id, subId))) {
+            if (subLabel != null) Text(subLabel, color = NotifCard.meta, fontSize = NotifCard.nameSp, fontWeight = FontWeight.Medium, fontFamily = NotifCard.font)
             if (rows.isEmpty()) Text("No apps yet", color = NotifCard.body, fontSize = NotifCard.bodySp, fontFamily = NotifCard.font,
                 modifier = Modifier.padding(top = 4.dp))
             for ((pkg, label) in rows) androidx.compose.runtime.key(pkg) {
@@ -180,14 +187,22 @@ internal fun BadgeCard(d: BadgeCardData.Data) {
     val accent = accentOf(d)
     val icon = remember(d.badge.icon) { Sections.iconResFor(ctx, d.badge.icon) }
     val tap = d.open
-    Column(
-        Modifier.fillMaxWidth().clip(NotifCard.shape).background(NotifCard.surface)
+    // #1603 Samsung-UI media card: the album art, dimmed, fills the card behind the transport; a scrim keeps the text
+    // readable. Only for the media kind, and only when the posted notification carried art — otherwise a plain surface.
+    val art = if (d.badge.card.kind == "media") d.albumArt?.asImageBitmap() else null
+    Box(
+        Modifier.fillMaxWidth().clip(NotifCard.shape).background(if (art != null) Color(0xFF15151A) else NotifCard.surface)
             .then(if (tap != null) Modifier.clickable {
                 Haptics.tap(hostView); runCatching { tap.send() }
             } else Modifier)
-            .padding(start = NotifCard.pad, end = NotifCard.pad, top = 12.dp, bottom = 14.dp)
             .testTag(BadgeCardTags.card(d.badge.id)),
     ) {
+        if (art != null) {
+            androidx.compose.foundation.Image(art, null, Modifier.matchParentSize(),
+                contentScale = androidx.compose.ui.layout.ContentScale.Crop, alpha = 0.45f)
+            Box(Modifier.matchParentSize().background(Color.Black.copy(alpha = 0.38f)))
+        }
+        Column(Modifier.fillMaxWidth().padding(start = NotifCard.pad, end = NotifCard.pad, top = 12.dp, bottom = 14.dp)) {
         // The app-name row of a One UI notification: small tinted icon, name, state, no controls.
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(painterResource(icon), null, tint = accent, modifier = Modifier.size(NotifCard.headerIcon))
@@ -241,6 +256,7 @@ internal fun BadgeCard(d: BadgeCardData.Data) {
                 overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
         }
         ActionRow(d, accent, hostView)
+        }
     }
 }
 

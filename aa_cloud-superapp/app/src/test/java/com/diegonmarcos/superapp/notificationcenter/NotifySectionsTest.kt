@@ -14,13 +14,13 @@ class NotifySectionsTest {
 
     private val nc: String = JSONObject(File("../build.json").readText()).getJSONObject("ui").getJSONObject("notification_center").toString()
 
-    @Test fun `the page order is the redesigned taxonomy and Alerts is gone`() {
+    @Test fun `the page order is the six categories then keep-alive below and Alerts is gone`() {
         val groups = BadgeDeclaration.groups(nc)
         val apps = NotifySections.appSections(nc)
         val order = NotifySections.layout(NotifySections.pageOrder(nc), groups.map { it.id }, apps.map { it.id })
-        assertEquals(listOf("live", "media", "network", "apps_push", "apps_keepalive", "actions"), order)
+        assertEquals(listOf("live", "media", "network", "actions", "cloud_publisher", "phone_publisher", "apps_keepalive"), order)
         assertEquals(listOf("Me Infos", "Media", "Device Infos", "Actions"), groups.map { it.label })
-        assertEquals(listOf("Apps Push Notifications", "Apps Keep Alive Badges"), apps.map { it.label })
+        assertEquals(listOf("Cloud Publisher", "Phone Publisher", "Apps Keep Alive Badges"), apps.map { it.label })
         assertTrue(groups.none { it.alerts || it.id == "alerts" })
         assertTrue(BadgeDeclaration.badges(BadgeDeclaration.parse(nc)).none { it.id == "fleet_alerts" })
     }
@@ -35,9 +35,15 @@ class NotifySectionsTest {
             "battery_status", "ai_usage", "myhealth", "weather_today", "markets_prices"), placed)
     }
 
-    @Test fun `push and keep alive each split into Cloudy then Phone`() {
-        for (s in NotifySections.appSections(nc)) assertEquals(listOf("Cloudy", "Phone"), s.subs.map { it.label })
-        assertEquals(listOf("push", "keepalive"), NotifySections.appSections(nc).map { it.kind })
+    @Test fun `push splits into Cloud and Phone publishers, keep-alive keeps Cloudy then Phone`() {
+        val apps = NotifySections.appSections(nc)
+        assertEquals(listOf("push", "push", "keepalive"), apps.map { it.kind })
+        val push = apps.filter { it.kind == "push" }
+        assertEquals(listOf("cloudy", "phone"), push.map { it.filter })
+        assertTrue("a filtered publisher renders one flat side, no sub-groups", push.all { it.subs.isEmpty() })
+        val keep = apps.first { it.kind == "keepalive" }
+        assertEquals(listOf("Cloudy", "Phone"), keep.subs.map { it.label })
+        assertEquals("", keep.filter)
     }
 
     @Test fun `AppSplit puts fleet apps under Cloudy and every other app under Phone`() {

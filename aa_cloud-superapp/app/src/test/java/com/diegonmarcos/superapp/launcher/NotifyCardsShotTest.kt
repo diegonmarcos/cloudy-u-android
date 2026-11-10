@@ -88,11 +88,12 @@ class NotifyCardsShotTest : KitPageHarness() {
         assertEquals(listOf("Me Infos", "Media", "Device Infos", "Actions"), sections.map { it.title })
         showKit { Column(Modifier.fillMaxSize().background(NotifCard.panel).padding(12.dp)) { BadgeCards() } }
         for (s in sections) compose.onNodeWithTag(BadgeCardTags.section(s.id), useUnmergedTree = true).assertExists().assertTextEquals(s.title)
-        // The two app sections sit between Device Infos and Actions, each with a Cloudy and a Phone sub-group.
-        for (id in listOf("apps_push", "apps_keepalive")) {
+        // #1603: the two push publishers (after Actions) each render ONE flat side; the keep-alive block below keeps both.
+        for (id in listOf("cloud_publisher", "phone_publisher", "apps_keepalive"))
             compose.onNodeWithTag(BadgeCardTags.section(id), useUnmergedTree = true).assertExists()
-            for (sub in listOf("cloudy", "phone")) compose.onNodeWithTag(BadgeCardTags.sub(id, sub), useUnmergedTree = true).assertExists()
-        }
+        compose.onNodeWithTag(BadgeCardTags.sub("cloud_publisher", "cloudy"), useUnmergedTree = true).assertExists()
+        compose.onNodeWithTag(BadgeCardTags.sub("phone_publisher", "phone"), useUnmergedTree = true).assertExists()
+        for (sub in listOf("cloudy", "phone")) compose.onNodeWithTag(BadgeCardTags.sub("apps_keepalive", sub), useUnmergedTree = true).assertExists()
         compose.onNodeWithTag(BadgeCardTags.TITLE, useUnmergedTree = true).assertExists()
         snap("notify-page-sections.png")
     }
