@@ -93,15 +93,15 @@ check('G1', subnav.length === 0 && await evalJs(`!document.querySelector('[data-
 const pgs = await evalJs(`[...document.querySelectorAll('.served .pg')].map((p) => ({ name: p.querySelector('.nm').innerText.trim(), rows: ['status', 'meta', 'source', 'links', 'config'].filter((r) => p.querySelector('[data-r=' + r + ']')),
   port: (p.querySelector('.rh .badge') || {}).innerText, toggle: !!p.querySelector('.rh button[data-toggle]'), app: (p.querySelector('[data-r=status]').innerText.match(/app\\s*(not open|open)/i) || [])[1] || null,
   startApp: !!p.querySelector('[data-start-app]'), hrefs: [...p.querySelectorAll('[data-r=links] a')].map((a) => a.getAttribute('href')), srcOpen: !!p.querySelector('[data-r=source] a'), meta: p.querySelector('[data-r=meta]').innerText }))`);
-check('G2', ['Termux', 'Nix', 'Local', 'Cloud'].every((n) => pgs.some((p) => p.name === n)), `the declared endpoints all appear as rows: ${pgs.map((p) => p.name).join(', ')}`);
+check('G2', ['Termux', 'Nix', 'Local', 'X-Ray Device'].every((n) => pgs.some((p) => p.name === n)), `the declared endpoints all appear as rows: ${pgs.map((p) => p.name).join(', ')}`);
 check('G3', pgs.every((p) => p.rows.length === 5 && p.toggle && /auth/i.test(p.meta) && /exposure/i.test(p.meta) && /host/i.test(p.meta)),
   'every served row has Status, Metadata (auth, exposure, host), Source, Links, an edit-config link and a Start/Stop serving button');
 const tn = pgs.filter((p) => p.name === 'Termux' || p.name === 'Nix');
-check('G4', tn.length === 2 && tn.every((p) => p.app && (p.app.toLowerCase() === 'open' || p.startApp)) && pgs.filter((p) => p.name === 'Local' || p.name === 'Cloud').every((p) => !p.app && !p.startApp),
-  `Termux and Nix show app open/not open (+ Start app when not open); Local and Cloud do not (${JSON.stringify(tn.map((p) => [p.name, p.app, p.startApp]))})`);
+check('G4', tn.length === 2 && tn.every((p) => p.app && p.startApp) && pgs.filter((p) => p.name === 'Local' || p.name === 'X-Ray Device').every((p) => !p.app && !p.startApp),
+  `Termux and Nix always show a Start app button and the app open/not-open status; Local and X-Ray Device do not (${JSON.stringify(tn.map((p) => [p.name, p.app, p.startApp]))})`);
 check('G5', pgs.every((p) => p.hrefs.length === 2 && p.hrefs[0].startsWith('http://') && p.hrefs[0].includes('.app') && p.hrefs[1].startsWith('http://127.0.0.1:')),
   `every row lists its private name and its 127.0.0.1:port link (${pgs.map((p) => p.hrefs.join(' ')).join(' | ')})`);
-check('G6', pgs.filter((p) => p.name !== 'Cloud').every((p) => p.srcOpen), 'a path source (Termux, Nix, Local) has an open link');
+check('G6', pgs.filter((p) => p.name !== 'X-Ray Device').every((p) => p.srcOpen), 'a path source (Termux, Nix, Local) has an open link');
 const frm = await evalJs(`(() => { const f = document.querySelector('.form-sec .form'); if (!f) return null; return { post: f.getAttribute('data-post'), fields: [...f.querySelectorAll('[data-f]')].map((x) => x.getAttribute('data-f')), labels: [...f.querySelectorAll('label')].map((l) => l.firstChild.textContent.trim()), submit: f.querySelector('[data-submit]').innerText.trim(), title: document.querySelector('.form-sec h2').innerText.trim() }; })()`);
 check('G7', frm && frm.post === '/__app__/api/repos' && ['label', 'source', 'repo', 'exposure', 'auth'].every((k) => frm.fields.includes(k)) && /Add a place to serve/i.test(frm.title) && /Add & serve/.test(frm.submit),
   `the Add-a-place form exists and posts to the repos-serving backend: ${JSON.stringify(frm)}`);

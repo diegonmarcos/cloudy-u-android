@@ -354,8 +354,8 @@
         "port_from": "runtime.diag.port",
         "role": "diag",
         "owner": "ac_cloud-c3-webserver",
-        "title": "Cloud",
-        "summary": "Fleet diagnostics: the SuperApp's About, Logcat and Diagnose"
+        "title": "X-Ray Device",
+        "summary": "X-Ray Device profile: the SuperApp's device scan (device/OS, perms, storage, battery, memory/CPU, the stack sections), with Logcat and Diagnose. Served on cloud.app:8003 (id and DNS name kept stable)."
       }
     ],
     "keepalive": {

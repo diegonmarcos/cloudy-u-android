@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Fleet diagnostics</title>
+<title>X-Ray Device</title>
 <style>
   :root { --bg:#0b0e14; --panel:#131824; --line:#1e2634; --fg:#e6e9ef; --dim:#8b95a7; --acc:#7cc4ff; --bad:#ff8a8a; --nav:46px; }
   * { box-sizing: border-box; }
@@ -40,7 +40,7 @@
 </style>
 </head>
 <body>
-<header><h1>Fleet diagnostics</h1><span class="sub" id="sub">the SuperApp's About, Logcat and Diagnose</span></header>
+<header><h1>X-Ray Device</h1><span class="sub" id="sub">the SuperApp's device profile scan (About), Logcat and Diagnose</span></header>
 <main id="main"><div class="dim" style="padding:10px">Connecting to the bridge…</div></main>
 <nav id="nav" aria-label="diagnostics tabs"></nav>
 
@@ -92,7 +92,16 @@ function renderLog(text, filter) {
 function renderNav(tabs, cur) {
   return tabs.map(function (t) { return '<button data-tab="' + esc(t.id) + '"' + (t.id === cur ? ' class="on"' : '') + '>' + esc(t.label) + '</button>'; }).join('');
 }
-if (typeof module !== 'undefined') module.exports = { esc: esc, renderDoc: renderDoc, renderLog: renderLog, renderNav: renderNav };
+// #1614 the X-Ray Device action bar: Run X-Ray re-runs the device scan (the SuperApp's About read through the
+// bridge), Start Superapp launches com.diegonmarcos.superapp through the webserver's guarded launch API.
+function renderXrayBar() {
+  return '<section><h2>X-Ray Device · scan</h2><div class="tool">' +
+    '<button id="run-xray">Run X-Ray</button>' +
+    '<button id="start-superapp">Start Superapp</button>' +
+    '<span class="dim" id="xray-msg">The device profile below is the SuperApp’s static device scan (device/OS, perms, storage, battery, memory/CPU, the stack sections), read live through the fleet-diagnostics bridge.</span>' +
+    '</div></section>';
+}
+if (typeof module !== 'undefined') module.exports = { esc: esc, renderDoc: renderDoc, renderLog: renderLog, renderNav: renderNav, renderXrayBar: renderXrayBar };
 </script>
 
 <script>
@@ -109,11 +118,25 @@ if (typeof module !== 'undefined') module.exports = { esc: esc, renderDoc: rende
     });
   }
   function fail(e) { $main.innerHTML = '<div class="err">' + esc(e && e.message ? e.message : e) + '</div>'; }
+  // #1614 Start Superapp: the webserver's own launch API lives on the drive (admin) port, not :8003, so find that
+  // port from /__api__/serving and POST the guarded launch there. Cross-port is allowed: the admin origin check
+  // accepts loopback and the private DNS names, which this page is served under.
+  function startSuperapp(msg) {
+    if (msg) msg.textContent = 'Launching the SuperApp…';
+    get('/__api__/serving').then(function (sv) {
+      var drive = (sv.endpoints || []).filter(function (e) { return e.role === 'drive'; })[0];
+      if (!drive) throw new Error('no admin port in the serving declaration');
+      return fetch('http://127.0.0.1:' + drive.port + '/__app__/api/launch',
+        { method: 'POST', headers: { 'content-type': 'application/json', 'x-c3-write': '1' }, body: JSON.stringify({ target: 'superapp' }) })
+        .then(function (r) { return r.json().then(function (b) { if (!r.ok) throw new Error((b && b.error) || (r.status + ' launch')); return b; }); });
+    }).then(function (b) { if (msg) msg.textContent = 'Launched ' + (b.package || 'the SuperApp'); })
+      .catch(function (e) { if (msg) msg.textContent = 'Start Superapp failed: ' + (e && e.message ? e.message : e); });
+  }
   function paintLog() {
     var pre = document.getElementById('logpre'); if (pre) pre.innerHTML = renderLog(log.text, log.q);
   }
   var views = {
-    about: function () { return get('/__api__/diag/about').then(function (d) { return renderDoc('SuperApp · About', d); }); },
+    about: function () { return get('/__api__/diag/about').then(function (d) { return renderXrayBar() + renderDoc('SuperApp · Device Profile (X-Ray scan)', d); }); },
     diagnose: function () { return get('/__api__/diag/diagnose').then(function (d) { return renderDoc('SuperApp · Diagnose', d); }); },
     logcat: function () {
       var u = '/__api__/diag/logcat?n=' + log.n + '&scope=' + log.scope + (log.errors ? '&errors=1' : '');
@@ -142,6 +165,11 @@ if (typeof module !== 'undefined') module.exports = { esc: esc, renderDoc: rende
         document.getElementById('refresh').onclick = function () { show('logcat'); };
         document.getElementById('lf').oninput = function (ev) { log.q = ev.target.value; paintLog(); };
         paintLog();
+      }
+      if (id === 'about') {
+        var rx = document.getElementById('run-xray'), ss = document.getElementById('start-superapp'), mg = document.getElementById('xray-msg');
+        if (rx) rx.onclick = function () { show('about'); };
+        if (ss) ss.onclick = function () { startSuperapp(mg); };
       }
     }).catch(fail);
     try { history.replaceState(null, '', '#' + id); } catch (x) {}

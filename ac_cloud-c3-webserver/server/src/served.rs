@@ -91,6 +91,13 @@ pub fn set_launcher(f: Box<Launcher>) -> bool {
     LAUNCHER.set(f).is_ok()
 }
 
+/// #1614 launch a package's MAIN/LAUNCHER activity through the installed Android bridge (the same hook Start App uses).
+/// Used by the X-Ray Device page's "Start Superapp" button; the caller decides which package is allowed to launch.
+pub fn launch(package: &str) -> Result<(), String> {
+    let f = LAUNCHER.get().ok_or_else(|| "no Android bridge installed yet".to_string())?;
+    f(package)
+}
+
 // ── live facts ────────────────────────────────────────────────────────────────────────────────
 fn answers(port: u16) -> bool {
     serving::is_up(port) && repos::http_get(port, "/", Duration::from_millis(400)).is_ok()

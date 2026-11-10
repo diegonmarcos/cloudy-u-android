@@ -62,6 +62,7 @@ pub const ROUTES: &[Route] = &[
     Route { kind: Kind::Api, path: "/__app__/api/power", tab: None, post: true, summary: "GET the master controls and the live state (running, ports, sites); POST {server?, keep_alive?, ssh_door?} sets Server ON/OFF, Keep alive ON/OFF and the SSH door's own switch (true, false, or null to follow Keep alive) (build.json::power, ::ssh_doors)", handler: api_power },
     Route { kind: Kind::Api, path: "/__app__/api/sshd", tab: None, post: true, summary: "GET every SSH door, probed live (declared in build.json::ssh_doors); POST {door, op: start|stop|follow} starts or stops the supervised door (the nix-on-droid mesh sshd) or this app's own hosted sshd (webserver, :8025, ON by default) or hands it back to its default; POST {door?, mesh_only: true|false|null} sets that port's SSH reachable over the mesh VPN only (default ON, one switch per port) and re-applies it to a running door", handler: api_sshd },
     Route { kind: Kind::Api, path: "/__app__/api/open", tab: None, post: true, summary: "POST {url} or {id,via:name|ip}: hand an http(s) link to cloud-browser", handler: api_open },
+    Route { kind: Kind::Api, path: "/__app__/api/launch", tab: None, post: true, summary: "POST {target: superapp|browser}: launch a declared fleet app's MAIN/LAUNCHER activity through the Android bridge (the X-Ray Device page's Start Superapp). Only the packages declared in build.json (the SuperApp bridge package, the browser opener package) may be launched", handler: api_launch },
 ];
 
 /// Exact match over the table (a trailing slash is noise).
@@ -361,6 +362,29 @@ fn crashes_api(ctx: &Ctx, req: &Req) -> Resp {
     if req.method == "POST" { crashes::api_post(ctx, req) } else { crashes::api_get(ctx, req) }
 }
 
+/// #1614 POST {target}: launch a declared fleet app. `target` resolves to a package from build.json only (never a
+/// free package string from the body), so this cannot be turned into an arbitrary-app launcher: superapp = the
+/// diagnostics bridge package, browser = the link opener package. Used by the X-Ray Device page's Start Superapp.
+fn api_launch(_ctx: &Ctx, req: &Req) -> Resp {
+    let body: serde_json::Value = match serde_json::from_slice(&req.body) {
+        Ok(v) => v,
+        Err(_) => return jerr(400, "body must be JSON {target}"),
+    };
+    let sv = serving::get();
+    let pkg = match body["target"].as_str() {
+        Some("superapp") => sv.bridge_package.clone(),
+        Some("browser") => sv.browser_package.clone(),
+        _ => return jerr(400, "target must be \"superapp\" or \"browser\""),
+    };
+    if pkg.is_empty() {
+        return jerr(404, "no package is declared for that target");
+    }
+    match crate::served::launch(&pkg) {
+        Ok(()) => Resp::json(200, format!("{{\"ok\":true,\"package\":{}}}", jstr(&pkg))),
+        Err(e) => jerr(502, &e),
+    }
+}
+
 fn api_open(_ctx: &Ctx, req: &Req) -> Resp {
     let body: serde_json::Value = match serde_json::from_slice(&req.body) {
         Ok(v) => v,
@@ -450,6 +474,22 @@ mod tests {
         // a well-formed https link reaches the opener, which this test process has none of
         assert_eq!(post("x-c3-write: 1\r\ncontent-type: application/json\r\n", "{\"url\":\"https://example.org/\"}"), 502);
         assert_eq!(post("x-c3-write: 1\r\ncontent-type: application/json\r\n", "not json"), 400);
+    }
+
+    #[test]
+    fn launch_is_guarded_and_resolves_the_target_from_the_declaration() {
+        let post = |extra: &str, body: &str| {
+            let head = format!("POST /__app__/api/launch HTTP/1.1\r\nhost: 127.0.0.1\r\n{}content-length: {}\r\n\r\n", extra, body.len());
+            let mut req = http::parse_request(&head).unwrap();
+            req.body = body.as_bytes().to_vec();
+            handle(&ctx(), &req, &|h: &str| h == "127.0.0.1").unwrap().status
+        };
+        let json = "x-c3-write: 1\r\ncontent-type: application/json\r\n";
+        assert_eq!(post("content-type: application/json\r\n", "{\"target\":\"superapp\"}"), 403, "no x-c3-write header");
+        assert_eq!(post(json, "{\"target\":\"evil.pkg\"}"), 400, "a free package string is not a target");
+        assert_eq!(post(json, "{}"), 400, "target is required");
+        // a declared target resolves to a package and reaches the launcher, which this test process has none of
+        assert_eq!(post(json, "{\"target\":\"superapp\"}"), 502, "reaches the (absent) Android bridge");
     }
 
     #[test]
