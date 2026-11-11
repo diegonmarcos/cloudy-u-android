@@ -1200,7 +1200,7 @@
     <string name="browser_view_desktop">Visualizza come desktop</string>
     <string name="browser_view_mobile">Visualizza come mobile</string>
 
-    <string name="rss_title">Notizie</string>
+    <string name="rss_title">Avvisi</string>
     <string name="rss_add">Aggiungi feed</string>
     <string name="rss_add_hint">Incolla un indirizzo di feed</string>
     <string name="rss_subscribed">Iscritto</string>
@@ -1216,7 +1216,7 @@
     <string name="nav_bar_mail">Posta</string>
     <string name="nav_bar_chat">Chat</string>
     <string name="nav_bar_home">Home</string>
-    <string name="nav_bar_rss">Notizie</string>
+    <string name="nav_bar_rss">Avvisi</string>
     <string name="nav_bar_video">Video</string>
     <string name="nav_chat_not_installed">Telegram non è installato</string>
     <string name="nav_video_not_installed">WhatsApp Business non è installato</string>
@@ -1415,4 +1415,16 @@
     <string name="settings_offline_status">Cache offline: %1$s · Ultima sincronizzazione: %2$s</string>
     <string name="settings_offline_never">mai</string>
     <string name="message_sign_in_required">L’accesso è scaduto. Accedi di nuovo per caricare questo messaggio.</string>
+    <!-- #1624 Alert (RSS) accounts: the account type behind the Alerts view. -->
+    <string name="settings_alert_accounts_title">Account Avvisi (RSS)</string>
+    <string name="settings_alert_accounts_summary">Le fonti degli Avvisi: la flotta e i tuoi</string>
+    <string name="alert_accounts_name_hint">Nome (facoltativo)</string>
+    <string name="alert_accounts_url_hint">Indirizzo del feed</string>
+    <string name="alert_accounts_add">Aggiungi account</string>
+    <string name="alert_accounts_default_section">Predefinito</string>
+    <string name="alert_accounts_added_section">I tuoi account RSS</string>
+    <string name="alert_accounts_builtin">Integrato</string>
+    <string name="alert_accounts_channels_count">%1$d canali</string>
+    <string name="alert_accounts_none">Nessun account aggiunto</string>
+    <string name="alert_accounts_remove">Rimuovi account</string>
 </resources>

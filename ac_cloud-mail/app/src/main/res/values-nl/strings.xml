@@ -1197,7 +1197,7 @@
     <string name="browser_view_desktop">Weergeven als desktop</string>
     <string name="browser_view_mobile">Weergeven als mobiel</string>
 
-    <string name="rss_title">Nieuws</string>
+    <string name="rss_title">Waarschuwingen</string>
     <string name="rss_add">Feed toevoegen</string>
     <string name="rss_add_hint">Plak een feedadres</string>
     <string name="rss_subscribed">Geabonneerd</string>
@@ -1213,7 +1213,7 @@
     <string name="nav_bar_mail">Mail</string>
     <string name="nav_bar_chat">Chat</string>
     <string name="nav_bar_home">Start</string>
-    <string name="nav_bar_rss">Nieuws</string>
+    <string name="nav_bar_rss">Waarschuwingen</string>
     <string name="nav_bar_video">Video</string>
     <string name="nav_chat_not_installed">Telegram is niet geïnstalleerd</string>
     <string name="nav_video_not_installed">WhatsApp Business is niet geïnstalleerd</string>
@@ -1412,4 +1412,16 @@
     <string name="settings_offline_status">Offline cache: %1$s · Laatste synchronisatie: %2$s</string>
     <string name="settings_offline_never">nooit</string>
     <string name="message_sign_in_required">Je aanmelding is verlopen. Meld je opnieuw aan om dit bericht te laden.</string>
+    <!-- #1624 Alert (RSS) accounts: the account type behind the Alerts view. -->
+    <string name="settings_alert_accounts_title">Waarschuwingen-accounts (RSS)</string>
+    <string name="settings_alert_accounts_summary">De bronnen voor Waarschuwingen: de vloot en die van jou</string>
+    <string name="alert_accounts_name_hint">Naam (optioneel)</string>
+    <string name="alert_accounts_url_hint">Feedadres</string>
+    <string name="alert_accounts_add">Account toevoegen</string>
+    <string name="alert_accounts_default_section">Standaard</string>
+    <string name="alert_accounts_added_section">Je RSS-accounts</string>
+    <string name="alert_accounts_builtin">Ingebouwd</string>
+    <string name="alert_accounts_channels_count">%1$d kanalen</string>
+    <string name="alert_accounts_none">Nog geen accounts</string>
+    <string name="alert_accounts_remove">Account verwijderen</string>
 </resources>

@@ -33,6 +33,36 @@
     "alert_local_parts": ["alert", "alerts", "alarm", "monitoring", "notification", "notifications", "noreply", "no-reply", "donotreply", "do-not-reply", "security", "status", "uptime"],
     "alert_sender_domains": ["github.com", "sentry.io", "pagerduty.com", "statuspage.io", "uptimerobot.com", "grafana.com", "cloudflare.com"]
   },
+  "alerts_rss": {
+    "_doc": "#1624 Alert (RSS) Accounts: the declaration behind the Alerts view (the renamed News tab) and Configs > Alert (RSS) accounts. An Alert (RSS) Account is a named source that contributes one or more feed addresses to the Alerts reader, modeled on the fleet account+sync pattern (app/sterna/fleet/MailEndpointSync) and on Cloud-chat's server-provided account: the account and its channels come from the fleet rather than being typed by the user. default_account is the c3-notify RSS system, present out of the box; the user can ADD more RSS accounts (a name + a feed address) in Configs, stored under SettingsRepository.rssAccounts. Baked as BuildConfig.ALERTS_RSS_B64 and parsed by app/sterna/ui/rss/DefaultAlertRssAccount. The channel list MIRRORS the fleet's c3 notify registry (aa_cloud-superapp/build.json::ui.ntfy.channels + labels); the per-channel feed is the rss-gateway's anonymous Atom route (infra-obs_ntfy/src/code/rss-gateway.py: /feed/c/<topic>.atom), reachable from any device without the mesh. Three channels (cloud-sa-notifications, fleet_advisory, infra_mail-health) are marked anon:false because that anonymous route answers 404 for them (their valid-channel set is neither in the gateway's profiles config nor the RSS taxonomy); they are listed here for completeness but are not fetched anonymously. When this list changes, re-mirror it from ui.ntfy — a channel added there is a data edit here, never a code change.",
+    "default_account": {
+      "id": "c3-notify",
+      "name": "Fleet Alerts (c3)",
+      "channel_feed_template": "https://rss.diegonmarcos.com/feed/c/{topic}.atom",
+      "channels": [
+        { "topic": "all", "label": "Everything · fan-out of every channel" },
+        { "topic": "cloud-sa-notifications", "label": "SuperApp advisories · direct install links", "anon": false },
+        { "topic": "fleet_advisory", "label": "Fleet advisories · app is stuck, here is the fix", "anon": false },
+        { "topic": "infra_mail-health", "label": "Mail server health", "anon": false },
+        { "topic": "dev_commits", "label": "Commits pushed" },
+        { "topic": "dev_pull-requests", "label": "Pull requests" },
+        { "topic": "dev_releases", "label": "Releases, tags and forks" },
+        { "topic": "deploy_ship", "label": "Ship runs and deploys" },
+        { "topic": "deploy_containers", "label": "Container restarts and image pulls" },
+        { "topic": "deploy_dagu", "label": "Dagu DAG failures" },
+        { "topic": "health_mesh", "label": "WireGuard mesh reachability" },
+        { "topic": "health_endpoints", "label": "HTTP endpoint checks" },
+        { "topic": "health_dns", "label": "DNS resolution checks" },
+        { "topic": "health_resources", "label": "Host resource pressure" },
+        { "topic": "health_containers", "label": "Container health" },
+        { "topic": "health_report_cloud-health-full-daily", "label": "Daily full health report" },
+        { "topic": "health_report_cloud-health-full-2", "label": "Full health report (2)" },
+        { "topic": "health_report_cloud-mail-health-full", "label": "Mail health report" },
+        { "topic": "health_report_cloud-sec-data-report", "label": "Security data report" },
+        { "topic": "health_report_cloud-sec-network-report", "label": "Security network report" }
+      ]
+    }
+  },
   "ui": {
     "_doc": "#868 THE navigation declaration (libs:bottomnav NavDecl): ui.bottom_nav is the island's five ids, ui.sections the section each one opens, ui.default_section where the app opens. Each section's FIRST page is what its island item does: a page with no `action` is a DESTINATION of SternaApp's NavHost and its id IS the route (inbox / home / rss); a page whose `action` is `launch:<package>` is a LAUNCH hand-off to another app (Telegram, WhatsApp Business) that leaves mail's selected pill where it was. The labels shown on the island are the localised nav_bar_* strings keyed by section id; Home stays the centre. Reordering bottom_nav reorders the bar and changes nothing else.",
     "bottom_nav": [
@@ -65,12 +95,13 @@
       },
       {
         "id": "rss",
-        "label": "News",
+        "label": "Alerts",
         "icon": "rss",
+        "_doc": "#1624 Renamed News -> Alerts (display label only; the section id and the NavHost route stay \"rss\" so deep-links and the nav-shape contract do not break). The Alerts view is the Alert (RSS) feed reader, backed by Alert (RSS) Accounts (see alerts_rss): the default c3-notify account ships out of the box and the user can add more RSS sources in Configs > Alert (RSS) accounts.",
         "pages": [
           {
             "id": "rss",
-            "label": "News",
+            "label": "Alerts",
             "icon": "rss_feed"
           }
         ]

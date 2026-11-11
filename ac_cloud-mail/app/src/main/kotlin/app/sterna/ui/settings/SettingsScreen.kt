@@ -64,6 +64,7 @@ import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.RssFeed
 import androidx.compose.material3.AlertDialog
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.role
@@ -233,6 +234,7 @@ fun SettingsScreen(
                 onOpenNotifications = { entry.navigateOnce { nav.navigate("notifications") } },
                 onOpenVacation = { entry.navigateOnce { nav.navigate("vacation") } },
                 onOpenFilters = { entry.navigateOnce { nav.navigate("filters") } },
+                onOpenAlertAccounts = { entry.navigateOnce { nav.navigate("alertAccounts") } },
                 onOpenPrivacy = { entry.navigateOnce { nav.navigate("privacy") } },
                 onOpenStorage = { entry.navigateOnce { nav.navigate("storage") } },
                 onOpenBackup = { entry.navigateOnce { nav.navigate("backup") } },
@@ -352,6 +354,11 @@ fun SettingsScreen(
         composable("filters") { entry ->
             FiltersScreen(onBack = { entry.navigateOnce { nav.popBackStack() } })
         }
+        // #1624 Configs ▸ Alert (RSS) accounts: the account type behind the Alerts view. The default
+        // c3-notify account ships out of the box; the user adds more RSS sources here.
+        composable("alertAccounts") { entry ->
+            AlertAccountsScreen(onBack = { entry.navigateOnce { nav.popBackStack() } })
+        }
         composable("privacy") { entry ->
             PrivacySecurityScreen(viewModel = viewModel, onBack = { entry.navigateOnce { nav.popBackStack() } })
         }
@@ -389,6 +396,7 @@ private fun SettingsHub(
     onOpenNotifications: () -> Unit,
     onOpenVacation: () -> Unit,
     onOpenFilters: () -> Unit,
+    onOpenAlertAccounts: () -> Unit,
     onOpenPrivacy: () -> Unit,
     onOpenStorage: () -> Unit,
     onOpenBackup: () -> Unit,
@@ -406,6 +414,12 @@ private fun SettingsHub(
                 stringResource(R.string.settings_accounts_title),
                 stringResource(R.string.settings_accounts_summary),
                 onOpenAccounts,
+            )
+            SettingsCategoryRow(
+                Icons.Filled.RssFeed,
+                stringResource(R.string.settings_alert_accounts_title),
+                stringResource(R.string.settings_alert_accounts_summary),
+                onOpenAlertAccounts,
             )
             // Data, not hand-written rows: every row here opens one of THIS app's own Text
             // pages, over this app's own store. They used to open the Cloud Keyboard's pages,

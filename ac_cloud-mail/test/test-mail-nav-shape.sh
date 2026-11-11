@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # cloud-mail's navigation is ONE declaration (#868): build.json::ui, read through libs:bottomnav's NavDecl.
 #
-#   N1  ui.bottom_nav is the seven section ids Mail, News, Tasks, Home, Chat, Video, Contacts, and ui.default_section is one of them
+#   N1  ui.bottom_nav is the seven section ids Mail, Alerts, Tasks, Home, Chat, Video, Contacts, and ui.default_section is one of them
 #   N2  every section's first page is either a DESTINATION (page id = a NavHost route SternaApp serves) or a
 #       `launch:<package>` hand-off; exactly two launch (Telegram, WhatsApp Business), none is a destination
 #   N3  app/build.gradle.kts bakes UI_BOTTOM_NAV, UI_SECTIONS_B64 and UI_DEFAULT_SECTION from build.json::ui
@@ -17,7 +17,7 @@ has() { grep -q -- "$2" "$1" && ok "$3" || bad "$3 ($1)"; }
 code() { awk '{ l=$0; sub(/^[[:space:]]+/,"",l); if (l ~ /^\/\// || l ~ /^\*/ || l ~ /^\/\*/) next; print }' "$@"; }
 
 echo "== N1/N2: the declaration =="
-python3 - "$APP/build.json" "$UI/SternaApp.kt" <<'PY' && ok "bottom_nav is the seven sections (Mail News Tasks Home Chat Video Contacts); launch pages carry launch:<package>, destinations name a served route" || bad "build.json::ui is not a valid mail nav declaration"
+python3 - "$APP/build.json" "$UI/SternaApp.kt" <<'PY' && ok "bottom_nav is the seven sections (Mail Alerts Tasks Home Chat Video Contacts); launch pages carry launch:<package>, destinations name a served route" || bad "build.json::ui is not a valid mail nav declaration"
 import json, re, sys
 ui = json.load(open(sys.argv[1], encoding="utf-8"))["ui"]
 app = open(sys.argv[2], encoding="utf-8").read()

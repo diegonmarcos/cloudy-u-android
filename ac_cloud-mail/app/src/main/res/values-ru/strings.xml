@@ -1217,7 +1217,7 @@
     <string name="browser_view_desktop">Показать как на компьютере</string>
     <string name="browser_view_mobile">Показать как на телефоне</string>
 
-    <string name="rss_title">Новости</string>
+    <string name="rss_title">Оповещения</string>
     <string name="rss_add">Добавить ленту</string>
     <string name="rss_add_hint">Вставьте адрес ленты</string>
     <string name="rss_subscribed">Подписано</string>
@@ -1233,7 +1233,7 @@
     <string name="nav_bar_mail">Почта</string>
     <string name="nav_bar_chat">Чат</string>
     <string name="nav_bar_home">Главная</string>
-    <string name="nav_bar_rss">Новости</string>
+    <string name="nav_bar_rss">Оповещения</string>
     <string name="nav_bar_video">Видео</string>
     <string name="nav_chat_not_installed">Telegram не установлен</string>
     <string name="nav_video_not_installed">WhatsApp Business не установлен</string>
@@ -1432,4 +1432,16 @@
     <string name="settings_offline_status">Офлайн-кэш: %1$s · Последняя синхронизация: %2$s</string>
     <string name="settings_offline_never">никогда</string>
     <string name="message_sign_in_required">Срок входа истёк. Войдите снова, чтобы загрузить это письмо.</string>
+    <!-- #1624 Alert (RSS) accounts: the account type behind the Alerts view. -->
+    <string name="settings_alert_accounts_title">Учётные записи оповещений (RSS)</string>
+    <string name="settings_alert_accounts_summary">Источники оповещений: флот и ваши собственные</string>
+    <string name="alert_accounts_name_hint">Имя (необязательно)</string>
+    <string name="alert_accounts_url_hint">Адрес ленты</string>
+    <string name="alert_accounts_add">Добавить запись</string>
+    <string name="alert_accounts_default_section">По умолчанию</string>
+    <string name="alert_accounts_added_section">Ваши записи RSS</string>
+    <string name="alert_accounts_builtin">Встроенная</string>
+    <string name="alert_accounts_channels_count">Каналов: %1$d</string>
+    <string name="alert_accounts_none">Записей пока нет</string>
+    <string name="alert_accounts_remove">Удалить запись</string>
 </resources>

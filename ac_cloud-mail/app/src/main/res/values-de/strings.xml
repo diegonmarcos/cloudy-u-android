@@ -1194,7 +1194,7 @@
     <string name="browser_view_desktop">Als Desktop anzeigen</string>
     <string name="browser_view_mobile">Als Mobilgerät anzeigen</string>
 
-    <string name="rss_title">News</string>
+    <string name="rss_title">Warnungen</string>
     <string name="rss_add">Feed hinzufügen</string>
     <string name="rss_add_hint">Feed-Adresse einfügen</string>
     <string name="rss_subscribed">Abonniert</string>
@@ -1210,7 +1210,7 @@
     <string name="nav_bar_mail">Mail</string>
     <string name="nav_bar_chat">Chat</string>
     <string name="nav_bar_home">Start</string>
-    <string name="nav_bar_rss">News</string>
+    <string name="nav_bar_rss">Warnungen</string>
     <string name="nav_bar_video">Video</string>
     <string name="nav_chat_not_installed">Telegram ist nicht installiert</string>
     <string name="nav_video_not_installed">WhatsApp Business ist nicht installiert</string>
@@ -1409,4 +1409,16 @@
     <string name="settings_offline_status">Offline-Speicher: %1$s · Letzte Synchronisierung: %2$s</string>
     <string name="settings_offline_never">nie</string>
     <string name="message_sign_in_required">Deine Anmeldung ist abgelaufen. Melde dich erneut an, um diese Nachricht zu laden.</string>
+    <!-- #1624 Alert (RSS) accounts: the account type behind the Alerts view. -->
+    <string name="settings_alert_accounts_title">Warnungen-Konten (RSS)</string>
+    <string name="settings_alert_accounts_summary">Die Quellen der Warnungen: die Flotte und Ihre eigenen</string>
+    <string name="alert_accounts_name_hint">Name (optional)</string>
+    <string name="alert_accounts_url_hint">Feed-Adresse</string>
+    <string name="alert_accounts_add">Konto hinzufügen</string>
+    <string name="alert_accounts_default_section">Standard</string>
+    <string name="alert_accounts_added_section">Ihre RSS-Konten</string>
+    <string name="alert_accounts_builtin">Integriert</string>
+    <string name="alert_accounts_channels_count">%1$d Kanäle</string>
+    <string name="alert_accounts_none">Noch keine Konten</string>
+    <string name="alert_accounts_remove">Konto entfernen</string>
 </resources>

@@ -1250,7 +1250,7 @@
     <string name="browser_view_desktop">Ver como escritorio</string>
     <string name="browser_view_mobile">Ver como móvil</string>
 
-    <string name="rss_title">Noticias</string>
+    <string name="rss_title">Alertas</string>
     <string name="rss_add">Añadir fuente</string>
     <string name="rss_add_hint">Pega una dirección de fuente</string>
     <string name="rss_subscribed">Suscrito</string>
@@ -1266,7 +1266,7 @@
     <string name="nav_bar_mail">Correo</string>
     <string name="nav_bar_chat">Chat</string>
     <string name="nav_bar_home">Inicio</string>
-    <string name="nav_bar_rss">Noticias</string>
+    <string name="nav_bar_rss">Alertas</string>
     <string name="nav_bar_video">Vídeo</string>
     <string name="nav_chat_not_installed">Telegram no está instalado</string>
     <string name="nav_video_not_installed">WhatsApp Business no está instalado</string>
@@ -1465,4 +1465,16 @@
     <string name="settings_offline_status">Caché sin conexión: %1$s · Última sincronización: %2$s</string>
     <string name="settings_offline_never">nunca</string>
     <string name="message_sign_in_required">Tu sesión ha caducado. Vuelve a iniciar sesión para cargar este mensaje.</string>
+    <!-- #1624 Alert (RSS) accounts: the account type behind the Alerts view. -->
+    <string name="settings_alert_accounts_title">Cuentas de Alertas (RSS)</string>
+    <string name="settings_alert_accounts_summary">Las fuentes de Alertas: la flota y las tuyas</string>
+    <string name="alert_accounts_name_hint">Nombre (opcional)</string>
+    <string name="alert_accounts_url_hint">Dirección del feed</string>
+    <string name="alert_accounts_add">Añadir cuenta</string>
+    <string name="alert_accounts_default_section">Predeterminada</string>
+    <string name="alert_accounts_added_section">Tus cuentas RSS</string>
+    <string name="alert_accounts_builtin">Integrada</string>
+    <string name="alert_accounts_channels_count">%1$d canales</string>
+    <string name="alert_accounts_none">Aún no hay cuentas</string>
+    <string name="alert_accounts_remove">Quitar cuenta</string>
 </resources>

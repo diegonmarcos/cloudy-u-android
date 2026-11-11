@@ -361,6 +361,41 @@ class SettingsRepository(context: Context) {
         }
     }
 
+    /** The user-added Alert (RSS) Accounts (#1624): each a name + a feed address, stored as a set of
+     *  line-safe records beside the default c3-notify account (which ships from build.json::alerts_rss
+     *  and is not stored here). The same declared store as every other preference. */
+    val rssAccounts: Flow<List<app.sterna.core.data.rss.StoredAlertRssAccount>> =
+        dataStore.data.map { prefs ->
+            (prefs[KEY_RSS_ACCOUNTS] ?: emptySet())
+                .mapNotNull { app.sterna.core.data.rss.StoredAlertRssAccount.parse(it) }
+                .sortedBy { it.name.lowercase() }
+        }
+
+    /** Add a user Alert (RSS) account. Blank address is a no-op; a duplicate address replaces its name. */
+    suspend fun addRssAccount(name: String, url: String) {
+        val record = app.sterna.core.data.rss.StoredAlertRssAccount(name.trim(), url.trim())
+        if (record.url.isEmpty()) return
+        dataStore.edit { prefs ->
+            val current = prefs[KEY_RSS_ACCOUNTS] ?: emptySet()
+            val withoutSameUrl = current.filter {
+                app.sterna.core.data.rss.StoredAlertRssAccount.parse(it)?.url != record.url
+            }.toSet()
+            prefs[KEY_RSS_ACCOUNTS] = withoutSameUrl + record.serialize()
+        }
+    }
+
+    /** Remove the user Alert (RSS) account whose address is [url]. */
+    suspend fun removeRssAccount(url: String) {
+        val key = url.trim()
+        if (key.isEmpty()) return
+        dataStore.edit { prefs ->
+            val current = prefs[KEY_RSS_ACCOUNTS] ?: emptySet()
+            prefs[KEY_RSS_ACCOUNTS] = current.filter {
+                app.sterna.core.data.rss.StoredAlertRssAccount.parse(it)?.url != key
+            }.toSet()
+        }
+    }
+
     /** New-mail delivery mode; INSTANT (today's behavior) by default. */
     val deliveryMode: Flow<DeliveryMode> = dataStore.data.map { prefs ->
         prefs[KEY_DELIVERY_MODE]?.let { runCatching { DeliveryMode.valueOf(it) }.getOrNull() }
@@ -521,6 +556,7 @@ class SettingsRepository(context: Context) {
         private val KEY_CONFIRM_LINKS = booleanPreferencesKey("confirm_links")
         private val KEY_IMAGE_ALLOWLIST = stringSetPreferencesKey("image_allowlist")
         private val KEY_RSS_FEEDS = stringSetPreferencesKey("rss_feeds")
+        private val KEY_RSS_ACCOUNTS = stringSetPreferencesKey("rss_accounts")
         private val KEY_DELIVERY_MODE = stringPreferencesKey("delivery_mode")
         private val KEY_QUIET_ENABLED = booleanPreferencesKey("quiet_hours_enabled")
         private val KEY_QUIET_START = intPreferencesKey("quiet_hours_start")

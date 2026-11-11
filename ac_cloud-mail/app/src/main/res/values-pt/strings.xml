@@ -1204,7 +1204,7 @@
     <string name="browser_view_desktop">Ver como computador</string>
     <string name="browser_view_mobile">Ver como telemóvel</string>
 
-    <string name="rss_title">Notícias</string>
+    <string name="rss_title">Alertas</string>
     <string name="rss_add">Adicionar feed</string>
     <string name="rss_add_hint">Cole um endereço de feed</string>
     <string name="rss_subscribed">Inscrito</string>
@@ -1220,7 +1220,7 @@
     <string name="nav_bar_mail">Correio</string>
     <string name="nav_bar_chat">Chat</string>
     <string name="nav_bar_home">Início</string>
-    <string name="nav_bar_rss">Notícias</string>
+    <string name="nav_bar_rss">Alertas</string>
     <string name="nav_bar_video">Vídeo</string>
     <string name="nav_chat_not_installed">O Telegram não está instalado</string>
     <string name="nav_video_not_installed">O WhatsApp Business não está instalado</string>
@@ -1419,4 +1419,16 @@
     <string name="settings_offline_status">Cache offline: %1$s · Última sincronização: %2$s</string>
     <string name="settings_offline_never">nunca</string>
     <string name="message_sign_in_required">Sua sessão expirou. Entre novamente para carregar esta mensagem.</string>
+    <!-- #1624 Alert (RSS) accounts: the account type behind the Alerts view. -->
+    <string name="settings_alert_accounts_title">Contas de Alertas (RSS)</string>
+    <string name="settings_alert_accounts_summary">As fontes de Alertas: a frota e as suas</string>
+    <string name="alert_accounts_name_hint">Nome (opcional)</string>
+    <string name="alert_accounts_url_hint">Endereço do feed</string>
+    <string name="alert_accounts_add">Adicionar conta</string>
+    <string name="alert_accounts_default_section">Predefinida</string>
+    <string name="alert_accounts_added_section">As suas contas RSS</string>
+    <string name="alert_accounts_builtin">Integrada</string>
+    <string name="alert_accounts_channels_count">%1$d canais</string>
+    <string name="alert_accounts_none">Ainda sem contas</string>
+    <string name="alert_accounts_remove">Remover conta</string>
 </resources>

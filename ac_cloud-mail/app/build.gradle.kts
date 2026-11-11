@@ -110,6 +110,16 @@ val mailInboxSplitB64: String = (mailBuildJson["mail_inbox_split"] as Map<String
     ?.let { Base64.getEncoder().encodeToString(it) }
     ?: error("build.json::mail_inbox_split is missing: it declares which senders are alerts.")
 
+// #1624 build.json::alerts_rss (the Alert (RSS) Accounts declaration: the default c3-notify account
+// and its channels), baked for DefaultAlertRssAccount. A missing block is a build failure: the
+// Alerts view would have no default account to ship out of the box.
+@Suppress("UNCHECKED_CAST")
+val mailAlertsRssB64: String = (mailBuildJson["alerts_rss"] as Map<String, Any>?)
+    ?.let { groovy.json.JsonOutput.toJson(it) }
+    ?.toByteArray(Charsets.UTF_8)
+    ?.let { Base64.getEncoder().encodeToString(it) }
+    ?: error("build.json::alerts_rss is missing: it declares the default Alert (RSS) account (c3-notify) and its channels.")
+
 // #868 THE navigation declaration: build.json::ui (bottom_nav, sections, default_section), baked for
 // libs:bottomnav's NavDecl. Read from THIS app's build.json and nowhere else; a missing block is a
 // build failure, because an app with no declaration opens on a blank bar.
@@ -234,6 +244,7 @@ android {
         buildConfigField("String", "LIST_DEFAULT_RANK", "\"${mailListDefaults["rank"]}\"")
         buildConfigField("String", "LIST_DEFAULT_FILTER", "\"${mailListDefaults["filter"]}\"")
         buildConfigField("String", "INBOX_SPLIT_B64", "\"$mailInboxSplitB64\"")
+        buildConfigField("String", "ALERTS_RSS_B64", "\"$mailAlertsRssB64\"")
         buildConfigField("String", "CAL_ENGINE_PACKAGE", "\"$calEnginePackage\"")
         buildConfigField("String", "CAL_ENGINE_ACTION", "\"$mailCalEngineAction\"")
         buildConfigField("int", "CAL_ENGINE_MIN_CONTRACT", "${mailCalEngine["min_contract"]}")

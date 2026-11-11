@@ -9,7 +9,7 @@ import org.junit.Assert.assertNotEquals
 import org.junit.Test
 import java.io.File
 
-/** The bottom nav is the 7 items Mail, News, Tasks, Home, Chat, Video, Contacts, in that order. */
+/** The bottom nav is the 7 items Mail, Alerts, Tasks, Home, Chat, Video, Contacts, in that order. */
 class BottomNavSevenItemsTest {
     private val ui by lazy {
         val root = generateSequence(File("").absoluteFile) { it.parentFile }.first { File(it, "build.json").isFile && File(it, "app").isDirectory }

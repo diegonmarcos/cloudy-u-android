@@ -1296,7 +1296,7 @@
 
     <!-- RSS reader (#465): the News item's destination. Every state the reader can be in has a
          specific sentence so a feed that will not load is never a silent empty box. -->
-    <string name="rss_title">News</string>
+    <string name="rss_title">Alerts</string>
     <string name="rss_add">Add feed</string>
     <string name="rss_add_hint">Paste a feed address</string>
     <string name="rss_subscribed">Subscribed</string>
@@ -1316,7 +1316,7 @@
     <string name="nav_bar_mail">Mail</string>
     <string name="nav_bar_chat">Chat</string>
     <string name="nav_bar_home">Home</string>
-    <string name="nav_bar_rss">News</string>
+    <string name="nav_bar_rss">Alerts</string>
     <string name="nav_bar_video">Video</string>
     <!-- The launch items are interim links to other apps (Diego: "for now"). The sentence is what
          the bar says when the target app is not on the device — honest and specific, never a
@@ -1518,4 +1518,16 @@
     <string name="settings_offline_status">Offline cache: %1$s · Last sync: %2$s</string>
     <string name="settings_offline_never">never</string>
     <string name="message_sign_in_required">Your sign-in has expired. Sign in again to load this message.</string>
+    <!-- #1624 Alert (RSS) accounts: the account type behind the Alerts view. -->
+    <string name="settings_alert_accounts_title">Alert (RSS) accounts</string>
+    <string name="settings_alert_accounts_summary">The Alerts feed sources: the fleet default and your own</string>
+    <string name="alert_accounts_name_hint">Name (optional)</string>
+    <string name="alert_accounts_url_hint">Feed address</string>
+    <string name="alert_accounts_add">Add account</string>
+    <string name="alert_accounts_default_section">Default</string>
+    <string name="alert_accounts_added_section">Your RSS accounts</string>
+    <string name="alert_accounts_builtin">Built-in</string>
+    <string name="alert_accounts_channels_count">%1$d channels</string>
+    <string name="alert_accounts_none">No accounts added yet</string>
+    <string name="alert_accounts_remove">Remove account</string>
 </resources>

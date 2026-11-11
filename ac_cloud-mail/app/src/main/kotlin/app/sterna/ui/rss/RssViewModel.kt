@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -40,12 +41,18 @@ class RssViewModel(application: Application) : AndroidViewModel(application) {
     private val settings = application.container.settingsRepository
     private val fetcher = RssFetcher()
 
-    /** The subscribed feed addresses, live from the settings store. */
-    val subscriptions: StateFlow<Set<String>> = settings.rssFeeds.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = emptySet(),
-    )
+    /** Every feed address the Alerts view shows (#1624): the default c3-notify account's channels
+     *  (shipped out of the box through [DefaultAlertRssAccount]), the user's added Alert (RSS)
+     *  accounts, and the legacy flat subscriptions — unioned, so a channel declared by the fleet and
+     *  a feed the user pasted both appear. Live from the settings store, so it survives restarts. */
+    val subscriptions: StateFlow<Set<String>> =
+        combine(settings.rssFeeds, settings.rssAccounts) { legacy, accounts ->
+            DefaultAlertRssAccount.feedUrls().toSet() + accounts.map { it.url }.toSet() + legacy
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = DefaultAlertRssAccount.feedUrls().toSet(),
+        )
 
     private val _feeds = MutableStateFlow<List<RssFeedUi>>(emptyList())
 

@@ -1214,7 +1214,7 @@
     <string name="browser_view_desktop">Wyświetl jak na komputerze</string>
     <string name="browser_view_mobile">Wyświetl jak na telefonie</string>
 
-    <string name="rss_title">Wiadomości</string>
+    <string name="rss_title">Alerty</string>
     <string name="rss_add">Dodaj kanał</string>
     <string name="rss_add_hint">Wklej adres kanału</string>
     <string name="rss_subscribed">Subskrybowano</string>
@@ -1230,7 +1230,7 @@
     <string name="nav_bar_mail">Poczta</string>
     <string name="nav_bar_chat">Czat</string>
     <string name="nav_bar_home">Start</string>
-    <string name="nav_bar_rss">Wiadomości</string>
+    <string name="nav_bar_rss">Alerty</string>
     <string name="nav_bar_video">Wideo</string>
     <string name="nav_chat_not_installed">Telegram nie jest zainstalowany</string>
     <string name="nav_video_not_installed">WhatsApp Business nie jest zainstalowany</string>
@@ -1429,4 +1429,16 @@
     <string name="settings_offline_status">Pamięć offline: %1$s · Ostatnia synchronizacja: %2$s</string>
     <string name="settings_offline_never">nigdy</string>
     <string name="message_sign_in_required">Logowanie wygasło. Zaloguj się ponownie, aby wczytać tę wiadomość.</string>
+    <!-- #1624 Alert (RSS) accounts: the account type behind the Alerts view. -->
+    <string name="settings_alert_accounts_title">Konta alertów (RSS)</string>
+    <string name="settings_alert_accounts_summary">Źródła alertów: flota i Twoje własne</string>
+    <string name="alert_accounts_name_hint">Nazwa (opcjonalnie)</string>
+    <string name="alert_accounts_url_hint">Adres kanału</string>
+    <string name="alert_accounts_add">Dodaj konto</string>
+    <string name="alert_accounts_default_section">Domyślne</string>
+    <string name="alert_accounts_added_section">Twoje konta RSS</string>
+    <string name="alert_accounts_builtin">Wbudowane</string>
+    <string name="alert_accounts_channels_count">Kanały: %1$d</string>
+    <string name="alert_accounts_none">Brak kont</string>
+    <string name="alert_accounts_remove">Usuń konto</string>
 </resources>
