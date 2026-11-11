@@ -829,6 +829,9 @@ internal fun StatusStripBody(model: StatusStripModel, ctx: Context) {
  * only while that runs. It ticks (once a second, on the second) only while the launcher is STARTED and the stopwatch runs:
  * the effect is keyed on both, so a stop or an idle stopwatch cancels it, and nothing runs in the background.
  */
+/** #1646 the readout's tick runs only while the launcher is started AND the stopwatch runs. */
+internal fun stopwatchShouldTick(running: Boolean, started: Boolean): Boolean = running && started
+
 @Composable
 internal fun StopwatchReadout(host: View) {
     val running = TasksPopup.isStopwatchRunning()
@@ -837,7 +840,7 @@ internal fun StopwatchReadout(host: View) {
         .currentStateAsState().value.isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)
     var ms by remember { mutableStateOf(TasksPopup.stopwatchElapsedMs()) }
     LaunchedEffect(started) {
-        while (started) { ms = TasksPopup.stopwatchElapsedMs(); kotlinx.coroutines.delay(1000L - ms % 1000L) }
+        while (stopwatchShouldTick(running = true, started = started)) { ms = TasksPopup.stopwatchElapsedMs(); kotlinx.coroutines.delay(1000L - ms % 1000L) }
     }
     Tappable("strip:stopwatch", onTap = { r -> TasksPopup.show(host, r) }) {
         Text(

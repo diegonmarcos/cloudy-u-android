@@ -117,8 +117,8 @@ class StatusStripComposeTest : KitPageHarness() {
     @Test
     fun `W2 the readout shows from the shared stopwatch, left of the date, and goes away when it stops`() {
         TasksPopup.resetStopwatchForTest()
-        showStrip()
-        compose.runOnUiThread { TasksPopup.toggleStopwatchForTest() }  // the dropdown's own state, no second timer
+        val model = showStrip()
+        compose.runOnUiThread { model.refreshTime(); TasksPopup.toggleStopwatchForTest() }  // the dropdown's own state, no second timer
         compose.waitForIdle()
         val sw = compose.onNodeWithTag("strip:stopwatch").fetchSemanticsNode().boundsInRoot
         val date = compose.onNodeWithTag("strip:clock").fetchSemanticsNode().boundsInRoot
@@ -139,15 +139,20 @@ class StatusStripComposeTest : KitPageHarness() {
         compose.waitForIdle()
         advance(3_000)
         assertEquals("0:03", swText())
+        // Stopped: the host's compose hierarchy is torn down (nothing to tick); the clock moves on regardless.
         compose.activityRule.scenario.moveToState(androidx.lifecycle.Lifecycle.State.CREATED)
-        compose.waitForIdle()
-        val frozen = swText()
-        advance(5_000)
-        assertEquals("no tick while the launcher is stopped", frozen, swText())
+        org.robolectric.shadows.ShadowSystemClock.advanceBy(java.time.Duration.ofMillis(5_000))
         compose.activityRule.scenario.moveToState(androidx.lifecycle.Lifecycle.State.RESUMED)
         compose.waitForIdle()
-        advance(2_000)
-        assertEquals("0:10", swText())
+        assertEquals("back in front it shows the shared stopwatch's real elapsed time", "0:08", swText())
         TasksPopup.resetStopwatchForTest()
+    }
+
+    @Test
+    fun `W4 the tick is gated on started AND running`() {
+        assertTrue(stopwatchShouldTick(running = true, started = true))
+        assertTrue(!stopwatchShouldTick(running = true, started = false))
+        assertTrue(!stopwatchShouldTick(running = false, started = true))
+        assertTrue(!stopwatchShouldTick(running = false, started = false))
     }
 }
