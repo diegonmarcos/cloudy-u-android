@@ -190,7 +190,7 @@ public fun FleetConfigsScreen(
             }
             FleetConfigsTabs(shown, dark) { shown = it }
             if (shownExtra != null) {
-                shownExtra.body(dark)
+                FleetConfigsExtensions.Body(shownExtra, dark)
             } else when (shownBase) {
                 FleetConfigsPage.Perms -> FleetPermsPage(c)
                 FleetConfigsPage.About -> FleetAboutPage(decl, c)
@@ -282,13 +282,8 @@ private const val COLUMNS = 4
 /** #1439 General | Perms | About on the top nav: the shared strip (libs:ui-nav-bars NavBarTopSecondRow), first on every app's Configs. */
 @Composable
 public fun FleetConfigsTabs(selectedId: String, dark: Boolean, onSelect: (String) -> Unit) {
-    val pages = FleetConfigsPage.entries.map { com.diegonmarcos.superapp.bottomnav.NavPage(it.id, it.label, it.icon) }
-    // #1443 opted-in tabs (Logcat, X-Ray) draw between Perms and About; an app that opts into none shows the three base tabs.
-    val extras = FleetConfigsExtensions.all()
-    val shownPages = if (extras.isEmpty()) pages else {
-        val at = pages.indexOfFirst { it.id == FleetConfigsPage.About.id }.let { if (it < 0) pages.size else it }
-        pages.toMutableList().apply { addAll(at, extras.map { com.diegonmarcos.superapp.bottomnav.NavPage(it.id, it.label, it.icon) }) }
-    }
+    // #1630 [General + own tabs] | Agents, Perms, Logcat, X-Ray App, About (FleetConfigsExtensions.stripOrder); the `|` is drawn by the strip.
+    val shownPages = FleetConfigsExtensions.stripOrder()
     com.diegonmarcos.superapp.navbartop2.NavBarTopSecondRow(
         pages = shownPages,
         selectedId = selectedId,
@@ -318,7 +313,7 @@ public fun FleetConfigsPageBody(id: String, dark: Boolean = true, onAppConfigs: 
             FleetConfigsPage.About.id -> FleetAboutPage(FleetConfigs.current, c)
             else -> {
                 val extra = FleetConfigsExtensions.byId(id)
-                if (extra != null) extra.body(dark) else FleetGeneralPage(FleetConfigs.current, dark, c, onAppConfigs = onAppConfigs)
+                if (extra != null) FleetConfigsExtensions.Body(extra, dark) else FleetGeneralPage(FleetConfigs.current, dark, c, onAppConfigs = onAppConfigs)
             }
         }
     }

@@ -17,6 +17,10 @@ DECLARATION  1_cicd/src/data/configs-pages.json::tabs (the required first ids, t
       pages (a `tabs.draw` needle in its non-test sources), so the order cannot be declared in build.json yet drawn by nothing
   T6  (#1470) an app may keep an order its owner chose, but only by name in tabs.app_order with its exact `order` and a reason;
       its declarations must equal that order, so the exception is per app and never loosens another app
+  T7  (#1630) the fleet-default tail: the strip is [General + own tabs] | Agents, Perms, Logcat, X-Ray App, About. The lib holds that
+      order (FleetConfigsExtensions.TAIL_IDS + stripOrder), and every app that reaches the shared screen links the three
+      opt-in libs (libs:fleetconfigs-agents / -logcat / -xray in build.json::modules) or is named in tabs.tail.pending with a
+      reason; a pending entry for an app that links all three is stale (delete it in the commit that wires the app)
   T5  every a[acd]_* directory is checked: one without a build.json is named in tabs.no_build_json with a reason
 
 USAGE  cloud-android-configs-tabs-guard.py [ROOT]      EXIT 0 ok · 1 at least one violation
@@ -160,6 +164,38 @@ def main(argv):
             bad.append("T3 tabs.pending names no app: " + app)
         if len(reason) < MIN_REASON:
             bad.append("T3 tabs.pending %s: the reason is shorter than %d chars" % (app, MIN_REASON))
+
+    # T7 the fleet-default tail (#1630)
+    tail = rule.get("tail")
+    if tail:
+        try:
+            ext = open(os.path.join(root, tail["file"])).read()
+        except OSError:
+            ext = ""
+            bad.append("T7 the extensions source is missing: " + tail["file"])
+        if ext:
+            m = re.search(r"TAIL_IDS: List<String> = listOf\(([^)]*)\)", ext)
+            ids = re.findall(r'"([a-z_]+)"', m.group(1)) if m else []
+            if ids != tail["ids"]:
+                bad.append("T7 FleetConfigsExtensions.TAIL_IDS is %s, not %s" % ("|".join(ids) or "missing", "|".join(tail["ids"])))
+            for n in tail.get("needles", []):
+                if n not in ext:
+                    bad.append("T7 the shared strip no longer builds the tail (%r missing)" % n)
+        tpend = {k: v for k, v in tail.get("pending", {}).items() if not k.startswith("_")}
+        for app, d in apps.items():
+            if app in exempt or app in unreached:
+                continue
+            mods = set((d.get("modules") or {}).keys())
+            missing = [l for l in tail["libs"] if l not in mods]
+            if missing and app not in tpend:
+                bad.append("T7 %s: Configs lacks the fleet-default tail (link %s) or name it in tabs.tail.pending" % (app, ", ".join(missing)))
+            elif not missing and app in tpend:
+                bad.append("T7 %s: has the tail now; delete its entry in configs-pages.json::tabs.tail.pending" % app)
+        for app, reason in tpend.items():
+            if app not in apps:
+                bad.append("T7 tabs.tail.pending names no app: " + app)
+            if len(reason) < MIN_REASON:
+                bad.append("T7 tabs.tail.pending %s: the reason is shorter than %d chars" % (app, MIN_REASON))
 
     for b in bad:
         print("FAIL  " + b)

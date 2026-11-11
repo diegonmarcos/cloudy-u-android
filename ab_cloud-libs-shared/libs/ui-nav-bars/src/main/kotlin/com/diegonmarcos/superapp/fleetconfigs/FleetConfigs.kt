@@ -67,6 +67,17 @@ public data class FleetConfigsDecl(
     val general: List<GeneralSection>,
     val about: AboutDecl,
     val update: UpdateDecl,
+    /** #1630 build.json::fleet_agents of this app, drawn by the Agents tab (libs:fleetconfigs-agents). Empty when none declared. */
+    val agents: List<FleetAgentRow> = emptyList(),
+)
+
+/** #1630 One row of build.json::fleet_agents as the Agents tab shows it (the shape is aa_cloud-superapp/build.json::_doc_fleet_agents). */
+public data class FleetAgentRow(
+    val id: String,
+    val name: String,
+    val kind: String,
+    val trigger: String,
+    val summary: String,
 )
 
 public object FleetConfigs {
@@ -183,6 +194,9 @@ public object FleetConfigs {
                 assets = u.optJSONObject("assets")?.let { j -> j.keys().asSequence().associateWith { j.optString(it) } }.orEmpty(),
                 appDir = o.optString("app"),
             ),
+            agents = o.optJSONArray("agents").objects().map {
+                FleetAgentRow(it.optString("id"), it.optString("name").ifBlank { it.optString("id") }, it.optString("kind"), it.optString("trigger"), it.optString("summary"))
+            },
         )
     }
 

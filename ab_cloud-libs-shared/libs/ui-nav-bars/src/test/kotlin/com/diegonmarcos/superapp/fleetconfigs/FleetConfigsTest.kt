@@ -24,6 +24,14 @@ class FleetConfigsTest {
          "update":{"repo":"o/r","tag":"latest","assets":{"arm64-v8a":"X.apk","x86_64":"X-x86_64.apk"}}}
     """.trimIndent()
 
+    @Test fun `fleet_agents rows decode for the Agents tab`() {
+        val d = FleetConfigs.parse("""{"app":"x","agents":[{"id":"a1","name":"A One","kind":"worker","trigger":"periodic","summary":"does a"},{"id":"a2"}]}""")
+        assertEquals(listOf("a1", "a2"), d.agents.map { it.id })
+        assertEquals("A One", d.agents[0].name)
+        assertEquals("a2", d.agents[1].name)   // a nameless row shows its id
+        assertTrue(FleetConfigs.parse("""{"app":"x"}""").agents.isEmpty())
+    }
+
     @Test fun `a declaration decodes field by field`() {
         val d = FleetConfigs.decode(java.util.Base64.getEncoder().encodeToString(json.toByteArray()))
         assertEquals("Cloud X", d.name)

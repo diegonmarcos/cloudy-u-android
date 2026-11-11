@@ -7,7 +7,8 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
 GUARD="$ROOT/1_cicd/src/scripts/cloud-android-configs-tabs-guard.py"
 DATA=1_cicd/src/data/configs-pages.json
 LIB=ab_cloud-libs-shared/libs/ui-nav-bars/src/main/kotlin/com/diegonmarcos/superapp/fleetconfigs/FleetConfigsPages.kt
-for f in "$GUARD" "$ROOT/$DATA" "$ROOT/$LIB"; do
+EXT=ab_cloud-libs-shared/libs/ui-nav-bars/src/main/kotlin/com/diegonmarcos/superapp/fleetconfigs/FleetConfigsExtensions.kt
+for f in "$GUARD" "$ROOT/$DATA" "$ROOT/$LIB" "$ROOT/$EXT"; do
     [ -f "$f" ] || { echo "ERROR missing source: $f — this test is unrun, not passing"; exit 1; }
 done
 export PYTHONDONTWRITEBYTECODE=1
@@ -21,7 +22,7 @@ out="$(cd "$ROOT" && python3 "$GUARD" .)"; rc=$?
 if [ "$rc" -eq 0 ]; then ok "the real tree passes ($(tail -1 <<<"$out"))"; else fail "the real tree is red"; printf '%s\n' "$out"; fi
 
 mkdir -p "$BASE"
-( cd "$ROOT" && for f in a[acd]_*/build.json "$DATA" "$LIB" ac_cloud-media-center/web/assets/configs.js $(grep -rlE 'FleetConfigsPageBody\(|FleetGeneralPage\(|FleetConfigsScreen\(' --include=*.kt --include=*.java a[acd]_* 2>/dev/null | grep -vE '/(test|androidTest)/'); do mkdir -p "$BASE/$(dirname "$f")"; cp "$f" "$BASE/$f"; done )
+( cd "$ROOT" && for f in a[acd]_*/build.json "$DATA" "$LIB" "$EXT" ac_cloud-media-center/web/assets/configs.js $(grep -rlE 'FleetConfigsPageBody\(|FleetGeneralPage\(|FleetConfigsScreen\(' --include=*.kt --include=*.java a[acd]_* 2>/dev/null | grep -vE '/(test|androidTest)/'); do mkdir -p "$BASE/$(dirname "$f")"; cp "$f" "$BASE/$f"; done )
 python3 "$GUARD" "$BASE" >/dev/null || fail "the fixture is red before any mutation"
 
 # mutant NAME RULE PYTHON — PYTHON edits the fixture (cwd = fixture) and must change a file; the guard must go red naming RULE.
@@ -92,6 +93,22 @@ mutant "the Media Center exception drops a shared page" T6 "$J
 d = load('$DATA'); o = d['tabs']['app_order']['ac_cloud-media-center']['order']; o.remove('perms'); save('$DATA', d)"
 mutant "an app that no longer reaches the shared screen" T1 "$J
 d = load('$DATA'); d['pending']['ac_cloud-tasks'] = 'x' * 40; save('$DATA', d)"
+
+# #1630 the fleet-default tail: Agents, Perms, Logcat, X-Ray App, About after a | (T7)
+mutant "the lib reorders the tail (Logcat before Perms)" T7 "
+p = '$EXT'; s = open(p).read(); a = 'listOf(\"agents\", \"perms\", \"logcat\"'; assert a in s
+open(p, 'w').write(s.replace(a, 'listOf(\"agents\", \"logcat\", \"perms\"'))"
+mutant "the lib drops the custom X-Ray hook" T7 "
+p = '$EXT'; s = open(p).read(); a = 'public fun registerXrayPage('; assert a in s
+open(p, 'w').write(s.replace(a, 'public fun registerXrayPageGone('))"
+mutant "an app is wired without the Agents lib and not pending" T7 "$J
+d = load('ad_Capital-Stack-FinTerminal/build.json'); del d['modules']['libs:fleetconfigs-agents']; save('ad_Capital-Stack-FinTerminal/build.json', d)"
+mutant "a wired app stays in tail.pending (stale)" T7 "$J
+d = load('$DATA'); d['tabs']['tail']['pending']['ad_Capital-Stack-FinTerminal'] = 'x' * 40; save('$DATA', d)"
+mutant "tail.pending names no app" T7 "$J
+d = load('$DATA'); d['tabs']['tail']['pending']['ac_cloud-nope'] = 'x' * 40; save('$DATA', d)"
+mutant "tail.pending reason too short" T7 "$J
+d = load('$DATA'); k = [a for a in d['tabs']['tail']['pending'] if not a.startswith('_')][0]; d['tabs']['tail']['pending'][k] = 'later'; save('$DATA', d)"
 
 echo "configs-tabs-guard.test: $PROVEN mutation(s) proven red, $FAILURES failure(s)"
 [ "$FAILURES" -eq 0 ]

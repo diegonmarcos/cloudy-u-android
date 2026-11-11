@@ -111,6 +111,9 @@ ext.fleetConfigsB64 = { ->
         superapp_pkg  : sibling('aa_cloud-superapp')?.android?.application_id ?: '',
         general       : cp.general ?: [:],
         about         : about,
+        agents        : (app.fleet_agents instanceof List ? app.fleet_agents : []).findAll { it instanceof Map }.collect { a ->
+            [id: a.id ?: '', name: a.name ?: '', kind: a.kind ?: '', trigger: a.trigger ?: '', summary: a.summary ?: '']
+        },
         update        : [repo: 'diegonmarcos/cloudy-u-android', tag: rel.gh_release?.rolling_tag ?: 'latest', assets: assets],
     ]
     JsonOutput.toJson(out).getBytes('UTF-8').encodeBase64().toString()

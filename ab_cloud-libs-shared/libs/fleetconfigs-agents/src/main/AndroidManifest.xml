@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <!-- #1630 registers the Configs > Agents tab at process start (FleetAgentsTab -> FleetConfigsExtensions). Merged into every app
+             that links libs:fleetconfigs-agents; not exported, answers no query. -->
+        <provider
+            android:name="com.diegonmarcos.superapp.fleetagents.FleetAgentsInitProvider"
+            android:authorities="${applicationId}.fleetagents.init"
+            android:exported="false" />
+    </application>
+</manifest>

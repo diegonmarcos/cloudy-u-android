@@ -291,7 +291,7 @@
       "file": "ab_cloud-libs-shared/libs/ui-nav-bars/src/main/kotlin/com/diegonmarcos/superapp/fleetconfigs/FleetConfigsPages.kt",
       "enum": "public enum class FleetConfigsPage(",
       "screen_needle": "FleetConfigsTabs(shown, dark)",
-      "tabs_needle": "pages = FleetConfigsPage.entries.map"
+      "tabs_needle": "FleetConfigsExtensions.stripOrder()"
     },
     "draw": [
       "FleetConfigsPageBody(",
@@ -336,6 +336,68 @@
         ],
         "reason": "The owner chose the media areas first, then Apify, then General | Perms | About for Cloud Media Center (#1469), mirroring Cloud News (#1470); its Configs is a web page.",
         "source": "ac_cloud-media-center/web/assets/configs.js"
+      }
+    },
+    "tail": {
+      "_doc": "#1630 THE Configs strip of every app: [General + the app's own tabs] | Agents, Perms, Logcat, X-Ray App, About. The lib draws the order (FleetConfigsExtensions.stripOrder) over whatever the app registers; Agents, Logcat and X-Ray App come from the opt-in libs `libs`, which an app links in build.json::modules and app/build.gradle (they register themselves, no Kotlin); Perms and About are always drawn. An app may draw its OWN X-Ray App page (render diagnostics etc.) with FleetConfigsExtensions.registerXrayPage { dark -> ... } (the tab keeps its place in the tail). `pending` is the roll-out ledger: an app not yet wired, each with a reason; delete the entry in the commit that wires it (the guard fails a stale one).",
+      "file": "ab_cloud-libs-shared/libs/ui-nav-bars/src/main/kotlin/com/diegonmarcos/superapp/fleetconfigs/FleetConfigsExtensions.kt",
+      "ids": [
+        "agents",
+        "perms",
+        "logcat",
+        "xray",
+        "about"
+      ],
+      "needles": [
+        "public fun stripOrder(",
+        "separatorBefore = true",
+        "public fun registerXrayPage("
+      ],
+      "libs": [
+        "libs:fleetconfigs-agents",
+        "libs:fleetconfigs-logcat",
+        "libs:fleetconfigs-xray"
+      ],
+      "pending": {
+        "_doc": "Apps whose Configs does not carry the fleet-default tail yet.",
+        "ac_c3-morpheus": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
+        "ac_c3-watchdog": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
+        "ac_c3-watchtower": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
+        "ac_cloud-account": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
+        "ac_cloud-browser": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
+        "ac_cloud-c3": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
+        "ac_cloud-c3-webserver": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
+        "ac_cloud-calc": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
+        "ac_cloud-camera": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
+        "ac_cloud-code": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
+        "ac_cloud-contacts": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
+        "ac_cloud-dialer": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
+        "ac_cloud-drive": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
+        "ac_cloud-gallery": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
+        "ac_cloud-keyboard": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
+        "ac_cloud-kg-store": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
+        "ac_cloud-mail": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
+        "ac_cloud-matrix": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
+        "ac_cloud-me": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
+        "ac_cloud-media-center": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
+        "ac_cloud-myterminal": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
+        "ac_cloud-nav": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
+        "ac_cloud-news": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
+        "ac_cloud-nix-on-droid": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
+        "ac_cloud-notes": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
+        "ac_cloud-search": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
+        "ac_cloud-shopping": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
+        "ac_cloud-store": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
+        "ac_cloud-superintel": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
+        "ac_cloud-tasks": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
+        "ac_cloud-termux": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
+        "ac_cloud-tools-small-llms": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
+        "ac_cloud-vault": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
+        "ac_cloud-wallet": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
+        "ac_cloud-writer": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
+        "ad_CG-Omniverse": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
+        "ad_Hardtech-CAD": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
+        "ad_Hardtech-Sim2Real": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry."
       }
     }
   },

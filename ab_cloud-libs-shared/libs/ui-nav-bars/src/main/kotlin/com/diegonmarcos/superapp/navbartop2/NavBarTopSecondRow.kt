@@ -220,6 +220,8 @@ public fun NavBarTopSecondRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         shown.forEachIndexed { i, page ->
+            // #1630 a declared group boundary: a "|" character (not a tab) just before this page.
+            if (i > 0 && page.separatorBefore) Text("|", Modifier.testTag("secondrow_sep_" + page.id), color = palette.inkDim)
             SecondRowTab(
                 page, i, shown.size, page.id == selectedId,
                 // #1159 at rest EVERY tab shows its name; scrolled down only the selected one does, and the tab is shorter.

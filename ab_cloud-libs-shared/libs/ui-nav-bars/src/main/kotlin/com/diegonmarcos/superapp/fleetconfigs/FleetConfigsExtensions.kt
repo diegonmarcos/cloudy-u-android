@@ -45,8 +45,53 @@ public object FleetConfigsExtensions {
     /** The opted-in tab with [id], or null. */
     public fun byId(id: String): FleetConfigsTab? = tabs.firstOrNull { it.id == id }
 
+    /** #1630 The fleet-default tab ids, in the order they sit AFTER the `|`: Agents, Perms, Logcat, X-Ray App, About. */
+    public val TAIL_IDS: List<String> = listOf("agents", "perms", "logcat", "xray", "about")
+
+    public const val AGENTS_ID: String = "agents"
+    public const val XRAY_ID: String = "xray"
+
+    @Volatile private var customXray: (@Composable (dark: Boolean) -> Unit)? = null
+
+    /**
+     * #1630 CUSTOM X-RAY HOOK: an app supplies its OWN page for the "X-Ray App" tab instead of the generic profiler (e.g. Hardtech CAD
+     * and CG Omniverse draw render diagnostics). Call once from Application.onCreate (or any init). The tab keeps its place, label and
+     * icon in the fixed tail; when libs:fleetconfigs-xray is not linked the hook registers the tab itself, so it always shows.
+     */
+    public fun registerXrayPage(body: @Composable (dark: Boolean) -> Unit) {
+        customXray = body
+        if (byId(XRAY_ID) == null) register(FleetConfigsTab(XRAY_ID, "X-Ray App", "insights") { })
+    }
+
+    /** Draws [tab]'s page; the X-Ray tab draws the app's custom page when [registerXrayPage] was called. */
+    @Composable
+    public fun Body(tab: FleetConfigsTab, dark: Boolean) {
+        val custom = if (tab.id == XRAY_ID) customXray else null
+        if (custom != null) custom(dark) else tab.body(dark)
+    }
+
+    /**
+     * #1630 THE order of the Configs strip: [General + the app's own tabs] | Agents, Perms, Logcat, X-Ray App, About. A tail tab that is
+     * not registered (Agents, Logcat, X-Ray App come from opt-in libs) is simply absent; Perms and About are always there. Any other
+     * registered tab is an app-own tab and sits before the `|`. The first tail page carries `separatorBefore`, the `|` character.
+     */
+    public fun stripOrder(extras: List<FleetConfigsTab> = all()): List<com.diegonmarcos.superapp.bottomnav.NavPage> {
+        fun page(id: String, label: String, icon: String) = com.diegonmarcos.superapp.bottomnav.NavPage(id, label, icon)
+        val own = extras.filter { it.id !in TAIL_IDS }.map { page(it.id, it.label, it.icon) }
+        val tail = TAIL_IDS.mapNotNull { id ->
+            when (id) {
+                "perms" -> page(FleetConfigsPage.Perms.id, FleetConfigsPage.Perms.label, FleetConfigsPage.Perms.icon)
+                "about" -> page(FleetConfigsPage.About.id, FleetConfigsPage.About.label, FleetConfigsPage.About.icon)
+                else -> extras.firstOrNull { it.id == id }?.let { page(it.id, it.label, it.icon) }
+            }
+        }
+        val head = listOf(page(FleetConfigsPage.General.id, FleetConfigsPage.General.label, FleetConfigsPage.General.icon)) + own
+        return head + tail.mapIndexed { i, p -> if (i == 0) p.copy(separatorBefore = true) else p }
+    }
+
     /** Test seam only: drop every registration. */
     public fun clearForTest() {
         tabs.clear()
+        customXray = null
     }
 }

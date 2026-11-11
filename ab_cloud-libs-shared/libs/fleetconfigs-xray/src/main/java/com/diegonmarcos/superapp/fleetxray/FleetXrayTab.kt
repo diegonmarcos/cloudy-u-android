@@ -16,7 +16,7 @@ public object FleetXrayTab {
     public const val ID: String = "xray"
 
     public fun register() {
-        FleetConfigsExtensions.register(FleetConfigsTab(ID, "X-Ray", "insights") { dark -> FleetXrayPage(dark) })
+        FleetConfigsExtensions.register(FleetConfigsTab(ID, "X-Ray App", "insights") { dark -> FleetXrayPage(dark) })
     }
 }
 

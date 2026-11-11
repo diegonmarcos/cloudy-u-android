@@ -35,6 +35,7 @@
     "ui-nav-bars": { "class": "gui", "why": "#1154 shared navigation + theme: the bottom nav in Compose." },
     "ui-nav-bars": { "class": "gui", "why": "#1154 shared navigation + theme: the first top row in Compose." },
     "ui-nav-bars": { "class": "gui", "why": "#1154 shared navigation + theme: the second top row in Compose." },
+    "fleetconfigs-agents": { "class": "gui", "why": "#1630 the opt-in Configs Agents tab in Compose: the agents this app declares in build.json::fleet_agents, first tab after the | of the fleet-default tail (Agents, Perms, Logcat, X-Ray App, About); compiled into the app, no service, no APK." },
     "fleetconfigs-logcat": { "class": "gui", "why": "#1443 the opt-in Configs Logcat tab in Compose: this app's uid-filtered log stream and its HTML/Markdown export; compiled in only by an app that opts in." },
     "fleetconfigs-xray": { "class": "gui", "why": "#1443 the opt-in Configs X-Ray tab in Compose: the app profiler (13 trackers + Device Profile Scan), its HTML/Markdown export and the adb-shell cockpit deep link; compiled in only by an app that opts in." },
     "theme-background": { "class": "gui", "why": "#1154 shared navigation + theme: the page background and colour roles." },

@@ -44,4 +44,37 @@ class FleetConfigsExtensionsTest {
         assertTrue(isFleetConfigsPage("logcat"))
         assertTrue(!isFleetConfigsPage("logcat-not-registered-xyz"))
     }
+
+    // #1630 the strip is [General + own tabs] | Agents, Perms, Logcat, X-Ray App, About. FIELD PARITY (rule 16): no tab of the previous
+    // shape (General | Perms | <extras> | About) is lost, whatever an app registers.
+    private fun reg(id: String, label: String = id) = FleetConfigsExtensions.register(FleetConfigsTab(id, label, "code") { })
+
+    @Test fun strip_with_no_opt_in_keeps_general_perms_about_with_the_separator_before_perms() {
+        val s = FleetConfigsExtensions.stripOrder()
+        assertEquals(listOf("general", "perms", "about"), s.map { it.id })
+        assertEquals(listOf(false, true, false), s.map { it.separatorBefore })
+    }
+
+    @Test fun strip_puts_the_five_defaults_in_exact_order_whatever_the_registration_order() {
+        reg("xray", "X-Ray App"); reg("logcat"); reg("agents")
+        val s = FleetConfigsExtensions.stripOrder()
+        assertEquals(listOf("general", "agents", "perms", "logcat", "xray", "about"), s.map { it.id })
+        assertEquals(1, s.count { it.separatorBefore })
+        assertEquals("agents", s.first { it.separatorBefore }.id)
+    }
+
+    @Test fun app_own_tabs_stay_before_the_separator_and_none_is_lost() {
+        reg("media"); reg("logcat"); reg("events")
+        val s = FleetConfigsExtensions.stripOrder()
+        assertEquals(listOf("general", "media", "events", "perms", "logcat", "about"), s.map { it.id })
+        val oldShape = listOf("general", "perms", "media", "logcat", "events", "about")   // the pre-#1630 strip
+        assertTrue(s.map { it.id }.containsAll(oldShape))
+        assertEquals("perms", s.first { it.separatorBefore }.id)
+    }
+
+    @Test fun custom_xray_hook_registers_the_tab_when_the_lib_is_not_linked() {
+        FleetConfigsExtensions.registerXrayPage { }
+        assertEquals("X-Ray App", FleetConfigsExtensions.byId("xray")?.label)
+        assertEquals(listOf("general", "perms", "xray", "about"), FleetConfigsExtensions.stripOrder().map { it.id })
+    }
 }
