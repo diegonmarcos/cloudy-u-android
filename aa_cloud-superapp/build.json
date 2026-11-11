@@ -10499,7 +10499,7 @@
          "card": {"rank": 1, "kind": "text", "accent": "#58C4FF"},
          "label": "Weather",
          "click_target": "https://open-meteo.com/en/docs#latitude={lat}&longitude={lon}",
-         "subtitle": "Today where the device is: current temperature, the day's max/min and the hour-by-hour forecast, from Open-Meteo (no key, no account) for the last known position. The place name comes from Android's own geocoder. Location is never actively requested — the badge reads the position someone else already paid for.",
+         "subtitle": "Today where the device is: current temperature, the day's max/min and the hour-by-hour forecast, from Open-Meteo (no key, no account) for the last known position. The place name comes from Android's own geocoder. Location is one single-shot COARSE (cell/Wi-Fi network) fix, never GPS, taken at most once every 4 hours and cached; weather refreshes on the same 4 h cadence.",
          "icon": "ic_p_weather_today",
          "surface": "system_notification",
          "channel": "weather_today",
@@ -10548,11 +10548,9 @@
            "type": "choice",
            "label": "Refresh every",
            "options": [
-            "30",
-            "60",
-            "180"
+            "240"
            ],
-           "default": "60"
+           "default": "240"
           }
          ]
         },

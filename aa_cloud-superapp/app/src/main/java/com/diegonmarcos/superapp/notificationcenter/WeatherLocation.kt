@@ -14,14 +14,16 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 /**
- * Where the Weather badge is, found the cheapest way and never lost.
+ * Where the Weather badge is, found the cheapest way and never lost (#1654).
  *
- * ORDER, cheapest first: (1) the persisted fix when it is fresh, (2) the
- * system's cached fixes - network (Wi-Fi + cell), then passive, then GPS - when
- * fresh, (3) ONE active request to the network provider (Wi-Fi/cell, no GPS
- * radio), (4) an active GPS request only as the last resort. If all of that
- * fails the newest STALE fix we ever had is used: a weather forecast for where
- * the phone was an hour ago beats an empty card.
+ * COARSE ONLY, ONE FIX PER [REFRESH_MS] (4 h). ORDER: (1) the persisted fix
+ * while it is younger than [FRESH_MS] (= 4 h, nothing is asked), (2) the
+ * system's cached NETWORK (Wi-Fi + cell) fix when fresh, (3) ONE single-shot
+ * request to the NETWORK provider. NEVER GPS, never the fine permission, never
+ * the passive or fused high-accuracy path, never requestLocationUpdates, and no
+ * listener is left subscribed: the request is a one-shot getCurrentLocation
+ * that is cancelled on timeout. If it fails the newest STALE fix we ever had
+ * is used: a forecast for where the phone was hours ago beats an empty card.
  *
  * NEVER LOST: every fix found is written to [FixStore] and only a NEWER fix
  * replaces it; a failed refresh writes nothing. When there is truly no fix, the
@@ -33,20 +35,20 @@ import java.util.concurrent.TimeUnit
 object WeatherLocation {
 
     const val NETWORK = "network"
-    const val PASSIVE = "passive"
-    const val GPS = "gps"
     const val STORED = "stored"
 
+    /** Location and weather are refreshed at most once per this (4 h). */
+    const val REFRESH_MS = 4 * 60 * 60_000L
+
     /** A fix younger than this is used as is - no radio is woken for a forecast. */
-    const val FRESH_MS = 45 * 60_000L
+    const val FRESH_MS = REFRESH_MS
     const val NETWORK_TIMEOUT_MS = 10_000L
-    const val GPS_TIMEOUT_MS = 25_000L
 
-    /** Cached fixes the system already holds, cheapest first. */
-    val PEEK_ORDER = listOf(NETWORK, PASSIVE, GPS)
+    /** Cached fixes the system already holds: the coarse network provider only. */
+    val PEEK_ORDER = listOf(NETWORK)
 
-    /** Providers asked for a NEW fix, cheapest first; GPS is the last resort. */
-    val REQUEST_ORDER = listOf(NETWORK, GPS)
+    /** Providers asked for a NEW fix: the coarse network provider only, never GPS. */
+    val REQUEST_ORDER = listOf(NETWORK)
 
     data class Fix(val lat: Double, val lon: Double, val accuracyM: Float, val timeMs: Long, val source: String) {
         val valid: Boolean
@@ -86,10 +88,7 @@ object WeatherLocation {
         else -> Reason.NO_FIX
     }
 
-    private fun allowed(env: Env, provider: String) = when (provider) {
-        GPS -> env.fine
-        else -> env.coarse || env.fine
-    }
+    private fun allowed(env: Env, @Suppress("UNUSED_PARAMETER") provider: String) = env.coarse || env.fine
 
     fun resolve(now: Long, env: Env, probe: Probe, store: FixStore): Result {
         val stored = store.load()
@@ -105,7 +104,7 @@ object WeatherLocation {
             if (fix != null && fix.valid && fresh(now, fix)) return keep(fix, store, true)
         }
         for (p in REQUEST_ORDER.filter { it in usable }) {
-            val fix = probe.request(p, if (p == GPS) GPS_TIMEOUT_MS else NETWORK_TIMEOUT_MS)
+            val fix = probe.request(p, NETWORK_TIMEOUT_MS)
             if (fix != null && fix.valid) return keep(fix, store, true)
         }
         // Nothing fresh: the newest stale fix (persisted or cached by the system) beats an empty card.
@@ -127,7 +126,7 @@ object WeatherLocation {
         private val lm get() = ctx.getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
         override fun enabled(provider: String): Boolean =
-            provider == PASSIVE || runCatching { lm.isProviderEnabled(provider) }.getOrDefault(false)
+            runCatching { lm.isProviderEnabled(provider) }.getOrDefault(false)
 
         @SuppressLint("MissingPermission")
         override fun lastKnown(provider: String): Fix? =

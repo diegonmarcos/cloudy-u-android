@@ -41,8 +41,10 @@ import java.util.Locale
  * "💧40%". It replaced Open-Meteo, whose free tier is rate-shared and whose
  * page was a developer docs form rather than a forecast. Parsing lives in the
  * pure [WeatherModel]. The position comes from [WeatherLocation]: the
- * persisted fix when fresh, then the system's cached fixes, then one network
- * (Wi-Fi/cell) request, GPS only as the last resort; every fix is persisted
+ * persisted fix when fresh, then the system's cached network fix, then ONE
+ * single-shot coarse network (Wi-Fi/cell) request; never GPS, never fine, no listener.
+ * Fix and forecast are refreshed at most once per 4 h ([WeatherLocation.REFRESH_MS]); a start
+ * inside that window re-posts the cached card and asks for nothing. Every fix is persisted
  * and never cleared. The place name comes from
  * Android's own [Geocoder]; when it has no backend the coordinates are shown
  * instead, because a wrong name is worse than an honest number.
@@ -85,10 +87,11 @@ class WeatherBadgeService : Service() {
     private fun badge(): BadgeDeclaration.Badge? =
         BadgeServices.declared.firstOrNull { it.id == BADGE_ID }
 
+    /** Never sooner than 4 h, whatever an older customization stored. */
     private fun refreshMs(): Long {
         val m = badge()?.let { BadgeCustomization.text(this, it, "refresh_minutes") }
             ?.toLongOrNull() ?: DEFAULT_REFRESH_MIN
-        return m.coerceIn(15L, 360L) * 60_000L
+        return (m * 60_000L).coerceIn(WeatherLocation.REFRESH_MS, 24 * 60 * 60_000L)
     }
 
     private fun refresh(startId: Int) {
@@ -125,6 +128,11 @@ class WeatherBadgeService : Service() {
     }
 
     private fun compute(): WeatherFace.State {
+        // Inside the 4 h window: the cached forecast stands, no location request, no fetch.
+        val saved = store.loadForecast()
+        val last = store.load()
+        if (saved != null && last != null && System.currentTimeMillis() - saved.savedMs in 0 until WeatherLocation.REFRESH_MS)
+            cachedState(last)?.let { return it }
         val res = WeatherLocation.resolve(System.currentTimeMillis(), WeatherLocation.env(this),
             WeatherLocation.AndroidProbe(this), store)
         val fix = (res as? WeatherLocation.Result.Found)?.fix
@@ -227,7 +235,7 @@ class WeatherBadgeService : Service() {
         // other one in the shade (#535).
         const val NOTIF_ID = 7715
         private const val CHANNEL_ID = "weather_today"
-        private const val DEFAULT_REFRESH_MIN = 60L
+        private const val DEFAULT_REFRESH_MIN = 240L
 
         /** This badge's id in build.json::ui.notification_center.producers. */
         const val BADGE_ID = "weather_today"

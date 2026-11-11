@@ -8,10 +8,8 @@ import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.location.GnssStatus
 import android.location.Location
-import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Build
-import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
@@ -22,12 +20,11 @@ import android.provider.Settings
  *
  * Battery contract:
  *   [StripWatch]  (the strip's GPS icon, always on while the strip is) asks for NOTHING to be
- *                 computed: the location switch, the provider broadcasts, and the PASSIVE provider,
- *                 which only hands over fixes other apps already asked for. It never wakes GNSS.
- *   [LiveSession] (the popup's GPS section) does ask for GNSS fixes and satellite status, and runs
- *                 only while that section is on screen (NetworkInfoPopup starts it when the section
- *                 scrolls into view and stops it when it leaves or the popup closes), capped at
- *                 [LiveSession.MAX_MS] whatever happens.
+ *                 computed: the location switch, the provider broadcasts and the system's cached
+ *                 fix. It holds NO location subscription (#1654). It never wakes GNSS.
+ *   [LiveSession] (the popup's GPS section) requests NO location (#1654): it shows the cached fix
+ *                 and listens, read-only, to the satellite status other apps cause; it runs only
+ *                 while that section is on screen, capped at [LiveSession.MAX_MS].
  */
 object GpsProbe {
 
@@ -107,28 +104,17 @@ object GpsProbe {
         addAction(LocationManager.MODE_CHANGED_ACTION)
     }
 
-    /** A LocationListener with every method overridden: before API 30 the last three are abstract. */
-    private class Listener(val onFix: (Location) -> Unit, val onProvider: () -> Unit) : LocationListener {
-        override fun onLocationChanged(location: Location) { onFix(location) }
-        override fun onProviderEnabled(provider: String) { onProvider() }
-        override fun onProviderDisabled(provider: String) { onProvider() }
-        @Deprecated("Deprecated in Java")
-        @Suppress("OVERRIDE_DEPRECATION")
-        override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {}
-    }
-
     /**
-     * The strip's feed: [onChange] (main thread) when the location switch or a provider flips, or
-     * another app's fix arrives through the passive provider. Never asks for a fix of its own.
+     * The strip's feed: [onChange] (main thread) when the location switch or a provider flips.
+     * Never asks for a fix of its own.
      */
     class StripWatch(ctx: Context, private val onChange: () -> Unit) {
         private val app = ctx.applicationContext
         @Volatile var last: Location? = null
             private set
         private var started = false
-        private val listener = Listener({ last = it; onChange() }, { onChange() })
         private val receiver = object : BroadcastReceiver() {
-            override fun onReceive(c: Context, i: Intent) { onChange() }
+            override fun onReceive(c: Context, i: Intent) { last = lastKnown(app) ?: last; onChange() }
         }
 
         fun start() {
@@ -139,17 +125,12 @@ object GpsProbe {
                 androidx.core.content.ContextCompat.registerReceiver(app, receiver, broadcastFilter(),
                     androidx.core.content.ContextCompat.RECEIVER_NOT_EXPORTED)
             }
-            if (fineGranted(app) || coarseGranted(app)) runCatching {
-                @Suppress("MissingPermission")
-                lm(app)?.requestLocationUpdates(LocationManager.PASSIVE_PROVIDER, 30_000L, 0f, listener, Looper.getMainLooper())
-            }
         }
 
         fun stop() {
             if (!started) return
             started = false
             runCatching { app.unregisterReceiver(receiver) }
-            runCatching { lm(app)?.removeUpdates(listener) }
         }
 
         /** The dots now (a fix ages between events; the strip re-reads on its minute tick). */
@@ -170,13 +151,6 @@ object GpsProbe {
         @Volatile var sats: List<GpsFix.Sat> = emptyList()
             private set
         private var lastUpdate = 0L
-        private val listener = Listener({ l ->
-            // A GNSS fix outranks a network one of the same moment.
-            val cur = fix
-            if (cur == null || l.provider == LocationManager.GPS_PROVIDER || cur.provider != LocationManager.GPS_PROVIDER ||
-                l.elapsedRealtimeNanos - cur.elapsedRealtimeNanos > 10_000_000_000L) fix = l
-            update()
-        }, { update() })
         private val status: GnssStatus.Callback = object : GnssStatus.Callback() {
             override fun onSatelliteStatusChanged(s: GnssStatus) {
                 sats = (0 until s.satelliteCount).map { i ->
@@ -200,9 +174,6 @@ object GpsProbe {
                 if (Build.VERSION.SDK_INT >= 30) m.registerGnssStatusCallback(app.mainExecutor, status)
                 else m.registerGnssStatusCallback(status, main)
             }
-            for (p in listOf(LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER)) runCatching {
-                if (m.isProviderEnabled(p)) @Suppress("MissingPermission") m.requestLocationUpdates(p, 1_000L, 0f, listener, Looper.getMainLooper())
-            }
             main.postDelayed(cap, MAX_MS)
             update()
         }
@@ -214,7 +185,6 @@ object GpsProbe {
             main.removeCallbacks(flush); pending = false
             val m = lm(app) ?: return
             runCatching { m.unregisterGnssStatusCallback(status) }
-            runCatching { m.removeUpdates(listener) }
             onUpdate()
         }
 

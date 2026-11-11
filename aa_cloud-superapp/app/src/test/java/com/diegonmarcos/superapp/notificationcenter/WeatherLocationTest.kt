@@ -2,9 +2,7 @@ package com.diegonmarcos.superapp.notificationcenter
 
 import com.diegonmarcos.superapp.notificationcenter.WeatherLocation.Env
 import com.diegonmarcos.superapp.notificationcenter.WeatherLocation.Fix
-import com.diegonmarcos.superapp.notificationcenter.WeatherLocation.GPS
 import com.diegonmarcos.superapp.notificationcenter.WeatherLocation.NETWORK
-import com.diegonmarcos.superapp.notificationcenter.WeatherLocation.PASSIVE
 import com.diegonmarcos.superapp.notificationcenter.WeatherLocation.Reason
 import com.diegonmarcos.superapp.notificationcenter.WeatherLocation.Result
 import org.junit.Assert.assertEquals
@@ -12,8 +10,10 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** Provider order, persistence rule and fallback of the Weather badge's position. Pure JVM. */
+/** Coarse-only, one-fix-per-4h rule, persistence rule and fallback of the Weather badge's position (#1654). Pure JVM. */
 class WeatherLocationTest {
+    private val GPS = "gps"
+    private val PASSIVE = "passive"
     private val now = 10_000_000_000L
     private val min = 60_000L
     private val all = Env(coarse = true, fine = true, background = true, anyProviderOn = true)
@@ -40,9 +40,19 @@ class WeatherLocationTest {
         override fun request(provider: String, timeoutMs: Long): Fix? { requests += provider; return fresh[provider] }
     }
 
-    @Test fun orderIsCheapestFirstAndGpsIsLast() {
-        assertEquals(listOf(NETWORK, PASSIVE, GPS), WeatherLocation.PEEK_ORDER)
-        assertEquals(listOf(NETWORK, GPS), WeatherLocation.REQUEST_ORDER)
+    @Test fun onlyTheCoarseNetworkProviderIsEverUsed() {
+        assertEquals(listOf(NETWORK), WeatherLocation.PEEK_ORDER)
+        assertEquals(listOf(NETWORK), WeatherLocation.REQUEST_ORDER)
+    }
+
+    @Test fun refreshIsGatedToFourHours() {
+        assertEquals(4 * 60 * 60_000L, WeatherLocation.REFRESH_MS)
+        assertEquals(WeatherLocation.REFRESH_MS, WeatherLocation.FRESH_MS)
+        // 3h59 old: reused, nothing asked. 4h01 old: one network request.
+        val p1 = FakeProbe(); WeatherLocation.resolve(now, all, p1, MemStore(fix("network", 239)))
+        assertTrue(p1.peeks.isEmpty() && p1.requests.isEmpty())
+        val p2 = FakeProbe(); WeatherLocation.resolve(now, all, p2, MemStore(fix("network", 241)))
+        assertEquals(listOf(NETWORK), p2.requests)
     }
 
     @Test fun freshPersistedFixUsesNoProviderAtAll() {
@@ -52,7 +62,7 @@ class WeatherLocationTest {
         assertTrue(p.peeks.isEmpty() && p.requests.isEmpty())
     }
 
-    @Test fun cachedNetworkFixWinsOverFresherPassiveAndGps() {
+    @Test fun cachedNetworkFixIsUsedAndPassiveGpsAreNeverPeeked() {
         val p = FakeProbe(cached = mapOf(NETWORK to fix(NETWORK, 30), PASSIVE to fix(PASSIVE, 1), GPS to fix(GPS, 1)))
         val s = MemStore()
         val r = WeatherLocation.resolve(now, all, p, s) as Result.Found
@@ -62,28 +72,20 @@ class WeatherLocationTest {
         assertEquals(NETWORK, s.fix?.source)
     }
 
-    @Test fun networkIsRequestedBeforeGpsAndGpsIsSkippedWhenNetworkAnswers() {
-        val p = FakeProbe(fresh = mapOf(NETWORK to fix(NETWORK, 0), GPS to fix(GPS, 0)))
-        val r = WeatherLocation.resolve(now, all, p, MemStore()) as Result.Found
-        assertEquals(NETWORK, r.fix.source)
+    @Test fun gpsIsNeverRequestedEvenWhenNetworkFails() {
+        val p = FakeProbe(fresh = mapOf(GPS to fix(GPS, 0)))
+        assertTrue(WeatherLocation.resolve(now, all, p, MemStore()) is Result.None)
         assertEquals(listOf(NETWORK), p.requests)
     }
 
-    @Test fun gpsOnlyAsLastResort() {
-        val p = FakeProbe(fresh = mapOf(GPS to fix(GPS, 0)))
-        val r = WeatherLocation.resolve(now, all, p, MemStore()) as Result.Found
-        assertEquals(GPS, r.fix.source)
-        assertEquals(listOf(NETWORK, GPS), p.requests)
-    }
-
-    @Test fun gpsNeedsFinePermissionAndDisabledProvidersAreNotAsked() {
+    @Test fun coarsePermissionAloneIsEnoughAndDisabledProvidersAreNotAsked() {
         val coarseOnly = all.copy(fine = false)
-        val p = FakeProbe(on = setOf(NETWORK, PASSIVE, GPS), fresh = mapOf(GPS to fix(GPS, 0)))
-        assertTrue(WeatherLocation.resolve(now, coarseOnly, p, MemStore()) is Result.None)
+        val p = FakeProbe(fresh = mapOf(NETWORK to fix(NETWORK, 0)))
+        assertTrue(WeatherLocation.resolve(now, coarseOnly, p, MemStore()) is Result.Found)
         assertEquals(listOf(NETWORK), p.requests)
         val noNet = FakeProbe(on = setOf(PASSIVE, GPS), fresh = mapOf(GPS to fix(GPS, 0)))
-        WeatherLocation.resolve(now, all, noNet, MemStore())
-        assertEquals(listOf(GPS), noNet.requests)
+        assertTrue(WeatherLocation.resolve(now, all, noNet, MemStore()) is Result.None)
+        assertTrue(noNet.requests.isEmpty())
     }
 
     @Test fun failedRefreshNeverClearsTheStoredFix() {
@@ -93,14 +95,14 @@ class WeatherLocationTest {
         val r = WeatherLocation.resolve(now, all, p, s) as Result.Found
         assertFalse(r.fresh); assertEquals(old, r.fix)
         assertEquals(old, s.fix)
-        assertEquals(listOf(NETWORK, GPS), p.requests)
+        assertEquals(listOf(NETWORK), p.requests)
     }
 
-    @Test fun staleSystemFixIsUsedAndPersistedWhenNothingElseExists() {
-        val p = FakeProbe(cached = mapOf(PASSIVE to fix(PASSIVE, 600)))
+    @Test fun staleNetworkFixIsUsedAndPersistedWhenNothingElseExists() {
+        val p = FakeProbe(cached = mapOf(NETWORK to fix(NETWORK, 600)))
         val s = MemStore()
         val r = WeatherLocation.resolve(now, all, p, s) as Result.Found
-        assertFalse(r.fresh); assertEquals(PASSIVE, r.fix.source); assertEquals(r.fix, s.fix)
+        assertFalse(r.fresh); assertEquals(NETWORK, r.fix.source); assertEquals(r.fix, s.fix)
     }
 
     @Test fun onlyANewerFixReplacesTheStoredOne() {
