@@ -38,6 +38,20 @@
       "provider": "cloudflare",
       "role": "Edge runtime for JavaScript workers",
       "links": [{"label": "Dashboard", "url": "https://dash.cloudflare.com"}]
+    },
+    {
+      "id": "google-apps-script-workspace",
+      "label": "Google Apps Script – Workspace",
+      "provider": "gcloud",
+      "role": "Google Workspace Apps Script environment: JavaScript (V8) runtime on script.google.com for the Workspace account",
+      "links": [{"label": "Apps Script", "url": "https://script.google.com"}]
+    },
+    {
+      "id": "google-apps-script-personal",
+      "label": "Google Apps Script – Personal",
+      "provider": "gcloud",
+      "role": "Google Personal Apps Script environment: JavaScript (V8) runtime on script.google.com for the personal Google account",
+      "links": [{"label": "Apps Script", "url": "https://script.google.com"}]
     }
   ]
 }

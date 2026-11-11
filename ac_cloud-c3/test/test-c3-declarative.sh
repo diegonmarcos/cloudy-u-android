@@ -316,6 +316,23 @@ sys.exit(1 if bad else 0)
 PY
 }
 
+# d11 <app dir> : #1605 the Containers-Node-Python page lists both Google Apps Script environments (declared AND in the slice the page reads)
+d11() { python3 - "$1" <<'PY'
+import json, sys
+app = sys.argv[1]
+pl = json.load(open(app + "/data/platforms.json", encoding="utf-8"))
+sl = json.load(open(app + "/data/fleet_slice.json", encoding="utf-8"))
+want = {"google-apps-script-workspace": "Google Apps Script \u2013 Workspace", "google-apps-script-personal": "Google Apps Script \u2013 Personal"}
+bad = []
+for k, rows in (("platforms.json hosting_platforms", pl.get("hosting_platforms") or []), ("fleet_slice.json hosting", sl.get("hosting") or [])):
+    have = {p["id"]: p["label"] for p in rows}
+    for i, l in want.items():
+        if have.get(i) != l: bad.append("%s lacks %r labelled %r" % (k, i, l))
+for b in bad: print("    " + b)
+sys.exit(1 if bad else 0)
+PY
+}
+
 d1 "$APP" && pass "D1 no platform or project name is a string literal in Kotlin" || fail "D1 a page hard-codes a declared platform or project"
 d2 "$APP" && pass "D2 every project nests Topology | Table; Agents is under Ops" || fail "D2 the nav declaration is wrong"
 d3 "$APP" && pass "D3 the project strip and the container -> project mapping agree" || fail "D3 the strip and the mapping disagree"
@@ -326,6 +343,7 @@ d7 "$APP" && pass "D7 no tab has a Project Apps table or macro group" || fail "D
 d8 "$APP" && pass "D8 Filters is one page-wide row above the project tabs, read by Topology and Table" || fail "D8 the Filters row is not page-wide"
 d9 "$APP" && pass "D9 every project tab shows data and the Topology draws one card per scoped group" || fail "D9 a project tab is empty"
 d10 "$APP" && pass "D10 Infra Apps and Cloud Apps are Cloudy's only; every other project has its own families" || fail "D10 a project repeats Cloudy's groups or lacks families"
+d11 "$APP" && pass "D11 both Google Apps Script environments are declared Containers-Node-Python platforms and reach the slice" || fail "D11 a Google Apps Script platform is missing"
 
 # ── M: every check able to go RED ───────────────────────────────────────────
 WORK="$(mktemp -d)"
