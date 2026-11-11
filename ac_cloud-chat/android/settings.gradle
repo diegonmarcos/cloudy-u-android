@@ -41,3 +41,12 @@ project(':libs:fleetconfig-model').projectDir = new File(rootDir, '../../ab_clou
 // #1122 libs:core declares `api project(':libs:crash')` (the default crash handler and screen): the include is not optional.
 include ':libs:crash'
 project(':libs:crash').projectDir = new File(rootDir, '../../ab_cloud-libs-shared/libs/crash')
+
+// #1630 the fleet Configs tail (Agents, Perms, Logcat, X-Ray App, About): libs:ui-nav-bars draws the shared Configs screen (FleetConfigsActivity,
+// reached through the launcher shortcuts it publishes); the three opt-in libs register their tabs on it. Compose libs: root build.gradle carries
+// the compose compiler plugin. Closure: ui-nav-bars -> bottomnav, ui-icons, theme-background, perms -> fleet-data-client; logcat -> devtools.
+["ui-nav-bars", "bottomnav", "ui-icons", "theme-background", "perms", "fleet-data-client",
+ "fleetconfigs-agents", "fleetconfigs-logcat", "fleetconfigs-xray"].each { n ->
+    include ":libs:${n}"
+    project(":libs:${n}").projectDir = new File(rootDir, "../../ab_cloud-libs-shared/libs/${n}")
+}

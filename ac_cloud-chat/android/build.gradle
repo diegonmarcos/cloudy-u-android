@@ -8,7 +8,9 @@ buildscript {
         compileSdkVersion = 35
         targetSdkVersion = 35
         supportLibVersion = "35.0.0"
-        kotlinVersion = "2.0.21"
+        // #1630 2.3.20 (was upstream's 2.0.21): the fleet Configs lib (libs:ui-nav-bars, Compose) is built with the fleet toolchain and its
+        // compose artifacts carry Kotlin metadata a 2.0.x compiler cannot read; the compose compiler plugin below is pinned to the same version.
+        kotlinVersion = "2.3.20"
         kotlin_version = kotlinVersion
         RNNKotlinVersion = kotlinVersion
         firebaseVersion = "24.1.0"
@@ -23,7 +25,9 @@ buildscript {
         classpath("com.android.tools.build:gradle")
         classpath("com.facebook.react:react-native-gradle-plugin")
         classpath('com.google.gms:google-services:4.4.2')
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
+        // #1630 libs:ui-nav-bars and its libs apply the bare id org.jetbrains.kotlin.plugin.compose, resolved from this classpath
+        classpath("org.jetbrains.kotlin:compose-compiler-gradle-plugin:$kotlinVersion")
 
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files

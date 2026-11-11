@@ -59,7 +59,16 @@
       "_doc": "#873 libs:core `api`s this module (the setup provider every app serves, describe / export / apply / status); listed so settings.gradle resolves the path and the ship workflow's path triggers see it, not linked in the app's own gradle.",
       "dir": "../ab_cloud-libs-shared/libs/fleetconfig-model",
       "type": "library"
-    }
+    },
+    "libs:ui-nav-bars": {"dir": "../ab_cloud-libs-shared/libs/ui-nav-bars", "type": "library", "_doc": "#1630 fleet Configs tail (Agents, Perms, Logcat, X-Ray App, About): ui-nav-bars and the three fleetconfigs libs are linked in android/app/build.gradle; the rest are their dependencies, listed so settings.gradle resolves the path and the ship path triggers see them."},
+    "libs:bottomnav": {"dir": "../ab_cloud-libs-shared/libs/bottomnav", "type": "library"},
+    "libs:ui-icons": {"dir": "../ab_cloud-libs-shared/libs/ui-icons", "type": "library"},
+    "libs:theme-background": {"dir": "../ab_cloud-libs-shared/libs/theme-background", "type": "library"},
+    "libs:perms": {"dir": "../ab_cloud-libs-shared/libs/perms", "type": "library"},
+    "libs:fleet-data-client": {"dir": "../ab_cloud-libs-shared/libs/fleet-data-client", "type": "library"},
+    "libs:fleetconfigs-agents": {"dir": "../ab_cloud-libs-shared/libs/fleetconfigs-agents", "type": "library"},
+    "libs:fleetconfigs-logcat": {"dir": "../ab_cloud-libs-shared/libs/fleetconfigs-logcat", "type": "library"},
+    "libs:fleetconfigs-xray": {"dir": "../ab_cloud-libs-shared/libs/fleetconfigs-xray", "type": "library"}
   },
   "signing": {
     "vault_keystore": "Shared/Providers/D_TOOLS-DEVICES/d2-android/release.jks",

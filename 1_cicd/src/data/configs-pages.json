@@ -304,7 +304,6 @@
     },
     "pending": {
       "_doc": "Apps whose Configs does not start General | Perms | About yet, each with its reason. Delete an entry in the commit that fixes the app (the guard fails a stale one).",
-      "ac_cloud-chat": "React Native host that does not reach the shared Configs screen yet (configs_pages.pending).",
       "ac_cloud-office": "Collabora patch series that does not reach the shared Configs screen yet (configs_pages.pending)."
     },
     "app_order": {
@@ -407,11 +406,11 @@
     "_doc": "Apps with no native menu of their own to extend: React Native, Tauri and Cordova hosts and the generated office host. They reach Configs ▸ General and ▸ About through the launcher shortcuts libs:ui-nav-bars publishes for every app that links it (FleetConfigsInitProvider → FleetConfigsShortcuts: long-press the app icon). G4 accepts an app named here only while it links libs:ui-nav-bars (build.json::modules or a settings / patch file of the app names :libs:ui-nav-bars). Each entry says why no in-app entry exists.",
     "ac_cloud-c3-webserver": "Tauri 2 host: the whole UI is the Rust web server's page in one WebView; the Android side is a generated shell with no menu of its own.",
     "ac_cloud-media-center": "Tauri 2 host: seven static web pages in one WebView; the generated Android shell draws nothing of its own to hang an entry on.",
+    "ac_cloud-chat": "#1630 React Native host (Mattermost fork): the whole UI is React Native, the Android side has no Compose menu of its own; android/ builds on Kotlin 2.3.20 with the Compose compiler plugin and links libs:ui-nav-bars plus the three fleetconfigs libs, so the shared Configs screen (the five-tab tail) is reached through the launcher shortcuts.",
     "ac_cloud-code": "Cordova host (Acode): the editor's menus are web code in a WebView and the Android project is generated at build time, so no native menu exists to extend."
   },
   "pending": {
     "_doc": "Apps that declare configs_pages (held by G1-G3) but do not reach the pages yet. Wiring means linking libs:ui-nav-bars (with bottomnav, ui-icons, theme-background, perms) and calling FleetConfigsMenu( (Compose) or FleetConfigsEntries.addTo( / FleetConfigsActivity.intent( (Views, forks) from the app's own menu. Delete an entry in the commit that wires the app (the guard fails a stale one).",
-    "ac_cloud-chat": "React Native host on Kotlin 2.0.21 with no Compose: libs:ui-nav-bars needs the Compose compiler plugin and a Kotlin that reads the fleet BOM's metadata; then it joins shortcut_reach.",
     "ac_cloud-office": "Collabora Online patch series over a Java host: a new patch must add the Kotlin Compose plugin and libs:ui-nav-bars to upstream's android/ build; then shortcut_reach."
   }
 }

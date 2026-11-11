@@ -213,6 +213,11 @@ dependencies {
     // Fleet mesh member: libs:core (+ devtools via `api`) merges the fleet
     // provider, receiver, <queries> and the signature permission into this APK.
     implementation project(':libs:core')
+    // #1630 fleet Configs: shared screen + the five-tab tail (Agents, Perms, Logcat, X-Ray App, About)
+    implementation project(':libs:ui-nav-bars')
+    implementation project(':libs:fleetconfigs-agents')
+    implementation project(':libs:fleetconfigs-logcat')
+    implementation project(':libs:fleetconfigs-xray')
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
 
