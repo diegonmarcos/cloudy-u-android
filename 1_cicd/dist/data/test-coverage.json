@@ -89,7 +89,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 64,
+      "unit_test_sources": 65,
       "workflow": "ship-cloud-browser.yml"
     },
     "ac_cloud-browser/web": {
