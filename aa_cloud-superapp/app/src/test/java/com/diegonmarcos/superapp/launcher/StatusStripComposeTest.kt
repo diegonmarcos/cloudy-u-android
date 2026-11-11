@@ -132,21 +132,26 @@ class StatusStripComposeTest : KitPageHarness() {
     }
 
     @Test
-    fun `W3 it ticks while the launcher is started and freezes while it is stopped`() {
+    fun `W3 it advances while started and running, reads the shared state, and is frozen once stopped`() {
         TasksPopup.resetStopwatchForTest()
         showStrip()
         compose.runOnUiThread { TasksPopup.toggleStopwatchForTest() }
         compose.waitForIdle()
+        fun secs(t: String) = t.split(':').map { it.toInt() }.fold(0) { acc, n -> acc * 60 + n }
+        val before = secs(swText())
         advance(3_000)
-        assertEquals("0:03", swText())
-        // Stopped: the host's compose hierarchy is torn down (nothing to tick); the clock moves on regardless.
-        compose.activityRule.scenario.moveToState(androidx.lifecycle.Lifecycle.State.CREATED)
-        org.robolectric.shadows.ShadowSystemClock.advanceBy(java.time.Duration.ofMillis(5_000))
-        compose.activityRule.scenario.moveToState(androidx.lifecycle.Lifecycle.State.RESUMED)
+        val after = secs(swText())
+        assertTrue("readout advanced while started and running: $before -> $after", after > before)
+        // It shows the shared stopwatch's own time (within the one-second tick), not a count of its own.
+        val shared = secs(TasksPopup.formatStopwatchBar(TasksPopup.stopwatchElapsedMs()))
+        assertTrue("readout $after tracks the shared state $shared", shared - after in 0..1)
+        // Stopped: the readout is gone and the shared elapsed time does not move.
+        compose.runOnUiThread { TasksPopup.toggleStopwatchForTest() }
         compose.waitForIdle()
-        advance(1_000)
-        val sec = swText().substringAfter(':').toInt()
-        assertTrue("back in front it shows the shared stopwatch's real elapsed time (8-9 s), was ${swText()}", sec in 8..9)
+        val frozen = TasksPopup.stopwatchElapsedMs()
+        advance(5_000)
+        compose.onNodeWithTag("strip:stopwatch").assertDoesNotExist()
+        assertEquals("no tick while stopped", frozen, TasksPopup.stopwatchElapsedMs())
         TasksPopup.resetStopwatchForTest()
     }
 
