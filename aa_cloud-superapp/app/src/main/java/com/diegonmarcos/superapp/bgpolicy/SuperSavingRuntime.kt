@@ -44,6 +44,7 @@ object SuperSavingRuntime {
     /** Take the snapshot and apply every step. Blocking: call off the main thread. [shell] null = the ADB steps are skipped with a note. */
     fun turnOn(ctx: Context, shell: BgShell?): List<SsResult> {
         val app = ctx.applicationContext
+        if (SystemSaver.extreme(app)) { BgAudit.append(app, "super-saving not turned on: system extreme saver is on"); return emptyList() }
         val r = build(app, shell).on()
         if (active(app)) SsIndicator.post(app, SsDecl.indicator(decl(app)))
         return r
@@ -60,6 +61,7 @@ object SuperSavingRuntime {
     /** App start: the screen-off hook and the indicator come back with the process when the mode is on (a reboot clears the notification). */
     fun onAppStart(app: Context) {
         if (!active(app)) return
+        if (SystemSaver.extreme(app)) { Thread({ runCatching { turnOff(app) } }, "super-saving-yield").start(); return }
         if (BgPrefsKv(app).get(K_IDLE) == "1") SsScreenOff.register(app)
         runCatching { SsIndicator.post(app, SsDecl.indicator(decl(app))) }
     }

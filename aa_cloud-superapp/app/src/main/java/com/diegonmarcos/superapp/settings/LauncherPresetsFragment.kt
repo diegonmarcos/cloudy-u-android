@@ -148,8 +148,12 @@ class LauncherPresetsFragment : KitComposeFragment() {
     private fun fillModes(): List<Tile> {
         val ctx = requireContext()
         val selected = LauncherModePrefs(ctx).selected
-        return LauncherModes.load().map { mode ->
-            if (mode.engine == com.diegonmarcos.superapp.bgpolicy.SuperSavingRuntime.ENGINE) return@map superSavingTile(mode)
+        return LauncherModes.load().mapNotNull { mode ->
+            if (mode.engine == com.diegonmarcos.superapp.bgpolicy.SuperSavingRuntime.ENGINE) {
+                // Yields to the system's extreme saver: hidden unless it is on (so it can still be restored).
+                val sys = com.diegonmarcos.superapp.bgpolicy.SystemSaver.extreme(ctx)
+                return@mapNotNull if (sys && !com.diegonmarcos.superapp.bgpolicy.SuperSavingRuntime.active(ctx.applicationContext)) null else superSavingTile(mode)
+            }
             val isCurrent = mode.id == selected
             val modified = isCurrent && LauncherModes.isModified(ctx, mode)
             Tile(
