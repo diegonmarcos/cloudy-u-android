@@ -1789,31 +1789,31 @@ class WriterSurface(
                         R.string.settings_screen_enhance,
                         R.string.settings_screen_enhance_summary,
                         Icons.Rounded.AutoAwesome,
-                        TextEnhanceActivity::class.java,
+                        activityClass("TextEnhanceActivity"),
                     ),
                     Page(
                         R.string.settings_screen_translation,
                         R.string.settings_screen_translation_summary,
                         Icons.Rounded.Translate,
-                        TranslationActivity::class.java,
+                        activityClass("TranslationActivity"),
                     ),
                     Page(
                         R.string.settings_screen_grammar,
                         R.string.settings_screen_grammar_summary,
                         Icons.Rounded.Spellcheck,
-                        GrammarCheckActivity::class.java,
+                        activityClass("GrammarCheckActivity"),
                     ),
                     Page(
                         R.string.settings_screen_ai_routing,
                         R.string.settings_screen_ai_routing_summary,
                         Icons.Rounded.AltRoute,
-                        AiRoutingActivity::class.java,
+                        activityClass("AiRoutingActivity"),
                     ),
                     Page(
                         R.string.settings_screen_routes,
                         R.string.settings_screen_routes_summary,
                         Icons.Rounded.Hearing,
-                        RoutesActivity::class.java,
+                        activityClass("RoutesActivity"),
                     ),
                 )
                 val declared: List<NavPage> = WriterNav.decl.section(WriterNav.TOOLS)?.pages.orEmpty().map { p ->
@@ -2037,6 +2037,10 @@ class WriterSurface(
         /** The Tools pages, in the order build.json::ui.sections[tools].pages declares them. */
         val TOOLS_PAGES: List<String> = listOf(PAGE_TOOL_ENHANCE, PAGE_TOOL_TRANSLATION, PAGE_TOOL_GRAMMAR, PAGE_TOOL_AI_ROUTING, PAGE_TOOL_ROUTES)
         val ALL_PAGES: List<String> = BOTTOM_NAV_PAGES + TOOLS_PAGES + listOf(PAGE_EDITOR, PAGE_TOOLS, PAGE_CONFIGS, PAGE_DICTATION)
+
+        /** The tool-page activity shells live in the host app (it applies the inset); the lib reaches them by their manifest name. */
+        private fun activityClass(simple: String): Class<out Activity> =
+            Class.forName("com.diegonmarcos.cloudwriter.$simple").asSubclass(Activity::class.java)
 
         /** The activity that hosts the app: cloud-writer's MainActivity, or the host application's launcher where there is none. */
         fun mainIntent(context: Context): Intent {

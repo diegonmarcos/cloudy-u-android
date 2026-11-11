@@ -107,7 +107,7 @@ BREAKS = [
       "                        R.string.settings_screen_translation,\n"
       "                        R.string.settings_screen_translation_summary,\n"
       "                        Icons.Rounded.Translate,\n"
-      "                        TranslationActivity::class.java,\n"
+      "                        activityClass(\"TranslationActivity\"),\n"
       "                    ),\n", ""),
      "P1 the main screen never starts TranslationActivity"),
 

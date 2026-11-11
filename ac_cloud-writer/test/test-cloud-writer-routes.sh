@@ -217,7 +217,7 @@ if not bad:
     print("ok     R5/R6/R7 private debug provider, microphone service with its permissions, private Routes page")
 sys.exit(1 if bad else 0)
 PY
-if grep -q 'RoutesActivity::class.java' <<<"$MAINACT"; then
+if grep -qF 'activityClass("RoutesActivity")' <<<"$MAINACT"; then
     pass "R7 the home screen opens Configs > Routes"
 else
     fail "R7 nothing opens RoutesActivity — the route switches exist but cannot be reached"

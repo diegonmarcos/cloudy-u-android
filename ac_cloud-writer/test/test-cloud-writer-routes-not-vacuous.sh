@@ -73,7 +73,7 @@ BREAKS = [
     ("Listen is not a microphone service", APP + "/app/src/main/AndroidManifest.xml",
      ('android:foregroundServiceType="microphone"', 'android:foregroundServiceType="dataSync"'), "R6"),
     ("no route to the Routes page", SRC + "WriterSurface.kt",
-     ("RoutesActivity::class.java", "AiRoutingActivity::class.java"), "R7"),
+     ('activityClass("RoutesActivity")', 'activityClass("AiRoutingActivity")'), "R7"),
     ("documents stop being searched", SRC + "WriterSurface.kt", ("store.search(q)", "store.list()"), "D1"),
     ("the editor drops the rich drawing", SRC + "WriterSurface.kt", ("visualTransformation = look", "visualTransformation = VisualTransformation.None"), "D2"),
     ("bold becomes italic", APP + "/../ab_cloud-libs-shared/libs/writer-core/src/main/kotlin/com/diegonmarcos/cloudwriter/core/Format.kt", ('Markdown.wrap(text, start, end, "**")', 'Markdown.wrap(text, start, end, "_")'), "D3"),

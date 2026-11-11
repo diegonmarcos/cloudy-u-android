@@ -138,7 +138,7 @@ PYEOF
 [ $? -eq 0 ] || FAILURES=$((FAILURES + 1))
 
 for p in $PAGES; do
-    if grep -q "${p}::class.java" <(code "$SRC/WriterSurface.kt"); then
+    if grep -qF "activityClass(\"${p}\")" <(code "$SRC/WriterSurface.kt"); then
         pass "P1 the main screen opens $p"
     else
         fail "P1 the main screen never starts $p — a declared page nothing opens is a page the owner cannot reach"

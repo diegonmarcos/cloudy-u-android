@@ -62,11 +62,11 @@ CFG = json.loads(r'''{
    "WriterScreens.transition(",
    "ToolsScreen()",
    "ConfigsScreen()",
-   "TextEnhanceActivity::class.java",
-   "TranslationActivity::class.java",
-   "GrammarCheckActivity::class.java",
-   "AiRoutingActivity::class.java",
-   "RoutesActivity::class.java"
+   "activityClass(\"TextEnhanceActivity\")",
+   "activityClass(\"TranslationActivity\")",
+   "activityClass(\"GrammarCheckActivity\")",
+   "activityClass(\"AiRoutingActivity\")",
+   "activityClass(\"RoutesActivity\")"
   ],
   "../ab_cloud-libs-shared/libs/writer-ui/src/main/java/com/diegonmarcos/cloudwriter/WriterNav.kt": [
    "NavDecl.fromBuildConfig"
