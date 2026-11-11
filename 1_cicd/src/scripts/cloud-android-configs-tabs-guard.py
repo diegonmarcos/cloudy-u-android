@@ -115,6 +115,8 @@ def main(argv):
     apps = {}
     for f in sorted(glob.glob(os.path.join(root, "a[acd]_*/build.json"))):
         app = os.path.basename(os.path.dirname(f))
+        if os.path.islink(os.path.dirname(f)):   # a symlinked a[acd]_* entry (the web portal) is no app module of this repo
+            continue
         try:
             apps[app] = json.load(open(f))
         except ValueError as e:

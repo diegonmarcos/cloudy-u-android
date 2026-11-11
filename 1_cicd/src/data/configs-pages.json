@@ -375,7 +375,6 @@
       },
       "pending": {
         "_doc": "Apps whose Configs does not carry the fleet-default tail yet, each with its reason (T7 / T8 fail a stale entry).",
-        "aa_cloud-superapp-web": "Vanilla web portal built by esbuild (a PWA, no Android module): it has no native Configs strip to carry the tail, so the five tabs cannot be drawn there.",
         "ac_cloud-c3-webserver": "Tauri 2 host: the whole UI is the Rust web server's page in one WebView and the Android side is a generated shell with no Configs menu or strip of its own to hang the tail on.",
         "ac_cloud-media-center": "Tauri WebView host: its Configs strip is the web page web/assets/configs.js (media areas | General | Perms | About drawn as HTML); Agents, Logcat and X-Ray App are Compose pages that need a native bridge into the WebView, not written yet."
       }
