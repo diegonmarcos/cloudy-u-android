@@ -50,6 +50,26 @@
     "db_engine": null
   },
   {
+    "name": "google-apps-script-personal",
+    "service": "google-apps-script-personal",
+    "vm": "local",
+    "private_dns": "google-apps-script-personal",
+    "port": null,
+    "protocol": "tcp",
+    "category": "app",
+    "db_engine": null
+  },
+  {
+    "name": "google-apps-script-workspace",
+    "service": "google-apps-script-workspace",
+    "vm": "local",
+    "private_dns": "google-apps-script-workspace",
+    "port": null,
+    "protocol": "tcp",
+    "category": "app",
+    "db_engine": null
+  },
+  {
     "name": "cloud-builder-x",
     "service": "cloud-builder-x",
     "vm": "local",
