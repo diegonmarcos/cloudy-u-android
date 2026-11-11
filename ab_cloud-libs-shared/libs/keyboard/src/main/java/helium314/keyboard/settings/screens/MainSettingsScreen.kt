@@ -25,7 +25,8 @@ import helium314.keyboard.latin.utils.SubtypeLocaleUtils.displayName
 import helium314.keyboard.latin.utils.SubtypeSettings
 import helium314.keyboard.latin.utils.prefs
 import helium314.keyboard.latin.utils.NextScreenIcon
-import helium314.keyboard.settings.ConfigsEntry
+import helium314.keyboard.settings.AllSettingsPage
+import helium314.keyboard.settings.HomeGroup
 import helium314.keyboard.settings.SearchSettingsScreen
 import helium314.keyboard.latin.utils.Theme
 import helium314.keyboard.settings.initPreview
@@ -70,64 +71,66 @@ fun MainSettingsScreen(
             Column(
                 Modifier.verticalScroll(rememberScrollState()).then(Modifier.padding(innerPadding))
             ) {
-                // ── SuperApp section (patch 0011 reorder): our own additions first, in ConfigsEntry order (#1077) ──
-                ConfigsEntry.entries.forEach { entry ->
-                    when (entry) {
-                        ConfigsEntry.TOOLBAR -> Preference(
+                // #1650: every subpage sits under exactly one of three sections (Keyboard / Text / Configs), declared in AllSettingsPage
+                HomeGroup.entries.forEach { group ->
+                PreferenceCategory(stringResource(group.title))
+                AllSettingsPage.of(group).forEach { page ->
+                    when (page) {
+                        AllSettingsPage.TOOLBAR -> Preference(
                             name = stringResource(R.string.settings_screen_toolbar),
                             onClick = onClickToolbar,
                             icon = R.drawable.ic_settings_toolbar
                         ) { NextScreenIcon() }
-                        ConfigsEntry.CLIPBOARD -> Preference(
+                        AllSettingsPage.CLIPBOARD -> Preference(
                             name = stringResource(R.string.settings_screen_clipboard),
                             onClick = onClickClipboard,
                             icon = R.drawable.ic_settings_preferences
                         ) { NextScreenIcon() }
-                        ConfigsEntry.AUTOCOMPLETE -> Preference(
+                        AllSettingsPage.AUTOCOMPLETE -> Preference(
                             name = stringResource(R.string.settings_screen_autocomplete),
                             onClick = onClickAutocomplete,
                             icon = R.drawable.ic_toolbar_autocomplete
                         ) { NextScreenIcon() }
-                        ConfigsEntry.EMOJI -> Preference(
+                        AllSettingsPage.EMOJI -> Preference(
                             name = stringResource(R.string.settings_screen_emoji),
                             onClick = onClickEmoji,
                             icon = R.drawable.ic_settings_about
                         ) { NextScreenIcon() }
-                        ConfigsEntry.TRANSLATION -> Preference(
+                        AllSettingsPage.TRANSLATION -> Preference(
                             name = stringResource(R.string.settings_screen_translation),
                             onClick = onClickTranslation,
                             icon = R.drawable.ic_settings_about
                         ) { NextScreenIcon() }
-                        ConfigsEntry.TEXT_ENHANCE -> Preference(
+                        AllSettingsPage.TEXT_ENHANCE -> Preference(
                             name = stringResource(R.string.settings_screen_enhance),
                             onClick = onClickTextEnhance,
                             icon = R.drawable.ic_toolbar_enhance
                         ) { NextScreenIcon() }
-                        ConfigsEntry.DRAFT_ANSWER -> Preference(
+                        AllSettingsPage.DRAFT_ANSWER -> Preference(
                             name = stringResource(R.string.settings_screen_answer),
                             onClick = onClickDraftAnswer,
                             icon = R.drawable.ic_toolbar_answer
                         ) { NextScreenIcon() }
-                        ConfigsEntry.GRAMMAR_CHECK -> Preference(
+                        AllSettingsPage.GRAMMAR_CHECK -> Preference(
                             name = stringResource(R.string.settings_screen_grammar),
                             onClick = onClickGrammarCheck,
                             icon = R.drawable.ic_settings_correction
                         ) { NextScreenIcon() }
-                        ConfigsEntry.VOICE_TRANSCRIPT -> Preference(
+                        AllSettingsPage.VOICE_TRANSCRIPT -> Preference(
                             name = stringResource(R.string.settings_screen_voice_transcript),
                             onClick = onClickVoiceTranscript,
                             icon = R.drawable.ic_settings_about
                         ) { NextScreenIcon() }
                         // AI Model Routing: the shared provider/key/model used by Text Enhancements,
                         // Grammar Check (AI engine) and translation.
-                        ConfigsEntry.AI_ROUTING -> Preference(
+                        AllSettingsPage.AI_ROUTING -> Preference(
                             name = stringResource(R.string.settings_screen_ai_routing),
                             description = stringResource(R.string.settings_screen_ai_routing_summary),
                             onClick = onClickAiRouting,
                             icon = R.drawable.ic_settings_advanced
                         ) { NextScreenIcon() }
                         // #1413 Dev Keyboard: corner swipes + corner labels of the "unexpected" layout, OFF by default
-                        ConfigsEntry.DEV_KEYBOARD -> {
+                        AllSettingsPage.DEV_KEYBOARD -> {
                             val ctx = androidx.compose.ui.platform.LocalContext.current
                             var on by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(helium314.keyboard.keyboard.CornerSwipe.enabled) }
                             Preference(
@@ -143,7 +146,7 @@ fun MainSettingsScreen(
                             ) { androidx.compose.material3.Switch(checked = on, onCheckedChange = null) }
                         }
                         // #1103: shortcut to Android's own keyboard (input method) settings, same intent as the toolbar key
-                        ConfigsEntry.ANDROID_SETTINGS -> {
+                        AllSettingsPage.ANDROID_SETTINGS -> {
                             val ctx = androidx.compose.ui.platform.LocalContext.current
                             Preference(
                                 name = stringResource(R.string.android_settings),
@@ -152,7 +155,7 @@ fun MainSettingsScreen(
                             ) { NextScreenIcon() }
                         }
                         // #776 Config ▸ Update: shown when the consuming app's build.json declares an update block.
-                        ConfigsEntry.UPDATE -> if (KeyboardUpdate.enabled) {
+                        AllSettingsPage.UPDATE -> if (KeyboardUpdate.enabled) {
                             Preference(
                                 name = stringResource(R.string.keyboard_update),
                                 description = stringResource(R.string.keyboard_update_summary),
@@ -160,75 +163,75 @@ fun MainSettingsScreen(
                                 icon = R.drawable.ic_settings_about
                             ) { NextScreenIcon() }
                         }
+                        // #1352 the host app's entries (Cloud Keyboard: Configs ▸ General / ▸ About, the fleet's shared pages)
+                        AllSettingsPage.HOST_EXTRAS -> {
+                            val extrasCtx = androidx.compose.ui.platform.LocalContext.current
+                            helium314.keyboard.settings.KeyboardSettingsExtras.entries.forEach { extra ->
+                                Preference(
+                                    name = extra.label,
+                                    description = extra.description,
+                                    onClick = { extra.open(extrasCtx) },
+                                    icon = R.drawable.ic_settings_about
+                                ) { NextScreenIcon() }
+                            }
+                        }
+                        AllSettingsPage.LANGUAGES -> Preference(
+                            name = stringResource(R.string.language_and_layouts_title),
+                            description = enabledSubtypes.joinToString(", ") { it.displayName() },
+                            onClick = onClickLanguage,
+                            icon = R.drawable.ic_settings_languages
+                        ) { NextScreenIcon() }
+                        AllSettingsPage.DICTIONARIES -> Preference(
+                            name = stringResource(R.string.dictionary_settings_category),
+                            onClick = onClickDictionaries,
+                            icon = R.drawable.ic_dictionary
+                        ) { NextScreenIcon() }
+                        AllSettingsPage.PREFERENCES -> Preference(
+                            name = stringResource(R.string.settings_screen_preferences),
+                            onClick = onClickPreferences,
+                            icon = R.drawable.ic_settings_preferences
+                        ) { NextScreenIcon() }
+                        AllSettingsPage.ADVANCED -> Preference(
+                            name = stringResource(R.string.settings_screen_advanced),
+                            onClick = onClickAdvanced,
+                            icon = R.drawable.ic_settings_advanced
+                        ) { NextScreenIcon() }
+                        AllSettingsPage.SECONDARY_LAYOUTS -> Preference(
+                            name = stringResource(R.string.settings_screen_secondary_layouts),
+                            onClick = onClickLayouts,
+                            icon = R.drawable.ic_ime_switcher
+                        ) { NextScreenIcon() }
+                        AllSettingsPage.APPEARANCE -> Preference(
+                            name = stringResource(R.string.settings_screen_appearance),
+                            onClick = onClickAppearance,
+                            icon = R.drawable.ic_settings_appearance
+                        ) { NextScreenIcon() }
+                        AllSettingsPage.GESTURE_TYPING -> if (JniUtils.sHaveGestureLib)
+                            Preference(
+                                name = stringResource(R.string.settings_screen_gesture),
+                                onClick = onClickGestureTyping,
+                                icon = R.drawable.ic_settings_gesture
+                            ) { NextScreenIcon() }
+                        // we don't even show the menu if data gathering phase ended more than 2 weeks ago
+                        AllSettingsPage.DATA_GATHERING -> if (JniUtils.sHaveGestureLib && System.currentTimeMillis() < END_DATE_EPOCH_MILLIS + TWO_WEEKS_IN_MILLIS)
+                            Preference(
+                                name = stringResource(R.string.gesture_data_screen),
+                                onClick = onClickDataGathering,
+                                icon = R.drawable.ic_settings_gesture
+                            ) { NextScreenIcon() }
+                        AllSettingsPage.TEXT_CORRECTION -> Preference(
+                            name = stringResource(R.string.settings_screen_correction),
+                            onClick = onClickTextCorrection,
+                            icon = R.drawable.ic_settings_correction
+                        ) { NextScreenIcon() }
+                        AllSettingsPage.ABOUT -> Preference(
+                            name = stringResource(R.string.settings_screen_about),
+                            onClick = onClickAbout,
+                            icon = R.drawable.ic_settings_about
+                        ) { NextScreenIcon() }
                     }
                 }
-                // #1352 the host app's entries (Cloud Keyboard: Configs ▸ General / ▸ About, the fleet's shared pages)
-                val extrasCtx = androidx.compose.ui.platform.LocalContext.current
-                helium314.keyboard.settings.KeyboardSettingsExtras.entries.forEach { extra ->
-                    Preference(
-                        name = extra.label,
-                        description = extra.description,
-                        onClick = { extra.open(extrasCtx) },
-                        icon = R.drawable.ic_settings_about
-                    ) { NextScreenIcon() }
                 }
-
-                // ── Everything below is the base keyboard menu ─────────────────────
-                PreferenceCategory("Keyboard defaults")
-                Preference(
-                    name = stringResource(R.string.language_and_layouts_title),
-                    description = enabledSubtypes.joinToString(", ") { it.displayName() },
-                    onClick = onClickLanguage,
-                    icon = R.drawable.ic_settings_languages
-                ) { NextScreenIcon() }
-                Preference(
-                    name = stringResource(R.string.dictionary_settings_category),
-                    onClick = onClickDictionaries,
-                    icon = R.drawable.ic_dictionary
-                ) { NextScreenIcon() }
-                Preference(
-                    name = stringResource(R.string.settings_screen_preferences),
-                    onClick = onClickPreferences,
-                    icon = R.drawable.ic_settings_preferences
-                ) { NextScreenIcon() }
-                Preference(
-                    name = stringResource(R.string.settings_screen_advanced),
-                    onClick = onClickAdvanced,
-                    icon = R.drawable.ic_settings_advanced
-                ) { NextScreenIcon() }
-                Preference(
-                    name = stringResource(R.string.settings_screen_secondary_layouts),
-                    onClick = onClickLayouts,
-                    icon = R.drawable.ic_ime_switcher
-                ) { NextScreenIcon() }
-                Preference(
-                    name = stringResource(R.string.settings_screen_appearance),
-                    onClick = onClickAppearance,
-                    icon = R.drawable.ic_settings_appearance
-                ) { NextScreenIcon() }
-                if (JniUtils.sHaveGestureLib)
-                    Preference(
-                        name = stringResource(R.string.settings_screen_gesture),
-                        onClick = onClickGestureTyping,
-                        icon = R.drawable.ic_settings_gesture
-                    ) { NextScreenIcon() }
-                // we don't even show the menu if data gathering phase ended more than 2 weeks ago
-                if (JniUtils.sHaveGestureLib && System.currentTimeMillis() < END_DATE_EPOCH_MILLIS + TWO_WEEKS_IN_MILLIS)
-                    Preference(
-                        name = stringResource(R.string.gesture_data_screen),
-                        onClick = onClickDataGathering,
-                        icon = R.drawable.ic_settings_gesture
-                    ) { NextScreenIcon() }
-                Preference(
-                    name = stringResource(R.string.settings_screen_correction),
-                    onClick = onClickTextCorrection,
-                    icon = R.drawable.ic_settings_correction
-                ) { NextScreenIcon() }
-                Preference(
-                    name = stringResource(R.string.settings_screen_about),
-                    onClick = onClickAbout,
-                    icon = R.drawable.ic_settings_about
-                ) { NextScreenIcon() }
             }
         }
     }
