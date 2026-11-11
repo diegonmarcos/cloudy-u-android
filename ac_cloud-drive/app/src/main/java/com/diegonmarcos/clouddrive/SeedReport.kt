@@ -57,8 +57,14 @@ data class SeedOutcome(val name: String, val kind: String, val detail: String) {
          */
         const val NEEDS_STORE = "needs-store"
 
+        /**
+         * #1643 Declared, absent, and deliberately NOT cloned: the pass was automatic (app start,
+         * update, first run). Terminal, never retried; the user clones it on purpose.
+         */
+        const val NOT_CLONED = "not-cloned"
+
         /** The kinds a repository can carry and still leave the store finished. */
-        val SETTLED = setOf(PRESENT, SEEDED, UNDECLARED)
+        val SETTLED = setOf(PRESENT, SEEDED, UNDECLARED, NOT_CLONED)
         /** The kinds another pass could still turn into a clone. */
         val RESUMABLE = setOf(FAILED, DEFERRED, NEEDS_STORAGE, NEEDS_STORE)
         /** #683 Terminal but NOT finished: no retry can help, and the store still lacks the repository. */
@@ -69,7 +75,7 @@ data class SeedOutcome(val name: String, val kind: String, val detail: String) {
 /** [declared] is the size of the declared seed set, so a missing outcome is itself a failure. */
 data class SeedReport(val declared: Int, val outcomes: List<SeedOutcome>) {
 
-    val present: List<SeedOutcome> get() = outcomes.filter { it.kind in SeedOutcome.SETTLED }
+    val present: List<SeedOutcome> get() = outcomes.filter { it.kind in SeedOutcome.SETTLED && it.kind != SeedOutcome.NOT_CLONED }
     val resumable: List<SeedOutcome> get() = outcomes.filter { it.kind in SeedOutcome.RESUMABLE }
     /** #683 the repositories no pass can reach without a credential this device does not hold. */
     val blocked: List<SeedOutcome> get() = outcomes.filter { it.kind in SeedOutcome.BLOCKED }
@@ -88,6 +94,7 @@ data class SeedReport(val declared: Int, val outcomes: List<SeedOutcome>) {
     fun tally(): String = "seed ${present.size}/$declared " + when {
         !complete -> "INCOMPLETE, will retry: " + resumable.joinToString { it.name }
         blocked.isNotEmpty() -> "settled; needs a credential (no retry — the vault import or a fleet sign-in delivers one): " + blocked.joinToString { it.name }
+        outcomes.any { it.kind == SeedOutcome.NOT_CLONED } -> "not cloned automatically: " + outcomes.filter { it.kind == SeedOutcome.NOT_CLONED }.joinToString { it.name } + " (clone them from the Git page)"
         else -> "complete"
     }
 
@@ -141,4 +148,14 @@ object SeedPolicy {
             report.resumable.joinToString { it.name } + " (fix the cause above, then press Retry)"
         return (report.outcomes.map { it.line() } + tally).joinToString("\n")
     }
+}
+
+/**
+ * #1643 WHO MAY CLONE. A clone is made only on an explicit user action; app start, an update, a
+ * first run, the all-files grant and WorkManager retries of those never clone. Pure so the JVM
+ * suite proves it.
+ */
+object CloneTrigger {
+    const val EXPLICIT_KEY = "explicit_user_clone"
+    fun mayClone(explicit: Boolean): Boolean = explicit
 }

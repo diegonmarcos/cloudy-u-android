@@ -985,7 +985,7 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            if (seedTally.contains("STOPPED")) TextButton(onClick = { StoreSeedWorker.kick(ctx.applicationContext) }, modifier = Modifier.padding(horizontal = DriveMetrics.sectionInset)) {
+            if (seedTally.contains("STOPPED") || seedTally.contains("not cloned")) TextButton(onClick = { StoreSeedWorker.cloneMissing(ctx.applicationContext) }, modifier = Modifier.padding(horizontal = DriveMetrics.sectionInset)) {
                 Text(stringResource(R.string.git_seed_retry))
             }
         }

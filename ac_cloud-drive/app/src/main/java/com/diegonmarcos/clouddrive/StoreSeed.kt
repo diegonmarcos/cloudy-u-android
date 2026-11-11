@@ -52,6 +52,9 @@ import java.io.File
  */
 class StoreSeedWorker(context: Context, params: WorkerParameters) : Worker(context, params) {
 
+    /** #1643 true only when the user asked for the clone (see [CloneTrigger]); false for every automatic trigger. */
+    private val explicit: Boolean get() = inputData.getBoolean(CloneTrigger.EXPLICIT_KEY, false)
+
     override fun doWork(): Result {
         if (!BuildConfig.SEED_ENABLED) return Result.success()
         // #730 THE FRESH-PHONE GATE, before anything touches the store (the migration included):
@@ -139,6 +142,10 @@ class StoreSeedWorker(context: Context, params: WorkerParameters) : Worker(conte
                 // Stopped: recorded, not thrown away. The remaining repositories are DEFERRED rather
                 // than attempted against a torn-down thread and logged as if they were broken.
                 isStopped -> SeedOutcome(decl.name, SeedOutcome.DEFERRED, "the worker was stopped before this repository was reached")
+                // #1643 NO AUTOMATIC CLONE: app start, an update, a first run and every retry of those
+                // reach here with explicit=false and only REPORT the missing repository; the clone
+                // below runs solely for the user's own action (the Git page's Clone missing / Retry).
+                !CloneTrigger.mayClone(explicit) -> SeedOutcome(decl.name, SeedOutcome.NOT_CLONED, "not cloned automatically — clone it from the Git page")
                 else -> {
                     val auth = if (token.isBlank()) GitAuth.None else com.diegonmarcos.cloudlib.gitui.GitConnectRules.https(decl.githubOwner, token)
                     // cloud-shared-store: not in cld.termux's uid -> the clone runs inside it (CLOUD_EXEC).
@@ -250,12 +257,16 @@ class StoreSeedWorker(context: Context, params: WorkerParameters) : Worker(conte
          */
         fun kick(context: Context) = enqueue(context, ExistingWorkPolicy.REPLACE)
 
-        private fun enqueue(context: Context, policy: ExistingWorkPolicy) {
+        /** #1643 the ONE clone entry: the user pressed Clone missing / Retry on the Git page. */
+        fun cloneMissing(context: Context) = enqueue(context, ExistingWorkPolicy.REPLACE, explicit = true)
+
+        private fun enqueue(context: Context, policy: ExistingWorkPolicy, explicit: Boolean = false) {
             if (!BuildConfig.SEED_ENABLED) return
             // #730 the network constraint is DECLARED (build.json::storage.seed.require_unmetered_network).
             val network = if (BuildConfig.SEED_REQUIRE_UNMETERED) NetworkType.UNMETERED else NetworkType.CONNECTED
             val request = OneTimeWorkRequestBuilder<StoreSeedWorker>()
                 .setConstraints(Constraints.Builder().setRequiredNetworkType(network).build())
+                .setInputData(androidx.work.Data.Builder().putBoolean(CloneTrigger.EXPLICIT_KEY, explicit).build())
                 .build()
             WorkManager.getInstance(context).enqueueUniqueWork(WORK_NAME, policy, request)
             // Before any pass has run the Git page would show nothing at all — exactly what a
