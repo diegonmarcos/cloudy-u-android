@@ -387,7 +387,6 @@
         "ac_cloud-notes": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
         "ac_cloud-search": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
         "ac_cloud-shopping": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
-        "ac_cloud-store": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
         "ac_cloud-superintel": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
         "ac_cloud-tasks": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
         "ac_cloud-termux": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",

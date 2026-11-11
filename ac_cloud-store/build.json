@@ -50,7 +50,7 @@
         "libs:appstore",
         "libs:bottomnav",
         "libs:ui-icons",
-        "libs:ui-nav-bars",
+        "libs:ui-nav-bars", "libs:fleetconfigs-agents", "libs:fleetconfigs-logcat", "libs:fleetconfigs-xray",
         "libs:theme-background",
         "libs:sysdns",
         "libs:shell-client",
@@ -114,6 +114,18 @@
     "libs:shared-store": {
       "_doc_dir": "cloud-shared-store's store-access layer (contract). libs:appstore compiles it for the generated ICloudExec client: SharedUidMigration asks the OLD terminal build to back its home up over CLOUD_EXEC. Shared BY REFERENCE; reads ac_cloud-termux/build.json::shared_store.",
       "dir": "../ab_cloud-libs-shared/libs/shared-store",
+      "type": "library"
+    },
+    "libs:fleetconfigs-agents": {
+      "dir": "../ab_cloud-libs-shared/libs/fleetconfigs-agents",
+      "type": "library"
+    },
+    "libs:fleetconfigs-logcat": {
+      "dir": "../ab_cloud-libs-shared/libs/fleetconfigs-logcat",
+      "type": "library"
+    },
+    "libs:fleetconfigs-xray": {
+      "dir": "../ab_cloud-libs-shared/libs/fleetconfigs-xray",
       "type": "library"
     },
     "libs:ui-nav-bars": {
