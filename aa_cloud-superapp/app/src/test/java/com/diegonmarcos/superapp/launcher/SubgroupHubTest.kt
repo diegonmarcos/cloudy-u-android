@@ -20,7 +20,7 @@ import org.robolectric.annotation.Config
  *   H2 the Agents hub shows one titled section, Network, derived from the nav (hub_sections name a group now that subgroups are gone)
  *   H3 routing: in-app pages are page:config/<id>; apps / sections / Cloud Store hand-offs keep their declared action
  *   H4 the hub routes to SubgroupHubFragment (not the C3 APKs) and draws a section heading and a Cloud ▸ Apps tile per entry
- *   H5 Cloud ▸ Apps ▸ Configs opens page:config/agents-watchdog where Firewall was
+ *   H5 Cloud ▸ Apps ▸ Configs row = Quick Actions, UI | Firewall, WiFi | Store | Account, C3 | Watchdog | About (#1628); Watchdog launches extapp:c3-watchdog
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
@@ -97,9 +97,15 @@ class SubgroupHubTest : KitPageHarness() {
     }
 
     @Test
-    fun `H5 Cloud Apps Configs opens the Watchdog page where Firewall was`() {
+    fun `H5 Cloud Apps Configs row reads Quick Actions, UI, Firewall, WiFi, Store, Account, C3, Watchdog, About (1628)`() {
+        // #1628 redefined the Cloud > Apps > Configs row (supersedes #1611): Quick Actions, UI | Firewall, WiFi |
+        // Store | Account, C3 | Watchdog | About. Watchdog now launches the C3-Watchdog APK (extapp:c3-watchdog)
+        // and a Firewall tile (page:config/firewall) is present. The config-section Agents hub page is a separate surface.
         val row = Sections.all().flatMap { it.tileGroups }.single { it.title == "Configs" }.tiles.filter { !it.separator }
-        assertTrue(row.any { it.label == "Watchdog" && it.target == "page:config/agents-watchdog" })
-        assertTrue("no Firewall tile left", row.none { it.label == "Firewall" })
+        assertEquals(
+            listOf("Quick Actions", "UI", "Firewall", "WiFi", "Store", "Account", "C3", "Watchdog", "About"),
+            row.map { it.label })
+        assertTrue("Watchdog launches the C3-Watchdog app", row.any { it.label == "Watchdog" && it.target == "extapp:c3-watchdog" })
+        assertTrue("Firewall opens the Network firewall page", row.any { it.label == "Firewall" && it.target == "page:config/firewall" })
     }
 }
