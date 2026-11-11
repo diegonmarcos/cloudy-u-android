@@ -77,7 +77,18 @@ def fleetAppsB64 = b64(fleetManifest.apps.findAll { it.kind == 'app' }.collect {
      image: it.image ?: '', asset: it.asset ?: '', release_url: it.release_url ?: '', repo_url: it.repo_url ?: '']
 })
 def debugPortsB64 = b64(new groovy.json.JsonSlurper().parse(new File(rootDir, '../1_cicd/src/data/debug-ports.json')).ports)
-[searchConfigB64, fleetServicesB64, fleetAppsB64, debugPortsB64].each {
+// #1640 Scrapped lists the Headless Browsers stack BY REFERENCE: the ui.domains.headless key of ac_cloud-browser/build.json, the one
+// declaration Cloud Browser's Domains > Headless Browsers draws (#1637). build.json::ui.scrapped names the file and the key path.
+def scrappedRef = buildJson.ui.scrapped
+def scrappedNode = new groovy.json.JsonSlurper().parse(new File(rootDir, scrappedRef.source))
+scrappedRef.path.each { k -> scrappedNode = scrappedNode?.get(k) }
+if (!(scrappedNode instanceof List) || scrappedNode.isEmpty()) throw new GradleException("${scrappedRef.source}::${scrappedRef.path.join('.')} missing or empty - the Scrapped page would list no stack (#1640)")
+def headlessB64 = b64(scrappedNode)
+// #1640 the repository the Me tab clones at runtime (owner, repo, ref, entry): a declaration, no credential and no repo content.
+def meDecl = buildJson.ui.me
+if (!meDecl?.owner || !meDecl?.repo) throw new GradleException("build.json::ui.me.owner / repo missing - the Me tab would have nothing to clone (#1640)")
+def meB64 = b64([owner: meDecl.owner, repo: meDecl.repo, ref: meDecl.ref ?: 'main', entry: meDecl.entry ?: ''])
+[searchConfigB64, fleetServicesB64, fleetAppsB64, debugPortsB64, headlessB64, meB64].each {
     if (it.length() > 65000) throw new GradleException("a baked declaration is ${it.length()} bytes: a Java string constant holds 65535")
 }
 
@@ -114,6 +125,8 @@ android {
         buildConfigField "String", "FLEET_SERVICES_B64", "\"${fleetServicesB64}\""
         buildConfigField "String", "FLEET_APPS_B64",     "\"${fleetAppsB64}\""
         buildConfigField "String", "DEBUG_PORTS_B64",    "\"${debugPortsB64}\""
+        buildConfigField "String", "HEADLESS_B64",       "\"${headlessB64}\""
+        buildConfigField "String", "ME_REPO_B64",        "\"${meB64}\""
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
 
@@ -145,8 +158,9 @@ android {
 
     packaging {
         resources {
-            excludes += ['META-INF/NOTICE.md', 'META-INF/LICENSE.md',
-                         'META-INF/NOTICE',    'META-INF/LICENSE']
+            // #1640 + JGit (libs:git-ui GitConnect): the same list as Cloud Me's and Cloud Drive's packaging excludes
+            excludes += ['META-INF/NOTICE.md', 'META-INF/LICENSE.md', 'META-INF/NOTICE', 'META-INF/LICENSE', 'META-INF/NOTICE.txt', 'META-INF/LICENSE.txt',
+                         'META-INF/DEPENDENCIES', 'META-INF/AL2.0', 'META-INF/LGPL2.1', 'META-INF/INDEX.LIST', 'META-INF/versions/*/OSGI-INF/MANIFEST.MF']
         }
     }
 
@@ -165,7 +179,15 @@ dependencies {
     // Profile at the top right, the second row with icons, the bottom nav, the page gradient (#1154).
     implementation project(':libs:bottomnav')
     implementation project(':libs:ui-nav-bars')
+    // #1630 fleet-default Configs tail: Agents, Logcat, X-Ray App register themselves on the shared strip.
+    implementation project(':libs:fleetconfigs-agents')
+    implementation project(':libs:fleetconfigs-logcat')
+    implementation project(':libs:fleetconfigs-xray')
     implementation project(':libs:theme-background')
+    // #1640 Me: clone the repo at runtime (libs:git-ui GitConnect) and serve its html (libs:local-serve, shown through libs:web-core).
+    implementation project(':libs:git-ui')
+    implementation project(':libs:local-serve')
+    implementation project(':libs:web-core')
     // The fleet's AI chat: the page, sessions drawer, Markdown and streaming are the lib's.
     implementation project(':libs:ai')
     implementation project(':libs:model-catalogue')

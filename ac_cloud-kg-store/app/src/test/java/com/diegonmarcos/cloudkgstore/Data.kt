@@ -14,6 +14,7 @@ object Data {
     val kgText: String get() = File(repo, "data/fleet/app/com.diegonmarcos.cloudkgstore/kg.json").readText()
     val buildJson: JSONObject get() = json(File(module, "build.json"))
     val searchJson: JSONObject get() = json(File(repo, "ac_cloud-search/build.json")).getJSONObject("search")
+    val browserJson: JSONObject get() = json(File(repo, "ac_cloud-browser/build.json"))
     val accountJson: JSONObject get() = json(File(repo, "ac_cloud-account/build.json"))
     val composer: JSONObject get() = json(File(app, "src/main/assets/ai/composer.json"))
     val fleetManifest: JSONObject get() = json(File(repo, "aa_cloud-superapp/data/constellation-fleet.json"))

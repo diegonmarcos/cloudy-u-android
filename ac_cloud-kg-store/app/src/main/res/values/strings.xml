@@ -12,7 +12,21 @@
     <string name="backend_body">The assistant answers from the fleet agent gateway (my-ai-api) over the mesh. The Cloud pages call the fleet services declared in ac_cloud-account (mesh first, then the public route with the fleet sign-in of Cloud Account); the Web pages read the sources Cloud Search declares. This app stores no token: the gateway holds the fleet keys and the fleet bearer is read from Cloud Account on use.</string>
     <string name="backend_gateway">Gateway: %1$s</string>
     <string name="about_title">Cloud KG Store</string>
-    <string name="about_body">The fleet\'s knowledge-graph store: Cloud (applications and repositories), Phone (the installed apps index) and Web (news, media, shopping, real estate, jobs, business). Version %1$s, build %2$s.</string>
+    <string name="about_body">The fleet\'s knowledge-graph store: Cloud (applications and repositories), API (news, media, shopping, real estate, jobs, business). Version %1$s, build %2$s.</string>
+
+    <string name="scrapped_heading">Headless Browsers</string>
+    <string name="scrapped_none">The Headless Browsers declaration was not available in this build.</string>
+    <string name="scrapped_service">Service: %1$s</string>
+    <string name="scrapped_link">Link: %1$s</string>
+    <string name="home_heading">Cloud KG Store</string>
+    <string name="me_undeclared">The Me repository is not declared in this build.</string>
+    <string name="me_cloning">Cloning the repository…</string>
+    <string name="me_no_html">The repository was cloned but holds no html file to show.</string>
+    <string name="me_failed">Could not clone: %1$s</string>
+    <string name="me_stale">Could not update, showing the last clone: %1$s</string>
+    <string name="me_retry">Retry</string>
+    <string name="me_token_hint">GitHub token (kept encrypted)</string>
+    <string name="me_connect">Connect</string>
 
     <string name="go">Search</string>
     <string name="send">Send</string>

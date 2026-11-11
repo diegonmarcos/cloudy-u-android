@@ -65,7 +65,7 @@ fun kgAiTheme(): AiTheme = materialAiTheme(
 
 /**
  * The shell: the shared first row (Profile at the top right opens Cloud Account; the hamburger opens the assistant's sessions
- * drawer; the AI icon opens the assistant), the second row (two rows in Cloud), the bottom nav Cloud, Phone, Web, the shared page
+ * drawer; the AI icon opens the assistant), the second row (two rows in Cloud), the bottom nav API, Scrapped, Home, Me, Cloud, the shared page
  * gradient and the shared scroll collapse, all from libs (#1154, #1157). Which sections and pages exist is build.json::ui, read
  * through [Decl.nav]; what each page shows is the kg dataset (Cloud Store), read through [KgServices].
  */
@@ -74,7 +74,7 @@ fun KgShell() {
     val ctx = LocalContext.current.applicationContext
     val svc = remember { KgServices.get(ctx) }
     val nav = Decl.nav
-    var section by rememberSaveable { mutableStateOf(nav.default()?.id ?: Decl.SECTION_CLOUD) }
+    var section by rememberSaveable { mutableStateOf(nav.default()?.id ?: Decl.SECTION_HOME) }
     var page by rememberSaveable { mutableStateOf<String?>(null) }
     val sec = nav.section(section)
     val pageId = page?.takeIf { p -> sec?.pages?.any { it.id == p } == true } ?: sec?.pages?.firstOrNull()?.id
@@ -108,6 +108,9 @@ fun KgShell() {
                     Box(Modifier.fillMaxSize()) {
                         val kg = pageId?.let { svc.kg.page(it) }
                         when {
+                            sec?.id == Decl.SECTION_SCRAPPED -> ScrappedPage(svc)
+                            sec?.id == Decl.SECTION_HOME -> HomePage(nav.bottomNav.filter { it != Decl.SECTION_HOME }.mapNotNull { id -> nav.section(id)?.let { id to it.label } }) { open(it, null) }
+                            sec?.id == Decl.SECTION_ME -> MePage()
                             sec?.id == Decl.SECTION_ASK ->
                                 AiChatPage(chat, theme.copy(strings = theme.strings.copy(hello = stringResource(R.string.chat_hello))), Modifier.imePadding().testTag(KgTags.CHAT), suggestions = svc.kg.ask.suggestions)
                             kg != null -> when (kg.kind) {

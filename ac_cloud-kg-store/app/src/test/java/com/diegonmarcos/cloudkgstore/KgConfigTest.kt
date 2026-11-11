@@ -17,15 +17,46 @@ class KgConfigTest {
     private fun section(id: String): JSONObject = ui.arr("sections") { it }.first { it.getString("id") == id }
     private fun pageIds(id: String): List<String> = section(id).arr("pages") { it.getString("id") }
 
-    @Test fun theBottomNavIsCloudPhoneWeb() {
+    @Test fun theBottomNavIsApiScrappedHomeMeCloud() {
         val nav = ui.getJSONArray("bottom_nav")
-        assertEquals(listOf("cloud", "phone", "web"), (0 until nav.length()).map { nav.getString(it) })
-        assertEquals("cloud", ui.getString("default_section"))
+        assertEquals(listOf("api", "scrapped", "home", "me", "cloud"), (0 until nav.length()).map { nav.getString(it) })
+        assertEquals("home", ui.getString("default_section"))
+        assertEquals(listOf("API", "Scrapped", "Home", "Me", "Cloud"), listOf("api", "scrapped", "home", "me", "cloud").map { section(it).getString("label") })
+    }
+
+    /** #1640 rule 16: the reshape renamed web to API and took Phone off the nav; every page, label and icon of the previous nav is still declared. */
+    @Test fun noFieldOfThePreviousNavIsLost() {
+        assertEquals(listOf("News", "Media", "Shopping", "Real Estate", "Jobs", "Business"), section("api").arr("pages") { it.getString("label") })
+        assertEquals(listOf("web_news", "web_media", "web_shopping", "web_realestate", "web_jobs", "web_business"), pageIds("api"))
+        assertEquals(listOf("public"), listOf(section("api").getString("icon")))
+        assertEquals(listOf("phone_apps"), pageIds("phone"))
+        assertEquals("smartphone", section("phone").getString("icon"))
+        assertEquals(listOf("models", "backend", "about"), pageIds("settings"))
+        assertEquals("cloud", section("cloud").getString("id"))
+        assertEquals(10, pageIds("cloud").size)
+    }
+
+    @Test fun scrappedListsTheSharedHeadlessDeclarationByReference() {
+        val ref = ui.getJSONObject("scrapped")
+        assertEquals("../ac_cloud-browser/build.json", ref.getString("source"))
+        val shared = Data.browserJson.getJSONObject("ui").getJSONObject("domains").getJSONArray("headless")
+        val ids = (0 until shared.length()).map { shared.getJSONObject(it).getString("id") }
+        assertEquals(listOf("cloudflare_browser_run", "cloudy_browser_headless", "steel_browser"), ids)
+        val parsed = HeadlessService.parse(shared.toString())
+        assertEquals(listOf("Cloudflare Browser Run", "Cloud Headless", "Cloud Stealth"), parsed.map { it.title })
+        for (s in parsed) { assertTrue(s.stack.isNotEmpty()); assertNotNull(s.link); assertTrue(s.link!!.url.isNotBlank()) }
+        assertEquals("every stack key survives", shared.getJSONObject(0).getJSONObject("stack").length(), parsed[0].stack.size)
+    }
+
+    @Test fun meDeclaresTheRepoToCloneAtRuntime() {
+        val me = MeRepo.parse(ui.getJSONObject("me").toString())
+        assertTrue(me.owner.isNotBlank() && me.repo.isNotBlank())
+        assertFalse("no credential in the declaration", ui.getJSONObject("me").has("token"))
     }
 
     @Test fun everyDataPageIsDeclaredByTheNavAndEveryDeclaredPageHasItsData() {
-        val navPages = listOf("cloud", "phone", "web").flatMap { pageIds(it) }.toSet()
-        assertEquals("kg.json::pages and build.json::ui (cloud, phone, web) name the same pages", navPages, kg.pages.keys)
+        val navPages = listOf("cloud", "phone", "api").flatMap { pageIds(it) }.toSet()
+        assertEquals("kg.json::pages and build.json::ui (cloud, phone, api) name the same pages", navPages, kg.pages.keys)
     }
 
     @Test fun cloudIsTwoRowsOfTwoGroups() {
@@ -40,8 +71,8 @@ class KgConfigTest {
         assertEquals(pages.keys, groups.flatMap { g -> g.getJSONArray("pages").let { a -> (0 until a.length()).map { a.getString(it) } } }.toSet())
     }
 
-    @Test fun webIsSixPagesAndPhoneIsTheAppsIndex() {
-        assertEquals(listOf("News", "Media", "Shopping", "Real Estate", "Jobs", "Business"), section("web").arr("pages") { it.getString("label") })
+    @Test fun apiIsSixPagesAndPhoneIsTheAppsIndex() {
+        assertEquals(listOf("News", "Media", "Shopping", "Real Estate", "Jobs", "Business"), section("api").arr("pages") { it.getString("label") })
         assertEquals(listOf("Apps"), section("phone").arr("pages") { it.getString("label") })
         assertEquals(KgConfig.KIND_PHONE_APPS, kg.page("phone_apps")?.kind)
     }

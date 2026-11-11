@@ -48,23 +48,38 @@ named_sections = set(re.findall(r'SECTION_\w+\s*=\s*"([^"]+)"', decl))
 named_pages = set(re.findall(r'PAGE_\w+\s*=\s*"([^"]+)"', decl))
 for x in sorted(named_sections - set(sections)): bad.append("B1 Decl.kt names section %r that build.json::ui does not declare" % x)
 for x in sorted(set(sections) - named_sections): bad.append("B1 section %r is declared but Decl.kt has no id for it (the shell would draw nothing)" % x)
-data_sections = ("cloud", "phone", "web")
+data_sections = ("cloud", "phone", "api")
 data_pages = [p["id"] for s in data_sections for p in sections[s]["pages"]] if all(s in sections for s in data_sections) else []
-if set(data_pages) != set(kg["pages"]): bad.append("B1 kg.json::pages and build.json::ui (cloud, phone, web) differ: %s" % sorted(set(data_pages) ^ set(kg["pages"])))
+if set(data_pages) != set(kg["pages"]): bad.append("B1 kg.json::pages and build.json::ui (cloud, phone, api) differ: %s" % sorted(set(data_pages) ^ set(kg["pages"])))
 settings_pages = {p["id"] for p in sections.get("settings", {"pages": []})["pages"]}
 if settings_pages != named_pages: bad.append("B1 Decl.kt PAGE_ ids %s are not the Settings pages %s" % (sorted(named_pages), sorted(settings_pages)))
-if bj["ui"]["bottom_nav"] != ["cloud", "phone", "web"]: bad.append("B1 the bottom nav must be Cloud, Phone, Web, in that order")
+if bj["ui"]["bottom_nav"] != ["api", "scrapped", "home", "me", "cloud"]: bad.append("B1 the bottom nav must be API, Scrapped, Home, Me, Cloud, in that order (#1640)")
+for sid, lab in (("api", "API"), ("scrapped", "Scrapped"), ("home", "Home"), ("me", "Me"), ("cloud", "Cloud")):
+    if sections.get(sid, {}).get("label") != lab: bad.append("B1 section %r is not labelled %r" % (sid, lab))
 cloud = sections.get("cloud", {})
 if cloud.get("nav_mode") != "horizontal_two_rows": bad.append("B1 the Cloud section is not horizontal_two_rows")
 labels = {p["id"]: p["label"] for p in cloud.get("pages", [])}
 want = [("Application", ["Binary", "Web/Debug", "MCP", "API Data", "API Debug"]), ("Repo", ["Code", "CGC", "MCP", "API Semantic", "API GraphRAG"])]
 got = [(g["label"], [labels.get(i) for i in g["pages"]]) for g in cloud.get("groups", [])]
 if got != want: bad.append("B1 the Cloud groups are not Application and Repo with their five pages each: %s" % got)
-if [p["label"] for p in sections.get("web", {"pages": []})["pages"]] != ["News", "Media", "Shopping", "Real Estate", "Jobs", "Business"]: bad.append("B1 the Web pages are not News, Media, Shopping, Real Estate, Jobs, Business")
+if [p["label"] for p in sections.get("api", {"pages": []})["pages"]] != ["News", "Media", "Shopping", "Real Estate", "Jobs", "Business"]: bad.append("B1 the API pages are not News, Media, Shopping, Real Estate, Jobs, Business")
 if [p["label"] for p in sections.get("phone", {"pages": []})["pages"]] != ["Apps"]: bad.append("B1 the Phone section is not the Apps index")
 for s in bj["ui"]["sections"]:
     for p in s.get("pages", []):
         if not p.get("icon"): bad.append("B1 page %r has no icon (the second row draws one per tab)" % p["id"])
+
+# B8 (#1640) Scrapped reads the shared headless declaration by reference; Me clones at runtime and serves; nothing baked, nothing spelled
+ui = bj["ui"]
+if ui.get("scrapped", {}).get("source") != "../ac_cloud-browser/build.json" or ui["scrapped"].get("path") != ["ui", "domains", "headless"]: bad.append("B8 ui.scrapped does not reference ac_cloud-browser/build.json::ui.domains.headless")
+if "HEADLESS_B64" not in script or "ME_REPO_B64" not in script: bad.append("B8 the build script does not bake the headless declaration and the Me repo declaration")
+if not ui.get("me", {}).get("owner") or not ui["me"].get("repo"): bad.append("B8 ui.me owner/repo are not declared")
+if any(re.search(r"token|secret|password|bearer", k, re.I) for k in ui.get("me", {})): bad.append("B8 ui.me carries a credential key")
+for lib in ("libs:local-serve", "libs:git-ui"):
+    if lib not in bj["modules"]: bad.append("B8 build.json modules lack %s" % lib)
+    if "project(':%s')" % lib not in script: bad.append("B8 the app's build script does not link %s" % lib)
+native = code(os.path.join(kt, "ui/NativePages.kt"))
+if "GitConnect(" not in native or "ServedPage(" not in native: bad.append("B8 the Me page must clone through GitConnect and serve through ServedPage")
+if "assets" in native or "R.raw" in native: bad.append("B8 the Me page reads baked content")
 
 # B2
 for need in ("NavBarTopFirstRowScaffold(", "NavSectionLayout(", "NavBarBottomHost(", "themeBackground(", "rememberAccountLauncher()", "titleHierarchy("):
@@ -144,13 +159,16 @@ mutant() {   # mutant <name> <shell edit run in the copy> <needle expected in th
   if out="$(KG_JSON="$W/app/kg.json" check "$W/app" 2>&1)"; then bad "mutant '$1' stayed green"; elif grep -q -- "$3" <<<"$out"; then ok "mutant '$1' is red ($3)"; else bad "mutant '$1' is red for the wrong reason: $out"; fi
 }
 KT=app/src/main/java/com/diegonmarcos/cloudkgstore
-mutant "section dropped from Decl"      "sed -i '/SECTION_WEB/d' $KT/Decl.kt"                                 "B1 section 'web' is declared"
+mutant "section dropped from Decl"      "sed -i '/SECTION_API/d' $KT/Decl.kt"                                 "B1 section 'api' is declared"
 mutant "settings page dropped from Decl" "sed -i '/PAGE_ABOUT/d' $KT/Decl.kt"                                  "B1 Decl.kt PAGE_ ids"
 mutant "a data page loses its entry"   "python3 -c \"import json;p='kg.json';d=json.load(open(p));d['pages'].pop('web_jobs');json.dump(d,open(p,'w'))\"" "B1 kg.json::pages and build.json::ui"
-mutant "bottom nav loses Web"           "python3 -c \"import json;p='build.json';d=json.load(open(p));d['ui']['bottom_nav']=['cloud','phone'];json.dump(d,open(p,'w'))\"" "B1 the bottom nav must be"
+mutant "bottom nav loses Me"            "python3 -c \"import json;p='build.json';d=json.load(open(p));d['ui']['bottom_nav']=['api','scrapped','home','cloud'];json.dump(d,open(p,'w'))\"" "B1 the bottom nav must be"
+mutant "scrapped loses its reference"   "sed -i 's#../ac_cloud-browser/build.json#x/build.json#' build.json"      "B8 ui.scrapped does not reference"
+mutant "me serve dropped"               "sed -i 's/ServedPage(/Foo(/' $KT/ui/NativePages.kt"                  "B8 the Me page must clone through GitConnect"
+mutant "headless not baked"             "sed -i 's/HEADLESS_B64/NOPE/g' $SCRIPT"                               "B8 the build script does not bake"
 mutant "Cloud loses its two rows"       "sed -i 's/horizontal_two_rows/horizontal_one_row/' build.json"        "B1 the Cloud section is not horizontal_two_rows"
 mutant "a Cloud group is renamed"       "sed -i 's/\"label\": \"Application\"/\"label\": \"Apps\"/' build.json"  "B1 the Cloud groups are not"
-mutant "a Web page is renamed"          "sed -i 's/\"label\": \"Real Estate\"/\"label\": \"Houses\"/' build.json"  "B1 the Web pages are not"
+mutant "an API page is renamed"          "sed -i 's/\"label\": \"Real Estate\"/\"label\": \"Houses\"/' build.json"  "B1 the API pages are not"
 mutant "shell loses the section layout" "sed -i 's/NavSectionLayout(/Foo(/' $KT/ui/KgShell.kt"                 "B2 KgShell does not call NavSectionLayout("
 mutant "nav lib unlinked"               "sed -i \"s/project(':libs:theme-background')/project(':x')/\" $SCRIPT"  "B2 the app's build script does not link libs:theme-background"
 mutant "drawer loses the sessions"      "sed -i 's/AiSessionsPanel(/Foo(/' $KT/ui/KgShell.kt"                  "B3 KgShell lacks AiSessionsPanel("

@@ -115,7 +115,11 @@
         "libs:core",
         "libs:bottomnav",
         "libs:ui-icons",
-        "libs:ui-nav-bars",
+        "libs:ui-nav-bars", "libs:fleetconfigs-agents", "libs:fleetconfigs-logcat", "libs:fleetconfigs-xray",
+        "libs:local-serve",
+        "libs:web-core",
+        "libs:git-ui",
+        "libs:ui-kit",
         "libs:theme-background",
         "libs:model-catalogue",
         "libs:ai",
@@ -161,6 +165,53 @@
       "dir": "../ab_cloud-libs-shared/libs/model-catalogue",
       "type": "library"
     },
+    "libs:fleetconfigs-agents": {
+      "dir": "../ab_cloud-libs-shared/libs/fleetconfigs-agents",
+      "type": "library"
+    },
+    "libs:fleetconfigs-logcat": {
+      "dir": "../ab_cloud-libs-shared/libs/fleetconfigs-logcat",
+      "type": "library"
+    },
+    "libs:fleetconfigs-xray": {
+      "dir": "../ab_cloud-libs-shared/libs/fleetconfigs-xray",
+      "type": "library"
+    },
+    "libs:local-serve": {
+      "_doc": "#1640 the Me tab serves the cloned repo's html: libs:local-serve LocalServer + ServedPage (loopback only, traversal guard), the Git Sites way (#1615), shared BY REFERENCE.",
+      "dir": "../ab_cloud-libs-shared/libs/local-serve",
+      "type": "library"
+    },
+    "libs:web-core": {
+      "_doc": "#1371 libs:local-serve's ServedPage shows its page through the fleet's one web view (CloudWeb, WebProfile).",
+      "dir": "../ab_cloud-libs-shared/libs/web-core",
+      "type": "library"
+    },
+    "libs:git-ui": {
+      "_doc": "#1640 the Me tab clones its repo through libs:git-ui GitConnect, the fleet's ONE GitHub connect (#1445); no second clone path.",
+      "dir": "../ab_cloud-libs-shared/libs/git-ui",
+      "type": "library"
+    },
+    "libs:git-sync": {
+      "_doc": "#1445 GitEngine + GitCredentialStore under libs:git-ui's GitConnect.",
+      "dir": "../ab_cloud-libs-shared/libs/git-sync",
+      "type": "library"
+    },
+    "libs:git-core": {
+      "_doc": "#1445 the in-process JGit engine, `api` of libs:git-sync, so settings.gradle must include it.",
+      "dir": "../ab_cloud-libs-shared/libs/git-core",
+      "type": "library"
+    },
+    "libs:git-repos": {
+      "_doc": "#1445 the Auto Commit message core GitConnect commits with.",
+      "dir": "../ab_cloud-libs-shared/libs/git-repos",
+      "type": "library"
+    },
+    "libs:ui-kit": {
+      "_doc": "libs:git-ui's `implementation` dependency (the Cloud Store row), listed so settings.gradle resolves the path.",
+      "dir": "../ab_cloud-libs-shared/libs/ui-kit",
+      "type": "library"
+    },
     "libs:ui-nav-bars": {
       "dir": "../ab_cloud-libs-shared/libs/ui-nav-bars",
       "type": "library",
@@ -196,13 +247,29 @@
     }
   },
   "ui": {
-    "_doc": "#868 THE nav declaration (libs:bottomnav NavDecl) of Cloud KG Store: three sections on the bottom nav, Cloud, Phone and Web, plus Ask (the assistant behind the AI icon at the top right, not on the bottom nav) and Settings behind the first row. Cloud is the section in `horizontal_two_rows` mode (libs:ui-nav-bars NavSectionLayout; the user may switch it to one row or the side menu in Configs): two groups on the first row, Application and Repo, each with its five pages on the second. Application: Binary (the fleet's binaries), Web/Debug (the apps' debug endpoints), MCP (search tools of the MCP services the apps declare), API Data and API Debug (GET and POST consoles on the fleet API services). Repo: Code (code search), CGC (the two code graph indexes), MCP (the CGC MCP services' search tools), API Semantic and API GraphRAG (the two CGC tools). Phone is the installed Android apps index. Web is News, Media, Shopping, Real Estate, Jobs and Business on Cloud Search's declared sources. The page ids ARE the keys of assets/kg/kg.json::pages (test-kg-store-app.sh and KgConfigTest hold them in step, both ways). Every icon is a libs:ui-icons name. The Profile icon at the top right of the first row opens extapp:cloud-account; the sessions drawer is the hamburger's.",
+    "_doc": "#868 THE nav declaration (libs:bottomnav NavDecl) of Cloud KG Store: five sections on the bottom nav in this order (#1640), API, Scrapped, Home, Me and Cloud, plus Ask (the assistant behind the AI icon at the top right, not on the bottom nav) and Settings behind the first row. Cloud is the section in `horizontal_two_rows` mode (libs:ui-nav-bars NavSectionLayout; the user may switch it to one row or the side menu in Configs): two groups on the first row, Application and Repo, each with its five pages on the second. Application: Binary (the fleet's binaries), Web/Debug (the apps' debug endpoints), MCP (search tools of the MCP services the apps declare), API Data and API Debug (GET and POST consoles on the fleet API services). Repo: Code (code search), CGC (the two code graph indexes), MCP (the CGC MCP services' search tools), API Semantic and API GraphRAG (the two CGC tools). API is the former Web section renamed (id api, same six pages): News, Media, Shopping, Real Estate, Jobs and Business on Cloud Search's declared sources. Scrapped lists the Headless Browsers stack read from ac_cloud-browser/build.json::ui.domains.headless (the one declaration Cloud Browser's Domains > Headless Browsers draws, #1637), never re-listed here. Home is the overview of the bottom nav. Me clones and serves the repository declared in `me` at runtime (libs:git-ui GitConnect + libs:local-serve). Phone (the installed Android apps index) is no longer on the bottom nav (#1640) and stays declared, with its page and code, so nothing is lost. The data page ids ARE the keys of assets/kg/kg.json::pages (test-kg-store-app.sh and KgConfigTest hold them in step, both ways). Every icon is a libs:ui-icons name. The Profile icon at the top right of the first row opens extapp:cloud-account; the sessions drawer is the hamburger's.",
     "bottom_nav": [
-      "cloud",
-      "phone",
-      "web"
+      "api",
+      "scrapped",
+      "home",
+      "me",
+      "cloud"
     ],
-    "default_section": "cloud",
+    "default_section": "home",
+    "scrapped": {
+      "_doc": "#1640 the Scrapped page lists the Headless Browsers stack by reference: the app's build script bakes this declaration key of this file, which is the ONE shared declaration (#1637, Cloud Browser Domains > Headless Browsers; backends #1498 #1540 #1541, command API in libs/headless-api/headless-api.json). Nothing about the stack is typed in this app.",
+      "source": "../ac_cloud-browser/build.json",
+      "path": ["ui", "domains", "headless"]
+    },
+    "me": {
+      "_doc": "#1640 the repository the Me tab clones at RUNTIME (shallow, through libs:git-ui GitConnect, the fleet's one GitHub connect; a private repo asks once for a GitHub token kept encrypted by libs:git-sync) and serves from its clone through libs:local-serve (the Git Sites way, #1615): the html file is rendered in a loopback WebView. No repo content is in the APK; no credential is declared here.",
+      "owner": "diegonmarcos",
+      "repo": "HardTech-Chronos",
+      "ref": "main",
+      "entry": "index.html",
+      "entry_fallback": "first *.html at the clone root",
+      "_doc_repo": "The live repo is HardTech-Chronos (public; index.html + topics.md); the owner asked to rename it to Projects-Library-KG. The slug is this one declared value: change `repo` when the rename lands (GitHub redirects the old name meanwhile)."
+    },
     "configs_ui": ["nav_ui"],
     "sections": [
       {
@@ -300,6 +367,45 @@
         ]
       },
       {
+        "id": "scrapped",
+        "label": "Scrapped",
+        "icon": "smart_toy",
+        "pages": [
+          {
+            "id": "scrapped_headless",
+            "label": "Headless Browsers",
+            "icon": "smart_toy",
+            "pages": []
+          }
+        ]
+      },
+      {
+        "id": "home",
+        "label": "Home",
+        "icon": "home",
+        "pages": [
+          {
+            "id": "home_overview",
+            "label": "Overview",
+            "icon": "home",
+            "pages": []
+          }
+        ]
+      },
+      {
+        "id": "me",
+        "label": "Me",
+        "icon": "person",
+        "pages": [
+          {
+            "id": "me_library",
+            "label": "Library",
+            "icon": "menu_book",
+            "pages": []
+          }
+        ]
+      },
+      {
         "id": "phone",
         "label": "Phone",
         "icon": "smartphone",
@@ -313,8 +419,8 @@
         ]
       },
       {
-        "id": "web",
-        "label": "Web",
+        "id": "api",
+        "label": "API",
         "icon": "public",
         "pages": [
           {
@@ -412,7 +518,9 @@
         "Repo: code, CGC, semantic and GraphRAG search",
         "Phone: installed apps",
         "Web: news, media, shopping, real estate, jobs",
-        "Ask: answers grounded in the graph"
+        "Scrapped: the Headless Browsers stack with its API and MCP links",
+    "Me: a git repository cloned and served on the phone",
+    "Ask: answers grounded in the graph"
       ],
       "screens": [
         {
