@@ -34,18 +34,23 @@ class LastMediaSessionTest {
      * on Play resumes it by sending a MEDIA_PLAY button to that exact package —
      * the default path, with no per-app special-casing.
      */
-    @Test fun `resume replays the last session for any package, not just Spotify or Tidal`() {
+    @Test fun `resume replays the stored Tidal or Spotify session and a stored session from any other app is dropped`() {
         val ctx = ApplicationProvider.getApplicationContext<Application>()
-        val pkg = "com.example.genericplayer"
+        // #1648: only Tidal / Spotify are held; a session stored by another app (older build) is discarded on load.
+        ctx.getSharedPreferences("last_media_session", Context.MODE_PRIVATE).edit()
+            .putString("pkg", "com.example.genericplayer").putString("title", "Old Song").apply()
+        assertEquals("a non-held stored session is not shown", null, LastMediaSession.load(ctx))
+        assertEquals("and it cannot be resumed", false, LastMediaSession.resume(ctx))
+        val pkg = "com.aspiro.tidal"
         ctx.getSharedPreferences("last_media_session", Context.MODE_PRIVATE).edit()
             .putString("pkg", pkg).putString("title", "Some Song").putString("artist", "Some Artist")
             .putLong("pos", 1_000).putLong("dur", 200_000).apply()
 
         val last = LastMediaSession.load(ctx)
-        assertEquals("the stored package is read back whatever it is", pkg, last?.pkg)
+        assertEquals("the stored held package is read back", pkg, last?.pkg)
 
         val resumed = LastMediaSession.resume(ctx)
-        assertTrue("resume dispatched a play for the arbitrary package", resumed)
+        assertTrue("resume dispatched a play for the stored package", resumed)
         val sent = shadowOf(ctx).broadcastIntents.filter { it.action == Intent.ACTION_MEDIA_BUTTON }
         assertTrue("a MEDIA_BUTTON broadcast was sent", sent.isNotEmpty())
         assertEquals("the media button targets the stored package", pkg, sent.last().`package`)
