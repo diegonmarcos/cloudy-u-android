@@ -44,6 +44,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.produceState
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.ui.Alignment
@@ -110,11 +113,11 @@ private fun WebyIcon(tile: WebyTile, sz: androidx.compose.ui.unit.Dp, icons: Web
 /** One launcher cell, an app or a folder tile, as the SuperApp's phone grid draws them (shared KitLauncher pieces). */
 @Composable
 private fun WebyCell(
-    cell: WebyLayout.Cell, path: String, modifier: Modifier, icons: WebyIconCache, rev: Int,
+    cell: WebyLayout.Cell, path: String, modifier: Modifier, icons: WebyIconCache, rev: Int, launchable: Set<String?>,
     onTile: (WebyTile) -> Unit, onTileLong: (WebyTile) -> Unit, onFolder: (String) -> Unit, onFolderLong: (String) -> Unit,
 ) {
     when (cell) {
-        is WebyLayout.Cell.App -> KitLauncherTile(cell.tile.label, modifier.testTag("weby:tile:${cell.tile.id}"), enabled = cell.tile.url != null,
+        is WebyLayout.Cell.App -> KitLauncherTile(cell.tile.label, modifier.testTag("weby:tile:${cell.tile.id}"), enabled = cell.tile.url != null || cell.tile.pkg in launchable,
             onClick = { onTile(cell.tile) }, onLongClick = { onTileLong(cell.tile) }) { sz -> WebyIcon(cell.tile, sz, icons, rev) }
         is WebyLayout.Cell.Folder -> {
             val sub = "$path/${cell.folder.title}"
@@ -137,11 +140,16 @@ fun WebyPage(decl: SitesDecl, onOpen: (String) -> Unit) {
     val store = remember { WebyStore(ctx, WebySeed.derive(decl.weby)) }
     val icons = remember { WebyIconCache(ctx, decl.weby) }
     var folders by remember { mutableStateOf(store.load()) }
+    // #1634 the full Phone-apps catalogue: the SuperApp's folders and every app, derived on each open (never saved), the installed ones read off-thread
+    val installed by produceState(emptyList<WebyInstalled>()) { value = withContext(Dispatchers.IO) { WebyInstalledApps.read(ctx) } }
+    val catalogue = remember(installed) { WebyCatalogue.derive(decl.weby, installed) }
+    val launchable = remember(installed) { installed.map { it.pkg }.toSet<String?>() }
+    fun launch(tile: WebyTile): Boolean = tile.url?.let { onOpen(it); true } ?: tile.pkg?.takeIf { it in launchable }?.let { WebyInstalledApps.launch(ctx, it) } ?: false
     var dialog by remember { mutableStateOf<WebyDialog?>(null) }
     var openPath by remember { mutableStateOf<String?>(null) }
     var rev by remember { mutableIntStateOf(0) }
     fun commit(n: List<WebyFolder>) { folders = n; store.save(n) }
-    val sections = WebyOps.flatten(folders)
+    val sections = WebyOps.flatten(folders) + WebyOps.flatten(catalogue)
 
     LazyVerticalGrid(
         GridCells.Fixed(WebyLayout.COLUMNS), Modifier.fillMaxSize().testTag("weby:grid"),
@@ -155,22 +163,25 @@ fun WebyPage(decl: SitesDecl, onOpen: (String) -> Unit) {
             }
         }
         if (folders.isEmpty()) item(span = { GridItemSpan(maxLineSpan) }) { KitStoreRowLine { KitStoreCaption(t("empty"), color = p.textSecondary) } }
-        for (f in folders) {
+        for (f in folders + catalogue) {
             val path = f.title
+            val derived = WebyCatalogue.isCatalogue(path)
             item(key = "h:$path", span = { GridItemSpan(maxLineSpan) }) {
                 KitStoreRowLine(Modifier.testTag("weby:folder:$path")) {
                     KitStoreName(path, Modifier.weight(1f), p.textPrimary)
                     KitStoreCaption(WebyLayout.cells(f).size.toString(), color = p.textSecondary)
-                    Spacer(Modifier.width(KitStoreRow.gap))
-                    KitStoreQuick(t("add_short"), KitStoreRow.BLUE_FILL, Modifier.testTag("weby:folder:$path:add"), onClick = { dialog = WebyDialog.AddBookmark(path) })
-                    Spacer(Modifier.width(KitStoreRow.gap))
-                    KitStoreQuick(t("remove_short"), KitStoreRow.BAD, Modifier.testTag("weby:folder:$path:remove"), onClick = { dialog = WebyDialog.RemoveFolder(path) })
+                    if (!derived) {
+                        Spacer(Modifier.width(KitStoreRow.gap))
+                        KitStoreQuick(t("add_short"), KitStoreRow.BLUE_FILL, Modifier.testTag("weby:folder:$path:add"), onClick = { dialog = WebyDialog.AddBookmark(path) })
+                        Spacer(Modifier.width(KitStoreRow.gap))
+                        KitStoreQuick(t("remove_short"), KitStoreRow.BAD, Modifier.testTag("weby:folder:$path:remove"), onClick = { dialog = WebyDialog.RemoveFolder(path) })
+                    }
                 }
             }
             items(WebyLayout.cells(f), key = { c -> if (c is WebyLayout.Cell.App) "$path|${c.tile.id}" else "$path|f:${(c as WebyLayout.Cell.Folder).folder.title}" }) { c ->
-                WebyCell(c, path, Modifier.fillMaxWidth(), icons, rev,
-                    onTile = { tile -> tile.url?.let(onOpen) }, onTileLong = { tile -> dialog = WebyDialog.TileMenu(path, tile) },
-                    onFolder = { openPath = it }, onFolderLong = { dialog = WebyDialog.RemoveFolder(it) })
+                WebyCell(c, path, Modifier.fillMaxWidth(), icons, rev, launchable,
+                    onTile = { tile -> launch(tile) }, onTileLong = { tile -> dialog = WebyDialog.TileMenu(path, tile) },
+                    onFolder = { openPath = it }, onFolderLong = { if (!WebyCatalogue.isCatalogue(it)) dialog = WebyDialog.RemoveFolder(it) })
             }
         }
     }
@@ -182,9 +193,9 @@ fun WebyPage(decl: SitesDecl, onOpen: (String) -> Unit) {
         KitLauncherFolderPopup(f.title, onDismiss = { openPath = null }) {
             Column(Modifier.testTag("weby:popup:$path")) {
                 KitLauncherRows(WebyLayout.cells(f), WebyLayout.POPUP_COLUMNS) { c, m ->
-                    WebyCell(c, path, m, icons, rev,
-                        onTile = { tile -> tile.url?.let { openPath = null; onOpen(it) } }, onTileLong = { tile -> dialog = WebyDialog.TileMenu(path, tile) },
-                        onFolder = { openPath = it }, onFolderLong = { dialog = WebyDialog.RemoveFolder(it) })
+                    WebyCell(c, path, m, icons, rev, launchable,
+                        onTile = { tile -> if (launch(tile)) openPath = null }, onTileLong = { tile -> dialog = WebyDialog.TileMenu(path, tile) },
+                        onFolder = { openPath = it }, onFolderLong = { if (!WebyCatalogue.isCatalogue(it)) dialog = WebyDialog.RemoveFolder(it) })
                 }
             }
         }
@@ -214,8 +225,9 @@ fun WebyPage(decl: SitesDecl, onOpen: (String) -> Unit) {
         is WebyDialog.TileMenu -> AlertDialog(onDismissRequest = { dialog = null }, title = { Text(d.tile.label) },
             text = { Column {
                 d.tile.url?.let { u -> TextButton({ dialog = null; openPath = null; onOpen(u) }, Modifier.testTag("weby:menu:open")) { Text(t("menu_open")) } }
+                if (d.tile.pkg in launchable) TextButton({ dialog = null; openPath = null; d.tile.pkg?.let { WebyInstalledApps.launch(ctx, it) } }, Modifier.testTag("weby:menu:launch")) { Text(t("menu_launch")) }
                 TextButton({ dialog = null; icons.refresh(d.tile) { rev++ } }, Modifier.testTag("weby:menu:refresh_icon")) { Text(t("menu_refresh_icon")) }
-                TextButton({ commit(WebyOps.removeBookmark(folders, d.path, d.tile.id)); dialog = null }, Modifier.testTag("weby:menu:remove")) { Text(t("menu_remove")) }
+                if (!WebyCatalogue.isCatalogue(d.path)) TextButton({ commit(WebyOps.removeBookmark(folders, d.path, d.tile.id)); dialog = null }, Modifier.testTag("weby:menu:remove")) { Text(t("menu_remove")) }
             } },
             confirmButton = {}, dismissButton = { TextButton({ dialog = null }) { Text(t("cancel")) } })
         is WebyDialog.RemoveFolder -> AlertDialog(onDismissRequest = { dialog = null }, title = { Text(t("remove_folder")) }, text = { Text(d.path) },

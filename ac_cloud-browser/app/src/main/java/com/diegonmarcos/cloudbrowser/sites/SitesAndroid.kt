@@ -71,3 +71,20 @@ private val main = Handler(Looper.getMainLooper())
 
 /** Run [f] on the main thread. */
 fun onMain(f: () -> Unit) { main.post(f) }
+
+/** #1634 the launchable apps on this phone (Weby's catalogue joins them to the SuperApp's Phone-apps folders) and the launch of one. */
+object WebyInstalledApps {
+    fun read(ctx: android.content.Context): List<WebyInstalled> = runCatching {
+        val pm = ctx.packageManager
+        val q = android.content.Intent(android.content.Intent.ACTION_MAIN).addCategory(android.content.Intent.CATEGORY_LAUNCHER)
+        pm.queryIntentActivities(q, 0).mapNotNull { ri ->
+            val pkg = ri.activityInfo?.packageName ?: return@mapNotNull null
+            WebyInstalled(pkg, runCatching { ri.loadLabel(pm).toString() }.getOrDefault(pkg))
+        }.distinctBy { it.pkg }
+    }.getOrDefault(emptyList())
+
+    fun launch(ctx: android.content.Context, pkg: String): Boolean = runCatching {
+        val i = ctx.packageManager.getLaunchIntentForPackage(pkg) ?: return false
+        ctx.startActivity(i.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)); true
+    }.getOrDefault(false)
+}

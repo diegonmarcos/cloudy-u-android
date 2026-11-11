@@ -131,11 +131,11 @@ class WebyIconCache(context: Context, private val decl: JSONObject) {
     private val keys = (0 until (decl.optJSONArray("website_meta_keys")?.length() ?: 0)).map { decl.optJSONArray("website_meta_keys")!!.optString(it) }
 
     /** In memory only (safe on the main thread). */
-    fun peek(tile: WebyTile): Bitmap? = keyOf(tile)?.let { mem.get(it) }
+    fun peek(tile: WebyTile): Bitmap? = keyOf(tile)?.let { mem.get(it) } ?: tile.pkg?.let { mem.get("app:$it") }
 
     /** Ask for [tile]'s icon: [done] gets it on the main thread, null = grey. */
     fun request(tile: WebyTile, done: (Bitmap?) -> Unit) {
-        POOL.execute { val b = runCatching { load(tile) }.getOrNull(); onMain { done(b) } }
+        POOL.execute { val b = runCatching { load(tile) ?: appIcon(tile) }.getOrNull(); onMain { done(b) } }
     }
 
     /** Forget [tile]'s icon (file, marker, memory) and fetch it again. */
@@ -178,6 +178,19 @@ class WebyIconCache(context: Context, private val decl: JSONObject) {
         if (bmp == null) { if (reached) none.writeBytes(ByteArray(0)); return null }
         png.outputStream().use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) }
         mem.put(key, bmp)
+        return bmp
+    }
+
+    /** #1634 an app with no website (or none that answers) shows its own launcher icon when it is installed here; BLOCKING. */
+    private fun appIcon(t: WebyTile): Bitmap? {
+        val pkg = t.pkg ?: return null
+        mem.get("app:$pkg")?.let { return it }
+        val d = runCatching { ctx.packageManager.getApplicationIcon(pkg) }.getOrNull() ?: return null
+        val bmp = Bitmap.createBitmap(192, 192, Bitmap.Config.ARGB_8888)
+        val c = android.graphics.Canvas(bmp)
+        d.setBounds(0, 0, 192, 192)
+        d.draw(c)
+        mem.put("app:$pkg", bmp)
         return bmp
     }
 

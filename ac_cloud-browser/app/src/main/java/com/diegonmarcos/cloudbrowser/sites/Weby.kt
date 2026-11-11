@@ -5,7 +5,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /** One site tile. [url] null = the declaration knows no web address for it: the tile is drawn greyed and does nothing. */
-data class WebyTile(val id: String, val label: String, val url: String?)
+data class WebyTile(val id: String, val label: String, val url: String?, val pkg: String? = null)
 
 /** A launcher folder: tiles, then sub-folders. */
 data class WebyFolder(val title: String, val tiles: List<WebyTile>, val folders: List<WebyFolder> = emptyList())
@@ -33,7 +33,7 @@ object WebySeed {
             val pkg = if (p is JSONObject) p.optString("pkg") else (p as? String).orEmpty()
             if (pkg.isBlank()) return@mapNotNull null
             val label = (p as? JSONObject)?.optString("label")?.takeIf { it.isNotBlank() } ?: web[pkg]?.first ?: pkg
-            WebyTile(pkg, label, web[pkg]?.second)
+            WebyTile(pkg, label, web[pkg]?.second, pkg)
         }
         val groups = decl.optJSONArray("groups") ?: JSONArray()
         return (0 until groups.length()).mapNotNull { i ->
@@ -43,6 +43,98 @@ object WebySeed {
                 (0 until (subs?.length() ?: 0)).mapNotNull { k -> subs?.optJSONObject(k)?.let { WebyFolder(it.optString("label"), tiles(it.optJSONArray("packages"))) } })
         }
     }
+}
+
+/** An installed, launchable app as the phone reports it. */
+data class WebyInstalled(val pkg: String, val label: String)
+
+/**
+ * #1634 the FULL Phone-apps catalogue, pure (JVM-tested in WebyCatalogueTest): every section, every folder and every app of the
+ * SuperApp's Phone > Apps page, beside the Quickmarks groups (WebySeed), never instead of them. The sections (ui.phone_sections) and
+ * the folders (ui.phone_folders: label prefix char -> section, match_keywords -> members) come from the SuperApp's declaration;
+ * the fleet's own packages join the folder ui.external_apps names. Members = every package a folder declares (so the whole
+ * catalogue is there, installed or not) plus every launchable app on this phone, sorted into its folder by the same keyword rules
+ * as libs:appstore PhoneAppClassifier (first folder in declared order wins; an app nothing claims falls to the sink folder).
+ * [decl] = ui.weby.catalogue + webapps (phone-webapps.json groups, the web address of an app).
+ */
+object WebyCatalogue {
+    /** Title of the top-level group that holds a section's folders. */
+    const val ROOT = "Phone apps"
+    const val NO_SECTION = "Other"
+
+    private data class Folder(val id: String, val order: String, val label: String, val keywords: List<String>, val pin: Boolean, val sink: Boolean)
+
+    private fun strings(a: JSONArray?): List<String> = (0 until (a?.length() ?: 0)).mapNotNull { a?.optString(it)?.takeIf { s -> s.isNotEmpty() } }
+
+    private fun folders(cat: JSONObject): List<Folder> {
+        val ext = HashMap<String, MutableList<String>>()
+        val e = cat.optJSONArray("external") ?: JSONArray()
+        for (i in 0 until e.length()) e.optJSONObject(i)?.let { o -> strings(o.optJSONArray("packages")).forEach { ext.getOrPut(o.optString("folder")) { ArrayList() }.add("pkg:$it") } }
+        val a = cat.optJSONArray("folders") ?: JSONArray()
+        return (0 until a.length()).mapNotNull { i ->
+            val o = a.optJSONObject(i) ?: return@mapNotNull null
+            Folder(o.optString("id"), o.optString("order", "99"), o.optString("label"),
+                (strings(o.optJSONArray("match_keywords")) + (ext[o.optString("id")] ?: emptyList())).map { it.lowercase() }, o.optBoolean("pin"), o.optBoolean("sink"))
+        }.sortedWith(compareBy({ it.order }, { it.id }))
+    }
+
+    private fun matches(kw: String, pkg: String, lbl: String): Boolean = when {
+        kw.startsWith("pkg:") -> kw.length > 4 && pkg == kw.substring(4)
+        kw.startsWith("pkg^") -> kw.length > 4 && pkg.startsWith(kw.substring(4))
+        kw.startsWith("lbl:") -> kw.length > 4 && lbl == kw.substring(4)
+        kw.startsWith("lbl~") -> kw.length - 4 >= 3 && lbl.contains(kw.substring(4))
+        else -> kw.length >= 4 && "$pkg $lbl".contains(kw)
+    }
+
+    private fun classify(pkg: String, label: String, fs: List<Folder>, sink: String?): String? {
+        val p = pkg.lowercase(); val l = label.lowercase()
+        for (f in fs) for (k in f.keywords) if (matches(k, p, l)) return f.id
+        return sink
+    }
+
+    /** Every package a folder names with a `pkg:` keyword, in declared folder order (the catalogue's declared members). */
+    fun declaredPackages(decl: JSONObject): List<String> =
+        folders(decl.optJSONObject("catalogue") ?: JSONObject()).flatMap { f -> f.keywords.filter { it.startsWith("pkg:") }.map { it.substring(4) } }.distinct()
+
+    fun derive(decl: JSONObject, installed: List<WebyInstalled>): List<WebyFolder> {
+        val cat = decl.optJSONObject("catalogue") ?: return emptyList()
+        val fs = folders(cat)
+        if (fs.isEmpty()) return emptyList()
+        val sink = fs.firstOrNull { it.sink }?.id ?: fs.firstOrNull { it.keywords.isEmpty() }?.id
+        val web = HashMap<String, Pair<String, String?>>()
+        val wg = decl.optJSONArray("webapps") ?: JSONArray()
+        for (i in 0 until wg.length()) {
+            val apps = wg.optJSONObject(i)?.optJSONArray("apps") ?: continue
+            for (j in 0 until apps.length()) {
+                val a = apps.optJSONObject(j) ?: continue
+                web.putIfAbsent(a.optString("pkg"), a.optString("label") to a.optString("url").takeIf { it.isNotBlank() && it != "null" })
+            }
+        }
+        val label = HashMap<String, String>()
+        installed.forEach { label[it.pkg] = it.label }
+        val members = LinkedHashMap<String, LinkedHashSet<String>>()
+        fun put(pkg: String) { classify(pkg, label[pkg] ?: web[pkg]?.first ?: pkg, fs, sink)?.let { members.getOrPut(it) { LinkedHashSet() }.add(pkg) } }
+        fs.flatMap { f -> f.keywords.filter { it.startsWith("pkg:") }.map { it.substring(4) } }.distinct().forEach { put(it) }
+        installed.forEach { put(it.pkg) }
+        val secs = cat.optJSONArray("sections") ?: JSONArray()
+        val sections = (0 until secs.length()).mapNotNull { secs.optJSONObject(it) }.map { it.optString("prefix") to it.optString("title") }
+        val out = LinkedHashMap<String, MutableList<WebyFolder>>()
+        sections.forEach { out[it.second] = ArrayList() }
+        for (f in fs) {
+            val m = members[f.id].orEmpty()
+            if (m.isEmpty() && !f.pin) continue
+            val first = f.label.firstOrNull()
+            val sec = sections.firstOrNull { it.first.isNotEmpty() && first != null && it.first[0] == first }
+            val title = if (sec != null) f.label.drop(1) else f.label
+            val tiles = m.map { pkg -> WebyTile(pkg, label[pkg] ?: web[pkg]?.first ?: pkg, web[pkg]?.second, pkg) }.sortedBy { it.label.lowercase() }
+            out.getOrPut(sec?.second ?: NO_SECTION) { ArrayList() }.add(WebyFolder(title.replace('/', '-'), tiles))
+        }
+        return out.filterValues { it.isNotEmpty() }.map { (t, l) -> WebyFolder(prefix(t), emptyList(), l) }
+    }
+
+    /** A catalogue section's top-level title; the page tells these (derived, never saved or edited) from the user's own folders by it. */
+    fun prefix(section: String) = "$ROOT › ${section.replace('/', '-')}"
+    fun isCatalogue(path: String) = path == ROOT || path.startsWith("$ROOT › ")
 }
 
 /**
@@ -128,7 +220,7 @@ object WebyOps {
     fun toJson(list: List<WebyFolder>): JSONArray = JSONArray().also { a ->
         list.forEach { f ->
             a.put(JSONObject().put("title", f.title)
-                .put("tiles", JSONArray().also { t -> f.tiles.forEach { x -> t.put(JSONObject().put("id", x.id).put("label", x.label).put("url", x.url ?: JSONObject.NULL)) } })
+                .put("tiles", JSONArray().also { t -> f.tiles.forEach { x -> t.put(JSONObject().put("id", x.id).put("label", x.label).put("url", x.url ?: JSONObject.NULL).also { o -> x.pkg?.let { o.put("pkg", it) } }) } })
                 .put("folders", toJson(f.folders)))
         }
     }
@@ -142,7 +234,7 @@ object WebyOps {
         val o = a.optJSONObject(i) ?: return@mapNotNull null
         val t = o.optJSONArray("tiles") ?: JSONArray()
         WebyFolder(o.optString("title"), (0 until t.length()).mapNotNull { j ->
-            t.optJSONObject(j)?.let { WebyTile(it.optString("id"), it.optString("label"), if (it.isNull("url")) null else it.optString("url").takeIf { u -> u.isNotBlank() }) }
+            t.optJSONObject(j)?.let { WebyTile(it.optString("id"), it.optString("label"), if (it.isNull("url")) null else it.optString("url").takeIf { u -> u.isNotBlank() }, it.optString("pkg").takeIf { p -> p.isNotBlank() }) }
         }, parse(o.optJSONArray("folders") ?: JSONArray()))
     }
 }

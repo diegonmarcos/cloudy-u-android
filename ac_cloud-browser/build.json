@@ -2157,7 +2157,8 @@
         "add_bookmark": "Add bookmark", "add_folder": "New folder", "add_short": "+", "remove_short": "×", "path_sep": " › ",
         "remove_bookmark": "Remove this bookmark?", "remove_folder": "Remove this folder and everything in it?",
         "field_title": "Title", "field_url": "Address", "field_folder": "Folder", "ok": "OK", "cancel": "Cancel", "empty": "No bookmarks.",
-        "menu_open": "Open", "menu_refresh_icon": "Refresh icon", "menu_remove": "Remove"
+        "menu_open": "Open",
+    "menu_launch": "Open app", "menu_refresh_icon": "Refresh icon", "menu_remove": "Remove"
       },
       "_doc_icons": "#1531 each tile's icon is its website's own picture (manifest icons, then apple-touch-icon, then favicon; sites/WebyIcons.kt), fetched on demand and kept in the app's files (weby_icons/); a tile with no website or no picture is grey with its initial. website_meta_keys is NOT here: app/build.gradle bakes the SuperApp's ui.app_urls.website_meta_keys (the declared website lookup for an app whose phone-webapps entry has no address). icon_overrides: tile id (package) or host -> icon URL, used instead of the lookup.",
       "icon_overrides": {}

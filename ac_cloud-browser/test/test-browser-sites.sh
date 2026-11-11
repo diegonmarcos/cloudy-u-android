@@ -33,6 +33,8 @@ def check(root, ok):
     ok("aa_cloud-superapp" in gradle and "phone_app_groups" in gradle and "'data/phone-webapps.json'" in gradle, "W1 Weby is derived from the SuperApp phone apps and phone-webapps.json")
     ok("repos_declared.json" in gradle and "ac_cloud-c3-webserver/build.json" in gradle and "SITES_DECL_B64" in gradle, "W1 Cloudy reads the declared repos and the Cloud-Webserver's declaration")
     ok(not os.path.exists(os.path.join(root, "ac_cloud-browser/app/src/main/assets/phone-webapps.json")), "W1 no copy of the SuperApp declaration in the app")
+    ok("superappUi.phone_folders" in gradle and "superappUi.phone_sections" in gradle and "superappUi.external_apps" in gradle, "W1 #1634 Weby's full Phone-apps catalogue (folders, sections, fleet apps) is read from the SuperApp declaration, not copied")
+    ok("object WebyCatalogue" in "".join(src.values()) and "WebyCatalogue.derive" in "".join(src.values()), "W1 #1634 the page draws the full catalogue beside the Quickmarks groups")
     # W2
     secs = {s["id"]: s for s in ui["sections"]}
     ok(ui["bottom_nav"] == ["weby", "cloudy", "browser", "tabs", "domains"], "W2 the island is Weby | Cloudy | Browser | Tabs | Domains")
@@ -64,6 +66,7 @@ B = "ac_cloud-browser/build.json"
 main("sites", check, [
     ("Weby stops reading the phone apps", GRADLE, "'data/phone-webapps.json'", "'data/phone-webapps.jsonx'", "W1 Weby is derived"),
     ("a copy of the declaration lands in the assets", "ac_cloud-browser/app/src/main/assets/phone-webapps.json", None, "{}", "W1 no copy"),
+    ("Weby stops reading the phone folders", GRADLE, "superappUi.phone_folders", "superappUi.phone_foldersx", "W1 #1634 Weby's full"),
     ("a scraper module comes back", B, '"libs:bottomnav": {', '"libs:scraper": {"dir": "x"},\n    "libs:bottomnav": {', "W4 build.json no longer"),
     ("the app depends on libs:apify again", GRADLE, "    implementation project(':libs:ui-kit')", "    implementation project(':libs:ui-kit')\n    implementation project(':libs:apify')", "W4 the app does not depend"),
     ("a site action is dropped", B, '{"id": "media", "label": "Clear media", "detail": "cached images, audio, video"},', "", "W2 the five site actions"),

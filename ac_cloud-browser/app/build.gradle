@@ -171,7 +171,17 @@ def webserverLauncher = ''
 }
 if (webserverLauncher == '') throw new GradleException("ac_cloud-c3-webserver AndroidManifest.xml has no LAUNCHER activity: Cloudy cannot open the Cloud-Webserver")
 def sitesDecl = [
-    weby   : (buildJson.ui.weby ?: [:]) + [groups: phoneSection.phone_app_groups, webapps: phoneWebapps.groups, website_meta_keys: (superappUi.app_urls?.website_meta_keys ?: [])],
+    // #1634 the FULL phone-apps catalogue beside the Quickmarks groups: the SuperApp's own taxonomy (ui.phone_sections and
+    // ui.phone_folders: id/order/label/match_keywords/pin/sink) plus the fleet's own packages by folder (ui.external_apps), read
+    // here from the declaration, never copied. WebyCatalogue classifies the installed apps with the same rules libs:appstore uses.
+    weby   : (buildJson.ui.weby ?: [:]) + [groups: phoneSection.phone_app_groups, webapps: phoneWebapps.groups, website_meta_keys: (superappUi.app_urls?.website_meta_keys ?: []),
+        catalogue: [
+            sections: (superappUi.phone_sections ?: []).collect { [title: it.title, prefix: it.prefix] },
+            folders : (superappUi.phone_folders ?: []).collect { [id: it.id, order: (it.order ?: '99'), label: it.label, match_keywords: (it.match_keywords ?: []), pin: (it.pin ?: false), sink: (it.sink ?: false)] },
+            external: (superappUi.external_apps ?: []).findAll { it.folder }.collect { e ->
+                [folder: e.folder, packages: ([e.hub_package, e.alt_package, e.install_package] + ((e.forks ?: [:]).values() as List)).findAll { it }.collect { it.toString() }.unique()]
+            },
+        ]],
     cloudy : (buildJson.ui.cloudy ?: [:]) + [
         gh_pages : reposDeclared.repos.findAll { it.visibility == 'pub' && it.pages_url }.collect { [name: it.name, url: it.pages_url] },
         webserver: [

@@ -35,6 +35,11 @@
     <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
 
     <queries>
+        <!-- #1634 Weby lists every launchable app on the phone beside the SuperApp's Phone-apps folders (launcher apps only, no QUERY_ALL_PACKAGES). -->
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
         <package android:name="com.diegonmarcos.cloudbrowser" />
         <!-- #802 I10 Cloud Vault (the vault add-on's requires_fleet, resolved by app/build.gradle). -->
         <package android:name="${vaultPackage}" />
