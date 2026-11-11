@@ -236,12 +236,13 @@ class DevControlFragment : KitComposeFragment() {
         //    Debug targets, each a real measurement against its limit. One collect feeds every block (EngineProbes.Shared).
         macro("🧬  ENGINE PROFILES")
         val engines = EngineProbes.Shared(appCtx)
+        // The verdict wears the app's ONE status light (ui/StatusLight): pass = on, fail = off, nothing measured = unknown.
         fun verdictColor(v: EngineProfiles.Verdict): Color? = when (v) {
-            EngineProfiles.Verdict.PASS -> Color(0xFF4ADE80)
-            EngineProfiles.Verdict.FAIL -> Color(0xFFF87171)
-            EngineProfiles.Verdict.NO_DATA -> Color(0xFF9CA3AF)
+            EngineProfiles.Verdict.PASS -> com.diegonmarcos.superapp.ui.StatusLight.State.ON
+            EngineProfiles.Verdict.FAIL -> com.diegonmarcos.superapp.ui.StatusLight.State.OFF
+            EngineProfiles.Verdict.NO_DATA -> com.diegonmarcos.superapp.ui.StatusLight.State.UNKNOWN
             EngineProfiles.Verdict.INFO -> null
-        }
+        }?.let { Color(com.diegonmarcos.superapp.ui.StatusLight.colour(appCtx, it)) }
 
         asyncSection(ENGINE_SCOREBOARD, timeoutMs = 30_000, probe = { engines.get() }) { inputs ->
             small("The profiler of THIS APP, by engine: what each engine of Cloud SuperApp measured since the process started, against " +
