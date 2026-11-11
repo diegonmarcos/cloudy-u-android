@@ -112,6 +112,9 @@ class GitSyncCoordinator(private val ctx: Context, private val scope: CoroutineS
         val path: String = "",
         val via: String = "",
         val tookMs: Long = 0,
+        /** #1645 detached HEAD and stash entries, real reads. */
+        val detached: Boolean = false,
+        val stashed: Int = 0,
     )
 
     enum class Step { STAGING, COMMITTING, PULLING, PUSHING }
@@ -1378,6 +1381,8 @@ class GitSyncCoordinator(private val ctx: Context, private val scope: CoroutineS
                 s.branch, s.upstream, s.ahead, s.behind, s.files.size - s.conflicts.size, s.conflicts.size, s.repositoryState,
                 untracked = s.files.count { !it.conflicting && it.unstaged == com.diegonmarcos.cloudlib.gitsync.GitChange.UNTRACKED },
                 fetchedAtMs = File(dir, ".git/FETCH_HEAD").lastModified(),
+                detached = RepoCheap.head(dir).detached || (s.branch.isNullOrBlank() && !File(dir, ".git").isDirectory),
+                stashed = RepoCheap.stashCount(File(dir, ".git")),
             )
         }
 
@@ -1428,7 +1433,7 @@ class GitSyncCoordinator(private val ctx: Context, private val scope: CoroutineS
             GitStatusReader.State.LARGE -> Glance(s.probe?.branch, s.probe?.upstream, read = true, large = true, state = "large", readAtMs = s.readAtMs, level = "full", path = s.path, tookMs = s.tookMs)
             GitStatusReader.State.ERROR -> Glance(error = s.reason ?: "unknown", read = true, state = "error", readAtMs = s.readAtMs, level = s.level.name.lowercase(), path = s.path, tookMs = s.tookMs)
             else -> s.probe!!.let { p ->
-                Glance(p.branch, p.upstream, p.ahead, p.behind, p.changed, p.conflicts, p.repositoryState, read = true, state = s.state.name.lowercase(), readAtMs = s.readAtMs, untracked = p.untracked, fetchedAtMs = p.fetchedAtMs, level = s.level.name.lowercase(), path = s.path, via = p.via, tookMs = s.tookMs)
+                Glance(p.branch, p.upstream, p.ahead, p.behind, p.changed, p.conflicts, p.repositoryState, read = true, state = s.state.name.lowercase(), readAtMs = s.readAtMs, untracked = p.untracked, fetchedAtMs = p.fetchedAtMs, level = s.level.name.lowercase(), path = s.path, via = p.via, tookMs = s.tookMs, detached = p.detached, stashed = p.stashed)
             }
         }
 

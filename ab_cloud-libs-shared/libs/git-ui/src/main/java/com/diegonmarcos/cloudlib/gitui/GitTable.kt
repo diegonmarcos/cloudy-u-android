@@ -27,6 +27,16 @@ data class GitTableRow<S : Enum<S>>(
     /** #1452 the Status Message cell: what the status icons cannot say (the clone is gone, a conflict, an error, a folder command's outcome); "" = nothing to say. */
     val message: String = "",
     val messageProblem: Boolean = false,
+    /** #1645 is a local clone present (the real registry + folder check); null = not known. */
+    val cloned: Boolean? = null,
+    /** #1645 stash entries (git stash list); null = not read. */
+    val stashed: Int? = null,
+    /** #1645 HEAD is detached (a sha, not a branch ref); null = not read. */
+    val detached: Boolean? = null,
+    /** #1645 commits not pushed to the upstream (rev-list ahead); null = no upstream / not read. */
+    val unpushed: Int? = null,
+    /** #1645 the checked-out branch name (null = detached or not read). */
+    val branch: String? = null,
 )
 
 /** #1408 moved from Cloud Drive: the host keeps only how a row is read from its own state (RepoTable.rowOf). */
@@ -54,7 +64,12 @@ object GitTable {
         RepoColumn.SIZE_TOTAL -> r.sizeTotalBytes
         RepoColumn.SIZE_DISK -> r.sizeDiskBytes
         RepoColumn.BRANCHES -> r.branches
-        RepoColumn.DIRTY -> r.dirtyFiles
+        // Dirty first when descending; a stash breaks ties among equally dirty repositories.
+        RepoColumn.DIRTY -> r.dirtyFiles?.let { it.toLong() * 1_000_000L + (r.stashed ?: 0) }
+        RepoColumn.CLONED -> r.cloned?.let { if (it) 1 else 0 }
+        RepoColumn.DETACHED -> r.detached?.let { if (it) 1 else 0 }
+        RepoColumn.UNPUSHED -> r.unpushed
+        RepoColumn.CURRENT_BRANCH -> r.branch?.lowercase()
         // Ahead first, then behind: one number that orders by ahead and breaks ties by behind.
         RepoColumn.AHEAD_BEHIND -> if (r.ahead == null || r.behind == null) null else r.ahead.toLong() * 1_000_000L + r.behind
         RepoColumn.LAST_COMMIT -> r.lastCommitMs
@@ -119,6 +134,11 @@ object GitTable {
         files == null -> DASH
         files == 0 -> no
         else -> "$yes · $files"
+    }
+    /** #1645 the Dirty/Stashed cell: dirty word (with count) and, when stash entries exist, "· stash N". Unknown dirty stays the dash. */
+    fun dirtyStashed(files: Int?, stashed: Int?, yes: String, no: String): String {
+        val d = dirty(files, yes, no)
+        return if (stashed != null && stashed > 0) (if (d == DASH) "stash $stashed" else "$d · stash $stashed") else d
     }
     fun aheadBehind(ahead: Int?, behind: Int?): String = if (ahead == null || behind == null) DASH else "↑$ahead ↓$behind"
 }

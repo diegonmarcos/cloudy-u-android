@@ -54,6 +54,12 @@ object RepoTable {
             lfs = lfs,
             status = RepoStatus.kindOf(cloned, glance),
             lastCommitMs = lastCommit(cloned, localHeadMs, remote?.pushedAtMs),
+            // #1645 the light git stats, each from the real read of the clone; null (the dash) when it was not read.
+            cloned = cloned,
+            stashed = if (local) glance!!.stashed else null,
+            detached = if (local) glance!!.detached else null,
+            unpushed = if (local && glance!!.upstream != null) glance.ahead else null,
+            branch = if (local) glance!!.branch else null,
         )
     }
 }

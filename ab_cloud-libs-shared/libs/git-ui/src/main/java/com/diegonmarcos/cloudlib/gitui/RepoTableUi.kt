@@ -31,7 +31,11 @@ import com.diegonmarcos.superapp.uikit.KitStoreName
 import com.diegonmarcos.superapp.uikit.KitStoreRow
 
 /** #1138 the repo table's columns, in display order. #1238: STATUS is the leftmost and LFS follows Pvt/Pub. #1452: MESSAGE (Status Message) follows the name, so the status text has a cell of its own. */
-enum class RepoColumn { STATUS, NAME, MESSAGE, PROVIDER, VISIBILITY, LFS, SIZE_MAIN, SIZE_TOTAL, SIZE_DISK, BRANCHES, DIRTY, AHEAD_BEHIND, LAST_COMMIT }
+/**
+ * #1645 the light git stats LEAD (after the status lights and the name): Cloned, Divergence (AHEAD_BEHIND), Dirty/Stashed (DIRTY),
+ * Detached HEAD, Unpushed, checked-out Branch (CURRENT_BRANCH); every one is a sortable column read from real git state.
+ */
+enum class RepoColumn { STATUS, NAME, CLONED, AHEAD_BEHIND, DIRTY, DETACHED, UNPUSHED, CURRENT_BRANCH, MESSAGE, PROVIDER, VISIBILITY, LFS, SIZE_MAIN, SIZE_TOTAL, SIZE_DISK, BRANCHES, LAST_COMMIT }
 
 /** The string resource that labels [c] (a column without one is a programming error caught by RepoColumnTest). */
 fun columnLabelRes(c: RepoColumn): Int = when (c) {
@@ -46,6 +50,10 @@ fun columnLabelRes(c: RepoColumn): Int = when (c) {
     RepoColumn.SIZE_DISK -> R.string.repo_col_size_disk
     RepoColumn.BRANCHES -> R.string.repo_col_branches
     RepoColumn.DIRTY -> R.string.repo_col_dirty
+    RepoColumn.CLONED -> R.string.repo_col_cloned
+    RepoColumn.DETACHED -> R.string.repo_col_detached
+    RepoColumn.UNPUSHED -> R.string.repo_col_unpushed
+    RepoColumn.CURRENT_BRANCH -> R.string.repo_col_branch
     RepoColumn.AHEAD_BEHIND -> R.string.repo_col_ab
     RepoColumn.LAST_COMMIT -> R.string.repo_col_last_commit
 }
@@ -159,6 +167,15 @@ fun RepoMessageCell(text: String, problem: Boolean = false) {
 fun RepoCells(r: GitTableRow<*>) {
     val yes = stringResource(R.string.repo_dirty_yes)
     val no = stringResource(R.string.repo_dirty_no)
+    val yesNo: (Boolean?) -> String = { b -> if (b == null) GitTable.DASH else if (b) yes else no }
+    val lead = listOf(
+        RepoColumn.CLONED to yesNo(r.cloned),
+        RepoColumn.AHEAD_BEHIND to GitTable.aheadBehind(r.ahead, r.behind),
+        RepoColumn.DIRTY to GitTable.dirtyStashed(r.dirtyFiles, r.stashed, yes, no),
+        RepoColumn.DETACHED to yesNo(r.detached),
+        RepoColumn.UNPUSHED to GitTable.count(r.unpushed),
+        RepoColumn.CURRENT_BRANCH to (r.branch ?: GitTable.DASH),
+    )
     val texts = listOf(
         RepoColumn.PROVIDER to (r.provider ?: GitTable.DASH),
         RepoColumn.VISIBILITY to repoVisibilityWord(r.isPrivate),
@@ -167,10 +184,9 @@ fun RepoCells(r: GitTableRow<*>) {
         RepoColumn.SIZE_TOTAL to GitTable.size(r.sizeTotalBytes),
         RepoColumn.SIZE_DISK to GitTable.size(r.sizeDiskBytes),
         RepoColumn.BRANCHES to GitTable.count(r.branches),
-        RepoColumn.DIRTY to GitTable.dirty(r.dirtyFiles, yes, no),
-        RepoColumn.AHEAD_BEHIND to GitTable.aheadBehind(r.ahead, r.behind),
         RepoColumn.LAST_COMMIT to GitTable.age(r.lastCommitMs, System.currentTimeMillis()),
     )
+    lead.forEach { (c, t) -> KitStoreCaption(t, repoCellModifier(c), mono = true, align = if (c == RepoColumn.CURRENT_BRANCH) TextAlign.Start else TextAlign.End) }
     RepoMessageCell(r.message, r.messageProblem)
     texts.forEach { (c, t) ->
         KitStoreCaption(t, repoCellModifier(c), mono = true, align = TextAlign.End)

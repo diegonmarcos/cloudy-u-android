@@ -73,6 +73,10 @@ class GitStatusReader(
         val fetchedAtMs: Long = 0,
         /** How the facts were read: "files" (plain .git files), "exec" (git in cld.termux), "engine"; "" = unknown. Shown on the debug line. */
         val via: String = "",
+        /** #1645 HEAD is a raw sha, not a branch ref (read from HEAD / symbolic-ref). */
+        val detached: Boolean = false,
+        /** #1645 stash entries (the stash reflog / git stash list). */
+        val stashed: Int = 0,
     )
 
     enum class State { READING, CLEAN, AHEAD, BEHIND, DIRTY, NOT_CLONED, ERROR, LARGE }
@@ -222,7 +226,7 @@ class GitStatusReader(
                             timedOut(t, level, took)
                         }
                         r.isFailure -> failed(t, level, r.exceptionOrNull(), took)
-                        deferred.get() != null -> deferred.get()!!.let { h -> Status(State.LARGE, Probe(h.branch, h.upstream, 0, 0, 0, 0), readAtMs = clock(), tookMs = took, level = Level.FULL, path = t.dir.absolutePath) }
+                        deferred.get() != null -> deferred.get()!!.let { h -> Status(State.LARGE, Probe(h.branch, h.upstream, 0, 0, 0, 0, detached = h.detached), readAtMs = clock(), tookMs = took, level = Level.FULL, path = t.dir.absolutePath) }
                         r.getOrNull() == null -> Status(State.NOT_CLONED, readAtMs = clock(), tookMs = took, level = level, path = t.dir.absolutePath)
                         else -> classify(r.getOrThrow()!!, clock(), took).copy(level = level, path = t.dir.absolutePath)
                     }

@@ -91,6 +91,9 @@ object RepoStatus {
         /** "light" (refs only: dirty is unknown) / "full" / null = not read. */
         val level: String? = null,
         val readAtMs: Long? = null,
+        /** #1645 real reads: HEAD detached / stash entries (null = not read). */
+        val detached: Boolean? = null,
+        val stashed: Int? = null,
     ) {
         val dirty: Int? get() = if (modified == null || untracked == null) null else modified + untracked + (conflicts ?: 0)
     }
@@ -115,6 +118,8 @@ object RepoStatus {
             errorDetail = if (kind == Kind.ERROR) g?.error else null,
             level = if (read) g!!.level.ifBlank { null } else null,
             readAtMs = if (read && g!!.readAtMs > 0) g.readAtMs else null,
+            detached = if (read) g!!.detached else null,
+            stashed = if (counts) g!!.stashed else null,
         )
     }
 

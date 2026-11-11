@@ -26,7 +26,23 @@ data class GitStatusFacts(
     /** "light" (refs only: dirty is unknown) / "full" / null = not read. */
     val level: String?, val levelAge: String?,
     val ahead: Int?, val behind: Int?, val unpushed: Int?, val lastFetchMs: Long?, val errorText: String?,
+    /** #1645 stash entries / detached HEAD, real git reads; null = not read. */
+    val stashed: Int? = null, val detached: Boolean? = null,
 )
+
+/** #1645 the STATUS TABLE rows (label res, value) from real facts, in the owner's order. Pure so the JVM can test it. */
+fun gitStatusTableRows(b: GitStatusFacts, yes: String, no: String): List<Pair<Int, String>> {
+    val dash = GitTable.DASH
+    fun yn(v: Boolean?) = if (v == null) dash else if (v) yes else no
+    return listOf(
+        R.string.repo_status_tbl_cloned to yn(b.cloned),
+        R.string.repo_status_tbl_divergence to GitTable.aheadBehind(b.ahead, b.behind).let { if (b.ahead == null || b.behind == null) it else "+${b.ahead}/-${b.behind}" },
+        R.string.repo_status_tbl_dirty to GitTable.dirtyStashed(b.dirty, b.stashed, yes, no),
+        R.string.repo_status_tbl_detached to yn(b.detached),
+        R.string.repo_status_tbl_unpushed to GitTable.count(b.unpushed),
+        R.string.repo_status_tbl_branch to (b.branch ?: dash),
+    )
+}
 
 /** One monospace fact line of a panel. */
 @Composable
@@ -41,6 +57,12 @@ fun GitStatusBlockView(b: GitStatusFacts, fmt: DateFormat) {
     val dash = GitTable.DASH
     Column(Modifier.fillMaxWidth().padding(top = k.gapWide).testTag(k.tagStatusBlock)) {
         Text(stringResource(R.string.repo_status_title), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        gitStatusTableRows(b, stringResource(R.string.repo_dirty_yes), stringResource(R.string.repo_dirty_no)).forEach { (label, value) ->
+            androidx.compose.foundation.layout.Row(Modifier.fillMaxWidth()) {
+                Text(stringResource(label), Modifier.weight(1f), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
+                Text(value, style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Monospace)
+            }
+        }
         StatusLine(stringResource(R.string.repo_status_cloned, stringResource(if (b.cloned) R.string.repo_dirty_yes else R.string.repo_dirty_no)))
         StatusLine(stringResource(R.string.repo_status_branch, b.branch ?: dash, b.upstream ?: stringResource(R.string.repo_status_no_upstream)))
         StatusLine(

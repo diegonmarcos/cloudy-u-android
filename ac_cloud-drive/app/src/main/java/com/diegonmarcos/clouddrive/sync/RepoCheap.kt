@@ -9,14 +9,20 @@ import java.io.File
  * app's memory on large trees, so it only runs for a clone [tooLarge] says is small, or when the owner asks for it.
  */
 object RepoCheap {
-    data class Head(val branch: String?, val upstream: String?)
+    data class Head(val branch: String?, val upstream: String?, /** #1645 HEAD holds a raw sha (not `ref: refs/heads/..`). */ val detached: Boolean = false)
+
+    /** #1645 stash entries of a clone: one line per entry in `.git/logs/refs/stash` (the stash reflog); 0 when there is none. */
+    fun stashCount(gitDir: File): Int = runCatching { File(gitDir, "logs/refs/stash").takeIf { it.isFile }?.useLines { ls -> ls.count { it.isNotBlank() } } }.getOrNull() ?: 0
+
+    /** #1645 pure: is HEAD's text a detached sha (a 40/64-hex line) rather than a symbolic ref. */
+    fun isDetachedHead(headText: String?): Boolean = headText?.trim()?.let { it.isNotEmpty() && !it.startsWith("ref:") && it.matches(Regex("[0-9a-fA-F]{40,64}")) } ?: false
 
     /** HEAD's branch (null = detached / unreadable) and the configured upstream `<remote>/<branch>` (null = none). */
     fun head(dir: File): Head {
         val gitDir = File(dir, ".git").takeIf { it.isDirectory } ?: return Head(null, null)
         val branch = runCatching { File(gitDir, "HEAD").takeIf { it.isFile }?.readText()?.trim() }.getOrNull()
             ?.takeIf { it.startsWith("ref: refs/heads/") }?.removePrefix("ref: refs/heads/")
-        if (branch == null) return Head(null, null)
+        if (branch == null) return Head(null, null, isDetachedHead(runCatching { File(gitDir, "HEAD").takeIf { it.isFile }?.readText() }.getOrNull()))
         return Head(branch, upstreamOf(runCatching { File(gitDir, "config").takeIf { it.isFile }?.readText() }.getOrNull().orEmpty(), branch))
     }
 
@@ -66,13 +72,14 @@ object RepoCheap {
         if (!gitDir.isDirectory) throw IllegalStateException("not a git repository: no readable .git directory in ${dir.absolutePath}")
         val fetched = File(gitDir, "FETCH_HEAD").lastModified()
         val h = head(dir)
-        val branch = h.branch ?: return GitStatusReader.Probe(null, null, 0, 0, 0, 0, fetchedAtMs = fetched, via = "files")
-        val upstream = h.upstream ?: return GitStatusReader.Probe(branch, null, 0, 0, 0, 0, fetchedAtMs = fetched, via = "files")
+        val stash = stashCount(gitDir)
+        val branch = h.branch ?: return GitStatusReader.Probe(null, null, 0, 0, 0, 0, fetchedAtMs = fetched, via = "files", detached = h.detached, stashed = stash)
+        val upstream = h.upstream ?: return GitStatusReader.Probe(branch, null, 0, 0, 0, 0, fetchedAtMs = fetched, via = "files", stashed = stash)
         val local = refSha(gitDir, "refs/heads/$branch")
         val remote = refSha(gitDir, "refs/remotes/$upstream")
         val log = if (local != null && remote != null && local != remote) localLog(branch) else emptyList()
         val r = aheadBehind(local, remote, log)
-        return GitStatusReader.Probe(branch, upstream, r?.ahead ?: 0, r?.behind ?: 0, 0, 0, fetchedAtMs = fetched, via = "files")
+        return GitStatusReader.Probe(branch, upstream, r?.ahead ?: 0, r?.behind ?: 0, 0, 0, fetchedAtMs = fetched, via = "files", stashed = stash)
     }
 
     /**
@@ -86,6 +93,7 @@ object RepoCheap {
             "if [ -n \"\$b\" ]; then r=\$(git config branch.\"\$b\".remote); m=\$(git config branch.\"\$b\".merge); " +
             "if [ -n \"\$r\" ] && [ -n \"\$m\" ]; then u=\"\$r/\${m#refs/heads/}\"; echo \"U:\$u\"; " +
             "echo \"LR:\$(git rev-list --left-right --count HEAD...\"refs/remotes/\$u\" 2>/dev/null)\"; fi; fi; " +
+            "echo \"S:\$(git stash list 2>/dev/null | wc -l)\"; if [ -z \"\$b\" ]; then echo D:1; fi; " +
             "echo \"F:\$(stat -c %Y \"\$(git rev-parse --git-dir)/FETCH_HEAD\" 2>/dev/null)\""
 
     /** Pure: [lightScript]'s output as a Probe; throws when the guest says it is not a repository. */
@@ -96,6 +104,7 @@ object RepoCheap {
         return GitStatusReader.Probe(
             v("B"), v("U"), lr?.getOrNull(0) ?: 0, lr?.getOrNull(1) ?: 0, 0, 0,
             fetchedAtMs = (v("F")?.toLongOrNull() ?: 0L) * 1000L, via = "exec",
+            detached = v("D") == "1", stashed = v("S")?.toIntOrNull() ?: 0,
         )
     }
 
