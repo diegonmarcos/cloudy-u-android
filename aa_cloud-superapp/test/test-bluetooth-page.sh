@@ -35,7 +35,7 @@ pages = {p['id']: p for p in next(s for s in json.load(open(sys.argv[1]))['ui'][
 probs = []
 b = pages.get('bluetooth')
 if not b: print('no bluetooth page'); sys.exit()
-if (b.get('group'), b.get('subgroup')) != ('Device', 'Network') or b.get('label') != 'Bluetooth' or b.get('hidden'): probs.append('page = %r' % b)
+if (b.get('group'), b.get('subgroup')) != ('Network', '') or b.get('label') != 'Bluetooth' or b.get('hidden'): probs.append('page = %r' % b)
 want = ['bluetooth-find', 'bluetooth-analyze', 'bluetooth-locate', 'bluetooth-connect', 'bluetooth-interact', 'bluetooth-debug', 'bluetooth-dev']
 if b.get('tabs') != want: probs.append('tabs = %r' % b.get('tabs'))
 for t, label in zip(want, ['Find', 'Analyze', 'Locate', 'Connect', 'Interact', 'Debug', 'Dev']):
@@ -61,12 +61,12 @@ sec = next(s for s in json.load(open(sys.argv[1]))['ui']['sections'] if s['id'] 
 probs = []
 if sec.get('nav_mode') != 'horizontal_two_rows': probs.append('nav_mode = %r' % sec.get('nav_mode'))
 groups = {g['id']: g for g in sec.get('groups', [])}
-if set(groups) != {'device', 'setup'}: probs.append('groups = %r (want device, setup)' % sorted(groups))  # #1610 two subpages
-# #1610 bluetooth and its tabs live in the Device row (subgroup Network)
-dev_pages = set(groups.get('device', {}).get('pages', []))
-if 'bluetooth' not in dev_pages or not {'bluetooth-find', 'bluetooth-dev'} <= dev_pages: probs.append('bluetooth and its tabs are not in the Device row')
-for stale in ('fleet', 'agents', 'observability'):
-    if stale in groups: probs.append('%s is still a top-level group (#1610 made Configs Device + Setup)' % stale)
+if set(groups) != {'launcher', 'network', 'apps', 'connect', 'tools', 'configs'}: probs.append('groups = %r (want the six #1623 groups)' % sorted(groups))
+# #1623 bluetooth and its tabs live in the Network group (no subgroup)
+net_pages = set(groups.get('network', {}).get('pages', []))
+if 'bluetooth' not in net_pages or not {'bluetooth-find', 'bluetooth-dev'} <= net_pages: probs.append('bluetooth and its tabs are not in the Network group')
+for stale in ('device', 'setup', 'fleet', 'agents', 'observability'):
+    if stale in groups: probs.append('%s is still a top-level group (#1623 made Configs the six flat groups)' % stale)
 label = {p['id']: p['label'] for p in sec['pages']}
 if label['c3'] != 'Cloudy C3': probs.append('c3 label = %r' % label['c3'])  # #1610 C3 moved to Setup ▸ Connect, relabelled Cloudy C3
 if label['kde'] != 'Peer Control': probs.append('kde label = %r' % label['kde'])

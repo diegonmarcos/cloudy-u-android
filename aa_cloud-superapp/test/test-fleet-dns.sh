@@ -62,7 +62,7 @@ echo "== D1: the page =="
 out="$(python3 - "$BJ" <<'EOF'
 import json, sys
 pages = next(s for s in json.load(open(sys.argv[1]))['ui']['sections'] if s['id'] == 'config')['pages']
-mesh = [p['id'] for p in pages if p.get('group') == 'Device' and p.get('subgroup') == 'Network' and not p.get('hidden')]  # #1610 Network moved to the Device subpage
+mesh = [p['id'] for p in pages if p.get('group') == 'Network' and not p.get('hidden')]  # #1623 Network is a top-level group (no subgroup)
 dns = next((p for p in pages if p['id'] == 'dns'), {})
 print('MESH', ','.join(mesh))
 print('LABEL', dns.get('label'), dns.get('hidden', False))

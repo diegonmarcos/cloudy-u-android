@@ -67,7 +67,7 @@ import json, sys
 pages = next(s for s in json.load(open(sys.argv[1]))['ui']['sections'] if s['id'] == 'config')['pages']
 by = {p['id']: p for p in pages}
 store_caption = json.load(open(sys.argv[2]))['pages']['mesh']['label']
-mesh = [p['id'] for p in pages if p.get('subgroup') == 'Network' and not p.get('hidden')]
+mesh = [p['id'] for p in pages if p.get('group') == 'Network' and not p.get('hidden')]
 print('WG', by.get('wg', {}).get('label'), by.get('wg', {}).get('action'))
 print('APPS', by.get('apps-access', {}).get('label'), by.get('apps-access', {}).get('action'), '|', store_caption, '|', ','.join(i for i in ('apps-mesh', 'ipc', 'identity', 'apps-mesh-members') if i in by))
 print('ORDER', ','.join(mesh))

@@ -48,25 +48,26 @@ if any(p['id'] == 'launcher' for p in pages):
     print('a `launcher` page is declared again — #649 made Launcher a heading, '
           'and a page of that name would tile beside its own members')
     sys.exit()
-def run(g, s): return [p['id'] for p in pages if p.get('group') == g and p.get('subgroup') == s and not p.get('hidden')]
-ui = run('Device', 'UI'); notif = run('Device', 'Notification Center'); cfg = run('Device', 'Configs')
-if ui != ['controls', 'onehand', 'app-folders']: print('Device ▸ UI = %r' % (ui,)); sys.exit()
-if notif != ['notify']: print('Device ▸ Notification Center = %r' % (notif,)); sys.exit()
-if cfg != ['agents-watchdog', 'perms', 'logcat', 'xray-app', 'app-about', 'launcher-sep-1', 'xray', 'logcat-fleet']:
-    print('Device ▸ Configs = %r' % (cfg,)); sys.exit()
+def run(g): return [p['id'] for p in pages if p.get('group') == g and not p.get('hidden')]
+launcher = run('Launcher'); tools = run('Tools'); cfg = run('Configs')
+if launcher != ['controls', 'panels-ui', 'app-folders', 'onehand', 'launcher-sep-1', 'notify']: print('Launcher = %r' % (launcher,)); sys.exit()
+if tools != ['c3-watchdog', 'tools-sep-1', 'xray', 'logcat-fleet', 'agents-watchdog']: print('Tools = %r' % (tools,)); sys.exit()
+if cfg != ['perms', 'logcat', 'xray-app', 'app-about']: print('Configs = %r' % (cfg,)); sys.exit()
 ids = [p['id'] for p in pages]
-for r in (ui, notif, cfg):
+for r in (launcher, tools, cfg):
     first = ids.index(r[0])
     if ids[first:first + len(r)] != r: print('not CONSECUTIVE: %r' % (ids[first:first + len(r)],)); sys.exit()
 by = {p['id']: p for p in pages}
-if by['controls'].get('tabs') != ['presets', 'panels-ui', 'panels'] or by['panels'].get('tabs') != ['panels-all', 'panels-battery', 'panels-tools']:
-    print('Controls is not Presets | UI | Panels(All | Battery Hungers | Tools) [#1621]: %r / %r' % (by['controls'].get('tabs'), by['panels'].get('tabs'))); sys.exit()
-loose = [i for i in ('presets', 'panels', 'panels-all', 'panels-ui', 'panels-battery', 'panels-tools') if i not in by or not by[i].get('hidden')]
+if by['controls'].get('tabs') != ['presets', 'panels'] or by['panels'].get('tabs') != ['panels-all', 'panels-battery', 'panels-tools']:
+    print('Controls is not Presets | Panels(All | Battery Hungers | Tools) [#1623 UI promoted out]: %r / %r' % (by['controls'].get('tabs'), by['panels'].get('tabs'))); sys.exit()
+if by['panels-ui'].get('hidden') or by['panels-ui'].get('group') != 'Launcher':
+    print('UI (panels-ui) is not a visible Launcher tile: %r' % (by.get('panels-ui'),)); sys.exit()
+loose = [i for i in ('presets', 'panels', 'panels-all', 'panels-battery', 'panels-tools') if i not in by or not by[i].get('hidden')]
 if loose:
     print('tab page(s) missing or drawing a tile of their own: %r' % (loose,)); sys.exit()
 print('OK')
 PY
-)" "Device ▸ UI = Quick Actions (#1621 tabs Presets | UI | Panels ▸ All | Battery Hungers | Tools), One-Hand, Folders; Notification Center = Notify; Configs = Agents, Perms, Logcat, X-Ray App, About | X-Ray Device, Logcat Fleet — all consecutive direct pages (#1610)"
+)" "Launcher = Quick Actions (#1623 tabs Presets | Panels ▸ All | Battery Hungers | Tools), UI, Folders, One-Hand | Notify — all consecutive direct pages; Tools = Watchdog | X-Ray Device, Logcat Fleet, Agents; Configs = Perms, Logcat, X-Ray App, About (#1623)"
 
 echo "== T2: no Configs page is a tab strip any more =="
 # #865 deleted the generic tab-owner rule: its last subject, Store, became a

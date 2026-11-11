@@ -11,14 +11,15 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * #1545 #1548 The Configs nav tree and its hub page, Agents ▸ Watchdog (the Watchtower hub page is gone: its content is the
- * Watchtower - Obsv subgroup, and page:config/watchtower and /agents-watchtower are page_aliases of X-Ray Device).
+ * #1623 The Configs nav tree and its hub page, the Agents hub (agents-watchdog). Configs is ONE page of six flat top-level
+ * groups (the #1610 Device/Setup split removed): Launcher, Network, Apps, Connect, Tools, Configs. The Watchtower hub page is
+ * gone (page:config/watchtower and /agents-watchtower are page_aliases of X-Ray Device).
  *
- *   H1 nav tree: Setup (Connect, Apps, Launcher, Network, Watchtower - Obsv), Agents (Watchdog), Cloudy C3 (C3, Peer Control)
- *      Launcher = Quick Actions, One-Hand, Folders, Notify | Perms, Logcat, X-Ray App, About; Bluetooth is a Network page
- *   H2 Watchdog = two titled sections, Network then Watchtower - Obsv, derived from the nav, in order
+ *   H1 nav tree: six flat groups, Launcher, Network, Apps, Connect, Tools, Configs. The Agents hub and the Watchdog launch both
+ *      sit in Tools; X-Ray Device / Logcat Fleet moved to Tools; Bluetooth is a Network page
+ *   H2 the Agents hub shows one titled section, Network, derived from the nav (hub_sections name a group now that subgroups are gone)
  *   H3 routing: in-app pages are page:config/<id>; apps / sections / Cloud Store hand-offs keep their declared action
- *   H4 Watchdog routes to SubgroupHubFragment (not the C3 APKs) and draws a section heading and a Cloud ▸ Apps tile per entry
+ *   H4 the hub routes to SubgroupHubFragment (not the C3 APKs) and draws a section heading and a Cloud ▸ Apps tile per entry
  *   H5 Cloud ▸ Apps ▸ Configs opens page:config/agents-watchdog where Firewall was
  */
 @RunWith(RobolectricTestRunner::class)
@@ -26,41 +27,40 @@ import org.robolectric.annotation.Config
 class SubgroupHubTest : KitPageHarness() {
 
     private val config get() = Sections.byId("config")!!
-    private fun sub(name: String) = config.pages.filter { it.subgroup == name }
+    // #1623 Configs is one page of six flat top-level groups, so a group's members are its visible, non-separator pages.
+    private fun grp(name: String) = config.pages.filter { it.group == name && !it.hidden && !it.separator }
     private fun hub(id: String) = SubgroupHubFragment.sectionsFor("config", id)
 
     @Test
     fun `H1 the Configs nav is the declared tree`() {
-        // #1610: the flat Setup/Agents/Cloudy C3 tree is restructured into Device / Setup groups.
+        // #1623: one page, six flat top-level groups (the #1610 Device/Setup split removed).
         val runs = config.pages.filter { !it.isAction }.map { it.group to it.subgroup }.distinct()
         assertEquals(listOf(
-            "Device" to "UI", "Device" to "Notification Center", "Device" to "Network", "Device" to "Configs",
-            "Setup" to "Connect", "Setup" to "Apps", "Setup" to "Configs"), runs)
+            "Launcher" to "", "Network" to "", "Apps" to "", "Connect" to "", "Tools" to "", "Configs" to ""), runs)
         // Connect carries Account, Cloudy C3 and Peer Control.
-        assertEquals(listOf("Account", "Cloudy C3", "Peer Control"), sub("Connect").map { it.label })
-        // Agents is the in-app agents-watchdog hub, declared in the Device ▸ Configs subgroup.
+        assertEquals(listOf("Account", "Cloudy C3", "Peer Control"), grp("Connect").map { it.label })
+        // Agents is the in-app agents-watchdog hub, in the Tools group (the owner's dual listing kept once, beside the observability pages).
         assertEquals(listOf("agents-watchdog"), config.pages.filter { it.hubSections.isNotEmpty() }.map { it.id })
-        assertEquals("Device" to "Configs", config.pages.first { it.id == "agents-watchdog" }.let { it.group to it.subgroup })
-        // Watchdog is the extapp:c3-watchdog tile under Setup ▸ Configs.
+        assertEquals("Tools" to "", config.pages.first { it.id == "agents-watchdog" }.let { it.group to it.subgroup })
+        // Watchdog is the extapp:c3-watchdog tile, also in Tools.
         assertEquals("extapp:c3-watchdog", config.pages.first { it.id == "c3-watchdog" }.action)
-        assertEquals("Setup" to "Configs", config.pages.first { it.id == "c3-watchdog" }.let { it.group to it.subgroup })
-        // Device groups as declared: UI, then the Configs column (incl. the moved X-Ray/Logcat Fleet).
-        assertEquals(listOf("controls", "onehand", "app-folders"), sub("UI").map { it.id })
-        assertEquals(listOf("agents-watchdog", "perms", "logcat", "xray-app", "app-about", "launcher-sep-1", "xray", "logcat-fleet"),
-            sub("Configs").filter { it.group == "Device" }.map { it.id })
-        assertEquals(listOf("c3-watchdog"), sub("Configs").filter { it.group == "Setup" }.map { it.id })
+        assertEquals("Tools" to "", config.pages.first { it.id == "c3-watchdog" }.let { it.group to it.subgroup })
+        // The groups as declared.
+        assertEquals(listOf("controls", "panels-ui", "app-folders", "onehand", "notify"), grp("Launcher").map { it.id })
+        assertEquals(listOf("c3-watchdog", "xray", "logcat-fleet", "agents-watchdog"), grp("Tools").map { it.id })
+        assertEquals(listOf("perms", "logcat", "xray-app", "app-about"), grp("Configs").map { it.id })
         assertEquals(listOf("X-Ray Device", "Logcat Fleet"),
-            sub("Configs").filter { it.id == "xray" || it.id == "logcat-fleet" }.map { it.label })
-        assertTrue("Bluetooth is a Network page", sub("Network").any { it.id == "bluetooth" })
-        assertEquals("firewall", sub("Network").first().id)
-        assertTrue("Watchdog is no Network item any more", sub("Network").none { it.id == "agents-watchdog" })
+            grp("Tools").filter { it.id == "xray" || it.id == "logcat-fleet" }.map { it.label })
+        assertTrue("Bluetooth is a Network page", grp("Network").any { it.id == "bluetooth" })
+        assertEquals("firewall", grp("Network").first().id)
+        assertTrue("Watchdog is no Network item any more", grp("Network").none { it.id == "agents-watchdog" })
     }
 
     @Test
-    fun `H2 Watchdog shows Network and Watchtower - Obsv`() {
-        // #1610: agents-watchdog now hubs the Network subgroup only.
+    fun `H2 the Agents hub shows Network`() {
+        // #1623: agents-watchdog hubs the Network group (hub_sections name the group now that subgroups are flattened away).
         assertEquals(listOf("Network"), hub("agents-watchdog").map { it.title })
-        assertEquals(sub("Network").map { it.id }, hub("agents-watchdog")[0].tiles.map { it.id })
+        assertEquals(grp("Network").map { it.id }, hub("agents-watchdog")[0].tiles.map { it.id })
         assertTrue(hub("agents-watchdog")[0].tiles.map { it.id }.containsAll(listOf("firewall", "dns")))
     }
 
@@ -73,7 +73,7 @@ class SubgroupHubTest : KitPageHarness() {
         assertEquals("action:open_webserver", by.getValue("webserver").target)
         assertEquals("action:open_apps_access", by.getValue("apps-access").target)
         assertEquals("section:wg", by.getValue("wg").target)
-        for (p in sub("Network")) assertEquals(p.id, Sections.hubTarget("config", p), by.getValue(p.id).target)
+        for (p in grp("Network")) assertEquals(p.id, Sections.hubTarget("config", p), by.getValue(p.id).target)
     }
 
     @Test

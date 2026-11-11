@@ -49,13 +49,14 @@ echo "== T1: #1621 UI promoted to the Quick Actions parent (Presets | UI | Panel
 # (panels-all/ui/battery/tools) all still exist and route; only panels-ui's
 # PARENT changed (panels -> controls), so page:config/panels-ui still resolves
 # and the UI content is still reachable under Panels ▸ All (the union view).
-check "Controls strip = Presets | UI | Panels; Panels = All | Battery Hungers | Tools" "
+check "Controls strip = Presets | Panels; Panels = All | Battery Hungers | Tools; UI is its own Launcher tile (#1623)" "
 ctrl = [by[i]['label'] for i in by['controls']['tabs']]
 pnl  = [by[i]['label'] for i in by['panels']['tabs']]
-ok = (by['controls']['tabs'] == ['presets','panels-ui','panels'] and ctrl == ['Presets','UI','Panels']
+ok = (by['controls']['tabs'] == ['presets','panels'] and ctrl == ['Presets','Panels']
       and by['panels']['tabs'] == ['panels-all','panels-battery','panels-tools'] and pnl == ['All','Battery Hungers','Tools']
-      and all(by[i].get('hidden') for i in ('panels-ui','panels-all','panels-battery','panels-tools','panels','presets')))
-print('OK' if ok else 'Controls=%r Panels=%r' % (ctrl, pnl))"
+      and not by['panels-ui'].get('hidden') and by['panels-ui'].get('group') == 'Launcher' and by['panels-ui'].get('label') == 'UI'
+      and all(by[i].get('hidden') for i in ('panels-all','panels-battery','panels-tools','panels','presets')))
+print('OK' if ok else 'Controls=%r Panels=%r UI_hidden=%r' % (ctrl, pnl, by['panels-ui'].get('hidden')))"
 for pair in "panels-all:SCOPE_ALL" "panels-ui:SCOPE_UI" "panels-battery:SCOPE_BATTERY" "panels-tools:SCOPE_TOOLS"; do
   grep -qF "pageId == \"${pair%%:*}\" -> LauncherConfigFragment.newInstance(LauncherConfigFragment.${pair##*:})" "$PAGES" \
     && ok "${pair%%:*} -> ${pair##*:}" || bad "${pair%%:*} is not routed to ${pair##*:}"

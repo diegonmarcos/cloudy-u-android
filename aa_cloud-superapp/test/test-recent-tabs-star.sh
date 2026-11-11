@@ -193,19 +193,19 @@ d=json.load(open('$BJ'))
 c=[s for s in d['ui']['sections'] if s['id']=='config'][0]
 print(' '.join(p['id'] for p in c['pages']
                 if not p.get('hidden') and not p.get('is_action')
-                and p.get('group') == 'Device' and p.get('subgroup') == 'Configs'))
+                and p.get('group') == 'Configs'))
 ")
-# #1610 About (app-about) now closes the PRIMARY run of Device ▸ Configs — Agents, Perms, Logcat, X-Ray App, About — right
-# before the | separator (launcher-sep-1), after which the observability pair X-Ray Device, Logcat Fleet follows. #580 deleted
-# Configs ▸ Home (its two tabs merged into Notify), so the page that used to sit immediately before About is gone. What is left
-# to pin: About is opened once ever and stays the entry just before the | separator, and no `home` page creeps into the list.
-BEFORE_SEP=$(echo "$TILED" | tr ' ' '\n' | awk '/^launcher-sep-1$/{print prev; exit} {prev=$0}')
+# #1623 Configs is one page of six groups; the Configs group itself — Perms, Logcat, X-Ray App, About — closes with About
+# (app-about), the last visible tile of the group (X-Ray Device and Logcat Fleet moved out to Tools; the | separator moved
+# into Launcher before Notify). #580 deleted Configs ▸ Home (its two tabs merged into Notify). What is left to pin: About is
+# opened once ever and stays the last entry of the Configs group, and no `home` page creeps into the list.
+LAST_CONFIGS=$(echo "$TILED" | awk '{print $NF}')
 if case " $ORDER " in *" home "*) true ;; *) false ;; esac; then
   bad "a Configs page named home is declared again — #580 deleted it; its tabs live in Notify"
-elif [ "$BEFORE_SEP" = "app-about" ]; then  # About is app-about since the X-Ray regroup (about aliases X-Ray)
-  ok "no Home page in ui.sections[config].pages, and About closes the primary run of Device ▸ Configs (just before the | separator)"
+elif [ "$LAST_CONFIGS" = "app-about" ]; then  # About is app-about since the X-Ray regroup (about aliases X-Ray)
+  ok "no Home page in ui.sections[config].pages, and About closes the Configs group (its last visible tile)"
 else
-  bad "About is not the entry before the | separator in Device ▸ Configs — before-sep is: $BEFORE_SEP (run: $TILED)"
+  bad "About is not the last entry of the Configs group — last is: $LAST_CONFIGS (run: $TILED)"
 fi
 # Both surfaces read that one list. A Kotlin-side order would be a second truth.
 grep -qF 'SectionPages.pagesFor(section)' "$SHELL_KT" \

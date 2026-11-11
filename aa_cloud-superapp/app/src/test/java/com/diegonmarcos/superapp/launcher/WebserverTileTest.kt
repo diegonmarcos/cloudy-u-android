@@ -29,7 +29,8 @@ class WebserverTileTest {
         val i = pages.indexOfFirst { it.id == "webserver" }
         assertTrue("Webserver tile missing", i > 0)
         assertEquals("dns", pages[i - 1].id)
-        assertEquals("Network", pages[i].subgroup)
+        assertEquals("Network", pages[i].group)
+        assertEquals("", pages[i].subgroup)
         assertEquals("action:open_webserver", pages[i].action)
         assertEquals(1, pages.count { it.iconName == pages[i].iconName })
         assertTrue(Sections.iconResFor(app, pages[i].iconName!!) != 0)

@@ -1072,7 +1072,10 @@ object Sections {
      */
     fun hubSections(section: Section, hub: Page): List<HubSection> = hub.hubSections.mapNotNull { sub ->
         section.pages
-            .filter { it.subgroup == sub && it.id != hub.id && !it.hidden && !it.separator }
+            // #1623 Configs flattened its subgroups into the six top-level groups, so a hub whose
+            // hub_sections name a group (e.g. the Agents hub over "Network") must match on group when
+            // a page carries no subgroup. Pages that still declare a subgroup match on it, unchanged.
+            .filter { (it.subgroup.ifBlank { it.group }) == sub && it.id != hub.id && !it.hidden && !it.separator }
             .map { AggTile(it.id, it.label, it.iconName ?: "", hubTarget(section.id, it)) }
             .takeIf { it.isNotEmpty() }
             ?.let { HubSection(sub, it) }

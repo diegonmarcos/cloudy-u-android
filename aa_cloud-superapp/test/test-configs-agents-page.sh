@@ -48,21 +48,21 @@ for p in vis:
 probs = []
 declared = [g['label'] for g in sec['groups']]
 if groups != declared: probs.append('grid groups %r != declared groups %r' % (groups, declared))
-if declared != ['Device', 'Setup']: probs.append('declared groups %r != Device, Setup' % declared)
-connect = [p['label'] for p in vis if p.get('group') == 'Setup' and p.get('subgroup') == 'Connect']
-if connect != ['Account', 'Cloudy C3', 'Peer Control']: probs.append('Setup ▸ Connect = %r' % connect)
-for stale in ('Fleet', 'Cloudy C3', 'Agents'):
+if declared != ['Launcher', 'Network', 'Apps', 'Connect', 'Tools', 'Configs']: probs.append('declared groups %r != the six #1623 groups' % declared)
+connect = [p['label'] for p in vis if p.get('group') == 'Connect']
+if connect != ['Account', 'Cloudy C3', 'Peer Control']: probs.append('Connect = %r' % connect)
+for stale in ('Device', 'Setup', 'Fleet', 'Cloudy C3'):
     if any(p.get('group') == stale for p in pages): probs.append('a page still wears the group %r' % stale)
 for gone in ('agents', 'agents-superapp', 'agents-fleet', 'agents-watchtower'):
     if gone in by: probs.append('%s is still declared' % gone)
-obsv = [p['id'] for p in vis if p.get('group') == 'Device' and p.get('subgroup') == 'Configs' and p['id'] in ('xray', 'logcat-fleet')]
-if obsv != ['xray', 'logcat-fleet']: probs.append('X-Ray Device/Logcat Fleet not in Device ▸ Configs: %r' % obsv)
+obsv = [p['id'] for p in vis if p.get('group') == 'Tools' and p['id'] in ('xray', 'logcat-fleet')]
+if obsv != ['xray', 'logcat-fleet']: probs.append('X-Ray Device/Logcat Fleet not in the Tools group: %r' % obsv)
 w = by.get('agents-watchdog', {})
-if w.get('label') != 'Agents' or (w.get('group'), w.get('subgroup')) != ('Device', 'Configs'):
+if w.get('label') != 'Agents' or (w.get('group'), w.get('subgroup')) != ('Tools', ''):
     probs.append('the Agents hub is %r' % {k: w.get(k) for k in ('label', 'group', 'subgroup')})
 print('; '.join(probs) or 'OK')
 PY
-)" "Configs groups are build.json's groups (Device, Setup); Setup ▸ Connect = Account, Cloudy C3, Peer Control; no agents page; X-Ray Device, Logcat Fleet in Device ▸ Configs; the Agents hub is agents-watchdog relabelled Agents (#1610)"
+)" "Configs groups are build.json's six groups (Launcher, Network, Apps, Connect, Tools, Configs); Connect = Account, Cloudy C3, Peer Control; no agents page; X-Ray Device, Logcat Fleet in the Tools group; the Agents hub is agents-watchdog relabelled Agents, kept once in Tools (#1623)"
 
 echo "== A2: the old Agents ids land on X-Ray =="
 check "$(python3 - "$BJ" <<'PY'

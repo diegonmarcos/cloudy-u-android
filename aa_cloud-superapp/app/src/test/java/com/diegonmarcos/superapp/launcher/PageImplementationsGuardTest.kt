@@ -70,9 +70,12 @@ class PageImplementationsGuardTest {
     /** A hub page is implemented only while SectionPages really routes the key to SubgroupHubFragment... */
     private val hubRouted = Regex("""hubSections\.isNotEmpty\(\)\s*->\s*SubgroupHubFragment\.newInstance""").containsMatchIn(routing)
 
-    /** ...and EVERY subgroup it lists holds at least one other visible page, so no section it draws is empty. */
+    /** ...and EVERY section it lists holds at least one other visible page, so no section it draws is empty. #1623 Configs
+     *  flattened its subgroups into the six top-level groups, so hub_sections now name a group: a page with no subgroup is
+     *  matched on its group (mirrors Sections.hubSections, which falls back to group when subgroup is blank). */
     private fun hubSectionsHavePages(d: Decl): Boolean = hubSectionsOf(d).all { sub ->
-        declared().any { it.section == d.section && it.page != d.page && it.o.optString("subgroup") == sub && !it.o.optBoolean("hidden") }
+        declared().any { it.section == d.section && it.page != d.page &&
+            it.o.optString("subgroup").ifEmpty { it.o.optString("group") } == sub && !it.o.optBoolean("hidden") }
     }
 
     @Test fun `P1 every declared page is implemented, data-drawn, lib-hosted or declared a placeholder`() {

@@ -31,7 +31,7 @@ for t in tabs:
     if not by[t][0].get('hidden'): bad.append('%s is not hidden' % t)
     if sum(t in g['pages'] for g in sec['groups']) != 1: bad.append('%s not in exactly one group' % t)
 if '_doc' not in page or 'FOUR TABS' not in page['_doc']: bad.append('_doc does not describe the tabs')
-vis = [p['id'] for p in sec['pages'] if p.get('subgroup') == 'Network' and not p.get('hidden')]
+vis = [p['id'] for p in sec['pages'] if p.get('group') == 'Network' and not p.get('hidden')]
 if vis[vis.index('adb-shell') - 1] != 'apps-access': bad.append('not after apps-access')
 sys.exit(1 if bad else 0) if not print('; '.join(bad)) or True else 0
 PY

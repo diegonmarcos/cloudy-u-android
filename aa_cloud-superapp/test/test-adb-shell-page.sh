@@ -17,7 +17,7 @@ out="$(python3 - "$ROOT/aa_cloud-superapp/build.json" <<'PY'
 import json, sys
 b = json.load(open(sys.argv[1]))
 pages = next(s for s in b['ui']['sections'] if s['id'] == 'config')['pages']
-net = [p['id'] for p in pages if p.get('subgroup') == 'Network' and not p.get('hidden')]
+net = [p['id'] for p in pages if p.get('group') == 'Network' and not p.get('hidden')]
 by = {p['id']: p for p in pages}
 # Apps Access (Cloud Store > Access: Apps Mesh, IPC, Identity) is the one mesh tile; ADB Shell follows it
 mesh = [i for i in ('apps-access',) if i in net]

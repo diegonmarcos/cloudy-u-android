@@ -39,16 +39,18 @@ for f in "$BJ" "$POLY" "$HOME3D" "$PREFS" "$CFG"; do
   [ -f "$f" ] || { echo "  ABORT: no such file: $f"; exit 2; }
 done
 
-echo "== T1: Quick Actions row = Presets | UI | Panels (UI promoted) =="
+echo "== T1: Quick Actions row = Presets | Panels (#1623 UI promoted to its own Launcher tile) =="
 check "$(python3 - "$BJ" <<'PY'
 import json, sys
 pages = next(s for s in json.load(open(sys.argv[1]))['ui']['sections'] if s['id'] == 'config')['pages']
 by = {p['id']: p for p in pages}
 ctrl = [by[i]['label'] for i in by['controls']['tabs']]
-print('OK' if by['controls']['tabs'] == ['presets','panels-ui','panels'] and ctrl == ['Presets','UI','Panels']
-      and by['panels']['tabs'] == ['panels-all','panels-battery','panels-tools'] else 'controls=%r panels=%r' % (by['controls']['tabs'], by['panels']['tabs']))
+ui = by['panels-ui']
+print('OK' if by['controls']['tabs'] == ['presets','panels'] and ctrl == ['Presets','Panels']
+      and by['panels']['tabs'] == ['panels-all','panels-battery','panels-tools']
+      and not ui.get('hidden') and ui.get('group') == 'Launcher' else 'controls=%r panels=%r UI_hidden=%r' % (by['controls']['tabs'], by['panels']['tabs'], ui.get('hidden')))
 PY
-)" "controls strip is Presets | UI | Panels; panels is All | Battery Hungers | Tools"
+)" "controls strip is Presets | Panels; panels is All | Battery Hungers | Tools; UI is its own Launcher tile"
 
 echo "== T2: the Background declaration =="
 check "$(python3 - "$BJ" <<'PY'

@@ -18,7 +18,7 @@ echo "== F1: Network order =="
 got="$(python3 - "$APP/build.json" <<'PY'
 import json, sys
 pages = next(s for s in json.load(open(sys.argv[1]))['ui']['sections'] if s['id'] == 'config')['pages']
-print(','.join(p['label'] for p in pages if p.get('subgroup') == 'Network' and not p.get('hidden')))
+print(','.join(p['label'] for p in pages if p.get('group') == 'Network' and not p.get('hidden')))
 PY
 )"
 [ "$got" = "Firewall,DNS,Webserver,Cloud Mesh,Apps Access,ADB Shell,WiFi,Bluetooth" ] && ok "Network = $got" || bad "Network order is: $got"

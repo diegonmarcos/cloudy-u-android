@@ -43,7 +43,7 @@ pages = sec['pages']; by = {p['id']: p for p in pages}
 probs = []
 w = by.get('wifi')
 if not w: print('no wifi page'); sys.exit()
-if (w.get('group'), w.get('subgroup'), w.get('label'), w.get('icon')) != ('Device', 'Network', 'WiFi', 'ic_wifi') or w.get('hidden'): probs.append('page = %r' % {k: w.get(k) for k in ('group', 'subgroup', 'label', 'icon', 'hidden')})
+if (w.get('group'), w.get('subgroup'), w.get('label'), w.get('icon')) != ('Network', '', 'WiFi', 'ic_wifi') or w.get('hidden'): probs.append('page = %r' % {k: w.get(k) for k in ('group', 'subgroup', 'label', 'icon', 'hidden')})
 vis = [p['id'] for p in pages if not p.get('hidden') and not p.get('is_action')]
 if 'adb-shell' not in vis or vis[vis.index('adb-shell') + 1:vis.index('adb-shell') + 2] != ['wifi']: probs.append('WiFi is not the tile right after ADB Shell: %r' % vis)
 want = ['wifi-scan', 'wifi-channels', 'wifi-link', 'wifi-tools', 'wifi-log']
@@ -68,29 +68,29 @@ PY
 [ -f "$APP/app/src/main/res/drawable/ic_wifi.xml" ] && ok "ic_wifi resolves to a drawable" || bad "ic_wifi is not a drawable (the tile would fall back to ic_link_tile)"
 
 echo "== W2: the group row holds the page and its tabs =="
-# #1610 Configs restructure: ADB Shell, WiFi and Bluetooth belong to the Device
-# group (Device ▸ Network), none to Setup — asserted by test-configs-restructure
-# R6. This row check moved from the retired 'setup' group to 'device' in lockstep
-# with that declaration; the page + its five tabs must all sit in device, none in
-# setup, WiFi must be the visible Network tile right after ADB Shell, and every
-# Configs page must still live in exactly one group.
+# #1623 Configs is one page of six top-level groups; ADB Shell, WiFi and Bluetooth
+# belong to the Network group (no subgroup), none to Launcher/Apps/Connect/Tools/
+# Configs — asserted by test-configs-restructure R6. This row check moved to the
+# 'network' group in lockstep; the page + its five tabs must all sit in network,
+# WiFi must be the visible Network tile right after ADB Shell, and every Configs
+# page must still live in exactly one group.
 check "$(python3 - "$BJ" <<'PY'
 import json, sys
 sec = next(s for s in json.load(open(sys.argv[1]))['ui']['sections'] if s['id'] == 'config')
-device = next(g for g in sec['groups'] if g['id'] == 'device')['pages']
-setup  = next(g for g in sec['groups'] if g['id'] == 'setup')['pages']
+network = next(g for g in sec['groups'] if g['id'] == 'network')['pages']
+others  = [i for g in sec['groups'] if g['id'] != 'network' for i in g['pages']]
 probs = []
 need = ['wifi', 'wifi-scan', 'wifi-channels', 'wifi-link', 'wifi-tools', 'wifi-log']
-if any(i not in device for i in need): probs.append('device group lacks %r' % [i for i in need if i not in device])
-if any(i in setup for i in need): probs.append('setup row still lists wifi pages %r' % [i for i in need if i in setup])
-net = [p['id'] for p in sec['pages'] if p.get('group') == 'Device' and p.get('subgroup') == 'Network' and not p.get('hidden')]
+if any(i not in network for i in need): probs.append('network group lacks %r' % [i for i in need if i not in network])
+if any(i in others for i in need): probs.append('another group still lists wifi pages %r' % [i for i in need if i in others])
+net = [p['id'] for p in sec['pages'] if p.get('group') == 'Network' and not p.get('hidden')]
 if 'adb-shell' not in net or net[net.index('adb-shell') + 1:net.index('adb-shell') + 2] != ['wifi']:
     probs.append('WiFi is not the Network tile right after ADB Shell: %r' % net)
 seen = [i for g in sec['groups'] for i in g['pages']]
 if sorted(seen) != sorted(p['id'] for p in sec['pages']): probs.append('a page is not in exactly one group')
 print('; '.join(probs) or 'OK')
 PY
-)" "Device ▸ Network row: WiFi (+ its five tabs) after ADB Shell, in the device group not Setup; every Configs page in exactly one group"
+)" "Network group row: WiFi (+ its five tabs) after ADB Shell, in the network group; every Configs page in exactly one group"
 
 echo "== W3: the page is the lib's, scroll and clearance wired, features present =="
 F="$KT/configs/WifiFragment.kt"

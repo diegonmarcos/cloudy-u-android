@@ -82,14 +82,18 @@ class XrayExportTest {
             is JSONArray -> (0 until o.length()).asSequence().mapNotNull { find(o.get(it)) }.firstOrNull()
             else -> null
         }
-        // #1610: the Observability pages now live in the Device > Configs column — every page declared there, visible and
-        // hidden, except the Agents hub and the layout separator, in declaration order.
+        // #1623: Configs is one page of six flat groups, and the X-Ray-walked pages now span two of them — the Configs group
+        // (Perms, Logcat, X-Ray App, About, and the hidden Battery) and the Tools group's observability pair (X-Ray Device,
+        // Logcat Fleet). Collect the diagnostic pages of both groups — every page there, visible and hidden, except the
+        // external Watchdog launch (it declares an action), the Agents hub (hub_sections) and the layout separators. The
+        // UI-tree order no longer reflects the X-Ray walk order (the pages split across two groups), so compare as a SET;
+        // XrayTree.PAGES is the X-Ray-internal walk order, still the one source of truth for what is walked.
         val pages = find(root)!!.getJSONArray("pages")
         val declared = (0 until pages.length()).map { pages.getJSONObject(it) }
-            .filter { it.optString("group") == "Device" && it.optString("subgroup") == "Configs" &&
+            .filter { it.optString("group") in setOf("Tools", "Configs") && it.optString("action").isEmpty() &&
                 !it.optBoolean("separator", false) && !it.has("hub_sections") }
             .map { it.getString("id") }
-        assertEquals(declared, XrayTree.PAGES)
+        assertEquals(XrayTree.PAGES.toSet(), declared.toSet())
         val r = build()
         val groupsSeen = r.sections.map { it.group }.toSet()
         for (p in declared) {

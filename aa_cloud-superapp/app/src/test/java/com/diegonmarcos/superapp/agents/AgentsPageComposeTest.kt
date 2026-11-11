@@ -46,9 +46,9 @@ class AgentsPageComposeTest : KitPageHarness() {
             assertTrue("$old is still declared", old !in ids)
             assertEquals("config" to "xray", Sections.canonicalPage("config", old))
         }
-        // #1610: X-Ray Device now lives in the Device ▸ Configs column (Device ▸ Configs ▸ X-Ray Device).
+        // #1623: X-Ray Device now lives in the Tools group (Tools ▸ X-Ray Device).
         val xray = section.allPages.first { it.id == "xray" }
-        assertEquals("Device" to "Configs", xray.group to xray.subgroup)
+        assertEquals("Tools" to "", xray.group to xray.subgroup)
         assertEquals("X-Ray Device", xray.label)
     }
 
