@@ -152,15 +152,15 @@ out(M.moreFor(chat, direct, health).every((f) => f.agents === "all"), "the direc
 
 // ── the hamburger lists the ACTIVE page's items ─────────────────────────────
 const tabs = T.buildTabs(nav, nav.tabs.map((t) => t.view));
-const menus = { ai: () => ({ items: M.chatMenu() }), repos: () => ({ items: [{ id: "rescan" }] }) };
+const menus = { ai: () => ({ items: M.chatMenu() }), git: () => ({ items: [{ id: "rescan" }] }) };
 const chatItems = T.menuFor({ active: "ai" }, tabs, menus).items.map((i) => i.id);
 out(JSON.stringify(chatItems) === JSON.stringify(M.chatMenu().map((i) => i.id)), `Chat's drawer is Chat's own items (${chatItems.join(", ")})`);
 for (const need of ["new", "history", "search", "pinned", "export"]) out(chatItems.includes(need), `Chat's drawer has ${need}`);
-out(T.menuFor({ active: "repos" }, tabs, menus).items[0].id === "rescan", "Repos' drawer is Repos' own items");
+out(T.menuFor({ active: "git" }, tabs, menus).items[0].id === "rescan", "Git' drawer is Git's own items (tab id git, formerly repos)");
 out(T.menuFor({ active: "browser" }, tabs, menus).items.length === 0, "a page that registered nothing gets an empty drawer, never another page's");
 const index = read("src/cloud/index.js");
 out(/MENUS\[panel\.dataset\.tab\] = \(\) => chatDrawer\(drawer\)/.test(index) && /menuFor\(state, tabs, MENUS\)/.test(index), "index.js registers Chat's drawer and opens the active tab's through menuFor");
-for (const view of ["renderBacklogView", "renderRepos", "renderBrowser"]) {
+for (const view of ["renderBacklogView", "renderGit", "renderBrowser"]) {
 	const body = new RegExp(`function ${view}\\([\\s\\S]*?\\n\\}`).exec(index)?.[0] || "";
 	out(/MENUS\[panel\.dataset\.tab\] =/.test(body), `${view} supplies its own drawer items`);
 }

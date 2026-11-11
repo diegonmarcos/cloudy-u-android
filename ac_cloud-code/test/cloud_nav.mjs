@@ -113,6 +113,13 @@ const vols = nav.repos?.volumes || [];
 out(vols.length === 2 && vols[0].label === "Cloud-Shared-Store/Git" && vols[1].label === "Emulated/Git", "both volumes are declared: Cloud-Shared-Store/Git and Emulated/Git");
 out(/cloud-shared-store/.test(vols[0]?.store_home || "") && /cordova\.file\.externalRootDirectory/.test(index) && vols[1]?.subdir === "Git", "shared-store path resolves under the store home (legacy mirror fallback); emulated = externalRootDirectory + Git");
 out(/await listRepos\(root\)/.test(index) && /nav\.repos\.volumes\.map/.test(index) && /ensureDir\(/.test(index) && /manageAllFiles/.test(index.slice(index.indexOf("async function fillVolume"))), "repos are enumerated per volume; missing folders are created; denied volumes offer the all-files grant");
+// #1589 field parity: the Backlog page keeps its own content (entry, reader, edit/repo/folder actions) and ADDS the cloud-docs tree.
+out(nav.docs?.root === "cloud-a-docs" && !nav.docs.root.startsWith("/"), "nav.docs.root declares the cloud-docs clone relative to the store git folder (#1589)");
+out(/async function renderBacklogView\(panel, title, entry, \{ extra = \[\], docs = false \} = \{\}\)/.test(index) && /renderBacklogView\(panel, "Backlog", nav\.backlog\.entry, \{ docs: true \}\)/.test(index), "only the Backlog tab mounts the cloud-docs tree; Agents keeps its plain view");
+out(/new FileTree\(treeBox/.test(index) && /cloud-docs-toggle/.test(index) && /classList\.toggle\("collapsed"\)/.test(index) && /cloud-backlog-split/.test(index), "the tree is a LEFT collapsible child menu beside the page body");
+out(/\.html\?\$\/i\.test\(name\)/.test(index) && /DOMPurify\.sanitize\(html\)/.test(index) && /renderMarkdown\(text, \{ uri: url \}\)/.test(index) && /DOMPurify\.sanitize\(text\)/.test(index), "clicking a .md or .html renders it (markdown through the shared renderer, html sanitized)");
+for (const id of ["reload", "entry", "edit", "repo", "folder", "docs-reload", "docs-folder"]) out(new RegExp(`id: "${id}"`).test(index), `Backlog drawer keeps/gains the ${id} item`);
+out(/\.cloud-docs-tree/.test(read("src/cloud/cloud.scss")) && /\.cloud-backlog-split/.test(read("src/cloud/cloud.scss")), "cloud.scss styles the split and the tree");
 const scss = read("src/cloud/cloud.scss");
 out(/\.cloud-vols \{[^}]*flex-direction: row/.test(scss) && /\.cloud-vol \{[^}]*flex: 1 1 0/.test(scss), "the two volumes sit side by side in horizontal columns, repos stacked under each header");
 out(/fsOperation\(e\.url, "\.git"\)\.exists\(\)/.test(read("src/cloud/seams.js")), "a repo is an immediate subdirectory holding .git");
