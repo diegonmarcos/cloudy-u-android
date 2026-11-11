@@ -179,7 +179,12 @@ class MainActivity : AppCompatActivity() {
         // A magnet: link or a .torrent handed to the app is queued (and the Downloads page opens), never loaded as a page.
         val torrent = savedInstanceState == null && com.diegonmarcos.cloudbrowser.torrent.TorrentIntents.consume(this, intent)
         if (savedInstanceState != null || torrent) show(null)
-        else mhtml.open(intent) { url -> if (!isFinishing && !isDestroyed) show(url?.takeIf { it.isNotBlank() }) }
+        else com.diegonmarcos.cloudbrowser.textopen.TextIntents.open(this, intent) { textUrl ->
+            // #1642 a text file (.txt .md .json .log ...) is shown as text; anything else goes to the saved-page / link opener.
+            if (isFinishing || isDestroyed) return@open
+            if (textUrl != null) show(textUrl)
+            else mhtml.open(intent) { url -> if (!isFinishing && !isDestroyed) show(url?.takeIf { it.isNotBlank() }) }
+        }
 
         Updater.start(this)
         UpdateProgress.setListener { state ->
@@ -343,7 +348,7 @@ class MainActivity : AppCompatActivity() {
         // BrowserHostFragment takes its URL via newInstance args only.
         if (com.diegonmarcos.cloudbrowser.torrent.TorrentIntents.consume(this, intent)) { setIntent(intent); return }
         // A saved page (.mhtml / .mht) is copied to the cache first when it arrives as a content:// stream.
-        mhtml.open(intent) { target ->
+        val load: (String?) -> Unit = { target ->
             val url = target?.takeIf { it.isNotBlank() }
             if (url != null && !isFinishing && !isDestroyed) supportFragmentManager.commit(allowStateLoss = true) {
                 replace(
@@ -351,6 +356,10 @@ class MainActivity : AppCompatActivity() {
                     BrowserHostFragment.newInstance(url, BuildConfig.UI_BROWSER_CONFIG_B64),
                 )
             }
+        }
+        // #1642 a text file is shown as text first; anything else keeps the saved-page / link path unchanged.
+        com.diegonmarcos.cloudbrowser.textopen.TextIntents.open(this, intent) { textUrl ->
+            if (textUrl != null) load(textUrl) else mhtml.open(intent) { target -> load(target) }
         }
     }
 
