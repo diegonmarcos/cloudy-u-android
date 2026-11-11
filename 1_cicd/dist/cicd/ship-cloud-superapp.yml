@@ -203,8 +203,35 @@ jobs:
       # runner for reasons unrelated to the code. Installing it is what makes
       # those assertions mean anything; build.json::tests.shell.requires is the
       # check that stops them going quietly vacuous again.
+      #
+      # The install must not be the reason a Ship is red: on 2026-11-11 every
+      # run of this workflow died here for over an hour because the runner
+      # could not resolve security.ubuntu.com (runs 43031869353, 43034912241,
+      # 43038387582), before a single tester ran. So: refresh the index, try
+      # apt three times with backoff, then fall back to the static musl binary
+      # from ripgrep's own GitHub release (the runner reaches github.com, or it
+      # could not have checked out). The last line still fails the step when rg
+      # is not on PATH, so a missing tool is never a pass.
       - name: Install ripgrep (a tester's missing tool must never be a pass)
-        run: sudo apt-get install -y -qq ripgrep
+        run: |
+          if ! command -v rg >/dev/null 2>&1; then
+            for try in 1 2 3; do
+              sudo apt-get update -qq || true
+              if sudo apt-get install -y -qq ripgrep; then break; fi
+              echo "::warning::apt could not install ripgrep (try $try of 3)"
+              sleep $((try * 10))
+            done
+          fi
+          if ! command -v rg >/dev/null 2>&1; then
+            echo "::warning::apt never delivered ripgrep; falling back to its GitHub release binary"
+            ver=14.1.1
+            tgz="ripgrep-${ver}-x86_64-unknown-linux-musl.tar.gz"
+            curl -fsSL --retry 5 --retry-delay 5 --retry-all-errors -o "$RUNNER_TEMP/$tgz" \
+              "https://github.com/BurntSushi/ripgrep/releases/download/${ver}/${tgz}"
+            tar -xzf "$RUNNER_TEMP/$tgz" -C "$RUNNER_TEMP"
+            sudo install -m 0755 "$RUNNER_TEMP/ripgrep-${ver}-x86_64-unknown-linux-musl/rg" /usr/local/bin/rg
+          fi
+          rg --version
 
       - name: Shell testers (static assertions — fatal on failure)
         run: sh 1_cicd/dist/scripts/cloud-android-test-engine.sh shell "$WORK_DIR"
