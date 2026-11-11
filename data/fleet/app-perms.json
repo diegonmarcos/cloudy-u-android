@@ -329,6 +329,19 @@
    "first_run": "libs:perms",
    "helpers": []
   },
+  "com.diegonmarcos.comms.chat": {
+   "needs": [
+    "notifications",
+    "bt_connect",
+    "camera",
+    "microphone",
+    "media_audio",
+    "storage_read",
+    "storage_write"
+   ],
+   "first_run": "libs:perms",
+   "helpers": []
+  },
   "com.diegonmarcos.comms.dialer": {
    "needs": [
     "notifications",

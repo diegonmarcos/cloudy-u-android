@@ -139,10 +139,9 @@
     ]
   },
   "pending_page": {
-    "_doc": "#1360 Gradle apps whose own UI is a vendored fork or a non-Compose host that does not link libs:perms yet: their permissions are DECLARED (build.json::perms, checked P1-P4) but drawn by the fork's own screens. The list may only shrink (pending_page_max).",
-    "ac_cloud-chat": "React Native (Mattermost) host: permissions are asked from JavaScript by the upstream screens"
+    "_doc": "#1360 Gradle apps whose own UI is a vendored fork or a non-Compose host that does not link libs:perms yet: their permissions are DECLARED (build.json::perms, checked P1-P4) but drawn by the fork's own screens. The list may only shrink (pending_page_max)."
   },
-  "pending_page_max": 1,
+  "pending_page_max": 0,
   "one_place": {
     "_doc": "#1515 P7 of 1_cicd/src/scripts/cloud-android-perms-guard.py. tokens: calls an app may make only from its Perms page. allow: path substrings of the places that may (the libs:perms lib and each app's declared Perms page). exceptions: declared in data, code that acts on OTHER apps. baseline: sites not moved into a Perms row yet (exact file, or a dir/ prefix for a vendored fork); the list only shrinks (baseline_max) and an entry that stops violating must be removed. allow also names an activity that must register the launcher its own Perms page uses (Cloud Me MainActivity hosts Configs > Perms: the Configs rows and the start-up walk go through its one launcher).",
     "tokens": [
