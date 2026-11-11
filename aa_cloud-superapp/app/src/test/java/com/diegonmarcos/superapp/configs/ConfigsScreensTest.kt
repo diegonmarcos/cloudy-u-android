@@ -47,6 +47,13 @@ class ConfigsScreensTest(private val screen: String, private val fontScale: Floa
         const val MAX_BUTTON_DP = 32f
         const val MAX_ROW_DP = 44f
         const val EXTRA_LINE_DP = 18f
+        /**
+         * #1647 The ONE roomy screen. The ADB Shell Status page is drawn spacious on the owner's explicit instruction for that
+         * page (not data-dense: large lights, large verbs, 44dp action icons with their word under them), so its controls get
+         * this cap instead of the dense 32 / 44dp. It is a cap, not an exemption: the page is still measured, and every other
+         * screen keeps the dense bounds. Add nothing here without the same kind of instruction.
+         */
+        val ROOMY_MAX_DP = mapOf("adb-status" to 64f)
         /** Screens that are read-only by design (no control to measure). Empty unless proven by a render. */
         // The four tab STRIPS: under Robolectric the strip's pane (a FragmentContainerView inside an AndroidView pager)
         // stays empty, so only its tab pills are measured here. Every tab they hold is rendered and guarded as its own
@@ -208,13 +215,15 @@ class ConfigsScreensTest(private val screen: String, private val fontScale: Floa
                 hits.any { it.kind != "tab" } || screen in NO_CONTROLS)
         }
         if (fontScale == 1.0f) {
+            val maxButton = ROOMY_MAX_DP[screen] ?: MAX_BUTTON_DP
+            val maxRow = ROOMY_MAX_DP[screen] ?: MAX_ROW_DP
             val tooTall = hits.filter {
-                (it.kind == "button" || it.kind == "view-button" || it.kind == "chip") && it.hDp > MAX_BUTTON_DP + 0.5f ||
+                (it.kind == "button" || it.kind == "view-button" || it.kind == "chip") && it.hDp > maxButton + 0.5f ||
                     (it.kind == "row" || it.kind == "view-row" || it.kind == "tab") &&
-                        it.hDp > MAX_ROW_DP + EXTRA_LINE_DP * (it.lines - 1) + 0.5f ||
+                        it.hDp > maxRow + EXTRA_LINE_DP * (it.lines - 1) + 0.5f ||
                     it.kind == "icon-box" && maxOf(it.wDp, it.hDp) > MAX_ICON_BOX_DP + 0.5f
             }
-            assertTrue("$name: ${tooTall.size} control(s) over ${MAX_BUTTON_DP}dp (button) / ${MAX_ROW_DP}dp (row):\n" +
+            assertTrue("$name: ${tooTall.size} control(s) over ${maxButton}dp (button) / ${maxRow}dp (row):\n" +
                 tooTall.joinToString("\n") { "  ${it.kind} ${"%.1f".format(it.hDp)}dp tall: ${it.name}" },
                 !ENFORCE || tooTall.isEmpty())
         }
