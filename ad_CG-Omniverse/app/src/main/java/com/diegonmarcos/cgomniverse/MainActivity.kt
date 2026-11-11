@@ -2,6 +2,8 @@ package com.diegonmarcos.cgomniverse
 
 import android.content.Intent
 import android.os.Bundle
+import com.diegonmarcos.cgomniverse.ui.OmniXrayPage
+import com.diegonmarcos.superapp.fleetconfigs.FleetConfigsExtensions
 import android.os.StrictMode
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -21,6 +23,8 @@ class MainActivity : ComponentActivity() {
         }
         super.onCreate(savedInstanceState)
         FleetChrome.apply(this)
+        // #1631 Configs > X-Ray App (its place in the fleet-default tail, #1630) draws this app's own 3D render diagnostics, not the generic profiler
+        FleetConfigsExtensions.registerXrayPage { dark -> OmniXrayPage(dark) }
         // the start page and world, read once from the launching intent (Launch); state restores take over after that
         val section = intent?.getStringExtra(Launch.EXTRA_SECTION)
         val world = worldOf(intent)

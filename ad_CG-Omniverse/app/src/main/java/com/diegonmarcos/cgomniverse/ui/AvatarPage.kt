@@ -99,6 +99,7 @@ import com.diegonmarcos.cgomniverse.Avatar
 import com.diegonmarcos.cgomniverse.AvatarSpec
 import com.diegonmarcos.cgomniverse.Decl
 import com.diegonmarcos.cgomniverse.GraphicsStats
+import com.diegonmarcos.cgomniverse.OmniXray
 import com.diegonmarcos.cloudlib.web.CloudWeb
 import com.diegonmarcos.cloudlib.web.CloudWebClient
 import com.diegonmarcos.cloudlib.web.WebProfile
@@ -176,6 +177,7 @@ private class CgcBridge(private val ctx: Context, private val onEvent: (JSONObje
     @JavascriptInterface fun event(json: String) {
         android.util.Log.i("CgcHost", json.take(400)) // scene events only (ready, loaded, quality, error): no user data
         val o = runCatching { JSONObject(json) }.getOrNull() ?: return
+        OmniXray.cgcEvent(o)   // #1631 ready / loaded / size / error reach the X-Ray App even when the Avatar page is closed
         main.post { onEvent(o) }
     }
 
@@ -295,14 +297,33 @@ fun AvatarPage() {
             factory = { c ->
                 CloudWeb.create(c, WebProfile.WEB_WORLD).also { wv ->
                     wv.addJavascriptInterface(bridge, "CgcHost")
+                    wv.addJavascriptInterface(OmniXrayBridge(), "OmniDiag")   // #1631 the page's render probe reports here (Configs > X-Ray App)
                     wv.webViewClient = object : CloudWebClient(WebProfile.WEB_WORLD, CloudWeb.assetLoader(c)) {
+                        override fun onPageStarted(view: WebView, url: String, favicon: android.graphics.Bitmap?) {
+                            super.onPageStarted(view, url, favicon)
+                            OmniXray.avatarStarted(url)
+                        }
+                        override fun onReceivedError(view: WebView, request: android.webkit.WebResourceRequest, err: android.webkit.WebResourceError) {
+                            super.onReceivedError(view, request, err)
+                            OmniXray.avatarError(request.url.toString(), request.isForMainFrame, err.errorCode, err.description?.toString().orEmpty())
+                        }
+                        override fun onReceivedHttpError(view: WebView, request: android.webkit.WebResourceRequest, response: android.webkit.WebResourceResponse) {
+                            super.onReceivedHttpError(view, request, response)
+                            OmniXray.avatarHttp(request.url.toString(), request.isForMainFrame, response.statusCode)
+                        }
+                        override fun onRenderProcessGone(view: WebView, detail: android.webkit.RenderProcessGoneDetail): Boolean {
+                            OmniXray.avatarRenderGone(detail.didCrash())
+                            return super.onRenderProcessGone(view, detail)
+                        }
                         override fun onPageFinished(view: WebView, url: String?) {
                             super.onPageFinished(view, url)
+                            OmniXray.avatarFinished(url.orEmpty())
                             val conf = Avatar.sceneConfig(spec, 0, css(bottomPx))
                             view.evaluateJavascript("window.cgcBoot&&window.cgcBoot(" + JSONObject.quote(conf) + ")", null)
                         }
                         override fun onRecovered(dead: WebView, fresh: WebView?) {
                             fresh?.addJavascriptInterface(bridge, "CgcHost")
+                            fresh?.addJavascriptInterface(OmniXrayBridge(), "OmniDiag")
                             web = fresh; loaded = false
                         }
                     }

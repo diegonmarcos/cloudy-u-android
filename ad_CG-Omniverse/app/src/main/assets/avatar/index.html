@@ -20,6 +20,118 @@
 <body>
 <div id="cgc"></div>
 <script>
+  /* #1631 X-Ray App probe: runs BEFORE three.js so it sees every WebGL context, draw call, frame, fetch and error the scene makes.
+     It only observes (every wrapper calls the original and rethrows); window.__omni.snap() is pushed to the app once a second and on
+     every error through the OmniDiag bridge (present only inside the app) and is what Configs > X-Ray App reports. */
+  (function () {
+    var t0 = performance.now(), S = window.__omni = { ctx: [], lost: [], err: [], con: [], req: [], marks: {}, frames: 0, draws: 0, firstRaf: null, firstDraw: null };
+    var now = function () { return Math.round(performance.now() - t0); };
+    var push = function (a, o, max) { a.push(o); if (a.length > (max || 40)) a.shift(); };
+    var abs = function (u) { try { return new URL(u, document.baseURI).href; } catch (e) { return String(u); } };
+    var timer = null;
+    var send = function () { try { if (window.OmniDiag) window.OmniDiag.report(JSON.stringify(S.snap())); } catch (e) {} };
+    var soon = function () { if (!timer) timer = setTimeout(function () { timer = null; send(); }, 150); };
+    var fail = function (where, e) { push(S.err, { t: now(), where: where, msg: String(e && (e.stack || e.message) || e).slice(0, 300) }); soon(); };
+    S.mark = function (k) { if (!(k in S.marks)) S.marks[k] = now(); soon(); };
+    S.fail = fail;
+    S.snap = function () {
+      var cv = Array.prototype.map.call(document.querySelectorAll('canvas'), function (c) {
+        var r = c.getBoundingClientRect(), cs = getComputedStyle(c);
+        return { w: c.width, h: c.height, cw: c.clientWidth, ch: c.clientHeight, rect: [Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height)],
+                 display: cs.display, visibility: cs.visibility, opacity: cs.opacity, inDom: document.contains(c) };
+      });
+      return { v: 1, t: now(), ua: navigator.userAgent, dpr: window.devicePixelRatio, inner: [window.innerWidth, window.innerHeight], vis: document.visibilityState,
+               ctx: S.ctx, lost: S.lost, err: S.err, con: S.con, req: S.req, marks: S.marks, frames: S.frames, draws: S.draws, firstRaf: S.firstRaf, firstDraw: S.firstDraw, canvases: cv };
+    };
+    // 1 WebGL contexts: every getContext('webgl'|'webgl2'), its success, renderer/vendor, software fallback, lost / restored events
+    try {
+      var gc = HTMLCanvasElement.prototype.getContext;
+      HTMLCanvasElement.prototype.getContext = function (type) {
+        var self = this, isGl = /webgl/i.test(String(type));
+        if (isGl && !self.__omniL) {
+          self.__omniL = 1;
+          self.addEventListener('webglcontextcreationerror', function (e) { push(S.ctx, { type: String(type), ok: false, t: now(), err: 'creation error: ' + (e.statusMessage || '') }); soon(); }, false);
+          self.addEventListener('webglcontextlost', function () { push(S.lost, { t: now(), kind: 'lost' }); soon(); }, false);
+          self.addEventListener('webglcontextrestored', function () { push(S.lost, { t: now(), kind: 'restored' }); soon(); }, false);
+        }
+        var r;
+        try { r = gc.apply(this, arguments); } catch (e) { if (isGl) push(S.ctx, { type: String(type), ok: false, t: now(), err: String(e) }); soon(); throw e; }
+        if (isGl) {
+          var o = { type: String(type), ok: !!r, t: now(), canvas: [self.width, self.height] };
+          if (r) {
+            try {
+              var d = r.getExtension('WEBGL_debug_renderer_info');
+              o.renderer = String(r.getParameter(d ? d.UNMASKED_RENDERER_WEBGL : r.RENDERER));
+              o.vendor = String(r.getParameter(d ? d.UNMASKED_VENDOR_WEBGL : r.VENDOR));
+              o.version = String(r.getParameter(r.VERSION));
+              o.maxTex = r.getParameter(r.MAX_TEXTURE_SIZE);
+              o.software = /swiftshader|llvmpipe|softpipe|software|basic render|microsoft basic/i.test(o.renderer + ' ' + o.vendor);
+            } catch (e) { o.probeErr = String(e); }
+          }
+          push(S.ctx, o); soon();
+        }
+        return r;
+      };
+    } catch (e) { fail('probe:getContext', e); }
+    // 2 draw calls and first draw
+    try {
+      ['WebGLRenderingContext', 'WebGL2RenderingContext'].forEach(function (n) {
+        var C = window[n]; if (!C) return;
+        ['drawArrays', 'drawElements', 'drawArraysInstanced', 'drawElementsInstanced', 'drawRangeElements'].forEach(function (k) {
+          var f = C.prototype[k]; if (!f) return;
+          C.prototype[k] = function () { S.draws++; if (S.firstDraw === null) { S.firstDraw = now(); soon(); } return f.apply(this, arguments); };
+        });
+      });
+    } catch (e) { fail('probe:draw', e); }
+    // 3 frames (and the exception a render callback throws)
+    try {
+      var raf = window.requestAnimationFrame;
+      window.requestAnimationFrame = function (cb) {
+        return raf.call(window, function (ts) {
+          S.frames++; if (S.firstRaf === null) { S.firstRaf = now(); soon(); }
+          try { return cb(ts); } catch (e) { fail('render', e); throw e; }
+        });
+      };
+    } catch (e) { fail('probe:raf', e); }
+    // 4 fetches: the resolved URL, status, bytes and the file's first bytes for a model
+    try {
+      var f0 = window.fetch;
+      window.fetch = function (inp) {
+        var u = abs(typeof inp === 'string' ? inp : (inp && inp.url) || inp), rec = { url: u, via: 'fetch', t: now() };
+        push(S.req, rec, 60); soon();
+        return f0.apply(this, arguments).then(function (r) {
+          rec.status = r.status; rec.ok = r.ok; rec.done = now(); rec.type = r.headers.get('content-type') || '';
+          var len = r.headers.get('content-length'); if (len) rec.len = len;
+          if (/\.(glb|gltf|vrm|bin)(\?|$)/i.test(u)) {
+            r.clone().arrayBuffer().then(function (b) {
+              rec.bytes = b.byteLength; rec.magic = String.fromCharCode.apply(null, new Uint8Array(b.slice(0, 4))).replace(/[^\x20-\x7e]/g, '?'); soon();
+            }, function (e) { rec.err = 'body: ' + String(e); soon(); });
+          }
+          soon(); return r;
+        }, function (e) { rec.ok = false; rec.err = String(e); rec.done = now(); soon(); throw e; });
+      };
+    } catch (e) { fail('probe:fetch', e); }
+    // 5 errors: script errors, rejected promises, a resource (script, image, module) that failed to load, console errors
+    window.addEventListener('error', function (e) {
+      var t = e.target;
+      if (t && t !== window && (t.src || t.href)) fail('resource', 'failed to load ' + (t.src || t.href));
+      else fail('page', (e.message || 'error') + ' @' + String(e.filename || '').split('/').pop() + ':' + e.lineno);
+    }, true);
+    window.addEventListener('unhandledrejection', function (e) { fail('promise', e.reason); });
+    ['error', 'warn'].forEach(function (lvl) {
+      var o = console[lvl]; if (!o) return;
+      console[lvl] = function () {
+        push(S.con, { t: now(), lvl: lvl, msg: Array.prototype.map.call(arguments, String).join(' ').slice(0, 300) }, 30);
+        if (lvl === 'error') soon();
+        return o.apply(console, arguments);
+      };
+    });
+    document.addEventListener('visibilitychange', soon);
+    S.mark('probe_ready');
+    setInterval(send, 1000);
+  })();
+</script>
+<script>
   window.cgcBoot = (json) => { window.cgcPending = json; };
   // a script error or a failed promise reaches the app's log (CgcHost) instead of leaving an empty stage unexplained
   const report = (m) => { try { window.CgcHost && window.CgcHost.event(JSON.stringify({ type: 'error', where: 'page', message: String(m).slice(0, 300) })); } catch (e) {} };
@@ -28,8 +140,16 @@
 </script>
 <script type="module">
   import { boot } from '../cgc/cgc.js';
+  window.__omni && window.__omni.mark('cgc_module');
   let booted = false;
-  const go = (json) => { if (booted) return; booted = true; boot(typeof json === 'string' ? JSON.parse(json) : json); };
+  // #1631 the boot promise is observed (boot_called / boot_resolved marks, a rejection reaches the X-Ray App), never swallowed
+  const go = (json) => {
+    if (booted) return; booted = true;
+    window.__omni && window.__omni.mark('boot_called');
+    Promise.resolve(boot(typeof json === 'string' ? JSON.parse(json) : json)).then(
+      () => window.__omni && window.__omni.mark('boot_resolved'),
+      (e) => { window.__omni && window.__omni.fail('boot', e); throw e; });
+  };
   if (!window.CgcHost) go({ model: { url: 'models/owner.glb' } });
   else if (window.cgcPending) go(window.cgcPending);
   else window.cgcBoot = go;

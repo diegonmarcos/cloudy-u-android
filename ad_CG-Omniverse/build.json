@@ -119,7 +119,10 @@
         "libs:ui-nav-bars",
         "libs:theme-background",
         "libs:ui-kit",
-        "libs:cgc-3d"
+        "libs:cgc-3d",
+        "libs:fleetconfigs-agents",
+        "libs:fleetconfigs-logcat",
+        "libs:fleetconfigs-xray"
       ]
     },
     "libs:web-core": {
@@ -160,6 +163,21 @@
       "dir": "../ab_cloud-libs-shared/libs/ui-nav-bars",
       "type": "library",
       "_doc": "#1154 shared navigation and theme design, shared BY REFERENCE."
+    },
+    "libs:fleetconfigs-agents": {
+      "dir": "../ab_cloud-libs-shared/libs/fleetconfigs-agents",
+      "type": "library",
+      "_doc": "#1630 the Agents tab of the fleet-default Configs tail (Agents, Perms, Logcat, X-Ray App, About after the | separator); registers itself."
+    },
+    "libs:fleetconfigs-logcat": {
+      "dir": "../ab_cloud-libs-shared/libs/fleetconfigs-logcat",
+      "type": "library",
+      "_doc": "#1630 the Logcat tab (this app's uid-filtered log stream + HTML/Markdown export); registers itself."
+    },
+    "libs:fleetconfigs-xray": {
+      "dir": "../ab_cloud-libs-shared/libs/fleetconfigs-xray",
+      "type": "library",
+      "_doc": "#1630 the X-Ray App tab slot of the tail. CG-Omniverse replaces its body with its own 3D render diagnostics (#1631, ui/OmniXrayPage) through FleetConfigsExtensions.registerXrayPage."
     },
     "libs:fleet-data-client": {"dir": "../ab_cloud-libs-shared/libs/fleet-data-client", "type": "library"},
     "libs:perms": {

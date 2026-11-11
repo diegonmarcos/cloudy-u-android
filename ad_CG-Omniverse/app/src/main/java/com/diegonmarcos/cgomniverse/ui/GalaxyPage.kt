@@ -76,6 +76,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.diegonmarcos.cgomniverse.Decl
 import com.diegonmarcos.cgomniverse.GraphicsStats
+import com.diegonmarcos.cgomniverse.OmniXray
 import com.diegonmarcos.cgomniverse.Offline
 import com.diegonmarcos.cgomniverse.R
 import com.diegonmarcos.cgomniverse.Store
@@ -262,7 +263,7 @@ fun WorldView(w: World, modifier: Modifier = Modifier) {
                 AndroidView(factory = { c ->
                     CloudWeb.create(c, WebProfile.WEB_WORLD, desktop).also { wv ->
                         wv.webChromeClient = object : CloudChromeClient(ctx as? android.app.Activity) {
-                            override fun onProgressChanged(view: WebView, newProgress: Int) { progress = newProgress }
+                            override fun onProgressChanged(view: WebView, newProgress: Int) { progress = newProgress; OmniXray.worldProgress(w.id, newProgress) }
                             // protected media (some worlds stream DRM video) is the one resource granted; nothing else is asked of the user
                             override fun onPermissionRequest(request: PermissionRequest) {
                                 val ok = request.resources.filter { it == PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID }
@@ -277,21 +278,32 @@ fun WorldView(w: World, modifier: Modifier = Modifier) {
                             }
                             override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? =
                                 (if (pinned) Pinned.intercept(c, host, request, refreshing) else null) ?: super.shouldInterceptRequest(view, request)
-                            override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) { error = null }
+                            override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) { error = null; OmniXray.worldStarted(w.id, url) }
                             override fun doUpdateVisitedHistory(view: WebView, url: String?, isReload: Boolean) { canBack = view.canGoBack() }
                             override fun onPageFinished(view: WebView, url: String) {
+                                OmniXray.worldFinished(w.id, url)
+                                // #1631 what this world's page can draw with, measured in the page (no bridge is added to a foreign page)
+                                view.evaluateJavascript(PageDiag.SCRIPT, null)
+                                view.postDelayed({
+                                    view.evaluateJavascript(PageDiag.READ) { raw ->
+                                        PageDiag.parse(raw)?.let { d -> OmniXray.worldDiag(w.id, d.rows().joinToString("; ") { it.label + ": " + it.value }) }
+                                    }
+                                }, 1500)
                                 if (error == null && !offline) finished = true
                                 refreshing = false
                                 if (w.vr) view.evaluateJavascript("(function(){return !!(navigator.xr&&navigator.xr.isSessionSupported)})()") { xr = it == "true" }
                             }
                             override fun onReceivedError(view: WebView, request: WebResourceRequest, err: WebResourceError) {
+                                OmniXray.worldError(w.id, request.url.toString(), request.isForMainFrame, err.errorCode, err.description?.toString().orEmpty())
                                 if (!request.isForMainFrame) return
                                 if (Offline.isOfflineError(err.errorCode)) offline = true else error = err.description?.toString()
                             }
                             override fun onReceivedHttpError(view: WebView, request: WebResourceRequest, response: WebResourceResponse) {
+                                if (response.statusCode >= 400) OmniXray.worldHttp(w.id, request.url.toString(), request.isForMainFrame, response.statusCode)
                                 if (request.isForMainFrame && Offline.isOfflineHttp(response.statusCode)) offline = true
                             }
                             override fun onRenderProcessGone(view: WebView, detail: RenderProcessGoneDetail): Boolean {
+                                OmniXray.worldRenderGone(w.id)
                                 if (web === view) web = null
                                 view.destroy(); error = crashed; return true
                             }

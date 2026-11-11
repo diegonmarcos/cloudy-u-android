@@ -395,7 +395,6 @@
         "ac_cloud-vault": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
         "ac_cloud-wallet": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
         "ac_cloud-writer": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
-        "ad_CG-Omniverse": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
         "ad_Hardtech-CAD": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
         "ad_Hardtech-Sim2Real": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry."
       }
