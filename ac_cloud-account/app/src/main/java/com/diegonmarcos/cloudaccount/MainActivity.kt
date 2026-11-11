@@ -30,11 +30,7 @@ import com.diegonmarcos.superapp.accountui.AccountUiHost
 import com.diegonmarcos.superapp.accountui.AccountUiPage
 import com.diegonmarcos.superapp.fleetdata.FleetDataRouting
 import com.diegonmarcos.superapp.fleetdata.ui.FleetDataPage
-import com.diegonmarcos.cloudaccount.contacts.AllContactsScreen
-import com.diegonmarcos.cloudaccount.contacts.BusinessContactsScreen
-import com.diegonmarcos.cloudaccount.contacts.EmptyContactsRepo
-import com.diegonmarcos.cloudaccount.contacts.GroupsScreen
-import com.diegonmarcos.cloudaccount.contacts.PeopleContactsScreen
+import com.diegonmarcos.cloudaccount.contacts.ContactsSection
 import com.diegonmarcos.cloudaccount.hub.AppProfilesPage
 import com.diegonmarcos.cloudaccount.hub.ConnectionsPage
 import com.diegonmarcos.cloudaccount.hub.HubNav
@@ -266,13 +262,12 @@ class MainActivity : AppCompatActivity() {
                 "fleetdata" -> FleetDataPage(FleetDataRouting.ACCOUNT, Modifier.fillMaxSize())
                 else -> ActivityPage()
             }
-            // #1625 the contacts sections: the Account app's contacts source has no backend of its own, so the
-            // repo is EmptyContactsRepo until a source (device ContactsContract behind contacts_read, or an import) is
-            // wired; the model, filters and groups (contacts/Contacts.kt) are complete and drive every screen.
-            "all" -> AllContactsScreen(EmptyContactsRepo)
-            "business" -> BusinessContactsScreen(EmptyContactsRepo)
-            "people" -> PeopleContactsScreen(EmptyContactsRepo)
-            "groups" -> GroupsScreen(EmptyContactsRepo)
+            // #1625 / #1626 the contacts sections, backed by the device address book (ContactsContract behind the
+            // READ_CONTACTS / contacts_read grant); ContactsSection gates the permission and persists group assignment.
+            "all" -> ContactsSection(section, go)
+            "business" -> ContactsSection(section, go)
+            "people" -> ContactsSection(section, go)
+            "groups" -> ContactsSection(section, go)
             "configs" -> Unit   // the app's own Configs: drawn above by FleetConfigsPageBody (General | Perms | About)
             else -> AccountPlaceholderPage(section, page, "no task: undeclared section")
         }

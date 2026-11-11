@@ -1,5 +1,6 @@
 package com.diegonmarcos.cloudaccount.contacts
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -35,22 +36,22 @@ import androidx.compose.ui.unit.dp
 
 /** ALL: every contact. */
 @Composable
-fun AllContactsScreen(repo: ContactsRepo = EmptyContactsRepo) {
+fun AllContactsScreen(repo: ContactsRepo = EmptyContactsRepo, onToggleGroup: ((Contact, String) -> Unit)? = null) {
     val contacts = remember(repo) { repo.contacts() }
-    ContactList(Contacts.all(contacts), empty = "No contacts yet.", tag = "contacts:all")
+    ContactList(Contacts.all(contacts), empty = "No contacts yet.", tag = "contacts:all", onToggleGroup = onToggleGroup)
 }
 
 /** BUSINESS: only company/organization contacts. */
 @Composable
-fun BusinessContactsScreen(repo: ContactsRepo = EmptyContactsRepo) {
+fun BusinessContactsScreen(repo: ContactsRepo = EmptyContactsRepo, onToggleGroup: ((Contact, String) -> Unit)? = null) {
     val contacts = remember(repo) { repo.contacts() }
-    ContactList(Contacts.business(contacts), empty = "No business contacts. A contact with a company name shows here.", tag = "contacts:business")
+    ContactList(Contacts.business(contacts), empty = "No business contacts. A contact with a company name shows here.", tag = "contacts:business", onToggleGroup = onToggleGroup)
 }
 
 /** PEOPLE: non-company contacts, with filter chips by the app/account each came from. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PeopleContactsScreen(repo: ContactsRepo = EmptyContactsRepo) {
+fun PeopleContactsScreen(repo: ContactsRepo = EmptyContactsRepo, onToggleGroup: ((Contact, String) -> Unit)? = null) {
     val contacts = remember(repo) { repo.contacts() }
     var origin by remember { mutableStateOf<ContactOrigin?>(null) }
     val sources = remember(contacts) { Contacts.sourcesPresent(contacts) }
@@ -67,7 +68,7 @@ fun PeopleContactsScreen(repo: ContactsRepo = EmptyContactsRepo) {
             }
             HorizontalDivider()
         }
-        ContactList(Contacts.peopleByOrigin(contacts, origin), empty = "No people match this filter.", tag = "contacts:people")
+        ContactList(Contacts.peopleByOrigin(contacts, origin), empty = "No people match this filter.", tag = "contacts:people", onToggleGroup = onToggleGroup)
     }
 }
 
@@ -103,23 +104,48 @@ private fun OriginChip(label: String, selected: Boolean, tag: String, onClick: (
 }
 
 @Composable
-private fun ContactList(contacts: List<Contact>, empty: String, tag: String) {
+private fun ContactList(contacts: List<Contact>, empty: String, tag: String, onToggleGroup: ((Contact, String) -> Unit)? = null) {
     if (contacts.isEmpty()) {
         Column(Modifier.fillMaxSize().padding(24.dp).testTag("$tag:empty")) { Text(empty, style = MaterialTheme.typography.bodyMedium) }
         return
     }
     LazyColumn(Modifier.fillMaxSize().testTag(tag)) {
-        items(contacts, key = { it.id }) { c ->
-            val secondary = buildList {
-                if (c.isBusiness) add(c.company!!) else add(c.origin.label)
-                if (c.groups.isNotEmpty()) add(c.groups.sorted().joinToString("/"))
-            }.joinToString(" · ")
-            ListItem(
-                headlineContent = { Text(c.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                supportingContent = { Text(secondary, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                modifier = Modifier.fillMaxWidth().testTag("contacts:row:${c.id}"),
-            )
-            HorizontalDivider()
+        items(contacts, key = { it.id }) { c -> ContactRow(c, onToggleGroup) }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ContactRow(c: Contact, onToggleGroup: ((Contact, String) -> Unit)?) {
+    var expanded by remember(c.id) { mutableStateOf(false) }
+    val secondary = buildList {
+        if (c.isBusiness) add(c.company!!) else add(c.origin.label)
+        if (c.groups.isNotEmpty()) add(c.groups.sorted().joinToString("/"))
+    }.joinToString(" · ")
+    ListItem(
+        headlineContent = { Text(c.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+        supportingContent = { Text(secondary, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("contacts:row:${c.id}")
+            .let { if (onToggleGroup != null) it.clickable { expanded = !expanded } else it },
+    )
+    // #1626 tap a contact to assign it to the default groups; the assignment persists.
+    if (onToggleGroup != null && expanded) {
+        Row(
+            Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            for (g in Contacts.DEFAULT_GROUPS) {
+                val on = g in c.groups
+                FilterChip(
+                    selected = on,
+                    onClick = { onToggleGroup(c, g) },
+                    label = { Text(g) },
+                    modifier = Modifier.testTag("contacts:assign:${c.id}:$g"),
+                )
+            }
         }
     }
+    HorizontalDivider()
 }
