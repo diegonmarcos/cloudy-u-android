@@ -588,11 +588,11 @@ function renderDeviceStrip(groups) {
 }
 // Link to the API topology page (the topology page is a later task: the link opens the API tab for now).
 function renderTopologyLink() {
-  return '<section class="stat" id="home-topology"><h2>API topology</h2><div class="row"><div class="k">Topology</div><div class="v"><a href="#" data-goto="api">Open the API topology &rsaquo;</a> <span class="sum">(the topology view is a separate page, linked here)</span></div></div></section>';
+  return '<section class="stat" id="home-topology"><h2>API topology</h2><div class="row"><div class="k">Topology</div><div class="v"><a href="#" data-goto="api">Open the API topology (MCP &rarr; API &rarr; IPC) &rsaquo;</a></div></div></section>';
 }
 function renderHome(m) {
   return renderHealth(m.power, m.health, m.serving) + renderPower(m.power) + renderServedStrip(m.served) + renderSshdStrip(m.sshd) +
-    renderPortsStrip(m.serving) + renderDeviceStrip(m.about) + renderTopologyLink();
+    renderPortsStrip(m.serving) + renderDeviceStrip(m.about) + renderTopologyLink() + renderAbout(m.about);
 }
 // ── API topology (MCP -> API -> IPC), Swagger-style: left a tree, right the detail of the selected node. `t` is /__app__/api/topology.
 // `st` = { q: search text, group: 'layer'|'server'|'surface', sel: node id|null }.
@@ -830,7 +830,17 @@ if (typeof module !== 'undefined') {
     });
   }
   var views = {
-    pages: function () { return j('/__app__/api/served').then(function (pg) { return renderPages(pg); }); },
+    // #1615 Pages = the ONE served list plus the Git Sites sub-page (repos served directly: md + html rendered). The old Drive / Terminals /
+    // Repos sub-pages stay routes (and the Served list's add form) but get no sub-nav entry; only Git Sites is added beside the list.
+    pages: function () {
+      var git = subsOf(SUBPAGES, 'pages').filter(function (p) { return p.id === 'git'; })[0];
+      var served = function () { return j('/__app__/api/served').then(function (pg) { return renderPages(pg); }); };
+      if (!git) return served();
+      var cur = subPage.pages === 'git' ? 'git' : 'served';
+      var nav = renderSubNav([{ id: 'served', label: 'Served pages' }, { id: 'git', label: git.label }], cur);
+      if (cur === 'git') return j(git.route).then(function (pg) { return nav + renderSubPage(pg); });
+      return served().then(function (html) { return nav + html; });
+    },
     api: function () {
       var topo = j('/__app__/api/topology').then(function (t) { TOPO = t; return renderTopology(t, topoSt); }).catch(function (e) { return '<div class="err">Topology: ' + esc(e.message) + '</div>'; });
       return Promise.all([topo, withSubs('api', 'apps', function () { return Promise.resolve(renderRoutes(ROUTES, 'api')); })]).then(function (r) { return r[0] + r[1]; });

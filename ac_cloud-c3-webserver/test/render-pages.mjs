@@ -89,7 +89,7 @@ for (const [label, name, ready] of tabs) {
 await evalJs(`[...document.querySelectorAll('nav button')].find((b) => b.innerText.trim() === 'Pages').click()`);
 await until(`document.querySelectorAll('.served .pg').length >= 4`);
 const subnav = await evalJs(`[...document.querySelectorAll('main .seg button, main [data-sub]')].map((b) => b.innerText.trim())`);
-check('G1', subnav.length === 0 && await evalJs(`!document.querySelector('[data-sub]')`), `no Drive|Terminals|Repos sub-nav on Pages (${JSON.stringify(subnav)})`);
+check('G1', !subnav.some((x) => /Drive|Terminals|Repos/i.test(x)) && subnav.includes('Git Sites'), `Pages sub-nav is Served pages | Git Sites only, no Drive|Terminals|Repos (${JSON.stringify(subnav)})`);
 const pgs = await evalJs(`[...document.querySelectorAll('.served .pg')].map((p) => ({ name: p.querySelector('.nm').innerText.trim(), rows: ['status', 'meta', 'source', 'links', 'config'].filter((r) => p.querySelector('[data-r=' + r + ']')),
   port: (p.querySelector('.rh .badge') || {}).innerText, toggle: !!p.querySelector('.rh button[data-toggle]'), app: (p.querySelector('[data-r=status]').innerText.match(/app\\s*(not open|open)/i) || [])[1] || null,
   startApp: !!p.querySelector('[data-start-app]'), hrefs: [...p.querySelectorAll('[data-r=links] a')].map((a) => a.getAttribute('href')), srcOpen: !!p.querySelector('[data-r=source] a'), meta: p.querySelector('[data-r=meta]').innerText }))`);
