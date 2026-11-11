@@ -43,11 +43,11 @@ class DeclaredNeedsTest {
         assertEquals(null, DeclaredNeeds.decode("%%%"))
     }
 
-    /** The three apps that link this module each declare their needs in their own build.json. */
+    /** Every app that links this module declares its needs in its own build.json. Since #1512 that is the SuperApp alone. */
     @Test fun everyConsumerAppDeclaresItsNeeds() {
         val repo = generateSequence(File("").absoluteFile) { it.parentFile }.firstOrNull { File(it, "aa_cloud-superapp/build.json").exists() }
         assumeTrue("not run from a full checkout", repo != null)
-        for (app in listOf("aa_cloud-superapp", "ac_cloud-store", "ac_cloud-account")) {
+        for (app in listOf("aa_cloud-superapp")) {
             val block = JSONObject(File(repo, "$app/build.json").readText()).optJSONObject("privileged_channel")
             assertNotNull("$app declares no privileged_channel", block)
             val needs = DeclaredNeeds.parse(block.toString())

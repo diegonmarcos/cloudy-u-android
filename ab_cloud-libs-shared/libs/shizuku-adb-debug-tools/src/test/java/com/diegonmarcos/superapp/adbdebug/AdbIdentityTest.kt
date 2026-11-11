@@ -59,7 +59,8 @@ class AdbIdentityTest {
         val apps = repo().listFiles { f -> f.isDirectory && Regex("^a[ac]_").containsMatchIn(f.name) && File(f, "build.json").exists() }.orEmpty()
             .filter { d -> Regex("""project\(\s*["']:libs:shizuku-adb-debug-tools["']\s*\)""").containsMatchIn(
                 listOf("app/build.gradle", "build.gradle", "settings.gradle").map { File(d, it) }.filter { it.isFile }.joinToString("\n") { it.readText() }) }
-        assertTrue("the discovery found the Store and the SuperApp at least", apps.size >= 2)
+        // #1512: only the SuperApp links this lib now (every other app is a shell-broker client); the discovery must still find it.
+        assertTrue("the discovery found the SuperApp", apps.any { it.name == "aa_cloud-superapp" })
         val labels = apps.map { derived(it.name).deviceName }
         assertEquals("one label per app: $labels", labels.size, labels.toSet().size)
     }

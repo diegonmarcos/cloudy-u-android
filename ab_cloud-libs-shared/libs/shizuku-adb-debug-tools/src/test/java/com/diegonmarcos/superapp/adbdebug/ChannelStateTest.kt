@@ -67,11 +67,14 @@ class ChannelStateTest {
 
     @Test fun shizukuRow() {
         fun r(inst: Boolean, run: Boolean, grant: Boolean) =
-            row(ChannelState.rows(healthy.copy(shizukuInstalled = inst, shizukuRunning = run, shizukuGranted = grant)), "shizuku").let { it.dot to it.value }
+            row(ChannelState.rows(healthy.copy(mode = SHIZUKU, shizukuInstalled = inst, shizukuRunning = run, shizukuGranted = grant)), "shizuku").let { it.dot to it.value }
         assertEquals(Dot.OK to "installed, running, permitted v13", r(true, true, true))
         assertEquals(Dot.WARN to "running, permission needed", r(true, true, false))
         assertEquals(Dot.WARN to "installed, not running", r(true, false, false))
         assertEquals(Dot.BAD to "not installed", r(false, false, false))
+        // Local server mode never uses Shizuku: a Shizuku that is down is grey there, not a fault
+        val local = row(ChannelState.rows(healthy.copy(shizukuRunning = false)), "shizuku")
+        assertEquals(Dot.UNKNOWN to "installed, not running (not used in Local server mode)", local.dot to local.value)
     }
 
     @Test fun routeFollowsTheModeAndTheLadder() {

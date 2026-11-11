@@ -31,12 +31,12 @@ class ChannelAutoArmTest {
         assertFalse(ChannelAutoArm.resolve(false, on))
     }
 
-    /** SuperApp ships OFF, Cloud Store ships ON, read from their own build.json. */
+    /** SuperApp ships OFF, read from its own build.json. Since #1512 the Store and Account are shell-broker clients with no block: the no-block default (on) applies. */
     @Test fun defaultPerApp() {
         val repo = generateSequence(File("").absoluteFile) { it.parentFile }.firstOrNull { File(it, "aa_cloud-superapp/build.json").exists() }
         assumeTrue("not run from a full checkout", repo != null)
         fun def(app: String) = ChannelAutoArm.declaredDefault(
-            JSONObject(File(repo, "$app/build.json").readText()).getJSONObject("privileged_channel").toString())
+            JSONObject(File(repo, "$app/build.json").readText()).optJSONObject("privileged_channel")?.toString())
         assertFalse(def("aa_cloud-superapp"))
         assertTrue(def("ac_cloud-store"))
         assertEquals(true, def("ac_cloud-account"))
