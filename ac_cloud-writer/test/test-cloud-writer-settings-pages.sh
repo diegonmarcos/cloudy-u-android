@@ -57,8 +57,8 @@ set -uo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && while [ "$PWD" != "/" ] && [ ! -e "$PWD/.git" ]; do cd ..; done; printf '%s' "$PWD")"
 
 APP="$ROOT/ac_cloud-writer"
-SRC="$APP/app/src/main/java/com/diegonmarcos/cloudwriter"
-RES="$APP/app/src/main/res"
+SRC="$APP/../ab_cloud-libs-shared/libs/writer-ui/src/main/java/com/diegonmarcos/cloudwriter"
+RES="$APP/../ab_cloud-libs-shared/libs/writer-ui/src/main/res"
 MANIFEST="$APP/app/src/main/AndroidManifest.xml"
 BUILD_JSON="$APP/build.json"
 
@@ -70,7 +70,7 @@ pass() { printf 'ok     %s\n' "$1"; }
 fail() { printf 'FAIL   %s\n' "$1"; FAILURES=$((FAILURES + 1)); }
 
 for f in "$MANIFEST" "$BUILD_JSON" "$RES/values/strings.xml" "$RES/values-es/strings.xml" \
-         "$SRC/MainActivity.kt" "$SRC/WriterPrefs.kt" "$SRC/WriterRegistry.kt" \
+         "$SRC/WriterSurface.kt" "$SRC/WriterPrefs.kt" "$SRC/WriterRegistry.kt" \
          "$SRC/WriterTools.kt" "$SRC/WriterSettingsUi.kt"; do
     [ -f "$f" ] || { echo "FAIL   $f is missing — every assertion below would read an empty file and pass"; exit 1; }
 done
@@ -138,7 +138,7 @@ PYEOF
 [ $? -eq 0 ] || FAILURES=$((FAILURES + 1))
 
 for p in $PAGES; do
-    if grep -q "${p}::class.java" <(code "$SRC/MainActivity.kt"); then
+    if grep -q "${p}::class.java" <(code "$SRC/WriterSurface.kt"); then
         pass "P1 the main screen opens $p"
     else
         fail "P1 the main screen never starts $p — a declared page nothing opens is a page the owner cannot reach"
@@ -285,7 +285,7 @@ fi
 
 # ── P6  the LanguageTool URL, and the mesh constraint around it ─────────────
 
-# #1093 the default is no longer a literal: WriterPrefs reads BuildConfig.LANGUAGETOOL_URL, which app/build.gradle bakes
+# #1093 the default is no longer a literal: WriterPrefs reads BuildConfig.LANGUAGETOOL_URL, which libs:writer-ui bakes
 # from the one fleet declaration (fleetUrl('languagetool') + /v2/check). The mesh-only constraint is therefore asserted on the
 # chain: the pref reads the baked field, the build bakes the declared service, and the declaration is the mesh-only host.
 LT_DECL="$APP/../ac_cloud-account/build.json"
@@ -296,7 +296,7 @@ print("%s://%s%s" % (s.get("public_scheme", "https"), s["public_domain"], s.get(
 PY
 )
 if grep -qE 'DEFAULT_GRAMMAR_REMOTE_URL[^=]*=[[:space:]]*BuildConfig\.LANGUAGETOOL_URL' <(code "$SRC/WriterPrefs.kt") \
-   && grep -qF "fleetUrl('languagetool')}/v2/check" "$APP/app/build.gradle" \
+   && grep -qF "fleetUrl('languagetool')}/v2/check" "$APP/../ab_cloud-libs-shared/libs/writer-ui/build.gradle" \
    && [ "$LT_DECLARED" = "$LT_URL" ]; then
     pass "P6 the LanguageTool default is the declared mesh endpoint $LT_URL (WriterPrefs <- BuildConfig <- fleet declaration)"
 else

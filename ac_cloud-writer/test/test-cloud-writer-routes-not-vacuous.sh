@@ -19,8 +19,8 @@ import json, os, shutil, subprocess, sys, tempfile
 
 root, tester = sys.argv[1], sys.argv[2]
 APP = "ac_cloud-writer"
-SRC = APP + "/app/src/main/java/com/diegonmarcos/cloudwriter/"
-RES = APP + "/app/src/main/res/"
+SRC = APP + "/../ab_cloud-libs-shared/libs/writer-ui/src/main/java/com/diegonmarcos/cloudwriter/"
+RES = APP + "/../ab_cloud-libs-shared/libs/writer-ui/src/main/res/"
 
 
 def drop_key(key):
@@ -47,9 +47,9 @@ BREAKS = [
      ("while (!client.isConnected()) {", "if (!client.isConnected()) {"), "S1"),
     ("too-old string names no app", RES + "values/strings.xml",
      ("<string name=\"status_serving_app_too_old\">%1$s (version", "<string name=\"status_serving_app_too_old\">The app (version"), "S2"),
-    ("silent folded into too old", SRC + "MainActivity.kt",
+    ("silent folded into too old", SRC + "WriterSurface.kt",
      ("ServingApp.State.SILENT -> getString(", "ServingApp.State.SILENT -> getText("), "S2"),
-    ("no Store button", SRC + "MainActivity.kt",
+    ("no Store button", SRC + "WriterSurface.kt",
      ("storeRepair.value = serving.needsStore", "storeRepair.value = false"), "S3"),
     ("no Store fallback", APP + "/build.json", drop_key("fallback_url"), "S4"),
     ("speech defaults to on-device", APP + "/build.json", routes_edit("speech", "default_route", "ml"), "R1"),
@@ -63,7 +63,7 @@ BREAKS = [
      ("if (onDevice) v.feed(buf, n)", "if (false) v.feed(buf, n)"), "R3"),
     ("Listen skips auto-translation", SRC + "Listen.kt",
      ("WriterRoutes.translate(app, heardText, target)", "WriterRoutes.lastTranslation"), "R3"),
-    ("the fallback is hidden on Translate", SRC + "MainActivity.kt",
+    ("the fallback is hidden on Translate", SRC + "WriterSurface.kt",
      ("R.string.route_fell_back", "R.string.route_answered_by"), "R4"),
     ("/api/writer/translate unregistered", SRC + "WriterDebugApi.kt",
      ('                "translate" -> translate(app, q).toString()\n', ""), "R5"),
@@ -72,22 +72,22 @@ BREAKS = [
       'android:authorities="${applicationId}.writerdebugapi"\n            android:exported="true"'), "R5"),
     ("Listen is not a microphone service", APP + "/app/src/main/AndroidManifest.xml",
      ('android:foregroundServiceType="microphone"', 'android:foregroundServiceType="dataSync"'), "R6"),
-    ("no route to the Routes page", SRC + "MainActivity.kt",
+    ("no route to the Routes page", SRC + "WriterSurface.kt",
      ("RoutesActivity::class.java", "AiRoutingActivity::class.java"), "R7"),
-    ("documents stop being searched", SRC + "MainActivity.kt", ("store.search(q)", "store.list()"), "D1"),
-    ("the editor drops the rich drawing", SRC + "MainActivity.kt", ("visualTransformation = look", "visualTransformation = VisualTransformation.None"), "D2"),
-    ("bold becomes italic", APP + "/core/src/main/kotlin/com/diegonmarcos/cloudwriter/core/Format.kt", ('Markdown.wrap(text, start, end, "**")', 'Markdown.wrap(text, start, end, "_")'), "D3"),
-    ("the toolbar stops drawing its groups", SRC + "MainActivity.kt", ("FormatAction.GROUPS.forEachIndexed", "FormatAction.GROUPS.take(0).forEachIndexed"), "D3"),
-    ("the outline does not jump", SRC + "MainActivity.kt", ("selection = TextRange(h.offset)", "selection = TextRange(0)"), "D4"),
-    ("find stops wrapping", SRC + "MainActivity.kt", ("((findIndex.value + by) % n + n) % n", "(findIndex.value + by).coerceIn(0, n - 1)"), "D5"),
-    ("no .txt export", SRC + "MainActivity.kt", ('CreateDocument("text/plain")', 'CreateDocument("text/markdown")'), "D6"),
+    ("documents stop being searched", SRC + "WriterSurface.kt", ("store.search(q)", "store.list()"), "D1"),
+    ("the editor drops the rich drawing", SRC + "WriterSurface.kt", ("visualTransformation = look", "visualTransformation = VisualTransformation.None"), "D2"),
+    ("bold becomes italic", APP + "/../ab_cloud-libs-shared/libs/writer-core/src/main/kotlin/com/diegonmarcos/cloudwriter/core/Format.kt", ('Markdown.wrap(text, start, end, "**")', 'Markdown.wrap(text, start, end, "_")'), "D3"),
+    ("the toolbar stops drawing its groups", SRC + "WriterSurface.kt", ("FormatAction.GROUPS.forEachIndexed", "FormatAction.GROUPS.take(0).forEachIndexed"), "D3"),
+    ("the outline does not jump", SRC + "WriterSurface.kt", ("selection = TextRange(h.offset)", "selection = TextRange(0)"), "D4"),
+    ("find stops wrapping", SRC + "WriterSurface.kt", ("((findIndex.value + by) % n + n) % n", "(findIndex.value + by).coerceIn(0, n - 1)"), "D5"),
+    ("no .txt export", SRC + "WriterSurface.kt", ('CreateDocument("text/plain")', 'CreateDocument("text/markdown")'), "D6"),
     ("the theme ignores the choice", SRC + "ui/Theme.kt", ("darkTheme: Boolean = WriterTheme.isDark()", "darkTheme: Boolean = isSystemInDarkTheme()"), "D7"),
-    ("Listen keeps writing into a stopped editor", SRC + "MainActivity.kt",
+    ("Listen keeps writing into a stopped editor", SRC + "WriterSurface.kt",
      ("        // From here on Listen appends to the document FILE: a stopped activity recomposes nothing.\n        ListenEngine.sink = null\n", ""), "D8"),
-    ("a tool replaces the whole document", SRC + "MainActivity.kt",
+    ("a tool replaces the whole document", SRC + "WriterSurface.kt",
      ("text.substring(0, from) + r.text + text.substring(to)", "r.text"), "D9"),
-    ("shared text is dropped", SRC + "MainActivity.kt", ("open(store.create(shared))", "newDoc()"), "D10"),
-    ("the empty state is dropped", SRC + "MainActivity.kt", ('list.isEmpty() -> item(key = "empty")', 'list.isEmpty() -> item(key = "nothing")'), "D11"),
+    ("shared text is dropped", SRC + "WriterSurface.kt", ("open(store.create(shared))", "newDoc()"), "D10"),
+    ("the empty state is dropped", SRC + "WriterSurface.kt", ('list.isEmpty() -> item(key = "empty")', 'list.isEmpty() -> item(key = "nothing")'), "D11"),
     ("the empty illustration is dropped", SRC + "ui/WriterComponents.kt", ("        EmptyDocsIllustration()\n", ""), "D11"),
     ("the route reply reads the token", SRC + "WriterRoutes.kt",
      ('            .put("online", online(context))\n', '            .put("online", online(context))\n            .put("t", accountToken(context))\n'), "R8"),
@@ -100,6 +100,10 @@ for label, rel, edit, expect in BREAKS:
         open(os.path.join(stage, ".git"), "w").close()
         shutil.copytree(os.path.join(root, APP), os.path.join(stage, APP),
                         ignore=shutil.ignore_patterns("build", ".gradle"))
+        # #1652 the app's UI and logic live in shared libs now; the planted defects are in those copies.
+        for lib in ("writer-ui", "writer-core"):
+            shutil.copytree(os.path.join(root, "ab_cloud-libs-shared/libs", lib), os.path.join(stage, "ab_cloud-libs-shared/libs", lib),
+                            ignore=shutil.ignore_patterns("build", ".gradle"))
         target = os.path.join(stage, rel)
         text = open(target, encoding="utf-8").read()
         if callable(edit):

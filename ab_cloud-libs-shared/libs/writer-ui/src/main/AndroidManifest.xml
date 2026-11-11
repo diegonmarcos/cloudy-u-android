@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  libs:writer-ui declares NO components. The host application owns the manifest: cloud-writer
+  declares MainActivity, the five tool pages, WriterSettingsActivity's subclasses, ListenService,
+  the OCR FileProvider and the debug-API provider exactly once (ac_cloud-writer/app), and a host
+  that only embeds WriterSurface (cloud-keyboard) declares none of them. Declaring any here would
+  merge a second copy into every consumer (#1652).
+-->
+<manifest />

@@ -51,6 +51,7 @@
   "rule_allow": {
     "nested_safe_drawing": [
       "ac_cloud-writer/",
+      "ab_cloud-libs-shared/libs/writer-ui/",
       "ac_cloud-gallery/",
       "ac_cloud-drive/",
       "ac_cloud-search/",
@@ -60,6 +61,7 @@
     ],
     "scaffold_without_insets": [
       "ac_cloud-writer/",
+      "ab_cloud-libs-shared/libs/writer-ui/",
       "ac_cloud-gallery/",
       "ac_cloud-drive/",
       "ac_cloud-search/",
@@ -94,6 +96,7 @@
     "ac_cloud-kg-store",
     "ac_cloud-tools-small-llms",
     "ac_cloud-writer",
+    "ab_cloud-libs-shared/libs/writer-ui",
     "ac_cloud-gallery",
     "ac_cloud-drive",
     "ac_cloud-search",
@@ -126,6 +129,7 @@
     ],
     "sp_literal": [
       "ac_cloud-writer/",
+      "ab_cloud-libs-shared/libs/writer-ui/",
       "ad_Hardtech-CAD/"
     ]
   }

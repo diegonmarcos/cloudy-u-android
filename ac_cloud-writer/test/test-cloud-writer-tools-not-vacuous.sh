@@ -44,11 +44,13 @@ root = sys.argv[1]
 NEEDED = [
     "ac_cloud-writer",
     "ab_cloud-libs-shared/libs/text-tools",
+    "ab_cloud-libs-shared/libs/writer-ui",
+    "ab_cloud-libs-shared/libs/writer-core",
     "aa_cloud-superapp/data/constellation-fleet.json",
 ]
 
 APP = "ac_cloud-writer"
-SRC = APP + "/app/src/main/java/com/diegonmarcos/cloudwriter"
+SRC = APP + "/../ab_cloud-libs-shared/libs/writer-ui/src/main/java/com/diegonmarcos/cloudwriter"
 WRITER_PKG = "com.diegonmarcos.cloudwriter"
 FLEET = "aa_cloud-superapp/data/constellation-fleet.json"
 

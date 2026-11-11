@@ -241,11 +241,16 @@ def module_dirs(root, app):
     android.gradle_module when the Android project is nested (Cloud Notes vendors the upstream's, #868)."""
     dirs = [os.path.join(root, app, "app"), os.path.join(root, app)]
     try:
-        gm = (json.load(open(os.path.join(root, app, "build.json"))).get("android") or {}).get("gradle_module")
+        android = json.load(open(os.path.join(root, app, "build.json"))).get("android") or {}
+        gm = android.get("gradle_module")
     except (OSError, ValueError):
-        gm = None
+        android, gm = {}, None
     if isinstance(gm, str) and gm.strip("./"):
         dirs.append(os.path.normpath(os.path.join(root, app, gm)))
+    # #1652 android.ui_module_dirs: shared library modules that hold the app's UI (Cloud Writer's whole UI is libs:writer-ui, its
+    # MainActivity a thin shell), so the nav rules still read the code that draws the nav.
+    for extra in android.get("ui_module_dirs") or []:
+        dirs.append(os.path.normpath(os.path.join(root, app, extra)))
     return dirs
 
 

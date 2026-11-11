@@ -1,5 +1,8 @@
 package com.diegonmarcos.cloudwriter
 
+import com.diegonmarcos.cloudwriter.writerui.R
+import com.diegonmarcos.cloudwriter.writerui.BuildConfig
+
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities

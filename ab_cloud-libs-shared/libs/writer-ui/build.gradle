@@ -1,0 +1,129 @@
+// libs:writer-ui (#1652) — Cloud Writer's whole UI as a library, shared BY REFERENCE: the app
+// (ac_cloud-writer) hosts it in a thin MainActivity, and cloud-keyboard's Writer tab hosts the very
+// same code, so the two cannot drift (rule 16: replicate exactly, no fork).
+//
+// WHAT IS HERE: WriterSurface (the whole app as Content(), or ONE named page as Page(id), see its
+// companion for the ids), the five tool pages and their activity shells, the Listen engine and its
+// service class, prefs, registry, routes, the Compose components and theme, the strings. WHAT IS NOT:
+// the manifest. This module declares no component; the host owns MainActivity, the activity list,
+// ListenService, the OCR FileProvider and the debug-API provider (ac_cloud-writer/app declares each
+// exactly once). The pure logic is libs:writer-core.
+//
+// ITS BAKED CONFIG IS AC_CLOUD-WRITER'S build.json (writer_ai, writer_routes, update, ui): one source
+// of truth, read from there whichever app builds this module, so the app and an embedding host bake
+// byte-identical registries, routes and nav declarations. FAILS THE BUILD when a block is missing
+// (a registry that silently resolved to empty draws an app whose tool menu is blank).
+plugins {
+    id 'com.android.library'
+    id 'org.jetbrains.kotlin.android'
+    id 'org.jetbrains.kotlin.plugin.compose'
+}
+apply from: '../fleet-urls.gradle'   // #1093 fleetUrl(): fleet hosts come from the one declaration
+
+def writerJson = [new File(projectDir.canonicalFile, '../../../ac_cloud-writer/build.json'),
+                  new File(rootDir, '../ac_cloud-writer/build.json'),
+                  new File(rootDir, 'ac_cloud-writer/build.json')].find { it.exists() }
+if (writerJson == null) throw new GradleException("libs:writer-ui bakes ac_cloud-writer/build.json and it is not in the checkout.")
+def buildJson = new groovy.json.JsonSlurper().parse(writerJson)
+
+def writerAi = buildJson.writer_ai
+if (writerAi == null) {
+    throw new GradleException(
+        "build.json::writer_ai is missing. It is cloud-writer's own copy of the text-tool " +
+        "registry (providers, models, Enhance prompts, Resume prompts, languages) and this app " +
+        "reads no other. Restore it from git rather than pointing this build at keyboard_ai or " +
+        "mail_ai - sharing one registry between two apps is exactly what made a second app's " +
+        "Text settings uneditable (task 209).")
+}
+def b64 = { Object o -> groovy.json.JsonOutput.toJson(o).bytes.encodeBase64().toString() }
+def writerAiB64 = b64(writerAi)
+// build.json::update (#800) — where the status card's one tap goes when the app serving the text
+// tools needs installing or updating. An absent block bakes {} and the tap opens nothing.
+def writerUpdateB64 = b64(buildJson.update ?: [:])
+// #868 the nav declaration: ui.bottom_nav (the island), ui.sections (what each item opens), ui.default_section.
+def uiBottomNav      = (buildJson.ui?.bottom_nav ?: []).join(',')
+def uiSectionsB64    = b64(buildJson.ui?.sections ?: [])
+def uiDefaultSection = (buildJson.ui?.default_section ?: '').toString()
+// build.json::writer_routes (#800) — the Model / on-device routes for Listen and Translation. FAILS THE BUILD when missing.
+def writerRoutes = buildJson.writer_routes
+if (writerRoutes == null || writerRoutes.voice_engine?.package == null || writerRoutes.voice_engine?.action == null) {
+    throw new GradleException("build.json::writer_routes (with voice_engine.package and .action) is missing — " +
+        "Listen and Translation have no routes to run on. Restore it from git.")
+}
+def writerRoutesB64 = b64(writerRoutes)
+def debugGroup = (writerRoutes.debug_api?.group ?: '').toString()
+if (!debugGroup) throw new GradleException("build.json::writer_routes.debug_api.group missing — /api/writer/* would register under no name")
+
+// #826 the build commit, same derivation as the rest of the fleet (GITHUB_SHA first, `git rev-parse` locally).
+def shortSha = (System.getenv('GITHUB_SHA')
+                ?: providers.exec {
+                       commandLine 'git', 'rev-parse', '--short=8', 'HEAD'
+                       ignoreExitValue = true
+                   }.standardOutput.asText.get().trim())
+                .take(8)
+
+android {
+    namespace 'com.diegonmarcos.cloudwriter.writerui'
+    compileSdk 36
+
+    defaultConfig {
+        minSdk 26
+        // The surface's own title string (Home's top bar): the app's display name, NOT the host's app_name.
+        resValue "string", "writer_surface_name", buildJson.display_name
+        // #1093 the LanguageTool check URL = the declared (public) URL of the languagetool service.
+        buildConfigField "String", "LANGUAGETOOL_URL", "\"${fleetUrl('languagetool')}/v2/check\""
+        buildConfigField "String", "GIT_SHORT_SHA", "\"${shortSha}\""
+        buildConfigField "String", "WRITER_AI_ROUTING_B64", "\"${writerAiB64}\""
+        buildConfigField "String", "WRITER_UPDATE_B64", "\"${writerUpdateB64}\""
+        buildConfigField "String", "WRITER_ROUTES_B64", "\"${writerRoutesB64}\""
+        buildConfigField "String", "UI_BOTTOM_NAV", "\"${uiBottomNav}\""
+        buildConfigField "String", "UI_SECTIONS_B64", "\"${uiSectionsB64}\""
+        buildConfigField "String", "UI_DEFAULT_SECTION", "\"${uiDefaultSection}\""
+        buildConfigField "String", "DEBUG_API_GROUP", "\"${debugGroup}\""
+    }
+
+    buildFeatures { buildConfig = true; compose = true; aidl = true }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
+dependencies {
+    // The ITextTools boundary: AIDL, TextToolsClient, the addresses. Engines, key and HTTP stay in the serving app.
+    implementation project(':libs:text-tools')
+    implementation project(':libs:ml-l-image-ocr')           // #1418 OCR: ML Kit on-device + the OpenRouter vision transport
+    // #1418 the WYSIWYG box: compose-rich-editor (Apache-2.0, MohamedRejeb).
+    implementation 'com.mohamedrejeb.richeditor:richeditor-compose:1.0.0-rc13'
+    implementation project(':libs:decisions-link')   // #882 writer_route: asks the decisions engine, holds no key
+    implementation project(':libs:core')             // #743 fleet mesh membership
+    implementation project(':libs:writer-core')      // #800 the pure logic, JVM-tested and PIT-mutated on its own
+    implementation project(':libs:ui-kit')           // #800 the fleet UI kit, drawn inside this theme by ui.KitBridge
+    implementation project(':libs:bottomnav')        // #868 NavDecl; #1164 the shared nav
+    implementation project(':libs:ui-nav-bars')
+    implementation project(':libs:fleetconfigs-agents')
+    implementation project(':libs:fleetconfigs-logcat')
+    implementation project(':libs:fleetconfigs-xray')
+    implementation project(':libs:theme-background')
+    implementation project(':libs:perms')            // PermsLink: Listen's microphone grant goes through Configs > Perms
+
+    implementation 'androidx.core:core-ktx:1.13.1'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+
+    // WriterSurface's public API is a ComponentActivity and @Composable functions: consumers see these types.
+    api platform('androidx.compose:compose-bom:2025.11.01')
+    api 'androidx.activity:activity-compose:1.9.3'
+    api 'androidx.compose.ui:ui'
+    api 'androidx.compose.material3:material3'
+    implementation 'androidx.compose.animation:animation'   // #1532 AnimatedContent: the fade-through between screens
+    implementation 'androidx.compose.ui:ui-graphics'
+    implementation 'androidx.compose.ui:ui-tooling-preview'
+    implementation 'androidx.compose.material:material-icons-extended'
+    debugImplementation 'androidx.compose.ui:ui-tooling'
+}

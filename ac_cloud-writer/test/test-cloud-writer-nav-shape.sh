@@ -8,7 +8,7 @@
 #      default_section home, and the Tools section carries the five tool pages (enhance|translation|grammar|
 #      ai_routing|routes) that the Tools screen draws as a second-row strip.
 #   S2 the app compiles libs:bottomnav and bakes UI_BOTTOM_NAV + UI_SECTIONS_B64 + UI_DEFAULT_SECTION.
-#   S3 MainActivity's ONE shell (#1164) is the shared first row (NavBarTopFirstRowScaffold, Profile ->
+#   S3 WriterSurface's ONE shell (#1164) is the shared first row (NavBarTopFirstRowScaffold, Profile ->
 #      Cloud Account) around libs:ui-nav-bars's NavBarBottomHost fed by WriterNav.decl (NavDecl); the
 #      Documents, Tools and Settings screens are the host's content (no per-screen scaffold).
 #   S4 the Tools screen draws its strip with NavBarTopSecondRow, and each declared page opens its own activity.
@@ -43,13 +43,14 @@ CFG = json.loads(r'''{
  },
  "gradles": [
   "build.gradle",
-  "app/build.gradle"
+  "../ab_cloud-libs-shared/libs/writer-ui/build.gradle"
  ],
  "src_roots": [
-  "app/src/main"
+  "app/src/main",
+  "../ab_cloud-libs-shared/libs/writer-ui/src/main"
  ],
  "must": {
-  "app/src/main/java/com/diegonmarcos/cloudwriter/MainActivity.kt": [
+  "../ab_cloud-libs-shared/libs/writer-ui/src/main/java/com/diegonmarcos/cloudwriter/WriterSurface.kt": [
    "NavBarTopFirstRowScaffold(",
    "NavBarBottomHost(",
    "NavBarTopSecondRow(",
@@ -67,45 +68,45 @@ CFG = json.loads(r'''{
    "AiRoutingActivity::class.java",
    "RoutesActivity::class.java"
   ],
-  "app/src/main/java/com/diegonmarcos/cloudwriter/WriterNav.kt": [
+  "../ab_cloud-libs-shared/libs/writer-ui/src/main/java/com/diegonmarcos/cloudwriter/WriterNav.kt": [
    "NavDecl.fromBuildConfig"
   ]
  },
  "mustnot": {
-  "app/src/main/java/com/diegonmarcos/cloudwriter/MainActivity.kt": [
+  "../ab_cloud-libs-shared/libs/writer-ui/src/main/java/com/diegonmarcos/cloudwriter/WriterSurface.kt": [
    "fun PagesSection",
    "(?<![A-Za-z])Scaffold\\s*\\(",
    "\\bLargeTopAppBar\\b"
   ]
  },
- "mutate_host": "app/src/main/java/com/diegonmarcos/cloudwriter/MainActivity.kt",
+ "mutate_host": "../ab_cloud-libs-shared/libs/writer-ui/src/main/java/com/diegonmarcos/cloudwriter/WriterSurface.kt",
  "must_token_mutations": [
   [
-   "app/src/main/java/com/diegonmarcos/cloudwriter/MainActivity.kt",
+   "../ab_cloud-libs-shared/libs/writer-ui/src/main/java/com/diegonmarcos/cloudwriter/WriterSurface.kt",
    "NavBarTopFirstRowScaffold("
   ],
   [
-   "app/src/main/java/com/diegonmarcos/cloudwriter/MainActivity.kt",
+   "../ab_cloud-libs-shared/libs/writer-ui/src/main/java/com/diegonmarcos/cloudwriter/WriterSurface.kt",
    "NavBarBottomHost("
   ],
   [
-   "app/src/main/java/com/diegonmarcos/cloudwriter/MainActivity.kt",
+   "../ab_cloud-libs-shared/libs/writer-ui/src/main/java/com/diegonmarcos/cloudwriter/WriterSurface.kt",
    "NavBarTopSecondRow("
   ],
   [
-   "app/src/main/java/com/diegonmarcos/cloudwriter/MainActivity.kt",
+   "../ab_cloud-libs-shared/libs/writer-ui/src/main/java/com/diegonmarcos/cloudwriter/WriterSurface.kt",
    "rememberAccountLauncher()"
   ],
   [
-   "app/src/main/java/com/diegonmarcos/cloudwriter/MainActivity.kt",
+   "../ab_cloud-libs-shared/libs/writer-ui/src/main/java/com/diegonmarcos/cloudwriter/WriterSurface.kt",
    "AnimatedContent("
   ],
   [
-   "app/src/main/java/com/diegonmarcos/cloudwriter/MainActivity.kt",
+   "../ab_cloud-libs-shared/libs/writer-ui/src/main/java/com/diegonmarcos/cloudwriter/WriterSurface.kt",
    "WriterScreens.back("
   ],
   [
-   "app/src/main/java/com/diegonmarcos/cloudwriter/WriterNav.kt",
+   "../ab_cloud-libs-shared/libs/writer-ui/src/main/java/com/diegonmarcos/cloudwriter/WriterNav.kt",
    "NavDecl.fromBuildConfig"
   ]
  ]

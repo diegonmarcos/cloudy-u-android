@@ -1,5 +1,8 @@
 package com.diegonmarcos.cloudwriter
 
+import com.diegonmarcos.cloudwriter.writerui.R
+import androidx.activity.ComponentActivity
+
 import android.os.Handler
 import android.os.Looper
 import androidx.compose.runtime.Composable
@@ -27,7 +30,7 @@ import java.util.concurrent.Executors
  * translation — because decision models (typesafe/jev-*) can do neither. Listen's language and its
  * auto-translate target and layout live here too.
  */
-class RoutesActivity : WriterSettingsActivity() {
+class RoutesPage(activity: ComponentActivity) : WriterSettingsPage(activity) {
 
     private val worker = Executors.newSingleThreadExecutor()
     private val main = Handler(Looper.getMainLooper())
@@ -142,7 +145,7 @@ class RoutesActivity : WriterSettingsActivity() {
                 getString(if (engine) R.string.routes_yes else R.string.routes_no),
                 WriterRoutes.voiceEngine.optString("label"),
             )
-            main.post { if (!isFinishing) accountNote.value = line }
+            main.post { if (!activity.isFinishing) accountNote.value = line }
         }
         generation.value++
     }
@@ -152,7 +155,7 @@ class RoutesActivity : WriterSettingsActivity() {
         worker.execute {
             val r = WriterRoutes.fetchCatalogue(this)
             main.post {
-                if (isFinishing) return@post
+                if (activity.isFinishing) return@post
                 r.onSuccess { catalogue.value = it; catalogueNote.value = countLine(it) }
                     .onFailure { catalogueNote.value = getString(R.string.routes_refresh_failed, it.message ?: it.javaClass.simpleName) }
             }
@@ -185,4 +188,9 @@ class RoutesActivity : WriterSettingsActivity() {
     }
 
     private fun routeName(r: Route?): String = getString(if (r == Route.ML) R.string.route_ml else R.string.route_model)
+}
+
+/** The activity shell: the manifest declares this class, the page is [RoutesPage]. */
+class RoutesActivity : WriterSettingsActivity() {
+    override fun createPage(): WriterSettingsPage = RoutesPage(this)
 }

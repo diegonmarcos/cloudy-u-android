@@ -124,6 +124,8 @@ on:
       - "ab_cloud-libs-shared/libs/ui-icons/**"
       - "ab_cloud-libs-shared/libs/ui-kit/**"
       - "ab_cloud-libs-shared/libs/ui-nav-bars/**"
+      - "ab_cloud-libs-shared/libs/writer-core/**"
+      - "ab_cloud-libs-shared/libs/writer-ui/**"
       - "ac_cloud-writer/**"
       - "!ac_cloud-writer/web/**"
 permissions:

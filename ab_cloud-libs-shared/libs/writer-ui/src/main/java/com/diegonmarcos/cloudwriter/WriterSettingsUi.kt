@@ -1,5 +1,7 @@
 package com.diegonmarcos.cloudwriter
 
+import com.diegonmarcos.cloudwriter.writerui.R
+
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -7,6 +9,11 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.ComponentActivity
+import android.content.ContextWrapper
+import androidx.compose.runtime.DisposableEffect
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -85,10 +92,10 @@ import com.diegonmarcos.superapp.navbartop1.rememberSuperAppAiLauncher
  * still a whole-row target, and the preview row is still handed text composed by the same call the
  * run makes.
  */
-abstract class WriterSettingsActivity : AppCompatActivity() {
+abstract class WriterSettingsPage(val activity: ComponentActivity) : ContextWrapper(activity) {
 
     /** The page's own title, drawn as the large app-bar title — the theme is NoActionBar. */
-    protected abstract fun pageTitle(): String
+    abstract fun pageTitle(): String
 
     /**
      * The page's rows.
@@ -101,70 +108,32 @@ abstract class WriterSettingsActivity : AppCompatActivity() {
      * that for free now.
      */
     @Composable
-    protected abstract fun PageContent()
+    abstract fun PageContent()
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        FleetChrome.apply(this)
-        title = pageTitle()
-        setContent {
-            CloudWriterTheme {
-                // #1164 the same shell as MainActivity's: the shared first row, bottom nav, page background and scroll-collapse.
-                val dark = WriterTheme.isDark()
-                val entries = WriterNav.decl.bottomSections().map { sec ->
-                    navEntry(sec.id, sec.label, sec.icon)
-                }
-                NavBarTopFirstRowScaffold(
-                    title = pageTitle(),
-                    hierarchy = emptyList(),
-                    onNavigate = {},
-                    onAccount = rememberAccountLauncher(),
-                    onConfigs = { openSection(WriterNav.SETTINGS) },
-                    onAi = rememberSuperAppAiLauncher(),
-                    modifier = Modifier.fillMaxSize().statusBarsPadding(),
-                    dark = dark,
-                ) {
-                    NavBarBottomHost(
-                        entries = entries,
-                        selectedId = WriterNav.TOOLS,
-                        onSelect = { e -> if (e.id == WriterNav.TOOLS) finish() else openSection(e.id) },
-                        dark = dark,
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .verticalScroll(rememberScrollState()),
-                        ) {
-                            // TOP RIGHT, as before: the back button sits where the thumb already is. Every configuration
-                            // page of this application is built on this one base, so all of them get it from this place.
-                            Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), horizontalArrangement = Arrangement.End) {
-                                IconButton(onClick = { finish() }) {
-                                    Icon(
-                                        Icons.AutoMirrored.Rounded.ArrowBack,
-                                        contentDescription = stringResource(R.string.page_back),
-                                    )
-                                }
-                            }
-                            PageContent()
-                            // The last row of a settings page sat flush against the navigation bar
-                            // before; a page that ends exactly at the edge reads as a page that has
-                            // been cut off.
-                            Spacer(Modifier.height(BlockGap * 2))
-                        }
-                    }
-                }
-            }
+    /** Called each time the hosting activity resumes (and once on attach), as the activity's onResume was. */
+    open fun onResume() {}
+
+    /**
+     * #1652 THE PAGE WITHOUT THE ACTIVITY'S CHROME: the scrolling rows and nothing else, so a host
+     * that has its own navigation (the keyboard's Writer tab, the Tools page of [WriterSurface])
+     * draws the page inside it. [WriterSettingsActivity] draws the very same body inside the
+     * app's own shell, so the two can never differ.
+     */
+    @Composable
+    fun Body(modifier: Modifier = Modifier, header: @Composable () -> Unit = {}) {
+        DisposableEffect(this) {
+            val observer = LifecycleEventObserver { _, event -> if (event == Lifecycle.Event.ON_RESUME) onResume() }
+            activity.lifecycle.addObserver(observer)
+            onDispose { activity.lifecycle.removeObserver(observer) }
         }
-    }
-
-    /** A bottom-nav item pressed on a tool page: the main screen at that section (the tool page closes). */
-    private fun openSection(id: String) {
-        startActivity(
-            Intent(this, MainActivity::class.java)
-                .putExtra(MainActivity.EXTRA_SECTION, id)
-                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP),
-        )
-        finish()
+        Column(modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+            header()
+            PageContent()
+            // The last row of a settings page sat flush against the navigation bar
+            // before; a page that ends exactly at the edge reads as a page that has
+            // been cut off.
+            Spacer(Modifier.height(BlockGap * 2))
+        }
     }
 
     // ── the rows, one per keyboard preference widget ─────────────────────────
@@ -366,3 +335,72 @@ abstract class WriterSettingsActivity : AppCompatActivity() {
         com.diegonmarcos.cloudwriter.ui.NoteText(text)
     }
 }
+
+/**
+ * The activity shell of a configuration page: the app's own first row, bottom nav and back button
+ * around [WriterSettingsPage.Body]. The page itself is built by [createPage] so the same page runs
+ * inside any ComponentActivity (see [WriterSurface]).
+ */
+abstract class WriterSettingsActivity : AppCompatActivity() {
+
+    protected abstract fun createPage(): WriterSettingsPage
+
+    private lateinit var page: WriterSettingsPage
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        FleetChrome.apply(this)
+        page = createPage()
+        title = page.pageTitle()
+        setContent {
+            CloudWriterTheme {
+                // #1164 the same shell as MainActivity's: the shared first row, bottom nav, page background and scroll-collapse.
+                val dark = WriterTheme.isDark()
+                val entries = WriterNav.decl.bottomSections().map { sec ->
+                    navEntry(sec.id, sec.label, sec.icon)
+                }
+                NavBarTopFirstRowScaffold(
+                    title = page.pageTitle(),
+                    hierarchy = emptyList(),
+                    onNavigate = {},
+                    onAccount = rememberAccountLauncher(),
+                    onConfigs = { openSection(WriterNav.SETTINGS) },
+                    onAi = rememberSuperAppAiLauncher(),
+                    modifier = Modifier.fillMaxSize().statusBarsPadding(),
+                    dark = dark,
+                ) {
+                    NavBarBottomHost(
+                        entries = entries,
+                        selectedId = WriterNav.TOOLS,
+                        onSelect = { e -> if (e.id == WriterNav.TOOLS) finish() else openSection(e.id) },
+                        dark = dark,
+                    ) {
+                        page.Body {
+                            // TOP RIGHT, as before: the back button sits where the thumb already is. Every configuration
+                            // page of this application is built on this one base, so all of them get it from this place.
+                            Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), horizontalArrangement = Arrangement.End) {
+                                IconButton(onClick = { finish() }) {
+                                    Icon(
+                                        Icons.AutoMirrored.Rounded.ArrowBack,
+                                        contentDescription = stringResource(R.string.page_back),
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /** A bottom-nav item pressed on a tool page: the main screen at that section (the tool page closes). */
+    private fun openSection(id: String) {
+        startActivity(
+            WriterSurface.mainIntent(this)
+                .putExtra(WriterSurface.EXTRA_SECTION, id)
+                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP),
+        )
+        finish()
+    }
+}
+

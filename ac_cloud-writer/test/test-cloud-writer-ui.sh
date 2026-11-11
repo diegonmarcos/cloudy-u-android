@@ -49,8 +49,8 @@ set -uo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && while [ "$PWD" != "/" ] && [ ! -e "$PWD/.git" ]; do cd ..; done; printf '%s' "$PWD")"
 APP="$ROOT/ac_cloud-writer"
-SRC="$APP/app/src/main/java/com/diegonmarcos/cloudwriter"
-RES="$APP/app/src/main/res"
+SRC="$APP/../ab_cloud-libs-shared/libs/writer-ui/src/main/java/com/diegonmarcos/cloudwriter"
+RES="$APP/../ab_cloud-libs-shared/libs/writer-ui/src/main/res"
 
 FAILURES=0
 pass() { printf 'ok     %s\n' "$1"; }
@@ -140,13 +140,24 @@ fi
 
 # ── T4  every screen is drawn inside the theme ──────────────────────────────
 
-python3 - "$SRC" <<'PY'
+python3 - "$SRC" "$APP/app/src/main/java/com/diegonmarcos/cloudwriter" <<'PY'
 import glob, os, re, sys
 src = sys.argv[1]
+shell = sys.argv[2]
 bad = 0
 drawing = []
-for path in sorted(glob.glob(os.path.join(src, "*.kt")) + glob.glob(os.path.join(src, "ui", "*.kt"))):
+# #1652 MainActivity is a thin shell: its setContent hands the screen to WriterSurface.Content(),
+# which must itself open with CloudWriterTheme. The theme is still the first thing inside the draw.
+surface = open(os.path.join(src, "WriterSurface.kt")).read()
+surface_themed = re.search(r"fun Content\(\)\s*\{\s*CloudWriterTheme", surface) is not None
+for path in sorted(glob.glob(os.path.join(src, "*.kt")) + glob.glob(os.path.join(src, "ui", "*.kt")) + glob.glob(os.path.join(shell, "*.kt"))):
     body = open(path).read()
+    if re.search(r"\bsetContent\s*\{\s*surface\.Content\(\)\s*\}", body):
+        drawing.append(os.path.basename(path))
+        if not surface_themed:
+            print("FAIL   T4 %s hands the screen to WriterSurface.Content(), which does not open with CloudWriterTheme." % os.path.basename(path))
+            bad += 1
+        continue
     # setContent { — the call, not setContentTitle/Text/Intent on a notification (#800 Listen.kt).
     if not re.search(r"\bsetContent\s*\{", body):
         continue
@@ -186,9 +197,9 @@ import re, sys, os
 src, res = sys.argv[1], sys.argv[2]
 bad = 0
 try:
-    main = open(os.path.join(src, "MainActivity.kt")).read()
+    main = open(os.path.join(src, "WriterSurface.kt")).read()
 except Exception as exc:
-    print("FAIL   T6 MainActivity.kt is unreadable (%s)" % exc); sys.exit(1)
+    print("FAIL   T6 WriterSurface.kt is unreadable (%s)" % exc); sys.exit(1)
 
 used = sorted(set(re.findall(r"R\.string\.(settings_screen_\w*_summary)", main)))
 # FAIL CLOSED: one description per page card, the cards COUNTED rather than assumed (#800 added
@@ -251,7 +262,7 @@ fi
 # ── T9  the design is token-driven and the contrast is held (#1532) ─────────
 
 THEME="$(code "$SRC/ui/Theme.kt")"
-DESIGN_TEST="$APP/core/src/test/kotlin/com/diegonmarcos/cloudwriter/core/DesignTest.kt"
+DESIGN_TEST="$APP/../ab_cloud-libs-shared/libs/writer-core/src/test/kotlin/com/diegonmarcos/cloudwriter/core/DesignTest.kt"
 if grep -q 'TokenSet.DARK.toScheme' <<<"$THEME" && grep -q 'TokenSet.LIGHT.toScheme' <<<"$THEME" \
    && [ -f "$DESIGN_TEST" ] && grep -q 'fun everyTextPairReachesAA' "$DESIGN_TEST" && grep -q 'Contrast.AA_TEXT' "$DESIGN_TEST"; then
     pass "T9 both schemes are painted from core TokenSet, and DesignTest holds every text pair at WCAG AA"
@@ -261,7 +272,7 @@ fi
 
 # ── T10 buttons are the component set's, not bare Material ones (#1532) ─────
 
-MAINKT="$(code "$SRC/MainActivity.kt")"
+MAINKT="$(code "$SRC/WriterSurface.kt")"
 if grep -Eq '(^|[^A-Za-z.])(Button|FilledTonalButton|OutlinedButton|ElevatedButton)\(' <<<"$MAINKT"; then
     fail "T10 a bare Material button is in MainActivity. Use WriterButton (filled / tonal / text, 40 to 48 dp, icon plus label) so every button has the same height, radius and states."
 else

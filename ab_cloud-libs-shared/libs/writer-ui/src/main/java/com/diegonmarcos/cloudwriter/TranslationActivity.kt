@@ -1,5 +1,8 @@
 package com.diegonmarcos.cloudwriter
 
+import com.diegonmarcos.cloudwriter.writerui.R
+import androidx.activity.ComponentActivity
+
 import android.os.Handler
 import android.os.Looper
 import androidx.compose.runtime.Composable
@@ -35,7 +38,7 @@ import java.util.concurrent.Executors
  * is the keyboard's, not this app's. It is a question for the owner and not a decision to take
  * here: changing it silently is how the pages stopped matching last time.
  */
-class TranslationActivity : WriterSettingsActivity() {
+class TranslationPage(activity: ComponentActivity) : WriterSettingsPage(activity) {
 
     /**
      * The engine's own list once it answers; the fallback is drawn meanwhile.
@@ -114,9 +117,14 @@ class TranslationActivity : WriterSettingsActivity() {
         worker.execute {
             val reported = runner.translateLanguages()
             if (reported.isEmpty()) return@execute
-            main.post { if (!isFinishing) engineLanguages.value = reported }
+            main.post { if (!activity.isFinishing) engineLanguages.value = reported }
         }
     }
 
     private fun languageName(tag: String): String = Locale(tag).displayLanguage + " (" + tag + ")"
+}
+
+/** The activity shell: the manifest declares this class, the page is [TranslationPage]. */
+class TranslationActivity : WriterSettingsActivity() {
+    override fun createPage(): WriterSettingsPage = TranslationPage(this)
 }

@@ -1,5 +1,8 @@
 package com.diegonmarcos.cloudwriter
 
+import com.diegonmarcos.cloudwriter.writerui.R
+import androidx.activity.ComponentActivity
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -55,7 +58,7 @@ import com.diegonmarcos.cloudwriter.ui.WriterTextField
  * binder call the main screen uses, so "it worked in the test box" and "it worked on the button"
  * cannot disagree.
  */
-class TextEnhanceActivity : WriterSettingsActivity() {
+class TextEnhancePage(activity: ComponentActivity) : WriterSettingsPage(activity) {
 
     private val runner by lazy { WriterToolRunner(this) }
 
@@ -220,4 +223,9 @@ class TextEnhanceActivity : WriterSettingsActivity() {
             }
         }
     }
+}
+
+/** The activity shell: the manifest declares this class, the page is [TextEnhancePage]. */
+class TextEnhanceActivity : WriterSettingsActivity() {
+    override fun createPage(): WriterSettingsPage = TextEnhancePage(this)
 }

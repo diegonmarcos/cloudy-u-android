@@ -26,6 +26,10 @@
     "version_name": "0.1.0-dev",
     "abi_filters": [
       "arm64-v8a"
+    ],
+    "_doc_ui_module_dirs": "#1652 the app's UI lives in this shared library (WriterSurface); the nav-shape guard reads it as part of the app (1_cicd/src/scripts/cloud-android-nav-shape-guard.py::module_dirs), because MainActivity is a thin shell.",
+    "ui_module_dirs": [
+      "../ab_cloud-libs-shared/libs/writer-ui"
     ]
   },
   "modules": {
@@ -34,7 +38,8 @@
       "type": "application",
       "depends_on": [
         "libs:core",
-        "core",
+        "libs:writer-ui",
+        "libs:writer-core",
         "libs:ui-kit",
         "libs:bottomnav",
         "libs:ui-icons",
@@ -43,9 +48,15 @@
         "libs:ml-l-image-ocr"
       ]
     },
-    "core": {
+    "libs:writer-core": {
       "type": "library",
-      "_doc": "#800 the pure logic as a plain-JVM module (core/build.gradle): Model/on-device routing with fallback, the OpenRouter wire for translation and speech-to-text, the Listen segmenter and WAV, dictation layout, the Markdown editor tools and the document store. Unit-tested and PIT-mutated in the JVM step."
+      "dir": "../ab_cloud-libs-shared/libs/writer-core",
+      "_doc": "#800 the pure logic as a plain-JVM module (libs/writer-core/build.gradle), moved here from this app's own core/ by #1652 so cloud-keyboard's Writer tab links the same code: Model/on-device routing with fallback, the OpenRouter wire for translation and speech-to-text, the Listen segmenter and WAV, dictation layout, the Markdown editor tools and the document store. Unit-tested and PIT-mutated in the JVM step. Shared BY REFERENCE."
+    },
+    "libs:writer-ui": {
+      "type": "library",
+      "dir": "../ab_cloud-libs-shared/libs/writer-ui",
+      "_doc": "#1652 THE WHOLE CLOUD WRITER UI as a library (WriterSurface: Content() for the app, Page(id) for one named page, plus the five tool pages, Listen, prefs, registry, routes, components, theme, strings), shared BY REFERENCE so cloud-keyboard's Writer tab hosts the same code (rule 16: replicate exactly, no fork). MainActivity here is a thin shell. The library declares NO manifest component: this app's AndroidManifest.xml declares each once. It bakes THIS file's writer_ai / writer_routes / update / ui blocks into its own BuildConfig."
     },
     "libs:decisions-link": {
       "type": "library",

@@ -47,18 +47,18 @@ root = sys.argv[1]
 # Exactly what the tester reads, and nothing else. The tester is own-source-only
 # by design — that is what lets it FAIL a release rather than be downgraded to a
 # warning — so this copy is one directory.
-NEEDED = ["ac_cloud-writer", "ac_cloud-account/build.json"]   # + the fleet declaration the LanguageTool default is baked from (#1093)
+NEEDED = ["ac_cloud-writer", "ac_cloud-account/build.json", "ab_cloud-libs-shared/libs/writer-ui", "ab_cloud-libs-shared/libs/writer-core"]   # + the fleet declaration the LanguageTool default is baked from (#1093)
 
 APP = "ac_cloud-writer"
-SRC = APP + "/app/src/main/java/com/diegonmarcos/cloudwriter"
-RES = APP + "/app/src/main/res"
+SRC = APP + "/../ab_cloud-libs-shared/libs/writer-ui/src/main/java/com/diegonmarcos/cloudwriter"
+RES = APP + "/../ab_cloud-libs-shared/libs/writer-ui/src/main/res"
 
 # (what a later change would plausibly do, which file, the exact edit, the text
 #  the failing assertion must contain).
 BREAKS = [
     # ── the four shapes of task 209 ──────────────────────────────────────────
-    ("a page is pointed at the keyboard's own settings screen", SRC + "/MainActivity.kt",
-     ("                        onClick = { startActivity(Intent(this@MainActivity, page.screen)) },",
+    ("a page is pointed at the keyboard's own settings screen", SRC + "/WriterSurface.kt",
+     ("                        onClick = { startActivity(Intent(activity, page.screen)) },",
       "                        onClick = {\n"
       "                            startActivity(Intent().setClassName(\"com.diegonmarcos.cloudkeyboard\",\n"
       "                                \"helium314.keyboard.settings.SettingsActivity\"))\n"
@@ -102,7 +102,7 @@ BREAKS = [
     # one list of `label to class` pairs, so what is removed here is the whole entry. The assertion
     # it must still trip is unchanged: MainActivity has to NAME every activity the manifest
     # declares, or the owner has a settings page nothing on the phone can open.
-    ("the main screen stops opening one of the pages", SRC + "/MainActivity.kt",
+    ("the main screen stops opening one of the pages", SRC + "/WriterSurface.kt",
      ("                    Page(\n"
       "                        R.string.settings_screen_translation,\n"
       "                        R.string.settings_screen_translation_summary,\n"

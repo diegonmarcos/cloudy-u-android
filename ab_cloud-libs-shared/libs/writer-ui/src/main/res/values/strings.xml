@@ -424,4 +424,7 @@
     <string name="doc_filter_all">All</string>
     <string name="editor_focus">Focus mode</string>
     <string name="editor_focus_exit">Exit focus</string>
+    <!-- #1652 page titles a host (the keyboard's Writer tab) shows as top-nav subpages. -->
+    <string name="writer_page_dictation">Voice transcription</string>
+    <string name="writer_page_dictionary">Dictionary</string>
 </resources>

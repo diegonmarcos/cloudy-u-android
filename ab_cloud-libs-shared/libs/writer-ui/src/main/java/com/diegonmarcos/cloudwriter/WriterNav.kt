@@ -1,5 +1,8 @@
 package com.diegonmarcos.cloudwriter
 
+
+import com.diegonmarcos.cloudwriter.writerui.BuildConfig
+
 import com.diegonmarcos.cloudwriter.core.WriterTabs
 import com.diegonmarcos.superapp.bottomnav.NavDecl
 

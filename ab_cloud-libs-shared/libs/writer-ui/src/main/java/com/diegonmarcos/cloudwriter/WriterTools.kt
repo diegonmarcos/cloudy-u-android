@@ -1,5 +1,7 @@
 package com.diegonmarcos.cloudwriter
 
+import com.diegonmarcos.cloudwriter.writerui.R
+
 import android.content.Context
 import android.os.Handler
 import android.os.Looper

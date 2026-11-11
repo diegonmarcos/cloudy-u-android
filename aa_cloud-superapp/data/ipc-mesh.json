@@ -3192,7 +3192,7 @@
      "method": "fleet.ipc.v1",
      "permission": "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA",
      "level": "signature",
-     "source": "ac_cloud-writer/app/src/main/java/com/diegonmarcos/cloudwriter/WriterDebugApi.kt",
+     "source": "ab_cloud-libs-shared/libs/writer-ui/src/main/java/com/diegonmarcos/cloudwriter/WriterDebugApi.kt",
      "callers": []
     },
     {
@@ -3202,7 +3202,7 @@
      "method": "fleet.ipc.v1",
      "permission": "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA",
      "level": "signature",
-     "source": "ac_cloud-writer/app/src/main/java/com/diegonmarcos/cloudwriter/WriterDebugApi.kt",
+     "source": "ab_cloud-libs-shared/libs/writer-ui/src/main/java/com/diegonmarcos/cloudwriter/WriterDebugApi.kt",
      "callers": []
     },
     {
@@ -3212,7 +3212,7 @@
      "method": "fleet.ipc.v1",
      "permission": "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA",
      "level": "signature",
-     "source": "ac_cloud-writer/app/src/main/java/com/diegonmarcos/cloudwriter/WriterDebugApi.kt",
+     "source": "ab_cloud-libs-shared/libs/writer-ui/src/main/java/com/diegonmarcos/cloudwriter/WriterDebugApi.kt",
      "callers": []
     }
    ]

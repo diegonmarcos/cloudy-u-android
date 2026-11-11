@@ -9,48 +9,14 @@ apply plugin: 'org.jetbrains.kotlin.plugin.compose'
 def buildJson = new groovy.json.JsonSlurper().parse(file("${rootDir}/build.json"))
 def a = buildJson.android
 
-// build.json::writer_ai — THIS APP'S OWN registry, read at run time by
-// com.diegonmarcos.cloudwriter.WriterRegistry.
-//
-// Baked as BASE64, exactly as libs/keyboard bakes keyboard_ai and cloud-mail
-// bakes mail_ai, and for the same reason: the prompts carry quotes, commas and
-// newlines that a plain buildConfigField string does not survive.
-//
-// It FAILS THE BUILD rather than defaulting when the block is missing. A
-// registry that silently resolved to empty would produce an app whose tool
-// menu draws nothing and whose failure looks like a broken binder rather than
-// a missing file.
-def writerAi = buildJson.writer_ai
-if (writerAi == null) {
-    throw new GradleException(
-        "build.json::writer_ai is missing. It is cloud-writer's own copy of the text-tool " +
-        "registry (providers, models, Enhance prompts, Resume prompts, languages) and this app " +
-        "reads no other. Restore it from git rather than pointing this build at keyboard_ai or " +
-        "mail_ai - sharing one registry between two apps is exactly what made a second app's " +
-        "Text settings uneditable (task 209).")
-}
-def writerAiB64 = groovy.json.JsonOutput.toJson(writerAi).bytes.encodeBase64().toString()
-
-// build.json::update (#800) — where the status card's one tap goes when the app serving the text
-// tools needs installing or updating. ServingApp.kt reads it; an absent block bakes {} and the
-// tap opens nothing rather than a guessed address.
-def writerUpdateB64 = groovy.json.JsonOutput.toJson(buildJson.update ?: [:]).bytes.encodeBase64().toString()
-
-// build.json::writer_routes (#800) — the Model / on-device routes for Listen and Translation, the
-// OpenRouter endpoints, the default models, the segmenter and the on-device voice engine's address.
-// FAILS THE BUILD when missing: a Writer without it would offer Listen with nowhere to send audio.
-// #868 the nav declaration: ui.bottom_nav (the island), ui.sections (what each item opens), ui.default_section.
-def uiBottomNav      = (buildJson.ui?.bottom_nav ?: []).join(',')
-def uiSectionsB64    = groovy.json.JsonOutput.toJson(buildJson.ui?.sections ?: []).bytes.encodeBase64().toString()
-def uiDefaultSection = (buildJson.ui?.default_section ?: '').toString()
+// build.json::writer_ai, ::writer_routes, ::update and ::ui are baked by libs:writer-ui (BuildConfig of
+// the lib), which reads THIS app's build.json; the app bakes none of them (#1652). Only the voice
+// engine's package is needed here, for the manifest's <queries>.
 def writerRoutes = buildJson.writer_routes
 if (writerRoutes == null || writerRoutes.voice_engine?.package == null || writerRoutes.voice_engine?.action == null) {
     throw new GradleException("build.json::writer_routes (with voice_engine.package and .action) is missing — " +
         "Listen and Translation have no routes to run on. Restore it from git.")
 }
-def writerRoutesB64 = groovy.json.JsonOutput.toJson(writerRoutes).bytes.encodeBase64().toString()
-def debugGroup = (writerRoutes.debug_api?.group ?: '').toString()
-if (!debugGroup) throw new GradleException("build.json::writer_routes.debug_api.group missing — /api/writer/* would register under no name")
 
 // versionCode MUST move on every build, or nothing lands.
 //
@@ -105,24 +71,15 @@ android {
         targetSdk     a.target_sdk
         versionCode   codeFinal
         versionName   "${a.version_name} (sha-${shortSha})"
-        // #1093 the LanguageTool check URL = the declared (public) URL of the languagetool service.
-        buildConfigField "String", "LANGUAGETOOL_URL", "\"${fleetUrl('languagetool')}/v2/check\""
         buildConfigField "String", "GIT_SHORT_SHA", "\"${shortSha}\""
         ndk { abiFilters a.abi_filters as String[] }
 
-        buildConfigField "String", "WRITER_AI_ROUTING_B64", "\"${writerAiB64}\""
-        buildConfigField "String", "WRITER_UPDATE_B64", "\"${writerUpdateB64}\""
-        buildConfigField "String", "WRITER_ROUTES_B64", "\"${writerRoutesB64}\""
-        buildConfigField "String", "UI_BOTTOM_NAV", "\"${uiBottomNav}\""
-        buildConfigField "String", "UI_SECTIONS_B64", "\"${uiSectionsB64}\""
-        buildConfigField "String", "UI_DEFAULT_SECTION", "\"${uiDefaultSection}\""
-        buildConfigField "String", "DEBUG_API_GROUP", "\"${debugGroup}\""
         // The on-device voice engine's package and action, for the manifest's <queries> and the
         // bind (VoiceEngineBinder reads the same values out of WRITER_ROUTES_B64).
         manifestPlaceholders.put('voiceEnginePackage', writerRoutes.voice_engine.package.toString())
     }
 
-    buildFeatures { buildConfig = true; compose = true; aidl = true }
+    buildFeatures { buildConfig = true; compose = true }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
@@ -154,7 +111,9 @@ dependencies {
     implementation project(':libs:core')
     // #800 the pure logic (routing, OpenRouter wire, segmenter, documents, Markdown tools), a
     // plain-JVM module tested and PIT-mutated on its own; it carries libs:decisions by `api`.
-    implementation project(':core')
+    // #1652 the whole UI: WriterSurface and the tool pages (libs:writer-ui), over the pure logic (libs:writer-core).
+    implementation project(':libs:writer-ui')
+    implementation project(':libs:writer-core')
     // #800 the fleet UI kit (empty state, section headers), drawn inside this app's theme by ui.KitBridge.
     implementation project(':libs:ui-kit')
     // #868 NavDecl, and #1164 the shared nav: first row (Profile -> Cloud Account), second row, bottom nav, page background.

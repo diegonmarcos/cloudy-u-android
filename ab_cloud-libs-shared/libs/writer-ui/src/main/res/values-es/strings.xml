@@ -355,4 +355,7 @@
     <string name="doc_filter_all">Todos</string>
     <string name="editor_focus">Modo concentración</string>
     <string name="editor_focus_exit">Salir de concentración</string>
+    <!-- #1652 page titles a host (the keyboard's Writer tab) shows as top-nav subpages. -->
+    <string name="writer_page_dictation">Transcripción de voz</string>
+    <string name="writer_page_dictionary">Diccionario</string>
 </resources>

@@ -72,8 +72,8 @@
     "ac_cloud-mail/app": {
       "base_language": "en"
     },
-    "ac_cloud-writer/app": {
-      "base_language": "en"
+    "ab_cloud-libs-shared/libs/writer-ui": {
+      "base_language": "host"
     },
     "ac_cloud-myterminal/hub": {
       "base_language": "en"

@@ -92,6 +92,8 @@
     "editor-core",
     "file-editor",
     "wysiwyg",
+    "writer-ui",
+    "writer-core",
     "media-viewer",
     "pdf",
     "odf",

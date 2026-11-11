@@ -1,5 +1,7 @@
 package com.diegonmarcos.cloudwriter
 
+import com.diegonmarcos.cloudwriter.writerui.R
+
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context

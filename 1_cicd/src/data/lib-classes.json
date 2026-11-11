@@ -8,7 +8,7 @@
     "pinned": "Non-GUI, but bound to the consuming process by an OS boundary no IPC fixes; the reason is required.",
     "logic": "Non-GUI logic still compiled into its apps: the migration backlog. Each one is a candidate engine."
   },
-  "backlog_baseline": 27,
+  "backlog_baseline": 28,
   "libs": {
     "ai":                      { "class": "gui",      "why": "#823 the fleet's AI chat (renamed from search-page) in Compose: the page, the consent card, the assistant panel, the gateway and OpenRouter backends and the shared ai.json contract, hosted and themed by cloud-search, cloud-browser, cloud-drive and cloud-tools-small-llms. It stores nothing of its own (sessions go in the host's AiSessionStore), reads no OpenRouter key (the app hands an AiTokenSource) and ships no APK." },
     "ai-usage":                { "class": "contract", "why": "#1499 the read of the fleet AI usage table (c3 API GET /ai/usage): AiUsageClient (mesh first, public with the fleet bearer) and AiUsageModel (parse + card words), shared by the SuperApp Notify AI badge and Cloud SuperIntel Cost so one source feeds both. Plain JVM over org.json, renders nothing. #1543 added the weekly now-usage model (AiUsageModel.week, four-line words) and the per-family token tables (Tokens, Period, FamilyRow) both consumers draw; still pure parse + words, no I/O beyond AiUsageClient. Budget 270 -> 330.", "budget_lines": 330 },
@@ -133,6 +133,8 @@
     "ui-kit":                  { "class": "gui",      "why": "#773 the shared Compose kit: theme over the launcher palette, tiles, rows, dialogs, KitComposeFragment." },
     "updater":                 { "class": "logic",    "why": "Self-update and the store's install machinery (PackageInstaller sessions, APK cache, GHCR client), compiled into 11 apps -- the largest fan-out by measured cost. Moving it moves the install-permission identity. #865 cloud-store is the 12th app (+1 backlog edge): it IS the installer, so the engine must run in its process. #867 cloud-account is the 13th (+1): Updater.start is every app's self-update and the Fleet tab reads the install engine." },
     "voice":                   { "class": "logic",    "why": "Voice engines + model manager + VoiceBarView, keyboard only." },
+    "writer-core":             { "class": "logic",    "why": "#1652 Cloud Writer's pure logic (routing and its fallback, the OpenRouter wire, the Listen segmenter and WAV, the Markdown editor tools, the document store), moved out of the app's own :core so cloud-keyboard's Writer tab compiles the same code as cloud-writer. Plain JVM Kotlin, no Android; JVM-tested and PIT-mutated in its own suite. Compiled into the app that hosts libs:writer-ui, so it counts as backlog until an engine serves it." },
+    "writer-ui":               { "class": "gui",      "why": "#1652 Cloud Writer's whole UI as a library: WriterSurface (the app, or one named page), the five tool pages, Listen, prefs, registry, routes, components and theme. Hosted by cloud-writer's thin MainActivity and by cloud-keyboard's Writer tab; declares no manifest component (the host owns the manifest)." },
     "wallet":                  { "class": "gui",      "why": "cloud-wallet's feature module." },
     "watchdog":                { "class": "contract", "why": "ICloudExec binder contract + bridge, c3-watchdog only.", "budget_lines": 230 },
     "web-core":                { "class": "gui",      "why": "#1371 the fleet's one embedded web view: CloudWeb (factory, profiles, desktop mode), the client bases, the GPU probe." },

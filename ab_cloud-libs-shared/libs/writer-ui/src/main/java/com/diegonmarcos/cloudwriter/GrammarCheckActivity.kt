@@ -1,5 +1,8 @@
 package com.diegonmarcos.cloudwriter
 
+import com.diegonmarcos.cloudwriter.writerui.R
+import androidx.activity.ComponentActivity
+
 import androidx.compose.runtime.Composable
 import com.diegonmarcos.cloudwriter.ui.ChoiceRow
 import com.diegonmarcos.cloudwriter.ui.ToggleRow
@@ -37,7 +40,7 @@ import com.diegonmarcos.cloudwriter.ui.ToggleRow
  * and the two server addresses are now three surfaces, which is the structure the page always had
  * and never showed. Every stored value, default and key is the one that was there before.
  */
-class GrammarCheckActivity : WriterSettingsActivity() {
+class GrammarCheckPage(activity: ComponentActivity) : WriterSettingsPage(activity) {
 
     override fun pageTitle(): String = getString(R.string.settings_screen_grammar)
 
@@ -109,4 +112,9 @@ class GrammarCheckActivity : WriterSettingsActivity() {
             ) { WriterPrefs.put(this, WriterPrefs.KEY_GRAMMAR_NGRAM_URL, it) }
         }
     }
+}
+
+/** The activity shell: the manifest declares this class, the page is [GrammarCheckPage]. */
+class GrammarCheckActivity : WriterSettingsActivity() {
+    override fun createPage(): WriterSettingsPage = GrammarCheckPage(this)
 }

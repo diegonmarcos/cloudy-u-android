@@ -517,11 +517,11 @@
     },
     "ac_cloud-writer": {
       "first_test": "Has 6 shell testers, executed. Two prove the routing and the absence of a credential; two prove the four configuration pages exist AND are backed by this app's own store, which is the assertion task 209 lacked; two prove the Material 3 design system is in place and has not been undone \u2014 the toolchain restated in build.gradle still matches build.json, no screen draws outside the theme, no hardcoded hex palette or raw-pixel padding has crept back, the price table's cells are still single-line (task 214), and every home-screen card description exists in Spanish (task 221). The gap that remains is that NONE of this is a rendered screen: there is no instrumentation test and no JVM in the container that maintains this app, so a green run proves the APK compiles and the source has the right shape, never that the screen looks right. Only a device screenshot does that.",
-      "shell_testers": 12,
+      "shell_testers": 13,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 11,
+      "unit_test_sources": 0,
       "workflow": "ship-cloud-writer.yml"
     },
     "ac_cloud-writer/web": {

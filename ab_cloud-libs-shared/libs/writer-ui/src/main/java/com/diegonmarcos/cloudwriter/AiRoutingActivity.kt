@@ -1,5 +1,8 @@
 package com.diegonmarcos.cloudwriter
 
+import com.diegonmarcos.cloudwriter.writerui.R
+import androidx.activity.ComponentActivity
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -58,7 +61,7 @@ import java.util.Locale
  * never needs to be here. So this row is READ-ONLY and says where the key actually lives. Dropping
  * the row instead would leave the owner hunting for a setting that is simply somewhere else.
  */
-class AiRoutingActivity : WriterSettingsActivity() {
+class AiRoutingPage(activity: ComponentActivity) : WriterSettingsPage(activity) {
 
     override fun pageTitle(): String = getString(R.string.settings_screen_ai_routing)
 
@@ -169,4 +172,9 @@ class AiRoutingActivity : WriterSettingsActivity() {
      * phone's locale and turn a decimal point into a comma in a table of numbers.
      */
     private fun usdPerMillion(v: Double): String = String.format(Locale.US, "%.3f", v)
+}
+
+/** The activity shell: the manifest declares this class, the page is [AiRoutingPage]. */
+class AiRoutingActivity : WriterSettingsActivity() {
+    override fun createPage(): WriterSettingsPage = AiRoutingPage(this)
 }

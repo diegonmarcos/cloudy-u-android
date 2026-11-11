@@ -25,9 +25,9 @@ import json, os, re, sys
 
 APP = os.environ["APP_DIR"]
 ROOT = os.path.dirname(APP)
-J = "app/src/main/java/com/diegonmarcos/cloudwriter/"
-C = "core/src/main/kotlin/com/diegonmarcos/cloudwriter/core/"
-FILES = ["build.json", "app/build.gradle", J + "MainActivity.kt", J + "WriterBoxes.kt", J + "WriterRoutes.kt",
+J = "../ab_cloud-libs-shared/libs/writer-ui/src/main/java/com/diegonmarcos/cloudwriter/"
+C = "../ab_cloud-libs-shared/libs/writer-core/src/main/kotlin/com/diegonmarcos/cloudwriter/core/"
+FILES = ["build.json", "app/build.gradle", J + "WriterSurface.kt", J + "WriterBoxes.kt", J + "WriterRoutes.kt",
          C + "Boxes.kt", C + "HtmlText.kt"]
 INVENTORY = os.path.join(ROOT, "licenses", "inventory.json")
 
@@ -55,7 +55,7 @@ def checks(f):
     need("T1 ui.default_section is home", ui.get("default_section") == "home")
     secs = {s["id"] for s in ui.get("sections", [])}
     need("T1 every tab is a declared section", all(t in secs for t in order))
-    main = f[J + "MainActivity.kt"]
+    main = f[J + "WriterSurface.kt"]
     for scr in ("ENHANCER", "DRAFTER", "TRANSLATOR", "GRAMMAR"):
         name = scr.capitalize() + "Screen"
         need("T2 Screen.%s draws %s()" % (scr, name), re.search(r"Screen\.%s -> %s\(\)" % (scr, name), main) is not None)
@@ -66,7 +66,7 @@ def checks(f):
     need("T2 Drafter runs runner.draft", "runner.draft(" in main)
     need("T2 runTab calls runner.run", "runner.run(tool, input.text()" in main)
     need("T2 Translator has the ML / OpenRouter engine picker on the Translation route",
-         "WriterRoutes.setRoute(this@MainActivity, WriterRoutes.Function.TRANSLATION" in main)
+         "WriterRoutes.setRoute(activity, WriterRoutes.Function.TRANSLATION" in main)
     need("T3 the tab draws an input box", "WriterBox(inputLabel, input, io, input = true)" in main)
     need("T3 the tab draws an output box", "WriterBox(outputLabel, output, io, input = false)" in main)
     box = f[J + "WriterBoxes.kt"]
@@ -111,9 +111,9 @@ MUT = [
     ("build.json", '"enhancer",\n      "drafter",', '"drafter",\n      "enhancer",', "bar order swapped"),
     ("build.json", '"default_section": "home"', '"default_section": "enhancer"', "default not home"),
     (C + "Boxes.kt", "val ORDER = listOf(ENHANCER, DRAFTER, HOME, TRANSLATOR, GRAMMAR)", "val ORDER = listOf(ENHANCER, DRAFTER, HOME, GRAMMAR, TRANSLATOR)", "core order swapped"),
-    (J + "MainActivity.kt", "Screen.TRANSLATOR -> TranslatorScreen()", "Screen.TRANSLATOR -> GrammarScreen()", "Translator draws Grammar"),
-    (J + "MainActivity.kt", "runTab(WriterTool.GRAMMAR", "runTab(WriterTool.ENHANCE", "Grammar runs Enhance"),
-    (J + "MainActivity.kt", "WriterBox(inputLabel, input, io, input = true)", "WriterBox(inputLabel, input, io, input = false)", "input box loses its actions"),
+    (J + "WriterSurface.kt", "Screen.TRANSLATOR -> TranslatorScreen()", "Screen.TRANSLATOR -> GrammarScreen()", "Translator draws Grammar"),
+    (J + "WriterSurface.kt", "runTab(WriterTool.GRAMMAR", "runTab(WriterTool.ENHANCE", "Grammar runs Enhance"),
+    (J + "WriterSurface.kt", "WriterBox(inputLabel, input, io, input = true)", "WriterBox(inputLabel, input, io, input = false)", "input box loses its actions"),
     (J + "WriterBoxes.kt", "box.setHtml(Ocr.intoBox(box.html()", "box.setHtml((box.html()", "OCR result dropped"),
     (J + "WriterBoxes.kt", "io.takePicture(state)", "io.loadImage(state)", "no Take picture"),
     (J + "WriterRoutes.kt", "MlKitOcr.read(bitmap)", "Outcome.failed(\"x\") ?: MlKitOcr", "ML engine unplugged"),

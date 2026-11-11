@@ -1,5 +1,8 @@
 package com.diegonmarcos.cloudwriter
 
+
+import com.diegonmarcos.cloudwriter.writerui.BuildConfig
+
 import android.content.ContentProvider
 import android.content.ContentValues
 import android.content.Context

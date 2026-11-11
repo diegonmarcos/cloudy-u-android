@@ -42,8 +42,8 @@ set -uo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && while [ "$PWD" != "/" ] && [ ! -e "$PWD/.git" ]; do cd ..; done; printf '%s' "$PWD")"
 APP="$ROOT/ac_cloud-writer"
-SRC="$APP/app/src/main/java/com/diegonmarcos/cloudwriter"
-RES="$APP/app/src/main/res"
+SRC="$APP/../ab_cloud-libs-shared/libs/writer-ui/src/main/java/com/diegonmarcos/cloudwriter"
+RES="$APP/../ab_cloud-libs-shared/libs/writer-ui/src/main/res"
 
 FAILURES=0
 pass() { printf 'ok     %s\n' "$1"; }
@@ -52,7 +52,7 @@ fail() { printf 'FAIL   %s\n' "$1"; FAILURES=$((FAILURES + 1)); }
 # Comments dropped: prose may NAME a call the code does not make.
 code() { sed -e 's,^[[:space:]]*//.*,,' -e 's,^[[:space:]]*\*.*,,' -e 's,^[[:space:]]*/\*.*,,' "$@"; }
 
-for f in "$SRC/ServingApp.kt" "$SRC/MainActivity.kt" "$APP/build.json" "$RES/values/strings.xml"; do
+for f in "$SRC/ServingApp.kt" "$SRC/WriterSurface.kt" "$APP/build.json" "$RES/values/strings.xml"; do
     [ -f "$f" ] || { echo "FAIL   $f is missing — every assertion below would read nothing and pass"; exit 1; }
 done
 
@@ -233,8 +233,8 @@ else
 fi
 
 # ── D ── the document UI ──────────────────────────────────────────────────
-MAINKT="$(code "$SRC/MainActivity.kt")"
-UIKT="$(code "$SRC/ui/DocumentsUi.kt" "$SRC/ui/Theme.kt" "$SRC/ui/WriterComponents.kt" "$APP/core/src/main/kotlin/com/diegonmarcos/cloudwriter/core/Format.kt")"
+MAINKT="$(code "$SRC/WriterSurface.kt")"
+UIKT="$(code "$SRC/ui/DocumentsUi.kt" "$SRC/ui/Theme.kt" "$SRC/ui/WriterComponents.kt" "$APP/../ab_cloud-libs-shared/libs/writer-core/src/main/kotlin/com/diegonmarcos/cloudwriter/core/Format.kt")"
 d() { # d <id> <message> <pattern>...  — every pattern must be in MainActivity/ui code
     local id="$1" msg="$2"; shift 2
     local p
@@ -256,8 +256,8 @@ d D5 "find counts and steps through core matches, wrapping" \
 d D6 "share and export as .md and .txt" \
     'Intent(Intent.ACTION_SEND)' 'CreateDocument("text/markdown")' 'CreateDocument("text/plain")' 'contentResolver.openOutputStream(uri)'
 d D7 "System / Light / Dark, followed by every screen" \
-    'darkTheme: Boolean = WriterTheme.isDark()' 'WriterTheme.set(this@MainActivity, id)' 'LIGHT -> false' 'DARK -> true'
-ONSTOP="$(awk '/override fun onStop\(\)/,/^    }$/' <<<"$MAINKT")"
+    'darkTheme: Boolean = WriterTheme.isDark()' 'WriterTheme.set(activity, id)' 'LIGHT -> false' 'DARK -> true'
+ONSTOP="$(awk '/fun onStop\(\)/,/^    }$/' <<<"$MAINKT")"
 if grep -qF 'field.value = insertAtCaret(field.value, segment)' <<<"$MAINKT" && grep -qF 'ListenEngine.sink = null' <<<"$ONSTOP"; then
     pass "D8 Listen writes at the caret while the editor shows, to the file once it stops"
 else

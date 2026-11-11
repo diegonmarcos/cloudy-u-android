@@ -1,5 +1,8 @@
 package com.diegonmarcos.cloudwriter
 
+
+import com.diegonmarcos.cloudwriter.writerui.BuildConfig
+
 import android.util.Base64
 import org.json.JSONObject
 

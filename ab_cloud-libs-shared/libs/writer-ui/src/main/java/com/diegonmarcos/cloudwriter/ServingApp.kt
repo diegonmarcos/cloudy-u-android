@@ -1,5 +1,8 @@
 package com.diegonmarcos.cloudwriter
 
+
+import com.diegonmarcos.cloudwriter.writerui.BuildConfig
+
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent

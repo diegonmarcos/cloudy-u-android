@@ -34,8 +34,8 @@ import os, shutil, subprocess, sys, tempfile
 
 root = sys.argv[1]
 APP = "ac_cloud-writer"
-SRC = APP + "/app/src/main/java/com/diegonmarcos/cloudwriter"
-RES = APP + "/app/src/main/res"
+SRC = APP + "/../ab_cloud-libs-shared/libs/writer-ui/src/main/java/com/diegonmarcos/cloudwriter"
+RES = APP + "/../ab_cloud-libs-shared/libs/writer-ui/src/main/res"
 
 # (what a later change would plausibly do, which file, the exact edit, the text
 #  the failing assertion must contain).
@@ -59,20 +59,20 @@ BREAKS = [
       "private val WriterBlue = Color(android.graphics.Color.parseColor(\"#78c8ff\"))"),
      "T2 Color.parseColor is back"),
 
-    ("raw-pixel padding comes back with a hand-built view", SRC + "/MainActivity.kt",
+    ("raw-pixel padding comes back with a hand-built view", SRC + "/WriterSurface.kt",
      ("    private fun say(line: String) {",
       "    private fun legacyPad(v: android.view.View) { v.setPadding(36, 36, 36, 36) }\n"
       "    private fun say(line: String) {"),
      "T3 setPadding() is back"),
 
     # ── T7..T10 (#1532): the premium design is undone ───────────────────────
-    ("an sp literal comes back", SRC + "/MainActivity.kt",
+    ("an sp literal comes back", SRC + "/WriterSurface.kt",
      ("    private fun say(line: String) {",
       "    private val legacySize = 14.sp\n"
       "    private fun say(line: String) {"),
      "T7 an sp literal is in the source"),
 
-    ("a filled icon creeps back next to the rounded ones", SRC + "/MainActivity.kt",
+    ("a filled icon creeps back next to the rounded ones", SRC + "/WriterSurface.kt",
      ("    private fun say(line: String) {",
       "    private val legacyIcon = Icons.Filled.Add\n"
       "    private fun say(line: String) {"),
@@ -82,11 +82,11 @@ BREAKS = [
      ("private val WriterDarkScheme = TokenSet.DARK.toScheme(dark = true)", "private val WriterDarkScheme = darkColorScheme()"),
      "T9 the theme no longer paints from core TokenSet"),
 
-    ("the AA contrast test is deleted", APP + "/core/src/test/kotlin/com/diegonmarcos/cloudwriter/core/DesignTest.kt",
+    ("the AA contrast test is deleted", APP + "/../ab_cloud-libs-shared/libs/writer-core/src/test/kotlin/com/diegonmarcos/cloudwriter/core/DesignTest.kt",
      ("fun everyTextPairReachesAA", "fun everyTextPairIsIgnored"),
      "T9 the theme no longer paints from core TokenSet, or the AA contrast test"),
 
-    ("a bare Material button is back on the main screen", SRC + "/MainActivity.kt",
+    ("a bare Material button is back on the main screen", SRC + "/WriterSurface.kt",
      ("    private fun say(line: String) {",
       "    @Composable private fun legacyButton() { Button(onClick = {}) { Text(\"x\") } }\n"
       "    private fun say(line: String) {"),
@@ -107,7 +107,7 @@ BREAKS = [
      ('    <string name="settings_screen_grammar_summary">Modo de corrección, las correcciones que se aplican en el teléfono y el servidor de LanguageTool</string>\n', ""),
      "has no Spanish; that card would read English"),
 
-    ("a card loses its description entirely", SRC + "/MainActivity.kt",
+    ("a card loses its description entirely", SRC + "/WriterSurface.kt",
      ("                        R.string.settings_screen_translation_summary,",
       "                        R.string.settings_screen_translation,"),
      "page description(s) (expected 5"),
@@ -123,12 +123,16 @@ def build_copy(work):
     # ever run on the build machine — the one place it is least needed. shutil.copy copies
     # the bytes and the mode and stops there, and the mode has to come along because the
     # copied tester is later executed.
-    src = os.path.join(root, APP)
-    for base, _dirs, files in os.walk(src):
-        target = os.path.join(dst, os.path.relpath(base, src))
-        os.makedirs(target, exist_ok=True)
-        for name in files:
-            shutil.copy(os.path.join(base, name), os.path.join(target, name))
+    # #1652 the UI and the pure logic live in shared libs now, copied beside the app.
+    for rel_dir, dst_dir in ((APP, dst),
+                             ("ab_cloud-libs-shared/libs/writer-ui", os.path.join(work, "ab_cloud-libs-shared/libs/writer-ui")),
+                             ("ab_cloud-libs-shared/libs/writer-core", os.path.join(work, "ab_cloud-libs-shared/libs/writer-core"))):
+        src = os.path.join(root, rel_dir)
+        for base, _dirs, files in os.walk(src):
+            target = os.path.join(dst_dir, os.path.relpath(base, src))
+            os.makedirs(target, exist_ok=True)
+            for name in files:
+                shutil.copy(os.path.join(base, name), os.path.join(target, name))
     # The tester finds the repository root by walking up to a .git; without this
     # marker it would walk out of the copy and silently assert about the REAL
     # tree, reporting green while testing nothing that was broken.

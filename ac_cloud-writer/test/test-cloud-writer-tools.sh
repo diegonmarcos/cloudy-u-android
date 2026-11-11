@@ -60,7 +60,7 @@ set -uo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && while [ "$PWD" != "/" ] && [ ! -e "$PWD/.git" ]; do cd ..; done; printf '%s' "$PWD")"
 
 APP="$ROOT/ac_cloud-writer"
-SRC="$APP/app/src/main/java/com/diegonmarcos/cloudwriter"
+SRC="$APP/../ab_cloud-libs-shared/libs/writer-ui/src/main/java/com/diegonmarcos/cloudwriter"
 MANIFEST="$APP/app/src/main/AndroidManifest.xml"
 TOOLS="$SRC/WriterTools.kt"
 PREFS="$SRC/WriterPrefs.kt"
