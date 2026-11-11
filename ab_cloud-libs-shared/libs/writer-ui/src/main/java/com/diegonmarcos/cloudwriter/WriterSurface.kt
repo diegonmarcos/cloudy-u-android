@@ -83,7 +83,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -283,6 +282,9 @@ class WriterSurface(
 
     private val runner = WriterToolRunner(this)
     private val store = DocStore(ListenEngine.docsDir(this))
+    /** The HOST's window-inset treatment of the shell (the app passes its status-bar padding): shared pages never handle the top inset themselves. */
+    private var chrome: Modifier = Modifier
+
     /** #1652 the document the Dictation page's transcript lands in: created on its first Start, reused after. */
     private var dictationDoc: String? = null
 
@@ -496,7 +498,8 @@ class WriterSurface(
      * sections, the editor. This is exactly what cloud-writer's MainActivity draws.
      */
     @Composable
-    fun Content() {
+    fun Content(chromeModifier: Modifier = Modifier) {
+        chrome = chromeModifier
         CloudWriterTheme {
             Surface(color = Color.Transparent, contentColor = MaterialTheme.colorScheme.onBackground) { App() }
         }
@@ -649,7 +652,7 @@ class WriterSurface(
             onAccount = rememberAccountLauncher(),
             onConfigs = { if (screen.value != Screen.CONFIGS) { saveNow(); openConfigs() } },
             onAi = rememberSuperAppAiLauncher(),
-            modifier = Modifier.fillMaxSize().statusBarsPadding(),
+            modifier = Modifier.fillMaxSize().then(chrome),
             dark = dark,
         ) {
             TopBarDrawer { close ->

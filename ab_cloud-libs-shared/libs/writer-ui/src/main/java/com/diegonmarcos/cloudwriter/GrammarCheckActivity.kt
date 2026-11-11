@@ -114,7 +114,3 @@ class GrammarCheckPage(activity: ComponentActivity) : WriterSettingsPage(activit
     }
 }
 
-/** The activity shell: the manifest declares this class, the page is [GrammarCheckPage]. */
-class GrammarCheckActivity : WriterSettingsActivity() {
-    override fun createPage(): WriterSettingsPage = GrammarCheckPage(this)
-}

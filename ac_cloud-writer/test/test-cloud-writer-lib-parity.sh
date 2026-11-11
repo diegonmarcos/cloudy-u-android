@@ -167,7 +167,7 @@ def checks(f):
     need("F4 build.json::ui.bottom_nav is still %s" % nav["bottom_nav"], f["build_json"]["ui"]["bottom_nav"] == nav["bottom_nav"])
     need("F4 the Tools pages are still %s" % nav["tools_pages"],
          [p["id"] for sec in f["build_json"]["ui"]["sections"] if sec["id"] == "tools" for p in sec["pages"]] == nav["tools_pages"])
-    need("F4 WriterSurface exposes Content() and Page(id)", "fun Content()" in s and re.search(r"fun Page\(id: String", s) is not None)
+    need("F4 WriterSurface exposes Content() and Page(id)", "fun Content(" in s and re.search(r"fun Page\(id: String", s) is not None)
     need("F4 the bottom-nav pages are WriterTabs.ORDER", "BOTTOM_NAV_PAGES: List<String> = WriterTabs.ORDER" in s)
     for tid in nav["tools_pages"]:
         need("F4 the Tools page %s has a page id" % tid, re.search(r'PAGE_TOOL_%s\s*=\s*"tools\.%s"' % (tid.upper(), tid), s) is not None)
@@ -181,7 +181,7 @@ def checks(f):
     need("F4 the host can add pages (the keyboard's Dictionary)", "hostPages" in s and "PAGE_DICTIONARY" in s)
     # F5
     sh = f["shell"]
-    need("F5 MainActivity hosts WriterSurface.Content()", "WriterSurface(this)" in sh and "surface.Content()" in sh)
+    need("F5 MainActivity hosts WriterSurface.Content()", "WriterSurface(this)" in sh and "surface.Content(" in sh)
     need("F5 MainActivity is thin (no @Composable of its own, under 60 lines of code)", "@Composable" not in sh and len([l for l in sh.splitlines() if l.strip()]) < 60)
     # F6
     for fld in BASE["buildconfig_fields"]:

@@ -190,7 +190,3 @@ class RoutesPage(activity: ComponentActivity) : WriterSettingsPage(activity) {
     private fun routeName(r: Route?): String = getString(if (r == Route.ML) R.string.route_ml else R.string.route_model)
 }
 
-/** The activity shell: the manifest declares this class, the page is [RoutesPage]. */
-class RoutesActivity : WriterSettingsActivity() {
-    override fun createPage(): WriterSettingsPage = RoutesPage(this)
-}

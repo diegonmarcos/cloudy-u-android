@@ -4,6 +4,8 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.ui.Modifier
 import com.diegonmarcos.superapp.bottomnav.FleetChrome
 
 /**
@@ -25,7 +27,7 @@ class MainActivity : AppCompatActivity() {
         FleetChrome.apply(this)
         surface = WriterSurface(this)
         surface.adoptIntent(intent)
-        setContent { surface.Content() }
+        setContent { surface.Content(Modifier.statusBarsPadding()) }
     }
 
     override fun onNewIntent(intent: Intent) {

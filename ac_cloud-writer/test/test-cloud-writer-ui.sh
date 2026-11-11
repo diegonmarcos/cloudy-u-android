@@ -149,10 +149,10 @@ drawing = []
 # #1652 MainActivity is a thin shell: its setContent hands the screen to WriterSurface.Content(),
 # which must itself open with CloudWriterTheme. The theme is still the first thing inside the draw.
 surface = open(os.path.join(src, "WriterSurface.kt")).read()
-surface_themed = re.search(r"fun Content\(\)\s*\{\s*CloudWriterTheme", surface) is not None
+surface_themed = re.search(r"fun Content\([^)]*\)\s*\{[^}]*?CloudWriterTheme", surface) is not None
 for path in sorted(glob.glob(os.path.join(src, "*.kt")) + glob.glob(os.path.join(src, "ui", "*.kt")) + glob.glob(os.path.join(shell, "*.kt"))):
     body = open(path).read()
-    if re.search(r"\bsetContent\s*\{\s*surface\.Content\(\)\s*\}", body):
+    if re.search(r"\bsetContent\s*\{\s*surface\.Content\(", body):
         drawing.append(os.path.basename(path))
         if not surface_themed:
             print("FAIL   T4 %s hands the screen to WriterSurface.Content(), which does not open with CloudWriterTheme." % os.path.basename(path))

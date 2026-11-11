@@ -174,7 +174,3 @@ class AiRoutingPage(activity: ComponentActivity) : WriterSettingsPage(activity) 
     private fun usdPerMillion(v: Double): String = String.format(Locale.US, "%.3f", v)
 }
 
-/** The activity shell: the manifest declares this class, the page is [AiRoutingPage]. */
-class AiRoutingActivity : WriterSettingsActivity() {
-    override fun createPage(): WriterSettingsPage = AiRoutingPage(this)
-}

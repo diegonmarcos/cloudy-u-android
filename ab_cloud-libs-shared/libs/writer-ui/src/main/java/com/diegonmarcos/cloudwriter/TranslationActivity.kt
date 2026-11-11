@@ -124,7 +124,3 @@ class TranslationPage(activity: ComponentActivity) : WriterSettingsPage(activity
     private fun languageName(tag: String): String = Locale(tag).displayLanguage + " (" + tag + ")"
 }
 
-/** The activity shell: the manifest declares this class, the page is [TranslationPage]. */
-class TranslationActivity : WriterSettingsActivity() {
-    override fun createPage(): WriterSettingsPage = TranslationPage(this)
-}

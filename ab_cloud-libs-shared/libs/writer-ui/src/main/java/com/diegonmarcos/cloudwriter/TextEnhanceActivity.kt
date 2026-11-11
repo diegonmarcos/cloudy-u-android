@@ -225,7 +225,3 @@ class TextEnhancePage(activity: ComponentActivity) : WriterSettingsPage(activity
     }
 }
 
-/** The activity shell: the manifest declares this class, the page is [TextEnhancePage]. */
-class TextEnhanceActivity : WriterSettingsActivity() {
-    override fun createPage(): WriterSettingsPage = TextEnhancePage(this)
-}

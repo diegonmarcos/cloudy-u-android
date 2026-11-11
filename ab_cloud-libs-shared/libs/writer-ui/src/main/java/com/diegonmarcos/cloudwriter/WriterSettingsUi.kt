@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -345,6 +344,9 @@ abstract class WriterSettingsActivity : AppCompatActivity() {
 
     protected abstract fun createPage(): WriterSettingsPage
 
+    /** The host's window-inset treatment of the shell (cloud-writer's activities pass the status-bar padding); a shared page never handles the top inset. */
+    protected open fun hostModifier(): Modifier = Modifier
+
     private lateinit var page: WriterSettingsPage
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -366,7 +368,7 @@ abstract class WriterSettingsActivity : AppCompatActivity() {
                     onAccount = rememberAccountLauncher(),
                     onConfigs = { openSection(WriterNav.SETTINGS) },
                     onAi = rememberSuperAppAiLauncher(),
-                    modifier = Modifier.fillMaxSize().statusBarsPadding(),
+                    modifier = Modifier.fillMaxSize().then(hostModifier()),
                     dark = dark,
                 ) {
                     NavBarBottomHost(
