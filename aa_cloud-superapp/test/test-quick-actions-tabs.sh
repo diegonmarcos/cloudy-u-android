@@ -110,7 +110,7 @@ grep -q 'sliderRow(sc.label' "$CFG" && grep -q 'stepperRow("Cloud apps"' "$CFG" 
 echo "== T8: Cloud-superapp Scale / Font Size / Zoom Size =="
 check "declared: scale centred on 411 with Set 500, symmetric ruler; font and zoom steps" "
 d = ls['display_controls']; s = d['scale']
-ok = (s['label'] == 'Cloud-superapp Scale' and s['center'] == 411 and s['center'] - s['min'] == s['max'] - s['center']
+ok = (s['label'] == 'Display Scale' and s['center'] == 411 and s['center'] - s['min'] == s['max'] - s['center']
       and 500 in [p['value'] for p in s['presets']] and d['font']['label'] == 'Font Size' and d['font']['key'] == 'font_scale'
       and d['zoom']['label'] == 'Zoom Size' and d['zoom']['key'] == 'display_density_forced' and len(d['font']['steps']) >= 3 and len(d['zoom']['steps']) >= 3)
 print('OK' if ok else d)"
