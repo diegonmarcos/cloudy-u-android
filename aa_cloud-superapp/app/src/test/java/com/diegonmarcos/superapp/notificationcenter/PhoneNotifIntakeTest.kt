@@ -25,25 +25,28 @@ class PhoneNotifIntakeTest {
     }
 
     @Test fun `a progress notification changing ten times a second is recorded once per gap and its last state is kept`() {
-        // The service's loop: RECORD = full record now; HOLD = keep the newest, record it (commit) when the gap ends.
+        // The service's loop: RECORD = full record now (anything held is older and dropped); HOLD = keep the newest and,
+        // when the wait ends, put it through decide() again.
         var full = 0
         var held: String? = null
-        var flushAt = Long.MAX_VALUE
+        var waitEnds = Long.MAX_VALUE
         var lastRecorded = ""
-        val end = 1_000L + 10_000L
+        fun offer(sig: String, now: Long) {
+            when (PhoneNotifIntake.decide("dl", sig, now)) {
+                Verdict.RECORD -> { held = null; full++; lastRecorded = sig }
+                Verdict.HOLD -> { held = sig; if (waitEnds == Long.MAX_VALUE) waitEnds = now + gap }
+                Verdict.TOUCH -> held = null
+            }
+        }
         var now = 1_000L
         var pct = 0
-        while (now < end) {
-            if (now >= flushAt) { held?.let { PhoneNotifIntake.commit("dl", it, now); full++; lastRecorded = it }; held = null; flushAt = Long.MAX_VALUE }
-            val sig = PhoneNotifIntake.signature("Downloading", "${pct++}%")
-            when (PhoneNotifIntake.decide("dl", sig, now)) {
-                Verdict.RECORD -> { full++; lastRecorded = sig }
-                Verdict.HOLD -> { if (held == null) flushAt = now + gap; held = sig }
-                Verdict.TOUCH -> Unit
-            }
+        while (now < 11_000L) {
+            if (now >= waitEnds) { waitEnds = Long.MAX_VALUE; val h = held; held = null; if (h != null) offer(h, now) }
+            offer(PhoneNotifIntake.signature("Downloading", "${pct++}%"), now)
             now += 100
         }
-        held?.let { PhoneNotifIntake.commit("dl", it, now); full++; lastRecorded = it }
+        // The app stops posting: the wait that is still queued records what is held.
+        while (held != null) { now += 100; if (now >= waitEnds) { waitEnds = Long.MAX_VALUE; val h = held; held = null; if (h != null) offer(h, now) } }
         assertTrue("100 posts in 10 s were $full full records", full <= 10_000L / gap + 2)
         assertEquals("the last state was lost", PhoneNotifIntake.signature("Downloading", "${pct - 1}%"), lastRecorded)
     }

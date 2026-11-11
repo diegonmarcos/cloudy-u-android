@@ -57,6 +57,8 @@ class PhoneNotificationListenerService : NotificationListenerService() {
 
     /** The posts held back by the per-key gap, newest per key. Main thread only (the listener's callbacks arrive there). */
     private val held = HashMap<String, StatusBarNotification>()
+    /** Keys with a wait already queued. Main thread only. */
+    private val scheduled = HashSet<String>()
     private val main by lazy { Handler(Looper.getMainLooper()) }
 
     /** The service is going: nothing held is lost, and the history is on disk. */
@@ -88,16 +90,20 @@ class PhoneNotificationListenerService : NotificationListenerService() {
         val key = sbn.key
         val sig = PhoneNotifIntake.signature(title, text)
         when (PhoneNotifIntake.decide(key, sig, SystemClock.elapsedRealtime())) {
-            PhoneNotifIntake.Verdict.RECORD -> store(sbn, n, title, text)
+            // RECORD and TOUCH are the newest state of this key: an older post still held must not be recorded after it.
+            PhoneNotifIntake.Verdict.RECORD -> { held.remove(key); store(sbn, n, title, text) }
             PhoneNotifIntake.Verdict.TOUCH -> {
+                held.remove(key)
                 // Same title and text: only the time moved. The thread / reply intents are refreshed (they are in memory).
                 if (PhoneNotificationStore.touch(this, key, sbn.postTime)) keepIntents(key, n)
                 else { PhoneNotifIntake.commit(key, sig, SystemClock.elapsedRealtime()); store(sbn, n, title, text) }
             }
             PhoneNotifIntake.Verdict.HOLD -> {
-                // Changed again inside the gap: keep the newest, record it once when the gap ends.
-                if (held.put(key, sbn) == null)
-                    main.postDelayed({ held.remove(key)?.let { runCatching { recordHeld(it) } } }, PhoneNotifIntake.MIN_GAP_MS)
+                // Changed again inside the gap: keep the newest. When the wait ends it goes through this same door again,
+                // so it is recorded only if the gap is really over (else it is held once more), never twice, never early.
+                held[key] = sbn
+                if (scheduled.add(key))
+                    main.postDelayed({ scheduled.remove(key); held.remove(key)?.let { runCatching { record(it) } } }, PhoneNotifIntake.MIN_GAP_MS)
             }
         }
     }
