@@ -34,6 +34,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
@@ -85,6 +86,7 @@ import com.diegonmarcos.superapp.ui.ShellFxState
 import com.diegonmarcos.superapp.ui.SystemInfoPopup
 import com.diegonmarcos.superapp.zoomies.PetStrengthView
 import org.json.JSONObject
+import androidx.lifecycle.compose.currentStateAsState
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -815,9 +817,34 @@ internal fun StatusStripBody(model: StatusStripModel, ctx: Context) {
             // CENTRE: the clock, below the camera punch-hole / pet row.
             clock = { StripCluster(layout.getValue(StatusBarDecl.CENTRE), model, ctx, host) },
             right = { StripCluster(layout.getValue(StatusBarDecl.RIGHT), model, ctx, host) },
+            stopwatch = { StopwatchReadout(host) },
         )
         // ── Bottom hairline: faint white separator. ShellActivity nudges the toolbar island 6 dp below it. ──
         Spacer(Modifier.fillMaxWidth().height(with(density) { maxOf(1, (density.density * 0.75f).toInt()).toDp() }).background(Color(0x33FFFFFF)))
+    }
+}
+
+/**
+ * #1646 the live stopwatch time, left of the date. It reads the ONE stopwatch the date dropdown opens (TasksPopup) and exists
+ * only while that runs. It ticks (once a second, on the second) only while the launcher is STARTED and the stopwatch runs:
+ * the effect is keyed on both, so a stop or an idle stopwatch cancels it, and nothing runs in the background.
+ */
+@Composable
+internal fun StopwatchReadout(host: View) {
+    val running = TasksPopup.isStopwatchRunning()
+    if (!running) return
+    val started = androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle
+        .currentStateAsState().value.isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)
+    var ms by remember { mutableStateOf(TasksPopup.stopwatchElapsedMs()) }
+    LaunchedEffect(started) {
+        while (started) { ms = TasksPopup.stopwatchElapsedMs(); kotlinx.coroutines.delay(1000L - ms % 1000L) }
+    }
+    Tappable("strip:stopwatch", onTap = { r -> TasksPopup.show(host, r) }) {
+        Text(
+            TasksPopup.formatStopwatchBar(ms), color = Color(0xFFE9D8FD), fontSize = 12.sp, fontFamily = MONO_BOLD, fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center, maxLines = 1, softWrap = false,
+            style = androidx.compose.ui.text.TextStyle(shadow = Shadow(Color(0xCC000000), Offset(0f, 1f), 4f)),
+        )
     }
 }
 
@@ -903,13 +930,15 @@ private fun StripElementView(el: StatusElement, model: StatusStripModel, ctx: Co
 internal fun StripRow(
     reservePx: Int, dotsPx: Int, gapPx: Int, modifier: Modifier,
     left: @Composable () -> Unit, reserve: @Composable (Int) -> Unit, clock: @Composable () -> Unit, right: @Composable () -> Unit,
+    stopwatch: @Composable () -> Unit = {},
 ) {
     androidx.compose.ui.layout.Layout(
-        contents = listOf(left, { reserve(reservePx) }, clock, right), modifier = modifier,
-    ) { (lm, resm, cm, rm), c ->
+        contents = listOf(left, { reserve(reservePx) }, clock, right, stopwatch), modifier = modifier,
+    ) { (lm, resm, cm, rm, sm), c ->
         val free = androidx.compose.ui.unit.Constraints()
         val l = lm.map { it.measure(free) }; val res = resm.map { it.measure(free) }
         val ck = cm.map { it.measure(free) }; val r = rm.map { it.measure(free) }
+        val sw = sm.map { it.measure(free) }
         fun w(ps: List<androidx.compose.ui.layout.Placeable>) = ps.maxOfOrNull { it.width } ?: 0
         fun h(ps: List<androidx.compose.ui.layout.Placeable>) = ps.maxOfOrNull { it.height } ?: 0
         val room = if (c.hasBoundedWidth) c.maxWidth else w(ck) + 2 * maxOf(w(l), w(r)) + 2 * gapPx
@@ -929,6 +958,16 @@ internal fun StripRow(
             res.forEach { it.place((width - it.width) / 2, top) }
             ck.forEach { place(it, ((width - it.width * s) / 2f).roundToInt(), top + reserveH) }
             r.forEach { place(it, (width - it.width * s).roundToInt(), (height - rh) / 2) }
+            // #1646 the stopwatch readout: centred in the empty region between the left cluster and the date, scaled down
+            // (never moved onto either) when that region is narrower than it.
+            val lEnd = (w(l) * s).roundToInt() + gapPx
+            val dateStart = ((width - w(ck) * s) / 2f).roundToInt() - gapPx
+            val region = (dateStart - lEnd).coerceAtLeast(0)
+            sw.forEach {
+                val ss = if (it.width > region && it.width > 0) region.toFloat() / it.width else 1f
+                val x = lEnd + ((region - it.width * ss) / 2f).roundToInt()
+                it.placeWithLayer(x, top + reserveH + (((h(ck) * s) - it.height * ss) / 2f).roundToInt()) { scaleX = ss; scaleY = ss; transformOrigin = origin }
+            }
         }
     }
 }

@@ -76,7 +76,11 @@ object TasksPopup {
     // is monotonic across sleeps so the elapsed value is accurate
     // even if the user dismisses the popup, locks the screen, and
     // re-opens it minutes later.
-    @Volatile private var stopwatchRunning: Boolean = false
+    // #1646 snapshot-backed so the launcher bar's readout recomposes the moment the dropdown starts/stops it (one shared state).
+    private val stopwatchRunningState = mutableStateOf(false)
+    private var stopwatchRunning: Boolean
+        get() = stopwatchRunningState.value
+        set(v) { stopwatchRunningState.value = v }
     @Volatile private var stopwatchStartElapsedMs: Long = 0L
     @Volatile private var stopwatchAccumulatedMs: Long = 0L
 
@@ -85,6 +89,18 @@ object TasksPopup {
             stopwatchAccumulatedMs + (SystemClock.elapsedRealtime() - stopwatchStartElapsedMs)
         else
             stopwatchAccumulatedMs
+
+    /** #1646 whether the SHARED stopwatch runs (observable from composition). */
+    internal fun isStopwatchRunning(): Boolean = stopwatchRunning
+
+    /** #1646 the SHARED stopwatch's elapsed time now, ms. */
+    internal fun stopwatchElapsedMs(): Long = stopwatchCurrentMs()
+
+    /** #1646 the bar readout: m:ss, or h:mm:ss from an hour on. */
+    internal fun formatStopwatchBar(ms: Long): String {
+        val t = ms / 1000L
+        return if (t >= 3600L) "%d:%02d:%02d".format(t / 3600L, (t / 60L) % 60L, t % 60L) else "%d:%02d".format(t / 60L, t % 60L)
+    }
 
     /** Under a Compose anchor whose window bounds are [rect], horizontally SCREEN-centered (the drop matches Battery/SysInfo). */
     fun show(host: View, rect: androidx.compose.ui.unit.IntRect) {
@@ -308,6 +324,11 @@ object TasksPopup {
         val s = totalSec % 60L
         val tenths = (ms % 1000L) / 100L
         return "%d:%02d.%d".format(m, s, tenths)
+    }
+
+    internal fun toggleStopwatchForTest() {
+        if (stopwatchRunning) { stopwatchAccumulatedMs += SystemClock.elapsedRealtime() - stopwatchStartElapsedMs; stopwatchRunning = false }
+        else { stopwatchStartElapsedMs = SystemClock.elapsedRealtime(); stopwatchRunning = true }
     }
 
     internal fun resetStopwatchForTest() { stopwatchRunning = false; stopwatchAccumulatedMs = 0L; stopwatchStartElapsedMs = 0L }

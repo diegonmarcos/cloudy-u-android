@@ -7,6 +7,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
+import com.diegonmarcos.superapp.cal.TasksPopup
 import com.diegonmarcos.superapp.network.NetworkSections
 import com.diegonmarcos.superapp.settings.LauncherSettingsPrefs
 import com.diegonmarcos.superapp.ui.KitPageHarness
@@ -93,5 +94,60 @@ class StatusStripComposeTest : KitPageHarness() {
         showStrip()
         compose.onNodeWithTag("strip:clock").performClick()
         compose.waitForIdle()
+    }
+
+    // ── #1646 the live stopwatch readout, left of the date ──
+
+    private fun swText() = compose.onNodeWithTag("strip:stopwatch").fetchSemanticsNode()
+        .config[SemanticsProperties.Text].joinToString("") { it.text }
+
+    private fun advance(ms: Long) {
+        org.robolectric.shadows.ShadowSystemClock.advanceBy(java.time.Duration.ofMillis(ms))
+        compose.mainClock.advanceTimeBy(ms)
+        compose.waitForIdle()
+    }
+
+    @Test
+    fun `W1 no readout while the stopwatch is idle`() {
+        TasksPopup.resetStopwatchForTest()
+        showStrip()
+        compose.onNodeWithTag("strip:stopwatch").assertDoesNotExist()
+    }
+
+    @Test
+    fun `W2 the readout shows from the shared stopwatch, left of the date, and goes away when it stops`() {
+        TasksPopup.resetStopwatchForTest()
+        showStrip()
+        compose.runOnUiThread { TasksPopup.toggleStopwatchForTest() }  // the dropdown's own state, no second timer
+        compose.waitForIdle()
+        val sw = compose.onNodeWithTag("strip:stopwatch").fetchSemanticsNode().boundsInRoot
+        val date = compose.onNodeWithTag("strip:clock").fetchSemanticsNode().boundsInRoot
+        assertTrue("readout $sw is left of the date $date", sw.right <= date.left)
+        assertTrue("readout reads m:ss: ${swText()}", Regex("""\d+:\d\d""").matches(swText()))
+        assertEquals("date stays centred", compose.onRoot().fetchSemanticsNode().size.width / 2f, (date.left + date.right) / 2f, 2f)
+        compose.runOnUiThread { TasksPopup.toggleStopwatchForTest() }
+        compose.waitForIdle()
+        compose.onNodeWithTag("strip:stopwatch").assertDoesNotExist()
+        TasksPopup.resetStopwatchForTest()
+    }
+
+    @Test
+    fun `W3 it ticks while the launcher is started and freezes while it is stopped`() {
+        TasksPopup.resetStopwatchForTest()
+        showStrip()
+        compose.runOnUiThread { TasksPopup.toggleStopwatchForTest() }
+        compose.waitForIdle()
+        advance(3_000)
+        assertEquals("0:03", swText())
+        compose.activityRule.scenario.moveToState(androidx.lifecycle.Lifecycle.State.CREATED)
+        compose.waitForIdle()
+        val frozen = swText()
+        advance(5_000)
+        assertEquals("no tick while the launcher is stopped", frozen, swText())
+        compose.activityRule.scenario.moveToState(androidx.lifecycle.Lifecycle.State.RESUMED)
+        compose.waitForIdle()
+        advance(2_000)
+        assertEquals("0:10", swText())
+        TasksPopup.resetStopwatchForTest()
     }
 }
