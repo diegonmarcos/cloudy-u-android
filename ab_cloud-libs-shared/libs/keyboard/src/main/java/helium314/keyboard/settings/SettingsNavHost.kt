@@ -12,6 +12,8 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.compose.runtime.getValue
 import androidx.navigation.compose.rememberNavController
 import helium314.keyboard.latin.common.LocaleUtils.constructLocale
 import helium314.keyboard.latin.settings.SettingsSubtype.Companion.toSettingsSubtype
@@ -70,6 +72,7 @@ fun SettingsNavHost(
         if (!navController.popBackStack()) onClickBack()
     }
 
+    val hostContent: @Composable () -> Unit = {
     NavHost(
         navController = navController,
         startDestination = startDestination ?: SettingsDestination.Home, // #1622: the icon-grid Home Page
@@ -205,6 +208,13 @@ fun SettingsNavHost(
             SubtypeScreen(initialSubtype = it.arguments?.getString("subtype")!!.toSettingsSubtype(), onClickBack = ::goBack)
         }
     }
+    }
+    // #1651: the host app's chrome (the fleet default top + bottom nav bars) wraps the pages; none registered = the bare NavHost
+    val chrome = KeyboardSettingsExtras.chrome
+    if (chrome == null) hostContent() else {
+        val route by navController.currentBackStackEntryAsState()
+        chrome(route?.destination?.route, { r -> navController.navigate(r) { launchSingleTop = true } }, hostContent)
+    }
     if (target.value != SettingsDestination.Settings/* && target.value != navController.currentBackStackEntry?.destination?.route*/)
         navController.navigate(route = target.value)
 }
@@ -268,6 +278,7 @@ object SettingsDestination {
         "translation" to Translation,
         "grammar_check" to GrammarCheck,
         "draft_answer" to DraftAnswer,
+        "all_settings" to Settings, // #1651 the Config page's keyboard tab opens the grouped All settings (#1650)
     )
 
     /** The route [name] asks for, or null when it is not one another app may reach. */

@@ -362,8 +362,7 @@
         "_doc": "Apps whose Configs does not carry the fleet-default tail yet.",
         "ac_cloud-browser": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
         "ac_cloud-c3": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
-        "ac_cloud-c3-webserver": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry.",
-        "ac_cloud-keyboard": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry."
+        "ac_cloud-c3-webserver": "Tail rollout (#1630): not wired yet; link libs:fleetconfigs-agents, -logcat and -xray (build.json modules + app/build.gradle) and delete this entry."
       }
     }
   },

@@ -35,6 +35,12 @@ class App : Application(), WorkManagerConfiguration.Provider {
                 com.diegonmarcos.superapp.fleetconfigs.FleetConfigsEntries.open(ctx, page)
             }
         }
+        // #1651 the fleet default top + bottom nav bars around the settings pages, and the keyboard's own tab of the standard
+        // Configs strip ({app tabs} | Agents, Perms, Logcat, X-Ray App, About; the tail tabs register from the linked fleetconfigs libs).
+        helium314.keyboard.settings.KeyboardSettingsExtras.chrome = { route, open, content -> KeyboardChrome.Draw(route, open, content) }
+        com.diegonmarcos.superapp.fleetconfigs.FleetConfigsExtensions.register(
+            com.diegonmarcos.superapp.fleetconfigs.FleetConfigsTab("keyboard", "Keyboard", "settings") { dark -> KeyboardConfigsTabBody(dark) }
+        )
         // Crash takeout — on any uncaught exception, drop the stack into a
         // single, predictably-named SHARED file: Download/cloud-keyboard-log-error.log
         // (MediaStore, no permission on Android 10+). Readable from Termux

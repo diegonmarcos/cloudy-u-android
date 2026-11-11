@@ -31,3 +31,20 @@ enum class AllSettingsPage(val section: HomeGroup) {
         fun of(section: HomeGroup): List<AllSettingsPage> = entries.filter { it.section == section }
     }
 }
+
+/**
+ * #1651 the settings' BOTTOM NAV, declared once, in order: Toolbar, Themes, Writer, Autocomplete, Clipboard. The host's chrome draws the
+ * fleet default bottom bar (libs:ui-nav-bars NavBarBottom) from this list; each tab opens an existing page ([route]), so no
+ * surface is removed. Writer is the Text Enhancements page (rewrite / draft with AI). [icon] is a libs:ui-icons catalog key.
+ */
+enum class BottomNavTab(val id: String, val label: String, val icon: String, val route: String) {
+    TOOLBAR("toolbar", "Toolbar", "apps", SettingsDestination.Toolbar),
+    THEMES("themes", "Themes", "palette", SettingsDestination.Themes),
+    WRITER("writer", "Writer", "edit", SettingsDestination.TextEnhance),
+    AUTOCOMPLETE("autocomplete", "Autocomplete", "auto_fix_high", SettingsDestination.Autocomplete),
+    CLIPBOARD("clipboard", "Clipboard", "content_paste", SettingsDestination.Clipboard);
+
+    companion object {
+        fun forRoute(route: String?): BottomNavTab? = entries.firstOrNull { it.route == route }
+    }
+}

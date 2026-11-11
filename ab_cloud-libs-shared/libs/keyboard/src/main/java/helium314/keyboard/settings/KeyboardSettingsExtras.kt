@@ -1,6 +1,7 @@
 package helium314.keyboard.settings
 
 import android.content.Context
+import androidx.compose.runtime.Composable
 
 /**
  * #1352 entries the hosting app puts at the top of the keyboard's Configs, under the fleet's own additions. The standalone
@@ -11,4 +12,11 @@ object KeyboardSettingsExtras {
     class Entry(val label: String, val description: String, val open: (Context) -> Unit)
 
     @Volatile var entries: List<Entry> = emptyList()
+
+    /**
+     * #1651 the host's chrome around the settings pages: the fleet default top and bottom nav bars (libs:ui-nav-bars), which this
+     * lib does not depend on. Called with the open route, a way to open a route, and the page content to draw between the bars.
+     * null (the keyboard engines APK) draws the pages bare.
+     */
+    @Volatile var chrome: (@Composable (route: String?, open: (String) -> Unit, content: @Composable () -> Unit) -> Unit)? = null
 }
