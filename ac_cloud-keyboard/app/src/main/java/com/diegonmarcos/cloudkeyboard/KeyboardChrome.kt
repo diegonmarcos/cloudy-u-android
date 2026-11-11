@@ -4,6 +4,12 @@ import android.content.Context
 import android.content.Intent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Text
 import androidx.compose.foundation.clickable
@@ -38,9 +44,13 @@ object KeyboardChrome {
             onNavigate = { },
             onAccount = { },
             onConfigs = { openConfigs(ctx) },
+            // #1652 the settings window is edge-to-edge: the status bar is cleared HERE, once (statusBarsPadding also consumes the
+            // inset, so no page below pads for it again). The scaffold paints its underlay behind the band itself.
+            modifier = Modifier.statusBarsPadding(),
         ) {
             Column {
-                Box(Modifier.weight(1f).fillMaxWidth()) { content() }
+                // the bottom bar owns the navigation-bar inset, so the pages above it do not pad for it a second time
+                Box(Modifier.weight(1f).fillMaxWidth().consumeWindowInsets(WindowInsets.systemBars.only(WindowInsetsSides.Bottom))) { content() }
                 NavBarBottom(
                     entries = BottomNavTab.entries.map { navEntry(it.id, it.label, it.icon) },
                     selectedId = tab?.id,

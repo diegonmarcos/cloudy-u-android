@@ -3,9 +3,12 @@ package helium314.keyboard.settings
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
@@ -138,10 +141,38 @@ fun <T: Any?> SearchScreen(
                 if (showSearch || searchText.text.isNotEmpty()) setShowSearch(false)
                 else onClickBack()
             }
+            val actionsRow: @Composable RowScope.() -> Unit = {
+                if (icon == null)
+                    IconButton(onClick = { setShowSearch(!showSearch) }) { SearchIcon() }
+                else
+                    icon()
+                if (menu != null)
+                    Box {
+                        var showMenu by remember { mutableStateOf(false) }
+                        IconButton(
+                            onClick = { showMenu = true }
+                        ) { Icon(painterResource(R.drawable.ic_arrow_left), "menu", Modifier.rotate(-90f)) }
+                        DropdownMenu(
+                            expanded = showMenu,
+                            onDismissRequest = { showMenu = false }
+                        ) {
+                            menu.forEach {
+                                DropdownMenuItem(
+                                    text = { Text(it.first) },
+                                    onClick = { showMenu = false; it.second() }
+                                )
+                            }
+                        }
+                    }
+            }
             Surface(
                 color = MaterialTheme.colorScheme.surfaceContainer,
             ) {
                 Column {
+                    // #1652 one top treatment: under the host's fleet top bar a page draws only its actions row (search, menu), no title bar
+                    if (KeyboardSettingsExtras.chromeActive) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                        actionsRow()
+                    } else
                     TopAppBar(
                         title = title,
                         windowInsets = WindowInsets(0),
@@ -151,30 +182,7 @@ fun <T: Any?> SearchScreen(
                                 else onClickBack()
                             }
                         },
-                        actions = {
-                            if (icon == null)
-                                IconButton(onClick = { setShowSearch(!showSearch) }) { SearchIcon() }
-                            else
-                                icon()
-                            if (menu != null)
-                                Box {
-                                    var showMenu by remember { mutableStateOf(false) }
-                                    IconButton(
-                                        onClick = { showMenu = true }
-                                    ) { Icon(painterResource(R.drawable.ic_arrow_left), "menu", Modifier.rotate(-90f)) }
-                                    DropdownMenu(
-                                        expanded = showMenu,
-                                        onDismissRequest = { showMenu = false }
-                                    ) {
-                                        menu.forEach {
-                                            DropdownMenuItem(
-                                                text = { Text(it.first) },
-                                                onClick = { showMenu = false; it.second() }
-                                            )
-                                        }
-                                    }
-                                }
-                        },
+                        actions = actionsRow,
                     )
                     ExpandableSearchField(
                         expanded = showSearch,

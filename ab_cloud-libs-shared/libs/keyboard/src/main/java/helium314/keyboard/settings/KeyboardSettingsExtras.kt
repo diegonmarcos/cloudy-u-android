@@ -18,5 +18,8 @@ object KeyboardSettingsExtras {
      * lib does not depend on. Called with the open route, a way to open a route, and the page content to draw between the bars.
      * null (the keyboard engines APK) draws the pages bare.
      */
+    /** #1652 true when [chrome] draws the one top bar: pages then draw no title bar of their own (back = system back, search stays). */
+    val chromeActive: Boolean get() = chrome != null
+
     @Volatile var chrome: (@Composable (route: String?, open: (String) -> Unit, content: @Composable () -> Unit) -> Unit)? = null
 }

@@ -51,4 +51,16 @@ class KeyboardNavChromeTest {
         assertTrue(appFile("app/src/main/java/com/diegonmarcos/cloudkeyboard/App.kt").contains("FleetConfigsTab(\"keyboard\""))
         assertEquals(SettingsDestination.Settings, SettingsDestination.externalRoute("all_settings"))
     }
+
+    @Test fun theChromeClearsTheStatusBarOnceAndPagesDrawNoSecondTitleBar() {
+        // #1652 edge-to-edge window: the status-bar inset is applied (and consumed) by the chrome, not drawn over
+        val chrome = appFile("app/src/main/java/com/diegonmarcos/cloudkeyboard/KeyboardChrome.kt")
+        assertTrue(chrome.contains("Modifier.statusBarsPadding()"))
+        assertTrue(chrome.contains("consumeWindowInsets(WindowInsets.systemBars.only(WindowInsetsSides.Bottom))"))
+        // one top treatment: under the chrome a page draws its actions row (search stays), not a TopAppBar
+        val search = File("src/main/java/helium314/keyboard/settings/SearchScreen.kt").readText()
+        assertTrue(search.contains("if (KeyboardSettingsExtras.chromeActive) Row("))
+        assertTrue(search.contains("actions = actionsRow"))
+        assertTrue(File("src/main/java/helium314/keyboard/settings/KeyboardSettingsExtras.kt").readText().contains("val chromeActive: Boolean get() = chrome != null"))
+    }
 }
