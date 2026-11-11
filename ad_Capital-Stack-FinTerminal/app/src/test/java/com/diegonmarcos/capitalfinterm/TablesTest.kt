@@ -39,7 +39,7 @@ class TablesTest {
 
     @Test fun performanceRowsComeFromTheContainerThroughPerformanceRow() {
         val http = Fake { u -> if (u.startsWith("http://mesh-base/v1/history?symbol=XLK")) v1Bars("2025-10-30" to 100.0, "2026-10-30" to 110.0) else null }
-        val data = load("eq_dm_us", "sectors", http)
+        val data = load("world_equity_indices", "dm_sectors", http)
         val xlk = data.rows.first { it[0] == "XLK Technology" }
         assertEquals(listOf("Name", "Last") + Performance.COLUMNS, data.columns)
         assertEquals("+10.00%", xlk[2 + Performance.COLUMNS.indexOf("1Y")])

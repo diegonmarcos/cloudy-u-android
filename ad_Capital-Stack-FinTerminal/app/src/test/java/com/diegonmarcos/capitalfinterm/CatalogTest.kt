@@ -45,7 +45,7 @@ class CatalogTest {
 
     @Test fun everyFinTermEntryMapsToAtLeastOneDeclaredSource() {
         val entries = finTermEntries()
-        assertEquals("entries read from build.json", 36, entries.size) // #1447 PM A1, B1, C1, D1, D0 (#1478 A2 dropped)
+        assertEquals("entries read from build.json", 34, entries.size) // #1447 PM A1, B1, C1, D1, D0 (#1478 A2 dropped); #1612 EQ DM+EM merged into World Indices Equity
         assertEquals(emptyList<Pair<String, String>>(), Catalog.unmapped(sources, entries))
     }
 

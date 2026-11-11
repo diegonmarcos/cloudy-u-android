@@ -26,7 +26,7 @@ class DashboardsTest {
                 assertEquals(tab, d.tab)
             }
         }
-        assertEquals(36, count) // #1399 FI Market Monitor removed; #1447 PM A1, B1, C1, D1, D0 (#1478 A2 dropped)
+        assertEquals(34, count) // #1399 FI Market Monitor removed; #1447 PM A1, B1, C1, D1, D0 (#1478 A2 dropped); #1612 EQ DM+EM merged into World Indices Equity
         assertEquals(count, dashboards.size)
     }
 

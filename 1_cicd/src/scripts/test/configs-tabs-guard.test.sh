@@ -22,7 +22,7 @@ out="$(cd "$ROOT" && python3 "$GUARD" .)"; rc=$?
 if [ "$rc" -eq 0 ]; then ok "the real tree passes ($(tail -1 <<<"$out"))"; else fail "the real tree is red"; printf '%s\n' "$out"; fi
 
 mkdir -p "$BASE"
-( cd "$ROOT" && for f in a[acd]_*/build.json "$DATA" "$LIB" "$EXT" ac_cloud-media-center/web/assets/configs.js $(grep -rlE 'FleetConfigsPageBody\(|FleetGeneralPage\(|FleetConfigsScreen\(' --include=*.kt --include=*.java a[acd]_* 2>/dev/null | grep -vE '/(test|androidTest)/'); do mkdir -p "$BASE/$(dirname "$f")"; cp "$f" "$BASE/$f"; done )
+( cd "$ROOT" && for f in a[acd]_*/build.json $(find a[acd]_* \( -name "build.gradle" -o -name "build.gradle.kts" -o -name "build-extras.gradle" -o -name "settings.gradle" -o -name "settings.gradle.kts" \) -not -path "*/node_modules/*" -not -path "*/build/*" -not -path "*/src/*") "$DATA" "$LIB" "$EXT" ac_cloud-media-center/web/assets/configs.js $(grep -rlE 'FleetConfigsPageBody\(|FleetGeneralPage\(|FleetConfigsScreen\(' --include=*.kt --include=*.java a[acd]_* 2>/dev/null | grep -vE '/(test|androidTest)/'); do mkdir -p "$BASE/$(dirname "$f")"; cp "$f" "$BASE/$f"; done )
 python3 "$GUARD" "$BASE" >/dev/null || fail "the fixture is red before any mutation"
 
 # mutant NAME RULE PYTHON — PYTHON edits the fixture (cwd = fixture) and must change a file; the guard must go red naming RULE.
@@ -102,7 +102,8 @@ mutant "the lib drops the custom X-Ray hook" T7 "
 p = '$EXT'; s = open(p).read(); a = 'public fun registerXrayPage('; assert a in s
 open(p, 'w').write(s.replace(a, 'public fun registerXrayPageGone('))"
 mutant "an app is wired without the Agents lib and not pending" T7 "$J
-d = load('ad_Capital-Stack-FinTerminal/build.json'); del d['modules']['libs:fleetconfigs-agents']; save('ad_Capital-Stack-FinTerminal/build.json', d)"
+d = load('ad_Capital-Stack-FinTerminal/build.json'); del d['modules']['libs:fleetconfigs-agents']; save('ad_Capital-Stack-FinTerminal/build.json', d)
+g = 'ad_Capital-Stack-FinTerminal/app/build.gradle'; t = open(g).read().split('\\n'); open(g, 'w').write('\\n'.join(x for x in t if 'fleetconfigs-agents' not in x))"
 mutant "a wired app stays in tail.pending (stale)" T7 "$J
 d = load('$DATA'); d['tabs']['tail']['pending']['ad_Capital-Stack-FinTerminal'] = 'x' * 40; save('$DATA', d)"
 mutant "tail.pending names no app" T7 "$J
