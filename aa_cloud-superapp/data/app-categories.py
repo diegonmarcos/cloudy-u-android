@@ -38,6 +38,11 @@ def derive(bj, apps):
     for g in section["tile_groups"]:
         members = []
         for tile in g["tiles"]:
+            # #1627 a tile flagged category_skip is a DUPLICATE shortcut (the same app also lives in another
+            # row that is its real home, e.g. the 'me' tile added to Data beside the Me row). First-group-wins
+            # would otherwise re-home the app's Store category onto this duplicate and empty the real category.
+            if tile.get("category_skip"):
+                continue
             f = fleet_of(tile)
             if f and f in tab and f not in seen:
                 seen.add(f)

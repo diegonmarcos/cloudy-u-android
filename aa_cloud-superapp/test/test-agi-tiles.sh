@@ -26,8 +26,8 @@
 #       is a folder any more
 #   T4  a not-installed extapp tile draws the #249 placeholder, with strings in
 #       every locale, and the install snack is a string resource
-#   T5  the Configs row reads Quick Actions, Watchdog | Account, C3 | Store (#1611 owner order 2026-11:
-#       About dropped from the row, still reachable from the Configs grid) —
+#   T5  the Configs row reads Quick Actions, UI | Firewall, WiFi | Store | Account, C3 | Watchdog | About
+#       (#1628 owner order, supersedes #1611) —
 #       and SuperApp is declared in exactly one tile group under ui.sections
 #   T6  (#803) the Search tile declares tint:false (its glyph is the mockup's gradient), the
 #       tile parser reads `tint`, and tileCell tints only a missing or tint:true tile
@@ -190,12 +190,12 @@ for d in locales:
               "phone_install_downloading", "phone_install_no_source"):
         check('name="%s"' % s in xml, "%s/strings.xml defines %s" % (d, s))
 
-print("== T5: the Configs row reads Quick Actions, Watchdog │ Account, C3 │ Store ==")
+print("== T5: the Configs row reads Quick Actions, UI | Firewall, WiFi | Store | Account, C3 | Watchdog | About (#1628) ==")
 configs = [g for g in groups(bj["ui"]["sections"], "Configs")]
 check(len(configs) == 1, "exactly one Configs tile group under ui.sections (found %d)" % len(configs))
 if configs:
     row = [t.get("label") for t in configs[0]["tiles"]]
-    check(row == ["Quick Actions", "Watchdog", "|", "Account", "C3", "|", "Store"], "Configs row = Quick Actions, Watchdog | Account, C3 | Store (#1611 owner order 2026-11; About dropped from the row) (got %s)" % row)
+    check(row == ["Quick Actions", "UI", "|", "Firewall", "WiFi", "|", "Store", "|", "Account", "C3", "|", "Watchdog", "|", "About"], "Configs row = Quick Actions, UI | Firewall, WiFi | Store | Account, C3 | Watchdog | About (#1628 owner order, supersedes #1611) (got %s)" % row)
 lnk = [g for g in groups(bj["ui"]["sections"], "Lnktree")]
 if lnk:
     sa = lnk[0]["tiles"][0] if lnk[0]["tiles"] else {}

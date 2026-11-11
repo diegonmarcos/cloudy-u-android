@@ -5,7 +5,9 @@
 #      Watchdog is no Network item; no agents-watchtower page is declared
 #   W2 the hub's sections are DERIVED (Sections.hubSections over the subgroups), routed by data (SectionPages hub_sections
 #      branch), and drawn with the Cloud ▸ Apps heading and tile components (GroupTitle, TileStrip), not a copy
-#   W3 Cloud ▸ Apps ▸ Configs holds Watchdog (page:config/agents-watchdog) where Firewall was, and no Firewall tile
+#   W3 Cloud ▸ Apps ▸ Configs holds Watchdog as the C3-Watchdog app (extapp:c3-watchdog) and a Firewall tile
+#      (page:config/firewall) — #1628 redefined this apps-Configs row (Quick Actions, UI | Firewall, WiFi | Store |
+#      Account, C3 | Watchdog | About); the config-section Agents hub page (W1) is a separate surface and unchanged.
 set -u
 APP="$(cd "$(dirname "$0")/.." && pwd)"
 KT="$APP/app/src/main/java/com/diegonmarcos/superapp/launcher"
@@ -33,9 +35,10 @@ echo "$out" | grep -qx "AGENTS agents-watchdog:Agents:'':Network" \
   && ok "the Agents hub (agents-watchdog, relabelled Agents) has hub_sections [Network] and no action (an in-app hub page, #1610)" \
   || bad "agents-watchdog is not exactly the Agents hub (hub_sections [Network]) without an action"
 echo "$out" | grep -q '^NETWORK.*watchdog' && bad "Watchdog is still a Network item" || ok "Watchdog left Network"
-echo "$out" | grep -q '|Watchdog=page:config/agents-watchdog|' && ok "Cloud ▸ Apps ▸ Configs opens page:config/agents-watchdog" \
-  || bad "Cloud ▸ Apps ▸ Configs has no Watchdog tile on page:config/agents-watchdog"
-echo "$out" | grep -q 'Firewall=' && bad "Cloud ▸ Apps ▸ Configs still has a Firewall tile" || ok "Cloud ▸ Apps ▸ Configs no longer carries Firewall"
+echo "$out" | grep -q 'Watchdog=extapp:c3-watchdog' && ok "Cloud ▸ Apps ▸ Configs Watchdog opens the C3-Watchdog app (extapp:c3-watchdog, #1628)" \
+  || bad "Cloud ▸ Apps ▸ Configs has no Watchdog tile on extapp:c3-watchdog (#1628)"
+echo "$out" | grep -q 'Firewall=page:config/firewall' && ok "Cloud ▸ Apps ▸ Configs carries a Firewall tile on page:config/firewall (#1628)" \
+  || bad "Cloud ▸ Apps ▸ Configs has no Firewall tile on page:config/firewall (#1628)"
 
 echo "== W2: derived, routed by data, drawn by the shared component =="
 grep -qE 'hubSections\.isNotEmpty\(\) -> SubgroupHubFragment\.newInstance\(sectionId, pageId\)' "$KT/SectionPages.kt" \

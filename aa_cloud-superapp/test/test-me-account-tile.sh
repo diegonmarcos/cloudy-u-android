@@ -16,7 +16,7 @@ eq "MySocials and MyTrips left the Me row" "$(jq -r "$G | select(.title == \"Me\
 eq "Me row starts with the Me tile" "$(jq -r "$G | select(.title == \"Me\") | .tiles[0].label" "$BJ")" "Me"
 eq "Me row ends |, Profile (#1362, #1440)" "$(jq -r "$G | select(.title == \"Me\") | [.tiles[-2:][].label] | join(\",\")" "$BJ")" "|,Profile"
 eq "Profile tile opens Cloud Me's profile page (#1440)" "$(jq -r "$G | select(.title == \"Me\") | .tiles[-1].target" "$BJ")" "extapp:cloud-me#page:profile/profile"
-eq "Tools Primary has no Account tile" "$(jq -r "$G | select(.title == \"Tools Primary\") | [.tiles[] | select(.label == \"Account\")] | length" "$BJ")" "0"
-eq "Tools Primary now ends with Vault (Light moved to Cloud Calc > Toolkit)" "$(jq -r "$G | select(.title == \"Tools Primary\") | .tiles[-1].label" "$BJ")" "Vault"
+eq "Primary (renamed from 'Tools Primary', #1627) has no Account tile" "$(jq -r "$G | select(.title == \"Primary\") | [.tiles[] | select(.label == \"Account\")] | length" "$BJ")" "0"
+eq "Primary now ends with Wallet (#1627 moved Vault out to Data; the '||' divider precedes Wallet)" "$(jq -r "$G | select(.title == \"Primary\") | .tiles[-1].label" "$BJ")" "Wallet"
 echo; echo "== RESULT: $PASS passed, $FAIL failed =="
 [ "$FAIL" -eq 0 ]

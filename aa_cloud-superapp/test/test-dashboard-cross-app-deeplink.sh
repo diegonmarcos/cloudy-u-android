@@ -265,8 +265,8 @@ for gone in ("myprojects", "myfin"):
     assert gone not in placed, f"{gone} is back in a project row — the owner removed it"
 PY
 
-echo "== T6 (#1092): Cloud ▸ Apps row order, Vault and Account in Tools Primary =="
-python3 - "$BJ" "$APP/data/constellation-fleet.json" <<'PY' && ok "rows follow the derived registry (constellation-fleet.json app_categories); Vault in Tools Primary; Account closes Me, after a '|' (#1362); Account kept in Configs" || bad "Cloud ▸ Apps row order or the Vault/Account placement drifted"
+echo "== T6 (#1092, #1627): Cloud ▸ Apps row order; Primary ends Wallet, Vault+Me in Data; Account closes Me and is kept in Configs =="
+python3 - "$BJ" "$APP/data/constellation-fleet.json" <<'PY' && ok "rows follow the derived registry (constellation-fleet.json app_categories); #1627 Primary ends with Wallet, Vault and a Me tile moved into Data; Account closes Me after a '|' (#1362); Account kept in Configs" || bad "Cloud ▸ Apps row order or the Vault/Account placement drifted"
 import json, sys
 d = json.load(open(sys.argv[1]))
 cloud = next(s for s in d["ui"]["sections"] if s["id"] == "cloud")
@@ -277,8 +277,11 @@ want = [c["label"] for c in json.load(open(sys.argv[2]))["app_categories"] if c[
 assert titles == want, (titles, "!=", want, "regen: data/regen.sh --constellation-only")
 g = {x["title"]: [t.get("label") for t in x["tiles"]] for x in cloud["tile_groups"]}
 assert g["Me"] == ["Me", "|", "Me-Health", "Experienc.", "Tasks", "|", "Me-Invent.", "Me-Buro", "Me-LLC", "|", "Profile"], g["Me"]  # #1440 Account -> Profile (Cloud Me profile page)
-assert g["Tools Primary"][-2:] == ["Wallet", "Vault"] and "Account" not in g["Tools Primary"], g["Tools Primary"]  # #1155 order (Light left for Cloud Calc > Toolkit); Account moved to Me (last since #1362)
-assert "Vault" not in g["Data Apps"] and "Me" not in g["Tools Primary"], g
+# #1627 renamed 'Tools Primary'->'Primary' and 'Data Apps'->'Data'; Drive moved Data->Primary, Vault moved Primary->Data,
+# and a second Me tile (data-me) was added to Data. Primary now ends Writer, '||', Wallet; Account stays out of Primary.
+assert g["Primary"][-2:] == ["||", "Wallet"] and "Account" not in g["Primary"] and "Vault" not in g["Primary"], g["Primary"]
+assert "Vault" in g["Data"] and "Me" in g["Data"], g["Data"]  # #1627 Vault and a Me tile close the Data row (after '||')
+assert "Me" not in g["Primary"], g["Primary"]
 assert "Account" in g["Configs"], "Account must stay in Configs (intentional duplicate)"
 ids = [t["id"] for x in cloud["tile_groups"] for t in x["tiles"] if t.get("id")]
 assert len(ids) == len(set(ids)), "tile ids must stay unique"

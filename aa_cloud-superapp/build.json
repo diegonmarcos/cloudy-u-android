@@ -2908,6 +2908,81 @@
         ],
         "tile_groups": [
           {
+            "_doc": "#1627 Primary (renamed from 'Tools Primary'). Order: Drive, Browser | Calc, Navigation, Camera, Keyboard, Writer || Wallet. Single '|' after Browser, DOUBLE '||' after Writer. Drive moved in from Data; Vault moved out to Data. Pinned by test-primary-tools-order.sh, test-calc-tile.sh, test-camera-tiles.sh, test-writer-tile.sh, test-me-account-tile.sh and test-quickmarks-field-parity.sh.",
+            "title": "Primary",
+            "tiles": [
+              {
+                "_doc": "#1627 Drive leads the Primary group (moved here from Data). Drive, the leading tile of Data Apps. It used to be a `page:drive/connections` deep link into an in-app section; task 302/304 lifted those four tabs out into the standalone Cloud Drive APK (ac_cloud-drive, com.diegonmarcos.clouddrive), whose Files tab is a full native local file manager rather than a list of remote back ends. The tile now LAUNCHES that app through the `extapp:` resolver and ui.external_apps.cloud-drive. The tile id is unchanged because the Home tile rows address it by id. ICON \u2014 THIS TILE IS THE ONE PLACE THE DRIVE GLYPH IS DECLARED. The one-hand left-edge `down` sector carries no icon field of its own: libs/launcher-onehand/build.gradle derives action_catalogue from these tiles, canonicalising `extapp:cloud-drive` and `app:com.diegonmarcos.clouddrive` onto one key through ui.external_apps, and OneHandAccessibilityService.declaredIcon draws whatever this field names when the APK is not installed. Changing it here therefore changes the tile AND the edge sector, and there is deliberately no second field anywhere to disagree with it. It was ic_p_sol_cloud, a shared palette glyph four other entries also use and the mark the in-app Drive PAGE wore; task 404 made it ic_drive, which now holds Cloud Drive OWN launcher foreground copied verbatim from ac_cloud-drive/app/src/main/res/drawable/ic_launcher_foreground.xml \u2014 the same thing Writer, Camera and Nav already do for their extracted apps. Sections.iconResFor falls back to ic_link_tile in silence when a name resolves to nothing, so both the existence of that drawable and its provenance are pinned by test-onehand-app-sector-icon.sh rather than trusted.",
+                "id": "drive-conn",
+                "label": "Drive",
+                "icon": "ic_drive",
+                "target": "extapp:cloud-drive"
+              },
+              {
+                "_doc": "Cloud-Browser \u2014 the dedicated WebView browser app (ac_cloud-browser). libs:browser (BrowserHostFragment + BrowserTabPrefs) was MOVED out of the SuperApp into Cloud-Browser, so this tile no longer routes to an in-app section. target=extapp:cloud-browser \u2192 MainActivity.launchExternalApp opens com.diegonmarcos.cloudbrowser if installed, else downloads + installs ui.external_apps[id=cloud-browser].install_apk_url. Browser also handles http/https VIEW intents so other apps can open links in it. icon ic_world (globe) stays \u2014 visually distinct from the App Tabs tile (ic_mode_apps).",
+                "id": "browser",
+                "label": "Browser",
+                "icon": "ic_world",
+                "target": "extapp:cloud-browser"
+              },
+              {
+                "_doc": "#1627 Single divider ('|'): `separator:true`; GroupedTilesFragment draws a thin TileDivider on the previous tile's edge. Not clickable, not focusable, no target, dropped by TileGroup.destinations.",
+                "id": "primary-sep-1",
+                "label": "|",
+                "separator": true
+              },
+              {
+                "_doc": "Calc \u2014 hands off to the standalone Cloud Calc app (ac_cloud-calc, com.diegonmarcos.cloudcalc, read from ITS android.application_id and app/build.gradle namespace). #772: the owner asked for it IMMEDIATELY BEFORE Writer in this row, and GroupedTilesFragment walks group.tiles in declared order with no sort, so array position is that placement and test-calc-tile.sh pins it as 'the tile right after calc is writer'. Same shape as Writer: target=extapp:cloud-calc \u2192 launchExternalApp opens the package if installed, else installs ui.external_apps[id=cloud-calc].install_apk_url (ABI-resolved through the fleet assets map). icon ic_calc is Cloud Calc's own launcher foreground, cropped to its art like ic_writer.",
+                "id": "calc",
+                "label": "Calc",
+                "icon": "ic_calc",
+                "target": "extapp:cloud-calc"
+              },
+              {
+                "_doc": "Navigation \u2014 hands off to the dedicated Cloud-Nav app (ac_cloud-nav). libs:maps (MapLibre tracker + timeline + MyTrips) was MOVED out of the SuperApp into Cloud-Nav, so this tile no longer routes to an in-app section. target=extapp:cloud-nav \u2192 MainActivity.launchExternalApp opens com.diegonmarcos.cloudnav if installed, else downloads + installs ui.external_apps[id=cloud-nav].install_apk_url (Cloud-Nav.apk). icon ic_nav (ic_maps left with libs:maps). For the system Google Maps launcher use action:app://com.google.android.apps.maps from anywhere else.",
+                "id": "maps",
+                "label": "Navigation",
+                "icon": "ic_nav",
+                "target": "extapp:cloud-nav"
+              },
+              {
+                "_doc": "Camera \u2014 the fleet's OWN camera (ac_cloud-camera, applicationId cld.camera, our signed build of GrapheneOS Camera), not a third-party one. The owner asked for it 'as last' in this row on 2026-09-10, and LAST HERE IS ARRAY POSITION: GroupedTilesFragment walks group.tiles in declared order and applies no sort of any kind, so appending is what makes it last and reordering this array is the only way to move it. There is no `order` field to set and none is wanted \u2014 a second way to express position is a second thing to disagree with the first. target=extapp:cloud-camera \u2192 MainActivity.launchExternalApp opens cld.camera if installed, else downloads + installs ui.external_apps[id=cloud-camera].install_apk_url. icon ic_camera is its own drawable rather than ic_photos, which the Gallery tile already carries; Sections.iconResFor falls back to ic_link_tile without complaining when a name resolves to nothing, so a shared or misspelt icon is a silent defect and test-camera-tiles.sh pins the file's existence.",
+                "id": "camera",
+                "label": "Camera",
+                "icon": "ic_camera",
+                "target": "extapp:cloud-camera"
+              },
+              {
+                "_doc": "Keyboard \u2014 hands off to the standalone Cloud-Keyboard app (ac_cloud-keyboard, com.diegonmarcos.cloudkeyboard). Same target as the Configs \u25b8 Keyboard entry: extapp:cloud-keyboard \u2192 MainActivity.launchExternalApp opens Cloud-Keyboard's SettingsActivity if installed, else downloads + installs ui.external_apps[id=cloud-keyboard].install_apk_url. The keyboard is a first-class Cloud app like Browser/Wallet/Vault, so it belongs in Tools Primary and not only behind Configs.",
+                "id": "keyboard",
+                "label": "Keyboard",
+                "icon": "ic_keyboard",
+                "target": "extapp:cloud-keyboard"
+              },
+              {
+                "_doc": "Writer \u2014 hands off to the standalone Cloud Writer app (ac_cloud-writer, com.diegonmarcos.cloudwriter, read from ITS android.application_id and app/build.gradle namespace, not guessed from the slug). Same shape as the Keyboard tile beside it: target=extapp:cloud-writer \u2192 ShellActivity.launchExternalApp opens the package if installed, else downloads + installs ui.external_apps[id=cloud-writer].install_apk_url \u2014 no ACTION_VIEW, so there is no seventh ad-hoc startActivity site and no ActivityNotFoundException path. POSITION IS DELIBERATE AND IT IS NOT LAST: GroupedTilesFragment walks group.tiles in declared order with no sort, and the Camera tile below records the owner asking for the camera 'as last' in this row on 2026-09-10, so Writer goes in front of it rather than displacing a placement he named. icon ic_writer is Cloud Writer's own launcher foreground copied into this app's drawables \u2014 Sections.iconResFor falls back to ic_link_tile in silence when a name resolves to nothing, so the file's existence is pinned by test-writer-tile.sh rather than trusted.",
+                "id": "writer",
+                "label": "Writer",
+                "icon": "ic_writer",
+                "target": "extapp:cloud-writer"
+              },
+              {
+                "_doc": "#1627 DOUBLE divider ('||'): a stronger group rule than the single '|'. `separator:true` + `double:true`; GroupedTilesFragment draws a bolder TileDivider on the previous tile's edge. Not clickable, not focusable, no target, dropped by TileGroup.destinations.",
+                "id": "primary-sep-2",
+                "label": "||",
+                "separator": true,
+                "double": true
+              },
+              {
+                "_doc": "Cloud-Wallet \u2014 the dedicated cards/passes/tickets app (ac_cloud-wallet). libs:wallet (Compose deck) was MOVED out of the SuperApp into Cloud-Wallet, so this tile no longer routes to an in-app section. target=extapp:cloud-wallet \u2192 MainActivity.launchExternalApp opens com.diegonmarcos.cloudwallet if installed, else downloads + installs ui.external_apps[id=cloud-wallet].install_apk_url. For the system Google Wallet launcher use action:app://com.google.android.apps.walletnfcrel from anywhere else.",
+                "id": "wallet",
+                "label": "Wallet",
+                "icon": "ic_wallet",
+                "target": "extapp:cloud-wallet"
+              }
+            ]
+          },
+          {
             "title": "Communication",
             "tiles": [
               {
@@ -2927,24 +3002,24 @@
                 "label": "Messenger",
                 "icon": "ic_p_chat_matrix",
                 "target": "extapp:cloud-matrix",
-                "_doc": "Opens the standalone Cloud-Matrix app (ac_cloud-matrix, com.diegonmarcos.comms.matrix) via extapp:cloud-matrix — installed → launches; absent → install via Configs ▸ Constellation. The Cloud-Comms hub is decommissioned; the matrix fork is now its own constellation app. Replaces the old app://im.vector.app launcher."
+                "_doc": "Opens the standalone Cloud-Matrix app (ac_cloud-matrix, com.diegonmarcos.comms.matrix) via extapp:cloud-matrix \u2014 installed \u2192 launches; absent \u2192 install via Configs \u25b8 Constellation. The Cloud-Comms hub is decommissioned; the matrix fork is now its own constellation app. Replaces the old app://im.vector.app launcher."
               },
               {
                 "id": "dialer",
                 "label": "Dialer",
                 "icon": "ic_p_dialer",
                 "target": "extapp:cloud-dialer",
-                "_doc": "Opens the standalone Cloud-Dialer app (ac_cloud-dialer, com.diegonmarcos.comms.dialer, Fossify Phone) via extapp:cloud-dialer — installed → launches; absent → install via Configs ▸ Constellation. Its own constellation app now that the Cloud-Comms hub is decommissioned; same extapp mechanism as Mail / Chat / Messenger above."
+                "_doc": "Opens the standalone Cloud-Dialer app (ac_cloud-dialer, com.diegonmarcos.comms.dialer, Fossify Phone) via extapp:cloud-dialer \u2014 installed \u2192 launches; absent \u2192 install via Configs \u25b8 Constellation. Its own constellation app now that the Cloud-Comms hub is decommissioned; same extapp mechanism as Mail / Chat / Messenger above."
               },
               {
-                "_doc": "C3-Bot is a BOT, not an AI assistant, and the icon said otherwise. It shared ic_ai_chat with the three genuine AI tiles above it (Chat GPT / Claude / Gemini), so the one tile in this group that opens a Telegram automation read as a fourth chatbot. ic_robot is the glyph the rest of the fleet already uses for automation — Morpheus and the three Dagu tiles in ui.sections[13] carry it. Resolution is Sections.iconResFor's literal getIdentifier(name, \"drawable\", pkg) hit on res/drawable/ic_robot.xml; there is no icon allow-list, and a name that resolves to nothing does NOT fail the build — it silently falls back to ic_link_tile, which is why test-tile-icons-resolve.sh checks every ui icon against the drawable set rather than this one value.",
+                "_doc": "C3-Bot is a BOT, not an AI assistant, and the icon said otherwise. It shared ic_ai_chat with the three genuine AI tiles above it (Chat GPT / Claude / Gemini), so the one tile in this group that opens a Telegram automation read as a fourth chatbot. ic_robot is the glyph the rest of the fleet already uses for automation \u2014 Morpheus and the three Dagu tiles in ui.sections[13] carry it. Resolution is Sections.iconResFor's literal getIdentifier(name, \"drawable\", pkg) hit on res/drawable/ic_robot.xml; there is no icon allow-list, and a name that resolves to nothing does NOT fail the build \u2014 it silently falls back to ic_link_tile, which is why test-tile-icons-resolve.sh checks every ui icon against the drawable set rather than this one value.",
                 "id": "c3-bot",
                 "label": "C3-Bot",
                 "icon": "ic_robot",
                 "target": "intent://resolve?domain=Cloud_bot_C3_Infra_bot#Intent;scheme=tg;package=org.telegram.messenger;S.browser_fallback_url=https%3A%2F%2Ft.me%2FCloud_bot_C3_Infra_bot;end"
               },
               {
-                "_doc": "Opens the standalone Cloud-Contacts app (ac_cloud-contacts, com.diegonmarcos.cloudcontacts, native multi-channel people hub) via extapp:cloud-contacts — installed → launches; absent → install via Configs ▸ Constellation. Replaces the old Google Contacts launcher.",
+                "_doc": "Opens the standalone Cloud-Contacts app (ac_cloud-contacts, com.diegonmarcos.cloudcontacts, native multi-channel people hub) via extapp:cloud-contacts \u2014 installed \u2192 launches; absent \u2192 install via Configs \u25b8 Constellation. Replaces the old Google Contacts launcher.",
                 "id": "contacts",
                 "label": "Contacts",
                 "icon": "ic_p_sol_personal",
@@ -2953,84 +3028,11 @@
             ]
           },
           {
-            "title": "Tools Primary",
+            "_doc": "#1627 Data (renamed from 'Data Apps'). Order: Note, Tasks, Office | Gallery, Media Center || Me, Vault. Single '|' after Office, DOUBLE '||' after Media Center. Drive moved out to Primary; Me (data-me) and Vault moved in. Pinned by test-drive-page-sections.sh, test-services-row.sh and test-quickmarks-field-parity.sh.",
+            "title": "Data",
             "tiles": [
               {
-                "_doc": "Cloud-Browser — the dedicated WebView browser app (ac_cloud-browser). libs:browser (BrowserHostFragment + BrowserTabPrefs) was MOVED out of the SuperApp into Cloud-Browser, so this tile no longer routes to an in-app section. target=extapp:cloud-browser → MainActivity.launchExternalApp opens com.diegonmarcos.cloudbrowser if installed, else downloads + installs ui.external_apps[id=cloud-browser].install_apk_url. Browser also handles http/https VIEW intents so other apps can open links in it. icon ic_world (globe) stays — visually distinct from the App Tabs tile (ic_mode_apps).",
-                "id": "browser",
-                "label": "Browser",
-                "icon": "ic_world",
-                "target": "extapp:cloud-browser"
-              },
-              {
-                "_doc": "Navigation — hands off to the dedicated Cloud-Nav app (ac_cloud-nav). libs:maps (MapLibre tracker + timeline + MyTrips) was MOVED out of the SuperApp into Cloud-Nav, so this tile no longer routes to an in-app section. target=extapp:cloud-nav → MainActivity.launchExternalApp opens com.diegonmarcos.cloudnav if installed, else downloads + installs ui.external_apps[id=cloud-nav].install_apk_url (Cloud-Nav.apk). icon ic_nav (ic_maps left with libs:maps). For the system Google Maps launcher use action:app://com.google.android.apps.maps from anywhere else.",
-                "id": "maps",
-                "label": "Navigation",
-                "icon": "ic_nav",
-                "target": "extapp:cloud-nav"
-              },
-              {
-                "_doc": "Camera — the fleet's OWN camera (ac_cloud-camera, applicationId cld.camera, our signed build of GrapheneOS Camera), not a third-party one. The owner asked for it 'as last' in this row on 2026-09-10, and LAST HERE IS ARRAY POSITION: GroupedTilesFragment walks group.tiles in declared order and applies no sort of any kind, so appending is what makes it last and reordering this array is the only way to move it. There is no `order` field to set and none is wanted — a second way to express position is a second thing to disagree with the first. target=extapp:cloud-camera → MainActivity.launchExternalApp opens cld.camera if installed, else downloads + installs ui.external_apps[id=cloud-camera].install_apk_url. icon ic_camera is its own drawable rather than ic_photos, which the Gallery tile already carries; Sections.iconResFor falls back to ic_link_tile without complaining when a name resolves to nothing, so a shared or misspelt icon is a silent defect and test-camera-tiles.sh pins the file's existence.",
-                "id": "camera",
-                "label": "Camera",
-                "icon": "ic_camera",
-                "target": "extapp:cloud-camera"
-              },
-              {
-                "_doc": "Calc — hands off to the standalone Cloud Calc app (ac_cloud-calc, com.diegonmarcos.cloudcalc, read from ITS android.application_id and app/build.gradle namespace). #772: the owner asked for it IMMEDIATELY BEFORE Writer in this row, and GroupedTilesFragment walks group.tiles in declared order with no sort, so array position is that placement and test-calc-tile.sh pins it as 'the tile right after calc is writer'. Same shape as Writer: target=extapp:cloud-calc → launchExternalApp opens the package if installed, else installs ui.external_apps[id=cloud-calc].install_apk_url (ABI-resolved through the fleet assets map). icon ic_calc is Cloud Calc's own launcher foreground, cropped to its art like ic_writer.",
-                "id": "calc",
-                "label": "Calc",
-                "icon": "ic_calc",
-                "target": "extapp:cloud-calc"
-              },
-              {
-                "_doc": "Keyboard — hands off to the standalone Cloud-Keyboard app (ac_cloud-keyboard, com.diegonmarcos.cloudkeyboard). Same target as the Configs ▸ Keyboard entry: extapp:cloud-keyboard → MainActivity.launchExternalApp opens Cloud-Keyboard's SettingsActivity if installed, else downloads + installs ui.external_apps[id=cloud-keyboard].install_apk_url. The keyboard is a first-class Cloud app like Browser/Wallet/Vault, so it belongs in Tools Primary and not only behind Configs.",
-                "id": "keyboard",
-                "label": "Keyboard",
-                "icon": "ic_keyboard",
-                "target": "extapp:cloud-keyboard"
-              },
-              {
-                "_doc": "Writer — hands off to the standalone Cloud Writer app (ac_cloud-writer, com.diegonmarcos.cloudwriter, read from ITS android.application_id and app/build.gradle namespace, not guessed from the slug). Same shape as the Keyboard tile beside it: target=extapp:cloud-writer → ShellActivity.launchExternalApp opens the package if installed, else downloads + installs ui.external_apps[id=cloud-writer].install_apk_url — no ACTION_VIEW, so there is no seventh ad-hoc startActivity site and no ActivityNotFoundException path. POSITION IS DELIBERATE AND IT IS NOT LAST: GroupedTilesFragment walks group.tiles in declared order with no sort, and the Camera tile below records the owner asking for the camera 'as last' in this row on 2026-09-10, so Writer goes in front of it rather than displacing a placement he named. icon ic_writer is Cloud Writer's own launcher foreground copied into this app's drawables — Sections.iconResFor falls back to ic_link_tile in silence when a name resolves to nothing, so the file's existence is pinned by test-writer-tile.sh rather than trusted.",
-                "id": "writer",
-                "label": "Writer",
-                "icon": "ic_writer",
-                "target": "extapp:cloud-writer"
-              },
-              {
-                "_doc": "Cloud-Wallet — the dedicated cards/passes/tickets app (ac_cloud-wallet). libs:wallet (Compose deck) was MOVED out of the SuperApp into Cloud-Wallet, so this tile no longer routes to an in-app section. target=extapp:cloud-wallet → MainActivity.launchExternalApp opens com.diegonmarcos.cloudwallet if installed, else downloads + installs ui.external_apps[id=cloud-wallet].install_apk_url. For the system Google Wallet launcher use action:app://com.google.android.apps.walletnfcrel from anywhere else.",
-                "id": "wallet",
-                "label": "Wallet",
-                "icon": "ic_wallet",
-                "target": "extapp:cloud-wallet"
-              },
-              {
-                "_doc": "Cloud-Vault — the dedicated Vaultwarden client app (ac_cloud-vault). libs:vault (KeePassDX stub) was replaced by Cloud-Vault, a standalone constellation APK hosting vault.diegonmarcos.com (self-hosted Vaultwarden). target=extapp:cloud-vault → MainActivity.launchExternalApp opens com.diegonmarcos.cloudvault if installed, else downloads + installs ui.external_apps[id=cloud-vault].install_apk_url. Lives in Tools Primary (moved there from Data Apps by owner order, #1092).",
-                "id": "vault",
-                "label": "Vault",
-                "icon": "ic_vault",
-                "target": "extapp:cloud-vault"
-              }
-            ]
-          },
-          {
-            "title": "Data Apps",
-            "tiles": [
-              {
-                "_doc": "Drive, the leading tile of Data Apps. It used to be a `page:drive/connections` deep link into an in-app section; task 302/304 lifted those four tabs out into the standalone Cloud Drive APK (ac_cloud-drive, com.diegonmarcos.clouddrive), whose Files tab is a full native local file manager rather than a list of remote back ends. The tile now LAUNCHES that app through the `extapp:` resolver and ui.external_apps.cloud-drive. The tile id is unchanged because the Home tile rows address it by id. ICON \u2014 THIS TILE IS THE ONE PLACE THE DRIVE GLYPH IS DECLARED. The one-hand left-edge `down` sector carries no icon field of its own: libs/launcher-onehand/build.gradle derives action_catalogue from these tiles, canonicalising `extapp:cloud-drive` and `app:com.diegonmarcos.clouddrive` onto one key through ui.external_apps, and OneHandAccessibilityService.declaredIcon draws whatever this field names when the APK is not installed. Changing it here therefore changes the tile AND the edge sector, and there is deliberately no second field anywhere to disagree with it. It was ic_p_sol_cloud, a shared palette glyph four other entries also use and the mark the in-app Drive PAGE wore; task 404 made it ic_drive, which now holds Cloud Drive OWN launcher foreground copied verbatim from ac_cloud-drive/app/src/main/res/drawable/ic_launcher_foreground.xml \u2014 the same thing Writer, Camera and Nav already do for their extracted apps. Sections.iconResFor falls back to ic_link_tile in silence when a name resolves to nothing, so both the existence of that drawable and its provenance are pinned by test-onehand-app-sector-icon.sh rather than trusted.",
-                "id": "drive-conn",
-                "label": "Drive",
-                "icon": "ic_drive",
-                "target": "extapp:cloud-drive"
-              },
-              {
-                "_doc": "Divides Drive from the rest of Data Apps. Drive is about to stop being a page and become its own application (task 302/304), so it is no longer a sibling of Calendar and Contacts — it is the row's entry point. A CHARACTER and not a rule: `separator: true` makes GroupedTilesFragment draw a bare '|', not clickable, not focusable, hidden from accessibility, which is what the owner asked for — \"add this char, not a line, a char!! a seprator\". Same declaration as projects-me-sep-1, so Sections.TileGroup.destinations drops it and no surface that reads tiles as places to go ever offers it.",
-                "id": "data-apps-sep-1",
-                "label": "|",
-                "separator": true
-              },
-              {
-                "_doc": "Cloud Notes (ac_cloud-notes, com.diegonmarcos.cloudnotes) — our own signed build of Cloud Notes, a local-first notes/whiteboard app. Formerly a Markor build in this same directory; #495 flipped the Cloud Notes build (vendored alongside it by #469 under com.diegonmarcos.cloud-notes) onto this identity and deleted the Markor tree. #522 put the DIRECTORY and the NAME back: the product is cloud-notes, Cloud Notes is only the upstream it is built from. Replaces the `obsidian://open` deep link this tile used to carry, back when it was added. Two things were wrong with that target and only one of them was about branding: it is a bare scheme URI, so ShellActivity.launchUri turns it into a plain ACTION_VIEW and it raises ActivityNotFoundException on any phone without Obsidian installed — the exact hazard test-drive-page-sections.sh T9 exists to contain, and a tile that fails AFTER the tap. `extapp:cloud-notes` resolves through ui.external_apps instead: installed → launches, absent → offers the install from the Constellation store. Obsidian itself is NOT removed from the phone or from this file — md.obsidian keeps its ui.phone_folders keyword and its place in the favourites picker (a favourite is what you can pick, not what you get), so nothing dangles.",
+                "_doc": "Cloud Notes (ac_cloud-notes, com.diegonmarcos.cloudnotes) \u2014 our own signed build of Cloud Notes, a local-first notes/whiteboard app. Formerly a Markor build in this same directory; #495 flipped the Cloud Notes build (vendored alongside it by #469 under com.diegonmarcos.cloud-notes) onto this identity and deleted the Markor tree. #522 put the DIRECTORY and the NAME back: the product is cloud-notes, Cloud Notes is only the upstream it is built from. Replaces the `obsidian://open` deep link this tile used to carry, back when it was added. Two things were wrong with that target and only one of them was about branding: it is a bare scheme URI, so ShellActivity.launchUri turns it into a plain ACTION_VIEW and it raises ActivityNotFoundException on any phone without Obsidian installed \u2014 the exact hazard test-drive-page-sections.sh T9 exists to contain, and a tile that fails AFTER the tap. `extapp:cloud-notes` resolves through ui.external_apps instead: installed \u2192 launches, absent \u2192 offers the install from the Constellation store. Obsidian itself is NOT removed from the phone or from this file \u2014 md.obsidian keeps its ui.phone_folders keyword and its place in the favourites picker (a favourite is what you can pick, not what you get), so nothing dangles.",
                 "id": "notes",
                 "label": "Notes",
                 "icon": "ic_notes",
@@ -3044,37 +3046,53 @@
                 "target": "extapp:cloud-tasks"
               },
               {
-                "_doc": "Divides Notes and Tasks from the media pair, in the owner's order: Drive | Notes Tasks | Gallery Media | Office (News moved to the Services row, #1473). Same separator declaration as data-apps-sep-1.",
-                "id": "data-apps-sep-2",
+                "_doc": "#380. This tile is the Data Apps entry for the application whose IDENTITY is cloud-office (ac_cloud-office, com.diegonmarcos.cloudoffice) and its label is \"Office\" \u2014 a caption for the tap target, not a name for the app. It printed the identity string \"cloud-office\" until #380; identity now lives only in `target`/ui.external_apps[cloud-office].id and the app's own build.json::name, and nothing about the package, the Cloud-Office.apk asset or the folder changed with this label. THE PREVIOUS _doc HERE WAS WRONG TWICE AND IS CORRECTED RATHER THAN KEPT. It said \"this tile label and ui.external_apps[cloud-office].label are the two names the fleet owns\": ui.external_apps carries NO label key on any of its 23 entries, and test-app-names-pattern.sh T3 forbids one outright (\"ui.external_apps shows the id and restates no name\") \u2014 so that sentence pointed a future editor at a second copy that does not exist and would have reddened the guard the moment they created it. It also said the rebrand waits on build.json::build.host \"and it is null\"; ac_cloud-office/build.json::build.host is ubuntu-latest and the source build has published Cloud-Office.apk. Android's own home screen is a SEPARATE surface from this tile and takes its label from the APK manifest, via --with-app-name = that app's build.json::name, which test-app-name-reaches-the-user.sh pins to the cloud-<x> pattern \u2014 deliberately NOT to this caption.",
+                "id": "sheets",
+                "label": "Office",
+                "icon": "ic_sheets",
+                "target": "extapp:cloud-office"
+              },
+              {
+                "_doc": "#1627 Single divider ('|'): `separator:true`; GroupedTilesFragment draws a thin TileDivider on the previous tile's edge. Not clickable, not focusable, no target, dropped by TileGroup.destinations.",
+                "id": "data-sep-1",
                 "label": "|",
                 "separator": true
               },
               {
-                "_doc": "Gallery — the Data Apps tile for cloud-gallery (ac_cloud-gallery, applicationId com.diegonmarcos.mediacenter), our Google-Photos/Samsung-Gallery replacement (local gallery + PhotoPrism cloud library + backup). Registered in ui.external_apps[cloud-gallery]; this tile is what makes it VISIBLE in the launcher — an external_apps entry alone only makes an app installable/openable BY ID and shows nothing. The app was called cloud-media-center until 2026-10 and this tile's id was mediacenter; both were renamed to gallery so that the name cloud-media-center could go to the new Tauri media app (ac_cloud-media-center, com.diegonmarcos.cloudmediacenter). The applicationId did NOT change, because the app is installed on phones and a new package id would be a different app to Android. The former sibling 'photos' tile (app://com.google.android.apps.photos) was removed 2026-08-30 — Gallery is the sole photo entry point.",
+                "_doc": "Gallery \u2014 the Data Apps tile for cloud-gallery (ac_cloud-gallery, applicationId com.diegonmarcos.mediacenter), our Google-Photos/Samsung-Gallery replacement (local gallery + PhotoPrism cloud library + backup). Registered in ui.external_apps[cloud-gallery]; this tile is what makes it VISIBLE in the launcher \u2014 an external_apps entry alone only makes an app installable/openable BY ID and shows nothing. The app was called cloud-media-center until 2026-10 and this tile's id was mediacenter; both were renamed to gallery so that the name cloud-media-center could go to the new Tauri media app (ac_cloud-media-center, com.diegonmarcos.cloudmediacenter). The applicationId did NOT change, because the app is installed on phones and a new package id would be a different app to Android. The former sibling 'photos' tile (app://com.google.android.apps.photos) was removed 2026-08-30 \u2014 Gallery is the sole photo entry point.",
                 "id": "gallery",
                 "label": "Gallery",
                 "icon": "ic_photos",
                 "target": "extapp:cloud-gallery"
               },
               {
-                "_doc": "Media Center — the Data Apps tile for cloud-media-center (ac_cloud-media-center, com.diegonmarcos.cloudmediacenter), the Tauri media hub: music (TIDAL playlists), videos, gallery (Pinterest boards), books, the feed, movies and documentaries. It REPLACES the old Music tile, which launched TIDAL itself (app://com.aspiro.tidal); TIDAL is not removed from the phone — every track in the Media Center's music page opens a TIDAL search through the system, so the app is still one tap away. Resolved through ui.external_apps[cloud-media-center]: installed launches it, absent offers the install. Not to be confused with cloud-gallery (the Gallery tile above, com.diegonmarcos.mediacenter), which held the name cloud-media-center until 2026-10.",
+                "_doc": "#1627 label is now 'Media Center' (was 'Media'); package/id unchanged. Media Center \u2014 the Data Apps tile for cloud-media-center (ac_cloud-media-center, com.diegonmarcos.cloudmediacenter), the Tauri media hub: music (TIDAL playlists), videos, gallery (Pinterest boards), books, the feed, movies and documentaries. It REPLACES the old Music tile, which launched TIDAL itself (app://com.aspiro.tidal); TIDAL is not removed from the phone \u2014 every track in the Media Center's music page opens a TIDAL search through the system, so the app is still one tap away. Resolved through ui.external_apps[cloud-media-center]: installed launches it, absent offers the install. Not to be confused with cloud-gallery (the Gallery tile above, com.diegonmarcos.mediacenter), which held the name cloud-media-center until 2026-10.",
                 "id": "mediacenter",
-                "label": "Media",
+                "label": "Media Center",
                 "icon": "ic_music",
                 "target": "extapp:cloud-media-center"
               },
               {
-                "_doc": "Divides the media group from Office, in the owner's order: Drive | Notes Tasks | Gallery Media | Office (News moved to the Services row, #1473). Same separator declaration as data-apps-sep-1.",
-                "id": "data-apps-sep-3",
-                "label": "|",
-                "separator": true
+                "_doc": "#1627 DOUBLE divider ('||'): a stronger group rule than the single '|'. `separator:true` + `double:true`; GroupedTilesFragment draws a bolder TileDivider on the previous tile's edge. Not clickable, not focusable, no target, dropped by TileGroup.destinations.",
+                "id": "data-sep-2",
+                "label": "||",
+                "separator": true,
+                "double": true
               },
               {
-                "_doc": "#380. This tile is the Data Apps entry for the application whose IDENTITY is cloud-office (ac_cloud-office, com.diegonmarcos.cloudoffice) and its label is \"Office\" — a caption for the tap target, not a name for the app. It printed the identity string \"cloud-office\" until #380; identity now lives only in `target`/ui.external_apps[cloud-office].id and the app's own build.json::name, and nothing about the package, the Cloud-Office.apk asset or the folder changed with this label. THE PREVIOUS _doc HERE WAS WRONG TWICE AND IS CORRECTED RATHER THAN KEPT. It said \"this tile label and ui.external_apps[cloud-office].label are the two names the fleet owns\": ui.external_apps carries NO label key on any of its 23 entries, and test-app-names-pattern.sh T3 forbids one outright (\"ui.external_apps shows the id and restates no name\") — so that sentence pointed a future editor at a second copy that does not exist and would have reddened the guard the moment they created it. It also said the rebrand waits on build.json::build.host \"and it is null\"; ac_cloud-office/build.json::build.host is ubuntu-latest and the source build has published Cloud-Office.apk. Android's own home screen is a SEPARATE surface from this tile and takes its label from the APK manifest, via --with-app-name = that app's build.json::name, which test-app-name-reaches-the-user.sh pins to the cloud-<x> pattern — deliberately NOT to this caption.",
-                "id": "sheets",
-                "label": "Office",
-                "icon": "ic_sheets",
-                "target": "extapp:cloud-office"
+                "_doc": "#1627 Me \u2014 launches the Cloud-Me app (ac_cloud-me, extapp:cloud-me). Added to the Data group after the || divider, beside Vault, by owner order. A SECOND entry point for the same app that heads the separate 'Me' row below (an app on two surfaces is the normal case); own id 'data-me' because tile ids are unique.",
+                "id": "data-me",
+                "label": "Me",
+                "icon": "ic_vcard",
+                "target": "extapp:cloud-me",
+                "category_skip": true
+              },
+              {
+                "_doc": "#1627 Vault moved to the Data group (after the || divider, before none; last of Data). Cloud-Vault \u2014 the dedicated Vaultwarden client app (ac_cloud-vault). libs:vault (KeePassDX stub) was replaced by Cloud-Vault, a standalone constellation APK hosting vault.diegonmarcos.com (self-hosted Vaultwarden). target=extapp:cloud-vault \u2192 MainActivity.launchExternalApp opens com.diegonmarcos.cloudvault if installed, else downloads + installs ui.external_apps[id=cloud-vault].install_apk_url. Lives in Tools Primary (moved there from Data Apps by owner order, #1092).",
+                "id": "vault",
+                "label": "Vault",
+                "icon": "ic_vault",
+                "target": "extapp:cloud-vault"
               }
             ]
           },
@@ -3363,55 +3381,102 @@
             ]
           },
           {
-            "_doc": "Configs (#324) — the surfaces that configure the fleet rather than being part of it (led by Account; the SuperApp tile moved to Lnktree on 2026-10-30), pulled out of Tools Primary so a config errand is one recognisable row instead of a hunt through the tool tiles. It sits LAST among the declared groups on purpose: GroupedTilesFragment appends a synthetic 'Actions' header after every data group it renders (see LauncherNavController.GROUP_ACTIONS), so 'after Lnktree and before Actions' is exactly this position and there is no Actions group in this array to sit before.",
+            "_doc": "Configs (#324) - the surfaces that configure the fleet rather than being part of it, pulled out of Tools Primary so a config errand is one recognisable row instead of a hunt through the tool tiles. It sits LAST among the declared groups on purpose: GroupedTilesFragment appends a synthetic 'Actions' header after every data group it renders (see LauncherNavController.GROUP_ACTIONS), so 'after Lnktree and before Actions' is exactly this position and there is no Actions group in this array to sit before.",
             "title": "Configs",
-            "_doc_row_order": "#1611 OWNER ORDER (2026-11): the Cloud ▸ Apps ▸ Configs row reads exactly Quick Actions, Watchdog | Account, C3 | Store — three tile groups divided by two '|' separators. Quick Actions and Watchdog are the device-side pair; Account and C3 the connect pair; Store stands alone. The About tile that used to close this row was dropped from the row on owner order; the About page itself (page:config/app-about) is untouched and still reachable from the Configs grid. test-c3-is-an-app.sh finds this group by its CONTENT (a group holding both Store and Quick Actions labels), so the reorder keeps it identifiable.",
+            "_doc_row_order": "#1628 OWNER ORDER (2026-11, supersedes #1611): the Cloud > Apps > Configs row reads exactly Quick Actions, UI | Firewall, WiFi | Store | Account, C3 | Watchdog | About - six tile groups divided by five '|' separators. Groups: [Quick Actions, UI] [Firewall, WiFi] [Store] [Account, C3] [Watchdog] [About]. Each tile maps to a real existing page/app id (no page invented): Quick Actions=page:config/controls, UI=page:config/panels-ui, Firewall=page:config/firewall, WiFi=page:config/wifi, Store=extapp:cloud-store, Account=extapp:cloud-account, C3=extapp:cloud-c3, Watchdog=extapp:c3-watchdog, About=page:config/app-about. #1611's five tiles (Quick Actions, Watchdog, Account, C3, Store) are all retained; UI, Firewall, WiFi, About added. test-c3-is-an-app.sh finds this group by its CONTENT (a group holding both Store and Quick Actions labels), so the reorder keeps it identifiable. Pinned by test-configs-apps-row.sh.",
             "tiles": [
               {
-                "_doc": "#1611 Configs ▸ (Device) ▸ UI ▸ Quick Actions — the merged Controls entry (tabs Presets | Panels ▸ UI | Tools). First of the owner-ordered row (Quick Actions, Watchdog | Account, C3 | Store).",
+                "_doc": "#1628 Configs row group 1a: Quick Actions -> the merged Controls page (page:config/controls).",
                 "id": "configs-controls",
                 "label": "Quick Actions",
                 "icon": "ic_home",
                 "target": "page:config/controls"
               },
               {
-                "_doc": "#1545 #1611 Configs ▸ Watchdog (the in-app Agents/Watchdog hub page), paired with Quick Actions in group 1 of the Cloud ▸ Apps ▸ Configs row. page:, so it opens the in-app page, never the C3-Watchdog APK.",
-                "id": "configs-watchdog",
-                "label": "Watchdog",
-                "icon": "ic_p_watchdog",
-                "target": "page:config/agents-watchdog"
+                "_doc": "#1628 Configs row group 1b: UI -> the Launcher UI page (page:config/panels-ui, LauncherConfigFragment; promoted to a sibling of Presets/Panels by #1623).",
+                "id": "configs-ui",
+                "label": "UI",
+                "icon": "ic_ctl_brightness",
+                "target": "page:config/panels-ui"
               },
               {
-                "_doc": "Rule between tile groups (#1611 owner order: Quick Actions, Watchdog | Account, C3 | Store).",
+                "_doc": "#1628 Rule between tile groups of the Cloud > Apps Configs row: Quick Actions, UI | Firewall, WiFi | Store | Account, C3 | Watchdog | About.",
+                "id": "configs-sep-1",
+                "label": "|",
+                "separator": true
+              },
+              {
+                "_doc": "#1628 Configs row group 2a: Firewall -> the Network firewall page (page:config/firewall).",
+                "id": "configs-firewall",
+                "label": "Firewall",
+                "icon": "ic_lock",
+                "target": "page:config/firewall"
+              },
+              {
+                "_doc": "#1628 Configs row group 2b: WiFi -> the Network WiFi page (page:config/wifi).",
+                "id": "configs-wifi",
+                "label": "WiFi",
+                "icon": "ic_wifi",
+                "target": "page:config/wifi"
+              },
+              {
+                "_doc": "#1628 Rule between tile groups of the Cloud > Apps Configs row: Quick Actions, UI | Firewall, WiFi | Store | Account, C3 | Watchdog | About.",
                 "id": "configs-sep-2",
                 "label": "|",
                 "separator": true
               },
               {
-                "_doc": "#1611 Configs ▸ (Setup) ▸ Connect ▸ Account, opening the same page the Configs grid tile does. First of group 2 (Account, C3).",
+                "_doc": "#1628 Configs row group 3: Store -> the Cloud Store app (extapp:cloud-store). Its label must equal the store page's label - test-store-identity.sh derives both and fails if they drift.",
+                "id": "configs-store",
+                "label": "Store",
+                "icon": "ic_refresh",
+                "target": "extapp:cloud-store"
+              },
+              {
+                "_doc": "#1628 Rule between tile groups of the Cloud > Apps Configs row: Quick Actions, UI | Firewall, WiFi | Store | Account, C3 | Watchdog | About.",
+                "id": "configs-sep-3",
+                "label": "|",
+                "separator": true
+              },
+              {
+                "_doc": "#1628 Configs row group 4a: Account -> the Cloud Account app (extapp:cloud-account).",
                 "id": "configs-account",
                 "label": "Account",
                 "icon": "ic_p_accounts",
-                "target": "page:config/profile"
+                "target": "extapp:cloud-account"
               },
               {
-                "_doc": "C3 (#663) — cloud-c3 is a published APK, so this tile is extapp:, NOT page: — it opens the app, or offers the install when it is absent. It resolves through the ui.external_apps entry 'cloud-c3', which carries no label: the caption derives from the id. test-c3-is-an-app.sh fails if this goes back to a page: route. The in-app C3 section is still reachable from the one-hand circular menu and the Labs index, and its Watchdog tab launches com.diegonmarcos.watchdog via extapp:c3-watchdog #1552 icon ic_cloud_control, the SAME declared drawable as Configs > Fleet > C3, so the two C3 entries share one glyph without duplicating the asset.",
+                "_doc": "#1628 (was #663) Configs row group 4b: C3 -> cloud-c3, a published APK, so extapp: (opens the app or offers the install). Resolves through ui.external_apps 'cloud-c3' (no label; caption derives from the id). test-c3-is-an-app.sh fails if this goes back to a page: route.",
                 "id": "c3",
                 "label": "C3",
                 "icon": "ic_cloud_control",
                 "target": "extapp:cloud-c3"
               },
               {
-                "_doc": "Rule between tile groups (#1611 owner order: Quick Actions, Watchdog | Account, C3 | Store).",
-                "id": "configs-sep-3",
+                "_doc": "#1628 Rule between tile groups of the Cloud > Apps Configs row: Quick Actions, UI | Firewall, WiFi | Store | Account, C3 | Watchdog | About.",
+                "id": "configs-sep-4",
                 "label": "|",
                 "separator": true
               },
               {
-                "_doc": "#1611 The Configs row's way into Configs ▸ Store (#563), the final group of the row. Its label must equal the store page's label — test-store-identity.sh derives both and fails if they drift.",
-                "label": "Store",
-                "icon": "ic_refresh",
-                "target": "extapp:cloud-store"
+                "_doc": "#1628 Configs row group 5: Watchdog -> the C3-Watchdog app (extapp:c3-watchdog, com.diegonmarcos.watchdog). #1628 retargeted this tile from the in-app page:config/agents-watchdog to the published APK.",
+                "id": "configs-watchdog",
+                "label": "Watchdog",
+                "icon": "ic_p_watchdog",
+                "target": "extapp:c3-watchdog"
+              },
+              {
+                "_doc": "#1628 Rule between tile groups of the Cloud > Apps Configs row: Quick Actions, UI | Firewall, WiFi | Store | Account, C3 | Watchdog | About.",
+                "id": "configs-sep-5",
+                "label": "|",
+                "separator": true
+              },
+              {
+                "_doc": "#1628 Configs row group 6: About -> the in-app About page (page:config/app-about). Restored to this row by #1628; the page itself was always reachable from the Configs grid.",
+                "id": "configs-about",
+                "label": "About",
+                "icon": "ic_info",
+                "target": "page:config/app-about"
               }
             ]
           }

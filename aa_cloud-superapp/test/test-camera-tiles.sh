@@ -94,7 +94,7 @@ CLOUD_TILE_TARGET="extapp:cloud-camera"
 SAMSUNG_PKG="com.sec.android.app.camera"
 OPUS_PKG="pl.mobimax.cameraopus"
 
-echo "== T1: Camera sits at the owner's declared place in Cloud ▸ Apps ▸ Tools Primary =="
+echo "== T1: Camera sits at the owner's declared place in Cloud ▸ Apps ▸ Primary (renamed from 'Tools Primary', #1627) =="
 # Read the whole row in array order, not a membership test: array position IS
 # render position, so the order in build.json is the order on the screen, and a
 # future `sort_by` in GroupedTilesFragment would show up here as well as in T2.
@@ -109,18 +109,20 @@ echo "== T1: Camera sits at the owner's declared place in Cloud ▸ Apps ▸ Too
 # Light then left the row for Cloud Calc > Toolkit (#1200).
 # #1155: the owner named the nine primary tools in a new order (test-primary-tools-order.sh);
 # Account, the intentional duplicate, left this row for the Me group (test-me-account-tile.sh).
-WANT_ROW="Browser,Navigation,Camera,Calc,Keyboard,Writer,Wallet,Vault"
+# #1627 renamed the group to 'Primary' and set the order Drive, Browser | Calc, Navigation, Camera, Keyboard,
+# Writer || Wallet ('|' single separator, '||' double separator); Drive moved in from Data, Vault out to Data.
+WANT_ROW="Drive,Browser,|,Calc,Navigation,Camera,Keyboard,Writer,||,Wallet"
 GOT_ROW="$(jq -r '
   .ui.sections[] | select(.id == "cloud")
-  | .tile_groups[] | select(.title == "Tools Primary")
+  | .tile_groups[] | select(.title == "Primary")
   | [ .tiles[].label ] | join(",")' "$BJ")"
 CAM_TARGET="$(jq -r '
   .ui.sections[] | select(.id == "cloud")
-  | .tile_groups[] | select(.title == "Tools Primary")
+  | .tile_groups[] | select(.title == "Primary")
   | .tiles[] | select(.label == "Camera") | .target // ""' "$BJ")"
 [ "$GOT_ROW" = "$WANT_ROW" ] && [ "$CAM_TARGET" = "$CLOUD_TILE_TARGET" ] \
   && ok "the row reads $GOT_ROW, with Camera → $CAM_TARGET" \
-  || bad "Cloud Tools Primary reads '$GOT_ROW' with Camera → '$CAM_TARGET', expected '$WANT_ROW' with Camera → $CLOUD_TILE_TARGET (array position is render position)"
+  || bad "Cloud Primary reads '$GOT_ROW' with Camera → '$CAM_TARGET', expected '$WANT_ROW' with Camera → $CLOUD_TILE_TARGET (array position is render position)"
 
 echo "== T2: the row is rendered in DECLARED order, with no sort =="
 # The assertion T1 depends on. If the renderer ever sorts, "last in the array"
@@ -159,7 +161,7 @@ echo "== T4: the Camera tile's icon resolves to a drawable that exists =="
 # another tile already carries is the same defect the other way round.
 ICON="$(jq -r '
   .ui.sections[] | select(.id == "cloud")
-  | .tile_groups[] | select(.title == "Tools Primary")
+  | .tile_groups[] | select(.title == "Primary")
   | .tiles[] | select(.target == "extapp:cloud-camera") | .icon // ""' "$BJ")"
 if [ -n "$ICON" ] && [ -f "$APP/app/src/main/res/drawable/$ICON.xml" ]; then
   USERS="$(jq -r --arg i "$ICON" '[ .. | objects | select((.icon // "") == $i) ] | length' "$BJ")"

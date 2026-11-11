@@ -13,15 +13,15 @@
 {"id":"os","label":"OS","members":["lib-rootfs-nixdroid","lib-rootfs-termux","ae-tool_termux-boot"]}
 ],
 "app_categories":[
+{"id":"primary","label":"Primary","members":["drive","browser","calc","nav","camera","keyboard","writer","wallet"]},
 {"id":"communication","label":"Communication","members":["mail","chat","matrix","dialer","contacts"]},
-{"id":"tools-primary","label":"Tools Primary","members":["browser","nav","camera","calc","keyboard","writer","wallet","vault"]},
-{"id":"data-apps","label":"Data Apps","members":["drive","notes","tasks","gallery","media-center","office"]},
+{"id":"data","label":"Data","members":["notes","tasks","office","gallery","media-center","vault"]},
 {"id":"me","label":"Me","members":["me"]},
 {"id":"weby-services-markets","label":"Weby Services & Markets","members":["search","news","shopping","kg-store"]},
 {"id":"agi","label":"AGI","members":["superintel","code","tools-small-llms","myterminal","nix-on-droid"]},
 {"id":"lnktree","label":"Lnktree","members":["aa_cloud-superapp","cg-omniverse","capital-stack-finterminal","hardtech-cad","hardtech-sim2real"]},
-{"id":"configs","label":"Configs","members":["c3","store"]},
-{"id":"other","label":"Other","members":["morpheus","watchdog","watchtower","account","c3-webserver","termux"]}
+{"id":"configs","label":"Configs","members":["store","account","c3","watchdog"]},
+{"id":"other","label":"Other","members":["morpheus","watchtower","c3-webserver","termux"]}
 ],
 "apps":[
 {"id":"aa_cloud-superapp","label":"cloud-superapp","display_name":"Cloud SuperApp","package":"com.diegonmarcos.superapp","alt_id":null,"registry":"ghcr.io","namespace":"diegonmarcos","image":"cloud-superapp","tag":"latest","asset":"Cloud-SuperApp.apk","release_url":"https://github.com/diegonmarcos/cloudy-u-android/releases/download/latest/Cloud-SuperApp.apk","repo_url":"https://github.com/diegonmarcos/cloudy-u-android/tree/main/aa_cloud-superapp","ghcr_page":"https://github.com/diegonmarcos/cloudy-u-android/pkgs/container/cloud-superapp","blocked":false,"kind":"app","version_name":"0.1.1-dev","version_code":23,"engines":[{"binding":"gh","fleet":"lib-gh","action":"{package}.ENGINE","min_contract":1},{"binding":"feed","fleet":"lib-feed","action":"{package}.ENGINE","min_contract":1},{"binding":"cal","fleet":"lib-cal","action":"{package}.ENGINE","min_contract":1}],"libs":["lib-web-core","lib-core","lib-updater","lib-mail","lib-net","lib-ops","lib-chat","lib-health","lib-launcher-apptabs","lib-kde-connect","lib-shizuku-adb-debug-tools","lib-shell-broker","lib-firewall","lib-battery","lib-light","lib-bluetooth","lib-wifi","lib-perms","lib-datamanager","lib-launcher-onehand","lib-launcher-zoomies","lib-bottomnav","lib-ui-icons","lib-auth","lib-ui-kit","lib-account","lib-sysdns"],"assets":{"arm64-v8a":"Cloud-SuperApp.apk","armeabi-v7a":"Cloud-SuperApp.apk","x86_64":"Cloud-SuperApp-x86_64.apk","x86":"Cloud-SuperApp-x86_64.apk"},"group":"apps"},

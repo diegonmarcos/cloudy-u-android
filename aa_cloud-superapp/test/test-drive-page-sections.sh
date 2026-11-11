@@ -94,22 +94,32 @@ def emit(test, message):
 all_groups = [(section, group)
               for section in ui.get("sections", [])
               for group in section.get("tile_groups", [])]
+# #1627 the Data group is renamed from 'Data Apps' to 'Data', and the Drive tile moved OUT of it and now
+# LEADS the Primary group. The launch SuperApp still owns about Drive is unchanged — a drive-conn tile that
+# fires extapp:cloud-drive — it just lives in Primary now; the rest of the Data row (T4) stays in 'Data'.
 data_apps = next((g for s, g in all_groups
-                  if s.get("id") == "cloud" and g.get("title") == "Data Apps"), None)
+                  if s.get("id") == "cloud" and g.get("title") == "Data"), None)
+primary = next((g for s, g in all_groups
+                if s.get("id") == "cloud" and g.get("title") == "Primary"), None)
+if primary is None:
+    emit("T1", "Cloud ▸ Apps ▸ Primary (renamed from 'Tools Primary', #1627) no longer exists")
+else:
+    ptiles = primary.get("tiles", [])
+    first = ptiles[0] if ptiles else {}
+    if first.get("id") != "drive-conn":
+        emit("T1", "Primary leads with %r, not the drive-conn tile (#1627 Drive moved here from Data)" % first.get("id"))
+    if first.get("target") != "extapp:cloud-drive":
+        emit("T1", "the leading Drive tile targets %r — it must launch the extracted "
+                   "APK as extapp:cloud-drive" % first.get("target"))
 if data_apps is None:
-    emit("T1", "Cloud ▸ Apps ▸ Data Apps no longer exists — every check below it is vacuous")
+    emit("T1", "Cloud ▸ Apps ▸ Data (renamed from 'Data Apps', #1627) no longer exists — the T4 row check is vacuous")
     tiles = []
 else:
     tiles = data_apps.get("tiles", [])
     if not tiles:
-        emit("T1", "Data Apps declares no tiles")
-    else:
-        first = tiles[0]
-        if first.get("id") != "drive-conn":
-            emit("T1", "Data Apps leads with %r, not the drive-conn tile" % first.get("id"))
-        if first.get("target") != "extapp:cloud-drive":
-            emit("T1", "the leading Drive tile targets %r — it must launch the extracted "
-                       "APK as extapp:cloud-drive" % first.get("target"))
+        emit("T1", "Data declares no tiles")
+    if any(t.get("id") == "drive-conn" for t in tiles):
+        emit("T1", "the drive-conn tile is still in Data — #1627 moved it to Primary")
 
 # The AGI `drive` tile is a different thing (MyTerminal files) and must not have been
 # swept up by the rename.
@@ -170,10 +180,10 @@ else:
 prefixes = [p for p in os.environ.get("DISPATCH_PREFIXES", "").split("\n") if p]
 for tile in tiles:
     target = tile.get("target", "")
-    if tile.get("label", "").strip() in ("|", ""):
-        continue                       # the separator character, not an app
+    if tile.get("separator") or tile.get("label", "").strip() in ("|", "||", ""):
+        continue                       # the separator character ('|' or #1627 '||'), not an app
     if not target:
-        emit("T4", "the %r tile in Data Apps carries no target — it renders and does nothing"
+        emit("T4", "the %r tile in Data carries no target — it renders and does nothing"
                    % tile.get("id"))
     elif prefixes and not any(target.startswith(p) for p in prefixes) \
             and "://" not in target:
@@ -239,10 +249,10 @@ for label in T1 T2 T3 T4 T5 T6 T7; do
   lines="$(printf '%s\n' "$RESULT" | awk -F'\t' -v t="$label" '$1==t {print $2}')"
   if [ -z "$lines" ]; then
     case "$label" in
-      T1) ok "T1: Data Apps leads with the Drive tile, and it launches extapp:cloud-drive" ;;
+      T1) ok "T1: Primary leads with the Drive tile launching extapp:cloud-drive (#1627 moved it from Data), and Data no longer carries it" ;;
       T2) ok "T2: the Drive section, its data, its fragment and its BuildConfig field are all gone" ;;
       T3) ok "T3: extapp:cloud-drive resolves to a real external app with a tagged APK url" ;;
-      T4) ok "T4: every Data Apps tile carries a target routeTarget has a branch for" ;;
+      T4) ok "T4: every Data tile carries a target routeTarget has a branch for" ;;
       T5) ok "T5: PM Boards stays removed" ;;
       T6) ok "T6: the twelve back ends moved to the Drive app and reach its APK" ;;
       T7) ok "T7: the left handle's down sector and its picker option are byte-identical" ;;

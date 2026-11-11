@@ -20,10 +20,10 @@ check() {
   eq "placeholders have no target and no icon-less entry" "$(jq -r "$W | [.tiles[] | select(.coming_soon == true) | (.target // \"\") + (.icon // \"?\" | if . == \"?\" then \"?\" else \"\" end)] | join(\"\")" "$bj")" ""
   eq "no fleet app or external app was invented for the placeholders" "$(jq -r '[.ui.external_apps[] | select(.id | test("events|mobility|jobs"))] | length' "$bj")$(jq -r '[.apps[]? | select(.id | test("^(events|mobility|jobs)$"))] | length' "$FLEET")" "00"
   eq "Search and KG Store left AGI" "$(jq -r "$G | select(.title == \"AGI\") | [.tiles[] | select(.label == \"Search\" or .label == \"KG Store\")] | length" "$bj")" "0"
-  eq "News left Data Apps" "$(jq -r "$G | select(.title == \"Data Apps\") | [.tiles[] | select(.label == \"News\")] | length" "$bj")" "0"
+  eq "News left Data (renamed from 'Data Apps', #1627)" "$(jq -r "$G | select(.title == \"Data\") | [.tiles[] | select(.label == \"News\")] | length" "$bj")" "0"
   eq "the Shopping app resolves in ui.external_apps" "$(jq -r '[.ui.external_apps[] | select(.id == "cloud-shopping") | .install_package] | join(",")' "$bj")" "com.diegonmarcos.cloudshopping"
   eq "Store > Cloud > Apps groups Search, News, Shopping, KG Store under Weby Services & Markets" "$(jq -r '.app_categories[] | select(.label == "Weby Services & Markets") | .members | join(",")' "$fleet")" "search,news,shopping,kg-store"
-  eq "Data Apps no longer lists news in the Store" "$(jq -r '.app_categories[] | select(.label == "Data Apps") | .members | index("news")' "$fleet")" "null"
+  eq "Data (renamed from 'Data Apps', #1627) no longer lists news in the Store" "$(jq -r '.app_categories[] | select(.label == "Data") | .members | index("news")' "$fleet")" "null"
 }
 echo "[services-row] the real tree"; check "$BJ" "$FLEET"
 echo "[services-row] mutations (each must turn the tester red)"
@@ -34,7 +34,7 @@ mut() { # mut <name> <jq filter on build.json>
 mut "Weby Services & Markets dropped" '(.ui.sections[] | select(.id == "cloud") | .tile_groups) |= map(select(.title != "Weby Services & Markets"))'
 mut "old title restored"    '(.ui.sections[] | select(.id == "cloud") | .tile_groups[] | select(.title == "Weby Services & Markets") | .title) = "Weby Services"'
 mut "divider removed"       '(.ui.sections[] | select(.id == "cloud") | .tile_groups[] | select(.title == "Weby Services & Markets") | .tiles) |= map(select(.separator | not))'
-mut "News back in Data Apps" '(.ui.sections[] | select(.id == "cloud") | .tile_groups[] | select(.title == "Data Apps") | .tiles) += [{"id":"news","label":"News","target":"extapp:cloud-news"}]'
+mut "News back in Data" '(.ui.sections[] | select(.id == "cloud") | .tile_groups[] | select(.title == "Data") | .tiles) += [{"id":"news","label":"News","target":"extapp:cloud-news"}]'
 mut "Shopping tile retargeted" '(.ui.sections[] | select(.id == "cloud") | .tile_groups[] | select(.title == "Weby Services & Markets") | .tiles[5].target) = "extapp:cloud-news"'
 mut "Jobs placeholder made live" '(.ui.sections[] | select(.id == "cloud") | .tile_groups[] | select(.title == "Weby Services & Markets") | .tiles[] | select(.label == "Jobs & Business") | .coming_soon) = false'
 mut "Shopping app unresolved"  '(.ui.external_apps) |= map(select(.id != "cloud-shopping"))'

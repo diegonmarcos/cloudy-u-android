@@ -31,6 +31,7 @@ expected() {  # $1 = fleet file
     | [ (.ui.sections[] | select(.id == "cloud") | .tile_groups[]) as $g
         | { label: $g.title,
             ids: [ $g.tiles[]
+                   | select(.category_skip != true)    # 1627 a duplicate shortcut (e.g. the Me tile in Data) does not claim the Store category of that app
                    | (.fleet_app // ( (.target // "") as $t
                        | if ($t | startswith("extapp:")) then $byPkg[ $ext[ ($t | ltrimstr("extapp:") | sub("#.*$"; "")) ] // "" ]
                          elif ($t | startswith("app://")) then $byPkg[ $t | ltrimstr("app://") ]

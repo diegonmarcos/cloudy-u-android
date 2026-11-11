@@ -108,12 +108,13 @@ else
   echo "::warning::About › Battery Usage Details not reached"; shot about-missing
 fi
 
-# #1380 Cloud ▸ Apps: Communication carries Contacts; Data Apps reads Drive | Notes Tasks | Gallery Media News | Office.
+# #1380/#1627 Cloud ▸ Apps: groups render Primary, Communication, Data, Me (top to bottom). Primary leads with Drive;
+# Communication carries Contacts; Data reads Note, Tasks, Office | Gallery, Media Center || Me, Vault.
 open_page "page:cloud/apps"
 adb shell screencap -p /sdcard/s.png; adb pull /sdcard/s.png "$OUT/cloud-apps.png" >/dev/null; dump; cp "$OUT/ui.xml" "$OUT/cloud-apps.xml"
 scroll 70 40; sleep 1.5
 adb shell screencap -p /sdcard/s.png; adb pull /sdcard/s.png "$OUT/cloud-apps-scrolled.png" >/dev/null; dump; cp "$OUT/ui.xml" "$OUT/cloud-apps-scrolled.xml"
-# Each row is one horizontal strip of six tiles: Office, the seventh Data App, is reached by swiping that row left.
+# Each row is one horizontal strip of six tiles: Vault, the seventh Data tile (#1627), is reached by swiping that row left.
 open_page "page:cloud/apps"; dump; xy=$(centre "Gallery")
 if [ -n "$xy" ]; then set -- $xy; adb shell input swipe $((SW * 9 / 10)) "$2" $((SW / 10)) "$2" 400; sleep 1.5; fi
 adb shell screencap -p /sdcard/s.png; adb pull /sdcard/s.png "$OUT/cloud-apps-data-right.png" >/dev/null; dump; cp "$OUT/ui.xml" "$OUT/cloud-apps-data-right.xml"
@@ -131,14 +132,27 @@ def after(head, want, stop):
         if seq[i] in want and seq[i] not in got: got.append(seq[i])
         i += 1
     return got
-com = after("Communication", {"Mail", "Chat", "Messenger", "Dialer", "C3-Bot", "Contacts"}, "Tools Primary")
-data = after("Data Apps", {"Drive", "Notes", "Tasks", "Gallery", "Media", "Office"}, "Me")
-print("Communication:", com); print("Data Apps:", data)
+# #1627 group order is Primary, Communication, Data, Me. Primary leads with Drive; Communication is followed by the
+# Data header; Data's app tiles read Notes, Tasks, Office, Gallery, Media Center (the 'Me' tile + Vault close it after
+# the '||' divider — note the Data 'Me' tile shares the Me group's header text, so Data stops at the header's sub-tile).
+headers = [h for h in ("Primary", "Communication", "Data", "Me") if h in seq]
+order_ok = headers == ["Primary", "Communication", "Data", "Me"]
+prim = after("Primary", {"Drive", "Browser", "Calc", "Navigation", "Camera", "Keyboard", "Writer", "Wallet"}, "Communication")
+com = after("Communication", {"Mail", "Chat", "Messenger", "Dialer", "C3-Bot", "Contacts"}, "Data")
+# Data ends on the 'Me' tile then Vault; the Me GROUP header is the 'Me' immediately followed by 'Me-Health'.
+data = after("Data", {"Notes", "Tasks", "Office", "Gallery", "Media Center"}, "Me-Health")
+print("Primary:", prim); print("Communication:", com); print("Data:", data)
 right = re.findall(r' text="([^"]+)"', open(sys.argv[3], encoding="utf-8", errors="ignore").read())
-office = "Media" in right and "Office" in right[right.index("Media"):]
-print("Data Apps swiped:", [t for t in right if t in {"Gallery", "Media", "Office"}])
-ok = com is not None and "Contacts" in com and data is not None and data[:5] == ["Drive", "Notes", "Tasks", "Gallery", "Media"] and office
-if not ok: print("::error::Cloud > Apps groups are not as declared (#1380)")
+# #1627 the Data row holds 7 app tiles (Notes, Tasks, Office, Gallery, Media Center, Me, Vault); Vault is the overflow
+# tile past the sixth, reached by swiping the row left — the swipe above centres on Gallery and drags its row.
+vault_revealed = "Vault" in right
+print("Data swiped (overflow):", [t for t in right if t in {"Media Center", "Me", "Vault"}])
+ok = (order_ok
+      and prim is not None and prim[:1] == ["Drive"]
+      and com is not None and "Contacts" in com
+      and data is not None and data[:5] == ["Notes", "Tasks", "Office", "Gallery", "Media Center"]
+      and vault_revealed)
+if not ok: print("::error::Cloud > Apps groups are not as declared (#1380/#1627)")
 sys.exit(0 if ok else 1)
 PY
 

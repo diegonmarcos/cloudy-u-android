@@ -231,7 +231,7 @@ internal fun TileStrip(tiles: List<Sections.AggTile>, click: (String) -> Unit, o
         Box(Modifier.width(TILE_CELL_WIDTH)) {
             TileCell(tile, click, openFolder)
             tiles.getOrNull(i + 1)?.takeIf { it.separator }?.let {
-                TileDivider(tileSepTag(it.id), TILE_CELL_ICON_CENTRE, 0.5.dp, Modifier.align(Alignment.TopEnd))
+                TileDivider(tileSepTag(it.id), TILE_CELL_ICON_CENTRE, 0.5.dp, Modifier.align(Alignment.TopEnd), double = it.double)
             }
         }
     }

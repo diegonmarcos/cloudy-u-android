@@ -37,15 +37,19 @@ grep -q 'ConfigsFragment.newInstance(tiles)' "$KT/LauncherNavController.kt" && g
   && ok "Configs is drawn by ConfigsFragment through the Apps TileStrip" || bad "Configs is not drawn through the shared Apps tile strip"
 
 echo "== G3: the separator is inline =="
-# #1069: the separator is the composable TileDivider (LauncherTiles.kt): a 1 dp rule drawn as an OVERLAY on the edge of the
+# #1069: the separator is the composable TileDivider (LauncherTiles.kt): a thin rule drawn as an OVERLAY on the edge of the
 # neighbouring tile (never a row child), so it takes no slot and no width, centred on the icon line, not clickable.
+# #1627: TileDivider gained a `double` flag for the '||' group rule; the SINGLE '|' path is unchanged (1 dp, 0x66 ink),
+# the DOUBLE path is the stronger 2 dp / 0.7f rule. The width and ink are now `if (double) … else …`, so pin both arms.
 sep="$(awk '/^internal fun TileDivider/{f=1} f{print} f&&/^}$/{exit}' "$KT/LauncherTiles.kt")"
-echo "$sep" | grep -q 'size(1.dp, SEP_HEIGHT)' && ! echo "$sep" | grep -qE 'weight\(|fillMaxWidth|clickable|Text\(' && ok "separator is a 1 dp rule (no weight, no fill, no slot, not clickable)" || bad "separator is not wrap_content"
+echo "$sep" | grep -qE 'size\(w, h\)' && echo "$sep" | grep -qE 'if \(double\) 2\.dp else 1\.dp' && echo "$sep" | grep -qE 'if \(double\) SEP_HEIGHT \+ 4\.dp else SEP_HEIGHT' \
+  && ! echo "$sep" | grep -qE 'weight\(|fillMaxWidth|clickable|Text\(' \
+  && ok "separator is a thin rule (single 1 dp, double 2 dp; no weight, no fill, no slot, not clickable)" || bad "separator is not wrap_content"
 # Data Apps' separators (GroupedTilesFragment) and this grid's are the ONE TileDivider composable, so they cannot differ
 # in ink, centring or accessibility; the faint 0x66 ink and the a11y-hidden semantics are pinned on it below.
 grep -q 'TileDivider(' "$KT/GroupedTilesFragment.kt" && grep -q 'TileDivider(' "$KT/TileGridFragment.kt" \
   && ok "Data Apps and the section grid draw their separators with the same TileDivider" || bad "a grid draws its own separator again"
-echo "$sep" | grep -q 'alpha = 0.4f' && ok "the separator ink is the faint 0x66 (40%) ink" || bad "separator ink is not the faint 0x66 ink"
+echo "$sep" | grep -qE 'if \(double\) 0\.7f else 0\.4f' && ok "the single separator ink is the faint 0x66 (40%) ink, the double is 0.7f" || bad "separator ink is not the faint 0x66 ink"
 echo "$sep" | grep -q 'iconCentreY' && ok "the separator is centred on the icon line" || bad "separator is not centred on the icon line"
 echo "$sep" | grep -q 'clearAndSetSemantics' && ok "the separator is hidden from accessibility" || bad "separator is not hidden from accessibility"
 grep -q 'if (!sep) slots++' "$KT/TileGridFragment.kt" && grep -q 'if (!sep && slots == cols) break' "$KT/TileGridFragment.kt" \

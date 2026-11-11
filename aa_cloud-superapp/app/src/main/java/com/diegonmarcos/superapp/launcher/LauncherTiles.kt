@@ -97,9 +97,14 @@ internal fun tileSepTag(id: String) = "tilesep:$id"
  * on the boundary ([edgeShift] = half the gap to the neighbour). Never a control, hidden from accessibility.
  */
 @Composable
-internal fun TileDivider(tag: String, iconCentreY: Dp, edgeShift: Dp, modifier: Modifier = Modifier) {
-    Box(modifier.offset(x = edgeShift, y = iconCentreY - SEP_HEIGHT / 2).size(1.dp, SEP_HEIGHT)
-        .background(LocalKitPalette.current.textPrimary.copy(alpha = 0.4f))
+internal fun TileDivider(tag: String, iconCentreY: Dp, edgeShift: Dp, modifier: Modifier = Modifier, double: Boolean = false) {
+    // #1627 the double '||' group rule reads as a STRONGER separator than the single '|': a taller, bolder,
+    // fully-opaque rule (2 dp wide, SEP_HEIGHT + 4 dp tall, alpha 0.7) vs the thin 1 dp / alpha-0.4 single.
+    val w = if (double) 2.dp else 1.dp
+    val h = if (double) SEP_HEIGHT + 4.dp else SEP_HEIGHT
+    val a = if (double) 0.7f else 0.4f
+    Box(modifier.offset(x = edgeShift, y = iconCentreY - h / 2).size(w, h)
+        .background(LocalKitPalette.current.textPrimary.copy(alpha = a))
         .clearAndSetSemantics { testTag = tag })
 }
 

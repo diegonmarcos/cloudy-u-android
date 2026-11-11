@@ -44,11 +44,11 @@ command -v jq >/dev/null 2>&1 || { echo "ERROR: jq required" >&2; exit 2; }
 # order with no sort. This is that, and nothing else: no search of the whole
 # document, so a Writer tile anywhere ELSE in build.json cannot satisfy it.
 GROUP='.ui.sections[] | select(.id == "cloud") | .tile_groups[]
-       | select(.title == "Tools Primary")'
+       | select(.title == "Primary")'
 
-echo "== T1: the Writer tile is in Cloud ▸ Tools Primary =="
+echo "== T1: the Writer tile is in Cloud ▸ Primary (renamed from 'Tools Primary', #1627) =="
 N="$(jq -r "[$GROUP] | length" "$BJ")"
-eq "exactly one Cloud/Tools Primary group" "$N" "1"
+eq "exactly one Cloud/Primary group" "$N" "1"
 
 HIT="$(jq -r "[$GROUP | .tiles[] | select(.id == \"writer\")] | length" "$BJ")"
 eq "one tile with id 'writer' in that group" "$HIT" "1"

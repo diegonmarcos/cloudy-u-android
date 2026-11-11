@@ -326,6 +326,12 @@ object Sections {
          *  reclassify any tile whose target was lost in an edit as decoration
          *  instead of failing. */
         val separator: Boolean = false,
+        /** #1627 a STRONGER separator: the double '||' group rule. Only read
+         *  when [separator] is true; `"double": true` in build.json makes
+         *  [TileDivider] draw a bolder rule than the single '|'. A variant of
+         *  the separator, never its own tile — every surface that drops a
+         *  separator drops this with it. */
+        val double: Boolean = false,
         /** The tiles INSIDE this one, when it is a folder rather than a
          *  destination. A non-empty list is what MAKES a tile a folder: the
          *  renderer opens a popup listing these instead of dispatching
@@ -786,6 +792,7 @@ object Sections {
                             iconName  = t.optString("icon", "ic_settings"),
                             target    = t.optString("target", ""),
                             separator = t.optBoolean("separator", false),
+                            double    = t.optBoolean("double", false),
                             // A folder's entries are the same shape as a tile,
                             // so this reads them with itself rather than with a
                             // second parser that would drift from this one.
