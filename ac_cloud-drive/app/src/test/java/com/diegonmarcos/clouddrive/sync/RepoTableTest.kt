@@ -143,9 +143,9 @@ class RepoTableTest {
         assertTrue(RepoTable.PINNED.isEmpty())
     }
 
-    @Test fun `#1452 the Status Message column follows the name and sorts by its text, empty last`() {
+    @Test fun `#1452 the Status Message column follows the six light git stats and sorts by its text, empty last`() {
         val cols = RepoColumn.entries
-        assertEquals(RepoColumn.MESSAGE, cols[cols.indexOf(RepoColumn.NAME) + 1])
+        assertEquals(RepoColumn.MESSAGE, cols[cols.indexOf(RepoColumn.CURRENT_BRANCH) + 1])
         val rows = listOf(row("a").copy(message = "zeta"), row("b").copy(message = ""), row("c").copy(message = "alpha"))
         assertEquals(listOf("c", "a", "b"), names(rows, RepoColumn.MESSAGE, true))
         assertEquals(listOf("a", "c", "b"), names(rows, RepoColumn.MESSAGE, false))
