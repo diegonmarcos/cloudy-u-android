@@ -251,7 +251,7 @@ private fun GroupCard(g: AdbCockpitModel.Group, a: CockpitActions) {
     Card("adbc:step:${g.id}") {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CockpitRoom.gap)) {
             Text(g.title, fontSize = CockpitRoom.head, fontWeight = FontWeight.Bold, color = p.textPrimary, modifier = Modifier.alpha(if (g.dim) 0.6f else 1f))
-            g.badge?.let { Text(if (g.dim) "$it · switch mode to use" else it, fontSize = CockpitRoom.small, color = if (g.dim) p.textSecondary else p.accent, modifier = Modifier.testTag("adbc:badge:${g.id}")) }
+            g.badge?.let { Text(if (g.dim) "$it · switch mode to use" else it, fontSize = CockpitRoom.small, color = if (g.dim) p.textSecondary else p.accent, modifier = Modifier.testTag("adbc:modebadge:${g.id}")) }
         }
         for (r in g.rows) StepRow(g, r, a)
     }
