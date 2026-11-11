@@ -42,7 +42,7 @@ class PhoneNotificationListenerService : NotificationListenerService() {
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
-        if (sbn != null) record(sbn)
+        if (sbn != null) com.diegonmarcos.superapp.xray.EngineProfiler.time("notify", "intake") { record(sbn) }
     }
 
     override fun onListenerDisconnected() {

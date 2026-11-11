@@ -1,6 +1,5 @@
 package com.diegonmarcos.superapp.media
 import com.diegonmarcos.superapp.MainActivity
-import com.diegonmarcos.superapp.battery.EnergyLedger
 
 import com.diegonmarcos.superapp.notificationcenter.PhoneNotificationListenerService
 import android.content.ComponentName
@@ -146,7 +145,7 @@ class NowPlayingMonitor(
         tracked = controllers
     }
 
-    private fun evaluateAndDispatch() = EnergyLedger.track("music.session") {
+    private fun evaluateAndDispatch() = com.diegonmarcos.superapp.xray.EngineProfiler.time("media", "session", ledgerTag = "music.session") {
         // Pick the FIRST controller in PLAYING state. Most users have
         // exactly one media app playing at a time; even when several
         // are listed (e.g. when one was paused but the system still

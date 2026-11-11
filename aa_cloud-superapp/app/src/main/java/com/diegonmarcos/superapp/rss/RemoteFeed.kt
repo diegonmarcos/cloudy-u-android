@@ -56,9 +56,10 @@ object RemoteFeed {
         return null
     }
 
-    fun fetch(ctx: Context, url: String, maxItems: Int = 25): List<FeedItem> {
+    fun fetch(ctx: Context, url: String, maxItems: Int = 25): List<FeedItem> { return com.diegonmarcos.superapp.xray.EngineProfiler.time("feeds", "rss") {
         app = ctx.applicationContext
         val text = ask(FETCH, url, maxItems.toString())
+        com.diegonmarcos.superapp.xray.EngineProfiler.bytes("feeds", "rss", text.length.toLong())
         // Success is an array; a failure is {"error": …} and is thrown, never drawn as "No items".
         val arr = runCatching { JSONArray(text) }.getOrElse {
             val error = runCatching { JSONObject(text).optString("error") }.getOrNull()
@@ -74,7 +75,7 @@ object RemoteFeed {
                 ))
             }
         }
-    }
+    } }
 
     private fun ask(method: String, vararg args: String): String {
         val ctx = app ?: throw IllegalStateException("the feed engine was asked before any context reached it")

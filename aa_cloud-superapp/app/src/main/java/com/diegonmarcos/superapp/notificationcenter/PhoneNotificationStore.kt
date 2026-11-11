@@ -62,6 +62,9 @@ object PhoneNotificationStore {
     @Synchronized
     fun all(ctx: Context): List<Entry> = mem ?: load(ctx).also { mem = it }
 
+    /** #1649 How many entries the history holds (X-Ray App, Notify engine). */
+    fun count(ctx: Context): Int = all(ctx).size
+
     private fun load(ctx: Context): List<Entry> {
         diskReads++
         val sp = ctx.getSharedPreferences(PREF, Context.MODE_PRIVATE)

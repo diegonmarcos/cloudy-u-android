@@ -39,6 +39,9 @@ object AppIconCache {
 
     fun cached(pkg: String): Drawable? = cache[pkg]
 
+    /** #1649 How many icons the cache holds (X-Ray App, UI engine). */
+    fun size(): Int = cache.size
+
     fun knownMissing(pkg: String): Boolean = pkg in misses
 
     /** Resolve + cache. The FIRST call per package pays the (Knox-slow)
@@ -48,9 +51,9 @@ object AppIconCache {
     fun load(ctx: Context, pkg: String): Drawable? {
         cache[pkg]?.let { return it }
         if (pkg in misses) return null
-        val d = runCatching {
-            ctx.applicationContext.packageManager.getApplicationIcon(pkg)
-        }.getOrNull()
+        val d = com.diegonmarcos.superapp.xray.EngineProfiler.time("ui", "icon") {
+            runCatching { ctx.applicationContext.packageManager.getApplicationIcon(pkg) }.getOrNull()
+        }
         if (d == null) {
             misses.add(pkg)
             return null

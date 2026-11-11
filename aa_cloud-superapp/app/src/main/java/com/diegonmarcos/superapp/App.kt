@@ -203,6 +203,8 @@ class App : Application(), WorkManagerConfiguration.Provider {
         // Capture process-start time before anything else so About →
         // Battery & Usage can report the real uptime.
         AppProcessUptime.initOnce()
+        // #1649 X-Ray App engine profiler: frame durations, page / activity open times and the foreground flag, from the platform.
+        runCatching { com.diegonmarcos.superapp.xray.XrayLifecycleProbe.install(this) }
         // Fleet token is DECLARATIVE: BuildConfig.FLEET_TOKEN is baked from the
         // sops secret (build.sh exports SUPERAPP_FLEET_TOKEN from the vault, the
         // same value the cloud-superapp-mcp env is rendered with). Seed it into

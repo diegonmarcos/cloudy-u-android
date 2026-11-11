@@ -130,7 +130,7 @@ object DevControlServer {
             Log.i(TAG, "listening on 127.0.0.1:$port")
             while (running.get()) {
                 val s = server?.accept() ?: break
-                runCatching { handle(ctx, s, token) }.onFailure { Log.w(TAG, "handle: $it") }
+                runCatching { com.diegonmarcos.superapp.xray.EngineProfiler.time("xray", "http") { handle(ctx, s, token) } }.onFailure { Log.w(TAG, "handle: $it") }
             }
         } catch (t: Throwable) {
             Log.w(TAG, "server died: $t")

@@ -1,6 +1,9 @@
 package com.diegonmarcos.superapp.devcontrol
 
 import com.diegonmarcos.superapp.xray.PARTIAL_LABEL
+import com.diegonmarcos.superapp.xray.EngineProbes
+import com.diegonmarcos.superapp.xray.EngineProfiler
+import com.diegonmarcos.superapp.xray.EngineProfiles
 import com.diegonmarcos.superapp.agents.AgentStatusReader
 import com.diegonmarcos.superapp.agents.FleetAgents
 import com.diegonmarcos.superapp.configs.Diagnostics
@@ -226,6 +229,58 @@ class DevControlFragment : KitComposeFragment() {
                 status.text = "working…"
                 launch { status.text = XrayExport.run(appCtx, { m -> askAdb(m) }, page, scope, o) { m -> status.text = m } }
             }
+        }
+
+        // ══ ENGINE PROFILES macro section (#1649) — the SuperApp's own debugger / profiler, organised by its engines
+        //    (EngineProfiles.ENGINES): a scoreboard, then one profile per engine with its Performance, Battery, Bugs / health and
+        //    Debug targets, each a real measurement against its limit. One collect feeds every block (EngineProbes.Shared).
+        macro("🧬  ENGINE PROFILES")
+        val engines = EngineProbes.Shared(appCtx)
+        fun verdictColor(v: EngineProfiles.Verdict): Color? = when (v) {
+            EngineProfiles.Verdict.PASS -> Color(0xFF4ADE80)
+            EngineProfiles.Verdict.FAIL -> Color(0xFFF87171)
+            EngineProfiles.Verdict.NO_DATA -> Color(0xFF9CA3AF)
+            EngineProfiles.Verdict.INFO -> null
+        }
+
+        asyncSection(ENGINE_SCOREBOARD, timeoutMs = 30_000, probe = { engines.get() }) { inputs ->
+            small("The profiler of THIS APP, by engine: what each engine of Cloud SuperApp measured since the process started, against " +
+                "its targets. Every number is read from the running app (its own recorder, the process CPU clock, the battery Source " +
+                "of Truth, the crash reports on disk, the shell broker's audit ring); a target with nothing measured yet says so.")
+            val snap = inputs.snap
+            row("Profiling since", "${fmtMillis(snap.sinceMs)} (${fmtDuration(snap.recordedMs)})")
+            row("In background", fmtDuration(snap.backgroundMs))
+            row("Process CPU", inputs.processCpuMs?.let { "$it ms" } ?: "not readable")
+            row("App mAh, cycle", inputs.appMah?.let { EngineProfiles.num(it) + " mAh (batterystats, open cycle)" }
+                ?: "no per-app batterystats reading yet (needs the ADB shell)")
+            row("Runs recorded", "${snap.records} over ${snap.paths.size} paths")
+            row("Crash reports", "${inputs.crashes.size} on disk, ${inputs.crashes.count { it.engine == null }} in no engine")
+            small("— Engines —")
+            val reports = EngineProfiles.reports(inputs)
+            for (r in reports) row(r.engine.title, r.summary).color = verdictColor(r.verdict)
+            row("All engines", "${reports.count { it.verdict == EngineProfiles.Verdict.PASS }} pass · " +
+                "${reports.count { it.verdict == EngineProfiles.Verdict.FAIL }} fail · " +
+                "${reports.count { it.verdict == EngineProfiles.Verdict.NO_DATA }} no sample · ${reports.size} engines")
+            button("ADB Shell ›", gray = true) { com.diegonmarcos.superapp.adbdebug.AdbShellLink.open(ctxAny()) }
+            button("Refresh", gray = true) { engines.invalidate(); reload() }
+            button("Reset measurement window", gray = true) { EngineProfiler.reset(); engines.invalidate(); reload() }
+        }
+
+        for (e in EngineProfiles.ENGINES) asyncSection(engineHead(e), timeoutMs = 30_000, probe = { engines.get() }) { inputs ->
+            val r = EngineProfiles.report(e, inputs)
+            small(e.what)
+            row("Verdict", r.summary).color = verdictColor(r.verdict)
+            for (k in EngineProfiles.Kind.values()) {
+                small("— ${k.title} —")
+                for (x in r.rows(k)) row(x.target.label, x.value).color = verdictColor(x.verdict)
+            }
+            small("— Trace —")
+            row("Last active", if (r.lastActiveMs > 0) fmtMillis(r.lastActiveMs) else "no profiled run yet")
+            row("Last error", r.lastError?.let { "${fmtMillis(it.atMs)} · ${it.where} · ${it.what}" } ?: "none since process start")
+            row("Last crash", r.lastCrash?.let { "${fmtMillis(it.atMs)} · ${it.headline} · ${it.file}" } ?: "none on disk")
+            row("Code", (e.appDirs.map { "app/$it" } + e.libs).joinToString(", "))
+            small("Measured from: " + e.targets.joinToString("; ") { "${it.label} = ${it.source}" })
+            button("Refresh", gray = true) { engines.invalidate(); reload() }
         }
 
         // ══ APP & BUILD macro section — this APK's identity: package/version,
@@ -1756,8 +1811,10 @@ class DevControlFragment : KitComposeFragment() {
          * ("APP & BUILD") or "GROUP/Section" for one section of a group that mixes app and device rows (RESOURCES keeps the
          * app's Storage, Battery & Usage and Memory & CPU Usage; AGENTS keeps the SuperApp agents, not the fleet's). The
          * device-wide groups (Device, Security, Network, API, Mesh, Dev Tools, Webserver, Diagnostics, Export All) are absent.
+         * #1649 ENGINE PROFILES leads: the page is the SuperApp's own profiler, one profile per engine (EngineProfiles.ENGINES).
          */
         val APP_XRAY_MACROS = arrayListOf(
+            "ENGINE PROFILES",
             "APP & BUILD", "REPO & RELEASES",
             "RESOURCES/Storage", "RESOURCES/Battery & Usage", "RESOURCES/Memory & CPU Usage",
             "AGENTS/SuperApp agents",
@@ -1766,6 +1823,10 @@ class DevControlFragment : KitComposeFragment() {
         fun newInstance(title: String = "X-Ray", macros: ArrayList<String>? = null) = DevControlFragment().apply {
             arguments = android.os.Bundle().apply { putString(ARG_TITLE, title); macros?.let { putStringArrayList(ARG_MACROS, it) } }
         }
+
+        /** #1649 The heads of the ENGINE PROFILES blocks: the scoreboard, then one per engine. */
+        const val ENGINE_SCOREBOARD = "Engine scoreboard"
+        fun engineHead(e: EngineProfiles.Engine) = "Engine · ${e.title}"
 
         /** The page's own two heading rows (title, Index) before the first block. */
         private const val HEAD_ITEMS = 2

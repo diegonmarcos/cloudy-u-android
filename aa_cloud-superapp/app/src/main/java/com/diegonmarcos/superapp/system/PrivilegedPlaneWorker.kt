@@ -31,7 +31,7 @@ import com.diegonmarcos.superapp.adbdebug.EmbeddedAdbChannel
  */
 class PrivilegedPlaneWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params) {
 
-    override fun doWork(): Result {
+    override fun doWork(): Result { com.diegonmarcos.superapp.xray.EngineProfiler.wake("system", "plane_worker"); return com.diegonmarcos.superapp.xray.EngineProfiler.time("system", "plane") {
         val ctx = applicationContext
         enableWirelessDebugging(ctx)
         // First consultation of the chosen mode's channel at start: a pure read, it launches nothing.
@@ -70,8 +70,9 @@ class PrivilegedPlaneWorker(ctx: Context, params: WorkerParameters) : Worker(ctx
             Thread.sleep(minOf(5_000L * attempt, 30_000L))
         }
         Log.w(TAG, "privileged plane NOT up after $ATTEMPTS attempts: $last (paired yet?)")
+        com.diegonmarcos.superapp.xray.EngineProfiler.error("system", "plane", "privileged plane not up after $ATTEMPTS attempts")
         return Result.failure()
-    }
+    } }
 
     private fun enableWirelessDebugging(ctx: Context) {
         // The owner's keep-alive switch decides whether this app turns it on.

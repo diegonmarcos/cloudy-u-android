@@ -39,7 +39,7 @@ object NotifyGate {
     @Volatile internal var notifyCount = 0
 
     fun post(nm: NotificationManager, tag: String?, id: Int, n: Notification, force: Boolean = false): Boolean =
-        synchronized(this) {
+        com.diegonmarcos.superapp.xray.EngineProfiler.time("notify", "post") { synchronized(this) {
             val key = "$tag#$id"
             val s = slots.getOrPut(key) { Slot() }
             val sig = signature(n)
@@ -57,7 +57,7 @@ object NotifyGate {
             }
             send(nm, tag, id, n, s, sig, now)
             true
-        }
+        } }
 
     /**
      * A data widget card: goes out when its content changed OR when it is not in the shade (swiped away, cleared, never

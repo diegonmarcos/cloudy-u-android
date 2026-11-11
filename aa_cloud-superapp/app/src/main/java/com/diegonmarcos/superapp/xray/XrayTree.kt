@@ -12,7 +12,7 @@ object XrayTree {
     /** page id → how the export covers it. */
     val COVERAGE: Map<String, String> = mapOf(
         "xray" to WALKED,
-        "xray-app" to "$WALKED: the app-scoped groups (App & Build, Repo & Releases, app Resources, SuperApp agents)",
+        "xray-app" to "$WALKED: the app-scoped groups (Engine Profiles, App & Build, Repo & Releases, app Resources, SuperApp agents)",
         "logcat-fleet" to XrayProbes.G_LOGCAT,
         "app-about" to "$WALKED: the App & Build and Repo & Releases groups",
         "logcat" to XrayProbes.G_LOGCAT,

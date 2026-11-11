@@ -49,6 +49,7 @@ object DataWidgetRuntime {
     /** One inexact, idle-tolerant alarm that starts [cls] again after about [delayMs]; replaces the previous one. */
     fun scheduleNext(ctx: Context, cls: Class<*>, requestCode: Int, delayMs: Long) {
         val am = ctx.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        com.diegonmarcos.superapp.xray.EngineProfiler.wake("notify", "widget_alarm")
         runCatching {
             am.setAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME, SystemClock.elapsedRealtime() + delayMs, pi(ctx, cls, requestCode))
         }

@@ -20,7 +20,7 @@ object SuperappSearchIndex {
     /** Hits for one declared scope. Unknown kinds yield nothing rather than
      *  throwing, so adding a scope to build.json before its builder exists
      *  degrades to an empty chip instead of a crash. */
-    fun hitsFor(ctx: Context, scope: SearchScope): List<SearchHit> = when (scope.kind) {
+    fun hitsFor(ctx: Context, scope: SearchScope): List<SearchHit> = com.diegonmarcos.superapp.xray.EngineProfiler.time("search", "index") { when (scope.kind) {
         "cloud_apps"    -> cloudApps(scope.id)
         "phone_apps"    -> phoneApps(scope.id, ctx)
         "cloud_configs" -> cloudConfigs(scope.id, ctx)
@@ -29,7 +29,7 @@ object SuperappSearchIndex {
         SearchKinds.APP_ALL -> cloudApps(scope.id) + cloudConfigs(scope.id, ctx)
         // browser_fav / browser_history / browser_web are per query: [Source.live].
         else -> emptyList()
-    }
+    } }
 
     /** The app's [SearchSource]: the index above, Cloud Browser's scopes per query, the commands. */
     class Source(ctx: Context) : SearchSource {

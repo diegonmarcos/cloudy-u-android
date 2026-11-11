@@ -14,6 +14,7 @@ class DataWidgetWakeReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
         val ctx = context ?: return
         if (intent?.action !in HANDLED) return
+        com.diegonmarcos.superapp.xray.EngineProfiler.wake("notify", "widget_broadcast")
         if (!BadgeServices.wanted(ctx, BatteryBadgeService::class.java.name)) return
         runCatching { DataWidgetRuntime.start(ctx.applicationContext, BatteryBadgeService::class.java) }
     }

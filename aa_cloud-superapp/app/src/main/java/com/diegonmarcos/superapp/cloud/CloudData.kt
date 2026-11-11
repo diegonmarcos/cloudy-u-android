@@ -95,7 +95,7 @@ object CloudData {
         out
     }
 
-    private fun fetchRaw(url: String): String {
+    private fun fetchRaw(url: String): String { return com.diegonmarcos.superapp.xray.EngineProfiler.time("feeds", "cloud") {
         val conn = (URL(url).openConnection() as HttpURLConnection).apply {
             requestMethod = "GET"
             connectTimeout = 8_000
@@ -108,6 +108,7 @@ object CloudData {
         val stream = if (code in 200..299) conn.inputStream else conn.errorStream
         val body = stream?.bufferedReader()?.use { it.readText() } ?: ""
         if (code !in 200..299) throw RuntimeException("HTTP $code: ${body.take(200)}")
+        com.diegonmarcos.superapp.xray.EngineProfiler.bytes("feeds", "cloud", body.length.toLong())
         return body
-    }
+    } }
 }

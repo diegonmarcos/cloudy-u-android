@@ -164,7 +164,7 @@ class WirelessDebugKeeper(ctx: Context, params: WorkerParameters) : Worker(ctx, 
 
         /** Bring scheduling in line with the switch. Called from App.onCreate,
          *  the boot receiver and the switch itself. */
-        fun sync(ctx: Context, trigger: Trigger) {
+        fun sync(ctx: Context, trigger: Trigger) { com.diegonmarcos.superapp.xray.EngineProfiler.time("system", "wdkeeper") {
             val app = ctx.applicationContext
             val wm = WorkManager.getInstance(app)
             if (!Prefs.enabled(app)) {
@@ -181,7 +181,7 @@ class WirelessDebugKeeper(ctx: Context, params: WorkerParameters) : Worker(ctx, 
                 PeriodicWorkRequestBuilder<WirelessDebugKeeper>(15, TimeUnit.MINUTES).build())
             registerCallbacks(app)
             kick(app, trigger, delayS = 0)
-        }
+        } }
 
         private fun kick(ctx: Context, trigger: Trigger, delayS: Long = EVENT_DELAY_S) {
             if (!Prefs.enabled(ctx)) return

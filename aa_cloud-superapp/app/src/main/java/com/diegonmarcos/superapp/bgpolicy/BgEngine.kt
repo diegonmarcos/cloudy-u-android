@@ -16,7 +16,7 @@ class BgEngine(
 ) {
     val available get() = shell != null
 
-    private fun run(cmd: String): String? = runCatching { shell?.exec(cmd) }.getOrNull()
+    private fun run(cmd: String): String? = com.diegonmarcos.superapp.xray.EngineProfiler.time("bgpolicy", "shell") { runCatching { shell?.exec(cmd) }.getOrNull() }
 
     private fun say(o: BgOutcome): BgOutcome { audit("bg-policy ${o.action.name.lowercase()} ${o.pkg}: ${if (o.ok) "ok" else if (o.skipped) "skipped" else "FAILED"} ${o.note}".trim()); return o }
 

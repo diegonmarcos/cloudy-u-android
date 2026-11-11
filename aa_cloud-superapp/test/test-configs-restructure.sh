@@ -10,7 +10,7 @@
 #   R3 X-Ray App (page xray-app) is the same DevControlFragment under APP_XRAY_MACROS, which names app groups only: no device-wide
 #      group (Device, Security, Network, API, Mesh, Dev Tools, Webserver, Diagnostics, Export All, Fleet agents)
 #   R4 Tools = Watchdog | X-Ray Device, Logcat Fleet, Agents (the | is a separator); Configs = Perms, Logcat, X-Ray App, About;
-#      X-Ray Device is the unfiltered X-Ray (all 13 macro groups); Logcat Fleet is the multi-select fleet reader; Battery stays
+#      X-Ray Device is the unfiltered X-Ray (all 14 macro groups, #1649 added ENGINE PROFILES); Logcat Fleet is the multi-select fleet reader; Battery stays
 #      a hidden Configs-group page (page:config/battery)
 #   R5 the Agents hub is the page agents-watchdog, relabelled Agents, in the Tools group, hub_sections = [Network]; watchtower and
 #      agents-watchtower are page_aliases of a DECLARED page (never a 404) and agents-watchtower is retired; watchdog alias lands on it
@@ -114,12 +114,12 @@ if (by['battery'].get('group'), by['battery'].get('subgroup')) != ('Configs', ''
 print('; '.join(probs) or 'OK')
 PY
 )" "Tools holds Watchdog, |, X-Ray Device, Logcat Fleet, Agents; Configs holds Perms, Logcat, X-Ray App, About; Battery is hidden in the Configs group; no Watchtower - Obsv subgroup remains"
-python3 - "$DEV" "$PAGES" <<'PY' && ok "X-Ray Device is DevControlFragment.newInstance(label) with no filter and all 13 macro groups are still declared" || bad "X-Ray Device lost its macro groups or got a filter"
+python3 - "$DEV" "$PAGES" <<'PY' && ok "X-Ray Device is DevControlFragment.newInstance(label) with no filter and all 14 macro groups are still declared" || bad "X-Ray Device lost its macro groups or got a filter"
 import re, sys
 dev = open(sys.argv[1]).read(); pages = open(sys.argv[2]).read()
 assert re.search(r'pageId == "xray" ->\s*\n?\s*com\.diegonmarcos\.superapp\.devcontrol\.DevControlFragment\.newInstance\(label\)\n', pages)
 macros = re.findall(r'^\s+macro\("([^"]+)"\)', dev, re.M)
-assert len(macros) == 13, '%d macro groups: %r' % (len(macros), macros)
+assert len(macros) == 14, '%d macro groups: %r' % (len(macros), macros)
 PY
 grep -qE 'pageId == "logcat-fleet" +-> .*FleetLogcatFragment' "$PAGES" && ok "config/logcat-fleet routes to FleetLogcatFragment" || bad "logcat-fleet is not routed"
 python3 - "$FLEET" <<'PY' && ok "Logcat Fleet: multi-select app picker (checkboxes), fleet shortcut, per-app view, export / copy / share / post c3-api, reader mechanism with the one-time grant" || bad "Logcat Fleet lacks the picker, per-app view, export or the reader mechanism"

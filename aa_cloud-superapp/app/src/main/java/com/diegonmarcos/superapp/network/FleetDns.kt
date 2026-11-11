@@ -441,7 +441,7 @@ object FleetDns {
      * (a reboot), on an engine update or reinstall (consent can be dropped)
      * and after the page's consent. Blocks: off the main thread.
      */
-    fun syncAndCheck(ctx: Context, raiseNow: Boolean, settleMs: Long = 4_000): Verdict {
+    fun syncAndCheck(ctx: Context, raiseNow: Boolean, settleMs: Long = 4_000): Verdict { return com.diegonmarcos.superapp.xray.EngineProfiler.time("network", "dns") {
         if (Prefs(ctx).chosen) runCatching { syncMeshDown(ctx, raiseNow) }
             .onFailure { android.util.Log.w("FleetDns", "mesh-down DNS not handed to the engine", it) }
         val until = System.currentTimeMillis() + settleMs
@@ -458,7 +458,7 @@ object FleetDns {
             dedupeKey = CONSENT_ALERT,
         )) else FleetAlerts.withdraw(ctx, CONSENT_ALERT)
         return v
-    }
+    } }
 
     // ── Android's own Private DNS ────────────────────────────────────────
 

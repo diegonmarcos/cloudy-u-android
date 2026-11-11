@@ -50,7 +50,7 @@ object AlertsNotifier {
      *  a re-draw after a reboot or a filter change must not ring N times.
      *  Returns the alerts actually posted. */
     @Synchronized
-    fun refresh(ctx: Context, fresh: String? = null): List<AlertStore.Alert> {
+    fun refresh(ctx: Context, fresh: String? = null): List<AlertStore.Alert> { return com.diegonmarcos.superapp.xray.EngineProfiler.time("notify", "alerts") {
         val g = NotifyGroups.alertsGroup
         val on = g != null && badge()?.let { BadgeCustomization.isEnabled(ctx, it) } == true
         // The Alerts group and badge are gone (notify redesign 2026-11-08), but an alert the owner can ACT on (the mesh-down
@@ -111,7 +111,7 @@ object AlertsNotifier {
                 .apply { if (pinned) flags = flags or Notification.FLAG_NO_CLEAR })
         }
         return shown
-    }
+    } }
 
     /** Only the [fresh] alert may make a sound, and not when Jev judged it not worth one ([quiet] is empty without an opinion). */
     internal fun silent(alertId: String, fresh: String?, quiet: Set<String>): Boolean = alertId != fresh || alertId in quiet

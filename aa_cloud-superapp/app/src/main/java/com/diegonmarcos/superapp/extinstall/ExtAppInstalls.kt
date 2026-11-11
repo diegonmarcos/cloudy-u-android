@@ -74,7 +74,7 @@ object ExtAppInstalls {
     }
 
     /** Re-check on resume: anything the system finished while nobody listened. */
-    fun refresh(ctx: Context) {
+    fun refresh(ctx: Context) = com.diegonmarcos.superapp.xray.EngineProfiler.time("store", "installs") {
         for (pkg in tracker.trackedPackages()) {
             val installed = ctx.packageManager.getLaunchIntentForPackage(pkg) != null
             val s = tracker.snapshot(pkg) ?: continue
