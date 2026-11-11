@@ -41,7 +41,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.diegonmarcos.superapp.uikit.KitStoreRow
 import com.diegonmarcos.hardtechcad.BuildConfig
 import com.diegonmarcos.hardtechcad.CadDiag
 import com.diegonmarcos.hardtechcad.GlProbe
@@ -287,9 +287,9 @@ fun CadXrayPage(dark: Boolean = true) {
 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 12.dp, vertical = 8.dp).testTag(XrayTags.PAGE), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Card(card) {
-            Text("Verdict", color = dim, fontSize = 12.sp)
+            Text("Verdict", color = dim, fontSize = KitStoreRow.caption)
             val bad = stages.any { it.status == "FAIL" }
-            Text(verdict, color = if (bad) statusColor("FAIL") else statusColor("OK"), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.testTag(XrayTags.VERDICT))
+            Text(verdict, color = if (bad) statusColor("FAIL") else statusColor("OK"), fontSize = KitStoreRow.body, fontWeight = FontWeight.SemiBold, modifier = Modifier.testTag(XrayTags.VERDICT))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Chip("Copy Markdown", accent, Modifier.testTag(XrayTags.COPY_MD)) { copy(ctx, "Hardtech-CAD X-Ray", XrayReport.markdown(snap)) }
                 Chip("Copy JSON", accent, Modifier.testTag(XrayTags.COPY_JSON)) { copy(ctx, "Hardtech-CAD X-Ray", XrayReport.json(snap)) }
@@ -305,30 +305,30 @@ fun CadXrayPage(dark: Boolean = true) {
             }
         }
         Card(card) {
-            Text("Pipeline, in order (the first FAIL is where a model stops rendering)", color = dim, fontSize = 12.sp)
+            Text("Pipeline, in order (the first FAIL is where a model stops rendering)", color = dim, fontSize = KitStoreRow.caption)
             stages.forEach { s ->
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(s.status, color = statusColor(s.status), fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 1.dp))
+                    Text(s.status, color = statusColor(s.status), fontSize = KitStoreRow.caption, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 1.dp))
                     Column {
-                        Text(s.name, color = ink, fontSize = 13.sp, fontWeight = FontWeight.Medium)
-                        Text(s.detail, color = dim, fontSize = 12.sp)
+                        Text(s.name, color = ink, fontSize = KitStoreRow.caption, fontWeight = FontWeight.Medium)
+                        Text(s.detail, color = dim, fontSize = KitStoreRow.caption)
                     }
                 }
             }
         }
         Card(card) {
-            Text("GPU: EGL / GLES context created now on this device", color = dim, fontSize = 12.sp)
-            if (egl.ran && !egl.ok) Text("FAILED at ${egl.stage}: ${egl.error}", color = statusColor("FAIL"), fontSize = 12.sp)
+            Text("GPU: EGL / GLES context created now on this device", color = dim, fontSize = KitStoreRow.caption)
+            if (egl.ran && !egl.ok) Text("FAILED at ${egl.stage}: ${egl.error}", color = statusColor("FAIL"), fontSize = KitStoreRow.caption)
             Facts(egl.fields, ink, dim)
         }
         Card(card) {
-            Text("WebView and device", color = dim, fontSize = 12.sp)
+            Text("WebView and device", color = dim, fontSize = KitStoreRow.caption)
             Facts(snap.webview + snap.device, ink, dim)
         }
         Card(card) {
-            Text("Viewer page: window.cadDiag() (WebGL context kinds tried, three.js module, frames, errors)", color = dim, fontSize = 12.sp)
+            Text("Viewer page: window.cadDiag() (WebGL context kinds tried, three.js module, frames, errors)", color = dim, fontSize = KitStoreRow.caption)
             val d = runCatching { org.json.JSONObject(snap.viewerJs) }.getOrNull()
-            if (d == null) Text("No viewer page has answered yet (a WebView below loads it; give it a few seconds).", color = statusColor("WARN"), fontSize = 12.sp)
+            if (d == null) Text("No viewer page has answered yet (a WebView below loads it; give it a few seconds).", color = statusColor("WARN"), fontSize = KitStoreRow.caption)
             else {
                 val pr = d.optJSONObject("probe")
                 val canvas = d.optJSONObject("canvas")
@@ -356,13 +356,13 @@ fun CadXrayPage(dark: Boolean = true) {
             }
         }
         Card(card) {
-            Text("Model assets: found, bytes, parse, hash, the path and URL actually used", color = dim, fontSize = 12.sp)
-            if (assets.isEmpty()) Text("reading…", color = dim, fontSize = 12.sp)
+            Text("Model assets: found, bytes, parse, hash, the path and URL actually used", color = dim, fontSize = KitStoreRow.caption)
+            if (assets.isEmpty()) Text("reading…", color = dim, fontSize = KitStoreRow.caption)
             assets.forEach { a ->
                 val i = a.inspect
                 val ok = a.found && (i?.ok == true || !a.bundled) && a.hashOk != false && a.sizeOk != false
                 Column(Modifier.testTag(XrayTags.model(a.id)), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text((if (ok) "OK  " else "FAIL  ") + a.id + "  (" + a.name + ")", color = if (ok || !a.bundled) ink else statusColor("FAIL"), fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                    Text((if (ok) "OK  " else "FAIL  ") + a.id + "  (" + a.name + ")", color = if (ok || !a.bundled) ink else statusColor("FAIL"), fontSize = KitStoreRow.caption, fontWeight = FontWeight.Medium)
                     Facts(listOfNotNull(
                         "route" to "${a.route}, ${a.format}, ${if (a.bundled) "bundled in the APK" else "not bundled"}",
                         "resolved path" to a.path,
@@ -377,7 +377,7 @@ fun CadXrayPage(dark: Boolean = true) {
             }
         }
         Card(card) {
-            Text("Live test: open a model right here (the real viewer, recorded above); with none chosen the viewer page loads with no model", color = dim, fontSize = 12.sp)
+            Text("Live test: open a model right here (the real viewer, recorded above); with none chosen the viewer page loads with no model", color = dim, fontSize = KitStoreRow.caption)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 Chip("No model", accent, selected = selected == null) { selected = null }
             }
@@ -389,12 +389,12 @@ fun CadXrayPage(dark: Boolean = true) {
             else Column(Modifier.fillMaxWidth().height(160.dp).background(Color(0xFF0E1116)).border(1.dp, dim.copy(alpha = 0.3f), RoundedCornerShape(12.dp))) { ViewerProbe(dir, Modifier.fillMaxSize()) }
         }
         Card(card) {
-            Text("Viewer sessions of this process (events as the page posted them)", color = dim, fontSize = 12.sp)
-            if (live.isEmpty()) Text("none yet", color = dim, fontSize = 12.sp)
+            Text("Viewer sessions of this process (events as the page posted them)", color = dim, fontSize = KitStoreRow.caption)
+            if (live.isEmpty()) Text("none yet", color = dim, fontSize = KitStoreRow.caption)
             live.forEach { r ->
-                Text("${r.id}: ${r.state}${if (r.error.isNotEmpty()) "  ERROR: " + r.error else ""}", color = if (r.error.isNotEmpty()) statusColor("FAIL") else ink, fontSize = 13.sp, fontWeight = FontWeight.Medium)
-                Text("WebView ${r.viewW}x${r.viewH}, shown ${r.viewShown}, hardware accelerated ${r.viewHwAccel}, shown after ${r.shownMs} ms, ${r.triangles} triangles, painted ${r.paintedPct}%", color = dim, fontSize = 12.sp)
-                r.events.takeLast(12).forEach { Text(it, color = dim, fontSize = 11.sp, fontFamily = FontFamily.Monospace) }
+                Text("${r.id}: ${r.state}${if (r.error.isNotEmpty()) "  ERROR: " + r.error else ""}", color = if (r.error.isNotEmpty()) statusColor("FAIL") else ink, fontSize = KitStoreRow.caption, fontWeight = FontWeight.Medium)
+                Text("WebView ${r.viewW}x${r.viewH}, shown ${r.viewShown}, hardware accelerated ${r.viewHwAccel}, shown after ${r.shownMs} ms, ${r.triangles} triangles, painted ${r.paintedPct}%", color = dim, fontSize = KitStoreRow.caption)
+                r.events.takeLast(12).forEach { Text(it, color = dim, fontSize = KitStoreRow.caption, fontFamily = FontFamily.Monospace) }
             }
         }
     }
@@ -409,8 +409,8 @@ private fun Card(bg: Color, body: @Composable () -> Unit) {
 private fun Facts(l: List<Pair<String, String>>, ink: Color, dim: Color, mono: Boolean = true) {
     l.forEach { (k, v) ->
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(k, color = dim, fontSize = 12.sp, modifier = Modifier.weight(0.42f))
-            Text(v.ifEmpty { "-" }, color = ink, fontSize = 12.sp, fontFamily = if (mono) FontFamily.Monospace else null, modifier = Modifier.weight(0.58f))
+            Text(k, color = dim, fontSize = KitStoreRow.caption, modifier = Modifier.weight(0.42f))
+            Text(v.ifEmpty { "-" }, color = ink, fontSize = KitStoreRow.caption, fontFamily = if (mono) FontFamily.Monospace else null, modifier = Modifier.weight(0.58f))
         }
     }
 }
@@ -418,6 +418,6 @@ private fun Facts(l: List<Pair<String, String>>, ink: Color, dim: Color, mono: B
 @Composable
 private fun Chip(label: String, accent: Color, modifier: Modifier = Modifier, selected: Boolean = false, onClick: () -> Unit) {
     val shape = RoundedCornerShape(10.dp)
-    Text(label, color = if (selected) Color.Black else accent, fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
+    Text(label, color = if (selected) Color.Black else accent, fontSize = KitStoreRow.caption, fontWeight = FontWeight.SemiBold,
         modifier = modifier.clip(shape).background(if (selected) accent else Color.Transparent).border(1.dp, accent, shape).clickable(onClick = onClick).padding(horizontal = 12.dp, vertical = 7.dp))
 }
