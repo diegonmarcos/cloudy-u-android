@@ -23,8 +23,10 @@ import helium314.keyboard.settings.screens.ColorsScreen
 import helium314.keyboard.settings.screens.DebugScreen
 import helium314.keyboard.settings.screens.DictionaryScreen
 import helium314.keyboard.settings.screens.GestureTypingScreen
+import helium314.keyboard.settings.screens.HomeScreen
 import helium314.keyboard.settings.screens.LanguageScreen
 import helium314.keyboard.settings.screens.MainSettingsScreen
+import helium314.keyboard.settings.screens.ThemesScreen
 import helium314.keyboard.settings.screens.PersonalDictionariesScreen
 import helium314.keyboard.settings.screens.PersonalDictionaryScreen
 import helium314.keyboard.settings.screens.PreferencesScreen
@@ -70,12 +72,21 @@ fun SettingsNavHost(
 
     NavHost(
         navController = navController,
-        startDestination = startDestination ?: SettingsDestination.Settings,
+        startDestination = startDestination ?: SettingsDestination.Home, // #1622: the icon-grid Home Page
         enterTransition = { slideInHorizontally(initialOffsetX = { +it * dir }, animationSpec = animation) },
         exitTransition = { slideOutHorizontally(targetOffsetX = { -it * dir }, animationSpec = animation) },
         popEnterTransition = { slideInHorizontally(initialOffsetX = { -it * dir }, animationSpec = animation) },
         popExitTransition = { slideOutHorizontally(targetOffsetX = { +it * dir }, animationSpec = animation) }
     ) {
+        composable(SettingsDestination.Home) { // #1622: icon-grid Home Page, the Config icon's new landing screen
+            HomeScreen(
+                onOpen = { route -> navController.navigate(route) },
+                onClickBack = ::goBack,
+            )
+        }
+        composable(SettingsDestination.Themes) { // #1622: Themes picker (Default | Unexpected)
+            ThemesScreen(onClickBack = ::goBack)
+        }
         composable(SettingsDestination.Settings) {
             MainSettingsScreen(
                 onClickAbout = { navController.navigate(SettingsDestination.About) },
@@ -199,6 +210,8 @@ fun SettingsNavHost(
 }
 
 object SettingsDestination {
+    const val Home = "home" // #1622: icon-grid Home Page (the Config icon opens this)
+    const val Themes = "themes" // #1622: Themes picker
     const val Settings = "settings"
     const val About = "about"
     const val TextCorrection = "text_correction"

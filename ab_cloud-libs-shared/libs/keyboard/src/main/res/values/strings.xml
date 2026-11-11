@@ -1585,4 +1585,15 @@ New dictionary:
     <!-- #1413 Configs toggle -->
     <string name="dev_keyboard">Dev Keyboard</string>
     <string name="dev_keyboard_summary">Swipe-corner keys (Esc, Tab, Ctrl, Alt, arrows, symbols) on the Unexpected layout</string>
+    <!-- #1622 Home Page (icon grid) and Themes picker -->
+    <string name="settings_screen_home">Home</string>
+    <string name="home_group_keyboard">Keyboard</string>
+    <string name="home_group_text">Text</string>
+    <string name="home_group_configs">Configs</string>
+    <string name="home_all_settings">All settings</string>
+    <string name="kb_themes">Themes</string>
+    <string name="kb_theme_default">Default</string>
+    <string name="kb_theme_default_summary">The standard keyboard</string>
+    <string name="kb_theme_unexpected">Unexpected</string>
+    <string name="kb_theme_unexpected_summary">Dark keys with white glyphs and corner-swipe legends, like the Unexpected Keyboard app</string>
 </resources>

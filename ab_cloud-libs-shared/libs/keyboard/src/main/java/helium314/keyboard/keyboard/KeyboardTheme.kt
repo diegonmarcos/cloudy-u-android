@@ -65,6 +65,10 @@ private constructor(val themeId: Int, @JvmField val mStyleId: Int) {
         const val THEME_PINK = "pink"
         const val THEME_SAND = "sand"
         const val THEME_VIOLETTE = "violette"
+        // #1622 "Unexpected" theme: dark keys, white centred glyphs, light corner legends, to match the
+        // Unexpected Keyboard app. Applied by the Themes picker (KbThemePreset), not listed in the normal
+        // colour picker — it is one half of a theme preset that also forces the corner-swipe layout on.
+        const val THEME_UNEXPECTED = "unexpected"
         fun getAvailableDefaultColors(prefs: SharedPreferences, isNight: Boolean) = listOfNotNull(
             if (!isNight) THEME_LIGHT else null, THEME_DARK,
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) THEME_DYNAMIC else null,
@@ -212,6 +216,19 @@ private constructor(val themeId: Int, @JvmField val mStyleId: Int) {
                     ContextCompat.getColor(context, R.color.background_amoled_dark),
                     ContextCompat.getColor(context, R.color.key_text_color_lxx_dark),
                     ContextCompat.getColor(context, R.color.key_hint_letter_color_lxx_dark),
+                    keyboardBackground = backgroundImage
+                )
+                // #1622: the "Unexpected" look — near-black backdrop, dark grey keys, white glyphs, pale corner legends.
+                THEME_UNEXPECTED -> DefaultColors(
+                    themeStyle,
+                    hasBorders,
+                    "#5C9DED".toColorInt(), // accent: the blue shift / enter glyphs in the reference screenshot
+                    "#0E0E0E".toColorInt(), // keyboard background: near black
+                    "#333333".toColorInt(), // normal key: dark grey (letter rows)
+                    "#1F1F1F".toColorInt(), // functional key: darker grey (number row, shift, space, bottom row)
+                    "#1F1F1F".toColorInt(), // spacebar
+                    Color.WHITE,            // key text: white, centred glyphs
+                    "#B8B8B8".toColorInt(), // hint / corner-legend colour: pale grey
                     keyboardBackground = backgroundImage
                 )
                 THEME_BLUE_GRAY -> DefaultColors(
