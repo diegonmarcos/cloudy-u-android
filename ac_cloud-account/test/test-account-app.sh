@@ -129,22 +129,25 @@ PY
   grep -q "<action android:name=\"$action\" */>" "$MF" && ok "manifest answers SuperApp's $action" || bad "manifest does not declare the action SuperApp sends ('$action')"
 
   # 5. redesign task 3: five islands declared in build.json::ui, drawn by the shared island + strips
-  python3 - "$A/build.json" <<'PY' && ok "ui.bottom_nav = vault, config, connect, devices, activity (+ the app's own configs); ui.sections hold every page" || bad "build.json ui.bottom_nav/sections are not the five sections"
+  python3 - "$A/build.json" <<'PY' && ok "#1625 ui.bottom_nav = groups, business, all, people, configs (default all); the vault/config/connect/devices/activity sections stay declared; ui.sections hold every page" || bad "build.json ui.bottom_nav/sections are not the #1625 contacts nav"
 import json, sys
 ui = json.load(open(sys.argv[1], encoding='utf-8')).get('ui') or {}
 # a0_docs/eng-specs/cloud-account-ia.md: a page's own `pages` is a second strip (Autofill, Phone, Setup)
+# #1625 the bottom nav became Groups | Business | All | People | Configs; the identity/vault sections stay declared
+# (reachable by deep link, off the bottom bar); the four contacts sections are single screens with no child pages.
 want = {'vault': ['ids', 'cards', 'secrets', 'autocomplete'],
         'config': ['android', 'desktop', 'c3', 'repos'],
         'connect': ['status', 'auth', 'fleetsetup'],
         'devices': ['mesh', 'peer-control', 'backup', 'files', 'working', 'diff'],
         'activity': ['activity', 'fleetdata'],
-        'configs': ['general', 'perms', 'about']}
+        'configs': ['general', 'perms', 'about'],
+        'groups': [], 'business': [], 'all': [], 'people': []}
 strips = {'autocomplete': ['personal', 'sites', 'snippets'], 'android': ['cloud-apps', 'phone-apps', 'runbook'], 'c3': ['infra', 'containers'],
           'secrets': ['providers', 'keys', 'tokens', 'grants', 'import', 'entries'], 'backup': ['databases', 'bundle', 'me'],
           'status': ['connections', 'apps', 'endpoints'], 'auth': ['hub', 'signin', 'settings'], 'fleetsetup': ['services', 'drive', 'push', 'perms', 'adb-shell']}
 got = {s.get('id'): [p.get('id') for p in s.get('pages') or []] for s in ui.get('sections') or []}
 gotstrips = {p.get('id'): [q.get('id') for q in p.get('pages')] for s in ui.get('sections') or [] for p in s.get('pages') or [] if p.get('pages')}
-ok = (ui.get('bottom_nav') == ['vault', 'config', 'connect', 'devices', 'activity'] and got == want and gotstrips == strips and ui.get('default_section') == 'vault'
+ok = (ui.get('bottom_nav') == ['groups', 'business', 'all', 'people', 'configs'] and got == want and gotstrips == strips and ui.get('default_section') == 'all'
       and isinstance(ui.get('account', {}).get('forges'), list)
       and ui.get('account', {}).get('connect', {}).get('file', {}).get('kind') == 'vault_file')
 sys.exit(0 if ok else 1)
@@ -257,7 +260,7 @@ mutate "package name drifts" lib/profile/AccountData.kt 'const val PKG = "com.di
 mutate "OPEN action dropped" acc/app/src/main/AndroidManifest.xml '<action android:name="com.diegonmarcos.cloudaccount.OPEN" />' '' || M=$((M+1))
 mutate "island replaced by a plain box" acc/app/src/main/java/com/diegonmarcos/cloudaccount/MainActivity.kt 'NavBarBottomHost(' 'Box(' || M=$((M+1))
 mutate "island no longer fed by NavDecl" acc/app/src/main/java/com/diegonmarcos/cloudaccount/MainActivity.kt 'NavDecl.fromBuildConfig(' 'NavDeclx.fromBuildConfig(' || M=$((M+1))
-mutate "a section leaves build.json" acc/build.json '"connect", "devices", "activity"' '"connect", "activity"' || M=$((M+1))
+mutate "a section leaves the bottom nav" acc/build.json '"business", "all", "people"' '"business", "people"' || M=$((M+1))
 mutate "a page leaves build.json" acc/build.json '"id": "working",' '"id": "workingx",' || M=$((M+1))
 mutate "a strip leaves build.json" acc/build.json '"id": "android",' '"id": "androidx",' || M=$((M+1))
 mutate "connect dispatch replaced by a literal" lib/profile/ConnectWays.kt 'fun handler(kind: String): Handler = when (kind) {' 'fun handler(kind: String): Handler = Handler.File

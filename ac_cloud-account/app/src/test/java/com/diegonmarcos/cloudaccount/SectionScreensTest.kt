@@ -22,6 +22,12 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.test.core.app.ApplicationProvider
 import com.diegonmarcos.cloudaccount.autofill.AutofillProfilesPage
+import com.diegonmarcos.cloudaccount.contacts.AllContactsScreen
+import com.diegonmarcos.cloudaccount.contacts.BusinessContactsScreen
+import com.diegonmarcos.cloudaccount.contacts.GroupsScreen
+import com.diegonmarcos.cloudaccount.contacts.ListContactsRepo
+import com.diegonmarcos.cloudaccount.contacts.PeopleContactsScreen
+import com.diegonmarcos.cloudaccount.contacts.sampleContacts
 import com.diegonmarcos.cloudaccount.configs.AppRow
 import com.diegonmarcos.cloudaccount.configs.CloudAppsPage
 import com.diegonmarcos.cloudaccount.configs.ComposeDecl
@@ -158,6 +164,11 @@ class SectionScreensTest(private val section: String, private val page: String) 
             "connect/services" -> FleetServicesSetupPage()
             "connect/drive" -> DriveSetupPage()
             "activity/activity" -> ActivityPage()
+            // #1625 the contacts sections, over an obvious-fake sample source so the lists and the People origin chips render.
+            "all/all" -> AllContactsScreen(ListContactsRepo(sampleContacts()))
+            "business/business" -> BusinessContactsScreen(ListContactsRepo(sampleContacts()))
+            "people/people" -> PeopleContactsScreen(ListContactsRepo(sampleContacts()))
+            "groups/groups" -> GroupsScreen(ListContactsRepo(sampleContacts()))
             else -> error("no page for $section/$page")
         }
     }
@@ -261,6 +272,7 @@ class SectionScreensTest(private val section: String, private val page: String) 
             "vault/providers", "vault/tokens", "devices/databases", "devices/mesh", "devices/peer-control",
             "connect/connections", "connect/apps", "connect/endpoints", "connect/services", "connect/drive",
             "activity/activity",
+            "all/all", "business/business", "people/people", "groups/groups",
         ).map { it.split('/').toTypedArray<Any>() }
     }
 }

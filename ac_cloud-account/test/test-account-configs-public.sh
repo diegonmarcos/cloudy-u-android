@@ -42,7 +42,7 @@ allowed = {"cloud-apps", "phone-apps", "runbook", "desktop", "infra", "container
 have = set(leaves(cfg["pages"]))
 ok(have == allowed, "Config declares exactly the allowed pages", f"Config leaves are {sorted(have)}, allowed {sorted(allowed)}")
 own = next(s for s in ui["sections"] if s["id"] == "configs")
-ok(set(leaves(own["pages"])) == {"general", "perms", "about"} and "configs" not in ui["bottom_nav"] and "config" in ui["bottom_nav"], "the app's own Configs is General | Perms | About, outside the bottom nav", "the app's own Configs drifted or is in the bottom nav")
+ok(set(leaves(own["pages"])) == {"general", "perms", "about"} and "configs" in ui["bottom_nav"] and "config" not in ui["bottom_nav"], "#1625 the app's own Configs is General | Perms | About, and is the fifth bottom-nav item; the Fleet Config files section stays declared off the bottom bar", "the app's own Configs drifted or is not the bottom-nav Configs item")
 
 ma = code(rd(MA))
 host = code(rd(A + "/app/src/main/java/com/diegonmarcos/cloudaccount/MainActivity.kt"))
