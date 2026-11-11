@@ -26,6 +26,7 @@ import com.diegonmarcos.superapp.R
 import com.diegonmarcos.superapp.notificationcenter.BadgeCustomization
 import com.diegonmarcos.superapp.notificationcenter.BadgeDeclaration
 import com.diegonmarcos.superapp.notificationcenter.BadgeServices
+import com.diegonmarcos.superapp.notificationcenter.NotifyGroups
 import com.diegonmarcos.superapp.uikit.LocalKitPalette
 
 /**
@@ -159,11 +160,14 @@ object BadgePanes {
     }
 
     /**
-     * Take effect on the LIVE badge: re-ensure the services (a badge switched back on needs its owner started) and redraw
-     * so the switches and the live view read the store that was just written.
+     * Take effect on the LIVE badge, in BOTH directions, and redraw so the switches and the live view read the store that
+     * was just written. [NotifyGroups.apply] is the one place a switch is applied: it stops the owner of a badge that is
+     * no longer wanted and takes a data widget's card (and its alarm) down, starts the owner of a badge switched back on
+     * ([BadgeServices.ensureAll]) and re-posts what the running ones own. This used to call only ensureAll, so switching
+     * a badge OFF did nothing: its card stayed in the shade and its service or alarm kept running until the next reboot.
      */
     private fun apply(ctx: Context, redraw: () -> Unit) {
-        runCatching { BadgeServices.ensureAll(ctx) }
+        runCatching { NotifyGroups.apply(ctx) }
         redraw()
     }
 

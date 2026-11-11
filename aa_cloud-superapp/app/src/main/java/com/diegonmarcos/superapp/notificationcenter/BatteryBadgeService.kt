@@ -154,7 +154,9 @@ class BatteryBadgeService : Service() {
 
         private fun refreshNow(app: Context) {
             // Switched off (or its grants gone): stop recording and posting; the owner retires the card.
-            if (!BadgeServices.wanted(app, BatteryBadgeService::class.java.name)) { dropReceiver(app); return }
+            if (!BadgeServices.wanted(app, BatteryBadgeService::class.java.name)) {
+                dropReceiver(app); DataWidgetRuntime.retiredIfOff(app, BatteryBadgeService::class.java); return
+            }
             // The SoT records the sample even when the shade may not be posted to.
             val report = runCatching { BatteryRepository.report(app) }.getOrNull() ?: return
             lastPostMs = System.currentTimeMillis()

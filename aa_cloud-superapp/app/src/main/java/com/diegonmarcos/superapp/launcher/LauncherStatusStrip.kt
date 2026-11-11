@@ -364,8 +364,17 @@ class StatusStripModel(private val context: Context) {
         override fun onAvailable(network: Network) { mainHandler.post { refreshNetworkFromConnectivity() } }
     }
 
-    /** Register everything and take a first reading of each. The strip being composed calls this. */
+    /** True between [start] and [stop]: the receivers, callbacks and tickers below exist only then. */
+    var running = false
+        private set
+
+    /**
+     * Register everything and take a first reading of each. Called when the strip's host becomes visible (ON_START, see
+     * [StripLifecycle]) and undone by [stop] when it no longer is. Idempotent.
+     */
     fun start() {
+        if (running) return
+        running = true
         runCatching {
             context.registerReceiver(timeReceiver, IntentFilter().apply {
                 addAction(Intent.ACTION_TIME_TICK)
@@ -423,6 +432,8 @@ class StatusStripModel(private val context: Context) {
     }
 
     fun stop() {
+        if (!running) return
+        running = false
         runCatching { context.unregisterReceiver(timeReceiver) }
         runCatching { context.unregisterReceiver(batteryReceiver) }
         runCatching { context.unregisterReceiver(usbReceiver) }
@@ -750,18 +761,34 @@ private fun PetAbove(model: StatusStripModel, toolId: String) {
 @Composable
 private fun LauncherStripContent(model: StatusStripModel) {
     val ctx = LocalView.current.context
-    DisposableEffect(model) {
-        model.start()
-        onDispose { model.stop() }
-    }
     // #1522 the ADB dot is re-checked on every resume (the broker caches a verdict for seconds), never on a timer.
-    val owner = androidx.lifecycle.compose.LocalLifecycleOwner.current
-    DisposableEffect(owner, model) {
-        val o = androidx.lifecycle.LifecycleEventObserver { _, e -> if (e == androidx.lifecycle.Lifecycle.Event.ON_RESUME) model.refreshBroker() }
-        owner.lifecycle.addObserver(o)
-        onDispose { owner.lifecycle.removeObserver(o) }
-    }
+    StripLifecycle(model, onStart = { model.start() }, onResume = { model.refreshBroker() }, onStop = { model.stop() })
     StatusStripBody(model, ctx)
+}
+
+/**
+ * The strip's model runs only while its host is VISIBLE (started), not for as long as it is composed. The launcher's
+ * activity stays composed while another app is in front, and the model used to stay started with it: the 10 s
+ * RAM / CPU / storage ticker, the minute tick, the battery, Wi-Fi signal and all-networks callbacks and the passive
+ * location listener kept running for a strip nobody could see. [onStart] runs on ON_START (and at once when the host is
+ * already started), [onStop] on ON_STOP and when the strip leaves the composition, [onResume] on every ON_RESUME. A start
+ * takes a fresh reading of everything, so what the strip shows on return is the state then, not the state it left.
+ */
+@Composable
+internal fun StripLifecycle(key: Any, onStart: () -> Unit, onResume: () -> Unit, onStop: () -> Unit) {
+    val owner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    DisposableEffect(owner, key) {
+        val o = androidx.lifecycle.LifecycleEventObserver { _, e ->
+            when (e) {
+                androidx.lifecycle.Lifecycle.Event.ON_START -> onStart()
+                androidx.lifecycle.Lifecycle.Event.ON_RESUME -> onResume()
+                androidx.lifecycle.Lifecycle.Event.ON_STOP -> onStop()
+                else -> Unit
+            }
+        }
+        owner.lifecycle.addObserver(o)
+        onDispose { owner.lifecycle.removeObserver(o); onStop() }
+    }
 }
 
 @Composable

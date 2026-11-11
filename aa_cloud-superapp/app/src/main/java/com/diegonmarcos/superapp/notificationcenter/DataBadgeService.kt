@@ -131,15 +131,19 @@ class DataBadgeService : Service() {
 
         private fun refreshNow(app: Context) {
             // Switched off (or its grants gone): stop reading; the owner retires the card.
-            if (!BadgeServices.wanted(app, DataBadgeService::class.java.name)) { dropReceiver(app); return }
+            if (!BadgeServices.wanted(app, DataBadgeService::class.java.name)) {
+                dropReceiver(app); DataWidgetRuntime.retiredIfOff(app, DataBadgeService::class.java); return
+            }
             if (!NetworkBadgeService.canPost(app)) return
             // Screen off (the hourly alarm) or read a moment ago: no netstats sessions. Screen-on refreshes it.
             val awake = runCatching { (app.getSystemService(Context.POWER_SERVICE) as android.os.PowerManager).isInteractive }.getOrDefault(true)
+            // Armed BEFORE the gate: a read skipped by the gate (the alarm fired with the screen off) used to return
+            // without the next alarm, which ended the chain, so with the process gone the card was never read again.
+            DataWidgetRuntime.scheduleNext(app, DataBadgeService::class.java, NOTIF_ID, REFRESH_MS)
             if (!mayRead(true, awake, System.currentTimeMillis(), lastPostMs)) return
             ensureChannel(app)
             val snap = gather(app)
             lastPostMs = System.currentTimeMillis()
-            DataWidgetRuntime.scheduleNext(app, DataBadgeService::class.java, NOTIF_ID, REFRESH_MS)
             runCatching { NotifyGate.postCtx(app, NOTIF_ID, build(app, snap)) }
         }
 

@@ -6,6 +6,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import androidx.core.app.NotificationCompat
 import androidx.test.core.app.ApplicationProvider
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -35,6 +36,9 @@ class NotifyGateTest {
         NotifyGate.clock = { now }
         NotifyGate.defer = { d, r -> deferred += d to r }
     }
+
+    /** The frozen clock and the captured scheduler are this test's own: the next test class gets the real ones back. */
+    @After fun tearDown() { NotifyGate.reset() }
 
     private fun n(text: String): Notification =
         NotificationCompat.Builder(app, "c").setSmallIcon(android.R.drawable.ic_dialog_info)
@@ -68,6 +72,52 @@ class NotifyGateTest {
     @Test fun idsAreIndependent() {
         NotifyGate.post(nm, null, 1, n("a")); NotifyGate.post(nm, null, 2, n("a")); NotifyGate.post(nm, "tag", 1, n("a"))
         assertEquals(3, NotifyGate.notifyCount)
+    }
+
+    // ── A data widget card (postCtx): forced only when it is really not in the shade ─────────────────────────────
+
+    @Test fun anUnchangedWidgetCardStillInTheShadeIsNotPostedAgain() {
+        assertTrue(NotifyGate.postCtx(app, 7, n("72%")))
+        // Every screen-on used to re-post every widget card, changed or not.
+        repeat(200) { now += 5_000; assertFalse(NotifyGate.postCtx(app, 7, n("72%"))) }
+        assertEquals(1, NotifyGate.notifyCount)
+        assertTrue("a changed card still goes out", NotifyGate.postCtx(app, 7, n("71%")))
+        assertEquals(2, NotifyGate.notifyCount)
+    }
+
+    @Test fun aWidgetCardThatLeftTheShadeIsPutBackEvenUnchanged() {
+        assertTrue(NotifyGate.postCtx(app, 7, n("72%")))
+        nm.cancel(7) // swiped away: nobody told the gate
+        assertFalse("control: the card is gone", NotifyGate.inShade(nm, null, 7))
+        now += 5_000
+        assertTrue("the shade is asked, not assumed", NotifyGate.postCtx(app, 7, n("72%")))
+        assertTrue(NotifyGate.inShade(nm, null, 7))
+        assertEquals(2, NotifyGate.notifyCount)
+    }
+
+    @Test fun aCardSwipedInsideTheGapComesBackWhenTheGapEnds() {
+        assertTrue(NotifyGate.postCtx(app, 7, n("72%")))
+        nm.cancel(7)
+        now += 100 // inside the gap: held, forced
+        assertFalse(NotifyGate.postCtx(app, 7, n("72%")))
+        // A plain identical post in between must not void the held forced one.
+        assertFalse(NotifyGate.post(nm, null, 7, n("72%")))
+        now += NotifyGate.MIN_GAP_MS
+        deferred.toList().forEach { it.second.run() }
+        assertTrue("the held card was dropped as a duplicate", NotifyGate.inShade(nm, null, 7))
+        assertEquals(2, NotifyGate.notifyCount)
+    }
+
+    @Test fun aHeldOlderStateNeverOverwritesANewerOneAlreadySent() {
+        NotifyGate.post(nm, null, 1, n("a"))
+        now += 100
+        NotifyGate.post(nm, null, 1, n("b")) // held
+        now += NotifyGate.MIN_GAP_MS         // the gap is over, the flush has not run yet
+        assertTrue(NotifyGate.post(nm, null, 1, n("c")))
+        deferred.toList().forEach { it.second.run() } // the late flush
+        assertEquals("the stale held 'b' went out after 'c'", 2, NotifyGate.notifyCount)
+        val shown = nm.activeNotifications.first { it.id == 1 }.notification.extras.getCharSequence(Notification.EXTRA_TEXT).toString()
+        assertEquals("c", shown)
     }
 
     @Test fun batteryGapIs90s() {

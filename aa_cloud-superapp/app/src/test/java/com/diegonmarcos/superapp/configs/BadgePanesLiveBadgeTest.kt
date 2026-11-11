@@ -81,6 +81,28 @@ class BadgePanesLiveBadgeTest : KitPageHarness() {
     }
 
     @Test
+    fun `turn-all off takes a posted badge out of the shade and cancels its alarm`() {
+        // #1629: the switch used to re-ensure the wanted services only, so a badge switched OFF stayed where it was.
+        render()
+        val nm = ctx.getSystemService(android.app.NotificationManager::class.java)
+        val alarms = org.robolectric.Shadows.shadowOf(ctx.getSystemService(android.app.AlarmManager::class.java))
+        val id = com.diegonmarcos.superapp.notificationcenter.MarketsBadgeService.NOTIF_ID
+        val channel = badges().first { it.id == com.diegonmarcos.superapp.notificationcenter.MarketsBadgeService.BADGE_ID }.channel
+        nm.createNotificationChannel(android.app.NotificationChannel(channel, channel, android.app.NotificationManager.IMPORTANCE_LOW))
+        nm.notify(id, androidx.core.app.NotificationCompat.Builder(ctx, channel).setSmallIcon(android.R.drawable.ic_dialog_info).setContentTitle("card").build())
+        com.diegonmarcos.superapp.notificationcenter.DataWidgetRuntime.scheduleNext(
+            ctx, com.diegonmarcos.superapp.notificationcenter.MarketsBadgeService::class.java, id, 60_000L)
+        assertTrue("control: the card is posted", nm.activeNotifications.any { it.id == id })
+        assertTrue("control: the alarm is armed", alarms.scheduledAlarms.size == 1)
+
+        compose.onAllNodesWithTag("switch:notify-all")[0].performScrollTo().performClick()
+        compose.waitForIdle()
+
+        assertTrue("switched off, yet still in the shade", nm.activeNotifications.none { it.id == id })
+        assertTrue("switched off, yet its alarm is still armed", alarms.scheduledAlarms.isEmpty())
+    }
+
+    @Test
     fun `the persistent switch follows Keep it pinned`() {
         val b = badges().first { it.persistent }
         assertTrue("${b.id} is declared persistent, so it pins by default", BadgeServices.pinned(ctx, b.id))

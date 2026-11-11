@@ -93,6 +93,16 @@ object BadgeServices {
         BadgeDeclaration.badgesOf(declared, fqcn)
             .any { missingRequirement(ctx, it) == null && BadgeCustomization.isEnabled(ctx, it) }
 
+    /**
+     * True when the owner switched off EVERY badge [fqcn] owns (its own switch or its group's). Not the same as
+     * ![wanted]: a badge that is on but misses a grant still has something to say (its card names the grant), a badge
+     * that is off has nothing to post, read or schedule. The data widgets ask this before every read, so a start that
+     * reaches a switched-off widget (an alarm armed by a read in flight, a stale delete intent) retires it instead of
+     * posting the card back and arming the next alarm.
+     */
+    fun switchedOff(ctx: Context, fqcn: String): Boolean =
+        BadgeDeclaration.badgesOf(declared, fqcn).none { BadgeCustomization.isEnabled(ctx, it) }
+
     private fun start(ctx: Context, fqcn: String): Boolean = runCatching {
         val cls = Class.forName(fqcn)
         // A data widget (Weather, MyHealth, Battery) is no keep-alive: plain start, never a foreground service.

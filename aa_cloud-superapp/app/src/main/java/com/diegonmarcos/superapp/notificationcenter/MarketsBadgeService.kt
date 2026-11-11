@@ -150,6 +150,8 @@ class MarketsBadgeService : Service() {
          * card is posted. The next read is one inexact alarm ([DataWidgetRuntime]).
          */
         fun refresh(app: Context, force: Boolean, done: (() -> Unit)? = null) = main.post {
+            // Switched off: no fetch and, above all, no next alarm (this used to re-arm it on every start).
+            if (DataWidgetRuntime.retiredIfOff(app, MarketsBadgeService::class.java)) { done?.invoke(); return@post }
             if (!seeded) { seeded = true; quotes.putAll(MarketsLastGood(app).load()) }
             DataWidgetRuntime.scheduleNext(app, MarketsBadgeService::class.java, NOTIF_ID, refreshMs(app))
             val list = instruments()

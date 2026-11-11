@@ -54,6 +54,19 @@ object DataWidgetRuntime {
         }
     }
 
+    /**
+     * The guard every widget passes before it reads, posts or schedules: when the owner switched the badge off, the
+     * widget is retired HERE (alarm cancelled, card and group summary gone) and true is returned, so the caller stops.
+     * Without it a switched-off Weather / MyHealth / Markets kept fetching, re-posting its card and re-arming its alarm
+     * until the next reboot, because nothing between the alarm and the read asked the switch.
+     */
+    fun retiredIfOff(ctx: Context, cls: Class<*>): Boolean {
+        val app = ctx.applicationContext
+        if (!BadgeServices.switchedOff(app, cls.name)) return false
+        of(cls.name)?.let { retire(app, it) }
+        return true
+    }
+
     /** The widget is switched off: no more reads, and its card leaves the shade (with its group summary if it was the last). */
     fun retire(ctx: Context, w: Widget) {
         val am = ctx.getSystemService(Context.ALARM_SERVICE) as AlarmManager

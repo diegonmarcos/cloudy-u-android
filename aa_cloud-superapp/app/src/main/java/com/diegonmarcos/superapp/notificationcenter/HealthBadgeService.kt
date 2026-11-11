@@ -38,6 +38,8 @@ class HealthBadgeService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // Switched off: no Health Connect read, no card, no next alarm.
+        if (DataWidgetRuntime.retiredIfOff(this, HealthBadgeService::class.java)) { stopSelf(startId); return START_NOT_STICKY }
         // The last cached face at once, then the read fills it in.
         post()
         refresh(startId)
@@ -81,8 +83,11 @@ class HealthBadgeService : Service() {
             val failed = face.state == HealthBadgeModel.State.ERROR || face.state == HealthBadgeModel.State.TIMEOUT
             val cached = cached()
             if (failed && cached != null) save(cached.first, cached.second, face.text) else save(face)
-            post()
-            schedule()
+            // Switched off while the read was in flight: the result is kept, but nothing is posted or re-armed.
+            if (!DataWidgetRuntime.retiredIfOff(this@HealthBadgeService, HealthBadgeService::class.java)) {
+                post()
+                schedule()
+            }
             stopSelf(startId)
         }
     }

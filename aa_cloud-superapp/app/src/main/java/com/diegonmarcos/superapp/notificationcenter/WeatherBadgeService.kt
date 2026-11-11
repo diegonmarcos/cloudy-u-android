@@ -65,6 +65,8 @@ class WeatherBadgeService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // Switched off: no fetch, no card, no next alarm.
+        if (DataWidgetRuntime.retiredIfOff(this, WeatherBadgeService::class.java)) { stopSelf(startId); return START_NOT_STICKY }
         // The cached face at once (also what a restart or a reboot shows), then the fetch fills it in.
         runCatching { NotifyGate.postCtx(this, NOTIF_ID, build(initialState())) }
         refresh(startId)
@@ -93,8 +95,11 @@ class WeatherBadgeService : Service() {
         scope.launch {
             val state = runCatching { compute() }.getOrElse { initialState() }
             main.post {
-                runCatching { NotifyGate.postCtx(this@WeatherBadgeService, NOTIF_ID, build(state)) }
-                schedule()
+                // Switched off while the fetch was in flight: the result is dropped, nothing is re-armed.
+                if (!DataWidgetRuntime.retiredIfOff(this@WeatherBadgeService, WeatherBadgeService::class.java)) {
+                    runCatching { NotifyGate.postCtx(this@WeatherBadgeService, NOTIF_ID, build(state)) }
+                    schedule()
+                }
                 stopSelf(startId)
             }
         }

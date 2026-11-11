@@ -32,9 +32,10 @@ import java.util.concurrent.Executors
  * [AiUsageModel]; nothing here computes a figure.
  *
  * A DATA WIDGET, not a keep-alive: plain notify ([FleetNotify.dataWidgetBuilder]), never startForeground (see
- * [DataWidgetRuntime]). Refresh: on start, when the screen comes on, on the Refresh button, every [TICK_MS] while the
- * screen is on (the tick stops with the screen; a process-level receiver), and one inexact [REFRESH_MS] alarm while the
- * process is gone. A failed read keeps the last good figures on the card and says why; data older than
+ * [DataWidgetRuntime]). Refresh: on start, on the Refresh button, when the screen comes on and every [TICK_MS] while the
+ * screen is on (those two only when the last read is
+ * [AUTO_GAP_MS] old; the tick stops with the screen; a process-level receiver), and one inexact [REFRESH_MS] alarm while
+ * the process is gone. The network is read only with the screen on: a start that finds it off redraws the cached figures. A failed read keeps the last good figures on the card and says why; data older than
  * [AiUsageModel.STALE_MS] is marked stale. Without POST_NOTIFICATIONS (Android 13+) it posts and reads nothing.
  */
 class AiBadgeService : Service() {
@@ -63,8 +64,20 @@ class AiBadgeService : Service() {
         private const val ACTION_REFRESH = "com.diegonmarcos.superapp.notificationcenter.AI_REFRESH"
         private const val RC_OPEN = 0x4151
         private const val RC_REFRESH = 0x4152
-        private const val MIN_GAP_MS = 20_000L
         private const val TICK_MS = 5 * 60_000L
+        /**
+         * The floor between two reads NOBODY asked for (a screen-on, the tick). It was 20 s, so every unlock more than
+         * 20 s after the last one was an HTTPS round trip for figures that move a few times an hour. Just under the tick,
+         * so the tick itself is always due. A forced read (service start, the Refresh button) is never floored.
+         */
+        internal const val AUTO_GAP_MS = 4 * 60_000L
+
+        /** The network is touched only with the screen on (the same rule as the Data and Markets cards). Pure, for the test. */
+        internal fun fetchAllowed(interactive: Boolean): Boolean = interactive
+
+        /** Whether a read is due: always when the owner asked, otherwise only once the last one is [AUTO_GAP_MS] old. Pure, for the test. */
+        internal fun readDue(force: Boolean, nowMs: Long, lastReadMs: Long): Boolean =
+            force || lastReadMs <= 0L || nowMs < lastReadMs || nowMs - lastReadMs >= AUTO_GAP_MS
         /** The one inexact alarm that carries the card while the process is gone. */
         internal const val REFRESH_MS = 30 * 60_000L
         private const val PREFS = "ai_usage_badge"
@@ -118,18 +131,22 @@ class AiBadgeService : Service() {
             main.removeCallbacks(tick)
         }
 
-        /** Coalesce a burst into one read, at most one per [MIN_GAP_MS] unless the owner forced it; [done] runs after it. */
+        /** Coalesce a burst into one read; a read nobody forced is skipped unless [readDue]; [done] runs after the read (at once when skipped). */
         fun requestRefresh(app: Context, force: Boolean, done: (() -> Unit)? = null) {
             if (done != null) waiting += done
             main.post {
                 if (pending != null) return@post
-                val wait = if (force) 0L else (MIN_GAP_MS - (System.currentTimeMillis() - lastReadMs)).coerceIn(0L, MIN_GAP_MS)
+                if (!readDue(force, System.currentTimeMillis(), lastReadMs)) {
+                    // Read a moment ago: the card is current. Nothing is queued, so the next due tick or screen-on reads.
+                    if (done != null && waiting.remove(done)) runCatching(done)
+                    return@post
+                }
                 val r = Runnable {
                     pending = null
                     runCatching { worker.execute { try { refreshNow(app) } finally { finish() } } }.onFailure { finish() }
                 }
                 pending = r
-                main.postDelayed(r, wait)
+                main.post(r)
             }
         }
 
@@ -142,20 +159,28 @@ class AiBadgeService : Service() {
 
         private fun refreshNow(app: Context) {
             // Switched off (or its grants gone): stop reading; the owner retires the card.
-            if (!BadgeServices.wanted(app, AiBadgeService::class.java.name)) { dropReceiver(app); return }
+            if (!BadgeServices.wanted(app, AiBadgeService::class.java.name)) {
+                dropReceiver(app); DataWidgetRuntime.retiredIfOff(app, AiBadgeService::class.java); return
+            }
             if (!NetworkBadgeService.canPost(app)) return
             ensureChannel(app)
-            lastReadMs = System.currentTimeMillis()
             var note = ""
-            val out = runCatching { AiUsageClient.fetch(BuildConfig.UI_C3_OPS_BASE_URL, bearer(app), AiUsageClient.fleetTransport, AiUsageClient.plainTransport) }
-                .getOrElse { AiUsageClient.Outcome.Failed(it.javaClass.simpleName) }
-            when (out) {
-                is AiUsageClient.Outcome.Ok -> {
-                    if (AiUsageModel.parse(out.body) != null) {
-                        prefs(app).edit().putString(KEY_BODY, out.body).putLong(KEY_AT, lastReadMs).apply()
-                    } else note = "unreadable reply"
+            // Screen off (the alarm found the device awake for something else): no network round trip for a card nobody
+            // can see. The cached figures are redrawn with their true age, and the screen-on edge reads (nothing is
+            // marked as read here, so that read is due).
+            val awake = runCatching { (app.getSystemService(Context.POWER_SERVICE) as PowerManager).isInteractive }.getOrDefault(true)
+            if (fetchAllowed(awake)) {
+                lastReadMs = System.currentTimeMillis()
+                val out = runCatching { AiUsageClient.fetch(BuildConfig.UI_C3_OPS_BASE_URL, bearer(app), AiUsageClient.fleetTransport, AiUsageClient.plainTransport) }
+                    .getOrElse { AiUsageClient.Outcome.Failed(it.javaClass.simpleName) }
+                when (out) {
+                    is AiUsageClient.Outcome.Ok -> {
+                        if (AiUsageModel.parse(out.body) != null) {
+                            prefs(app).edit().putString(KEY_BODY, out.body).putLong(KEY_AT, lastReadMs).apply()
+                        } else note = "unreadable reply"
+                    }
+                    is AiUsageClient.Outcome.Failed -> note = out.reason
                 }
-                is AiUsageClient.Outcome.Failed -> note = out.reason
             }
             DataWidgetRuntime.scheduleNext(app, AiBadgeService::class.java, NOTIF_ID, REFRESH_MS)
             runCatching { NotifyGate.postCtx(app, NOTIF_ID, build(app, drawCached(app, note))) }
