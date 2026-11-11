@@ -54,6 +54,17 @@ class KgConfigTest {
         assertFalse("no credential in the declaration", ui.getJSONObject("me").has("token"))
     }
 
+    /** #1656 Me sources from the library repo cloned at runtime (HardTech-Chronos today, Projects-Library-KG after #1609), never from baked stub collections. */
+    @Test fun meSourcesFromTheLibraryRepoNotBakedCollections() {
+        val me = MeRepo.parse(ui.getJSONObject("me").toString())
+        assertTrue("the live library repo or its #1609 rename, got ${me.repo}", me.repo.lowercase() in setOf("hardtech-chronos", "projects-library-kg", "project-library-kg"))
+        val cwd = java.io.File(System.getProperty("user.dir"))
+        val main = java.io.File(if (java.io.File(cwd, "src/main").isDirectory) cwd else java.io.File(cwd, "app"), "src/main")
+        val baked = main.walkTopDown().filter { it.isFile && it.extension in setOf("kt", "json", "html", "xml") }
+            .filter { f -> listOf("Science & Math", "Tech & Dev", "Saved collections").any { f.readText().contains(it) } }.map { it.name }.toList()
+        assertTrue("no collection data is baked into the APK: $baked", baked.isEmpty())
+    }
+
     @Test fun everyDataPageIsDeclaredByTheNavAndEveryDeclaredPageHasItsData() {
         val navPages = listOf("cloud", "phone", "api").flatMap { pageIds(it) }.toSet()
         assertEquals("kg.json::pages and build.json::ui (cloud, phone, api) name the same pages", navPages, kg.pages.keys)
