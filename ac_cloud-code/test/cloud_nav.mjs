@@ -94,7 +94,11 @@ out(typeof nav.shared_store?.app === "string" && nav.shared_store.app.length > 0
 for (const [k, v] of [["backlog.source_dir", nav.backlog?.source_dir], ["repos.root", nav.repos?.root]]) {
 	out(typeof v === "string" && !v.startsWith("/") && !v.includes(".."), `nav.${k} is relative to the store (${JSON.stringify(v)})`);
 }
-out(nav.backlog?.source_dir?.startsWith("cloud-a-docs/"), "Backlog reads cloud-a-docs FROM the store (the #575 proof case)");
+out(nav.backlog?.source_dir?.startsWith("cloudy-a-docs/"), "Backlog reads cloudy-a-docs FROM the store (the #575 proof case)");
+// #1655 the default path must name the REAL repo (cloudy-a-docs), never the old cloud-a-docs, and the sub-tab -> file map must match the generated dist names.
+out(nav.backlog.source_dir === "cloudy-a-docs/1___BACKLOG___/1.1.Product-Backlog/dist/" && nav.docs?.root === "cloudy-a-docs" && !/(^|[^y])-a-docs|cloud-a-docs/.test(navText.replace(/cloudy-a-docs/g, "")), "#1655 default backlog path uses the real repo name cloudy-a-docs");
+const subMap = Object.fromEntries(nav.tabs.flatMap((t) => (t.pages || []).map((p) => [p.id, p.file])));
+out(["sts", "prj", "pry", "eff", "bat", "mdl"].every((k) => subMap[k] === `P-Backlog-${k}.md`) && nav.backlog.entry === subMap.sts, "#1655 sub-tab ids map to the generated dist files (Status->P-Backlog-sts.md, prj/pry/eff/bat/mdl)");
 const resolver = read("tools/resolve-targets.py");
 out(/def shared_root\(app_root, fleet_id\)/.test(resolver) && /"shared_root": shared_root\(app_root, nav\["shared_store"\]\["app"\]\)/.test(resolver), "resolve-targets.py emits shared_root from nav.shared_store.app");
 out(/\("storage"\) or \{\}\)\.get\("shared_root"\)/.test(resolver) && /root\.startswith\("\/"\)/.test(resolver), "the resolver reads build.json::storage.shared_root and refuses an absolute one");
@@ -114,7 +118,7 @@ out(vols.length === 2 && vols[0].label === "Cloud-Shared-Store/Git" && vols[1].l
 out(/cloud-shared-store/.test(vols[0]?.store_home || "") && /cordova\.file\.externalRootDirectory/.test(index) && vols[1]?.subdir === "Git", "shared-store path resolves under the store home (legacy mirror fallback); emulated = externalRootDirectory + Git");
 out(/await listRepos\(root\)/.test(index) && /nav\.repos\.volumes\.map/.test(index) && /ensureDir\(/.test(index) && /manageAllFiles/.test(index.slice(index.indexOf("async function fillVolume"))), "repos are enumerated per volume; missing folders are created; denied volumes offer the all-files grant");
 // #1589 field parity: the Backlog page keeps its own content (entry, reader, edit/repo/folder actions) and ADDS the cloud-docs tree.
-out(nav.docs?.root === "cloud-a-docs" && !nav.docs.root.startsWith("/"), "nav.docs.root declares the cloud-docs clone relative to the store git folder (#1589)");
+out(nav.docs?.root === "cloudy-a-docs" && !nav.docs.root.startsWith("/"), "nav.docs.root declares the cloud-docs clone relative to the store git folder (#1589)");
 out(/async function renderBacklogView\(panel, title, entry, \{ extra = \[\], docs = false \} = \{\}\)/.test(index) && /renderBacklogView\(panel, "Backlog", nav\.backlog\.entry, \{ docs: true \}\)/.test(index), "only the Backlog tab mounts the cloud-docs tree; Agents keeps its plain view");
 out(/new FileTree\(treeBox/.test(index) && /cloud-docs-toggle/.test(index) && /classList\.toggle\("collapsed"\)/.test(index) && /cloud-backlog-split/.test(index), "the tree is a LEFT collapsible child menu beside the page body");
 out(/\.html\?\$\/i\.test\(name\)/.test(index) && /DOMPurify\.sanitize\(html\)/.test(index) && /renderMarkdown\(text, \{ uri: url \}\)/.test(index) && /DOMPurify\.sanitize\(text\)/.test(index), "clicking a .md or .html renders it (markdown through the shared renderer, html sanitized)");

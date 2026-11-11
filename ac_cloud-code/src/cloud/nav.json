@@ -99,14 +99,14 @@
     "app": "cloud-terminal-termux"
   },
   "backlog": {
-    "_doc": "Backlog reads the ONE existing source: the dist output of cloud-a-docs/1___BACKLOG___/1.1.Product-Backlog (built by its own build.js). Nothing here re-derives it: `entry` is loaded and rendered as-is, and every other view is reached through the links that file itself carries ('Views: per project · per status …'). That repository is PRIVATE and this APK is PUBLIC, so the backlog is never baked into the bundle; it is read on the device from the clone cloud-drive keeps in the shared store (#575): source_dir is RELATIVE to the store's git folder (shared_root/git_subdir, #676). The tab lets the owner point it elsewhere (kept in localStorage), and its edit / folder actions open the same files in Acode's editor, so a change is written back into that clone for cloud-drive to commit and push.",
-    "source_dir": "cloud-a-docs/1___BACKLOG___/1.1.Product-Backlog/dist/",
+    "_doc": "Backlog reads the ONE existing source: the dist output of cloudy-a-docs/1___BACKLOG___/1.1.Product-Backlog (built by its own build.js). Nothing here re-derives it: `entry` is loaded and rendered as-is, and every other view is reached through the links that file itself carries ('Views: per project · per status …'). That repository is PRIVATE and this APK is PUBLIC, so the backlog is never baked into the bundle; it is read on the device from the clone cloud-drive keeps in the shared store (#575): source_dir is RELATIVE to the store's git folder (shared_root/git_subdir, #676). The tab lets the owner point it elsewhere (kept in localStorage), and its edit / folder actions open the same files in Acode's editor, so a change is written back into that clone for cloud-drive to commit and push.",
+    "source_dir": "cloudy-a-docs/1___BACKLOG___/1.1.Product-Backlog/dist/",
     "entry": "P-Backlog-sts.md"
   },
   "docs": {
-    "_doc": "#1589 the Backlog tab's LEFT collapsible child file tree: the on-device clone of cloud-a-docs (the Product-Backlog repo cloud-drive keeps in the shared store, #575/#676). `root` is RELATIVE to the store's git folder (shared_root/git_subdir), so no device-absolute path is written here; index.js composes it with gitPath(). It is a secondary tree (components/fileTree), not Acode's sidebar: a .md or .html opens RENDERED in place through the shared markdown/html preview (pages/markdownPreview). The folder is overridable per device (kept in localStorage docs.dir) for when the clone lives elsewhere.",
-    "root": "cloud-a-docs",
-    "label": "cloud-a-docs"
+    "_doc": "#1589 the Backlog tab's LEFT collapsible child file tree: the on-device clone of cloudy-a-docs (the Product-Backlog repo cloud-drive keeps in the shared store, #575/#676). `root` is RELATIVE to the store's git folder (shared_root/git_subdir), so no device-absolute path is written here; index.js composes it with gitPath(). It is a secondary tree (components/fileTree), not Acode's sidebar: a .md or .html opens RENDERED in place through the shared markdown/html preview (pages/markdownPreview). The folder is overridable per device (kept in localStorage docs.dir) for when the clone lives elsewhere.",
+    "root": "cloudy-a-docs",
+    "label": "cloudy-a-docs"
   },
   "agents": {
     "_doc": "The Agents tab reads the SAME source as Backlog (#562: 'they must read ONE source'): the backlog engine already derives task-effort, task-complexity and agent-model per task and curates agent-slot from assignments.json, and emits them as its own views — 'agent batches' (entry, below) and 'per agent-model', which the entry links to in its Views line. This tab renders `entry` through the very renderer Backlog uses, from backlog.source_dir; nothing about agents is derived here. SEAM: seams.js::listAgents is where the LIVE half (running status, token utilisation from the agent runner) plugs in; until then the tab shows its note under the view.",

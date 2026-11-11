@@ -137,7 +137,7 @@ async function renderBacklogView(panel, title, entry, { extra = [], docs = false
 			body.replaceChildren(
 				el("p", {}, `Cannot read ${dir}${file}`),
 				el("p", { className: "cloud-muted" }, String(err?.message || err)),
-				el("p", { className: "cloud-muted" }, "The backlog repository is private: clone it with Cloud Drive (Sync ▸ Git ▸ cloud-a-docs ▸ Clone / open) and it appears here through the shared store. Or point this tab at another 1.1.Product-Backlog/dist/ folder."),
+				el("p", { className: "cloud-muted" }, "The backlog repository is private: clone it with Cloud Drive (Sync ▸ Git ▸ cloudy-a-docs ▸ Clone / open) and it appears here through the shared store. Or point this tab at another 1.1.Product-Backlog/dist/ folder."),
 				grant,
 			);
 		}
@@ -186,7 +186,7 @@ async function renderBacklogView(panel, title, entry, { extra = [], docs = false
 			showTab("editor");
 		},
 	});
-	// #1589 Docs child menu: a LEFT collapsible file tree of the cloud-a-docs clone
+	// #1589 Docs child menu: a LEFT collapsible file tree of the cloudy-a-docs clone
 	// (the Product-Backlog repo). It is NOT the editor's sidebar — a secondary tree
 	// scoped to this one repo (components/fileTree). Clicking a .md or .html renders
 	// it in place through the shared preview (pages/markdownPreview renderer + html),
