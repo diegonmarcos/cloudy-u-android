@@ -31,7 +31,6 @@ class ConnectPlanTest {
                 StepId.ADB_CONNECT -> f.copy(adbConnected = true)
                 StepId.SHIZUKU_RUNNING -> f.copy(shizukuInstalled = true, shizukuRunning = true)
                 StepId.SHIZUKU_PERMISSION -> f.copy(shizukuGranted = true)
-                StepId.START_SERVER -> f.copy(serverRunning = true)
                 StepId.VERIFY -> f
             }
             return StepResult(true, "ok:${step.name}")
@@ -43,23 +42,56 @@ class ConnectPlanTest {
         val shz = listOf(StepId.SHIZUKU_RUNNING, StepId.SHIZUKU_PERMISSION)
         assertEquals(adb + StepId.VERIFY, ConnectPlan.steps(EMBEDDED_ONLY, LaunchVia.ADB))
         assertEquals(shz + StepId.VERIFY, ConnectPlan.steps(SHIZUKU, LaunchVia.ADB))
-        assertEquals(adb + StepId.START_SERVER + StepId.VERIFY, ConnectPlan.steps(LOCAL_SERVER, LaunchVia.ADB))
-        assertEquals(shz + StepId.START_SERVER + StepId.VERIFY, ConnectPlan.steps(LOCAL_SERVER, LaunchVia.SHIZUKU))
-        assertEquals(adb + StepId.START_SERVER + StepId.VERIFY, ConnectPlan.steps(AUTO, LaunchVia.SHIZUKU))   // Auto is adb-led whatever the pref
+        // Local server = the adbd connection: the same adb chain, and no "start the server" step in any mode.
+        assertEquals(adb + StepId.VERIFY, ConnectPlan.steps(LOCAL_SERVER, LaunchVia.ADB))
+        assertEquals(adb + StepId.VERIFY, ConnectPlan.steps(AUTO, LaunchVia.ADB))
         for (m in ChannelMode.values()) for (v in LaunchVia.values()) assertEquals(StepId.VERIFY, ConnectPlan.steps(m, v).last())
-        // no server of its own: the launch step is never planned
-        for (m in ChannelMode.values()) for (v in LaunchVia.values()) assertFalse(StepId.START_SERVER in ConnectPlan.steps(m, v, ownsServer = false))
         assertEquals(adb + StepId.VERIFY, ConnectPlan.steps(AUTO, LaunchVia.ADB, ownsServer = false))
+        assertEquals(adb, ConnectPlan.ADB_CHAIN); assertEquals(shz, ConnectPlan.SHIZUKU_CHAIN)
+    }
+
+    /** The owner's rule: each mode is ONE self-contained channel. The launcher choice and server ownership change no chain. */
+    @Test fun modesAreIndependentChains() {
+        val shizukuSteps = setOf(StepId.SHIZUKU_RUNNING, StepId.SHIZUKU_PERMISSION)
+        val adbSteps = setOf(StepId.DEV_OPTIONS, StepId.WIRELESS_DEBUG, StepId.PAIR, StepId.ADB_CONNECT)
+        for (v in LaunchVia.values()) for (owns in listOf(true, false)) {
+            for (m in listOf(LOCAL_SERVER, EMBEDDED_ONLY, AUTO)) {
+                val plan = ConnectPlan.steps(m, v, owns)
+                assertTrue("$m/$v walks into Shizuku", plan.none { it in shizukuSteps })
+                assertTrue("$m/$v names Shizuku", ConnectPlan.methods(m, v, owns).none { (it.title + it.detail).contains("Shizuku") })
+            }
+            val shz = ConnectPlan.steps(SHIZUKU, v, owns)
+            assertTrue("Shizuku/$v walks into adb", shz.none { it in adbSteps })
+            assertTrue(ConnectPlan.methods(SHIZUKU, v, owns).none { (it.title + it.detail).contains("adb") || it.title.contains("Pair") })
+            // the launcher choice is not part of any chain
+            for (m in ChannelMode.values()) assertEquals("$m", ConnectPlan.steps(m, LaunchVia.ADB, owns), ConnectPlan.steps(m, v, owns))
+        }
+    }
+
+    /** No step starts a server: the circular "start the server through the channel it provides" step is gone for good. */
+    @Test fun noStepStartsAServer() {
+        assertEquals(listOf("DEV_OPTIONS", "WIRELESS_DEBUG", "PAIR", "ADB_CONNECT", "SHIZUKU_RUNNING", "SHIZUKU_PERMISSION", "VERIFY"), StepId.values().map { it.name })
+        assertTrue(StepId.values().none { it.label.contains("server", ignoreCase = true) })
+        for (m in ChannelMode.values()) assertTrue("$m", ConnectPlan.methods(m).none { it.title.contains("Launch the server") })
+    }
+
+    /** The reported log: adb already connected, server not running. Local server mode succeeds on the round trip and runs nothing else. */
+    @Test fun localServerModeConnectsOnTheAdbSessionAlone() {
+        val dev = FakeDevice(none.copy(devOptions = true, wirelessDebug = true, adbPaired = true, adbConnected = true, serverRunning = false))
+        val log = ChannelLog()
+        val out = ConnectPlan.run(LOCAL_SERVER, LaunchVia.SHIZUKU, dev, log)
+        assertEquals(ConnectStatus.SUCCESS, out.status)
+        assertEquals(listOf(StepId.VERIFY), dev.ran)
+        assertFalse(log.asText().contains("server")); assertFalse(log.asText().contains("Shizuku"))
     }
 
     @Test fun methodsShowOnlyWhatAppliesToTheMode() {
-        assertEquals(listOf("Pair with code", "Connect via mDNS"), ConnectPlan.methods(EMBEDDED_ONLY, LaunchVia.ADB).map { it.title })
-        // an app with no server of its own (a terminal) is offered the embedded way in every mode but Shizuku
-        assertEquals(listOf("Pair with code", "Connect via mDNS"), ConnectPlan.methods(AUTO, LaunchVia.ADB, ownsServer = false).map { it.title })
+        val adbWay = listOf("Pair with code", "Connect via mDNS", "Run over the adb session")
+        assertEquals(adbWay, ConnectPlan.methods(EMBEDDED_ONLY, LaunchVia.ADB).map { it.title })
+        assertEquals(adbWay, ConnectPlan.methods(AUTO, LaunchVia.ADB, ownsServer = false).map { it.title })
+        assertEquals(adbWay, ConnectPlan.methods(LOCAL_SERVER, LaunchVia.SHIZUKU).map { it.title })
         assertEquals(listOf("Shizuku only"), ConnectPlan.methods(SHIZUKU, LaunchVia.ADB, ownsServer = false).map { it.title })
         assertEquals(listOf("Shizuku only"), ConnectPlan.methods(SHIZUKU, LaunchVia.ADB).map { it.title })
-        assertEquals(listOf("Launch the server via Shizuku"), ConnectPlan.methods(LOCAL_SERVER, LaunchVia.SHIZUKU).map { it.title })
-        assertTrue(ConnectPlan.methods(LOCAL_SERVER, LaunchVia.ADB).any { it.title == "Launch the server via adb" })
         assertTrue(ConnectPlan.methods(AUTO, LaunchVia.ADB).none { it.title.contains("Shizuku") })
     }
 

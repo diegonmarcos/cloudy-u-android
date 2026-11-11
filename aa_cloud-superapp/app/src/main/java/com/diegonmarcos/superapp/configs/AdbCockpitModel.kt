@@ -65,10 +65,14 @@ internal object AdbCockpitModel {
         ChannelMode.SHIZUKU -> "Shizuku"; ChannelMode.LOCAL_SERVER -> "Local Server"; ChannelMode.EMBEDDED_ONLY -> "Embedded"; ChannelMode.AUTO -> "Auto"
     }
 
-    /** The mode rows the chosen mode uses (highlighted); the others dim to "switch mode to use". Local Server launched via Shizuku also uses Shizuku. */
+    /**
+     * The mode rows the chosen mode uses (highlighted); the others dim to "switch mode to use". Every mode but Auto is ONE
+     * self-contained channel: Local Server is its own row and never Shizuku's, whatever the launcher choice says.
+     */
+    @Suppress("UNUSED_PARAMETER")
     fun active(mode: ChannelMode, via: LaunchVia = LaunchVia.ADB): Set<String> = when (mode) {
         ChannelMode.SHIZUKU -> setOf(SHIZUKU)
-        ChannelMode.LOCAL_SERVER -> if (via == LaunchVia.SHIZUKU) setOf(LOCAL, SHIZUKU) else setOf(LOCAL)
+        ChannelMode.LOCAL_SERVER -> setOf(LOCAL)
         ChannelMode.EMBEDDED_ONLY -> setOf(EMBEDDED)
         ChannelMode.AUTO -> setOf(SHIZUKU, LOCAL, EMBEDDED)
     }
@@ -122,22 +126,35 @@ internal object AdbCockpitModel {
             dim = !on, badge = if (on) "active mode" else "inactive")
     }
 
-    fun local(f: ChannelFacts, on: Boolean, via: LaunchVia): Step {
+    /**
+     * The Local Server row: the adbd connection on 127.0.0.1 IS this mode's channel, so the light is green only when a real shell
+     * round trip answers over it ([ChannelFacts.adbConnected] is an `echo` over the session, [ChannelFacts.serverRunning] a probe of
+     * the loopback server), never a socket flag. The loopback server is an optional extra with its own Start / Stop / Restart; it is
+     * launched over the adb session only and never by Connect or Auto-fix. Nothing in this row touches Shizuku.
+     */
+    @Suppress("UNUSED_PARAMETER")
+    fun local(f: ChannelFacts, on: Boolean, via: LaunchVia = LaunchVia.ADB): Step {
         if (!f.ownsServer) return Step(LOCAL, "Local Server", Light.GREY, "this app runs no server of its own", dim = true, badge = "inactive")
         val en = ChannelActions.enablement(f)
         fun e(a: ChannelAction) = en.getValue(a)
-        val pairedPart = if (via == LaunchVia.SHIZUKU) "launched via Shizuku" else if (f.adbPaired) "paired" else "not paired"
+        val adbPart = when {
+            f.adbConnected -> "paired · connected" + (f.adbEndpoint?.let { " $it" } ?: "")
+            f.adbPaired -> "paired · not connected"
+            else -> "not paired"
+        }
         val detail = listOfNotNull(f.serverUid, f.serverUptime?.let { "up $it" }).joinToString(", ")
-        val serverPart = if (f.serverRunning) "server up" + (if (detail.isNotEmpty()) " ($detail)" else "") else "server down"
+        val serverPart = if (f.serverRunning) "server up" + (if (detail.isNotEmpty()) " ($detail)" else "") else "server not started (optional)"
         val shellUid = f.serverUid == null || f.serverUid == "uid 2000" || f.serverUid == "uid 0"
-        val light = if (f.serverRunning && shellUid) Light.GREEN else Light.AMBER
-        return Step(LOCAL, "Local Server", if (on) light else Light.GREY, dimMsg(on, "$pairedPart · $serverPart"),
+        val answers = f.adbConnected || (f.serverRunning && shellUid)
+        val light = if (answers) Light.GREEN else Light.AMBER
+        return Step(LOCAL, "Local Server", if (on) light else Light.GREY, dimMsg(on, "$adbPart · $serverPart"),
             listOf(
-                Act(Do.LOCAL_PAIR, via == LaunchVia.ADB, if (via == LaunchVia.ADB) null else "launched via Shizuku, no pairing", primary = on && via == LaunchVia.ADB && !f.adbPaired),
-                Act(Do.LOCAL_START, e(ChannelAction.RESTART_SERVER).enabled && !f.serverRunning, e(ChannelAction.RESTART_SERVER).why ?: if (f.serverRunning) "already running" else null,
-                    primary = on && f.adbPaired && !f.serverRunning),
+                Act(Do.LOCAL_PAIR, primary = on && !f.adbPaired),
+                Act(Do.LOCAL_START, e(ChannelAction.RESTART_SERVER).enabled && !f.serverRunning, e(ChannelAction.RESTART_SERVER).why ?: if (f.serverRunning) "already running" else null),
                 Act(Do.LOCAL_STOP, e(ChannelAction.STOP_SERVER).enabled, e(ChannelAction.STOP_SERVER).why),
                 Act(Do.LOCAL_RESTART, e(ChannelAction.RESTART_SERVER).enabled, e(ChannelAction.RESTART_SERVER).why)),
+            subs = listOf(Sub("adbd round trip", if (f.adbConnected) Light.GREEN else if (on) Light.AMBER else Light.GREY),
+                Sub("Loopback server", if (f.serverRunning && shellUid) Light.GREEN else Light.GREY)),
             dim = !on, badge = if (on) "active mode" else "inactive")
     }
 
@@ -154,12 +171,14 @@ internal object AdbCockpitModel {
 
     /**
      * Can Connect do its job from the active mode row's state? It must not be waiting on the PERSON: Shizuku running and authorized,
-     * the adb pairing done (then connect / start-server are automatic), or a server already answering. [id] = the mode row.
+     * the adb pairing done (then the connect is automatic), or a server already answering. [id] = the mode row. Each row reads only
+     * its own channel's facts.
      */
-    fun modeReady(id: String, f: ChannelFacts, via: LaunchVia): Boolean = when (id) {
+    @Suppress("UNUSED_PARAMETER")
+    fun modeReady(id: String, f: ChannelFacts, via: LaunchVia = LaunchVia.ADB): Boolean = when (id) {
         SHIZUKU -> f.shizuku == ShizukuState.UP
         EMBEDDED -> f.adbPaired
-        LOCAL -> f.serverRunning || (if (via == LaunchVia.SHIZUKU) f.shizuku == ShizukuState.UP else f.adbPaired)
+        LOCAL -> f.serverRunning || f.adbPaired
         else -> true
     }
 
@@ -273,7 +292,11 @@ internal object AdbCockpitModel {
         return KeepAlive(on, light, status, detail, subs)
     }
 
-    /** What Auto-fix walks, in order: grant the perms, then the mode's connect plan (Developer Options, Wireless Debugging, pair / Shizuku, start the server, connect, verify). */
+    /**
+     * What Auto-fix walks, in order: grant the perms, then the SELECTED mode's own connect plan and nothing of another mode's
+     * (adb modes: Developer Options, Wireless Debugging, pair, connect; Shizuku mode: Shizuku running, authorized), ending on a real
+     * shell round trip. There is no server-start step: a connected adbd session is the channel.
+     */
     fun autoFixOrder(mode: ChannelMode, via: LaunchVia, ownsServer: Boolean): List<String> =
         listOf("PERMS") + ConnectPlan.steps(mode, via, ownsServer).map { it.name }
 

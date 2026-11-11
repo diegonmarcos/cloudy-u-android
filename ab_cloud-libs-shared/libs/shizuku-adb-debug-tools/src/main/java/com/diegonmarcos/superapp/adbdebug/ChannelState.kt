@@ -73,15 +73,16 @@ object ChannelState {
     fun route(f: ChannelFacts): String? =
         ChannelSelector.execOrder(f.mode, ladder(f)).firstOrNull { ready(it, f) }
 
-    /** Something other than the server that could (re)launch it, in this mode. */
+    /** A session of this mode's own channel is up for the Restart-server button to launch the optional server through. */
     fun canLaunchServer(f: ChannelFacts): Boolean =
-        ChannelSelector.bootstrapSources(f.mode, ladder(f)).any { it != ChannelSelector.LOCAL && ready(it, f) }
+        f.ownsServer && ChannelSelector.launchSources(f.mode, ladder(f)).any { ready(it, f) }
 
     /** Does [mode] use this layer at all, in an app that [ownsServer]. A layer never touched is greyed, not red. */
     fun used(layer: String, mode: ChannelMode, ownsServer: Boolean = true): Boolean = when (layer) {
         ROW_WD, ROW_ADB, ROW_DEV -> mode != ChannelMode.SHIZUKU
         ROW_SERVER -> ownsServer && (mode == ChannelMode.LOCAL_SERVER || mode == ChannelMode.AUTO)
-        ROW_SHIZUKU -> mode == ChannelMode.SHIZUKU || mode == ChannelMode.AUTO || mode == ChannelMode.LOCAL_SERVER
+        // Shizuku is its own channel: only Shizuku mode (and the Auto ladder) ever touch it.
+        ROW_SHIZUKU -> mode == ChannelMode.SHIZUKU || mode == ChannelMode.AUTO
         ROW_BRIDGE -> mode == ChannelMode.AUTO
         else -> true
     }
@@ -90,8 +91,8 @@ object ChannelState {
         if (f.connecting) return ConnState.CONNECTING
         val r = route(f) ?: return ConnState.DOWN
         val degraded = when (f.mode) {
-            // The server answers, but nothing is left to relaunch it if it dies.
-            ChannelMode.LOCAL_SERVER -> !canLaunchServer(f)
+            // The loopback server carries the commands while the adbd connection (the mode's channel) is down.
+            ChannelMode.LOCAL_SERVER -> r == ChannelSelector.LOCAL && !f.adbConnected
             // A paired adb session that dropped while a lower rung carries the commands.
             ChannelMode.AUTO -> r != ChannelSelector.EMBEDDED && f.adbPaired && !f.adbConnected
             else -> false
@@ -131,6 +132,9 @@ object ChannelState {
             else -> Dot.BAD to "not paired"
         }
         val server = when {
+            // Optional: a server that was never started is not a fault while the adb session carries the commands.
+            !f.serverRunning && f.adbConnected && used(ROW_SERVER, f.mode, f.ownsServer) ->
+                Dot.UNKNOWN to "port ${f.serverPort}, not started (optional: commands run over embedded adb)"
             !f.serverRunning -> Dot.BAD to "port ${f.serverPort}, not running"
             f.serverUid != null && f.serverUid != "uid 2000" && f.serverUid != "uid 0" ->
                 Dot.WARN to "port ${f.serverPort}, ${f.serverUid} (not the shell)"
@@ -168,8 +172,8 @@ object ChannelState {
 
     /** Why [ConnState.DEGRADED], in the words of what is missing. */
     fun degradedWhy(f: ChannelFacts): String = when (f.mode) {
-        ChannelMode.LOCAL_SERVER -> "commands run, but nothing can relaunch the server if it dies " +
-            "(embedded adb ${if (f.adbPaired) "not connected" else "not paired"}, Shizuku not running)"
+        ChannelMode.LOCAL_SERVER -> "commands run on the loopback server, but the adbd connection is down " +
+            "(embedded adb ${if (f.adbPaired) "not connected" else "not paired"})"
         else -> "the embedded adb dropped; a lower rung carries the commands"
     }
 

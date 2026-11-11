@@ -23,8 +23,10 @@
 #   P4  the pairing runs in a FOREGROUND service: a Service that calls
 #       startForeground, declared in the lib manifest with a foreground type and
 #       the FOREGROUND_SERVICE permissions, and the pair() call sits inside it
-#   P5  after pairing it connects and starts: AdbShellBootstrap.shellCommand is
-#       exec'd and the app hooks onConnected to arm the privileged plane
+#   P5  after pairing it connects and VERIFIES: a shell round trip (probe) over the
+#       connected session, then the app's onConnected hook arms the privileged plane.
+#       The session IS the shell channel, so the service starts nothing through it
+#       (no AdbShellBootstrap launch line: that was the circular bootstrap)
 #   P6  the bundled Conscrypt (exported keying material) stays declared in the
 #       lib — Android's platform Conscrypt does not expose it
 #   P7  the ADB Shell page's Pair only starts the service — no pair() in the UI, no Pair on the Permissions page
@@ -122,12 +124,13 @@ else
   bad "P4b the lib manifest no longer declares AdbPairingService as a typed foreground service with its permissions"
 fi
 
-# ── P5 ── pair → connect → start
-if has "$SVC" 'EmbeddedAdbChannel.connect(' && has "$SVC" 'AdbShellBootstrap.shellCommand(' \
+# ── P5 ── pair → connect → verify (nothing is started through the session)
+if has "$SVC" 'EmbeddedAdbChannel.connect(' && has "$SVC" 'EmbeddedAdbChannel.probe(' \
+  && ! has "$SVC" 'AdbShellBootstrap' && ! has "$SVC" 'shellCommand(' \
   && has "$BOOT" 'fun shellCommand(' && has "$APPKT" 'AdbPairingService.onConnected ='; then
-  ok "P5 after pairing the service connects, exec's the shell-server start line and the app arms the plane on onConnected"
+  ok "P5 after pairing the service connects, proves the session with a shell round trip, starts no server through it, and the app arms the plane on onConnected"
 else
-  bad "P5 the pair → connect → start chain is broken"
+  bad "P5 the pair → connect → verify chain is broken (or the service launches a server through the session again)"
 fi
 
 # ── P6 ── bundled Conscrypt stays declared

@@ -34,12 +34,10 @@ class PrivilegedPlaneWorker(ctx: Context, params: WorkerParameters) : Worker(ctx
     override fun doWork(): Result {
         val ctx = applicationContext
         enableWirelessDebugging(ctx)
-        // First consultation of the ladder at start: resolves the active channel and,
-        // with our own server down but Shizuku (or the paired embedded adb) up,
-        // self-bootstraps it through that channel — the PRIMARY must not depend on
-        // a PC running /api/adb/server-command.
+        // First consultation of the chosen mode's channel at start: a pure read, it launches nothing.
+        // The loopback server is optional and started only from its own button.
         Log.i(TAG, "shell ladder at start: ${com.diegonmarcos.superapp.adbdebug.ShellChannels.active(ctx)?.name() ?: "none"}" +
-            " — own server self-bootstrap ${com.diegonmarcos.superapp.adbdebug.AdbShellBootstrap.bootstrapState(ctx)}")
+            " — optional loopback server ${com.diegonmarcos.superapp.adbdebug.AdbShellBootstrap.bootstrapState(ctx)}")
         // #891 the tuning pass needs A shell, not the embedded one: run it now through whatever the
         // ladder resolved (own server, Shizuku). A phone that never paired the embedded adb — the
         // owner's — otherwise never gets its device tuning; the pass is verify-first and single-run.

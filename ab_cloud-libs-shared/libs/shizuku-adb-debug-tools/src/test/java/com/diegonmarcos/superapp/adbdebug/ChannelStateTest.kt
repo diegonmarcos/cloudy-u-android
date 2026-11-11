@@ -56,7 +56,9 @@ class ChannelStateTest {
     @Test fun localServerRow() {
         fun r(f: ChannelFacts) = row(ChannelState.rows(f), "local-server").let { it.dot to it.value }
         assertEquals(Dot.OK to "port 38099, uid 2000, up 01:02, pid 4242", r(healthy))
-        assertEquals(Dot.BAD to "port 38099, not running", r(healthy.copy(serverRunning = false)))
+        // never started while the adb session carries the commands: optional, grey, not a fault
+        assertEquals(Dot.UNKNOWN to "port 38099, not started (optional: commands run over embedded adb)", r(healthy.copy(serverRunning = false)))
+        assertEquals(Dot.BAD to "port 38099, not running", r(healthy.copy(serverRunning = false, adbConnected = false)))
         assertEquals(Dot.OK to "port 38099", r(healthy.copy(serverUid = null, serverUptime = null, serverPid = null)))
         // a server that answers as the app's own uid is not the shell
         assertEquals(Dot.WARN, r(healthy.copy(serverUid = "uid 10234")).first)
@@ -73,13 +75,14 @@ class ChannelStateTest {
     }
 
     @Test fun routeFollowsTheModeAndTheLadder() {
-        assertEquals("local-server", ChannelState.route(healthy))                       // Local server mode: only the server runs commands
+        assertEquals("local-server", ChannelState.route(healthy))                       // Local server mode: the loopback server first when it answers
         assertEquals("embedded-adb", ChannelState.route(healthy.copy(mode = EMBEDDED_ONLY)))
         assertEquals("shizuku", ChannelState.route(healthy.copy(mode = SHIZUKU)))
         assertEquals("embedded-adb", ChannelState.route(healthy.copy(mode = AUTO)))      // first rung wins
         assertEquals("local-server", ChannelState.route(healthy.copy(mode = AUTO, adbConnected = false)))
         assertEquals("shizuku", ChannelState.route(healthy.copy(mode = AUTO, adbConnected = false, serverRunning = false)))
-        assertNull(ChannelState.route(healthy.copy(serverRunning = false)))             // adb up does not run commands in Local server mode
+        assertEquals("embedded-adb", ChannelState.route(healthy.copy(serverRunning = false)))   // the adbd connection IS the channel: no server needed
+        assertNull(ChannelState.route(healthy.copy(serverRunning = false, adbConnected = false)))   // Shizuku up, and still never used in Local server mode
         assertNull(ChannelState.route(healthy.copy(mode = SHIZUKU, shizukuGranted = false)))
         assertNull(ChannelState.route(healthy.copy(mode = EMBEDDED_ONLY, adbConnected = false)))
     }
@@ -87,11 +90,13 @@ class ChannelStateTest {
     @Test fun routeRowCarriesRouteAndMode() {
         val up = row(ChannelState.rows(healthy), "active-route")
         assertEquals(Dot.OK to "local-server - Local server mode", up.dot to up.value)
-        val down = row(ChannelState.rows(healthy.copy(serverRunning = false)), "active-route")
+        val adb = row(ChannelState.rows(healthy.copy(serverRunning = false)), "active-route")
+        assertEquals(Dot.OK to "embedded-adb - Local server mode", adb.dot to adb.value)
+        val down = row(ChannelState.rows(healthy.copy(serverRunning = false, adbConnected = false)), "active-route")
         assertEquals(Dot.BAD to "none - Local server mode", down.dot to down.value)
         val deg = row(ChannelState.rows(healthy.copy(adbConnected = false, shizukuRunning = false)), "active-route")
         assertEquals(Dot.WARN, deg.dot)
-        assertTrue(deg.value, deg.value.startsWith("local-server - Local server mode, degraded: commands run, but nothing can relaunch the server"))
+        assertTrue(deg.value, deg.value.startsWith("local-server - Local server mode, degraded: commands run on the loopback server, but the adbd connection is down"))
         val con = row(ChannelState.rows(healthy.copy(connecting = true)), "active-route")
         assertEquals(Dot.WARN, con.dot); assertTrue(con.value.endsWith("connecting"))
     }
@@ -103,6 +108,11 @@ class ChannelStateTest {
             assertEquals(id, Dot.UNKNOWN, row(rows, id).dot)
             assertTrue(id, row(rows, id).value.endsWith("(not used in Shizuku mode)"))
         }
+        // Local server mode: Shizuku is another channel, never used
+        val l = ChannelState.rows(facts(LOCAL_SERVER))
+        assertEquals(Dot.UNKNOWN, row(l, "shizuku").dot); assertTrue(row(l, "shizuku").value.endsWith("(not used in Local server mode)"))
+        assertEquals(false, ChannelState.used("shizuku", LOCAL_SERVER)); assertEquals(false, ChannelState.used("shizuku", EMBEDDED_ONLY))
+        assertEquals(false, ChannelState.used("embedded-adb", SHIZUKU)); assertEquals(false, ChannelState.used("local-server", SHIZUKU))
         // Embedded-only mode: the server and Shizuku are not used
         val e = ChannelState.rows(facts(EMBEDDED_ONLY))
         assertEquals(Dot.UNKNOWN, row(e, "local-server").dot); assertEquals(Dot.UNKNOWN, row(e, "shizuku").dot)
@@ -146,10 +156,12 @@ class ChannelStateTest {
         assertEquals(ConnState.CONNECTING, ChannelState.connState(healthy.copy(connecting = true)))
         assertEquals(ConnState.CONNECTING, ChannelState.connState(facts().copy(connecting = true)))     // even with no route
         assertEquals(ConnState.DOWN, ChannelState.connState(facts()))
-        assertEquals(ConnState.DOWN, ChannelState.connState(healthy.copy(serverRunning = false)))
-        // Local server mode: server answers but nothing can relaunch it -> degraded
+        // Local server mode: the adbd connection alone is UP (no server needed); nothing answering is DOWN whatever Shizuku says
+        assertEquals(ConnState.UP, ChannelState.connState(healthy.copy(serverRunning = false)))
+        assertEquals(ConnState.DOWN, ChannelState.connState(healthy.copy(serverRunning = false, adbConnected = false)))
+        // the loopback server carries the commands while the adbd connection is down -> degraded, with or without Shizuku
         assertEquals(ConnState.DEGRADED, ChannelState.connState(healthy.copy(adbConnected = false, shizukuRunning = false)))
-        assertEquals(ConnState.UP, ChannelState.connState(healthy.copy(adbConnected = false)))          // Shizuku can relaunch it
+        assertEquals(ConnState.DEGRADED, ChannelState.connState(healthy.copy(adbConnected = false)))
         // Auto: a paired adb that dropped while the server carries the commands -> degraded
         assertEquals(ConnState.DEGRADED, ChannelState.connState(healthy.copy(mode = AUTO, adbConnected = false)))
         assertEquals(ConnState.UP, ChannelState.connState(healthy.copy(mode = AUTO)))
@@ -161,15 +173,19 @@ class ChannelStateTest {
 
     @Test fun launchSourceRules() {
         assertTrue(ChannelState.canLaunchServer(healthy))
-        assertTrue(ChannelState.canLaunchServer(healthy.copy(adbConnected = false)))                    // Shizuku
-        assertEquals(false, ChannelState.canLaunchServer(healthy.copy(adbConnected = false, shizukuGranted = false)))
+        assertEquals(false, ChannelState.canLaunchServer(healthy.copy(adbConnected = false)))           // Local server mode never launches through Shizuku
+        assertTrue(ChannelState.canLaunchServer(healthy.copy(mode = AUTO, adbConnected = false)))       // the Auto ladder may
+        assertEquals(false, ChannelState.canLaunchServer(healthy.copy(mode = SHIZUKU)))
+        assertEquals(false, ChannelState.canLaunchServer(healthy.copy(ownsServer = false)))
+        assertEquals(false, ChannelState.canLaunchServer(healthy.copy(mode = AUTO, adbConnected = false, shizukuGranted = false)))
         assertEquals(false, ChannelState.canLaunchServer(healthy.copy(mode = EMBEDDED_ONLY)))           // that mode never launches a server
     }
 
     @Test fun chipTextIsOneLine() {
         assertEquals("ADB Shell: checking...", ChannelState.chip(null))
         assertEquals("ADB Shell: up (local-server)", ChannelState.chip(healthy))
-        assertEquals("ADB Shell: down", ChannelState.chip(healthy.copy(serverRunning = false)))
+        assertEquals("ADB Shell: up (embedded-adb)", ChannelState.chip(healthy.copy(serverRunning = false)))
+        assertEquals("ADB Shell: down", ChannelState.chip(healthy.copy(serverRunning = false, adbConnected = false)))
         assertEquals("ADB Shell: connecting...", ChannelState.chip(healthy.copy(connecting = true)))
         assertEquals("ADB Shell: degraded (local-server)", ChannelState.chip(healthy.copy(adbConnected = false, shizukuRunning = false)))
     }

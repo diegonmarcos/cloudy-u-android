@@ -27,8 +27,11 @@ class SetupChecklistTest {
 
     @Test fun shizukuModeListsOnlyShizukuItems() {
         assertEquals(listOf("shizuku-running", "shizuku-permission"), ids(ready.copy(mode = SHIZUKU)))
-        // Local server launched via Shizuku needs the same two, and no pairing / notification
-        assertEquals(listOf("shizuku-running", "shizuku-permission"), ids(ready, LaunchVia.SHIZUKU))
+        // Local server mode is the adb channel whatever the launcher choice says: never a Shizuku item
+        assertEquals(listOf("dev-options", "wireless-debugging", "wifi", "paired", "notifications"), ids(ready, LaunchVia.SHIZUKU))
+        assertTrue(ids(ready).none { it.startsWith("shizuku") })
+        // and Shizuku mode lists nothing of adb
+        assertTrue(ids(ready.copy(mode = SHIZUKU)).none { it in setOf("dev-options", "wireless-debugging", "wifi", "paired", "notifications") })
         // Shizuku permission is not asked for in modes that never use it
         assertTrue(ids(ready.copy(mode = EMBEDDED_ONLY)).none { it.startsWith("shizuku") })
         assertTrue(ids(ready.copy(mode = AUTO)).none { it.startsWith("shizuku") })

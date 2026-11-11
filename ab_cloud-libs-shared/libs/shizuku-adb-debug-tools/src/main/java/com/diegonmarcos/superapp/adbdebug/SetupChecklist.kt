@@ -18,10 +18,12 @@ object SetupChecklist {
 
     private fun st(v: Boolean?) = when (v) { true -> SetupStatus.OK; false -> SetupStatus.TODO; null -> SetupStatus.UNKNOWN }
 
+    /** [via] is not a prerequisite of any mode (it only orders the Restart-server button's launch in Auto). */
+    @Suppress("UNUSED_PARAMETER")
     fun items(f: ChannelFacts, via: LaunchVia = LaunchVia.ADB): List<SetupItem> {
-        val adbPath = f.mode == ChannelMode.EMBEDDED_ONLY || f.mode == ChannelMode.AUTO ||
-            (f.mode == ChannelMode.LOCAL_SERVER && via == LaunchVia.ADB)
-        val shizukuPath = f.mode == ChannelMode.SHIZUKU || (f.mode == ChannelMode.LOCAL_SERVER && via == LaunchVia.SHIZUKU)
+        // One channel per mode: the adb modes list adb's prerequisites, Shizuku mode lists Shizuku's, never both.
+        val shizukuPath = f.mode == ChannelMode.SHIZUKU
+        val adbPath = !shizukuPath
         val out = ArrayList<SetupItem>()
         if (adbPath) {
             out += SetupItem("dev-options", "Developer options enabled", st(f.devOptions),

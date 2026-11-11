@@ -14,7 +14,8 @@ import android.content.Context
  *                              (the LADB approach). Fully self-contained:
  *                              no third-party app, no PC. "We ARE Shizuku."
  *   2. [LocalShellChannel]   — OUR app_process server (AdbShellServer),
- *                              if started via the adb one-liner.
+ *                              when its own button (or the adb one-liner)
+ *                              started it. Optional: nothing waits for it.
  *   3. [ShizukuShellChannel] — optional fallback when the Shizuku app is
  *                              already running + granted.
  */
@@ -80,23 +81,23 @@ object ShellChannels {
             return if (declared.isEmpty()) self + ShizukuShellChannel else self + declared
         }
 
-    /** First channel that's ready, or null when neither is available. Resolving
-     *  the ladder is also where OUR server gets self-bootstrapped through
-     *  whichever fallback is up ([AdbShellBootstrap.ensureServer]) — so the
-     *  PRIMARY wins as soon as it can. */
+    /**
+     * Does the chosen mode run commands over the channel named [name] at all? Code that reaches for ONE channel
+     * directly (a Shizuku fallback, a status line) asks this first, so it cannot cross into another mode's channel.
+     */
+    fun modeUses(ctx: Context, name: String): Boolean =
+        name in ChannelSelector.execOrder(ChannelModePrefs.current(ctx), all.map { it.name() })
+
+    /**
+     * The channel that runs commands in the chosen mode, or null. A pure read of what is up: it
+     * launches nothing and reconnects nothing (that used to start the app_process server through
+     * whichever channel answered, on every lookup).
+     */
     fun active(ctx: Context): ShellChannel? {
-        val ladder = all
-        val mode = ChannelModePrefs.current(ctx)
-        // Only an app that OWNS a server launches it: SuperApp (no shizuku_client block), or one
-        // that declares its own local_server port (Cloud Store, Cloud Account). A terminal reaching
-        // the shell through the SuperApp bridge must not put ITS APK + token on the shared port.
-        val owns = ChannelModePrefs.ownsServer()
         // Our server is the one channel that can WEDGE: a uid-2000 app_process launched from the
         // previous APK keeps its listening socket after an update while every exec dies in it, so
-        // isReady (a connect) stayed true and rish answered "no shell channel ready" with Shizuku up.
-        // The ladder asks it to execute before trusting it; ensureServer replaces a wedged one.
-        return ChannelSelector.select(mode, ladder, { it.name() },
-            usable = { it.isReady(ctx) && (it !== LocalShellChannel || it.probe(ctx)) },
-            relaunch = { sources -> owns && AdbShellBootstrap.ensureServer(ctx, LaunchViaPrefs.order(ctx, sources)) })
+        // isReady (a connect) stays true. It is asked to execute before it is trusted.
+        return ChannelSelector.select(ChannelModePrefs.current(ctx), all, { it.name() },
+            usable = { it.isReady(ctx) && (it !== LocalShellChannel || it.probe(ctx)) })
     }
 }

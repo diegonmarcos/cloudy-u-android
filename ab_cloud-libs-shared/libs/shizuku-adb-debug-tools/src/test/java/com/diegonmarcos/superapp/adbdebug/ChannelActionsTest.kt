@@ -35,14 +35,22 @@ class ChannelActionsTest {
         val d = up.copy(adbConnected = false, shizukuRunning = false)
         assertEquals(ConnState.DEGRADED, ChannelState.connState(d))
         assertEquals(setOf(RECONNECT, STOP_SERVER, TEST), on(d))
-        assertEquals("no adb or Shizuku session to start it with", ChannelActions.enablement(d)[RESTART_SERVER]!!.why)
+        assertEquals("no adb session to start it with", ChannelActions.enablement(d)[RESTART_SERVER]!!.why)
+        // Shizuku being up changes nothing in Local server mode: its channel is never borrowed to launch the server
+        val shizukuUp = up.copy(adbConnected = false)
+        assertEquals(setOf(RECONNECT, STOP_SERVER, TEST), on(shizukuUp))
+        assertEquals("no adb session to start it with", ChannelActions.enablement(shizukuUp)[RESTART_SERVER]!!.why)
+        // the Auto ladder may use either
+        assertTrue(ChannelActions.enablement(shizukuUp.copy(mode = ChannelMode.AUTO))[RESTART_SERVER]!!.enabled)
+        assertEquals("no adb or Shizuku session to start it with",
+            ChannelActions.enablement(d.copy(mode = ChannelMode.AUTO))[RESTART_SERVER]!!.why)
         assertEquals("embedded adb is not connected", ChannelActions.enablement(d)[DISCONNECT]!!.why)
     }
 
-    @Test fun downOnlyReconnectAndRestartWhenALauncherIsUp() {
-        val down = up.copy(serverRunning = false)           // adb still connected, server gone
-        assertEquals(ConnState.DOWN, ChannelState.connState(down))
-        assertEquals(setOf(DISCONNECT, RECONNECT, RESTART_SERVER), on(down))
+    @Test fun noServerIsStillUpOverAdbAndDownOnlyWhenNothingAnswers() {
+        val down = up.copy(serverRunning = false)           // adb still connected, the optional server not started
+        assertEquals(ConnState.UP, ChannelState.connState(down))
+        assertEquals(setOf(DISCONNECT, RECONNECT, RESTART_SERVER, TEST), on(down))
         val dead = down.copy(adbConnected = false, shizukuRunning = false)
         assertEquals(setOf(RECONNECT), on(dead))
         assertEquals("the local server is not running", ChannelActions.enablement(dead)[STOP_SERVER]!!.why)

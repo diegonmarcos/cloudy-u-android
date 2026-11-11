@@ -17,8 +17,11 @@ plugins {
 //  - :app                       the Robolectric suite (SelfAllowlistTest proves every X-Ray / Background policy command is on the SuperApp's allowlist entry)
 //  - :libs:shell-broker         allowlist matching, default deny, audit, timeout, NeedsArm, concurrency cap, idle stop
 //  - :libs:shell-client         the wire codec, NeedsArm, the bounded stream
+//  - :libs:shizuku-adb-debug-tools   the privileged channel's pure rules: the connect plan per mode, the channel selection, the status
+//                               table, the buttons, the setup checklist. Only the SuperApp links this lib (#1512), so no other
+//                               pipeline runs these suites; without this line the mode-independence tests never executed.
 tasks.register('superappUnitTests') {
     group = 'verification'
     description = 'Unit suites the SuperApp ship runs (see build.json::tests.unit).'
-    dependsOn ':libs:shell-client:testDebugUnitTest', ':libs:shell-broker:testDebugUnitTest', ':app:testDebugUnitTest'
+    dependsOn ':libs:shell-client:testDebugUnitTest', ':libs:shell-broker:testDebugUnitTest', ':libs:shizuku-adb-debug-tools:testDebugUnitTest', ':app:testDebugUnitTest'
 }

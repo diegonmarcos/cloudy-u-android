@@ -4,13 +4,17 @@ package com.diegonmarcos.superapp.adbdebug
  * Which shell channel runs the app's commands, as pure rules (no Android): the owner's
  * "Privileged channel" setting, and the selection it drives.
  *
- * The two adb-flavoured channels are layers of ONE path: embedded adb pairs with adbd and can
- * launch the uid-2000 local server; the server then answers over loopback even when the adb
- * session is gone. LOCAL_SERVER keeps commands off adb entirely and uses adb only to (re)launch
- * the server.
+ * Every mode but AUTO is ONE self-contained channel and never touches another's:
+ *  - SHIZUKU: the external Shizuku app's binder, and nothing of adb.
+ *  - EMBEDDED_ONLY: the app's own adb client connected to adbd (wireless debugging), and nothing else.
+ *  - LOCAL_SERVER: that same adbd connection on 127.0.0.1 is the channel; commands run directly over
+ *    it. The loopback app_process server, when its own button started it, answers first (it outlives a
+ *    dropped adb session). Nothing of Shizuku.
+ *  - AUTO: the declared ladder of every channel, first one that answers.
+ * No mode starts anything to get a channel: selection only reads what is up.
  */
 enum class ChannelMode(val id: String) {
-    /** Commands only through the local server; embedded adb (or Shizuku) only (re)launches it. */
+    /** The adbd connection on 127.0.0.1 (the loopback server first, when it was started and answers). Never Shizuku. */
     LOCAL_SERVER("local"),
     /** Embedded adb, then the local server, then the external providers. */
     AUTO("auto"),
@@ -34,37 +38,34 @@ object ChannelSelector {
     /** Channel names allowed to RUN COMMANDS in [mode], in order, out of [ladder] (preference order). */
     fun execOrder(mode: ChannelMode, ladder: List<String>): List<String> = when (mode) {
         ChannelMode.AUTO -> ladder
-        ChannelMode.LOCAL_SERVER -> ladder.filter { it == LOCAL }
+        ChannelMode.LOCAL_SERVER -> listOf(LOCAL, EMBEDDED).filter { it in ladder }
         ChannelMode.EMBEDDED_ONLY -> ladder.filter { it == EMBEDDED }
         ChannelMode.SHIZUKU -> ladder.filter { it == SHIZUKU }
     }
 
-    /** Channel names allowed to LAUNCH the server (one bootstrap line, no other command). */
-    fun bootstrapSources(mode: ChannelMode, ladder: List<String>): List<String> = when (mode) {
+    /**
+     * Channel names the "Restart server" BUTTON may send its one launch line over. Only that explicit
+     * tap uses it; no connect, reconnect, auto-fix or channel lookup ever launches the server.
+     * LOCAL_SERVER: the embedded adb session alone (never Shizuku). AUTO: any other channel of its ladder.
+     */
+    fun launchSources(mode: ChannelMode, ladder: List<String>): List<String> = when (mode) {
         ChannelMode.EMBEDDED_ONLY, ChannelMode.SHIZUKU -> emptyList()
-        else -> ladder.filter { it != LOCAL }
+        ChannelMode.LOCAL_SERVER -> ladder.filter { it == EMBEDDED }
+        ChannelMode.AUTO -> ladder.filter { it != LOCAL }
     }
 
+    /** Every channel [mode] may touch at all (run commands on, or launch the server through). */
+    fun touches(mode: ChannelMode, ladder: List<String>): Set<String> =
+        (execOrder(mode, ladder) + launchSources(mode, ladder)).toSet()
+
     /**
-     * The channel that runs commands, or null. [usable] = ready (and, for the server, answering).
-     * [relaunch] gets the channels that may launch the server and returns true when it is up; it
-     * is called lazily in LOCAL_SERVER (only when the server is not usable) and first in AUTO
-     * (as before), never in EMBEDDED_ONLY. The caller's [relaunch] is the only code that may run
-     * a command over a non-server channel in LOCAL_SERVER mode.
+     * The channel that runs commands, or null: the first of [execOrder] that is [usable] (ready, and
+     * for the server, answering). A pure read: it starts nothing, so a mode can never reach into
+     * another channel (or launch a server) as a side effect of being asked what is up.
      */
-    fun <T> select(
-        mode: ChannelMode, ladder: List<T>, name: (T) -> String, usable: (T) -> Boolean,
-        relaunch: (List<T>) -> Boolean,
-    ): T? {
-        val names = ladder.map(name)
-        fun byName(n: String) = ladder.first { name(it) == n }
-        val sources = bootstrapSources(mode, names).map(::byName)
-        if (mode == ChannelMode.AUTO && sources.isNotEmpty()) relaunch(sources)
-        val order = execOrder(mode, names).map(::byName)
-        order.firstOrNull(usable)?.let { return it }
-        if (mode == ChannelMode.LOCAL_SERVER && order.isNotEmpty() && sources.isNotEmpty() && relaunch(sources))
-            return order.firstOrNull(usable)
-        return null
+    fun <T> select(mode: ChannelMode, ladder: List<T>, name: (T) -> String, usable: (T) -> Boolean): T? {
+        val byName = ladder.associateBy(name)
+        return execOrder(mode, ladder.map(name)).mapNotNull { byName[it] }.firstOrNull(usable)
     }
 
     /** The control's label in Shizuku mode. */
@@ -107,7 +108,7 @@ fun ChannelMode.title(): String = when (this) {
 
 /** What a mode does, one line. */
 fun ChannelMode.hint(): String = when (this) {
-    ChannelMode.LOCAL_SERVER -> "Commands run through the local server on 127.0.0.1; adb or Shizuku only starts it."
+    ChannelMode.LOCAL_SERVER -> "Commands run over the adbd connection on 127.0.0.1 (the loopback server first, when it was started). Never Shizuku."
     ChannelMode.EMBEDDED_ONLY -> "Embedded adb only; the local server is skipped."
     ChannelMode.SHIZUKU -> "The external Shizuku app only."
     ChannelMode.AUTO -> "Embedded adb, then the local server, then Shizuku."

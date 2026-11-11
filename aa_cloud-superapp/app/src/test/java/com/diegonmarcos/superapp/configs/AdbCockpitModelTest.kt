@@ -24,6 +24,8 @@ import org.junit.Test
  *   C8 the master pill: green connected / amber ready / red blocked / grey idle
  *   C9 Auto-fix order and its consent gates
  *   C10 log severity and filter
+ *   C11 the modes are independent channels: Local Server never reads, lists or walks into Shizuku, and Shizuku never into adb
+ *   C12 a mode row is green only on a real shell round trip over its own channel
  */
 class AdbCockpitModelTest {
     private fun facts(mode: ChannelMode = ChannelMode.LOCAL_SERVER, dev: Boolean? = true, wd: Boolean? = true, paired: Boolean = false, connected: Boolean = false,
@@ -86,24 +88,30 @@ class AdbCockpitModelTest {
         val e = inputs(facts(ChannelMode.EMBEDDED_ONLY))
         assertEquals(setOf("embedded"), AdbCockpitModel.steps(e).filter { !it.dim && it.id in setOf("shizuku", "local", "embedded") }.map { it.id }.toSet())
         assertEquals(setOf("shizuku", "local", "embedded"), AdbCockpitModel.active(ChannelMode.AUTO))
-        assertEquals(setOf("local", "shizuku"), AdbCockpitModel.active(ChannelMode.LOCAL_SERVER, LaunchVia.SHIZUKU))
+        // Local Server is its own channel whatever the launcher choice says: Shizuku's row is never part of it
+        assertEquals(setOf("local"), AdbCockpitModel.active(ChannelMode.LOCAL_SERVER, LaunchVia.SHIZUKU))
+        assertEquals(setOf("local"), AdbCockpitModel.active(ChannelMode.LOCAL_SERVER))
+        assertEquals(setOf("shizuku"), AdbCockpitModel.active(ChannelMode.SHIZUKU)); assertEquals(setOf("embedded"), AdbCockpitModel.active(ChannelMode.EMBEDDED_ONLY))
         assertEquals(listOf("Shizuku", "Local Server", "Embedded"), AdbCockpitModel.SELECTABLE.map { AdbCockpitModel.modeName(it) })
     }
 
     @Test fun `C6 local server owns its actions`() {
         val down = step(inputs(facts()), "local")
         assertEquals(listOf(Do.LOCAL_PAIR, Do.LOCAL_START, Do.LOCAL_STOP, Do.LOCAL_RESTART), down.acts.map { it.what })
-        assertEquals("not paired · server down", down.message.removePrefix("switch mode to use · "))
+        assertEquals("not paired · server not started (optional)", down.message.removePrefix("switch mode to use · "))
         assertTrue(down.acts.first { it.what == Do.LOCAL_PAIR }.primary)
-        assertFalse("no adb or Shizuku session to start it with", down.acts.first { it.what == Do.LOCAL_START }.enabled)
+        assertFalse(down.acts.first { it.what == Do.LOCAL_START }.enabled)
+        assertEquals("no adb session to start it with", down.acts.first { it.what == Do.LOCAL_START }.why)
         assertFalse(down.acts.first { it.what == Do.LOCAL_STOP }.enabled)
         val up = step(inputs(facts(paired = true, connected = true, server = true)), "local")
-        assertEquals(Light.GREEN, up.light); assertTrue(up.message.startsWith("paired · server up"))
+        assertEquals(Light.GREEN, up.light); assertTrue(up.message, up.message.startsWith("paired · connected · server up"))
         assertTrue(up.acts.first { it.what == Do.LOCAL_STOP }.enabled)
         assertFalse(up.acts.first { it.what == Do.LOCAL_START }.enabled)
         assertTrue(up.acts.first { it.what == Do.LOCAL_RESTART }.enabled)
         val startable = step(inputs(facts(paired = true, connected = true)), "local")
         assertTrue(startable.acts.first { it.what == Do.LOCAL_START }.enabled)
+        // the optional server is never the row's highlighted next step
+        assertFalse(startable.acts.first { it.what == Do.LOCAL_START }.primary)
         // another mode does not use the server: its actions say so
         assertFalse(step(inputs(facts(ChannelMode.SHIZUKU, paired = true, connected = true)), "local").acts.first { it.what == Do.LOCAL_START }.enabled)
     }
@@ -136,7 +144,7 @@ class AdbCockpitModelTest {
         assertEquals(Light.GREY, AdbCockpitModel.master(null).light)
         assertEquals("Connected", AdbCockpitModel.master(inputs(facts(paired = true, connected = true, server = true))).label)
         assertEquals(Light.GREEN, AdbCockpitModel.master(inputs(facts(paired = true, connected = true, server = true))).light)
-        // the server answers but nothing can relaunch it: degraded
+        // the loopback server answers while the adbd connection is down: degraded
         assertEquals("Degraded", AdbCockpitModel.master(inputs(facts(paired = true, server = true))).label)
         val ready = AdbCockpitModel.master(inputs(facts(ChannelMode.EMBEDDED_ONLY, paired = true)))
         assertEquals(Light.AMBER, ready.light); assertEquals("Ready", ready.label)
@@ -170,14 +178,71 @@ class AdbCockpitModelTest {
     }
 
     @Test fun `C9 auto-fix order and gates`() {
-        assertEquals(listOf("PERMS", "DEV_OPTIONS", "WIRELESS_DEBUG", "PAIR", "ADB_CONNECT", "START_SERVER", "VERIFY"),
+        // Local Server walks the adb channel's real prerequisites and ends on the round trip: no server-start step to walk into
+        assertEquals(listOf("PERMS", "DEV_OPTIONS", "WIRELESS_DEBUG", "PAIR", "ADB_CONNECT", "VERIFY"),
             AdbCockpitModel.autoFixOrder(ChannelMode.LOCAL_SERVER, LaunchVia.ADB, true))
+        assertEquals(AdbCockpitModel.autoFixOrder(ChannelMode.LOCAL_SERVER, LaunchVia.ADB, true), AdbCockpitModel.autoFixOrder(ChannelMode.LOCAL_SERVER, LaunchVia.SHIZUKU, true))
         assertEquals(listOf("PERMS", "SHIZUKU_RUNNING", "SHIZUKU_PERMISSION", "VERIFY"), AdbCockpitModel.autoFixOrder(ChannelMode.SHIZUKU, LaunchVia.ADB, true))
         assertEquals(listOf("PERMS", "DEV_OPTIONS", "WIRELESS_DEBUG", "PAIR", "ADB_CONNECT", "VERIFY"), AdbCockpitModel.autoFixOrder(ChannelMode.EMBEDDED_ONLY, LaunchVia.ADB, true))
         // every consent gate is in some order, and the gates are exactly the person's steps
         val all = ChannelMode.values().flatMap { AdbCockpitModel.autoFixOrder(it, LaunchVia.ADB, true) + AdbCockpitModel.autoFixOrder(it, LaunchVia.SHIZUKU, true) }.toSet()
         assertTrue(all.containsAll(AdbCockpitModel.USER_GATES))
-        assertFalse("START_SERVER and ADB_CONNECT run by themselves", "START_SERVER" in AdbCockpitModel.USER_GATES || "ADB_CONNECT" in AdbCockpitModel.USER_GATES)
+        assertFalse("ADB_CONNECT runs by itself", "ADB_CONNECT" in AdbCockpitModel.USER_GATES)
+        assertTrue("no order holds a server-start step", all.none { it.contains("SERVER") })
+        for (m in ChannelMode.values()) for (v in LaunchVia.values()) assertEquals("VERIFY", AdbCockpitModel.autoFixOrder(m, v, true).last())
+    }
+
+    @Test fun `C11 the modes are independent channels`() {
+        val shizukuSteps = setOf("SHIZUKU_RUNNING", "SHIZUKU_PERMISSION")
+        val adbSteps = setOf("DEV_OPTIONS", "WIRELESS_DEBUG", "PAIR", "ADB_CONNECT")
+        for (v in LaunchVia.values()) {
+            for (m in listOf(ChannelMode.LOCAL_SERVER, ChannelMode.EMBEDDED_ONLY))
+                assertTrue("$m/$v walks into Shizuku", AdbCockpitModel.autoFixOrder(m, v, true).none { it in shizukuSteps })
+            assertTrue("Shizuku/$v walks into adb", AdbCockpitModel.autoFixOrder(ChannelMode.SHIZUKU, v, true).none { it in adbSteps })
+        }
+        // Local Server mode with Shizuku fully up and adb down: Shizuku changes nothing. Its row is dim, the mode is not "ready"
+        // through it, Connect waits on Local Server, and the server's Start is not offered through it.
+        val shzUp = Triple(true, true, true)
+        val f = facts(ChannelMode.LOCAL_SERVER, shz = shzUp)
+        for (v in LaunchVia.values()) {
+            val i = AdbCockpitModel.Inputs(f, AdbCockpitModel.PermsDigest(2, emptyList()), v)
+            val steps = AdbCockpitModel.steps(i)
+            assertTrue(steps.first { it.id == "shizuku" }.dim); assertEquals(Light.GREY, steps.first { it.id == "shizuku" }.light)
+            assertFalse(AdbCockpitModel.modeReady("local", f, v))
+            assertEquals(listOf("Local Server"), AdbCockpitModel.notReady(steps, f, v))
+            val local = steps.first { it.id == "local" }
+            assertFalse(local.acts.first { it.what == Do.LOCAL_START }.enabled)
+            assertTrue(local.acts.first { it.what == Do.LOCAL_PAIR }.enabled)
+            assertFalse("the Local Server row names Shizuku", (local.message + local.acts.mapNotNull { it.why }.joinToString()).contains("Shizuku"))
+            assertEquals(Light.GREY, steps.last().light)
+        }
+        // and Shizuku mode with adb fully up: the adb rows are dim, the mode waits on Shizuku alone
+        val s = facts(ChannelMode.SHIZUKU, paired = true, connected = true, server = true)
+        val sSteps = AdbCockpitModel.steps(inputs(s))
+        for (id in listOf("local", "embedded")) assertTrue(id, sSteps.first { it.id == id }.dim)
+        assertEquals(listOf("Shizuku"), AdbCockpitModel.notReady(sSteps, s, LaunchVia.ADB))
+        assertEquals(Do.CONNECT, AdbCockpitModel.toggle(s).what)
+    }
+
+    @Test fun `C12 a mode row is green only on a real round trip over its own channel`() {
+        // the reported state: adb connected (an echo answered), the optional server never started -> green, connected, nothing to start
+        val adbOnly = inputs(facts(paired = true, connected = true))
+        val local = step(adbOnly, "local")
+        assertEquals(Light.GREEN, local.light); assertEquals("paired · connected · server not started (optional)", local.message)
+        assertEquals(listOf("adbd round trip" to Light.GREEN, "Loopback server" to Light.GREY), local.subs.map { it.label to it.light })
+        assertEquals(Light.GREEN, step(adbOnly, "connection").light); assertEquals("connected via embedded-adb", step(adbOnly, "connection").message)
+        assertEquals("Connected", AdbCockpitModel.master(adbOnly).label)
+        // paired is not connected: no round trip, no green (the false-green of #1521 stays fixed)
+        val paired = inputs(facts(paired = true))
+        assertEquals(Light.AMBER, step(paired, "local").light); assertEquals(Light.AMBER, step(paired, "connection").light)
+        assertEquals("Ready", AdbCockpitModel.master(paired).label)
+        assertEquals(Light.AMBER, step(inputs(facts(ChannelMode.EMBEDDED_ONLY, paired = true)), "embedded").light)
+        // Shizuku fully up never turns another mode green
+        val shz = inputs(facts(shz = Triple(true, true, true)))
+        assertEquals(Light.AMBER, step(shz, "local").light); assertFalse(AdbCockpitModel.master(shz).light == Light.GREEN)
+        // a server answering as the wrong uid is not a shell
+        val wrong = facts(server = true).copy(serverUid = "uid 10234")
+        assertEquals(Light.AMBER, step(inputs(wrong), "local").light)
     }
 
     @Test fun `C10 log severity and filter`() {

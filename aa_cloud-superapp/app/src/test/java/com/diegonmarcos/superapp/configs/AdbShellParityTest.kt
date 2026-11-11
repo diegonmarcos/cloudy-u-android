@@ -48,6 +48,9 @@ class AdbShellParityTest : KitPageHarness() {
     private val facts = ChannelFacts(ChannelMode.AUTO, 1_000L, devOptions = true, wirelessDebug = false, onWifi = true,
         notificationsAllowed = true, adbPaired = true, serverPort = 8023, serverRunning = true, serverUid = "uid 2000")
 
+    /** The Status cockpit's chain in the default (Local Server) mode: its rows, actions and sub-lights are fields too. */
+    private val cockpit = AdbCockpitModel.steps(AdbCockpitModel.Inputs(facts.copy(mode = ChannelMode.LOCAL_SERVER), AdbCockpitModel.PermsDigest(2, emptyList())))
+
     private fun model(src: String): List<String> = when (src) {
         "layers" -> ChannelState.rows(facts).map { it.label }
         "layer_ids" -> ChannelState.rows(facts).map { it.id }
@@ -56,6 +59,11 @@ class AdbShellParityTest : KitPageHarness() {
         "modes" -> ChannelMode.values().map { it.id }
         "launch_via" -> LaunchVia.values().map { it.title }
         "methods_auto" -> ConnectPlan.methods(ChannelMode.AUTO, LaunchVia.ADB, true).map { it.title }
+        "methods_local" -> ConnectPlan.methods(ChannelMode.LOCAL_SERVER, LaunchVia.ADB, true).map { it.title }
+        "plan_local" -> ConnectPlan.steps(ChannelMode.LOCAL_SERVER, LaunchVia.ADB, true).map { it.label }
+        "plan_shizuku" -> ConnectPlan.steps(ChannelMode.SHIZUKU, LaunchVia.ADB, true).map { it.label }
+        "cockpit_acts" -> cockpit.flatMap { s -> s.acts.map { "${s.id}:${it.what.name}" } }
+        "cockpit_subs" -> cockpit.flatMap { s -> s.subs.map { "${s.id}:${it.label}" } }
         "actions" -> ChannelAction.values().map { it.label }
         "adb_links" -> AdbLink.values().map { it.label }
         else -> error("unknown model source $src")

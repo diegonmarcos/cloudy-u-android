@@ -1,6 +1,9 @@
 package com.diegonmarcos.superapp.adbdebug
 
-/** Who launches the local server in Local server mode: the embedded adb session, or Shizuku. */
+/**
+ * Who launches the optional loopback server when its Restart button is tapped in AUTO mode (the one mode that
+ * is a ladder of every channel). Local server mode never reads it: that mode is the embedded adb channel alone.
+ */
 enum class LaunchVia(val id: String, val title: String) {
     ADB("adb", "Embedded adb"),
     SHIZUKU("shizuku", "Shizuku");
@@ -16,7 +19,6 @@ enum class StepId(val label: String) {
     ADB_CONNECT("Connect embedded adb (mDNS)"),
     SHIZUKU_RUNNING("Shizuku running"),
     SHIZUKU_PERMISSION("Shizuku permission"),
-    START_SERVER("Start local server"),
     VERIFY("Round trip"),
 }
 
@@ -51,39 +53,41 @@ data class Method(val title: String, val detail: String)
  * The Connect sequence as a step machine. [steps] decides WHICH steps a mode runs (the method that
  * applies); [run] walks them in order, skipping the ones already true, stopping at the first one that
  * fails or needs the person, and saying which step it was and why.
+ *
+ * Each mode is ONE self-contained channel and its chain holds only that channel's real prerequisites:
+ *  - Shizuku: the Shizuku service and its permission. Nothing of adb.
+ *  - Embedded adb, Local server, Auto: Developer options, Wireless debugging, the pairing, the adbd
+ *    connection. Nothing of Shizuku.
+ * The chain ends on a real shell round trip (VERIFY). There is no "start the server" step: once the
+ * adbd connection is up the shell channel exists and commands run over it. The loopback app_process
+ * server is an optional extra started only from its own button, never by Connect, Reconnect or Auto-fix.
  */
 object ConnectPlan {
 
-    /** The methods that apply to [mode] (the page shows these and nothing else). */
-    fun methods(mode: ChannelMode, via: LaunchVia, ownsServer: Boolean = true): List<Method> {
+    /** The methods that apply to [mode] (the page shows these and nothing else). [via] is not part of any chain. */
+    @Suppress("UNUSED_PARAMETER")
+    fun methods(mode: ChannelMode, via: LaunchVia = LaunchVia.ADB, ownsServer: Boolean = true): List<Method> {
         val pair = Method("Pair with code", "Once: type the code into the notification (Developer options > Wireless debugging > Pair device with pairing code).")
         val mdns = Method("Connect via mDNS", "Finds the wireless-debugging port by itself; no port to type.")
-        return when {
-            mode == ChannelMode.SHIZUKU ->
+        val direct = Method("Run over the adb session", "Commands run directly over the adbd connection on 127.0.0.1; nothing else is started.")
+        return when (mode) {
+            ChannelMode.SHIZUKU ->
                 listOf(Method("Shizuku only", "Start the Shizuku service in its own app, then allow this app; nothing else is used."))
-            // An app with no server of its own (a terminal) has nothing to launch: it connects the embedded way.
-            mode == ChannelMode.EMBEDDED_ONLY || !ownsServer -> listOf(pair, mdns)
-            mode == ChannelMode.AUTO ->
-                listOf(pair, mdns, Method("Launch the server via adb", "Started through the adb session when it is up; Shizuku is the last fallback."))
-            via == LaunchVia.SHIZUKU ->
-                listOf(Method("Launch the server via Shizuku", "Shizuku runs the one launch line; commands then run on the loopback server."))
-            else -> listOf(pair, mdns,
-                Method("Launch the server via adb", "One launch line over adb; commands then run on the loopback server."))
+            ChannelMode.EMBEDDED_ONLY, ChannelMode.LOCAL_SERVER, ChannelMode.AUTO -> listOf(pair, mdns, direct)
         }
     }
 
-    /** The steps [mode] runs, in order. */
-    fun steps(mode: ChannelMode, via: LaunchVia, ownsServer: Boolean = true): List<StepId> {
-        val adb = listOf(StepId.DEV_OPTIONS, StepId.WIRELESS_DEBUG, StepId.PAIR, StepId.ADB_CONNECT)
-        val shizuku = listOf(StepId.SHIZUKU_RUNNING, StepId.SHIZUKU_PERMISSION)
-        return when (mode) {
-            ChannelMode.EMBEDDED_ONLY -> adb + StepId.VERIFY
-            ChannelMode.SHIZUKU -> shizuku + StepId.VERIFY
-            ChannelMode.LOCAL_SERVER ->
-                (if (via == LaunchVia.SHIZUKU) shizuku else adb) + (if (ownsServer) listOf(StepId.START_SERVER) else emptyList()) + StepId.VERIFY
-            ChannelMode.AUTO -> adb + (if (ownsServer) listOf(StepId.START_SERVER) else emptyList()) + StepId.VERIFY
-        }
+    /** The steps [mode] runs, in order: the prerequisites of that mode's own channel, then the round trip. */
+    @Suppress("UNUSED_PARAMETER")
+    fun steps(mode: ChannelMode, via: LaunchVia = LaunchVia.ADB, ownsServer: Boolean = true): List<StepId> = when (mode) {
+        ChannelMode.SHIZUKU -> SHIZUKU_CHAIN + StepId.VERIFY
+        ChannelMode.EMBEDDED_ONLY, ChannelMode.LOCAL_SERVER, ChannelMode.AUTO -> ADB_CHAIN + StepId.VERIFY
     }
+
+    /** The embedded adb / wireless-debugging channel's prerequisites. */
+    val ADB_CHAIN = listOf(StepId.DEV_OPTIONS, StepId.WIRELESS_DEBUG, StepId.PAIR, StepId.ADB_CONNECT)
+    /** The Shizuku channel's prerequisites. */
+    val SHIZUKU_CHAIN = listOf(StepId.SHIZUKU_RUNNING, StepId.SHIZUKU_PERMISSION)
 
     /** Is [step] already true in [f]; such a step is skipped. VERIFY is never skipped. */
     fun satisfied(step: StepId, f: ChannelFacts): Boolean = when (step) {
@@ -93,7 +97,6 @@ object ConnectPlan {
         StepId.ADB_CONNECT -> f.adbConnected
         StepId.SHIZUKU_RUNNING -> f.shizukuRunning
         StepId.SHIZUKU_PERMISSION -> f.shizukuGranted
-        StepId.START_SERVER -> f.serverRunning
         StepId.VERIFY -> false
     }
 
@@ -109,7 +112,6 @@ object ConnectPlan {
             StepId.ADB_CONNECT -> "no wireless-debugging service answered. It must be ON and this phone on Wi-Fi; if the pairing was revoked, pair again.$tail"
             StepId.SHIZUKU_RUNNING -> "Shizuku is not running. Open Shizuku and start its service, then Connect again.$tail"
             StepId.SHIZUKU_PERMISSION -> "Shizuku has not allowed this app. Approve its prompt, then Connect again.$tail"
-            StepId.START_SERVER -> "the local server did not come up.$tail"
             StepId.VERIFY -> "the round trip got no shell answer.$tail"
         }
     }

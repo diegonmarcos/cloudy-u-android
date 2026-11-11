@@ -201,6 +201,22 @@ object EmbeddedAdbChannel : ShellChannel {
     }.getOrElse { rejected(ctx, it); false to "autoconnect failed: ${it.message}" }
 
     /**
+     * [autoConnect], proven by a shell round trip. "Connected" is a socket flag that stays true on a dead
+     * link (the adbd behind it went away with a Wi-Fi change), and [autoConnect] short-circuits on it: so a
+     * session that does not answer `echo` is closed and discovered again, and the result is true only when
+     * the new one answers. This is the explicit Connect / Reconnect path of the adb modes.
+     */
+    fun connectLive(ctx: Context): Pair<Boolean, String> {
+        if (isReady(ctx)) {
+            if (probe(ctx)) return true to "already connected"
+            disconnect(ctx)
+        }
+        val (ok, msg) = autoConnect(ctx)
+        if (!ok) return false to msg
+        return if (probe(ctx)) true to msg else false to "$msg, but the shell round trip got no answer"
+    }
+
+    /**
      * [autoConnect] for every IMPLICIT caller (app start, boot, keep-alive, a privileged tool that found no
      * channel): does nothing while the app's auto-arm switch is off ([ChannelAutoArm]). A tap on the ADB Shell
      * page is explicit and calls [autoConnect] itself.

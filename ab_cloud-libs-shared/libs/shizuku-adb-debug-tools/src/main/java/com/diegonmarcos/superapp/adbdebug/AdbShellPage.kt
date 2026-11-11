@@ -257,8 +257,12 @@ fun AdbShellPage(modifier: Modifier = Modifier) {
         // ── 2  connect ───────────────────────────────────────────────────────────────────────────
         Section("2  CONNECT") {
             ChannelModeBar { m -> mode = m; log.add("mode", "mode set to ${m.title()}"); tick++ }
-            if (mode == ChannelMode.LOCAL_SERVER) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                Dim("Launch the server via", size = 11)
+            // Each mode is its own channel. Local server mode never reaches for Shizuku, so the launcher choice
+            // is offered where a ladder of channels is the declared behaviour (Auto) and only orders the Restart-server button.
+            if (mode == ChannelMode.LOCAL_SERVER) Dim("Local server = the adbd connection on 127.0.0.1. Commands run over it once it is connected; " +
+                "the loopback server is optional (Restart server, over the adb session only). Shizuku is never used in this mode.", size = 11)
+            if (mode == ChannelMode.AUTO) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Dim("Restart server launches via", size = 11)
                 for (v in LaunchVia.values()) DenseButton(v.title, primary = v == via, onClick = {
                     via = v; LaunchViaPrefs.set(ctx, v); log.add("mode", "server launcher set to ${v.title}"); tick++
                 })

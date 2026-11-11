@@ -25,9 +25,10 @@ import java.util.concurrent.TimeUnit
  *     it into the shade — this app never has to be in front;
  *  3. pair in THIS foreground service (SPAKE2 over TLS, libadb through
  *     [AdbManager] — bundled Conscrypt for the exported keying material);
- *  4. then discover `_adb-tls-connect._tcp`, connect with the now-trusted key
- *     and start our shell-domain server ([AdbShellBootstrap.shellCommand], our
- *     `start.sh`) plus whatever the app hangs on [onConnected].
+ *  4. then discover `_adb-tls-connect._tcp`, connect with the now-trusted key,
+ *     prove the session with a shell round trip, and run whatever the app
+ *     hangs on [onConnected]. The connected session IS the shell channel:
+ *     nothing further is started through it.
  *
  * One deliberate difference: Shizuku pairs with 127.0.0.1; we pair with the
  * address the advert resolves to, because [EmbeddedAdbChannel] pins its
@@ -131,11 +132,11 @@ class AdbPairingService : Service() {
             EmbeddedAdbChannel.disconnect(this)
             val (connected, connectMsg) = EmbeddedAdbChannel.connect(this, ch.hostAddress ?: ch.hostName, cPort)
             if (!connected) { finish("Paired, but connect failed: $connectMsg"); return }
-            // Our start.sh: the shell-domain app_process server, launched the
-            // way Shizuku's starter launches its own — through the adb stream.
-            EmbeddedAdbChannel.exec(this, AdbShellBootstrap.shellCommand(this))
+            // The connected session IS the shell channel: nothing further is started through it.
+            val live = EmbeddedAdbChannel.probe(this)
             runCatching { onConnected?.invoke(applicationContext) }
-            finish("Paired and connected — privileged plane starting")
+            finish(if (live) "Paired and connected — shell channel up (round trip answered)"
+                   else "Paired and connected, but the shell round trip got no answer — tap Reconnect")
         } finally {
             busy = false
         }

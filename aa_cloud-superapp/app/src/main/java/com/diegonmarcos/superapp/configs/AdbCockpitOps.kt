@@ -91,9 +91,11 @@ internal object AdbCockpitOps {
     /** Auto-fix: grant perms, then walk the plan in dependency order; stops at the first step that needs the person. Resumable: tap again. */
     fun autoFix(ctx: Context): CockpitResult {
         val app = ctx.applicationContext
-        log.add("autofix", "start (perms, Developer Options, Wireless debugging, pair / Shizuku, server, connect)")
+        val mode = ChannelModePrefs.current(app)
+        // Only the selected mode's own prerequisites are walked; no step of another mode, and no server start.
+        log.add("autofix", "start, ${AdbCockpitModel.modeName(mode)} mode (" + AdbCockpitModel.autoFixOrder(mode, LaunchViaPrefs.current(app), ChannelModePrefs.ownsServer()).joinToString(", ") + ")")
         val perms = grantPerms(app)
-        val o = ConnectPlan.run(ChannelModePrefs.current(app), LaunchViaPrefs.current(app), AutoFixExecutor(app), log, ChannelModePrefs.ownsServer())
+        val o = ConnectPlan.run(mode, LaunchViaPrefs.current(app), AutoFixExecutor(app), log, ChannelModePrefs.ownsServer())
         val r = result(o)
         log.add("autofix", when (o.status) {
             ConnectStatus.SUCCESS -> "done: connected"

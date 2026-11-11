@@ -9,19 +9,33 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** The owner's "Privileged channel": which channels run commands, which may only launch the server. */
+/** The "Privileged channel" setting: which channels run commands in each mode, and that no mode reaches into another's. */
 class ChannelModeTest {
 
     private val ladder = listOf("embedded-adb", "local-server", "shizuku")
 
     @Test fun modeToChannelOrder() {
-        assertEquals(listOf("local-server"), ChannelSelector.execOrder(LOCAL_SERVER, ladder))
+        // Local server mode = the adbd connection; the loopback server answers first when it was started.
+        assertEquals(listOf("local-server", "embedded-adb"), ChannelSelector.execOrder(LOCAL_SERVER, ladder))
         assertEquals(ladder, ChannelSelector.execOrder(AUTO, ladder))
         assertEquals(listOf("embedded-adb"), ChannelSelector.execOrder(EMBEDDED_ONLY, ladder))
         assertEquals(listOf("shizuku"), ChannelSelector.execOrder(SHIZUKU, ladder))
-        assertEquals(emptyList<String>(), ChannelSelector.bootstrapSources(SHIZUKU, ladder))
-        assertEquals(listOf("embedded-adb", "shizuku"), ChannelSelector.bootstrapSources(LOCAL_SERVER, ladder))
-        assertEquals(emptyList<String>(), ChannelSelector.bootstrapSources(EMBEDDED_ONLY, ladder))
+        // the Restart-server button's launch line: the mode's own channel only
+        assertEquals(emptyList<String>(), ChannelSelector.launchSources(SHIZUKU, ladder))
+        assertEquals(listOf("embedded-adb"), ChannelSelector.launchSources(LOCAL_SERVER, ladder))
+        assertEquals(emptyList<String>(), ChannelSelector.launchSources(EMBEDDED_ONLY, ladder))
+        assertEquals(listOf("embedded-adb", "shizuku"), ChannelSelector.launchSources(AUTO, ladder))
+    }
+
+    /** Independent channels: no single-channel mode ever touches another mode's channel, to run a command or to launch anything. */
+    @Test fun modesNeverCrossCall() {
+        val withBridge = listOf("embedded-adb", "local-server", "superapp-bridge", "shizuku")
+        for (l in listOf(ladder, withBridge)) {
+            assertEquals(setOf("local-server", "embedded-adb"), ChannelSelector.touches(LOCAL_SERVER, l))
+            assertEquals(setOf("embedded-adb"), ChannelSelector.touches(EMBEDDED_ONLY, l))
+            assertEquals(setOf("shizuku"), ChannelSelector.touches(SHIZUKU, l))
+            assertTrue("shizuku" !in ChannelSelector.touches(LOCAL_SERVER, l) && "shizuku" !in ChannelSelector.touches(EMBEDDED_ONLY, l))
+        }
     }
 
     @Test fun parseAndDefaults() {
@@ -33,73 +47,71 @@ class ChannelModeTest {
         assertEquals(AUTO, ChannelMode.parse("garbage", AUTO))
     }
 
-    /** A fake world: the server is down or up; embedded adb is connected; every exec is logged. */
-    private class World(var serverUp: Boolean, val adbUp: Boolean, val relaunchWorks: Boolean = true) {
-        val execLog = ArrayList<String>()      // commands run over a channel, as "channel:command"
-        val relaunchVia = ArrayList<String>()  // channels handed to the relaunch
-        var shizukuUp = false
-        fun usable(n: String) = when (n) { "local-server" -> serverUp; "embedded-adb" -> adbUp; "shizuku" -> shizukuUp; else -> false }
-        fun relaunch(sources: List<String>): Boolean {
-            relaunchVia += sources
-            val via = sources.firstOrNull { usable(it) } ?: return false
-            execLog += "$via:launch-server"    // the ONE command adb may run in server mode
-            if (relaunchWorks) serverUp = true
-            return serverUp
+    /** A fake world: which channels answer; every question asked of a channel is logged. */
+    private class World(val serverUp: Boolean, val adbUp: Boolean, val shizukuUp: Boolean = false) {
+        val asked = ArrayList<String>()
+        fun usable(n: String): Boolean {
+            asked += n
+            return when (n) { "local-server" -> serverUp; "embedded-adb" -> adbUp; "shizuku" -> shizukuUp; else -> false }
         }
-        fun select(mode: ChannelMode) = ChannelSelector.select(mode, listOf("embedded-adb", "local-server", "shizuku"),
-            { it }, ::usable, ::relaunch)
+        fun select(mode: ChannelMode) = ChannelSelector.select(mode, listOf("embedded-adb", "local-server", "shizuku"), { it }, ::usable)
     }
 
-    @Test fun serverModeUsesTheServerAndNeverExecsOverAdb() {
-        val w = World(serverUp = true, adbUp = true)
-        assertEquals("local-server", w.select(LOCAL_SERVER))
-        assertTrue("a live server needs no relaunch", w.execLog.isEmpty() && w.relaunchVia.isEmpty())
+    @Test fun localServerModeRunsOverTheAdbSessionWhenNoServerWasStarted() {
+        // The reported case: adb connected, no loopback server. The channel exists: nothing is started, nothing fails.
+        val w = World(serverUp = false, adbUp = true, shizukuUp = true)
+        assertEquals("embedded-adb", w.select(LOCAL_SERVER))
+        assertTrue("Shizuku was asked in Local server mode", "shizuku" !in w.asked)
     }
 
-    @Test fun serverModeRelaunchesADeadServerThroughAdbOnlyThenSwitchesToIt() {
-        val w = World(serverUp = false, adbUp = true)
-        assertEquals("local-server", w.select(LOCAL_SERVER))          // the answer is the server, never embedded-adb
-        assertEquals(listOf("embedded-adb:launch-server"), w.execLog)  // adb ran the bootstrap line and nothing else
-        assertEquals(listOf("embedded-adb", "shizuku"), w.relaunchVia)
+    @Test fun localServerModePrefersTheLoopbackServerWhenItAnswers() {
+        assertEquals("local-server", World(serverUp = true, adbUp = true).select(LOCAL_SERVER))
+        // it outlives a dropped adb session
+        assertEquals("local-server", World(serverUp = true, adbUp = false).select(LOCAL_SERVER))
     }
 
-    @Test fun serverModeIsDownWhenNeitherTheServerNorTheBootstrapWorks() {
-        assertNull(World(serverUp = false, adbUp = false).select(LOCAL_SERVER))
-        // adb is up but cannot start the server: still down, adb is NOT used to run commands instead
-        val w = World(serverUp = false, adbUp = true, relaunchWorks = false)
+    @Test fun localServerModeIsDownWithoutAdbOrServerEvenWithShizukuUp() {
+        val w = World(serverUp = false, adbUp = false, shizukuUp = true)
         assertNull(w.select(LOCAL_SERVER))
-        assertEquals(listOf("embedded-adb:launch-server"), w.execLog)
+        assertTrue("shizuku" !in w.asked)
     }
 
-    @Test fun autoKeepsTheOldOrderAndRelaunchesFirst() {
-        val up = World(serverUp = true, adbUp = true)
-        assertEquals("embedded-adb", up.select(AUTO))
-        val down = World(serverUp = false, adbUp = true)
-        assertEquals("embedded-adb", down.select(AUTO))
-        assertTrue("auto relaunches the server when it is down", down.serverUp)
+    @Test fun autoIsTheLadderFirstThatAnswers() {
+        assertEquals("embedded-adb", World(serverUp = true, adbUp = true).select(AUTO))
         assertEquals("local-server", World(serverUp = true, adbUp = false).select(AUTO))
+        assertEquals("shizuku", World(serverUp = false, adbUp = false, shizukuUp = true).select(AUTO))
+        assertNull(World(serverUp = false, adbUp = false).select(AUTO))
     }
 
     @Test fun embeddedOnlySkipsTheServer() {
-        val w = World(serverUp = true, adbUp = false)
+        val w = World(serverUp = true, adbUp = false, shizukuUp = true)
         assertNull(w.select(EMBEDDED_ONLY))
-        assertTrue(w.relaunchVia.isEmpty())
+        assertEquals(listOf("embedded-adb"), w.asked)
         assertEquals("embedded-adb", World(serverUp = true, adbUp = true).select(EMBEDDED_ONLY))
     }
 
     @Test fun shizukuModeUsesOnlyTheShizukuBinder() {
-        val w = World(serverUp = true, adbUp = true).apply { shizukuUp = true }
+        val w = World(serverUp = true, adbUp = true, shizukuUp = true)
         assertEquals("shizuku", w.select(SHIZUKU))
-        // Shizuku down: the server and adb are NOT used instead, and nothing is relaunched.
+        assertEquals(listOf("shizuku"), w.asked)
+        // Shizuku down: the server and adb are NOT used instead.
         val down = World(serverUp = true, adbUp = true)
         assertNull(down.select(SHIZUKU))
-        assertTrue(down.relaunchVia.isEmpty() && down.execLog.isEmpty())
+        assertEquals(listOf("shizuku"), down.asked)
     }
 
     @Test fun allFourModesPickDifferentRoutesFromTheSameWorld() {
-        fun route(m: ChannelMode) = World(serverUp = true, adbUp = true).apply { shizukuUp = true }.select(m)
+        fun route(m: ChannelMode) = World(serverUp = true, adbUp = true, shizukuUp = true).select(m)
         assertEquals(listOf("local-server", "embedded-adb", "shizuku", "embedded-adb"),
             listOf(LOCAL_SERVER, EMBEDDED_ONLY, SHIZUKU, AUTO).map(::route))
+    }
+
+    /** Reconnect re-binds the chosen mode's own channel and no other. */
+    @Test fun reconnectRungsPerMode() {
+        assertEquals(listOf(EnsureRung.SHIZUKU), ShellAccess.rungs(SHIZUKU))
+        assertEquals(listOf(EnsureRung.EMBEDDED_ADB), ShellAccess.rungs(LOCAL_SERVER))
+        assertEquals(listOf(EnsureRung.EMBEDDED_ADB), ShellAccess.rungs(EMBEDDED_ONLY))
+        assertEquals(listOf(EnsureRung.EMBEDDED_ADB, EnsureRung.SHIZUKU), ShellAccess.rungs(AUTO))
     }
 
     @Test fun shizukuStateAndLabels() {

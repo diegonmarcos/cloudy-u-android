@@ -113,36 +113,46 @@ object ChannelOps {
         return "Embedded adb disconnected; the pairing is kept."
     }
 
+    /** Reconnect the CHOSEN mode's own channel ([ShellAccess.rungs]): re-bind Shizuku in Shizuku mode, re-attach adb in the adb modes. */
     fun reconnect(ctx: Context): String {
         val msg = ShellAccess.ensure(ctx) { }
         log.add("action", "reconnect: $msg")
         return msg
     }
 
-    /** The channels allowed to launch the server, the chosen launcher first. */
-    fun launchSources(ctx: Context): List<ShellChannel> =
-        LaunchViaPrefs.order(ctx, ShellChannels.all.filter { it !== LocalShellChannel && it.isReady(ctx) })
+    /**
+     * The channels the Restart-server BUTTON may send its launch line over, in the chosen mode, that are up
+     * right now. Local server mode: the embedded adb session only. Auto: its ladder, the chosen launcher first.
+     */
+    fun launchSources(ctx: Context): List<ShellChannel> {
+        val names = ChannelSelector.launchSources(ChannelModePrefs.current(ctx), ShellChannels.all.map { it.name() })
+        return LaunchViaPrefs.order(ctx, ShellChannels.all.filter { it.name() in names && it.isReady(ctx) })
+    }
 
-    /** Starts (or replaces) the local server through a ready non-server channel. */
+    /**
+     * Starts (or replaces) the OPTIONAL loopback server. Only this explicit button does it; Connect,
+     * Reconnect and Auto-fix never do, and no channel waits for it: commands already run over the adb session.
+     */
     fun startServer(ctx: Context, restart: Boolean): String {
         val sources = launchSources(ctx)
         val via = sources.firstOrNull() ?: run {
-            log.add("action", "server: no adb or Shizuku session to start it with")
-            return "No adb or Shizuku channel is up to start the server with - Reconnect first."
+            log.add("action", "server: ${ChannelModePrefs.current(ctx).title()} mode has no session up to start it with")
+            return "No session of ${ChannelModePrefs.current(ctx).title()} mode is up to start the server with - Reconnect first."
         }
         if (restart) { stopServer(ctx); Thread.sleep(500) }
-        val ok = AdbShellBootstrap.ensureServer(ctx, sources, force = true)
+        val ok = AdbShellBootstrap.ensureServer(ctx, sources)
         val line = if (ok) "Local server running (started via ${via.name()})."
-        else "The server did not come up (${AdbShellBootstrap.bootstrapState(ctx)})."
-        log.add("action", (if (restart) "restart" else "start") + " server via ${via.name()}: " + if (ok) "up" else "did not come up")
+        else "The optional loopback server did not come up (${AdbShellBootstrap.bootstrapState(ctx)}). Commands still run over ${via.name()}."
+        log.add("action", (if (restart) "restart" else "start") + " optional server via ${via.name()}: " + if (ok) "up" else "did not come up; commands still run over ${via.name()}")
         return line
     }
 
     fun stopServer(ctx: Context): String {
         val nice = AdbShellBootstrap.niceName()
-        val via = ShellChannels.all.firstOrNull { it !== LocalShellChannel && it.isReady(ctx) }
-            ?: ShellChannels.all.firstOrNull { it.isReady(ctx) }
-            ?: run { log.add("action", "stop server: no channel is up to send it"); return "No channel is up to stop it with." }
+        // The stop goes over the mode's own session, else through the server itself; never over another mode's channel.
+        val via = launchSources(ctx).firstOrNull()
+            ?: LocalShellChannel.takeIf { it.isReady(ctx) }
+            ?: run { log.add("action", "stop server: no channel of this mode is up to send it"); return "No channel of this mode is up to stop it with." }
         val out = via.exec(ctx, "pkill -f '${nice.dropLast(1)}[${nice.last()}]'; echo rc=\$?")
         log.add("action", "stop server via ${via.name()}: rc=${ShellUid.rc(out) ?: "?"}")
         return "Stop sent to the local server."
@@ -226,16 +236,13 @@ class DeviceConnectExecutor(private val ctx: Context) : ConnectExecutor {
             if (said.startsWith("Pairing")) StepResult(false, "notification posted", needsUser = true)
             else StepResult(false, said)
         }
-        StepId.ADB_CONNECT -> EmbeddedAdbChannel.autoConnect(app).let { (ok, msg) -> StepResult(ok, msg) }
+        // Up only when the session answers a shell round trip; a dead socket that still says "connected" is replaced.
+        StepId.ADB_CONNECT -> EmbeddedAdbChannel.connectLive(app).let { (ok, msg) -> StepResult(ok, msg) }
         StepId.SHIZUKU_RUNNING ->
             if (ShizukuAdb.isAvailable()) StepResult(true, "running") else StepResult(false, if (ShizukuStatus.installed(app)) "installed, not running" else "not installed")
         StepId.SHIZUKU_PERMISSION -> {
             ShizukuAdb.requestPermission { }
             StepResult(false, "prompt shown", needsUser = true)
-        }
-        StepId.START_SERVER -> {
-            val said = ChannelOps.startServer(app, restart = false)
-            if (said.startsWith("Local server running")) StepResult(true, said) else StepResult(false, said)
         }
         StepId.VERIFY -> {
             val ch = ShellChannels.active(app)

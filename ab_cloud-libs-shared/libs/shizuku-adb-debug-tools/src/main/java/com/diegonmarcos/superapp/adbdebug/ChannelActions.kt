@@ -34,7 +34,9 @@ object ChannelActions {
             ChannelAction.RESTART_SERVER to when {
                 !f.ownsServer -> no("this app runs no server of its own")
                 !usesServer -> no("${f.mode.title()} mode does not use the local server")
-                !(f.adbConnected || f.shizuku == ShizukuState.UP) -> no("no adb or Shizuku session to start it with")
+                // The launch line goes over the mode's OWN channel: Local server mode never reaches for Shizuku.
+                !ChannelState.canLaunchServer(f) ->
+                    no(if (f.mode == ChannelMode.AUTO) "no adb or Shizuku session to start it with" else "no adb session to start it with")
                 else -> yes
             },
             ChannelAction.STOP_SERVER to when {

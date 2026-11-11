@@ -782,7 +782,8 @@ class PermissionsFragment : KitComposeFragment() {
 
     /** The one channel-availability check for this screen; null = no shell. */
     private fun shellPlane(): ShellChannel? =
-        listOf<ShellChannel>(EmbeddedAdbChannel, ShizukuShellChannel).firstOrNull { it.isReady(ctxAny()) }
+        listOf<ShellChannel>(EmbeddedAdbChannel, ShizukuShellChannel)
+            .firstOrNull { com.diegonmarcos.superapp.adbdebug.ShellChannels.modeUses(ctxAny(), it.name()) && it.isReady(ctxAny()) }
 
     /** A thing only a system page can grant: state + the page that opens it. */
     private class PageItem(val label: String, val granted: Boolean?, val state: String, val open: () -> Unit)

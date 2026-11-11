@@ -158,9 +158,10 @@ object ShizukuAdb {
      */
     fun grant(ctx: Context, perm: String): GrantResult {
         val cmd = com.diegonmarcos.superapp.perms.PermsShell.grant(ctx.packageName, perm)
+        // The chosen mode's channel; Shizuku itself is a fallback only where the mode uses Shizuku (never in the adb modes).
         val out = ShellChannels.active(ctx)?.exec(ctx, cmd)
-            ?: exec(ctx, cmd)
-            ?: return GrantResult(false, false, "No shell channel — start Shizuku or pair adb")
+            ?: (if (ShellChannels.modeUses(ctx, ChannelSelector.SHIZUKU)) exec(ctx, cmd) else null)
+            ?: return GrantResult(false, false, "No shell channel in ${ChannelModePrefs.current(ctx).title()} mode — connect it on the ADB Shell page")
         val held = ctx.checkSelfPermission(perm) == PackageManager.PERMISSION_GRANTED
         return GrantResult(true, held, out.ifBlank { "(no output — the grant is silent on success)" })
     }

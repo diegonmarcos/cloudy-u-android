@@ -785,6 +785,303 @@
     "Shell broker"
    ],
    "before": "#1550 (new)"
+  },
+  {
+   "id": "connect-plan.81",
+   "group": "connect-plan",
+   "field": "Local server plan step Developer options on",
+   "kind": "model",
+   "source": "plan_local",
+   "value": "Developer options on",
+   "before": "#1550 connect-logic fix (independent modes)"
+  },
+  {
+   "id": "connect-plan.82",
+   "group": "connect-plan",
+   "field": "Local server plan step Wireless debugging on",
+   "kind": "model",
+   "source": "plan_local",
+   "value": "Wireless debugging on",
+   "before": "#1550 connect-logic fix (independent modes)"
+  },
+  {
+   "id": "connect-plan.83",
+   "group": "connect-plan",
+   "field": "Local server plan step Pair with code",
+   "kind": "model",
+   "source": "plan_local",
+   "value": "Pair with code",
+   "before": "#1550 connect-logic fix (independent modes)"
+  },
+  {
+   "id": "connect-plan.84",
+   "group": "connect-plan",
+   "field": "Local server plan step Connect embedded adb (mDNS)",
+   "kind": "model",
+   "source": "plan_local",
+   "value": "Connect embedded adb (mDNS)",
+   "before": "#1550 connect-logic fix (independent modes)"
+  },
+  {
+   "id": "connect-plan.85",
+   "group": "connect-plan",
+   "field": "Local server plan step Round trip",
+   "kind": "model",
+   "source": "plan_local",
+   "value": "Round trip",
+   "before": "#1550 connect-logic fix (independent modes)"
+  },
+  {
+   "id": "connect-plan.86",
+   "group": "connect-plan",
+   "field": "Shizuku plan step Shizuku running",
+   "kind": "model",
+   "source": "plan_shizuku",
+   "value": "Shizuku running",
+   "before": "#1550 connect-logic fix (independent modes)"
+  },
+  {
+   "id": "connect-plan.87",
+   "group": "connect-plan",
+   "field": "Shizuku plan step Shizuku permission",
+   "kind": "model",
+   "source": "plan_shizuku",
+   "value": "Shizuku permission",
+   "before": "#1550 connect-logic fix (independent modes)"
+  },
+  {
+   "id": "connect-plan.88",
+   "group": "connect-plan",
+   "field": "Shizuku plan step Round trip",
+   "kind": "model",
+   "source": "plan_shizuku",
+   "value": "Round trip",
+   "before": "#1550 connect-logic fix (independent modes)"
+  },
+  {
+   "id": "connect-plan.89",
+   "group": "connect-plan",
+   "field": "Local server connect method Pair with code",
+   "kind": "model",
+   "source": "methods_local",
+   "value": "Pair with code",
+   "before": "#1550 connect-logic fix (independent modes)"
+  },
+  {
+   "id": "connect-plan.90",
+   "group": "connect-plan",
+   "field": "Local server connect method Connect via mDNS",
+   "kind": "model",
+   "source": "methods_local",
+   "value": "Connect via mDNS",
+   "before": "#1550 connect-logic fix (independent modes)"
+  },
+  {
+   "id": "connect-plan.91",
+   "group": "connect-plan",
+   "field": "Local server connect method Run over the adb session",
+   "kind": "model",
+   "source": "methods_local",
+   "value": "Run over the adb session",
+   "before": "#1550 connect-logic fix (independent modes)"
+  },
+  {
+   "id": "cockpit-actions.92",
+   "group": "cockpit-actions",
+   "field": "cockpit row action perms:OPEN_PERMS",
+   "kind": "model",
+   "source": "cockpit_acts",
+   "value": "perms:OPEN_PERMS",
+   "before": "#1550 connect-logic fix (independent modes)"
+  },
+  {
+   "id": "cockpit-actions.93",
+   "group": "cockpit-actions",
+   "field": "cockpit row action setup:OPEN_DEV",
+   "kind": "model",
+   "source": "cockpit_acts",
+   "value": "setup:OPEN_DEV",
+   "before": "#1550 connect-logic fix (independent modes)"
+  },
+  {
+   "id": "cockpit-actions.94",
+   "group": "cockpit-actions",
+   "field": "cockpit row action setup:OPEN_WD",
+   "kind": "model",
+   "source": "cockpit_acts",
+   "value": "setup:OPEN_WD",
+   "before": "#1550 connect-logic fix (independent modes)"
+  },
+  {
+   "id": "cockpit-actions.95",
+   "group": "cockpit-actions",
+   "field": "cockpit row action shizuku:SHIZUKU_START",
+   "kind": "model",
+   "source": "cockpit_acts",
+   "value": "shizuku:SHIZUKU_START",
+   "before": "#1550 connect-logic fix (independent modes)"
+  },
+  {
+   "id": "cockpit-actions.96",
+   "group": "cockpit-actions",
+   "field": "cockpit row action shizuku:SHIZUKU_AUTH",
+   "kind": "model",
+   "source": "cockpit_acts",
+   "value": "shizuku:SHIZUKU_AUTH",
+   "before": "#1550 connect-logic fix (independent modes)"
+  },
+  {
+   "id": "cockpit-actions.97",
+   "group": "cockpit-actions",
+   "field": "cockpit row action local:LOCAL_PAIR",
+   "kind": "model",
+   "source": "cockpit_acts",
+   "value": "local:LOCAL_PAIR",
+   "before": "#1550 connect-logic fix (independent modes)"
+  },
+  {
+   "id": "cockpit-actions.98",
+   "group": "cockpit-actions",
+   "field": "cockpit row action local:LOCAL_START",
+   "kind": "model",
+   "source": "cockpit_acts",
+   "value": "local:LOCAL_START",
+   "before": "#1550 connect-logic fix (independent modes)"
+  },
+  {
+   "id": "cockpit-actions.99",
+   "group": "cockpit-actions",
+   "field": "cockpit row action local:LOCAL_STOP",
+   "kind": "model",
+   "source": "cockpit_acts",
+   "value": "local:LOCAL_STOP",
+   "before": "#1550 connect-logic fix (independent modes)"
+  },
+  {
+   "id": "cockpit-actions.100",
+   "group": "cockpit-actions",
+   "field": "cockpit row action local:LOCAL_RESTART",
+   "kind": "model",
+   "source": "cockpit_acts",
+   "value": "local:LOCAL_RESTART",
+   "before": "#1550 connect-logic fix (independent modes)"
+  },
+  {
+   "id": "cockpit-actions.101",
+   "group": "cockpit-actions",
+   "field": "cockpit row action embedded:EMB_INIT",
+   "kind": "model",
+   "source": "cockpit_acts",
+   "value": "embedded:EMB_INIT",
+   "before": "#1550 connect-logic fix (independent modes)"
+  },
+  {
+   "id": "cockpit-actions.102",
+   "group": "cockpit-actions",
+   "field": "cockpit row action embedded:EMB_RESET",
+   "kind": "model",
+   "source": "cockpit_acts",
+   "value": "embedded:EMB_RESET",
+   "before": "#1550 connect-logic fix (independent modes)"
+  },
+  {
+   "id": "cockpit-actions.103",
+   "group": "cockpit-actions",
+   "field": "cockpit row action connection:CONNECT",
+   "kind": "model",
+   "source": "cockpit_acts",
+   "value": "connection:CONNECT",
+   "before": "#1550 connect-logic fix (independent modes)"
+  },
+  {
+   "id": "cockpit-actions.104",
+   "group": "cockpit-actions",
+   "field": "cockpit row action connection:RECONNECT",
+   "kind": "model",
+   "source": "cockpit_acts",
+   "value": "connection:RECONNECT",
+   "before": "#1550 connect-logic fix (independent modes)"
+  },
+  {
+   "id": "cockpit-lights.105",
+   "group": "cockpit-lights",
+   "field": "cockpit sub-light setup:Developer Options",
+   "kind": "model",
+   "source": "cockpit_subs",
+   "value": "setup:Developer Options",
+   "before": "#1550 connect-logic fix (independent modes)"
+  },
+  {
+   "id": "cockpit-lights.106",
+   "group": "cockpit-lights",
+   "field": "cockpit sub-light setup:Wireless Debugging",
+   "kind": "model",
+   "source": "cockpit_subs",
+   "value": "setup:Wireless Debugging",
+   "before": "#1550 connect-logic fix (independent modes)"
+  },
+  {
+   "id": "cockpit-lights.107",
+   "group": "cockpit-lights",
+   "field": "cockpit sub-light local:adbd round trip",
+   "kind": "model",
+   "source": "cockpit_subs",
+   "value": "local:adbd round trip",
+   "before": "#1550 connect-logic fix (independent modes)"
+  },
+  {
+   "id": "cockpit-lights.108",
+   "group": "cockpit-lights",
+   "field": "cockpit sub-light local:Loopback server",
+   "kind": "model",
+   "source": "cockpit_subs",
+   "value": "local:Loopback server",
+   "before": "#1550 connect-logic fix (independent modes)"
+  },
+  {
+   "id": "console-actions.109",
+   "group": "console-actions",
+   "field": "channel action Disconnect (model)",
+   "kind": "model",
+   "source": "actions",
+   "value": "Disconnect",
+   "before": "#1550 connect-logic fix (independent modes)"
+  },
+  {
+   "id": "console-actions.110",
+   "group": "console-actions",
+   "field": "channel action Reconnect (model)",
+   "kind": "model",
+   "source": "actions",
+   "value": "Reconnect",
+   "before": "#1550 connect-logic fix (independent modes)"
+  },
+  {
+   "id": "console-actions.111",
+   "group": "console-actions",
+   "field": "channel action Restart server (model)",
+   "kind": "model",
+   "source": "actions",
+   "value": "Restart server",
+   "before": "#1550 connect-logic fix (independent modes)"
+  },
+  {
+   "id": "console-actions.112",
+   "group": "console-actions",
+   "field": "channel action Stop server (model)",
+   "kind": "model",
+   "source": "actions",
+   "value": "Stop server",
+   "before": "#1550 connect-logic fix (independent modes)"
+  },
+  {
+   "id": "console-actions.113",
+   "group": "console-actions",
+   "field": "channel action Test round-trip (model)",
+   "kind": "model",
+   "source": "actions",
+   "value": "Test round-trip",
+   "before": "#1550 connect-logic fix (independent modes)"
   }
  ],
  "owner_ordered_removals": [
