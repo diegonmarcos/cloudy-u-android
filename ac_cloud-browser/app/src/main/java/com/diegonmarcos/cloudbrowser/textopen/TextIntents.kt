@@ -9,7 +9,7 @@ import android.provider.OpenableColumns
 import java.io.File
 
 /**
- * #1642 a text file another app hands cloud-browser (the manifest's text VIEW filters: text/*, json, xml, csv,
+ * #1642 a text file another app hands cloud-browser (the manifest's text VIEW filters: every text type, json, xml, csv,
  * markdown, and the usual extensions for senders that give a generic type): it is shown as readable text.
  * The bytes are read with a size cap, HTML-escaped into a small page in the cache, and that page's file:// URL is
  * what the browser opens. Nothing in the file is ever run as markup or script (HTML is shown as its source).
