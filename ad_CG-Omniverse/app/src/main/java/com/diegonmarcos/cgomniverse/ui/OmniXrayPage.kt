@@ -5,7 +5,6 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -77,6 +76,7 @@ fun OmniXrayPage(dark: Boolean = true) {
     var probe by remember { mutableStateOf<OmniXray.Probe?>(null) }
     var probing by remember { mutableStateOf(true) }
     var run by remember { mutableIntStateOf(0) }
+    var copied by remember { mutableStateOf("") }
     var tick by remember { mutableIntStateOf(0) }
     LaunchedEffect(Unit) { while (true) { delay(1000); tick++ } }
     LaunchedEffect(run) {
@@ -93,11 +93,12 @@ fun OmniXrayPage(dark: Boolean = true) {
     }
     Column(Modifier.fillMaxSize().testTag(OmniXrayTags.PAGE).verticalScroll(rememberScrollState()).padding(horizontal = 12.dp)) {
         Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Btn("Copy MD", c, OmniXrayTags.COPY_MD) { copy(ctx, "X-Ray App (Markdown)", OmniXray.markdown(report)) }
-            Btn("Copy JSON", c, OmniXrayTags.COPY_JSON) { copy(ctx, "X-Ray App (JSON)", OmniXray.json(report)) }
+            Btn("Copy MD", c, OmniXrayTags.COPY_MD) { copy(ctx, "X-Ray App (Markdown)", OmniXray.markdown(report)); copied = "Markdown copied" }
+            Btn("Copy JSON", c, OmniXrayTags.COPY_JSON) { copy(ctx, "X-Ray App (JSON)", OmniXray.json(report)); copied = "JSON copied" }
             Btn("Share", c, OmniXrayTags.SHARE) { share(ctx, OmniXray.markdown(report)) }
             Btn(if (probing) "Probing..." else "Retest", c, OmniXrayTags.RETEST) { if (!probing) run++ }
         }
+        if (copied.isNotEmpty()) Text(copied, color = c.accent, fontSize = 11.sp)
         val bad = report.stages.any { it.state == OmniXray.State.FAIL }
         Card("Verdict", c, Modifier.testTag(OmniXrayTags.VERDICT)) {
             Text(report.verdict, color = if (bad) Color(0xFFFF6B6B) else c.ink, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
@@ -144,7 +145,6 @@ private fun build(ctx: Context, p: OmniXray.Probe?): OmniXray.Report {
 private fun copy(ctx: Context, label: String, text: String) {
     runCatching {
         (ctx.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager).setPrimaryClip(ClipData.newPlainText(label, text))
-        Toast.makeText(ctx, "$label copied", Toast.LENGTH_SHORT).show()
     }
 }
 
