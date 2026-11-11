@@ -65,7 +65,7 @@ BREAKS = [
      ("WriterRoutes.translate(app, heardText, target)", "WriterRoutes.lastTranslation"), "R3"),
     ("the fallback is hidden on Translate", SRC + "WriterSurface.kt",
      ("R.string.route_fell_back", "R.string.route_answered_by"), "R4"),
-    ("/api/writer/translate unregistered", SRC + "WriterDebugApi.kt",
+    ("/api/writer/translate unregistered", APP + "/app/src/main/java/com/diegonmarcos/cloudwriter/WriterDebugApi.kt",
      ('                "translate" -> translate(app, q).toString()\n', ""), "R5"),
     ("the debug provider is exported", APP + "/app/src/main/AndroidManifest.xml",
      ('android:authorities="${applicationId}.writerdebugapi"\n            android:exported="false"',

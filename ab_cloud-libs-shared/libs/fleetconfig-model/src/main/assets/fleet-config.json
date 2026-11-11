@@ -1995,7 +1995,7 @@
       "doc": "Mail AI text-tools choices: provider, per-provider model, enhance/summary style, translate target language (a language picker, default en), auto_translate_incoming and auto_summary_incoming switches (off by default), summary_language (default en), answer_prompt (the Answer Prediction prompt shared by the composer and the summary box suggested reply; empty means the built-in default).",
       "used_by": [
         "ac_cloud-mail",
-        "ac_cloud-writer"
+        "lib-writer-ui"
       ],
       "keys": {
         "seeded_from_keyboard": "device",
@@ -4484,7 +4484,9 @@
         "lib-theme-background",
         "lib-ui-icons",
         "lib-ui-kit",
-        "lib-ui-nav-bars"
+        "lib-ui-nav-bars",
+        "lib-writer-core",
+        "lib-writer-ui"
       ],
       "items": []
     },

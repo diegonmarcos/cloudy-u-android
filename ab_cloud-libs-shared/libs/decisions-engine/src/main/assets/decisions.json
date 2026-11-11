@@ -221,7 +221,7 @@
     "min_labelled": 30,
     "min_precision": 0.85
    },
-   "fallback_test": "ac_cloud-writer/core/src/test/kotlin/com/diegonmarcos/cloudwriter/core/RoutingJevTest.kt::RoutingJevTest"
+   "fallback_test": "ab_cloud-libs-shared/libs/writer-core/src/test/kotlin/com/diegonmarcos/cloudwriter/core/RoutingJevTest.kt::RoutingJevTest"
   },
   "keyboard_style": {
    "_doc": "#883 Jev wave 2 (spec 3.8): the ENHANCE style when the owner never picked one; sees the SHAPE of the text, never the text. Observe-only until its own journal shows it right: gate.after is itself, so the engine scores and journals but answers gate_closed (today's behaviour) until >= 30 of its confident answers have an outcome (the person's correction, the observed result, or a suggestion left standing for a week) and >= 85% matched.",

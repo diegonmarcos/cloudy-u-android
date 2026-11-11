@@ -8463,7 +8463,7 @@
     "ac_cloud-superintel/app/build.gradle",
     "ac_cloud-tasks/app/build.gradle",
     "ac_cloud-tools-small-llms/core/build.gradle",
-    "ac_cloud-writer/core/build.gradle",
+    "ab_cloud-libs-shared/libs/writer-core/build.gradle",
     "ad_CG-Omniverse/app/build.gradle",
     "ad_Capital-Stack-FinTerminal/app/build.gradle",
     "ad_Hardtech-CAD/app/build.gradle",

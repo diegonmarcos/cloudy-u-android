@@ -11,10 +11,10 @@
   "lib_root": "ab_cloud-libs-shared/libs",
   "skip_dirs": ["build", "node_modules", ".git", "z_archive", "test", "androidTest"],
   "key_call": "revealAiKey(",
-  "_doc_key_readers": "The code that may call revealAiKey( today. text-tools DEFINES it; account serves it; keyboard serves it; the image engine and the decisions engine read the token in their own process; calc, search, browser and writer are the apps that predate the engine and still hold the key (waves #882-#884 move them to DecisionsLink one by one, and each one that moves is deleted from this list: the list can only shrink). Mail is deliberately not here: it may choose a model and may never hold, read, store or send the key that pays for it (ac_cloud-mail/test/test-mail-text-tools.sh K1).",
+  "_doc_key_readers": "The code that may call revealAiKey( today. text-tools DEFINES it; account serves it; keyboard serves it; the image engine and the decisions engine read the token in their own process; calc, search and browser are the apps that predate the engine, and writer-ui is the lib that carries Cloud Writer's UI (#1652: the app's own code moved there, so the reader moved with it and the app itself no longer reads it) and still hold the key (waves #882-#884 move them to DecisionsLink one by one, and each one that moves is deleted from this list: the list can only shrink). Mail is deliberately not here: it may choose a model and may never hold, read, store or send the key that pays for it (ac_cloud-mail/test/test-mail-text-tools.sh K1).",
   "key_readers": {
-    "apps": ["ac_cloud-browser", "ac_cloud-calc", "ac_cloud-search", "ac_cloud-writer"],
-    "libs": ["account", "decisions-engine", "keyboard", "ml-l-image-mlkit", "text-tools"]
+    "apps": ["ac_cloud-browser", "ac_cloud-calc", "ac_cloud-search"],
+    "libs": ["account", "decisions-engine", "keyboard", "ml-l-image-mlkit", "text-tools", "writer-ui"]
   },
   "classes": ["user_facing", "background", "gating"],
   "sensitive_content": ["mail", "git"]

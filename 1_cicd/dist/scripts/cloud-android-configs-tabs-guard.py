@@ -59,14 +59,21 @@ def own_tabs(d):
 def app_sources(root, app):
     """The app's non-test Kotlin / Java sources, as text."""
     out = []
-    for dp, dn, fn in os.walk(os.path.join(root, app)):
-        dn[:] = [d for d in dn if d not in ("test", "androidTest", "build", "node_modules")]
-        for f in fn:
-            if f.endswith((".kt", ".java")):
-                try:
-                    out.append(open(os.path.join(dp, f), encoding="utf-8", errors="replace").read())
-                except OSError:
-                    pass
+    tops = [os.path.join(root, app)]
+    try:  # #1652 android.ui_module_dirs: shared lib modules that hold the app's UI (Cloud Writer: libs:writer-ui)
+        for extra in (json.load(open(os.path.join(root, app, "build.json"))).get("android") or {}).get("ui_module_dirs") or []:
+            tops.append(os.path.normpath(os.path.join(root, app, extra)))
+    except (OSError, ValueError):
+        pass
+    for top in tops:
+        for dp, dn, fn in os.walk(top):
+            dn[:] = [d for d in dn if d not in ("test", "androidTest", "build", "node_modules")]
+            for f in fn:
+                if f.endswith((".kt", ".java")):
+                    try:
+                        out.append(open(os.path.join(dp, f), encoding="utf-8", errors="replace").read())
+                    except OSError:
+                        pass
     return "\n".join(out)
 
 

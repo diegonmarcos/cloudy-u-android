@@ -189,7 +189,7 @@ else
 fi
 
 # ── R5/R6/R7 ── the manifest and the debug API ────────────────────────────
-DEBUG="$(code "$SRC/WriterDebugApi.kt")"
+DEBUG="$(code "$APP/app/src/main/java/com/diegonmarcos/cloudwriter/WriterDebugApi.kt")"
 for op in '"listen/status"' '"translate"' '"route"'; do
     if grep -q "$op ->" <<<"$DEBUG"; then pass "R5 /api/writer/${op//\"/} is served"; else fail "R5 /api/writer/${op//\"/} is not served"; fi
 done
