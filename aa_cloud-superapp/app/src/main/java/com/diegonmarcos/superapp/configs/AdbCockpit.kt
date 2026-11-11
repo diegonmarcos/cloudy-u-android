@@ -127,7 +127,7 @@ private fun Card(tag: String, content: @Composable () -> Unit) {
 
 /** A large labelled verb (Connect, Reconnect, a mode, a log tool). [primary] = filled; a disabled one is dimmed and says why. */
 @Composable
-private fun Verb(label: String, tag: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, primary: Boolean = false, why: String? = null, small: Boolean = false) {
+private fun CockpitVerb(label: String, tag: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, primary: Boolean = false, why: String? = null, small: Boolean = false) {
     val p = LocalKitPalette.current
     val shape = RoundedCornerShape(if (small) 8.dp else 10.dp)
     Text(label, fontSize = if (small) CockpitRoom.small else CockpitRoom.name, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, maxLines = 1,
@@ -184,10 +184,10 @@ internal fun AdbCockpitContent(
         Card("adbc:control") {
             FlowRow(Modifier.fillMaxWidth().testTag("adbc:bar"), horizontalArrangement = Arrangement.spacedBy(CockpitRoom.gap), verticalArrangement = Arrangement.spacedBy(CockpitRoom.gap)) {
                 val t = inputs?.let { AdbCockpitModel.toggle(it.facts) }
-                Verb(t?.what?.label ?: "Connect", "adbc:toggle", { t?.let { a.act(it.what) } }, enabled = t != null && t.enabled && busy.isEmpty(), primary = t?.primary == true, why = t?.why)
-                Verb("↻ Reconnect", "adbc:reconnect", { a.act(AdbCockpitModel.Do.RECONNECT) }, enabled = inputs != null && busy.isEmpty())
+                CockpitVerb(t?.what?.label ?: "Connect", "adbc:toggle", { t?.let { a.act(it.what) } }, enabled = t != null && t.enabled && busy.isEmpty(), primary = t?.primary == true, why = t?.why)
+                CockpitVerb("↻ Reconnect", "adbc:reconnect", { a.act(AdbCockpitModel.Do.RECONNECT) }, enabled = inputs != null && busy.isEmpty())
                 Row(Modifier.testTag("adbc:mode"), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    for (md in AdbCockpitModel.SELECTABLE) Verb(AdbCockpitModel.modeName(md), "adbc:mode:${md.id}", { a.pickMode(md) }, primary = md == mode, small = true)
+                    for (md in AdbCockpitModel.SELECTABLE) CockpitVerb(AdbCockpitModel.modeName(md), "adbc:mode:${md.id}", { a.pickMode(md) }, primary = md == mode, small = true)
                 }
             }
             if (mode == ChannelMode.AUTO) Text("Mode: Auto. Every channel is live; pick one above to use that channel alone.", fontSize = CockpitRoom.small, color = p.textSecondary,
@@ -218,9 +218,9 @@ internal fun AdbCockpitContent(
         Card("adbc:logs") {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("Logs", fontSize = CockpitRoom.head, fontWeight = FontWeight.Bold, color = p.textPrimary, modifier = Modifier.weight(1f))
-                Verb(if (filtering) "filter ✓" else "filter", "adbc:log-filter", { filtering = !filtering; if (!filtering) q = "" }, small = true)
-                Verb("copy", "adbc:log-copy", a.copyLog, small = true)
-                Verb("clear", "adbc:log-clear", a.clearLog, small = true)
+                CockpitVerb(if (filtering) "filter ✓" else "filter", "adbc:log-filter", { filtering = !filtering; if (!filtering) q = "" }, small = true)
+                CockpitVerb("copy", "adbc:log-copy", a.copyLog, small = true)
+                CockpitVerb("clear", "adbc:log-clear", a.clearLog, small = true)
             }
             val mono = TextStyle(fontFamily = FontFamily.Monospace, fontSize = CockpitRoom.small, color = p.textPrimary)
             if (filtering) BasicTextField(q, { q = it }, singleLine = true, textStyle = mono, cursorBrush = SolidColor(p.accent),
@@ -290,7 +290,7 @@ private fun KeepAliveCard(ka: AdbCockpitModel.KeepAlive, set: (Boolean) -> Unit)
                 Text("Keep Wireless debugging on:", fontSize = CockpitRoom.name, fontWeight = FontWeight.Bold, color = p.textPrimary)
                 Text(ka.status, fontSize = CockpitRoom.message, color = if (ka.light == AdbCockpitModel.Light.GREY) p.textSecondary else lightInk(ka.light))
             }
-            Verb(if (ka.on) "ON ✓" else "OFF", "adbc:keepalive-toggle", { set(!ka.on) }, primary = ka.on, small = true)
+            CockpitVerb(if (ka.on) "ON ✓" else "OFF", "adbc:keepalive-toggle", { set(!ka.on) }, primary = ka.on, small = true)
         }
         if (ka.subs.isNotEmpty()) FlowRow(horizontalArrangement = Arrangement.spacedBy(CockpitRoom.row), verticalArrangement = Arrangement.spacedBy(CockpitRoom.gap)) {
             for (x in ka.subs) Row(Modifier.testTag("adbc:ka-sub:${x.label}"), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
