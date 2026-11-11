@@ -66,7 +66,7 @@ B = "ac_cloud-browser/build.json"
 main("sites", check, [
     ("Weby stops reading the phone apps", GRADLE, "'data/phone-webapps.json'", "'data/phone-webapps.jsonx'", "W1 Weby is derived"),
     ("a copy of the declaration lands in the assets", "ac_cloud-browser/app/src/main/assets/phone-webapps.json", None, "{}", "W1 no copy"),
-    ("Weby stops reading the phone folders", GRADLE, "superappUi.phone_folders", "superappUi.phone_foldersx", "W1 #1634 Weby's full"),
+    ("Weby stops reading the phone folders", GRADLE, "superappUi.phone_folders", "superappUi.phone_fold", "W1 #1634 Weby's full"),
     ("a scraper module comes back", B, '"libs:bottomnav": {', '"libs:scraper": {"dir": "x"},\n    "libs:bottomnav": {', "W4 build.json no longer"),
     ("the app depends on libs:apify again", GRADLE, "    implementation project(':libs:ui-kit')", "    implementation project(':libs:ui-kit')\n    implementation project(':libs:apify')", "W4 the app does not depend"),
     ("a site action is dropped", B, '{"id": "media", "label": "Clear media", "detail": "cached images, audio, video"},', "", "W2 the five site actions"),
