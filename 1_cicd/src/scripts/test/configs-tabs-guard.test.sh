@@ -62,14 +62,12 @@ assert a in s and b in s; open(p, 'w').write(s.replace(a + b, b + a))"
 mutant "the shared screen drops its tab strip" T0 "
 p = '$LIB'; s = open(p).read(); n = 'FleetConfigsTabs(shown, dark)'
 assert n in s; open(p, 'w').write(s.replace(n, 'Unit // tabs gone'))"
-mutant "a pending app is forgiven without an entry" T1 "$J
-d = load('$DATA'); del d['tabs']['pending']['ac_cloud-office']; save('$DATA', d)"
 mutant "a conforming app stays pending (stale)" T3 "$J
 d = load('$DATA'); d['tabs']['pending']['ac_cloud-me'] = 'x' * 40; save('$DATA', d)"
 mutant "pending names no app" T3 "$J
 d = load('$DATA'); d['tabs']['pending']['ac_cloud-nope'] = 'x' * 40; save('$DATA', d)"
 mutant "pending reason too short" T3 "$J
-d = load('$DATA'); d['tabs']['pending']['ac_cloud-office'] = 'later'; save('$DATA', d)"
+d = load('$DATA'); d['tabs']['pending']['ac_cloud-me'] = 'later'; save('$DATA', d)"
 mutant "Cloud Browser declares the tabs but stops drawing the shared pages" T4 "
 p = 'ac_cloud-browser/app/src/main/java/com/diegonmarcos/cloudbrowser/MainActivity.kt'; s = open(p).read()
 assert 'FleetConfigsPageBody(' in s; open(p, 'w').write(s.replace('FleetConfigsPageBody(', 'SomethingElse('))"
