@@ -3,4 +3,57 @@
 <style>html,body{margin:0;height:100%;background:#0e1116;overflow:hidden}canvas{display:block;width:100%;height:100%}
 #s{position:absolute;left:8px;bottom:6px;color:#8a93a3;font:12px sans-serif}</style>
 <script type="importmap">{ "imports": { "three": "../space/three.module.min.js" } }</script>
-</head><body><div id="s"></div><script type="module" src="viewer.js"></script></body></html>
+<script>
+// #1631 render diagnostics, collected BEFORE the module script runs so a failure of the module itself (a missing three.js, a WebGL context that cannot be
+// created, a script error) is still recorded: window.__cad is the live state, window.cadDiag() its JSON-able snapshot, read by the host's X-Ray App page.
+(function () {
+  var d = window.__cad = { t0: performance.now(), errors: [], frames: 0, firstFrameMs: -1, lastFrameMs: -1, lastError: '', moduleLoaded: false,
+    rendererCreated: false, ready: false, contextLost: false, restored: 0, stage: 'page', stageMs: 0, opened: '', loadMs: -1, shownMs: -1, triangles: -1, info: null, probe: null };
+  var now = function () { return Math.round(performance.now() - d.t0); };
+  d.now = now;
+  d.stageTo = function (s) { d.stage = s; d.stageMs = now(); };
+  d.err = function (m) { d.lastError = String(m); d.errors.push({ t: now(), m: String(m) }); if (d.errors.length > 20) d.errors.shift(); };
+  addEventListener('error', function (e) { d.err((e && e.message) || 'script error'); });
+  addEventListener('unhandledrejection', function (e) { d.err('unhandled rejection: ' + (e.reason && e.reason.message || e.reason)); });
+  // The WebGL probe on a canvas of its own, independent of three.js: which context kinds the WebView can create, whether it is hardware (a
+  // context made with failIfMajorPerformanceCaveat is a GPU one; a software rasteriser such as SwiftShader refuses it) and whether it draws.
+  function probe() {
+    var r = { attempts: [], hardware: false, kind: '', drawOk: false };
+    var tries = [['webgl2', true], ['webgl2', false], ['webgl', true], ['webgl', false]], gl = null;
+    for (var i = 0; i < tries.length; i++) {
+      var ctx = null;
+      try { ctx = document.createElement('canvas').getContext(tries[i][0], { failIfMajorPerformanceCaveat: tries[i][1] }); } catch (e) { r.attempts.push(tries[i][0] + (tries[i][1] ? ' (hardware only)' : '') + ': threw ' + e.message); continue; }
+      r.attempts.push(tries[i][0] + (tries[i][1] ? ' (hardware only)' : '') + ': ' + (ctx ? 'created' : 'null'));
+      if (ctx && !gl) { gl = ctx; r.kind = tries[i][0]; }
+      if (ctx && tries[i][1]) r.hardware = true;
+    }
+    if (!gl) { r.error = 'no WebGL context could be created (webgl2 and webgl both null)'; return r; }
+    try {
+      r.version = gl.getParameter(gl.VERSION); r.shading = gl.getParameter(gl.SHADING_LANGUAGE_VERSION);
+      r.vendor = gl.getParameter(gl.VENDOR); r.renderer = gl.getParameter(gl.RENDERER);
+      var dbg = gl.getExtension('WEBGL_debug_renderer_info');
+      if (dbg) { r.unmaskedVendor = gl.getParameter(dbg.UNMASKED_VENDOR_WEBGL); r.unmaskedRenderer = gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL); }
+      r.maxTexture = gl.getParameter(gl.MAX_TEXTURE_SIZE); r.maxRenderbuffer = gl.getParameter(gl.MAX_RENDERBUFFER_SIZE);
+      r.maxVertexAttribs = gl.getParameter(gl.MAX_VERTEX_ATTRIBS);
+      r.extensions = (gl.getSupportedExtensions() || []).length;
+      r.uint32Index = r.kind === 'webgl2' || !!gl.getExtension('OES_element_index_uint');
+      gl.clearColor(1, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT);
+      var px = new Uint8Array(4); gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
+      r.drawOk = px[0] === 255 && px[1] === 0 && px[2] === 0 && px[3] === 255; r.readback = Array.prototype.slice.call(px);
+      r.lost = gl.isContextLost();
+    } catch (e) { r.error = 'reading the context threw: ' + e.message; }
+    return r;
+  }
+  try { d.probe = probe(); } catch (e) { d.probe = { error: 'probe threw: ' + e.message, attempts: [] }; d.err('WebGL probe: ' + e.message); }
+  window.cadDiag = function () {
+    var c = document.querySelector('canvas');
+    var i = null; try { i = d.infoFn ? d.infoFn() : null; } catch (e) {}
+    return { stage: d.stage, stageMs: d.stageMs, ageMs: now(), moduleLoaded: d.moduleLoaded, rendererCreated: d.rendererCreated, ready: d.ready, contextLost: d.contextLost, restored: d.restored,
+      frames: d.frames, firstFrameMs: d.firstFrameMs, lastFrameMs: d.lastFrameMs, lastError: d.lastError, errors: d.errors, opened: d.opened, loadMs: d.loadMs, shownMs: d.shownMs,
+      triangles: d.triangles, render: i, probe: d.probe,
+      canvas: c ? { width: c.width, height: c.height, clientWidth: c.clientWidth, clientHeight: c.clientHeight } : null,
+      window: { innerWidth: innerWidth, innerHeight: innerHeight, dpr: devicePixelRatio, visibility: document.visibilityState }, ua: navigator.userAgent };
+  };
+})();
+</script>
+</head><body><div id="s"></div><script type="module" src="viewer.js" onerror="__cad.err('viewer.js (or a module it imports) failed to load'); __cad.stageTo('module load failed')"></script></body></html>

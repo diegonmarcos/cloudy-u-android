@@ -22,6 +22,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,6 +37,7 @@ import com.diegonmarcos.cloudlib.web.CloudWeb
 import com.diegonmarcos.cloudlib.web.CloudWebClient
 import com.diegonmarcos.cloudlib.web.WebProfile
 import com.diegonmarcos.hardtechcad.BuildConfig
+import com.diegonmarcos.hardtechcad.CadDiag
 import com.diegonmarcos.hardtechcad.R
 import com.diegonmarcos.superapp.cad.CadFormats
 import com.diegonmarcos.superapp.cad.Model
@@ -69,19 +71,29 @@ internal fun ModelViewer(m: Model, dir: File) {
     var ready by remember { mutableStateOf(false) }
     var web by remember { mutableStateOf<WebView?>(null) }
     var file by remember(m) { mutableStateOf<File?>(null) }
+    val curId by rememberUpdatedState(m.id)
     val bridge = remember {
         object {
             @JavascriptInterface
             fun post(json: String) {
                 android.util.Log.i("CadHost", json)
                 val e = runCatching { JSONObject(json) }.getOrNull() ?: return
+                // #1631 every event of the real viewer page is recorded for the X-Ray App page
                 when (e.optString("type")) {
-                    "ready" -> ready = true
-                    "shown" -> state = ViewState.Shown
-                    "error" -> state = ViewState.Failed(e.optString("message"))
+                    "ready" -> { ready = true; CadDiag.event(curId, "viewer ready") }
+                    "shown" -> { state = ViewState.Shown; CadDiag.shown(curId, e.optLong("triangles", -1)) }
+                    "painted" -> CadDiag.painted(curId, e.optDouble("pct", -1.0), e.optInt("w"), e.optInt("h"), e.optString("gl"))
+                    "error" -> { state = ViewState.Failed(e.optString("message")); CadDiag.failed(curId, e.optString("message")) }
+                    else -> CadDiag.event(curId, json)
                 }
             }
         }
+    }
+    // #1631 read the viewer page's own diagnostics (window.cadDiag) and the WebView's real surface, into the X-Ray record
+    fun pollDiag(id: String) {
+        val w = web ?: return
+        CadDiag.view(id, w.width, w.height, w.isShown, w.isHardwareAccelerated)
+        w.evaluateJavascript("JSON.stringify(window.cadDiag&&window.cadDiag())") { v -> decodeJs(v)?.let { CadDiag.js(id, it) } }
     }
     // #1542 a view bundled in the APK (Plan.Show.asset) is drawn from the app's own assets: no download, no LFS, nothing to fail on the network
     val bundled = (plan as? CadFormats.Plan.Show)?.asset.orEmpty()
@@ -89,7 +101,7 @@ internal fun ModelViewer(m: Model, dir: File) {
         val show = plan as? CadFormats.Plan.Show ?: return@LaunchedEffect
         if (bundled.isNotEmpty()) { state = ViewState.Loading; return@LaunchedEffect }
         file = runCatching { withContext(Dispatchers.IO) { ModelCache.fetch(BuildConfig.MODELS_BASE, dir, show.path, show.format, show.sha256) } }
-            .onFailure { state = ViewState.Failed(it.message ?: it.javaClass.simpleName) }.getOrNull()
+            .onFailure { state = ViewState.Failed(it.message ?: it.javaClass.simpleName); CadDiag.begin(m.id, m.name, show.lib, show.format, MODELS_PATH + show.path); CadDiag.failed(m.id, "fetch: " + (it.message ?: it.javaClass.simpleName)) }.getOrNull()
         if (file != null) state = ViewState.Loading
     }
     LaunchedEffect(ready, file, bundled) {
@@ -99,10 +111,12 @@ internal fun ModelViewer(m: Model, dir: File) {
         if (!ready) return@LaunchedEffect
         val url = if (bundled.isNotEmpty()) ASSETS_PATH + bundled else MODELS_PATH + f!!.name
         val arg = JSONObject().put("lib", show.lib).put("url", url).put("format", show.format)
-        web?.evaluateJavascript("window.cadOpen&&window.cadOpen($arg)", null)
+        CadDiag.begin(m.id, m.name, show.lib, show.format, url)
+        web?.evaluateJavascript("window.cadOpen&&window.cadOpen($arg)") { r -> if (r == "null") CadDiag.event(m.id, "window.cadOpen is not defined: the viewer module did not run") }
         android.util.Log.i("CadHost", "cadOpen " + arg)
-        kotlinx.coroutines.delay(20000)
-        web?.evaluateJavascript("document.getElementById('s')&&document.getElementById('s').textContent") { android.util.Log.i("CadHost", "status=" + it) }
+        kotlinx.coroutines.delay(2500); pollDiag(m.id)
+        kotlinx.coroutines.delay(17500); pollDiag(m.id)
+        web?.evaluateJavascript("document.getElementById('s')&&document.getElementById('s').textContent") { android.util.Log.i("CadHost", "status=" + it); CadDiag.event(m.id, "page status " + it) }
         // The proof pulls this PNG (cache/cad-snapshot-<id>.png) with run-as: a WebView screenshot does not capture WebGL on an emulator.
         web?.evaluateJavascript("window.cadSnapshot&&window.cadSnapshot()") { v ->
             runCatching {
@@ -110,6 +124,18 @@ internal fun ModelViewer(m: Model, dir: File) {
                 if (b64.isNotEmpty()) File(dir.parentFile, "cad-snapshot-" + m.id + ".png").writeBytes(android.util.Base64.decode(b64, android.util.Base64.DEFAULT))
             }
         }
+    }
+    // #1631 a viewer page that never becomes ready (its module died: three.js missing, no WebGL context) used to leave a silent spinner; say so, with the page's own error
+    LaunchedEffect(m) {
+        val show = plan as? CadFormats.Plan.Show ?: return@LaunchedEffect
+        kotlinx.coroutines.delay(8000)
+        if (ready) return@LaunchedEffect
+        if (CadDiag.snapshot().none { it.id == m.id }) CadDiag.begin(m.id, m.name, show.lib, show.format, "(not opened: the viewer was never ready)")
+        pollDiag(m.id)
+        val why = CadDiag.snapshot().firstOrNull { it.id == m.id }?.js?.let { runCatching { JSONObject(it).optString("lastError") }.getOrNull() }.orEmpty()
+        val msg = "the viewer page did not become ready in 8 s" + if (why.isNotBlank()) ": $why" else " (see Configs > X-Ray App)"
+        CadDiag.failed(m.id, msg)
+        if (state !is ViewState.Shown) state = ViewState.Failed(msg)
     }
     DisposableEffect(Unit) { onDispose { web?.destroy(); web = null } }
 
@@ -174,4 +200,59 @@ private fun ControlChip(label: String, on: Boolean, modifier: Modifier, onClick:
     Text(label, color = if (on) p.tileInk else p.accent, fontSize = KitStoreRow.body,
         modifier = modifier.clip(shape).background(if (on) p.accent else Color.Transparent).border(1.dp, p.accent, shape)
             .clickable(onClick = onClick).padding(horizontal = KitStoreRow.padH, vertical = KitStoreRow.tight))
+}
+
+/** The string a WebView's evaluateJavascript hands back for a JS string result: a JSON string literal; null for "null" / blank. */
+internal fun decodeJs(v: String?): String? {
+    if (v.isNullOrBlank() || v == "null") return null
+    return runCatching { org.json.JSONTokener(v).nextValue() as? String }.getOrNull()?.takeIf { it.isNotBlank() && it != "null" }
+}
+
+/**
+ * #1631 The real viewer page with NO model: the X-Ray App page shows it so the WebGL context, the three.js module and the page's own
+ * diagnostics are measured on this device even when no model has been opened. It records under [CadDiag.PROBE_ID] and re-reads
+ * window.cadDiag() every few seconds. Same page, same WebView profile and same asset handler as [ModelViewer].
+ */
+@SuppressLint("SetJavaScriptEnabled")
+@Composable
+internal fun ViewerProbe(dir: File, modifier: Modifier = Modifier) {
+    var web by remember { mutableStateOf<WebView?>(null) }
+    val bridge = remember {
+        object {
+            @JavascriptInterface
+            fun post(json: String) {
+                android.util.Log.i("CadHost", "probe " + json)
+                val e = runCatching { JSONObject(json) }.getOrNull() ?: return
+                if (e.optString("type") == "error") CadDiag.failed(CadDiag.PROBE_ID, e.optString("message")) else CadDiag.event(CadDiag.PROBE_ID, json)
+            }
+        }
+    }
+    LaunchedEffect(web) {
+        val w = web ?: return@LaunchedEffect
+        CadDiag.begin(CadDiag.PROBE_ID, "viewer page without a model", "", "", VIEWER_URL)
+        while (true) {
+            kotlinx.coroutines.delay(1500)
+            CadDiag.view(CadDiag.PROBE_ID, w.width, w.height, w.isShown, w.isHardwareAccelerated)
+            w.evaluateJavascript("JSON.stringify(window.cadDiag&&window.cadDiag())") { v -> decodeJs(v)?.let { CadDiag.js(CadDiag.PROBE_ID, it) } }
+            kotlinx.coroutines.delay(1500)
+        }
+    }
+    DisposableEffect(Unit) { onDispose { web?.destroy(); web = null } }
+    AndroidView(
+        factory = { c ->
+            val loader = WebViewAssetLoader.Builder()
+                .addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(c))
+                .addPathHandler(MODELS_PATH, WebViewAssetLoader.InternalStoragePathHandler(c, dir.apply { mkdirs() }))
+                .build()
+            CloudWeb.create(c, WebProfile.WEB_WORLD).also { wv ->
+                wv.addJavascriptInterface(bridge, "CadHost")
+                wv.webViewClient = object : CloudWebClient(WebProfile.WEB_WORLD, loader) {
+                    override fun onRecovered(dead: WebView, fresh: WebView?) { fresh?.addJavascriptInterface(bridge, "CadHost"); web = fresh }
+                }
+                wv.loadUrl(VIEWER_URL)
+                web = wv
+            }
+        },
+        modifier = modifier,
+    )
 }

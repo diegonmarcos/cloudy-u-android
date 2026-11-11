@@ -4,7 +4,11 @@ import * as THREE from 'three';
 import { OrbitControls } from '../space/OrbitControls.js';
 const post = (o) => { try { window.CadHost && CadHost.post(JSON.stringify(o)); } catch (e) {} };
 const status = (t) => { document.getElementById('s').textContent = t; };
-const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+const D = window.__cad || { err() {}, stageTo() {}, now: () => 0 }; // #1631 the diagnostics state of viewer.html
+D.moduleLoaded = true; D.stageTo('creating the WebGL renderer');
+let renderer;
+try { renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true }); D.rendererCreated = true; }
+catch (e) { D.err('WebGLRenderer: ' + (e && e.message || e)); D.stageTo('renderer creation failed'); post({ type: 'error', message: 'the WebGL renderer could not be created: ' + (e && e.message || e) }); throw e; }
 renderer.setPixelRatio(1); // software GL on emulators and low-end phones: never more than one sample per pixel
 document.body.appendChild(renderer.domElement);
 const scene = new THREE.Scene(); scene.background = new THREE.Color(0x0e1116);
@@ -14,10 +18,16 @@ const camera = new THREE.PerspectiveCamera(45, 1, 0.01, 1e6);
 const controls = new OrbitControls(camera, renderer.domElement); controls.enableDamping = false;
 controls.enableRotate = true; controls.enableZoom = true; controls.enablePan = true; // one finger orbits, a pinch zooms, two fingers pan
 // #1542 a lost GL context is reported, never a silent blank canvas (a phone GPU can drop it under memory pressure)
-renderer.domElement.addEventListener('webglcontextlost', (e) => { e.preventDefault(); post({ type: 'error', message: 'WebGL context lost' }); });
+renderer.domElement.addEventListener('webglcontextlost', (e) => { e.preventDefault(); D.contextLost = true; D.err('WebGL context lost'); post({ type: 'error', message: 'WebGL context lost' }); });
+renderer.domElement.addEventListener('webglcontextrestored', () => { D.contextLost = false; D.restored++; });
+D.infoFn = () => ({ calls: renderer.info.render.calls, triangles: renderer.info.render.triangles, geometries: renderer.info.memory.geometries, textures: renderer.info.memory.textures });
 // Render on demand (a still scene costs nothing): after a camera move, a resize and a load. A continuous loop of a 250k-triangle hull starves the device.
 let queued = false;
-function draw() { queued = false; controls.update(); renderer.render(scene, camera); }
+function draw() {
+  queued = false;
+  try { controls.update(); renderer.render(scene, camera); D.frames++; D.lastFrameMs = D.now(); if (D.firstFrameMs < 0) D.firstFrameMs = D.lastFrameMs; }
+  catch (e) { D.err('render: ' + (e && e.message || e)); post({ type: 'error', message: 'render failed: ' + (e && e.message || e) }); }
+}
 function render() { if (!queued) { queued = true; requestAnimationFrame(draw); } }
 controls.addEventListener('change', render);
 let current = null;
@@ -52,16 +62,20 @@ window.cadPaint = () => {
 };
 window.cadOpen = async ({ lib, url, format }) => {
   status('Loading ' + format.toUpperCase() + '…');
+  D.opened = url; D.loadMs = -1; D.shownMs = -1; D.stageTo('importing the ' + lib + ' loader');
   try {
     const m = await import('./' + lib + '/loader.js');
+    D.stageTo('loading ' + url);
     const obj = await m.load(url, format);
+    D.loadMs = D.now(); D.stageTo('framing the model');
     if (current) scene.remove(current);
     current = obj; scene.add(obj); applyWire(); frame(obj);
     let tris = 0; obj.traverse((o) => { if (o.isMesh && o.geometry) tris += (o.geometry.index ? o.geometry.index.count : o.geometry.attributes.position.count) / 3; });
+    D.triangles = Math.round(tris); D.shownMs = D.now(); D.stageTo('shown');
     status(format.toUpperCase() + ' · libs:cad-' + lib);
     post({ type: 'shown', lib, format, triangles: Math.round(tris) });
     const pt = window.cadPaint(); post(pt);
     if (pt.pct < 0.1) post({ type: 'error', message: 'the canvas drew nothing (' + pt.w + 'x' + pt.h + ', ' + pt.gl + ')' });
-  } catch (e) { status('Failed: ' + e.message); post({ type: 'error', message: String(e.message || e) }); }
+  } catch (e) { D.err('cadOpen ' + url + ': ' + (e && e.message || e)); D.stageTo('failed: ' + (D.stage || '')); status('Failed: ' + e.message); post({ type: 'error', message: String(e.message || e) }); }
 };
-post({ type: 'ready' });
+D.ready = true; D.stageTo('ready'); post({ type: 'ready' });
